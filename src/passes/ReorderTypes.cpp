@@ -41,8 +41,8 @@ struct ReorderingTypeRewriter : GlobalTypeRewriter {
   static constexpr float maxFactor = 1.0;
   static constexpr Index numFactors = 21;
 
-  ReorderingTypeRewriter(Module& wasm, bool forTesting)
-    : GlobalTypeRewriter(wasm), forTesting(forTesting) {}
+  ReorderingTypeRewriter(Module& wasm, bool forTesting, WorldMode worldMode)
+    : GlobalTypeRewriter(wasm, worldMode), forTesting(forTesting) {}
 
   std::vector<HeapType> getSortedTypes(PredecessorGraph preds) override {
     auto numTypes = preds.size();
@@ -142,11 +142,12 @@ struct ReorderTypes : Pass {
     }
 
     // See note in RemoveUnusedTypes.
-    if (!getPassOptions().closedWorld) {
+    if (getPassOptions().worldMode == WorldMode::Open) {
       Fatal() << "ReorderTypes requires --closed-world";
     }
 
-    ReorderingTypeRewriter(*module, forTesting).update();
+    ReorderingTypeRewriter(*module, forTesting, getPassOptions().worldMode)
+      .update();
   }
 };
 

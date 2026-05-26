@@ -338,7 +338,7 @@ struct StringLowering : public StringGathering {
     // Strings turn into externref.
     updates[HeapType::string] = HeapType::ext;
 
-    TypeMapper(*module, updates).map();
+    TypeMapper(*module, updates, getPassOptions().worldMode).map();
   }
 
   // Imported string functions.

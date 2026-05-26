@@ -481,12 +481,16 @@ struct CodeScanner : PostWalker<CodeScanner> {
 };
 
 void classifyTypeVisibility(Module& wasm,
-                            InsertOrderedMap<HeapType, HeapTypeInfo>& types);
+                            InsertOrderedMap<HeapType, HeapTypeInfo>& types,
+                            WorldMode worldMode);
 
 } // anonymous namespace
 
-InsertOrderedMap<HeapType, HeapTypeInfo> collectHeapTypeInfo(
-  Module& wasm, TypeInclusion inclusion, VisibilityHandling visibility) {
+InsertOrderedMap<HeapType, HeapTypeInfo>
+collectHeapTypeInfo(Module& wasm,
+                    WorldMode worldMode,
+                    TypeInclusion inclusion,
+                    VisibilityHandling visibility) {
   // Collect module-level info.
   TypeInfos info;
   CodeScanner(wasm, info).walkModuleCode(&wasm);
@@ -593,7 +597,7 @@ InsertOrderedMap<HeapType, HeapTypeInfo> collectHeapTypeInfo(
   }
 
   if (visibility == VisibilityHandling::FindVisibility) {
-    classifyTypeVisibility(wasm, info.info);
+    classifyTypeVisibility(wasm, info.info, worldMode);
   }
 
   return std::move(info.info);
@@ -602,8 +606,9 @@ InsertOrderedMap<HeapType, HeapTypeInfo> collectHeapTypeInfo(
 namespace {
 
 void classifyTypeVisibility(Module& wasm,
-                            InsertOrderedMap<HeapType, HeapTypeInfo>& types) {
-  for (auto type : getPublicHeapTypes(wasm)) {
+                            InsertOrderedMap<HeapType, HeapTypeInfo>& types,
+                            WorldMode worldMode) {
+  for (auto type : getPublicHeapTypes(wasm, worldMode)) {
     if (auto it = types.find(type); it != types.end()) {
       it->second.visibility = Visibility::Public;
     }
@@ -615,6 +620,64 @@ void classifyTypeVisibility(Module& wasm,
   }
 }
 
+// Collects all heap types transitively reachable from a root set of types.
+// Options are provided to customize the traversal:
+// - `includeSupertypes`: if true, declared supertypes are also traversed.
+// - `includeRecGroups`: if true, all types in the same recursion group
+//                     are also traversed.
+std::vector<HeapType>
+getTransitivelyReachable(const std::vector<HeapType>& roots,
+                         bool includeSupertypes,
+                         bool includeRecGroups) {
+  std::vector<HeapType> result;
+  std::vector<HeapType> worklist;
+  std::unordered_set<HeapType> seen;
+  std::unordered_set<RecGroup> seenRecGroups;
+
+  auto note = [&](HeapType type) {
+    if (type.isBasic()) {
+      if (seen.insert(type).second) {
+        result.push_back(type);
+      }
+      return;
+    }
+
+    if (includeRecGroups) {
+      auto group = type.getRecGroup();
+      if (seenRecGroups.insert(group).second) {
+        for (auto member : group) {
+          result.push_back(member);
+          worklist.push_back(member);
+        }
+      }
+    } else {
+      if (seen.insert(type).second) {
+        result.push_back(type);
+        worklist.push_back(type);
+      }
+    }
+  };
+
+  for (auto type : roots) {
+    note(type);
+  }
+
+  while (!worklist.empty()) {
+    auto curr = worklist.back();
+    worklist.pop_back();
+    std::optional<HeapType> super =
+      includeSupertypes ? std::nullopt : curr.getDeclaredSuperType();
+    for (auto t : curr.getReferencedHeapTypes()) {
+      if (super && t == *super) {
+        continue;
+      }
+      note(t);
+    }
+  }
+
+  return result;
+}
+
 void setIndices(IndexedHeapTypes& indexedTypes) {
   for (Index i = 0; i < indexedTypes.types.size(); i++) {
     indexedTypes.indices[indexedTypes.types[i]] = i;
@@ -624,7 +687,7 @@ void setIndices(IndexedHeapTypes& indexedTypes) {
 } // anonymous namespace
 
 std::vector<HeapType> collectHeapTypes(Module& wasm) {
-  auto info = collectHeapTypeInfo(wasm);
+  auto info = collectHeapTypeInfo(wasm, WorldMode::Open);
   std::vector<HeapType> types;
   types.reserve(info.size());
   for (auto& [type, _] : info) {
@@ -633,27 +696,16 @@ std::vector<HeapType> collectHeapTypes(Module& wasm) {
   return types;
 }
 
-std::vector<HeapType> getPublicHeapTypes(Module& wasm) {
-  // Look at the types of imports as exports to get an initial set of public
-  // types, then traverse the types used by public types and collect the
-  // transitively reachable public types as well.
-  std::vector<HeapType> workList;
-  std::unordered_set<RecGroup> publicGroups;
-
-  // The collected types.
+std::vector<HeapType> getExposedPublicHeapTypes(Module& wasm) {
+  // Look at the types of imports and exports to get an initial set of public
+  // types.
   std::vector<HeapType> publicTypes;
+  std::unordered_set<HeapType> seenTypes;
 
   auto notePublic = [&](HeapType type) {
-    if (type.isBasic()) {
-      return;
+    if (seenTypes.insert(type).second) {
+      publicTypes.push_back(type);
     }
-    auto group = type.getRecGroup();
-    if (!publicGroups.insert(group).second) {
-      // The groups in this type have already been marked public.
-      return;
-    }
-    publicTypes.insert(publicTypes.end(), group.begin(), group.end());
-    workList.insert(workList.end(), group.begin(), group.end());
   };
 
   ModuleUtils::iterImportedTags(wasm, [&](Tag* tag) { notePublic(tag->type); });
@@ -710,24 +762,28 @@ std::vector<HeapType> getPublicHeapTypes(Module& wasm) {
     notePublic(type);
   }
 
-  // Find all the other public types reachable from directly publicized types.
-  while (!workList.empty()) {
-    auto curr = workList.back();
-    workList.pop_back();
-    for (auto t : curr.getReferencedHeapTypes()) {
-      notePublic(t);
-    }
-  }
-
-  // TODO: In an open world, we need to consider subtypes of public types public
-  // as well, or potentially even consider all types to be public unless
-  // otherwise annotated.
   return publicTypes;
 }
 
-std::vector<HeapType> getPrivateHeapTypes(Module& wasm) {
-  auto info = collectHeapTypeInfo(
-    wasm, TypeInclusion::UsedIRTypes, VisibilityHandling::FindVisibility);
+std::vector<HeapType> getPublicHeapTypes(Module& wasm, WorldMode worldMode) {
+  auto directlyExposed = getExposedPublicHeapTypes(wasm);
+  auto transitivelyExposed = getTransitivelyReachable(
+    directlyExposed, /*includeSupertypes=*/true, /*includeRecGroups=*/true);
+  std::vector<HeapType> publicTypes;
+  publicTypes.reserve(transitivelyExposed.size());
+  for (auto type : transitivelyExposed) {
+    if (!type.isBasic()) {
+      publicTypes.push_back(type);
+    }
+  }
+  return publicTypes;
+}
+
+std::vector<HeapType> getPrivateHeapTypes(Module& wasm, WorldMode worldMode) {
+  auto info = collectHeapTypeInfo(wasm,
+                                  worldMode,
+                                  TypeInclusion::UsedIRTypes,
+                                  VisibilityHandling::FindVisibility);
   std::vector<HeapType> types;
   types.reserve(info.size());
   for (auto& [type, typeInfo] : info) {
@@ -739,7 +795,8 @@ std::vector<HeapType> getPrivateHeapTypes(Module& wasm) {
 }
 
 IndexedHeapTypes getOptimizedIndexedHeapTypes(Module& wasm) {
-  auto counts = collectHeapTypeInfo(wasm, TypeInclusion::BinaryTypes);
+  auto counts =
+    collectHeapTypeInfo(wasm, WorldMode::Open, TypeInclusion::BinaryTypes);
 
   // Collect the rec groups.
   std::unordered_map<RecGroup, size_t> groupIndices;
