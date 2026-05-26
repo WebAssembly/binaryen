@@ -18,7 +18,6 @@
 #include <string>
 
 #include "parser/wat-parser.h"
-#include "pass.h"
 #include "support/file.h"
 #include "tools/wasm2c/assertion-emitter.h"
 #include "tools/wasm2c/c-printer.h"
@@ -54,9 +53,8 @@ inline std::string getBasename(const std::string& path) {
 } // anonymous namespace
 
 AssertionEmitter::AssertionEmitter(WATParser::WASTScript& script,
-                                   Wasm2CBuilder::Flags flags,
-                                   const PassOptions& options)
-  : script(script), flags(flags), options(options) {}
+                                   Wasm2CBuilder::Flags flags)
+  : script(script), flags(flags) {}
 
 void AssertionEmitter::emit(std::ostream& cOut,
                             const std::string& outputCPath) {

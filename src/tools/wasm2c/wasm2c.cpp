@@ -94,7 +94,7 @@ int main(int argc, const char* argv[]) {
     }
 
     Output cOut(options.output, Flags::Text);
-    AssertionEmitter emitter(*script, flags, options.passOptions);
+    AssertionEmitter emitter(*script, flags);
     emitter.emit(cOut.getStream(), options.output);
   } else {
     Module wasm;

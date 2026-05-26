@@ -20,7 +20,6 @@
 #include <string>
 
 #include "parser/wat-parser.h"
-#include "pass.h"
 #include "tools/wasm2c/wasm2c-builder.h"
 
 namespace wasm {
@@ -28,15 +27,13 @@ namespace wasm {
 class AssertionEmitter {
 public:
   AssertionEmitter(WATParser::WASTScript& script,
-                   Wasm2CBuilder::Flags flags,
-                   const PassOptions& options);
+                   Wasm2CBuilder::Flags flags);
 
   void emit(std::ostream& cOut, const std::string& outputCPath);
 
 private:
   WATParser::WASTScript& script;
   Wasm2CBuilder::Flags flags;
-  PassOptions options;
 
   size_t moduleCounter = 0;
 };
