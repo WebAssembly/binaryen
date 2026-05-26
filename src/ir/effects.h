@@ -1501,10 +1501,8 @@ public:
   }
 };
 
-} // namespace wasm
+std::ostream& operator<<(std::ostream& o, const EffectAnalyzer& effects);
 
-namespace std {
-std::ostream& operator<<(std::ostream& o, wasm::EffectAnalyzer& effects);
-} // namespace std
+} // namespace wasm
 
 #endif // wasm_ir_effects_h

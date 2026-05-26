@@ -121,10 +121,10 @@ class TranslateToFuzzReader {
 public:
   TranslateToFuzzReader(Module& wasm,
                         std::vector<char>&& input,
-                        bool closedWorld = false);
+                        WorldMode worldMode = WorldMode::Open);
   TranslateToFuzzReader(Module& wasm,
                         std::string& filename,
-                        bool closedWorld = false);
+                        WorldMode worldMode = WorldMode::Open);
 
   void pickPasses(OptimizationOptions& options);
   void setAllowMemory(bool allowMemory_) { allowMemory = allowMemory_; }
@@ -141,7 +141,7 @@ public:
 
 private:
   // Whether the module will be tested in a closed-world environment.
-  bool closedWorld;
+  WorldMode worldMode;
   Builder builder;
   Random random;
   Intrinsics intrinsics;

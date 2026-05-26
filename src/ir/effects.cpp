@@ -17,9 +17,9 @@
 #include "ir/effects.h"
 #include "wasm.h"
 
-namespace std {
+namespace wasm {
 
-std::ostream& operator<<(std::ostream& o, wasm::EffectAnalyzer& effects) {
+std::ostream& operator<<(std::ostream& o, const EffectAnalyzer& effects) {
   o << "EffectAnalyzer {\n";
   if (effects.branchesOut) {
     o << "branchesOut\n";
@@ -87,10 +87,10 @@ std::ostream& operator<<(std::ostream& o, wasm::EffectAnalyzer& effects) {
   if (effects.implicitTrap) {
     o << "implicitTrap\n";
   }
-  if (effects.readOrder != wasm::MemoryOrder::Unordered) {
+  if (effects.readOrder != MemoryOrder::Unordered) {
     o << "readOrder " << effects.readOrder << "\n";
   }
-  if (effects.writeOrder != wasm::MemoryOrder::Unordered) {
+  if (effects.writeOrder != MemoryOrder::Unordered) {
     o << "writeOrder " << effects.writeOrder << "\n";
   }
   if (effects.throws_) {
@@ -160,4 +160,4 @@ std::ostream& operator<<(std::ostream& o, wasm::EffectAnalyzer& effects) {
   return o;
 }
 
-} // namespace std
+} // namespace wasm

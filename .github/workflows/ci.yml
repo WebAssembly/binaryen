@@ -265,7 +265,7 @@ jobs:
       # size for pthreads is tiny,
       # https://github.com/WebAssembly/binaryen/issues/8594
       run: |
-        ./alpine.sh cmake . -G Ninja -DCMAKE_CXX_FLAGS="-static" -DCMAKE_C_FLAGS="-static" -DCMAKE_EXE_LINKER_FLAGS="-Wl,-z,stack-size=8388608" -DCMAKE_BUILD_TYPE=Release -DBUILD_STATIC_LIB=ON -DBUILD_MIMALLOC=ON -DCMAKE_INSTALL_PREFIX=install
+        ./alpine.sh cmake . -G Ninja -DCMAKE_CXX_FLAGS="-static" -DCMAKE_C_FLAGS="-static" -DCMAKE_EXE_LINKER_FLAGS="-Wl,-z,stack-size=8388608" -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DBUILD_MIMALLOC=ON -DCMAKE_INSTALL_PREFIX=install
 
     - name: build
       run: |
