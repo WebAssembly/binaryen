@@ -533,11 +533,8 @@ private:
 public:
   // Clear the state of the operation of applying the interpreter's runtime
   // information into the module. This must be done before we start to serialize
-  // content. After this, seriqli
-  //
-  // This happens each time we apply contents to the module, which is basically
-  // once per ctor function, but can be more fine-grained also if we execute a
-  // line at a time.
+  // content. After this, serialization can happen, and after that, a call to
+  // applyToModule() can be done.
   void clearApplyState() {
     // The process of allocating "defining globals" begins here, from scratch
     // each time (things live before may no longer be).
@@ -1204,6 +1201,10 @@ start_eval:
         break;
       }
 
+      // We are about to serialize content (the code paths below call
+      // getSerialization). Clear the state.
+      interface.clearApplyState();
+
       if (flow.breakTo == RETURN_CALL_FLOW) {
         // The return-called function is stored in the last value.
         func = wasm.getFunction(flow.values.back().getFunc());
@@ -1212,7 +1213,6 @@ start_eval:
 
         // Serialize the arguments for the new function and save the module
         // state in case we fail to eval the new function.
-        interface.clearApplyState();
         localExprs.clear();
         for (auto& param : params) {
           auto* serialized = interface.getSerialization(param);
@@ -1243,7 +1243,6 @@ start_eval:
       // of them, and leave it to the optimizer to remove redundant or
       // unnecessary operations. We just recompute the entire local
       // serialization sets from scratch each time here, for all locals.
-      interface.clearApplyState();
       localExprs.clear();
       for (Index i = 0; i < func->getNumLocals(); i++) {
         auto* serialized = interface.getSerialization(scope.locals[i]);
