@@ -78,7 +78,7 @@
 ;; CHECK-SOURCE-NEXT: //
 ;; CHECK-SOURCE-NEXT: // Result:
 ;; CHECK-SOURCE-NEXT: // A pointer for an object of size n.
-;; CHECK-SOURCE-NEXT: #if WABT_BIG_ENDIAN
+;; CHECK-SOURCE-NEXT: #if WASM_RT_BIG_ENDIAN
 ;; CHECK-SOURCE-NEXT: #define MEM_ADDR(mem, addr, n) ((mem)->data_end - (addr) - (n))
 ;; CHECK-SOURCE-NEXT: #else
 ;; CHECK-SOURCE-NEXT: #define MEM_ADDR(mem, addr, n) &((mem)->data[addr])
@@ -220,7 +220,7 @@
 ;; CHECK-SOURCE-NEXT:   if (!n) {
 ;; CHECK-SOURCE-NEXT:     return;
 ;; CHECK-SOURCE-NEXT:   }
-;; CHECK-SOURCE-NEXT: #if WABT_BIG_ENDIAN
+;; CHECK-SOURCE-NEXT: #if WASM_RT_BIG_ENDIAN
 ;; CHECK-SOURCE-NEXT:   for (size_t i = 0; i < n; i++) {
 ;; CHECK-SOURCE-NEXT:     dest[i] = src[n - i - 1];
 ;; CHECK-SOURCE-NEXT:   }

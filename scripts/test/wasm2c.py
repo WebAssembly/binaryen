@@ -42,12 +42,12 @@ def test_wasm2c_spec_output():
 
         c_sources = sorted(test_subdir_path.glob('*.c'))
 
-        wasm2c_dir = pathlib.Path(shared.options.binaryen_root) / 'wasm2c'
-        c_sources.append(wasm2c_dir / 'wasm-rt-impl.c')
-        c_sources.append(wasm2c_dir / 'wasm-rt-mem-impl.c')
-        c_sources.append(wasm2c_dir / 'wasm-rt-exceptions-impl.c')
+        wasm_rt_dir = pathlib.Path(shared.options.binaryen_root) / 'src' / 'tools' / 'wasm2c' / 'wasm-rt'
+        c_sources.append(wasm_rt_dir / 'wasm-rt-impl.c')
+        c_sources.append(wasm_rt_dir / 'wasm-rt-mem-impl.c')
+        c_sources.append(wasm_rt_dir / 'wasm-rt-exceptions-impl.c')
 
-        compile_cmd = [shared.NATIVECC, '-O2', '-std=c11', '-D_GNU_SOURCE', '-D_DEFAULT_SOURCE', '-I.', f"-I{wasm2c_dir}"] + [str(s) for s in c_sources] + ['-o', f'{test_subdir}/spec_test_runner']
+        compile_cmd = [shared.NATIVECC, '-O2', '-std=c11', '-D_GNU_SOURCE', '-D_DEFAULT_SOURCE', '-I.', f"-I{wasm_rt_dir}"] + [str(s) for s in c_sources] + ['-o', f'{test_subdir}/spec_test_runner']
 
         compile_cmd += ['-fno-optimize-sibling-calls', '-frounding-math']
         if 'gcc' in shared.NATIVECC.lower():
