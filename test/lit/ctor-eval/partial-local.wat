@@ -16,10 +16,12 @@
 
  (func $0
   (local $temp (ref null $0))
+
   ;; wasm-ctor-eval evals away the get of $global, since it sees all the data.
   (local.set $temp
    (global.get $global)
   )
+
   ;; It stops at the read of the imported global, since that value depends on
   ;; runtime info.
   ;;
@@ -29,6 +31,7 @@
   (drop
    (global.get $gimport)
   )
+
   (drop
    (ref.as_non_null
     (struct.get $0 1
