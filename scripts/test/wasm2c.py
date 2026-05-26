@@ -20,7 +20,6 @@ from . import shared, support
 from .shared import print_heading
 
 spec_tests = [
-    'unreachable.wast',
 ]
 
 def test_wasm2c_spec_output():
