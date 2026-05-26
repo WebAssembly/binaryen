@@ -250,7 +250,7 @@ void validateExactReferences(Module& module, ValidationInfo& info) {
     return;
   }
 
-  for (auto type : ModuleUtils::getPublicHeapTypes(module)) {
+  for (auto type : ModuleUtils::getExposedPublicHeapTypes(module)) {
     for (auto child : type.getTypeChildren()) {
       if (child.isExact()) {
         std::string typeName;

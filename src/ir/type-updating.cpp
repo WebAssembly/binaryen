@@ -26,7 +26,7 @@
 
 namespace wasm {
 
-GlobalTypeRewriter::GlobalTypeRewriter(Module& wasm)
+GlobalTypeRewriter::GlobalTypeRewriter(Module& wasm, WorldMode worldMode)
   : wasm(wasm), publicGroups(wasm.features) {
   // Find the heap types that are not publicly observable. Even in a closed
   // world scenario, don't modify public types because we assume that they may
@@ -34,6 +34,7 @@ GlobalTypeRewriter::GlobalTypeRewriter(Module& wasm)
   // will be located in the builder.
   typeInfo = ModuleUtils::collectHeapTypeInfo(
     wasm,
+    worldMode,
     ModuleUtils::TypeInclusion::UsedIRTypes,
     ModuleUtils::VisibilityHandling::FindVisibility);
 

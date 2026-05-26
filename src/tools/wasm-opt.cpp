@@ -353,7 +353,7 @@ For more on how to optimize effectively, see
   }
   if (translateToFuzz) {
     TranslateToFuzzReader reader(
-      wasm, options.extra["infile"], options.passOptions.closedWorld);
+      wasm, options.extra["infile"], options.passOptions.worldMode);
     reader.setAllowMemory(fuzzMemory);
     reader.setAllowOOB(fuzzOOB);
     reader.setPreserveImportsAndExports(fuzzPreserveImportsAndExports);
