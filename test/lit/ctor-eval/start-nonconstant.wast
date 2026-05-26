@@ -2,7 +2,7 @@
 ;; RUN: foreach %s %t wasm-ctor-eval --ctors=test --kept-exports=test --quiet -all -S -o - | filecheck %s
 
 ;; A non-constant (relaxed SIMD) operation in the start function. We should not
-;; error and just not eval anything.
+;; error.
 (module
  ;; CHECK:      (type $0 (func))
  (type $0 (func))
@@ -16,6 +16,8 @@
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  (func $0
+  ;; While this is non-constant and evalling it fails, vacuum does remove it,
+  ;; so it vanishes.
   (drop
    (f32x4.relaxed_min
     (v128.const i32x4 0x00000000 0x00000000 0x00000000 0x00000000)
