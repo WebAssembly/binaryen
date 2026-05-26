@@ -2080,10 +2080,13 @@ class Two(TestCaseHandler):
         if output == IGNORE:
             return
 
-        # We ruled out things we must ignore, like host limitations, and also
-        # exited earlier on a deterministic instantiation error, so there should
-        # be no such error in V8.
-        assert INSTANTIATE_ERROR not in output
+        if INSTANTIATE_ERROR in output:
+            # We ruled out a bynterpreter instantiation error, but v8 might have
+            # one for a different reason (e.g. JS conversion error on the
+            # boundary, if the start function calls an import). Verify we have
+            # the same error without the second module, and skip.
+            assert INSTANTIATE_ERROR in run_d8_wasm(wasm)
+            return
 
         output = fix_output(output)
 
