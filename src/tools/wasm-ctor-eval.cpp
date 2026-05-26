@@ -533,8 +533,9 @@ private:
 public:
   // Clear the state of the operation of applying the interpreter's runtime
   // information into the module. This must be done before we start to serialize
-  // content. After this, serialization can happen, and after that, a call to
-  // applyToModule() can be done.
+  // content (as the serialization uses this state - defining globals must be
+  // set and are latter used, etc.). After this, serialization can happen, and
+  // after that, a call to applyToModule() can be done.
   void clearApplyState() {
     // The process of allocating "defining globals" begins here, from scratch
     // each time (things live before may no longer be).
