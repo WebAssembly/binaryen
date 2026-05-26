@@ -14,17 +14,11 @@
  * limitations under the License.
  */
 
-#include "wasm2c-builder.h"
-
 #include <iostream>
 #include <string>
 
-#include "c-printer.h"
-#include "parser/wat-parser.h"
-#include "parsing.h"
-#include "pass.h"
-#include "wasm-io.h"
-#include "wasm-validator.h"
+#include "tools/wasm2c/c-printer.h"
+#include "tools/wasm2c/wasm2c-builder.h"
 #include "wasm.h"
 
 // code to be inserted into the generated output

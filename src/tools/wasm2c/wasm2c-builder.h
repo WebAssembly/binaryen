@@ -14,17 +14,12 @@
  * limitations under the License.
  */
 
-#ifndef wasm_wasm2c_wasm2c_builder_h
-#define wasm_wasm2c_wasm2c_builder_h
+#ifndef wasm_tools_wasm2c_wasm2c_builder_h
+#define wasm_tools_wasm2c_wasm2c_builder_h
 
 #include <iostream>
 #include <string>
 
-#include "parser/wat-parser.h"
-#include "parsing.h"
-#include "pass.h"
-#include "wasm-io.h"
-#include "wasm-validator.h"
 #include "wasm.h"
 
 namespace wasm {
@@ -48,4 +43,4 @@ private:
 
 } // namespace wasm
 
-#endif // wasm_wasm2c_wasm2c_builder_h
+#endif // wasm_tools_wasm2c_wasm2c_builder_h

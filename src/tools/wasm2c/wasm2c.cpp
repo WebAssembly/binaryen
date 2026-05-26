@@ -18,15 +18,16 @@
 // wasm2c console tool
 //
 
-#include "assertion-emitter.h"
 #include "parser/wat-parser.h"
-#include "pass.h"
+#include "parsing.h"
 #include "support/colors.h"
 #include "support/command-line.h"
 #include "support/file.h"
 #include "support/path.h"
 #include "tools/tool-options.h"
-#include "wasm2c-builder.h"
+#include "tools/wasm2c/assertion-emitter.h"
+#include "tools/wasm2c/wasm2c-builder.h"
+#include "wasm-io.h"
 
 using namespace wasm;
 

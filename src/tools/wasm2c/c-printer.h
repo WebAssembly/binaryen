@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef wasm_wasm2c_c_printer_h
-#define wasm_wasm2c_c_printer_h
+#ifndef wasm_tools_wasm2c_c_printer_h
+#define wasm_tools_wasm2c_c_printer_h
 
 #include <iostream>
 
@@ -57,4 +57,4 @@ inline CPrinter& endl(CPrinter& p) {
 
 } // namespace wasm
 
-#endif // wasm_wasm2c_c_printer_h
+#endif // wasm_tools_wasm2c_c_printer_h
