@@ -1490,7 +1490,7 @@ void evalCtors(Module& wasm,
   } catch (NonconstantException& fail) {
     // We can also fail during start due to a non-constant operation.
     if (!quiet) {
-      std::cout << "  ...stopping since could non-constant in start\n";
+      std::cout << "  ...stopping since non-constant in start\n";
     }
   } catch (TopologicalSort::CycleException e) {
     // We use a topological sort for GC globals. If there is a non-breakable
