@@ -97,8 +97,8 @@ struct GUFAOptimizer
   std::unordered_map<Expression*, PossibleContents> newContents;
 
   Expression* replaceCurrent(Expression* rep) {
+    optimized = true;
     newContents[rep] = oracle.getContents(getCurrent());
-
     return WalkerPass<
       PostWalker<GUFAOptimizer,
                  UnifiedExpressionVisitor<GUFAOptimizer>>>::replaceCurrent(rep);
@@ -140,7 +140,6 @@ struct GUFAOptimizer
       // code.
       replaceCurrent(getDroppedChildrenAndAppend(
         curr, wasm, options, builder.makeUnreachable()));
-      optimized = true;
       return;
     }
 
@@ -169,7 +168,6 @@ struct GUFAOptimizer
     //       valid here.
     if (Type::isSubType(c->type, curr->type)) {
       replaceCurrent(getDroppedChildrenAndAppend(curr, wasm, options, c));
-      optimized = true;
     } else {
       // The type is not compatible: we cannot place |c| in this location, even
       // though we have proven it is the only value possible here.
@@ -214,7 +212,6 @@ struct GUFAOptimizer
         assert(Properties::isConstantExpression(c));
         replaceCurrent(getDroppedChildrenAndAppend(
           curr, wasm, options, builder.makeUnreachable()));
-        optimized = true;
       }
     }
   }
@@ -391,7 +388,6 @@ struct GUFAOptimizer
         if (oracleType.isRef() && oracleType != curr->type &&
             Type::isSubType(oracleType, curr->type)) {
           replaceCurrent(Builder(*getModule()).makeRefCast(curr, oracleType));
-          optimized = true;
         }
       }
     };

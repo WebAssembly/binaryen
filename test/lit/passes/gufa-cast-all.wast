@@ -392,3 +392,65 @@
   )
 )
 
+
+;; Regression test for bug where optimizing expressions containing a Pop could
+;; result in the Pop becoming invalidly nested inside a Block (created to
+;; preserve side effects), and the optimizer failed to run the nested pop fixup
+;; because it didn't mark the function as optimized.
+(module
+  ;; CHECK:      (type $array (sub (array anyref)))
+  (type $array (sub (array (ref null any))))
+  ;; CHECK:      (type $tag-sig (func (param (ref null $array))))
+  (type $tag-sig (func (param (ref null $array))))
+  ;; CHECK:      (type $2 (func))
+
+  ;; CHECK:      (tag $tag (type $tag-sig) (param (ref null $array)))
+  (tag $tag (type $tag-sig) (param (ref null $array)))
+
+  ;; CHECK:      (func $test (type $2)
+  ;; CHECK-NEXT:  (local $0 (ref null $array))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (try (result (ref i31))
+  ;; CHECK-NEXT:    (do
+  ;; CHECK-NEXT:     (ref.i31
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (catch $tag
+  ;; CHECK-NEXT:     (local.set $0
+  ;; CHECK-NEXT:      (pop (ref null $array))
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (ref.i31
+  ;; CHECK-NEXT:      (block (result i32)
+  ;; CHECK-NEXT:       (block
+  ;; CHECK-NEXT:        (drop
+  ;; CHECK-NEXT:         (local.get $0)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (unreachable)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (i32.const 0)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test
+    (drop
+      (try (result (ref i31))
+        (do
+          ;; This doesn't throw, so everything in the catch is unreachable.
+          (ref.i31 (i32.const 0))
+        )
+        (catch $tag
+          (ref.i31
+            (ref.eq
+              (pop (ref null $array))
+              (ref.i31 (i32.const 0))
+            )
+          )
+        )
+      )
+    )
+  )
+)
