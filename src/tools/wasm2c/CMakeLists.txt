@@ -1,4 +1,4 @@
-set(TEMPLATE_CMAKE ${PROJECT_SOURCE_DIR}/scripts/gen-wasm2c-templates.cmake)
+set(TEMPLATE_CMAKE ${CMAKE_CURRENT_SOURCE_DIR}/gen-wasm2c-templates.cmake)
 set(TEMPLATE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/templates)
 set(PREBUILT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/prebuilt)
 

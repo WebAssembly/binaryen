@@ -17,7 +17,7 @@ options-pinned.h
 # files related to building in-tree
 CMakeFiles
 *.cmake
-!scripts/gen-wasm2c-templates.cmake
+!src/tools/wasm2c/gen-wasm2c-templates.cmake
 /CMakeCache.txt
 /Makefile
 /*.ninja
