@@ -12,9 +12,6 @@
   ;; CHECK-NEXT: )
   (func $foo (param i32 i32))
 
-  ;; Test 1: Disallowed reordering (GC read NOT moved before Wasm acquire load)
-  ;; Child 0 is named, so it is NOT optimized and its effects (acquire load) are left behind.
-  ;; Child 1 tries to move the GC read out, which should be blocked because it cannot move before the acquire load.
   ;; CHECK:      (func $disallowed (type $1) (param $x (ref $struct))
   ;; CHECK-NEXT:  (call $foo
   ;; CHECK-NEXT:   (block $label1 (result i32)
@@ -36,25 +33,21 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $disallowed (param $x (ref $struct))
+    ;; Test 1: Disallowed reordering (GC read NOT moved before acquire load).
     (call $foo
-      ;; Child 0: Left behind (named block)
-      (block $label1 (result i32)
+      ;; This block is left behind because it is named.
+      (block $block (result i32)
         (drop (i32.atomic.load acqrel (i32.const 0)))
         (i32.const 0)
       )
-      ;; Child 1: Tries to move out
+      ;; This block tries to move back past $block and out of $foo, but cannot.
       (block (result i32)
-        ;; A: GC read
         (drop (struct.get $struct 0 (local.get $x)))
-        ;; B
         (i32.const 0)
       )
     )
   )
 
-  ;; Test 2: Allowed reordering (GC read moved before Wasm release store)
-  ;; Child 0 is named, so it is NOT optimized and its effects (release store) are left behind.
-  ;; Child 1 tries to move the GC read out, which should be ALLOWED because it can move before the release store.
   ;; CHECK:      (func $allowed (type $1) (param $x (ref $struct))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.get $struct 0
@@ -73,17 +66,16 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $allowed (param $x (ref $struct))
+    ;; Test 2: Allowed reordering (GC read moved before Wasm release store)
     (call $foo
-      ;; Child 0: Left behind (named block)
-      (block $label2 (result i32)
+      ;; This block is left behind because it is named.
+      (block $block (result i32)
         (i32.atomic.store acqrel (i32.const 0) (i32.const 42))
         (i32.const 0)
       )
-      ;; Child 1: Tries to move out
+      ;; This block can move back past $block and out of $foo.
       (block (result i32)
-        ;; A: GC read
         (drop (struct.get $struct 0 (local.get $x)))
-        ;; B
         (i32.const 0)
       )
     )
