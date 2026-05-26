@@ -722,7 +722,7 @@ void TranslateToFuzzReader::setupGlobals() {
         // Remove import info from imported globals, and give them a simple
         // initializer.
         global->module = global->base = Name();
-        global->init = makeConst(global->type);
+        global->init = makeConst(global->type, /*isGlobalInitializer=*/true);
       }
     } else {
       // If the initialization used an imported global that we made
@@ -733,7 +733,8 @@ void TranslateToFuzzReader::setupGlobals() {
         auto gets = FindAll<GlobalGet>(global->init);
         for (auto& get : gets.list) {
           if (!wasm.getGlobal(get->name)->imported()) {
-            global->init = makeConst(global->type);
+            global->init =
+              makeConst(global->type, /*isGlobalInitializer=*/true);
             break;
           }
         }
@@ -780,7 +781,7 @@ void TranslateToFuzzReader::setupGlobals() {
         // For now we disallow anything but tuple.make at the top level of tuple
         // globals (see details in wasm-binary.cpp). In the future we may allow
         // global.get or other things here.
-        global->init = makeConst(global->type);
+        global->init = makeConst(global->type, /*isGlobalInitializer=*/true);
         assert(global->init->is<TupleMake>());
       }
       if (!FindAll<RefAs>(global->init).list.empty() ||
@@ -794,7 +795,7 @@ void TranslateToFuzzReader::setupGlobals() {
         // Likewise, if we see cont.new, we must switch as well. That can happen
         // if a nested struct we create has a continuation field, for example.
         global->type = getMVPType();
-        global->init = makeConst(global->type);
+        global->init = makeConst(global->type, /*isGlobalInitializer=*/true);
       }
     }
 
@@ -2761,7 +2762,7 @@ Expression* TranslateToFuzzReader::_makeConcrete(Type type) {
               WeightedOption{&Self::makeLocalGet, VeryImportant},
               WeightedOption{&Self::makeLocalSet, VeryImportant},
               WeightedOption{&Self::makeGlobalGet, Important},
-              WeightedOption{&Self::makeConst, Important});
+              WeightedOption{&Self::makeConstForNonGlobal, Important});
   if (canMakeControlFlow) {
     options
       .add(FeatureSet::MVP,
@@ -2813,11 +2814,10 @@ Expression* TranslateToFuzzReader::_makeConcrete(Type type) {
                 &Self::makeStringGet);
   }
   if (type.isTuple()) {
-    options.add(FeatureSet::Multivalue, &Self::makeTupleMake);
-    if (type == Types::getI64Pair()) {
-      options.add(FeatureSet::WideArithmetic,
-                  WeightedOption{&Self::makeWideIntAddSub, VeryImportant},
-                  WeightedOption{&Self::makeWideIntMul, VeryImportant});
+    if (type == Types::getI64Pair() && oneIn(2)) {
+      options.add(FeatureSet::WideArithmetic, &Self::makeWideIntExpression);
+    } else {
+      options.add(FeatureSet::Multivalue, &Self::makeTupleMake);
     }
   }
   if (type.isRef()) {
@@ -3521,6 +3521,10 @@ Expression* TranslateToFuzzReader::makeWideIntMul(Type type) {
   return builder.makeWideIntMul(op, left, right);
 }
 
+Expression* TranslateToFuzzReader::makeWideIntExpression(Type type) {
+  return oneIn(2) ? makeWideIntAddSub(type) : makeWideIntMul(type);
+}
+
 Expression* TranslateToFuzzReader::makeTupleExtract(Type type) {
   // Tuples can require locals in binary format conversions.
   if (!type.isDefaultable()) {
@@ -4100,7 +4104,8 @@ Expression* TranslateToFuzzReader::makeRefFuncConst(Type type) {
   return builder.makeRefFunc(func->name);
 }
 
-Expression* TranslateToFuzzReader::makeConst(Type type) {
+Expression* TranslateToFuzzReader::makeConst(Type type,
+                                             bool isGlobalInitializer) {
   if (type.isRef()) {
     assert(wasm.features.hasReferenceTypes());
     // With a low chance, just emit a null if that is valid.
@@ -4115,10 +4120,13 @@ Expression* TranslateToFuzzReader::makeConst(Type type) {
     } else {
       return makeCompoundRef(type);
     }
+  } else if (type == Types::getI64Pair() && oneIn(2) && !isGlobalInitializer &&
+             wasm.features.hasWideArithmetic()) {
+    return makeWideIntExpression(type);
   } else if (type.isTuple()) {
     std::vector<Expression*> operands;
     for (const auto& t : type) {
-      operands.push_back(makeConst(t));
+      operands.push_back(makeConst(t, isGlobalInitializer));
     }
     return builder.makeTupleMake(std::move(operands));
   } else {
