@@ -4,21 +4,30 @@
 ;; A non-constant (relaxed SIMD) operation in the start function. We should not
 ;; error.
 (module
- ;; CHECK:      (type $0 (func))
- (type $0 (func))
+ ;; CHECK:      (type $0 (func (param v128)))
+
+ ;; CHECK:      (type $1 (func))
+
+ ;; CHECK:      (import "a" "b" (func $import (type $0) (param v128)))
+ (import "a" "b" (func $import (param v128)))
 
  ;; CHECK:      (export "test" (func $0))
  (export "test" (func $0))
 
+ ;; CHECK:      (start $0)
  (start $0)
 
- ;; CHECK:      (func $0 (type $0)
- ;; CHECK-NEXT:  (nop)
+ ;; CHECK:      (func $0 (type $1)
+ ;; CHECK-NEXT:  (call $import
+ ;; CHECK-NEXT:   (f32x4.relaxed_min
+ ;; CHECK-NEXT:    (v128.const i32x4 0x00000000 0x00000000 0x00000000 0x00000000)
+ ;; CHECK-NEXT:    (v128.const i32x4 0x00000000 0x00000000 0x00000000 0x00000000)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $0
-  ;; While this is non-constant and evalling it fails, vacuum does remove it,
-  ;; so it vanishes.
-  (drop
+  ;; The import avoids vacuum from removing the entire body.
+  (call $import
    (f32x4.relaxed_min
     (v128.const i32x4 0x00000000 0x00000000 0x00000000 0x00000000)
     (v128.const i32x4 0x00000000 0x00000000 0x00000000 0x00000000)
