@@ -89,6 +89,7 @@
     (drop (local.get $y))
     (drop (local.get $z))
   )
+
   ;; CHECK:      (func $merges-effects-from-sub-only (type $3) (param $ref (ref $indirect-type-sub))
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (local $y i32)
@@ -260,13 +261,12 @@
 
 (module
   ;; CHECK:      (type $indirect-type (func (param i32)))
+  (type $indirect-type (func (param i32)))
 
   ;; CHECK:      (type $1 (func (param (ref $indirect-type))))
 
   ;; CHECK:      (import "" "" (func $imported-func (type $indirect-type) (param i32)))
   (import "" "" (func $imported-func (type $indirect-type)))
-
-  (type $indirect-type (func (param i32)))
 
   ;; CHECK:      (global $g1 (mut i32) (i32.const 0))
   (global $g1 (mut i32) (i32.const 0))
