@@ -75,21 +75,19 @@
   ;; CHECK:      (func $const (type $const-type) (result f32)
   ;; CHECK-NEXT:  (f32.const 1)
   ;; CHECK-NEXT: )
-  (func $const (type $const-type)
+  (func $const (export "const") (type $const-type)
     (f32.const 1)
   )
-  (elem declare $const)
 
 
   ;; CHECK:      (func $throws (type $throw-type) (result f64)
   ;; CHECK-NEXT:  (throw $t)
   ;; CHECK-NEXT:  (f64.const 1)
   ;; CHECK-NEXT: )
-  (func $throws (type $throw-type)
+  (func $throws (export "throws") (type $throw-type)
     (throw $t)
     (f64.const 1)
   )
-  (elem declare $throws)
 
   ;; CHECK:      (func $read-g-with-nop-call-ref (type $5) (param $ref (ref null $const-type)) (result i32)
   ;; CHECK-NEXT:  (local $x i32)
