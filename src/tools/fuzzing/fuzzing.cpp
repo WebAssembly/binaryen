@@ -722,7 +722,7 @@ void TranslateToFuzzReader::setupGlobals() {
         // Remove import info from imported globals, and give them a simple
         // initializer.
         global->module = global->base = Name();
-        global->init = makeConst(global->type, /*isGlobalInitializer=*/true);
+        global->init = makeConst(global->type);
       }
     } else {
       // If the initialization used an imported global that we made
@@ -733,8 +733,7 @@ void TranslateToFuzzReader::setupGlobals() {
         auto gets = FindAll<GlobalGet>(global->init);
         for (auto& get : gets.list) {
           if (!wasm.getGlobal(get->name)->imported()) {
-            global->init =
-              makeConst(global->type, /*isGlobalInitializer=*/true);
+            global->init = makeConst(global->type);
             break;
           }
         }
@@ -781,7 +780,7 @@ void TranslateToFuzzReader::setupGlobals() {
         // For now we disallow anything but tuple.make at the top level of tuple
         // globals (see details in wasm-binary.cpp). In the future we may allow
         // global.get or other things here.
-        global->init = makeConst(global->type, /*isGlobalInitializer=*/true);
+        global->init = makeConst(global->type);
         assert(global->init->is<TupleMake>());
       }
       if (!FindAll<RefAs>(global->init).list.empty() ||
@@ -795,7 +794,7 @@ void TranslateToFuzzReader::setupGlobals() {
         // Likewise, if we see cont.new, we must switch as well. That can happen
         // if a nested struct we create has a continuation field, for example.
         global->type = getMVPType();
-        global->init = makeConst(global->type, /*isGlobalInitializer=*/true);
+        global->init = makeConst(global->type);
       }
     }
 
@@ -2762,7 +2761,7 @@ Expression* TranslateToFuzzReader::_makeConcrete(Type type) {
               WeightedOption{&Self::makeLocalGet, VeryImportant},
               WeightedOption{&Self::makeLocalSet, VeryImportant},
               WeightedOption{&Self::makeGlobalGet, Important},
-              WeightedOption{&Self::makeConstForNonGlobal, Important});
+              WeightedOption{&Self::makeConst, Important});
   if (canMakeControlFlow) {
     options
       .add(FeatureSet::MVP,
@@ -4104,8 +4103,7 @@ Expression* TranslateToFuzzReader::makeRefFuncConst(Type type) {
   return builder.makeRefFunc(func->name);
 }
 
-Expression* TranslateToFuzzReader::makeConst(Type type,
-                                             bool isGlobalInitializer) {
+Expression* TranslateToFuzzReader::makeConst(Type type) {
   if (type.isRef()) {
     assert(wasm.features.hasReferenceTypes());
     // With a low chance, just emit a null if that is valid.
@@ -4120,13 +4118,10 @@ Expression* TranslateToFuzzReader::makeConst(Type type,
     } else {
       return makeCompoundRef(type);
     }
-  } else if (type == Types::getI64Pair() && oneIn(2) && !isGlobalInitializer &&
-             wasm.features.hasWideArithmetic()) {
-    return makeWideIntExpression(type);
   } else if (type.isTuple()) {
     std::vector<Expression*> operands;
     for (const auto& t : type) {
-      operands.push_back(makeConst(t, isGlobalInitializer));
+      operands.push_back(makeConst(t));
     }
     return builder.makeTupleMake(std::move(operands));
   } else {
@@ -6480,7 +6475,7 @@ Type TranslateToFuzzReader::getTupleType() {
 }
 
 Type TranslateToFuzzReader::getConcreteType() {
-  if (wasm.features.hasMultivalue() && oneIn(5)) {
+  if (wasm.features.hasMultivalue() && oneIn(2)) {
     return getTupleType();
   } else {
     return getSingleConcreteType();
