@@ -4,6 +4,8 @@
 ;; Tests for aggregating effects from indirect calls in GlobalEffects when
 ;; --closed-world is true. Continued from global-effects-closed-world.wast.
 
+;; Test that effects are aggregated from both $indirect-type-super and
+;; $indirect-type-sub for indirect calls to $indirect-type-super.
 (module
   ;; CHECK:      (type $indirect-type-super (sub (func (param i32))))
   (type $indirect-type-super (sub (func (param i32))))
@@ -12,6 +14,8 @@
   (type $indirect-type-sub (sub $indirect-type-super (func (param i32))))
 
   ;; CHECK:      (type $2 (func (param (ref $indirect-type-super))))
+
+  ;; CHECK:      (type $3 (func (param (ref $indirect-type-sub))))
 
   ;; CHECK:      (global $g1 (mut i32) (i32.const 0))
   (global $g1 (mut i32) (i32.const 0))
@@ -42,7 +46,7 @@
     (global.set $g2 (local.get $i32))
   )
 
-  ;; CHECK:      (func $merges-multiple-effects (type $2) (param $ref (ref $indirect-type-super))
+  ;; CHECK:      (func $merges-effects-from-super-and-sub (type $2) (param $ref (ref $indirect-type-super))
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (local $y i32)
   ;; CHECK-NEXT:  (local $z i32)
@@ -67,7 +71,7 @@
   ;; CHECK-NEXT:   (global.get $g3)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $merges-multiple-effects (param $ref (ref $indirect-type-super))
+  (func $merges-effects-from-super-and-sub (param $ref (ref $indirect-type-super))
     (local $x i32)
     (local $y i32)
     (local $z i32)
@@ -85,8 +89,57 @@
     (drop (local.get $y))
     (drop (local.get $z))
   )
+  ;; CHECK:      (func $merges-effects-from-sub-only (type $3) (param $ref (ref $indirect-type-sub))
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (local $y i32)
+  ;; CHECK-NEXT:  (local $z i32)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (local.set $y
+  ;; CHECK-NEXT:   (global.get $g2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (call_ref $indirect-type-sub
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (local.get $ref)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $g1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $y)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $g3)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $merges-effects-from-sub-only (param $ref (ref $indirect-type-sub))
+    (local $x i32)
+    (local $y i32)
+    (local $z i32)
+
+    (local.set $x (global.get $g1))
+    (local.set $y (global.get $g2))
+    (local.set $z (global.get $g3))
+
+    ;; Similar to above but here it's impossible to reach $impl1
+    ;; (the supertype), so $x can safely be optimized out.
+    (call_ref $indirect-type-sub (i32.const 1) (local.get $ref))
+
+    (drop (local.get $x))
+    (drop (local.get $y))
+    (drop (local.get $z))
+  )
 )
 
+;; Test different ways of referencing functions to ensure that they're included
+;; in indirect effects analysis. A function is considered 'addressed' if it's:
+;; - imported (tested in the next test)
+;; - exported
+;; - referenced in a ref.func
+;; - contained in an `elem` segment
+;; Imported functions are tested in the next module to avoid
+;; confounding this test because imports are assumed to have all possible
+;; effects.
 (module
   ;; CHECK:      (type $indirect-type (func (param i32)))
   (type $indirect-type (func (param i32)))
@@ -101,12 +154,14 @@
   (global $g2 (mut i32) (i32.const 0))
   ;; CHECK:      (global $g3 (mut i32) (i32.const 0))
   (global $g3 (mut i32) (i32.const 0))
+  ;; CHECK:      (global $g4 (mut i32) (i32.const 0))
+  (global $g4 (mut i32) (i32.const 0))
 
   (table 1 1 funcref)
 
   ;; CHECK:      (table $0 1 1 funcref)
 
-  ;; CHECK:      (elem $f3 func)
+  ;; CHECK:      (elem $0 (i32.const 0) $f3)
 
   ;; CHECK:      (elem declare func $f2)
 
@@ -129,16 +184,14 @@
   (func $f2 (type $indirect-type) (param $i32 i32)
     (global.set $g2 (local.get $i32))
   )
-  (func
-    (drop (ref.func $f2))
-  )
-
-
-  ;; CHECK:      (func $0 (type $1)
+  ;; CHECK:      (func $reference-f2 (type $1)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.func $f2)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
+  (func $reference-f2
+    (drop (ref.func $f2))
+  )
 
   ;; CHECK:      (func $f3 (type $indirect-type) (param $i32 i32)
   ;; CHECK-NEXT:  (global.set $g3
@@ -148,17 +201,21 @@
   (func $f3 (type $indirect-type) (param $i32 i32)
     (global.set $g3 (local.get $i32))
   )
-  (elem $f3)
+  (elem (i32.const 0) $f3)
 
   ;; CHECK:      (func $merges-multiple-effects (type $2) (param $ref (ref $indirect-type))
-  ;; CHECK-NEXT:  (local $x i32)
-  ;; CHECK-NEXT:  (local $y i32)
-  ;; CHECK-NEXT:  (local $z i32)
-  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:  (local $l1 i32)
+  ;; CHECK-NEXT:  (local $l2 i32)
+  ;; CHECK-NEXT:  (local $l3 i32)
+  ;; CHECK-NEXT:  (local $l4 i32)
+  ;; CHECK-NEXT:  (local.set $l1
   ;; CHECK-NEXT:   (global.get $g1)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (local.set $y
+  ;; CHECK-NEXT:  (local.set $l2
   ;; CHECK-NEXT:   (global.get $g2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $l3
+  ;; CHECK-NEXT:   (global.get $g3)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (call_ref $indirect-type
@@ -166,31 +223,88 @@
   ;; CHECK-NEXT:   (local.get $ref)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (local.get $l1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.get $y)
+  ;; CHECK-NEXT:   (local.get $l2)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (global.get $g3)
+  ;; CHECK-NEXT:   (local.get $l3)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $g4)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $merges-multiple-effects (param $ref (ref $indirect-type))
-    (local $x i32)
-    (local $y i32)
-    (local $z i32)
+    (local $l1 i32)
+    (local $l2 i32)
+    (local $l3 i32)
+    (local $l4 i32)
 
-    (local.set $x (global.get $g1))
-    (local.set $y (global.get $g2))
-    (local.set $z (global.get $g3))
+    (local.set $l1 (global.get $g1))
+    (local.set $l2 (global.get $g2))
+    (local.set $l3 (global.get $g3))
+    (local.set $l4 (global.get $g4))
 
-    ;; This acts as a barrier for $x and $y, but not $z because
-    ;; $ref may write to $g1 (via $impl1) or $g2 (via $impl2) but not $g3.
-    ;; $z is optimized out and $x and $y are left alone.
+    ;; This acts as a barrier for $l1, $l2, and $l3 but not $l4.
+    ;; $ref may write to $g1 via $f1, or $g2 via $f2, $g3 via $f3 but not $g4.
+    ;; $l4 is optimized out and the others are left alone.
     (call_ref $indirect-type (i32.const 1) (local.get $ref))
 
-    (drop (local.get $x))
-    (drop (local.get $y))
-    (drop (local.get $z))
+    (drop (local.get $l1))
+    (drop (local.get $l2))
+    (drop (local.get $l3))
+    (drop (local.get $l4))
+  )
+)
+
+(module
+  ;; CHECK:      (type $indirect-type (func (param i32)))
+
+  ;; CHECK:      (type $1 (func (param (ref $indirect-type))))
+
+  ;; CHECK:      (import "" "" (func $imported-func (type $indirect-type) (param i32)))
+  (import "" "" (func $imported-func (type $indirect-type)))
+
+  (type $indirect-type (func (param i32)))
+
+  ;; CHECK:      (global $g1 (mut i32) (i32.const 0))
+  (global $g1 (mut i32) (i32.const 0))
+  ;; CHECK:      (global $g2 (mut i32) (i32.const 0))
+  (global $g2 (mut i32) (i32.const 0))
+
+  ;; CHECK:      (func $merges-multiple-effects (type $1) (param $ref (ref $indirect-type))
+  ;; CHECK-NEXT:  (local $l1 i32)
+  ;; CHECK-NEXT:  (local $l2 i32)
+  ;; CHECK-NEXT:  (local.set $l1
+  ;; CHECK-NEXT:   (global.get $g1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $l2
+  ;; CHECK-NEXT:   (global.get $g2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call_ref $indirect-type
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (local.get $ref)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $l1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $l2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $merges-multiple-effects (param $ref (ref $indirect-type))
+    (local $l1 i32)
+    (local $l2 i32)
+
+    (local.set $l1 (global.get $g1))
+    (local.set $l2 (global.get $g2))
+
+    ;; This can flow to an import, so we have to assume that $g1 and $g2 could
+    ;; be mutated, and nothing can be optimized.
+    (call_ref $indirect-type (i32.const 1) (local.get $ref))
+
+    (drop (local.get $l1))
+    (drop (local.get $l2))
   )
 )

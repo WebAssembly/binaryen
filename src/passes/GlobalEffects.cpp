@@ -59,7 +59,7 @@ struct FuncInfo {
  an indirect call and we don't need to include its effects in indirect calls.
 */
 std::unordered_set<Function*> getAddressedFuncs(Module& module) {
-  struct AddressedFuncsWalker : PostWalker<AddressedFuncsWalker> {
+  struct AddressedFuncsWalker : WalkerPass<PostWalker<AddressedFuncsWalker>> {
     std::unordered_set<Function*>& addressedFuncs;
 
     AddressedFuncsWalker(std::unordered_set<Function*>& addressedFuncs)
@@ -72,6 +72,7 @@ std::unordered_set<Function*> getAddressedFuncs(Module& module) {
 
   std::unordered_set<Function*> addressedFuncs;
   AddressedFuncsWalker walker(addressedFuncs);
+  walker.walkModuleCode(&module);
   walker.walkModule(&module);
 
   ModuleUtils::iterImportedFunctions(
