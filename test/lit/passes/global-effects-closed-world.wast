@@ -6,6 +6,8 @@
 ;; global-effects-closed-world-simplify-locals.wast.
 
 (module
+  (table 1 1 funcref)
+
   ;; CHECK:      (type $nopType (func (param i32)))
   (type $nopType (func (param i32)))
 
@@ -17,18 +19,12 @@
   )
 
   ;; CHECK:      (func $calls-nop-via-ref (type $1) (param $ref (ref $nopType))
-  ;; CHECK-NEXT:  (call_ref $nopType
-  ;; CHECK-NEXT:   (i32.const 1)
-  ;; CHECK-NEXT:   (local.get $ref)
-  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $calls-nop-via-ref (param $ref (ref $nopType))
     ;; This can only possibly be a nop in closed-world.
-    ;; Ideally vacuum could optimize this out but we don't have a way to share
-    ;; this information with other passes today.
-    ;; For now, we can at least annotate that the call to this function in $f
-    ;; has no effects.
-    ;; TODO: This call_ref could be marked as having no effects, like the call below.
+    ;; The equivalent for call_indirect is tested in
+    ;; test/lit/passes/global-effects-closed-world-tnh.wast.
     (call_ref $nopType (i32.const 1) (local.get $ref))
   )
 
@@ -42,69 +38,27 @@
     (call_ref $nopType (i32.const 1) (local.get $ref))
   )
 
-
-  ;; CHECK:      (func $f (type $1) (param $ref (ref $nopType))
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT: )
-  (func $f (param $ref (ref $nopType))
-    ;; $calls-nop-via-ref has no effects because we determined that it can only
-    ;; call $nop. We can optimize this call out.
-    (call $calls-nop-via-ref (local.get $ref))
-  )
-
-  ;; CHECK:      (func $g (type $2) (param $ref (ref null $nopType))
-  ;; CHECK-NEXT:  (call $calls-nop-via-nullable-ref
-  ;; CHECK-NEXT:   (local.get $ref)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $g (param $ref (ref null $nopType))
-    ;; Similar to $f, but we may still trap here because the ref is null, so we
-    ;; don't optimize.
-    (call $calls-nop-via-nullable-ref (local.get $ref))
-  )
-)
-
-;; Same as the above but with call_indirect
-(module
-  ;; CHECK:      (type $nopType (func (param i32)))
-  (type $nopType (func (param i32)))
-
-  (table 1 1 funcref)
-
-  ;; CHECK:      (func $nop (type $nopType) (param $0 i32)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT: )
-  (func $nop (export "nop") (type $nopType)
-    (nop)
-  )
-
-  ;; CHECK:      (func $calls-nop-via-ref (type $1)
+  ;; CHECK:      (func $call-indirect-nop (type $3)
   ;; CHECK-NEXT:  (call_indirect $0 (type $nopType)
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $calls-nop-via-ref
-    ;; This can only possibly be a nop in closed-world.
-    ;; Ideally vacuum could optimize this out but we don't have a way to share
-    ;; this information with other passes today.
-    ;; For now, we can at least annotate that the call to this function in $f
-    ;; has no effects.
-    ;; TODO: This call_ref could be marked as having no effects, like the call below.
+  (func $call-indirect-nop
+    ;; The call body is guaranteed to have no effects, however the call_indirect
+    ;; itself may trap if the index is out of bounds or if the function we
+    ;; lookup doesn't match $nopType. The call can't be optimized out.
+    ;; This could be optimized out if --traps-never-happens or
+    ;; --ignore-implicit-traps (in fewer cases) is set. See
+    ;; global-effects-closed-world-tnh.wast and
+    ;; global-effects-closed-world-ignore-implicit-traps.wast.
     (call_indirect (type $nopType) (i32.const 1) (i32.const 0))
-  )
-
-  ;; CHECK:      (func $f (type $1)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT: )
-  (func $f
-    ;; $calls-nop-via-ref has no effects because we determined that it can only
-    ;; call $nop. We can optimize this call out.
-    (call $calls-nop-via-ref)
   )
 )
 
 (module
+  (table 1 1 funcref)
+
   ;; CHECK:      (type $maybe-has-effects (func (param i32)))
   (type $maybe-has-effects (func (param i32)))
 
@@ -115,10 +69,10 @@
     (unreachable)
   )
 
-  ;; CHECK:      (func $nop2 (type $maybe-has-effects) (param $0 i32)
+  ;; CHECK:      (func $nop (type $maybe-has-effects) (param $0 i32)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
-  (func $nop2 (export "nop2") (type $maybe-has-effects) (param i32)
+  (func $nop (export "nop") (type $maybe-has-effects) (param i32)
     (nop)
   )
 
@@ -129,59 +83,22 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $calls-effectful-function-via-ref (param $ref (ref $maybe-has-effects))
+    ;; This may be a nop or it may trap depending on the ref
+    ;; We don't know so don't optimize it out.
     (call_ref $maybe-has-effects (i32.const 1) (local.get $ref))
   )
 
-  ;; CHECK:      (func $f (type $1) (param $ref (ref $maybe-has-effects))
-  ;; CHECK-NEXT:  (call $calls-effectful-function-via-ref
-  ;; CHECK-NEXT:   (local.get $ref)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $f (param $ref (ref $maybe-has-effects))
-    ;; This may be a nop or it may trap depending on the ref.
-    ;; We don't know so don't optimize it out.
-    (call $calls-effectful-function-via-ref (local.get $ref))
-  )
-)
-
-;; Same as above but with call_indirect
-(module
-  (table 1 1 funcref)
-
-  ;; CHECK:      (type $maybe-has-effects (func (param i32)))
-  (type $maybe-has-effects (func (param i32)))
-
-  ;; CHECK:      (func $unreachable (type $maybe-has-effects) (param $0 i32)
-  ;; CHECK-NEXT:  (unreachable)
-  ;; CHECK-NEXT: )
-  (func $unreachable (export "unreachable") (type $maybe-has-effects) (param i32)
-    (unreachable)
-  )
-
-  ;; CHECK:      (func $nop2 (type $maybe-has-effects) (param $0 i32)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT: )
-  (func $nop2 (export "nop2") (type $maybe-has-effects) (param i32)
-    (nop)
-  )
-
-  ;; CHECK:      (func $calls-effectful-function-via-ref (type $1)
+  ;; CHECK:      (func $call-indirect-effectful-function (type $2)
   ;; CHECK-NEXT:  (call_indirect $0 (type $maybe-has-effects)
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $calls-effectful-function-via-ref
+  (func $call-indirect-effectful-function
+    ;; As above, this may trap or be a nop depending on what's in the table.
+    ;; In addition, this may trap due to a type mismatch of index out of bounds.
+    ;; Since we don't know any of these things, don't optimize the call out.
     (call_indirect (type $maybe-has-effects) (i32.const 1) (i32.const 1))
-  )
-
-  ;; CHECK:      (func $f (type $1)
-  ;; CHECK-NEXT:  (call $calls-effectful-function-via-ref)
-  ;; CHECK-NEXT: )
-  (func $f
-    ;; This may be a nop or it may trap depending on the ref.
-    ;; We don't know so don't optimize it out.
-    (call $calls-effectful-function-via-ref)
   )
 )
 
@@ -196,8 +113,9 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $calls-uninhabited (param $ref (ref $uninhabited))
-    ;; It's impossible to create a ref to call this function with.
-    ;; TODO: Optimize this to (unreachable).
+    ;; There's no function with this type, so it's impossible to create a ref to
+    ;; call this function with. If this code is reached, it must trap.
+    ;; TODO: Optimize this to (unreachable) by creating a 'must trap' effect.
     (call_ref $uninhabited (i32.const 1) (local.get $ref))
   )
 
@@ -209,30 +127,8 @@
   ;; CHECK-NEXT: )
   (func $calls-nullable-uninhabited (param $ref (ref null $uninhabited))
     ;; This must be null, so it's guaranteed to trap and can't be optimized out.
-    ;; TODO: Optimize this to (unreachable).
+    ;; TODO: Optimize this to (unreachable) by creating a 'must trap' effect.
     (call_ref $uninhabited (i32.const 1) (local.get $ref))
-  )
-
-
-  ;; CHECK:      (func $f (type $1) (param $ref (ref $uninhabited))
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT: )
-  (func $f (param $ref (ref $uninhabited))
-    ;; There's no function with this type, so it's impossible to create a ref to
-    ;; call this function with and there are no effects to aggregate.
-    ;; Remove this call.
-    (call $calls-uninhabited (local.get $ref))
-  )
-
-  ;; CHECK:      (func $g (type $2) (param $ref (ref null $uninhabited))
-  ;; CHECK-NEXT:  (call $calls-nullable-uninhabited
-  ;; CHECK-NEXT:   (local.get $ref)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $g (param $ref (ref null $uninhabited))
-    ;; Similar to above but we have a nullable reference, so we may trap and
-    ;; can't optimize the call out.
-    (call $calls-nullable-uninhabited (local.get $ref))
   )
 )
 
@@ -256,48 +152,30 @@
     (unreachable)
   )
 
-  ;; CHECK:      (func $calls-ref-with-supertype (type $1) (param $func (ref $super))
+  ;; CHECK:      (func $calls-ref-with-supertype (type $2) (param $func (ref $super))
   ;; CHECK-NEXT:  (call_ref $super
   ;; CHECK-NEXT:   (local.get $func)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $calls-ref-with-supertype (param $func (ref $super))
-    (call_ref $super (local.get $func))
-  )
-
-  ;; CHECK:      (func $calls-ref-with-exact-supertype (type $2) (param $func (ref (exact $super)))
-  ;; CHECK-NEXT:  (call_ref $super
-  ;; CHECK-NEXT:   (local.get $func)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $calls-ref-with-exact-supertype (param $func (ref (exact $super)))
-    (call_ref $super (local.get $func))
-  )
-
-  ;; CHECK:      (func $f (type $1) (param $func (ref $super))
-  ;; CHECK-NEXT:  (call $calls-ref-with-supertype
-  ;; CHECK-NEXT:   (local.get $func)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $f (param $func (ref $super))
     ;; Check that we account for subtyping correctly.
     ;; $super has no effects (i.e. the union of all effects of functions with
     ;; this type is empty). However, $sub does have effects, and we can call_ref
     ;; with that subtype, so we need to include the unreachable effect and we
     ;; can't optimize out this call.
-    (call $calls-ref-with-supertype (local.get $func))
+    (call_ref $super (local.get $func))
   )
 
-  ;; CHECK:      (func $g (type $2) (param $func (ref (exact $super)))
-  ;; CHECK-NEXT:  (call $calls-ref-with-exact-supertype
+  ;; CHECK:      (func $calls-ref-with-exact-supertype (type $3) (param $func (ref (exact $super)))
+  ;; CHECK-NEXT:  (call_ref $super
   ;; CHECK-NEXT:   (local.get $func)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $g (param $func (ref (exact $super)))
+  (func $calls-ref-with-exact-supertype (param $func (ref (exact $super)))
     ;; Same as above but this time our reference is the exact supertype
     ;; so we know not to aggregate effects from the subtype.
     ;; TODO: this case doesn't optimize today. Add exact ref support in the pass.
-    (call $calls-ref-with-exact-supertype (local.get $func))
+    (call_ref $super (local.get $func))
   )
 )
 
@@ -325,21 +203,12 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $calls-type-with-effects-but-not-addressable (param $ref (ref $only-has-effects-in-not-addressable-function))
-    (call_ref $only-has-effects-in-not-addressable-function (i32.const 1) (local.get $ref))
-  )
-
-  ;; CHECK:      (func $f (type $1) (param $ref (ref $only-has-effects-in-not-addressable-function))
-  ;; CHECK-NEXT:  (call $calls-type-with-effects-but-not-addressable
-  ;; CHECK-NEXT:   (local.get $ref)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $f (param $ref (ref $only-has-effects-in-not-addressable-function))
     ;; The type $has-effects-but-not-exported doesn't have an address because
     ;; it's not exported and it's never the target of a ref.func.
     ;; We should be able to determine that $ref can only point to $nop.
     ;; TODO: Only aggregate effects from functions that are addressed.
-    (call $calls-type-with-effects-but-not-addressable (local.get $ref))
-  )
+     (call_ref $only-has-effects-in-not-addressable-function (i32.const 1) (local.get $ref))
+   )
 )
 
 (module
@@ -406,18 +275,9 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $indirect-calls (param $ref (ref $t))
-    (call_ref $t (i32.const 1) (local.get $ref))
-  )
-
-  ;; CHECK:      (func $f (type $1) (param $ref (ref $t))
-  ;; CHECK-NEXT:  (call $indirect-calls
-  ;; CHECK-NEXT:   (local.get $ref)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $f (param $ref (ref $t))
-    ;; $indirect-calls might end up calling an imported function,
+    ;; This might end up calling an imported function,
     ;; so we don't know anything about effects here
-    (call $indirect-calls (local.get $ref))
+    (call_ref $t (i32.const 1) (local.get $ref))
   )
 )
 
@@ -435,15 +295,8 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $calls-unreachable (export "calls-unreachable")
-    (call_ref $t (unreachable))
-  )
-
-  ;; CHECK:      (func $f (type $0)
-  ;; CHECK-NEXT:  (call $calls-unreachable)
-  ;; CHECK-NEXT: )
-  (func $f
     ;; $t looks like it has no effects, but unreachable is passed in,
     ;; so preserve the trap.
-    (call $calls-unreachable)
+    (call_ref $t (unreachable))
   )
 )

@@ -472,6 +472,7 @@ struct HeapTypeInfo {
 
 InsertOrderedMap<HeapType, HeapTypeInfo> collectHeapTypeInfo(
   Module& wasm,
+  WorldMode worldMode,
   TypeInclusion inclusion = TypeInclusion::AllTypes,
   VisibilityHandling visibility = VisibilityHandling::NoVisibility);
 
@@ -479,13 +480,18 @@ InsertOrderedMap<HeapType, HeapTypeInfo> collectHeapTypeInfo(
 // module, i.e. the types that would appear in the type section.
 std::vector<HeapType> collectHeapTypes(Module& wasm);
 
-// Collect all the heap types visible on the module boundary that cannot be
-// changed. TODO: For open world use cases, this needs to include all subtypes
-// of public types as well.
-std::vector<HeapType> getPublicHeapTypes(Module& wasm);
+// Get the types directly made public by imported or exported module items. For
+// example, the types of imported or exported globals or functions, but not
+// other types reachable from those types. Includes abstract heap types.
+std::vector<HeapType> getExposedPublicHeapTypes(Module& wasm);
 
-// getHeapTypes - getPublicHeapTypes
-std::vector<HeapType> getPrivateHeapTypes(Module& wasm);
+// Collect all the defined heap types visible on the module boundary that cannot
+// be changed, e.g. the defined types from getExposedPublicHeapTypes and those
+// they reach.
+std::vector<HeapType> getPublicHeapTypes(Module& wasm, WorldMode worldMode);
+
+// All the defined heap types that are not public.
+std::vector<HeapType> getPrivateHeapTypes(Module& wasm, WorldMode worldMode);
 
 struct IndexedHeapTypes {
   std::vector<HeapType> types;

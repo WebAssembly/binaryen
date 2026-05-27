@@ -497,7 +497,9 @@ struct Checker
           continue;
         }
         auto& originalInfo = kv.second;
-        if (effects.invalidates(originalInfo.effects)) {
+        // Check whether curr must remain before COPY. We use ORIGINAL's effects
+        // in the check because we know they are the same as COPY's effects.
+        if (effects.orderedBefore(originalInfo.effects)) {
           invalidated.push_back(original);
         }
       }

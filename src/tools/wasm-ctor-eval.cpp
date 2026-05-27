@@ -288,6 +288,9 @@ std::unique_ptr<Module> buildEnvModule(Module& wasm) {
 // that there are not arguments passed to main, etc.
 static bool ignoreExternalInput = false;
 
+// Whether to emit informative logging to stdout about the eval process.
+static bool quiet = false;
+
 struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
   Module* wasm;
   EvallingModuleRunner* instance;
@@ -312,10 +315,21 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
     linkedInstances.swap(linkedInstances_);
   }
 
+  bool firstApplication = true;
+
   // Called when we want to apply the current state of execution to the Module.
   // Until this is called the Module is never changed.
   void applyToModule() {
-    clearApplyState();
+    if (firstApplication) {
+      // The first time we apply things to the module, we can remove the start
+      // function: we evalled it successfully, if we got to here (and we must
+      // not execute it again later, which would mean it runs twice). We do not
+      // do this after the first application because we start to build up a new
+      // start function with the things we need, unrelated to the original one
+      // (see addStartFixup).
+      wasm->start = Name();
+      firstApplication = false;
+    }
 
     // If nothing was ever written to memories then there is nothing to update.
     if (!memories.empty()) {
@@ -516,12 +530,12 @@ private:
     return Bits::readLE<T>(getMemory(address, memoryName, sizeof(T)));
   }
 
+public:
   // Clear the state of the operation of applying the interpreter's runtime
-  // information into the module.
-  //
-  // This happens each time we apply contents to the module, which is basically
-  // once per ctor function, but can be more fine-grained also if we execute a
-  // line at a time.
+  // information into the module. This must be done before we start to serialize
+  // content (as the serialization uses this state - defining globals must be
+  // set and are latter used, etc.). After this, serialization can happen, and
+  // after that, a call to applyToModule() can be done.
   void clearApplyState() {
     // The process of allocating "defining globals" begins here, from scratch
     // each time (things live before may no longer be).
@@ -533,6 +547,7 @@ private:
     clearStartBlock();
   }
 
+private:
   void applyMemoryToModule() {
     // Memory must have already been flattened into the standard form: one
     // segment at offset 0, or none.
@@ -1049,9 +1064,6 @@ public:
   }
 };
 
-// Whether to emit informative logging to stdout about the eval process.
-static bool quiet = false;
-
 // The outcome of evalling a ctor is one of three states:
 //
 // 1. We failed to eval it completely (but perhaps we succeeded partially). In
@@ -1189,6 +1201,10 @@ start_eval:
         }
         break;
       }
+
+      // We are about to serialize content (the code paths below call
+      // getSerialization). Clear the state.
+      interface.clearApplyState();
 
       if (flow.breakTo == RETURN_CALL_FLOW) {
         // The return-called function is stored in the last value.
