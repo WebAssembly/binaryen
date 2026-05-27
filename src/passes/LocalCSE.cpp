@@ -485,7 +485,7 @@ struct Checker
       // example above has no effect as (ORIGINAL) never has global write
       // effects.
       effects.mustTrap = false;
-      effects.implicitTrap = false;
+      effects.clearMayTrap();
 
       auto idempotent = isIdempotent(curr, *getModule());
 
@@ -542,7 +542,7 @@ struct Checker
       // determinism, will ensure that either all of the appearances trap, or
       // none of them.)
       effects.mustTrap = false;
-      effects.implicitTrap = false;
+      effects.clearMayTrap();
 
       // Note that we've already checked above that this has no side effects or
       // generativity: if we got here, then it is good to go from the

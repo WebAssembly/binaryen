@@ -110,13 +110,20 @@ public:
 
   // A trap from an instruction like a load or div/rem, which may trap on corner
   // cases. If we do not ignore implicit traps then these are counted as a trap.
+  // Private to enforce using noteMayTrap().
+private:
   bool implicitTrap : 1;
 
+public:
   // Whether this code may trap, either because it is a guaranteed mustTrap,
   // or because it has an implicitTrap and we are not ignoring them.
   bool mayTrap() const {
     return mustTrap || (implicitTrap && !ignoreImplicitTraps);
   }
+
+  void noteMayTrap() { implicitTrap = true; }
+  void clearMayTrap() { implicitTrap = false; }
+  bool hasImplicitTrap() const { return implicitTrap; }
 
   bool throws_ : 1;
 
@@ -692,7 +699,7 @@ private:
         return true;
       }
       if (type.isNullable()) {
-        parent.implicitTrap = true;
+        parent.noteMayTrap();
       }
 
       return false;
@@ -761,7 +768,7 @@ private:
 
       // Due to index out of bounds. Type-related traps are handled above and
       // may set either implicitTrap or trap (or neither).
-      parent.implicitTrap = true;
+      parent.noteMayTrap();
 
       const EffectAnalyzer* callTargetEffects = nullptr;
       if (auto it = parent.module.indirectCallEffects.find(curr->heapType);
@@ -799,21 +806,21 @@ private:
     }
     void visitLoad(Load* curr) {
       readsMemory(curr->memory, curr->order);
-      parent.implicitTrap = true;
+      parent.noteMayTrap();
     }
     void visitStore(Store* curr) {
       writesMemory(curr->memory, curr->order);
-      parent.implicitTrap = true;
+      parent.noteMayTrap();
     }
     void visitAtomicRMW(AtomicRMW* curr) {
       readsMemory(curr->memory, curr->order);
       writesMemory(curr->memory, curr->order);
-      parent.implicitTrap = true;
+      parent.noteMayTrap();
     }
     void visitAtomicCmpxchg(AtomicCmpxchg* curr) {
       readsMemory(curr->memory, curr->order);
       writesMemory(curr->memory, curr->order);
-      parent.implicitTrap = true;
+      parent.noteMayTrap();
     }
     void visitAtomicWait(AtomicWait* curr) {
       // Waits on unshared memories trap.
@@ -828,12 +835,12 @@ private:
       parent.writesSharedMemory = true;
       parent.readOrder = parent.writeOrder = MemoryOrder::SeqCst;
       // Traps on unaligned accesses.
-      parent.implicitTrap = true;
+      parent.noteMayTrap();
     }
     void visitAtomicNotify(AtomicNotify* curr) {
       // Notifies on unshared memories just return 0 or trap on unaligned
       // accesses.
-      parent.implicitTrap = true;
+      parent.noteMayTrap();
       if (!parent.module.getMemory(curr->memory)->shared) {
         return;
       }
@@ -868,7 +875,7 @@ private:
     void visitSIMDShift(SIMDShift* curr) {}
     void visitSIMDLoad(SIMDLoad* curr) {
       readsMemory(curr->memory, MemoryOrder::Unordered);
-      parent.implicitTrap = true;
+      parent.noteMayTrap();
     }
     void visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) {
       if (curr->isLoad()) {
@@ -876,27 +883,27 @@ private:
       } else {
         writesMemory(curr->memory, MemoryOrder::Unordered);
       }
-      parent.implicitTrap = true;
+      parent.noteMayTrap();
     }
     void visitMemoryInit(MemoryInit* curr) {
       writesMemory(curr->memory, MemoryOrder::Unordered);
-      parent.implicitTrap = true;
+      parent.noteMayTrap();
     }
     void visitDataDrop(DataDrop* curr) {
       // data.drop does not actually write memory, but it does alter the size of
       // a segment, which can be noticeable later by memory.init, so we need to
       // mark it as having a global side effect of some kind.
       parent.writesMemory = true;
-      parent.implicitTrap = true;
+      parent.noteMayTrap();
     }
     void visitMemoryCopy(MemoryCopy* curr) {
       readsMemory(curr->sourceMemory, MemoryOrder::Unordered);
       writesMemory(curr->destMemory, MemoryOrder::Unordered);
-      parent.implicitTrap = true;
+      parent.noteMayTrap();
     }
     void visitMemoryFill(MemoryFill* curr) {
       writesMemory(curr->memory, MemoryOrder::Unordered);
-      parent.implicitTrap = true;
+      parent.noteMayTrap();
     }
     void visitConst(Const* curr) {}
     void visitUnary(Unary* curr) {
@@ -909,7 +916,7 @@ private:
         case TruncSFloat64ToInt64:
         case TruncUFloat64ToInt32:
         case TruncUFloat64ToInt64: {
-          parent.implicitTrap = true;
+          parent.noteMayTrap();
           break;
         }
         default: {
@@ -932,13 +939,13 @@ private:
           // divider.
           if (auto* c = curr->right->dynCast<Const>()) {
             if (c->value.isZero()) {
-              parent.implicitTrap = true;
+              parent.noteMayTrap();
             } else if ((curr->op == DivSInt32 || curr->op == DivSInt64) &&
                        c->value.getInteger() == -1LL) {
-              parent.implicitTrap = true;
+              parent.noteMayTrap();
             }
           } else {
-            parent.implicitTrap = true;
+            parent.noteMayTrap();
           }
           break;
         }
@@ -972,11 +979,11 @@ private:
     void visitRefEq(RefEq* curr) {}
     void visitTableGet(TableGet* curr) {
       parent.readsTable = true;
-      parent.implicitTrap = true;
+      parent.noteMayTrap();
     }
     void visitTableSet(TableSet* curr) {
       parent.writesTable = true;
-      parent.implicitTrap = true;
+      parent.noteMayTrap();
     }
     void visitTableSize(TableSize* curr) { parent.readsTable = true; }
     void visitTableGrow(TableGrow* curr) {
@@ -988,16 +995,16 @@ private:
     }
     void visitTableFill(TableFill* curr) {
       parent.writesTable = true;
-      parent.implicitTrap = true;
+      parent.noteMayTrap();
     }
     void visitTableCopy(TableCopy* curr) {
       parent.readsTable = true;
       parent.writesTable = true;
-      parent.implicitTrap = true;
+      parent.noteMayTrap();
     }
     void visitTableInit(TableInit* curr) {
       parent.writesTable = true;
-      parent.implicitTrap = true;
+      parent.noteMayTrap();
     }
     void visitElemDrop(ElemDrop* curr) { parent.writesTable = true; }
     void visitTry(Try* curr) {
@@ -1046,7 +1053,7 @@ private:
         return;
       }
       // Traps if the cast fails.
-      parent.implicitTrap = true;
+      parent.noteMayTrap();
     }
     void visitRefGetDesc(RefGetDesc* curr) { trapOnNull(curr->ref); }
     void visitBrOn(BrOn* curr) {
@@ -1112,12 +1119,12 @@ private:
     void visitArrayNewData(ArrayNewData* curr) {
       // Traps on out of bounds access to segments or access to dropped
       // segments.
-      parent.implicitTrap = true;
+      parent.noteMayTrap();
     }
     void visitArrayNewElem(ArrayNewElem* curr) {
       // Traps on out of bounds access to segments or access to dropped
       // segments.
-      parent.implicitTrap = true;
+      parent.noteMayTrap();
     }
     void visitArrayNewFixed(ArrayNewFixed* curr) {}
     void visitArrayGet(ArrayGet* curr) {
@@ -1125,7 +1132,7 @@ private:
         return;
       }
       // Null refs and OOB access.
-      parent.implicitTrap = true;
+      parent.noteMayTrap();
       readsArray(curr->ref->type.getHeapType(), curr->order);
     }
     void visitArraySet(ArraySet* curr) {
@@ -1133,7 +1140,7 @@ private:
         return;
       }
       // Null refs and OOB access.
-      parent.implicitTrap = true;
+      parent.noteMayTrap();
       writesArray(curr->ref->type.getHeapType(), curr->order);
     }
     void visitArrayLoad(ArrayLoad* curr) {
@@ -1141,7 +1148,7 @@ private:
         return;
       }
       // Null refs and OOB access.
-      parent.implicitTrap = true;
+      parent.noteMayTrap();
       readsArray(curr->ref->type.getHeapType(), MemoryOrder::Unordered);
     }
 
@@ -1152,7 +1159,7 @@ private:
       }
       parent.writesArray = true;
       // traps when the arg is null or the index out of bounds
-      parent.implicitTrap = true;
+      parent.noteMayTrap();
     }
     void visitArrayLen(ArrayLen* curr) {
       trapOnNull(curr->ref);
@@ -1165,7 +1172,7 @@ private:
         return;
       }
       // Null refs and OOB access.
-      parent.implicitTrap = true;
+      parent.noteMayTrap();
       readsArray(curr->srcRef->type.getHeapType(), MemoryOrder::Unordered);
       writesArray(curr->destRef->type.getHeapType(), MemoryOrder::Unordered);
     }
@@ -1174,7 +1181,7 @@ private:
         return;
       }
       // Null refs and OOB access.
-      parent.implicitTrap = true;
+      parent.noteMayTrap();
       writesArray(curr->ref->type.getHeapType(), MemoryOrder::Unordered);
     }
     template<typename ArrayInit> void visitArrayInit(ArrayInit* curr) {
@@ -1183,7 +1190,7 @@ private:
       }
       parent.writesArray = true;
       // OOB access to array or element segment.
-      parent.implicitTrap = true;
+      parent.noteMayTrap();
       writesArray(curr->ref->type.getHeapType(), MemoryOrder::Unordered);
     }
     void visitArrayInitData(ArrayInitData* curr) { visitArrayInit(curr); }
@@ -1193,7 +1200,7 @@ private:
         return;
       }
       // Null refs and OOB access.
-      parent.implicitTrap = true;
+      parent.noteMayTrap();
       auto heapType = curr->ref->type.getHeapType();
       readsArray(heapType, curr->order);
       writesArray(heapType, curr->order);
@@ -1216,12 +1223,12 @@ private:
             return;
           }
           // OOB access to array.
-          parent.implicitTrap = true;
+          parent.noteMayTrap();
           parent.readsMutableArray = true;
           return;
         case StringNewFromCodePoint:
           // Invalid code points.
-          parent.implicitTrap = true;
+          parent.noteMayTrap();
           return;
       }
     }
@@ -1232,7 +1239,7 @@ private:
         return;
       }
       // OOB array access.
-      parent.implicitTrap = true;
+      parent.noteMayTrap();
       parent.writesArray = true;
     }
     void visitStringConcat(StringConcat* curr) {
@@ -1254,14 +1261,14 @@ private:
         return;
       }
       // OOB string access.
-      parent.implicitTrap = true;
+      parent.noteMayTrap();
     }
     void visitStringSliceWTF(StringSliceWTF* curr) {
       if (trapOnNull(curr->ref)) {
         return;
       }
       // OOB string access.
-      parent.implicitTrap = true;
+      parent.noteMayTrap();
     }
     void visitContNew(ContNew* curr) { trapOnNull(curr->func); }
     void visitContBind(ContBind* curr) {
@@ -1283,7 +1290,7 @@ private:
       }
 
       // A suspend may go unhandled and therefore trap.
-      parent.implicitTrap = true;
+      parent.noteMayTrap();
     }
     void visitResume(Resume* curr) {
       if (trapOnNull(curr->cont)) {

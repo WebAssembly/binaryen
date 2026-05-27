@@ -41,7 +41,7 @@ Expression* getDroppedChildrenAndAppend(Expression* parent,
     // Ignore a trap, as the unreachable replacement would trap too.
     if (last->is<Unreachable>()) {
       effects.mustTrap = false;
-      effects.implicitTrap = false;
+      effects.clearMayTrap();
     }
     keepParent = effects.hasUnremovableSideEffects();
   }
