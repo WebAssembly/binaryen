@@ -6454,7 +6454,8 @@ Type TranslateToFuzzReader::getMVPType() {
 }
 
 Type TranslateToFuzzReader::getTupleType() {
-  if (wasm.features.hasWideArithmetic() && oneIn(2)) {
+  // Give a significant chance to an i64 pair, for wide arithmetic.
+  if (wasm.features.hasWideArithmetic() && oneIn(5)) {
     return Types::getI64Pair();
   }
 
@@ -6475,7 +6476,7 @@ Type TranslateToFuzzReader::getTupleType() {
 }
 
 Type TranslateToFuzzReader::getConcreteType() {
-  if (wasm.features.hasMultivalue() && oneIn(2)) {
+  if (wasm.features.hasMultivalue() && oneIn(5)) {
     return getTupleType();
   } else {
     return getSingleConcreteType();
