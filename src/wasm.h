@@ -2571,8 +2571,8 @@ public:
   Type type = Type(HeapType::func, Nullable);
   std::vector<Expression*> data;
 
-  bool isPassive() const { return !table; }
   bool isActive() const { return bool(table); }
+  bool isPassive() const { return !table; }
 
   ElementSegment() = default;
   ElementSegment(Name table,
@@ -2616,8 +2616,8 @@ public:
   Expression* offset = nullptr;
   std::vector<char> data; // TODO: optimize
 
-  bool isPassive() const { return !memory; }
   bool isActive() const { return bool(memory); }
+  bool isPassive() const { return !memory; }
 };
 
 class Memory : public Importable {
