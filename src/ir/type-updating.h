@@ -358,7 +358,7 @@ public:
   // private types do not conflict with public types.
   UniqueRecGroups publicGroups;
 
-  GlobalTypeRewriter(Module& wasm);
+  GlobalTypeRewriter(Module& wasm, WorldMode worldMode);
   virtual ~GlobalTypeRewriter() {}
 
   // Main entry point. This performs the entire process of creating new heap
@@ -427,7 +427,9 @@ public:
 
   // Helper for the repeating pattern of just updating Signature types using a
   // map of old heap type => new Signature.
-  static void updateSignatures(const SignatureUpdates& updates, Module& wasm) {
+  static void updateSignatures(const SignatureUpdates& updates,
+                               Module& wasm,
+                               WorldMode worldMode) {
     if (updates.empty()) {
       return;
     }
@@ -436,8 +438,10 @@ public:
       const SignatureUpdates& updates;
 
     public:
-      SignatureRewriter(Module& wasm, const SignatureUpdates& updates)
-        : GlobalTypeRewriter(wasm), updates(updates) {
+      SignatureRewriter(Module& wasm,
+                        const SignatureUpdates& updates,
+                        WorldMode worldMode)
+        : GlobalTypeRewriter(wasm, worldMode), updates(updates) {
         update();
       }
 
@@ -448,7 +452,7 @@ public:
           sig.results = getTempType(iter->second.results);
         }
       }
-    } rewriter(wasm, updates);
+    } rewriter(wasm, updates, worldMode);
   }
 
 protected:
@@ -473,8 +477,8 @@ public:
 
   const TypeUpdates& mapping;
 
-  TypeMapper(Module& wasm, const TypeUpdates& mapping)
-    : GlobalTypeRewriter(wasm), mapping(mapping) {}
+  TypeMapper(Module& wasm, const TypeUpdates& mapping, WorldMode worldMode)
+    : GlobalTypeRewriter(wasm, worldMode), mapping(mapping) {}
 
   void map() {
     // Update the internals of types (struct fields, signatures, etc.) to

@@ -726,6 +726,11 @@ private:
 
     void visitCall(Call* curr) {
       if (Intrinsics(parent.module).isCallWithoutEffects(curr)) {
+        // The only effect this can have is to branch (which is an effect of the
+        // return, not the call).
+        if (curr->isReturn) {
+          parent.branchesOut = true;
+        }
         return;
       }
 
@@ -1496,10 +1501,8 @@ public:
   }
 };
 
-} // namespace wasm
+std::ostream& operator<<(std::ostream& o, const EffectAnalyzer& effects);
 
-namespace std {
-std::ostream& operator<<(std::ostream& o, wasm::EffectAnalyzer& effects);
-} // namespace std
+} // namespace wasm
 
 #endif // wasm_ir_effects_h

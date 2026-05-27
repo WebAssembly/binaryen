@@ -4874,9 +4874,66 @@ public:
     return {};
   }
   Flow visitTry(Try* curr) {
-    assert(!self()->isResuming()); // TODO
+    auto suspend = [&](Index resumeIndex,
+                       std::optional<Literal> exn = std::nullopt) {
+      if (exn) {
+        self()->pushResumeEntry({Literal(int32_t(resumeIndex)), *exn}, "try");
+      } else {
+        self()->pushResumeEntry({Literal(int32_t(resumeIndex))}, "try");
+      }
+    };
+
+    Index resumeIndex = -1;
+    std::optional<Literal> resumedExn;
+    if (self()->isResuming()) {
+      auto entry = self()->popResumeEntry("try");
+      assert(entry.size() == 1 || entry.size() == 2);
+      resumeIndex = entry[0].geti32();
+      if (entry.size() == 2) {
+        resumedExn = entry[1];
+      }
+    }
+
+    auto processCatchBody =
+      [&](Index i, Expression* catchBody, const WasmException& currentExn) {
+        // Push the current exception onto the exceptionStack in case
+        // 'rethrow's use it
+        exceptionStack.push_back({currentExn, curr->name});
+        // We need to pop exceptionStack in either case: when the catch body
+        // exits normally or when a new exception is thrown
+        Flow ret;
+        try {
+          ret = self()->visit(catchBody);
+          if (ret.suspendTag) {
+            suspend(1 + i, currentExn.exn);
+            return ret;
+          }
+        } catch (const WasmException&) {
+          exceptionStack.pop_back();
+          throw;
+        }
+        exceptionStack.pop_back();
+        return ret;
+      };
+
+    if (self()->isResuming() && resumeIndex >= 1) {
+      Index i = resumeIndex - 1;
+      assert(i < curr->catchBodies.size());
+      assert(resumedExn);
+      return processCatchBody(
+        i, curr->catchBodies[i], WasmException{*resumedExn});
+    }
+
+    Flow flow;
     try {
-      return self()->visit(curr->body);
+      if (!self()->isResuming() || resumeIndex == 0) {
+        flow = self()->visit(curr->body);
+        if (flow.suspendTag) {
+          suspend(0);
+          return flow;
+        }
+        return flow;
+      }
     } catch (const WasmException& e) {
       // If delegation is in progress and the current try is not the target of
       // the delegation, don't handle it and just rethrow.
@@ -4888,33 +4945,17 @@ public:
         }
       }
 
-      auto processCatchBody = [&](Expression* catchBody) {
-        // Push the current exception onto the exceptionStack in case
-        // 'rethrow's use it
-        exceptionStack.push_back(std::make_pair(e, curr->name));
-        // We need to pop exceptionStack in either case: when the catch body
-        // exits normally or when a new exception is thrown
-        Flow ret;
-        try {
-          ret = self()->visit(catchBody);
-        } catch (const WasmException&) {
-          exceptionStack.pop_back();
-          throw;
-        }
-        exceptionStack.pop_back();
-        return ret;
-      };
-
       auto exnData = e.exn.getExnData();
       for (size_t i = 0; i < curr->catchTags.size(); i++) {
         auto* tag = allTags[curr->catchTags[i]];
         if (tag == exnData->tag) {
           multiValues.push_back(exnData->payload);
-          return processCatchBody(curr->catchBodies[i]);
+          return processCatchBody(i, curr->catchBodies[i], e);
         }
       }
       if (curr->hasCatchAll()) {
-        return processCatchBody(curr->catchBodies.back());
+        return processCatchBody(
+          curr->catchBodies.size() - 1, curr->catchBodies.back(), e);
       }
       if (curr->isDelegate()) {
         scope->currDelegateTarget = curr->delegateTarget;
@@ -4922,6 +4963,7 @@ public:
       // This exception is not caught by this try-catch. Rethrow it.
       throw;
     }
+    return flow;
   }
   Flow visitTryTable(TryTable* curr) {
     try {

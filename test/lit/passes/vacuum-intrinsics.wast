@@ -258,4 +258,25 @@
     ;; Helper function for the above.
     (nop)
   )
+
+  ;; CHECK:      (func $const (type $1) (result i32)
+  ;; CHECK-NEXT:  (i32.const 1)
+  ;; CHECK-NEXT: )
+  (func $const (result i32)
+    (i32.const 1)
+  )
+
+  ;; CHECK:      (func $sets-branch-effect (type $1) (result i32)
+  ;; CHECK-NEXT:  (return_call $call.without.effects
+  ;; CHECK-NEXT:   (ref.func $const)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $sets-branch-effect (result i32)
+    ;; $call-without-effects still has a branch effect, even though the callee
+    ;; body is assumed to have no effects.
+    ;; Without a branch effect, we'd be free to optimize this to (unreachable).
+    ;; Also, we're free to optimize away the (unreachable).
+    (return_call $call.without.effects (ref.func $const))
+    (unreachable)
+  )
 )

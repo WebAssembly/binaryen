@@ -5,7 +5,7 @@
 ;; Test that indirect call effects are preserved when types are rewritten
 ;; globally. When we rewrite $effectful and $not-effectful into the same type,
 ;; the resulting type has the same effects as the union of the two. This is
-;; pessemistic since indirect calls that targeted $not-effectful now look like
+;; pessimistic since indirect calls that targeted $not-effectful now look like
 ;; they may target $effectful as well which is not true in practice. This is the
 ;; best we can do without preserving extra information before rewriting.
 
