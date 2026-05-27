@@ -42,7 +42,7 @@ public:
       writesTable(false), readsMutableStruct(false), writesStruct(false),
       readsSharedMutableStruct(false), writesSharedStruct(false),
       readsMutableArray(false), writesArray(false),
-      readsSharedMutableArray(false), writesSharedArray(false), trap(false),
+      readsSharedMutableArray(false), writesSharedArray(false), mustTrap(false),
       implicitTrap(false), throws_(false), danglingPop(false),
       mayNotReturn(false), hasReturnCallThrow(false), module(module),
       features(module.features) {}
@@ -106,11 +106,17 @@ public:
   // *do* mark a potentially infinite number of allocations as trapping, as all
   // VMs would trap eventually, and the same for potentially infinite recursion,
   // etc.
-  bool trap : 1;
+  bool mustTrap : 1;
 
   // A trap from an instruction like a load or div/rem, which may trap on corner
   // cases. If we do not ignore implicit traps then these are counted as a trap.
   bool implicitTrap : 1;
+
+  // Whether this code may trap, either because it is a guaranteed mustTrap,
+  // or because it has an implicitTrap and we are not ignoring them.
+  bool mayTrap() const {
+    return mustTrap || (implicitTrap && !ignoreImplicitTraps);
+  }
 
   bool throws_ : 1;
 
@@ -163,13 +169,13 @@ public:
   // Walk an expression and all its children.
   void walk(Expression* ast) {
     InternalAnalyzer(*this).walk(ast);
-    post();
+    assert(tryDepth == 0);
   }
 
   // Visit an expression, without any children.
   void visit(Expression* ast) {
     InternalAnalyzer(*this).visit(ast);
-    post();
+    assert(tryDepth == 0);
   }
 
   // Walk an entire function body. This will ignore effects that are not
@@ -267,7 +273,7 @@ public:
            mayNotReturn;
   }
 
-  bool hasSideEffects() const { return trap || hasNonTrapSideEffects(); }
+  bool hasSideEffects() const { return mayTrap() || hasNonTrapSideEffects(); }
 
   // Check if there are side effects, and they are of a kind that cannot be
   // removed by optimization passes.
@@ -290,7 +296,7 @@ public:
   // TODO: Go through the optimizer and use this in all places that do not move
   //       code around.
   bool hasUnremovableSideEffects() const {
-    return hasNonTrapSideEffects() || (trap && !trapsNeverHappen);
+    return hasNonTrapSideEffects() || (mayTrap() && !trapsNeverHappen);
   }
 
   bool hasAnything() const {
@@ -420,7 +426,7 @@ public:
     // function, so transfersControlFlow would be true) - while we allow the
     // reordering of traps with each other, we do not reorder exceptions with
     // anything.
-    assert(!((trap && other.throws()) || (throws() && other.trap)));
+    assert(!((mayTrap() && other.throws()) || (throws() && other.mayTrap())));
     // We can't reorder an implicit trap in a way that could alter what global
     // state is modified. However, in trapsNeverHappen mode we assume traps do
     // not occur in practice, which lets us ignore this, at least in the case
@@ -429,8 +435,8 @@ public:
     // need to do is check for such transfers in them.
     if (!trapsNeverHappen || transfersControlFlow() ||
         other.transfersControlFlow()) {
-      if ((trap && other.writesGlobalState()) ||
-          (other.trap && writesGlobalState())) {
+      if ((mayTrap() && other.writesGlobalState()) ||
+          (other.mayTrap() && writesGlobalState())) {
         return true;
       }
     }
@@ -467,7 +473,7 @@ public:
     readsSharedMutableArray =
       readsSharedMutableArray || other.readsSharedMutableArray;
     writesSharedArray = writesSharedArray || other.writesSharedArray;
-    trap = trap || other.trap;
+    mustTrap = mustTrap || other.mustTrap;
     implicitTrap = implicitTrap || other.implicitTrap;
     trapsNeverHappen = trapsNeverHappen || other.trapsNeverHappen;
     throws_ = throws_ || other.throws_;
@@ -682,7 +688,7 @@ private:
       }
       assert(type.isRef());
       if (type.isNull()) {
-        parent.trap = true;
+        parent.mustTrap = true;
         return true;
       }
       if (type.isNullable()) {
@@ -749,7 +755,7 @@ private:
 
       if (!Type::isSubType(Type(curr->heapType, Nullability::NonNullable),
                            table->type)) {
-        parent.trap = true;
+        parent.mustTrap = true;
         return;
       }
 
@@ -812,7 +818,7 @@ private:
     void visitAtomicWait(AtomicWait* curr) {
       // Waits on unshared memories trap.
       if (!parent.module.getMemory(curr->memory)->shared) {
-        parent.trap = true;
+        parent.mustTrap = true;
         return;
       }
       // AtomicWait doesn't strictly write memory, but it does modify the
@@ -1023,7 +1029,7 @@ private:
       }
     }
     void visitNop(Nop* curr) {}
-    void visitUnreachable(Unreachable* curr) { parent.trap = true; }
+    void visitUnreachable(Unreachable* curr) { parent.mustTrap = true; }
     void visitPop(Pop* curr) {
       if (parent.catchDepth == 0) {
         parent.danglingPop = true;
@@ -1141,7 +1147,7 @@ private:
 
     void visitArrayStore(ArrayStore* curr) {
       if (curr->ref->type.isNull()) {
-        parent.trap = true;
+        parent.mustTrap = true;
         return;
       }
       parent.writesArray = true;
@@ -1473,17 +1479,6 @@ public:
     throws_ = false;
     delegateTargets.clear();
     assert(!transfersControlFlow());
-  }
-
-private:
-  void post() {
-    assert(tryDepth == 0);
-
-    if (ignoreImplicitTraps) {
-      implicitTrap = false;
-    } else if (implicitTrap) {
-      trap = true;
-    }
   }
 };
 

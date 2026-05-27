@@ -81,8 +81,8 @@ std::ostream& operator<<(std::ostream& o, const EffectAnalyzer& effects) {
   if (effects.writesSharedArray) {
     o << "writesSharedArray\n";
   }
-  if (effects.trap) {
-    o << "trap\n";
+  if (effects.mustTrap) {
+    o << "mustTrap\n";
   }
   if (effects.implicitTrap) {
     o << "implicitTrap\n";

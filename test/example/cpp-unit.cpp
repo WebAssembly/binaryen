@@ -597,11 +597,11 @@ void test_effects() {
 
   // Unreachables trap.
   Unreachable unreachable;
-  assert_equal(EffectAnalyzer(options, module, &unreachable).trap, true);
+  assert_equal(EffectAnalyzer(options, module, &unreachable).mustTrap, true);
 
   // Nops... do not.
   Nop nop;
-  assert_equal(EffectAnalyzer(options, module, &nop).trap, false);
+  assert_equal(EffectAnalyzer(options, module, &nop).mustTrap, false);
 
   // ArrayCopy can trap, reads arrays, and writes arrays (but not structs).
   {
@@ -631,7 +631,7 @@ void test_effects() {
 
     EffectAnalyzer effects(options, module);
     effects.visit(&arrayCopy);
-    assert_equal(effects.trap, true);
+    assert_equal(effects.mayTrap(), true);
     assert_equal(effects.readsMutableArray, true);
     assert_equal(effects.writesArray, true);
     assert_equal(effects.readsMutableStruct, false);

@@ -303,7 +303,7 @@ void propagateEffects(
     // Add trap effects for potential cycles.
     if (cc.size() > 1) {
       if (ccEffects != UnknownEffects) {
-        ccEffects->trap = true;
+        ccEffects->mustTrap = true;
       }
     } else if (ccFuncs.size() == 1) {
       // It's possible for a CC to only contain 1 type, but that is not a
@@ -311,7 +311,7 @@ void propagateEffects(
       auto* func = ccFuncs[0];
       if (funcInfos.at(func).calledFunctions.contains(func->name)) {
         if (ccEffects != UnknownEffects) {
-          ccEffects->trap = true;
+          ccEffects->mustTrap = true;
         }
       }
     } else if (ccFuncs.empty() && calleeSccs.empty()) {
@@ -321,7 +321,7 @@ void propagateEffects(
       //
       // Since the type is uninhabited, this call must trap.
       assert(cc.size() == 1);
-      ccEffects->trap = true;
+      ccEffects->mustTrap = true;
     }
 
     // Aggregate effects within this CC
