@@ -1629,20 +1629,10 @@ class Merge(TestCaseHandler):
         if merged_output == IGNORE:
             return
 
-        # If the second module traps in instantiation, then the merged module
-        # must do so as well, regardless of what the first module does. (In
-        # contrast, if the first module traps in instantiation, then the normal
-        # checks below will ensure the merged module does as well.)
-        if traps_in_instantiation(second_output) and \
-                not traps_in_instantiation(output):
-            # The merged module should also trap in instantiation, but the
-            # exports will not be called, so there's nothing else to compare.
-            if not traps_in_instantiation(merged_output):
-                raise Exception('expected merged module to trap during ' +
-                                'instantiation because second module traps ' +
-                                'during instantiation')
-            compare(merged_output, second_output, 'Merge: second module traps' +
-                    ' in instantiation')
+        # If either original module traps in instantiation, the merged module
+        # must do so as well.
+        if traps_in_instantiation(second_output) or traps_in_instantiation(output):
+            assert traps_in_instantiation(merged_output)
             return
 
         # a complication is that the second module's exports are appended, so we
@@ -3139,7 +3129,3 @@ After reduction, the reduced file will be in {working_wasm}
         else:
             print(f'(finished running seed {given_seed}, see error above)')
             sys.exit(given_seed_error)
-
-'''
-azakai@azakai:~/Dev/2-binaryen$ merge: it end sup reordering output, as the escond module's start runs with the first, before even first's exports...
-'''
