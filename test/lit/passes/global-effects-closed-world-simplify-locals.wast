@@ -8,10 +8,10 @@
   ;; CHECK:      (type $indirect-type-super (sub (func (param i32))))
   (type $indirect-type-super (sub (func (param i32))))
 
-  ;; CHECK:      (type $1 (func (param (ref $indirect-type-super))))
-
   ;; CHECK:      (type $indirect-type-sub (sub $indirect-type-super (func (param i32))))
   (type $indirect-type-sub (sub $indirect-type-super (func (param i32))))
+
+  ;; CHECK:      (type $2 (func (param (ref $indirect-type-super))))
 
   ;; CHECK:      (global $g1 (mut i32) (i32.const 0))
   (global $g1 (mut i32) (i32.const 0))
@@ -42,18 +42,7 @@
     (global.set $g2 (local.get $i32))
   )
 
-  ;; CHECK:      (func $caller (type $1) (param $ref (ref $indirect-type-super))
-  ;; CHECK-NEXT:  (call_ref $indirect-type-super
-  ;; CHECK-NEXT:   (i32.const 1)
-  ;; CHECK-NEXT:   (local.get $ref)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $caller (param $ref (ref $indirect-type-super))
-    ;; This inherits effects from $impl1 and $impl2, so may mutate $g1 and $g2.
-    (call_ref $indirect-type-super (i32.const 1) (local.get $ref))
-  )
-
-  ;; CHECK:      (func $merges-multiple-effects (type $1) (param $ref (ref $indirect-type-super))
+  ;; CHECK:      (func $merges-multiple-effects (type $2) (param $ref (ref $indirect-type-super))
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (local $y i32)
   ;; CHECK-NEXT:  (local $z i32)
@@ -64,7 +53,8 @@
   ;; CHECK-NEXT:   (global.get $g2)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (call $caller
+  ;; CHECK-NEXT:  (call_ref $indirect-type-super
+  ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:   (local.get $ref)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -89,7 +79,7 @@
     ;; This acts as a barrier for $x and $y, but not $z because
     ;; $ref may write to $g1 (via $impl1) or $g2 (via $impl2) but not $g3.
     ;; $z is optimized out and $x and $y are left alone.
-    (call $caller (local.get $ref))
+    (call_ref $indirect-type-super (i32.const 1) (local.get $ref))
 
     (drop (local.get $x))
     (drop (local.get $y))
