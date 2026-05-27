@@ -45,25 +45,26 @@ struct FuncInfo {
   std::unordered_set<HeapType> indirectCalledTypes;
 };
 
-/*
- Only funcs that are 'addressed' may be the target of an indirect call. A
- function is addressed if:
- - It appears in a ref.func expression
- - It appears in an `elem` segment (note that we already ignore `elem declare`
-   statements in our IR, but we check separately for funcs that appear in
-   `ref.func`).
- - It's exported, because it may flow back to us as a reference.
- - It's imported, which implies it is `elem declare`d.
-
- If a function doesn't meet any of these criteria, it can't be the target of
- an indirect call and we don't need to include its effects in indirect calls.
-*/
+// Only funcs that are 'addressed' may be the target of an indirect call. A
+// function is addressed if:
+// - It appears in a ref.func expression
+// - It appears in an `elem` segment (note that we already ignore `elem declare`
+//   statements in our IR, but we check separately for funcs that appear in
+//   `ref.func`).
+// - It's exported, because it may flow back to us as a reference.
+// - It's imported, which implies it can be addressed (see
+// https://github.com/WebAssembly/spec/issues/2072).
+//
+// If a function doesn't meet any of these criteria, it can't be the target of
+// an indirect call and we don't need to include its effects in indirect calls.
 std::unordered_set<Function*> getAddressedFuncs(Module& module) {
   struct AddressedFuncsWalker : WalkerPass<PostWalker<AddressedFuncsWalker>> {
     std::unordered_set<Function*>& addressedFuncs;
 
     AddressedFuncsWalker(std::unordered_set<Function*>& addressedFuncs)
       : addressedFuncs(addressedFuncs) {}
+
+    bool isFunctionParallel() override { return true; }
 
     void visitRefFunc(RefFunc* refFunc) {
       addressedFuncs.insert(getModule()->getFunction(refFunc->func));
@@ -87,11 +88,6 @@ std::unordered_set<Function*> getAddressedFuncs(Module& module) {
 
     addressedFuncs.insert(module.getFunction(*export_->getInternalName()));
   }
-
-  ElementUtils::iterAllElementFunctionNames(
-    &module, [&addressedFuncs, &module](Name func) {
-      addressedFuncs.insert(module.getFunction(func));
-    });
 
   return addressedFuncs;
 }
