@@ -689,7 +689,7 @@ void WasmBinaryWriter::writeDataSegments() {
   for (auto& segment : wasm->dataSegments) {
     uint32_t flags = 0;
     Index memoryIndex = 0;
-    if (segment->isPassive) {
+    if (segment->isPassive()) {
       flags |= BinaryConsts::IsPassive;
     } else {
       memoryIndex = getMemoryIndex(segment->memory);
@@ -698,7 +698,7 @@ void WasmBinaryWriter::writeDataSegments() {
       }
     }
     o << U32LEB(flags);
-    if (!segment->isPassive) {
+    if (segment->isActive()) {
       if (memoryIndex) {
         o << U32LEB(memoryIndex);
       }
@@ -825,7 +825,6 @@ void WasmBinaryWriter::writeElementSegments() {
   for (auto& segment : wasm->elementSegments) {
     Index tableIdx = 0;
 
-    bool isPassive = segment->table.isNull();
     // If the segment is MVP, we can use the shorter form.
     bool usesExpressions = TableUtils::usesExpressions(segment.get(), wasm);
 
@@ -834,7 +833,7 @@ void WasmBinaryWriter::writeElementSegments() {
     // supported by the MVP, which also did not support table indices in the
     // segment encoding.
     bool hasTableIndex = false;
-    if (!isPassive) {
+    if (segment->isActive()) {
       tableIdx = getTableIndex(segment->table);
       hasTableIndex =
         tableIdx > 0 || wasm->getTable(segment->table)->type != funcref;
@@ -844,14 +843,14 @@ void WasmBinaryWriter::writeElementSegments() {
     if (usesExpressions) {
       flags |= BinaryConsts::UsesExpressions;
     }
-    if (isPassive) {
+    if (segment->isPassive()) {
       flags |= BinaryConsts::IsPassive;
     } else if (hasTableIndex) {
       flags |= BinaryConsts::HasIndex;
     }
 
     o << U32LEB(flags);
-    if (!isPassive) {
+    if (segment->isActive()) {
       if (hasTableIndex) {
         o << U32LEB(tableIdx);
       }
@@ -859,7 +858,7 @@ void WasmBinaryWriter::writeElementSegments() {
       o << int8_t(BinaryConsts::End);
     }
 
-    if (isPassive || hasTableIndex) {
+    if (segment->isPassive() || hasTableIndex) {
       if (usesExpressions) {
         // elemType
         writeType(segment->type);
@@ -5023,8 +5022,7 @@ void WasmBinaryReader::readDataSegments() {
       throwError("bad segment flags, must be 0, 1, or 2, not " +
                  std::to_string(flags));
     }
-    curr->isPassive = flags & BinaryConsts::IsPassive;
-    if (curr->isPassive) {
+    if (flags & BinaryConsts::IsPassive) {
       curr->memory = Name();
       curr->offset = nullptr;
     } else {

@@ -5557,7 +5557,7 @@ BinaryenIndex BinaryenGetNumElementSegments(BinaryenModuleRef module) {
 }
 BinaryenExpressionRef
 BinaryenElementSegmentGetOffset(BinaryenElementSegmentRef elem) {
-  if (((ElementSegment*)elem)->table.isNull()) {
+  if (((ElementSegment*)elem)->isPassive()) {
     Fatal() << "elem segment is passive.";
   }
   return ((ElementSegment*)elem)->offset;
@@ -5766,7 +5766,7 @@ size_t BinaryenGetDataSegmentByteLength(BinaryenDataSegmentRef segment) {
   return ((DataSegment*)segment)->data.size();
 }
 bool BinaryenGetDataSegmentPassive(BinaryenDataSegmentRef segment) {
-  return ((DataSegment*)segment)->isPassive;
+  return ((DataSegment*)segment)->isPassive();
 }
 void BinaryenCopyDataSegmentData(BinaryenDataSegmentRef segment, char* buffer) {
   std::copy(((DataSegment*)segment)->data.cbegin(),
@@ -6333,7 +6333,7 @@ void BinaryenElementSegmentSetTable(BinaryenElementSegmentRef elem,
   ((ElementSegment*)elem)->table = table;
 }
 bool BinaryenElementSegmentIsPassive(BinaryenElementSegmentRef elem) {
-  return ((ElementSegment*)elem)->table.isNull();
+  return ((ElementSegment*)elem)->isPassive();
 }
 
 //
