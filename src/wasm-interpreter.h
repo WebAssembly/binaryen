@@ -1878,14 +1878,8 @@ public:
   }
   Flow visitNop(Nop* curr) { return Flow(); }
 
-  // Tracking whether we are in the start function is important for error
-  // logging in the fuzzer, see visitUnreachable.
-  bool inStart = false;
-
   Flow visitUnreachable(Unreachable* curr) {
-    // Trapping during the start function requires special logging for the
-    // fuzzer.
-    trap(inStart ? "exception thrown: failed to instantiate module (unreachable)" : "unreachable");
+    trap("unreachable");
     WASM_UNREACHABLE("unreachable");
   }
 
@@ -3435,6 +3429,10 @@ public:
     }
     self()->continuationStore = shared;
   }
+
+  // Tracking whether we are in the start function is important for error
+  // logging in the fuzzer, see visitUnreachable.
+  bool inStart = false;
 
   struct InStartContext {
     SubType& parent;
