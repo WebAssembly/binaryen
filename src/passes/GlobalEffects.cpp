@@ -20,7 +20,6 @@
 //
 
 #include "ir/effects.h"
-#include "ir/element-utils.h"
 #include "ir/module-utils.h"
 #include "pass.h"
 #include "support/graph_traversal.h"
