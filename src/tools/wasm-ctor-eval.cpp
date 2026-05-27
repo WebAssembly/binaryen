@@ -288,6 +288,9 @@ std::unique_ptr<Module> buildEnvModule(Module& wasm) {
 // that there are not arguments passed to main, etc.
 static bool ignoreExternalInput = false;
 
+// Whether to emit informative logging to stdout about the eval process.
+static bool quiet = false;
+
 struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
   Module* wasm;
   EvallingModuleRunner* instance;
@@ -327,8 +330,6 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
       wasm->start = Name();
       firstApplication = false;
     }
-
-    clearApplyState();
 
     // If nothing was ever written to memories then there is nothing to update.
     if (!memories.empty()) {
@@ -529,12 +530,12 @@ private:
     return Bits::readLE<T>(getMemory(address, memoryName, sizeof(T)));
   }
 
+public:
   // Clear the state of the operation of applying the interpreter's runtime
-  // information into the module.
-  //
-  // This happens each time we apply contents to the module, which is basically
-  // once per ctor function, but can be more fine-grained also if we execute a
-  // line at a time.
+  // information into the module. This must be done before we start to serialize
+  // content (as the serialization uses this state - defining globals must be
+  // set and are latter used, etc.). After this, serialization can happen, and
+  // after that, a call to applyToModule() can be done.
   void clearApplyState() {
     // The process of allocating "defining globals" begins here, from scratch
     // each time (things live before may no longer be).
@@ -546,6 +547,7 @@ private:
     clearStartBlock();
   }
 
+private:
   void applyMemoryToModule() {
     // Memory must have already been flattened into the standard form: one
     // segment at offset 0, or none.
@@ -1062,9 +1064,6 @@ public:
   }
 };
 
-// Whether to emit informative logging to stdout about the eval process.
-static bool quiet = false;
-
 // The outcome of evalling a ctor is one of three states:
 //
 // 1. We failed to eval it completely (but perhaps we succeeded partially). In
@@ -1202,6 +1201,10 @@ start_eval:
         }
         break;
       }
+
+      // We are about to serialize content (the code paths below call
+      // getSerialization). Clear the state.
+      interface.clearApplyState();
 
       if (flow.breakTo == RETURN_CALL_FLOW) {
         // The return-called function is stored in the last value.
@@ -1482,10 +1485,15 @@ void evalCtors(Module& wasm,
       }
     }
   } catch (FailToEvalException& fail) {
-    // that's it, we failed to even create the instance
+    // That's it, we failed to even create the instance.
     if (!quiet) {
       std::cout << "  ...stopping since could not create module instance: "
                 << fail.why << "\n";
+    }
+  } catch (NonconstantException& fail) {
+    // We can also fail during start due to a non-constant operation.
+    if (!quiet) {
+      std::cout << "  ...stopping since non-constant in start\n";
     }
   } catch (TopologicalSort::CycleException e) {
     // We use a topological sort for GC globals. If there is a non-breakable

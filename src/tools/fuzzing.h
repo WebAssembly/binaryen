@@ -477,6 +477,9 @@ private:
   Expression* makeGlobalGet(Type type);
   Expression* makeGlobalSet(Type type);
   Expression* makeTupleMake(Type type);
+  Expression* makeWideIntAddSub(Type type);
+  Expression* makeWideIntMul(Type type);
+  Expression* makeWideIntExpression(Type type);
   Expression* makeTupleExtract(Type type);
   Expression* makePointer();
   Expression* makeNonAtomicLoad(Type type);
