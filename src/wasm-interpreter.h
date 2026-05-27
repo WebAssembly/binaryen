@@ -3436,12 +3436,8 @@ public:
 
   struct InStartContext {
     SubType& parent;
-    InStartContext(SubType& parent) : parent(parent) {
-      parent.inStart = true;
-    }
-    ~InStartContext() {
-      parent.inStart = false;
-    }
+    InStartContext(SubType& parent) : parent(parent) { parent.inStart = true; }
+    ~InStartContext() { parent.inStart = false; }
   };
 
   // Start up this instance. This must be called before doing anything else.
