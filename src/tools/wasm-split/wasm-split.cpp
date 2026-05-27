@@ -52,7 +52,8 @@ void parseInput(Module& wasm, const WasmSplitOptions& options) {
 
   options.applyOptionsAfterParse(wasm);
 
-  if (options.passOptions.validate && !WasmValidator().validate(wasm)) {
+  if (options.passOptions.validate &&
+      !WasmValidator().validate(wasm, options.passOptions)) {
     Fatal() << "error validating input";
   }
 }
@@ -100,6 +101,17 @@ void writeModule(Module& wasm,
     runner.add("strip-debug");
     runner.run();
   }
+
+  // We currently cannot enable validation for outputs when custom-descriptors
+  // is not enabled. See the description of
+  // https://github.com/WebAssembly/binaryen/pull/8043.
+  // TODO Fix this and enable validation for all cases.
+  if (options.passOptions.validate &&
+      !WasmValidator().validate(wasm, options.passOptions) &&
+      wasm.features.hasCustomDescriptors()) {
+    Fatal() << "error validating output module";
+  }
+
   ModuleWriter writer(options.passOptions);
   writer.setBinary(options.emitBinary);
   writer.setDebugInfo(options.passOptions.debugInfo && !options.stripDebug);
