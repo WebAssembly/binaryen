@@ -663,7 +663,6 @@ void MemoryPacking::createSplitSegments(
     }
     auto curr = Builder::makeDataSegment(name,
                                          segment->memory,
-                                         segment->isPassive(),
                                          offset,
                                          segment->data.data() + range.start,
                                          range.end - range.start);

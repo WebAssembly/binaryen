@@ -152,15 +152,12 @@ public:
   static std::unique_ptr<DataSegment>
   makeDataSegment(Name name = "",
                   Name memory = Name(),
-                  bool isPassive = false,
                   Expression* offset = nullptr,
                   const char* init = "",
                   Address size = 0) {
     auto seg = std::make_unique<DataSegment>();
     seg->name = name;
-    if (!isPassive) {
-      seg->memory = memory;
-    }
+    seg->memory = memory;
     seg->offset = offset;
     seg->data.resize(size);
     std::copy_n(init, size, seg->data.begin());
