@@ -194,12 +194,6 @@ def parse_output_fuzz_exec(text, named_items):
             # in the input.
             name = '$' + func.group("name")
             items.append((('func', name), [line]))
-        elif line.startswith('[host limit'):
-            # Skip mentions of host limits that we hit. This can happen even
-            # before we reach the execution of a function (if it happens during
-            # instantiation of the module), in which case |items| may be empty,
-            # and we'd error on the code below.
-            pass
         elif line:
             if not items:
                 # Early output before any export was executed. Associate it with
