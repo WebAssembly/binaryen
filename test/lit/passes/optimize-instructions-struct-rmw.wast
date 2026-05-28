@@ -1477,9 +1477,9 @@
   )
 )
 
+;; Test the effect analysis in areConsecutiveInputsEqual by optimizing (or not)
+;; cmpxchg operations with matching expected and replacement operands.
 (module
-  ;; Test the effect analysis in areConsecutiveInputsEqual by optimizing (or
-  ;; not) cmpxchg operations with matching expected and replacement operands.
   ;; CHECK:      (type $struct (shared (struct (field (mut i32)))))
   (type $struct (shared (struct (field (mut i32)))))
   ;; CHECK:      (type $array (shared (array (mut i32))))
@@ -1979,7 +1979,7 @@
     (struct.atomic.rmw.cmpxchg acqrel acqrel $struct 0
       (local.get $struct)
       (local.tee $x
-        ;; The fallthrough values depends on $x, so the optimization is blocked.
+        ;; The fallthrough values depend on $x, so the optimization is blocked.
         (i32.add (local.get $x) (i32.const 1))
       )
       (i32.add (local.get $x) (i32.const 1))
@@ -2098,7 +2098,7 @@
         (i32.const 1)
       )
       (block (result i32)
-        ;; This set change the value of $x and blocks optimization.
+        ;; This set changes the value of $x and blocks optimization.
         (local.set $x (i32.const 2))
         (local.get $x)
       )
