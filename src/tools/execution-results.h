@@ -203,7 +203,10 @@ public:
           // Check for errors here, duplicating tableLoad(), because that will
           // trap, and we just want to throw an exception (the same as JS
           // would).
-          if (!exportedTable) {
+          //
+          // Note that we trap if we are in the start, as exports do not exist
+          // yet.
+          if (!exportedTable || inStart) {
             throwJSException();
           }
           auto index = arguments[0].getUnsigned();
@@ -213,7 +216,7 @@ public:
           }
           return table->get(index);
         } else if (import->base == "table-set") {
-          if (!exportedTable) {
+          if (!exportedTable || inStart) {
             throwJSException();
           }
           auto index = arguments[0].getUnsigned();
