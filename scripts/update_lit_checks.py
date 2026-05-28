@@ -188,9 +188,6 @@ def parse_output_fuzz_exec(text, first_named_item):
     # module boundaries are, so always just returns items for a single module.
     items = []
     for line in text.split('\n'):
-        # Skip empty lines.
-        if not line:
-            continue
         func = FUZZ_EXEC_FUNC.match(line)
         if func:
             # Add a '$' prefix to the name because that is how it will be parsed
