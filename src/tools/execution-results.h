@@ -206,7 +206,7 @@ public:
           //
           // Note that we trap if we are in the start, as exports do not exist
           // yet.
-          if (!exportedTable || inStart) {
+          if (!exportedTable || instance->inStart) {
             throwJSException();
           }
           auto index = arguments[0].getUnsigned();
@@ -216,7 +216,7 @@ public:
           }
           return table->get(index);
         } else if (import->base == "table-set") {
-          if (!exportedTable || inStart) {
+          if (!exportedTable || instance->inStart) {
             throwJSException();
           }
           auto index = arguments[0].getUnsigned();

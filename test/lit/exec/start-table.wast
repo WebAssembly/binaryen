@@ -12,6 +12,7 @@
 
  (export "table" (table $0))
 
+ ;; CHECK:      [exception thrown: failed to instantiate module]
  (start $0)
 
  (func $0
