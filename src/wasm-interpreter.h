@@ -1877,7 +1877,6 @@ public:
     return flow;
   }
   Flow visitNop(Nop* curr) { return Flow(); }
-
   Flow visitUnreachable(Unreachable* curr) {
     trap("unreachable");
     WASM_UNREACHABLE("unreachable");
@@ -3431,7 +3430,7 @@ public:
   }
 
   // Tracking whether we are in the start function is important for error
-  // logging in the fuzzer, see visitUnreachable.
+  // logging in the fuzzer, see uses of inStart there.
   bool inStart = false;
 
   struct InStartContext {
