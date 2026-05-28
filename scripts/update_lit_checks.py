@@ -183,7 +183,7 @@ def parse_output_modules(text):
     return modules
 
 
-def parse_output_fuzz_exec(text):
+def parse_output_fuzz_exec(text, first_named_item):
     # Returns the same data as `parse_output_modules`, but can't tell where
     # module boundaries are, so always just returns items for a single module.
     items = []
@@ -194,19 +194,18 @@ def parse_output_fuzz_exec(text):
             # in the input.
             name = '$' + func.group("name")
             items.append((('func', name), [line]))
-        elif line.startswith('[host limit'):
-            # Skip mentions of host limits that we hit. This can happen even
-            # before we reach the execution of a function (if it happens during
-            # instantiation of the module), in which case |items| may be empty,
-            # and we'd error on the code below.
-            pass
         elif line:
-            assert items, 'unexpected non-invocation line'
-            items[-1][1].append(line)
+            if not items:
+                # Early output before any export was executed. Associate it with
+                # the first named item, so it appears before everything else
+                # (which is when it executes).
+                items.append((first_named_item, [line]))
+            else:
+                items[-1][1].append(line)
     return [items]
 
 
-def get_command_output(args, kind, test, lines, tmp):
+def get_command_output(args, kind, test, lines, tmp, named_items):
     # Return list of maps from prefixes to lists of module items of the form
     # ((kind, name), [line]). The outer list has an entry for each module.
     command_output = []
@@ -233,7 +232,7 @@ def get_command_output(args, kind, test, lines, tmp):
             if kind == 'wat':
                 module_outputs = parse_output_modules(output)
             elif kind == 'fuzz-exec':
-                module_outputs = parse_output_fuzz_exec(output)
+                module_outputs = parse_output_fuzz_exec(output, named_items[0])
             else:
                 assert False, "unknown output kind"
             for i in range(len(module_outputs)):
@@ -259,7 +258,14 @@ def update_test(args, test, lines, tmp):
         # Skip the notice if it is already in the output
         lines = lines[1:]
 
-    command_output = get_command_output(args, output_kind, test, lines, tmp)
+    named_items = []
+    for line in lines:
+        match = ITEM_RE.match(line)
+        if match:
+            _, kind, name = indentKindName(match)
+            named_items.append((kind, name))
+
+    command_output = get_command_output(args, output_kind, test, lines, tmp, named_items)
 
     prefixes = {prefix for module_output in command_output for prefix in module_output.keys()}
     check_line_re = re.compile(r'^\s*;;\s*(' + '|'.join(prefixes) +
@@ -274,13 +280,6 @@ def update_test(args, test, lines, tmp):
                 filtered.append(lines[i])
         filtered.append(lines[-1])
         lines = filtered
-
-    named_items = []
-    for line in lines:
-        match = ITEM_RE.match(line)
-        if match:
-            _, kind, name = indentKindName(match)
-            named_items.append((kind, name))
 
     notice_args = ''
     if all_items:

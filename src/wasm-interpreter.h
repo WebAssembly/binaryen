@@ -3449,7 +3449,10 @@ public:
     // run start, if present
     if (wasm.start.is()) {
       Literals arguments;
-      callFunction(wasm.start, arguments);
+      auto flow = callFunction(wasm.start, arguments);
+      if (flow.suspendTag) {
+        trap("unhandled suspend in start function");
+      }
     }
   }
 
