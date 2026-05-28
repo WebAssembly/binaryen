@@ -183,7 +183,7 @@ def parse_output_modules(text):
     return modules
 
 
-def parse_output_fuzz_exec(text, named_items):
+def parse_output_fuzz_exec(text, first_named_item):
     # Returns the same data as `parse_output_modules`, but can't tell where
     # module boundaries are, so always just returns items for a single module.
     items = []
@@ -199,10 +199,7 @@ def parse_output_fuzz_exec(text, named_items):
                 # Early output before any export was executed. Associate it with
                 # the first named item, so it appears before everything else
                 # (which is when it executes).
-                if named_items:
-                    items.append((named_items[0], [line]))
-                else:
-                    items.append((('module', 'trap'), [line]))
+                items.append((first_named_item, [line]))
             else:
                 items[-1][1].append(line)
     return [items]
@@ -235,7 +232,7 @@ def get_command_output(args, kind, test, lines, tmp, named_items):
             if kind == 'wat':
                 module_outputs = parse_output_modules(output)
             elif kind == 'fuzz-exec':
-                module_outputs = parse_output_fuzz_exec(output, named_items)
+                module_outputs = parse_output_fuzz_exec(output, named_items[0])
             else:
                 assert False, "unknown output kind"
             for i in range(len(module_outputs)):
