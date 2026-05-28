@@ -1676,11 +1676,13 @@ void TranslateToFuzzReader::processFunctions() {
   // as that is the least risky for fuzzing (any trap in the start will make
   // the entire module not execute), but other cases are important too.
   //
-  // When preserving imports and exports, however, we usually keep the start
+  // When preserving imports and exports, however, we always keep the start
   // method, as it may be important to keep the contract between the wasm and
-  // the outside.
-  if (!preserveImportsAndExports || oneIn(5)) {
-    switch (upTo(3)) { // TODO 10
+  // the outside (even in that mode, though we have a chance to mutate and
+  // empty out or replace the current start, though it declines with the amount
+  // of mutation, so the user can control it).
+  if (!preserveImportsAndExports) {
+    switch (upTo(10)) {
       case 0:
         // Do not modify the start, potentially leaving the existing one.
         break;
