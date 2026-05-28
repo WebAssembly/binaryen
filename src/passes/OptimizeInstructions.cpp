@@ -2795,6 +2795,11 @@ private:
     // them. The exceptions are `local.tee` instructions and br_if conditions,
     // which execute after the fallthrough and might affect only the value of
     // `right`.
+    // TODO: We should use a custom getFallthrough that ignores whether br_if
+    // conditions and values can be reordered, since we can handle that more
+    // precisely here.
+    // TODO: When the fallthrough is an If (meaning the other branch must never
+    // return), we should ignore effects in that non-returning branch.
     EffectAnalyzer interferingEffects(getPassOptions(), *getModule());
     bool matchingTeeAndGet = false;
     while (true) {
@@ -2810,6 +2815,8 @@ private:
         // after it, so we need not look for further effects. But there might be
         // interfering sets in previous br_if conditions, so we cannot just
         // return here.
+        // TODO: Calculate `right`'s fallthrough first in case the fallthrough
+        // is the matching get.
         if (areMatchingTeeAndGet(left, right)) {
           matchingTeeAndGet = true;
           left = getFallthrough(left);
@@ -2821,6 +2828,9 @@ private:
       }
       if (auto* br = left->dynCast<Break>(); br && br->condition) {
         assert(br->value);
+        // NB: We don't need to worry about the branch effect because any branch
+        // at runtime must skip past the parent expression, so it would not
+        // matter how that parent expression gets optimized.
         interferingEffects.walk(br->condition);
         left = br->value;
         continue;
