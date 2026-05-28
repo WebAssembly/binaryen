@@ -5902,9 +5902,13 @@ void BinaryenSetTrapsNeverHappen(bool on) {
   globalPassOptions.trapsNeverHappen = on;
 }
 
-bool BinaryenGetClosedWorld(void) { return globalPassOptions.closedWorld; }
+bool BinaryenGetClosedWorld(void) {
+  return globalPassOptions.worldMode == WorldMode::Closed;
+}
 
-void BinaryenSetClosedWorld(bool on) { globalPassOptions.closedWorld = on; }
+void BinaryenSetClosedWorld(bool on) {
+  globalPassOptions.worldMode = on ? WorldMode::Closed : WorldMode::Open;
+}
 
 bool BinaryenGetLowMemoryUnused(void) {
   return globalPassOptions.lowMemoryUnused;

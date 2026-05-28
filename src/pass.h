@@ -110,6 +110,30 @@ struct InliningOptions {
   Index partialInliningIfs = 0;
 };
 
+// Assume code outside of the module does not inspect or interact with GC and
+// function references, with the goal of being able to aggressively optimize all
+// user-defined types. The outside may hold on to references and pass them back
+// in, but may not inspect their contents, call them, construct them, or reflect
+// on their types in any way.
+//
+// By default we do not make this assumption, and assume anything that escapes
+// to the outside may be inspected in detail, which prevents us from e.g.
+// changing the type of any value that may escape except by refining it (so we
+// can't remove or refine fields on an escaping struct type, for example,
+// unless the new type declares the original type as a supertype).
+//
+// Note that the module can still have imports and exports - otherwise it
+// could do nothing at all! - so the meaning of "closed world" is a little
+// subtle here. We do still want to keep imports and exports unchanged, as
+// they form a contract with the outside world. For example, if an import has
+// two parameters, we can't remove one of them. A nuance regarding that is how
+// type equality works between wasm modules using the isorecursive type
+// system: not only do we need to not remove a parameter as just mentioned,
+// but we also want to keep types of things on the boundary unchanged. For
+// example, we should not change an exported function's signature, as the
+// outside may need that type to properly call the export.
+enum class WorldMode { Open, Closed };
+
 struct PassOptions {
   friend Pass;
 
@@ -196,29 +220,7 @@ struct PassOptions {
   // creates it and we know it is all zeros right before the active segments are
   // applied.)
   bool zeroFilledMemory = false;
-  // Assume code outside of the module does not inspect or interact with GC and
-  // function references, with the goal of being able to aggressively optimize
-  // all user-defined types. The outside may hold on to references and pass them
-  // back in, but may not inspect their contents, call them, or reflect on their
-  // types in any way.
-  //
-  // By default we do not make this assumption, and assume anything that escapes
-  // to the outside may be inspected in detail, which prevents us from e.g.
-  // changing the type of any value that may escape except by refining it (so we
-  // can't remove or refine fields on an escaping struct type, for example,
-  // unless the new type declares the original type as a supertype).
-  //
-  // Note that the module can still have imports and exports - otherwise it
-  // could do nothing at all! - so the meaning of "closed world" is a little
-  // subtle here. We do still want to keep imports and exports unchanged, as
-  // they form a contract with the outside world. For example, if an import has
-  // two parameters, we can't remove one of them. A nuance regarding that is how
-  // type equality works between wasm modules using the isorecursive type
-  // system: not only do we need to not remove a parameter as just mentioned,
-  // but we also want to keep types of things on the boundary unchanged. For
-  // example, we should not change an exported function's signature, as the
-  // outside may need that type to properly call the export.
-  bool closedWorld = false;
+  WorldMode worldMode = WorldMode::Open;
   // Whether to try to preserve debug info through, which are special calls.
   bool debugInfo = false;
   // Whether to generate StackIR during binary writing. This is on by default

@@ -145,7 +145,7 @@ struct TypeRefining : public Pass {
       return;
     }
 
-    if (!getPassOptions().closedWorld) {
+    if (getPassOptions().worldMode == WorldMode::Open) {
       Fatal() << "TypeRefining requires --closed-world";
     }
 
@@ -262,7 +262,8 @@ struct TypeRefining : public Pass {
     bool canOptimize = false;
 
     // We cannot modify public types.
-    auto publicTypes = ModuleUtils::getPublicHeapTypes(*module);
+    auto publicTypes =
+      ModuleUtils::getPublicHeapTypes(*module, getPassOptions().worldMode);
     std::unordered_set<HeapType> publicTypesSet(publicTypes.begin(),
                                                 publicTypes.end());
 
@@ -454,7 +455,8 @@ struct TypeRefining : public Pass {
 
     public:
       TypeRewriter(Module& wasm, TypeRefining& parent)
-        : GlobalTypeRewriter(wasm), parent(parent) {}
+        : GlobalTypeRewriter(wasm, parent.getPassOptions().worldMode),
+          parent(parent) {}
 
       void modifyStruct(HeapType oldStructType, Struct& struct_) override {
         const auto& oldFields = oldStructType.getStruct().fields;

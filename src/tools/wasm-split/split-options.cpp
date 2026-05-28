@@ -358,6 +358,16 @@ WasmSplitOptions::WasmSplitOptions()
          {Mode::Split, Mode::MultiSplit, Mode::Instrument},
          Options::Arguments::Zero,
          [&](Options* o, const std::string& arguments) { stripDebug = true; })
+    .add("--traps-never-happen",
+         "-tnh",
+         "Split under the helpful assumption that no trap is reached at "
+         "runtime (from load, div/mod, etc.)",
+         WasmSplitOption,
+         {Mode::Split, Mode::MultiSplit},
+         Options::Arguments::Zero,
+         [&](Options* o, const std::string& arguments) {
+           passOptions.trapsNeverHappen = true;
+         })
     .add("--output",
          "-o",
          "Output file.",

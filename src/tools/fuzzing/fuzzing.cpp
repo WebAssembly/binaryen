@@ -62,8 +62,8 @@ std::vector<MemoryOrder> getMemoryOrders(const FeatureSet& features) {
 
 TranslateToFuzzReader::TranslateToFuzzReader(Module& wasm,
                                              std::vector<char>&& input,
-                                             bool closedWorld)
-  : wasm(wasm), closedWorld(closedWorld), builder(wasm),
+                                             WorldMode worldMode)
+  : wasm(wasm), worldMode(worldMode), builder(wasm),
     random(std::move(input), wasm.features), intrinsics(wasm),
     loggableTypes(getLoggableTypes(wasm.features)),
     atomicMemoryOrders(getMemoryOrders(wasm.features)),
@@ -123,10 +123,9 @@ TranslateToFuzzReader::TranslateToFuzzReader(Module& wasm,
 
 TranslateToFuzzReader::TranslateToFuzzReader(Module& wasm,
                                              std::string& filename,
-                                             bool closedWorld)
-  : TranslateToFuzzReader(wasm,
-                          read_file<std::vector<char>>(filename, Flags::Binary),
-                          closedWorld) {}
+                                             WorldMode worldMode)
+  : TranslateToFuzzReader(
+      wasm, read_file<std::vector<char>>(filename, Flags::Binary), worldMode) {}
 
 void TranslateToFuzzReader::pickPasses(OptimizationOptions& options) {
   // Pick random passes to further shape the wasm. This is similar to how we
@@ -274,8 +273,8 @@ void TranslateToFuzzReader::pickPasses(OptimizationOptions& options) {
           // Most of these depend on closed world, so just set that. Set it both
           // on the global pass options, and in the internal state of this
           // TranslateToFuzzReader instance.
-          options.passOptions.closedWorld = true;
-          closedWorld = true;
+          options.passOptions.worldMode = WorldMode::Closed;
+          worldMode = WorldMode::Closed;
 
           switch (upTo(16)) {
             case 0:
@@ -343,8 +342,8 @@ void TranslateToFuzzReader::pickPasses(OptimizationOptions& options) {
     options.passOptions.shrinkLevel = upTo(3);
   }
 
-  if (!options.passOptions.closedWorld && oneIn(2)) {
-    options.passOptions.closedWorld = true;
+  if (options.passOptions.worldMode == WorldMode::Open && oneIn(2)) {
+    options.passOptions.worldMode = WorldMode::Closed;
   }
 
   // Prune things that error in JS if we call them (like SIMD), some of the
@@ -845,6 +844,17 @@ void TranslateToFuzzReader::setupTags() {
     jsTag->module = "fuzzing-support";
     jsTag->base = "jstag";
     wasm.addTag(std::move(jsTag));
+  }
+
+  // Export some tags, sometimes.
+  if (!preserveImportsAndExports) {
+    for (auto& tag : wasm.tags) {
+      if (isValidPublicType(tag->type) && oneIn(2)) {
+        auto exportName = Names::getValidExportName(wasm, tag->name);
+        wasm.addExport(
+          Builder::makeExport(exportName, tag->name, ExternalKind::Tag));
+      }
+    }
   }
 }
 
@@ -1672,7 +1682,7 @@ void TranslateToFuzzReader::processFunctions() {
 
   // Also fix up closed world, if we need to. We must do this at the end, so
   // nothing can break the closed world assumptions after.
-  if (closedWorld) {
+  if (worldMode == WorldMode::Closed) {
     for (auto& func : wasm.functions) {
       if (!func->imported()) {
         fixClosedWorld(func.get());
@@ -2183,7 +2193,7 @@ void TranslateToFuzzReader::mutate(Function* func) {
 }
 
 void TranslateToFuzzReader::fixClosedWorld(Function* func) {
-  assert(closedWorld);
+  assert(worldMode == WorldMode::Closed);
 
   struct Fixer
     : public ExpressionStackWalker<Fixer, UnifiedExpressionVisitor<Fixer>> {
@@ -2802,7 +2812,11 @@ Expression* TranslateToFuzzReader::_makeConcrete(Type type) {
                 &Self::makeStringGet);
   }
   if (type.isTuple()) {
-    options.add(FeatureSet::Multivalue, &Self::makeTupleMake);
+    if (type == Types::getI64Pair() && oneIn(2)) {
+      options.add(FeatureSet::WideArithmetic, &Self::makeWideIntExpression);
+    } else {
+      options.add(FeatureSet::Multivalue, &Self::makeTupleMake);
+    }
   }
   if (type.isRef()) {
     auto heapType = type.getHeapType();
@@ -3483,6 +3497,30 @@ Expression* TranslateToFuzzReader::makeTupleMake(Type type) {
     elements.push_back(make(t));
   }
   return builder.makeTupleMake(std::move(elements));
+}
+
+Expression* TranslateToFuzzReader::makeWideIntAddSub(Type type) {
+  assert(wasm.features.hasWideArithmetic());
+  assert(type == Types::getI64Pair());
+  auto op = oneIn(2) ? AddInt128 : SubInt128;
+  auto* leftLow = make(Type::i64);
+  auto* leftHigh = make(Type::i64);
+  auto* rightLow = make(Type::i64);
+  auto* rightHigh = make(Type::i64);
+  return builder.makeWideIntAddSub(op, leftLow, leftHigh, rightLow, rightHigh);
+}
+
+Expression* TranslateToFuzzReader::makeWideIntMul(Type type) {
+  assert(wasm.features.hasWideArithmetic());
+  assert(type == Types::getI64Pair());
+  auto op = oneIn(2) ? MulWideSInt64 : MulWideUInt64;
+  auto* left = make(Type::i64);
+  auto* right = make(Type::i64);
+  return builder.makeWideIntMul(op, left, right);
+}
+
+Expression* TranslateToFuzzReader::makeWideIntExpression(Type type) {
+  return oneIn(2) ? makeWideIntAddSub(type) : makeWideIntMul(type);
 }
 
 Expression* TranslateToFuzzReader::makeTupleExtract(Type type) {
@@ -6415,9 +6453,14 @@ Type TranslateToFuzzReader::getMVPType() {
 }
 
 Type TranslateToFuzzReader::getTupleType() {
+  // Give a significant chance to an i64 pair, for wide arithmetic.
+  if (wasm.features.hasWideArithmetic() && oneIn(5)) {
+    return Types::getI64Pair();
+  }
+
   std::vector<Type> elements;
-  size_t maxElements = 2 + upTo(fuzzParams->MAX_TUPLE_SIZE - 1);
-  for (size_t i = 0; i < maxElements; ++i) {
+  size_t numElements = 2 + upTo(fuzzParams->MAX_TUPLE_SIZE - 2);
+  for (size_t i = 0; i < numElements; ++i) {
     auto type = getSingleConcreteType();
     // Don't add a non-defaultable type into a tuple, as currently we can't
     // spill them into locals (that would require a "let").
@@ -6688,7 +6731,7 @@ bool TranslateToFuzzReader::isValidRefFuncTarget(Name func) {
   // reference, but in that mode we must only pass in jsCalled functions. We
   // handle direct calls in fixClosedWorld, but cannot handle indirect ones
   // easily, so just disallow taking references of those functions.
-  if (!closedWorld) {
+  if (worldMode == WorldMode::Open) {
     return true;
   }
   return !isCallRefImport(func);

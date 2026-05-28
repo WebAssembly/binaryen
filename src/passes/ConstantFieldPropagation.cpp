@@ -542,7 +542,7 @@ struct ConstantFieldPropagation : public Pass {
       return;
     }
 
-    if (!getPassOptions().closedWorld) {
+    if (getPassOptions().worldMode == WorldMode::Open) {
       Fatal() << "CFP requires --closed-world";
     }
 

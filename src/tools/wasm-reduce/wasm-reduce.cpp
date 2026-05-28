@@ -1089,7 +1089,6 @@ struct Reducer
       struct FunctionReplacer
         : public WalkerPass<PostWalker<FunctionReplacer>> {
         bool isFunctionParallel() override { return true; }
-        bool requiresNonNullableLocalFixups() override { return false; }
         std::unique_ptr<Pass> create() override {
           return std::make_unique<FunctionReplacer>();
         };
@@ -1102,6 +1101,7 @@ struct Reducer
           auto* block =
             ChildLocalizer(curr, getFunction(), *getModule(), getPassOptions())
               .getChildrenReplacement();
+          auto originalType = curr->type;
           auto* replacement = builder.replaceWithIdenticalType(curr);
           // We may have failed to come up with a replacement (e.g. for
           // non-nullable references), so manually add an `unreachable` in that
@@ -1110,7 +1110,7 @@ struct Reducer
             replacement = builder.makeUnreachable();
           }
           block->list.push_back(replacement);
-          block->type = curr->type;
+          block->type = originalType;
           replaceCurrent(block);
         }
         void visitRefFunc(RefFunc* curr) {

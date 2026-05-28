@@ -73,6 +73,7 @@
 //      from the IR before splitting.
 //
 #include "ir/module-splitting.h"
+#include "ir/effects.h"
 #include "ir/find_all.h"
 #include "ir/module-utils.h"
 #include "ir/names.h"
@@ -342,6 +343,8 @@ struct ModuleSplitter {
   // Map from original secondary function name to its trampoline
   std::unordered_map<Name, Name> trampolineMap;
 
+  void shareActiveTable(Module* secondary);
+
   // Initialization helpers
   static std::unique_ptr<Module> initSecondary(const Module& primary);
   static std::unordered_map<Name, Name>
@@ -590,6 +593,32 @@ Name ModuleSplitter::getTrampoline(Name funcName) {
   return trampoline;
 }
 
+void ModuleSplitter::shareActiveTable(Module* secondary) {
+  assert(tableManager.activeTable);
+  auto secondaryTable =
+    secondary->getTableOrNull(tableManager.activeTable->name);
+  if (secondaryTable) {
+    // In case it's already in the secondary module, sync the initial/max
+    secondaryTable->initial = tableManager.activeTable->initial;
+    secondaryTable->max = tableManager.activeTable->max;
+  } else {
+    secondaryTable =
+      ModuleUtils::copyTable(tableManager.activeTable, *secondary);
+    makeImportExport(
+      *tableManager.activeTable, *secondaryTable, "table", ExternalKind::Table);
+  }
+  if (tableManager.activeBase.global) {
+    auto* primaryGlobal = primary.getGlobal(tableManager.activeBase.global);
+    auto* secondaryGlobal =
+      secondary->getGlobalOrNull(tableManager.activeBase.global);
+    if (!secondaryGlobal) {
+      secondaryGlobal = ModuleUtils::copyGlobal(primaryGlobal, *secondary);
+      makeImportExport(
+        *primaryGlobal, *secondaryGlobal, "global", ExternalKind::Global);
+    }
+  }
+}
+
 void ModuleSplitter::thunkExportedSecondaryFunctions() {
   // Update exports of secondary functions in the primary module to export
   // wrapper functions that indirectly call the secondary functions. We are
@@ -760,6 +789,19 @@ void ModuleSplitter::shareImportableItems() {
   }
   if (tableManager.activeBase.global) {
     primaryUsed.globals.insert(tableManager.activeBase.global);
+  }
+
+  // If custom-descirptors is enabled, global initializers can trap. Trapping
+  // globals should stay in the primary module to preserve the trapping behavior
+  // upon instantiation.
+  if (primary.features.hasCustomDescriptors()) {
+    for (auto& global : primary.globals) {
+      if (global->init &&
+          EffectAnalyzer(config.passOptions, primary, global->init)
+            .hasUnremovableSideEffects()) {
+        primaryUsed.globals.insert(global->name);
+      }
+    }
   }
 
   // Compute the transitive closure of globals referenced in other globals'
@@ -988,6 +1030,7 @@ void ModuleSplitter::indirectCallsToSecondaryFunctions() {
   // corresponding table indices instead.
   struct CallIndirector : public PostWalker<CallIndirector> {
     ModuleSplitter& parent;
+    std::unordered_set<Module*> activeTableUsingSecondaries;
     CallIndirector(ModuleSplitter& parent) : parent(parent) {}
     void visitCall(Call* curr) {
       // Return if the call's target is not in one of the secondary module.
@@ -997,30 +1040,39 @@ void ModuleSplitter::indirectCallsToSecondaryFunctions() {
       // Return if the current module is the same module as the call's target,
       // because we don't need a call_indirect within the same module.
       Module* currModule = getModule();
-      if (currModule != &parent.primary &&
-          parent.secondaries.at(parent.funcToSecondaryIndex.at(curr->target))
-              .get() == currModule) {
+      Module* calleeModule =
+        parent.secondaries.at(parent.funcToSecondaryIndex.at(curr->target))
+          .get();
+      if (currModule == calleeModule) {
         return;
       }
 
-      Builder builder(*getModule());
-      Index secIndex = parent.funcToSecondaryIndex.at(curr->target);
-      auto* func = parent.secondaries.at(secIndex)->getFunction(curr->target);
+      Builder builder(*currModule);
+      auto* func = calleeModule->getFunction(curr->target);
       auto tableSlot =
         parent.tableManager.getSlot(curr->target, func->type.getHeapType());
-
       replaceCurrent(
         builder.makeCallIndirect(tableSlot.tableName,
                                  tableSlot.makeExpr(parent.primary),
                                  curr->operands,
                                  func->type.getHeapType(),
                                  curr->isReturn));
+
+      // Share the active table with the current module (caller). We share the
+      // active table with with calleeModule later in setupTablePathing.
+      if (currModule != &parent.primary) {
+        activeTableUsingSecondaries.insert(currModule);
+      }
     }
   };
   CallIndirector callIndirector(*this);
   callIndirector.walkModule(&primary);
   for (auto& secondaryPtr : secondaries) {
     callIndirector.walkModule(secondaryPtr.get());
+  }
+
+  for (auto* secondary : callIndirector.activeTableUsingSecondaries) {
+    shareActiveTable(secondary);
   }
 }
 
@@ -1076,6 +1128,8 @@ void ModuleSplitter::setupTablePatching() {
   }
 
   std::map<Module*, std::map<Index, Function*>> moduleToReplacedElems;
+  Name fillerName;
+  Type fillerType = Type(Signature(Type::none, Type::none), NonNullable, Exact);
   // Replace table references to secondary functions with an imported
   // placeholder that encodes the table index in its name:
   // `importNamespace`.`index`.
@@ -1096,22 +1150,38 @@ void ModuleSplitter::setupTablePatching() {
       Name secondaryName = config.secondaryNames.at(secondaryIndex);
       auto* secondaryFunc = secondary.getFunction(ref->func);
       moduleToReplacedElems[&secondary][index] = secondaryFunc;
-      if (!config.usePlaceholders) {
-        // TODO: This can create active element segments with lots of nulls. We
-        // should optimize them like we do data segments with zeros.
-        elem = Builder(primary).makeRefNull(HeapType::nofunc);
-        return;
+
+      if (config.usePlaceholders) {
+        auto placeholder = std::make_unique<Function>();
+        placeholder->module = config.placeholderNamespacePrefix.toString() +
+                              "." + secondaryName.toString();
+        placeholder->base = std::to_string(index);
+        placeholder->name = Names::getValidFunctionName(
+          primary, std::string("placeholder_") + placeholder->base.toString());
+        placeholder->hasExplicitName = true;
+        placeholder->type = secondaryFunc->type.with(Inexact);
+        elem =
+          Builder(primary).makeRefFunc(placeholder->name, placeholder->type);
+        primary.addFunction(std::move(placeholder));
+
+      } else { // !config.usePlaceholders
+        if (primary.features.hasReferenceTypes()) {
+          // TODO: This can create active element segments with lots of nulls.
+          // We should optimize them like we do data segments with zeros.
+          elem = Builder(primary).makeRefNull(HeapType::nofunc);
+          return;
+        }
+        // When reference-types is not enabled, we can't use a ref.null. Put a
+        // filler function that contains an unreachable.
+        if (!fillerName) {
+          fillerName = Names::getValidFunctionName(primary, "filler");
+          auto filler = Builder::makeFunction(
+            fillerName, fillerType, {}, Builder(primary).makeUnreachable());
+          filler->hasExplicitName = true;
+          primary.addFunction(std::move(filler));
+        }
+        elem = Builder(primary).makeRefFunc(fillerName, fillerType);
       }
-      auto placeholder = std::make_unique<Function>();
-      placeholder->module = config.placeholderNamespacePrefix.toString() + "." +
-                            secondaryName.toString();
-      placeholder->base = std::to_string(index);
-      placeholder->name = Names::getValidFunctionName(
-        primary, std::string("placeholder_") + placeholder->base.toString());
-      placeholder->hasExplicitName = true;
-      placeholder->type = secondaryFunc->type.with(Inexact);
-      elem = Builder(primary).makeRefFunc(placeholder->name, placeholder->type);
-      primary.addFunction(std::move(placeholder));
     });
 
   if (moduleToReplacedElems.size() == 0) {
@@ -1121,40 +1191,10 @@ void ModuleSplitter::setupTablePatching() {
 
   for (auto& [secondaryPtr, replacedElems] : moduleToReplacedElems) {
     Module& secondary = *secondaryPtr;
-    // Import and export the active table if necessary. Unless we use an
-    // existing table as an active table (e.g. because reference-types is
-    // disabled) and that table was already being used by an existing indirect
-    // call, shareImportableItems wasn't able to mark it as used in secondaries,
-    // so we should export and import the active table here.
-    auto secondaryTable =
-      secondary.getTableOrNull(tableManager.activeTable->name);
-    if (secondaryTable) {
-      // In case it's already in the secondary module, sync the initial/max
-      secondaryTable->initial = tableManager.activeTable->initial;
-      secondaryTable->max = tableManager.activeTable->max;
-    } else {
-      secondaryTable =
-        ModuleUtils::copyTable(tableManager.activeTable, secondary);
-      makeImportExport(*tableManager.activeTable,
-                       *secondaryTable,
-                       "table",
-                       ExternalKind::Table);
-    }
+    shareActiveTable(&secondary);
+    auto* secondaryTable = secondary.getTable(tableManager.activeTable->name);
 
     if (tableManager.activeBase.global) {
-      // Import and export the active table's base global if necessary. Unless
-      // the base global was already being used elsewhere in secondaries,
-      // shareImportableItems wasn't able to mark it as used in secondaries, so
-      // we should export and import it here.
-      auto* primaryGlobal = primary.getGlobal(tableManager.activeBase.global);
-      auto* secondaryGlobal =
-        secondary.getGlobalOrNull(tableManager.activeBase.global);
-      if (!secondaryGlobal) {
-        secondaryGlobal = ModuleUtils::copyGlobal(primaryGlobal, secondary);
-      }
-      makeImportExport(
-        *primaryGlobal, *secondaryGlobal, "global", ExternalKind::Global);
-
       assert(tableManager.activeTableSegments.size() == 1 &&
              "Unexpected number of segments with non-const base");
       assert(secondary.tables.size() == 1 && secondary.elementSegments.empty());

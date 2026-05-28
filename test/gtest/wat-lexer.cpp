@@ -22,6 +22,14 @@
 using namespace wasm::WATParser;
 using namespace std::string_view_literals;
 
+TEST(LexerTest, EmptyInput) {
+  EXPECT_TRUE(Lexer(""sv).empty());
+  EXPECT_EQ(Lexer(""sv).takeI32(), std::nullopt);
+  EXPECT_EQ(Lexer(""sv).takeF32(), std::nullopt);
+  EXPECT_EQ(Lexer(""sv).takeString(), std::nullopt);
+  EXPECT_EQ(Lexer(""sv).takeID(), std::nullopt);
+}
+
 TEST(LexerTest, LexWhitespace) {
   Lexer lexer(" 1\t2\n3\r4 \n\n\t 5 "sv);
 
@@ -915,6 +923,7 @@ TEST(LexerTest, LexString) {
     "_$_\xC2\xA3_\xE2\x82\xAC_\xF0\x90\x8D\x88_"s);
 
   EXPECT_FALSE(Lexer("\"unterminated"sv).takeString());
+  EXPECT_FALSE(Lexer("\"foo\\"sv).takeString());
   EXPECT_FALSE(Lexer("\"unescaped nul\0\""sv).takeString());
   EXPECT_FALSE(Lexer("\"unescaped U+19\x19\""sv).takeString());
   EXPECT_FALSE(Lexer("\"unescaped U+7f\x7f\""sv).takeString());

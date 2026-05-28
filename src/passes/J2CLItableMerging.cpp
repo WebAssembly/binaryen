@@ -72,7 +72,7 @@ struct J2CLItableMerging : public Pass {
       return;
     }
 
-    if (!getPassOptions().closedWorld) {
+    if (getPassOptions().worldMode == WorldMode::Open) {
       Fatal() << "--merge-j2cl-itables requires --closed-world";
     }
 
@@ -384,7 +384,8 @@ struct J2CLItableMerging : public Pass {
 
     public:
       TypeRewriter(Module& wasm, J2CLItableMerging& parent)
-        : GlobalTypeRewriter(wasm), parent(parent) {}
+        : GlobalTypeRewriter(wasm, parent.getPassOptions().worldMode),
+          parent(parent) {}
 
       void modifyStruct(HeapType oldStructType, Struct& struct_) override {
         auto structInfoIt = parent.structInfoByVtableType.find(oldStructType);

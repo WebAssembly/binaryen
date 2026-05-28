@@ -229,6 +229,7 @@ void writePlaceholderMap(
 
 void setCommonSplitConfigs(ModuleSplitting::Config& config,
                            const WasmSplitOptions& options) {
+  config.passOptions = options.passOptions;
   config.usePlaceholders = options.usePlaceholders;
   config.minimizeNewExportNames = !options.passOptions.debugInfo;
   if (options.importNamespace) {
@@ -240,6 +241,33 @@ void setCommonSplitConfigs(ModuleSplitting::Config& config,
   if (options.placeholderNamespacePrefix) {
     config.placeholderNamespacePrefix = *options.placeholderNamespacePrefix;
   }
+}
+
+// Returns whether it is valid to split a function out from the main module.
+bool canSplitFunc(Function* func,
+                  const Module& wasm,
+                  const WasmSplitOptions& options) {
+  if (!func) {
+    if (!options.quiet) {
+      std::cerr << "warning: function " << func->name << " does not exist\n";
+    }
+    return false;
+  }
+  if (func->imported()) {
+    if (!options.quiet) {
+      std::cerr << "warning: cannot split out imported function " << func->name
+                << "\n";
+    }
+    return false;
+  }
+  if (func->name == wasm.start) {
+    if (!options.quiet) {
+      std::cerr << "warning: cannot split out start function " << func->name
+                << "\n";
+    }
+    return false;
+  }
+  return true;
 }
 
 void splitModule(const WasmSplitOptions& options) {
@@ -283,17 +311,7 @@ void splitModule(const WasmSplitOptions& options) {
   // Use the explicitly provided `splitFuncs`.
   for (auto& func : options.splitFuncs) {
     auto* function = wasm.getFunctionOrNull(func);
-    if (!function) {
-      if (!options.quiet) {
-        std::cerr << "warning: function " << func << " does not exist\n";
-      }
-      continue;
-    }
-    if (function->imported()) {
-      if (!options.quiet) {
-        std::cerr << "warning: cannot split out imported function " << func
-                  << "\n";
-      }
+    if (!canSplitFunc(function, wasm, options)) {
       continue;
     }
     if (!options.quiet && options.keepFuncs.contains(func)) {
@@ -435,15 +453,15 @@ void multiSplitModule(const WasmSplitOptions& options) {
       continue;
     }
     assert(currFuncs);
+    if (!canSplitFunc(wasm.getFunctionOrNull(name), wasm, options)) {
+      continue;
+    }
     currFuncs->insert(name);
     auto [it, inserted] = funcModules.insert({name, currModule});
     if (!inserted && it->second != currModule) {
       Fatal() << "Function " << name << "cannot be assigned to module "
               << currModule << "; it is already assigned to module "
               << it->second << '\n';
-    }
-    if (inserted && !options.quiet && !wasm.getFunctionOrNull(name)) {
-      std::cerr << "warning: Function " << name << " does not exist\n";
     }
   }
 

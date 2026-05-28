@@ -23,6 +23,7 @@
 #include "ir/intrinsics.h"
 #include "pass.h"
 #include "support/name.h"
+#include "support/utilities.h"
 #include "wasm-traversal.h"
 #include "wasm-type.h"
 #include "wasm.h"
@@ -303,10 +304,8 @@ public:
   // (e.g., if we write, we must remain ordered before someone that reads).
   //
   // This assumes the things whose effects we are comparing will both execute,
-  // at least if neither of them transfers control flow away. That is, we assume
-  // that there is no transfer of control flow *between* them: we are comparing
-  // things appear after each other, perhaps with some other code in the middle,
-  // but that code does not transfer control flow. It is not valid to call this
+  // at least if neither of them transfers control flow away. We assume there is
+  // no transfer of control flow *between* them. It is not valid to call this
   // method in other situations, like this:
   //
   //   A
@@ -326,12 +325,15 @@ public:
   //                               ;; control flow transfer
   //   B
   //
-  // That the things being compared both execute only matters in the case of
-  // traps-never-happen: in that mode we can move traps but only if doing so
-  // would not make them start to appear when they did not. In the second
-  // example we can't reorder A and B if B traps, but in the first example we
-  // can reorder them even if B traps (even if A has a global effect like a
-  // global.set, since we assume B does not trap in traps-never-happen).
+  // (Note that if they appear in inside a loop, A and B may overlap or even be
+  // the same expression; this is fine because A still executes before B, even
+  // if also executes during and after B across different loop iterations.) That
+  // A and B both execute only matters in the case of traps-never-happen: in
+  // that mode we can move traps but only if doing so would not make them start
+  // to appear when they did not previously. In the example with the br_if we
+  // can't reorder A and B if B traps, but in the valid examples we can reorder
+  // them even if B traps (even if A has a global effect like a global.set,
+  // since we assume B does not trap in traps-never-happen).
   bool orderedBefore(const EffectAnalyzer& other) const {
     // Cannot reorder control flow and side effects.
     if ((transfersControlFlow() && other.hasSideEffects()) ||
@@ -670,25 +672,32 @@ private:
       }
     }
 
+    // Handle effects due to a null type arriving in a place where a null input
+    // causes trapping. That is, handle the case of the type proving that the
+    // input is null.
+    // Returns true iff there is no need to consider further effects.
+    bool trapOnNull(Type type) {
+      if (type == Type::unreachable) {
+        return true;
+      }
+      assert(type.isRef());
+      if (type.isNull()) {
+        parent.trap = true;
+        return true;
+      }
+      if (type.isNullable()) {
+        parent.implicitTrap = true;
+      }
+
+      return false;
+    }
+
     // Handle effects due to an explicit null check of the operands in `exprs`.
     // Returns true iff there is no need to consider further effects.
     bool trapOnNull(std::initializer_list<Expression*> exprs) {
       for (auto* expr : exprs) {
-        if (expr && expr->type == Type::unreachable) {
+        if (expr && trapOnNull(expr->type)) {
           return true;
-        }
-      }
-      for (auto* expr : exprs) {
-        assert(!expr || expr->type.isRef());
-        if (expr && expr->type.isNull()) {
-          parent.trap = true;
-          return true;
-        }
-      }
-      for (auto* expr : exprs) {
-        if (expr && expr->type.isNullable()) {
-          parent.implicitTrap = true;
-          break;
         }
       }
       return false;
@@ -716,71 +725,57 @@ private:
     }
 
     void visitCall(Call* curr) {
-      // call.without.effects has no effects.
       if (Intrinsics(parent.module).isCallWithoutEffects(curr)) {
-        return;
-      }
-
-      // Get the target's effects, if they exist. Note that we must handle the
-      // case of the function not yet existing (we may be executed in the middle
-      // of a pass, which may have built up calls but not the targets of those
-      // calls; in such a case, we do not find the targets and therefore assume
-      // we know nothing about the effects, which is safe).
-      const EffectAnalyzer* targetEffects = nullptr;
-      if (auto* target = parent.module.getFunctionOrNull(curr->target)) {
-        targetEffects = target->effects.get();
-      }
-
-      if (curr->isReturn) {
-        parent.branchesOut = true;
-        // When EH is enabled, any call can throw.
-        if (parent.features.hasExceptionHandling() &&
-            (!targetEffects || targetEffects->throws())) {
-          parent.hasReturnCallThrow = true;
-        }
-      }
-
-      if (targetEffects) {
-        // We have effect information for this call target, and can just use
-        // that. The one change we may want to make is to remove throws_, if the
-        // target function throws and we know that will be caught anyhow, the
-        // same as the code below for the general path. We can always filter out
-        // throws for return calls because they are already more precisely
-        // captured by `branchesOut`, which models the return, and
-        // `hasReturnCallThrow`, which models the throw that will happen after
-        // the return.
-        if (targetEffects->throws_ && (parent.tryDepth > 0 || curr->isReturn)) {
-          auto filteredEffects = *targetEffects;
-          filteredEffects.throws_ = false;
-          parent.mergeIn(filteredEffects);
-        } else {
-          // Just merge in all the effects.
-          parent.mergeIn(*targetEffects);
+        // The only effect this can have is to branch (which is an effect of the
+        // return, not the call).
+        if (curr->isReturn) {
+          parent.branchesOut = true;
         }
         return;
       }
 
-      parent.calls = true;
-      // When EH is enabled, any call can throw. Skip this for return calls
-      // because the throw is already more precisely captured by the combination
-      // of `hasReturnCallThrow` and `branchesOut`.
-      if (parent.features.hasExceptionHandling() && parent.tryDepth == 0 &&
-          !curr->isReturn) {
-        parent.throws_ = true;
+      const EffectAnalyzer* callTargetEffects = nullptr;
+      if (auto* target = parent.module.getFunctionOrNull(curr->target);
+          target && target->effects) {
+        callTargetEffects = target->effects.get();
       }
+      addCallEffects(curr, callTargetEffects);
     }
     void visitCallIndirect(CallIndirect* curr) {
-      parent.calls = true;
-      if (curr->isReturn) {
-        parent.branchesOut = true;
-        if (parent.features.hasExceptionHandling()) {
-          parent.hasReturnCallThrow = true;
-        }
+      auto* table = parent.module.getTable(curr->table);
+      if (trapOnNull(table->type)) {
+        return;
       }
-      if (parent.features.hasExceptionHandling() &&
-          (parent.tryDepth == 0 && !curr->isReturn)) {
-        parent.throws_ = true;
+
+      if (!Type::isSubType(Type(curr->heapType, Nullability::NonNullable),
+                           table->type)) {
+        parent.trap = true;
+        return;
       }
+
+      // Due to index out of bounds. Type-related traps are handled above and
+      // may set either implicitTrap or trap (or neither).
+      parent.implicitTrap = true;
+
+      const EffectAnalyzer* callTargetEffects = nullptr;
+      if (auto it = parent.module.indirectCallEffects.find(curr->heapType);
+          it != parent.module.indirectCallEffects.end()) {
+        callTargetEffects = it->second.get();
+      }
+      addCallEffects(curr, callTargetEffects);
+    }
+    void visitCallRef(CallRef* curr) {
+      if (trapOnNull(curr->target)) {
+        return;
+      }
+
+      const EffectAnalyzer* callTargetEffects = nullptr;
+      if (auto it = parent.module.indirectCallEffects.find(
+            curr->target->type.getHeapType());
+          it != parent.module.indirectCallEffects.end()) {
+        callTargetEffects = it->second.get();
+      }
+      addCallEffects(curr, callTargetEffects);
     }
     void visitLocalGet(LocalGet* curr) {
       parent.localsRead.insert(curr->index);
@@ -1038,22 +1033,6 @@ private:
     void visitTupleExtract(TupleExtract* curr) {}
     void visitRefI31(RefI31* curr) {}
     void visitI31Get(I31Get* curr) { trapOnNull(curr->i31); }
-    void visitCallRef(CallRef* curr) {
-      if (trapOnNull(curr->target)) {
-        return;
-      }
-      if (curr->isReturn) {
-        parent.branchesOut = true;
-        if (parent.features.hasExceptionHandling()) {
-          parent.hasReturnCallThrow = true;
-        }
-      }
-      parent.calls = true;
-      if (parent.features.hasExceptionHandling() &&
-          (parent.tryDepth == 0 && !curr->isReturn)) {
-        parent.throws_ = true;
-      }
-    }
     void visitRefTest(RefTest* curr) {}
 
     void visitRefCast(RefCast* curr) {
@@ -1335,6 +1314,61 @@ private:
         parent.throws_ = true;
       }
     }
+
+  private:
+    // Populate a call's effects using effects computed from GlobalEffects. Note
+    // that calls may have other effects that aren't captured by the function
+    // body of the target (e.g. a call_ref may trap on null refs).
+    template<typename CallType>
+    void addCallEffectsFromGlobalEffects(const CallType* curr,
+                                         const EffectAnalyzer& funcEffects) {
+      if (curr->isReturn) {
+        if (funcEffects.throws()) {
+          parent.hasReturnCallThrow = true;
+        }
+      }
+
+      if (funcEffects.throws_ && (parent.tryDepth > 0 || curr->isReturn)) {
+        // We can ignore a throw here, as the parent catches it.
+        //
+        // Also, we can filter out throws for return calls because they are
+        // already more precisely captured by `branchesOut`, which models the
+        // return, and `hasReturnCallThrow`, which models the throw that will
+        // happen after the return.
+        auto filteredEffects = funcEffects;
+        filteredEffects.throws_ = false;
+        parent.mergeIn(filteredEffects);
+      } else {
+        parent.mergeIn(funcEffects);
+      }
+    }
+
+    // Common effects logic for the 3 types of call: `call`, `call_indirect`,
+    // and `call_ref`.
+    template<typename CallType>
+    void addCallEffects(const CallType* curr,
+                        const EffectAnalyzer* callTargetEffects) {
+      if (curr->isReturn) {
+        parent.branchesOut = true;
+      }
+
+      if (callTargetEffects) {
+        addCallEffectsFromGlobalEffects(curr, *callTargetEffects);
+        return;
+      }
+
+      parent.calls = true;
+      // If EH is enabled and we don't have global effects information,
+      // assume that the call target may throw.
+      if (parent.features.hasExceptionHandling()) {
+        if (curr->isReturn) {
+          parent.hasReturnCallThrow = true;
+        }
+        if (parent.tryDepth == 0 && !curr->isReturn) {
+          parent.throws_ = true;
+        }
+      }
+    }
   };
 
 public:
@@ -1467,10 +1501,8 @@ public:
   }
 };
 
-} // namespace wasm
+std::ostream& operator<<(std::ostream& o, const EffectAnalyzer& effects);
 
-namespace std {
-std::ostream& operator<<(std::ostream& o, wasm::EffectAnalyzer& effects);
-} // namespace std
+} // namespace wasm
 
 #endif // wasm_ir_effects_h
