@@ -188,21 +188,20 @@ def parse_output_fuzz_exec(text):
     # module boundaries are, so always just returns items for a single module.
     items = []
     for line in text.split('\n'):
+        # Skip empty lines.
+        if not line:
+            continue
         func = FUZZ_EXEC_FUNC.match(line)
         if func:
             # Add a '$' prefix to the name because that is how it will be parsed
             # in the input.
             name = '$' + func.group("name")
             items.append((('func', name), [line]))
-        elif line.startswith('[host limit'):
-            # Skip mentions of host limits that we hit. This can happen even
-            # before we reach the execution of a function (if it happens during
-            # instantiation of the module), in which case |items| may be empty,
-            # and we'd error on the code below.
-            pass
-        elif line:
-            assert items, 'unexpected non-invocation line'
+        elif items:
             items[-1][1].append(line)
+        # Skip if `items` is empty. We can hit host limitations and traps
+        # during instantiation, and do not have a function to report them on.
+        # TODO: Find a way to report them at the module level.
     return [items]
 
 
