@@ -35,9 +35,10 @@
  )
 
  ;; CHECK:      [fuzz-exec] export export
- (func $export (export "export")
+ ;; CHECK-NEXT: [fuzz-exec] note result: export => 42
+ (func $export (export "export") (result i32)
   ;; An export to be called later, proving we did not trap during start.
-  (nop)
+  (i32.const 42)
  )
 )
 
