@@ -6,13 +6,13 @@
 ;; yet exist, so this traps.
 
 (module
+ ;; CHECK:      [exception thrown: failed to instantiate module]
  (import "fuzzing-support" "table-get" (func $table-get (param i32) (result funcref)))
 
  (table $0 i64 8 funcref)
 
  (export "table" (table $0))
 
- ;; CHECK:      [exception thrown: failed to instantiate module]
  (start $0)
 
  (func $0
