@@ -12,6 +12,7 @@
 
   (tag $tag_suspend (type $void_func))
 
+  ;; CHECK:      [trap unhandled suspend in start function]
   (start $start)
 
   (func $start
