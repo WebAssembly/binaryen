@@ -1867,7 +1867,7 @@ class ClusterFuzz(TestCaseHandler):
         # (rarely, none might exist), unless we've decided to ignore the entire
         # run, or if the wasm errored during instantiation, which can happen due
         # to a testcase with a segment out of bounds, say.
-        if output != IGNORE and not INSTANTIATE_ERROR in output:
+        if output != IGNORE and INSTANTIATE_ERROR not in output:
             # Do the work to find if there were function exports: extract the
             # wasm from the JS, and process it.
             run([sys.executable,
