@@ -104,9 +104,8 @@ struct PrintBoundary : public Pass {
   // results.
   //
   // We emit an array only when needed, unless forceArray is set.
-  json::Value::Ref getTypes(Type type,
-                            bool forceArray = false,
-                            size_t depth = 0) {
+  json::Value::Ref
+  getTypes(Type type, bool forceArray = false, size_t depth = 0) {
     // Avoid infinite recursion.
     if (type.isRef() && depth == 0) {
       auto heapType = type.getHeapType();
