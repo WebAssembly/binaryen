@@ -743,12 +743,12 @@ void ModuleSplitter::shareImportableItems() {
     // module, it can't.
     walkSegments(collector, &module);
     for (auto& segment : module.dataSegments) {
-      if (segment->memory.is()) {
+      if (segment->isActive()) {
         used.memories.insert(segment->memory);
       }
     }
     for (auto& segment : module.elementSegments) {
-      if (segment->table.is()) {
+      if (segment->isActive()) {
         used.tables.insert(segment->table);
       }
     }

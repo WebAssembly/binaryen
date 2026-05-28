@@ -7,12 +7,12 @@
 ;; stack (which would cause subsequent assertions to fail).
 
 (module
+  ;; CHECK:      [trap unhandled suspend in start function]
   (type $void_func (func))
   (type $cont (cont $void_func))
 
   (tag $tag_suspend (type $void_func))
 
-  ;; CHECK:      [trap unhandled suspend in start function]
   (start $start)
 
   (func $start

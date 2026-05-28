@@ -146,7 +146,7 @@ ElementSegment* copyElementSegment(const ElementSegment* segment, Module& out) {
     return out.addElementSegment(std::move(ret));
   };
 
-  if (segment->table.isNull()) {
+  if (segment->isPassive()) {
     return copy(std::make_unique<ElementSegment>());
   } else {
     auto offset = ExpressionManipulator::copy(segment->offset, out);
@@ -188,8 +188,7 @@ DataSegment* copyDataSegment(const DataSegment* segment, Module& out) {
   ret->name = segment->name;
   ret->hasExplicitName = segment->hasExplicitName;
   ret->memory = segment->memory;
-  ret->isPassive = segment->isPassive;
-  if (!segment->isPassive) {
+  if (segment->isActive()) {
     auto offset = ExpressionManipulator::copy(segment->offset, out);
     ret->offset = offset;
   }

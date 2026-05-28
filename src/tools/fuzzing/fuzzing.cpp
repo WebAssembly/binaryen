@@ -451,13 +451,13 @@ void TranslateToFuzzReader::setupMemory() {
       auto segment = builder.makeDataSegment();
       segment->setName(Names::getValidDataSegmentName(wasm, Name::fromInt(i)),
                        false);
-      segment->isPassive = bool(upTo(2));
+      bool isPassive = bool(upTo(2));
       size_t segSize = upTo(fuzzParams->USABLE_MEMORY * 2);
       segment->data.resize(segSize);
       for (size_t j = 0; j < segSize; j++) {
         segment->data[j] = upTo(512);
       }
-      if (!segment->isPassive) {
+      if (!isPassive) {
         segment->offset = builder.makeConst(
           Literal::makeFromInt32(memCovered, memory->addressType));
         memCovered += segSize;
@@ -644,7 +644,7 @@ void TranslateToFuzzReader::setupTables() {
     std::any_of(wasm.elementSegments.begin(),
                 wasm.elementSegments.end(),
                 [&](auto& segment) {
-                  return segment->table.is() && segment->type == funcref;
+                  return segment->isActive() && segment->type == funcref;
                 });
   auto addressType = wasm.getTable(funcrefTableName)->addressType;
   if (!hasFuncrefElemSegment) {
@@ -870,7 +870,7 @@ void TranslateToFuzzReader::finalizeMemory() {
   auto& memory = wasm.memories[0];
   for (auto& segment : wasm.dataSegments) {
     Address maxOffset = segment->data.size();
-    if (!segment->isPassive) {
+    if (segment->isActive()) {
       if (!wasm.features.hasGC()) {
         // Using a non-imported global in a segment offset is not valid in wasm
         // unless GC is enabled. This can occur due to us adding a local
