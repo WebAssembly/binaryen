@@ -183,29 +183,41 @@ def parse_output_modules(text):
     return modules
 
 
-def parse_output_fuzz_exec(text):
+def parse_output_fuzz_exec(text, named_items):
     # Returns the same data as `parse_output_modules`, but can't tell where
     # module boundaries are, so always just returns items for a single module.
     items = []
     for line in text.split('\n'):
-        # Skip empty lines.
-        if not line:
-            continue
         func = FUZZ_EXEC_FUNC.match(line)
         if func:
             # Add a '$' prefix to the name because that is how it will be parsed
             # in the input.
             name = '$' + func.group("name")
             items.append((('func', name), [line]))
-        elif items:
-            items[-1][1].append(line)
-        # Skip if `items` is empty. We can hit host limitations and traps
-        # during instantiation, and do not have a function to report them on.
-        # TODO: Find a way to report them at the module level.
+        elif line.startswith('[host limit'):
+            # Skip mentions of host limits that we hit. This can happen even
+            # before we reach the execution of a function (if it happens during
+            # instantiation of the module), in which case |items| may be empty,
+            # and we'd error on the code below.
+            pass
+        elif line:
+            if not items:
+                # Early output before any export was executed. Associate it with
+                # the start function if we can find it, otherwise the first named
+                # item as a fallback.
+                start_item = next((item for item in named_items if item[0] == 'start'), None)
+                if start_item:
+                    items.append((start_item, [line]))
+                elif named_items:
+                    items.append((named_items[0], [line]))
+                else:
+                    items.append((('module', 'trap'), [line]))
+            else:
+                items[-1][1].append(line)
     return [items]
 
 
-def get_command_output(args, kind, test, lines, tmp):
+def get_command_output(args, kind, test, lines, tmp, named_items):
     # Return list of maps from prefixes to lists of module items of the form
     # ((kind, name), [line]). The outer list has an entry for each module.
     command_output = []
@@ -232,7 +244,7 @@ def get_command_output(args, kind, test, lines, tmp):
             if kind == 'wat':
                 module_outputs = parse_output_modules(output)
             elif kind == 'fuzz-exec':
-                module_outputs = parse_output_fuzz_exec(output)
+                module_outputs = parse_output_fuzz_exec(output, named_items)
             else:
                 assert False, "unknown output kind"
             for i in range(len(module_outputs)):
@@ -258,7 +270,14 @@ def update_test(args, test, lines, tmp):
         # Skip the notice if it is already in the output
         lines = lines[1:]
 
-    command_output = get_command_output(args, output_kind, test, lines, tmp)
+    named_items = []
+    for line in lines:
+        match = ITEM_RE.match(line)
+        if match:
+            _, kind, name = indentKindName(match)
+            named_items.append((kind, name))
+
+    command_output = get_command_output(args, output_kind, test, lines, tmp, named_items)
 
     prefixes = {prefix for module_output in command_output for prefix in module_output.keys()}
     check_line_re = re.compile(r'^\s*;;\s*(' + '|'.join(prefixes) +
@@ -273,13 +292,6 @@ def update_test(args, test, lines, tmp):
                 filtered.append(lines[i])
         filtered.append(lines[-1])
         lines = filtered
-
-    named_items = []
-    for line in lines:
-        match = ITEM_RE.match(line)
-        if match:
-            _, kind, name = indentKindName(match)
-            named_items.append((kind, name))
 
     notice_args = ''
     if all_items:
