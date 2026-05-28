@@ -3851,7 +3851,7 @@ private:
     // apply active memory segments
     for (size_t i = 0, e = wasm.dataSegments.size(); i < e; ++i) {
       auto& segment = wasm.dataSegments[i];
-      if (segment->isPassive) {
+      if (segment->isPassive()) {
         continue;
       }
 

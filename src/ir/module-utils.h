@@ -95,7 +95,7 @@ template<typename T> inline void iterDefinedMemories(Module& wasm, T visitor) {
 template<typename T>
 inline void iterMemorySegments(Module& wasm, Name memory, T visitor) {
   for (auto& segment : wasm.dataSegments) {
-    if (!segment->isPassive && segment->memory == memory) {
+    if (segment->isActive() && segment->memory == memory) {
       visitor(segment.get());
     }
   }
@@ -104,7 +104,7 @@ inline void iterMemorySegments(Module& wasm, Name memory, T visitor) {
 template<typename T>
 inline void iterActiveDataSegments(Module& wasm, T visitor) {
   for (auto& segment : wasm.dataSegments) {
-    if (!segment->isPassive) {
+    if (segment->isActive()) {
       visitor(segment.get());
     }
   }
@@ -142,7 +142,7 @@ inline void iterTableSegments(Module& wasm, Name table, T visitor) {
 template<typename T>
 inline void iterActiveElementSegments(Module& wasm, T visitor) {
   for (auto& segment : wasm.elementSegments) {
-    if (segment->table.is()) {
+    if (segment->isActive()) {
       visitor(segment.get());
     }
   }

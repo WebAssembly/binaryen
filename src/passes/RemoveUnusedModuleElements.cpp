@@ -314,7 +314,7 @@ struct Analyzer {
 
   void prepare() {
     for (auto& elem : module->elementSegments) {
-      if (!elem->table) {
+      if (elem->isPassive()) {
         continue;
       }
       auto& flatTableInfo = flatTableInfoMap[elem->table];
@@ -862,7 +862,7 @@ struct RemoveUnusedModuleElements : public Pass {
       }
     };
     ModuleUtils::iterActiveDataSegments(*module, [&](DataSegment* segment) {
-      if (segment->memory.is()) {
+      if (segment->isActive()) {
         auto* memory = module->getMemory(segment->memory);
         maybeRootSegment(ModuleElementKind::DataSegment,
                          segment->name,
@@ -874,7 +874,7 @@ struct RemoveUnusedModuleElements : public Pass {
     });
     ModuleUtils::iterActiveElementSegments(
       *module, [&](ElementSegment* segment) {
-        if (segment->table.is()) {
+        if (segment->isActive()) {
           auto* table = module->getTable(segment->table);
           maybeRootSegment(ModuleElementKind::ElementSegment,
                            segment->name,

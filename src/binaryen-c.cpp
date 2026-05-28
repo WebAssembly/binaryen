@@ -5557,7 +5557,7 @@ BinaryenIndex BinaryenGetNumElementSegments(BinaryenModuleRef module) {
 }
 BinaryenExpressionRef
 BinaryenElementSegmentGetOffset(BinaryenElementSegmentRef elem) {
-  if (((ElementSegment*)elem)->table.isNull()) {
+  if (((ElementSegment*)elem)->isPassive()) {
     Fatal() << "elem segment is passive.";
   }
   return ((ElementSegment*)elem)->offset;
@@ -5611,12 +5611,12 @@ void BinaryenSetMemory(BinaryenModuleRef module,
   for (BinaryenIndex i = 0; i < numSegments; i++) {
     auto explicitName = segmentNames && segmentNames[i];
     auto name = explicitName ? Name(segmentNames[i]) : Name::fromInt(i);
-    auto curr = Builder::makeDataSegment(name,
-                                         memory->name,
-                                         segmentPassives[i],
-                                         (Expression*)segmentOffsets[i],
-                                         segmentDatas[i],
-                                         segmentSizes[i]);
+    auto curr =
+      Builder::makeDataSegment(name,
+                               segmentPassives[i] ? Name() : memory->name,
+                               (Expression*)segmentOffsets[i],
+                               segmentDatas[i],
+                               segmentSizes[i]);
     curr->hasExplicitName = explicitName;
     ((Module*)module)->addDataSegment(std::move(curr));
   }
@@ -5766,7 +5766,7 @@ size_t BinaryenGetDataSegmentByteLength(BinaryenDataSegmentRef segment) {
   return ((DataSegment*)segment)->data.size();
 }
 bool BinaryenGetDataSegmentPassive(BinaryenDataSegmentRef segment) {
-  return ((DataSegment*)segment)->isPassive;
+  return ((DataSegment*)segment)->isPassive();
 }
 void BinaryenCopyDataSegmentData(BinaryenDataSegmentRef segment, char* buffer) {
   std::copy(((DataSegment*)segment)->data.cbegin(),
@@ -5783,12 +5783,12 @@ void BinaryenAddDataSegment(BinaryenModuleRef module,
   auto* wasm = (Module*)module;
   auto name =
     segmentName ? Name(segmentName) : Name::fromInt(wasm->dataSegments.size());
-  auto curr = Builder::makeDataSegment(name,
-                                       memoryName ? memoryName : "0",
-                                       segmentPassive,
-                                       (Expression*)segmentOffset,
-                                       segmentData,
-                                       segmentSize);
+  auto curr = Builder::makeDataSegment(
+    name,
+    segmentPassive ? Name() : (memoryName ? memoryName : "0"),
+    (Expression*)segmentOffset,
+    segmentData,
+    segmentSize);
   curr->hasExplicitName = segmentName ? true : false;
   wasm->addDataSegment(std::move(curr));
 }
@@ -6333,7 +6333,7 @@ void BinaryenElementSegmentSetTable(BinaryenElementSegmentRef elem,
   ((ElementSegment*)elem)->table = table;
 }
 bool BinaryenElementSegmentIsPassive(BinaryenElementSegmentRef elem) {
-  return ((ElementSegment*)elem)->table.isNull();
+  return ((ElementSegment*)elem)->isPassive();
 }
 
 //
