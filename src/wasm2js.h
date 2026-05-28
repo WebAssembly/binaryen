@@ -97,7 +97,7 @@ bool isTableExported(Module& wasm) {
 
 bool hasActiveSegments(Module& wasm) {
   for (Index i = 0; i < wasm.dataSegments.size(); i++) {
-    if (!wasm.dataSegments[i]->isPassive) {
+    if (wasm.dataSegments[i]->isActive()) {
       return true;
     }
   }
@@ -2870,7 +2870,7 @@ void Wasm2JSGlue::emitMemory() {
 
   // If we have passive memory segments, we need to store those.
   for (auto& seg : wasm.dataSegments) {
-    if (seg->isPassive) {
+    if (seg->isPassive()) {
       out << "  var memorySegments = {};\n";
       break;
     }
@@ -2907,7 +2907,7 @@ void Wasm2JSGlue::emitMemory() {
 
   for (Index i = 0; i < wasm.dataSegments.size(); i++) {
     auto& seg = wasm.dataSegments[i];
-    if (seg->isPassive) {
+    if (seg->isPassive()) {
       // Fancy passive segments are decoded into typed arrays on the side, for
       // later copying.
       out << "memorySegments[" << i
@@ -2934,7 +2934,7 @@ void Wasm2JSGlue::emitMemory() {
     out << "function initActiveSegments(imports) {\n";
     for (Index i = 0; i < wasm.dataSegments.size(); i++) {
       auto& seg = wasm.dataSegments[i];
-      if (!seg->isPassive) {
+      if (seg->isActive()) {
         // Plain active segments are decoded directly into the main memory.
         out << "  base64DecodeToExistingUint8Array(bufferView, "
             << globalOffset(*seg) << ", \"" << base64Encode(seg->data)
