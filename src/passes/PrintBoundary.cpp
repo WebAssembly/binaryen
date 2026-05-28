@@ -104,15 +104,18 @@ struct PrintBoundary : public Pass {
   // results.
   //
   // We emit an array only when needed, unless forceArray is set.
-  json::Value::Ref getTypes(Type type, bool forceArray = false) {
-    if (type.isRef()) {
+  json::Value::Ref getTypes(Type type,
+                            bool forceArray = false,
+                            size_t depth = 0) {
+    // Avoid infinite recursion.
+    if (type.isRef() && depth == 0) {
       auto heapType = type.getHeapType();
       if (heapType.isSignature()) {
         auto sig = heapType.getSignature();
         auto ret = json::Value::makeObject();
         // Always emit arrays for params and results.
-        ret["params"] = getTypes(sig.params, true);
-        ret["results"] = getTypes(sig.results, true);
+        ret["params"] = getTypes(sig.params, true, depth + 1);
+        ret["results"] = getTypes(sig.results, true, depth + 1);
         return ret;
       }
     }
