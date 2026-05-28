@@ -197,12 +197,9 @@ def parse_output_fuzz_exec(text, named_items):
         elif line:
             if not items:
                 # Early output before any export was executed. Associate it with
-                # the start function if we can find it, otherwise the first named
-                # item as a fallback.
-                start_item = next((item for item in named_items if item[0] == 'start'), None)
-                if start_item:
-                    items.append((start_item, [line]))
-                elif named_items:
+                # the first named item, so it appears before everything else
+                # (which is when it executes).
+                if named_items:
                     items.append((named_items[0], [line]))
                 else:
                     items.append((('module', 'trap'), [line]))
