@@ -662,7 +662,7 @@ struct ReconstructStringifyWalker
 };
 
 struct Outlining : public Pass {
-  void run(Module* module) {
+  void run(Module* module) override {
     HashStringifyWalker stringify;
     // Walk the module and create a "string representation" of the program.
     stringify.walkModule(module);
