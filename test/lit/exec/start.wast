@@ -16,26 +16,17 @@
 
   ;; CHECK:      [fuzz-exec] export run
   ;; CHECK-NEXT: [fuzz-exec] note result: run => 1
-  ;; CHECK-NEXT: [trap unreachable]
-  ;; CHECK-NEXT: [exception thrown: failed to instantiate module]
   (func $run (export "run") (result i32)
-    ;; Due to limitations of the auto-updater, the trap and exception from the
-    ;; following two modules gets logged here. (There is at least no
-    ;; ambiguity: we first see that we finished ok and returned a value.)
     (global.get $global)
   )
 )
 
 ;; A trapping start prevents any export from running.
 (module
+  ;; CHECK:      [trap unreachable]
   (start $trap)
 
   (func $trap
-    ;; Due to a limitation, this currently logs both
-    ;;   [trap unreachable]
-    ;; and
-    ;;   [trap: exception thrown: failed to instantiate module]
-    ;; above.
     (unreachable)
   )
 
@@ -46,6 +37,7 @@
 
 ;; A throwing start prevents any export from running.
 (module
+  ;; CHECK:      [exception thrown: failed to instantiate module]
   (tag $tag)
 
   (start $throw)
