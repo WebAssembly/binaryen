@@ -248,9 +248,19 @@ def randomize_fuzz_settings():
         if random.random() < 0.5:
             GEN_ARGS += ['--enclose-world']
 
-    # Test JSPI somewhat rarely, as it may be slower.
+    # Test JSPI somewhat rarely, as it may be slower, and disables some other
+    # fuzzing.
     global JSPI
-    JSPI = random.random() < 0.25
+    JSPI = random.random() < 0.1
+    if JSPI:
+        # Fuzzing the start function with JSPI is tricky: if the start function
+        # calls an import that is marked as suspending, then it traps on
+        # "SuspendError: trying to suspend without WebAssembly.promising" - the
+        # start function in fact *cannot* be wrapped as promising, as it is not
+        # even an export. To make the binaryen interpreter behave the same way,
+        # we'd need to know JSPI is enabled and act like it, which would add a
+        # bunch of complexity. Instead, fuzz JSPI without start functions.
+        GEN_ARGS += ['--remove-start']
 
     print('randomized settings (NaNs, OOB, legalize, JSPI):', NANS, OOB, LEGALIZE, JSPI)
 
