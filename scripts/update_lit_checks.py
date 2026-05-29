@@ -235,6 +235,8 @@ def split_outputs(output):
 
 
 def get_modules_named_items(lines):
+    # Return a list, one entry per module, each entry being the named items for
+    # that module.
     modules_text = split_modules('\n'.join(lines))
     modules_named_items = []
     for module_text in modules_text:
