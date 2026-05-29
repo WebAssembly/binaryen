@@ -57,21 +57,22 @@ std::unordered_set<Function*> getReferencedFuncs(Module& module,
   struct AddressedFuncsWalker : WalkerPass<PostWalker<AddressedFuncsWalker>> {
     std::mutex& m;
     // Guarded by `m`.
-    std::unordered_set<Function*>& allReferencedFuncs;
+    std::deque<std::unordered_set<Function*>>& allReferencedFuncs;
+    // Points to `allReferencedFuncs`.
+    std::unordered_set<Function*>& referencedFuncs;
 
-    std::unordered_set<Function*> referencedFuncs;
-
-    AddressedFuncsWalker(std::mutex& m,
-                         std::unordered_set<Function*>& allReferencedFuncs)
-      : m(m), allReferencedFuncs(allReferencedFuncs) {}
+    AddressedFuncsWalker(
+      std::mutex& m,
+      std::deque<std::unordered_set<Function*>>& allReferencedFuncs)
+      : m(m), allReferencedFuncs(allReferencedFuncs),
+        referencedFuncs(
+          [&m, &allReferencedFuncs]() -> std::unordered_set<Function*>& {
+            std::lock_guard<std::mutex> _(m);
+            return allReferencedFuncs.emplace_back();
+          }()) {}
 
     std::unique_ptr<Pass> create() override {
       return std::make_unique<AddressedFuncsWalker>(m, allReferencedFuncs);
-    }
-
-    ~AddressedFuncsWalker() override {
-      std::lock_guard<std::mutex> _(m);
-      allReferencedFuncs.merge(referencedFuncs);
     }
 
     bool isFunctionParallel() override { return true; }
@@ -81,21 +82,27 @@ std::unordered_set<Function*> getReferencedFuncs(Module& module,
     }
   };
 
-  std::unordered_set<Function*> referencedFuncs;
   std::mutex m;
-  AddressedFuncsWalker walker(m, referencedFuncs);
+  std::deque<std::unordered_set<Function*>> allReferencedFuncs;
+  AddressedFuncsWalker walker(m, allReferencedFuncs);
   walker.run(&passRunner, &module);
   walker.runOnModuleCode(&passRunner, &module);
+
+  std::unordered_set<Function*> mergedReferencedFuncs;
+  for (auto& referencedFuncs : allReferencedFuncs) {
+    mergedReferencedFuncs.merge(referencedFuncs);
+  }
 
   for (const auto& export_ : module.exports) {
     if (export_->kind != ExternalKind::Function) {
       continue;
     }
 
-    referencedFuncs.insert(module.getFunction(*export_->getInternalName()));
+    mergedReferencedFuncs.insert(
+      module.getFunction(*export_->getInternalName()));
   }
 
-  return referencedFuncs;
+  return mergedReferencedFuncs;
 }
 
 std::map<Function*, FuncInfo> analyzeFuncs(Module& module,
