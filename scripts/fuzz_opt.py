@@ -1525,23 +1525,27 @@ def wasm_has_duplicate_tags(wasm):
     return binary.count(b'jstag') >= 2 or binary.count(b'wasmtag') >= 2
 
 
-# Detect whether there is a trap reported before an export call in the output.
+# Detect whether there is a trap or exception reported before an export call in
+# the output (i.e. during instantiation).
 def traps_in_instantiation(output):
-    trap_index = output.find(TRAP_PREFIX)
-    if trap_index == -1:
+    # First look for a trap.
+    error_index = output.find(TRAP_PREFIX)
+    if error_index == -1:
         # In "fixed" output, traps are replaced with *exception*.
-        trap_index = output.find('*exception*')
-    # An exception can occur during the start function.
+        error_index = output.find('*exception*')
+
+    # Next look for an exception.
     exception_index = output.find(EXCEPTION_PREFIX)
     # Look at the first of a trap or an exception.
-    if exception_index >= 0 and (trap_index == -1 or exception_index < trap_index):
-        trap_index = exception_index
-    if trap_index == -1:
+    if exception_index >= 0 and (error_index == -1 or exception_index < error_index):
+        error_index = exception_index
+
+    if error_index == -1:
         return False
     export_index = output.find(FUZZ_EXEC_EXPORT_PREFIX)
     if export_index == -1:
         return True
-    return trap_index < export_index
+    return error_index < export_index
 
 
 # Tests wasm-merge
