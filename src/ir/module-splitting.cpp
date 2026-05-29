@@ -773,6 +773,27 @@ void ModuleSplitter::shareImportableItems() {
           break;
       }
     }
+
+    // Compute the transitive closure of globals referenced in other globals'
+    // initializers. Since globals can reference other globals, we must ensure
+    // that if a global is used in a module, all its dependencies are also
+    // marked as used.
+    UniqueNonrepeatingDeferredQueue<Name> worklist;
+    for (auto global : used.globals) {
+      worklist.push(global);
+    }
+    while (!worklist.empty()) {
+      Name name = worklist.pop();
+      // At this point all globals are still in the primary module, so this
+      // exists
+      auto* global = primary.getGlobal(name);
+      if (!global->imported() && global->init) {
+        for (auto* get : FindAll<GlobalGet>(global->init).list) {
+          worklist.push(get->name);
+          used.globals.insert(get->name);
+        }
+      }
+    }
     return used;
   };
 
@@ -802,34 +823,6 @@ void ModuleSplitter::shareImportableItems() {
         primaryUsed.globals.insert(global->name);
       }
     }
-  }
-
-  // Compute the transitive closure of globals referenced in other globals'
-  // initializers. Since globals can reference other globals, we must ensure
-  // that if a global is used in a module, all its dependencies are also marked
-  // as used.
-  auto computeTransitiveGlobals = [&](UsedNames& used) {
-    UniqueNonrepeatingDeferredQueue<Name> worklist;
-    for (auto global : used.globals) {
-      worklist.push(global);
-    }
-    while (!worklist.empty()) {
-      Name name = worklist.pop();
-      // At this point all globals are still in the primary module, so this
-      // exists
-      auto* global = primary.getGlobal(name);
-      if (!global->imported() && global->init) {
-        for (auto* get : FindAll<GlobalGet>(global->init).list) {
-          worklist.push(get->name);
-          used.globals.insert(get->name);
-        }
-      }
-    }
-  };
-
-  computeTransitiveGlobals(primaryUsed);
-  for (auto& used : secondaryUsed) {
-    computeTransitiveGlobals(used);
   }
 
   // Given a name and module item kind, returns the list of secondary modules

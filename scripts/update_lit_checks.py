@@ -113,24 +113,25 @@ def run_command(args, test, tmp, command):
     command = command.replace('%S', os.path.dirname(test))
     command = command.replace('%t', tmp)
 
-    match = re.match(r'^foreach\s+(\S+)\s+(\S+)\s+(.*)$', command)
+    match = re.match(r'^(.*)\s*foreach\s+(\S+)\s+(\S+)\s+(.*)$', command)
     if match:
-        infile = match.group(1)
-        tempfile = match.group(2)
-        cmd_rest = match.group(3)
+        prefix = match.group(1)
+        infile = match.group(2)
+        tempfile = match.group(3)
+        cmd_rest = match.group(4)
 
         outputs = []
         for i, (module, _asserts) in enumerate(support.split_wast(infile)):
             tempname = tempfile + '.' + str(i)
             with open(tempname, 'w') as temp:
                 print(module, file=temp)
-            new_command = cmd_rest + ' ' + tempname
+            new_command = prefix + ' ' + cmd_rest + ' ' + tempname
             out = subprocess.check_output(new_command, shell=True, env=env).decode('utf-8')
             outputs.append(out)
 
         return f"\n{INTERNAL_SEPARATOR}\n".join(outputs)
     else:
-        command = command.replace('foreach', os.path.join(script_dir, 'foreach.py'))
+        assert 'foreach' not in command, 'bad foreach matching: ' + command
         return subprocess.check_output(command, shell=True, env=env).decode('utf-8')
 
 
@@ -228,13 +229,12 @@ def parse_output_fuzz_exec(text, first_named_item):
 
 
 def split_outputs(output):
-    if INTERNAL_SEPARATOR in output:
-        return re.split(r'\n?' + re.escape(INTERNAL_SEPARATOR) + r'\n?', output)
-    else:
-        return [output]
+    return re.split(r'\n?' + re.escape(INTERNAL_SEPARATOR) + r'\n?', output)
 
 
 def get_modules_named_items(lines):
+    # Return a list, one entry per module, each entry being the named items for
+    # that module.
     modules_text = split_modules('\n'.join(lines))
     modules_named_items = []
     for module_text in modules_text:
@@ -248,7 +248,7 @@ def get_modules_named_items(lines):
     return modules_named_items
 
 
-def get_command_output(args, kind, test, lines, tmp, named_items):
+def get_command_output(args, kind, test, lines, tmp):
     # Return list of maps from prefixes to lists of module items of the form
     # ((kind, name), [line]). The outer list has an entry for each module.
     command_output = []
@@ -275,29 +275,28 @@ def get_command_output(args, kind, test, lines, tmp, named_items):
         if prefix:
             outputs = split_outputs(output)
             module_outputs = []
-            if len(outputs) == 1 and len(modules_named_items) > 1 and kind == 'wat':
-                module_outputs = parse_output_modules(outputs[0])
-            else:
-                if len(outputs) != len(modules_named_items):
-                    warn(f'Mismatch between output parts ({len(outputs)}) and '
-                         f'input modules ({len(modules_named_items)}).')
-                for i, out in enumerate(outputs):
-                    if i >= len(modules_named_items):
-                        break
-                    mod_named_items = modules_named_items[i]
-                    first_named_item = mod_named_items[0] if mod_named_items else None
-                    if kind == 'wat':
-                        mod_out = parse_output_modules(out)
-                        if mod_out:
-                            module_outputs.append(mod_out[0])
-                        else:
-                            module_outputs.append([])
-                    elif kind == 'fuzz-exec':
-                        mod_out = parse_output_fuzz_exec(out, first_named_item)
-                        if mod_out:
-                            module_outputs.append(mod_out[0])
-                        else:
-                            module_outputs.append([])
+            if len(outputs) != len(modules_named_items):
+                warn(f'Mismatch between output parts ({len(outputs)}) and '
+                     f'input modules ({len(modules_named_items)}).')
+            for i, out in enumerate(outputs):
+                if i >= len(modules_named_items):
+                    break
+                mod_named_items = modules_named_items[i]
+                first_named_item = mod_named_items[0] if mod_named_items else None
+                if kind == 'wat':
+                    mod_out = parse_output_modules(out)
+                    if mod_out:
+                        module_outputs.append(mod_out[0])
+                    else:
+                        module_outputs.append([])
+                elif kind == 'fuzz-exec':
+                    mod_out = parse_output_fuzz_exec(out, first_named_item)
+                    if mod_out:
+                        module_outputs.append(mod_out[0])
+                    else:
+                        module_outputs.append([])
+                else:
+                    assert False, "unknown output kind"
             for i in range(len(module_outputs)):
                 if len(command_output) == i:
                     command_output.append({})
@@ -328,7 +327,7 @@ def update_test(args, test, lines, tmp):
             _, kind, name = indentKindName(match)
             named_items.append((kind, name))
 
-    command_output = get_command_output(args, output_kind, test, lines, tmp, named_items)
+    command_output = get_command_output(args, output_kind, test, lines, tmp)
 
     prefixes = {prefix for module_output in command_output for prefix in module_output.keys()}
     check_line_re = re.compile(r'^\s*;;\s*(' + '|'.join(prefixes) +
