@@ -2,7 +2,7 @@
 
 ;; RUN: foreach %s %t wasm-opt -all --fuzz-exec-before | filecheck %s
 
-;; The start function tries to call an export. This reenntrancy of course does
+;; The start function tries to call an export. This reentrancy of course does
 ;; not work in JS (the module is not ready - no exports have been provided) so
 ;; it throws when trying to call undefined (what we get from the un-populated
 ;; list of exports). We should have the same behavior: rather than call $trap
