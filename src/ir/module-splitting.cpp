@@ -776,8 +776,8 @@ void ModuleSplitter::shareImportableItems() {
 
     // Compute the transitive closure of globals referenced in other globals'
     // initializers. Since globals can reference other globals, we must ensure
-    // that if a global is used in a module, all its dependencies are also marked
-    // as used.
+    // that if a global is used in a module, all its dependencies are also
+    // marked as used.
     UniqueNonrepeatingDeferredQueue<Name> worklist;
     for (auto global : used.globals) {
       worklist.push(global);
