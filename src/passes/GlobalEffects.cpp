@@ -44,51 +44,58 @@ struct FuncInfo {
   std::unordered_set<HeapType> indirectCalledTypes;
 };
 
-// Only funcs that are 'addressed' may be the target of an indirect call. A
-// function is addressed if:
-// - It appears in a ref.func expression
-// - It appears in an `elem` segment (note that we already ignore `elem declare`
-//   statements in our IR, but we check separately for funcs that appear in
-//   `ref.func`).
+// Only funcs that are referenced may be the target of an indirect call. A
+// function is referenced if:
+// - It appears in a ref.func expression (this includes `elem` statements
+// because of how our IR is represented).
 // - It's exported, because it may flow back to us as a reference.
-// - It's imported, which implies it can be addressed (see
-// https://github.com/WebAssembly/spec/issues/2072).
 //
 // If a function doesn't meet any of these criteria, it can't be the target of
 // an indirect call and we don't need to include its effects in indirect calls.
-std::unordered_set<Function*> getAddressedFuncs(Module& module) {
+std::unordered_set<Function*> getReferencedFuncs(Module& module,
+                                                 PassRunner& passRunner) {
   struct AddressedFuncsWalker : WalkerPass<PostWalker<AddressedFuncsWalker>> {
-    std::unordered_set<Function*>& addressedFuncs;
+    std::mutex& m;
+    // Guarded by `m`.
+    std::unordered_set<Function*>& allReferencedFuncs;
 
-    AddressedFuncsWalker(std::unordered_set<Function*>& addressedFuncs)
-      : addressedFuncs(addressedFuncs) {}
+    std::unordered_set<Function*> referencedFuncs;
+
+    AddressedFuncsWalker(std::mutex& m,
+                         std::unordered_set<Function*>& allReferencedFuncs)
+      : m(m), allReferencedFuncs(allReferencedFuncs) {}
+
+    std::unique_ptr<Pass> create() override {
+      return std::make_unique<AddressedFuncsWalker>(m, allReferencedFuncs);
+    }
+
+    ~AddressedFuncsWalker() override {
+      std::lock_guard _(m);
+      allReferencedFuncs.merge(referencedFuncs);
+    }
 
     bool isFunctionParallel() override { return true; }
 
     void visitRefFunc(RefFunc* refFunc) {
-      addressedFuncs.insert(getModule()->getFunction(refFunc->func));
+      referencedFuncs.insert(getModule()->getFunction(refFunc->func));
     }
   };
 
-  std::unordered_set<Function*> addressedFuncs;
-  AddressedFuncsWalker walker(addressedFuncs);
-  walker.walkModuleCode(&module);
-  walker.walkModule(&module);
-
-  ModuleUtils::iterImportedFunctions(
-    module, [&addressedFuncs, &module](Function* import) {
-      addressedFuncs.insert(module.getFunction(import->name));
-    });
+  std::unordered_set<Function*> referencedFuncs;
+  std::mutex m;
+  AddressedFuncsWalker walker(m, referencedFuncs);
+  walker.run(&passRunner, &module);
+  walker.runOnModuleCode(&passRunner, &module);
 
   for (const auto& export_ : module.exports) {
     if (export_->kind != ExternalKind::Function) {
       continue;
     }
 
-    addressedFuncs.insert(module.getFunction(*export_->getInternalName()));
+    referencedFuncs.insert(module.getFunction(*export_->getInternalName()));
   }
 
-  return addressedFuncs;
+  return referencedFuncs;
 }
 
 std::map<Function*, FuncInfo> analyzeFuncs(Module& module,
@@ -96,9 +103,12 @@ std::map<Function*, FuncInfo> analyzeFuncs(Module& module,
   ModuleUtils::ParallelFunctionAnalysis<FuncInfo> analysis(
     module, [&](Function* func, FuncInfo& funcInfo) {
       if (func->imported()) {
-        // Imports can do anything, so we need to assume the worst anyhow,
-        // which is the same as not specifying any effects for them in the
-        // map (which we do by not setting funcInfo.effects).
+        // Imports can do almost anything, so we need to assume the worst
+        // anyhow, which is the same as not specifying any effects for them in
+        // the map (which we do by not setting funcInfo.effects).
+        //
+        // TODO: We can be more precise here since imports can't mutate
+        // globals/tables/memories that aren't imported or exported.
         return;
       }
 
@@ -191,7 +201,7 @@ using CallGraph =
 
 CallGraph buildCallGraph(const Module& module,
                          const std::map<Function*, FuncInfo>& funcInfos,
-                         const std::unordered_set<Function*>& addressedFuncs,
+                         const std::unordered_set<Function*>& referencedFuncs,
                          WorldMode worldMode) {
   CallGraph callGraph;
   if (worldMode == WorldMode::Open) {
@@ -227,7 +237,7 @@ CallGraph buildCallGraph(const Module& module,
     }
 
     // Type -> Function
-    if (addressedFuncs.contains(caller)) {
+    if (referencedFuncs.contains(caller)) {
       callGraph[caller->type.getHeapType()].insert(caller);
     }
   }
@@ -400,10 +410,10 @@ struct GenerateGlobalEffects : public Pass {
     std::map<Function*, FuncInfo> funcInfos =
       analyzeFuncs(*module, getPassOptions());
 
-    auto addressedFuncs = getAddressedFuncs(*module);
+    auto referencedFuncs = getReferencedFuncs(*module, *getPassRunner());
 
     auto callGraph = buildCallGraph(
-      *module, funcInfos, addressedFuncs, getPassOptions().worldMode);
+      *module, funcInfos, referencedFuncs, getPassOptions().worldMode);
 
     propagateEffects(*module,
                      getPassOptions(),

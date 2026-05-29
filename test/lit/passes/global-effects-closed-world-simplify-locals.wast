@@ -263,7 +263,9 @@
   ;; CHECK:      (type $indirect-type (func (param i32)))
   (type $indirect-type (func (param i32)))
 
-  ;; CHECK:      (type $1 (func (param (ref $indirect-type))))
+  ;; CHECK:      (type $1 (func))
+
+  ;; CHECK:      (type $2 (func (param (ref $indirect-type))))
 
   ;; CHECK:      (import "" "" (func $imported-func (type $indirect-type) (param i32)))
   (import "" "" (func $imported-func (type $indirect-type)))
@@ -273,7 +275,18 @@
   ;; CHECK:      (global $g2 (mut i32) (i32.const 0))
   (global $g2 (mut i32) (i32.const 0))
 
-  ;; CHECK:      (func $merges-multiple-effects (type $1) (param $ref (ref $indirect-type))
+  ;; CHECK:      (elem declare func $imported-func)
+
+  ;; CHECK:      (func $reference-imported-func (type $1)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.func $imported-func)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $reference-imported-func
+    (drop (ref.func $imported-func))
+  )
+
+  ;; CHECK:      (func $merges-multiple-effects (type $2) (param $ref (ref $indirect-type))
   ;; CHECK-NEXT:  (local $l1 i32)
   ;; CHECK-NEXT:  (local $l2 i32)
   ;; CHECK-NEXT:  (local.set $l1
@@ -300,8 +313,10 @@
     (local.set $l1 (global.get $g1))
     (local.set $l2 (global.get $g2))
 
-    ;; This can flow to an import, so we have to assume that $g1 and $g2 could
-    ;; be mutated, and nothing can be optimized.
+    ;; This can flow to an import, so we assume that $g1 and $g2 could be
+    ;; mutated, and nothing can be optimized.
+    ;; TODO: Since $g1 and $g2 are not imported or exported, it's impossible for
+    ;; an import to mutate them and we should be able to optimize anyway.
     (call_ref $indirect-type (i32.const 1) (local.get $ref))
 
     (drop (local.get $l1))
