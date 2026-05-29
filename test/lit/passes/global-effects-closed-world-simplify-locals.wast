@@ -133,14 +133,10 @@
 )
 
 ;; Test different ways of referencing functions to ensure that they're included
-;; in indirect effects analysis. A function is considered 'addressed' if it's:
-;; - imported (tested in the next test)
+;; in indirect effects analysis. A function is considered referenced if it's:
 ;; - exported
 ;; - referenced in a ref.func
 ;; - contained in an `elem` segment
-;; Imported functions are tested in the next module to avoid
-;; confounding this test because imports are assumed to have all possible
-;; effects.
 (module
   ;; CHECK:      (type $indirect-type (func (param i32)))
   (type $indirect-type (func (param i32)))
@@ -259,6 +255,7 @@
   )
 )
 
+;; Test that a reference that may contain an import has all possible effects.
 (module
   ;; CHECK:      (type $indirect-type (func (param i32)))
   (type $indirect-type (func (param i32)))
