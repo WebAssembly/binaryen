@@ -228,10 +228,7 @@ def parse_output_fuzz_exec(text, first_named_item):
 
 
 def split_outputs(output):
-    if INTERNAL_SEPARATOR in output:
-        return re.split(r'\n?' + re.escape(INTERNAL_SEPARATOR) + r'\n?', output)
-    else:
-        return [output]
+    return re.split(r'\n?' + re.escape(INTERNAL_SEPARATOR) + r'\n?', output)
 
 
 def get_modules_named_items(lines):
