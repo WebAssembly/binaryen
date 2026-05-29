@@ -1677,7 +1677,7 @@ void TranslateToFuzzReader::processFunctions() {
   // the entire module not execute), but other cases are important too.
   //
   // When preserving imports and exports, however, we always keep the start
-  // method, as it may be important to keep the contract between the wasm and
+  // function, as it may be important to keep the contract between the Wasm and
   // the outside (even in that mode, though we have a chance to mutate and
   // empty out or replace the current start, though it declines with the amount
   // of mutation, so the user can control it).
