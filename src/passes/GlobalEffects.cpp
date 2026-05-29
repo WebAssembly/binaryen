@@ -70,7 +70,7 @@ std::unordered_set<Function*> getReferencedFuncs(Module& module,
     }
 
     ~AddressedFuncsWalker() override {
-      std::lock_guard _(m);
+      std::lock_guard<std::mutex> _(m);
       allReferencedFuncs.merge(referencedFuncs);
     }
 
