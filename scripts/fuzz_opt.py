@@ -1575,6 +1575,9 @@ class Merge(TestCaseHandler):
         #
         # After merge, the middle two lines are swapped, since the starts are
         # merged, changing the behavior.
+        #
+        # TODO: This can also happen if the second module appends segments in a
+        #       way that the first module notices.
         second_args = [
             in_bin('wasm-opt'),
             second_input,
