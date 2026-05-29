@@ -274,29 +274,26 @@ def get_command_output(args, kind, test, lines, tmp):
         if prefix:
             outputs = split_outputs(output)
             module_outputs = []
-            if len(outputs) == 1 and len(modules_named_items) > 1 and kind == 'wat':
-                module_outputs = parse_output_modules(outputs[0])
-            else:
-                if len(outputs) != len(modules_named_items):
-                    warn(f'Mismatch between output parts ({len(outputs)}) and '
-                         f'input modules ({len(modules_named_items)}).')
-                for i, out in enumerate(outputs):
-                    if i >= len(modules_named_items):
-                        break
-                    mod_named_items = modules_named_items[i]
-                    first_named_item = mod_named_items[0] if mod_named_items else None
-                    if kind == 'wat':
-                        mod_out = parse_output_modules(out)
-                        if mod_out:
-                            module_outputs.append(mod_out[0])
-                        else:
-                            module_outputs.append([])
-                    elif kind == 'fuzz-exec':
-                        mod_out = parse_output_fuzz_exec(out, first_named_item)
-                        if mod_out:
-                            module_outputs.append(mod_out[0])
-                        else:
-                            module_outputs.append([])
+            if len(outputs) != len(modules_named_items):
+                warn(f'Mismatch between output parts ({len(outputs)}) and '
+                     f'input modules ({len(modules_named_items)}).')
+            for i, out in enumerate(outputs):
+                if i >= len(modules_named_items):
+                    break
+                mod_named_items = modules_named_items[i]
+                first_named_item = mod_named_items[0] if mod_named_items else None
+                if kind == 'wat':
+                    mod_out = parse_output_modules(out)
+                    if mod_out:
+                        module_outputs.append(mod_out[0])
+                    else:
+                        module_outputs.append([])
+                elif kind == 'fuzz-exec':
+                    mod_out = parse_output_fuzz_exec(out, first_named_item)
+                    if mod_out:
+                        module_outputs.append(mod_out[0])
+                    else:
+                        module_outputs.append([])
             for i in range(len(module_outputs)):
                 if len(command_output) == i:
                     command_output.append({})
