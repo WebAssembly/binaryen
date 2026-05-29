@@ -53,6 +53,10 @@ public:
     skipFunctionBodies = skipFunctionBodies_;
   }
 
+  void setNeedCodeLocations(bool needCodeLocations_) {
+    needCodeLocations = needCodeLocations_;
+  }
+
   // read text
   void readText(std::string filename, Module& wasm);
   // read binary
@@ -68,14 +72,21 @@ public:
 
   FeatureSet getFeaturesSectionFeatures() { return featuresSectionFeatures; }
 
+  // Return the offset of the code section, or nothing if we did not read a
+  // binary.
+  std::optional<size_t> getCodeSectionLocation() { return codeSectionLocation; }
+
 private:
   bool DWARF = false;
 
   IRProfile profile = IRProfile::Normal;
 
   bool skipFunctionBodies = false;
+  bool needCodeLocations = false;
 
   FeatureSet featuresSectionFeatures = FeatureSet::MVP;
+
+  std::optional<size_t> codeSectionLocation;
 
   void readStdin(Module& wasm, std::string sourceMapFilename);
 

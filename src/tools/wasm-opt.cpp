@@ -95,6 +95,7 @@ int main(int argc, const char* argv[]) {
   std::string outputSourceMapFilename;
   std::string outputSourceMapUrl;
   bool emitExnref = false;
+  bool needCodeLocations = false;
 
   const std::string WasmOptOption = "wasm-opt options";
 
@@ -288,7 +289,21 @@ For more on how to optimize effectively, see
          "post-translation optimizations.",
          WasmOptOption,
          Options::Arguments::Zero,
-         [&emitExnref](Options*, const std::string&) { emitExnref = true; });
+         [&emitExnref](Options*, const std::string&) { emitExnref = true; })
+    .add("--print-binary-offsets",
+         "-pbo",
+         "Print wat text annotated with binary offsets",
+         WasmOptOption,
+         Options::Arguments::Zero,
+         [&](Options*, const std::string&) {
+           // Track code locations, so we can print them.
+           needCodeLocations = true;
+           // Enable debugInfo, so that we print code locations (which are part
+           // of debugInfo).
+           options.passOptions.debugInfo = true;
+           // Run the print pass, to do the printing.
+           options.passes.push_back("print");
+         });
   options.parse(argc, argv);
 
   Module wasm;
@@ -323,6 +338,7 @@ For more on how to optimize effectively, see
     reader.setDWARF(options.passOptions.debugInfo &&
                     !willRemoveDebugInfo(options.passes));
     reader.setProfile(options.profile);
+    reader.setNeedCodeLocations(needCodeLocations);
     try {
       reader.read(inputFile, wasm, inputSourceMapFilename);
     } catch (ParseException& p) {
@@ -341,6 +357,15 @@ For more on how to optimize effectively, see
     } catch (std::bad_alloc&) {
       Fatal() << "error building module, std::bad_alloc (possibly invalid "
                  "request for silly amounts of memory)";
+    }
+
+    if (needCodeLocations) {
+      if (auto codeSectionLocation = reader.getCodeSectionLocation()) {
+        std::cout << ";; Code section offset: 0x" << std::hex
+                  << *codeSectionLocation << std::dec << '\n'
+                  << ";; (binary offsets in VM stack traces include this;"
+                  << " add it to the offsets below)\n";
+      }
     }
 
     options.applyOptionsAfterParse(wasm);
