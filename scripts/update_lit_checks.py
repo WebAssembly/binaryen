@@ -248,7 +248,7 @@ def get_modules_named_items(lines):
     return modules_named_items
 
 
-def get_command_output(args, kind, test, lines, tmp, named_items):
+def get_command_output(args, kind, test, lines, tmp):
     # Return list of maps from prefixes to lists of module items of the form
     # ((kind, name), [line]). The outer list has an entry for each module.
     command_output = []
@@ -328,7 +328,7 @@ def update_test(args, test, lines, tmp):
             _, kind, name = indentKindName(match)
             named_items.append((kind, name))
 
-    command_output = get_command_output(args, output_kind, test, lines, tmp, named_items)
+    command_output = get_command_output(args, output_kind, test, lines, tmp)
 
     prefixes = {prefix for module_output in command_output for prefix in module_output.keys()}
     check_line_re = re.compile(r'^\s*;;\s*(' + '|'.join(prefixes) +
