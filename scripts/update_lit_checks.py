@@ -294,6 +294,8 @@ def get_command_output(args, kind, test, lines, tmp):
                         module_outputs.append(mod_out[0])
                     else:
                         module_outputs.append([])
+                else:
+                    assert False, "unknown output kind"
             for i in range(len(module_outputs)):
                 if len(command_output) == i:
                     command_output.append({})
