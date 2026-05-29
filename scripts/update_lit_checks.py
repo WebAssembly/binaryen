@@ -113,24 +113,25 @@ def run_command(args, test, tmp, command):
     command = command.replace('%S', os.path.dirname(test))
     command = command.replace('%t', tmp)
 
-    match = re.match(r'^foreach\s+(\S+)\s+(\S+)\s+(.*)$', command)
+    match = re.match(r'^(.*)\s*foreach\s+(\S+)\s+(\S+)\s+(.*)$', command)
     if match:
-        infile = match.group(1)
-        tempfile = match.group(2)
-        cmd_rest = match.group(3)
+        prefix = match.group(1)
+        infile = match.group(2)
+        tempfile = match.group(3)
+        cmd_rest = match.group(4)
 
         outputs = []
         for i, (module, _asserts) in enumerate(support.split_wast(infile)):
             tempname = tempfile + '.' + str(i)
             with open(tempname, 'w') as temp:
                 print(module, file=temp)
-            new_command = cmd_rest + ' ' + tempname
+            new_command = prefix + ' ' + cmd_rest + ' ' + tempname
             out = subprocess.check_output(new_command, shell=True, env=env).decode('utf-8')
             outputs.append(out)
 
         return f"\n{INTERNAL_SEPARATOR}\n".join(outputs)
     else:
-        command = command.replace('foreach', os.path.join(script_dir, 'foreach.py'))
+        assert 'foreach' not in command, 'bad foreach matching: ' + command
         return subprocess.check_output(command, shell=True, env=env).decode('utf-8')
 
 
