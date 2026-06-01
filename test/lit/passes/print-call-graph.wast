@@ -67,22 +67,22 @@
 
 ;; CHECK:       digraph CallGraph {
 ;; CHECK-NEXT:   "A" [kind="function"];
-;; CHECK-NEXT:   "A-indirect" [kind="function"];
 ;; CHECK-NEXT:   "B" [kind="function"];
+;; CHECK-NEXT:   "indirect-cycle" [kind="function"];
 ;; CHECK-NEXT:   "A" -> "B" [style="solid", color="black", kind="direct"];
 ;; CHECK-NEXT:   "B" -> "A" [style="solid", color="black", kind="direct"];
 ;; CHECK-NEXT:  }
 
 ;; CLOSED:       digraph CallGraph {
-;; CLOSED-NEXT:   "(type $func.0 (func (param i32)))" [kind="type"];
-;; CLOSED-NEXT:   "(type $func.0 (func))" [kind="type"];
-;; CLOSED-NEXT:   "A" [kind="function"];
-;; CLOSED-NEXT:   "A-indirect" [kind="function"];
-;; CLOSED-NEXT:   "B" [kind="function"];
-;; CLOSED-NEXT:   "(type $func.0 (func (param i32)))" -> "A-indirect" [style="dashed", color="green", kind="implementation"];
-;; CLOSED-NEXT:   "(type $func.0 (func))" -> "A" [style="dashed", color="green", kind="implementation"];
-;; CLOSED-NEXT:   "(type $func.0 (func))" -> "B" [style="dashed", color="green", kind="implementation"];
-;; CLOSED-NEXT:   "A" -> "B" [style="solid", color="black", kind="direct"];
-;; CLOSED-NEXT:   "A-indirect" -> "(type $func.0 (func (param i32)))" [style="dotted", color="black", kind="indirect"];
-;; CLOSED-NEXT:   "B" -> "A" [style="solid", color="black", kind="direct"];
+;; CLOSED-NEXT:    "(type $func.0 (func (param i32)))" [kind="type"];
+;; CLOSED-NEXT:    "(type $func.0 (func))" [kind="type"];
+;; CLOSED-NEXT:    "A" [kind="function"];
+;; CLOSED-NEXT:    "B" [kind="function"];
+;; CLOSED-NEXT:    "indirect-cycle" [kind="function"];
+;; CLOSED-NEXT:    "(type $func.0 (func (param i32)))" -> "indirect-cycle" [style="dashed", color="green", kind="implementation"];
+;; CLOSED-NEXT:    "(type $func.0 (func))" -> "A" [style="dashed", color="green", kind="implementation"];
+;; CLOSED-NEXT:    "(type $func.0 (func))" -> "B" [style="dashed", color="green", kind="implementation"];
+;; CLOSED-NEXT:    "A" -> "B" [style="solid", color="black", kind="direct"];
+;; CLOSED-NEXT:    "B" -> "A" [style="solid", color="black", kind="direct"];
+;; CLOSED-NEXT:    "indirect-cycle" -> "(type $func.0 (func (param i32)))" [style="dotted", color="black", kind="indirect"];
 ;; CLOSED-NEXT:  }
