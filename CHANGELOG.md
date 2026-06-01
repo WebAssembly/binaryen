@@ -15,6 +15,17 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
+v130
+----
+
+ - MarkJSCalled pass, to help configureAll users. (#8733)
+ - RemoveExports pass, to allow easy export removal (e.g. after merge) (#8670)
+ - Wide Arithmetic support (#8544)
+ - New fuzzer mode: PreserveImportsExportsJS (#8592)
+ - New fuzzer mode: Fuzz against JavaScript (#8655)
+ - Increase Alpine stack size to 8MB for release builds (#8595)
+ - [JS & C API] Rename MemorySegment functions to DataSegment (#8576)
+
  - Rename relaxed SIMD instructions to prepend the `relaxed_` prefix.
    - Rename C and JS API operations to prepend the `Relaxed` prefix:
      - `LaneselectI8x16` to `RelaxedLaneselectI8x16`
