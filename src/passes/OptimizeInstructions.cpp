@@ -2788,69 +2788,89 @@ private:
   // simple peephole optimizations - all we care about is a single instruction
   // at a time, and its inputs).
   bool areConsecutiveInputsEqual(Expression* left, Expression* right) {
-    // When we look for a tee/get pair, we can consider the fallthrough values
-    // for the first, as the fallthrough happens last (however, we must use
-    // NoTeeBrIf as we do not want to look through the tee). We cannot do this
-    // on the second, however, as there could be effects in the middle.
-    // TODO: Use effects here perhaps.
-    left =
-      Properties::getFallthrough(left,
-                                 getPassOptions(),
-                                 *getModule(),
-                                 Properties::FallthroughBehavior::NoTeeBrIf);
-    if (areMatchingTeeAndGet(left, right)) {
-      return true;
+    // The fallthrough expression of `left` produces its value. That value may
+    // depend on effects from other non-fallthrough expressions in `left`, but
+    // those expressions are generally executed before the fallthrough value and
+    // will affect the values of `left` and `right` equally, so we can ignore
+    // them. The exceptions are `local.tee` instructions and br_if conditions,
+    // which execute after the fallthrough and might affect only the value of
+    // `right`.
+    // TODO: We should use a custom getFallthrough that ignores whether br_if
+    // conditions and values can be reordered, since we can handle that more
+    // precisely here.
+    // TODO: When the fallthrough is an If (meaning the other branch must never
+    // return), we should ignore effects in that non-returning branch.
+    EffectAnalyzer interferingEffects(getPassOptions(), *getModule());
+    bool matchingTeeAndGet = false;
+    while (true) {
+      left =
+        Properties::getFallthrough(left,
+                                   getPassOptions(),
+                                   *getModule(),
+                                   Properties::FallthroughBehavior::NoTeeBrIf);
+      if (auto* tee = left->dynCast<LocalSet>()) {
+        assert(tee->isTee());
+        // If `right` reads directly from this local.tee, then we know their
+        // values are the same. We know no children of this tee will be executed
+        // after it, so we need not look for further effects. But there might be
+        // interfering sets in previous br_if conditions, so we cannot just
+        // return here.
+        // TODO: Calculate `right`'s fallthrough first in case the fallthrough
+        // is the matching get.
+        if (areMatchingTeeAndGet(left, right)) {
+          matchingTeeAndGet = true;
+          left = getFallthrough(left);
+          break;
+        }
+        interferingEffects.visit(tee);
+        left = tee->value;
+        continue;
+      }
+      if (auto* br = left->dynCast<Break>(); br && br->condition) {
+        assert(br->value);
+        // NB: We don't need to worry about the branch effect because any branch
+        // at runtime must skip past the parent expression, so it would not
+        // matter how that parent expression gets optimized.
+        interferingEffects.walk(br->condition);
+        left = br->value;
+        continue;
+      }
+      // We have found the real fallthrough expression.
+      break;
     }
 
-    // Ignore extraneous things and compare them syntactically. We can also
-    // look at the full fallthrough for both sides now.
-    auto* originalLeft = left;
-    left = getFallthrough(left);
-    auto* originalRight = right;
-    right = getFallthrough(right);
-    if (!ExpressionAnalyzer::equal(left, right)) {
+    // We similarly want to find the fallthrough expression of `right`. But this
+    // time, it is the expressions that execute before, not after, the
+    // fallthrough that can affect its value.
+    while (true) {
+      auto* next = Properties::getImmediateFallthrough(
+        right, getPassOptions(), *getModule());
+      if (next == right) {
+        // We have found the fallthrough expression.
+        break;
+      }
+      // Gather the effects of all the non-fallthrough children of the
+      // container.
+      for (auto* child : ChildIterator(right)) {
+        if (child == next) {
+          // Skip children that execute after the fallthrough value, such as
+          // br_if conditions.
+          break;
+        }
+        interferingEffects.walk(child);
+      }
+      right = next;
+    }
+
+    // We have both fallthrough expressions. See if they look the same.
+    if (!matchingTeeAndGet && !ExpressionAnalyzer::equal(left, right)) {
       return false;
     }
 
-    // We must also not have non-fallthrough effects that invalidate us, such as
-    // this situation:
-    //
-    //  (local.get $x)
-    //  (block
-    //    (local.set $x ..)
-    //    (local.get $x)
-    //  )
-    //
-    // The fallthroughs are identical, but the set may cause us to read a
-    // different value.
-    if (originalRight != right) {
-      // TODO: We could be more precise here and ignore right itself in
-      //       originalRightEffects.
-      auto originalRightEffects = effects(originalRight);
-      auto rightEffects = effects(right);
-      if (originalRightEffects.invalidates(rightEffects)) {
-        return false;
-      }
-    }
-
-    // The same, with left, as we can have this situation:
-    //
-    //  (local.tee $x ..)
-    //    (something using $x)
-    //  )
-    //  (something using $x)
-    //
-    // The fallthroughs are identical, but the tee may cause us to read a
-    // different value.
-    if (originalLeft != left) {
-      auto originalLeftEffects = effects(originalLeft);
-      // |left == right| here (we would have exited early, otherwise, above), so
-      // we could compute either. Compute |left| as it might have better cache
-      // locality.
-      auto leftEffects = effects(left);
-      if (originalLeftEffects.invalidates(leftEffects)) {
-        return false;
-      }
+    // They do look the same! Make sure nothing executed in between them can
+    // affect the value of `right` and make it different from `left`.
+    if (interferingEffects.orderedBefore(effects(right))) {
+      return false;
     }
 
     // To be equal, they must also be known to return the same result

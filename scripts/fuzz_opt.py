@@ -76,7 +76,6 @@ DISALLOWED_FEATURES_IN_V8 = [
     'strings',
     'stack-switching',
     'multibyte',
-    'wide-arithmetic',
 ]
 
 
@@ -2699,6 +2698,7 @@ opt_choices = [
     ("--precompute",),
     ("--precompute-propagate",),
     ("--print",),
+    ("--print-boundary",),
     ("--remove-unused-brs",),
     ("--remove-unused-nonfunction-module-elements",),
     ("--remove-unused-module-elements",),

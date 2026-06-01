@@ -1485,10 +1485,15 @@ void evalCtors(Module& wasm,
       }
     }
   } catch (FailToEvalException& fail) {
-    // that's it, we failed to even create the instance
+    // That's it, we failed to even create the instance.
     if (!quiet) {
       std::cout << "  ...stopping since could not create module instance: "
                 << fail.why << "\n";
+    }
+  } catch (NonconstantException& fail) {
+    // We can also fail during start due to a non-constant operation.
+    if (!quiet) {
+      std::cout << "  ...stopping since non-constant in start\n";
     }
   } catch (TopologicalSort::CycleException e) {
     // We use a topological sort for GC globals. If there is a non-breakable
