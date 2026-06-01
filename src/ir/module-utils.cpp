@@ -675,11 +675,18 @@ void classifyTypeVisibility(Module& wasm,
   }
 
   // Open world public types have different levels of exposure that change
-  // whether their related types must be public or not. Types may be public only
-  // because they are part of the structural identity of another public type,
-  // but not be otherwise exposed across the module boundary, or they may be
-  // exposed only via exact references, or they may be exposed fully.
-  enum Exposure { NotExposed, ExposedExactly, Exposed };
+  // whether their related types must be public or not.
+  enum Exposure {
+    // Types that never cross the module boundary (i.e. are "not exposed"), but
+    // must have stable structural identities so some other public type can have
+    // a stable identity.
+    NotExposed,
+    // Types that may cross the module boundary only via exact references.
+    ExposedExactly,
+    // Types that may cross the module boundary via inexact references, meaning
+    // their subtypes may cross the module boundary as well.
+    Exposed
+  };
 
   std::unordered_map<HeapType, Exposure> exposures;
   std::vector<HeapType> worklist;
