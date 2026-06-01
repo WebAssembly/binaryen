@@ -59,10 +59,10 @@
     (call $A)
   )
 
-  (func $A-indirect (type $indirect-type) (param $x i32)
+  (func $indirect-cycle (type $indirect-type) (param $x i32)
     (call_indirect (type $indirect-type) (local.get $x) (i32.const 0))
   )
-  (elem $A-indirect (i32.const 0))
+  (elem $indirect-cycle (i32.const 0))
 )
 
 ;; CHECK:       digraph CallGraph {
