@@ -685,12 +685,6 @@ def run_vm(cmd, checked=True):
         if filtered == IGNORE:
             return IGNORE
 
-        # If we trap during instantiation, we do not need to ignore this run
-        # (we can see that all VMs have the same behavior), but we do need to
-        # not raise an error here.
-        if INSTANTIATE_ERROR in raw:
-            return raw
-
         # Otherwise, raise an error.
         raise
 
