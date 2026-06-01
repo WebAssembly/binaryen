@@ -2698,6 +2698,7 @@ opt_choices = [
     ("--precompute",),
     ("--precompute-propagate",),
     ("--print",),
+    ("--print-boundary",),
     ("--remove-unused-brs",),
     ("--remove-unused-nonfunction-module-elements",),
     ("--remove-unused-module-elements",),
