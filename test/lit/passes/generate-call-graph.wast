@@ -1,5 +1,5 @@
-;; RUN: foreach %s %t wasm-opt --generate-call-graph | filecheck %s
-;; RUN: foreach %s %t wasm-opt --generate-call-graph --closed-world | filecheck %s --check-prefix CLOSED
+;; RUN: foreach %s %t wasm-opt --print-call-graph | filecheck %s
+;; RUN: foreach %s %t wasm-opt --print-call-graph --closed-world | filecheck %s --check-prefix CLOSED
 
 (module
   (type $sig (func))

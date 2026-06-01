@@ -372,7 +372,7 @@ struct DiscardGlobalEffects : public Pass {
   }
 };
 
-struct GenerateCallGraph : public Pass {
+struct PrintCallGraph : public Pass {
   bool modifiesBinaryenIR() override { return false; }
 
   void run(Module* module) override {
@@ -385,7 +385,7 @@ struct GenerateCallGraph : public Pass {
     printCallGraph(callGraph, std::cout);
   }
 
-  private:
+private:
   std::string nodeToString(const CallGraphNode& node) {
     return std::visit(
       overloaded{[](Function* func) { return func->name.toString(); },
@@ -443,23 +443,20 @@ struct GenerateCallGraph : public Pass {
     }
     for (const auto& [callerName, callees] : sortedGraph) {
       for (const auto& [calleeName, style] : callees) {
-        o << "  \"" << callerName << "\" -> \"" << calleeName << "\""
-                  << style << ";\n";
+        o << "  \"" << callerName << "\" -> \"" << calleeName << "\"" << style
+          << ";\n";
       }
     }
     o << "}\n";
   }
-
 };
 
 } // namespace
 
+Pass* createPrintCallGraphPass() { return new PrintCallGraph(); }
+
 Pass* createGenerateGlobalEffectsPass() { return new GenerateGlobalEffects(); }
 
 Pass* createDiscardGlobalEffectsPass() { return new DiscardGlobalEffects(); }
-
-Pass* createGenerateCallGraphPass() { return new GenerateCallGraph(); }
-
-Pass* createPrintCallGraphPass() { return new GenerateCallGraph(); }
 
 } // namespace wasm

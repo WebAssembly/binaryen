@@ -190,8 +190,6 @@ void PassRegistry::registerPasses() {
                "generate global effect info (helps later passes)",
                createGenerateGlobalEffectsPass);
   registerPass(
-    "generate-call-graph", "print call graph", createGenerateCallGraphPass);
-  registerPass(
     "global-refining", "refine the types of globals", createGlobalRefiningPass);
   registerPass(
     "gsi", "globally optimize struct values", createGlobalStructInferencePass);
