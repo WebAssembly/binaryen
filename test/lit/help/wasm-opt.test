@@ -199,6 +199,8 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --func-metrics                                reports function metrics
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --generate-call-graph                         print call graph
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --generate-dyncalls                           generate dynCall functions used
 ;; CHECK-NEXT:                                                 by emscripten ABI
 ;; CHECK-NEXT:

@@ -105,6 +105,6 @@ struct PrintCallGraph : public Pass {
   }
 };
 
-Pass* createPrintCallGraphPass() { return new PrintCallGraph(); }
+// Pass* createPrintCallGraphPass() { return new PrintCallGraph(); }
 
 } // namespace wasm

@@ -380,8 +380,24 @@ struct GenerateCallGraph : public Pass {
       analyzeFuncs(*module, getPassOptions());
 
     auto callGraph =
-      buildCallGraph(*module, funcInfos, getPassOptions().closedWorld);
+      buildCallGraph(*module, funcInfos, getPassOptions().worldMode);
 
+    printCallGraph(callGraph, std::cout);
+  }
+
+  private:
+  std::string nodeToString(const CallGraphNode& node) {
+    return std::visit(
+      overloaded{[](Function* func) { return func->name.toString(); },
+                 [](HeapType type) {
+                   std::stringstream ss;
+                   ss << type;
+                   return ss.str();
+                 }},
+      node);
+  }
+
+  void printCallGraph(const CallGraph& callGraph, std::ostream& o) {
     std::map<std::string, std::string> nodeTypes;
     std::map<std::string, std::map<std::string, std::string>> sortedGraph;
 
@@ -421,29 +437,19 @@ struct GenerateCallGraph : public Pass {
       }
     }
 
-    std::cout << "digraph CallGraph {\n";
+    o << "digraph CallGraph {\n";
     for (const auto& [nodeName, nodeType] : nodeTypes) {
-      std::cout << "  \"" << nodeName << "\" [kind=\"" << nodeType << "\"];\n";
+      o << "  \"" << nodeName << "\" [kind=\"" << nodeType << "\"];\n";
     }
     for (const auto& [callerName, callees] : sortedGraph) {
       for (const auto& [calleeName, style] : callees) {
-        std::cout << "  \"" << callerName << "\" -> \"" << calleeName << "\""
+        o << "  \"" << callerName << "\" -> \"" << calleeName << "\""
                   << style << ";\n";
       }
     }
-    std::cout << "}\n";
+    o << "}\n";
   }
 
-  std::string nodeToString(const CallGraphNode& node) {
-    return std::visit(
-      overloaded{[](Function* func) { return func->name.toString(); },
-                 [](HeapType type) {
-                   std::stringstream ss;
-                   ss << type;
-                   return ss.str();
-                 }},
-      node);
-  }
 };
 
 } // namespace
@@ -453,5 +459,7 @@ Pass* createGenerateGlobalEffectsPass() { return new GenerateGlobalEffects(); }
 Pass* createDiscardGlobalEffectsPass() { return new DiscardGlobalEffects(); }
 
 Pass* createGenerateCallGraphPass() { return new GenerateCallGraph(); }
+
+Pass* createPrintCallGraphPass() { return new GenerateCallGraph(); }
 
 } // namespace wasm
