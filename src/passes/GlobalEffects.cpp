@@ -55,41 +55,50 @@ struct FuncInfo {
 std::unordered_set<Function*> getReferencedFuncs(Module& module,
                                                  PassRunner& passRunner) {
   struct AddressedFuncsWalker : WalkerPass<PostWalker<AddressedFuncsWalker>> {
-    std::mutex& m;
-    // Guarded by `m`.
-    std::deque<std::unordered_set<Function*>>& allReferencedFuncs;
+    // For each function, which functions are referenced in its body.
+    // The key for `nullptr` contains references that are not in a function
+    // (e.g. `elem` segments).
+    std::unordered_map<Function*, std::unordered_set<Function*>>&
+      allReferencedFuncs;
     // Points to `allReferencedFuncs`.
-    std::unordered_set<Function*>& referencedFuncs;
+    std::unordered_set<Function*>* referencedFuncs = nullptr;
 
     AddressedFuncsWalker(
-      std::mutex& m,
-      std::deque<std::unordered_set<Function*>>& allReferencedFuncs)
-      : m(m), allReferencedFuncs(allReferencedFuncs),
-        referencedFuncs(
-          [&m, &allReferencedFuncs]() -> std::unordered_set<Function*>& {
-            std::lock_guard<std::mutex> _(m);
-            return allReferencedFuncs.emplace_back();
-          }()) {}
+      std::unordered_map<Function*, std::unordered_set<Function*>>&
+        allReferencedFuncs)
+      : allReferencedFuncs(allReferencedFuncs),
+        referencedFuncs(&allReferencedFuncs[nullptr]) {}
 
     std::unique_ptr<Pass> create() override {
-      return std::make_unique<AddressedFuncsWalker>(m, allReferencedFuncs);
+      return std::make_unique<AddressedFuncsWalker>(allReferencedFuncs);
     }
 
     bool isFunctionParallel() override { return true; }
 
+    bool modifiesBinaryenIR() override { return false; }
+
+    void doWalkFunction(Function* func) {
+      referencedFuncs = &allReferencedFuncs.at(func);
+      walk(func->body);
+    }
+
     void visitRefFunc(RefFunc* refFunc) {
-      referencedFuncs.insert(getModule()->getFunction(refFunc->func));
+      referencedFuncs->insert(getModule()->getFunction(refFunc->func));
     }
   };
 
-  std::mutex m;
-  std::deque<std::unordered_set<Function*>> allReferencedFuncs;
-  AddressedFuncsWalker walker(m, allReferencedFuncs);
+  std::unordered_map<Function*, std::unordered_set<Function*>>
+    allReferencedFuncs;
+  for (auto& func : module.functions) {
+    allReferencedFuncs[func.get()];
+  }
+
+  AddressedFuncsWalker walker(allReferencedFuncs);
   walker.run(&passRunner, &module);
   walker.runOnModuleCode(&passRunner, &module);
 
   std::unordered_set<Function*> mergedReferencedFuncs;
-  for (auto& referencedFuncs : allReferencedFuncs) {
+  for (auto& [_, referencedFuncs] : allReferencedFuncs) {
     mergedReferencedFuncs.merge(referencedFuncs);
   }
 
