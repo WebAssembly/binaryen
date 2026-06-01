@@ -198,6 +198,11 @@ function logRef(ref) {
 // whose keys are strings and whose values are the corresponding exports).
 var exports = {};
 
+// The raw exports, uninstrumented by JSPI. This is necessary as we need the
+// JSPI wrapping when calling from JS, but when calling from wasm, the exports
+// need to be linked to imports directly, in the raw form.
+var rawExports = {};
+
 // Also track exports in a list, to allow access by index. Each entry here will
 // be in the form of { name: .., value: .. }. That allows us to log the name of
 // the function and also to call it. This is important because different
@@ -512,8 +517,9 @@ function build(binary, isSecond) {
 
   if (isSecond) {
     assert(secondBinary);
-    // Provide the primary module's exports to the secondary.
-    imports['primary'] = exports;
+    // Provide the primary module's exports to the secondary. This is a direct
+    // wasm-wasm link, so we use the raw exports.
+    imports['primary'] = rawExports;
   }
 
   var instance;
@@ -547,6 +553,7 @@ function build(binary, isSecond) {
   for (var e of WebAssembly.Module.exports(module)) {
     var key = e.name;
     var value = instance.exports[key];
+    rawExports[key] = value;
     value = wrapExportForJSPI(value);
     exports[key] = value;
 
