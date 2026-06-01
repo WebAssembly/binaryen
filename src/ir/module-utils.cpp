@@ -681,14 +681,14 @@ void classifyTypeVisibility(Module& wasm,
   // exposed only via exact references, or they may be exposed fully.
   enum Exposure { NotExposed, ExposedExactly, Exposed };
 
-  std::unordered_map<HeapType, Exposure> visited;
+  std::unordered_map<HeapType, Exposure> exposures;
   std::vector<HeapType> worklist;
 
   // Insert or upgrade a type's exposure in the `visited` map. If a type's
   // exposure is upgraded, we re-push it to the worklist to update the
   // propagation to related types.
-  auto visit = [&](HeapType type, Exposure state) {
-    auto [it, inserted] = visited.insert({type, state});
+  auto markPublic = [&](HeapType type, Exposure state) {
+    auto [it, inserted] = exposures.insert({type, state});
     if (inserted || state > it->second) {
       it->second = state;
       worklist.push_back(type);
@@ -705,26 +705,27 @@ void classifyTypeVisibility(Module& wasm,
 
   // Initialize with directly exposed types.
   for (auto& [type, exact] : getExposedPublicHeapTypes(wasm)) {
-    visit(type, exact == Exact ? Exposure::ExposedExactly : Exposure::Exposed);
+    markPublic(type,
+               exact == Exact ? Exposure::ExposedExactly : Exposure::Exposed);
   }
 
   while (!worklist.empty()) {
     auto curr = worklist.back();
     worklist.pop_back();
 
-    auto state = visited.at(curr);
+    auto state = exposures.at(curr);
 
     // Propagate exposed status to subtypes.
     if (state == Exposure::Exposed) {
       if (curr.isBasic()) {
         for (auto& [definedType, _] : types) {
           if (HeapType::isSubType(definedType, curr)) {
-            visit(definedType, Exposure::Exposed);
+            markPublic(definedType, Exposure::Exposed);
           }
         }
       } else {
         for (auto sub : subTypes.getImmediateSubTypes(curr)) {
-          visit(sub, Exposure::Exposed);
+          markPublic(sub, Exposure::Exposed);
         }
       }
     }
@@ -736,7 +737,7 @@ void classifyTypeVisibility(Module& wasm,
     // Rec group members must also be public, but do not necessarily cross the
     // module boundary.
     for (auto member : curr.getRecGroup()) {
-      visit(member, Exposure::NotExposed);
+      markPublic(member, Exposure::NotExposed);
     }
 
     // Types reachable from this public type (e.g. params, results, fields) must
@@ -749,38 +750,38 @@ void classifyTypeVisibility(Module& wasm,
         auto exposure = state == NotExposed ? NotExposed
                         : child.isExact()   ? ExposedExactly
                                             : Exposed;
-        visit(child.getHeapType(), exposure);
+        markPublic(child.getHeapType(), exposure);
       }
     }
 
     // Public continuation types require their function types to be public, but
     // a continuation reference does not make any function reference available.
     if (curr.isContinuation()) {
-      visit(curr.getContinuation().type, NotExposed);
+      markPublic(curr.getContinuation().type, NotExposed);
     }
 
     // Descriptor types are like type children, except that they are exposed
     // exactly iff the current type is exposed exactly.
     if (auto desc = curr.getDescriptorType()) {
-      visit(*desc, state);
+      markPublic(*desc, state);
     }
 
     // Supertypes need to be public, but only to keep structural identity the
     // same. Other types related to the supertypes are not necessarily exposed.
     if (auto super = curr.getDeclaredSuperType()) {
-      visit(*super, Exposure::NotExposed);
+      markPublic(*super, Exposure::NotExposed);
     }
 
     // Similarly, described types also need to be kept public, but they are not
     // necessarily exposed just because their descriptor is exposed.
     if (auto described = curr.getDescribedType()) {
-      visit(*described, Exposure::NotExposed);
+      markPublic(*described, Exposure::NotExposed);
     }
   }
 
   // Mark visibility for all defined types
   for (auto& [type, typeInfo] : types) {
-    if (visited.contains(type)) {
+    if (exposures.contains(type)) {
       typeInfo.visibility = Visibility::Public;
     } else {
       typeInfo.visibility = Visibility::Private;
