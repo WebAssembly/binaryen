@@ -981,13 +981,14 @@ void ModuleSplitter::indirectReferencesToSecondaryFunctions() {
     gatherer.walkModule(secondaryPtr.get());
   }
 
-  // Ignore references to secondary functions that occur in the dispatch segment
-  // that will contain the imported placeholders. Indirect calls to table slots
-  // initialized by that segment will already go to the right place once the
-  // secondary module has been loaded and the table has been patched.
+  // Ignore references to secondary functions that occur in the dispatch
+  // segments that will contain the imported placeholders. Indirect calls to
+  // table slots initialized by those segments will already go to the right
+  // place once the secondary module has been loaded and the table has been
+  // patched.
   std::unordered_set<RefFunc*> ignore;
-  if (tableManager.dispatchSegment) {
-    for (auto* expr : tableManager.dispatchSegment->data) {
+  for (auto* segment : tableManager.dispatchTableSegments) {
+    for (auto* expr : segment->data) {
       if (auto* ref = expr->dynCast<RefFunc>()) {
         ignore.insert(ref);
       }
