@@ -26,6 +26,8 @@
 // TODO: Look not just at integers but also references
 //
 
+#include <variant>
+
 #include "cfg/cfg-traversal.h"
 #include "ir/local-graph.h"
 #include "ir/properties.h"
@@ -37,10 +39,25 @@ namespace wasm {
 
 namespace {
 
+// In each range of values, one of the values. This can be either a literal like
+// i32(0), or a local index (i.e., a reference to another local, showing that
+// this one is related to them somehow: one of ==, <, >=, etc.).
+using Value = std::variant<Literal, Index>;
+
+// A range of values, [min, max] (inclusive).
+// TODO: support more clever things like unions
+struct Span {
+  Value min;
+  Value max;
+};
+
 // In each basic block we will store the relevant operations, which are all
 // local gets and sets, branches, and uses of them.
 struct Info {
   std::vector<Expression**> actions; // XXX just *?
+
+  // The span of values we inferred for locals, in this block.
+  std::unordered_map<Index, Span> localSpans;
 };
 
 struct RangeAnalysis
@@ -101,13 +118,14 @@ struct RangeAnalysis
   }
 #endif
 
+  // We start with the relevant locals, i.e. which we could optimize: for
+  // example, if we see (i32.eqz (local.get $x)) then we know that information
+  // about $x might resolve the eqz, and we compute it and things related to
+  // it.
+  std::unordered_set<Index> relevantLocals;
+
   void visitFunction(Function* curr) {
     // Now that the walk is complete and we have a CFG, find things to optimize.
-    // We start with the relevant locals, i.e. which we could optimize: for
-    // example, if we see (i32.eqz (local.get $x)) then we know that information
-    // about $x might resolve the eqz, and we compute it and things related to
-    // it.
-    std::unordered_set<Index> relevantLocals;
 
     auto maybeAdd = [&](Expression* value) {
       // Given a value flowing into something we can optimize, see if there is a
@@ -132,9 +150,15 @@ struct RangeAnalysis
       }
     }
 
-    if (relevantLocals.empty()) {
-      return;
+    if (!relevantLocals.empty()) {
+      optimize();
     }
+  }
+
+  void optimize() {
+    // There is something to potentially optimize. For each relevant local,
+    // find its sets and branches and flow ranges around, producing a graph of
+    // the value of each relevant local in each block.
   }
 
 private:
