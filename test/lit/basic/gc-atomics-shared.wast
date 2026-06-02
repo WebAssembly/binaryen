@@ -2,8 +2,9 @@
 
 ;; RUN: wasm-opt -all %s -S -o - | filecheck %s
 
-;; Check that we properly validate array.atomic.rmw.cmpxchg of a shared array,
-;; when the instruction is unreachable.
+;; Check that we properly parse array.atomic.rmw.cmpxchg of a shared array,
+;; when the instruction is unreachable (when the the expected field does not
+;; have the correct sharedness).
 
 (module
   ;; CHECK:      (type $array (shared (array (mut (ref null (shared eq))))))
