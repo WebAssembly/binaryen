@@ -2,6 +2,9 @@
 
 ;; RUN: wasm-opt -all %s -S -o - | filecheck %s
 
+;; Check that we properly validate array.atomic.rmw.cmpxchg of a shared array,
+;; when the instruction is unreachable.
+
 (module
   ;; CHECK:      (type $array (shared (array (mut (ref null (shared eq))))))
   (type $array (shared (array (mut (ref null (shared eq))))))
@@ -25,22 +28,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (block ;; (replaces unreachable ArrayCmpxchg we can't emit)
   ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (if (result (ref null (shared none)))
-  ;; CHECK-NEXT:     (block
-  ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (ref.as_non_null
-  ;; CHECK-NEXT:        (ref.null none)
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (unreachable)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (then
-  ;; CHECK-NEXT:      (ref.null (shared none))
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (else
-  ;; CHECK-NEXT:      (ref.null (shared none))
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (unreachable)
@@ -59,14 +47,7 @@
       (global.get $g)
       (i32.const 0)
       (ref.as_non_null (ref.null none))
-      (if (result (ref null (shared eq)))
-        (block
-          (drop (ref.as_non_null (ref.null none)))
-          (unreachable)
-        )
-        (then (ref.null (shared eq)))
-        (else (ref.null (shared eq)))
-      )
+      (unreachable)
     )
   )
 )
