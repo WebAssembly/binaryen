@@ -45,7 +45,7 @@ struct Unknown : public std::monostate {};
 // i32(0), or a local index (i.e., a reference to another local, showing that
 // this one is related to them somehow: one of ==, <, >=, etc.), or something
 // unknown.
-using Value = std::variant<Literal, Index>;
+using Value = std::variant<Literal, Index, Unknown>;
 
 // A range of values, [min, max] (inclusive).
 // TODO: support more clever things like unions
@@ -54,7 +54,9 @@ struct Span {
   Value max;
 };
 
-// The span of values we inferred for locals.
+// The span of values we inferred for locals. In the code below, we consider
+// missing indexes to have no known span for them (i.e., we do not need to write
+// an Unknown, and can just leave them empty).
 using LocalSpans = std::unordered_map<Index, Span>;
 
 // In each basic block we will store the relevant operations, which are all
@@ -185,7 +187,9 @@ struct RangeAnalysis
             } else if (auto* c = set->value->dynCast<Const>()) {
               value = c->value;
             } else {
-              value = Unknown;
+              // Nothing is known.
+              localSpans.erase(set->index);
+              continue;
             }
             // Both the min and max are equal to what we found.
             localSpans[set->index] = Span{value, value};
