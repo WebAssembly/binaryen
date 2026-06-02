@@ -758,7 +758,9 @@
   (export "t" (tag $t))
 )
 
-;; Function signature exact vs inexact params and results.
+;; Function signature exact vs inexact params and results. None of the params or
+;; results can be optimized, but the subtypes of the exactly referenced params
+;; and results can.
 (module
   ;; CHECK:      (type $param-exact-super (sub (struct (field i32))))
   (type $param-exact-super (sub (struct (field i32))))
