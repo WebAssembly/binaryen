@@ -1249,7 +1249,6 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
     Type type = ht->getArray().element.type;
     note(&curr->ref, Type(*ht, Nullable));
     note(&curr->index, Type::i32);
-    // TODO: (shared eq) as appropriate.
     note(
       &curr->expected,
       type.isRef()
