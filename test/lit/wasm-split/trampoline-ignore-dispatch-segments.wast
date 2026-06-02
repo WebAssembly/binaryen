@@ -3,20 +3,20 @@
 ;; RUN: wasm-dis %t.1.wasm | filecheck %s --check-prefix PRIMARY
 
 ;; Regression test for a bug that we incorrectly created a trampoline for
-;; (elem $e0 (i32.const 0) $split) segment, even though it was one of active
+;; (elem $e0 (i32.const 0) $split) segment, even though it was one of dispatch
 ;; segments.
 
 (module
   ;; PRIMARY:      (type $0 (func))
   (type $0 (func))
-  ;; PRIMARY:      (table $active_table 2 2 funcref)
-  (table $active_table 2 2 funcref)
+  ;; PRIMARY:      (table $dispatch_table 2 2 funcref)
+  (table $dispatch_table 2 2 funcref)
   ;; PRIMARY:      (elem $e0 (i32.const 0) $placeholder_0)
 
   ;; PRIMARY:      (elem $e1 (i32.const 1) $keep)
 
-  ;; PRIMARY:      (export "active_table" (table $active_table))
-  (export "active_table" (table $active_table))
+  ;; PRIMARY:      (export "dispatch_table" (table $dispatch_table))
+  (export "dispatch_table" (table $dispatch_table))
 
   (elem $e0 (i32.const 0) $split)
   (elem $e1 (i32.const 1) $keep)
