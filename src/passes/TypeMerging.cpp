@@ -243,13 +243,14 @@ void TypeMerging::run(Module* module_) {
     return;
   }
 
-  if (!getPassOptions().closedWorld) {
+  if (getPassOptions().worldMode == WorldMode::Open) {
     Fatal() << "TypeMerging requires --closed-world";
   }
 
   // First, find all the cast types and private types. We will need these to
   // determine whether types are eligible to be merged.
-  mergeable = ModuleUtils::getPrivateHeapTypes(*module);
+  mergeable =
+    ModuleUtils::getPrivateHeapTypes(*module, getPassOptions().worldMode);
   privateTypes =
     std::unordered_set<HeapType>(mergeable.begin(), mergeable.end());
   auto casts = findCastTypes();
@@ -303,7 +304,8 @@ bool TypeMerging::merge(MergeKind kind) {
   Partitions partitions;
 
 #if TYPE_MERGING_DEBUG
-  auto printedPrivateTypes = ModuleUtils::getPrivateHeapTypes(*module);
+  auto printedPrivateTypes =
+    ModuleUtils::getPrivateHeapTypes(*module, getPassOptions().worldMode);
   using Fallback = IndexedTypeNameGenerator<DefaultTypeNameGenerator>;
   Fallback printPrivate(printedPrivateTypes, "private.");
   ModuleTypeNameGenerator<Fallback> print(*module, printPrivate);
@@ -640,7 +642,7 @@ void TypeMerging::applyMerges() {
 
   // We found things to optimize! Rewrite types in the module to apply those
   // changes.
-  TypeMapper(*module, replacements).map();
+  TypeMapper(*module, replacements, getPassOptions().worldMode).map();
 }
 
 bool shapeEq(HeapType a, HeapType b) {

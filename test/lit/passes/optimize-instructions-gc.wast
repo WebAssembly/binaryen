@@ -3695,13 +3695,15 @@
 
   ;; CHECK:      (func $comp-i31-struct-unreachable-if (type $4)
   ;; CHECK-NEXT:  (ref.eq
-  ;; CHECK-NEXT:   (ref.i31
-  ;; CHECK-NEXT:    (if (result i32)
-  ;; CHECK-NEXT:     (unreachable)
-  ;; CHECK-NEXT:     (then
+  ;; CHECK-NEXT:   (if (result (ref i31))
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (then
+  ;; CHECK-NEXT:     (ref.i31
   ;; CHECK-NEXT:      (i32.const 0)
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (else
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (else
+  ;; CHECK-NEXT:     (ref.i31
   ;; CHECK-NEXT:      (i32.const 1)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )

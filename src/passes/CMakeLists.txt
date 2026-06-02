@@ -65,6 +65,7 @@ set(passes_SOURCES
   LocalSubtyping.cpp
   LogExecution.cpp
   LoopInvariantCodeMotion.cpp
+  MarkJSCalled.cpp
   Memory64Lowering.cpp
   MemoryPacking.cpp
   MergeBlocks.cpp
@@ -89,6 +90,7 @@ set(passes_SOURCES
   PostEmscripten.cpp
   Precompute.cpp
   Print.cpp
+  PrintBoundary.cpp
   PrintCallGraph.cpp
   PrintFeatures.cpp
   PrintFunctionMap.cpp

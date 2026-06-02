@@ -26,6 +26,7 @@ from multiprocessing.pool import ThreadPool
 from pathlib import Path
 
 from scripts.test import binaryenjs, finalize, shared, support, wasm2js, wasm_opt
+from scripts.test.shared import print_heading
 
 assert sys.version_info >= (3, 10), 'requires Python 3.10'
 
@@ -41,7 +42,7 @@ def get_changelog_version():
 
 
 def run_version_tests():
-    print('[ checking --version ... ]\n')
+    print_heading('checking --version ...')
 
     not_executable_suffix = ['.DS_Store', '.txt', '.js', '.ilk', '.pdb', '.dll', '.wasm', '.manifest']
     executable_prefix = ['wasm']
@@ -67,7 +68,7 @@ def run_version_tests():
 
 
 def run_wasm_dis_tests():
-    print('\n[ checking wasm-dis on provided binaries... ]\n')
+    print_heading('checking wasm-dis on provided binaries...')
 
     for t in shared.get_tests(shared.options.binaryen_test, ['.wasm']):
         print('..', os.path.basename(t))
@@ -85,7 +86,7 @@ def run_wasm_dis_tests():
 
 
 def run_crash_tests():
-    print("\n[ checking we don't crash on tricky inputs... ]\n")
+    print_heading("checking we don't crash on tricky inputs...")
 
     for t in shared.get_tests(shared.get_test_dir('crash'), ['.wast', '.wasm']):
         print('..', os.path.basename(t))
@@ -95,7 +96,7 @@ def run_crash_tests():
 
 
 def run_dylink_tests():
-    print("\n[ we emit dylink sections properly... ]\n")
+    print_heading('we emit dylink sections properly...')
 
     dylink_tests = glob.glob(os.path.join(shared.options.binaryen_test, 'dylib*.wasm'))
     for t in sorted(dylink_tests):
@@ -109,7 +110,7 @@ def run_dylink_tests():
 
 
 def run_ctor_eval_tests():
-    print('\n[ checking wasm-ctor-eval... ]\n')
+    print_heading('checking wasm-ctor-eval...')
 
     for t in shared.get_tests(shared.get_test_dir('ctor-eval'), ['.wast', '.wasm']):
         print('..', os.path.basename(t))
@@ -126,7 +127,7 @@ def run_ctor_eval_tests():
 
 
 def run_wasm_metadce_tests():
-    print('\n[ checking wasm-metadce ]\n')
+    print_heading('checking wasm-metadce')
 
     for t in shared.get_tests(shared.get_test_dir('metadce'), ['.wast', '.wasm']):
         print('..', os.path.basename(t))
@@ -141,10 +142,10 @@ def run_wasm_metadce_tests():
 
 def run_wasm_reduce_tests():
     if not shared.has_shell_timeout():
-        print('\n[ skipping wasm-reduce testcases]\n')
+        print_heading('skipping wasm-reduce testcases')
         return
 
-    print('\n[ checking wasm-reduce testcases]\n')
+    print_heading('checking wasm-reduce testcases')
 
     # fixed testcases
     for t in shared.get_tests(shared.get_test_dir('reduce'), ['.wast']):
@@ -161,7 +162,7 @@ def run_wasm_reduce_tests():
     # run on a nontrivial fuzz testcase, for general coverage
     # this is very slow in ThreadSanitizer, so avoid it there
     if 'fsanitize=thread' not in str(os.environ):
-        print('\n[ checking wasm-reduce fuzz testcase ]\n')
+        print_heading('checking wasm-reduce fuzz testcase')
         # TODO: re-enable multivalue once it is better optimized
         support.run_command(shared.WASM_OPT + [os.path.join(shared.options.binaryen_test, 'lit/basic/signext.wast'), '-ttf', '-Os', '-o', 'a.wasm', '--detect-features', '--disable-multivalue'])
         before = os.stat('a.wasm').st_size
@@ -191,7 +192,7 @@ def run_opt_test(wast, stdout=None):
 def check_expected(actual, expected, stdout=None):
     if expected and os.path.exists(expected):
         expected = open(expected).read()
-        print('       (using expected output)', file=stdout)
+        shared.verbose_log('       (using expected output)', file=stdout)
         actual = actual.strip()
         expected = expected.strip()
         if actual != expected:
@@ -228,7 +229,7 @@ def run_one_spec_test(wast: Path, stdout=None):
         actual = run_spec_test(str(wast), stdout=stdout)
     except Exception as e:
         if ('wasm-validator error' in str(e) or 'error: ' in str(e)) and '.fail.' in test_name:
-            print('<< test failed as expected >>', file=stdout)
+            shared.verbose_log('<< test failed as expected >>', file=stdout)
             return  # don't try all the binary format stuff TODO
         else:
             shared.fail_with_error(str(e))
@@ -248,7 +249,7 @@ def run_one_spec_test(wast: Path, stdout=None):
             if not module:
                 # Skip any initial assertions that don't have a module
                 continue
-            print(f'        testing split module {i}', file=stdout)
+            shared.verbose_log(f'        testing split module {i}', file=stdout)
             split_name = base_name + f'_split{i}.wast'
             support.write_wast(split_name, module)
             run_opt_test(split_name, stdout=stdout)    # also that our optimizer doesn't break on it
@@ -296,7 +297,7 @@ def red_stderr():
 
 
 def run_spec_tests():
-    print('\n[ checking wasm-shell spec testcases... ]\n')
+    print_heading('checking wasm-shell spec testcases...')
 
     worker_count = os.cpu_count()
     print("Running with", worker_count, "workers")
@@ -328,7 +329,7 @@ def run_spec_tests():
 
 
 def run_validator_tests():
-    print('\n[ running validation tests... ]\n')
+    print_heading('running validation tests...')
     # Ensure the tests validate by default
     cmd = shared.WASM_AS + [os.path.join(shared.get_test_dir('validator'), 'invalid_export.wast'), '-o', 'a.wasm']
     support.run_command(cmd)
@@ -345,7 +346,7 @@ def run_validator_tests():
 
 
 def run_example_tests():
-    print('\n[ checking native example testcases...]\n')
+    print_heading('checking native example testcases...')
     if not shared.NATIVECC or not shared.NATIVEXX:
         shared.fail_with_error('Native compiler (e.g. gcc/g++) was not found in PATH!')
         return
@@ -387,7 +388,7 @@ def run_example_tests():
 
 
 def run_unittest():
-    print('\n[ checking unit tests...]\n')
+    print_heading('checking unit tests...')
 
     # equivalent to `python -m unittest discover -s ./test -v`
     suite = unittest.defaultTestLoader.discover(os.path.dirname(shared.options.binaryen_test))
@@ -471,16 +472,17 @@ def main():
 
     for test in shared.requested:
         TEST_SUITES[test]()
+        print()
 
     # Check/display the results
     if shared.num_failures == 0:
-        print('\n[ success! ]')
+        print_heading('success!')
 
     if shared.warnings:
         print('\n' + '\n'.join(shared.warnings))
 
     if shared.num_failures > 0:
-        print('\n[ ' + str(shared.num_failures) + ' failures! ]')
+        print_heading(f'{shared.num_failures} failures!')
         return 1
 
     return 0

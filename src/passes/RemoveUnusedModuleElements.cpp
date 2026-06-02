@@ -314,7 +314,7 @@ struct Analyzer {
 
   void prepare() {
     for (auto& elem : module->elementSegments) {
-      if (!elem->table) {
+      if (elem->isPassive()) {
         continue;
       }
       auto& flatTableInfo = flatTableInfoMap[elem->table];
@@ -444,7 +444,7 @@ struct Analyzer {
   }
 
   void useRefFunc(Name func) {
-    if (!options.closedWorld) {
+    if (options.worldMode == WorldMode::Open) {
       // The world is open, so assume the worst and something (inside or outside
       // of the module) can call this.
       use({ModuleElementKind::Function, func});
@@ -610,8 +610,8 @@ struct Analyzer {
     // outside of the code we can see), and when it is reached (if it's
     // unreachable then we don't know the type, and can defer that to DCE to
     // remove).
-    if (!options.closedWorld || curr->type == Type::unreachable ||
-        !curr->is<StructNew>()) {
+    if (options.worldMode == WorldMode::Open ||
+        curr->type == Type::unreachable || !curr->is<StructNew>()) {
       for (auto* child : ChildIterator(curr)) {
         use(child);
       }
@@ -764,6 +764,9 @@ struct Analyzer {
     } else if (kind == ModuleElementKind::ElementSegment) {
       // TODO: We could empty out parts of the segment we don't need.
       auto* segment = module->getElementSegment(value);
+      if (segment->offset) {
+        addReferences(segment->offset);
+      }
       for (auto* item : segment->data) {
         addReferences(item);
       }
@@ -859,7 +862,7 @@ struct RemoveUnusedModuleElements : public Pass {
       }
     };
     ModuleUtils::iterActiveDataSegments(*module, [&](DataSegment* segment) {
-      if (segment->memory.is()) {
+      if (segment->isActive()) {
         auto* memory = module->getMemory(segment->memory);
         maybeRootSegment(ModuleElementKind::DataSegment,
                          segment->name,
@@ -871,7 +874,7 @@ struct RemoveUnusedModuleElements : public Pass {
     });
     ModuleUtils::iterActiveElementSegments(
       *module, [&](ElementSegment* segment) {
-        if (segment->table.is()) {
+        if (segment->isActive()) {
           auto* table = module->getTable(segment->table);
           maybeRootSegment(ModuleElementKind::ElementSegment,
                            segment->name,

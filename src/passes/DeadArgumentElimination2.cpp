@@ -235,7 +235,7 @@ struct DAE2 : public Pass {
     }
 
     optimizeReferencedFuncs =
-      getPassOptions().closedWorld && wasm->features.hasGC();
+      getPassOptions().worldMode == WorldMode::Closed && wasm->features.hasGC();
 
     TIME(Timer timer);
 
@@ -579,7 +579,8 @@ void DAE2::analyzeModule() {
   //
   // TODO: Analyze tags and remove their unused parameters.
   std::unordered_set<HeapType> unrewritableRoots;
-  publicHeapTypes = ModuleUtils::getPublicHeapTypes(*wasm);
+  publicHeapTypes =
+    ModuleUtils::getPublicHeapTypes(*wasm, getPassOptions().worldMode);
   for (auto type : publicHeapTypes) {
     if (type.isSignature()) {
       unrewritableRoots.insert(getRootType(type));
@@ -728,7 +729,8 @@ void DAE2::computeFixedPoint() {
 struct DAETypeUpdater : GlobalTypeRewriter {
   DAE2& parent;
   DAETypeUpdater(DAE2& parent)
-    : GlobalTypeRewriter(*parent.wasm), parent(parent) {}
+    : GlobalTypeRewriter(*parent.wasm, parent.getPassOptions().worldMode),
+      parent(parent) {}
 
   void modifySignature(HeapType oldType, Signature& sig) override {
     // All signature types in a type tree will have the same parameters removed

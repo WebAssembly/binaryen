@@ -422,7 +422,7 @@ struct HeapTypeGeneratorImpl {
   }
 
   Type generateTupleType(Shareability share) {
-    std::vector<Type> types(2 + rand.upTo(params.MAX_TUPLE_SIZE - 1));
+    std::vector<Type> types(2 + rand.upTo(params.MAX_TUPLE_SIZE - 2));
     for (auto& type : types) {
       type = generateSingleType(share);
     }

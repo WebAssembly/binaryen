@@ -6,7 +6,7 @@
  (memory $0 2)
  (data (i32.const 568) "%d:%d\n\00Result: %d\n\00")
  (table $0 1 1 funcref)
- (global $global$0 (mut i32) (i32.const 66128))
+ (global $__stack_pointer (mut i32) (i32.const 66128))
  (global $global$1 i32 (i32.const 66128))
  (global $global$2 i32 (i32.const 587))
  (export "memory" (memory $0))
@@ -18,10 +18,10 @@
  )
  (func $foo (; 2 ;) (type $0) (param $0 i32) (param $1 i32) (result i32)
   (local $2 i32)
-  (global.set $global$0
+  (global.set $__stack_pointer
    (local.tee $2
     (i32.sub
-     (global.get $global$0)
+     (global.get $__stack_pointer)
      (i32.const 16)
     )
    )
@@ -40,7 +40,7 @@
     (local.get $2)
    )
   )
-  (global.set $global$0
+  (global.set $__stack_pointer
    (i32.add
     (local.get $2)
     (i32.const 16)
@@ -53,10 +53,10 @@
  )
  (func $__original_main (; 3 ;) (type $2) (result i32)
   (local $0 i32)
-  (global.set $global$0
+  (global.set $__stack_pointer
    (local.tee $0
     (i32.sub
-     (global.get $global$0)
+     (global.get $__stack_pointer)
      (i32.const 16)
     )
    )
@@ -74,7 +74,7 @@
     (local.get $0)
    )
   )
-  (global.set $global$0
+  (global.set $__stack_pointer
    (i32.add
     (local.get $0)
     (i32.const 16)

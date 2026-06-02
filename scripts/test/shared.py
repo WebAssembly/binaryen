@@ -97,6 +97,9 @@ def parse_args(args):
         action='store_false', default=True,
         help='Disables the automatic selection of important initial contents '
              'in fuzzer.')
+    parser.add_argument(
+        '--verbose', action='store_true', default=False,
+        help='Enables verbose logging.')
 
     return parser.parse_args(args)
 
@@ -112,6 +115,15 @@ warnings = []
 def warn(text):
     warnings.append(text)
     print('warning:', text, file=sys.stderr)
+
+
+def print_heading(msg):
+    print(f'[ {msg} ]')
+
+
+def verbose_log(*args, **kwargs):
+    if options.verbose:
+        print(*args, **kwargs)
 
 
 # setup
@@ -254,6 +266,8 @@ V8_OPTS = [
     '--experimental-wasm-fp16',
     '--experimental-wasm-custom-descriptors',
     '--experimental-wasm-js-interop',
+    '--experimental-wasm-acquire-release',
+    '--experimental-wasm-wide-arithmetic',
 ]
 
 # external tools
@@ -467,16 +481,16 @@ def binary_format_check(wast, verify_final_result=True, base_name=None, stdout=N
     as_file = f"{base_name}-a.wasm" if base_name is not None else "a.wasm"
     disassembled_file = f"{base_name}-ab.wast" if base_name is not None else "ab.wast"
 
-    print('         (binary format check)', file=stdout)
+    verbose_log('         (binary format check)', file=stdout)
     cmd = WASM_AS + [wast, '-o', as_file, '-all', '-g']
-    print('            ', ' '.join(cmd), file=stdout)
+    verbose_log('            ', ' '.join(cmd), file=stdout)
     if os.path.exists(as_file):
         os.unlink(as_file)
     subprocess.check_call(cmd, stdout=subprocess.PIPE)
     assert os.path.exists(as_file)
 
     cmd = WASM_DIS + [as_file, '-o', disassembled_file, '-all']
-    print('            ', ' '.join(cmd), file=stdout)
+    verbose_log('            ', ' '.join(cmd), file=stdout)
     if os.path.exists(disassembled_file):
         os.unlink(disassembled_file)
     subprocess.check_call(cmd, stdout=subprocess.PIPE)
@@ -484,7 +498,7 @@ def binary_format_check(wast, verify_final_result=True, base_name=None, stdout=N
 
     # make sure it is a valid wast
     cmd = WASM_OPT + [disassembled_file, '-all', '-q']
-    print('            ', ' '.join(cmd), file=stdout)
+    verbose_log('            ', ' '.join(cmd), file=stdout)
     subprocess.check_call(cmd, stdout=subprocess.PIPE)
 
     if verify_final_result:

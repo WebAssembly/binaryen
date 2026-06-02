@@ -58,7 +58,9 @@
 #if defined(__EMSCRIPTEN__)
 #include <emscripten.h>
 #define BINARYEN_API EMSCRIPTEN_KEEPALIVE
-#elif defined(_MSC_VER) && !defined(BUILD_STATIC_LIBRARY)
+#elif defined(_MSC_VER) && defined(BUILD_SHARED_LIBS)
+// TODO: This is not yet used since we disabled BUILD_SHARED_LIBS under
+// _MSC_VER in CMakeLists.txt
 #define BINARYEN_API __declspec(dllexport)
 #else
 #define BINARYEN_API
