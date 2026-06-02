@@ -39,9 +39,12 @@ namespace wasm {
 
 namespace {
 
+struct Unknown : public std::monostate {};
+
 // In each range of values, one of the values. This can be either a literal like
 // i32(0), or a local index (i.e., a reference to another local, showing that
-// this one is related to them somehow: one of ==, <, >=, etc.).
+// this one is related to them somehow: one of ==, <, >=, etc.), or something
+// unknown.
 using Value = std::variant<Literal, Index>;
 
 // A range of values, [min, max] (inclusive).
@@ -51,13 +54,18 @@ struct Span {
   Value max;
 };
 
+// The span of values we inferred for locals.
+using LocalSpans = std::unordered_map<Index, Span>;
+
 // In each basic block we will store the relevant operations, which are all
 // local gets and sets, branches, and uses of them.
 struct Info {
   std::vector<Expression**> actions; // XXX just *?
 
-  // The span of values we inferred for locals, in this block.
-  std::unordered_map<Index, Span> localSpans;
+  // We track them local spans at
+  // the start and at the end of the block (for the values in the middle, we
+  // need to traverse the actions and see how they are modified).
+  LocalSpans localSpansStart, localSpansEnd;
 };
 
 struct RangeAnalysis
@@ -85,7 +93,7 @@ struct RangeAnalysis
     }
   }
 
-  void visitLocalGet(LocalGet* curr) { addAction(); }
+  void visitLocalGet(LocalGet* curr) { addAction(); } // XXX needed?
   void visitLocalSet(LocalSet* curr) { addAction(); }
   void visitUnary(Unary* curr) { addAction(); }
   void visitBinary(Binary* curr) { addAction(); }
@@ -150,6 +158,9 @@ struct RangeAnalysis
       }
     }
 
+    // Values can flow between locals: if x is relevant, and y is written to it,
+    // we must consider y relevant too. TODO?
+
     if (!relevantLocals.empty()) {
       optimize();
     }
@@ -159,6 +170,27 @@ struct RangeAnalysis
     // There is something to potentially optimize. For each relevant local,
     // find its sets and branches and flow ranges around, producing a graph of
     // the value of each relevant local in each block.
+    for (auto& block : basicBlocks) {
+      LocalSpans localSpans;
+      for (auto** currp : block->contents.actions) {
+        auto* curr = *currp;
+        if (auto* set = curr->dynCast<LocalSet>()) {
+          if (relevantLocals.contains(set->index)) {
+            Value value;
+            // TODO: fallthrough, tee chains, etc.
+            if (auto* get = set->value->dynCast<LocalGet>()) {
+              value = get->index;
+            } else if (auto* c = set->value->dynCast<Const>()) {
+              value = c->value;
+            } else {
+              value = Unknown;
+            }
+            // Both the min and max are equal to what we found.
+            localSpans[set->index] = Span{value, value};
+          }
+        }
+      }
+    }
   }
 
 private:
