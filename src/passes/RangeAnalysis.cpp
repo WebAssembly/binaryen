@@ -172,6 +172,7 @@ struct RangeAnalysis
     // There is something to potentially optimize. For each relevant local,
     // find its sets and branches and flow ranges around, producing a graph of
     // the value of each relevant local in each block.
+    // TODO: flow starts here
     for (auto& block : basicBlocks) {
       LocalSpans localSpans;
       for (auto** currp : block->contents.actions) {
@@ -198,6 +199,8 @@ struct RangeAnalysis
       }
       // We now know the values at the end of the block.
       block->localSpansEnd = std::move(localSpans);
+      // keep flowing if stuff changed
+      // flow DIFFERENT VALUES based on an if condition!!1
     }
   }
 
