@@ -177,7 +177,9 @@ struct RangeAnalysis
         if (auto* set = curr->dynCast<LocalSet>()) {
           if (relevantLocals.contains(set->index)) {
             Value value;
-            // TODO: fallthrough, tee chains, etc.
+            // TODO: fallthrough, tee chains, etc. For that we must track values
+            // by Expression*, as e.g. reading a local, then setting it, should
+            // read the original flowing value.
             if (auto* get = set->value->dynCast<LocalGet>()) {
               value = get->index;
             } else if (auto* c = set->value->dynCast<Const>()) {
@@ -190,6 +192,8 @@ struct RangeAnalysis
           }
         }
       }
+      // We now know the values at the end of the block.
+      block->localSpansEnd = std::move(localSpans);
     }
   }
 
