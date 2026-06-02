@@ -21,6 +21,8 @@
 //    assert(x > 0); // redundant and can be removed.
 //  }
 //
+// TODO: Compare locals, inferring that x <= y in some range (necessary for
+//       software bounds check removal.
 // TODO: Look not just at integers but also references
 //
 
@@ -59,12 +61,17 @@ struct RangeAnalysis
   // state in the function.
   bool ignoreBranchesOutsideOfFunc = true;
 
-  // Store struct.sets and blocks, as we can find patterns among those.
+  // Store the actions we care about.
   void addAction() {
     if (currBasicBlock) {
       currBasicBlock->contents.actions.push_back(getCurrentPointer());
     }
   }
+
+  void visitLocalGet(LocalGet* curr) { addAction(); }
+  void visitLocalSet(LocalSet* curr) { addAction(); }
+  void visitUnary(Unary* curr) { addAction(); }
+  void visitBinary(Binary* curr) { addAction(); }
 
   // Track the branches we reason about. CFGWalker builds a CFG, and we want to
   // add information on top of that about which branch is due to which
@@ -85,33 +92,55 @@ struct RangeAnalysis
     Super::doStartIfTrue(self, currp);
   }
 
+#if 0
   static void doEndBranch(SubType* self, Expression** currp) {
     // We are right after the condition, so we are in the block before the If's
     // branching.
     XXX maybe leave for laterself->brancherBlocks[*currp] = self->currBasicBlock;
     Super::doEndBranch(self, currp);
   }
+#endif
 
   void visitFunction(Function* curr) {
     // Now that the walk is complete and we have a CFG, find things to optimize.
+    // We start with the relevant locals, i.e. which we could optimize: for
+    // example, if we see (i32.eqz (local.get $x)) then we know that information
+    // about $x might resolve the eqz, and we compute it and things related to
+    // it.
+    std::unordered_set<Index> relevantLocals;
+
+    auto maybeAdd = [&](Expression* value) {
+      // Given a value flowing into something we can optimize, see if there is a
+      // local there, and if so, mark it as relevant.
+      // TODO: handle tee
+      // TODO: handle fallthrough values
+      if (auto* get = value->dynCast<LocalGet>()) {
+        relevantLocals.insert(get->index);
+      }
+    };
+
     for (auto& block : basicBlocks) {
       for (auto** currp : block->contents.actions) {
         auto* curr = *currp;
-        if (auto* set = curr->dynCast<StructSet>()) {
-          optimizeStructSet(set, currp);
-        } else if (auto* block = curr->dynCast<Block>()) {
-          optimizeBlock(block);
-        } else {
-          WASM_UNREACHABLE("bad action");
+        // TODO: specific unary/binary ops
+        if (auto* unary = curr->dynCast<Unary>()) {
+          maybeAdd(unary->value);
+        } else if (auto* binary = curr->dynCast<Binary>()) {
+          maybeAdd(binary->left);
+          maybeAdd(binary->right);
         }
       }
+    }
+
+    if (relevantLocals.empty()) {
+      return;
     }
   }
 
 private:
+  /*
   // A local graph that is constructed the first time we need it.
   std::optional<LazyLocalGraph> localGraph;
-  /*
       if (!localGraph) {
       localGraph.emplace(getFunction(), getModule(), StructSet::SpecificId);
     }
