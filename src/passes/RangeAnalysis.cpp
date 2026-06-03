@@ -33,6 +33,7 @@
 #include "ir/properties.h"
 #include "pass.h"
 #include "support/unique_deferring_queue.h"
+#include "support/utilities.h"
 #include "wasm-builder.h"
 #include "wasm.h"
 
@@ -273,8 +274,63 @@ struct RangeAnalysis
     ..
   }
 
-  // Merge two spans. This is a monotonic operation, to avoid infinite loops.
+  enum MinMax { Min, Max };
+
+  // Merge two spans. This is a merge of two spans from two different
+  // predecessor blocks, so the result is a span large enough to contain them
+  // both, as all values in either one are possible.
+  //
+  // Note that this is a monotonic operation, to avoid infinite loops.
   Span merge(Span a, Span b) {
+    return Span{merge(a.min, b.min, Min), merge(a.max, b.max, Max)};
+  }
+
+//using Value = std::variant<Literal, Index, Unknown>;
+  Value merge(Value a, Value b, MinMax op) {
+    Value ret;
+    std::visit(overloaded{
+      [&](Literal& lit1) {
+        std::visit(overloaded{
+          [&](Literal& lit2) {
+            if (lit1 == lit2) {
+              // Equal literals.
+              ret = lit1;
+            } else if (lit1.type.isNumber()) {
+              // Numbers can be ordered.
+              assert(lit2.type == lit1.type);
+              if (lit1.le(lit2)) {
+                ret = (op == Min) ? lit1 : lit2;
+              } else {
+                ret = (op == Min) ? lit2 : lit1;
+              }
+            } else {
+              // Anything else (function reference, etc.) is unknown.
+              ret = Span::unknown();
+            }
+          },
+          [&](Index& local2) {
+          },
+          [&](Unknown& unknown2) {
+            ret = unknown;
+          },
+        }, b);
+      },
+      [&](Index& local) {
+        std::visit(overloaded{
+          [&](Literal& lit2) {
+          },
+          [&](Index& local2) {
+          },
+          [&](Unknown& unknown2) {
+            ret = unknown;
+          },
+        }, b);
+      },
+      [&](Unknown& unknown) {
+        ret = unknown;
+      },
+    }, a);
+    return ret;
   }
 
   /*
