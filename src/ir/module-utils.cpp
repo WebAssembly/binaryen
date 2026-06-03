@@ -18,9 +18,12 @@
 #include "ir/intrinsics.h"
 #include "ir/manipulation.h"
 #include "ir/metadata.h"
-#include "ir/properties.h"
+#include "ir/subtypes.h"
+#include "pass.h"
 #include "support/insert_ordered.h"
 #include "support/topological_sort.h"
+#include "support/utilities.h"
+#include "wasm-builder.h"
 
 namespace wasm::ModuleUtils {
 
@@ -604,55 +607,24 @@ collectHeapTypeInfo(Module& wasm,
 
 namespace {
 
-void classifyTypeVisibility(Module& wasm,
-                            InsertOrderedMap<HeapType, HeapTypeInfo>& types,
-                            WorldMode worldMode) {
-  for (auto type : getPublicHeapTypes(wasm, worldMode)) {
-    if (auto it = types.find(type); it != types.end()) {
-      it->second.visibility = Visibility::Public;
-    }
-  }
-  for (auto& [type, info] : types) {
-    if (info.visibility != Visibility::Public) {
-      info.visibility = Visibility::Private;
-    }
-  }
-}
-
-// Collects all heap types transitively reachable from a root set of types.
-// Options are provided to customize the traversal:
-// - `includeSupertypes`: if true, declared supertypes are also traversed.
-// - `includeRecGroups`: if true, all types in the same recursion group
-//                     are also traversed.
+// Collects all defined heap types transitively reachable from a root set of
+// types.
 std::vector<HeapType>
-getTransitivelyReachable(const std::vector<HeapType>& roots,
-                         bool includeSupertypes,
-                         bool includeRecGroups) {
+getTransitivelyReachable(const std::vector<HeapType>& roots) {
   std::vector<HeapType> result;
   std::vector<HeapType> worklist;
-  std::unordered_set<HeapType> seen;
   std::unordered_set<RecGroup> seenRecGroups;
 
   auto note = [&](HeapType type) {
     if (type.isBasic()) {
-      if (seen.insert(type).second) {
-        result.push_back(type);
-      }
       return;
     }
 
-    if (includeRecGroups) {
-      auto group = type.getRecGroup();
-      if (seenRecGroups.insert(group).second) {
-        for (auto member : group) {
-          result.push_back(member);
-          worklist.push_back(member);
-        }
-      }
-    } else {
-      if (seen.insert(type).second) {
-        result.push_back(type);
-        worklist.push_back(type);
+    auto group = type.getRecGroup();
+    if (seenRecGroups.insert(group).second) {
+      for (auto member : group) {
+        result.push_back(member);
+        worklist.push_back(member);
       }
     }
   };
@@ -664,17 +636,164 @@ getTransitivelyReachable(const std::vector<HeapType>& roots,
   while (!worklist.empty()) {
     auto curr = worklist.back();
     worklist.pop_back();
-    std::optional<HeapType> super =
-      includeSupertypes ? std::nullopt : curr.getDeclaredSuperType();
     for (auto t : curr.getReferencedHeapTypes()) {
-      if (super && t == *super) {
-        continue;
-      }
       note(t);
     }
   }
 
   return result;
+}
+
+// Computes the visibility of all types in the module.
+//
+// ## Closed World Mode
+// Every type reachable from imports/exports and all of their rec group siblings
+// are marked public. This preserves the structural type identity of the imports
+// and exports.
+//
+// ## Open World Mode
+// In an open world, the outside environment may cast a publicized type down
+// to any of its subtypes. Thus, subtypes of exposed types must also remain
+// public to preserve their structural identities.
+void classifyTypeVisibility(Module& wasm,
+                            InsertOrderedMap<HeapType, HeapTypeInfo>& types,
+                            WorldMode worldMode) {
+  if (worldMode == WorldMode::Closed) {
+    // In closed world mode, the public types are simply the exposed types and
+    // all types reachable from their definitions.
+    for (auto type : getPublicHeapTypes(wasm, WorldMode::Closed)) {
+      if (auto it = types.find(type); it != types.end()) {
+        it->second.visibility = Visibility::Public;
+      }
+    }
+    for (auto& [_, info] : types) {
+      if (info.visibility != Visibility::Public) {
+        info.visibility = Visibility::Private;
+      }
+    }
+    return;
+  }
+
+  // Open world public types have different levels of exposure that change
+  // whether their related types must be public or not.
+  enum Exposure {
+    // Types that never cross the module boundary (i.e. are "not exposed"), but
+    // must have stable structural identities so some other public type can have
+    // a stable identity.
+    NotExposed,
+    // Types that may cross the module boundary only via exact references.
+    ExposedExactly,
+    // Types that may cross the module boundary via inexact references, meaning
+    // their subtypes may cross the module boundary as well.
+    Exposed
+  };
+
+  std::unordered_map<HeapType, Exposure> exposures;
+  std::vector<HeapType> worklist;
+
+  // Insert or upgrade a type's exposure in the `visited` map. If a type's
+  // exposure is upgraded, we re-push it to the worklist to update the
+  // propagation to related types.
+  auto markPublic = [&](HeapType type, Exposure state) {
+    auto [it, inserted] = exposures.insert({type, state});
+    if (inserted || state > it->second) {
+      it->second = state;
+      worklist.push_back(type);
+    }
+  };
+
+  // Build the subtype hierarchy.
+  std::vector<HeapType> heapTypes;
+  heapTypes.reserve(types.size());
+  for (auto& [type, _] : types) {
+    heapTypes.push_back(type);
+  }
+  SubTypes subTypes(heapTypes);
+
+  // Initialize with directly exposed types.
+  for (auto& [type, exact] : getExposedPublicHeapTypes(wasm)) {
+    markPublic(type,
+               exact == Exact ? Exposure::ExposedExactly : Exposure::Exposed);
+  }
+
+  while (!worklist.empty()) {
+    auto curr = worklist.back();
+    worklist.pop_back();
+
+    auto state = exposures.at(curr);
+
+    // Propagate exposed status to subtypes.
+    if (state == Exposure::Exposed) {
+      if (curr.isBasic()) {
+        for (auto& [definedType, _] : types) {
+          if (HeapType::isSubType(definedType, curr)) {
+            markPublic(definedType, Exposure::Exposed);
+          }
+        }
+      } else {
+        for (auto sub : subTypes.getImmediateSubTypes(curr)) {
+          markPublic(sub, Exposure::Exposed);
+        }
+      }
+    }
+
+    if (curr.isBasic()) {
+      continue;
+    }
+
+    // Rec group members must also be public, but do not necessarily cross the
+    // module boundary.
+    for (auto member : curr.getRecGroup()) {
+      markPublic(member, Exposure::NotExposed);
+    }
+
+    // Types reachable from this public type (e.g. params, results, fields) must
+    // be public. If the current type is not exposed, the other reachable types
+    // are not necessarily exposed either. If the current type is exposed
+    // (whether exactly or not), the reachable types are exposed with exactness
+    // depending on the reference type.
+    for (auto child : curr.getTypeChildren()) {
+      if (child.isRef()) {
+        auto exposure = state == NotExposed ? NotExposed
+                        : child.isExact()   ? ExposedExactly
+                                            : Exposed;
+        markPublic(child.getHeapType(), exposure);
+      }
+    }
+
+    // Public continuation types require their function types to be public, but
+    // a continuation reference does not make any function reference available.
+    if (curr.isContinuation()) {
+      markPublic(curr.getContinuation().type, NotExposed);
+    }
+
+    // Descriptor types are like type children, except that they are exposed
+    // exactly iff the current type is exposed exactly.
+    if (auto desc = curr.getDescriptorType()) {
+      markPublic(*desc, state);
+    }
+
+    // Supertypes need to be public, but only to keep structural identity the
+    // same. Other types related to the supertypes are not necessarily exposed.
+    if (auto super = curr.getDeclaredSuperType()) {
+      markPublic(*super, Exposure::NotExposed);
+    }
+
+    // Similarly, described types also need to be kept public, but they are not
+    // necessarily exposed just because their descriptor is exposed.
+    if (auto described = curr.getDescribedType()) {
+      markPublic(*described, Exposure::NotExposed);
+    }
+  }
+
+  // Mark visibility for all defined types
+  for (auto& [type, typeInfo] : types) {
+    if (exposures.contains(type)) {
+      typeInfo.visibility = Visibility::Public;
+    } else {
+      typeInfo.visibility = Visibility::Private;
+    }
+  }
 }
 
 void setIndices(IndexedHeapTypes& indexedTypes) {
@@ -695,60 +814,59 @@ std::vector<HeapType> collectHeapTypes(Module& wasm) {
   return types;
 }
 
-std::vector<HeapType> getExposedPublicHeapTypes(Module& wasm) {
-  // Look at the types of imports and exports to get an initial set of public
-  // types.
-  std::vector<HeapType> publicTypes;
-  std::unordered_set<HeapType> seenTypes;
+std::vector<std::pair<HeapType, Exactness>>
+getExposedPublicHeapTypes(Module& wasm) {
+  InsertOrderedMap<HeapType, Exactness> seenTypes;
 
-  auto notePublic = [&](HeapType type) {
-    if (seenTypes.insert(type).second) {
-      publicTypes.push_back(type);
+  auto notePublic = [&](HeapType type, Exactness exact) {
+    auto [it, inserted] = seenTypes.insert({type, exact});
+    if (!inserted) {
+      if (it->second == Exact && exact == Inexact) {
+        it->second = Inexact;
+      }
     }
   };
 
-  ModuleUtils::iterImportedTags(wasm, [&](Tag* tag) { notePublic(tag->type); });
+  ModuleUtils::iterImportedTags(
+    wasm, [&](Tag* tag) { notePublic(tag->type, Inexact); });
   ModuleUtils::iterImportedTables(wasm, [&](Table* table) {
     assert(table->type.isRef());
-    notePublic(table->type.getHeapType());
+    notePublic(table->type.getHeapType(), table->type.getExactness());
   });
   ModuleUtils::iterImportedGlobals(wasm, [&](Global* global) {
     if (global->type.isRef()) {
-      notePublic(global->type.getHeapType());
+      notePublic(global->type.getHeapType(), global->type.getExactness());
     }
   });
   ModuleUtils::iterImportedFunctions(wasm, [&](Function* func) {
-    // We can ignore call.without.effects, which is implemented as an import but
-    // functionally is a call within the module.
     if (!Intrinsics(wasm).isCallWithoutEffects(func)) {
-      notePublic(func->type.getHeapType());
+      notePublic(func->type.getHeapType(), Inexact);
     }
   });
   for (auto& ex : wasm.exports) {
     switch (ex->kind) {
       case ExternalKind::Function: {
         auto* func = wasm.getFunction(*ex->getInternalName());
-        notePublic(func->type.getHeapType());
+        notePublic(func->type.getHeapType(), Inexact);
         continue;
       }
       case ExternalKind::Table: {
         auto* table = wasm.getTable(*ex->getInternalName());
         assert(table->type.isRef());
-        notePublic(table->type.getHeapType());
+        notePublic(table->type.getHeapType(), table->type.getExactness());
         continue;
       }
       case ExternalKind::Memory:
-        // Never a reference type.
         continue;
       case ExternalKind::Global: {
         auto* global = wasm.getGlobal(*ex->getInternalName());
         if (global->type.isRef()) {
-          notePublic(global->type.getHeapType());
+          notePublic(global->type.getHeapType(), global->type.getExactness());
         }
         continue;
       }
       case ExternalKind::Tag:
-        notePublic(wasm.getTag(*ex->getInternalName())->type);
+        notePublic(wasm.getTag(*ex->getInternalName())->type, Inexact);
         continue;
       case ExternalKind::Invalid:
         break;
@@ -756,22 +874,36 @@ std::vector<HeapType> getExposedPublicHeapTypes(Module& wasm) {
     WASM_UNREACHABLE("unexpected export kind");
   }
 
-  // Ignorable public types are public.
   for (auto type : getIgnorablePublicTypes()) {
-    notePublic(type);
+    notePublic(type, Inexact);
   }
 
-  return publicTypes;
+  return std::vector<std::pair<HeapType, Exactness>>(seenTypes.begin(),
+                                                     seenTypes.end());
 }
 
 std::vector<HeapType> getPublicHeapTypes(Module& wasm, WorldMode worldMode) {
-  auto directlyExposed = getExposedPublicHeapTypes(wasm);
-  auto transitivelyExposed = getTransitivelyReachable(
-    directlyExposed, /*includeSupertypes=*/true, /*includeRecGroups=*/true);
+  if (worldMode == WorldMode::Closed) {
+    // Find all the types reachable from the directly exposed types. There's no
+    // need to traverse the entire module to find all the subtypes, etc.
+    auto exposedPairs = getExposedPublicHeapTypes(wasm);
+    std::vector<HeapType> directlyExposed;
+    directlyExposed.reserve(exposedPairs.size());
+    for (auto& [type, _] : exposedPairs) {
+      directlyExposed.push_back(type);
+    }
+    return getTransitivelyReachable(directlyExposed);
+  }
+
+  // In open-world mode we need to find all the types so we can include
+  // subtypes.
+  auto typeInfo = collectHeapTypeInfo(wasm,
+                                      worldMode,
+                                      TypeInclusion::AllTypes,
+                                      VisibilityHandling::FindVisibility);
   std::vector<HeapType> publicTypes;
-  publicTypes.reserve(transitivelyExposed.size());
-  for (auto type : transitivelyExposed) {
-    if (!type.isBasic()) {
+  for (auto& [type, info] : typeInfo) {
+    if (info.visibility == Visibility::Public) {
       publicTypes.push_back(type);
     }
   }
@@ -781,7 +913,7 @@ std::vector<HeapType> getPublicHeapTypes(Module& wasm, WorldMode worldMode) {
 std::vector<HeapType> getPrivateHeapTypes(Module& wasm, WorldMode worldMode) {
   auto info = collectHeapTypeInfo(wasm,
                                   worldMode,
-                                  TypeInclusion::UsedIRTypes,
+                                  TypeInclusion::AllTypes,
                                   VisibilityHandling::FindVisibility);
   std::vector<HeapType> types;
   types.reserve(info.size());
