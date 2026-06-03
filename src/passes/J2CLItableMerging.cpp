@@ -106,7 +106,8 @@ struct J2CLItableMerging : public Pass {
         return it != typeNameInfo.fieldNames.end() && it->second.equals(name);
       };
 
-    auto publicTypes = ModuleUtils::getPublicHeapTypes(wasm, getPassOptions().worldMode);
+    auto publicTypes =
+      ModuleUtils::getPublicHeapTypes(wasm, getPassOptions().worldMode);
     std::unordered_set<HeapType> publicTypesSet(publicTypes.begin(),
                                                 publicTypes.end());
 
@@ -148,10 +149,11 @@ struct J2CLItableMerging : public Pass {
       }
 
       if (publicTypesSet.contains(heapType) ||
-          publicTypesSet.contains(vtabletype) || 
+          publicTypesSet.contains(vtabletype) ||
           publicTypesSet.contains(itabletype)) {
         Fatal() << "Cannot merge itables because the J2CL type "
-                << ModuleHeapType(wasm, heapType) << " or its dispatch tables are public";
+                << ModuleHeapType(wasm, heapType)
+                << " or its dispatch tables are public";
       }
 
       auto structItableSize = itabletype.getStruct().fields.size();
