@@ -30,6 +30,7 @@
 #include <string_view>
 #include <unordered_map>
 
+#include "ir/module-utils.h"
 #include "ir/type-updating.h"
 #include "pass.h"
 #include "support/utilities.h"
@@ -105,6 +106,10 @@ struct J2CLItableMerging : public Pass {
         return it != typeNameInfo.fieldNames.end() && it->second.equals(name);
       };
 
+    auto publicTypes = ModuleUtils::getPublicHeapTypes(wasm, getPassOptions().worldMode);
+    std::unordered_set<HeapType> publicTypesSet(publicTypes.begin(),
+                                                publicTypes.end());
+
     // 1. Collect all structs that correspond that a Java type.
     for (auto [heapType, typeNameInfo] : wasm.typeNames) {
       if (!heapType.isStruct()) {
@@ -140,6 +145,13 @@ struct J2CLItableMerging : public Pass {
 
         vtabletype = type.fields[0].type.getHeapType();
         itabletype = type.fields[1].type.getHeapType();
+      }
+
+      if (publicTypesSet.contains(heapType) ||
+          publicTypesSet.contains(vtabletype) || 
+          publicTypesSet.contains(itabletype)) {
+        Fatal() << "Cannot merge itables because the J2CL type "
+                << ModuleHeapType(wasm, heapType) << " or its dispatch tables are public";
       }
 
       auto structItableSize = itabletype.getStruct().fields.size();
