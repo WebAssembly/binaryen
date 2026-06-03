@@ -3318,7 +3318,7 @@ Module['emitText'] = function(expr) {
   }
   const textPtr = Module['_BinaryenExpressionAllocateAndWriteText'](expr);
   try {
-    return UTF8ToString(textPtr);
+    return UTF8ToString(textPtr) + '\n';
   } finally {
     if (textPtr) {
       _free(textPtr);
