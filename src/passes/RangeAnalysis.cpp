@@ -272,6 +272,7 @@ struct RangeAnalysis
     }
 
     // TODO: use conditional branching to send different values along branches
+    return iter->second;
   }
 
   enum MinMax { Min, Max };
