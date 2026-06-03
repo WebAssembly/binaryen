@@ -99,6 +99,10 @@ bool Span::includes(const Value& value) {
                [&](Index& local) {
                  // A local index can be compared to others.
                  const Index* minLocal = std::get_if<Index>(&min);
+                 if (minLocal && *minLocal == local) {
+                   ret = true;
+                   return;
+                 }
                  const Index* maxLocal = std::get_if<Index>(&max);
                  if (!minLocal || !maxLocal) {
                    return;
