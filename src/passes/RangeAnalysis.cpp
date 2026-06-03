@@ -266,7 +266,9 @@ struct RangeAnalysis
           return;
         }
 
-        
+        switch (curr->op) {
+          case LtSInt32:
+        }
       }
     } optimizer(*this);
     optimizer.walk(getFunction()->body);
