@@ -89,6 +89,11 @@ public:
   bool readsSharedMutableArray : 1;
   bool writesSharedArray : 1;
 
+  std::vector<std::pair<HeapType, Index>> structsWrittenList;
+  std::vector<std::pair<HeapType, Index>> structsReadList;
+  std::vector<HeapType> arraysWrittenList;
+  std::vector<HeapType> arraysReadList;
+
   // A trap, either from an unreachable instruction, or from an implicit trap
   // that we do not ignore (see below).
   //
@@ -347,19 +352,70 @@ public:
         ((writesSharedMemory || calls) && other.accessesSharedMemory()) ||
         ((other.writesSharedMemory || other.calls) && accessesSharedMemory()) ||
         ((writesTable || calls) && other.accessesTable()) ||
-        ((other.writesTable || other.calls) && accessesTable()) ||
-        ((writesStruct || calls) && other.accessesMutableStruct()) ||
-        ((other.writesStruct || other.calls) && accessesMutableStruct()) ||
-        ((writesSharedStruct || calls) &&
-         other.accessesSharedMutableStruct()) ||
-        ((other.writesSharedStruct || other.calls) &&
-         accessesSharedMutableStruct()) ||
-        ((writesArray || calls) && other.accessesArray()) ||
-        ((other.writesArray || other.calls) && accessesArray()) ||
-        ((writesSharedArray || calls) && other.accessesSharedArray()) ||
-        ((other.writesSharedArray || other.calls) && accessesSharedArray())) {
+        ((other.writesTable || other.calls) && accessesTable())) {
       return true;
     }
+
+    auto structsConflict = [&]() {
+      if ((calls && other.accessesMutableStruct()) ||
+          (other.calls && accessesMutableStruct()) ||
+          (calls && other.accessesSharedMutableStruct()) ||
+          (other.calls && accessesSharedMutableStruct())) {
+        return true;
+      }
+      auto overlap = [](const std::vector<std::pair<HeapType, Index>>& a,
+                        const std::vector<std::pair<HeapType, Index>>& b) {
+        for (auto& x : a) {
+          for (auto& y : b) {
+            if (x.second == y.second &&
+                (HeapType::isSubType(x.first, y.first) ||
+                 HeapType::isSubType(y.first, x.first))) {
+              return true;
+            }
+          }
+        }
+        return false;
+      };
+      if (overlap(structsWrittenList, other.structsWrittenList) ||
+          overlap(structsWrittenList, other.structsReadList) ||
+          overlap(structsReadList, other.structsWrittenList)) {
+        return true;
+      }
+      return false;
+    };
+    if (structsConflict()) {
+      return true;
+    }
+
+    auto arraysConflict = [&]() {
+      if ((calls && other.accessesArray()) ||
+          (other.calls && accessesArray()) ||
+          (calls && other.accessesSharedArray()) ||
+          (other.calls && accessesSharedArray())) {
+        return true;
+      }
+      auto overlap = [](const std::vector<HeapType>& a,
+                        const std::vector<HeapType>& b) {
+        for (auto& x : a) {
+          for (auto& y : b) {
+            if (HeapType::isSubType(x, y) || HeapType::isSubType(y, x)) {
+              return true;
+            }
+          }
+        }
+        return false;
+      };
+      if (overlap(arraysWrittenList, other.arraysWrittenList) ||
+          overlap(arraysWrittenList, other.arraysReadList) ||
+          overlap(arraysReadList, other.arraysWrittenList)) {
+        return true;
+      }
+      return false;
+    };
+    if (arraysConflict()) {
+      return true;
+    }
+
     // Cannot reorder anything before dangling pops.
     if (danglingPop) {
       return true;
@@ -476,6 +532,27 @@ public:
     hasReturnCallThrow = hasReturnCallThrow || other.hasReturnCallThrow;
     readOrder = std::max(readOrder, other.readOrder);
     writeOrder = std::max(writeOrder, other.writeOrder);
+
+    for (auto& x : other.structsWrittenList) {
+      if (std::find(structsWrittenList.begin(), structsWrittenList.end(), x) ==
+          structsWrittenList.end())
+        structsWrittenList.push_back(x);
+    }
+    for (auto& x : other.structsReadList) {
+      if (std::find(structsReadList.begin(), structsReadList.end(), x) ==
+          structsReadList.end())
+        structsReadList.push_back(x);
+    }
+    for (auto& x : other.arraysWrittenList) {
+      if (std::find(arraysWrittenList.begin(), arraysWrittenList.end(), x) ==
+          arraysWrittenList.end())
+        arraysWrittenList.push_back(x);
+    }
+    for (auto& x : other.arraysReadList) {
+      if (std::find(arraysReadList.begin(), arraysReadList.end(), x) ==
+          arraysReadList.end())
+        arraysReadList.push_back(x);
+    }
 
     for (auto i : other.localsRead) {
       localsRead.insert(i);
@@ -631,6 +708,11 @@ private:
     void readsStruct(HeapType type, Index index, MemoryOrder order) {
       assert(type.isStruct());
       if (type.getStruct().fields[index].mutable_ == Mutable) {
+        if (std::find(parent.structsReadList.begin(),
+                      parent.structsReadList.end(),
+                      std::pair<HeapType, Index>{type, index}) ==
+            parent.structsReadList.end())
+          parent.structsReadList.push_back({type, index});
         if (type.isShared()) {
           parent.readsSharedMutableStruct = true;
           parent.readOrder = std::max(parent.readOrder, order);
@@ -642,6 +724,11 @@ private:
 
     void writesStruct(HeapType type, Index index, MemoryOrder order) {
       assert(type.isStruct());
+      if (std::find(parent.structsWrittenList.begin(),
+                    parent.structsWrittenList.end(),
+                    std::pair<HeapType, Index>{type, index}) ==
+          parent.structsWrittenList.end())
+        parent.structsWrittenList.push_back({type, index});
       if (type.isShared()) {
         parent.writesSharedStruct = true;
         parent.writeOrder = std::max(parent.writeOrder, order);
@@ -653,6 +740,10 @@ private:
     void readsArray(HeapType type, MemoryOrder order) {
       assert(type.isArray());
       if (type.getArray().element.mutable_ == Mutable) {
+        if (std::find(parent.arraysReadList.begin(),
+                      parent.arraysReadList.end(),
+                      type) == parent.arraysReadList.end())
+          parent.arraysReadList.push_back(type);
         if (type.isShared()) {
           parent.readsSharedMutableArray = true;
           parent.readOrder = std::max(parent.readOrder, order);
@@ -664,6 +755,10 @@ private:
 
     void writesArray(HeapType type, MemoryOrder order) {
       assert(type.isArray());
+      if (std::find(parent.arraysWrittenList.begin(),
+                    parent.arraysWrittenList.end(),
+                    type) == parent.arraysWrittenList.end())
+        parent.arraysWrittenList.push_back(type);
       if (type.isShared()) {
         parent.writesSharedArray = true;
         parent.writeOrder = std::max(parent.writeOrder, order);
