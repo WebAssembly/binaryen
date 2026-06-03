@@ -309,24 +309,32 @@ struct RangeAnalysis
             }
           },
           [&](Index& local2) {
+            // Mix of literal and local. We don't know what to make of this.
+            // TODO: consider trees of constraints and using a solver
+            ret = Span::unknown();
           },
           [&](Unknown& unknown2) {
             ret = unknown;
           },
         }, b);
       },
-      [&](Index& local) {
+      [&](Index& local1) {
         std::visit(overloaded{
           [&](Literal& lit2) {
+            // Mix of literal and local, as above.
+            ret = Span::unknown();
           },
           [&](Index& local2) {
+            // Two locals. If equal, we know the outcome.
+            ret = (local1 == local2) ? local1 : Span::unknown();
           },
           [&](Unknown& unknown2) {
             ret = unknown;
           },
         }, b);
       },
-      [&](Unknown& unknown) {
+      [&](Unknown& unknown1) {
+        // It doesn't even matter what b is.
         ret = unknown;
       },
     }, a);
