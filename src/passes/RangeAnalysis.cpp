@@ -295,19 +295,19 @@ struct RangeAnalysis : public WalkerPass<CFGWalker<RangeAnalysis, Visitor<RangeA
   Value merge(Value a, Value b, MinMax op) {
     Value ret;
     std::visit(overloaded{
-                 [&](Literal& lit1) {
+                 [&](Literal& aLit) {
                    std::visit(overloaded{
-                                [&](Literal& lit2) {
-                                  if (lit1 == lit2) {
+                                [&](Literal& bLit) {
+                                  if (aLit == bLit) {
                                     // Equal literals.
-                                    ret = lit1;
-                                  } else if (lit1.type.isNumber()) {
+                                    ret = aLit;
+                                  } else if (aLit.type.isNumber()) {
                                     // Numbers can be ordered.
-                                    assert(lit2.type == lit1.type);
-                                    if (lit1.le(lit2)) {
-                                      ret = (op == Min) ? lit1 : lit2;
+                                    assert(bLit.type == aLit.type);
+                                    if (aLit.le(bLit)) {
+                                      ret = (op == Min) ? aLit : bLit;
                                     } else {
-                                      ret = (op == Min) ? lit2 : lit1;
+                                      ret = (op == Min) ? bLit : aLit;
                                     }
                                   } else {
                                     // Anything else (function reference, etc.)
@@ -315,33 +315,33 @@ struct RangeAnalysis : public WalkerPass<CFGWalker<RangeAnalysis, Visitor<RangeA
                                     ret = Span::unknown();
                                   }
                                 },
-                                [&](Index& local2) {
+                                [&](Index& bLocal) {
                                   // Mix of literal and local. We don't know
                                   // what to make of this.
                                   // TODO: consider trees of constraints and
                                   // using a solver
                                   ret = Span::unknown();
                                 },
-                                [&](Unknown& unknown2) { ret = unknown; },
+                                [&](Unknown& unknown) { ret = unknown; },
                               },
                               b);
                  },
-                 [&](Index& local1) {
+                 [&](Index& aLocal) {
                    std::visit(overloaded{
-                                [&](Literal& lit2) {
+                                [&](Literal& bLit) {
                                   // Mix of literal and local, as above.
                                   ret = Span::unknown();
                                 },
-                                [&](Index& local2) {
+                                [&](Index& bLocal) {
                                   // Two locals. If equal, we know the outcome.
-                                  ret = (local1 == local2) ? local1
+                                  ret = (aLocal == bLocal) ? aLocal
                                                            : Span::unknown();
                                 },
-                                [&](Unknown& unknown2) { ret = unknown; },
+                                [&](Unknown& unknown) { ret = unknown; },
                               },
                               b);
                  },
-                 [&](Unknown& unknown1) {
+                 [&](Unknown& unknown) {
                    // It doesn't even matter what b is.
                    ret = unknown;
                  },
