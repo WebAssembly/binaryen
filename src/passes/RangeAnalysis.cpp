@@ -47,17 +47,21 @@ struct Unknown : public std::monostate {};
 // i32(0), or a local index (i.e., a reference to another local, showing that
 // this one is related to them somehow: one of ==, <, >=, etc.), or something
 // unknown.
-using Value = std::variant<Literal, Index, Unknown>;
+struct Value : public std::variant<Unknown, Literal, Index> {
+  bool isUnknown() const { 
+    return std::holds_alternative<Unknown>(*this);
+  }
+};
 
 // A range of values, [min, max] (inclusive).
 // TODO: support more clever things like unions
 struct Span {
-  Value min = Unknown;
-  Value max = Unknown;
+  Value min = Unknown();
+  Value max = Unknown();
 
-  bool isUnknown() { return min == Unknown && max == Unknown; }
+  bool isUnknown() { return min.isUnknown() && max.isUnknown(); }
 
-  static Span unknown() { return Span{Unknown, Unknown}; }
+  static Span unknown() { return Span{Unknown(), Unknown()}; }
 };
 
 // The span of values we inferred for locals. In the code below, we consider
