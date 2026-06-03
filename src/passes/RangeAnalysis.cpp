@@ -118,18 +118,20 @@ struct RangeAnalysis : public WalkerPass<CFGWalker<RangeAnalysis, Visitor<RangeA
   // Maps each branching instruction to the basic block right before the
   // branchings. For example, for an If, this is the block that branches to the
   // ifTrue and ifFalse blocks.
+#if 0
   std::unordered_map<If*, BasicBlock*> brancherBlocks;
 
-  static void doStartIfTrue(SubType* self, Expression** currp) {
+  static void doStartIfTrue(RangeAnalysis* self, Expression** currp) {
     // We are right after the condition, so we are in the block before the If's
     // branching.
     self->brancherBlocks[*currp] = self->currBasicBlock;
 
     Super::doStartIfTrue(self, currp);
   }
+#endif
 
 #if 0
-  static void doEndBranch(SubType* self, Expression** currp) {
+  static void doEndBranch(RangeAnalysis* self, Expression** currp) {
     // We are right after the condition, so we are in the block before the If's
     // branching.
     XXX maybe leave for laterself->brancherBlocks[*currp] = self->currBasicBlock;
@@ -202,9 +204,9 @@ struct RangeAnalysis : public WalkerPass<CFGWalker<RangeAnalysis, Visitor<RangeA
             // by Expression*, as e.g. reading a local, then setting it, should
             // read the original flowing value.
             if (auto* get = set->value->dynCast<LocalGet>()) {
-              value = get->index;
+              value = Value(get->index);
             } else if (auto* c = set->value->dynCast<Const>()) {
-              value = c->value;
+              value = Value(c->value);
             } else {
               // Nothing is known.
               localSpans.erase(set->index);
@@ -262,6 +264,7 @@ struct RangeAnalysis : public WalkerPass<CFGWalker<RangeAnalysis, Visitor<RangeA
         }
       }
     }
+    return localSpans;
   }
 
   // Given a source (predecessor) and a target (successor) block, find the span
