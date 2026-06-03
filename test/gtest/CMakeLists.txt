@@ -28,6 +28,7 @@ set(unittest_SOURCES
   printing.cpp
   public-type-validator.cpp
   scc.cpp
+  span.cpp
   stringify.cpp
   subtype-exprs.cpp
   suffix_tree.cpp
