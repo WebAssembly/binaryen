@@ -112,7 +112,7 @@ struct RangeAnalysis
 
   void visitLocalGet(LocalGet* curr) { addAction(); } // XXX needed?
   void visitLocalSet(LocalSet* curr) { addAction(); }
-  void visitUnary(Unary* curr) { addAction(); }
+  void visitUnary(Unary* curr) { addAction(); } // XXX needed?
   void visitBinary(Binary* curr) { addAction(); }
 
   // Track the branches we reason about. CFGWalker builds a CFG, and we want to
@@ -238,40 +238,45 @@ struct RangeAnalysis
 
   // After inferring all we can, apply it to optimize the code.
   void optimize() {
-    struct Optimizer : public PostWalker<Optimizer> {
-      RangeAnalysis& parent;
-
-      Optimizer(RangeAnalysis& parent) : parent(parent) {}
-
-      void visitBinary(Binary* curr) {
-        /// Find relevant gets. If we see a get we can't handle, stop.
-        auto* leftGet = curr->left->dynCast<LocalGet>();
-        auto* rightGet = curr->right->dynCast<LocalGet>();
-        if (leftGet && !parent.relevantLocals.contains(leftGet->index)) {
-          return;
+    for (auto& block : basicBlocks) {
+      for (auto** currp : block->contents.actions) {
+        auto* curr = *currp;
+        if (auto* binary = curr->dynCast<Binary>()) {
+          optimizeBinary(binary, currp, block.get());
         }
-        if (rightGet && !parent.relevantLocals.contains(rightGet->index)) {
-          return;
-        }
-
-        // Find consts.
-        auto* leftConst = curr->left->dynCast<Const>();
-        auto* rightConst = curr->right->dynCast<Const>();
-
-        // If we have something other than relevant gets and consts, stop.
-        if (!leftGet && !leftConst) {
-          return;
-        }
-        if (!rightGet && !rightConst) {
-          return;
-        }
-
-        switch (curr->op) {
-          case LtSInt32:
-        }
+        // TODO unary
       }
-    } optimizer(*this);
-    optimizer.walk(getFunction()->body);
+    }
+  }
+
+  // Given a binary and its block, try to optimize it. We provide the pointer
+  // to the binary, so that it can be replaced if optimizable.
+  void optimizeBinary(Binary* curr, Expression** currp, BasicBlock* block) {
+    /// Find relevant gets. If we see a get we can't handle, stop.
+    auto* leftGet = curr->left->dynCast<LocalGet>();
+    auto* rightGet = curr->right->dynCast<LocalGet>();
+    if (leftGet && !parent.relevantLocals.contains(leftGet->index)) {
+      return;
+    }
+    if (rightGet && !parent.relevantLocals.contains(rightGet->index)) {
+      return;
+    }
+
+    // Find consts.
+    auto* leftConst = curr->left->dynCast<Const>();
+    auto* rightConst = curr->right->dynCast<Const>();
+
+    // If we have something other than relevant gets and consts, stop.
+    if (!leftGet && !leftConst) {
+      return;
+    }
+    if (!rightGet && !rightConst) {
+      return;
+    }
+
+    switch (curr->op) {
+      case LtSInt32:
+    }
   }
 
   // Merge incoming data to a block, by looking at the data arriving from each
