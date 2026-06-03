@@ -30,10 +30,10 @@ struct Span {
 
   struct Unknown : public std::monostate {};
 
-  // In each range of values, one of the values. This can be either a literal like
-  // i32(0), or a local index (i.e., a reference to another local, showing that
-  // this one is related to them somehow: one of ==, <, >=, etc.), or something
-  // unknown.
+  // In each range of values, one of the values. This can be either a literal
+  // like i32(0), or a local index (i.e., a reference to another local, showing
+  // that this one is related to them somehow: one of ==, <, >=, etc.), or
+  // something unknown.
   struct Value : public std::variant<Unknown, Literal, Index> {
     static Value unknown() { return Value(Unknown()); }
 
@@ -79,21 +79,17 @@ bool Span::includes(const Value& value) {
                    // TODO: move out and unit test
                  }
                },
-               [&](Index& local) {
-               },
+               [&](Index& local) {},
                [&](Unknown& unknown) {},
              },
              value);
   return ret;
 }
 
-bool Span::lessThan(const Value& value) {
-}
+bool Span::lessThan(const Value& value) {}
 
-bool Span::greaterThan(const Value& value) {
-}
+bool Span::greaterThan(const Value& value) {}
 
 } // namespace wasm
 
 #endif // wasm_ir_span_h
-

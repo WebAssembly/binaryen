@@ -215,7 +215,10 @@ struct RangeAnalysis
 
   // Given a binary and its block, try to optimize it. We provide the pointer
   // to the binary, so that it can be replaced if optimizable.
-  void optimizeBinary(Binary* curr, Expression** currp, BasicBlock* block, const LocalSpans& localSpans) {
+  void optimizeBinary(Binary* curr,
+                      Expression** currp,
+                      BasicBlock* block,
+                      const LocalSpans& localSpans) {
     /// Find relevant gets. If we see a get we can't handle, stop.
     auto* leftGet = curr->left->dynCast<LocalGet>();
     auto* rightGet = curr->right->dynCast<LocalGet>();
