@@ -199,7 +199,7 @@ struct RangeAnalysis
       // at each intermediate point inside the block. (Flowing between blocks is
       // of course not needed at this stage.)
 
-      LocalSpans localSpans = mergeIncoming(block);
+      LocalSpans localSpans = mergeIncoming(block.get());
       for (auto** currp : block->contents.actions) {
         auto* curr = *currp;
 
@@ -222,10 +222,10 @@ struct RangeAnalysis
     /// Find relevant gets. If we see a get we can't handle, stop.
     auto* leftGet = curr->left->dynCast<LocalGet>();
     auto* rightGet = curr->right->dynCast<LocalGet>();
-    if (leftGet && !parent.relevantLocals.contains(leftGet->index)) {
+    if (leftGet && !relevantLocals.contains(leftGet->index)) {
       return;
     }
-    if (rightGet && !parent.relevantLocals.contains(rightGet->index)) {
+    if (rightGet && !relevantLocals.contains(rightGet->index)) {
       return;
     }
 
