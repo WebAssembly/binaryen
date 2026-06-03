@@ -41,6 +41,8 @@ namespace wasm {
 
 namespace {
 
+using namespace span;
+
 // The span of values we inferred for locals. In the code below, we consider
 // missing indexes to have no known span for them (i.e., we do not need to write
 // an Unknown, and can just leave them empty).

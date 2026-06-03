@@ -72,7 +72,7 @@ bool Span::includes(const Value& value) {
   // In most cases, we don't know enough.
   bool ret = false;
   std::visit(overloaded{
-               [&](Literal& lit) {
+               [&](const Literal& lit) {
                  // The value is a literal. We can infer something here if the
                  // span is a range of literals, checking if value is within
                  // [min, max].
@@ -96,7 +96,7 @@ bool Span::includes(const Value& value) {
                    }
                  }
                },
-               [&](Index& local) {
+               [&](const Index& local) {
                  // A local index can be compared to others.
                  const Index* minLocal = std::get_if<Index>(&min);
                  if (minLocal && *minLocal == local) {
@@ -108,7 +108,7 @@ bool Span::includes(const Value& value) {
                    ret = true;
                  }
                },
-               [&](Unknown& unknown) {},
+               [&](const Unknown& unknown) {},
              },
              value);
   return ret;
