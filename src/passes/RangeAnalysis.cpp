@@ -51,8 +51,12 @@ using Value = std::variant<Literal, Index, Unknown>;
 // A range of values, [min, max] (inclusive).
 // TODO: support more clever things like unions
 struct Span {
-  Value min;
-  Value max;
+  Value min = Unknown;
+  Value max = Unknown;
+
+  bool isUnknown() { return min == Unknown && max == Unknown; }
+
+  static Span unknown() { return Span{Unknown, Unknown}; }
 };
 
 // The span of values we inferred for locals. In the code below, we consider
@@ -233,12 +237,44 @@ struct RangeAnalysis
     optimizer.walk(getFunction());
   }
 
-private:
-
   // Merge incoming data to a block, by looking at the data arriving from each
   // of the predecessor blocks.
-  LocalSpans localSpans = mergeIncoming(BasicBlock* block) {
-    
+  LocalSpans mergeIncoming(BasicBlock* block) {
+    LocalSpans localSpans;
+    // For each relevant local, merge its spans.
+    for (auto local : relevantLocals) {
+      Span mergedSpan;
+      for (auto* pred : block->in) {
+        auto span = getSpanFromPredToSucc(pred, block, local);
+        if (span.isUnknown()) {
+          // Unknown, so the entire merge is unknown.
+          mergedSpan = Span::unknown();
+          break;
+        }
+        if (mergedSpan.isUnknown()) {
+          // This is the first item. Copy it.
+          mergedSpan = span;
+        } else {
+          // Merge in new data alongside existing.
+          mergedSpan = merge(mergedSpan, span);
+        }
+      }
+    }
+  }
+
+  // Given a source (predecessor) and a target (successor) block, find the span
+  // of a particular local as it arrives to that target from that successor.
+  Span getSpanFromPredToSucc(BasicBlock* pred, BasicBlock* block, Index local) {
+    auto iter = pred->localSpansEnd.find(local);
+    if (iter == pred->localSpansEnd.end()) {
+      return Span::unknown();
+    }
+
+    ..
+  }
+
+  // Merge two spans. This is a monotonic operation, to avoid infinite loops.
+  Span merge(Span a, Span b) {
   }
 
   /*
