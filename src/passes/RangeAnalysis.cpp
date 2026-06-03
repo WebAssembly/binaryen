@@ -71,6 +71,7 @@ struct Span {
   // Check if this span definitely includes a value inside it. If we don't know,
   // return false.
   bool includes(const Value& value);
+  // TODO: notIncludes..?
 
   // Check if this span is definitely smaller than a value (or false if we don't
   // know).
@@ -418,16 +419,21 @@ struct RangeAnalysis
 };
 
 bool Span::includes(const Value& value) {
-  bool ret;
+  // In most cases, we don't know enough.
+  bool ret = false;
   std::visit(overloaded{
                [&](Literal& lit) {
                  // The value is a literal. We can infer something here if the
-                 // span contains ..
-                 if (const int* pval = std::get_if<int>(&v))
+                 // span is a range of literals, checking if value is within
+                 // [min, max].
+                 if (const int* minLit = std::get_if<Literal>(&min)) {
+                   if (const int* maxLit = std::get_if<Literal>(&max)) {
+                   }
+                 }
                },
                [&](Index& local) {
                },
-               [&](Unknown& unknown) { ret = false; },
+               [&](Unknown& unknown) {},
              },
              value);
   return ret;
