@@ -114,13 +114,9 @@ bool Span::includes(const Value& value) {
   return ret;
 }
 
-bool Span::lessThan(const Value& value) {
-  abort();
-}
+bool Span::lessThan(const Value& value) { abort(); }
 
-bool Span::greaterThan(const Value& value) {
-  abort();
-}
+bool Span::greaterThan(const Value& value) { abort(); }
 
 } // namespace wasm::span
 
