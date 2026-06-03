@@ -20,7 +20,10 @@
 #ifndef wasm_ir_span_h
 #define wasm_ir_span_h
 
-#include <wasm.h>
+#include <variant>
+
+#include "support/utilities.h"
+#include "wasm.h"
 
 namespace wasm {
 
@@ -73,10 +76,24 @@ bool Span::includes(const Value& value) {
                  // The value is a literal. We can infer something here if the
                  // span is a range of literals, checking if value is within
                  // [min, max].
-                 if (const int* minLit = std::get_if<Literal>(&min)) {
-                   if (const int* maxLit = std::get_if<Literal>(&max)) {
+                 const Literal* minLit = std::get_if<Literal>(&min);
+                 const Literal* maxLit = std::get_if<Literal>(&max);
+                 if (!minLit || !maxLit) {
+                   return;
+                 }
+                 if (lit == *minLit && lit == *maxLit) {
+                   // Simple equality.
+                   ret = true;
+                   return;
+                 }
+                 if (lit.type.isNumber()) {
+                   // Numbers can be ordered.
+                   assert(minLit.type == lit.type);
+                   assert(maxLit.type == lit.type);
+                   if (minLit.le(it).getUnsigned() &&
+                       maxLit.ge(it).getUnsigned()) {
+                     ret = true;
                    }
-                   // TODO: move out and unit test
                  }
                },
                [&](Index& local) {},
@@ -86,9 +103,13 @@ bool Span::includes(const Value& value) {
   return ret;
 }
 
-bool Span::lessThan(const Value& value) {}
+bool Span::lessThan(const Value& value) {
+  abort();
+}
 
-bool Span::greaterThan(const Value& value) {}
+bool Span::greaterThan(const Value& value) {
+  abort();
+}
 
 } // namespace wasm
 

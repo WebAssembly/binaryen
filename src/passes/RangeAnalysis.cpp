@@ -26,8 +26,6 @@
 // TODO: Look not just at integers but also references
 //
 
-#include <variant>
-
 #include "cfg/cfg-traversal.h"
 #include "ir/abstract.h"
 #include "ir/local-graph.h"
