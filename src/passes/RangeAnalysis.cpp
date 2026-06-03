@@ -271,7 +271,7 @@ struct RangeAnalysis
       return Span::unknown();
     }
 
-    ..
+    // TODO: use conditional branching to send different values along branches
   }
 
   enum MinMax { Min, Max };
@@ -285,7 +285,6 @@ struct RangeAnalysis
     return Span{merge(a.min, b.min, Min), merge(a.max, b.max, Max)};
   }
 
-//using Value = std::variant<Literal, Index, Unknown>;
   Value merge(Value a, Value b, MinMax op) {
     Value ret;
     std::visit(overloaded{
@@ -340,14 +339,6 @@ struct RangeAnalysis
     }, a);
     return ret;
   }
-
-  /*
-  // A local graph that is constructed the first time we need it.
-  std::optional<LazyLocalGraph> localGraph;
-      if (!localGraph) {
-      localGraph.emplace(getFunction(), getModule(), StructSet::SpecificId);
-    }
-*/
 };
 
 } // anonymous namespace
