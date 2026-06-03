@@ -53,6 +53,8 @@ struct Value : public std::variant<Unknown, Literal, Index> {
   bool isUnknown() const { 
     return std::holds_alternative<Unknown>(*this);
   }
+
+  bool operator==(const Value&) const = default;
 };
 
 // A range of values, [min, max] (inclusive).
@@ -64,6 +66,8 @@ struct Span {
   static Span unknown() { return Span{Unknown(), Unknown()}; }
 
   bool isUnknown() { return min.isUnknown() && max.isUnknown(); }
+
+  bool operator==(const Span&) const = default;
 };
 
 // The span of values we inferred for locals. In the code below, we consider
@@ -222,7 +226,8 @@ struct RangeAnalysis : public WalkerPass<CFGWalker<RangeAnalysis, Visitor<RangeA
 
       // We now know the values at the end of the block. If something changed,
       // flow it onward.
-      if (localSpans != block->contents.localSpansEnd) {
+      LocalSpans t = block->contents.localSpansEnd;
+      if (localSpans != t) {
         block->contents.localSpansEnd = std::move(localSpans);
         for (auto* out : block->out) {
           work.push(out);
