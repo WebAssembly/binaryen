@@ -300,14 +300,14 @@ struct RangeAnalysis : public WalkerPass<CFGWalker<RangeAnalysis, Visitor<RangeA
                                 [&](Literal& bLit) {
                                   if (aLit == bLit) {
                                     // Equal literals.
-                                    ret = aLit;
+                                    ret = a;
                                   } else if (aLit.type.isNumber()) {
                                     // Numbers can be ordered.
                                     assert(bLit.type == aLit.type);
                                     if (aLit.le(bLit)) {
-                                      ret = (op == Min) ? aLit : bLit;
+                                      ret = (op == Min) ? a : b;
                                     } else {
-                                      ret = (op == Min) ? bLit : aLit;
+                                      ret = (op == Min) ? b : a;
                                     }
                                   } else {
                                     // Anything else (function reference, etc.)
@@ -334,7 +334,7 @@ struct RangeAnalysis : public WalkerPass<CFGWalker<RangeAnalysis, Visitor<RangeA
                                 },
                                 [&](Index& bLocal) {
                                   // Two locals. If equal, we know the outcome.
-                                  ret = (aLocal == bLocal) ? aLocal
+                                  ret = (aLocal == bLocal) ? a
                                                            : Span::unknown();
                                 },
                                 [&](Unknown& unknown) { ret = unknown; },
