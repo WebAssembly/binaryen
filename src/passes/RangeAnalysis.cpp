@@ -220,8 +220,17 @@ struct RangeAnalysis
     }
   }
 
-  //
+  // After inferring all we can, apply it to optimize the code.
   void optimize() {
+    struct Optimizer : public PostWalker<Optimizer> {
+      RangeAnalysis& parent;
+
+      Optimizer(RangeAnalysis& parent) : parent(parent) {}
+
+      void visitBinary(Binary* curr) {
+      }
+    } optimizer(*this);
+    optimizer.walk(getFunction());
   }
 
 private:
