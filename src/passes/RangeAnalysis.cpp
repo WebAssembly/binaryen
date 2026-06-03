@@ -56,8 +56,8 @@ struct Value : public std::variant<Unknown, Literal, Index> {
 // A range of values, [min, max] (inclusive).
 // TODO: support more clever things like unions
 struct Span {
-  Value min = Unknown();
-  Value max = Unknown();
+  Value min;
+  Value max;
 
   bool isUnknown() { return min.isUnknown() && max.isUnknown(); }
 
@@ -81,7 +81,7 @@ struct Info {
   LocalSpans localSpansStart, localSpansEnd;
 };
 
-struct RangeAnalysis : public WalkerPass<CFGWalker<RangeAnalysis, Info>> {
+struct RangeAnalysis : public WalkerPass<CFGWalker<RangeAnalysis, Visitor<RangeAnalysis>, Info>> {
   bool isFunctionParallel() override { return true; }
 
   // Locals are not modified here.
@@ -91,7 +91,7 @@ struct RangeAnalysis : public WalkerPass<CFGWalker<RangeAnalysis, Info>> {
     return std::make_unique<RangeAnalysis>();
   }
 
-  using Super = WalkerPass<CFGWalker<RangeAnalysis, Info>>;
+  using Super = WalkerPass<CFGWalker<RangeAnalysis, Visitor<RangeAnalysis>, Info>>;
 
   // Branches outside of the function can be ignored, as we only look at local
   // state in the function.
