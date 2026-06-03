@@ -44,7 +44,7 @@ struct SeparateDataSegments : public Pass {
     Address base = std::stoi(baseStr);
     size_t lastEnd = 0;
     for (auto& seg : module->dataSegments) {
-      if (seg->isPassive) {
+      if (seg->isPassive()) {
         Fatal() << "separating passive segments not implemented";
       }
       if (!seg->offset->is<Const>()) {

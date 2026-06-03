@@ -1220,10 +1220,11 @@ BINARYEN_API void BinaryenExpressionFinalize(BinaryenExpressionRef expr);
 // Makes a deep copy of the given expression.
 BINARYEN_API BinaryenExpressionRef
 BinaryenExpressionCopy(BinaryenExpressionRef expr, BinaryenModuleRef module);
-// Serialize an expression in s-expression form. Implicitly allocates the returned
-// char* with malloc(), and expects the user to free() them manually
+// Serialize an expression in s-expression form. Implicitly allocates the
+// returned char* with malloc(), and expects the user to free() them manually
 // once not needed anymore.
-BINARYEN_API char* BinaryenExpressionAllocateAndWriteText(BinaryenExpressionRef expr);
+BINARYEN_API char*
+BinaryenExpressionAllocateAndWriteText(BinaryenExpressionRef expr);
 
 // Block
 

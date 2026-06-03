@@ -1,5 +1,9 @@
 ;; Test running a wasm file in fuzz_shell.js.
 
+;; This fails on windows-ARM on CI for unclear reasons. v8 is somehow not
+;; properly installed.
+;; REQUIRES: linux
+
 (module
   (func $test (export "test") (result i32)
     (i32.const 42)

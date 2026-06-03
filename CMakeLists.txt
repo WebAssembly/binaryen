@@ -5,7 +5,7 @@ cmake_minimum_required(VERSION 3.16.3)
 # Needed for C++17 (std::path)
 set(CMAKE_OSX_DEPLOYMENT_TARGET "10.15" CACHE STRING "Minimum OS X deployment version")
 
-project(binaryen LANGUAGES C CXX VERSION 129)
+project(binaryen LANGUAGES C CXX VERSION 130)
 include(GNUInstallDirs)
 
 # The C++ standard whose features are required to build Binaryen.
@@ -419,6 +419,7 @@ else() # MSVC
   add_compile_flag("-Wswitch") # we explicitly expect this in the code
   add_compile_flag("-Wimplicit-fallthrough")
   add_compile_flag("-Wnon-virtual-dtor")
+  add_compile_flag("-Wsuggest-override")
 
   if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
     # Google style requires this, so make sure we compile cleanly with it.

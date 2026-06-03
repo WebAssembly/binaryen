@@ -350,11 +350,13 @@ export class Module {
 	 */
 	emitText(): string {
 		const textPtr = BinaryenObj["_BinaryenModuleAllocateAndWriteText"](this[PTR]);
-		const text = UTF8ToString(textPtr);
-		if (textPtr) {
-			_free(textPtr);
+		try {
+			return UTF8ToString(textPtr);
+		} finally {
+			if (textPtr) {
+				_free(textPtr);
+			}
 		}
-		return text;
 	}
 
 	/**
@@ -363,11 +365,13 @@ export class Module {
 	 */
 	emitStackIR(): string {
 		const textPtr = BinaryenObj["_BinaryenModuleAllocateAndWriteStackIR"](this[PTR]);
-		const text = UTF8ToString(textPtr);
-		if (textPtr) {
-			_free(textPtr);
+		try {
+			return UTF8ToString(textPtr);
+		} finally {
+			if (textPtr) {
+				_free(textPtr);
+			}
 		}
-		return text;
 	}
 
 	/**

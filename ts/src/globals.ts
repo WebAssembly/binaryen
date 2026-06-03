@@ -187,11 +187,13 @@ function handleFatalError<T>(func: () => T): T {
 /** Emits the expression in Binaryen’s s-expression text format (not official stack-style text format). */
 export function emitText(expr: ExpressionRef): string {
 	const textPtr = BinaryenObj["_BinaryenExpressionAllocateAndWriteText"](expr);
-	const text = UTF8ToString(textPtr);
-	if (textPtr) {
-		_free(textPtr);
+	try {
+		return `${ UTF8ToString(textPtr) }\n`;
+	} finally {
+		if (textPtr) {
+			_free(textPtr);
+		}
 	}
-	return text;
 }
 
 /** Creates a module from binary data. */

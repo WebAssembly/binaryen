@@ -43,7 +43,7 @@
 //      export the primary function if it is not already exported and import it
 //      into each secondary module using it.
 //
-//   8. For each secondary module, create new active table segments in the
+//   8. For each secondary module, create new dispatch table segments in the
 //      module that will replace all the placeholder function references in the
 //      table with references to their corresponding secondary functions upon
 //      instantiation.
@@ -64,7 +64,7 @@
 //
 //   2. It assumes that either all table segment offsets are constants or there
 //      is exactly one segment that may have a non-constant offset. It also
-//      assumes that all segments are active segments.
+//      assumes that all segments are dispatch segments.
 //
 //   3. It assumes that if exact function references are required for validity
 //      (because they are stored in a local with an exact function type, for
@@ -114,11 +114,11 @@ struct TableSlotManager {
   };
   Module& module;
   const std::vector<std::unique_ptr<Module>>& secondaries;
-  Table* activeTable = nullptr;
-  ElementSegment* activeSegment = nullptr;
-  Slot activeBase;
+  Table* dispatchTable = nullptr;
+  ElementSegment* dispatchSegment = nullptr;
+  Slot dispatchBase;
   std::map<Name, Slot> funcIndices;
-  std::vector<ElementSegment*> activeTableSegments;
+  std::vector<ElementSegment*> dispatchTableSegments;
 
   TableSlotManager(Module& module,
                    const std::vector<std::unique_ptr<Module>>& secondaries);
@@ -187,43 +187,43 @@ TableSlotManager::TableSlotManager(
     return;
   }
 
-  activeTable = it->get();
+  dispatchTable = it->get();
   ModuleUtils::iterTableSegments(
-    module, activeTable->name, [&](ElementSegment* segment) {
-      activeTableSegments.push_back(segment);
+    module, dispatchTable->name, [&](ElementSegment* segment) {
+      dispatchTableSegments.push_back(segment);
     });
 
-  if (activeTableSegments.empty()) {
-    // There are no active segments, so we will lazily create one and start
+  if (dispatchTableSegments.empty()) {
+    // There are no dispatch segments, so we will lazily create one and start
     // filling it at index 0.
-    activeBase = {activeTable->name, Name(), 0};
-  } else if (activeTableSegments.size() == 1 &&
-             activeTableSegments[0]->type == funcref &&
-             !activeTableSegments[0]->offset->is<Const>()) {
+    dispatchBase = {dispatchTable->name, Name(), 0};
+  } else if (dispatchTableSegments.size() == 1 &&
+             dispatchTableSegments[0]->type == funcref &&
+             !dispatchTableSegments[0]->offset->is<Const>()) {
     // If there is exactly one table segment and that segment has a non-constant
     // offset, append new items to the end of that segment. In all other cases,
     // append new items at constant offsets after all existing items at constant
     // offsets.
-    assert(activeTableSegments[0]->offset->is<GlobalGet>() &&
+    assert(dispatchTableSegments[0]->offset->is<GlobalGet>() &&
            "Unexpected initializer instruction");
-    activeSegment = activeTableSegments[0];
-    activeBase = {activeTable->name,
-                  activeTableSegments[0]->offset->cast<GlobalGet>()->name,
-                  0};
+    dispatchSegment = dispatchTableSegments[0];
+    dispatchBase = {dispatchTable->name,
+                    dispatchTableSegments[0]->offset->cast<GlobalGet>()->name,
+                    0};
   } else {
     // Finds the segment with the highest occupied table slot so that new items
     // can be inserted contiguously at the end of it without accidentally
     // overwriting any other items. TODO: be more clever about filling gaps in
     // the table, if that is ever useful.
     Index maxIndex = 0;
-    for (auto& segment : activeTableSegments) {
+    for (auto& segment : dispatchTableSegments) {
       assert(segment->offset->is<Const>() &&
              "Unexpected non-const segment offset with multiple segments");
       Index segmentBase = segment->offset->cast<Const>()->value.getInteger();
       if (segmentBase + segment->data.size() >= maxIndex) {
         maxIndex = segmentBase + segment->data.size();
-        activeSegment = segment;
-        activeBase = {activeTable->name, Name(), segmentBase};
+        dispatchSegment = segment;
+        dispatchBase = {dispatchTable->name, Name(), segmentBase};
       }
     }
   }
@@ -238,7 +238,7 @@ TableSlotManager::TableSlotManager(
 }
 
 Table* TableSlotManager::makeTable() {
-  // Because the active table will be imported in secondary modules, its name
+  // Because the dispatch table will be imported in secondary modules, its name
   // should not collide with any existing tables in primary and secondary
   // modules.
   std::unordered_set<Name> secondaryTableNames;
@@ -262,10 +262,10 @@ Table* TableSlotManager::makeTable() {
 ElementSegment* TableSlotManager::makeElementSegment() {
   Builder builder(module);
   Expression* offset =
-    builder.makeConst(Literal::makeFromInt32(0, activeTable->addressType));
+    builder.makeConst(Literal::makeFromInt32(0, dispatchTable->addressType));
   return module.addElementSegment(Builder::makeElementSegment(
     Names::getValidElementSegmentName(module, Name::fromInt(0)),
-    activeTable->name,
+    dispatchTable->name,
     offset));
 }
 
@@ -276,40 +276,40 @@ TableSlotManager::Slot TableSlotManager::getSlot(Name func, HeapType type) {
   }
 
   // If there are no segments yet, allocate one.
-  if (activeSegment == nullptr) {
-    if (activeTable == nullptr) {
-      activeTable = makeTable();
-      activeBase = {activeTable->name, Name(), 0};
+  if (dispatchSegment == nullptr) {
+    if (dispatchTable == nullptr) {
+      dispatchTable = makeTable();
+      dispatchBase = {dispatchTable->name, Name(), 0};
     }
 
-    // None of the existing segments should refer to the active table
+    // None of the existing segments should refer to the dispatch table
     assert(std::all_of(module.elementSegments.begin(),
                        module.elementSegments.end(),
                        [&](std::unique_ptr<ElementSegment>& segment) {
-                         return segment->table != activeTable->name;
+                         return segment->table != dispatchTable->name;
                        }));
 
-    activeSegment = makeElementSegment();
+    dispatchSegment = makeElementSegment();
   }
 
-  Slot newSlot = {activeBase.tableName,
-                  activeBase.global,
-                  activeBase.index + Index(activeSegment->data.size())};
+  Slot newSlot = {dispatchBase.tableName,
+                  dispatchBase.global,
+                  dispatchBase.index + Index(dispatchSegment->data.size())};
 
   Builder builder(module);
   auto funcType = Type(type, NonNullable, Inexact);
-  activeSegment->data.push_back(builder.makeRefFunc(func, funcType));
+  dispatchSegment->data.push_back(builder.makeRefFunc(func, funcType));
 
   addSlot(func, newSlot);
-  if (activeTable->initial <= newSlot.index) {
-    activeTable->initial = newSlot.index + 1;
-    // TODO: handle the active table not being the dylink table (#3823)
+  if (dispatchTable->initial <= newSlot.index) {
+    dispatchTable->initial = newSlot.index + 1;
+    // TODO: handle the dispatch table not being the dylink table (#3823)
     if (module.dylinkSection) {
-      module.dylinkSection->tableSize = activeTable->initial;
+      module.dylinkSection->tableSize = dispatchTable->initial;
     }
   }
-  if (activeTable->max <= newSlot.index) {
-    activeTable->max = newSlot.index + 1;
+  if (dispatchTable->max <= newSlot.index) {
+    dispatchTable->max = newSlot.index + 1;
   }
   return newSlot;
 }
@@ -343,7 +343,7 @@ struct ModuleSplitter {
   // Map from original secondary function name to its trampoline
   std::unordered_map<Name, Name> trampolineMap;
 
-  void shareActiveTable(Module* secondary);
+  void shareDispatchTable(Module* secondary);
 
   // Initialization helpers
   static std::unique_ptr<Module> initSecondary(const Module& primary);
@@ -593,24 +593,26 @@ Name ModuleSplitter::getTrampoline(Name funcName) {
   return trampoline;
 }
 
-void ModuleSplitter::shareActiveTable(Module* secondary) {
-  assert(tableManager.activeTable);
+void ModuleSplitter::shareDispatchTable(Module* secondary) {
+  assert(tableManager.dispatchTable);
   auto secondaryTable =
-    secondary->getTableOrNull(tableManager.activeTable->name);
+    secondary->getTableOrNull(tableManager.dispatchTable->name);
   if (secondaryTable) {
     // In case it's already in the secondary module, sync the initial/max
-    secondaryTable->initial = tableManager.activeTable->initial;
-    secondaryTable->max = tableManager.activeTable->max;
+    secondaryTable->initial = tableManager.dispatchTable->initial;
+    secondaryTable->max = tableManager.dispatchTable->max;
   } else {
     secondaryTable =
-      ModuleUtils::copyTable(tableManager.activeTable, *secondary);
-    makeImportExport(
-      *tableManager.activeTable, *secondaryTable, "table", ExternalKind::Table);
+      ModuleUtils::copyTable(tableManager.dispatchTable, *secondary);
+    makeImportExport(*tableManager.dispatchTable,
+                     *secondaryTable,
+                     "table",
+                     ExternalKind::Table);
   }
-  if (tableManager.activeBase.global) {
-    auto* primaryGlobal = primary.getGlobal(tableManager.activeBase.global);
+  if (tableManager.dispatchBase.global) {
+    auto* primaryGlobal = primary.getGlobal(tableManager.dispatchBase.global);
     auto* secondaryGlobal =
-      secondary->getGlobalOrNull(tableManager.activeBase.global);
+      secondary->getGlobalOrNull(tableManager.dispatchBase.global);
     if (!secondaryGlobal) {
       secondaryGlobal = ModuleUtils::copyGlobal(primaryGlobal, *secondary);
       makeImportExport(
@@ -743,12 +745,12 @@ void ModuleSplitter::shareImportableItems() {
     // module, it can't.
     walkSegments(collector, &module);
     for (auto& segment : module.dataSegments) {
-      if (segment->memory.is()) {
+      if (segment->isActive()) {
         used.memories.insert(segment->memory);
       }
     }
     for (auto& segment : module.elementSegments) {
-      if (segment->table.is()) {
+      if (segment->isActive()) {
         used.tables.insert(segment->table);
       }
     }
@@ -773,42 +775,11 @@ void ModuleSplitter::shareImportableItems() {
           break;
       }
     }
-    return used;
-  };
 
-  UsedNames primaryUsed = getUsedNames(primary);
-  std::vector<UsedNames> secondaryUsed;
-  for (auto& secondaryPtr : secondaries) {
-    secondaryUsed.push_back(getUsedNames(*secondaryPtr));
-  }
-
-  // We need to assume the active table and its base global are used in the
-  // primary module, because we will create segments there later.
-  if (tableManager.activeTable) {
-    primaryUsed.tables.insert(tableManager.activeTable->name);
-  }
-  if (tableManager.activeBase.global) {
-    primaryUsed.globals.insert(tableManager.activeBase.global);
-  }
-
-  // If custom-descirptors is enabled, global initializers can trap. Trapping
-  // globals should stay in the primary module to preserve the trapping behavior
-  // upon instantiation.
-  if (primary.features.hasCustomDescriptors()) {
-    for (auto& global : primary.globals) {
-      if (global->init &&
-          EffectAnalyzer(config.passOptions, primary, global->init)
-            .hasUnremovableSideEffects()) {
-        primaryUsed.globals.insert(global->name);
-      }
-    }
-  }
-
-  // Compute the transitive closure of globals referenced in other globals'
-  // initializers. Since globals can reference other globals, we must ensure
-  // that if a global is used in a module, all its dependencies are also marked
-  // as used.
-  auto computeTransitiveGlobals = [&](UsedNames& used) {
+    // Compute the transitive closure of globals referenced in other globals'
+    // initializers. Since globals can reference other globals, we must ensure
+    // that if a global is used in a module, all its dependencies are also
+    // marked as used.
     UniqueNonrepeatingDeferredQueue<Name> worklist;
     for (auto global : used.globals) {
       worklist.push(global);
@@ -825,11 +796,35 @@ void ModuleSplitter::shareImportableItems() {
         }
       }
     }
+    return used;
   };
 
-  computeTransitiveGlobals(primaryUsed);
-  for (auto& used : secondaryUsed) {
-    computeTransitiveGlobals(used);
+  UsedNames primaryUsed = getUsedNames(primary);
+  std::vector<UsedNames> secondaryUsed;
+  for (auto& secondaryPtr : secondaries) {
+    secondaryUsed.push_back(getUsedNames(*secondaryPtr));
+  }
+
+  // We need to assume the dispatch table and its base global are used in the
+  // primary module, because we will create segments there later.
+  if (tableManager.dispatchTable) {
+    primaryUsed.tables.insert(tableManager.dispatchTable->name);
+  }
+  if (tableManager.dispatchBase.global) {
+    primaryUsed.globals.insert(tableManager.dispatchBase.global);
+  }
+
+  // If custom-descirptors is enabled, global initializers can trap. Trapping
+  // globals should stay in the primary module to preserve the trapping behavior
+  // upon instantiation.
+  if (primary.features.hasCustomDescriptors()) {
+    for (auto& global : primary.globals) {
+      if (global->init &&
+          EffectAnalyzer(config.passOptions, primary, global->init)
+            .hasUnremovableSideEffects()) {
+        primaryUsed.globals.insert(global->name);
+      }
+    }
   }
 
   // Given a name and module item kind, returns the list of secondary modules
@@ -986,13 +981,14 @@ void ModuleSplitter::indirectReferencesToSecondaryFunctions() {
     gatherer.walkModule(secondaryPtr.get());
   }
 
-  // Ignore references to secondary functions that occur in the active segment
-  // that will contain the imported placeholders. Indirect calls to table slots
-  // initialized by that segment will already go to the right place once the
-  // secondary module has been loaded and the table has been patched.
+  // Ignore references to secondary functions that occur in the dispatch
+  // segments that will contain the imported placeholders. Indirect calls to
+  // table slots initialized by those segments will already go to the right
+  // place once the secondary module has been loaded and the table has been
+  // patched.
   std::unordered_set<RefFunc*> ignore;
-  if (tableManager.activeSegment) {
-    for (auto* expr : tableManager.activeSegment->data) {
+  for (auto* segment : tableManager.dispatchTableSegments) {
+    for (auto* expr : segment->data) {
       if (auto* ref = expr->dynCast<RefFunc>()) {
         ignore.insert(ref);
       }
@@ -1030,7 +1026,7 @@ void ModuleSplitter::indirectCallsToSecondaryFunctions() {
   // corresponding table indices instead.
   struct CallIndirector : public PostWalker<CallIndirector> {
     ModuleSplitter& parent;
-    std::unordered_set<Module*> activeTableUsingSecondaries;
+    std::unordered_set<Module*> dispatchTableUsingSecondaries;
     CallIndirector(ModuleSplitter& parent) : parent(parent) {}
     void visitCall(Call* curr) {
       // Return if the call's target is not in one of the secondary module.
@@ -1058,10 +1054,10 @@ void ModuleSplitter::indirectCallsToSecondaryFunctions() {
                                  func->type.getHeapType(),
                                  curr->isReturn));
 
-      // Share the active table with the current module (caller). We share the
-      // active table with with calleeModule later in setupTablePathing.
+      // Share the dispatch table with the current module (caller). We share the
+      // dispatch table with with calleeModule later in setupTablePathing.
       if (currModule != &parent.primary) {
-        activeTableUsingSecondaries.insert(currModule);
+        dispatchTableUsingSecondaries.insert(currModule);
       }
     }
   };
@@ -1071,8 +1067,8 @@ void ModuleSplitter::indirectCallsToSecondaryFunctions() {
     callIndirector.walkModule(secondaryPtr.get());
   }
 
-  for (auto* secondary : callIndirector.activeTableUsingSecondaries) {
-    shareActiveTable(secondary);
+  for (auto* secondary : callIndirector.dispatchTableUsingSecondaries) {
+    shareDispatchTable(secondary);
   }
 }
 
@@ -1123,7 +1119,7 @@ void ModuleSplitter::exportImportCalledPrimaryFunctions() {
 }
 
 void ModuleSplitter::setupTablePatching() {
-  if (!tableManager.activeTable) {
+  if (!tableManager.dispatchTable) {
     return;
   }
 
@@ -1142,7 +1138,7 @@ void ModuleSplitter::setupTablePatching() {
       if (!allSecondaryFuncs.contains(ref->func)) {
         return;
       }
-      assert(table == tableManager.activeTable->name);
+      assert(table == tableManager.dispatchTable->name);
 
       placeholderMap[table][index] = ref->func;
       Index secondaryIndex = funcToSecondaryIndex.at(ref->func);
@@ -1166,7 +1162,7 @@ void ModuleSplitter::setupTablePatching() {
 
       } else { // !config.usePlaceholders
         if (primary.features.hasReferenceTypes()) {
-          // TODO: This can create active element segments with lots of nulls.
+          // TODO: This can create dispatch element segments with lots of nulls.
           // We should optimize them like we do data segments with zeros.
           elem = Builder(primary).makeRefNull(HeapType::nofunc);
           return;
@@ -1191,11 +1187,11 @@ void ModuleSplitter::setupTablePatching() {
 
   for (auto& [secondaryPtr, replacedElems] : moduleToReplacedElems) {
     Module& secondary = *secondaryPtr;
-    shareActiveTable(&secondary);
-    auto* secondaryTable = secondary.getTable(tableManager.activeTable->name);
+    shareDispatchTable(&secondary);
+    auto* secondaryTable = secondary.getTable(tableManager.dispatchTable->name);
 
-    if (tableManager.activeBase.global) {
-      assert(tableManager.activeTableSegments.size() == 1 &&
+    if (tableManager.dispatchBase.global) {
+      assert(tableManager.dispatchTableSegments.size() == 1 &&
              "Unexpected number of segments with non-const base");
       assert(secondary.tables.size() == 1 && secondary.elementSegments.empty());
       // Since addition is not currently allowed in initializer expressions, we
@@ -1206,7 +1202,7 @@ void ModuleSplitter::setupTablePatching() {
       // to be imported into the second module. TODO: use better strategies
       // here, such as using ref.func in the start function or standardizing
       // addition in initializer expressions.
-      ElementSegment* primarySeg = tableManager.activeTableSegments.front();
+      ElementSegment* primarySeg = tableManager.dispatchTableSegments.front();
       std::vector<Expression*> secondaryElems;
       secondaryElems.reserve(primarySeg->data.size());
 
@@ -1240,7 +1236,7 @@ void ModuleSplitter::setupTablePatching() {
       return;
     }
 
-    // Create active table segments in the secondary module to patch in the
+    // Create dispatch table segments in the secondary module to patch in the
     // original functions when it is instantiated.
     Index currBase = replacedElems.begin()->first;
     std::vector<Expression*> currData;

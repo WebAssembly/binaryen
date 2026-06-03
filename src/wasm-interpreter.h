@@ -3449,7 +3449,10 @@ public:
     // run start, if present
     if (wasm.start.is()) {
       Literals arguments;
-      callFunction(wasm.start, arguments);
+      auto flow = callFunction(wasm.start, arguments);
+      if (flow.suspendTag) {
+        trap("unhandled suspend in start function");
+      }
     }
   }
 
@@ -3848,7 +3851,7 @@ private:
     // apply active memory segments
     for (size_t i = 0, e = wasm.dataSegments.size(); i < e; ++i) {
       auto& segment = wasm.dataSegments[i];
-      if (segment->isPassive) {
+      if (segment->isPassive()) {
         continue;
       }
 
