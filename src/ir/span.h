@@ -25,26 +25,26 @@
 #include "support/utilities.h"
 #include "wasm.h"
 
-namespace wasm {
+namespace wasm::span {
 
-// A range of values, [min, max] (inclusive).
+struct Unknown : public std::monostate {};
+
+// In each span of values, one of the values. This can be either a literal
+// like i32(0), or a local index (i.e., a reference to another local, showing
+// that this one is related to them somehow: one of ==, <, >=, etc.), or
+// something unknown.
+struct Value : public std::variant<Unknown, Literal, Index> {
+  static Value unknown() { return Value(Unknown()); }
+
+  bool isUnknown() const { return std::holds_alternative<Unknown>(*this); }
+
+  bool operator==(const Value&) const = default;
+};
+
+// A span of values, [min, max] (inclusive).
 // TODO: support more clever things like unions
 struct Span {
-
-  struct Unknown : public std::monostate {};
-
-  // In each range of values, one of the values. This can be either a literal
-  // like i32(0), or a local index (i.e., a reference to another local, showing
-  // that this one is related to them somehow: one of ==, <, >=, etc.), or
-  // something unknown.
-  struct Value : public std::variant<Unknown, Literal, Index> {
-    static Value unknown() { return Value(Unknown()); }
-
-    bool isUnknown() const { return std::holds_alternative<Unknown>(*this); }
-
-    bool operator==(const Value&) const = default;
-  };
-
+  // TODO: add "inclusive" for [ ] vs ( ) bounds?
   Value min;
   Value max;
 
@@ -57,7 +57,7 @@ struct Span {
   // Check if this span definitely includes a value inside it. If we don't know,
   // return false.
   bool includes(const Value& value);
-  // TODO: notIncludes..?
+  // TODO: excludes..?
 
   // Check if this span is definitely smaller than a value (or false if we don't
   // know).
@@ -90,8 +90,8 @@ bool Span::includes(const Value& value) {
                    // Numbers can be ordered.
                    assert(minLit->type == lit.type);
                    assert(maxLit->type == lit.type);
-                   if (minLit->le(it).getUnsigned() &&
-                       maxLit->ge(it).getUnsigned()) {
+                   if (minLit->le(lit).getUnsigned() &&
+                       maxLit->ge(lit).getUnsigned()) {
                      ret = true;
                    }
                  }
@@ -104,13 +104,8 @@ bool Span::includes(const Value& value) {
                    return;
                  }
                  const Index* maxLocal = std::get_if<Index>(&max);
-                 if (!minLocal || !maxLocal) {
-                   return;
-                 }
-                 if (lit == *minLit && lit == *maxLit) {
-                   // Simple equality.
+                 if (maxLocal && *maxLocal == local) {
                    ret = true;
-                   return;
                  }
                },
                [&](Unknown& unknown) {},
@@ -127,6 +122,6 @@ bool Span::greaterThan(const Value& value) {
   abort();
 }
 
-} // namespace wasm
+} // namespace wasm::span
 
 #endif // wasm_ir_span_h
