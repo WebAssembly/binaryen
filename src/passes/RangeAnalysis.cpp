@@ -28,6 +28,7 @@
 
 #include <variant>
 
+#include "ir/abstract.h"
 #include "cfg/cfg-traversal.h"
 #include "ir/local-graph.h"
 #include "ir/properties.h"
@@ -263,9 +264,13 @@ struct RangeAnalysis
       return;
     }
 
+    if (curr->op == Abstract::getBinary(Abstract::LtS
     switch (curr->op) {
       case LtSInt32:
     }
+
+    // TODO: we might consider x < y < z, i.e., chains of relations, with a
+    // general-purpose constraint solver
   }
 
   // Merge incoming data to a block, by looking at the data arriving from each

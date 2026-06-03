@@ -23,9 +23,15 @@
         )
       )
     )
-    ;; $x is in [10, 20], so it is less than 30
+    ;; $x is in [10, 20], so it is less than 30 (strictly, and not)
     (drop
       (i32.lt_u
+        (local.get $x)
+        (i32.const 30)
+      )
+    )
+    (drop
+      (i32.le_u
         (local.get $x)
         (i32.const 30)
       )
