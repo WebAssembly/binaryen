@@ -48,6 +48,8 @@ struct Unknown : public std::monostate {};
 // this one is related to them somehow: one of ==, <, >=, etc.), or something
 // unknown.
 struct Value : public std::variant<Unknown, Literal, Index> {
+  static Value unknown() { return Unknown(); }
+
   bool isUnknown() const { 
     return std::holds_alternative<Unknown>(*this);
   }
@@ -59,9 +61,9 @@ struct Span {
   Value min;
   Value max;
 
-  bool isUnknown() { return min.isUnknown() && max.isUnknown(); }
-
   static Span unknown() { return Span{Unknown(), Unknown()}; }
+
+  bool isUnknown() { return min.isUnknown() && max.isUnknown(); }
 };
 
 // The span of values we inferred for locals. In the code below, we consider
@@ -304,7 +306,7 @@ struct RangeAnalysis : public WalkerPass<CFGWalker<RangeAnalysis, Visitor<RangeA
                                   } else if (aLit.type.isNumber()) {
                                     // Numbers can be ordered.
                                     assert(bLit.type == aLit.type);
-                                    if (aLit.le(bLit)) {
+                                    if (aLit.le(bLit).getUnsigned()) {
                                       ret = (op == Min) ? a : b;
                                     } else {
                                       ret = (op == Min) ? b : a;
@@ -312,7 +314,7 @@ struct RangeAnalysis : public WalkerPass<CFGWalker<RangeAnalysis, Visitor<RangeA
                                   } else {
                                     // Anything else (function reference, etc.)
                                     // is unknown.
-                                    ret = Span::unknown();
+                                    ret = Value::unknown();
                                   }
                                 },
                                 [&](Index& bLocal) {
@@ -320,7 +322,7 @@ struct RangeAnalysis : public WalkerPass<CFGWalker<RangeAnalysis, Visitor<RangeA
                                   // what to make of this.
                                   // TODO: consider trees of constraints and
                                   // using a solver
-                                  ret = Span::unknown();
+                                  ret = Value::unknown();
                                 },
                                 [&](Unknown& unknown) { ret = unknown; },
                               },
@@ -330,12 +332,12 @@ struct RangeAnalysis : public WalkerPass<CFGWalker<RangeAnalysis, Visitor<RangeA
                    std::visit(overloaded{
                                 [&](Literal& bLit) {
                                   // Mix of literal and local, as above.
-                                  ret = Span::unknown();
+                                  ret = Value::unknown();
                                 },
                                 [&](Index& bLocal) {
                                   // Two locals. If equal, we know the outcome.
                                   ret = (aLocal == bLocal) ? a
-                                                           : Span::unknown();
+                                                           : Value::unknown();
                                 },
                                 [&](Unknown& unknown) { ret = unknown; },
                               },
