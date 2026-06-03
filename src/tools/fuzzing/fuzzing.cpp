@@ -2579,10 +2579,9 @@ void TranslateToFuzzReader::mutateJSBoundary() {
 
     // Refine.
     auto lub = paramLUBs[func->name];
-    auto lubType = lub.getLUB();
     // Either the LUB has the right data shape, or nothing was noted (this is
     // unreachable).
-    assert(oldParams.size() == lubType.size() || !lub.noted());
+    assert(oldParams.size() == lub.getLUB().size() || !lub.noted());
     std::vector<Type> newParams;
     for (Index i = 0; i < oldParams.size(); i++) {
       newParams.push_back(maybeRefineIndex(oldParams, lub, i));
@@ -2608,8 +2607,7 @@ void TranslateToFuzzReader::mutateJSBoundary() {
 
     // Refine.
     auto lub = LUB::getResultsLUB(func, wasm);
-    auto lubType = lub.getLUB();
-    assert(oldResults.size() == lubType.size() || !lub.noted());
+    assert(oldResults.size() == lub.getLUB().size() || !lub.noted());
     std::vector<Type> newResults;
     for (Index i = 0; i < oldResults.size(); i++) {
       newResults.push_back(maybeRefineIndex(oldResults, lub, i));
