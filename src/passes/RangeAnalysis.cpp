@@ -202,26 +202,7 @@ struct RangeAnalysis
 
       // Go through the block, applying things.
       for (auto** currp : block->contents.actions) {
-        auto* curr = *currp;
-        if (auto* set = curr->dynCast<LocalSet>()) {
-          if (relevantLocals.contains(set->index)) {
-            Value value;
-            // TODO: fallthrough, tee chains, etc. For that we must track values
-            // by Expression*, as e.g. reading a local, then setting it, should
-            // read the original flowing value.
-            if (auto* get = set->value->dynCast<LocalGet>()) {
-              value = Value(get->index);
-            } else if (auto* c = set->value->dynCast<Const>()) {
-              value = Value(c->value);
-            } else {
-              // Nothing is known.
-              localSpans.erase(set->index);
-              continue;
-            }
-            // Both the min and max are equal to what we found.
-            localSpans[set->index] = Span{value, value};
-          }
-        }
+        applyToLocalSpans(*currp, localSpans);
       }
 
       // We now know the values at the end of the block. If something changed,
@@ -239,10 +220,18 @@ struct RangeAnalysis
   // After inferring all we can, apply it to optimize the code.
   void optimize() {
     for (auto& block : basicBlocks) {
+      // Follow the general shape of flow(): we need to see what the state is
+      // at each intermediate point inside the block. (Flowing between blocks is
+      // of course not needed at this stage.)
+
+      LocalSpans localSpans = mergeIncoming(block);
       for (auto** currp : block->contents.actions) {
         auto* curr = *currp;
+
+        applyToLocalSpans(*currp, localSpans);
+
         if (auto* binary = curr->dynCast<Binary>()) {
-          optimizeBinary(binary, currp, block.get());
+          optimizeBinary(binary, currp, block.get(), localSpans);
         }
         // TODO unary
       }
@@ -251,7 +240,7 @@ struct RangeAnalysis
 
   // Given a binary and its block, try to optimize it. We provide the pointer
   // to the binary, so that it can be replaced if optimizable.
-  void optimizeBinary(Binary* curr, Expression** currp, BasicBlock* block) {
+  void optimizeBinary(Binary* curr, Expression** currp, BasicBlock* block, const LocalSpans& localSpans) {
     /// Find relevant gets. If we see a get we can't handle, stop.
     auto* leftGet = curr->left->dynCast<LocalGet>();
     auto* rightGet = curr->right->dynCast<LocalGet>();
@@ -384,6 +373,30 @@ struct RangeAnalysis
       },
       a);
     return ret;
+  }
+
+  // Given an expression, apply it to the local spans. For example, a local.set
+  // sets the value for that local.
+  void applyToLocalSpans(Expression* curr, LocalSpans& localSpans) {
+    if (auto* set = curr->dynCast<LocalSet>()) {
+      if (relevantLocals.contains(set->index)) {
+        Value value;
+        // TODO: fallthrough, tee chains, etc. For that we must track values
+        // by Expression*, as e.g. reading a local, then setting it, should
+        // read the original flowing value.
+        if (auto* get = set->value->dynCast<LocalGet>()) {
+          value = Value(get->index);
+        } else if (auto* c = set->value->dynCast<Const>()) {
+          value = Value(c->value);
+        } else {
+          // Nothing is known.
+          localSpans.erase(set->index);
+          return;
+        }
+        // Both the min and max are equal to what we found.
+        localSpans[set->index] = Span{value, value};
+      }
+    }
   }
 };
 
