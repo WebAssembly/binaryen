@@ -236,9 +236,11 @@ struct RangeAnalysis : public WalkerPass<CFGWalker<RangeAnalysis, Visitor<RangeA
 
       Optimizer(RangeAnalysis& parent) : parent(parent) {}
 
-      void visitBinary(Binary* curr) {}
+      void visitBinary(Binary* curr) {
+        // TODO
+      }
     } optimizer(*this);
-    optimizer.walk(getFunction());
+    optimizer.walk(getFunction()->body);
   }
 
   // Merge incoming data to a block, by looking at the data arriving from each
