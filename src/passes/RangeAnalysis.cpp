@@ -67,6 +67,15 @@ struct Span {
   bool isUnknown() { return min.isUnknown() && max.isUnknown(); }
 
   bool operator==(const Span&) const = default;
+
+  // Check if this span includes a value inside it.
+  bool includes(const Value& value);
+
+  // Check if this span is smaller than a value.
+  bool lessThan(const Value& value);
+
+  // Check if this span is greater than a value.
+  bool greaterThan(const Value& value);
 };
 
 // The span of values we inferred for locals. In the code below, we consider
@@ -264,7 +273,7 @@ struct RangeAnalysis
       return;
     }
 
-    if (curr->op == Abstract::getBinary(Abstract::LtS
+    if (curr->op == Abstract::getBinary(Abstract::LtS)
     switch (curr->op) {
       case LtSInt32:
     }
@@ -404,6 +413,48 @@ struct RangeAnalysis
     }
   }
 };
+
+bool Span::includes(const Value& value) {
+  bool ret;
+  std::visit(overloaded{
+               [&](Literal& bLit) {
+                 if (aLit == bLit) {
+                   // Equal literals.
+                   ret = a;
+                 } else if (aLit.type.isNumber()) {
+                   // Numbers can be ordered.
+                   assert(bLit.type == aLit.type);
+                   if (aLit.le(bLit).getUnsigned()) {
+                     ret = (op == Min) ? a : b;
+                   } else {
+                     ret = (op == Min) ? b : a;
+                   }
+                 } else {
+                   // Anything else (function reference, etc.)
+                   // is unknown.
+                   ret = Value::unknown();
+                 }
+               },
+               [&](Index& bLocal) {
+                 // Mix of literal and local. We don't know
+                 // what to make of this.
+                 // TODO: consider trees of constraints and
+                 // using a solver
+                 ret = Value::unknown();
+               },
+               [&](Unknown& unknown) { ret = Value::unknown(); },
+             },
+             value);
+  return ret;
+}
+
+// Check if this span is smaller than a value.
+bool Span::lessThan(const Value& value) {
+}
+
+// Check if this span is greater than a value.
+bool Span::greaterThan(const Value& value) {
+}
 
 } // anonymous namespace
 
