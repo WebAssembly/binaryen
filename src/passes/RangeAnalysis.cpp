@@ -48,7 +48,7 @@ struct Unknown : public std::monostate {};
 // this one is related to them somehow: one of ==, <, >=, etc.), or something
 // unknown.
 struct Value : public std::variant<Unknown, Literal, Index> {
-  static Value unknown() { return Unknown(); }
+  static Value unknown() { return Value(Unknown()); }
 
   bool isUnknown() const { 
     return std::holds_alternative<Unknown>(*this);
@@ -324,7 +324,7 @@ struct RangeAnalysis : public WalkerPass<CFGWalker<RangeAnalysis, Visitor<RangeA
                                   // using a solver
                                   ret = Value::unknown();
                                 },
-                                [&](Unknown& unknown) { ret = unknown; },
+                                [&](Unknown& unknown) { ret = Value::unknown(); },
                               },
                               b);
                  },
@@ -339,13 +339,13 @@ struct RangeAnalysis : public WalkerPass<CFGWalker<RangeAnalysis, Visitor<RangeA
                                   ret = (aLocal == bLocal) ? a
                                                            : Value::unknown();
                                 },
-                                [&](Unknown& unknown) { ret = unknown; },
+                                [&](Unknown& unknown) { ret = Value::unknown(); },
                               },
                               b);
                  },
                  [&](Unknown& unknown) {
                    // It doesn't even matter what b is.
-                   ret = unknown;
+                   ret = Value::unknown();
                  },
                },
                a);
