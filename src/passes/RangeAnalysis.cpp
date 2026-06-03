@@ -28,10 +28,11 @@
 
 #include <variant>
 
-#include "ir/abstract.h"
 #include "cfg/cfg-traversal.h"
+#include "ir/abstract.h"
 #include "ir/local-graph.h"
 #include "ir/properties.h"
+#include "ir/span.h"
 #include "pass.h"
 #include "support/unique_deferring_queue.h"
 #include "support/utilities.h"
@@ -41,46 +42,6 @@
 namespace wasm {
 
 namespace {
-
-struct Unknown : public std::monostate {};
-
-// In each range of values, one of the values. This can be either a literal like
-// i32(0), or a local index (i.e., a reference to another local, showing that
-// this one is related to them somehow: one of ==, <, >=, etc.), or something
-// unknown.
-struct Value : public std::variant<Unknown, Literal, Index> {
-  static Value unknown() { return Value(Unknown()); }
-
-  bool isUnknown() const { return std::holds_alternative<Unknown>(*this); }
-
-  bool operator==(const Value&) const = default;
-};
-
-// A range of values, [min, max] (inclusive).
-// TODO: support more clever things like unions
-struct Span {
-  Value min;
-  Value max;
-
-  static Span unknown() { return Span{Unknown(), Unknown()}; }
-
-  bool isUnknown() { return min.isUnknown() && max.isUnknown(); }
-
-  bool operator==(const Span&) const = default;
-
-  // Check if this span definitely includes a value inside it. If we don't know,
-  // return false.
-  bool includes(const Value& value);
-  // TODO: notIncludes..?
-
-  // Check if this span is definitely smaller than a value (or false if we don't
-  // know).
-  bool lessThan(const Value& value);
-
-  // Check if this span is definitely greater than a value (or false if we don't
-  // know).
-  bool greaterThan(const Value& value);
-};
 
 // The span of values we inferred for locals. In the code below, we consider
 // missing indexes to have no known span for them (i.e., we do not need to write
@@ -417,34 +378,6 @@ struct RangeAnalysis
     }
   }
 };
-
-bool Span::includes(const Value& value) {
-  // In most cases, we don't know enough.
-  bool ret = false;
-  std::visit(overloaded{
-               [&](Literal& lit) {
-                 // The value is a literal. We can infer something here if the
-                 // span is a range of literals, checking if value is within
-                 // [min, max].
-                 if (const int* minLit = std::get_if<Literal>(&min)) {
-                   if (const int* maxLit = std::get_if<Literal>(&max)) {
-                   }
-                   // TODO: move out and unit test
-                 }
-               },
-               [&](Index& local) {
-               },
-               [&](Unknown& unknown) {},
-             },
-             value);
-  return ret;
-}
-
-bool Span::lessThan(const Value& value) {
-}
-
-bool Span::greaterThan(const Value& value) {
-}
 
 } // anonymous namespace
 
