@@ -429,6 +429,7 @@ bool Span::includes(const Value& value) {
                  if (const int* minLit = std::get_if<Literal>(&min)) {
                    if (const int* maxLit = std::get_if<Literal>(&max)) {
                    }
+                   // TODO: move out and unit test
                  }
                },
                [&](Index& local) {
