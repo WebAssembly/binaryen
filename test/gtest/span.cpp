@@ -1,4 +1,4 @@
-#include "support/span.h"
+#include "ir/span.h"
 #include "gtest/gtest.h"
 
 using namespace wasm;
@@ -8,11 +8,11 @@ TEST(SpanTest, TestEmpty) {
   // An empty value or span is unknown.
   Value v;
   EXPECT_TRUE(v.isUnknown());
-  EXPECT_EQ(v == Value::unknown());
+  EXPECT_EQ(v, Value::unknown());
 
   Span s;
   EXPECT_TRUE(s.isUnknown());
-  EXPECT_EQ(v == Span::unknown());
+  EXPECT_EQ(s, Span::unknown());
 }
 
 TEST(SpanTest, TestIncludes) {
