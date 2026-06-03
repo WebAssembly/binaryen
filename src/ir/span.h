@@ -77,8 +77,30 @@ bool Span::includes(const Value& value) {
                  // span is a range of literals, checking if value is within
                  // [min, max].
                  const Literal* minLit = std::get_if<Literal>(&min);
+                 if (minLit && *minLit == lit) {
+                   ret = true;
+                   return;
+                 }
                  const Literal* maxLit = std::get_if<Literal>(&max);
-                 if (!minLit || !maxLit) {
+                 if (maxLit && *maxLit == lit) {
+                   ret = true;
+                   return;
+                 }
+                 if (lit.type.isNumber() && minLit && maxLit) {
+                   // Numbers can be ordered.
+                   assert(minLit->type == lit.type);
+                   assert(maxLit->type == lit.type);
+                   if (minLit->le(it).getUnsigned() &&
+                       maxLit->ge(it).getUnsigned()) {
+                     ret = true;
+                   }
+                 }
+               },
+               [&](Index& local) {
+                 // A local index can be compared to others.
+                 const Index* minLocal = std::get_if<Index>(&min);
+                 const Index* maxLocal = std::get_if<Index>(&max);
+                 if (!minLocal || !maxLocal) {
                    return;
                  }
                  if (lit == *minLit && lit == *maxLit) {
@@ -86,17 +108,7 @@ bool Span::includes(const Value& value) {
                    ret = true;
                    return;
                  }
-                 if (lit.type.isNumber()) {
-                   // Numbers can be ordered.
-                   assert(minLit.type == lit.type);
-                   assert(maxLit.type == lit.type);
-                   if (minLit.le(it).getUnsigned() &&
-                       maxLit.ge(it).getUnsigned()) {
-                     ret = true;
-                   }
-                 }
                },
-               [&](Index& local) {},
                [&](Unknown& unknown) {},
              },
              value);
