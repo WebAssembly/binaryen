@@ -220,8 +220,8 @@ struct RangeAnalysis : public WalkerPass<CFGWalker<RangeAnalysis, Visitor<RangeA
 
       // We now know the values at the end of the block. If something changed,
       // flow it onward.
-      if (localSpans != block->localSpansEnd) {
-        block->localSpansEnd = std::move(localSpans);
+      if (localSpans != block->contents.localSpansEnd) {
+        block->contents.localSpansEnd = std::move(localSpans);
         for (auto* out : block->out) {
           work.push(out);
         }
@@ -270,8 +270,8 @@ struct RangeAnalysis : public WalkerPass<CFGWalker<RangeAnalysis, Visitor<RangeA
   // Given a source (predecessor) and a target (successor) block, find the span
   // of a particular local as it arrives to that target from that successor.
   Span getSpanFromPredToSucc(BasicBlock* pred, BasicBlock* block, Index local) {
-    auto iter = pred->localSpansEnd.find(local);
-    if (iter == pred->localSpansEnd.end()) {
+    auto iter = pred->contents.localSpansEnd.find(local);
+    if (iter == pred->contents.localSpansEnd.end()) {
       return Span::unknown();
     }
 
