@@ -50,9 +50,7 @@ struct Unknown : public std::monostate {};
 struct Value : public std::variant<Unknown, Literal, Index> {
   static Value unknown() { return Value(Unknown()); }
 
-  bool isUnknown() const { 
-    return std::holds_alternative<Unknown>(*this);
-  }
+  bool isUnknown() const { return std::holds_alternative<Unknown>(*this); }
 
   bool operator==(const Value&) const = default;
 };
@@ -87,7 +85,8 @@ struct Info {
   LocalSpans localSpansStart, localSpansEnd;
 };
 
-struct RangeAnalysis : public WalkerPass<CFGWalker<RangeAnalysis, Visitor<RangeAnalysis>, Info>> {
+struct RangeAnalysis
+  : public WalkerPass<CFGWalker<RangeAnalysis, Visitor<RangeAnalysis>, Info>> {
   bool isFunctionParallel() override { return true; }
 
   // Locals are not modified here.
@@ -97,7 +96,8 @@ struct RangeAnalysis : public WalkerPass<CFGWalker<RangeAnalysis, Visitor<RangeA
     return std::make_unique<RangeAnalysis>();
   }
 
-  using Super = WalkerPass<CFGWalker<RangeAnalysis, Visitor<RangeAnalysis>, Info>>;
+  using Super =
+    WalkerPass<CFGWalker<RangeAnalysis, Visitor<RangeAnalysis>, Info>>;
 
   // Branches outside of the function can be ignored, as we only look at local
   // state in the function.
@@ -301,59 +301,59 @@ struct RangeAnalysis : public WalkerPass<CFGWalker<RangeAnalysis, Visitor<RangeA
 
   Value merge(Value a, Value b, MinMax op) {
     Value ret;
-    std::visit(overloaded{
-                 [&](Literal& aLit) {
-                   std::visit(overloaded{
-                                [&](Literal& bLit) {
-                                  if (aLit == bLit) {
-                                    // Equal literals.
-                                    ret = a;
-                                  } else if (aLit.type.isNumber()) {
-                                    // Numbers can be ordered.
-                                    assert(bLit.type == aLit.type);
-                                    if (aLit.le(bLit).getUnsigned()) {
-                                      ret = (op == Min) ? a : b;
-                                    } else {
-                                      ret = (op == Min) ? b : a;
-                                    }
-                                  } else {
-                                    // Anything else (function reference, etc.)
-                                    // is unknown.
-                                    ret = Value::unknown();
-                                  }
-                                },
-                                [&](Index& bLocal) {
-                                  // Mix of literal and local. We don't know
-                                  // what to make of this.
-                                  // TODO: consider trees of constraints and
-                                  // using a solver
-                                  ret = Value::unknown();
-                                },
-                                [&](Unknown& unknown) { ret = Value::unknown(); },
-                              },
-                              b);
-                 },
-                 [&](Index& aLocal) {
-                   std::visit(overloaded{
-                                [&](Literal& bLit) {
-                                  // Mix of literal and local, as above.
-                                  ret = Value::unknown();
-                                },
-                                [&](Index& bLocal) {
-                                  // Two locals. If equal, we know the outcome.
-                                  ret = (aLocal == bLocal) ? a
-                                                           : Value::unknown();
-                                },
-                                [&](Unknown& unknown) { ret = Value::unknown(); },
-                              },
-                              b);
-                 },
-                 [&](Unknown& unknown) {
-                   // It doesn't even matter what b is.
-                   ret = Value::unknown();
-                 },
-               },
-               a);
+    std::visit(
+      overloaded{
+        [&](Literal& aLit) {
+          std::visit(overloaded{
+                       [&](Literal& bLit) {
+                         if (aLit == bLit) {
+                           // Equal literals.
+                           ret = a;
+                         } else if (aLit.type.isNumber()) {
+                           // Numbers can be ordered.
+                           assert(bLit.type == aLit.type);
+                           if (aLit.le(bLit).getUnsigned()) {
+                             ret = (op == Min) ? a : b;
+                           } else {
+                             ret = (op == Min) ? b : a;
+                           }
+                         } else {
+                           // Anything else (function reference, etc.)
+                           // is unknown.
+                           ret = Value::unknown();
+                         }
+                       },
+                       [&](Index& bLocal) {
+                         // Mix of literal and local. We don't know
+                         // what to make of this.
+                         // TODO: consider trees of constraints and
+                         // using a solver
+                         ret = Value::unknown();
+                       },
+                       [&](Unknown& unknown) { ret = Value::unknown(); },
+                     },
+                     b);
+        },
+        [&](Index& aLocal) {
+          std::visit(overloaded{
+                       [&](Literal& bLit) {
+                         // Mix of literal and local, as above.
+                         ret = Value::unknown();
+                       },
+                       [&](Index& bLocal) {
+                         // Two locals. If equal, we know the outcome.
+                         ret = (aLocal == bLocal) ? a : Value::unknown();
+                       },
+                       [&](Unknown& unknown) { ret = Value::unknown(); },
+                     },
+                     b);
+        },
+        [&](Unknown& unknown) {
+          // It doesn't even matter what b is.
+          ret = Value::unknown();
+        },
+      },
+      a);
     return ret;
   }
 };
