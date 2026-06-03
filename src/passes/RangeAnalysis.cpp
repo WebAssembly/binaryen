@@ -244,7 +244,29 @@ struct RangeAnalysis
       Optimizer(RangeAnalysis& parent) : parent(parent) {}
 
       void visitBinary(Binary* curr) {
-        // TODO
+        /// Find relevant gets. If we see a get we can't handle, stop.
+        auto* leftGet = curr->left->dynCast<LocalGet>();
+        auto* rightGet = curr->right->dynCast<LocalGet>();
+        if (leftGet && !parent.relevantLocals.contains(leftGet->index)) {
+          return;
+        }
+        if (rightGet && !parent.relevantLocals.contains(rightGet->index)) {
+          return;
+        }
+
+        // Find consts.
+        auto* leftConst = curr->left->dynCast<Const>();
+        auto* rightConst = curr->right->dynCast<Const>();
+
+        // If we have something other than relevant gets and consts, stop.
+        if (!leftGet && !leftConst) {
+          return;
+        }
+        if (!rightGet && !rightConst) {
+          return;
+        }
+
+        
       }
     } optimizer(*this);
     optimizer.walk(getFunction()->body);
