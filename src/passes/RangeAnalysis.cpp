@@ -77,9 +77,7 @@ struct Info {
   LocalSpans localSpansStart, localSpansEnd;
 };
 
-struct RangeAnalysis
-  : public WalkerPass<
-      CFGWalker<RangeAnalysis, Info>> {
+struct RangeAnalysis : public WalkerPass<CFGWalker<RangeAnalysis, Info>> {
   bool isFunctionParallel() override { return true; }
 
   // Locals are not modified here.
@@ -232,8 +230,7 @@ struct RangeAnalysis
 
       Optimizer(RangeAnalysis& parent) : parent(parent) {}
 
-      void visitBinary(Binary* curr) {
-      }
+      void visitBinary(Binary* curr) {}
     } optimizer(*this);
     optimizer.walk(getFunction());
   }
@@ -289,55 +286,58 @@ struct RangeAnalysis
   Value merge(Value a, Value b, MinMax op) {
     Value ret;
     std::visit(overloaded{
-      [&](Literal& lit1) {
-        std::visit(overloaded{
-          [&](Literal& lit2) {
-            if (lit1 == lit2) {
-              // Equal literals.
-              ret = lit1;
-            } else if (lit1.type.isNumber()) {
-              // Numbers can be ordered.
-              assert(lit2.type == lit1.type);
-              if (lit1.le(lit2)) {
-                ret = (op == Min) ? lit1 : lit2;
-              } else {
-                ret = (op == Min) ? lit2 : lit1;
-              }
-            } else {
-              // Anything else (function reference, etc.) is unknown.
-              ret = Span::unknown();
-            }
-          },
-          [&](Index& local2) {
-            // Mix of literal and local. We don't know what to make of this.
-            // TODO: consider trees of constraints and using a solver
-            ret = Span::unknown();
-          },
-          [&](Unknown& unknown2) {
-            ret = unknown;
-          },
-        }, b);
-      },
-      [&](Index& local1) {
-        std::visit(overloaded{
-          [&](Literal& lit2) {
-            // Mix of literal and local, as above.
-            ret = Span::unknown();
-          },
-          [&](Index& local2) {
-            // Two locals. If equal, we know the outcome.
-            ret = (local1 == local2) ? local1 : Span::unknown();
-          },
-          [&](Unknown& unknown2) {
-            ret = unknown;
-          },
-        }, b);
-      },
-      [&](Unknown& unknown1) {
-        // It doesn't even matter what b is.
-        ret = unknown;
-      },
-    }, a);
+                 [&](Literal& lit1) {
+                   std::visit(overloaded{
+                                [&](Literal& lit2) {
+                                  if (lit1 == lit2) {
+                                    // Equal literals.
+                                    ret = lit1;
+                                  } else if (lit1.type.isNumber()) {
+                                    // Numbers can be ordered.
+                                    assert(lit2.type == lit1.type);
+                                    if (lit1.le(lit2)) {
+                                      ret = (op == Min) ? lit1 : lit2;
+                                    } else {
+                                      ret = (op == Min) ? lit2 : lit1;
+                                    }
+                                  } else {
+                                    // Anything else (function reference, etc.)
+                                    // is unknown.
+                                    ret = Span::unknown();
+                                  }
+                                },
+                                [&](Index& local2) {
+                                  // Mix of literal and local. We don't know
+                                  // what to make of this.
+                                  // TODO: consider trees of constraints and
+                                  // using a solver
+                                  ret = Span::unknown();
+                                },
+                                [&](Unknown& unknown2) { ret = unknown; },
+                              },
+                              b);
+                 },
+                 [&](Index& local1) {
+                   std::visit(overloaded{
+                                [&](Literal& lit2) {
+                                  // Mix of literal and local, as above.
+                                  ret = Span::unknown();
+                                },
+                                [&](Index& local2) {
+                                  // Two locals. If equal, we know the outcome.
+                                  ret = (local1 == local2) ? local1
+                                                           : Span::unknown();
+                                },
+                                [&](Unknown& unknown2) { ret = unknown; },
+                              },
+                              b);
+                 },
+                 [&](Unknown& unknown1) {
+                   // It doesn't even matter what b is.
+                   ret = unknown;
+                 },
+               },
+               a);
     return ret;
   }
 };
