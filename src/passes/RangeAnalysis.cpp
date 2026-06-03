@@ -241,10 +241,13 @@ struct RangeAnalysis
       return;
     }
 
+#if 0
     if (curr->op == Abstract::getBinary(Abstract::LtS)
     switch (curr->op) {
       case LtSInt32:
     }
+
+#endif
 
     // TODO: we might consider x < y < z, i.e., chains of relations, with a
     // general-purpose constraint solver
