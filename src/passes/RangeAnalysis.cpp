@@ -32,6 +32,7 @@
 #include "ir/local-graph.h"
 #include "ir/properties.h"
 #include "pass.h"
+#include "support/unique_deferring_queue.h"
 #include "wasm-builder.h"
 #include "wasm.h"
 
@@ -67,6 +68,7 @@ struct Info {
   // We track them local spans at
   // the start and at the end of the block (for the values in the middle, we
   // need to traverse the actions and see how they are modified).
+  // XXX do we need both?
   LocalSpans localSpansStart, localSpansEnd;
 };
 
@@ -164,17 +166,26 @@ struct RangeAnalysis
     // we must consider y relevant too. TODO?
 
     if (!relevantLocals.empty()) {
+      flow();
       optimize();
     }
   }
 
-  void optimize() {
-    // There is something to potentially optimize. For each relevant local,
-    // find its sets and branches and flow ranges around, producing a graph of
-    // the value of each relevant local in each block.
-    // TODO: flow starts here
+  // Flow spans around until we have inferred all we can about the ranges of
+  // values in each location.
+  void flow() {
+    // Start from all the blocks, and keep going while we find something new.
+    UniqueDeferredQueue<BasicBlock*> work;
     for (auto& block : basicBlocks) {
-      LocalSpans localSpans;
+      work.push(block.get());
+    }
+    while (!work.empty()) {
+      auto* block = work.pop();
+
+      // Merge incoming data.
+      LocalSpans localSpans = mergeIncoming(block);
+
+      // Go through the block, applying things.
       for (auto** currp : block->contents.actions) {
         auto* curr = *currp;
         if (auto* set = curr->dynCast<LocalSet>()) {
@@ -197,14 +208,30 @@ struct RangeAnalysis
           }
         }
       }
-      // We now know the values at the end of the block.
-      block->localSpansEnd = std::move(localSpans);
-      // keep flowing if stuff changed
-      // flow DIFFERENT VALUES based on an if condition!!1
+
+      // We now know the values at the end of the block. If something changed,
+      // flow it onward.
+      if (localSpans != block->localSpansEnd) {
+        block->localSpansEnd = std::move(localSpans);
+        for (auto* out : block->out) {
+          work.push(out);
+        }
+      }
     }
   }
 
+  //
+  void optimize() {
+  }
+
 private:
+
+  // Merge incoming data to a block, by looking at the data arriving from each
+  // of the predecessor blocks.
+  LocalSpans localSpans = mergeIncoming(BasicBlock* block) {
+    
+  }
+
   /*
   // A local graph that is constructed the first time we need it.
   std::optional<LazyLocalGraph> localGraph;
