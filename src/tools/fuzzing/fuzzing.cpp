@@ -2584,7 +2584,7 @@ void TranslateToFuzzReader::mutateJSBoundary() {
     // unreachable).
     assert(oldParams.size() == lubType.size() || !lub.noted());
     std::vector<Type> newParams;
-    for (Index i = 0; i < lubType.size(); i++) {
+    for (Index i = 0; i < oldParams.size(); i++) {
       newParams.push_back(maybeRefineIndex(oldParams, lub, i));
     }
     func->setParams(Type(newParams));
@@ -2611,7 +2611,7 @@ void TranslateToFuzzReader::mutateJSBoundary() {
     auto lubType = lub.getLUB();
     assert(oldResults.size() == lubType.size() || !lub.noted());
     std::vector<Type> newResults;
-    for (Index i = 0; i < lubType.size(); i++) {
+    for (Index i = 0; i < oldResults.size(); i++) {
       newResults.push_back(maybeRefineIndex(oldResults, lub, i));
     }
     func->setResults(Type(newResults));
