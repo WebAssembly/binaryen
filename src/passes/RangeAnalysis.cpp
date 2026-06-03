@@ -68,13 +68,16 @@ struct Span {
 
   bool operator==(const Span&) const = default;
 
-  // Check if this span includes a value inside it.
+  // Check if this span definitely includes a value inside it. If we don't know,
+  // return false.
   bool includes(const Value& value);
 
-  // Check if this span is smaller than a value.
+  // Check if this span is definitely smaller than a value (or false if we don't
+  // know).
   bool lessThan(const Value& value);
 
-  // Check if this span is greater than a value.
+  // Check if this span is definitely greater than a value (or false if we don't
+  // know).
   bool greaterThan(const Value& value);
 };
 
@@ -417,42 +420,22 @@ struct RangeAnalysis
 bool Span::includes(const Value& value) {
   bool ret;
   std::visit(overloaded{
-               [&](Literal& bLit) {
-                 if (aLit == bLit) {
-                   // Equal literals.
-                   ret = a;
-                 } else if (aLit.type.isNumber()) {
-                   // Numbers can be ordered.
-                   assert(bLit.type == aLit.type);
-                   if (aLit.le(bLit).getUnsigned()) {
-                     ret = (op == Min) ? a : b;
-                   } else {
-                     ret = (op == Min) ? b : a;
-                   }
-                 } else {
-                   // Anything else (function reference, etc.)
-                   // is unknown.
-                   ret = Value::unknown();
-                 }
+               [&](Literal& lit) {
+                 // The value is a literal. We can infer something here if the
+                 // span contains ..
+                 if (const int* pval = std::get_if<int>(&v))
                },
-               [&](Index& bLocal) {
-                 // Mix of literal and local. We don't know
-                 // what to make of this.
-                 // TODO: consider trees of constraints and
-                 // using a solver
-                 ret = Value::unknown();
+               [&](Index& local) {
                },
-               [&](Unknown& unknown) { ret = Value::unknown(); },
+               [&](Unknown& unknown) { ret = false; },
              },
              value);
   return ret;
 }
 
-// Check if this span is smaller than a value.
 bool Span::lessThan(const Value& value) {
 }
 
-// Check if this span is greater than a value.
 bool Span::greaterThan(const Value& value) {
 }
 
