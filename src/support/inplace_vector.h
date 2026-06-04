@@ -29,7 +29,7 @@
 
 #include "support/parent_index_iterator.h"
 
-namespace wasm {
+namespace std {
 
 template<typename T, size_t N> class inplace_vector {
   // fixed-space storage
@@ -193,6 +193,6 @@ struct ZeroInitinplace_vector : public inplace_vector<T, N> {
   }
 };
 
-} // namespace wasm
+} // namespace std
 
 #endif // wasm_support_inplace_vector_h

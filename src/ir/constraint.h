@@ -49,20 +49,22 @@ struct Constraint {
 // TODO: use a generic constraint solver..?
 using MaxConstraints = 3;
 
+// What a constraint is known to be: true/false, or unknown.
+enum Result {
+  True,
+  False,
+  Unknown
+};
+
 // A set of constraints.
-struct ConstraintSet : std::array<Constraint, 3>
-  // Check if this span definitely includes a value inside it. If we don't know,
-  // return false.
-  bool includes(const Value& value);
-  // TODO: excludes..?
+struct ConstraintSet : std::inplace_vector<Constraint, 3> {
+  // Add a constraint to the set. We deduplicate and apply it as relevant. We
+  // also respect the maximum number of constraints
+  XXXX 
 
-  // Check if this span is definitely smaller than a value (or false if we don't
-  // know).
-  bool lessThan(const Value& value);
-
-  // Check if this span is definitely greater than a value (or false if we don't
-  // know).
-  bool greaterThan(const Value& value);
+  // Check a constraint against this set, that is, whether the existing
+  // constraints prove that it must be true, false, or unknown.
+  Result check(const Constraint& constraint);
 };
 
 bool Span::includes(const Value& value) {
