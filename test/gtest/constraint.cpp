@@ -25,6 +25,11 @@ TEST(ConstraintTest, TestSet) {
 
   // If we add it, then things check out.
   s.and_(c);
+  EXPECT_EQ(s.size(), 1);
   EXPECT_EQ(s.check(c), True);
+
+  // $1 == 5, a different local: we can't infer anything.
+  Constraint c2{Eq, Index(1), Literal(int32_t(5))};
+  EXPECT_EQ(s.check(c2), Unknown);
 }
 
