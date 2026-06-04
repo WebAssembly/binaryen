@@ -26,6 +26,7 @@ Result AndedConstraintSet::check(const Constraint& condition) {
       return True;
     }
   }
+
   // TODO smarts
   return Unknown;
 }
