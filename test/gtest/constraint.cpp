@@ -12,7 +12,7 @@ TEST(ConstraintTest, TestEmpty) {
   EXPECT_FALSE(c);
 }
 
-TEST(ConstraintTest, TestSetEq) {
+TEST(ConstraintTest, TestEq) {
   // Sets start empty.
   AndedConstraintSet s;
   EXPECT_TRUE(s.empty());

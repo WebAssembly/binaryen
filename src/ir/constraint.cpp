@@ -35,9 +35,9 @@ std::tuple<const Index*, const Literal*> getLocalConstant(const Constraint& c) {
 } // anonymous namespace
 
 Result AndedConstraintSet::check(const Constraint& condition) {
-  for (auto& constraint : *this) {
+  for (auto& c : *this) {
     // If the condition is among our constraints exactly, it is definitely true.
-    if (constraint == condition) {
+    if (c == condition) {
       return True;
     }
   }
@@ -47,12 +47,12 @@ Result AndedConstraintSet::check(const Constraint& condition) {
     if (conditionLocal) {
       // $x == c. If one of our constraints is $x == c', then we found a
       // contradiction.
-      for (auto& constraint : *this) {
-        auto [constraintLocal, constraintConstant] = getLocalConstant(constraint);
-        if (constraintLocal && *conditionLocal == *constraintLocal) {
+      for (auto& c : *this) {
+        auto [cLocal, cConstant] = getLocalConstant(c);
+        if (cLocal && *conditionLocal == *cLocal) {
           // We already looked for full equality earlier, so some difference
           // must be here.
-          assert(*conditionConstant != *constraintConstant);
+          assert(*conditionConstant != *cConstant);
           return False;
         }
       }
@@ -66,7 +66,19 @@ Result AndedConstraintSet::check(const Constraint& condition) {
 }
 
 void AndedConstraintSet::fuzzyOr(const Constraint& c) {
-  // TODO
+  // See what we know about this.
+  switch (check(c)) {
+    case True:
+      // This is already implied by current constraints, i.e., it is redundant.
+      return;
+    case False:
+      // This contradicts us. For example, we were x == 5 and this is x == 10.
+      ...
+    case Unknown:
+      // This is an interesting case, which we analyze.
+  }
+
+  // TODO smarts
 }
 
 } // namespace wasm::constraint
