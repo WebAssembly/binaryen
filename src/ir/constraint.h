@@ -27,22 +27,30 @@
 
 namespace wasm::constraint {
 
-// A value in a constraint, either a literal value or a local index.
-struct Value : public std::variant<Literal, Index> {
+// A value in a constraint, either a local index or literal value.
+struct Value : public std::variant<Index, Literal> {
   bool operator==(const Value&) const = default;
 };
 
 // A constraint.
 struct Constraint {
+  // The operation relating two values, and the values.
+  Abstract::Op op == Abstract::Invalid;
   Value left;
   Value right;
 
-  static Span unknown() { return Span{Unknown(), Unknown()}; }
+  bool operator==(const Constraint&) const = default;
 
-  bool isUnknown() { return min.isUnknown() && max.isUnknown(); }
+  operator bool() const { return op != Abstract::Invalid; }
+};
 
-  bool operator==(const Span&) const = default;
+// We limit constraints to a low number to ensure good performance even with
+// simple brute-force solving.
+// TODO: use a generic constraint solver..?
+using MaxConstraints = 3;
 
+// A set of constraints.
+struct ConstraintSet : std::array<Constraint, 3>
   // Check if this span definitely includes a value inside it. If we don't know,
   // return false.
   bool includes(const Value& value);
