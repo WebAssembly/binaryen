@@ -87,17 +87,17 @@ struct AndedConstraintSet : std::inplace_vector<Constraint, MaxConstraints> {
   //
   // Returning to the example above, we can use this to optimize as follows: if
   // two code paths reaching a location have x == 5 and x == 10, so the value in
-  // the merge location is either 5 or 10, then if we see a check there of
-  // x >= 0 then
+  // the merge location is either 5 or 10, then if we see a some i32.ge_s that
+  // does x >= 0 then we can evaluate it with check():
   //
   //   { x >= 5 && x <= 10 }.check({ x >= 0 }) == True
   //
-  // And we can optimize that code, since
+  // And it is valid to optimize that i32.ge_s into a constant 1, since
   //
-  //   { (x == 5 || x == 10) && ({ x >= 5 && x <= 10 } => { x >= 0 }) }  =>
-  //     [-- the truth   --]    [-- our inference using check()   --]
-  //   x == 5 || x == 10  =>
-  //   x >= 5 && x <= 10
+  //   { x == 5 || x == 10 } =>
+  //   { x >= 5 && x <= 10 } =>
+  //   { x >= 0 }
+  //
   void fuzzyOr(const Constraint& c) {
   . We deduplicate and apply it as relevant. We
   // also respect the maximum number of constraints
