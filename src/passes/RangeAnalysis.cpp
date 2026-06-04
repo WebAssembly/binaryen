@@ -31,7 +31,6 @@
 // chak and compress it as we goo etc.
 
 #include "cfg/cfg-traversal.h"
-#include "ir/abstract.h"
 #include "ir/local-graph.h"
 #include "ir/properties.h"
 #include "ir/span.h"

@@ -56,9 +56,30 @@ enum Result {
   Unknown
 };
 
-// A set of constraints.
-struct ConstraintSet : std::inplace_vector<Constraint, 3> {
-  // Add a constraint to the set. We deduplicate and apply it as relevant. We
+// A set of constraints connected by the logical "and" operation. That is, all
+// the constraints are simultaneously true.
+struct AndedConstraintSet : std::inplace_vector<Constraint, MaxConstraints> {
+  // Add a constraint to the set, ANDed with the others. The caller must make
+  // sure to not add too many.
+  void and_(const Constraint& c) {
+    push_back(c);
+  }
+
+  // Add a constraint that is ORed. We cannot represent such a thing directly,
+  // and so we approximate it in a fuzzy way. For example,
+  //
+  //   fuzzyOr({ x == 5 }, { x == 10 })  =>  { x >= 5 && x <= 10 }
+  //
+  // Note how the result here still accepts the values 5 and 10, but it also
+  // allows more. Formally, this has the following mathematical property:
+  //
+  //   (X || Y) => fuzzyOr(X, Y)
+  //
+  // That is, if X or Y is true, the result of fuzzOr is also true. But the
+  // reverse is not always the case: fuzzyOr may be true without X || Y being
+  // true.
+  void fuzzyOr(const Constraint& c) {
+  . We deduplicate and apply it as relevant. We
   // also respect the maximum number of constraints
   XXXX 
 
