@@ -27,6 +27,8 @@
 
 namespace wasm::constraint {
 
+// TODO: constraint => condition?
+
 // A value in a constraint, either a local index or literal value.
 struct Value : public std::variant<Index, Literal> {
   bool operator==(const Value&) const = default;
@@ -59,6 +61,10 @@ enum Result {
 // A set of constraints connected by the logical "and" operation. That is, all
 // the constraints are simultaneously true.
 struct AndedConstraintSet : std::inplace_vector<Constraint, MaxConstraints> {
+  // Check a condition against this set, that is, whether the existing
+  // constraints prove that it must be true, false, or unknown.
+  Result check(const Constraint& condition);
+
   // Add a constraint to the set, ANDed with the others. The caller must make
   // sure to not add too many.
   void and_(const Constraint& c) {
@@ -78,14 +84,24 @@ struct AndedConstraintSet : std::inplace_vector<Constraint, MaxConstraints> {
   // That is, if X or Y is true, the result of fuzzOr is also true. But the
   // reverse is not always the case: fuzzyOr may be true without X || Y being
   // true.
+  //
+  // Returning to the example above, we can use this to optimize as follows: if
+  // two code paths reaching a location have x == 5 and x == 10, so the value in
+  // the merge location is either 5 or 10, then if we see a check there of
+  // x >= 0 then
+  //
+  //   { x >= 5 && x <= 10 }.check({ x >= 0 }) == True
+  //
+  // And we can optimize that code, since
+  //
+  //   { (x == 5 || x == 10) && ({ x >= 5 && x <= 10 } => { x >= 0 }) }  =>
+  //     [-- the truth   --]    [-- our inference using check()   --]
+  //   x == 5 || x == 10  =>
+  //   x >= 5 && x <= 10
   void fuzzyOr(const Constraint& c) {
   . We deduplicate and apply it as relevant. We
   // also respect the maximum number of constraints
   XXXX 
-
-  // Check a constraint against this set, that is, whether the existing
-  // constraints prove that it must be true, false, or unknown.
-  Result check(const Constraint& constraint);
 };
 
 bool Span::includes(const Value& value) {
