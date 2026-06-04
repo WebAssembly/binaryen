@@ -66,13 +66,13 @@ struct AndedConstraintSet : std::inplace_vector<Constraint, MaxConstraints> {
   Result check(const Constraint& condition);
 
   // Add a constraint to the set, ANDed with the others. The caller must make
-  // sure to not add too many.
+  // sure not to add too many.
   void and_(const Constraint& c) {
     push_back(c);
   }
 
-  // Add a constraint that is ORed. We cannot represent such a thing directly,
-  // and so we approximate it in a fuzzy way. For example,
+  // Add a constraint that is ORed. We cannot represent such a thing directly
+  // (we only use AND), so we approximate it in a fuzzy way. For example,
   //
   //   fuzzyOr({ x == 5 }, { x == 10 })  =>  { x >= 5 && x <= 10 }
   //
@@ -81,13 +81,13 @@ struct AndedConstraintSet : std::inplace_vector<Constraint, MaxConstraints> {
   //
   //   (X || Y) => fuzzyOr(X, Y)
   //
-  // That is, if X or Y is true, the result of fuzzOr is also true. But the
+  // That is, if X or Y is true, the result of fuzzOr is also true. (But the
   // reverse is not always the case: fuzzyOr may be true without X || Y being
-  // true.
+  // true.)
   //
   // Returning to the example above, we can use this to optimize as follows: if
   // two code paths reaching a location have x == 5 and x == 10, so the value in
-  // the merge location is either 5 or 10, then if we see a some i32.ge_s that
+  // the merge location is either 5 or 10, then if we see some i32.ge_s that
   // does x >= 0 then we can evaluate it with check():
   //
   //   { x >= 5 && x <= 10 }.check({ x >= 0 }) == True
@@ -98,10 +98,7 @@ struct AndedConstraintSet : std::inplace_vector<Constraint, MaxConstraints> {
   //   { x >= 5 && x <= 10 } =>
   //   { x >= 0 }
   //
-  void fuzzyOr(const Constraint& c) {
-  . We deduplicate and apply it as relevant. We
-  // also respect the maximum number of constraints
-  XXXX 
+  void fuzzyOr(const Constraint& c);
 };
 
 bool Span::includes(const Value& value) {
