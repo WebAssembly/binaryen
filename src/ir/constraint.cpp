@@ -21,6 +21,7 @@ namespace wasm::constraint {
 
 Result AndedConstraintSet::check(const Constraint& condition) {
   // TODO
+  return Unknown;
 }
 
 void AndedConstraintSet::fuzzyOr(const Constraint& c) {
