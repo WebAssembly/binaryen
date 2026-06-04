@@ -29,11 +29,26 @@ TEST(ConstraintTest, TestSetEq) {
   EXPECT_EQ(s.check(c), True);
 
   // $1 == 5, a different local: we can't infer anything.
-  Constraint c2{Eq, Index(1), Literal(int32_t(5))};
-  EXPECT_EQ(s.check(c2), Unknown);
+  Constraint d{Eq, Index(1), Literal(int32_t(5))};
+  EXPECT_EQ(s.check(d), Unknown);
 
   // $0 == 10, a different number: we can infer false.
-  Constraint c3{Eq, Index(0), Literal(int32_t(10))};
-  EXPECT_EQ(s.check(c3), False);
+  Constraint e{Eq, Index(0), Literal(int32_t(10))};
+  EXPECT_EQ(s.check(e), False);
+}
+
+TEST(ConstraintTest, TestMulti) {
+  // Two anded constraints. Both check out.
+  AndedConstraintSet s;
+  Constraint c{Eq, Index(0), Literal(int32_t(5))};
+  Constraint d{Eq, Index(1), Literal(int32_t(10))};
+  s.and_(c);
+  s.and_(d);
+  EXPECT_EQ(s.check(c), True);
+  EXPECT_EQ(s.check(d), True);
+
+  // Something unrelated does not.
+  Constraint e{Eq, Index(2), Literal(int32_t(15))};
+  EXPECT_EQ(s.check(e), Unknown);
 }
 
