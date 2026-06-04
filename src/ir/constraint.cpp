@@ -73,4 +73,3 @@ bool Span::greaterThan(const Value& value) { abort(); }
 
 } // namespace wasm::constraint
 
-#endif // wasm_ir_constraint_h

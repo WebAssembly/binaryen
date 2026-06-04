@@ -37,7 +37,7 @@ struct Value : public std::variant<Index, Literal> {
 // A constraint.
 struct Constraint {
   // The operation relating two values, and the values.
-  Abstract::Op op == Abstract::Invalid;
+  Abstract::Op op = Abstract::Invalid;
   Value left;
   Value right;
 

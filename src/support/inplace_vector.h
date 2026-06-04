@@ -125,26 +125,26 @@ public:
 
   // iteration
 
-  struct Iterator : ParentIndexIterator<inplace_vector<T, N>*, Iterator> {
+  struct Iterator : wasm::ParentIndexIterator<inplace_vector<T, N>*, Iterator> {
     using value_type = T;
     using pointer = T*;
     using reference = T&;
 
     Iterator(inplace_vector<T, N>* parent, size_t index)
-      : ParentIndexIterator<inplace_vector<T, N>*, Iterator>{parent, index} {}
+      : wasm::ParentIndexIterator<inplace_vector<T, N>*, Iterator>{parent, index} {}
     Iterator(const Iterator& other) = default;
 
     T& operator*() { return (*this->parent)[this->index]; }
   };
 
   struct ConstIterator
-    : ParentIndexIterator<const inplace_vector<T, N>*, ConstIterator> {
+    : wasm::ParentIndexIterator<const inplace_vector<T, N>*, ConstIterator> {
     using value_type = const T;
     using pointer = const T*;
     using reference = const T&;
 
     ConstIterator(const inplace_vector<T, N>* parent, size_t index)
-      : ParentIndexIterator<const inplace_vector<T, N>*, ConstIterator>{parent,
+      : wasm::ParentIndexIterator<const inplace_vector<T, N>*, ConstIterator>{parent,
                                                                         index} {
     }
     ConstIterator(const ConstIterator& other) = default;
