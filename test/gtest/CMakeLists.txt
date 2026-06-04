@@ -9,6 +9,7 @@ set(unittest_SOURCES
   arena.cpp
   cast-check.cpp
   cfg.cpp
+  constraint.cpp
   dataflow.cpp
   delta_debugging.cpp
   dfa_minimization.cpp
@@ -28,7 +29,6 @@ set(unittest_SOURCES
   printing.cpp
   public-type-validator.cpp
   scc.cpp
-  span.cpp
   stringify.cpp
   subtype-exprs.cpp
   suffix_tree.cpp
