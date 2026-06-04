@@ -62,7 +62,11 @@ enum Result {
 // the constraints are simultaneously true.
 struct AndedConstraintSet : std::inplace_vector<Constraint, MaxConstraints> {
   // Check a condition against this set, that is, whether the existing
-  // constraints prove that it must be true, false, or unknown.
+  // constraints prove that it must be true, false, or unknown: whether
+  //
+  //   { this } => { condition }
+  //
+  // https://en.wikipedia.org/wiki/Material_conditional#Truth_table
   Result check(const Constraint& condition);
 
   // Add a constraint to the set, ANDed with the others. The caller must make
@@ -72,9 +76,10 @@ struct AndedConstraintSet : std::inplace_vector<Constraint, MaxConstraints> {
   }
 
   // Add a constraint that is ORed. We cannot represent such a thing directly
-  // (we only use AND), so we approximate it in a fuzzy way. For example,
+  // (we only use AND), so we approximate it in a fuzzy way. For example, this
+  // would be valid:
   //
-  //   fuzzyOr({ x == 5 }, { x == 10 })  =>  { x >= 5 && x <= 10 }
+  //   fuzzyOr({ x == 5 }, { x == 10 }) == { x >= 5 && x <= 10 }
   //
   // Note how the result here still accepts the values 5 and 10, but it also
   // allows more. Formally, this has the following mathematical property:
@@ -83,8 +88,7 @@ struct AndedConstraintSet : std::inplace_vector<Constraint, MaxConstraints> {
   //
   // That is, if X or Y is true, the result of fuzzOr is also true. But the
   // reverse is not always the case: fuzzyOr may be true without X || Y being
-  // true, see
-  // https://en.wikipedia.org/wiki/Material_conditional#Truth_table
+  // true (see the truth table linked above).
   //
   // Returning to the example above, we can use this to optimize as follows: if
   // two code paths reaching a location have x == 5 and x == 10, so the value in
@@ -101,7 +105,7 @@ struct AndedConstraintSet : std::inplace_vector<Constraint, MaxConstraints> {
   //
   // Note that the fuzziness here means that fuzzyOr() can do a better or a
   // worse job. It is always valid for fuzzOr to return { x == x } or any other
-  // always-true thing (see the truth table linked above).But then:
+  // always-true thing (see the truth table linked above). But then:
   //
   //   { x == 5 || x == 10 }  =>
   //   { x == x }            =!!>
@@ -110,56 +114,6 @@ struct AndedConstraintSet : std::inplace_vector<Constraint, MaxConstraints> {
   // If we become too fuzzy, we lose the ability to imply anything useful.
   void fuzzyOr(const Constraint& c);
 };
-
-bool Span::includes(const Value& value) {
-  // In most cases, we don't know enough.
-  bool ret = false;
-  std::visit(overloaded{
-               [&](const Literal& lit) {
-                 // The value is a literal. We can infer something here if the
-                 // span is a range of literals, checking if value is within
-                 // [min, max].
-                 const Literal* minLit = std::get_if<Literal>(&min);
-                 if (minLit && *minLit == lit) {
-                   ret = true;
-                   return;
-                 }
-                 const Literal* maxLit = std::get_if<Literal>(&max);
-                 if (maxLit && *maxLit == lit) {
-                   ret = true;
-                   return;
-                 }
-                 if (lit.type.isNumber() && minLit && maxLit) {
-                   // Numbers can be ordered.
-                   assert(minLit->type == lit.type);
-                   assert(maxLit->type == lit.type);
-                   if (minLit->le(lit).getUnsigned() &&
-                       maxLit->ge(lit).getUnsigned()) {
-                     ret = true;
-                   }
-                 }
-               },
-               [&](const Index& local) {
-                 // A local index can be compared to others.
-                 const Index* minLocal = std::get_if<Index>(&min);
-                 if (minLocal && *minLocal == local) {
-                   ret = true;
-                   return;
-                 }
-                 const Index* maxLocal = std::get_if<Index>(&max);
-                 if (maxLocal && *maxLocal == local) {
-                   ret = true;
-                 }
-               },
-               [&](const Unknown& unknown) {},
-             },
-             value);
-  return ret;
-}
-
-bool Span::lessThan(const Value& value) { abort(); }
-
-bool Span::greaterThan(const Value& value) { abort(); }
 
 } // namespace wasm::constraint
 
