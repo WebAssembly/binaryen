@@ -19,8 +19,7 @@
 
 namespace wasm::constraint {
 
-void AndedConstraintSet::fuzzyOr(const Constraint& c) {
-}
+void AndedConstraintSet::fuzzyOr(const Constraint& c) {}
 
 bool Span::includes(const Value& value) {
   // In most cases, we don't know enough.

@@ -35,4 +35,3 @@ TEST(SpanTest, TestIncludes) {
   EXPECT_TRUE(span10_20.includes(lit15));
   EXPECT_FALSE(span10_20.includes(lit25));
 }
-

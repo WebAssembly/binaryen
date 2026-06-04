@@ -52,11 +52,7 @@ struct Constraint {
 using MaxConstraints = 3;
 
 // What a constraint is known to be: true/false, or unknown.
-enum Result {
-  True,
-  False,
-  Unknown
-};
+enum Result { True, False, Unknown };
 
 // A set of constraints connected by the logical "and" operation. That is, all
 // the constraints are simultaneously true.
@@ -71,9 +67,7 @@ struct AndedConstraintSet : std::inplace_vector<Constraint, MaxConstraints> {
 
   // Add a constraint to the set, ANDed with the others. The caller must make
   // sure not to add too many.
-  void and_(const Constraint& c) {
-    push_back(c);
-  }
+  void and_(const Constraint& c) { push_back(c); }
 
   // Add a constraint that is ORed. We cannot represent such a thing directly
   // (we only use AND), so we approximate it in a fuzzy way. For example, this

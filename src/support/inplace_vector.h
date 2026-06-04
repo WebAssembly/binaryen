@@ -41,11 +41,9 @@ public:
 
   inplace_vector() {}
   inplace_vector(const inplace_vector<T, N>& other)
-    : usedFixed(other.usedFixed), fixed(other.fixed) {
-  }
+    : usedFixed(other.usedFixed), fixed(other.fixed) {}
   inplace_vector(inplace_vector<T, N>&& other)
-    : usedFixed(other.usedFixed), fixed(std::move(other.fixed)),
-      {}
+    : usedFixed(other.usedFixed), fixed(std::move(other.fixed)), {}
   inplace_vector(std::initializer_list<T> init) {
     for (T item : init) {
       push_back(item);
@@ -65,9 +63,7 @@ public:
     return *this;
   }
 
-  T& operator[](size_t i) {
-    return fixed[i];
-  }
+  T& operator[](size_t i) { return fixed[i]; }
 
   const T& operator[](size_t i) const {
     return const_cast<inplace_vector<T, N>&>(*this)[i];
@@ -102,9 +98,7 @@ public:
 
   bool empty() const { return size() == 0; }
 
-  void clear() {
-    usedFixed = 0;
-  }
+  void clear() { usedFixed = 0; }
 
   void resize(size_t newSize) {
     assert(newSize <= N);
@@ -151,7 +145,8 @@ public:
 
     ConstIterator(const inplace_vector<T, N>* parent, size_t index)
       : ParentIndexIterator<const inplace_vector<T, N>*, ConstIterator>{parent,
-                                                                     index} {}
+                                                                        index} {
+    }
     ConstIterator(const ConstIterator& other) = default;
 
     const T& operator*() const { return (*this->parent)[this->index]; }
@@ -169,8 +164,8 @@ public:
   }
 };
 
-// A inplace_vector for which some values may be read before they are written, and
-// in that case they have the value zero.
+// A inplace_vector for which some values may be read before they are written,
+// and in that case they have the value zero.
 template<typename T, size_t N>
 struct ZeroInitinplace_vector : public inplace_vector<T, N> {
   T& operator[](size_t i) {
