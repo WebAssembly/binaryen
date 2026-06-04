@@ -2677,6 +2677,7 @@ opt_choices = [
     ("--generate-stack-ir",),
     ("--licm",),
     ("--local-subtyping",),
+    ("--merge-data-segments",),
     ("--memory-packing",),
     ("--merge-blocks",),
     ('--merge-locals',),
