@@ -26,6 +26,10 @@
 // TODO: Look not just at integers but also references
 //
 
+// XXX actually a ConstraintAnalysis! Find constraints like x >= 0, x < y and
+// link each local to the constraints on it, a list up to fixed depth. Then
+// chak and compress it as we goo etc.
+
 #include "cfg/cfg-traversal.h"
 #include "ir/abstract.h"
 #include "ir/local-graph.h"
