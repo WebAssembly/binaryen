@@ -81,9 +81,10 @@ struct AndedConstraintSet : std::inplace_vector<Constraint, MaxConstraints> {
   //
   //   (X || Y) => fuzzyOr(X, Y)
   //
-  // That is, if X or Y is true, the result of fuzzOr is also true. (But the
+  // That is, if X or Y is true, the result of fuzzOr is also true. But the
   // reverse is not always the case: fuzzyOr may be true without X || Y being
-  // true.)
+  // true, see
+  // https://en.wikipedia.org/wiki/Material_conditional#Truth_table
   //
   // Returning to the example above, we can use this to optimize as follows: if
   // two code paths reaching a location have x == 5 and x == 10, so the value in
@@ -98,6 +99,15 @@ struct AndedConstraintSet : std::inplace_vector<Constraint, MaxConstraints> {
   //   { x >= 5 && x <= 10 } =>
   //   { x >= 0 }
   //
+  // Note that the fuzziness here means that fuzzyOr() can do a better or a
+  // worse job. It is always valid for fuzzOr to return { x == x } or any other
+  // always-true thing (see the truth table linked above).But then:
+  //
+  //   { x == 5 || x == 10 }  =>
+  //   { x == x }            =!!>
+  //   { x >= 0 }
+  //
+  // If we become too fuzzy, we lose the ability to imply anything useful.
   void fuzzyOr(const Constraint& c);
 };
 
