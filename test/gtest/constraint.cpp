@@ -31,5 +31,9 @@ TEST(ConstraintTest, TestSet) {
   // $1 == 5, a different local: we can't infer anything.
   Constraint c2{Eq, Index(1), Literal(int32_t(5))};
   EXPECT_EQ(s.check(c2), Unknown);
+
+  // $0 == 10, a different number: we could infer False here TODO.
+  Constraint c3{Eq, Index(0) Literal(int32_t(10))};
+  EXPECT_EQ(s.check(c3), Unknown);
 }
 
