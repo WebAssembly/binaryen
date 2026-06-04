@@ -60,6 +60,8 @@ Result AndedConstraintSet::check(const Constraint& condition) {
   }
 
   // TODO smarts
+
+  // Otherwise, who knows.
   return Unknown;
 }
 
