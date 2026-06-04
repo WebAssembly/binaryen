@@ -66,13 +66,14 @@ Result AndedConstraintSet::check(const Constraint& condition) {
 }
 
 void AndedConstraintSet::fuzzyOr(const Constraint& c) {
-  // See what we know about this.
-  switch (check(c)) {
-    case True:
-      // This is already implied by current constraints, i.e., it is redundant.
-      return;
-    case False:
-      // This contradicts us. For example, we were x == 5 and this is x == 10.
+  // If this is already implied by current constraints, then it is redundant.
+  if (check(c) == True) {
+    return;
+  }
+
+  // Otherwise, it either contradicts us (e.g. we were x == 5 and this is
+  // x == 10) or we can't infer anything about it (e.g. we were x == 5 and this
+  // is z == 99) XXX
       ...
     case Unknown:
       // This is an interesting case, which we analyze.
