@@ -44,7 +44,7 @@ namespace wasm {
 
 namespace {
 
-struct Constraint {};
+#if 0
 
 // The span of values we inferred for locals. In the code below, we consider
 // missing indexes to have no known span for them (i.e., we do not need to write
@@ -62,6 +62,7 @@ struct Info {
   // XXX do we need both?
   LocalSpans localSpansStart, localSpansEnd;
 };
+#endif
 
 struct RangeAnalysis
   : public WalkerPass<CFGWalker<RangeAnalysis, Visitor<RangeAnalysis>, Info>> {
@@ -77,6 +78,7 @@ struct RangeAnalysis
   using Super =
     WalkerPass<CFGWalker<RangeAnalysis, Visitor<RangeAnalysis>, Info>>;
 
+#if 0
   // Branches outside of the function can be ignored, as we only look at local
   // state in the function.
   bool ignoreBranchesOutsideOfFunc = true;
@@ -386,6 +388,7 @@ struct RangeAnalysis
       }
     }
   }
+#endif
 };
 
 } // anonymous namespace

@@ -22,6 +22,7 @@
 #include <variant>
 
 #include "ir/abstract.h"
+#include "support/inplace_vector.h"
 #include "support/utilities.h"
 #include "wasm.h"
 
@@ -49,7 +50,7 @@ struct Constraint {
 // We limit constraints to a low number to ensure good performance even with
 // simple brute-force solving.
 // TODO: use a generic constraint solver..?
-using MaxConstraints = 3;
+inline constexpr std::size_t MaxConstraints = 3;
 
 // What a constraint is known to be: true/false, or unknown.
 enum Result { True, False, Unknown };

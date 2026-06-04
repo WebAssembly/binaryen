@@ -19,57 +19,13 @@
 
 namespace wasm::constraint {
 
-void AndedConstraintSet::fuzzyOr(const Constraint& c) {}
-
-bool Span::includes(const Value& value) {
-  // In most cases, we don't know enough.
-  bool ret = false;
-  std::visit(overloaded{
-               [&](const Literal& lit) {
-                 // The value is a literal. We can infer something here if the
-                 // span is a range of literals, checking if value is within
-                 // [min, max].
-                 const Literal* minLit = std::get_if<Literal>(&min);
-                 if (minLit && *minLit == lit) {
-                   ret = true;
-                   return;
-                 }
-                 const Literal* maxLit = std::get_if<Literal>(&max);
-                 if (maxLit && *maxLit == lit) {
-                   ret = true;
-                   return;
-                 }
-                 if (lit.type.isNumber() && minLit && maxLit) {
-                   // Numbers can be ordered.
-                   assert(minLit->type == lit.type);
-                   assert(maxLit->type == lit.type);
-                   if (minLit->le(lit).getUnsigned() &&
-                       maxLit->ge(lit).getUnsigned()) {
-                     ret = true;
-                   }
-                 }
-               },
-               [&](const Index& local) {
-                 // A local index can be compared to others.
-                 const Index* minLocal = std::get_if<Index>(&min);
-                 if (minLocal && *minLocal == local) {
-                   ret = true;
-                   return;
-                 }
-                 const Index* maxLocal = std::get_if<Index>(&max);
-                 if (maxLocal && *maxLocal == local) {
-                   ret = true;
-                 }
-               },
-               [&](const Unknown& unknown) {},
-             },
-             value);
-  return ret;
+Result AndedConstraintSet::check(const Constraint& condition) {
+  // TODO
 }
 
-bool Span::lessThan(const Value& value) { abort(); }
-
-bool Span::greaterThan(const Value& value) { abort(); }
+void AndedConstraintSet::fuzzyOr(const Constraint& c) {
+  // TODO
+}
 
 } // namespace wasm::constraint
 
