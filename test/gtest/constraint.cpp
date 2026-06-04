@@ -19,5 +19,12 @@ TEST(ConstraintTest, TestSet) {
 
   // $0 == 5
   Constraint c{Eq, Index(0), Literal(int32_t(5))};
+
+  // We can't infer anything using an empty set.
+  EXPECT_EQ(s.check(c), Unknown);
+
+  // If we add it, then things check out.
+  s.and_(c);
+  EXPECT_EQ(s.check(c), True);
 }
 
