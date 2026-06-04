@@ -32,6 +32,8 @@ std::tuple<const Index*, const Literal*> getLocalConstant(const Constraint& c) {
   return {nullptr, nullptr};
 }
 
+} // anonymous namespace
+
 Result AndedConstraintSet::check(const Constraint& condition) {
   for (auto& constraint : *this) {
     // If the condition is among our constraints exactly, it is definitely true.
@@ -50,7 +52,7 @@ Result AndedConstraintSet::check(const Constraint& condition) {
         if (constraintLocal && *conditionLocal == *constraintLocal) {
           // We already looked for full equality earlier, so some difference
           // must be here.
-          assert(*conditionConstant != constraintConstant);
+          assert(*conditionConstant != *constraintConstant);
           return False;
         }
       }
