@@ -20,7 +20,13 @@
 namespace wasm::constraint {
 
 Result AndedConstraintSet::check(const Constraint& condition) {
-  // TODO
+  // If the condition is among our constraints exactly, it is definitely true.
+  for (auto& constraint : *this) {
+    if (constraint == condition) {
+      return True;
+    }
+  }
+  // TODO smarts
   return Unknown;
 }
 
