@@ -12,7 +12,7 @@ TEST(ConstraintTest, TestEmpty) {
   EXPECT_FALSE(c);
 }
 
-TEST(ConstraintTest, TestSet) {
+TEST(ConstraintTest, TestSetEq) {
   // Sets start empty.
   AndedConstraintSet s;
   EXPECT_TRUE(s.empty());
@@ -33,7 +33,7 @@ TEST(ConstraintTest, TestSet) {
   EXPECT_EQ(s.check(c2), Unknown);
 
   // $0 == 10, a different number: we could infer False here TODO.
-  Constraint c3{Eq, Index(0) Literal(int32_t(10))};
+  Constraint c3{Eq, Index(0), Literal(int32_t(10))};
   EXPECT_EQ(s.check(c3), Unknown);
 }
 
