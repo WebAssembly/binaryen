@@ -32,6 +32,7 @@
 
 #include "cfg/cfg-traversal.h"
 #include "ir/constraint.h"
+#include "ir/literal-utils.h"
 #include "ir/local-graph.h"
 #include "ir/properties.h"
 #include "pass.h"
@@ -221,43 +222,22 @@ struct RangeAnalysis
       return;
     }
 
-    // Add the constraint, if we can. TODO: perhaps be smart about which are
-    // more useful, rather than just drop later ones?
     auto& localConstraints = constraints[parsed.local];
-    if (!localConstraints.full()) {
-      localConstraints.and_(parsed.constraint_);
-    }
-XXX
-    // Find relevant gets. If we see a get we can't handle, stop.
-
-    // This binary operates on a relevant local. Try to use what we know.
-    auto* rightGet = curr->right->dynCast<LocalGet>();
-    if (rightGet && !relevantLocals.contains(rightGet->index)) {
+    Result result = localConstraints.check(parsed.constraint_);
+    if (result == Unknown) {
+      // If we parsed something using two locals, like x != y, we can also look
+      // for the flipped condition among y's constraints TODO
       return;
     }
 
-    // Find consts.
-    auto* leftConst = curr->left->dynCast<Const>();
-    auto* rightConst = curr->right->dynCast<Const>();
-
-    // If we have something other than relevant gets and consts, stop.
-    if (!leftGet && !leftConst) {
-      return;
-    }
-    if (!rightGet && !rightConst) {
-      return;
-    }
-
-#if 0
-    if (curr->op == Abstract::getBinary(Abstract::LtS)
-    switch (curr->op) {
-      case LtSInt32:
-    }
-
-#endif
-
-    // TODO: we might consider x < y < z, i.e., chains of relations, with a
-    // general-purpose constraint solver
+    // We know the result!
+    auto& wasm = *getModule();
+    auto value = LiteralUtils::makeFromInt32(result == True ? 1 : 0, curr->type, wasm);
+    *currp = getDroppedChildrenAndAppend(curr,
+                            wasm,
+                            getPassOptions(),
+                            value,
+                            DropMode::IgnoreParentEffects);
   }
 
   // Merge incoming data to a block, by looking at the data arriving from each
