@@ -200,23 +200,18 @@ struct RangeAnalysis
 
       LocalConstraintMap constraints = mergeIncoming(block.get());
       for (auto** currp : block->contents.actions) {
-        auto* curr = *currp;
-
         applyToConstraints(*currp, constraints);
-
-        optimizeExpression(binary, currp, block.get(), constraints);
-        }
-        // TODO unary
+        optimizeExpression(currp, block.get(), constraints);
       }
     }
   }
 
   // Given a binary XXXand its block, try to optimize it. We provide the pointer
   // to the binary, so that it can be replaced if optimizable.
-  void optimizeExpression(Expression* curr,
-                      Expression** currp,
+  void optimizeExpression(Expression** currp,
                       BasicBlock* block,
                       const LocalConstraintMap& constraints) {
+    auto* curr = *currp;
     auto parsed = LocalConstraint::parse(curr);
     if (!parsed) {
       return;
@@ -282,7 +277,7 @@ struct RangeAnalysis
     // more useful, rather than just drop later ones?
     auto& localConstraints = constraints[parsed->local];
     if (!localConstraints.full()) {
-      localConstraints.and_(parsed->constraint_);
+      localConstraints.and_(parsed->constraint);
     }
   }
 };
