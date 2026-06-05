@@ -139,7 +139,7 @@ std::optional<LocalConstraint> LocalConstraint::parse(Binary* curr) {
   for (auto op : {Abstract::Eq, Abstract::Ne}) {
     if (Abstract::getBinary(curr->type, op) == curr->op) {
       auto value = rightGet ? Value(rightGet->index) : Value(*rightConstant);
-      return LocalConstraint{leftGet->index, Constraint{op, value};
+      return LocalConstraint{leftGet->index, Constraint{op, value}};
     }
   }
   return {};

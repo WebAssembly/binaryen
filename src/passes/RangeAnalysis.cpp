@@ -217,13 +217,13 @@ struct RangeAnalysis
                       Expression** currp,
                       BasicBlock* block,
                       const LocalConstraintMap& constraints) {
-    auto parsed = constraint::parse(curr);
+    auto parsed = LocalConstraint::parse(curr);
     if (!parsed) {
       return;
     }
 
-    auto& localConstraints = constraints[parsed.local];
-    Result result = localConstraints.check(parsed.constraint_);
+    auto& localConstraints = constraints[parsed->local];
+    Result result = localConstraints.check(parsed->constraint);
     if (result == Unknown) {
       // If we parsed something using two locals, like x != y, we can also look
       // for the flipped condition among y's constraints TODO
@@ -269,16 +269,16 @@ struct RangeAnalysis
   // Given an expression, apply it to the constraints. For example, a local.set
   // sets the value for that local.
   void applyToConstraints(Expression* curr, LocalConstraintMap& constraints) {
-    auto parsed = constraint::parse(curr);
+    auto parsed = LocalConstraint::parse(curr);
     if (!parsed) {
       return;
     }
 
     // Add the constraint, if we can. TODO: perhaps be smart about which are
     // more useful, rather than just drop later ones?
-    auto& localConstraints = constraints[parsed.local];
+    auto& localConstraints = constraints[parsed->local];
     if (!localConstraints.full()) {
-      localConstraints.and_(parsed.constraint_);
+      localConstraints.and_(parsed->constraint_);
     }
   }
 };
