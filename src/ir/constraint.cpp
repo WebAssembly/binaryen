@@ -17,6 +17,7 @@
 #include <optional>
 
 #include "ir/constraint.h"
+#include "ir/properties.h"
 #include "wasm.h"
 
 namespace wasm::constraint {
@@ -118,14 +119,30 @@ void AndedConstraintSet::fuzzyOr(const AndedConstraintSet& other) {
 }
 
 std::optional<LocalConstraint> LocalConstraint::parse(Binary* curr) {
-  auto* get = curr->left->dynCast<LocalGet>();
-  if (!get) {
+  // The left must be a get.
+  auto* leftGet = curr->left->dynCast<LocalGet>();
+  if (!leftGet) {
     return {};
   }
 
-   || !relevantLocals.contains(get->index)) {
-    return;
+  // The right must be a get or a constant.
+  auto* rightGet = curr->right->dynCast<LocalGet>();
+  std::optional<Literal> rightConstant;
+  if (Properties::isSingleConstantExpression(curr->right)) {
+    rightConstant = Properties::getLiteral(curr->right);
   }
+  if (!rightGet && !rightConstant) {
+    return {};
+  }
+
+  // The operation must be one we recognize.
+  for (auto op : {Abstract::Eq, Abstract::Ne}) {
+    if (Abstract::getBinary(curr->type, op) == curr->op) {
+      auto value = rightGet ? Value(rightGet->index) : Value(*rightConstant);
+      return LocalConstraint{leftGet->index, Constraint{op, value};
+    }
+  }
+  return {};
 }
 
 } // namespace wasm::constraint
