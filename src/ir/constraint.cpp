@@ -97,9 +97,16 @@ Result AndedConstraintSet::check(const Constraint& condition) {
   return Unknown;
 }
 
-void AndedConstraintSet::fuzzyOr(const Constraint& c) {
+void AndedConstraintSet::fuzzyOr(const AndedConstraintSet& other) {
   // If this is already implied by current constraints, then it is redundant.
-  if (check(c) == True) {
+  // E.g. if we are { x = 10 } and other is { x >= 0 } then we don't need other.
+  if (check(other) == True) {
+    return;
+  }
+
+  // Reverse case of the above.
+  if (other.check(*this)) {
+    *this = other;
     return;
   }
 

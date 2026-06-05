@@ -67,11 +67,31 @@ struct AndedConstraintSet : std::inplace_vector<Constraint, MaxConstraints> {
   // https://en.wikipedia.org/wiki/Material_conditional#Truth_table
   Result check(const Constraint& condition);
 
+  // Check an entire other set.
+  Result check(const AndedConstraintSet& other) {
+    Result result = Unknown;
+    for (auto& c : other) {
+      auto currResult = check(c);
+      if (currResult == Unknown) {
+        // If something is unknown, it all is.
+        return Unknown;
+      }
+      if (result == Unknown) {
+        // This is the first result
+        result = currResult;
+      } else if (result != currResult) {
+        // This is a later result, and different, so give up.
+        return Unknown;
+      }
+    }
+    return result;
+  }
+
   // Add a constraint to the set, ANDed with the others. The caller must make
   // sure not to add too many.
   void and_(const Constraint& c) { push_back(c); }
 
-  // Add a constraint that is ORed. We cannot represent such a thing directly
+  // Add constraints that are ORed. We cannot represent such a thing directly
   // (we only use AND), so we approximate it in a fuzzy way. For example, this
   // would be valid:
   //
@@ -108,7 +128,7 @@ struct AndedConstraintSet : std::inplace_vector<Constraint, MaxConstraints> {
   //   { x >= 0 }
   //
   // If we become too fuzzy, we lose the ability to imply anything useful.
-  void fuzzyOr(const Constraint& c);
+  void fuzzyOr(const AndedConstraintSet& other);
 };
 
 } // namespace wasm::constraint
