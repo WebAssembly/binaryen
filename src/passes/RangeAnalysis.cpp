@@ -31,6 +31,7 @@
 // chak and compress it as we goo etc.
 
 #include "cfg/cfg-traversal.h"
+#include "ir/constraint.h"
 #include "ir/local-graph.h"
 #include "ir/properties.h"
 #include "ir/span.h"
@@ -41,6 +42,8 @@
 #include "wasm.h"
 
 namespace wasm {
+
+using namespace wasm::constraint;
 
 namespace {
 
@@ -54,11 +57,9 @@ namespace {
 struct Info {
   std::vector<Expression**> actions; // XXX just *?
 
-  // We track them local spans at
-  // the start and at the end of the block (for the values in the middle, we
-  // need to traverse the actions and see how they are modified).
-  // XXX do we need both?
-  // LocalSpans localSpansStart, localSpansEnd;
+  // For each local index, we track the constraints we know about it. We only do
+  // so at the end of each block, which is enough gfor the analysis below.
+  std::unordered_map<Index, AndedConstraintSet> endConstraints;
 };
 
 struct RangeAnalysis
