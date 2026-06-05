@@ -28,9 +28,17 @@ TEST(ConstraintTest, TestEq) {
   EXPECT_EQ(s.size(), 1);
   EXPECT_EQ(s.check(c), True);
 
-  // $0 == 10, a different number: we can infer false.
+  // x == 10, a different number: we can infer false.
   Constraint e{Eq, Literal(int32_t(10))};
   EXPECT_EQ(s.check(e), False);
+
+  // x != 15: we can infer true.
+  Constraint f{Ne, Literal(int32_t(15))};
+  EXPECT_EQ(s.check(f), True);
+
+  // x != 5: we can infer false.
+  Constraint g{Ne, Literal(int32_t(5))};
+  EXPECT_EQ(s.check(g), False);
 }
 
 #if 0

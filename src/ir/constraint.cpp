@@ -41,6 +41,11 @@ Result AndedConstraintSet::check(const Constraint& condition) {
                 assert(*constant != *cConstant);
                 return False;
               }
+              case Abstract::Ne: {
+                // The condition is x == c and constraint is x != c'. We can
+                // infer the result based on relating c and c'.
+                return *constant != *cConstant ? True : False;
+              }
               default: {}
             }
           }
