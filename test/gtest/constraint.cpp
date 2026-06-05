@@ -84,8 +84,7 @@ TEST(ConstraintTest, TestMulti) {
   EXPECT_EQ(s.check(f), False);
 
   // x == 15: we don't know.
-  Constraint g{Ne, Literal(int32_t(15))};
-  EXPECT_EQ(s.check(g), Unknown);
+  EXPECT_EQ(s.check(Constraint{Ne, Literal(int32_t(15))}), Unknown);
 
   // x != 15: we don't know.
   Constraint h{Ne, Literal(int32_t(15))};
