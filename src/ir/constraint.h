@@ -28,19 +28,17 @@
 
 namespace wasm::constraint {
 
-// TODO: constraint => condition?
-
 // A value in a constraint, either a local index or literal value.
 struct Value : public std::variant<Index, Literal> {
   bool operator==(const Value&) const = default;
 };
 
-// A constraint.
+// A constraint: some operation and some value, like "is equal to 17" or "is
+// less than local $z".
 struct Constraint {
   // The operation relating two values, and the values.
   Abstract::Op op = Abstract::Invalid;
-  Value left;
-  Value right;
+  Value value;
 
   bool operator==(const Constraint&) const = default;
 
@@ -56,7 +54,10 @@ inline constexpr std::size_t MaxConstraints = 3;
 enum Result { True, False, Unknown };
 
 // A set of constraints connected by the logical "and" operation. That is, all
-// the constraints are simultaneously true.
+// the constraints are simultaneously true about some value. In the examples in
+// the comments below, `x` is used for the thing all the constraints are talking
+// about, but it could be a global or a struct field or anything else in
+// general.
 struct AndedConstraintSet : std::inplace_vector<Constraint, MaxConstraints> {
   // Check a condition against this set, that is, whether the existing
   // constraints prove that it must be true, false, or unknown: whether

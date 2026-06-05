@@ -17,8 +17,8 @@ TEST(ConstraintTest, TestEq) {
   AndedConstraintSet s;
   EXPECT_TRUE(s.empty());
 
-  // $0 == 5
-  Constraint c{Eq, Index(0), Literal(int32_t(5))};
+  // x == 5 (we use "x" for the name of the thing being compared).
+  Constraint c{Eq, Literal(int32_t(5))};
 
   // We can't infer anything using an empty set.
   EXPECT_EQ(s.check(c), Unknown);
@@ -28,15 +28,12 @@ TEST(ConstraintTest, TestEq) {
   EXPECT_EQ(s.size(), 1);
   EXPECT_EQ(s.check(c), True);
 
-  // $1 == 5, a different local: we can't infer anything.
-  Constraint d{Eq, Index(1), Literal(int32_t(5))};
-  EXPECT_EQ(s.check(d), Unknown);
-
   // $0 == 10, a different number: we can infer false.
-  Constraint e{Eq, Index(0), Literal(int32_t(10))};
+  Constraint e{Eq, Literal(int32_t(10))};
   EXPECT_EQ(s.check(e), False);
 }
 
+#if 0
 TEST(ConstraintTest, TestMulti) {
   // Two anded constraints. Both check out.
   AndedConstraintSet s;
@@ -51,4 +48,5 @@ TEST(ConstraintTest, TestMulti) {
   Constraint e{Eq, Index(2), Literal(int32_t(15))};
   EXPECT_EQ(s.check(e), Unknown);
 }
+#endif
 

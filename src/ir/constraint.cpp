@@ -19,21 +19,6 @@
 
 namespace wasm::constraint {
 
-namespace {
-
-// Parses a constraint of the form of a local on the left and a constant on the
-// right.
-std::tuple<const Index*, const Literal*> getLocalConstant(const Constraint& c) {
-  if (const Index* local = std::get_if<Index>(&c.left)) {
-    if (const Literal* literal = std::get_if<Literal>(&c.right)) {
-      return {local, literal};
-    }
-  }
-  return {nullptr, nullptr};
-}
-
-} // anonymous namespace
-
 Result AndedConstraintSet::check(const Constraint& condition) {
   for (auto& c : *this) {
     // If the condition is among our constraints exactly, it is definitely true.
@@ -43,16 +28,14 @@ Result AndedConstraintSet::check(const Constraint& condition) {
   }
 
   if (condition.op == Abstract::Eq) {
-    auto [conditionLocal, conditionConstant] = getLocalConstant(condition);
-    if (conditionLocal) {
-      // $x == c. If one of our constraints is $x == c', then we found a
-      // contradiction.
+    if (auto* constant = std::get_if<Literal>(&condition.value)) {
+      // The condition is x == c. If one of our constraints is $x == c', then we
+      // found a contradiction.
       for (auto& c : *this) {
-        auto [cLocal, cConstant] = getLocalConstant(c);
-        if (cLocal && *conditionLocal == *cLocal) {
+        if (auto* cConstant = std::get_if<Literal>(&c.value)) {
           // We already looked for full equality earlier, so some difference
           // must be here.
-          assert(*conditionConstant != *cConstant);
+          assert(*constant != *cConstant);
           return False;
         }
       }
@@ -71,6 +54,7 @@ void AndedConstraintSet::fuzzyOr(const Constraint& c) {
     return;
   }
 
+#if 0
   // Otherwise, it either contradicts us (e.g. we were x == 5 and this is
   // x == 10) or we can't infer anything about it (e.g. we were x == 5 and this
   // is z == 99) XXX
@@ -78,6 +62,9 @@ void AndedConstraintSet::fuzzyOr(const Constraint& c) {
     case Unknown:
       // This is an interesting case, which we analyze.
   }
+#endif
+
+// fuzzyOr with a set, not a constriant...
 
   // TODO smarts
 }
