@@ -2867,9 +2867,24 @@ private:
       return false;
     }
 
-    // They do look the same! Make sure nothing executed in between them can
-    // affect the value of `right` and make it different from `left`.
-    if (interferingEffects.orderedBefore(effects(right))) {
+    // They do look the same! Determine whether the left hand expression can
+    // change the value of the operands flowing into the right-hand expression.
+    // Do not consider the right-hand expression itself here because the
+    // expressions might be idempotent function calls and we might otherwise
+    // mistakenly conclude that the first call interferes with the second.
+    EffectAnalyzer rightEffects(getPassOptions(), *getModule());
+    for (auto* child : ChildIterator(right)) {
+      rightEffects.walk(child);
+    }
+    ShallowEffectAnalyzer leftEffects(getPassOptions(), *getModule(), left);
+    if (leftEffects.orderedBefore(rightEffects)) {
+      return false;
+    }
+
+    // Make sure nothing executed in between the expressions can affect the
+    // value of `right` (or its operands) and make it different from `left`.
+    rightEffects.visit(right);
+    if (interferingEffects.orderedBefore(rightEffects)) {
       return false;
     }
 
