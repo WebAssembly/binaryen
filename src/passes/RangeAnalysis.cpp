@@ -34,7 +34,6 @@
 #include "ir/constraint.h"
 #include "ir/local-graph.h"
 #include "ir/properties.h"
-#include "ir/span.h"
 #include "pass.h"
 #include "support/unique_deferring_queue.h"
 #include "support/utilities.h"
@@ -47,10 +46,7 @@ using namespace wasm::constraint;
 
 namespace {
 
-// The span of values we inferred for locals. In the code below, we consider
-// missing indexes to have no known span for them (i.e., we do not need to write
-// an Unknown, and can just leave them empty).
-// using LocalSpans = std::unordered_map<Index, Span>;
+using LocalConstraintMap = std::unordered_map<Index, AndedConstraintSet>;
 
 // In each basic block we will store the relevant operations, which are all
 // local gets and sets, branches, and uses of them.
@@ -59,7 +55,7 @@ struct Info {
 
   // For each local index, we track the constraints we know about it. We only do
   // so at the end of each block, which is enough gfor the analysis below.
-  std::unordered_map<Index, AndedConstraintSet> endConstraints;
+  LocalConstraintMap endConstraints;
 };
 
 struct RangeAnalysis
@@ -102,7 +98,6 @@ struct RangeAnalysis
   // Maps each branching instruction to the basic block right before the
   // branchings. For example, for an If, this is the block that branches to the
   // ifTrue and ifFalse blocks.
-#if 0
   std::unordered_map<If*, BasicBlock*> brancherBlocks;
 
   static void doStartIfTrue(RangeAnalysis* self, Expression** currp) {
@@ -164,8 +159,8 @@ struct RangeAnalysis
     }
   }
 
-  // Flow spans around until we have inferred all we can about the ranges of
-  // values in each location.
+  // Flow infos around until we have inferred all we can about the constraints
+  // in each location.
   void flow() {
     // Start from all the blocks, and keep going while we find something new.
     UniqueDeferredQueue<BasicBlock*> work;
@@ -176,18 +171,17 @@ struct RangeAnalysis
       auto* block = work.pop();
 
       // Merge incoming data.
-      LocalSpans localSpans = mergeIncoming(block);
+      LocalConstraintMap constraints = mergeIncoming(block);
 
       // Go through the block, applying things.
       for (auto** currp : block->contents.actions) {
-        applyToLocalSpans(*currp, localSpans);
+        applyToConstraints(*currp, constraints);
       }
 
       // We now know the values at the end of the block. If something changed,
       // flow it onward.
-      LocalSpans t = block->contents.localSpansEnd;
-      if (localSpans != t) {
-        block->contents.localSpansEnd = std::move(localSpans);
+      if (constraints != block->contents.endConstraints) {
+        block->contents.endConstraints = std::move(constraints);
         for (auto* out : block->out) {
           work.push(out);
         }
@@ -202,14 +196,14 @@ struct RangeAnalysis
       // at each intermediate point inside the block. (Flowing between blocks is
       // of course not needed at this stage.)
 
-      LocalSpans localSpans = mergeIncoming(block.get());
+      LocalConstraintMap constraints = mergeIncoming(block.get());
       for (auto** currp : block->contents.actions) {
         auto* curr = *currp;
 
-        applyToLocalSpans(*currp, localSpans);
+        applyToConstraints(*currp, constraints);
 
         if (auto* binary = curr->dynCast<Binary>()) {
-          optimizeBinary(binary, currp, block.get(), localSpans);
+          optimizeBinary(binary, currp, block.get(), constraints);
         }
         // TODO unary
       }
@@ -221,7 +215,7 @@ struct RangeAnalysis
   void optimizeBinary(Binary* curr,
                       Expression** currp,
                       BasicBlock* block,
-                      const LocalSpans& localSpans) {
+                      const AndedConstraintSet& constraints) {
     /// Find relevant gets. If we see a get we can't handle, stop.
     auto* leftGet = curr->left->dynCast<LocalGet>();
     auto* rightGet = curr->right->dynCast<LocalGet>();
@@ -285,8 +279,8 @@ struct RangeAnalysis
   // Given a source (predecessor) and a target (successor) block, find the span
   // of a particular local as it arrives to that target from that successor.
   Span getSpanFromPredToSucc(BasicBlock* pred, BasicBlock* block, Index local) {
-    auto iter = pred->contents.localSpansEnd.find(local);
-    if (iter == pred->contents.localSpansEnd.end()) {
+    auto iter = pred->contents.endConstraints.find(local);
+    if (iter == pred->contents.endConstraints.end()) {
       return Span::unknown();
     }
 
@@ -363,9 +357,9 @@ struct RangeAnalysis
     return ret;
   }
 
-  // Given an expression, apply it to the local spans. For example, a local.set
+  // Given an expression, apply it to the constraints. For example, a local.set
   // sets the value for that local.
-  void applyToLocalSpans(Expression* curr, LocalSpans& localSpans) {
+  void applyToConstraints(Expression* curr, LocalConstraintMap& constraints) {
     if (auto* set = curr->dynCast<LocalSet>()) {
       if (relevantLocals.contains(set->index)) {
         Value value;
@@ -378,15 +372,14 @@ struct RangeAnalysis
           value = Value(c->value);
         } else {
           // Nothing is known.
-          localSpans.erase(set->index);
+          constraints.erase(set->index);
           return;
         }
         // Both the min and max are equal to what we found.
-        localSpans[set->index] = Span{value, value};
+        constraints[set->index] = Span{value, value};
       }
     }
   }
-#endif
 };
 
 } // anonymous namespace
