@@ -6190,9 +6190,14 @@
   )
   ;; CHECK:      (func $select-parallel (param $0 i32) (param $1 i32)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.add
-  ;; CHECK-NEXT:    (local.get $1)
-  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.add
+  ;; CHECK-NEXT:     (local.get $1)
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -6281,6 +6286,72 @@
       )
     )
   )
+
+  ;; CHECK:      (func $select-no-fold (param $x i32) (param $y i32) (param $c i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $c)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (block (result i32)
+  ;; CHECK-NEXT:     (local.set $y
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (select
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (block (result i32)
+  ;; CHECK-NEXT:     (local.set $y
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (block (result i32)
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (local.get $y)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.get $c)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $select-no-fold (param $x i32) (param $y i32) (param $c i32)
+    (drop
+      ;; We cannot fold away the ifFalse branch because it sets $y. But both
+      ;; branches produce the same value, so we can still optimize.
+      (select
+        (local.get $x)
+        (block (result i32)
+          (local.set $y (i32.const 0))
+          (local.get $x)
+        )
+        (local.get $c)
+      )
+    )
+    (drop
+      ;; Same, but now we cannot reorder the ifFalse and the condition, so we
+      ;; would need a scratch local. We do not bother optimizing.
+      (select
+        (local.get $x)
+        (block (result i32)
+          (local.set $y (i32.const 0))
+          (local.get $x)
+        )
+        (block (result i32)
+          (drop (local.get $y))
+          (local.get $c)
+        )
+      )
+    )
+  )
+
   ;; CHECK:      (func $zero-shifts-is-not-sign-ext
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.eq
