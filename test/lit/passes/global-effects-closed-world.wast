@@ -167,14 +167,12 @@
   )
 
   ;; CHECK:      (func $calls-ref-with-exact-supertype (type $3) (param $func (ref (exact $super)))
-  ;; CHECK-NEXT:  (call_ref $super
-  ;; CHECK-NEXT:   (local.get $func)
-  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $calls-ref-with-exact-supertype (param $func (ref (exact $super)))
     ;; Same as above but this time our reference is the exact supertype
-    ;; so we know not to aggregate effects from the subtype.
-    ;; TODO: this case doesn't optimize today. Add exact ref support in the pass.
+    ;; so we know not to aggregate effects from the subtype. This can only
+    ;; call $nop-with-supertype which has no effects.
     (call_ref $super (local.get $func))
   )
 )
