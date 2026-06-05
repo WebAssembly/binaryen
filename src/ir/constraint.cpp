@@ -50,7 +50,8 @@ std::optional<Result> checkPair(const Constraint& a, const Constraint& b) {
               // and c'.
               return *aConstant != *bConstant ? True : False;
             }
-            default: {}
+            default: {
+            }
           }
         }
         case Abstract::Ne: {
@@ -67,10 +68,12 @@ std::optional<Result> checkPair(const Constraint& a, const Constraint& b) {
               // earlier, hence c != c', and we can infer nothing.
               return {};
             }
-            default: {}
+            default: {
+            }
           }
         }
-        default: {}
+        default: {
+        }
       }
     }
   }
@@ -110,10 +113,9 @@ void AndedConstraintSet::fuzzyOr(const Constraint& c) {
   }
 #endif
 
-// fuzzyOr with a set, not a constriant...
+  // fuzzyOr with a set, not a constriant...
 
   // TODO smarts
 }
 
 } // namespace wasm::constraint
-

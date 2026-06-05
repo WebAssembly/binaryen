@@ -44,11 +44,10 @@ namespace wasm {
 
 namespace {
 
-
 // The span of values we inferred for locals. In the code below, we consider
 // missing indexes to have no known span for them (i.e., we do not need to write
 // an Unknown, and can just leave them empty).
-//using LocalSpans = std::unordered_map<Index, Span>;
+// using LocalSpans = std::unordered_map<Index, Span>;
 
 // In each basic block we will store the relevant operations, which are all
 // local gets and sets, branches, and uses of them.
@@ -59,7 +58,7 @@ struct Info {
   // the start and at the end of the block (for the values in the middle, we
   // need to traverse the actions and see how they are modified).
   // XXX do we need both?
-  //LocalSpans localSpansStart, localSpansEnd;
+  // LocalSpans localSpansStart, localSpansEnd;
 };
 
 struct RangeAnalysis

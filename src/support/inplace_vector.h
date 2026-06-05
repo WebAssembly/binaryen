@@ -131,7 +131,8 @@ public:
     using reference = T&;
 
     Iterator(inplace_vector<T, N>* parent, size_t index)
-      : wasm::ParentIndexIterator<inplace_vector<T, N>*, Iterator>{parent, index} {}
+      : wasm::ParentIndexIterator<inplace_vector<T, N>*, Iterator>{parent,
+                                                                   index} {}
     Iterator(const Iterator& other) = default;
 
     T& operator*() { return (*this->parent)[this->index]; }
@@ -144,9 +145,8 @@ public:
     using reference = const T&;
 
     ConstIterator(const inplace_vector<T, N>* parent, size_t index)
-      : wasm::ParentIndexIterator<const inplace_vector<T, N>*, ConstIterator>{parent,
-                                                                        index} {
-    }
+      : wasm::ParentIndexIterator<const inplace_vector<T, N>*, ConstIterator>{
+          parent, index} {}
     ConstIterator(const ConstIterator& other) = default;
 
     const T& operator*() const { return (*this->parent)[this->index]; }

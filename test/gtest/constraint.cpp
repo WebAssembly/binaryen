@@ -1,5 +1,5 @@
-#include "ir/abstract.h"
 #include "ir/constraint.h"
+#include "ir/abstract.h"
 #include "gtest/gtest.h"
 
 using namespace wasm;
@@ -81,4 +81,3 @@ TEST(ConstraintTest, TestMulti) {
   // x != 15: we don't know.
   EXPECT_EQ(s.check(Constraint{Ne, Literal(int32_t(15))}), Unknown);
 }
-
