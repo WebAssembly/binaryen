@@ -65,10 +65,15 @@ struct AndedConstraintSet : std::inplace_vector<Constraint, MaxConstraints> {
   //   { this } => { condition }
   //
   // https://en.wikipedia.org/wiki/Material_conditional#Truth_table
-  Result check(const Constraint& condition);
+  Result check(const Constraint& condition) const;
 
   // Check an entire other set.
-  Result check(const AndedConstraintSet& other) {
+  Result check(const AndedConstraintSet& other) const {
+    if (other.empty()) {
+      // The empty set of constraints is always true.
+      return True;
+    }
+
     Result result = Unknown;
     for (auto& c : other) {
       auto currResult = check(c);

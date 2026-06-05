@@ -82,4 +82,40 @@ TEST(ConstraintTest, TestMulti) {
   EXPECT_EQ(s.check(Constraint{Ne, Literal(int32_t(15))}), Unknown);
 }
 
-// check set
+TEST(ConstraintTest, TestSets) {
+  // x == 5
+  Constraint c{Eq, Literal(int32_t(5))};
+
+  AndedConstraintSet s;
+
+  // Any set always proves itself to be true.
+  EXPECT_EQ(s.check(s), True);
+
+  // Ditto after adding something.
+  s.and_(c);
+  EXPECT_EQ(s.check(s), True);
+
+  // Another set, empty.
+  AndedConstraintSet t;
+
+  // Any set always proves an empty set to be true.
+  EXPECT_EQ(s.check(t), True);
+
+  // Make both sets contain the same stuff.
+  t.and_(c);
+  EXPECT_EQ(s.check(t), True);
+
+  // Now t has *different* stuff, x == 10, which given s is false.
+  t.clear();
+  t.and_(Constraint{Eq, Literal(int32_t(10))});
+  EXPECT_EQ(s.check(t), False);
+
+  // Same, with x != 10. Now we know it is true.
+  t.clear();
+  t.and_(Constraint{Ne, Literal(int32_t(10))});
+  EXPECT_EQ(s.check(t), True);
+
+  // In reverse, we can infer nothing: knowing x != 10 does not say if x == 5.
+  EXPECT_EQ(t.check(s), Unknown);
+}
+

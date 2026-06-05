@@ -83,7 +83,7 @@ std::optional<Result> checkPair(const Constraint& a, const Constraint& b) {
 
 } // anonymous namespace
 
-Result AndedConstraintSet::check(const Constraint& condition) {
+Result AndedConstraintSet::check(const Constraint& condition) const {
   // Sometimes a single constraint is enough to determine the condition.
   for (auto& c : *this) {
     if (auto result = checkPair(c, condition)) {
@@ -99,30 +99,22 @@ Result AndedConstraintSet::check(const Constraint& condition) {
 
 void AndedConstraintSet::fuzzyOr(const AndedConstraintSet& other) {
   // If this is already implied by current constraints, then it is redundant.
-  // E.g. if we are { x = 10 } and other is { x >= 0 } then we don't need other.
+  // E.g. if we are { x = 10 } and other is { x >= 0 } then all we need is
+  // { x >= 0 } as the result of the OR.
   if (check(other) == True) {
-    return;
-  }
-
-  // Reverse case of the above.
-  if (other.check(*this)) {
     *this = other;
     return;
   }
-
-#if 0
-  // Otherwise, it either contradicts us (e.g. we were x == 5 and this is
-  // x == 10) or we can't infer anything about it (e.g. we were x == 5 and this
-  // is z == 99) XXX
-      ...
-    case Unknown:
-      // This is an interesting case, which we analyze.
+  if (other.check(*this) == True) {
+    return;
   }
-#endif
-
-  // fuzzyOr with a set, not a constriant...
 
   // TODO smarts
+
+  // Otherwise, we don't know how to nicely OR these things, and expand to the
+  // trivial set of no constraints (i.e., where everything is true, and we can
+  // prove nothing).
+  clear();
 }
 
 } // namespace wasm::constraint
