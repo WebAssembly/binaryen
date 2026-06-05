@@ -2574,7 +2574,7 @@ struct OptimizeInstructions
         auto& options = getPassRunner()->options;
         EffectAnalyzer descEffects(options, *getModule(), curr->desc);
         ShallowEffectAnalyzer movingEffects(options, *getModule(), curr->ref);
-        if (descEffects.invalidates(movingEffects)) {
+        if (movingEffects.orderedBefore(descEffects)) {
           return;
         }
       }
