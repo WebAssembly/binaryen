@@ -118,3 +118,5 @@ TEST(ConstraintTest, TestSets) {
   // In reverse, we can infer nothing: knowing x != 10 does not say if x == 5.
   EXPECT_EQ(t.check(s), Unknown);
 }
+
+// TODO: test fuzzyOr

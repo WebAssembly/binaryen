@@ -242,13 +242,13 @@ struct RangeAnalysis
 
   // Merge incoming data to a block, by looking at the data arriving from each
   // of the predecessor blocks.
-  LocalSpans mergeIncoming(BasicBlock* block) {
-    LocalSpans localSpans;
-    // For each relevant local, merge its spans.
+  LocalConstraintMap mergeIncoming(BasicBlock* block) {
+    LocalConstraintMap constraints;
+    // For each relevant local, merge its constraints.
     for (auto local : relevantLocals) {
-      Span mergedSpan;
+      AndedConstraintSet merged;
       for (auto* pred : block->in) {
-        auto span = getSpanFromPredToSucc(pred, block, local);
+        auto constraints = getConstraintsFromPredToSucc(pred, block, local);
         if (span.isUnknown()) {
           // Unknown, so the entire merge is unknown.
           mergedSpan = Span::unknown();
@@ -263,12 +263,12 @@ struct RangeAnalysis
         }
       }
     }
-    return localSpans;
+    return constraints;
   }
 
   // Given a source (predecessor) and a target (successor) block, find the span
   // of a particular local as it arrives to that target from that successor.
-  Span getSpanFromPredToSucc(BasicBlock* pred, BasicBlock* block, Index local) {
+  Span getConstraintsFromPredToSucc(BasicBlock* pred, BasicBlock* block, Index local) {
     auto iter = pred->contents.endConstraints.find(local);
     if (iter == pred->contents.endConstraints.end()) {
       return Span::unknown();
