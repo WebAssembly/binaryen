@@ -123,7 +123,6 @@ std::optional<LocalConstraint> LocalConstraint::parse(Binary* curr) {
     return {};
   }
 
-  
    || !relevantLocals.contains(get->index)) {
     return;
   }
