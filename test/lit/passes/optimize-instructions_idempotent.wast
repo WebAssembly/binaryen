@@ -33,7 +33,6 @@
     (call $import)
   )
 
-
   ;; CHECK:      (func $test-abs (type $1)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (f32.mul
