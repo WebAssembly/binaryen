@@ -136,6 +136,23 @@ struct AndedConstraintSet : std::inplace_vector<Constraint, MaxConstraints> {
   void fuzzyOr(const AndedConstraintSet& other);
 };
 
+// A local plus a constraint on it.
+struct LocalConstraint {
+  Index local;
+  Constraint constraint;
+
+  // Try to parse BinaryenIR into a local to which a constraint is applied. For
+  // example
+  //
+  //   (i32.eq (local.get $r) (i32.const 10))
+  //
+  // parses into
+  //
+  //   LocalConstraint($r, { x == 10 })
+  //
+  static std::optional<LocalConstraint> parse(Binary* curr);
+};
+
 } // namespace wasm::constraint
 
 #endif // wasm_ir_constraint_h

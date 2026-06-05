@@ -117,4 +117,16 @@ void AndedConstraintSet::fuzzyOr(const AndedConstraintSet& other) {
   clear();
 }
 
+std::optional<LocalConstraint> LocalConstraint::parse(Binary* curr) {
+  auto* get = curr->left->dynCast<LocalGet>();
+  if (!get) {
+    return {};
+  }
+
+  
+   || !relevantLocals.contains(get->index)) {
+    return;
+  }
+}
+
 } // namespace wasm::constraint

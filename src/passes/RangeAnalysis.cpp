@@ -215,13 +215,15 @@ struct RangeAnalysis
   void optimizeBinary(Binary* curr,
                       Expression** currp,
                       BasicBlock* block,
-                      const AndedConstraintSet& constraints) {
-    /// Find relevant gets. If we see a get we can't handle, stop.
-    auto* leftGet = curr->left->dynCast<LocalGet>();
-    auto* rightGet = curr->right->dynCast<LocalGet>();
-    if (leftGet && !relevantLocals.contains(leftGet->index)) {
+                      const LocalConstraintMap& constraints) {
+    auto condition = constraint::parse(curr);
+    if (!condition) {
       return;
     }
+    // Find relevant gets. If we see a get we can't handle, stop.
+
+    // This binary operates on a relevant local. Try to use what we know.
+    auto* rightGet = curr->right->dynCast<LocalGet>();
     if (rightGet && !relevantLocals.contains(rightGet->index)) {
       return;
     }
