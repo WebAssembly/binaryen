@@ -2951,6 +2951,8 @@ private:
         }
         ShallowEffectAnalyzer parentEffects(
           getPassOptions(), *getModule(), call);
+        // Check if the first parent is ordered before the second child (in the
+        // example above, the first call vs the second global.get).
         if (parentEffects.orderedBefore(childEffects)) {
           return false;
         }
