@@ -268,11 +268,6 @@
   ;; CHECK-NEXT:      (global.get $g1)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (call $idempotent
-  ;; CHECK-NEXT:      (global.get $g1)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
