@@ -27,16 +27,24 @@ Result AndedConstraintSet::check(const Constraint& condition) {
     }
   }
 
-  if (condition.op == Abstract::Eq) {
-    if (auto* constant = std::get_if<Literal>(&condition.value)) {
-      // The condition is x == c. If one of our constraints is $x == c', then we
-      // found a contradiction.
-      for (auto& c : *this) {
-        if (auto* cConstant = std::get_if<Literal>(&c.value)) {
-          // We already looked for full equality earlier, so some difference
-          // must be here.
-          assert(*constant != *cConstant);
-          return False;
+  // Comparisons of two constants.
+  if (auto* constant = std::get_if<Literal>(&condition.value)) {
+    for (auto& c : *this) {
+      if (auto* cConstant = std::get_if<Literal>(&c.value)) {
+        switch (c.op) {
+          case Abstract::Eq: {
+            switch (condition.op) {
+              case Abstract::Eq: {
+                // The condition is x == c and constraint is x == c', and we
+                // already looked for full equality earlier, c != c', and we
+                // found a contradiction.
+                assert(*constant != *cConstant);
+                return False;
+              }
+              default: {}
+            }
+          }
+          default: {}
         }
       }
     }
