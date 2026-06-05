@@ -216,10 +216,18 @@ struct RangeAnalysis
                       Expression** currp,
                       BasicBlock* block,
                       const LocalConstraintMap& constraints) {
-    auto condition = constraint::parse(curr);
-    if (!condition) {
+    auto parsed = constraint::parse(curr);
+    if (!parsed) {
       return;
     }
+
+    // Add the constraint, if we can. TODO: perhaps be smart about which are
+    // more useful, rather than just drop later ones?
+    auto& localConstraints = constraints[parsed.local];
+    if (!localConstraints.full()) {
+      localConstraints.and_(parsed.constraint_);
+    }
+XXX
     // Find relevant gets. If we see a get we can't handle, stop.
 
     // This binary operates on a relevant local. Try to use what we know.
@@ -362,24 +370,16 @@ struct RangeAnalysis
   // Given an expression, apply it to the constraints. For example, a local.set
   // sets the value for that local.
   void applyToConstraints(Expression* curr, LocalConstraintMap& constraints) {
-    if (auto* set = curr->dynCast<LocalSet>()) {
-      if (relevantLocals.contains(set->index)) {
-        Value value;
-        // TODO: fallthrough, tee chains, etc. For that we must track values
-        // by Expression*, as e.g. reading a local, then setting it, should
-        // read the original flowing value.
-        if (auto* get = set->value->dynCast<LocalGet>()) {
-          value = Value(get->index);
-        } else if (auto* c = set->value->dynCast<Const>()) {
-          value = Value(c->value);
-        } else {
-          // Nothing is known.
-          constraints.erase(set->index);
-          return;
-        }
-        // Both the min and max are equal to what we found.
-        constraints[set->index] = Span{value, value};
-      }
+    auto parsed = constraint::parse(curr);
+    if (!parsed) {
+      return;
+    }
+
+    // Add the constraint, if we can. TODO: perhaps be smart about which are
+    // more useful, rather than just drop later ones?
+    auto& localConstraints = constraints[parsed.local];
+    if (!localConstraints.full()) {
+      localConstraints.and_(parsed.constraint_);
     }
   }
 };
