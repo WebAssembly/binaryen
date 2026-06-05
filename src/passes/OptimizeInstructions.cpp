@@ -1796,6 +1796,8 @@ struct OptimizeInstructions
   }
 
   void visitRefEq(RefEq* curr) {
+    Builder builder(*getModule());
+
     // Check for unreachability. Note we must check both the children and the
     // ref.eq itself, as in e.g. optimizeTernary, as we only refinalize at the
     // end, so unreachable children may not update the parent yet.
@@ -1832,12 +1834,16 @@ struct OptimizeInstructions
     skipCast(curr->left, nullableEq);
     skipCast(curr->right, nullableEq);
 
-    // Identical references compare equal.
-    // (Technically we do not need to check if the inputs are also foldable into
-    // a single one, but we do not have utility code to handle non-foldable
-    // cases yet; the foldable case we do handle is the common one of the first
-    // child being a tee and the second a get of that tee. TODO)
+    // Identical references compare equal. If the inputs are foldable, we need
+    // only keep one of them.
     if (areConsecutiveInputsEqualAndFoldable(curr->left, curr->right)) {
+      replaceCurrent(
+        builder.makeSequence(builder.makeDrop(curr->left),
+                             builder.makeConst(Literal::makeOne(Type::i32))));
+      return;
+    }
+
+    if (areConsecutiveInputsEqual(curr->left, curr->right)) {
       replaceCurrent(
         getDroppedChildrenAndAppend(curr, Literal::makeOne(Type::i32)));
       return;
@@ -2911,7 +2917,8 @@ private:
       return true;
     }
 
-    // To fold the right side into the left, it must have no effects.
+    // To fold the right side into the left, it must have no unremovable
+    // effects.
     auto rightMightHaveEffects = true;
     if (auto* call = right->dynCast<Call>()) {
       // If these are a pair of idempotent calls, then the second has no
@@ -2944,7 +2951,9 @@ private:
         }
         ShallowEffectAnalyzer parentEffects(
           getPassOptions(), *getModule(), call);
-        if (parentEffects.invalidates(childEffects)) {
+        // Check if the first parent is ordered before the second child (in the
+        // example above, the first call vs the second global.get).
+        if (parentEffects.orderedBefore(childEffects)) {
           return false;
         }
         // No effects are possible.

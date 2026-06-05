@@ -33,6 +33,7 @@
     (call $import)
   )
 
+
   ;; CHECK:      (func $test-abs (type $1)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (f32.mul
@@ -262,11 +263,6 @@
   ;; CHECK:      (func $test-ref.eq (type $2)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (call $idempotent
-  ;; CHECK-NEXT:      (global.get $g1)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (call $idempotent
   ;; CHECK-NEXT:      (global.get $g1)
