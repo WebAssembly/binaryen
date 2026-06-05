@@ -119,4 +119,4 @@ TEST(ConstraintTest, TestSets) {
   EXPECT_EQ(t.check(s), Unknown);
 }
 
-// TODO: test fuzzyOr
+// TODO: test fuzzyOr. in particular, empty merged with X is X, and flipped

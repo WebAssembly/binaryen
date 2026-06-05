@@ -246,21 +246,9 @@ struct RangeAnalysis
     LocalConstraintMap constraints;
     // For each relevant local, merge its constraints.
     for (auto local : relevantLocals) {
-      AndedConstraintSet merged;
+      AndedConstraintSet& merged = constraints[local];
       for (auto* pred : block->in) {
-        auto constraints = getConstraintsFromPredToSucc(pred, block, local);
-        if (span.isUnknown()) {
-          // Unknown, so the entire merge is unknown.
-          mergedSpan = Span::unknown();
-          break;
-        }
-        if (mergedSpan.isUnknown()) {
-          // This is the first item. Copy it.
-          mergedSpan = span;
-        } else {
-          // Merge in new data alongside existing.
-          mergedSpan = merge(mergedSpan, span);
-        }
+        merged.fuzzyOr(getConstraintsFromPredToSucc(pred, block, local));
       }
     }
     return constraints;
@@ -268,83 +256,14 @@ struct RangeAnalysis
 
   // Given a source (predecessor) and a target (successor) block, find the span
   // of a particular local as it arrives to that target from that successor.
-  Span getConstraintsFromPredToSucc(BasicBlock* pred, BasicBlock* block, Index local) {
+  AndedConstraintSet getConstraintsFromPredToSucc(BasicBlock* pred, BasicBlock* block, Index local) {
     auto iter = pred->contents.endConstraints.find(local);
     if (iter == pred->contents.endConstraints.end()) {
-      return Span::unknown();
+      return {};
     }
 
     // TODO: use conditional branching to send different values along branches
     return iter->second;
-  }
-
-  enum MinMax { Min, Max };
-
-  // Merge two spans. This is a merge of two spans from two different
-  // predecessor blocks, so the result is a span large enough to contain them
-  // both, as all values in either one are possible.
-  //
-  // Note that this is a monotonic operation, to avoid infinite loops.
-  Span merge(Span a, Span b) {
-    return Span{merge(a.min, b.min, Min), merge(a.max, b.max, Max)};
-  }
-
-  Value merge(Value a, Value b, MinMax op) {
-    Value ret;
-    std::visit(
-      overloaded{
-        [&](Literal& aLit) {
-          std::visit(overloaded{
-                       [&](Literal& bLit) {
-                         if (aLit == bLit) {
-                           // Equal literals.
-                           ret = a;
-                         } else if (aLit.type.isNumber()) {
-                           // Numbers can be ordered.
-                           assert(bLit.type == aLit.type);
-                           if (aLit.le(bLit).getUnsigned()) {
-                             ret = (op == Min) ? a : b;
-                           } else {
-                             ret = (op == Min) ? b : a;
-                           }
-                         } else {
-                           // Anything else (function reference, etc.)
-                           // is unknown.
-                           ret = Value::unknown();
-                         }
-                       },
-                       [&](Index& bLocal) {
-                         // Mix of literal and local. We don't know
-                         // what to make of this.
-                         // TODO: consider trees of constraints and
-                         // using a solver
-                         ret = Value::unknown();
-                       },
-                       [&](Unknown& unknown) { ret = Value::unknown(); },
-                     },
-                     b);
-        },
-        [&](Index& aLocal) {
-          std::visit(overloaded{
-                       [&](Literal& bLit) {
-                         // Mix of literal and local, as above.
-                         ret = Value::unknown();
-                       },
-                       [&](Index& bLocal) {
-                         // Two locals. If equal, we know the outcome.
-                         ret = (aLocal == bLocal) ? a : Value::unknown();
-                       },
-                       [&](Unknown& unknown) { ret = Value::unknown(); },
-                     },
-                     b);
-        },
-        [&](Unknown& unknown) {
-          // It doesn't even matter what b is.
-          ret = Value::unknown();
-        },
-      },
-      a);
-    return ret;
   }
 
   // Given an expression, apply it to the constraints. For example, a local.set
