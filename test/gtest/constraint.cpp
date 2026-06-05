@@ -29,16 +29,13 @@ TEST(ConstraintTest, TestEq) {
   EXPECT_EQ(s.check(c), True);
 
   // x == 10, a different number: we can infer false.
-  Constraint e{Eq, Literal(int32_t(10))};
-  EXPECT_EQ(s.check(e), False);
+  EXPECT_EQ(s.check(Constraint{Eq, Literal(int32_t(10))}), False);
 
   // x != 15: we can infer true.
-  Constraint f{Ne, Literal(int32_t(15))};
-  EXPECT_EQ(s.check(f), True);
+  EXPECT_EQ(s.check(Constraint{Ne, Literal(int32_t(15))}), True);
 
   // x != 5: we can infer false.
-  Constraint g{Ne, Literal(int32_t(5))};
-  EXPECT_EQ(s.check(g), False);
+  EXPECT_EQ(s.check(Constraint{Ne, Literal(int32_t(5))}), False);
 }
 
 TEST(ConstraintTest, TestNe) {
@@ -51,16 +48,13 @@ TEST(ConstraintTest, TestNe) {
   EXPECT_EQ(s.check(c), True);
 
   // x == 10: we don't know.
-  Constraint e{Eq, Literal(int32_t(10))};
-  EXPECT_EQ(s.check(e), Unknown);
+  EXPECT_EQ(s.check(Constraint{Eq, Literal(int32_t(10))}), Unknown);
 
   // x != 15: we don't know.
-  Constraint f{Ne, Literal(int32_t(15))};
-  EXPECT_EQ(s.check(f), Unknown);
+  EXPECT_EQ(s.check(Constraint{Ne, Literal(int32_t(15))}), Unknown);
 
   // x == 5: we can infer false.
-  Constraint g{Eq, Literal(int32_t(5))};
-  EXPECT_EQ(s.check(g), False);
+  EXPECT_EQ(s.check(Constraint{Eq, Literal(int32_t(5))}), False);
 }
 
 TEST(ConstraintTest, TestMulti) {
@@ -76,18 +70,15 @@ TEST(ConstraintTest, TestMulti) {
   EXPECT_EQ(s.check(d), True);
 
   // x == 5: false.
-  Constraint e{Eq, Literal(int32_t(5))};
-  EXPECT_EQ(s.check(e), False);
+  EXPECT_EQ(s.check(Constraint{Eq, Literal(int32_t(5))}), False);
 
   // x == 10: false.
-  Constraint f{Eq, Literal(int32_t(10))};
-  EXPECT_EQ(s.check(f), False);
+  EXPECT_EQ(s.check(Constraint{Eq, Literal(int32_t(10))}), False);
 
   // x == 15: we don't know.
   EXPECT_EQ(s.check(Constraint{Ne, Literal(int32_t(15))}), Unknown);
 
   // x != 15: we don't know.
-  Constraint h{Ne, Literal(int32_t(15))};
-  EXPECT_EQ(s.check(h), Unknown);
+  EXPECT_EQ(s.check(Constraint{Ne, Literal(int32_t(15))}), Unknown);
 }
 
