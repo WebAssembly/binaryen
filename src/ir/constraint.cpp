@@ -14,10 +14,59 @@
  * limitations under the License.
  */
 
+#include <optional>
+
 #include "ir/constraint.h"
 #include "wasm.h"
 
 namespace wasm::constraint {
+
+namespace {
+
+// Core comparison of two constraints. To keep it simple, this is not
+// symmetrical - it leaves handling of parallel cases to another call of this
+// function with inputs reversed.
+//
+// Returns a Result, or an empty option if we should keep working (i.e., a
+// result of Unknown means we are certain we can just return Unknown).
+std::optional<Result> checkPairInternal(const Constraint& a, const Constraint& b) {
+  // Comparisons of two constants.
+  if (auto* aConstant = std::get_if<Literal>(&a.value)) {
+    if (auto* bConstant = std::get_if<Literal>(&b.value)) {
+      switch (a.op) {
+        case Abstract::Eq: {
+          switch (b.op) {
+            case Abstract::Eq: {
+              // The condition is x == c and constraint is x == c', and we
+              // already looked for full equality earlier, c != c', and we
+              // found a contradiction.
+              assert(*aConstant != *bConstant);
+              return False;
+            }
+            case Abstract::Ne: {
+              // The condition is x == c and constraint is x != c'. We can
+              // infer the result based on relating c and c'.
+              return *aConstant != *bConstant ? True : False;
+            }
+            default: {}
+          }
+        }
+        default: {}
+      }
+    }
+  }
+
+  return {};
+}
+
+std::optional<Result> checkPair(const Constraint& a, const Constraint& b) {
+  if (auto result = checkPairInternal(a, b)) {
+    return *result;
+  }
+  return checkPairInternal(b, a);
+}
+
+} // anonymous namespace
 
 Result AndedConstraintSet::check(const Constraint& condition) {
   for (auto& c : *this) {
@@ -27,31 +76,10 @@ Result AndedConstraintSet::check(const Constraint& condition) {
     }
   }
 
-  // Comparisons of two constants.
-  if (auto* constant = std::get_if<Literal>(&condition.value)) {
-    for (auto& c : *this) {
-      if (auto* cConstant = std::get_if<Literal>(&c.value)) {
-        switch (c.op) {
-          case Abstract::Eq: {
-            switch (condition.op) {
-              case Abstract::Eq: {
-                // The condition is x == c and constraint is x == c', and we
-                // already looked for full equality earlier, c != c', and we
-                // found a contradiction.
-                assert(*constant != *cConstant);
-                return False;
-              }
-              case Abstract::Ne: {
-                // The condition is x == c and constraint is x != c'. We can
-                // infer the result based on relating c and c'.
-                return *constant != *cConstant ? True : False;
-              }
-              default: {}
-            }
-          }
-          default: {}
-        }
-      }
+  // Sometimes a single constraint is enough to determine the condition.
+  for (auto& c : *this) {
+    if (auto result = checkPair(c, condition)) {
+      return *result;
     }
   }
 
