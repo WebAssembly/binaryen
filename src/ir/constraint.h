@@ -150,7 +150,7 @@ struct LocalConstraint {
   //
   //   LocalConstraint($r, { x == 10 })
   //
-  static std::optional<LocalConstraint> parse(Binary* curr);
+  static std::optional<LocalConstraint> parse(Expression* curr);
 };
 
 } // namespace wasm::constraint

@@ -32,6 +32,7 @@
 
 #include "cfg/cfg-traversal.h"
 #include "ir/constraint.h"
+#include "ir/drop.h"
 #include "ir/literal-utils.h"
 #include "ir/local-graph.h"
 #include "ir/properties.h"
@@ -203,17 +204,16 @@ struct RangeAnalysis
 
         applyToConstraints(*currp, constraints);
 
-        if (auto* binary = curr->dynCast<Binary>()) {
-          optimizeBinary(binary, currp, block.get(), constraints);
+        optimizeExpression(binary, currp, block.get(), constraints);
         }
         // TODO unary
       }
     }
   }
 
-  // Given a binary and its block, try to optimize it. We provide the pointer
+  // Given a binary XXXand its block, try to optimize it. We provide the pointer
   // to the binary, so that it can be replaced if optimizable.
-  void optimizeBinary(Binary* curr,
+  void optimizeExpression(Expression* curr,
                       Expression** currp,
                       BasicBlock* block,
                       const LocalConstraintMap& constraints) {
@@ -222,7 +222,11 @@ struct RangeAnalysis
       return;
     }
 
-    auto& localConstraints = constraints[parsed->local];
+    auto iter = constraints.find(parsed->local);
+    if (iter == constraints.end()) {
+      return;
+    }
+    auto& localConstraints = iter->second;
     Result result = localConstraints.check(parsed->constraint);
     if (result == Unknown) {
       // If we parsed something using two locals, like x != y, we can also look

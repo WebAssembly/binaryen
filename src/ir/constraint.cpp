@@ -118,18 +118,24 @@ void AndedConstraintSet::fuzzyOr(const AndedConstraintSet& other) {
   clear();
 }
 
-std::optional<LocalConstraint> LocalConstraint::parse(Binary* curr) {
+std::optional<LocalConstraint> LocalConstraint::parse(Expression* curr) {
+  auto* binary = curr->dynCast<Binary>();
+  if (!binary) {
+    // TODO: unary etc.
+    return {};
+  }
+
   // The left must be a get.
-  auto* leftGet = curr->left->dynCast<LocalGet>();
+  auto* leftGet = binary->left->dynCast<LocalGet>();
   if (!leftGet) {
     return {};
   }
 
   // The right must be a get or a constant.
-  auto* rightGet = curr->right->dynCast<LocalGet>();
+  auto* rightGet = binary->right->dynCast<LocalGet>();
   std::optional<Literal> rightConstant;
-  if (Properties::isSingleConstantExpression(curr->right)) {
-    rightConstant = Properties::getLiteral(curr->right);
+  if (Properties::isSingleConstantExpression(binary->right)) {
+    rightConstant = Properties::getLiteral(binary->right);
   }
   if (!rightGet && !rightConstant) {
     return {};
@@ -137,7 +143,7 @@ std::optional<LocalConstraint> LocalConstraint::parse(Binary* curr) {
 
   // The operation must be one we recognize.
   for (auto op : {Abstract::Eq, Abstract::Ne}) {
-    if (Abstract::getBinary(curr->type, op) == curr->op) {
+    if (Abstract::getBinary(binary->type, op) == binary->op) {
       auto value = rightGet ? Value(rightGet->index) : Value(*rightConstant);
       return LocalConstraint{leftGet->index, Constraint{op, value}};
     }
