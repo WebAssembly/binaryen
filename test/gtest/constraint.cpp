@@ -46,6 +46,7 @@ TEST(ConstraintTest, TestNe) {
   // x != 5
   Constraint c{Ne, Literal(int32_t(5))};
   s.and_(c);
+
   // Checks out versus itself.
   EXPECT_EQ(s.check(c), True);
 
@@ -62,20 +63,32 @@ TEST(ConstraintTest, TestNe) {
   EXPECT_EQ(s.check(g), False);
 }
 
-#if 0
 TEST(ConstraintTest, TestMulti) {
-  // Two anded constraints. Both check out.
   AndedConstraintSet s;
-  Constraint c{Eq, Index(0), Literal(int32_t(5))};
-  Constraint d{Eq, Index(1), Literal(int32_t(10))};
+  // x != 5 && x != 10
+  Constraint c{Ne, Literal(int32_t(5))};
+  Constraint d{Ne, Literal(int32_t(10))};
   s.and_(c);
   s.and_(d);
+
+  // Each checks out versus itself.
   EXPECT_EQ(s.check(c), True);
   EXPECT_EQ(s.check(d), True);
 
-  // Something unrelated does not.
-  Constraint e{Eq, Index(2), Literal(int32_t(15))};
-  EXPECT_EQ(s.check(e), Unknown);
+  // x == 5: false.
+  Constraint e{Eq, Literal(int32_t(5))};
+  EXPECT_EQ(s.check(e), False);
+
+  // x == 10: false.
+  Constraint f{Eq, Literal(int32_t(10))};
+  EXPECT_EQ(s.check(f), False);
+
+  // x == 15: we don't know.
+  Constraint g{Ne, Literal(int32_t(15))};
+  EXPECT_EQ(s.check(g), Unknown);
+
+  // x != 15: we don't know.
+  Constraint h{Ne, Literal(int32_t(15))};
+  EXPECT_EQ(s.check(h), Unknown);
 }
-#endif
 
