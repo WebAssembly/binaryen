@@ -88,7 +88,7 @@ Result AndedConstraintSet::check(const Constraint& condition) {
     }
   }
 
-  // TODO smarts
+  // TODO smarts for multiple constraints
 
   // Otherwise, who knows.
   return Unknown;
