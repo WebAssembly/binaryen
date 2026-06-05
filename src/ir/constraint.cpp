@@ -23,13 +23,16 @@ namespace wasm::constraint {
 
 namespace {
 
-// Core comparison of two constraints. To keep it simple, this is not
-// symmetrical - it leaves handling of parallel cases to another call of this
-// function with inputs reversed.
+// Core comparison of two constraints.
 //
 // Returns a Result, or an empty option if we should keep working (i.e., a
 // result of Unknown means we are certain we can just return Unknown).
-std::optional<Result> checkPairInternal(const Constraint& a, const Constraint& b) {
+std::optional<Result> checkPair(const Constraint& a, const Constraint& b) {
+  // A thing always implies itself.
+  if (a == b) {
+    return True;
+  }
+
   // Comparisons of two constants.
   if (auto* aConstant = std::get_if<Literal>(&a.value)) {
     if (auto* bConstant = std::get_if<Literal>(&b.value)) {
@@ -37,16 +40,32 @@ std::optional<Result> checkPairInternal(const Constraint& a, const Constraint& b
         case Abstract::Eq: {
           switch (b.op) {
             case Abstract::Eq: {
-              // The condition is x == c and constraint is x == c', and we
-              // already looked for full equality earlier, c != c', and we
-              // found a contradiction.
+              // x == c vs x == c', and we already handled full equality
+              // earlier, hence c != c', and we found a contradiction.
               assert(*aConstant != *bConstant);
               return False;
             }
             case Abstract::Ne: {
-              // The condition is x == c and constraint is x != c'. We can
-              // infer the result based on relating c and c'.
+              // x == c vs x != c'. We can infer the result based on relating c
+              // and c'.
               return *aConstant != *bConstant ? True : False;
+            }
+            default: {}
+          }
+        }
+        case Abstract::Ne: {
+          switch (b.op) {
+            case Abstract::Eq: {
+              // x != c vs x == c'. If c == c', we can infer.
+              if (*aConstant == *bConstant) {
+                return False;
+              }
+              return {};
+            }
+            case Abstract::Ne: {
+              // x == c vs x == c', and we already handled full equality
+              // earlier, hence c != c', and we can infer nothing.
+              return {};
             }
             default: {}
           }
@@ -59,23 +78,9 @@ std::optional<Result> checkPairInternal(const Constraint& a, const Constraint& b
   return {};
 }
 
-std::optional<Result> checkPair(const Constraint& a, const Constraint& b) {
-  if (auto result = checkPairInternal(a, b)) {
-    return *result;
-  }
-  return checkPairInternal(b, a);
-}
-
 } // anonymous namespace
 
 Result AndedConstraintSet::check(const Constraint& condition) {
-  for (auto& c : *this) {
-    // If the condition is among our constraints exactly, it is definitely true.
-    if (c == condition) {
-      return True;
-    }
-  }
-
   // Sometimes a single constraint is enough to determine the condition.
   for (auto& c : *this) {
     if (auto result = checkPair(c, condition)) {
