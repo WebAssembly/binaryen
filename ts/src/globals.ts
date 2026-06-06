@@ -290,6 +290,7 @@ export function getExpressionType(expr: ExpressionRef): Type {
 
 /**
  * Creates a new Expression object given an ExpressionRef argument.
+ *
  * This function is called without `new`.
  * You may also use the constructor `new expressions.Expression()`,
  * or a specific subclass of it.
@@ -303,6 +304,7 @@ export function Expression(expr: ExpressionRef): expressions.Expression {
 
 /**
  * Obtains information about an expression.
+ *
  * Additional properties depend on the expression’s ID
  * and are usually equivalent to the respective parameters when creating such an expression.
  */

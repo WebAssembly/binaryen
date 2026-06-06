@@ -23,7 +23,7 @@ export class Expression {
 	/**
 	 * Construct a new Expression object given an ID and reference.
 	 *
-	 * Without an ID, you can still call {@link getExpressionInfo | `getExpressionInfo(expr)`},
+	 * Without an ID, you can still call {@link Expression | `Expression(expr)`} (without `new`),
 	 * which will compute the ID and construct an Expression object from there.
 	 * @param exprId the expression “kind” id
 	 * @param expr the expression reference
@@ -52,7 +52,7 @@ export class Expression {
 	 * Adds to this object enumerable own properties that are computed from getter methods.
 	 * Useful when calling `JSON.stringify`:
 	 * ```ts
-	 * JSON.stringify(exprInfo.toJson());
+	 * JSON.stringify(this.toJson());
 	 * ```
 	 */
 	toJson(): Record<string, number | string> {
