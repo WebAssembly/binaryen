@@ -5,7 +5,7 @@
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/WebAssembly/binaryen.git"
+    "url": "git+https://github.com/WebAssembly/binaryen.git"
   },
   "keywords": [
     "webassembly",
@@ -24,14 +24,10 @@
     "docs": "rm -rf ../docs/binaryen.ts/ && typedoc",
     "test": "tsx --test -- './test/**/*.test.ts'",
     "test:only": "tsx --test --test-only -- './test/**/*.test.ts'",
-    "build": "npm run compile && npm run lint && npm run docs && npm run test"
+    "build": "npm run compile && npm run lint && npm run docs && npm run test",
+    "prepublishOnly": "npm run make && npm run check && npm run build"
   },
-  "files": [
-    "package.json",
-    "package-lock.json",
-    "./dist/*.d.ts",
-    "./dist/*.js"
-  ],
+  "files": ["./build/", "./dist/"],
   "imports": {
     "#binaryen-raw": {
       "types": "./src/types/binaryen_js.d.ts",
