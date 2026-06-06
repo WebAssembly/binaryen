@@ -168,6 +168,9 @@
  )
 
  ;; CHECK:      (func $always-fold-select (type $2) (param $x i32) (param $y i32) (result i32)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (local.get $y)
+ ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (@metadata.code.branch_hint "\00")
  ;; CHECK-NEXT:  (if (result i32)
  ;; CHECK-NEXT:   (local.get $x)
@@ -180,16 +183,23 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  ;; NO_FO:      (func $always-fold-select (type $2) (param $x i32) (param $y i32) (result i32)
- ;; NO_FO-NEXT:  (@metadata.code.branch_hint "\00")
- ;; NO_FO-NEXT:  (if (result i32)
- ;; NO_FO-NEXT:   (local.get $x)
- ;; NO_FO-NEXT:   (then
- ;; NO_FO-NEXT:    (i32.const 10)
- ;; NO_FO-NEXT:   )
- ;; NO_FO-NEXT:   (else
- ;; NO_FO-NEXT:    (i32.const 20)
+ ;; NO_FO-NEXT:  (local $2 i32)
+ ;; NO_FO-NEXT:  (local.set $2
+ ;; NO_FO-NEXT:   (@metadata.code.branch_hint "\00")
+ ;; NO_FO-NEXT:   (if (result i32)
+ ;; NO_FO-NEXT:    (local.get $x)
+ ;; NO_FO-NEXT:    (then
+ ;; NO_FO-NEXT:     (i32.const 10)
+ ;; NO_FO-NEXT:    )
+ ;; NO_FO-NEXT:    (else
+ ;; NO_FO-NEXT:     (i32.const 20)
+ ;; NO_FO-NEXT:    )
  ;; NO_FO-NEXT:   )
  ;; NO_FO-NEXT:  )
+ ;; NO_FO-NEXT:  (drop
+ ;; NO_FO-NEXT:   (local.get $y)
+ ;; NO_FO-NEXT:  )
+ ;; NO_FO-NEXT:  (local.get $2)
  ;; NO_FO-NEXT: )
  (func $always-fold-select (param $x i32) (param $y i32) (result i32)
   ;; A select with different metadata is still foldable: the code was executed

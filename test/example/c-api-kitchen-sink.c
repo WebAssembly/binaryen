@@ -1280,6 +1280,14 @@ void test_core() {
 
   BinaryenExpressionPrint(
     valueList[3]); // test printing a standalone expression
+  // test stringifying an expression
+  {
+    char* textPtr = BinaryenExpressionAllocateAndWriteText(valueList[3]);
+    assert(textPtr);
+    assert(strstr(textPtr, "f32.neg"));
+    assert(!strstr(textPtr, "\x1b")); // ensure color escapes are not emitted
+    free(textPtr);
+  }
 
   // Add drops of concrete expressions
   for (int i = 0; i < sizeof(valueList) / sizeof(valueList[0]); ++i) {

@@ -86,5 +86,11 @@ export function f32(mod: Module) {
 		/** @deprecated Use `.reinterpret_i32()` instead. */ reinterpret(...args) { BinaryenObj.printWarn("`.reinterpret()` is deprecated; use `.reinterpret_i32()` instead."); return this.reinterpret_i32(...args); },
 		// @ts-expect-error
 		/** @deprecated Use `.demote_f64()` instead. */ demote(...args) { BinaryenObj.printWarn("`.demote()` is deprecated; use `.demote_f64()` instead."); return this.demote_f64(...args); },
+
+		/** @deprecated Use {@link Module#pop} instead. */
+		pop() {
+			BinaryenObj.printWarn("`.f32.pop()` is deprecated; use `.pop(f32)` instead.");
+			return mod.pop(f32_t);
+		},
 	} as const;
 }

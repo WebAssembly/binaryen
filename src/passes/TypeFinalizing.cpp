@@ -52,7 +52,8 @@ struct TypeFinalizing : public Pass {
 
     // Note we don't need to worry about signature-called functions here
     // (configureAll) because such calls don't care about finality.
-    auto privateTypes = ModuleUtils::getPrivateHeapTypes(*module);
+    auto privateTypes =
+      ModuleUtils::getPrivateHeapTypes(*module, getPassOptions().worldMode);
     for (auto type : privateTypes) {
       // If we are finalizing types then we can only do that to leaf types. If
       // we are unfinalizing, we can do that unconditionally.
@@ -66,7 +67,8 @@ struct TypeFinalizing : public Pass {
 
     public:
       TypeRewriter(Module& wasm, TypeFinalizing& parent)
-        : GlobalTypeRewriter(wasm), parent(parent) {}
+        : GlobalTypeRewriter(wasm, parent.getPassOptions().worldMode),
+          parent(parent) {}
 
       void modifyTypeBuilderEntry(TypeBuilder& typeBuilder,
                                   Index i,

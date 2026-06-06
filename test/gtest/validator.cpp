@@ -90,3 +90,28 @@ TEST(ValidatorTest, UnreachableCastDescEq) {
     WasmValidator::FlagValues::Globally | WasmValidator::FlagValues::Quiet;
   EXPECT_FALSE(WasmValidator{}.validate(func.get(), module, flags));
 }
+
+TEST(ValidatorTest, ContNewUnreachable) {
+  Module module;
+  module.features = FeatureSet::All;
+  Builder builder(module);
+
+  auto sig = Signature(Type::none, Type::none);
+  module.addFunction(builder.makeFunction(
+    "f", {}, Signature(Type::none, Type::none), {}, builder.makeUnreachable()));
+
+  auto contType = HeapType(Continuation(sig));
+  auto contRefType = Type(contType, NonNullable);
+
+  // Create a cont.new with a concrete type despite an unreachable child. This
+  // is not valid, but we should not crash while validating it.
+  auto* contNew = builder.makeContNew(contType, builder.makeUnreachable());
+  contNew->type = contRefType;
+
+  auto testFunc = builder.makeFunction(
+    "test", {}, Signature(Type::none, contRefType), {}, contNew);
+
+  auto flags =
+    WasmValidator::FlagValues::Globally | WasmValidator::FlagValues::Quiet;
+  EXPECT_FALSE(WasmValidator{}.validate(testFunc.get(), module, flags));
+}

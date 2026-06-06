@@ -3443,7 +3443,7 @@ void PrintSExpression::visitElementSegment(ElementSegment* curr) {
   printMedium(o, "elem ");
   curr->name.print(o);
 
-  if (curr->table.is()) {
+  if (curr->isActive()) {
     if (usesExpressions || currModule->tables.size() > 1) {
       // tableuse
       o << " (table ";
@@ -3523,7 +3523,7 @@ void PrintSExpression::visitMemory(Memory* curr) {
 }
 
 void PrintSExpression::visitDataSegment(DataSegment* curr) {
-  if (!curr->isPassive && !curr->offset) {
+  if (curr->isActive() && !curr->offset) {
     // This data segment must have been created from the datacount section but
     // not parsed yet. Skip it.
     return;
@@ -3533,7 +3533,7 @@ void PrintSExpression::visitDataSegment(DataSegment* curr) {
   printMajor(o, "data ");
   curr->name.print(o);
   o << ' ';
-  if (!curr->isPassive) {
+  if (curr->isActive()) {
     assert(!currModule || currModule->memories.size() > 0);
     if (!currModule || curr->memory != currModule->memories[0]->name) {
       o << "(memory ";

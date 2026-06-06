@@ -69,6 +69,8 @@ private:
   std::vector<Annotation> annotations;
   std::optional<std::string> file;
 
+  static bool isSpacechar(uint8_t c);
+
 public:
   std::string_view buffer;
 
@@ -93,11 +95,11 @@ public:
 
   std::optional<char> peekChar() const;
 
-  bool peekLParen() { return !empty() && peek() == '('; }
+  bool peekLParen() { return peek() == uint8_t('('); }
 
   bool takeLParen();
 
-  bool peekRParen() { return !empty() && peek() == ')'; }
+  bool peekRParen() { return peek() == uint8_t(')'); }
 
   bool takeRParen();
 
@@ -134,7 +136,12 @@ public:
 
   std::string_view next() const { return buffer.substr(pos); }
 
-  uint8_t peek() const { return buffer[pos]; }
+  std::optional<uint8_t> peek() const {
+    if (empty()) {
+      return std::nullopt;
+    }
+    return uint8_t(buffer[pos]);
+  }
 
   void advance() {
     annotations.clear();
@@ -247,8 +254,8 @@ inline Lexer::Lexer(std::string_view buffer, std::optional<std::string> file)
 }
 
 inline std::optional<char> Lexer::peekChar() const {
-  if (!empty()) {
-    return peek();
+  if (auto c = peek()) {
+    return char(*c);
   }
   return std::nullopt;
 }
@@ -298,16 +305,12 @@ inline std::optional<Name> Lexer::takeID() {
 }
 
 inline std::optional<std::string_view> Lexer::peekKeyword() {
-  if (empty()) {
+  auto start = peek();
+  if (!start || *start < 'a' || *start > 'z') {
     return std::nullopt;
   }
   auto startPos = pos;
-  uint8_t start = peek();
-  if ('a' <= start && start <= 'z') {
-    take(1);
-  } else {
-    return std::nullopt;
-  }
+  take(1);
   while (idchar()) {
     take(1);
   }
@@ -544,23 +547,21 @@ inline bool Lexer::takePrefix(std::string_view sv) {
 }
 
 inline std::optional<int> Lexer::takeDigit() {
-  if (empty()) {
-    return std::nullopt;
-  }
-  if (auto d = getDigit(peek())) {
-    take(1);
-    return d;
+  if (auto c = peek()) {
+    if (auto d = getDigit(*c)) {
+      take(1);
+      return d;
+    }
   }
   return std::nullopt;
 }
 
 inline std::optional<int> Lexer::takeHexdigit() {
-  if (empty()) {
-    return std::nullopt;
-  }
-  if (auto h = getHexDigit(peek())) {
-    take(1);
-    return h;
+  if (auto c = peek()) {
+    if (auto h = getHexDigit(*c)) {
+      take(1);
+      return h;
+    }
   }
   return std::nullopt;
 }
@@ -624,14 +625,15 @@ inline std::optional<uint64_t> Lexer::takeHexnum(OverflowBehavior behavior) {
 }
 
 inline Lexer::Sign Lexer::takeSign() {
-  auto c = peek();
-  if (c == '+') {
-    take(1);
-    return Pos;
-  }
-  if (c == '-') {
-    take(1);
-    return Neg;
+  if (auto c = peek()) {
+    if (*c == '+') {
+      take(1);
+      return Pos;
+    }
+    if (*c == '-') {
+      take(1);
+      return Neg;
+    }
   }
   return NoSign;
 }
@@ -812,7 +814,8 @@ inline std::optional<Lexer::LexedFloat> Lexer::takeFloat() {
   // we need to strip any underscores since `std::strtod` does not understand
   // them.
   std::stringstream ss;
-  for (const char *curr = &buffer[startPos], *end = &buffer[pos]; curr != end;
+  for (const char *curr = buffer.data() + startPos, *end = buffer.data() + pos;
+       curr != end;
        ++curr) {
     if (*curr != '_') {
       ss << *curr;
@@ -853,9 +856,17 @@ inline std::optional<Lexer::StringOrView> Lexer::takeStr() {
       // Escape sequences
       ensureBuildingEscaped();
       take(1);
+      if (empty()) {
+        pos = startPos;
+        return std::nullopt;
+      }
       auto c = peek();
+      if (!c) {
+        pos = startPos;
+        return std::nullopt;
+      }
       take(1);
-      switch (c) {
+      switch (*c) {
         case 't':
           *escapeBuilder << '\t';
           break;
@@ -901,7 +912,7 @@ inline std::optional<Lexer::StringOrView> Lexer::takeStr() {
         default: {
           // Byte escape: \hh
           // We already took the first h as c.
-          auto first = getHexDigit(c);
+          auto first = getHexDigit(*c);
           auto second = takeHexdigit();
           if (!first || !second) {
             // TODO: Add error production for unrecognized escape sequence.
@@ -913,7 +924,8 @@ inline std::optional<Lexer::StringOrView> Lexer::takeStr() {
       }
     } else {
       // Normal characters
-      if (uint8_t c = peek(); c >= 0x20 && c != 0x7F) {
+      uint8_t c = *peek();
+      if (c >= 0x20 && c != 0x7F) {
         if (escapeBuilder) {
           *escapeBuilder << c;
         }
@@ -933,17 +945,17 @@ inline std::optional<Lexer::StringOrView> Lexer::takeStr() {
 }
 
 inline bool Lexer::idchar() {
-  if (empty()) {
+  auto c = peek();
+  if (!c) {
     return false;
   }
-  uint8_t c = peek();
   // All the allowed characters lie in the range '!' to '~', and within that
   // range the vast majority of characters are allowed, so it is significantly
   // faster to check for the disallowed characters instead.
-  if (c < '!' || c > '~') {
+  if (*c < '!' || *c > '~') {
     return false;
   }
-  switch (c) {
+  switch (*c) {
     case '"':
     case '(':
     case ')':
@@ -991,11 +1003,8 @@ inline std::optional<Lexer::StringOrView> Lexer::takeIdent() {
   return std::nullopt;
 }
 
-inline bool Lexer::spacechar() {
-  if (empty()) {
-    return false;
-  }
-  switch (peek()) {
+inline bool Lexer::isSpacechar(uint8_t c) {
+  switch (c) {
     case ' ':
     case '\n':
     case '\r':
@@ -1004,6 +1013,13 @@ inline bool Lexer::spacechar() {
     default:
       return false;
   }
+}
+
+inline bool Lexer::spacechar() {
+  if (auto c = peek()) {
+    return isSpacechar(*c);
+  }
+  return false;
 }
 
 inline bool Lexer::takeSpacechar() {
@@ -1152,8 +1168,11 @@ inline bool Lexer::canFinish() {
   // actually want to parse more than a couple characters of space, so check
   // for individual space chars or comment starts instead.
   using namespace std::string_view_literals;
-  return empty() || spacechar() || peek() == '(' || peek() == ')' ||
-         startsWith(";;"sv);
+  auto c = peek();
+  if (!c) {
+    return true;
+  }
+  return isSpacechar(*c) || *c == '(' || *c == ')' || startsWith(";;"sv);
 }
 
 } // namespace wasm::WATParser

@@ -80,7 +80,11 @@ struct LinearExecutionWalker : public PostWalker<SubType, VisitorType> {
   static void scan(SubType* self, Expression** currp) {
     Expression* curr = *currp;
 
-    auto handleCall = [&](bool mayThrow, bool isReturn) {
+    auto handleCall = [&](bool isReturn, bool refutesThrowEffect) {
+      bool mayThrow = !self->getModule() ||
+                      self->getModule()->features.hasExceptionHandling();
+      mayThrow = mayThrow && !refutesThrowEffect;
+
       if (!self->connectAdjacentBlocks) {
         // Control is nonlinear if we return or throw. Traps don't need to be
         // taken into account since they don't break control flow in a way
@@ -156,40 +160,54 @@ struct LinearExecutionWalker : public PostWalker<SubType, VisitorType> {
       case Expression::Id::CallId: {
         auto* call = curr->cast<Call>();
 
-        bool mayThrow = !self->getModule() ||
-                        self->getModule()->features.hasExceptionHandling();
-        if (mayThrow && self->getModule()) {
-          auto* effects =
-            self->getModule()->getFunction(call->target)->effects.get();
-
-          if (effects && !effects->throws_) {
-            mayThrow = false;
+        bool refutesThrowEffect = false;
+        if (self->getModule()) {
+          auto* func = self->getModule()->getFunctionOrNull(call->target);
+          // TODO: `func` might not exist here because of #8753. Fix this
+          // and remove the null check.
+          if (func && func->effects) {
+            refutesThrowEffect = !func->effects->throws_;
           }
         }
 
-        handleCall(mayThrow, call->isReturn);
+        handleCall(call->isReturn, refutesThrowEffect);
         break;
       }
       case Expression::Id::CallRefId: {
         auto* callRef = curr->cast<CallRef>();
 
-        // TODO: Effect analysis for indirect calls isn't implemented yet.
-        // Assume any indirect call may throw for now.
-        bool mayThrow = !self->getModule() ||
-                        self->getModule()->features.hasExceptionHandling();
+        bool refutesThrowEffect = [&]() {
+          if (!self->getModule()) {
+            return false;
+          }
+          if (!callRef->target->type.isRef()) {
+            // This is an unreachable, so no throws effect.
+            return true;
+          }
 
-        handleCall(mayThrow, callRef->isReturn);
+          auto* effects = find_or_null(self->getModule()->indirectCallEffects,
+                                       callRef->target->type.getHeapType());
+          if (!effects) {
+            return false;
+          }
+          return !(*effects)->throws_;
+        }();
+
+        handleCall(callRef->isReturn, refutesThrowEffect);
         break;
       }
       case Expression::Id::CallIndirectId: {
         auto* callIndirect = curr->cast<CallIndirect>();
 
-        // TODO: Effect analysis for indirect calls isn't implemented yet.
-        // Assume any indirect call may throw for now.
-        bool mayThrow = !self->getModule() ||
-                        self->getModule()->features.hasExceptionHandling();
-
-        handleCall(mayThrow, callIndirect->isReturn);
+        bool refutesThrowEffect = false;
+        if (self->getModule()) {
+          if (auto* effects = find_or_null(
+                self->getModule()->indirectCallEffects, callIndirect->heapType);
+              effects) {
+            refutesThrowEffect = !(*effects)->throws_;
+          }
+        }
+        handleCall(callIndirect->isReturn, refutesThrowEffect);
         break;
       }
       case Expression::Id::TryId: {

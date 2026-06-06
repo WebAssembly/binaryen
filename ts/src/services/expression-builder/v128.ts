@@ -72,5 +72,11 @@ export function v128(mod: Module) {
 		),
 
 		anytrue: unaryFn(mod, Operation.AnyTrueVec128),
+
+		/** @deprecated Use {@link Module#pop} instead. */
+		pop() {
+			BinaryenObj.printWarn("`.v128.pop()` is deprecated; use `.pop(v128)` instead.");
+			return mod.pop(v128_t);
+		},
 	} as const;
 }

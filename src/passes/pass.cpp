@@ -277,6 +277,9 @@ void PassRegistry::registerPasses() {
   registerPass("limit-segments",
                "attempt to merge segments to fit within web limits",
                createLimitSegmentsPass);
+  registerPass("mark-js-called",
+               "mark js called functions (using configureAll) as doing so",
+               createMarkJSCalledPass);
   registerPass("memory64-lowering",
                "lower loads and stores to a 64-bit memory to instead use a "
                "32-bit one",
@@ -613,6 +616,8 @@ void PassRegistry::registerPasses() {
   registerTestPass("randomize-branch-hints",
                    "randomize branch hints (for fuzzing)",
                    createRandomizeBranchHintsPass);
+  registerTestPass(
+    "remove-start", "remove the start function", createRemoveStartPass);
   registerTestPass("reorder-globals-always",
                    "sorts globals by access frequency (even if there are few)",
                    createReorderGlobalsAlwaysPass);
@@ -760,7 +765,7 @@ void PassRunner::addDefaultGlobalOptimizationPrePasses() {
     addIfNoDWARFIssues("once-reduction");
   }
   if (wasm->features.hasGC() && options.optimizeLevel >= 2) {
-    if (options.closedWorld) {
+    if (options.worldMode == WorldMode::Closed) {
       addIfNoDWARFIssues("type-refining");
       addIfNoDWARFIssues("signature-pruning");
       addIfNoDWARFIssues("signature-refining");
@@ -770,11 +775,11 @@ void PassRunner::addDefaultGlobalOptimizationPrePasses() {
     // remove ref.funcs that were once assigned to vtables but are no longer
     // needed, which can allow more code to be removed globally. After those,
     // constant field propagation can be more effective.
-    if (options.closedWorld) {
+    if (options.worldMode == WorldMode::Closed) {
       addIfNoDWARFIssues("gto");
     }
     addIfNoDWARFIssues("remove-unused-module-elements");
-    if (options.closedWorld) {
+    if (options.worldMode == WorldMode::Closed) {
       addIfNoDWARFIssues("remove-unused-types");
       // Allow ref.tests in cfp if we are aggressively optimizing for speed.
       if (options.optimizeLevel >= 3) {
@@ -784,7 +789,7 @@ void PassRunner::addDefaultGlobalOptimizationPrePasses() {
       }
     }
     addIfNoDWARFIssues("gsi");
-    if (options.closedWorld) {
+    if (options.worldMode == WorldMode::Closed) {
       addIfNoDWARFIssues("abstract-type-refining");
       addIfNoDWARFIssues("unsubtyping");
     }

@@ -40,14 +40,14 @@ suite("Global", () => {
 
 	test("initial value.", () => {
 		globalInfo = new binaryen.Module.Global(globalRef);
-		const exprInfo: binaryen.expressions.Expression = binaryen.getExpressionInfo(globalInfo.init);
-		assert.ok(exprInfo instanceof binaryen.expressions.Const);
-		assert.partialDeepStrictEqual(exprInfo.toJson(), {
+		const exprObj: binaryen.expressions.Expression = binaryen.Expression(globalInfo.init);
+		assert.ok(exprObj instanceof binaryen.expressions.Const);
+		assert.partialDeepStrictEqual(exprObj.toJson(), {
 			id: binaryen.ExpressionId.Const,
 			type: binaryen.i32,
 			value: 1,
 		});
-		assert.strictEqual(binaryen.emitText(globalInfo.init), "(i32.const 1)");
+		assert.strictEqual(binaryen.emitText(globalInfo.init), "(i32.const 1)\n");
 	});
 
 	test("module is valid with imports/exports.", () => {

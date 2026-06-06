@@ -435,11 +435,14 @@ class ClusterFuzz(utils.BinaryenTestCase):
             valid_executions = 0
             for i in range(1, N + 1):
                 fuzz_file = os.path.join(temp_dir.name, f'fuzz-binaryen-{i}.js')
+                flags_file = os.path.join(temp_dir.name, f'flags-binaryen-{i}.js')
 
+                # Read flags from flags file to faithfully simulate how
+                # ClusterFuzz runs V8.
+                with open(flags_file) as f:
+                    flags = f.read().strip().split()
                 # Add --fuzzing to allow legacy and standard EH to coexist
-                cmd = [shared.V8,
-                       '--wasm-staging',
-                       '--experimental-wasm-custom-descriptors',
+                cmd = [shared.V8] + flags + [
                        '--fuzzing',
                        fuzz_file]
                 # Capture stderr even though we will not read it. It may

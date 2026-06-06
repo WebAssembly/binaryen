@@ -102,9 +102,9 @@ suite("Function", () => {
 		mod.functions.remove("a-function");
 		assert.strictEqual(mod.functions.count(), 1);
 
-		let bodyExprInfo: binaryen.expressions.Expression = binaryen.getExpressionInfo(funcInfo.body);
-		assert.ok(bodyExprInfo instanceof binaryen.expressions.Binary);
-		assert.partialDeepStrictEqual(bodyExprInfo.toJson(), {
+		let bodyExprObj: binaryen.expressions.Expression = binaryen.Expression(funcInfo.body);
+		assert.ok(bodyExprObj instanceof binaryen.expressions.Binary);
+		assert.partialDeepStrictEqual(bodyExprObj.toJson(), {
 			id: binaryen.ExpressionId.Binary,
 			type: binaryen.i32,
 		});
@@ -113,18 +113,19 @@ suite("Function", () => {
 		assert.strictEqual(binaryen.emitText(funcInfo.body), `(i32.add
  (i32.const 1)
  (i32.const 2)
-)`);
+)
+`);
 
 		mod.runPassesOnFunction(funcRef, ["precompute"]);
 
-		bodyExprInfo = binaryen.getExpressionInfo(funcInfo.body);
-		assert.ok(bodyExprInfo instanceof binaryen.expressions.Const);
-		assert.partialDeepStrictEqual(bodyExprInfo.toJson(), {
+		bodyExprObj = binaryen.Expression(funcInfo.body);
+		assert.ok(bodyExprObj instanceof binaryen.expressions.Const);
+		assert.partialDeepStrictEqual(bodyExprObj.toJson(), {
 			id: binaryen.ExpressionId.Const,
 			type: binaryen.i32,
 			value: 3,
 		});
-		assert.strictEqual(binaryen.emitText(funcInfo.body), "(i32.const 3)");
+		assert.strictEqual(binaryen.emitText(funcInfo.body), "(i32.const 3)\n");
 
 		assert.ok(mod.validate());
 		assert.strictEqual(mod.emitText(), `(module

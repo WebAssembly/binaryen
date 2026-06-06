@@ -84,12 +84,12 @@ export function breaks(mod: Module) {
 	return {
 		/** Creates an unconditional branch `(br)` to a label. */
 		br: (label: string, condition?: ExpressionRef, value?: ExpressionRef): ExpressionRef => (
-			preserveStack(() => BinaryenObj["_BinaryenBreak"](mod[PTR], strToStack(label), condition!, value!))
+			preserveStack(() => BinaryenObj["_BinaryenBreak"](mod[PTR], strToStack(label), condition ?? 0, value ?? 0))
 		),
 
 		/** Creates a conditional branch `(br_if)` to a label. */
 		br_if: (label: string, condition: ExpressionRef, value?: ExpressionRef): ExpressionRef => (
-			preserveStack(() => BinaryenObj["_BinaryenBreak"](mod[PTR], strToStack(label), condition, value!))
+			preserveStack(() => BinaryenObj["_BinaryenBreak"](mod[PTR], strToStack(label), condition, value ?? 0))
 		),
 
 		/** Creates a switch. */
@@ -100,7 +100,7 @@ export function breaks(mod: Module) {
 				labels.length,
 				strToStack(defaultLabel),
 				condition,
-				value!,
+				value ?? 0,
 			))
 		),
 

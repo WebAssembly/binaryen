@@ -58,7 +58,9 @@
 #if defined(__EMSCRIPTEN__)
 #include <emscripten.h>
 #define BINARYEN_API EMSCRIPTEN_KEEPALIVE
-#elif defined(_MSC_VER) && !defined(BUILD_STATIC_LIBRARY)
+#elif defined(_MSC_VER) && defined(BUILD_SHARED_LIBS)
+// TODO: This is not yet used since we disabled BUILD_SHARED_LIBS under
+// _MSC_VER in CMakeLists.txt
 #define BINARYEN_API __declspec(dllexport)
 #else
 #define BINARYEN_API
@@ -1218,10 +1220,11 @@ BINARYEN_API void BinaryenExpressionFinalize(BinaryenExpressionRef expr);
 // Makes a deep copy of the given expression.
 BINARYEN_API BinaryenExpressionRef
 BinaryenExpressionCopy(BinaryenExpressionRef expr, BinaryenModuleRef module);
-// Serialize an expression in s-expression form. Implicitly allocates the returned
-// char* with malloc(), and expects the user to free() them manually
+// Serialize an expression in s-expression form. Implicitly allocates the
+// returned char* with malloc(), and expects the user to free() them manually
 // once not needed anymore.
-BINARYEN_API char* BinaryenExpressionAllocateAndWriteText(BinaryenExpressionRef expr);
+BINARYEN_API char*
+BinaryenExpressionAllocateAndWriteText(BinaryenExpressionRef expr);
 
 // Block
 

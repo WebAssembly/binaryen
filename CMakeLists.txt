@@ -5,7 +5,7 @@ cmake_minimum_required(VERSION 3.16.3)
 # Needed for C++17 (std::path)
 set(CMAKE_OSX_DEPLOYMENT_TARGET "10.15" CACHE STRING "Minimum OS X deployment version")
 
-project(binaryen LANGUAGES C CXX VERSION 129)
+project(binaryen LANGUAGES C CXX VERSION 130)
 include(GNUInstallDirs)
 
 # The C++ standard whose features are required to build Binaryen.
@@ -52,10 +52,11 @@ if(EMSCRIPTEN)
   set(BUILD_LLVM_DWARF OFF)
 endif()
 
-option(BUILD_STATIC_LIB "Build as a static library" OFF)
-if(MSVC)
+option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
+if(MSVC OR EMSCRIPTEN)
   # We don't have dllexport declarations set up for Windows yet.
-  set(BUILD_STATIC_LIB ON)
+  # With emscripten we require a static library to create binaryen_js correctly.
+  set(BUILD_SHARED_LIBS OFF)
 endif()
 
 # Advised to turn on when statically linking against musl libc (e.g., in the
@@ -418,6 +419,7 @@ else() # MSVC
   add_compile_flag("-Wswitch") # we explicitly expect this in the code
   add_compile_flag("-Wimplicit-fallthrough")
   add_compile_flag("-Wnon-virtual-dtor")
+  add_compile_flag("-Wsuggest-override")
 
   if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
     # Google style requires this, so make sure we compile cleanly with it.
@@ -450,18 +452,18 @@ else() # MSVC
 endif()
 
 # Declare libbinaryen
+# This will be either be STATIC or SHARED depending on BUILD_SHARED_LIBS
+add_library(binaryen)
 
-if(BUILD_STATIC_LIB)
-  message(STATUS "Building libbinaryen as statically linked library.")
-  add_library(binaryen STATIC)
-  add_definitions(-DBUILD_STATIC_LIBRARY)
-else()
+if(BUILD_SHARED_LIBS)
+  add_definitions(-DBUILD_SHARED_LIBS)
   message(STATUS "Building libbinaryen as shared library.")
-  add_library(binaryen SHARED)
   if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     # Disable interposition and resolve Binaryen symbols locally.
     add_link_flag("-Bsymbolic")
   endif()
+else()
+  message(STATUS "Building libbinaryen as statically linked library.")
 endif()
 target_link_libraries(binaryen PUBLIC Threads::Threads)
 binaryen_setup_rpath(binaryen)
@@ -474,13 +476,13 @@ if(BUILD_MIMALLOC)
     message(FATAL_ERROR "Linking mimalloc is only supported on Linux.")
   endif()
   message(STATUS "Building with mimalloc allocator.")
-  if(BUILD_STATIC_LIB)
+  if(BUILD_SHARED_LIBS)
+    target_link_options(mimalloc PRIVATE "-Wl,--as-needed")
+    target_link_libraries(binaryen PRIVATE mimalloc)
+  else()
     target_link_libraries(binaryen PRIVATE "-Wl,--push-state,--as-needed")
     target_link_libraries(binaryen PRIVATE mimalloc-static)
     target_link_libraries(binaryen PRIVATE "-Wl,--pop-state")
-  else()
-    target_link_options(mimalloc PRIVATE "-Wl,--as-needed")
-    target_link_libraries(binaryen PRIVATE mimalloc)
   endif()
 endif()
 
@@ -517,7 +519,7 @@ set(binaryen_SOURCES
 )
 target_sources(binaryen PRIVATE ${binaryen_SOURCES})
 
-if(INSTALL_LIBS OR NOT BUILD_STATIC_LIB)
+if(INSTALL_LIBS OR BUILD_SHARED_LIBS)
   install(TARGETS binaryen
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}

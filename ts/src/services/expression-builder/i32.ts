@@ -144,5 +144,11 @@ export function i32(mod: Module) {
 		},
 		// @ts-expect-error
 		/** @deprecated Use `.reinterpret_f32()` instead. */ reinterpret(...args) { BinaryenObj.printWarn("`.reinterpret()` is deprecated; use `.reinterpret_f32()` instead."); return this.reinterpret_f32(...args); },
+
+		/** @deprecated Use {@link Module#pop} instead. */
+		pop() {
+			BinaryenObj.printWarn("`.i32.pop()` is deprecated; use `.pop(i32)` instead.");
+			return mod.pop(i32_t);
+		},
 	} as const;
 }

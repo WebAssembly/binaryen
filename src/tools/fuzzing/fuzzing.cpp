@@ -15,6 +15,7 @@
  */
 
 #include "tools/fuzzing.h"
+#include "ir/eh-utils.h"
 #include "ir/gc-type-utils.h"
 #include "ir/glbs.h"
 #include "ir/iteration.h"
@@ -62,8 +63,8 @@ std::vector<MemoryOrder> getMemoryOrders(const FeatureSet& features) {
 
 TranslateToFuzzReader::TranslateToFuzzReader(Module& wasm,
                                              std::vector<char>&& input,
-                                             bool closedWorld)
-  : wasm(wasm), closedWorld(closedWorld), builder(wasm),
+                                             WorldMode worldMode)
+  : wasm(wasm), worldMode(worldMode), builder(wasm),
     random(std::move(input), wasm.features), intrinsics(wasm),
     loggableTypes(getLoggableTypes(wasm.features)),
     atomicMemoryOrders(getMemoryOrders(wasm.features)),
@@ -123,10 +124,9 @@ TranslateToFuzzReader::TranslateToFuzzReader(Module& wasm,
 
 TranslateToFuzzReader::TranslateToFuzzReader(Module& wasm,
                                              std::string& filename,
-                                             bool closedWorld)
-  : TranslateToFuzzReader(wasm,
-                          read_file<std::vector<char>>(filename, Flags::Binary),
-                          closedWorld) {}
+                                             WorldMode worldMode)
+  : TranslateToFuzzReader(
+      wasm, read_file<std::vector<char>>(filename, Flags::Binary), worldMode) {}
 
 void TranslateToFuzzReader::pickPasses(OptimizationOptions& options) {
   // Pick random passes to further shape the wasm. This is similar to how we
@@ -274,8 +274,8 @@ void TranslateToFuzzReader::pickPasses(OptimizationOptions& options) {
           // Most of these depend on closed world, so just set that. Set it both
           // on the global pass options, and in the internal state of this
           // TranslateToFuzzReader instance.
-          options.passOptions.closedWorld = true;
-          closedWorld = true;
+          options.passOptions.worldMode = WorldMode::Closed;
+          worldMode = WorldMode::Closed;
 
           switch (upTo(16)) {
             case 0:
@@ -343,8 +343,8 @@ void TranslateToFuzzReader::pickPasses(OptimizationOptions& options) {
     options.passOptions.shrinkLevel = upTo(3);
   }
 
-  if (!options.passOptions.closedWorld && oneIn(2)) {
-    options.passOptions.closedWorld = true;
+  if (options.passOptions.worldMode == WorldMode::Open && oneIn(2)) {
+    options.passOptions.worldMode = WorldMode::Closed;
   }
 
   // Prune things that error in JS if we call them (like SIMD), some of the
@@ -451,13 +451,13 @@ void TranslateToFuzzReader::setupMemory() {
       auto segment = builder.makeDataSegment();
       segment->setName(Names::getValidDataSegmentName(wasm, Name::fromInt(i)),
                        false);
-      segment->isPassive = bool(upTo(2));
+      bool isPassive = bool(upTo(2));
       size_t segSize = upTo(fuzzParams->USABLE_MEMORY * 2);
       segment->data.resize(segSize);
       for (size_t j = 0; j < segSize; j++) {
         segment->data[j] = upTo(512);
       }
-      if (!segment->isPassive) {
+      if (!isPassive) {
         segment->offset = builder.makeConst(
           Literal::makeFromInt32(memCovered, memory->addressType));
         memCovered += segSize;
@@ -644,7 +644,7 @@ void TranslateToFuzzReader::setupTables() {
     std::any_of(wasm.elementSegments.begin(),
                 wasm.elementSegments.end(),
                 [&](auto& segment) {
-                  return segment->table.is() && segment->type == funcref;
+                  return segment->isActive() && segment->type == funcref;
                 });
   auto addressType = wasm.getTable(funcrefTableName)->addressType;
   if (!hasFuncrefElemSegment) {
@@ -846,6 +846,17 @@ void TranslateToFuzzReader::setupTags() {
     jsTag->base = "jstag";
     wasm.addTag(std::move(jsTag));
   }
+
+  // Export some tags, sometimes.
+  if (!preserveImportsAndExports) {
+    for (auto& tag : wasm.tags) {
+      if (isValidPublicType(tag->type) && oneIn(2)) {
+        auto exportName = Names::getValidExportName(wasm, tag->name);
+        wasm.addExport(
+          Builder::makeExport(exportName, tag->name, ExternalKind::Tag));
+      }
+    }
+  }
 }
 
 void TranslateToFuzzReader::addTag() {
@@ -859,7 +870,7 @@ void TranslateToFuzzReader::finalizeMemory() {
   auto& memory = wasm.memories[0];
   for (auto& segment : wasm.dataSegments) {
     Address maxOffset = segment->data.size();
-    if (!segment->isPassive) {
+    if (segment->isActive()) {
       if (!wasm.features.hasGC()) {
         // Using a non-imported global in a segment offset is not valid in wasm
         // unless GC is enabled. This can occur due to us adding a local
@@ -1661,6 +1672,30 @@ void TranslateToFuzzReader::processFunctions() {
     }
   }
 
+  // Decide what to do with the start function. Most of the time we remove it,
+  // as that is the least risky for fuzzing (any trap in the start will make
+  // the entire module not execute), but other cases are important too.
+  //
+  // When preserving imports and exports, however, we always keep the start
+  // function, as it may be important to keep the contract between the Wasm and
+  // the outside (even in that mode, though we have a chance to mutate and
+  // empty out or replace the current start, though it declines with the amount
+  // of mutation, so the user can control it).
+  if (!preserveImportsAndExports) {
+    switch (upTo(10)) {
+      case 0:
+        // Do not modify the start, potentially leaving the existing one.
+        break;
+      case 1:
+        // Pick a new start.
+        wasm.start = pickStart();
+        break;
+      default:
+        // Remove it.
+        wasm.start = Name();
+    }
+  }
+
   // At the very end, add hang limit checks (so no modding can override them).
   if (fuzzParams->HANG_LIMIT > 0) {
     for (auto& func : wasm.functions) {
@@ -1672,7 +1707,7 @@ void TranslateToFuzzReader::processFunctions() {
 
   // Also fix up closed world, if we need to. We must do this at the end, so
   // nothing can break the closed world assumptions after.
-  if (closedWorld) {
+  if (worldMode == WorldMode::Closed) {
     for (auto& func : wasm.functions) {
       if (!func->imported()) {
         fixClosedWorld(func.get());
@@ -2183,7 +2218,7 @@ void TranslateToFuzzReader::mutate(Function* func) {
 }
 
 void TranslateToFuzzReader::fixClosedWorld(Function* func) {
-  assert(closedWorld);
+  assert(worldMode == WorldMode::Closed);
 
   struct Fixer
     : public ExpressionStackWalker<Fixer, UnifiedExpressionVisitor<Fixer>> {
@@ -2384,14 +2419,6 @@ void TranslateToFuzzReader::modifyInitialFunctions() {
       func->body = make(func->getResults());
     }
   }
-
-  // Remove a start function - the fuzzing harness expects code to run only
-  // from exports. When preserving imports and exports, however, we need to
-  // keep any start method, as it may be important to keep the contract between
-  // the wasm and the outside.
-  if (!preserveImportsAndExports) {
-    wasm.start = Name();
-  }
 }
 
 void TranslateToFuzzReader::mutateJSBoundary() {
@@ -2569,12 +2596,11 @@ void TranslateToFuzzReader::mutateJSBoundary() {
 
     // Refine.
     auto lub = paramLUBs[func->name];
-    auto lubType = lub.getLUB();
     // Either the LUB has the right data shape, or nothing was noted (this is
     // unreachable).
-    assert(oldParams.size() == lubType.size() || !lub.noted());
+    assert(oldParams.size() == lub.getLUB().size() || !lub.noted());
     std::vector<Type> newParams;
-    for (Index i = 0; i < lubType.size(); i++) {
+    for (Index i = 0; i < oldParams.size(); i++) {
       newParams.push_back(maybeRefineIndex(oldParams, lub, i));
     }
     func->setParams(Type(newParams));
@@ -2598,10 +2624,9 @@ void TranslateToFuzzReader::mutateJSBoundary() {
 
     // Refine.
     auto lub = LUB::getResultsLUB(func, wasm);
-    auto lubType = lub.getLUB();
-    assert(oldResults.size() == lubType.size() || !lub.noted());
+    assert(oldResults.size() == lub.getLUB().size() || !lub.noted());
     std::vector<Type> newResults;
-    for (Index i = 0; i < lubType.size(); i++) {
+    for (Index i = 0; i < oldResults.size(); i++) {
       newResults.push_back(maybeRefineIndex(oldResults, lub, i));
     }
     func->setResults(Type(newResults));
@@ -2802,7 +2827,11 @@ Expression* TranslateToFuzzReader::_makeConcrete(Type type) {
                 &Self::makeStringGet);
   }
   if (type.isTuple()) {
-    options.add(FeatureSet::Multivalue, &Self::makeTupleMake);
+    if (type == Types::getI64Pair() && oneIn(2)) {
+      options.add(FeatureSet::WideArithmetic, &Self::makeWideIntExpression);
+    } else {
+      options.add(FeatureSet::Multivalue, &Self::makeTupleMake);
+    }
   }
   if (type.isRef()) {
     auto heapType = type.getHeapType();
@@ -3483,6 +3512,30 @@ Expression* TranslateToFuzzReader::makeTupleMake(Type type) {
     elements.push_back(make(t));
   }
   return builder.makeTupleMake(std::move(elements));
+}
+
+Expression* TranslateToFuzzReader::makeWideIntAddSub(Type type) {
+  assert(wasm.features.hasWideArithmetic());
+  assert(type == Types::getI64Pair());
+  auto op = oneIn(2) ? AddInt128 : SubInt128;
+  auto* leftLow = make(Type::i64);
+  auto* leftHigh = make(Type::i64);
+  auto* rightLow = make(Type::i64);
+  auto* rightHigh = make(Type::i64);
+  return builder.makeWideIntAddSub(op, leftLow, leftHigh, rightLow, rightHigh);
+}
+
+Expression* TranslateToFuzzReader::makeWideIntMul(Type type) {
+  assert(wasm.features.hasWideArithmetic());
+  assert(type == Types::getI64Pair());
+  auto op = oneIn(2) ? MulWideSInt64 : MulWideUInt64;
+  auto* left = make(Type::i64);
+  auto* right = make(Type::i64);
+  return builder.makeWideIntMul(op, left, right);
+}
+
+Expression* TranslateToFuzzReader::makeWideIntExpression(Type type) {
+  return oneIn(2) ? makeWideIntAddSub(type) : makeWideIntMul(type);
 }
 
 Expression* TranslateToFuzzReader::makeTupleExtract(Type type) {
@@ -6415,9 +6468,14 @@ Type TranslateToFuzzReader::getMVPType() {
 }
 
 Type TranslateToFuzzReader::getTupleType() {
+  // Give a significant chance to an i64 pair, for wide arithmetic.
+  if (wasm.features.hasWideArithmetic() && oneIn(5)) {
+    return Types::getI64Pair();
+  }
+
   std::vector<Type> elements;
-  size_t maxElements = 2 + upTo(fuzzParams->MAX_TUPLE_SIZE - 1);
-  for (size_t i = 0; i < maxElements; ++i) {
+  size_t numElements = 2 + upTo(fuzzParams->MAX_TUPLE_SIZE - 2);
+  for (size_t i = 0; i < numElements; ++i) {
     auto type = getSingleConcreteType();
     // Don't add a non-defaultable type into a tuple, as currently we can't
     // spill them into locals (that would require a "let").
@@ -6688,7 +6746,7 @@ bool TranslateToFuzzReader::isValidRefFuncTarget(Name func) {
   // reference, but in that mode we must only pass in jsCalled functions. We
   // handle direct calls in fixClosedWorld, but cannot handle indirect ones
   // easily, so just disallow taking references of those functions.
-  if (!closedWorld) {
+  if (worldMode == WorldMode::Open) {
     return true;
   }
   return !isCallRefImport(func);
@@ -6707,6 +6765,17 @@ bool TranslateToFuzzReader::isCallRefImport(Name target) {
   }
   return func->imported() && func->module == "fuzzing-support" &&
          func->base.startsWith("call-ref");
+}
+
+Name TranslateToFuzzReader::pickStart() {
+  // Any none-none function is an option.
+  std::vector<Name> options;
+  for (auto& func : wasm.functions) {
+    if (func->getParams() == Type::none && func->getResults() == Type::none) {
+      options.push_back(func->name);
+    }
+  }
+  return options.empty() ? Name() : pick(options);
 }
 
 } // namespace wasm

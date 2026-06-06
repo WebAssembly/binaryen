@@ -81,7 +81,7 @@ ensureLimitedSegments(Module& module,
         numDynamic++;
       }
     }
-    hasPassiveSegments |= segment->isPassive;
+    hasPassiveSegments |= segment->isPassive();
   }
 
   if (hasPassiveSegments) {

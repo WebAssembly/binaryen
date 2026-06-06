@@ -56,10 +56,11 @@
 )
 
 (module
+  ;; CHECK:      (type $throw-type (func (result f64)))
+
   ;; CHECK:      (type $const-type (func (result f32)))
   (type $const-type (func (result f32)))
 
-  ;; CHECK:      (type $throw-type (func (result f64)))
   (type $throw-type (func (result f64)))
 
   ;; CHECK:      (global $g (mut i32) (i32.const 0))
@@ -68,54 +69,68 @@
   ;; CHECK:      (table $t 2 2 funcref)
   (table $t 2 2 funcref)
 
-  ;; CHECK:      (tag $t (type $2))
+  ;; CHECK:      (tag $t (type $4))
   (tag $t)
 
   ;; CHECK:      (func $const (type $const-type) (result f32)
   ;; CHECK-NEXT:  (f32.const 1)
   ;; CHECK-NEXT: )
-  (func $const (type $const-type)
+  (func $const (export "const") (type $const-type)
     (f32.const 1)
   )
-  (elem declare $const)
 
 
   ;; CHECK:      (func $throws (type $throw-type) (result f64)
   ;; CHECK-NEXT:  (throw $t)
   ;; CHECK-NEXT:  (f64.const 1)
   ;; CHECK-NEXT: )
-  (func $throws (type $throw-type)
+  (func $throws (export "throws") (type $throw-type)
     (throw $t)
     (f64.const 1)
   )
-  (elem declare $throws)
 
-  ;; CHECK:      (func $read-g (type $3) (param $ref (ref null $const-type)) (result i32)
+  ;; CHECK:      (func $read-g-with-nop-call-ref (type $5) (param $ref (ref null $const-type)) (result i32)
   ;; CHECK-NEXT:  (local $x i32)
-  ;; CHECK-NEXT:  (local.set $x
-  ;; CHECK-NEXT:   (global.get $g)
-  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (call_ref $const-type
   ;; CHECK-NEXT:    (local.get $ref)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (local.get $x)
+  ;; CHECK-NEXT:  (global.get $g)
   ;; CHECK-NEXT: )
-  (func $read-g (param $ref (ref null $const-type)) (result i32)
+  (func $read-g-with-nop-call-ref (param $ref (ref null $const-type)) (result i32)
     (local $x i32)
     (local.set $x (global.get $g))
 
-    ;; With more precise effect analysis for indirect calls, we can determine
-    ;; that the only possible target for this ref is $const in a closed world,
-    ;; which wouldn't block our optimizations.
-    ;; TODO: Add effects analysis for indirect calls.
+    ;; With --closed-world enabled, we can tell that this can only possibly call
+    ;; $const, which doesn't block our optimizations.
     (drop (call_ref $const-type (local.get $ref)))
 
     (local.get $x)
   )
 
-  ;; CHECK:      (func $read-g-with-throw-in-between (type $4) (param $ref (ref $throw-type)) (result i32)
+  ;; CHECK:      (func $read-g-with-nop-call-indirect (type $2) (result i32)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (call_indirect $t (type $const-type)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (global.get $g)
+  ;; CHECK-NEXT: )
+  (func $read-g-with-nop-call-indirect (result i32)
+    (local $x i32)
+    (local.set $x (global.get $g))
+
+    ;; Similar to above with call_indirect instead of call_ref.
+    (drop (call_indirect (type $const-type) (i32.const 0)))
+
+    (local.get $x)
+  )
+
+  ;; CHECK:      (func $read-g-with-effectful-call-ref (type $3) (param $ref (ref $throw-type)) (result i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (local.set $x
   ;; CHECK-NEXT:   (global.get $g)
@@ -127,7 +142,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.get $x)
   ;; CHECK-NEXT: )
-  (func $read-g-with-throw-in-between (param $ref (ref $throw-type)) (result i32)
+  (func $read-g-with-effectful-call-ref (param $ref (ref $throw-type)) (result i32)
     (local $x i32)
     (local.set $x (global.get $g))
 
@@ -138,25 +153,52 @@
     (local.get $x)
   )
 
-  ;; CHECK:      (func $read-g-with-call-indirect-in-between (type $5) (result i32)
+  ;; CHECK:      (func $read-g-with-effectful-call-indirect (type $3) (param $ref (ref $throw-type)) (result i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (local.set $x
   ;; CHECK-NEXT:   (global.get $g)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (call_indirect $t (type $const-type)
+  ;; CHECK-NEXT:   (call_indirect $t (type $throw-type)
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.get $x)
   ;; CHECK-NEXT: )
-  (func $read-g-with-call-indirect-in-between (result i32)
+  (func $read-g-with-effectful-call-indirect (param $ref (ref $throw-type)) (result i32)
     (local $x i32)
     (local.set $x (global.get $g))
 
-    ;; Similar to above with call_indirect instead of call_ref.
-    ;; TODO: Add effects analysis for indirect calls.
-    (drop (call_indirect (type $const-type) (i32.const 0)))
+    ;; Similar to above, except here we can tell that the indirect call may
+    ;; throw so optimization is halted.
+    (drop (call_indirect (type $throw-type) (i32.const 0)))
+
+    (local.get $x)
+  )
+
+  ;; CHECK:      (func $read-g-with-unreachable-call-ref (type $2) (result i32)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (global.get $g)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block ;; (replaces unreachable CallRef we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.get $x)
+  ;; CHECK-NEXT: )
+  (func $read-g-with-unreachable-call-ref (result i32)
+    (local $x i32)
+    (local.set $x (global.get $g))
+
+    ;; This is guaranteed to trap, and the type immediate doesn't matter.
+    ;; TODO: we should be able to optimize this, but something is likely missing
+    ;; in SimplifyGlobals (LinearExecutionWalker handles this case correctly).
+    (drop (call_ref $throw-type (unreachable)))
 
     (local.get $x)
   )

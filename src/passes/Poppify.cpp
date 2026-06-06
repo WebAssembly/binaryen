@@ -456,7 +456,7 @@ class PoppifyFunctionsPass : public Pass {
 } // anonymous namespace
 
 class PoppifyPass : public Pass {
-  void run(Module* module) {
+  void run(Module* module) override {
     PassRunner subRunner(getPassRunner());
     subRunner.add(std::make_unique<PoppifyFunctionsPass>());
     // TODO: Enable this once it handles Poppy blocks correctly

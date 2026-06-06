@@ -104,15 +104,17 @@ struct PrintBoundary : public Pass {
   // results.
   //
   // We emit an array only when needed, unless forceArray is set.
-  json::Value::Ref getTypes(Type type, bool forceArray = false) {
-    if (type.isRef()) {
+  json::Value::Ref
+  getTypes(Type type, bool forceArray = false, size_t depth = 0) {
+    // Avoid infinite recursion.
+    if (type.isRef() && depth == 0) {
       auto heapType = type.getHeapType();
       if (heapType.isSignature()) {
         auto sig = heapType.getSignature();
         auto ret = json::Value::makeObject();
         // Always emit arrays for params and results.
-        ret["params"] = getTypes(sig.params, true);
-        ret["results"] = getTypes(sig.results, true);
+        ret["params"] = getTypes(sig.params, true, depth + 1);
+        ret["results"] = getTypes(sig.results, true, depth + 1);
         return ret;
       }
     }
@@ -135,19 +137,20 @@ struct PrintBoundary : public Pass {
     switch (kind) {
       case ExternalKind::Function:
         return getTypes(wasm.getFunction(name)->type);
-        break;
       case ExternalKind::Table:
-        break;
+        return getTypes(wasm.getTable(name)->type);
       case ExternalKind::Memory:
-        break;
+        return getTypes(wasm.getMemory(name)->addressType);
       case ExternalKind::Global:
         return getTypes(wasm.getGlobal(name)->type);
       case ExternalKind::Tag:
-        break;
+        // Wrap it in a Type so that getTypes can handle it. That will print the
+        // params and results as we expect.
+        return getTypes(Type(wasm.getTag(name)->type, NonNullable));
       case ExternalKind::Invalid:
-        WASM_UNREACHABLE("invalid ExternalKind");
+        break;
     }
-    return {};
+    WASM_UNREACHABLE("invalid ExternalKind");
   }
 
   json::Value::Ref getKindName(ExternalKind kind) {

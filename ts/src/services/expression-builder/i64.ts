@@ -173,5 +173,11 @@ export function i64(mod: Module) {
 		},
 		// @ts-expect-error
 		/** @deprecated Use `.reinterpret_f64()` instead. */ reinterpret(...args) { BinaryenObj.printWarn("`.reinterpret()` is deprecated; use `.reinterpret_f64()` instead."); return this.reinterpret_f64(...args); },
+
+		/** @deprecated Use {@link Module#pop} instead. */
+		pop() {
+			BinaryenObj.printWarn("`.i64.pop()` is deprecated; use `.pop(i64)` instead.");
+			return mod.pop(i64_t);
+		},
 	} as const;
 }

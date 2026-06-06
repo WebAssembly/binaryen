@@ -498,28 +498,10 @@ struct MergeBlocks
   // )
   // at which point the block is on the outside and potentially mergeable with
   // an outer block
-  Block* optimize(Expression* curr,
-                  Expression*& child,
-                  Block* outer = nullptr,
-                  Expression** dependency1 = nullptr,
-                  Expression** dependency2 = nullptr) {
+  Block*
+  optimize(Expression* curr, Expression*& child, Block* outer = nullptr) {
     if (!child) {
       return outer;
-    }
-    if ((dependency1 && *dependency1) || (dependency2 && *dependency2)) {
-      // there are dependencies, things we must be reordered through. make sure
-      // no problems there
-      EffectAnalyzer childEffects(getPassOptions(), *getModule(), child);
-      if (dependency1 && *dependency1 &&
-          EffectAnalyzer(getPassOptions(), *getModule(), *dependency1)
-            .invalidates(childEffects)) {
-        return outer;
-      }
-      if (dependency2 && *dependency2 &&
-          EffectAnalyzer(getPassOptions(), *getModule(), *dependency2)
-            .invalidates(childEffects)) {
-        return outer;
-      }
     }
     if (auto* block = child->dynCast<Block>()) {
       if (!block->name.is() && block->list.size() >= 2) {
@@ -665,7 +647,7 @@ struct MergeBlocks
         EffectAnalyzer blockChildEffects(
           getPassOptions(), *getModule(), blockChild);
         for (auto& effects : childEffects) {
-          if (blockChildEffects.invalidates(effects)) {
+          if (effects.orderedBefore(blockChildEffects)) {
             fail = true;
             break;
           }

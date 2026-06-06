@@ -56,34 +56,48 @@
     )
   )
 
-  ;; TNH:      (func $ref.eq-no (type $8) (param $a eqref) (param $b eqref) (param $any anyref)
+  ;; TNH:      (func $ref.eq-different-traps (type $8) (param $a eqref) (param $b eqref) (param $any anyref)
   ;; TNH-NEXT:  (drop
-  ;; TNH-NEXT:   (i32.const 1)
+  ;; TNH-NEXT:   (block (result i32)
+  ;; TNH-NEXT:    (drop
+  ;; TNH-NEXT:     (ref.cast (ref null $struct)
+  ;; TNH-NEXT:      (local.get $any)
+  ;; TNH-NEXT:     )
+  ;; TNH-NEXT:    )
+  ;; TNH-NEXT:    (i32.const 1)
+  ;; TNH-NEXT:   )
   ;; TNH-NEXT:  )
   ;; TNH-NEXT: )
-  ;; NO_TNH:      (func $ref.eq-no (type $8) (param $a eqref) (param $b eqref) (param $any anyref)
+  ;; NO_TNH:      (func $ref.eq-different-traps (type $8) (param $a eqref) (param $b eqref) (param $any anyref)
   ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (ref.eq
-  ;; NO_TNH-NEXT:    (ref.cast (ref null $struct)
-  ;; NO_TNH-NEXT:     (local.get $any)
+  ;; NO_TNH-NEXT:   (block (result i32)
+  ;; NO_TNH-NEXT:    (drop
+  ;; NO_TNH-NEXT:     (ref.cast (ref null $struct)
+  ;; NO_TNH-NEXT:      (local.get $any)
+  ;; NO_TNH-NEXT:     )
   ;; NO_TNH-NEXT:    )
-  ;; NO_TNH-NEXT:    (ref.cast (ref struct)
-  ;; NO_TNH-NEXT:     (local.get $any)
+  ;; NO_TNH-NEXT:    (drop
+  ;; NO_TNH-NEXT:     (ref.cast (ref struct)
+  ;; NO_TNH-NEXT:      (local.get $any)
+  ;; NO_TNH-NEXT:     )
   ;; NO_TNH-NEXT:    )
+  ;; NO_TNH-NEXT:    (i32.const 1)
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT: )
-  (func $ref.eq-no (param $a (ref null eq)) (param $b (ref null eq)) (param $any anyref)
-    ;; We must leave the inputs to ref.eq of type eqref or a subtype.
+  (func $ref.eq-different-traps (param $a (ref null eq)) (param $b (ref null eq)) (param $any anyref)
+    ;; The right hand side traps on nulls but the left hand side does not. We
+    ;; can always see that they produce the same value, but we can only fold
+    ;; the right side away if we assume traps never happen.
     (drop
       (ref.eq
         (ref.cast (ref null $struct)
-          (local.get $any) ;; *Not* an eqref!
+          (local.get $any)
         )
         (ref.as_non_null
           (ref.cast (ref struct)
             (ref.as_non_null
-              (local.get $any) ;; *Not* an eqref!
+              (local.get $any)
             )
           )
         )

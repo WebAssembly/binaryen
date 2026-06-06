@@ -7,11 +7,13 @@
 
  ;; CHECK:      (type $0 (func (param i32)))
 
- ;; CHECK:      (type $1 (func))
+ ;; CHECK:      (type $1 (func (param i32) (result i32)))
+
+ ;; CHECK:      (type $2 (func))
 
  ;; CHECK:      (memory $0 10 20)
 
- ;; CHECK:      (func $unreachable-get (type $1)
+ ;; CHECK:      (func $unreachable-get (type $2)
  ;; CHECK-NEXT:  (local $x i32)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (local.get $x)
@@ -104,4 +106,80 @@
    (br $loop)
   )
  )
+
+  ;; CHECK:      (func $bug-inversion (type $1) (param $z i32) (result i32)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (local $y i32)
+  ;; CHECK-NEXT:  (local.set $y
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (loop $loop
+  ;; CHECK-NEXT:   (local.set $y
+  ;; CHECK-NEXT:    (i32.const 2)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.set $x
+  ;; CHECK-NEXT:    (i32.add
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (br_if $loop
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.get $x)
+  ;; CHECK-NEXT: )
+  (func $bug-inversion (param $z i32) (result i32)
+    (local $x i32)
+    (local $y i32)
+    (local.set $y (i32.const 0))
+    (local.set $x (i32.const 0))
+    (loop $loop
+      (local.set $y (i32.const 2))
+      (local.set $x (i32.add (local.get $y) (i32.const 1)))
+      (br_if $loop (i32.const 0))
+    )
+    (local.get $x)
+  )
+
+  ;; CHECK:      (func $bug-cross-statement-dependency (type $1) (param $z i32) (result i32)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (local $y i32)
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $y
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (loop $loop
+  ;; CHECK-NEXT:   (local.set $y
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.set $x
+  ;; CHECK-NEXT:    (i32.add
+  ;; CHECK-NEXT:     (local.get $z)
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (br_if $loop
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.get $y)
+  ;; CHECK-NEXT: )
+  (func $bug-cross-statement-dependency (param $z i32) (result i32)
+    (local $x i32)
+    (local $y i32)
+    (local.set $x (i32.const 0))
+    (local.set $y (i32.const 0))
+    (loop $loop
+      (local.set $y (local.get $x))
+      (local.set $x (i32.add (local.get $z) (i32.const 1)))
+      (br_if $loop (i32.const 0))
+    )
+    (local.get $y)
+  )
 )

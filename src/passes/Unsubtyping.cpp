@@ -567,8 +567,7 @@ struct Unsubtyping : Pass, Noter<Unsubtyping> {
     if (!wasm->features.hasGC()) {
       return;
     }
-
-    if (!getPassOptions().closedWorld) {
+    if (getPassOptions().worldMode == WorldMode::Open) {
       Fatal() << "Unsubtyping requires --closed-world";
     }
 
@@ -635,7 +634,8 @@ struct Unsubtyping : Pass, Noter<Unsubtyping> {
 
   void analyzePublicTypes(Module& wasm) {
     // We cannot change supertypes for anything public.
-    for (auto type : ModuleUtils::getPublicHeapTypes(wasm)) {
+    for (auto type :
+         ModuleUtils::getPublicHeapTypes(wasm, getPassOptions().worldMode)) {
       if (auto super = type.getDeclaredSuperType()) {
         noteSubtype(type, *super);
       }
@@ -1038,7 +1038,8 @@ struct Unsubtyping : Pass, Noter<Unsubtyping> {
     struct Rewriter : GlobalTypeRewriter {
       Unsubtyping& parent;
       Rewriter(Unsubtyping& parent, Module& wasm)
-        : GlobalTypeRewriter(wasm), parent(parent) {}
+        : GlobalTypeRewriter(wasm, parent.getPassOptions().worldMode),
+          parent(parent) {}
       std::optional<HeapType> getDeclaredSuperType(HeapType type) override {
         if (auto super = parent.types.getSupertype(type);
             super && !super->isBasic()) {

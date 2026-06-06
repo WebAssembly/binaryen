@@ -173,7 +173,7 @@ struct ToolOptions : public Options {
         ToolOptionsCategory,
         Options::Arguments::Zero,
         [this](Options*, const std::string&) {
-          passOptions.closedWorld = true;
+          passOptions.worldMode = WorldMode::Closed;
         })
       .add(
         "--preserve-type-order",

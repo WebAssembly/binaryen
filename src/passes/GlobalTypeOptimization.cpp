@@ -153,8 +153,7 @@ struct GlobalTypeOptimization : public Pass {
     if (!module->features.hasGC()) {
       return;
     }
-
-    if (!getPassOptions().closedWorld) {
+    if (getPassOptions().worldMode == WorldMode::Open) {
       Fatal() << "GTO requires --closed-world";
     }
 
@@ -207,7 +206,8 @@ struct GlobalTypeOptimization : public Pass {
     propagator.propagateToSubTypes(dataFromSupersMap);
 
     // Find the public types, which we must not modify.
-    auto publicTypes = ModuleUtils::getPublicHeapTypes(*module);
+    auto publicTypes =
+      ModuleUtils::getPublicHeapTypes(*module, getPassOptions().worldMode);
     std::unordered_set<HeapType> publicTypesSet(publicTypes.begin(),
                                                 publicTypes.end());
 
@@ -479,7 +479,8 @@ struct GlobalTypeOptimization : public Pass {
 
     public:
       TypeRewriter(Module& wasm, GlobalTypeOptimization& parent)
-        : GlobalTypeRewriter(wasm), parent(parent) {}
+        : GlobalTypeRewriter(wasm, parent.getPassOptions().worldMode),
+          parent(parent) {}
       void modifyStruct(HeapType oldStructType, Struct& struct_) override {
         auto& newFields = struct_.fields;
 

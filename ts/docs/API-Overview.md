@@ -447,6 +447,7 @@ Enum names have been singularized.
 - `MemoryInfo`         &rarr; `Module.Memory`
 - `TableInfo`          &rarr; `Module.Table`
 - `FunctionInfo`       &rarr; `Module.Function`
+- `MemorySegmentInfo`  &rarr; `Module.DataSegment`
 - `ElementSegmentInfo` &rarr; `Module.ElementSegment`
 - `ExportInfo`         &rarr; `Module.Export`
 
@@ -456,8 +457,6 @@ Enum names have been singularized.
 - `LoopInfo`       &rarr; `expressions.Loop`
 - `IfInfo`         &rarr; `expressions.If`
 - etc.
-
-~~`MemorySegmentInfo`~~ ❌ has been removed.
 
 
 ### Modules
@@ -470,13 +469,13 @@ Most `get*Info()` functions have been replaced by their corresponding class cons
 - `getGlobalInfo(global)`          &rarr; `new Module.Global(global)`
 - `getTableInfo(table)`            &rarr; `new Module.Table(table)`
 - `getFunctionInfo(func)`          &rarr; `new Module.Function(func)`
+- `getMemorySegmentInfo(segment)`  &rarr; `new Module.DataSegment(segment)`
 - `getElementSegmentInfo(segment)` &rarr; `new Module.ElementSegment(segment)`
 - `getExportInfo(xport)`           &rarr; `new Module.Export(xport)`
 >
 - `Module#getMemoryInfo(name)` has not changed.
 - `Module#getDataSegmentInfo(name)` has not changed.
 - global `getExpressionInfo(expr)` has not changed.
-- global ~~`getMemorySegmentInfo()`~~ ❌ has been removed.
 
 Most of the `Module` class’s instance methods relating to module component manipulation have been moved.
 - `Module#addTag()`      &rarr; `Module#tags.add()`

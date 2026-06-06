@@ -80,7 +80,7 @@ struct GlobalRefining : public Pass {
     std::unordered_set<Global*> exportedGlobals(exportedGlobalsVec.begin(),
                                                 exportedGlobalsVec.end());
     for (auto* global : exportedGlobalsVec) {
-      if (getPassOptions().closedWorld || global->mutable_) {
+      if (getPassOptions().worldMode == WorldMode::Closed || global->mutable_) {
         unoptimizable.insert(global->name);
       }
     }

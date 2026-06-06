@@ -57,7 +57,12 @@ var fuzzSplit = false;
 for (var i = 0; i < argv.length; i++) {
   var curr = argv[i];
   if (curr.startsWith('exports:')) {
-    exportsToCall = curr.substr('exports:'.length).split(',');
+    var payload = curr.substr('exports:'.length);
+    if (payload.startsWith('[')) {
+      exportsToCall = JSON.parse(payload);
+    } else {
+      exportsToCall = payload ? payload.split(',') : [];
+    }
     argv.splice(i, 1);
     i--;
   } else if (curr == '--fuzz-split') {
@@ -192,6 +197,11 @@ function logRef(ref) {
 // Track the exports in a map (similar to the Exports object from wasm, i.e.,
 // whose keys are strings and whose values are the corresponding exports).
 var exports = {};
+
+// The raw exports, uninstrumented by JSPI. This is necessary as we need the
+// JSPI wrapping when calling from JS, but when calling from wasm, the exports
+// need to be linked to imports directly, in the raw form.
+var rawExports = {};
 
 // Also track exports in a list, to allow access by index. Each entry here will
 // be in the form of { name: .., value: .. }. That allows us to log the name of
@@ -507,16 +517,17 @@ function build(binary, isSecond) {
 
   if (isSecond) {
     assert(secondBinary);
-    // Provide the primary module's exports to the secondary.
-    imports['primary'] = exports;
+    // Provide the primary module's exports to the secondary. This is a direct
+    // wasm-wasm link, so we use the raw exports.
+    imports['primary'] = rawExports;
   }
 
   var instance;
   try {
     instance = new WebAssembly.Instance(module, imports);
   } catch (e) {
-    console.log('exception thrown: failed to instantiate module: ' + e);
-    quit();
+    console.log('exception thrown: failed to instantiate module:', e);
+    return;
   }
 
   // Do not add the second instance's exports to the list, as that would be
@@ -542,6 +553,7 @@ function build(binary, isSecond) {
   for (var e of WebAssembly.Module.exports(module)) {
     var key = e.name;
     var value = instance.exports[key];
+    rawExports[key] = value;
     value = wrapExportForJSPI(value);
     exports[key] = value;
 
