@@ -3399,28 +3399,29 @@ private:
       // execute anyhow, and things like branch hints were already being run.
       // After optimization, we will only run fewer things, and run no risk of
       // running new bad things.
-      if (matches(curr, select(any(&ifTrue), any(&ifFalse), any(&c))) &&
-          ExpressionAnalyzer::equal(ifTrue, ifFalse)) {
-        auto value = effects(ifTrue);
-        if (value.hasSideEffects()) {
-          // At best we don't need the condition, but need to execute the
-          // value twice. a block is larger than a select by 2 bytes, and we
-          // must drop one value, so 3, while we save the condition, so it's
-          // not clear this is worth it, TODO
-        } else {
-          // The value has no side effects, so we can replace ourselves with one
-          // of the two identical values in the arms.
-          auto condition = effects(c);
-          if (!condition.hasSideEffects()) {
-            return ifTrue;
-          } else {
-            // The condition is last, so we need a new local, and it may be a
-            // bad idea to use a block like we do for an if. Do it only if we
-            // can reorder
-            if (!condition.invalidates(value)) {
-              return builder.makeSequence(builder.makeDrop(c), ifTrue);
-            }
+      if (matches(curr, select(any(&ifTrue), any(&ifFalse), any(&c)))) {
+        // Check if the values are identical and we can keep just the first one.
+        if (areConsecutiveInputsEqualAndFoldable(ifTrue, ifFalse)) {
+          // We can keep just the ifTrue branch, but we need to move its value
+          // past the condition. If there are side effects that force us to use
+          // a scratch local, then it is probably worth the extra local to
+          // execute the value expression once instead of twice.
+          if (canReorder(ifTrue, c)) {
+            return builder.makeSequence(builder.makeDrop(c), ifTrue);
           }
+          auto scratch = builder.addVar(getFunction(), ifTrue->type);
+          return builder.makeBlock(
+            {builder.makeLocalSet(scratch, ifTrue),
+             builder.makeDrop(c),
+             builder.makeLocalGet(scratch, ifTrue->type)});
+        }
+        // Otherwise, check if the values are identical, but we would have to
+        // keep both. In this case the benefit is less, so we only optimize if
+        // we can avoid the scratch local.
+        if (areConsecutiveInputsEqual(ifTrue, ifFalse) &&
+            canReorder(ifFalse, c)) {
+          return builder.makeBlock(
+            {builder.makeDrop(ifTrue), builder.makeDrop(c), ifFalse});
         }
       }
     }
