@@ -96,12 +96,6 @@ export class Try extends Expression {
 	get body(): ExpressionRef { return BinaryenObj["_BinaryenTryGetBody"](this._ptr); }
 	set body(bodyExpr: ExpressionRef) { BinaryenObj["_BinaryenTrySetBody"](this._ptr, bodyExpr); }
 
-	get numCatchTags(): number { return BinaryenObj["_BinaryenTryGetNumCatchTags"](this._ptr); }
-
-	get numCatchBodies(): number { return BinaryenObj["_BinaryenTryGetNumCatchBodies"](this._ptr); }
-
-	get delegate(): boolean { return Boolean(BinaryenObj["_BinaryenTryIsDelegate"](this._ptr)); }
-
 	get name(): string | null {
 		const name = BinaryenObj["_BinaryenTryGetName"](this._ptr);
 		return name ? UTF8ToString(name) : null;
@@ -110,6 +104,8 @@ export class Try extends Expression {
 	set name(name: string) {
 		preserveStack(() => BinaryenObj["_BinaryenTrySetName"](this._ptr, strToStack(name)));
 	}
+
+	get numCatchTags(): number { return BinaryenObj["_BinaryenTryGetNumCatchTags"](this._ptr); }
 
 	get catchTags(): string[] {
 		return getAllNested(
@@ -130,6 +126,8 @@ export class Try extends Expression {
 		));
 	}
 
+	get numCatchBodies(): number { return BinaryenObj["_BinaryenTryGetNumCatchBodies"](this._ptr); }
+
 	get catchBodies(): ExpressionRef[] {
 		return getAllNested(
 			this._ptr,
@@ -148,6 +146,12 @@ export class Try extends Expression {
 			BinaryenObj["_BinaryenTryRemoveCatchBodyAt"],
 		);
 	}
+
+	get hasCatchAll(): boolean {
+		return Boolean(BinaryenObj["_BinaryenTryHasCatchAll"](this._ptr));
+	}
+
+	get delegate(): boolean { return Boolean(BinaryenObj["_BinaryenTryIsDelegate"](this._ptr)); }
 
 	get delegateTarget(): string | null {
 		const name = BinaryenObj["_BinaryenTryGetDelegateTarget"](this._ptr);
@@ -196,9 +200,5 @@ export class Try extends Expression {
 
 	removeCatchBodyAt(index: number): ExpressionRef {
 		return BinaryenObj["_BinaryenTryRemoveCatchBodyAt"](this._ptr, index);
-	}
-
-	hasCatchAll(): boolean {
-		return Boolean(BinaryenObj["_BinaryenTryHasCatchAll"](this._ptr));
 	}
 }
