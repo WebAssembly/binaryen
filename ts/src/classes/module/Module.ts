@@ -227,9 +227,18 @@ export class Module {
 		].includes(typ)) {
 			return BinaryenObj["_BinaryenPop"](this[PTR], typ);
 		} else {
-			throw new Error(`Unexpected type ${ typ }.`);
+			throw new Error(`\`Module#pop()\` was called with an unexpected type: \`${ typ }\`.`);
 		}
 	}
+
+	/** @deprecated Use {@link Module#pop} instead. @category Expression Manipulation */ readonly funcref = {pop: () => { BinaryenObj.printWarn("`.funcref.pop()` is deprecated; use `.pop(funcref)` instead."); return this.pop(funcref); }};
+	/** @deprecated Use {@link Module#pop} instead. @category Expression Manipulation */ readonly externref = {pop: () => { BinaryenObj.printWarn("`.externref.pop()` is deprecated; use `.pop(externref)` instead."); return this.pop(externref); }};
+	/** @deprecated Use {@link Module#pop} instead. @category Expression Manipulation */ readonly anyref = {pop: () => { BinaryenObj.printWarn("`.anyref.pop()` is deprecated; use `.pop(anyref)` instead."); return this.pop(anyref); }};
+	/** @deprecated Use {@link Module#pop} instead. @category Expression Manipulation */ readonly eqref = {pop: () => { BinaryenObj.printWarn("`.eqref.pop()` is deprecated; use `.pop(eqref)` instead."); return this.pop(eqref); }};
+	/** @deprecated Use {@link Module#pop} instead. @category Expression Manipulation */ readonly i31ref = {pop: () => { BinaryenObj.printWarn("`.i31ref.pop()` is deprecated; use `.pop(i31ref)` instead."); return this.pop(i31ref); }};
+	/** @deprecated Use {@link Module#pop} instead. @category Expression Manipulation */ readonly structref = {pop: () => { BinaryenObj.printWarn("`.structref.pop()` is deprecated; use `.pop(structref)` instead."); return this.pop(structref); }};
+	/** @deprecated Use {@link Module#pop} instead. @category Expression Manipulation */ readonly arrayref = {pop: () => { BinaryenObj.printWarn("`.arrayref.pop()` is deprecated; use `.pop(arrayref)` instead."); return this.pop(arrayref); }};
+	/** @deprecated Use {@link Module#pop} instead. @category Expression Manipulation */ readonly stringref = {pop: () => { BinaryenObj.printWarn("`.stringref.pop()` is deprecated; use `.pop(stringref)` instead."); return this.pop(stringref); }};
 
 	/**
 	 * Gets the side effects of the specified expression.
