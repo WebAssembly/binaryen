@@ -306,6 +306,6 @@ export function Expression(expr: ExpressionRef): expressions.Expression {
  * Additional properties depend on the expression’s ID
  * and are usually equivalent to the respective parameters when creating such an expression.
  */
-export function getExpressionInfo(expr: ExpressionRef): expressions.Expression {
-	return Expression(expr);
+export function getExpressionInfo(expr: ExpressionRef): Record<string, number | string> {
+	return Expression(expr).toJson();
 }
