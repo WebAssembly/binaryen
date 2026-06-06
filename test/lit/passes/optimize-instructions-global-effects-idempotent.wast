@@ -120,6 +120,8 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $function-effects-interfere (result f32)
+    ;; Even knowing the effects of the call, we should not be able to optimize
+    ;; here because the calls will return different values.
     (f32.abs
       (f32.mul
         (call $potent)

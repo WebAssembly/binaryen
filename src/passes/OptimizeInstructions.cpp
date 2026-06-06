@@ -2874,7 +2874,9 @@ private:
     }
 
     // They do look the same! Determine whether there are side effects that
-    // could make the values different.
+    // could make the values different. Note that we use the same
+    // EffectAnalyzers for effects from the left and right sides because they
+    // are the same.
     EffectAnalyzer fallthroughChildEffects(getPassOptions(), *getModule());
     for (auto* child : ChildIterator(right)) {
       fallthroughChildEffects.walk(child);
