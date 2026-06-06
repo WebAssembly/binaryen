@@ -8,13 +8,20 @@
   ;; CHECK:      (import "a" "b" (func $import (type $2) (result f32)))
   (import "a" "b" (func $import (result f32)))
 
+  ;; CHECK:      (global $g (mut f32) (f32.const 1))
+  (global $g (mut f32) (f32.const 1))
+
   ;; CHECK:      (@binaryen.idempotent)
   ;; CHECK-NEXT: (func $idempotent (type $0) (param $x f32) (result f32)
+  ;; CHECK-NEXT:  (global.set $g
+  ;; CHECK-NEXT:   (f32.const -1)
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.get $x)
   ;; CHECK-NEXT: )
   (@binaryen.idempotent)
   (func $idempotent (param $x f32) (result f32)
     ;; This function is idempotent: same inputs, same outputs.
+    (global.set $g (f32.const -1))
     (local.get $x)
   )
 
@@ -25,6 +32,7 @@
     ;; This function is not idempotent - anything might happen here.
     (call $import)
   )
+
 
   ;; CHECK:      (func $test-abs (type $1)
   ;; CHECK-NEXT:  (drop
@@ -57,6 +65,18 @@
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (call $idempotent
   ;; CHECK-NEXT:      (f32.const 20)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.abs
+  ;; CHECK-NEXT:    (f32.mul
+  ;; CHECK-NEXT:     (call $idempotent
+  ;; CHECK-NEXT:      (global.get $g)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (call $idempotent
+  ;; CHECK-NEXT:      (global.get $g)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
@@ -99,6 +119,20 @@
           )
           (call $idempotent
             (f32.const 20)
+          )
+        )
+      )
+    )
+    ;; Here the arguments look the same, but the first call will change the
+    ;; value of the argument to the second call, so we cannot optimize.
+    (drop
+      (f32.abs
+        (f32.mul
+          (call $idempotent
+            (global.get $g)
+          )
+          (call $idempotent
+            (global.get $g)
           )
         )
       )
@@ -229,11 +263,6 @@
   ;; CHECK:      (func $test-ref.eq (type $2)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (call $idempotent
-  ;; CHECK-NEXT:      (global.get $g1)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (call $idempotent
   ;; CHECK-NEXT:      (global.get $g1)

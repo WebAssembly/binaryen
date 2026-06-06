@@ -15,6 +15,7 @@
  */
 
 #include "tools/fuzzing.h"
+#include "ir/eh-utils.h"
 #include "ir/gc-type-utils.h"
 #include "ir/glbs.h"
 #include "ir/iteration.h"
@@ -1671,6 +1672,30 @@ void TranslateToFuzzReader::processFunctions() {
     }
   }
 
+  // Decide what to do with the start function. Most of the time we remove it,
+  // as that is the least risky for fuzzing (any trap in the start will make
+  // the entire module not execute), but other cases are important too.
+  //
+  // When preserving imports and exports, however, we always keep the start
+  // function, as it may be important to keep the contract between the Wasm and
+  // the outside (even in that mode, though we have a chance to mutate and
+  // empty out or replace the current start, though it declines with the amount
+  // of mutation, so the user can control it).
+  if (!preserveImportsAndExports) {
+    switch (upTo(10)) {
+      case 0:
+        // Do not modify the start, potentially leaving the existing one.
+        break;
+      case 1:
+        // Pick a new start.
+        wasm.start = pickStart();
+        break;
+      default:
+        // Remove it.
+        wasm.start = Name();
+    }
+  }
+
   // At the very end, add hang limit checks (so no modding can override them).
   if (fuzzParams->HANG_LIMIT > 0) {
     for (auto& func : wasm.functions) {
@@ -2394,14 +2419,6 @@ void TranslateToFuzzReader::modifyInitialFunctions() {
       func->body = make(func->getResults());
     }
   }
-
-  // Remove a start function - the fuzzing harness expects code to run only
-  // from exports. When preserving imports and exports, however, we need to
-  // keep any start method, as it may be important to keep the contract between
-  // the wasm and the outside.
-  if (!preserveImportsAndExports) {
-    wasm.start = Name();
-  }
 }
 
 void TranslateToFuzzReader::mutateJSBoundary() {
@@ -2579,12 +2596,11 @@ void TranslateToFuzzReader::mutateJSBoundary() {
 
     // Refine.
     auto lub = paramLUBs[func->name];
-    auto lubType = lub.getLUB();
     // Either the LUB has the right data shape, or nothing was noted (this is
     // unreachable).
-    assert(oldParams.size() == lubType.size() || !lub.noted());
+    assert(oldParams.size() == lub.getLUB().size() || !lub.noted());
     std::vector<Type> newParams;
-    for (Index i = 0; i < lubType.size(); i++) {
+    for (Index i = 0; i < oldParams.size(); i++) {
       newParams.push_back(maybeRefineIndex(oldParams, lub, i));
     }
     func->setParams(Type(newParams));
@@ -2608,10 +2624,9 @@ void TranslateToFuzzReader::mutateJSBoundary() {
 
     // Refine.
     auto lub = LUB::getResultsLUB(func, wasm);
-    auto lubType = lub.getLUB();
-    assert(oldResults.size() == lubType.size() || !lub.noted());
+    assert(oldResults.size() == lub.getLUB().size() || !lub.noted());
     std::vector<Type> newResults;
-    for (Index i = 0; i < lubType.size(); i++) {
+    for (Index i = 0; i < oldResults.size(); i++) {
       newResults.push_back(maybeRefineIndex(oldResults, lub, i));
     }
     func->setResults(Type(newResults));
@@ -6750,6 +6765,17 @@ bool TranslateToFuzzReader::isCallRefImport(Name target) {
   }
   return func->imported() && func->module == "fuzzing-support" &&
          func->base.startsWith("call-ref");
+}
+
+Name TranslateToFuzzReader::pickStart() {
+  // Any none-none function is an option.
+  std::vector<Name> options;
+  for (auto& func : wasm.functions) {
+    if (func->getParams() == Type::none && func->getResults() == Type::none) {
+      options.push_back(func->name);
+    }
+  }
+  return options.empty() ? Name() : pick(options);
 }
 
 } // namespace wasm

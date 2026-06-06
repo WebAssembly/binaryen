@@ -1581,7 +1581,7 @@ struct OptimizeInstructions
             // trap we want to move. (We use a shallow effect analyzer since we
             // will only move the ref.as_non_null itself.)
             ShallowEffectAnalyzer movingEffects(options, *getModule(), input);
-            if (crossedEffects.invalidates(movingEffects)) {
+            if (movingEffects.orderedBefore(crossedEffects)) {
               return;
             }
 
@@ -1796,6 +1796,8 @@ struct OptimizeInstructions
   }
 
   void visitRefEq(RefEq* curr) {
+    Builder builder(*getModule());
+
     // Check for unreachability. Note we must check both the children and the
     // ref.eq itself, as in e.g. optimizeTernary, as we only refinalize at the
     // end, so unreachable children may not update the parent yet.
@@ -1832,12 +1834,16 @@ struct OptimizeInstructions
     skipCast(curr->left, nullableEq);
     skipCast(curr->right, nullableEq);
 
-    // Identical references compare equal.
-    // (Technically we do not need to check if the inputs are also foldable into
-    // a single one, but we do not have utility code to handle non-foldable
-    // cases yet; the foldable case we do handle is the common one of the first
-    // child being a tee and the second a get of that tee. TODO)
+    // Identical references compare equal. If the inputs are foldable, we need
+    // only keep one of them.
     if (areConsecutiveInputsEqualAndFoldable(curr->left, curr->right)) {
+      replaceCurrent(
+        builder.makeSequence(builder.makeDrop(curr->left),
+                             builder.makeConst(Literal::makeOne(Type::i32))));
+      return;
+    }
+
+    if (areConsecutiveInputsEqual(curr->left, curr->right)) {
       replaceCurrent(
         getDroppedChildrenAndAppend(curr, Literal::makeOne(Type::i32)));
       return;
@@ -2574,7 +2580,7 @@ struct OptimizeInstructions
         auto& options = getPassRunner()->options;
         EffectAnalyzer descEffects(options, *getModule(), curr->desc);
         ShallowEffectAnalyzer movingEffects(options, *getModule(), curr->ref);
-        if (descEffects.invalidates(movingEffects)) {
+        if (movingEffects.orderedBefore(descEffects)) {
           return;
         }
       }
@@ -2867,9 +2873,24 @@ private:
       return false;
     }
 
-    // They do look the same! Make sure nothing executed in between them can
-    // affect the value of `right` and make it different from `left`.
-    if (interferingEffects.orderedBefore(effects(right))) {
+    // They do look the same! Determine whether the left hand expression can
+    // change the value of the operands flowing into the right-hand expression.
+    // Do not consider the right-hand expression itself here because the
+    // expressions might be idempotent function calls and we might otherwise
+    // mistakenly conclude that the first call interferes with the second.
+    EffectAnalyzer rightEffects(getPassOptions(), *getModule());
+    for (auto* child : ChildIterator(right)) {
+      rightEffects.walk(child);
+    }
+    ShallowEffectAnalyzer leftEffects(getPassOptions(), *getModule(), left);
+    if (leftEffects.orderedBefore(rightEffects)) {
+      return false;
+    }
+
+    // Make sure nothing executed in between the expressions can affect the
+    // value of `right` (or its operands) and make it different from `left`.
+    rightEffects.visit(right);
+    if (interferingEffects.orderedBefore(rightEffects)) {
       return false;
     }
 
@@ -2896,7 +2917,8 @@ private:
       return true;
     }
 
-    // To fold the right side into the left, it must have no effects.
+    // To fold the right side into the left, it must have no unremovable
+    // effects.
     auto rightMightHaveEffects = true;
     if (auto* call = right->dynCast<Call>()) {
       // If these are a pair of idempotent calls, then the second has no
@@ -2929,7 +2951,9 @@ private:
         }
         ShallowEffectAnalyzer parentEffects(
           getPassOptions(), *getModule(), call);
-        if (parentEffects.invalidates(childEffects)) {
+        // Check if the first parent is ordered before the second child (in the
+        // example above, the first call vs the second global.get).
+        if (parentEffects.orderedBefore(childEffects)) {
           return false;
         }
         // No effects are possible.
@@ -3375,28 +3399,29 @@ private:
       // execute anyhow, and things like branch hints were already being run.
       // After optimization, we will only run fewer things, and run no risk of
       // running new bad things.
-      if (matches(curr, select(any(&ifTrue), any(&ifFalse), any(&c))) &&
-          ExpressionAnalyzer::equal(ifTrue, ifFalse)) {
-        auto value = effects(ifTrue);
-        if (value.hasSideEffects()) {
-          // At best we don't need the condition, but need to execute the
-          // value twice. a block is larger than a select by 2 bytes, and we
-          // must drop one value, so 3, while we save the condition, so it's
-          // not clear this is worth it, TODO
-        } else {
-          // The value has no side effects, so we can replace ourselves with one
-          // of the two identical values in the arms.
-          auto condition = effects(c);
-          if (!condition.hasSideEffects()) {
-            return ifTrue;
-          } else {
-            // The condition is last, so we need a new local, and it may be a
-            // bad idea to use a block like we do for an if. Do it only if we
-            // can reorder
-            if (!condition.invalidates(value)) {
-              return builder.makeSequence(builder.makeDrop(c), ifTrue);
-            }
+      if (matches(curr, select(any(&ifTrue), any(&ifFalse), any(&c)))) {
+        // Check if the values are identical and we can keep just the first one.
+        if (areConsecutiveInputsEqualAndFoldable(ifTrue, ifFalse)) {
+          // We can keep just the ifTrue branch, but we need to move its value
+          // past the condition. If there are side effects that force us to use
+          // a scratch local, then it is probably worth the extra local to
+          // execute the value expression once instead of twice.
+          if (canReorder(ifTrue, c)) {
+            return builder.makeSequence(builder.makeDrop(c), ifTrue);
           }
+          auto scratch = builder.addVar(getFunction(), ifTrue->type);
+          return builder.makeBlock(
+            {builder.makeLocalSet(scratch, ifTrue),
+             builder.makeDrop(c),
+             builder.makeLocalGet(scratch, ifTrue->type)});
+        }
+        // Otherwise, check if the values are identical, but we would have to
+        // keep both. In this case the benefit is less, so we only optimize if
+        // we can avoid the scratch local.
+        if (areConsecutiveInputsEqual(ifTrue, ifFalse) &&
+            canReorder(ifFalse, c)) {
+          return builder.makeBlock(
+            {builder.makeDrop(ifTrue), builder.makeDrop(c), ifFalse});
         }
       }
     }
