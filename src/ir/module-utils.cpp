@@ -408,10 +408,16 @@ struct TypeInfos {
   bool contains(HeapType type) { return info.contains(type); }
 };
 
+using ReferencedFuncs = std::unordered_map<Name, std::atomic<bool>>;
+
 struct CodeScanner : PostWalker<CodeScanner> {
   TypeInfos& info;
+  ReferencedFuncs& referencedFuncs;
 
-  CodeScanner(Module& wasm, TypeInfos& info) : info(info) { setModule(&wasm); }
+  CodeScanner(Module& wasm, TypeInfos& info, ReferencedFuncs& referencedFuncs)
+    : info(info), referencedFuncs(referencedFuncs) {
+    setModule(&wasm);
+  }
 
   void visitCallIndirect(CallIndirect* curr) { info.note(curr->heapType); }
   void visitCallRef(CallRef* curr) { info.note(curr->target->type); }
@@ -480,10 +486,12 @@ struct CodeScanner : PostWalker<CodeScanner> {
   void visitTryTable(TryTable* curr) {
     info.noteControlFlow(Signature(Type::none, curr->type));
   }
+  void visitRefFunc(RefFunc* curr) { referencedFuncs.at(curr->func) = true; }
 };
 
 void classifyTypeVisibility(Module& wasm,
                             InsertOrderedMap<HeapType, HeapTypeInfo>& types,
+                            const ReferencedFuncs& referencedFuncs,
                             WorldMode worldMode);
 
 } // anonymous namespace
@@ -495,7 +503,11 @@ collectHeapTypeInfo(Module& wasm,
                     VisibilityHandling visibility) {
   // Collect module-level info.
   TypeInfos info;
-  CodeScanner(wasm, info).walkModuleCode(&wasm);
+  ReferencedFuncs referencedFuncs;
+  for (auto& func : wasm.functions) {
+    referencedFuncs.emplace(func->name, false);
+  }
+  CodeScanner(wasm, info, referencedFuncs).walkModuleCode(&wasm);
   for (auto& curr : wasm.globals) {
     info.note(curr->type);
   }
@@ -520,7 +532,7 @@ collectHeapTypeInfo(Module& wasm,
       // printing an error message on a partially parsed module whose declared
       // function bodies have not all been parsed yet.
       if (func->body) {
-        CodeScanner(wasm, info).walk(func->body);
+        CodeScanner(wasm, info, referencedFuncs).walk(func->body);
       }
     });
 
@@ -599,7 +611,7 @@ collectHeapTypeInfo(Module& wasm,
   }
 
   if (visibility == VisibilityHandling::FindVisibility) {
-    classifyTypeVisibility(wasm, info.info, worldMode);
+    classifyTypeVisibility(wasm, info.info, referencedFuncs, worldMode);
   }
 
   return std::move(info.info);
@@ -657,6 +669,7 @@ getTransitivelyReachable(const std::vector<HeapType>& roots) {
 // public to preserve their structural identities.
 void classifyTypeVisibility(Module& wasm,
                             InsertOrderedMap<HeapType, HeapTypeInfo>& types,
+                            const ReferencedFuncs& referencedFuncs,
                             WorldMode worldMode) {
   if (worldMode == WorldMode::Closed) {
     // In closed world mode, the public types are simply the exposed types and
@@ -702,6 +715,31 @@ void classifyTypeVisibility(Module& wasm,
     }
   };
 
+  // When `func` is exposed, we naively would have to make every function type
+  // public. However, we can be more precise and keep function types that are
+  // only used for non-referenced functions private. Lazily compute these
+  // private function types on-demand.
+  std::optional<std::unordered_set<HeapType>> unreferencedFunctionTypes;
+  auto getUnreferencedFunctionTypes = [&]() -> std::unordered_set<HeapType>& {
+    if (!unreferencedFunctionTypes) {
+      // Find functions types that are used only in the declarations of
+      // unreferenced functions.
+      std::unordered_map<HeapType, Index> unreferencedCount;
+      for (auto& [func, referenced] : referencedFuncs) {
+        if (!referenced) {
+          ++unreferencedCount[wasm.getFunction(func)->type.getHeapType()];
+        }
+      }
+      unreferencedFunctionTypes.emplace();
+      for (auto& [type, count] : unreferencedCount) {
+        if (count == types.at(type).useCount) {
+          unreferencedFunctionTypes->insert(type);
+        }
+      }
+    }
+    return *unreferencedFunctionTypes;
+  };
+
   // Build the subtype hierarchy.
   std::vector<HeapType> heapTypes;
   heapTypes.reserve(types.size());
@@ -724,7 +762,18 @@ void classifyTypeVisibility(Module& wasm,
 
     // Propagate exposed status to subtypes.
     if (state == Exposure::Exposed) {
-      if (curr.isBasic()) {
+      // `func` gets special treatment because we do not mark function types
+      // only used in unreferenced function declarations public. Other kinds of
+      // heap types cannot be inhabited without having reference values.
+      if (curr.isMaybeShared(HeapType::func)) {
+        auto& unreferenced = getUnreferencedFunctionTypes();
+        for (auto& [definedType, _] : types) {
+          if (HeapType::isSubType(definedType, curr) &&
+              !unreferenced.contains(definedType)) {
+            markPublic(definedType, Exposure::Exposed);
+          }
+        }
+      } else if (curr.isBasic()) {
         for (auto& [definedType, _] : types) {
           if (HeapType::isSubType(definedType, curr)) {
             markPublic(definedType, Exposure::Exposed);
