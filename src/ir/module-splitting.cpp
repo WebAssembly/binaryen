@@ -850,9 +850,11 @@ void ModuleSplitter::shareImportableItems() {
   for (auto& memory : primary.memories) {
     auto usingSecondaries =
       getUsingSecondaries(memory->name, &UsedNames::memories);
-    bool usedInPrimary = primaryUsed.memories.contains(memory->name);
+    bool inPrimary = primaryUsed.memories.contains(memory->name);
 
-    if (!usedInPrimary && usingSecondaries.size() == 1) {
+    if (!inPrimary && usingSecondaries.empty()) {
+      memoriesToRemove.push_back(memory->name);
+    } else if (!inPrimary && usingSecondaries.size() == 1) {
       auto* secondary = usingSecondaries[0];
       ModuleUtils::copyMemory(memory.get(), *secondary);
       memoriesToRemove.push_back(memory->name);
@@ -873,9 +875,11 @@ void ModuleSplitter::shareImportableItems() {
   for (auto& table : primary.tables) {
     auto usingSecondaries =
       getUsingSecondaries(table->name, &UsedNames::tables);
-    bool usedInPrimary = primaryUsed.tables.contains(table->name);
+    bool inPrimary = primaryUsed.tables.contains(table->name);
 
-    if (!usedInPrimary && usingSecondaries.size() == 1) {
+    if (!inPrimary && usingSecondaries.empty()) {
+      tablesToRemove.push_back(table->name);
+    } else if (!inPrimary && usingSecondaries.size() == 1) {
       auto* secondary = usingSecondaries[0];
       assert(!secondary->getTableOrNull(table->name));
       ModuleUtils::copyTable(table.get(), *secondary);
@@ -903,12 +907,6 @@ void ModuleSplitter::shareImportableItems() {
     bool inPrimary = primaryUsed.globals.contains(global->name);
 
     if (!inPrimary && usingSecondaries.empty()) {
-      // It's not used anywhere, so delete it. Unlike other unused module items
-      // (memories, tables, and tags) that can just sit in the primary module
-      // and later be DCE'ed by another pass, we should remove it here, because
-      // an unused global can contain an initializer that refers to another
-      // global that will be moved to a secondary module, like
-      // (global $unused i32 (global.get $a)) // $a is moved to a secondary
       globalsToRemove.push_back(global->name);
     } else if (!inPrimary && usingSecondaries.size() == 1) {
       auto* secondary = usingSecondaries[0];
@@ -930,9 +928,11 @@ void ModuleSplitter::shareImportableItems() {
   std::vector<Name> tagsToRemove;
   for (auto& tag : primary.tags) {
     auto usingSecondaries = getUsingSecondaries(tag->name, &UsedNames::tags);
-    bool usedInPrimary = primaryUsed.tags.contains(tag->name);
+    bool inPrimary = primaryUsed.tags.contains(tag->name);
 
-    if (!usedInPrimary && usingSecondaries.size() == 1) {
+    if (!inPrimary && usingSecondaries.empty()) {
+      tagsToRemove.push_back(tag->name);
+    } else if (!inPrimary && usingSecondaries.size() == 1) {
       auto* secondary = usingSecondaries[0];
       ModuleUtils::copyTag(tag.get(), *secondary);
       tagsToRemove.push_back(tag->name);
