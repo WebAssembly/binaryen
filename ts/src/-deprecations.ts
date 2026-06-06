@@ -5,7 +5,7 @@
 import {
 	BinaryenObj,
 } from "./-pre.ts";
-import type * as expressions from "./classes/expression/index.ts";
+import * as expressions from "./classes/expression/index.ts";
 import {
 	Feature,
 	Module,
@@ -220,6 +220,171 @@ export type StringSliceWTFInfo = expressions.StringSliceWTF;
 export type WideIntAddSubInfo = expressions.WideIntAddSub;
 /** @deprecated The `WideIntMulInfo` object type is now called {@link expressions.WideIntMul}. */
 export type WideIntMulInfo = expressions.WideIntMul;
+
+
+
+/** @deprecated The `Expression` class now lives under the `expressions` namespace. Use {@link expressions.Expression}. */
+export const Expression = expressions.Expression;
+/** @deprecated The `Drop` class now lives under the `expressions` namespace. Use {@link expressions.Drop}. */
+export const Drop = expressions.Drop;
+/** @deprecated The `Select` class now lives under the `expressions` namespace. Use {@link expressions.Select}. */
+export const Select = expressions.Select;
+/** @deprecated The `Block` class now lives under the `expressions` namespace. Use {@link expressions.Block}. */
+export const Block = expressions.Block;
+/** @deprecated The `Loop` class now lives under the `expressions` namespace. Use {@link expressions.Loop}. */
+export const Loop = expressions.Loop;
+/** @deprecated The `If` class now lives under the `expressions` namespace. Use {@link expressions.If}. */
+export const If = expressions.If;
+/** @deprecated The `Break` class now lives under the `expressions` namespace. Use {@link expressions.Break}. */
+export const Break = expressions.Break;
+/** @deprecated The `Switch` class now lives under the `expressions` namespace. Use {@link expressions.Switch}. */
+export const Switch = expressions.Switch;
+/** @deprecated The `BrOn` class now lives under the `expressions` namespace. Use {@link expressions.BrOn}. */
+export const BrOn = expressions.BrOn;
+/** @deprecated The `Call` class now lives under the `expressions` namespace. Use {@link expressions.Call}. */
+export const Call = expressions.Call;
+/** @deprecated The `CallRef` class now lives under the `expressions` namespace. Use {@link expressions.CallRef}. */
+export const CallRef = expressions.CallRef;
+/** @deprecated The `CallIndirect` class now lives under the `expressions` namespace. Use {@link expressions.CallIndirect}. */
+export const CallIndirect = expressions.CallIndirect;
+/** @deprecated The `Return` class now lives under the `expressions` namespace. Use {@link expressions.Return}. */
+export const Return = expressions.Return;
+/** @deprecated The `Throw` class now lives under the `expressions` namespace. Use {@link expressions.Throw}. */
+export const Throw = expressions.Throw;
+/** @deprecated The `Rethrow` class now lives under the `expressions` namespace. Use {@link expressions.Rethrow}. */
+export const Rethrow = expressions.Rethrow;
+/** @deprecated The `Try` class now lives under the `expressions` namespace. Use {@link expressions.Try}. */
+export const Try = expressions.Try;
+/** @deprecated The `LocalGet` class now lives under the `expressions` namespace. Use {@link expressions.LocalGet}. */
+export const LocalGet = expressions.LocalGet;
+/** @deprecated The `LocalSet` class now lives under the `expressions` namespace. Use {@link expressions.LocalSet}. */
+export const LocalSet = expressions.LocalSet;
+/** @deprecated The `GlobalGet` class now lives under the `expressions` namespace. Use {@link expressions.GlobalGet}. */
+export const GlobalGet = expressions.GlobalGet;
+/** @deprecated The `GlobalSet` class now lives under the `expressions` namespace. Use {@link expressions.GlobalSet}. */
+export const GlobalSet = expressions.GlobalSet;
+/** @deprecated The `TableGet` class now lives under the `expressions` namespace. Use {@link expressions.TableGet}. */
+export const TableGet = expressions.TableGet;
+/** @deprecated The `TableSet` class now lives under the `expressions` namespace. Use {@link expressions.TableSet}. */
+export const TableSet = expressions.TableSet;
+/** @deprecated The `TableSize` class now lives under the `expressions` namespace. Use {@link expressions.TableSize}. */
+export const TableSize = expressions.TableSize;
+/** @deprecated The `TableGrow` class now lives under the `expressions` namespace. Use {@link expressions.TableGrow}. */
+export const TableGrow = expressions.TableGrow;
+/** @deprecated The `Load` class now lives under the `expressions` namespace. Use {@link expressions.Load}. */
+export const Load = expressions.Load;
+/** @deprecated The `Store` class now lives under the `expressions` namespace. Use {@link expressions.Store}. */
+export const Store = expressions.Store;
+/** @deprecated The `SIMDLoad` class now lives under the `expressions` namespace. Use {@link expressions.SIMDLoad}. */
+export const SIMDLoad = expressions.SIMDLoad;
+/** @deprecated The `SIMDLoadStoreLane` class now lives under the `expressions` namespace. Use {@link expressions.SIMDLoadStoreLane}. */
+export const SIMDLoadStoreLane = expressions.SIMDLoadStoreLane;
+/** @deprecated The `MemorySize` class now lives under the `expressions` namespace. Use {@link expressions.MemorySize}. */
+export const MemorySize = expressions.MemorySize;
+/** @deprecated The `MemoryGrow` class now lives under the `expressions` namespace. Use {@link expressions.MemoryGrow}. */
+export const MemoryGrow = expressions.MemoryGrow;
+/** @deprecated The `MemoryFill` class now lives under the `expressions` namespace. Use {@link expressions.MemoryFill}. */
+export const MemoryFill = expressions.MemoryFill;
+/** @deprecated The `MemoryCopy` class now lives under the `expressions` namespace. Use {@link expressions.MemoryCopy}. */
+export const MemoryCopy = expressions.MemoryCopy;
+/** @deprecated The `MemoryInit` class now lives under the `expressions` namespace. Use {@link expressions.MemoryInit}. */
+export const MemoryInit = expressions.MemoryInit;
+/** @deprecated The `DataDrop` class now lives under the `expressions` namespace. Use {@link expressions.DataDrop}. */
+export const DataDrop = expressions.DataDrop;
+/** @deprecated The `RefFunc` class now lives under the `expressions` namespace. Use {@link expressions.RefFunc}. */
+export const RefFunc = expressions.RefFunc;
+/** @deprecated The `RefIsNull` class now lives under the `expressions` namespace. Use {@link expressions.RefIsNull}. */
+export const RefIsNull = expressions.RefIsNull;
+/** @deprecated The `RefAs` class now lives under the `expressions` namespace. Use {@link expressions.RefAs}. */
+export const RefAs = expressions.RefAs;
+/** @deprecated The `RefEq` class now lives under the `expressions` namespace. Use {@link expressions.RefEq}. */
+export const RefEq = expressions.RefEq;
+/** @deprecated The `RefTest` class now lives under the `expressions` namespace. Use {@link expressions.RefTest}. */
+export const RefTest = expressions.RefTest;
+/** @deprecated The `RefCast` class now lives under the `expressions` namespace. Use {@link expressions.RefCast}. */
+export const RefCast = expressions.RefCast;
+/** @deprecated The `RefI31` class now lives under the `expressions` namespace. Use {@link expressions.RefI31}. */
+export const RefI31 = expressions.RefI31;
+/** @deprecated The `I31Get` class now lives under the `expressions` namespace. Use {@link expressions.I31Get}. */
+export const I31Get = expressions.I31Get;
+/** @deprecated The `TupleMake` class now lives under the `expressions` namespace. Use {@link expressions.TupleMake}. */
+export const TupleMake = expressions.TupleMake;
+/** @deprecated The `TupleExtract` class now lives under the `expressions` namespace. Use {@link expressions.TupleExtract}. */
+export const TupleExtract = expressions.TupleExtract;
+/** @deprecated The `StructNew` class now lives under the `expressions` namespace. Use {@link expressions.StructNew}. */
+export const StructNew = expressions.StructNew;
+/** @deprecated The `StructGet` class now lives under the `expressions` namespace. Use {@link expressions.StructGet}. */
+export const StructGet = expressions.StructGet;
+/** @deprecated The `StructSet` class now lives under the `expressions` namespace. Use {@link expressions.StructSet}. */
+export const StructSet = expressions.StructSet;
+/** @deprecated The `ArrayNew` class now lives under the `expressions` namespace. Use {@link expressions.ArrayNew}. */
+export const ArrayNew = expressions.ArrayNew;
+/** @deprecated The `ArrayNewFixed` class now lives under the `expressions` namespace. Use {@link expressions.ArrayNewFixed}. */
+export const ArrayNewFixed = expressions.ArrayNewFixed;
+/** @deprecated The `ArrayNewData` class now lives under the `expressions` namespace. Use {@link expressions.ArrayNewData}. */
+export const ArrayNewData = expressions.ArrayNewData;
+/** @deprecated The `ArrayNewElem` class now lives under the `expressions` namespace. Use {@link expressions.ArrayNewElem}. */
+export const ArrayNewElem = expressions.ArrayNewElem;
+/** @deprecated The `ArrayGet` class now lives under the `expressions` namespace. Use {@link expressions.ArrayGet}. */
+export const ArrayGet = expressions.ArrayGet;
+/** @deprecated The `ArraySet` class now lives under the `expressions` namespace. Use {@link expressions.ArraySet}. */
+export const ArraySet = expressions.ArraySet;
+/** @deprecated The `ArrayLen` class now lives under the `expressions` namespace. Use {@link expressions.ArrayLen}. */
+export const ArrayLen = expressions.ArrayLen;
+/** @deprecated The `ArrayFill` class now lives under the `expressions` namespace. Use {@link expressions.ArrayFill}. */
+export const ArrayFill = expressions.ArrayFill;
+/** @deprecated The `ArrayCopy` class now lives under the `expressions` namespace. Use {@link expressions.ArrayCopy}. */
+export const ArrayCopy = expressions.ArrayCopy;
+/** @deprecated The `ArrayInitData` class now lives under the `expressions` namespace. Use {@link expressions.ArrayInitData}. */
+export const ArrayInitData = expressions.ArrayInitData;
+/** @deprecated The `ArrayInitElem` class now lives under the `expressions` namespace. Use {@link expressions.ArrayInitElem}. */
+export const ArrayInitElem = expressions.ArrayInitElem;
+/** @deprecated The `Const` class now lives under the `expressions` namespace. Use {@link expressions.Const}. */
+export const Const = expressions.Const;
+/** @deprecated The `Unary` class now lives under the `expressions` namespace. Use {@link expressions.Unary}. */
+export const Unary = expressions.Unary;
+/** @deprecated The `Binary` class now lives under the `expressions` namespace. Use {@link expressions.Binary}. */
+export const Binary = expressions.Binary;
+/** @deprecated The `SIMDTernary` class now lives under the `expressions` namespace. Use {@link expressions.SIMDTernary}. */
+export const SIMDTernary = expressions.SIMDTernary;
+/** @deprecated The `SIMDShift` class now lives under the `expressions` namespace. Use {@link expressions.SIMDShift}. */
+export const SIMDShift = expressions.SIMDShift;
+/** @deprecated The `SIMDShuffle` class now lives under the `expressions` namespace. Use {@link expressions.SIMDShuffle}. */
+export const SIMDShuffle = expressions.SIMDShuffle;
+/** @deprecated The `SIMDExtract` class now lives under the `expressions` namespace. Use {@link expressions.SIMDExtract}. */
+export const SIMDExtract = expressions.SIMDExtract;
+/** @deprecated The `SIMDReplace` class now lives under the `expressions` namespace. Use {@link expressions.SIMDReplace}. */
+export const SIMDReplace = expressions.SIMDReplace;
+/** @deprecated The `AtomicRMW` class now lives under the `expressions` namespace. Use {@link expressions.AtomicRMW}. */
+export const AtomicRMW = expressions.AtomicRMW;
+/** @deprecated The `AtomicCmpxchg` class now lives under the `expressions` namespace. Use {@link expressions.AtomicCmpxchg}. */
+export const AtomicCmpxchg = expressions.AtomicCmpxchg;
+/** @deprecated The `AtomicWait` class now lives under the `expressions` namespace. Use {@link expressions.AtomicWait}. */
+export const AtomicWait = expressions.AtomicWait;
+/** @deprecated The `AtomicNotify` class now lives under the `expressions` namespace. Use {@link expressions.AtomicNotify}. */
+export const AtomicNotify = expressions.AtomicNotify;
+/** @deprecated The `AtomicFence` class now lives under the `expressions` namespace. Use {@link expressions.AtomicFence}. */
+export const AtomicFence = expressions.AtomicFence;
+/** @deprecated The `StringNew` class now lives under the `expressions` namespace. Use {@link expressions.StringNew}. */
+export const StringNew = expressions.StringNew;
+/** @deprecated The `StringConst` class now lives under the `expressions` namespace. Use {@link expressions.StringConst}. */
+export const StringConst = expressions.StringConst;
+/** @deprecated The `StringMeasure` class now lives under the `expressions` namespace. Use {@link expressions.StringMeasure}. */
+export const StringMeasure = expressions.StringMeasure;
+/** @deprecated The `StringEncode` class now lives under the `expressions` namespace. Use {@link expressions.StringEncode}. */
+export const StringEncode = expressions.StringEncode;
+/** @deprecated The `StringConcat` class now lives under the `expressions` namespace. Use {@link expressions.StringConcat}. */
+export const StringConcat = expressions.StringConcat;
+/** @deprecated The `StringEq` class now lives under the `expressions` namespace. Use {@link expressions.StringEq}. */
+export const StringEq = expressions.StringEq;
+/** @deprecated The `StringWTF16Get` class now lives under the `expressions` namespace. Use {@link expressions.StringWTF16Get}. */
+export const StringWTF16Get = expressions.StringWTF16Get;
+/** @deprecated The `StringSliceWTF` class now lives under the `expressions` namespace. Use {@link expressions.StringSliceWTF}. */
+export const StringSliceWTF = expressions.StringSliceWTF;
+/** @deprecated The `WideIntAddSub` class now lives under the `expressions` namespace. Use {@link expressions.WideIntAddSub}. */
+export const WideIntAddSub = expressions.WideIntAddSub;
+/** @deprecated The `WideIntMul` class now lives under the `expressions` namespace. Use {@link expressions.WideIntMul}. */
+export const WideIntMul = expressions.WideIntMul;
 
 
 
