@@ -16,12 +16,14 @@
   "type": "module",
   "main": "./dist/binaryen.js",
   "scripts": {
-    "make": "emcmake cmake -S ../ -B ../build/ && emmake make -C ../build/ binaryen_js",
+    "make": "rm -rf ../build/ && emcmake cmake -S ../ -B ../build/ && emmake make -C ../build/ binaryen_js",
     "postmake": "rm -rf ./build/ && mkdir -p ./build/ && cp -R ../build/bin/ ./build/",
+    "check": "../check.py binaryenjs --binaryen-bin='../build/bin'",
     "compile": "rm -rf ./dist/ && tsc && tsc --project ./test/tsconfig.json",
     "lint": "eslint ./",
     "docs": "rm -rf ../docs/binaryen.ts/ && typedoc",
-    "test": "tsx --test --test-isolation=none -- './test/**/*.test.ts'",
+    "test": "tsx --test -- './test/**/*.test.ts'",
+    "test:only": "tsx --test --test-only -- './test/**/*.test.ts'",
     "build": "npm run compile && npm run lint && npm run docs && npm run test"
   },
   "files": [
