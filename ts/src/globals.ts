@@ -289,12 +289,23 @@ export function getExpressionType(expr: ExpressionRef): Type {
 }
 
 /**
+ * Creates a new Expression object given an ExpressionRef argument.
+ * This function is called without `new`.
+ * You may also use the constructor `new expressions.Expression()`,
+ * or a specific subclass of it.
+ * @see {@link expressions.Expression}
+ */
+export function Expression(expr: ExpressionRef): expressions.Expression {
+	const id = getExpressionId(expr);
+	const specificExpression = EXPRESSION_TYPE_REGISTRY.get(id);
+	return specificExpression ? new specificExpression(expr) : new expressions.Expression(id, expr);
+}
+
+/**
  * Obtains information about an expression.
  * Additional properties depend on the expression’s ID
  * and are usually equivalent to the respective parameters when creating such an expression.
  */
 export function getExpressionInfo(expr: ExpressionRef): expressions.Expression {
-	const id = getExpressionId(expr);
-	const specificExpression = EXPRESSION_TYPE_REGISTRY.get(id);
-	return specificExpression ? new specificExpression(expr) : new expressions.Expression(id, expr);
+	return Expression(expr);
 }

@@ -223,8 +223,6 @@ export type WideIntMulInfo = expressions.WideIntMul;
 
 
 
-/** @deprecated The `Expression` class now lives under the `expressions` namespace. Use {@link expressions.Expression}. */
-export const Expression = expressions.Expression;
 /** @deprecated The `Drop` class now lives under the `expressions` namespace. Use {@link expressions.Drop}. */
 export const Drop = expressions.Drop;
 /** @deprecated The `Select` class now lives under the `expressions` namespace. Use {@link expressions.Select}. */
