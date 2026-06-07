@@ -340,7 +340,7 @@ void GlobalTypeRewriter::mapTypes(const TypeMap& oldToNewTypes) {
     auto [oldType, exactness] = oldTypeExact;
     auto newType = updater.getNew(oldType);
     std::shared_ptr<const EffectAnalyzer>& targetEffects =
-      newTypeEffects[std::pair(newType, exactness)];
+      newTypeEffects[{newType, exactness}];
     if (!targetEffects) {
       targetEffects = oldEffects;
     } else {

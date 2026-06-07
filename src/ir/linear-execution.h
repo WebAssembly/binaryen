@@ -205,7 +205,7 @@ struct LinearExecutionWalker : public PostWalker<SubType, VisitorType> {
         if (self->getModule()) {
           if (auto* effects =
                 find_or_null(self->getModule()->indirectCallEffects,
-                             std::make_pair(callIndirect->heapType, Inexact));
+                             std::pair(callIndirect->heapType, Inexact));
               effects) {
             refutesThrowEffect = !(*effects)->throws_;
           }
