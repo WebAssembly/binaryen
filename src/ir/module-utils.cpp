@@ -962,7 +962,7 @@ std::vector<HeapType> getPublicHeapTypes(Module& wasm, WorldMode worldMode) {
 std::vector<HeapType> getPrivateHeapTypes(Module& wasm, WorldMode worldMode) {
   auto info = collectHeapTypeInfo(wasm,
                                   worldMode,
-                                  TypeInclusion::AllTypes,
+                                  TypeInclusion::UsedIRTypes,
                                   VisibilityHandling::FindVisibility);
   std::vector<HeapType> types;
   types.reserve(info.size());
