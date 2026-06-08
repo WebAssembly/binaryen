@@ -608,6 +608,9 @@ private:
   // Checks if a function is a callRef* import (call-ref or call-ref-catch).
   bool isCallRefImport(Name func);
 
+  // Pick a start function.
+  Name pickStart();
+
   // statistical distributions
 
   // 0 to the limit, logarithmic scale

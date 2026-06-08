@@ -57,6 +57,11 @@
   ;; CHECK:      (import "env" "get-i32" (func $get-i32 (type $8) (result i32)))
   (import "env" "get-i32" (func $get-i32 (result i32)))
 
+  ;; CHECK:      (global $g (mut eqref) (ref.i31
+  ;; CHECK-NEXT:  (i32.const 0)
+  ;; CHECK-NEXT: ))
+  (global $g (mut eqref) (ref.i31 (i32.const 0)))
+
   ;; These functions test if an `if` with subtyped arms is correctly folded
   ;; 1. if its `ifTrue` and `ifFalse` arms are identical (can fold)
   ;; CHECK:      (func $if-arms-subtype-fold (type $29) (result anyref)
@@ -415,7 +420,12 @@
   ;; CHECK-NEXT:  (local $lx eqref)
   ;; CHECK-NEXT:  (local $ly eqref)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.eq
@@ -427,10 +437,23 @@
   ;; CHECK-NEXT:   (call $get-eqref)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $lx)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result eqref)
+  ;; CHECK-NEXT:      (nop)
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $ref-eq (param $x eqref) (param $y eqref)
@@ -489,12 +512,29 @@
   ;; CHECK-NEXT:   (ref.eq
   ;; CHECK-NEXT:    (block (result eqref)
   ;; CHECK-NEXT:     (call $nothing)
-  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (global.get $g)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (block (result eqref)
   ;; CHECK-NEXT:     (call $nothing)
-  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (global.get $g)
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result eqref)
+  ;; CHECK-NEXT:      (call $nothing)
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result eqref)
+  ;; CHECK-NEXT:      (call $nothing)
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -504,7 +544,17 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result eqref)
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (struct.new_default $struct)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
@@ -518,7 +568,22 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $ref-eq-corner-cases (param $x eqref)
-    ;; side effects prevent optimization
+    ;; Side effects generally prevent optimization. Here the call might change
+    ;; the value of the global.
+    (drop
+      (ref.eq
+        (block (result eqref)
+          (call $nothing)
+          (global.get $g)
+        )
+        (block (result eqref)
+          (call $nothing)
+          (global.get $g)
+        )
+      )
+    )
+    ;; But here the call cannot change the value of the local, so we can still
+    ;; optimize.
     (drop
       (ref.eq
         (block (result eqref)
@@ -531,18 +596,18 @@
         )
       )
     )
-    ;; allocation prevents optimization
+    ;; Allocation prevents optimization.
     (drop
       (ref.eq
         (struct.new_default $struct)
         (struct.new_default $struct)
       )
     )
-    ;; but irrelevant allocations do not prevent optimization
+    ;; But irrelevant allocations do not prevent optimization.
     (drop
       (ref.eq
         (block (result eqref)
-          ;; an allocation that does not trouble us
+          ;; An allocation that does not trouble us.
           (drop
             (struct.new_default $struct)
           )
@@ -552,15 +617,15 @@
           (drop
             (struct.new_default $struct)
           )
-          ;; add a nop to make the two inputs to ref.eq not structurally equal,
+          ;; Add a nop to make the two inputs to ref.eq not structurally equal,
           ;; but in a way that does not matter (since only the value falling
-          ;; out does)
+          ;; out does).
           (nop)
           (local.get $x)
         )
       )
     )
-    ;; a tee does not prevent optimization, as we can fold the tee and the get.
+    ;; A tee does not prevent optimization, as we can fold the tee and the get.
     (drop
       (ref.eq
         (local.tee $x
@@ -573,17 +638,19 @@
 
   ;; CHECK:      (func $ref-eq-ref-cast (type $5) (param $x eqref)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.eq
-  ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:    (ref.cast (ref null $struct)
-  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.cast (ref null $struct)
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $ref-eq-ref-cast (param $x eqref)
-    ;; it is almost valid to look through a cast, except that it might trap so
-    ;; there is a side effect
+    ;; We can see that both sides produce the same value if they finish
+    ;; executing, but we have to preserve the trap.
     (drop
       (ref.eq
         (local.get $x)
@@ -899,7 +966,12 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $ref-eq-null (param $x eqref)

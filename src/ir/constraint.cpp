@@ -24,7 +24,7 @@ namespace wasm::constraint {
 
 namespace {
 
-// Core comparison of two constraints.
+// Core comparison of two constraints: whether a => b
 //
 // Returns a Result, or an empty option if we should keep working (i.e., a
 // result of Unknown means we are certain we can just return Unknown).
@@ -54,6 +54,7 @@ std::optional<Result> checkPair(const Constraint& a, const Constraint& b) {
             default: {
             }
           }
+          break;
         }
         case Abstract::Ne: {
           switch (b.op) {
@@ -65,13 +66,15 @@ std::optional<Result> checkPair(const Constraint& a, const Constraint& b) {
               return {};
             }
             case Abstract::Ne: {
-              // x == c vs x == c', and we already handled full equality
+              // x != c vs x != c', and we already handled full equality
               // earlier, hence c != c', and we can infer nothing.
+              assert(*aConstant != *bConstant);
               return {};
             }
             default: {
             }
           }
+          break;
         }
         default: {
         }
@@ -123,8 +126,7 @@ void AndedConstraintSet::fuzzyOr(const AndedConstraintSet& other) {
   // TODO smarts
 
   // Otherwise, we don't know how to nicely OR these things, and expand to the
-  // trivial set of no constraints (i.e., where everything is true, and we can
-  // prove nothing).
+  // trivial set of no constraints.
   clear();
 }
 

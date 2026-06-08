@@ -248,9 +248,19 @@ def randomize_fuzz_settings():
         if random.random() < 0.5:
             GEN_ARGS += ['--enclose-world']
 
-    # Test JSPI somewhat rarely, as it may be slower.
+    # Test JSPI somewhat rarely, as it may be slower, and disables some other
+    # fuzzing.
     global JSPI
-    JSPI = random.random() < 0.25
+    JSPI = random.random() < 0.1
+    if JSPI:
+        # Fuzzing the start function with JSPI is tricky: if the start function
+        # calls an import that is marked as suspending, then it traps on
+        # "SuspendError: trying to suspend without WebAssembly.promising" - the
+        # start function in fact *cannot* be wrapped as promising, as it is not
+        # even an export. To make the binaryen interpreter behave the same way,
+        # we'd need to know JSPI is enabled and act like it, which would add a
+        # bunch of complexity. Instead, fuzz JSPI without start functions.
+        GEN_ARGS += ['--remove-start']
 
     print('randomized settings (NaNs, OOB, legalize, JSPI):', NANS, OOB, LEGALIZE, JSPI)
 
@@ -567,6 +577,14 @@ def fix_output(out):
     # Tag names may change due to opts, so canonicalize them.
     out = re.sub(r' tag\$\d+', ' tag', out)
 
+    # If we failed to instantiate, remove everything after it. VMs may print
+    # additional error info that cannot be compared between VMs, like a JS
+    # stack trace for where we tried to instantiate.
+    if INSTANTIATE_ERROR in out:
+        after = out.find(INSTANTIATE_ERROR)
+        after = out.find('\n', after)
+        out = out[:after + 1]
+
     lines = out.splitlines()
     for i in range(len(lines)):
         line = lines[i]
@@ -575,6 +593,9 @@ def fix_output(out):
             # removed a flag that is no longer needed. but print the line so the
             # developer can see it.
             print(line)
+            lines[i] = None
+        elif 'V8 is running with experimental features enabled. Stability and security will suffer.' in line:
+            # Ignore some boilerplate from VMs
             lines[i] = None
         elif EXCEPTION_PREFIX in line:
             # exceptions may differ when optimizing, but an exception should
@@ -657,10 +678,14 @@ def run_vm(cmd, checked=True):
             ret = run_unchecked(cmd)
         return filter_known_issues(ret)
     except subprocess.CalledProcessError:
-        # other known issues do make it fail, so re-run without checking for
+        # Other known issues do make it fail, so re-run without checking for
         # success and see if we should ignore it
-        if filter_known_issues(run_unchecked(cmd)) == IGNORE:
+        raw = run_unchecked(cmd)
+        filtered = filter_known_issues(raw)
+        if filtered == IGNORE:
             return IGNORE
+
+        # Otherwise, raise an error.
         raise
 
 
@@ -1091,7 +1116,15 @@ class Wasm2JS(TestCaseHandler):
         # later make sense (if we don't do this, the wasm may have i64 exports).
         # after applying other necessary fixes, we'll recreate the after wasm
         # from scratch.
-        run([in_bin('wasm-opt'), before_wasm, '--legalize-and-prune-js-interface', '-o', before_wasm_temp] + FEATURE_OPTS)
+        run([
+            in_bin('wasm-opt'),
+            before_wasm,
+            '--legalize-and-prune-js-interface',
+            '-o', before_wasm_temp,
+            # Remove the start function for now, as this can lead to traps
+            # during start which this fuzzer doesn't handle yet. TODO
+            '--remove-start',
+        ] + FEATURE_OPTS)
         compare_before_to_after = random.random() < 0.5
         compare_to_interpreter = compare_before_to_after and random.random() < 0.5
         if compare_before_to_after:
@@ -1110,9 +1143,11 @@ class Wasm2JS(TestCaseHandler):
             run([in_bin('wasm-opt'), before_wasm_temp, '-o', before_wasm_temp] + simplification_passes + FEATURE_OPTS)
         # now that the before wasm is fixed up, generate a proper after wasm
         run([in_bin('wasm-opt'), before_wasm_temp, '-o', after_wasm_temp] + opts + FEATURE_OPTS)
-        # always check for compiler crashes
+
+        # run before and after
         before = self.run(before_wasm_temp)
         after = self.run(after_wasm_temp)
+
         if NANS:
             # with NaNs we can't compare the output, as a reinterpret through
             # memory might end up different in JS than wasm
@@ -1484,18 +1519,27 @@ def wasm_has_duplicate_tags(wasm):
     return binary.count(b'jstag') >= 2 or binary.count(b'wasmtag') >= 2
 
 
-# Detect whether there is a trap reported before an export call in the output.
+# Detect whether there is a trap or exception reported before an export call in
+# the output (i.e. during instantiation).
 def traps_in_instantiation(output):
-    trap_index = output.find(TRAP_PREFIX)
-    if trap_index == -1:
+    # First look for a trap.
+    error_index = output.find(TRAP_PREFIX)
+    if error_index == -1:
         # In "fixed" output, traps are replaced with *exception*.
-        trap_index = output.find('*exception*')
-        if trap_index == -1:
-            return False
+        error_index = output.find('*exception*')
+
+    # Next look for an exception.
+    exception_index = output.find(EXCEPTION_PREFIX)
+    # Look at the first of a trap or an exception.
+    if exception_index >= 0 and (error_index == -1 or exception_index < error_index):
+        error_index = exception_index
+
+    if error_index == -1:
+        return False
     export_index = output.find(FUZZ_EXEC_EXPORT_PREFIX)
     if export_index == -1:
         return True
-    return trap_index < export_index
+    return error_index < export_index
 
 
 # Tests wasm-merge
@@ -1514,7 +1558,28 @@ class Merge(TestCaseHandler):
         second_input = abspath('second_input.dat')
         make_random_input(second_size, second_input)
         second_wasm = abspath('second.wasm')
-        run([in_bin('wasm-opt'), second_input, '-ttf', '-o', second_wasm] + GEN_ARGS + FEATURE_OPTS)
+
+        # Always remove the second module's start function. Before merge, we
+        # have this:
+        #
+        #  * call first's start
+        #  * call first's exports
+        #  * call second's start
+        #  * call second's exports
+        #
+        # After merge, the middle two lines are swapped, since the starts are
+        # merged, changing the behavior.
+        #
+        # TODO: This can also happen if the second module appends segments in a
+        #       way that the first module notices.
+        second_args = [
+            in_bin('wasm-opt'),
+            second_input,
+            '-ttf',
+            '-o', second_wasm,
+            '--remove-start',
+        ]
+        run(second_args + GEN_ARGS + FEATURE_OPTS)
 
         # the second wasm file must not have an export that can influence our
         # execution. the JS exports have that behavior, as when "table-set" is
@@ -1533,12 +1598,12 @@ class Merge(TestCaseHandler):
             # second.wasm, but that is ok.
             filter_exports(second_wasm, second_wasm, filtered, keep_defaults=False)
 
-        # sometimes also optimize the second module
+        # Sometimes also optimize the second module
         if random.random() < 0.5:
             opts = get_random_opts()
             run([in_bin('wasm-opt'), second_wasm, '-o', second_wasm, '-all'] + FEATURE_OPTS + opts)
 
-        # merge the wasm files. note that we must pass -all, as even if the two
+        # Merge the wasm files. note that we must pass -all, as even if the two
         # inputs are MVP, the output may have multiple tables and multiple
         # memories (and we must also do that in the commands later down).
         #
@@ -1574,20 +1639,10 @@ class Merge(TestCaseHandler):
         if merged_output == IGNORE:
             return
 
-        # If the second module traps in instantiation, then the merged module
-        # must do so as well, regardless of what the first module does. (In
-        # contrast, if the first module traps in instantiation, then the normal
-        # checks below will ensure the merged module does as well.)
-        if traps_in_instantiation(second_output) and \
-                not traps_in_instantiation(output):
-            # The merged module should also trap in instantiation, but the
-            # exports will not be called, so there's nothing else to compare.
-            if not traps_in_instantiation(merged_output):
-                raise Exception('expected merged module to trap during ' +
-                                'instantiation because second module traps ' +
-                                'during instantiation')
-            compare(merged_output, second_output, 'Merge: second module traps' +
-                    ' in instantiation')
+        # If either original module traps in instantiation, the merged module
+        # must do so as well.
+        if traps_in_instantiation(second_output) or traps_in_instantiation(output):
+            assert traps_in_instantiation(merged_output)
             return
 
         # a complication is that the second module's exports are appended, so we
@@ -1823,7 +1878,7 @@ class ClusterFuzz(TestCaseHandler):
         # (rarely, none might exist), unless we've decided to ignore the entire
         # run, or if the wasm errored during instantiation, which can happen due
         # to a testcase with a segment out of bounds, say.
-        if output != IGNORE and not output.startswith(INSTANTIATE_ERROR):
+        if output != IGNORE and INSTANTIATE_ERROR not in output:
             # Do the work to find if there were function exports: extract the
             # wasm from the JS, and process it.
             run([sys.executable,
@@ -1910,6 +1965,9 @@ class Two(TestCaseHandler):
         # Most of the time, use the first wasm as an import to the second.
         if random.random() < 0.8:
             args += ['--fuzz-import=' + wasm]
+        # Always remove the second module's start function, see comment before
+        # in Merge.
+        args += ['--remove-start']
 
         given = os.environ.get('BINARYEN_SECOND_WASM')
         if not given:
@@ -2022,10 +2080,13 @@ class Two(TestCaseHandler):
         if output == IGNORE:
             return
 
-        # We ruled out things we must ignore, like host limitations, and also
-        # exited earlier on a deterministic instantiation error, so there should
-        # be no such error in V8.
-        assert not output.startswith(INSTANTIATE_ERROR)
+        if INSTANTIATE_ERROR in output:
+            # We ruled out a bynterpreter instantiation error, but v8 might have
+            # one for a different reason (e.g. JS conversion error on the
+            # boundary, if the start function calls an import). Verify we have
+            # the same error without the second module, and skip.
+            assert INSTANTIATE_ERROR in run_d8_wasm(wasm)
+            return
 
         output = fix_output(output)
 

@@ -619,6 +619,8 @@ void PassRegistry::registerPasses() {
   registerTestPass("randomize-branch-hints",
                    "randomize branch hints (for fuzzing)",
                    createRandomizeBranchHintsPass);
+  registerTestPass(
+    "remove-start", "remove the start function", createRemoveStartPass);
   registerTestPass("reorder-globals-always",
                    "sorts globals by access frequency (even if there are few)",
                    createReorderGlobalsAlwaysPass);

@@ -18,6 +18,7 @@ set(unittest_SOURCES
   int128.cpp
   leaves.cpp
   glbs.cpp
+  inplace_vector.cpp
   interpreter.cpp
   intervals.cpp
   istring.cpp

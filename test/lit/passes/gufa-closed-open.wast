@@ -167,3 +167,85 @@
  )
 )
 
+;; Write to an array using string.encode.
+(module
+ ;; OPEND:      (type $array (array (mut i16)))
+ ;; CLOSE:      (type $array (array (mut i16)))
+ (type $array (array (mut i16)))
+
+ ;; OPEND:      (type $1 (func))
+
+ ;; OPEND:      (type $2 (func (result i32)))
+
+ ;; OPEND:      (global $global (ref $array) (array.new_default $array
+ ;; OPEND-NEXT:  (i32.const 42)
+ ;; OPEND-NEXT: ))
+ ;; CLOSE:      (type $1 (func))
+
+ ;; CLOSE:      (type $2 (func (result i32)))
+
+ ;; CLOSE:      (global $global (ref $array) (array.new_default $array
+ ;; CLOSE-NEXT:  (i32.const 42)
+ ;; CLOSE-NEXT: ))
+ (global $global (ref $array) (array.new_default $array
+  (i32.const 42)
+ ))
+
+ ;; OPEND:      (export "encode" (func $encode))
+
+ ;; OPEND:      (export "read" (func $read))
+
+ ;; OPEND:      (func $encode (type $1)
+ ;; OPEND-NEXT:  (drop
+ ;; OPEND-NEXT:   (string.encode_wtf16_array
+ ;; OPEND-NEXT:    (string.const "hello")
+ ;; OPEND-NEXT:    (global.get $global)
+ ;; OPEND-NEXT:    (i32.const 0)
+ ;; OPEND-NEXT:   )
+ ;; OPEND-NEXT:  )
+ ;; OPEND-NEXT: )
+ ;; CLOSE:      (export "encode" (func $encode))
+
+ ;; CLOSE:      (export "read" (func $read))
+
+ ;; CLOSE:      (func $encode (type $1)
+ ;; CLOSE-NEXT:  (drop
+ ;; CLOSE-NEXT:   (string.encode_wtf16_array
+ ;; CLOSE-NEXT:    (string.const "hello")
+ ;; CLOSE-NEXT:    (global.get $global)
+ ;; CLOSE-NEXT:    (i32.const 0)
+ ;; CLOSE-NEXT:   )
+ ;; CLOSE-NEXT:  )
+ ;; CLOSE-NEXT: )
+ (func $encode (export "encode")
+  (drop
+   (string.encode_wtf16_array
+    (string.const "hello")
+    (global.get $global)
+    (i32.const 0)
+   )
+  )
+ )
+
+ ;; OPEND:      (func $read (type $2) (result i32)
+ ;; OPEND-NEXT:  (array.get_s $array
+ ;; OPEND-NEXT:   (global.get $global)
+ ;; OPEND-NEXT:   (i32.const 0)
+ ;; OPEND-NEXT:  )
+ ;; OPEND-NEXT: )
+ ;; CLOSE:      (func $read (type $2) (result i32)
+ ;; CLOSE-NEXT:  (array.get_s $array
+ ;; CLOSE-NEXT:   (global.get $global)
+ ;; CLOSE-NEXT:   (i32.const 0)
+ ;; CLOSE-NEXT:  )
+ ;; CLOSE-NEXT: )
+ (func $read (export "read") (result i32)
+  ;; We could infer what the value is here, since there is only one write. TODO
+  ;; Meanwhile, we should not infer a wrong value, even in closed world.
+  (array.get_s $array
+   (global.get $global)
+   (i32.const 0)
+  )
+ )
+)
+
