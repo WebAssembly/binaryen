@@ -60,7 +60,6 @@
 #include "ir/utils.h"
 #include "pass.h"
 #include "support/hash.h"
-#include "support/inplace_vector.h"
 #include "support/small_vector.h"
 #include "support/unique_deferring_queue.h"
 #include "wasm-builder.h"
@@ -312,7 +311,9 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
     //  values = [ { 42, [A, B] }, { 1337, [C] } ];
     struct Value {
       PossibleConstantValues constant;
-      inplace_vector<HeapType, 2> types;
+      // Use a SmallVector as we'll only have 2 Values, and so the stack usage
+      // here is fixed.
+      SmallVector<HeapType, 10> types;
 
       // Whether this slot is used. If so, |constant| has a value, and |types|
       // is not empty.
