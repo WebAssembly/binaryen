@@ -16,8 +16,9 @@
 
 //
 // A vector of elements with a maximum size, storing them all in-place. This is
-// similar to C++26's inplace_vector, and is basically a small_vector, except
+// similar to c++26's inplace_vector, and is basically a small_vector, except
 // there is never any dynamic storage.
+// TODO: remove when we have c++26
 //
 
 #ifndef wasm_support_inplace_vector_h
