@@ -164,30 +164,6 @@ public:
   }
 };
 
-// A inplace_vector for which some values may be read before they are written,
-// and in that case they have the value zero.
-template<typename T, size_t N>
-struct ZeroInitinplace_vector : public inplace_vector<T, N> {
-  T& operator[](size_t i) {
-    if (i >= this->size()) {
-      resize(i + 1);
-    }
-    return inplace_vector<T, N>::operator[](i);
-  }
-
-  const T& operator[](size_t i) const {
-    return const_cast<ZeroInitinplace_vector<T, N>&>(*this)[i];
-  }
-
-  void resize(size_t newSize) {
-    auto oldSize = this->size();
-    inplace_vector<T, N>::resize(newSize);
-    for (size_t i = oldSize; i < this->size(); i++) {
-      (*this)[i] = 0;
-    }
-  }
-};
-
 } // namespace std
 
 #endif // wasm_support_inplace_vector_h
