@@ -228,13 +228,13 @@
  )
 
  ;; OPEND:      (func $read (type $2) (result i32)
- ;; OPEND-NEXT:  (array.atomic.get_s $array
+ ;; OPEND-NEXT:  (array.get_s $array
  ;; OPEND-NEXT:   (global.get $global)
  ;; OPEND-NEXT:   (i32.const 0)
  ;; OPEND-NEXT:  )
  ;; OPEND-NEXT: )
  ;; CLOSE:      (func $read (type $2) (result i32)
- ;; CLOSE-NEXT:  (array.atomic.get_s $array
+ ;; CLOSE-NEXT:  (array.get_s $array
  ;; CLOSE-NEXT:   (global.get $global)
  ;; CLOSE-NEXT:   (i32.const 0)
  ;; CLOSE-NEXT:  )
@@ -242,7 +242,7 @@
  (func $read (export "read") (result i32)
   ;; We could infer what the value is here, since there is only one write. TODO
   ;; Meanwhile, we should not infer a wrong value, even in closed world.
-  (array.atomic.get_s $array
+  (array.get_s $array
    (global.get $global)
    (i32.const 0)
   )
