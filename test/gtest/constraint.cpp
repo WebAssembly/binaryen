@@ -119,4 +119,27 @@ TEST(ConstraintTest, TestSets) {
   EXPECT_EQ(t.check(s), Unknown);
 }
 
-// TODO: test fuzzyOr. in particular, empty merged with X is X, and flipped
+TEST(ConstraintTest, TestOr) {
+  // { x == 5 }
+  AndedConstraintSet s;
+  s.and_(Constraint{Eq, Literal(int32_t(5))});
+
+  // { }
+  AndedConstraintSet empty;
+
+  // Anything ORed with the empty set is unchanged.
+  auto t = s;
+  t.fuzzyOr(empty);
+  EXPECT_EQ(t, s);
+
+  // Flipped.
+  t = empty;
+  t.fuzzyOr(s);
+  EXPECT_EQ(t, s);
+
+  // ORing with oneself changes nothing
+  t = s;
+  t.fuzzyOr(s);
+  EXPECT_EQ(t, s);
+}
+

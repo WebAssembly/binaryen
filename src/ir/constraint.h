@@ -113,9 +113,9 @@ struct AndedConstraintSet : std::inplace_vector<Constraint, MaxConstraints> {
   //
   // That is, if X or Y is true, the result of fuzzOr is also true. But the
   // reverse is not always the case: fuzzyOr may be true without X || Y being
-  // true (see the truth table linked above).
+  // true (see the truth table linked above, and the value 8 in the example).
   //
-  // Returning to the example above, we can use this to optimize as follows: if
+  // Returning to the example  we can use this to optimize as follows: if
   // two code paths reaching a location have x == 5 and x == 10, so the value in
   // the merge location is either 5 or 10, then if we see some i32.ge_s that
   // does x >= 0 then we can evaluate it with check():
@@ -129,11 +129,11 @@ struct AndedConstraintSet : std::inplace_vector<Constraint, MaxConstraints> {
   //   { x >= 0 }
   //
   // Note that the fuzziness here means that fuzzyOr() can do a better or a
-  // worse job. It is always valid for fuzzOr to return { x == x } or any other
+  // worse job. It is always valid for fuzzOr to return { } or any other
   // always-true thing (see the truth table linked above). But then:
   //
   //   { x == 5 || x == 10 }  =>
-  //   { x == x }            =!!>
+  //   { }                   =!!>
   //   { x >= 0 }
   //
   // If we become too fuzzy, we lose the ability to imply anything useful.
