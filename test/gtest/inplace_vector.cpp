@@ -18,7 +18,7 @@ TEST_F(InplaceVectorTest, Basics) {
   EXPECT_EQ(vec.size(), 3);
 
   vec[1] = 20;
-  vec[2] = 30;  
+  vec[2] = 30;
   EXPECT_EQ(vec[1], 20);
   EXPECT_EQ(vec[2], 30);
 
