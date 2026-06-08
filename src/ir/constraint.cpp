@@ -68,6 +68,7 @@ std::optional<Result> checkPair(const Constraint& a, const Constraint& b) {
             case Abstract::Ne: {
               // x == c vs x == c', and we already handled full equality
               // earlier, hence c != c', and we can infer nothing.
+              assert(*aConstant != *bConstant);
               return {};
             }
             default: {
