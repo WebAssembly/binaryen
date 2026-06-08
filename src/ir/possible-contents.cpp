@@ -1161,11 +1161,12 @@ struct InfoCollector
       curr->ref, curr->index, curr->value, MemoryOrder::Unordered);
     visitArraySet(set);
   }
-  template<typename ArrayInit> void visitArrayInit(ArrayInit* curr) {
+
+  void handleArrayWrite(Expression* ref) {
     // Check for both unreachability and a bottom type. In either case we have
     // no work to do, and would error on an assertion below in finding the array
     // type.
-    auto field = GCTypeUtils::getField(curr->ref->type);
+    auto field = GCTypeUtils::getField(ref->type);
     if (!field) {
       return;
     }
@@ -1179,12 +1180,15 @@ struct InfoCollector
     Builder builder(*getModule());
     auto* get = builder.makeLocalGet(-1, valueType);
     addRoot(get);
+    // The index does not matter, as we do not track array indexes yet TODO
+    Expression* index = builder.makeNop();
     auto* set =
-      builder.makeArraySet(curr->ref, curr->index, get, MemoryOrder::Unordered);
+      builder.makeArraySet(ref, index, get, MemoryOrder::Unordered);
     visitArraySet(set);
   }
-  void visitArrayInitData(ArrayInitData* curr) { visitArrayInit(curr); }
-  void visitArrayInitElem(ArrayInitElem* curr) { visitArrayInit(curr); }
+
+  void visitArrayInitData(ArrayInitData* curr) { handleArrayWrite(curr->ref); }
+  void visitArrayInitElem(ArrayInitElem* curr) { handleArrayWrite(curr->ref); }
   void visitArrayRMW(ArrayRMW* curr) {
     if (curr->ref->type == Type::unreachable) {
       return;
@@ -1219,6 +1223,7 @@ struct InfoCollector
   }
   void visitStringEncode(StringEncode* curr) {
     // TODO: optimize when possible
+    handleArrayWrite(curr->array);
     addRoot(curr);
   }
   void visitStringConcat(StringConcat* curr) {
