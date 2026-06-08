@@ -5,6 +5,7 @@ using InplaceVectorTest = ::testing::Test;
 
 TEST_F(InplaceVectorTest, Size) {
   std::inplace_vector<int64_t, 10> vec;
+  // An inplace_vector is just a size plus the in-place storage.
   EXPECT_EQ(sizeof(vec), sizeof(size_t) + 10 * sizeof(int64_t));
 }
 
