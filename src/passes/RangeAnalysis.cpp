@@ -74,7 +74,6 @@ struct RangeAnalysis
   using Super =
     WalkerPass<CFGWalker<RangeAnalysis, Visitor<RangeAnalysis>, Info>>;
 
-#if 0
   // Branches outside of the function can be ignored, as we only look at local
   // state in the function.
   bool ignoreBranchesOutsideOfFunc = true;
@@ -91,6 +90,7 @@ struct RangeAnalysis
   void visitUnary(Unary* curr) { addAction(); } // XXX needed?
   void visitBinary(Binary* curr) { addAction(); }
 
+#if 0
   // Track the branches we reason about. CFGWalker builds a CFG, and we want to
   // add information on top of that about which branch is due to which
   // instruction. For example, if block A branches to B and C, we want to know
@@ -154,6 +154,8 @@ struct RangeAnalysis
 
     // Values can flow between locals: if x is relevant, and y is written to it,
     // we must consider y relevant too. TODO?
+
+std::cout << relevantLocals.size() << '\n';
 
     if (!relevantLocals.empty()) {
       flow();
