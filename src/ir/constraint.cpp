@@ -54,6 +54,7 @@ std::optional<Result> checkPair(const Constraint& a, const Constraint& b) {
             default: {
             }
           }
+          break;
         }
         case Abstract::Ne: {
           switch (b.op) {
@@ -72,6 +73,7 @@ std::optional<Result> checkPair(const Constraint& a, const Constraint& b) {
             default: {
             }
           }
+          break;
         }
         default: {
         }
