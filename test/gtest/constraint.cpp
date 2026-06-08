@@ -17,13 +17,14 @@ TEST(ConstraintTest, TestEq) {
   AndedConstraintSet s;
   EXPECT_TRUE(s.empty());
 
-  // x == 5 (we use "x" for the name of the thing being compared).
+  // x == 5 (we use "x" for the name of the thing being compared, in these
+  // comments).
   Constraint c{Eq, Literal(int32_t(5))};
 
   // We can't infer anything using an empty set.
   EXPECT_EQ(s.check(c), Unknown);
 
-  // If we add it, then things check out.
+  // If we add it, then things check out: a thing always proves itself true.
   s.and_(c);
   EXPECT_EQ(s.size(), 1);
   EXPECT_EQ(s.check(c), True);
