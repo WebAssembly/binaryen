@@ -7,67 +7,58 @@
 ;; RUN: wasm-opt %s --optimize-instructions --range-analysis -all -S -o - | filecheck %s
 
 (module
-  (func $simple (param $p i32)
+  ;; CHECK:      (func $simple (type $0)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (i32.const 10)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.eq
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.ne
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $simple
     (local $x i32)
-    ;; TODO: handle a fallthrough
-    (if
-      (local.get $p)
-      (then
-        (local.set $x
-          (i32.const 10)
-        )
-      )
-      (else
-        (local.set $x
-          (i32.const 20)
-        )
-      )
+    ;; Set x to 10, and then compare it to 10 and 20 using == and !=
+    (local.set $x
+      (i32.const 10)
     )
-    ;; $x is in [10, 20], so it is less than 30 (strictly, and not)
     (drop
-      (i32.lt_u
+      (i32.eq
         (local.get $x)
-        (i32.const 30)
+        (i32.const 10)
       )
     )
     (drop
-      (i32.le_u
-        (local.get $x)
-        (i32.const 30)
-      )
-    )
-    ;; And less than 21.
-    (drop
-      (i32.lt_u
-        (local.get $x)
-        (i32.const 21)
-      )
-    )
-    ;; And less or equal to 20.
-    (drop
-      (i32.le_u
+      (i32.eq
         (local.get $x)
         (i32.const 20)
       )
     )
-    ;; But *not* strictly less than 20.
     (drop
-      (i32.lt_u
+      (i32.ne
+        (local.get $x)
+        (i32.const 10)
+      )
+    )
+    (drop
+      (i32.ne
         (local.get $x)
         (i32.const 20)
-      )
-    )
-    ;; And not less (or equal) to 19.
-    (drop
-      (i32.le_u
-        (local.get $x)
-        (i32.const 19)
-      )
-    )
-    (drop
-      (i32.lt_u
-        (local.get $x)
-        (i32.const 19)
       )
     )
   )
