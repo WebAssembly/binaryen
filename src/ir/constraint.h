@@ -14,7 +14,11 @@
  * limitations under the License.
  */
 
-// Constraints on the values of locals, things like x >=0, x < 42, and x == y.
+//
+// Constraints on the values of things, like x >=0, x < 42, and x == y. Allows
+// inference whether other things are true given a set of constraints, like
+// { x == 10 } => { x >= 5 }.
+//
 
 #ifndef wasm_ir_constraint_h
 #define wasm_ir_constraint_h
@@ -34,7 +38,7 @@ struct Value : public std::variant<Index, Literal> {
 };
 
 // A constraint: some operation and some value, like "is equal to 17" or "is
-// less than local $z".
+// less than local 6".
 struct Constraint {
   // The operation relating two values, and the values.
   Abstract::Op op = Abstract::Invalid;
@@ -50,14 +54,14 @@ struct Constraint {
 // TODO: use a generic constraint solver..?
 inline constexpr std::size_t MaxConstraints = 3;
 
-// What a constraint is known to be: true/false, or unknown.
+// What we infer from one thing about another: true/false, or unknown.
 enum Result { True, False, Unknown };
 
 // A set of constraints connected by the logical "and" operation. That is, all
 // the constraints are simultaneously true about some value. In the examples in
 // the comments below, `x` is used for the thing all the constraints are talking
-// about, but it could be a global or a struct field or anything else in
-// general.
+// about, which looks like a local, but it could be a global or a struct field
+// or anything else in general.
 struct AndedConstraintSet : inplace_vector<Constraint, MaxConstraints> {
   // Check a condition against this set, that is, whether the existing
   // constraints prove that it must be true, false, or unknown: whether
@@ -95,10 +99,13 @@ struct AndedConstraintSet : inplace_vector<Constraint, MaxConstraints> {
   bool full() const { return size() == MaxConstraints; }
 
   // Add a constraint to the set, ANDed with the others. The caller must make
-  // sure not to add too many.
-  void and_(const Constraint& c) { push_back(c); }
+  // sure not to add too many (i.e. it is invalid to call this when full()).
+  void and_(const Constraint& c) {
+    assert(!full());
+    push_back(c);
+  }
 
-  // Add constraints that are ORed. We cannot represent such a thing directly
+  // Merge constraints using OR. We cannot represent such a thing directly
   // (we only use AND), so we approximate it in a fuzzy way. For example, this
   // would be valid:
   //
@@ -113,7 +120,7 @@ struct AndedConstraintSet : inplace_vector<Constraint, MaxConstraints> {
   // reverse is not always the case: fuzzyOr may be true without X || Y being
   // true (see the truth table linked above, and the value 8 in the example).
   //
-  // Returning to the example  we can use this to optimize as follows: if
+  // Returning to the example, we can use this to optimize as follows: if
   // two code paths reaching a location have x == 5 and x == 10, so the value in
   // the merge location is either 5 or 10, then if we see some i32.ge_s that
   // does x >= 0 then we can evaluate it with check():
@@ -126,8 +133,10 @@ struct AndedConstraintSet : inplace_vector<Constraint, MaxConstraints> {
   //   { x >= 5 && x <= 10 } =>
   //   { x >= 0 }
   //
+  // I.e. the constraints imply the truth of the thing we are evaluating.
+  //
   // Note that the fuzziness here means that fuzzyOr() can do a better or a
-  // worse job. It is always valid for fuzzOr to return { } or any other
+  // worse job. It is always valid for fuzzyOr to return { } or any other
   // always-true thing (see the truth table linked above). But then:
   //
   //   { x == 5 || x == 10 }  =>
@@ -136,23 +145,6 @@ struct AndedConstraintSet : inplace_vector<Constraint, MaxConstraints> {
   //
   // If we become too fuzzy, we lose the ability to imply anything useful.
   void fuzzyOr(const AndedConstraintSet& other);
-};
-
-// A local plus a constraint on it.
-struct LocalConstraint {
-  Index local;
-  Constraint constraint;
-
-  // Try to parse BinaryenIR into a local to which a constraint is applied. For
-  // example
-  //
-  //   (i32.eq (local.get $r) (i32.const 10))
-  //
-  // parses into
-  //
-  //   LocalConstraint($r, { x == 10 })
-  //
-  static std::optional<LocalConstraint> parse(Expression* curr);
 };
 
 } // namespace wasm::constraint
