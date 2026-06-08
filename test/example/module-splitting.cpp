@@ -78,19 +78,19 @@ int main() {
   // Global stuff
   do_test({}, R"(
     (module
-     (memory $mem 3 42 shared)
-     (table $tab 3 42 funcref)
-     (global $glob (mut i32) (i32.const 7))
-     (tag $e (param i32))
+     (memory $mem (export "mem") 3 42 shared)
+     (table $tab (export "tab") 3 42 funcref)
+     (global $glob (export "glob") (mut i32) (i32.const 7))
+     (tag $e (export "e") (param i32))
     ))");
 
   // Imported global stuff
   do_test({}, R"(
     (module
-     (import "env" "mem" (memory $mem 3 42 shared))
-     (import "env" "tab" (table $tab 3 42 funcref))
-     (import "env" "glob" (global $glob (mut i32)))
-     (import "env" "e" (tag $e (param i32)))
+     (memory $mem (export "mem") (import "env" "mem") 3 42 shared)
+     (table $tab (export "tab") (import "env" "tab") 3 42 funcref)
+     (global $glob (export "glob") (import "env" "glob") (mut i32))
+     (tag $e (export "e") (import "env" "e") (param i32))
     ))");
 
   // Exported global stuff
