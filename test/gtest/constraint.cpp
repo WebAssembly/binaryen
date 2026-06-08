@@ -143,3 +143,6 @@ TEST(ConstraintTest, TestOr) {
   EXPECT_EQ(t, s);
 }
 
+// TODO: test a fuzzyOr of { x = 10 } and { x >= 0 }, once we support
+//       inequalities
+

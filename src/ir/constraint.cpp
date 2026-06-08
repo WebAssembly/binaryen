@@ -99,6 +99,16 @@ Result AndedConstraintSet::check(const Constraint& condition) const {
 }
 
 void AndedConstraintSet::fuzzyOr(const AndedConstraintSet& other) {
+  // If one is empty (no constraints, everything is true, and we can prove
+  // nothing useful) then it does not add anything to the other.
+  if (empty()) {
+    *this = other;
+    return;
+  }
+  if (other.empty()) {
+    return;
+  }
+
   // If this is already implied by current constraints, then it is redundant.
   // E.g. if we are { x = 10 } and other is { x >= 0 } then all we need is
   // { x >= 0 } as the result of the OR.
