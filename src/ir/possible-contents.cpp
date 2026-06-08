@@ -1182,8 +1182,7 @@ struct InfoCollector
     addRoot(get);
     // The index does not matter, as we do not track array indexes yet TODO
     Expression* index = builder.makeNop();
-    auto* set =
-      builder.makeArraySet(ref, index, get, MemoryOrder::Unordered);
+    auto* set = builder.makeArraySet(ref, index, get, MemoryOrder::Unordered);
     visitArraySet(set);
   }
 
