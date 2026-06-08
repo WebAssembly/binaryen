@@ -1,0 +1,160 @@
+/*
+ * Copyright 2026 WebAssembly Community Group participants
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+// Constraints on the values of locals, things like x >=0, x < 42, and x == y.
+
+#ifndef wasm_ir_constraint_h
+#define wasm_ir_constraint_h
+
+#include <variant>
+
+#include "ir/abstract.h"
+#include "support/inplace_vector.h"
+#include "support/utilities.h"
+#include "wasm.h"
+
+namespace wasm::constraint {
+
+// A value in a constraint, either a local index or literal value.
+struct Value : public std::variant<Index, Literal> {
+  bool operator==(const Value&) const = default;
+};
+
+// A constraint: some operation and some value, like "is equal to 17" or "is
+// less than local $z".
+struct Constraint {
+  // The operation relating two values, and the values.
+  Abstract::Op op = Abstract::Invalid;
+  Value value;
+
+  bool operator==(const Constraint&) const = default;
+
+  operator bool() const { return op != Abstract::Invalid; }
+};
+
+// We limit constraints to a low number to ensure good performance even with
+// simple brute-force solving.
+// TODO: use a generic constraint solver..?
+inline constexpr std::size_t MaxConstraints = 3;
+
+// What a constraint is known to be: true/false, or unknown.
+enum Result { True, False, Unknown };
+
+// A set of constraints connected by the logical "and" operation. That is, all
+// the constraints are simultaneously true about some value. In the examples in
+// the comments below, `x` is used for the thing all the constraints are talking
+// about, but it could be a global or a struct field or anything else in
+// general.
+struct AndedConstraintSet : std::inplace_vector<Constraint, MaxConstraints> {
+  // Check a condition against this set, that is, whether the existing
+  // constraints prove that it must be true, false, or unknown: whether
+  //
+  //   { this } => { condition }
+  //
+  // https://en.wikipedia.org/wiki/Material_conditional#Truth_table
+  Result check(const Constraint& condition) const;
+
+  // Check an entire other set.
+  Result check(const AndedConstraintSet& other) const {
+    if (other.empty()) {
+      // The empty set of constraints is always true.
+      return True;
+    }
+
+    Result result = Unknown;
+    for (auto& c : other) {
+      auto currResult = check(c);
+      if (currResult == Unknown) {
+        // If something is unknown, it all is.
+        return Unknown;
+      }
+      if (result == Unknown) {
+        // This is the first result
+        result = currResult;
+      } else if (result != currResult) {
+        // This is a later result, and different, so give up.
+        return Unknown;
+      }
+    }
+    return result;
+  }
+
+  bool full() const { return size() == MaxConstraints; }
+
+  // Add a constraint to the set, ANDed with the others. The caller must make
+  // sure not to add too many.
+  void and_(const Constraint& c) { push_back(c); }
+
+  // Add constraints that are ORed. We cannot represent such a thing directly
+  // (we only use AND), so we approximate it in a fuzzy way. For example, this
+  // would be valid:
+  //
+  //   fuzzyOr({ x == 5 }, { x == 10 }) == { x >= 5 && x <= 10 }
+  //
+  // Note how the result here still accepts the values 5 and 10, but it also
+  // allows more. Formally, this has the following mathematical property:
+  //
+  //   (X || Y) => fuzzyOr(X, Y)
+  //
+  // That is, if X or Y is true, the result of fuzzOr is also true. But the
+  // reverse is not always the case: fuzzyOr may be true without X || Y being
+  // true (see the truth table linked above, and the value 8 in the example).
+  //
+  // Returning to the example  we can use this to optimize as follows: if
+  // two code paths reaching a location have x == 5 and x == 10, so the value in
+  // the merge location is either 5 or 10, then if we see some i32.ge_s that
+  // does x >= 0 then we can evaluate it with check():
+  //
+  //   { x >= 5 && x <= 10 }.check({ x >= 0 }) == True
+  //
+  // And it is valid to optimize that i32.ge_s into a constant 1, since
+  //
+  //   { x == 5 || x == 10 } =>
+  //   { x >= 5 && x <= 10 } =>
+  //   { x >= 0 }
+  //
+  // Note that the fuzziness here means that fuzzyOr() can do a better or a
+  // worse job. It is always valid for fuzzOr to return { } or any other
+  // always-true thing (see the truth table linked above). But then:
+  //
+  //   { x == 5 || x == 10 }  =>
+  //   { }                   =!!>
+  //   { x >= 0 }
+  //
+  // If we become too fuzzy, we lose the ability to imply anything useful.
+  void fuzzyOr(const AndedConstraintSet& other);
+};
+
+// A local plus a constraint on it.
+struct LocalConstraint {
+  Index local;
+  Constraint constraint;
+
+  // Try to parse BinaryenIR into a local to which a constraint is applied. For
+  // example
+  //
+  //   (i32.eq (local.get $r) (i32.const 10))
+  //
+  // parses into
+  //
+  //   LocalConstraint($r, { x == 10 })
+  //
+  static std::optional<LocalConstraint> parse(Expression* curr);
+};
+
+} // namespace wasm::constraint
+
+#endif // wasm_ir_constraint_h
