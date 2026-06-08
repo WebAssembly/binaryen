@@ -312,7 +312,7 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
     //  values = [ { 42, [A, B] }, { 1337, [C] } ];
     struct Value {
       PossibleConstantValues constant;
-      std::inplace_vector<HeapType, 2> types;
+      inplace_vector<HeapType, 2> types;
 
       // Whether this slot is used. If so, |constant| has a value, and |types|
       // is not empty.
