@@ -46,7 +46,7 @@ public:
   inplace_vector(inplace_vector<T, N>&& other)
     : usedFixed(other.usedFixed), fixed(std::move(other.fixed)) {}
   inplace_vector(std::initializer_list<T> init) {
-    for (T item : init) {
+    for (const T& item : init) {
       push_back(item);
     }
   }
