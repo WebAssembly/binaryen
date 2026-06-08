@@ -165,4 +165,3 @@ TEST(ConstraintTest, TestOrImplies) {
 
 // TODO: test a fuzzyOr of { x = 10 } and { x >= 0 }, once we support
 //       inequalities
-

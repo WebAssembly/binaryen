@@ -92,9 +92,7 @@ struct AndedConstraintSet : std::inplace_vector<Constraint, MaxConstraints> {
     return result;
   }
 
-  bool full() const {
-    return size() == MaxConstraints;
-  }
+  bool full() const { return size() == MaxConstraints; }
 
   // Add a constraint to the set, ANDed with the others. The caller must make
   // sure not to add too many.

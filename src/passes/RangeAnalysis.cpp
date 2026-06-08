@@ -209,8 +209,8 @@ struct RangeAnalysis
   // Given a binary XXXand its block, try to optimize it. We provide the pointer
   // to the binary, so that it can be replaced if optimizable.
   void optimizeExpression(Expression** currp,
-                      BasicBlock* block,
-                      const LocalConstraintMap& constraints) {
+                          BasicBlock* block,
+                          const LocalConstraintMap& constraints) {
     auto* curr = *currp;
     auto parsed = LocalConstraint::parse(curr);
     if (!parsed) {
@@ -231,12 +231,10 @@ struct RangeAnalysis
 
     // We know the result!
     auto& wasm = *getModule();
-    auto value = LiteralUtils::makeFromInt32(result == True ? 1 : 0, curr->type, wasm);
-    *currp = getDroppedChildrenAndAppend(curr,
-                            wasm,
-                            getPassOptions(),
-                            value,
-                            DropMode::IgnoreParentEffects);
+    auto value =
+      LiteralUtils::makeFromInt32(result == True ? 1 : 0, curr->type, wasm);
+    *currp = getDroppedChildrenAndAppend(
+      curr, wasm, getPassOptions(), value, DropMode::IgnoreParentEffects);
   }
 
   // Merge incoming data to a block, by looking at the data arriving from each
@@ -255,7 +253,9 @@ struct RangeAnalysis
 
   // Given a source (predecessor) and a target (successor) block, find the span
   // of a particular local as it arrives to that target from that successor.
-  AndedConstraintSet getConstraintsFromPredToSucc(BasicBlock* pred, BasicBlock* block, Index local) {
+  AndedConstraintSet getConstraintsFromPredToSucc(BasicBlock* pred,
+                                                  BasicBlock* block,
+                                                  Index local) {
     auto iter = pred->contents.endConstraints.find(local);
     if (iter == pred->contents.endConstraints.end()) {
       return {};
