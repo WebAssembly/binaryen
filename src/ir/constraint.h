@@ -58,7 +58,7 @@ enum Result { True, False, Unknown };
 // the comments below, `x` is used for the thing all the constraints are talking
 // about, but it could be a global or a struct field or anything else in
 // general.
-struct AndedConstraintSet : std::inplace_vector<Constraint, MaxConstraints> {
+struct AndedConstraintSet : inplace_vector<Constraint, MaxConstraints> {
   // Check a condition against this set, that is, whether the existing
   // constraints prove that it must be true, false, or unknown: whether
   //
