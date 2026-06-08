@@ -119,7 +119,7 @@ TEST(ConstraintTest, TestSets) {
   EXPECT_EQ(t.check(s), Unknown);
 }
 
-TEST(ConstraintTest, TestOr) {
+TEST(ConstraintTest, TestOrTrivial) {
   // { x == 5 }
   AndedConstraintSet s;
   s.and_(Constraint{Eq, Literal(int32_t(5))});
@@ -141,6 +141,26 @@ TEST(ConstraintTest, TestOr) {
   t = s;
   t.fuzzyOr(s);
   EXPECT_EQ(t, s);
+}
+
+TEST(ConstraintTest, TestOrImplies) {
+  // { x == 5 }
+  AndedConstraintSet s;
+  s.and_(Constraint{Eq, Literal(int32_t(5))});
+
+  // { x != 10 }
+  AndedConstraintSet t;
+  t.and_(Constraint{Ne, Literal(int32_t(10))});
+
+  // ORing these leaves us with x != 10.
+  auto u = s;
+  u.fuzzyOr(t);
+  EXPECT_EQ(u, t);
+
+  // Flipped.
+  u = t;
+  u.fuzzyOr(s);
+  EXPECT_EQ(u, t);
 }
 
 // TODO: test a fuzzyOr of { x = 10 } and { x >= 0 }, once we support
