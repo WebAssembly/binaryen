@@ -1398,7 +1398,8 @@ struct AnnotationParserCtx {
       }
     }
 
-    auto parseI7Hint = [&](const Annotation* hint, const char* name) -> std::optional<uint8_t> {
+    auto parseI7Hint = [&](const Annotation* hint,
+                           const char* name) -> std::optional<uint8_t> {
       if (!hint) {
         return {};
       }
@@ -1425,7 +1426,8 @@ struct AnnotationParserCtx {
 
     // Apply the last inline hints, if valid.
     ret.inline_ = parseI7Hint(inlineHint, "InlineHint");
-    ret.toolchainInline = parseI7Hint(toolchainInlineHint, "Toolchain InlineHint");
+    ret.toolchainInline =
+      parseI7Hint(toolchainInlineHint, "Toolchain InlineHint");
 
     return ret;
   }
