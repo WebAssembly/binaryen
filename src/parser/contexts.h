@@ -1372,6 +1372,8 @@ struct AnnotationParserCtx {
         ret.jsCalled = true;
       } else if (a.kind == Annotations::IdempotentHint) {
         ret.idempotent = true;
+      } else if (a.kind == Annotations::ToolchainInlineHint) {
+        ret.toolchainInline = true;
       }
     }
 

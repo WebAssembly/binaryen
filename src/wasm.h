@@ -2378,6 +2378,11 @@ struct CodeAnnotation {
   // optimize things like Java class constructors.
   bool idempotent = false;
 
+  // An inlining hint at the toolchain level, in contrast to inline_, above,
+  // which is for VMs. (E.g., one may want to not inline at the toolchain level
+  // to keep size small, and tell VMs to inline at runtime.)
+  std::optional<uint8_t> toolchainInline = false;
+
   bool operator==(const CodeAnnotation& other) const {
     return equalOnSemanticsPreserving(other) && equalOnSemanticsAltering(other);
   }
@@ -2476,6 +2481,12 @@ public:
   // is a toolchain-level hint. For more details, see Inlining.cpp.
   bool noFullInline = false;
   bool noPartialInline = false;
+
+  // Whether to always inline a function, despite other flags like optimizing
+  // for size (except for things that prevent inlining for correctness reasons,
+  // like infinite recursion).
+  bool alwaysFullInline = false;
+  // TODO: alwaysPartialInline, if that is useful?
 
   // Methods
   Signature getSig() { return type.getHeapType().getSignature(); }

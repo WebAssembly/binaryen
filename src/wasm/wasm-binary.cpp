@@ -1662,6 +1662,7 @@ std::optional<BufferWithRandomAccess> WasmBinaryWriter::writeCodeAnnotations() {
   append(getRemovableIfUnusedHintsBuffer());
   append(getJSCalledHintsBuffer());
   append(getIdempotentHintsBuffer());
+  append(getToolchainInlineHintsBuffer());
   return ret;
 }
 
@@ -1783,23 +1784,24 @@ std::optional<BufferWithRandomAccess> WasmBinaryWriter::getBranchHintsBuffer() {
     });
 }
 
-std::optional<BufferWithRandomAccess> WasmBinaryWriter::getInlineHintsBuffer() {
-  return writeExpressionHints(
-    Annotations::InlineHint,
-    [](const CodeAnnotation& annotation) { return annotation.inline_; },
-    [](const CodeAnnotation& annotation, BufferWithRandomAccess& buffer) {
-      // Hint size, always 1 for now.
-      buffer << U32LEB(1);
-
-      // We must only emit hints that are present.
-      assert(annotation.inline_);
-
-      // Hint must fit in one byte.
-      assert(*annotation.inline_ <= 127);
-
-      // Hint contents: inline frequency count
-      buffer << U32LEB(*annotation.inline_);
+// Writes a simple i7 hint, in the range [0..127].
+#define WRITE_I7_HINT(code, field)                                         \
+  return writeExpressionHints( \
+    code, \
+    [](const CodeAnnotation& annotation) { return annotation.field; }, \
+    [](const CodeAnnotation& annotation, BufferWithRandomAccess& buffer) { \
+      /* Hint size, always 1 for now. */ \
+      buffer << U32LEB(1); \
+      /* We must only emit hints that are present. */ \
+      assert(annotation.field); \
+      /* Hint must fit in one byte. */ \
+      assert(*annotation.field <= 127); \
+      /* Hint contents: inline frequency count. */ \
+      buffer << U32LEB(*annotation.field); \
     });
+
+std::optional<BufferWithRandomAccess> WasmBinaryWriter::getInlineHintsBuffer() {
+  WRITE_I7_HINT(Annotations::InlineHint, inline_);
 }
 
 // Writes a simple boolean hint of size 0. Receives the code and the field name
@@ -1825,6 +1827,10 @@ WasmBinaryWriter::getJSCalledHintsBuffer() {
 std::optional<BufferWithRandomAccess>
 WasmBinaryWriter::getIdempotentHintsBuffer() {
   WRITE_BOOLEAN_HINT(Annotations::IdempotentHint, idempotent);
+}
+
+std::optional<BufferWithRandomAccess> WasmBinaryWriter::getToolchainInlineHintsBuffer() {
+  WRITE_I7_HINT(Annotations::ToolchainInlineHint, toolchainInline);
 }
 
 void WasmBinaryWriter::writeData(const char* data, size_t size) {
@@ -2103,7 +2109,8 @@ void WasmBinaryReader::preScan() {
           sectionName == Annotations::InlineHint ||
           sectionName == Annotations::RemovableIfUnusedHint ||
           sectionName == Annotations::JSCalledHint ||
-          sectionName == Annotations::IdempotentHint) {
+          sectionName == Annotations::IdempotentHint ||
+          sectionName == Annotations::ToolchainInlineHint) {
         // Code annotations require code locations.
         // TODO: We could note which functions require code locations, as an
         //       optimization.
@@ -2271,6 +2278,9 @@ void WasmBinaryReader::readCustomSection(size_t payloadLen) {
   } else if (sectionName == Annotations::IdempotentHint) {
     deferredAnnotationSections.push_back(AnnotationSectionInfo{
       pos, [this, payloadLen]() { this->readIdempotentHints(payloadLen); }});
+  } else if (sectionName == Annotations::ToolchainInlineHint) {
+    deferredAnnotationSections.push_back(AnnotationSectionInfo{
+      pos, [this, payloadLen]() { this->readToolchainInlineHints(payloadLen); }});
   } else {
     // an unfamiliar custom section
     if (sectionName.equals(BinaryConsts::CustomSections::Linking)) {
@@ -5617,21 +5627,23 @@ void WasmBinaryReader::readBranchHints(size_t payloadLen) {
     });
 }
 
-void WasmBinaryReader::readInlineHints(size_t payloadLen) {
-  readExpressionHints(
-    Annotations::InlineHint, payloadLen, [&](CodeAnnotation& annotation) {
-      auto size = getU32LEB();
-      if (size != 1) {
-        throwError("bad InlineHint size");
-      }
-
-      uint8_t inline_ = getInt8();
-      if (inline_ > 127) {
-        throwError("bad InlineHint value");
-      }
-
-      annotation.inline_ = inline_;
+// Reads a simple i7 hint, in the range [0..127].
+#define READ_I7_HINT(code, field) \
+  readExpressionHints( \
+    , payloadLen, [&](CodeAnnotation& annotation) { \
+      auto size = getU32LEB(); \
+      if (size != 1) { \
+        throwError("bad InlineHint size"); \
+      } \
+      uint8_t field = getInt8(); \
+      if (field > 127) { \
+        throwError("bad InlineHint value"); \
+      } \
+      annotation.field = field; \
     });
+
+void WasmBinaryReader::readInlineHints(size_t payloadLen) {
+  READ_I7_HINT(Annotations::InlineHint, inline_);
 }
 
 // Reads a simple boolean hint of size 0. Receives the code and the field name
@@ -5655,6 +5667,10 @@ void WasmBinaryReader::readJSCalledHints(size_t payloadLen) {
 
 void WasmBinaryReader::readIdempotentHints(size_t payloadLen) {
   READ_BOOLEAN_HINT(Annotations::IdempotentHint, idempotent);
+}
+
+void WasmBinaryReader::readToolchainInlineHints(size_t payloadLen) {
+  READ_I7_HINT(Annotations::ToolchainInlineHint, toolchainInline);
 }
 
 std::tuple<Address, Address, Index, MemoryOrder, BackingType>
