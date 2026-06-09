@@ -1398,7 +1398,7 @@ struct AnnotationParserCtx {
       }
     }
 
-    auto parseI7Hint = [&](Annotation* hint, const char* name) -> std::optional<uint8_t> {
+    auto parseI7Hint = [&](const Annotation* hint, const char* name) -> std::optional<uint8_t> {
       if (!hint) {
         return {};
       }
