@@ -44,5 +44,9 @@
     ;; This should be removed too.
     (@binaryen.idempotent)
     (call $test (i32.const 4))
+
+    ;; And this.
+    (@binaryen.inline "\00")
+    (call $test (i32.const 5))
   )
 )

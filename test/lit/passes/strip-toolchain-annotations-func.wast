@@ -42,6 +42,9 @@
   (func $idempotent
     ;; This hint should be removed too.
   )
+
+  (@binaryen.inline "\00")
+  (func $test-func-a
+    ;; This hint should be removed too.
+  )
 )
-
-
