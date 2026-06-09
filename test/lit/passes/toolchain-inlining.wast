@@ -3,6 +3,14 @@
 ;; RUN: foreach %s %t wasm-opt --inlining --optimize-level=3 -S -o - | filecheck %s
 
 (module
+  ;; CHECK:      (type $0 (func (result i32)))
+
+  ;; CHECK:      (type $1 (func))
+
+  ;; CHECK:      (@binaryen.inline "\00")
+  ;; CHECK-NEXT: (func $never (result i32)
+  ;; CHECK-NEXT:  (i32.const 42)
+  ;; CHECK-NEXT: )
   (@binaryen.inline "\00")
   (func $never (result i32)
     (i32.const 42)
@@ -54,23 +62,19 @@
     (local.get $x)
   )
 
-  ;; CHECK:      (type $0 (func))
-
   ;; CHECK:      (func $caller
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block $__inlined_func$never (result i32)
+  ;; CHECK-NEXT:   (call $never)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block $__inlined_func$never-unannotated (result i32)
   ;; CHECK-NEXT:    (i32.const 42)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block $__inlined_func$never-unannotated$1 (result i32)
-  ;; CHECK-NEXT:    (i32.const 42)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block $__inlined_func$always$2 (result i32)
+  ;; CHECK-NEXT:   (block $__inlined_func$always$1 (result i32)
   ;; CHECK-NEXT:    (local.set $0
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
@@ -93,7 +97,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block $__inlined_func$always-unannotated$3 (result i32)
+  ;; CHECK-NEXT:   (block $__inlined_func$always-unannotated$2 (result i32)
   ;; CHECK-NEXT:    (local.set $1
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
