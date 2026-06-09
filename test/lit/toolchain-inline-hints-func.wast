@@ -3,7 +3,7 @@
 ;; RUN: wasm-opt -all --roundtrip %s -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (@binaryen.inline "\12")
+  ;; CHECK:      (@binaryen.inline "\00")
   ;; CHECK-NEXT: (func $func-annotation (type $0)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.const 0)
