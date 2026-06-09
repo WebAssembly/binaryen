@@ -20,6 +20,20 @@
   )
  )
 
+ ;; PRIMARY:         (global $null-desc nullref
+ ;; PRIMARY-TNH-NOT: (global $null-desc nullref
+ (global $null-desc (ref null none)
+  (ref.null none)
+ )
+
+ ;; PRIMARY:         (global $trapping-global-init-global-get (ref $struct)
+ ;; PRIMARY-TNH-NOT: (global $trapping-global-init-global-get (ref $struct)
+ (global $trapping-global-init-global-get (ref $struct)
+  (struct.new_desc $struct
+   (global.get $null-desc)
+  )
+ )
+
  ;; PRIMARY:         (table $trapping-table 1 1 (ref $struct)
  ;; PRIMARY-TNH-NOT: (table $trapping-table 1 1 (ref $struct)
  (table $trapping-table 1 1 (ref $struct)
