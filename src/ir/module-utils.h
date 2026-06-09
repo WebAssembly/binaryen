@@ -76,7 +76,7 @@ void renameFunction(Module& wasm, Name oldName, Name newName);
 
 // Convenient iteration over imported/non-imported module elements
 
-template<typename T> inline void iterImportedMemories(Module& wasm, T visitor) {
+template<typename T> inline void iterImportedMemories(const Module& wasm, T visitor) {
   for (auto& import : wasm.memories) {
     if (import->imported()) {
       visitor(import.get());
@@ -84,7 +84,7 @@ template<typename T> inline void iterImportedMemories(Module& wasm, T visitor) {
   }
 }
 
-template<typename T> inline void iterDefinedMemories(Module& wasm, T visitor) {
+template<typename T> inline void iterDefinedMemories(const Module& wasm, T visitor) {
   for (auto& import : wasm.memories) {
     if (!import->imported()) {
       visitor(import.get());
@@ -93,7 +93,7 @@ template<typename T> inline void iterDefinedMemories(Module& wasm, T visitor) {
 }
 
 template<typename T>
-inline void iterMemorySegments(Module& wasm, Name memory, T visitor) {
+inline void iterMemorySegments(const Module& wasm, Name memory, T visitor) {
   for (auto& segment : wasm.dataSegments) {
     if (segment->isActive() && segment->memory == memory) {
       visitor(segment.get());
@@ -102,7 +102,7 @@ inline void iterMemorySegments(Module& wasm, Name memory, T visitor) {
 }
 
 template<typename T>
-inline void iterActiveDataSegments(Module& wasm, T visitor) {
+inline void iterActiveDataSegments(const Module& wasm, T visitor) {
   for (auto& segment : wasm.dataSegments) {
     if (segment->isActive()) {
       visitor(segment.get());
@@ -110,7 +110,7 @@ inline void iterActiveDataSegments(Module& wasm, T visitor) {
   }
 }
 
-template<typename T> inline void iterImportedTables(Module& wasm, T visitor) {
+template<typename T> inline void iterImportedTables(const Module& wasm, T visitor) {
   for (auto& import : wasm.tables) {
     if (import->imported()) {
       visitor(import.get());
@@ -118,7 +118,7 @@ template<typename T> inline void iterImportedTables(Module& wasm, T visitor) {
   }
 }
 
-template<typename T> inline void iterDefinedTables(Module& wasm, T visitor) {
+template<typename T> inline void iterDefinedTables(const Module& wasm, T visitor) {
   for (auto& import : wasm.tables) {
     if (!import->imported()) {
       visitor(import.get());
@@ -127,7 +127,7 @@ template<typename T> inline void iterDefinedTables(Module& wasm, T visitor) {
 }
 
 template<typename T>
-inline void iterTableSegments(Module& wasm, Name table, T visitor) {
+inline void iterTableSegments(const Module& wasm, Name table, T visitor) {
   // Just a precaution so that we don't iterate over passive elem segments by
   // accident
   assert(table.is() && "Table name must not be null");
@@ -140,7 +140,7 @@ inline void iterTableSegments(Module& wasm, Name table, T visitor) {
 }
 
 template<typename T>
-inline void iterActiveElementSegments(Module& wasm, T visitor) {
+inline void iterActiveElementSegments(const Module& wasm, T visitor) {
   for (auto& segment : wasm.elementSegments) {
     if (segment->isActive()) {
       visitor(segment.get());
@@ -148,7 +148,7 @@ inline void iterActiveElementSegments(Module& wasm, T visitor) {
   }
 }
 
-template<typename T> inline void iterImportedGlobals(Module& wasm, T visitor) {
+template<typename T> inline void iterImportedGlobals(const Module& wasm, T visitor) {
   for (auto& import : wasm.globals) {
     if (import->imported()) {
       visitor(import.get());
@@ -156,7 +156,7 @@ template<typename T> inline void iterImportedGlobals(Module& wasm, T visitor) {
   }
 }
 
-template<typename T> inline void iterDefinedGlobals(Module& wasm, T visitor) {
+template<typename T> inline void iterDefinedGlobals(const Module& wasm, T visitor) {
   for (auto& import : wasm.globals) {
     if (!import->imported()) {
       visitor(import.get());
@@ -165,7 +165,7 @@ template<typename T> inline void iterDefinedGlobals(Module& wasm, T visitor) {
 }
 
 template<typename T>
-inline void iterImportedFunctions(Module& wasm, T visitor) {
+inline void iterImportedFunctions(const Module& wasm, T visitor) {
   for (auto& import : wasm.functions) {
     if (import->imported()) {
       visitor(import.get());
@@ -173,7 +173,7 @@ inline void iterImportedFunctions(Module& wasm, T visitor) {
   }
 }
 
-template<typename T> inline void iterDefinedFunctions(Module& wasm, T visitor) {
+template<typename T> inline void iterDefinedFunctions(const Module& wasm, T visitor) {
   for (auto& import : wasm.functions) {
     if (!import->imported()) {
       visitor(import.get());
@@ -181,7 +181,7 @@ template<typename T> inline void iterDefinedFunctions(Module& wasm, T visitor) {
   }
 }
 
-template<typename T> inline void iterImportedTags(Module& wasm, T visitor) {
+template<typename T> inline void iterImportedTags(const Module& wasm, T visitor) {
   for (auto& import : wasm.tags) {
     if (import->imported()) {
       visitor(import.get());
@@ -189,7 +189,7 @@ template<typename T> inline void iterImportedTags(Module& wasm, T visitor) {
   }
 }
 
-template<typename T> inline void iterDefinedTags(Module& wasm, T visitor) {
+template<typename T> inline void iterDefinedTags(const Module& wasm, T visitor) {
   for (auto& import : wasm.tags) {
     if (!import->imported()) {
       visitor(import.get());
@@ -197,7 +197,7 @@ template<typename T> inline void iterDefinedTags(Module& wasm, T visitor) {
   }
 }
 
-template<typename T> inline void iterImports(Module& wasm, T visitor) {
+template<typename T> inline void iterImports(const Module& wasm, T visitor) {
   iterImportedMemories(wasm, visitor);
   iterImportedTables(wasm, visitor);
   iterImportedGlobals(wasm, visitor);
@@ -207,7 +207,7 @@ template<typename T> inline void iterImports(Module& wasm, T visitor) {
 
 // Iterates over all importable module items. The visitor provided should have
 // signature void(ExternalKind, Importable*).
-template<typename T> inline void iterImportable(Module& wasm, T visitor) {
+template<typename T> inline void iterImportable(const Module& wasm, T visitor) {
   for (auto& curr : wasm.functions) {
     if (curr->imported()) {
       visitor(ExternalKind::Function, curr.get());
@@ -237,7 +237,7 @@ template<typename T> inline void iterImportable(Module& wasm, T visitor) {
 
 // Iterates over all module items. The visitor provided should have signature
 // void(ModuleItemKind, Named*).
-template<typename T> inline void iterModuleItems(Module& wasm, T visitor) {
+template<typename T> inline void iterModuleItems(const Module& wasm, T visitor) {
   for (auto& curr : wasm.functions) {
     visitor(ModuleItemKind::Function, curr.get());
   }
@@ -381,7 +381,7 @@ template<typename T> struct CallGraphPropertyAnalysis {
         Module* module;
         T& info;
         Func work;
-      } mapper(&wasm, info, work);
+      } mapper(const_cast<Module*>(&wasm), info, work);
       mapper.walk(func->body);
     });
 
@@ -471,27 +471,27 @@ struct HeapTypeInfo {
 };
 
 InsertOrderedMap<HeapType, HeapTypeInfo> collectHeapTypeInfo(
-  Module& wasm,
+  const Module& wasm,
   WorldMode worldMode,
   TypeInclusion inclusion = TypeInclusion::AllTypes,
   VisibilityHandling visibility = VisibilityHandling::NoVisibility);
 
 // Helper function for collecting all the non-basic heap types used in the
 // module, i.e. the types that would appear in the type section.
-std::vector<HeapType> collectHeapTypes(Module& wasm);
+std::vector<HeapType> collectHeapTypes(const Module& wasm);
 
 // Get the types directly made public by imported or exported module items. For
 // example, the types of imported or exported globals or functions, but not
 // other types reachable from those types. Includes abstract heap types.
-std::vector<HeapType> getExposedPublicHeapTypes(Module& wasm);
+std::vector<HeapType> getExposedPublicHeapTypes(const Module& wasm);
 
 // Collect all the defined heap types visible on the module boundary that cannot
 // be changed, e.g. the defined types from getExposedPublicHeapTypes and those
 // they reach.
-std::vector<HeapType> getPublicHeapTypes(Module& wasm, WorldMode worldMode);
+std::vector<HeapType> getPublicHeapTypes(const Module& wasm, WorldMode worldMode);
 
 // All the defined heap types that are not public.
-std::vector<HeapType> getPrivateHeapTypes(Module& wasm, WorldMode worldMode);
+std::vector<HeapType> getPrivateHeapTypes(const Module& wasm, WorldMode worldMode);
 
 struct IndexedHeapTypes {
   std::vector<HeapType> types;
@@ -501,7 +501,7 @@ struct IndexedHeapTypes {
 // Similar to `collectHeapTypes`, but provides fast lookup of the index for each
 // type as well. Also orders the types to be valid and sorts the types by
 // frequency of use to minimize code size.
-IndexedHeapTypes getOptimizedIndexedHeapTypes(Module& wasm);
+IndexedHeapTypes getOptimizedIndexedHeapTypes(const Module& wasm);
 
 } // namespace wasm::ModuleUtils
 

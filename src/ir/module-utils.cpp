@@ -408,7 +408,7 @@ struct TypeInfos {
 struct CodeScanner : PostWalker<CodeScanner> {
   TypeInfos& info;
 
-  CodeScanner(Module& wasm, TypeInfos& info) : info(info) { setModule(&wasm); }
+  CodeScanner(const Module& wasm, TypeInfos& info) : info(info) { setModule(const_cast<Module*>(&wasm)); }
 
   void visitCallIndirect(CallIndirect* curr) { info.note(curr->heapType); }
   void visitCallRef(CallRef* curr) { info.note(curr->target->type); }
@@ -479,20 +479,20 @@ struct CodeScanner : PostWalker<CodeScanner> {
   }
 };
 
-void classifyTypeVisibility(Module& wasm,
+void classifyTypeVisibility(const Module& wasm,
                             InsertOrderedMap<HeapType, HeapTypeInfo>& types,
                             WorldMode worldMode);
 
 } // anonymous namespace
 
 InsertOrderedMap<HeapType, HeapTypeInfo>
-collectHeapTypeInfo(Module& wasm,
+collectHeapTypeInfo(const Module& wasm,
                     WorldMode worldMode,
                     TypeInclusion inclusion,
                     VisibilityHandling visibility) {
   // Collect module-level info.
   TypeInfos info;
-  CodeScanner(wasm, info).walkModuleCode(&wasm);
+  CodeScanner(wasm, info).walkModuleCode(const_cast<Module*>(&wasm));
   for (auto& curr : wasm.globals) {
     info.note(curr->type);
   }
@@ -508,7 +508,7 @@ collectHeapTypeInfo(Module& wasm,
 
   // Collect info from functions in parallel.
   ModuleUtils::ParallelFunctionAnalysis<TypeInfos, Immutable, InsertOrderedMap>
-    analysis(wasm, [&](Function* func, TypeInfos& info) {
+    analysis(const_cast<Module&>(wasm), [&](Function* func, TypeInfos& info) {
       info.note(func->type);
       for (auto type : func->vars) {
         info.note(type);
@@ -604,7 +604,7 @@ collectHeapTypeInfo(Module& wasm,
 
 namespace {
 
-void classifyTypeVisibility(Module& wasm,
+void classifyTypeVisibility(const Module& wasm,
                             InsertOrderedMap<HeapType, HeapTypeInfo>& types,
                             WorldMode worldMode) {
   for (auto type : getPublicHeapTypes(wasm, worldMode)) {
@@ -685,7 +685,7 @@ void setIndices(IndexedHeapTypes& indexedTypes) {
 
 } // anonymous namespace
 
-std::vector<HeapType> collectHeapTypes(Module& wasm) {
+std::vector<HeapType> collectHeapTypes(const Module& wasm) {
   auto info = collectHeapTypeInfo(wasm, WorldMode::Open);
   std::vector<HeapType> types;
   types.reserve(info.size());
@@ -695,7 +695,7 @@ std::vector<HeapType> collectHeapTypes(Module& wasm) {
   return types;
 }
 
-std::vector<HeapType> getExposedPublicHeapTypes(Module& wasm) {
+std::vector<HeapType> getExposedPublicHeapTypes(const Module& wasm) {
   // Look at the types of imports and exports to get an initial set of public
   // types.
   std::vector<HeapType> publicTypes;
@@ -764,7 +764,7 @@ std::vector<HeapType> getExposedPublicHeapTypes(Module& wasm) {
   return publicTypes;
 }
 
-std::vector<HeapType> getPublicHeapTypes(Module& wasm, WorldMode worldMode) {
+std::vector<HeapType> getPublicHeapTypes(const Module& wasm, WorldMode worldMode) {
   auto directlyExposed = getExposedPublicHeapTypes(wasm);
   auto transitivelyExposed = getTransitivelyReachable(
     directlyExposed, /*includeSupertypes=*/true, /*includeRecGroups=*/true);
@@ -778,7 +778,7 @@ std::vector<HeapType> getPublicHeapTypes(Module& wasm, WorldMode worldMode) {
   return publicTypes;
 }
 
-std::vector<HeapType> getPrivateHeapTypes(Module& wasm, WorldMode worldMode) {
+std::vector<HeapType> getPrivateHeapTypes(const Module& wasm, WorldMode worldMode) {
   auto info = collectHeapTypeInfo(wasm,
                                   worldMode,
                                   TypeInclusion::UsedIRTypes,
@@ -793,7 +793,7 @@ std::vector<HeapType> getPrivateHeapTypes(Module& wasm, WorldMode worldMode) {
   return types;
 }
 
-IndexedHeapTypes getOptimizedIndexedHeapTypes(Module& wasm) {
+IndexedHeapTypes getOptimizedIndexedHeapTypes(const Module& wasm) {
   auto counts =
     collectHeapTypeInfo(wasm, WorldMode::Open, TypeInclusion::BinaryTypes);
 
