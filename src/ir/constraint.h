@@ -32,17 +32,16 @@
 
 namespace wasm::constraint {
 
-// A value in a constraint, either a local index or literal value.
-struct Value : public std::variant<Index, Literal> {
-  bool operator==(const Value&) const = default;
+// A term in a constraint, either a local index or literal value.
+struct Term : public std::variant<Index, Literal> {
+  bool operator==(const Term&) const = default;
 };
 
 // A constraint: some operation and some value, like "is equal to 17" or "is
 // less than local 6".
 struct Constraint {
-  // The operation relating two values, and the values.
   Abstract::Op op = Abstract::Invalid;
-  Value value;
+  Term term;
 
   bool operator==(const Constraint&) const = default;
 

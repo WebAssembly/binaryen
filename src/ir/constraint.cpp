@@ -35,8 +35,8 @@ std::optional<Result> checkPair(const Constraint& a, const Constraint& b) {
   }
 
   // Comparisons of two constants.
-  if (auto* aConstant = std::get_if<Literal>(&a.value)) {
-    if (auto* bConstant = std::get_if<Literal>(&b.value)) {
+  if (auto* aConstant = std::get_if<Literal>(&a.term)) {
+    if (auto* bConstant = std::get_if<Literal>(&b.term)) {
       switch (a.op) {
         case Abstract::Eq: {
           switch (b.op) {
