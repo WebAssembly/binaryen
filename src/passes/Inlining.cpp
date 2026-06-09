@@ -246,6 +246,7 @@ struct FunctionInfoScanner
     auto& info = infos[curr->name];
 
     info.size = Measurer::measure(curr->body);
+    info.toolchainInlineHint = curr->funcAnnotations.toolchainInline;
 
     // If the body is a simple instruction with roughly the same encoded size as
     // a `call` instruction, and arguments are function locals read in order,
