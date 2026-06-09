@@ -165,6 +165,9 @@ Table* copyTable(const Table* table, Module& out) {
   ret->initial = table->initial;
   ret->max = table->max;
   ret->addressType = table->addressType;
+  if (table->init) {
+    ret->init = ExpressionManipulator::copy(table->init, out);
+  }
 
   return out.addTable(std::move(ret));
 }
