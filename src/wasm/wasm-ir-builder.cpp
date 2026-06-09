@@ -2866,7 +2866,7 @@ void IRBuilder::applyAnnotations(Expression* expr,
 
   if (annotation.toolchainInline) {
     assert(func);
-    func->codeAnnotations[expr].toolchainInline = true;
+    func->codeAnnotations[expr].toolchainInline = annotation.toolchainInline;
   }
 }
 
