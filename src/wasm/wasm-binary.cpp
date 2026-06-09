@@ -5632,7 +5632,7 @@ void WasmBinaryReader::readBranchHints(size_t payloadLen) {
 
 // Reads a simple i7 hint, in the range [0..127].
 #define READ_I7_HINT(code, field)                                              \
-  readExpressionHints(, payloadLen, [&](CodeAnnotation& annotation) {          \
+  readExpressionHints(code, payloadLen, [&](CodeAnnotation& annotation) {      \
     auto size = getU32LEB();                                                   \
     if (size != 1) {                                                           \
       throwError("bad InlineHint size");                                       \
