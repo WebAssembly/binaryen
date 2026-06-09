@@ -2482,12 +2482,6 @@ public:
   bool noFullInline = false;
   bool noPartialInline = false;
 
-  // Whether to always inline a function, despite other flags like optimizing
-  // for size (except for things that prevent inlining for correctness reasons,
-  // like infinite recursion).
-  bool alwaysFullInline = false;
-  // TODO: alwaysPartialInline, if that is useful?
-
   // Methods
   Signature getSig() { return type.getHeapType().getSignature(); }
   Type getParams() { return getSig().params; }
