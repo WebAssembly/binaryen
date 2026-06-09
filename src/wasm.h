@@ -2381,7 +2381,7 @@ struct CodeAnnotation {
   // An inlining hint at the toolchain level, in contrast to inline_, above,
   // which is for VMs. (E.g., one may want to not inline at the toolchain level
   // to keep size small, and tell VMs to inline at runtime.)
-  std::optional<uint8_t> toolchainInline = false;
+  std::optional<uint8_t> toolchainInline;
 
   bool operator==(const CodeAnnotation& other) const {
     return equalOnSemanticsPreserving(other) && equalOnSemanticsAltering(other);

@@ -114,6 +114,7 @@ struct FunctionInfo {
   bool usedGlobally;
   TrivialInstruction trivialInstruction;
   InliningMode inliningMode;
+  std::optional<uint8_t> toolchainInlineHint;
 
   FunctionInfo() { clear(); }
 
@@ -126,6 +127,7 @@ struct FunctionInfo {
     usedGlobally = false;
     trivialInstruction = TrivialInstruction::NotTrivial;
     inliningMode = InliningMode::Unknown;
+    toolchainInlineHint = std::nullopt;
   }
 
   // Provide an explicit = operator as the |refs| field lacks one by default.
@@ -138,6 +140,7 @@ struct FunctionInfo {
     usedGlobally = other.usedGlobally;
     trivialInstruction = other.trivialInstruction;
     inliningMode = other.inliningMode;
+    toolchainInlineHint = other.toolchainInlineHint;
     return *this;
   }
 
@@ -147,6 +150,13 @@ struct FunctionInfo {
     // FIXME https://github.com/WebAssembly/binaryen/issues/3634
     if (hasTryDelegate) {
       return false;
+    }
+    // Follow the toolchain hint, if present.
+    if (toolchainInlineHint == CodeAnnotation::NeverInline) {
+      return false;
+    }
+    if (toolchainInlineHint == CodeAnnotation::AlwaysInline) {
+      return true;
     }
     // If it's small enough that we always want to inline such things, do so.
     if (size <= options.inlining.alwaysInlineMaxSize) {
