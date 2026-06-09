@@ -2400,9 +2400,10 @@ struct CodeAnnotation {
 
 class Function : public Importable {
 public:
+  Function() : type(Signature(), NonNullable, imported() ? Inexact : Exact) {}
+
   // A non-nullable reference to a function type. Exact for defined functions.
-  // TODO: Inexact for imported functions.
-  Type type = Type(Signature(), NonNullable, Exact);
+  Type type;
   IRProfile profile = IRProfile::Normal;
   std::vector<Type> vars; // non-param locals
 
