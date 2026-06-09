@@ -1424,8 +1424,8 @@ struct AnnotationParserCtx {
     };
 
     // Apply the last inline hints, if valid.
-    ret.inline_ = parseI7Hint(inlineHint);
-    ret.toolchainInline = parseI7Hint(toolchainInlineHint);
+    ret.inline_ = parseI7Hint(inlineHint, "InlineHint");
+    ret.toolchainInline = parseI7Hint(toolchainInlineHint, "Toolchain InlineHint");
 
     return ret;
   }
