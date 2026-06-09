@@ -2838,6 +2838,17 @@ void PrintSExpression::printCodeAnnotations(const CodeAnnotation& annotation) {
     restoreNormalColor(o);
     doIndent(o, indent);
   }
+  if (annotation.toolchainInline) {
+    Colors::grey(o);
+    std::ofstream saved;
+    saved.copyfmt(o);
+    o << "(@" << Annotations::ToolchainInlineHint << " \"\\" << std::hex
+      << std::setfill('0') << std::setw(2) << int(*annotation.toolchainInline)
+      << "\")\n";
+    o.copyfmt(saved);
+    restoreNormalColor(o);
+    doIndent(o, indent);
+  }
 }
 
 void PrintSExpression::printExpressionContents(Expression* curr) {
