@@ -2843,7 +2843,7 @@ void PrintSExpression::printCodeAnnotations(const CodeAnnotation& annotation) {
     std::ofstream saved;
     saved.copyfmt(o);
     o << "(@" << Annotations::ToolchainInlineHint << " \"\\" << std::hex
-      << std::setfill('0') << std::setw(2) << int(*annotation.inline_)
+      << std::setfill('0') << std::setw(2) << int(*annotation.toolchainInline)
       << "\")\n";
     o.copyfmt(saved);
     restoreNormalColor(o);

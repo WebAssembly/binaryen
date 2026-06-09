@@ -1361,6 +1361,7 @@ struct AnnotationParserCtx {
     // overrides the others.
     const Annotation* branchHint = nullptr;
     const Annotation* inlineHint = nullptr;
+    const Annotation* toolchainInlineHint = nullptr;
     for (auto& a : annotations) {
       if (a.kind == Annotations::BranchHint) {
         branchHint = &a;
@@ -1373,7 +1374,7 @@ struct AnnotationParserCtx {
       } else if (a.kind == Annotations::IdempotentHint) {
         ret.idempotent = true;
       } else if (a.kind == Annotations::ToolchainInlineHint) {
-        ret.toolchainInline = true;
+        toolchainInlineHint = &a;
       }
     }
 
@@ -1397,25 +1398,34 @@ struct AnnotationParserCtx {
       }
     }
 
-    // Apply the last inline hint, if valid.
-    if (inlineHint) {
-      Lexer lexer(inlineHint->contents);
+    auto parseI7Hint = [&](Annotation* hint, const char* name) -> std::optional<uint8_t> {
+      if (!hint) {
+        return {};
+      }
+
+      Lexer lexer(hint->contents);
       if (lexer.empty()) {
-        std::cerr << "warning: empty InlineHint\n";
+        std::cerr << "warning: empty " << name << "\n";
       } else {
         auto str = lexer.takeString();
         if (!str || str->size() != 1) {
-          std::cerr << "warning: invalid InlineHint string\n";
+          std::cerr << "warning: invalid " << name << " string\n";
         } else {
           uint8_t value = (*str)[0];
           if (value > 127) {
-            std::cerr << "warning: invalid InlineHint value\n";
+            std::cerr << "warning: invalid " << name << " value\n";
           } else {
-            ret.inline_ = value;
+            return value;
           }
         }
       }
-    }
+
+      return {};
+    };
+
+    // Apply the last inline hints, if valid.
+    ret.inline_ = parseI7Hint(inlineHint);
+    ret.toolchainInline = parseI7Hint(toolchainInlineHint);
 
     return ret;
   }
