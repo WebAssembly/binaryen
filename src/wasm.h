@@ -2347,10 +2347,7 @@ struct CodeAnnotation {
   std::optional<bool> branchLikely;
 
   // Compilation Hints proposal.
-  enum {
-    NeverInline = 0,
-    AlwaysInline = 127
-  };
+  enum { NeverInline = 0, AlwaysInline = 127 };
   std::optional<uint8_t> inline_;
 
   // Toolchain hints, see
