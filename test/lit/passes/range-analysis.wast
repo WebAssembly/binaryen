@@ -59,7 +59,7 @@
     )
   )
 
-  ;; CHECK:      (func $multi (type $0)
+  ;; CHECK:      (func $multi-local (type $0)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (local $y i32)
   ;; CHECK-NEXT:  (local.set $x
@@ -87,7 +87,7 @@
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $multi
+  (func $multi-local
     (local $x i32)
     (local $y i32)
     ;; x is 10, y is 20
@@ -131,6 +131,75 @@
       (i32.eq
         (local.get $y)
         (i32.const 20)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $multi-block (type $1) (param $param i32)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (i32.const 10)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (local.get $param)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (else
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.eq
+  ;; CHECK-NEXT:    (local.get $param)
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $multi-block (param $param i32)
+    (local $x i32)
+    (local.set $x
+      (i32.const 10)
+    )
+    ;; We can infer into these basic blocks.
+    (if
+      (local.get $param)
+      (then
+        (drop
+          (i32.eq
+            (local.get $x)
+            (i32.const 10)
+          )
+        )
+      )
+      (else
+        (drop
+          (i32.ne           ;; also test a not-equals here; result is 0
+            (local.get $x)
+            (i32.const 10)
+          )
+        )
+      )
+    )
+    ;; We can infer after the merge.
+    (drop
+      (i32.eq
+        (local.get $x)
+        (i32.const 10)
+      )
+    )
+    ;; We can infer nothing for the param.
+    (drop
+      (i32.eq
+        (local.get $param)
+        (i32.const 10)
       )
     )
   )
