@@ -156,7 +156,7 @@ std::optional<LocalConstraint> LocalConstraint::parse(Expression* curr) {
   // The operation must be one we recognize.
   for (auto op : {Abstract::Eq, Abstract::Ne}) {
     if (Abstract::getBinary(binary->type, op) == binary->op) {
-      auto value = rightGet ? Value(rightGet->index) : Value(*rightConstant);
+      auto value = rightGet ? Term(rightGet->index) : Term(*rightConstant);
       return LocalConstraint{leftGet->index, Constraint{op, value}};
     }
   }
