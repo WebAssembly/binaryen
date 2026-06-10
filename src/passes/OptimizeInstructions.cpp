@@ -3415,6 +3415,12 @@ private:
           if (canReorder(ifTrue, c)) {
             return builder.makeSequence(builder.makeDrop(c), ifTrue);
           }
+          // We generally skip optimizing unreachable selects, but an
+          // optimization on the children might have made them newly
+          // unreachable. We cannot create a scratch local in that case.
+          if (!ifTrue->type.isConcrete()) {
+            return nullptr;
+          }
           auto scratch = builder.addVar(getFunction(), ifTrue->type);
           return builder.makeBlock(
             {builder.makeLocalSet(scratch, ifTrue),

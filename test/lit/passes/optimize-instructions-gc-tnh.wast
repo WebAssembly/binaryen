@@ -1056,4 +1056,39 @@
   (func $get-null (result (ref null none))
     (unreachable)
   )
+
+  ;; TNH:      (func $select-uninhabitable-arms (type $void)
+  ;; TNH-NEXT:  (drop
+  ;; TNH-NEXT:   (select
+  ;; TNH-NEXT:    (unreachable)
+  ;; TNH-NEXT:    (unreachable)
+  ;; TNH-NEXT:    (call $get-i32)
+  ;; TNH-NEXT:   )
+  ;; TNH-NEXT:  )
+  ;; TNH-NEXT: )
+  ;; NO_TNH:      (func $select-uninhabitable-arms (type $void)
+  ;; NO_TNH-NEXT:  (drop
+  ;; NO_TNH-NEXT:   (select
+  ;; NO_TNH-NEXT:    (unreachable)
+  ;; NO_TNH-NEXT:    (unreachable)
+  ;; NO_TNH-NEXT:    (call $get-i32)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT: )
+  (func $select-uninhabitable-arms
+    (drop
+      ;; This select is not unreachable, so we will optimize it.
+      (select (result (ref nofunc))
+        ;; But the arms will be optimized to unreachable first. We should not
+        ;; crash on trying to create an unreachable scratch local here.
+        (ref.as_non_null
+          (ref.null nofunc)
+        )
+        (ref.as_non_null
+          (ref.null nofunc)
+        )
+        (call $get-i32)
+      )
+    )
+  )
 )
