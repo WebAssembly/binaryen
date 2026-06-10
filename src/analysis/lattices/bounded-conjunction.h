@@ -238,6 +238,13 @@ private:
     if (lattice.compare(e, lattice.getBottom()) == EQUAL) {
       return false;
     }
+    if constexpr (requires {
+                    { lattice.getTop() } -> std::same_as<typename L::Element>;
+                  }) {
+      if (lattice.compare(e, lattice.getTop()) == EQUAL) {
+        return true;
+      }
+    }
 
     bool add = true;
     for (auto it = vec.begin(); it != vec.end();) {
