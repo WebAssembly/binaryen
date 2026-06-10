@@ -503,5 +503,3 @@
   )
 )
 
-;; TODO eqz
-;; todo -split
