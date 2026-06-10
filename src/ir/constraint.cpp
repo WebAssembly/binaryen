@@ -162,7 +162,9 @@ std::optional<LocalConstraint> LocalConstraint::parse(Expression* curr) {
     return {};
   };
 
-  auto parseBinary = [&](Abstract::Op op, Expression* left, Expression* right) -> std::optional<LocalConstraint> {
+  auto parseBinary = [&](Abstract::Op op,
+                         Expression* left,
+                         Expression* right) -> std::optional<LocalConstraint> {
     // The left must be a get.
     if (auto* get = left->dynCast<LocalGet>()) {
       // The right can be any term.
