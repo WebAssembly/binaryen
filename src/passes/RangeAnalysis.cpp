@@ -90,6 +90,7 @@ struct RangeAnalysis
   void visitUnary(Unary* curr) { addAction(); } // XXX needed?
   void visitBinary(Binary* curr) { addAction(); }
   void visitRefEq(RefEq* curr) { addAction(); }
+  void visitRefIsNull(RefIsNull* curr) { addAction(); }
 
 #if 0
   // Track the branches we reason about. CFGWalker builds a CFG, and we want to

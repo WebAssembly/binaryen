@@ -448,9 +448,7 @@
   ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (drop
-  ;; OPTIN-NEXT:   (ref.is_null
-  ;; OPTIN-NEXT:    (local.get $eq)
-  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:   (i32.const 1)
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT: )
   (func $default-var (param $param i32)
