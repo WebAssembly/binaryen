@@ -35,12 +35,15 @@ namespace wasm {
 
 template<typename SubType, typename VisitorType = Visitor<SubType>>
 struct LinearExecutionWalker : public PostWalker<SubType, VisitorType> {
+  static constexpr bool IsConst = internal::GetIsConst<VisitorType>::value;
+  template<typename T> using C = MaybeConst<IsConst, T>;
+
   LinearExecutionWalker() = default;
 
   // subclasses should implement this
-  void noteNonLinear(Expression* curr) { abort(); }
+  void noteNonLinear(C<Expression>* curr) { abort(); }
 
-  static void doNoteNonLinear(SubType* self, Expression** currp) {
+  static void doNoteNonLinear(SubType* self, C<Expression>** currp) {
     self->noteNonLinear(*currp);
   }
 
@@ -77,8 +80,8 @@ struct LinearExecutionWalker : public PostWalker<SubType, VisitorType> {
   // only do a simple postorder walk on the IR, no CFG is constructed, etc.).
   bool connectAdjacentBlocks = false;
 
-  static void scan(SubType* self, Expression** currp) {
-    Expression* curr = *currp;
+  static void scan(SubType* self, C<Expression>** currp) {
+    C<Expression>* curr = *currp;
 
     auto handleCall = [&](bool isReturn, bool refutesThrowEffect) {
       bool mayThrow = !self->getModule() ||
@@ -103,10 +106,10 @@ struct LinearExecutionWalker : public PostWalker<SubType, VisitorType> {
         WASM_UNREACHABLE("bad id");
       case Expression::Id::BlockId: {
         self->pushTask(SubType::doVisitBlock, currp);
-        if (curr->cast<Block>()->name.is()) {
+        if (curr->template cast<Block>()->name.is()) {
           self->pushTask(SubType::doNoteNonLinear, currp);
         }
-        auto& list = curr->cast<Block>()->list;
+        auto& list = curr->template cast<Block>()->list;
         for (int i = int(list.size()) - 1; i >= 0; i--) {
           self->pushTask(SubType::scan, &list[i]);
         }
@@ -115,24 +118,24 @@ struct LinearExecutionWalker : public PostWalker<SubType, VisitorType> {
       case Expression::Id::IfId: {
         self->pushTask(SubType::doVisitIf, currp);
         self->pushTask(SubType::doNoteNonLinear, currp);
-        self->maybePushTask(SubType::scan, &curr->cast<If>()->ifFalse);
+        self->maybePushTask(SubType::scan, &curr->template cast<If>()->ifFalse);
         self->pushTask(SubType::doNoteNonLinear, currp);
-        self->pushTask(SubType::scan, &curr->cast<If>()->ifTrue);
+        self->pushTask(SubType::scan, &curr->template cast<If>()->ifTrue);
         if (!self->connectAdjacentBlocks) {
           self->pushTask(SubType::doNoteNonLinear, currp);
         }
-        self->pushTask(SubType::scan, &curr->cast<If>()->condition);
+        self->pushTask(SubType::scan, &curr->template cast<If>()->condition);
         break;
       }
       case Expression::Id::LoopId: {
         self->pushTask(SubType::doVisitLoop, currp);
-        self->pushTask(SubType::scan, &curr->cast<Loop>()->body);
+        self->pushTask(SubType::scan, &curr->template cast<Loop>()->body);
         self->pushTask(SubType::doNoteNonLinear, currp);
         break;
       }
       case Expression::Id::BreakId: {
         self->pushTask(SubType::doVisitBreak, currp);
-        auto* br = curr->cast<Break>();
+        auto* br = curr->template cast<Break>();
         // If there is no condition then we note non-linearity as the code after
         // us is unreachable anyhow (we do the same for Switch, Return, etc.).
         // If there is a condition, then we note or do not note depending on
@@ -147,18 +150,18 @@ struct LinearExecutionWalker : public PostWalker<SubType, VisitorType> {
       case Expression::Id::SwitchId: {
         self->pushTask(SubType::doVisitSwitch, currp);
         self->pushTask(SubType::doNoteNonLinear, currp);
-        self->pushTask(SubType::scan, &curr->cast<Switch>()->condition);
-        self->maybePushTask(SubType::scan, &curr->cast<Switch>()->value);
+        self->pushTask(SubType::scan, &curr->template cast<Switch>()->condition);
+        self->maybePushTask(SubType::scan, &curr->template cast<Switch>()->value);
         break;
       }
       case Expression::Id::ReturnId: {
         self->pushTask(SubType::doVisitReturn, currp);
         self->pushTask(SubType::doNoteNonLinear, currp);
-        self->maybePushTask(SubType::scan, &curr->cast<Return>()->value);
+        self->maybePushTask(SubType::scan, &curr->template cast<Return>()->value);
         break;
       }
       case Expression::Id::CallId: {
-        auto* call = curr->cast<Call>();
+        auto* call = curr->template cast<Call>();
 
         bool refutesThrowEffect = false;
         if (self->getModule()) {
@@ -174,7 +177,7 @@ struct LinearExecutionWalker : public PostWalker<SubType, VisitorType> {
         break;
       }
       case Expression::Id::CallRefId: {
-        auto* callRef = curr->cast<CallRef>();
+        auto* callRef = curr->template cast<CallRef>();
 
         bool refutesThrowEffect = [&]() {
           if (!self->getModule()) {
@@ -197,7 +200,7 @@ struct LinearExecutionWalker : public PostWalker<SubType, VisitorType> {
         break;
       }
       case Expression::Id::CallIndirectId: {
-        auto* callIndirect = curr->cast<CallIndirect>();
+        auto* callIndirect = curr->template cast<CallIndirect>();
 
         bool refutesThrowEffect = false;
         if (self->getModule()) {
@@ -213,24 +216,24 @@ struct LinearExecutionWalker : public PostWalker<SubType, VisitorType> {
       case Expression::Id::TryId: {
         self->pushTask(SubType::doVisitTry, currp);
         self->pushTask(SubType::doNoteNonLinear, currp);
-        auto& list = curr->cast<Try>()->catchBodies;
+        auto& list = curr->template cast<Try>()->catchBodies;
         for (int i = int(list.size()) - 1; i >= 0; i--) {
           self->pushTask(SubType::scan, &list[i]);
           self->pushTask(SubType::doNoteNonLinear, currp);
         }
-        self->pushTask(SubType::scan, &curr->cast<Try>()->body);
+        self->pushTask(SubType::scan, &curr->template cast<Try>()->body);
         break;
       }
       case Expression::Id::TryTableId: {
         self->pushTask(SubType::doVisitTryTable, currp);
         self->pushTask(SubType::doNoteNonLinear, currp);
-        self->pushTask(SubType::scan, &curr->cast<TryTable>()->body);
+        self->pushTask(SubType::scan, &curr->template cast<TryTable>()->body);
         break;
       }
       case Expression::Id::ThrowId: {
         self->pushTask(SubType::doVisitThrow, currp);
         self->pushTask(SubType::doNoteNonLinear, currp);
-        auto& list = curr->cast<Throw>()->operands;
+        auto& list = curr->template cast<Throw>()->operands;
         for (int i = int(list.size()) - 1; i >= 0; i--) {
           self->pushTask(SubType::scan, &list[i]);
         }
@@ -251,7 +254,7 @@ struct LinearExecutionWalker : public PostWalker<SubType, VisitorType> {
         if (!self->connectAdjacentBlocks) {
           self->pushTask(SubType::doNoteNonLinear, currp);
         }
-        self->pushTask(SubType::scan, &curr->cast<BrOn>()->ref);
+        self->pushTask(SubType::scan, &curr->template cast<BrOn>()->ref);
         break;
       }
       default: {

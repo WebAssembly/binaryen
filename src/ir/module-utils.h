@@ -273,14 +273,14 @@ template<typename T,
          Mutability Mut = Immutable,
          template<typename, typename> class MapT = DefaultMap>
 struct ParallelFunctionAnalysis {
-  Module& wasm;
+  MaybeConst<Mut == Immutable, Module>& wasm;
 
   using Map = MapT<Function*, T>;
   Map map;
 
   using Func = std::function<void(Function*, T&)>;
 
-  ParallelFunctionAnalysis(Module& wasm, Func work) : wasm(wasm) {
+  ParallelFunctionAnalysis(MaybeConst<Mut == Immutable, Module>& wasm, Func work) : wasm(wasm) {
     // Fill in the map as we operate on it in parallel (each function to its own
     // entry).
     for (auto& func : wasm.functions) {
@@ -303,30 +303,32 @@ struct ParallelFunctionAnalysis {
       }
     }
 
-    struct Mapper : public WalkerPass<PostWalker<Mapper>> {
+    struct Mapper : public WalkerPass<PostWalker<Mapper, Visitor<Mapper, void, Mut == Immutable>>> {
       bool isFunctionParallel() override { return true; }
-      bool modifiesBinaryenIR() override { return Mut; }
+      bool modifiesBinaryenIR() override { return Mut == Mutable; }
 
-      Mapper(Module& module, Map& map, Func work)
+      Mapper(MaybeConst<Mut == Immutable, Module>& module, Map& map, Func work)
         : module(module), map(map), work(work) {}
 
       std::unique_ptr<Pass> create() override {
         return std::make_unique<Mapper>(module, map, work);
       }
 
-      void doWalkFunction(Function* curr) {
-        assert(map.contains(curr));
-        work(curr, map[curr]);
+      void doWalkFunction(MaybeConst<Mut == Immutable, Function>* curr) {
+        auto* mutableCurr = const_cast<Function*>(curr);
+        assert(map.contains(mutableCurr));
+        work(mutableCurr, map[mutableCurr]);
       }
 
     private:
-      Module& module;
+      MaybeConst<Mut == Immutable, Module>& module;
       Map& map;
       Func work;
     };
 
     PassRunner runner(&wasm);
-    Mapper(wasm, map, work).run(&runner, &wasm);
+    runner.add(std::make_unique<Mapper>(wasm, map, work));
+    runner.run();
   }
 };
 

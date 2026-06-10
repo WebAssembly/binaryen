@@ -1616,11 +1616,11 @@ struct TNHInfo {
   std::unordered_map<Expression*, PossibleContents> inferences;
 };
 
-class TNHOracle : public ModuleUtils::ParallelFunctionAnalysis<TNHInfo> {
+class TNHOracle : public ModuleUtils::ParallelFunctionAnalysis<TNHInfo, Mutable> {
   const PassOptions& options;
 
 public:
-  using Parent = ModuleUtils::ParallelFunctionAnalysis<TNHInfo>;
+  using Parent = ModuleUtils::ParallelFunctionAnalysis<TNHInfo, Mutable>;
   TNHOracle(Module& wasm, const PassOptions& options)
     : Parent(wasm,
              [this, &options](Function* func, TNHInfo& info) {

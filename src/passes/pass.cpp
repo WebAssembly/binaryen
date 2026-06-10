@@ -1012,6 +1012,9 @@ void PassRunner::clear() { passes.clear(); }
 
 void PassRunner::runPass(Pass* pass) {
   assert(!pass->isFunctionParallel());
+  if (isConstModule) {
+    assert(!pass->modifiesBinaryenIR() && "Cannot run a mutating pass on a const module");
+  }
 
   if (options.passesToSkip.contains(pass->name)) {
     return;
@@ -1027,6 +1030,9 @@ void PassRunner::runPass(Pass* pass) {
 
 void PassRunner::runPassOnFunction(Pass* pass, Function* func) {
   assert(pass->isFunctionParallel());
+  if (isConstModule) {
+    assert(!pass->modifiesBinaryenIR() && "Cannot run a mutating pass on a const module");
+  }
 
   if (options.passesToSkip.contains(pass->name)) {
     return;

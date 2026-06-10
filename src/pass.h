@@ -290,10 +290,15 @@ struct PassRunner {
   MixedArena* allocator;
   std::vector<std::unique_ptr<Pass>> passes;
   PassOptions options;
+  bool isConstModule = false;
 
   PassRunner(Module* wasm) : wasm(wasm), allocator(&wasm->allocator) {}
   PassRunner(Module* wasm, PassOptions options)
     : wasm(wasm), allocator(&wasm->allocator), options(options) {}
+    
+  PassRunner(const Module* wasm) : wasm(const_cast<Module*>(wasm)), allocator(&const_cast<Module*>(wasm)->allocator), isConstModule(true) {}
+  PassRunner(const Module* wasm, PassOptions options)
+    : wasm(const_cast<Module*>(wasm)), allocator(&const_cast<Module*>(wasm)->allocator), options(options), isConstModule(true) {}
 
   // no copying, we control |passes|
   PassRunner(const PassRunner&) = delete;

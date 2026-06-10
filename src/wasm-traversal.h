@@ -34,38 +34,48 @@
 
 namespace wasm {
 
+namespace internal {
+template<typename T, typename = void> struct GetIsConst { static constexpr bool value = false; };
+template<typename T> struct GetIsConst<T, std::void_t<decltype(T::IsConst)>> { static constexpr bool value = T::IsConst; };
+}
+
+template<bool IsConstVisitor, typename T>
+using MaybeConst = std::conditional_t<IsConstVisitor, const T, T>;
+
 // A generic visitor, defaulting to doing nothing on each visit
 
-template<typename SubType, typename ReturnType_ = void> struct Visitor {
+template<typename SubType, typename ReturnType_ = void, bool IsConstVisitor = false> struct Visitor {
   // Capture the parameter in something we can access later.
   using ReturnType = ReturnType_;
+  static constexpr bool IsConst = IsConstVisitor;
+  template<typename T> using C = MaybeConst<IsConstVisitor, T>;
 
   // Expression visitors
 #define DELEGATE(CLASS_TO_VISIT)                                               \
-  ReturnType visit##CLASS_TO_VISIT(CLASS_TO_VISIT* curr) {                     \
+  ReturnType visit##CLASS_TO_VISIT(C<CLASS_TO_VISIT>* curr) {                     \
     return ReturnType();                                                       \
   }
 #include "wasm-delegations.def"
 
   // Module-level visitors
-  ReturnType visitExport(Export* curr) { return ReturnType(); }
-  ReturnType visitGlobal(Global* curr) { return ReturnType(); }
-  ReturnType visitFunction(Function* curr) { return ReturnType(); }
-  ReturnType visitTable(Table* curr) { return ReturnType(); }
-  ReturnType visitElementSegment(ElementSegment* curr) { return ReturnType(); }
-  ReturnType visitMemory(Memory* curr) { return ReturnType(); }
-  ReturnType visitDataSegment(DataSegment* curr) { return ReturnType(); }
-  ReturnType visitTag(Tag* curr) { return ReturnType(); }
-  ReturnType visitModule(Module* curr) { return ReturnType(); }
+  ReturnType visitExport(C<Export>* curr) { return ReturnType(); }
+  ReturnType visitGlobal(C<Global>* curr) { return ReturnType(); }
+  ReturnType visitFunction(C<Function>* curr) { return ReturnType(); }
+  ReturnType visitTable(C<Table>* curr) { return ReturnType(); }
+  ReturnType visitElementSegment(C<ElementSegment>* curr) { return ReturnType(); }
+  ReturnType visitMemory(C<Memory>* curr) { return ReturnType(); }
+  ReturnType visitDataSegment(C<DataSegment>* curr) { return ReturnType(); }
+  ReturnType visitTag(C<Tag>* curr) { return ReturnType(); }
+  ReturnType visitModule(C<Module>* curr) { return ReturnType(); }
 
-  ReturnType visit(Expression* curr) {
+  ReturnType visit(C<Expression>* curr) {
     assert(curr);
 
     switch (curr->_id) {
 #define DELEGATE(CLASS_TO_VISIT)                                               \
   case Expression::Id::CLASS_TO_VISIT##Id:                                     \
     return static_cast<SubType*>(this)->visit##CLASS_TO_VISIT(                 \
-      static_cast<CLASS_TO_VISIT*>(curr))
+      static_cast<C<CLASS_TO_VISIT>*>(curr))
 
 #include "wasm-delegations.def"
 
@@ -77,14 +87,15 @@ template<typename SubType, typename ReturnType_ = void> struct Visitor {
 
 // A visitor which must be overridden for each visitor that is reached.
 
-template<typename SubType, typename ReturnType = void>
-struct OverriddenVisitor : public Visitor<SubType, ReturnType> {
+template<typename SubType, typename ReturnType = void, bool IsConstVisitor = false>
+struct OverriddenVisitor : public Visitor<SubType, ReturnType, IsConstVisitor> {
+  template<typename T> using C = MaybeConst<IsConstVisitor, T>;
 // Expression visitors, which must be overridden
 #define DELEGATE(CLASS_TO_VISIT)                                               \
-  ReturnType visit##CLASS_TO_VISIT(CLASS_TO_VISIT* curr) {                     \
+  ReturnType visit##CLASS_TO_VISIT(C<CLASS_TO_VISIT>* curr) {                     \
     static_assert(                                                             \
       &SubType::visit##CLASS_TO_VISIT !=                                       \
-        &OverriddenVisitor<SubType, ReturnType>::visit##CLASS_TO_VISIT,        \
+        &OverriddenVisitor<SubType, ReturnType, IsConstVisitor>::visit##CLASS_TO_VISIT,        \
       "Derived class must implement visit" #CLASS_TO_VISIT);                   \
     WASM_UNREACHABLE("Derived class must implement visit" #CLASS_TO_VISIT);    \
   }
@@ -95,14 +106,15 @@ struct OverriddenVisitor : public Visitor<SubType, ReturnType> {
 // Visit with a single unified visitor, called on every node, instead of
 // separate visit* per node
 
-template<typename SubType, typename ReturnType = void>
-struct UnifiedExpressionVisitor : public Visitor<SubType, ReturnType> {
+template<typename SubType, typename ReturnType = void, bool IsConstVisitor = false>
+struct UnifiedExpressionVisitor : public Visitor<SubType, ReturnType, IsConstVisitor> {
+  template<typename T> using C = MaybeConst<IsConstVisitor, T>;
   // called on each node
-  ReturnType visitExpression(Expression* curr) { return ReturnType(); }
+  ReturnType visitExpression(C<Expression>* curr) { return ReturnType(); }
 
   // redirects
 #define DELEGATE(CLASS_TO_VISIT)                                               \
-  ReturnType visit##CLASS_TO_VISIT(CLASS_TO_VISIT* curr) {                     \
+  ReturnType visit##CLASS_TO_VISIT(C<CLASS_TO_VISIT>* curr) {                     \
     return static_cast<SubType*>(this)->visitExpression(curr);                 \
   }
 
@@ -118,12 +130,16 @@ struct UnifiedExpressionVisitor : public Visitor<SubType, ReturnType> {
 //
 template<typename SubType, typename VisitorType>
 struct Walker : public VisitorType {
+  static constexpr bool IsConst = internal::GetIsConst<VisitorType>::value;
+  template<typename T> using C = MaybeConst<IsConst, T>;
+
   // Useful methods for visitor implementations
 
   // Replace the current node. You can call this in your visit*() methods.
   // Note that the visit*() for the result node is not called for you (i.e.,
   // just one visit*() method is called by the traversal; if you replace a node,
   // and you want to process the output, you must do that explicitly).
+  template<bool U = IsConst, typename std::enable_if<!U, int>::type = 0>
   Expression* replaceCurrent(Expression* expression) {
     // Copy debug info, if present.
     if (currFunction) {
@@ -133,33 +149,33 @@ struct Walker : public VisitorType {
     return *replacep = expression;
   }
 
-  Expression* getCurrent() { return *replacep; }
+  C<Expression>* getCurrent() { return *replacep; }
 
-  Expression** getCurrentPointer() { return replacep; }
+  C<Expression>** getCurrentPointer() { return replacep; }
 
   // Get the current module
-  Module* getModule() { return currModule; }
+  C<Module>* getModule() { return currModule; }
 
   // Get the current function
-  Function* getFunction() { return currFunction; }
+  C<Function>* getFunction() { return currFunction; }
 
   // Walk starting
 
-  void walkGlobal(Global* global) {
+  void walkGlobal(C<Global>* global) {
     walk(global->init);
     static_cast<SubType*>(this)->visitGlobal(global);
   }
 
-  void walkFunction(Function* func) {
+  void walkFunction(C<Function>* func) {
     setFunction(func);
     static_cast<SubType*>(this)->doWalkFunction(func);
     static_cast<SubType*>(this)->visitFunction(func);
     setFunction(nullptr);
   }
 
-  void walkTag(Tag* tag) { static_cast<SubType*>(this)->visitTag(tag); }
+  void walkTag(C<Tag>* tag) { static_cast<SubType*>(this)->visitTag(tag); }
 
-  void walkFunctionInModule(Function* func, Module* module) {
+  void walkFunctionInModule(C<Function>* func, C<Module>* module) {
     setModule(module);
     setFunction(func);
     static_cast<SubType*>(this)->doWalkFunction(func);
@@ -169,9 +185,9 @@ struct Walker : public VisitorType {
   }
 
   // override this to provide custom functionality
-  void doWalkFunction(Function* func) { walk(func->body); }
+  void doWalkFunction(C<Function>* func) { walk(func->body); }
 
-  void walkElementSegment(ElementSegment* segment) {
+  void walkElementSegment(C<ElementSegment>* segment) {
     if (segment->isActive()) {
       walk(segment->offset);
     }
@@ -181,26 +197,26 @@ struct Walker : public VisitorType {
     static_cast<SubType*>(this)->visitElementSegment(segment);
   }
 
-  void walkTable(Table* table) {
+  void walkTable(C<Table>* table) {
     if (table->init) {
       walk(table->init);
     }
     static_cast<SubType*>(this)->visitTable(table);
   }
 
-  void walkDataSegment(DataSegment* segment) {
+  void walkDataSegment(C<DataSegment>* segment) {
     if (segment->isActive()) {
       walk(segment->offset);
     }
     static_cast<SubType*>(this)->visitDataSegment(segment);
   }
 
-  void walkMemory(Memory* memory) {
+  void walkMemory(C<Memory>* memory) {
     // TODO: This method and walkTable should walk children too, or be renamed.
     static_cast<SubType*>(this)->visitMemory(memory);
   }
 
-  void walkModule(Module* module) {
+  void walkModule(C<Module>* module) {
     setModule(module);
     static_cast<SubType*>(this)->doWalkModule(module);
     static_cast<SubType*>(this)->visitModule(module);
@@ -208,7 +224,7 @@ struct Walker : public VisitorType {
   }
 
   // override this to provide custom functionality
-  void doWalkModule(Module* module) {
+  void doWalkModule(C<Module>* module) {
     // Dispatch statically through the SubType.
     SubType* self = static_cast<SubType*>(this);
     for (auto& curr : module->exports) {
@@ -250,7 +266,7 @@ struct Walker : public VisitorType {
   }
 
   // Walks module-level code, that is, code that is not in functions.
-  void walkModuleCode(Module* module) {
+  void walkModuleCode(C<Module>* module) {
     setModule(module);
     // Dispatch statically through the SubType.
     SubType* self = static_cast<SubType*>(this);
@@ -284,20 +300,20 @@ struct Walker : public VisitorType {
   // nested.
 
   // Tasks receive the this pointer and a pointer to the pointer to operate on
-  using TaskFunc = void (*)(SubType*, Expression**);
+  using TaskFunc = void (*)(SubType*, C<Expression>**);
 
   struct Task {
     TaskFunc func;
-    Expression** currp;
+    C<Expression>** currp;
     Task() {}
-    Task(TaskFunc func, Expression** currp) : func(func), currp(currp) {}
+    Task(TaskFunc func, C<Expression>** currp) : func(func), currp(currp) {}
   };
 
-  void pushTask(TaskFunc func, Expression** currp) {
+  void pushTask(TaskFunc func, C<Expression>** currp) {
     assert(*currp);
     stack.emplace_back(func, currp);
   }
-  void maybePushTask(TaskFunc func, Expression** currp) {
+  void maybePushTask(TaskFunc func, C<Expression>** currp) {
     if (*currp) {
       stack.emplace_back(func, currp);
     }
@@ -308,9 +324,10 @@ struct Walker : public VisitorType {
     return ret;
   }
 
-  void walk(Expression*& root) {
+  void walk(Expression* const& root) {
     assert(stack.size() == 0);
-    pushTask(SubType::scan, &root);
+    C<Expression>** p = (C<Expression>**)&root;
+    pushTask(SubType::scan, p);
     while (stack.size() > 0) {
       auto task = popTask();
       replacep = task.currp;
@@ -320,27 +337,27 @@ struct Walker : public VisitorType {
   }
 
   // subclasses implement this to define the proper order of execution
-  static void scan(SubType* self, Expression** currp) { abort(); }
+  static void scan(SubType* self, C<Expression>** currp) { abort(); }
 
   // task hooks to call visitors
 
 #define DELEGATE(CLASS_TO_VISIT)                                               \
-  static void doVisit##CLASS_TO_VISIT(SubType* self, Expression** currp) {     \
-    self->visit##CLASS_TO_VISIT((*currp)->cast<CLASS_TO_VISIT>());             \
+  static void doVisit##CLASS_TO_VISIT(SubType* self, C<Expression>** currp) {     \
+    self->visit##CLASS_TO_VISIT((*currp)->template cast<CLASS_TO_VISIT>());             \
   }
 
 #include "wasm-delegations.def"
 
-  void setModule(Module* module) { currModule = module; }
+  void setModule(C<Module>* module) { this->currModule = module; }
 
-  void setFunction(Function* func) { currFunction = func; }
+  void setFunction(C<Function>* func) { this->currFunction = func; }
 
 private:
   // the address of the current node, used to replace it
-  Expression** replacep = nullptr;
-  SmallVector<Task, 10> stack;      // stack of tasks
-  Function* currFunction = nullptr; // current function being processed
-  Module* currModule = nullptr;     // current module being processed
+  C<Expression>** replacep = nullptr;
+  SmallVector<typename Walker<SubType, VisitorType>::Task, 10> stack;      // stack of tasks
+  C<Function>* currFunction = nullptr; // current function being processed
+  C<Module>* currModule = nullptr;     // current module being processed
 };
 
 // Define which expression classes are leaves. We can handle them more
@@ -369,9 +386,11 @@ template<> struct IsLeaf<StringConst> : std::true_type {};
 
 template<typename SubType, typename VisitorType = Visitor<SubType>>
 struct PostWalker : public Walker<SubType, VisitorType> {
+  static constexpr bool IsConst = internal::GetIsConst<VisitorType>::value;
+  template<typename T> using C = MaybeConst<IsConst, T>;
 
-  static void scan(SubType* self, Expression** currp) {
-    Expression* curr = *currp;
+  static void scan(SubType* self, C<Expression>** currp) {
+    C<Expression>* curr = *currp;
 
 #define DELEGATE_ID curr->_id
 
@@ -397,16 +416,16 @@ struct PostWalker : public Walker<SubType, VisitorType> {
 #if defined(__GNUC__) && !defined(__clang__) && __GNUC__ <= 11
 #define DELEGATE_START(id)                                                     \
   if (&SubType::visit##id !=                                                   \
-        &Visitor<SubType, typename SubType::ReturnType>::visit##id ||          \
+        &Visitor<SubType, typename SubType::ReturnType, IsConst>::visit##id || \
       &SubType::doVisit##id != &Walker<SubType, VisitorType>::doVisit##id) {   \
     self->pushTask(SubType::doVisit##id, currp);                               \
   }                                                                            \
-  [[maybe_unused]] auto* cast = curr->cast<id>();
+  [[maybe_unused]] auto* cast = curr->template cast<id>();
 #else // constexpr
 #define DELEGATE_START(id)                                                     \
   if constexpr (&SubType::visit##id !=                                         \
                   &Visitor<SubType,                                            \
-                           typename SubType::ReturnType>::visit##id ||         \
+                           typename SubType::ReturnType, IsConst>::visit##id || \
                 &SubType::doVisit##id !=                                       \
                   &Walker<SubType, VisitorType>::doVisit##id) {                \
     if constexpr (IsLeaf<id>::value &&                                         \
@@ -416,16 +435,16 @@ struct PostWalker : public Walker<SubType, VisitorType> {
     }                                                                          \
     self->pushTask(SubType::doVisit##id, currp);                               \
   }                                                                            \
-  [[maybe_unused]] auto* cast = curr->cast<id>();
+  [[maybe_unused]] auto* cast = curr->template cast<id>();
 #endif // constexpr
 
 #define DELEGATE_GET_FIELD(id, field) cast->field
 
 #define DELEGATE_FIELD_CHILD(id, field)                                        \
-  self->pushTask(SubType::scan, &cast->field);
+  self->pushTask(SubType::scan, (C<Expression>**)&cast->field);
 
 #define DELEGATE_FIELD_OPTIONAL_CHILD(id, field)                               \
-  self->maybePushTask(SubType::scan, &cast->field);
+  self->maybePushTask(SubType::scan, (C<Expression>**)&cast->field);
 
 #define DELEGATE_FIELD_INT(id, field)
 #define DELEGATE_FIELD_LITERAL(id, field)
@@ -448,20 +467,23 @@ using ExpressionStack = SmallVector<Expression*, 10>;
 
 template<typename SubType, typename VisitorType = Visitor<SubType>>
 struct ControlFlowWalker : public PostWalker<SubType, VisitorType> {
+  static constexpr bool IsConst = internal::GetIsConst<VisitorType>::value;
+  template<typename T> using C = MaybeConst<IsConst, T>;
+  
   // contains blocks, loops, ifs, trys, and try_tables
-  ExpressionStack controlFlowStack;
+  SmallVector<C<Expression>*, 10> controlFlowStack;
 
   // Uses the control flow stack to find the target of a break to a name
-  Expression* findBreakTarget(Name name) {
+  C<Expression>* findBreakTarget(Name name) {
     assert(!controlFlowStack.empty());
     Index i = controlFlowStack.size() - 1;
     while (true) {
       auto* curr = controlFlowStack[i];
-      if (Block* block = curr->template dynCast<Block>()) {
+      if (C<Block>* block = curr->template dynCast<Block>()) {
         if (name == block->name) {
           return curr;
         }
-      } else if (Loop* loop = curr->template dynCast<Loop>()) {
+      } else if (C<Loop>* loop = curr->template dynCast<Loop>()) {
         if (name == loop->name) {
           return curr;
         }
@@ -477,17 +499,17 @@ struct ControlFlowWalker : public PostWalker<SubType, VisitorType> {
     }
   }
 
-  static void doPreVisitControlFlow(SubType* self, Expression** currp) {
+  static void doPreVisitControlFlow(SubType* self, C<Expression>** currp) {
     self->controlFlowStack.push_back(*currp);
   }
 
-  static void doPostVisitControlFlow(SubType* self, Expression** currp) {
+  static void doPostVisitControlFlow(SubType* self, C<Expression>** currp) {
     // note that we might be popping something else, as we may have been
     // replaced
     self->controlFlowStack.pop_back();
   }
 
-  static void scan(SubType* self, Expression** currp) {
+  static void scan(SubType* self, C<Expression>** currp) {
     auto* curr = *currp;
 
     switch (curr->_id) {
@@ -524,21 +546,24 @@ struct ControlFlowWalker : public PostWalker<SubType, VisitorType> {
 
 template<typename SubType, typename VisitorType = Visitor<SubType>>
 struct ExpressionStackWalker : public PostWalker<SubType, VisitorType> {
+  static constexpr bool IsConst = internal::GetIsConst<VisitorType>::value;
+  template<typename T> using C = MaybeConst<IsConst, T>;
+
   ExpressionStackWalker() = default;
 
-  ExpressionStack expressionStack;
+  SmallVector<C<Expression>*, 10> expressionStack;
 
   // Uses the control flow stack to find the target of a break to a name
-  Expression* findBreakTarget(Name name) {
+  C<Expression>* findBreakTarget(Name name) {
     assert(!expressionStack.empty());
     Index i = expressionStack.size() - 1;
     while (true) {
       auto* curr = expressionStack[i];
-      if (Block* block = curr->template dynCast<Block>()) {
+      if (C<Block>* block = curr->template dynCast<Block>()) {
         if (name == block->name) {
           return curr;
         }
-      } else if (Loop* loop = curr->template dynCast<Loop>()) {
+      } else if (C<Loop>* loop = curr->template dynCast<Loop>()) {
         if (name == loop->name) {
           return curr;
         }
@@ -550,7 +575,7 @@ struct ExpressionStackWalker : public PostWalker<SubType, VisitorType> {
     }
   }
 
-  Expression* getParent() {
+  C<Expression>* getParent() {
     if (expressionStack.size() == 1) {
       return nullptr;
     }
@@ -558,15 +583,15 @@ struct ExpressionStackWalker : public PostWalker<SubType, VisitorType> {
     return expressionStack[expressionStack.size() - 2];
   }
 
-  static void doPreVisit(SubType* self, Expression** currp) {
+  static void doPreVisit(SubType* self, C<Expression>** currp) {
     self->expressionStack.push_back(*currp);
   }
 
-  static void doPostVisit(SubType* self, Expression** currp) {
+  static void doPostVisit(SubType* self, C<Expression>** currp) {
     self->expressionStack.pop_back();
   }
 
-  static void scan(SubType* self, Expression** currp) {
+  static void scan(SubType* self, C<Expression>** currp) {
     self->pushTask(SubType::doPostVisit, currp);
 
     PostWalker<SubType, VisitorType>::scan(self, currp);
@@ -574,6 +599,7 @@ struct ExpressionStackWalker : public PostWalker<SubType, VisitorType> {
     self->pushTask(SubType::doPreVisit, currp);
   }
 
+  template<bool U = IsConst, typename std::enable_if<!U, int>::type = 0>
   Expression* replaceCurrent(Expression* expression) {
     PostWalker<SubType, VisitorType>::replaceCurrent(expression);
     // also update the stack
