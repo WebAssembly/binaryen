@@ -307,6 +307,8 @@
 
   ;; CHECK:      (func $default-var (type $0) (param $param i32)
   ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (local $eq eqref)
+  ;; CHECK-NEXT:  (local $nn-eq (ref eq))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
@@ -316,9 +318,19 @@
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (local.get $eq)
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $default-var (param $param i32)
     (local $x i32)
+    (local $eq eqref)
+    ;; A non-nullable local. We cannot add a get for it (it would not validate),
+    ;; but check we do not error.
+    (local $nn-eq (ref eq))
     ;; locals begin with default values, so we can infer here.
     (drop
       (i32.eq
@@ -331,6 +343,13 @@
       (i32.eq
         (local.get $param)
         (i32.const 0)
+      )
+    )
+    ;; We can infer a null reference.
+    (drop
+      (ref.eq
+        (local.get $eq)
+        (ref.null eq)
       )
     )
   )
