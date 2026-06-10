@@ -24,6 +24,7 @@
 #include "analysis/lattice.h"
 #include "analysis/lattices/array.h"
 #include "analysis/lattices/bool.h"
+#include "analysis/lattices/bound.h"
 #include "analysis/lattices/bounded-conjunction.h"
 #include "analysis/lattices/flat.h"
 #include "analysis/lattices/int.h"
@@ -191,6 +192,8 @@ using TupleLattice = analysis::Tuple<RandomLattice, RandomLattice>;
 using OneOfFullLattice = analysis::OneOf<RandomFullLattice, RandomFullLattice>;
 using OneOfLattice = analysis::OneOf<RandomLattice, RandomLattice>;
 
+using FuzzFullBound = analysis::Bound<RandomFullLattice>;
+
 using FullLatticeVariant = std::variant<Bool,
                                         UInt32,
                                         ValType,
@@ -198,7 +201,8 @@ using FullLatticeVariant = std::variant<Bool,
                                         ArrayFullLattice,
                                         Vector<RandomFullLattice>,
                                         TupleFullLattice,
-                                        OneOfFullLattice>;
+                                        OneOfFullLattice,
+                                        FuzzFullBound>;
 
 struct RandomFullLattice::LatticeImpl : FullLatticeVariant {};
 
@@ -210,7 +214,8 @@ using FullLatticeElementVariant =
                typename ArrayFullLattice::Element,
                typename Vector<RandomFullLattice>::Element,
                typename TupleFullLattice::Element,
-               typename OneOfFullLattice::Element>;
+               typename OneOfFullLattice::Element,
+               typename FuzzFullBound::Element>;
 
 struct RandomFullLattice::ElementImpl : FullLatticeElementVariant {};
 
@@ -278,7 +283,7 @@ using LatticeElementVariant =
 
 struct RandomLattice::ElementImpl : LatticeElementVariant {};
 
-constexpr int FullLatticePicks = 8;
+constexpr int FullLatticePicks = 9;
 
 RandomFullLattice::RandomFullLattice(Random& rand,
                                      size_t depth,
@@ -318,6 +323,10 @@ RandomFullLattice::RandomFullLattice(Random& rand,
       lattice = std::make_unique<LatticeImpl>(
         LatticeImpl{OneOfFullLattice{RandomFullLattice{rand, depth + 1},
                                      RandomFullLattice{rand, depth + 1}}});
+      return;
+    case 8:
+      lattice = std::make_unique<LatticeImpl>(
+        LatticeImpl{FuzzFullBound{RandomFullLattice{rand, depth + 1}}});
       return;
   }
   WASM_UNREACHABLE("unexpected pick");
@@ -441,6 +450,22 @@ RandomFullLattice::Element RandomFullLattice::makeElement() const noexcept {
       case 3:
         return ElementImpl{l->get<1>(std::get<1>(l->lattices).makeElement())};
     }
+  }
+  if (const auto* l = std::get_if<FuzzFullBound>(lattice.get())) {
+    auto pick = rand.upTo(8);
+    if (pick == 0) {
+      return ElementImpl{l->getBottom()};
+    }
+    if (pick == 1) {
+      return ElementImpl{l->getTop()};
+    }
+    BoundRelation rels[] = {BoundRelation::LT,
+                            BoundRelation::LE,
+                            BoundRelation::GE,
+                            BoundRelation::GT};
+    BoundRelation rel = rels[rand.upTo(4)];
+    auto val = l->lattice.makeElement();
+    return ElementImpl{l->makeBound(rel, val)};
   }
   WASM_UNREACHABLE("unexpected lattice");
 }
@@ -585,6 +610,19 @@ void printFullElement(std::ostream& os,
       os << ")\n";
     } else {
       WASM_UNREACHABLE("unexpected one-of element");
+    }
+  } else if (const auto* e =
+               std::get_if<typename FuzzFullBound::Element>(&*elem)) {
+    if (std::holds_alternative<FuzzFullBound::Bot>(*e)) {
+      os << "bound bot\n";
+    } else if (std::holds_alternative<FuzzFullBound::Top>(*e)) {
+      os << "bound top\n";
+    } else {
+      const auto& c = std::get<FuzzFullBound::Constraint>(*e);
+      os << "Bound( " << c.rel << " \n";
+      printFullElement(os, c.val, depth + 1);
+      indent(os, depth);
+      os << ")\n";
     }
   } else {
     WASM_UNREACHABLE("unexpected element");
