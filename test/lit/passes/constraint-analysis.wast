@@ -78,6 +78,85 @@
     )
   )
 
+  ;; CHECK:      (func $unknown (type $1)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (i32.add
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:    (i32.const 20)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.eq
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 30)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (i32.div_s
+  ;; CHECK-NEXT:    (i32.const 1337)
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.eq
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 31)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPTIN:      (func $unknown (type $1)
+  ;; OPTIN-NEXT:  (local $x i32)
+  ;; OPTIN-NEXT:  (local.set $x
+  ;; OPTIN-NEXT:   (i32.const 30)
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (drop
+  ;; OPTIN-NEXT:   (i32.const 1)
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (local.set $x
+  ;; OPTIN-NEXT:   (i32.div_u
+  ;; OPTIN-NEXT:    (i32.const 1337)
+  ;; OPTIN-NEXT:    (i32.const 42)
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (drop
+  ;; OPTIN-NEXT:   (i32.eq
+  ;; OPTIN-NEXT:    (local.get $x)
+  ;; OPTIN-NEXT:    (i32.const 31)
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT: )
+  (func $unknown
+    (local $x i32)
+    ;; Set x to an add. We can only optimize this if optimize-instructions first
+    ;; simplifies it to a constant.
+    (local.set $x
+      (i32.add
+        (i32.const 10)
+        (i32.const 20)
+      )
+    )
+    (drop
+      (i32.eq
+        (local.get $x)
+        (i32.const 30)
+      )
+    )
+    ;; When optimize-instructions does not help, we infer nothing.
+    (local.set $x
+      (i32.div_s
+        (i32.const 1337)
+        (i32.const 42)
+      )
+    )
+    (drop
+      (i32.eq
+        (local.get $x)
+        (i32.const 31)
+      )
+    )
+  )
+
   ;; CHECK:      (func $multi-local (type $1)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (local $y i32)
@@ -300,10 +379,16 @@
   ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (drop
-  ;; OPTIN-NEXT:   (i32.const 0)
+  ;; OPTIN-NEXT:   (i32.eq
+  ;; OPTIN-NEXT:    (local.get $x)
+  ;; OPTIN-NEXT:    (i32.const 10)
+  ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (drop
-  ;; OPTIN-NEXT:   (i32.const 0)
+  ;; OPTIN-NEXT:   (i32.eq
+  ;; OPTIN-NEXT:    (local.get $x)
+  ;; OPTIN-NEXT:    (i32.const 20)
+  ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT: )
   (func $multi-block-split (param $param i32)
