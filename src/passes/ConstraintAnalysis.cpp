@@ -15,7 +15,7 @@
  */
 
 //
-// Finds ranges of values for locals, and uses them. For example:
+// Finds XXX ranges of values for locals, and uses them. For example:
 //
 //  if (x > 10) {
 //    assert(x > 0); // redundant and can be removed.
@@ -60,19 +60,19 @@ struct Info {
   LocalConstraintMap endConstraints;
 };
 
-struct RangeAnalysis
-  : public WalkerPass<CFGWalker<RangeAnalysis, Visitor<RangeAnalysis>, Info>> {
+struct ConstraintAnalysis
+  : public WalkerPass<CFGWalker<ConstraintAnalysis, Visitor<ConstraintAnalysis>, Info>> {
   bool isFunctionParallel() override { return true; }
 
   // Locals are not modified here.
   bool requiresNonNullableLocalFixups() override { return false; }
 
   std::unique_ptr<Pass> create() override {
-    return std::make_unique<RangeAnalysis>();
+    return std::make_unique<ConstraintAnalysis>();
   }
 
   using Super =
-    WalkerPass<CFGWalker<RangeAnalysis, Visitor<RangeAnalysis>, Info>>;
+    WalkerPass<CFGWalker<ConstraintAnalysis, Visitor<ConstraintAnalysis>, Info>>;
 
   // Branches outside of the function can be ignored, as we only look at local
   // state in the function.
@@ -104,7 +104,7 @@ struct RangeAnalysis
   // ifTrue and ifFalse blocks.
   std::unordered_map<If*, BasicBlock*> brancherBlocks;
 
-  static void doStartIfTrue(RangeAnalysis* self, Expression** currp) {
+  static void doStartIfTrue(ConstraintAnalysis* self, Expression** currp) {
     // We are right after the condition, so we are in the block before the If's
     // branching.
     self->brancherBlocks[*currp] = self->currBasicBlock;
@@ -114,7 +114,7 @@ struct RangeAnalysis
 #endif
 
 #if 0
-  static void doEndBranch(RangeAnalysis* self, Expression** currp) {
+  static void doEndBranch(ConstraintAnalysis* self, Expression** currp) {
     // We are right after the condition, so we are in the block before the If's
     // branching.
     XXX maybe leave for laterself->brancherBlocks[*currp] = self->currBasicBlock;
@@ -301,6 +301,6 @@ struct RangeAnalysis
 
 } // anonymous namespace
 
-Pass* createRangeAnalysisPass() { return new RangeAnalysis(); }
+Pass* createConstraintAnalysisPass() { return new ConstraintAnalysis(); }
 
 } // namespace wasm
