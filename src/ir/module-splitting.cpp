@@ -822,15 +822,22 @@ void ModuleSplitter::shareImportableItems() {
     secondaryUsed.push_back(getUsedNames(*secondaryPtr));
   }
 
-  // If custom-descirptors is enabled, global initializers can trap. Trapping
-  // globals should stay in the primary module to preserve the trapping behavior
-  // upon instantiation.
+  // If custom-descirptors is enabled, global and table initializers can trap.
+  // Trapping globals should stay in the primary module to preserve the trapping
+  // behavior upon instantiation.
   if (primary.features.hasCustomDescriptors()) {
     for (auto& global : primary.globals) {
       if (global->init &&
           EffectAnalyzer(config.passOptions, primary, global->init)
             .hasUnremovableSideEffects()) {
         primaryUsed.globals.insert(global->name);
+      }
+    }
+    for (auto& table : primary.tables) {
+      if (table->init &&
+          EffectAnalyzer(config.passOptions, primary, table->init)
+            .hasUnremovableSideEffects()) {
+        primaryUsed.tables.insert(table->name);
       }
     }
   }
