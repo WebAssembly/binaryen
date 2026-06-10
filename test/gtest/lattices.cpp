@@ -18,6 +18,7 @@
 #include "analysis/lattices/abstraction.h"
 #include "analysis/lattices/array.h"
 #include "analysis/lattices/bool.h"
+#include "analysis/lattices/bound.h"
 #include "analysis/lattices/bounded-conjunction.h"
 #include "analysis/lattices/conetype.h"
 #include "analysis/lattices/flat.h"
@@ -1668,4 +1669,116 @@ TEST(BoundedConjunctionLattice, BoundedMeet) {
 
   // Meet with redundancy
   test(e_1, e_1_2, e_1_2);
+}
+
+TEST(BoundLattice, Compare) {
+  analysis::Int32 integers;
+  analysis::Bound<analysis::Int32> lattice(std::move(integers));
+
+  auto bot = lattice.getBottom();
+  auto top = lattice.getTop();
+
+  auto make_lt = [&](int v) {
+    return lattice.makeBound(analysis::BoundRelation::LT, v);
+  };
+  auto make_le = [&](int v) {
+    return lattice.makeBound(analysis::BoundRelation::LE, v);
+  };
+  auto make_ge = [&](int v) {
+    return lattice.makeBound(analysis::BoundRelation::GE, v);
+  };
+  auto make_gt = [&](int v) {
+    return lattice.makeBound(analysis::BoundRelation::GT, v);
+  };
+
+  // LT implication
+  EXPECT_EQ(lattice.compare(make_lt(4), make_lt(5)),
+            analysis::LESS); // x < 4 => x < 5
+  EXPECT_EQ(lattice.compare(make_lt(5), make_lt(4)), analysis::GREATER);
+  EXPECT_EQ(lattice.compare(make_lt(4), make_le(4)),
+            analysis::LESS); // x < 4 => x <= 4
+  EXPECT_EQ(lattice.compare(make_lt(4), make_le(3)),
+            analysis::GREATER); // x < 4 not=> x <= 3 (generically, LE(3) =>
+                                // LT(4) so LT(4) > LE(3))
+
+  // LT and GT (unrelated)
+  EXPECT_EQ(lattice.compare(make_lt(4), make_gt(4)), analysis::NO_RELATION);
+}
+
+TEST(BoundLattice, Join) {
+  analysis::Int32 integers;
+  analysis::Bound<analysis::Int32> lattice(std::move(integers));
+
+  auto bot = lattice.getBottom();
+  auto top = lattice.getTop();
+
+  auto make_lt = [&](int v) {
+    return lattice.makeBound(analysis::BoundRelation::LT, v);
+  };
+  auto make_le = [&](int v) {
+    return lattice.makeBound(analysis::BoundRelation::LE, v);
+  };
+  auto make_ge = [&](int v) {
+    return lattice.makeBound(analysis::BoundRelation::GE, v);
+  };
+  auto make_gt = [&](int v) {
+    return lattice.makeBound(analysis::BoundRelation::GT, v);
+  };
+
+  auto test =
+    [&](const auto& joinee, const auto& joiner, const auto& expected) {
+      auto copy = joinee;
+      EXPECT_EQ(lattice.join(copy, joiner), joinee != expected);
+      EXPECT_EQ(copy, expected);
+    };
+
+  // Same relations
+  test(make_lt(4), make_lt(5), make_lt(5)); // x < 4 or x < 5 => x < 5
+  test(make_le(4), make_le(5), make_le(5));
+  test(make_ge(4), make_ge(5), make_ge(4)); // x >= 4 or x >= 5 => x >= 4
+  test(make_gt(4), make_gt(5), make_gt(4));
+
+  // Mixed relations
+  test(make_lt(4), make_le(4), make_le(4)); // x < 4 or x <= 4 => x <= 4
+  test(make_lt(4), make_gt(5), top);        // x < 4 or x > 5 => Top
+}
+
+TEST(BoundLattice, Meet) {
+  analysis::Int32 integers;
+  analysis::Bound<analysis::Int32> lattice(std::move(integers));
+
+  auto bot = lattice.getBottom();
+  auto top = lattice.getTop();
+
+  auto make_lt = [&](int v) {
+    return lattice.makeBound(analysis::BoundRelation::LT, v);
+  };
+  auto make_le = [&](int v) {
+    return lattice.makeBound(analysis::BoundRelation::LE, v);
+  };
+  auto make_ge = [&](int v) {
+    return lattice.makeBound(analysis::BoundRelation::GE, v);
+  };
+  auto make_gt = [&](int v) {
+    return lattice.makeBound(analysis::BoundRelation::GT, v);
+  };
+
+  auto test =
+    [&](const auto& meetee, const auto& meeter, const auto& expected) {
+      auto copy = meetee;
+      EXPECT_EQ(lattice.meet(copy, meeter), meetee != expected);
+      EXPECT_EQ(copy, expected);
+    };
+
+  // Opposite relations meeting to Bot
+  test(make_le(4), make_ge(5), bot); // x <= 4 and x >= 5 => Bot
+  test(make_lt(4), make_ge(4), bot); // x < 4 and x >= 4 => Bot
+  test(make_le(4), make_gt(4), bot); // x <= 4 and x > 4 => Bot
+
+  // Same relations
+  test(make_le(4), make_le(5), make_le(4)); // x <= 4 and x <= 5 => x <= 4
+  test(make_ge(4), make_ge(5), make_ge(5)); // x >= 4 and x >= 5 => x >= 5
+
+  // Related
+  test(make_lt(4), make_le(4), make_lt(4));
 }
