@@ -19,7 +19,7 @@ TEST(ConstraintTest, TestEq) {
 
   // x == 5 (we use "x" for the name of the thing being compared, in these
   // comments).
-  Constraint c{Eq, Literal(int32_t(5))};
+  Constraint c{Eq, {Literal(int32_t(5))}};
 
   // We can't infer anything using an empty set.
   EXPECT_EQ(s.eval(c), Unknown);
@@ -30,39 +30,39 @@ TEST(ConstraintTest, TestEq) {
   EXPECT_EQ(s.eval(c), True);
 
   // x == 10, a different number: we can infer false.
-  EXPECT_EQ(s.eval(Constraint{Eq, Literal(int32_t(10))}), False);
+  EXPECT_EQ(s.eval(Constraint{Eq, {Literal(int32_t(10))}}), False);
 
   // x != 15: we can infer true.
-  EXPECT_EQ(s.eval(Constraint{Ne, Literal(int32_t(15))}), True);
+  EXPECT_EQ(s.eval(Constraint{Ne, {Literal(int32_t(15))}}), True);
 
   // x != 5: we can infer false.
-  EXPECT_EQ(s.eval(Constraint{Ne, Literal(int32_t(5))}), False);
+  EXPECT_EQ(s.eval(Constraint{Ne, {Literal(int32_t(5))}}), False);
 }
 
 TEST(ConstraintTest, TestNe) {
   AndedConstraintSet s;
   // x != 5
-  Constraint c{Ne, Literal(int32_t(5))};
+  Constraint c{Ne, {Literal(int32_t(5))}};
   s.and_(c);
 
   // Checks out versus itself.
   EXPECT_EQ(s.eval(c), True);
 
   // x == 10: we don't know.
-  EXPECT_EQ(s.eval(Constraint{Eq, Literal(int32_t(10))}), Unknown);
+  EXPECT_EQ(s.eval(Constraint{Eq, {Literal(int32_t(10))}}), Unknown);
 
   // x != 15: we don't know.
-  EXPECT_EQ(s.eval(Constraint{Ne, Literal(int32_t(15))}), Unknown);
+  EXPECT_EQ(s.eval(Constraint{Ne, {Literal(int32_t(15))}}), Unknown);
 
   // x == 5: we can infer false.
-  EXPECT_EQ(s.eval(Constraint{Eq, Literal(int32_t(5))}), False);
+  EXPECT_EQ(s.eval(Constraint{Eq, {Literal(int32_t(5))}}), False);
 }
 
 TEST(ConstraintTest, TestMulti) {
   AndedConstraintSet s;
   // x != 5 && x != 10
-  Constraint c{Ne, Literal(int32_t(5))};
-  Constraint d{Ne, Literal(int32_t(10))};
+  Constraint c{Ne, {Literal(int32_t(5))}};
+  Constraint d{Ne, {Literal(int32_t(10))}};
   s.and_(c);
   s.and_(d);
 
@@ -71,21 +71,21 @@ TEST(ConstraintTest, TestMulti) {
   EXPECT_EQ(s.eval(d), True);
 
   // x == 5: false.
-  EXPECT_EQ(s.eval(Constraint{Eq, Literal(int32_t(5))}), False);
+  EXPECT_EQ(s.eval(Constraint{Eq, {Literal(int32_t(5))}}), False);
 
   // x == 10: false.
-  EXPECT_EQ(s.eval(Constraint{Eq, Literal(int32_t(10))}), False);
+  EXPECT_EQ(s.eval(Constraint{Eq, {Literal(int32_t(10))}}), False);
 
   // x == 15: we don't know.
-  EXPECT_EQ(s.eval(Constraint{Eq, Literal(int32_t(15))}), Unknown);
+  EXPECT_EQ(s.eval(Constraint{Eq, {Literal(int32_t(15))}}), Unknown);
 
   // x != 15: we don't know.
-  EXPECT_EQ(s.eval(Constraint{Ne, Literal(int32_t(15))}), Unknown);
+  EXPECT_EQ(s.eval(Constraint{Ne, {Literal(int32_t(15))}}), Unknown);
 }
 
 TEST(ConstraintTest, TestSets) {
   // x == 5
-  Constraint c{Eq, Literal(int32_t(5))};
+  Constraint c{Eq, {Literal(int32_t(5))}};
 
   AndedConstraintSet s;
 
@@ -108,12 +108,12 @@ TEST(ConstraintTest, TestSets) {
 
   // Now t has *different* stuff, x == 10, which given s is false.
   t.clear();
-  t.and_(Constraint{Eq, Literal(int32_t(10))});
+  t.and_(Constraint{Eq, {Literal(int32_t(10))}});
   EXPECT_EQ(s.eval(t), False);
 
   // Same, with x != 10. Now we know it is true.
   t.clear();
-  t.and_(Constraint{Ne, Literal(int32_t(10))});
+  t.and_(Constraint{Ne, {Literal(int32_t(10))}});
   EXPECT_EQ(s.eval(t), True);
 
   // In reverse, we can infer nothing: knowing x != 10 does not say if x == 5.
@@ -123,7 +123,7 @@ TEST(ConstraintTest, TestSets) {
 TEST(ConstraintTest, TestOrTrivial) {
   // { x == 5 }
   AndedConstraintSet s;
-  s.and_(Constraint{Eq, Literal(int32_t(5))});
+  s.and_(Constraint{Eq, {Literal(int32_t(5))}});
 
   // { }
   AndedConstraintSet empty;
@@ -147,11 +147,11 @@ TEST(ConstraintTest, TestOrTrivial) {
 TEST(ConstraintTest, TestOrImplies) {
   // { x == 5 }
   AndedConstraintSet s;
-  s.and_(Constraint{Eq, Literal(int32_t(5))});
+  s.and_(Constraint{Eq, {Literal(int32_t(5))}});
 
   // { x != 10 }
   AndedConstraintSet t;
-  t.and_(Constraint{Ne, Literal(int32_t(10))});
+  t.and_(Constraint{Ne, {Literal(int32_t(10))}});
 
   // ORing these leaves us with x != 10.
   auto u = s;
