@@ -426,10 +426,16 @@
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.eq
   ;; CHECK-NEXT:    (local.get $param)
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.const 1)
@@ -443,9 +449,15 @@
   ;; OPTIN-NEXT:   (i32.const 1)
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (drop
+  ;; OPTIN-NEXT:   (i32.const 1)
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (drop
   ;; OPTIN-NEXT:   (i32.eqz
   ;; OPTIN-NEXT:    (local.get $param)
   ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (drop
+  ;; OPTIN-NEXT:   (i32.const 1)
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (drop
   ;; OPTIN-NEXT:   (i32.const 1)
@@ -464,6 +476,11 @@
         (i32.const 0)
       )
     )
+    (drop
+      (i32.eqz
+        (local.get $x)
+      )
+    )
     ;; We can infer nothing for a param.
     (drop
       (i32.eq
@@ -476,6 +493,11 @@
       (ref.eq
         (local.get $eq)
         (ref.null eq)
+      )
+    )
+    (drop
+      (ref.is_null
+        (local.get $eq)
       )
     )
   )
