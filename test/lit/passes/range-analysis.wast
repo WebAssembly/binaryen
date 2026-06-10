@@ -350,4 +350,77 @@
       )
     )
   )
+
+  ;; CHECK:      (func $var-var (type $1)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (local $y i32)
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (i32.const 10)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $y
+  ;; CHECK-NEXT:   (i32.const 20)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.eq
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (i32.const 20)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.eq
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (local.get $y)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.eq
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $var-var
+    (local $x i32)
+    (local $y i32)
+    ;; x is 10, y is 20. Compare them to each other.
+    (local.set $x
+      (i32.const 10)
+    )
+    (local.set $y
+      (i32.const 20)
+    )
+    ;; 10 != 20
+    (drop
+      (i32.eq
+        (local.get $x)
+        (local.get $y)
+      )
+    )
+    ;; Now both are 20, so they are equal.
+    (local.set $x
+      (i32.const 20)
+    )
+    (drop
+      (i32.eq
+        (local.get $x)
+        (local.get $y)
+      )
+    )
+    ;; Make one directly equal to the other.
+    (local.set $x
+      (local.get $y)
+    )
+    (drop
+      (i32.eq
+        (local.get $x)
+        (local.get $y)
+      )
+    )
+  )
 )
