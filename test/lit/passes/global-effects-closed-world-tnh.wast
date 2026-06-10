@@ -55,12 +55,18 @@
   ;; CHECK-NEXT:    (local.get $ref)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call_ref $sub
+  ;; CHECK-NEXT:   (ref.cast (ref (exact $sub))
+  ;; CHECK-NEXT:    (local.get $ref)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $downcast-import (param $ref (ref $super))
     ;; $import's exact type could be $sub although we imported it as $super.
-    ;; Since we don't know, we need to propagate $import's effects to $sub as
-    ;; well.
+    ;; Since we don't know, we need to propagate $import's effects to $sub and
+    ;; (exact $sub) as well.
     (call_ref $sub (ref.cast (ref $sub) (local.get $ref)))
+    (call_ref $sub (ref.cast (ref (exact $sub)) (local.get $ref)))
   )
 )
 

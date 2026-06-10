@@ -322,7 +322,11 @@ CallGraph buildCallGraph(const Module& module,
     }
 
     subtypes.iterSubTypes(func->type.getHeapType(), [&](auto subtype, int _) {
-      callGraph[subtype].insert(func);
+      // The import's effects must be included in both calls to its exact and
+      // inexact subtypes. Adding an edge from the exact subtype is enough
+      // because we propagate effects up the subtype chain and exact types are a
+      // subtype of their inexact type.
+      callGraph[std::pair(subtype, Exact)].insert(func);
       return true;
     });
   });
