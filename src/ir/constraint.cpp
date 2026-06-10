@@ -28,7 +28,7 @@ namespace {
 //
 // Returns a Result, or an empty option if we should keep working (i.e., a
 // result of Unknown means we are certain we can just return Unknown).
-std::optional<Result> checkPair(const Constraint& a, const Constraint& b) {
+std::optional<Result> evalPair(const Constraint& a, const Constraint& b) {
   // A thing always implies itself.
   if (a == b) {
     return True;
@@ -87,10 +87,10 @@ std::optional<Result> checkPair(const Constraint& a, const Constraint& b) {
 
 } // anonymous namespace
 
-Result AndedConstraintSet::check(const Constraint& condition) const {
+Result AndedConstraintSet::eval(const Constraint& condition) const {
   // Sometimes a single constraint is enough to determine the condition.
   for (auto& c : *this) {
-    if (auto result = checkPair(c, condition)) {
+    if (auto result = evalPair(c, condition)) {
       return *result;
     }
   }
@@ -115,11 +115,11 @@ void AndedConstraintSet::fuzzyOr(const AndedConstraintSet& other) {
   // If this is already implied by current constraints, then it is redundant.
   // E.g. if we are { x = 10 } and other is { x >= 0 } then all we need is
   // { x >= 0 } as the result of the OR.
-  if (check(other) == True) {
+  if (eval(other) == True) {
     *this = other;
     return;
   }
-  if (other.check(*this) == True) {
+  if (other.eval(*this) == True) {
     return;
   }
 

@@ -68,10 +68,10 @@ struct AndedConstraintSet : inplace_vector<Constraint, MaxConstraints> {
   //   { this } => { condition }
   //
   // https://en.wikipedia.org/wiki/Material_conditional#Truth_table
-  Result check(const Constraint& condition) const;
+  Result eval(const Constraint& condition) const;
 
   // Check an entire other set.
-  Result check(const AndedConstraintSet& other) const {
+  Result eval(const AndedConstraintSet& other) const {
     if (other.empty()) {
       // The empty set of constraints is always true.
       return True;
@@ -79,7 +79,7 @@ struct AndedConstraintSet : inplace_vector<Constraint, MaxConstraints> {
 
     Result result = Unknown;
     for (auto& c : other) {
-      auto currResult = check(c);
+      auto currResult = eval(c);
       if (currResult == Unknown) {
         // If something is unknown, it all is.
         return Unknown;
@@ -122,9 +122,9 @@ struct AndedConstraintSet : inplace_vector<Constraint, MaxConstraints> {
   // Returning to the example, we can use this to optimize as follows: if
   // two code paths reaching a location have x == 5 and x == 10, so the value in
   // the merge location is either 5 or 10, then if we see some i32.ge_s that
-  // does x >= 0 then we can evaluate it with check():
+  // does x >= 0 then we can evaluate it with eval():
   //
-  //   { x >= 5 && x <= 10 }.check({ x >= 0 }) == True
+  //   { x >= 5 && x <= 10 }.eval({ x >= 0 }) == True
   //
   // And it is valid to optimize that i32.ge_s into a constant 1, since
   //
