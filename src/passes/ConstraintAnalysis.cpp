@@ -87,7 +87,7 @@ struct RangeAnalysis
 
   void visitLocalGet(LocalGet* curr) { addAction(); } // XXX needed?
   void visitLocalSet(LocalSet* curr) { addAction(); }
-  void visitUnary(Unary* curr) { addAction(); } // XXX needed?
+  void visitUnary(Unary* curr) { addAction(); }
   void visitBinary(Binary* curr) { addAction(); }
   void visitRefEq(RefEq* curr) { addAction(); }
   void visitRefIsNull(RefIsNull* curr) { addAction(); }
@@ -289,10 +289,10 @@ struct RangeAnalysis
   // sets the value for that local.
   void applyToConstraints(Expression* curr, LocalConstraintMap& constraints) {
     if (auto* set = curr->dynCast<LocalSet>()) {
+      auto& localConstraints = constraints[set->index];
+      localConstraints.clear();
       if (Properties::isSingleConstantExpression(set->value)) {
         auto value = Properties::getLiteral(set->value);
-        auto& localConstraints = constraints[set->index];
-        localConstraints.clear();
         localConstraints.and_(Constraint{Abstract::Eq, value});
       }
     }
