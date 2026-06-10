@@ -240,6 +240,7 @@ struct RangeAnalysis
   // of the predecessor blocks.
   LocalConstraintMap mergeIncoming(BasicBlock* block) {
     LocalConstraintMap constraints;
+
     // For each relevant local, merge its constraints.
     for (auto local : relevantLocals) {
       AndedConstraintSet& merged = constraints[local];
@@ -247,6 +248,19 @@ struct RangeAnalysis
         merged.fuzzyOr(getConstraintsFromPredToSucc(pred, block, local));
       }
     }
+
+    // The entry block has incoming values - defaults - for each var.
+    if (block == entry) {
+      auto* func = getFunction();
+      auto numVars = func->getNumVars();
+      for (Index i = 0; i < numVars; i++) {
+        auto type = func->getLocalType(i);
+        if (LiteralUtils::canMakeZero(type)) {
+          constraints[i].and_(Literal::makeZeros(type));
+        }
+      }
+    }
+
     return constraints;
   }
 

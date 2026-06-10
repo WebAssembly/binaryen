@@ -8,7 +8,7 @@
 ;; R;U;N: wasm-opt %s --optimize-instructions --range-analysis -all -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (func $simple (type $1)
+  ;; CHECK:      (func $simple (type $0)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (local.set $x
   ;; CHECK-NEXT:   (i32.const 10)
@@ -59,7 +59,7 @@
     )
   )
 
-  ;; CHECK:      (func $multi-local (type $1)
+  ;; CHECK:      (func $multi-local (type $0)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (local $y i32)
   ;; CHECK-NEXT:  (local.set $x
@@ -135,7 +135,7 @@
     )
   )
 
-  ;; CHECK:      (func $multi-block (type $0) (param $param i32)
+  ;; CHECK:      (func $multi-block (type $1) (param $param i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (local.set $x
   ;; CHECK-NEXT:   (i32.const 10)
@@ -204,7 +204,7 @@
     )
   )
 
-  ;; CHECK:      (func $multi-block-split (type $0) (param $param i32)
+  ;; CHECK:      (func $multi-block-split (type $1) (param $param i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (local.get $param)
@@ -263,7 +263,7 @@
     ;; TODO: test we can infer x >= 10 etc.
   )
 
-  ;; CHECK:      (func $multi-block-split-2 (type $0) (param $param i32)
+  ;; CHECK:      (func $multi-block-split-2 (type $1) (param $param i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (local.set $x
   ;; CHECK-NEXT:   (i32.const 10)
@@ -314,6 +314,26 @@
       (i32.eq
         (local.get $x)
         (i32.const 20)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $default-var (type $0)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.eq
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $default-var
+    (local $x i32)
+    ;; locals begin with default values, so we can infer here.
+    (drop
+      (i32.eq
+        (local.get $x)
+        (i32.const 0)
       )
     )
   )
