@@ -27,6 +27,7 @@
 #endif
 
 #include "analysis/lattice.h"
+#include "analysis/lattices/bool.h"
 #include "support/utilities.h"
 
 namespace wasm::analysis {

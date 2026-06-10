@@ -116,10 +116,25 @@ public:
     }
     WASM_UNREACHABLE("unexpected comparison result");
   }
+
+  bool meet(Element& meetee, const Element& meeter) const noexcept {
+    switch (compare(meetee, meeter)) {
+      case GREATER:
+        meetee = meeter;
+        return true;
+      case NO_RELATION:
+        meetee = Element{Bot{}};
+        return true;
+      case LESS:
+      case EQUAL:
+        return false;
+    }
+    WASM_UNREACHABLE("unexpected comparison result");
+  }
 };
 
 #if defined(__cpp_lib_concepts)
-static_assert(Lattice<Flat<int>>);
+static_assert(FullLattice<Flat<int>>);
 #endif
 
 } // namespace wasm::analysis
