@@ -755,13 +755,6 @@ ModuleSplitter::PrimarySecondaryUsedNames ModuleSplitter::computeUsedNames() {
       }
     }
 
-    for (auto name : used.tables) {
-      if (auto* table = primary.getTableOrNull(name)) {
-        if (table->init) {
-          collector.walk(table->init);
-        }
-      }
-    }
     return used;
   };
 
@@ -821,32 +814,77 @@ ModuleSplitter::PrimarySecondaryUsedNames ModuleSplitter::computeUsedNames() {
     }
   }
 
-  // Compute the transitive closure of globals referenced in other globals'
-  // initializers. Since globals can reference other globals, we must ensure
-  // that if a global is used in a module, all its dependencies are also marked
-  // as used.
-  auto computeTransitiveGlobals = [&](UsedNames& used) {
-    UniqueNonrepeatingDeferredQueue<Name> worklist;
-    for (auto global : used.globals) {
-      worklist.push(global);
+  // Given a name and a module item kind (field pointer), find which module
+  // "owns" it. If it is used by exactly one secondary module, that secondary
+  // module is the owner. If it is used by the primary module or multiple
+  // secondary modules, the primary module is the owner. If it is not used,
+  // returns nullptr.
+  auto getOwner = [&](Name name, auto UsedNames::*field) -> UsedNames* {
+    UsedNames* owner = nullptr;
+    size_t users = 0;
+    if ((primaryUsed.*field).contains(name)) {
+      owner = &primaryUsed;
+      users++;
     }
-    while (!worklist.empty()) {
-      Name name = worklist.pop();
-      // At this point all globals are still in the primary module, so this
-      // exists
-      auto* global = primary.getGlobal(name);
-      if (!global->imported() && global->init) {
-        for (auto* get : FindAll<GlobalGet>(global->init).list) {
-          worklist.push(get->name);
-          used.globals.insert(get->name);
-        }
+    for (auto& sec : secondaryUsed) {
+      if ((sec.*field).contains(name)) {
+        owner = &sec;
+        users++;
       }
     }
+    if (users == 0) {
+      return nullptr;
+    }
+    if (users > 1) {
+      return &primaryUsed;
+    }
+    return owner;
   };
 
-  computeTransitiveGlobals(primaryUsed);
-  for (auto& used : secondaryUsed) {
-    computeTransitiveGlobals(used);
+  // Scan table initializers into their owning modules. If a table is used by a
+  // single secondary module, its initializer dependencies belong to that
+  // secondary module. Otherwise, they belong to the primary module.
+  if (primary.features.hasGC()) {
+    for (auto& table : primary.tables) {
+      if (!table->init) {
+        continue;
+      }
+      UsedNames* owner = getOwner(table->name, &UsedNames::tables);
+      if (!owner) {
+        continue;
+      }
+      NameCollector(*owner).walk(table->init);
+    }
+  }
+
+  // Compute the transitive closure of globals referenced in other globals'
+  // initializers. A global's initializer is evaluated by the module that
+  // defines it.
+  UniqueDeferredQueue<Name> worklist;
+  for (auto name : primaryUsed.globals) {
+    worklist.push(name);
+  }
+  for (auto& sec : secondaryUsed) {
+    for (auto name : sec.globals) {
+      worklist.push(name);
+    }
+  }
+
+  while (!worklist.empty()) {
+    Name name = worklist.pop();
+    auto* global = primary.getGlobal(name);
+    if (!global->init) {
+      continue;
+    }
+    UsedNames* owner = getOwner(name, &UsedNames::globals);
+    if (!owner) {
+      continue;
+    }
+    for (auto* get : FindAll<GlobalGet>(global->init).list) {
+      if (owner->globals.insert(get->name).second) {
+        worklist.push(get->name);
+      }
+    }
   }
 
   return std::make_pair(primaryUsed, secondaryUsed);
