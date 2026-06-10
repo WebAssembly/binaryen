@@ -134,15 +134,15 @@ std::optional<LocalConstraint> LocalConstraint::parse(Expression* curr) {
   // Parse a get or a constant.
   auto parseTerm = [&](Expression* expr) -> std::optional<Term> {
     if (auto* get = expr->dynCast<LocalGet>()) {
-      return get->index;
+      return Term(get->index);
     }
     if (Properties::isSingleConstantExpression(expr)) {
-      return Properties::getLiteral(expr);
+      return Term(Properties::getLiteral(expr));
     }
     return {};
   };
 
-  auto parseBinary = [&](Abstract::Op op, Expression* left, Expression* right) {
+  auto parseBinary = [&](Abstract::Op op, Expression* left, Expression* right) -> std::optional<LocalConstraint> {
     // The left must be a get.
     if (auto* get = left->dynCast<LocalGet>()) {
       // The right can be any term.
@@ -150,6 +150,7 @@ std::optional<LocalConstraint> LocalConstraint::parse(Expression* curr) {
         return LocalConstraint{get->index, Constraint{op, *value}};
       }
     }
+    return {};
   };
 
   if (auto* binary = curr->dynCast<Binary>()) {
@@ -162,7 +163,7 @@ std::optional<LocalConstraint> LocalConstraint::parse(Expression* curr) {
   }
 
   if (auto* refEq = curr->dynCast<RefEq>()) {
-    return parseBinary(Abstract::eq, refEq->left, refEq->right);
+    return parseBinary(Abstract::Eq, refEq->left, refEq->right);
   }
 
   return {};
