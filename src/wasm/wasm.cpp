@@ -80,6 +80,7 @@ const char* RelaxedAtomicsFeature = "relaxed-atomics";
 const char* MultibyteFeature = "multibyte";
 const char* CustomPageSizesFeature = "custom-page-sizes";
 const char* WideArithmeticFeature = "wide-arithmetic";
+const char* CompactImportsFeature = "compact-imports";
 
 } // namespace BinaryConsts::CustomSections
 

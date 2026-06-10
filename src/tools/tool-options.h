@@ -113,6 +113,7 @@ struct ToolOptions : public Options {
                   "acquire/release atomic memory operations")
       .addFeature(FeatureSet::CustomPageSizes, "custom page sizes")
       .addFeature(FeatureSet::WideArithmetic, "wide arithmetic")
+      .addFeature(FeatureSet::CompactImports, "compact import section")
       .add("--enable-typed-function-references",
            "",
            "Deprecated compatibility flag",
