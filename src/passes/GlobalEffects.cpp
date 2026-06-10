@@ -254,7 +254,7 @@ CallGraph buildCallGraph(const Module& module,
     }
 
     // Function -> Type
-    allFunctionTypes.insert(std::pair(caller->type.getHeapType(), Exact));
+    allFunctionTypes.insert({caller->type.getHeapType(), Exact});
     for (auto calleeTypeExact : callerInfo.indirectCalledTypes) {
       callees.insert(calleeTypeExact);
 
@@ -290,13 +290,13 @@ CallGraph buildCallGraph(const Module& module,
       switch (exactness) {
         case Exact: {
           callGraph[std::pair(type, Inexact)].insert(typeAndExactness);
-          push(std::pair(type, Inexact));
+          push({type, Inexact});
           break;
         }
         case Inexact: {
           if (auto super = type.getDeclaredSuperType()) {
             callGraph[std::pair(*super, Inexact)].insert(typeAndExactness);
-            push(std::pair(*super, Inexact));
+            push({*super, Inexact});
           }
           break;
         }
