@@ -729,29 +729,6 @@ void ModuleSplitter::shareImportableItems() {
     }
 
     NameCollector collector(used);
-    // We shouldn't use collector.walkModuleCode here, because we don't want to
-    // walk global initializers. At this point, all globals are still in the
-    // primary module, so if we walk global initializers here, other globals
-    // appearing in their initializers will all be marked as used in the primary
-    // module, which is not what we want.
-    //
-    // For example, we have (global $a i32 (global.get $b)). Because $a is at
-    // this point still in the primary module, $b will be marked as "used" in
-    // the primary module. But $a can be moved to a secondary module later if it
-    // is used exclusively by that module. Then $b can be also moved, in case it
-    // doesn't have other uses. But if it is marked as "used" in the primary
-    // module, it can't.
-    walkSegments(collector, &module);
-    for (auto& segment : module.dataSegments) {
-      if (segment->isActive()) {
-        used.memories.insert(segment->memory);
-      }
-    }
-    for (auto& segment : module.elementSegments) {
-      if (segment->isActive()) {
-        used.tables.insert(segment->table);
-      }
-    }
 
     // If primary module has exports, they are "used" in it. Secondary modules
     // don't have exports, so this only applies to the primary module.
@@ -785,6 +762,37 @@ void ModuleSplitter::shareImportableItems() {
       }
     }
 
+    // We shouldn't use collector.walkModuleCode here, because we don't want to
+    // walk global initializers. At this point, all globals are still in the
+    // primary module, so if we walk global initializers here, other globals
+    // appearing in their initializers will all be marked as used in the primary
+    // module, which is not what we want.
+    //
+    // For example, we have (global $a i32 (global.get $b)). Because $a is at
+    // this point still in the primary module, $b will be marked as "used" in
+    // the primary module. But $a can be moved to a secondary module later if it
+    // is used exclusively by that module. Then $b can be also moved, in case it
+    // doesn't have other uses. But if it is marked as "used" in the primary
+    // module, it can't.
+    walkSegments(collector, &module);
+    for (auto& segment : module.dataSegments) {
+      if (segment->isActive()) {
+        used.memories.insert(segment->memory);
+      }
+    }
+    for (auto& segment : module.elementSegments) {
+      if (segment->isActive()) {
+        used.tables.insert(segment->table);
+      }
+    }
+    for (auto name : used.tables) {
+      if (auto* table = primary.getTableOrNull(name)) {
+        if (table->init) {
+          collector.walk(table->init);
+        }
+      }
+    }
+
     // Compute the transitive closure of globals referenced in other globals'
     // initializers. Since globals can reference other globals, we must ensure
     // that if a global is used in a module, all its dependencies are also
@@ -814,15 +822,22 @@ void ModuleSplitter::shareImportableItems() {
     secondaryUsed.push_back(getUsedNames(*secondaryPtr));
   }
 
-  // If custom-descirptors is enabled, global initializers can trap. Trapping
-  // globals should stay in the primary module to preserve the trapping behavior
-  // upon instantiation.
+  // If custom-descirptors is enabled, global and table initializers can trap.
+  // Trapping globals should stay in the primary module to preserve the trapping
+  // behavior upon instantiation.
   if (primary.features.hasCustomDescriptors()) {
     for (auto& global : primary.globals) {
       if (global->init &&
           EffectAnalyzer(config.passOptions, primary, global->init)
             .hasUnremovableSideEffects()) {
         primaryUsed.globals.insert(global->name);
+      }
+    }
+    for (auto& table : primary.tables) {
+      if (table->init &&
+          EffectAnalyzer(config.passOptions, primary, table->init)
+            .hasUnremovableSideEffects()) {
+        primaryUsed.tables.insert(table->name);
       }
     }
   }
