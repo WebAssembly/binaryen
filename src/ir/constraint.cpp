@@ -131,35 +131,40 @@ void AndedConstraintSet::fuzzyOr(const AndedConstraintSet& other) {
 }
 
 std::optional<LocalConstraint> LocalConstraint::parse(Expression* curr) {
-  auto* binary = curr->dynCast<Binary>();
-  if (!binary) {
-    // TODO: unary etc.
+  // Parse a get or a constant.
+  auto parseTerm = [&](Expression* expr) -> std::optional<Term> {
+    if (auto* get = expr->dynCast<LocalGet>()) {
+      return get->index;
+    }
+    if (Properties::isSingleConstantExpression(expr)) {
+      return Properties::getLiteral(expr);
+    }
     return {};
-  }
+  };
 
-  // The left must be a get.
-  auto* leftGet = binary->left->dynCast<LocalGet>();
-  if (!leftGet) {
-    return {};
-  }
+  auto parseBinary = [&](Abstract::Op op, Expression* left, Expression* right) {
+    // The left must be a get.
+    if (auto* get = left->dynCast<LocalGet>()) {
+      // The right can be any term.
+      if (auto value = parseTerm(right)) {
+        return LocalConstraint{get->index, Constraint{op, *value}};
+      }
+    }
+  };
 
-  // The right must be a get or a constant.
-  auto* rightGet = binary->right->dynCast<LocalGet>();
-  std::optional<Literal> rightConstant;
-  if (Properties::isSingleConstantExpression(binary->right)) {
-    rightConstant = Properties::getLiteral(binary->right);
-  }
-  if (!rightGet && !rightConstant) {
-    return {};
-  }
-
-  // The operation must be one we recognize.
-  for (auto op : {Abstract::Eq, Abstract::Ne}) {
-    if (Abstract::getBinary(binary->type, op) == binary->op) {
-      auto value = rightGet ? Term(rightGet->index) : Term(*rightConstant);
-      return LocalConstraint{leftGet->index, Constraint{op, value}};
+  if (auto* binary = curr->dynCast<Binary>()) {
+    // The operation must be one we recognize.
+    for (auto op : {Abstract::Eq, Abstract::Ne}) {
+      if (Abstract::getBinary(binary->type, op) == binary->op) {
+        return parseBinary(op, binary->left, binary->right);
+      }
     }
   }
+
+  if (auto* refEq = curr->dynCast<RefEq>()) {
+    return parseBinary(Abstract::eq, refEq->left, refEq->right);
+  }
+
   return {};
 }
 
