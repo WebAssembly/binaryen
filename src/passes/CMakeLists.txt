@@ -26,6 +26,7 @@ set(passes_SOURCES
   CodeFolding.cpp
   ConstantFieldPropagation.cpp
   ConstHoisting.cpp
+  ConstraintAnalysis.cpp
   DataFlowOpts.cpp
   DeadArgumentElimination.cpp
   DeadArgumentElimination2.cpp
@@ -107,7 +108,6 @@ set(passes_SOURCES
   StripToolchainAnnotations.cpp
   TraceCalls.cpp
   RandomizeBranchHints.cpp
-  RangeAnalysis.cpp
   RedundantSetElimination.cpp
   RemoveExports.cpp
   RemoveImports.cpp

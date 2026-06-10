@@ -129,6 +129,9 @@ void PassRegistry::registerPasses() {
   registerPass("cfp-reftest",
                "propagate constant struct field values, using ref.test",
                createConstantFieldPropagationRefTestPass);
+  registerPass("constraint-analysis",
+               "finds and uses mathematical constraints on locals",
+               createConstraintAnalysisPass);
   registerPass(
     "dce", "removes unreachable code", createDeadCodeEliminationPass);
   registerPass("dealign",
@@ -411,9 +414,6 @@ void PassRegistry::registerPasses() {
   registerPass("propagate-globals-globally",
                "propagate global values to other globals (useful for tests)",
                createPropagateGlobalsGloballyPass);
-  registerPass("range-analysis",
-               "finds and uses value ranges for locals",
-               createRangeAnalysisPass);
   registerPass("remove-non-js-ops",
                "removes operations incompatible with js",
                createRemoveNonJSOpsPass);
