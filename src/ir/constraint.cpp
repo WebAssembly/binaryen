@@ -137,6 +137,7 @@ std::optional<LocalConstraint> LocalConstraint::parse(Expression* curr) {
       auto value = Literal::makeZero(get->type);
       return LocalConstraint{get->index, Constraint{Abstract::Eq, value}};
     }
+    return {};
   };
 
   if (auto* unary = curr->dynCast<Unary>()) {
