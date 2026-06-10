@@ -16,6 +16,7 @@
 
 #include <optional>
 #include <random>
+#include <sstream>
 #include <string>
 #include <type_traits>
 #include <variant>
@@ -23,6 +24,7 @@
 #include "analysis/lattice.h"
 #include "analysis/lattices/array.h"
 #include "analysis/lattices/bool.h"
+#include "analysis/lattices/bounded-conjunction.h"
 #include "analysis/lattices/flat.h"
 #include "analysis/lattices/int.h"
 #include "analysis/lattices/inverted.h"
@@ -56,25 +58,39 @@ uint64_t getSeed() {
   return std::uniform_int_distribution<uint64_t>{}(rand);
 }
 
+// Functor deleter to make RandomElement default-constructible, which is
+// required by std::array (used in inplace_vector).
+struct RandomElementDeleter {
+  void (*deleter)(void*) = nullptr;
+  void operator()(void* p) const {
+    if (deleter) {
+      deleter(p);
+    }
+  }
+};
+
 // Actually a pointer to `L::ElementImpl`, but we erase the type to avoid
 // getting into a situation where `L` satisfying `Lattice` or `FullLattice`
 // circularly requires that `L` satisfies `Lattice` or `FullLattice`. C++ does
 // not allow concepts to depend on themselves. Also make the pointer copyable to
 // satisfy that constraint on lattice elements.
 template<typename L>
-struct RandomElement : std::unique_ptr<void, void (*)(void*)> {
+struct RandomElement : std::unique_ptr<void, RandomElementDeleter> {
   RandomElement() = default;
 
   RandomElement(typename L::ElementImpl&& other)
-    : std::unique_ptr<void, void (*)(void*)>(
+    : std::unique_ptr<void, RandomElementDeleter>(
         new typename L::ElementImpl(std::move(other)),
-        [](void* e) { delete static_cast<typename L::ElementImpl*>(e); }) {}
+        RandomElementDeleter{
+          [](void* e) { delete static_cast<typename L::ElementImpl*>(e); }}) {}
 
   RandomElement(const RandomElement& other)
-    : RandomElement([&]() {
-        auto copy = *other;
-        return copy;
-      }()) {}
+    : std::unique_ptr<void, RandomElementDeleter>(
+        other.get() ? new
+          typename L::ElementImpl(
+            *static_cast<const typename L::ElementImpl*>(other.get()))
+                    : nullptr,
+        other.get_deleter()) {}
 
   RandomElement(RandomElement&& other) = default;
   RandomElement& operator=(const RandomElement& other) {
@@ -87,16 +103,28 @@ struct RandomElement : std::unique_ptr<void, void (*)(void*)> {
   RandomElement& operator=(RandomElement&& other) = default;
 
   typename L::ElementImpl& operator*() {
-    return *static_cast<typename L::ElementImpl*>(get());
+    return *static_cast<typename L::ElementImpl*>(this->get());
   }
 
   const typename L::ElementImpl& operator*() const {
-    return *static_cast<const typename L::ElementImpl*>(get());
+    return *static_cast<const typename L::ElementImpl*>(this->get());
   }
 
   typename L::ElementImpl* operator->() { return &*(*this); }
 
   const typename L::ElementImpl* operator->() const { return &*(*this); }
+
+  bool operator==(const RandomElement& other) const {
+    if (this->get() == other.get())
+      return true;
+    if (!this->get() || !other.get())
+      return false;
+    return **this == *other;
+  }
+
+  bool operator!=(const RandomElement& other) const {
+    return !(*this == other);
+  }
 };
 
 struct RandomFullLattice {
@@ -186,6 +214,45 @@ using FullLatticeElementVariant =
 
 struct RandomFullLattice::ElementImpl : FullLatticeElementVariant {};
 
+struct FuzzBoundedConjunction;
+
+void printElement(std::ostream& os,
+                  const typename RandomLattice::Element& elem,
+                  int depth = 0);
+
+struct FuzzBoundedConjunction
+  : analysis::BoundedConjunction<FuzzBoundedConjunction, RandomLattice, 2> {
+  using Base =
+    analysis::BoundedConjunction<FuzzBoundedConjunction, RandomLattice, 2>;
+  FuzzBoundedConjunction(RandomLattice&& lattice) : Base(std::move(lattice)) {}
+
+  std::strong_ordering orderElements(const RandomLattice::Element& a,
+                                     const RandomLattice::Element& b) const {
+    std::stringstream ss1, ss2;
+    printElement(ss1, a, 0);
+    printElement(ss2, b, 0);
+    return ss1.str() <=> ss2.str();
+  }
+};
+
+FuzzBoundedConjunction::Element makeFuzzBoundedConjunctionElement(
+  const FuzzBoundedConjunction& lattice,
+  const std::vector<RandomLattice::Element>& elements) {
+  FuzzBoundedConjunction::Element result{
+    inplace_vector<RandomLattice::Element, 2>{}};
+
+  for (const auto& e : elements) {
+    if (lattice.lattice.compare(e, lattice.lattice.getBottom()) == EQUAL) {
+      return lattice.getBottom();
+    }
+    inplace_vector<RandomLattice::Element, 2> vec;
+    vec.push_back(e);
+    FuzzBoundedConjunction::Element meeter{vec};
+    lattice.boundedMeet(result, meeter);
+  }
+  return result;
+}
+
 using LatticeVariant = std::variant<RandomFullLattice,
                                     Flat<uint32_t>,
                                     Lift<RandomLattice>,
@@ -193,7 +260,8 @@ using LatticeVariant = std::variant<RandomFullLattice,
                                     Vector<RandomLattice>,
                                     TupleLattice,
                                     SharedPath<RandomLattice>,
-                                    OneOfLattice>;
+                                    OneOfLattice,
+                                    FuzzBoundedConjunction>;
 
 struct RandomLattice::LatticeImpl : LatticeVariant {};
 
@@ -205,7 +273,8 @@ using LatticeElementVariant =
                typename Vector<RandomLattice>::Element,
                typename TupleLattice::Element,
                typename SharedPath<RandomLattice>::Element,
-               typename OneOfLattice::Element>;
+               typename OneOfLattice::Element,
+               typename FuzzBoundedConjunction::Element>;
 
 struct RandomLattice::ElementImpl : LatticeElementVariant {};
 
@@ -216,7 +285,8 @@ RandomFullLattice::RandomFullLattice(Random& rand,
                                      std::optional<uint32_t> maybePick)
   : rand(rand) {
   // TODO: Limit the depth once we get lattices with more fan-out.
-  uint32_t pick = maybePick ? *maybePick : rand.upTo(FullLatticePicks);
+  uint32_t maxPick = depth > 3 ? 3 : FullLatticePicks;
+  uint32_t pick = maybePick ? *maybePick : rand.upTo(maxPick);
   switch (pick) {
     case 0:
       lattice = std::make_unique<LatticeImpl>(LatticeImpl{Bool{}});
@@ -255,7 +325,8 @@ RandomFullLattice::RandomFullLattice(Random& rand,
 
 RandomLattice::RandomLattice(Random& rand, size_t depth) : rand(rand) {
   // TODO: Limit the depth once we get lattices with more fan-out.
-  uint32_t pick = rand.upTo(FullLatticePicks + 7);
+  uint32_t maxPick = depth > 3 ? FullLatticePicks + 1 : FullLatticePicks + 8;
+  uint32_t pick = rand.upTo(maxPick);
 
   if (pick < FullLatticePicks) {
     lattice = std::make_unique<LatticeImpl>(
@@ -290,6 +361,10 @@ RandomLattice::RandomLattice(Random& rand, size_t depth) : rand(rand) {
     case FullLatticePicks + 6:
       lattice = std::make_unique<LatticeImpl>(LatticeImpl{OneOfLattice{
         RandomLattice{rand, depth + 1}, RandomLattice{rand, depth + 1}}});
+      return;
+    case FullLatticePicks + 7:
+      lattice = std::make_unique<LatticeImpl>(
+        LatticeImpl{FuzzBoundedConjunction{RandomLattice{rand, depth + 1}}});
       return;
   }
   WASM_UNREACHABLE("unexpected pick");
@@ -424,6 +499,24 @@ RandomLattice::Element RandomLattice::makeElement() const noexcept {
         return ElementImpl{l->get<1>(std::get<1>(l->lattices).makeElement())};
     }
   }
+  if (const auto* l = std::get_if<FuzzBoundedConjunction>(lattice.get())) {
+    auto pick = rand.upTo(4);
+    switch (pick) {
+      case 0:
+        return ElementImpl{l->getBottom()};
+      case 1:
+        return ElementImpl{typename FuzzBoundedConjunction::Element{
+          inplace_vector<typename RandomLattice::Element, 2>{}}};
+      case 2: {
+        return ElementImpl{
+          makeFuzzBoundedConjunctionElement(*l, {l->lattice.makeElement()})};
+      }
+      case 3: {
+        return ElementImpl{makeFuzzBoundedConjunctionElement(
+          *l, {l->lattice.makeElement(), l->lattice.makeElement()})};
+      }
+    }
+  }
   WASM_UNREACHABLE("unexpected lattice");
 }
 
@@ -468,6 +561,13 @@ void printFullElement(std::ostream& os,
     indent(os, depth);
     os << "]\n";
   } else if (const auto* e =
+               std::get_if<typename TupleFullLattice::Element>(&*elem)) {
+    os << "Tuple(\n";
+    printFullElement(os, std::get<0>(*e), depth + 1);
+    printFullElement(os, std::get<1>(*e), depth + 1);
+    indent(os, depth);
+    os << ")\n";
+  } else if (const auto* e =
                std::get_if<typename OneOfFullLattice::Element>(&*elem)) {
     if (e->isBottom()) {
       os << "one-of bot\n";
@@ -493,7 +593,7 @@ void printFullElement(std::ostream& os,
 
 void printElement(std::ostream& os,
                   const typename RandomLattice::Element& elem,
-                  int depth = 0) {
+                  int depth) {
   if (const auto* e =
         std::get_if<typename RandomFullLattice::Element>(&*elem)) {
     printFullElement(os, *e, depth);
@@ -568,6 +668,24 @@ void printElement(std::ostream& os,
       os << ")\n";
     } else {
       WASM_UNREACHABLE("unexpected one-of element");
+    }
+  } else if (const auto* e =
+               std::get_if<typename FuzzBoundedConjunction::Element>(&*elem)) {
+    if (std::holds_alternative<FuzzBoundedConjunction::Bot>(*e)) {
+      os << "bounded-conjunction bot\n";
+    } else {
+      const auto& vec =
+        std::get<inplace_vector<typename RandomLattice::Element, 2>>(*e);
+      if (vec.empty()) {
+        os << "bounded-conjunction top\n";
+      } else {
+        os << "BoundedConjunction[\n";
+        for (const auto& el : vec) {
+          printElement(os, el, depth + 1);
+        }
+        indent(os, depth);
+        os << "]\n";
+      }
     }
   } else {
     WASM_UNREACHABLE("unexpected element");

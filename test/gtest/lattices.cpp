@@ -18,6 +18,7 @@
 #include "analysis/lattices/abstraction.h"
 #include "analysis/lattices/array.h"
 #include "analysis/lattices/bool.h"
+#include "analysis/lattices/bounded-conjunction.h"
 #include "analysis/lattices/conetype.h"
 #include "analysis/lattices/flat.h"
 #include "analysis/lattices/int.h"
@@ -1511,4 +1512,160 @@ TEST(OneOfLattice, Meet) {
   // Different lattice meets
   test(b_false, i_0, bot);
   test(i_10, b_true, bot);
+}
+
+struct TestBoundedConjunction
+  : analysis::
+      BoundedConjunction<TestBoundedConjunction, analysis::Flat<int>, 2> {
+  using Base = analysis::
+    BoundedConjunction<TestBoundedConjunction, analysis::Flat<int>, 2>;
+  TestBoundedConjunction() : Base(analysis::Flat<int>{}) {}
+
+  std::strong_ordering
+  orderElements(const analysis::Flat<int>::Element& a,
+                const analysis::Flat<int>::Element& b) const {
+    assert(a.getVal() && b.getVal());
+    return *a.getVal() <=> *b.getVal();
+  }
+};
+
+TEST(BoundedConjunctionLattice, Compare) {
+  TestBoundedConjunction lattice;
+  auto flat = lattice.lattice;
+
+  auto bot = lattice.getBottom();
+
+  auto make_elem = [&](std::initializer_list<int> vals) {
+    wasm::inplace_vector<analysis::Flat<int>::Element, 2> vec;
+    for (int val : vals) {
+      vec.push_back(flat.get(val));
+    }
+    return TestBoundedConjunction::Element{vec};
+  };
+
+  auto e_empty = make_elem({}); // Top
+  auto e_1 = make_elem({1});
+  auto e_2 = make_elem({2});
+  auto e_1_2 = make_elem({1, 2});
+  auto e_2_3 = make_elem({2, 3});
+
+  // Bot comparison
+  EXPECT_EQ(lattice.compare(bot, bot), analysis::EQUAL);
+  EXPECT_EQ(lattice.compare(bot, e_empty), analysis::LESS);
+  EXPECT_EQ(lattice.compare(bot, e_1), analysis::LESS);
+  EXPECT_EQ(lattice.compare(e_1, bot), analysis::GREATER);
+
+  // Top (empty) comparison
+  EXPECT_EQ(lattice.compare(e_empty, e_empty), analysis::EQUAL);
+  EXPECT_EQ(lattice.compare(e_empty, e_1), analysis::GREATER);
+  EXPECT_EQ(lattice.compare(e_1, e_empty), analysis::LESS);
+
+  // Subset comparison (more constraints = smaller)
+  EXPECT_EQ(lattice.compare(e_1_2, e_1), analysis::LESS);
+  EXPECT_EQ(lattice.compare(e_1, e_1_2), analysis::GREATER);
+
+  // Equal
+  EXPECT_EQ(lattice.compare(e_1, e_1), analysis::EQUAL);
+  EXPECT_EQ(lattice.compare(e_1_2, e_1_2), analysis::EQUAL);
+
+  // Unrelated
+  EXPECT_EQ(lattice.compare(e_1, e_2), analysis::NO_RELATION);
+  EXPECT_EQ(lattice.compare(e_1_2, e_2_3), analysis::NO_RELATION);
+}
+
+TEST(BoundedConjunctionLattice, Join) {
+  TestBoundedConjunction lattice;
+  auto flat = lattice.lattice;
+
+  auto bot = lattice.getBottom();
+
+  auto make_elem = [&](std::initializer_list<int> vals) {
+    wasm::inplace_vector<analysis::Flat<int>::Element, 2> vec;
+    for (int val : vals) {
+      vec.push_back(flat.get(val));
+    }
+    return TestBoundedConjunction::Element{vec};
+  };
+
+  auto e_top = make_elem({});
+  auto e_1 = make_elem({1});
+  auto e_2 = make_elem({2});
+  auto e_1_2 = make_elem({1, 2});
+  auto e_2_3 = make_elem({2, 3});
+
+  auto test =
+    [&](const auto& joinee, const auto& joiner, const auto& expected) {
+      auto copy = joinee;
+      EXPECT_EQ(lattice.join(copy, joiner), joinee != expected);
+      EXPECT_EQ(copy, expected);
+    };
+
+  // Bot/Top joins
+  test(bot, bot, bot);
+  test(bot, e_1, e_1);
+  test(e_1, bot, e_1);
+  test(e_top, e_1, e_top);
+  test(e_1, e_top, e_top);
+
+  // Same joins
+  test(e_1, e_1, e_1);
+  test(e_1_2, e_1_2, e_1_2);
+
+  // Unrelated joins
+  test(e_1, e_2, e_top);
+
+  // {1, 2} join {2, 3} -> {2}
+  test(e_1_2, e_2_3, e_2);
+}
+
+TEST(BoundedConjunctionLattice, BoundedMeet) {
+  TestBoundedConjunction lattice;
+  auto flat = lattice.lattice;
+
+  auto bot = lattice.getBottom();
+
+  auto make_elem = [&](std::initializer_list<int> vals) {
+    wasm::inplace_vector<analysis::Flat<int>::Element, 2> vec;
+    for (int val : vals) {
+      vec.push_back(flat.get(val));
+    }
+    return TestBoundedConjunction::Element{vec};
+  };
+
+  auto e_top = make_elem({});
+  auto e_1 = make_elem({1});
+  auto e_2 = make_elem({2});
+  auto e_3 = make_elem({3});
+  auto e_1_2 = make_elem({1, 2});
+  auto e_1_3 = make_elem({1, 3});
+
+  auto test =
+    [&](const auto& meetee, const auto& meeter, const auto& expected) {
+      auto copy = meetee;
+      EXPECT_EQ(lattice.boundedMeet(copy, meeter), meetee != expected);
+      EXPECT_EQ(copy, expected);
+    };
+
+  // Bot/Top meets
+  test(bot, bot, bot);
+  test(bot, e_1, bot);
+  test(e_1, bot, bot);
+  test(e_top, e_1, e_1);
+  test(e_1, e_top, e_1);
+
+  // Same meets
+  test(e_1, e_1, e_1);
+
+  // Unrelated meets without overflow
+  test(e_1, e_2, e_1_2);
+
+  // Unrelated meets with overflow (N=2)
+  // {1, 2} meet {3} = {1, 2, 3} -> keep 1, 2
+  test(e_1_2, e_3, e_1_2); // returns false (no change)
+
+  // {1, 3} meet {2} = {1, 2, 3} -> keep 1, 2 (changes from {1, 3})
+  test(e_1_3, e_2, e_1_2); // returns true
+
+  // Meet with redundancy
+  test(e_1, e_1_2, e_1_2);
 }
