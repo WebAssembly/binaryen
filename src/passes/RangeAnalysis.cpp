@@ -89,6 +89,7 @@ struct RangeAnalysis
   void visitLocalSet(LocalSet* curr) { addAction(); }
   void visitUnary(Unary* curr) { addAction(); } // XXX needed?
   void visitBinary(Binary* curr) { addAction(); }
+  void visitRefEq(RefEq* curr) { addAction(); }
 
 #if 0
   // Track the branches we reason about. CFGWalker builds a CFG, and we want to

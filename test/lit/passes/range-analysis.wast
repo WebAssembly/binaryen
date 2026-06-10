@@ -319,10 +319,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.eq
-  ;; CHECK-NEXT:    (local.get $eq)
-  ;; CHECK-NEXT:    (ref.null none)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $default-var (param $param i32)
