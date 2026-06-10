@@ -638,25 +638,6 @@ void ModuleSplitter::thunkExportedSecondaryFunctions() {
   }
 }
 
-// Helper to walk expressions in segments but NOT in globals.
-template<typename Walker>
-static void walkSegments(Walker& walker, Module* module) {
-  walker.setModule(module);
-  for (auto& curr : module->elementSegments) {
-    if (curr->offset) {
-      walker.walk(curr->offset);
-    }
-    for (auto* item : curr->data) {
-      walker.walk(item);
-    }
-  }
-  for (auto& curr : module->dataSegments) {
-    if (curr->offset) {
-      walker.walk(curr->offset);
-    }
-  }
-}
-
 void ModuleSplitter::shareImportableItems() {
 
   struct UsedNames {
@@ -664,6 +645,23 @@ void ModuleSplitter::shareImportableItems() {
     std::unordered_set<Name> memories;
     std::unordered_set<Name> tables;
     std::unordered_set<Name> tags;
+  };
+
+  auto walkSegments = [](auto& walker, Module* module) {
+    walker.setModule(module);
+    for (auto& curr : module->elementSegments) {
+      if (curr->offset) {
+        walker.walk(curr->offset);
+      }
+      for (auto* item : curr->data) {
+        walker.walk(item);
+      }
+    }
+    for (auto& curr : module->dataSegments) {
+      if (curr->offset) {
+        walker.walk(curr->offset);
+      }
+    }
   };
 
   struct NameCollector
@@ -776,6 +774,17 @@ void ModuleSplitter::shareImportableItems() {
       }
     }
 
+    // We need to assume the dispatch table and its base global are used in the
+    // primary module, because we will create segments there later.
+    if (&module == &primary) {
+      if (tableManager.dispatchTable) {
+        used.tables.insert(tableManager.dispatchTable->name);
+      }
+      if (tableManager.dispatchBase.global) {
+        used.globals.insert(tableManager.dispatchBase.global);
+      }
+    }
+
     // Compute the transitive closure of globals referenced in other globals'
     // initializers. Since globals can reference other globals, we must ensure
     // that if a global is used in a module, all its dependencies are also
@@ -803,15 +812,6 @@ void ModuleSplitter::shareImportableItems() {
   std::vector<UsedNames> secondaryUsed;
   for (auto& secondaryPtr : secondaries) {
     secondaryUsed.push_back(getUsedNames(*secondaryPtr));
-  }
-
-  // We need to assume the dispatch table and its base global are used in the
-  // primary module, because we will create segments there later.
-  if (tableManager.dispatchTable) {
-    primaryUsed.tables.insert(tableManager.dispatchTable->name);
-  }
-  if (tableManager.dispatchBase.global) {
-    primaryUsed.globals.insert(tableManager.dispatchBase.global);
   }
 
   // If custom-descirptors is enabled, global initializers can trap. Trapping
@@ -850,9 +850,11 @@ void ModuleSplitter::shareImportableItems() {
   for (auto& memory : primary.memories) {
     auto usingSecondaries =
       getUsingSecondaries(memory->name, &UsedNames::memories);
-    bool usedInPrimary = primaryUsed.memories.contains(memory->name);
+    bool inPrimary = primaryUsed.memories.contains(memory->name);
 
-    if (!usedInPrimary && usingSecondaries.size() == 1) {
+    if (!inPrimary && usingSecondaries.empty()) {
+      memoriesToRemove.push_back(memory->name);
+    } else if (!inPrimary && usingSecondaries.size() == 1) {
       auto* secondary = usingSecondaries[0];
       ModuleUtils::copyMemory(memory.get(), *secondary);
       memoriesToRemove.push_back(memory->name);
@@ -873,9 +875,11 @@ void ModuleSplitter::shareImportableItems() {
   for (auto& table : primary.tables) {
     auto usingSecondaries =
       getUsingSecondaries(table->name, &UsedNames::tables);
-    bool usedInPrimary = primaryUsed.tables.contains(table->name);
+    bool inPrimary = primaryUsed.tables.contains(table->name);
 
-    if (!usedInPrimary && usingSecondaries.size() == 1) {
+    if (!inPrimary && usingSecondaries.empty()) {
+      tablesToRemove.push_back(table->name);
+    } else if (!inPrimary && usingSecondaries.size() == 1) {
       auto* secondary = usingSecondaries[0];
       assert(!secondary->getTableOrNull(table->name));
       ModuleUtils::copyTable(table.get(), *secondary);
@@ -903,12 +907,6 @@ void ModuleSplitter::shareImportableItems() {
     bool inPrimary = primaryUsed.globals.contains(global->name);
 
     if (!inPrimary && usingSecondaries.empty()) {
-      // It's not used anywhere, so delete it. Unlike other unused module items
-      // (memories, tables, and tags) that can just sit in the primary module
-      // and later be DCE'ed by another pass, we should remove it here, because
-      // an unused global can contain an initializer that refers to another
-      // global that will be moved to a secondary module, like
-      // (global $unused i32 (global.get $a)) // $a is moved to a secondary
       globalsToRemove.push_back(global->name);
     } else if (!inPrimary && usingSecondaries.size() == 1) {
       auto* secondary = usingSecondaries[0];
@@ -930,9 +928,11 @@ void ModuleSplitter::shareImportableItems() {
   std::vector<Name> tagsToRemove;
   for (auto& tag : primary.tags) {
     auto usingSecondaries = getUsingSecondaries(tag->name, &UsedNames::tags);
-    bool usedInPrimary = primaryUsed.tags.contains(tag->name);
+    bool inPrimary = primaryUsed.tags.contains(tag->name);
 
-    if (!usedInPrimary && usingSecondaries.size() == 1) {
+    if (!inPrimary && usingSecondaries.empty()) {
+      tagsToRemove.push_back(tag->name);
+    } else if (!inPrimary && usingSecondaries.size() == 1) {
       auto* secondary = usingSecondaries[0];
       ModuleUtils::copyTag(tag.get(), *secondary);
       tagsToRemove.push_back(tag->name);

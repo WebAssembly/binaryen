@@ -2077,6 +2077,20 @@ BinaryenExpressionRef BinaryenExpressionCopy(BinaryenExpressionRef expr,
                                              BinaryenModuleRef module) {
   return ExpressionManipulator::copy(expr, *(Module*)module);
 }
+char* BinaryenExpressionAllocateAndWriteText(BinaryenExpressionRef expr) {
+  std::ostringstream os;
+  bool colors = Colors::isEnabled();
+
+  Colors::setEnabled(false); // do not use colors for writing
+  os << *(Expression*)expr;
+  Colors::setEnabled(colors); // restore colors state
+
+  auto str = os.str();
+  const size_t len = str.length() + 1;
+  char* output = (char*)malloc(len);
+  std::copy_n(str.c_str(), len, output);
+  return output;
+}
 
 // Specific expression utility
 

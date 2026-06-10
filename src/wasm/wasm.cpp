@@ -90,6 +90,7 @@ const Name InlineHint = "metadata.code.inline";
 const Name RemovableIfUnusedHint = "binaryen.removable.if.unused";
 const Name JSCalledHint = "binaryen.js.called";
 const Name IdempotentHint = "binaryen.idempotent";
+const Name ToolchainInlineHint = "binaryen.inline";
 
 } // namespace Annotations
 
