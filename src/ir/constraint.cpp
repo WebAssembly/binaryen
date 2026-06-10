@@ -131,6 +131,17 @@ void AndedConstraintSet::fuzzyOr(const AndedConstraintSet& other) {
 }
 
 std::optional<LocalConstraint> LocalConstraint::parse(Expression* curr) {
+  if (auto* unary = curr->dynCast<Unary>()) {
+    if (Abstract::getUnary(unary->type, Abstract::EqZ) == unary->op) {
+      if (auto* get = unary->value->dynCast<LocalGet>()) {
+        // Canonicalize EqZ to Eq of 0.
+        auto value = Literal::makeZero(get->type);
+        return LocalConstraint{get->index, Constraint{Abstract::Eq, value}};
+      }
+    }
+    return {};
+  }
+
   // Parse a get or a constant.
   auto parseTerm = [&](Expression* expr) -> std::optional<Term> {
     if (auto* get = expr->dynCast<LocalGet>()) {
@@ -160,6 +171,7 @@ std::optional<LocalConstraint> LocalConstraint::parse(Expression* curr) {
         return parseBinary(op, binary->left, binary->right);
       }
     }
+    return {};
   }
 
   if (auto* refEq = curr->dynCast<RefEq>()) {

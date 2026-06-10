@@ -440,9 +440,7 @@
   ;; OPTIN-NEXT:  (local $eq eqref)
   ;; OPTIN-NEXT:  (local $nn-eq (ref eq))
   ;; OPTIN-NEXT:  (drop
-  ;; OPTIN-NEXT:   (i32.eqz
-  ;; OPTIN-NEXT:    (local.get $x)
-  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:   (i32.const 1)
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (drop
   ;; OPTIN-NEXT:   (i32.eqz
@@ -485,5 +483,5 @@
   )
 )
 
-TODO eqz
-todo -split
+;; TODO eqz
+;; todo -split
