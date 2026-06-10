@@ -321,10 +321,7 @@
   ;; CHECK:      (func $default-var (type $0)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.eq
-  ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:    (i32.const 0)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $default-var

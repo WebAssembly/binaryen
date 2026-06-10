@@ -252,11 +252,16 @@ struct RangeAnalysis
     // The entry block has incoming values - defaults - for each var.
     if (block == entry) {
       auto* func = getFunction();
-      auto numVars = func->getNumVars();
-      for (Index i = 0; i < numVars; i++) {
+      auto numLocals = func->getNumLocals();
+      for (Index i = 0; i < numLocals; i++) {
+        if (!func->isVar(i)) {
+          continue;
+        }
         auto type = func->getLocalType(i);
-        if (LiteralUtils::canMakeZero(type)) {
-          constraints[i].and_(Literal::makeZeros(type));
+        // TODO: support tuples
+        if (type.size() == 1 && LiteralUtils::canMakeZero(type)) {
+          auto value = Literal::makeZero(type);
+          constraints[i].and_(Constraint{Abstract::Eq, value});
         }
       }
     }
