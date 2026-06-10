@@ -154,9 +154,6 @@ struct RangeAnalysis
 
     // Values can flow between locals: if x is relevant, and y is written to it,
     // we must consider y relevant too. TODO?
-
-std::cout << relevantLocals.size() << '\n';
-
     if (!relevantLocals.empty()) {
       flow();
       optimize();
