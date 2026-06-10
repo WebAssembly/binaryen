@@ -224,7 +224,7 @@ std::cout << relevantLocals.size() << '\n';
       return;
     }
     auto& localConstraints = iter->second;
-    Result result = localConstraints.check(parsed->constraint);
+    Result result = localConstraints.eval(parsed->constraint);
     if (result == Unknown) {
       // If we parsed something using two locals, like x != y, we can also look
       // for the flipped condition among y's constraints TODO
