@@ -53,10 +53,10 @@ using LocalConstraintMap = std::unordered_map<Index, AndedConstraintSet>;
 // In each basic block we will store the relevant operations, which are all
 // local gets and sets, branches, and uses of them.
 struct Info {
-  std::vector<Expression**> actions; // XXX just *?
+  std::vector<Expression**> actions;
 
   // For each local index, we track the constraints we know about it. We only do
-  // so at the end of each block, which is enough gfor the analysis below.
+  // so at the end of each block, which is enough for the analysis below.
   LocalConstraintMap endConstraints;
 };
 
@@ -85,7 +85,6 @@ struct ConstraintAnalysis
     }
   }
 
-  void visitLocalGet(LocalGet* curr) { addAction(); } // XXX needed?
   void visitLocalSet(LocalSet* curr) { addAction(); }
   void visitUnary(Unary* curr) { addAction(); }
   void visitBinary(Binary* curr) { addAction(); }
