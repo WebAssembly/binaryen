@@ -8,7 +8,7 @@
 ;; R;U;N: wasm-opt %s --optimize-instructions --range-analysis -all -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (func $simple (type $0)
+  ;; CHECK:      (func $simple (type $1)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (local.set $x
   ;; CHECK-NEXT:   (i32.const 10)
@@ -59,7 +59,7 @@
     )
   )
 
-  ;; CHECK:      (func $multi-local (type $0)
+  ;; CHECK:      (func $multi-local (type $1)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (local $y i32)
   ;; CHECK-NEXT:  (local.set $x
@@ -135,7 +135,7 @@
     )
   )
 
-  ;; CHECK:      (func $multi-block (type $1) (param $param i32)
+  ;; CHECK:      (func $multi-block (type $0) (param $param i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (local.set $x
   ;; CHECK-NEXT:   (i32.const 10)
@@ -155,12 +155,6 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.const 1)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.eq
-  ;; CHECK-NEXT:    (local.get $param)
-  ;; CHECK-NEXT:    (i32.const 10)
-  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $multi-block (param $param i32)
@@ -195,16 +189,9 @@
         (i32.const 10)
       )
     )
-    ;; We can infer nothing for the param.
-    (drop
-      (i32.eq
-        (local.get $param)
-        (i32.const 10)
-      )
-    )
   )
 
-  ;; CHECK:      (func $multi-block-split (type $1) (param $param i32)
+  ;; CHECK:      (func $multi-block-split (type $0) (param $param i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (local.get $param)
@@ -263,7 +250,7 @@
     ;; TODO: test we can infer x >= 10 etc.
   )
 
-  ;; CHECK:      (func $multi-block-split-2 (type $1) (param $param i32)
+  ;; CHECK:      (func $multi-block-split-2 (type $0) (param $param i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (local.set $x
   ;; CHECK-NEXT:   (i32.const 10)
@@ -318,18 +305,31 @@
     )
   )
 
-  ;; CHECK:      (func $default-var (type $0)
+  ;; CHECK:      (func $default-var (type $0) (param $param i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.eq
+  ;; CHECK-NEXT:    (local.get $param)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $default-var
+  (func $default-var (param $param i32)
     (local $x i32)
     ;; locals begin with default values, so we can infer here.
     (drop
       (i32.eq
         (local.get $x)
+        (i32.const 0)
+      )
+    )
+    ;; We can infer nothing for a param.
+    (drop
+      (i32.eq
+        (local.get $param)
         (i32.const 0)
       )
     )
