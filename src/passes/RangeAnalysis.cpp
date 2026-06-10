@@ -270,16 +270,13 @@ std::cout << relevantLocals.size() << '\n';
   // Given an expression, apply it to the constraints. For example, a local.set
   // sets the value for that local.
   void applyToConstraints(Expression* curr, LocalConstraintMap& constraints) {
-    auto parsed = LocalConstraint::parse(curr);
-    if (!parsed) {
-      return;
-    }
-
-    // Add the constraint, if we can. TODO: perhaps be smart about which are
-    // more useful, rather than just drop later ones?
-    auto& localConstraints = constraints[parsed->local];
-    if (!localConstraints.full()) {
-      localConstraints.and_(parsed->constraint);
+    if (auto* set = curr->dynCast<LocalSet>()) {
+      if (Properties::isSingleConstantExpression(set->value)) {
+        auto value = Properties::getLiteral(set->value);
+        auto& localConstraints = constraints[set->index];
+        localConstraints.clear();
+        localConstraints.and_(Constraint{Abstract::Eq, value});
+      }
     }
   }
 };

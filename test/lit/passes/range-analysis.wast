@@ -28,7 +28,8 @@
   ;; CHECK-NEXT: )
   (func $simple
     (local $x i32)
-    ;; Set x to 10, and then compare it to 10 and 20 using == and !=
+    ;; Set x to 10, and then compare it to 10 and 20 using == and !=, all in a
+    ;; single basic block.
     (local.set $x
       (i32.const 10)
     )
@@ -53,6 +54,82 @@
     (drop
       (i32.ne
         (local.get $x)
+        (i32.const 20)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $multi (type $0)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (local $y i32)
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (i32.const 10)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $y
+  ;; CHECK-NEXT:   (i32.const 20)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (i32.const 15)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $multi
+    (local $x i32)
+    (local $y i32)
+    ;; x is 10, y is 20
+    (local.set $x
+      (i32.const 10)
+    )
+    (local.set $y
+      (i32.const 20)
+    )
+    ;; Verify those values.
+    (drop
+      (i32.eq
+        (local.get $x)
+        (i32.const 10)
+      )
+    )
+    (drop
+      (i32.eq
+        (local.get $y)
+        (i32.const 20)
+      )
+    )
+    ;; Overwrite x to 15.
+    (local.set $x
+      (i32.const 15)
+    )
+    (drop
+      (i32.eq
+        (local.get $x)
+        (i32.const 10)
+      )
+    )
+    (drop
+      (i32.eq
+        (local.get $x)
+        (i32.const 15)
+      )
+    )
+    ;; y is unchanged.
+    (drop
+      (i32.eq
+        (local.get $y)
         (i32.const 20)
       )
     )
