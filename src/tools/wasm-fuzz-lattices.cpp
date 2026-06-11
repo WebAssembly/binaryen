@@ -27,6 +27,7 @@
 #include "analysis/lattices/int.h"
 #include "analysis/lattices/inverted.h"
 #include "analysis/lattices/lift.h"
+#include "analysis/lattices/one-of.h"
 #include "analysis/lattices/shared.h"
 #include "analysis/lattices/stack.h"
 #include "analysis/lattices/tuple.h"
@@ -159,13 +160,17 @@ using ArrayLattice = analysis::Array<RandomLattice, 2>;
 using TupleFullLattice = analysis::Tuple<RandomFullLattice, RandomFullLattice>;
 using TupleLattice = analysis::Tuple<RandomLattice, RandomLattice>;
 
+using OneOfFullLattice = analysis::OneOf<RandomFullLattice, RandomFullLattice>;
+using OneOfLattice = analysis::OneOf<RandomLattice, RandomLattice>;
+
 using FullLatticeVariant = std::variant<Bool,
                                         UInt32,
                                         ValType,
                                         Inverted<RandomFullLattice>,
                                         ArrayFullLattice,
                                         Vector<RandomFullLattice>,
-                                        TupleFullLattice>;
+                                        TupleFullLattice,
+                                        OneOfFullLattice>;
 
 struct RandomFullLattice::LatticeImpl : FullLatticeVariant {};
 
@@ -176,7 +181,8 @@ using FullLatticeElementVariant =
                typename Inverted<RandomFullLattice>::Element,
                typename ArrayFullLattice::Element,
                typename Vector<RandomFullLattice>::Element,
-               typename TupleFullLattice::Element>;
+               typename TupleFullLattice::Element,
+               typename OneOfFullLattice::Element>;
 
 struct RandomFullLattice::ElementImpl : FullLatticeElementVariant {};
 
@@ -186,7 +192,8 @@ using LatticeVariant = std::variant<RandomFullLattice,
                                     ArrayLattice,
                                     Vector<RandomLattice>,
                                     TupleLattice,
-                                    SharedPath<RandomLattice>>;
+                                    SharedPath<RandomLattice>,
+                                    OneOfLattice>;
 
 struct RandomLattice::LatticeImpl : LatticeVariant {};
 
@@ -197,11 +204,12 @@ using LatticeElementVariant =
                typename ArrayLattice::Element,
                typename Vector<RandomLattice>::Element,
                typename TupleLattice::Element,
-               typename SharedPath<RandomLattice>::Element>;
+               typename SharedPath<RandomLattice>::Element,
+               typename OneOfLattice::Element>;
 
 struct RandomLattice::ElementImpl : LatticeElementVariant {};
 
-constexpr int FullLatticePicks = 7;
+constexpr int FullLatticePicks = 8;
 
 RandomFullLattice::RandomFullLattice(Random& rand,
                                      size_t depth,
@@ -236,13 +244,18 @@ RandomFullLattice::RandomFullLattice(Random& rand,
         LatticeImpl{TupleFullLattice{RandomFullLattice{rand, depth + 1},
                                      RandomFullLattice{rand, depth + 1}}});
       return;
+    case 7:
+      lattice = std::make_unique<LatticeImpl>(
+        LatticeImpl{OneOfFullLattice{RandomFullLattice{rand, depth + 1},
+                                     RandomFullLattice{rand, depth + 1}}});
+      return;
   }
   WASM_UNREACHABLE("unexpected pick");
 }
 
 RandomLattice::RandomLattice(Random& rand, size_t depth) : rand(rand) {
   // TODO: Limit the depth once we get lattices with more fan-out.
-  uint32_t pick = rand.upTo(FullLatticePicks + 6);
+  uint32_t pick = rand.upTo(FullLatticePicks + 7);
 
   if (pick < FullLatticePicks) {
     lattice = std::make_unique<LatticeImpl>(
@@ -274,13 +287,17 @@ RandomLattice::RandomLattice(Random& rand, size_t depth) : rand(rand) {
       lattice = std::make_unique<LatticeImpl>(
         LatticeImpl{SharedPath{RandomLattice{rand, depth + 1}}});
       return;
+    case FullLatticePicks + 6:
+      lattice = std::make_unique<LatticeImpl>(LatticeImpl{OneOfLattice{
+        RandomLattice{rand, depth + 1}, RandomLattice{rand, depth + 1}}});
+      return;
   }
   WASM_UNREACHABLE("unexpected pick");
 }
 
 RandomFullLattice::Element RandomFullLattice::makeElement() const noexcept {
   if (std::get_if<Bool>(lattice.get())) {
-    return ElementImpl{rand.pick(true, false)};
+    return ElementImpl{Bool::Element{rand.pick(true, false)}};
   }
   if (std::get_if<UInt32>(lattice.get())) {
     return ElementImpl{rand.upToSquared(33)};
@@ -337,6 +354,19 @@ RandomFullLattice::Element RandomFullLattice::makeElement() const noexcept {
       std::get<0>(l->lattices).makeElement(),
       std::get<1>(l->lattices).makeElement()}};
   }
+  if (const auto* l = std::get_if<OneOfFullLattice>(lattice.get())) {
+    auto pick = rand.upTo(4);
+    switch (pick) {
+      case 0:
+        return ElementImpl{l->getBottom()};
+      case 1:
+        return ElementImpl{l->getTop()};
+      case 2:
+        return ElementImpl{l->get<0>(std::get<0>(l->lattices).makeElement())};
+      case 3:
+        return ElementImpl{l->get<1>(std::get<1>(l->lattices).makeElement())};
+    }
+  }
   WASM_UNREACHABLE("unexpected lattice");
 }
 
@@ -380,6 +410,19 @@ RandomLattice::Element RandomLattice::makeElement() const noexcept {
     auto elem = l->getBottom();
     l->join(elem, l->lattice.makeElement());
     return ElementImpl{elem};
+  }
+  if (const auto* l = std::get_if<OneOfLattice>(lattice.get())) {
+    auto pick = rand.upTo(4);
+    switch (pick) {
+      case 0:
+        return ElementImpl{l->getBottom()};
+      case 1:
+        return ElementImpl{l->getTop()};
+      case 2:
+        return ElementImpl{l->get<0>(std::get<0>(l->lattices).makeElement())};
+      case 3:
+        return ElementImpl{l->get<1>(std::get<1>(l->lattices).makeElement())};
+    }
   }
   WASM_UNREACHABLE("unexpected lattice");
 }
@@ -425,13 +468,24 @@ void printFullElement(std::ostream& os,
     indent(os, depth);
     os << "]\n";
   } else if (const auto* e =
-               std::get_if<typename TupleFullLattice::Element>(&*elem)) {
-    os << "Tuple(\n";
-    const auto& [first, second] = *e;
-    printFullElement(os, first, depth + 1);
-    printFullElement(os, second, depth + 1);
-    indent(os, depth);
-    os << ")\n";
+               std::get_if<typename OneOfFullLattice::Element>(&*elem)) {
+    if (e->isBottom()) {
+      os << "one-of bot\n";
+    } else if (e->isTop()) {
+      os << "one-of top\n";
+    } else if (const auto* val0 = e->getVal<0>()) {
+      os << "OneOf(0: \n";
+      printFullElement(os, *val0, depth + 1);
+      indent(os, depth);
+      os << ")\n";
+    } else if (const auto* val1 = e->getVal<1>()) {
+      os << "OneOf(1: \n";
+      printFullElement(os, *val1, depth + 1);
+      indent(os, depth);
+      os << ")\n";
+    } else {
+      WASM_UNREACHABLE("unexpected one-of element");
+    }
   } else {
     WASM_UNREACHABLE("unexpected element");
   }
@@ -496,6 +550,25 @@ void printElement(std::ostream& os,
     printElement(os, **e, depth + 1);
     indent(os, depth);
     os << ")\n";
+  } else if (const auto* e =
+               std::get_if<typename OneOfLattice::Element>(&*elem)) {
+    if (e->isBottom()) {
+      os << "one-of bot\n";
+    } else if (e->isTop()) {
+      os << "one-of top\n";
+    } else if (const auto* val0 = e->getVal<0>()) {
+      os << "OneOf(0: \n";
+      printElement(os, *val0, depth + 1);
+      indent(os, depth);
+      os << ")\n";
+    } else if (const auto* val1 = e->getVal<1>()) {
+      os << "OneOf(1: \n";
+      printElement(os, *val1, depth + 1);
+      indent(os, depth);
+      os << ")\n";
+    } else {
+      WASM_UNREACHABLE("unexpected one-of element");
+    }
   } else {
     WASM_UNREACHABLE("unexpected element");
   }
