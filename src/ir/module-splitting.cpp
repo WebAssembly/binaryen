@@ -845,7 +845,9 @@ ModuleSplitter::computeUsedNames() {
 }
 
 void ModuleSplitter::shareImportableItems() {
-  auto [primaryUsed, secondaryUseds] = computeUsedNames();
+  auto usedNames = computeUsedNames();
+  auto& primaryUsed = usedNames.first;
+  auto& secondaryUseds = usedNames.second;
 
   // Given a name and module item kind, returns the list of secondary modules
   // using that name
