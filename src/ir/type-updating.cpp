@@ -329,16 +329,18 @@ void GlobalTypeRewriter::mapTypes(const TypeMap& oldToNewTypes) {
   // Update indirect call effects per type.
   // When A is rewritten to B, B inherits the effects of A and A loses its
   // effects.
-  std::unordered_map<HeapType, std::shared_ptr<const EffectAnalyzer>>
+  std::unordered_map<std::pair<HeapType, Exactness>,
+                     std::shared_ptr<const EffectAnalyzer>>
     newTypeEffects;
-  for (auto& [oldType, oldEffects] : wasm.indirectCallEffects) {
+  for (auto& [oldTypeExact, oldEffects] : wasm.indirectCallEffects) {
     if (!oldEffects) {
       continue;
     }
 
+    auto [oldType, exactness] = oldTypeExact;
     auto newType = updater.getNew(oldType);
     std::shared_ptr<const EffectAnalyzer>& targetEffects =
-      newTypeEffects[newType];
+      newTypeEffects[{newType, exactness}];
     if (!targetEffects) {
       targetEffects = oldEffects;
     } else {

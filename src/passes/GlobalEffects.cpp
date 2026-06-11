@@ -42,7 +42,7 @@ struct FuncInfo {
   std::unordered_set<Name> calledFunctions;
 
   // Types that are targets of indirect calls.
-  std::unordered_set<HeapType> indirectCalledTypes;
+  std::unordered_set<std::pair<HeapType, Exactness>> indirectCalledTypes;
 };
 
 // Only funcs that are referenced may be the target of an indirect call. A
@@ -162,19 +162,20 @@ std::map<Function*, FuncInfo> analyzeFuncs(Module& module,
               funcInfo.calledFunctions.insert(call->target);
             } else if (effects.calls &&
                        options.worldMode == WorldMode::Closed) {
-              HeapType type;
+              std::pair<HeapType, Exactness> typeExact;
               if (auto* callRef = curr->dynCast<CallRef>()) {
                 // call_ref on unreachable does not have a call effect,
                 // so this must be a HeapType.
-                type = callRef->target->type.getHeapType();
+                typeExact = {callRef->target->type.getHeapType(),
+                             callRef->target->type.getExactness()};
               } else if (auto* callIndirect = curr->dynCast<CallIndirect>()) {
-                type = callIndirect->heapType;
+                typeExact = {callIndirect->heapType, Inexact};
               } else {
                 funcInfo.effects = std::nullopt;
                 return;
               }
 
-              funcInfo.indirectCalledTypes.insert(type);
+              funcInfo.indirectCalledTypes.insert(typeExact);
             } else if (effects.calls) {
               assert(options.worldMode == WorldMode::Open);
               funcInfo.effects = std::nullopt;
@@ -196,19 +197,28 @@ std::map<Function*, FuncInfo> analyzeFuncs(Module& module,
   return std::move(analysis.map);
 }
 
-using CallGraphNode = std::variant<Function*, HeapType>;
+using CallGraphNode = std::variant<Function*, std::pair<HeapType, Exactness>>;
 
 // Call graph for indirect and direct calls.
 //
 // key (caller) -> value (callee)
-// Function  -> Function : direct call
-// Function  -> HeapType : indirect call to the given HeapType
-// HeapType  -> Function : The function `callee` has the type `caller`. The
-//                         HeapType may essentially 'call' any of its
-//                         potential implementations.
-// HeapType  -> HeapType : `callee` is a subtype of `caller`. A call_ref
-//                         could target any subtype of the ref, so we need to
-//                         aggregate effects of subtypes of the target type.
+// Function  -> Function :
+//   direct call
+// Function  -> HeapType :
+//   indirect call to the given HeapType (exact or inexact).
+// HeapType  -> Function :
+//   The function `callee` has the type `caller`. The HeapType may essentially
+//   'call' any of its potential implementations. The HeapType is always Exact
+//   for these edges.
+// HeapType  -> HeapType :
+//   `callee` is a subtype of `caller`. An indirect call with an Inexact type
+//   could target any subtype of the ref, so we aggregate effects of subtypes of
+//   the target type. If B is a subtype of A, then we have edges:
+//     A (inexact) -> B (inexact)
+//     A (inexact) -> A (exact)
+//     B (inexact) -> B (exact)
+//   As a result, calls to (inexact A) include B's effects, and calls to
+//   (exact A) only include A's effects.
 //
 // If we're running in an open world, we only include Function -> Function
 // edges, and don't compute effects for indirect calls, conservatively assuming
@@ -234,7 +244,7 @@ CallGraph buildCallGraph(const Module& module,
     return callGraph;
   }
 
-  std::unordered_set<HeapType> allFunctionTypes;
+  std::unordered_set<std::pair<HeapType, Exactness>> allFunctionTypes;
   for (const auto& [caller, callerInfo] : funcInfos) {
     auto& callees = callGraph[caller];
 
@@ -244,18 +254,19 @@ CallGraph buildCallGraph(const Module& module,
     }
 
     // Function -> Type
-    allFunctionTypes.insert(caller->type.getHeapType());
-    for (HeapType calleeType : callerInfo.indirectCalledTypes) {
-      callees.insert(calleeType);
+    allFunctionTypes.insert({caller->type.getHeapType(), Exact});
+    for (auto calleeTypeExact : callerInfo.indirectCalledTypes) {
+      callees.insert(calleeTypeExact);
 
       // Add the key to ensure the lookup doesn't fail for indirect calls to
       // uninhabited types.
-      callGraph[calleeType];
+      callGraph[calleeTypeExact];
+      allFunctionTypes.insert(calleeTypeExact);
     }
 
     // Type -> Function
     if (referencedFuncs.contains(caller)) {
-      callGraph[caller->type.getHeapType()].insert(caller);
+      callGraph[std::pair(caller->type.getHeapType(), Exact)].insert(caller);
     }
   }
 
@@ -263,18 +274,34 @@ CallGraph buildCallGraph(const Module& module,
   // Do a DFS up the type hierarchy for all function implementations.
   // We are essentially walking up each supertype chain and adding edges from
   // super -> subtype, but doing it via DFS to avoid repeated work.
-  Graph superTypeGraph(allFunctionTypes.begin(),
-                       allFunctionTypes.end(),
-                       [&callGraph](const auto& push, HeapType t) {
-                         // Not needed except that during lookup we expect the
-                         // key to exist.
-                         callGraph[t];
+  Graph superTypeGraph(
+    allFunctionTypes.begin(),
+    allFunctionTypes.end(),
+    [&callGraph](const auto& push,
+                 std::pair<HeapType, Exactness> typeAndExactness) {
+      // Not needed except that during lookup we expect the
+      // key to exist.
+      callGraph[typeAndExactness];
 
-                         if (auto super = t.getDeclaredSuperType()) {
-                           callGraph[*super].insert(t);
-                           push(*super);
-                         }
-                       });
+      auto [type, exactness] = typeAndExactness;
+
+      // The supertype of an exact type is its inexact type.
+      // The supertype of an inexact type is its normal inexact supertype.
+      switch (exactness) {
+        case Exact: {
+          callGraph[std::pair(type, Inexact)].insert(typeAndExactness);
+          push({type, Inexact});
+          break;
+        }
+        case Inexact: {
+          if (auto super = type.getDeclaredSuperType()) {
+            callGraph[std::pair(*super, Inexact)].insert(typeAndExactness);
+            push({*super, Inexact});
+          }
+          break;
+        }
+      }
+    });
   (void)superTypeGraph.traverseDepthFirst();
 
   // Add Type -> Function edges to account for inexact imports. For (ref.func)
@@ -295,7 +322,11 @@ CallGraph buildCallGraph(const Module& module,
     }
 
     subtypes.iterSubTypes(func->type.getHeapType(), [&](auto subtype, int _) {
-      callGraph[subtype].insert(func);
+      // The import's effects must be included in both calls to its exact and
+      // inexact subtypes. Adding an edge from the exact subtype is enough
+      // because we propagate effects up the subtype chain and exact types are a
+      // subtype of their inexact type.
+      callGraph[std::pair(subtype, Exact)].insert(func);
       return true;
     });
   });
@@ -334,8 +365,8 @@ void propagateEffects(
   const Module& module,
   const PassOptions& passOptions,
   std::map<Function*, FuncInfo>& funcInfos,
-  std::unordered_map<HeapType, std::shared_ptr<const EffectAnalyzer>>&
-    typeEffects,
+  std::unordered_map<std::pair<HeapType, Exactness>,
+                     std::shared_ptr<const EffectAnalyzer>>& typeEffects,
   const CallGraph& callGraph) {
   // We only care about Functions that are roots, not types.
   // A type would be a root if a function exists with that type, but no-one
@@ -434,7 +465,7 @@ void propagateEffects(
 
     // Assign each function's effects to its CC effects.
     for (auto node : cc) {
-      std::visit(overloaded{[&](HeapType type) {
+      std::visit(overloaded{[&](std::pair<HeapType, Exactness> type) {
                               if (ccEffects != UnknownEffects) {
                                 typeEffects[type] = ccEffects;
                               }
