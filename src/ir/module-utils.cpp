@@ -537,9 +537,14 @@ collectHeapTypeInfo(Module& wasm,
     });
 
   // Combine the function info with the module info.
-  for (auto& [_, functionInfo] : analysis.map) {
+  for (auto& [func, functionInfo] : analysis.map) {
+    bool referenced = referencedFuncs.at(func->name);
     for (auto& [type, typeInfo] : functionInfo.info) {
-      info.info[type].useCount += typeInfo.useCount;
+      auto& mainInfo = info.info[type];
+      mainInfo.useCount += typeInfo.useCount;
+      if (!referenced) {
+        mainInfo.unreferencedFuncUseCount += typeInfo.useCount;
+      }
     }
     for (auto& [sig, count] : functionInfo.controlFlowSignatures) {
       info.controlFlowSignatures[sig] += count;
@@ -598,13 +603,20 @@ collectHeapTypeInfo(Module& wasm,
     // control flow types. Consider one more control flow type and repeat.
     while (controlFlowIt != info.controlFlowSignatures.end()) {
       auto& [sig, count] = *controlFlowIt++;
+      HeapTypeInfo* sigInfo = nullptr;
+      bool newType = false;
       if (auto it = seenSigs.find(sig); it != seenSigs.end()) {
-        info.info[it->second].useCount += count;
+        sigInfo = &info.info[it->second];
       } else {
         // We've never seen this signature before, so add a type for it.
         HeapType type(sig);
         noteNewType(type);
-        info.info[type].useCount += count;
+        newType = true;
+        sigInfo = &info.info[type];
+      }
+      sigInfo->useCount += count;
+      sigInfo->controlFlowUseCount += count;
+      if (newType) {
         break;
       }
     }
@@ -717,28 +729,15 @@ void classifyTypeVisibility(Module& wasm,
 
   // When `func` is exposed, we naively would have to make every function type
   // public. However, we can be more precise and keep function types that are
-  // only used for non-referenced functions private. Lazily compute these
-  // private function types on-demand.
-  std::optional<std::unordered_set<HeapType>> unreferencedFunctionTypes;
-  auto getUnreferencedFunctionTypes = [&]() -> std::unordered_set<HeapType>& {
-    if (!unreferencedFunctionTypes) {
-      // Find functions types that are used only in the declarations of
-      // unreferenced functions.
-      std::unordered_map<HeapType, Index> unreferencedCount;
-      for (auto& [func, referenced] : referencedFuncs) {
-        if (!referenced) {
-          ++unreferencedCount[wasm.getFunction(func)->type.getHeapType()];
-        }
-      }
-      unreferencedFunctionTypes.emplace();
-      for (auto& [type, count] : unreferencedCount) {
-        if (count == types.at(type).useCount) {
-          unreferencedFunctionTypes->insert(type);
-        }
-      }
+  // only used for non-referenced functions and control flow private.
+  std::unordered_set<HeapType> privateFunctionTypes;
+  for (auto& [type, info] : types) {
+    if (type.isSignature() &&
+        info.useCount ==
+          info.controlFlowUseCount + info.unreferencedFuncUseCount) {
+      privateFunctionTypes.insert(type);
     }
-    return *unreferencedFunctionTypes;
-  };
+  }
 
   // Build the subtype hierarchy.
   std::vector<HeapType> heapTypes;
@@ -766,10 +765,9 @@ void classifyTypeVisibility(Module& wasm,
       // only used in unreferenced function declarations public. Other kinds of
       // heap types cannot be inhabited without having reference values.
       if (curr.isMaybeShared(HeapType::func)) {
-        auto& unreferenced = getUnreferencedFunctionTypes();
         for (auto& [definedType, _] : types) {
           if (HeapType::isSubType(definedType, curr) &&
-              !unreferenced.contains(definedType)) {
+              !privateFunctionTypes.contains(definedType)) {
             markPublic(definedType, Exposure::Exposed);
           }
         }

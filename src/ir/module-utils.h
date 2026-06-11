@@ -467,6 +467,8 @@ enum class Visibility { Unknown, Public, Private };
 
 struct HeapTypeInfo {
   Index useCount = 0;
+  Index controlFlowUseCount = 0;
+  Index unreferencedFuncUseCount = 0;
   Visibility visibility = Visibility::Unknown;
 };
 
