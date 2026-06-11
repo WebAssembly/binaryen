@@ -786,9 +786,9 @@ ModuleSplitter::computeUsedNames() {
   };
 
   UsedNames primaryUsed = scanModule(primary);
-  std::vector<UsedNames> secondaryUseds;
+  std::vector<UsedNames> secondaryUsed;
   for (auto& secondaryPtr : secondaries) {
-    secondaryUseds.push_back(scanModule(*secondaryPtr));
+    secondaryUsed.push_back(scanModule(*secondaryPtr));
   }
 
   // If primary module has exports, they are "used" in it. Secondary modules
@@ -841,20 +841,20 @@ ModuleSplitter::computeUsedNames() {
     }
   }
 
-  return std::make_pair(primaryUsed, secondaryUseds);
+  return std::make_pair(primaryUsed, secondaryUsed);
 }
 
 void ModuleSplitter::shareImportableItems() {
   auto usedNames = computeUsedNames();
   auto& primaryUsed = usedNames.first;
-  auto& secondaryUseds = usedNames.second;
+  auto& secondaryUsed = usedNames.second;
 
   // Given a name and module item kind, returns the list of secondary modules
   // using that name
   auto getUsingSecondaries = [&](const Name& name, auto UsedNames::* field) {
     std::vector<Module*> usingModules;
     for (size_t i = 0; i < secondaries.size(); ++i) {
-      if ((secondaryUseds[i].*field).contains(name)) {
+      if ((secondaryUsed[i].*field).contains(name)) {
         usingModules.push_back(secondaries[i].get());
       }
     }
