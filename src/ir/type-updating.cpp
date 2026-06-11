@@ -331,22 +331,28 @@ void GlobalTypeRewriter::mapTypes(const TypeMap& oldToNewTypes) {
   // effects.
   std::unordered_map<HeapType, std::shared_ptr<const EffectAnalyzer>>
     newTypeEffects;
-  for (auto& [oldType, oldEffects] : wasm.indirectCallEffects) {
-    if (!oldEffects) {
+
+  for (const auto& [oldType, newType] : oldToNewTypes) {
+    std::shared_ptr<const EffectAnalyzer>* oldEffects =
+      find_or_null(wasm.indirectCallEffects, oldType);
+    std::shared_ptr<const EffectAnalyzer>* targetEffects =
+      find_or_null(wasm.indirectCallEffects, newType);
+
+    if (!targetEffects) {
+      // Nothing to update, we already know nothing and assume all effects.
       continue;
     }
 
-    auto newType = updater.getNew(oldType);
-    std::shared_ptr<const EffectAnalyzer>& targetEffects =
-      newTypeEffects[newType];
-    if (!targetEffects) {
-      targetEffects = oldEffects;
-    } else {
-      auto merged = std::make_shared<EffectAnalyzer>(*targetEffects);
-      merged->mergeIn(*oldEffects);
-      targetEffects = merged;
+    if (!oldEffects) {
+      targetEffects->reset();
+      continue;
     }
+
+    auto merged = std::make_shared<EffectAnalyzer>(**targetEffects);
+    merged->mergeIn(**oldEffects);
+    *targetEffects = std::move(merged);
   }
+
   wasm.indirectCallEffects = std::move(newTypeEffects);
 }
 
