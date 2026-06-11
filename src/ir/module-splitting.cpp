@@ -819,7 +819,7 @@ ModuleSplitter::PrimarySecondaryUsedNames ModuleSplitter::computeUsedNames() {
   // module is the owner. If it is used by the primary module or multiple
   // secondary modules, the primary module is the owner. If it is not used,
   // returns nullptr.
-  auto getOwner = [&](Name name, auto UsedNames::*field) -> UsedNames* {
+  auto getOwner = [&](Name name, auto UsedNames::* field) -> UsedNames* {
     UsedNames* owner = nullptr;
     size_t users = 0;
     if ((primaryUsed.*field).contains(name)) {
