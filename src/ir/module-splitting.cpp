@@ -366,7 +366,9 @@ struct ModuleSplitter {
     std::unordered_set<Name> tables;
     std::unordered_set<Name> tags;
   };
-  std::pair<UsedNames, std::vector<UsedNames>> computeUsedNames();
+  using PrimarySecondaryUsedNames =
+    std::pair<UsedNames, std::vector<UsedNames>>;
+  PrimarySecondaryUsedNames computeUsedNames();
 
   // Main splitting steps
   void classifyFunctions();
@@ -646,8 +648,7 @@ void ModuleSplitter::thunkExportedSecondaryFunctions() {
   }
 }
 
-std::pair<ModuleSplitter::UsedNames, std::vector<ModuleSplitter::UsedNames>>
-ModuleSplitter::computeUsedNames() {
+ModuleSplitter::PrimarySecondaryUsedNames ModuleSplitter::computeUsedNames() {
   auto walkSegments = [](auto& walker, Module* module) {
     walker.setModule(module);
     for (auto& curr : module->elementSegments) {
