@@ -371,6 +371,10 @@ constexpr uint32_t HasMemoryIndexMask = 1 << 6;
 constexpr uint8_t HasTableInitializer = 0x40;
 constexpr uint8_t TableReservedByte = 0x00;
 
+// TODO(sbc): Use upstream names for these schemes if/when they are decided.
+constexpr uint8_t CompactImportsSharedModule = 0x7f;
+constexpr uint8_t CompactImportsSharedAll = 0x7e;
+
 enum EncodedType {
   // value types
   i32 = -0x1,  // 0x7f
@@ -475,6 +479,7 @@ extern const char* RelaxedAtomicsFeature;
 extern const char* MultibyteFeature;
 extern const char* CustomPageSizesFeature;
 extern const char* WideArithmeticFeature;
+extern const char* CompactImportsFeature;
 
 enum Subsection {
   NameModule = 0,
@@ -1678,6 +1683,23 @@ public:
                           uint8_t& pageSizeLog2,
                           Address defaultIfNoMax);
   void readImports();
+  void readImport(Name module, Name base, uint32_t kind);
+
+  void addImport(std::unique_ptr<Function> func);
+  void addImport(std::unique_ptr<Table> table);
+  void addImport(std::unique_ptr<Memory> memory);
+  void addImport(std::unique_ptr<Global> global);
+  void addImport(std::unique_ptr<Tag> tag);
+
+  std::unique_ptr<Function>
+  readFunctionImport(Name module, Name base, uint32_t kind);
+  std::unique_ptr<Table> readTableImport(Name module, Name base);
+  std::unique_ptr<Memory> readMemoryImport(Name module, Name base);
+  std::unique_ptr<Global> readGlobalImport(Name module, Name base);
+  std::unique_ptr<Tag> readTagImport(Name module, Name base);
+
+  template<typename T, typename ReadFunc>
+  void readCompactImportsShared(Name module, ReadFunc readFunc);
 
   // The signatures of each function, including imported functions, given in the
   // import and function sections. Store HeapTypes instead of Signatures because

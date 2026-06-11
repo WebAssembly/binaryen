@@ -511,6 +511,9 @@ BinaryenFeatures BinaryenFeatureCustomPageSizes(void) {
 BinaryenFeatures BinaryenFeatureWideArithmetic(void) {
   return static_cast<BinaryenFeatures>(FeatureSet::WideArithmetic);
 }
+BinaryenFeatures BinaryenFeatureCompactImports(void) {
+  return static_cast<BinaryenFeatures>(FeatureSet::CompactImports);
+}
 BinaryenFeatures BinaryenFeatureAll(void) {
   return static_cast<BinaryenFeatures>(FeatureSet::All);
 }
