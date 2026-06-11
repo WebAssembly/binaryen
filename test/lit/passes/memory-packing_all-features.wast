@@ -2196,12 +2196,11 @@
 (module
  ;; CHECK:      (memory $0 1 1)
  (memory $0 1 1)
+ ;; the zero tramples the "x", so the final memory contents are all zeros, and
+ ;; both segments can be removed entirely
  (data (i32.const 1024) "x")
- (data (i32.const 1024) "\00") ;; this tramples the "x", and so must be kept.
+ (data (i32.const 1024) "\00")
 )
-;; CHECK:      (data $0 (i32.const 1024) "x")
-
-;; CHECK:      (data $1 (i32.const 1024) "\00")
 (module
  ;; CHECK:      (memory $0 1 1)
  (memory $0 1 1)
@@ -2219,15 +2218,85 @@
 (module
  ;; CHECK:      (memory $0 1 1)
  (memory $0 1 1)
+ ;; trampling in one place does not prevent optimizing elsewhere: everything
+ ;; here is zeros in the final memory contents, and can be removed
  (data (i32.const 1024) "x")
- (data (i32.const 1024) "\00") ;; when we see one bad thing, we give up
+ (data (i32.const 1024) "\00")
  (data (i32.const 4096) "\00")
 )
-;; CHECK:      (data $0 (i32.const 1024) "x")
+(module
+ ;; CHECK:      (memory $0 1 1)
+ (memory $0 1 1)
+ ;; the "y" fully tramples the "x", so only the "y" remains
+ (data (i32.const 1024) "x")
+ (data (i32.const 1024) "y")
+)
+;; CHECK:      (data $1 (i32.const 1024) "y")
+(module
+ ;; CHECK:      (memory $0 1 1)
+ (memory $0 1 1)
+ ;; partial trampling: the "A" overwrites the "y" in the middle of "xyz". the
+ ;; trampled byte is zeroed out, and as the segments are applied in order, the
+ ;; final memory contents are "x", "A", "z"
+ (data (i32.const 1024) "xyz")
+ (data (i32.const 1025) "A")
+)
+;; CHECK:      (data $0 (i32.const 1024) "x\00z")
 
-;; CHECK:      (data $1 (i32.const 1024) "\00")
+;; CHECK:      (data $1 (i32.const 1025) "A")
+(module
+ ;; CHECK:      (memory $0 1 1)
+ (memory $0 1 1)
+ ;; chained trampling, where the tramplers are themselves trampled: the final
+ ;; memory contents are "f", "e", "c"
+ (data (i32.const 1024) "abc")
+ (data (i32.const 1024) "de")
+ (data (i32.const 1024) "f")
+)
+;; CHECK:      (data $0 (i32.const 1026) "c")
 
-;; CHECK:      (data $2 (i32.const 4096) "\00")
+;; CHECK:      (data $1 (i32.const 1025) "e")
+
+;; CHECK:      (data $2 (i32.const 1024) "f")
+(module
+ ;; CHECK:      (memory $0 1 1)
+ (memory $0 1 1)
+ ;; one segment tramples multiple earlier ones: "WXYZ" covers all of "ab" and
+ ;; the "c" of "cd", so only "WXYZ" and the "d" remain
+ (data (i32.const 1024) "ab")
+ (data (i32.const 1026) "cd")
+ (data (i32.const 1023) "WXYZ")
+)
+;; CHECK:      (data $1 (i32.const 1027) "d")
+
+;; CHECK:      (data $2 (i32.const 1023) "WXYZ")
+(module
+ ;; CHECK:      (type $0 (func))
+
+ ;; CHECK:      (memory $0 1 1)
+ (memory $0 1 1)
+ ;; a passive segment is not applied at instantiation, so it neither tramples
+ ;; nor is trampled: the active segments cancel out as usual, and the passive
+ ;; segment is untouched
+ (data (i32.const 1024) "x")
+ ;; CHECK:      (data $passive "ppp")
+ (data $passive "ppp")
+ (data (i32.const 1024) "\00")
+ ;; CHECK:      (func $init (type $0)
+ ;; CHECK-NEXT:  (memory.init $passive
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:   (i32.const 3)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $init
+  (memory.init $passive
+   (i32.const 0)
+   (i32.const 0)
+   (i32.const 3)
+  )
+ )
+)
 (module
  ;; CHECK:      (import "env" "memoryBase" (global $memoryBase i32))
  (import "env" "memoryBase" (global $memoryBase i32))
