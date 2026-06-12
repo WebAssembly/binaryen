@@ -53,6 +53,7 @@ Result provesConstantPair(Abstract::Op aOp,
     }
   }
 
+  TODO: handle >, >=, <, and <=
   return Unknown;
 }
 
