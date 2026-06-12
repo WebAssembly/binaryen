@@ -25,9 +25,6 @@ namespace wasm::constraint {
 namespace {
 
 // Evaluate whether a => b, where a and b are operations on constants.
-//
-// Returns a Result, or an empty option if we should keep working (i.e., a
-// result of Unknown means we are certain we can just return Unknown).
 Result evalConstantPair(Abstract::Op aOp,
                         const Literal& aConstant,
                         Abstract::Op bOp,
