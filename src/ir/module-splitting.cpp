@@ -868,13 +868,11 @@ ModuleSplitter::PrimarySecondaryUsedNames ModuleSplitter::computeUsedNames() {
     if (!global->init) {
       continue;
     }
-    UsedNames* owner = getOwner(name, &UsedNames::globals);
-    if (!owner) {
-      continue;
-    }
-    for (auto* get : FindAll<GlobalGet>(global->init).list) {
-      if (owner->globals.insert(get->name).second) {
-        worklist.push(get->name);
+    if (UsedNames* owner = getOwner(name, &UsedNames::globals)) {
+      for (auto* get : FindAll<GlobalGet>(global->init).list) {
+        if (owner->globals.insert(get->name).second) {
+          worklist.push(get->name);
+        }
       }
     }
   }
