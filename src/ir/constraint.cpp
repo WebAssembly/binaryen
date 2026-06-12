@@ -90,6 +90,30 @@ Result AndedConstraintSet::eval(const Constraint& condition) const {
   return Unknown;
 }
 
+Result AndedConstraintSet::eval(const AndedConstraintSet& other) const {
+  if (other.empty()) {
+    // The empty set of constraints is always true.
+    return True;
+  }
+
+  Result result = Unknown;
+  for (auto& c : other) {
+    auto currResult = eval(c);
+    if (currResult == Unknown) {
+      // If something is unknown, it all is.
+      return Unknown;
+    }
+    if (result == Unknown) {
+      // This is the first result
+      result = currResult;
+    } else if (result != currResult) {
+      // This is a later result, and different, so give up.
+      return Unknown;
+    }
+  }
+  return result;
+}
+
 void AndedConstraintSet::fuzzyOr(const AndedConstraintSet& other) {
   // If one is empty (no constraints, everything is true, and we can prove
   // nothing useful) then it does not add anything to the other.

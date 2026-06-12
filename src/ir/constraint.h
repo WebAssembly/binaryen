@@ -69,29 +69,7 @@ struct AndedConstraintSet : inplace_vector<Constraint, MaxConstraints> {
   Result eval(const Constraint& condition) const;
 
   // Check an entire other set.
-  Result eval(const AndedConstraintSet& other) const {
-    if (other.empty()) {
-      // The empty set of constraints is always true.
-      return True;
-    }
-
-    Result result = Unknown;
-    for (auto& c : other) {
-      auto currResult = eval(c);
-      if (currResult == Unknown) {
-        // If something is unknown, it all is.
-        return Unknown;
-      }
-      if (result == Unknown) {
-        // This is the first result
-        result = currResult;
-      } else if (result != currResult) {
-        // This is a later result, and different, so give up.
-        return Unknown;
-      }
-    }
-    return result;
-  }
+  Result eval(const AndedConstraintSet& other) const;
 
   bool full() const { return size() == MaxConstraints; }
 

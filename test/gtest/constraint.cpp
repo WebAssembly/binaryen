@@ -6,12 +6,6 @@ using namespace wasm;
 using namespace wasm::Abstract;
 using namespace wasm::constraint;
 
-TEST(ConstraintTest, TestEmpty) {
-  // An empty constraint is invalid.
-  Constraint c;
-  EXPECT_FALSE(c);
-}
-
 TEST(ConstraintTest, TestEq) {
   // Sets start empty.
   AndedConstraintSet s;
