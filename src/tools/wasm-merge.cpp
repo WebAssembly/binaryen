@@ -313,73 +313,54 @@ void renameInputItems(Module& input) {
   // input module, as that means it is a valid name there, with things referring
   // to it, which we would need to map. For simplicity, when fixing a collision,
   // pick a totally novel name.
-  auto getValidName =
-    [&](Name name, auto getMerged, auto getInput, Index hint) {
-      return Names::getValidName(
-        name,
-        [&](Name test) {
-          // As explained above, a name is valid if it is not in the merged
-          // module, and also it is either the original name in the input module
-          // (no collision) or it does not appear there.
-          return !getMerged(test) && (test == name || !getInput(test));
-        },
-        hint);
-    };
+  auto getValidName = [&](Name name, auto method, Index hint) {
+    return Names::getValidName(
+      name,
+      [&](Name test) {
+        // As explained above, a name is valid if it is not in the merged
+        // module, and also it is either the original name in the input module
+        // (no collision) or it does not appear there.
+        return !(merged.*method)(test) &&
+               (test == name || !(input.*method)(test));
+      },
+      hint);
+  };
 
   for (auto& curr : input.functions) {
     auto name = getValidName(
-      curr->name,
-      [&](Name test) { return merged.getFunctionOrNull(test); },
-      [&](Name test) { return input.getFunctionOrNull(test); },
-      merged.functions.size());
+      curr->name, &Module::getFunctionOrNull, merged.functions.size());
     maybeAdd(ModuleItemKind::Function, curr->name, name);
   }
   for (auto& curr : input.globals) {
     auto name = getValidName(
-      curr->name,
-      [&](Name test) { return merged.getGlobalOrNull(test); },
-      [&](Name test) { return input.getGlobalOrNull(test); },
-      merged.globals.size());
+      curr->name, &Module::getGlobalOrNull, merged.globals.size());
     maybeAdd(ModuleItemKind::Global, curr->name, name);
   }
   for (auto& curr : input.tags) {
     auto name = getValidName(
-      curr->name,
-      [&](Name test) { return merged.getTagOrNull(test); },
-      [&](Name test) { return input.getTagOrNull(test); },
-      merged.tags.size());
+      curr->name, &Module::getTagOrNull, merged.tags.size());
     maybeAdd(ModuleItemKind::Tag, curr->name, name);
   }
   for (auto& curr : input.elementSegments) {
     auto name = getValidName(
       curr->name,
-      [&](Name test) { return merged.getElementSegmentOrNull(test); },
-      [&](Name test) { return input.getElementSegmentOrNull(test); },
+      &Module::getElementSegmentOrNull,
       merged.elementSegments.size());
     maybeAdd(ModuleItemKind::ElementSegment, curr->name, name);
   }
   for (auto& curr : input.memories) {
     auto name = getValidName(
-      curr->name,
-      [&](Name test) { return merged.getMemoryOrNull(test); },
-      [&](Name test) { return input.getMemoryOrNull(test); },
-      merged.memories.size());
+      curr->name, &Module::getMemoryOrNull, merged.memories.size());
     maybeAdd(ModuleItemKind::Memory, curr->name, name);
   }
   for (auto& curr : input.dataSegments) {
     auto name = getValidName(
-      curr->name,
-      [&](Name test) { return merged.getDataSegmentOrNull(test); },
-      [&](Name test) { return input.getDataSegmentOrNull(test); },
-      merged.dataSegments.size());
+      curr->name, &Module::getDataSegmentOrNull, merged.dataSegments.size());
     maybeAdd(ModuleItemKind::DataSegment, curr->name, name);
   }
   for (auto& curr : input.tables) {
     auto name = getValidName(
-      curr->name,
-      [&](Name test) { return merged.getTableOrNull(test); },
-      [&](Name test) { return input.getTableOrNull(test); },
-      merged.tables.size());
+      curr->name, &Module::getTableOrNull, merged.tables.size());
     maybeAdd(ModuleItemKind::Table, curr->name, name);
   }
 
