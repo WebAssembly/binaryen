@@ -76,6 +76,12 @@ void renameFunction(Module& wasm, Name oldName, Name newName);
 
 // Convenient iteration over imported/non-imported module elements
 
+inline void iterTypes(const Module& wasm, auto&& visitor) {
+  for (const auto& [type, _] : wasm.typeIndices) {
+    visitor(type);
+  }
+}
+
 inline void iterImportedMemories(const Module& wasm, auto&& visitor) {
   for (auto& import : wasm.memories) {
     if (import->imported()) {
