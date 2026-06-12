@@ -845,6 +845,7 @@ ModuleSplitter::PrimarySecondaryUsedNames ModuleSplitter::computeUsedNames() {
       }
       if (UsedNames* owner = getOwner(table->name, &UsedNames::tables)) {
         NameCollector(*owner).walk(table->init);
+      }
     }
   }
 
