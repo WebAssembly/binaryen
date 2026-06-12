@@ -25,7 +25,7 @@ namespace wasm::constraint {
 namespace {
 
 // Evaluate whether a => b, where a and b are operations on constants.
-Result evalConstantPair(Abstract::Op aOp,
+Result provesConstantPair(Abstract::Op aOp,
                         const Literal& aConstant,
                         Abstract::Op bOp,
                         const Literal& bConstant) {
@@ -57,7 +57,7 @@ Result evalConstantPair(Abstract::Op aOp,
 }
 
 // Core comparison of two constraints: whether a => b
-Result evalPair(const Constraint& a, const Constraint& b) {
+Result provesPair(const Constraint& a, const Constraint& b) {
   // A thing always implies itself.
   if (a == b) {
     return True;
@@ -67,7 +67,7 @@ Result evalPair(const Constraint& a, const Constraint& b) {
   auto* aConstant = std::get_if<Literal>(&a.term);
   auto* bConstant = std::get_if<Literal>(&b.term);
   if (aConstant && bConstant) {
-    return evalConstantPair(a.op, *aConstant, b.op, *bConstant);
+    return provesConstantPair(a.op, *aConstant, b.op, *bConstant);
   }
 
   return Unknown;
@@ -75,10 +75,10 @@ Result evalPair(const Constraint& a, const Constraint& b) {
 
 } // anonymous namespace
 
-Result AndedConstraintSet::eval(const Constraint& condition) const {
+Result AndedConstraintSet::proves(const Constraint& condition) const {
   // Sometimes a single constraint is enough to determine the condition.
   for (auto& c : *this) {
-    auto result = evalPair(c, condition);
+    auto result = provesPair(c, condition);
     if (result != Unknown) {
       return result;
     }
@@ -90,7 +90,7 @@ Result AndedConstraintSet::eval(const Constraint& condition) const {
   return Unknown;
 }
 
-Result AndedConstraintSet::eval(const AndedConstraintSet& other) const {
+Result AndedConstraintSet::proves(const AndedConstraintSet& other) const {
   if (other.empty()) {
     // The empty set of constraints is always true.
     return True;
@@ -98,7 +98,7 @@ Result AndedConstraintSet::eval(const AndedConstraintSet& other) const {
 
   Result result = Unknown;
   for (auto& c : other) {
-    auto currResult = eval(c);
+    auto currResult = proves(c);
     if (currResult == Unknown) {
       // If something is unknown, it all is.
       return Unknown;
@@ -128,11 +128,11 @@ void AndedConstraintSet::fuzzyOr(const AndedConstraintSet& other) {
   // If this is already implied by current constraints, then it is redundant.
   // E.g. if we are { x = 10 } and other is { x >= 0 } then all we need is
   // { x >= 0 } as the result of the OR.
-  if (eval(other) == True) {
+  if (proves(other) == True) {
     *this = other;
     return;
   }
-  if (other.eval(*this) == True) {
+  if (other.proves(*this) == True) {
     return;
   }
 
