@@ -332,20 +332,19 @@ void renameInputItems(Module& input) {
     maybeAdd(ModuleItemKind::Function, curr->name, name);
   }
   for (auto& curr : input.globals) {
-    auto name = getValidName(
-      curr->name, &Module::getGlobalOrNull, merged.globals.size());
+    auto name =
+      getValidName(curr->name, &Module::getGlobalOrNull, merged.globals.size());
     maybeAdd(ModuleItemKind::Global, curr->name, name);
   }
   for (auto& curr : input.tags) {
-    auto name = getValidName(
-      curr->name, &Module::getTagOrNull, merged.tags.size());
+    auto name =
+      getValidName(curr->name, &Module::getTagOrNull, merged.tags.size());
     maybeAdd(ModuleItemKind::Tag, curr->name, name);
   }
   for (auto& curr : input.elementSegments) {
-    auto name = getValidName(
-      curr->name,
-      &Module::getElementSegmentOrNull,
-      merged.elementSegments.size());
+    auto name = getValidName(curr->name,
+                             &Module::getElementSegmentOrNull,
+                             merged.elementSegments.size());
     maybeAdd(ModuleItemKind::ElementSegment, curr->name, name);
   }
   for (auto& curr : input.memories) {
@@ -359,8 +358,8 @@ void renameInputItems(Module& input) {
     maybeAdd(ModuleItemKind::DataSegment, curr->name, name);
   }
   for (auto& curr : input.tables) {
-    auto name = getValidName(
-      curr->name, &Module::getTableOrNull, merged.tables.size());
+    auto name =
+      getValidName(curr->name, &Module::getTableOrNull, merged.tables.size());
     maybeAdd(ModuleItemKind::Table, curr->name, name);
   }
 
