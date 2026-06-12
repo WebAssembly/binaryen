@@ -836,8 +836,9 @@ ModuleSplitter::PrimarySecondaryUsedNames ModuleSplitter::computeUsedNames() {
   };
 
   // Scan table initializers into their owning modules. If a table is used by a
-  // single secondary module, its initializer dependencies belong to that
-  // secondary module. Otherwise, they belong to the primary module.
+  // single secondary module, its initializer dependencies are marked as "used"
+  // in that secondary module. Otherwise, they are marked as used in the primary
+  // module.
   if (primary.features.hasGC()) {
     for (auto& table : primary.tables) {
       if (!table->init) {
