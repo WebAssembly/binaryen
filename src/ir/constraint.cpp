@@ -137,7 +137,7 @@ void AndedConstraintSet::fuzzyOr(const AndedConstraintSet& other) {
     return;
   }
 
-  // TODO smarts
+  // TODO smarts: handle <= > and so forth
 
   // Otherwise, we don't know how to nicely OR these things, and expand to the
   // trivial set of no constraints.
