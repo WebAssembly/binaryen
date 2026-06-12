@@ -113,6 +113,17 @@ Result AndedConstraintSet::proves(const AndedConstraintSet& other) const {
   return hasUnknown ? Unknown : True;
 }
 
+void AndedConstraintSet::fuzzyAnd(const Constraint& c) {
+  if (size() < MaxConstraints) {
+    push_back(c);
+    return;
+  }
+
+  // Otherwise, just do not add this one.
+  // TODO: We could try to be clever and see if one of the existing ones makes
+  //       more sense to drop.
+}
+
 void AndedConstraintSet::fuzzyOr(const AndedConstraintSet& other) {
   // If one is empty (no constraints, everything is true, and we can prove
   // nothing useful) then it does not add anything to the other.

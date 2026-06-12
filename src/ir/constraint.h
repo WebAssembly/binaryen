@@ -71,14 +71,12 @@ struct AndedConstraintSet : inplace_vector<Constraint, MaxConstraints> {
   // Check an entire other set.
   Result proves(const AndedConstraintSet& other) const;
 
-  bool full() const { return size() == MaxConstraints; }
-
-  // Add a constraint to the set, ANDed with the others. The caller must make
-  // sure not to add too many (i.e. it is invalid to call this when full()).
-  void and_(const Constraint& c) {
-    assert(!full());
-    push_back(c);
-  }
+  // Add a constraint to the set, ANDed with the others. This is a fuzzy
+  // operation because our capacity is bounded - we cannot have more than
+  // MaxConstraints. If too many are added, we will drop some, which means we
+  // will be able to prove less things (but we will never prove anything
+  // incorrectly).
+  void fuzzyAnd(const Constraint& c);
 
   // Merge constraints using OR. We cannot represent such a thing directly
   // (we only use AND), so we approximate it in a fuzzy way. For example, this

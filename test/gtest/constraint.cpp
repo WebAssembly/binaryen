@@ -19,7 +19,7 @@ TEST(ConstraintTest, TestEq) {
   EXPECT_EQ(s.proves(c), Unknown);
 
   // If we add it, then things check out: a thing always proves itself true.
-  s.and_(c);
+  s.fuzzyAnd(c);
   EXPECT_EQ(s.size(), 1);
   EXPECT_EQ(s.proves(c), True);
 
@@ -37,7 +37,7 @@ TEST(ConstraintTest, TestNe) {
   AndedConstraintSet s;
   // x != 5
   Constraint c{Ne, {Literal(int32_t(5))}};
-  s.and_(c);
+  s.fuzzyAnd(c);
 
   // Checks out versus itself.
   EXPECT_EQ(s.proves(c), True);
@@ -57,8 +57,8 @@ TEST(ConstraintTest, TestMulti) {
   // x != 5 && x != 10
   Constraint c{Ne, {Literal(int32_t(5))}};
   Constraint d{Ne, {Literal(int32_t(10))}};
-  s.and_(c);
-  s.and_(d);
+  s.fuzzyAnd(c);
+  s.fuzzyAnd(d);
 
   // Each checks out versus itself.
   EXPECT_EQ(s.proves(c), True);
@@ -87,7 +87,7 @@ TEST(ConstraintTest, TestSets) {
   EXPECT_EQ(s.proves(s), True);
 
   // Ditto after adding something.
-  s.and_(c);
+  s.fuzzyAnd(c);
   EXPECT_EQ(s.proves(s), True);
 
   // Another set, empty.
@@ -97,17 +97,17 @@ TEST(ConstraintTest, TestSets) {
   EXPECT_EQ(s.proves(t), True);
 
   // Make both sets contain the same stuff.
-  t.and_(c);
+  t.fuzzyAnd(c);
   EXPECT_EQ(s.proves(t), True);
 
   // Now t has *different* stuff, x == 10, which given s is false.
   t.clear();
-  t.and_(Constraint{Eq, {Literal(int32_t(10))}});
+  t.fuzzyAnd(Constraint{Eq, {Literal(int32_t(10))}});
   EXPECT_EQ(s.proves(t), False);
 
   // Same, with x != 10. Now we know it is true.
   t.clear();
-  t.and_(Constraint{Ne, {Literal(int32_t(10))}});
+  t.fuzzyAnd(Constraint{Ne, {Literal(int32_t(10))}});
   EXPECT_EQ(s.proves(t), True);
 
   // In reverse, we can infer nothing: knowing x != 10 does not say if x == 5.
@@ -118,23 +118,23 @@ TEST(ConstraintTest, TestSetsUnknown) {
   // x != 5
   // x != 10
   AndedConstraintSet s;
-  s.and_(Constraint{Ne, {Literal(int32_t(5))}});
-  s.and_(Constraint{Ne, {Literal(int32_t(10))}});
+  s.fuzzyAnd(Constraint{Ne, {Literal(int32_t(5))}});
+  s.fuzzyAnd(Constraint{Ne, {Literal(int32_t(10))}});
 
   // x != 20, which is unknown by s.
   AndedConstraintSet t;
-  t.and_(Constraint{Ne, {Literal(int32_t(20))}});
+  t.fuzzyAnd(Constraint{Ne, {Literal(int32_t(20))}});
   EXPECT_EQ(s.proves(t), Unknown);
 
   // Add x == 10, which is false by s, and so the whole thing is false.
-  t.and_(Constraint{Eq, {Literal(int32_t(10))}});
+  t.fuzzyAnd(Constraint{Eq, {Literal(int32_t(10))}});
   EXPECT_EQ(s.proves(t), False);
 }
 
 TEST(ConstraintTest, TestOrTrivial) {
   // { x == 5 }
   AndedConstraintSet s;
-  s.and_(Constraint{Eq, {Literal(int32_t(5))}});
+  s.fuzzyAnd(Constraint{Eq, {Literal(int32_t(5))}});
 
   // { }
   AndedConstraintSet empty;
@@ -158,11 +158,11 @@ TEST(ConstraintTest, TestOrTrivial) {
 TEST(ConstraintTest, TestOrImplies) {
   // { x == 5 }
   AndedConstraintSet s;
-  s.and_(Constraint{Eq, {Literal(int32_t(5))}});
+  s.fuzzyAnd(Constraint{Eq, {Literal(int32_t(5))}});
 
   // { x != 10 }
   AndedConstraintSet t;
-  t.and_(Constraint{Ne, {Literal(int32_t(10))}});
+  t.fuzzyAnd(Constraint{Ne, {Literal(int32_t(10))}});
 
   // ORing these leaves us with x != 10.
   auto u = s;
@@ -173,6 +173,35 @@ TEST(ConstraintTest, TestOrImplies) {
   u = t;
   u.fuzzyOr(s);
   EXPECT_EQ(u, t);
+}
+
+TEST(ConstraintTest, TestMaxCapacity) {
+  EXPECT_EQ(MaxConstraints, 3);
+
+  // Max out with x != 10, 20, 30
+  Constraint not10{Ne, {Literal(int32_t(10))}};
+  Constraint not20{Ne, {Literal(int32_t(20))}};
+  Constraint not30{Ne, {Literal(int32_t(30))}};
+
+  AndedConstraintSet s;
+  s.fuzzyAnd(not10);
+  s.fuzzyAnd(not20);
+  s.fuzzyAnd(not30);
+
+  // We can prove all those.
+  EXPECT_EQ(s.proves(not10), True);
+  EXPECT_EQ(s.proves(not20), True);
+  EXPECT_EQ(s.proves(not30), True);
+
+  // Add another, exceeding the capacity.
+  Constraint not40{Ne, {Literal(int32_t(40))}};
+  s.fuzzyAnd(not40);
+
+  // We can prove the old ones but not the new.
+  EXPECT_EQ(s.proves(not10), True);
+  EXPECT_EQ(s.proves(not20), True);
+  EXPECT_EQ(s.proves(not30), True);
+  EXPECT_EQ(s.proves(not40), Unknown);
 }
 
 // TODO: test a fuzzyOr of { x = 10 } and { x >= 0 }, once we support
