@@ -304,76 +304,34 @@ void renameInputItems(Module& input) {
     }
   };
 
-  auto getValidNameHelper = [&](Name root,
-                                auto getOrNullMerged,
-                                auto getOrNullInput,
-                                Index hint) {
-    return Names::getValidName(
-      root,
-      [&](Name test) {
-        return !getOrNullMerged(test) &&
-               (!getOrNullInput(test) || test == root);
-      },
-      hint);
-  };
-
   for (auto& curr : input.functions) {
-    auto name = getValidNameHelper(
-      curr->name,
-      [&](Name test) { return merged.getFunctionOrNull(test); },
-      [&](Name test) { return input.getFunctionOrNull(test); },
-      merged.functions.size());
+    auto name = Names::getValidFunctionName(merged, curr->name);
     maybeAdd(ModuleItemKind::Function, curr->name, name);
   }
   for (auto& curr : input.globals) {
-    auto name = getValidNameHelper(
-      curr->name,
-      [&](Name test) { return merged.getGlobalOrNull(test); },
-      [&](Name test) { return input.getGlobalOrNull(test); },
-      merged.globals.size());
+    auto name = Names::getValidGlobalName(merged, curr->name);
     maybeAdd(ModuleItemKind::Global, curr->name, name);
   }
   for (auto& curr : input.tags) {
-    auto name = getValidNameHelper(
-      curr->name,
-      [&](Name test) { return merged.getTagOrNull(test); },
-      [&](Name test) { return input.getTagOrNull(test); },
-      merged.tags.size());
+    auto name = Names::getValidTagName(merged, curr->name);
     maybeAdd(ModuleItemKind::Tag, curr->name, name);
   }
   for (auto& curr : input.elementSegments) {
-    auto name = getValidNameHelper(
-      curr->name,
-      [&](Name test) { return merged.getElementSegmentOrNull(test); },
-      [&](Name test) { return input.getElementSegmentOrNull(test); },
-      merged.elementSegments.size());
+    auto name = Names::getValidElementSegmentName(merged, curr->name);
     maybeAdd(ModuleItemKind::ElementSegment, curr->name, name);
   }
   for (auto& curr : input.memories) {
-    auto name = getValidNameHelper(
-      curr->name,
-      [&](Name test) { return merged.getMemoryOrNull(test); },
-      [&](Name test) { return input.getMemoryOrNull(test); },
-      merged.memories.size());
+    auto name = Names::getValidMemoryName(merged, curr->name);
     maybeAdd(ModuleItemKind::Memory, curr->name, name);
   }
   for (auto& curr : input.dataSegments) {
-    auto name = getValidNameHelper(
-      curr->name,
-      [&](Name test) { return merged.getDataSegmentOrNull(test); },
-      [&](Name test) { return input.getDataSegmentOrNull(test); },
-      merged.dataSegments.size());
+    auto name = Names::getValidDataSegmentName(merged, curr->name);
     maybeAdd(ModuleItemKind::DataSegment, curr->name, name);
   }
   for (auto& curr : input.tables) {
-    auto name = getValidNameHelper(
-      curr->name,
-      [&](Name test) { return merged.getTableOrNull(test); },
-      [&](Name test) { return input.getTableOrNull(test); },
-      merged.tables.size());
+    auto name = Names::getValidTableName(merged, curr->name);
     maybeAdd(ModuleItemKind::Table, curr->name, name);
   }
-
 
   // Apply the names to their uses.
   updateNames(input, kindNameUpdates);
