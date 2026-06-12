@@ -53,7 +53,7 @@
 
   ;; CHECK:      (func $unreachable-value
   ;; CHECK-NEXT:  (local $x i32)
-  ;; CHECK-NEXT:  (local.tee $x
+  ;; CHECK-NEXT:  (local.set $x
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (if

@@ -45,7 +45,7 @@
   ;; CHECK-NEXT:    (nop)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (local.tee $2
+  ;; CHECK-NEXT:  (local.set $2
   ;; CHECK-NEXT:   (block $__asyncify_unwind
   ;; CHECK-NEXT:    (block
   ;; CHECK-NEXT:     (block

@@ -1175,7 +1175,7 @@
  ;; CHECK-NEXT:    (block $__return_call
  ;; CHECK-NEXT:     (try
  ;; CHECK-NEXT:      (do
- ;; CHECK-NEXT:       (local.tee $0
+ ;; CHECK-NEXT:       (local.set $0
  ;; CHECK-NEXT:        (block
  ;; CHECK-NEXT:         (br $__inlined_func$second-2$1)
  ;; CHECK-NEXT:        )

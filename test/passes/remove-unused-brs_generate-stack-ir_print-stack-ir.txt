@@ -4,7 +4,7 @@
   (block $label$1
    (block $label$2
     (loop $label$3
-     (local.tee $var$0
+     (local.set $var$0
       (block $label$4
        (unreachable)
       )
@@ -24,6 +24,8 @@
      unreachable
     end
     unreachable
+    unreachable
+    local.set $var$0
    end
    unreachable
   end

@@ -455,7 +455,7 @@
  ;; CHECK-NEXT:  (block $__inlined_func$A$3
  ;; CHECK-NEXT:   (local.set $1
  ;; CHECK-NEXT:    (block $__inlined_func$C$2 (result f32)
- ;; CHECK-NEXT:     (local.tee $0
+ ;; CHECK-NEXT:     (local.set $0
  ;; CHECK-NEXT:      (block $__inlined_func$D$1
  ;; CHECK-NEXT:       (unreachable)
  ;; CHECK-NEXT:      )
