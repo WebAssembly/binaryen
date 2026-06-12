@@ -10,6 +10,7 @@
  (data (i32.const 1024) "x")
  (data (i32.const 1023) "\00")
 )
+
 ;; CHECK:      (data $0 (i32.const 1024) "x")
 (module
  ;; but we cannot optimize trampling on an imported memory: if a later segment

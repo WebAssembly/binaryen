@@ -2193,6 +2193,7 @@
     (data.drop 0)
   )
 )
+
 (module
  ;; CHECK:      (memory $0 1 1)
  (memory $0 1 1)
@@ -2201,12 +2202,14 @@
  (data (i32.const 1024) "x")
  (data (i32.const 1024) "\00")
 )
+
 (module
  ;; CHECK:      (memory $0 1 1)
  (memory $0 1 1)
  (data (i32.const 1024) "x")
  (data (i32.const 1025) "\00")
 )
+
 ;; CHECK:      (data $0 (i32.const 1024) "x")
 (module
  ;; CHECK:      (memory $0 1 1)
@@ -2214,6 +2217,7 @@
  (data (i32.const 1024) "x")
  (data (i32.const 1023) "\00")
 )
+
 ;; CHECK:      (data $0 (i32.const 1024) "x")
 (module
  ;; CHECK:      (memory $0 1 1)
@@ -2224,6 +2228,7 @@
  (data (i32.const 1024) "\00")
  (data (i32.const 4096) "\00")
 )
+
 (module
  ;; CHECK:      (memory $0 1 1)
  (memory $0 1 1)
@@ -2231,6 +2236,7 @@
  (data (i32.const 1024) "x")
  (data (i32.const 1024) "y")
 )
+
 ;; CHECK:      (data $1 (i32.const 1024) "y")
 (module
  ;; CHECK:      (memory $0 1 1)
@@ -2241,6 +2247,7 @@
  (data (i32.const 1024) "xyz")
  (data (i32.const 1025) "A")
 )
+
 ;; CHECK:      (data $0 (i32.const 1024) "x\00z")
 
 ;; CHECK:      (data $1 (i32.const 1025) "A")
@@ -2253,6 +2260,7 @@
  (data (i32.const 1024) "de")
  (data (i32.const 1024) "f")
 )
+
 ;; CHECK:      (data $0 (i32.const 1026) "c")
 
 ;; CHECK:      (data $1 (i32.const 1025) "e")
@@ -2267,9 +2275,26 @@
  (data (i32.const 1026) "cd")
  (data (i32.const 1023) "WXYZ")
 )
+
 ;; CHECK:      (data $1 (i32.const 1027) "d")
 
 ;; CHECK:      (data $2 (i32.const 1023) "WXYZ")
+(module
+ ;; CHECK:      (memory $0 1 1)
+ (memory $0 1 1)
+ ;; the regions covered by later segments must be merged as they accumulate:
+ ;; walking the segments in reverse we see "fghij" [1024, 1029), then "B"
+ ;; [1025, 1026), then "abcde" [1027, 1032). if the region for "B" were not
+ ;; merged into the one for "fghij", then looking up the region covering
+ ;; "abcde" would find "B" and miss that "fghij" tramples the "ab"
+ (data (i32.const 1027) "abcde")
+ (data (i32.const 1025) "B")
+ (data (i32.const 1024) "fghij")
+)
+
+;; CHECK:      (data $0 (i32.const 1029) "cde")
+
+;; CHECK:      (data $2 (i32.const 1024) "fghij")
 (module
  ;; CHECK:      (type $0 (func))
 
@@ -2297,6 +2322,7 @@
   )
  )
 )
+
 (module
  ;; CHECK:      (import "env" "memoryBase" (global $memoryBase i32))
  (import "env" "memoryBase" (global $memoryBase i32))

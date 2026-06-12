@@ -262,6 +262,11 @@ bool MemoryPacking::canOptimize(
         // partway, leaving the data written so far visible in the imported
         // memory (which outlives the failed instantiation), so even trampled
         // data matters.
+        // TODO: We could optimize anyway if we can check that all the segments
+        //       after the trampled segment, up to and including the trampling
+        //       segment, will be in-bounds for the imported memory, as then no
+        //       trap can occur between the trampled write and the trampling
+        //       one.
         if (memory->imported()) {
           std::cerr << "warning: active memory segments have overlap, which "
                     << "prevents some optimizations.\n";
