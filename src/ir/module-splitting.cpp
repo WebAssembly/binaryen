@@ -820,10 +820,8 @@ ModuleSplitter::PrimarySecondaryUsedNames ModuleSplitter::computeUsedNames() {
   // returns nullptr.
   auto getOwner = [&](Name name, auto UsedNames::* field) -> UsedNames* {
     UsedNames* owner = nullptr;
-    size_t users = 0;
     if ((primaryUsed.*field).contains(name)) {
       owner = &primaryUsed;
-      users++;
     }
     for (auto& sec : secondaryUsed) {
       if ((sec.*field).contains(name)) {
