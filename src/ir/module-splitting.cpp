@@ -828,15 +828,12 @@ ModuleSplitter::PrimarySecondaryUsedNames ModuleSplitter::computeUsedNames() {
     }
     for (auto& sec : secondaryUsed) {
       if ((sec.*field).contains(name)) {
+        if (owner) {
+          owner = &primaryUsed;
+          break;
+        }
         owner = &sec;
-        users++;
       }
-    }
-    if (users == 0) {
-      return nullptr;
-    }
-    if (users > 1) {
-      return &primaryUsed;
     }
     return owner;
   };
@@ -849,11 +846,8 @@ ModuleSplitter::PrimarySecondaryUsedNames ModuleSplitter::computeUsedNames() {
       if (!table->init) {
         continue;
       }
-      UsedNames* owner = getOwner(table->name, &UsedNames::tables);
-      if (!owner) {
-        continue;
-      }
-      NameCollector(*owner).walk(table->init);
+      if (UsedNames* owner = getOwner(table->name, &UsedNames::tables)) {
+        NameCollector(*owner).walk(table->init);
     }
   }
 
