@@ -44,8 +44,6 @@ struct Constraint {
   Term term;
 
   bool operator==(const Constraint&) const = default;
-
-  operator bool() const { return op != Abstract::Invalid; }
 };
 
 // We limit constraints to a low number to ensure good performance even with
