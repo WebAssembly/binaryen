@@ -29,9 +29,9 @@ namespace {
 // Returns a Result, or an empty option if we should keep working (i.e., a
 // result of Unknown means we are certain we can just return Unknown).
 Result evalConstantPair(Abstract::Op aOp,
-                                       const Literal& aConstant,
-                                       Abstract::Op bOp,
-                                       const Literal& bConstant) {
+                        const Literal& aConstant,
+                        Abstract::Op bOp,
+                        const Literal& bConstant) {
   // x == X =?=> x == Y. True iff X == Y.
   if (aOp == Abstract::Eq && bOp == Abstract::Eq) {
     return aConstant == bConstant ? True : False;
