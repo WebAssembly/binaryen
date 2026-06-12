@@ -24,10 +24,39 @@ namespace wasm::constraint {
 
 namespace {
 
-// Core comparison of two constraints: whether a => b
+// Evaluate whether a => b, where a and b are operations on constants.
 //
 // Returns a Result, or an empty option if we should keep working (i.e., a
 // result of Unknown means we are certain we can just return Unknown).
+std::optional<Result> evalConstantPair(Abstract::Op aOp, const Literal& aConstant, Abstract::Op bOp, const Literal& bConstant) {
+  // x == X =?=> x == Y. True iff X == Y.
+  if (aOp == Abstract::Eq && bOp == Abstract::Eq) {
+    return aConstant == bConstant ? True : False;
+  }
+
+  // x == X =?=> x != Y. True iff X != Y.
+  if (aOp == Abstract::Eq && bOp == Abstract::Ne) {
+    return aConstant == bConstant ? False : True;
+  }
+
+  // x != X =?=> x == Y. False if X = Y, else unknown.
+  if (aOp == Abstract::Ne && bOp == Abstract::Eq) {
+    if (aConstant == bConstant) {
+      return False;
+    }
+  }
+
+  // x != X =?=> x != Y. True if X = Y, else unknown.
+  if (aOp == Abstract::Ne && bOp == Abstract::Ne) {
+    if (aConstant == bConstant) {
+      return True;
+    }
+  }
+
+  return {};
+}
+
+// Core comparison of two constraints: whether a => b
 std::optional<Result> evalPair(const Constraint& a, const Constraint& b) {
   // A thing always implies itself.
   if (a == b) {
@@ -35,51 +64,10 @@ std::optional<Result> evalPair(const Constraint& a, const Constraint& b) {
   }
 
   // Comparisons of two constants.
-  if (auto* aConstant = std::get_if<Literal>(&a.term)) {
-    if (auto* bConstant = std::get_if<Literal>(&b.term)) {
-      switch (a.op) {
-        case Abstract::Eq: {
-          switch (b.op) {
-            case Abstract::Eq: {
-              // x == c vs x == c', and we already handled full equality
-              // earlier, hence c != c', and we found a contradiction.
-              assert(*aConstant != *bConstant);
-              return False;
-            }
-            case Abstract::Ne: {
-              // x == c vs x != c'. We can infer the result based on relating c
-              // and c'.
-              return *aConstant != *bConstant ? True : False;
-            }
-            default: {
-            }
-          }
-          break;
-        }
-        case Abstract::Ne: {
-          switch (b.op) {
-            case Abstract::Eq: {
-              // x != c vs x == c'. If c == c', we can infer.
-              if (*aConstant == *bConstant) {
-                return False;
-              }
-              return {};
-            }
-            case Abstract::Ne: {
-              // x != c vs x != c', and we already handled full equality
-              // earlier, hence c != c', and we can infer nothing.
-              assert(*aConstant != *bConstant);
-              return {};
-            }
-            default: {
-            }
-          }
-          break;
-        }
-        default: {
-        }
-      }
-    }
+  auto* aConstant = std::get_if<Literal>(&a.term);
+  auto* bConstant = std::get_if<Literal>(&b.term);
+  if (aConstant && bConstant) {
+    return evalConstantPair(a.op, *aConstant, b.op, *bConstant);
   }
 
   return {};
