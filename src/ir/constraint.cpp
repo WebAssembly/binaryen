@@ -53,7 +53,7 @@ Result provesConstantPair(Abstract::Op aOp,
     }
   }
 
-  TODO: handle >, >=, <, and <=
+  // TODO: handle >, >=, <, and <=
   return Unknown;
 }
 
@@ -97,22 +97,20 @@ Result AndedConstraintSet::proves(const AndedConstraintSet& other) const {
     return True;
   }
 
-  Result result = Unknown;
+  bool hasUnknown = false;
+
   for (auto& c : other) {
-    auto currResult = proves(c);
-    if (currResult == Unknown) {
-      // If something is unknown, it all is.
-      return Unknown;
+    auto result = proves(c);
+    if (result == False) {
+      // The entire conjunction is proven false.
+      return False;
     }
     if (result == Unknown) {
-      // This is the first result
-      result = currResult;
-    } else if (result != currResult) {
-      // This is a later result, and different, so give up.
-      return Unknown;
+      hasUnknown = true;
     }
   }
-  return result;
+
+  return hasUnknown ? Unknown : True;
 }
 
 void AndedConstraintSet::fuzzyOr(const AndedConstraintSet& other) {

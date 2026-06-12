@@ -114,6 +114,23 @@ TEST(ConstraintTest, TestSets) {
   EXPECT_EQ(t.proves(s), Unknown);
 }
 
+TEST(ConstraintTest, TestSetsUnknown) {
+  // x != 5
+  // x != 10
+  AndedConstraintSet s;
+  s.and_(Constraint{Ne, {Literal(int32_t(5))}});
+  s.and_(Constraint{Ne, {Literal(int32_t(10))}});
+
+  // x != 20, which is unknown by s.
+  AndedConstraintSet t;
+  t.and_(Constraint{Ne, {Literal(int32_t(20))}});
+  EXPECT_EQ(s.proves(t), Unknown);
+
+  // Add x == 10, which is false by s, and so the whole thing is false.
+  t.and_(Constraint{Eq, {Literal(int32_t(10))}});
+  EXPECT_EQ(s.proves(t), False);
+}
+
 TEST(ConstraintTest, TestOrTrivial) {
   // { x == 5 }
   AndedConstraintSet s;
