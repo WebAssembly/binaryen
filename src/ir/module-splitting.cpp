@@ -77,7 +77,6 @@
 #include "ir/find_all.h"
 #include "ir/module-utils.h"
 #include "ir/names.h"
-#include "support/insert_ordered.h"
 #include "support/unique_deferring_queue.h"
 #include "wasm-builder.h"
 #include "wasm.h"
