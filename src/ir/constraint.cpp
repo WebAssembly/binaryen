@@ -26,9 +26,9 @@ namespace {
 
 // Evaluate whether a => b, where a and b are operations on constants.
 Result provesConstantPair(Abstract::Op aOp,
-                        const Literal& aConstant,
-                        Abstract::Op bOp,
-                        const Literal& bConstant) {
+                          const Literal& aConstant,
+                          Abstract::Op bOp,
+                          const Literal& bConstant) {
   // x == X =?=> x == Y. True iff X == Y.
   if (aOp == Abstract::Eq && bOp == Abstract::Eq) {
     return aConstant == bConstant ? True : False;
