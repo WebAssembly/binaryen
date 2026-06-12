@@ -84,7 +84,7 @@ jobs:
     - name: archive-arm64
       id: archive-arm64
       run: |
-        # Ignore all but the first componnent of the os name
+        # Ignore all but the first component of the os name
         OSNAME=$(echo ${{ matrix.os }} | sed 's/-.*//')
         VERSION=$GITHUB_REF_NAME
         PKGNAME="binaryen-$VERSION-arm64-$OSNAME"
