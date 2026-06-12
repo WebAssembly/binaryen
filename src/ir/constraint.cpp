@@ -28,7 +28,7 @@ namespace {
 //
 // Returns a Result, or an empty option if we should keep working (i.e., a
 // result of Unknown means we are certain we can just return Unknown).
-std::optional<Result> evalConstantPair(Abstract::Op aOp,
+Result evalConstantPair(Abstract::Op aOp,
                                        const Literal& aConstant,
                                        Abstract::Op bOp,
                                        const Literal& bConstant) {
@@ -56,11 +56,11 @@ std::optional<Result> evalConstantPair(Abstract::Op aOp,
     }
   }
 
-  return {};
+  return Unknown;
 }
 
 // Core comparison of two constraints: whether a => b
-std::optional<Result> evalPair(const Constraint& a, const Constraint& b) {
+Result evalPair(const Constraint& a, const Constraint& b) {
   // A thing always implies itself.
   if (a == b) {
     return True;
@@ -73,7 +73,7 @@ std::optional<Result> evalPair(const Constraint& a, const Constraint& b) {
     return evalConstantPair(a.op, *aConstant, b.op, *bConstant);
   }
 
-  return {};
+  return Unknown;
 }
 
 } // anonymous namespace
@@ -81,8 +81,9 @@ std::optional<Result> evalPair(const Constraint& a, const Constraint& b) {
 Result AndedConstraintSet::eval(const Constraint& condition) const {
   // Sometimes a single constraint is enough to determine the condition.
   for (auto& c : *this) {
-    if (auto result = evalPair(c, condition)) {
-      return *result;
+    auto result = evalPair(c, condition);
+    if (result != Unknown) {
+      return result;
     }
   }
 
