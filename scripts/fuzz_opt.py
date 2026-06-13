@@ -2736,6 +2736,7 @@ opt_choices = [
     ("--remove-unused-names", "--heap2local",),
     ("--heap-store-optimization",),
     ("--generate-stack-ir",),
+    ("--ldse",),
     ("--licm",),
     ("--local-subtyping",),
     ("--memory-packing",),
