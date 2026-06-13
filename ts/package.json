@@ -1,0 +1,63 @@
+{
+  "name": "binaryen.ts",
+  "description": "Browser & Node.js builds of Binaryen, a compiler infrastructure and toolchain library for WebAssembly.",
+  "version": "0.1.0",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/WebAssembly/binaryen.git"
+  },
+  "keywords": [
+    "webassembly",
+    "wasm",
+    "typescript",
+    "javascript"
+  ],
+  "type": "module",
+  "main": "./dist/binaryen.js",
+  "scripts": {
+    "make": "rm -rf ../build/ && emcmake cmake -S ../ -B ../build/ && emmake make -C ../build/ binaryen_js",
+    "postmake": "rm -rf ./build/ && mkdir -p ./build/ && cp -R ../build/bin/ ./build/",
+    "check": "../check.py binaryenjs --binaryen-bin='../build/bin'",
+    "compile": "rm -rf ./dist/ && tsc && tsc --project ./test/tsconfig.json",
+    "lint": "eslint ./",
+    "docs": "rm -rf ../docs/binaryen.ts/ && typedoc",
+    "test": "tsx --test -- './test/**/*.test.ts'",
+    "test:only": "tsx --test --test-only -- './test/**/*.test.ts'",
+    "build": "npm run compile && npm run lint && npm run docs && npm run test",
+    "prepublishOnly": "npm run make && npm run check && npm run build"
+  },
+  "files": [
+    "./build/",
+    "./dist/"
+  ],
+  "imports": {
+    "#binaryen-raw": {
+      "types": "./src/types/binaryen_js.d.ts",
+      "default": "./build/binaryen_js.js"
+    }
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@stylistic/eslint-plugin": "^5.10.0",
+    "@types/node": "^25.8.0 || ^26",
+    "eslint": "^10.2.1",
+    "globals": "^17.5.0",
+    "tsx": "^4.21.0",
+    "typedoc": "^0.28.19",
+    "typescript": "~6.0.0",
+    "typescript-eslint": "^8.59.1"
+  },
+  "engines": {
+    "node": "^20 || ^22 || ^24 || ^26"
+  },
+  "devEngines": {
+    "runtime": {
+      "name": "node",
+      "version": "^22 || ^24 || ^26"
+    },
+    "packageManager": {
+      "name": "npm"
+    }
+  }
+}
