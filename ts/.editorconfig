@@ -11,6 +11,6 @@ insert_final_newline = true
 max_line_length = off
 trim_trailing_whitespace = true
 
-[**/package{,-lock}.json]
+[**/*.json]
 indent_size = 2
 indent_style = space

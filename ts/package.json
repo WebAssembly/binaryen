@@ -27,7 +27,10 @@
     "build": "npm run compile && npm run lint && npm run docs && npm run test",
     "prepublishOnly": "npm run make && npm run check && npm run build"
   },
-  "files": ["./build/", "./dist/"],
+  "files": [
+    "./build/",
+    "./dist/"
+  ],
   "imports": {
     "#binaryen-raw": {
       "types": "./src/types/binaryen_js.d.ts",
