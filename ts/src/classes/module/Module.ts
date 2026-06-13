@@ -105,6 +105,7 @@ export enum Feature {
 	CustomPageSizes = BinaryenObj["_BinaryenFeatureCustomPageSizes"](),
 	// TODO: Multibyte
 	WideArithmetic = BinaryenObj["_BinaryenFeatureWideArithmetic"](),
+	CompactImports = BinaryenObj["_BinaryenFeatureCompactImports"](),
 	All = BinaryenObj["_BinaryenFeatureAll"](),
 }
 

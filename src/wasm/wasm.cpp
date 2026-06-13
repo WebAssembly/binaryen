@@ -80,6 +80,7 @@ const char* RelaxedAtomicsFeature = "relaxed-atomics";
 const char* MultibyteFeature = "multibyte";
 const char* CustomPageSizesFeature = "custom-page-sizes";
 const char* WideArithmeticFeature = "wide-arithmetic";
+const char* CompactImportsFeature = "compact-imports";
 
 } // namespace BinaryConsts::CustomSections
 
@@ -90,6 +91,7 @@ const Name InlineHint = "metadata.code.inline";
 const Name RemovableIfUnusedHint = "binaryen.removable.if.unused";
 const Name JSCalledHint = "binaryen.js.called";
 const Name IdempotentHint = "binaryen.idempotent";
+const Name ToolchainInlineHint = "binaryen.inline";
 
 } // namespace Annotations
 
