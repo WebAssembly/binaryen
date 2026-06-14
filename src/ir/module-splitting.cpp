@@ -851,29 +851,20 @@ ModuleSplitter::PrimarySecondaryUsedNames ModuleSplitter::computeUsedNames() {
   }
 
   // Compute the transitive closure of globals referenced in other globals'
-  // initializers. A global's initializer is evaluated by the module that
-  // defines it.
-  UniqueDeferredQueue<Name> worklist;
-  for (auto name : primaryUsed.globals) {
-    worklist.push(name);
-  }
-  for (auto& sec : secondaryUsed) {
-    for (auto name : sec.globals) {
-      worklist.push(name);
-    }
-  }
-
-  while (!worklist.empty()) {
-    Name name = worklist.pop();
-    auto* global = primary.getGlobal(name);
+  // initializers. WebAssembly validation requires that global initializers only
+  // refer to previously defined globals. Therefore, `primary.globals` is
+  // guaranteed to be topologically sorted with respect to its internal
+  // dependencies. By iterating in reverse, we are guaranteed to process
+  // dependent globals before the globals they depend on, allowing us to
+  // propagate ownership in a single O(N) pass.
+  for (auto it = primary.globals.rbegin(); it != primary.globals.rend(); ++it) {
+    auto& global = *it;
     if (!global->init) {
       continue;
     }
-    if (UsedNames* owner = getOwner(name, &UsedNames::globals)) {
+    if (UsedNames* owner = getOwner(global->name, &UsedNames::globals)) {
       for (auto* get : FindAll<GlobalGet>(global->init).list) {
-        if (owner->globals.insert(get->name).second) {
-          worklist.push(get->name);
-        }
+        owner->globals.insert(get->name);
       }
     }
   }
