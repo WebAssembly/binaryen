@@ -607,6 +607,7 @@
   ;; OPEN_WORLD-NEXT:  (i32.const 0)
   ;; OPEN_WORLD-NEXT: )
   (func $func (type $func) (result i32)
+    ;; This does not change, because it is callable.
     (i32.const 0)
   )
 )
@@ -665,6 +666,7 @@
   ;; OPEN_WORLD-NEXT:  (unreachable)
   ;; OPEN_WORLD-NEXT: )
   (func $func (type $func) (result i32)
+    ;; This can become unreachable, as it is not called.
     (i32.const 0)
   )
 )
