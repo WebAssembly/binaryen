@@ -87,3 +87,88 @@
   )
 )
 
+;; As above, but the initializer is a global.get, so we cannot infer a direct
+;; call.
+(module
+  ;; CHECK:      (type $func (func (result i32)))
+  ;; IMMUT:      (type $func (func (result i32)))
+  (type $func (func (result i32)))
+
+  ;; CHECK:      (type $1 (func))
+
+  ;; CHECK:      (table $table 1 1 funcref (ref.func $func))
+  ;; IMMUT:      (type $1 (func))
+
+  (import "a" "b" (global $import funcref))
+
+  ;; IMMUT:      (table $table 1 1 funcref (ref.func $func))
+  (table $table 1 1 funcref (global.get $import))
+
+  ;; CHECK:      (export "caller" (func $caller))
+
+  ;; CHECK:      (func $caller (type $1)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (call_indirect $table (type $func)
+  ;; CHECK-NEXT:    (i32.eqz
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; IMMUT:      (export "caller" (func $caller))
+
+  ;; IMMUT:      (func $caller (type $1)
+  ;; IMMUT-NEXT:  (drop
+  ;; IMMUT-NEXT:   (unreachable)
+  ;; IMMUT-NEXT:  )
+  ;; IMMUT-NEXT:  (drop
+  ;; IMMUT-NEXT:   (unreachable)
+  ;; IMMUT-NEXT:  )
+  ;; IMMUT-NEXT:  (drop
+  ;; IMMUT-NEXT:   (call_indirect $table (type $func)
+  ;; IMMUT-NEXT:    (i32.eqz
+  ;; IMMUT-NEXT:     (i32.const 1)
+  ;; IMMUT-NEXT:    )
+  ;; IMMUT-NEXT:   )
+  ;; IMMUT-NEXT:  )
+  ;; IMMUT-NEXT: )
+  (func $caller (export "caller")
+    ;; This cannot be optimized to a call to $func.
+    (drop
+      (call_indirect $table (type $func)
+        (i32.const 0)
+      )
+    )
+    ;; As before, this is out of bounds, and traps.
+    (drop
+      (call_indirect $table (type $func)
+        (i32.const 999)
+      )
+    )
+    ;; As before, this is an unknown index, which we do not optimize.
+    (drop
+      (call_indirect $table (type $func)
+        (i32.eqz
+          (i32.const 1)
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $func (type $func) (result i32)
+  ;; CHECK-NEXT:  (i32.const 0)
+  ;; CHECK-NEXT: )
+  ;; IMMUT:      (func $func (type $func) (result i32)
+  ;; IMMUT-NEXT:  (i32.const 0)
+  ;; IMMUT-NEXT: )
+  (func $func (type $func) (result i32)
+    (i32.const 0)
+  )
+)
+
