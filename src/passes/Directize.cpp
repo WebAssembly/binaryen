@@ -130,10 +130,10 @@ private:
       if (index < flatTable.names.size()) {
         calledName = flatTable.names[index];
       }
+      auto* table = getModule()->getTable(original->table);
       if (!calledName) {
         // We did not see a value there, but the table might have a default
         // value.
-        auto* table = getModule()->getTable(original->table);
         if (table->imported()) {
           // An imported table might have a default value, and we can't tell.
           return CallUtils::Unknown{};
@@ -163,7 +163,11 @@ private:
       // If we found no data, and the table init did not change anything, then
       // we trap.
       if (!calledName) {
-        return CallUtils::Trap{};
+        // But we must not read a place where grow can write to - we must either
+        // have no grow, or have an index below where grow writes to.
+        if (!info.hasGrow || index < table->initial) {
+          return CallUtils::Trap{};
+        }
       }
     }
 

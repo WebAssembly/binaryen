@@ -1479,11 +1479,11 @@
  ;; IMMUT-NEXT: )
  (func $bar (param $x i32) (param $y i32)
   ;; When assuming the initial contents are immutable, we can optimize some
-  ;; of these cases. 0 and 2 are offsets that are known to contain a null, so
-  ;; they will trap, and 1 and 3 contain known contents we can do a direct call
+  ;; of these cases. 1 and 3 contain known contents we can do a direct call
   ;; to. 4 is out of bounds so we cannot optimize there. (And in all of these,
   ;; we cannot optimize anything in the non-immutable case, since the table is
-  ;; imported.)
+  ;; imported. That the table is imported also prevents us from optimizing
+  ;; traps: the imported table might have a default value, avoiding traps.)
   (call_indirect (type $ii)
    (local.get $x)
    (local.get $y)
@@ -2010,13 +2010,21 @@
 
  ;; CHECK:      (func $caller (type $func)
  ;; CHECK-NEXT:  (call $target)
- ;; CHECK-NEXT:  (unreachable)
- ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT:  (call_indirect $table (type $func)
+ ;; CHECK-NEXT:   (i32.const 10)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (call_indirect $table (type $func)
+ ;; CHECK-NEXT:   (i32.const 1000)
+ ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  ;; IMMUT:      (func $caller (type $func)
  ;; IMMUT-NEXT:  (call $target)
- ;; IMMUT-NEXT:  (unreachable)
- ;; IMMUT-NEXT:  (unreachable)
+ ;; IMMUT-NEXT:  (call_indirect $table (type $func)
+ ;; IMMUT-NEXT:   (i32.const 10)
+ ;; IMMUT-NEXT:  )
+ ;; IMMUT-NEXT:  (call_indirect $table (type $func)
+ ;; IMMUT-NEXT:   (i32.const 1000)
+ ;; IMMUT-NEXT:  )
  ;; IMMUT-NEXT: )
  (func $caller (export "caller")
   ;; This is in the elem segment, so we can optimize it. Growth can only append.
