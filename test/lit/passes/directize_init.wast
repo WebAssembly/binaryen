@@ -18,7 +18,7 @@
 
   ;; CHECK:      (func $caller (type $1)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:   (call $func)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (unreachable)
@@ -68,7 +68,6 @@
   ;; CHECK:      (type $func (func (result i32)))
   (type $func (func (result i32)))
 
-
   ;; CHECK:      (type $1 (func))
 
   ;; CHECK:      (import "a" "b" (global $import funcref))
@@ -81,7 +80,9 @@
 
   ;; CHECK:      (func $caller (type $1)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:   (call_indirect $table (type $func)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (unreachable)
@@ -122,6 +123,68 @@
   ;; CHECK-NEXT: )
   (func $func (type $func) (result i32)
     (i32.const 0)
+  )
+)
+
+;; As above, but there are additional element segments.
+(module
+  ;; CHECK:      (type $func (func (result i32)))
+  (type $func (func (result i32)))
+
+  ;; CHECK:      (type $1 (func))
+
+  ;; CHECK:      (table $table 2 2 funcref (ref.func $func))
+  (table $table 2 2 funcref (ref.func $func))
+
+  ;; CHECK:      (elem $elem (i32.const 1) $other)
+  (elem $elem (table $table) (i32.const 1) func $other)
+
+  ;; CHECK:      (export "caller" (func $caller))
+
+  ;; CHECK:      (func $caller (type $1)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (call $func)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (call $other)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $caller (export "caller")
+    ;; This can be optimized to a call to $func, using the default
+    (drop
+      (call_indirect $table (type $func)
+        (i32.const 0)
+      )
+    )
+    ;; This can be optimized to a call to $other, using the elem.
+    (drop
+      (call_indirect $table (type $func)
+        (i32.const 1)
+      )
+    )
+    ;; This is out of bounds, and traps.
+    (drop
+      (call_indirect $table (type $func)
+        (i32.const 999)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $func (type $func) (result i32)
+  ;; CHECK-NEXT:  (i32.const 0)
+  ;; CHECK-NEXT: )
+  (func $func (type $func) (result i32)
+    (i32.const 0)
+  )
+
+  ;; CHECK:      (func $other (type $func) (result i32)
+  ;; CHECK-NEXT:  (i32.const 1)
+  ;; CHECK-NEXT: )
+  (func $other (type $func) (result i32)
+    (i32.const 1)
   )
 )
 

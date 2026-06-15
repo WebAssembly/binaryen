@@ -121,46 +121,64 @@ private:
 
     Address index = c->value.getUnsigned();
 
-    // Check if index is invalid, or the type is wrong.
+    // Check if we know what is called from the table's initial content.
     auto& flatTable = *info.flatTable;
-    if (index >= flatTable.names.size()) {
-      // The index is out of bounds for the initial table's content. This may
-      // trap, but it may also not trap if the table is modified later (if a
-      // function is appended to it).
-      if (!info.mayBeModified()) {
-        return CallUtils::Trap{};
-      } else {
-        // The table may be modified, so it might be appended to. We should only
-        // get here in the case that the initial contents are immutable, or the
-        // table can grow, as otherwise we have nothing to optimize at all.
-        assert(info.initialContentsImmutable || info.hasGrow);
-        return CallUtils::Unknown{};
-      }
+    Name calledName;
+    if (index < flatTable.names.size()) {
+      calledName = flatTable.names[index];
     }
-    auto name = flatTable.names[index];
-    if (!name.is()) {
-      // No segment wrote to this part of the initial contents of the table.
-      // This will trap, unless there is an initial value in the table.
-      auto* table = getModule()->getTable(original->table);
-      if (table->init) {
-        if (auto* refFunc = table->init->dynCast<RefFunc>()) {
-          return CallUtils::Known{refFunc->func};
-        }
-        // Something unknown like a global.get. We can infer nothing.
-        return CallUtils::Unknown{};
-      }
 
-      // This must trap, as we only get here if we can optimize such cases,
-      // relying on the fact that the table cannot be modified, or at least the
-      // initial contents cannot be.
-      assert(!info.hasSet || info.initialContentsImmutable);
+    // If we didn't see initial content there, the default value of the table
+    // might be called.
+    if (!calledName) {
+      auto* table = getModule()->getTable(original->table);
+      if (table->imported()) {
+        // An imported table might have a default value, and we can't tell.
+        XXX
+      }
+      if (table->init) {
+        if (index < table->initial) {
+          // This is in bounds, so the default value of the table is called.
+          if (auto* refFunc = table->init->dynCast<RefFunc>()) {
+            calledName = refFunc->func;
+          } else {
+            // There is an initial value, but it is unknown, like a global.get.
+            // We can infer nothing, not even a trap.
+            return CallUtils::Unknown{};
+          }
+        } else {
+          // We are beyond the initial table size, and can't infer anything,
+          // unless we are in the simple case of no growth, in which case we
+          // trap.
+          if (!info.hasGrow) {
+            return CallUtils::Trap{};
+          } else {
+            return CallUtils::Unknown{};
+          }
+        }
+      }
+    }
+
+    if (calledName) {
+      auto* func = getModule()->getFunction(calledName);
+      if (!HeapType::isSubType(func->type.getHeapType(), original->heapType)) {
+        return CallUtils::Trap{};
+      }
+      return CallUtils::Known{calledName};
+    }
+
+    // The initial table's content has no value for what is called. See if
+    // anything may appear in it.
+    if (!info.mayBeModified()) {
+      // This is out of bounds and definitely traps.
       return CallUtils::Trap{};
     }
-    auto* func = getModule()->getFunction(name);
-    if (!HeapType::isSubType(func->type.getHeapType(), original->heapType)) {
-      return CallUtils::Trap{};
-    }
-    return CallUtils::Known{name};
+
+    // The table may be modified, so it might be appended to. We should only
+    // get here in the case that the initial contents are immutable, or the
+    // table can grow, as otherwise we have nothing to optimize at all.
+    assert(info.initialContentsImmutable || info.hasGrow);
+    return CallUtils::Unknown{};
   }
 
   // Create a direct call for a given list of operands, an expression which is
