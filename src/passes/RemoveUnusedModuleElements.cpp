@@ -313,23 +313,36 @@ struct Analyzer {
   }
 
   void prepare() {
+    auto notePossibleFunc = [&](FlatTableInfo& info, Expression* item, std::optional<Name> elem={}) {
+      if (auto* refFunc = item->dynCast<RefFunc>()) {
+        auto* func = module->getFunction(refFunc->func);
+        std::optional<HeapType> type = func->type.getHeapType();
+        // Add this function and element to all relevant types: each function
+        // might be called by its type, or a supertype.
+        while (type) {
+          info.typeFuncs[*type].insert(func->name);
+          if (elem) {
+            info.typeElems[*type].insert(*elem);
+          }
+          type = type->getSuperType();
+        }
+      }
+    };
+
     for (auto& elem : module->elementSegments) {
       if (elem->isPassive()) {
         continue;
       }
-      auto& flatTableInfo = flatTableInfoMap[elem->table];
+      auto& info = flatTableInfoMap[elem->table];
       for (auto* item : elem->data) {
-        if (auto* refFunc = item->dynCast<RefFunc>()) {
-          auto* func = module->getFunction(refFunc->func);
-          std::optional<HeapType> type = func->type.getHeapType();
-          // Add this function and element to all relevant types: each function
-          // might be called by its type, or a supertype.
-          while (type) {
-            flatTableInfo.typeFuncs[*type].insert(func->name);
-            flatTableInfo.typeElems[*type].insert(elem->name);
-            type = type->getSuperType();
-          }
-        }
+        notePossibleFunc(info, item, elem->name);
+      }
+    }
+
+    // If a table has an initial value, it is callable as well.
+    for (auto& table : module->tables) {
+      if (table->init) {
+        notePossibleFunc(flatTableInfoMap[table->name], table->init);
       }
     }
   }

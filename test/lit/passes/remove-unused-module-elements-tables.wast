@@ -560,3 +560,106 @@
   )
 )
 
+;; An initial value in a table. That makes the function callable.
+(module
+  ;; CHECK:      (type $func (func (result i32)))
+  ;; OPEN_WORLD:      (type $func (func (result i32)))
+  (type $func (func (result i32)))
+
+  ;; CHECK:      (type $1 (func))
+
+  ;; CHECK:      (table $table 1 1 funcref (ref.func $func))
+  ;; OPEN_WORLD:      (type $1 (func))
+
+  ;; OPEN_WORLD:      (table $table 1 1 funcref (ref.func $func))
+  (table $table 1 1 funcref (ref.func $func))
+
+  ;; CHECK:      (export "caller" (func $caller))
+
+  ;; CHECK:      (func $caller (type $1)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (call_indirect $table (type $func)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPEN_WORLD:      (export "caller" (func $caller))
+
+  ;; OPEN_WORLD:      (func $caller (type $1)
+  ;; OPEN_WORLD-NEXT:  (drop
+  ;; OPEN_WORLD-NEXT:   (call_indirect $table (type $func)
+  ;; OPEN_WORLD-NEXT:    (i32.const 0)
+  ;; OPEN_WORLD-NEXT:   )
+  ;; OPEN_WORLD-NEXT:  )
+  ;; OPEN_WORLD-NEXT: )
+  (func $caller (export "caller")
+    (drop
+      (call_indirect $table (type $func)
+        (i32.const 0)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $func (type $func) (result i32)
+  ;; CHECK-NEXT:  (i32.const 0)
+  ;; CHECK-NEXT: )
+  ;; OPEN_WORLD:      (func $func (type $func) (result i32)
+  ;; OPEN_WORLD-NEXT:  (i32.const 0)
+  ;; OPEN_WORLD-NEXT: )
+  (func $func (type $func) (result i32)
+    (i32.const 0)
+  )
+)
+
+;; As above, but now the type does not match, so it is not callable.
+(module
+  ;; CHECK:      (type $func (func (result i32)))
+  ;; OPEN_WORLD:      (type $func (func (result i32)))
+  (type $func (func (result i32)))
+  (type $other (func (result i32)))
+
+  ;; CHECK:      (type $1 (func))
+
+  ;; CHECK:      (table $table 1 1 funcref (ref.func $func))
+  ;; OPEN_WORLD:      (type $1 (func))
+
+  ;; OPEN_WORLD:      (table $table 1 1 funcref (ref.func $func))
+  (table $table 1 1 funcref (ref.func $func))
+
+  ;; CHECK:      (export "caller" (func $caller))
+
+  ;; CHECK:      (func $caller (type $1)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (call_indirect $table (type $func)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPEN_WORLD:      (export "caller" (func $caller))
+
+  ;; OPEN_WORLD:      (func $caller (type $1)
+  ;; OPEN_WORLD-NEXT:  (drop
+  ;; OPEN_WORLD-NEXT:   (call_indirect $table (type $func)
+  ;; OPEN_WORLD-NEXT:    (i32.const 0)
+  ;; OPEN_WORLD-NEXT:   )
+  ;; OPEN_WORLD-NEXT:  )
+  ;; OPEN_WORLD-NEXT: )
+  (func $caller (export "caller")
+    (drop
+      (call_indirect $table (type $func)
+        (i32.const 0)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $func (type $func) (result i32)
+  ;; CHECK-NEXT:  (i32.const 0)
+  ;; CHECK-NEXT: )
+  ;; OPEN_WORLD:      (func $func (type $func) (result i32)
+  ;; OPEN_WORLD-NEXT:  (i32.const 0)
+  ;; OPEN_WORLD-NEXT: )
+  (func $func (type $other) (result i32)
+    (i32.const 0)
+  )
+)
+
