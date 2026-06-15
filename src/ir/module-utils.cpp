@@ -507,20 +507,20 @@ collectHeapTypeInfo(Module& wasm,
   // Collect module-level info.
   TypeInfos info;
   ReferencedFuncs referencedFuncs;
-  for (auto& func : wasm.functions) {
+  for (const auto& func : wasm.functions) {
     referencedFuncs.emplace(func->name, false);
   }
   CodeScanner(wasm, info, referencedFuncs).walkModuleCode(&wasm);
-  for (auto& curr : wasm.globals) {
+  for (const auto& curr : wasm.globals) {
     info.note(curr->type);
   }
-  for (auto& curr : wasm.tags) {
+  for (const auto& curr : wasm.tags) {
     info.note(curr->type);
   }
-  for (auto& curr : wasm.tables) {
+  for (const auto& curr : wasm.tables) {
     info.note(curr->type);
   }
-  for (auto& curr : wasm.elementSegments) {
+  for (const auto& curr : wasm.elementSegments) {
     info.note(curr->type);
   }
 
@@ -540,16 +540,16 @@ collectHeapTypeInfo(Module& wasm,
     });
 
   // Combine the function info with the module info.
-  for (auto& [func, functionInfo] : analysis.map) {
+  for (const auto& [func, functionInfo] : analysis.map) {
     bool referenced = referencedFuncs.at(func->name);
-    for (auto& [type, typeInfo] : functionInfo.info) {
+    for (const auto& [type, typeInfo] : functionInfo.info) {
       auto& mainInfo = info.info[type];
       mainInfo.useCount += typeInfo.useCount;
       if (!referenced) {
         mainInfo.unreferencedFuncUseCount += typeInfo.useCount;
       }
     }
-    for (auto& [sig, count] : functionInfo.controlFlowSignatures) {
+    for (const auto& [sig, count] : functionInfo.controlFlowSignatures) {
       info.controlFlowSignatures[sig] += count;
     }
   }
@@ -570,7 +570,7 @@ collectHeapTypeInfo(Module& wasm,
       seenSigs.insert({type.getSignature(), type});
     }
   };
-  for (auto& [type, _] : info.info) {
+  for (const auto& [type, _] : info.info) {
     noteNewType(type);
   }
   auto controlFlowIt = info.controlFlowSignatures.begin();
@@ -609,7 +609,7 @@ collectHeapTypeInfo(Module& wasm,
       HeapTypeInfo* sigInfo = nullptr;
       bool newType = false;
       if (auto it = seenSigs.find(sig); it != seenSigs.end()) {
-        sigInfo = &info.info[it->second];
+        sigInfo = &info.info.at(it->second);
       } else {
         // We've never seen this signature before, so add a type for it.
         HeapType type(sig);
@@ -723,7 +723,7 @@ void classifyTypeVisibility(Module& wasm,
   // exposure is upgraded, we re-push it to the worklist to update the
   // propagation to related types.
   auto markPublic = [&](HeapType type, Exposure state) {
-    auto [it, inserted] = exposures.insert({type, state});
+    auto [it, inserted] = exposures.try_emplace(type, state);
     if (inserted || state > it->second) {
       it->second = state;
       worklist.push_back(type);
@@ -734,7 +734,7 @@ void classifyTypeVisibility(Module& wasm,
   // public. However, we can be more precise and keep function types that are
   // only used for non-referenced functions and control flow private.
   std::unordered_set<HeapType> privateFunctionTypes;
-  for (auto& [type, info] : types) {
+  for (const auto& [type, info] : types) {
     if (type.isSignature() &&
         info.useCount ==
           info.controlFlowUseCount + info.unreferencedFuncUseCount) {
@@ -745,13 +745,13 @@ void classifyTypeVisibility(Module& wasm,
   // Build the subtype hierarchy.
   std::vector<HeapType> heapTypes;
   heapTypes.reserve(types.size());
-  for (auto& [type, _] : types) {
+  for (const auto& [type, _] : types) {
     heapTypes.push_back(type);
   }
   SubTypes subTypes(heapTypes);
 
   // Initialize with directly exposed types.
-  for (auto& [type, exact] : getExposedPublicHeapTypes(wasm)) {
+  for (const auto& [type, exact] : getExposedPublicHeapTypes(wasm)) {
     markPublic(type,
                exact == Exact ? Exposure::ExposedExactly : Exposure::Exposed);
   }
@@ -765,17 +765,18 @@ void classifyTypeVisibility(Module& wasm,
     // Propagate exposed status to subtypes.
     if (state == Exposure::Exposed) {
       // `func` gets special treatment because we do not mark function types
-      // only used in unreferenced function declarations public. Other kinds of
-      // heap types cannot be inhabited without having reference values.
+      // only used in unreferenced function declarations or control flow public.
+      // Other kinds of heap types cannot be inhabited without having reference
+      // values.
       if (curr.isMaybeShared(HeapType::func)) {
-        for (auto& [definedType, _] : types) {
+        for (const auto& [definedType, _] : types) {
           if (HeapType::isSubType(definedType, curr) &&
               !privateFunctionTypes.contains(definedType)) {
             markPublic(definedType, Exposure::Exposed);
           }
         }
       } else if (curr.isBasic()) {
-        for (auto& [definedType, _] : types) {
+        for (const auto& [definedType, _] : types) {
           if (HeapType::isSubType(definedType, curr)) {
             markPublic(definedType, Exposure::Exposed);
           }
@@ -858,7 +859,7 @@ std::vector<HeapType> collectHeapTypes(Module& wasm) {
   auto info = collectHeapTypeInfo(wasm, WorldMode::Open);
   std::vector<HeapType> types;
   types.reserve(info.size());
-  for (auto& [type, _] : info) {
+  for (const auto& [type, _] : info) {
     types.push_back(type);
   }
   return types;
@@ -939,7 +940,7 @@ std::vector<HeapType> getPublicHeapTypes(Module& wasm, WorldMode worldMode) {
     auto exposedPairs = getExposedPublicHeapTypes(wasm);
     std::vector<HeapType> directlyExposed;
     directlyExposed.reserve(exposedPairs.size());
-    for (auto& [type, _] : exposedPairs) {
+    for (const auto& [type, _] : exposedPairs) {
       directlyExposed.push_back(type);
     }
     return getTransitivelyReachable(directlyExposed);
@@ -952,7 +953,7 @@ std::vector<HeapType> getPublicHeapTypes(Module& wasm, WorldMode worldMode) {
                                       TypeInclusion::AllTypes,
                                       VisibilityHandling::FindVisibility);
   std::vector<HeapType> publicTypes;
-  for (auto& [type, info] : typeInfo) {
+  for (const auto& [type, info] : typeInfo) {
     if (info.visibility == Visibility::Public) {
       publicTypes.push_back(type);
     }
@@ -967,7 +968,7 @@ std::vector<HeapType> getPrivateHeapTypes(Module& wasm, WorldMode worldMode) {
                                   VisibilityHandling::FindVisibility);
   std::vector<HeapType> types;
   types.reserve(info.size());
-  for (auto& [type, typeInfo] : info) {
+  for (const auto& [type, typeInfo] : info) {
     if (typeInfo.visibility == Visibility::Private) {
       types.push_back(type);
     }
@@ -982,7 +983,7 @@ IndexedHeapTypes getOptimizedIndexedHeapTypes(Module& wasm) {
   // Collect the rec groups.
   std::unordered_map<RecGroup, size_t> groupIndices;
   std::vector<RecGroup> groups;
-  for (auto& [type, _] : counts) {
+  for (const auto& [type, _] : counts) {
     auto group = type.getRecGroup();
     if (groupIndices.insert({group, groups.size()}).second) {
       groups.push_back(group);
