@@ -313,7 +313,9 @@ struct Analyzer {
   }
 
   void prepare() {
-    auto notePossibleFunc = [&](FlatTableInfo& info, Expression* item, std::optional<Name> elem={}) {
+    auto notePossibleFunc = [&](FlatTableInfo& info,
+                                Expression* item,
+                                std::optional<Name> elem = {}) {
       if (auto* refFunc = item->dynCast<RefFunc>()) {
         auto* func = module->getFunction(refFunc->func);
         std::optional<HeapType> type = func->type.getHeapType();
