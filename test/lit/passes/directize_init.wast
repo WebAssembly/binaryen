@@ -94,14 +94,17 @@
   ;; IMMUT:      (type $func (func (result i32)))
   (type $func (func (result i32)))
 
+
   ;; CHECK:      (type $1 (func))
 
-  ;; CHECK:      (table $table 1 1 funcref (ref.func $func))
+  ;; CHECK:      (import "a" "b" (global $import funcref))
   ;; IMMUT:      (type $1 (func))
 
+  ;; IMMUT:      (import "a" "b" (global $import funcref))
   (import "a" "b" (global $import funcref))
 
-  ;; IMMUT:      (table $table 1 1 funcref (ref.func $func))
+  ;; CHECK:      (table $table 1 1 funcref (global.get $import))
+  ;; IMMUT:      (table $table 1 1 funcref (global.get $import))
   (table $table 1 1 funcref (global.get $import))
 
   ;; CHECK:      (export "caller" (func $caller))

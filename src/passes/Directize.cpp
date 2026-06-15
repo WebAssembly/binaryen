@@ -112,7 +112,7 @@ private:
   // that is, whether we know a direct call target, or we know it will trap, or
   // if we know nothing.
   CallUtils::IndirectCallInfo getTargetInfo(Expression* target,
-                                            const TableUtils::TableInfo& table,
+                                            const TableUtils::TableInfo& info,
                                             CallIndirect* original) {
     auto* c = target->dynCast<Const>();
     if (!c) {
@@ -122,28 +122,38 @@ private:
     Address index = c->value.getUnsigned();
 
     // Check if index is invalid, or the type is wrong.
-    auto& flatTable = *table.flatTable;
+    auto& flatTable = *info.flatTable;
     if (index >= flatTable.names.size()) {
       // The index is out of bounds for the initial table's content. This may
       // trap, but it may also not trap if the table is modified later (if a
       // function is appended to it).
-      if (!table.mayBeModified()) {
+      if (!info.mayBeModified()) {
         return CallUtils::Trap{};
       } else {
         // The table may be modified, so it might be appended to. We should only
         // get here in the case that the initial contents are immutable, or the
         // table can grow, as otherwise we have nothing to optimize at all.
-        assert(table.initialContentsImmutable || table.hasGrow);
+        assert(info.initialContentsImmutable || info.hasGrow);
         return CallUtils::Unknown{};
       }
     }
     auto name = flatTable.names[index];
     if (!name.is()) {
       // No segment wrote to this part of the initial contents of the table.
+      // This will trap, unless there is an initial value in the table.
+      auto* table = getModule()->getTable(original->table);
+      if (table->init) {
+        if (auto* refFunc = table->init->dynCast<RefFunc>()) {
+          return CallUtils::Known{refFunc->func};
+        }
+        // Something unknown like a global.get. We can infer nothing.
+        return CallUtils::Unknown{};
+      }
+
       // This must trap, as we only get here if we can optimize such cases,
       // relying on the fact that the table cannot be modified, or at least the
       // initial contents cannot be.
-      assert(!table.hasSet || table.initialContentsImmutable);
+      assert(!info.hasSet || info.initialContentsImmutable);
       return CallUtils::Trap{};
     }
     auto* func = getModule()->getFunction(name);
