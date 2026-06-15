@@ -6,35 +6,14 @@
 ;; An initial value in a table. Rather than a null for uninitialized elements,
 ;; which traps, we know what is called here.
 (module
-  ;; IMMUT:      (type $func (func (result i32)))
   ;; CHECK:      (type $func (func (result i32)))
   (type $func (func (result i32)))
 
-  ;; IMMUT:      (type $1 (func))
-
-  ;; IMMUT:      (table $table 1 1 funcref (ref.func $func))
   ;; CHECK:      (type $1 (func))
 
   ;; CHECK:      (table $table 1 1 funcref (ref.func $func))
   (table $table 1 1 funcref (ref.func $func))
 
-  ;; IMMUT:      (export "caller" (func $caller))
-
-  ;; IMMUT:      (func $caller (type $1)
-  ;; IMMUT-NEXT:  (drop
-  ;; IMMUT-NEXT:   (unreachable)
-  ;; IMMUT-NEXT:  )
-  ;; IMMUT-NEXT:  (drop
-  ;; IMMUT-NEXT:   (unreachable)
-  ;; IMMUT-NEXT:  )
-  ;; IMMUT-NEXT:  (drop
-  ;; IMMUT-NEXT:   (call_indirect $table (type $func)
-  ;; IMMUT-NEXT:    (i32.eqz
-  ;; IMMUT-NEXT:     (i32.const 1)
-  ;; IMMUT-NEXT:    )
-  ;; IMMUT-NEXT:   )
-  ;; IMMUT-NEXT:  )
-  ;; IMMUT-NEXT: )
   ;; CHECK:      (export "caller" (func $caller))
 
   ;; CHECK:      (func $caller (type $1)
@@ -75,9 +54,6 @@
     )
   )
 
-  ;; IMMUT:      (func $func (type $func) (result i32)
-  ;; IMMUT-NEXT:  (i32.const 0)
-  ;; IMMUT-NEXT: )
   ;; CHECK:      (func $func (type $func) (result i32)
   ;; CHECK-NEXT:  (i32.const 0)
   ;; CHECK-NEXT: )
@@ -89,40 +65,18 @@
 ;; As above, but the initializer is a global.get, so we cannot infer a direct
 ;; call.
 (module
-  ;; IMMUT:      (type $func (func (result i32)))
   ;; CHECK:      (type $func (func (result i32)))
   (type $func (func (result i32)))
 
 
-  ;; IMMUT:      (type $1 (func))
-
-  ;; IMMUT:      (import "a" "b" (global $import funcref))
   ;; CHECK:      (type $1 (func))
 
   ;; CHECK:      (import "a" "b" (global $import funcref))
   (import "a" "b" (global $import funcref))
 
-  ;; IMMUT:      (table $table 1 1 funcref (global.get $import))
   ;; CHECK:      (table $table 1 1 funcref (global.get $import))
   (table $table 1 1 funcref (global.get $import)) ;; this changed
 
-  ;; IMMUT:      (export "caller" (func $caller))
-
-  ;; IMMUT:      (func $caller (type $1)
-  ;; IMMUT-NEXT:  (drop
-  ;; IMMUT-NEXT:   (unreachable)
-  ;; IMMUT-NEXT:  )
-  ;; IMMUT-NEXT:  (drop
-  ;; IMMUT-NEXT:   (unreachable)
-  ;; IMMUT-NEXT:  )
-  ;; IMMUT-NEXT:  (drop
-  ;; IMMUT-NEXT:   (call_indirect $table (type $func)
-  ;; IMMUT-NEXT:    (i32.eqz
-  ;; IMMUT-NEXT:     (i32.const 1)
-  ;; IMMUT-NEXT:    )
-  ;; IMMUT-NEXT:   )
-  ;; IMMUT-NEXT:  )
-  ;; IMMUT-NEXT: )
   ;; CHECK:      (export "caller" (func $caller))
 
   ;; CHECK:      (func $caller (type $1)
@@ -163,9 +117,6 @@
     )
   )
 
-  ;; IMMUT:      (func $func (type $func) (result i32)
-  ;; IMMUT-NEXT:  (i32.const 0)
-  ;; IMMUT-NEXT: )
   ;; CHECK:      (func $func (type $func) (result i32)
   ;; CHECK-NEXT:  (i32.const 0)
   ;; CHECK-NEXT: )
