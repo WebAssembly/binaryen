@@ -313,24 +313,23 @@ struct Analyzer {
   }
 
   void prepare() {
-    auto notePossibleFunc = [&](FlatTableInfo& info,
-                                Expression* item,
-                                Name elem = Name()) {
-      if (auto* refFunc = item->dynCast<RefFunc>()) {
-        auto* func = module->getFunction(refFunc->func);
-        std::optional<HeapType> type = func->type.getHeapType();
-        // Add this function and element to all relevant types: each function
-        // might be called by its type, or a supertype.
-        // TODO: use exactness here
-        while (type) {
-          info.typeFuncs[*type].insert(func->name);
-          if (elem) {
-            info.typeElems[*type].insert(elem);
+    auto notePossibleFunc =
+      [&](FlatTableInfo& info, Expression* item, Name elem = Name()) {
+        if (auto* refFunc = item->dynCast<RefFunc>()) {
+          auto* func = module->getFunction(refFunc->func);
+          std::optional<HeapType> type = func->type.getHeapType();
+          // Add this function and element to all relevant types: each function
+          // might be called by its type, or a supertype.
+          // TODO: use exactness here
+          while (type) {
+            info.typeFuncs[*type].insert(func->name);
+            if (elem) {
+              info.typeElems[*type].insert(elem);
+            }
+            type = type->getSuperType();
           }
-          type = type->getSuperType();
         }
-      }
-    };
+      };
 
     for (auto& elem : module->elementSegments) {
       if (elem->isPassive()) {
