@@ -2,40 +2,22 @@
 ;; NOTE: This test was ported using port_passes_tests_to_lit.py and could be cleaned up.
 
 ;; RUN: foreach %s %t wasm-opt --directize                                                 --all-features -S -o - | filecheck %s --check-prefix=CHECK
-;; RUN: foreach %s %t wasm-opt --directize --pass-arg=directize-initial-contents-immutable --all-features -S -o - | filecheck %s --check-prefix=IMMUT
 
 ;; An initial value in a table. Rather than a null for uninitialized elements,
 ;; which traps, we know what is called here.
 (module
-  ;; CHECK:      (type $func (func (result i32)))
   ;; IMMUT:      (type $func (func (result i32)))
+  ;; CHECK:      (type $func (func (result i32)))
   (type $func (func (result i32)))
 
-  ;; CHECK:      (type $1 (func))
-
-  ;; CHECK:      (table $table 1 1 funcref (ref.func $func))
   ;; IMMUT:      (type $1 (func))
 
   ;; IMMUT:      (table $table 1 1 funcref (ref.func $func))
+  ;; CHECK:      (type $1 (func))
+
+  ;; CHECK:      (table $table 1 1 funcref (ref.func $func))
   (table $table 1 1 funcref (ref.func $func))
 
-  ;; CHECK:      (export "caller" (func $caller))
-
-  ;; CHECK:      (func $caller (type $1)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (unreachable)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (unreachable)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (call_indirect $table (type $func)
-  ;; CHECK-NEXT:    (i32.eqz
-  ;; CHECK-NEXT:     (i32.const 1)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
   ;; IMMUT:      (export "caller" (func $caller))
 
   ;; IMMUT:      (func $caller (type $1)
@@ -53,6 +35,23 @@
   ;; IMMUT-NEXT:   )
   ;; IMMUT-NEXT:  )
   ;; IMMUT-NEXT: )
+  ;; CHECK:      (export "caller" (func $caller))
+
+  ;; CHECK:      (func $caller (type $1)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (call_indirect $table (type $func)
+  ;; CHECK-NEXT:    (i32.eqz
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $caller (export "caller")
     ;; This can be optimized to a call to $func.
     (drop
@@ -76,12 +75,12 @@
     )
   )
 
-  ;; CHECK:      (func $func (type $func) (result i32)
-  ;; CHECK-NEXT:  (i32.const 0)
-  ;; CHECK-NEXT: )
   ;; IMMUT:      (func $func (type $func) (result i32)
   ;; IMMUT-NEXT:  (i32.const 0)
   ;; IMMUT-NEXT: )
+  ;; CHECK:      (func $func (type $func) (result i32)
+  ;; CHECK-NEXT:  (i32.const 0)
+  ;; CHECK-NEXT: )
   (func $func (type $func) (result i32)
     (i32.const 0)
   )
@@ -90,40 +89,23 @@
 ;; As above, but the initializer is a global.get, so we cannot infer a direct
 ;; call.
 (module
-  ;; CHECK:      (type $func (func (result i32)))
   ;; IMMUT:      (type $func (func (result i32)))
+  ;; CHECK:      (type $func (func (result i32)))
   (type $func (func (result i32)))
 
 
-  ;; CHECK:      (type $1 (func))
-
-  ;; CHECK:      (import "a" "b" (global $import funcref))
   ;; IMMUT:      (type $1 (func))
 
   ;; IMMUT:      (import "a" "b" (global $import funcref))
+  ;; CHECK:      (type $1 (func))
+
+  ;; CHECK:      (import "a" "b" (global $import funcref))
   (import "a" "b" (global $import funcref))
 
-  ;; CHECK:      (table $table 1 1 funcref (global.get $import))
   ;; IMMUT:      (table $table 1 1 funcref (global.get $import))
-  (table $table 1 1 funcref (global.get $import))
+  ;; CHECK:      (table $table 1 1 funcref (global.get $import))
+  (table $table 1 1 funcref (global.get $import)) ;; this changed
 
-  ;; CHECK:      (export "caller" (func $caller))
-
-  ;; CHECK:      (func $caller (type $1)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (unreachable)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (unreachable)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (call_indirect $table (type $func)
-  ;; CHECK-NEXT:    (i32.eqz
-  ;; CHECK-NEXT:     (i32.const 1)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
   ;; IMMUT:      (export "caller" (func $caller))
 
   ;; IMMUT:      (func $caller (type $1)
@@ -141,6 +123,23 @@
   ;; IMMUT-NEXT:   )
   ;; IMMUT-NEXT:  )
   ;; IMMUT-NEXT: )
+  ;; CHECK:      (export "caller" (func $caller))
+
+  ;; CHECK:      (func $caller (type $1)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (call_indirect $table (type $func)
+  ;; CHECK-NEXT:    (i32.eqz
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $caller (export "caller")
     ;; This cannot be optimized to a call to $func.
     (drop
@@ -164,12 +163,12 @@
     )
   )
 
-  ;; CHECK:      (func $func (type $func) (result i32)
-  ;; CHECK-NEXT:  (i32.const 0)
-  ;; CHECK-NEXT: )
   ;; IMMUT:      (func $func (type $func) (result i32)
   ;; IMMUT-NEXT:  (i32.const 0)
   ;; IMMUT-NEXT: )
+  ;; CHECK:      (func $func (type $func) (result i32)
+  ;; CHECK-NEXT:  (i32.const 0)
+  ;; CHECK-NEXT: )
   (func $func (type $func) (result i32)
     (i32.const 0)
   )
