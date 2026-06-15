@@ -313,23 +313,38 @@ struct Analyzer {
   }
 
   void prepare() {
-    for (auto& elem : module->elementSegments) {
-      if (elem->isPassive()) {
-        continue;
-      }
-      auto& flatTableInfo = flatTableInfoMap[elem->table];
-      for (auto* item : elem->data) {
+    auto notePossibleFunc =
+      [&](FlatTableInfo& info, Expression* item, Name elem = Name()) {
         if (auto* refFunc = item->dynCast<RefFunc>()) {
           auto* func = module->getFunction(refFunc->func);
           std::optional<HeapType> type = func->type.getHeapType();
           // Add this function and element to all relevant types: each function
           // might be called by its type, or a supertype.
+          // TODO: use exactness here
           while (type) {
-            flatTableInfo.typeFuncs[*type].insert(func->name);
-            flatTableInfo.typeElems[*type].insert(elem->name);
+            info.typeFuncs[*type].insert(func->name);
+            if (elem) {
+              info.typeElems[*type].insert(elem);
+            }
             type = type->getSuperType();
           }
         }
+      };
+
+    for (auto& elem : module->elementSegments) {
+      if (elem->isPassive()) {
+        continue;
+      }
+      auto& info = flatTableInfoMap[elem->table];
+      for (auto* item : elem->data) {
+        notePossibleFunc(info, item, elem->name);
+      }
+    }
+
+    // If a table has an initial value, it is callable as well.
+    for (auto& table : module->tables) {
+      if (table->init) {
+        notePossibleFunc(flatTableInfoMap[table->name], table->init);
       }
     }
   }
