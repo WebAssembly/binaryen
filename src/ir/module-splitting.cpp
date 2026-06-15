@@ -856,7 +856,7 @@ ModuleSplitter::PrimarySecondaryUsedNames ModuleSplitter::computeUsedNames() {
   // guaranteed to be topologically sorted with respect to its internal
   // dependencies. By iterating in reverse, we are guaranteed to process
   // dependent globals before the globals they depend on, allowing us to
-  // propagate ownership in a single O(N) pass.
+  // propagate ownership in a single pass.
   for (auto it = primary.globals.rbegin(); it != primary.globals.rend(); ++it) {
     auto& global = *it;
     if (!global->init) {
