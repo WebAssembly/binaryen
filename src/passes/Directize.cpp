@@ -121,45 +121,54 @@ private:
 
     Address index = c->value.getUnsigned();
 
-    // Check if we know what is called from the table's initial content.
+    // Check if we know what is called from the table's initial content. We can
+    // only do this if the initial contents are immutable, or if there is no
+    // writing to the table at all.
     auto& flatTable = *info.flatTable;
     Name calledName;
-    if (index < flatTable.names.size()) {
-      calledName = flatTable.names[index];
-    }
-
-    // If we didn't see initial content there, the default value of the table
-    // might be called.
-    if (!calledName) {
-      auto* table = getModule()->getTable(original->table);
-      if (table->imported()) {
-        // An imported table might have a default value, and we can't tell.
-        XXX
+    if (info.initialContentsImmutable || !info.hasSet) {
+      if (index < flatTable.names.size()) {
+        calledName = flatTable.names[index];
       }
-      if (table->init) {
-        if (index < table->initial) {
-          // This is in bounds, so the default value of the table is called.
-          if (auto* refFunc = table->init->dynCast<RefFunc>()) {
-            calledName = refFunc->func;
+      if (!calledName) {
+        // We did not see a value there, but the table might have a default
+        // value.
+        auto* table = getModule()->getTable(original->table);
+        if (table->imported()) {
+          // An imported table might have a default value, and we can't tell.
+          return CallUtils::Unknown{};
+        }
+        if (table->init) {
+          if (index < table->initial) {
+            // This is in bounds, so the default value of the table is called.
+            if (auto* refFunc = table->init->dynCast<RefFunc>()) {
+              calledName = refFunc->func;
+            } else {
+              // There is an initial value, but it is unknown, like a
+              // global.get. We can infer nothing, not even a trap.
+              return CallUtils::Unknown{};
+            }
           } else {
-            // There is an initial value, but it is unknown, like a global.get.
-            // We can infer nothing, not even a trap.
-            return CallUtils::Unknown{};
-          }
-        } else {
-          // We are beyond the initial table size, and can't infer anything,
-          // unless we are in the simple case of no growth, in which case we
-          // trap.
-          if (!info.hasGrow) {
-            return CallUtils::Trap{};
-          } else {
-            return CallUtils::Unknown{};
+            // We are beyond the initial table size, and can't infer anything,
+            // unless we are in the simple case of no growth, in which case we
+            // trap.
+            if (!info.hasGrow) {
+              return CallUtils::Trap{};
+            } else {
+              return CallUtils::Unknown{};
+            }
           }
         }
+      }
+      // If we found no data, and the table init did not change anything, then
+      // we trap.
+      if (!calledName) {
+        return CallUtils::Trap{};
       }
     }
 
     if (calledName) {
+      // We know what is called, but it must have the right type.
       auto* func = getModule()->getFunction(calledName);
       if (!HeapType::isSubType(func->type.getHeapType(), original->heapType)) {
         return CallUtils::Trap{};
@@ -167,17 +176,7 @@ private:
       return CallUtils::Known{calledName};
     }
 
-    // The initial table's content has no value for what is called. See if
-    // anything may appear in it.
-    if (!info.mayBeModified()) {
-      // This is out of bounds and definitely traps.
-      return CallUtils::Trap{};
-    }
-
-    // The table may be modified, so it might be appended to. We should only
-    // get here in the case that the initial contents are immutable, or the
-    // table can grow, as otherwise we have nothing to optimize at all.
-    assert(info.initialContentsImmutable || info.hasGrow);
+    // Otherwise, give up.
     return CallUtils::Unknown{};
   }
 
