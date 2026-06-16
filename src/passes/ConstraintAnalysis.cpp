@@ -199,7 +199,7 @@ struct ConstraintAnalysis
   const LocalConstraintMap& getConstraintsFromPredToSucc(BasicBlock* pred,
                                                          BasicBlock* block) {
     // TODO: use conditional branching to send different values along branches
-    return pred->contents.endConstraints.find(local);
+    return pred->contents.endConstraints;
   }
 
   // Given an expression, apply it to the constraints. For example, a local.set
