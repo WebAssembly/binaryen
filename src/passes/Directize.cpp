@@ -121,67 +121,69 @@ private:
 
     Address index = c->value.getUnsigned();
 
-    // Check if we know what is called from the table's initial content. We can
-    // only do this if the initial contents are immutable, or if there is no
-    // writing to the table at all.
-    auto& flatTable = *info.flatTable;
+    // We'll check if we know what is called from the table's initial content,
+    // but we can only do this if the initial contents are immutable, or if
+    // there is no writing to the table at all.
+    if (!info.initialContentsImmutable && info.hasSet) {
+      return CallUtils::Unknown{};
+    }
+
+    auto* table = getModule()->getTable(original->table);
     Name calledName;
-    if (info.initialContentsImmutable || !info.hasSet) {
-      if (index < flatTable.names.size()) {
-        calledName = flatTable.names[index];
+    auto& flatTable = *info.flatTable;
+    if (index < flatTable.names.size()) {
+      calledName = flatTable.names[index];
+    }
+    if (!calledName) {
+      // We did not see a value there, but the table might have a default
+      // value.
+      if (table->imported()) {
+        // An imported table might have a default value, and we can't tell.
+        return CallUtils::Unknown{};
       }
-      auto* table = getModule()->getTable(original->table);
-      if (!calledName) {
-        // We did not see a value there, but the table might have a default
-        // value.
-        if (table->imported()) {
-          // An imported table might have a default value, and we can't tell.
-          return CallUtils::Unknown{};
-        }
-        if (table->init) {
-          if (index < table->initial) {
-            // This is in bounds, so the default value of the table is called.
-            if (auto* refFunc = table->init->dynCast<RefFunc>()) {
-              calledName = refFunc->func;
-            } else {
-              // There is an initial value, but it is unknown, like a
-              // global.get. We can infer nothing, not even a trap.
-              return CallUtils::Unknown{};
-            }
+      if (table->init) {
+        if (index < table->initial) {
+          // This is in bounds, so the default value of the table is called.
+          if (auto* refFunc = table->init->dynCast<RefFunc>()) {
+            calledName = refFunc->func;
           } else {
-            // We are beyond the initial table size, and can't infer anything,
-            // unless we are in the simple case of no growth, in which case we
-            // trap.
-            if (!info.hasGrow) {
-              return CallUtils::Trap{};
-            } else {
-              return CallUtils::Unknown{};
-            }
+            // There is an initial value, but it is unknown, like a
+            // global.get. We can infer nothing, not even a trap.
+            return CallUtils::Unknown{};
+          }
+        } else {
+          // We are beyond the initial table size, and can't infer anything,
+          // unless we are in the simple case of no growth, in which case we
+          // trap.
+          if (!info.hasGrow) {
+            return CallUtils::Trap{};
+          } else {
+            return CallUtils::Unknown{};
           }
         }
       }
-      // If we found no data, and the table init did not change anything, then
-      // we trap.
-      if (!calledName) {
-        // But we must not read a place where grow can write to - we must either
-        // have no grow, or have an index below where grow writes to.
-        if (!info.hasGrow || index < table->initial) {
-          return CallUtils::Trap{};
-        }
-      }
     }
 
-    if (calledName) {
-      // We know what is called, but it must have the right type.
-      auto* func = getModule()->getFunction(calledName);
-      if (!HeapType::isSubType(func->type.getHeapType(), original->heapType)) {
+    // If we found no data, and the table init did not change anything, then
+    // we trap.
+    if (!calledName) {
+      // But we must not read a place where grow can write to - we must either
+      // have no grow, or have an index below where grow writes to.
+      if (!info.hasGrow || index < table->initial) {
         return CallUtils::Trap{};
       }
-      return CallUtils::Known{calledName};
+      // Otherwise, give up.
+      return CallUtils::Unknown{};
     }
 
-    // Otherwise, give up.
-    return CallUtils::Unknown{};
+    // We know what is called, but it must have the right type.
+    auto* func = getModule()->getFunction(calledName);
+    if (!HeapType::isSubType(func->type.getHeapType(), original->heapType)) {
+      return CallUtils::Trap{};
+    }
+
+    // We know exactly what is called, and it does not trap.
+    return CallUtils::Known{calledName};
   }
 
   // Create a direct call for a given list of operands, an expression which is

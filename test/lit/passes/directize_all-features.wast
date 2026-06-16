@@ -1513,7 +1513,7 @@
 )
 
 ;; As above, a non-contiguous range in initial contents, but now the table is
-;; not imported. We do do more.
+;; not imported. We can do more.
 (module
  ;; CHECK:      (type $ii (func (param i32 i32)))
  ;; IMMUT:      (type $ii (func (param i32 i32)))
