@@ -207,6 +207,12 @@ struct Analyzer
     }
   }
 
+  void visitTable(Table* table) {
+    if (table->init && table->init->type.isExact()) {
+      disallowedTypes.insert(table->init->type.getHeapType());
+    }
+  }
+
   void visitElementSegment(ElementSegment* segment) {
     assert(!segment->type.isTuple());
     if (segment->type.isExact()) {
@@ -252,6 +258,9 @@ struct TypeSSA : public Pass {
     moduleAnalyzer.walkModuleCode(module);
     for (auto& global : module->globals) {
       moduleAnalyzer.visitGlobal(global.get());
+    }
+    for (auto& table : module->tables) {
+      moduleAnalyzer.visitTable(table.get());
     }
     for (auto& segment : module->elementSegments) {
       moduleAnalyzer.visitElementSegment(segment.get());
