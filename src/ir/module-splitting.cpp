@@ -77,8 +77,6 @@
 #include "ir/find_all.h"
 #include "ir/module-utils.h"
 #include "ir/names.h"
-#include "support/insert_ordered.h"
-#include "support/unique_deferring_queue.h"
 #include "wasm-builder.h"
 #include "wasm.h"
 
@@ -755,13 +753,6 @@ ModuleSplitter::PrimarySecondaryUsedNames ModuleSplitter::computeUsedNames() {
       }
     }
 
-    for (auto name : used.tables) {
-      if (auto* table = primary.getTableOrNull(name)) {
-        if (table->init) {
-          collector.walk(table->init);
-        }
-      }
-    }
     return used;
   };
 
@@ -821,32 +812,60 @@ ModuleSplitter::PrimarySecondaryUsedNames ModuleSplitter::computeUsedNames() {
     }
   }
 
-  // Compute the transitive closure of globals referenced in other globals'
-  // initializers. Since globals can reference other globals, we must ensure
-  // that if a global is used in a module, all its dependencies are also marked
-  // as used.
-  auto computeTransitiveGlobals = [&](UsedNames& used) {
-    UniqueNonrepeatingDeferredQueue<Name> worklist;
-    for (auto global : used.globals) {
-      worklist.push(global);
+  // Given a name and a module item kind (field pointer), find which module
+  // "owns" it. If it is used by exactly one secondary module, that secondary
+  // module is the owner. If it is used by the primary module or multiple
+  // secondary modules, the primary module is the owner. If it is not used,
+  // returns nullptr.
+  auto getOwner = [&](Name name, auto UsedNames::* field) -> UsedNames* {
+    UsedNames* owner = nullptr;
+    if ((primaryUsed.*field).contains(name)) {
+      owner = &primaryUsed;
     }
-    while (!worklist.empty()) {
-      Name name = worklist.pop();
-      // At this point all globals are still in the primary module, so this
-      // exists
-      auto* global = primary.getGlobal(name);
-      if (!global->imported() && global->init) {
-        for (auto* get : FindAll<GlobalGet>(global->init).list) {
-          worklist.push(get->name);
-          used.globals.insert(get->name);
+    for (auto& sec : secondaryUsed) {
+      if ((sec.*field).contains(name)) {
+        if (owner) {
+          owner = &primaryUsed;
+          break;
         }
+        owner = &sec;
       }
     }
+    return owner;
   };
 
-  computeTransitiveGlobals(primaryUsed);
-  for (auto& used : secondaryUsed) {
-    computeTransitiveGlobals(used);
+  // Scan table initializers into their owning modules. If a table is used by a
+  // single secondary module, its initializer dependencies are marked as "used"
+  // in that secondary module. Otherwise, they are marked as used in the primary
+  // module.
+  if (primary.features.hasGC()) {
+    for (auto& table : primary.tables) {
+      if (!table->init) {
+        continue;
+      }
+      if (UsedNames* owner = getOwner(table->name, &UsedNames::tables)) {
+        NameCollector(*owner).walk(table->init);
+      }
+    }
+  }
+
+  // Compute the transitive closure of globals referenced in other globals'
+  // initializers. WebAssembly validation requires that global initializers only
+  // refer to previously defined globals. Therefore, `primary.globals` is
+  // guaranteed to be topologically sorted with respect to its internal
+  // dependencies. By iterating in reverse, we are guaranteed to process
+  // dependent globals before the globals they depend on, allowing us to
+  // propagate ownership in a single pass.
+  for (auto it = primary.globals.rbegin(); it != primary.globals.rend(); ++it) {
+    auto& global = *it;
+    if (!global->init) {
+      continue;
+    }
+    if (UsedNames* owner = getOwner(global->name, &UsedNames::globals)) {
+      for (auto* get : FindAll<GlobalGet>(global->init).list) {
+        owner->globals.insert(get->name);
+      }
+    }
   }
 
   return std::make_pair(primaryUsed, secondaryUsed);
