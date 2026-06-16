@@ -930,7 +930,7 @@ BinaryenAtomicNotify(BinaryenModuleRef module,
                      BinaryenExpressionRef notifyCount,
                      const char* memoryName);
 BINARYEN_API BinaryenExpressionRef
-BinaryenAtomicFence(BinaryenModuleRef module);
+BinaryenAtomicFence(BinaryenModuleRef module, BinaryenMemoryOrder order);
 BINARYEN_API BinaryenExpressionRef
 BinaryenSIMDExtract(BinaryenModuleRef module,
                     BinaryenOp op,
@@ -1961,10 +1961,11 @@ BinaryenAtomicNotifySetNotifyCount(BinaryenExpressionRef expr,
 // AtomicFence
 
 // Gets the order of an `atomic.fence` expression.
-BINARYEN_API uint8_t BinaryenAtomicFenceGetOrder(BinaryenExpressionRef expr);
+BINARYEN_API BinaryenMemoryOrder
+BinaryenAtomicFenceGetOrder(BinaryenExpressionRef expr);
 // Sets the order of an `atomic.fence` expression.
 BINARYEN_API void BinaryenAtomicFenceSetOrder(BinaryenExpressionRef expr,
-                                              uint8_t order);
+                                              BinaryenMemoryOrder order);
 
 // SIMDExtract
 

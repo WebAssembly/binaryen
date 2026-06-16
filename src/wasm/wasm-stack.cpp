@@ -632,8 +632,21 @@ void BinaryInstWriter::visitAtomicNotify(AtomicNotify* curr) {
 
 void BinaryInstWriter::visitAtomicFence(AtomicFence* curr) {
   o << static_cast<int8_t>(BinaryConsts::AtomicPrefix)
-    << static_cast<int8_t>(BinaryConsts::AtomicFence)
-    << static_cast<int8_t>(curr->order);
+    << static_cast<int8_t>(BinaryConsts::AtomicFence);
+
+  switch (curr->order) {
+    case MemoryOrder::SeqCst: {
+      o << static_cast<int8_t>(0);
+      break;
+    }
+    case MemoryOrder::AcqRel: {
+      o << static_cast<int8_t>(1);
+      break;
+    }
+    case MemoryOrder::Unordered: {
+      WASM_UNREACHABLE("Unexpected memory ordering for atomic.fence");
+    }
+  }
 }
 
 void BinaryInstWriter::visitPause(Pause* curr) {

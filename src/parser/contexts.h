@@ -617,7 +617,7 @@ struct NullInstrParserCtx {
                             MemargT) {
     return Ok{};
   }
-  Result<> makeAtomicFence(Index, const std::vector<Annotation>&) {
+  Result<> makeAtomicFence(Index, const std::vector<Annotation>&, MemoryOrder) {
     return Ok{};
   }
   Result<> makePause(Index, const std::vector<Annotation>&) { return Ok{}; }
@@ -2448,8 +2448,9 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
   }
 
   Result<> makeAtomicFence(Index pos,
-                           const std::vector<Annotation>& annotations) {
-    return withLoc(pos, irBuilder.makeAtomicFence());
+                           const std::vector<Annotation>& annotations,
+                           MemoryOrder order) {
+    return withLoc(pos, irBuilder.makeAtomicFence(order));
   }
 
   Result<> makePause(Index pos, const std::vector<Annotation>& annotations) {

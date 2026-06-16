@@ -5191,7 +5191,7 @@ Expression* TranslateToFuzzReader::makeAtomic(Type type) {
   }
   wasm.memories[0]->shared = true;
   if (type == Type::none) {
-    return builder.makeAtomicFence();
+    return builder.makeAtomicFence(MemoryOrder::SeqCst);
   }
   if (type == Type::i32 && oneIn(2)) {
     if (ATOMIC_WAITS && oneIn(2)) {

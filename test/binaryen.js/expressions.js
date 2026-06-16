@@ -1372,10 +1372,10 @@ console.log("# AtomicFence");
 (function testAtomicFence() {
   const module = new binaryen.Module();
 
-  const theAtomicFence = binaryen.AtomicFence(module.atomic.fence());
+  const theAtomicFence = binaryen.AtomicFence(module.atomic.fence(binaryen.MemoryOrder.seqcst));
   assert(theAtomicFence instanceof binaryen.AtomicFence);
   assert(theAtomicFence instanceof binaryen.Expression);
-  assert(theAtomicFence.order === 0); // reserved, not yet used
+  assert(theAtomicFence.order === binaryen.MemoryOrder.seqcst);
   assert(theAtomicFence.type === binaryen.none);
 
   var info = binaryen.getExpressionInfo(theAtomicFence);
@@ -1383,8 +1383,8 @@ console.log("# AtomicFence");
   assert(info.type === theAtomicFence.type);
   assert(info.order === theAtomicFence.order);
 
-  theAtomicFence.order = 1;
-  assert(theAtomicFence.order === 1);
+  theAtomicFence.order = binaryen.MemoryOrder.acqrel;
+  assert(theAtomicFence.order === binaryen.MemoryOrder.acqrel);
 
   info = binaryen.getExpressionInfo(theAtomicFence);
   assert(info.type === theAtomicFence.type);
@@ -1394,7 +1394,7 @@ console.log("# AtomicFence");
   assert(
     theAtomicFence.toText()
     ==
-    "(atomic.fence)\n"
+    "(atomic.fence acqrel)\n"
   );
 
   module.dispose();
