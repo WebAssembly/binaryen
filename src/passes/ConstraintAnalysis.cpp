@@ -15,20 +15,12 @@
  */
 
 //
-// Finds XXX ranges of values for locals, and uses them. For example:
+// Use mathematical constraint solving to optimize. For example:
 //
 //  if (x > 10) {
 //    assert(x > 0); // redundant and can be removed.
 //  }
 //
-// TODO: Compare locals, inferring that x <= y in some range (necessary for
-//       software bounds check removal.
-// TODO: Look not just at integers but also references
-//
-
-// XXX actually a ConstraintAnalysis! Find constraints like x >= 0, x < y and
-// link each local to the constraints on it, a list up to fixed depth. Then
-// chak and compress it as we goo etc.
 
 #include "cfg/cfg-traversal.h"
 #include "ir/constraint.h"
@@ -71,9 +63,6 @@ struct ConstraintAnalysis
     return std::make_unique<ConstraintAnalysis>();
   }
 
-  using Super =
-    WalkerPass<CFGWalker<ConstraintAnalysis, Visitor<ConstraintAnalysis>, Info>>;
-
   // Branches outside of the function can be ignored, as we only look at local
   // state in the function.
   bool ignoreBranchesOutsideOfFunc = true;
@@ -90,36 +79,6 @@ struct ConstraintAnalysis
   void visitBinary(Binary* curr) { addAction(); }
   void visitRefEq(RefEq* curr) { addAction(); }
   void visitRefIsNull(RefIsNull* curr) { addAction(); }
-
-#if 0
-  // Track the branches we reason about. CFGWalker builds a CFG, and we want to
-  // add information on top of that about which branch is due to which
-  // instruction. For example, if block A branches to B and C, we want to know
-  // if A ends in a br_if, so we can apply its condition to the branches to B
-  // (if the condition is true) and C (if false).
-
-  // Maps each branching instruction to the basic block right before the
-  // branchings. For example, for an If, this is the block that branches to the
-  // ifTrue and ifFalse blocks.
-  std::unordered_map<If*, BasicBlock*> brancherBlocks;
-
-  static void doStartIfTrue(ConstraintAnalysis* self, Expression** currp) {
-    // We are right after the condition, so we are in the block before the If's
-    // branching.
-    self->brancherBlocks[*currp] = self->currBasicBlock;
-
-    Super::doStartIfTrue(self, currp);
-  }
-#endif
-
-#if 0
-  static void doEndBranch(ConstraintAnalysis* self, Expression** currp) {
-    // We are right after the condition, so we are in the block before the If's
-    // branching.
-    XXX maybe leave for laterself->brancherBlocks[*currp] = self->currBasicBlock;
-    Super::doEndBranch(self, currp);
-  }
-#endif
 
   // We start with the relevant locals, i.e. which we could optimize: for
   // example, if we see (i32.eqz (local.get $x)) then we know that information
@@ -246,7 +205,7 @@ struct ConstraintAnalysis
     for (auto local : relevantLocals) {
       AndedConstraintSet& merged = constraints[local];
       for (auto* pred : block->in) {
-        merged.fuzzyOr(getConstraintsFromPredToSucc(pred, block, local));
+        merged.approximateOr(getConstraintsFromPredToSucc(pred, block, local));
       }
     }
 
@@ -262,7 +221,7 @@ struct ConstraintAnalysis
         // TODO: support tuples
         if (type.size() == 1 && LiteralUtils::canMakeZero(type)) {
           auto value = Literal::makeZero(type);
-          constraints[i].and_(Constraint{Abstract::Eq, value});
+          constraints[i].approximateAnd(Constraint{Abstract::Eq, value});
         }
       }
     }
@@ -292,7 +251,7 @@ struct ConstraintAnalysis
       localConstraints.clear();
       if (Properties::isSingleConstantExpression(set->value)) {
         auto value = Properties::getLiteral(set->value);
-        localConstraints.and_(Constraint{Abstract::Eq, value});
+        localConstraints.approximateAnd(Constraint{Abstract::Eq, value});
       }
     }
   }
