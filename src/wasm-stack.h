@@ -326,7 +326,7 @@ void BinaryenIRWriter<SubType>::visit(Expression* curr) {
   bool sawUnreachable = false;
   for (auto* child : ValueChildIterator(curr)) {
     if (sawUnreachable) {
-      emitUnreachableLocalSets(curr);
+      emitUnreachableLocalSets(child);
       continue;
     }
     visit(child);
