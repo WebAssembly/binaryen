@@ -231,6 +231,11 @@ public:
     throw FailToEvalException("TODO: table.set");
   }
 
+  Flow visitTableGrow(TableGrow* curr) {
+    // When changes occur to the table, give up.
+    throw FailToEvalException("TODO: table.grow");
+  }
+
   bool allowContNew = true;
 
   Flow visitContNew(ContNew* curr) {

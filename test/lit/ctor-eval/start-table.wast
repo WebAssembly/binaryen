@@ -4,14 +4,26 @@
 ;; The table.set in the start alters what is called indirectly later. We do not
 ;; handle this yet, but at least do not misoptimize. TODO
 (module
+ ;; CHECK:      (type $func (func))
  (type $func (func))
 
+ ;; CHECK:      (table $t 48 48 funcref)
  (table $t 48 48 funcref)
 
+ ;; CHECK:      (elem $e (i32.const 0) $target)
  (elem $e (i32.const 0) $target)
 
+ ;; CHECK:      (export "test" (func $test))
+
+ ;; CHECK:      (start $start)
  (start $start)
 
+ ;; CHECK:      (func $start (type $func)
+ ;; CHECK-NEXT:  (table.set $t
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:   (ref.null nofunc)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
  (func $start
   (table.set $t
    (i32.const 0)
@@ -19,12 +31,71 @@
   )
  )
 
+ ;; CHECK:      (func $test (type $func)
+ ;; CHECK-NEXT:  (call_indirect $t (type $func)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
  (func $test (export "test")
   (call_indirect (type $func)
    (i32.const 0)
   )
  )
 
+ ;; CHECK:      (func $target (type $func)
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT: )
+ (func $target
+ )
+)
+
+;; Similar, but with grow. We also do not optimize TODO
+(module
+ ;; CHECK:      (type $func (func))
+ (type $func (func))
+
+ ;; CHECK:      (table $t 48 48 funcref)
+ (table $t 48 48 funcref)
+
+ ;; CHECK:      (elem $e (i32.const 0) $target)
+ (elem $e (i32.const 0) $target)
+
+ ;; CHECK:      (export "test" (func $test))
+
+ ;; CHECK:      (start $start)
+ (start $start)
+
+ ;; CHECK:      (func $start (type $func)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (table.grow $t
+ ;; CHECK-NEXT:    (ref.null nofunc)
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $start
+  (drop
+   (table.grow $t
+    (ref.null nofunc)
+    (i32.const 0)
+   )
+  )
+ )
+
+ ;; CHECK:      (func $test (type $func)
+ ;; CHECK-NEXT:  (call_indirect $t (type $func)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $test (export "test")
+  (call_indirect (type $func)
+   (i32.const 0)
+  )
+ )
+
+ ;; CHECK:      (func $target (type $func)
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT: )
  (func $target
  )
 )
