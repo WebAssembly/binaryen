@@ -181,7 +181,7 @@ struct ConstraintAnalysis
       return;
     }
     auto& localConstraints = iter->second;
-    Result result = localConstraints.eval(parsed->constraint);
+    Result result = localConstraints.proves(parsed->constraint);
     if (result == Unknown) {
       // If we parsed something using two locals, like x != y, we can also look
       // for the flipped condition among y's constraints TODO
