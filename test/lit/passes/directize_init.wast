@@ -64,6 +64,7 @@
 
 ;; As above, but the initializer is a global.get, so we cannot infer a direct
 ;; call.
+;; TODO: the pass could propagate global.gets from tables where possible
 (module
   ;; CHECK:      (type $func (func (result i32)))
   (type $func (func (result i32)))
