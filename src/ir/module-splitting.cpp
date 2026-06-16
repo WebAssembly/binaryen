@@ -850,14 +850,13 @@ ModuleSplitter::PrimarySecondaryUsedNames ModuleSplitter::computeUsedNames() {
       // Check if this might trap. If it is obviously in bounds then it cannot.
       auto* c = segment->offset->template dynCast<Const>();
       // Check for overflow in the largest possible space of addresses.
-      using AddressType = Address::address64_t;
-      AddressType maxWritten;
+      uint64_t maxWritten;
       // If there is no integer, or if there is and the addition overflows, or
       // if the addition leads to a too-large value, then we may trap.
       if (!c ||
           std::ckd_add(&maxWritten,
-                       (AddressType)segmentSize,
-                       (AddressType)c->value.getInteger()) ||
+                       (uint64_t)segmentSize,
+                       (uint64_t)c->value.getInteger()) ||
           maxWritten > parentSize) {
         return true;
       }
