@@ -78,9 +78,9 @@ struct AndedConstraintSet : inplace_vector<Constraint, MaxConstraints> {
   // incorrectly).
   void approximateAnd(const Constraint& c);
 
-  // Merge constraints using OR. We cannot represent such a thing directly
-  // (we only use AND), so we approximate it in an approximate way. For example,
-  // this would be valid:
+  // Merge constraints using OR. We cannot always represent such a thing
+  // directly (we only use AND), so we approximate it. For example, this would
+  // be valid:
   //
   //   approximateOr({ x == 5 }, { x == 10 }) == { x >= 5 && x <= 10 }
   //
@@ -89,9 +89,10 @@ struct AndedConstraintSet : inplace_vector<Constraint, MaxConstraints> {
   //
   //   (X || Y) => approximateOr(X, Y)
   //
-  // That is, if X or Y is true, the result of fuzzOr is also true. But the
-  // reverse is not always so: approximateOr may be true without X || Y being
-  // true (see the truth table linked above, and the value 8 in the example).
+  // That is, if X or Y is true, the result of approximateOr is also true. But
+  // the reverse is not always so: approximateOr may be true without X || Y
+  // being true (see the truth table linked above, and the value 8 in the
+  // example).
   //
   // Returning to the example, we can use this to optimize as follows: if
   // two code paths reaching a location have x == 5 and x == 10, so the value in
@@ -108,9 +109,9 @@ struct AndedConstraintSet : inplace_vector<Constraint, MaxConstraints> {
   //
   // I.e. the constraints imply the truth of the thing we are evaluating.
   //
-  // Note that the fuzziness here means that approximateOr() can do a better /
-  // worse job. It is always valid for approximateOr to return { } or any other
-  // always-true thing (see the truth table linked above). But then:
+  // Note that the approximation here means that approximateOr() can do a better
+  // / worse job. It is always valid for approximateOr to return { } or any
+  // other always-true thing (see the truth table linked above). But then:
   //
   //   { x == 5 || x == 10 }  =>
   //   { }                   =!!>
