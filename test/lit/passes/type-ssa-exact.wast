@@ -1727,3 +1727,14 @@
   )
 )
 
+;; Table initial values can be exact, and prevent optimization.
+(module
+  ;; CHECK:      (type $super (sub (struct)))
+  (type $super (sub (struct)))
+  ;; CHECK:      (type $sub (sub $super (struct)))
+  (type $sub (sub $super (struct)))
+
+  ;; CHECK:      (table $table 1 1 (ref (exact $sub)) (struct.new_default $sub))
+  (table $table 1 1 (ref (exact $sub)) (struct.new $sub))
+)
+
