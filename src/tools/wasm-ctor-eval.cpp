@@ -226,6 +226,11 @@ public:
     throw FailToEvalException("TODO: table.get");
   }
 
+  Flow visitTableSet(TableSet* curr) {
+    // When changes occur to the table, give up.
+    throw FailToEvalException("TODO: table.set");
+  }
+
   bool allowContNew = true;
 
   Flow visitContNew(ContNew* curr) {
