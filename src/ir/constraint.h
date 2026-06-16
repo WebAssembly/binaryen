@@ -89,7 +89,7 @@ struct AndedConstraintSet : inplace_vector<Constraint, MaxConstraints> {
   //
   //   (X || Y) => approximateOr(X, Y)
   //
-  // That is, if X or Y is true, the result of fuzzOr is also true. But the
+  // That is, if X or Y is true, the result of approximateOr is also true. But the
   // reverse is not always so: approximateOr may be true without X || Y being
   // true (see the truth table linked above, and the value 8 in the example).
   //
