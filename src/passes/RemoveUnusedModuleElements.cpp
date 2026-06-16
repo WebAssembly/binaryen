@@ -292,6 +292,9 @@ struct Analyzer {
     // need to read one place.
     std::unordered_map<HeapType, std::unordered_set<Name>> typeFuncs;
     std::unordered_map<HeapType, std::unordered_set<Name>> typeElems;
+
+    // All elems, regardless of type.
+    std::unordered_set<Name> allElems;
   };
   std::unordered_map<Name, FlatTableInfo> flatTableInfoMap;
 
@@ -339,6 +342,7 @@ struct Analyzer {
       for (auto* item : elem->data) {
         notePossibleFunc(info, item, elem->name);
       }
+      info.allElems.insert(elem->name);
     }
 
     // If a table has an initial value, it is callable as well.
@@ -438,11 +442,31 @@ struct Analyzer {
     auto [table, type] = call;
 
     // Find callable functions and segments.
-    for (auto& func : flatTableInfoMap[table].typeFuncs[type]) {
+    auto& info = flatTableInfoMap[table];
+    for (auto& func : info.typeFuncs[type]) {
       use({ModuleElementKind::Function, func});
     }
-    for (auto& elem : flatTableInfoMap[table].typeElems[type]) {
+    for (auto& elem : info.typeElems[type]) {
       reference({ModuleElementKind::ElementSegment, elem});
+    }
+
+    // If traps might happen, and the table has an initial value, we must
+    // consider more: imagine that we call a function with the wrong type, so we
+    // trap. The loops above handled all the non-trapping cases - info.typeFuncs
+    // refers to the functions we might actually call successfully. But if we
+    // trap on the wrong type, then we must preserve that trap. To do so, if
+    // there is an initial value of the right type, we must preserve elem
+    // segments with the *wrong* type - they write the function that we trap on
+    // into the table. Without that write, we will call the initial value, and
+    // if it has the right type, we would not trap. (Note that we were using the
+    // fact that we do not distinguish types of traps, in the case without an
+    // initial value - we turned a trap on the wrong type to one on a null.)
+    if (!options.trapsNeverHappen && module->getTable(table)->init) {
+      // We only need to reference the elem, so it writes its functions - the
+      // functions are not actually called, as we just trap.
+      for (auto& elem : info.allElems) {
+        reference({ModuleElementKind::ElementSegment, elem});
+      }
     }
 
     // Note a possible call of a function reference as well, if something else
