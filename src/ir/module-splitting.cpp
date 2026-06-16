@@ -844,7 +844,7 @@ ModuleSplitter::PrimarySecondaryUsedNames ModuleSplitter::computeUsedNames() {
       } else {
         segmentSize = segment->data.size();
         auto* table = primary.getTable(segment->table);
-        parentSize = table->initial * Table::kPageSize;
+        parentSize = table->initial;
       }
 
       // Check if this might trap. If it is obviously in bounds then it cannot.
