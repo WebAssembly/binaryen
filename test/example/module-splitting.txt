@@ -3,6 +3,7 @@
 Before:
 (module
 )
+
 Keeping: <none>
 
 After:
@@ -27,6 +28,7 @@ Before:
  (export "glob" (global $glob))
  (export "e" (tag $e))
 )
+
 Keeping: <none>
 
 After:
@@ -60,6 +62,7 @@ Before:
  (export "glob" (global $glob))
  (export "e" (tag $e))
 )
+
 Keeping: <none>
 
 After:
@@ -93,6 +96,7 @@ Before:
  (export "glob" (global $glob))
  (export "e" (tag $e))
 )
+
 Keeping: <none>
 
 After:
@@ -121,6 +125,7 @@ Before:
   (local.get $0)
  )
 )
+
 Keeping: foo
 
 After:
@@ -145,6 +150,7 @@ Before:
   (local.get $0)
  )
 )
+
 Keeping: foo
 
 After:
@@ -171,6 +177,7 @@ Before:
   (local.get $0)
  )
 )
+
 Keeping: foo
 
 After:
@@ -198,6 +205,7 @@ Before:
   (local.get $0)
  )
 )
+
 Keeping: foo
 
 After:
@@ -226,6 +234,7 @@ Before:
   (local.get $0)
  )
 )
+
 Keeping: foo
 
 After:
@@ -255,6 +264,7 @@ Before:
   (local.get $0)
  )
 )
+
 Keeping: foo
 
 After:
@@ -279,6 +289,7 @@ Before:
  (type $0 (func (param i32) (result i32)))
  (import "env" "foo" (func $foo (type $0) (param i32) (result i32)))
 )
+
 Keeping: foo
 
 After:
@@ -301,6 +312,7 @@ Before:
  (elem $0 (i32.const 42) $foo)
  (export "foo" (func $foo))
 )
+
 Keeping: foo
 
 After:
@@ -327,6 +339,7 @@ Before:
  (elem $0 (global.get $base) $foo)
  (export "foo" (func $foo))
 )
+
 Keeping: foo
 
 After:
@@ -352,6 +365,7 @@ Before:
   (local.get $0)
  )
 )
+
 Keeping: <none>
 
 After:
@@ -376,6 +390,7 @@ Before:
   (local.get $0)
  )
 )
+
 Keeping: <none>
 
 After:
@@ -415,6 +430,7 @@ Before:
   (local.get $0)
  )
 )
+
 Keeping: <none>
 
 After:
@@ -455,6 +471,7 @@ Before:
   (local.get $0)
  )
 )
+
 Keeping: <none>
 
 After:
@@ -496,6 +513,7 @@ Before:
   (local.get $0)
  )
 )
+
 Keeping: <none>
 
 After:
@@ -539,6 +557,7 @@ Before:
   (local.get $0)
  )
 )
+
 Keeping: <none>
 
 After:
@@ -583,6 +602,7 @@ Before:
   (local.get $0)
  )
 )
+
 Keeping: <none>
 
 After:
@@ -630,6 +650,7 @@ Before:
   (local.get $0)
  )
 )
+
 Keeping: null
 
 After:
@@ -676,6 +697,7 @@ Before:
   (nop)
  )
 )
+
 Keeping: bar, foo
 
 After:
@@ -705,6 +727,7 @@ Before:
   (nop)
  )
 )
+
 Keeping: bar
 
 After:
@@ -737,6 +760,7 @@ Before:
   (nop)
  )
 )
+
 Keeping: foo
 
 After:
@@ -775,6 +799,7 @@ Before:
   (nop)
  )
 )
+
 Keeping: <none>
 
 After:
@@ -805,6 +830,7 @@ Before:
   (call $foo)
  )
 )
+
 Keeping: foo
 
 After:
@@ -857,6 +883,7 @@ Before:
   (nop)
  )
 )
+
 Keeping: bar, quux
 
 After:
@@ -921,6 +948,7 @@ Before:
   (nop)
  )
 )
+
 Keeping: bar, quux
 
 After:
@@ -985,6 +1013,7 @@ Before:
   (nop)
  )
 )
+
 Keeping: baz
 
 After:
@@ -1055,6 +1084,7 @@ Before:
   (nop)
  )
 )
+
 Keeping: baz
 
 After:
@@ -1120,6 +1150,7 @@ Before:
   (call $foo)
  )
 )
+
 Keeping: foo
 
 After:
@@ -1172,6 +1203,7 @@ Before:
   )
  )
 )
+
 Keeping: foo
 
 After:
@@ -1215,6 +1247,7 @@ Before:
  (func $foo (type $0)
  )
 )
+
 Keeping: <none>
 
 After:

@@ -39,7 +39,7 @@ void do_test(int testNo,
   std::cout << "\nBefore:\n";
   std::cout << *primary.get();
 
-  std::cout << "Keeping: ";
+  std::cout << "\nKeeping: ";
   if (keptFuncs.size()) {
     auto it = keptFuncs.begin();
     splitFuncs.erase(*it);
