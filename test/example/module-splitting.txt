@@ -1,7 +1,10 @@
+- Test 0
+
 Before:
 (module
 )
 Keeping: <none>
+
 After:
 (module
 )
@@ -9,6 +12,8 @@ Secondary:
 (module
 )
 
+
+- Test 1
 
 Before:
 (module
@@ -23,6 +28,7 @@ Before:
  (export "e" (tag $e))
 )
 Keeping: <none>
+
 After:
 (module
  (type $0 (func (param i32)))
@@ -39,6 +45,8 @@ Secondary:
 (module
 )
 
+
+- Test 2
 
 Before:
 (module
@@ -53,6 +61,7 @@ Before:
  (export "e" (tag $e))
 )
 Keeping: <none>
+
 After:
 (module
  (type $0 (func (param i32)))
@@ -70,6 +79,8 @@ Secondary:
 )
 
 
+- Test 3
+
 Before:
 (module
  (type $0 (func (param i32)))
@@ -83,6 +94,7 @@ Before:
  (export "e" (tag $e))
 )
 Keeping: <none>
+
 After:
 (module
  (type $0 (func (param i32)))
@@ -100,6 +112,8 @@ Secondary:
 )
 
 
+- Test 4
+
 Before:
 (module
  (type $0 (func (param i32) (result i32)))
@@ -108,6 +122,7 @@ Before:
  )
 )
 Keeping: foo
+
 After:
 (module
  (type $0 (func (param i32) (result i32)))
@@ -120,6 +135,8 @@ Secondary:
 )
 
 
+- Test 5
+
 Before:
 (module
  (type $0 (func (param i32) (result i32)))
@@ -129,6 +146,7 @@ Before:
  )
 )
 Keeping: foo
+
 After:
 (module
  (type $0 (func (param i32) (result i32)))
@@ -141,6 +159,8 @@ Secondary:
 (module
 )
 
+
+- Test 6
 
 Before:
 (module
@@ -152,6 +172,7 @@ Before:
  )
 )
 Keeping: foo
+
 After:
 (module
  (type $0 (func (param i32) (result i32)))
@@ -166,6 +187,8 @@ Secondary:
 )
 
 
+- Test 7
+
 Before:
 (module
  (type $0 (func (param i32) (result i32)))
@@ -176,6 +199,7 @@ Before:
  )
 )
 Keeping: foo
+
 After:
 (module
  (type $0 (func (param i32) (result i32)))
@@ -189,6 +213,8 @@ Secondary:
 (module
 )
 
+
+- Test 8
 
 Before:
 (module
@@ -201,6 +227,7 @@ Before:
  )
 )
 Keeping: foo
+
 After:
 (module
  (type $0 (func (param i32) (result i32)))
@@ -215,6 +242,8 @@ Secondary:
 (module
 )
 
+
+- Test 9
 
 Before:
 (module
@@ -227,6 +256,7 @@ Before:
  )
 )
 Keeping: foo
+
 After:
 (module
  (type $0 (func (param i32) (result i32)))
@@ -242,12 +272,15 @@ Secondary:
 )
 
 
+- Test 10
+
 Before:
 (module
  (type $0 (func (param i32) (result i32)))
  (import "env" "foo" (func $foo (type $0) (param i32) (result i32)))
 )
 Keeping: foo
+
 After:
 (module
  (type $0 (func (param i32) (result i32)))
@@ -258,6 +291,8 @@ Secondary:
 )
 
 
+- Test 11
+
 Before:
 (module
  (type $0 (func (param i32) (result i32)))
@@ -267,6 +302,7 @@ Before:
  (export "foo" (func $foo))
 )
 Keeping: foo
+
 After:
 (module
  (type $0 (func (param i32) (result i32)))
@@ -279,6 +315,8 @@ Secondary:
 (module
 )
 
+
+- Test 12
 
 Before:
 (module
@@ -290,6 +328,7 @@ Before:
  (export "foo" (func $foo))
 )
 Keeping: foo
+
 After:
 (module
  (type $0 (func (param i32) (result i32)))
@@ -304,6 +343,8 @@ Secondary:
 )
 
 
+- Test 13
+
 Before:
 (module
  (type $0 (func (param i32) (result i32)))
@@ -312,6 +353,7 @@ Before:
  )
 )
 Keeping: <none>
+
 After:
 (module
 )
@@ -324,6 +366,8 @@ Secondary:
 )
 
 
+- Test 14
+
 Before:
 (module
  (type $0 (func (param i32) (result i32)))
@@ -333,6 +377,7 @@ Before:
  )
 )
 Keeping: <none>
+
 After:
 (module
  (type $0 (func (param i32) (result i32)))
@@ -359,6 +404,8 @@ Secondary:
 )
 
 
+- Test 15
+
 Before:
 (module
  (type $0 (func (param i32) (result i32)))
@@ -369,6 +416,7 @@ Before:
  )
 )
 Keeping: <none>
+
 After:
 (module
  (type $0 (func (param i32) (result i32)))
@@ -396,6 +444,8 @@ Secondary:
 )
 
 
+- Test 16
+
 Before:
 (module
  (type $0 (func (param i32) (result i32)))
@@ -406,6 +456,7 @@ Before:
  )
 )
 Keeping: <none>
+
 After:
 (module
  (type $0 (func (param i32) (result i32)))
@@ -433,6 +484,8 @@ Secondary:
 )
 
 
+- Test 17
+
 Before:
 (module
  (type $0 (func (param i32) (result i32)))
@@ -444,6 +497,7 @@ Before:
  )
 )
 Keeping: <none>
+
 After:
 (module
  (type $0 (func (param i32) (result i32)))
@@ -472,6 +526,8 @@ Secondary:
 )
 
 
+- Test 18
+
 Before:
 (module
  (type $0 (func (param i32) (result i32)))
@@ -484,6 +540,7 @@ Before:
  )
 )
 Keeping: <none>
+
 After:
 (module
  (type $0 (func (param i32) (result i32)))
@@ -513,6 +570,8 @@ Secondary:
 )
 
 
+- Test 19
+
 Before:
 (module
  (type $0 (func (param i32) (result i32)))
@@ -525,6 +584,7 @@ Before:
  )
 )
 Keeping: <none>
+
 After:
 (module
  (type $0 (func (param i32) (result i32)))
@@ -554,6 +614,8 @@ Secondary:
 )
 
 
+- Test 20
+
 Before:
 (module
  (type $0 (func))
@@ -569,6 +631,7 @@ Before:
  )
 )
 Keeping: null
+
 After:
 (module
  (type $0 (func))
@@ -601,6 +664,8 @@ Secondary:
 )
 
 
+- Test 21
+
 Before:
 (module
  (type $0 (func))
@@ -612,6 +677,7 @@ Before:
  )
 )
 Keeping: bar, foo
+
 After:
 (module
  (type $0 (func))
@@ -627,6 +693,8 @@ Secondary:
 )
 
 
+- Test 22
+
 Before:
 (module
  (type $0 (func))
@@ -638,6 +706,7 @@ Before:
  )
 )
 Keeping: bar
+
 After:
 (module
  (type $0 (func))
@@ -656,6 +725,8 @@ Secondary:
 )
 
 
+- Test 23
+
 Before:
 (module
  (type $0 (func))
@@ -667,6 +738,7 @@ Before:
  )
 )
 Keeping: foo
+
 After:
 (module
  (type $0 (func))
@@ -691,6 +763,8 @@ Secondary:
 )
 
 
+- Test 24
+
 Before:
 (module
  (type $0 (func))
@@ -702,6 +776,7 @@ Before:
  )
 )
 Keeping: <none>
+
 After:
 (module
 )
@@ -717,6 +792,8 @@ Secondary:
 )
 
 
+- Test 25
+
 Before:
 (module
  (type $0 (func))
@@ -729,6 +806,7 @@ Before:
  )
 )
 Keeping: foo
+
 After:
 (module
  (type $0 (func))
@@ -759,6 +837,8 @@ Secondary:
 )
 
 
+- Test 26
+
 Before:
 (module
  (type $0 (func))
@@ -778,6 +858,7 @@ Before:
  )
 )
 Keeping: bar, quux
+
 After:
 (module
  (type $0 (func))
@@ -819,6 +900,8 @@ Secondary:
 )
 
 
+- Test 27
+
 Before:
 (module
  (type $0 (func))
@@ -839,6 +922,7 @@ Before:
  )
 )
 Keeping: bar, quux
+
 After:
 (module
  (type $0 (func))
@@ -881,6 +965,8 @@ Secondary:
 )
 
 
+- Test 28
+
 Before:
 (module
  (type $0 (func))
@@ -900,6 +986,7 @@ Before:
  )
 )
 Keeping: baz
+
 After:
 (module
  (type $0 (func))
@@ -947,6 +1034,8 @@ Secondary:
 )
 
 
+- Test 29
+
 Before:
 (module
  (type $0 (func))
@@ -967,6 +1056,7 @@ Before:
  )
 )
 Keeping: baz
+
 After:
 (module
  (type $0 (func))
@@ -1015,6 +1105,8 @@ Secondary:
 )
 
 
+- Test 30
+
 Before:
 (module
  (type $0 (func))
@@ -1029,6 +1121,7 @@ Before:
  )
 )
 Keeping: foo
+
 After:
 (module
  (type $0 (func))
@@ -1061,6 +1154,8 @@ Secondary:
 )
 
 
+- Test 31
+
 Before:
 (module
  (type $0 (func (param i32) (result i32)))
@@ -1078,6 +1173,7 @@ Before:
  )
 )
 Keeping: foo
+
 After:
 (module
  (type $0 (func (param i32) (result i32)))
@@ -1109,6 +1205,8 @@ Secondary:
 )
 
 
+- Test 32
+
 Before:
 (module
  (type $0 (func))
@@ -1118,6 +1216,7 @@ Before:
  )
 )
 Keeping: <none>
+
 After:
 (module
  (type $0 (func))

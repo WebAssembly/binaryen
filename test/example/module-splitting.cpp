@@ -2,8 +2,8 @@
 #include <iostream>
 
 #include "ir/module-splitting.h"
-#include "ir/stack-utils.h"
 #include "parser/wat-parser.h"
+#include "wasm-builder.h"
 #include "wasm-features.h"
 #include "wasm-validator.h"
 #include "wasm.h"
@@ -20,7 +20,9 @@ std::unique_ptr<Module> parse(char* module) {
   return wasm;
 }
 
-void do_test(const std::set<Name>& keptFuncs, std::string&& module) {
+void do_test(int testNo,
+             const std::set<Name>& keptFuncs,
+             std::string&& module) {
   WasmValidator validator;
   bool valid;
 
@@ -33,7 +35,8 @@ void do_test(const std::set<Name>& keptFuncs, std::string&& module) {
     splitFuncs.insert(func->name);
   }
 
-  std::cout << "Before:\n";
+  std::cout << "- Test " << testNo << "\n";
+  std::cout << "\nBefore:\n";
   std::cout << *primary.get();
 
   std::cout << "Keeping: ";
@@ -57,7 +60,7 @@ void do_test(const std::set<Name>& keptFuncs, std::string&& module) {
   auto results = splitFunctions(*primary, config);
   auto& secondary = *results.secondaries.begin();
 
-  std::cout << "After:\n";
+  std::cout << "\nAfter:\n";
   std::cout << *primary.get();
   std::cout << "Secondary:\n";
   std::cout << *secondary.get();
@@ -73,10 +76,10 @@ void test_minimized_exports();
 
 int main() {
   // Trivial module
-  do_test({}, "(module)");
+  do_test(0, {}, "(module)");
 
   // Global stuff
-  do_test({}, R"(
+  do_test(1, {}, R"(
     (module
      (memory $mem (export "mem") 3 42 shared)
      (table $tab (export "tab") 3 42 funcref)
@@ -85,7 +88,7 @@ int main() {
     ))");
 
   // Imported global stuff
-  do_test({}, R"(
+  do_test(2, {}, R"(
     (module
      (memory $mem (export "mem") (import "env" "mem") 3 42 shared)
      (table $tab (export "tab") (import "env" "tab") 3 42 funcref)
@@ -94,7 +97,7 @@ int main() {
     ))");
 
   // Exported global stuff
-  do_test({}, R"(
+  do_test(3, {}, R"(
     (module
      (memory $mem 3 42 shared)
      (table $tab 3 42 funcref)
@@ -107,7 +110,7 @@ int main() {
     ))");
 
   // Non-deferred function
-  do_test({"foo"}, R"(
+  do_test(4, {"foo"}, R"(
     (module
      (func $foo (param i32) (result i32)
       (local.get 0)
@@ -115,7 +118,7 @@ int main() {
     ))");
 
   // Non-deferred exported function
-  do_test({"foo"}, R"(
+  do_test(5, {"foo"}, R"(
     (module
      (export "foo" (func $foo))
      (func $foo (param i32) (result i32)
@@ -124,7 +127,7 @@ int main() {
     ))");
 
   // Non-deferred function in table
-  do_test({"foo"}, R"(
+  do_test(6, {"foo"}, R"(
     (module
      (table $table 1 funcref)
      (elem (i32.const 0) $foo)
@@ -134,7 +137,7 @@ int main() {
     ))");
 
   // Non-deferred function in table multiple times
-  do_test({"foo"}, R"(
+  do_test(7, {"foo"}, R"(
     (module
      (table $table 2 funcref)
      (elem (i32.const 0) $foo $foo)
@@ -144,7 +147,7 @@ int main() {
     ))");
 
   // Non-deferred function in table at non-const offset
-  do_test({"foo"}, R"(
+  do_test(8, {"foo"}, R"(
     (module
      (import "env" "base" (global $base i32))
      (table $table 1 funcref)
@@ -155,7 +158,7 @@ int main() {
     ))");
 
   // Non-deferred function in table at non-const offset multiple times
-  do_test({"foo"}, R"(
+  do_test(9, {"foo"}, R"(
     (module
      (import "env" "base" (global $base i32))
      (table $table 2 funcref)
@@ -166,13 +169,13 @@ int main() {
     ))");
 
   // Non-deferred imported function
-  do_test({"foo"}, R"(
+  do_test(10, {"foo"}, R"(
     (module
      (import "env" "foo" (func $foo (param i32) (result i32)))
     ))");
 
   // Non-deferred exported imported function in table at a weird offset
-  do_test({"foo"}, R"(
+  do_test(11, {"foo"}, R"(
     (module
      (import "env" "foo" (func $foo (param i32) (result i32)))
      (table $table 1000 funcref)
@@ -181,7 +184,7 @@ int main() {
     ))");
 
   // Non-deferred exported imported function in table at a non-const offset
-  do_test({"foo"}, R"(
+  do_test(12, {"foo"}, R"(
     (module
      (import "env" "base" (global $base i32))
      (import "env" "foo" (func $foo (param i32) (result i32)))
@@ -191,7 +194,7 @@ int main() {
     ))");
 
   // Deferred function
-  do_test({}, R"(
+  do_test(13, {}, R"(
     (module
      (func $foo (param i32) (result i32)
       (local.get 0)
@@ -199,7 +202,7 @@ int main() {
     ))");
 
   // Deferred exported function
-  do_test({}, R"(
+  do_test(14, {}, R"(
     (module
      (export "foo" (func $foo))
      (func $foo (param i32) (result i32)
@@ -208,7 +211,7 @@ int main() {
     ))");
 
   // Deferred function in table
-  do_test({}, R"(
+  do_test(15, {}, R"(
     (module
      (table $table 1 funcref)
      (elem (i32.const 0) $foo)
@@ -218,7 +221,7 @@ int main() {
     ))");
 
   // Deferred function in table multiple times
-  do_test({}, R"(
+  do_test(16, {}, R"(
     (module
      (table $table 2 funcref)
      (elem (i32.const 0) $foo $foo)
@@ -228,7 +231,7 @@ int main() {
     ))");
 
   // Deferred exported function in table at a weird offset
-  do_test({}, R"(
+  do_test(17, {}, R"(
     (module
      (table $table 1000 funcref)
      (elem (i32.const 42) $foo)
@@ -239,7 +242,7 @@ int main() {
     ))");
 
   // Deferred exported function in table at a non-const offset
-  do_test({}, R"(
+  do_test(18, {}, R"(
     (module
      (import "env" "base" (global $base i32))
      (table $table 1000 funcref)
@@ -251,7 +254,7 @@ int main() {
     ))");
 
   // Deferred exported function in table at a non-const offset multiple times
-  do_test({}, R"(
+  do_test(19, {}, R"(
     (module
      (import "env" "base" (global $base i32))
      (table $table 1000 funcref)
@@ -263,7 +266,7 @@ int main() {
     ))");
 
   // Deferred exported function in table at an offset from a non-const base
-  do_test({"null"}, R"(
+  do_test(20, {"null"}, R"(
     (module
      (import "env" "base" (global $base i32))
      (table $table 1000 funcref)
@@ -276,7 +279,7 @@ int main() {
     ))");
 
   // Non-deferred function calling non-deferred function
-  do_test({"foo", "bar"}, R"(
+  do_test(21, {"foo", "bar"}, R"(
     (module
      (func $foo
       (call $bar)
@@ -287,7 +290,7 @@ int main() {
     ))");
 
   // Deferred function calling non-deferred function
-  do_test({"bar"}, R"(
+  do_test(22, {"bar"}, R"(
     (module
      (func $foo
       (call $bar)
@@ -298,7 +301,7 @@ int main() {
     ))");
 
   // Non-deferred function calling deferred function
-  do_test({"foo"}, R"(
+  do_test(23, {"foo"}, R"(
     (module
      (func $foo
       (call $bar)
@@ -309,7 +312,7 @@ int main() {
     ))");
 
   // Deferred function calling deferred function
-  do_test({}, R"(
+  do_test(24, {}, R"(
     (module
      (func $foo
       (call $bar)
@@ -320,7 +323,7 @@ int main() {
     ))");
 
   // Deferred function calling non-deferred function with clashing export name
-  do_test({"foo"}, R"(
+  do_test(25, {"foo"}, R"(
     (module
      (export "%foo" (func $bar))
      (func $foo
@@ -332,7 +335,7 @@ int main() {
     ))");
 
   // Mixed table 1
-  do_test({"bar", "quux"}, R"(
+  do_test(26, {"bar", "quux"}, R"(
     (module
      (table $table 4 funcref)
      (elem (i32.const 0) $foo $bar $baz $quux)
@@ -351,7 +354,7 @@ int main() {
     ))");
 
   // Mixed table 1 with non-const offset
-  do_test({"bar", "quux"}, R"(
+  do_test(27, {"bar", "quux"}, R"(
     (module
      (import "env" "base" (global $base i32))
      (table $table 4 funcref)
@@ -371,7 +374,7 @@ int main() {
     ))");
 
   // Mixed table 2
-  do_test({"baz"}, R"(
+  do_test(28, {"baz"}, R"(
     (module
      (table $table 4 funcref)
      (elem (i32.const 0) $foo $bar $baz $quux)
@@ -390,7 +393,7 @@ int main() {
     ))");
 
   // Mixed table 2 with non-const offset
-  do_test({"baz"}, R"(
+  do_test(29, {"baz"}, R"(
     (module
      (import "env" "base" (global $base i32))
      (table $table 4 funcref)
@@ -411,7 +414,7 @@ int main() {
 
   // `foo` is exported both because it is called by `bar` and because it is in a
   // table gap
-  do_test({"foo"}, R"(
+  do_test(30, {"foo"}, R"(
     (module
      (import "env" "base" (global $base i32))
      (table $table 2 funcref)
@@ -425,7 +428,7 @@ int main() {
     ))");
 
   // Mutual recursion with table growth
-  do_test({"foo"}, R"(
+  do_test(31, {"foo"}, R"(
     (module
      (table $table 1 1 funcref)
      (elem (i32.const 0) $foo)
@@ -438,7 +441,7 @@ int main() {
     ))");
 
   // Multiple exports of a secondary function
-  do_test({}, R"(
+  do_test(32, {}, R"(
     (module
      (export "foo1" (func $foo))
      (export "foo2" (func $foo))
