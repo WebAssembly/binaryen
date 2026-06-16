@@ -79,7 +79,7 @@ struct AndedConstraintSet : inplace_vector<Constraint, MaxConstraints> {
   void approximateAnd(const Constraint& c);
 
   // Merge constraints using OR. We cannot always represent such a thing directly
-  // (we only use AND), so we approximate it in an approximate way. For example,
+  // (we only use AND), so we approximate it. For example,
   // this would be valid:
   //
   //   approximateOr({ x == 5 }, { x == 10 }) == { x >= 5 && x <= 10 }
