@@ -144,9 +144,7 @@
  ;; CHECK-BIN-NEXT:  (drop
  ;; CHECK-BIN-NEXT:   (i32.const 42)
  ;; CHECK-BIN-NEXT:  )
- ;; CHECK-BIN-NEXT:  (local.set $k
- ;; CHECK-BIN-NEXT:   (unreachable)
- ;; CHECK-BIN-NEXT:  )
+ ;; CHECK-BIN-NEXT:  (unreachable)
  ;; CHECK-BIN-NEXT: )
  (func $unreachable (param $k (ref null $ct)) (result i32)
    (switch $ct $t
@@ -217,7 +215,5 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
 ;; CHECK-BIN-NODEBUG-NEXT:   (i32.const 42)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT:  (local.set $0
-;; CHECK-BIN-NODEBUG-NEXT:   (unreachable)
-;; CHECK-BIN-NODEBUG-NEXT:  )
+;; CHECK-BIN-NODEBUG-NEXT:  (unreachable)
 ;; CHECK-BIN-NODEBUG-NEXT: )

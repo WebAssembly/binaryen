@@ -24,8 +24,6 @@
      unreachable
     end
     unreachable
-    unreachable
-    local.set $var$0
    end
    unreachable
   end

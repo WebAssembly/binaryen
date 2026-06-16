@@ -136,9 +136,7 @@
   ;; CHECK-TEXT-NEXT: )
   ;; CHECK-BIN:      (func $tee (type $3) (param $x i32)
   ;; CHECK-BIN-NEXT:  (local $y f32)
-  ;; CHECK-BIN-NEXT:  (local.set $x
-  ;; CHECK-BIN-NEXT:   (unreachable)
-  ;; CHECK-BIN-NEXT:  )
+  ;; CHECK-BIN-NEXT:  (unreachable)
   ;; CHECK-BIN-NEXT: )
   (func $tee (param $x i32)
     (local $y f32)
@@ -174,9 +172,7 @@
   ;; CHECK-BIN-NEXT:  (if
   ;; CHECK-BIN-NEXT:   (i32.const 259)
   ;; CHECK-BIN-NEXT:   (then
-  ;; CHECK-BIN-NEXT:    (local.set $0
-  ;; CHECK-BIN-NEXT:     (unreachable)
-  ;; CHECK-BIN-NEXT:    )
+  ;; CHECK-BIN-NEXT:    (unreachable)
   ;; CHECK-BIN-NEXT:   )
   ;; CHECK-BIN-NEXT:  )
   ;; CHECK-BIN-NEXT: )
@@ -402,9 +398,7 @@
 
 ;; CHECK-BIN-NODEBUG:      (func $2 (type $3) (param $0 i32)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $1 f32)
-;; CHECK-BIN-NODEBUG-NEXT:  (local.set $0
-;; CHECK-BIN-NODEBUG-NEXT:   (unreachable)
-;; CHECK-BIN-NODEBUG-NEXT:  )
+;; CHECK-BIN-NODEBUG-NEXT:  (unreachable)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
 ;; CHECK-BIN-NODEBUG:      (func $3 (type $2)
@@ -412,9 +406,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  (if
 ;; CHECK-BIN-NODEBUG-NEXT:   (i32.const 259)
 ;; CHECK-BIN-NODEBUG-NEXT:   (then
-;; CHECK-BIN-NODEBUG-NEXT:    (local.set $0
-;; CHECK-BIN-NODEBUG-NEXT:     (unreachable)
-;; CHECK-BIN-NODEBUG-NEXT:    )
+;; CHECK-BIN-NODEBUG-NEXT:    (unreachable)
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )

@@ -339,7 +339,8 @@ void BinaryenIRWriter<SubType>::visit(Expression* curr) {
   if (sawUnreachable) {
     // `curr` is not reachable, so don't emit it unless it is a
     // potentially-necessary local.set itself.
-    if (auto* set = curr->dynCast<LocalSet>()) {
+    if (auto* set = curr->dynCast<LocalSet>();
+        set && func->getLocalType(set->index).isNonNullable()) {
       emitUnreachableLocalSet(set->index);
     }
     return;
