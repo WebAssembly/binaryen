@@ -78,7 +78,7 @@ struct AndedConstraintSet : inplace_vector<Constraint, MaxConstraints> {
   // incorrectly).
   void approximateAnd(const Constraint& c);
 
-  // Merge constraints using OR. We cannot represent such a thing directly
+  // Merge constraints using OR. We cannot always represent such a thing directly
   // (we only use AND), so we approximate it in an approximate way. For example,
   // this would be valid:
   //
