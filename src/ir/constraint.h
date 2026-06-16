@@ -71,26 +71,26 @@ struct AndedConstraintSet : inplace_vector<Constraint, MaxConstraints> {
   // Check an entire other set.
   Result proves(const AndedConstraintSet& other) const;
 
-  // Add a constraint to the set, ANDed with the others. This is a fuzzy
+  // Add a constraint to the set, ANDed with the others. This is an approximate
   // operation because our capacity is bounded - we cannot have more than
   // MaxConstraints. If too many are added, we will drop some, which means we
   // will be able to prove less things (but we will never prove anything
   // incorrectly).
-  void fuzzyAnd(const Constraint& c);
+  void approximateAnd(const Constraint& c);
 
   // Merge constraints using OR. We cannot represent such a thing directly
-  // (we only use AND), so we approximate it in a fuzzy way. For example, this
-  // would be valid:
+  // (we only use AND), so we approximate it in an approximate way. For example,
+  // this would be valid:
   //
-  //   fuzzyOr({ x == 5 }, { x == 10 }) == { x >= 5 && x <= 10 }
+  //   approximateOr({ x == 5 }, { x == 10 }) == { x >= 5 && x <= 10 }
   //
   // Note how the result here still accepts the values 5 and 10, but it also
   // allows more. Formally, this has the following mathematical property:
   //
-  //   (X || Y) => fuzzyOr(X, Y)
+  //   (X || Y) => approximateOr(X, Y)
   //
   // That is, if X or Y is true, the result of fuzzOr is also true. But the
-  // reverse is not always the case: fuzzyOr may be true without X || Y being
+  // reverse is not always so: approximateOr may be true without X || Y being
   // true (see the truth table linked above, and the value 8 in the example).
   //
   // Returning to the example, we can use this to optimize as follows: if
@@ -108,16 +108,16 @@ struct AndedConstraintSet : inplace_vector<Constraint, MaxConstraints> {
   //
   // I.e. the constraints imply the truth of the thing we are evaluating.
   //
-  // Note that the fuzziness here means that fuzzyOr() can do a better or a
-  // worse job. It is always valid for fuzzyOr to return { } or any other
+  // Note that the fuzziness here means that approximateOr() can do a better /
+  // worse job. It is always valid for approximateOr to return { } or any other
   // always-true thing (see the truth table linked above). But then:
   //
   //   { x == 5 || x == 10 }  =>
   //   { }                   =!!>
   //   { x >= 0 }
   //
-  // If we become too fuzzy, we lose the ability to imply anything useful.
-  void fuzzyOr(const AndedConstraintSet& other);
+  // If we become too imprecise, we lose the ability to imply anything useful.
+  void approximateOr(const AndedConstraintSet& other);
 };
 
 } // namespace wasm::constraint

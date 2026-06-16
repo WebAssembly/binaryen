@@ -19,7 +19,7 @@ TEST(ConstraintTest, TestEq) {
   EXPECT_EQ(s.proves(c), Unknown);
 
   // If we add it, then things check out: a thing always proves itself true.
-  s.fuzzyAnd(c);
+  s.approximateAnd(c);
   EXPECT_EQ(s.size(), 1);
   EXPECT_EQ(s.proves(c), True);
 
@@ -37,7 +37,7 @@ TEST(ConstraintTest, TestNe) {
   AndedConstraintSet s;
   // x != 5
   Constraint c{Ne, {Literal(int32_t(5))}};
-  s.fuzzyAnd(c);
+  s.approximateAnd(c);
 
   // Checks out versus itself.
   EXPECT_EQ(s.proves(c), True);
@@ -57,8 +57,8 @@ TEST(ConstraintTest, TestMulti) {
   // x != 5 && x != 10
   Constraint c{Ne, {Literal(int32_t(5))}};
   Constraint d{Ne, {Literal(int32_t(10))}};
-  s.fuzzyAnd(c);
-  s.fuzzyAnd(d);
+  s.approximateAnd(c);
+  s.approximateAnd(d);
 
   // Each checks out versus itself.
   EXPECT_EQ(s.proves(c), True);
@@ -87,7 +87,7 @@ TEST(ConstraintTest, TestSets) {
   EXPECT_EQ(s.proves(s), True);
 
   // Ditto after adding something.
-  s.fuzzyAnd(c);
+  s.approximateAnd(c);
   EXPECT_EQ(s.proves(s), True);
 
   // Another set, empty.
@@ -97,17 +97,17 @@ TEST(ConstraintTest, TestSets) {
   EXPECT_EQ(s.proves(t), True);
 
   // Make both sets contain the same stuff.
-  t.fuzzyAnd(c);
+  t.approximateAnd(c);
   EXPECT_EQ(s.proves(t), True);
 
   // Now t has *different* stuff, x == 10, which given s is false.
   t.clear();
-  t.fuzzyAnd(Constraint{Eq, {Literal(int32_t(10))}});
+  t.approximateAnd(Constraint{Eq, {Literal(int32_t(10))}});
   EXPECT_EQ(s.proves(t), False);
 
   // Same, with x != 10. Now we know it is true.
   t.clear();
-  t.fuzzyAnd(Constraint{Ne, {Literal(int32_t(10))}});
+  t.approximateAnd(Constraint{Ne, {Literal(int32_t(10))}});
   EXPECT_EQ(s.proves(t), True);
 
   // In reverse, we can infer nothing: knowing x != 10 does not say if x == 5.
@@ -118,60 +118,60 @@ TEST(ConstraintTest, TestSetsUnknown) {
   // x != 5
   // x != 10
   AndedConstraintSet s;
-  s.fuzzyAnd(Constraint{Ne, {Literal(int32_t(5))}});
-  s.fuzzyAnd(Constraint{Ne, {Literal(int32_t(10))}});
+  s.approximateAnd(Constraint{Ne, {Literal(int32_t(5))}});
+  s.approximateAnd(Constraint{Ne, {Literal(int32_t(10))}});
 
   // x != 20, which is unknown by s.
   AndedConstraintSet t;
-  t.fuzzyAnd(Constraint{Ne, {Literal(int32_t(20))}});
+  t.approximateAnd(Constraint{Ne, {Literal(int32_t(20))}});
   EXPECT_EQ(s.proves(t), Unknown);
 
   // Add x == 10, which is false by s, and so the whole thing is false.
-  t.fuzzyAnd(Constraint{Eq, {Literal(int32_t(10))}});
+  t.approximateAnd(Constraint{Eq, {Literal(int32_t(10))}});
   EXPECT_EQ(s.proves(t), False);
 }
 
 TEST(ConstraintTest, TestOrTrivial) {
   // { x == 5 }
   AndedConstraintSet s;
-  s.fuzzyAnd(Constraint{Eq, {Literal(int32_t(5))}});
+  s.approximateAnd(Constraint{Eq, {Literal(int32_t(5))}});
 
   // { }
   AndedConstraintSet empty;
 
   // Anything ORed with the empty set is unchanged.
   auto t = s;
-  t.fuzzyOr(empty);
+  t.approximateOr(empty);
   EXPECT_EQ(t, s);
 
   // Flipped.
   t = empty;
-  t.fuzzyOr(s);
+  t.approximateOr(s);
   EXPECT_EQ(t, s);
 
   // ORing with oneself changes nothing
   t = s;
-  t.fuzzyOr(s);
+  t.approximateOr(s);
   EXPECT_EQ(t, s);
 }
 
 TEST(ConstraintTest, TestOrImplies) {
   // { x == 5 }
   AndedConstraintSet s;
-  s.fuzzyAnd(Constraint{Eq, {Literal(int32_t(5))}});
+  s.approximateAnd(Constraint{Eq, {Literal(int32_t(5))}});
 
   // { x != 10 }
   AndedConstraintSet t;
-  t.fuzzyAnd(Constraint{Ne, {Literal(int32_t(10))}});
+  t.approximateAnd(Constraint{Ne, {Literal(int32_t(10))}});
 
   // ORing these leaves us with x != 10.
   auto u = s;
-  u.fuzzyOr(t);
+  u.approximateOr(t);
   EXPECT_EQ(u, t);
 
   // Flipped.
   u = t;
-  u.fuzzyOr(s);
+  u.approximateOr(s);
   EXPECT_EQ(u, t);
 }
 
@@ -184,9 +184,9 @@ TEST(ConstraintTest, TestMaxCapacity) {
   Constraint not30{Ne, {Literal(int32_t(30))}};
 
   AndedConstraintSet s;
-  s.fuzzyAnd(not10);
-  s.fuzzyAnd(not20);
-  s.fuzzyAnd(not30);
+  s.approximateAnd(not10);
+  s.approximateAnd(not20);
+  s.approximateAnd(not30);
 
   // We can prove all those.
   EXPECT_EQ(s.proves(not10), True);
@@ -195,7 +195,7 @@ TEST(ConstraintTest, TestMaxCapacity) {
 
   // Add another, exceeding the capacity.
   Constraint not40{Ne, {Literal(int32_t(40))}};
-  s.fuzzyAnd(not40);
+  s.approximateAnd(not40);
 
   // We can prove the old ones but not the new.
   EXPECT_EQ(s.proves(not10), True);
@@ -204,5 +204,5 @@ TEST(ConstraintTest, TestMaxCapacity) {
   EXPECT_EQ(s.proves(not40), Unknown);
 }
 
-// TODO: test a fuzzyOr of { x = 10 } and { x >= 0 }, once we support
+// TODO: test an approximateOr of { x = 10 } and { x >= 0 }, once we support
 //       inequalities
