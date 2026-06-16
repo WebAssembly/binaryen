@@ -40,12 +40,10 @@ struct Term : public std::variant<Index, Literal> {
 // A constraint: some operation and some value, like "is equal to 17" or "is
 // less than local 6".
 struct Constraint {
-  Abstract::Op op = Abstract::Invalid;
+  Abstract::Op op;
   Term term;
 
   bool operator==(const Constraint&) const = default;
-
-  operator bool() const { return op != Abstract::Invalid; }
 };
 
 // We limit constraints to a low number to ensure good performance even with
@@ -68,63 +66,39 @@ struct AndedConstraintSet : inplace_vector<Constraint, MaxConstraints> {
   //   { this } => { condition }
   //
   // https://en.wikipedia.org/wiki/Material_conditional#Truth_table
-  Result eval(const Constraint& condition) const;
+  Result proves(const Constraint& condition) const;
 
   // Check an entire other set.
-  Result eval(const AndedConstraintSet& other) const {
-    if (other.empty()) {
-      // The empty set of constraints is always true.
-      return True;
-    }
+  Result proves(const AndedConstraintSet& other) const;
 
-    Result result = Unknown;
-    for (auto& c : other) {
-      auto currResult = eval(c);
-      if (currResult == Unknown) {
-        // If something is unknown, it all is.
-        return Unknown;
-      }
-      if (result == Unknown) {
-        // This is the first result
-        result = currResult;
-      } else if (result != currResult) {
-        // This is a later result, and different, so give up.
-        return Unknown;
-      }
-    }
-    return result;
-  }
-
-  bool full() const { return size() == MaxConstraints; }
-
-  // Add a constraint to the set, ANDed with the others. The caller must make
-  // sure not to add too many (i.e. it is invalid to call this when full()).
-  void and_(const Constraint& c) {
-    assert(!full());
-    push_back(c);
-  }
+  // Add a constraint to the set, ANDed with the others. This is an approximate
+  // operation because our capacity is bounded - we cannot have more than
+  // MaxConstraints. If too many are added, we will drop some, which means we
+  // will be able to prove less things (but we will never prove anything
+  // incorrectly).
+  void approximateAnd(const Constraint& c);
 
   // Merge constraints using OR. We cannot represent such a thing directly
-  // (we only use AND), so we approximate it in a fuzzy way. For example, this
-  // would be valid:
+  // (we only use AND), so we approximate it in an approximate way. For example,
+  // this would be valid:
   //
-  //   fuzzyOr({ x == 5 }, { x == 10 }) == { x >= 5 && x <= 10 }
+  //   approximateOr({ x == 5 }, { x == 10 }) == { x >= 5 && x <= 10 }
   //
   // Note how the result here still accepts the values 5 and 10, but it also
   // allows more. Formally, this has the following mathematical property:
   //
-  //   (X || Y) => fuzzyOr(X, Y)
+  //   (X || Y) => approximateOr(X, Y)
   //
   // That is, if X or Y is true, the result of fuzzOr is also true. But the
-  // reverse is not always the case: fuzzyOr may be true without X || Y being
+  // reverse is not always so: approximateOr may be true without X || Y being
   // true (see the truth table linked above, and the value 8 in the example).
   //
   // Returning to the example, we can use this to optimize as follows: if
   // two code paths reaching a location have x == 5 and x == 10, so the value in
   // the merge location is either 5 or 10, then if we see some i32.ge_s that
-  // does x >= 0 then we can evaluate it with eval():
+  // does x >= 0 then we can evaluate it with proves():
   //
-  //   { x >= 5 && x <= 10 }.eval({ x >= 0 }) == True
+  //   { x >= 5 && x <= 10 }.proves({ x >= 0 }) == True
   //
   // And it is valid to optimize that i32.ge_s into a constant 1, since
   //
@@ -134,16 +108,16 @@ struct AndedConstraintSet : inplace_vector<Constraint, MaxConstraints> {
   //
   // I.e. the constraints imply the truth of the thing we are evaluating.
   //
-  // Note that the fuzziness here means that fuzzyOr() can do a better or a
-  // worse job. It is always valid for fuzzyOr to return { } or any other
+  // Note that the fuzziness here means that approximateOr() can do a better /
+  // worse job. It is always valid for approximateOr to return { } or any other
   // always-true thing (see the truth table linked above). But then:
   //
   //   { x == 5 || x == 10 }  =>
   //   { }                   =!!>
   //   { x >= 0 }
   //
-  // If we become too fuzzy, we lose the ability to imply anything useful.
-  void fuzzyOr(const AndedConstraintSet& other);
+  // If we become too imprecise, we lose the ability to imply anything useful.
+  void approximateOr(const AndedConstraintSet& other);
 };
 
 // A local plus a constraint on it.

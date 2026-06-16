@@ -56,8 +56,7 @@ enum Op {
   GtS,
   GtU,
   GeS,
-  GeU,
-  Invalid
+  GeU
 };
 
 inline bool hasAnyRotateShift(BinaryOp op) {

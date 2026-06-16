@@ -24,74 +24,64 @@ namespace wasm::constraint {
 
 namespace {
 
+// Evaluate whether a => b, where a and b are operations on constants.
+Result provesConstantPair(Abstract::Op aOp,
+                          const Literal& aConstant,
+                          Abstract::Op bOp,
+                          const Literal& bConstant) {
+  // x == X =?=> x == Y. True iff X == Y.
+  if (aOp == Abstract::Eq && bOp == Abstract::Eq) {
+    return aConstant == bConstant ? True : False;
+  }
+
+  // x == X =?=> x != Y. True iff X != Y.
+  if (aOp == Abstract::Eq && bOp == Abstract::Ne) {
+    return aConstant == bConstant ? False : True;
+  }
+
+  // x != X =?=> x == Y. False if X = Y, else unknown.
+  if (aOp == Abstract::Ne && bOp == Abstract::Eq) {
+    if (aConstant == bConstant) {
+      return False;
+    }
+  }
+
+  // x != X =?=> x != Y. True if X = Y, else unknown.
+  if (aOp == Abstract::Ne && bOp == Abstract::Ne) {
+    if (aConstant == bConstant) {
+      return True;
+    }
+  }
+
+  // TODO: handle >, >=, <, and <=
+  return Unknown;
+}
+
 // Core comparison of two constraints: whether a => b
-//
-// Returns a Result, or an empty option if we should keep working (i.e., a
-// result of Unknown means we are certain we can just return Unknown).
-std::optional<Result> evalPair(const Constraint& a, const Constraint& b) {
+Result provesPair(const Constraint& a, const Constraint& b) {
   // A thing always implies itself.
   if (a == b) {
     return True;
   }
 
   // Comparisons of two constants.
-  if (auto* aConstant = std::get_if<Literal>(&a.term)) {
-    if (auto* bConstant = std::get_if<Literal>(&b.term)) {
-      switch (a.op) {
-        case Abstract::Eq: {
-          switch (b.op) {
-            case Abstract::Eq: {
-              // x == c vs x == c', and we already handled full equality
-              // earlier, hence c != c', and we found a contradiction.
-              assert(*aConstant != *bConstant);
-              return False;
-            }
-            case Abstract::Ne: {
-              // x == c vs x != c'. We can infer the result based on relating c
-              // and c'.
-              return *aConstant != *bConstant ? True : False;
-            }
-            default: {
-            }
-          }
-          break;
-        }
-        case Abstract::Ne: {
-          switch (b.op) {
-            case Abstract::Eq: {
-              // x != c vs x == c'. If c == c', we can infer.
-              if (*aConstant == *bConstant) {
-                return False;
-              }
-              return {};
-            }
-            case Abstract::Ne: {
-              // x != c vs x != c', and we already handled full equality
-              // earlier, hence c != c', and we can infer nothing.
-              assert(*aConstant != *bConstant);
-              return {};
-            }
-            default: {
-            }
-          }
-          break;
-        }
-        default: {
-        }
-      }
-    }
+  auto* aConstant = std::get_if<Literal>(&a.term);
+  auto* bConstant = std::get_if<Literal>(&b.term);
+  if (aConstant && bConstant) {
+    return provesConstantPair(a.op, *aConstant, b.op, *bConstant);
   }
 
-  return {};
+  return Unknown;
 }
 
 } // anonymous namespace
 
-Result AndedConstraintSet::eval(const Constraint& condition) const {
+Result AndedConstraintSet::proves(const Constraint& condition) const {
   // Sometimes a single constraint is enough to determine the condition.
   for (auto& c : *this) {
-    if (auto result = evalPair(c, condition)) {
-      return *result;
+    auto result = provesPair(c, condition);
+    if (result != Unknown) {
+      return result;
     }
   }
 
@@ -101,7 +91,40 @@ Result AndedConstraintSet::eval(const Constraint& condition) const {
   return Unknown;
 }
 
-void AndedConstraintSet::fuzzyOr(const AndedConstraintSet& other) {
+Result AndedConstraintSet::proves(const AndedConstraintSet& other) const {
+  if (other.empty()) {
+    // The empty set of constraints is always true.
+    return True;
+  }
+
+  bool hasUnknown = false;
+
+  for (auto& c : other) {
+    auto result = proves(c);
+    if (result == False) {
+      // The entire conjunction is proven false.
+      return False;
+    }
+    if (result == Unknown) {
+      hasUnknown = true;
+    }
+  }
+
+  return hasUnknown ? Unknown : True;
+}
+
+void AndedConstraintSet::approximateAnd(const Constraint& c) {
+  if (size() < MaxConstraints) {
+    push_back(c);
+    return;
+  }
+
+  // Otherwise, just do not add this one.
+  // TODO: We could try to be clever and see if one of the existing ones makes
+  //       more sense to drop.
+}
+
+void AndedConstraintSet::approximateOr(const AndedConstraintSet& other) {
   // If one is empty (no constraints, everything is true, and we can prove
   // nothing useful) then it does not add anything to the other.
   if (empty()) {
@@ -115,15 +138,15 @@ void AndedConstraintSet::fuzzyOr(const AndedConstraintSet& other) {
   // If this is already implied by current constraints, then it is redundant.
   // E.g. if we are { x = 10 } and other is { x >= 0 } then all we need is
   // { x >= 0 } as the result of the OR.
-  if (eval(other) == True) {
+  if (proves(other) == True) {
     *this = other;
     return;
   }
-  if (other.eval(*this) == True) {
+  if (other.proves(*this) == True) {
     return;
   }
 
-  // TODO smarts
+  // TODO smarts: handle <= > and so forth
 
   // Otherwise, we don't know how to nicely OR these things, and expand to the
   // trivial set of no constraints.
