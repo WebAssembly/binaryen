@@ -821,11 +821,6 @@ ModuleSplitter::PrimarySecondaryUsedNames ModuleSplitter::computeUsedNames() {
   }
 
   auto mayTrap = [&](auto* segment) {
-    if (segment->offset &&
-        EffectAnalyzer(config.passOptions, primary, segment->offset)
-          .hasUnremovableSideEffects()) {
-      return true;
-    }
     if constexpr (std::is_same_v<decltype(segment), ElementSegment*>) {
       if (primary.features.hasCustomDescriptors()) {
         for (auto* item : segment->data) {
