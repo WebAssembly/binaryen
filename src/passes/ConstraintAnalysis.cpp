@@ -40,8 +40,6 @@ using namespace wasm::constraint;
 
 namespace {
 
-using LocalConstraintMap = std::unordered_map<Index, AndedConstraintSet>;
-
 // In each basic block we will store the relevant operations, which are all
 // local gets and sets, branches, and uses of them.
 struct Info {
@@ -164,11 +162,15 @@ struct ConstraintAnalysis
   LocalConstraintMap mergeIncoming(BasicBlock* block) {
     LocalConstraintMap constraints;
 
-    // For each relevant local, merge its constraints.
-    for (auto local : relevantLocals) { XXX
-      AndedConstraintSet& merged = constraints[local];
-      for (auto* pred : block->in) {
-        merged.approximateOr(getConstraintsFromPredToSucc(pred, block, local));
+    // Merge all preds.
+    for (auto* pred : block->in) {
+      auto& predConstraints = getConstraintsFromPredToSucc(pred, block);
+      if (pred == *block->in.begin()) {
+        // This is the first. Just copy.
+        constraints = predConstraints;
+      } else {
+        // Merge in subsequent ones.
+        constraints.approximateOr(predConstraints);
       }
     }
 
@@ -194,16 +196,10 @@ struct ConstraintAnalysis
 
   // Given a source (predecessor) and a target (successor) block, find the span
   // of a particular local as it arrives to that target from that successor.
-  AndedConstraintSet getConstraintsFromPredToSucc(BasicBlock* pred,
-                                                  BasicBlock* block,
-                                                  Index local) {
-    auto iter = pred->contents.endConstraints.find(local);
-    if (iter == pred->contents.endConstraints.end()) {
-      return {};
-    }
-
+  const LocalConstraintMap& getConstraintsFromPredToSucc(BasicBlock* pred,
+                                                         BasicBlock* block) {
     // TODO: use conditional branching to send different values along branches
-    return iter->second;
+    return pred->contents.endConstraints.find(local);
   }
 
   // Given an expression, apply it to the constraints. For example, a local.set

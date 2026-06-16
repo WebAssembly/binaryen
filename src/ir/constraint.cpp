@@ -215,4 +215,19 @@ std::optional<LocalConstraint> LocalConstraint::parse(Expression* curr) {
   return {};
 }
 
+void LocalConstraintMap::approximateOr(const LocalConstraintMap& other) {
+  // Find things in both, and OR them.
+  for (auto& [local, constraints] : other) {
+    if (auto iter = find(local); iter != end()) {
+      iter->second.approximateOr(constraints);
+    }
+  }
+
+  // Remove things only in us.
+  std::erase_if(*this, [&](const auto& item) {
+    const auto& [local, constraints] = item;
+    return !other.contains(local); 
+  });
+}
+
 } // namespace wasm::constraint
