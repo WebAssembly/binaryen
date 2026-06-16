@@ -348,8 +348,7 @@ struct Analyzer {
     // If a table has an initial value, it is callable as well.
     for (auto& table : module->tables) {
       if (table->init) {
-        auto& info = flatTableInfoMap[table->name];
-        notePossibleFunc(info, table->init);
+        notePossibleFunc(flatTableInfoMap[table->name], table->init);
       }
     }
   }
