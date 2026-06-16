@@ -40,7 +40,7 @@ struct Term : public std::variant<Index, Literal> {
 // A constraint: some operation and some value, like "is equal to 17" or "is
 // less than local 6".
 struct Constraint {
-  Abstract::Op op = Abstract::Invalid;
+  Abstract::Op op;
   Term term;
 
   bool operator==(const Constraint&) const = default;
