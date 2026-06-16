@@ -17,8 +17,8 @@
 //
 // Use mathematical constraint solving to optimize. For example:
 //
-//  if (x > 10) {
-//    assert(x > 0); // redundant and can be removed.
+//  if (x == 10) {
+//    assert(x != 0); // redundant and can be removed.
 //  }
 //
 
@@ -194,8 +194,8 @@ struct ConstraintAnalysis
     return constraints;
   }
 
-  // Given a source (predecessor) and a target (successor) block, find the span
-  // of a particular local as it arrives to that target from that successor.
+  // Given a source (predecessor) and a target (successor) block, find the
+  // constraints for locals as they arrive to that target from that successor.
   const LocalConstraintMap& getConstraintsFromPredToSucc(BasicBlock* pred,
                                                          BasicBlock* block) {
     // TODO: use conditional branching to send different values along branches
