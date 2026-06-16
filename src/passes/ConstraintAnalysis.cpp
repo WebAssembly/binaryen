@@ -80,44 +80,10 @@ struct ConstraintAnalysis
   void visitRefEq(RefEq* curr) { addAction(); }
   void visitRefIsNull(RefIsNull* curr) { addAction(); }
 
-  // We start with the relevant locals, i.e. which we could optimize: for
-  // example, if we see (i32.eqz (local.get $x)) then we know that information
-  // about $x might resolve the eqz, and we compute it and things related to
-  // it.
-  std::unordered_set<Index> relevantLocals;
-
   void visitFunction(Function* curr) {
-    // Now that the walk is complete and we have a CFG, find things to optimize.
-
-    auto maybeAdd = [&](Expression* value) {
-      // Given a value flowing into something we can optimize, see if there is a
-      // local there, and if so, mark it as relevant.
-      // TODO: handle tee
-      // TODO: handle fallthrough values
-      if (auto* get = value->dynCast<LocalGet>()) {
-        relevantLocals.insert(get->index);
-      }
-    };
-
-    for (auto& block : basicBlocks) {
-      for (auto** currp : block->contents.actions) {
-        auto* curr = *currp;
-        // TODO: specific unary/binary ops
-        if (auto* unary = curr->dynCast<Unary>()) {
-          maybeAdd(unary->value);
-        } else if (auto* binary = curr->dynCast<Binary>()) {
-          maybeAdd(binary->left);
-          maybeAdd(binary->right);
-        }
-      }
-    }
-
-    // Values can flow between locals: if x is relevant, and y is written to it,
-    // we must consider y relevant too. TODO?
-    if (!relevantLocals.empty()) {
-      flow();
-      optimize();
-    }
+    // TODO: optimize for speed, find relevant locals etc.
+    flow();
+    optimize();
   }
 
   // Flow infos around until we have inferred all we can about the constraints
@@ -131,7 +97,7 @@ struct ConstraintAnalysis
     while (!work.empty()) {
       auto* block = work.pop();
 
-      // Merge incoming data.
+      // Merge incoming data to get the status at the start of the block.
       LocalConstraintMap constraints = mergeIncoming(block);
 
       // Go through the block, applying things.
@@ -156,19 +122,16 @@ struct ConstraintAnalysis
       // Follow the general shape of flow(): we need to see what the state is
       // at each intermediate point inside the block. (Flowing between blocks is
       // of course not needed at this stage.)
-
       LocalConstraintMap constraints = mergeIncoming(block.get());
       for (auto** currp : block->contents.actions) {
         applyToConstraints(*currp, constraints);
-        optimizeExpression(currp, block.get(), constraints);
+        optimizeExpression(currp, constraints);
       }
     }
   }
 
-  // Given a binary XXXand its block, try to optimize it. We provide the pointer
-  // to the binary, so that it can be replaced if optimizable.
+  // Given an expression and the constraints on it, optimize it.
   void optimizeExpression(Expression** currp,
-                          BasicBlock* block,
                           const LocalConstraintMap& constraints) {
     auto* curr = *currp;
     auto parsed = LocalConstraint::parse(curr);
@@ -202,7 +165,7 @@ struct ConstraintAnalysis
     LocalConstraintMap constraints;
 
     // For each relevant local, merge its constraints.
-    for (auto local : relevantLocals) {
+    for (auto local : relevantLocals) { XXX
       AndedConstraintSet& merged = constraints[local];
       for (auto* pred : block->in) {
         merged.approximateOr(getConstraintsFromPredToSucc(pred, block, local));
