@@ -108,7 +108,7 @@ struct AndedConstraintSet : inplace_vector<Constraint, MaxConstraints> {
   //
   // I.e. the constraints imply the truth of the thing we are evaluating.
   //
-  // Note that the fuzziness here means that approximateOr() can do a better /
+  // Note that the approximation here means that approximateOr() can do a better /
   // worse job. It is always valid for approximateOr to return { } or any other
   // always-true thing (see the truth table linked above). But then:
   //
