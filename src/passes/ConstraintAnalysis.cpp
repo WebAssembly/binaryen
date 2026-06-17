@@ -227,13 +227,41 @@ struct ConstraintAnalysis
   const LocalConstraintMap getConstraintsFromPredToSucc(BasicBlock* pred,
                                                         BasicBlock* block) {
     auto* brancher = block->contents.brancher;
+    auto& predEnd = pred->contents.endConstraints;
     if (!brancher) {
       // No branching instruction to reason about. Just return what is at the
       // end of the pred, no matter where we go.
-      return pred->contents.endConstraints;
+      return predEnd;
     }
 
     if (auto* iff = brancher->dynCast<If>()) {
+      auto parsed = LocalConstraint::parse(iff->condition);
+      if (!parsed) {
+        return predEnd;
+      }
+      auto& [local, constraint] = *parsed;
+
+      // The if's condition's constraint is added to the other contents, and
+      // sent on the ifTrue. The negation is added to the ifFalse, so negate if
+      // that is the path here. To detect that, use the fact that the CFG always
+      // puts the ifTrue first in the successors.
+      auto& predOut = pred->out;
+      assert(predOut.size() == 2);
+      if (block == predOut[1]) {
+        // This is the ifFalse.
+        if (auto negated = constraint.negate()) {
+          constraint = *negated;
+        } else {
+          // This could not be negated.
+          return predEnd;
+        }
+      } else {
+        // It must be the ifTrue.
+        assert(block == predOut[0]);
+      }
+      auto combined = predEnd;
+      combined[local].approximateAnd(constraint);
+      return combined;
     }
 
     WASM_UNREACHABLE("unknown brancher");
