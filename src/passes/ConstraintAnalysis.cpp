@@ -40,10 +40,15 @@ using namespace wasm::constraint;
 
 namespace {
 
-// In each basic block we will store the relevant operations, which are all
-// local gets and sets, branches, and uses of them.
+// Information in a basic block.
 struct Info {
+  // All relevant operations: local gets and sets and uses of them.
   std::vector<Expression**> actions;
+
+  // The branching instruction at the end of the block (or nullptr if there is
+  // something like a return or an unreachable, which are terminators that don't
+  // interest us in this pass - we just look at ifs and brs).
+  Expression* brancher = nullptr;
 
   // For each local index, we track the constraints we know about it. We only do
   // so at the end of each block, which is enough for the analysis below.
@@ -62,6 +67,9 @@ struct ConstraintAnalysis
     return std::make_unique<ConstraintAnalysis>();
   }
 
+  using Super =
+    WalkerPass<CFGWalker<ConstraintAnalysis, Visitor<ConstraintAnalysis>, Info>>;
+
   // Branches outside of the function can be ignored, as we only look at local
   // state in the function.
   bool ignoreBranchesOutsideOfFunc = true;
@@ -78,6 +86,16 @@ struct ConstraintAnalysis
   void visitBinary(Binary* curr) { addAction(); }
   void visitRefEq(RefEq* curr) { addAction(); }
   void visitRefIsNull(RefIsNull* curr) { addAction(); }
+
+  static void doStartIfTrue(ConstraintAnalysis* self, Expression** currp) {
+    // We are right after the condition, so we are in the block before the If's
+    // branching. Mark the If as the brancher (unless in unreachable code).
+    if (self->currBasicBlock) {
+      self->currBasicBlock->contents.brancher = *currp;
+    }
+
+    Super::doStartIfTrue(self, currp);
+  }
 
   void visitFunction(Function* curr) {
     // TODO: optimize for speed, find relevant locals etc.
@@ -167,8 +185,8 @@ struct ConstraintAnalysis
     for (auto* pred : block->in) {
       auto& predConstraints = getConstraintsFromPredToSucc(pred, block);
       if (pred == *block->in.begin()) {
-        // This is the first. Just copy.
-        constraints = predConstraints;
+        // This is the first.
+        constraints = std::move(predConstraints);
       } else {
         // Merge in subsequent ones.
         constraints.approximateOr(predConstraints);
@@ -197,10 +215,19 @@ struct ConstraintAnalysis
 
   // Given a source (predecessor) and a target (successor) block, find the
   // constraints for locals as they arrive to that target from that successor.
-  const LocalConstraintMap& getConstraintsFromPredToSucc(BasicBlock* pred,
-                                                         BasicBlock* block) {
-    // TODO: use conditional branching to send different values along branches
-    return pred->contents.endConstraints;
+  const LocalConstraintMap getConstraintsFromPredToSucc(BasicBlock* pred,
+                                                        BasicBlock* block) {
+    auto* brancher = block->contents.brancher;
+    if (!brancher) {
+      // No branching instruction to reason about. Just return what is at the
+      // end of the pred, no matter where we go.
+      return pred->contents.endConstraints;
+    }
+
+    if (auto* iff = brancher->dynCast<If>()) {
+    }
+
+    WASM_UNREACHABLE("unknown brancher");
   }
 
   // Given an expression, apply it to the constraints. For example, a local.set
