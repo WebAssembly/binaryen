@@ -226,7 +226,7 @@ struct ConstraintAnalysis
   // constraints for locals as they arrive to that target from that successor.
   const LocalConstraintMap getConstraintsFromPredToSucc(BasicBlock* pred,
                                                         BasicBlock* block) {
-    auto* brancher = block->contents.brancher;
+    auto* brancher = pred->contents.brancher;
     auto& predEnd = pred->contents.endConstraints;
     if (!brancher) {
       // No branching instruction to reason about. Just return what is at the

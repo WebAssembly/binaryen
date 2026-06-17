@@ -661,9 +661,7 @@
   ;; CHECK-NEXT:   (local.get $param)
   ;; CHECK-NEXT:   (then
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.eqz
-  ;; CHECK-NEXT:      (local.get $param)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (local.get $param)
@@ -671,9 +669,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (else
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.eqz
-  ;; CHECK-NEXT:      (local.get $param)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (local.get $param)
@@ -755,30 +751,18 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (then
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.eq
-  ;; CHECK-NEXT:      (local.get $param)
-  ;; CHECK-NEXT:      (i32.const 10)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.ne
-  ;; CHECK-NEXT:      (local.get $param)
-  ;; CHECK-NEXT:      (i32.const 10)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (else
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.eq
-  ;; CHECK-NEXT:      (local.get $param)
-  ;; CHECK-NEXT:      (i32.const 10)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.ne
-  ;; CHECK-NEXT:      (local.get $param)
-  ;; CHECK-NEXT:      (i32.const 10)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
