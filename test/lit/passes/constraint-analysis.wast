@@ -971,4 +971,83 @@
       )
     )
   )
+
+  ;; CHECK:      (func $conditional-binary-contradiction (type $0) (param $x i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.eq
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:     (then
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (i32.const 1)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (i32.const 0)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPTIN:      (func $conditional-binary-contradiction (type $0) (param $x i32)
+  ;; OPTIN-NEXT:  (if
+  ;; OPTIN-NEXT:   (i32.eq
+  ;; OPTIN-NEXT:    (local.get $x)
+  ;; OPTIN-NEXT:    (i32.const 10)
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:   (then
+  ;; OPTIN-NEXT:    (if
+  ;; OPTIN-NEXT:     (i32.const 0)
+  ;; OPTIN-NEXT:     (then
+  ;; OPTIN-NEXT:      (drop
+  ;; OPTIN-NEXT:       (i32.const 1)
+  ;; OPTIN-NEXT:      )
+  ;; OPTIN-NEXT:      (drop
+  ;; OPTIN-NEXT:       (i32.const 0)
+  ;; OPTIN-NEXT:      )
+  ;; OPTIN-NEXT:     )
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT: )
+  (func $conditional-binary-contradiction (param $x i32)
+    ;; As above, but with only $x.
+    (if
+      (i32.eq
+        (local.get $x)
+        (i32.const 10)
+      )
+      (then
+        (if
+          (i32.eq
+            (local.get $x)
+            (i32.const 20)
+          )
+          (then
+            ;; This is only reached if x is both 10 and 20, so it is
+            ;; unreachable. We prove the condition of the nested if is 0
+            ;; first, and end up optimizing these as if x == 10 (other passes
+            ;; would then remove the unreachable code, seeing the 0 in the if
+            ;; condition).
+            (drop
+              (i32.eq
+                (local.get $x)
+                (i32.const 10)
+              )
+            )
+            (drop
+              (i32.eq
+                (local.get $x)
+                (i32.const 20)
+              )
+            )
+          )
+        )
+      )
+    )
+  )
 )
