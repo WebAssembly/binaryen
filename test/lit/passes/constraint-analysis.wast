@@ -664,7 +664,7 @@
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (local.get $param)
+  ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (else
@@ -672,7 +672,7 @@
   ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (local.get $param)
+  ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -693,7 +693,10 @@
   ;; OPTIN-NEXT:    )
   ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:   (drop
-  ;; OPTIN-NEXT:    (local.get $param)
+  ;; OPTIN-NEXT:    (i32.ne
+  ;; OPTIN-NEXT:     (local.get $param)
+  ;; OPTIN-NEXT:     (i32.const 0)
+  ;; OPTIN-NEXT:    )
   ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (drop
@@ -708,17 +711,22 @@
   (func $conditional (param $param i32)
     ;; We can infer $param is non-zero in the if's first arm, but not the second
     ;; nor after the if.
+    ;; (Note: we fail to optimize this in OPTIN, because it folds the if arms
+    ;; first.)
     (if
       (local.get $param)
       (then
-        ;; The first is true, the second not.
+        ;; The first is false, the second true.
         (drop
           (i32.eqz
             (local.get $param)
           )
         )
         (drop
-          (local.get $param)
+          (i32.ne
+            (local.get $param)
+            (i32.const 0)
+          )
         )
       )
       (else
@@ -729,7 +737,10 @@
           )
         )
         (drop
-          (local.get $param)
+          (i32.ne
+            (local.get $param)
+            (i32.const 0)
+          )
         )
       )
     )
