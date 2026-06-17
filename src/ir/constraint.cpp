@@ -160,6 +160,7 @@ std::optional<LocalConstraint> LocalConstraint::parse(Expression* curr) {
       auto value = Literal::makeZero(get->type);
       return LocalConstraint{get->index, Constraint{Abstract::Eq, {value}}};
     }
+    // TODO: Recursively parse and reverse a constraint
     return {};
   };
 
