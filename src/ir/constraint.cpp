@@ -226,7 +226,7 @@ void LocalConstraintMap::approximateOr(const LocalConstraintMap& other) {
   // Remove things only in us.
   std::erase_if(*this, [&](const auto& item) {
     const auto& [local, constraints] = item;
-    return !other.contains(local); 
+    return !other.contains(local);
   });
 }
 
