@@ -158,7 +158,7 @@ std::optional<LocalConstraint> LocalConstraint::parse(Expression* curr) {
     if (auto* get = value->dynCast<LocalGet>()) {
       // Canonicalize EqZ to Eq of 0.
       auto value = Literal::makeZero(get->type);
-      return LocalConstraint{get->index, Constraint{Abstract::Eq, value}};
+      return LocalConstraint{get->index, Constraint{Abstract::Eq, {value}}};
     }
     return {};
   };
