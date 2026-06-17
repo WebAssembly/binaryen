@@ -2524,20 +2524,35 @@ void TranslateToFuzzReader::mutateJSBoundary() {
     // Pick the exactness.
     auto oldExactness = old.getExactness();
     auto newExactness = new_.getExactness();
-    // We can only be exact if we are using the new heap type: that type is
-    // exactly what is sent here, and no intermediate heap type would be valid.
-    // For example, given $A :> $B :> $C, then maybeRefine($A, exact $C) can
-    // return exact $C, but cannot return exact $B.
-    //
-    // Also, basic heap types cannot be exact.
-    if (newHeapType != new_.getHeapType() || newHeapType.isBasic()) {
+    if (newHeapType.isBasic()) {
+      // Basic heap types cannot be exact.
       newExactness = Inexact;
-    } else if (newExactness != oldExactness) {
-      // TODO: once getExactness() is fixed (see there), use that
-      newExactness = oneIn(2) ? Exact : Inexact;
+    } else {
+      // We are refining to a non-basic type. This can only be exact if we are
+      // using the new heap type: that type is exactly what is sent here, and no
+      // intermediate heap type would be valid. For example, given
+      // $A :> $B :> $C, then maybeRefine($A, exact $C) can return exact $C, but
+      // cannot return exact $B.
+      if (newHeapType != new_.getHeapType()) {
+        newExactness = Inexact;
+        if (newHeapType != oldHeapType && oldExactness == Exact) {
+          // We are refining the heap type (i.e. it changes), but it was exact.
+          // We must be exact as well, to be a subtype, which means we must use
+          // the same heap type.
+          newHeapType = oldHeapType;
+          newExactness = Exact;
+        }
+      } else if (newExactness != oldExactness) {
+        // We are refining to the new heap type, and it is exact while before it
+        // was not, so both are possible.
+        // TODO: once getExactness() is fixed (see there), use that
+        newExactness = oneIn(2) ? Exact : Inexact;
+      }
     }
 
-    return Type(newHeapType, newNullability, newExactness);
+    auto refined = Type(newHeapType, newNullability, newExactness);
+    assert(Type::isSubType(refined, old));
+    return refined;
   };
 
   // Given a set of types (all params or all results), and an index among them,
