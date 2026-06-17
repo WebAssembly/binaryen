@@ -44,6 +44,9 @@ struct Constraint {
   Term term;
 
   bool operator==(const Constraint&) const = default;
+
+  // Return a negated constraint, if possible.
+  std::optional<Constraint> negate();
 };
 
 // We limit constraints to a low number to ensure good performance even with

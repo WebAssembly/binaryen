@@ -304,6 +304,24 @@ inline BinaryOp getBinary(Type type, Op op) {
   WASM_UNREACHABLE("invalid type");
 }
 
+// Negate an operation, if possible.
+std::optional<Op> negate(Op op) {
+  switch (op) {
+    case Eq: return Ne;
+    case Ne: return Eq;
+    case LtS: return GeS;
+    case LtU: return GeU;
+    case LeS: return GtS;
+    case LeU: return GtU;
+    case GtS: return LeS;
+    case GtU: return LeU;
+    case GeS: return LtS;
+    case GeU: return LtU;
+    default:
+      return {};
+  }
+}
+
 } // namespace wasm::Abstract
 
 #endif // wasm_ir_abstract_h
