@@ -2555,6 +2555,12 @@ Flower::Flower(Module& wasm, const PassOptions& options)
       } else if (type.isArray()) {
         roots[getIndex(DataLocation{type, 0})] =
           PossibleContents::fromType(type.getArray().element.type);
+      } else if (type.isSignature()) {
+        auto sig = type.getSignature();
+        for (Index i = 0; i < sig.results.size(); i++) {
+          roots[getIndex(SignatureResultLocation{type, i})] =
+            PossibleContents::fromType(sig.results[i]);
+        }
       }
     }
   }

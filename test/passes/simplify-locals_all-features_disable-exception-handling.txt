@@ -909,7 +909,7 @@
  )
  (func $drop-tee-unreachable (type $FUNCSIG$v)
   (local $x i32)
-  (local.tee $x
+  (local.set $x
    (unreachable)
   )
   (drop

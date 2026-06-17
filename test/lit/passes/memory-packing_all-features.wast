@@ -2497,7 +2497,7 @@
 
  ;; CHECK:      (func $0 (type $0)
  ;; CHECK-NEXT:  (local $0 i32)
- ;; CHECK-NEXT:  (local.tee $0
+ ;; CHECK-NEXT:  (local.set $0
  ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (if

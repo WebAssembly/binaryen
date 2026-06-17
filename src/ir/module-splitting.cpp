@@ -77,6 +77,7 @@
 #include "ir/find_all.h"
 #include "ir/module-utils.h"
 #include "ir/names.h"
+#include "support/stdckdint.h"
 #include "wasm-builder.h"
 #include "wasm.h"
 
@@ -363,6 +364,8 @@ struct ModuleSplitter {
     std::unordered_set<Name> memories;
     std::unordered_set<Name> tables;
     std::unordered_set<Name> tags;
+    std::unordered_set<Name> dataSegments;
+    std::unordered_set<Name> elementSegments;
   };
   using PrimarySecondaryUsedNames =
     std::pair<UsedNames, std::vector<UsedNames>>;
@@ -647,23 +650,6 @@ void ModuleSplitter::thunkExportedSecondaryFunctions() {
 }
 
 ModuleSplitter::PrimarySecondaryUsedNames ModuleSplitter::computeUsedNames() {
-  auto walkSegments = [](auto& walker, Module* module) {
-    walker.setModule(module);
-    for (auto& curr : module->elementSegments) {
-      if (curr->offset) {
-        walker.walk(curr->offset);
-      }
-      for (auto* item : curr->data) {
-        walker.walk(item);
-      }
-    }
-    for (auto& curr : module->dataSegments) {
-      if (curr->offset) {
-        walker.walk(curr->offset);
-      }
-    }
-  };
-
   struct NameCollector
     : public PostWalker<NameCollector,
                         UnifiedExpressionVisitor<NameCollector>> {
@@ -699,9 +685,13 @@ ModuleSplitter::PrimarySecondaryUsedNames ModuleSplitter::computeUsedNames() {
       case ModuleItemKind::Tag:                                                \
         used.tags.insert(cast->field);                                         \
         break;                                                                 \
-      case ModuleItemKind::Function:                                           \
       case ModuleItemKind::DataSegment:                                        \
+        used.dataSegments.insert(cast->field);                                 \
+        break;                                                                 \
       case ModuleItemKind::ElementSegment:                                     \
+        used.elementSegments.insert(cast->field);                              \
+        break;                                                                 \
+      case ModuleItemKind::Function:                                           \
       case ModuleItemKind::Invalid:                                            \
         break;                                                                 \
     }                                                                          \
@@ -726,32 +716,13 @@ ModuleSplitter::PrimarySecondaryUsedNames ModuleSplitter::computeUsedNames() {
       used.memories.insert(funcUsed.memories.begin(), funcUsed.memories.end());
       used.tables.insert(funcUsed.tables.begin(), funcUsed.tables.end());
       used.tags.insert(funcUsed.tags.begin(), funcUsed.tags.end());
+      used.dataSegments.insert(funcUsed.dataSegments.begin(),
+                               funcUsed.dataSegments.end());
+      used.elementSegments.insert(funcUsed.elementSegments.begin(),
+                                  funcUsed.elementSegments.end());
     }
 
     NameCollector collector(used);
-    // We shouldn't use collector.walkModuleCode here, because we don't want to
-    // walk global initializers. At this point, all globals are still in the
-    // primary module, so if we walk global initializers here, other globals
-    // appearing in their initializers will all be marked as used in the primary
-    // module, which is not what we want.
-    //
-    // For example, we have (global $a i32 (global.get $b)). Because $a is at
-    // this point still in the primary module, $b will be marked as "used" in
-    // the primary module. But $a can be moved to a secondary module later if it
-    // is used exclusively by that module. Then $b can be also moved, in case it
-    // doesn't have other uses. But if it is marked as "used" in the primary
-    // module, it can't.
-    walkSegments(collector, &module);
-    for (auto& segment : module.dataSegments) {
-      if (segment->isActive()) {
-        used.memories.insert(segment->memory);
-      }
-    }
-    for (auto& segment : module.elementSegments) {
-      if (segment->isActive()) {
-        used.tables.insert(segment->table);
-      }
-    }
 
     return used;
   };
@@ -845,6 +816,101 @@ ModuleSplitter::PrimarySecondaryUsedNames ModuleSplitter::computeUsedNames() {
       }
       if (UsedNames* owner = getOwner(table->name, &UsedNames::tables)) {
         NameCollector(*owner).walk(table->init);
+      }
+    }
+  }
+
+  auto mayTrap = [&](auto* segment) {
+    if constexpr (std::is_same_v<decltype(segment), ElementSegment*>) {
+      if (primary.features.hasCustomDescriptors()) {
+        for (auto* item : segment->data) {
+          if (EffectAnalyzer(config.passOptions, primary, item)
+                .hasUnremovableSideEffects()) {
+            return true;
+          }
+        }
+      }
+    }
+
+    // Check for out-of-bounds offset. This is adapted from maybeRootSegment
+    // function in RemoveUnusedModuleElements pass.
+    if (!config.passOptions.trapsNeverHappen) {
+      Index segmentSize;
+      Index parentSize;
+      if constexpr (std::is_same_v<decltype(segment), DataSegment*>) {
+        segmentSize = segment->data.size();
+        auto* memory = primary.getMemory(segment->memory);
+        parentSize = memory->initial << memory->pageSizeLog2;
+      } else {
+        segmentSize = segment->data.size();
+        auto* table = primary.getTable(segment->table);
+        parentSize = table->initial;
+      }
+
+      // Check if this might trap. If it is obviously in bounds then it cannot.
+      auto* c = segment->offset->template dynCast<Const>();
+      // Check for overflow in the largest possible space of addresses.
+      uint64_t maxWritten;
+      // If there is no integer, or if there is and the addition overflows, or
+      // if the addition leads to a too-large value, then we may trap.
+      if (!c ||
+          std::ckd_add(&maxWritten,
+                       (uint64_t)segmentSize,
+                       (uint64_t)c->value.getInteger()) ||
+          maxWritten > parentSize) {
+        return true;
+      }
+    }
+    return false;
+  };
+
+  // Iterate on active data and element segments. If its table or memory is
+  // used by a single secondary module, mark it "used" there. Only scan its
+  // 'offset' or 'data'(in case of ElementSegment) and add it to that module's
+  // used only when it is a sole secondary owner. If not assign it to the
+  // primary module and scan it there.
+  ModuleUtils::iterActiveDataSegments(primary, [&](DataSegment* segment) {
+    UsedNames* owner = getOwner(segment->memory, &UsedNames::memories);
+    if (mayTrap(segment)) {
+      owner = &primaryUsed;
+    }
+    if (!owner) {
+      return;
+    }
+    owner->dataSegments.insert(segment->name);
+    owner->memories.insert(segment->memory);
+    if (segment->offset) {
+      NameCollector(*owner).walk(segment->offset);
+    }
+  });
+
+  ModuleUtils::iterActiveElementSegments(primary, [&](ElementSegment* segment) {
+    UsedNames* owner = getOwner(segment->table, &UsedNames::tables);
+    if (mayTrap(segment)) {
+      owner = &primaryUsed;
+    }
+    if (!owner) {
+      return;
+    }
+    owner->elementSegments.insert(segment->name);
+    owner->tables.insert(segment->table);
+    if (segment->offset) {
+      NameCollector(*owner).walk(segment->offset);
+    }
+    for (auto* item : segment->data) {
+      NameCollector(*owner).walk(item);
+    }
+  });
+
+  // Passive element segments contain expressions (e.g. global.get) in their
+  // data arrays that must be scanned. Since currently functions referring to
+  // segments are forced into the primary module, passive segments always belong
+  // to the primary module.
+  for (auto& segment : primary.elementSegments) {
+    if (segment->isPassive() &&
+        primaryUsed.elementSegments.contains(segment->name)) {
+      for (auto* item : segment->data) {
+        NameCollector(primaryUsed).walk(item);
       }
     }
   }
@@ -994,6 +1060,46 @@ void ModuleSplitter::shareImportableItems() {
   }
   for (auto& name : tagsToRemove) {
     primary.removeTag(name);
+  }
+
+  // Move segments that are exclusively used in a secondary module. If not, do
+  // nothing. (Segments cannot be imported / exported. They will be handled in
+  // indirectReferencesToSecondaryFunctions.)
+
+  std::vector<Name> dataSegmentsToRemove;
+  for (auto& dataSegment : primary.dataSegments) {
+    auto usingSecondaries =
+      getUsingSecondaries(dataSegment->name, &UsedNames::dataSegments);
+    bool inPrimary = primaryUsed.dataSegments.contains(dataSegment->name);
+
+    if (!inPrimary && usingSecondaries.empty()) {
+      dataSegmentsToRemove.push_back(dataSegment->name);
+    } else if (!inPrimary && usingSecondaries.size() == 1) {
+      auto* secondary = usingSecondaries[0];
+      ModuleUtils::copyDataSegment(dataSegment.get(), *secondary);
+      dataSegmentsToRemove.push_back(dataSegment->name);
+    }
+  }
+  for (auto& name : dataSegmentsToRemove) {
+    primary.removeDataSegment(name);
+  }
+
+  std::vector<Name> elementSegmentsToRemove;
+  for (auto& elementSegment : primary.elementSegments) {
+    auto usingSecondaries =
+      getUsingSecondaries(elementSegment->name, &UsedNames::elementSegments);
+    bool inPrimary = primaryUsed.elementSegments.contains(elementSegment->name);
+
+    if (!inPrimary && usingSecondaries.empty()) {
+      elementSegmentsToRemove.push_back(elementSegment->name);
+    } else if (!inPrimary && usingSecondaries.size() == 1) {
+      auto* secondary = usingSecondaries[0];
+      ModuleUtils::copyElementSegment(elementSegment.get(), *secondary);
+      elementSegmentsToRemove.push_back(elementSegment->name);
+    }
+  }
+  for (auto& name : elementSegmentsToRemove) {
+    primary.removeElementSegment(name);
   }
 }
 
