@@ -192,10 +192,6 @@ enum class ParentChildInteraction : int8_t {
   None,
 };
 
-// When we insert scratch locals, we sometimes need to record the flow between
-// their set and subsequent get.
-using ScratchInfo = std::unordered_map<LocalSet*, LocalGet*>;
-
 // Core analysis that provides an escapes() method to check if an allocation
 // escapes in a way that prevents optimizing it away as described above. It also
 // stashes information about the relevant expressions as it goes, which helps
@@ -213,7 +209,6 @@ struct EscapeAnalyzer {
   // scratch local, then we will never look at it again after creating it and do
   // not need to record it here.
   const LazyLocalGraph& localGraph;
-  ScratchInfo& scratchInfo;
   Parents& parents;
   const BranchUtils::BranchTargets& branchTargets;
 
@@ -221,13 +216,12 @@ struct EscapeAnalyzer {
   Module& wasm;
 
   EscapeAnalyzer(const LazyLocalGraph& localGraph,
-                 ScratchInfo& scratchInfo,
                  Parents& parents,
                  const BranchUtils::BranchTargets& branchTargets,
                  const PassOptions& passOptions,
                  Module& wasm)
-    : localGraph(localGraph), scratchInfo(scratchInfo), parents(parents),
-      branchTargets(branchTargets), passOptions(passOptions), wasm(wasm) {}
+    : localGraph(localGraph), parents(parents), branchTargets(branchTargets),
+      passOptions(passOptions), wasm(wasm) {}
 
   // We must track all the local.sets that write the allocation, to verify
   // exclusivity.
@@ -287,23 +281,13 @@ struct EscapeAnalyzer {
       }
 
       if (auto* set = parent->dynCast<LocalSet>()) {
-
-        // We must also look at how the value flows from those gets. Check the
-        // scratchInfo first because it contains sets that localGraph doesn't
-        // know about.
-        if (auto it = scratchInfo.find(set); it != scratchInfo.end()) {
-          auto* get = it->second;
+        // This is one of the sets we are written to, and so we must check for
+        // exclusive use of our allocation by all the gets that read the
+        // value. Note the set, and we will check the gets at the end once we
+        // know all of our sets.
+        sets.insert(set);
+        for (auto* get : localGraph.getSetInfluences(set)) {
           flows.push({get, parents.getParent(get)});
-        } else {
-          // This is one of the sets we are written to, and so we must check for
-          // exclusive use of our allocation by all the gets that read the
-          // value. Note the set, and we will check the gets at the end once we
-          // know all of our sets. (For scratch locals above, we know all the
-          // sets are already accounted for.)
-          sets.insert(set);
-          for (auto* get : localGraph.getSetInfluences(set)) {
-            flows.push({get, parents.getParent(get)});
-          }
         }
       }
 
@@ -1206,12 +1190,6 @@ struct Struct2Local : PostWalker<Struct2Local> {
                                      builder.makeDrop(curr->replacement),
                                      structGet});
     replaceCurrent(block);
-    // Record the new data flow into and out of the new scratch local. This is
-    // necessary in case `ref` gets processed later so we can detect that it
-    // flows to the new struct.atomic.get, which may need to be replaced.
-    analyzer.parents.setParent(curr->ref, setRefScratch);
-    analyzer.scratchInfo.insert({setRefScratch, getRefScratch});
-    analyzer.parents.setParent(getRefScratch, structGet);
     return;
   }
 
@@ -1566,14 +1544,15 @@ struct Heap2Local {
   Module& wasm;
   const PassOptions& passOptions;
 
-  LazyLocalGraph localGraph;
-  ScratchInfo scratchInfo;
-  Parents parents;
-  BranchUtils::BranchTargets branchTargets;
+  std::unique_ptr<LazyLocalGraph> localGraph;
+  std::unique_ptr<Parents> parents;
+  std::unique_ptr<BranchUtils::BranchTargets> branchTargets;
 
   Heap2Local(Function* func, Module& wasm, const PassOptions& passOptions)
-    : func(func), wasm(wasm), passOptions(passOptions), localGraph(func, &wasm),
-      parents(func->body), branchTargets(func->body) {
+    : func(func), wasm(wasm), passOptions(passOptions),
+      localGraph(std::make_unique<LazyLocalGraph>(func, &wasm)),
+      parents(std::make_unique<Parents>(func->body)),
+      branchTargets(std::make_unique<BranchUtils::BranchTargets>(func->body)) {
 
     // Find all the relevant allocations in the function: StructNew, ArrayNew,
     // ArrayNewFixed.
@@ -1639,7 +1618,7 @@ struct Heap2Local {
         continue;
       }
       EscapeAnalyzer analyzer(
-        localGraph, scratchInfo, parents, branchTargets, passOptions, wasm);
+        *localGraph, *parents, *branchTargets, passOptions, wasm);
       if (!analyzer.escapes(allocation)) {
         // Convert the allocation and all its uses into a struct. Then convert
         // the struct into locals.
@@ -1647,6 +1626,10 @@ struct Heap2Local {
           Array2Struct(allocation, analyzer, func, wasm).structNew;
         Struct2Local(structNew, analyzer, func, wasm);
         optimized = true;
+        localGraph = std::make_unique<LazyLocalGraph>(func, &wasm);
+        parents = std::make_unique<Parents>(func->body);
+        branchTargets =
+          std::make_unique<BranchUtils::BranchTargets>(func->body);
       }
     }
 
@@ -1659,10 +1642,14 @@ struct Heap2Local {
       // Check for escaping, noting relevant information as we go. If this does
       // not escape, optimize it into locals.
       EscapeAnalyzer analyzer(
-        localGraph, scratchInfo, parents, branchTargets, passOptions, wasm);
+        *localGraph, *parents, *branchTargets, passOptions, wasm);
       if (!analyzer.escapes(allocation)) {
         Struct2Local(allocation, analyzer, func, wasm);
         optimized = true;
+        localGraph = std::make_unique<LazyLocalGraph>(func, &wasm);
+        parents = std::make_unique<Parents>(func->body);
+        branchTargets =
+          std::make_unique<BranchUtils::BranchTargets>(func->body);
       }
     }
 
