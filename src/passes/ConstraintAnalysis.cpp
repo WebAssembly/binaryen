@@ -51,7 +51,8 @@ struct Info {
 };
 
 struct ConstraintAnalysis
-  : public WalkerPass<CFGWalker<ConstraintAnalysis, Visitor<ConstraintAnalysis>, Info>> {
+  : public WalkerPass<
+      CFGWalker<ConstraintAnalysis, Visitor<ConstraintAnalysis>, Info>> {
   bool isFunctionParallel() override { return true; }
 
   // Locals are not modified here.

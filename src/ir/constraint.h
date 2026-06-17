@@ -139,7 +139,8 @@ struct LocalConstraint {
 };
 
 // A map of locals and their constraints.
-struct LocalConstraintMap : public std::unordered_map<Index, AndedConstraintSet> {
+struct LocalConstraintMap
+  : public std::unordered_map<Index, AndedConstraintSet> {
   // Perform an OR as above on each local that appears in both maps. If a local
   // appears only in one, we can infer nothing, and drop it.
   void approximateOr(const LocalConstraintMap& other);
