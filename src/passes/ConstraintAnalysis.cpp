@@ -187,7 +187,7 @@ struct ConstraintAnalysis
         // TODO: support tuples
         if (type.size() == 1 && LiteralUtils::canMakeZero(type)) {
           auto value = Literal::makeZero(type);
-          constraints[i].approximateAnd(Constraint{Abstract::Eq, value});
+          constraints[i].approximateAnd(Constraint{Abstract::Eq, {value}});
         }
       }
     }
@@ -211,7 +211,7 @@ struct ConstraintAnalysis
       localConstraints.clear();
       if (Properties::isSingleConstantExpression(set->value)) {
         auto value = Properties::getLiteral(set->value);
-        localConstraints.approximateAnd(Constraint{Abstract::Eq, value});
+        localConstraints.approximateAnd(Constraint{Abstract::Eq, {value}});
       }
     }
   }
