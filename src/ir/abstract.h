@@ -305,7 +305,7 @@ inline BinaryOp getBinary(Type type, Op op) {
 }
 
 // Negate an operation, if possible.
-std::optional<Op> negate(Op op) {
+inline std::optional<Op> negate(Op op) {
   switch (op) {
     case Eq:
       return Ne;
