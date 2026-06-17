@@ -871,6 +871,8 @@ ModuleSplitter::PrimarySecondaryUsedNames ModuleSplitter::computeUsedNames() {
   // primary module and scan it there.
   ModuleUtils::iterActiveDataSegments(primary, [&](DataSegment* segment) {
     UsedNames* owner = getOwner(segment->memory, &UsedNames::memories);
+    // Trapping segments should be kept in the primary module because they are
+    // evaluated at the instantiation time.
     if (mayTrap(segment)) {
       owner = &primaryUsed;
     }
@@ -886,6 +888,39 @@ ModuleSplitter::PrimarySecondaryUsedNames ModuleSplitter::computeUsedNames() {
 
   ModuleUtils::iterActiveElementSegments(primary, [&](ElementSegment* segment) {
     UsedNames* owner = getOwner(segment->table, &UsedNames::tables);
+
+    // If placeholders are NOT used, and if all functions in an element segment
+    // belong to a single secondary module, we can move the segment to that
+    // secondary module, because those functions aren't available until the
+    // secondary module is loaded anyway.
+    if (!config.usePlaceholders && segment->type.isFunction() &&
+        owner == &primaryUsed) {
+      bool foundSecondary = false;
+      Index secondaryIndex = 0;
+      bool keepInPrimary = false;
+      for (auto* item : segment->data) {
+        if (item->is<GlobalGet>()) {
+          keepInPrimary = true;
+          break;
+        } else if (auto* ref = item->dynCast<RefFunc>()) {
+          auto it = funcToSecondaryIndex.find(ref->func);
+          if (it == funcToSecondaryIndex.end()) {
+            keepInPrimary = true;
+            break;
+          }
+          if (foundSecondary && secondaryIndex != it->second) {
+            keepInPrimary = true;
+            break;
+          }
+          foundSecondary = true;
+          secondaryIndex = it->second;
+        }
+      }
+      if (!keepInPrimary && foundSecondary) {
+        owner = &secondaryUsed[secondaryIndex];
+      }
+    }
+
     if (mayTrap(segment)) {
       owner = &primaryUsed;
     }
