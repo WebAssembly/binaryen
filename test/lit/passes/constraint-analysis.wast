@@ -665,12 +665,18 @@
   ;; CHECK-NEXT:      (local.get $param)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $param)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (else
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (i32.eqz
   ;; CHECK-NEXT:      (local.get $param)
   ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $param)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -679,10 +685,18 @@
   ;; CHECK-NEXT:    (local.get $param)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $param)
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; OPTIN:      (func $conditional (type $0) (param $param i32)
-  ;; OPTIN-NEXT:  (drop
-  ;; OPTIN-NEXT:   (i32.eqz
+  ;; OPTIN-NEXT:  (block
+  ;; OPTIN-NEXT:   (drop
+  ;; OPTIN-NEXT:    (i32.eqz
+  ;; OPTIN-NEXT:     (local.get $param)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:   (drop
   ;; OPTIN-NEXT:    (local.get $param)
   ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
@@ -690,31 +704,171 @@
   ;; OPTIN-NEXT:   (i32.eqz
   ;; OPTIN-NEXT:    (local.get $param)
   ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (drop
+  ;; OPTIN-NEXT:   (local.get $param)
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT: )
   (func $conditional (param $param i32)
-    ;; We can infer param is non-zero in the if's first arm, but not the second
+    ;; We can infer $param is non-zero in the if's first arm, but not the second
     ;; nor after the if.
     (if
       (local.get $param)
       (then
+        ;; The first is true, the second not.
         (drop
           (i32.eqz
             (local.get $param)
           )
         )
+        (drop
+          (local.get $param)
+        )
       )
       (else
+        ;; Flipped.
         (drop
           (i32.eqz
             (local.get $param)
           )
+        )
+        (drop
+          (local.get $param)
         )
       )
     )
     (drop
       (i32.eqz
         (local.get $param)
+      )
+    )
+    (drop
+      (local.get $param)
+    )
+  )
+
+  ;; CHECK:      (func $conditional-binary (type $0) (param $param i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.eq
+  ;; CHECK-NEXT:    (local.get $param)
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.eq
+  ;; CHECK-NEXT:      (local.get $param)
+  ;; CHECK-NEXT:      (i32.const 10)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.ne
+  ;; CHECK-NEXT:      (local.get $param)
+  ;; CHECK-NEXT:      (i32.const 10)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (else
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.eq
+  ;; CHECK-NEXT:      (local.get $param)
+  ;; CHECK-NEXT:      (i32.const 10)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.ne
+  ;; CHECK-NEXT:      (local.get $param)
+  ;; CHECK-NEXT:      (i32.const 10)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.eq
+  ;; CHECK-NEXT:    (local.get $param)
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.ne
+  ;; CHECK-NEXT:    (local.get $param)
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPTIN:      (func $conditional-binary (type $0) (param $param i32)
+  ;; OPTIN-NEXT:  (block
+  ;; OPTIN-NEXT:   (drop
+  ;; OPTIN-NEXT:    (i32.eq
+  ;; OPTIN-NEXT:     (local.get $param)
+  ;; OPTIN-NEXT:     (i32.const 10)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:   (drop
+  ;; OPTIN-NEXT:    (i32.ne
+  ;; OPTIN-NEXT:     (local.get $param)
+  ;; OPTIN-NEXT:     (i32.const 10)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (drop
+  ;; OPTIN-NEXT:   (i32.eq
+  ;; OPTIN-NEXT:    (local.get $param)
+  ;; OPTIN-NEXT:    (i32.const 10)
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (drop
+  ;; OPTIN-NEXT:   (i32.ne
+  ;; OPTIN-NEXT:    (local.get $param)
+  ;; OPTIN-NEXT:    (i32.const 10)
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT: )
+  (func $conditional-binary (param $param i32)
+    ;; As above, but comparing param to 10.
+    (if
+      (i32.eq
+        (local.get $param)
+        (i32.const 10)
+      )
+      (then
+        (drop
+          (i32.eq
+            (local.get $param)
+            (i32.const 10)
+          )
+        )
+        (drop
+          (i32.ne
+            (local.get $param)
+            (i32.const 10)
+          )
+        )
+      )
+      (else
+        (drop
+          (i32.eq
+            (local.get $param)
+            (i32.const 10)
+          )
+        )
+        (drop
+          (i32.ne
+            (local.get $param)
+            (i32.const 10)
+          )
+        )
+      )
+    )
+    (drop
+      (i32.eq
+        (local.get $param)
+        (i32.const 10)
+      )
+    )
+    (drop
+      (i32.ne
+        (local.get $param)
+        (i32.const 10)
       )
     )
   )
