@@ -97,6 +97,15 @@ struct ConstraintAnalysis
     Super::doStartIfTrue(self, currp);
   }
 
+#if 0
+  static void doEndBranch(ConstraintAnalysis* self, Expression** currp) {
+    // We are right after the condition, so we are in the block before the If's
+    // branching.
+    XXX maybe leave for laterself->brancherBlocks[*currp] = self->currBasicBlock;
+    Super::doEndBranch(self, currp);
+  }
+#endif
+
   void visitFunction(Function* curr) {
     // TODO: optimize for speed, find relevant locals etc.
     flow();
