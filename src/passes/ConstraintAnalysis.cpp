@@ -67,8 +67,8 @@ struct ConstraintAnalysis
     return std::make_unique<ConstraintAnalysis>();
   }
 
-  using Super =
-    WalkerPass<CFGWalker<ConstraintAnalysis, Visitor<ConstraintAnalysis>, Info>>;
+  using Super = WalkerPass<
+    CFGWalker<ConstraintAnalysis, Visitor<ConstraintAnalysis>, Info>>;
 
   // Branches outside of the function can be ignored, as we only look at local
   // state in the function.
