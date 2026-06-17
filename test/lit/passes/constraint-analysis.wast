@@ -503,6 +503,75 @@
     )
   )
 
+  ;; CHECK:      (func $multi-block-split-yes (type $0) (param $param i32)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (i32.const 10)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (local.get $param)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (local.set $x
+  ;; CHECK-NEXT:     (i32.const 10)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPTIN:      (func $multi-block-split-yes (type $0) (param $param i32)
+  ;; OPTIN-NEXT:  (local $x i32)
+  ;; OPTIN-NEXT:  (local.set $x
+  ;; OPTIN-NEXT:   (i32.const 10)
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (if
+  ;; OPTIN-NEXT:   (local.get $param)
+  ;; OPTIN-NEXT:   (then
+  ;; OPTIN-NEXT:    (local.set $x
+  ;; OPTIN-NEXT:     (i32.const 10)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (drop
+  ;; OPTIN-NEXT:   (i32.const 1)
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (drop
+  ;; OPTIN-NEXT:   (i32.const 0)
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT: )
+  (func $multi-block-split-yes (param $param i32)
+    (local $x i32)
+    ;; As above, but now we set 10 again in the if arm.
+    (local.set $x
+      (i32.const 10)
+    )
+    (if
+      (local.get $param)
+      (then
+        (local.set $x
+          (i32.const 10)
+        )
+      )
+    )
+    ;; Now we can infer 1 and 0 here.
+    (drop
+      (i32.eq
+        (local.get $x)
+        (i32.const 10)
+      )
+    )
+    (drop
+      (i32.eq
+        (local.get $x)
+        (i32.const 20)
+      )
+    )
+  )
+
   ;; CHECK:      (func $default-var (type $0) (param $param i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (local $eq eqref)
@@ -588,3 +657,4 @@
   )
 )
 
+;; dropAll
