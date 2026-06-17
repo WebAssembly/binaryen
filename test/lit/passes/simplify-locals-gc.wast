@@ -73,7 +73,7 @@
 
   ;; CHECK:      (func $unreachable-struct.get (type $6) (param $x (ref $struct)) (param $y (ref $struct-immutable)) (result i32)
   ;; CHECK-NEXT:  (local $temp i32)
-  ;; CHECK-NEXT:  (local.tee $temp
+  ;; CHECK-NEXT:  (local.set $temp
   ;; CHECK-NEXT:   (block ;; (replaces unreachable StructGet we can't emit)
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (unreachable)

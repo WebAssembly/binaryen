@@ -2834,7 +2834,7 @@
   ;; CHECK-NEXT:  (local $temp (ref null $struct))
   ;; CHECK-NEXT:  (block ;; (replaces unreachable StructSet we can't emit)
   ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (local.tee $temp
+  ;; CHECK-NEXT:    (local.set $temp
   ;; CHECK-NEXT:     (unreachable)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
@@ -2863,7 +2863,7 @@
   ;; CHECK-NEXT:  (local $temp (ref none))
   ;; CHECK-NEXT:  (block ;; (replaces unreachable ArraySet we can't emit)
   ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (local.tee $temp
+  ;; CHECK-NEXT:    (local.set $temp
   ;; CHECK-NEXT:     (unreachable)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
@@ -2978,7 +2978,7 @@
   ;; CHECK:      (func $non-null-bottom-ref (type $45) (result (ref func))
   ;; CHECK-NEXT:  (local $0 funcref)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.tee $0
+  ;; CHECK-NEXT:   (local.set $0
   ;; CHECK-NEXT:    (loop
   ;; CHECK-NEXT:     (unreachable)
   ;; CHECK-NEXT:    )

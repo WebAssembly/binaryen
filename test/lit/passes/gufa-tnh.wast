@@ -169,8 +169,6 @@
 
   ;; CHECK:      (type $4 (func (param anyref)))
 
-  ;; CHECK:      (export "out" (func $caller))
-
   ;; CHECK:      (func $maker (type $2)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new $A
@@ -213,7 +211,8 @@
     )
   )
 
-  ;; CHECK:      (func $caller (type $4) (param $any anyref)
+  ;; CHECK:      (@binaryen.js.called)
+  ;; CHECK-NEXT: (func $caller (type $4) (param $any anyref)
   ;; CHECK-NEXT:  (local $x (ref null $A))
   ;; CHECK-NEXT:  (call $called
   ;; CHECK-NEXT:   (local.tee $x
@@ -241,7 +240,8 @@
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $caller (export "out") (param $any anyref)
+  (@binaryen.js.called)
+  (func $caller (param $any anyref)
     (local $x (ref null $A))
     ;; The called function casts to $B. This lets us infer the value of the
     ;; fallthrough ref.cast, which will turn into $B. Furthermore, that then
@@ -296,8 +296,6 @@
 
   ;; CHECK:      (type $3 (func))
 
-  ;; CHECK:      (export "out" (func $caller))
-
   ;; CHECK:      (func $maker (type $3)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new $A
@@ -340,7 +338,8 @@
     )
   )
 
-  ;; CHECK:      (func $caller (type $2) (param $a (ref null $A))
+  ;; CHECK:      (@binaryen.js.called)
+  ;; CHECK-NEXT: (func $caller (type $2) (param $a (ref null $A))
   ;; CHECK-NEXT:  (local $x (ref null $A))
   ;; CHECK-NEXT:  (call $called
   ;; CHECK-NEXT:   (local.tee $x
@@ -351,7 +350,8 @@
   ;; CHECK-NEXT:   (i32.const 20)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $caller (export "out") (param $a (ref null $A))
+  (@binaryen.js.called)
+  (func $caller (param $a (ref null $A))
     (local $x (ref null $A))
     ;; The change compared to before is that we only have a local.tee here, and
     ;; no ref.cast. We can still infer the type of the tee's value, and
@@ -362,6 +362,96 @@
       )
     )
     ;; This can be inferred to be 20.
+    (drop
+      (struct.get $A 0
+        (local.get $x)
+      )
+    )
+  )
+)
+
+;; The same module as above, but now $caller is exported instead of marked
+;; @binaryen.js.called. This makes $A public, and since we are in open-world
+;; mode, that in turn makes its subtype $B public, so we cannot infer anything
+;; about either type.
+(module
+  ;; CHECK:      (type $A (sub (struct (field (mut i32)))))
+  (type $A (sub (struct (field (mut i32)))))
+
+  ;; CHECK:      (type $B (sub $A (struct (field (mut i32)))))
+  (type $B (sub $A (struct (field (mut i32)))))
+
+  ;; CHECK:      (type $2 (func (param (ref null $A))))
+
+  ;; CHECK:      (type $3 (func))
+
+  ;; CHECK:      (export "out" (func $caller))
+
+  ;; CHECK:      (func $maker (type $3)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $A
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $B
+  ;; CHECK-NEXT:    (i32.const 20)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $maker
+    ;; A always contains 10, and B always contains 20, except that they are both
+    ;; public, so they can come in from the outside with any field value.
+    (drop
+      (struct.new $A
+        (i32.const 10)
+      )
+    )
+    (drop
+      (struct.new $B
+        (i32.const 20)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $called (type $2) (param $x (ref null $A))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast (ref $B)
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $called (param $x (ref null $A))
+    ;; Cast the input to a $B, which will help the caller.
+    (drop
+      (ref.cast (ref $B)
+        (local.get $x)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $caller (type $2) (param $a (ref null $A))
+  ;; CHECK-NEXT:  (local $x (ref null $A))
+  ;; CHECK-NEXT:  (call $called
+  ;; CHECK-NEXT:   (local.tee $x
+  ;; CHECK-NEXT:    (local.get $a)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $A 0
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $caller (export "out") (param $a (ref null $A))
+    (local $x (ref null $A))
+    ;; Despite inferring that the argument must be a $B, we still cannot
+    ;; optimize.
+    (call $called
+      (local.tee $x
+        (local.get $a)
+      )
+    )
     (drop
       (struct.get $A 0
         (local.get $x)
@@ -1146,12 +1236,6 @@
 
   ;; CHECK:      (type $5 (func))
 
-  ;; CHECK:      (export "caller-C" (func $caller-C))
-
-  ;; CHECK:      (export "caller-B" (func $caller-B))
-
-  ;; CHECK:      (export "caller-A" (func $caller-A))
-
   ;; CHECK:      (func $called (type $4) (param $x (ref null $A))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.cast (ref $B)
@@ -1204,7 +1288,8 @@
     )
   )
 
-  ;; CHECK:      (func $caller-C (type $3) (param $any anyref)
+  ;; CHECK:      (@binaryen.js.called)
+  ;; CHECK-NEXT: (func $caller-C (type $3) (param $any anyref)
   ;; CHECK-NEXT:  (local $temp-C (ref $C))
   ;; CHECK-NEXT:  (local $temp-any anyref)
   ;; CHECK-NEXT:  (call $called
@@ -1234,7 +1319,8 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $caller-C (export "caller-C") (param $any anyref)
+  (@binaryen.js.called)
+  (func $caller-C (param $any anyref)
     (local $temp-C (ref $C))
     (local $temp-any anyref)
     (call $called
@@ -1276,7 +1362,8 @@
     )
   )
 
-  ;; CHECK:      (func $caller-B (type $3) (param $any anyref)
+  ;; CHECK:      (@binaryen.js.called)
+  ;; CHECK-NEXT: (func $caller-B (type $3) (param $any anyref)
   ;; CHECK-NEXT:  (local $temp (ref $A))
   ;; CHECK-NEXT:  (call $called
   ;; CHECK-NEXT:   (local.tee $temp
@@ -1291,7 +1378,8 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $caller-B (export "caller-B") (param $any anyref)
+  (@binaryen.js.called)
+  (func $caller-B (param $any anyref)
     (local $temp (ref $A))
     (call $called
       (local.tee $temp
@@ -1307,7 +1395,8 @@
     )
   )
 
-  ;; CHECK:      (func $caller-A (type $3) (param $any anyref)
+  ;; CHECK:      (@binaryen.js.called)
+  ;; CHECK-NEXT: (func $caller-A (type $3) (param $any anyref)
   ;; CHECK-NEXT:  (local $temp (ref $A))
   ;; CHECK-NEXT:  (call $called
   ;; CHECK-NEXT:   (local.tee $temp
@@ -1322,7 +1411,8 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $caller-A (export "caller-A") (param $any anyref)
+  (@binaryen.js.called)
+  (func $caller-A (param $any anyref)
     (local $temp (ref $A))
     (call $called
       (local.tee $temp
@@ -1731,8 +1821,6 @@
   ;; CHECK:      (elem $e func)
   (elem $e funcref)
 
-  ;; CHECK:      (export "out" (func $caller))
-
   ;; CHECK:      (func $called (type $3) (param $struct.get (ref null $A)) (param $struct.set (ref null $A)) (param $array.get (ref null $B)) (param $array.set (ref null $B)) (param $array.len (ref null $B)) (param $array.copy.src (ref null $B)) (param $array.copy.dest (ref null $B)) (param $array.fill (ref null $B)) (param $array.init_data (ref null $B)) (param $array.init_elem (ref null $C)) (param $ref.test (ref null $A))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.const 0)
@@ -1859,7 +1947,8 @@
     )
   )
 
-  ;; CHECK:      (func $caller (type $4) (param $any anyref)
+  ;; CHECK:      (@binaryen.js.called)
+  ;; CHECK-NEXT: (func $caller (type $4) (param $any anyref)
   ;; CHECK-NEXT:  (call $called
   ;; CHECK-NEXT:   (ref.cast (ref $A)
   ;; CHECK-NEXT:    (local.get $any)
@@ -1896,7 +1985,8 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $caller (export "out") (param $any anyref)
+  (@binaryen.js.called)
+  (func $caller (param $any anyref)
     ;; All these casts will be refined to non-nullable, aside from the last
     ;; param which is but a ref.test.
     (call $called

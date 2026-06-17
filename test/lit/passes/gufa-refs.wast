@@ -313,7 +313,7 @@
   ;; CHECK-NEXT:  (local $x anyref)
   ;; CHECK-NEXT:  (local $y anyref)
   ;; CHECK-NEXT:  (local $z anyref)
-  ;; CHECK-NEXT:  (local.tee $x
+  ;; CHECK-NEXT:  (local.set $x
   ;; CHECK-NEXT:   (block
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (call $get-nothing)

@@ -121,13 +121,13 @@
   ;; CHECK-TEXT-NEXT:  (local $y f32)
   ;; CHECK-TEXT-NEXT:  (drop
   ;; CHECK-TEXT-NEXT:   (i64.eqz
-  ;; CHECK-TEXT-NEXT:    (local.tee $x
+  ;; CHECK-TEXT-NEXT:    (local.set $x
   ;; CHECK-TEXT-NEXT:     (unreachable)
   ;; CHECK-TEXT-NEXT:    )
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT:  (drop
-  ;; CHECK-TEXT-NEXT:   (local.tee $y
+  ;; CHECK-TEXT-NEXT:   (local.set $y
   ;; CHECK-TEXT-NEXT:    (i64.eqz
   ;; CHECK-TEXT-NEXT:     (unreachable)
   ;; CHECK-TEXT-NEXT:    )
@@ -161,7 +161,7 @@
   ;; CHECK-TEXT-NEXT:  (if
   ;; CHECK-TEXT-NEXT:   (i32.const 259)
   ;; CHECK-TEXT-NEXT:   (then
-  ;; CHECK-TEXT-NEXT:    (local.tee $0
+  ;; CHECK-TEXT-NEXT:    (local.set $0
   ;; CHECK-TEXT-NEXT:     (unreachable)
   ;; CHECK-TEXT-NEXT:    )
   ;; CHECK-TEXT-NEXT:   )
@@ -225,11 +225,8 @@
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
   ;; CHECK-BIN:      (func $untaken-break-should-have-value (type $0) (result i32)
-  ;; CHECK-BIN-NEXT:  (block
-  ;; CHECK-BIN-NEXT:   (drop
-  ;; CHECK-BIN-NEXT:    (i32.const 0)
-  ;; CHECK-BIN-NEXT:   )
-  ;; CHECK-BIN-NEXT:   (unreachable)
+  ;; CHECK-BIN-NEXT:  (drop
+  ;; CHECK-BIN-NEXT:   (i32.const 0)
   ;; CHECK-BIN-NEXT:  )
   ;; CHECK-BIN-NEXT:  (unreachable)
   ;; CHECK-BIN-NEXT: )
@@ -419,11 +416,8 @@
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
 ;; CHECK-BIN-NODEBUG:      (func $5 (type $0) (result i32)
-;; CHECK-BIN-NODEBUG-NEXT:  (block
-;; CHECK-BIN-NODEBUG-NEXT:   (drop
-;; CHECK-BIN-NODEBUG-NEXT:    (i32.const 0)
-;; CHECK-BIN-NODEBUG-NEXT:   )
-;; CHECK-BIN-NODEBUG-NEXT:   (unreachable)
+;; CHECK-BIN-NODEBUG-NEXT:  (drop
+;; CHECK-BIN-NODEBUG-NEXT:   (i32.const 0)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT:  (unreachable)
 ;; CHECK-BIN-NODEBUG-NEXT: )
