@@ -867,4 +867,108 @@
       )
     )
   )
+
+  ;; CHECK:      (func $conditional-binary-nesting (type $2) (param $x i32) (param $y i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.eq
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (i32.eq
+  ;; CHECK-NEXT:      (local.get $y)
+  ;; CHECK-NEXT:      (i32.const 20)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (then
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (i32.const 1)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (i32.const 0)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (i32.const 0)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (i32.const 1)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPTIN:      (func $conditional-binary-nesting (type $2) (param $x i32) (param $y i32)
+  ;; OPTIN-NEXT:  (if
+  ;; OPTIN-NEXT:   (i32.eq
+  ;; OPTIN-NEXT:    (local.get $x)
+  ;; OPTIN-NEXT:    (i32.const 10)
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:   (then
+  ;; OPTIN-NEXT:    (if
+  ;; OPTIN-NEXT:     (i32.eq
+  ;; OPTIN-NEXT:      (local.get $y)
+  ;; OPTIN-NEXT:      (i32.const 20)
+  ;; OPTIN-NEXT:     )
+  ;; OPTIN-NEXT:     (then
+  ;; OPTIN-NEXT:      (drop
+  ;; OPTIN-NEXT:       (i32.const 1)
+  ;; OPTIN-NEXT:      )
+  ;; OPTIN-NEXT:      (drop
+  ;; OPTIN-NEXT:       (i32.const 0)
+  ;; OPTIN-NEXT:      )
+  ;; OPTIN-NEXT:      (drop
+  ;; OPTIN-NEXT:       (i32.const 0)
+  ;; OPTIN-NEXT:      )
+  ;; OPTIN-NEXT:      (drop
+  ;; OPTIN-NEXT:       (i32.const 1)
+  ;; OPTIN-NEXT:      )
+  ;; OPTIN-NEXT:     )
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT: )
+  (func $conditional-binary-nesting (param $x i32) (param $y i32)
+    (if
+      (i32.eq
+        (local.get $x)
+        (i32.const 10)
+      )
+      (then
+        (if
+          (i32.eq
+            (local.get $y)
+            (i32.const 20)
+          )
+          (then
+            ;; x is 10 here, and y is 20.
+            (drop
+              (i32.eq
+                (local.get $x)
+                (i32.const 10)
+              )
+            )
+            (drop
+              (i32.eq
+                (local.get $x)
+                (i32.const 20)
+              )
+            )
+            (drop
+              (i32.eq
+                (local.get $y)
+                (i32.const 10)
+              )
+            )
+            (drop
+              (i32.eq
+                (local.get $y)
+                (i32.const 20)
+              )
+            )
+          )
+        )
+      )
+    )
+  )
 )
