@@ -235,7 +235,7 @@ struct ConstraintAnalysis
     }
 
     if (auto* iff = brancher->dynCast<If>()) {
-      auto parsed = LocalConstraint::parse(iff->condition);
+      auto parsed = LocalConstraint::parseBoolean(iff->condition);
       if (!parsed) {
         return predEnd;
       }

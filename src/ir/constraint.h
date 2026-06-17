@@ -139,6 +139,10 @@ struct LocalConstraint {
   //   LocalConstraint($r, { x == 10 })
   //
   static std::optional<LocalConstraint> parse(Expression* curr);
+
+  // Parse in a boolean context, i.e., where (local.get $x) is the same as
+  // $x != 0 (e.g., in an if condition).
+  static std::optional<LocalConstraint> parseBoolean(Expression* curr);
 };
 
 // A map of locals and their constraints.
