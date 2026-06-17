@@ -18,6 +18,7 @@
 #define wasm_stack_h
 
 #include "ir/branch-utils.h"
+#include "ir/find_all.h"
 #include "ir/module-utils.h"
 #include "ir/properties.h"
 #include "pass.h"
@@ -123,6 +124,7 @@ public:
   // emit an end at the end of a function
   void emitFunctionEnd();
   void emitUnreachable();
+  void emitUnreachableLocalSet(Index index);
   void mapLocalsAndEmitHeader();
 
   MappedLocals mappedLocals;
@@ -243,11 +245,16 @@ private:
   void emitScopeEnd(Expression* curr) {
     static_cast<SubType*>(this)->emitScopeEnd(curr);
   }
-  void emitFunctionEnd() { static_cast<SubType*>(this)->emitFunctionEnd(); }
-  void emitUnreachable() { static_cast<SubType*>(this)->emitUnreachable(); }
+  SubType& self() { return *static_cast<SubType*>(this); }
+  void emitFunctionEnd() { self().emitFunctionEnd(); }
+  void emitUnreachable() { self().emitUnreachable(); }
+  void emitUnreachableLocalSet(Index index) {
+    self().emitUnreachableLocalSet(index);
+  }
   void emitDebugLocation(Expression* curr) {
     static_cast<SubType*>(this)->emitDebugLocation(curr);
   }
+  void emitUnreachableLocalSets(Expression* curr);
   void visitPossibleBlockContents(Expression* curr);
 };
 
@@ -256,6 +263,23 @@ template<typename SubType> void BinaryenIRWriter<SubType>::write() {
   emitHeader();
   visitPossibleBlockContents(func->body);
   emitFunctionEnd();
+}
+
+// Normally we do not emit any instructions between a stack-polymorphic (i.e.
+// unreachable) instruction and the end of the current control flow structure.
+// However, local.sets of non-nullable locals in these unreachable regions can
+// still be necessary to make later local.gets valid. We can emit just these
+// sets without emitting their values; they will pull whatever type they need
+// out of the unreachable. This works no matter what type the current control
+// flow structure returns; it will also pull whatever values it needs out of the
+// unreachable, and the sets will not push any values to get in the way.
+template<typename SubType>
+void BinaryenIRWriter<SubType>::emitUnreachableLocalSets(Expression* curr) {
+  for (auto* set : FindAll<LocalSet>(curr).list) {
+    if (func->getLocalType(set->index).isNonNullable()) {
+      emitUnreachableLocalSet(set->index);
+    }
+  }
 }
 
 // Emits a node in a position that can contain a list of contents, like an if
@@ -279,10 +303,12 @@ void BinaryenIRWriter<SubType>::visitPossibleBlockContents(Expression* curr) {
   }
   for (auto* child : block->list) {
     visit(child);
-    // Since this child was unreachable, either this child or one of its
-    // descendants was a source of unreachability that was actually
-    // emitted. Subsequent children won't be reachable, so skip them.
     if (child->type == Type::unreachable) {
+      // Since this child was unreachable, either this child or one of its
+      // descendants was a source of unreachability that was actually
+      // emitted. Subsequent children won't be reachable, so skip them. We also
+      // don't have to worry about local.sets here because they will not be
+      // visible past the end of the surrounding control flow structure anyway.
       break;
     }
   }
@@ -294,19 +320,29 @@ void BinaryenIRWriter<SubType>::visit(Expression* curr) {
   // unreachable instructions that just inherit unreachability from their
   // children, since the latter won't be reached. This (together with logic in
   // the control flow visitors) also ensures that the final instruction in each
-  // unreachable block is a source of unreachability, which means we don't need
-  // to emit an extra `unreachable` before the end of the block to prevent type
-  // errors.
-  bool hasUnreachableChild = false;
+  // unreachable block is a source of unreachability (possibly followed by a
+  // sequence of local.sets), which means we don't need to emit an extra
+  // `unreachable` before the end of the block to prevent type errors.
+  bool sawUnreachable = false;
   for (auto* child : ValueChildIterator(curr)) {
+    if (sawUnreachable) {
+      emitUnreachableLocalSets(child);
+      continue;
+    }
     visit(child);
     if (child->type == Type::unreachable) {
-      hasUnreachableChild = true;
-      break;
+      // Skip the following children, except for necessary local.sets they
+      // contain.
+      sawUnreachable = true;
     }
   }
-  if (hasUnreachableChild) {
-    // `curr` is not reachable, so don't emit it.
+  if (sawUnreachable) {
+    // `curr` is not reachable, so don't emit it unless it is a
+    // potentially-necessary local.set itself.
+    if (auto* set = curr->dynCast<LocalSet>();
+        set && func->getLocalType(set->index).isNonNullable()) {
+      emitUnreachableLocalSet(set->index);
+    }
     return;
   }
   emitDebugLocation(curr);
@@ -323,13 +359,17 @@ template<typename SubType>
 void BinaryenIRWriter<SubType>::visitBlock(Block* curr) {
   auto visitChildren = [this](Block* curr, Index from) {
     auto& list = curr->list;
-    while (from < list.size()) {
-      auto* child = list[from];
+    bool sawUnreachable = false;
+    for (Index i = from; i < list.size(); ++i) {
+      auto* child = list[i];
+      if (sawUnreachable) {
+        emitUnreachableLocalSets(child);
+        continue;
+      }
       visit(child);
       if (child->type == Type::unreachable) {
-        break;
+        sawUnreachable = true;
       }
-      ++from;
     }
   };
 
@@ -354,6 +394,10 @@ void BinaryenIRWriter<SubType>::visitBlock(Block* curr) {
   }
 
   auto afterChildren = [this](Block* curr) {
+    if (!curr->name) {
+      // Not emitting a block, so continue on in the parent.
+      return;
+    }
     emitScopeEnd(curr);
     if (curr->type == Type::unreachable) {
       // Since this block is unreachable, no instructions will be emitted after
@@ -376,13 +420,17 @@ void BinaryenIRWriter<SubType>::visitBlock(Block* curr) {
     Block* child;
     while (!curr->list.empty() && (child = curr->list[0]->dynCast<Block>())) {
       parents.push_back(curr);
-      emit(curr);
+      if (curr->name) {
+        emit(curr);
+      }
       curr = child;
       emitDebugLocation(curr);
     }
     // Emit the current block, which does not have a block as a child in the
     // first position.
-    emit(curr);
+    if (curr->name) {
+      emit(curr);
+    }
     visitChildren(curr, 0);
     afterChildren(curr);
     bool childUnreachable = curr->type == Type::unreachable;
@@ -391,6 +439,9 @@ void BinaryenIRWriter<SubType>::visitBlock(Block* curr) {
       auto* parent = parents.back();
       parents.pop_back();
       if (!childUnreachable) {
+        // No need to emit unreachable sets here because we will skip everything
+        // up to the end of the next named block, which would hide their effects
+        // anyway.
         visitChildren(parent, 1);
       }
       afterChildren(parent);
@@ -504,6 +555,9 @@ public:
     writer.emitFunctionEnd();
   }
   void emitUnreachable() { writer.emitUnreachable(); }
+  void emitUnreachableLocalSet(Index index) {
+    writer.emitUnreachableLocalSet(index);
+  }
   void emitDebugLocation(Expression* curr) {
     if (sourceMap) {
       parent.writeSourceMapLocation(curr, func);

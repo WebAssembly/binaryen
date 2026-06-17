@@ -127,7 +127,7 @@
 
  ;; CHECK-TEXT:      (func $unreachable (type $2) (param $k (ref null $ct)) (result i32)
  ;; CHECK-TEXT-NEXT:  (return
- ;; CHECK-TEXT-NEXT:   (local.tee $k
+ ;; CHECK-TEXT-NEXT:   (local.set $k
  ;; CHECK-TEXT-NEXT:    (block ;; (replaces unreachable StackSwitch we can't emit)
  ;; CHECK-TEXT-NEXT:     (drop
  ;; CHECK-TEXT-NEXT:      (i32.const 42)
