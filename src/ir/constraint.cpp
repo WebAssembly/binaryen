@@ -177,10 +177,10 @@ std::optional<LocalConstraint> LocalConstraint::parse(Expression* curr) {
   // Parse a get or a constant.
   auto parseTerm = [&](Expression* expr) -> std::optional<Term> {
     if (auto* get = expr->dynCast<LocalGet>()) {
-      return Term(get->index);
+      return Term{get->index};
     }
     if (Properties::isSingleConstantExpression(expr)) {
-      return Term(Properties::getLiteral(expr));
+      return Term{Properties::getLiteral(expr)};
     }
     return {};
   };
