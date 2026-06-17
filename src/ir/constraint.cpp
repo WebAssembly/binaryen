@@ -161,6 +161,12 @@ void AndedConstraintSet::approximateOr(const AndedConstraintSet& other) {
 }
 
 std::optional<LocalConstraint> LocalConstraint::parse(Expression* curr) {
+  // A get by itself is a check for not being null.
+  if (auto* get = curr->dynCast<LocalGet>()) {
+    auto value = Literal::makeZero(get->type);
+    return LocalConstraint{get->index, Constraint{Abstract::Ne, {value}}};
+  }
+
   auto parseEqZ = [&](Expression* value) -> std::optional<LocalConstraint> {
     if (auto* get = value->dynCast<LocalGet>()) {
       // Canonicalize EqZ to Eq of 0.

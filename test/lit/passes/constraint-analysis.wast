@@ -655,4 +655,67 @@
       )
     )
   )
+
+  ;; CHECK:      (func $conditional (type $0) (param $param i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (local.get $param)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.eqz
+  ;; CHECK-NEXT:      (local.get $param)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (else
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.eqz
+  ;; CHECK-NEXT:      (local.get $param)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (local.get $param)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPTIN:      (func $conditional (type $0) (param $param i32)
+  ;; OPTIN-NEXT:  (drop
+  ;; OPTIN-NEXT:   (i32.eqz
+  ;; OPTIN-NEXT:    (local.get $param)
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (drop
+  ;; OPTIN-NEXT:   (i32.eqz
+  ;; OPTIN-NEXT:    (local.get $param)
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT: )
+  (func $conditional (param $param i32)
+    ;; We can infer param is non-zero in the if's first arm, but not the second
+    ;; nor after the if.
+    (if
+      (local.get $param)
+      (then
+        (drop
+          (i32.eqz
+            (local.get $param)
+          )
+        )
+      )
+      (else
+        (drop
+          (i32.eqz
+            (local.get $param)
+          )
+        )
+      )
+    )
+    (drop
+      (i32.eqz
+        (local.get $param)
+      )
+    )
+  )
 )
