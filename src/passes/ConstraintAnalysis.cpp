@@ -255,43 +255,7 @@ struct ConstraintAnalysis
       return getConstraintsFromBrOn(pred, succ, predEnd, br);
     }
     // TODO: Switch
-    // TODO: BrOn
     return predEnd;
-  }
-
-  const LocalConstraintMap
-  getConstraintsFromBrOn(BasicBlock* pred,
-                         BasicBlock* succ,
-                         const LocalConstraintMap& predEnd,
-                         BrOn* brOn) {
-    // We only handle br_on of a local.
-    auto* get = brOn->ref->dynCast<LocalGet>();
-    if (!get) {
-      return predEnd;
-    }
-
-    // The constraint on that local depends on the op.
-    Constraint constraint;
-    switch (brOn->op) {
-      case BrOnNull:
-      case BrOnNonNull: {
-        // The first block that pred branches to is ifFalse (the immediate
-        // successor, which is adjacent to the current block, and simply falls
-        // through), so BrOnNull needs "!= null" here, which is true when we
-        // reach that first block.
-        auto op = brOn->op == BrOnNull ? Abstract::Ne : Abstract::Eq;
-        auto nullType = get->type.getHeapType().getBottom();
-        auto zero = Literal::makeZero(Type(nullType, Nullable));
-        constraint = Constraint{op, zero};
-        break;
-      }
-      default:
-        // TODO: Handle BrOnCast* etc using subtyping operations.
-        return predEnd;
-    }
-
-    return getConstraintsFromParsed(
-      pred, succ, predEnd, LocalConstraint{get->index, constraint});
   }
 
   // Gets constraints from pred to succ, given a parsed LocalConstraint, which
@@ -333,6 +297,41 @@ struct ConstraintAnalysis
     auto combined = predEnd;
     combined[local].approximateAnd(constraint);
     return combined;
+  }
+
+  const LocalConstraintMap
+  getConstraintsFromBrOn(BasicBlock* pred,
+                         BasicBlock* succ,
+                         const LocalConstraintMap& predEnd,
+                         BrOn* brOn) {
+    // We only handle br_on of a local.
+    auto* get = brOn->ref->dynCast<LocalGet>();
+    if (!get) {
+      return predEnd;
+    }
+
+    // The constraint on that local depends on the op.
+    Constraint constraint;
+    switch (brOn->op) {
+      case BrOnNull:
+      case BrOnNonNull: {
+        // The first block that pred branches to is ifFalse (the immediate
+        // successor, which is adjacent to the current block, and simply falls
+        // through), so BrOnNull needs "!= null" here, which is true when we
+        // reach that first block.
+        auto op = brOn->op == BrOnNull ? Abstract::Ne : Abstract::Eq;
+        auto nullType = get->type.getHeapType().getBottom();
+        auto zero = Literal::makeZero(Type(nullType, Nullable));
+        constraint = Constraint{op, zero};
+        break;
+      }
+      default:
+        // TODO: Handle BrOnCast* etc using subtyping operations.
+        return predEnd;
+    }
+
+    return getConstraintsFromParsed(
+      pred, succ, predEnd, LocalConstraint{get->index, constraint});
   }
 
   // Given an expression, apply it to the constraints. For example, a local.set
