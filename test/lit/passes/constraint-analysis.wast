@@ -579,16 +579,10 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (loop $loop
   ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (i32.eq
-  ;; CHECK-NEXT:     (local.get $x)
-  ;; CHECK-NEXT:     (i32.const 10)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (i32.ne
-  ;; CHECK-NEXT:     (local.get $x)
-  ;; CHECK-NEXT:     (i32.const 20)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (br_if $loop
   ;; CHECK-NEXT:    (local.get $param)
@@ -602,10 +596,7 @@
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (loop $loop
   ;; OPTIN-NEXT:   (drop
-  ;; OPTIN-NEXT:    (i32.eq
-  ;; OPTIN-NEXT:     (local.get $x)
-  ;; OPTIN-NEXT:     (i32.const 10)
-  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:    (i32.const 1)
   ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:   (drop
   ;; OPTIN-NEXT:    (i32.const 1)
