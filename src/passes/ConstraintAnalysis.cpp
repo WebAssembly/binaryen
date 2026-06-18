@@ -237,8 +237,7 @@ struct ConstraintAnalysis
     }
 
     if (auto* iff = brancher->dynCast<If>()) {
-      return getConstraintsFromParsed(
-        pred, succ, predEnd, LocalConstraint::parseBoolean(iff->condition));
+      return getConstraintsFromIf(pred, succ, predEnd, iff);
     } else if (auto* br = brancher->dynCast<Break>()) {
       return getConstraintsFromBreak(pred, succ, predEnd, br);
     } else if (auto* br = brancher->dynCast<BrOn>()) {
@@ -287,6 +286,16 @@ struct ConstraintAnalysis
     auto combined = predEnd;
     combined[local].approximateAnd(constraint);
     return combined;
+  }
+
+  const LocalConstraintMap
+  getConstraintsFromIf(BasicBlock* pred,
+                       BasicBlock* succ,
+                       const LocalConstraintMap& predEnd,
+                       If* iff) {
+    // Simply parse the condition and use that.
+    return getConstraintsFromParsed(
+      pred, succ, predEnd, LocalConstraint::parseBoolean(iff->condition));
   }
 
   const LocalConstraintMap
