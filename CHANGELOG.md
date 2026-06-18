@@ -16,8 +16,8 @@ Current Trunk
 -------------
 
 - Add relaxed atomics support for atomic fences (#8845). Breaks the C and JS
-  apis; the BinaryenAtomicFence / module.atomic.fence now take a memory order
-  param. Use BinaryenMemoryOrderSeqCst() / binaryen.MemoryOrder.seqcst to
+  APIs; BinaryenAtomicFence / module.atomic.fence now take a memory order param.
+  Use BinaryenMemoryOrderSeqCst() / binaryen.MemoryOrder.seqcst to
   preserve the original behavior.
 
 v130

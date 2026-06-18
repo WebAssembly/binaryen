@@ -1502,8 +1502,8 @@ BinaryenExpressionRef BinaryenAtomicNotify(BinaryenModuleRef module,
 }
 BinaryenExpressionRef BinaryenAtomicFence(BinaryenModuleRef module,
                                           BinaryenMemoryOrder order) {
-  return static_cast<Expression*>(
-    Builder(*(Module*)module).makeAtomicFence(static_cast<MemoryOrder>(order)));
+  return Builder(*(Module*)module)
+    .makeAtomicFence(static_cast<MemoryOrder>(order));
 }
 BinaryenExpressionRef BinaryenSIMDExtract(BinaryenModuleRef module,
                                           BinaryenOp op,
