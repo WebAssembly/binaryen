@@ -51,8 +51,12 @@ struct Info {
   Expression* brancher = nullptr;
 
   // For each local index, we track the constraints we know about it. We only do
-  // so at the end of each block, which is enough for the analysis below.
-  LocalConstraintMap endConstraints;
+  // so at the start of each block, which is enough for the analysis below.
+  //
+  // We use an optional here to represent the "null" state before any
+  // information arrives. (From the perspective of set theory, nullopt can be
+  // taken to mean the empty set is the set of values possible for each local.)
+  std::optional<LocalConstraintMap> startConstraints;
 };
 
 struct ConstraintAnalysis
@@ -107,6 +111,10 @@ struct ConstraintAnalysis
 #endif
 
   void visitFunction(Function* curr) {
+    if (!entry) {
+      // Body is unreachable, no entry block.
+      return;
+    }
     // TODO: optimize for speed, find relevant locals etc.
     flow();
     optimize();
@@ -115,27 +123,53 @@ struct ConstraintAnalysis
   // Flow infos around until we have inferred all we can about the constraints
   // in each location.
   void flow() {
-    // Start from all the blocks, and keep going while we find something new.
-    UniqueDeferredQueue<BasicBlock*> work;
-    for (auto& block : basicBlocks) {
-      work.push(block.get());
+    // Start from the entry. That block has incoming values - defaults - for
+    // each var.
+    auto& entryConstraints = entry->contents.startConstraints;
+    entryConstraints.emplace();
+    auto* func = getFunction();
+    auto numLocals = func->getNumLocals();
+    for (Index i = 0; i < numLocals; i++) {
+      if (!func->isVar(i)) {
+        continue;
+      }
+      auto type = func->getLocalType(i);
+      // TODO: support tuples
+      if (type.size() == 1 && LiteralUtils::canMakeZero(type)) {
+        auto value = Literal::makeZero(type);
+        (*entryConstraints)[i].approximateAnd(
+          Constraint{Abstract::Eq, {value}});
+      }
     }
+
+    // Starting from the entry, keep going while we find something new.
+    UniqueDeferredQueue<BasicBlock*> work;
+    work.push(entry);
     while (!work.empty()) {
       auto* block = work.pop();
 
-      // Merge incoming data to get the status at the start of the block.
-      LocalConstraintMap constraints = mergeIncoming(block);
-
-      // Go through the block, applying things.
+      // Start at the top of the block, then go through, applying things.
+      LocalConstraintMap constraints = *block->contents.startConstraints;
       for (auto** currp : block->contents.actions) {
         applyToConstraints(*currp, constraints);
       }
 
-      // We now know the values at the end of the block. If something changed,
-      // flow it onward.
-      if (constraints != block->contents.endConstraints) {
-        block->contents.endConstraints = std::move(constraints);
-        for (auto* out : block->out) {
+      // We now know the values at the end of the block. Flow it onward, and
+      // where it causes changes, queue more work.
+      for (auto* out : block->out) {
+        auto sentConstraints = getConstraintsFromPredToSucc(block, out, constraints);
+        auto& outConstraints = out->contents.startConstraints;
+        if (!outConstraints) {
+          // This is the first data arriving.
+          outConstraints.emplace(sentConstraints);
+          work.push(out);
+          continue;
+        }
+
+        // This is later data, which may or may not cause changes.
+        auto old = outConstraints;
+        outConstraints->approximateOr(sentConstraints);
+        if (*outConstraints != old) {
           work.push(out);
         }
       }
@@ -148,10 +182,15 @@ struct ConstraintAnalysis
       // Follow the general shape of flow(): we need to see what the state is
       // at each intermediate point inside the block. (Flowing between blocks is
       // of course not needed at this stage.)
-      LocalConstraintMap constraints = mergeIncoming(block.get());
+      auto& constraints = block->contents.startConstraints;
+      if (!constraints) {
+        // Unreachable.
+        continue;
+      }
+
       for (auto** currp : block->contents.actions) {
-        applyToConstraints(*currp, constraints);
-        optimizeExpression(currp, constraints);
+        applyToConstraints(*currp, *constraints);
+        optimizeExpression(currp, *constraints);
       }
     }
   }
@@ -185,49 +224,13 @@ struct ConstraintAnalysis
       curr, wasm, getPassOptions(), value, DropMode::IgnoreParentEffects);
   }
 
-  // Merge incoming data to a block, by looking at the data arriving from each
-  // of the predecessor blocks.
-  LocalConstraintMap mergeIncoming(BasicBlock* block) {
-    LocalConstraintMap constraints;
-
-    // Merge all preds.
-    for (auto* pred : block->in) {
-      auto& predConstraints = getConstraintsFromPredToSucc(pred, block);
-      if (pred == *block->in.begin()) {
-        // This is the first.
-        constraints = std::move(predConstraints);
-      } else {
-        // Merge in subsequent ones.
-        constraints.approximateOr(predConstraints);
-      }
-    }
-
-    // The entry block has incoming values - defaults - for each var.
-    if (block == entry) {
-      auto* func = getFunction();
-      auto numLocals = func->getNumLocals();
-      for (Index i = 0; i < numLocals; i++) {
-        if (!func->isVar(i)) {
-          continue;
-        }
-        auto type = func->getLocalType(i);
-        // TODO: support tuples
-        if (type.size() == 1 && LiteralUtils::canMakeZero(type)) {
-          auto value = Literal::makeZero(type);
-          constraints[i].approximateAnd(Constraint{Abstract::Eq, {value}});
-        }
-      }
-    }
-
-    return constraints;
-  }
-
-  // Given a source (predecessor) and a target (successor) block, find the
-  // constraints for locals as they arrive to that target from that successor.
+  // Given a predecessor and one of its successors, find the constraints that
+  // flow to that specific successor, given the constraints at the end of the
+  // predecessor.
   const LocalConstraintMap getConstraintsFromPredToSucc(BasicBlock* pred,
-                                                        BasicBlock* block) {
+                                                        BasicBlock* succ,
+                                                        const LocalConstraintMap& predEnd) {
     auto* brancher = pred->contents.brancher;
-    auto& predEnd = pred->contents.endConstraints;
     if (!brancher) {
       // No branching instruction to reason about. Just return what is at the
       // end of the pred, no matter where we go.
@@ -247,7 +250,7 @@ struct ConstraintAnalysis
       // puts the ifTrue first in the successors.
       auto& predOut = pred->out;
       assert(predOut.size() == 2);
-      if (block == predOut[1]) {
+      if (succ == predOut[1]) {
         // This is the ifFalse.
         if (auto negated = constraint.negate()) {
           constraint = *negated;
@@ -257,7 +260,7 @@ struct ConstraintAnalysis
         }
       } else {
         // It must be the ifTrue.
-        assert(block == predOut[0]);
+        assert(succ == predOut[0]);
       }
       auto combined = predEnd;
       combined[local].approximateAnd(constraint);

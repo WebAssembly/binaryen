@@ -153,6 +153,10 @@ struct LocalConstraintMap
   void approximateOr(const LocalConstraintMap& other);
 };
 
+std::ostream& operator<<(std::ostream& o, const Constraint& constraint);
+std::ostream& operator<<(std::ostream& o,
+                         const AndedConstraintSet& constraints);
+
 } // namespace wasm::constraint
 
 #endif // wasm_ir_constraint_h

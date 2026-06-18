@@ -133,12 +133,9 @@ void AndedConstraintSet::approximateAnd(const Constraint& c) {
 
 void AndedConstraintSet::approximateOr(const AndedConstraintSet& other) {
   // If one is empty (no constraints, everything is true, and we can prove
-  // nothing useful) then it does not add anything to the other.
-  if (empty()) {
-    *this = other;
-    return;
-  }
-  if (other.empty()) {
+  // nothing useful) then we can prove nothing after the OR.
+  if (empty() || other.empty()) {
+    clear();
     return;
   }
 
@@ -249,6 +246,33 @@ void LocalConstraintMap::approximateOr(const LocalConstraintMap& other) {
     const auto& [local, constraints] = item;
     return !other.contains(local);
   });
+}
+
+std::ostream& operator<<(std::ostream& o, const Constraint& constraint) {
+  o << "Constraint{" << /*constraint.op <<*/ ", ";
+  if (auto* c = std::get_if<Literal>(&constraint.term)) {
+    o << *c;
+  } else if (auto* i = std::get_if<Index>(&constraint.term)) {
+    o << "Index(" << *i << ')';
+  }
+  o << '}';
+  return o;
+}
+
+std::ostream& operator<<(std::ostream& o,
+                         const AndedConstraintSet& constraints) {
+  o << "AndedConstraintSet{";
+  bool first = true;
+  for (auto& constraint : constraints) {
+    if (first) {
+      first = false;
+    } else {
+      o << ", ";
+    }
+    o << constraint;
+  }
+  o << '}';
+  return o;
 }
 
 } // namespace wasm::constraint

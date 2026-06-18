@@ -572,6 +572,146 @@
     )
   )
 
+  ;; CHECK:      (func $loop (type $0) (param $param i32)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (i32.const 10)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (loop $loop
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (br_if $loop
+  ;; CHECK-NEXT:    (local.get $param)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPTIN:      (func $loop (type $0) (param $param i32)
+  ;; OPTIN-NEXT:  (local $x i32)
+  ;; OPTIN-NEXT:  (local.set $x
+  ;; OPTIN-NEXT:   (i32.const 10)
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (loop $loop
+  ;; OPTIN-NEXT:   (drop
+  ;; OPTIN-NEXT:    (i32.const 1)
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:   (drop
+  ;; OPTIN-NEXT:    (i32.const 1)
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:   (br_if $loop
+  ;; OPTIN-NEXT:    (local.get $param)
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT: )
+  (func $loop (param $param i32)
+    (local $x i32)
+    ;; Set $x to 10 before the loop.
+    (local.set $x
+      (i32.const 10)
+    )
+    (loop $loop
+      ;; Despite the backedges, we can infer x is 10 and not 20.
+      (drop
+        (i32.eq
+          (local.get $x)
+          (i32.const 10)
+        )
+      )
+      (drop
+        (i32.ne
+          (local.get $x)
+          (i32.const 20)
+        )
+      )
+      (br_if $loop
+        (local.get $param)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $loop-no (type $0) (param $param i32)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (i32.const 10)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (loop $loop
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.eq
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i32.const 10)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.ne
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i32.const 20)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.set $x
+  ;; CHECK-NEXT:    (i32.const 20)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (br_if $loop
+  ;; CHECK-NEXT:    (local.get $param)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPTIN:      (func $loop-no (type $0) (param $param i32)
+  ;; OPTIN-NEXT:  (local $x i32)
+  ;; OPTIN-NEXT:  (local.set $x
+  ;; OPTIN-NEXT:   (i32.const 10)
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (loop $loop
+  ;; OPTIN-NEXT:   (drop
+  ;; OPTIN-NEXT:    (i32.eq
+  ;; OPTIN-NEXT:     (local.get $x)
+  ;; OPTIN-NEXT:     (i32.const 10)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:   (drop
+  ;; OPTIN-NEXT:    (i32.ne
+  ;; OPTIN-NEXT:     (local.get $x)
+  ;; OPTIN-NEXT:     (i32.const 20)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:   (local.set $x
+  ;; OPTIN-NEXT:    (i32.const 20)
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:   (br_if $loop
+  ;; OPTIN-NEXT:    (local.get $param)
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT: )
+  (func $loop-no (param $param i32)
+    (local $x i32)
+    ;; As above, but now with another value set in the loop. We cannot infer.
+    (local.set $x
+      (i32.const 10)
+    )
+    (loop $loop
+      (drop
+        (i32.eq
+          (local.get $x)
+          (i32.const 10)
+        )
+      )
+      (drop
+        (i32.ne
+          (local.get $x)
+          (i32.const 20)
+        )
+      )
+      (local.set $x
+        (i32.const 20)
+      )
+      (br_if $loop
+        (local.get $param)
+      )
+    )
+  )
+
   ;; CHECK:      (func $default-var (type $0) (param $param i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (local $eq eqref)
