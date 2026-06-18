@@ -154,7 +154,8 @@ void AndedConstraintSet::approximateOr(const AndedConstraintSet& other) {
 }
 
 std::optional<LocalConstraint> LocalConstraint::parse(Expression* curr) {
-  auto parseEqZArgument = [&](Expression* value) -> std::optional<LocalConstraint> {
+  auto parseEqZArgument =
+    [&](Expression* value) -> std::optional<LocalConstraint> {
     if (auto* get = value->dynCast<LocalGet>()) {
       // Canonicalize EqZ to Eq of 0.
       auto value = Literal::makeZero(get->type);
@@ -186,9 +187,10 @@ std::optional<LocalConstraint> LocalConstraint::parse(Expression* curr) {
     return {};
   };
 
-  auto parseBinaryArguments = [&](Abstract::Op op,
-                         Expression* left,
-                         Expression* right) -> std::optional<LocalConstraint> {
+  auto parseBinaryArguments =
+    [&](Abstract::Op op,
+        Expression* left,
+        Expression* right) -> std::optional<LocalConstraint> {
     // The left must be a get.
     if (auto* get = left->dynCast<LocalGet>()) {
       // The right can be any term.
