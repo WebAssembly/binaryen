@@ -1148,7 +1148,9 @@
     (drop
       ;; Then `expected` gets optimized, creating a new scratch local. Since the
       ;; flower is already created, the index of the scratch local would be out
-      ;; of bounds if we tried to look it up in the LocalGraph.
+      ;; of bounds if we tried to look it up in the original LocalGraph. This
+      ;; still works fine because we reset the LocalGraph after each
+      ;; optimization.
       (struct.atomic.rmw.cmpxchg $struct 0
         (struct.new_default $struct)
         (array.new_fixed $inner 0)

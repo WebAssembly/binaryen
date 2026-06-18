@@ -374,7 +374,10 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $cast-desc-eq-fail-reverse (param $desc (ref null (exact $super.desc)))
-    ;; Same as above, but change where the parameter is used.
+    ;; Same as above, but change where the parameter is used. We can optimize
+    ;; more because we do not have one non-escaping allocation flowing into
+    ;; another non-escaping allocation (which would currently require multiple
+    ;; runs to fully optimize).
     (drop
       (ref.cast_desc_eq (ref (exact $super))
         (struct.new_desc $super
