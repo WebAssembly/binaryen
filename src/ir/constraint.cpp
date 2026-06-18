@@ -241,7 +241,8 @@ std::ostream& operator<<(std::ostream& o, const Constraint& constraint) {
   return o;
 }
 
-std::ostream& operator<<(std::ostream& o, const AndedConstraintSet& constraints) {
+std::ostream& operator<<(std::ostream& o,
+                         const AndedConstraintSet& constraints) {
   o << "AndedConstraintSet{";
   bool first = true;
   for (auto& constraint : constraints) {

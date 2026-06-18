@@ -110,7 +110,8 @@ struct ConstraintAnalysis
       // TODO: support tuples
       if (type.size() == 1 && LiteralUtils::canMakeZero(type)) {
         auto value = Literal::makeZero(type);
-        (*entryConstraints)[i].approximateAnd(Constraint{Abstract::Eq, {value}});
+        (*entryConstraints)[i].approximateAnd(
+          Constraint{Abstract::Eq, {value}});
       }
     }
 

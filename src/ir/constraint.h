@@ -147,7 +147,8 @@ struct LocalConstraintMap
 };
 
 std::ostream& operator<<(std::ostream& o, const Constraint& constraint);
-std::ostream& operator<<(std::ostream& o, const AndedConstraintSet& constraints);
+std::ostream& operator<<(std::ostream& o,
+                         const AndedConstraintSet& constraints);
 
 } // namespace wasm::constraint
 
