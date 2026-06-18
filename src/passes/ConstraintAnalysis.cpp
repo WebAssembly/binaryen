@@ -243,6 +243,8 @@ struct ConstraintAnalysis
       return getConstraintsFromBooleanBranch(
         pred, succ, predEnd, br->condition);
     }
+    // TODO: Switch
+    // TODO: BrOn
 
     WASM_UNREACHABLE("unhandled branch");
   }
@@ -255,7 +257,6 @@ struct ConstraintAnalysis
                                   BasicBlock* succ,
                                   const LocalConstraintMap& predEnd,
                                   Expression* condition) {
-
     auto parsed = LocalConstraint::parseBoolean(condition);
     if (!parsed) {
       return predEnd;
