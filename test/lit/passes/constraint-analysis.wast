@@ -1008,7 +1008,7 @@
     )
   )
 
-  ;; CHECK:      (func $conditional-binary-nesting (type $2) (param $x i32) (param $y i32)
+  ;; CHECK:      (func $conditional-binary-nesting (type $3) (param $x i32) (param $y i32)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.eq
   ;; CHECK-NEXT:    (local.get $x)
@@ -1038,7 +1038,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; OPTIN:      (func $conditional-binary-nesting (type $2) (param $x i32) (param $y i32)
+  ;; OPTIN:      (func $conditional-binary-nesting (type $3) (param $x i32) (param $y i32)
   ;; OPTIN-NEXT:  (if
   ;; OPTIN-NEXT:   (i32.eq
   ;; OPTIN-NEXT:    (local.get $x)
@@ -1388,7 +1388,7 @@
     )
   )
 
-  ;; CHECK:      (func $br_on_null (type $3) (param $param anyref)
+  ;; CHECK:      (func $br_on_null (type $2) (param $param anyref)
   ;; CHECK-NEXT:  (block $block
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (ref.is_null
@@ -1409,7 +1409,7 @@
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; OPTIN:      (func $br_on_null (type $3) (param $param anyref)
+  ;; OPTIN:      (func $br_on_null (type $2) (param $param anyref)
   ;; OPTIN-NEXT:  (block $block
   ;; OPTIN-NEXT:   (drop
   ;; OPTIN-NEXT:    (ref.is_null
@@ -1452,6 +1452,77 @@
       (return)
     )
     ;; Because of the return, we can infer 1 here.
+    (drop
+      (ref.is_null
+        (local.get $param)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $br_on_non_null (type $2) (param $param anyref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block $block (result (ref any))
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.is_null
+  ;; CHECK-NEXT:      (local.get $param)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (br_on_non_null $block
+  ;; CHECK-NEXT:     (local.get $param)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (return)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPTIN:      (func $br_on_non_null (type $2) (param $param anyref)
+  ;; OPTIN-NEXT:  (drop
+  ;; OPTIN-NEXT:   (block $block (result (ref any))
+  ;; OPTIN-NEXT:    (drop
+  ;; OPTIN-NEXT:     (ref.is_null
+  ;; OPTIN-NEXT:      (local.get $param)
+  ;; OPTIN-NEXT:     )
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:    (br_on_non_null $block
+  ;; OPTIN-NEXT:     (local.get $param)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:    (drop
+  ;; OPTIN-NEXT:     (i32.const 1)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:    (return)
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (drop
+  ;; OPTIN-NEXT:   (i32.const 0)
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT: )
+  (func $br_on_non_null (param $param anyref)
+    (drop
+      (block $block (result (ref any))
+        ;; We cannot infer here.
+        (drop
+          (ref.is_null
+            (local.get $param)
+          )
+        )
+        (br_on_non_null $block
+          (local.get $param)
+        )
+        ;; We can infer 1 here.
+        (drop
+          (ref.is_null
+            (local.get $param)
+          )
+        )
+        (return)
+      )
+    )
+    ;; Because of the return, we can infer 0 here.
     (drop
       (ref.is_null
         (local.get $param)
