@@ -2509,11 +2509,11 @@ void TranslateToFuzzReader::mutateJSBoundary() {
             options.push_back({type, Inexact});
             options.push_back({type, Exact});
           }
-        } else {
-          // The old exactness is exact, so after adding the bottom, add exact
-          // of the old type, and stop.
-          options.push_back({oldHeapType, Exact});
+          options.push_back({oldHeapType, Inexact});
         }
+        // Regardless of the old exactness, it is valid to add the old type as
+        // exact.
+        options.push_back({oldHeapType, Exact});
         break;
       }
       // Continue until we reach the old type and exactness.
