@@ -139,15 +139,16 @@ TEST(ConstraintTest, TestOrTrivial) {
   // { }
   AndedConstraintSet empty;
 
-  // Anything ORed with the empty set is unchanged.
+  // Anything ORed with the empty set becomes the empty set: if one side can
+  // prove nothing, neither can the result.
   auto t = s;
   t.approximateOr(empty);
-  EXPECT_EQ(t, s);
+  EXPECT_EQ(t, empty);
 
   // Flipped.
   t = empty;
   t.approximateOr(s);
-  EXPECT_EQ(t, s);
+  EXPECT_EQ(t, empty);
 
   // ORing with oneself changes nothing
   t = s;
