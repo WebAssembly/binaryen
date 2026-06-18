@@ -242,8 +242,8 @@ struct ConstraintAnalysis
     } else if (auto* br = brancher->dynCast<Break>()) {
       return getConstraintsFromBooleanBranch(
         pred, succ, predEnd, br->condition);
-//    } else if (auto* br = brancher->dynCast<BrOn>()) {
-  //    return getConstraintsFromBrOn(pred, succ, predEnd, br);
+    } else if (auto* br = brancher->dynCast<BrOn>()) {
+      return getConstraintsFromBrOn(pred, succ, predEnd, br);
     }
     // TODO: Switch
     // TODO: BrOn
@@ -259,6 +259,36 @@ struct ConstraintAnalysis
                                   const LocalConstraintMap& predEnd,
                                   Expression* condition) {
     return getConstraintsFromParsed(pred, succ, predEnd, LocalConstraint::parseBoolean(condition));
+  }
+
+  const LocalConstraintMap
+  getConstraintsFromBrOn(BasicBlock* pred,
+                                  BasicBlock* succ,
+                                  const LocalConstraintMap& predEnd,
+                                  BrOn* brOn) {
+    // We only handle br_on of a local.
+    auto* get = brOn->ref->dynCast<LocalGet>();
+    if (!get) {
+      return predEnd;
+    }
+
+    // The constraint on that local depends on the op.
+    Constraint constraint;
+    switch (brOn->op) {
+      case BrOnNull:
+      case BrOnNonNull: {
+        auto op = brOn->op == BrOnNull ? Abstract::Eq : Abstract::Ne;
+        auto nullType = get->type.getHeapType().getBottom();
+        auto zero = Literal::makeZero(Type(nullType, Nullable));
+        constraint = Constraint{op, zero};
+        break;
+      }
+      default:
+        // TODO: Handle casts using subtyping operations.
+        return predEnd;
+    }
+
+    return getConstraintsFromParsed(pred, succ, predEnd, LocalConstraint{get->index, constraint});
   }
 
   // Gets constraints from pred to succ, given a parsed LocalConstraint, which
