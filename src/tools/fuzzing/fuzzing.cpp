@@ -2487,32 +2487,49 @@ void TranslateToFuzzReader::mutateJSBoundary() {
     if (new_ == Type::unreachable) {
       new_ = Type(old.getHeapType().getBottom(), NonNullable);
     }
+    assert(Type::isSubType(new_, old));
 
     // Find all heap types between the old and new, starting from new.
     auto oldHeapType = old.getHeapType();
+    auto oldExactness = old.getExactness();
     auto newHeapType = new_.getHeapType();
-    assert(HeapType::isSubType(newHeapType, oldHeapType));
-    std::vector<HeapType> options;
+    auto newExactness = new_.getExactness();
+    std::vector<std::pair<HeapType, Exactness>> options;
     while (1) {
-      options.push_back(newHeapType);
+      options.push_back({newHeapType, newExactness});
       // We cannot look at a bottom type's supers (there can be many, and the
       // getSuperType() API doesn't return them), but can use
       // interestingHeapSubTypes: any subtype of old is valid.
       if (newHeapType.isBottom()) {
-        for (auto type : interestingHeapSubTypes[oldHeapType]) {
-          options.push_back(type);
+        // We can only do this when the old exactness is inexact: if old was
+        // (exact $A) then the only valid subtypes are (exact $A) itself, and
+        // the bottom type.
+        if (oldExactness == Inexact) {
+          for (auto type : interestingHeapSubTypes[oldHeapType]) {
+            options.push_back({type, Inexact});
+            options.push_back({type, Exact});
+          }
         }
         break;
       }
-      // Continue until we reach the old type.
-      if (newHeapType == oldHeapType) {
+      // Continue until we reach the old type and exactness.
+      if (newHeapType == oldHeapType && newExactness == oldExactness) {
         break;
+      }
+      if (newExactness == Exact) {
+        // We are not at the old type and exactness yet (or we would have just
+        // stopped). Remove exactness, as the only exact result that is valid is
+        // newHeapType itself. That is, if the actual output is (exact $B) then
+        // we cannot return (exact $A) for some supertype $A, as that would
+        // break subtyping.
+        newExactness = Inexact;
+        continue;
       }
       auto next = newHeapType.getSuperType();
       assert(next);
       newHeapType = *next;
     }
-    newHeapType = pick(options);
+    auto [heapType, exactness] = pick(options);
 
     // Pick the nullability.
     auto oldNullability = old.getNullability();
@@ -2521,36 +2538,7 @@ void TranslateToFuzzReader::mutateJSBoundary() {
       newNullability = getNullability();
     }
 
-    // Pick the exactness.
-    auto oldExactness = old.getExactness();
-    auto newExactness = new_.getExactness();
-    if (newHeapType.isBasic()) {
-      // Basic heap types cannot be exact.
-      newExactness = Inexact;
-    } else {
-      // We are refining to a non-basic type. This can only be exact if we are
-      // using the new heap type: that type is exactly what is sent here, and no
-      // intermediate heap type would be valid. For example, given
-      // $A :> $B :> $C, then maybeRefine($A, exact $C) can return exact $C, but
-      // cannot return exact $B.
-      if (newHeapType != new_.getHeapType()) {
-        newExactness = Inexact;
-        if (newHeapType != oldHeapType && oldExactness == Exact) {
-          // We are refining the heap type (i.e. it changes), but it was exact.
-          // We must be exact as well, to be a subtype, which means we must use
-          // the same heap type.
-          newHeapType = oldHeapType;
-          newExactness = Exact;
-        }
-      } else if (newExactness != oldExactness) {
-        // We are refining to the new heap type, and it is exact while before it
-        // was not, so both are possible.
-        // TODO: once getExactness() is fixed (see there), use that
-        newExactness = oneIn(2) ? Exact : Inexact;
-      }
-    }
-
-    auto refined = Type(newHeapType, newNullability, newExactness);
+    auto refined = Type(heapType, newNullability, exactness);
     assert(Type::isSubType(refined, old));
     return refined;
   };
