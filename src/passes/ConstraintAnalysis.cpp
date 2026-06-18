@@ -236,18 +236,22 @@ struct ConstraintAnalysis
       return predEnd;
     }
 
-    // Most branches are boolean conditions.
-    Expression* booleanCondition = nullptr;
     if (auto* iff = brancher->dynCast<If>()) {
-      booleanCondition = iff->condition;
+      return getConstraintsFromBooleanBranch(pred, succ, predEnd, iff->condition);
     } else if (auto* br = brancher->dynCast<Break>()) {
-      booleanCondition = br->condition;
-    } else {
-      // An unhandled condition.
-      return predEnd;
+      return getConstraintsFromBooleanBranch(pred, succ, predEnd, br->condition);
     }
 
-    auto parsed = LocalConstraint::parseBoolean(booleanCondition);
+    WASM_UNREACHABLE("unhandled branch");
+  }
+
+  // Gets constraints from a pred to a succ, given the branch at the end of the
+  // pred is a boolean condition, that is, if the condition is true we take the
+  // first path, and if not, the other.
+  const LocalConstraintMap getConstraintsFromBooleanBranch(
+    BasicBlock* pred, BasicBlock* succ, const LocalConstraintMap& predEnd, Expression* condition) {
+
+    auto parsed = LocalConstraint::parseBoolean(condition);
     if (!parsed) {
       return predEnd;
     }
