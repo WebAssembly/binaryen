@@ -2512,8 +2512,10 @@ void TranslateToFuzzReader::mutateJSBoundary() {
           options.push_back({oldHeapType, Inexact});
         }
         // Regardless of the old exactness, it is valid to add the old type as
-        // exact.
-        options.push_back({oldHeapType, Exact});
+        // exact (unless the old type was a basic type).
+        if (!oldHeapType.isBasic()) {
+          options.push_back({oldHeapType, Exact});
+        }
         break;
       }
       // Continue until we reach the old type and exactness.
