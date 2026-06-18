@@ -242,6 +242,8 @@ struct ConstraintAnalysis
     } else if (auto* br = brancher->dynCast<Break>()) {
       return getConstraintsFromBooleanBranch(
         pred, succ, predEnd, br->condition);
+//    } else if (auto* br = brancher->dynCast<BrOn>()) {
+  //    return getConstraintsFromBrOn(pred, succ, predEnd, br);
     }
     // TODO: Switch
     // TODO: BrOn
@@ -256,7 +258,18 @@ struct ConstraintAnalysis
                                   BasicBlock* succ,
                                   const LocalConstraintMap& predEnd,
                                   Expression* condition) {
-    auto parsed = LocalConstraint::parseBoolean(condition);
+    return getConstraintsFromParsed(pred, succ, predEnd, LocalConstraint::parseBoolean(condition));
+  }
+
+  // Gets constraints from pred to succ, given a parsed LocalConstraint, which
+  // represents the condition of the branch: if that constraint is true, it is
+  // taken in the first path from pred, and otherwise the second.
+  const LocalConstraintMap
+  getConstraintsFromParsed(BasicBlock* pred,
+                                  BasicBlock* succ,
+                                  const LocalConstraintMap& predEnd,
+                                  std::optional<LocalConstraint> parsed) {
+
     if (!parsed) {
       return predEnd;
     }
