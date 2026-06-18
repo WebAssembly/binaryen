@@ -276,7 +276,7 @@ template<typename SubType> void BinaryenIRWriter<SubType>::write() {
 template<typename SubType>
 void BinaryenIRWriter<SubType>::emitUnreachableLocalSets(Expression* curr) {
   for (auto* set : FindAll<LocalSet>(curr).list) {
-    if (func->getLocalType(set->index).isNonNullable()) {
+    if (!func->getLocalType(set->index).isDefaultable()) {
       emitUnreachableLocalSet(set->index);
     }
   }
@@ -340,7 +340,7 @@ void BinaryenIRWriter<SubType>::visit(Expression* curr) {
     // `curr` is not reachable, so don't emit it unless it is a
     // potentially-necessary local.set itself.
     if (auto* set = curr->dynCast<LocalSet>();
-        set && func->getLocalType(set->index).isNonNullable()) {
+        set && !func->getLocalType(set->index).isDefaultable()) {
       emitUnreachableLocalSet(set->index);
     }
     return;
