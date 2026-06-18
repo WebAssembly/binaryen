@@ -157,8 +157,10 @@ struct ConstraintAnalysis
       // We now know the values at the end of the block. Flow it onward, and
       // where it causes changes, queue more work.
       for (auto* out : block->out) {
+        // Find the constraints sent to this specific successor.
         auto sentConstraints =
           getConstraintsFromPredToSucc(block, out, constraints);
+
         auto& outConstraints = out->contents.startConstraints;
         if (!outConstraints) {
           // This is the first data arriving.
