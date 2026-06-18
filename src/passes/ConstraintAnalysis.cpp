@@ -245,8 +245,7 @@ struct ConstraintAnalysis
     }
     // TODO: Switch
     // TODO: BrOn
-
-    WASM_UNREACHABLE("unhandled branch");
+    return predEnd;
   }
 
   // Gets constraints from a pred to a succ, given the branch at the end of the
@@ -268,7 +267,11 @@ struct ConstraintAnalysis
     // that is the path here. To detect that, use the fact that the CFG always
     // puts the ifTrue first in the successors.
     auto& predOut = pred->out;
-    assert(predOut.size() == 2);
+    if (predOut.size() != 2) {
+      // In unreachable code, there is no block right after the branch. Other
+      // passes can optimize away the branch entirely.
+      return predEnd;
+    }
     if (succ == predOut[1]) {
       // This is the ifFalse.
       if (auto negated = constraint.negate()) {

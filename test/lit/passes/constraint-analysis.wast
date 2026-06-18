@@ -1352,4 +1352,39 @@
       )
     )
   )
+
+  ;; CHECK:      (func $unreachable-br_if (type $0) (param $param i32)
+  ;; CHECK-NEXT:  (block $block
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:   (br_if $block
+  ;; CHECK-NEXT:    (i32.eq
+  ;; CHECK-NEXT:     (local.get $param)
+  ;; CHECK-NEXT:     (i32.const 10)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPTIN:      (func $unreachable-br_if (type $0) (param $param i32)
+  ;; OPTIN-NEXT:  (block $block
+  ;; OPTIN-NEXT:   (unreachable)
+  ;; OPTIN-NEXT:   (br_if $block
+  ;; OPTIN-NEXT:    (i32.eq
+  ;; OPTIN-NEXT:     (local.get $param)
+  ;; OPTIN-NEXT:     (i32.const 10)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT: )
+  (func $unreachable-br_if (param $param i32)
+    (block $block
+      ;; We should not error on br_if in unreachable code.
+      (unreachable)
+      (br_if $block
+        (i32.eq
+          (local.get $param)
+          (i32.const 10)
+        )
+      )
+    )
+  )
 )
