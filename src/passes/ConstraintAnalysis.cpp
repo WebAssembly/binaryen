@@ -284,7 +284,7 @@ struct ConstraintAnalysis
         break;
       }
       default:
-        // TODO: Handle casts using subtyping operations.
+        // TODO: Handle BrOnCast* etc using subtyping operations.
         return predEnd;
     }
 
