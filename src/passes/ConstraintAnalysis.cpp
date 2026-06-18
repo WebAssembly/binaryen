@@ -97,18 +97,15 @@ struct ConstraintAnalysis
     if (self->currBasicBlock) {
       self->currBasicBlock->contents.brancher = *currp;
     }
-
     Super::doStartIfTrue(self, currp);
   }
 
-#if 0
   static void doEndBranch(ConstraintAnalysis* self, Expression** currp) {
-    // We are right after the condition, so we are in the block before the If's
-    // branching.
-    XXX maybe leave for laterself->brancherBlocks[*currp] = self->currBasicBlock;
+    if (self->currBasicBlock) {
+//      self->currBasicBlock->contents.brancher = *currp;
+    }
     Super::doEndBranch(self, currp);
   }
-#endif
 
   void visitFunction(Function* curr) {
     if (!entry) {
@@ -239,37 +236,41 @@ struct ConstraintAnalysis
       return predEnd;
     }
 
+    // Most branches are boolean conditions.
+    Expression* booleanCondition = nullptr;
     if (auto* iff = brancher->dynCast<If>()) {
-      auto parsed = LocalConstraint::parseBoolean(iff->condition);
-      if (!parsed) {
-        return predEnd;
-      }
-      auto& [local, constraint] = *parsed;
-
-      // The if's condition's constraint is added to the other contents, and
-      // sent on the ifTrue. The negation is added to the ifFalse, so negate if
-      // that is the path here. To detect that, use the fact that the CFG always
-      // puts the ifTrue first in the successors.
-      auto& predOut = pred->out;
-      assert(predOut.size() == 2);
-      if (succ == predOut[1]) {
-        // This is the ifFalse.
-        if (auto negated = constraint.negate()) {
-          constraint = *negated;
-        } else {
-          // This could not be negated.
-          return predEnd;
-        }
-      } else {
-        // It must be the ifTrue.
-        assert(succ == predOut[0]);
-      }
-      auto combined = predEnd;
-      combined[local].approximateAnd(constraint);
-      return combined;
+      booleanCondition = iff->condition;
+    } else {
+      WASM_UNREACHABLE("unknown brancher");
     }
 
-    WASM_UNREACHABLE("unknown brancher");
+    auto parsed = LocalConstraint::parseBoolean(booleanCondition);
+    if (!parsed) {
+      return predEnd;
+    }
+    auto& [local, constraint] = *parsed;
+
+    // The boolean condition's constraint is added to the other contents, and
+    // sent on the ifTrue. The negation is added to the ifFalse, so negate if
+    // that is the path here. To detect that, use the fact that the CFG always
+    // puts the ifTrue first in the successors.
+    auto& predOut = pred->out;
+    assert(predOut.size() == 2);
+    if (succ == predOut[1]) {
+      // This is the ifFalse.
+      if (auto negated = constraint.negate()) {
+        constraint = *negated;
+      } else {
+        // This could not be negated.
+        return predEnd;
+      }
+    } else {
+      // It must be the ifTrue.
+      assert(succ == predOut[0]);
+    }
+    auto combined = predEnd;
+    combined[local].approximateAnd(constraint);
+    return combined;
   }
 
   // Given an expression, apply it to the constraints. For example, a local.set
