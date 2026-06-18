@@ -1626,10 +1626,7 @@ struct Heap2Local {
           Array2Struct(allocation, analyzer, func, wasm).structNew;
         Struct2Local(structNew, analyzer, func, wasm);
         optimized = true;
-        localGraph = std::make_unique<LazyLocalGraph>(func, &wasm);
-        parents = std::make_unique<Parents>(func->body);
-        branchTargets =
-          std::make_unique<BranchUtils::BranchTargets>(func->body);
+        resetAnalysisData();
       }
     }
 
@@ -1646,10 +1643,7 @@ struct Heap2Local {
       if (!analyzer.escapes(allocation)) {
         Struct2Local(allocation, analyzer, func, wasm);
         optimized = true;
-        localGraph = std::make_unique<LazyLocalGraph>(func, &wasm);
-        parents = std::make_unique<Parents>(func->body);
-        branchTargets =
-          std::make_unique<BranchUtils::BranchTargets>(func->body);
+        resetAnalysisData();
       }
     }
 
@@ -1659,6 +1653,15 @@ struct Heap2Local {
     if (finder.hasPop && optimized) {
       EHUtils::handleBlockNestedPops(func, wasm);
     }
+  }
+
+  void resetAnalysisData() {
+    // Optimizations may add new locals and parent-child relationships. Rather
+    // than trying to keep these data structures up-to-date, just clear and
+    // recompute them after each optimization.
+    localGraph = std::make_unique<LazyLocalGraph>(func, &wasm);
+    parents = std::make_unique<Parents>(func->body);
+    branchTargets = std::make_unique<BranchUtils::BranchTargets>(func->body);
   }
 };
 
