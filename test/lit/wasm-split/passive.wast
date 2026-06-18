@@ -23,6 +23,20 @@
 
  ;; PRIMARY:      (export "table" (table $1))
 
+ ;; PRIMARY:      (func $use_table (type $0)
+ ;; PRIMARY-NEXT:  (call_indirect $table (type $0)
+ ;; PRIMARY-NEXT:   (i32.const 0)
+ ;; PRIMARY-NEXT:  )
+ ;; PRIMARY-NEXT:  (elem.drop $passive)
+ ;; PRIMARY-NEXT: )
+ (func $use_table
+  ;; Use $table so that it will not be deleted
+  (call_indirect $table
+   (i32.const 0)
+  )
+  (elem.drop $passive)
+ )
+
  ;; PRIMARY:      (func $in-table (type $0)
  ;; PRIMARY-NEXT: )
  (func $in-table
@@ -40,7 +54,8 @@
  ;; SECONDARY-NEXT: )
  (func $second-in-table
   ;; This is in a passive segment, and it is in the secondary module, so we will
-  ;; handle it by adding a trampoline from the segment as a new function "$1".
+  ;; handle it by adding a trampoline from the segment as a new function
+  ;; "$trampoline_second-in-table".
  )
 )
 ;; PRIMARY:      (func $trampoline_second-in-table (type $0)

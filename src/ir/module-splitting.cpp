@@ -360,6 +360,16 @@ struct ModuleSplitter {
                         ExternalKind kind);
   Name getTrampoline(Name funcName);
 
+  struct UsedNames {
+    std::unordered_set<Name> globals;
+    std::unordered_set<Name> memories;
+    std::unordered_set<Name> tables;
+    std::unordered_set<Name> tags;
+  };
+  using PrimarySecondaryUsedNames =
+    std::pair<UsedNames, std::vector<UsedNames>>;
+  PrimarySecondaryUsedNames computeUsedNames();
+
   // Main splitting steps
   void classifyFunctions();
   void moveSecondaryFunctions();
@@ -638,32 +648,22 @@ void ModuleSplitter::thunkExportedSecondaryFunctions() {
   }
 }
 
-// Helper to walk expressions in segments but NOT in globals.
-template<typename Walker>
-static void walkSegments(Walker& walker, Module* module) {
-  walker.setModule(module);
-  for (auto& curr : module->elementSegments) {
-    if (curr->offset) {
-      walker.walk(curr->offset);
+ModuleSplitter::PrimarySecondaryUsedNames ModuleSplitter::computeUsedNames() {
+  auto walkSegments = [](auto& walker, Module* module) {
+    walker.setModule(module);
+    for (auto& curr : module->elementSegments) {
+      if (curr->offset) {
+        walker.walk(curr->offset);
+      }
+      for (auto* item : curr->data) {
+        walker.walk(item);
+      }
     }
-    for (auto* item : curr->data) {
-      walker.walk(item);
+    for (auto& curr : module->dataSegments) {
+      if (curr->offset) {
+        walker.walk(curr->offset);
+      }
     }
-  }
-  for (auto& curr : module->dataSegments) {
-    if (curr->offset) {
-      walker.walk(curr->offset);
-    }
-  }
-}
-
-void ModuleSplitter::shareImportableItems() {
-
-  struct UsedNames {
-    std::unordered_set<Name> globals;
-    std::unordered_set<Name> memories;
-    std::unordered_set<Name> tables;
-    std::unordered_set<Name> tags;
   };
 
   struct NameCollector
@@ -714,7 +714,7 @@ void ModuleSplitter::shareImportableItems() {
   };
 
   // Given a module, collect names used in the module
-  auto getUsedNames = [&](Module& module) {
+  auto scanModule = [&](Module& module) {
     UsedNames used;
     ModuleUtils::ParallelFunctionAnalysis<UsedNames> nameCollector(
       module, [&](Function* func, UsedNames& used) {
@@ -755,31 +755,77 @@ void ModuleSplitter::shareImportableItems() {
       }
     }
 
-    // If primary module has exports, they are "used" in it. Secondary modules
-    // don't have exports, so this only applies to the primary module.
-    for (auto& ex : module.exports) {
-      switch (ex->kind) {
-        case ExternalKind::Global:
-          used.globals.insert(*ex->getInternalName());
-          break;
-        case ExternalKind::Memory:
-          used.memories.insert(*ex->getInternalName());
-          break;
-        case ExternalKind::Table:
-          used.tables.insert(*ex->getInternalName());
-          break;
-        case ExternalKind::Tag:
-          used.tags.insert(*ex->getInternalName());
-          break;
-        default:
-          break;
+    for (auto name : used.tables) {
+      if (auto* table = primary.getTableOrNull(name)) {
+        if (table->init) {
+          collector.walk(table->init);
+        }
       }
     }
+    return used;
+  };
 
-    // Compute the transitive closure of globals referenced in other globals'
-    // initializers. Since globals can reference other globals, we must ensure
-    // that if a global is used in a module, all its dependencies are also
-    // marked as used.
+  UsedNames primaryUsed = scanModule(primary);
+  std::vector<UsedNames> secondaryUsed;
+  for (auto& secondaryPtr : secondaries) {
+    secondaryUsed.push_back(scanModule(*secondaryPtr));
+  }
+
+  // If primary module has exports, they are "used" in it. Secondary modules
+  // don't have exports, so this only applies to the primary module.
+  for (auto& ex : primary.exports) {
+    switch (ex->kind) {
+      case ExternalKind::Global:
+        primaryUsed.globals.insert(*ex->getInternalName());
+        break;
+      case ExternalKind::Memory:
+        primaryUsed.memories.insert(*ex->getInternalName());
+        break;
+      case ExternalKind::Table:
+        primaryUsed.tables.insert(*ex->getInternalName());
+        break;
+      case ExternalKind::Tag:
+        primaryUsed.tags.insert(*ex->getInternalName());
+        break;
+      default:
+        break;
+    }
+  }
+
+  // We need to assume the dispatch table and its base global are used in the
+  // primary module, because we will create segments there later.
+  if (tableManager.dispatchTable) {
+    primaryUsed.tables.insert(tableManager.dispatchTable->name);
+  }
+  if (tableManager.dispatchBase.global) {
+    primaryUsed.globals.insert(tableManager.dispatchBase.global);
+  }
+
+  // If custom-descirptors is enabled, global and table initializers can trap.
+  // Trapping globals should stay in the primary module to preserve the trapping
+  // behavior upon instantiation.
+  if (primary.features.hasCustomDescriptors()) {
+    for (auto& global : primary.globals) {
+      if (global->init &&
+          EffectAnalyzer(config.passOptions, primary, global->init)
+            .hasUnremovableSideEffects()) {
+        primaryUsed.globals.insert(global->name);
+      }
+    }
+    for (auto& table : primary.tables) {
+      if (table->init &&
+          EffectAnalyzer(config.passOptions, primary, table->init)
+            .hasUnremovableSideEffects()) {
+        primaryUsed.tables.insert(table->name);
+      }
+    }
+  }
+
+  // Compute the transitive closure of globals referenced in other globals'
+  // initializers. Since globals can reference other globals, we must ensure
+  // that if a global is used in a module, all its dependencies are also marked
+  // as used.
+  auto computeTransitiveGlobals = [&](UsedNames& used) {
     UniqueNonrepeatingDeferredQueue<Name> worklist;
     for (auto global : used.globals) {
       worklist.push(global);
@@ -796,36 +842,20 @@ void ModuleSplitter::shareImportableItems() {
         }
       }
     }
-    return used;
   };
 
-  UsedNames primaryUsed = getUsedNames(primary);
-  std::vector<UsedNames> secondaryUsed;
-  for (auto& secondaryPtr : secondaries) {
-    secondaryUsed.push_back(getUsedNames(*secondaryPtr));
+  computeTransitiveGlobals(primaryUsed);
+  for (auto& used : secondaryUsed) {
+    computeTransitiveGlobals(used);
   }
 
-  // We need to assume the dispatch table and its base global are used in the
-  // primary module, because we will create segments there later.
-  if (tableManager.dispatchTable) {
-    primaryUsed.tables.insert(tableManager.dispatchTable->name);
-  }
-  if (tableManager.dispatchBase.global) {
-    primaryUsed.globals.insert(tableManager.dispatchBase.global);
-  }
+  return std::make_pair(primaryUsed, secondaryUsed);
+}
 
-  // If custom-descirptors is enabled, global initializers can trap. Trapping
-  // globals should stay in the primary module to preserve the trapping behavior
-  // upon instantiation.
-  if (primary.features.hasCustomDescriptors()) {
-    for (auto& global : primary.globals) {
-      if (global->init &&
-          EffectAnalyzer(config.passOptions, primary, global->init)
-            .hasUnremovableSideEffects()) {
-        primaryUsed.globals.insert(global->name);
-      }
-    }
-  }
+void ModuleSplitter::shareImportableItems() {
+  auto usedNames = computeUsedNames();
+  auto& primaryUsed = usedNames.first;
+  auto& secondaryUsed = usedNames.second;
 
   // Given a name and module item kind, returns the list of secondary modules
   // using that name
@@ -850,9 +880,11 @@ void ModuleSplitter::shareImportableItems() {
   for (auto& memory : primary.memories) {
     auto usingSecondaries =
       getUsingSecondaries(memory->name, &UsedNames::memories);
-    bool usedInPrimary = primaryUsed.memories.contains(memory->name);
+    bool inPrimary = primaryUsed.memories.contains(memory->name);
 
-    if (!usedInPrimary && usingSecondaries.size() == 1) {
+    if (!inPrimary && usingSecondaries.empty()) {
+      memoriesToRemove.push_back(memory->name);
+    } else if (!inPrimary && usingSecondaries.size() == 1) {
       auto* secondary = usingSecondaries[0];
       ModuleUtils::copyMemory(memory.get(), *secondary);
       memoriesToRemove.push_back(memory->name);
@@ -873,9 +905,11 @@ void ModuleSplitter::shareImportableItems() {
   for (auto& table : primary.tables) {
     auto usingSecondaries =
       getUsingSecondaries(table->name, &UsedNames::tables);
-    bool usedInPrimary = primaryUsed.tables.contains(table->name);
+    bool inPrimary = primaryUsed.tables.contains(table->name);
 
-    if (!usedInPrimary && usingSecondaries.size() == 1) {
+    if (!inPrimary && usingSecondaries.empty()) {
+      tablesToRemove.push_back(table->name);
+    } else if (!inPrimary && usingSecondaries.size() == 1) {
       auto* secondary = usingSecondaries[0];
       assert(!secondary->getTableOrNull(table->name));
       ModuleUtils::copyTable(table.get(), *secondary);
@@ -903,12 +937,6 @@ void ModuleSplitter::shareImportableItems() {
     bool inPrimary = primaryUsed.globals.contains(global->name);
 
     if (!inPrimary && usingSecondaries.empty()) {
-      // It's not used anywhere, so delete it. Unlike other unused module items
-      // (memories, tables, and tags) that can just sit in the primary module
-      // and later be DCE'ed by another pass, we should remove it here, because
-      // an unused global can contain an initializer that refers to another
-      // global that will be moved to a secondary module, like
-      // (global $unused i32 (global.get $a)) // $a is moved to a secondary
       globalsToRemove.push_back(global->name);
     } else if (!inPrimary && usingSecondaries.size() == 1) {
       auto* secondary = usingSecondaries[0];
@@ -930,9 +958,11 @@ void ModuleSplitter::shareImportableItems() {
   std::vector<Name> tagsToRemove;
   for (auto& tag : primary.tags) {
     auto usingSecondaries = getUsingSecondaries(tag->name, &UsedNames::tags);
-    bool usedInPrimary = primaryUsed.tags.contains(tag->name);
+    bool inPrimary = primaryUsed.tags.contains(tag->name);
 
-    if (!usedInPrimary && usingSecondaries.size() == 1) {
+    if (!inPrimary && usingSecondaries.empty()) {
+      tagsToRemove.push_back(tag->name);
+    } else if (!inPrimary && usingSecondaries.size() == 1) {
       auto* secondary = usingSecondaries[0];
       ModuleUtils::copyTag(tag.get(), *secondary);
       tagsToRemove.push_back(tag->name);

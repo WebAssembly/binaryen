@@ -30,6 +30,7 @@ extern const Name InlineHint;
 extern const Name RemovableIfUnusedHint;
 extern const Name JSCalledHint;
 extern const Name IdempotentHint;
+extern const Name ToolchainInlineHint;
 
 } // namespace wasm::Annotations
 

@@ -2873,24 +2873,30 @@ private:
       return false;
     }
 
-    // They do look the same! Determine whether the left hand expression can
-    // change the value of the operands flowing into the right-hand expression.
-    // Do not consider the right-hand expression itself here because the
-    // expressions might be idempotent function calls and we might otherwise
-    // mistakenly conclude that the first call interferes with the second.
-    EffectAnalyzer rightEffects(getPassOptions(), *getModule());
+    // They do look the same! Determine whether there are side effects that
+    // could make the values different. Note that we use the same
+    // EffectAnalyzers for effects from the left and right sides because they
+    // are the same.
+    EffectAnalyzer fallthroughChildEffects(getPassOptions(), *getModule());
     for (auto* child : ChildIterator(right)) {
-      rightEffects.walk(child);
+      fallthroughChildEffects.walk(child);
     }
-    ShallowEffectAnalyzer leftEffects(getPassOptions(), *getModule(), left);
-    if (leftEffects.orderedBefore(rightEffects)) {
+    EffectAnalyzer fallthroughEffects = fallthroughChildEffects;
+    fallthroughEffects.visit(right);
+
+    // Does the left-hand parent expression or side effects in the right-hand
+    // children affect the values flowing into the right-hand parent expression?
+    // Do not consider the right-hand parent expression because it could be an
+    // idempotent call and we don't want to mistakenly conclude that the
+    // left-hand side could interfere with it. (Non-idempotent functions will
+    // be rejected by the `isGenerative` check below.)
+    if (fallthroughEffects.orderedBefore(fallthroughChildEffects)) {
       return false;
     }
 
-    // Make sure nothing executed in between the expressions can affect the
-    // value of `right` (or its operands) and make it different from `left`.
-    rightEffects.visit(right);
-    if (interferingEffects.orderedBefore(rightEffects)) {
+    // Do any effects executed between the expressions affect the right-hand
+    // expression?
+    if (interferingEffects.orderedBefore(fallthroughEffects)) {
       return false;
     }
 
@@ -3408,6 +3414,12 @@ private:
           // execute the value expression once instead of twice.
           if (canReorder(ifTrue, c)) {
             return builder.makeSequence(builder.makeDrop(c), ifTrue);
+          }
+          // We generally skip optimizing unreachable selects, but an
+          // optimization on the children might have made them newly
+          // unreachable. We cannot create a scratch local in that case.
+          if (!ifTrue->type.isConcrete()) {
+            return nullptr;
           }
           auto scratch = builder.addVar(getFunction(), ifTrue->type);
           return builder.makeBlock(

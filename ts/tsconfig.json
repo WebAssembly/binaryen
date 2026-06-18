@@ -1,26 +1,28 @@
 {
-	// TSConfig: https://www.typescriptlang.org/tsconfig/
-	"compilerOptions": {
-		// Type Checking
-		"exactOptionalPropertyTypes": true,
-		"noImplicitOverride": true,
-		"noImplicitReturns": true,
-		"noPropertyAccessFromIndexSignature": true,
+  // TSConfig: https://www.typescriptlang.org/tsconfig/
+  "compilerOptions": {
+    // Type Checking
+    "exactOptionalPropertyTypes": true,
+    "noImplicitOverride": true,
+    "noImplicitReturns": true,
+    "noPropertyAccessFromIndexSignature": true,
 
-		// Modules
-		"module": "esnext",
-		"rewriteRelativeImportExtensions": true,
-		"rootDir": "./src/",
+    // Modules
+    "module": "esnext",
+    "rewriteRelativeImportExtensions": true,
+    "rootDir": "./src/",
 
-		// Emit
-		"declaration": true,
-		"outDir": "./dist/",
+    // Emit
+    "declaration": true,
+    "outDir": "./dist/",
 
-		// Interop Constraints
-		"verbatimModuleSyntax": true,
+    // Interop Constraints
+    "verbatimModuleSyntax": true,
 
-		// Completeness
-		"skipLibCheck": true,
-	},
-	"include": ["./src/"],
+    // Completeness
+    "skipLibCheck": true,
+  },
+  "include": [
+    "./src/"
+  ],
 }

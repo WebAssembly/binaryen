@@ -21,6 +21,7 @@
 
 #include "ir/effects.h"
 #include "ir/module-utils.h"
+#include "ir/subtypes.h"
 #include "pass.h"
 #include "support/graph_traversal.h"
 #include "support/strongly_connected_components.h"
@@ -275,6 +276,29 @@ CallGraph buildCallGraph(const Module& module,
                          }
                        });
   (void)superTypeGraph.traverseDepthFirst();
+
+  // Add Type -> Function edges to account for inexact imports. For (ref.func)
+  // on a *defined* function, we know its exact type and can add a single
+  // Type -> Function edge in the graph (done above). We know that indirect
+  // calls to strict subtypes of the function can't reach the function.
+  //
+  // OTOH for inexactly imported functions, they may be downcasted to a subtype.
+  // To account for this, add Type -> Function edges to all subtypes for
+  // inexactly imported functions.
+  SubTypes subtypes(module);
+  ModuleUtils::iterImportedFunctions(module, [&](Function* func) {
+    if (func->type.isExact()) {
+      return;
+    }
+    if (!referencedFuncs.contains(func)) {
+      return;
+    }
+
+    subtypes.iterSubTypes(func->type.getHeapType(), [&](auto subtype, int _) {
+      callGraph[subtype].insert(func);
+      return true;
+    });
+  });
 
   return callGraph;
 }

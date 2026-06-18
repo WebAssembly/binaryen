@@ -76,7 +76,7 @@ void renameFunction(Module& wasm, Name oldName, Name newName);
 
 // Convenient iteration over imported/non-imported module elements
 
-template<typename T> inline void iterImportedMemories(Module& wasm, T visitor) {
+inline void iterImportedMemories(const Module& wasm, auto&& visitor) {
   for (auto& import : wasm.memories) {
     if (import->imported()) {
       visitor(import.get());
@@ -84,7 +84,7 @@ template<typename T> inline void iterImportedMemories(Module& wasm, T visitor) {
   }
 }
 
-template<typename T> inline void iterDefinedMemories(Module& wasm, T visitor) {
+inline void iterDefinedMemories(const Module& wasm, auto&& visitor) {
   for (auto& import : wasm.memories) {
     if (!import->imported()) {
       visitor(import.get());
@@ -92,8 +92,8 @@ template<typename T> inline void iterDefinedMemories(Module& wasm, T visitor) {
   }
 }
 
-template<typename T>
-inline void iterMemorySegments(Module& wasm, Name memory, T visitor) {
+inline void
+iterMemorySegments(const Module& wasm, Name memory, auto&& visitor) {
   for (auto& segment : wasm.dataSegments) {
     if (segment->isActive() && segment->memory == memory) {
       visitor(segment.get());
@@ -101,8 +101,7 @@ inline void iterMemorySegments(Module& wasm, Name memory, T visitor) {
   }
 }
 
-template<typename T>
-inline void iterActiveDataSegments(Module& wasm, T visitor) {
+inline void iterActiveDataSegments(const Module& wasm, auto&& visitor) {
   for (auto& segment : wasm.dataSegments) {
     if (segment->isActive()) {
       visitor(segment.get());
@@ -110,7 +109,7 @@ inline void iterActiveDataSegments(Module& wasm, T visitor) {
   }
 }
 
-template<typename T> inline void iterImportedTables(Module& wasm, T visitor) {
+inline void iterImportedTables(const Module& wasm, auto&& visitor) {
   for (auto& import : wasm.tables) {
     if (import->imported()) {
       visitor(import.get());
@@ -118,7 +117,7 @@ template<typename T> inline void iterImportedTables(Module& wasm, T visitor) {
   }
 }
 
-template<typename T> inline void iterDefinedTables(Module& wasm, T visitor) {
+inline void iterDefinedTables(const Module& wasm, auto&& visitor) {
   for (auto& import : wasm.tables) {
     if (!import->imported()) {
       visitor(import.get());
@@ -126,8 +125,7 @@ template<typename T> inline void iterDefinedTables(Module& wasm, T visitor) {
   }
 }
 
-template<typename T>
-inline void iterTableSegments(Module& wasm, Name table, T visitor) {
+inline void iterTableSegments(const Module& wasm, Name table, auto&& visitor) {
   // Just a precaution so that we don't iterate over passive elem segments by
   // accident
   assert(table.is() && "Table name must not be null");
@@ -139,8 +137,7 @@ inline void iterTableSegments(Module& wasm, Name table, T visitor) {
   }
 }
 
-template<typename T>
-inline void iterActiveElementSegments(Module& wasm, T visitor) {
+inline void iterActiveElementSegments(const Module& wasm, auto&& visitor) {
   for (auto& segment : wasm.elementSegments) {
     if (segment->isActive()) {
       visitor(segment.get());
@@ -148,7 +145,7 @@ inline void iterActiveElementSegments(Module& wasm, T visitor) {
   }
 }
 
-template<typename T> inline void iterImportedGlobals(Module& wasm, T visitor) {
+inline void iterImportedGlobals(const Module& wasm, auto&& visitor) {
   for (auto& import : wasm.globals) {
     if (import->imported()) {
       visitor(import.get());
@@ -156,7 +153,7 @@ template<typename T> inline void iterImportedGlobals(Module& wasm, T visitor) {
   }
 }
 
-template<typename T> inline void iterDefinedGlobals(Module& wasm, T visitor) {
+inline void iterDefinedGlobals(const Module& wasm, auto&& visitor) {
   for (auto& import : wasm.globals) {
     if (!import->imported()) {
       visitor(import.get());
@@ -164,8 +161,7 @@ template<typename T> inline void iterDefinedGlobals(Module& wasm, T visitor) {
   }
 }
 
-template<typename T>
-inline void iterImportedFunctions(Module& wasm, T visitor) {
+inline void iterImportedFunctions(const Module& wasm, auto&& visitor) {
   for (auto& import : wasm.functions) {
     if (import->imported()) {
       visitor(import.get());
@@ -173,7 +169,7 @@ inline void iterImportedFunctions(Module& wasm, T visitor) {
   }
 }
 
-template<typename T> inline void iterDefinedFunctions(Module& wasm, T visitor) {
+inline void iterDefinedFunctions(const Module& wasm, auto&& visitor) {
   for (auto& import : wasm.functions) {
     if (!import->imported()) {
       visitor(import.get());
@@ -181,7 +177,7 @@ template<typename T> inline void iterDefinedFunctions(Module& wasm, T visitor) {
   }
 }
 
-template<typename T> inline void iterImportedTags(Module& wasm, T visitor) {
+inline void iterImportedTags(const Module& wasm, auto&& visitor) {
   for (auto& import : wasm.tags) {
     if (import->imported()) {
       visitor(import.get());
@@ -189,7 +185,7 @@ template<typename T> inline void iterImportedTags(Module& wasm, T visitor) {
   }
 }
 
-template<typename T> inline void iterDefinedTags(Module& wasm, T visitor) {
+inline void iterDefinedTags(const Module& wasm, auto&& visitor) {
   for (auto& import : wasm.tags) {
     if (!import->imported()) {
       visitor(import.get());
@@ -197,7 +193,7 @@ template<typename T> inline void iterDefinedTags(Module& wasm, T visitor) {
   }
 }
 
-template<typename T> inline void iterImports(Module& wasm, T visitor) {
+inline void iterImports(const Module& wasm, auto&& visitor) {
   iterImportedMemories(wasm, visitor);
   iterImportedTables(wasm, visitor);
   iterImportedGlobals(wasm, visitor);
@@ -207,7 +203,7 @@ template<typename T> inline void iterImports(Module& wasm, T visitor) {
 
 // Iterates over all importable module items. The visitor provided should have
 // signature void(ExternalKind, Importable*).
-template<typename T> inline void iterImportable(Module& wasm, T visitor) {
+inline void iterImportable(const Module& wasm, auto&& visitor) {
   for (auto& curr : wasm.functions) {
     if (curr->imported()) {
       visitor(ExternalKind::Function, curr.get());
@@ -237,7 +233,7 @@ template<typename T> inline void iterImportable(Module& wasm, T visitor) {
 
 // Iterates over all module items. The visitor provided should have signature
 // void(ModuleItemKind, Named*).
-template<typename T> inline void iterModuleItems(Module& wasm, T visitor) {
+inline void iterModuleItems(const Module& wasm, auto&& visitor) {
   for (auto& curr : wasm.functions) {
     visitor(ModuleItemKind::Function, curr.get());
   }

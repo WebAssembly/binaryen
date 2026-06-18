@@ -51,7 +51,8 @@ BinaryenFeatureRelaxedAtomics: 4194304
 BinaryenFeatureCustomPageSizes: 8388608
 BinaryenFeatureMultibyte: 16777216
 BinaryenFeatureWideArithmetic: 33554432
-BinaryenFeatureAll: 67108863
+BinaryenFeatureCompactImports: 67108864
+BinaryenFeatureAll: 134217727
 (f32.neg
  (f32.const -33.61199951171875)
 )

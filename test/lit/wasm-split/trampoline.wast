@@ -9,7 +9,7 @@
  ;; PRIMARY:      (import "placeholder.deferred" "0" (func $placeholder_0 (param i32) (result i32)))
 
  ;; PRIMARY:      (table $table 1 1 funcref)
- (table $table 1 1 funcref)
+ (table $table (export "table_export") 1 1 funcref)
  (elem (i32.const 0) $bar)
  (export "bar" (func $bar))
  ;; PRIMARY:      (table $1 1 funcref)
@@ -17,6 +17,8 @@
  ;; PRIMARY:      (elem $0 (table $table) (i32.const 0) func $trampoline_bar)
 
  ;; PRIMARY:      (elem $1 (table $1) (i32.const 0) func $placeholder_0)
+
+ ;; PRIMARY:      (export "table_export" (table $table))
 
  ;; PRIMARY:      (export "bar" (func $trampoline_bar))
 

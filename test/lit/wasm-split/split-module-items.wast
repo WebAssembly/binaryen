@@ -9,6 +9,7 @@
 ;;    the secondary module
 
 (module
+ (import "env" "g" (global $import-global-for-table funcref))
  (memory $keep-memory 1 1)
  (global $keep-global i32 (i32.const 20))
  (table $keep-table 1 1 funcref)
@@ -16,7 +17,7 @@
 
  (memory $split-memory 1 1)
  (global $split-global i32 (i32.const 20))
- (table $split-table 1 1 funcref)
+ (table $split-table 1 1 funcref (global.get $import-global-for-table))
  (tag $split-tag (param i32))
 
  (memory $shared-memory 1 1)
@@ -44,13 +45,14 @@
  ;; SECONDARY:      (import "primary" "memory" (memory $shared-memory 1 1))
  ;; SECONDARY-NEXT: (import "primary" "table" (table $shared-table 1 1 funcref))
  ;; SECONDARY-NEXT: (import "primary" "table_5" (table $timport$1 1 funcref))
+ ;; SECONDARY-NEXT: (import "env" "g" (global $import-global-for-table funcref))
  ;; SECONDARY-NEXT: (import "primary" "global" (global $shared-global i32))
  ;; SECONDARY-NEXT: (import "primary" "keep" (func $keep (exact (param i32) (result i32))))
  ;; SECONDARY-NEXT: (import "primary" "tag" (tag $shared-tag (type $1) (param i32)))
 
  ;; SECONDARY:      (global $split-global i32 (i32.const 20))
  ;; SECONDARY-NEXT: (memory $split-memory 1 1)
- ;; SECONDARY-NEXT: (table $split-table 1 1 funcref)
+ ;; SECONDARY-NEXT: (table $split-table 1 1 funcref (global.get $import-global-for-table))
  ;; SECONDARY:      (tag $split-tag (type $1) (param i32))
 
  (func $keep (param i32) (result i32)

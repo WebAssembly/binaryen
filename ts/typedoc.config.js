@@ -3,6 +3,8 @@ export default {
 	entryPoints: ["./src/binaryen.ts"],
 	projectDocuments: ["./docs/API-Overview.md"],
 	useFirstParagraphOfCommentAsSummary: true,
+	includeVersion: true,
+	gitRevision: "gh-pages",
 	out: "../docs/binaryen.ts/",
 	githubPages: false, // when `false`, does not generate a `.nojekyll` file to prevent GitHub Pages from using Jekyll
 	customCss: "./docs/styles.css",

@@ -42,6 +42,11 @@
   (func $idempotent
     ;; This hint should be removed too.
   )
+
+  ;; CHECK:      (func $test-binaryen-inline (type $0)
+  ;; CHECK-NEXT: )
+  (@binaryen.inline "\00")
+  (func $test-binaryen-inline
+    ;; This hint should be removed too.
+  )
 )
-
-

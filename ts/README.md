@@ -43,10 +43,16 @@ From the repo’s root:
 ```zsh
 $ cd ./ts/
 $ npm ci
-$ npm run build
+$ npm run prepublishOnly # gets the package in working order
 ```
 
 ### Pipeline
+#### Set Up the Emscripten Build
+You’ll need to do this whenever pulling changes from the C++ repo.
+```zsh
+$ npm run make # emits Emscripten builds to ./build/
+```
+
 #### Develop in TypeScript
 The core of this project is written in [TS](https://www.typescriptlang.org/), best paired with a powerful editor and some nice extensions.
 ```zsh
@@ -99,16 +105,15 @@ $ git push
 
 #### Run Tests
 The test suite is still in progress, migrating from `../test/binaryen.js/`.
-The new test suite uses the Node v26+ test runner.
+The new test suite uses the Node v22+ test runner.
 ```zsh
 $ npm run test
 ```
 
 #### Bundle
 TypeScript only compiles the source files to `./dist/`.
-After that we need a bundler to optimize and minify it into one giant JS file,
-which will then get processed with Emscripten’s build so that it can be used by consumers.
-This will look a lot like AssemblyScript’s build process.
+After that we may need a bundler to optimize and minify it into a prepackaged file,
+which will be able to target different platforms so that it can be used by consumers.
 
 TODO: more details
 
