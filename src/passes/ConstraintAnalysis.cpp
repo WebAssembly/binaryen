@@ -240,17 +240,7 @@ struct ConstraintAnalysis
       return getConstraintsFromParsed(
         pred, succ, predEnd, LocalConstraint::parseBoolean(iff->condition));
     } else if (auto* br = brancher->dynCast<Break>()) {
-      auto parsed = LocalConstraint::parseBoolean(br->condition);
-      if (parsed) {
-        auto [local, constraint] = *parsed;
-        // Unlike If, we must flip the constraint. The adjacent block right
-        // after the if is the ifTrue path, but for br_if, the adjacent block is
-        // the fallthrough, i.e., ifFalse.
-        if (auto negated = constraint.negate()) {
-          return getConstraintsFromParsed(
-            pred, succ, predEnd, LocalConstraint{local, *negated});
-        }
-      }
+      return getConstraintsFromBreak(pred, succ, predEnd, br);
     } else if (auto* br = brancher->dynCast<BrOn>()) {
       return getConstraintsFromBrOn(pred, succ, predEnd, br);
     }
@@ -297,6 +287,32 @@ struct ConstraintAnalysis
     auto combined = predEnd;
     combined[local].approximateAnd(constraint);
     return combined;
+  }
+
+  const LocalConstraintMap
+  getConstraintsFromBreak(BasicBlock* pred,
+                          BasicBlock* succ,
+                          const LocalConstraintMap& predEnd,
+                          Break* br) {
+    if (!br->condition) {
+      return predEnd;
+    }
+
+    auto parsed = LocalConstraint::parseBoolean(br->condition);
+    if (!parsed) {
+      return predEnd;
+    }
+
+    auto [local, constraint] = *parsed;
+    // Unlike If, we must flip the constraint. The adjacent block right
+    // after the if is the ifTrue path, but for br_if, the adjacent block is
+    // the fallthrough, i.e., ifFalse.
+    if (auto negated = constraint.negate()) {
+      return getConstraintsFromParsed(
+        pred, succ, predEnd, LocalConstraint{local, *negated});
+    }
+
+    return predEnd;
   }
 
   const LocalConstraintMap
