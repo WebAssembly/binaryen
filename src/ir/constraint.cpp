@@ -154,7 +154,7 @@ void AndedConstraintSet::approximateOr(const AndedConstraintSet& other) {
 }
 
 std::optional<LocalConstraint> LocalConstraint::parse(Expression* curr) {
-  auto parseEqZ = [&](Expression* value) -> std::optional<LocalConstraint> {
+  auto parseEqZArgument = [&](Expression* value) -> std::optional<LocalConstraint> {
     if (auto* get = value->dynCast<LocalGet>()) {
       // Canonicalize EqZ to Eq of 0.
       auto value = Literal::makeZero(get->type);
@@ -166,13 +166,13 @@ std::optional<LocalConstraint> LocalConstraint::parse(Expression* curr) {
 
   if (auto* unary = curr->dynCast<Unary>()) {
     if (Abstract::getUnary(unary->type, Abstract::EqZ) == unary->op) {
-      return parseEqZ(unary->value);
+      return parseEqZArgument(unary->value);
     }
     return {};
   }
 
   if (auto* refIsNull = curr->dynCast<RefIsNull>()) {
-    return parseEqZ(refIsNull->value);
+    return parseEqZArgument(refIsNull->value);
   }
 
   // Parse a get or a constant.
@@ -186,7 +186,7 @@ std::optional<LocalConstraint> LocalConstraint::parse(Expression* curr) {
     return {};
   };
 
-  auto parseBinary = [&](Abstract::Op op,
+  auto parseBinaryArguments = [&](Abstract::Op op,
                          Expression* left,
                          Expression* right) -> std::optional<LocalConstraint> {
     // The left must be a get.
@@ -203,14 +203,14 @@ std::optional<LocalConstraint> LocalConstraint::parse(Expression* curr) {
     // The operation must be one we recognize.
     for (auto op : {Abstract::Eq, Abstract::Ne}) {
       if (Abstract::getBinary(binary->type, op) == binary->op) {
-        return parseBinary(op, binary->left, binary->right);
+        return parseBinaryArguments(op, binary->left, binary->right);
       }
     }
     return {};
   }
 
   if (auto* refEq = curr->dynCast<RefEq>()) {
-    return parseBinary(Abstract::Eq, refEq->left, refEq->right);
+    return parseBinaryArguments(Abstract::Eq, refEq->left, refEq->right);
   }
 
   return {};
