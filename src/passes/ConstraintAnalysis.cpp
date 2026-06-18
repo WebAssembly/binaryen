@@ -157,7 +157,8 @@ struct ConstraintAnalysis
       // We now know the values at the end of the block. Flow it onward, and
       // where it causes changes, queue more work.
       for (auto* out : block->out) {
-        auto sentConstraints = getConstraintsFromPredToSucc(block, out, constraints);
+        auto sentConstraints =
+          getConstraintsFromPredToSucc(block, out, constraints);
         auto& outConstraints = out->contents.startConstraints;
         if (!outConstraints) {
           // This is the first data arriving.
@@ -227,9 +228,8 @@ struct ConstraintAnalysis
   // Given a predecessor and one of its successors, find the constraints that
   // flow to that specific successor, given the constraints at the end of the
   // predecessor.
-  const LocalConstraintMap getConstraintsFromPredToSucc(BasicBlock* pred,
-                                                        BasicBlock* succ,
-                                                        const LocalConstraintMap& predEnd) {
+  const LocalConstraintMap getConstraintsFromPredToSucc(
+    BasicBlock* pred, BasicBlock* succ, const LocalConstraintMap& predEnd) {
     auto* brancher = pred->contents.brancher;
     if (!brancher) {
       // No branching instruction to reason about. Just return what is at the
