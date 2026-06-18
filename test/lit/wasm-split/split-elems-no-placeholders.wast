@@ -25,6 +25,9 @@
  ;; primary. So keep this in the primary too.
  ;; PRIMARY:      (elem $keep-elem3 (table $keep-table2) (i32.const 0) externref (item (ref.null noextern)))
  (elem $keep-elem3 (table $keep-table2) (i32.const 0) externref (ref.null extern))
+ ;; The offset exceeds the table size, so keep this in the primary.
+ ;; PRIMARY:      (elem $keep-elem4 (table $keep-table) (i32.const 10) func $trampoline_split)
+ (elem $keep-elem4 (table $keep-table) (i32.const 10) func $split)
 
  ;; SECONDARY:      (global $split-global funcref (ref.func $split))
  (global $split-global funcref (ref.func $split))
@@ -35,7 +38,7 @@
  ;; even if the referenced table is in the primary module.
  ;; SECONDARY:      (elem $split-elem1 (table $keep-table) (i32.const 0) func $split $split)
  (elem $split-elem1 (table $keep-table) (i32.const 0) func $split $split)
- ;; All functions are in the secondary module, so split this to the secondary.
+ ;; The same test with $split-table.
  ;; SECONDARY:      (elem $split-elem2 (table $split-table) (i32.const 0) func $split $split)
  (elem $split-elem2 (table $split-table) (i32.const 0) func $split $split)
  ;; ref.null within data doesn't affect the segment's splitability.
