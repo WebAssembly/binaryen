@@ -8,12 +8,16 @@
 ;; module.
 
 (module
+ ;; PRIMARY:      (type $array (array (mut funcref)))
+ (type $array (array (mut funcref)))
+
  ;; PRIMARY:      (global $keep-global funcref (ref.func $trampoline_split))
  (global $keep-global funcref (ref.func $split))
  ;; PRIMARY:      (table $keep-table 2 2 funcref)
  (table $keep-table 2 2 funcref)
  ;; PRIMARY:      (table $keep-table2 1 1 externref)
  (table $keep-table2 1 1 externref)
+
  ;; This contains both a primary function and a secondary function, so keep this
  ;; in the primary.
  ;; PRIMARY:      (elem $keep-elem1 (table $keep-table) (i32.const 0) func $keep $trampoline_split)
@@ -28,6 +32,11 @@
  ;; The offset exceeds the table size, so keep this in the primary.
  ;; PRIMARY:      (elem $keep-elem4 (table $keep-table) (i32.const 10) func $trampoline_split)
  (elem $keep-elem4 (table $keep-table) (i32.const 10) func $split)
+ ;; This segment contains only secondary functions, but it is referenced by an
+ ;; array.init_elem instruction in the primary module, so keep this in the
+ ;; primary.
+ ;; PRIMARY:      (elem $keep-elem5 (table $keep-table) (i32.const 0) func $trampoline_split)
+ (elem $keep-elem5 (table $keep-table) (i32.const 0) func $split)
 
  ;; SECONDARY:      (global $split-global funcref (ref.func $split))
  (global $split-global funcref (ref.func $split))
@@ -57,6 +66,14 @@
  ;; PRIMARY-NEXT:  (drop
  ;; PRIMARY-NEXT:   (global.get $keep-global)
  ;; PRIMARY-NEXT:  )
+ ;; PRIMARY-NEXT:  (array.init_elem $array $keep-elem5
+ ;; PRIMARY-NEXT:   (array.new_default $array
+ ;; PRIMARY-NEXT:    (i32.const 1)
+ ;; PRIMARY-NEXT:   )
+ ;; PRIMARY-NEXT:   (i32.const 0)
+ ;; PRIMARY-NEXT:   (i32.const 0)
+ ;; PRIMARY-NEXT:   (i32.const 1)
+ ;; PRIMARY-NEXT:  )
  ;; PRIMARY-NEXT: )
  (func $keep
   ;; Uses $keep-table
@@ -72,6 +89,13 @@
   ;; Uses $keep-global
   (drop
    (global.get $keep-global)
+  )
+  ;; References $keep-elem5
+  (array.init_elem $array $keep-elem5
+    (array.new_default $array (i32.const 1))
+    (i32.const 0)
+    (i32.const 0)
+    (i32.const 1)
   )
  )
 
