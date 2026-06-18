@@ -258,14 +258,15 @@ struct ConstraintAnalysis
                                   BasicBlock* succ,
                                   const LocalConstraintMap& predEnd,
                                   Expression* condition) {
-    return getConstraintsFromParsed(pred, succ, predEnd, LocalConstraint::parseBoolean(condition));
+    return getConstraintsFromParsed(
+      pred, succ, predEnd, LocalConstraint::parseBoolean(condition));
   }
 
   const LocalConstraintMap
   getConstraintsFromBrOn(BasicBlock* pred,
-                                  BasicBlock* succ,
-                                  const LocalConstraintMap& predEnd,
-                                  BrOn* brOn) {
+                         BasicBlock* succ,
+                         const LocalConstraintMap& predEnd,
+                         BrOn* brOn) {
     // We only handle br_on of a local.
     auto* get = brOn->ref->dynCast<LocalGet>();
     if (!get) {
@@ -292,7 +293,8 @@ struct ConstraintAnalysis
         return predEnd;
     }
 
-    return getConstraintsFromParsed(pred, succ, predEnd, LocalConstraint{get->index, constraint});
+    return getConstraintsFromParsed(
+      pred, succ, predEnd, LocalConstraint{get->index, constraint});
   }
 
   // Gets constraints from pred to succ, given a parsed LocalConstraint, which
@@ -300,9 +302,9 @@ struct ConstraintAnalysis
   // taken in the first path from pred, and otherwise the second.
   const LocalConstraintMap
   getConstraintsFromParsed(BasicBlock* pred,
-                                  BasicBlock* succ,
-                                  const LocalConstraintMap& predEnd,
-                                  std::optional<LocalConstraint> parsed) {
+                           BasicBlock* succ,
+                           const LocalConstraintMap& predEnd,
+                           std::optional<LocalConstraint> parsed) {
 
     if (!parsed) {
       return predEnd;
