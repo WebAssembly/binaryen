@@ -102,7 +102,7 @@ struct ConstraintAnalysis
 
   static void doEndBranch(ConstraintAnalysis* self, Expression** currp) {
     if (self->currBasicBlock) {
-//      self->currBasicBlock->contents.brancher = *currp;
+      self->currBasicBlock->contents.brancher = *currp;
     }
     Super::doEndBranch(self, currp);
   }
@@ -240,8 +240,11 @@ struct ConstraintAnalysis
     Expression* booleanCondition = nullptr;
     if (auto* iff = brancher->dynCast<If>()) {
       booleanCondition = iff->condition;
+    } else if (auto* br = brancher->dynCast<Break>()) {
+      booleanCondition = br->condition;
     } else {
-      WASM_UNREACHABLE("unknown brancher");
+      // An unhandled condition.
+      return predEnd;
     }
 
     auto parsed = LocalConstraint::parseBoolean(booleanCondition);

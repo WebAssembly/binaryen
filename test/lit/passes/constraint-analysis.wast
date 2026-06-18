@@ -1190,4 +1190,86 @@
       )
     )
   )
+
+  ;; CHECK:      (func $conditional-br_if (type $0) (param $param i32)
+  ;; CHECK-NEXT:  (block $block
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.eq
+  ;; CHECK-NEXT:     (local.get $param)
+  ;; CHECK-NEXT:     (i32.const 10)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (br_if $block
+  ;; CHECK-NEXT:    (i32.eq
+  ;; CHECK-NEXT:     (local.get $param)
+  ;; CHECK-NEXT:     (i32.const 10)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.eq
+  ;; CHECK-NEXT:    (local.get $param)
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPTIN:      (func $conditional-br_if (type $0) (param $param i32)
+  ;; OPTIN-NEXT:  (block $block
+  ;; OPTIN-NEXT:   (drop
+  ;; OPTIN-NEXT:    (i32.eq
+  ;; OPTIN-NEXT:     (local.get $param)
+  ;; OPTIN-NEXT:     (i32.const 10)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:   (br_if $block
+  ;; OPTIN-NEXT:    (i32.eq
+  ;; OPTIN-NEXT:     (local.get $param)
+  ;; OPTIN-NEXT:     (i32.const 10)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:   (drop
+  ;; OPTIN-NEXT:    (i32.const 1)
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (drop
+  ;; OPTIN-NEXT:   (i32.eq
+  ;; OPTIN-NEXT:    (local.get $param)
+  ;; OPTIN-NEXT:    (i32.const 10)
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT: )
+  (func $conditional-br_if (param $param i32)
+    (block $block
+      ;; We can infer nothing yet.
+      (drop
+        (i32.eq
+          (local.get $param)
+          (i32.const 10)
+        )
+      )
+      (br_if $block
+        (i32.eq
+          (local.get $param)
+          (i32.const 10)
+        )
+      )
+      ;; Now we can.
+      (drop
+        (i32.eq
+          (local.get $param)
+          (i32.const 10)
+        )
+      )
+    )
+    ;; Merging after the block, we can't.
+    (drop
+      (i32.eq
+        (local.get $param)
+        (i32.const 10)
+      )
+    )
+  )
 )
