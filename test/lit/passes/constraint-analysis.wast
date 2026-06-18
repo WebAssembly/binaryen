@@ -1388,6 +1388,48 @@
     )
   )
 
+  ;; CHECK:      (func $br_on_null (type $3) (param $param anyref)
+  ;; CHECK-NEXT:  (block $block
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (ref.is_null
+  ;; CHECK-NEXT:     (local.get $param)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (br_on_null $block
+  ;; CHECK-NEXT:     (local.get $param)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (return)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPTIN:      (func $br_on_null (type $3) (param $param anyref)
+  ;; OPTIN-NEXT:  (block $block
+  ;; OPTIN-NEXT:   (drop
+  ;; OPTIN-NEXT:    (ref.is_null
+  ;; OPTIN-NEXT:     (local.get $param)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:   (drop
+  ;; OPTIN-NEXT:    (br_on_null $block
+  ;; OPTIN-NEXT:     (local.get $param)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:   (drop
+  ;; OPTIN-NEXT:    (i32.const 0)
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:   (return)
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (drop
+  ;; OPTIN-NEXT:   (i32.const 1)
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT: )
   (func $br_on_null (param $param anyref)
     (block $block
       ;; We cannot infer here.
@@ -1410,35 +1452,6 @@
       (return)
     )
     ;; Because of the return, we can infer 1 here.
-    (drop
-      (ref.is_null
-        (local.get $param)
-      )
-    )
-  )
-
-  (func $br_on_non_null (param $param anyref)
-    (drop
-      (block $block (param (ref any))
-        ;; We cannot infer here.
-        (drop
-          (ref.is_null
-            (local.get $param)
-          )
-        )
-        (br_on_non_null $block
-          (local.get $param)
-        )
-        ;; We can infer 1 here.
-        (drop
-          (ref.is_null
-            (local.get $param)
-          )
-        )
-        (return)
-      )
-    )
-    ;; Because of the return, we can infer 0 here.
     (drop
       (ref.is_null
         (local.get $param)
