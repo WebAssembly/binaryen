@@ -1206,7 +1206,7 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -1231,7 +1231,7 @@
   ;; OPTIN-NEXT:    )
   ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:   (drop
-  ;; OPTIN-NEXT:    (i32.const 1)
+  ;; OPTIN-NEXT:    (i32.const 0)
   ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (drop
@@ -1256,7 +1256,7 @@
           (i32.const 10)
         )
       )
-      ;; Now we can.
+      ;; Now we can, this is false.
       (drop
         (i32.eq
           (local.get $param)
@@ -1288,12 +1288,12 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (return)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; OPTIN:      (func $conditional-br_if_2 (type $0) (param $param i32)
@@ -1311,12 +1311,12 @@
   ;; OPTIN-NEXT:    )
   ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:   (drop
-  ;; OPTIN-NEXT:    (i32.const 1)
+  ;; OPTIN-NEXT:    (i32.const 0)
   ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:   (return)
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (drop
-  ;; OPTIN-NEXT:   (i32.const 0)
+  ;; OPTIN-NEXT:   (i32.const 1)
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT: )
   (func $conditional-br_if_2 (param $param i32)
@@ -1335,7 +1335,7 @@
           (i32.const 10)
         )
       )
-      ;; As before, we can infer 1 here.
+      ;; As before, we can infer 0 here.
       (drop
         (i32.eq
           (local.get $param)
@@ -1344,7 +1344,7 @@
       )
       (return) ;; this was added
     )
-    ;; Because of the return, we can infer 0 here.
+    ;; Because of the return, we can infer 1 here.
     (drop
       (i32.eq
         (local.get $param)

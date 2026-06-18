@@ -237,29 +237,26 @@ struct ConstraintAnalysis
     }
 
     if (auto* iff = brancher->dynCast<If>()) {
-      return getConstraintsFromBooleanBranch(
-        pred, succ, predEnd, iff->condition);
+      return getConstraintsFromParsed(
+        pred, succ, predEnd, LocalConstraint::parseBoolean(iff->condition));
     } else if (auto* br = brancher->dynCast<Break>()) {
-      return getConstraintsFromBooleanBranch(
-        pred, succ, predEnd, br->condition);
+      auto parsed = LocalConstraint::parseBoolean(br->condition);
+      if (parsed) {
+        auto [local, constraint] = *parsed;
+        // Unlike If, we must flip the constraint. The adjacent block right
+        // after the if is the ifTrue path, but for br_if, the adjacent block is
+        // the fallthrough, i.e., ifFalse.
+        if (auto negated = constraint.negate()) {
+          return getConstraintsFromParsed(
+            pred, succ, predEnd, LocalConstraint{local, *negated});
+        }
+      }
     } else if (auto* br = brancher->dynCast<BrOn>()) {
       return getConstraintsFromBrOn(pred, succ, predEnd, br);
     }
     // TODO: Switch
     // TODO: BrOn
     return predEnd;
-  }
-
-  // Gets constraints from a pred to a succ, given the branch at the end of the
-  // pred is a boolean condition, that is, if the condition is true we take the
-  // first path, and if not, the other.
-  const LocalConstraintMap
-  getConstraintsFromBooleanBranch(BasicBlock* pred,
-                                  BasicBlock* succ,
-                                  const LocalConstraintMap& predEnd,
-                                  Expression* condition) {
-    return getConstraintsFromParsed(
-      pred, succ, predEnd, LocalConstraint::parseBoolean(condition));
   }
 
   const LocalConstraintMap
