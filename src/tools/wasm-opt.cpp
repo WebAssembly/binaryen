@@ -269,7 +269,7 @@ For more on how to optimize effectively, see
          [&outputSourceMapUrl](Options* o, const std::string& argument) {
            outputSourceMapUrl = argument;
          })
-    
+
     .add_positional("INFILE",
                     Options::Arguments::One,
                     [](Options* o, const std::string& argument) {
