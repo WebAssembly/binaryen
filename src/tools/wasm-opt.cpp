@@ -95,7 +95,6 @@ int main(int argc, const char* argv[]) {
   std::string outputSourceMapFilename;
   std::string outputSourceMapUrl;
   bool emitExnref = false;
-  bool emitModuleNames = false;
 
   const std::string WasmOptOption = "wasm-opt options";
 
@@ -270,15 +269,7 @@ For more on how to optimize effectively, see
          [&outputSourceMapUrl](Options* o, const std::string& argument) {
            outputSourceMapUrl = argument;
          })
-    .add(
-      "--emit-module-names",
-      "",
-      "Emit module names, even if not emitting the rest of the names section",
-      WasmOptOption,
-      Options::Arguments::Zero,
-      [&emitModuleNames](Options*, const std::string&) {
-        emitModuleNames = true;
-      })
+    
     .add_positional("INFILE",
                     Options::Arguments::One,
                     [](Options* o, const std::string& argument) {
@@ -417,7 +408,7 @@ For more on how to optimize effectively, see
     ModuleWriter writer(options.passOptions);
     writer.setBinary(emitBinary);
     writer.setDebugInfo(options.passOptions.debugInfo);
-    if (emitModuleNames) {
+    if (options.emitModuleNames) {
       writer.setEmitModuleName(true);
     }
     writer.write(wasm, options.extra["output"]);
@@ -509,7 +500,7 @@ For more on how to optimize effectively, see
     ModuleWriter writer(options.passOptions);
     writer.setBinary(emitBinary);
     writer.setDebugInfo(options.passOptions.debugInfo);
-    if (emitModuleNames) {
+    if (options.emitModuleNames) {
       writer.setEmitModuleName(true);
     }
     if (outputSourceMapFilename.size()) {

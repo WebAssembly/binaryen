@@ -32,6 +32,7 @@ struct ToolOptions : public Options {
 
   bool quiet = false;
   bool preserveTypeOrder = false;
+  bool emitModuleNames = false;
   IRProfile profile = IRProfile::Normal;
 
   constexpr static const char* ToolOptionsCategory = "Tool options";
@@ -69,13 +70,19 @@ struct ToolOptions : public Options {
            ToolOptionsCategory,
            Arguments::Zero,
            [this](Options*, const std::string&) { quiet = true; })
-      .add(
-        "--experimental-poppy",
-        "",
-        "Parse wast files as Poppy IR for testing purposes.",
-        ToolOptionsCategory,
-        Arguments::Zero,
-        [this](Options*, const std::string&) { profile = IRProfile::Poppy; });
+      .add("--experimental-poppy",
+           "",
+           "Parse wast files as Poppy IR for testing purposes.",
+           ToolOptionsCategory,
+           Arguments::Zero,
+           [this](Options*, const std::string&) { profile = IRProfile::Poppy; })
+      .add("--emit-module-names",
+           "",
+           "Emit module names, even if not emitting the rest of the names "
+           "section.",
+           ToolOptionsCategory,
+           Arguments::Zero,
+           [this](Options*, const std::string&) { emitModuleNames = true; });
     (*this)
       .addFeature(FeatureSet::SignExt, "sign extension operations")
       .addFeature(FeatureSet::Atomics, "atomic operations")
