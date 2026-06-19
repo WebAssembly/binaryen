@@ -52,7 +52,6 @@ struct WasmSplitOptions : ToolOptions {
   bool placeholderMap = false;
   bool stripDebug = false;
 
-
   std::string profileFile;
   std::string profileExport = DEFAULT_PROFILE_EXPORT;
 
