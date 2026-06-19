@@ -73,9 +73,8 @@
 ;; CHECK-NEXT:   --experimental-poppy                 Parse wast files as Poppy IR for testing
 ;; CHECK-NEXT:                                        purposes.
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --emit-module-names                  Emit module names, even if not
-;; CHECK-NEXT:                                        emitting the rest of the names
-;; CHECK-NEXT:                                        section
+;; CHECK-NEXT:   --emit-module-names                  Emit module names, even if not emitting
+;; CHECK-NEXT:                                        the rest of the names section
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --enable-sign-ext                    Enable sign extension operations
 ;; CHECK-NEXT:
