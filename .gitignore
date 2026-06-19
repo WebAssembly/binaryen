@@ -15,7 +15,7 @@ options-pinned.h
 /out/
 
 # generated documentation
-docs/
+/docs/
 
 # files related to building in-tree
 CMakeFiles
