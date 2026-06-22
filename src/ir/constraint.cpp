@@ -246,10 +246,13 @@ std::optional<LocalConstraint> LocalConstraint::parse(Expression* curr) {
 }
 
 void LocalConstraintMap::approximateOr(const LocalConstraintMap& other) {
-  // Find things in both, and OR them.
   for (auto& [local, constraints] : other) {
     if (auto iter = find(local); iter != end()) {
+      // This is in both: OR them.
       iter->second.approximateOr(constraints);
+    } else {
+      // This is only in other, so apply it.
+      (*this)[local] = constraints;
     }
   }
 
