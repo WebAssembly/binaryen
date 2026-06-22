@@ -988,7 +988,8 @@ Result<> IRBuilder::visitCatch(Name tag) {
     auto& delimiterLocs = func->delimiterLocations[tryy];
     delimiterLocs[delimiterLocs.size()] = lastBinaryPos - codeSectionOffset;
     if (wasTry) {
-      func->expressionLocations[tryy].start = scope.startPos - codeSectionOffset;
+      func->expressionLocations[tryy].start =
+        scope.startPos - codeSectionOffset;
     }
   }
 
@@ -1029,7 +1030,8 @@ Result<> IRBuilder::visitCatchAll() {
     auto& delimiterLocs = func->delimiterLocations[tryy];
     delimiterLocs[delimiterLocs.size()] = lastBinaryPos - codeSectionOffset;
     if (wasTry) {
-      func->expressionLocations[tryy].start = scope.startPos - codeSectionOffset;
+      func->expressionLocations[tryy].start =
+        scope.startPos - codeSectionOffset;
     }
   }
 
