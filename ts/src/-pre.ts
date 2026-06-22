@@ -18,8 +18,6 @@ export const BinaryenObj = await Binaryen({
 export const {
 	_malloc,
 	_free,
-	out,
-	err,
 	stackSave,
 	stackRestore,
 	stackAlloc,
