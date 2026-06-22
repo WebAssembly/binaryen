@@ -49,12 +49,12 @@
     "typescript-eslint": "^8.59.1"
   },
   "engines": {
-    "node": "^20 || ^22 || ^24 || ^26"
+    "node": ">= 22"
   },
   "devEngines": {
     "runtime": {
       "name": "node",
-      "version": "^22 || ^24 || ^26"
+      "version": ">= 22"
     },
     "packageManager": {
       "name": "npm"
