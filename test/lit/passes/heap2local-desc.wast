@@ -352,11 +352,16 @@
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (if (result nullref)
-  ;; CHECK-NEXT:     (ref.eq
-  ;; CHECK-NEXT:      (block (result nullref)
-  ;; CHECK-NEXT:       (ref.null none)
+  ;; CHECK-NEXT:     (block (result i32)
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (block (result nullref)
+  ;; CHECK-NEXT:        (ref.null none)
+  ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (local.get $1)
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (local.get $1)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (i32.const 0)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (then
   ;; CHECK-NEXT:      (ref.null none)
@@ -369,7 +374,10 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $cast-desc-eq-fail-reverse (param $desc (ref null (exact $super.desc)))
-    ;; Same as above, but change where the parameter is used.
+    ;; Same as above, but change where the parameter is used. We can optimize
+    ;; more because we do not have one non-escaping allocation flowing into
+    ;; another non-escaping allocation (which would currently require multiple
+    ;; runs to fully optimize).
     (drop
       (ref.cast_desc_eq (ref (exact $super))
         (struct.new_desc $super
@@ -1079,7 +1087,7 @@
   ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (local.tee $v
+  ;; CHECK-NEXT:  (local.set $v
   ;; CHECK-NEXT:   (block ;; (replaces unreachable StructGet we can't emit)
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (block
@@ -1305,7 +1313,7 @@
   ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (local.tee $func
+  ;; CHECK-NEXT:  (local.set $func
   ;; CHECK-NEXT:   (block ;; (replaces unreachable StructGet we can't emit)
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (block ;; (replaces unreachable RefGetDesc we can't emit)

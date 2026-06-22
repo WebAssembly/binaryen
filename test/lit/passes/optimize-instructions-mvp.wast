@@ -10981,7 +10981,7 @@
   ;; CHECK:      (func $tee-with-unreachable-value (result f64)
   ;; CHECK-NEXT:  (local $var$0 i32)
   ;; CHECK-NEXT:  (block $label$1 (result f64)
-  ;; CHECK-NEXT:   (local.tee $var$0
+  ;; CHECK-NEXT:   (local.set $var$0
   ;; CHECK-NEXT:    (br_if $label$1
   ;; CHECK-NEXT:     (f64.const 1)
   ;; CHECK-NEXT:     (unreachable)
@@ -18704,7 +18704,7 @@
   ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (local.tee $temp
+  ;; CHECK-NEXT:  (local.set $temp
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )

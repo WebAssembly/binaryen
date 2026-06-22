@@ -229,18 +229,6 @@ def randomize_fuzz_settings():
     else:
         LEGALIZE = False
 
-    # if GC is enabled then run --dce at the very end, to ensure that our
-    # binaries validate in other VMs, due to how non-nullable local validation
-    # and unreachable code interact. see
-    #   https://github.com/WebAssembly/binaryen/pull/5665
-    #   https://github.com/WebAssembly/binaryen/issues/5599
-    if '--disable-gc' not in FEATURE_OPTS:
-        GEN_ARGS += ['--dce']
-
-        # Add --dce not only when generating the original wasm but to the
-        # optimizations we use to create any other wasm file.
-        FUZZ_OPTS += ['--dce']
-
     if CLOSED_WORLD:
         GEN_ARGS += [CLOSED_WORLD_FLAG]
         # Enclose the world much of the time when fuzzing closed-world, so that
@@ -450,13 +438,6 @@ FUZZ_EXEC_EXPORT_PREFIX = '[fuzz-exec] export'
 # --fuzz-exec reports a stack limit using this notation
 STACK_LIMIT = '[trap stack limit]'
 
-# V8 reports this error in rare cases due to limitations in our handling of non-
-# nullable locals in unreachable code, see
-#   https://github.com/WebAssembly/binaryen/pull/5665
-#   https://github.com/WebAssembly/binaryen/issues/5599
-# and also see the --dce workaround below that also links to those issues.
-V8_UNINITIALIZED_NONDEF_LOCAL = 'uninitialized non-defaultable local'
-
 # JS exceptions are logged as exception thrown: REASON
 EXCEPTION_PREFIX = 'exception thrown: '
 
@@ -655,8 +636,6 @@ def run_vm(cmd, checked=True):
             # strings in this list for known issues (to which more need to be
             # added as necessary).
             HOST_LIMIT_PREFIX,
-            # see comment above on this constant
-            V8_UNINITIALIZED_NONDEF_LOCAL,
             # V8 does not accept nullable stringviews
             # (https://github.com/WebAssembly/binaryen/pull/6574)
             'expected (ref stringview_wtf16), got nullref',

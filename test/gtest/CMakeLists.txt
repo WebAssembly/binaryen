@@ -9,6 +9,7 @@ set(unittest_SOURCES
   arena.cpp
   cast-check.cpp
   cfg.cpp
+  constraint.cpp
   dataflow.cpp
   delta_debugging.cpp
   dfa_minimization.cpp
