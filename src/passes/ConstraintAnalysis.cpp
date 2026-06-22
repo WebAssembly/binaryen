@@ -47,11 +47,7 @@ struct Info {
 
   // For each local index, we track the constraints we know about it. We only do
   // so at the start of each block, which is enough for the analysis below.
-  //
-  // We use an optional here to represent the "null" state before any
-  // information arrives. (From the perspective of set theory, nullopt can be
-  // taken to mean the empty set is the set of values possible for each local.)
-  std::optional<LocalConstraintMap> startConstraints;
+  LocalConstraintMap startConstraints;
 };
 
 struct ConstraintAnalysis
@@ -110,8 +106,7 @@ struct ConstraintAnalysis
       // TODO: support tuples
       if (type.size() == 1 && LiteralUtils::canMakeZero(type)) {
         auto value = Literal::makeZero(type);
-        (*entryConstraints)[i].approximateAnd(
-          Constraint{Abstract::Eq, {value}});
+        (*entryConstraints)[i].set(Constraint{Abstract::Eq, {value}});
       }
     }
 
@@ -122,7 +117,7 @@ struct ConstraintAnalysis
       auto* block = work.pop();
 
       // Start at the top of the block, then go through, applying things.
-      LocalConstraintMap constraints = *block->contents.startConstraints;
+      LocalConstraintMap constraints = block->contents.startConstraints;
       for (auto** currp : block->contents.actions) {
         applyToConstraints(*currp, constraints);
       }
@@ -140,7 +135,7 @@ struct ConstraintAnalysis
 
         // This is later data, which may or may not cause changes.
         auto old = outConstraints;
-        outConstraints->approximateOr(constraints);
+        outConstraints.approximateOr(constraints);
         if (*outConstraints != old) {
           work.push(out);
         }
@@ -161,8 +156,8 @@ struct ConstraintAnalysis
       }
 
       for (auto** currp : block->contents.actions) {
-        applyToConstraints(*currp, *constraints);
-        optimizeExpression(currp, *constraints);
+        applyToConstraints(*currp, constraints);
+        optimizeExpression(currp, constraints);
       }
     }
   }
@@ -204,7 +199,7 @@ struct ConstraintAnalysis
       localConstraints.clear();
       if (Properties::isSingleConstantExpression(set->value)) {
         auto value = Properties::getLiteral(set->value);
-        localConstraints.approximateAnd(Constraint{Abstract::Eq, {value}});
+        localConstraints.set(Constraint{Abstract::Eq, {value}});
       }
     }
   }
