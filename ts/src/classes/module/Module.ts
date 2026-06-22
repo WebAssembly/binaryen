@@ -400,11 +400,14 @@ export class Module {
 		 * Instead, we reassign directly on `BinaryenObj`.
 		 */
 		let returned = "";
+		// @ts-expect-error
 		const temp_out = BinaryenObj.out;
+		// @ts-expect-error
 		BinaryenObj.out = (x: string): void => {
 			returned += `${ x }\n`;
 		};
 		BinaryenObj["_BinaryenModulePrintAsmjs"](this[PTR]);
+		// @ts-expect-error
 		BinaryenObj.out = temp_out;
 		return returned;
 	}

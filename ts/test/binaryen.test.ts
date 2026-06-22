@@ -13,8 +13,6 @@ suite("binaryen", () => {
 		assert.ok(__pre.BinaryenObj);
 		assert.ok(__pre._malloc);
 		assert.ok(__pre._free);
-		assert.ok(__pre.out);
-		assert.ok(__pre.err);
 		assert.ok(__pre.stackSave);
 		assert.ok(__pre.stackRestore);
 		assert.ok(__pre.stackAlloc);
