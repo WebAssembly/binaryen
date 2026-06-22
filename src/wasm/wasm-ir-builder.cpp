@@ -987,8 +987,9 @@ Result<> IRBuilder::visitCatch(Name tag) {
   if (binaryPos && func) {
     auto& delimiterLocs = func->delimiterLocations[tryy];
     delimiterLocs[delimiterLocs.size()] = lastBinaryPos - codeSectionOffset;
-    // TODO: As in visitElse, we likely need to stash the Try start. Here we
-    //       also need to account for multiple catches.
+    if (wasTry) {
+      func->expressionLocations[tryy].start = scope.startPos - codeSectionOffset;
+    }
   }
 
   CHECK_ERR(pushScope(ScopeCtx::makeCatch(std::move(scope), tryy)));
@@ -1027,6 +1028,9 @@ Result<> IRBuilder::visitCatchAll() {
   if (binaryPos && func) {
     auto& delimiterLocs = func->delimiterLocations[tryy];
     delimiterLocs[delimiterLocs.size()] = lastBinaryPos - codeSectionOffset;
+    if (wasTry) {
+      func->expressionLocations[tryy].start = scope.startPos - codeSectionOffset;
+    }
   }
 
   return pushScope(ScopeCtx::makeCatchAll(std::move(scope), tryy));
