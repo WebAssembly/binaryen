@@ -100,7 +100,7 @@ public:
   // Writing defaults to not storing the names section. Storing it is a user-
   // observable fact that must be opted into.
   ModuleWriter(const PassOptions& options, bool emitModuleName)
-      : options(options), emitModuleName(emitModuleName) {
+    : options(options), emitModuleName(emitModuleName) {
     setDebugInfo(false);
   }
 
