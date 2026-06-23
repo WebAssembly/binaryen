@@ -857,7 +857,7 @@ static void dumpWasm(Name name, Module* wasm, const PassOptions& options) {
 #endif
   fullName += numstr + "-" + name.toString();
   Colors::setEnabled(false);
-  ModuleWriter writer(options);
+  ModuleWriter writer(options, false);
   writer.setDebugInfo(true);
   writer.writeBinary(*wasm, fullName + ".wasm");
 }

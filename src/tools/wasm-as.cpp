@@ -134,7 +134,7 @@ int main(int argc, const char* argv[]) {
 
   // Ensure the destructor of ModuleWriter runs before quick_exit.
   {
-    ModuleWriter writer(options.passOptions);
+    ModuleWriter writer(options.passOptions, options.emitModuleNames);
     writer.setBinary(true);
     writer.setDebugInfo(debugInfo);
     if (sourceMapFilename.size()) {

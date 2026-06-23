@@ -279,7 +279,7 @@ int main(int argc, const char* argv[]) {
 
   if (writeOutput) {
     Output output(outfile, emitBinary ? Flags::Binary : Flags::Text);
-    ModuleWriter writer(options.passOptions);
+    ModuleWriter writer(options.passOptions, options.emitModuleNames);
     writer.setDebugInfo(debugInfo);
     // writer.setSymbolMap(symbolMap);
     writer.setBinary(emitBinary);

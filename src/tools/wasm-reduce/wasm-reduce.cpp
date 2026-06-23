@@ -411,7 +411,7 @@ struct Reducer
 
   bool writeAndTestReduction(ProgramResult& out) {
     // write the module out
-    ModuleWriter writer(toolOptions.passOptions);
+    ModuleWriter writer(toolOptions.passOptions, toolOptions.emitModuleNames);
     writer.setBinary(binary);
     writer.setDebugInfo(debugInfo);
     writer.write(*getModule(), test);
@@ -1488,6 +1488,9 @@ More documentation can be found at
   if (debugInfo) {
     extraFlags += " -g ";
   }
+  if (options.emitModuleNames) {
+    extraFlags += " --emit-module-names ";
+  }
 
   if (test.size() == 0) {
     Fatal() << "test file not provided\n";
@@ -1543,7 +1546,7 @@ More documentation can be found at
     if (resultOnInvalid == expected) {
       // Try it on a valid input.
       Module emptyModule;
-      ModuleWriter writer(options.passOptions);
+      ModuleWriter writer(options.passOptions, options.emitModuleNames);
       writer.setBinary(true);
       writer.write(emptyModule, test);
       ProgramResult resultOnValid(command);

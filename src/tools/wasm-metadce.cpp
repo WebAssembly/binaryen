@@ -659,7 +659,7 @@ int main(int argc, const char* argv[]) {
   graph.apply();
 
   if (options.extra.contains("output")) {
-    ModuleWriter writer(options.passOptions);
+    ModuleWriter writer(options.passOptions, options.emitModuleNames);
     writer.setBinary(emitBinary);
     writer.setDebugInfo(debugInfo);
     if (outputSourceMapFilename.size()) {

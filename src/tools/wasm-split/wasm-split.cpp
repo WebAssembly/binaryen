@@ -100,12 +100,9 @@ void writeModule(Module& wasm,
     runner.add("strip-debug");
     runner.run();
   }
-  ModuleWriter writer(options.passOptions);
+  ModuleWriter writer(options.passOptions, options.emitModuleNames);
   writer.setBinary(options.emitBinary);
   writer.setDebugInfo(options.passOptions.debugInfo && !options.stripDebug);
-  if (options.emitModuleNames) {
-    writer.setEmitModuleName(true);
-  }
   writer.write(wasm, filename);
 }
 
