@@ -110,7 +110,6 @@ features = [
     '--disable-strings',
     '--disable-stack-switching',
     '--disable-multibyte',
-    '--disable-wide-arithmetic',
 ]
 
 with tarfile.open(output_file, "w:gz") as tar:
@@ -185,5 +184,5 @@ with tarfile.open(output_file, "w:gz") as tar:
 print('Done.')
 print('To run the tests on this bundle, do:')
 print()
-print(f'BINARYEN_CLUSTER_FUZZ_BUNDLE={output_file} python -m unittest test/unit/test_cluster_fuzz.py')
+print(f'BINARYEN_CLUSTER_FUZZ_BUNDLE={output_file} python3 -m unittest test/unit/test_cluster_fuzz.py')
 print()

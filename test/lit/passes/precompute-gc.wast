@@ -1066,7 +1066,7 @@
 
  ;; CHECK:      (func $get-nonnullable-in-unreachable (type $10) (result anyref)
  ;; CHECK-NEXT:  (local $x (ref any))
- ;; CHECK-NEXT:  (local.tee $x
+ ;; CHECK-NEXT:  (local.set $x
  ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (if
@@ -1182,7 +1182,7 @@
 
  ;; CHECK:      (func $get-nonnullable-in-unreachable-tuple (type $20) (result anyref i32)
  ;; CHECK-NEXT:  (local $x (tuple (ref any) i32))
- ;; CHECK-NEXT:  (local.tee $x
+ ;; CHECK-NEXT:  (local.set $x
  ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (if

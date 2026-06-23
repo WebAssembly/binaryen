@@ -2863,6 +2863,11 @@ void IRBuilder::applyAnnotations(Expression* expr,
     assert(func);
     func->codeAnnotations[expr].idempotent = true;
   }
+
+  if (annotation.toolchainInline) {
+    assert(func);
+    func->codeAnnotations[expr].toolchainInline = annotation.toolchainInline;
+  }
 }
 
 } // namespace wasm

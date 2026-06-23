@@ -167,3 +167,160 @@
  )
 )
 
+;; Write to an array using string.encode.
+(module
+ ;; OPEND:      (type $array (array (mut i16)))
+ ;; CLOSE:      (type $array (array (mut i16)))
+ (type $array (array (mut i16)))
+
+ ;; OPEND:      (type $1 (func))
+
+ ;; OPEND:      (type $2 (func (result i32)))
+
+ ;; OPEND:      (global $global (ref $array) (array.new_default $array
+ ;; OPEND-NEXT:  (i32.const 42)
+ ;; OPEND-NEXT: ))
+ ;; CLOSE:      (type $1 (func))
+
+ ;; CLOSE:      (type $2 (func (result i32)))
+
+ ;; CLOSE:      (global $global (ref $array) (array.new_default $array
+ ;; CLOSE-NEXT:  (i32.const 42)
+ ;; CLOSE-NEXT: ))
+ (global $global (ref $array) (array.new_default $array
+  (i32.const 42)
+ ))
+
+ ;; OPEND:      (export "encode" (func $encode))
+
+ ;; OPEND:      (export "read" (func $read))
+
+ ;; OPEND:      (func $encode (type $1)
+ ;; OPEND-NEXT:  (drop
+ ;; OPEND-NEXT:   (string.encode_wtf16_array
+ ;; OPEND-NEXT:    (string.const "hello")
+ ;; OPEND-NEXT:    (global.get $global)
+ ;; OPEND-NEXT:    (i32.const 0)
+ ;; OPEND-NEXT:   )
+ ;; OPEND-NEXT:  )
+ ;; OPEND-NEXT: )
+ ;; CLOSE:      (export "encode" (func $encode))
+
+ ;; CLOSE:      (export "read" (func $read))
+
+ ;; CLOSE:      (func $encode (type $1)
+ ;; CLOSE-NEXT:  (drop
+ ;; CLOSE-NEXT:   (string.encode_wtf16_array
+ ;; CLOSE-NEXT:    (string.const "hello")
+ ;; CLOSE-NEXT:    (global.get $global)
+ ;; CLOSE-NEXT:    (i32.const 0)
+ ;; CLOSE-NEXT:   )
+ ;; CLOSE-NEXT:  )
+ ;; CLOSE-NEXT: )
+ (func $encode (export "encode")
+  (drop
+   (string.encode_wtf16_array
+    (string.const "hello")
+    (global.get $global)
+    (i32.const 0)
+   )
+  )
+ )
+
+ ;; OPEND:      (func $read (type $2) (result i32)
+ ;; OPEND-NEXT:  (array.get_s $array
+ ;; OPEND-NEXT:   (global.get $global)
+ ;; OPEND-NEXT:   (i32.const 0)
+ ;; OPEND-NEXT:  )
+ ;; OPEND-NEXT: )
+ ;; CLOSE:      (func $read (type $2) (result i32)
+ ;; CLOSE-NEXT:  (array.get_s $array
+ ;; CLOSE-NEXT:   (global.get $global)
+ ;; CLOSE-NEXT:   (i32.const 0)
+ ;; CLOSE-NEXT:  )
+ ;; CLOSE-NEXT: )
+ (func $read (export "read") (result i32)
+  ;; We could infer what the value is here, since there is only one write. TODO
+  ;; Meanwhile, we should not infer a wrong value, even in closed world.
+  (array.get_s $array
+   (global.get $global)
+   (i32.const 0)
+  )
+ )
+)
+
+;; Export parameter test. In open world, a function reference parameter of an
+;; export can have any value from the outside, so the call_ref is preserved.
+;; In closed world, we assume no such function is called from the outside.
+(module
+  ;; OPEND:      (type $sig (func (result i32)))
+  ;; CLOSE:      (type $sig (func (result i32)))
+  (type $sig (func (result i32)))
+
+  ;; OPEND:      (type $1 (func (param (ref $sig)) (result i32)))
+
+  ;; OPEND:      (export "test-export-param" (func $export-param))
+
+  ;; OPEND:      (func $export-param (type $1) (param $f (ref $sig)) (result i32)
+  ;; OPEND-NEXT:  (call_ref $sig
+  ;; OPEND-NEXT:   (local.get $f)
+  ;; OPEND-NEXT:  )
+  ;; OPEND-NEXT: )
+  ;; CLOSE:      (type $1 (func (param (ref $sig)) (result i32)))
+
+  ;; CLOSE:      (export "test-export-param" (func $export-param))
+
+  ;; CLOSE:      (func $export-param (type $1) (param $f (ref $sig)) (result i32)
+  ;; CLOSE-NEXT:  (drop
+  ;; CLOSE-NEXT:   (call_ref $sig
+  ;; CLOSE-NEXT:    (local.get $f)
+  ;; CLOSE-NEXT:   )
+  ;; CLOSE-NEXT:  )
+  ;; CLOSE-NEXT:  (unreachable)
+  ;; CLOSE-NEXT: )
+  (func $export-param (export "test-export-param") (param $f (ref $sig)) (result i32)
+    (call_ref $sig
+      (local.get $f)
+    )
+  )
+)
+
+;; Import result test. In open world, the return value of the imported function
+;; can be any function reference, which when called via call_ref preserves it.
+;; In closed world, it optimizes to unreachable.
+(module
+  ;; OPEND:      (type $sig (func (result i32)))
+  ;; CLOSE:      (type $sig (func (result i32)))
+  (type $sig (func (result i32)))
+  ;; OPEND:      (type $1 (func (result (ref $sig))))
+
+  ;; OPEND:      (import "env" "get-sig" (func $get-sig (type $1) (result (ref $sig))))
+  ;; CLOSE:      (type $1 (func (result (ref $sig))))
+
+  ;; CLOSE:      (import "env" "get-sig" (func $get-sig (type $1) (result (ref $sig))))
+  (import "env" "get-sig" (func $get-sig (result (ref $sig))))
+
+  ;; OPEND:      (export "test-import-result" (func $import-result))
+
+  ;; OPEND:      (func $import-result (type $sig) (result i32)
+  ;; OPEND-NEXT:  (call_ref $sig
+  ;; OPEND-NEXT:   (call $get-sig)
+  ;; OPEND-NEXT:  )
+  ;; OPEND-NEXT: )
+  ;; CLOSE:      (export "test-import-result" (func $import-result))
+
+  ;; CLOSE:      (func $import-result (type $sig) (result i32)
+  ;; CLOSE-NEXT:  (drop
+  ;; CLOSE-NEXT:   (call_ref $sig
+  ;; CLOSE-NEXT:    (call $get-sig)
+  ;; CLOSE-NEXT:   )
+  ;; CLOSE-NEXT:  )
+  ;; CLOSE-NEXT:  (unreachable)
+  ;; CLOSE-NEXT: )
+  (func $import-result (export "test-import-result") (result i32)
+    (call_ref $sig
+      (call $get-sig)
+    )
+  )
+)
+

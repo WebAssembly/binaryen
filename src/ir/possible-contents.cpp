@@ -684,7 +684,7 @@ struct InfoCollector
          SignatureResultLocation{func->type.getHeapType(), i}});
     }
 
-    if (!options.closedWorld) {
+    if (options.worldMode == WorldMode::Open) {
       info.calledFromOutside.insert(curr->func);
     }
   }
@@ -1161,11 +1161,12 @@ struct InfoCollector
       curr->ref, curr->index, curr->value, MemoryOrder::Unordered);
     visitArraySet(set);
   }
-  template<typename ArrayInit> void visitArrayInit(ArrayInit* curr) {
+
+  void handleArrayWrite(Expression* ref) {
     // Check for both unreachability and a bottom type. In either case we have
     // no work to do, and would error on an assertion below in finding the array
     // type.
-    auto field = GCTypeUtils::getField(curr->ref->type);
+    auto field = GCTypeUtils::getField(ref->type);
     if (!field) {
       return;
     }
@@ -1179,12 +1180,14 @@ struct InfoCollector
     Builder builder(*getModule());
     auto* get = builder.makeLocalGet(-1, valueType);
     addRoot(get);
-    auto* set =
-      builder.makeArraySet(curr->ref, curr->index, get, MemoryOrder::Unordered);
+    // The index does not matter, as we do not track array indexes yet TODO
+    Expression* index = builder.makeNop();
+    auto* set = builder.makeArraySet(ref, index, get, MemoryOrder::Unordered);
     visitArraySet(set);
   }
-  void visitArrayInitData(ArrayInitData* curr) { visitArrayInit(curr); }
-  void visitArrayInitElem(ArrayInitElem* curr) { visitArrayInit(curr); }
+
+  void visitArrayInitData(ArrayInitData* curr) { handleArrayWrite(curr->ref); }
+  void visitArrayInitElem(ArrayInitElem* curr) { handleArrayWrite(curr->ref); }
   void visitArrayRMW(ArrayRMW* curr) {
     if (curr->ref->type == Type::unreachable) {
       return;
@@ -1219,6 +1222,7 @@ struct InfoCollector
   }
   void visitStringEncode(StringEncode* curr) {
     // TODO: optimize when possible
+    handleArrayWrite(curr->array);
     addRoot(curr);
   }
   void visitStringConcat(StringConcat* curr) {
@@ -1711,7 +1715,7 @@ void TNHOracle::scan(Function* func,
     void visitCallRef(CallRef* curr) {
       // We can only optimize call_ref in closed world, as otherwise the
       // call can go somewhere we can't see.
-      if (options.closedWorld) {
+      if (options.worldMode == WorldMode::Closed) {
         info.callRefs.push_back(curr);
       }
     }
@@ -1834,7 +1838,7 @@ void TNHOracle::infer() {
   // that type or a subtype, i.e., might be called when that type is seen in a
   // call_ref target.
   std::unordered_map<HeapType, std::vector<Function*>> typeFunctions;
-  if (options.closedWorld) {
+  if (options.worldMode == WorldMode::Closed) {
     for (auto& func : wasm.functions) {
       auto type = func->type;
       auto& info = map[wasm.getFunction(func->name)];
@@ -1895,7 +1899,7 @@ void TNHOracle::infer() {
       // We should only get here in a closed world, in which we know which
       // functions might be called (the scan phase only notes callRefs if we are
       // in fact in a closed world).
-      assert(options.closedWorld);
+      assert(options.worldMode == WorldMode::Closed);
 
       auto iter = typeFunctions.find(targetType.getHeapType());
       if (iter == typeFunctions.end()) {
@@ -2535,8 +2539,8 @@ Flower::Flower(Module& wasm, const PassOptions& options)
   }
 
   // In open world, public heap types may be written to from the outside.
-  if (!options.closedWorld) {
-    for (auto type : ModuleUtils::getPublicHeapTypes(wasm)) {
+  if (options.worldMode == WorldMode::Open) {
+    for (auto type : ModuleUtils::getPublicHeapTypes(wasm, options.worldMode)) {
       if (type.isStruct()) {
         auto& fields = type.getStruct().fields;
         for (Index i = 0; i < fields.size(); i++) {
@@ -2551,6 +2555,12 @@ Flower::Flower(Module& wasm, const PassOptions& options)
       } else if (type.isArray()) {
         roots[getIndex(DataLocation{type, 0})] =
           PossibleContents::fromType(type.getArray().element.type);
+      } else if (type.isSignature()) {
+        auto sig = type.getSignature();
+        for (Index i = 0; i < sig.results.size(); i++) {
+          roots[getIndex(SignatureResultLocation{type, i})] =
+            PossibleContents::fromType(sig.results[i]);
+        }
       }
     }
   }

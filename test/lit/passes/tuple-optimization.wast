@@ -576,7 +576,7 @@
   ;; CHECK-NEXT:    (i32.const 2)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (local.tee $tuple
+  ;; CHECK-NEXT:  (local.set $tuple
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -586,14 +586,14 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (tuple.extract 2 1
-  ;; CHECK-NEXT:    (local.tee $tuple
+  ;; CHECK-NEXT:    (local.set $tuple
   ;; CHECK-NEXT:     (unreachable)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.tee $tuple
-  ;; CHECK-NEXT:    (local.tee $nontuple
+  ;; CHECK-NEXT:   (local.set $tuple
+  ;; CHECK-NEXT:    (local.set $nontuple
   ;; CHECK-NEXT:     (unreachable)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
@@ -1069,7 +1069,7 @@
   ;; CHECK-NEXT:  (local $tuple (tuple i32 i64))
   ;; CHECK-NEXT:  (local $non-tuple i32)
   ;; CHECK-NEXT:  (tuple.extract 2 0
-  ;; CHECK-NEXT:   (local.tee $non-tuple
+  ;; CHECK-NEXT:   (local.set $non-tuple
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )

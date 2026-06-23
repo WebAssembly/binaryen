@@ -2347,8 +2347,7 @@ struct CodeAnnotation {
   std::optional<bool> branchLikely;
 
   // Compilation Hints proposal.
-  static const uint8_t NeverInline = 0;
-  static const uint8_t AlwaysInline = 127;
+  enum { NeverInline = 0, AlwaysInline = 127 };
   std::optional<uint8_t> inline_;
 
   // Toolchain hints, see
@@ -2378,6 +2377,11 @@ struct CodeAnnotation {
   // optimize things like Java class constructors.
   bool idempotent = false;
 
+  // An inlining hint at the toolchain level, in contrast to inline_, above,
+  // which is for VMs. (E.g., one may want to not inline at the toolchain level
+  // to keep size small, and tell VMs to inline at runtime.)
+  std::optional<uint8_t> toolchainInline;
+
   bool operator==(const CodeAnnotation& other) const {
     return equalOnSemanticsPreserving(other) && equalOnSemanticsAltering(other);
   }
@@ -2401,7 +2405,6 @@ struct CodeAnnotation {
 class Function : public Importable {
 public:
   // A non-nullable reference to a function type. Exact for defined functions.
-  // TODO: Inexact for imported functions.
   Type type = Type(Signature(), NonNullable, Exact);
   IRProfile profile = IRProfile::Normal;
   std::vector<Type> vars; // non-param locals
@@ -2571,6 +2574,9 @@ public:
   Type type = Type(HeapType::func, Nullable);
   std::vector<Expression*> data;
 
+  bool isActive() const { return bool(table); }
+  bool isPassive() const { return !table; }
+
   ElementSegment() = default;
   ElementSegment(Name table,
                  Expression* offset,
@@ -2610,9 +2616,11 @@ public:
 class DataSegment : public Named {
 public:
   Name memory;
-  bool isPassive = false;
   Expression* offset = nullptr;
   std::vector<char> data; // TODO: optimize
+
+  bool isActive() const { return bool(memory); }
+  bool isPassive() const { return !memory; }
 };
 
 class Memory : public Importable {

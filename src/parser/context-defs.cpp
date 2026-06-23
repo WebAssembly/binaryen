@@ -108,7 +108,6 @@ Result<> ParseDefsCtx::addData(
   Name, Name* mem, std::optional<ExprT> offset, DataStringT, Index pos) {
   auto& d = wasm.dataSegments[index];
   if (offset) {
-    d->isPassive = false;
     d->offset = *offset;
     if (mem) {
       d->memory = *mem;
@@ -118,7 +117,7 @@ Result<> ParseDefsCtx::addData(
       return in.err(pos, "active data segment with no memory");
     }
   } else {
-    d->isPassive = true;
+    d->memory = Name();
   }
   return Ok{};
 }

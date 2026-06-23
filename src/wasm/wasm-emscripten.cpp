@@ -140,7 +140,7 @@ private:
     }
     for (unsigned i = 0; i < wasm.dataSegments.size(); ++i) {
       auto& segment = wasm.dataSegments[i];
-      if (segment->isPassive) {
+      if (segment->isPassive()) {
         auto it = passiveOffsets.find(segment->name);
         if (it != passiveOffsets.end()) {
           segmentOffsets.push_back(it->second);

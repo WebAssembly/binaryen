@@ -172,7 +172,7 @@ struct Walker : public VisitorType {
   void doWalkFunction(Function* func) { walk(func->body); }
 
   void walkElementSegment(ElementSegment* segment) {
-    if (segment->table.is()) {
+    if (segment->isActive()) {
       walk(segment->offset);
     }
     for (auto* expr : segment->data) {
@@ -189,7 +189,7 @@ struct Walker : public VisitorType {
   }
 
   void walkDataSegment(DataSegment* segment) {
-    if (!segment->isPassive) {
+    if (segment->isActive()) {
       walk(segment->offset);
     }
     static_cast<SubType*>(this)->visitDataSegment(segment);

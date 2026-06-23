@@ -109,7 +109,7 @@ struct GlobalStructInference : public Pass {
       subTypes = std::make_unique<SubTypes>(*module);
     }
 
-    if (getPassOptions().closedWorld) {
+    if (getPassOptions().worldMode == WorldMode::Closed) {
       analyzeClosedWorld(module);
     }
 

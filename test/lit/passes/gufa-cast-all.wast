@@ -127,7 +127,7 @@
 
   ;; CHECK:      (func $unreachable (type $none_=>_none)
   ;; CHECK-NEXT:  (local $a (ref $A))
-  ;; CHECK-NEXT:  (local.tee $a
+  ;; CHECK-NEXT:  (local.set $a
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -451,6 +451,47 @@
           )
         )
       )
+    )
+  )
+)
+
+(module
+  ;; CHECK:      (type $struct (struct))
+  (type $struct (struct))
+
+  ;; CHECK:      (type $1 (func (result (ref $struct))))
+
+  ;; CHECK:      (global $g (mut (ref null $struct)) (struct.new_default $struct))
+  (global $g (mut (ref null $struct)) (struct.new $struct))
+
+  ;; CHECK:      (func $test (type $1) (result (ref $struct))
+  ;; CHECK-NEXT:  (ref.cast (ref (exact $struct))
+  ;; CHECK-NEXT:   (block $block (result (ref (exact $struct)))
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.cast (ref (exact $struct))
+  ;; CHECK-NEXT:      (br_on_cast $block (ref (exact $struct)) (ref (exact $struct))
+  ;; CHECK-NEXT:       (ref.cast (ref (exact $struct))
+  ;; CHECK-NEXT:        (global.get $g)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test (result (ref $struct))
+    (block $block (result (ref $struct))
+      (drop
+        (br_on_cast $block (ref null $struct) (ref $struct)
+          ;; This will be cast to (ref (exact $struct)). We must refinalize to
+          ;; update the br_on_cast output to (ref (exact $struct)) as well to
+          ;; maintain the validation condition that the cast output is a subtype
+          ;; of its input.
+          (global.get $g)
+        )
+      )
+      (unreachable)
     )
   )
 )

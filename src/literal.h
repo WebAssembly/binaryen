@@ -43,28 +43,18 @@ class Literal {
     // Note: i31 is stored in the |i32| field, with the lower 31 bits containing
     // the value if there is one, and the highest bit containing whether there
     // is a value. Thus, a null is |i32 === 0|.
-    //
-    // Externref payloads, which serve to differentiate different external
-    // references but are otherwise meaningless, are also stored in the i32
-    // field, with their low bit set to differentiate an externref with a
-    // payload from an externalized internal reference, which uses the gcData
-    // field instead. This scheme supports 31 bits of payload for externrefs,
-    // which should be sufficient for spec test and fuzzing purposes, but if we
-    // need more bits we can use the i64 field instead. This scheme also depends
-    // on the low bit of a shared_ptr not being used.
     int32_t i32;
     int64_t i64;
     uint8_t v128[16];
     // A reference to Function data.
     std::shared_ptr<FuncData> funcData;
-    // A reference to GC data, either a Struct or an Array. For both of those we
-    // store the referred data as a Literals object (which is natural for an
-    // Array, and for a Struct, is just the fields in order). The type is used
-    // to indicate whether this is a Struct or an Array, and of what type. We
-    // also use this to store String data, as it is similarly stored on the
-    // heap. For externalized or internalized references (including strings),
-    // gcData holds a single value, which is the wrapped internal or external
-    // reference.
+    // A reference to GC data, used for structs, arrays, strings, externrefs,
+    // and internalized externrefs. The GCData contains the struct or array
+    // fields, or the characters in the string. Externrefs are either
+    // externalized internal references, in which case the GCData will contain
+    // the internal reference, or a host reference, in which case the GCData
+    // will contain an i32 payload. Internalized references contain the wrapped
+    // externref in the GCData.
     std::shared_ptr<GCData> gcData;
     // A reference to Exn data.
     std::shared_ptr<ExnData> exnData;
@@ -266,11 +256,7 @@ public:
     lit.i32 = value | 0x80000000;
     return lit;
   }
-  static Literal makeExtern(int32_t payload, Shareability share) {
-    auto lit = Literal(Type(HeapTypes::ext.getBasic(share), NonNullable));
-    lit.i32 = (payload << 1) | 1;
-    return lit;
-  }
+  static Literal makeExtern(int32_t payload, Shareability share);
   // Wasm has nondeterministic rules for NaN propagation in some operations. For
   // example. f32.neg is deterministic and just flips the sign, even of a NaN,
   // but f32.add is nondeterministic, and if one or more of the inputs is a NaN,
@@ -308,14 +294,8 @@ public:
     // Cast to unsigned for the left shift to avoid undefined behavior.
     return signed_ ? int32_t((uint32_t(i32) << 1)) >> 1 : (i32 & 0x7fffffff);
   }
-  bool hasExternPayload() const {
-    assert(type.getHeapType().isMaybeShared(HeapType::ext));
-    return (i32 & 1) == 1;
-  }
-  int32_t getExternPayload() const {
-    assert(hasExternPayload());
-    return int32_t(uint32_t(i32) >> 1);
-  }
+  bool hasExternPayload() const;
+  int32_t getExternPayload() const;
   int64_t geti64() const {
     assert(type == Type::i64);
     return i64;
@@ -813,6 +793,19 @@ struct GCData {
     : values(std::move(values)), desc(desc) {}
 };
 
+inline bool Literal::hasExternPayload() const {
+  if (isNull()) {
+    return false;
+  }
+  assert(type.getHeapType().isMaybeShared(HeapType::ext));
+  return gcData->values[0].type == Type::i32;
+}
+
+inline int32_t Literal::getExternPayload() const {
+  assert(hasExternPayload());
+  return gcData->values[0].geti32();
+}
+
 } // namespace wasm
 
 namespace std {
@@ -855,6 +848,14 @@ template<> struct hash<wasm::Literal> {
       auto type = a.type.getHeapType();
       if (type.isMaybeShared(wasm::HeapType::i31)) {
         wasm::rehash(digest, a.geti31(true));
+        return digest;
+      }
+      if (type.isMaybeShared(wasm::HeapType::ext)) {
+        if (a.hasExternPayload()) {
+          wasm::rehash(digest, a.getExternPayload());
+          return digest;
+        }
+        wasm::rehash(digest, (*this)(a.internalize()));
         return digest;
       }
       if (type.isMaybeShared(wasm::HeapType::any)) {

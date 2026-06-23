@@ -6,8 +6,8 @@
 ;; RUN: wasm-dis %t2.wasm | filecheck %s --check-prefix=MOD2
 ;; RUN: wasm-dis %t3.wasm | filecheck %s --check-prefix=MOD3
 
-;; A regresion test for the case the active table was not correctly shared with
-;; MOD1. Because func $A is not called by any function, MOD1 is a secondary
+;; A regresion test for the case the dispatch table was not correctly shared
+;; with MOD1. Because func $A is not called by any function, MOD1 is a secondary
 ;; module who only acts as a caller.
 
 (module

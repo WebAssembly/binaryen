@@ -156,7 +156,8 @@ struct SignatureRefining : public Pass {
     }
 
     // Find the public types, which we must not modify.
-    for (auto type : ModuleUtils::getPublicHeapTypes(*module)) {
+    for (auto type :
+         ModuleUtils::getPublicHeapTypes(*module, getPassOptions().worldMode)) {
       if (type.isFunction()) {
         allInfo[type].canModify = false;
       }
@@ -337,7 +338,8 @@ struct SignatureRefining : public Pass {
     CodeUpdater(*this, *module).run(getPassRunner(), module);
 
     // Rewrite the types.
-    GlobalTypeRewriter::updateSignatures(newSignatures, *module);
+    GlobalTypeRewriter::updateSignatures(
+      newSignatures, *module, getPassOptions().worldMode);
 
     // Update intrinsics.
     updateIntrinsics(module, allInfo);

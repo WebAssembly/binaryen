@@ -1,3 +1,7 @@
+;; This fails on windows-ARM on CI for unclear reasons. v8 is somehow not
+;; properly installed.
+;; REQUIRES: linux
+
 (module
   (import "fuzzing-support" "log-i32" (func $log (param i32)))
 

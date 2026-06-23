@@ -59,13 +59,13 @@ struct LLVMMemoryCopyFillLowering
 
     // Check for the presence of any passive data or table segments.
     for (auto& segment : module->dataSegments) {
-      if (segment->isPassive) {
+      if (segment->isPassive()) {
         Fatal() << "memory.copy lowering should only be run on modules with "
                    "no passive segments";
       }
     }
     for (auto& segment : module->elementSegments) {
-      if (!segment->table.is()) {
+      if (segment->isPassive()) {
         Fatal() << "memory.copy lowering should only be run on modules with"
                    " no passive segments";
       }

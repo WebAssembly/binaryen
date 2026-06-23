@@ -27,6 +27,10 @@ import subprocess
 import sys
 import tempfile
 
+from test import support
+
+INTERNAL_SEPARATOR = '[update-lit-checks-separator]'
+
 script_dir = os.path.dirname(__file__)
 script_name = os.path.basename(__file__)
 
@@ -108,8 +112,27 @@ def run_command(args, test, tmp, command):
     command = command.replace('%s', test)
     command = command.replace('%S', os.path.dirname(test))
     command = command.replace('%t', tmp)
-    command = command.replace('foreach', os.path.join(script_dir, 'foreach.py'))
-    return subprocess.check_output(command, shell=True, env=env).decode('utf-8')
+
+    match = re.match(r'^(.*)\s*foreach\s+(\S+)\s+(\S+)\s+(.*)$', command)
+    if match:
+        prefix = match.group(1)
+        infile = match.group(2)
+        tempfile = match.group(3)
+        cmd_rest = match.group(4)
+
+        outputs = []
+        for i, (module, _asserts) in enumerate(support.split_wast(infile)):
+            tempname = tempfile + '.' + str(i)
+            with open(tempname, 'w') as temp:
+                print(module, file=temp)
+            new_command = prefix + ' ' + cmd_rest + ' ' + tempname
+            out = subprocess.check_output(new_command, shell=True, env=env).decode('utf-8')
+            outputs.append(out)
+
+        return f"\n{INTERNAL_SEPARATOR}\n".join(outputs)
+    else:
+        assert 'foreach' not in command, 'bad foreach matching: ' + command
+        return subprocess.check_output(command, shell=True, env=env).decode('utf-8')
 
 
 def find_end(module, start):
@@ -183,7 +206,7 @@ def parse_output_modules(text):
     return modules
 
 
-def parse_output_fuzz_exec(text):
+def parse_output_fuzz_exec(text, first_named_item):
     # Returns the same data as `parse_output_modules`, but can't tell where
     # module boundaries are, so always just returns items for a single module.
     items = []
@@ -194,22 +217,42 @@ def parse_output_fuzz_exec(text):
             # in the input.
             name = '$' + func.group("name")
             items.append((('func', name), [line]))
-        elif line.startswith('[host limit'):
-            # Skip mentions of host limits that we hit. This can happen even
-            # before we reach the execution of a function (if it happens during
-            # instantiation of the module), in which case |items| may be empty,
-            # and we'd error on the code below.
-            pass
         elif line:
-            assert items, 'unexpected non-invocation line'
-            items[-1][1].append(line)
+            if not items:
+                # Early output before any export was executed. Associate it with
+                # the first named item, so it appears before everything else
+                # (which is when it executes).
+                items.append((first_named_item, [line]))
+            else:
+                items[-1][1].append(line)
     return [items]
+
+
+def split_outputs(output):
+    return re.split(r'\n?' + re.escape(INTERNAL_SEPARATOR) + r'\n?', output)
+
+
+def get_modules_named_items(lines):
+    # Return a list, one entry per module, each entry being the named items for
+    # that module.
+    modules_text = split_modules('\n'.join(lines))
+    modules_named_items = []
+    for module_text in modules_text:
+        named_items = []
+        for line in module_text.split('\n'):
+            match = ITEM_RE.match(line)
+            if match:
+                _, kind, name = indentKindName(match)
+                named_items.append((kind, name))
+        modules_named_items.append(named_items)
+    return modules_named_items
 
 
 def get_command_output(args, kind, test, lines, tmp):
     # Return list of maps from prefixes to lists of module items of the form
     # ((kind, name), [line]). The outer list has an entry for each module.
     command_output = []
+    modules_named_items = get_modules_named_items(lines)
     for line in find_run_lines(test, lines):
         commands = [cmd.strip() for cmd in line.rsplit('|', 1)]
         if (len(commands) > 2 or
@@ -230,12 +273,30 @@ def get_command_output(args, kind, test, lines, tmp):
 
         output = run_command(args, test, tmp, commands[0])
         if prefix:
-            if kind == 'wat':
-                module_outputs = parse_output_modules(output)
-            elif kind == 'fuzz-exec':
-                module_outputs = parse_output_fuzz_exec(output)
-            else:
-                assert False, "unknown output kind"
+            outputs = split_outputs(output)
+            module_outputs = []
+            if len(outputs) != len(modules_named_items):
+                warn(f'Mismatch between output parts ({len(outputs)}) and '
+                     f'input modules ({len(modules_named_items)}).')
+            for i, out in enumerate(outputs):
+                if i >= len(modules_named_items):
+                    break
+                mod_named_items = modules_named_items[i]
+                first_named_item = mod_named_items[0] if mod_named_items else None
+                if kind == 'wat':
+                    mod_out = parse_output_modules(out)
+                    if mod_out:
+                        module_outputs.append(mod_out[0])
+                    else:
+                        module_outputs.append([])
+                elif kind == 'fuzz-exec':
+                    mod_out = parse_output_fuzz_exec(out, first_named_item)
+                    if mod_out:
+                        module_outputs.append(mod_out[0])
+                    else:
+                        module_outputs.append([])
+                else:
+                    assert False, "unknown output kind"
             for i in range(len(module_outputs)):
                 if len(command_output) == i:
                     command_output.append({})
@@ -259,6 +320,13 @@ def update_test(args, test, lines, tmp):
         # Skip the notice if it is already in the output
         lines = lines[1:]
 
+    named_items = []
+    for line in lines:
+        match = ITEM_RE.match(line)
+        if match:
+            _, kind, name = indentKindName(match)
+            named_items.append((kind, name))
+
     command_output = get_command_output(args, output_kind, test, lines, tmp)
 
     prefixes = {prefix for module_output in command_output for prefix in module_output.keys()}
@@ -274,13 +342,6 @@ def update_test(args, test, lines, tmp):
                 filtered.append(lines[i])
         filtered.append(lines[-1])
         lines = filtered
-
-    named_items = []
-    for line in lines:
-        match = ITEM_RE.match(line)
-        if match:
-            _, kind, name = indentKindName(match)
-            named_items.append((kind, name))
 
     notice_args = ''
     if all_items:

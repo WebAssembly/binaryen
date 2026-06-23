@@ -498,7 +498,10 @@ struct PrintExpressionContents
     printLocal(curr->index, currFunction, o);
   }
   void visitLocalSet(LocalSet* curr) {
-    if (curr->isTee()) {
+    // Print unreachable tees as sets. This makes the output valid WebAssembly
+    // in more cases because it avoids pushing a concrete type (which may not
+    // be the type required by the next instruction) onto a polymorphic stack.
+    if (curr->isTee() && curr->type != Type::unreachable) {
       printMedium(o, "local.tee ");
     } else {
       printMedium(o, "local.set ");
@@ -2838,6 +2841,17 @@ void PrintSExpression::printCodeAnnotations(const CodeAnnotation& annotation) {
     restoreNormalColor(o);
     doIndent(o, indent);
   }
+  if (annotation.toolchainInline) {
+    Colors::grey(o);
+    std::ofstream saved;
+    saved.copyfmt(o);
+    o << "(@" << Annotations::ToolchainInlineHint << " \"\\" << std::hex
+      << std::setfill('0') << std::setw(2) << int(*annotation.toolchainInline)
+      << "\")\n";
+    o.copyfmt(saved);
+    restoreNormalColor(o);
+    doIndent(o, indent);
+  }
 }
 
 void PrintSExpression::printExpressionContents(Expression* curr) {
@@ -3443,7 +3457,7 @@ void PrintSExpression::visitElementSegment(ElementSegment* curr) {
   printMedium(o, "elem ");
   curr->name.print(o);
 
-  if (curr->table.is()) {
+  if (curr->isActive()) {
     if (usesExpressions || currModule->tables.size() > 1) {
       // tableuse
       o << " (table ";
@@ -3523,7 +3537,7 @@ void PrintSExpression::visitMemory(Memory* curr) {
 }
 
 void PrintSExpression::visitDataSegment(DataSegment* curr) {
-  if (!curr->isPassive && !curr->offset) {
+  if (curr->isActive() && !curr->offset) {
     // This data segment must have been created from the datacount section but
     // not parsed yet. Skip it.
     return;
@@ -3533,7 +3547,7 @@ void PrintSExpression::visitDataSegment(DataSegment* curr) {
   printMajor(o, "data ");
   curr->name.print(o);
   o << ' ';
-  if (!curr->isPassive) {
+  if (curr->isActive()) {
     assert(!currModule || currModule->memories.size() > 0);
     if (!currModule || curr->memory != currModule->memories[0]->name) {
       o << "(memory ";

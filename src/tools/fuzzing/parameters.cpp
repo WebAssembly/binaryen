@@ -26,7 +26,7 @@ void FuzzParams::setDefaults() {
 
   MAX_GLOBALS = 30;
 
-  MAX_TUPLE_SIZE = 6;
+  MAX_TUPLE_SIZE = 7;
 
   MAX_STRUCT_SIZE = 6;
 

@@ -66,7 +66,8 @@ Literal::Literal(Type type) : type(type) {
 
   if (type.isRef() && type.getHeapType().isMaybeShared(HeapType::ext)) {
     assert(type.isNonNullable());
-    i32 = 1;
+    new (&gcData) std::shared_ptr<GCData>(
+      std::make_shared<GCData>(Literals{Literal(int32_t(0))}));
     return;
   }
 
@@ -90,6 +91,11 @@ Literal Literal::makeFunc(Name func, Type type) {
 
 Literal Literal::makeFunc(Name func, Module& wasm) {
   return makeFunc(func, wasm.getFunction(func)->type);
+}
+
+Literal Literal::makeExtern(int32_t payload, Shareability share) {
+  auto ext = HeapTypes::ext.getBasic(share);
+  return Literal(std::make_shared<GCData>(Literals{Literal(payload)}), ext);
 }
 
 Literal::Literal(std::shared_ptr<GCData> gcData, HeapType type)
@@ -175,17 +181,9 @@ Literal::Literal(const Literal& other) : type(other.type) {
     case HeapType::exn:
       new (&exnData) std::shared_ptr<ExnData>(other.exnData);
       return;
-    case HeapType::ext: {
-      if (other.hasExternPayload()) {
-        i32 = other.i32;
-      } else {
-        // Externalized internal reference.
-        new (&gcData) std::shared_ptr<GCData>(other.gcData);
-      }
-      return;
-    }
+    case HeapType::ext:
     case HeapType::any:
-      // Internalized external reference or string.
+      // Externalized or internalized reference/payload.
       new (&gcData) std::shared_ptr<GCData>(other.gcData);
       return;
     case HeapType::none:
@@ -210,12 +208,8 @@ Literal::~Literal() {
   if (type.isBasic()) {
     return;
   }
-  if (type.getHeapType().isMaybeShared(HeapType::ext) && !hasExternPayload()) {
-    // Externalized internal reference.
-    gcData.~shared_ptr();
-    return;
-  }
-  if (isNull() || isData() || type.getHeapType().isMaybeShared(HeapType::any)) {
+  if (isNull() || isData() || type.getHeapType().isMaybeShared(HeapType::any) ||
+      type.getHeapType().isMaybeShared(HeapType::ext)) {
     gcData.~shared_ptr();
   } else if (isFunction()) {
     funcData.~shared_ptr();
@@ -506,10 +500,10 @@ bool Literal::operator==(const Literal& other) const {
       return i32 == other.i32;
     }
     if (heapType.isMaybeShared(HeapType::ext)) {
+      if (hasExternPayload() != other.hasExternPayload()) {
+        return false;
+      }
       if (hasExternPayload()) {
-        if (!other.hasExternPayload()) {
-          return false;
-        }
         return getExternPayload() == other.getExternPayload();
       }
       return internalize() == other.internalize();

@@ -132,6 +132,7 @@ struct Poppifier : BinaryenIRWriter<Poppifier> {
   void emitScopeEnd(Expression* curr);
   void emitFunctionEnd();
   void emitUnreachable();
+  void emitUnreachableLocalSet(Index i);
   void emitDebugLocation(Expression* curr) {}
 
   // Tuple lowering methods
@@ -317,6 +318,12 @@ void Poppifier::emitUnreachable() {
   instrs.push_back(builder.makeUnreachable());
 }
 
+void Poppifier::emitUnreachableLocalSet(Index i) {
+  auto& instrs = scopeStack.back().instrs;
+  instrs.push_back(builder.makeUnreachable());
+  instrs.push_back(builder.makeLocalSet(i, builder.makePop(Type::unreachable)));
+}
+
 void Poppifier::emitTupleExtract(TupleExtract* curr) {
   auto& instrs = scopeStack.back().instrs;
   auto types = curr->tuple->type;
@@ -456,7 +463,7 @@ class PoppifyFunctionsPass : public Pass {
 } // anonymous namespace
 
 class PoppifyPass : public Pass {
-  void run(Module* module) {
+  void run(Module* module) override {
     PassRunner subRunner(getPassRunner());
     subRunner.add(std::make_unique<PoppifyFunctionsPass>());
     // TODO: Enable this once it handles Poppy blocks correctly
