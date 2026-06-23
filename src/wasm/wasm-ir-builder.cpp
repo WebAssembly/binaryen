@@ -1636,8 +1636,7 @@ Result<> IRBuilder::makeAtomicNotify(Address offset, Name mem) {
 }
 
 Result<> IRBuilder::makeAtomicFence(MemoryOrder order) {
-  auto* fence = builder.makeAtomicFence(order);
-  push(fence);
+  push(builder.makeAtomicFence(order));
   return Ok{};
 }
 

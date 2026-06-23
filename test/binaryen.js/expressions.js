@@ -1372,7 +1372,7 @@ console.log("# AtomicFence");
 (function testAtomicFence() {
   const module = new binaryen.Module();
 
-  const theAtomicFence = binaryen.AtomicFence(module.atomic.fence(binaryen.MemoryOrder.seqcst));
+  const theAtomicFence = binaryen.AtomicFence(module.atomic.fence());
   assert(theAtomicFence instanceof binaryen.AtomicFence);
   assert(theAtomicFence instanceof binaryen.Expression);
   assert(theAtomicFence.order === binaryen.MemoryOrder.seqcst);
