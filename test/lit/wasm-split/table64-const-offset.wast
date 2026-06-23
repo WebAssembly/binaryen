@@ -22,8 +22,8 @@
 ;; PRIMARY-NOREF-NEXT:  (import "placeholder.deferred" "1" (func $placeholder_1 (param i32) (result i32)))
 ;; PRIMARY-NOREF-NEXT:  (table $table i64 2 2 funcref)
 ;; PRIMARY-NOREF-NEXT:  (elem $0 (i64.const 0) $foo $placeholder_1)
+;; PRIMARY-NOREF-NEXT:  (export "%table_export" (table $table))
 ;; PRIMARY-NOREF-NEXT:  (export "%foo" (func $foo))
-;; PRIMARY-NOREF-NEXT:  (export "%table" (table $table))
 ;; PRIMARY-NOREF-NEXT:  (func $foo (param $0 i32) (result i32)
 ;; PRIMARY-NOREF-NEXT:   (call_indirect (type $0)
 ;; PRIMARY-NOREF-NEXT:    (i32.const 0)
@@ -34,7 +34,7 @@
 
 ;; SECONDARY-NOREF:      (module
 ;; SECONDARY-NOREF-NEXT:  (type $0 (func (param i32) (result i32)))
-;; SECONDARY-NOREF-NEXT:  (import "primary" "%table" (table $table i64 2 2 funcref))
+;; SECONDARY-NOREF-NEXT:  (import "primary" "%table_export" (table $table i64 2 2 funcref))
 ;; SECONDARY-NOREF-NEXT:  (import "primary" "%foo" (func $foo (param i32) (result i32)))
 ;; SECONDARY-NOREF-NEXT:  (elem $0 (i64.const 1) $bar)
 ;; SECONDARY-NOREF-NEXT:  (func $bar (param $0 i32) (result i32)
@@ -51,6 +51,7 @@
 ;; PRIMARY-REF-NEXT:  (table $1 1 funcref)
 ;; PRIMARY-REF-NEXT:  (elem $0 (table $table) (i64.const 0) func $foo)
 ;; PRIMARY-REF-NEXT:  (elem $1 (table $1) (i32.const 0) func $placeholder_0)
+;; PRIMARY-REF-NEXT:  (export "%table_export" (table $table))
 ;; PRIMARY-REF-NEXT:  (export "%foo" (func $foo))
 ;; PRIMARY-REF-NEXT:  (export "%table" (table $1))
 ;; PRIMARY-REF-NEXT:  (func $foo (param $0 i32) (result i32)
@@ -75,6 +76,7 @@
 
 (module
  (table $table i64 1 1 funcref)
+ (export "%table_export" (table $table))
  (elem (i64.const 0) $foo)
  (func $foo (param i32) (result i32)
   (call $bar (i32.const 0))

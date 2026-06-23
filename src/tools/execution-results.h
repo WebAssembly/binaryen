@@ -203,7 +203,10 @@ public:
           // Check for errors here, duplicating tableLoad(), because that will
           // trap, and we just want to throw an exception (the same as JS
           // would).
-          if (!exportedTable) {
+          //
+          // Note that we trap if we are in the start, as exports do not exist
+          // yet.
+          if (!exportedTable || instance->inStart) {
             throwJSException();
           }
           auto index = arguments[0].getUnsigned();
@@ -213,7 +216,7 @@ public:
           }
           return table->get(index);
         } else if (import->base == "table-set") {
-          if (!exportedTable) {
+          if (!exportedTable || instance->inStart) {
             throwJSException();
           }
           auto index = arguments[0].getUnsigned();
@@ -289,6 +292,12 @@ public:
   }
 
   Literals callExportAsJS(Index index) {
+    if (instance->inStart) {
+      // No exports are even available yet. JS throws on trying to call an
+      // undefined (which is what we get when we read from the un-populated list
+      // of exports).
+      throwJSException();
+    }
     if (index >= wasm.exports.size()) {
       // No export.
       throwJSException();
@@ -494,7 +503,7 @@ struct ExecutionResults {
       // change whether a host limit is reached.
       ignore = true;
     } catch (const WasmException&) {
-      std::cout << "[exception thrown: start]\n";
+      std::cout << "[exception thrown: failed to instantiate module]\n";
     }
   }
 

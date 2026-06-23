@@ -388,6 +388,7 @@ struct GUFAOptimizer
         if (oracleType.isRef() && oracleType != curr->type &&
             Type::isSubType(oracleType, curr->type)) {
           replaceCurrent(Builder(*getModule()).makeRefCast(curr, oracleType));
+          optimized = true;
         }
       }
     };

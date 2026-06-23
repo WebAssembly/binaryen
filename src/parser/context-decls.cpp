@@ -181,7 +181,6 @@ Result<> ParseDeclsCtx::addImplicitData(DataStringT&& data) {
   auto& mem = *wasm.memories.back();
   auto d = std::make_unique<DataSegment>();
   d->memory = mem.name;
-  d->isPassive = false;
   d->offset = Builder(wasm).makeConstPtr(0, mem.addressType);
   d->data = std::move(data);
   d->name = Names::getValidDataSegmentName(wasm, "implicit-data");

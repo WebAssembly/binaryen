@@ -140,6 +140,7 @@ Pass* createRemoveRelaxedSIMDPass();
 Pass* createRemoveExportsPass();
 Pass* createRemoveImportsPass();
 Pass* createRemoveMemoryInitPass();
+Pass* createRemoveStartPass();
 Pass* createRemoveUnusedBrsPass();
 Pass* createRemoveUnusedModuleElementsPass();
 Pass* createRemoveUnusedNonFunctionModuleElementsPass();

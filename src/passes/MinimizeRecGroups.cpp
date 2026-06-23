@@ -302,6 +302,7 @@ struct MinimizeRecGroups : Pass {
 
     auto typeInfo = ModuleUtils::collectHeapTypeInfo(
       *module,
+      getPassOptions().worldMode,
       ModuleUtils::TypeInclusion::AllTypes,
       ModuleUtils::VisibilityHandling::FindVisibility);
 
@@ -771,7 +772,7 @@ struct MinimizeRecGroups : Pass {
         ++i;
       }
     }
-    GlobalTypeRewriter rewriter(wasm);
+    GlobalTypeRewriter rewriter(wasm, getPassOptions().worldMode);
     rewriter.mapTypes(oldToNew);
     rewriter.mapTypeNamesAndIndices(oldToNew);
   }

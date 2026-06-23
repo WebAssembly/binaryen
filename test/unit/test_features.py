@@ -459,4 +459,5 @@ class TargetFeaturesSectionTest(utils.BinaryenTestCase):
             '--enable-relaxed-atomics',
             '--enable-custom-page-sizes',
             '--enable-wide-arithmetic',
+            '--enable-compact-imports',
         ], p2.stdout.splitlines())

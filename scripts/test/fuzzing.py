@@ -113,6 +113,7 @@ unfuzzable = [
     'duplicate-function-elimination_annotations.wast',
     'once-reduction_idempotent.wast',
     'local-cse_idempotent.wast',
+    'optimize-instructions-global-effects-idempotent.wast',
     # Not fully implemented.
     'waitqueue.wast',
     # TODO: fix handling of the non-utf8 names here

@@ -7,6 +7,7 @@
 ;; fuzz exec and not error.
 
 (module
+ ;; CHECK:      [host limit allocation failure]
  (type $type$0 (array i8))
 
  (import "fuzzing-support" "log-i32" (func $log (param i32)))

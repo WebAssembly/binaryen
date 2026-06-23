@@ -1,5 +1,9 @@
 ;; Test throwing from JS by calling the throw import.
 
+;; This fails on windows-ARM on CI for unclear reasons. v8 is somehow not
+;; properly installed.
+;; REQUIRES: linux
+
 (module
   (import "fuzzing-support" "throw" (func $throw (param i32)))
 

@@ -3,7 +3,7 @@
 ;; RUN: cat %t.2.wast | filecheck %s --check-prefix SECONDARY
 
 ;; Regression test for a bug when an existing table, which is to be split to the
-;; secondary module, has the name '0'. The newly created active table should
+;; secondary module, has the name '0'. The newly created dispatch table should
 ;; have a different name.
 
 (module

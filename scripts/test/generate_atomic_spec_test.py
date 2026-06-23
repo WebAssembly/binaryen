@@ -178,12 +178,12 @@ def bin_to_str(bin: bytes) -> str:
     return ''.join(f'{backslash}{byte:02x}' for byte in bin)
 
 
-# (i64.const 0)
-I64CONST = b"\x42\x00"
+def i64_const(num):
+    return b"\x42" + int.to_bytes(num)
 
 
-# (i32.const 0)
-I32CONST = b"\x41\x00"
+def i32_const(num):
+    return b"\x41" + int.to_bytes(num)
 
 
 def bin_statement_lines(template: Template, mem_idx: int, mem_ptr_type: ValueType, ordering: Ordering) -> Iterator[(bytes, str)]:
@@ -194,10 +194,10 @@ def bin_statement_lines(template: Template, mem_idx: int, mem_ptr_type: ValueTyp
     The entire iterator represents a complete expression using the `template`. e.g.
         (drop (i32.atomic.load (i32.const 42)))
     """
-    arg_one_bin = I64CONST if mem_ptr_type == ValueType.i64 else I32CONST
+    arg_one_bin = i64_const(0) if mem_ptr_type == ValueType.i64 else i32_const(0)
     yield arg_one_bin, f"({mem_ptr_type.name}.const 0)"
     for _ in range(template.args - 1):
-        const = I64CONST if template.value_type == ValueType.i64 else I32CONST
+        const = i64_const(51) if template.value_type == ValueType.i64 else i32_const(51)
         yield const, f"({template.value_type.name}.const 51)"
 
     yield template.bin, template.op

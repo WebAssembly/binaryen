@@ -34,7 +34,9 @@ struct SubTypes {
     }
   }
 
-  SubTypes(Module& wasm) : SubTypes(ModuleUtils::collectHeapTypes(wasm)) {}
+  // TODO: fix const-correctness here.
+  SubTypes(const Module& wasm)
+    : SubTypes(ModuleUtils::collectHeapTypes(const_cast<Module&>(wasm))) {}
 
   const std::vector<HeapType>& getImmediateSubTypes(HeapType type) const {
     // When we return an empty result, use a canonical constant empty vec to

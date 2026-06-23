@@ -49,7 +49,7 @@ public:
     : usedFixed(other.usedFixed), fixed(std::move(other.fixed)),
       flexible(std::move(other.flexible)) {}
   SmallVector(std::initializer_list<T> init) {
-    for (T item : init) {
+    for (const T& item : init) {
       push_back(item);
     }
   }
