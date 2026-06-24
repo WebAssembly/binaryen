@@ -16,7 +16,7 @@ Current Trunk
 -------------
 
 - Add acqrel ordering support for atomic fences (#8845). Breaks the C API;
-  `BinaryenAtomicFence` now take a memory order param. Use
+  `BinaryenAtomicFence` now takes a memory order param. Use
   `BinaryenMemoryOrderSeqCst()` to preserve the original behavior.
 
 v130
