@@ -52,11 +52,7 @@ struct Info {
 
   // For each local index, we track the constraints we know about it. We only do
   // so at the start of each block, which is enough for the analysis below.
-  //
-  // We use an optional here to represent the "null" state before any
-  // information arrives. (From the perspective of set theory, nullopt can be
-  // taken to mean the empty set is the set of values possible for each local.)
-  std::optional<LocalConstraintMap> startConstraints;
+  LocalConstraintMap startConstraints;
 };
 
 struct ConstraintAnalysis
@@ -127,15 +123,17 @@ struct ConstraintAnalysis
     auto* func = getFunction();
     auto numLocals = func->getNumLocals();
     for (Index i = 0; i < numLocals; i++) {
-      if (!func->isVar(i)) {
+      // We know nothing, by default.
+      entryConstraints[i].setProvesNothing();
+      if (func->isParam(i)) {
         continue;
       }
+
       auto type = func->getLocalType(i);
       // TODO: support tuples
       if (type.size() == 1 && LiteralUtils::canMakeZero(type)) {
         auto value = Literal::makeZero(type);
-        (*entryConstraints)[i].approximateAnd(
-          Constraint{Abstract::Eq, {value}});
+        entryConstraints[i].set(Constraint{Abstract::Eq, {value}});
       }
     }
 
@@ -146,7 +144,7 @@ struct ConstraintAnalysis
       auto* block = work.pop();
 
       // Start at the top of the block, then go through, applying things.
-      LocalConstraintMap constraints = *block->contents.startConstraints;
+      LocalConstraintMap constraints = block->contents.startConstraints;
       for (auto** currp : block->contents.actions) {
         applyToConstraints(*currp, constraints);
       }
@@ -154,22 +152,13 @@ struct ConstraintAnalysis
       // We now know the values at the end of the block. Flow it onward, and
       // where it causes changes, queue more work.
       for (auto* out : block->out) {
-        // Find the constraints sent to this specific successor.
+        // Find the constraints sent to this specific successor, and apply them.
         auto sentConstraints =
           getConstraintsFromPredToSucc(block, out, constraints);
-
-        auto& outConstraints = out->contents.startConstraints;
-        if (!outConstraints) {
-          // This is the first data arriving.
-          outConstraints.emplace(sentConstraints);
-          work.push(out);
-          continue;
-        }
-
-        // This is later data, which may or may not cause changes.
-        auto old = outConstraints;
-        outConstraints->approximateOr(sentConstraints);
-        if (*outConstraints != old) {
+        auto& outStartConstraints = out->contents.startConstraints;
+        auto old = outStartConstraints;
+        outStartConstraints.approximateOr(sentConstraints);
+        if (outStartConstraints != old) {
           work.push(out);
         }
       }
@@ -183,14 +172,9 @@ struct ConstraintAnalysis
       // at each intermediate point inside the block. (Flowing between blocks is
       // of course not needed at this stage.)
       auto& constraints = block->contents.startConstraints;
-      if (!constraints) {
-        // Unreachable.
-        continue;
-      }
-
       for (auto** currp : block->contents.actions) {
-        applyToConstraints(*currp, *constraints);
-        optimizeExpression(currp, *constraints);
+        applyToConstraints(*currp, constraints);
+        optimizeExpression(currp, constraints);
       }
     }
   }
@@ -364,10 +348,13 @@ struct ConstraintAnalysis
   void applyToConstraints(Expression* curr, LocalConstraintMap& constraints) {
     if (auto* set = curr->dynCast<LocalSet>()) {
       auto& localConstraints = constraints[set->index];
-      localConstraints.clear();
       if (Properties::isSingleConstantExpression(set->value)) {
+        // We know this one constraint.
         auto value = Properties::getLiteral(set->value);
-        localConstraints.approximateAnd(Constraint{Abstract::Eq, {value}});
+        localConstraints.set(Constraint{Abstract::Eq, {value}});
+      } else {
+        // We know and can prove nothing.
+        localConstraints.setProvesNothing();
       }
     }
   }

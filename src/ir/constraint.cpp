@@ -84,6 +84,12 @@ Result provesPair(const Constraint& a, const Constraint& b) {
 } // anonymous namespace
 
 Result AndedConstraintSet::proves(const Constraint& condition) const {
+  if (provesEverything()) {
+    return True;
+  }
+  // Note we do not need to handle the provesNothing case in a special way: the
+  // loop below finds nothing.
+
   // Sometimes a single constraint is enough to determine the condition.
   for (auto& c : *this) {
     auto result = provesPair(c, condition);
@@ -99,9 +105,13 @@ Result AndedConstraintSet::proves(const Constraint& condition) const {
 }
 
 Result AndedConstraintSet::proves(const AndedConstraintSet& other) const {
-  if (other.empty()) {
-    // The empty set of constraints is always true.
+  if (provesEverything()) {
     return True;
+  }
+
+  if (other.provesEverything()) {
+    // We are not a contradiction, but other is, so we prove it false.
+    return False;
   }
 
   bool hasUnknown = false;
@@ -121,6 +131,17 @@ Result AndedConstraintSet::proves(const AndedConstraintSet& other) const {
 }
 
 void AndedConstraintSet::approximateAnd(const Constraint& c) {
+  if (provesEverything()) {
+    // Nothing to add.
+    return;
+  }
+
+  if (proves(c) == False) {
+    // We are now a contradiction.
+    isContradiction = true;
+    return;
+  }
+
   if (size() < MaxConstraints) {
     push_back(c);
     return;
@@ -132,10 +153,19 @@ void AndedConstraintSet::approximateAnd(const Constraint& c) {
 }
 
 void AndedConstraintSet::approximateOr(const AndedConstraintSet& other) {
-  // If one is empty (no constraints, everything is true, and we can prove
-  // nothing useful) then we can prove nothing after the OR.
-  if (empty() || other.empty()) {
+  // If one proves everything, the only thing that matters is the other.
+  if (provesEverything()) {
+    *this = other;
+    return;
+  }
+  if (other.provesEverything()) {
+    return;
+  }
+
+  // If one proves nothing, neither does the combination.
+  if (provesNothing() || other.provesNothing()) {
     clear();
+    assert(provesNothing());
     return;
   }
 
@@ -234,10 +264,13 @@ std::optional<LocalConstraint> LocalConstraint::parseBoolean(Expression* curr) {
 };
 
 void LocalConstraintMap::approximateOr(const LocalConstraintMap& other) {
-  // Find things in both, and OR them.
   for (auto& [local, constraints] : other) {
     if (auto iter = find(local); iter != end()) {
+      // This is in both: OR them.
       iter->second.approximateOr(constraints);
+    } else {
+      // This is only in other, so apply it.
+      (*this)[local] = constraints;
     }
   }
 

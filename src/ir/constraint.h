@@ -63,6 +63,30 @@ enum Result { True, False, Unknown };
 // about, which looks like a local, but it could be a global or a struct field
 // or anything else in general.
 struct AndedConstraintSet : inplace_vector<Constraint, MaxConstraints> {
+  // We could represent a contradiction using two constraints that contradict
+  // each other (== 0 && != 0), but for simplicity we mark this explicitly.
+  //
+  // A contradiction is the default value here, because it represents
+  // unreachable code: if (x == 0 && x != 0) { .. unreachable ..}. That is, we
+  // assume we represent the constraints in code that has not been reached,
+  // until something changes.
+  bool isContradiction = true;
+
+  // Proving everything (even contradictions) is equivalent to being a
+  // contradiction. (This and provesNothing can be seen as the top/bottom of a
+  // lattice, if one wants to think of things that way.)
+  bool provesEverything() const { return isContradiction; }
+
+  // An empty set of contradictions means we know nothing, and so anything is
+  // possible, and we can prove nothing.
+  bool provesNothing() const { return empty(); }
+
+  void setProvesNothing() {
+    clear();
+    isContradiction = false;
+    assert(provesNothing());
+  }
+
   // Check a condition against this set, that is, whether the existing
   // constraints prove that it must be true, false, or unknown: whether
   //
@@ -122,6 +146,12 @@ struct AndedConstraintSet : inplace_vector<Constraint, MaxConstraints> {
   //
   // If we become too imprecise, we lose the ability to imply anything useful.
   void approximateOr(const AndedConstraintSet& other);
+
+  // Set a constraint, replacing all previous state.
+  void set(const Constraint& c) {
+    setProvesNothing();
+    push_back(c);
+  }
 };
 
 // A local plus a constraint on it.
@@ -148,8 +178,9 @@ struct LocalConstraint {
 // A map of locals and their constraints.
 struct LocalConstraintMap
   : public std::unordered_map<Index, AndedConstraintSet> {
-  // Perform an OR as above on each local that appears in both maps. If a local
-  // appears only in one, we can infer nothing, and drop it.
+  // Perform an OR as above. When a local only appears in one map, we treat it
+  // as if it contains a contradiction there, that is, as if the code is
+  // unreachable.
   void approximateOr(const LocalConstraintMap& other);
 };
 
