@@ -306,8 +306,7 @@ struct StringLowering : public StringGathering {
     // function, which must be modified either in TypeMapper - but as just
     // explained we cannot do that - or before it, which is what we do here).
     auto fixType = [&](HeapType type) {
-      if (type.getRecGroup().size() != 1 ||
-          !type.getFeatures().hasStrings()) {
+      if (type.getRecGroup().size() != 1 || !type.getFeatures().hasStrings()) {
         // This is ok as it is.
         return type;
       }
