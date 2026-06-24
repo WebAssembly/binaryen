@@ -337,6 +337,8 @@ overview of some of the relevant ones:
   removes unneeded parts, etc.
 * **MergeBlocks** - Merge a `block` to an outer one where possible, reducing
   their number.
+* **MergeDataSegments** - Merge active data segments with adjacent offsets into
+  a single data segment.
 * **MergeLocals** - When two locals have the same value in part of their
   overlap, pick in a way to help CoalesceLocals do better later (split off from
   CoalesceLocals to keep the latter simple).

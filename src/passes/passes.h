@@ -91,6 +91,7 @@ Pass* createMarkJSCalledPass();
 Pass* createMemory64LoweringPass();
 Pass* createMemoryPackingPass();
 Pass* createMergeBlocksPass();
+Pass* createMergeDataSegmentsPass();
 Pass* createMergeSimilarFunctionsPass();
 Pass* createMergeLocalsPass();
 Pass* createMinifiedPrinterPass();

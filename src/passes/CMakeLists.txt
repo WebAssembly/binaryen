@@ -69,6 +69,7 @@ set(passes_SOURCES
   Memory64Lowering.cpp
   MemoryPacking.cpp
   MergeBlocks.cpp
+  MergeDataSegments.cpp
   MergeSimilarFunctions.cpp
   MergeLocals.cpp
   Metrics.cpp
