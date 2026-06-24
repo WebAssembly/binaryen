@@ -28,6 +28,7 @@
 #include "ir/literal-utils.h"
 #include "ir/local-graph.h"
 #include "ir/properties.h"
+#include "ir/utils.h"
 #include "pass.h"
 #include "support/unique_deferring_queue.h"
 #include "support/utilities.h"
@@ -170,6 +171,7 @@ struct ConstraintAnalysis
   // After inferring all we can, apply it to optimize the code.
   void optimize() {
     auto numLocals = getFunction()->getNumLocals();
+    bool refinalize = false;
 
     for (auto& block : basicBlocks) {
       // Follow the general shape of flow(): we need to see what the state is
@@ -183,9 +185,14 @@ struct ConstraintAnalysis
           // unreachable code (equivalently, it is a logical contradiction to
           // get here).
           *currp = Builder(*getModule()).makeUnreachable();
+          refinalize = true;
         }
         optimizeExpression(currp, constraints);
       }
+    }
+
+    if (refinalize) {
+      ReFinalize().walkFunctionInModule(getFunction(), getModule());
     }
   }
 
