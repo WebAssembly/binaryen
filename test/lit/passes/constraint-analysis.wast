@@ -1130,6 +1130,12 @@
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -1150,6 +1156,12 @@
   ;; OPTIN-NEXT:       (unreachable)
   ;; OPTIN-NEXT:      )
   ;; OPTIN-NEXT:     )
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:    (drop
+  ;; OPTIN-NEXT:     (i32.const 1)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:    (drop
+  ;; OPTIN-NEXT:     (i32.const 0)
   ;; OPTIN-NEXT:    )
   ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
@@ -1183,6 +1195,20 @@
                 (i32.const 20)
               )
             )
+          )
+        )
+        ;; After that contradiction, control flow merges, and we can infer 1 and
+        ;; 0 here (since we are still inside the x == 10 If's body).
+        (drop
+          (i32.eq
+            (local.get $x)
+            (i32.const 10)
+          )
+        )
+        (drop
+          (i32.eq
+            (local.get $x)
+            (i32.const 20)
           )
         )
       )
