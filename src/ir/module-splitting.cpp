@@ -900,18 +900,25 @@ ModuleSplitter::PrimarySecondaryUsedNames ModuleSplitter::computeUsedNames() {
       bool keepInPrimary = false;
       for (auto* item : segment->data) {
         if (item->is<GlobalGet>()) {
+          // If we encounter a global.get, we just keep the segment in the
+          // primary module. TODO Consider moving this if this global is in a
+          // secondary module.
           keepInPrimary = true;
           break;
         } else if (auto* ref = item->dynCast<RefFunc>()) {
+          // If this ref.func is in the primary module, keep the segment there.
           auto it = funcToSecondaryIndex.find(ref->func);
           if (it == funcToSecondaryIndex.end()) {
             keepInPrimary = true;
             break;
           }
+          // If the segment contains ref.funcs from more than one secondary
+          // modules, keep it in the primary.
           if (foundSecondary && secondaryIndex != it->second) {
             keepInPrimary = true;
             break;
           }
+          // This segment contains ref.funcs from a single secondary module.
           foundSecondary = true;
           secondaryIndex = it->second;
         }
