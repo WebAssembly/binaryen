@@ -66,14 +66,6 @@
  ;; PRIMARY-NEXT:  (drop
  ;; PRIMARY-NEXT:   (global.get $keep-global)
  ;; PRIMARY-NEXT:  )
- ;; PRIMARY-NEXT:  (array.init_elem $array $keep-elem5
- ;; PRIMARY-NEXT:   (array.new_default $array
- ;; PRIMARY-NEXT:    (i32.const 1)
- ;; PRIMARY-NEXT:   )
- ;; PRIMARY-NEXT:   (i32.const 0)
- ;; PRIMARY-NEXT:   (i32.const 0)
- ;; PRIMARY-NEXT:   (i32.const 1)
- ;; PRIMARY-NEXT:  )
  ;; PRIMARY-NEXT: )
  (func $keep
   ;; Uses $keep-table
@@ -90,6 +82,21 @@
   (drop
    (global.get $keep-global)
   )
+ )
+
+ ;; This is not in --keep-funcs but will be kept in the primary because it
+ ;; references a segment.
+ ;; PRIMARY:      (func $array-init-elem-user (type $0)
+ ;; PRIMARY-NEXT:  (array.init_elem $array $keep-elem5
+ ;; PRIMARY-NEXT:   (array.new_default $array
+ ;; PRIMARY-NEXT:    (i32.const 1)
+ ;; PRIMARY-NEXT:   )
+ ;; PRIMARY-NEXT:   (i32.const 0)
+ ;; PRIMARY-NEXT:   (i32.const 0)
+ ;; PRIMARY-NEXT:   (i32.const 1)
+ ;; PRIMARY-NEXT:  )
+ ;; PRIMARY-NEXT: )
+ (func $array-init-elem-user
   ;; References $keep-elem5
   (array.init_elem $array $keep-elem5
     (array.new_default $array (i32.const 1))
