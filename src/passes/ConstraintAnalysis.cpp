@@ -171,6 +171,7 @@ struct ConstraintAnalysis
   // After inferring all we can, apply it to optimize the code.
   void optimize() {
     auto numLocals = getFunction()->getNumLocals();
+    // If we make things unreachable, we must refinalize.
     bool refinalize = false;
 
     for (auto& block : basicBlocks) {
