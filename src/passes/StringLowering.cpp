@@ -305,10 +305,11 @@ struct StringLowering : public StringGathering {
     // things like the types of parameters (which depend on the type of the
     // function, which must be modified either in TypeMapper - but as just
     // explained we cannot do that - or before it, which is what we do here).
-    for (auto& func : module->functions) {
-      if (func->type.getHeapType().getRecGroup().size() != 1 ||
-          !func->type.getFeatures().hasStrings()) {
-        continue;
+    auto fixType = [&](HeapType type) {
+      if (type.getRecGroup().size() != 1 ||
+          !type.getFeatures().hasStrings()) {
+        // This is ok as it is.
+        return type;
       }
 
       // Fix up the stringrefs in this type that uses strings and is in a
@@ -321,18 +322,26 @@ struct StringLowering : public StringGathering {
         }
         return t;
       };
-      for (auto param : func->type.getHeapType().getSignature().params) {
+      for (auto param : type.getSignature().params) {
         params.push_back(fix(param));
       }
-      for (auto result : func->type.getHeapType().getSignature().results) {
+      for (auto result : type.getSignature().results) {
         results.push_back(fix(result));
       }
 
       // In addition to doing the update, mark it in the map of updates for
       // TypeMapper, so RefFuncs with this type get updated.
-      auto old = func->type;
-      func->type = func->type.with(Signature(params, results));
-      updates[old.getHeapType()] = func->type.getHeapType();
+      HeapType newType = Signature(params, results);
+      updates[type] = newType;
+      return newType;
+    };
+
+    // Update functions and tags.
+    for (auto& func : module->functions) {
+      func->type = func->type.with(fixType(func->type.getHeapType()));
+    }
+    for (auto& tag : module->tags) {
+      tag->type = fixType(tag->type);
     }
 
     // Strings turn into externref.
