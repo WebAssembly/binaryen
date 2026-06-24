@@ -582,12 +582,13 @@ struct OptimizeInstructions
       {
         // unsigned(x) >= 0   =>   i32(1)
         Const* c;
-        Expression* x;
-        if (matches(curr, binary(GeU, any(&x), ival(&c))) &&
+        if (curr->op == Abstract::getBinary(curr->left->type, Abstract::GeU) &&
+            (c = getFallthrough(curr->right)->dynCast<Const>()) &&
             c->value.isZero()) {
-          c->value = Literal::makeOne(Type::i32);
-          c->type = Type::i32;
-          return replaceCurrent(getDroppedChildrenAndAppend(curr, c));
+          // We could reuse c here, if we checked it had no more uses
+          auto one =
+            Builder(*getModule()).makeConst(Literal::makeOne(Type::i32));
+          return replaceCurrent(getDroppedChildrenAndAppend(curr, one));
         }
         // unsigned(x) < 0   =>   i32(0)
         if (curr->op == Abstract::getBinary(curr->left->type, Abstract::LtU) &&
