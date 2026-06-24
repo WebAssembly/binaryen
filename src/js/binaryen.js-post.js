@@ -2481,8 +2481,8 @@ function wrapModule(module, self = {}) {
   };
 
   self['atomic'] = {
-    'fence'() {
-      return Module['_BinaryenAtomicFence'](module);
+    'fence'(order = Module['MemoryOrder']['seqcst']) {
+      return Module['_BinaryenAtomicFence'](module, order);
     }
   };
 

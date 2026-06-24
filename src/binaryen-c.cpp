@@ -1500,8 +1500,10 @@ BinaryenExpressionRef BinaryenAtomicNotify(BinaryenModuleRef module,
                         0,
                         getMemoryName(module, memoryName)));
 }
-BinaryenExpressionRef BinaryenAtomicFence(BinaryenModuleRef module) {
-  return static_cast<Expression*>(Builder(*(Module*)module).makeAtomicFence());
+BinaryenExpressionRef BinaryenAtomicFence(BinaryenModuleRef module,
+                                          BinaryenMemoryOrder order) {
+  return Builder(*(Module*)module)
+    .makeAtomicFence(static_cast<MemoryOrder>(order));
 }
 BinaryenExpressionRef BinaryenSIMDExtract(BinaryenModuleRef module,
                                           BinaryenOp op,
@@ -3381,15 +3383,18 @@ void BinaryenAtomicNotifySetNotifyCount(BinaryenExpressionRef expr,
     (Expression*)notifyCountExpr;
 }
 // AtomicFence
-uint8_t BinaryenAtomicFenceGetOrder(BinaryenExpressionRef expr) {
+BinaryenMemoryOrder BinaryenAtomicFenceGetOrder(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<AtomicFence>());
-  return static_cast<AtomicFence*>(expression)->order;
+  return static_cast<BinaryenMemoryOrder>(
+    static_cast<AtomicFence*>(expression)->order);
 }
-void BinaryenAtomicFenceSetOrder(BinaryenExpressionRef expr, uint8_t order) {
+void BinaryenAtomicFenceSetOrder(BinaryenExpressionRef expr,
+                                 BinaryenMemoryOrder order) {
   auto* expression = (Expression*)expr;
   assert(expression->is<AtomicFence>());
-  static_cast<AtomicFence*>(expression)->order = order;
+  static_cast<AtomicFence*>(expression)->order =
+    static_cast<MemoryOrder>(order);
 }
 // SIMDExtract
 BinaryenOp BinaryenSIMDExtractGetOp(BinaryenExpressionRef expr) {

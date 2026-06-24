@@ -650,7 +650,7 @@ function test_core() {
         module.i32.const(0)
       )
     ),
-    module.atomic.fence(),
+    module.atomic.fence(binaryen.MemoryOrder.acqrel),
 
     // Tuples
     module.tuple.make(
@@ -1266,11 +1266,16 @@ function test_relaxed_atomics() {
   binaryen.AtomicCmpxchg.setMemoryOrder(cmpxchg, binaryen.MemoryOrder.acqrel);
   console.log("Cmpxchg memory order: " + binaryen.AtomicCmpxchg.getMemoryOrder(cmpxchg));
 
+  var fence = module.atomic.fence(binaryen.MemoryOrder.seqcst)
+  binaryen.AtomicFence.setOrder(fence, binaryen.MemoryOrder.acqrel)
+  console.log("Fence memory order: " + binaryen.AtomicFence.getOrder(fence));
+
   var body = module.block("body", [
     module.drop(load),
     store,
     module.drop(rmw),
-    module.drop(cmpxchg)
+    module.drop(cmpxchg),
+    fence,
   ], binaryen.auto);
 
   module.addFunction("relaxed-atomics", binaryen.none, binaryen.none, [], body);

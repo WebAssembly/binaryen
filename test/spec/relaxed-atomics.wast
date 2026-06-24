@@ -574,6 +574,9 @@
     (drop (i64.atomic.rmw32.cmpxchg_u 1 (i64.const 0) (i64.const 42) (i64.const 42)))
     (drop (i64.atomic.rmw32.cmpxchg_u 1 acqrel (i64.const 0) (i64.const 42) (i64.const 42)))
     (drop (i64.atomic.rmw32.cmpxchg_u 1 seqcst (i64.const 0) (i64.const 42) (i64.const 42)))
+    (atomic.fence)
+    (atomic.fence acqrel)
+    (atomic.fence seqcst)
   )
 )
 
@@ -591,8 +594,8 @@
   "\05\07\02" ;; Memory section
     "\01\01\01" ;; (memory i32 1 1)
     "\05\01\01" ;; (memory i64 1 1)
-  "\0a\a9\2d\01" ;; Code section
-  "\a6\2d\00" ;; func $test-all-ops
+  "\0a\af\2d\01" ;; Code section
+  "\ac\2d\00" ;; func $test-all-ops
 
     "\41\00" ;; (i32.const 0)
     "\fe\10" ;; i32.atomic.load
@@ -5255,6 +5258,12 @@
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
     "\1a" ;; drop
+
+    "\fe\03" ;; atomic.fence
+    "\01" ;; acqrel memory ordering
+
+    "\fe\03" ;; atomic.fence
+    "\00" ;; seqcst memory ordering
 
     "\0b" ;; end
 )
@@ -5338,6 +5347,7 @@
   (func (export "i64.atomic.rmw16.cmpxchg_u") (param $addr i32) (param $expected i64) (param $value i64) (result i64) (i64.atomic.rmw16.cmpxchg_u acqrel (local.get $addr) (local.get $expected) (local.get $value)))
   (func (export "i64.atomic.rmw32.cmpxchg_u") (param $addr i32) (param $expected i64) (param $value i64) (result i64) (i64.atomic.rmw32.cmpxchg_u acqrel (local.get $addr) (local.get $expected) (local.get $value)))
 
+  (func (export "atomic.fence") (atomic.fence acqrel))
 )
 
 ;; *.atomic.load*
@@ -5648,6 +5658,10 @@
 (invoke "init" (i64.const 0x1111111111111111))
 (assert_return (invoke "i64.atomic.rmw32.cmpxchg_u" (i32.const 0) (i64.const 0x11111111) (i64.const 0xcabba6e5cabba6e5)) (i64.const 0x11111111))
 (assert_return (invoke "i64.atomic.load" (i32.const 0)) (i64.const 0x11111111cabba6e5))
+
+;; atomic.fence
+
+(invoke "atomic.fence")
 
 
 ;; unaligned accesses
