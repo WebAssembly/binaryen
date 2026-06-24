@@ -152,11 +152,13 @@ struct ConstraintAnalysis
       // We now know the values at the end of the block. Flow it onward, and
       // where it causes changes, queue more work.
       for (auto* out : block->out) {
-        // Find the constraints sent to this specific successor, and apply them.
+        auto& outStartConstraints = out->contents.startConstraints;
+
+        // Find the constraints sent to this specific successor, and apply them
+        // to the start of this block. If anything changed, flow onwards.
+        auto old = outStartConstraints;
         auto sentConstraints =
           getConstraintsFromPredToSucc(block, out, constraints);
-        auto& outStartConstraints = out->contents.startConstraints;
-        auto old = outStartConstraints;
         outStartConstraints.approximateOr(sentConstraints);
         if (outStartConstraints != old) {
           work.push(out);

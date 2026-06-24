@@ -1126,7 +1126,7 @@
   ;; CHECK-NEXT:       (i32.const 1)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (i32.const 0)
+  ;; CHECK-NEXT:       (i32.const 1)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
@@ -1147,7 +1147,7 @@
   ;; OPTIN-NEXT:       (i32.const 1)
   ;; OPTIN-NEXT:      )
   ;; OPTIN-NEXT:      (drop
-  ;; OPTIN-NEXT:       (i32.const 0)
+  ;; OPTIN-NEXT:       (i32.const 1)
   ;; OPTIN-NEXT:      )
   ;; OPTIN-NEXT:     )
   ;; OPTIN-NEXT:    )
@@ -1168,11 +1168,9 @@
             (i32.const 20)
           )
           (then
-            ;; This is only reached if x is both 10 and 20, so it is
-            ;; unreachable. We prove the condition of the nested if is 0
-            ;; first, and end up optimizing these as if x == 10 (other passes
-            ;; would then remove the unreachable code, seeing the 0 in the if
-            ;; condition).
+            ;; This is only reached if x is both 10 and 20, which is a
+            ;; contradiction, so it is unreachable. Given such a contradiction,
+            ;; we can prove everything to be true.
             (drop
               (i32.eq
                 (local.get $x)
