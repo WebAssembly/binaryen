@@ -169,6 +169,8 @@ struct ConstraintAnalysis
 
   // After inferring all we can, apply it to optimize the code.
   void optimize() {
+    auto numLocals = getFunction()->getNumLocals();
+
     for (auto& block : basicBlocks) {
       // Follow the general shape of flow(): we need to see what the state is
       // at each intermediate point inside the block. (Flowing between blocks is
@@ -176,6 +178,12 @@ struct ConstraintAnalysis
       auto& constraints = block->contents.startConstraints;
       for (auto** currp : block->contents.actions) {
         applyToConstraints(*currp, constraints);
+        if (constraints.size() != numLocals) {
+          // If we do not have constraints for all locals, then we are in
+          // unreachable code (equivalently, it is a logical contradiction to
+          // get here).
+          *currp = Builder(*getModule()).makeUnreachable();
+        }
         optimizeExpression(currp, constraints);
       }
     }
@@ -191,9 +199,9 @@ struct ConstraintAnalysis
     }
 
     auto iter = constraints.find(parsed->local);
-    if (iter == constraints.end()) {
-      return;
-    }
+    // We must find constraints for this local, as otherwise we are in
+    // unreachable code, which we handle and avoid getting here.
+    assert(iter != constraints.end());
     auto& localConstraints = iter->second;
     Result result = localConstraints.proves(parsed->constraint);
     if (result == Unknown) {
@@ -271,6 +279,11 @@ struct ConstraintAnalysis
     }
     auto combined = predEnd;
     combined[local].approximateAnd(constraint);
+    if (combined[local].provesEverything()) {
+      // We generated a contradiction. That means we can just remove it from the
+      // set (the default value is a contradiction).
+      combined.erase(local);
+    }
     return combined;
   }
 

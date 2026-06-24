@@ -1123,10 +1123,10 @@
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:     (then
   ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (i32.const 1)
+  ;; CHECK-NEXT:       (unreachable)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (i32.const 1)
+  ;; CHECK-NEXT:       (unreachable)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
@@ -1144,10 +1144,10 @@
   ;; OPTIN-NEXT:     (i32.const 0)
   ;; OPTIN-NEXT:     (then
   ;; OPTIN-NEXT:      (drop
-  ;; OPTIN-NEXT:       (i32.const 1)
+  ;; OPTIN-NEXT:       (unreachable)
   ;; OPTIN-NEXT:      )
   ;; OPTIN-NEXT:      (drop
-  ;; OPTIN-NEXT:       (i32.const 1)
+  ;; OPTIN-NEXT:       (unreachable)
   ;; OPTIN-NEXT:      )
   ;; OPTIN-NEXT:     )
   ;; OPTIN-NEXT:    )
@@ -1169,8 +1169,8 @@
           )
           (then
             ;; This is only reached if x is both 10 and 20, which is a
-            ;; contradiction, so it is unreachable. Given such a contradiction,
-            ;; we can prove everything to be true.
+            ;; contradiction, so it is unreachable. We optimize to unreachable
+            ;; here.
             (drop
               (i32.eq
                 (local.get $x)
