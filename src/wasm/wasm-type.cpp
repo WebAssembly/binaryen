@@ -891,10 +891,10 @@ std::optional<HeapType> HeapType::getSuperType() const {
       case none:
       case exn:
       case noexn:
+      case waitqueue:
         return {};
       case string:
         return HeapType(ext).getBasic(share);
-      case waitqueue:
       case nowaitqueue:
         return HeapType(waitqueue).getBasic(share);
       case eq:
@@ -961,13 +961,10 @@ size_t HeapType::getDepth() const {
         case HeapType::cont:
         case HeapType::any:
         case HeapType::exn:
+        case HeapType::waitqueue:
           break;
         case HeapType::eq:
         case HeapType::string:
-        case HeapType::waitqueue:
-        case HeapType::nowaitqueue:
-          depth++;
-          break;
         case HeapType::i31:
         case HeapType::struct_:
         case HeapType::array:
@@ -978,6 +975,7 @@ size_t HeapType::getDepth() const {
         case HeapType::nocont:
         case HeapType::noext:
         case HeapType::noexn:
+        case HeapType::nowaitqueue:
           // Bottom types are infinitely deep.
           depth = size_t(-1l);
       }
@@ -1106,8 +1104,6 @@ bool HeapType::isSubType(HeapType a, HeapType b) {
         return aUnshared == HeapType::noext;
       case HeapType::waitqueue:
         return aUnshared == HeapType::nowaitqueue;
-      case HeapType::nowaitqueue:
-        return false;
       case HeapType::struct_:
         return aUnshared == HeapType::none || a.isStruct();
       case HeapType::array:
@@ -1117,6 +1113,7 @@ bool HeapType::isSubType(HeapType a, HeapType b) {
       case HeapType::nofunc:
       case HeapType::nocont:
       case HeapType::noexn:
+      case HeapType::nowaitqueue:
         return false;
     }
   }

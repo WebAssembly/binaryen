@@ -3667,7 +3667,6 @@ void FunctionValidator::visitStructWait(StructWait* curr) {
   // * The reference arg is a subtype of the type immediate
   // * The index immediate is a valid field index of the type immediate (and
   // thus valid for the reference's type too)
-  // * The index points to a mutable i32 field (currently checked implicitly)
 }
 
 void FunctionValidator::visitWaitqueueNew(WaitqueueNew* curr) {

@@ -740,6 +740,7 @@ struct HeapTypeGeneratorImpl {
       case HeapType::exn:
       case HeapType::cont:
       case HeapType::any:
+        break;
       case HeapType::eq:
         candidates.push_back(HeapTypes::any.getBasic(share));
         break;

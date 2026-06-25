@@ -67,7 +67,7 @@ Literal::Literal(Type type) : type(type) {
   if (type.isRef() && type.getHeapType().isMaybeShared(HeapType::ext)) {
     assert(type.isNonNullable());
     new (&gcData) std::shared_ptr<GCData>(
-      std::make_shared<GCData>(Literals{Literal(int32_t(0))}));
+      std::make_shared<GCData>(Literals{Literal(int32_t{0})}));
     return;
   }
 
