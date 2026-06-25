@@ -120,21 +120,21 @@ struct ConstraintAnalysis
     // Start from the entry. That block has incoming values - defaults - for
     // each var.
     auto& entryConstraints = entry->contents.startConstraints;
-    entryConstraints.emplace();
     auto* func = getFunction();
     auto numLocals = func->getNumLocals();
     for (Index i = 0; i < numLocals; i++) {
-      // We know nothing, by default.
-      entryConstraints[i].setProvesNothing();
-      if (func->isParam(i)) {
-        continue;
-      }
-
       auto type = func->getLocalType(i);
       // TODO: support tuples
-      if (type.size() == 1 && LiteralUtils::canMakeZero(type)) {
+      if (func->isParam(i) || type.size() != 1) {
+        // We can't do anything in this case.
+        entryConstraints[i].setProvesNothing();
+      } else if (LiteralUtils::canMakeZero(type)) {
+        // We have a default value.
         auto value = Literal::makeZero(type);
         entryConstraints[i].set(Constraint{Abstract::Eq, {value}});
+      } else {
+        // Otherwise, this is non-nullable, and it is unreachable until set.
+        assert(type.isNonNullable());
       }
     }
 

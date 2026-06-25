@@ -162,13 +162,6 @@ void AndedConstraintSet::approximateOr(const AndedConstraintSet& other) {
     return;
   }
 
-  // If one proves nothing, neither does the combination.
-  if (provesNothing() || other.provesNothing()) {
-    clear();
-    assert(provesNothing());
-    return;
-  }
-
   // If this is already implied by current constraints, then it is redundant.
   // E.g. if we are { x = 10 } and other is { x >= 0 } then all we need is
   // { x >= 0 } as the result of the OR.
@@ -264,21 +257,15 @@ std::optional<LocalConstraint> LocalConstraint::parseBoolean(Expression* curr) {
 };
 
 void LocalConstraintMap::approximateOr(const LocalConstraintMap& other) {
-  for (auto& [local, constraints] : other) {
-    if (auto iter = find(local); iter != end()) {
-      // This is in both: OR them.
-      iter->second.approximateOr(constraints);
-    } else {
-      // This is only in other, so apply it.
-      (*this)[local] = constraints;
-    }
-  }
-
   // Remove things only in us.
   std::erase_if(*this, [&](const auto& item) {
     const auto& [local, constraints] = item;
     return !other.contains(local);
   });
+
+  for (auto& [local, constraints] : other) {
+    (*this)[local].approximateOr(constraints);
+  }
 }
 
 std::ostream& operator<<(std::ostream& o, const Constraint& constraint) {
@@ -294,6 +281,10 @@ std::ostream& operator<<(std::ostream& o, const Constraint& constraint) {
 
 std::ostream& operator<<(std::ostream& o,
                          const AndedConstraintSet& constraints) {
+  if (constraints.provesEverything()) {
+    o << "AndedConstraintSet(contradiction)";
+    return o;
+  }
   o << "AndedConstraintSet{";
   bool first = true;
   for (auto& constraint : constraints) {
