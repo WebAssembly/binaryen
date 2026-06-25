@@ -263,6 +263,10 @@ std::ostream& operator<<(std::ostream& o, const Constraint& constraint) {
 
 std::ostream& operator<<(std::ostream& o,
                          const AndedConstraintSet& constraints) {
+  if (constraints.provesEverything()) {
+    o << "AndedConstraintSet(contradiction)";
+    return o;
+  }
   o << "AndedConstraintSet{";
   bool first = true;
   for (auto& constraint : constraints) {
