@@ -99,8 +99,7 @@ class ModuleWriter : public ModuleIOBase {
 public:
   // Writing defaults to not storing the names section. Storing it is a user-
   // observable fact that must be opted into.
-  ModuleWriter(const PassOptions& options, bool emitModuleName)
-    : options(options), emitModuleName(emitModuleName) {
+  ModuleWriter(const PassOptions& options) : options(options) {
     setDebugInfo(false);
   }
 
@@ -112,6 +111,7 @@ public:
   void setSourceMapUrl(std::string sourceMapUrl_) {
     sourceMapUrl = sourceMapUrl_;
   }
+  void setEmitModuleName(bool set) { emitModuleName = set; }
 
   // write text
   void writeText(Module& wasm, Output& output);

@@ -20,6 +20,7 @@
 #include "ir/module-utils.h"
 #include "pass.h"
 #include "support/command-line.h"
+#include "wasm-io.h"
 
 //
 // Shared options for commandline tools
@@ -259,6 +260,16 @@ struct ToolOptions : public Options {
     if (!preserveTypeOrder) {
       module.typeIndices.clear();
     }
+  }
+
+  void write(ModuleWriter& writer, Module& wasm, Output& output) const {
+    writer.setEmitModuleName(emitModuleNames);
+    writer.write(wasm, output);
+  }
+
+  void write(ModuleWriter& writer, Module& wasm, const std::string& filename) const {
+    writer.setEmitModuleName(emitModuleNames);
+    writer.write(wasm, filename);
   }
 
   virtual void addPassArg(const std::string& key, const std::string& value) {

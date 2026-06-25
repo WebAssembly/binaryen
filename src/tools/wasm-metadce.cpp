@@ -659,14 +659,14 @@ int main(int argc, const char* argv[]) {
   graph.apply();
 
   if (options.extra.contains("output")) {
-    ModuleWriter writer(options.passOptions, options.emitModuleNames);
+    ModuleWriter writer(options.passOptions);
     writer.setBinary(emitBinary);
     writer.setDebugInfo(debugInfo);
     if (outputSourceMapFilename.size()) {
       writer.setSourceMapFilename(outputSourceMapFilename);
       writer.setSourceMapUrl(outputSourceMapUrl);
     }
-    writer.write(wasm, options.extra["output"]);
+    options.write(writer, wasm, options.extra["output"]);
   }
 
   // Print out everything that we found is removable, the outside might use that

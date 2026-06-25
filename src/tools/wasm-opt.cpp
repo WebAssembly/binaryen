@@ -405,10 +405,10 @@ For more on how to optimize effectively, see
 
   if (extraFuzzCommand.size() > 0 && options.extra.contains("output")) {
     BYN_TRACE("writing binary before opts, for extra fuzz command...\n");
-    ModuleWriter writer(options.passOptions, options.emitModuleNames);
+    ModuleWriter writer(options.passOptions);
     writer.setBinary(emitBinary);
     writer.setDebugInfo(options.passOptions.debugInfo);
-    writer.write(wasm, options.extra["output"]);
+    options.write(writer, wasm, options.extra["output"]);
     firstOutput = runCommand(extraFuzzCommand);
     std::cout << "[extra-fuzz-command first output:]\n" << firstOutput << '\n';
   }
@@ -494,14 +494,14 @@ For more on how to optimize effectively, see
   // Ensure the destructor of ModuleWriter runs before quick_exit.
   {
     BYN_TRACE("writing...\n");
-    ModuleWriter writer(options.passOptions, options.emitModuleNames);
+    ModuleWriter writer(options.passOptions);
     writer.setBinary(emitBinary);
     writer.setDebugInfo(options.passOptions.debugInfo);
     if (outputSourceMapFilename.size()) {
       writer.setSourceMapFilename(outputSourceMapFilename);
       writer.setSourceMapUrl(outputSourceMapUrl);
     }
-    writer.write(wasm, options.extra["output"]);
+    options.write(writer, wasm, options.extra["output"]);
   }
 
   if (extraFuzzCommand.size() > 0) {

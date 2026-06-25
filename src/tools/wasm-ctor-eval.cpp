@@ -1671,10 +1671,10 @@ int main(int argc, const char* argv[]) {
     if (options.debug) {
       std::cout << "writing..." << std::endl;
     }
-    ModuleWriter writer(options.passOptions, options.emitModuleNames);
+    ModuleWriter writer(options.passOptions);
     writer.setBinary(emitBinary);
     writer.setDebugInfo(debugInfo);
-    writer.write(wasm, options.extra["output"]);
+    options.write(writer, wasm, options.extra["output"]);
   }
 
   flush_and_quick_exit(0);

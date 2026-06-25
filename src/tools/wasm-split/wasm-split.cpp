@@ -100,10 +100,10 @@ void writeModule(Module& wasm,
     runner.add("strip-debug");
     runner.run();
   }
-  ModuleWriter writer(options.passOptions, options.emitModuleNames);
+  ModuleWriter writer(options.passOptions);
   writer.setBinary(options.emitBinary);
   writer.setDebugInfo(options.passOptions.debugInfo && !options.stripDebug);
-  writer.write(wasm, filename);
+  options.write(writer, wasm, filename);
 }
 
 void instrumentModule(const WasmSplitOptions& options) {

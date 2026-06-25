@@ -279,7 +279,7 @@ int main(int argc, const char* argv[]) {
 
   if (writeOutput) {
     Output output(outfile, emitBinary ? Flags::Binary : Flags::Text);
-    ModuleWriter writer(options.passOptions, options.emitModuleNames);
+    ModuleWriter writer(options.passOptions);
     writer.setDebugInfo(debugInfo);
     // writer.setSymbolMap(symbolMap);
     writer.setBinary(emitBinary);
@@ -287,7 +287,7 @@ int main(int argc, const char* argv[]) {
       writer.setSourceMapFilename(outputSourceMapFilename);
       writer.setSourceMapUrl(outputSourceMapUrl);
     }
-    writer.write(wasm, output);
+    options.write(writer, wasm, output);
   }
 
   flush_and_quick_exit(0);

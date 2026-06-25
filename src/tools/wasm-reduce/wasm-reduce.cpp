@@ -411,10 +411,10 @@ struct Reducer
 
   bool writeAndTestReduction(ProgramResult& out) {
     // write the module out
-    ModuleWriter writer(toolOptions.passOptions, toolOptions.emitModuleNames);
+    ModuleWriter writer(toolOptions.passOptions);
     writer.setBinary(binary);
     writer.setDebugInfo(debugInfo);
-    writer.write(*getModule(), test);
+    toolOptions.write(writer, *getModule(), test);
     // note that it is ok for the destructively-reduced module to be bigger
     // than the previous - each destructive reduction removes logical code,
     // and so is strictly better, even if the wasm binary format happens to
@@ -1546,9 +1546,9 @@ More documentation can be found at
     if (resultOnInvalid == expected) {
       // Try it on a valid input.
       Module emptyModule;
-      ModuleWriter writer(options.passOptions, options.emitModuleNames);
+      ModuleWriter writer(options.passOptions);
       writer.setBinary(true);
-      writer.write(emptyModule, test);
+      options.write(writer, emptyModule, test);
       ProgramResult resultOnValid(command);
       if (resultOnValid == expected) {
         Fatal()

@@ -924,14 +924,14 @@ Input source maps can be specified by adding an -ism option right after the modu
   }
 
   if (options.extra.contains("output")) {
-    ModuleWriter writer(options.passOptions, options.emitModuleNames);
+    ModuleWriter writer(options.passOptions);
     writer.setBinary(emitBinary);
     writer.setDebugInfo(debugInfo);
     if (outputSourceMapFilename.size()) {
       writer.setSourceMapFilename(outputSourceMapFilename);
       writer.setSourceMapUrl(outputSourceMapUrl);
     }
-    writer.write(merged, options.extra["output"]);
+    options.write(writer, merged, options.extra["output"]);
   }
 
   flush_and_quick_exit(0);
