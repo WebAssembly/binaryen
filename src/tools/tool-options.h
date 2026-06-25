@@ -267,7 +267,8 @@ struct ToolOptions : public Options {
     writer.write(wasm, output);
   }
 
-  void write(ModuleWriter& writer, Module& wasm, const std::string& filename) const {
+  void
+  write(ModuleWriter& writer, Module& wasm, const std::string& filename) const {
     writer.setEmitModuleName(emitModuleNames);
     writer.write(wasm, filename);
   }
