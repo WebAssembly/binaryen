@@ -101,8 +101,10 @@ struct ConstraintAnalysis
       auto type = func->getLocalType(i);
       // TODO: support tuples
       if (func->isParam(i) || type.size() != 1) {
+        // We can't do anything in this case.
         entryConstraints[i].setProvesNothing();
       } else if (LiteralUtils::canMakeZero(type)) {
+        // We have a default value.
         auto value = Literal::makeZero(type);
         entryConstraints[i].set(Constraint{Abstract::Eq, {value}});
       } else {
