@@ -25,7 +25,7 @@ from contextlib import contextmanager
 from multiprocessing.pool import ThreadPool
 from pathlib import Path
 
-from scripts.test import binaryenjs, finalize, shared, support, wasm2js, wasm_opt
+from scripts.test import binaryenjs, finalize, shared, support, wasm2js, wasm2c, wasm_opt
 from scripts.test.shared import print_heading
 
 assert sys.version_info >= (3, 10), 'requires Python 3.10'
@@ -441,6 +441,7 @@ TEST_SUITES = {
     'spec': run_spec_tests,
     'finalize': finalize.test_wasm_emscripten_finalize,
     'wasm2js': wasm2js.test_wasm2js,
+    'wasm2c-spec': wasm2c.test_wasm2c_spec,
     'validator': run_validator_tests,
     'example': run_example_tests,
     'unit': run_unittest,

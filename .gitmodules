@@ -10,3 +10,9 @@
 [submodule "third_party/mimalloc"]
 	path = third_party/mimalloc
 	url = https://github.com/microsoft/mimalloc.git
+[submodule "third_party/simde"]
+	path = third_party/simde
+	url = https://github.com/simd-everywhere/simde
+[submodule "third_party/picosha2"]
+	path = third_party/picosha2
+	url = https://github.com/okdshin/PicoSHA2
