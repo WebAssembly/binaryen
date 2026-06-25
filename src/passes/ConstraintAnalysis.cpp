@@ -135,6 +135,7 @@ struct ConstraintAnalysis
       } else {
         // Otherwise, this is non-nullable, and it is unreachable until set.
         assert(type.isNonNullable());
+        entryConstraints[i].setProvesEverything();
       }
     }
 
