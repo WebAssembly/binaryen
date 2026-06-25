@@ -4341,8 +4341,7 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
       }
       WASM_UNREACHABLE("bad switch");
     }
-    case HeapType::waitqueue:
-    case HeapType::nowaitqueue: {
+    case HeapType::waitqueue: {
       if (share == Unshared || !funcContext) {
         auto null =
           builder.makeRefNull(HeapType(HeapType::waitqueue).getBasic(share));
@@ -4353,6 +4352,7 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
       }
       return builder.makeWaitqueueNew();
     }
+    case HeapType::nowaitqueue:
     case HeapType::none:
     case HeapType::noext:
     case HeapType::nofunc:
@@ -6648,7 +6648,6 @@ HeapType TranslateToFuzzReader::getSubType(HeapType type) {
                     HeapType(HeapType::nowaitqueue))
           .getBasic(share);
       case HeapType::nowaitqueue:
-        return HeapType(HeapType::nowaitqueue).getBasic(share);
       case HeapType::none:
       case HeapType::noext:
       case HeapType::nofunc:

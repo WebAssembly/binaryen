@@ -1,6 +1,6 @@
 (assert_invalid
   (module
-    (type $t (shared (struct (field (mut i32)))))
+    (type $t (shared (struct (field i32))))
     (func (param $expected i32) (param $timeout i64) (result i32)
       (struct.wait $t 0 (ref.null $t) (ref.null any) (local.get $expected) (local.get $timeout))
     )
@@ -9,7 +9,7 @@
 
 (assert_invalid
   (module
-    (type $t (shared (struct (field (mut i32)))))
+    (type $t (shared (struct (field i32))))
     (global $wq (ref (shared waitqueue)) (waitqueue.new))
     (func (param $expected i32) (param $timeout i64) (result i32)
       (struct.wait $t 2 (ref.null $t) (global.get $wq) (local.get $expected) (local.get $timeout))
@@ -19,7 +19,7 @@
 
 (assert_invalid
   (module
-    (type $t (shared (struct (field (mut i32)))))
+    (type $t (shared (struct (field i32))))
     (global $g (ref $t) (struct.new $t (i32.const 0)))
     (global $wq (ref (shared waitqueue)) (waitqueue.new))
     (func (param $expected i32) (param $timeout i64) (result i32)
@@ -30,7 +30,7 @@
 
 (assert_invalid
   (module
-    (type $t (shared (struct (field (mut i32)))))
+    (type $t (shared (struct (field i32))))
     (global $g (ref $t) (struct.new $t (i32.const 0)))
     (global $wq (ref (shared waitqueue)) (waitqueue.new))
     (func (param $expected i32) (param $timeout i64) (result i32)
@@ -41,7 +41,7 @@
 
 (assert_invalid
   (module
-    (type $t (shared (struct (field (mut i32)))))
+    (type $t (shared (struct (field i32))))
     (global $wq (ref (shared waitqueue)) (waitqueue.new))
     (func (param $count i32) (result i32)
       (waitqueue.notify (i32.const 0) (local.get $count))
@@ -51,7 +51,7 @@
 
 (assert_invalid
   (module
-    (type $t (shared (struct (field (mut i32)))))
+    (type $t (shared (struct (field i32))))
     (global $wq (ref (shared waitqueue)) (waitqueue.new))
     (func (param $count i32) (result i32)
       (waitqueue.notify (global.get $wq) (i64.const 0))
@@ -61,7 +61,7 @@
 
 ;; unreachable is allowed
 (module
-  (type $t (shared (struct (field (mut i32)))))
+  (type $t (shared (struct (field i32))))
   (global $wq (ref (shared waitqueue)) (waitqueue.new))
   (func (param $expected i32) (param $timeout i64) (result i32)
     (struct.wait $t 0 (unreachable) (global.get $wq) (local.get $expected) (local.get $timeout))
