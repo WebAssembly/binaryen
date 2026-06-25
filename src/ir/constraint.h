@@ -71,7 +71,7 @@ struct AndedConstraintSet : inplace_vector<Constraint, MaxConstraints> {
 
   // Proving everything (even contradictions) is equivalent to being a
   // contradiction. (This and provesNothing can be seen as the top/bottom of a
-  // lattice, if one wants to think of things that way.)
+  // poset, if one wants to think of things that way.)
   bool provesEverything() const { return isContradiction; }
 
   // An empty set of contradictions means we know nothing, and so anything is
