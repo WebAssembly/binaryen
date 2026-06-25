@@ -758,7 +758,7 @@ private:
       parent.implicitTrap = true;
 
       const EffectAnalyzer* callTargetEffects = nullptr;
-      if (auto it = parent.module.indirectCallEffects.find(curr->heapType);
+      if (auto it = parent.module.indirectCallEffects.find(curr);
           it != parent.module.indirectCallEffects.end()) {
         callTargetEffects = it->second.get();
       }
@@ -770,8 +770,7 @@ private:
       }
 
       const EffectAnalyzer* callTargetEffects = nullptr;
-      if (auto it = parent.module.indirectCallEffects.find(
-            curr->target->type.getHeapType());
+      if (auto it = parent.module.indirectCallEffects.find(curr);
           it != parent.module.indirectCallEffects.end()) {
         callTargetEffects = it->second.get();
       }

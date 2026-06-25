@@ -54,11 +54,6 @@
   ;; MERGE_FIRST:      (func $test (type $0) (param $effectful-ref (ref $effectful)) (param $not-effectful-ref (ref $effectful))
   ;; MERGE_FIRST-NEXT:  (drop
   ;; MERGE_FIRST-NEXT:   (call_ref $effectful
-  ;; MERGE_FIRST-NEXT:    (local.get $not-effectful-ref)
-  ;; MERGE_FIRST-NEXT:   )
-  ;; MERGE_FIRST-NEXT:  )
-  ;; MERGE_FIRST-NEXT:  (drop
-  ;; MERGE_FIRST-NEXT:   (call_ref $effectful
   ;; MERGE_FIRST-NEXT:    (local.get $effectful-ref)
   ;; MERGE_FIRST-NEXT:   )
   ;; MERGE_FIRST-NEXT:  )

@@ -41,8 +41,8 @@ struct FuncInfo {
   // Directly-called functions from this function.
   std::unordered_set<Name> calledFunctions;
 
-  // Types that are targets of indirect calls.
-  std::unordered_set<HeapType> indirectCalledTypes;
+  // Expressions that are indirect calls.
+  std::vector<const Expression*> indirectCalls;
 };
 
 // Only funcs that are referenced may be the target of an indirect call. A
@@ -162,19 +162,12 @@ std::map<Function*, FuncInfo> analyzeFuncs(Module& module,
               funcInfo.calledFunctions.insert(call->target);
             } else if (effects.calls &&
                        options.worldMode == WorldMode::Closed) {
-              HeapType type;
-              if (auto* callRef = curr->dynCast<CallRef>()) {
-                // call_ref on unreachable does not have a call effect,
-                // so this must be a HeapType.
-                type = callRef->target->type.getHeapType();
-              } else if (auto* callIndirect = curr->dynCast<CallIndirect>()) {
-                type = callIndirect->heapType;
+              if (curr->is<CallRef>() || curr->is<CallIndirect>()) {
+                funcInfo.indirectCalls.push_back(curr);
               } else {
                 funcInfo.effects = std::nullopt;
                 return;
               }
-
-              funcInfo.indirectCalledTypes.insert(type);
             } else if (effects.calls) {
               assert(options.worldMode == WorldMode::Open);
               funcInfo.effects = std::nullopt;
@@ -245,7 +238,13 @@ CallGraph buildCallGraph(const Module& module,
 
     // Function -> Type
     allFunctionTypes.insert(caller->type.getHeapType());
-    for (HeapType calleeType : callerInfo.indirectCalledTypes) {
+    for (const Expression* expr : callerInfo.indirectCalls) {
+      HeapType calleeType;
+      if (auto* callRef = expr->dynCast<CallRef>()) {
+        calleeType = callRef->target->type.getHeapType();
+      } else {
+        calleeType = expr->cast<CallIndirect>()->heapType;
+      }
       callees.insert(calleeType);
 
       // Add the key to ensure the lookup doesn't fail for indirect calls to
@@ -447,6 +446,8 @@ void propagateEffects(
 
 struct GenerateGlobalEffects : public Pass {
   void run(Module* module) override {
+    module->indirectCallEffects.clear();
+
     std::map<Function*, FuncInfo> funcInfos =
       analyzeFuncs(*module, getPassOptions());
 
@@ -455,11 +456,25 @@ struct GenerateGlobalEffects : public Pass {
     auto callGraph = buildCallGraph(
       *module, funcInfos, referencedFuncs, getPassOptions().worldMode);
 
-    propagateEffects(*module,
-                     getPassOptions(),
-                     funcInfos,
-                     module->indirectCallEffects,
-                     callGraph);
+    std::unordered_map<HeapType, std::shared_ptr<const EffectAnalyzer>>
+      typeEffects;
+
+    propagateEffects(
+      *module, getPassOptions(), funcInfos, typeEffects, callGraph);
+
+    for (const auto& [func, info] : funcInfos) {
+      for (const Expression* expr : info.indirectCalls) {
+        HeapType type;
+        if (auto* callRef = expr->dynCast<CallRef>()) {
+          type = callRef->target->type.getHeapType();
+        } else {
+          type = expr->cast<CallIndirect>()->heapType;
+        }
+        if (auto it = typeEffects.find(type); it != typeEffects.end()) {
+          module->indirectCallEffects[expr] = it->second;
+        }
+      }
+    }
   }
 };
 

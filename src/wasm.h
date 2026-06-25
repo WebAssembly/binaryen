@@ -2744,7 +2744,7 @@ public:
   // exists to a function, the data can be out of date (no effort is made to
   // clean up the data if e.g. all indirect calls to a function are removed).
   // TODO: Account for exactness here.
-  std::unordered_map<HeapType, std::shared_ptr<const EffectAnalyzer>>
+  std::unordered_map<const Expression*, std::shared_ptr<const EffectAnalyzer>>
     indirectCallEffects;
 
   MixedArena allocator;
