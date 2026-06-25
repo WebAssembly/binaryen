@@ -541,16 +541,15 @@ collectHeapTypeInfo(Module& wasm,
 
   // Combine the function info with the module info.
   for (const auto& [func, functionInfo] : analysis.map) {
-    bool referenced = referencedFuncs.at(func->name);
     for (const auto& [type, typeInfo] : functionInfo.info) {
-      auto& mainInfo = info.info[type];
-      mainInfo.useCount += typeInfo.useCount;
-      if (!referenced) {
-        mainInfo.unreferencedFuncUseCount += typeInfo.useCount;
-      }
+      info.info[type].useCount += typeInfo.useCount;
     }
     for (const auto& [sig, count] : functionInfo.controlFlowSignatures) {
       info.controlFlowSignatures[sig] += count;
+    }
+    if (!referencedFuncs.at(func->name)) {
+      auto funcType = func->type.getHeapType();
+      ++info.info[funcType].unreferencedFuncUseCount;
     }
   }
 

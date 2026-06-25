@@ -632,8 +632,9 @@ void BinaryInstWriter::visitAtomicNotify(AtomicNotify* curr) {
 
 void BinaryInstWriter::visitAtomicFence(AtomicFence* curr) {
   o << static_cast<int8_t>(BinaryConsts::AtomicPrefix)
-    << static_cast<int8_t>(BinaryConsts::AtomicFence)
-    << static_cast<int8_t>(curr->order);
+    << static_cast<int8_t>(BinaryConsts::AtomicFence);
+
+  parent.writeMemoryOrder(curr->order);
 }
 
 void BinaryInstWriter::visitPause(Pause* curr) {

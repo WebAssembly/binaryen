@@ -103,6 +103,46 @@
     (local.get $local)
   )
 
+  ;; CHECK:      (func $after-unreachable-tuple (type $2) (param $i32 i32) (param $ref (ref struct)) (result i32 (ref struct))
+  ;; CHECK-NEXT:  (local $local (tuple i32 (ref struct)))
+  ;; CHECK-NEXT:  unreachable
+  ;; CHECK-NEXT:  unreachable
+  ;; CHECK-NEXT:  local.set $local
+  ;; CHECK-NEXT:  drop
+  ;; CHECK-NEXT:  local.get $local
+  ;; CHECK-NEXT: )
+  ;; RTRIP:      (func $after-unreachable-tuple (type $2) (param $i32 i32) (param $ref (ref struct)) (result i32 (ref struct))
+  ;; RTRIP-NEXT:  (local $local i32)
+  ;; RTRIP-NEXT:  (local $3 (ref struct))
+  ;; RTRIP-NEXT:  (drop
+  ;; RTRIP-NEXT:   (local.set $local
+  ;; RTRIP-NEXT:    (local.set $3
+  ;; RTRIP-NEXT:     (unreachable)
+  ;; RTRIP-NEXT:    )
+  ;; RTRIP-NEXT:   )
+  ;; RTRIP-NEXT:  )
+  ;; RTRIP-NEXT:  (tuple.make 2
+  ;; RTRIP-NEXT:   (local.get $local)
+  ;; RTRIP-NEXT:   (local.get $3)
+  ;; RTRIP-NEXT:  )
+  ;; RTRIP-NEXT: )
+  (func $after-unreachable-tuple (param $i32 i32) (param $ref (ref struct)) (result i32 (ref struct))
+    (local $local (tuple i32 (ref struct)))
+    (drop
+      (block (result i32)
+        (unreachable)
+        (local.set $local
+          (tuple.make 2
+            (local.get $i32)
+            (local.get $ref)
+          )
+        )
+        (i32.const 0)
+      )
+    )
+    (local.get $local)
+  )
+
   ;; CHECK:      (func $nested-exprs (type $0) (param $ref (ref struct)) (result (ref struct))
   ;; CHECK-NEXT:  (local $local (ref struct))
   ;; CHECK-NEXT:  unreachable
@@ -224,6 +264,44 @@
         (local.get $local)
       )
       (unreachable)
+    )
+  )
+
+  ;; CHECK:      (func $tuple (type $1) (result (ref struct))
+  ;; CHECK-NEXT:  (local $local (tuple i32 (ref struct)))
+  ;; CHECK-NEXT:  unreachable
+  ;; CHECK-NEXT:  unreachable
+  ;; CHECK-NEXT:  local.set $local
+  ;; CHECK-NEXT:  drop
+  ;; CHECK-NEXT:  local.get $local
+  ;; CHECK-NEXT:  tuple.extract 2 1
+  ;; CHECK-NEXT: )
+  ;; RTRIP:      (func $tuple (type $1) (result (ref struct))
+  ;; RTRIP-NEXT:  (local $local i32)
+  ;; RTRIP-NEXT:  (local $1 (ref struct))
+  ;; RTRIP-NEXT:  (drop
+  ;; RTRIP-NEXT:   (local.set $local
+  ;; RTRIP-NEXT:    (local.set $1
+  ;; RTRIP-NEXT:     (unreachable)
+  ;; RTRIP-NEXT:    )
+  ;; RTRIP-NEXT:   )
+  ;; RTRIP-NEXT:  )
+  ;; RTRIP-NEXT:  (local.get $1)
+  ;; RTRIP-NEXT: )
+  (func $tuple (result (ref struct))
+    ;; unreachable sets of tuples containing non-nullable references also need
+    ;; to be kept.
+    (local $local (tuple i32 (ref struct)))
+    (drop
+     (block (result i32)
+      (local.set $local
+       (unreachable)
+      )
+      (i32.const 0)
+     )
+    )
+    (tuple.extract 2 1
+      (local.get $local)
     )
   )
 )

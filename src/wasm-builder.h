@@ -428,7 +428,11 @@ public:
     notify->memory = memory;
     return notify;
   }
-  AtomicFence* makeAtomicFence() { return wasm.allocator.alloc<AtomicFence>(); }
+  AtomicFence* makeAtomicFence(MemoryOrder order) {
+    auto* ret = wasm.allocator.alloc<AtomicFence>();
+    ret->order = order;
+    return ret;
+  }
   Pause* makePause() { return wasm.allocator.alloc<Pause>(); }
   Store* makeStore(unsigned bytes,
                    Address offset,

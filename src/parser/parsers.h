@@ -150,7 +150,8 @@ Result<> makeAtomicWait(Ctx&, Index, const std::vector<Annotation>&, Type type);
 template<typename Ctx>
 Result<> makeAtomicNotify(Ctx&, Index, const std::vector<Annotation>&);
 template<typename Ctx>
-Result<> makeAtomicFence(Ctx&, Index, const std::vector<Annotation>&);
+Result<>
+makeAtomicFence(Ctx&, Index, const std::vector<Annotation>&, MemoryOrder);
 template<typename Ctx>
 Result<> makePause(Ctx&, Index, const std::vector<Annotation>&);
 template<typename Ctx>
@@ -1958,12 +1959,14 @@ Result<> makeAtomicNotify(Ctx& ctx,
   CHECK_ERR(arg);
   return ctx.makeAtomicNotify(pos, annotations, mem.getPtr(), *arg);
 }
-
 template<typename Ctx>
 Result<> makeAtomicFence(Ctx& ctx,
                          Index pos,
                          const std::vector<Annotation>& annotations) {
-  return ctx.makeAtomicFence(pos, annotations);
+  auto maybeOrder = maybeMemOrder(ctx);
+  CHECK_ERR(maybeOrder);
+  MemoryOrder order = maybeOrder ? *maybeOrder : MemoryOrder::SeqCst;
+  return ctx.makeAtomicFence(pos, annotations, order);
 }
 
 template<typename Ctx>
