@@ -587,8 +587,7 @@ void printReadableProfile(const WasmSplitOptions& options) {
   auto printFnSet = [&](auto funcs, std::string prefix) {
     for (auto it = funcs.begin(); it != funcs.end(); ++it) {
       std::cout << prefix << " "
-                << (options.unescape ? Names::unescape(*it)
-                                     : it->toString())
+                << (options.unescape ? Names::unescape(*it) : it->toString())
                 << std::endl;
     }
   };

@@ -5315,9 +5315,7 @@ class NameProcessor {
 public:
   // Returns a unique, escaped name. Notes that name for the items to follow to
   // keep them unique as well.
-  Name process(Name name) {
-    return deduplicate(Names::escape(name));
-  }
+  Name process(Name name) { return deduplicate(Names::escape(name)); }
 
 private:
   std::unordered_set<Name> usedNames;
