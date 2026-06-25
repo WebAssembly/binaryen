@@ -239,15 +239,15 @@ std::optional<LocalConstraint> LocalConstraint::parse(Expression* curr) {
 }
 
 void LocalConstraintMap::approximateOr(const LocalConstraintMap& other) {
-  for (auto& [local, constraints] : other) {
-    (*this)[local].approximateOr(constraints);
-  }
-
   // Remove things only in us.
   std::erase_if(*this, [&](const auto& item) {
     const auto& [local, constraints] = item;
     return !other.contains(local);
   });
+
+  for (auto& [local, constraints] : other) {
+    (*this)[local].approximateOr(constraints);
+  }
 }
 
 std::ostream& operator<<(std::ostream& o, const Constraint& constraint) {
