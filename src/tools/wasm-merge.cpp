@@ -917,7 +917,7 @@ Input source maps can be specified by adding an -ism option right after the modu
 
       manifest << moduleName << "\n";
       for (auto func : funcs) {
-        manifest << func << "\n";
+        manifest << Names::unescape(func.toString()) << "\n";
       }
       manifest << "\n";
     }

@@ -1,0 +1,5 @@
+(module
+  (func $foo\20bar (export "foo bar")
+    nop
+  )
+)
