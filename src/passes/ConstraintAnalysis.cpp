@@ -355,7 +355,7 @@ struct ConstraintAnalysis
         auto op = brOn->op == BrOnNull ? Abstract::Ne : Abstract::Eq;
         auto nullType = get->type.getHeapType().getBottom();
         auto zero = Literal::makeZero(Type(nullType, Nullable));
-        constraint = Constraint{op, zero};
+        constraint = Constraint{op, {zero}};
         break;
       }
       default:
