@@ -22,13 +22,6 @@
 
 namespace wasm::constraint {
 
-std::optional<Constraint> Constraint::negate() {
-  if (auto negatedOp = Abstract::negate(op)) {
-    return Constraint{*negatedOp, term};
-  }
-  return {};
-}
-
 namespace {
 
 // Evaluate whether a => b, where a and b are operations on constants.

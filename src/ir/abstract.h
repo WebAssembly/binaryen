@@ -304,8 +304,7 @@ inline BinaryOp getBinary(Type type, Op op) {
   WASM_UNREACHABLE("invalid type");
 }
 
-// Negate an operation, if possible.
-inline std::optional<Op> negate(Op op) {
+inline Op negateRelational(Op op) {
   switch (op) {
     case Eq:
       return Ne;
@@ -328,7 +327,7 @@ inline std::optional<Op> negate(Op op) {
     case GeU:
       return LtU;
     default:
-      return {};
+      WASM_UNREACHABLE("invalid relational");
   }
 }
 

@@ -45,8 +45,9 @@ struct Constraint {
 
   bool operator==(const Constraint&) const = default;
 
-  // Return a negated constraint, if possible.
-  std::optional<Constraint> negate();
+  Constraint negate() {
+    return Constraint{Abstract::negateRelational(op), term};
+  }
 };
 
 // We limit constraints to a low number to ensure good performance even with

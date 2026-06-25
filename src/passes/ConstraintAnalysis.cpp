@@ -276,12 +276,7 @@ struct ConstraintAnalysis
     }
     if (succ == predOut[1]) {
       // This is the ifFalse.
-      if (auto negated = constraint.negate()) {
-        constraint = *negated;
-      } else {
-        // This could not be negated.
-        return predEnd;
-      }
+      constraint = constraint.negate();
     } else {
       // It must be the ifTrue.
       assert(succ == predOut[0]);
@@ -324,10 +319,8 @@ struct ConstraintAnalysis
     // Unlike If, we must flip the constraint. The adjacent block right
     // after the if is the ifTrue path, but for br_if, the adjacent block is
     // the fallthrough, i.e., ifFalse.
-    if (auto negated = constraint.negate()) {
-      return getConstraintsFromParsed(
-        pred, succ, predEnd, LocalConstraint{local, *negated});
-    }
+    return getConstraintsFromParsed(
+      pred, succ, predEnd, LocalConstraint{local, constraint.negate()});
 
     return predEnd;
   }
