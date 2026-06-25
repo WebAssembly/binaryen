@@ -104,10 +104,7 @@ void writeModule(Module& wasm,
   ModuleWriter writer(options.passOptions);
   writer.setBinary(options.emitBinary);
   writer.setDebugInfo(options.passOptions.debugInfo && !options.stripDebug);
-  if (options.emitModuleNames) {
-    writer.setEmitModuleName(true);
-  }
-  writer.write(wasm, filename);
+  options.write(writer, wasm, filename);
 }
 
 void instrumentModule(const WasmSplitOptions& options) {

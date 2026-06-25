@@ -647,7 +647,10 @@ struct PrintExpressionContents
       o << " offset=" << curr->offset;
     }
   }
-  void visitAtomicFence(AtomicFence* curr) { printMedium(o, "atomic.fence"); }
+  void visitAtomicFence(AtomicFence* curr) {
+    printMedium(o, "atomic.fence");
+    printMemoryOrder(curr->order);
+  }
   void visitPause(Pause* curr) { printMedium(o, "pause"); }
   void visitSIMDExtract(SIMDExtract* curr) {
     prepareColor(o);
