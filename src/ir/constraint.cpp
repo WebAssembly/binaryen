@@ -155,13 +155,6 @@ void AndedConstraintSet::approximateOr(const AndedConstraintSet& other) {
     return;
   }
 
-  // If one proves nothing, neither does the combination.
-  if (provesNothing() || other.provesNothing()) {
-    clear();
-    assert(provesNothing());
-    return;
-  }
-
   // If this is already implied by current constraints, then it is redundant.
   // E.g. if we are { x = 10 } and other is { x >= 0 } then all we need is
   // { x >= 0 } as the result of the OR.
