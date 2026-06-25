@@ -70,4 +70,59 @@ std::string MinifiedNameGenerator::getName() {
   return name;
 }
 
+static bool isIdChar(char ch) {
+  return (ch >= '0' && ch <= '9') || (ch >= 'A' && ch <= 'Z') ||
+         (ch >= 'a' && ch <= 'z') || ch == '!' || ch == '#' || ch == '$' ||
+         ch == '%' || ch == '&' || ch == '\'' || ch == '*' || ch == '+' ||
+         ch == '-' || ch == '.' || ch == '/' || ch == ':' || ch == '<' ||
+         ch == '=' || ch == '>' || ch == '?' || ch == '@' || ch == '^' ||
+         ch == '_' || ch == '`' || ch == '|' || ch == '~';
+}
+
+static char formatNibble(int nibble) {
+  return nibble < 10 ? '0' + nibble : 'a' - 10 + nibble;
+}
+
+Name escape(Name name) {
+  bool allIdChars = true;
+  for (char c : name.view()) {
+    if (!(allIdChars = isIdChar(c))) {
+      break;
+    }
+  }
+  if (allIdChars) {
+    return name;
+  }
+  // encode name, if at least one non-idchar (per WebAssembly spec) was found
+  std::string escaped;
+  for (char c : name.view()) {
+    if (isIdChar(c)) {
+      escaped.push_back(c);
+      continue;
+    }
+    // replace non-idchar with `\xx` escape
+    escaped.push_back('\\');
+    escaped.push_back(formatNibble((unsigned char)c >> 4));
+    escaped.push_back(formatNibble((unsigned char)c & 15));
+  }
+  return escaped;
+}
+
+std::string unescape(Name name) {
+  std::string output;
+  std::string_view input = name.view();
+  for (size_t i = 0; i < input.length(); i++) {
+    if ((input[i] == '\\') && (i + 2 < input.length()) &&
+        isxdigit(input[i + 1]) && isxdigit(input[i + 2])) {
+      std::string byte = std::string(input.substr(i + 1, 2));
+      i += 2;
+      char chr = (char)(int)strtol(byte.c_str(), nullptr, 16);
+      output.push_back(chr);
+    } else {
+      output.push_back(input[i]);
+    }
+  }
+  return output;
+}
+
 } // namespace wasm::Names
