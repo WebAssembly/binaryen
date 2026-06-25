@@ -7,20 +7,26 @@ using namespace wasm::Abstract;
 using namespace wasm::constraint;
 
 TEST(ConstraintTest, TestEq) {
-  // Sets start empty.
-  AndedConstraintSet s;
-  EXPECT_TRUE(s.empty());
-
   // x == 5 (we use "x" for the name of the thing being compared, in these
   // comments).
   Constraint c{Eq, {Literal(int32_t(5))}};
 
-  // We can't infer anything using an empty set.
+  // Sets start as proving anything, as representing unreachable code.
+  AndedConstraintSet s;
+  EXPECT_TRUE(s.provesEverything());
+  EXPECT_EQ(s.proves(c), True);
+
+  // We can't infer anything if told so.
+  s.setProvesNothing();
   EXPECT_EQ(s.proves(c), Unknown);
 
   // If we add it, then things check out: a thing always proves itself true.
   s.approximateAnd(c);
   EXPECT_EQ(s.size(), 1);
+  EXPECT_EQ(s.proves(c), True);
+
+  // Ditto using set();
+  s.set(c);
   EXPECT_EQ(s.proves(c), True);
 
   // x == 10, a different number: we can infer false.
@@ -37,7 +43,7 @@ TEST(ConstraintTest, TestNe) {
   AndedConstraintSet s;
   // x != 5
   Constraint c{Ne, {Literal(int32_t(5))}};
-  s.approximateAnd(c);
+  s.set(c);
 
   // Checks out versus itself.
   EXPECT_EQ(s.proves(c), True);
@@ -57,7 +63,7 @@ TEST(ConstraintTest, TestMulti) {
   // x != 5 && x != 10
   Constraint c{Ne, {Literal(int32_t(5))}};
   Constraint d{Ne, {Literal(int32_t(10))}};
-  s.approximateAnd(c);
+  s.set(c);
   s.approximateAnd(d);
 
   // Each checks out versus itself.
@@ -87,27 +93,22 @@ TEST(ConstraintTest, TestSets) {
   EXPECT_EQ(s.proves(s), True);
 
   // Ditto after adding something.
-  s.approximateAnd(c);
+  s.set(c);
   EXPECT_EQ(s.proves(s), True);
 
   // Another set, empty.
   AndedConstraintSet t;
 
-  // Any set always proves an empty set to be true.
-  EXPECT_EQ(s.proves(t), True);
-
   // Make both sets contain the same stuff.
-  t.approximateAnd(c);
+  t.set(c);
   EXPECT_EQ(s.proves(t), True);
 
   // Now t has *different* stuff, x == 10, which given s is false.
-  t.clear();
-  t.approximateAnd(Constraint{Eq, {Literal(int32_t(10))}});
+  t.set(Constraint{Eq, {Literal(int32_t(10))}});
   EXPECT_EQ(s.proves(t), False);
 
   // Same, with x != 10. Now we know it is true.
-  t.clear();
-  t.approximateAnd(Constraint{Ne, {Literal(int32_t(10))}});
+  t.set(Constraint{Ne, {Literal(int32_t(10))}});
   EXPECT_EQ(s.proves(t), True);
 
   // In reverse, we can infer nothing: knowing x != 10 does not say if x == 5.
@@ -118,36 +119,38 @@ TEST(ConstraintTest, TestSetsUnknown) {
   // x != 5
   // x != 10
   AndedConstraintSet s;
-  s.approximateAnd(Constraint{Ne, {Literal(int32_t(5))}});
+  s.set(Constraint{Ne, {Literal(int32_t(5))}});
   s.approximateAnd(Constraint{Ne, {Literal(int32_t(10))}});
 
   // x != 20, which is unknown by s.
   AndedConstraintSet t;
-  t.approximateAnd(Constraint{Ne, {Literal(int32_t(20))}});
+  t.set(Constraint{Ne, {Literal(int32_t(20))}});
   EXPECT_EQ(s.proves(t), Unknown);
 
   // Add x == 10, which is false by s, and so the whole thing is false.
-  t.approximateAnd(Constraint{Eq, {Literal(int32_t(10))}});
+  t.set(Constraint{Eq, {Literal(int32_t(10))}});
   EXPECT_EQ(s.proves(t), False);
 }
 
 TEST(ConstraintTest, TestOrTrivial) {
   // { x == 5 }
   AndedConstraintSet s;
-  s.approximateAnd(Constraint{Eq, {Literal(int32_t(5))}});
+  s.set(Constraint{Eq, {Literal(int32_t(5))}});
 
   // { }
   AndedConstraintSet empty;
+  empty.setProvesNothing();
 
-  // Anything ORed with the empty set is unchanged.
+  // Anything ORed with the empty set becomes the empty set: if one side can
+  // prove nothing, neither can the result.
   auto t = s;
   t.approximateOr(empty);
-  EXPECT_EQ(t, s);
+  EXPECT_EQ(t, empty);
 
   // Flipped.
   t = empty;
   t.approximateOr(s);
-  EXPECT_EQ(t, s);
+  EXPECT_EQ(t, empty);
 
   // ORing with oneself changes nothing
   t = s;
@@ -158,11 +161,11 @@ TEST(ConstraintTest, TestOrTrivial) {
 TEST(ConstraintTest, TestOrImplies) {
   // { x == 5 }
   AndedConstraintSet s;
-  s.approximateAnd(Constraint{Eq, {Literal(int32_t(5))}});
+  s.set(Constraint{Eq, {Literal(int32_t(5))}});
 
   // { x != 10 }
   AndedConstraintSet t;
-  t.approximateAnd(Constraint{Ne, {Literal(int32_t(10))}});
+  t.set(Constraint{Ne, {Literal(int32_t(10))}});
 
   // ORing these leaves us with x != 10.
   auto u = s;
@@ -184,7 +187,7 @@ TEST(ConstraintTest, TestMaxCapacity) {
   Constraint not30{Ne, {Literal(int32_t(30))}};
 
   AndedConstraintSet s;
-  s.approximateAnd(not10);
+  s.set(not10);
   s.approximateAnd(not20);
   s.approximateAnd(not30);
 
