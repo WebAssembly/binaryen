@@ -53,7 +53,7 @@ struct Info {
 
   // For each local index, we track the constraints we know about it. We only do
   // so at the start of each block, which is enough for the analysis below.
-  LocalConstraintMap startConstraints;
+  BasicBlockConstraintMap startConstraints;
 };
 
 struct ConstraintAnalysis
@@ -117,25 +117,23 @@ struct ConstraintAnalysis
   // Flow infos around until we have inferred all we can about the constraints
   // in each location.
   void flow() {
-    // Start from the entry. That block has incoming values - defaults - for
-    // each var.
+    // Everything starts unreachable until we reach it in the flow.
+    for (auto& block : basicBlocks) {
+      block->contents.startConstraints.unreachable = true;
+    }
+
+    // Start from the entry as the only reachable block. That block has incoming
+    // values - defaults - for each var.
+    entry->contents.startConstraints.unreachable = false;
     auto& entryConstraints = entry->contents.startConstraints;
     auto* func = getFunction();
-    auto numLocals = func->getNumLocals();
-    for (Index i = 0; i < numLocals; i++) {
+    for (Index i = func->getVarIndexBase(); i < func->getNumLocals(); i++) {
       auto type = func->getLocalType(i);
       // TODO: support tuples
-      if (func->isParam(i) || type.size() != 1) {
-        // We can't do anything in this case.
-        entryConstraints[i].setProvesNothing();
-      } else if (LiteralUtils::canMakeZero(type)) {
-        // We have a default value.
+      if (type.size() == 1 && LiteralUtils::canMakeZero(type)) {
+        // We have a default value, so we can prove something.
         auto value = Literal::makeZero(type);
-        entryConstraints[i].set(Constraint{Abstract::Eq, {value}});
-      } else {
-        // Otherwise, this is non-nullable, and it is unreachable until set.
-        assert(type.isNonNullable());
-        entryConstraints[i].setProvesEverything();
+        entryConstraints.set(i, Constraint{Abstract::Eq, {value}});
       }
     }
 
@@ -146,7 +144,7 @@ struct ConstraintAnalysis
       auto* block = work.pop();
 
       // Start at the top of the block, then go through, applying things.
-      LocalConstraintMap constraints = block->contents.startConstraints;
+      BasicBlockConstraintMap constraints = block->contents.startConstraints;
       for (auto** currp : block->contents.actions) {
         applyToConstraints(*currp, constraints);
       }
@@ -171,7 +169,6 @@ struct ConstraintAnalysis
 
   // After inferring all we can, apply it to optimize the code.
   void optimize() {
-    auto numLocals = getFunction()->getNumLocals();
     // If we make things unreachable, we must refinalize.
     bool refinalize = false;
 
@@ -182,10 +179,7 @@ struct ConstraintAnalysis
       auto& constraints = block->contents.startConstraints;
       for (auto** currp : block->contents.actions) {
         applyToConstraints(*currp, constraints);
-        if (constraints.size() != numLocals) {
-          // If we do not have constraints for all locals, then we are in
-          // unreachable code (equivalently, it is a logical contradiction to
-          // get here).
+        if (constraints.unreachable) {
           *currp = Builder(*getModule()).makeUnreachable();
           refinalize = true;
         }
@@ -200,18 +194,14 @@ struct ConstraintAnalysis
 
   // Given an expression and the constraints on it, optimize it.
   void optimizeExpression(Expression** currp,
-                          const LocalConstraintMap& constraints) {
+                          const BasicBlockConstraintMap& constraints) {
     auto* curr = *currp;
     auto parsed = LocalConstraint::parse(curr);
     if (!parsed) {
       return;
     }
 
-    auto iter = constraints.find(parsed->local);
-    // We must find constraints for this local, as otherwise we are in
-    // unreachable code, which we handle and avoid getting here.
-    assert(iter != constraints.end());
-    auto& localConstraints = iter->second;
+    auto localConstraints = constraints.get(parsed->local);
     Result result = localConstraints.proves(parsed->constraint);
     if (result == Unknown) {
       // If we parsed something using two locals, like x != y, we can also look
@@ -230,8 +220,8 @@ struct ConstraintAnalysis
   // Given a predecessor and one of its successors, find the constraints that
   // flow to that specific successor, given the constraints at the end of the
   // predecessor.
-  const LocalConstraintMap getConstraintsFromPredToSucc(
-    BasicBlock* pred, BasicBlock* succ, const LocalConstraintMap& predEnd) {
+  const BasicBlockConstraintMap getConstraintsFromPredToSucc(
+    BasicBlock* pred, BasicBlock* succ, const BasicBlockConstraintMap& predEnd) {
     auto* brancher = pred->contents.brancher;
     if (!brancher) {
       // No branching instruction to reason about. Just return what is at the
@@ -253,10 +243,10 @@ struct ConstraintAnalysis
   // Gets constraints from pred to succ, given a parsed LocalConstraint, which
   // represents the condition of the branch: if that constraint is true, it is
   // taken in the first path from pred, and otherwise the second.
-  const LocalConstraintMap
+  const BasicBlockConstraintMap
   getConstraintsFromParsed(BasicBlock* pred,
                            BasicBlock* succ,
-                           const LocalConstraintMap& predEnd,
+                           const BasicBlockConstraintMap& predEnd,
                            std::optional<LocalConstraint> parsed) {
 
     if (!parsed) {
@@ -282,29 +272,24 @@ struct ConstraintAnalysis
       assert(succ == predOut[0]);
     }
     auto combined = predEnd;
-    combined[local].approximateAnd(constraint);
-    if (combined[local].provesEverything()) {
-      // We generated a contradiction. That means we can just remove it from the
-      // set (the default value is a contradiction).
-      combined.erase(local);
-    }
+    combined.approximateAnd(local, constraint);
     return combined;
   }
 
-  const LocalConstraintMap
+  const BasicBlockConstraintMap
   getConstraintsFromIf(BasicBlock* pred,
                        BasicBlock* succ,
-                       const LocalConstraintMap& predEnd,
+                       const BasicBlockConstraintMap& predEnd,
                        If* iff) {
     // Simply parse the condition and use that.
     return getConstraintsFromParsed(
       pred, succ, predEnd, LocalConstraint::parseBoolean(iff->condition));
   }
 
-  const LocalConstraintMap
+  const BasicBlockConstraintMap
   getConstraintsFromBreak(BasicBlock* pred,
                           BasicBlock* succ,
-                          const LocalConstraintMap& predEnd,
+                          const BasicBlockConstraintMap& predEnd,
                           Break* br) {
     if (!br->condition) {
       return predEnd;
@@ -325,10 +310,10 @@ struct ConstraintAnalysis
     return predEnd;
   }
 
-  const LocalConstraintMap
+  const BasicBlockConstraintMap
   getConstraintsFromBrOn(BasicBlock* pred,
                          BasicBlock* succ,
-                         const LocalConstraintMap& predEnd,
+                         const BasicBlockConstraintMap& predEnd,
                          BrOn* brOn) {
     // We only handle br_on of a local.
     auto* get = brOn->ref->dynCast<LocalGet>();
@@ -362,16 +347,15 @@ struct ConstraintAnalysis
 
   // Given an expression, apply it to the constraints. For example, a local.set
   // sets the value for that local.
-  void applyToConstraints(Expression* curr, LocalConstraintMap& constraints) {
+  void applyToConstraints(Expression* curr, BasicBlockConstraintMap& constraints) {
     if (auto* set = curr->dynCast<LocalSet>()) {
-      auto& localConstraints = constraints[set->index];
       if (Properties::isSingleConstantExpression(set->value)) {
         // We know this one constraint.
         auto value = Properties::getLiteral(set->value);
-        localConstraints.set(Constraint{Abstract::Eq, {value}});
+        constraints.set(set->index, Constraint{Abstract::Eq, {value}});
       } else {
         // We know and can prove nothing.
-        localConstraints.setProvesNothing();
+        constraints.setProvesNothing(set->index);
       }
     }
   }

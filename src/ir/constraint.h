@@ -94,6 +94,12 @@ struct AndedConstraintSet : inplace_vector<Constraint, MaxConstraints> {
     assert(provesNothing());
   }
 
+  static AndedConstraintSet makeProvesNothing() {
+    AndedConstraintSet ret;
+    ret.setProvesNothing();
+    return ret;
+  }
+
   // Check a condition against this set, that is, whether the existing
   // constraints prove that it must be true, false, or unknown: whether
   //
@@ -182,18 +188,61 @@ struct LocalConstraint {
   static std::optional<LocalConstraint> parseBoolean(Expression* curr);
 };
 
-// A map of locals and their constraints.
-struct LocalConstraintMap
-  : public std::unordered_map<Index, AndedConstraintSet> {
+// A map of locals and their constraints, representing the state at a basic
+// block. We use the following representation:
+//
+//  * When the basic block is unreachable, we mark ourselves so, and clear the
+//    map.
+//  * If any local is in a contradiction, we know we are unreachable, and mark
+//    ourselves so.
+//  * When we can prove nothing about a local - the common case - we leave it
+//    out of the map.
+//  * If a local is unusable - a non-nullable local before any set - then it is
+//    marked as being able to prove nothing. (We could also mark this as a
+//    contradiction, but both apply - we can indeed prove nothing, as the IR
+//    disallows any uses of it - and avoiding a contradiction avoids confusion
+//    with the case of the basic block being unreachable.)
+//
+// As a result, the map only contains interesting things, where we can prove
+// something (but not everything).
+struct BasicBlockConstraintMap {
+  bool unreachable = false;
+
+  // Apply a constraint to a local.
+  void set(Index index, const Constraint& c) { map[index].set(c); }
+
+  void setProvesNothing(Index index) { map.erase(index); }
+
+  // Get the constraints for a local.
+  AndedConstraintSet get(Index index) const {
+    if (auto iter = map.find(index); iter != map.end()) {
+      return iter->second;
+    }
+    return AndedConstraintSet::makeProvesNothing();
+  }
+
   // Perform an OR as above. When a local only appears in one map, we treat it
   // as if it contains a contradiction there, that is, as if the code is
   // unreachable.
-  void approximateOr(const LocalConstraintMap& other);
+  void approximateOr(const BasicBlockConstraintMap& other);
+
+  // Perform an AND as above, on a particular index.
+  void approximateAnd(Index index, const Constraint& c);
+
+  bool operator!=(const BasicBlockConstraintMap& other) {
+    return unreachable != other.unreachable || map != other.map;
+  }
+
+friend std::ostream& operator<<(std::ostream& o,
+                         const BasicBlockConstraintMap& map);
+
+private:
+  std::unordered_map<Index, AndedConstraintSet> map;
 };
 
-std::ostream& operator<<(std::ostream& o, const Constraint& constraint);
+std::ostream& operator<<(std::ostream& o, const Constraint& c);
 std::ostream& operator<<(std::ostream& o,
-                         const AndedConstraintSet& constraints);
+                         const AndedConstraintSet& set);
 
 } // namespace wasm::constraint
 
