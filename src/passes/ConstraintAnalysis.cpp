@@ -220,8 +220,10 @@ struct ConstraintAnalysis
   // Given a predecessor and one of its successors, find the constraints that
   // flow to that specific successor, given the constraints at the end of the
   // predecessor.
-  const BasicBlockConstraintMap getConstraintsFromPredToSucc(
-    BasicBlock* pred, BasicBlock* succ, const BasicBlockConstraintMap& predEnd) {
+  const BasicBlockConstraintMap
+  getConstraintsFromPredToSucc(BasicBlock* pred,
+                               BasicBlock* succ,
+                               const BasicBlockConstraintMap& predEnd) {
     auto* brancher = pred->contents.brancher;
     if (!brancher) {
       // No branching instruction to reason about. Just return what is at the
@@ -347,7 +349,8 @@ struct ConstraintAnalysis
 
   // Given an expression, apply it to the constraints. For example, a local.set
   // sets the value for that local.
-  void applyToConstraints(Expression* curr, BasicBlockConstraintMap& constraints) {
+  void applyToConstraints(Expression* curr,
+                          BasicBlockConstraintMap& constraints) {
     if (auto* set = curr->dynCast<LocalSet>()) {
       if (Properties::isSingleConstantExpression(set->value)) {
         // We know this one constraint.

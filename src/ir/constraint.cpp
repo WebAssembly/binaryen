@@ -249,7 +249,8 @@ std::optional<LocalConstraint> LocalConstraint::parseBoolean(Expression* curr) {
   return parse(curr);
 };
 
-void BasicBlockConstraintMap::approximateOr(const BasicBlockConstraintMap& other) {
+void BasicBlockConstraintMap::approximateOr(
+  const BasicBlockConstraintMap& other) {
   // If one is unreachable, it adds nothing to the other.
   if (other.unreachable) {
     return;
@@ -312,8 +313,7 @@ std::ostream& operator<<(std::ostream& o, const Constraint& c) {
   return o;
 }
 
-std::ostream& operator<<(std::ostream& o,
-                         const AndedConstraintSet& set) {
+std::ostream& operator<<(std::ostream& o, const AndedConstraintSet& set) {
   if (set.provesEverything()) {
     o << "AndedConstraintSet(contradiction)";
     return o;
@@ -332,8 +332,7 @@ std::ostream& operator<<(std::ostream& o,
   return o;
 }
 
-std::ostream& operator<<(std::ostream& o,
-                         const BasicBlockConstraintMap& map) {
+std::ostream& operator<<(std::ostream& o, const BasicBlockConstraintMap& map) {
   if (map.unreachable) {
     o << "BasicBlockConstraintMap(unreachable)";
     return o;

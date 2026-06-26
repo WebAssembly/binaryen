@@ -233,16 +233,15 @@ struct BasicBlockConstraintMap {
     return unreachable != other.unreachable || map != other.map;
   }
 
-friend std::ostream& operator<<(std::ostream& o,
-                         const BasicBlockConstraintMap& map);
+  friend std::ostream& operator<<(std::ostream& o,
+                                  const BasicBlockConstraintMap& map);
 
 private:
   std::unordered_map<Index, AndedConstraintSet> map;
 };
 
 std::ostream& operator<<(std::ostream& o, const Constraint& c);
-std::ostream& operator<<(std::ostream& o,
-                         const AndedConstraintSet& set);
+std::ostream& operator<<(std::ostream& o, const AndedConstraintSet& set);
 
 } // namespace wasm::constraint
 
