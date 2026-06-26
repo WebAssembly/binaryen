@@ -154,11 +154,15 @@ struct ConstraintAnalysis
       for (auto* out : block->out) {
         auto& outStartConstraints = out->contents.startConstraints;
 
-        // Find the constraints sent to this specific successor, and apply them
-        // to the start of this block. If anything changed, flow onwards.
+        // Find the constraints sent to this specific successor, if there is a
+        // branch, and use them.
+        auto sentConstraints = constraints;
+        if (auto branch = getBranchConstraints(block, out)) {
+          sentConstraints.approximateAnd(branch->local, branch->constraint);
+        }
+
+        // If anything changed at the start of the target block, flow onwards.
         auto old = outStartConstraints;
-        auto sentConstraints =
-          getConstraintsFromPredToSucc(block, out, constraints);
         outStartConstraints.approximateOr(sentConstraints);
         if (outStartConstraints != old) {
           work.push(out);
@@ -217,42 +221,41 @@ struct ConstraintAnalysis
       curr, wasm, getPassOptions(), value, DropMode::IgnoreParentEffects);
   }
 
-  // Given a predecessor and one of its successors, find the constraints that
-  // flow to that specific successor, given the constraints at the end of the
-  // predecessor.
-  const BasicBlockConstraintMap
-  getConstraintsFromPredToSucc(BasicBlock* pred,
-                               BasicBlock* succ,
-                               const BasicBlockConstraintMap& predEnd) {
+  // Given a predecessor and one of its successors, find new constraints that
+  // can be added due to the flow to that specific successor.
+  std::optional<LocalConstraint> getBranchConstraints(BasicBlock* pred,
+                                                      BasicBlock* succ) {
     auto* brancher = pred->contents.brancher;
     if (!brancher) {
-      // No branching instruction to reason about. Just return what is at the
-      // end of the pred, no matter where we go.
-      return predEnd;
+      return {};
     }
+    // We handle the case of two successors for now. When there are less, other
+    // opts can handle things. TODO: Switch is the case of more than 2.
+    if (pred->out.size() != 2) {
+      return {};
+    }
+    // We pass the next function the index of the successor among the others.
+    assert(succ == pred->out[0] || succ == pred->out[1]);
+    auto succIndex = succ == pred->out[1] ? 1 : 0;
 
     if (auto* iff = brancher->dynCast<If>()) {
-      return getConstraintsFromIf(pred, succ, predEnd, iff);
+      return getConstraintsFromIf(succIndex, iff);
     } else if (auto* br = brancher->dynCast<Break>()) {
-      return getConstraintsFromBreak(pred, succ, predEnd, br);
+      return getConstraintsFromBreak(succIndex, br);
     } else if (auto* br = brancher->dynCast<BrOn>()) {
-      return getConstraintsFromBrOn(pred, succ, predEnd, br);
+      return getConstraintsFromBrOn(succIndex, br);
     }
     // TODO: Switch
-    return predEnd;
+    return {};
   }
 
-  // Gets constraints from pred to succ, given a parsed LocalConstraint, which
-  // represents the condition of the branch: if that constraint is true, it is
-  // taken in the first path from pred, and otherwise the second.
-  const BasicBlockConstraintMap
-  getConstraintsFromParsed(BasicBlock* pred,
-                           BasicBlock* succ,
-                           const BasicBlockConstraintMap& predEnd,
+  // Gets branch constraints using a successor index and a parsed constraint.
+  std::optional<LocalConstraint>
+  getConstraintsFromParsed(Index succIndex,
                            std::optional<LocalConstraint> parsed) {
 
     if (!parsed) {
-      return predEnd;
+      return {};
     }
     auto& [local, constraint] = *parsed;
 
@@ -260,46 +263,31 @@ struct ConstraintAnalysis
     // sent on the ifTrue. The negation is added to the ifFalse, so negate if
     // that is the path here. To detect that, use the fact that the CFG always
     // puts the ifTrue first in the successors.
-    auto& predOut = pred->out;
-    if (predOut.size() != 2) {
-      // In unreachable code, there is no block right after the branch. Other
-      // passes can optimize away the branch entirely.
-      return predEnd;
-    }
-    if (succ == predOut[1]) {
+    if (succIndex == 1) {
       // This is the ifFalse.
       constraint = constraint.negate();
     } else {
-      // It must be the ifTrue.
-      assert(succ == predOut[0]);
+      assert(succIndex == 0);
     }
-    auto combined = predEnd;
-    combined.approximateAnd(local, constraint);
-    return combined;
+    return LocalConstraint{local, constraint};
   }
 
-  const BasicBlockConstraintMap
-  getConstraintsFromIf(BasicBlock* pred,
-                       BasicBlock* succ,
-                       const BasicBlockConstraintMap& predEnd,
-                       If* iff) {
+  std::optional<LocalConstraint> getConstraintsFromIf(Index succIndex,
+                                                      If* iff) {
     // Simply parse the condition and use that.
     return getConstraintsFromParsed(
-      pred, succ, predEnd, LocalConstraint::parseBoolean(iff->condition));
+      succIndex, LocalConstraint::parseBoolean(iff->condition));
   }
 
-  const BasicBlockConstraintMap
-  getConstraintsFromBreak(BasicBlock* pred,
-                          BasicBlock* succ,
-                          const BasicBlockConstraintMap& predEnd,
-                          Break* br) {
-    if (!br->condition) {
-      return predEnd;
-    }
+  std::optional<LocalConstraint> getConstraintsFromBreak(Index succIndex,
+                                                         Break* br) {
+    // We get here when there is more than one successor, so there must be a
+    // condition.
+    assert(br->condition);
 
     auto parsed = LocalConstraint::parseBoolean(br->condition);
     if (!parsed) {
-      return predEnd;
+      return {};
     }
 
     auto [local, constraint] = *parsed;
@@ -307,20 +295,17 @@ struct ConstraintAnalysis
     // after the if is the ifTrue path, but for br_if, the adjacent block is
     // the fallthrough, i.e., ifFalse.
     return getConstraintsFromParsed(
-      pred, succ, predEnd, LocalConstraint{local, constraint.negate()});
+      succIndex, LocalConstraint{local, constraint.negate()});
 
-    return predEnd;
+    return {};
   }
 
-  const BasicBlockConstraintMap
-  getConstraintsFromBrOn(BasicBlock* pred,
-                         BasicBlock* succ,
-                         const BasicBlockConstraintMap& predEnd,
-                         BrOn* brOn) {
+  std::optional<LocalConstraint> getConstraintsFromBrOn(Index succIndex,
+                                                        BrOn* brOn) {
     // We only handle br_on of a local.
     auto* get = brOn->ref->dynCast<LocalGet>();
     if (!get) {
-      return predEnd;
+      return {};
     }
 
     // The constraint on that local depends on the op.
@@ -340,11 +325,11 @@ struct ConstraintAnalysis
       }
       default:
         // TODO: Handle BrOnCast* etc using subtyping operations.
-        return predEnd;
+        return {};
     }
 
-    return getConstraintsFromParsed(
-      pred, succ, predEnd, LocalConstraint{get->index, constraint});
+    return getConstraintsFromParsed(succIndex,
+                                    LocalConstraint{get->index, constraint});
   }
 
   // Given an expression, apply it to the constraints. For example, a local.set
