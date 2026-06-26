@@ -138,6 +138,13 @@ public:
   std::string getName();
 };
 
+// Escapes a string into a valid WebAssembly identifier by converting invalid
+// characters to \xx hex sequences.
+Name escape(Name name);
+// Unescapes a WebAssembly identifier back into its original human-readable
+// string.
+std::string unescape(Name name);
+
 } // namespace wasm::Names
 
 #endif // wasm_ir_names_h

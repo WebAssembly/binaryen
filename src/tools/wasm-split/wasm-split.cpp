@@ -20,6 +20,7 @@
 #include <fstream>
 
 #include "ir/module-splitting.h"
+#include "ir/names.h"
 #include "support/file.h"
 #include "support/name.h"
 #include "support/path.h"
@@ -430,7 +431,7 @@ void multiSplitModule(const WasmSplitOptions& options) {
       }
       continue;
     }
-    Name name = WasmBinaryReader::escape(line);
+    Name name = Names::escape(line);
     if (newSection) {
       if (name.endsWith(":")) {
         name = name.substr(0, name.size() - 1);
@@ -561,22 +562,6 @@ void mergeProfiles(const WasmSplitOptions& options) {
   buffer.writeTo(out.getStream());
 }
 
-std::string unescape(std::string input) {
-  std::string output;
-  for (size_t i = 0; i < input.length(); i++) {
-    if ((input[i] == '\\') && (i + 2 < input.length()) &&
-        isxdigit(input[i + 1]) && isxdigit(input[i + 2])) {
-      std::string byte = input.substr(i + 1, 2);
-      i += 2;
-      char chr = (char)(int)strtol(byte.c_str(), nullptr, 16);
-      output.push_back(chr);
-    } else {
-      output.push_back(input[i]);
-    }
-  }
-  return output;
-}
-
 void checkExists(const std::string& path) {
   std::ifstream infile(path);
   if (!infile.is_open()) {
@@ -602,8 +587,7 @@ void printReadableProfile(const WasmSplitOptions& options) {
   auto printFnSet = [&](auto funcs, std::string prefix) {
     for (auto it = funcs.begin(); it != funcs.end(); ++it) {
       std::cout << prefix << " "
-                << (options.unescape ? unescape(it->toString())
-                                     : it->toString())
+                << (options.unescape ? Names::unescape(*it) : it->toString())
                 << std::endl;
     }
   };
