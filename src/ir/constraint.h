@@ -206,12 +206,24 @@ struct LocalConstraint {
 // As a result, the map only contains interesting things, where we can prove
 // something (but not everything).
 struct BasicBlockConstraintMap {
-  bool unreachable = false;
+  // Blocks begin unreachable, like AndedConstraintSet.
+  bool unreachable = true;
+
+  void setReachable() {
+    unreachable = false;
+    assert(map.empty());
+  }
 
   // Apply a constraint to a local.
-  void set(Index index, const Constraint& c) { map[index].set(c); }
+  void set(Index index, const Constraint& c) {
+    assert(!unreachable);
+    map[index].set(c);
+  }
 
-  void setProvesNothing(Index index) { map.erase(index); }
+  void setProvesNothing(Index index) {
+    assert(!unreachable);
+    map.erase(index);
+  }
 
   // Get the constraints for a local.
   AndedConstraintSet get(Index index) const {

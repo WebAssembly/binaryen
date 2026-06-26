@@ -117,14 +117,9 @@ struct ConstraintAnalysis
   // Flow infos around until we have inferred all we can about the constraints
   // in each location.
   void flow() {
-    // Everything starts unreachable until we reach it in the flow.
-    for (auto& block : basicBlocks) {
-      block->contents.startConstraints.unreachable = true;
-    }
-
     // Start from the entry as the only reachable block. That block has incoming
     // values - defaults - for each var.
-    entry->contents.startConstraints.unreachable = false;
+    entry->contents.startConstraints.setReachable();
     auto& entryConstraints = entry->contents.startConstraints;
     auto* func = getFunction();
     for (Index i = func->getVarIndexBase(); i < func->getNumLocals(); i++) {
