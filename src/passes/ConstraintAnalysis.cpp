@@ -130,6 +130,11 @@ struct ConstraintAnalysis
         auto value = Literal::makeZero(type);
         entryConstraints.set(i, Constraint{Abstract::Eq, {value}});
       }
+      // Note that we need no special handling for non-nullable locals. They
+      // cannot be used before being set, so it doesn't matter what we have in
+      // the map for them. We leave them as proving nothing (as if they were
+      // parameters in effect) as that is more efficient in the way the
+      // information is encoded (see constraint.h).
     }
 
     // Starting from the entry, keep going while we find something new.
