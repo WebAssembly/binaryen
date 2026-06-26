@@ -239,11 +239,11 @@ struct ConstraintAnalysis
     auto succIndex = succ == pred->out[1] ? 1 : 0;
 
     if (auto* iff = brancher->dynCast<If>()) {
-      return getConstraintsFromIf(succIndex, iff);
+      return getConstraintsFromIf(iff, succIndex);
     } else if (auto* br = brancher->dynCast<Break>()) {
-      return getConstraintsFromBreak(succIndex, br);
+      return getConstraintsFromBreak(br, succIndex);
     } else if (auto* br = brancher->dynCast<BrOn>()) {
-      return getConstraintsFromBrOn(succIndex, br);
+      return getConstraintsFromBrOn(br, succIndex);
     }
     // TODO: Switch
     return {};
@@ -251,8 +251,8 @@ struct ConstraintAnalysis
 
   // Gets branch constraints using a successor index and a parsed constraint.
   std::optional<LocalConstraint>
-  getConstraintsFromParsed(Index succIndex,
-                           std::optional<LocalConstraint> parsed) {
+  getConstraintsFromParsed(
+                           std::optional<LocalConstraint> parsed, Index succIndex) {
 
     if (!parsed) {
       return {};
@@ -271,15 +271,15 @@ struct ConstraintAnalysis
     return LocalConstraint{local, constraint};
   }
 
-  std::optional<LocalConstraint> getConstraintsFromIf(Index succIndex,
-                                                      If* iff) {
+  std::optional<LocalConstraint> getConstraintsFromIf(
+                                                      If* iff, Index succIndex) {
     // Simply parse the condition and use that.
     return getConstraintsFromParsed(
-      succIndex, LocalConstraint::parseBoolean(iff->condition));
+      LocalConstraint::parseBoolean(iff->condition), succIndex);
   }
 
-  std::optional<LocalConstraint> getConstraintsFromBreak(Index succIndex,
-                                                         Break* br) {
+  std::optional<LocalConstraint> getConstraintsFromBreak(
+                                                         Break* br, Index succIndex) {
     // We get here when there is more than one successor, so there must be a
     // condition.
     assert(br->condition);
@@ -294,13 +294,13 @@ struct ConstraintAnalysis
     // after the if is the ifTrue path, but for br_if, the adjacent block is
     // the fallthrough, i.e., ifFalse.
     return getConstraintsFromParsed(
-      succIndex, LocalConstraint{local, constraint.negate()});
+      LocalConstraint{local, constraint.negate()}, succIndex);
 
     return {};
   }
 
-  std::optional<LocalConstraint> getConstraintsFromBrOn(Index succIndex,
-                                                        BrOn* brOn) {
+  std::optional<LocalConstraint> getConstraintsFromBrOn(
+                                                        BrOn* brOn, Index succIndex) {
     // We only handle br_on of a local.
     auto* get = brOn->ref->dynCast<LocalGet>();
     if (!get) {
@@ -327,8 +327,8 @@ struct ConstraintAnalysis
         return {};
     }
 
-    return getConstraintsFromParsed(succIndex,
-                                    LocalConstraint{get->index, constraint});
+    return getConstraintsFromParsed(
+                                    LocalConstraint{get->index, constraint}, succIndex);
   }
 
   // Given an expression, apply it to the constraints. For example, a local.set
