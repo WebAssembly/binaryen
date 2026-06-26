@@ -4,5 +4,4 @@
 ;; CHECK:      second
 ;; CHECK-NEXT: foo bar
 
-(module
-)
+(module)
