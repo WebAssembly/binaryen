@@ -260,16 +260,10 @@ void BasicBlockConstraintMap::approximateOr(
     return;
   }
 
+  // We only need to loop on our locals, as any local that is missing in us is
+  // one that would end up proving nothing (and get removed).
   for (auto& [local, constraints] : map) {
-    auto iter = other.map.find(local);
-    if (iter == other.map.end()) {
-      // When an entry is missing in one of the two, it means we can prove
-      // nothing there, which means we can prove nothing in the result.
-      constraints.setProvesNothing();
-    } else {
-      // This local appears in both. OR it.
-      constraints.approximateOr(iter->second);
-    }
+    constraints.approximateOr(other.get(local));
   }
 
   // Anything that became trivial after the OR must be removed.
