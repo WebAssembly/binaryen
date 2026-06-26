@@ -263,11 +263,10 @@ struct ConstraintAnalysis
     // sent on the ifTrue. The negation is added to the ifFalse, so negate if
     // that is the path here. To detect that, use the fact that the CFG always
     // puts the ifTrue first in the successors.
+    assert(succIndex < 2);
     if (succIndex == 1) {
       // This is the ifFalse.
       constraint = constraint.negate();
-    } else {
-      assert(succIndex == 0);
     }
     return LocalConstraint{local, constraint};
   }
