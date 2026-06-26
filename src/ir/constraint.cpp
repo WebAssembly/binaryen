@@ -286,11 +286,9 @@ void BasicBlockConstraintMap::approximateAnd(Index index, const Constraint& c) {
     return;
   }
 
-  if (combined.provesNothing()) {
-    // When we prove nothing, we leave the entry empty.
-    map.erase(index);
-    return;
-  }
+  // We just added a constraint, so we can prove something (we may lose some
+  // information as this is an approximate AND, but we cannot lose it all).
+  assert(!combined.provesNothing());
 
   // Otherwise, this is an interesting state; set it.
   map[index] = std::move(combined);
