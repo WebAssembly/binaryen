@@ -857,7 +857,7 @@ Input source maps can be specified by adding an -ism option right after the modu
         for (auto& func : currModule->functions) {
           if (!func->imported()) {
             funcs.push_back(func->name);
-            // Even if  function name is empty, if we were to put it in the
+            // Even if the function name is empty, if we were to put it in the
             // output manifest, it has to be emitted in the name section.
             merged.getFunction(func->name)->hasExplicitName = true;
           }
