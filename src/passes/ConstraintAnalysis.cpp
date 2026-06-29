@@ -234,25 +234,29 @@ struct ConstraintAnalysis
     if (pred->out.size() != 2) {
       return {};
     }
-    // We pass the next function the index of the successor among the others.
+
+    // CFGWalker builds the IR by putting the physical successor as the first
+    // successor (that is, the first is the one we reach without branching).
+    // We pass that along to the specific branch type handlers, so they can
+    // figure out if we are in the true or false path.
     assert(succ == pred->out[0] || succ == pred->out[1]);
-    auto succIndex = succ == pred->out[1] ? 1 : 0;
+    auto physicalSuccessor = succ == pred->out[0] ? 1 : 0;
 
     if (auto* iff = brancher->dynCast<If>()) {
-      return getConstraintsFromIf(iff, succIndex);
+      return getConstraintsFromIf(iff, physicalSuccessor);
     } else if (auto* br = brancher->dynCast<Break>()) {
-      return getConstraintsFromBreak(br, succIndex);
+      return getConstraintsFromBreak(br, physicalSuccessor);
     } else if (auto* br = brancher->dynCast<BrOn>()) {
-      return getConstraintsFromBrOn(br, succIndex);
+      return getConstraintsFromBrOn(br, physicalSuccessor);
     }
     // TODO: Switch
     return {};
   }
 
   std::optional<LocalConstraint> getConstraintsFromIf(If* iff,
-                                                      Index succIndex) {
+                                                      bool physicalSuccessor) {
     auto parsed = LocalConstraint::parseCondition(iff->condition);
-    if (parsed && succIndex == 1) {
+    if (parsed && !physicalSuccessor) {
       // We are in the ifFalse, so negate the condition.
       parsed->constraint = parsed->constraint.negate();
     }
@@ -260,22 +264,21 @@ struct ConstraintAnalysis
   }
 
   std::optional<LocalConstraint> getConstraintsFromBreak(Break* br,
-                                                         Index succIndex) {
+                                                         bool physicalSuccessor) {
     // We get here when there is more than one successor, so there must be a
     // condition.
     assert(br->condition);
 
     auto parsed = LocalConstraint::parseCondition(br->condition);
-    if (parsed && succIndex == 0) {
-      // We are in the physical successor block, i.e. the branch was not taken,
-      // so negate the condition.
+    if (parsed && physicalSuccessor) {
+      // The branch was not taken, so negate the condition.
       parsed->constraint = parsed->constraint.negate();
     }
     return parsed;
   }
 
   std::optional<LocalConstraint> getConstraintsFromBrOn(BrOn* brOn,
-                                                        Index succIndex) {
+                                                        bool physicalSuccessor) {
     // The constraint on that local depends on the op.
     // TODO: Handle BrOnCast* etc using subtyping operations.
     if (brOn->op != BrOnNull && brOn->op != BrOnNonNull) {
@@ -287,7 +290,7 @@ struct ConstraintAnalysis
     // can reuse it.
     auto parsed = LocalConstraint::parseCondition(brOn->ref);
     // Negate depending on the op and (similar to Break) the successor.
-    if (parsed && ((brOn->op == BrOnNull) ^ (succIndex == 0))) {
+    if (parsed && ((brOn->op == BrOnNull) ^ physicalSuccessor)) {
       parsed->constraint = parsed->constraint.negate();
     }
     return parsed;
