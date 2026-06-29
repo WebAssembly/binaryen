@@ -17,7 +17,6 @@
 #ifndef wasm_ir_table_h
 #define wasm_ir_table_h
 
-#include "ir/element-utils.h"
 #include "ir/literal-utils.h"
 #include "ir/module-utils.h"
 #include "support/stdckdint.h"
@@ -51,8 +50,19 @@ struct FlatTable {
         if (end > names.size()) {
           names.resize(end);
         }
-        ElementUtils::iterElementSegmentFunctionNames(
-          segment, [&](Name entry, Index i) { names[start + i] = entry; });
+        for (Index i = 0; i < segment->data.size(); i++) {
+          auto* item = segment->data[i];
+          if (auto* refFunc = item->dynCast<RefFunc>()) {
+            names[start + i] = refFunc->func;
+          } else if (item->is<RefNull>()) {
+            names[start + i] = Name();
+          } else {
+            // Anything else, we can't represent.
+            // TODO: mark only this index as unoptimizable?
+            valid = false;
+            return;
+          }
+        }
       });
   }
 };
