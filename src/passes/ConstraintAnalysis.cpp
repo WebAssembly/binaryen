@@ -240,7 +240,7 @@ struct ConstraintAnalysis
     // We pass that along to the specific branch type handlers, so they can
     // figure out if we are in the true or false path.
     assert(succ == pred->out[0] || succ == pred->out[1]);
-    auto physicalSuccessor = succ == pred->out[0] ? 1 : 0;
+    auto physicalSuccessor = (succ == pred->out[0]);
 
     if (auto* iff = brancher->dynCast<If>()) {
       return getConstraintsFromIf(iff, physicalSuccessor);
