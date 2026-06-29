@@ -249,28 +249,12 @@ struct ConstraintAnalysis
     return {};
   }
 
-  // Gets branch constraints using a successor index and a parsed constraint.
-  std::optional<LocalConstraint>
-  getConstraintsFromParsed(LocalConstraint parsed, Index succIndex) {
-    auto& [local, constraint] = parsed;
-
-    // The boolean condition's constraint is added to the other contents, and
-    // sent on the ifTrue. The negation is added to the ifFalse, so negate if
-    // that is the path here. To detect that, use the fact that the CFG always
-    // puts the ifTrue first in the successors.
-    assert(succIndex < 2);
-    if (succIndex == 1) {
-      // This is the ifFalse.
-      constraint = constraint.negate();
-    }
-    return LocalConstraint{local, constraint};
-  }
-
   std::optional<LocalConstraint> getConstraintsFromIf(If* iff,
                                                       Index succIndex) {
     auto parsed = LocalConstraint::parseBoolean(iff->condition);
     if (parsed && succIndex == 1) {
-      parsed = parsed->negate();
+      // We are in the ifFalse, so negate the condition.
+      parsed->constraint = parsed->constraint.negate();
     }
     return parsed;
   }
@@ -282,18 +266,12 @@ struct ConstraintAnalysis
     assert(br->condition);
 
     auto parsed = LocalConstraint::parseBoolean(br->condition);
-    if (!parsed) {
-      return {};
+    if (parsed && succIndex == 0) {
+      // We are in the physical successor block, i.e. the branch was not taken,
+      // so negate the condition.
+      parsed->constraint = parsed->constraint.negate();
     }
-
-    auto [local, constraint] = *parsed;
-    // Unlike If, we must flip the constraint. The adjacent block right
-    // after the if is the ifTrue path, but for br_if, the adjacent block is
-    // the fallthrough, i.e., ifFalse.
-    return getConstraintsFromParsed(LocalConstraint{local, constraint.negate()},
-                                    succIndex);
-
-    return {};
+    return parsed;
   }
 
   std::optional<LocalConstraint> getConstraintsFromBrOn(BrOn* brOn,
@@ -305,27 +283,19 @@ struct ConstraintAnalysis
     }
 
     // The constraint on that local depends on the op.
-    Constraint constraint;
-    switch (brOn->op) {
-      case BrOnNull:
-      case BrOnNonNull: {
-        // The first block that pred branches to is ifFalse (the immediate
-        // successor, which is adjacent to the current block, and simply falls
-        // through), so BrOnNull needs "!= null" here, which is true when we
-        // reach that first block.
-        auto op = brOn->op == BrOnNull ? Abstract::Ne : Abstract::Eq;
-        auto nullType = get->type.getHeapType().getBottom();
-        auto zero = Literal::makeZero(Type(nullType, Nullable));
-        constraint = Constraint{op, {zero}};
-        break;
-      }
-      default:
-        // TODO: Handle BrOnCast* etc using subtyping operations.
-        return {};
+    // TODO: Handle BrOnCast* etc using subtyping operations.
+    if (brOn->op != BrOnNull && brOn->op != BrOnNonNull) {
+      return {};
     }
 
-    return getConstraintsFromParsed(LocalConstraint{get->index, constraint},
-                                    succIndex);
+    auto op = brOn->op == BrOnNull ? Abstract::Eq : Abstract::Ne;
+    auto nullType = get->type.getHeapType().getBottom();
+    auto zero = Literal::makeZero(Type(nullType, Nullable));
+    Constraint constraint{op, {zero}};
+    if (succIndex == 0) {
+      constraint = constraint.negate();
+    }
+    return LocalConstraint{get->index, constraint};
   }
 
   // Given an expression, apply it to the constraints. For example, a local.set
