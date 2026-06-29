@@ -268,11 +268,11 @@ struct ConstraintAnalysis
 
   std::optional<LocalConstraint> getConstraintsFromIf(If* iff,
                                                       Index succIndex) {
-    // Simply parse the condition and use that.
-    if (auto parsed = LocalConstraint::parseBoolean(iff->condition)) {
-      return getConstraintsFromParsed(*parsed, succIndex);
+    auto parsed = LocalConstraint::parseBoolean(iff->condition);
+    if (parsed && succIndex == 1) {
+      parsed = parsed->negate();
     }
-    return {};
+    return parsed;
   }
 
   std::optional<LocalConstraint> getConstraintsFromBreak(Break* br,
