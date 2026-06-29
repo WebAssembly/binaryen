@@ -1130,6 +1130,34 @@ function test_parsing() {
   module2.dispose();
 }
 
+function test_parsing_with_features() {
+  var text;
+
+  // create a module and write it to text
+  module = new binaryen.Module();
+  module.setFeatures(binaryen.Features.All);
+
+  var builder = new binaryen.TypeBuilder(1);
+  builder.setStructType(0, [
+    { type: binaryen.i32, packedType: binaryen.notPacked, mutable: false },
+  ]);
+  var foo = builder.buildAndDispose()[0];
+  var structGetExpr = module.struct.get(0, module.local.get(0, foo), foo, false);
+  var getI = module.addFunction("getI", [foo], binaryen.i32, [], structGetExpr);
+  var intConstExpr = module.i32.const(0);
+  var twin = module.addFunction("twin", [binaryen.anyref], binaryen.i32, [], intConstExpr);
+  text = module.emitText();
+  module.dispose();
+  module = null;
+  console.log('test_parsing_with_features text:\n' + text);
+
+  var module2 = binaryen.parseTextWithFeatures(text, binaryen.Features.All);
+  assert(module2.validate());
+  console.log("module loaded from text form with features:");
+  console.log(module2.emitText());
+  module2.dispose();
+}
+
 function test_internals() {
   console.log('sizeof Literal: ' + binaryen['_BinaryenSizeofLiteral']());
 }
@@ -1294,6 +1322,7 @@ test_binaries_with_features();
 test_interpret();
 test_nonvalid();
 test_parsing();
+test_parsing_with_features();
 test_internals();
 test_for_each();
 test_expression_info();

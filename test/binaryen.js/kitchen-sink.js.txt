@@ -2838,6 +2838,36 @@ module loaded from text form:
  )
 )
 
+test_parsing_with_features text:
+(module
+ (type $0 (struct (field i32)))
+ (type $1 (func (param (ref $0)) (result i32)))
+ (type $2 (func (param anyref) (result i32)))
+ (func $getI (type $1) (param $0 (ref $0)) (result i32)
+  (struct.get $0 0
+   (local.get $0)
+  )
+ )
+ (func $twin (type $2) (param $0 anyref) (result i32)
+  (i32.const 0)
+ )
+)
+
+module loaded from text form with features:
+(module
+ (type $0 (struct (field i32)))
+ (type $1 (func (param (ref $0)) (result i32)))
+ (type $2 (func (param anyref) (result i32)))
+ (func $getI (type $1) (param $0 (ref $0)) (result i32)
+  (struct.get $0 0
+   (local.get $0)
+  )
+ )
+ (func $twin (type $2) (param $0 anyref) (result i32)
+  (i32.const 0)
+ )
+)
+
 sizeof Literal: 24
 (module
  (type $0 (func))

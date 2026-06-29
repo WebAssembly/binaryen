@@ -3391,6 +3391,15 @@ Module['parseText'] = function(text) {
   return wrapModule(ptr);
 };
 
+// Parses text format to a module with the given feature set enabled
+Module['parseTextWithFeatures'] = function(text, features) {
+  const buffer = _malloc(text.length + 1);
+  stringToAscii(text, buffer);
+  const ptr = handleFatalError(() => Module['_BinaryenModuleParseWithFeatures'](buffer, features));
+  _free(buffer);
+  return wrapModule(ptr);
+};
+
 // Gets the currently set optimize level. 0, 1, 2 correspond to -O0, -O1, -O2, etc.
 Module['getOptimizeLevel'] = function() {
   return Module['_BinaryenGetOptimizeLevel']();
