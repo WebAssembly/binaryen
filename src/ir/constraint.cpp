@@ -238,7 +238,7 @@ std::optional<LocalConstraint> LocalConstraint::parse(Expression* curr) {
   return {};
 }
 
-std::optional<LocalConstraint> LocalConstraint::parseBoolean(Expression* curr) {
+std::optional<LocalConstraint> LocalConstraint::parseCondition(Expression* curr) {
   // A get by itself is a check for not being null.
   if (auto* get = curr->dynCast<LocalGet>()) {
     auto value = Literal::makeZero(get->type);

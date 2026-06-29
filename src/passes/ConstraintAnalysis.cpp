@@ -251,7 +251,7 @@ struct ConstraintAnalysis
 
   std::optional<LocalConstraint> getConstraintsFromIf(If* iff,
                                                       Index succIndex) {
-    auto parsed = LocalConstraint::parseBoolean(iff->condition);
+    auto parsed = LocalConstraint::parseCondition(iff->condition);
     if (parsed && succIndex == 1) {
       // We are in the ifFalse, so negate the condition.
       parsed->constraint = parsed->constraint.negate();
@@ -265,7 +265,7 @@ struct ConstraintAnalysis
     // condition.
     assert(br->condition);
 
-    auto parsed = LocalConstraint::parseBoolean(br->condition);
+    auto parsed = LocalConstraint::parseCondition(br->condition);
     if (parsed && succIndex == 0) {
       // We are in the physical successor block, i.e. the branch was not taken,
       // so negate the condition.
@@ -276,26 +276,21 @@ struct ConstraintAnalysis
 
   std::optional<LocalConstraint> getConstraintsFromBrOn(BrOn* brOn,
                                                         Index succIndex) {
-    // We only handle br_on of a local.
-    auto* get = brOn->ref->dynCast<LocalGet>();
-    if (!get) {
-      return {};
-    }
-
     // The constraint on that local depends on the op.
     // TODO: Handle BrOnCast* etc using subtyping operations.
     if (brOn->op != BrOnNull && brOn->op != BrOnNonNull) {
       return {};
     }
 
-    auto op = brOn->op == BrOnNull ? Abstract::Eq : Abstract::Ne;
-    auto nullType = get->type.getHeapType().getBottom();
-    auto zero = Literal::makeZero(Type(nullType, Nullable));
-    Constraint constraint{op, {zero}};
-    if (succIndex == 0) {
-      constraint = constraint.negate();
+    // parseCondition can parse more things than a local.get, which is all we
+    // handle here, but there is no other valid IR that can appear there, so we
+    // can reuse it.
+    auto parsed = LocalConstraint::parseCondition(brOn->ref);
+    // Negate depending on the op and (similar to Break) the successor.
+    if (parsed && ((brOn->op == BrOnNull) ^ (succIndex == 0))) {
+      parsed->constraint = parsed->constraint.negate();
     }
-    return LocalConstraint{get->index, constraint};
+    return parsed;
   }
 
   // Given an expression, apply it to the constraints. For example, a local.set
