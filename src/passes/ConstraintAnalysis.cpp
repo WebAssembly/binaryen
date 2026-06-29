@@ -251,8 +251,7 @@ struct ConstraintAnalysis
 
   // Gets branch constraints using a successor index and a parsed constraint.
   std::optional<LocalConstraint>
-  getConstraintsFromParsed(LocalConstraint parsed,
-                           Index succIndex) {
+  getConstraintsFromParsed(LocalConstraint parsed, Index succIndex) {
     auto& [local, constraint] = parsed;
 
     // The boolean condition's constraint is added to the other contents, and
