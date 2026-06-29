@@ -251,13 +251,9 @@ struct ConstraintAnalysis
 
   // Gets branch constraints using a successor index and a parsed constraint.
   std::optional<LocalConstraint>
-  getConstraintsFromParsed(std::optional<LocalConstraint> parsed,
+  getConstraintsFromParsed(LocalConstraint parsed,
                            Index succIndex) {
-
-    if (!parsed) {
-      return {};
-    }
-    auto& [local, constraint] = *parsed;
+    auto& [local, constraint] = parsed;
 
     // The boolean condition's constraint is added to the other contents, and
     // sent on the ifTrue. The negation is added to the ifFalse, so negate if
@@ -274,8 +270,10 @@ struct ConstraintAnalysis
   std::optional<LocalConstraint> getConstraintsFromIf(If* iff,
                                                       Index succIndex) {
     // Simply parse the condition and use that.
-    return getConstraintsFromParsed(
-      LocalConstraint::parseBoolean(iff->condition), succIndex);
+    if (auto parsed = LocalConstraint::parseBoolean(iff->condition)) {
+      return getConstraintsFromParsed(*parsed, succIndex);
+    }
+    return {};
   }
 
   std::optional<LocalConstraint> getConstraintsFromBreak(Break* br,
