@@ -263,8 +263,8 @@ struct ConstraintAnalysis
     return parsed;
   }
 
-  std::optional<LocalConstraint> getConstraintsFromBreak(Break* br,
-                                                         bool physicalSuccessor) {
+  std::optional<LocalConstraint>
+  getConstraintsFromBreak(Break* br, bool physicalSuccessor) {
     // We get here when there is more than one successor, so there must be a
     // condition.
     assert(br->condition);
@@ -277,8 +277,8 @@ struct ConstraintAnalysis
     return parsed;
   }
 
-  std::optional<LocalConstraint> getConstraintsFromBrOn(BrOn* brOn,
-                                                        bool physicalSuccessor) {
+  std::optional<LocalConstraint>
+  getConstraintsFromBrOn(BrOn* brOn, bool physicalSuccessor) {
     // The constraint on that local depends on the op.
     // TODO: Handle BrOnCast* etc using subtyping operations.
     if (brOn->op != BrOnNull && brOn->op != BrOnNonNull) {
