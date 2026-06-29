@@ -57,7 +57,10 @@ struct FlatTable {
           } else if (item->is<RefNull>()) {
             names[start + i] = Name();
           } else {
-            WASM_UNREACHABLE("invalid elem segment func content");
+            // Anything else, we can't represent.
+            // TODO: mark only this index as unoptimizable?
+            valid = false;
+            return;
           }
         }
       });
