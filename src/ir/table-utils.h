@@ -29,10 +29,10 @@ struct FlatTable {
   std::vector<Name> names;
   bool valid;
 
-  FlatTable(Module& wasm, Table& table) {
+  FlatTable(const Module& wasm, const Table& table) {
     valid = true;
     ModuleUtils::iterTableSegments(
-      wasm, table.name, [&](ElementSegment* segment) {
+      wasm, table.name, [&](const ElementSegment* segment) {
         auto offset = segment->offset;
         if (!offset->is<Const>() || !segment->type.isFunction()) {
           // TODO: handle some non-constant segments
