@@ -256,16 +256,8 @@ void BasicBlockConstraintMap::set(Index index, const Constraint& c) {
   map[index].set(c);
 
   // If the constraint refers to another local, add it there too.
-  if (auto* otherIndex = std::get_if<Index>(&c.term)) {
-    // Build a flipped constraint, referring to index.
-    Constraint otherC{c.op, index};
-    if (Abstract::isRelationalAntiSymmetric(otherC.op)) {
-      otherC.op = Abstract::negateRelational(otherC.op);
-    } else {
-      // All we support for now are symmetric and antisymmetric operations.
-      assert(Abstract::isRelationalSymmetric(c.op));
-    }
-    map[*otherIndex].approximateAnd(otherC);
+  if (std::holds_alternative<Index>(c.term)) {
+    approximateAndInternal(c, true);
   }
 }
 
@@ -301,9 +293,23 @@ void BasicBlockConstraintMap::approximateOr(
   });
 }
 
-void BasicBlockConstraintMap::approximateAnd(Index index, const Constraint& c) {
+void BasicBlockConstraintMap::approximateAndInternal(Index index, const Constraint& c, bool flip) {
+  Constraint actual = c;
+  if (flip) {
+    // Build a flipped constraint, referring to index.
+    auto otherIndex = std::get<Index>(&actual.term);
+    actual.term = index;
+    index = otherIndex;
+    if (Abstract::isRelationalAntisymmetric(actual.op)) {
+      actual.op = Abstract::negateRelational(actual.op);
+    } else {
+      // All we support for now are symmetric and antisymmetric operations.
+      assert(Abstract::isRelationalSymmetric(actual.op));
+    }
+  }
+
   auto combined = get(index);
-  combined.approximateAnd(c);
+  combined.approximateAnd(actual);
 
   if (combined.provesEverything()) {
     // We just proved we are in unreachable code.
@@ -318,6 +324,12 @@ void BasicBlockConstraintMap::approximateAnd(Index index, const Constraint& c) {
 
   // Otherwise, this is an interesting state; set it.
   map[index] = std::move(combined);
+
+  // If this is not the flipped version, and it refers to a local, add the
+  // flipped one too.
+  if (!flip && std::holds_alternative<Index>(actual.term)) {
+    approximateAndInternal(actual, true);
+  }
 }
 
 void BasicBlockConstraintMap::eraseStaleRefs(Index index) {

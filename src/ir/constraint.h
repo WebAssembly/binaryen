@@ -238,7 +238,9 @@ struct BasicBlockConstraintMap {
   void approximateOr(const BasicBlockConstraintMap& other);
 
   // Perform an AND as above, on a particular index.
-  void approximateAnd(Index index, const Constraint& c);
+  void approximateAnd(Index index, const Constraint& c) {
+    approximateAndInternal(index, c);
+  }
 
   bool operator!=(const BasicBlockConstraintMap& other) {
     return unreachable != other.unreachable || map != other.map;
@@ -257,6 +259,12 @@ private:
 
   // Given an index, erase constraints referring to it.
   void eraseStaleRefs(Index index);
+
+  // Internal version, with a flag to flip the constraint. Whenever we apply
+  // e.g. x == y, we also apply y == x to y, to maintain the invariant described
+  // above. When flip is true, we flip the constraint and apply it to the other
+  // index (y == x) in this example.
+  void approximateAndInternal(Index index, const Constraint& c, bool flip = false);
 };
 
 std::ostream& operator<<(std::ostream& o, const Constraint& c);
