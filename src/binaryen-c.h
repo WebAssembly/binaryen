@@ -3131,8 +3131,12 @@ BINARYEN_API void BinaryenModuleSetFeatures(BinaryenModuleRef module,
 // ========== Module Operations ==========
 //
 
-// Parse a module in s-expression text format
+// Parse a module in s-expression text format, assuming the MVP feature set.
 BINARYEN_API BinaryenModuleRef BinaryenModuleParse(const char* text);
+
+// Parse a module in s-expression text format, enabling the given feature set.
+BINARYEN_API BinaryenModuleRef
+BinaryenModuleParseWithFeatures(const char* text, BinaryenFeatures features);
 
 // Print a module to stdout in s-expression text format. Useful for debugging.
 BINARYEN_API void BinaryenModulePrint(BinaryenModuleRef module);

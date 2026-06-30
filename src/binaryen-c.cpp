@@ -5841,7 +5841,13 @@ void BinaryenModuleSetFeatures(BinaryenModuleRef module,
 //
 
 BinaryenModuleRef BinaryenModuleParse(const char* text) {
+  return BinaryenModuleParseWithFeatures(text, BinaryenFeatureMVP());
+}
+
+BinaryenModuleRef BinaryenModuleParseWithFeatures(const char* text,
+                                                  BinaryenFeatures features) {
   auto* wasm = new Module;
+  wasm->features.features = features;
   auto parsed = WATParser::parseModule(*wasm, text);
   if (auto* err = parsed.getErr()) {
     Fatal() << err->msg << "\n";

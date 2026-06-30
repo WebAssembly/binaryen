@@ -2838,6 +2838,17 @@ module loaded from text form:
  )
 )
 
+module loaded from text form with features:
+(module
+ (global $g anyref (ref.null none))
+)
+
+[wasm-validator error in module] unexpected false: all used types should be allowed, on 
+g
+[wasm-validator error in module] unexpected false: , on 
+g
+global type requires additional features [--enable-reference-types --enable-gc]
+validation with MVP features: 0
 sizeof Literal: 24
 (module
  (type $0 (func))
