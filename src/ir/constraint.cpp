@@ -238,44 +238,107 @@ std::optional<LocalConstraint> LocalConstraint::parse(Expression* curr) {
   return {};
 }
 
-void LocalConstraintMap::approximateOr(const LocalConstraintMap& other) {
-  // Remove things only in us.
-  std::erase_if(*this, [&](const auto& item) {
-    const auto& [local, constraints] = item;
-    return !other.contains(local);
-  });
-
-  for (auto& [local, constraints] : other) {
-    (*this)[local].approximateOr(constraints);
+std::optional<LocalConstraint>
+LocalConstraint::parseCondition(Expression* curr) {
+  // A get by itself is a check for not being null.
+  if (auto* get = curr->dynCast<LocalGet>()) {
+    auto value = Literal::makeZero(get->type);
+    return LocalConstraint{get->index, Constraint{Abstract::Ne, {value}}};
   }
+
+  // Otherwise, parse normally.
+  return parse(curr);
+};
+
+void BasicBlockConstraintMap::approximateOr(
+  const BasicBlockConstraintMap& other) {
+  // If one is unreachable, it adds nothing to the other.
+  if (other.unreachable) {
+    return;
+  }
+  if (unreachable) {
+    *this = other;
+    return;
+  }
+
+  // We only need to loop on our locals, as any local that is missing in us is
+  // one that would end up proving nothing (and get removed).
+  for (auto& [local, constraints] : map) {
+    constraints.approximateOr(other.get(local));
+  }
+
+  // Anything that became trivial after the OR must be removed.
+  std::erase_if(map, [&](const auto& item) {
+    const auto& [local, constraints] = item;
+    // We do not store contradictions.
+    assert(!constraints.provesEverything());
+    return constraints.provesNothing();
+  });
 }
 
-std::ostream& operator<<(std::ostream& o, const Constraint& constraint) {
-  o << "Constraint{" << /*constraint.op <<*/ ", ";
-  if (auto* c = std::get_if<Literal>(&constraint.term)) {
-    o << *c;
-  } else if (auto* i = std::get_if<Index>(&constraint.term)) {
+void BasicBlockConstraintMap::approximateAnd(Index index, const Constraint& c) {
+  auto combined = get(index);
+  combined.approximateAnd(c);
+
+  if (combined.provesEverything()) {
+    // We just proved we are in unreachable code.
+    unreachable = true;
+    map.clear();
+    return;
+  }
+
+  // We just added a constraint, so we can prove something (we may lose some
+  // information as this is an approximate AND, but we cannot lose it all).
+  assert(!combined.provesNothing());
+
+  // Otherwise, this is an interesting state; set it.
+  map[index] = std::move(combined);
+}
+
+std::ostream& operator<<(std::ostream& o, const Constraint& c) {
+  o << "Constraint{" << int(c.op) << ", ";
+  if (auto* cc = std::get_if<Literal>(&c.term)) {
+    o << *cc;
+  } else if (auto* i = std::get_if<Index>(&c.term)) {
     o << "Index(" << *i << ')';
   }
   o << '}';
   return o;
 }
 
-std::ostream& operator<<(std::ostream& o,
-                         const AndedConstraintSet& constraints) {
-  if (constraints.provesEverything()) {
+std::ostream& operator<<(std::ostream& o, const AndedConstraintSet& set) {
+  if (set.provesEverything()) {
     o << "AndedConstraintSet(contradiction)";
     return o;
   }
   o << "AndedConstraintSet{";
   bool first = true;
-  for (auto& constraint : constraints) {
+  for (auto& constraint : set) {
     if (first) {
       first = false;
     } else {
       o << ", ";
     }
     o << constraint;
+  }
+  o << '}';
+  return o;
+}
+
+std::ostream& operator<<(std::ostream& o, const BasicBlockConstraintMap& map) {
+  if (map.unreachable) {
+    o << "BasicBlockConstraintMap(unreachable)";
+    return o;
+  }
+  o << "BasicBlockConstraintMap{";
+  bool first = true;
+  for (auto& [local, constraints] : map.map) {
+    if (first) {
+      first = false;
+    } else {
+      o << ", ";
+    }
+    o << local << ": " << constraints;
   }
   o << '}';
   return o;

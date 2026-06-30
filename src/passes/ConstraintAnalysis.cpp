@@ -28,6 +28,7 @@
 #include "ir/literal-utils.h"
 #include "ir/local-graph.h"
 #include "ir/properties.h"
+#include "ir/utils.h"
 #include "pass.h"
 #include "support/unique_deferring_queue.h"
 #include "support/utilities.h"
@@ -40,14 +41,19 @@ using namespace wasm::constraint;
 
 namespace {
 
-// In each basic block we will store the relevant operations, which are all
-// local gets and sets, branches, and uses of them.
+// Information in a basic block.
 struct Info {
+  // All relevant operations: local gets and sets and uses of them.
   std::vector<Expression**> actions;
+
+  // The branching instruction at the end of the block (or nullptr if there is
+  // something like a return or an unreachable, which are terminators that don't
+  // interest us in this pass - we just look at ifs and brs).
+  Expression* brancher = nullptr;
 
   // For each local index, we track the constraints we know about it. We only do
   // so at the start of each block, which is enough for the analysis below.
-  LocalConstraintMap startConstraints;
+  BasicBlockConstraintMap startConstraints;
 };
 
 struct ConstraintAnalysis
@@ -61,6 +67,9 @@ struct ConstraintAnalysis
   std::unique_ptr<Pass> create() override {
     return std::make_unique<ConstraintAnalysis>();
   }
+
+  using Super = WalkerPass<
+    CFGWalker<ConstraintAnalysis, Visitor<ConstraintAnalysis>, Info>>;
 
   // Branches outside of the function can be ignored, as we only look at local
   // state in the function.
@@ -79,6 +88,22 @@ struct ConstraintAnalysis
   void visitRefEq(RefEq* curr) { addAction(); }
   void visitRefIsNull(RefIsNull* curr) { addAction(); }
 
+  static void doStartIfTrue(ConstraintAnalysis* self, Expression** currp) {
+    // We are right after the condition, so we are in the block before the If's
+    // branching. Mark the If as the brancher (unless in unreachable code).
+    if (self->currBasicBlock) {
+      self->currBasicBlock->contents.brancher = *currp;
+    }
+    Super::doStartIfTrue(self, currp);
+  }
+
+  static void doEndBranch(ConstraintAnalysis* self, Expression** currp) {
+    if (self->currBasicBlock) {
+      self->currBasicBlock->contents.brancher = *currp;
+    }
+    Super::doEndBranch(self, currp);
+  }
+
   void visitFunction(Function* curr) {
     if (!entry) {
       // Body is unreachable, no entry block.
@@ -92,26 +117,24 @@ struct ConstraintAnalysis
   // Flow infos around until we have inferred all we can about the constraints
   // in each location.
   void flow() {
-    // Start from the entry. That block has incoming values - defaults - for
-    // each var.
+    // Start from the entry as the only reachable block. That block has incoming
+    // values - defaults - for each var.
+    entry->contents.startConstraints.setReachable();
     auto& entryConstraints = entry->contents.startConstraints;
     auto* func = getFunction();
-    auto numLocals = func->getNumLocals();
-    for (Index i = 0; i < numLocals; i++) {
+    for (Index i = func->getVarIndexBase(); i < func->getNumLocals(); i++) {
       auto type = func->getLocalType(i);
       // TODO: support tuples
-      if (func->isParam(i) || type.size() != 1) {
-        // We can't do anything in this case.
-        entryConstraints[i].setProvesNothing();
-      } else if (LiteralUtils::canMakeZero(type)) {
-        // We have a default value.
+      if (type.size() == 1 && LiteralUtils::canMakeZero(type)) {
+        // We have a default value, so we can prove something.
         auto value = Literal::makeZero(type);
-        entryConstraints[i].set(Constraint{Abstract::Eq, {value}});
-      } else {
-        // Otherwise, this is non-nullable, and it is unreachable until set.
-        assert(type.isNonNullable());
-        entryConstraints[i].setProvesEverything();
+        entryConstraints.set(i, Constraint{Abstract::Eq, {value}});
       }
+      // Note that we need no special handling for non-nullable locals. They
+      // cannot be used before being set, so it doesn't matter what we have in
+      // the map for them. We leave them as proving nothing (as if they were
+      // parameters in effect) as that is more efficient in the way the
+      // information is encoded (see constraint.h).
     }
 
     // Starting from the entry, keep going while we find something new.
@@ -121,7 +144,7 @@ struct ConstraintAnalysis
       auto* block = work.pop();
 
       // Start at the top of the block, then go through, applying things.
-      LocalConstraintMap constraints = block->contents.startConstraints;
+      BasicBlockConstraintMap constraints = block->contents.startConstraints;
       for (auto** currp : block->contents.actions) {
         applyToConstraints(*currp, constraints);
       }
@@ -130,8 +153,17 @@ struct ConstraintAnalysis
       // where it causes changes, queue more work.
       for (auto* out : block->out) {
         auto& outStartConstraints = out->contents.startConstraints;
+
+        // Find the constraints sent to this specific successor, if there is a
+        // branch, and use them.
+        auto sentConstraints = constraints;
+        if (auto branch = getBranchConstraints(block, out)) {
+          sentConstraints.approximateAnd(branch->local, branch->constraint);
+        }
+
+        // If anything changed at the start of the target block, flow onwards.
         auto old = outStartConstraints;
-        outStartConstraints.approximateOr(constraints);
+        outStartConstraints.approximateOr(sentConstraints);
         if (outStartConstraints != old) {
           work.push(out);
         }
@@ -141,6 +173,9 @@ struct ConstraintAnalysis
 
   // After inferring all we can, apply it to optimize the code.
   void optimize() {
+    // If we make things unreachable, we must refinalize.
+    bool refinalize = false;
+
     for (auto& block : basicBlocks) {
       // Follow the general shape of flow(): we need to see what the state is
       // at each intermediate point inside the block. (Flowing between blocks is
@@ -148,25 +183,29 @@ struct ConstraintAnalysis
       auto& constraints = block->contents.startConstraints;
       for (auto** currp : block->contents.actions) {
         applyToConstraints(*currp, constraints);
+        if (constraints.unreachable) {
+          *currp = Builder(*getModule()).makeUnreachable();
+          refinalize = true;
+        }
         optimizeExpression(currp, constraints);
       }
+    }
+
+    if (refinalize) {
+      ReFinalize().walkFunctionInModule(getFunction(), getModule());
     }
   }
 
   // Given an expression and the constraints on it, optimize it.
   void optimizeExpression(Expression** currp,
-                          const LocalConstraintMap& constraints) {
+                          const BasicBlockConstraintMap& constraints) {
     auto* curr = *currp;
     auto parsed = LocalConstraint::parse(curr);
     if (!parsed) {
       return;
     }
 
-    auto iter = constraints.find(parsed->local);
-    if (iter == constraints.end()) {
-      return;
-    }
-    auto& localConstraints = iter->second;
+    auto localConstraints = constraints.get(parsed->local);
     Result result = localConstraints.proves(parsed->constraint);
     if (result == Unknown) {
       // If we parsed something using two locals, like x != y, we can also look
@@ -182,18 +221,93 @@ struct ConstraintAnalysis
       curr, wasm, getPassOptions(), value, DropMode::IgnoreParentEffects);
   }
 
+  // Given a predecessor and one of its successors, find new constraints that
+  // can be added due to the flow to that specific successor.
+  std::optional<LocalConstraint> getBranchConstraints(BasicBlock* pred,
+                                                      BasicBlock* succ) {
+    auto* brancher = pred->contents.brancher;
+    if (!brancher) {
+      return {};
+    }
+    // We handle the case of two successors for now. When there are less, other
+    // opts can handle things. TODO: Switch is the case of more than 2.
+    if (pred->out.size() != 2) {
+      return {};
+    }
+
+    // CFGWalker builds the IR by putting the physical successor as the first
+    // successor (that is, the first is the one we reach without branching).
+    // We pass that along to the specific branch type handlers, so they can
+    // figure out if we are in the true or false path.
+    assert(succ == pred->out[0] || succ == pred->out[1]);
+    auto physicalSuccessor = (succ == pred->out[0]);
+
+    if (auto* iff = brancher->dynCast<If>()) {
+      return getConstraintsFromIf(iff, physicalSuccessor);
+    } else if (auto* br = brancher->dynCast<Break>()) {
+      return getConstraintsFromBreak(br, physicalSuccessor);
+    } else if (auto* br = brancher->dynCast<BrOn>()) {
+      return getConstraintsFromBrOn(br, physicalSuccessor);
+    }
+    // TODO: Switch
+    return {};
+  }
+
+  std::optional<LocalConstraint> getConstraintsFromIf(If* iff,
+                                                      bool physicalSuccessor) {
+    auto parsed = LocalConstraint::parseCondition(iff->condition);
+    if (parsed && !physicalSuccessor) {
+      // We are in the ifFalse, so negate the condition.
+      parsed->constraint = parsed->constraint.negate();
+    }
+    return parsed;
+  }
+
+  std::optional<LocalConstraint>
+  getConstraintsFromBreak(Break* br, bool physicalSuccessor) {
+    // We get here when there is more than one successor, so there must be a
+    // condition.
+    assert(br->condition);
+
+    auto parsed = LocalConstraint::parseCondition(br->condition);
+    if (parsed && physicalSuccessor) {
+      // The branch was not taken, so negate the condition.
+      parsed->constraint = parsed->constraint.negate();
+    }
+    return parsed;
+  }
+
+  std::optional<LocalConstraint>
+  getConstraintsFromBrOn(BrOn* brOn, bool physicalSuccessor) {
+    // The constraint on that local depends on the op.
+    // TODO: Handle BrOnCast* etc using subtyping operations.
+    if (brOn->op != BrOnNull && brOn->op != BrOnNonNull) {
+      return {};
+    }
+
+    // parseCondition can parse more things than a local.get, which is all we
+    // handle here, but there is no other valid IR that can appear there, so we
+    // can reuse it.
+    auto parsed = LocalConstraint::parseCondition(brOn->ref);
+    // Negate depending on the op and (similar to Break) the successor.
+    if (parsed && ((brOn->op == BrOnNull) ^ physicalSuccessor)) {
+      parsed->constraint = parsed->constraint.negate();
+    }
+    return parsed;
+  }
+
   // Given an expression, apply it to the constraints. For example, a local.set
   // sets the value for that local.
-  void applyToConstraints(Expression* curr, LocalConstraintMap& constraints) {
+  void applyToConstraints(Expression* curr,
+                          BasicBlockConstraintMap& constraints) {
     if (auto* set = curr->dynCast<LocalSet>()) {
-      auto& localConstraints = constraints[set->index];
       if (Properties::isSingleConstantExpression(set->value)) {
         // We know this one constraint.
         auto value = Properties::getLiteral(set->value);
-        localConstraints.set(Constraint{Abstract::Eq, {value}});
+        constraints.set(set->index, Constraint{Abstract::Eq, {value}});
       } else {
         // We know and can prove nothing.
-        localConstraints.setProvesNothing();
+        constraints.setProvesNothing(set->index);
       }
     }
   }
