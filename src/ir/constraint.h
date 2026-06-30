@@ -227,7 +227,10 @@ struct BasicBlockConstraintMap {
   // Get the constraints for a local.
   AndedConstraintSet get(Index index) const {
     if (auto iter = map.find(index); iter != map.end()) {
-      return iter->second;
+      auto& constraints = iter->second;
+      // If we can prove nothing, we should have removed it from the map.
+      assert(!constraints.provesNothing());
+      return constraints;
     }
     return AndedConstraintSet::makeProvesNothing();
   }
