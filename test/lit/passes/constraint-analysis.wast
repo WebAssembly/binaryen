@@ -1669,25 +1669,22 @@
   ;; CHECK-NEXT:       (i32.const 1)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (i32.eq
-  ;; CHECK-NEXT:        (local.get $y)
-  ;; CHECK-NEXT:        (local.get $x)
-  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (i32.const 1)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (drop
   ;; CHECK-NEXT:       (i32.const 1)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (i32.eq
-  ;; CHECK-NEXT:        (local.get $z)
-  ;; CHECK-NEXT:        (local.get $x)
-  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (i32.const 1)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (local.set $y
   ;; CHECK-NEXT:       (local.get $w)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (i32.const 1)
+  ;; CHECK-NEXT:       (i32.eq
+  ;; CHECK-NEXT:        (local.get $x)
+  ;; CHECK-NEXT:        (local.get $y)
+  ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (drop
   ;; CHECK-NEXT:       (i32.eq
@@ -1699,10 +1696,13 @@
   ;; CHECK-NEXT:       (i32.const 1)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (i32.eq
-  ;; CHECK-NEXT:        (local.get $z)
-  ;; CHECK-NEXT:        (local.get $x)
-  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (i32.const 1)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (i32.const 1)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (i32.const 1)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
@@ -1736,6 +1736,18 @@
   ;; OPTIN-NEXT:      )
   ;; OPTIN-NEXT:      (local.set $y
   ;; OPTIN-NEXT:       (local.get $w)
+  ;; OPTIN-NEXT:      )
+  ;; OPTIN-NEXT:      (drop
+  ;; OPTIN-NEXT:       (i32.eq
+  ;; OPTIN-NEXT:        (local.get $x)
+  ;; OPTIN-NEXT:        (local.get $y)
+  ;; OPTIN-NEXT:       )
+  ;; OPTIN-NEXT:      )
+  ;; OPTIN-NEXT:      (drop
+  ;; OPTIN-NEXT:       (i32.eq
+  ;; OPTIN-NEXT:        (local.get $x)
+  ;; OPTIN-NEXT:        (local.get $y)
+  ;; OPTIN-NEXT:       )
   ;; OPTIN-NEXT:      )
   ;; OPTIN-NEXT:      (drop
   ;; OPTIN-NEXT:       (i32.const 1)
@@ -1794,7 +1806,8 @@
             )
             ;; TODO: y == z
 
-            ;; Modify y. x is still equal to z.
+            ;; Modify y to the value of w. x is still equal to z, but no longer
+            ;; to y.
             (local.set $y
               (local.get $w)
             )
@@ -1820,6 +1833,19 @@
               (i32.eq
                 (local.get $z)
                 (local.get $x)
+              )
+            )
+            ;; But y == w.
+            (drop
+              (i32.eq
+                (local.get $y)
+                (local.get $w)
+              )
+            )
+            (drop
+              (i32.eq
+                (local.get $w)
+                (local.get $y)
               )
             )
           )
