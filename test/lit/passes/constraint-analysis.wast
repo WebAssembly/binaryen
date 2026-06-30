@@ -1008,7 +1008,7 @@
     )
   )
 
-  ;; CHECK:      (func $conditional-binary-nesting (type $3) (param $x i32) (param $y i32)
+  ;; CHECK:      (func $conditional-binary-nesting (type $4) (param $x i32) (param $y i32)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.eq
   ;; CHECK-NEXT:    (local.get $x)
@@ -1038,7 +1038,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; OPTIN:      (func $conditional-binary-nesting (type $3) (param $x i32) (param $y i32)
+  ;; OPTIN:      (func $conditional-binary-nesting (type $4) (param $x i32) (param $y i32)
   ;; OPTIN-NEXT:  (if
   ;; OPTIN-NEXT:   (i32.eq
   ;; OPTIN-NEXT:    (local.get $x)
@@ -1652,7 +1652,7 @@
     )
   )
 
-  ;; CHECK:      (func $local-changes (type $4) (param $x i32) (param $y i32) (param $z i32)
+  ;; CHECK:      (func $local-changes (type $3) (param $x i32) (param $y i32) (param $z i32)
   ;; CHECK-NEXT:  (local.set $x
   ;; CHECK-NEXT:   (local.get $y)
   ;; CHECK-NEXT:  )
@@ -1696,7 +1696,7 @@
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; OPTIN:      (func $local-changes (type $4) (param $x i32) (param $y i32) (param $z i32)
+  ;; OPTIN:      (func $local-changes (type $3) (param $x i32) (param $y i32) (param $z i32)
   ;; OPTIN-NEXT:  (local.set $x
   ;; OPTIN-NEXT:   (local.get $y)
   ;; OPTIN-NEXT:  )
@@ -1774,6 +1774,167 @@
     (local.set $x
       (local.get $z)
     )
+    (drop
+      (i32.eq
+        (local.get $x)
+        (local.get $y)
+      )
+    )
+    (drop
+      (i32.eq
+        (local.get $y)
+        (local.get $x)
+      )
+    )
+    (drop
+      (i32.eq
+        (local.get $x)
+        (local.get $z)
+      )
+    )
+    (drop
+      (i32.eq
+        (local.get $z)
+        (local.get $x)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $local-changes-2 (type $3) (param $x i32) (param $y i32) (param $z i32)
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (local.get $y)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.eq
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (local.get $z)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.eq
+  ;; CHECK-NEXT:    (local.get $z)
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $y
+  ;; CHECK-NEXT:   (local.get $z)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.eq
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.eq
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.eq
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (local.get $z)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.eq
+  ;; CHECK-NEXT:    (local.get $z)
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPTIN:      (func $local-changes-2 (type $3) (param $x i32) (param $y i32) (param $z i32)
+  ;; OPTIN-NEXT:  (local.set $x
+  ;; OPTIN-NEXT:   (local.get $y)
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (drop
+  ;; OPTIN-NEXT:   (i32.const 1)
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (drop
+  ;; OPTIN-NEXT:   (i32.const 1)
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (drop
+  ;; OPTIN-NEXT:   (i32.eq
+  ;; OPTIN-NEXT:    (local.get $x)
+  ;; OPTIN-NEXT:    (local.get $z)
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (drop
+  ;; OPTIN-NEXT:   (i32.eq
+  ;; OPTIN-NEXT:    (local.get $x)
+  ;; OPTIN-NEXT:    (local.get $z)
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (local.set $y
+  ;; OPTIN-NEXT:   (local.get $z)
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (drop
+  ;; OPTIN-NEXT:   (i32.eq
+  ;; OPTIN-NEXT:    (local.get $x)
+  ;; OPTIN-NEXT:    (local.get $y)
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (drop
+  ;; OPTIN-NEXT:   (i32.eq
+  ;; OPTIN-NEXT:    (local.get $x)
+  ;; OPTIN-NEXT:    (local.get $y)
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (drop
+  ;; OPTIN-NEXT:   (i32.eq
+  ;; OPTIN-NEXT:    (local.get $x)
+  ;; OPTIN-NEXT:    (local.get $z)
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (drop
+  ;; OPTIN-NEXT:   (i32.eq
+  ;; OPTIN-NEXT:    (local.get $x)
+  ;; OPTIN-NEXT:    (local.get $z)
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT: )
+  (func $local-changes-2 (param $x i32) (param $y i32) (param $z i32)
+    ;; As above, but the set in the middle is on y, not x.
+    (local.set $x
+      (local.get $y)
+    )
+    ;; x == y but not z, as above.
+    (drop
+      (i32.eq
+        (local.get $x)
+        (local.get $y)
+      )
+    )
+    (drop
+      (i32.eq
+        (local.get $y)
+        (local.get $x)
+      )
+    )
+    (drop
+      (i32.eq
+        (local.get $x)
+        (local.get $z)
+      )
+    )
+    (drop
+      (i32.eq
+        (local.get $z)
+        (local.get $x)
+      )
+    )
+
+    (local.set $y    ;; this changed
+      (local.get $z)
+    )
+    ;; We can prove nothing here.
     (drop
       (i32.eq
         (local.get $x)
