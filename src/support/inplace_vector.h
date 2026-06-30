@@ -137,7 +137,6 @@ public:
     Iterator(inplace_vector<T, N>* parent, size_t index)
       : wasm::ParentIndexIterator<inplace_vector<T, N>*, Iterator>{parent,
                                                                    index} {}
-    Iterator(const Iterator& other) = default;
 
     T& operator*() { return (*this->parent)[this->index]; }
     T* operator->() { return &(*this->parent)[this->index]; }
