@@ -24,8 +24,11 @@
 #ifndef wasm_support_inplace_vector_h
 #define wasm_support_inplace_vector_h
 
+#include <algorithm>
 #include <array>
 #include <cassert>
+#include <iterator>
+#include <type_traits>
 #include <vector>
 
 #include "support/parent_index_iterator.h"
@@ -137,6 +140,7 @@ public:
     Iterator(const Iterator& other) = default;
 
     T& operator*() { return (*this->parent)[this->index]; }
+    T* operator->() { return &(*this->parent)[this->index]; }
   };
 
   struct ConstIterator
@@ -151,6 +155,7 @@ public:
     ConstIterator(const ConstIterator& other) = default;
 
     const T& operator*() const { return (*this->parent)[this->index]; }
+    const T* operator->() const { return &(*this->parent)[this->index]; }
   };
 
   Iterator begin() { return Iterator(this, 0); }
@@ -158,13 +163,62 @@ public:
   ConstIterator begin() const { return ConstIterator(this, 0); }
   ConstIterator end() const { return ConstIterator(this, size()); }
 
-  void erase(Iterator a, Iterator b) {
-    // Atm we only support erasing at the end, which is very efficient.
-    assert(b == end());
-    resize(a.index);
+  Iterator erase(ConstIterator first, ConstIterator last) {
+    assert(first.index <= last.index);
+    assert(last.index <= usedFixed);
+    size_t numToErase = last.index - first.index;
+    if (numToErase > 0) {
+      std::move(fixed.begin() + last.index,
+                fixed.begin() + usedFixed,
+                fixed.begin() + first.index);
+      usedFixed -= numToErase;
+    }
+    return Iterator(this, first.index);
   }
+
+  Iterator erase(Iterator first, Iterator last) {
+    return erase(ConstIterator(this, first.index),
+                 ConstIterator(this, last.index));
+  }
+
+  Iterator erase(ConstIterator pos) { return erase(pos, pos + 1); }
+
+  Iterator erase(Iterator pos) { return erase(pos, pos + 1); }
 };
 
+namespace detail {
+
+template<typename T> struct is_inplace_vector_or_derived {
+private:
+  template<typename U, size_t N>
+  static std::true_type test(const inplace_vector<U, N>*);
+  static std::false_type test(...);
+
+public:
+  static constexpr bool value = decltype(test(std::declval<T*>()))::value;
+};
+
+} // namespace detail
+
+template<typename Vector, typename Pred>
+  requires detail::is_inplace_vector_or_derived<Vector>::value
+size_t erase_if(Vector& c, Pred pred) {
+  auto it = std::remove_if(c.begin(), c.end(), pred);
+  auto r = std::distance(it, c.end());
+  c.erase(it, c.end());
+  return r;
+}
+
 } // namespace wasm
+
+namespace std {
+
+template<typename Vector, typename Pred>
+  requires wasm::detail::is_inplace_vector_or_derived<Vector>::value
+size_t erase_if(Vector& c, Pred pred) {
+  return wasm::erase_if(c, pred);
+}
+
+} // namespace std
 
 #endif // wasm_support_inplace_vector_h

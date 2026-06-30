@@ -205,6 +205,10 @@ struct LocalConstraint {
 //
 // As a result, the map only contains interesting things, where we can prove
 // something (but not everything).
+//
+// Cross-local constraints (like x == y) are duplicated, that is, they appear in
+// the constraints for both x and y. This makes things simple by having all
+// constraints related to a local in the same place.
 struct BasicBlockConstraintMap {
   // Blocks begin unreachable, like AndedConstraintSet.
   bool unreachable = true;
@@ -215,15 +219,10 @@ struct BasicBlockConstraintMap {
   }
 
   // Apply a constraint to a local.
-  void set(Index index, const Constraint& c) {
-    assert(!unreachable);
-    map[index].set(c);
-  }
+  void set(Index index, const Constraint& c);
 
-  void setProvesNothing(Index index) {
-    assert(!unreachable);
-    map.erase(index);
-  }
+  // Mark a local as unknown and able to prove nothing.
+  void setProvesNothing(Index index);
 
   // Get the constraints for a local.
   AndedConstraintSet get(Index index) const {
@@ -250,6 +249,14 @@ struct BasicBlockConstraintMap {
 
 private:
   std::unordered_map<Index, AndedConstraintSet> map;
+
+  // Maps an index to the locals that have constraints referring to it. When a
+  // local is modified, we need to wipe all those constraints, which become
+  // stale.
+  std::unordered_map<Index, std::unordered_set<Index>> refs;
+
+  // Given an index, erase constraints referring to it.
+  void eraseStaleRefs(Index index);
 };
 
 std::ostream& operator<<(std::ostream& o, const Constraint& c);

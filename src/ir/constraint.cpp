@@ -250,6 +250,31 @@ LocalConstraint::parseCondition(Expression* curr) {
   return parse(curr);
 };
 
+void BasicBlockConstraintMap::set(Index index, const Constraint& c) {
+  assert(!unreachable);
+  eraseStaleRefs(index);
+  map[index].set(c);
+
+  // If the constraint refers to another local, add it there too.
+  if (auto* otherIndex = std::get_if<Index>(&c.term)) {
+    // Build a flipped constraint, referring to index.
+    Constraint otherC{c.op, index};
+    if (Abstract::isRelationalAntiSymmetric(otherC.op)) {
+      otherC.op = Abstract::negateRelational(otherC.op);
+    } else {
+      // All we support for now are symmetric and antisymmetric operations.
+      assert(Abstract::isRelationalSymmetric(c.op));
+    }
+    map[*otherIndex].approximateAnd(otherC);
+  }
+}
+
+void BasicBlockConstraintMap::setProvesNothing(Index index) {
+  assert(!unreachable);
+  eraseStaleRefs(index);
+  map.erase(index);
+}
+
 void BasicBlockConstraintMap::approximateOr(
   const BasicBlockConstraintMap& other) {
   // If one is unreachable, it adds nothing to the other.
@@ -293,6 +318,33 @@ void BasicBlockConstraintMap::approximateAnd(Index index, const Constraint& c) {
 
   // Otherwise, this is an interesting state; set it.
   map[index] = std::move(combined);
+}
+
+void BasicBlockConstraintMap::eraseStaleRefs(Index index) {
+  auto iter = refs.find(index);
+  if (iter == refs.end()) {
+    return;
+  }
+
+  auto& refIndexes = iter->second;
+
+  for (auto refIndex : refIndexes) {
+    if (auto iter = map.find(refIndex); iter != map.end()) {
+      auto& refConstraints = iter->second;
+      std::erase_if(refConstraints, [&](const auto& c) {
+        if (auto* i = std::get_if<Index>(&c.term)) {
+          if (*i == index) {
+            return true;
+          }
+        }
+        return false;
+      });
+      if (refConstraints.empty()) {
+        // This became trivial.
+        map.erase(iter);
+      }
+    }
+  }
 }
 
 std::ostream& operator<<(std::ostream& o, const Constraint& c) {

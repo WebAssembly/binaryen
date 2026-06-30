@@ -331,6 +331,24 @@ inline Op negateRelational(Op op) {
   }
 }
 
+inline bool isRelationalSymmetric(Op op) { return op == Eq || op == Ne; }
+
+inline bool isRelationalAntisymmetric(Op op) {
+  switch (op) {
+    case LtS:
+    case LtU:
+    case LeS:
+    case LeU:
+    case GtS:
+    case GtU:
+    case GeS:
+    case GeU:
+      return true;
+    default:
+      return false;
+  }
+}
+
 } // namespace wasm::Abstract
 
 #endif // wasm_ir_abstract_h
