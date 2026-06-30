@@ -64,6 +64,11 @@ Result provesPair(const Constraint& a, const Constraint& b) {
     return True;
   }
 
+  // A thing always implies its negation is false.
+  if (a == b.negate()) {
+    return False;
+  }
+
   // Comparisons of two constants.
   auto* aConstant = std::get_if<Literal>(&a.term);
   auto* bConstant = std::get_if<Literal>(&b.term);

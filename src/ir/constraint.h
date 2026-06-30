@@ -45,7 +45,7 @@ struct Constraint {
 
   bool operator==(const Constraint&) const = default;
 
-  Constraint negate() {
+  Constraint negate() const {
     return Constraint{Abstract::negateRelational(op), term};
   }
 };

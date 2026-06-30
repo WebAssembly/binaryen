@@ -2236,7 +2236,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (then
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (i32.const 1)
@@ -2245,51 +2245,36 @@
   ;; CHECK-NEXT:     (i32.ne
   ;; CHECK-NEXT:      (local.get $x)
   ;; CHECK-NEXT:      (local.get $z)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.ne
-  ;; CHECK-NEXT:      (local.get $z)
-  ;; CHECK-NEXT:      (local.get $x)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.set $x
   ;; CHECK-NEXT:     (local.get $z)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.ne
+  ;; CHECK-NEXT:     (i32.eq
   ;; CHECK-NEXT:      (local.get $x)
   ;; CHECK-NEXT:      (local.get $y)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (i32.ne
+  ;; CHECK-NEXT:      (local.get $x)
   ;; CHECK-NEXT:      (local.get $y)
-  ;; CHECK-NEXT:      (local.get $x)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.ne
-  ;; CHECK-NEXT:      (local.get $x)
-  ;; CHECK-NEXT:      (local.get $z)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.ne
-  ;; CHECK-NEXT:      (local.get $z)
-  ;; CHECK-NEXT:      (local.get $x)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.ne
+  ;; CHECK-NEXT:     (i32.eq
   ;; CHECK-NEXT:      (local.get $y)
   ;; CHECK-NEXT:      (local.get $z)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (i32.ne
-  ;; CHECK-NEXT:      (local.get $z)
   ;; CHECK-NEXT:      (local.get $y)
+  ;; CHECK-NEXT:      (local.get $z)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
@@ -2303,16 +2288,10 @@
   ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:   (then
   ;; OPTIN-NEXT:    (drop
-  ;; OPTIN-NEXT:     (i32.const 1)
+  ;; OPTIN-NEXT:     (i32.const 0)
   ;; OPTIN-NEXT:    )
   ;; OPTIN-NEXT:    (drop
   ;; OPTIN-NEXT:     (i32.const 1)
-  ;; OPTIN-NEXT:    )
-  ;; OPTIN-NEXT:    (drop
-  ;; OPTIN-NEXT:     (i32.ne
-  ;; OPTIN-NEXT:      (local.get $x)
-  ;; OPTIN-NEXT:      (local.get $z)
-  ;; OPTIN-NEXT:     )
   ;; OPTIN-NEXT:    )
   ;; OPTIN-NEXT:    (drop
   ;; OPTIN-NEXT:     (i32.ne
@@ -2324,7 +2303,7 @@
   ;; OPTIN-NEXT:     (local.get $z)
   ;; OPTIN-NEXT:    )
   ;; OPTIN-NEXT:    (drop
-  ;; OPTIN-NEXT:     (i32.ne
+  ;; OPTIN-NEXT:     (i32.eq
   ;; OPTIN-NEXT:      (local.get $x)
   ;; OPTIN-NEXT:      (local.get $y)
   ;; OPTIN-NEXT:     )
@@ -2336,19 +2315,10 @@
   ;; OPTIN-NEXT:     )
   ;; OPTIN-NEXT:    )
   ;; OPTIN-NEXT:    (drop
-  ;; OPTIN-NEXT:     (i32.ne
-  ;; OPTIN-NEXT:      (local.get $x)
-  ;; OPTIN-NEXT:      (local.get $z)
-  ;; OPTIN-NEXT:     )
+  ;; OPTIN-NEXT:     (i32.const 0)
   ;; OPTIN-NEXT:    )
   ;; OPTIN-NEXT:    (drop
-  ;; OPTIN-NEXT:     (i32.ne
-  ;; OPTIN-NEXT:      (local.get $x)
-  ;; OPTIN-NEXT:      (local.get $z)
-  ;; OPTIN-NEXT:     )
-  ;; OPTIN-NEXT:    )
-  ;; OPTIN-NEXT:    (drop
-  ;; OPTIN-NEXT:     (i32.ne
+  ;; OPTIN-NEXT:     (i32.eq
   ;; OPTIN-NEXT:      (local.get $y)
   ;; OPTIN-NEXT:      (local.get $z)
   ;; OPTIN-NEXT:     )
@@ -2372,6 +2342,12 @@
       (then
         ;; x == y is false, and we know nothing about z.
         (drop
+          (i32.eq
+            (local.get $x)
+            (local.get $y)
+          )
+        )
+        (drop
           (i32.ne
             (local.get $x)
             (local.get $y)
@@ -2379,20 +2355,8 @@
         )
         (drop
           (i32.ne
-            (local.get $y)
-            (local.get $x)
-          )
-        )
-        (drop
-          (i32.ne
             (local.get $x)
             (local.get $z)
-          )
-        )
-        (drop
-          (i32.ne
-            (local.get $z)
-            (local.get $x)
           )
         )
 
@@ -2402,6 +2366,12 @@
           (local.get $z)
         )
         (drop
+          (i32.eq
+            (local.get $x)
+            (local.get $y)
+          )
+        )
+        (drop
           (i32.ne
             (local.get $x)
             (local.get $y)
@@ -2409,34 +2379,22 @@
         )
         (drop
           (i32.ne
-            (local.get $y)
-            (local.get $x)
-          )
-        )
-        (drop
-          (i32.ne
             (local.get $x)
             (local.get $z)
-          )
-        )
-        (drop
-          (i32.ne
-            (local.get $z)
-            (local.get $x)
           )
         )
 
         ;; No idea about y vs z.
         (drop
-          (i32.ne
+          (i32.eq
             (local.get $y)
             (local.get $z)
           )
         )
         (drop
           (i32.ne
-            (local.get $z)
             (local.get $y)
+            (local.get $z)
           )
         )
       )
