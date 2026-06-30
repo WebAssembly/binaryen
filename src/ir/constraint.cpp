@@ -311,11 +311,6 @@ void BasicBlockConstraintMap::approximateAndInternal(Index index,
     }
   }
 
-  // Add a ref of what we are adding. Note that the approximation below may end
-  // up not actually adding this, or adding only part of this, but it is safe to
-  // always add a ref (at the cost of minor wasted work).
-  noteRefs(index, actual);
-
   auto combined = get(index);
   combined.approximateAnd(actual);
 
@@ -332,6 +327,11 @@ void BasicBlockConstraintMap::approximateAndInternal(Index index,
 
   // Otherwise, this is an interesting state; set it.
   map[index] = std::move(combined);
+
+  // Add a ref of what we are adding. Note that the approximation above may end
+  // up not actually adding this, or adding only part of this, but it is safe to
+  // always add a ref (at the cost of minor wasted work).
+  noteRefs(index, actual);
 
   // If this is not the flipped version, and it refers to a local, add the
   // flipped one too.
