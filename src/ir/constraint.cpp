@@ -294,7 +294,9 @@ void BasicBlockConstraintMap::approximateOr(
   });
 }
 
-void BasicBlockConstraintMap::approximateAndInternal(Index index, const Constraint& c, bool flip) {
+void BasicBlockConstraintMap::approximateAndInternal(Index index,
+                                                     const Constraint& c,
+                                                     bool flip) {
   Constraint actual = c;
   if (flip) {
     // Build a flipped constraint, referring to index.
