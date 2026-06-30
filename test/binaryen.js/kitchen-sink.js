@@ -1131,8 +1131,6 @@ function test_parsing() {
 }
 
 function test_parsing_with_features() {
-  var text;
-
   // create a module and write it to text
   module = new binaryen.Module();
   module.setFeatures(binaryen.Features.All);
@@ -1146,7 +1144,7 @@ function test_parsing_with_features() {
   var getI = module.addFunction("getI", [foo], binaryen.i32, [], structGetExpr);
   var intConstExpr = module.i32.const(0);
   var twin = module.addFunction("twin", [binaryen.anyref], binaryen.i32, [], intConstExpr);
-  text = module.emitText();
+  var text = module.emitText();
   module.dispose();
   module = null;
   console.log('test_parsing_with_features text:\n' + text);
