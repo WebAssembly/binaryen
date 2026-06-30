@@ -18,6 +18,8 @@ Current Trunk
 - Add acqrel ordering support for atomic fences (#8845). Breaks the C API;
   `BinaryenAtomicFence` now takes a memory order param. Use
   `BinaryenMemoryOrderSeqCst()` to preserve the original behavior.
+- wasm-split's --manifest option now takes a manifest file with escaped function
+  names instead of unescaped ones, e.g., `foo\20bar` instead of `foo bar`.
 
 v130
 ----
