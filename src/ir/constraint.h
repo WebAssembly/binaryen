@@ -259,6 +259,11 @@ private:
   // Maps an index to the locals that have constraints referring to it. When a
   // local is modified, we need to wipe all those constraints, which become
   // stale.
+  //
+  // It is ok (but unoptimal in efficiency) if we have stale refs here, e.g. due
+  // to approximation removing a constraint. Whenever there is a reference,
+  // however, it must be noted here, so that when things get stale we can remove
+  // them.
   std::unordered_map<Index, std::unordered_set<Index>> refs;
 
   // Given a constraint on a local, note refs.
