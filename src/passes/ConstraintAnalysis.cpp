@@ -301,23 +301,16 @@ struct ConstraintAnalysis
   void applyToConstraints(Expression* curr,
                           BasicBlockConstraintMap& constraints) {
     if (auto* set = curr->dynCast<LocalSet>()) {
-std::cout << "apply " << *curr << "\n";
       if (Properties::isSingleConstantExpression(set->value)) {
         // Apply a constraint to this value.
         auto value = Properties::getLiteral(set->value);
-std::cout << constraints << "\n";
         constraints.set(set->index, Constraint{Abstract::Eq, {value}});
-std::cout << " ==>\n" << constraints << "\n";
       } else if (auto* get = set->value->dynCast<LocalGet>()) {
         // Apply a constraint to this local..
-std::cout << constraints << "\n";
         constraints.set(set->index, Constraint{Abstract::Eq, {get->index}});
-std::cout << " =1=>\n" << constraints << "\n";
       } else {
         // We know and can prove nothing.
-std::cout << constraints << "\n";
         constraints.setProvesNothing(set->index);
-std::cout << " =2=>\n" << constraints << "\n";
       }
     }
   }

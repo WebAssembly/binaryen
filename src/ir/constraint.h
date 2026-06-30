@@ -257,6 +257,9 @@ private:
   // stale.
   std::unordered_map<Index, std::unordered_set<Index>> refs;
 
+  // Given a constraint on a local, note refs.
+  void noteRefs(Index index, const Constraint& c);
+
   // Given an index, erase constraints referring to it.
   void eraseStaleRefs(Index index);
 

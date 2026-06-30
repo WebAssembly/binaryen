@@ -254,6 +254,7 @@ void BasicBlockConstraintMap::set(Index index, const Constraint& c) {
   assert(!unreachable);
   eraseStaleRefs(index);
   map[index].set(c);
+  noteRefs(index, c);
 
   // If the constraint refers to another local, add it there too.
   if (std::holds_alternative<Index>(c.term)) {
@@ -308,6 +309,11 @@ void BasicBlockConstraintMap::approximateAndInternal(Index index, const Constrai
     }
   }
 
+  // Add a ref of what we are adding. Note that the approximation below may end
+  // up not actually adding this, or adding only part of this, but it is safe to
+  // always add a ref (at the cost of minor wasted work).
+  noteRefs(index, actual);
+
   auto combined = get(index);
   combined.approximateAnd(actual);
 
@@ -329,6 +335,12 @@ void BasicBlockConstraintMap::approximateAndInternal(Index index, const Constrai
   // flipped one too.
   if (!flip && std::holds_alternative<Index>(actual.term)) {
     approximateAndInternal(index, actual, true);
+  }
+}
+
+void BasicBlockConstraintMap::noteRefs(Index index, const Constraint& c) {
+  if (auto* i = std::get_if<Index>(&c.term)) {
+    refs[*i].insert(index);
   }
 }
 
