@@ -1131,29 +1131,17 @@ function test_parsing() {
 }
 
 function test_parsing_with_features() {
-  // create a module and write it to text
-  module = new binaryen.Module();
-  module.setFeatures(binaryen.Features.All);
+  var text = `
+  (module
+    (global $g anyref (ref.null any))
+  )
+  `;
 
-  var builder = new binaryen.TypeBuilder(1);
-  builder.setStructType(0, [
-    { type: binaryen.i32, packedType: binaryen.notPacked, mutable: false },
-  ]);
-  var foo = builder.buildAndDispose()[0];
-  var structGetExpr = module.struct.get(0, module.local.get(0, foo), foo, false);
-  var getI = module.addFunction("getI", [foo], binaryen.i32, [], structGetExpr);
-  var intConstExpr = module.i32.const(0);
-  var twin = module.addFunction("twin", [binaryen.anyref], binaryen.i32, [], intConstExpr);
-  var text = module.emitText();
-  module.dispose();
-  module = null;
-  console.log('test_parsing_with_features text:\n' + text);
-
-  var module2 = binaryen.parseTextWithFeatures(text, binaryen.Features.All);
-  assert(module2.validate());
+  module = binaryen.parseTextWithFeatures(text, binaryen.Features.All);
+  assert(module.validate());
   console.log("module loaded from text form with features:");
-  console.log(module2.emitText());
-  module2.dispose();
+  console.log(module.emitText());
+  module.dispose();
 }
 
 function test_internals() {
