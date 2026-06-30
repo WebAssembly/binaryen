@@ -257,7 +257,7 @@ void BasicBlockConstraintMap::set(Index index, const Constraint& c) {
 
   // If the constraint refers to another local, add it there too.
   if (std::holds_alternative<Index>(c.term)) {
-    approximateAndInternal(c, true);
+    approximateAndInternal(index, c, true);
   }
 }
 
@@ -297,8 +297,8 @@ void BasicBlockConstraintMap::approximateAndInternal(Index index, const Constrai
   Constraint actual = c;
   if (flip) {
     // Build a flipped constraint, referring to index.
-    auto otherIndex = std::get<Index>(&actual.term);
-    actual.term = index;
+    auto otherIndex = std::get<Index>(actual.term);
+    actual.term = Term{index};
     index = otherIndex;
     if (Abstract::isRelationalAntisymmetric(actual.op)) {
       actual.op = Abstract::negateRelational(actual.op);
@@ -328,7 +328,7 @@ void BasicBlockConstraintMap::approximateAndInternal(Index index, const Constrai
   // If this is not the flipped version, and it refers to a local, add the
   // flipped one too.
   if (!flip && std::holds_alternative<Index>(actual.term)) {
-    approximateAndInternal(actual, true);
+    approximateAndInternal(index, actual, true);
   }
 }
 
