@@ -322,8 +322,8 @@ void mergeMaybeEffects(std::shared_ptr<EffectAnalyzer>& dest,
 }
 
 // Propagate effects from callees to callers transitively and populate direct
-// and indirect call effects. e.g. if A -> B -> C (A calls B which calls C) Then
-// B inherits effects from C and A inherits effects from both B and C.
+// and indirect call effects. e.g. if A -> B -> C (A calls B which calls C),
+// then B inherits effects from C and A inherits effects from both B and C.
 //
 // Generate SCC for the call graph, then traverse it in reverse topological
 // order processing each callee before its callers. When traversing:
