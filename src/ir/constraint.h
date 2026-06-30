@@ -278,7 +278,7 @@ private:
   // Internal version, with a flag to flip the constraint. Whenever we apply
   // e.g. x == y, we also apply y == x to y, to maintain the invariant described
   // above. When flip is true, we flip the constraint and apply it to the other
-  // index (y == x) in this example.
+  // index (y == x, in this example).
   void
   approximateAndInternal(Index index, const Constraint& c, bool flip = false);
 };
