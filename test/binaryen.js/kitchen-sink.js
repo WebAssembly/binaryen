@@ -1131,16 +1131,19 @@ function test_parsing() {
 }
 
 function test_parsing_with_features() {
-  var text = `
-  (module
+  var text = `(module
     (global $g anyref (ref.null any))
-  )
-  `;
+  )`;
 
   module = binaryen.parseTextWithFeatures(text, binaryen.Features.All);
   assert(module.validate());
   console.log("module loaded from text form with features:");
   console.log(module.emitText());
+  module.dispose();
+
+  // parse with MVP features, which should fail
+  module = binaryen.parseTextWithFeatures(text, binaryen.Features.MVP);
+  console.log("validation with MVP features: " + module.validate());
   module.dispose();
 }
 
