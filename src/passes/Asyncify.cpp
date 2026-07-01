@@ -475,32 +475,29 @@ public:
   std::set<Name> names;
   std::set<std::string> patterns;
   std::set<std::string> patternsMatched;
-  std::map<std::string, std::string> unescaped;
 
   PatternMatcher(std::string designation,
                  Module& module,
                  const String::Split& list)
     : designation(designation) {
     // The lists contain human-readable strings. Turn them into the
-    // internal escaped names for later comparisons
+    // internal names for later comparisons.
     for (auto& name : list) {
-      auto escaped = Names::escape(name);
-      unescaped[escaped.toString()] = name;
       if (name.find('*') != std::string::npos) {
-        patterns.insert(escaped.toString());
+        patterns.insert(name);
       } else {
-        auto* func = module.getFunctionOrNull(escaped);
+        auto* func = module.getFunctionOrNull(name);
         if (!func) {
           std::cerr << "warning: Asyncify " << designation
-                    << "list contained a non-existing function name: " << name
-                    << " (" << escaped << ")\n";
+                    << "list contained a non-existing function name: '" << name
+                    << "'\n";
         } else if (func->imported()) {
           Fatal() << "Asyncify " << designation
                   << "list contained an imported function name (use the import "
                      "list for imports): "
                   << name << '\n';
         }
-        names.insert(escaped.str);
+        names.insert(name);
       }
     }
   }
@@ -523,8 +520,8 @@ public:
     for (auto& pattern : patterns) {
       if (!patternsMatched.contains(pattern)) {
         std::cerr << "warning: Asyncify " << designation
-                  << "list contained a non-matching pattern: "
-                  << unescaped[pattern] << " (" << pattern << ")\n";
+                  << "list contained a non-matching pattern: '" << pattern
+                  << "'\n";
       }
     }
   }

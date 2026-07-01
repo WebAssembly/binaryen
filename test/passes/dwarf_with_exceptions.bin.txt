@@ -2,17 +2,17 @@
  (type $0 (func))
  (type $1 (func (param i32)))
  (type $2 (func (param i32) (result i32)))
- (import "env" "_Z3foov" (func $foo\28\29))
+ (import "env" "_Z3foov" (func $"foo()"))
  (import "env" "__cxa_begin_catch" (func $__cxa_begin_catch (param i32) (result i32)))
  (import "env" "__cxa_end_catch" (func $__cxa_end_catch))
- (import "env" "_ZSt9terminatev" (func $std::terminate\28\29))
+ (import "env" "_ZSt9terminatev" (func $"std::terminate()"))
  (global $__stack_pointer (mut i32) (i32.const 66560))
  (memory $0 2)
  (tag $tag$0 (type $1) (param i32))
  (export "memory" (memory $0))
  (func $__wasm_call_ctors
  )
- (func $dwarf_with_exceptions\28\29
+ (func $"dwarf_with_exceptions()"
   (local $0 i32)
   (local $1 i32)
   ;; code offset: 0xe
@@ -24,7 +24,7 @@
   (try
    (do
     ;; code offset: 0x12
-    (call $foo\28\29)
+    (call $"foo()")
    )
    ;; code offset: 0x18
    (catch $tag$0
@@ -49,7 +49,7 @@
     (try $label
      (do
       ;; code offset: 0x33
-      (call $foo\28\29)
+      (call $"foo()")
       ;; code offset: 0x3b
       (global.set $__stack_pointer
        ;; code offset: 0x39
@@ -86,7 +86,7 @@
        ;; code offset: 0x63
        (catch_all
         ;; code offset: 0x64
-        (call $std::terminate\28\29)
+        (call $"std::terminate()")
         ;; code offset: 0x6a
         (unreachable)
        )
@@ -110,7 +110,7 @@
    )
   )
   ;; code offset: 0x82
-  (call $std::terminate\28\29)
+  (call $"std::terminate()")
   ;; code offset: 0x88
   (unreachable)
  )
@@ -423,17 +423,17 @@ file_names[  1]:
  (type $0 (func))
  (type $1 (func (param i32)))
  (type $2 (func (param i32) (result i32)))
- (import "env" "_Z3foov" (func $foo\28\29))
+ (import "env" "_Z3foov" (func $"foo()"))
  (import "env" "__cxa_begin_catch" (func $__cxa_begin_catch (param i32) (result i32)))
  (import "env" "__cxa_end_catch" (func $__cxa_end_catch))
- (import "env" "_ZSt9terminatev" (func $std::terminate\28\29))
+ (import "env" "_ZSt9terminatev" (func $"std::terminate()"))
  (global $__stack_pointer (mut i32) (i32.const 66560))
  (memory $0 2)
  (tag $tag$0 (type $1) (param i32))
  (export "memory" (memory $0))
  (func $__wasm_call_ctors
  )
- (func $dwarf_with_exceptions\28\29
+ (func $"dwarf_with_exceptions()"
   (local $0 i32)
   (local $1 i32)
   ;; code offset: 0xc
@@ -445,7 +445,7 @@ file_names[  1]:
   (try
    (do
     ;; code offset: 0x10
-    (call $foo\28\29)
+    (call $"foo()")
    )
    ;; code offset: 0x12
    (catch $tag$0
@@ -470,7 +470,7 @@ file_names[  1]:
     (try $label
      (do
       ;; code offset: 0x21
-      (call $foo\28\29)
+      (call $"foo()")
       ;; code offset: 0x25
       (global.set $__stack_pointer
        ;; code offset: 0x23
@@ -507,7 +507,7 @@ file_names[  1]:
        ;; code offset: 0x39
        (catch_all
         ;; code offset: 0x3a
-        (call $std::terminate\28\29)
+        (call $"std::terminate()")
         ;; code offset: 0x3c
         (unreachable)
        )
@@ -531,7 +531,7 @@ file_names[  1]:
    )
   )
   ;; code offset: 0x4c
-  (call $std::terminate\28\29)
+  (call $"std::terminate()")
   ;; code offset: 0x4e
   (unreachable)
  )

@@ -917,7 +917,7 @@ void WasmBinaryWriter::writeNames() {
   if (emitModuleName && wasm->name.is()) {
     auto substart =
       startSubsection(BinaryConsts::CustomSections::Subsection::NameModule);
-    writeEscapedName(wasm->name.view());
+    writeInlineString(wasm->name.view());
     finishSubsection(substart);
   }
 
@@ -946,7 +946,7 @@ void WasmBinaryWriter::writeNames() {
       o << U32LEB(functionsWithNames.size());
       for (auto& [index, global] : functionsWithNames) {
         o << U32LEB(index);
-        writeEscapedName(global->name.view());
+        writeInlineString(global->name.view());
       }
       finishSubsection(substart);
     }
@@ -1006,7 +1006,7 @@ void WasmBinaryWriter::writeNames() {
         o << U32LEB(localsWithNames.size());
         for (auto& [indexInBinary, name] : localsWithNames) {
           o << U32LEB(indexInBinary);
-          writeEscapedName(name.view());
+          writeInlineString(name.view());
         }
         emitted++;
       }
@@ -1029,7 +1029,7 @@ void WasmBinaryWriter::writeNames() {
       o << U32LEB(namedTypes.size());
       for (auto type : namedTypes) {
         o << U32LEB(indexedTypes.indices[type]);
-        writeEscapedName(wasm->typeNames[type].name.view());
+        writeInlineString(wasm->typeNames[type].name.view());
       }
       finishSubsection(substart);
     }
@@ -1056,7 +1056,7 @@ void WasmBinaryWriter::writeNames() {
 
       for (auto& [index, table] : tablesWithNames) {
         o << U32LEB(index);
-        writeEscapedName(table->name.view());
+        writeInlineString(table->name.view());
       }
 
       finishSubsection(substart);
@@ -1082,7 +1082,7 @@ void WasmBinaryWriter::writeNames() {
       o << U32LEB(memoriesWithNames.size());
       for (auto& [index, memory] : memoriesWithNames) {
         o << U32LEB(index);
-        writeEscapedName(memory->name.view());
+        writeInlineString(memory->name.view());
       }
       finishSubsection(substart);
     }
@@ -1107,7 +1107,7 @@ void WasmBinaryWriter::writeNames() {
       o << U32LEB(globalsWithNames.size());
       for (auto& [index, global] : globalsWithNames) {
         o << U32LEB(index);
-        writeEscapedName(global->name.view());
+        writeInlineString(global->name.view());
       }
       finishSubsection(substart);
     }
@@ -1132,7 +1132,7 @@ void WasmBinaryWriter::writeNames() {
 
       for (auto& [index, elem] : elemsWithNames) {
         o << U32LEB(index);
-        writeEscapedName(elem->name.view());
+        writeInlineString(elem->name.view());
       }
 
       finishSubsection(substart);
@@ -1156,7 +1156,7 @@ void WasmBinaryWriter::writeNames() {
         auto& seg = wasm->dataSegments[i];
         if (seg->hasExplicitName) {
           o << U32LEB(i);
-          writeEscapedName(seg->name.view());
+          writeInlineString(seg->name.view());
         }
       }
       finishSubsection(substart);
@@ -1187,7 +1187,7 @@ void WasmBinaryWriter::writeNames() {
         o << U32LEB(fieldNames.size());
         for (auto& [index, name] : fieldNames) {
           o << U32LEB(index);
-          writeEscapedName(name.view());
+          writeInlineString(name.view());
         }
       }
       finishSubsection(substart);
@@ -1213,7 +1213,7 @@ void WasmBinaryWriter::writeNames() {
       o << U32LEB(tagsWithNames.size());
       for (auto& [index, tag] : tagsWithNames) {
         o << U32LEB(index);
-        writeEscapedName(tag->name.view());
+        writeInlineString(tag->name.view());
       }
       finishSubsection(substart);
     }
@@ -1844,37 +1844,6 @@ void WasmBinaryWriter::writeData(const char* data, size_t size) {
 
 void WasmBinaryWriter::writeInlineString(std::string_view name) {
   o.writeInlineString(name);
-}
-
-static bool isHexDigit(char ch) {
-  return (ch >= '0' && ch <= '9') || (ch >= 'a' && ch <= 'f') ||
-         (ch >= 'A' && ch <= 'F');
-}
-
-static int decodeHexNibble(char ch) {
-  return ch <= '9' ? ch & 15 : (ch & 15) + 9;
-}
-
-void WasmBinaryWriter::writeEscapedName(std::string_view name) {
-  if (name.find('\\') == std::string_view::npos) {
-    writeInlineString(name);
-    return;
-  }
-  // decode escaped by escapeName (see below) function names
-  std::string unescaped;
-  for (size_t i = 0; i < name.size();) {
-    char ch = name[i++];
-    // support only `\xx` escapes; ignore invalid or unsupported escapes
-    if (ch != '\\' || i + 1 >= name.size() || !isHexDigit(name[i]) ||
-        !isHexDigit(name[i + 1])) {
-      unescaped.push_back(ch);
-      continue;
-    }
-    unescaped.push_back(
-      char((decodeHexNibble(name[i]) << 4) | decodeHexNibble(name[i + 1])));
-    i += 2;
-  }
-  writeInlineString({unescaped.data(), unescaped.size()});
 }
 
 void WasmBinaryWriter::writeInlineBuffer(const char* data, size_t size) {
@@ -5310,21 +5279,19 @@ void WasmBinaryReader::readTags() {
 namespace {
 
 // Performs necessary processing of names from the name section before using
-// them. Specifically it escapes and deduplicates them.
+// them. Specifically it deduplicates them.
 class NameProcessor {
 public:
-  // Returns a unique, escaped name. Notes that name for the items to follow to
+  // Returns a unique name. Notes that name for the items to follow to
   // keep them unique as well.
-  Name process(Name name) { return deduplicate(Names::escape(name)); }
-
-private:
-  std::unordered_set<Name> usedNames;
-
-  Name deduplicate(Name base) {
-    auto name = Names::getValidNameGivenExisting(base, usedNames);
+  Name process(Name name) {
+    name = Names::getValidNameGivenExisting(name, usedNames);
     usedNames.insert(name);
     return name;
   }
+
+private:
+  std::unordered_set<Name> usedNames;
 };
 
 } // anonymous namespace

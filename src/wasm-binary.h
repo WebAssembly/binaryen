@@ -1489,7 +1489,6 @@ public:
 
   // helpers
   void writeInlineString(std::string_view name);
-  void writeEscapedName(std::string_view name);
   void writeInlineBuffer(const char* data, size_t size);
   void writeData(const char* data, size_t size);
 

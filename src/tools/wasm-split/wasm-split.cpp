@@ -431,7 +431,7 @@ void multiSplitModule(const WasmSplitOptions& options) {
       }
       continue;
     }
-    Name name = Names::escape(line);
+    Name name = line;
     if (newSection) {
       if (name.endsWith(":")) {
         name = name.substr(0, name.size() - 1);
@@ -586,9 +586,7 @@ void printReadableProfile(const WasmSplitOptions& options) {
 
   auto printFnSet = [&](auto funcs, std::string prefix) {
     for (auto it = funcs.begin(); it != funcs.end(); ++it) {
-      std::cout << prefix << " "
-                << (options.unescape ? Names::unescape(*it) : it->toString())
-                << std::endl;
+      std::cout << prefix << " " << it->toString() << std::endl;
     }
   };
 
