@@ -38,7 +38,8 @@ class Template:
     bin: bytes = b""
 
 
-templates = [
+atomic_fence_template = Template(op="atomic.fence", value_type=None, args=0, should_drop=False, bin=b"\xfe\x03")
+load_store_acqrel_templates = [
     Template(op="i32.atomic.load", value_type=ValueType.i32, args=1, should_drop=True, bin=b"\xfe\x10"),
     Template(op="i64.atomic.load", value_type=ValueType.i64, args=1, should_drop=True, bin=b"\xfe\x11"),
     Template(op="i32.atomic.load8_u", value_type=ValueType.i64, args=1, should_drop=True, bin=b"\xfe\x12"),
@@ -116,11 +117,20 @@ def all_combinations() -> Iterator[(Template, (int, ValueType), Ordering)]:
     # See the memory section defined in `binary_test`
     memories = [(None, ValueType.i32), (0, ValueType.i32), (1, ValueType.i64)]
 
-    return itertools.product(templates, memories, [None, Ordering.acqrel, Ordering.seqcst])
+    yield from itertools.product(load_store_acqrel_templates, memories, [None, Ordering.acqrel, Ordering.seqcst])
+
+    for ordering in None, Ordering.acqrel, Ordering.seqcst:
+        yield atomic_fence_template, (None, None), ordering
 
 
 def statement(template, mem_idx: int | None, mem_ptr_type: ValueType, ordering: Ordering | None):
     """Return a statement exercising the op in `template` e.g. (i32.atomic.store 1 acqrel (i64.const 42) (i32.const 42))."""
+    if template.op == "atomic.fence":
+        assert mem_idx is None
+        assert mem_ptr_type is None
+
+        return f"(atomic.fence{' ' + ordering.name if ordering is not None else ''})"
+
     memargs = []
     if mem_idx is not None:
         memargs.append(str(mem_idx))
@@ -139,7 +149,7 @@ def statement(template, mem_idx: int | None, mem_ptr_type: ValueType, ordering: 
 
 
 def func():
-    """Return a func exercising all ops in `templates`.
+    """Return a func exercising all atomic ops.
 
     e.g.
     (func $test-all-ops
@@ -156,7 +166,7 @@ def func():
 
 
 def text_test():
-    """Return a (module ...) that exercises all ops in `templates`."""
+    """Return a (module ...) that exercises all atomic ops."""
     return f'''(module
   (memory i32 1 1)
   (memory i64 1 1)
@@ -194,6 +204,16 @@ def bin_statement_lines(template: Template, mem_idx: int, mem_ptr_type: ValueTyp
     The entire iterator represents a complete expression using the `template`. e.g.
         (drop (i32.atomic.load (i32.const 42)))
     """
+    if template.op == "atomic.fence":
+        assert mem_idx is None
+        assert mem_ptr_type is None
+
+        assert ordering is not None
+
+        yield template.bin, template.op
+        yield int.to_bytes(ordering.value), f"{ordering.name} memory ordering"
+        return
+
     arg_one_bin = i64_const(0) if mem_ptr_type == ValueType.i64 else i32_const(0)
     yield arg_one_bin, f"({mem_ptr_type.name}.const 0)"
     for _ in range(template.args - 1):
@@ -272,6 +292,11 @@ def binary_func_body():
     statement_bins = []
 
     for template, (mem_idx, mem_ptr_type), ordering in all_combinations():
+        # In the binary encoding for atomic.fence, there's no 'default' without
+        # a memory ordering. Skip this case.
+        if template.op == "atomic.fence" and ordering is None:
+            continue
+
         bin, s = bin_statement(template, mem_idx, mem_ptr_type, ordering)
         statement_bins.append(bin)
         statement_strs.append(s)

@@ -77,6 +77,12 @@ Result provesPair(const Constraint& a, const Constraint& b) {
 } // anonymous namespace
 
 Result AndedConstraintSet::proves(const Constraint& condition) const {
+  if (provesEverything()) {
+    return True;
+  }
+  // Note we do not need to handle the provesNothing case in a special way: the
+  // loop below finds nothing.
+
   // Sometimes a single constraint is enough to determine the condition.
   for (auto& c : *this) {
     auto result = provesPair(c, condition);
@@ -92,9 +98,13 @@ Result AndedConstraintSet::proves(const Constraint& condition) const {
 }
 
 Result AndedConstraintSet::proves(const AndedConstraintSet& other) const {
-  if (other.empty()) {
-    // The empty set of constraints is always true.
+  if (provesEverything()) {
     return True;
+  }
+
+  if (other.provesEverything()) {
+    // We are not a contradiction, but other is, so we prove it false.
+    return False;
   }
 
   bool hasUnknown = false;
@@ -114,6 +124,17 @@ Result AndedConstraintSet::proves(const AndedConstraintSet& other) const {
 }
 
 void AndedConstraintSet::approximateAnd(const Constraint& c) {
+  if (provesEverything()) {
+    // Nothing to add.
+    return;
+  }
+
+  if (proves(c) == False) {
+    // We are now a contradiction.
+    isContradiction = true;
+    return;
+  }
+
   if (size() < MaxConstraints) {
     push_back(c);
     return;
@@ -125,13 +146,12 @@ void AndedConstraintSet::approximateAnd(const Constraint& c) {
 }
 
 void AndedConstraintSet::approximateOr(const AndedConstraintSet& other) {
-  // If one is empty (no constraints, everything is true, and we can prove
-  // nothing useful) then it does not add anything to the other.
-  if (empty()) {
+  // If one proves everything, the only thing that matters is the other.
+  if (provesEverything()) {
     *this = other;
     return;
   }
-  if (other.empty()) {
+  if (other.provesEverything()) {
     return;
   }
 
@@ -151,6 +171,177 @@ void AndedConstraintSet::approximateOr(const AndedConstraintSet& other) {
   // Otherwise, we don't know how to nicely OR these things, and expand to the
   // trivial set of no constraints.
   clear();
+}
+
+std::optional<LocalConstraint> LocalConstraint::parse(Expression* curr) {
+  auto parseEqZArgument =
+    [&](Expression* value) -> std::optional<LocalConstraint> {
+    if (auto* get = value->dynCast<LocalGet>()) {
+      // Canonicalize EqZ to Eq of 0.
+      auto value = Literal::makeZero(get->type);
+      return LocalConstraint{get->index, Constraint{Abstract::Eq, {value}}};
+    }
+    // TODO: Recursively parse and reverse a constraint
+    return {};
+  };
+
+  if (auto* unary = curr->dynCast<Unary>()) {
+    if (Abstract::getUnary(unary->type, Abstract::EqZ) == unary->op) {
+      return parseEqZArgument(unary->value);
+    }
+    return {};
+  }
+
+  if (auto* refIsNull = curr->dynCast<RefIsNull>()) {
+    return parseEqZArgument(refIsNull->value);
+  }
+
+  // Parse a get or a constant.
+  auto parseTerm = [&](Expression* expr) -> std::optional<Term> {
+    if (auto* get = expr->dynCast<LocalGet>()) {
+      return Term{get->index};
+    }
+    if (Properties::isSingleConstantExpression(expr)) {
+      return Term{Properties::getLiteral(expr)};
+    }
+    return {};
+  };
+
+  auto parseBinaryArguments =
+    [&](Abstract::Op op,
+        Expression* left,
+        Expression* right) -> std::optional<LocalConstraint> {
+    // The left must be a get.
+    if (auto* get = left->dynCast<LocalGet>()) {
+      // The right can be any term.
+      if (auto value = parseTerm(right)) {
+        return LocalConstraint{get->index, Constraint{op, *value}};
+      }
+    }
+    return {};
+  };
+
+  if (auto* binary = curr->dynCast<Binary>()) {
+    // The operation must be one we recognize.
+    for (auto op : {Abstract::Eq, Abstract::Ne}) {
+      if (Abstract::getBinary(binary->type, op) == binary->op) {
+        return parseBinaryArguments(op, binary->left, binary->right);
+      }
+    }
+    return {};
+  }
+
+  if (auto* refEq = curr->dynCast<RefEq>()) {
+    return parseBinaryArguments(Abstract::Eq, refEq->left, refEq->right);
+  }
+
+  return {};
+}
+
+std::optional<LocalConstraint>
+LocalConstraint::parseCondition(Expression* curr) {
+  // A get by itself is a check for not being null.
+  if (auto* get = curr->dynCast<LocalGet>()) {
+    auto value = Literal::makeZero(get->type);
+    return LocalConstraint{get->index, Constraint{Abstract::Ne, {value}}};
+  }
+
+  // Otherwise, parse normally.
+  return parse(curr);
+};
+
+void BasicBlockConstraintMap::approximateOr(
+  const BasicBlockConstraintMap& other) {
+  // If one is unreachable, it adds nothing to the other.
+  if (other.unreachable) {
+    return;
+  }
+  if (unreachable) {
+    *this = other;
+    return;
+  }
+
+  // We only need to loop on our locals, as any local that is missing in us is
+  // one that would end up proving nothing (and get removed).
+  for (auto& [local, constraints] : map) {
+    constraints.approximateOr(other.get(local));
+  }
+
+  // Anything that became trivial after the OR must be removed.
+  std::erase_if(map, [&](const auto& item) {
+    const auto& [local, constraints] = item;
+    // We do not store contradictions.
+    assert(!constraints.provesEverything());
+    return constraints.provesNothing();
+  });
+}
+
+void BasicBlockConstraintMap::approximateAnd(Index index, const Constraint& c) {
+  auto combined = get(index);
+  combined.approximateAnd(c);
+
+  if (combined.provesEverything()) {
+    // We just proved we are in unreachable code.
+    unreachable = true;
+    map.clear();
+    return;
+  }
+
+  // We just added a constraint, so we can prove something (we may lose some
+  // information as this is an approximate AND, but we cannot lose it all).
+  assert(!combined.provesNothing());
+
+  // Otherwise, this is an interesting state; set it.
+  map[index] = std::move(combined);
+}
+
+std::ostream& operator<<(std::ostream& o, const Constraint& c) {
+  o << "Constraint{" << int(c.op) << ", ";
+  if (auto* cc = std::get_if<Literal>(&c.term)) {
+    o << *cc;
+  } else if (auto* i = std::get_if<Index>(&c.term)) {
+    o << "Index(" << *i << ')';
+  }
+  o << '}';
+  return o;
+}
+
+std::ostream& operator<<(std::ostream& o, const AndedConstraintSet& set) {
+  if (set.provesEverything()) {
+    o << "AndedConstraintSet(contradiction)";
+    return o;
+  }
+  o << "AndedConstraintSet{";
+  bool first = true;
+  for (auto& constraint : set) {
+    if (first) {
+      first = false;
+    } else {
+      o << ", ";
+    }
+    o << constraint;
+  }
+  o << '}';
+  return o;
+}
+
+std::ostream& operator<<(std::ostream& o, const BasicBlockConstraintMap& map) {
+  if (map.unreachable) {
+    o << "BasicBlockConstraintMap(unreachable)";
+    return o;
+  }
+  o << "BasicBlockConstraintMap{";
+  bool first = true;
+  for (auto& [local, constraints] : map.map) {
+    if (first) {
+      first = false;
+    } else {
+      o << ", ";
+    }
+    o << local << ": " << constraints;
+  }
+  o << '}';
+  return o;
 }
 
 } // namespace wasm::constraint

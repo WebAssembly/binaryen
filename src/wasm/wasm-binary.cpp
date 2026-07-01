@@ -3960,11 +3960,10 @@ Result<> WasmBinaryReader::readInst() {
           auto [mem, align, offset, memoryOrder] = getAtomicMemarg();
           return builder.makeAtomicNotify(offset, mem);
         }
-        case BinaryConsts::AtomicFence:
-          if (getInt8() != 0) {
-            return Err{"expected 0x00 byte immediate on atomic.fence"};
-          }
-          return builder.makeAtomicFence();
+        case BinaryConsts::AtomicFence: {
+          MemoryOrder order = getMemoryOrder(/*isRMW=*/false);
+          return builder.makeAtomicFence(order);
+        }
         case BinaryConsts::Pause:
           return builder.makePause();
         case BinaryConsts::StructAtomicGet:

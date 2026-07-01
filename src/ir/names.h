@@ -138,6 +138,10 @@ public:
   std::string getName();
 };
 
+// Unescapes a WebAssembly identifier back into its original human-readable
+// string.
+std::string unescape(Name name);
+
 } // namespace wasm::Names
 
 #endif // wasm_ir_names_h

@@ -16,5 +16,6 @@
     (i32.atomic.load acqrel
       (i32.const 1)
     )
+    (atomic.fence)
   )
 )
