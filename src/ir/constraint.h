@@ -230,10 +230,15 @@ struct BasicBlockConstraintMap {
 
   // Get the constraints for a local.
   AndedConstraintSet get(Index index) const {
+    // We should not be called in unreachable code.
+    assert(!unreachable);
+
     if (auto iter = map.find(index); iter != map.end()) {
       auto& constraints = iter->second;
       // If we can prove nothing, we should have removed it from the map.
       assert(!constraints.provesNothing());
+      // If we can prove everything, we should be entirely unreachable.
+      assert(!constraints.provesEverything());
       return constraints;
     }
     return AndedConstraintSet::makeProvesNothing();
