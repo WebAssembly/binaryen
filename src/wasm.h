@@ -2727,6 +2727,9 @@ public:
   Name name;
 
   std::unordered_map<HeapType, TypeNames> typeNames;
+
+  // The source binary's type indicies. Used in some cases for preserving
+  // ordering of types
   std::unordered_map<HeapType, Index> typeIndices;
 
   // Potential effects for bodies of indirect calls to this type. Populated by
@@ -2743,6 +2746,13 @@ public:
   // This data is only meaningful for indirect calls. If no indirect call
   // exists to a function, the data can be out of date (no effort is made to
   // clean up the data if e.g. all indirect calls to a function are removed).
+  //
+  // Null values are possible in the case that a types's effects are unknown.
+  // A null value is functionally the same as the key not being present at all
+  // in the map, but we distinguish the two for correctness when rewriting
+  // types. Suppose we rewrite A -> B where B is a brand new type. Then B should
+  // inherit A's effects. OTOH if B is an existing type with *explicitly*
+  // unknown effects (present with nullptr), then B remains explicitly unknown.
   // TODO: Account for exactness here.
   std::unordered_map<HeapType, std::shared_ptr<const EffectAnalyzer>>
     indirectCallEffects;

@@ -35,6 +35,7 @@ set(unittest_SOURCES
   suffix_tree.cpp
   topological-sort.cpp
   type-builder.cpp
+  type-updating.cpp
   wat-lexer.cpp
   validator.cpp
   source-map.cpp
