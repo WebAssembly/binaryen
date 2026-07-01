@@ -433,7 +433,7 @@ void multiSplitModule(const WasmSplitOptions& options) {
       }
       continue;
     }
-    Name name = WasmBinaryReader::escape(line);
+    Name name = line;
     if (newSection) {
       if (name.endsWith(":")) {
         name = name.substr(0, name.size() - 1);

@@ -112,9 +112,9 @@ private:
           std::cout << ',';
         }
         std::cout << "\n  [";
-        String::printEscaped(std::cout, key.first.view()) << ", ";
-        String::printEscaped(std::cout, key.second.view()) << ", ";
-        String::printEscaped(std::cout, new_.view()) << "]";
+        String::printEscapedJSON(std::cout, key.first.view()) << ", ";
+        String::printEscapedJSON(std::cout, key.second.view()) << ", ";
+        String::printEscapedJSON(std::cout, new_.view()) << "]";
       }
     }
     std::cout << "\n ],\n\"exports\": [";
@@ -127,8 +127,8 @@ private:
           std::cout << ',';
         }
         std::cout << "\n  [";
-        String::printEscaped(std::cout, key.second.view()) << ", ";
-        String::printEscaped(std::cout, new_.view()) << "]";
+        String::printEscapedJSON(std::cout, key.second.view()) << ", ";
+        String::printEscapedJSON(std::cout, new_.view()) << "]";
       }
     }
     std::cout << "\n ]\n";
