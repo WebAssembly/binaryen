@@ -70,44 +70,6 @@ std::string MinifiedNameGenerator::getName() {
   return name;
 }
 
-static bool isIdChar(char ch) {
-  return (ch >= '0' && ch <= '9') || (ch >= 'A' && ch <= 'Z') ||
-         (ch >= 'a' && ch <= 'z') || ch == '!' || ch == '#' || ch == '$' ||
-         ch == '%' || ch == '&' || ch == '\'' || ch == '*' || ch == '+' ||
-         ch == '-' || ch == '.' || ch == '/' || ch == ':' || ch == '<' ||
-         ch == '=' || ch == '>' || ch == '?' || ch == '@' || ch == '^' ||
-         ch == '_' || ch == '`' || ch == '|' || ch == '~';
-}
-
-static char formatNibble(int nibble) {
-  return nibble < 10 ? '0' + nibble : 'a' - 10 + nibble;
-}
-
-Name escape(Name name) {
-  bool allIdChars = true;
-  for (char c : name.view()) {
-    if (!(allIdChars = isIdChar(c))) {
-      break;
-    }
-  }
-  if (allIdChars) {
-    return name;
-  }
-  // encode name, if at least one non-idchar (per WebAssembly spec) was found
-  std::string escaped;
-  for (char c : name.view()) {
-    if (isIdChar(c)) {
-      escaped.push_back(c);
-      continue;
-    }
-    // replace non-idchar with `\xx` escape
-    escaped.push_back('\\');
-    escaped.push_back(formatNibble((unsigned char)c >> 4));
-    escaped.push_back(formatNibble((unsigned char)c & 15));
-  }
-  return escaped;
-}
-
 // TODO: consolidate this with other string parsing code in string.cpp and
 // lexer.h.
 std::string unescape(Name name) {
