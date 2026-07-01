@@ -255,6 +255,18 @@ LocalConstraint::parseCondition(Expression* curr) {
   return parse(curr);
 };
 
+void LocalConstraint::flip() {
+  auto other = std::get<Index>(constraint.term);
+  constraint.term = Term{local};
+  local = other;
+  if (Abstract::isRelationalAntisymmetric(constraint.op)) {
+    constraint.op = Abstract::negateRelational(constraint.op);
+  } else {
+    // All we support for now are symmetric and antisymmetric operations.
+    assert(Abstract::isRelationalSymmetric(constraint.op));
+  }
+}
+
 void BasicBlockConstraintMap::set(Index index, const Constraint& c) {
   assert(!unreachable);
   eraseStaleRefs(index);
@@ -304,16 +316,10 @@ void BasicBlockConstraintMap::approximateAndInternal(Index index,
                                                      bool flip) {
   Constraint actual = c;
   if (flip) {
-    // Build a flipped constraint, referring to index.
-    auto otherIndex = std::get<Index>(actual.term);
-    actual.term = Term{index};
-    index = otherIndex;
-    if (Abstract::isRelationalAntisymmetric(actual.op)) {
-      actual.op = Abstract::negateRelational(actual.op);
-    } else {
-      // All we support for now are symmetric and antisymmetric operations.
-      assert(Abstract::isRelationalSymmetric(actual.op));
-    }
+    LocalConstraint flipped{index, c};
+    flipped.flip();
+    index = flipped.local;
+    actual = flipped.constraint;
   }
 
   auto combined = get(index);
