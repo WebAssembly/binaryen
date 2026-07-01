@@ -70,23 +70,4 @@ std::string MinifiedNameGenerator::getName() {
   return name;
 }
 
-// TODO: consolidate this with other string parsing code in string.cpp and
-// lexer.h.
-std::string unescape(Name name) {
-  std::string output;
-  std::string_view input = name.view();
-  for (size_t i = 0; i < input.length(); i++) {
-    if ((input[i] == '\\') && (i + 2 < input.length()) &&
-        isxdigit(input[i + 1]) && isxdigit(input[i + 2])) {
-      std::string byte = std::string(input.substr(i + 1, 2));
-      i += 2;
-      char chr = (char)(int)strtol(byte.c_str(), nullptr, 16);
-      output.push_back(chr);
-    } else {
-      output.push_back(input[i]);
-    }
-  }
-  return output;
-}
-
 } // namespace wasm::Names

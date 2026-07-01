@@ -150,9 +150,6 @@
 ;; CHECK-NEXT:   --output,-o                          [instrument, merge-profiles, multi-split]
 ;; CHECK-NEXT:                                        Output file.
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --unescape,-u                        Un-escape function names (in
-;; CHECK-NEXT:                                        print-profile output)
-;; CHECK-NEXT:
 ;; CHECK-NEXT:   --verbose,-v                         Verbose output mode. Prints the functions
 ;; CHECK-NEXT:                                        that will be kept and split out when
 ;; CHECK-NEXT:                                        splitting a module.
