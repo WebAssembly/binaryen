@@ -47,6 +47,7 @@ struct GenerativityScanner : public PostWalker<GenerativityScanner> {
   void visitArrayNewElem(ArrayNewElem* curr) { generative = true; }
   void visitArrayNewFixed(ArrayNewFixed* curr) { generative = true; }
   void visitContNew(ContNew* curr) { generative = true; }
+  void visitWaitqueueNew(WaitqueueNew* curr) { generative = true; }
 };
 
 } // anonymous namespace
@@ -73,7 +74,7 @@ bool isShallowlyGenerative(Expression* curr, Function* func, Module& wasm) {
 static bool isValidInConstantExpression(Module& wasm, Expression* expr) {
   if (isSingleConstantExpression(expr) || expr->is<StructNew>() ||
       expr->is<ArrayNew>() || expr->is<ArrayNewFixed>() || expr->is<RefI31>() ||
-      expr->is<StringConst>()) {
+      expr->is<StringConst>() || expr->is<WaitqueueNew>()) {
     return true;
   }
 
