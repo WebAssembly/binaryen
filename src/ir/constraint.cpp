@@ -64,6 +64,11 @@ Result provesPair(const Constraint& a, const Constraint& b) {
     return True;
   }
 
+  // A thing always implies its negation is false.
+  if (a == b.negate()) {
+    return False;
+  }
+
   // Comparisons of two constants.
   auto* aConstant = std::get_if<Literal>(&a.term);
   auto* bConstant = std::get_if<Literal>(&b.term);
@@ -250,6 +255,36 @@ LocalConstraint::parseCondition(Expression* curr) {
   return parse(curr);
 };
 
+void LocalConstraint::flip() {
+  auto other = std::get<Index>(constraint.term);
+  constraint.term = Term{local};
+  local = other;
+  if (Abstract::isRelationalAntisymmetric(constraint.op)) {
+    constraint.op = Abstract::negateRelational(constraint.op);
+  } else {
+    // All we support for now are symmetric and antisymmetric operations.
+    assert(Abstract::isRelationalSymmetric(constraint.op));
+  }
+}
+
+void BasicBlockConstraintMap::set(Index index, const Constraint& c) {
+  assert(!unreachable);
+  eraseStaleRefs(index);
+  map[index].set(c);
+  noteRefs(index, c);
+
+  // If the constraint refers to another local, add it there too.
+  if (std::holds_alternative<Index>(c.term)) {
+    approximateAndInternal(index, c, true);
+  }
+}
+
+void BasicBlockConstraintMap::setProvesNothing(Index index) {
+  assert(!unreachable);
+  eraseStaleRefs(index);
+  map.erase(index);
+}
+
 void BasicBlockConstraintMap::approximateOr(
   const BasicBlockConstraintMap& other) {
   // If one is unreachable, it adds nothing to the other.
@@ -276,9 +311,19 @@ void BasicBlockConstraintMap::approximateOr(
   });
 }
 
-void BasicBlockConstraintMap::approximateAnd(Index index, const Constraint& c) {
+void BasicBlockConstraintMap::approximateAndInternal(Index index,
+                                                     const Constraint& c,
+                                                     bool flip) {
+  Constraint actual = c;
+  if (flip) {
+    LocalConstraint flipped{index, c};
+    flipped.flip();
+    index = flipped.local;
+    actual = flipped.constraint;
+  }
+
   auto combined = get(index);
-  combined.approximateAnd(c);
+  combined.approximateAnd(actual);
 
   if (combined.provesEverything()) {
     // We just proved we are in unreachable code.
@@ -293,6 +338,50 @@ void BasicBlockConstraintMap::approximateAnd(Index index, const Constraint& c) {
 
   // Otherwise, this is an interesting state; set it.
   map[index] = std::move(combined);
+
+  // Add a ref of what we are adding. Note that the approximation above may end
+  // up not actually adding this, or adding only part of this, but it is safe to
+  // always add a ref (at the cost of minor wasted work).
+  noteRefs(index, actual);
+
+  // If this is not the flipped version, and it refers to a local, add the
+  // flipped one too.
+  if (!flip && std::holds_alternative<Index>(actual.term)) {
+    approximateAndInternal(index, actual, true);
+  }
+}
+
+void BasicBlockConstraintMap::noteRefs(Index index, const Constraint& c) {
+  if (auto* i = std::get_if<Index>(&c.term)) {
+    refs[*i].insert(index);
+  }
+}
+
+void BasicBlockConstraintMap::eraseStaleRefs(Index index) {
+  auto iter = refs.find(index);
+  if (iter == refs.end()) {
+    return;
+  }
+
+  auto& refIndexes = iter->second;
+
+  for (auto refIndex : refIndexes) {
+    if (auto iter = map.find(refIndex); iter != map.end()) {
+      auto& refConstraints = iter->second;
+      std::erase_if(refConstraints, [&](const auto& c) {
+        if (auto* i = std::get_if<Index>(&c.term)) {
+          if (*i == index) {
+            return true;
+          }
+        }
+        return false;
+      });
+      if (refConstraints.empty()) {
+        // This became trivial.
+        map.erase(iter);
+      }
+    }
+  }
 }
 
 std::ostream& operator<<(std::ostream& o, const Constraint& c) {

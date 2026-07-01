@@ -45,7 +45,7 @@ struct Constraint {
 
   bool operator==(const Constraint&) const = default;
 
-  Constraint negate() {
+  Constraint negate() const {
     return Constraint{Abstract::negateRelational(op), term};
   }
 };
@@ -186,6 +186,10 @@ struct LocalConstraint {
   // Parse in a condition context, i.e., where (local.get $x) is the same as
   // $x != 0 (e.g., in an if condition, or a br_on ref).
   static std::optional<LocalConstraint> parseCondition(Expression* curr);
+
+  // Reverse the constraint. The constraint's term must, of course, be another
+  // local.
+  void flip();
 };
 
 // A map of locals and their constraints, representing the state at a basic
@@ -205,6 +209,10 @@ struct LocalConstraint {
 //
 // As a result, the map only contains interesting things, where we can prove
 // something (but not everything).
+//
+// Cross-local constraints (like x == y) are duplicated, that is, they appear in
+// the constraints for both x and y. This makes things simple by having all
+// constraints related to a local in the same place.
 struct BasicBlockConstraintMap {
   // Blocks begin unreachable, like AndedConstraintSet.
   bool unreachable = true;
@@ -215,20 +223,23 @@ struct BasicBlockConstraintMap {
   }
 
   // Apply a constraint to a local.
-  void set(Index index, const Constraint& c) {
-    assert(!unreachable);
-    map[index].set(c);
-  }
+  void set(Index index, const Constraint& c);
 
-  void setProvesNothing(Index index) {
-    assert(!unreachable);
-    map.erase(index);
-  }
+  // Mark a local as unknown and able to prove nothing.
+  void setProvesNothing(Index index);
 
   // Get the constraints for a local.
   AndedConstraintSet get(Index index) const {
+    // We should not be called in unreachable code.
+    assert(!unreachable);
+
     if (auto iter = map.find(index); iter != map.end()) {
-      return iter->second;
+      auto& constraints = iter->second;
+      // If we can prove nothing, we should have removed it from the map.
+      assert(!constraints.provesNothing());
+      // If we can prove everything, we should be entirely unreachable.
+      assert(!constraints.provesEverything());
+      return constraints;
     }
     return AndedConstraintSet::makeProvesNothing();
   }
@@ -239,7 +250,13 @@ struct BasicBlockConstraintMap {
   void approximateOr(const BasicBlockConstraintMap& other);
 
   // Perform an AND as above, on a particular index.
-  void approximateAnd(Index index, const Constraint& c);
+  void approximateAnd(Index index, const Constraint& c) {
+    approximateAndInternal(index, c);
+  }
+
+  // TODO: Add proves() here, which could do things like: if asked x == y, we
+  // can answer False if we see x == c1, y == c2, and the constants c1, c2
+  // differ.
 
   bool operator!=(const BasicBlockConstraintMap& other) {
     return unreachable != other.unreachable || map != other.map;
@@ -250,6 +267,29 @@ struct BasicBlockConstraintMap {
 
 private:
   std::unordered_map<Index, AndedConstraintSet> map;
+
+  // Maps an index to the locals that have constraints referring to it. When a
+  // local is modified, we need to wipe all those constraints, which become
+  // stale.
+  //
+  // It is ok (but unoptimal in efficiency) if we have stale refs here, e.g. due
+  // to approximation removing a constraint. Whenever there is a reference,
+  // however, it must be noted here, so that when things get stale we can remove
+  // them.
+  std::unordered_map<Index, std::unordered_set<Index>> refs;
+
+  // Given a constraint on a local, note refs.
+  void noteRefs(Index index, const Constraint& c);
+
+  // Given an index, erase constraints referring to it.
+  void eraseStaleRefs(Index index);
+
+  // Internal version, with a flag to flip the constraint. Whenever we apply
+  // e.g. x == y, we also apply y == x to y, to maintain the invariant described
+  // above. When flip is true, we flip the constraint and apply it to the other
+  // index (y == x, in this example).
+  void
+  approximateAndInternal(Index index, const Constraint& c, bool flip = false);
 };
 
 std::ostream& operator<<(std::ostream& o, const Constraint& c);
