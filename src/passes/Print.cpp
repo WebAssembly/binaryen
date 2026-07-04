@@ -498,7 +498,10 @@ struct PrintExpressionContents
     printLocal(curr->index, currFunction, o);
   }
   void visitLocalSet(LocalSet* curr) {
-    if (curr->isTee()) {
+    // Print unreachable tees as sets. This makes the output valid WebAssembly
+    // in more cases because it avoids pushing a concrete type (which may not
+    // be the type required by the next instruction) onto a polymorphic stack.
+    if (curr->isTee() && curr->type != Type::unreachable) {
       printMedium(o, "local.tee ");
     } else {
       printMedium(o, "local.set ");
@@ -644,7 +647,10 @@ struct PrintExpressionContents
       o << " offset=" << curr->offset;
     }
   }
-  void visitAtomicFence(AtomicFence* curr) { printMedium(o, "atomic.fence"); }
+  void visitAtomicFence(AtomicFence* curr) {
+    printMedium(o, "atomic.fence");
+    printMemoryOrder(curr->order);
+  }
   void visitPause(Pause* curr) { printMedium(o, "pause"); }
   void visitSIMDExtract(SIMDExtract* curr) {
     prepareColor(o);

@@ -3677,7 +3677,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.get $1)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (local.tee $a
+  ;; CHECK-NEXT:  (local.set $a
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (global.set $g

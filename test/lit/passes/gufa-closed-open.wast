@@ -249,3 +249,78 @@
  )
 )
 
+;; Export parameter test. In open world, a function reference parameter of an
+;; export can have any value from the outside, so the call_ref is preserved.
+;; In closed world, we assume no such function is called from the outside.
+(module
+  ;; OPEND:      (type $sig (func (result i32)))
+  ;; CLOSE:      (type $sig (func (result i32)))
+  (type $sig (func (result i32)))
+
+  ;; OPEND:      (type $1 (func (param (ref $sig)) (result i32)))
+
+  ;; OPEND:      (export "test-export-param" (func $export-param))
+
+  ;; OPEND:      (func $export-param (type $1) (param $f (ref $sig)) (result i32)
+  ;; OPEND-NEXT:  (call_ref $sig
+  ;; OPEND-NEXT:   (local.get $f)
+  ;; OPEND-NEXT:  )
+  ;; OPEND-NEXT: )
+  ;; CLOSE:      (type $1 (func (param (ref $sig)) (result i32)))
+
+  ;; CLOSE:      (export "test-export-param" (func $export-param))
+
+  ;; CLOSE:      (func $export-param (type $1) (param $f (ref $sig)) (result i32)
+  ;; CLOSE-NEXT:  (drop
+  ;; CLOSE-NEXT:   (call_ref $sig
+  ;; CLOSE-NEXT:    (local.get $f)
+  ;; CLOSE-NEXT:   )
+  ;; CLOSE-NEXT:  )
+  ;; CLOSE-NEXT:  (unreachable)
+  ;; CLOSE-NEXT: )
+  (func $export-param (export "test-export-param") (param $f (ref $sig)) (result i32)
+    (call_ref $sig
+      (local.get $f)
+    )
+  )
+)
+
+;; Import result test. In open world, the return value of the imported function
+;; can be any function reference, which when called via call_ref preserves it.
+;; In closed world, it optimizes to unreachable.
+(module
+  ;; OPEND:      (type $sig (func (result i32)))
+  ;; CLOSE:      (type $sig (func (result i32)))
+  (type $sig (func (result i32)))
+  ;; OPEND:      (type $1 (func (result (ref $sig))))
+
+  ;; OPEND:      (import "env" "get-sig" (func $get-sig (type $1) (result (ref $sig))))
+  ;; CLOSE:      (type $1 (func (result (ref $sig))))
+
+  ;; CLOSE:      (import "env" "get-sig" (func $get-sig (type $1) (result (ref $sig))))
+  (import "env" "get-sig" (func $get-sig (result (ref $sig))))
+
+  ;; OPEND:      (export "test-import-result" (func $import-result))
+
+  ;; OPEND:      (func $import-result (type $sig) (result i32)
+  ;; OPEND-NEXT:  (call_ref $sig
+  ;; OPEND-NEXT:   (call $get-sig)
+  ;; OPEND-NEXT:  )
+  ;; OPEND-NEXT: )
+  ;; CLOSE:      (export "test-import-result" (func $import-result))
+
+  ;; CLOSE:      (func $import-result (type $sig) (result i32)
+  ;; CLOSE-NEXT:  (drop
+  ;; CLOSE-NEXT:   (call_ref $sig
+  ;; CLOSE-NEXT:    (call $get-sig)
+  ;; CLOSE-NEXT:   )
+  ;; CLOSE-NEXT:  )
+  ;; CLOSE-NEXT:  (unreachable)
+  ;; CLOSE-NEXT: )
+  (func $import-result (export "test-import-result") (result i32)
+    (call_ref $sig
+      (call $get-sig)
+    )
+  )
+)
+

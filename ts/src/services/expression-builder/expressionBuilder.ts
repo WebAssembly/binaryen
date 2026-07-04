@@ -9,6 +9,9 @@ import type {
 	Module,
 } from "../../classes/module/Module.ts";
 import {
+	MemoryOrder,
+} from "../../constants.ts";
+import {
 	array,
 	struct,
 	tuple,
@@ -92,7 +95,7 @@ export function expressionBuilder(mod: Module) {
 		i64x2: i64x2(mod),
 		f32x4: f32x4(mod),
 		f64x2: f64x2(mod),
-		atomic: {fence: () => BinaryenObj["_BinaryenAtomicFence"](mod[PTR])},
+		atomic: {fence: (order: MemoryOrder = MemoryOrder.SeqCst) => BinaryenObj["_BinaryenAtomicFence"](mod[PTR], order)},
 	} as const;
 }
 

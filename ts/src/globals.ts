@@ -222,6 +222,15 @@ export function parseText(text: string): Module {
 	return wrapModule(ptr);
 }
 
+/** Parses text format to a module with the given feature set enabled. */
+export function parseTextWithFeatures(text: string, features: Feature): Module {
+	const buffer = _malloc(text.length + 1);
+	stringToAscii(text, buffer);
+	const ptr = handleFatalError(() => BinaryenObj["_BinaryenModuleParseWithFeatures"](buffer, features));
+	_free(buffer);
+	return wrapModule(ptr);
+}
+
 export function exit(status: number): void {
 	// Instead of exiting silently on errors, always show an error with a stack trace, for debuggability.
 	if (status !== 0) {

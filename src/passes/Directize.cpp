@@ -112,7 +112,7 @@ private:
   // that is, whether we know a direct call target, or we know it will trap, or
   // if we know nothing.
   CallUtils::IndirectCallInfo getTargetInfo(Expression* target,
-                                            const TableUtils::TableInfo& table,
+                                            const TableUtils::TableInfo& info,
                                             CallIndirect* original) {
     auto* c = target->dynCast<Const>();
     if (!c) {
@@ -121,36 +121,69 @@ private:
 
     Address index = c->value.getUnsigned();
 
-    // Check if index is invalid, or the type is wrong.
-    auto& flatTable = *table.flatTable;
-    if (index >= flatTable.names.size()) {
-      // The index is out of bounds for the initial table's content. This may
-      // trap, but it may also not trap if the table is modified later (if a
-      // function is appended to it).
-      if (!table.mayBeModified()) {
-        return CallUtils::Trap{};
-      } else {
-        // The table may be modified, so it might be appended to. We should only
-        // get here in the case that the initial contents are immutable, or the
-        // table can grow, as otherwise we have nothing to optimize at all.
-        assert(table.initialContentsImmutable || table.hasGrow);
+    // We'll check if we know what is called from the table's initial content,
+    // but we can only do this if the initial contents are immutable, or if
+    // there is no writing to the table at all.
+    if (!info.initialContentsImmutable && info.hasSet) {
+      return CallUtils::Unknown{};
+    }
+
+    auto* table = getModule()->getTable(original->table);
+    Name calledName;
+    auto& flatTable = *info.flatTable;
+    if (index < flatTable.names.size()) {
+      calledName = flatTable.names[index];
+    }
+    if (!calledName) {
+      // We did not see a value there, but the table might have a default
+      // value.
+      if (table->imported()) {
+        // An imported table might have a default value, and we can't tell.
         return CallUtils::Unknown{};
       }
+      if (table->init) {
+        if (index < table->initial) {
+          // This is in bounds, so the default value of the table is called.
+          if (auto* refFunc = table->init->dynCast<RefFunc>()) {
+            calledName = refFunc->func;
+          } else {
+            // There is an initial value, but it is unknown, like a
+            // global.get. We can infer nothing, not even a trap.
+            return CallUtils::Unknown{};
+          }
+        } else {
+          // We are beyond the initial table size, and can't infer anything,
+          // unless we are in the simple case of no growth, in which case we
+          // trap.
+          if (!info.hasGrow) {
+            return CallUtils::Trap{};
+          } else {
+            return CallUtils::Unknown{};
+          }
+        }
+      }
     }
-    auto name = flatTable.names[index];
-    if (!name.is()) {
-      // No segment wrote to this part of the initial contents of the table.
-      // This must trap, as we only get here if we can optimize such cases,
-      // relying on the fact that the table cannot be modified, or at least the
-      // initial contents cannot be.
-      assert(!table.hasSet || table.initialContentsImmutable);
-      return CallUtils::Trap{};
+
+    // If we found no data, and the table init did not change anything, then
+    // we trap.
+    if (!calledName) {
+      // But we must not read a place where grow can write to - we must either
+      // have no grow, or have an index below where grow writes to.
+      if (!info.hasGrow || index < table->initial) {
+        return CallUtils::Trap{};
+      }
+      // Otherwise, give up.
+      return CallUtils::Unknown{};
     }
-    auto* func = getModule()->getFunction(name);
+
+    // We know what is called, but it must have the right type.
+    auto* func = getModule()->getFunction(calledName);
     if (!HeapType::isSubType(func->type.getHeapType(), original->heapType)) {
       return CallUtils::Trap{};
     }
-    return CallUtils::Known{name};
+
+    // We know exactly what is called, and it does not trap.
+    return CallUtils::Known{calledName};
   }
 
   // Create a direct call for a given list of operands, an expression which is

@@ -3795,7 +3795,7 @@
   ;; CHECK-NEXT:     (i32.const 2)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (local.tee $x
+  ;; CHECK-NEXT:   (local.set $x
   ;; CHECK-NEXT:    (if
   ;; CHECK-NEXT:     (local.get $p)
   ;; CHECK-NEXT:     (then
@@ -3858,7 +3858,7 @@
   ;; CHECK-NEXT:      (block $label$4 (result i64)
   ;; CHECK-NEXT:       (block $label$5
   ;; CHECK-NEXT:        (block $label$6
-  ;; CHECK-NEXT:         (local.tee $var$1
+  ;; CHECK-NEXT:         (local.set $var$1
   ;; CHECK-NEXT:          (if (result f64)
   ;; CHECK-NEXT:           (unreachable)
   ;; CHECK-NEXT:           (then
@@ -4055,7 +4055,7 @@
   ;; CHECK-NEXT:    (local.get $0)
   ;; CHECK-NEXT:    (then
   ;; CHECK-NEXT:     (block $label$2
-  ;; CHECK-NEXT:      (local.tee $0
+  ;; CHECK-NEXT:      (local.set $0
   ;; CHECK-NEXT:       (loop $label$5
   ;; CHECK-NEXT:        (unreachable)
   ;; CHECK-NEXT:        (drop
@@ -5193,7 +5193,7 @@
   ;; CHECK-NEXT:   (if
   ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:    (then
-  ;; CHECK-NEXT:     (local.tee $x
+  ;; CHECK-NEXT:     (local.set $x
   ;; CHECK-NEXT:      (unreachable)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )

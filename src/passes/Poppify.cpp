@@ -132,6 +132,7 @@ struct Poppifier : BinaryenIRWriter<Poppifier> {
   void emitScopeEnd(Expression* curr);
   void emitFunctionEnd();
   void emitUnreachable();
+  void emitUnreachableLocalSet(Index i);
   void emitDebugLocation(Expression* curr) {}
 
   // Tuple lowering methods
@@ -315,6 +316,12 @@ void Poppifier::emitUnreachable() {
   // TODO: Try making this a nop
   auto& instrs = scopeStack.back().instrs;
   instrs.push_back(builder.makeUnreachable());
+}
+
+void Poppifier::emitUnreachableLocalSet(Index i) {
+  auto& instrs = scopeStack.back().instrs;
+  instrs.push_back(builder.makeUnreachable());
+  instrs.push_back(builder.makeLocalSet(i, builder.makePop(Type::unreachable)));
 }
 
 void Poppifier::emitTupleExtract(TupleExtract* curr) {

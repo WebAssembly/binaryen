@@ -192,4 +192,21 @@
       )
     )
   )
+
+  ;; CHECK:      (func $nested (type $1) (result v128)
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $nested (result v128)
+    (f32x4.relaxed_min
+      (v128.const i32x4 0x00000000 0x00000000 0x00000000 0x00000000)
+      (f32x4.relaxed_madd
+        (v128.const i32x4 0x00000000 0x00000000 0x00000000 0x00000000)
+        (v128.const i32x4 0x00000000 0x00000000 0x00000000 0x00000000)
+        (v128.const i32x4 0x00000000 0x00000000 0x00000000 0x00000000)
+      )
+    )
+  )
 )

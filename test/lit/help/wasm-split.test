@@ -124,15 +124,6 @@
 ;; CHECK-NEXT:                                        memory created to store profile
 ;; CHECK-NEXT:                                        information.
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --emit-module-names                  [split, multi-split, instrument] Emit
-;; CHECK-NEXT:                                        module names, even if not emitting the
-;; CHECK-NEXT:                                        rest of the names section. Can help
-;; CHECK-NEXT:                                        differentiate the modules in stack
-;; CHECK-NEXT:                                        traces. This option will be removed once
-;; CHECK-NEXT:                                        simpler ways of naming modules are widely
-;; CHECK-NEXT:                                        available. See
-;; CHECK-NEXT:                                        https://bugs.chromium.org/p/v8/issues/detail?id=11808.
-;; CHECK-NEXT:
 ;; CHECK-NEXT:   --initial-table                      [split, instrument] A hack to ensure the
 ;; CHECK-NEXT:                                        split and instrumented modules have the
 ;; CHECK-NEXT:                                        same table size when using Emscripten's
@@ -159,9 +150,6 @@
 ;; CHECK-NEXT:   --output,-o                          [instrument, merge-profiles, multi-split]
 ;; CHECK-NEXT:                                        Output file.
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --unescape,-u                        Un-escape function names (in
-;; CHECK-NEXT:                                        print-profile output)
-;; CHECK-NEXT:
 ;; CHECK-NEXT:   --verbose,-v                         Verbose output mode. Prints the functions
 ;; CHECK-NEXT:                                        that will be kept and split out when
 ;; CHECK-NEXT:                                        splitting a module.
@@ -181,6 +169,9 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --experimental-poppy                 Parse wast files as Poppy IR for testing
 ;; CHECK-NEXT:                                        purposes.
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --emit-module-names                  Emit module names, even if not emitting
+;; CHECK-NEXT:                                        the rest of the names section
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --enable-sign-ext                    Enable sign extension operations
 ;; CHECK-NEXT:

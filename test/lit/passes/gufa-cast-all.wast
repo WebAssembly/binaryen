@@ -127,7 +127,7 @@
 
   ;; CHECK:      (func $unreachable (type $none_=>_none)
   ;; CHECK-NEXT:  (local $a (ref $A))
-  ;; CHECK-NEXT:  (local.tee $a
+  ;; CHECK-NEXT:  (local.set $a
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop

@@ -463,6 +463,8 @@ enum class Visibility { Unknown, Public, Private };
 
 struct HeapTypeInfo {
   Index useCount = 0;
+  Index controlFlowUseCount = 0;
+  Index unreferencedFuncUseCount = 0;
   Visibility visibility = Visibility::Unknown;
 };
 
@@ -479,7 +481,8 @@ std::vector<HeapType> collectHeapTypes(Module& wasm);
 // Get the types directly made public by imported or exported module items. For
 // example, the types of imported or exported globals or functions, but not
 // other types reachable from those types. Includes abstract heap types.
-std::vector<HeapType> getExposedPublicHeapTypes(Module& wasm);
+std::vector<std::pair<HeapType, Exactness>>
+getExposedPublicHeapTypes(Module& wasm);
 
 // Collect all the defined heap types visible on the module boundary that cannot
 // be changed, e.g. the defined types from getExposedPublicHeapTypes and those
