@@ -1,6 +1,12 @@
 import {
 	BinaryenObj,
 } from "../../-pre.ts";
+import {
+	PTR,
+} from "../../-utils.ts";
+import type {
+	ModuleRef,
+} from "../../constants.ts";
 
 
 
@@ -34,4 +40,44 @@ export enum Feature {
 	WideArithmetic = BinaryenObj["_BinaryenFeatureWideArithmetic"](),
 	CompactImports = BinaryenObj["_BinaryenFeatureCompactImports"](),
 	All = BinaryenObj["_BinaryenFeatureAll"](),
+}
+
+
+
+/**
+ * A WASM module.
+ *
+ * `Module` itself is:
+ * - an instantiable class (via `new Module()`)
+ * - a namespace containing the following members, which themselves are classes (see related documentation):
+ * 	- {@link Module.Tag}
+ * 	- {@link Module.Global}
+ * 	- {@link Module.Memory}
+ * 	- {@link Module.Table}
+ * 	- {@link Module.Function}
+ * 	- {@link Module.DataSegment}
+ * 	- {@link Module.ElementSegment}
+ * 	- {@link Module.Import}
+ * 	- {@link Module.Export}
+ *
+ * Each instance of `Module`:
+ * - is a WASM module with module manipulation methods (`.emitText()`, `.validate()`, etc.).
+ * - is an individual namespace containing mixins, each with its own component manipulation methods (`.tags.add()`, `.globals.get()`, etc):
+ * 	- {@link Module#tags}
+ * 	- {@link Module#globals}
+ * 	- {@link Module#memories}
+ * 	- {@link Module#tables}
+ * 	- {@link Module#functions}
+ * 	- {@link Module#dataSegments}
+ * 	- {@link Module#elementSegments}
+ * 	- {@link Module#imports}
+ * 	- {@link Module#exports}
+ * - has a property `.wasm`, a namespace for creating expressions in the module (`.wasm.nop()`, `.wasm.i32.add()`, etc.)
+ */
+export class Module {
+	/**
+	 * The underlying C-API pointer of the wrapped module.
+	 * @hidden
+	 */
+	readonly [PTR]: ModuleRef = BinaryenObj["_BinaryenModuleCreate"]();
 }

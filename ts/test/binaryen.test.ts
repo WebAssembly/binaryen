@@ -96,12 +96,14 @@ suite("binaryen", () => {
 		*/
 
 		// classes
-		/*
 		assert.strictEqual(typeof binaryen.Module, "function");
+		/*
 		assert.strictEqual(typeof binaryen.TypeBuilder, "function");
 		assert.strictEqual(typeof binaryen.ExpressionRunner, "function");
 		assert.strictEqual(typeof binaryen.Relooper, "function");
+		*/
 		assert.ok(binaryen.Module.toString().startsWith("class"));
+		/*
 		assert.ok(binaryen.TypeBuilder.toString().startsWith("class"));
 		assert.ok(binaryen.ExpressionRunner.toString().startsWith("class"));
 		assert.ok(binaryen.Relooper.toString().startsWith("class"));
