@@ -1,5 +1,6 @@
 /** @module binaryen.ts */
 export * from "./constants.ts";
+export * from "./globals.ts";
 export {
 	Feature,
 	Module,

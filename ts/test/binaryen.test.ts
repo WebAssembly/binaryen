@@ -68,11 +68,11 @@ suite("binaryen", () => {
 		assert.strictEqual(typeof binaryen.ExpressionRunnerFlag, "object");
 
 		// functions
-		/*
 		assert.strictEqual(typeof binaryen.emitText, "function");
 		assert.strictEqual(typeof binaryen.readBinary, "function");
 		assert.strictEqual(typeof binaryen.readBinaryWithFeatures, "function");
 		assert.strictEqual(typeof binaryen.parseText, "function");
+		assert.strictEqual(typeof binaryen.parseTextWithFeatures, "function");
 		assert.strictEqual(typeof binaryen.exit, "function");
 		assert.strictEqual(typeof binaryen.createType, "function");
 		assert.strictEqual(typeof binaryen.expandType, "function");
@@ -80,11 +80,14 @@ suite("binaryen", () => {
 		assert.strictEqual(typeof binaryen.getHeapType, "function");
 		assert.strictEqual(typeof binaryen.getExpressionId, "function");
 		assert.strictEqual(typeof binaryen.getExpressionType, "function");
+		/*
 		assert.strictEqual(typeof binaryen.getExpressionInfo, "function");
+		*/
 		assert.ok(binaryen.emitText.toString().startsWith("function"));
 		assert.ok(binaryen.readBinary.toString().startsWith("function"));
 		assert.ok(binaryen.readBinaryWithFeatures.toString().startsWith("function"));
 		assert.ok(binaryen.parseText.toString().startsWith("function"));
+		assert.ok(binaryen.parseTextWithFeatures.toString().startsWith("function"));
 		assert.ok(binaryen.exit.toString().startsWith("function"));
 		assert.ok(binaryen.createType.toString().startsWith("function"));
 		assert.ok(binaryen.expandType.toString().startsWith("function"));
@@ -92,6 +95,7 @@ suite("binaryen", () => {
 		assert.ok(binaryen.getHeapType.toString().startsWith("function"));
 		assert.ok(binaryen.getExpressionId.toString().startsWith("function"));
 		assert.ok(binaryen.getExpressionType.toString().startsWith("function"));
+		/*
 		assert.ok(binaryen.getExpressionInfo.toString().startsWith("function"));
 		*/
 
@@ -145,7 +149,6 @@ suite("binaryen", () => {
 		assert.strictEqual(binaryen.i16, 2);
 		assert.strictEqual(binaryen.stringref, 0x52);
 
-		/*
 		const i32_pair = binaryen.createType([binaryen.i32, binaryen.i32]);
 		const duplicate_pair = binaryen.createType([binaryen.i32, binaryen.i32]);
 		assert.strictEqual(binaryen.expandType(i32_pair).toString(), "2,2");
@@ -153,7 +156,6 @@ suite("binaryen", () => {
 		assert.strictEqual(i32_pair, duplicate_pair);
 
 		assert.strictEqual(binaryen.expandType(binaryen.createType([binaryen.f32, binaryen.f32])).toString(), "4,4");
-		*/
 	});
 
 
