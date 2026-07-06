@@ -965,6 +965,8 @@ size_t HeapType::getDepth() const {
           break;
         case HeapType::eq:
         case HeapType::string:
+          depth++;
+          break;
         case HeapType::i31:
         case HeapType::struct_:
         case HeapType::array:
