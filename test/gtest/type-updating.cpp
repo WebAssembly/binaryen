@@ -41,6 +41,10 @@ protected:
           (type $C (func))
           (type $D (func))
         )
+        (func $f_a (type $A))
+        (func $f_b (type $B))
+        (func $f_c (type $C))
+        (func $f_d (type $D))
       )
     )wasm";
 
@@ -92,10 +96,7 @@ TEST_F(IndirectCallEffectsTest, SrcHasNoEffects) {
     updateEffects(/*oldEffects=*/{{"B", effectsB}}, /*typeMap=*/{{"A", "B"}});
 
   EXPECT_FALSE(merged.contains("A"));
-  ASSERT_TRUE(merged.contains("B"));
-
-  // Pointer comparison
-  EXPECT_EQ(merged.at("B"), effectsB);
+  EXPECT_FALSE(merged.contains("B"));
 }
 
 TEST_F(IndirectCallEffectsTest, DestHasNoEffects) {
@@ -106,10 +107,7 @@ TEST_F(IndirectCallEffectsTest, DestHasNoEffects) {
     updateEffects(/*oldEffects=*/{{"A", effectsA}}, /*typeMap=*/{{"A", "B"}});
 
   EXPECT_FALSE(merged.contains("A"));
-  ASSERT_TRUE(merged.contains("B"));
-
-  // Pointer comparison
-  EXPECT_EQ(merged.at("B"), effectsA);
+  EXPECT_FALSE(merged.contains("B"));
 }
 
 TEST_F(IndirectCallEffectsTest, BothHaveNoEffects) {
@@ -134,30 +132,6 @@ TEST_F(IndirectCallEffectsTest, BothHaveEffects) {
   EXPECT_TRUE(merged.at("B")->writesMemory);
 }
 
-TEST_F(IndirectCallEffectsTest, SrcHasNullptrEffects) {
-  auto effectsB = std::make_shared<EffectAnalyzer>(options, wasm);
-  effectsB->writesMemory = true;
-
-  auto merged = updateEffects(/*oldEffects=*/{{"A", nullptr}, {"B", effectsB}},
-                              /*typeMap=*/{{"A", "B"}});
-
-  EXPECT_FALSE(merged.contains("A"));
-  ASSERT_TRUE(merged.contains("B"));
-  EXPECT_EQ(merged.at("B"), nullptr);
-}
-
-TEST_F(IndirectCallEffectsTest, DestHasNullptrEffects) {
-  auto effectsA = std::make_shared<EffectAnalyzer>(options, wasm);
-  effectsA->calls = true;
-
-  auto merged = updateEffects(/*oldEffects=*/{{"A", effectsA}, {"B", nullptr}},
-                              /*typeMap=*/{{"A", "B"}});
-
-  EXPECT_FALSE(merged.contains("A"));
-  ASSERT_TRUE(merged.contains("B"));
-  EXPECT_EQ(merged.at("B"), nullptr);
-}
-
 TEST_F(IndirectCallEffectsTest, MergeThreeTypes) {
   auto effectsA = std::make_shared<EffectAnalyzer>(options, wasm);
   effectsA->calls = true;
@@ -173,8 +147,5 @@ TEST_F(IndirectCallEffectsTest, MergeThreeTypes) {
   EXPECT_FALSE(merged.contains("A"));
   EXPECT_FALSE(merged.contains("B"));
   EXPECT_FALSE(merged.contains("C"));
-  ASSERT_TRUE(merged.contains("D"));
-  EXPECT_TRUE(merged.at("D")->calls);
-  EXPECT_TRUE(merged.at("D")->writesMemory);
-  EXPECT_TRUE(merged.at("D")->throws_);
+  EXPECT_FALSE(merged.contains("D"));
 }

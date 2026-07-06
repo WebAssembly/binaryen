@@ -187,7 +187,7 @@ struct LinearExecutionWalker : public PostWalker<SubType, VisitorType> {
 
           auto* effects = find_or_null(self->getModule()->indirectCallEffects,
                                        callRef->target->type.getHeapType());
-          if (!effects || !*effects) {
+          if (!effects) {
             return false;
           }
           return !(*effects)->throws_;
@@ -203,7 +203,7 @@ struct LinearExecutionWalker : public PostWalker<SubType, VisitorType> {
         if (self->getModule()) {
           if (auto* effects = find_or_null(
                 self->getModule()->indirectCallEffects, callIndirect->heapType);
-              effects && *effects) {
+              effects) {
             refutesThrowEffect = !(*effects)->throws_;
           }
         }

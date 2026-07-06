@@ -435,9 +435,9 @@ void propagateEffects(
     // Assign each function's effects to its CC effects.
     for (auto node : cc) {
       std::visit(overloaded{[&](HeapType type) {
-                              // Assign the key even if ccEffects is nullptr.
-                              // See the comment in Module::indirectCallEffects.
-                              indirectCallEffects[type] = ccEffects;
+                              if (ccEffects) {
+                                indirectCallEffects[type] = ccEffects;
+                              }
                             },
                             [&](Function* f) { f->effects = ccEffects; }},
                  node);

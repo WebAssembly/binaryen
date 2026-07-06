@@ -2750,12 +2750,12 @@ public:
   // exists to a function, the data can be out of date (no effort is made to
   // clean up the data if e.g. all indirect calls to a function are removed).
   //
-  // Null values are possible in the case that a types's effects are unknown.
-  // A null value is functionally the same as the key not being present at all
-  // in the map, but we distinguish the two for correctness when rewriting
-  // types. Suppose we rewrite A -> B where B is a brand new type. Then B should
-  // inherit A's effects. OTOH if B is an existing type with *explicitly*
-  // unknown effects (present with nullptr), then B remains explicitly unknown.
+  // A missing key in the map means that the type's effects are explicitly
+  // unknown. When rewriting types, we distinguish new types from existing
+  // types by checking whether they existed before the update. If a new type
+  // is created, it inherits the effects of the old types that map to it. If
+  // an existing type with unknown effects is mapped, the resulting type will
+  // also have explicitly unknown effects.
   // TODO: Account for exactness here.
   std::unordered_map<HeapType, std::shared_ptr<const EffectAnalyzer>>
     indirectCallEffects;

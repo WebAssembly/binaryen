@@ -30,56 +30,46 @@ namespace {
 
 std::unordered_map<HeapType, std::shared_ptr<const EffectAnalyzer>>
 updateIndirectCallEffects(const Module& wasm,
+                          const std::vector<HeapType>& oldTypes,
                           const GlobalTypeRewriter::TypeMap& oldToNewTypes) {
   std::unordered_map<HeapType, std::shared_ptr<const EffectAnalyzer>>
     newTypeEffects;
 
-  ModuleUtils::iterTypes(wasm, [&](HeapType oldType) {
+  std::unordered_set<HeapType> unknownNewTypes;
+
+  for (HeapType oldType : oldTypes) {
     HeapType newType;
     {
       auto it = oldToNewTypes.find(oldType);
       if (it == oldToNewTypes.end()) {
-        // This type wasn't renamed. Copy over the existing entry if present.
-        if (const auto* oldEffects =
-              find_or_null(wasm.indirectCallEffects, oldType)) {
-          newTypeEffects[oldType] = *oldEffects;
-        }
-        return;
+        newType = oldType;
+      } else {
+        newType = it->second;
       }
-      newType = it->second;
+    }
+
+    if (unknownNewTypes.count(newType)) {
+      continue;
     }
 
     const std::shared_ptr<const EffectAnalyzer>* oldEffects =
       find_or_null(wasm.indirectCallEffects, oldType);
 
     if (!oldEffects) {
-      // We never knew the effects of this (either GlobalEffects never ran or a
-      // new type was created without copying over effects). Nothing to update.
-      return;
+      // oldType is an existing type and has no entry, which means its
+      // effects are explicitly UNKNOWN.
+      unknownNewTypes.insert(newType);
+      newTypeEffects.erase(newType);
+      continue;
     }
 
-    auto [it, inserted] = newTypeEffects.emplace(newType, nullptr);
-    auto& newEffects = it->second;
-
-    if (!inserted && !newEffects) {
-      // Effects of the new type were already unknown. Nothing to do.
-      return;
-    }
-
-    if (!*oldEffects) {
-      // oldType is explicitly unknown. Set the new effects to unknown.
-      newEffects = nullptr;
-      return;
-    }
-
-    if (inserted) {
-      newEffects = *oldEffects;
-    } else {
-      auto merged = std::make_shared<EffectAnalyzer>(*newEffects);
+    auto [it, inserted] = newTypeEffects.emplace(newType, *oldEffects);
+    if (!inserted) {
+      auto merged = std::make_shared<EffectAnalyzer>(*it->second);
       merged->mergeIn(**oldEffects);
-      newEffects = std::move(merged);
+      it->second = std::move(merged);
     }
-  });
+  }
 
   return newTypeEffects;
 }
@@ -272,6 +262,15 @@ GlobalTypeRewriter::rebuildTypes(std::vector<HeapType> types) {
 }
 
 void GlobalTypeRewriter::mapTypes(const TypeMap& oldToNewTypes) {
+  if (!wasm.indirectCallEffects.empty()) {
+    // Update indirect call effects per type.
+    // When A is rewritten to B, B inherits the effects of A and A loses its
+    // effects.
+    std::vector<HeapType> oldTypes = ModuleUtils::collectHeapTypes(wasm);
+    wasm.indirectCallEffects =
+      updateIndirectCallEffects(wasm, oldTypes, oldToNewTypes);
+  }
+
   // Replace all the old types in the module with the new ones.
   struct CodeUpdater
     : public WalkerPass<
@@ -384,13 +383,6 @@ void GlobalTypeRewriter::mapTypes(const TypeMap& oldToNewTypes) {
   }
   for (auto& tag : wasm.tags) {
     tag->type = updater.getNew(tag->type);
-  }
-
-  // Update indirect call effects per type.
-  // When A is rewritten to B, B inherits the effects of A and A loses its
-  // effects.
-  if (!wasm.indirectCallEffects.empty()) {
-    wasm.indirectCallEffects = updateIndirectCallEffects(wasm, oldToNewTypes);
   }
 }
 
