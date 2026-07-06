@@ -22,8 +22,8 @@
 
   ;; OPEN_WORLD:      (table $table 10 funcref)
   (table $table 10 funcref)
-  ;; CHECK:      (elem $table (i32.const 0) $foo-in-table $bar)
-  ;; OPEN_WORLD:      (elem $table (i32.const 0) $foo-in-table $bar)
+  ;; CHECK:      (elem $table (i32.const 0) $foo-in-table)
+  ;; OPEN_WORLD:      (elem $table (i32.const 0) $foo-in-table)
   (elem $table (i32.const 0) $foo-in-table $bar)
 
   ;; CHECK:      (elem declare func $foo-not-in-table)
@@ -94,15 +94,10 @@
     (drop (i32.const 20))
   )
 
-  ;; CHECK:      (func $bar (type $bar)
-  ;; CHECK-NEXT:  (unreachable)
-  ;; CHECK-NEXT: )
-  ;; OPEN_WORLD:      (func $bar (type $bar)
-  ;; OPEN_WORLD-NEXT:  (unreachable)
-  ;; OPEN_WORLD-NEXT: )
   (func $bar (type $bar)
-    ;; This can be made unreachable: its type is not even called, even though it
-    ;; is in the table.
+    ;; This can be removed entirely: its type is not even called, and it is at
+    ;; the edge of the table's element segment, so it can be trimmed from
+    ;; there.
     (drop (i32.const 30))
   )
 )

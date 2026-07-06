@@ -19,34 +19,33 @@
  ;; CHECK:      (type $A (sub (func)))
  (type $A (sub (func)))
 
+ ;; CHECK:      (type $subA (sub $A (func)))
+
+ ;; CHECK:      (type $2 (func))
+
  ;; CHECK:      (type $B (sub (func (param f64))))
  (type $B (sub (func (param f64))))
 
- ;; CHECK:      (type $subA (sub $A (func)))
  (type $subA (sub $A (func)))
-
- ;; CHECK:      (type $3 (func (param f32)))
-
- ;; CHECK:      (type $4 (func))
 
  ;; CHECK:      (table $t1 60 60 funcref)
  (table $t1 60 60 funcref)
 
  (table $t2 60 60 funcref)
 
- ;; CHECK:      (elem $t1-withA (i32.const 0) $A1 $B1 $subA1 $C1)
+ ;; CHECK:      (elem $t1-withA (i32.const 0) $A1 $B1 $subA1)
  (elem $t1-withA (table $t1) (i32.const 0) func $A1 $B1 $subA1 $C1)
 
  (elem $t1-noA (table $t1) (i32.const 10) func $B2 $C2)
 
- ;; CHECK:      (elem $t1-withSubA (i32.const 20) $B3 $subA3 $C3)
+ ;; CHECK:      (elem $t1-withSubA (i32.const 21) $subA3)
  (elem $t1-withSubA (table $t1) (i32.const 20) func $B3 $subA3 $C3)
 
  (elem $t2-withA (table $t2) (i32.const 0) func $A2)
 
  ;; CHECK:      (export "export" (func $export))
 
- ;; CHECK:      (func $export (type $4)
+ ;; CHECK:      (func $export (type $2)
  ;; CHECK-NEXT:  (call_indirect $t1 (type $A)
  ;; CHECK-NEXT:   (i32.const -1)
  ;; CHECK-NEXT:  )
@@ -84,12 +83,9 @@
   (drop (i32.const 30))
  )
 
- ;; CHECK:      (func $C1 (type $3) (param $p f32)
- ;; CHECK-NEXT:  (unreachable)
- ;; CHECK-NEXT: )
  (func $C1 (param $p f32)
-  ;; We can empty this out, as while a segment references it, no call_indirect
-  ;; exists.
+  ;; We can remove this entirely: no call_indirect of its type exists, and it
+  ;; is at the edge of its segment, so it can be trimmed from there.
   (drop (i32.const 40))
  )
 
@@ -103,12 +99,10 @@
   (drop (i32.const 60))
  )
 
- ;; CHECK:      (func $B3 (type $B) (param $p f64)
- ;; CHECK-NEXT:  (unreachable)
- ;; CHECK-NEXT: )
  (func $B3 (type $B) (param $p f64)
-  ;; We can empty this out, as while a segment references it, no call_indirect
-  ;; exists.
+  ;; We can remove this entirely: no call_indirect of its type exists, and it
+  ;; is at the edge of its segment, so it can be trimmed from there (bumping
+  ;; the segment's offset).
   (drop (i32.const 70))
  )
 
@@ -121,12 +115,10 @@
   (drop (i32.const 80))
  )
 
- ;; CHECK:      (func $C3 (type $3) (param $p f32)
- ;; CHECK-NEXT:  (unreachable)
- ;; CHECK-NEXT: )
  (func $C3 (param $p f32)
-  ;; We can empty this out, as while a segment references it, no call_indirect
-  ;; exists. We can also remove the thing it calls.
+  ;; We can remove this entirely: no call_indirect of its type exists, and it
+  ;; is at the edge of its segment, so it can be trimmed from there. We can
+  ;; also remove the thing it calls.
   (drop (call $C3-called))
  )
 
@@ -360,7 +352,7 @@
  ;; CHECK:      (table $t 60 60 funcref)
  (table $t 60 60 funcref)
 
- ;; CHECK:      (elem $elem (i32.const 0) $A $B $C $D)
+ ;; CHECK:      (elem $elem (i32.const 0) $A $B $C)
  (elem $elem (table $t) (i32.const 0) func $A $B $C $D)
 
  ;; CHECK:      (export "export" (func $export))
@@ -408,9 +400,6 @@
   (drop (i32.const 30))
  )
 
- ;; CHECK:      (func $D (type $D)
- ;; CHECK-NEXT:  (unreachable)
- ;; CHECK-NEXT: )
  (func $D (type $D)
   ;; Add calls to all types, to check unreached code does not confuse us.
   (call_indirect $t (type $A)

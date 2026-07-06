@@ -801,13 +801,20 @@ struct Analyzer {
         addReferences(global->init);
       }
     } else if (kind == ModuleElementKind::ElementSegment) {
-      // TODO: We could empty out parts of the segment we don't need.
       auto* segment = module->getElementSegment(value);
       if (segment->offset) {
         addReferences(segment->offset);
       }
       for (auto* item : segment->data) {
-        addReferences(item);
+        // Do not add references for items that are bare RefFuncs quite yet:
+        // after the analysis we may be able to trim some of them from the
+        // segment entirely, if they can never be called (see
+        // trimElementSegments), and a reference here would keep their
+        // functions around. The ones that remain in the segment are given
+        // their references there.
+        if (!item->is<RefFunc>()) {
+          addReferences(item);
+        }
       }
     } else if (kind == ModuleElementKind::Table) {
       auto* table = module->getTable(value);
@@ -830,6 +837,151 @@ struct RemoveUnusedModuleElements : public Pass {
 
   RemoveUnusedModuleElements(bool rootAllFunctions)
     : rootAllFunctions(rootAllFunctions) {}
+
+  // Trim never-called functions from the edges of element segments, which
+  // allows those functions to be removed entirely. An entry in a table only
+  // matters if some call_indirect can actually call it (with a matching
+  // type), or if the table can be inspected in some other way (table.get,
+  // exports, etc. - any of which marks the entire table as used). When an
+  // entry on the edge of a segment can never be called we can simply not
+  // write it: the slot is then null, and a call_indirect reaching it traps on
+  // the null instead of on the signature mismatch, a change we allow (we do
+  // not distinguish among traps).
+  //
+  // We only trim the edges, which keeps the segment contiguous: removing an
+  // interior entry would require writing a null in its place, which would
+  // force the less compact expression-based binary encoding for the entire
+  // segment.
+  // TODO: null out interior entries when the segment already uses the
+  //       expression encoding, or split segments, with a cost model like
+  //       MemoryPacking's.
+  //
+  // Returns the segments that have become empty, which the caller can remove.
+  std::unordered_set<Name> trimElementSegments(Module* module,
+                                               Analyzer& analyzer) {
+    std::unordered_set<Name> emptied;
+
+    // The functions in each table that some used call_indirect could actually
+    // call successfully.
+    std::unordered_map<Name, std::unordered_set<Name>> tableCallable;
+    for (auto& [table, type] : analyzer.usedIndirectCalls) {
+      auto& callable = tableCallable[table];
+      auto& typeFuncs = analyzer.flatTableInfoMap[table].typeFuncs[type];
+      callable.insert(typeFuncs.begin(), typeFuncs.end());
+    }
+
+    // Find the tables we can trim segments of, and the (constant) ranges
+    // their active segments write to, so we can check for overlaps.
+    std::unordered_map<Name, std::vector<std::pair<uint64_t, uint64_t>>>
+      tableRanges;
+    std::unordered_set<Name> ineligibleTables;
+    for (auto& table : module->tables) {
+      // A used table can be inspected in ways that see the difference between
+      // a never-called function and a null (e.g. table.get). Note that
+      // exported and imported tables always end up used. A table with an
+      // initial value is also not eligible: not writing an entry would expose
+      // that value in the slot, rather than a null.
+      if (analyzer.used.contains({ModuleElementKind::Table, table->name}) ||
+          table->init) {
+        ineligibleTables.insert(table->name);
+      }
+    }
+    for (auto& segment : module->elementSegments) {
+      if (!segment->table.is()) {
+        // Passive segments have no fixed position; do not trim them.
+        continue;
+      }
+      if (auto* c = segment->offset->dynCast<Const>()) {
+        auto start = c->value.getUnsigned();
+        tableRanges[segment->table].emplace_back(start,
+                                                 start + segment->data.size());
+      } else {
+        // We cannot tell what this segment overlaps, so do not trim anything
+        // in this table.
+        ineligibleTables.insert(segment->table);
+      }
+    }
+
+    for (auto& segment : module->elementSegments) {
+      if (!segment->table.is() || ineligibleTables.count(segment->table)) {
+        continue;
+      }
+      ModuleElement elem = {ModuleElementKind::ElementSegment, segment->name};
+      if (analyzer.used.contains(elem) || !analyzer.referenced.contains(elem)) {
+        // Either every entry may be needed, or the entire segment will be
+        // removed anyhow.
+        continue;
+      }
+      auto* c = segment->offset->cast<Const>();
+      uint64_t start = c->value.getUnsigned();
+      uint64_t end;
+      auto* table = module->getTable(segment->table);
+      if (std::ckd_add(&end, start, uint64_t(segment->data.size())) ||
+          end > table->initial * Table::kPageSize) {
+        // This segment may trap at instantiation, and trimming it would
+        // change the size that the trap depends on.
+        continue;
+      }
+      // Check for overlaps with the other active segments of this table: a
+      // trimmed slot must remain null, and not be observable through the
+      // ordering of writes.
+      bool overlaps = false;
+      for (auto& [otherStart, otherEnd] : tableRanges[segment->table]) {
+        if (otherStart == start && otherEnd == end) {
+          // Skip ourselves. (An identical other segment is an overlap we
+          // must detect, but then it also sees us as an overlap, either way
+          // |overlaps| is set.)
+          continue;
+        }
+        if (otherStart < end && start < otherEnd) {
+          overlaps = true;
+          break;
+        }
+      }
+      if (overlaps) {
+        continue;
+      }
+
+      // An entry is dead if writing it is indistinguishable from leaving the
+      // slot null.
+      auto& callable = tableCallable[segment->table];
+      auto isDead = [&](Expression* item) {
+        if (item->is<RefNull>()) {
+          return true;
+        }
+        if (auto* refFunc = item->dynCast<RefFunc>()) {
+          return !callable.count(refFunc->func);
+        }
+        return false;
+      };
+
+      auto& data = segment->data;
+      size_t firstLive = 0;
+      size_t liveEnd = data.size();
+      while (liveEnd > firstLive && isDead(data[liveEnd - 1])) {
+        liveEnd--;
+      }
+      while (firstLive < liveEnd && isDead(data[firstLive])) {
+        firstLive++;
+      }
+      if (firstLive == liveEnd) {
+        // Nothing here can be called; remove the segment entirely. (It is in
+        // bounds, so no trap is lost.)
+        emptied.insert(segment->name);
+        continue;
+      }
+      data.erase(data.begin() + liveEnd, data.end());
+      if (firstLive > 0) {
+        data.erase(data.begin(), data.begin() + firstLive);
+        // The segment now begins later.
+        c->value = c->value.type == Type::i64
+                     ? Literal(int64_t(start + firstLive))
+                     : Literal(int32_t(start + firstLive));
+      }
+    }
+
+    return emptied;
+  }
 
   void run(Module* module) override {
     prepare(module);
@@ -949,6 +1101,28 @@ struct RemoveUnusedModuleElements : public Pass {
     auto& options = getPassOptions();
     Analyzer analyzer(module, options, roots);
 
+    // Trim never-called functions from the edges of element segments. We do
+    // this before deciding what to remove, so that trimmed functions can be
+    // removed entirely.
+    auto emptiedSegments = trimElementSegments(module, analyzer);
+
+    // The analysis deferred references for functions appearing directly in
+    // element segments that are only referenced (see the comment in
+    // |reference|); now that trimming is done, reference the ones that
+    // remain.
+    for (auto& segment : module->elementSegments) {
+      ModuleElement elem = {ModuleElementKind::ElementSegment, segment->name};
+      if (emptiedSegments.count(segment->name) ||
+          analyzer.used.contains(elem) || !analyzer.referenced.contains(elem)) {
+        continue;
+      }
+      for (auto* item : segment->data) {
+        if (auto* refFunc = item->dynCast<RefFunc>()) {
+          analyzer.reference({ModuleElementKind::Function, refFunc->func});
+        }
+      }
+    }
+
     // Remove unneeded elements.
     auto needed = [&](ModuleElement element) {
       // We need to emit something in the output if it has either a reference or
@@ -993,7 +1167,8 @@ struct RemoveUnusedModuleElements : public Pass {
       return !needed(ModuleElement(ModuleElementKind::DataSegment, curr->name));
     });
     module->removeElementSegments([&](ElementSegment* curr) {
-      return !needed({ModuleElementKind::ElementSegment, curr->name});
+      return emptiedSegments.count(curr->name) ||
+             !needed({ModuleElementKind::ElementSegment, curr->name});
     });
     // TODO: After removing elements, we may be able to remove more things, and
     //       should continue to work. (For example, after removing a reference
