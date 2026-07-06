@@ -71,3 +71,41 @@
 ;; CHECK:      (data $1 (i32.const 1024) "\00")
 
 ;; CHECK:      (data $2 (i32.const 65535) "yy")
+(module
+ ;; a segment with a non-constant offset (here an imported global, as in
+ ;; dynamic linking) prevents any reasoning about overlap or bounds when
+ ;; there are multiple segments: we cannot tell what it tramples or whether
+ ;; it traps, so nothing is optimized and the zero is kept.
+ ;; CHECK:      (import "env" "memory" (memory $0 1 1))
+ (import "env" "memory" (memory $0 1 1))
+
+ ;; CHECK:      (import "env" "offset" (global $offset i32))
+ (import "env" "offset" (global $offset i32))
+
+ (data (i32.const 1024) "x")
+ (data (global.get $offset) "\00")
+)
+;; CHECK:      (data $0 (i32.const 1024) "x")
+
+;; CHECK:      (data $1 (global.get $offset) "\00")
+(module
+ ;; a memory64 memory with the maximal declared minimum size (2^48 pages):
+ ;; the size in bytes does not fit in 64 bits, but the in-bounds check
+ ;; compares page counts, so the overlapping segments are still optimized.
+ ;; CHECK:      (import "env" "memory" (memory $0 i64 281474976710656 281474976710656))
+ (import "env" "memory" (memory $0 i64 281474976710656 281474976710656))
+
+ (data (i64.const 1024) "x")
+ (data (i64.const 1024) "\00")
+)
+(module
+ ;; a memory64 segment whose offset does not fit in 32 bits and is out of
+ ;; bounds of the one-page memory: it traps during instantiation, so its
+ ;; zeros must not be removed. (This used to truncate the offset to 32 bits,
+ ;; conclude the segment was in bounds, and remove the trap.)
+ ;; CHECK:      (import "env" "memory" (memory $0 i64 1 1))
+ (import "env" "memory" (memory $0 i64 1 1))
+
+ (data (i64.const 4294968320) "\00\00")
+)
+;; CHECK:      (data $0 (i64.const 4294968321) "\00")

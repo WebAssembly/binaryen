@@ -195,6 +195,24 @@ void MemoryPacking::run(Module* module) {
   }
 }
 
+// Whether [offset, offset + size) provably fits in the declared minimum size
+// of the memory, so that writing the segment cannot trap. Compares page
+// counts rather than byte sizes, as the byte size of a maximal memory64
+// (2^48 pages) does not fit in 64 bits.
+static bool provablyInBounds(const Memory& memory,
+                             uint64_t offset,
+                             uint64_t size) {
+  uint64_t end;
+  if (std::ckd_add(&end, offset, size)) {
+    return false;
+  }
+  uint64_t endPages = end >> memory.pageSizeLog2;
+  if (end & (memory.pageSize() - 1)) {
+    endPages++;
+  }
+  return endPages <= memory.initial;
+}
+
 bool MemoryPacking::canOptimize(
   std::vector<std::unique_ptr<Memory>>& memories,
   std::vector<std::unique_ptr<DataSegment>>& dataSegments) {
@@ -266,18 +284,16 @@ bool MemoryPacking::canOptimize(
         //       segment, to be provably in-bounds, as then no trap can occur
         //       between the trampled write and the trampling one.
         if (memory->imported()) {
-          uint64_t memorySize = uint64_t(memory->initial)
-                                << memory->pageSizeLog2;
           for (auto& seg : dataSegments) {
-            uint64_t end;
             if (seg->isActive() &&
-                (std::ckd_add(&end,
-                              seg->offset->cast<Const>()->value.getUnsigned(),
-                              uint64_t(seg->data.size())) ||
-                 end > memorySize)) {
+                !provablyInBounds(
+                  *memory,
+                  seg->offset->cast<Const>()->value.getUnsigned(),
+                  seg->data.size())) {
               std::cerr
-                << "warning: active memory segments have overlap, which "
-                << "prevents some optimizations.\n";
+                << "warning: active memory segments overlap, and some may "
+                << "be out of bounds of the imported memory's declared "
+                << "minimum size, which prevents some optimizations.\n";
               return false;
             }
           }
@@ -399,12 +415,8 @@ void MemoryPacking::calculateRanges(Module* module,
     // Check if we can rule out a trap by it being in bounds.
     if (auto* c = segment->offset->dynCast<Const>()) {
       auto* memory = module->getMemory(segment->memory);
-      auto memorySize = memory->initial << memory->pageSizeLog2;
-      Index start = c->value.getUnsigned();
-      Index size = segment->data.size();
-      Index end;
-      if (!std::ckd_add(&end, start, size) && end <= memorySize) {
-        // This is in bounds.
+      if (provablyInBounds(
+            *memory, c->value.getUnsigned(), segment->data.size())) {
         preserveTrap = false;
       }
     }
