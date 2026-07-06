@@ -127,11 +127,15 @@
 
 ;; Overwrite the first segment's function with a null. The null must be kept
 ;; around, so we trap - if traps are possible. As a result, elem $second is
-;; removed in TNH, but not otherwise.
+;; removed in TNH, but not otherwise. elem $third, on the other hand, can be
+;; removed in both cases, as it contains no nulls, only a function of another
+;; type.
 (module
   ;; CHECK:      (type $func (func))
   ;; TNH__:      (type $func (func))
   (type $func (func))
+
+  (type $other (func (result i32)))
 
   ;; CHECK:      (table $table 6 6 funcref)
   ;; TNH__:      (table $table 6 6 funcref)
@@ -144,6 +148,8 @@
   ;; CHECK:      (elem $second (table $table) (i32.const 0) funcref (item (ref.null nofunc)))
   (elem $second (table $table) (i32.const 0) funcref (item (ref.null nofunc)))
 
+  (elem $third (i32.const 1) $other)
+
   ;; CHECK:      (export "export" (func $export))
 
   ;; CHECK:      (func $func (type $func)
@@ -153,6 +159,10 @@
   ;; TNH__:      (func $func (type $func)
   ;; TNH__-NEXT: )
   (func $func (type $func)
+  )
+
+  (func $other (type $other) (result i32)
+    (i32.const 42)
   )
 
   ;; CHECK:      (func $export (type $func)
