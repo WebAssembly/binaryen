@@ -1079,7 +1079,7 @@ private:
       }
 
       // StructWait doesn't strictly write a struct, but it does modify the
-      // waiters list associated with the waitqueue field, which we can think
+      // waiters list associated with the waitqueue, which we can think
       // of as a write.
       parent.readsSharedMutableStruct = true;
       parent.writesSharedStruct = true;

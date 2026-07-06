@@ -73,7 +73,8 @@ Literal::Literal(Type type) : type(type) {
 
   if (type.isRef() && type.getHeapType().isMaybeShared(HeapType::waitqueue)) {
     assert(type.isNonNullable());
-    new (&gcData) std::shared_ptr<GCData>(new GCData({}, Literal()));
+    new (&gcData) std::shared_ptr<GCData>(
+      std::make_shared<GCData>(Literals{Literal(int32_t{1})}));
     return;
   }
 
@@ -190,8 +191,6 @@ Literal::Literal(const Literal& other) : type(other.type) {
       return;
     case HeapType::ext:
     case HeapType::any:
-    case HeapType::eq:
-    case HeapType::string:
     case HeapType::waitqueue:
     case HeapType::nowaitqueue:
       // Externalized or internalized reference/payload.
@@ -203,11 +202,14 @@ Literal::Literal(const Literal& other) : type(other.type) {
     case HeapType::noexn:
     case HeapType::nocont:
       WASM_UNREACHABLE("null literals should already have been handled");
+    case HeapType::eq:
     case HeapType::func:
     case HeapType::cont:
     case HeapType::struct_:
     case HeapType::array:
       WASM_UNREACHABLE("invalid type");
+    case HeapType::string:
+      WASM_UNREACHABLE("TODO: string literals");
   }
 }
 

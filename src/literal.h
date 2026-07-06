@@ -797,8 +797,9 @@ inline bool Literal::hasExternPayload() const {
   if (isNull()) {
     return false;
   }
-  assert(type.getHeapType().isMaybeShared(HeapType::ext));
-  return gcData->values[0].type == Type::i32;
+  return
+   type.getHeapType().isMaybeShared(HeapType::ext) &&
+   gcData->values[0].type == Type::i32;
 }
 
 inline int32_t Literal::getExternPayload() const {
