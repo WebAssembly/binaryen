@@ -199,9 +199,8 @@ void MemoryPacking::run(Module* module) {
 // of the memory, so that writing the segment cannot trap. Compares page
 // counts rather than byte sizes, as the byte size of a maximal memory64
 // (2^48 pages) does not fit in 64 bits.
-static bool provablyInBounds(const Memory& memory,
-                             uint64_t offset,
-                             uint64_t size) {
+static bool
+provablyInBounds(const Memory& memory, uint64_t offset, uint64_t size) {
   uint64_t end;
   if (std::ckd_add(&end, offset, size)) {
     return false;
