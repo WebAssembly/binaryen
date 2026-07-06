@@ -481,6 +481,10 @@ struct Analyzer {
         // A related situation is a table with element segments that write
         // nulls: they might overwrite a function, causing a trap, if traps can
         // happen, so we must preserve such element segments.
+        //
+        // Note that this is in an else, i.e., we never do it when ->init is
+        // true, above - that is ok, as if ->init were true, we'd loop on
+        // allElems, which is a larger group than we loop on here.
         for (auto& elem : info.typeElems[type.getBottom()]) {
           reference({ModuleElementKind::ElementSegment, elem});
         }
