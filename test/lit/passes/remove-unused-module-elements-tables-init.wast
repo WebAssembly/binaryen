@@ -125,3 +125,49 @@
   )
 )
 
+;; Overwrite the first segment's function with a null. The null must be kept
+;; around, so we trap - if traps are possible. As a result, elem $second is
+;; removed in TNH, but not otherwise.
+(module
+  ;; CHECK:      (type $func (func))
+  ;; TNH__:      (type $func (func))
+  (type $func (func))
+
+  ;; CHECK:      (table $table 6 6 funcref)
+  ;; TNH__:      (table $table 6 6 funcref)
+  (table $table 6 6 funcref)
+
+  ;; CHECK:      (elem $first (i32.const 0) $func)
+  ;; TNH__:      (elem $first (i32.const 0) $func)
+  (elem $first (i32.const 0) $func)
+
+  ;; CHECK:      (elem $second (table $table) (i32.const 0) funcref (item (ref.null nofunc)))
+  (elem $second (table $table) (i32.const 0) funcref (item (ref.null nofunc)))
+
+  ;; CHECK:      (export "export" (func $export))
+
+  ;; CHECK:      (func $func (type $func)
+  ;; CHECK-NEXT: )
+  ;; TNH__:      (export "export" (func $export))
+
+  ;; TNH__:      (func $func (type $func)
+  ;; TNH__-NEXT: )
+  (func $func (type $func)
+  )
+
+  ;; CHECK:      (func $export (type $func)
+  ;; CHECK-NEXT:  (call_indirect $table (type $func)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; TNH__:      (func $export (type $func)
+  ;; TNH__-NEXT:  (call_indirect $table (type $func)
+  ;; TNH__-NEXT:   (i32.const 0)
+  ;; TNH__-NEXT:  )
+  ;; TNH__-NEXT: )
+  (func $export (export "export")
+    (call_indirect $table (type $func)
+      (i32.const 0)
+    )
+  )
+)

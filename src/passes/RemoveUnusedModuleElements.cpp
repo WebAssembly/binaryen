@@ -289,7 +289,10 @@ struct Analyzer {
     // Maps each heap type that is in this table to the items it can call: the
     // functions, and their segments. This takes into account subtyping, that
     // is, typeItemMap[foo] includes data for subtypes of foo, so that we just
-    // need to read one place.
+    // need to read one place. Bottom types are stored without subtyping,
+    // however: adding a null to all its supertypes would mean adding it to all
+    // function types, which is wasteful and adds no information; as a result,
+    // we need to check for nulls specifically and not rely on subtyping.
     std::unordered_map<HeapType, std::unordered_set<Name>> typeFuncs;
     std::unordered_map<HeapType, std::unordered_set<Name>> typeElems;
 
@@ -330,6 +333,12 @@ struct Analyzer {
               info.typeElems[*type].insert(elem);
             }
             type = type->getSuperType();
+          }
+        } else if (item->is<RefNull>()) {
+          // We must note nulls too. An element segment that writes a null may
+          // trample a previous value, and if so we cannot remove it.
+          if (elem) {
+            info.typeElems[item->type.getHeapType()].insert(elem);
           }
         }
       };
@@ -461,11 +470,20 @@ struct Analyzer {
     // if it has the right type, we would not trap. (Note that we were using the
     // fact that we do not distinguish types of traps, in the case without an
     // initial value - we turned a trap on the wrong type to one on a null.)
-    if (!options.trapsNeverHappen && module->getTable(table)->init) {
-      // We only need to reference the elem, so it writes its functions - the
-      // functions are not actually called, as we just trap.
-      for (auto& elem : info.allElems) {
-        reference({ModuleElementKind::ElementSegment, elem});
+    if (!options.trapsNeverHappen) {
+      if (module->getTable(table)->init) {
+        // We only need to reference the elem, so it writes its functions - the
+        // functions are not actually called, as we just trap.
+        for (auto& elem : info.allElems) {
+          reference({ModuleElementKind::ElementSegment, elem});
+        }
+      } else {
+        // A related situation is a table with element segments that write
+        // nulls: they might overwrite a function, causing a trap, if traps can
+        // happen, so we must preserve such element segments.
+        for (auto& elem : info.typeElems[type.getBottom()]) {
+          reference({ModuleElementKind::ElementSegment, elem});
+        }
       }
     }
 
