@@ -13,15 +13,61 @@
 
 ;; CHECK:      (data $0 (i32.const 1024) "x")
 (module
- ;; but we cannot optimize trampling on an imported memory: if a later segment
- ;; were to trap during instantiation, the data written before it remains
- ;; visible in the imported memory, so even the trampled "x" must be kept
+ ;; we can optimize trampling on an imported memory when every active segment
+ ;; is provably in bounds of the declared minimum size: then no segment can
+ ;; trap during instantiation, so only the final memory contents are
+ ;; observable, and the trampled "x" is zeroed out and removed along with the
+ ;; zero that tramples it.
  ;; CHECK:      (import "env" "memory" (memory $0 1 1))
  (import "env" "memory" (memory $0 1 1))
 
  (data (i32.const 1024) "x")
  (data (i32.const 1024) "\00")
 )
+
+(module
+ ;; the same, but with a nonzero trampling byte: the trampled "a" is removed
+ ;; while the rest of the segment and the trampler are kept.
+ ;; CHECK:      (import "env" "memory" (memory $0 1 1))
+ (import "env" "memory" (memory $0 1 1))
+
+ (data (i32.const 1024) "ab")
+ (data (i32.const 1024) "Z")
+)
+
+;; CHECK:      (data $0 (i32.const 1025) "b")
+
+;; CHECK:      (data $1 (i32.const 1024) "Z")
+(module
+ ;; but we cannot optimize when the trampling segment may be out of bounds
+ ;; (here it ends one byte past the declared minimum size of one page): if it
+ ;; traps during instantiation, the data written before it remains visible in
+ ;; the imported memory, so even the trampled "x" must be kept
+ ;; CHECK:      (import "env" "memory" (memory $0 1 1))
+ (import "env" "memory" (memory $0 1 1))
+
+ (data (i32.const 65535) "x")
+ (data (i32.const 65535) "\00\00")
+)
+
+;; CHECK:      (data $0 (i32.const 65535) "x")
+
+;; CHECK:      (data $1 (i32.const 65535) "\00\00")
+(module
+ ;; here the overlapping segments are both in bounds, but a possibly
+ ;; out-of-bounds segment elsewhere in the module still prevents the
+ ;; optimization: if it traps, the trampled "x" remains visible. (This is more
+ ;; conservative than necessary, as that segment is applied only after the
+ ;; trampling one; see the TODO in canOptimize.)
+ ;; CHECK:      (import "env" "memory" (memory $0 1 1))
+ (import "env" "memory" (memory $0 1 1))
+
+ (data (i32.const 1024) "x")
+ (data (i32.const 1024) "\00")
+ (data (i32.const 65535) "yy")
+)
 ;; CHECK:      (data $0 (i32.const 1024) "x")
 
 ;; CHECK:      (data $1 (i32.const 1024) "\00")
+
+;; CHECK:      (data $2 (i32.const 65535) "yy")

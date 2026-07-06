@@ -215,7 +215,6 @@ bool MemoryPacking::canOptimize(
     return true;
   }
   // Check if it is ok for us to optimize.
-  Address maxAddress = 0;
   for (auto& segment : dataSegments) {
     if (segment->isActive()) {
       auto* c = segment->offset->dynCast<Const>();
@@ -241,9 +240,6 @@ bool MemoryPacking::canOptimize(
       if (!c) {
         return false;
       }
-      // Note the maximum address so far.
-      maxAddress = std::max(
-        maxAddress, Address(c->value.getUnsigned() + segment->data.size()));
     }
   }
   // All active segments have constant offsets, known at this time, so we may be
@@ -257,26 +253,41 @@ bool MemoryPacking::canOptimize(
       DisjointSpans::Span span{start, start + segment->data.size()};
       if (space.addAndCheckOverlap(span)) {
         // Some segments overlap, that is, a later segment tramples the data of
-        // an earlier one. If the memory is imported then we cannot optimize
-        // here: if a later segment is out of bounds then instantiation traps
-        // partway, leaving the data written so far visible in the imported
-        // memory (which outlives the failed instantiation), so even trampled
-        // data matters.
-        // TODO: We could optimize anyway if we can check that all the segments
-        //       after the trampled segment, up to and including the trampling
-        //       segment, will be in-bounds for the imported memory, as then no
-        //       trap can occur between the trampled write and the trampling
-        //       one.
+        // an earlier one. If the memory is imported then a trap on a later
+        // out-of-bounds segment leaves the data written so far visible in the
+        // imported memory (which outlives the failed instantiation), so even
+        // trampled data matters. We can only optimize if we prove no active
+        // segment can trap, which is the case when each is in bounds of the
+        // memory's declared minimum size: then instantiation always applies
+        // every segment, and only the final memory contents are observable,
+        // exactly as for a memory defined in the module.
+        // TODO: This could be finer-grained: it is enough for the segments
+        //       after a trampled segment, up to and including its trampling
+        //       segment, to be provably in-bounds, as then no trap can occur
+        //       between the trampled write and the trampling one.
         if (memory->imported()) {
-          std::cerr << "warning: active memory segments have overlap, which "
-                    << "prevents some optimizations.\n";
-          return false;
+          uint64_t memorySize = uint64_t(memory->initial)
+                                << memory->pageSizeLog2;
+          for (auto& seg : dataSegments) {
+            uint64_t end;
+            if (seg->isActive() &&
+                (std::ckd_add(&end,
+                              seg->offset->cast<Const>()->value.getUnsigned(),
+                              uint64_t(seg->data.size())) ||
+                 end > memorySize)) {
+              std::cerr
+                << "warning: active memory segments have overlap, which "
+                << "prevents some optimizations.\n";
+              return false;
+            }
+          }
         }
-        // The memory is defined in this module, so partially-applied segments
-        // can never be observed: either instantiation completes and all the
-        // segments are applied in order, or it traps and the memory is never
-        // exposed. We can therefore zero out the trampled data, which the
-        // normal optimization of zeros will then remove.
+        // Zero out the trampled data, which the normal optimization of zeros
+        // will then remove. For a memory defined in the module
+        // partially-applied segments can never be observed (either
+        // instantiation completes and all the segments are applied in order,
+        // or it traps and the memory is never exposed), and for an imported
+        // memory we just proved that no trap is possible.
         zeroOutTrampledData(dataSegments);
         break;
       }
