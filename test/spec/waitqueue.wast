@@ -118,3 +118,19 @@
 
 (assert_trap (invoke "struct.wait" (i32.const 0) (i64.const 0)) "null ref")
 (assert_trap (invoke "waitqueue.notify" (i32.const 0)) "null ref")
+
+;; Binary format test for waitqueue and nowaitqueue.
+(module binary
+  "\00asm\01\00\00\00" ;; Wasm header
+  "\06\10\02" ;; Global section, section size 16, 2 globals
+    ;; Global 0
+    "\63\65\5c" ;; ref null shared waitqueue
+    "\01" ;; mut
+    "\fe\07" ;; waitqueue.new
+    "\0b" ;; end
+    ;; Global 1
+    "\63\65\5b" ;; ref null shared nowaitqueue
+    "\01" ;; mut
+    "\d0\65\5b" ;; ref.null shared nowaitqueue
+    "\0b" ;; end
+)

@@ -13,9 +13,11 @@
   ;; RTRIP-NEXT:  (i32.const 0)
   ;; RTRIP-NEXT: ))
   (global $g (ref $t) (struct.new $t (i32.const 0)))
-  ;; CHECK:      (global $wq (mut (ref null (shared waitqueue))) (ref.null (shared waitqueue)))
-  ;; RTRIP:      (global $wq (mut (ref null (shared waitqueue))) (ref.null (shared waitqueue)))
+  ;; CHECK:      (global $wq (mut (ref null (shared waitqueue))) (ref.null (shared nowaitqueue)))
+  ;; RTRIP:      (global $wq (mut (ref null (shared waitqueue))) (ref.null (shared nowaitqueue)))
   (global $wq (mut (ref null (shared waitqueue))) (ref.null (shared waitqueue)))
+
+  ;; CHECK:      (global $nwq (mut (ref null (shared nowaitqueue))) (ref.null (shared nowaitqueue)))
 
   ;; CHECK:      (func $wait (type $0)
   ;; CHECK-NEXT:  (drop
@@ -27,6 +29,8 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
+  ;; RTRIP:      (global $nwq (mut (ref null (shared nowaitqueue))) (ref.null (shared nowaitqueue)))
+
   ;; RTRIP:      (func $wait (type $0)
   ;; RTRIP-NEXT:  (drop
   ;; RTRIP-NEXT:   (struct.wait $t 0
@@ -151,7 +155,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block ;; (replaces unreachable WaitqueueNotify we can't emit)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.null (shared waitqueue))
+  ;; CHECK-NEXT:     (ref.null (shared nowaitqueue))
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (i32.const 1)
@@ -164,7 +168,7 @@
   ;; RTRIP-NEXT:  (drop
   ;; RTRIP-NEXT:   (block ;; (replaces unreachable WaitqueueNotify we can't emit)
   ;; RTRIP-NEXT:    (drop
-  ;; RTRIP-NEXT:     (ref.null (shared waitqueue))
+  ;; RTRIP-NEXT:     (ref.null (shared nowaitqueue))
   ;; RTRIP-NEXT:    )
   ;; RTRIP-NEXT:    (drop
   ;; RTRIP-NEXT:     (i32.const 1)
@@ -176,4 +180,20 @@
   (func $notify-none
     (drop (waitqueue.notify (ref.null (shared waitqueue)) (i32.const 1)))
   )
+
+  ;; CHECK:      (func $new (type $0)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (waitqueue.new)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; RTRIP:      (func $new (type $0)
+  ;; RTRIP-NEXT:  (drop
+  ;; RTRIP-NEXT:   (waitqueue.new)
+  ;; RTRIP-NEXT:  )
+  ;; RTRIP-NEXT: )
+  (func $new
+    (drop (waitqueue.new))
+  )
+
+  (global $nwq (mut (ref null (shared nowaitqueue))) (ref.null (shared nowaitqueue)))
 )

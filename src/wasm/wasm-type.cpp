@@ -1601,8 +1601,10 @@ std::ostream& TypePrinter::print(Type type) {
           os << "stringref";
           break;
         case HeapType::waitqueue:
-        case HeapType::nowaitqueue:
           os << "waitqueueref";
+          break;
+        case HeapType::nowaitqueue:
+          os << "nullwaitqueueref";
           break;
         case HeapType::none:
           os << "nullref";
@@ -1680,8 +1682,10 @@ std::ostream& TypePrinter::print(HeapType type) {
         os << "string";
         break;
       case HeapType::waitqueue:
-      case HeapType::nowaitqueue:
         os << "waitqueue";
+        break;
+      case HeapType::nowaitqueue:
+        os << "nowaitqueue";
         break;
       case HeapType::none:
         os << "none";
