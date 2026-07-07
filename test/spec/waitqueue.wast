@@ -2,7 +2,7 @@
   (module
     (type $t (shared (struct (field i32))))
     (func (param $expected i32) (param $timeout i64) (result i32)
-      (struct.wait $t 0 (ref.null $t) (ref.null any) (local.get $expected) (local.get $timeout))
+      (struct.wait $t 0 (ref.null $t) (ref.null waitqueue) (local.get $expected) (local.get $timeout))
     )
   ) "struct.wait waitqueue must be a shared waitqueue reference"
 )
@@ -44,7 +44,7 @@
     (type $t (shared (struct (field i32))))
     (global $wq (ref (shared waitqueue)) (waitqueue.new))
     (func (param $count i32) (result i32)
-      (waitqueue.notify (i32.const 0) (local.get $count))
+      (waitqueue.notify (ref.null waitqueue) (local.get $count))
     )
   ) "waitqueue.notify waitqueue must be a shared waitqueue reference"
 )
@@ -122,15 +122,38 @@
 ;; Binary format test for waitqueue and nowaitqueue.
 (module binary
   "\00asm\01\00\00\00" ;; Wasm header
-  "\06\10\02" ;; Global section, section size 16, 2 globals
-    ;; Global 0
-    "\63\65\5c" ;; ref null shared waitqueue
-    "\01" ;; mut
-    "\fe\07" ;; waitqueue.new
-    "\0b" ;; end
-    ;; Global 1
+
+  "\01\0b\02" ;; Type section, 11 bytes, 2 types
+    "\65\5f\01\7f\01" ;; Type 0: (shared (struct (field (mut i32))))
+    "\60\01\64\00\00" ;; Type 1: (func (param (ref 0)))
+
+  "\03\02\01\01" ;; Function section, 2 bytes, 1 function of type 1
+
+  "\06\09\01" ;; Global section, 9 bytes, 1 global
     "\63\65\5b" ;; ref null shared nowaitqueue
     "\01" ;; mut
     "\d0\65\5b" ;; ref.null shared nowaitqueue
     "\0b" ;; end
+
+  "\0a\20\01" ;; Code section, 32 bytes, 1 function
+    "\1e\01" ;; Function size 30, 1 local entry
+      "\01\63\65\5c" ;; 1 local of type (ref null shared waitqueue)
+
+      "\fe\07" ;; waitqueue.new
+      "\21\01" ;; local.set 1
+
+      "\20\00" ;; local.get 0 (s)
+      "\20\01" ;; local.get 1 (wq)
+      "\41\00" ;; i32.const 0
+      "\42\00" ;; i64.const 0
+      "\fe\05" ;; struct.wait
+      "\00"    ;; struct type 0
+      "\00"    ;; field index 0
+      "\1a"    ;; drop
+
+      "\20\01" ;; local.get 1 (wq)
+      "\41\01" ;; i32.const 1
+      "\fe\06" ;; waitqueue.notify
+      "\1a"    ;; drop
+      "\0b"    ;; end
 )
