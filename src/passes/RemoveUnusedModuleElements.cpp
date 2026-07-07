@@ -43,6 +43,7 @@
 #include "ir/find_all.h"
 #include "ir/intrinsics.h"
 #include "ir/module-utils.h"
+#include "ir/names.h"
 #include "ir/struct-utils.h"
 #include "ir/subtypes.h"
 #include "ir/table-utils.h"
@@ -949,6 +950,78 @@ struct RemoveUnusedModuleElements : public Pass {
     auto& options = getPassOptions();
     Analyzer analyzer(module, options, roots);
 
+    // Functions in element segments that are referenced but not used can
+    // never be called successfully: any call_indirect reaching their slot
+    // traps on the signature check. Point all such entries at one shared
+    // stub function whose body is unreachable, so a matching call traps in
+    // the stub instead - a trap either way, which is an equivalence we
+    // already rely on. The redirected functions may then become entirely
+    // unreferenced, letting us remove their bodies rather than keeping one
+    // emptied-out function per signature. See issue #3029.
+    //
+    // We only do this when:
+    //  * The entry's target is not the reason the segment is kept (the
+    //    function is referenced, not used).
+    //  * The segment's table is neither imported nor exported: an outside
+    //    view of the table could observe the changed entry identity.
+    //  * GC is not enabled: with GC, a table.get plus ref.test could
+    //    observe the changed type of the entry. (Emptying a function in
+    //    place preserves its type; redirecting does not.)
+    std::unordered_set<Name> redirected;
+    if (!module->features.hasGC()) {
+      std::unordered_set<Name> exportedTables;
+      for (auto& ex : module->exports) {
+        if (ex->kind == ExternalKind::Table) {
+          if (auto* name = ex->getInternalName()) {
+            exportedTables.insert(*name);
+          }
+        }
+      }
+      auto stubHeapType = HeapType(Signature(Type::none, Type::none));
+      auto stubRefType = Type(stubHeapType, NonNullable);
+      Name stubName;
+      for (auto& segment : module->elementSegments) {
+        auto segmentElement =
+          ModuleElement{ModuleElementKind::ElementSegment, segment->name};
+        bool kept = analyzer.used.contains(segmentElement) ||
+                    analyzer.referenced.contains(segmentElement);
+        if (!kept || segment->isPassive() ||
+            !Type::isSubType(stubRefType, segment->type)) {
+          continue;
+        }
+        auto* table = module->getTable(segment->table);
+        if (table->imported() || exportedTables.count(table->name)) {
+          continue;
+        }
+        for (auto*& item : segment->data) {
+          auto* refFunc = item->dynCast<RefFunc>();
+          if (!refFunc) {
+            continue;
+          }
+          auto target =
+            ModuleElement{ModuleElementKind::Function, refFunc->func};
+          if (analyzer.used.contains(target) ||
+              !analyzer.referenced.contains(target)) {
+            continue;
+          }
+          if (!stubName) {
+            // Create the shared stub lazily, with the simplest signature.
+            stubName = Names::getValidFunctionName(*module, "trap-stub");
+            module->addFunction(Builder(*module).makeFunction(
+              stubName,
+              Signature(Type::none, Type::none),
+              {},
+              Builder(*module).makeUnreachable()));
+            analyzer.used.insert({ModuleElementKind::Function, stubName});
+          }
+          redirected.insert(refFunc->func);
+          // The one-argument makeRefFunc computes the proper (exact) type
+          // from the stub function we added to the module above.
+          item = Builder(*module).makeRefFunc(stubName);
+        }
+      }
+    }
+
     // Remove unneeded elements.
     auto needed = [&](ModuleElement element) {
       // We need to emit something in the output if it has either a reference or
@@ -995,6 +1068,46 @@ struct RemoveUnusedModuleElements : public Pass {
     module->removeElementSegments([&](ElementSegment* curr) {
       return !needed({ModuleElementKind::ElementSegment, curr->name});
     });
+
+    // Redirecting element segment entries above may have removed the last
+    // reference to a function (removeFunctions kept it, and emptied it out,
+    // based on the analysis from before the redirect). Find which of the
+    // redirected functions are still referred to from the remaining module
+    // contents, and remove the others entirely.
+    if (!redirected.empty()) {
+      std::unordered_set<Name> stillReferenced;
+      auto scanExpr = [&](Expression* expr) {
+        if (!expr) {
+          return;
+        }
+        for (auto* refFunc : FindAll<RefFunc>(expr).list) {
+          stillReferenced.insert(refFunc->func);
+        }
+      };
+      for (auto& func : module->functions) {
+        if (!func->imported()) {
+          scanExpr(func->body);
+        }
+      }
+      for (auto& global : module->globals) {
+        if (!global->imported()) {
+          scanExpr(global->init);
+        }
+      }
+      for (auto& segment : module->elementSegments) {
+        scanExpr(segment->offset);
+        for (auto* item : segment->data) {
+          scanExpr(item);
+        }
+      }
+      for (auto& table : module->tables) {
+        scanExpr(table->init);
+      }
+      module->removeFunctions([&](Function* curr) {
+        return redirected.count(curr->name) &&
+               !stillReferenced.count(curr->name);
+      });
+    }
     // TODO: After removing elements, we may be able to remove more things, and
     //       should continue to work. (For example, after removing a reference
     //       to a function from an element segment, we may be able to remove
