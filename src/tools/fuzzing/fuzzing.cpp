@@ -5265,15 +5265,10 @@ Expression* TranslateToFuzzReader::makeAtomic(Type type) {
   auto* ptr = makePointer();
   if (oneIn(2)) {
     auto* value = make(type);
+    auto op = pick(RMWAdd, RMWSub, RMWAnd, RMWOr, RMWXor, RMWXchg);
+    auto order = pick(atomicMemoryOrders);
     return builder.makeAtomicRMW(
-      pick(RMWAdd, RMWSub, RMWAnd, RMWOr, RMWXor, RMWXchg),
-      bytes,
-      offset,
-      ptr,
-      value,
-      type,
-      wasm.memories[0]->name,
-      pick(atomicMemoryOrders));
+      op, bytes, offset, ptr, value, type, wasm.memories[0]->name, order);
   } else {
     auto* expected = make(type);
     auto* replacement = make(type);
