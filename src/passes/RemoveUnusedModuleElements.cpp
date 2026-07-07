@@ -49,6 +49,7 @@
 #include "ir/utils.h"
 #include "pass.h"
 #include "support/insert_ordered.h"
+#include "support/space.h"
 #include "support/stdckdint.h"
 #include "support/utilities.h"
 #include "wasm-builder.h"
@@ -289,15 +290,20 @@ struct Analyzer {
     // Maps each heap type that is in this table to the items it can call: the
     // functions, and their segments. This takes into account subtyping, that
     // is, typeItemMap[foo] includes data for subtypes of foo, so that we just
-    // need to read one place. Bottom types are stored without subtyping,
-    // however: adding a null to all its supertypes would mean adding it to all
-    // function types, which is wasteful and adds no information; as a result,
-    // we need to check for nulls specifically and not rely on subtyping.
+    // need to read one place.
     std::unordered_map<HeapType, std::unordered_set<Name>> typeFuncs;
     std::unordered_map<HeapType, std::unordered_set<Name>> typeElems;
 
     // All elems, regardless of type.
     std::unordered_set<Name> allElems;
+
+    // Whether this table's elems may overlap, i.e., trample each other. In such
+    // a case, we can optimize less: if segment A writes a function, and B
+    // tramples it with a null or with a function of another type, then if we
+    // call that index with the right type for A, the trampling causes a trap -
+    // so we cannot remove the trampling segment, even though it has nothing
+    // can can be called, just to preserve the trap.
+    bool mayHaveOverlappingElems = false;
   };
   std::unordered_map<Name, FlatTableInfo> flatTableInfoMap;
 
@@ -319,6 +325,10 @@ struct Analyzer {
   }
 
   void prepare() {
+    // The spans of element segments for each table. We use this to compute
+    // |mayHaveOverlappingElems|.
+    std::unordered_map<Name, DisjointSpans> tableElemSpans;
+
     auto notePossibleFunc =
       [&](FlatTableInfo& info, Expression* item, Name elem = Name()) {
         if (auto* refFunc = item->dynCast<RefFunc>()) {
@@ -352,6 +362,33 @@ struct Analyzer {
         notePossibleFunc(info, item, elem->name);
       }
       info.allElems.insert(elem->name);
+    }
+
+    // Compute elem overlap.
+    for (auto& elem : module->elementSegments) {
+      if (elem->isPassive()) {
+        continue;
+      }
+
+      auto& info = flatTableInfoMap[elem->table];
+      // There is at least one elem, this one.
+      assert(!info.allElems.empty());
+      if (info.allElems.size() <= 1) {
+        // This table has just this one elem, so no overlap is possible, even
+        // if the single elem has a non-constant offset.
+        continue;
+      }
+
+      if (auto* c = elem->offset->dynCast<Const>()) {
+        auto start = c->value.getUnsigned();
+        auto end = start + elem->data.size();
+        if (tableElemSpans[elem->table].addAndCheckOverlap({start, end})) {
+          info.mayHaveOverlappingElems = true;
+        }
+      } else {
+        // Offset is not constant, so it might overlap with others.
+        info.mayHaveOverlappingElems = true;
+      }
     }
 
     // If a table has an initial value, it is callable as well.
@@ -471,21 +508,14 @@ struct Analyzer {
     // fact that we do not distinguish types of traps, in the case without an
     // initial value - we turned a trap on the wrong type to one on a null.)
     if (!options.trapsNeverHappen) {
-      if (module->getTable(table)->init) {
+      // A related situation is a table with element segments that trample
+      // valid values with nulls or functions of the wrong type for a call:
+      // when they overwrite a valid function, they cause a trap, which we
+      // must preserve if traps can.
+      if (module->getTable(table)->init || info.mayHaveOverlappingElems) {
         // We only need to reference the elem, so it writes its functions - the
         // functions are not actually called, as we just trap.
         for (auto& elem : info.allElems) {
-          reference({ModuleElementKind::ElementSegment, elem});
-        }
-      } else {
-        // A related situation is a table with element segments that write
-        // nulls: they might overwrite a function, causing a trap, if traps can
-        // happen, so we must preserve such element segments.
-        //
-        // Note that this is in an else, i.e., we never do it when ->init is
-        // true, above - that is ok, as if ->init were true, we'd loop on
-        // allElems, which is a larger group than we loop on here.
-        for (auto& elem : info.typeElems[type.getBottom()]) {
           reference({ModuleElementKind::ElementSegment, elem});
         }
       }
