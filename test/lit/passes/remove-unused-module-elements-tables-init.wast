@@ -181,3 +181,56 @@
     )
   )
 )
+
+;; Similar, but overwrite not with a null, but with a function of the wrong type
+;; for the call_indirect. Like with a null, we must write that wrongly-typed
+;; function, to preserve the trap, if traps are possible, so when not TNH, we
+;; must keep elem $second around. XXX
+(module
+  ;; CHECK:      (type $func (func))
+  ;; TNH__:      (type $func (func))
+  (type $func (func))
+
+  (type $other (func (result i32)))
+
+  ;; CHECK:      (table $table 6 6 funcref)
+  ;; TNH__:      (table $table 6 6 funcref)
+  (table $table 6 6 funcref)
+
+  ;; CHECK:      (elem $first (i32.const 0) $func)
+  ;; TNH__:      (elem $first (i32.const 0) $func)
+  (elem $first (i32.const 0) $func)
+
+  (elem $second (i32.const 0) $other)
+
+  ;; CHECK:      (export "export" (func $export))
+
+  ;; CHECK:      (func $func (type $func)
+  ;; CHECK-NEXT: )
+  ;; TNH__:      (export "export" (func $export))
+
+  ;; TNH__:      (func $func (type $func)
+  ;; TNH__-NEXT: )
+  (func $func (type $func)
+  )
+
+  (func $other (type $other) (result i32)
+    (i32.const 42)
+  )
+
+  ;; CHECK:      (func $export (type $func)
+  ;; CHECK-NEXT:  (call_indirect $table (type $func)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; TNH__:      (func $export (type $func)
+  ;; TNH__-NEXT:  (call_indirect $table (type $func)
+  ;; TNH__-NEXT:   (i32.const 0)
+  ;; TNH__-NEXT:  )
+  ;; TNH__-NEXT: )
+  (func $export (export "export")
+    (call_indirect $table (type $func)
+      (i32.const 0)
+    )
+  )
+)
