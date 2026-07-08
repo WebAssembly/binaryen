@@ -56,7 +56,8 @@ struct Info {
   BasicBlockConstraintMap startConstraints;
 
   void dump(Function* func) {
-    std::cout << "Info{" << actions.size() << ", " << brancher << ", " << startConstraints << "}\n";
+    std::cout << "Info{" << actions.size() << ", " << brancher << ", "
+              << startConstraints << "}\n";
   }
 };
 
