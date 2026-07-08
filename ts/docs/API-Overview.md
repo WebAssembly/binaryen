@@ -498,6 +498,8 @@ Some of `Module`’s instance methods have been converted into getters/setters:
 
 Global `getSideEffects(expr, mod)` has been moved to `Module#getSideEffects()` where it lives alongside `Module#copyExpression()`.
 
+`Module#emitAsmjs` logs asm.js code to stdout instead of returning a string. (Until C++ API supports an asm.js-string-returning function.)
+
 All expression creation methods (`.nop()`, `.drop()`, `.block()`, `.call()`, etc.) directly on `Module`
 were functions for building expressions, and have migrated to `Module#wasm`, an [Expression Builder](#expression-building).
 

@@ -387,26 +387,11 @@ export class Module {
 	/**
 	 * Returns the [asm.js](http://asmjs.org/) representation of the module.
 	 * @category Emission & Execution
+	 * @deprecated This method no longer returns the asm.js string, but instead logs it to standard output.
 	 */
 	emitAsmjs(): string {
-		/*
-		 * `out` is Emscripten's `stdout` function (an alias of `console.log`),
-		 * called internally by `BinaryenModulePrintAsmjs()` to print its output.
-		 * We have to temporarily swap out the function itself
-		 * so that when `BinaryenModulePrintAsmjs()` calls it,
-		 * it calls our capturing function instead.
-		 *
-		 * We can’t use `import {out} from "../../-pre.ts";` because ES Module imports can’t be reassigned.
-		 * Instead, we reassign directly on `BinaryenObj`.
-		 */
-		let returned = "";
-		const temp_out = BinaryenObj.out;
-		BinaryenObj.out = (x: string): void => {
-			returned += `${ x }\n`;
-		};
 		BinaryenObj["_BinaryenModulePrintAsmjs"](this[PTR]);
-		BinaryenObj.out = temp_out;
-		return returned;
+		return ""; // TODO: if keeping console-logging behavior, change return type to `void` and delete this return statement
 	}
 
 	/**
