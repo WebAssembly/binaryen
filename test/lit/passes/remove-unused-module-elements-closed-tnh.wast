@@ -66,4 +66,66 @@
   )
 )
 
-;; TODO: two segments, one non-constant, one yes, which forces pessimistic overlap assumption
+;; As above, but now we have two segments, one constant. We don't know if they
+;; overlap, so we normally assume the worst. However, with tnh, we can assume no
+;; traps, and remove elem $elem. (We cannot remove elem $second in either case,
+;; as it contains a function we have an indirect call for its type.)
+(module
+  ;; TNH__:      (type $func (func))
+  ;; CHECK:      (type $func (func))
+  ;; OPEN_WORLD:      (type $func (func))
+  (type $func (func))
+
+  ;; OPEN_WORLD:      (type $other (func (result i32)))
+  (type $other (func (result i32)))
+
+  ;; OPEN_WORLD:      (import "a" "b" (global $offset i32))
+  (import "a" "b" (global $offset i32))
+
+  ;; TNH__:      (table $table 6 6 funcref)
+  ;; CHECK:      (table $table 6 6 funcref)
+  ;; OPEN_WORLD:      (table $table 6 6 funcref)
+  (table $table 6 6 funcref)
+
+  ;; OPEN_WORLD:      (elem $elem (global.get $offset) $other)
+  (elem $elem (global.get $offset) $other)
+
+  ;; CHECK:      (elem $second (i32.const 0) $export)
+  ;; OPEN_WORLD:      (elem $second (i32.const 0) $export)
+  (elem $second (i32.const 0) $export)
+
+  ;; OPEN_WORLD:      (export "export" (func $export))
+
+  ;; OPEN_WORLD:      (func $other (type $other) (result i32)
+  ;; OPEN_WORLD-NEXT:  (i32.const 42)
+  ;; OPEN_WORLD-NEXT: )
+  (func $other (type $other) (result i32)
+    (i32.const 42)
+  )
+
+  ;; TNH__:      (export "export" (func $export))
+
+  ;; TNH__:      (func $export (type $func)
+  ;; TNH__-NEXT:  (call_indirect $table (type $func)
+  ;; TNH__-NEXT:   (i32.const 0)
+  ;; TNH__-NEXT:  )
+  ;; TNH__-NEXT: )
+  ;; CHECK:      (export "export" (func $export))
+
+  ;; CHECK:      (func $export (type $func)
+  ;; CHECK-NEXT:  (call_indirect $table (type $func)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPEN_WORLD:      (func $export (type $func)
+  ;; OPEN_WORLD-NEXT:  (call_indirect $table (type $func)
+  ;; OPEN_WORLD-NEXT:   (i32.const 0)
+  ;; OPEN_WORLD-NEXT:  )
+  ;; OPEN_WORLD-NEXT: )
+  (func $export (export "export")
+    (call_indirect $table (type $func)
+      (i32.const 0)
+    )
+  )
+)
+
