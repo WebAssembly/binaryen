@@ -349,12 +349,6 @@ struct Analyzer {
             }
             type = type->getSuperType();
           }
-        } else if (item->is<RefNull>()) {
-          // We must note nulls too. An element segment that writes a null may
-          // trample a previous value, and if so we cannot remove it.
-          if (elem) {
-            info.typeElems[item->type.getHeapType()].insert(elem);
-          }
         }
       };
 
