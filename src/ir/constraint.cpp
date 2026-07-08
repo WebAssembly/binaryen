@@ -270,12 +270,22 @@ void LocalConstraint::flip() {
 void BasicBlockConstraintMap::set(Index index, const Constraint& c) {
   assert(!unreachable);
   eraseStaleRefs(index);
+
+  // Set the constraint.
   map[index].set(c);
   noteRefs(index, c);
 
-  // If the constraint refers to another local, add it there too.
-  if (std::holds_alternative<Index>(c.term)) {
+  if (auto* other = std::get_if<Index>(&c.term)) {
+    // The constraint refers to another local: add it there too.
     approximateAndInternal(index, c, true);
+
+    // If this constraint is simply "== x", then we are equal to that other
+    // local x, and can copy its constraints.
+    if (c.op == Abstract::Eq) {
+      for (auto& otherC : get(*other)) {
+        approximateAnd(index, otherC);
+      }
+    }
   }
 }
 

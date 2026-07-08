@@ -2400,4 +2400,61 @@
       )
     )
   )
+
+  ;; CHECK:      (func $multi-local-copy (type $1)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (local $y i32)
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (i32.const 10)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $y
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPTIN:      (func $multi-local-copy (type $1)
+  ;; OPTIN-NEXT:  (local $x i32)
+  ;; OPTIN-NEXT:  (local $y i32)
+  ;; OPTIN-NEXT:  (local.set $x
+  ;; OPTIN-NEXT:   (i32.const 10)
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (local.set $y
+  ;; OPTIN-NEXT:   (local.get $x)
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (drop
+  ;; OPTIN-NEXT:   (i32.const 1)
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (drop
+  ;; OPTIN-NEXT:   (i32.const 1)
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT: )
+  (func $multi-local-copy
+    (local $x i32)
+    (local $y i32)
+    ;; x is 10, y is copied.
+    (local.set $x
+      (i32.const 10)
+    )
+    (local.set $y
+      (local.get $x)
+    )
+    ;; Verify those values.
+    (drop
+      (i32.eq
+        (local.get $x)
+        (i32.const 10)
+      )
+    )
+    (drop
+      (i32.eq
+        (local.get $y)
+        (i32.const 10)
+      )
+    )
+  )
 )
