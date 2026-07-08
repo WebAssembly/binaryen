@@ -169,7 +169,7 @@ public:
     unsigned bytes, Address offset, Type type, Name mem, MemoryOrder order);
   Result<> makeAtomicWait(Type type, Address offset, Name mem);
   Result<> makeAtomicNotify(Address offset, Name mem);
-  Result<> makeAtomicFence();
+  Result<> makeAtomicFence(MemoryOrder order);
   Result<> makePause();
   Result<> makeSIMDExtract(SIMDExtractOp op, uint8_t lane);
   Result<> makeSIMDReplace(SIMDReplaceOp op, uint8_t lane);

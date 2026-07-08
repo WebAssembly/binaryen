@@ -650,7 +650,7 @@ function test_core() {
         module.i32.const(0)
       )
     ),
-    module.atomic.fence(),
+    module.atomic.fence(binaryen.MemoryOrder.acqrel),
 
     // Tuples
     module.tuple.make(
@@ -1130,6 +1130,23 @@ function test_parsing() {
   module2.dispose();
 }
 
+function test_parsing_with_features() {
+  var text = `(module
+    (global $g anyref (ref.null any))
+  )`;
+
+  module = binaryen.parseTextWithFeatures(text, binaryen.Features.All);
+  assert(module.validate());
+  console.log("module loaded from text form with features:");
+  console.log(module.emitText());
+  module.dispose();
+
+  // parse with MVP features, which should fail
+  module = binaryen.parseTextWithFeatures(text, binaryen.Features.MVP);
+  console.log("validation with MVP features: " + module.validate());
+  module.dispose();
+}
+
 function test_internals() {
   console.log('sizeof Literal: ' + binaryen['_BinaryenSizeofLiteral']());
 }
@@ -1266,11 +1283,16 @@ function test_relaxed_atomics() {
   binaryen.AtomicCmpxchg.setMemoryOrder(cmpxchg, binaryen.MemoryOrder.acqrel);
   console.log("Cmpxchg memory order: " + binaryen.AtomicCmpxchg.getMemoryOrder(cmpxchg));
 
+  var fence = module.atomic.fence(binaryen.MemoryOrder.seqcst)
+  binaryen.AtomicFence.setOrder(fence, binaryen.MemoryOrder.acqrel)
+  console.log("Fence memory order: " + binaryen.AtomicFence.getOrder(fence));
+
   var body = module.block("body", [
     module.drop(load),
     store,
     module.drop(rmw),
-    module.drop(cmpxchg)
+    module.drop(cmpxchg),
+    fence,
   ], binaryen.auto);
 
   module.addFunction("relaxed-atomics", binaryen.none, binaryen.none, [], body);
@@ -1289,6 +1311,7 @@ test_binaries_with_features();
 test_interpret();
 test_nonvalid();
 test_parsing();
+test_parsing_with_features();
 test_internals();
 test_for_each();
 test_expression_info();

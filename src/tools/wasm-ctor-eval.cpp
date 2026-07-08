@@ -226,6 +226,16 @@ public:
     throw FailToEvalException("TODO: table.get");
   }
 
+  Flow visitTableSet(TableSet* curr) {
+    // When changes occur to the table, give up.
+    throw FailToEvalException("TODO: table.set");
+  }
+
+  Flow visitTableGrow(TableGrow* curr) {
+    // When changes occur to the table, give up.
+    throw FailToEvalException("TODO: table.grow");
+  }
+
   bool allowContNew = true;
 
   Flow visitContNew(ContNew* curr) {
@@ -1664,7 +1674,7 @@ int main(int argc, const char* argv[]) {
     ModuleWriter writer(options.passOptions);
     writer.setBinary(emitBinary);
     writer.setDebugInfo(debugInfo);
-    writer.write(wasm, options.extra["output"]);
+    options.write(writer, wasm, options.extra["output"]);
   }
 
   flush_and_quick_exit(0);

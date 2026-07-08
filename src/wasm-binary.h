@@ -1489,7 +1489,6 @@ public:
 
   // helpers
   void writeInlineString(std::string_view name);
-  void writeEscapedName(std::string_view name);
   void writeInlineBuffer(const char* data, size_t size);
   void writeData(const char* data, size_t size);
 
@@ -1780,7 +1779,6 @@ public:
 
   void readTags();
 
-  static Name escape(Name name);
   void readNames(size_t sectionPos, size_t payloadLen);
   void readFeatures(size_t sectionPos, size_t payloadLen);
   void readDylink(size_t payloadLen);

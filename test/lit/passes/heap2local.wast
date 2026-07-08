@@ -4402,7 +4402,7 @@
   ;; CHECK:      (func $array.cast.struct.set (type $1)
   ;; CHECK-NEXT:  (local $eq (ref eq))
   ;; CHECK-NEXT:  (local $struct (ref struct))
-  ;; CHECK-NEXT:  (local.tee $struct
+  ;; CHECK-NEXT:  (local.set $struct
   ;; CHECK-NEXT:   (block
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (block (result nullref)

@@ -22,11 +22,9 @@
   ;; PRIMARY:      (global $f i32 (i32.const 42))
   ;; PRIMARY:      (global $e i32 (global.get $f))
 
-  ;; PRIMARY:      (export "global" (global $f))
-  ;; PRIMARY:      (export "global_1" (global $e))
+  ;; PRIMARY:      (export "global" (global $e))
 
-  ;; SECONDARY:      (import "primary" "global" (global $f i32))
-  ;; SECONDARY:      (import "primary" "global_1" (global $e i32))
+  ;; SECONDARY:      (import "primary" "global" (global $e i32))
 
   ;; SECONDARY:      (global $c i32 (i32.const 42))
   ;; SECONDARY:      (global $b i32 (global.get $c))

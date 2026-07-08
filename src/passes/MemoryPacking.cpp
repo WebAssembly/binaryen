@@ -105,6 +105,8 @@ struct MemoryPacking : public Pass {
   void run(Module* module) override;
   bool canOptimize(std::vector<std::unique_ptr<Memory>>& memories,
                    std::vector<std::unique_ptr<DataSegment>>& dataSegments);
+  void
+  zeroOutTrampledData(std::vector<std::unique_ptr<DataSegment>>& dataSegments);
   void optimizeSegmentOps(Module* module);
   void getSegmentReferrers(Module* module, ReferrersMap& referrers);
   void dropUnusedSegments(Module* module,
@@ -247,7 +249,6 @@ bool MemoryPacking::canOptimize(
   // All active segments have constant offsets, known at this time, so we may be
   // able to optimize, but must still check for the trampling problem mentioned
   // earlier.
-  // TODO: optimize in the trampling case
   DisjointSpans space;
   for (auto& segment : dataSegments) {
     if (segment->isActive()) {
@@ -255,13 +256,85 @@ bool MemoryPacking::canOptimize(
       Address start = c->value.getUnsigned();
       DisjointSpans::Span span{start, start + segment->data.size()};
       if (space.addAndCheckOverlap(span)) {
-        std::cerr << "warning: active memory segments have overlap, which "
-                  << "prevents some optimizations.\n";
-        return false;
+        // Some segments overlap, that is, a later segment tramples the data of
+        // an earlier one. If the memory is imported then we cannot optimize
+        // here: if a later segment is out of bounds then instantiation traps
+        // partway, leaving the data written so far visible in the imported
+        // memory (which outlives the failed instantiation), so even trampled
+        // data matters.
+        // TODO: We could optimize anyway if we can check that all the segments
+        //       after the trampled segment, up to and including the trampling
+        //       segment, will be in-bounds for the imported memory, as then no
+        //       trap can occur between the trampled write and the trampling
+        //       one.
+        if (memory->imported()) {
+          std::cerr << "warning: active memory segments have overlap, which "
+                    << "prevents some optimizations.\n";
+          return false;
+        }
+        // The memory is defined in this module, so partially-applied segments
+        // can never be observed: either instantiation completes and all the
+        // segments are applied in order, or it traps and the memory is never
+        // exposed. We can therefore zero out the trampled data, which the
+        // normal optimization of zeros will then remove.
+        zeroOutTrampledData(dataSegments);
+        break;
       }
     }
   }
   return true;
+}
+
+void MemoryPacking::zeroOutTrampledData(
+  std::vector<std::unique_ptr<DataSegment>>& dataSegments) {
+  // Active segments are applied in order at instantiation, before any code can
+  // run, so when segments overlap only the last write to each byte is ever
+  // observable. Zero out all bytes that a later segment overwrites. This
+  // assumes all active segments have constant offsets, which canOptimize
+  // verifies before calling us.
+  //
+  // Iterate in reverse, tracking the disjoint regions of memory covered by the
+  // segments seen so far as a map from a region's start address to its end.
+  std::map<uint64_t, uint64_t> covered;
+  for (auto it = dataSegments.rbegin(); it != dataSegments.rend(); ++it) {
+    auto& segment = *it;
+    if (!segment->isActive() || segment->data.empty()) {
+      continue;
+    }
+    uint64_t start = segment->offset->cast<Const>()->value.getUnsigned();
+    uint64_t end = start + segment->data.size();
+    // Zero out our bytes that later segments cover. Look for overlapping
+    // regions starting from the last one beginning at or before us.
+    auto covering = covered.upper_bound(start);
+    if (covering != covered.begin()) {
+      --covering;
+    }
+    for (; covering != covered.end() && covering->first < end; ++covering) {
+      uint64_t overlapStart = std::max(start, covering->first);
+      uint64_t overlapEnd = std::min(end, covering->second);
+      if (overlapStart < overlapEnd) {
+        std::fill(segment->data.begin() + (overlapStart - start),
+                  segment->data.begin() + (overlapEnd - start),
+                  0);
+      }
+    }
+    // Add our span to the covered regions, merging with any regions it
+    // touches.
+    auto next = covered.upper_bound(start);
+    if (next != covered.begin()) {
+      auto prev = std::prev(next);
+      if (prev->second >= start) {
+        start = prev->first;
+        end = std::max(end, prev->second);
+        next = prev;
+      }
+    }
+    while (next != covered.end() && next->first <= end) {
+      end = std::max(end, next->second);
+      next = covered.erase(next);
+    }
+    covered[start] = end;
+  }
 }
 
 bool MemoryPacking::canSplit(const std::unique_ptr<DataSegment>& segment,

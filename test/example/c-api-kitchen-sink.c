@@ -1128,7 +1128,7 @@ void test_core() {
                  BinaryenAtomicWait(
                    module, temp6, temp6, temp16, BinaryenTypeInt32(), "0")),
     BinaryenDrop(module, BinaryenAtomicNotify(module, temp6, temp6, "0")),
-    BinaryenAtomicFence(module),
+    BinaryenAtomicFence(module, BinaryenMemoryOrderSeqCst()),
     // Tuples
     BinaryenTupleMake(module, tupleElements4a, 4),
     BinaryenTupleExtract(
@@ -2365,10 +2365,16 @@ void test_relaxed_atomics() {
   printf("Cmpxchg memory order: %d\n",
          BinaryenAtomicCmpxchgGetMemoryOrder(cmpxchg));
 
+  BinaryenExpressionRef fence =
+    BinaryenAtomicFence(module, BinaryenMemoryOrderSeqCst());
+  BinaryenAtomicFenceSetOrder(fence, BinaryenMemoryOrderAcqRel());
+  printf("Fence memory order: %d\n", BinaryenAtomicFenceGetOrder(fence));
+
   BinaryenExpressionRef statements[] = {BinaryenDrop(module, load),
                                         store,
                                         BinaryenDrop(module, rmw),
-                                        BinaryenDrop(module, cmpxchg)};
+                                        BinaryenDrop(module, cmpxchg),
+                                        fence};
 
   BinaryenExpressionRef value =
     BinaryenBlock(module,

@@ -1110,10 +1110,7 @@ public:
   AtomicFence() = default;
   AtomicFence(MixedArena& allocator) : AtomicFence() {}
 
-  // Current wasm threads only supports sequentially consistent atomics, but
-  // other orderings may be added in the future. This field is reserved for
-  // that, and currently set to 0.
-  uint8_t order = 0;
+  MemoryOrder order = MemoryOrder::SeqCst;
 };
 
 class Pause : public SpecificExpression<Expression::PauseId> {

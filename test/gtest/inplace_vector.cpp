@@ -42,3 +42,45 @@ TEST_F(InplaceVectorTest, I) {
 
   EXPECT_EQ(normal, std::vector<int>({10, 20, 30}));
 }
+
+TEST_F(InplaceVectorTest, Erase) {
+  inplace_vector<int, 5> vec{10, 20, 30, 40, 50};
+
+  // Erase single element in the middle (30 at index 2)
+  auto it = vec.erase(vec.begin() + 2);
+  EXPECT_EQ(*it, 40);
+  EXPECT_EQ(vec.size(), 4u);
+  EXPECT_EQ(vec[0], 10);
+  EXPECT_EQ(vec[1], 20);
+  EXPECT_EQ(vec[2], 40);
+  EXPECT_EQ(vec[3], 50);
+
+  // Erase range at beginning [10, 20]
+  it = vec.erase(vec.begin(), vec.begin() + 2);
+  EXPECT_EQ(*it, 40);
+  EXPECT_EQ(vec.size(), 2u);
+  EXPECT_EQ(vec[0], 40);
+  EXPECT_EQ(vec[1], 50);
+
+  // Erase at end
+  it = vec.erase(vec.begin() + 1, vec.end());
+  EXPECT_EQ(it, vec.end());
+  EXPECT_EQ(vec.size(), 1u);
+  EXPECT_EQ(vec[0], 40);
+}
+
+TEST_F(InplaceVectorTest, EraseIf) {
+  // Test std::erase_if on inplace_vector
+  inplace_vector<int, 5> vec{1, 2, 3, 4, 5};
+  size_t erased = std::erase_if(vec, [](int x) { return x % 2 == 0; });
+  EXPECT_EQ(erased, 2u);
+  EXPECT_EQ(vec.size(), 3u);
+  EXPECT_EQ(vec[0], 1);
+  EXPECT_EQ(vec[1], 3);
+  EXPECT_EQ(vec[2], 5);
+
+  // Erase remaining elements
+  erased = std::erase_if(vec, [](int x) { return x > 0; });
+  EXPECT_EQ(erased, 3u);
+  EXPECT_TRUE(vec.empty());
+}
