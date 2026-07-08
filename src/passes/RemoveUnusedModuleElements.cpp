@@ -370,6 +370,7 @@ struct Analyzer {
       }
 
       auto& info = flatTableInfoMap[elem->table];
+
       // There is at least one elem, this one.
       assert(!info.allElems.empty());
       if (info.allElems.size() <= 1) {
