@@ -134,7 +134,13 @@ void AndedConstraintSet::approximateAnd(const Constraint& c) {
     return;
   }
 
-  if (proves(c) == False) {
+  auto result = proves(c);
+  if (result == True) {
+    // We already prove c to be true, so it adds nothing.
+    // TODO: we could also see if c proves us true, and replace things we
+    //       already have with c when possible
+    return;
+  } else if (result == False) {
     // We are now a contradiction.
     isContradiction = true;
     return;

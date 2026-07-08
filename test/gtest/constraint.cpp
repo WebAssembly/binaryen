@@ -207,5 +207,17 @@ TEST(ConstraintTest, TestMaxCapacity) {
   EXPECT_EQ(s.proves(not40), Unknown);
 }
 
+TEST(ConstraintTest, TestDeduplication) {
+  Constraint eq10{Eq, {Literal(int32_t(10))}};
+
+  AndedConstraintSet s;
+  EXPECT_EQ(s.size(), 0);
+  s.set(eq10);
+  EXPECT_EQ(s.size(), 1);
+  // The size does not increase when we add eq10 again.
+  s.approximateAnd(eq10);
+  EXPECT_EQ(s.size(), 1);
+}
+
 // TODO: test an approximateOr of { x = 10 } and { x >= 0 }, once we support
 //       inequalities
