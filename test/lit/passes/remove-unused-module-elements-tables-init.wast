@@ -313,7 +313,7 @@
 )
 
 ;; As above, but with non-adjacent segment offsets: before we had [0, 1),
-;; [1, 2), and now the second befores [2, 3). We can optimize away elem $second
+;; [1, 2), and now the second is [2, 3). We can optimize away elem $second
 ;; as there is no overlap.
 (module
   ;; CHECK:      (type $func (func))
@@ -352,6 +352,67 @@
   )
 
   ;; CHECK:      (func $export (type $1) (param $x i32)
+  ;; CHECK-NEXT:  (call_indirect $table (type $func)
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; TNH__:      (func $export (type $1) (param $x i32)
+  ;; TNH__-NEXT:  (call_indirect $table (type $func)
+  ;; TNH__-NEXT:   (local.get $x)
+  ;; TNH__-NEXT:  )
+  ;; TNH__-NEXT: )
+  (func $export (export "export") (param $x i32)
+    (call_indirect $table (type $func)
+      (local.get $x)
+    )
+  )
+)
+
+;; As the last testcase, but the first segment is long enough to cause overlap:
+;; we had [0, 1), [2, 3), and now we have [0, 3), [2, 3). We cannot remove
+;; elem $second.
+(module
+  ;; CHECK:      (type $func (func))
+  ;; TNH__:      (type $func (func))
+  (type $func (func))
+
+  ;; CHECK:      (type $other (func (result i32)))
+  (type $other (func (result i32)))
+
+  ;; CHECK:      (type $2 (func (param i32)))
+
+  ;; CHECK:      (table $table 6 6 funcref)
+  ;; TNH__:      (type $1 (func (param i32)))
+
+  ;; TNH__:      (table $table 6 6 funcref)
+  (table $table 6 6 funcref)
+
+  ;; CHECK:      (elem $first (i32.const 0) $func $func $func)
+  ;; TNH__:      (elem $first (i32.const 0) $func $func $func)
+  (elem $first (i32.const 0) $func $func $func) ;; the length here changed
+
+  ;; CHECK:      (elem $second (i32.const 2) $other)
+  (elem $second (i32.const 2) $other)
+
+  ;; CHECK:      (export "export" (func $export))
+
+  ;; CHECK:      (func $func (type $func)
+  ;; CHECK-NEXT: )
+  ;; TNH__:      (export "export" (func $export))
+
+  ;; TNH__:      (func $func (type $func)
+  ;; TNH__-NEXT: )
+  (func $func (type $func)
+  )
+
+  ;; CHECK:      (func $other (type $other) (result i32)
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $other (type $other) (result i32)
+    (i32.const 42)
+  )
+
+  ;; CHECK:      (func $export (type $2) (param $x i32)
   ;; CHECK-NEXT:  (call_indirect $table (type $func)
   ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:  )
