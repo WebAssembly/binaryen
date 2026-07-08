@@ -278,7 +278,7 @@
   ;; TNH__:      (elem $first (i32.const 0) $func)
   (elem $first (i32.const 0) $func)
 
-  (elem $second (i32.const 1) $other)
+  (elem $second (i32.const 1) $other) ;; the offset here changed from 0 to 1
 
   ;; CHECK:      (export "export" (func $export))
 
