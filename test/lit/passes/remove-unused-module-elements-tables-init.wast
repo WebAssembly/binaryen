@@ -140,7 +140,11 @@
   ;; CHECK:      (type $other (func (result i32)))
   (type $other (func (result i32)))
 
+  ;; CHECK:      (type $2 (func (param i32)))
+
   ;; CHECK:      (table $table 6 6 funcref)
+  ;; TNH__:      (type $1 (func (param i32)))
+
   ;; TNH__:      (table $table 6 6 funcref)
   (table $table 6 6 funcref)
 
@@ -172,19 +176,21 @@
     (i32.const 42)
   )
 
-  ;; CHECK:      (func $export (type $func)
+  ;; CHECK:      (func $export (type $2) (param $x i32)
   ;; CHECK-NEXT:  (call_indirect $table (type $func)
-  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; TNH__:      (func $export (type $func)
+  ;; TNH__:      (func $export (type $1) (param $x i32)
   ;; TNH__-NEXT:  (call_indirect $table (type $func)
-  ;; TNH__-NEXT:   (i32.const 0)
+  ;; TNH__-NEXT:   (local.get $x)
   ;; TNH__-NEXT:  )
   ;; TNH__-NEXT: )
-  (func $export (export "export")
+  (func $export (export "export") (param $x i32)
+    ;; Call with an unknown index, so we do not use any tricks about known
+    ;; indexes in the table.
     (call_indirect $table (type $func)
-      (i32.const 0)
+      (local.get $x)
     )
   )
 )
@@ -201,7 +207,11 @@
   ;; CHECK:      (type $other (func (result i32)))
   (type $other (func (result i32)))
 
+  ;; CHECK:      (type $2 (func (param i32)))
+
   ;; CHECK:      (table $table 6 6 funcref)
+  ;; TNH__:      (type $1 (func (param i32)))
+
   ;; TNH__:      (table $table 6 6 funcref)
   (table $table 6 6 funcref)
 
@@ -230,21 +240,75 @@
     (i32.const 42)
   )
 
-  ;; CHECK:      (func $export (type $func)
+  ;; CHECK:      (func $export (type $2) (param $x i32)
   ;; CHECK-NEXT:  (call_indirect $table (type $func)
-  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; TNH__:      (func $export (type $func)
+  ;; TNH__:      (func $export (type $1) (param $x i32)
   ;; TNH__-NEXT:  (call_indirect $table (type $func)
-  ;; TNH__-NEXT:   (i32.const 0)
+  ;; TNH__-NEXT:   (local.get $x)
   ;; TNH__-NEXT:  )
   ;; TNH__-NEXT: )
-  (func $export (export "export")
+  (func $export (export "export") (param $x i32)
     (call_indirect $table (type $func)
-      (i32.const 0)
+      (local.get $x)
     )
   )
 )
 
-;; TODO test without overlap, JUST Nudge offsests
+;; As the last testcase, but now there is no segment overlap, so it is safe to
+;; always remove elem $second.
+(module
+  ;; CHECK:      (type $func (func))
+  ;; TNH__:      (type $func (func))
+  (type $func (func))
+
+  (type $other (func (result i32)))
+
+  ;; CHECK:      (type $1 (func (param i32)))
+
+  ;; CHECK:      (table $table 6 6 funcref)
+  ;; TNH__:      (type $1 (func (param i32)))
+
+  ;; TNH__:      (table $table 6 6 funcref)
+  (table $table 6 6 funcref)
+
+  ;; CHECK:      (elem $first (i32.const 0) $func)
+  ;; TNH__:      (elem $first (i32.const 0) $func)
+  (elem $first (i32.const 0) $func)
+
+  (elem $second (i32.const 1) $other)
+
+  ;; CHECK:      (export "export" (func $export))
+
+  ;; CHECK:      (func $func (type $func)
+  ;; CHECK-NEXT: )
+  ;; TNH__:      (export "export" (func $export))
+
+  ;; TNH__:      (func $func (type $func)
+  ;; TNH__-NEXT: )
+  (func $func (type $func)
+  )
+
+  (func $other (type $other) (result i32)
+    (i32.const 42)
+  )
+
+  ;; CHECK:      (func $export (type $1) (param $x i32)
+  ;; CHECK-NEXT:  (call_indirect $table (type $func)
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; TNH__:      (func $export (type $1) (param $x i32)
+  ;; TNH__-NEXT:  (call_indirect $table (type $func)
+  ;; TNH__-NEXT:   (local.get $x)
+  ;; TNH__-NEXT:  )
+  ;; TNH__-NEXT: )
+  (func $export (export "export") (param $x i32)
+    (call_indirect $table (type $func)
+      (local.get $x)
+    )
+  )
+)
+
