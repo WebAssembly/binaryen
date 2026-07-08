@@ -129,12 +129,15 @@
 ;; around, so we trap - if traps are possible. As a result, elem $second is
 ;; removed in TNH, but not otherwise. elem $third, on the other hand, can be
 ;; removed in both cases, as it contains no nulls, only a function of another
-;; type.
+;; type - but we do not actually remove it in CHECK, as given the presence of
+;; overlapping segments, we give up on analyzing the precise overlap, and do not
+;; remove segments from the table.
 (module
   ;; CHECK:      (type $func (func))
   ;; TNH__:      (type $func (func))
   (type $func (func))
 
+  ;; CHECK:      (type $other (func (result i32)))
   (type $other (func (result i32)))
 
   ;; CHECK:      (table $table 6 6 funcref)
@@ -148,6 +151,7 @@
   ;; CHECK:      (elem $second (table $table) (i32.const 0) funcref (item (ref.null nofunc)))
   (elem $second (table $table) (i32.const 0) funcref (item (ref.null nofunc)))
 
+  ;; CHECK:      (elem $third (i32.const 1) $other)
   (elem $third (i32.const 1) $other)
 
   ;; CHECK:      (export "export" (func $export))
@@ -161,6 +165,9 @@
   (func $func (type $func)
   )
 
+  ;; CHECK:      (func $other (type $other) (result i32)
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
   (func $other (type $other) (result i32)
     (i32.const 42)
   )
@@ -185,12 +192,13 @@
 ;; Similar, but overwrite not with a null, but with a function of the wrong type
 ;; for the call_indirect. Like with a null, we must write that wrongly-typed
 ;; function, to preserve the trap, if traps are possible, so when not TNH, we
-;; must keep elem $second around. XXX
+;; must keep elem $second around.
 (module
   ;; CHECK:      (type $func (func))
   ;; TNH__:      (type $func (func))
   (type $func (func))
 
+  ;; CHECK:      (type $other (func (result i32)))
   (type $other (func (result i32)))
 
   ;; CHECK:      (table $table 6 6 funcref)
@@ -201,6 +209,7 @@
   ;; TNH__:      (elem $first (i32.const 0) $func)
   (elem $first (i32.const 0) $func)
 
+  ;; CHECK:      (elem $second (i32.const 0) $other)
   (elem $second (i32.const 0) $other)
 
   ;; CHECK:      (export "export" (func $export))
@@ -214,6 +223,9 @@
   (func $func (type $func)
   )
 
+  ;; CHECK:      (func $other (type $other) (result i32)
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
   (func $other (type $other) (result i32)
     (i32.const 42)
   )
