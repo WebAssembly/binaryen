@@ -8,7 +8,7 @@
 ;; causes us to keep all elems, but here there is just one, so we can optimize.
 ;; We require closed world (to know about which calls can reach it - the only
 ;; call is to type $func, so elem $elem which contains $other is not needed).
-;; We also require traps-never-happen, as an elem with nonconstnat offset can
+;; We also require traps-never-happen, as an elem with non-constant offset can
 ;; trap, normally. When both closed world and tnh, we remove elem $elem.
 (module
   ;; TNH__:      (type $func (func))
