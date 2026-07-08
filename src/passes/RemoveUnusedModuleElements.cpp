@@ -303,6 +303,11 @@ struct Analyzer {
     // call that index with the right type for A, the trampling causes a trap -
     // so we cannot remove the trampling segment, even though it has nothing
     // can can be called, just to preserve the trap.
+    //
+    // We could be more precise here, as currently we "give up" on analyzing
+    // exact overlap, and just stop removing element segments. But such an exact
+    // analysis would be complex, and is rarely needed: when trapsNeverHappen
+    // this is not an issue, and also segment overlap is rare.
     bool mayHaveOverlappingElems = false;
   };
   std::unordered_map<Name, FlatTableInfo> flatTableInfoMap;
