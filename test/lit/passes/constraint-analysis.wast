@@ -1008,7 +1008,7 @@
     )
   )
 
-  ;; CHECK:      (func $conditional-binary-nesting (type $4) (param $x i32) (param $y i32)
+  ;; CHECK:      (func $conditional-binary-nesting (type $3) (param $x i32) (param $y i32)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.eq
   ;; CHECK-NEXT:    (local.get $x)
@@ -1038,7 +1038,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; OPTIN:      (func $conditional-binary-nesting (type $4) (param $x i32) (param $y i32)
+  ;; OPTIN:      (func $conditional-binary-nesting (type $3) (param $x i32) (param $y i32)
   ;; OPTIN-NEXT:  (if
   ;; OPTIN-NEXT:   (i32.eq
   ;; OPTIN-NEXT:    (local.get $x)
@@ -1510,7 +1510,7 @@
     )
   )
 
-  ;; CHECK:      (func $br_on_null (type $3) (param $param anyref)
+  ;; CHECK:      (func $br_on_null (type $4) (param $param anyref)
   ;; CHECK-NEXT:  (block $block
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (ref.is_null
@@ -1531,7 +1531,7 @@
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; OPTIN:      (func $br_on_null (type $3) (param $param anyref)
+  ;; OPTIN:      (func $br_on_null (type $4) (param $param anyref)
   ;; OPTIN-NEXT:  (block $block
   ;; OPTIN-NEXT:   (drop
   ;; OPTIN-NEXT:    (ref.is_null
@@ -1581,7 +1581,7 @@
     )
   )
 
-  ;; CHECK:      (func $br_on_non_null (type $3) (param $param anyref)
+  ;; CHECK:      (func $br_on_non_null (type $4) (param $param anyref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block $block (result (ref any))
   ;; CHECK-NEXT:    (drop
@@ -1602,7 +1602,7 @@
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; OPTIN:      (func $br_on_non_null (type $3) (param $param anyref)
+  ;; OPTIN:      (func $br_on_non_null (type $4) (param $param anyref)
   ;; OPTIN-NEXT:  (drop
   ;; OPTIN-NEXT:   (block $block (result (ref any))
   ;; OPTIN-NEXT:    (drop
@@ -2443,7 +2443,7 @@
     (local.set $y
       (local.get $x)
     )
-    ;; Verify those values.
+    ;; Verify those values: both x and y are equal to 10.
     (drop
       (i32.eq
         (local.get $x)
@@ -2454,6 +2454,132 @@
       (i32.eq
         (local.get $y)
         (i32.const 10)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $multi-local-copy-if (type $3) (param $x i32) (param $y i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.eq
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.eq
+  ;; CHECK-NEXT:      (local.get $y)
+  ;; CHECK-NEXT:      (i32.const 42)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $y
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (else
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.eq
+  ;; CHECK-NEXT:      (local.get $y)
+  ;; CHECK-NEXT:      (i32.const 42)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $y
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPTIN:      (func $multi-local-copy-if (type $3) (param $x i32) (param $y i32)
+  ;; OPTIN-NEXT:  (drop
+  ;; OPTIN-NEXT:   (i32.eq
+  ;; OPTIN-NEXT:    (local.get $y)
+  ;; OPTIN-NEXT:    (i32.const 42)
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (local.set $y
+  ;; OPTIN-NEXT:   (local.get $x)
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (drop
+  ;; OPTIN-NEXT:   (i32.eq
+  ;; OPTIN-NEXT:    (local.get $y)
+  ;; OPTIN-NEXT:    (i32.const 42)
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (drop
+  ;; OPTIN-NEXT:   (i32.eq
+  ;; OPTIN-NEXT:    (local.get $x)
+  ;; OPTIN-NEXT:    (i32.const 42)
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT: )
+  (func $multi-local-copy-if (param $x i32) (param $y i32)
+    (if
+      (i32.eq
+        (local.get $x)
+        (i32.const 42)
+      )
+      (then
+        ;; We don't know anything yet.
+        (drop
+          (i32.eq
+            (local.get $y)
+            (i32.const 42)
+          )
+        )
+        ;; Copy x into y, and see that it is now equal to 42.
+        (local.set $y
+          (local.get $x)
+        )
+        (drop
+          (i32.eq
+            (local.get $y)
+            (i32.const 42)
+          )
+        )
+        ;; x was not changed (equal to 42)
+        (drop
+          (i32.eq
+            (local.get $x)
+            (i32.const 42)
+          )
+        )
+      )
+      (else
+        ;; We don't know anything yet.
+        (drop
+          (i32.eq
+            (local.get $y)
+            (i32.const 42)
+          )
+        )
+        ;; Copy x into y, and see that it is now *not* equal to 42.
+        (local.set $y
+          (local.get $x)
+        )
+        (drop
+          (i32.eq
+            (local.get $y)
+            (i32.const 42)
+          )
+        )
+        ;; x was not changed (not equal to 42)
+        (drop
+          (i32.eq
+            (local.get $x)
+            (i32.const 42)
+          )
+        )
       )
     )
   )

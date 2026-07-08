@@ -54,6 +54,10 @@ struct Info {
   // For each local index, we track the constraints we know about it. We only do
   // so at the start of each block, which is enough for the analysis below.
   BasicBlockConstraintMap startConstraints;
+
+  void dump(Function* func) {
+    std::cout << "Info{" << actions.size() << ", " << brancher << ", " << startConstraints << "}\n";
+  }
 };
 
 struct ConstraintAnalysis
