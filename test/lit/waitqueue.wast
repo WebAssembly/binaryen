@@ -13,11 +13,14 @@
   ;; RTRIP-NEXT:  (i32.const 0)
   ;; RTRIP-NEXT: ))
   (global $g (ref $t) (struct.new $t (i32.const 0)))
+
   ;; CHECK:      (global $wq (mut (ref null (shared waitqueue))) (ref.null (shared nowaitqueue)))
   ;; RTRIP:      (global $wq (mut (ref null (shared waitqueue))) (ref.null (shared nowaitqueue)))
   (global $wq (mut (ref null (shared waitqueue))) (ref.null (shared waitqueue)))
 
   ;; CHECK:      (global $nwq (mut (ref null (shared nowaitqueue))) (ref.null (shared nowaitqueue)))
+  ;; RTRIP:      (global $nwq (mut (ref null (shared nowaitqueue))) (ref.null (shared nowaitqueue)))
+  (global $nwq (mut (ref null (shared nowaitqueue))) (ref.null (shared nowaitqueue)))
 
   ;; CHECK:      (func $wait (type $0)
   ;; CHECK-NEXT:  (drop
@@ -29,8 +32,6 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; RTRIP:      (global $nwq (mut (ref null (shared nowaitqueue))) (ref.null (shared nowaitqueue)))
-
   ;; RTRIP:      (func $wait (type $0)
   ;; RTRIP-NEXT:  (drop
   ;; RTRIP-NEXT:   (struct.wait $t 0
@@ -194,6 +195,4 @@
   (func $new
     (drop (waitqueue.new))
   )
-
-  (global $nwq (mut (ref null (shared nowaitqueue))) (ref.null (shared nowaitqueue)))
 )
