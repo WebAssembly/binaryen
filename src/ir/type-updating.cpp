@@ -28,16 +28,36 @@ namespace wasm {
 
 namespace {
 
+// Copy over `indirectCallEffects` when types are rewritten. When rewriting a
+// type A to type B, A will lose its effects and B will gain A's effects. If the
+// destination type already existed in the program but had no effects recorded,
+// we must assume the worst (e.g. there may have been an import of type B) and
+// clear its entry in the effects map. OTOH if the destination type is a brand
+// new type, then it can only have effects from the source type. If the source
+// type didn't exist, it must have been created by a pass sometime after
+// GlobalEffects last ran. We again assume that effects are unknown.
 std::unordered_map<HeapType, std::shared_ptr<const EffectAnalyzer>>
-updateIndirectCallEffects(const Module& wasm,
-                          const std::vector<HeapType>& oldTypes,
-                          const GlobalTypeRewriter::TypeMap& oldToNewTypes) {
+updateIndirectCallEffects(
+  const Module& wasm,
+  const InsertOrderedMap<HeapType, ModuleUtils::HeapTypeInfo>& typeInfo,
+  const GlobalTypeRewriter::TypeMap& oldToNewTypes) {
   std::unordered_map<HeapType, std::shared_ptr<const EffectAnalyzer>>
     newTypeEffects;
 
   std::unordered_set<HeapType> unknownNewTypes;
 
-  for (HeapType oldType : oldTypes) {
+  std::unordered_set<HeapType> allOldTypes;
+  for (auto [oldType, _] : typeInfo) {
+    allOldTypes.insert(oldType);
+  }
+  for (auto& [oldType, newType] : oldToNewTypes) {
+    allOldTypes.insert(oldType);
+  }
+  for (auto& [oldType, effects] : wasm.indirectCallEffects) {
+    allOldTypes.insert(oldType);
+  }
+
+  for (auto oldType : allOldTypes) {
     HeapType newType;
     {
       auto it = oldToNewTypes.find(oldType);
@@ -48,7 +68,7 @@ updateIndirectCallEffects(const Module& wasm,
       }
     }
 
-    if (unknownNewTypes.count(newType)) {
+    if (unknownNewTypes.contains(newType)) {
       continue;
     }
 
@@ -56,8 +76,7 @@ updateIndirectCallEffects(const Module& wasm,
       find_or_null(wasm.indirectCallEffects, oldType);
 
     if (!oldEffects) {
-      // oldType is an existing type and has no entry, which means its
-      // effects are explicitly UNKNOWN.
+      // oldType has no entry, which means its effects are explicitly unknown.
       unknownNewTypes.insert(newType);
       newTypeEffects.erase(newType);
       continue;
@@ -263,12 +282,8 @@ GlobalTypeRewriter::rebuildTypes(std::vector<HeapType> types) {
 
 void GlobalTypeRewriter::mapTypes(const TypeMap& oldToNewTypes) {
   if (!wasm.indirectCallEffects.empty()) {
-    // Update indirect call effects per type.
-    // When A is rewritten to B, B inherits the effects of A and A loses its
-    // effects.
-    std::vector<HeapType> oldTypes = ModuleUtils::collectHeapTypes(wasm);
     wasm.indirectCallEffects =
-      updateIndirectCallEffects(wasm, oldTypes, oldToNewTypes);
+      updateIndirectCallEffects(wasm, typeInfo, oldToNewTypes);
   }
 
   // Replace all the old types in the module with the new ones.

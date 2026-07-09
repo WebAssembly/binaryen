@@ -2728,8 +2728,8 @@ public:
 
   std::unordered_map<HeapType, TypeNames> typeNames;
 
-  // The source binary's type indicies. Used in some cases for preserving
-  // ordering of types
+  // The source binary's type indices. Used in some cases for preserving
+  // ordering of types.
   std::unordered_map<HeapType, Index> typeIndices;
 
   // Potential effects for bodies of indirect calls to this type. Populated by
@@ -2747,12 +2747,6 @@ public:
   // exists to a function, the data can be out of date (no effort is made to
   // clean up the data if e.g. all indirect calls to a function are removed).
   //
-  // A missing key in the map means that the type's effects are explicitly
-  // unknown. When rewriting types, we distinguish new types from existing
-  // types by checking whether they existed before the update. If a new type
-  // is created, it inherits the effects of the old types that map to it. If
-  // an existing type with unknown effects is mapped, the resulting type will
-  // also have explicitly unknown effects.
   // TODO: Account for exactness here.
   std::unordered_map<HeapType, std::shared_ptr<const EffectAnalyzer>>
     indirectCallEffects;
