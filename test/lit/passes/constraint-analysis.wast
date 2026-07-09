@@ -1008,7 +1008,7 @@
     )
   )
 
-  ;; CHECK:      (func $conditional-binary-nesting (type $5) (param $x i32) (param $y i32)
+  ;; CHECK:      (func $conditional-binary-nesting (type $2) (param $x i32) (param $y i32)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.eq
   ;; CHECK-NEXT:    (local.get $x)
@@ -2628,7 +2628,7 @@
     )
   )
 
-  ;; CHECK:      (func $local-changes-if (type $7) (param $x i32) (param $y i32) (param $z i32) (param $w i32)
+  ;; CHECK:      (func $local-changes-if (type $5) (param $x i32) (param $y i32) (param $z i32) (param $w i32)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.eq
   ;; CHECK-NEXT:    (local.get $x)
@@ -2685,7 +2685,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; OPTIN:      (func $local-changes-if (type $7) (param $x i32) (param $y i32) (param $z i32) (param $w i32)
+  ;; OPTIN:      (func $local-changes-if (type $5) (param $x i32) (param $y i32) (param $z i32) (param $w i32)
   ;; OPTIN-NEXT:  (if
   ;; OPTIN-NEXT:   (i32.eq
   ;; OPTIN-NEXT:    (local.get $x)
