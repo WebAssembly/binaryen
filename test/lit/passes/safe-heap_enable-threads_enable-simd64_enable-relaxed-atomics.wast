@@ -5193,9 +5193,9 @@
  (memory i64 100 100)
  ;; CHECK:      (type $0 (func (param i64 i64) (result i64)))
 
- ;; CHECK:      (type $1 (func (param i64 i64 i64)))
+ ;; CHECK:      (type $1 (func (param i64 i64) (result i32)))
 
- ;; CHECK:      (type $2 (func (param i64 i64) (result i32)))
+ ;; CHECK:      (type $2 (func (param i64 i64 i64)))
 
  ;; CHECK:      (type $3 (func (param i64 i64 i32)))
 
@@ -5276,6 +5276,98 @@
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
+;; CHECK:      (func $SAFE_HEAP_LOAD_i32_1_AR (param $0 i64) (param $1 i64) (result i32)
+;; CHECK-NEXT:  (local $2 i64)
+;; CHECK-NEXT:  (local.set $2
+;; CHECK-NEXT:   (i64.add
+;; CHECK-NEXT:    (local.get $0)
+;; CHECK-NEXT:    (local.get $1)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (if
+;; CHECK-NEXT:   (i32.or
+;; CHECK-NEXT:    (i64.eq
+;; CHECK-NEXT:     (local.get $2)
+;; CHECK-NEXT:     (i64.const 0)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:    (i32.or
+;; CHECK-NEXT:     (i64.gt_u
+;; CHECK-NEXT:      (i64.add
+;; CHECK-NEXT:       (local.get $2)
+;; CHECK-NEXT:       (i64.const 1)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:      (i64.load
+;; CHECK-NEXT:       (call $emscripten_get_sbrk_ptr)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:     (i64.lt_u
+;; CHECK-NEXT:      (local.get $2)
+;; CHECK-NEXT:      (local.get $0)
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (call $segfault)
+;; CHECK-NEXT:    (unreachable)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (i32.shr_s
+;; CHECK-NEXT:   (i32.shl
+;; CHECK-NEXT:    (i32.atomic.load8_u acqrel
+;; CHECK-NEXT:     (local.get $2)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:    (i32.const 24)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (i32.const 24)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $SAFE_HEAP_LOAD_i32_1_SC (param $0 i64) (param $1 i64) (result i32)
+;; CHECK-NEXT:  (local $2 i64)
+;; CHECK-NEXT:  (local.set $2
+;; CHECK-NEXT:   (i64.add
+;; CHECK-NEXT:    (local.get $0)
+;; CHECK-NEXT:    (local.get $1)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (if
+;; CHECK-NEXT:   (i32.or
+;; CHECK-NEXT:    (i64.eq
+;; CHECK-NEXT:     (local.get $2)
+;; CHECK-NEXT:     (i64.const 0)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:    (i32.or
+;; CHECK-NEXT:     (i64.gt_u
+;; CHECK-NEXT:      (i64.add
+;; CHECK-NEXT:       (local.get $2)
+;; CHECK-NEXT:       (i64.const 1)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:      (i64.load
+;; CHECK-NEXT:       (call $emscripten_get_sbrk_ptr)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:     (i64.lt_u
+;; CHECK-NEXT:      (local.get $2)
+;; CHECK-NEXT:      (local.get $0)
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (call $segfault)
+;; CHECK-NEXT:    (unreachable)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (i32.shr_s
+;; CHECK-NEXT:   (i32.shl
+;; CHECK-NEXT:    (i32.atomic.load8_u
+;; CHECK-NEXT:     (local.get $2)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:    (i32.const 24)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (i32.const 24)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
 ;; CHECK:      (func $SAFE_HEAP_LOAD_i32_1_U_1 (param $0 i64) (param $1 i64) (result i32)
 ;; CHECK-NEXT:  (local $2 i64)
 ;; CHECK-NEXT:  (local.set $2
@@ -5312,6 +5404,86 @@
 ;; CHECK-NEXT:   )
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT:  (i32.load8_u
+;; CHECK-NEXT:   (local.get $2)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $SAFE_HEAP_LOAD_i32_1_U_AR (param $0 i64) (param $1 i64) (result i32)
+;; CHECK-NEXT:  (local $2 i64)
+;; CHECK-NEXT:  (local.set $2
+;; CHECK-NEXT:   (i64.add
+;; CHECK-NEXT:    (local.get $0)
+;; CHECK-NEXT:    (local.get $1)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (if
+;; CHECK-NEXT:   (i32.or
+;; CHECK-NEXT:    (i64.eq
+;; CHECK-NEXT:     (local.get $2)
+;; CHECK-NEXT:     (i64.const 0)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:    (i32.or
+;; CHECK-NEXT:     (i64.gt_u
+;; CHECK-NEXT:      (i64.add
+;; CHECK-NEXT:       (local.get $2)
+;; CHECK-NEXT:       (i64.const 1)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:      (i64.load
+;; CHECK-NEXT:       (call $emscripten_get_sbrk_ptr)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:     (i64.lt_u
+;; CHECK-NEXT:      (local.get $2)
+;; CHECK-NEXT:      (local.get $0)
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (call $segfault)
+;; CHECK-NEXT:    (unreachable)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (i32.atomic.load8_u acqrel
+;; CHECK-NEXT:   (local.get $2)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $SAFE_HEAP_LOAD_i32_1_U_SC (param $0 i64) (param $1 i64) (result i32)
+;; CHECK-NEXT:  (local $2 i64)
+;; CHECK-NEXT:  (local.set $2
+;; CHECK-NEXT:   (i64.add
+;; CHECK-NEXT:    (local.get $0)
+;; CHECK-NEXT:    (local.get $1)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (if
+;; CHECK-NEXT:   (i32.or
+;; CHECK-NEXT:    (i64.eq
+;; CHECK-NEXT:     (local.get $2)
+;; CHECK-NEXT:     (i64.const 0)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:    (i32.or
+;; CHECK-NEXT:     (i64.gt_u
+;; CHECK-NEXT:      (i64.add
+;; CHECK-NEXT:       (local.get $2)
+;; CHECK-NEXT:       (i64.const 1)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:      (i64.load
+;; CHECK-NEXT:       (call $emscripten_get_sbrk_ptr)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:     (i64.lt_u
+;; CHECK-NEXT:      (local.get $2)
+;; CHECK-NEXT:      (local.get $0)
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (call $segfault)
+;; CHECK-NEXT:    (unreachable)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (i32.atomic.load8_u
 ;; CHECK-NEXT:   (local.get $2)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
@@ -5407,6 +5579,120 @@
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
+;; CHECK:      (func $SAFE_HEAP_LOAD_i32_2_AR (param $0 i64) (param $1 i64) (result i32)
+;; CHECK-NEXT:  (local $2 i64)
+;; CHECK-NEXT:  (local.set $2
+;; CHECK-NEXT:   (i64.add
+;; CHECK-NEXT:    (local.get $0)
+;; CHECK-NEXT:    (local.get $1)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (if
+;; CHECK-NEXT:   (i32.or
+;; CHECK-NEXT:    (i64.eq
+;; CHECK-NEXT:     (local.get $2)
+;; CHECK-NEXT:     (i64.const 0)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:    (i32.or
+;; CHECK-NEXT:     (i64.gt_u
+;; CHECK-NEXT:      (i64.add
+;; CHECK-NEXT:       (local.get $2)
+;; CHECK-NEXT:       (i64.const 2)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:      (i64.load
+;; CHECK-NEXT:       (call $emscripten_get_sbrk_ptr)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:     (i64.lt_u
+;; CHECK-NEXT:      (local.get $2)
+;; CHECK-NEXT:      (local.get $0)
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (call $segfault)
+;; CHECK-NEXT:    (unreachable)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (if
+;; CHECK-NEXT:   (i32.and
+;; CHECK-NEXT:    (i32.wrap_i64
+;; CHECK-NEXT:     (local.get $2)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:    (i32.const 1)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (call $alignfault)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (i32.shr_s
+;; CHECK-NEXT:   (i32.shl
+;; CHECK-NEXT:    (i32.atomic.load16_u acqrel
+;; CHECK-NEXT:     (local.get $2)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:    (i32.const 16)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (i32.const 16)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $SAFE_HEAP_LOAD_i32_2_SC (param $0 i64) (param $1 i64) (result i32)
+;; CHECK-NEXT:  (local $2 i64)
+;; CHECK-NEXT:  (local.set $2
+;; CHECK-NEXT:   (i64.add
+;; CHECK-NEXT:    (local.get $0)
+;; CHECK-NEXT:    (local.get $1)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (if
+;; CHECK-NEXT:   (i32.or
+;; CHECK-NEXT:    (i64.eq
+;; CHECK-NEXT:     (local.get $2)
+;; CHECK-NEXT:     (i64.const 0)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:    (i32.or
+;; CHECK-NEXT:     (i64.gt_u
+;; CHECK-NEXT:      (i64.add
+;; CHECK-NEXT:       (local.get $2)
+;; CHECK-NEXT:       (i64.const 2)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:      (i64.load
+;; CHECK-NEXT:       (call $emscripten_get_sbrk_ptr)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:     (i64.lt_u
+;; CHECK-NEXT:      (local.get $2)
+;; CHECK-NEXT:      (local.get $0)
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (call $segfault)
+;; CHECK-NEXT:    (unreachable)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (if
+;; CHECK-NEXT:   (i32.and
+;; CHECK-NEXT:    (i32.wrap_i64
+;; CHECK-NEXT:     (local.get $2)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:    (i32.const 1)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (call $alignfault)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (i32.shr_s
+;; CHECK-NEXT:   (i32.shl
+;; CHECK-NEXT:    (i32.atomic.load16_u
+;; CHECK-NEXT:     (local.get $2)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:    (i32.const 16)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (i32.const 16)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
 ;; CHECK:      (func $SAFE_HEAP_LOAD_i32_2_U_1 (param $0 i64) (param $1 i64) (result i32)
 ;; CHECK-NEXT:  (local $2 i64)
 ;; CHECK-NEXT:  (local.set $2
@@ -5494,6 +5780,108 @@
 ;; CHECK-NEXT:   )
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT:  (i32.load16_u
+;; CHECK-NEXT:   (local.get $2)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $SAFE_HEAP_LOAD_i32_2_U_AR (param $0 i64) (param $1 i64) (result i32)
+;; CHECK-NEXT:  (local $2 i64)
+;; CHECK-NEXT:  (local.set $2
+;; CHECK-NEXT:   (i64.add
+;; CHECK-NEXT:    (local.get $0)
+;; CHECK-NEXT:    (local.get $1)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (if
+;; CHECK-NEXT:   (i32.or
+;; CHECK-NEXT:    (i64.eq
+;; CHECK-NEXT:     (local.get $2)
+;; CHECK-NEXT:     (i64.const 0)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:    (i32.or
+;; CHECK-NEXT:     (i64.gt_u
+;; CHECK-NEXT:      (i64.add
+;; CHECK-NEXT:       (local.get $2)
+;; CHECK-NEXT:       (i64.const 2)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:      (i64.load
+;; CHECK-NEXT:       (call $emscripten_get_sbrk_ptr)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:     (i64.lt_u
+;; CHECK-NEXT:      (local.get $2)
+;; CHECK-NEXT:      (local.get $0)
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (call $segfault)
+;; CHECK-NEXT:    (unreachable)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (if
+;; CHECK-NEXT:   (i32.and
+;; CHECK-NEXT:    (i32.wrap_i64
+;; CHECK-NEXT:     (local.get $2)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:    (i32.const 1)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (call $alignfault)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (i32.atomic.load16_u acqrel
+;; CHECK-NEXT:   (local.get $2)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $SAFE_HEAP_LOAD_i32_2_U_SC (param $0 i64) (param $1 i64) (result i32)
+;; CHECK-NEXT:  (local $2 i64)
+;; CHECK-NEXT:  (local.set $2
+;; CHECK-NEXT:   (i64.add
+;; CHECK-NEXT:    (local.get $0)
+;; CHECK-NEXT:    (local.get $1)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (if
+;; CHECK-NEXT:   (i32.or
+;; CHECK-NEXT:    (i64.eq
+;; CHECK-NEXT:     (local.get $2)
+;; CHECK-NEXT:     (i64.const 0)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:    (i32.or
+;; CHECK-NEXT:     (i64.gt_u
+;; CHECK-NEXT:      (i64.add
+;; CHECK-NEXT:       (local.get $2)
+;; CHECK-NEXT:       (i64.const 2)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:      (i64.load
+;; CHECK-NEXT:       (call $emscripten_get_sbrk_ptr)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:     (i64.lt_u
+;; CHECK-NEXT:      (local.get $2)
+;; CHECK-NEXT:      (local.get $0)
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (call $segfault)
+;; CHECK-NEXT:    (unreachable)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (if
+;; CHECK-NEXT:   (i32.and
+;; CHECK-NEXT:    (i32.wrap_i64
+;; CHECK-NEXT:     (local.get $2)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:    (i32.const 1)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (call $alignfault)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (i32.atomic.load16_u
 ;; CHECK-NEXT:   (local.get $2)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
@@ -5640,6 +6028,108 @@
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
+;; CHECK:      (func $SAFE_HEAP_LOAD_i32_4_AR (param $0 i64) (param $1 i64) (result i32)
+;; CHECK-NEXT:  (local $2 i64)
+;; CHECK-NEXT:  (local.set $2
+;; CHECK-NEXT:   (i64.add
+;; CHECK-NEXT:    (local.get $0)
+;; CHECK-NEXT:    (local.get $1)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (if
+;; CHECK-NEXT:   (i32.or
+;; CHECK-NEXT:    (i64.eq
+;; CHECK-NEXT:     (local.get $2)
+;; CHECK-NEXT:     (i64.const 0)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:    (i32.or
+;; CHECK-NEXT:     (i64.gt_u
+;; CHECK-NEXT:      (i64.add
+;; CHECK-NEXT:       (local.get $2)
+;; CHECK-NEXT:       (i64.const 4)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:      (i64.load
+;; CHECK-NEXT:       (call $emscripten_get_sbrk_ptr)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:     (i64.lt_u
+;; CHECK-NEXT:      (local.get $2)
+;; CHECK-NEXT:      (local.get $0)
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (call $segfault)
+;; CHECK-NEXT:    (unreachable)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (if
+;; CHECK-NEXT:   (i32.and
+;; CHECK-NEXT:    (i32.wrap_i64
+;; CHECK-NEXT:     (local.get $2)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:    (i32.const 3)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (call $alignfault)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (i32.atomic.load acqrel
+;; CHECK-NEXT:   (local.get $2)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $SAFE_HEAP_LOAD_i32_4_SC (param $0 i64) (param $1 i64) (result i32)
+;; CHECK-NEXT:  (local $2 i64)
+;; CHECK-NEXT:  (local.set $2
+;; CHECK-NEXT:   (i64.add
+;; CHECK-NEXT:    (local.get $0)
+;; CHECK-NEXT:    (local.get $1)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (if
+;; CHECK-NEXT:   (i32.or
+;; CHECK-NEXT:    (i64.eq
+;; CHECK-NEXT:     (local.get $2)
+;; CHECK-NEXT:     (i64.const 0)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:    (i32.or
+;; CHECK-NEXT:     (i64.gt_u
+;; CHECK-NEXT:      (i64.add
+;; CHECK-NEXT:       (local.get $2)
+;; CHECK-NEXT:       (i64.const 4)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:      (i64.load
+;; CHECK-NEXT:       (call $emscripten_get_sbrk_ptr)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:     (i64.lt_u
+;; CHECK-NEXT:      (local.get $2)
+;; CHECK-NEXT:      (local.get $0)
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (call $segfault)
+;; CHECK-NEXT:    (unreachable)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (if
+;; CHECK-NEXT:   (i32.and
+;; CHECK-NEXT:    (i32.wrap_i64
+;; CHECK-NEXT:     (local.get $2)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:    (i32.const 3)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (call $alignfault)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (i32.atomic.load
+;; CHECK-NEXT:   (local.get $2)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
 ;; CHECK:      (func $SAFE_HEAP_LOAD_i64_1_1 (param $0 i64) (param $1 i64) (result i64)
 ;; CHECK-NEXT:  (local $2 i64)
 ;; CHECK-NEXT:  (local.set $2
@@ -5680,6 +6170,98 @@
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
+;; CHECK:      (func $SAFE_HEAP_LOAD_i64_1_AR (param $0 i64) (param $1 i64) (result i64)
+;; CHECK-NEXT:  (local $2 i64)
+;; CHECK-NEXT:  (local.set $2
+;; CHECK-NEXT:   (i64.add
+;; CHECK-NEXT:    (local.get $0)
+;; CHECK-NEXT:    (local.get $1)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (if
+;; CHECK-NEXT:   (i32.or
+;; CHECK-NEXT:    (i64.eq
+;; CHECK-NEXT:     (local.get $2)
+;; CHECK-NEXT:     (i64.const 0)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:    (i32.or
+;; CHECK-NEXT:     (i64.gt_u
+;; CHECK-NEXT:      (i64.add
+;; CHECK-NEXT:       (local.get $2)
+;; CHECK-NEXT:       (i64.const 1)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:      (i64.load
+;; CHECK-NEXT:       (call $emscripten_get_sbrk_ptr)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:     (i64.lt_u
+;; CHECK-NEXT:      (local.get $2)
+;; CHECK-NEXT:      (local.get $0)
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (call $segfault)
+;; CHECK-NEXT:    (unreachable)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (i64.shr_s
+;; CHECK-NEXT:   (i64.shl
+;; CHECK-NEXT:    (i64.atomic.load8_u acqrel
+;; CHECK-NEXT:     (local.get $2)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:    (i64.const 56)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (i64.const 56)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $SAFE_HEAP_LOAD_i64_1_SC (param $0 i64) (param $1 i64) (result i64)
+;; CHECK-NEXT:  (local $2 i64)
+;; CHECK-NEXT:  (local.set $2
+;; CHECK-NEXT:   (i64.add
+;; CHECK-NEXT:    (local.get $0)
+;; CHECK-NEXT:    (local.get $1)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (if
+;; CHECK-NEXT:   (i32.or
+;; CHECK-NEXT:    (i64.eq
+;; CHECK-NEXT:     (local.get $2)
+;; CHECK-NEXT:     (i64.const 0)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:    (i32.or
+;; CHECK-NEXT:     (i64.gt_u
+;; CHECK-NEXT:      (i64.add
+;; CHECK-NEXT:       (local.get $2)
+;; CHECK-NEXT:       (i64.const 1)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:      (i64.load
+;; CHECK-NEXT:       (call $emscripten_get_sbrk_ptr)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:     (i64.lt_u
+;; CHECK-NEXT:      (local.get $2)
+;; CHECK-NEXT:      (local.get $0)
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (call $segfault)
+;; CHECK-NEXT:    (unreachable)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (i64.shr_s
+;; CHECK-NEXT:   (i64.shl
+;; CHECK-NEXT:    (i64.atomic.load8_u
+;; CHECK-NEXT:     (local.get $2)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:    (i64.const 56)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (i64.const 56)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
 ;; CHECK:      (func $SAFE_HEAP_LOAD_i64_1_U_1 (param $0 i64) (param $1 i64) (result i64)
 ;; CHECK-NEXT:  (local $2 i64)
 ;; CHECK-NEXT:  (local.set $2
@@ -5716,6 +6298,86 @@
 ;; CHECK-NEXT:   )
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT:  (i64.load8_u
+;; CHECK-NEXT:   (local.get $2)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $SAFE_HEAP_LOAD_i64_1_U_AR (param $0 i64) (param $1 i64) (result i64)
+;; CHECK-NEXT:  (local $2 i64)
+;; CHECK-NEXT:  (local.set $2
+;; CHECK-NEXT:   (i64.add
+;; CHECK-NEXT:    (local.get $0)
+;; CHECK-NEXT:    (local.get $1)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (if
+;; CHECK-NEXT:   (i32.or
+;; CHECK-NEXT:    (i64.eq
+;; CHECK-NEXT:     (local.get $2)
+;; CHECK-NEXT:     (i64.const 0)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:    (i32.or
+;; CHECK-NEXT:     (i64.gt_u
+;; CHECK-NEXT:      (i64.add
+;; CHECK-NEXT:       (local.get $2)
+;; CHECK-NEXT:       (i64.const 1)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:      (i64.load
+;; CHECK-NEXT:       (call $emscripten_get_sbrk_ptr)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:     (i64.lt_u
+;; CHECK-NEXT:      (local.get $2)
+;; CHECK-NEXT:      (local.get $0)
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (call $segfault)
+;; CHECK-NEXT:    (unreachable)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (i64.atomic.load8_u acqrel
+;; CHECK-NEXT:   (local.get $2)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $SAFE_HEAP_LOAD_i64_1_U_SC (param $0 i64) (param $1 i64) (result i64)
+;; CHECK-NEXT:  (local $2 i64)
+;; CHECK-NEXT:  (local.set $2
+;; CHECK-NEXT:   (i64.add
+;; CHECK-NEXT:    (local.get $0)
+;; CHECK-NEXT:    (local.get $1)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (if
+;; CHECK-NEXT:   (i32.or
+;; CHECK-NEXT:    (i64.eq
+;; CHECK-NEXT:     (local.get $2)
+;; CHECK-NEXT:     (i64.const 0)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:    (i32.or
+;; CHECK-NEXT:     (i64.gt_u
+;; CHECK-NEXT:      (i64.add
+;; CHECK-NEXT:       (local.get $2)
+;; CHECK-NEXT:       (i64.const 1)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:      (i64.load
+;; CHECK-NEXT:       (call $emscripten_get_sbrk_ptr)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:     (i64.lt_u
+;; CHECK-NEXT:      (local.get $2)
+;; CHECK-NEXT:      (local.get $0)
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (call $segfault)
+;; CHECK-NEXT:    (unreachable)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (i64.atomic.load8_u
 ;; CHECK-NEXT:   (local.get $2)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
@@ -5811,6 +6473,120 @@
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
+;; CHECK:      (func $SAFE_HEAP_LOAD_i64_2_AR (param $0 i64) (param $1 i64) (result i64)
+;; CHECK-NEXT:  (local $2 i64)
+;; CHECK-NEXT:  (local.set $2
+;; CHECK-NEXT:   (i64.add
+;; CHECK-NEXT:    (local.get $0)
+;; CHECK-NEXT:    (local.get $1)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (if
+;; CHECK-NEXT:   (i32.or
+;; CHECK-NEXT:    (i64.eq
+;; CHECK-NEXT:     (local.get $2)
+;; CHECK-NEXT:     (i64.const 0)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:    (i32.or
+;; CHECK-NEXT:     (i64.gt_u
+;; CHECK-NEXT:      (i64.add
+;; CHECK-NEXT:       (local.get $2)
+;; CHECK-NEXT:       (i64.const 2)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:      (i64.load
+;; CHECK-NEXT:       (call $emscripten_get_sbrk_ptr)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:     (i64.lt_u
+;; CHECK-NEXT:      (local.get $2)
+;; CHECK-NEXT:      (local.get $0)
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (call $segfault)
+;; CHECK-NEXT:    (unreachable)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (if
+;; CHECK-NEXT:   (i32.and
+;; CHECK-NEXT:    (i32.wrap_i64
+;; CHECK-NEXT:     (local.get $2)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:    (i32.const 1)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (call $alignfault)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (i64.shr_s
+;; CHECK-NEXT:   (i64.shl
+;; CHECK-NEXT:    (i64.atomic.load16_u acqrel
+;; CHECK-NEXT:     (local.get $2)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:    (i64.const 48)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (i64.const 48)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $SAFE_HEAP_LOAD_i64_2_SC (param $0 i64) (param $1 i64) (result i64)
+;; CHECK-NEXT:  (local $2 i64)
+;; CHECK-NEXT:  (local.set $2
+;; CHECK-NEXT:   (i64.add
+;; CHECK-NEXT:    (local.get $0)
+;; CHECK-NEXT:    (local.get $1)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (if
+;; CHECK-NEXT:   (i32.or
+;; CHECK-NEXT:    (i64.eq
+;; CHECK-NEXT:     (local.get $2)
+;; CHECK-NEXT:     (i64.const 0)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:    (i32.or
+;; CHECK-NEXT:     (i64.gt_u
+;; CHECK-NEXT:      (i64.add
+;; CHECK-NEXT:       (local.get $2)
+;; CHECK-NEXT:       (i64.const 2)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:      (i64.load
+;; CHECK-NEXT:       (call $emscripten_get_sbrk_ptr)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:     (i64.lt_u
+;; CHECK-NEXT:      (local.get $2)
+;; CHECK-NEXT:      (local.get $0)
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (call $segfault)
+;; CHECK-NEXT:    (unreachable)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (if
+;; CHECK-NEXT:   (i32.and
+;; CHECK-NEXT:    (i32.wrap_i64
+;; CHECK-NEXT:     (local.get $2)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:    (i32.const 1)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (call $alignfault)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (i64.shr_s
+;; CHECK-NEXT:   (i64.shl
+;; CHECK-NEXT:    (i64.atomic.load16_u
+;; CHECK-NEXT:     (local.get $2)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:    (i64.const 48)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (i64.const 48)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
 ;; CHECK:      (func $SAFE_HEAP_LOAD_i64_2_U_1 (param $0 i64) (param $1 i64) (result i64)
 ;; CHECK-NEXT:  (local $2 i64)
 ;; CHECK-NEXT:  (local.set $2
@@ -5898,6 +6674,108 @@
 ;; CHECK-NEXT:   )
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT:  (i64.load16_u
+;; CHECK-NEXT:   (local.get $2)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $SAFE_HEAP_LOAD_i64_2_U_AR (param $0 i64) (param $1 i64) (result i64)
+;; CHECK-NEXT:  (local $2 i64)
+;; CHECK-NEXT:  (local.set $2
+;; CHECK-NEXT:   (i64.add
+;; CHECK-NEXT:    (local.get $0)
+;; CHECK-NEXT:    (local.get $1)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (if
+;; CHECK-NEXT:   (i32.or
+;; CHECK-NEXT:    (i64.eq
+;; CHECK-NEXT:     (local.get $2)
+;; CHECK-NEXT:     (i64.const 0)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:    (i32.or
+;; CHECK-NEXT:     (i64.gt_u
+;; CHECK-NEXT:      (i64.add
+;; CHECK-NEXT:       (local.get $2)
+;; CHECK-NEXT:       (i64.const 2)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:      (i64.load
+;; CHECK-NEXT:       (call $emscripten_get_sbrk_ptr)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:     (i64.lt_u
+;; CHECK-NEXT:      (local.get $2)
+;; CHECK-NEXT:      (local.get $0)
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (call $segfault)
+;; CHECK-NEXT:    (unreachable)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (if
+;; CHECK-NEXT:   (i32.and
+;; CHECK-NEXT:    (i32.wrap_i64
+;; CHECK-NEXT:     (local.get $2)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:    (i32.const 1)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (call $alignfault)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (i64.atomic.load16_u acqrel
+;; CHECK-NEXT:   (local.get $2)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $SAFE_HEAP_LOAD_i64_2_U_SC (param $0 i64) (param $1 i64) (result i64)
+;; CHECK-NEXT:  (local $2 i64)
+;; CHECK-NEXT:  (local.set $2
+;; CHECK-NEXT:   (i64.add
+;; CHECK-NEXT:    (local.get $0)
+;; CHECK-NEXT:    (local.get $1)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (if
+;; CHECK-NEXT:   (i32.or
+;; CHECK-NEXT:    (i64.eq
+;; CHECK-NEXT:     (local.get $2)
+;; CHECK-NEXT:     (i64.const 0)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:    (i32.or
+;; CHECK-NEXT:     (i64.gt_u
+;; CHECK-NEXT:      (i64.add
+;; CHECK-NEXT:       (local.get $2)
+;; CHECK-NEXT:       (i64.const 2)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:      (i64.load
+;; CHECK-NEXT:       (call $emscripten_get_sbrk_ptr)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:     (i64.lt_u
+;; CHECK-NEXT:      (local.get $2)
+;; CHECK-NEXT:      (local.get $0)
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (call $segfault)
+;; CHECK-NEXT:    (unreachable)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (if
+;; CHECK-NEXT:   (i32.and
+;; CHECK-NEXT:    (i32.wrap_i64
+;; CHECK-NEXT:     (local.get $2)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:    (i32.const 1)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (call $alignfault)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (i64.atomic.load16_u
 ;; CHECK-NEXT:   (local.get $2)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
@@ -6044,6 +6922,120 @@
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
+;; CHECK:      (func $SAFE_HEAP_LOAD_i64_4_AR (param $0 i64) (param $1 i64) (result i64)
+;; CHECK-NEXT:  (local $2 i64)
+;; CHECK-NEXT:  (local.set $2
+;; CHECK-NEXT:   (i64.add
+;; CHECK-NEXT:    (local.get $0)
+;; CHECK-NEXT:    (local.get $1)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (if
+;; CHECK-NEXT:   (i32.or
+;; CHECK-NEXT:    (i64.eq
+;; CHECK-NEXT:     (local.get $2)
+;; CHECK-NEXT:     (i64.const 0)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:    (i32.or
+;; CHECK-NEXT:     (i64.gt_u
+;; CHECK-NEXT:      (i64.add
+;; CHECK-NEXT:       (local.get $2)
+;; CHECK-NEXT:       (i64.const 4)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:      (i64.load
+;; CHECK-NEXT:       (call $emscripten_get_sbrk_ptr)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:     (i64.lt_u
+;; CHECK-NEXT:      (local.get $2)
+;; CHECK-NEXT:      (local.get $0)
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (call $segfault)
+;; CHECK-NEXT:    (unreachable)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (if
+;; CHECK-NEXT:   (i32.and
+;; CHECK-NEXT:    (i32.wrap_i64
+;; CHECK-NEXT:     (local.get $2)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:    (i32.const 3)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (call $alignfault)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (i64.shr_s
+;; CHECK-NEXT:   (i64.shl
+;; CHECK-NEXT:    (i64.atomic.load32_u acqrel
+;; CHECK-NEXT:     (local.get $2)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:    (i64.const 32)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (i64.const 32)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $SAFE_HEAP_LOAD_i64_4_SC (param $0 i64) (param $1 i64) (result i64)
+;; CHECK-NEXT:  (local $2 i64)
+;; CHECK-NEXT:  (local.set $2
+;; CHECK-NEXT:   (i64.add
+;; CHECK-NEXT:    (local.get $0)
+;; CHECK-NEXT:    (local.get $1)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (if
+;; CHECK-NEXT:   (i32.or
+;; CHECK-NEXT:    (i64.eq
+;; CHECK-NEXT:     (local.get $2)
+;; CHECK-NEXT:     (i64.const 0)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:    (i32.or
+;; CHECK-NEXT:     (i64.gt_u
+;; CHECK-NEXT:      (i64.add
+;; CHECK-NEXT:       (local.get $2)
+;; CHECK-NEXT:       (i64.const 4)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:      (i64.load
+;; CHECK-NEXT:       (call $emscripten_get_sbrk_ptr)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:     (i64.lt_u
+;; CHECK-NEXT:      (local.get $2)
+;; CHECK-NEXT:      (local.get $0)
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (call $segfault)
+;; CHECK-NEXT:    (unreachable)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (if
+;; CHECK-NEXT:   (i32.and
+;; CHECK-NEXT:    (i32.wrap_i64
+;; CHECK-NEXT:     (local.get $2)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:    (i32.const 3)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (call $alignfault)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (i64.shr_s
+;; CHECK-NEXT:   (i64.shl
+;; CHECK-NEXT:    (i64.atomic.load32_u
+;; CHECK-NEXT:     (local.get $2)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:    (i64.const 32)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (i64.const 32)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
 ;; CHECK:      (func $SAFE_HEAP_LOAD_i64_4_U_1 (param $0 i64) (param $1 i64) (result i64)
 ;; CHECK-NEXT:  (local $2 i64)
 ;; CHECK-NEXT:  (local.set $2
@@ -6182,6 +7174,108 @@
 ;; CHECK-NEXT:   )
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT:  (i64.load32_u
+;; CHECK-NEXT:   (local.get $2)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $SAFE_HEAP_LOAD_i64_4_U_AR (param $0 i64) (param $1 i64) (result i64)
+;; CHECK-NEXT:  (local $2 i64)
+;; CHECK-NEXT:  (local.set $2
+;; CHECK-NEXT:   (i64.add
+;; CHECK-NEXT:    (local.get $0)
+;; CHECK-NEXT:    (local.get $1)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (if
+;; CHECK-NEXT:   (i32.or
+;; CHECK-NEXT:    (i64.eq
+;; CHECK-NEXT:     (local.get $2)
+;; CHECK-NEXT:     (i64.const 0)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:    (i32.or
+;; CHECK-NEXT:     (i64.gt_u
+;; CHECK-NEXT:      (i64.add
+;; CHECK-NEXT:       (local.get $2)
+;; CHECK-NEXT:       (i64.const 4)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:      (i64.load
+;; CHECK-NEXT:       (call $emscripten_get_sbrk_ptr)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:     (i64.lt_u
+;; CHECK-NEXT:      (local.get $2)
+;; CHECK-NEXT:      (local.get $0)
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (call $segfault)
+;; CHECK-NEXT:    (unreachable)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (if
+;; CHECK-NEXT:   (i32.and
+;; CHECK-NEXT:    (i32.wrap_i64
+;; CHECK-NEXT:     (local.get $2)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:    (i32.const 3)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (call $alignfault)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (i64.atomic.load32_u acqrel
+;; CHECK-NEXT:   (local.get $2)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $SAFE_HEAP_LOAD_i64_4_U_SC (param $0 i64) (param $1 i64) (result i64)
+;; CHECK-NEXT:  (local $2 i64)
+;; CHECK-NEXT:  (local.set $2
+;; CHECK-NEXT:   (i64.add
+;; CHECK-NEXT:    (local.get $0)
+;; CHECK-NEXT:    (local.get $1)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (if
+;; CHECK-NEXT:   (i32.or
+;; CHECK-NEXT:    (i64.eq
+;; CHECK-NEXT:     (local.get $2)
+;; CHECK-NEXT:     (i64.const 0)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:    (i32.or
+;; CHECK-NEXT:     (i64.gt_u
+;; CHECK-NEXT:      (i64.add
+;; CHECK-NEXT:       (local.get $2)
+;; CHECK-NEXT:       (i64.const 4)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:      (i64.load
+;; CHECK-NEXT:       (call $emscripten_get_sbrk_ptr)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:     (i64.lt_u
+;; CHECK-NEXT:      (local.get $2)
+;; CHECK-NEXT:      (local.get $0)
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (call $segfault)
+;; CHECK-NEXT:    (unreachable)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (if
+;; CHECK-NEXT:   (i32.and
+;; CHECK-NEXT:    (i32.wrap_i64
+;; CHECK-NEXT:     (local.get $2)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:    (i32.const 3)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (call $alignfault)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (i64.atomic.load32_u
 ;; CHECK-NEXT:   (local.get $2)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
@@ -6375,6 +7469,108 @@
 ;; CHECK-NEXT:   )
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT:  (i64.load
+;; CHECK-NEXT:   (local.get $2)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $SAFE_HEAP_LOAD_i64_8_AR (param $0 i64) (param $1 i64) (result i64)
+;; CHECK-NEXT:  (local $2 i64)
+;; CHECK-NEXT:  (local.set $2
+;; CHECK-NEXT:   (i64.add
+;; CHECK-NEXT:    (local.get $0)
+;; CHECK-NEXT:    (local.get $1)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (if
+;; CHECK-NEXT:   (i32.or
+;; CHECK-NEXT:    (i64.eq
+;; CHECK-NEXT:     (local.get $2)
+;; CHECK-NEXT:     (i64.const 0)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:    (i32.or
+;; CHECK-NEXT:     (i64.gt_u
+;; CHECK-NEXT:      (i64.add
+;; CHECK-NEXT:       (local.get $2)
+;; CHECK-NEXT:       (i64.const 8)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:      (i64.load
+;; CHECK-NEXT:       (call $emscripten_get_sbrk_ptr)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:     (i64.lt_u
+;; CHECK-NEXT:      (local.get $2)
+;; CHECK-NEXT:      (local.get $0)
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (call $segfault)
+;; CHECK-NEXT:    (unreachable)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (if
+;; CHECK-NEXT:   (i32.and
+;; CHECK-NEXT:    (i32.wrap_i64
+;; CHECK-NEXT:     (local.get $2)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:    (i32.const 7)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (call $alignfault)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (i64.atomic.load acqrel
+;; CHECK-NEXT:   (local.get $2)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $SAFE_HEAP_LOAD_i64_8_SC (param $0 i64) (param $1 i64) (result i64)
+;; CHECK-NEXT:  (local $2 i64)
+;; CHECK-NEXT:  (local.set $2
+;; CHECK-NEXT:   (i64.add
+;; CHECK-NEXT:    (local.get $0)
+;; CHECK-NEXT:    (local.get $1)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (if
+;; CHECK-NEXT:   (i32.or
+;; CHECK-NEXT:    (i64.eq
+;; CHECK-NEXT:     (local.get $2)
+;; CHECK-NEXT:     (i64.const 0)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:    (i32.or
+;; CHECK-NEXT:     (i64.gt_u
+;; CHECK-NEXT:      (i64.add
+;; CHECK-NEXT:       (local.get $2)
+;; CHECK-NEXT:       (i64.const 8)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:      (i64.load
+;; CHECK-NEXT:       (call $emscripten_get_sbrk_ptr)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:     (i64.lt_u
+;; CHECK-NEXT:      (local.get $2)
+;; CHECK-NEXT:      (local.get $0)
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (call $segfault)
+;; CHECK-NEXT:    (unreachable)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (if
+;; CHECK-NEXT:   (i32.and
+;; CHECK-NEXT:    (i32.wrap_i64
+;; CHECK-NEXT:     (local.get $2)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:    (i32.const 7)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (call $alignfault)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (i64.atomic.load
 ;; CHECK-NEXT:   (local.get $2)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
@@ -6999,6 +8195,88 @@
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
+;; CHECK:      (func $SAFE_HEAP_STORE_i32_1_AR (param $0 i64) (param $1 i64) (param $2 i32)
+;; CHECK-NEXT:  (local $3 i64)
+;; CHECK-NEXT:  (local.set $3
+;; CHECK-NEXT:   (i64.add
+;; CHECK-NEXT:    (local.get $0)
+;; CHECK-NEXT:    (local.get $1)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (if
+;; CHECK-NEXT:   (i32.or
+;; CHECK-NEXT:    (i64.eq
+;; CHECK-NEXT:     (local.get $3)
+;; CHECK-NEXT:     (i64.const 0)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:    (i32.or
+;; CHECK-NEXT:     (i64.gt_u
+;; CHECK-NEXT:      (i64.add
+;; CHECK-NEXT:       (local.get $3)
+;; CHECK-NEXT:       (i64.const 1)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:      (i64.load
+;; CHECK-NEXT:       (call $emscripten_get_sbrk_ptr)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:     (i64.lt_u
+;; CHECK-NEXT:      (local.get $3)
+;; CHECK-NEXT:      (local.get $0)
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (call $segfault)
+;; CHECK-NEXT:    (unreachable)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (i32.atomic.store8 acqrel
+;; CHECK-NEXT:   (local.get $3)
+;; CHECK-NEXT:   (local.get $2)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $SAFE_HEAP_STORE_i32_1_SC (param $0 i64) (param $1 i64) (param $2 i32)
+;; CHECK-NEXT:  (local $3 i64)
+;; CHECK-NEXT:  (local.set $3
+;; CHECK-NEXT:   (i64.add
+;; CHECK-NEXT:    (local.get $0)
+;; CHECK-NEXT:    (local.get $1)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (if
+;; CHECK-NEXT:   (i32.or
+;; CHECK-NEXT:    (i64.eq
+;; CHECK-NEXT:     (local.get $3)
+;; CHECK-NEXT:     (i64.const 0)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:    (i32.or
+;; CHECK-NEXT:     (i64.gt_u
+;; CHECK-NEXT:      (i64.add
+;; CHECK-NEXT:       (local.get $3)
+;; CHECK-NEXT:       (i64.const 1)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:      (i64.load
+;; CHECK-NEXT:       (call $emscripten_get_sbrk_ptr)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:     (i64.lt_u
+;; CHECK-NEXT:      (local.get $3)
+;; CHECK-NEXT:      (local.get $0)
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (call $segfault)
+;; CHECK-NEXT:    (unreachable)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (i32.atomic.store8
+;; CHECK-NEXT:   (local.get $3)
+;; CHECK-NEXT:   (local.get $2)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
 ;; CHECK:      (func $SAFE_HEAP_STORE_i32_2_1 (param $0 i64) (param $1 i64) (param $2 i32)
 ;; CHECK-NEXT:  (local $3 i64)
 ;; CHECK-NEXT:  (local.set $3
@@ -7087,6 +8365,110 @@
 ;; CHECK-NEXT:   )
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT:  (i32.store16
+;; CHECK-NEXT:   (local.get $3)
+;; CHECK-NEXT:   (local.get $2)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $SAFE_HEAP_STORE_i32_2_AR (param $0 i64) (param $1 i64) (param $2 i32)
+;; CHECK-NEXT:  (local $3 i64)
+;; CHECK-NEXT:  (local.set $3
+;; CHECK-NEXT:   (i64.add
+;; CHECK-NEXT:    (local.get $0)
+;; CHECK-NEXT:    (local.get $1)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (if
+;; CHECK-NEXT:   (i32.or
+;; CHECK-NEXT:    (i64.eq
+;; CHECK-NEXT:     (local.get $3)
+;; CHECK-NEXT:     (i64.const 0)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:    (i32.or
+;; CHECK-NEXT:     (i64.gt_u
+;; CHECK-NEXT:      (i64.add
+;; CHECK-NEXT:       (local.get $3)
+;; CHECK-NEXT:       (i64.const 2)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:      (i64.load
+;; CHECK-NEXT:       (call $emscripten_get_sbrk_ptr)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:     (i64.lt_u
+;; CHECK-NEXT:      (local.get $3)
+;; CHECK-NEXT:      (local.get $0)
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (call $segfault)
+;; CHECK-NEXT:    (unreachable)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (if
+;; CHECK-NEXT:   (i32.and
+;; CHECK-NEXT:    (i32.wrap_i64
+;; CHECK-NEXT:     (local.get $3)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:    (i32.const 1)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (call $alignfault)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (i32.atomic.store16 acqrel
+;; CHECK-NEXT:   (local.get $3)
+;; CHECK-NEXT:   (local.get $2)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $SAFE_HEAP_STORE_i32_2_SC (param $0 i64) (param $1 i64) (param $2 i32)
+;; CHECK-NEXT:  (local $3 i64)
+;; CHECK-NEXT:  (local.set $3
+;; CHECK-NEXT:   (i64.add
+;; CHECK-NEXT:    (local.get $0)
+;; CHECK-NEXT:    (local.get $1)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (if
+;; CHECK-NEXT:   (i32.or
+;; CHECK-NEXT:    (i64.eq
+;; CHECK-NEXT:     (local.get $3)
+;; CHECK-NEXT:     (i64.const 0)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:    (i32.or
+;; CHECK-NEXT:     (i64.gt_u
+;; CHECK-NEXT:      (i64.add
+;; CHECK-NEXT:       (local.get $3)
+;; CHECK-NEXT:       (i64.const 2)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:      (i64.load
+;; CHECK-NEXT:       (call $emscripten_get_sbrk_ptr)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:     (i64.lt_u
+;; CHECK-NEXT:      (local.get $3)
+;; CHECK-NEXT:      (local.get $0)
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (call $segfault)
+;; CHECK-NEXT:    (unreachable)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (if
+;; CHECK-NEXT:   (i32.and
+;; CHECK-NEXT:    (i32.wrap_i64
+;; CHECK-NEXT:     (local.get $3)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:    (i32.const 1)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (call $alignfault)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (i32.atomic.store16
 ;; CHECK-NEXT:   (local.get $3)
 ;; CHECK-NEXT:   (local.get $2)
 ;; CHECK-NEXT:  )
@@ -7237,6 +8619,110 @@
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
+;; CHECK:      (func $SAFE_HEAP_STORE_i32_4_AR (param $0 i64) (param $1 i64) (param $2 i32)
+;; CHECK-NEXT:  (local $3 i64)
+;; CHECK-NEXT:  (local.set $3
+;; CHECK-NEXT:   (i64.add
+;; CHECK-NEXT:    (local.get $0)
+;; CHECK-NEXT:    (local.get $1)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (if
+;; CHECK-NEXT:   (i32.or
+;; CHECK-NEXT:    (i64.eq
+;; CHECK-NEXT:     (local.get $3)
+;; CHECK-NEXT:     (i64.const 0)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:    (i32.or
+;; CHECK-NEXT:     (i64.gt_u
+;; CHECK-NEXT:      (i64.add
+;; CHECK-NEXT:       (local.get $3)
+;; CHECK-NEXT:       (i64.const 4)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:      (i64.load
+;; CHECK-NEXT:       (call $emscripten_get_sbrk_ptr)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:     (i64.lt_u
+;; CHECK-NEXT:      (local.get $3)
+;; CHECK-NEXT:      (local.get $0)
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (call $segfault)
+;; CHECK-NEXT:    (unreachable)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (if
+;; CHECK-NEXT:   (i32.and
+;; CHECK-NEXT:    (i32.wrap_i64
+;; CHECK-NEXT:     (local.get $3)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:    (i32.const 3)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (call $alignfault)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (i32.atomic.store acqrel
+;; CHECK-NEXT:   (local.get $3)
+;; CHECK-NEXT:   (local.get $2)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $SAFE_HEAP_STORE_i32_4_SC (param $0 i64) (param $1 i64) (param $2 i32)
+;; CHECK-NEXT:  (local $3 i64)
+;; CHECK-NEXT:  (local.set $3
+;; CHECK-NEXT:   (i64.add
+;; CHECK-NEXT:    (local.get $0)
+;; CHECK-NEXT:    (local.get $1)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (if
+;; CHECK-NEXT:   (i32.or
+;; CHECK-NEXT:    (i64.eq
+;; CHECK-NEXT:     (local.get $3)
+;; CHECK-NEXT:     (i64.const 0)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:    (i32.or
+;; CHECK-NEXT:     (i64.gt_u
+;; CHECK-NEXT:      (i64.add
+;; CHECK-NEXT:       (local.get $3)
+;; CHECK-NEXT:       (i64.const 4)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:      (i64.load
+;; CHECK-NEXT:       (call $emscripten_get_sbrk_ptr)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:     (i64.lt_u
+;; CHECK-NEXT:      (local.get $3)
+;; CHECK-NEXT:      (local.get $0)
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (call $segfault)
+;; CHECK-NEXT:    (unreachable)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (if
+;; CHECK-NEXT:   (i32.and
+;; CHECK-NEXT:    (i32.wrap_i64
+;; CHECK-NEXT:     (local.get $3)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:    (i32.const 3)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (call $alignfault)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (i32.atomic.store
+;; CHECK-NEXT:   (local.get $3)
+;; CHECK-NEXT:   (local.get $2)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
 ;; CHECK:      (func $SAFE_HEAP_STORE_i64_1_1 (param $0 i64) (param $1 i64) (param $2 i64)
 ;; CHECK-NEXT:  (local $3 i64)
 ;; CHECK-NEXT:  (local.set $3
@@ -7273,6 +8759,88 @@
 ;; CHECK-NEXT:   )
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT:  (i64.store8
+;; CHECK-NEXT:   (local.get $3)
+;; CHECK-NEXT:   (local.get $2)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $SAFE_HEAP_STORE_i64_1_AR (param $0 i64) (param $1 i64) (param $2 i64)
+;; CHECK-NEXT:  (local $3 i64)
+;; CHECK-NEXT:  (local.set $3
+;; CHECK-NEXT:   (i64.add
+;; CHECK-NEXT:    (local.get $0)
+;; CHECK-NEXT:    (local.get $1)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (if
+;; CHECK-NEXT:   (i32.or
+;; CHECK-NEXT:    (i64.eq
+;; CHECK-NEXT:     (local.get $3)
+;; CHECK-NEXT:     (i64.const 0)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:    (i32.or
+;; CHECK-NEXT:     (i64.gt_u
+;; CHECK-NEXT:      (i64.add
+;; CHECK-NEXT:       (local.get $3)
+;; CHECK-NEXT:       (i64.const 1)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:      (i64.load
+;; CHECK-NEXT:       (call $emscripten_get_sbrk_ptr)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:     (i64.lt_u
+;; CHECK-NEXT:      (local.get $3)
+;; CHECK-NEXT:      (local.get $0)
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (call $segfault)
+;; CHECK-NEXT:    (unreachable)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (i64.atomic.store8 acqrel
+;; CHECK-NEXT:   (local.get $3)
+;; CHECK-NEXT:   (local.get $2)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $SAFE_HEAP_STORE_i64_1_SC (param $0 i64) (param $1 i64) (param $2 i64)
+;; CHECK-NEXT:  (local $3 i64)
+;; CHECK-NEXT:  (local.set $3
+;; CHECK-NEXT:   (i64.add
+;; CHECK-NEXT:    (local.get $0)
+;; CHECK-NEXT:    (local.get $1)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (if
+;; CHECK-NEXT:   (i32.or
+;; CHECK-NEXT:    (i64.eq
+;; CHECK-NEXT:     (local.get $3)
+;; CHECK-NEXT:     (i64.const 0)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:    (i32.or
+;; CHECK-NEXT:     (i64.gt_u
+;; CHECK-NEXT:      (i64.add
+;; CHECK-NEXT:       (local.get $3)
+;; CHECK-NEXT:       (i64.const 1)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:      (i64.load
+;; CHECK-NEXT:       (call $emscripten_get_sbrk_ptr)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:     (i64.lt_u
+;; CHECK-NEXT:      (local.get $3)
+;; CHECK-NEXT:      (local.get $0)
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (call $segfault)
+;; CHECK-NEXT:    (unreachable)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (i64.atomic.store8
 ;; CHECK-NEXT:   (local.get $3)
 ;; CHECK-NEXT:   (local.get $2)
 ;; CHECK-NEXT:  )
@@ -7366,6 +8934,110 @@
 ;; CHECK-NEXT:   )
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT:  (i64.store16
+;; CHECK-NEXT:   (local.get $3)
+;; CHECK-NEXT:   (local.get $2)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $SAFE_HEAP_STORE_i64_2_AR (param $0 i64) (param $1 i64) (param $2 i64)
+;; CHECK-NEXT:  (local $3 i64)
+;; CHECK-NEXT:  (local.set $3
+;; CHECK-NEXT:   (i64.add
+;; CHECK-NEXT:    (local.get $0)
+;; CHECK-NEXT:    (local.get $1)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (if
+;; CHECK-NEXT:   (i32.or
+;; CHECK-NEXT:    (i64.eq
+;; CHECK-NEXT:     (local.get $3)
+;; CHECK-NEXT:     (i64.const 0)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:    (i32.or
+;; CHECK-NEXT:     (i64.gt_u
+;; CHECK-NEXT:      (i64.add
+;; CHECK-NEXT:       (local.get $3)
+;; CHECK-NEXT:       (i64.const 2)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:      (i64.load
+;; CHECK-NEXT:       (call $emscripten_get_sbrk_ptr)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:     (i64.lt_u
+;; CHECK-NEXT:      (local.get $3)
+;; CHECK-NEXT:      (local.get $0)
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (call $segfault)
+;; CHECK-NEXT:    (unreachable)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (if
+;; CHECK-NEXT:   (i32.and
+;; CHECK-NEXT:    (i32.wrap_i64
+;; CHECK-NEXT:     (local.get $3)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:    (i32.const 1)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (call $alignfault)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (i64.atomic.store16 acqrel
+;; CHECK-NEXT:   (local.get $3)
+;; CHECK-NEXT:   (local.get $2)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $SAFE_HEAP_STORE_i64_2_SC (param $0 i64) (param $1 i64) (param $2 i64)
+;; CHECK-NEXT:  (local $3 i64)
+;; CHECK-NEXT:  (local.set $3
+;; CHECK-NEXT:   (i64.add
+;; CHECK-NEXT:    (local.get $0)
+;; CHECK-NEXT:    (local.get $1)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (if
+;; CHECK-NEXT:   (i32.or
+;; CHECK-NEXT:    (i64.eq
+;; CHECK-NEXT:     (local.get $3)
+;; CHECK-NEXT:     (i64.const 0)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:    (i32.or
+;; CHECK-NEXT:     (i64.gt_u
+;; CHECK-NEXT:      (i64.add
+;; CHECK-NEXT:       (local.get $3)
+;; CHECK-NEXT:       (i64.const 2)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:      (i64.load
+;; CHECK-NEXT:       (call $emscripten_get_sbrk_ptr)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:     (i64.lt_u
+;; CHECK-NEXT:      (local.get $3)
+;; CHECK-NEXT:      (local.get $0)
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (call $segfault)
+;; CHECK-NEXT:    (unreachable)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (if
+;; CHECK-NEXT:   (i32.and
+;; CHECK-NEXT:    (i32.wrap_i64
+;; CHECK-NEXT:     (local.get $3)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:    (i32.const 1)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (call $alignfault)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (i64.atomic.store16
 ;; CHECK-NEXT:   (local.get $3)
 ;; CHECK-NEXT:   (local.get $2)
 ;; CHECK-NEXT:  )
@@ -7511,6 +9183,110 @@
 ;; CHECK-NEXT:   )
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT:  (i64.store32
+;; CHECK-NEXT:   (local.get $3)
+;; CHECK-NEXT:   (local.get $2)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $SAFE_HEAP_STORE_i64_4_AR (param $0 i64) (param $1 i64) (param $2 i64)
+;; CHECK-NEXT:  (local $3 i64)
+;; CHECK-NEXT:  (local.set $3
+;; CHECK-NEXT:   (i64.add
+;; CHECK-NEXT:    (local.get $0)
+;; CHECK-NEXT:    (local.get $1)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (if
+;; CHECK-NEXT:   (i32.or
+;; CHECK-NEXT:    (i64.eq
+;; CHECK-NEXT:     (local.get $3)
+;; CHECK-NEXT:     (i64.const 0)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:    (i32.or
+;; CHECK-NEXT:     (i64.gt_u
+;; CHECK-NEXT:      (i64.add
+;; CHECK-NEXT:       (local.get $3)
+;; CHECK-NEXT:       (i64.const 4)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:      (i64.load
+;; CHECK-NEXT:       (call $emscripten_get_sbrk_ptr)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:     (i64.lt_u
+;; CHECK-NEXT:      (local.get $3)
+;; CHECK-NEXT:      (local.get $0)
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (call $segfault)
+;; CHECK-NEXT:    (unreachable)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (if
+;; CHECK-NEXT:   (i32.and
+;; CHECK-NEXT:    (i32.wrap_i64
+;; CHECK-NEXT:     (local.get $3)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:    (i32.const 3)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (call $alignfault)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (i64.atomic.store32 acqrel
+;; CHECK-NEXT:   (local.get $3)
+;; CHECK-NEXT:   (local.get $2)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $SAFE_HEAP_STORE_i64_4_SC (param $0 i64) (param $1 i64) (param $2 i64)
+;; CHECK-NEXT:  (local $3 i64)
+;; CHECK-NEXT:  (local.set $3
+;; CHECK-NEXT:   (i64.add
+;; CHECK-NEXT:    (local.get $0)
+;; CHECK-NEXT:    (local.get $1)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (if
+;; CHECK-NEXT:   (i32.or
+;; CHECK-NEXT:    (i64.eq
+;; CHECK-NEXT:     (local.get $3)
+;; CHECK-NEXT:     (i64.const 0)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:    (i32.or
+;; CHECK-NEXT:     (i64.gt_u
+;; CHECK-NEXT:      (i64.add
+;; CHECK-NEXT:       (local.get $3)
+;; CHECK-NEXT:       (i64.const 4)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:      (i64.load
+;; CHECK-NEXT:       (call $emscripten_get_sbrk_ptr)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:     (i64.lt_u
+;; CHECK-NEXT:      (local.get $3)
+;; CHECK-NEXT:      (local.get $0)
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (call $segfault)
+;; CHECK-NEXT:    (unreachable)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (if
+;; CHECK-NEXT:   (i32.and
+;; CHECK-NEXT:    (i32.wrap_i64
+;; CHECK-NEXT:     (local.get $3)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:    (i32.const 3)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (call $alignfault)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (i64.atomic.store32
 ;; CHECK-NEXT:   (local.get $3)
 ;; CHECK-NEXT:   (local.get $2)
 ;; CHECK-NEXT:  )
@@ -7708,6 +9484,110 @@
 ;; CHECK-NEXT:   )
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT:  (i64.store
+;; CHECK-NEXT:   (local.get $3)
+;; CHECK-NEXT:   (local.get $2)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $SAFE_HEAP_STORE_i64_8_AR (param $0 i64) (param $1 i64) (param $2 i64)
+;; CHECK-NEXT:  (local $3 i64)
+;; CHECK-NEXT:  (local.set $3
+;; CHECK-NEXT:   (i64.add
+;; CHECK-NEXT:    (local.get $0)
+;; CHECK-NEXT:    (local.get $1)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (if
+;; CHECK-NEXT:   (i32.or
+;; CHECK-NEXT:    (i64.eq
+;; CHECK-NEXT:     (local.get $3)
+;; CHECK-NEXT:     (i64.const 0)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:    (i32.or
+;; CHECK-NEXT:     (i64.gt_u
+;; CHECK-NEXT:      (i64.add
+;; CHECK-NEXT:       (local.get $3)
+;; CHECK-NEXT:       (i64.const 8)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:      (i64.load
+;; CHECK-NEXT:       (call $emscripten_get_sbrk_ptr)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:     (i64.lt_u
+;; CHECK-NEXT:      (local.get $3)
+;; CHECK-NEXT:      (local.get $0)
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (call $segfault)
+;; CHECK-NEXT:    (unreachable)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (if
+;; CHECK-NEXT:   (i32.and
+;; CHECK-NEXT:    (i32.wrap_i64
+;; CHECK-NEXT:     (local.get $3)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:    (i32.const 7)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (call $alignfault)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (i64.atomic.store acqrel
+;; CHECK-NEXT:   (local.get $3)
+;; CHECK-NEXT:   (local.get $2)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $SAFE_HEAP_STORE_i64_8_SC (param $0 i64) (param $1 i64) (param $2 i64)
+;; CHECK-NEXT:  (local $3 i64)
+;; CHECK-NEXT:  (local.set $3
+;; CHECK-NEXT:   (i64.add
+;; CHECK-NEXT:    (local.get $0)
+;; CHECK-NEXT:    (local.get $1)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (if
+;; CHECK-NEXT:   (i32.or
+;; CHECK-NEXT:    (i64.eq
+;; CHECK-NEXT:     (local.get $3)
+;; CHECK-NEXT:     (i64.const 0)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:    (i32.or
+;; CHECK-NEXT:     (i64.gt_u
+;; CHECK-NEXT:      (i64.add
+;; CHECK-NEXT:       (local.get $3)
+;; CHECK-NEXT:       (i64.const 8)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:      (i64.load
+;; CHECK-NEXT:       (call $emscripten_get_sbrk_ptr)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:     (i64.lt_u
+;; CHECK-NEXT:      (local.get $3)
+;; CHECK-NEXT:      (local.get $0)
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (call $segfault)
+;; CHECK-NEXT:    (unreachable)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (if
+;; CHECK-NEXT:   (i32.and
+;; CHECK-NEXT:    (i32.wrap_i64
+;; CHECK-NEXT:     (local.get $3)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:    (i32.const 7)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (call $alignfault)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (i64.atomic.store
 ;; CHECK-NEXT:   (local.get $3)
 ;; CHECK-NEXT:   (local.get $2)
 ;; CHECK-NEXT:  )
