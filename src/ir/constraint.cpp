@@ -166,6 +166,8 @@ void AndedConstraintSet::approximateOr(const AndedConstraintSet& other) {
     return;
   }
 
+std::cout << "OR " << *this << " with " << other << '\n';
+
   // If this is already implied by current constraints, then it is redundant.
   // E.g. if we are { x = 10 } and other is { x >= 0 } then all we need is
   // { x >= 0 } as the result of the OR.
@@ -182,6 +184,7 @@ void AndedConstraintSet::approximateOr(const AndedConstraintSet& other) {
   // Otherwise, we don't know how to nicely OR these things, and expand to the
   // trivial set of no constraints.
   clear();
+std::cout << "  sadd OR\n";
 }
 
 std::optional<LocalConstraint> LocalConstraint::parse(Expression* curr) {
@@ -314,6 +317,7 @@ void BasicBlockConstraintMap::approximateOr(
   // We only need to loop on our locals, as any local that is missing in us is
   // one that would end up proving nothing (and get removed).
   for (auto& [local, constraints] : map) {
+std::cout << "or local " << local << '\n';
     constraints.approximateOr(other.get(local));
   }
 
@@ -400,7 +404,7 @@ void BasicBlockConstraintMap::eraseStaleRefs(Index index) {
 }
 
 std::ostream& operator<<(std::ostream& o, const Constraint& c) {
-  o << "Constraint{" << int(c.op) << ", ";
+  o << "Constraint{" << c.op << ", ";
   if (auto* cc = std::get_if<Literal>(&c.term)) {
     o << *cc;
   } else if (auto* i = std::get_if<Index>(&c.term)) {
