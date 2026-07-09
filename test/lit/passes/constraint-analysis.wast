@@ -9,6 +9,8 @@
 ;; RUN: wasm-opt %s --optimize-instructions --constraint-analysis -all -S -o - | filecheck %s --check-prefix=OPTIN
 
 (module
+  (type $array (array (mut i32)))
+
   ;; CHECK:      (func $simple (type $1)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (local.set $x
@@ -2253,6 +2255,72 @@
         )
       )
     )
+  )
+
+
+  (func $array-sum (param (ref $array)) (result i32)
+    ;; Somewhat-realistic code that sums up an array, using a software/userspace
+    ;; bounds check that can be removed.
+    (local $index i32)
+    (local $total i32)
+    (local $len i32)
+    (local $curr i32)
+    ;; Loop only if len > 0.
+    (if
+      (i32.gt_s
+        (local.tee $len
+          (array.len
+            (local.get $param)
+          )
+        )
+        (i32.const 0)
+      )
+      (then
+        (loop $label
+          ;; Increment for the next iteration, storing the current index in curr.
+          (local.set $index
+            (i32.add
+             (local.tee $curr
+               (local.get $index)
+              )
+              (i32.const 1)
+            )
+          )
+          ;; Software bounds check: if curr >= len, then the current index is invalid
+          ;; to read from the array.
+          ;;
+          ;; At the top of the loop, index == 0 or index < len. Those constraints
+          ;; were copied for curr. But we need len > 0 to make sense of it..?
+          (if
+            (i32.ge_s
+              (local.get $curr)
+              (local.get $len)
+            )
+            (then
+              (unreachable)
+            )
+          )
+          ;; Read the array and add to the total.
+          (local.set $total
+            (i32.add
+              (array.get $array
+                (local.get $param)
+                (local.get $curr)
+              )
+              (local.get $total)
+            )
+          )
+          ;; Keep looping if we did not reach the end of the array.
+          (br_if $label
+            (i32.lt_s
+              (local.get $index)
+              (local.get $len)
+            )
+          )
+        )
+      )
+    )
+    (local.get $total)
   )
 
   ;; CHECK:      (func $local-changes (type $2) (param $x i32) (param $y i32) (param $z i32)
