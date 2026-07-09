@@ -345,12 +345,10 @@ void BasicBlockConstraintMap::approximateAndInternal(Index index,
   // the local, then we insert a new item into the map, which has a default of
   // proxesEverything, which we need to flip (provesEverything cannot otherwise
   // be found in the map, as we never store it).
-  auto& indexConstraints = map[index];
-  if (indexConstraints.provesEverything()) {
-    indexConstraints.setProvesNothing();
-    // As in ::set(), this makes the map temporarily invalid until the
-    // approximateAnd, as we don't store proves-nothing in the map, normally.
-  }
+  auto [iter, _] = map.insert({index, AndedConstraintSet::makeProvesNothing()});
+  auto& indexConstraints = iter->second;
+  // As in ::set(), this makes the map temporarily invalid until the
+  // approximateAnd, as we don't store proves-nothing in the map, normally.
 
   indexConstraints.approximateAnd(actual);
 
