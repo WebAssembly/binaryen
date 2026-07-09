@@ -9,6 +9,8 @@
 ;; RUN: wasm-opt %s --optimize-instructions --constraint-analysis -all -S -o - | filecheck %s --check-prefix=OPTIN
 
 (module
+  ;; CHECK:      (type $array (array (mut i32)))
+  ;; OPTIN:      (type $array (array (mut i32)))
   (type $array (array (mut i32)))
 
   ;; CHECK:      (func $simple (type $1)
@@ -1010,7 +1012,7 @@
     )
   )
 
-  ;; CHECK:      (func $conditional-binary-nesting (type $4) (param $x i32) (param $y i32)
+  ;; CHECK:      (func $conditional-binary-nesting (type $5) (param $x i32) (param $y i32)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.eq
   ;; CHECK-NEXT:    (local.get $x)
@@ -1040,7 +1042,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; OPTIN:      (func $conditional-binary-nesting (type $4) (param $x i32) (param $y i32)
+  ;; OPTIN:      (func $conditional-binary-nesting (type $5) (param $x i32) (param $y i32)
   ;; OPTIN-NEXT:  (if
   ;; OPTIN-NEXT:   (i32.eq
   ;; OPTIN-NEXT:    (local.get $x)
@@ -1512,7 +1514,7 @@
     )
   )
 
-  ;; CHECK:      (func $br_on_null (type $3) (param $param anyref)
+  ;; CHECK:      (func $br_on_null (type $4) (param $param anyref)
   ;; CHECK-NEXT:  (block $block
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (ref.is_null
@@ -1533,7 +1535,7 @@
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; OPTIN:      (func $br_on_null (type $3) (param $param anyref)
+  ;; OPTIN:      (func $br_on_null (type $4) (param $param anyref)
   ;; OPTIN-NEXT:  (block $block
   ;; OPTIN-NEXT:   (drop
   ;; OPTIN-NEXT:    (ref.is_null
@@ -1583,7 +1585,7 @@
     )
   )
 
-  ;; CHECK:      (func $br_on_non_null (type $3) (param $param anyref)
+  ;; CHECK:      (func $br_on_non_null (type $4) (param $param anyref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block $block (result (ref any))
   ;; CHECK-NEXT:    (drop
@@ -1604,7 +1606,7 @@
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; OPTIN:      (func $br_on_non_null (type $3) (param $param anyref)
+  ;; OPTIN:      (func $br_on_non_null (type $4) (param $param anyref)
   ;; OPTIN-NEXT:  (drop
   ;; OPTIN-NEXT:   (block $block (result (ref any))
   ;; OPTIN-NEXT:    (drop
@@ -2258,7 +2260,110 @@
   )
 
 
-  (func $array-sum (param (ref $array)) (result i32)
+  ;; CHECK:      (func $array-sum (type $6) (param $param (ref $array)) (result i32)
+  ;; CHECK-NEXT:  (local $index i32)
+  ;; CHECK-NEXT:  (local $total i32)
+  ;; CHECK-NEXT:  (local $len i32)
+  ;; CHECK-NEXT:  (local $curr i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.gt_u
+  ;; CHECK-NEXT:    (local.tee $len
+  ;; CHECK-NEXT:     (array.len
+  ;; CHECK-NEXT:      (local.get $param)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (loop $label
+  ;; CHECK-NEXT:     (local.set $index
+  ;; CHECK-NEXT:      (i32.add
+  ;; CHECK-NEXT:       (local.tee $curr
+  ;; CHECK-NEXT:        (local.get $index)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (i32.const 1)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (if
+  ;; CHECK-NEXT:      (i32.ge_u
+  ;; CHECK-NEXT:       (local.get $curr)
+  ;; CHECK-NEXT:       (local.get $len)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (then
+  ;; CHECK-NEXT:       (unreachable)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.set $total
+  ;; CHECK-NEXT:      (i32.add
+  ;; CHECK-NEXT:       (array.get $array
+  ;; CHECK-NEXT:        (local.get $param)
+  ;; CHECK-NEXT:        (local.get $curr)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (local.get $total)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (br_if $label
+  ;; CHECK-NEXT:      (i32.lt_u
+  ;; CHECK-NEXT:       (local.get $index)
+  ;; CHECK-NEXT:       (local.get $len)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.get $total)
+  ;; CHECK-NEXT: )
+  ;; OPTIN:      (func $array-sum (type $6) (param $param (ref $array)) (result i32)
+  ;; OPTIN-NEXT:  (local $index i32)
+  ;; OPTIN-NEXT:  (local $total i32)
+  ;; OPTIN-NEXT:  (local $len i32)
+  ;; OPTIN-NEXT:  (local $curr i32)
+  ;; OPTIN-NEXT:  (if
+  ;; OPTIN-NEXT:   (local.tee $len
+  ;; OPTIN-NEXT:    (array.len
+  ;; OPTIN-NEXT:     (local.get $param)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:   (then
+  ;; OPTIN-NEXT:    (loop $label
+  ;; OPTIN-NEXT:     (local.set $index
+  ;; OPTIN-NEXT:      (i32.add
+  ;; OPTIN-NEXT:       (local.tee $curr
+  ;; OPTIN-NEXT:        (local.get $index)
+  ;; OPTIN-NEXT:       )
+  ;; OPTIN-NEXT:       (i32.const 1)
+  ;; OPTIN-NEXT:      )
+  ;; OPTIN-NEXT:     )
+  ;; OPTIN-NEXT:     (if
+  ;; OPTIN-NEXT:      (i32.le_u
+  ;; OPTIN-NEXT:       (local.get $len)
+  ;; OPTIN-NEXT:       (local.get $curr)
+  ;; OPTIN-NEXT:      )
+  ;; OPTIN-NEXT:      (then
+  ;; OPTIN-NEXT:       (unreachable)
+  ;; OPTIN-NEXT:      )
+  ;; OPTIN-NEXT:     )
+  ;; OPTIN-NEXT:     (local.set $total
+  ;; OPTIN-NEXT:      (i32.add
+  ;; OPTIN-NEXT:       (local.get $total)
+  ;; OPTIN-NEXT:       (array.get $array
+  ;; OPTIN-NEXT:        (local.get $param)
+  ;; OPTIN-NEXT:        (local.get $curr)
+  ;; OPTIN-NEXT:       )
+  ;; OPTIN-NEXT:      )
+  ;; OPTIN-NEXT:     )
+  ;; OPTIN-NEXT:     (br_if $label
+  ;; OPTIN-NEXT:      (i32.lt_u
+  ;; OPTIN-NEXT:       (local.get $index)
+  ;; OPTIN-NEXT:       (local.get $len)
+  ;; OPTIN-NEXT:      )
+  ;; OPTIN-NEXT:     )
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (local.get $total)
+  ;; OPTIN-NEXT: )
+  (func $array-sum (param $param (ref $array)) (result i32)
     ;; Somewhat-realistic code that sums up an array, using a software/userspace
     ;; bounds check that can be removed.
     (local $index i32)
@@ -2267,7 +2372,7 @@
     (local $curr i32)
     ;; Loop only if len > 0.
     (if
-      (i32.gt_s
+      (i32.gt_u
         (local.tee $len
           (array.len
             (local.get $param)
@@ -2288,11 +2393,8 @@
           )
           ;; Software bounds check: if curr >= len, then the current index is invalid
           ;; to read from the array.
-          ;;
-          ;; At the top of the loop, index == 0 or index < len. Those constraints
-          ;; were copied for curr. But we need len > 0 to make sense of it..?
           (if
-            (i32.ge_s
+            (i32.ge_u
               (local.get $curr)
               (local.get $len)
             )
@@ -2312,7 +2414,7 @@
           )
           ;; Keep looping if we did not reach the end of the array.
           (br_if $label
-            (i32.lt_s
+            (i32.lt_u
               (local.get $index)
               (local.get $len)
             )
@@ -2696,7 +2798,7 @@
     )
   )
 
-  ;; CHECK:      (func $local-changes-if (type $5) (param $x i32) (param $y i32) (param $z i32) (param $w i32)
+  ;; CHECK:      (func $local-changes-if (type $7) (param $x i32) (param $y i32) (param $z i32) (param $w i32)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.eq
   ;; CHECK-NEXT:    (local.get $x)
@@ -2753,7 +2855,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; OPTIN:      (func $local-changes-if (type $5) (param $x i32) (param $y i32) (param $z i32) (param $w i32)
+  ;; OPTIN:      (func $local-changes-if (type $7) (param $x i32) (param $y i32) (param $z i32) (param $w i32)
   ;; OPTIN-NEXT:  (if
   ;; OPTIN-NEXT:   (i32.eq
   ;; OPTIN-NEXT:    (local.get $x)
