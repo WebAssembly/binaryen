@@ -234,15 +234,16 @@ std::optional<LocalConstraint> LocalConstraint::parse(Expression* curr) {
 
   if (auto* binary = curr->dynCast<Binary>()) {
     // The operation must be one we recognize.
-    for (auto op : {Abstract::Eq, Abstract::Ne, Abstract::LtS,
-Abstract::LtU,
-Abstract::LeS,
-Abstract::LeU,
-Abstract::GtS,
-Abstract::GtU,
-Abstract::GeS,
-Abstract::GeU
-}) {
+    for (auto op : {Abstract::Eq,
+                    Abstract::Ne,
+                    Abstract::LtS,
+                    Abstract::LtU,
+                    Abstract::LeS,
+                    Abstract::LeU,
+                    Abstract::GtS,
+                    Abstract::GtU,
+                    Abstract::GeS,
+                    Abstract::GeU}) {
       if (Abstract::getBinary(binary->type, op) == binary->op) {
         return parseBinaryArguments(op, binary->left, binary->right);
       }
