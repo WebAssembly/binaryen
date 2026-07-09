@@ -1652,6 +1652,44 @@
     )
   )
 
+  (func $inequalities-lt_u (param $param i32)
+    ;; The simple case where an inequality is seen again, in exact form.
+    (if
+      (i32.lt_u
+        (local.get $x)
+        (i32.const 10)
+      )
+      (then
+        (drop
+          (i32.lt_u
+            (local.get $x)
+            (i32.const 10)
+          )
+        )
+        (drop
+          (i32.ge_u
+            (local.get $x)
+            (i32.const 10)
+          )
+        )
+      )
+      (else
+        (drop
+          (i32.lt_u
+            (local.get $x)
+            (i32.const 10)
+          )
+        )
+        (drop
+          (i32.ge_u
+            (local.get $x)
+            (i32.const 10)
+          )
+        )
+      )
+    )
+  )
+
   ;; CHECK:      (func $local-changes (type $2) (param $x i32) (param $y i32) (param $z i32)
   ;; CHECK-NEXT:  (local.set $x
   ;; CHECK-NEXT:   (local.get $y)
