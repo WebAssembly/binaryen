@@ -289,8 +289,10 @@ private:
   // above. When flip is true, we flip the constraint and apply it to the other
   // index (y == x, in this example). When isCopy is true, we are a copied
   // constraint from another local, and we do not need to add new copies of it.
-  void
-  approximateAndInternal(Index index, const Constraint& c, bool flip = false, bool isCopy = false);
+  void approximateAndInternal(Index index,
+                              const Constraint& c,
+                              bool flip = false,
+                              bool isCopy = false);
 };
 
 std::ostream& operator<<(std::ostream& o, const Constraint& c);
