@@ -1652,7 +1652,45 @@
     )
   )
 
-  (func $inequalities-lt_u (param $param i32)
+  ;; CHECK:      (func $inequalities-lt_u (type $0) (param $x i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.lt_u
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (else
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPTIN:      (func $inequalities-lt_u (type $0) (param $x i32)
+  ;; OPTIN-NEXT:  (drop
+  ;; OPTIN-NEXT:   (i32.lt_u
+  ;; OPTIN-NEXT:    (local.get $x)
+  ;; OPTIN-NEXT:    (i32.const 10)
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (drop
+  ;; OPTIN-NEXT:   (i32.ge_u
+  ;; OPTIN-NEXT:    (local.get $x)
+  ;; OPTIN-NEXT:    (i32.const 10)
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT: )
+  (func $inequalities-lt_u (param $x i32)
     ;; The simple case where an inequality is seen again, in exact form.
     (if
       (i32.lt_u
@@ -1660,6 +1698,7 @@
         (i32.const 10)
       )
       (then
+        ;; We can infer 1, 0 here.
         (drop
           (i32.lt_u
             (local.get $x)
@@ -1674,6 +1713,7 @@
         )
       )
       (else
+        ;; We can infer 0, 1 here.
         (drop
           (i32.lt_u
             (local.get $x)
