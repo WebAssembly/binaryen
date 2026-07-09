@@ -287,9 +287,12 @@ private:
   // Internal version, with a flag to flip the constraint. Whenever we apply
   // e.g. x == y, we also apply y == x to y, to maintain the invariant described
   // above. When flip is true, we flip the constraint and apply it to the other
-  // index (y == x, in this example).
-  void
-  approximateAndInternal(Index index, const Constraint& c, bool flip = false);
+  // index (y == x, in this example). When isCopy is true, we are a copied
+  // constraint from another local, and we do not need to add new copies of it.
+  void approximateAndInternal(Index index,
+                              const Constraint& c,
+                              bool flip = false,
+                              bool isCopy = false);
 };
 
 std::ostream& operator<<(std::ostream& o, const Constraint& c);
