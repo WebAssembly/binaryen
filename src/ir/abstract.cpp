@@ -20,9 +20,11 @@
 namespace wasm::Abstract {
 
 std::ostream& operator<<(std::ostream& o, Op op) {
+
 #define HANDLE(x)                                                              \
   case x:                                                                      \
     return o << #x;
+
   switch (op) {
     HANDLE(Abs)
     HANDLE(Neg)
