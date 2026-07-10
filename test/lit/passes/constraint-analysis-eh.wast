@@ -12,7 +12,7 @@
  ;; CHECK-NEXT:   (do
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (catch $tag
- ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:    (local.set $x
  ;; CHECK-NEXT:     (pop i32)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (unreachable)
@@ -26,7 +26,8 @@
    )
    (catch $tag
     ;; This code is unreachable: no throw exists that can reach it. However, it
-    ;; is invalid to remove a pop, as that would not validate, so we keep it.
+    ;; is invalid to remove a pop, as that would not validate, so we keep it. We
+    ;; also keep the set, as it may be needed for non-nullable local validation.
     (local.set $x
      (pop i32)
     )
@@ -47,7 +48,7 @@
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (block (result i32)
  ;; CHECK-NEXT:     (block
- ;; CHECK-NEXT:      (drop
+ ;; CHECK-NEXT:      (local.set $x
  ;; CHECK-NEXT:       (local.get $1)
  ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:      (unreachable)
