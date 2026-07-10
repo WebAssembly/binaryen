@@ -187,12 +187,18 @@ struct ConstraintAnalysis
       // of course not needed at this stage.)
       auto& constraints = block->contents.startConstraints;
       for (auto** currp : block->contents.actions) {
-        applyToConstraints(*currp, constraints);
-        if (constraints.unreachable) {
-          *currp = Builder(*getModule()).makeUnreachable();
+        if (!constraints.unreachable) {
+          applyToConstraints(*currp, constraints);
+          optimizeExpression(currp, constraints);
+        } else {
+          // This is unreachable code: just mark it so.
+          *currp = getDroppedChildrenAndAppend(*currp,
+                            *getModule(),
+                            getPassOptions(),
+                            Builder(*getModule()).makeUnreachable(),
+                            DropMode::IgnoreParentEffects);
           refinalize = true;
         }
-        optimizeExpression(currp, constraints);
       }
     }
 
