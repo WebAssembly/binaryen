@@ -2765,13 +2765,11 @@ std::unordered_set<HeapType> getIgnorablePublicTypes() {
 namespace HeapTypes {
 
 HeapType getMutI8Array() {
-  static HeapType i8Array = Array(Field(Field::i8, Mutable));
-  return i8Array;
+  return Array(Field(Field::i8, Mutable));
 }
 
 HeapType getMutI16Array() {
-  static HeapType i16Array = Array(Field(Field::i16, Mutable));
-  return i16Array;
+  return Array(Field(Field::i16, Mutable));
 }
 
 } // namespace HeapTypes
@@ -2779,8 +2777,7 @@ HeapType getMutI16Array() {
 namespace Types {
 
 Type getI64Pair() {
-  static Type i64Pair({Type::i64, Type::i64});
-  return i64Pair;
+  return Type({Type::i64, Type::i64});
 }
 
 } // namespace Types
