@@ -97,6 +97,13 @@ std::ostream& printEscaped(std::ostream& os, std::string_view str);
 // `str` must be a valid WTF-16 string.
 std::ostream& printEscapedJSON(std::ostream& os, std::string_view str);
 
+// Escape a UTF-8 string for safe inclusion in a JavaScript string literal.
+// Escapes both quote characters (so the result is usable in either a single-
+// or double-quoted literal), backslashes, newlines, and the U+2028/U+2029
+// separators that are line terminators in JS. Does not emit surrounding
+// quotes.
+std::ostream& printEscapedJS(std::ostream& os, std::string_view str);
+
 std::ostream& writeWTF8CodePoint(std::ostream& os, uint32_t u);
 
 std::ostream& writeWTF16CodePoint(std::ostream& os, uint32_t u);
