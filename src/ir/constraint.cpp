@@ -288,11 +288,7 @@ void BasicBlockConstraintMap::set(Index index, const Constraint& c) {
 
   // Clear the old state.
   eraseStaleRefs(index);
-  map[index].setProvesNothing();
-  // Note that this last line puts us in a temporarily invalid state: we do not
-  // normally store a constraint of proves-nothing in the map. Doing it this
-  // way, until approximateAnd adds the constraint, is more efficient than
-  // erasing and re-adding.
+  map.erase(index);
 
   // Apply the constraint.
   approximateAnd(index, c);
