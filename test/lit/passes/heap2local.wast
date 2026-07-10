@@ -4849,7 +4849,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $unreachable-flow
-    ;; The return flows into the br_if. This should not cause errors as wel
+    ;; The return flows into the br_if. This should not cause errors as we
     ;; optimize out the allocation.
     (drop
       (block $block (result arrayref)
