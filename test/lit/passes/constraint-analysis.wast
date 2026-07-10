@@ -3526,8 +3526,7 @@
     ;; Add some control flow to exercise the assert.
     (if
       (i32.const 0)
-      (then
-      )
+      (then)
     )
   )
 )
