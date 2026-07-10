@@ -193,10 +193,11 @@ struct ConstraintAnalysis
           optimizeExpression(currp, constraints);
         } else {
           // This is unreachable code: just mark it so.
-          *currp = getDroppedChildrenAndAppend(*currp,
-                            *getModule(),
-                            getPassOptions(),
-                            Builder(*getModule()).makeUnreachable());
+          *currp = getDroppedChildrenAndAppend(
+            *currp,
+            *getModule(),
+            getPassOptions(),
+            Builder(*getModule()).makeUnreachable());
           refinalize = true;
         }
       }
