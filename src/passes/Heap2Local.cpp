@@ -673,6 +673,7 @@ struct Struct2Local : PostWalker<Struct2Local> {
     // of our parent, since we know very specifically that only safe things
     // will end up using our value, like a StructGet or a Drop, which do not
     // care about non-nullability.
+    assert(curr->type.isRef());
     curr->type = Type(curr->type.getHeapType(), Nullable);
   }
 
