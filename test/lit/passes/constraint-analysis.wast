@@ -3472,4 +3472,27 @@
       (br $loop)
     )
   )
+
+  ;; CHECK:      (func $unreachable-loop (type $1)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  ;; OPTIN:      (func $unreachable-loop (type $1)
+  ;; OPTIN-NEXT:  (local $x i32)
+  ;; OPTIN-NEXT:  (unreachable)
+  ;; OPTIN-NEXT:  (unreachable)
+  ;; OPTIN-NEXT: )
+  (func $unreachable-loop
+    (local $x i32)
+    ;; The entire loop is unreachable. The control flow here should not cause any
+    ;; internal errors, and we can just optimize this to unreachable.
+    (unreachable)
+    (local.set $x
+      (loop $loop (result i32)
+        (i32.const 0)
+      )
+    )
+  )
 )
+
