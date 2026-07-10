@@ -202,7 +202,15 @@ static bool
 provablyInBounds(const Memory& memory, uint64_t offset, uint64_t size) {
   uint64_t end;
   if (std::ckd_add(&end, offset, size)) {
-    return false;
+    // The mathematical end is 2^64 + |end| (the wrapped value). That is in
+    // bounds only when it is exactly 2^64, that is, |end| is 0, and the
+    // memory's declared minimum size is the maximal 2^64 bytes. (With
+    // one-byte pages the largest declarable minimum is 2^64 - 1 bytes, so a
+    // segment ending at 2^64 is never in bounds there.)
+    if (end != 0 || memory.pageSizeLog2 == 0) {
+      return false;
+    }
+    return memory.initial == (uint64_t(1) << (64 - memory.pageSizeLog2));
   }
   // Compare page counts rather than byte counts: the byte size of a maximal
   // memory64 (2^48 pages) does not fit in 64 bits. Compute the number of

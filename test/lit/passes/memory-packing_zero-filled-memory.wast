@@ -109,3 +109,14 @@
  (data (i64.const 4294968320) "\00\00")
 )
 ;; CHECK:      (data $0 (i64.const 4294968321) "\00")
+(module
+ ;; a segment ending exactly at 2^64 bytes, the size of this maximal memory64:
+ ;; the byte end does not fit in 64 bits, but it is still provably in bounds,
+ ;; so the overlap optimization applies and all the segments are removed.
+ ;; CHECK:      (import "env" "memory" (memory $0 i64 281474976710656 281474976710656))
+ (import "env" "memory" (memory $0 i64 281474976710656 281474976710656))
+
+ (data (i64.const 1024) "x")
+ (data (i64.const 1024) "\00")
+ (data (i64.const -1) "\00")
+)
