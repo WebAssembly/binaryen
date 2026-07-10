@@ -320,7 +320,6 @@ struct ConstraintAnalysis
         constraints.setProvesNothing(set->index);
       }
     }
-    //std::cout << "applied " << *curr << " => " << constraints << '\n';
   }
 };
 
