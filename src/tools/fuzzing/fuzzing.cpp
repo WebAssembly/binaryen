@@ -917,10 +917,9 @@ void TranslateToFuzzReader::finalizeMemory() {
     // To allow growth to work (which a testcase may assume), try to make the
     // maximum larger than the initial, some of the time.
     // TODO: scan the wasm for grow instructions?
-    memory->max =
-      std::min(Address(memory->initial + 1),
-               Address(memory->is64() ? memory->maxSize64()
-                                      : memory->maxSize32()));
+    memory->max = std::min(
+      Address(memory->initial + 1),
+      Address(memory->is64() ? memory->maxSize64() : memory->maxSize32()));
   }
 
   if (!preserveImportsAndExports) {
