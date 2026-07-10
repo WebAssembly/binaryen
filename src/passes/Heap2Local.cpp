@@ -661,6 +661,11 @@ struct Struct2Local : PostWalker<Struct2Local> {
       return;
     }
 
+    if (curr->type == Type::unreachable) {
+      // We ended up with unreachable code, and have nothing to do.
+      return;
+    }
+
     // Our allocation passes through this expr. We must turn its type into a
     // nullable one, because we will remove things like RefAsNonNull of it,
     // which means we may no longer have a non-nullable value as our input,
@@ -668,7 +673,6 @@ struct Struct2Local : PostWalker<Struct2Local> {
     // of our parent, since we know very specifically that only safe things
     // will end up using our value, like a StructGet or a Drop, which do not
     // care about non-nullability.
-    assert(curr->type.isRef());
     curr->type = Type(curr->type.getHeapType(), Nullable);
   }
 
