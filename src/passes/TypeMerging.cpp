@@ -243,13 +243,14 @@ void TypeMerging::run(Module* module_) {
     return;
   }
 
-  if (!getPassOptions().closedWorld) {
+  if (getPassOptions().worldMode == WorldMode::Open) {
     Fatal() << "TypeMerging requires --closed-world";
   }
 
   // First, find all the cast types and private types. We will need these to
   // determine whether types are eligible to be merged.
-  mergeable = ModuleUtils::getPrivateHeapTypes(*module);
+  mergeable =
+    ModuleUtils::getPrivateHeapTypes(*module, getPassOptions().worldMode);
   privateTypes =
     std::unordered_set<HeapType>(mergeable.begin(), mergeable.end());
   auto casts = findCastTypes();
@@ -303,7 +304,8 @@ bool TypeMerging::merge(MergeKind kind) {
   Partitions partitions;
 
 #if TYPE_MERGING_DEBUG
-  auto printedPrivateTypes = ModuleUtils::getPrivateHeapTypes(*module);
+  auto printedPrivateTypes =
+    ModuleUtils::getPrivateHeapTypes(*module, getPassOptions().worldMode);
   using Fallback = IndexedTypeNameGenerator<DefaultTypeNameGenerator>;
   Fallback printPrivate(printedPrivateTypes, "private.");
   ModuleTypeNameGenerator<Fallback> print(*module, printPrivate);
@@ -382,9 +384,9 @@ bool TypeMerging::merge(MergeKind kind) {
     auto chain = type.getDescriptorChain();
     bool hasCast =
       std::any_of(chain.begin(), chain.end(), [&](HeapType t) -> bool {
-        return castTypes.count(t);
+        return castTypes.contains(t);
       });
-    if (hasCast || !privateTypes.count(type)) {
+    if (hasCast || !privateTypes.contains(type)) {
       ensurePartition(type);
       continue;
     }
@@ -396,7 +398,7 @@ bool TypeMerging::merge(MergeKind kind) {
           super &&
           std::any_of(chain.begin(), chain.end(), [&](HeapType t) -> bool {
             auto super = t.getDeclaredSuperType();
-            return super && exactCastTypes.count(*super);
+            return super && exactCastTypes.contains(*super);
           });
         if (!super || !shapeEq(type, *super) || superHasExactCast) {
           // Create a new partition for this type and bail.
@@ -467,7 +469,7 @@ bool TypeMerging::merge(MergeKind kind) {
     // Normally splitting partitions like this would require re-running DFA
     // minimization afterward, but in this case it is not possible that the
     // manual splits cause types in any other partition to become
-    // differentiatable. A type and its subtype cannot differ by referring to
+    // differentiable. A type and its subtype cannot differ by referring to
     // different, unrelated types in the same position because then they would
     // not be in a valid subtype relationship.
     std::vector<std::vector<HeapType>> newPartitions;
@@ -530,7 +532,7 @@ TypeMerging::splitSupertypePartition(const std::vector<HeapType>& types) {
   std::unordered_map<HeapType, Index> partitionIndices;
   for (auto type : mergeableSupertypesFirst(types)) {
     auto super = type.getDeclaredSuperType();
-    if (super && includedTypes.count(*super)) {
+    if (super && includedTypes.contains(*super)) {
       // We must already have a partition for the supertype we can add to.
       auto index = partitionIndices.at(*super);
       partitions[index].push_back(type);
@@ -582,7 +584,7 @@ std::pair<CastTypes, CastTypes> TypeMerging::findCastTypes() {
 std::vector<HeapType> TypeMerging::getPublicChildren(HeapType type) {
   std::vector<HeapType> publicChildren;
   for (auto child : type.getHeapTypeChildren()) {
-    if (!child.isBasic() && !privateTypes.count(child)) {
+    if (!child.isBasic() && !privateTypes.contains(child)) {
       publicChildren.push_back(child);
     }
   }
@@ -602,7 +604,7 @@ DFA::State<HeapType> TypeMerging::makeDFAState(HeapType type) {
   //
   // For private types, full descriptor chains are included in a single DFA
   // represented by their base described type.
-  if (privateTypes.count(type)) {
+  if (privateTypes.contains(type)) {
     assert(!type.getDescribedType());
     for (auto t : type.getDescriptorChain()) {
       for (auto child : t.getHeapTypeChildren()) {
@@ -640,7 +642,7 @@ void TypeMerging::applyMerges() {
 
   // We found things to optimize! Rewrite types in the module to apply those
   // changes.
-  TypeMapper(*module, replacements).map();
+  TypeMapper(*module, replacements, getPassOptions().worldMode).map();
 }
 
 bool shapeEq(HeapType a, HeapType b) {

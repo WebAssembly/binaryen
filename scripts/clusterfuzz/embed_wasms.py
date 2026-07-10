@@ -13,11 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-'''
-Reverse script for extract_wasms.py: That one extracts wasm files from a
-JavaScript testcase (which has wasm files embedded as arrays of numbers), and
-this one re-embeds them back. To do so, we use the magic comments that the
-extractor uses: it replaces each wasm array with
+"""Reverse of extract_wasms.py.
+
+extract_wasms.py extracts wasm files from a JavaScript testcase (which has wasm
+files embedded as arrays of numbers), and this script re-embeds them back. To
+do so, we use the magic comments that the extractor uses: it replaces each
+wasm array with
 
   'undefined /* extracted wasm */'
 
@@ -39,7 +40,7 @@ them, creating a merged JS file containing JS + wasm, using
 
 The first argument is the input JS, then the wasm files, then the last argument
 is the output JS.
-'''
+"""
 
 import re
 import sys

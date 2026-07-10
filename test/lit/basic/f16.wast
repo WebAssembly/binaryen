@@ -490,22 +490,22 @@
    (local.get $0)
   )
  )
-  ;; CHECK-TEXT:      (func $f16x8.relaxed_madd (type $2) (param $0 v128) (param $1 v128) (param $2 v128) (result v128)
-  ;; CHECK-TEXT-NEXT:  (f16x8.relaxed_madd
+  ;; CHECK-TEXT:      (func $f16x8.madd (type $2) (param $0 v128) (param $1 v128) (param $2 v128) (result v128)
+  ;; CHECK-TEXT-NEXT:  (f16x8.madd
   ;; CHECK-TEXT-NEXT:   (local.get $0)
   ;; CHECK-TEXT-NEXT:   (local.get $1)
   ;; CHECK-TEXT-NEXT:   (local.get $2)
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $f16x8.relaxed_madd (type $2) (param $0 v128) (param $1 v128) (param $2 v128) (result v128)
-  ;; CHECK-BIN-NEXT:  (f16x8.relaxed_madd
+  ;; CHECK-BIN:      (func $f16x8.madd (type $2) (param $0 v128) (param $1 v128) (param $2 v128) (result v128)
+  ;; CHECK-BIN-NEXT:  (f16x8.madd
   ;; CHECK-BIN-NEXT:   (local.get $0)
   ;; CHECK-BIN-NEXT:   (local.get $1)
   ;; CHECK-BIN-NEXT:   (local.get $2)
   ;; CHECK-BIN-NEXT:  )
   ;; CHECK-BIN-NEXT: )
-  (func $f16x8.relaxed_madd (param $0 v128) (param $1 v128) (param $2 v128) (result v128)
-  (f16x8.relaxed_madd
+  (func $f16x8.madd (param $0 v128) (param $1 v128) (param $2 v128) (result v128)
+  (f16x8.madd
    (local.get $0)
    (local.get $1)
    (local.get $2)
@@ -513,22 +513,22 @@
  )
 
 
- ;; CHECK-TEXT:      (func $f16x8.relaxed_nmadd (type $2) (param $0 v128) (param $1 v128) (param $2 v128) (result v128)
- ;; CHECK-TEXT-NEXT:  (f16x8.relaxed_nmadd
+ ;; CHECK-TEXT:      (func $f16x8.nmadd (type $2) (param $0 v128) (param $1 v128) (param $2 v128) (result v128)
+ ;; CHECK-TEXT-NEXT:  (f16x8.nmadd
  ;; CHECK-TEXT-NEXT:   (local.get $0)
  ;; CHECK-TEXT-NEXT:   (local.get $1)
  ;; CHECK-TEXT-NEXT:   (local.get $2)
  ;; CHECK-TEXT-NEXT:  )
  ;; CHECK-TEXT-NEXT: )
- ;; CHECK-BIN:      (func $f16x8.relaxed_nmadd (type $2) (param $0 v128) (param $1 v128) (param $2 v128) (result v128)
- ;; CHECK-BIN-NEXT:  (f16x8.relaxed_nmadd
+ ;; CHECK-BIN:      (func $f16x8.nmadd (type $2) (param $0 v128) (param $1 v128) (param $2 v128) (result v128)
+ ;; CHECK-BIN-NEXT:  (f16x8.nmadd
  ;; CHECK-BIN-NEXT:   (local.get $0)
  ;; CHECK-BIN-NEXT:   (local.get $1)
  ;; CHECK-BIN-NEXT:   (local.get $2)
  ;; CHECK-BIN-NEXT:  )
  ;; CHECK-BIN-NEXT: )
- (func $f16x8.relaxed_nmadd (param $0 v128) (param $1 v128) (param $2 v128) (result v128)
-  (f16x8.relaxed_nmadd
+ (func $f16x8.nmadd (param $0 v128) (param $1 v128) (param $2 v128) (result v128)
+  (f16x8.nmadd
    (local.get $0)
    (local.get $1)
    (local.get $2)
@@ -594,6 +594,52 @@
  ;; CHECK-BIN-NEXT: )
  (func $f16x8.convert_i16x8_u (param $0 v128) (result v128)
   (f16x8.convert_i16x8_u
+   (local.get $0)
+  )
+ )
+
+ ;; CHECK-TEXT:      (func $f32x4.promote_low_f16x8 (type $1) (param $0 v128) (result v128)
+ ;; CHECK-TEXT-NEXT:  (f32x4.promote_low_f16x8
+ ;; CHECK-TEXT-NEXT:   (local.get $0)
+ ;; CHECK-TEXT-NEXT:  )
+ ;; CHECK-TEXT-NEXT: )
+ ;; CHECK-BIN:      (func $f32x4.promote_low_f16x8 (type $1) (param $0 v128) (result v128)
+ ;; CHECK-BIN-NEXT:  (f32x4.promote_low_f16x8
+ ;; CHECK-BIN-NEXT:   (local.get $0)
+ ;; CHECK-BIN-NEXT:  )
+ ;; CHECK-BIN-NEXT: )
+ (func $f32x4.promote_low_f16x8 (param $0 v128) (result v128)
+  (f32x4.promote_low_f16x8
+   (local.get $0)
+  )
+ )
+ ;; CHECK-TEXT:      (func $f16x8.demote_f32x4_zero (type $1) (param $0 v128) (result v128)
+ ;; CHECK-TEXT-NEXT:  (f16x8.demote_f32x4_zero
+ ;; CHECK-TEXT-NEXT:   (local.get $0)
+ ;; CHECK-TEXT-NEXT:  )
+ ;; CHECK-TEXT-NEXT: )
+ ;; CHECK-BIN:      (func $f16x8.demote_f32x4_zero (type $1) (param $0 v128) (result v128)
+ ;; CHECK-BIN-NEXT:  (f16x8.demote_f32x4_zero
+ ;; CHECK-BIN-NEXT:   (local.get $0)
+ ;; CHECK-BIN-NEXT:  )
+ ;; CHECK-BIN-NEXT: )
+ (func $f16x8.demote_f32x4_zero (param $0 v128) (result v128)
+  (f16x8.demote_f32x4_zero
+   (local.get $0)
+  )
+ )
+ ;; CHECK-TEXT:      (func $f16x8.demote_f64x2_zero (type $1) (param $0 v128) (result v128)
+ ;; CHECK-TEXT-NEXT:  (f16x8.demote_f64x2_zero
+ ;; CHECK-TEXT-NEXT:   (local.get $0)
+ ;; CHECK-TEXT-NEXT:  )
+ ;; CHECK-TEXT-NEXT: )
+ ;; CHECK-BIN:      (func $f16x8.demote_f64x2_zero (type $1) (param $0 v128) (result v128)
+ ;; CHECK-BIN-NEXT:  (f16x8.demote_f64x2_zero
+ ;; CHECK-BIN-NEXT:   (local.get $0)
+ ;; CHECK-BIN-NEXT:  )
+ ;; CHECK-BIN-NEXT: )
+ (func $f16x8.demote_f64x2_zero (param $0 v128) (result v128)
+  (f16x8.demote_f64x2_zero
    (local.get $0)
   )
  )
@@ -789,7 +835,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
 ;; CHECK-BIN-NODEBUG:      (func $26 (type $2) (param $0 v128) (param $1 v128) (param $2 v128) (result v128)
-;; CHECK-BIN-NODEBUG-NEXT:  (f16x8.relaxed_madd
+;; CHECK-BIN-NODEBUG-NEXT:  (f16x8.madd
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $2)
@@ -797,7 +843,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
 ;; CHECK-BIN-NODEBUG:      (func $27 (type $2) (param $0 v128) (param $1 v128) (param $2 v128) (result v128)
-;; CHECK-BIN-NODEBUG-NEXT:  (f16x8.relaxed_nmadd
+;; CHECK-BIN-NODEBUG-NEXT:  (f16x8.nmadd
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $2)
@@ -824,6 +870,24 @@
 
 ;; CHECK-BIN-NODEBUG:      (func $31 (type $1) (param $0 v128) (result v128)
 ;; CHECK-BIN-NODEBUG-NEXT:  (f16x8.convert_i16x8_u
+;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
+;; CHECK-BIN-NODEBUG-NEXT:  )
+;; CHECK-BIN-NODEBUG-NEXT: )
+
+;; CHECK-BIN-NODEBUG:      (func $32 (type $1) (param $0 v128) (result v128)
+;; CHECK-BIN-NODEBUG-NEXT:  (f32x4.promote_low_f16x8
+;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
+;; CHECK-BIN-NODEBUG-NEXT:  )
+;; CHECK-BIN-NODEBUG-NEXT: )
+
+;; CHECK-BIN-NODEBUG:      (func $33 (type $1) (param $0 v128) (result v128)
+;; CHECK-BIN-NODEBUG-NEXT:  (f16x8.demote_f32x4_zero
+;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
+;; CHECK-BIN-NODEBUG-NEXT:  )
+;; CHECK-BIN-NODEBUG-NEXT: )
+
+;; CHECK-BIN-NODEBUG:      (func $34 (type $1) (param $0 v128) (result v128)
+;; CHECK-BIN-NODEBUG-NEXT:  (f16x8.demote_f64x2_zero
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )

@@ -397,7 +397,7 @@ public:
       if (t.isRef()) {
         auto h = t.getHeapType();
         o << " HT: " << h;
-        if (wasm && wasm->typeNames.count(h)) {
+        if (wasm && wasm->typeNames.contains(h)) {
           o << " $" << wasm->typeNames[h].name;
         }
         if (t.isNullable()) {

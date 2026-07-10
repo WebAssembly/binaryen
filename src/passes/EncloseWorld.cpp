@@ -17,7 +17,7 @@
 //
 // "Closes" the world, in the sense of making it more compatible with the
 // --closed-world flag, in a potentially destructive manner. This is mainly
-// useful for fuzzing (in that a random module is usually very incomptable with
+// useful for fuzzing (in that a random module is usually very incompatible with
 // closed world, with most types being public and hence unoptimizable, but
 // running this pass makes as many as we can fully private).
 //

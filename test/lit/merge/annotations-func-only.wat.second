@@ -1,0 +1,12 @@
+(module
+  (@binaryen.js.called)
+  (func $second (export "second")
+    (if
+      (i32.const 0)
+      (then
+        (return)
+      )
+    )
+  )
+)
+

@@ -1453,12 +1453,20 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  ;; IMMUT:      (func $bar (type $ii) (param $x i32) (param $y i32)
- ;; IMMUT-NEXT:  (unreachable)
+ ;; IMMUT-NEXT:  (call_indirect $table (type $ii)
+ ;; IMMUT-NEXT:   (local.get $x)
+ ;; IMMUT-NEXT:   (local.get $y)
+ ;; IMMUT-NEXT:   (i32.const 0)
+ ;; IMMUT-NEXT:  )
  ;; IMMUT-NEXT:  (call $foo1
  ;; IMMUT-NEXT:   (local.get $x)
  ;; IMMUT-NEXT:   (local.get $y)
  ;; IMMUT-NEXT:  )
- ;; IMMUT-NEXT:  (unreachable)
+ ;; IMMUT-NEXT:  (call_indirect $table (type $ii)
+ ;; IMMUT-NEXT:   (local.get $x)
+ ;; IMMUT-NEXT:   (local.get $y)
+ ;; IMMUT-NEXT:   (i32.const 2)
+ ;; IMMUT-NEXT:  )
  ;; IMMUT-NEXT:  (call $foo2
  ;; IMMUT-NEXT:   (local.get $x)
  ;; IMMUT-NEXT:   (local.get $y)
@@ -1471,11 +1479,109 @@
  ;; IMMUT-NEXT: )
  (func $bar (param $x i32) (param $y i32)
   ;; When assuming the initial contents are immutable, we can optimize some
-  ;; of these cases. 0 and 2 are offsets that are known to contain a null, so
-  ;; they will trap, and 1 and 3 contain known contents we can do a direct call
+  ;; of these cases. 1 and 3 contain known contents we can do a direct call
   ;; to. 4 is out of bounds so we cannot optimize there. (And in all of these,
   ;; we cannot optimize anything in the non-immutable case, since the table is
-  ;; imported.)
+  ;; imported. That the table is imported also prevents us from optimizing
+  ;; traps: the imported table might have a default value, avoiding traps.)
+  (call_indirect (type $ii)
+   (local.get $x)
+   (local.get $y)
+   (i32.const 0)
+  )
+  (call_indirect (type $ii)
+   (local.get $x)
+   (local.get $y)
+   (i32.const 1)
+  )
+  (call_indirect (type $ii)
+   (local.get $x)
+   (local.get $y)
+   (i32.const 2)
+  )
+  (call_indirect (type $ii)
+   (local.get $x)
+   (local.get $y)
+   (i32.const 3)
+  )
+  (call_indirect (type $ii)
+   (local.get $x)
+   (local.get $y)
+   (i32.const 4)
+  )
+ )
+)
+
+;; As above, a non-contiguous range in initial contents, but now the table is
+;; not imported. We can do more.
+(module
+ ;; CHECK:      (type $ii (func (param i32 i32)))
+ ;; IMMUT:      (type $ii (func (param i32 i32)))
+ (type $ii (func (param i32 i32)))
+
+ ;; CHECK:      (table $table 5 5 funcref)
+ ;; IMMUT:      (table $table 5 5 funcref)
+ (table $table 5 5 funcref)
+ (elem (i32.const 1) $foo1)
+ (elem (i32.const 3) $foo2)
+
+ ;; CHECK:      (elem $0 (i32.const 1) $foo1)
+
+ ;; CHECK:      (elem $1 (i32.const 3) $foo2)
+
+ ;; CHECK:      (func $foo1 (type $ii) (param $0 i32) (param $1 i32)
+ ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT: )
+ ;; IMMUT:      (elem $0 (i32.const 1) $foo1)
+
+ ;; IMMUT:      (elem $1 (i32.const 3) $foo2)
+
+ ;; IMMUT:      (func $foo1 (type $ii) (param $0 i32) (param $1 i32)
+ ;; IMMUT-NEXT:  (unreachable)
+ ;; IMMUT-NEXT: )
+ (func $foo1 (param i32) (param i32)
+  (unreachable)
+ )
+ ;; CHECK:      (func $foo2 (type $ii) (param $0 i32) (param $1 i32)
+ ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT: )
+ ;; IMMUT:      (func $foo2 (type $ii) (param $0 i32) (param $1 i32)
+ ;; IMMUT-NEXT:  (unreachable)
+ ;; IMMUT-NEXT: )
+ (func $foo2 (param i32) (param i32)
+  (unreachable)
+ )
+
+ ;; CHECK:      (func $bar (type $ii) (param $x i32) (param $y i32)
+ ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT:  (call $foo1
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:   (local.get $y)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT:  (call $foo2
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:   (local.get $y)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT: )
+ ;; IMMUT:      (func $bar (type $ii) (param $x i32) (param $y i32)
+ ;; IMMUT-NEXT:  (unreachable)
+ ;; IMMUT-NEXT:  (call $foo1
+ ;; IMMUT-NEXT:   (local.get $x)
+ ;; IMMUT-NEXT:   (local.get $y)
+ ;; IMMUT-NEXT:  )
+ ;; IMMUT-NEXT:  (unreachable)
+ ;; IMMUT-NEXT:  (call $foo2
+ ;; IMMUT-NEXT:   (local.get $x)
+ ;; IMMUT-NEXT:   (local.get $y)
+ ;; IMMUT-NEXT:  )
+ ;; IMMUT-NEXT:  (unreachable)
+ ;; IMMUT-NEXT: )
+ (func $bar (param $x i32) (param $y i32)
+  ;; We can optimize as above, but also since the table is not imported, and it
+  ;; has no default value, we can see that 0, 2, and 4 must trap. We can also
+  ;; infer direct calls for 1 and 3, even without immutability.
   (call_indirect (type $ii)
    (local.get $x)
    (local.get $y)
@@ -1864,6 +1970,228 @@
  (func $0
   (call_indirect (type $v)
    (i32.const 9)
+  )
+ )
+)
+
+(module
+ ;; CHECK:      (type $0 (func (param i32)))
+
+ ;; CHECK:      (type $ii (func (param i32) (result i32)))
+ ;; IMMUT:      (type $0 (func (param i32)))
+
+ ;; IMMUT:      (type $ii (func (param i32) (result i32)))
+ (type $ii (func (param i32) (result i32)))
+
+ ;; CHECK:      (table $0 10 10 funcref)
+
+ ;; CHECK:      (elem $0 (i32.const 0) $0)
+
+ ;; CHECK:      (tag $e (type $0) (param i32))
+ ;; IMMUT:      (table $0 10 10 funcref)
+
+ ;; IMMUT:      (elem $0 (i32.const 0) $0)
+
+ ;; IMMUT:      (tag $e (type $0) (param i32))
+ (tag $e (param i32))
+
+ (table 10 10 funcref)
+
+ (elem (i32.const 0) $0)
+
+ ;; CHECK:      (func $0 (type $ii) (param $0 i32) (result i32)
+ ;; CHECK-NEXT:  (local $1 i32)
+ ;; CHECK-NEXT:  (try
+ ;; CHECK-NEXT:   (do
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (catch $e
+ ;; CHECK-NEXT:    (local.set $1
+ ;; CHECK-NEXT:     (pop i32)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (block
+ ;; CHECK-NEXT:      (drop
+ ;; CHECK-NEXT:       (local.get $1)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (unreachable)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (i32.const 42)
+ ;; CHECK-NEXT: )
+ ;; IMMUT:      (func $0 (type $ii) (param $0 i32) (result i32)
+ ;; IMMUT-NEXT:  (local $1 i32)
+ ;; IMMUT-NEXT:  (try
+ ;; IMMUT-NEXT:   (do
+ ;; IMMUT-NEXT:   )
+ ;; IMMUT-NEXT:   (catch $e
+ ;; IMMUT-NEXT:    (local.set $1
+ ;; IMMUT-NEXT:     (pop i32)
+ ;; IMMUT-NEXT:    )
+ ;; IMMUT-NEXT:    (drop
+ ;; IMMUT-NEXT:     (block
+ ;; IMMUT-NEXT:      (drop
+ ;; IMMUT-NEXT:       (local.get $1)
+ ;; IMMUT-NEXT:      )
+ ;; IMMUT-NEXT:      (unreachable)
+ ;; IMMUT-NEXT:     )
+ ;; IMMUT-NEXT:    )
+ ;; IMMUT-NEXT:   )
+ ;; IMMUT-NEXT:  )
+ ;; IMMUT-NEXT:  (i32.const 42)
+ ;; IMMUT-NEXT: )
+ (func $0 (param i32) (result i32)
+  (try
+   (do)
+   (catch $e
+    ;; This is out of bounds (100 is far too large), so this will trap. We emit
+    ;; a block with the pop, and must handle that properly.
+    (drop
+     (call_indirect (type $ii)
+      (pop i32)
+      (i32.const 100)
+     )
+    )
+   )
+  )
+  (i32.const 42)
+ )
+)
+
+;; table.grow inhibits some optimizations.
+(module
+ ;; CHECK:      (type $func (func))
+ ;; IMMUT:      (type $func (func))
+ (type $func (func))
+
+ ;; CHECK:      (table $table 5 funcref)
+ ;; IMMUT:      (table $table 5 funcref)
+ (table $table 5 funcref)
+
+ ;; CHECK:      (elem $table (i32.const 1) $target)
+ ;; IMMUT:      (elem $table (i32.const 1) $target)
+ (elem $table (i32.const 1) $target)
+
+ ;; CHECK:      (elem declare func $grow)
+
+ ;; CHECK:      (export "caller" (func $caller))
+
+ ;; CHECK:      (func $grow (type $func)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (table.grow $table
+ ;; CHECK-NEXT:    (ref.func $grow)
+ ;; CHECK-NEXT:    (i32.const 42)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; IMMUT:      (elem declare func $grow)
+
+ ;; IMMUT:      (export "caller" (func $caller))
+
+ ;; IMMUT:      (func $grow (type $func)
+ ;; IMMUT-NEXT:  (drop
+ ;; IMMUT-NEXT:   (table.grow $table
+ ;; IMMUT-NEXT:    (ref.func $grow)
+ ;; IMMUT-NEXT:    (i32.const 42)
+ ;; IMMUT-NEXT:   )
+ ;; IMMUT-NEXT:  )
+ ;; IMMUT-NEXT: )
+ (func $grow
+  (drop
+   (table.grow $table
+    (ref.func $grow)
+    (i32.const 42)
+   )
+  )
+ )
+
+ ;; CHECK:      (func $caller (type $func)
+ ;; CHECK-NEXT:  (call $target)
+ ;; CHECK-NEXT:  (call_indirect $table (type $func)
+ ;; CHECK-NEXT:   (i32.const 10)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (call_indirect $table (type $func)
+ ;; CHECK-NEXT:   (i32.const 1000)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; IMMUT:      (func $caller (type $func)
+ ;; IMMUT-NEXT:  (call $target)
+ ;; IMMUT-NEXT:  (call_indirect $table (type $func)
+ ;; IMMUT-NEXT:   (i32.const 10)
+ ;; IMMUT-NEXT:  )
+ ;; IMMUT-NEXT:  (call_indirect $table (type $func)
+ ;; IMMUT-NEXT:   (i32.const 1000)
+ ;; IMMUT-NEXT:  )
+ ;; IMMUT-NEXT: )
+ (func $caller (export "caller")
+  ;; This is in the elem segment, so we can optimize it. Growth can only append.
+  (call_indirect (type $func)
+   (i32.const 1)
+  )
+  ;; This is in the range that we grow to, if grow() is called, but we don't
+  ;; know if it will, so we don't optimize.
+  (call_indirect (type $func)
+   (i32.const 10)
+  )
+  ;; This is in the range that we grow to, if grow() is called multiple times,
+  ;; but again we can't optimize.
+  (call_indirect (type $func)
+   (i32.const 1000)
+  )
+ )
+
+ ;; CHECK:      (func $target (type $func)
+ ;; CHECK-NEXT: )
+ ;; IMMUT:      (func $target (type $func)
+ ;; IMMUT-NEXT: )
+ (func $target
+ )
+)
+
+;; Set a function using one elem, then trample it with a null. We should use the
+;; null for the call_indirect.
+(module
+ ;; CHECK:      (type $func (func))
+ ;; IMMUT:      (type $func (func))
+ (type $func (func))
+
+ ;; CHECK:      (table $table 6 funcref)
+ ;; IMMUT:      (table $table 6 funcref)
+ (table $table 6 funcref)
+
+ ;; CHECK:      (elem $5 (i32.const 0) $nop)
+ ;; IMMUT:      (elem $5 (i32.const 0) $nop)
+ (elem $5 (i32.const 0) $nop)
+
+ ;; CHECK:      (elem $6 (table $table) (i32.const 0) funcref (item (ref.null nofunc)))
+ ;; IMMUT:      (elem $6 (table $table) (i32.const 0) funcref (item (ref.null nofunc)))
+ (elem $6 (i32.const 0) funcref (item (ref.null nofunc)))
+
+ ;; CHECK:      (export "call" (func $call))
+
+ ;; CHECK:      (func $nop (type $func)
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT: )
+ ;; IMMUT:      (export "call" (func $call))
+
+ ;; IMMUT:      (func $nop (type $func)
+ ;; IMMUT-NEXT:  (nop)
+ ;; IMMUT-NEXT: )
+ (func $nop (type $func)
+  (nop)
+ )
+
+ ;; CHECK:      (func $call (type $func)
+ ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT: )
+ ;; IMMUT:      (func $call (type $func)
+ ;; IMMUT-NEXT:  (unreachable)
+ ;; IMMUT-NEXT: )
+ (func $call (export "call")
+  ;; This can be optimized to an unreachable.
+  (call_indirect $table (type $func)
+   (i32.const 0)
   )
  )
 )

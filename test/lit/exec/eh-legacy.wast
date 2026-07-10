@@ -5,13 +5,13 @@
 (module
   (tag $e-i32 (param i32))
 
-  ;; CHECK:      [fuzz-exec] calling throw
+  ;; CHECK:      [fuzz-exec] export throw
   ;; CHECK-NEXT: [exception thrown: e-i32 1]
   (func $throw (export "throw")
     (throw $e-i32 (i32.const 1))
   )
 
-  ;; CHECK:      [fuzz-exec] calling try-catch
+  ;; CHECK:      [fuzz-exec] export try-catch
   (func $try-catch (export "try-catch")
     (try
       (do
@@ -23,7 +23,7 @@
     )
   )
 
-  ;; CHECK:      [fuzz-exec] calling catchless-try
+  ;; CHECK:      [fuzz-exec] export catchless-try
   ;; CHECK-NEXT: [exception thrown: e-i32 3]
   (func $catchless-try (export "catchless-try")
     (try
@@ -33,7 +33,7 @@
     )
   )
 
-  ;; CHECK:      [fuzz-exec] calling try-delegate
+  ;; CHECK:      [fuzz-exec] export try-delegate
   ;; CHECK-NEXT: [exception thrown: e-i32 4]
   (func $try-delegate (export "try-delegate")
     (try $l0
@@ -48,15 +48,15 @@
     )
   )
 )
-;; CHECK:      [fuzz-exec] calling throw
+;; CHECK:      [fuzz-exec] export throw
 ;; CHECK-NEXT: [exception thrown: e-i32 1]
 
-;; CHECK:      [fuzz-exec] calling try-catch
+;; CHECK:      [fuzz-exec] export try-catch
 
-;; CHECK:      [fuzz-exec] calling catchless-try
+;; CHECK:      [fuzz-exec] export catchless-try
 ;; CHECK-NEXT: [exception thrown: e-i32 3]
 
-;; CHECK:      [fuzz-exec] calling try-delegate
+;; CHECK:      [fuzz-exec] export try-delegate
 ;; CHECK-NEXT: [exception thrown: e-i32 4]
 ;; CHECK-NEXT: [fuzz-exec] comparing catchless-try
 ;; CHECK-NEXT: [fuzz-exec] comparing throw

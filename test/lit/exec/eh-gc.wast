@@ -5,7 +5,7 @@
 (module
  (tag $tag (param externref))
 
- ;; CHECK:      [fuzz-exec] calling catch-null
+ ;; CHECK:      [fuzz-exec] export catch-null
  (func $catch-null (export "catch-null")
   (block $tryend
    ;; The actual resulting value type is more refined than externref (it is a
@@ -23,5 +23,5 @@
   )
  )
 )
-;; CHECK:      [fuzz-exec] calling catch-null
+;; CHECK:      [fuzz-exec] export catch-null
 ;; CHECK-NEXT: [fuzz-exec] comparing catch-null

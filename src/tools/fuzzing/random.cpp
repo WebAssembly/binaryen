@@ -66,9 +66,6 @@ float Random::getFloat() { return Literal(get32()).reinterpretf32(); }
 double Random::getDouble() { return Literal(get64()).reinterpretf64(); }
 
 uint32_t Random::upTo(uint32_t x) {
-  if (finished()) {
-    return 0;
-  }
   if (x == 0) {
     return 0;
   }

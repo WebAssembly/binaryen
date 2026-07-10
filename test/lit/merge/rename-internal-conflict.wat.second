@@ -1,0 +1,7 @@
+(module
+  (global $classVTable (mut i32) (i32.const 2))
+  (global $classVTable_1 (mut i32) (i32.const 3))
+
+  (export "classVTable_b" (global $classVTable))
+  (export "classVTable_1" (global $classVTable_1))
+)

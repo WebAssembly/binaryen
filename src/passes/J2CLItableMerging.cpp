@@ -30,6 +30,7 @@
 #include <string_view>
 #include <unordered_map>
 
+#include "ir/module-utils.h"
 #include "ir/type-updating.h"
 #include "pass.h"
 #include "support/utilities.h"
@@ -72,7 +73,7 @@ struct J2CLItableMerging : public Pass {
       return;
     }
 
-    if (!getPassOptions().closedWorld) {
+    if (getPassOptions().worldMode == WorldMode::Open) {
       Fatal() << "--merge-j2cl-itables requires --closed-world";
     }
 
@@ -104,6 +105,11 @@ struct J2CLItableMerging : public Pass {
         auto it = typeNameInfo.fieldNames.find(index);
         return it != typeNameInfo.fieldNames.end() && it->second.equals(name);
       };
+
+    auto publicTypes =
+      ModuleUtils::getPublicHeapTypes(wasm, getPassOptions().worldMode);
+    std::unordered_set<HeapType> publicTypesSet(publicTypes.begin(),
+                                                publicTypes.end());
 
     // 1. Collect all structs that correspond that a Java type.
     for (auto [heapType, typeNameInfo] : wasm.typeNames) {
@@ -142,6 +148,14 @@ struct J2CLItableMerging : public Pass {
         itabletype = type.fields[1].type.getHeapType();
       }
 
+      if (publicTypesSet.contains(heapType) ||
+          publicTypesSet.contains(vtabletype) ||
+          publicTypesSet.contains(itabletype)) {
+        Fatal() << "Cannot merge itables because the J2CL type "
+                << ModuleHeapType(wasm, heapType)
+                << " or its dispatch tables are public";
+      }
+
       auto structItableSize = itabletype.getStruct().fields.size();
 
       if (itableSize != 0 && itableSize != structItableSize) {
@@ -165,9 +179,9 @@ struct J2CLItableMerging : public Pass {
       if (!g->type.isStruct()) {
         continue;
       }
-      if (structInfoByVtableType.count(g->type.getHeapType())) {
+      if (structInfoByVtableType.contains(g->type.getHeapType())) {
         tableGlobalsByType[g->type.getHeapType()] = g.get();
-      } else if (structInfoByITableType.count(g->type.getHeapType())) {
+      } else if (structInfoByITableType.contains(g->type.getHeapType())) {
         tableGlobalsByType[g->type.getHeapType()] = g.get();
       }
     }
@@ -384,7 +398,8 @@ struct J2CLItableMerging : public Pass {
 
     public:
       TypeRewriter(Module& wasm, J2CLItableMerging& parent)
-        : GlobalTypeRewriter(wasm), parent(parent) {}
+        : GlobalTypeRewriter(wasm, parent.getPassOptions().worldMode),
+          parent(parent) {}
 
       void modifyStruct(HeapType oldStructType, Struct& struct_) override {
         auto structInfoIt = parent.structInfoByVtableType.find(oldStructType);

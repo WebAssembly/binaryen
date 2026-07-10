@@ -80,7 +80,7 @@ struct GlobalRefining : public Pass {
     std::unordered_set<Global*> exportedGlobals(exportedGlobalsVec.begin(),
                                                 exportedGlobalsVec.end());
     for (auto* global : exportedGlobalsVec) {
-      if (getPassOptions().closedWorld || global->mutable_) {
+      if (getPassOptions().worldMode == WorldMode::Closed || global->mutable_) {
         unoptimizable.insert(global->name);
       }
     }
@@ -89,7 +89,7 @@ struct GlobalRefining : public Pass {
     PublicTypeValidator publicTypeValidator(module->features);
 
     for (auto& global : module->globals) {
-      if (global->imported() || unoptimizable.count(global->name)) {
+      if (global->imported() || unoptimizable.contains(global->name)) {
         continue;
       }
 
@@ -112,7 +112,7 @@ struct GlobalRefining : public Pass {
       }
 
       // Do not make invalid types public.
-      if (exportedGlobals.count(global.get()) &&
+      if (exportedGlobals.contains(global.get()) &&
           !publicTypeValidator.isValidPublicType(newType)) {
         continue;
       }

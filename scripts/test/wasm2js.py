@@ -16,6 +16,7 @@ import os
 import subprocess
 
 from . import shared, support
+from .shared import print_heading
 
 basic_tests = shared.get_tests(os.path.join(shared.options.binaryen_test, 'lit', 'basic'))
 # memory64 is not supported in wasm2js yet (but may be with BigInt eventually).
@@ -42,10 +43,15 @@ def check_for_stale_files():
     all_tests = basic_tests + spec_tests + wasm2js_tests
     all_tests = [os.path.basename(os.path.splitext(t)[0]) for t in all_tests]
 
+    assert_test_prefixes = [t.split('.')[0] for t in assert_tests]
+    skipped_test_prefixes = [t.split('.')[0] for t in shared.SPEC_TESTSUITE_TESTS_TO_SKIP]
+
     all_files = os.listdir(shared.get_test_dir('wasm2js'))
     for f in all_files:
         prefix = f.split('.')[0]
-        if prefix in [t.split('.')[0] for t in assert_tests]:
+        if prefix in assert_test_prefixes:
+            continue
+        if prefix in skipped_test_prefixes:
             continue
         if prefix not in all_tests:
             shared.fail_with_error(f'orphan test output: {f}')
@@ -154,7 +160,7 @@ def test_asserts_output():
 
 
 def test_wasm2js():
-    print('\n[ checking wasm2js testcases... ]\n')
+    print_heading('checking wasm2js testcases...')
     check_for_stale_files()
     if shared.skip_if_on_windows('wasm2js'):
         return
@@ -163,7 +169,7 @@ def test_wasm2js():
 
 
 def update_wasm2js_tests():
-    print('\n[ checking wasm2js ]\n')
+    print_heading('checking wasm2js')
 
     for opt in (0, 1):
         for wasm in basic_tests + spec_tests + wasm2js_tests:

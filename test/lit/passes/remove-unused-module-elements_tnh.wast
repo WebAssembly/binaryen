@@ -236,3 +236,45 @@
  ;; T_N_H:      (export "mem" (memory $mem))
  (export "mem" (memory $mem))
 )
+
+;; The exported function has a call_indirect, which refers to the table and
+;; elem. The elem refers to the global, so it must not be removed (in either TNH
+;; or not).
+(module
+ ;; CHECK:      (type $nop (func))
+ ;; T_N_H:      (type $nop (func))
+ (type $nop (func))
+
+ ;; CHECK:      (global $g i32 (i32.const 0))
+ ;; T_N_H:      (global $g i32 (i32.const 0))
+ (global $g i32 (i32.const 0))
+
+ ;; CHECK:      (table $table 50 50 funcref)
+ ;; T_N_H:      (table $table 50 50 funcref)
+ (table $table 50 50 funcref)
+
+ ;; CHECK:      (elem $elem (global.get $g) $func)
+ ;; T_N_H:      (elem $elem (global.get $g) $func)
+ (elem $elem (global.get $g) $func)
+
+ ;; CHECK:      (export "func" (func $func))
+
+ ;; CHECK:      (func $func (type $nop)
+ ;; CHECK-NEXT:  (call_indirect $table (type $nop)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; T_N_H:      (export "func" (func $func))
+
+ ;; T_N_H:      (func $func (type $nop)
+ ;; T_N_H-NEXT:  (call_indirect $table (type $nop)
+ ;; T_N_H-NEXT:   (i32.const 0)
+ ;; T_N_H-NEXT:  )
+ ;; T_N_H-NEXT: )
+ (func $func (export "func") (type $nop)
+  (call_indirect (type $nop)
+   (i32.const 0)
+  )
+ )
+)
+

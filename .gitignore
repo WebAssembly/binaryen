@@ -61,3 +61,5 @@ CMakeUserPresets.json
 
 # files related to clangd cache
 .cache/*
+
+.venv/

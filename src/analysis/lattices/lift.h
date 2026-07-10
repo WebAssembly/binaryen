@@ -77,7 +77,7 @@ template<Lattice L> struct Lift {
 // Deduction guide.
 template<typename L> Lift(L&&) -> Lift<L>;
 
-#if __cplusplus >= 202002L
+#if defined(__cpp_lib_concepts)
 static_assert(Lattice<Lift<Bool>>);
 #endif
 

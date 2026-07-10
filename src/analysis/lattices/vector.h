@@ -154,7 +154,7 @@ private:
 // Deduction guide.
 template<typename L> Vector(L&&, size_t) -> Vector<L>;
 
-#if __cplusplus >= 202002L
+#if defined(__cpp_lib_concepts)
 static_assert(FullLattice<Vector<Bool>>);
 static_assert(Lattice<Vector<Flat<bool>>>);
 #endif

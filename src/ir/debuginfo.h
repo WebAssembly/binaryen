@@ -34,7 +34,7 @@ inline void copyOriginalToReplacement(Expression* original,
   // if there is no debug info we do want to copy, as a replacement operation
   // suggests the new code plays the same role (it is an optimized version of
   // the old), but if the code is already annotated, trust that.
-  if (debugLocations.empty() || debugLocations.count(replacement)) {
+  if (debugLocations.empty() || debugLocations.contains(replacement)) {
     return;
   }
 

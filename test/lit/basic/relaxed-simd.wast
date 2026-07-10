@@ -199,88 +199,88 @@
   )
  )
 
- ;; CHECK-TEXT:      (func $i8x16.laneselect (type $0) (param $0 v128) (param $1 v128) (param $2 v128) (result v128)
- ;; CHECK-TEXT-NEXT:  (i8x16.laneselect
+ ;; CHECK-TEXT:      (func $i8x16.relaxed_laneselect (type $0) (param $0 v128) (param $1 v128) (param $2 v128) (result v128)
+ ;; CHECK-TEXT-NEXT:  (i8x16.relaxed_laneselect
  ;; CHECK-TEXT-NEXT:   (local.get $0)
  ;; CHECK-TEXT-NEXT:   (local.get $1)
  ;; CHECK-TEXT-NEXT:   (local.get $2)
  ;; CHECK-TEXT-NEXT:  )
  ;; CHECK-TEXT-NEXT: )
- ;; CHECK-BIN:      (func $i8x16.laneselect (type $0) (param $0 v128) (param $1 v128) (param $2 v128) (result v128)
- ;; CHECK-BIN-NEXT:  (i8x16.laneselect
+ ;; CHECK-BIN:      (func $i8x16.relaxed_laneselect (type $0) (param $0 v128) (param $1 v128) (param $2 v128) (result v128)
+ ;; CHECK-BIN-NEXT:  (i8x16.relaxed_laneselect
  ;; CHECK-BIN-NEXT:   (local.get $0)
  ;; CHECK-BIN-NEXT:   (local.get $1)
  ;; CHECK-BIN-NEXT:   (local.get $2)
  ;; CHECK-BIN-NEXT:  )
  ;; CHECK-BIN-NEXT: )
- (func $i8x16.laneselect (param $0 v128) (param $1 v128) (param $2 v128) (result v128)
-  (i8x16.laneselect
+ (func $i8x16.relaxed_laneselect (param $0 v128) (param $1 v128) (param $2 v128) (result v128)
+  (i8x16.relaxed_laneselect
    (local.get $0)
    (local.get $1)
    (local.get $2)
   )
  )
 
- ;; CHECK-TEXT:      (func $i16x8.laneselect (type $0) (param $0 v128) (param $1 v128) (param $2 v128) (result v128)
- ;; CHECK-TEXT-NEXT:  (i16x8.laneselect
+ ;; CHECK-TEXT:      (func $i16x8.relaxed_laneselect (type $0) (param $0 v128) (param $1 v128) (param $2 v128) (result v128)
+ ;; CHECK-TEXT-NEXT:  (i16x8.relaxed_laneselect
  ;; CHECK-TEXT-NEXT:   (local.get $0)
  ;; CHECK-TEXT-NEXT:   (local.get $1)
  ;; CHECK-TEXT-NEXT:   (local.get $2)
  ;; CHECK-TEXT-NEXT:  )
  ;; CHECK-TEXT-NEXT: )
- ;; CHECK-BIN:      (func $i16x8.laneselect (type $0) (param $0 v128) (param $1 v128) (param $2 v128) (result v128)
- ;; CHECK-BIN-NEXT:  (i16x8.laneselect
+ ;; CHECK-BIN:      (func $i16x8.relaxed_laneselect (type $0) (param $0 v128) (param $1 v128) (param $2 v128) (result v128)
+ ;; CHECK-BIN-NEXT:  (i16x8.relaxed_laneselect
  ;; CHECK-BIN-NEXT:   (local.get $0)
  ;; CHECK-BIN-NEXT:   (local.get $1)
  ;; CHECK-BIN-NEXT:   (local.get $2)
  ;; CHECK-BIN-NEXT:  )
  ;; CHECK-BIN-NEXT: )
- (func $i16x8.laneselect (param $0 v128) (param $1 v128) (param $2 v128) (result v128)
-  (i16x8.laneselect
+ (func $i16x8.relaxed_laneselect (param $0 v128) (param $1 v128) (param $2 v128) (result v128)
+  (i16x8.relaxed_laneselect
    (local.get $0)
    (local.get $1)
    (local.get $2)
   )
  )
 
- ;; CHECK-TEXT:      (func $i32x4.laneselect (type $0) (param $0 v128) (param $1 v128) (param $2 v128) (result v128)
- ;; CHECK-TEXT-NEXT:  (i32x4.laneselect
+ ;; CHECK-TEXT:      (func $i32x4.relaxed_laneselect (type $0) (param $0 v128) (param $1 v128) (param $2 v128) (result v128)
+ ;; CHECK-TEXT-NEXT:  (i32x4.relaxed_laneselect
  ;; CHECK-TEXT-NEXT:   (local.get $0)
  ;; CHECK-TEXT-NEXT:   (local.get $1)
  ;; CHECK-TEXT-NEXT:   (local.get $2)
  ;; CHECK-TEXT-NEXT:  )
  ;; CHECK-TEXT-NEXT: )
- ;; CHECK-BIN:      (func $i32x4.laneselect (type $0) (param $0 v128) (param $1 v128) (param $2 v128) (result v128)
- ;; CHECK-BIN-NEXT:  (i32x4.laneselect
+ ;; CHECK-BIN:      (func $i32x4.relaxed_laneselect (type $0) (param $0 v128) (param $1 v128) (param $2 v128) (result v128)
+ ;; CHECK-BIN-NEXT:  (i32x4.relaxed_laneselect
  ;; CHECK-BIN-NEXT:   (local.get $0)
  ;; CHECK-BIN-NEXT:   (local.get $1)
  ;; CHECK-BIN-NEXT:   (local.get $2)
  ;; CHECK-BIN-NEXT:  )
  ;; CHECK-BIN-NEXT: )
- (func $i32x4.laneselect (param $0 v128) (param $1 v128) (param $2 v128) (result v128)
-  (i32x4.laneselect
+ (func $i32x4.relaxed_laneselect (param $0 v128) (param $1 v128) (param $2 v128) (result v128)
+  (i32x4.relaxed_laneselect
    (local.get $0)
    (local.get $1)
    (local.get $2)
   )
  )
 
- ;; CHECK-TEXT:      (func $i64x2.laneselect (type $0) (param $0 v128) (param $1 v128) (param $2 v128) (result v128)
- ;; CHECK-TEXT-NEXT:  (i64x2.laneselect
+ ;; CHECK-TEXT:      (func $i64x2.relaxed_laneselect (type $0) (param $0 v128) (param $1 v128) (param $2 v128) (result v128)
+ ;; CHECK-TEXT-NEXT:  (i64x2.relaxed_laneselect
  ;; CHECK-TEXT-NEXT:   (local.get $0)
  ;; CHECK-TEXT-NEXT:   (local.get $1)
  ;; CHECK-TEXT-NEXT:   (local.get $2)
  ;; CHECK-TEXT-NEXT:  )
  ;; CHECK-TEXT-NEXT: )
- ;; CHECK-BIN:      (func $i64x2.laneselect (type $0) (param $0 v128) (param $1 v128) (param $2 v128) (result v128)
- ;; CHECK-BIN-NEXT:  (i64x2.laneselect
+ ;; CHECK-BIN:      (func $i64x2.relaxed_laneselect (type $0) (param $0 v128) (param $1 v128) (param $2 v128) (result v128)
+ ;; CHECK-BIN-NEXT:  (i64x2.relaxed_laneselect
  ;; CHECK-BIN-NEXT:   (local.get $0)
  ;; CHECK-BIN-NEXT:   (local.get $1)
  ;; CHECK-BIN-NEXT:   (local.get $2)
  ;; CHECK-BIN-NEXT:  )
  ;; CHECK-BIN-NEXT: )
- (func $i64x2.laneselect (param $0 v128) (param $1 v128) (param $2 v128) (result v128)
-  (i64x2.laneselect
+ (func $i64x2.relaxed_laneselect (param $0 v128) (param $1 v128) (param $2 v128) (result v128)
+  (i64x2.relaxed_laneselect
    (local.get $0)
    (local.get $1)
    (local.get $2)
@@ -382,41 +382,41 @@
   )
  )
 
- ;; CHECK-TEXT:      (func $i16x8.dot_i8x16_i7x16_s (type $1) (param $0 v128) (param $1 v128) (result v128)
- ;; CHECK-TEXT-NEXT:  (i16x8.dot_i8x16_i7x16_s
+ ;; CHECK-TEXT:      (func $i16x8.relaxed_dot_i8x16_i7x16_s (type $1) (param $0 v128) (param $1 v128) (result v128)
+ ;; CHECK-TEXT-NEXT:  (i16x8.relaxed_dot_i8x16_i7x16_s
  ;; CHECK-TEXT-NEXT:   (local.get $0)
  ;; CHECK-TEXT-NEXT:   (local.get $1)
  ;; CHECK-TEXT-NEXT:  )
  ;; CHECK-TEXT-NEXT: )
- ;; CHECK-BIN:      (func $i16x8.dot_i8x16_i7x16_s (type $1) (param $0 v128) (param $1 v128) (result v128)
- ;; CHECK-BIN-NEXT:  (i16x8.dot_i8x16_i7x16_s
+ ;; CHECK-BIN:      (func $i16x8.relaxed_dot_i8x16_i7x16_s (type $1) (param $0 v128) (param $1 v128) (result v128)
+ ;; CHECK-BIN-NEXT:  (i16x8.relaxed_dot_i8x16_i7x16_s
  ;; CHECK-BIN-NEXT:   (local.get $0)
  ;; CHECK-BIN-NEXT:   (local.get $1)
  ;; CHECK-BIN-NEXT:  )
  ;; CHECK-BIN-NEXT: )
- (func $i16x8.dot_i8x16_i7x16_s (param $0 v128) (param $1 v128) (result v128)
-  (i16x8.dot_i8x16_i7x16_s
+ (func $i16x8.relaxed_dot_i8x16_i7x16_s (param $0 v128) (param $1 v128) (result v128)
+  (i16x8.relaxed_dot_i8x16_i7x16_s
    (local.get $0)
    (local.get $1)
   )
  )
 
-;; CHECK-TEXT:      (func $i32x4.dot_i8x16_i7x16_add_s (type $0) (param $0 v128) (param $1 v128) (param $2 v128) (result v128)
-;; CHECK-TEXT-NEXT:  (i32x4.dot_i8x16_i7x16_add_s
+;; CHECK-TEXT:      (func $i32x4.relaxed_dot_i8x16_i7x16_add_s (type $0) (param $0 v128) (param $1 v128) (param $2 v128) (result v128)
+;; CHECK-TEXT-NEXT:  (i32x4.relaxed_dot_i8x16_i7x16_add_s
 ;; CHECK-TEXT-NEXT:   (local.get $0)
 ;; CHECK-TEXT-NEXT:   (local.get $1)
 ;; CHECK-TEXT-NEXT:   (local.get $2)
 ;; CHECK-TEXT-NEXT:  )
 ;; CHECK-TEXT-NEXT: )
-;; CHECK-BIN:      (func $i32x4.dot_i8x16_i7x16_add_s (type $0) (param $0 v128) (param $1 v128) (param $2 v128) (result v128)
-;; CHECK-BIN-NEXT:  (i32x4.dot_i8x16_i7x16_add_s
+;; CHECK-BIN:      (func $i32x4.relaxed_dot_i8x16_i7x16_add_s (type $0) (param $0 v128) (param $1 v128) (param $2 v128) (result v128)
+;; CHECK-BIN-NEXT:  (i32x4.relaxed_dot_i8x16_i7x16_add_s
 ;; CHECK-BIN-NEXT:   (local.get $0)
 ;; CHECK-BIN-NEXT:   (local.get $1)
 ;; CHECK-BIN-NEXT:   (local.get $2)
 ;; CHECK-BIN-NEXT:  )
 ;; CHECK-BIN-NEXT: )
-(func $i32x4.dot_i8x16_i7x16_add_s (param $0 v128) (param $1 v128) (param $2 v128) (result v128)
-  (i32x4.dot_i8x16_i7x16_add_s
+(func $i32x4.relaxed_dot_i8x16_i7x16_add_s (param $0 v128) (param $1 v128) (param $2 v128) (result v128)
+  (i32x4.relaxed_dot_i8x16_i7x16_add_s
    (local.get $0)
    (local.get $1)
    (local.get $2)
@@ -495,7 +495,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
 ;; CHECK-BIN-NODEBUG:      (func $9 (type $0) (param $0 v128) (param $1 v128) (param $2 v128) (result v128)
-;; CHECK-BIN-NODEBUG-NEXT:  (i8x16.laneselect
+;; CHECK-BIN-NODEBUG-NEXT:  (i8x16.relaxed_laneselect
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $2)
@@ -503,7 +503,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
 ;; CHECK-BIN-NODEBUG:      (func $10 (type $0) (param $0 v128) (param $1 v128) (param $2 v128) (result v128)
-;; CHECK-BIN-NODEBUG-NEXT:  (i16x8.laneselect
+;; CHECK-BIN-NODEBUG-NEXT:  (i16x8.relaxed_laneselect
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $2)
@@ -511,7 +511,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
 ;; CHECK-BIN-NODEBUG:      (func $11 (type $0) (param $0 v128) (param $1 v128) (param $2 v128) (result v128)
-;; CHECK-BIN-NODEBUG-NEXT:  (i32x4.laneselect
+;; CHECK-BIN-NODEBUG-NEXT:  (i32x4.relaxed_laneselect
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $2)
@@ -519,7 +519,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
 ;; CHECK-BIN-NODEBUG:      (func $12 (type $0) (param $0 v128) (param $1 v128) (param $2 v128) (result v128)
-;; CHECK-BIN-NODEBUG-NEXT:  (i64x2.laneselect
+;; CHECK-BIN-NODEBUG-NEXT:  (i64x2.relaxed_laneselect
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $2)
@@ -562,14 +562,14 @@
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
 ;; CHECK-BIN-NODEBUG:      (func $18 (type $1) (param $0 v128) (param $1 v128) (result v128)
-;; CHECK-BIN-NODEBUG-NEXT:  (i16x8.dot_i8x16_i7x16_s
+;; CHECK-BIN-NODEBUG-NEXT:  (i16x8.relaxed_dot_i8x16_i7x16_s
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
 ;; CHECK-BIN-NODEBUG:      (func $19 (type $0) (param $0 v128) (param $1 v128) (param $2 v128) (result v128)
-;; CHECK-BIN-NODEBUG-NEXT:  (i32x4.dot_i8x16_i7x16_add_s
+;; CHECK-BIN-NODEBUG-NEXT:  (i32x4.relaxed_dot_i8x16_i7x16_add_s
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $2)

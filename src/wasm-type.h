@@ -151,23 +151,17 @@ public:
   HeapTypeKind getKind() const;
 
   constexpr bool isBasic() const { return id <= _last_basic_type; }
-  bool isFunction() const {
-    return isMaybeShared(func) || getKind() == HeapTypeKind::Func;
-  }
-  bool isData() const {
-    auto kind = getKind();
-    return isMaybeShared(string) || kind == HeapTypeKind::Struct ||
-           kind == HeapTypeKind::Array;
-  }
-  bool isSignature() const { return getKind() == HeapTypeKind::Func; }
-  bool isContinuation() const { return getKind() == HeapTypeKind::Cont; }
-  bool isStruct() const { return getKind() == HeapTypeKind::Struct; }
-  bool isArray() const { return getKind() == HeapTypeKind::Array; }
+  bool isFunction() const;
+  bool isData() const;
+  bool isSignature() const;
+  bool isContinuation() const;
+  bool isStruct() const;
+  bool isArray() const;
   bool isExn() const { return isMaybeShared(HeapType::exn); }
   bool isString() const { return isMaybeShared(HeapType::string); }
   bool isBottom() const;
   bool isOpen() const;
-  bool isShared() const { return getShared() == Shared; }
+  bool isShared() const;
 
   Shareability getShared() const;
 
@@ -647,6 +641,14 @@ HeapType getMutI16Array();
 
 } // namespace HeapTypes
 
+namespace Types {
+
+// Certain Types are used by standard operations. Provide central accessors
+// for them to avoid having to build them everywhere they are used.
+Type getI64Pair();
+
+} // namespace Types
+
 // A recursion group consisting of one or more HeapTypes. HeapTypes with single
 // members are encoded without using any additional memory, which is why
 // `getHeapTypes` has to return a vector by value; it might have to create one
@@ -764,7 +766,7 @@ struct Array {
 
 // TypeBuilder - allows for the construction of recursive types. Contains a
 // table of `n` mutable HeapTypes and can construct temporary types that are
-// backed by those HeapTypes, refering to them by reference. Those temporary
+// backed by those HeapTypes, referring to them by reference. Those temporary
 // types are owned by the TypeBuilder and should only be used in the
 // construction of HeapTypes to insert into the TypeBuilder. Temporary types
 // should never be used in the construction of normal Types, only other
@@ -894,7 +896,7 @@ struct TypeBuilder {
   void setOpen(size_t i, bool open = true);
   void setShared(size_t i, Shareability share = Shared);
 
-  enum class ErrorReason {
+  enum class ErrorReasonKind {
     // There is a cycle in the supertype relation.
     SelfSupertype,
     // The declared supertype of a type is invalid.
@@ -917,6 +919,8 @@ struct TypeBuilder {
     NonStructDescribes,
     // The described type is an invalid forward reference.
     ForwardDescribesReference,
+    // The descriptor type is an invalid forward reference.
+    ForwardDescriptorReference,
     // The described type does not have this type as a descriptor.
     MismatchedDescribes,
     // A descriptor clause on a non-struct type.
@@ -932,6 +936,27 @@ struct TypeBuilder {
     // Two rec groups with different shapes would have the same shapes after
     // the binary writer generalizes refined types that use disabled features.
     RecGroupCollision,
+  };
+
+  struct RecGroupCollision {
+    FeatureSet missingFeatures;
+    bool operator==(const RecGroupCollision& other) const {
+      return missingFeatures == other.missingFeatures;
+    }
+  };
+
+  struct ErrorReason : std::variant<ErrorReasonKind, RecGroupCollision> {
+    using variant::variant;
+
+    ErrorReasonKind getKind() const {
+      if (auto* kind = std::get_if<ErrorReasonKind>(this)) {
+        return *kind;
+      }
+      return ErrorReasonKind::RecGroupCollision;
+    }
+
+    bool operator==(ErrorReasonKind kind) const { return getKind() == kind; }
+    bool operator!=(ErrorReasonKind kind) const { return getKind() != kind; }
   };
 
   struct Error {
@@ -1082,9 +1107,107 @@ std::ostream& operator<<(std::ostream&, Continuation);
 std::ostream& operator<<(std::ostream&, Field);
 std::ostream& operator<<(std::ostream&, Struct);
 std::ostream& operator<<(std::ostream&, Array);
-std::ostream& operator<<(std::ostream&, TypeBuilder::ErrorReason);
+std::ostream& operator<<(std::ostream&, const TypeBuilder::ErrorReason&);
 
 // Inline some nontrivial methods here for performance reasons.
+
+using RecGroupInfo = std::vector<HeapType>;
+
+struct HeapTypeInfo {
+  using type_t = HeapType;
+  // Used in assertions to ensure that temporary types don't leak into the
+  // global store.
+  bool isTemp = false;
+  bool isOpen = false;
+  Shareability share = Unshared;
+  // The supertype of this HeapType, if it exists.
+  HeapTypeInfo* supertype = nullptr;
+  // The descriptor of this HeapType, if it exists.
+  HeapTypeInfo* descriptor = nullptr;
+  // The HeapType described by this one, if it exists.
+  HeapTypeInfo* described = nullptr;
+  // The recursion group of this type or null if the recursion group is trivial
+  // (i.e. contains only this type).
+  RecGroupInfo* recGroup = nullptr;
+  size_t recGroupIndex = 0;
+  HeapTypeKind kind;
+  union {
+    Signature signature;
+    Continuation continuation;
+    Struct struct_;
+    Array array;
+  };
+
+  HeapTypeInfo(Signature sig) : kind(HeapTypeKind::Func), signature(sig) {}
+  HeapTypeInfo(Continuation continuation)
+    : kind(HeapTypeKind::Cont), continuation(continuation) {}
+  HeapTypeInfo(const Struct& struct_)
+    : kind(HeapTypeKind::Struct), struct_(struct_) {}
+  HeapTypeInfo(Struct&& struct_)
+    : kind(HeapTypeKind::Struct), struct_(std::move(struct_)) {}
+  HeapTypeInfo(Array array) : kind(HeapTypeKind::Array), array(array) {}
+  ~HeapTypeInfo();
+
+  constexpr bool isSignature() const { return kind == HeapTypeKind::Func; }
+  constexpr bool isContinuation() const { return kind == HeapTypeKind::Cont; }
+  constexpr bool isStruct() const { return kind == HeapTypeKind::Struct; }
+  constexpr bool isArray() const { return kind == HeapTypeKind::Array; }
+  constexpr bool isData() const { return isStruct() || isArray(); }
+};
+
+inline HeapTypeInfo* getHeapTypeInfo(HeapType ht) {
+  assert(!ht.isBasic());
+  return (HeapTypeInfo*)ht.getID();
+}
+
+inline HeapTypeKind HeapType::getKind() const {
+  if (isBasic()) {
+    return HeapTypeKind::Basic;
+  }
+  return getHeapTypeInfo(*this)->kind;
+}
+
+inline bool HeapType::isFunction() const {
+  return isMaybeShared(func) || getKind() == HeapTypeKind::Func;
+}
+
+inline bool HeapType::isData() const {
+  auto kind = getKind();
+  return isMaybeShared(string) || kind == HeapTypeKind::Struct ||
+         kind == HeapTypeKind::Array;
+}
+
+inline bool HeapType::isSignature() const {
+  return getKind() == HeapTypeKind::Func;
+}
+
+inline bool HeapType::isContinuation() const {
+  return getKind() == HeapTypeKind::Cont;
+}
+
+inline bool HeapType::isStruct() const {
+  return getKind() == HeapTypeKind::Struct;
+}
+
+inline bool HeapType::isArray() const {
+  return getKind() == HeapTypeKind::Array;
+}
+
+inline bool HeapType::isOpen() const {
+  if (isBasic()) {
+    return false;
+  }
+  return getHeapTypeInfo(*this)->isOpen;
+}
+
+inline bool HeapType::isShared() const { return getShared() == Shared; }
+
+inline Shareability HeapType::getShared() const {
+  if (isBasic()) {
+    return (getID() & SharedMask) != 0 ? Shared : Unshared;
+  }
+  return getHeapTypeInfo(*this)->share;
+}
 
 inline bool HeapType::isBottom() const {
   if (isBasic()) {

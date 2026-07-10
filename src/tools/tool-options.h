@@ -20,6 +20,7 @@
 #include "ir/module-utils.h"
 #include "pass.h"
 #include "support/command-line.h"
+#include "wasm-io.h"
 
 //
 // Shared options for commandline tools
@@ -32,6 +33,7 @@ struct ToolOptions : public Options {
 
   bool quiet = false;
   bool preserveTypeOrder = false;
+  bool emitModuleNames = false;
   IRProfile profile = IRProfile::Normal;
 
   constexpr static const char* ToolOptionsCategory = "Tool options";
@@ -69,13 +71,19 @@ struct ToolOptions : public Options {
            ToolOptionsCategory,
            Arguments::Zero,
            [this](Options*, const std::string&) { quiet = true; })
-      .add(
-        "--experimental-poppy",
-        "",
-        "Parse wast files as Poppy IR for testing purposes.",
-        ToolOptionsCategory,
-        Arguments::Zero,
-        [this](Options*, const std::string&) { profile = IRProfile::Poppy; });
+      .add("--experimental-poppy",
+           "",
+           "Parse wast files as Poppy IR for testing purposes.",
+           ToolOptionsCategory,
+           Arguments::Zero,
+           [this](Options*, const std::string&) { profile = IRProfile::Poppy; })
+      .add("--emit-module-names",
+           "",
+           "Emit module names, even if not emitting the rest of the names "
+           "section.",
+           ToolOptionsCategory,
+           Arguments::Zero,
+           [this](Options*, const std::string&) { emitModuleNames = true; });
     (*this)
       .addFeature(FeatureSet::SignExt, "sign extension operations")
       .addFeature(FeatureSet::Atomics, "atomic operations")
@@ -108,8 +116,12 @@ struct ToolOptions : public Options {
       .addFeature(FeatureSet::FP16, "float 16 operations")
       .addFeature(FeatureSet::CustomDescriptors,
                   "custom descriptors (RTTs) and exact references")
+      .addFeature(FeatureSet::Multibyte, "multibyte array loads and stores")
       .addFeature(FeatureSet::RelaxedAtomics,
                   "acquire/release atomic memory operations")
+      .addFeature(FeatureSet::CustomPageSizes, "custom page sizes")
+      .addFeature(FeatureSet::WideArithmetic, "wide arithmetic")
+      .addFeature(FeatureSet::CompactImports, "compact import section")
       .add("--enable-typed-function-references",
            "",
            "Deprecated compatibility flag",
@@ -170,7 +182,7 @@ struct ToolOptions : public Options {
         ToolOptionsCategory,
         Options::Arguments::Zero,
         [this](Options*, const std::string&) {
-          passOptions.closedWorld = true;
+          passOptions.worldMode = WorldMode::Closed;
         })
       .add(
         "--preserve-type-order",
@@ -248,6 +260,17 @@ struct ToolOptions : public Options {
     if (!preserveTypeOrder) {
       module.typeIndices.clear();
     }
+  }
+
+  void write(ModuleWriter& writer, Module& wasm, Output& output) const {
+    writer.setEmitModuleName(emitModuleNames);
+    writer.write(wasm, output);
+  }
+
+  void
+  write(ModuleWriter& writer, Module& wasm, const std::string& filename) const {
+    writer.setEmitModuleName(emitModuleNames);
+    writer.write(wasm, filename);
   }
 
   virtual void addPassArg(const std::string& key, const std::string& value) {

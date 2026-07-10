@@ -121,10 +121,10 @@ class TranslateToFuzzReader {
 public:
   TranslateToFuzzReader(Module& wasm,
                         std::vector<char>&& input,
-                        bool closedWorld = false);
+                        WorldMode worldMode = WorldMode::Open);
   TranslateToFuzzReader(Module& wasm,
                         std::string& filename,
-                        bool closedWorld = false);
+                        WorldMode worldMode = WorldMode::Open);
 
   void pickPasses(OptimizationOptions& options);
   void setAllowMemory(bool allowMemory_) { allowMemory = allowMemory_; }
@@ -132,6 +132,7 @@ public:
   void setPreserveImportsAndExports(bool preserveImportsAndExports_) {
     preserveImportsAndExports = preserveImportsAndExports_;
   }
+  void setAgainstJS(bool againstJS_) { againstJS = againstJS_; }
   void setImportedModule(std::string importedModuleName);
 
   void build();
@@ -140,7 +141,7 @@ public:
 
 private:
   // Whether the module will be tested in a closed-world environment.
-  bool closedWorld;
+  WorldMode worldMode;
   Builder builder;
   Random random;
   Intrinsics intrinsics;
@@ -158,6 +159,11 @@ private:
   // exports, which is useful if the tool using us only wants us to mutate an
   // existing testcase (using initial-content).
   bool preserveImportsAndExports = false;
+
+  // Whether the wasm will be used from JS and in no other way. This lets us
+  // modify the wasm in ways that keep it valid from JS's point of view, but
+  // which might cause issues when linked against wasm or used otherwise.
+  bool againstJS = false;
 
   // An optional module to import from.
   std::optional<Module> importedModule;
@@ -189,6 +195,7 @@ private:
   Name callRefImportName;
   Name callRefCatchImportName;
   Name sleepImportName;
+  Name importedGlobalModuleName = "__fuzz_import";
 
   std::unordered_map<Type, std::vector<Name>> globalsByType;
   std::unordered_map<Type, std::vector<Name>> mutableGlobalsByType;
@@ -215,6 +222,9 @@ private:
 
   // All arrays that are mutable.
   std::vector<HeapType> mutableArrays;
+
+  // Mapping of signatures to the continuations they are used by.
+  std::unordered_map<HeapType, std::vector<HeapType>> sigConts;
 
   // All tags that are valid as exception tags (which cannot have results).
   std::vector<Tag*> exceptionTags;
@@ -331,6 +341,8 @@ private:
   void setupMemory();
   void setupHeapTypes();
   void setupTables();
+  bool isImportableGlobalType(Type type);
+  bool isImportableGlobal(Global* global);
   void setupGlobals();
   void setupTags();
   void addTag();
@@ -362,6 +374,9 @@ private:
   // as those that reach exact types when custom descriptors is disabled.
   PublicTypeValidator publicTypeValidator;
   bool isValidPublicType(Type type) {
+    return publicTypeValidator.isValidPublicType(type);
+  }
+  bool isValidPublicType(HeapType type) {
     return publicTypeValidator.isValidPublicType(type);
   }
 
@@ -402,6 +417,10 @@ private:
   // Fix up the IR after recombination and mutation (which may break the IR).
   void fixAfterChanges(Function* func);
   void modifyInitialFunctions();
+
+  // Mutate the JS boundary, that is, make changes on the wasm side that JS
+  // would not be broken by (JS does not care about types).
+  void mutateJSBoundary();
 
   // Note a global for use during code generation.
   void useGlobalLater(Global* global);
@@ -458,6 +477,9 @@ private:
   Expression* makeGlobalGet(Type type);
   Expression* makeGlobalSet(Type type);
   Expression* makeTupleMake(Type type);
+  Expression* makeWideIntAddSub(Type type);
+  Expression* makeWideIntMul(Type type);
+  Expression* makeWideIntExpression(Type type);
   Expression* makeTupleExtract(Type type);
   Expression* makePointer();
   Expression* makeNonAtomicLoad(Type type);
@@ -526,15 +548,21 @@ private:
   Expression* makeRefCast(Type type);
   Expression* makeRefGetDesc(Type type);
   Expression* makeBrOn(Type type);
+  Expression* makeContBind(Type type);
+  // TODO: Expression* makeResume(Type type);
 
   // Decide to emit a signed Struct/ArrayGet sometimes, when the field is
   // packed.
   bool maybeSignedGet(const Field& field);
 
   Expression* makeStructGet(Type type);
+  Expression* makeStructRMW(Type type);
+  Expression* makeStructCmpxchg(Type type);
   Expression* makeStructSet(Type type);
   Expression* makeArrayGet(Type type);
   Expression* makeArraySet(Type type);
+  Expression* makeArrayRMW(Type type);
+  Expression* makeArrayCmpxchg(Type type);
   // Use a single method for the misc array operations, to not give them too
   // much representation (e.g. compared to struct operations, which only include
   // get/set).
@@ -579,6 +607,9 @@ private:
 
   // Checks if a function is a callRef* import (call-ref or call-ref-catch).
   bool isCallRefImport(Name func);
+
+  // Pick a start function.
+  Name pickStart();
 
   // statistical distributions
 

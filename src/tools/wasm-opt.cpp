@@ -87,6 +87,7 @@ int main(int argc, const char* argv[]) {
   bool fuzzMemory = true;
   bool fuzzOOB = true;
   bool fuzzPreserveImportsAndExports = false;
+  bool fuzzAgainstJS = false;
   std::string fuzzImport;
   std::string emitSpecWrapper;
   std::string emitWasm2CWrapper;
@@ -206,12 +207,19 @@ For more on how to optimize effectively, see
          [&](Options* o, const std::string& arguments) { fuzzOOB = false; })
     .add("--fuzz-preserve-imports-exports",
          "",
-         "don't add imports and exports in -ttf mode",
+         "don't add imports and exports in -ttf mode, and keep the start",
          WasmOptOption,
          Options::Arguments::Zero,
          [&](Options* o, const std::string& arguments) {
            fuzzPreserveImportsAndExports = true;
          })
+    .add(
+      "--fuzz-against-js",
+      "",
+      "modify the wasm in valid ways that assume it is used only from JS",
+      WasmOptOption,
+      Options::Arguments::Zero,
+      [&](Options* o, const std::string& arguments) { fuzzAgainstJS = true; })
     .add(
       "--fuzz-import",
       "",
@@ -261,6 +269,7 @@ For more on how to optimize effectively, see
          [&outputSourceMapUrl](Options* o, const std::string& argument) {
            outputSourceMapUrl = argument;
          })
+
     .add_positional("INFILE",
                     Options::Arguments::One,
                     [](Options* o, const std::string& argument) {
@@ -345,10 +354,11 @@ For more on how to optimize effectively, see
   }
   if (translateToFuzz) {
     TranslateToFuzzReader reader(
-      wasm, options.extra["infile"], options.passOptions.closedWorld);
+      wasm, options.extra["infile"], options.passOptions.worldMode);
     reader.setAllowMemory(fuzzMemory);
     reader.setAllowOOB(fuzzOOB);
     reader.setPreserveImportsAndExports(fuzzPreserveImportsAndExports);
+    reader.setAgainstJS(fuzzAgainstJS);
     if (!fuzzImport.empty()) {
       reader.setImportedModule(fuzzImport);
     }
@@ -393,12 +403,12 @@ For more on how to optimize effectively, see
 
   std::string firstOutput;
 
-  if (extraFuzzCommand.size() > 0 && options.extra.count("output") > 0) {
+  if (extraFuzzCommand.size() > 0 && options.extra.contains("output")) {
     BYN_TRACE("writing binary before opts, for extra fuzz command...\n");
     ModuleWriter writer(options.passOptions);
     writer.setBinary(emitBinary);
     writer.setDebugInfo(options.passOptions.debugInfo);
-    writer.write(wasm, options.extra["output"]);
+    options.write(writer, wasm, options.extra["output"]);
     firstOutput = runCommand(extraFuzzCommand);
     std::cout << "[extra-fuzz-command first output:]\n" << firstOutput << '\n';
   }
@@ -464,7 +474,7 @@ For more on how to optimize effectively, see
     printStackIR(std::cout, &wasm, options.passOptions);
   }
 
-  if (options.extra.count("output") == 0) {
+  if (!options.extra.contains("output")) {
     if (!options.quiet) {
       bool printsToStdout = std::any_of(
         options.passes.begin(),
@@ -491,7 +501,7 @@ For more on how to optimize effectively, see
       writer.setSourceMapFilename(outputSourceMapFilename);
       writer.setSourceMapUrl(outputSourceMapUrl);
     }
-    writer.write(wasm, options.extra["output"]);
+    options.write(writer, wasm, options.extra["output"]);
   }
 
   if (extraFuzzCommand.size() > 0) {

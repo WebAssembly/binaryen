@@ -168,8 +168,13 @@ struct EarlyCastFinder
     // TODO: generalize this when we handle more than RefAsNonNull.
     RefCast dummyRefCast(module->allocator);
     dummyRefCast.desc = nullptr;
+    // Use an arbitrary nullable reference operand to get conservative
+    // ref.as_non_null effects.
+    LocalGet dummyRefAsOperand(module->allocator);
+    dummyRefAsOperand.type = Type(HeapType::any, Nullable);
     RefAs dummyRefAs(module->allocator);
     dummyRefAs.op = RefAsNonNull;
+    dummyRefAs.value = &dummyRefAsOperand;
 
     testRefCast.visit(&dummyRefCast);
     testRefAs.visit(&dummyRefAs);
@@ -232,16 +237,16 @@ struct EarlyCastFinder
 
   void visitExpression(Expression* curr) {
     // A new one is instantiated for each expression to determine
-    // if a cast can be moved past it.
+    // if a cast can be moved backward past it.
     ShallowEffectAnalyzer currAnalyzer(options, *getModule(), curr);
 
-    if (testRefCast.invalidates(currAnalyzer)) {
+    if (currAnalyzer.orderedBefore(testRefCast)) {
       for (size_t i = 0; i < numLocals; i++) {
         flushRefCastResult(i, *getModule());
       }
     }
 
-    if (testRefAs.invalidates(currAnalyzer)) {
+    if (currAnalyzer.orderedBefore(testRefAs)) {
       for (size_t i = 0; i < numLocals; i++) {
         flushRefAsResult(i, *getModule());
       }
@@ -382,7 +387,7 @@ struct EarlyCastApplier : public PostWalker<EarlyCastApplier> {
   }
 };
 
-// Find the best casted verisons of local.gets: other local.gets with the same
+// Find the best casted versions of local.gets: other local.gets with the same
 // value, but cast to a more refined type.
 struct BestCastFinder : public LinearExecutionWalker<BestCastFinder> {
 

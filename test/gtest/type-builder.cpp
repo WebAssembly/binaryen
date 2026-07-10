@@ -215,7 +215,8 @@ TEST_F(TypeTest, DirectSelfSupertype) {
 
   const auto* error = result.getError();
   ASSERT_TRUE(error);
-  EXPECT_EQ(error->reason, TypeBuilder::ErrorReason::ForwardSupertypeReference);
+  EXPECT_EQ(error->reason,
+            TypeBuilder::ErrorReasonKind::ForwardSupertypeReference);
   EXPECT_EQ(error->index, 0u);
 }
 
@@ -233,7 +234,8 @@ TEST_F(TypeTest, IndirectSelfSupertype) {
 
   const auto* error = result.getError();
   ASSERT_TRUE(error);
-  EXPECT_EQ(error->reason, TypeBuilder::ErrorReason::ForwardSupertypeReference);
+  EXPECT_EQ(error->reason,
+            TypeBuilder::ErrorReasonKind::ForwardSupertypeReference);
   EXPECT_EQ(error->index, 0u);
 }
 
@@ -249,7 +251,7 @@ TEST_F(TypeTest, InvalidSupertype) {
 
   const auto* error = result.getError();
   ASSERT_TRUE(error);
-  EXPECT_EQ(error->reason, TypeBuilder::ErrorReason::InvalidSupertype);
+  EXPECT_EQ(error->reason, TypeBuilder::ErrorReasonKind::InvalidSupertype);
   EXPECT_EQ(error->index, 1u);
 }
 
@@ -265,7 +267,7 @@ TEST_F(TypeTest, InvalidFinalSupertype) {
 
   const auto* error = result.getError();
   ASSERT_TRUE(error);
-  EXPECT_EQ(error->reason, TypeBuilder::ErrorReason::InvalidSupertype);
+  EXPECT_EQ(error->reason, TypeBuilder::ErrorReasonKind::InvalidSupertype);
   EXPECT_EQ(error->index, 1u);
 }
 
@@ -282,7 +284,7 @@ TEST_F(TypeTest, InvalidSharedSupertype) {
 
   const auto* error = result.getError();
   ASSERT_TRUE(error);
-  EXPECT_EQ(error->reason, TypeBuilder::ErrorReason::InvalidSupertype);
+  EXPECT_EQ(error->reason, TypeBuilder::ErrorReasonKind::InvalidSupertype);
   EXPECT_EQ(error->index, 1u);
 }
 
@@ -299,7 +301,7 @@ TEST_F(TypeTest, InvalidUnsharedSupertype) {
 
   const auto* error = result.getError();
   ASSERT_TRUE(error);
-  EXPECT_EQ(error->reason, TypeBuilder::ErrorReason::InvalidSupertype);
+  EXPECT_EQ(error->reason, TypeBuilder::ErrorReasonKind::InvalidSupertype);
   EXPECT_EQ(error->index, 1u);
 }
 
@@ -319,7 +321,7 @@ TEST_F(TypeTest, ForwardReferencedChild) {
 
   const auto* error = result.getError();
   ASSERT_TRUE(error);
-  EXPECT_EQ(error->reason, TypeBuilder::ErrorReason::ForwardChildReference);
+  EXPECT_EQ(error->reason, TypeBuilder::ErrorReasonKind::ForwardChildReference);
   EXPECT_EQ(error->index, 1u);
 }
 
@@ -1693,6 +1695,7 @@ TEST_F(TypeTest, TestIterSubTypes) {
   HeapType A, B, C, D;
   {
     TypeBuilder builder(4);
+    builder.createRecGroup(0, 4);
     builder[0].setOpen() = Struct();
     builder[1].setOpen().subTypeOf(builder[0]) = Struct();
     builder[2].setOpen().subTypeOf(builder[0]) = Struct();
@@ -1715,6 +1718,7 @@ TEST_F(TypeTest, TestIterSubTypes) {
     TypeDepths ret;
     subTypes.iterSubTypes(type, depth, [&](HeapType subType, Index depth) {
       ret.insert({subType, depth});
+      return true;
     });
     return ret;
   };
@@ -1727,6 +1731,23 @@ TEST_F(TypeTest, TestIterSubTypes) {
   EXPECT_EQ(getSubTypes(C, 0), TypeDepths({{C, 0}}));
   EXPECT_EQ(getSubTypes(C, 1), TypeDepths({{C, 0}, {D, 1}}));
   EXPECT_EQ(getSubTypes(C, 2), TypeDepths({{C, 0}, {D, 1}}));
+
+  // When the iteration function returns |false|, we stop.
+  int count = 0;
+  subTypes.iterSubTypes(A, 3, [&](HeapType subType, Index depth) {
+    count++;
+    // Stop after the second increment.
+    return count != 2;
+  });
+  EXPECT_EQ(count, 2);
+
+  // If we return true, we iterate through all four.
+  count = 0;
+  subTypes.iterSubTypes(A, 3, [&](HeapType subType, Index depth) {
+    count++;
+    return true;
+  });
+  EXPECT_EQ(count, 4);
 }
 
 // Test supertypes

@@ -73,6 +73,9 @@
 ;; CHECK-NEXT:   --const-hoisting                              hoist repeated constants to a
 ;; CHECK-NEXT:                                                 local
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --constraint-analysis                         finds and uses mathematical
+;; CHECK-NEXT:                                                 constraints on locals
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --dae                                         removes arguments to calls in an
 ;; CHECK-NEXT:                                                 lto-like manner
 ;; CHECK-NEXT:
@@ -127,7 +130,7 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --func-metrics                                reports function metrics
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --generate-dyncalls                           generate dynCall fuctions used
+;; CHECK-NEXT:   --generate-dyncalls                           generate dynCall functions used
 ;; CHECK-NEXT:                                                 by emscripten ABI
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --generate-global-effects                     generate global effect info
@@ -220,6 +223,9 @@
 ;; CHECK-NEXT:   --log-execution                               instrument the build with
 ;; CHECK-NEXT:                                                 logging of where execution goes
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --mark-js-called                              mark js called functions (using
+;; CHECK-NEXT:                                                 configureAll) as doing so
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --memory-packing                              packs memory into separate
 ;; CHECK-NEXT:                                                 segments, skipping zeros
 ;; CHECK-NEXT:
@@ -311,7 +317,7 @@
 ;; CHECK-NEXT:   --pick-load-signs                             pick load signs based on their
 ;; CHECK-NEXT:                                                 uses
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --poppify                                     Tranform Binaryen IR into Poppy
+;; CHECK-NEXT:   --poppify                                     Transform Binaryen IR into Poppy
 ;; CHECK-NEXT:                                                 IR
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --post-emscripten                             miscellaneous optimizations for
@@ -325,6 +331,8 @@
 ;; CHECK-NEXT:                                                 propagates them through locals
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --print                                       print in s-expression format
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --print-boundary                              print boundary in JSON format
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --print-call-graph                            print call graph
 ;; CHECK-NEXT:
@@ -346,6 +354,8 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --propagate-globals-globally                  propagate global values to other
 ;; CHECK-NEXT:                                                 globals (useful for tests)
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --remove-exports                              removes exports using a wildcard
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --remove-imports                              removes imports and replaces
 ;; CHECK-NEXT:                                                 them with nops
@@ -655,6 +665,10 @@
 ;; CHECK-NEXT:   --experimental-poppy                          Parse wast files as Poppy IR for
 ;; CHECK-NEXT:                                                 testing purposes.
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --emit-module-names                           Emit module names, even if not
+;; CHECK-NEXT:                                                 emitting the rest of the names
+;; CHECK-NEXT:                                                 section
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --enable-sign-ext                             Enable sign extension operations
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --disable-sign-ext                            Disable sign extension
@@ -762,11 +776,29 @@
 ;; CHECK-NEXT:   --disable-custom-descriptors                  Disable custom descriptors
 ;; CHECK-NEXT:                                                 (RTTs) and exact references
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-multibyte                            Enable multibyte array loads and
+;; CHECK-NEXT:                                                 stores
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-multibyte                           Disable multibyte array loads
+;; CHECK-NEXT:                                                 and stores
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --enable-relaxed-atomics                      Enable acquire/release atomic
 ;; CHECK-NEXT:                                                 memory operations
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --disable-relaxed-atomics                     Disable acquire/release atomic
 ;; CHECK-NEXT:                                                 memory operations
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-custom-page-sizes                    Enable custom page sizes
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-custom-page-sizes                   Disable custom page sizes
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-wide-arithmetic                      Enable wide arithmetic
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-wide-arithmetic                     Disable wide arithmetic
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-compact-imports                      Enable compact import section
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-compact-imports                     Disable compact import section
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --enable-typed-function-references            Deprecated compatibility flag
 ;; CHECK-NEXT:

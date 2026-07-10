@@ -61,29 +61,34 @@ Result<Index> IRBuilder::addScratchLocal(Type type) {
   return Builder::addVar(func, name, type);
 }
 
-MaybeResult<IRBuilder::HoistedVal> IRBuilder::hoistLastValue() {
+MaybeResult<IRBuilder::HoistedVal> IRBuilder::hoistLastValue(bool greedy) {
   auto& stack = getScope().exprStack;
-  int index = stack.size() - 1;
-  for (; index >= 0; --index) {
-    if (stack[index]->type != Type::none) {
+  int valIndex = stack.size() - 1;
+  for (; valIndex >= 0; --valIndex) {
+    if (stack[valIndex]->type != Type::none) {
       break;
     }
   }
-  if (index < 0) {
+  if (valIndex < 0) {
     // There is no value-producing or unreachable expression.
     return {};
   }
-  if (unsigned(index) == stack.size() - 1) {
-    // Value-producing expression already on top of the stack.
-    return HoistedVal{Index(index), nullptr};
-  }
-  auto*& expr = stack[index];
-  if (expr->type == Type::unreachable) {
-    // Make sure the top of the stack also has an unreachable expression.
-    if (stack.back()->type != Type::unreachable) {
-      pushSynthetic(builder.makeUnreachable());
+
+  int hoistIndex = valIndex;
+  if (greedy) {
+    while (hoistIndex > 0 && stack[hoistIndex - 1]->type == Type::none) {
+      --hoistIndex;
     }
-    return HoistedVal{Index(index), nullptr};
+  }
+
+  if (unsigned(valIndex) == stack.size() - 1) {
+    // Value-producing expression already on top of the stack.
+    return HoistedVal{Index(hoistIndex), nullptr};
+  }
+  auto*& expr = stack[valIndex];
+  if (expr->type == Type::unreachable) {
+    // No need for a scratch local to hoist an unreachable.
+    return HoistedVal{Index(hoistIndex), nullptr};
   }
   // Hoist with a scratch local. Normally the scratch local is the same type as
   // the hoisted expression, but we may need to adjust it given the enabled
@@ -99,7 +104,7 @@ MaybeResult<IRBuilder::HoistedVal> IRBuilder::hoistLastValue() {
   expr = builder.makeLocalSet(*scratchIdx, expr);
   auto* get = builder.makeLocalGet(*scratchIdx, type);
   pushSynthetic(get);
-  return HoistedVal{Index(index), get};
+  return HoistedVal{Index(hoistIndex), get};
 }
 
 Result<> IRBuilder::packageHoistedValue(const HoistedVal& hoisted,
@@ -113,17 +118,22 @@ Result<> IRBuilder::packageHoistedValue(const HoistedVal& hoisted,
     // we are synthesizing a block to help us determine later whether we need to
     // run the nested pop fixup.
     scopeStack[0].noteSyntheticBlock();
-    std::vector<Expression*> exprs(scope.exprStack.begin() + hoisted.valIndex,
+    std::vector<Expression*> exprs(scope.exprStack.begin() + hoisted.hoistIndex,
                                    scope.exprStack.end());
     auto* block = builder.makeBlock(exprs, type);
-    scope.exprStack.resize(hoisted.valIndex);
+    scope.exprStack.resize(hoisted.hoistIndex);
     pushSynthetic(block);
   };
 
   auto type = scope.exprStack.back()->type;
+  if (type == Type::none) {
+    // If we did not have a value on top of the stack and did not add a scratch
+    // local, then there must have been an unreachable.
+    type = Type::unreachable;
+  }
 
   if (type.size() == sizeHint || type.size() <= 1) {
-    if (hoisted.get) {
+    if (hoisted.hoistIndex < scope.exprStack.size() - 1) {
       packageAsBlock(type);
     }
     return Ok{};
@@ -272,6 +282,8 @@ void IRBuilder::dump() {
       if (tryy->name) {
         std::cerr << " " << tryy->name;
       }
+    } else if (scope.getTryTable()) {
+      std::cerr << "try_table";
     } else {
       WASM_UNREACHABLE("unexpected scope");
     }
@@ -295,7 +307,8 @@ void IRBuilder::dump() {
     std::cerr << ":\n";
 
     for (auto* expr : scope.exprStack) {
-      std::cerr << "    " << ShallowExpression{expr} << "\n";
+      std::cerr << "    " << ShallowExpression{expr} << " (; "
+                << expr->type.toString() << " ;)\n";
     }
   }
 #endif // IR_BUILDER_DEBUG
@@ -348,48 +361,45 @@ private:
   Result<> popConstrainedChildren(std::vector<Child>& children) {
     auto& scope = builder.getScope();
 
-    // The index of the shallowest unreachable instruction on the stack, found
-    // by checkNeedsUnreachableFallback.
-    std::optional<size_t> unreachableIndex;
-
-    // Whether popping the children past the unreachable would produce a type
-    // mismatch or try to pop from an empty stack.
-    bool needUnreachableFallback = false;
+    // The stack size at which we are about to pop an unreachable instruction
+    // that we must not pop past because the expressions underneath it do not
+    // have the types we need.
+    std::optional<size_t> unreachableFallbackSize;
 
     // We only need to check requirements if there is an unreachable.
     // Otherwise the validator will catch any problems.
     if (scope.unreachable) {
-      needUnreachableFallback =
-        checkNeedsUnreachableFallback(children, unreachableIndex);
+      unreachableFallbackSize = checkNeedsUnreachableFallback(children);
     }
 
     // We have checked all the constraints, so we are ready to pop children.
     for (int i = children.size() - 1; i >= 0; --i) {
-      if (needUnreachableFallback &&
-          scope.exprStack.size() == *unreachableIndex + 1 && i > 0) {
+      if (unreachableFallbackSize &&
+          scope.exprStack.size() == *unreachableFallbackSize && i > 0) {
         // The next item on the stack is the unreachable instruction we must
-        // not pop past. We cannot insert unreachables in front of it because
-        // it might be a branch we actually have to execute, so this next item
-        // must be child 0. But we are not ready to pop child 0 yet, so
-        // synthesize an unreachable instead of popping. The deeper
-        // instructions that would otherwise have been popped will remain on
-        // the stack to become prior children of future expressions or to be
+        // not pop past. We could pop it as child 0, but we are not ready to pop
+        // child 0 yet, so synthesize an unreachable instead of popping. The
+        // deeper instructions that would otherwise have been popped will remain
+        // on the stack to become prior children of future expressions or to be
         // implicitly dropped at the end of the scope.
         *children[i].childp = builder.builder.makeUnreachable();
         continue;
       }
 
-      // Pop a child normally.
-      auto val = pop(children[i].constraint.size());
+      // Pop a child normally. Pop greedily for children other than the first
+      // (i.e. the last to be popped).
+      bool greedy = i > 0;
+      auto val = pop(children[i].constraint.size(), greedy);
       CHECK_ERR(val);
       *children[i].childp = *val;
     }
     return Ok{};
   }
 
-  bool checkNeedsUnreachableFallback(const std::vector<Child>& children,
-                                     std::optional<size_t>& unreachableIndex) {
+  std::optional<size_t>
+  checkNeedsUnreachableFallback(const std::vector<Child>& children) {
     auto& scope = builder.getScope();
+    std::optional<size_t> unreachableFallbackSize;
 
     // Two-part indices into the stack of available expressions and the vector
     // of requirements, allowing them to move independently with the granularity
@@ -398,6 +408,9 @@ private:
     size_t stackTupleIndex = 0;
     size_t childIndex = children.size();
     size_t childTupleIndex = 0;
+
+    // Whether we are deeper than some concrete expression.
+    bool seenConcrete = false;
 
     // Check whether the values on the stack will be able to meet the given
     // requirements.
@@ -425,7 +438,7 @@ private:
             // the input unreachable instruction is executed first. If we are
             // not reaching past an unreachable, the error will be caught when
             // we pop.
-            return true;
+            return unreachableFallbackSize;
           }
           --stackIndex;
           stackTupleIndex = scope.exprStack[stackIndex]->type.size() - 1;
@@ -440,30 +453,53 @@ private:
       }
 
       // We have an available type and a constraint. Only check constraints if
-      // we are past an unreachable, since otherwise we can leave problems to be
-      // caught by the validator later.
+      // we are deeper than an unreachable, since otherwise we can leave
+      // problems to be caught by the validator later.
       auto type = scope.exprStack[stackIndex]->type[stackTupleIndex];
-      if (unreachableIndex) {
+      if (unreachableFallbackSize) {
         auto constraint = children[childIndex].constraint[childTupleIndex];
         if (!PrincipalType::matches(type, constraint)) {
-          return true;
+          return unreachableFallbackSize;
         }
       }
 
-      // No problems for children after this unreachable.
+      // We may need an unreachable fallback if we find violated constraints in
+      // expressions deeper than this unreachable. Calculate the stack size at
+      // which this unreachable will be the next thing popped. This size is
+      // usually one more than the current index, but if there are no shallower
+      // concrete expressions, then everything down to this unreachable will be
+      // popped at once immediately at the current stack size.
       if (type == Type::unreachable) {
-        unreachableIndex = stackIndex;
+        unreachableFallbackSize =
+          seenConcrete ? stackIndex + 1 : scope.exprStack.size();
+      } else {
+        // We skipped none-typed expressions and this isn't unreachable, so it
+        // must be concrete.
+        assert(type.isConcrete());
+        seenConcrete = true;
       }
     }
-    return false;
+
+    // No unreachable fallback necessary.
+    return std::nullopt;
   }
 
-  Result<Expression*> pop(size_t size) {
+  // If `greedy`, then we will pop additional none-typed expressions that come
+  // before the value-producing expression. The additional expressions will be
+  // packaged into a block with the value-producing expression. This is better
+  // than leaving them on top of the stack, where they will force the use of a
+  // scratch local when the next operand is popped. `greedy` should be used when
+  // popping all children of an expression except the first (i.e. the
+  // last child to be popped). Not being greedy for the last popped child defers
+  // the creation of a block to hold its none-typed predecessors. It may turn
+  // out that such a block is not necessary, for example when the none-typed
+  // expressions can be included directly into a parent block scope.
+  Result<Expression*> pop(size_t size, bool greedy = false) {
     assert(size >= 1);
     auto& scope = builder.getScope();
 
     // Find the suffix of expressions that do not produce values.
-    auto hoisted = builder.hoistLastValue();
+    auto hoisted = builder.hoistLastValue(greedy);
     CHECK_ERR(hoisted);
     if (!hoisted) {
       // There are no expressions that produce values.
@@ -489,7 +525,7 @@ private:
     std::vector<Expression*> elems;
     elems.resize(size);
     for (int i = size - 1; i >= 0; --i) {
-      auto elem = pop(1);
+      auto elem = pop(1, greedy || i > 0);
       CHECK_ERR(elem);
       elems[i] = *elem;
     }
@@ -538,6 +574,21 @@ public:
     return popConstrainedChildren(children);
   }
 
+  Result<> visitStructWait(StructWait* curr,
+                           std::optional<HeapType> structType = std::nullopt) {
+    std::vector<Child> children;
+    ConstraintCollector{builder, children}.visitStructWait(curr, structType);
+    return popConstrainedChildren(children);
+  }
+
+  Result<>
+  visitStructNotify(StructNotify* curr,
+                    std::optional<HeapType> structType = std::nullopt) {
+    std::vector<Child> children;
+    ConstraintCollector{builder, children}.visitStructNotify(curr, structType);
+    return popConstrainedChildren(children);
+  }
+
   Result<> visitArrayGet(ArrayGet* curr,
                          std::optional<HeapType> ht = std::nullopt) {
     std::vector<Child> children;
@@ -549,6 +600,21 @@ public:
                          std::optional<HeapType> ht = std::nullopt) {
     std::vector<Child> children;
     ConstraintCollector{builder, children}.visitArraySet(curr, ht);
+    return popConstrainedChildren(children);
+  }
+
+  Result<> visitArrayLoad(ArrayLoad* curr,
+                          std::optional<HeapType> ht = std::nullopt) {
+    std::vector<Child> children;
+    ConstraintCollector{builder, children}.visitArrayLoad(curr, ht);
+    return popConstrainedChildren(children);
+  }
+
+  Result<> visitArrayStore(ArrayStore* curr,
+                           std::optional<HeapType> ht = std::nullopt,
+                           std::optional<Type> valueType = std::nullopt) {
+    std::vector<Child> children;
+    ConstraintCollector{builder, children}.visitArrayStore(curr, ht, valueType);
     return popConstrainedChildren(children);
   }
 
@@ -798,6 +864,13 @@ Result<Expression*> IRBuilder::finishScope(Block* block) {
       return Err{"popping from empty stack"};
     }
 
+    if (scope.exprStack.back()->type == Type::none) {
+      // Nothing was hoisted, which means there must have been an unreachable
+      // buried under none-type expressions. It is not valid to end a concretely
+      // typed block with none-typed expressions, so add an extra unreachable.
+      pushSynthetic(builder.makeUnreachable());
+    }
+
     if (type.isTuple()) {
       auto hoistedType = scope.exprStack.back()->type;
       if (hoistedType != Type::unreachable &&
@@ -914,8 +987,10 @@ Result<> IRBuilder::visitCatch(Name tag) {
   if (binaryPos && func) {
     auto& delimiterLocs = func->delimiterLocations[tryy];
     delimiterLocs[delimiterLocs.size()] = lastBinaryPos - codeSectionOffset;
-    // TODO: As in visitElse, we likely need to stash the Try start. Here we
-    //       also need to account for multiple catches.
+    if (wasTry) {
+      func->expressionLocations[tryy].start =
+        scope.startPos - codeSectionOffset;
+    }
   }
 
   CHECK_ERR(pushScope(ScopeCtx::makeCatch(std::move(scope), tryy)));
@@ -954,6 +1029,10 @@ Result<> IRBuilder::visitCatchAll() {
   if (binaryPos && func) {
     auto& delimiterLocs = func->delimiterLocations[tryy];
     delimiterLocs[delimiterLocs.size()] = lastBinaryPos - codeSectionOffset;
+    if (wasTry) {
+      func->expressionLocations[tryy].start =
+        scope.startPos - codeSectionOffset;
+    }
   }
 
   return pushScope(ScopeCtx::makeCatchAll(std::move(scope), tryy));
@@ -1562,8 +1641,8 @@ Result<> IRBuilder::makeAtomicNotify(Address offset, Name mem) {
   return Ok{};
 }
 
-Result<> IRBuilder::makeAtomicFence() {
-  push(builder.makeAtomicFence());
+Result<> IRBuilder::makeAtomicFence(MemoryOrder order) {
+  push(builder.makeAtomicFence(order));
   return Ok{};
 }
 
@@ -1681,6 +1760,23 @@ Result<> IRBuilder::makeBinary(BinaryOp op) {
   curr.op = op;
   CHECK_ERR(visitBinary(&curr));
   push(builder.makeBinary(op, curr.left, curr.right));
+  return Ok{};
+}
+
+Result<> IRBuilder::makeWideIntAddSub(WideIntAddSubOp op) {
+  WideIntAddSub curr;
+  curr.op = op;
+  CHECK_ERR(visitWideIntAddSub(&curr));
+  push(builder.makeWideIntAddSub(
+    op, curr.leftLow, curr.leftHigh, curr.rightLow, curr.rightHigh));
+  return Ok{};
+}
+
+Result<> IRBuilder::makeWideIntMul(WideIntMulOp op) {
+  WideIntMul curr;
+  curr.op = op;
+  CHECK_ERR(visitWideIntMul(&curr));
+  push(builder.makeWideIntMul(op, curr.left, curr.right));
   return Ok{};
 }
 
@@ -1959,6 +2055,9 @@ Result<> IRBuilder::makeRefTest(Type type) {
 }
 
 Result<> IRBuilder::makeRefCast(Type type, bool isDesc) {
+  if (!type.isCastable()) {
+    return Err{"ref.cast cannot cast to invalid type"};
+  }
   std::optional<HeapType> descriptor;
   if (isDesc) {
     assert(type.isRef());
@@ -2012,7 +2111,19 @@ Result<> IRBuilder::makeBrOn(Index label,
   curr.op = op;
   curr.castType = out;
   curr.desc = nullptr;
+  if (op != BrOnNull && op != BrOnNonNull && !out.isCastable()) {
+    return Err{"br_on cannot cast to invalid type"};
+  }
   CHECK_ERR(visitBrOn(&curr));
+
+  // Validate things that would cause errors later.
+  if (curr.ref->type != Type::unreachable && !curr.ref->type.isRef()) {
+    return Err{"br_on* ref must be a ref"};
+  }
+  if (curr.desc && curr.desc->type != Type::unreachable &&
+      !curr.desc->type.isRef()) {
+    return Err{"br_on_cast_desc* must be a ref"};
+  }
 
   // Validate type immediates before we forget them.
   switch (op) {
@@ -2239,6 +2350,48 @@ IRBuilder::makeStructCmpxchg(HeapType type, Index field, MemoryOrder order) {
   return Ok{};
 }
 
+Result<> IRBuilder::makeStructWait(HeapType type, Index index) {
+  if (!type.isStruct()) {
+    return Err{"expected struct type annotation on struct.wait"};
+  }
+  // This is likely checked in the caller by the `fieldidx` parser.
+  if (index >= type.getStruct().fields.size()) {
+    return Err{"struct.wait field index out of bounds"};
+  }
+
+  if (type.getStruct().fields.at(index).packedType !=
+      Field::PackedType::WaitQueue) {
+    return Err{"struct.wait field index must contain a `waitqueue`"};
+  }
+
+  StructWait curr(wasm.allocator);
+  CHECK_ERR(ChildPopper{*this}.visitStructWait(&curr, type));
+  CHECK_ERR(validateTypeAnnotation(type, curr.ref));
+  push(builder.makeStructWait(index, curr.ref, curr.expected, curr.timeout));
+  return Ok{};
+}
+
+Result<> IRBuilder::makeStructNotify(HeapType type, Index index) {
+  if (!type.isStruct()) {
+    return Err{"expected struct type annotation on struct.notify"};
+  }
+  // This is likely checked in the caller by the `fieldidx` parser.
+  if (index >= type.getStruct().fields.size()) {
+    return Err{"struct.notify field index out of bounds"};
+  }
+
+  if (type.getStruct().fields.at(index).packedType !=
+      Field::PackedType::WaitQueue) {
+    return Err{"struct.notify field index must contain a `waitqueue`"};
+  }
+
+  StructNotify curr(wasm.allocator);
+  CHECK_ERR(ChildPopper{*this}.visitStructNotify(&curr, type));
+  CHECK_ERR(validateTypeAnnotation(type, curr.ref));
+  push(builder.makeStructNotify(index, curr.ref, curr.count));
+  return Ok{};
+}
+
 Result<> IRBuilder::makeArrayNew(HeapType type) {
   if (!type.isArray()) {
     return Err{"expected array type annotation on array.new"};
@@ -2307,6 +2460,36 @@ Result<> IRBuilder::makeArraySet(HeapType type, MemoryOrder order) {
   CHECK_ERR(ChildPopper{*this}.visitArraySet(&curr, type));
   CHECK_ERR(validateTypeAnnotation(type, curr.ref));
   push(builder.makeArraySet(curr.ref, curr.index, curr.value, order));
+  return Ok{};
+}
+
+Result<>
+IRBuilder::makeArrayStore(HeapType arrayType, unsigned bytes, Type type) {
+  if (!arrayType.isArray()) {
+    return Err{"expected array type annotation on array store"};
+  }
+
+  ArrayStore curr;
+  CHECK_ERR(ChildPopper{*this}.visitArrayStore(&curr, arrayType, type));
+
+  CHECK_ERR(validateTypeAnnotation(arrayType, curr.ref));
+  push(builder.makeArrayStore(bytes, curr.ref, curr.index, curr.value));
+  return Ok{};
+}
+
+Result<> IRBuilder::makeArrayLoad(HeapType arrayType,
+                                  unsigned bytes,
+                                  bool signed_,
+                                  Type type) {
+  if (!arrayType.isArray()) {
+    return Err{"expected array type annotation on array load"};
+  }
+
+  ArrayLoad curr;
+  CHECK_ERR(ChildPopper{*this}.visitArrayLoad(&curr, arrayType));
+
+  CHECK_ERR(validateTypeAnnotation(arrayType, curr.ref));
+  push(builder.makeArrayLoad(bytes, signed_, curr.ref, curr.index, type));
   return Ok{};
 }
 
@@ -2590,7 +2773,8 @@ IRBuilder::makeResume(HeapType ct,
                           resumetable->targets,
                           resumetable->sentTypes,
                           std::move(curr.operands),
-                          curr.cont));
+                          curr.cont,
+                          ct));
 
   return Ok{};
 }
@@ -2630,7 +2814,8 @@ IRBuilder::makeResumeThrow(HeapType ct,
                                resumetable->targets,
                                resumetable->sentTypes,
                                std::move(curr.operands),
-                               curr.cont));
+                               curr.cont,
+                               ct));
   return Ok{};
 }
 
@@ -2683,6 +2868,11 @@ void IRBuilder::applyAnnotations(Expression* expr,
   if (annotation.idempotent) {
     assert(func);
     func->codeAnnotations[expr].idempotent = true;
+  }
+
+  if (annotation.toolchainInline) {
+    assert(func);
+    func->codeAnnotations[expr].toolchainInline = annotation.toolchainInline;
   }
 }
 

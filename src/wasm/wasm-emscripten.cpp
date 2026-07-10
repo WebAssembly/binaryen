@@ -40,17 +40,10 @@ void addExportedFunction(Module& wasm, Function* function) {
 }
 
 Global* getStackPointerGlobal(Module& wasm) {
-  // Assumption: The stack pointer is either imported as __stack_pointer or
-  // we just assume it's the first non-imported global.
-  // TODO(sbc): Find a better way to discover the stack pointer.  Perhaps the
-  // linker could export it by name?
+  // Assumption: The stack pointer is either be an imported global called
+  // __stack_pointer or a defined global with that name.
   for (auto& g : wasm.globals) {
-    if (g->imported() && g->base == STACK_POINTER) {
-      return g.get();
-    }
-  }
-  for (auto& g : wasm.globals) {
-    if (!g->imported()) {
+    if (g->base == STACK_POINTER || g->name == STACK_POINTER) {
       return g.get();
     }
   }
@@ -121,7 +114,7 @@ private:
         OffsetSearcher(std::unordered_map<Name, Address>& offsets)
           : offsets(offsets) {}
         void visitMemoryInit(MemoryInit* curr) {
-          // The desitination of the memory.init is either a constant
+          // The destination of the memory.init is either a constant
           // or the result of an addition with __memory_base in the
           // case of PIC code.
           auto* dest = curr->dest->dynCast<Const>();
@@ -147,7 +140,7 @@ private:
     }
     for (unsigned i = 0; i < wasm.dataSegments.size(); ++i) {
       auto& segment = wasm.dataSegments[i];
-      if (segment->isPassive) {
+      if (segment->isPassive()) {
         auto it = passiveOffsets.find(segment->name);
         if (it != passiveOffsets.end()) {
           segmentOffsets.push_back(it->second);

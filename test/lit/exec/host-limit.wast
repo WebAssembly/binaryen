@@ -7,6 +7,7 @@
 ;; fuzz exec and not error.
 
 (module
+ ;; CHECK:      [host limit allocation failure]
  (type $type$0 (array i8))
 
  (import "fuzzing-support" "log-i32" (func $log (param i32)))
@@ -15,7 +16,7 @@
   (i32.const -1)
  ))
 
- ;; CHECK:      [fuzz-exec] calling export
+ ;; CHECK:      [fuzz-exec] export export
  ;; CHECK-NEXT: [LoggingExternalInterface logging 42]
  ;; CHECK-NEXT: ignoring comparison of ExecutionResults!
  (func $export (export "export")

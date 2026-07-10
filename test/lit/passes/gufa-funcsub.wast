@@ -370,3 +370,82 @@
  )
 )
 
+;; Function subtyping in a return_call_indirect.
+(module
+ (rec
+  ;; CHECK:      (type $0 (func (result i32)))
+
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $super (sub (func (result i32))))
+  (type $super (sub (func (result i32))))
+  ;; CHECK:       (type $sub (sub $super (func (result i32))))
+  (type $sub (sub $super (func (result i32))))
+ )
+
+ ;; CHECK:      (table $table 44 funcref)
+ (table $table 44 funcref)
+
+ ;; CHECK:      (elem $table (i32.const 0) $sub)
+ (elem $table (i32.const 0) $sub)
+
+ ;; CHECK:      (export "call" (func $call))
+
+ ;; CHECK:      (export "call_ref" (func $call_ref))
+
+ ;; CHECK:      (func $sub (type $sub) (result i32)
+ ;; CHECK-NEXT:  (i32.const 42)
+ ;; CHECK-NEXT: )
+ (func $sub (type $sub) (result i32)
+  (i32.const 42)
+ )
+
+ ;; CHECK:      (func $do_call (type $0) (result i32)
+ ;; CHECK-NEXT:  (return_call_indirect $table (type $super)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $do_call (result i32)
+  ;; Call $sub using type $super. The result, 42, is returned from this
+  ;; function, even though we don't infer an explicit value here (the return-
+  ;; call is unreachable anyhow, and we don't replace an unreachable with a
+  ;; concrete type).
+  (return_call_indirect $table (type $super)
+   (i32.const 0)
+  )
+ )
+
+ ;; CHECK:      (func $call (type $0) (result i32)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (call $do_call)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (i32.const 42)
+ ;; CHECK-NEXT: )
+ (func $call (export "call") (result i32)
+  ;; We can infer 42 here.
+  (call $do_call)
+ )
+
+ ;; CHECK:      (func $do_call_ref (type $0) (result i32)
+ ;; CHECK-NEXT:  (return_call_ref $sub
+ ;; CHECK-NEXT:   (ref.func $sub)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $do_call_ref (result i32)
+  ;; As above, with a call_ref.
+  (return_call_ref $super
+   (ref.func $sub)
+  )
+ )
+
+ ;; CHECK:      (func $call_ref (type $0) (result i32)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (call $do_call_ref)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (i32.const 42)
+ ;; CHECK-NEXT: )
+ (func $call_ref (export "call_ref") (result i32)
+  ;; We can infer 42 here.
+  (call $do_call_ref)
+ )
+)
+

@@ -74,7 +74,7 @@ std::vector<std::string> PassRegistry::getRegisteredNames() {
 }
 
 bool PassRegistry::containsPass(const std::string& name) {
-  return passInfos.count(name) > 0;
+  return passInfos.contains(name);
 }
 
 std::string PassRegistry::getPassDescription(std::string name) {
@@ -129,6 +129,9 @@ void PassRegistry::registerPasses() {
   registerPass("cfp-reftest",
                "propagate constant struct field values, using ref.test",
                createConstantFieldPropagationRefTestPass);
+  registerPass("constraint-analysis",
+               "finds and uses mathematical constraints on locals",
+               createConstraintAnalysisPass);
   registerPass(
     "dce", "removes unreachable code", createDeadCodeEliminationPass);
   registerPass("dealign",
@@ -178,7 +181,7 @@ void PassRegistry::registerPasses() {
   registerPass(
     "func-metrics", "reports function metrics", createFunctionMetricsPass);
   registerPass("generate-dyncalls",
-               "generate dynCall fuctions used by emscripten ABI",
+               "generate dynCall functions used by emscripten ABI",
                createGenerateDynCallsPass);
   registerPass(
     "generate-i64-dyncalls",
@@ -277,6 +280,9 @@ void PassRegistry::registerPasses() {
   registerPass("limit-segments",
                "attempt to merge segments to fit within web limits",
                createLimitSegmentsPass);
+  registerPass("mark-js-called",
+               "mark js called functions (using configureAll) as doing so",
+               createMarkJSCalledPass);
   registerPass("memory64-lowering",
                "lower loads and stores to a 64-bit memory to instead use a "
                "32-bit one",
@@ -367,7 +373,7 @@ void PassRegistry::registerPasses() {
                "pick load signs based on their uses",
                createPickLoadSignsPass);
   registerPass(
-    "poppify", "Tranform Binaryen IR into Poppy IR", createPoppifyPass);
+    "poppify", "Transform Binaryen IR into Poppy IR", createPoppifyPass);
   registerPass("post-emscripten",
                "miscellaneous optimizations for Emscripten-generated code",
                createPostEmscriptenPass);
@@ -391,6 +397,8 @@ void PassRegistry::registerPasses() {
   registerPass(
     "print-full", "print in full s-expression format", createFullPrinterPass);
   registerPass(
+    "print-boundary", "print boundary in JSON format", createPrintBoundaryPass);
+  registerPass(
     "print-call-graph", "print call graph", createPrintCallGraphPass);
 
   // Register PrintFunctionMap using its normal name.
@@ -412,6 +420,9 @@ void PassRegistry::registerPasses() {
   registerPass("remove-relaxed-simd",
                "replaces relaxed SIMD instructions with unreachable",
                createRemoveRelaxedSIMDPass);
+  registerPass("remove-exports",
+               "removes exports using a wildcard",
+               createRemoveExportsPass);
   registerPass("remove-imports",
                "removes imports and replaces them with nops",
                createRemoveImportsPass);
@@ -608,6 +619,8 @@ void PassRegistry::registerPasses() {
   registerTestPass("randomize-branch-hints",
                    "randomize branch hints (for fuzzing)",
                    createRandomizeBranchHintsPass);
+  registerTestPass(
+    "remove-start", "remove the start function", createRemoveStartPass);
   registerTestPass("reorder-globals-always",
                    "sorts globals by access frequency (even if there are few)",
                    createReorderGlobalsAlwaysPass);
@@ -755,7 +768,7 @@ void PassRunner::addDefaultGlobalOptimizationPrePasses() {
     addIfNoDWARFIssues("once-reduction");
   }
   if (wasm->features.hasGC() && options.optimizeLevel >= 2) {
-    if (options.closedWorld) {
+    if (options.worldMode == WorldMode::Closed) {
       addIfNoDWARFIssues("type-refining");
       addIfNoDWARFIssues("signature-pruning");
       addIfNoDWARFIssues("signature-refining");
@@ -765,11 +778,11 @@ void PassRunner::addDefaultGlobalOptimizationPrePasses() {
     // remove ref.funcs that were once assigned to vtables but are no longer
     // needed, which can allow more code to be removed globally. After those,
     // constant field propagation can be more effective.
-    if (options.closedWorld) {
+    if (options.worldMode == WorldMode::Closed) {
       addIfNoDWARFIssues("gto");
     }
     addIfNoDWARFIssues("remove-unused-module-elements");
-    if (options.closedWorld) {
+    if (options.worldMode == WorldMode::Closed) {
       addIfNoDWARFIssues("remove-unused-types");
       // Allow ref.tests in cfp if we are aggressively optimizing for speed.
       if (options.optimizeLevel >= 3) {
@@ -779,7 +792,7 @@ void PassRunner::addDefaultGlobalOptimizationPrePasses() {
       }
     }
     addIfNoDWARFIssues("gsi");
-    if (options.closedWorld) {
+    if (options.worldMode == WorldMode::Closed) {
       addIfNoDWARFIssues("abstract-type-refining");
       addIfNoDWARFIssues("unsubtyping");
     }
@@ -1003,7 +1016,7 @@ void PassRunner::clear() { passes.clear(); }
 void PassRunner::runPass(Pass* pass) {
   assert(!pass->isFunctionParallel());
 
-  if (options.passesToSkip.count(pass->name)) {
+  if (options.passesToSkip.contains(pass->name)) {
     return;
   }
 
@@ -1018,7 +1031,7 @@ void PassRunner::runPass(Pass* pass) {
 void PassRunner::runPassOnFunction(Pass* pass, Function* func) {
   assert(pass->isFunctionParallel());
 
-  if (options.passesToSkip.count(pass->name)) {
+  if (options.passesToSkip.contains(pass->name)) {
     return;
   }
 

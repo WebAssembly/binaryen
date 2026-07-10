@@ -18,6 +18,8 @@ import sys
 
 assert sys.version_info >= (3, 10), 'requires Python 3.10'
 
+# ruff: noqa: E241
+
 instructions = [
     ("unreachable",    "makeUnreachable()"),
     ("nop",            "makeNop()"),
@@ -146,6 +148,10 @@ instructions = [
     ("i64.shr_u",      "makeBinary(BinaryOp::ShrUInt64)"),
     ("i64.rotl",       "makeBinary(BinaryOp::RotLInt64)"),
     ("i64.rotr",       "makeBinary(BinaryOp::RotRInt64)"),
+    ("i64.add128",     "makeWideIntAddSub(WideIntAddSubOp::AddInt128)"),
+    ("i64.sub128",     "makeWideIntAddSub(WideIntAddSubOp::SubInt128)"),
+    ("i64.mul_wide_s", "makeWideIntMul(WideIntMulOp::MulWideSInt64)"),
+    ("i64.mul_wide_u", "makeWideIntMul(WideIntMulOp::MulWideUInt64)"),
     ("f32.abs",        "makeUnary(UnaryOp::AbsFloat32)"),
     ("f32.neg",        "makeUnary(UnaryOp::NegFloat32)"),
     ("f32.ceil",       "makeUnary(UnaryOp::CeilFloat32)"),
@@ -206,6 +212,8 @@ instructions = [
     ("i64.extend32_s",      "makeUnary(UnaryOp::ExtendS32Int64)"),
     # atomic instructions
     ("memory.atomic.notify",    "makeAtomicNotify()"),
+    ("struct.wait",             "makeStructWait()"),
+    ("struct.notify",           "makeStructNotify()"),
     ("memory.atomic.wait32",    "makeAtomicWait(Type::i32)"),
     ("memory.atomic.wait64",    "makeAtomicWait(Type::i64)"),
     ("atomic.fence",            "makeAtomicFence()"),
@@ -547,6 +555,11 @@ instructions = [
     ("i16x8.trunc_sat_f16x8_u",  "makeUnary(UnaryOp::TruncSatUVecF16x8ToVecI16x8)"),
     ("f16x8.convert_i16x8_s",    "makeUnary(UnaryOp::ConvertSVecI16x8ToVecF16x8)"),
     ("f16x8.convert_i16x8_u",    "makeUnary(UnaryOp::ConvertUVecI16x8ToVecF16x8)"),
+    ("f32x4.promote_low_f16x8",  "makeUnary(UnaryOp::PromoteLowVecF16x8ToVecF32x4)"),
+    ("f16x8.demote_f32x4_zero",  "makeUnary(UnaryOp::DemoteZeroVecF32x4ToVecF16x8)"),
+    ("f16x8.demote_f64x2_zero",  "makeUnary(UnaryOp::DemoteZeroVecF64x2ToVecF16x8)"),
+    ("f16x8.madd",               "makeSIMDTernary(SIMDTernaryOp::MaddVecF16x8)"),
+    ("f16x8.nmadd",              "makeSIMDTernary(SIMDTernaryOp::NmaddVecF16x8)"),
 
     # relaxed SIMD ops
     ("i8x16.relaxed_swizzle", "makeBinary(BinaryOp::RelaxedSwizzleVecI8x16)"),
@@ -554,23 +567,21 @@ instructions = [
     ("i32x4.relaxed_trunc_f32x4_u", "makeUnary(UnaryOp::RelaxedTruncUVecF32x4ToVecI32x4)"),
     ("i32x4.relaxed_trunc_f64x2_s_zero", "makeUnary(UnaryOp::RelaxedTruncZeroSVecF64x2ToVecI32x4)"),
     ("i32x4.relaxed_trunc_f64x2_u_zero", "makeUnary(UnaryOp::RelaxedTruncZeroUVecF64x2ToVecI32x4)"),
-    ("f16x8.relaxed_madd", "makeSIMDTernary(SIMDTernaryOp::RelaxedMaddVecF16x8)"),
-    ("f16x8.relaxed_nmadd", "makeSIMDTernary(SIMDTernaryOp::RelaxedNmaddVecF16x8)"),
     ("f32x4.relaxed_madd", "makeSIMDTernary(SIMDTernaryOp::RelaxedMaddVecF32x4)"),
     ("f32x4.relaxed_nmadd", "makeSIMDTernary(SIMDTernaryOp::RelaxedNmaddVecF32x4)"),
     ("f64x2.relaxed_madd", "makeSIMDTernary(SIMDTernaryOp::RelaxedMaddVecF64x2)"),
     ("f64x2.relaxed_nmadd", "makeSIMDTernary(SIMDTernaryOp::RelaxedNmaddVecF64x2)"),
-    ("i8x16.laneselect", "makeSIMDTernary(SIMDTernaryOp::LaneselectI8x16)"),
-    ("i16x8.laneselect", "makeSIMDTernary(SIMDTernaryOp::LaneselectI16x8)"),
-    ("i32x4.laneselect", "makeSIMDTernary(SIMDTernaryOp::LaneselectI32x4)"),
-    ("i64x2.laneselect", "makeSIMDTernary(SIMDTernaryOp::LaneselectI64x2)"),
+    ("i8x16.relaxed_laneselect", "makeSIMDTernary(SIMDTernaryOp::RelaxedLaneselectI8x16)"),
+    ("i16x8.relaxed_laneselect", "makeSIMDTernary(SIMDTernaryOp::RelaxedLaneselectI16x8)"),
+    ("i32x4.relaxed_laneselect", "makeSIMDTernary(SIMDTernaryOp::RelaxedLaneselectI32x4)"),
+    ("i64x2.relaxed_laneselect", "makeSIMDTernary(SIMDTernaryOp::RelaxedLaneselectI64x2)"),
     ("f32x4.relaxed_min", "makeBinary(BinaryOp::RelaxedMinVecF32x4)"),
     ("f32x4.relaxed_max", "makeBinary(BinaryOp::RelaxedMaxVecF32x4)"),
     ("f64x2.relaxed_min", "makeBinary(BinaryOp::RelaxedMinVecF64x2)"),
     ("f64x2.relaxed_max", "makeBinary(BinaryOp::RelaxedMaxVecF64x2)"),
     ("i16x8.relaxed_q15mulr_s", "makeBinary(BinaryOp::RelaxedQ15MulrSVecI16x8)"),
-    ("i16x8.dot_i8x16_i7x16_s", "makeBinary(BinaryOp::DotI8x16I7x16SToVecI16x8)"),
-    ("i32x4.dot_i8x16_i7x16_add_s", "makeSIMDTernary(SIMDTernaryOp::DotI8x16I7x16AddSToVecI32x4)"),
+    ("i16x8.relaxed_dot_i8x16_i7x16_s", "makeBinary(BinaryOp::RelaxedDotI8x16I7x16SToVecI16x8)"),
+    ("i32x4.relaxed_dot_i8x16_i7x16_add_s", "makeSIMDTernary(SIMDTernaryOp::RelaxedDotI8x16I7x16AddSToVecI32x4)"),
 
     # reference types instructions
     ("ref.null",             "makeRefNull()"),
@@ -708,7 +719,8 @@ class CodePrinter:
         # call in a 'with' statement
         return self
 
-    def print_line(self, line):
+    @staticmethod
+    def print_line(line):
         print("  " * CodePrinter.indents + line)
 
 

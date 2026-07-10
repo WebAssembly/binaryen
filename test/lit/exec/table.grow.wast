@@ -5,7 +5,7 @@
 (module
  (table $0 0 funcref)
 
- ;; CHECK:      [fuzz-exec] calling just-right
+ ;; CHECK:      [fuzz-exec] export just-right
  ;; CHECK-NEXT: [fuzz-exec] note result: just-right => 0
  (func $just-right (export "just-right") (result i32)
   ;; Growing up to the limit of 10*1000*1000 will succeed.
@@ -15,7 +15,7 @@
   )
  )
 
- ;; CHECK:      [fuzz-exec] calling too-much
+ ;; CHECK:      [fuzz-exec] export too-much
  ;; CHECK-NEXT: [fuzz-exec] note result: too-much => -1
  (func $too-much (export "too-much") (result i32)
   ;; Growing beyond the limit will error and return -1.

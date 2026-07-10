@@ -77,18 +77,25 @@
 (assert_return (invoke "get-x") (i32.const 666))
 (assert_return (invoke "get-y") (i32.const 666))
 
-;; (assert_unlinkable
-;;   (module (import "spectest" "unknown" (global i32)))
-;;   "unknown import"
-;; )
-;; (assert_unlinkable
-;;   (module (import "spectest" "print" (global i32)))
-;;   "type mismatch"
-;; )
+(assert_unlinkable
+  (module (import "spectest" "unknown" (global i32)))
+  "unknown import"
+)
+(assert_unlinkable
+  (module (import "spectest" "print" (global i32)))
+  "type mismatch"
+)
 
 (module (import "spectest" "global_i64" (global i64)))
-(module (import "spectest" "global_i64" (global f32)))
-(module (import "spectest" "global_i64" (global f64)))
+
+(assert_unlinkable
+  (module (import "spectest" "global_i64" (global f32)))
+  "type mismatch"
+)
+(assert_unlinkable
+  (module (import "spectest" "global_i64" (global f64)))
+  "type mismatch"
+)
 
 
 ;; Tables

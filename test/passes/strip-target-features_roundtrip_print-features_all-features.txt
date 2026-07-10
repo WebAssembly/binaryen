@@ -21,6 +21,10 @@
 --enable-call-indirect-overlong
 --enable-custom-descriptors
 --enable-relaxed-atomics
+--enable-custom-page-sizes
+--enable-multibyte
+--enable-wide-arithmetic
+--enable-compact-imports
 (module
  (type $0 (func (result v128 externref)))
  (func $foo (type $0) (result v128 externref)

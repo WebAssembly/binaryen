@@ -11,11 +11,11 @@
  (type $cont (cont $i32))
  (type $none (func))
 
- (import "fuzzing-support" "log" (func $log (param i32)))
+ (import "fuzzing-support" "log-i32" (func $log (param i32)))
 
  (tag $tag (type $none))
 
- ;; CHECK:      [fuzz-exec] calling main
+ ;; CHECK:      [fuzz-exec] export main
  ;; CHECK-NEXT: [LoggingExternalInterface logging 50]
  ;; CHECK-NEXT: [LoggingExternalInterface logging -1]
  ;; CHECK-NEXT: [LoggingExternalInterface logging 100]

@@ -27,7 +27,9 @@
 #include <algorithm>
 #include <array>
 #include <cassert>
+#include <limits>
 #include <map>
+#include <optional>
 #include <ostream>
 #include <string>
 #include <unordered_map>
@@ -120,7 +122,7 @@ enum UnaryOp {
   TruncSFloat64ToInt64,
   TruncUFloat64ToInt32,
   TruncUFloat64ToInt64,
-  // reintepret bits to int
+  // reinterpret bits to int
   ReinterpretFloat32,
   ReinterpretFloat64,
   // int to float
@@ -141,7 +143,7 @@ enum UnaryOp {
   ReinterpretInt64,
 
   // Extend signed subword-sized integer. This differs from e.g. ExtendSInt32
-  // because the input integer is in an i64 value insetad of an i32 value.
+  // because the input integer is in an i64 value instead of an i32 value.
   ExtendS8Int32,
   ExtendS16Int32,
   ExtendS8Int64,
@@ -249,6 +251,9 @@ enum UnaryOp {
   TruncSatUVecF16x8ToVecI16x8,
   ConvertSVecI16x8ToVecF16x8,
   ConvertUVecI16x8ToVecF16x8,
+  PromoteLowVecF16x8ToVecF32x4,
+  DemoteZeroVecF32x4ToVecF16x8,
+  DemoteZeroVecF64x2ToVecF16x8,
 
   InvalidUnary
 };
@@ -511,7 +516,7 @@ enum BinaryOp {
   RelaxedMinVecF64x2,
   RelaxedMaxVecF64x2,
   RelaxedQ15MulrSVecI16x8,
-  DotI8x16I7x16SToVecI16x8,
+  RelaxedDotI8x16I7x16SToVecI16x8,
 
   InvalidBinary
 };
@@ -585,17 +590,18 @@ enum SIMDTernaryOp {
   Bitselect,
 
   // Relaxed SIMD
-  RelaxedMaddVecF16x8,
-  RelaxedNmaddVecF16x8,
   RelaxedMaddVecF32x4,
   RelaxedNmaddVecF32x4,
   RelaxedMaddVecF64x2,
   RelaxedNmaddVecF64x2,
-  LaneselectI8x16,
-  LaneselectI16x8,
-  LaneselectI32x4,
-  LaneselectI64x2,
-  DotI8x16I7x16AddSToVecI32x4,
+  RelaxedLaneselectI8x16,
+  RelaxedLaneselectI16x8,
+  RelaxedLaneselectI32x4,
+  RelaxedLaneselectI64x2,
+  RelaxedDotI8x16I7x16AddSToVecI32x4,
+  // FP16
+  MaddVecF16x8,
+  NmaddVecF16x8,
 };
 
 enum RefAsOp {
@@ -632,6 +638,16 @@ enum StringEncodeOp {
 enum StringEqOp {
   StringEqEqual,
   StringEqCompare,
+};
+
+enum WideIntAddSubOp {
+  AddInt128,
+  SubInt128,
+};
+
+enum WideIntMulOp {
+  MulWideSInt64,
+  MulWideUInt64,
 };
 
 //
@@ -736,6 +752,8 @@ public:
     ArrayNewFixedId,
     ArrayGetId,
     ArraySetId,
+    ArrayLoadId,
+    ArrayStoreId,
     ArrayLenId,
     ArrayCopyId,
     ArrayFillId,
@@ -758,8 +776,11 @@ public:
     SuspendId,
     ResumeId,
     ResumeThrowId,
-    // Id for the stack switching `switch`
     StackSwitchId,
+    StructWaitId,
+    StructNotifyId,
+    WideIntAddSubId,
+    WideIntMulId,
     NumExpressionIds
   };
   Id _id;
@@ -1089,10 +1110,7 @@ public:
   AtomicFence() = default;
   AtomicFence(MixedArena& allocator) : AtomicFence() {}
 
-  // Current wasm threads only supports sequentialy consistent atomics, but
-  // other orderings may be added in the future. This field is reserved for
-  // that, and currently set to 0.
-  uint8_t order = 0;
+  MemoryOrder order = MemoryOrder::SeqCst;
 };
 
 class Pause : public SpecificExpression<Expression::PauseId> {
@@ -1287,6 +1305,32 @@ public:
   // except for relationals
 
   bool isRelational();
+
+  void finalize();
+};
+
+class WideIntAddSub : public SpecificExpression<Expression::WideIntAddSubId> {
+public:
+  WideIntAddSub() = default;
+  WideIntAddSub(MixedArena& allocator) {}
+
+  WideIntAddSubOp op;
+  Expression* leftLow;
+  Expression* leftHigh;
+  Expression* rightLow;
+  Expression* rightHigh;
+
+  void finalize();
+};
+
+class WideIntMul : public SpecificExpression<Expression::WideIntMulId> {
+public:
+  WideIntMul() = default;
+  WideIntMul(MixedArena& allocator) {}
+
+  WideIntMulOp op;
+  Expression* left;
+  Expression* right;
 
   void finalize();
 };
@@ -1714,6 +1758,8 @@ public:
   bool signed_ = false;
   MemoryOrder order = MemoryOrder::Unordered;
 
+  bool isAtomic() const { return order != MemoryOrder::Unordered; }
+
   void finalize();
 };
 
@@ -1726,6 +1772,8 @@ public:
   Expression* ref;
   Expression* value;
   MemoryOrder order = MemoryOrder::Unordered;
+
+  bool isAtomic() const { return order != MemoryOrder::Unordered; }
 
   void finalize();
 };
@@ -1754,6 +1802,31 @@ public:
   Expression* expected;
   Expression* replacement;
   MemoryOrder order;
+
+  void finalize();
+};
+
+class StructWait : public SpecificExpression<Expression::StructWaitId> {
+public:
+  StructWait() = default;
+  StructWait(MixedArena& allocator) : StructWait() {}
+
+  Expression* ref;
+  Expression* expected;
+  Expression* timeout;
+  Index index;
+
+  void finalize();
+};
+
+class StructNotify : public SpecificExpression<Expression::StructNotifyId> {
+public:
+  StructNotify() = default;
+  StructNotify(MixedArena& allocator) : StructNotify() {}
+
+  Expression* ref;
+  Expression* count;
+  Index index;
 
   void finalize();
 };
@@ -1818,6 +1891,8 @@ public:
   bool signed_ = false;
   MemoryOrder order = MemoryOrder::Unordered;
 
+  bool isAtomic() const { return order != MemoryOrder::Unordered; }
+
   void finalize();
 };
 
@@ -1830,6 +1905,34 @@ public:
   Expression* index;
   Expression* value;
   MemoryOrder order = MemoryOrder::Unordered;
+
+  bool isAtomic() const { return order != MemoryOrder::Unordered; }
+
+  void finalize();
+};
+
+class ArrayLoad : public SpecificExpression<Expression::ArrayLoadId> {
+public:
+  ArrayLoad() = default;
+  ArrayLoad(MixedArena& allocator) {}
+
+  uint8_t bytes;
+  bool signed_ = false;
+  Expression* ref;
+  Expression* index;
+
+  void finalize();
+};
+
+class ArrayStore : public SpecificExpression<Expression::ArrayStoreId> {
+public:
+  ArrayStore() = default;
+  ArrayStore(MixedArena& allocator) {}
+
+  uint8_t bytes;
+  Expression* ref;
+  Expression* index;
+  Expression* value;
 
   void finalize();
 };
@@ -2241,8 +2344,7 @@ struct CodeAnnotation {
   std::optional<bool> branchLikely;
 
   // Compilation Hints proposal.
-  static const uint8_t NeverInline = 0;
-  static const uint8_t AlwaysInline = 127;
+  enum { NeverInline = 0, AlwaysInline = 127 };
   std::optional<uint8_t> inline_;
 
   // Toolchain hints, see
@@ -2262,7 +2364,20 @@ struct CodeAnnotation {
   // calls with the same parameters can be assumed to have no effects. If a
   // value is returned, it will be the same value as returned earlier (for the
   // same parameters).
+  //
+  // Note that this differs from related concepts in C,
+  // https://en.cppreference.com/w/c/language/attributes/reproducible.html#Idempotent
+  // There, idempotency is considered compared to the state of the program,
+  // which means that two idempotent calls with some effect in between cannot be
+  // optimized. Here, we do optimize such situations - the only state we care
+  // about is what is passed in via parameters. This allows us to better
+  // optimize things like Java class constructors.
   bool idempotent = false;
+
+  // An inlining hint at the toolchain level, in contrast to inline_, above,
+  // which is for VMs. (E.g., one may want to not inline at the toolchain level
+  // to keep size small, and tell VMs to inline at runtime.)
+  std::optional<uint8_t> toolchainInline;
 
   bool operator==(const CodeAnnotation& other) const {
     return equalOnSemanticsPreserving(other) && equalOnSemanticsAltering(other);
@@ -2279,12 +2394,14 @@ struct CodeAnnotation {
     return removableIfUnused == other.removableIfUnused &&
            jsCalled == other.jsCalled && idempotent == other.idempotent;
   }
+
+  // Checks if no annotation is actually set.
+  bool empty() { return *this == CodeAnnotation(); }
 };
 
 class Function : public Importable {
 public:
   // A non-nullable reference to a function type. Exact for defined functions.
-  // TODO: Inexact for imported functions.
   Type type = Type(Signature(), NonNullable, Exact);
   IRProfile profile = IRProfile::Normal;
   std::vector<Type> vars; // non-param locals
@@ -2346,12 +2463,14 @@ public:
   // about the function-level annotations.
   CodeAnnotation funcAnnotations;
 
-  // The effects for this function, if they have been computed. We use a shared
-  // ptr here to avoid compilation errors with the forward-declared
-  // EffectAnalyzer.
+  // The effects for this function, if they have been computed.
+  // Effects are shared within connected components of the function call graph.
+  // e.g. if A calls B and B calls A, then A and B's effects are exactly the
+  // same and they share the same EffectAnalyzer. The same applies for indirect
+  // calls when --closed-world is enabled (see Module::indirectCallEffects).
   //
   // See addsEffects() in pass.h for more details.
-  std::shared_ptr<EffectAnalyzer> effects;
+  std::shared_ptr<const EffectAnalyzer> effects;
 
   // Inlining metadata: whether to disallow full and/or partial inlining. This
   // is a toolchain-level hint. For more details, see Inlining.cpp.
@@ -2452,6 +2571,9 @@ public:
   Type type = Type(HeapType::func, Nullable);
   std::vector<Expression*> data;
 
+  bool isActive() const { return bool(table); }
+  bool isPassive() const { return !table; }
+
   ElementSegment() = default;
   ElementSegment(Name table,
                  Expression* offset,
@@ -2477,6 +2599,7 @@ public:
   Address max = kMaxSize;
   Type addressType = Type::i32;
   Type type = Type(HeapType::func, Nullable);
+  Expression* init = nullptr;
 
   bool hasMax() { return max != kUnlimitedSize; }
   bool is64() { return addressType == Type::i64; }
@@ -2490,35 +2613,44 @@ public:
 class DataSegment : public Named {
 public:
   Name memory;
-  bool isPassive = false;
   Expression* offset = nullptr;
   std::vector<char> data; // TODO: optimize
+
+  bool isActive() const { return bool(memory); }
+  bool isPassive() const { return !memory; }
 };
 
 class Memory : public Importable {
 public:
-  static const Address::address32_t kPageSize = 64 * 1024;
   static const Address::address64_t kUnlimitedSize = Address::address64_t(-1);
-  // In wasm32, the maximum memory size is limited by a 32-bit pointer: 4GB
-  static const Address::address32_t kMaxSize32 =
-    (uint64_t(4) * 1024 * 1024 * 1024) / kPageSize;
-  // in wasm64, the maximum number of pages
-  static const Address::address64_t kMaxSize64 = 1ull << (64 - 16);
+
+  static const uint8_t kDefaultPageSizeLog2 = 16;
+
+  static const Address::address32_t kDefaultPageSize = 1
+                                                       << kDefaultPageSizeLog2;
+
+  static const Address::address32_t kDefaultMaxSize32 =
+    1 << (32 - kDefaultPageSizeLog2);
 
   Address initial = 0; // sizes are in pages
-  Address max = kMaxSize32;
+  Address max = kDefaultMaxSize32;
+
+  uint8_t pageSizeLog2 = kDefaultPageSizeLog2;
 
   bool shared = false;
   Type addressType = Type::i32;
 
   bool hasMax() { return max != kUnlimitedSize; }
   bool is64() { return addressType == Type::i64; }
-  void clear() {
-    name = "";
-    initial = 0;
-    max = kMaxSize32;
-    shared = false;
-    addressType = Type::i32;
+  Address::address64_t maxSize32() const { return 1ull << (32 - pageSizeLog2); }
+  Address::address64_t maxSize64() const {
+    if (pageSizeLog2 == 0) {
+      return std::numeric_limits<uint64_t>::max();
+    }
+    return 1ull << (64 - pageSizeLog2);
+  }
+  Address::address64_t pageSize() const {
+    return 1ull << static_cast<Address::address64_t>(pageSizeLog2);
   }
 };
 
@@ -2597,6 +2729,24 @@ public:
   std::unordered_map<HeapType, TypeNames> typeNames;
   std::unordered_map<HeapType, Index> typeIndices;
 
+  // Potential effects for bodies of indirect calls to this type. Populated by
+  // GlobalEffects when --closed-world is enabled. e.g. when we have a call to
+  // HeapType $A and functions $foo and $bar have types that are subtypes of $A,
+  // then an indirect call to $A has effects equal to the union of $foo and
+  // $bar.
+  //
+  // This is stored as a shared_ptr because effects are always shared within
+  // each connected component in the module's call graph. e.g. if A calls B
+  // and B calls A (directly or indirectly), then A and B have the same effects
+  // and can share an EffectAnalyzer. Also see Function::effects.
+  //
+  // This data is only meaningful for indirect calls. If no indirect call
+  // exists to a function, the data can be out of date (no effort is made to
+  // clean up the data if e.g. all indirect calls to a function are removed).
+  // TODO: Account for exactness here.
+  std::unordered_map<HeapType, std::shared_ptr<const EffectAnalyzer>>
+    indirectCallEffects;
+
   MixedArena allocator;
 
 private:
@@ -2615,30 +2765,30 @@ private:
 public:
   Module() = default;
 
-  Export* getExport(Name name);
-  Function* getFunction(Name name);
-  Table* getTable(Name name);
-  ElementSegment* getElementSegment(Name name);
-  Memory* getMemory(Name name);
-  DataSegment* getDataSegment(Name name);
-  Global* getGlobal(Name name);
-  Tag* getTag(Name name);
+  Export* getExport(Name name) const;
+  Function* getFunction(Name name) const;
+  Table* getTable(Name name) const;
+  ElementSegment* getElementSegment(Name name) const;
+  Memory* getMemory(Name name) const;
+  DataSegment* getDataSegment(Name name) const;
+  Global* getGlobal(Name name) const;
+  Tag* getTag(Name name) const;
 
-  Export* getExportOrNull(Name name);
-  Table* getTableOrNull(Name name);
-  Memory* getMemoryOrNull(Name name);
-  ElementSegment* getElementSegmentOrNull(Name name);
-  DataSegment* getDataSegmentOrNull(Name name);
-  Function* getFunctionOrNull(Name name);
-  Global* getGlobalOrNull(Name name);
-  Tag* getTagOrNull(Name name);
+  Export* getExportOrNull(Name name) const;
+  Table* getTableOrNull(Name name) const;
+  Memory* getMemoryOrNull(Name name) const;
+  ElementSegment* getElementSegmentOrNull(Name name) const;
+  DataSegment* getDataSegmentOrNull(Name name) const;
+  Function* getFunctionOrNull(Name name) const;
+  Global* getGlobalOrNull(Name name) const;
+  Tag* getTagOrNull(Name name) const;
 
   // get* methods that are generic over the kind, that is, items are identified
   // by their kind and their name. Otherwise, they are similar to the above
   // get* methods. These return items that can be imports.
   // TODO: Add methods for things that cannot be imports (segments).
-  Importable* getImport(ModuleItemKind kind, Name name);
-  Importable* getImportOrNull(ModuleItemKind kind, Name name);
+  Importable* getImport(ModuleItemKind kind, Name name) const;
+  Importable* getImportOrNull(ModuleItemKind kind, Name name) const;
 
   Export* addExport(Export* curr);
   Function* addFunction(Function* curr);
@@ -2705,6 +2855,7 @@ std::ostream& operator<<(std::ostream& o, wasm::ModuleHeapType pair);
 std::ostream& operator<<(std::ostream& os, wasm::MemoryOrder mo);
 std::ostream& operator<<(std::ostream& o, const wasm::ImportNames& importNames);
 std::ostream& operator<<(std::ostream& o, const Table& table);
+std::ostream& operator<<(std::ostream& o, const wasm::Global& global);
 
 } // namespace wasm
 

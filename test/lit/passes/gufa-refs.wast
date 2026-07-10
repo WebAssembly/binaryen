@@ -313,7 +313,7 @@
   ;; CHECK-NEXT:  (local $x anyref)
   ;; CHECK-NEXT:  (local $y anyref)
   ;; CHECK-NEXT:  (local $z anyref)
-  ;; CHECK-NEXT:  (local.tee $x
+  ;; CHECK-NEXT:  (local.set $x
   ;; CHECK-NEXT:   (block
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (call $get-nothing)
@@ -6139,6 +6139,25 @@
           (i32.const 2)
         )
       )
+    )
+  )
+
+  ;; CHECK:      (func $unreachable (type $1)
+  ;; CHECK-NEXT:  (array.get_s $array
+  ;; CHECK-NEXT:   (array.new_default $array
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $unreachable
+    ;; This array.get is unreachable, and when handling packing we should not
+    ;; error.
+    (array.get_s $array
+      (array.new_default $array
+        (i32.const 0)
+      )
+      (unreachable)
     )
   )
 )

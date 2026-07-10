@@ -1,9 +1,16 @@
-memory => a
-table => b
-longname1 => c
-longname2 => d
-longname3 => e
-longname4 => f
+{
+ "imports": [
+  ["env", "memory", "a"],
+  ["env", "table", "b"],
+  ["env", "longname1", "c"],
+  ["env", "longname2", "d"],
+  ["env", "longname3", "e"],
+  ["other", "longname3", "f"],
+  ["other", "longname4", "g"]
+ ],
+"exports": [
+ ]
+}
 (module
  (type $0 (func))
  (import "a" "a" (memory $0 256 256))
@@ -11,5 +18,6 @@ longname4 => f
  (import "a" "c" (func $internal1))
  (import "a" "d" (func $internal2))
  (import "a" "e" (func $internal3))
- (import "a" "f" (func $internal4))
+ (import "a" "f" (func $internal3b))
+ (import "a" "g" (func $internal4))
 )

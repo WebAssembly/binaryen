@@ -265,7 +265,7 @@ struct Flatten
             // br_if leaves a value on the stack if not taken, which later can
             // be the last element of the enclosing innermost block and flow
             // out. The local we created using 'getTempForBreakTarget' returns
-            // the return type of the block this branch is targetting, which may
+            // the return type of the block this branch is targeting, which may
             // not be the same with the innermost block's return type. For
             // example,
             // (block $any (result anyref)

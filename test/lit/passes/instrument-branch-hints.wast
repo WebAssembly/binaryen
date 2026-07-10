@@ -11,28 +11,20 @@
 
   ;; CHECK:      (type $3 (func (param anyref)))
 
-  ;; CHECK:      (type $4 (func (param i32 i32 i32)))
+  ;; CHECK:      (type $4 (func (param i32 i32 i32) (result i32)))
 
-  ;; CHECK:      (import "fuzzing-support" "log-branch" (func $log-branch (type $4) (param i32 i32 i32)))
+  ;; CHECK:      (import "fuzzing-support" "log-branch" (func $log-branch (type $4) (param i32 i32 i32) (result i32)))
 
   ;; CHECK:      (tag $i32 (type $1) (param i32))
   (tag $i32 (param i32))
 
   ;; CHECK:      (func $if (type $0)
-  ;; CHECK-NEXT:  (local $0 i32)
-  ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (@metadata.code.branch_hint "\00")
   ;; CHECK-NEXT:  (if
-  ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (local.set $0
-  ;; CHECK-NEXT:     (i32.const 42)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (call $log-branch
-  ;; CHECK-NEXT:     (i32.const 1)
-  ;; CHECK-NEXT:     (i32.const 0)
-  ;; CHECK-NEXT:     (local.get $0)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:   (call $log-branch
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (then
   ;; CHECK-NEXT:    (drop
@@ -47,16 +39,10 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (@metadata.code.branch_hint "\01")
   ;; CHECK-NEXT:  (if
-  ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (local.set $1
-  ;; CHECK-NEXT:     (i32.const 142)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (call $log-branch
-  ;; CHECK-NEXT:     (i32.const 2)
-  ;; CHECK-NEXT:     (i32.const 1)
-  ;; CHECK-NEXT:     (local.get $1)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.get $1)
+  ;; CHECK-NEXT:   (call $log-branch
+  ;; CHECK-NEXT:    (i32.const 142)
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:    (i32.const 2)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (then
   ;; CHECK-NEXT:    (drop
@@ -95,7 +81,6 @@
   )
 
   ;; CHECK:      (func $if-2 (type $0)
-  ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.const 242)
   ;; CHECK-NEXT:   (then
@@ -111,16 +96,10 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (@metadata.code.branch_hint "\00")
   ;; CHECK-NEXT:  (if
-  ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (local.set $0
-  ;; CHECK-NEXT:     (i32.const 342)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (call $log-branch
-  ;; CHECK-NEXT:     (i32.const 3)
-  ;; CHECK-NEXT:     (i32.const 0)
-  ;; CHECK-NEXT:     (local.get $0)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:   (call $log-branch
+  ;; CHECK-NEXT:    (i32.const 342)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (i32.const 3)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (then
   ;; CHECK-NEXT:    (drop
@@ -158,21 +137,13 @@
   )
 
   ;; CHECK:      (func $br (type $0)
-  ;; CHECK-NEXT:  (local $0 i32)
-  ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (block $out
   ;; CHECK-NEXT:   (@metadata.code.branch_hint "\00")
   ;; CHECK-NEXT:   (br_if $out
-  ;; CHECK-NEXT:    (block (result i32)
-  ;; CHECK-NEXT:     (local.set $0
-  ;; CHECK-NEXT:      (i32.const 42)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (call $log-branch
-  ;; CHECK-NEXT:      (i32.const 4)
-  ;; CHECK-NEXT:      (i32.const 0)
-  ;; CHECK-NEXT:      (local.get $0)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (local.get $0)
+  ;; CHECK-NEXT:    (call $log-branch
+  ;; CHECK-NEXT:     (i32.const 42)
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:     (i32.const 4)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (drop
@@ -182,16 +153,10 @@
   ;; CHECK-NEXT:  (block $out1
   ;; CHECK-NEXT:   (@metadata.code.branch_hint "\01")
   ;; CHECK-NEXT:   (br_if $out1
-  ;; CHECK-NEXT:    (block (result i32)
-  ;; CHECK-NEXT:     (local.set $1
-  ;; CHECK-NEXT:      (i32.const 142)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (call $log-branch
-  ;; CHECK-NEXT:      (i32.const 5)
-  ;; CHECK-NEXT:      (i32.const 1)
-  ;; CHECK-NEXT:      (local.get $1)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (local.get $1)
+  ;; CHECK-NEXT:    (call $log-branch
+  ;; CHECK-NEXT:     (i32.const 142)
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:     (i32.const 5)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (drop
@@ -239,22 +204,15 @@
 
   ;; CHECK:      (func $br_value (type $2) (result f64)
   ;; CHECK-NEXT:  (local $scratch f64)
-  ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (block $out (result f64)
   ;; CHECK-NEXT:   (local.set $scratch
   ;; CHECK-NEXT:    (@metadata.code.branch_hint "\00")
   ;; CHECK-NEXT:    (br_if $out
   ;; CHECK-NEXT:     (f64.const 3.14159)
-  ;; CHECK-NEXT:     (block (result i32)
-  ;; CHECK-NEXT:      (local.set $1
-  ;; CHECK-NEXT:       (i32.const 42)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (call $log-branch
-  ;; CHECK-NEXT:       (i32.const 6)
-  ;; CHECK-NEXT:       (i32.const 0)
-  ;; CHECK-NEXT:       (local.get $1)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (local.get $1)
+  ;; CHECK-NEXT:     (call $log-branch
+  ;; CHECK-NEXT:      (i32.const 42)
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:      (i32.const 6)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
@@ -277,54 +235,33 @@
   )
 
   ;; CHECK:      (func $nested (type $0)
-  ;; CHECK-NEXT:  (local $0 i32)
-  ;; CHECK-NEXT:  (local $1 i32)
-  ;; CHECK-NEXT:  (local $2 i32)
   ;; CHECK-NEXT:  (@metadata.code.branch_hint "\00")
   ;; CHECK-NEXT:  (if
-  ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (local.set $2
-  ;; CHECK-NEXT:     (@metadata.code.branch_hint "\01")
-  ;; CHECK-NEXT:     (if (result i32)
-  ;; CHECK-NEXT:      (block (result i32)
-  ;; CHECK-NEXT:       (local.set $0
-  ;; CHECK-NEXT:        (i32.const 42)
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:       (call $log-branch
-  ;; CHECK-NEXT:        (i32.const 7)
-  ;; CHECK-NEXT:        (i32.const 1)
-  ;; CHECK-NEXT:        (local.get $0)
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:       (local.get $0)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (then
-  ;; CHECK-NEXT:       (i32.const 142)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (else
-  ;; CHECK-NEXT:       (i32.const 242)
-  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:   (call $log-branch
+  ;; CHECK-NEXT:    (@metadata.code.branch_hint "\01")
+  ;; CHECK-NEXT:    (if (result i32)
+  ;; CHECK-NEXT:     (call $log-branch
+  ;; CHECK-NEXT:      (i32.const 42)
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:      (i32.const 7)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (then
+  ;; CHECK-NEXT:      (i32.const 142)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (else
+  ;; CHECK-NEXT:      (i32.const 242)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (call $log-branch
-  ;; CHECK-NEXT:     (i32.const 9)
-  ;; CHECK-NEXT:     (i32.const 0)
-  ;; CHECK-NEXT:     (local.get $2)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.get $2)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (i32.const 9)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (then
   ;; CHECK-NEXT:    (@metadata.code.branch_hint "\00")
   ;; CHECK-NEXT:    (if
-  ;; CHECK-NEXT:     (block (result i32)
-  ;; CHECK-NEXT:      (local.set $1
-  ;; CHECK-NEXT:       (i32.const 342)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (call $log-branch
-  ;; CHECK-NEXT:       (i32.const 8)
-  ;; CHECK-NEXT:       (i32.const 0)
-  ;; CHECK-NEXT:       (local.get $1)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (local.get $1)
+  ;; CHECK-NEXT:     (call $log-branch
+  ;; CHECK-NEXT:      (i32.const 342)
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:      (i32.const 8)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (then
   ;; CHECK-NEXT:      (drop
@@ -385,29 +322,18 @@
   )
 
   ;; CHECK:      (func $eh-pop (type $0)
-  ;; CHECK-NEXT:  (local $0 i32)
-  ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (block $label
   ;; CHECK-NEXT:   (try
   ;; CHECK-NEXT:    (do
   ;; CHECK-NEXT:     (nop)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (catch $i32
-  ;; CHECK-NEXT:     (local.set $1
-  ;; CHECK-NEXT:      (pop i32)
-  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (@metadata.code.branch_hint "\00")
   ;; CHECK-NEXT:     (br_if $label
-  ;; CHECK-NEXT:      (block (result i32)
-  ;; CHECK-NEXT:       (local.set $0
-  ;; CHECK-NEXT:        (local.get $1)
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:       (call $log-branch
-  ;; CHECK-NEXT:        (i32.const 10)
-  ;; CHECK-NEXT:        (i32.const 0)
-  ;; CHECK-NEXT:        (local.get $0)
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:       (local.get $0)
+  ;; CHECK-NEXT:      (call $log-branch
+  ;; CHECK-NEXT:       (pop i32)
+  ;; CHECK-NEXT:       (i32.const 0)
+  ;; CHECK-NEXT:       (i32.const 10)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
@@ -423,8 +349,8 @@
         (catch $i32
           (@metadata.code.branch_hint "\00")
           (br_if $label
-            ;; This pop will end up in a block after our instrumentation, which
-            ;; requires fixups.
+            ;; This pop will end up as the first parameter of the call, so it
+            ;; will not need fixups.
             (pop i32)
           )
         )
@@ -436,43 +362,38 @@
 ;; This module has an existing import with our module and base names. We nop it
 ;; and create a fresh one, to avoid confusion.
 (module
-  (import "fuzzing-support" "log-branch" (func $existing (param i32 i32 i32)))
+  (import "fuzzing-support" "log-branch" (func $existing (param i32 i32 i32) (result i32)))
 
-  ;; CHECK:      (type $0 (func (param i32 i32 i32)))
+  ;; CHECK:      (type $0 (func (param i32 i32 i32) (result i32)))
 
   ;; CHECK:      (type $1 (func))
 
-  ;; CHECK:      (import "fuzzing-support" "log-branch" (func $log-branch (type $0) (param i32 i32 i32)))
+  ;; CHECK:      (import "fuzzing-support" "log-branch" (func $log-branch (type $0) (param i32 i32 i32) (result i32)))
 
-  ;; CHECK:      (func $existing (type $0) (param $0 i32) (param $1 i32) (param $2 i32)
-  ;; CHECK-NEXT:  (nop)
+  ;; CHECK:      (func $existing (type $0) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
+  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
 
   ;; CHECK:      (func $if (type $1)
   ;; CHECK-NEXT:  (local $x i32)
-  ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (@metadata.code.branch_hint "\01")
   ;; CHECK-NEXT:  (if
-  ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (local.set $1
-  ;; CHECK-NEXT:     (block (result i32)
-  ;; CHECK-NEXT:      (local.set $x
-  ;; CHECK-NEXT:       (i32.const 42)
-  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:   (call $log-branch
+  ;; CHECK-NEXT:    (block (result i32)
+  ;; CHECK-NEXT:     (local.set $x
+  ;; CHECK-NEXT:      (i32.const 42)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (drop
   ;; CHECK-NEXT:      (call $existing
   ;; CHECK-NEXT:       (i32.const 42)
   ;; CHECK-NEXT:       (i32.const 1)
   ;; CHECK-NEXT:       (local.get $x)
   ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (local.get $x)
   ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.get $x)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (call $log-branch
-  ;; CHECK-NEXT:     (i32.const 1)
-  ;; CHECK-NEXT:     (i32.const 1)
-  ;; CHECK-NEXT:     (local.get $1)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.get $1)
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (then
   ;; CHECK-NEXT:    (drop
@@ -489,10 +410,12 @@
         (local.set $x
           (i32.const 42)
         )
-        (call $existing
-          (i32.const 42)
-          (i32.const 1)
-          (local.get $x)
+        (drop
+          (call $existing
+            (i32.const 42)
+            (i32.const 1)
+            (local.get $x)
+          )
         )
         (local.get $x)
       )

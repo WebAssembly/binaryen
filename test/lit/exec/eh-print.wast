@@ -10,12 +10,12 @@
 
  (type $B (struct (field (mut anyref))))
 
- ;; CHECK:      [fuzz-exec] calling array
- ;; CHECK-NEXT: [exception thrown: A [ref (type $array.0 (array (mut i32))) (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0[..])]]
+ ;; CHECK:      [fuzz-exec] export array
+ ;; CHECK-NEXT: [exception thrown: A object(null)]
  (func $array (export "array") (result (ref $A))
   ;; Throw a very large array. We should not print all 12K items in it, as that
-  ;; would be very verbose. Instead we stop after a reasonable amount and
-  ;; print [..] for the rest.
+  ;; would be very verbose. Instead we print exactly what fuzz_shel.js would
+  ;; print.
   (throw $A
    (array.new_default $A
     (i32.const 12345)
@@ -23,8 +23,8 @@
   )
  )
 
- ;; CHECK:      [fuzz-exec] calling struct
- ;; CHECK-NEXT: [exception thrown: B [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [..]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]
+ ;; CHECK:      [fuzz-exec] export struct
+ ;; CHECK-NEXT: [exception thrown: B object(null)]
  (func $struct (export "struct") (result (ref $B))
   (local $x (ref $B))
   ;; As above, but now with a recursive struct.

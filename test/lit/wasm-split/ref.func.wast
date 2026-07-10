@@ -19,8 +19,7 @@
  ;; PRIMARY:      (global $glob2 (ref func) (ref.func $trampoline_second))
 
  ;; PRIMARY:      (table $table 1 1 funcref)
- (table $table 1 1 funcref)
-
+ (table $table (export "table_export") 1 1 funcref)
  (global $glob1 (ref func) (ref.func $prime))
 
  (global $glob2 (ref func) (ref.func $second))
@@ -34,6 +33,8 @@
 
  ;; PRIMARY:      (elem declare func $prime $trampoline_second)
 
+ ;; PRIMARY:      (export "table_export" (table $table))
+
  ;; PRIMARY:      (export "prime" (func $prime))
 
  ;; PRIMARY:      (export "table" (table $1))
@@ -45,6 +46,12 @@
  ;; PRIMARY-NEXT:  (drop
  ;; PRIMARY-NEXT:   (ref.func $trampoline_second)
  ;; PRIMARY-NEXT:  )
+ ;; PRIMARY-NEXT:  (drop
+ ;; PRIMARY-NEXT:   (global.get $glob1)
+ ;; PRIMARY-NEXT:  )
+ ;; PRIMARY-NEXT:  (drop
+ ;; PRIMARY-NEXT:   (global.get $glob2)
+ ;; PRIMARY-NEXT:  )
  ;; PRIMARY-NEXT: )
  (func $prime
   (drop
@@ -52,6 +59,12 @@
   )
   (drop
    (ref.func $second)
+  )
+  (drop
+   (global.get $glob1)
+  )
+  (drop
+   (global.get $glob2)
   )
  )
 

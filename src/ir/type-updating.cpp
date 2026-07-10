@@ -26,7 +26,7 @@
 
 namespace wasm {
 
-GlobalTypeRewriter::GlobalTypeRewriter(Module& wasm)
+GlobalTypeRewriter::GlobalTypeRewriter(Module& wasm, WorldMode worldMode)
   : wasm(wasm), publicGroups(wasm.features) {
   // Find the heap types that are not publicly observable. Even in a closed
   // world scenario, don't modify public types because we assume that they may
@@ -34,6 +34,7 @@ GlobalTypeRewriter::GlobalTypeRewriter(Module& wasm)
   // will be located in the builder.
   typeInfo = ModuleUtils::collectHeapTypeInfo(
     wasm,
+    worldMode,
     ModuleUtils::TypeInclusion::UsedIRTypes,
     ModuleUtils::VisibilityHandling::FindVisibility);
 
@@ -324,6 +325,35 @@ void GlobalTypeRewriter::mapTypes(const TypeMap& oldToNewTypes) {
   for (auto& tag : wasm.tags) {
     tag->type = updater.getNew(tag->type);
   }
+
+  // Update indirect call effects per type.
+  // When A is rewritten to B, B inherits the effects of A and A loses its
+  // effects.
+  std::unordered_map<HeapType, std::shared_ptr<const EffectAnalyzer>>
+    newTypeEffects;
+
+  for (const auto& [oldType, newType] : oldToNewTypes) {
+    std::shared_ptr<const EffectAnalyzer>* oldEffects =
+      find_or_null(wasm.indirectCallEffects, oldType);
+    std::shared_ptr<const EffectAnalyzer>* targetEffects =
+      find_or_null(wasm.indirectCallEffects, newType);
+
+    if (!targetEffects) {
+      // Nothing to update, we already know nothing and assume all effects.
+      continue;
+    }
+
+    if (!oldEffects) {
+      targetEffects->reset();
+      continue;
+    }
+
+    auto merged = std::make_shared<EffectAnalyzer>(**targetEffects);
+    merged->mergeIn(**oldEffects);
+    *targetEffects = std::move(merged);
+  }
+
+  wasm.indirectCallEffects = std::move(newTypeEffects);
 }
 
 void GlobalTypeRewriter::mapTypeNamesAndIndices(const TypeMap& oldToNewTypes) {
@@ -350,7 +380,7 @@ void GlobalTypeRewriter::mapTypeNamesAndIndices(const TypeMap& oldToNewTypes) {
       // replaces the old. Rename the old name in a unique way to avoid
       // confusion in the case that it remains used.
       auto deduped = Names::getValidName(
-        names.name, [&](Name test) { return !seenTypeNames.count(test); });
+        names.name, [&](Name test) { return !seenTypeNames.contains(test); });
       names.name = deduped;
       // Use `insert` to avoid overwriting the entry for the old type if it has
       // already appeared as a new type.
@@ -408,11 +438,6 @@ Type GlobalTypeRewriter::getTempTupleType(Tuple tuple) {
 
 namespace TypeUpdating {
 
-bool canHandleAsLocal(Type type) {
-  // TODO: Inline this into its callers.
-  return type.isConcrete();
-}
-
 void handleNonDefaultableLocals(Function* func, Module& wasm) {
   if (!wasm.features.hasReferenceTypes()) {
     // No references, so no non-nullable ones at all.
@@ -456,7 +481,7 @@ void handleNonDefaultableLocals(Function* func, Module& wasm) {
   Builder builder(wasm);
   for (auto** getp : FindAllPointers<LocalGet>(func->body).list) {
     auto* get = (*getp)->cast<LocalGet>();
-    if (badIndexes.count(get->index)) {
+    if (badIndexes.contains(get->index)) {
       *getp = fixLocalGet(get, wasm);
     }
   }
@@ -474,7 +499,7 @@ void handleNonDefaultableLocals(Function* func, Module& wasm) {
     if (!set->isTee() || set->type == Type::unreachable) {
       continue;
     }
-    if (badIndexes.count(set->index)) {
+    if (badIndexes.contains(set->index)) {
       auto type = func->getLocalType(set->index);
       auto validType = getValidLocalType(type, wasm.features);
       if (type.isRef()) {
@@ -576,7 +601,7 @@ void updateParamTypes(Function* func,
 
   for (auto* set : sets.list) {
     auto index = set->index;
-    if (func->isParam(index) && !paramFixups.count(index) &&
+    if (func->isParam(index) && !paramFixups.contains(index) &&
         !Type::isSubType(set->value->type, newParamTypes[index])) {
       paramFixups[index] = Builder::addVar(func, func->getLocalType(index));
     }

@@ -192,7 +192,7 @@ struct Memory64Lowering : public WalkerPass<PostWalker<Memory64Lowering>> {
     auto& module = *getModule();
 
     // passive segments don't have any offset to adjust
-    if (segment->isPassive || !module.getMemory(segment->memory)->is64()) {
+    if (segment->isPassive() || !module.getMemory(segment->memory)->is64()) {
       return;
     }
 
@@ -300,7 +300,7 @@ struct Memory64Lowering : public WalkerPass<PostWalker<Memory64Lowering>> {
     auto& module = *getModule();
 
     // Passive segments don't have any offset to update.
-    if (segment->table.isNull() || !module.getTable(segment->table)->is64()) {
+    if (segment->isPassive() || !module.getTable(segment->table)->is64()) {
       return;
     }
 
@@ -345,8 +345,8 @@ struct Memory64Lowering : public WalkerPass<PostWalker<Memory64Lowering>> {
     for (auto& memory : module->memories) {
       if (memory->is64()) {
         memory->addressType = Type::i32;
-        if (memory->hasMax() && memory->max > Memory::kMaxSize32) {
-          memory->max = Memory::kMaxSize32;
+        if (memory->hasMax() && memory->max > memory->maxSize32()) {
+          memory->max = memory->maxSize32();
         }
       }
     }

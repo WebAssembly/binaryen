@@ -193,6 +193,9 @@ function initializeConstants() {
     'BulkMemoryOpt',
     'CallIndirectOverlong',
     'RelaxedAtomics',
+    'CustomPageSizes',
+    'WideArithmetic',
+    'CompactImports',
     'All'
   ].forEach(name => {
     Module['Features'][name] = Module['_BinaryenFeature' + name]();
@@ -420,11 +423,11 @@ function initializeConstants() {
     'RelaxedNmaddVecF32x4',
     'RelaxedMaddVecF64x2',
     'RelaxedNmaddVecF64x2',
-    'LaneselectI8x16',
-    'LaneselectI16x8',
-    'LaneselectI32x4',
-    'LaneselectI64x2',
-    'DotI8x16I7x16AddSToVecI32x4',
+    'RelaxedLaneselectI8x16',
+    'RelaxedLaneselectI16x8',
+    'RelaxedLaneselectI32x4',
+    'RelaxedLaneselectI64x2',
+    'RelaxedDotI8x16I7x16AddSToVecI32x4',
     'AnyTrueVec128',
     'PopcntVecI8x16',
     'AbsVecI8x16',
@@ -593,7 +596,7 @@ function initializeConstants() {
     'RelaxedMinVecF64x2',
     'RelaxedMaxVecF64x2',
     'RelaxedQ15MulrSVecI16x8',
-    'DotI8x16I7x16SToVecI16x8',
+    'RelaxedDotI8x16I7x16SToVecI16x8',
     'RefAsNonNull',
     'RefAsExternInternalize',
     'RefAsExternExternalize',
@@ -611,7 +614,11 @@ function initializeConstants() {
     'StringEncodeLossyUTF8Array',
     'StringEncodeWTF16Array',
     'StringEqEqual',
-    'StringEqCompare'
+    'StringEqCompare',
+    'AddInt128',
+    'SubInt128',
+    'MulWideSInt64',
+    'MulWideUInt64'
   ].forEach(name => {
     Module['Operations'][name] = Module[name] = Module['_Binaryen' + name]();
   });
@@ -1181,6 +1188,18 @@ function wrapModule(module, self = {}) {
     },
     'add'(left, right) {
       return Module['_BinaryenBinary'](module, Module['AddInt64'], left, right);
+    },
+    'add128'(leftLow, leftHigh, rightLow, rightHigh) {
+      return Module['_BinaryenWideIntAddSub'](module, Module['AddInt128'], leftLow, leftHigh, rightLow, rightHigh);
+    },
+    'sub128'(leftLow, leftHigh, rightLow, rightHigh) {
+      return Module['_BinaryenWideIntAddSub'](module, Module['SubInt128'], leftLow, leftHigh, rightLow, rightHigh);
+    },
+    'mul_wide_s'(left, right) {
+      return Module['_BinaryenWideIntMul'](module, Module['MulWideSInt64'], left, right);
+    },
+    'mul_wide_u'(left, right) {
+      return Module['_BinaryenWideIntMul'](module, Module['MulWideUInt64'], left, right);
     },
     'sub'(left, right) {
       return Module['_BinaryenBinary'](module, Module['SubInt64'], left, right);
@@ -2462,8 +2481,8 @@ function wrapModule(module, self = {}) {
   };
 
   self['atomic'] = {
-    'fence'() {
-      return Module['_BinaryenAtomicFence'](module);
+    'fence'(order = Module['MemoryOrder']['seqcst']) {
+      return Module['_BinaryenAtomicFence'](module, order);
     }
   };
 
@@ -2612,8 +2631,8 @@ function wrapModule(module, self = {}) {
   self['getGlobal'] = function(name) {
     return preserveStack(() => Module['_BinaryenGetGlobal'](module, strToStack(name)));
   };
-  self['addTable'] = function(table, initial, maximum, type = Module['_BinaryenTypeFuncref']()) {
-    return preserveStack(() => Module['_BinaryenAddTable'](module, strToStack(table), initial, maximum, type));
+  self['addTable'] = function(table, initial, maximum, type = Module['_BinaryenTypeFuncref'](), init = null) {
+    return preserveStack(() => Module['_BinaryenAddTable'](module, strToStack(table), initial, maximum, type, init));
   }
   self['getTable'] = function(name) {
     return preserveStack(() => Module['_BinaryenGetTable'](module, strToStack(name)));
@@ -2768,30 +2787,63 @@ function wrapModule(module, self = {}) {
       return memoryInfo;
     });
   };
-  self['getNumMemorySegments'] = function() {
-    return Module['_BinaryenGetNumMemorySegments'](module);
+  self['getNumDataSegments'] = function() {
+    return Module['_BinaryenGetNumDataSegments'](module);
   };
-  self['getMemorySegmentInfo'] = function(name) {
+  /**
+   * Gets the data segment with the given name.
+   * 
+   * @param {string} name - The name of the data segment to get.
+   * @returns {number} A DataSegmentRef referring to the data segment with the given name, or `0` if no such segment exists.
+   */
+  self['getDataSegment'] = function(name) {
     return preserveStack(() => {
-      const passive = Boolean(Module['_BinaryenGetMemorySegmentPassive'](module, strToStack(name)));
-      let offset = null;
-      if (!passive) {
-        offset = Module['_BinaryenGetMemorySegmentByteOffset'](module, strToStack(name));
-      }
-      return {
-        'offset': offset,
-        'data': (function(){
-          const size = Module['_BinaryenGetMemorySegmentByteLength'](module, strToStack(name));
-          const ptr = _malloc(size);
-          Module['_BinaryenCopyMemorySegmentData'](module, strToStack(name), ptr);
-          const res = new Uint8Array(size);
-          res.set(HEAP8.subarray(ptr, ptr + size));
-          _free(ptr);
-          return res.buffer;
-        })(),
-        'passive': passive
-      };
+      return Module['_BinaryenGetDataSegment'](module, strToStack(name));
     });
+  };
+  /**
+   * Gets the data segment at the given index.
+   * 
+   * @param {number} index - The index of the data segment to get.
+   * @returns {number} A DataSegmentRef referring to the data segment at the given index.
+   * 
+   * @throws If no data segment exists at the given index.
+   */
+  self['getDataSegmentByIndex'] = function(index) {
+    return Module['_BinaryenGetDataSegmentByIndex'](module, index);
+  };
+  /**
+   * Queries information about a data segment.
+   * 
+   * @param {number} segment  - A DataSegmentRef referring to the data segment to get information about.
+   * @returns {Object} An object containing the following fields:
+   *   - `name`: The name of the segment.
+   *   - `offset`: If the segment is active, the offset expression of the segment. Otherwise, `null`.
+   *   - `data`: A buffer containing the data of the segment.
+   *   - `passive`: A boolean indicating whether the segment is passive.
+    * 
+    * @throws If the given segment reference is invalid.
+   */
+  self['getDataSegmentInfo'] = function(segment) {
+    const passive = Boolean(Module['_BinaryenGetDataSegmentPassive'](segment));
+    let offset = null;
+    if (!passive) {
+      offset = Module['_BinaryenGetDataSegmentByteOffset'](module, segment);
+    }
+    return {
+      'name': UTF8ToString(Module['_BinaryenDataSegmentGetName'](segment)),
+      'offset': offset,
+      'data': (function(){
+        const size = Module['_BinaryenGetDataSegmentByteLength'](segment);
+        const ptr = _malloc(size);
+        Module['_BinaryenCopyDataSegmentData'](segment, ptr);
+        const res = new Uint8Array(size);
+        res.set(HEAP8.subarray(ptr, ptr + size));
+        _free(ptr);
+        return res.buffer;
+      })(),
+      'passive': passive
+    };
   };
   self['setStart'] = function(start) {
     return Module['_BinaryenSetStart'](module, start);
@@ -2854,16 +2906,24 @@ function wrapModule(module, self = {}) {
     return Module['_BinaryenGetElementSegmentByIndex'](module, index);
   };
   self['emitText'] = function() {
-    let textPtr = Module['_BinaryenModuleAllocateAndWriteText'](module);
-    let text = UTF8ToString(textPtr);
-    if (textPtr) _free(textPtr);
-    return text;
+    const textPtr = Module['_BinaryenModuleAllocateAndWriteText'](module);
+    try {
+      return UTF8ToString(textPtr);
+    } finally {
+      if (textPtr) {
+        _free(textPtr);
+      }
+    }
   };
   self['emitStackIR'] = function() {
-    let textPtr = Module['_BinaryenModuleAllocateAndWriteStackIR'](module);
-    let text = UTF8ToString(textPtr);
-    if (textPtr) _free(textPtr);
-    return text;
+    const textPtr = Module['_BinaryenModuleAllocateAndWriteStackIR'](module);
+    try {
+      return UTF8ToString(textPtr);
+    } finally {
+      if (textPtr) {
+        _free(textPtr);
+      }
+    }
   };
   self['emitAsmjs'] = function() {
     const old = out;
@@ -3257,12 +3317,14 @@ Module['emitText'] = function(expr) {
   if (typeof expr === 'object') {
     return expr.emitText();
   }
-  const old = out;
-  let ret = '';
-  out = x => { ret += x + '\n' };
-  Module['_BinaryenExpressionPrint'](expr);
-  out = old;
-  return ret;
+  const textPtr = Module['_BinaryenExpressionAllocateAndWriteText'](expr);
+  try {
+    return UTF8ToString(textPtr) + '\n';
+  } finally {
+    if (textPtr) {
+      _free(textPtr);
+    }
+  }
 };
 
 // Calls a function, wrapping it in error handling code so that if it hits a
@@ -3273,15 +3335,22 @@ function handleFatalError(func) {
   try {
     return func();
   } catch (e) {
-    // Fatal errors begin with that prefix. Strip it out, and the newline.
-    // C++ exceptions are thrown as pointers (numbers) in release builds
-    // but CppException JS class in debug builds.
+    // Fatal errors begin with a specific prefix. Strip it out, and the newline.
     if (typeof e === 'number') {
+      // Older version of emscripten can throw C++ exceptions as pointers
+      // (numbers) in release builds.
       var [_, message] = getExceptionMessage(e);
       if (message?.startsWith('Fatal: ')) {
         throw new Error(message.substr(7).trim());
       }
     } else  {
+      // Newer version of emscripten always throw CppException object but don't
+      // always populate the `.message` field.
+      // TODO: Set EXCEPTION_STACK_TRACES instead?
+      if (!e.message) {
+        var [_, message] = getExceptionMessage(e);
+        e.message = message;
+      }
       e.message = e.message.replace('Fatal:', '');
       e.message = e.message.trim();
     }
@@ -3305,11 +3374,28 @@ Module['readBinary'] = function(data) {
   return wrapModule(ptr);
 };
 
+Module['readBinaryWithFeatures'] = function(data, features) {
+  const buffer = _malloc(data.length);
+  HEAP8.set(data, buffer);
+  const ptr = handleFatalError(() => Module['_BinaryenModuleReadWithFeatures'](buffer, data.length, features));
+  _free(buffer);
+  return wrapModule(ptr);
+};
+
 // Parses text format to a module
 Module['parseText'] = function(text) {
   const buffer = _malloc(text.length + 1);
   stringToAscii(text, buffer);
   const ptr = handleFatalError(() => Module['_BinaryenModuleParse'](buffer));
+  _free(buffer);
+  return wrapModule(ptr);
+};
+
+// Parses text format to a module with the given feature set enabled
+Module['parseTextWithFeatures'] = function(text, features) {
+  const buffer = _malloc(text.length + 1);
+  stringToAscii(text, buffer);
+  const ptr = handleFatalError(() => Module['_BinaryenModuleParseWithFeatures'](buffer, features));
   _free(buffer);
   return wrapModule(ptr);
 };
@@ -4144,6 +4230,60 @@ Module['Binary'] = makeExpressionWrapper(Module['_BinaryenBinaryId'](), {
   },
   'setRight'(expr, rightExpr) {
     Module['_BinaryenBinarySetRight'](expr, rightExpr);
+  }
+});
+
+Module['WideIntAddSub'] = makeExpressionWrapper(Module['_BinaryenWideIntAddSubId'](), {
+  'getOp'(expr) {
+    return Module['_BinaryenWideIntAddSubGetOp'](expr);
+  },
+  'setOp'(expr, op) {
+    Module['_BinaryenWideIntAddSubSetOp'](expr, op);
+  },
+  'getLeftLow'(expr) {
+    return Module['_BinaryenWideIntAddSubGetLeftLow'](expr);
+  },
+  'setLeftLow'(expr, leftLowExpr) {
+    Module['_BinaryenWideIntAddSubSetLeftLow'](expr, leftLowExpr);
+  },
+  'getLeftHigh'(expr) {
+    return Module['_BinaryenWideIntAddSubGetLeftHigh'](expr);
+  },
+  'setLeftHigh'(expr, leftHighExpr) {
+    Module['_BinaryenWideIntAddSubSetLeftHigh'](expr, leftHighExpr);
+  },
+  'getRightLow'(expr) {
+    return Module['_BinaryenWideIntAddSubGetRightLow'](expr);
+  },
+  'setRightLow'(expr, rightLowExpr) {
+    Module['_BinaryenWideIntAddSubSetRightLow'](expr, rightLowExpr);
+  },
+  'getRightHigh'(expr) {
+    return Module['_BinaryenWideIntAddSubGetRightHigh'](expr);
+  },
+  'setRightHigh'(expr, rightHighExpr) {
+    Module['_BinaryenWideIntAddSubSetRightHigh'](expr, rightHighExpr);
+  }
+});
+
+Module['WideIntMul'] = makeExpressionWrapper(Module['_BinaryenWideIntMulId'](), {
+  'getOp'(expr) {
+    return Module['_BinaryenWideIntMulGetOp'](expr);
+  },
+  'setOp'(expr, op) {
+    Module['_BinaryenWideIntMulSetOp'](expr, op);
+  },
+  'getLeft'(expr) {
+    return Module['_BinaryenWideIntMulGetLeft'](expr);
+  },
+  'setLeft'(expr, leftExpr) {
+    Module['_BinaryenWideIntMulSetLeft'](expr, leftExpr);
+  },
+  'getRight'(expr) {
+    return Module['_BinaryenWideIntMulGetRight'](expr);
+  },
+  'setRight'(expr, rightExpr) {
+    Module['_BinaryenWideIntMulSetRight'](expr, rightExpr);
   }
 });
 

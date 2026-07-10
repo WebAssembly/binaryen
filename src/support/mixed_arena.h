@@ -32,7 +32,7 @@
 //
 // Arena-style bump allocation is important for two reasons: First, so that
 // allocation is quick, and second, so that allocated items are close together,
-// which is cache-friendy. Arena allocation is also useful for a minor third
+// which is cache-friendly. Arena allocation is also useful for a minor third
 // reason which is to make freeing all the items in an arena very quick.
 //
 // Each WebAssembly Module has an arena allocator, which should be used
@@ -100,7 +100,7 @@ struct MixedArena {
         // allocator for us there. but carefully, as others may do so as
         // well. we may waste a few allocations here, but it doesn't matter
         // as this can only happen as the chain is built up, i.e.,
-        // O(# of cores) per allocator, and our allocatrs are long-lived.
+        // O(# of cores) per allocator, and our allocators are long-lived.
         if (!allocated) {
           allocated = new MixedArena(); // has our thread id
         }

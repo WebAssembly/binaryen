@@ -52,6 +52,7 @@
 #include "ir/type-updating.h"
 #include "pass.h"
 #include "support/index.h"
+#include "support/mixed_arena.h"
 #include "support/utilities.h"
 #include "wasm-builder.h"
 #include "wasm-traversal.h"
@@ -234,7 +235,7 @@ struct DAE2 : public Pass {
     }
 
     optimizeReferencedFuncs =
-      getPassOptions().closedWorld && wasm->features.hasGC();
+      getPassOptions().worldMode == WorldMode::Closed && wasm->features.hasGC();
 
     TIME(Timer timer);
 
@@ -354,9 +355,25 @@ struct GraphBuilder : public WalkerPass<ExpressionStackWalker<GraphBuilder>> {
     }
   }
 
-  void visitResume(Resume* curr) { noteContinuation(curr->cont->type); }
+  void visitResumeHandlers(const ArenaVector<Name>& labels) {
+    for (Index i = 0; i < labels.size(); ++i) {
+      if (labels[i]) {
+        auto* target = findBreakTarget(labels[i]);
+        assert(target->type.size() >= 1);
+        auto newContType = target->type[target->type.size() - 1];
+        assert(newContType.isContinuation());
+        noteContinuation(newContType);
+      }
+    }
+  }
+
+  void visitResume(Resume* curr) {
+    noteContinuation(curr->cont->type);
+    visitResumeHandlers(curr->handlerBlocks);
+  }
   void visitResumeThrow(ResumeThrow* curr) {
     noteContinuation(curr->cont->type);
+    visitResumeHandlers(curr->handlerBlocks);
   }
   void visitStackSwitch(StackSwitch* curr) {
     noteContinuation(curr->cont->type);
@@ -562,7 +579,8 @@ void DAE2::analyzeModule() {
   //
   // TODO: Analyze tags and remove their unused parameters.
   std::unordered_set<HeapType> unrewritableRoots;
-  publicHeapTypes = ModuleUtils::getPublicHeapTypes(*wasm);
+  publicHeapTypes =
+    ModuleUtils::getPublicHeapTypes(*wasm, getPassOptions().worldMode);
   for (auto type : publicHeapTypes) {
     if (type.isSignature()) {
       unrewritableRoots.insert(getRootType(type));
@@ -711,7 +729,8 @@ void DAE2::computeFixedPoint() {
 struct DAETypeUpdater : GlobalTypeRewriter {
   DAE2& parent;
   DAETypeUpdater(DAE2& parent)
-    : GlobalTypeRewriter(*parent.wasm), parent(parent) {}
+    : GlobalTypeRewriter(*parent.wasm, parent.getPassOptions().worldMode),
+      parent(parent) {}
 
   void modifySignature(HeapType oldType, Signature& sig) override {
     // All signature types in a type tree will have the same parameters removed
@@ -903,7 +922,7 @@ struct Optimizer
     // out the parameter.
     if (curr->index < funcInfo->paramUsages.size() &&
         !funcInfo->paramUsages[curr->index] &&
-        funcInfo->paramGets.count(curr)) {
+        funcInfo->paramGets.contains(curr)) {
       for (Index i = expressionStack.size(); i > 0; --i) {
         auto* expr = expressionStack[i - 1];
         if (expr->is<Call>() || expr->is<CallIndirect>() ||
@@ -1031,7 +1050,7 @@ struct Optimizer
       // or non-concrete expression it ultimately flows into.
       return;
     }
-    if (!removedExpressions.count(curr)) {
+    if (!removedExpressions.contains(curr)) {
       // We're keeping this one.
       return;
     }
@@ -1054,7 +1073,7 @@ struct Optimizer
 
 Expression* Optimizer::getReplacement(Expression* curr) {
   Builder builder(*getModule());
-  if (!removedExpressions.count(curr)) {
+  if (!removedExpressions.contains(curr)) {
     // This expression is not removed, so none of its children are either. (If
     // they were, they would already have been removed.)
     if (!curr->type.isConcrete()) {
@@ -1141,7 +1160,7 @@ Expression* Optimizer::getReplacement(Expression* curr) {
     static void scan(Collector* self, Expression** currp) {
       Expression* curr = *currp;
 
-      if (!self->removedExpressions.count(curr)) {
+      if (!self->removedExpressions.contains(curr)) {
         // The expressions we are removing form a sub-tree starting at the
         // root expression. There is therefore never a removed expression
         // inside a non-removed expression. We can just collect this
@@ -1479,7 +1498,7 @@ void DAE2::collectStats() {
       if (auto* loc = std::get_if<FuncParamLoc>(&node)) {
         auto [funcIndex, paramIndex] = *loc;
         for (auto loc : parent.funcInfos[funcIndex].callerParams[paramIndex]) {
-          if (optimizedNodes.count(loc)) {
+          if (optimizedNodes.contains(loc)) {
             push(loc);
           }
         }
@@ -1488,7 +1507,7 @@ void DAE2::collectStats() {
         if (auto it = parent.typeTreeInfos.find(funcType);
             it != parent.typeTreeInfos.end()) {
           for (auto loc : it->second.callerParams[paramIndex]) {
-            if (optimizedNodes.count(loc)) {
+            if (optimizedNodes.contains(loc)) {
               push(loc);
             }
           }

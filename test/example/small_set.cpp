@@ -11,7 +11,7 @@ template<typename T>
 void assertContents(T& t, const std::vector<int>& expectedContents) {
   assert(t.size() == expectedContents.size());
   for (auto item : expectedContents) {
-    assert(t.count(item) == 1);
+    assert(t.contains(item));
   }
   // Also test this using an iterator and a const iterator to also get
   // coverage there.
@@ -69,29 +69,29 @@ template<typename T> void testAPI() {
     assert(t.size() == 3);
 
     // unwind by erasing (in the opposite direction from before)
-    assert(t.count(1) == 1);
-    assert(t.count(2) == 1);
-    assert(t.count(3) == 1);
-    assert(t.count(1337) == 0);
+    assert(t.contains(1));
+    assert(t.contains(2));
+    assert(t.contains(3));
+    assert(!t.contains(1337));
 
     t.erase(1);
-    assert(t.count(1) == 0);
+    assert(!t.contains(1));
 
     assert(t.size() == 2);
 
-    assert(t.count(2) == 1);
+    assert(t.contains(2));
     t.erase(2);
-    assert(t.count(2) == 0);
+    assert(!t.contains(2));
 
     assert(t.size() == 1);
 
-    assert(t.count(3) == 1);
+    assert(t.contains(3));
     t.erase(3);
 
-    assert(t.count(1) == 0);
-    assert(t.count(2) == 0);
-    assert(t.count(3) == 0);
-    assert(t.count(1337) == 0);
+    assert(!t.contains(1));
+    assert(!t.contains(2));
+    assert(!t.contains(3));
+    assert(!t.contains(1337));
 
     assert(t.size() == 0);
   }

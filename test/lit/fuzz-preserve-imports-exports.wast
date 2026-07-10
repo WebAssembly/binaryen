@@ -18,7 +18,11 @@
 ;; PRESERVE:  (import "a" "f" (func $ifunc
 ;; PRESERVE:  (import "a" "c" (tag $itag
 
+;; The export is preserved.
 ;; PRESERVE:  (export "foo" (func $foo))
+
+;; The start function is preserved.
+;; PRESERVE:  (start $on_load)
 
 ;; And, without the flag, we do generate both imports and exports.
 
@@ -42,8 +46,14 @@
   (import "a" "e" (table $itable 10 20 funcref))
   (import "a" "f" (func $ifunc))
 
+  (start $on_load)
+
   ;; One existing export.
   (func $foo (export "foo")
+  )
+
+  (func $on_load
+    (call $ifunc)
   )
 )
 

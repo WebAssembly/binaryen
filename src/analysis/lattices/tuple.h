@@ -137,7 +137,7 @@ public:
   }
 };
 
-#if __cplusplus >= 202002L
+#if defined(__cpp_lib_concepts)
 static_assert(FullLattice<Tuple<>>);
 static_assert(FullLattice<Tuple<Bool>>);
 #endif

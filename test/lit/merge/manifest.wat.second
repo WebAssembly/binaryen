@@ -1,0 +1,6 @@
+(module
+  (import "env" "imported_second" (func $imported_second))
+  (func $baz (export "baz")
+    (call $imported_second)
+  )
+)

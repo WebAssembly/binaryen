@@ -79,6 +79,7 @@ acqrel_execution_tests = """;; Execution of acqrel atomics
   (func (export "i64.atomic.rmw16.cmpxchg_u") (param $addr i32) (param $expected i64) (param $value i64) (result i64) (i64.atomic.rmw16.cmpxchg_u acqrel (local.get $addr) (local.get $expected) (local.get $value)))
   (func (export "i64.atomic.rmw32.cmpxchg_u") (param $addr i32) (param $expected i64) (param $value i64) (result i64) (i64.atomic.rmw32.cmpxchg_u acqrel (local.get $addr) (local.get $expected) (local.get $value)))
 
+  (func (export "atomic.fence") (atomic.fence acqrel))
 )
 
 ;; *.atomic.load*
@@ -389,6 +390,10 @@ acqrel_execution_tests = """;; Execution of acqrel atomics
 (invoke "init" (i64.const 0x1111111111111111))
 (assert_return (invoke "i64.atomic.rmw32.cmpxchg_u" (i32.const 0) (i64.const 0x11111111) (i64.const 0xcabba6e5cabba6e5)) (i64.const 0x11111111))
 (assert_return (invoke "i64.atomic.load" (i32.const 0)) (i64.const 0x11111111cabba6e5))
+
+;; atomic.fence
+
+(invoke "atomic.fence")
 
 
 ;; unaligned accesses

@@ -5,7 +5,7 @@
 (module
  (type $A (struct (field (mut (ref null $A)))))
 
- ;; CHECK:      [fuzz-exec] calling test
+ ;; CHECK:      [fuzz-exec] export test
  (func $test (export "test")
   (local $a (ref $A))
   ;; This function makes a self-cycle where the local $a's ref field points to
@@ -24,5 +24,5 @@
   )
  )
 )
-;; CHECK:      [fuzz-exec] calling test
+;; CHECK:      [fuzz-exec] export test
 ;; CHECK-NEXT: [fuzz-exec] comparing test

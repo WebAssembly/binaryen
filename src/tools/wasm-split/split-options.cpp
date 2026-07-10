@@ -256,14 +256,6 @@ WasmSplitOptions::WasmSplitOptions()
          [&](Options* o, const std::string& argument) {
            placeholderNamespacePrefix = argument;
          })
-    .add("--jspi",
-         "",
-         "Transform the module to support asynchronously loading the secondary "
-         "module before any placeholder functions have been called.",
-         WasmSplitOption,
-         {Mode::Split},
-         Options::Arguments::Zero,
-         [&](Options* o, const std::string& argument) { jspi = true; })
     .add(
       "--export-prefix",
       "",
@@ -320,17 +312,7 @@ WasmSplitOptions::WasmSplitOptions()
          [&](Options* o, const std::string& argument) {
            secondaryMemoryName = argument;
          })
-    .add(
-      "--emit-module-names",
-      "",
-      "Emit module names, even if not emitting the rest of the names section. "
-      "Can help differentiate the modules in stack traces. This option will be "
-      "removed once simpler ways of naming modules are widely available. See "
-      "https://bugs.chromium.org/p/v8/issues/detail?id=11808.",
-      WasmSplitOption,
-      {Mode::Split, Mode::MultiSplit, Mode::Instrument},
-      Options::Arguments::Zero,
-      [&](Options* o, const std::string& arguments) { emitModuleNames = true; })
+
     .add("--initial-table",
          "",
          "A hack to ensure the split and instrumented modules have the same "
@@ -359,6 +341,23 @@ WasmSplitOptions::WasmSplitOptions()
          [&](Options* o, const std::string& arguments) {
            passOptions.debugInfo = true;
          })
+    .add("--strip-debug",
+         "",
+         "Strip debug info (including the names section)",
+         WasmSplitOption,
+         {Mode::Split, Mode::MultiSplit, Mode::Instrument},
+         Options::Arguments::Zero,
+         [&](Options* o, const std::string& arguments) { stripDebug = true; })
+    .add("--traps-never-happen",
+         "-tnh",
+         "Split under the helpful assumption that no trap is reached at "
+         "runtime (from load, div/mod, etc.)",
+         WasmSplitOption,
+         {Mode::Split, Mode::MultiSplit},
+         Options::Arguments::Zero,
+         [&](Options* o, const std::string& arguments) {
+           passOptions.trapsNeverHappen = true;
+         })
     .add("--output",
          "-o",
          "Output file.",
@@ -366,12 +365,6 @@ WasmSplitOptions::WasmSplitOptions()
          {Mode::Instrument, Mode::MergeProfiles, Mode::MultiSplit},
          Options::Arguments::One,
          [&](Options* o, const std::string& argument) { output = argument; })
-    .add("--unescape",
-         "-u",
-         "Un-escape function names (in print-profile output)",
-         WasmSplitOption,
-         Options::Arguments::Zero,
-         [&](Options* o, const std::string& argument) { unescape = true; })
     .add("--verbose",
          "-v",
          "Verbose output mode. Prints the functions that will be kept "
@@ -466,7 +459,7 @@ bool WasmSplitOptions::validate() {
 
   // Validate that all used options are allowed in the current mode.
   for (std::string& opt : usedOptions) {
-    if (!validOptions[static_cast<unsigned>(mode)].count(opt)) {
+    if (!validOptions[static_cast<unsigned>(mode)].contains(opt)) {
       std::stringstream msg;
       msg << "Option " << opt << " cannot be used in " << mode << " mode.";
       fail(msg.str());

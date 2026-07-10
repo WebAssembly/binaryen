@@ -292,6 +292,9 @@ struct Analyzer {
     // need to read one place.
     std::unordered_map<HeapType, std::unordered_set<Name>> typeFuncs;
     std::unordered_map<HeapType, std::unordered_set<Name>> typeElems;
+
+    // All elems, regardless of type.
+    std::unordered_set<Name> allElems;
   };
   std::unordered_map<Name, FlatTableInfo> flatTableInfoMap;
 
@@ -313,23 +316,39 @@ struct Analyzer {
   }
 
   void prepare() {
-    for (auto& elem : module->elementSegments) {
-      if (!elem->table) {
-        continue;
-      }
-      auto& flatTableInfo = flatTableInfoMap[elem->table];
-      for (auto* item : elem->data) {
+    auto notePossibleFunc =
+      [&](FlatTableInfo& info, Expression* item, Name elem = Name()) {
         if (auto* refFunc = item->dynCast<RefFunc>()) {
           auto* func = module->getFunction(refFunc->func);
           std::optional<HeapType> type = func->type.getHeapType();
           // Add this function and element to all relevant types: each function
           // might be called by its type, or a supertype.
+          // TODO: use exactness here
           while (type) {
-            flatTableInfo.typeFuncs[*type].insert(func->name);
-            flatTableInfo.typeElems[*type].insert(elem->name);
+            info.typeFuncs[*type].insert(func->name);
+            if (elem) {
+              info.typeElems[*type].insert(elem);
+            }
             type = type->getSuperType();
           }
         }
+      };
+
+    for (auto& elem : module->elementSegments) {
+      if (elem->isPassive()) {
+        continue;
+      }
+      auto& info = flatTableInfoMap[elem->table];
+      for (auto* item : elem->data) {
+        notePossibleFunc(info, item, elem->name);
+      }
+      info.allElems.insert(elem->name);
+    }
+
+    // If a table has an initial value, it is callable as well.
+    for (auto& table : module->tables) {
+      if (table->init) {
+        notePossibleFunc(flatTableInfoMap[table->name], table->init);
       }
     }
   }
@@ -397,7 +416,7 @@ struct Analyzer {
         // We must not have a type in both calledSignatures and
         // uncalledRefFuncMap: once it is called, we do not track RefFuncs for
         // it any more.
-        assert(calledSignatures.count(subType) == 0);
+        assert(!calledSignatures.contains(subType));
 
         for (Name target : iter->second) {
           use({ModuleElementKind::Function, target});
@@ -423,26 +442,48 @@ struct Analyzer {
     auto [table, type] = call;
 
     // Find callable functions and segments.
-    for (auto& func : flatTableInfoMap[table].typeFuncs[type]) {
+    auto& info = flatTableInfoMap[table];
+    for (auto& func : info.typeFuncs[type]) {
       use({ModuleElementKind::Function, func});
     }
-    for (auto& elem : flatTableInfoMap[table].typeElems[type]) {
+    for (auto& elem : info.typeElems[type]) {
       reference({ModuleElementKind::ElementSegment, elem});
+    }
+
+    // If traps might happen, and the table has an initial value, we must
+    // consider more: imagine that we call a function with the wrong type, so we
+    // trap. The loops above handled all the non-trapping cases - info.typeFuncs
+    // refers to the functions we might actually call successfully. But if we
+    // trap on the wrong type, then we must preserve that trap. To do so, if
+    // there is an initial value of the right type, we must preserve elem
+    // segments with the *wrong* type - they write the function that we trap on
+    // into the table. Without that write, we will call the initial value, and
+    // if it has the right type, we would not trap. (Note that we were using the
+    // fact that we do not distinguish types of traps, in the case without an
+    // initial value - we turned a trap on the wrong type to one on a null.)
+    if (!options.trapsNeverHappen && module->getTable(table)->init) {
+      // We only need to reference the elem, so it writes its functions - the
+      // functions are not actually called, as we just trap.
+      for (auto& elem : info.allElems) {
+        reference({ModuleElementKind::ElementSegment, elem});
+      }
     }
 
     // Note a possible call of a function reference as well, if something else
     // might be written into the table during runtime.
-    // TODO: Add an option for immutable initial content like Directize?
+    // TODO: Add an option for immutable initial content like Directize? Can
+    //       also check for grow without set, which leaves initial entries
+    //       fixed.
     if (!tableInfoMap) {
       tableInfoMap = TableUtils::computeTableInfo(*module);
     }
-    if ((*tableInfoMap)[table].mayBeModified) {
+    if ((*tableInfoMap)[table].mayBeModified()) {
       useCallRefType(type);
     }
   }
 
   void useRefFunc(Name func) {
-    if (!options.closedWorld) {
+    if (options.worldMode == WorldMode::Open) {
       // The world is open, so assume the worst and something (inside or outside
       // of the module) can call this.
       use({ModuleElementKind::Function, func});
@@ -454,11 +495,11 @@ struct Analyzer {
     auto element = ModuleElement{ModuleElementKind::Function, func};
 
     auto type = module->getFunction(func)->type.getHeapType();
-    if (calledSignatures.count(type)) {
+    if (calledSignatures.contains(type)) {
       // We must not have a type in both calledSignatures and
       // uncalledRefFuncMap: once it is called, we do not track RefFuncs for it
       // any more.
-      assert(uncalledRefFuncMap.count(type) == 0);
+      assert(!uncalledRefFuncMap.contains(type));
 
       // We've seen a RefFunc for this, so it is used.
       use(element);
@@ -471,7 +512,7 @@ struct Analyzer {
   }
 
   void useStructField(StructField structField) {
-    if (!readStructFields.count(structField)) {
+    if (!readStructFields.contains(structField)) {
       // Avoid a structured binding as the C++ spec does not allow capturing
       // them in lambdas, which we need below.
       auto type = structField.first;
@@ -496,6 +537,7 @@ struct Analyzer {
           }
         }
         unreadStructFieldExprMap.erase(subStructField);
+        return true;
       });
     }
   }
@@ -509,7 +551,7 @@ struct Analyzer {
       auto curr = moduleQueue.back();
       moduleQueue.pop_back();
 
-      assert(used.count(curr));
+      assert(used.contains(curr));
       auto& [kind, value] = curr;
       switch (kind) {
         case ModuleElementKind::Function: {
@@ -538,14 +580,19 @@ struct Analyzer {
               }
             });
           break;
-        case ModuleElementKind::Table:
+        case ModuleElementKind::Table: {
           ModuleUtils::iterTableSegments(
             *module, value, [&](ElementSegment* segment) {
               if (!segment->data.empty()) {
                 use({ModuleElementKind::ElementSegment, segment->name});
               }
             });
+          auto* table = module->getTable(value);
+          if (table->init) {
+            use(table->init);
+          }
           break;
+        }
         case ModuleElementKind::DataSegment: {
           auto* segment = module->getDataSegment(value);
           if (segment->offset) {
@@ -602,8 +649,8 @@ struct Analyzer {
     // outside of the code we can see), and when it is reached (if it's
     // unreachable then we don't know the type, and can defer that to DCE to
     // remove).
-    if (!options.closedWorld || curr->type == Type::unreachable ||
-        !curr->is<StructNew>()) {
+    if (options.worldMode == WorldMode::Open ||
+        curr->type == Type::unreachable || !curr->is<StructNew>()) {
       for (auto* child : ChildIterator(curr)) {
         use(child);
       }
@@ -644,7 +691,7 @@ struct Analyzer {
 
       // If this struct field has already been read, then we should use the
       // contents there now.
-      auto useOperandNow = readStructFields.count(structField);
+      auto useOperandNow = readStructFields.contains(structField);
 
       // Side effects are tricky to reason about - the side effects must happen
       // even if we never read the struct field - so give up and consider it
@@ -756,8 +803,18 @@ struct Analyzer {
     } else if (kind == ModuleElementKind::ElementSegment) {
       // TODO: We could empty out parts of the segment we don't need.
       auto* segment = module->getElementSegment(value);
+      if (segment->offset) {
+        addReferences(segment->offset);
+      }
       for (auto* item : segment->data) {
         addReferences(item);
+      }
+    } else if (kind == ModuleElementKind::Table) {
+      auto* table = module->getTable(value);
+      if (table->init) {
+        // TODO: Might be possible to remove the init expression if the type is
+        // nullable.
+        addReferences(table->init);
       }
     }
   }
@@ -844,19 +901,19 @@ struct RemoveUnusedModuleElements : public Pass {
       }
     };
     ModuleUtils::iterActiveDataSegments(*module, [&](DataSegment* segment) {
-      if (segment->memory.is()) {
+      if (segment->isActive()) {
         auto* memory = module->getMemory(segment->memory);
         maybeRootSegment(ModuleElementKind::DataSegment,
                          segment->name,
                          segment->data.size(),
                          segment->offset,
                          memory,
-                         memory->initial * Memory::kPageSize);
+                         memory->initial << memory->pageSizeLog2);
       }
     });
     ModuleUtils::iterActiveElementSegments(
       *module, [&](ElementSegment* segment) {
-        if (segment->table.is()) {
+        if (segment->isActive()) {
           auto* table = module->getTable(segment->table);
           maybeRootSegment(ModuleElementKind::ElementSegment,
                            segment->name,
@@ -897,17 +954,18 @@ struct RemoveUnusedModuleElements : public Pass {
       // We need to emit something in the output if it has either a reference or
       // a use. Situations where we can do better (for the case of a reference
       // without any use) are handled separately below.
-      return analyzer.used.count(element) || analyzer.referenced.count(element);
+      return analyzer.used.contains(element) ||
+             analyzer.referenced.contains(element);
     };
 
     module->removeFunctions([&](Function* curr) {
       auto element = ModuleElement{ModuleElementKind::Function, curr->name};
-      if (analyzer.used.count(element)) {
+      if (analyzer.used.contains(element)) {
         // This is used.
         return false;
       }
 
-      if (analyzer.referenced.count(element)) {
+      if (analyzer.referenced.contains(element)) {
         // This is not used, but has a reference. See comment above on
         // uncalledRefFuncs.
         if (!curr->imported()) {

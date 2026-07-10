@@ -181,7 +181,7 @@ struct HeapStoreOptimization
     // effects.
     auto firstEffects = effects(list[i]);
     auto secondEffects = effects(list[j]);
-    if (secondEffects.invalidates(firstEffects)) {
+    if (firstEffects.orderedBefore(secondEffects)) {
       return false;
     }
 
@@ -227,8 +227,8 @@ struct HeapStoreOptimization
     // occurred; or, if it writes to that local, then it would cross another
     // write).
     auto setValueEffects = effects(set->value);
-    if (setValueEffects.localsRead.count(refLocalIndex) ||
-        setValueEffects.localsWritten.count(refLocalIndex)) {
+    if (setValueEffects.localsRead.contains(refLocalIndex) ||
+        setValueEffects.localsWritten.contains(refLocalIndex)) {
       return false;
     }
 
@@ -241,7 +241,7 @@ struct HeapStoreOptimization
     if (!new_->isWithDefault()) {
       for (Index i = index + 1; i < operands.size(); i++) {
         auto operandEffects = effects(operands[i]);
-        if (operandEffects.invalidates(setValueEffects)) {
+        if (operandEffects.orderedBefore(setValueEffects)) {
           // TODO: we could use locals to reorder everything
           return false;
         }
@@ -252,7 +252,7 @@ struct HeapStoreOptimization
     // if it exists.
     if (new_->desc) {
       auto descEffects = effects(new_->desc);
-      if (descEffects.invalidates(setValueEffects)) {
+      if (descEffects.orderedBefore(setValueEffects)) {
         // TODO: we could use locals to reorder everything
         return false;
       }
@@ -264,7 +264,7 @@ struct HeapStoreOptimization
     // the optimization X' would happen first.
     ShallowEffectAnalyzer structNewEffects(
       getPassOptions(), *getModule(), new_);
-    if (structNewEffects.invalidates(setValueEffects)) {
+    if (structNewEffects.orderedBefore(setValueEffects)) {
       return false;
     }
 

@@ -65,7 +65,7 @@ struct SignaturePruning : public Pass {
       return;
     }
 
-    if (!getPassOptions().closedWorld) {
+    if (getPassOptions().worldMode == WorldMode::Open) {
       Fatal() << "SignaturePruning requires --closed-world";
     }
 
@@ -187,7 +187,8 @@ struct SignaturePruning : public Pass {
     }
 
     // Find the public types, which cannot be modified.
-    for (auto type : ModuleUtils::getPublicHeapTypes(*module)) {
+    for (auto type :
+         ModuleUtils::getPublicHeapTypes(*module, getPassOptions().worldMode)) {
       if (type.isFunction()) {
         allInfo[type].optimizable = false;
       }
@@ -197,6 +198,17 @@ struct SignaturePruning : public Pass {
     // switching tags. TODO.
     for (auto& tag : module->tags) {
       allInfo[tag->type].optimizable = false;
+    }
+
+    // Continuations must not have params refined, because we do not update
+    // their users (e.g. cont.bind, resume) with new types.
+    // TODO: support refining continuations
+    if (module->features.hasStackSwitching()) {
+      for (auto type : ModuleUtils::collectHeapTypes(*module)) {
+        if (type.isContinuation()) {
+          allInfo[type.getContinuation().type].optimizable = false;
+        }
+      }
     }
 
     // Signature-called functions must also not be modified.
@@ -266,7 +278,7 @@ struct SignaturePruning : public Pass {
       // to prune them.
       SortedVector unusedParams;
       for (Index i = 0; i < numParams; i++) {
-        if (usedParams.count(i) == 0) {
+        if (!usedParams.contains(i)) {
           unusedParams.insert(i);
         }
       }
@@ -304,7 +316,7 @@ struct SignaturePruning : public Pass {
       // Create a new signature. When the TypeRewriter operates below it will
       // modify the existing heap type in place to change its signature to this
       // one. TypeRewriter will also ensure that distinct types remain
-      // disctinct, even if they have the same signature after optimization.
+      // distinct, even if they have the same signature after optimization.
       newSignatures[type] = Signature(Type(newParams), sig.results);
 
       // removeParameters() updates the type as it goes, but in this pass we
@@ -328,7 +340,8 @@ struct SignaturePruning : public Pass {
     }
 
     // Rewrite the types.
-    GlobalTypeRewriter::updateSignatures(newSignatures, *module);
+    GlobalTypeRewriter::updateSignatures(
+      newSignatures, *module, getPassOptions().worldMode);
 
     if (callTargetsToLocalize.empty()) {
       return false;

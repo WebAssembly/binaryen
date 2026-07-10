@@ -1,7 +1,6 @@
 #!/usr/bin/python3
 
-'''
-Bundle files for uploading to ClusterFuzz.
+"""Bundle files for uploading to ClusterFuzz.
 
 Usage:
 
@@ -68,7 +67,7 @@ After uploading to ClusterFuzz, you can wait a while for it to run, and then:
 
   3. Check the stats and crashes page (known crashes should at least be showing
      up). Note that these may take longer to show up than 1 and 2.
-'''
+"""
 
 import glob
 import os
@@ -102,14 +101,15 @@ else:
     binaryen_lib = shared.options.binaryen_lib
 
 # ClusterFuzz's run.py uses these features. Keep this in sync with that, so that
-# we only bundle initial content that makes sense for it.
+# we only bundle initial content that makes sense for it. Also keep it in sync
+# with fuzz_opt.py's DISALLOWED_FEATURES_IN_V8.
 features = [
     '-all',
     '--disable-shared-everything',
     '--disable-fp16',
     '--disable-strings',
     '--disable-stack-switching',
-    '--disable-relaxed-atomics',
+    '--disable-multibyte',
 ]
 
 with tarfile.open(output_file, "w:gz") as tar:
@@ -184,5 +184,5 @@ with tarfile.open(output_file, "w:gz") as tar:
 print('Done.')
 print('To run the tests on this bundle, do:')
 print()
-print(f'BINARYEN_CLUSTER_FUZZ_BUNDLE={output_file} python -m unittest test/unit/test_cluster_fuzz.py')
+print(f'BINARYEN_CLUSTER_FUZZ_BUNDLE={output_file} python3 -m unittest test/unit/test_cluster_fuzz.py')
 print()

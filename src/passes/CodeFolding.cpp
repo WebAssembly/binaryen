@@ -56,11 +56,14 @@
 //
 
 #include <iterator>
+#include <unordered_map>
+#include <unordered_set>
 
 #include "ir/branch-utils.h"
 #include "ir/effects.h"
 #include "ir/eh-utils.h"
 #include "ir/find_all.h"
+#include "ir/iteration.h"
 #include "ir/label-utils.h"
 #include "ir/utils.h"
 #include "pass.h"
@@ -74,9 +77,9 @@ static const Index WORTH_ADDING_BLOCK_TO_REMOVE_THIS_MUCH = 3;
 struct ExpressionMarker
   : public PostWalker<ExpressionMarker,
                       UnifiedExpressionVisitor<ExpressionMarker>> {
-  std::set<Expression*>& marked;
+  std::unordered_set<Expression*>& marked;
 
-  ExpressionMarker(std::set<Expression*>& marked, Expression* expr)
+  ExpressionMarker(std::unordered_set<Expression*>& marked, Expression* expr)
     : marked(marked) {
     walk(expr);
   }
@@ -122,13 +125,16 @@ struct CodeFolding
 
   // pass state
 
-  std::map<Name, std::vector<Tail>> breakTails; // break target name => tails
-                                                // that reach it
+  std::unordered_map<Name, std::vector<Tail>>
+    breakTails;                       // break target name => tails
+                                      // that reach it
   std::vector<Tail> unreachableTails; // tails leading to (unreachable)
   std::vector<Tail> returnTails;      // tails leading to (return)
-  std::set<Name> unoptimizables;      // break target names that we can't handle
-  std::set<Expression*> modifieds;    // modified code should not be processed
-                                      // again, wait for next pass
+  std::unordered_set<Name>
+    unoptimizables; // break target names that we can't handle
+  std::unordered_set<Expression*>
+    modifieds; // modified code should not be processed
+               // again, wait for next pass
 
   // walking
 
@@ -209,7 +215,7 @@ struct CodeFolding
     if (!curr->name.is()) {
       return;
     }
-    if (unoptimizables.count(curr->name) > 0) {
+    if (unoptimizables.contains(curr->name)) {
       return;
     }
     auto iter = breakTails.find(curr->name);
@@ -246,7 +252,7 @@ struct CodeFolding
     auto* right = curr->ifFalse->dynCast<Block>();
     // If one is a block and the other isn't, and the non-block is a tail of the
     // other, we can fold that - for our convenience, we just add a block and
-    // run the rest of the optimization mormally.
+    // run the rest of the optimization normally.
     auto maybeAddBlock = [this](Block* block, Expression*& other) -> Block* {
       // If other is a suffix of the block, wrap it in a block.
       //
@@ -294,6 +300,7 @@ struct CodeFolding
       returnTails.clear();
       unoptimizables.clear();
       modifieds.clear();
+      exitingBranchCache.clear();
       if (needEHFixups) {
         EHUtils::handleBlockNestedPops(func, *getModule());
       }
@@ -301,11 +308,104 @@ struct CodeFolding
   }
 
 private:
+  // Cache of exiting branch names, populated on demand. Only queried roots
+  // are stored. An empty set means no exiting branches.
+  std::unordered_map<Expression*, std::unordered_set<Name>> exitingBranchCache;
+
+  bool hasExitingBranches(Expression* expr) {
+    auto it = exitingBranchCache.find(expr);
+    if (it != exitingBranchCache.end()) {
+      return !it->second.empty();
+    }
+    return !populateExitingBranchCache(expr).empty();
+  }
+
+  // Walk |root| bottom-up computing exiting branches. Name sets are kept
+  // transiently (moved from children, erased after merge). Only the root's
+  // name set is persisted. Already-cached subtrees are skipped via scan(),
+  // and their cached names are merged in precisely.
+  // Returns a reference to the root's cached set (which may be empty).
+  const std::unordered_set<Name>& populateExitingBranchCache(Expression* root) {
+    struct CachePopulator
+      : public PostWalker<CachePopulator,
+                          UnifiedExpressionVisitor<CachePopulator>> {
+      std::unordered_map<Expression*, std::unordered_set<Name>>& resultCache;
+      std::unordered_map<Expression*, std::unordered_set<Name>> nameSets;
+
+      CachePopulator(
+        std::unordered_map<Expression*, std::unordered_set<Name>>& resultCache)
+        : resultCache(resultCache) {}
+
+      static void scan(CachePopulator* self, Expression** currp) {
+        auto* curr = *currp;
+        if (self->resultCache.count(curr)) {
+          return;
+        }
+        PostWalker<CachePopulator,
+                   UnifiedExpressionVisitor<CachePopulator>>::scan(self, currp);
+      }
+
+      void visitExpression(Expression* curr) {
+        std::unordered_set<Name> targets;
+
+        ChildIterator children(curr);
+        for (auto* child : children) {
+          auto it = nameSets.find(child);
+          if (it != nameSets.end()) {
+            if (targets.empty()) {
+              targets = std::move(it->second);
+            } else {
+              targets.merge(it->second);
+            }
+            nameSets.erase(it);
+          } else {
+            // Child was skipped by scan() — merge its cached names.
+            auto cacheIt = resultCache.find(child);
+            if (cacheIt != resultCache.end() && !cacheIt->second.empty()) {
+              if (targets.empty()) {
+                targets = cacheIt->second;
+              } else {
+                targets.insert(cacheIt->second.begin(), cacheIt->second.end());
+              }
+            }
+          }
+        }
+
+        BranchUtils::operateOnScopeNameUses(
+          curr, [&](Name& name) { targets.insert(name); });
+
+        BranchUtils::operateOnScopeNameDefs(curr, [&](Name& name) {
+          if (name.is()) {
+            targets.erase(name);
+          }
+        });
+
+        if (!targets.empty()) {
+          nameSets[curr] = std::move(targets);
+        }
+      }
+    };
+    CachePopulator populator(exitingBranchCache);
+    populator.walk(root);
+    auto it = populator.nameSets.find(root);
+    if (it != populator.nameSets.end()) {
+      return exitingBranchCache[root] = std::move(it->second);
+    }
+    return exitingBranchCache[root] = {};
+  }
+
   // check if we can move a list of items out of another item. we can't do so
   // if one of the items has a branch to something inside outOf that is not
   // inside that item
   bool canMove(const std::vector<Expression*>& items, Expression* outOf) {
-    auto allTargets = BranchUtils::getBranchTargets(outOf);
+    return canMove(items, outOf, BranchUtils::getBranchTargets(outOf));
+  }
+
+  // Overload that accepts pre-computed branch targets to avoid redundant
+  // O(N) getBranchTargets calls.
+  bool canMove(const std::vector<Expression*>& items,
+               Expression* outOf,
+               const BranchUtils::NameSet& allTargets) {
     for (auto* item : items) {
       auto exiting = BranchUtils::getExitingBranches(item);
       std::vector<Name> intersection;
@@ -356,10 +456,10 @@ private:
     }
     // see if anything is untoward, and we should not do this
     for (auto& tail : tails) {
-      if (tail.expr && modifieds.count(tail.expr) > 0) {
+      if (tail.expr && modifieds.contains(tail.expr)) {
         return;
       }
-      if (modifieds.count(tail.block) > 0) {
+      if (modifieds.contains(tail.block)) {
         return;
       }
       // if we were not modified, then we should be valid for processing
@@ -539,20 +639,27 @@ private:
   // we are just starting; num > 0 means that tails is guaranteed to be
   // equal in the last num items, so we can merge there, but we look for
   // deeper merges first.
+  // bodyTargets is lazily computed on first need and then passed to recursive
+  // calls to avoid repeated O(N) getBranchTargets walks over the function body.
   // returns whether we optimized something.
-  bool optimizeTerminatingTails(std::vector<Tail>& tails, Index num = 0) {
+  bool optimizeTerminatingTails(std::vector<Tail>& tails,
+                                Index num = 0,
+                                BranchUtils::NameSet* bodyTargets = nullptr) {
     if (tails.size() < 2) {
       return false;
     }
+    // Storage for body branch targets, declared here so it outlives the
+    // pointer stored in bodyTargets.
+    BranchUtils::NameSet localBodyTargets;
     // remove things that are untoward and cannot be optimized
     tails.erase(
       std::remove_if(tails.begin(),
                      tails.end(),
                      [&](Tail& tail) {
-                       if (tail.expr && modifieds.count(tail.expr) > 0) {
+                       if (tail.expr && modifieds.contains(tail.expr)) {
                          return true;
                        }
-                       if (tail.block && modifieds.count(tail.block) > 0) {
+                       if (tail.block && modifieds.contains(tail.block)) {
                          return true;
                        }
                        return false;
@@ -594,19 +701,21 @@ private:
       for (auto* item : items) {
         saved += Measurer::measure(item) * (tails.size() - 1);
       }
-      // compure the cost: in non-fallthroughs, we are replacing the final
+      // compute the cost: in non-fallthroughs, we are replacing the final
       // element with a br; for a fallthrough, if there is one, we must
       // add a return element (for the function body, so it doesn't reach us)
-      // TODO: handle fallthroughts for return
+      // TODO: handle fallthroughs for return
       Index cost = tails.size();
       // we also need to add two blocks: for us to break to, and to contain
       // that block and the merged code. very possibly one of the blocks
       // can be removed, though
       cost += WORTH_ADDING_BLOCK_TO_REMOVE_THIS_MUCH;
       // if we cannot merge to the end, then we definitely need 2 blocks,
-      // and a branch
-      // TODO: efficiency, entire body
-      if (!canMove(items, getFunction()->body)) {
+      // and a branch. Use the pre-computed bodyTargets to avoid repeated
+      // O(N) getBranchTargets calls.
+      assert(bodyTargets);
+      bool canMoveItems = canMove(items, getFunction()->body, *bodyTargets);
+      if (!canMoveItems) {
         cost += 1 + WORTH_ADDING_BLOCK_TO_REMOVE_THIS_MUCH;
         // TODO: to do this, we need to maintain a map of element=>parent,
         //       so that we can insert the new blocks in the right place
@@ -632,9 +741,7 @@ private:
                                 // TODO: this should not be a problem in
                                 //       *non*-terminating tails, but
                                 //       double-verify that
-                                if (EffectAnalyzer(
-                                      getPassOptions(), *getModule(), newItem)
-                                      .hasExternalBreakTargets()) {
+                                if (hasExitingBranches(newItem)) {
                                   return true;
                                 }
                                 return false;
@@ -644,9 +751,10 @@ private:
     if (next.size() >= 2) {
       // now we want to find a mergeable item - any item that is equal among a
       // subset
-      std::map<Expression*, size_t> hashes; // expression => hash value
+      std::unordered_map<Expression*, size_t>
+        hashes; // expression => hash value
       // hash value => expressions with that hash
-      std::map<size_t, std::vector<Expression*>> hashed;
+      std::unordered_map<size_t, std::vector<Expression*>> hashed;
       for (auto& tail : next) {
         auto* item = getItem(tail, num);
         auto hash = hashes[item] = ExpressionAnalyzer::hash(item);
@@ -654,7 +762,7 @@ private:
       }
       // look at each hash value exactly once. we do this in a deterministic
       // order by iterating over a vector retaining insertion order.
-      std::set<size_t> seen;
+      std::unordered_set<size_t> seen;
       for (auto& tail : next) {
         auto* item = getItem(tail, num);
         auto digest = hashes[item];
@@ -703,7 +811,14 @@ private:
             // as the changes may influence us. we leave further opts to further
             // passes (as this is rare in practice, it's generally not a perf
             // issue, but TODO optimize)
-            if (optimizeTerminatingTails(explore, num + 1)) {
+            // Compute body branch targets once and share across recursive
+            // calls to avoid repeated O(N) tree walks.
+            if (!bodyTargets) {
+              localBodyTargets =
+                BranchUtils::getBranchTargets(getFunction()->body);
+              bodyTargets = &localBodyTargets;
+            }
+            if (optimizeTerminatingTails(explore, num + 1, bodyTargets)) {
               return true;
             }
           }

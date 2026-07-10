@@ -19,9 +19,8 @@
 
 #include <array>
 #include <iostream>
-#include <variant>
 
-#include "compiler-support.h"
+#include "support/bits.h"
 #include "support/hash.h"
 #include "support/name.h"
 #include "support/small_vector.h"
@@ -49,19 +48,13 @@ class Literal {
     uint8_t v128[16];
     // A reference to Function data.
     std::shared_ptr<FuncData> funcData;
-    // A reference to GC data, either a Struct or an Array. For both of those we
-    // store the referred data as a Literals object (which is natural for an
-    // Array, and for a Struct, is just the fields in order). The type is used
-    // to indicate whether this is a Struct or an Array, and of what type. We
-    // also use this to store String data, as it is similarly stored on the
-    // heap. For externrefs, the gcData is the same as for the corresponding
-    // internal references and the values are only differentiated by the type.
-    // Externalized i31 references have a gcData containing the internal i31
-    // reference as its sole value even though internal i31 references do not
-    // have a gcData.
-    //
-    // Note that strings can be internalized, in which case they keep the same
-    // gcData, but their type becomes anyref.
+    // A reference to GC data, used for structs, arrays, strings, externrefs,
+    // and internalized externrefs. The GCData contains the struct or array
+    // fields, or the characters in the string. Externrefs are either
+    // externalized internal references, in which case the GCData will contain
+    // the internal reference, or a host reference, in which case the GCData
+    // will contain an i32 payload. Internalized references contain the wrapped
+    // externref in the GCData.
     std::shared_ptr<GCData> gcData;
     // A reference to Exn data.
     std::shared_ptr<ExnData> exnData;
@@ -263,6 +256,7 @@ public:
     lit.i32 = value | 0x80000000;
     return lit;
   }
+  static Literal makeExtern(int32_t payload, Shareability share);
   // Wasm has nondeterministic rules for NaN propagation in some operations. For
   // example. f32.neg is deterministic and just flips the sign, even of a NaN,
   // but f32.add is nondeterministic, and if one or more of the inputs is a NaN,
@@ -300,6 +294,8 @@ public:
     // Cast to unsigned for the left shift to avoid undefined behavior.
     return signed_ ? int32_t((uint32_t(i32) << 1)) >> 1 : (i32 & 0x7fffffff);
   }
+  bool hasExternPayload() const;
+  int32_t getExternPayload() const;
   int64_t geti64() const {
     assert(type == Type::i64);
     return i64;
@@ -707,13 +703,16 @@ public:
   Literal truncSatZeroUToI32x4() const;
   Literal demoteZeroToF32x4() const;
   Literal promoteLowToF64x2() const;
+  Literal promoteLowF16x8ToF32x4() const;
+  Literal demoteZeroF32x4ToF16x8() const;
+  Literal demoteZeroF64x2ToF16x8() const;
   Literal truncSatToSI16x8() const;
   Literal truncSatToUI16x8() const;
   Literal convertSToF16x8() const;
   Literal convertUToF16x8() const;
   Literal swizzleI8x16(const Literal& other) const;
-  Literal relaxedMaddF16x8(const Literal& left, const Literal& right) const;
-  Literal relaxedNmaddF16x8(const Literal& left, const Literal& right) const;
+  Literal maddF16x8(const Literal& left, const Literal& right) const;
+  Literal nmaddF16x8(const Literal& left, const Literal& right) const;
   Literal relaxedMaddF32x4(const Literal& left, const Literal& right) const;
   Literal relaxedNmaddF32x4(const Literal& left, const Literal& right) const;
   Literal relaxedMaddF64x2(const Literal& left, const Literal& right) const;
@@ -721,6 +720,14 @@ public:
 
   Literal externalize() const;
   Literal internalize() const;
+
+  // Internalize an externalized value or externalize an internalized value,
+  // otherwise return the literal unmodified.
+  Literal unwrap() const;
+
+  // Get the JS prototype configured via this struct's descriptor, if it exists,
+  // or null. Assumes this is a reference value.
+  Literal getJSPrototype() const;
 
 private:
   Literal addSatSI8(const Literal& other) const;
@@ -775,20 +782,29 @@ std::ostream& operator<<(std::ostream& o, wasm::Literals literals);
 // A GC Struct, Array, or String is a set of values with a type saying how it
 // should be interpreted.
 struct GCData {
-  // The type of this struct, array, or string.
-  HeapType type;
-
   // The element or field values.
   Literals values;
 
   // The descriptor, if it exists, or null.
   Literal desc;
 
-  GCData(HeapType type,
-         Literals&& values,
+  GCData(Literals&& values,
          const Literal& desc = Literal::makeNull(HeapType::none))
-    : type(type), values(std::move(values)), desc(desc) {}
+    : values(std::move(values)), desc(desc) {}
 };
+
+inline bool Literal::hasExternPayload() const {
+  if (isNull()) {
+    return false;
+  }
+  assert(type.getHeapType().isMaybeShared(HeapType::ext));
+  return gcData->values[0].type == Type::i32;
+}
+
+inline int32_t Literal::getExternPayload() const {
+  assert(hasExternPayload());
+  return gcData->values[0].geti32();
+}
 
 } // namespace wasm
 
@@ -812,7 +828,8 @@ template<> struct hash<wasm::Literal> {
           return digest;
         case wasm::Type::v128:
           uint64_t chunks[2];
-          memcpy(&chunks, a.getv128Ptr(), 16);
+          chunks[0] = wasm::Bits::readLE<uint64_t>(a.getv128Ptr());
+          chunks[1] = wasm::Bits::readLE<uint64_t>(&a.getv128Ptr()[8]);
           wasm::rehash(digest, chunks[0]);
           wasm::rehash(digest, chunks[1]);
           return digest;
@@ -831,6 +848,14 @@ template<> struct hash<wasm::Literal> {
       auto type = a.type.getHeapType();
       if (type.isMaybeShared(wasm::HeapType::i31)) {
         wasm::rehash(digest, a.geti31(true));
+        return digest;
+      }
+      if (type.isMaybeShared(wasm::HeapType::ext)) {
+        if (a.hasExternPayload()) {
+          wasm::rehash(digest, a.getExternPayload());
+          return digest;
+        }
+        wasm::rehash(digest, (*this)(a.internalize()));
         return digest;
       }
       if (type.isMaybeShared(wasm::HeapType::any)) {

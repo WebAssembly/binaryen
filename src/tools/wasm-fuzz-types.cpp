@@ -20,6 +20,7 @@
 #include <string>
 #include <variant>
 
+#include "support/bits.h"
 #include "support/command-line.h"
 #include "tools/fuzzing/heap-types.h"
 #include "tools/fuzzing/random.h"
@@ -68,7 +69,7 @@ void Fuzzer::run(uint64_t seed) {
   // 4kb of random bytes should be enough for anyone!
   std::vector<char> bytes(4096);
   for (size_t i = 0; i < bytes.size(); i += sizeof(uint64_t)) {
-    *(uint64_t*)(bytes.data() + i) = getRand();
+    Bits::writeLE<uint64_t>(getRand(), bytes.data() + i);
   }
   rand = Random(std::move(bytes));
 
@@ -321,7 +322,8 @@ void Fuzzer::checkCanonicalization() {
             builder[index] = getArray(type.getArray());
             continue;
           case HeapTypeKind::Cont:
-            WASM_UNREACHABLE("TODO: cont");
+            builder[index] = getContinuation(type.getContinuation());
+            continue;
           case HeapTypeKind::Basic:
             break;
         }
@@ -463,6 +465,11 @@ void Fuzzer::checkCanonicalization() {
 
     Array getArray(Array old) {
       old.element = getField(old.element);
+      return old;
+    }
+
+    Continuation getContinuation(Continuation old) {
+      old.type = getChildHeapType(old.type).get();
       return old;
     }
   };

@@ -121,7 +121,7 @@ public:
         }
         break;
       case Field::WaitQueue:
-        WASM_UNREACHABLE("waitqueue not implemented");
+        value = val;
         break;
       case Field::NotPacked:
         WASM_UNREACHABLE("unexpected packed type");

@@ -135,7 +135,7 @@ struct DataFlowOpts : public WalkerPass<PostWalker<DataFlowOpts>> {
     }
     // Now we know that all our DataFlow inputs are constant, and all
     // our Binaryen IR representations of them are constant too. RUn
-    // precompute, which will transform the expression into a constanat.
+    // precompute, which will transform the expression into a constant.
     Module temp;
     // XXX we should copy expr here, in principle, and definitely will need to
     //     when we do arbitrarily regenerated expressions

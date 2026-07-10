@@ -47,15 +47,6 @@ inline Destination bit_cast(const Source& source) {
   return destination;
 }
 
-inline size_t alignAddr(size_t address, size_t alignment) {
-  assert(alignment && Bits::isPowerOf2((uint32_t)alignment) &&
-         "Alignment is not a power of two!");
-
-  assert(address + alignment - 1 >= address);
-
-  return ((address + alignment - 1) & ~(alignment - 1));
-}
-
 // For fatal errors which could arise from input (i.e. not assertion failures)
 class Fatal {
 private:
@@ -102,6 +93,27 @@ public:
 #else
 #define WASM_UNREACHABLE(msg) wasm::handle_unreachable()
 #endif
+
+// Helper to create an invocable with an overloaded operator(), for use with
+// std::visit e.g.
+// std::visit(
+//   overloaded{
+//     [](const A& a) { ... },
+//     [](const B& b) { ... }},
+//   variant)
+template<typename... Ts> struct overloaded : Ts... {
+  using Ts::operator()...;
+};
+
+template<typename... Ts> overloaded(Ts...) -> overloaded<Ts...>;
+
+// Lookup a value from `map` and return a pointer to the underlying value
+// or nullptr if not present. Returns a const pointer if `map` is const and
+// non-const otherwise
+auto* find_or_null(auto& map, const auto& key) {
+  auto it = map.find(key);
+  return it != map.end() ? &it->second : nullptr;
+}
 
 } // namespace wasm
 

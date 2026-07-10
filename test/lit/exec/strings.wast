@@ -9,7 +9,7 @@
 
   (memory 1 1)
 
-  ;; CHECK:      [fuzz-exec] calling new_wtf16_array
+  ;; CHECK:      [fuzz-exec] export new_wtf16_array
   ;; CHECK-NEXT: [fuzz-exec] note result: new_wtf16_array => string("ello")
   (func $new_wtf16_array (export "new_wtf16_array") (result stringref)
     (string.new_wtf16_array
@@ -25,13 +25,13 @@
     )
   )
 
-  ;; CHECK:      [fuzz-exec] calling const
+  ;; CHECK:      [fuzz-exec] export const
   ;; CHECK-NEXT: [fuzz-exec] note result: const => string("world")
   (func $const (export "const") (result stringref)
     (string.const "world")
   )
 
-  ;; CHECK:      [fuzz-exec] calling eq.1
+  ;; CHECK:      [fuzz-exec] export eq.1
   ;; CHECK-NEXT: [fuzz-exec] note result: eq.1 => 0
   (func $eq.1 (export "eq.1") (result i32)
     (string.eq
@@ -40,7 +40,7 @@
     )
   )
 
-  ;; CHECK:      [fuzz-exec] calling eq.2
+  ;; CHECK:      [fuzz-exec] export eq.2
   ;; CHECK-NEXT: [fuzz-exec] note result: eq.2 => 1
   (func $eq.2 (export "eq.2") (result i32)
     (string.eq
@@ -49,7 +49,7 @@
     )
   )
 
-  ;; CHECK:      [fuzz-exec] calling eq.3
+  ;; CHECK:      [fuzz-exec] export eq.3
   ;; CHECK-NEXT: [fuzz-exec] note result: eq.3 => 0
   (func $eq.3 (export "eq.3") (result i32)
     (string.eq
@@ -58,7 +58,7 @@
     )
   )
 
-  ;; CHECK:      [fuzz-exec] calling eq.4
+  ;; CHECK:      [fuzz-exec] export eq.4
   ;; CHECK-NEXT: [fuzz-exec] note result: eq.4 => 0
   (func $eq.4 (export "eq.4") (result i32)
     (string.eq
@@ -67,7 +67,7 @@
     )
   )
 
-  ;; CHECK:      [fuzz-exec] calling eq.5
+  ;; CHECK:      [fuzz-exec] export eq.5
   ;; CHECK-NEXT: [fuzz-exec] note result: eq.5 => 1
   (func $eq.5 (export "eq.5") (result i32)
     (string.eq
@@ -76,7 +76,7 @@
     )
   )
 
-  ;; CHECK:      [fuzz-exec] calling compare.1
+  ;; CHECK:      [fuzz-exec] export compare.1
   ;; CHECK-NEXT: [trap null ref]
   (func $compare.1 (export "compare.1") (result i32)
     (string.compare
@@ -85,7 +85,7 @@
     )
   )
 
-  ;; CHECK:      [fuzz-exec] calling compare.2
+  ;; CHECK:      [fuzz-exec] export compare.2
   ;; CHECK-NEXT: [trap null ref]
   (func $compare.2 (export "compare.2") (result i32)
     (string.compare
@@ -94,7 +94,7 @@
     )
   )
 
-  ;; CHECK:      [fuzz-exec] calling compare.3
+  ;; CHECK:      [fuzz-exec] export compare.3
   ;; CHECK-NEXT: [trap null ref]
   (func $compare.3 (export "compare.3") (result i32)
     (string.compare
@@ -103,7 +103,7 @@
     )
   )
 
-  ;; CHECK:      [fuzz-exec] calling compare.4
+  ;; CHECK:      [fuzz-exec] export compare.4
   ;; CHECK-NEXT: [fuzz-exec] note result: compare.4 => 0
   (func $compare.4 (export "compare.4") (result i32)
     (string.compare
@@ -112,7 +112,7 @@
     )
   )
 
-  ;; CHECK:      [fuzz-exec] calling compare.5
+  ;; CHECK:      [fuzz-exec] export compare.5
   ;; CHECK-NEXT: [fuzz-exec] note result: compare.5 => -1
   (func $compare.5 (export "compare.5") (result i32)
     (string.compare
@@ -121,7 +121,7 @@
     )
   )
 
-  ;; CHECK:      [fuzz-exec] calling compare.6
+  ;; CHECK:      [fuzz-exec] export compare.6
   ;; CHECK-NEXT: [fuzz-exec] note result: compare.6 => 1
   (func $compare.6 (export "compare.6") (result i32)
     (string.compare
@@ -130,7 +130,7 @@
     )
   )
 
-  ;; CHECK:      [fuzz-exec] calling compare.7
+  ;; CHECK:      [fuzz-exec] export compare.7
   ;; CHECK-NEXT: [fuzz-exec] note result: compare.7 => -1
   (func $compare.7 (export "compare.7") (result i32)
     (string.compare
@@ -139,7 +139,7 @@
     )
   )
 
-  ;; CHECK:      [fuzz-exec] calling compare.8
+  ;; CHECK:      [fuzz-exec] export compare.8
   ;; CHECK-NEXT: [fuzz-exec] note result: compare.8 => 1
   (func $compare.8 (export "compare.8") (result i32)
     (string.compare
@@ -148,7 +148,7 @@
     )
   )
 
-  ;; CHECK:      [fuzz-exec] calling compare.9
+  ;; CHECK:      [fuzz-exec] export compare.9
   ;; CHECK-NEXT: [fuzz-exec] note result: compare.9 => 1
   (func $compare.9 (export "compare.9") (result i32)
     (string.compare
@@ -157,7 +157,7 @@
     )
   )
 
-  ;; CHECK:      [fuzz-exec] calling compare.10
+  ;; CHECK:      [fuzz-exec] export compare.10
   ;; CHECK-NEXT: [fuzz-exec] note result: compare.10 => -1
   (func $compare.10 (export "compare.10") (result i32)
     (string.compare
@@ -166,7 +166,7 @@
     )
   )
 
-  ;; CHECK:      [fuzz-exec] calling get_codeunit
+  ;; CHECK:      [fuzz-exec] export get_codeunit
   ;; CHECK-NEXT: [fuzz-exec] note result: get_codeunit => 99
   (func $get_codeunit (export "get_codeunit") (result i32)
     ;; Reads 'c' which is code 99.
@@ -176,7 +176,7 @@
     )
   )
 
-  ;; CHECK:      [fuzz-exec] calling encode
+  ;; CHECK:      [fuzz-exec] export encode
   ;; CHECK-NEXT: [LoggingExternalInterface logging 3]
   ;; CHECK-NEXT: [LoggingExternalInterface logging 0]
   ;; CHECK-NEXT: [LoggingExternalInterface logging 97]
@@ -232,7 +232,7 @@
     )
   )
 
-  ;; CHECK:      [fuzz-exec] calling encode-unsigned
+  ;; CHECK:      [fuzz-exec] export encode-unsigned
   ;; CHECK-NEXT: [trap oob]
   (func $encode-unsigned (export "encode-unsigned")
     (drop
@@ -247,7 +247,7 @@
     )
   )
 
-  ;; CHECK:      [fuzz-exec] calling encode-overflow
+  ;; CHECK:      [fuzz-exec] export encode-overflow
   ;; CHECK-NEXT: [trap oob]
   (func $encode-overflow (export "encode-overflow")
     ;; The string's size + the offset lead to an overflow here in the array.
@@ -262,7 +262,7 @@
     )
   )
 
-  ;; CHECK:      [fuzz-exec] calling slice
+  ;; CHECK:      [fuzz-exec] export slice
   ;; CHECK-NEXT: [fuzz-exec] note result: slice => string("def")
   (func $slice (export "slice") (result (ref string))
     ;; Slicing [3:6] here should definitely output "def".
@@ -273,7 +273,7 @@
     )
   )
 
-  ;; CHECK:      [fuzz-exec] calling slice-big
+  ;; CHECK:      [fuzz-exec] export slice-big
   ;; CHECK-NEXT: [fuzz-exec] note result: slice-big => string("defgh")
   (func $slice-big (export "slice-big") (result (ref string))
     ;; Slicing [3:huge unsigned value] leads to slicing til the end: "defgh".
@@ -284,7 +284,7 @@
     )
   )
 
-  ;; CHECK:      [fuzz-exec] calling slice-ordering
+  ;; CHECK:      [fuzz-exec] export slice-ordering
   ;; CHECK-NEXT: [fuzz-exec] note result: slice-ordering => string("h")
   (func $slice-ordering (export "slice-ordering") (result (ref string))
     (local $0 i32)
@@ -299,7 +299,7 @@
     )
   )
 
-  ;; CHECK:      [fuzz-exec] calling new_empty
+  ;; CHECK:      [fuzz-exec] export new_empty
   ;; CHECK-NEXT: [fuzz-exec] note result: new_empty => string("")
   (func $new_empty (export "new_empty") (result stringref)
     ;; Make an empty string from an empty array.
@@ -312,7 +312,7 @@
     )
   )
 
-  ;; CHECK:      [fuzz-exec] calling new_empty_oob
+  ;; CHECK:      [fuzz-exec] export new_empty_oob
   ;; CHECK-NEXT: [trap array oob]
   (func $new_empty_oob (export "new_empty_oob") (result stringref)
     ;; Try to make a string from an empty array that we slice at [1:0], which is
@@ -326,7 +326,7 @@
     )
   )
 
-  ;; CHECK:      [fuzz-exec] calling new_empty_oob_2
+  ;; CHECK:      [fuzz-exec] export new_empty_oob_2
   ;; CHECK-NEXT: [trap array oob]
   (func $new_empty_oob_2 (export "new_empty_oob_2") (result stringref)
     ;; Try to make a string from an empty array that we slice at [:1], which is
@@ -340,7 +340,7 @@
     )
   )
 
-  ;; CHECK:      [fuzz-exec] calling new_oob
+  ;; CHECK:      [fuzz-exec] export new_oob
   ;; CHECK-NEXT: [trap array oob]
   (func $new_oob (export "new_oob") (result stringref)
     ;; Try to make a string from an array of size 1 that we slice at [1:0],
@@ -355,7 +355,7 @@
     )
   )
 
-  ;; CHECK:      [fuzz-exec] calling new_2
+  ;; CHECK:      [fuzz-exec] export new_2
   ;; CHECK-NEXT: [fuzz-exec] note result: new_2 => string("")
   (func $new_2 (export "new_2") (result stringref)
     (string.new_wtf16_array
@@ -368,7 +368,7 @@
     )
   )
 
-  ;; CHECK:      [fuzz-exec] calling new_oob_3
+  ;; CHECK:      [fuzz-exec] export new_oob_3
   ;; CHECK-NEXT: [trap array oob]
   (func $new_oob_3 (export "new_oob_3") (result stringref)
     (string.new_wtf16_array
@@ -380,7 +380,7 @@
     )
   )
 
-  ;; CHECK:      [fuzz-exec] calling new_4
+  ;; CHECK:      [fuzz-exec] export new_4
   ;; CHECK-NEXT: [fuzz-exec] note result: new_4 => string("\u0000")
   (func $new_4 (export "new_4") (result stringref)
     (string.new_wtf16_array
@@ -393,7 +393,7 @@
     )
   )
 
-  ;; CHECK:      [fuzz-exec] calling slice-unicode
+  ;; CHECK:      [fuzz-exec] export slice-unicode
   ;; CHECK-NEXT: [fuzz-exec] note result: slice-unicode => string("d\u00a3f")
   (func $slice-unicode (export "slice-unicode") (result (ref string))
     (stringview_wtf16.slice
@@ -404,14 +404,14 @@
     )
   )
 
-  ;; CHECK:      [fuzz-exec] calling concat-surrogates
+  ;; CHECK:      [fuzz-exec] export concat-surrogates
   ;; CHECK-NEXT: [fuzz-exec] note result: concat-surrogates => string("\ud800\udf48")
   (func $concat-surrogates (export "concat-surrogates") (result (ref string))
     ;; Concatenating these surrogates creates '𐍈'.
     (string.concat (string.const "\ED\A0\80") (string.const "\ED\BD\88"))
   )
 
-  ;; CHECK:      [fuzz-exec] calling string.from_code_point
+  ;; CHECK:      [fuzz-exec] export string.from_code_point
   ;; CHECK-NEXT: [fuzz-exec] note result: string.from_code_point => string("A")
   (func $string.from_code_point (export "string.from_code_point") (result stringref)
     (string.from_code_point
@@ -419,7 +419,7 @@
     )
   )
 
-  ;; CHECK:      [fuzz-exec] calling unsigned_code_point
+  ;; CHECK:      [fuzz-exec] export unsigned_code_point
   ;; CHECK-NEXT: [fuzz-exec] note result: unsigned_code_point => string("\u0093")
   (func $unsigned_code_point (export "unsigned_code_point") (result stringref)
     (string.from_code_point
@@ -429,7 +429,7 @@
     )
   )
 
-  ;; CHECK:      [fuzz-exec] calling weird_code_point
+  ;; CHECK:      [fuzz-exec] export weird_code_point
   ;; CHECK-NEXT: [fuzz-exec] note result: weird_code_point => string("\u03e8")
   (func $weird_code_point (export "weird_code_point") (result stringref)
     (string.from_code_point
@@ -437,7 +437,7 @@
     )
   )
 
-  ;; CHECK:      [fuzz-exec] calling isolated_high_code_point
+  ;; CHECK:      [fuzz-exec] export isolated_high_code_point
   ;; CHECK-NEXT: [fuzz-exec] note result: isolated_high_code_point => string("\ud800")
   (func $isolated_high_code_point (export "isolated_high_code_point") (result stringref)
     (string.from_code_point
@@ -445,7 +445,7 @@
     )
   )
 
-  ;; CHECK:      [fuzz-exec] calling isolated_low_code_point
+  ;; CHECK:      [fuzz-exec] export isolated_low_code_point
   ;; CHECK-NEXT: [fuzz-exec] note result: isolated_low_code_point => string("\udc00")
   (func $isolated_low_code_point (export "isolated_low_code_point") (result stringref)
     (string.from_code_point
@@ -453,7 +453,7 @@
     )
   )
 
-  ;; CHECK:      [fuzz-exec] calling surrogate_pair_code_point
+  ;; CHECK:      [fuzz-exec] export surrogate_pair_code_point
   ;; CHECK-NEXT: [fuzz-exec] note result: surrogate_pair_code_point => string("\u286c")
   (func $surrogate_pair_code_point (export "surrogate_pair_code_point") (result stringref)
     (string.from_code_point
@@ -461,7 +461,7 @@
     )
   )
 
-  ;; CHECK:      [fuzz-exec] calling invalid_code_point
+  ;; CHECK:      [fuzz-exec] export invalid_code_point
   ;; CHECK-NEXT: [trap invalid code point]
   (func $invalid_code_point (export "invalid_code_point") (result stringref)
     (string.from_code_point
@@ -469,7 +469,7 @@
     )
   )
 
-  ;; CHECK:      [fuzz-exec] calling string.measure
+  ;; CHECK:      [fuzz-exec] export string.measure
   ;; CHECK-NEXT: [fuzz-exec] note result: string.measure => 5
   (func $string.measure (export "string.measure") (result i32)
     (string.measure_wtf16
@@ -477,7 +477,7 @@
     )
   )
 
-  ;; CHECK:      [fuzz-exec] calling string.to.any
+  ;; CHECK:      [fuzz-exec] export string.to.any
   ;; CHECK-NEXT: [fuzz-exec] note result: string.to.any => string("six")
   (func $string.to.any (export "string.to.any") (result anyref)
     (any.convert_extern
@@ -485,7 +485,7 @@
     )
   )
 
-  ;; CHECK:      [fuzz-exec] calling string.to.any.and.back
+  ;; CHECK:      [fuzz-exec] export string.to.any.and.back
   ;; CHECK-NEXT: [fuzz-exec] note result: string.to.any.and.back => string("seven")
   (func $string.to.any.and.back (export "string.to.any.and.back") (result externref)
     (extern.convert_any
@@ -495,61 +495,61 @@
     )
   )
 )
-;; CHECK:      [fuzz-exec] calling new_wtf16_array
+;; CHECK:      [fuzz-exec] export new_wtf16_array
 ;; CHECK-NEXT: [fuzz-exec] note result: new_wtf16_array => string("ello")
 
-;; CHECK:      [fuzz-exec] calling const
+;; CHECK:      [fuzz-exec] export const
 ;; CHECK-NEXT: [fuzz-exec] note result: const => string("world")
 
-;; CHECK:      [fuzz-exec] calling eq.1
+;; CHECK:      [fuzz-exec] export eq.1
 ;; CHECK-NEXT: [fuzz-exec] note result: eq.1 => 0
 
-;; CHECK:      [fuzz-exec] calling eq.2
+;; CHECK:      [fuzz-exec] export eq.2
 ;; CHECK-NEXT: [fuzz-exec] note result: eq.2 => 1
 
-;; CHECK:      [fuzz-exec] calling eq.3
+;; CHECK:      [fuzz-exec] export eq.3
 ;; CHECK-NEXT: [fuzz-exec] note result: eq.3 => 0
 
-;; CHECK:      [fuzz-exec] calling eq.4
+;; CHECK:      [fuzz-exec] export eq.4
 ;; CHECK-NEXT: [fuzz-exec] note result: eq.4 => 0
 
-;; CHECK:      [fuzz-exec] calling eq.5
+;; CHECK:      [fuzz-exec] export eq.5
 ;; CHECK-NEXT: [fuzz-exec] note result: eq.5 => 1
 
-;; CHECK:      [fuzz-exec] calling compare.1
+;; CHECK:      [fuzz-exec] export compare.1
 ;; CHECK-NEXT: [trap null ref]
 
-;; CHECK:      [fuzz-exec] calling compare.2
+;; CHECK:      [fuzz-exec] export compare.2
 ;; CHECK-NEXT: [trap null ref]
 
-;; CHECK:      [fuzz-exec] calling compare.3
+;; CHECK:      [fuzz-exec] export compare.3
 ;; CHECK-NEXT: [trap null ref]
 
-;; CHECK:      [fuzz-exec] calling compare.4
+;; CHECK:      [fuzz-exec] export compare.4
 ;; CHECK-NEXT: [fuzz-exec] note result: compare.4 => 0
 
-;; CHECK:      [fuzz-exec] calling compare.5
+;; CHECK:      [fuzz-exec] export compare.5
 ;; CHECK-NEXT: [fuzz-exec] note result: compare.5 => -1
 
-;; CHECK:      [fuzz-exec] calling compare.6
+;; CHECK:      [fuzz-exec] export compare.6
 ;; CHECK-NEXT: [fuzz-exec] note result: compare.6 => 1
 
-;; CHECK:      [fuzz-exec] calling compare.7
+;; CHECK:      [fuzz-exec] export compare.7
 ;; CHECK-NEXT: [fuzz-exec] note result: compare.7 => -1
 
-;; CHECK:      [fuzz-exec] calling compare.8
+;; CHECK:      [fuzz-exec] export compare.8
 ;; CHECK-NEXT: [fuzz-exec] note result: compare.8 => 1
 
-;; CHECK:      [fuzz-exec] calling compare.9
+;; CHECK:      [fuzz-exec] export compare.9
 ;; CHECK-NEXT: [fuzz-exec] note result: compare.9 => 1
 
-;; CHECK:      [fuzz-exec] calling compare.10
+;; CHECK:      [fuzz-exec] export compare.10
 ;; CHECK-NEXT: [fuzz-exec] note result: compare.10 => -1
 
-;; CHECK:      [fuzz-exec] calling get_codeunit
+;; CHECK:      [fuzz-exec] export get_codeunit
 ;; CHECK-NEXT: [fuzz-exec] note result: get_codeunit => 99
 
-;; CHECK:      [fuzz-exec] calling encode
+;; CHECK:      [fuzz-exec] export encode
 ;; CHECK-NEXT: [LoggingExternalInterface logging 3]
 ;; CHECK-NEXT: [LoggingExternalInterface logging 0]
 ;; CHECK-NEXT: [LoggingExternalInterface logging 97]
@@ -557,76 +557,76 @@
 ;; CHECK-NEXT: [LoggingExternalInterface logging 99]
 ;; CHECK-NEXT: [LoggingExternalInterface logging 0]
 
-;; CHECK:      [fuzz-exec] calling encode-unsigned
+;; CHECK:      [fuzz-exec] export encode-unsigned
 ;; CHECK-NEXT: [trap oob]
 
-;; CHECK:      [fuzz-exec] calling encode-overflow
+;; CHECK:      [fuzz-exec] export encode-overflow
 ;; CHECK-NEXT: [trap oob]
 
-;; CHECK:      [fuzz-exec] calling slice
+;; CHECK:      [fuzz-exec] export slice
 ;; CHECK-NEXT: [fuzz-exec] note result: slice => string("def")
 
-;; CHECK:      [fuzz-exec] calling slice-big
+;; CHECK:      [fuzz-exec] export slice-big
 ;; CHECK-NEXT: [fuzz-exec] note result: slice-big => string("defgh")
 
-;; CHECK:      [fuzz-exec] calling slice-ordering
+;; CHECK:      [fuzz-exec] export slice-ordering
 ;; CHECK-NEXT: [fuzz-exec] note result: slice-ordering => string("h")
 
-;; CHECK:      [fuzz-exec] calling new_empty
+;; CHECK:      [fuzz-exec] export new_empty
 ;; CHECK-NEXT: [fuzz-exec] note result: new_empty => string("")
 
-;; CHECK:      [fuzz-exec] calling new_empty_oob
+;; CHECK:      [fuzz-exec] export new_empty_oob
 ;; CHECK-NEXT: [trap array oob]
 
-;; CHECK:      [fuzz-exec] calling new_empty_oob_2
+;; CHECK:      [fuzz-exec] export new_empty_oob_2
 ;; CHECK-NEXT: [trap array oob]
 
-;; CHECK:      [fuzz-exec] calling new_oob
+;; CHECK:      [fuzz-exec] export new_oob
 ;; CHECK-NEXT: [trap array oob]
 
-;; CHECK:      [fuzz-exec] calling new_2
+;; CHECK:      [fuzz-exec] export new_2
 ;; CHECK-NEXT: [fuzz-exec] note result: new_2 => string("")
 
-;; CHECK:      [fuzz-exec] calling new_oob_3
+;; CHECK:      [fuzz-exec] export new_oob_3
 ;; CHECK-NEXT: [trap array oob]
 
-;; CHECK:      [fuzz-exec] calling new_4
+;; CHECK:      [fuzz-exec] export new_4
 ;; CHECK-NEXT: [fuzz-exec] note result: new_4 => string("\u0000")
 
-;; CHECK:      [fuzz-exec] calling slice-unicode
+;; CHECK:      [fuzz-exec] export slice-unicode
 ;; CHECK-NEXT: [fuzz-exec] note result: slice-unicode => string("d\u00a3f")
 
-;; CHECK:      [fuzz-exec] calling concat-surrogates
+;; CHECK:      [fuzz-exec] export concat-surrogates
 ;; CHECK-NEXT: [fuzz-exec] note result: concat-surrogates => string("\ud800\udf48")
 
-;; CHECK:      [fuzz-exec] calling string.from_code_point
+;; CHECK:      [fuzz-exec] export string.from_code_point
 ;; CHECK-NEXT: [fuzz-exec] note result: string.from_code_point => string("A")
 
-;; CHECK:      [fuzz-exec] calling unsigned_code_point
+;; CHECK:      [fuzz-exec] export unsigned_code_point
 ;; CHECK-NEXT: [fuzz-exec] note result: unsigned_code_point => string("\u0093")
 
-;; CHECK:      [fuzz-exec] calling weird_code_point
+;; CHECK:      [fuzz-exec] export weird_code_point
 ;; CHECK-NEXT: [fuzz-exec] note result: weird_code_point => string("\u03e8")
 
-;; CHECK:      [fuzz-exec] calling isolated_high_code_point
+;; CHECK:      [fuzz-exec] export isolated_high_code_point
 ;; CHECK-NEXT: [fuzz-exec] note result: isolated_high_code_point => string("\ud800")
 
-;; CHECK:      [fuzz-exec] calling isolated_low_code_point
+;; CHECK:      [fuzz-exec] export isolated_low_code_point
 ;; CHECK-NEXT: [fuzz-exec] note result: isolated_low_code_point => string("\udc00")
 
-;; CHECK:      [fuzz-exec] calling surrogate_pair_code_point
+;; CHECK:      [fuzz-exec] export surrogate_pair_code_point
 ;; CHECK-NEXT: [fuzz-exec] note result: surrogate_pair_code_point => string("\u286c")
 
-;; CHECK:      [fuzz-exec] calling invalid_code_point
+;; CHECK:      [fuzz-exec] export invalid_code_point
 ;; CHECK-NEXT: [trap invalid code point]
 
-;; CHECK:      [fuzz-exec] calling string.measure
+;; CHECK:      [fuzz-exec] export string.measure
 ;; CHECK-NEXT: [fuzz-exec] note result: string.measure => 5
 
-;; CHECK:      [fuzz-exec] calling string.to.any
+;; CHECK:      [fuzz-exec] export string.to.any
 ;; CHECK-NEXT: [fuzz-exec] note result: string.to.any => string("six")
 
-;; CHECK:      [fuzz-exec] calling string.to.any.and.back
+;; CHECK:      [fuzz-exec] export string.to.any.and.back
 ;; CHECK-NEXT: [fuzz-exec] note result: string.to.any.and.back => string("seven")
 ;; CHECK-NEXT: [fuzz-exec] comparing compare.1
 ;; CHECK-NEXT: [fuzz-exec] comparing compare.10

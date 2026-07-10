@@ -376,6 +376,13 @@ void test_features() {
   printf("BinaryenFeatureStrings: %d\n", BinaryenFeatureStrings());
   printf("BinaryenFeatureRelaxedAtomics: %d\n",
          BinaryenFeatureRelaxedAtomics());
+  printf("BinaryenFeatureCustomPageSizes: %d\n",
+         BinaryenFeatureCustomPageSizes());
+  printf("BinaryenFeatureMultibyte: %d\n", BinaryenFeatureMultibyte());
+  printf("BinaryenFeatureWideArithmetic: %d\n",
+         BinaryenFeatureWideArithmetic());
+  printf("BinaryenFeatureCompactImports: %d\n",
+         BinaryenFeatureCompactImports());
   printf("BinaryenFeatureAll: %d\n", BinaryenFeatureAll());
 }
 
@@ -383,8 +390,8 @@ void test_read_with_feature() {
   BinaryenModuleRef module = BinaryenModuleCreate();
   // Having multiple tables makes this module inherently not MVP compatible
   // and requires the externref feature enabled to parse successfully.
-  BinaryenAddTable(module, "tab", 0, 100, BinaryenTypeFuncref());
-  BinaryenAddTable(module, "tab2", 0, 100, BinaryenTypeFuncref());
+  BinaryenAddTable(module, "tab", 0, 100, BinaryenTypeFuncref(), NULL);
+  BinaryenAddTable(module, "tab2", 0, 100, BinaryenTypeFuncref(), NULL);
 
   BinaryenFeatures features =
     BinaryenFeatureMVP() | BinaryenFeatureReferenceTypes();
@@ -489,7 +496,7 @@ void test_core() {
   // Tags
   BinaryenAddTag(module, "a-tag", BinaryenTypeInt32(), BinaryenTypeNone());
 
-  BinaryenAddTable(module, "tab", 0, 100, BinaryenTypeFuncref());
+  BinaryenAddTable(module, "tab", 0, 100, BinaryenTypeFuncref(), NULL);
 
   // Exception handling
 
@@ -522,6 +529,7 @@ void test_core() {
   BinaryenType i16Array;
   BinaryenType funcArray;
   BinaryenType i32Struct;
+  BinaryenType i32StructNonNull;
   {
     TypeBuilderRef tb = TypeBuilderCreate(4);
     TypeBuilderSetArrayType(
@@ -543,6 +551,7 @@ void test_core() {
     i16Array = BinaryenTypeFromHeapType(builtHeapTypes[1], true);
     funcArray = BinaryenTypeFromHeapType(builtHeapTypes[2], true);
     i32Struct = BinaryenTypeFromHeapType(builtHeapTypes[3], true);
+    i32StructNonNull = BinaryenTypeFromHeapType(builtHeapTypes[3], false);
   }
 
   // Memory. Add it before creating any memory-using instructions.
@@ -849,7 +858,7 @@ void test_core() {
     makeBinary(module, BinaryenRelaxedMinVecF64x2(), v128),
     makeBinary(module, BinaryenRelaxedMaxVecF64x2(), v128),
     makeBinary(module, BinaryenRelaxedQ15MulrSVecI16x8(), v128),
-    makeBinary(module, BinaryenDotI8x16I7x16SToVecI16x8(), v128),
+    makeBinary(module, BinaryenRelaxedDotI8x16I7x16SToVecI16x8(), v128),
     // SIMD lane manipulation
     makeSIMDExtract(module, BinaryenExtractLaneSVecI8x16()),
     makeSIMDExtract(module, BinaryenExtractLaneUVecI8x16()),
@@ -975,11 +984,11 @@ void test_core() {
     makeSIMDTernary(module, BinaryenRelaxedNmaddVecF32x4()),
     makeSIMDTernary(module, BinaryenRelaxedMaddVecF64x2()),
     makeSIMDTernary(module, BinaryenRelaxedNmaddVecF64x2()),
-    makeSIMDTernary(module, BinaryenLaneselectI8x16()),
-    makeSIMDTernary(module, BinaryenLaneselectI16x8()),
-    makeSIMDTernary(module, BinaryenLaneselectI32x4()),
-    makeSIMDTernary(module, BinaryenLaneselectI64x2()),
-    makeSIMDTernary(module, BinaryenDotI8x16I7x16AddSToVecI32x4()),
+    makeSIMDTernary(module, BinaryenRelaxedLaneselectI8x16()),
+    makeSIMDTernary(module, BinaryenRelaxedLaneselectI16x8()),
+    makeSIMDTernary(module, BinaryenRelaxedLaneselectI32x4()),
+    makeSIMDTernary(module, BinaryenRelaxedLaneselectI64x2()),
+    makeSIMDTernary(module, BinaryenRelaxedDotI8x16I7x16AddSToVecI32x4()),
     // Bulk memory
     makeMemoryInit(module),
     makeDataDrop(module),
@@ -1119,7 +1128,7 @@ void test_core() {
                  BinaryenAtomicWait(
                    module, temp6, temp6, temp16, BinaryenTypeInt32(), "0")),
     BinaryenDrop(module, BinaryenAtomicNotify(module, temp6, temp6, "0")),
-    BinaryenAtomicFence(module),
+    BinaryenAtomicFence(module, BinaryenMemoryOrderSeqCst()),
     // Tuples
     BinaryenTupleMake(module, tupleElements4a, 4),
     BinaryenTupleExtract(
@@ -1273,6 +1282,14 @@ void test_core() {
 
   BinaryenExpressionPrint(
     valueList[3]); // test printing a standalone expression
+  // test stringifying an expression
+  {
+    char* textPtr = BinaryenExpressionAllocateAndWriteText(valueList[3]);
+    assert(textPtr);
+    assert(strstr(textPtr, "f32.neg"));
+    assert(!strstr(textPtr, "\x1b")); // ensure color escapes are not emitted
+    free(textPtr);
+  }
 
   // Add drops of concrete expressions
   for (int i = 0; i < sizeof(valueList) / sizeof(valueList[0]); ++i) {
@@ -1369,7 +1386,7 @@ void test_core() {
 
   // Function table. One per module
   const char* funcNames[] = {BinaryenFunctionGetName(sinker)};
-  BinaryenAddTable(module, "0", 1, 1, BinaryenTypeFuncref());
+  BinaryenAddTable(module, "0", 1, 1, BinaryenTypeFuncref(), NULL);
   BinaryenAddActiveElementSegment(
     module,
     "0",
@@ -1380,6 +1397,16 @@ void test_core() {
   BinaryenAddPassiveElementSegment(module, "passive", funcNames, 1);
   BinaryenAddPassiveElementSegment(module, "p2", funcNames, 1);
   BinaryenRemoveElementSegment(module, "p2");
+
+  // Non-nullable table
+  BinaryenAddTable(
+    module,
+    "1",
+    1,
+    1,
+    i32StructNonNull,
+    BinaryenStructNew(
+      module, NULL, 0, BinaryenTypeGetHeapType(i32StructNonNull)));
 
   BinaryenExpressionRef funcrefExpr1 =
     BinaryenRefFunc(module, "kitchen()sinker", kitchenSinkerRefType);
@@ -2004,14 +2031,18 @@ void test_for_each() {
                       BinaryenTypeInt32(),
                       0,
                       makeInt32(module, expected_offsets[1]));
-
-    for (i = 0; i < BinaryenGetNumMemorySegments(module); i++) {
+    assert(BinaryenGetDataSegment(module, segmentNames[0]) != NULL);
+    assert(BinaryenGetDataSegment(module, "NonExistentSegment") == NULL);
+    for (i = 0; i < BinaryenGetNumDataSegments(module); i++) {
       char out[15] = {};
-      assert(BinaryenGetMemorySegmentByteOffset(module, segmentNames[i]) ==
+      BinaryenDataSegmentRef segment = BinaryenGetDataSegmentByIndex(module, i);
+      assert(segment != NULL);
+      assert(BinaryenDataSegmentGetName(segment) != NULL);
+      assert(BinaryenGetDataSegmentByteOffset(module, segment) ==
              expected_offsets[i]);
-      assert(BinaryenGetMemorySegmentByteLength(module, segmentNames[i]) ==
-             segmentSizes[i]);
-      BinaryenCopyMemorySegmentData(module, segmentNames[i], out);
+      assert(BinaryenGetDataSegmentByteLength(segment) == segmentSizes[i]);
+      assert(BinaryenGetDataSegmentPassive(segment) == segmentPassives[i]);
+      BinaryenCopyDataSegmentData(segment, out);
       assert(0 == strcmp(segmentDatas[i], out));
     }
   }
@@ -2021,7 +2052,7 @@ void test_for_each() {
                                BinaryenFunctionGetName(fns[2])};
     BinaryenExpressionRef constExprRef =
       BinaryenConst(module, BinaryenLiteralInt32(0));
-    BinaryenAddTable(module, "0", 1, 1, BinaryenTypeFuncref());
+    BinaryenAddTable(module, "0", 1, 1, BinaryenTypeFuncref(), NULL);
     BinaryenAddActiveElementSegment(
       module, "0", "0", funcNames, 3, constExprRef);
     assert(1 == BinaryenGetNumElementSegments(module));
@@ -2334,10 +2365,16 @@ void test_relaxed_atomics() {
   printf("Cmpxchg memory order: %d\n",
          BinaryenAtomicCmpxchgGetMemoryOrder(cmpxchg));
 
+  BinaryenExpressionRef fence =
+    BinaryenAtomicFence(module, BinaryenMemoryOrderSeqCst());
+  BinaryenAtomicFenceSetOrder(fence, BinaryenMemoryOrderAcqRel());
+  printf("Fence memory order: %d\n", BinaryenAtomicFenceGetOrder(fence));
+
   BinaryenExpressionRef statements[] = {BinaryenDrop(module, load),
                                         store,
                                         BinaryenDrop(module, rmw),
-                                        BinaryenDrop(module, cmpxchg)};
+                                        BinaryenDrop(module, cmpxchg),
+                                        fence};
 
   BinaryenExpressionRef value =
     BinaryenBlock(module,
@@ -2356,6 +2393,48 @@ void test_relaxed_atomics() {
   BinaryenModulePrint(module);
   BinaryenModuleDispose(module);
 }
+
+void test_wide_arithmetic() {
+  BinaryenModuleRef module = BinaryenModuleCreate();
+  BinaryenModuleSetFeatures(module, BinaryenFeatureWideArithmetic());
+
+  BinaryenExpressionRef ll = BinaryenConst(module, BinaryenLiteralInt64(1));
+  BinaryenExpressionRef lh = BinaryenConst(module, BinaryenLiteralInt64(2));
+  BinaryenExpressionRef rl = BinaryenConst(module, BinaryenLiteralInt64(3));
+  BinaryenExpressionRef rh = BinaryenConst(module, BinaryenLiteralInt64(4));
+
+  BinaryenExpressionRef wideAdd =
+    BinaryenWideIntAddSub(module, BinaryenAddInt128(), ll, lh, rl, rh);
+  BinaryenExpressionRef wideSub =
+    BinaryenWideIntAddSub(module, BinaryenSubInt128(), ll, lh, rl, rh);
+
+  BinaryenExpressionRef ml = BinaryenConst(module, BinaryenLiteralInt64(5));
+  BinaryenExpressionRef mr = BinaryenConst(module, BinaryenLiteralInt64(6));
+  BinaryenExpressionRef wideMulS =
+    BinaryenWideIntMul(module, BinaryenMulWideSInt64(), ml, mr);
+  BinaryenExpressionRef wideMulU =
+    BinaryenWideIntMul(module, BinaryenMulWideUInt64(), ml, mr);
+
+  BinaryenExpressionRef statements[] = {BinaryenDrop(module, wideAdd),
+                                        BinaryenDrop(module, wideSub),
+                                        BinaryenDrop(module, wideMulS),
+                                        BinaryenDrop(module, wideMulU)};
+
+  BinaryenExpressionRef body =
+    BinaryenBlock(module, "body", statements, 4, BinaryenTypeAuto());
+
+  BinaryenAddFunction(module,
+                      "wide-arithmetic-test",
+                      BinaryenTypeNone(),
+                      BinaryenTypeNone(),
+                      NULL,
+                      0,
+                      body);
+
+  BinaryenModulePrint(module);
+  BinaryenModuleDispose(module);
+}
+
 int main() {
   test_types();
   test_features();
@@ -2371,6 +2450,7 @@ int main() {
   test_typebuilder();
   test_callref_and_types();
   test_relaxed_atomics();
+  test_wide_arithmetic();
 
   return 0;
 }

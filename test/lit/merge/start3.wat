@@ -13,7 +13,7 @@
 
 ;; CHECK:      (export "user" (func $user))
 
-;; CHECK:      (start $merged.start.old)
+;; CHECK:      (start $merged.start.combined)
 
 ;; CHECK:      (func $start (type $0)
 ;; CHECK-NEXT:  (local $x i32)
@@ -30,20 +30,7 @@
 ;; CHECK-NEXT:  (call $start)
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $merged.start.old (type $0)
-;; CHECK-NEXT:  (local $x i32)
-;; CHECK-NEXT:  (block
-;; CHECK-NEXT:   (drop
-;; CHECK-NEXT:    (local.get $x)
-;; CHECK-NEXT:   )
-;; CHECK-NEXT:   (drop
-;; CHECK-NEXT:    (i32.const 1)
-;; CHECK-NEXT:   )
-;; CHECK-NEXT:  )
-;; CHECK-NEXT:  (call $merged.start.new)
-;; CHECK-NEXT: )
-
-;; CHECK:      (func $merged.start.new (type $0)
+;; CHECK:      (func $start_2 (type $0)
 ;; CHECK-NEXT:  (local $x f64)
 ;; CHECK-NEXT:  (drop
 ;; CHECK-NEXT:   (local.get $x)
@@ -51,4 +38,9 @@
 ;; CHECK-NEXT:  (drop
 ;; CHECK-NEXT:   (i32.const 2)
 ;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $merged.start.combined (type $0)
+;; CHECK-NEXT:  (call $start)
+;; CHECK-NEXT:  (call $start_2)
 ;; CHECK-NEXT: )

@@ -22,7 +22,7 @@ template<Lattice L, TransferFunction TxFn> class MonotoneCFGAnalyzer {
   std::vector<Element> states;
 
 public:
-  // Will constuct BlockState objects corresponding to BasicBlocks from the
+  // Will construct BlockState objects corresponding to BasicBlocks from the
   // given CFG.
   MonotoneCFGAnalyzer(L& lattice, TxFn& txfn, CFG& cfg);
 

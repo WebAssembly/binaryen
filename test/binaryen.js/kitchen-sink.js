@@ -101,6 +101,9 @@ function test_features() {
   console.log("Features.Strings: " + binaryen.Features.Strings);
   console.log("Features.MultiMemory: " + binaryen.Features.MultiMemory);
   console.log("Features.RelaxedAtomics: " + binaryen.Features.RelaxedAtomics);
+  console.log("Features.CustomPageSizes: " + binaryen.Features.CustomPageSizes);
+  console.log("Features.WideArithmetic: " + binaryen.Features.WideArithmetic);
+  console.log("Features.CompactImports: " + binaryen.Features.CompactImports);
   console.log("Features.All: " + binaryen.Features.All);
 }
 
@@ -647,7 +650,7 @@ function test_core() {
         module.i32.const(0)
       )
     ),
-    module.atomic.fence(),
+    module.atomic.fence(binaryen.MemoryOrder.acqrel),
 
     // Tuples
     module.tuple.make(
@@ -770,6 +773,8 @@ function test_core() {
   module.addActiveElementSegment("t0", "e0", [ binaryen.getFunctionInfo(sinker).name ]);
   assert(module.getNumTables() === 1);
   assert(module.getNumElementSegments() === 1);
+
+  module.addTable("t2", 1, 1, binaryen.i31ref, module.ref.i31(module.i32.const(1)));
 
   // Start function. One per module
   var starter = module.addFunction("starter", binaryen.none, binaryen.none, [], module.nop());
@@ -1017,6 +1022,55 @@ function test_binaries() {
   module.dispose();
 }
 
+function test_binaries_with_features() {
+  var builder = new binaryen.TypeBuilder(1);
+  builder.setStructType(0, [
+    { type: binaryen.i32, packedType: binaryen.notPacked, mutable: true },
+    { type: binaryen.f64, packedType: binaryen.notPacked, mutable: true }
+  ]);
+  var [structHeapType] = builder.buildAndDispose();
+  var structType = binaryen.getTypeFromHeapType(structHeapType, true);
+
+  var features = binaryen.Features.ReferenceTypes | binaryen.Features.GC;
+  module = new binaryen.Module();
+  module.setFeatures(features);
+
+  module.addGlobal("struct-global",
+    structType,
+    true,
+    module.struct.new(
+      [module.i32.const(42), module.f64.const(3.14)],
+      binaryen.getHeapType(structType)
+    )
+  );
+
+  module.addFunction("get-field", binaryen.none, binaryen.i32, [],
+    module.struct.get(
+      0,
+      module.global.get("struct-global", structType),
+      binaryen.i32,
+      false
+    )
+  );
+
+  assert(module.validate());
+  binaryen.setDebugInfo(true);
+  var buffer = module.emitBinary();
+  binaryen.setDebugInfo(false);
+  module.dispose();
+
+  module = binaryen.readBinaryWithFeatures(buffer, features);
+
+  assert(module.validate());
+  console.log("module loaded from binary with features:");
+  console.log(module.emitText());
+  module.dispose();
+
+  module = binaryen.readBinaryWithFeatures(buffer, binaryen.Features.MVP);
+  assert(!module.validate());
+  module.dispose();
+}
+
 function test_interpret() {
   // create a simple module with a start method that prints a number, and interpret it, printing that number.
   module = new binaryen.Module();
@@ -1074,6 +1128,23 @@ function test_parsing() {
   console.log("module loaded from text form:");
   console.log(module2.emitText());
   module2.dispose();
+}
+
+function test_parsing_with_features() {
+  var text = `(module
+    (global $g anyref (ref.null any))
+  )`;
+
+  module = binaryen.parseTextWithFeatures(text, binaryen.Features.All);
+  assert(module.validate());
+  console.log("module loaded from text form with features:");
+  console.log(module.emitText());
+  module.dispose();
+
+  // parse with MVP features, which should fail
+  module = binaryen.parseTextWithFeatures(text, binaryen.Features.MVP);
+  console.log("validation with MVP features: " + module.validate());
+  module.dispose();
 }
 
 function test_internals() {
@@ -1141,13 +1212,17 @@ function test_for_each() {
       data: expected_data[2].split('').map(function(x) { return x.charCodeAt(0) })
     }
   ], false);
-  for (i = 0; i < module.getNumMemorySegments(); i++) {
-    var segment = module.getMemorySegmentInfo(expected_names[i]);
-    assert(expected_offsets[i] === segment.offset);
-    var data8 = new Uint8Array(segment.data);
+  assert(module.getDataSegment(expected_names[0]) !== 0);
+  assert(module.getDataSegment("NonExistantSegment") === 0);
+  for (i = 0; i < module.getNumDataSegments(); i++) {
+    var segment = module.getDataSegmentByIndex(i);
+    var info = module.getDataSegmentInfo(segment);
+    assert(expected_names[i] === info.name);
+    assert(expected_offsets[i] === info.offset);
+    var data8 = new Uint8Array(info.data);
     var str = String.fromCharCode.apply(null, data8);
     assert(expected_data[i] === str);
-    assert(expected_passive[i] === segment.passive);
+    assert(expected_passive[i] === info.passive);
   }
 
   module.addTable("t0", 1, 0xffffffff);
@@ -1208,11 +1283,16 @@ function test_relaxed_atomics() {
   binaryen.AtomicCmpxchg.setMemoryOrder(cmpxchg, binaryen.MemoryOrder.acqrel);
   console.log("Cmpxchg memory order: " + binaryen.AtomicCmpxchg.getMemoryOrder(cmpxchg));
 
+  var fence = module.atomic.fence(binaryen.MemoryOrder.seqcst)
+  binaryen.AtomicFence.setOrder(fence, binaryen.MemoryOrder.acqrel)
+  console.log("Fence memory order: " + binaryen.AtomicFence.getOrder(fence));
+
   var body = module.block("body", [
     module.drop(load),
     store,
     module.drop(rmw),
-    module.drop(cmpxchg)
+    module.drop(cmpxchg),
+    fence,
   ], binaryen.auto);
 
   module.addFunction("relaxed-atomics", binaryen.none, binaryen.none, [], body);
@@ -1227,9 +1307,11 @@ test_ids();
 test_core();
 test_relooper();
 test_binaries();
+test_binaries_with_features();
 test_interpret();
 test_nonvalid();
 test_parsing();
+test_parsing_with_features();
 test_internals();
 test_for_each();
 test_expression_info();

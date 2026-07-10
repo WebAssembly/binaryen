@@ -26,7 +26,7 @@ namespace wasm::analysis {
 
 // The lattice of integers of the given type `T`, ordered by <. The min integer
 // is the bottom element and the max integer is the top element.
-#if __cplusplus >= 202002L
+#if defined(__cpp_lib_concepts)
 template<std::integral T>
 #else
 template<typename T>
@@ -59,12 +59,12 @@ using UInt32 = Integer<uint32_t>;
 using Int64 = Integer<int64_t>;
 using UInt64 = Integer<uint64_t>;
 
-#if __cplusplus >= 202002L
+#if defined(__cpp_lib_concepts)
 static_assert(FullLattice<Int32>);
 static_assert(FullLattice<Int64>);
 static_assert(FullLattice<UInt32>);
 static_assert(FullLattice<UInt64>);
-#endif // __cplusplus >= 202002L
+#endif // defined(__cpp_lib_concepts)
 
 } // namespace wasm::analysis
 

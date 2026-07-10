@@ -37,6 +37,7 @@
 #include <unordered_set>
 #include <vector>
 
+#include "support/insert_ordered.h"
 #include "support/istring.h"
 #include "support/safe_integer.h"
 #include "support/string.h"
@@ -67,7 +68,18 @@ struct Value {
     Ref& operator[](IString x) { return (*this->get())[x]; }
   };
 
+  static Ref make() { return Ref(new Value); }
   template<typename T> static Ref make(T t) { return Ref(new Value(t)); }
+  static Ref makeArray() {
+    Ref ret(new Value);
+    ret->setArray();
+    return ret;
+  }
+  static Ref makeObject() {
+    Ref ret(new Value);
+    ret->setObject();
+    return ret;
+  }
 
   enum Type {
     String = 0,
@@ -81,7 +93,7 @@ struct Value {
   Type type = Null;
 
   using ArrayStorage = std::vector<Ref>;
-  using ObjectStorage = std::unordered_map<IString, Ref>;
+  using ObjectStorage = wasm::InsertOrderedMap<IString, Ref>;
 
   // MSVC does not allow unrestricted unions:
   // http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2008/n2544.pdf
@@ -102,6 +114,10 @@ struct Value {
   // constructors all copy their input
   Value() {}
   explicit Value(const char* s) : type(Null) { setString(s); }
+  explicit Value(const std::string& s) : type(Null) { setString(s.c_str()); }
+  explicit Value(const std::string_view& s) : type(Null) {
+    setString(std::string(s));
+  }
   explicit Value(double n) : type(Null) { setNumber(n); }
   explicit Value(ArrayStorage& a) : type(Null) {
     setArray();
@@ -201,6 +217,10 @@ struct Value {
   ArrayStorage& getArray() {
     assert(isArray());
     return *arr;
+  }
+  ObjectStorage& getObject() {
+    assert(isObject());
+    return *obj;
   }
   bool& getBool() {
     assert(isBool());
@@ -378,7 +398,7 @@ struct Value {
     return curr;
   }
 
-  void stringify(std::ostream& os, bool pretty = false);
+  void stringify(std::ostream& os, bool pretty = false, int indent = 0);
 
   // String operations
 

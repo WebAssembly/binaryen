@@ -21,7 +21,7 @@ namespace wasm::ExpressionManipulator {
 
 Expression*
 flexibleCopy(Expression* original, Module& wasm, CustomCopier custom) {
-  // Perform the copy using a stack of tasks (avoiding recusion).
+  // Perform the copy using a stack of tasks (avoiding recursion).
   struct CopyTask {
     // The thing to copy.
     Expression* original;

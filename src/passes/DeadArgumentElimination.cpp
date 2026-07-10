@@ -185,7 +185,7 @@ struct DAEScanner
     if (numParams > 0) {
       auto usedParams = ParamUtils::getUsedParams(func, getModule());
       for (Index i = 0; i < numParams; i++) {
-        if (usedParams.count(i) == 0) {
+        if (!usedParams.contains(i)) {
           info->unusedParams.insert(i);
         }
       }
@@ -506,7 +506,7 @@ struct DAE : public Pass {
         }
         bool allDropped =
           std::all_of(calls.begin(), calls.end(), [&](Call* call) {
-            return allDroppedCalls.count(call);
+            return allDroppedCalls.contains(call);
           });
         if (!allDropped) {
           continue;

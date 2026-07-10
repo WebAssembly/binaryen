@@ -197,7 +197,7 @@ private:
   }
 
   Name getEnclosingClass(Name name) {
-    return Name(name.str.substr(name.str.find_last_of('@')));
+    return Name(name.view().substr(name.view().find_last_of('@')));
   }
 
   AssignmentCountMap& assignmentCounts;

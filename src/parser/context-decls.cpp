@@ -15,6 +15,7 @@
  */
 
 #include "contexts.h"
+#include "parsers.h"
 
 namespace wasm::WATParser {
 
@@ -108,6 +109,7 @@ Result<> ParseDeclsCtx::addTable(Name name,
                                  const std::vector<Name>& exports,
                                  ImportNames* import,
                                  TableType type,
+                                 std::optional<ExprT>,
                                  Index pos) {
   CHECK_ERR(checkImport(pos, import));
   auto t = addTableDecl(pos, name, import, type);
@@ -122,7 +124,7 @@ Result<> ParseDeclsCtx::addImplicitElems(TypeT, ElemListT&& elems) {
   auto& table = *wasm.tables.back();
   auto e = std::make_unique<ElementSegment>();
   e->table = table.name;
-  e->offset = Builder(wasm).makeConstPtr(0, Type::i32);
+  e->offset = Builder(wasm).makeConstPtr(0, table.addressType);
   e->name = Names::getValidElementSegmentName(wasm, "implicit-elem");
   wasm.addElementSegment(std::move(e));
 
@@ -144,6 +146,7 @@ Result<Memory*> ParseDeclsCtx::addMemoryDecl(Index pos,
   m->initial = type.limits.initial;
   m->max = type.limits.max ? *type.limits.max : Memory::kUnlimitedSize;
   m->shared = type.shared;
+  m->pageSizeLog2 = type.pageSizeLog2;
   if (name) {
     // TODO: if the existing memory is not explicitly named, fix its name
     // and continue.
@@ -178,7 +181,6 @@ Result<> ParseDeclsCtx::addImplicitData(DataStringT&& data) {
   auto& mem = *wasm.memories.back();
   auto d = std::make_unique<DataSegment>();
   d->memory = mem.name;
-  d->isPassive = false;
   d->offset = Builder(wasm).makeConstPtr(0, mem.addressType);
   d->data = std::move(data);
   d->name = Names::getValidDataSegmentName(wasm, "implicit-data");
@@ -298,6 +300,43 @@ Result<> ParseDeclsCtx::addTag(Name name,
   // TODO: tag annotations
   tagDefs.push_back({name, pos, Index(tagDefs.size()), {}});
   return Ok{};
+}
+
+bool ParseDeclsCtx::skipFunctionBody() {
+  using namespace std::string_view_literals;
+  size_t depth = 1;
+  while (depth > 0 && !in.empty()) {
+    if (in.takeLParen()) {
+      ++depth;
+      continue;
+    }
+    if (in.takeRParen()) {
+      --depth;
+      continue;
+    }
+    if (auto kw = in.takeKeyword()) {
+      if (*kw == "block"sv || *kw == "loop"sv || *kw == "if"sv ||
+          *kw == "try"sv || *kw == "try_table"sv) {
+        in.takeID();
+        (void)typeuse(*this);
+        continue;
+      }
+      if (*kw == "call_indirect"sv || *kw == "return_call_indirect"sv) {
+        (void)maybeTableidx(*this);
+        (void)typeuse(*this, false);
+        continue;
+      }
+      continue;
+    }
+    // Avoid confusion due to parens inside strings by skipping strings as a
+    // unit.
+    if (in.takeString()) {
+      continue;
+    }
+    in.take(1);
+    in.advance();
+  }
+  return true;
 }
 
 } // namespace wasm::WATParser

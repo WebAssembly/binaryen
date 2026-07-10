@@ -1,0 +1,7 @@
+(module
+  (import "__fuzz_import" "extern$" (global $gimport$0 externref))
+
+  (func (export "check_second") (result i32)
+    (ref.is_null (global.get $gimport$0))
+  )
+)

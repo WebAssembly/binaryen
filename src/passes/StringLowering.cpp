@@ -153,7 +153,7 @@ struct StringGathering : public Pass {
       // Re-encode from WTF-16 to WTF-8 to make the name easier to read.
       std::stringstream wtf8;
       [[maybe_unused]] bool valid =
-        String::convertWTF16ToWTF8(wtf8, string.str);
+        String::convertWTF16ToWTF8(wtf8, string.view());
       assert(valid);
       // Then escape it because identifiers must be valid UTF-8.
       // TODO: Use wtf8.view() and escaped.view() once we have C++20.
@@ -177,14 +177,15 @@ struct StringGathering : public Pass {
       module->globals.begin(),
       module->globals.end(),
       [&](const std::unique_ptr<Global>& a, const std::unique_ptr<Global>& b) {
-        return definingNames.count(a->name) && !definingNames.count(b->name);
+        return definingNames.contains(a->name) &&
+               !definingNames.contains(b->name);
       });
   }
 
   void replaceStrings(Module* module) {
     Builder builder(*module);
     for (auto** stringPtr : stringPtrs) {
-      if (stringPtrsToPreserve.count(stringPtr)) {
+      if (stringPtrsToPreserve.contains(stringPtr)) {
         continue;
       }
       auto* stringConst = (*stringPtr)->cast<StringConst>();
@@ -245,7 +246,7 @@ struct StringLowering : public StringGathering {
         if (auto* c = global->init->dynCast<StringConst>()) {
           std::stringstream utf8;
           if (useMagicImports &&
-              String::convertUTF16ToUTF8(utf8, c->string.str)) {
+              String::convertUTF16ToUTF8(utf8, c->string.view())) {
             global->module = stringConstsModule;
             global->base = Name(utf8.str());
           } else {
@@ -262,7 +263,7 @@ struct StringLowering : public StringGathering {
             } else {
               json << ',';
             }
-            String::printEscapedJSON(json, c->string.str);
+            String::printEscapedJSON(json, c->string.view());
             jsonImportIndex++;
           }
           global->init = nullptr;
@@ -304,10 +305,10 @@ struct StringLowering : public StringGathering {
     // things like the types of parameters (which depend on the type of the
     // function, which must be modified either in TypeMapper - but as just
     // explained we cannot do that - or before it, which is what we do here).
-    for (auto& func : module->functions) {
-      if (func->type.getHeapType().getRecGroup().size() != 1 ||
-          !func->type.getFeatures().hasStrings()) {
-        continue;
+    auto fixType = [&](HeapType type) {
+      if (type.getRecGroup().size() != 1 || !type.getFeatures().hasStrings()) {
+        // This is ok as it is.
+        return type;
       }
 
       // Fix up the stringrefs in this type that uses strings and is in a
@@ -320,24 +321,32 @@ struct StringLowering : public StringGathering {
         }
         return t;
       };
-      for (auto param : func->type.getHeapType().getSignature().params) {
+      for (auto param : type.getSignature().params) {
         params.push_back(fix(param));
       }
-      for (auto result : func->type.getHeapType().getSignature().results) {
+      for (auto result : type.getSignature().results) {
         results.push_back(fix(result));
       }
 
       // In addition to doing the update, mark it in the map of updates for
       // TypeMapper, so RefFuncs with this type get updated.
-      auto old = func->type;
-      func->type = func->type.with(Signature(params, results));
-      updates[old.getHeapType()] = func->type.getHeapType();
+      HeapType newType = Signature(params, results);
+      updates[type] = newType;
+      return newType;
+    };
+
+    // Update functions and tags.
+    for (auto& func : module->functions) {
+      func->type = func->type.with(fixType(func->type.getHeapType()));
+    }
+    for (auto& tag : module->tags) {
+      tag->type = fixType(tag->type);
     }
 
     // Strings turn into externref.
     updates[HeapType::string] = HeapType::ext;
 
-    TypeMapper(*module, updates).map();
+    TypeMapper(*module, updates, getPassOptions().worldMode).map();
   }
 
   // Imported string functions.

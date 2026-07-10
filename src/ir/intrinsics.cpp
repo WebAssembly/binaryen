@@ -110,6 +110,15 @@ std::vector<Name> Intrinsics::getJSCalledFunctions() {
   }
 
   // ConfigureAlls in a start function make their functions callable.
+  //
+  // TODO: Rather than scan the start, which does not handle all cases
+  // (configureAll can be called from an export), we could remove this and
+  // expect users to mark all functions as jsCalled. The MarkJSCalled pass scans
+  // for configureAlls and emits that annotation, so users could basically run
+  // it, if they don't want to manually annotate. Then the code here could
+  // get unified into that pass. The errors above (like the elem segment not
+  // having the right size etc.) could then be improved and/or turned into
+  // warnings.
   if (module.start) {
     auto* start = module.getFunction(module.start);
     if (!start->imported()) {

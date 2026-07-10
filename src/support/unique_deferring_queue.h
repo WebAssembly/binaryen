@@ -74,7 +74,7 @@ struct UniqueNonrepeatingDeferredQueue : UniqueDeferredQueue<T> {
   std::unordered_set<T> processed;
 
   void push(T item) {
-    if (!processed.count(item)) {
+    if (!processed.contains(item)) {
       UniqueDeferredQueue<T>::push(item);
     }
   }

@@ -26,6 +26,7 @@ set(passes_SOURCES
   CodeFolding.cpp
   ConstantFieldPropagation.cpp
   ConstHoisting.cpp
+  ConstraintAnalysis.cpp
   DataFlowOpts.cpp
   DeadArgumentElimination.cpp
   DeadArgumentElimination2.cpp
@@ -65,6 +66,7 @@ set(passes_SOURCES
   LocalSubtyping.cpp
   LogExecution.cpp
   LoopInvariantCodeMotion.cpp
+  MarkJSCalled.cpp
   Memory64Lowering.cpp
   MemoryPacking.cpp
   MergeBlocks.cpp
@@ -89,9 +91,11 @@ set(passes_SOURCES
   PostEmscripten.cpp
   Precompute.cpp
   Print.cpp
+  PrintBoundary.cpp
   PrintCallGraph.cpp
   PrintFeatures.cpp
   PrintFunctionMap.cpp
+  RemoveStart.cpp
   RoundTrip.cpp
   SetGlobals.cpp
   SignaturePruning.cpp
@@ -105,6 +109,7 @@ set(passes_SOURCES
   TraceCalls.cpp
   RandomizeBranchHints.cpp
   RedundantSetElimination.cpp
+  RemoveExports.cpp
   RemoveImports.cpp
   RemoveMemoryInit.cpp
   RemoveNonJSOps.cpp

@@ -27,17 +27,15 @@
 #include "asmjs/shared-constants.h"
 #include "ir/find_all.h"
 #include "ir/gc-type-utils.h"
-#include "ir/global-utils.h"
 #include "ir/import-utils.h"
 #include "ir/literal-utils.h"
 #include "ir/memory-utils.h"
 #include "ir/names.h"
 #include "pass.h"
-#include "shell-interface.h"
+#include "support/bits.h"
 #include "support/colors.h"
 #include "support/file.h"
 #include "support/insert_ordered.h"
-#include "support/small_set.h"
 #include "support/string.h"
 #include "support/topological_sort.h"
 #include "tool-options.h"
@@ -70,13 +68,14 @@ bool isNullableAndMutable(Expression* ref, Index fieldIndex) {
 
 class EvallingImportResolver : public ImportResolver {
 public:
-  EvallingImportResolver() : stubLiteral({Literal(0)}) {};
+  EvallingImportResolver() : stubGlobal(Type::i32, Immutable, {Literal(0)}) {}
 
   // Return an unused stub value. We throw FailToEvalException on reading any
   // imported globals. We ignore the type and return an i32 literal since some
   // types can't be created anyway (e.g. ref none).
-  Literals* getGlobalOrNull(ImportNames name, Type type) const override {
-    return &stubLiteral;
+  RuntimeGlobal*
+  getGlobalOrNull(ImportNames name, Type type, bool mut) const override {
+    return &stubGlobal;
   }
 
   RuntimeTable* getTableOrNull(ImportNames name,
@@ -98,7 +97,7 @@ public:
   }
 
 private:
-  mutable Literals stubLiteral;
+  mutable RuntimeGlobal stubGlobal;
   mutable std::unordered_map<ImportNames, Tag> importedTags;
 };
 
@@ -214,10 +213,27 @@ public:
     return ModuleRunnerBase<EvallingModuleRunner>::visitGlobalGet(curr);
   }
 
+  Flow visitGlobalSet(GlobalSet* curr) {
+    if (curr->value->type.isContinuation()) {
+      throw FailToEvalException("cannot serialize continuations to globals");
+    }
+    return ModuleRunnerBase<EvallingModuleRunner>::visitGlobalSet(curr);
+  }
+
   Flow visitTableGet(TableGet* curr) {
     // We support tableLoad, below, so that call_indirect works (it calls it
     // internally), but we want to disable table.get for now.
     throw FailToEvalException("TODO: table.get");
+  }
+
+  Flow visitTableSet(TableSet* curr) {
+    // When changes occur to the table, give up.
+    throw FailToEvalException("TODO: table.set");
+  }
+
+  Flow visitTableGrow(TableGrow* curr) {
+    // When changes occur to the table, give up.
+    throw FailToEvalException("TODO: table.grow");
   }
 
   bool allowContNew = true;
@@ -282,6 +298,9 @@ std::unique_ptr<Module> buildEnvModule(Module& wasm) {
 // that there are not arguments passed to main, etc.
 static bool ignoreExternalInput = false;
 
+// Whether to emit informative logging to stdout about the eval process.
+static bool quiet = false;
+
 struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
   Module* wasm;
   EvallingModuleRunner* instance;
@@ -306,10 +325,21 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
     linkedInstances.swap(linkedInstances_);
   }
 
+  bool firstApplication = true;
+
   // Called when we want to apply the current state of execution to the Module.
   // Until this is called the Module is never changed.
   void applyToModule() {
-    clearApplyState();
+    if (firstApplication) {
+      // The first time we apply things to the module, we can remove the start
+      // function: we evalled it successfully, if we got to here (and we must
+      // not execute it again later, which would mean it runs twice). We do not
+      // do this after the first application because we start to build up a new
+      // start function with the things we need, unrelated to the original one
+      // (see addStartFixup).
+      wasm->start = Name();
+      firstApplication = false;
+    }
 
     // If nothing was ever written to memories then there is nothing to update.
     if (!memories.empty()) {
@@ -469,7 +499,11 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
 
   void throwException(const WasmException& exn) override {
     std::stringstream ss;
-    ss << "exception thrown: " << exn;
+    auto& data = *exn.exn.getExnData();
+    ss << "exception thrown: " << data.tag->name;
+    if (!data.payload.empty()) {
+      ss << ' ' << data.payload;
+    }
     throw FailToEvalException(ss.str());
   }
 
@@ -499,23 +533,19 @@ private:
   }
 
   template<typename T> void doStore(Address address, T value, Name memoryName) {
-    // Use memcpy to avoid UB if unaligned.
-    memcpy(getMemory(address, memoryName, sizeof(T)), &value, sizeof(T));
+    Bits::writeLE<T>(value, getMemory(address, memoryName, sizeof(T)));
   }
 
   template<typename T> T doLoad(Address address, Name memoryName) {
-    // Use memcpy to avoid UB if unaligned.
-    T ret;
-    memcpy(&ret, getMemory(address, memoryName, sizeof(T)), sizeof(T));
-    return ret;
+    return Bits::readLE<T>(getMemory(address, memoryName, sizeof(T)));
   }
 
+public:
   // Clear the state of the operation of applying the interpreter's runtime
-  // information into the module.
-  //
-  // This happens each time we apply contents to the module, which is basically
-  // once per ctor function, but can be more fine-grained also if we execute a
-  // line at a time.
+  // information into the module. This must be done before we start to serialize
+  // content (as the serialization uses this state - defining globals must be
+  // set and are latter used, etc.). After this, serialization can happen, and
+  // after that, a call to applyToModule() can be done.
   void clearApplyState() {
     // The process of allocating "defining globals" begins here, from scratch
     // each time (things live before may no longer be).
@@ -527,6 +557,7 @@ private:
     clearStartBlock();
   }
 
+private:
   void applyMemoryToModule() {
     // Memory must have already been flattened into the standard form: one
     // segment at offset 0, or none.
@@ -566,8 +597,8 @@ private:
   void applyGlobalsToModule() {
     if (!wasm->features.hasGC()) {
       // Without GC, we can simply serialize the globals in place as they are.
-      for (const auto& [name, values] : instance->allGlobals) {
-        wasm->getGlobal(name)->init = getSerialization(*values);
+      for (const auto& [name, global] : instance->allGlobals) {
+        wasm->getGlobal(name)->init = getSerialization(global->literals);
       }
       return;
     }
@@ -585,6 +616,7 @@ private:
 
     for (auto& oldGlobal : oldGlobals) {
       if (oldGlobal->imported()) {
+        wasm->addGlobal(std::move(oldGlobal));
         continue;
       }
       // Serialize the global's value. While doing so, pass in the name of this
@@ -603,7 +635,7 @@ private:
       // value when we created it.)
       auto iter = instance->allGlobals.find(oldGlobal->name);
       if (iter != instance->allGlobals.end()) {
-        oldGlobal->init = getSerialization(*iter->second, name);
+        oldGlobal->init = getSerialization(iter->second->literals, name);
       }
 
       // Add the global back to the module.
@@ -764,7 +796,7 @@ private:
           }
 
           if (auto* get = child->dynCast<GlobalGet>()) {
-            if (!readableGlobals.count(get->name)) {
+            if (!readableGlobals.contains(get->name)) {
               // This get cannot be read - it is a global that appears after
               // us - and so we must fix it up, using the method mentioned
               // before (setting it to null now, and later in the start
@@ -1042,9 +1074,6 @@ public:
   }
 };
 
-// Whether to emit informative logging to stdout about the eval process.
-static bool quiet = false;
-
 // The outcome of evalling a ctor is one of three states:
 //
 // 1. We failed to eval it completely (but perhaps we succeeded partially). In
@@ -1107,7 +1136,7 @@ EvalCtorOutcome evalCtor(EvallingModuleRunner& instance,
   // the locals here. That is, we need to save the local state in the function,
   // which we do by setting up at the entry. We update this list of expressions
   // at the same time as applyToModule() - we must only do it after an entire
-  // atomic "chunk" has been processed succesfully, we do not want partial
+  // atomic "chunk" has been processed successfully, we do not want partial
   // updates from an item in the block that we only partially evalled. When we
   // construct the (partially) evalled function, we will create local.sets of
   // these expressions at the beginning.
@@ -1173,7 +1202,19 @@ start_eval:
           std::cout << "  ...stopping due to non-constant flow\n";
         }
         break;
+      } else if (flow.suspendTag) {
+        // A suspend reached the exit of the function, so it is unhandled in
+        // it. TODO: We could support the case of the calling function
+        // handling it.
+        if (!quiet) {
+          std::cout << "  ...stopping due to unhandled suspend\n";
+        }
+        break;
       }
+
+      // We are about to serialize content (the code paths below call
+      // getSerialization). Clear the state.
+      interface.clearApplyState();
 
       if (flow.breakTo == RETURN_CALL_FLOW) {
         // The return-called function is stored in the last value.
@@ -1205,7 +1246,7 @@ start_eval:
       // module. Note that we must serialize the locals now as doing so may
       // cause changes that must be applied to the module (e.g. GC data may
       // cause globals to be added). And we must apply to the module now, and
-      // not later, as we must do so right after a successfull partial eval
+      // not later, as we must do so right after a successful partial eval
       // (after any failure to eval, the global state is no long valid to be
       // applied to the module, as incomplete changes may have occurred).
       //
@@ -1235,18 +1276,8 @@ start_eval:
       results = flow.values;
 
       if (flow.breaking()) {
-        if (flow.suspendTag) {
-          // A suspend reached the exit of the function, so it is unhandled in
-          // it. TODO: We could support the case of the calling function
-          // handling it.
-          if (!quiet) {
-            std::cout << "  ...stopping due to unhandled suspend\n";
-          }
-          return EvalCtorOutcome();
-        }
-
         // We are returning out of the function (either via a return, or via a
-        // break to |block|, which has the same outcome. That means we don't
+        // break to |block|, which has the same outcome). That means we don't
         // need to execute any more lines, and can consider them to be
         // executed.
         if (!quiet) {
@@ -1417,7 +1448,7 @@ void evalCtors(Module& wasm,
       // time and undo any side effects here. Instead, if we will need the
       // export, disallow things that can block serialization, if we may end up
       // needing to serialize.
-      bool keeping = keptExportsSet.count(ctor);
+      bool keeping = keptExportsSet.contains(ctor);
       if (!keeping) {
         instance.allowContNew = true;
       } else {
@@ -1464,10 +1495,15 @@ void evalCtors(Module& wasm,
       }
     }
   } catch (FailToEvalException& fail) {
-    // that's it, we failed to even create the instance
+    // That's it, we failed to even create the instance.
     if (!quiet) {
       std::cout << "  ...stopping since could not create module instance: "
                 << fail.why << "\n";
+    }
+  } catch (NonconstantException& fail) {
+    // We can also fail during start due to a non-constant operation.
+    if (!quiet) {
+      std::cout << "  ...stopping since non-constant in start\n";
     }
   } catch (TopologicalSort::CycleException e) {
     // We use a topological sort for GC globals. If there is a non-breakable
@@ -1631,14 +1667,14 @@ int main(int argc, const char* argv[]) {
     }
   }
 
-  if (options.extra.count("output") > 0) {
+  if (options.extra.contains("output")) {
     if (options.debug) {
       std::cout << "writing..." << std::endl;
     }
     ModuleWriter writer(options.passOptions);
     writer.setBinary(emitBinary);
     writer.setDebugInfo(debugInfo);
-    writer.write(wasm, options.extra["output"]);
+    options.write(writer, wasm, options.extra["output"]);
   }
 
   flush_and_quick_exit(0);

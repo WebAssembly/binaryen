@@ -33,10 +33,10 @@
 namespace wasm {
 
 class Intrinsics {
-  Module& module;
+  const Module& module;
 
 public:
-  Intrinsics(Module& module) : module(module) {}
+  Intrinsics(const Module& module) : module(module) {}
 
   // Check if an instruction is the Binaryen call.without.effects intrinsic.
   //
@@ -141,8 +141,8 @@ public:
   }
 
   // Given a call in a function, return all the annotations for it. The call may
-  // be annotated itself (which takes precedence), or the function it calls be
-  // annotated.
+  // be annotated itself (which takes precedence), or the function it calls may
+  // be annotated.
   CodeAnnotation getCallAnnotations(Call* call, Function* func) {
     // Combine annotations from the call itself and from the called function.
     auto ret = getAnnotations(call, func);
@@ -167,6 +167,9 @@ public:
       }
       if (!ret.idempotent) {
         ret.idempotent = funcAnnotations.idempotent;
+      }
+      if (!ret.toolchainInline) {
+        ret.toolchainInline = funcAnnotations.toolchainInline;
       }
     }
 

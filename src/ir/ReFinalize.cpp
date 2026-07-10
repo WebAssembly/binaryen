@@ -109,6 +109,8 @@ void ReFinalize::visitMemoryFill(MemoryFill* curr) { curr->finalize(); }
 void ReFinalize::visitConst(Const* curr) { curr->finalize(); }
 void ReFinalize::visitUnary(Unary* curr) { curr->finalize(); }
 void ReFinalize::visitBinary(Binary* curr) { curr->finalize(); }
+void ReFinalize::visitWideIntAddSub(WideIntAddSub* curr) { curr->finalize(); }
+void ReFinalize::visitWideIntMul(WideIntMul* curr) { curr->finalize(); }
 void ReFinalize::visitSelect(Select* curr) { curr->finalize(); }
 void ReFinalize::visitDrop(Drop* curr) { curr->finalize(); }
 void ReFinalize::visitReturn(Return* curr) { curr->finalize(); }
@@ -163,12 +165,16 @@ void ReFinalize::visitStructGet(StructGet* curr) { curr->finalize(); }
 void ReFinalize::visitStructSet(StructSet* curr) { curr->finalize(); }
 void ReFinalize::visitStructRMW(StructRMW* curr) { curr->finalize(); }
 void ReFinalize::visitStructCmpxchg(StructCmpxchg* curr) { curr->finalize(); }
+void ReFinalize::visitStructWait(StructWait* curr) { curr->finalize(); }
+void ReFinalize::visitStructNotify(StructNotify* curr) { curr->finalize(); }
 void ReFinalize::visitArrayNew(ArrayNew* curr) { curr->finalize(); }
 void ReFinalize::visitArrayNewData(ArrayNewData* curr) { curr->finalize(); }
 void ReFinalize::visitArrayNewElem(ArrayNewElem* curr) { curr->finalize(); }
 void ReFinalize::visitArrayNewFixed(ArrayNewFixed* curr) { curr->finalize(); }
 void ReFinalize::visitArrayGet(ArrayGet* curr) { curr->finalize(); }
 void ReFinalize::visitArraySet(ArraySet* curr) { curr->finalize(); }
+void ReFinalize::visitArrayLoad(ArrayLoad* curr) { curr->finalize(); }
+void ReFinalize::visitArrayStore(ArrayStore* curr) { curr->finalize(); }
 void ReFinalize::visitArrayLen(ArrayLen* curr) { curr->finalize(); }
 void ReFinalize::visitArrayCopy(ArrayCopy* curr) { curr->finalize(); }
 void ReFinalize::visitArrayFill(ArrayFill* curr) { curr->finalize(); }

@@ -1,59 +1,59 @@
-[fuzz-exec] calling structs
+[fuzz-exec] export structs
 [LoggingExternalInterface logging 0]
 [LoggingExternalInterface logging 42]
 [LoggingExternalInterface logging 100]
 [LoggingExternalInterface logging 100]
-[fuzz-exec] calling arrays
+[fuzz-exec] export arrays
 [LoggingExternalInterface logging 50]
 [LoggingExternalInterface logging 42]
 [LoggingExternalInterface logging 128]
 [LoggingExternalInterface logging -128]
 [LoggingExternalInterface logging 42]
-[fuzz-exec] calling br_on_cast
+[fuzz-exec] export br_on_cast
 [LoggingExternalInterface logging 3]
-[fuzz-exec] calling br_on_failed_cast-1
+[fuzz-exec] export br_on_failed_cast-1
 [LoggingExternalInterface logging 1]
-[fuzz-exec] calling br_on_failed_cast-2
+[fuzz-exec] export br_on_failed_cast-2
 [LoggingExternalInterface logging 1]
 [LoggingExternalInterface logging 999]
-[fuzz-exec] calling cast-null-anyref-to-gc
+[fuzz-exec] export cast-null-anyref-to-gc
 [LoggingExternalInterface logging 0]
-[fuzz-exec] calling br-on_non_null
-[fuzz-exec] calling br-on_non_null-2
+[fuzz-exec] export br-on_non_null
+[fuzz-exec] export br-on_non_null-2
 [LoggingExternalInterface logging 1]
 [trap unreachable]
-[fuzz-exec] calling ref-as-func-of-func
-[fuzz-exec] calling cast-on-func
+[fuzz-exec] export ref-as-func-of-func
+[fuzz-exec] export cast-on-func
 [LoggingExternalInterface logging 0]
 [LoggingExternalInterface logging 1337]
 [LoggingExternalInterface logging 1]
 [trap cast error]
-[fuzz-exec] calling array-alloc-failure
+[fuzz-exec] export array-alloc-failure
 [host limit allocation failure]
-[fuzz-exec] calling init-array-packed
+[fuzz-exec] export init-array-packed
 [fuzz-exec] note result: init-array-packed => 213
-[fuzz-exec] calling array-copy
+[fuzz-exec] export array-copy
 [LoggingExternalInterface logging 10]
 [LoggingExternalInterface logging 10]
 [LoggingExternalInterface logging 99]
 [LoggingExternalInterface logging 0]
 [LoggingExternalInterface logging 10]
-[fuzz-exec] calling array.new_fixed
+[fuzz-exec] export array.new_fixed
 [LoggingExternalInterface logging 2]
 [LoggingExternalInterface logging 42]
 [LoggingExternalInterface logging 50]
-[fuzz-exec] calling array.new_fixed-packed
+[fuzz-exec] export array.new_fixed-packed
 [LoggingExternalInterface logging 8]
-[fuzz-exec] calling static-casts
+[fuzz-exec] export static-casts
 [LoggingExternalInterface logging 1]
 [LoggingExternalInterface logging 0]
 [LoggingExternalInterface logging 0]
 [LoggingExternalInterface logging 1]
 [LoggingExternalInterface logging 0]
 [LoggingExternalInterface logging 1]
-[fuzz-exec] calling static-br_on_cast
+[fuzz-exec] export static-br_on_cast
 [LoggingExternalInterface logging 3]
-[fuzz-exec] calling static-br_on_cast_fail
+[fuzz-exec] export static-br_on_cast_fail
 [LoggingExternalInterface logging -2]
 (module
  (type $bytes (array (mut i8)))
@@ -303,64 +303,64 @@
   )
  )
 )
-[fuzz-exec] calling structs
+[fuzz-exec] export structs
 [LoggingExternalInterface logging 0]
 [LoggingExternalInterface logging 42]
 [LoggingExternalInterface logging 100]
 [LoggingExternalInterface logging 100]
-[fuzz-exec] calling arrays
+[fuzz-exec] export arrays
 [LoggingExternalInterface logging 50]
 [LoggingExternalInterface logging 42]
 [LoggingExternalInterface logging 128]
 [LoggingExternalInterface logging -128]
 [LoggingExternalInterface logging 42]
-[fuzz-exec] calling br_on_cast
+[fuzz-exec] export br_on_cast
 [LoggingExternalInterface logging 3]
-[fuzz-exec] calling br_on_failed_cast-1
+[fuzz-exec] export br_on_failed_cast-1
 [LoggingExternalInterface logging 1]
-[fuzz-exec] calling br_on_failed_cast-2
+[fuzz-exec] export br_on_failed_cast-2
 [LoggingExternalInterface logging 1]
 [LoggingExternalInterface logging 999]
-[fuzz-exec] calling cast-null-anyref-to-gc
+[fuzz-exec] export cast-null-anyref-to-gc
 [LoggingExternalInterface logging 0]
-[fuzz-exec] calling br-on_non_null
-[fuzz-exec] calling br-on_non_null-2
+[fuzz-exec] export br-on_non_null
+[fuzz-exec] export br-on_non_null-2
 [LoggingExternalInterface logging 1]
 [trap unreachable]
-[fuzz-exec] calling ref-as-func-of-func
-[fuzz-exec] calling cast-on-func
+[fuzz-exec] export ref-as-func-of-func
+[fuzz-exec] export cast-on-func
 [LoggingExternalInterface logging 0]
 [LoggingExternalInterface logging 1337]
 [LoggingExternalInterface logging 1]
 [trap unreachable]
-[fuzz-exec] calling array-alloc-failure
-[fuzz-exec] calling init-array-packed
+[fuzz-exec] export array-alloc-failure
+[fuzz-exec] export init-array-packed
 [fuzz-exec] note result: init-array-packed => 213
-[fuzz-exec] calling array-copy
+[fuzz-exec] export array-copy
 [LoggingExternalInterface logging 10]
 [LoggingExternalInterface logging 10]
 [LoggingExternalInterface logging 99]
 [LoggingExternalInterface logging 0]
 [LoggingExternalInterface logging 10]
-[fuzz-exec] calling array.new_fixed
+[fuzz-exec] export array.new_fixed
 [LoggingExternalInterface logging 2]
 [LoggingExternalInterface logging 42]
 [LoggingExternalInterface logging 50]
-[fuzz-exec] calling array.new_fixed-packed
+[fuzz-exec] export array.new_fixed-packed
 [LoggingExternalInterface logging 8]
-[fuzz-exec] calling static-casts
+[fuzz-exec] export static-casts
 [LoggingExternalInterface logging 1]
 [LoggingExternalInterface logging 0]
 [LoggingExternalInterface logging 0]
 [LoggingExternalInterface logging 1]
 [LoggingExternalInterface logging 0]
 [LoggingExternalInterface logging 1]
-[fuzz-exec] calling static-br_on_cast
+[fuzz-exec] export static-br_on_cast
 [LoggingExternalInterface logging 3]
-[fuzz-exec] calling static-br_on_cast_fail
+[fuzz-exec] export static-br_on_cast_fail
 [LoggingExternalInterface logging -2]
 ignoring comparison of ExecutionResults!
-[fuzz-exec] calling foo
+[fuzz-exec] export foo
 [host limit allocation failure]
 (module
  (type $0 (func (result i32)))
@@ -369,6 +369,6 @@ ignoring comparison of ExecutionResults!
   (i32.const 0)
  )
 )
-[fuzz-exec] calling foo
+[fuzz-exec] export foo
 [fuzz-exec] note result: foo => 0
 ignoring comparison of ExecutionResults!

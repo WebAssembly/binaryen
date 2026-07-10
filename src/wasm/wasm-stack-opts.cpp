@@ -209,9 +209,9 @@ void StackIROptimizer::local2Stack() {
       bool optimized = false;
       // Do not optimize multivalue locals, since those will be better
       // optimized when they are visited in the binary writer and this
-      // optimization would intefere with that one.
+      // optimization would interfere with that one.
       if (auto* get = inst->origin->dynCast<LocalGet>();
-          get && inst->type.isSingle() && !deferredGets.count(get)) {
+          get && inst->type.isSingle() && !deferredGets.contains(get)) {
         // Use another local to clarify what instIndex means in this scope.
         auto getIndex = instIndex;
 
@@ -272,6 +272,79 @@ void StackIROptimizer::local2Stack() {
       values.push_back(instIndex);
     }
   }
+
+  // Optimize the simple case of a multivalue tee and extract. If an expression
+  // returns a tuple, and that tuple is immediately consumed, we end up with
+  // something like this:
+  //
+  //  local.tee $1
+  //  tuple.extract 4 0
+  //  local.get $1
+  //  tuple.extract 4 1
+  //  local.get $1
+  //  tuple.extract 4 2
+  //  local.get $1
+  //  tuple.extract 4 3
+  //
+  // The tuple is teed, then we extract the components one by one. If no other
+  // uses of the tee exist, we can just remove all of this.
+  for (Index instIndex = 0; instIndex < insts.size(); instIndex++) {
+    auto* inst = insts[instIndex];
+    if (!inst) {
+      continue;
+    }
+    auto* tee = inst->origin->dynCast<LocalSet>();
+    if (!tee || !tee->type.isTuple()) {
+      continue;
+    }
+
+    // The tee must be read by exactly the proper number of gets, and no more,
+    // which is one less than the tuple size (the tee provides one get).
+    auto size = tee->type.size();
+    auto& setInfluences = localGraph.getSetInfluences(tee);
+    if (setInfluences.size() != size - 1) {
+      continue;
+    }
+
+    // This is a tee of a tuple. Look for the expected extracts/gets. Each
+    // tuple index has 2 items.
+    bool ok = true;
+    for (Index i = 0; i < size; i++) {
+      // Each tuple index has a pair of items.
+      auto tupleIndexStart = instIndex + i * 2;
+      if (tupleIndexStart + 1 >= insts.size()) {
+        ok = false;
+        break;
+      }
+      auto* first = insts[tupleIndexStart];
+      auto* second = insts[tupleIndexStart + 1];
+      if (!first || !second) {
+        ok = false;
+        break;
+      }
+      // The first tuple index has the tee (already validated). Others have a
+      // get.
+      if (i != 0) {
+        auto* get = first->origin->dynCast<LocalGet>();
+        if (!get || get->index != tee->index) {
+          ok = false;
+          break;
+        }
+      }
+      // The second item of the pair is an extract.
+      auto* extract = second->origin->dynCast<TupleExtract>();
+      if (!extract || extract->index != i) {
+        ok = false;
+        break;
+      }
+    }
+    if (ok) {
+      // Optimize.
+      for (Index i = 0; i < size * 2; i++) {
+        insts[instIndex + i] = nullptr;
+      }
+    }
+  }
 }
 
 // There may be unnecessary blocks we can remove: blocks without arriving
@@ -293,7 +366,7 @@ void StackIROptimizer::removeUnneededBlocks() {
       continue;
     }
     if (auto* block = inst->origin->dynCast<Block>()) {
-      if (!block->name.is() || !targets.count(block->name)) {
+      if (!block->name.is() || !targets.contains(block->name)) {
         // TODO optimize, maybe run remove-unused-names
         inst = nullptr;
       }

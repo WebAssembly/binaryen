@@ -74,7 +74,7 @@ struct LLVMNonTrappingFPToIntLoweringImpl
     Builder builder(*getModule());
     Index v = Builder::addVar(getFunction(), curr->value->type);
     // if fabs(operand) < INT_MAX then use the trapping operation, else return
-    // INT_MIN. The altnernate value is correct for the case where the input is
+    // INT_MIN. The alternate value is correct for the case where the input is
     // INT_MIN itself; otherwise it's UB so any value will do.
     replaceCurrent(builder.makeIf(
       builder.makeBinary(

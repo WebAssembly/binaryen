@@ -502,6 +502,18 @@ BinaryenFeatures BinaryenFeatureCallIndirectOverlong(void) {
 BinaryenFeatures BinaryenFeatureRelaxedAtomics(void) {
   return static_cast<BinaryenFeatures>(FeatureSet::RelaxedAtomics);
 }
+BinaryenFeatures BinaryenFeatureMultibyte(void) {
+  return static_cast<BinaryenFeatures>(FeatureSet::Multibyte);
+}
+BinaryenFeatures BinaryenFeatureCustomPageSizes(void) {
+  return static_cast<BinaryenFeatures>(FeatureSet::CustomPageSizes);
+}
+BinaryenFeatures BinaryenFeatureWideArithmetic(void) {
+  return static_cast<BinaryenFeatures>(FeatureSet::WideArithmetic);
+}
+BinaryenFeatures BinaryenFeatureCompactImports(void) {
+  return static_cast<BinaryenFeatures>(FeatureSet::CompactImports);
+}
 BinaryenFeatures BinaryenFeatureAll(void) {
   return static_cast<BinaryenFeatures>(FeatureSet::All);
 }
@@ -681,6 +693,10 @@ BinaryenOp BinaryenLtFloat64(void) { return LtFloat64; }
 BinaryenOp BinaryenLeFloat64(void) { return LeFloat64; }
 BinaryenOp BinaryenGtFloat64(void) { return GtFloat64; }
 BinaryenOp BinaryenGeFloat64(void) { return GeFloat64; }
+BinaryenOp BinaryenAddInt128(void) { return AddInt128; }
+BinaryenOp BinaryenSubInt128(void) { return SubInt128; }
+BinaryenOp BinaryenMulWideSInt64(void) { return MulWideSInt64; }
+BinaryenOp BinaryenMulWideUInt64(void) { return MulWideUInt64; }
 BinaryenOp BinaryenAtomicRMWAdd(void) { return RMWAdd; }
 BinaryenOp BinaryenAtomicRMWSub(void) { return RMWSub; }
 BinaryenOp BinaryenAtomicRMWAnd(void) { return RMWAnd; }
@@ -789,12 +805,20 @@ BinaryenOp BinaryenRelaxedMaddVecF32x4(void) { return RelaxedMaddVecF32x4; }
 BinaryenOp BinaryenRelaxedNmaddVecF32x4(void) { return RelaxedNmaddVecF32x4; }
 BinaryenOp BinaryenRelaxedMaddVecF64x2(void) { return RelaxedMaddVecF64x2; }
 BinaryenOp BinaryenRelaxedNmaddVecF64x2(void) { return RelaxedNmaddVecF64x2; }
-BinaryenOp BinaryenLaneselectI8x16(void) { return LaneselectI8x16; }
-BinaryenOp BinaryenLaneselectI16x8(void) { return LaneselectI16x8; }
-BinaryenOp BinaryenLaneselectI32x4(void) { return LaneselectI32x4; }
-BinaryenOp BinaryenLaneselectI64x2(void) { return LaneselectI64x2; }
-BinaryenOp BinaryenDotI8x16I7x16AddSToVecI32x4(void) {
-  return DotI8x16I7x16AddSToVecI32x4;
+BinaryenOp BinaryenRelaxedLaneselectI8x16(void) {
+  return RelaxedLaneselectI8x16;
+}
+BinaryenOp BinaryenRelaxedLaneselectI16x8(void) {
+  return RelaxedLaneselectI16x8;
+}
+BinaryenOp BinaryenRelaxedLaneselectI32x4(void) {
+  return RelaxedLaneselectI32x4;
+}
+BinaryenOp BinaryenRelaxedLaneselectI64x2(void) {
+  return RelaxedLaneselectI64x2;
+}
+BinaryenOp BinaryenRelaxedDotI8x16I7x16AddSToVecI32x4(void) {
+  return RelaxedDotI8x16I7x16AddSToVecI32x4;
 }
 BinaryenOp BinaryenAnyTrueVec128(void) { return AnyTrueVec128; }
 BinaryenOp BinaryenAbsVecI8x16(void) { return AbsVecI8x16; }
@@ -1015,6 +1039,9 @@ BinaryenOp BinaryenDemoteZeroVecF64x2ToVecF32x4(void) {
 BinaryenOp BinaryenPromoteLowVecF32x4ToVecF64x2(void) {
   return PromoteLowVecF32x4ToVecF64x2;
 }
+BinaryenOp BinaryenPromoteLowVecF16x8ToVecF32x4(void) {
+  return PromoteLowVecF16x8ToVecF32x4;
+}
 BinaryenOp BinaryenRelaxedTruncSVecF32x4ToVecI32x4(void) {
   return RelaxedTruncSVecF32x4ToVecI32x4;
 }
@@ -1038,8 +1065,8 @@ BinaryenOp BinaryenRelaxedMaxVecF64x2(void) { return RelaxedMaxVecF64x2; }
 BinaryenOp BinaryenRelaxedQ15MulrSVecI16x8(void) {
   return RelaxedQ15MulrSVecI16x8;
 }
-BinaryenOp BinaryenDotI8x16I7x16SToVecI16x8(void) {
-  return DotI8x16I7x16SToVecI16x8;
+BinaryenOp BinaryenRelaxedDotI8x16I7x16SToVecI16x8(void) {
+  return RelaxedDotI8x16I7x16SToVecI16x8;
 }
 BinaryenOp BinaryenRefAsNonNull(void) { return RefAsNonNull; }
 BinaryenOp BinaryenRefAsExternInternalize(void) { return AnyConvertExtern; }
@@ -1303,6 +1330,26 @@ BinaryenExpressionRef BinaryenBinary(BinaryenModuleRef module,
     Builder(*(Module*)module)
       .makeBinary(BinaryOp(op), (Expression*)left, (Expression*)right));
 }
+BinaryenExpressionRef BinaryenWideIntAddSub(BinaryenModuleRef module,
+                                            BinaryenOp op,
+                                            BinaryenExpressionRef leftLow,
+                                            BinaryenExpressionRef leftHigh,
+                                            BinaryenExpressionRef rightLow,
+                                            BinaryenExpressionRef rightHigh) {
+  return Builder(*(Module*)module)
+    .makeWideIntAddSub(WideIntAddSubOp(op),
+                       (Expression*)leftLow,
+                       (Expression*)leftHigh,
+                       (Expression*)rightLow,
+                       (Expression*)rightHigh);
+}
+BinaryenExpressionRef BinaryenWideIntMul(BinaryenModuleRef module,
+                                         BinaryenOp op,
+                                         BinaryenExpressionRef left,
+                                         BinaryenExpressionRef right) {
+  return Builder(*(Module*)module)
+    .makeWideIntMul(WideIntMulOp(op), (Expression*)left, (Expression*)right);
+}
 BinaryenExpressionRef BinaryenSelect(BinaryenModuleRef module,
                                      BinaryenExpressionRef condition,
                                      BinaryenExpressionRef ifTrue,
@@ -1453,8 +1500,10 @@ BinaryenExpressionRef BinaryenAtomicNotify(BinaryenModuleRef module,
                         0,
                         getMemoryName(module, memoryName)));
 }
-BinaryenExpressionRef BinaryenAtomicFence(BinaryenModuleRef module) {
-  return static_cast<Expression*>(Builder(*(Module*)module).makeAtomicFence());
+BinaryenExpressionRef BinaryenAtomicFence(BinaryenModuleRef module,
+                                          BinaryenMemoryOrder order) {
+  return Builder(*(Module*)module)
+    .makeAtomicFence(static_cast<MemoryOrder>(order));
 }
 BinaryenExpressionRef BinaryenSIMDExtract(BinaryenModuleRef module,
                                           BinaryenOp op,
@@ -2032,6 +2081,20 @@ void BinaryenExpressionFinalize(BinaryenExpressionRef expr) {
 BinaryenExpressionRef BinaryenExpressionCopy(BinaryenExpressionRef expr,
                                              BinaryenModuleRef module) {
   return ExpressionManipulator::copy(expr, *(Module*)module);
+}
+char* BinaryenExpressionAllocateAndWriteText(BinaryenExpressionRef expr) {
+  std::ostringstream os;
+  bool colors = Colors::isEnabled();
+
+  Colors::setEnabled(false); // do not use colors for writing
+  os << *(Expression*)expr;
+  Colors::setEnabled(colors); // restore colors state
+
+  auto str = os.str();
+  const size_t len = str.length() + 1;
+  char* output = (char*)malloc(len);
+  std::copy_n(str.c_str(), len, output);
+  return output;
 }
 
 // Specific expression utility
@@ -2934,6 +2997,105 @@ void BinaryenBinarySetRight(BinaryenExpressionRef expr,
   assert(rightExpr);
   static_cast<Binary*>(expression)->right = (Expression*)rightExpr;
 }
+// WideIntAddSub
+BinaryenOp BinaryenWideIntAddSubGetOp(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<WideIntAddSub>());
+  return static_cast<WideIntAddSub*>(expression)->op;
+}
+void BinaryenWideIntAddSubSetOp(BinaryenExpressionRef expr, BinaryenOp op) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<WideIntAddSub>());
+  static_cast<WideIntAddSub*>(expression)->op = WideIntAddSubOp(op);
+}
+BinaryenExpressionRef
+BinaryenWideIntAddSubGetLeftLow(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<WideIntAddSub>());
+  return static_cast<WideIntAddSub*>(expression)->leftLow;
+}
+void BinaryenWideIntAddSubSetLeftLow(BinaryenExpressionRef expr,
+                                     BinaryenExpressionRef leftLowExpr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<WideIntAddSub>());
+  assert(leftLowExpr);
+  static_cast<WideIntAddSub*>(expression)->leftLow = (Expression*)leftLowExpr;
+}
+BinaryenExpressionRef
+BinaryenWideIntAddSubGetLeftHigh(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<WideIntAddSub>());
+  return static_cast<WideIntAddSub*>(expression)->leftHigh;
+}
+void BinaryenWideIntAddSubSetLeftHigh(BinaryenExpressionRef expr,
+                                      BinaryenExpressionRef leftHighExpr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<WideIntAddSub>());
+  assert(leftHighExpr);
+  static_cast<WideIntAddSub*>(expression)->leftHigh = (Expression*)leftHighExpr;
+}
+BinaryenExpressionRef
+BinaryenWideIntAddSubGetRightLow(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<WideIntAddSub>());
+  return static_cast<WideIntAddSub*>(expression)->rightLow;
+}
+void BinaryenWideIntAddSubSetRightLow(BinaryenExpressionRef expr,
+                                      BinaryenExpressionRef rightLowExpr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<WideIntAddSub>());
+  assert(rightLowExpr);
+  static_cast<WideIntAddSub*>(expression)->rightLow = (Expression*)rightLowExpr;
+}
+BinaryenExpressionRef
+BinaryenWideIntAddSubGetRightHigh(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<WideIntAddSub>());
+  return static_cast<WideIntAddSub*>(expression)->rightHigh;
+}
+void BinaryenWideIntAddSubSetRightHigh(BinaryenExpressionRef expr,
+                                       BinaryenExpressionRef rightHighExpr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<WideIntAddSub>());
+  assert(rightHighExpr);
+  static_cast<WideIntAddSub*>(expression)->rightHigh =
+    (Expression*)rightHighExpr;
+}
+// WideIntMul
+BinaryenOp BinaryenWideIntMulGetOp(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<WideIntMul>());
+  return static_cast<WideIntMul*>(expression)->op;
+}
+void BinaryenWideIntMulSetOp(BinaryenExpressionRef expr, BinaryenOp op) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<WideIntMul>());
+  static_cast<WideIntMul*>(expression)->op = WideIntMulOp(op);
+}
+BinaryenExpressionRef BinaryenWideIntMulGetLeft(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<WideIntMul>());
+  return static_cast<WideIntMul*>(expression)->left;
+}
+void BinaryenWideIntMulSetLeft(BinaryenExpressionRef expr,
+                               BinaryenExpressionRef leftExpr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<WideIntMul>());
+  assert(leftExpr);
+  static_cast<WideIntMul*>(expression)->left = (Expression*)leftExpr;
+}
+BinaryenExpressionRef BinaryenWideIntMulGetRight(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<WideIntMul>());
+  return static_cast<WideIntMul*>(expression)->right;
+}
+void BinaryenWideIntMulSetRight(BinaryenExpressionRef expr,
+                                BinaryenExpressionRef rightExpr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<WideIntMul>());
+  assert(rightExpr);
+  static_cast<WideIntMul*>(expression)->right = (Expression*)rightExpr;
+}
 // Select
 BinaryenExpressionRef BinaryenSelectGetIfTrue(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
@@ -3221,15 +3383,18 @@ void BinaryenAtomicNotifySetNotifyCount(BinaryenExpressionRef expr,
     (Expression*)notifyCountExpr;
 }
 // AtomicFence
-uint8_t BinaryenAtomicFenceGetOrder(BinaryenExpressionRef expr) {
+BinaryenMemoryOrder BinaryenAtomicFenceGetOrder(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<AtomicFence>());
-  return static_cast<AtomicFence*>(expression)->order;
+  return static_cast<BinaryenMemoryOrder>(
+    static_cast<AtomicFence*>(expression)->order);
 }
-void BinaryenAtomicFenceSetOrder(BinaryenExpressionRef expr, uint8_t order) {
+void BinaryenAtomicFenceSetOrder(BinaryenExpressionRef expr,
+                                 BinaryenMemoryOrder order) {
   auto* expression = (Expression*)expr;
   assert(expression->is<AtomicFence>());
-  static_cast<AtomicFence*>(expression)->order = order;
+  static_cast<AtomicFence*>(expression)->order =
+    static_cast<MemoryOrder>(order);
 }
 // SIMDExtract
 BinaryenOp BinaryenSIMDExtractGetOp(BinaryenExpressionRef expr) {
@@ -5333,8 +5498,10 @@ BinaryenTableRef BinaryenAddTable(BinaryenModuleRef module,
                                   const char* name,
                                   BinaryenIndex initial,
                                   BinaryenIndex maximum,
-                                  BinaryenType tableType) {
+                                  BinaryenType tableType,
+                                  BinaryenExpressionRef init) {
   auto table = Builder::makeTable(name, Type(tableType), initial, maximum);
+  table->init = init;
   table->hasExplicitName = true;
   return ((Module*)module)->addTable(std::move(table));
 }
@@ -5412,7 +5579,7 @@ BinaryenIndex BinaryenGetNumElementSegments(BinaryenModuleRef module) {
 }
 BinaryenExpressionRef
 BinaryenElementSegmentGetOffset(BinaryenElementSegmentRef elem) {
-  if (((ElementSegment*)elem)->table.isNull()) {
+  if (((ElementSegment*)elem)->isPassive()) {
     Fatal() << "elem segment is passive.";
   }
   return ((ElementSegment*)elem)->offset;
@@ -5466,12 +5633,12 @@ void BinaryenSetMemory(BinaryenModuleRef module,
   for (BinaryenIndex i = 0; i < numSegments; i++) {
     auto explicitName = segmentNames && segmentNames[i];
     auto name = explicitName ? Name(segmentNames[i]) : Name::fromInt(i);
-    auto curr = Builder::makeDataSegment(name,
-                                         memory->name,
-                                         segmentPassives[i],
-                                         (Expression*)segmentOffsets[i],
-                                         segmentDatas[i],
-                                         segmentSizes[i]);
+    auto curr =
+      Builder::makeDataSegment(name,
+                               segmentPassives[i] ? Name() : memory->name,
+                               (Expression*)segmentOffsets[i],
+                               segmentDatas[i],
+                               segmentSizes[i]);
     curr->hasExplicitName = explicitName;
     ((Module*)module)->addDataSegment(std::move(curr));
   }
@@ -5481,16 +5648,27 @@ void BinaryenSetMemory(BinaryenModuleRef module,
 
 // Memory segments
 
-uint32_t BinaryenGetNumMemorySegments(BinaryenModuleRef module) {
+uint32_t BinaryenGetNumDataSegments(BinaryenModuleRef module) {
   return ((Module*)module)->dataSegments.size();
 }
-uint32_t BinaryenGetMemorySegmentByteOffset(BinaryenModuleRef module,
-                                            const char* segmentName) {
-  auto* wasm = (Module*)module;
-  const auto* segment = wasm->getDataSegmentOrNull(Name(segmentName));
-  if (segment == NULL) {
-    Fatal() << "invalid segment name.";
+BinaryenDataSegmentRef BinaryenGetDataSegment(BinaryenModuleRef module,
+                                              const char* segmentName) {
+  return ((Module*)module)->getDataSegmentOrNull(Name(segmentName));
+}
+BinaryenDataSegmentRef BinaryenGetDataSegmentByIndex(BinaryenModuleRef module,
+                                                     BinaryenIndex index) {
+  const auto& dataSegments = ((Module*)module)->dataSegments;
+  if (dataSegments.size() <= index) {
+    Fatal() << "invalid memory segment index.";
   }
+  return dataSegments[index].get();
+}
+const char* BinaryenDataSegmentGetName(BinaryenDataSegmentRef segment) {
+  return ((DataSegment*)segment)->name.str.data();
+}
+uint32_t BinaryenGetDataSegmentByteOffset(BinaryenModuleRef module,
+                                          BinaryenDataSegmentRef segment) {
+  auto* wasm = (Module*)module;
 
   auto globalOffset = [&](const Expression* const& expr,
                           int64_t& result) -> bool {
@@ -5502,10 +5680,10 @@ uint32_t BinaryenGetMemorySegmentByteOffset(BinaryenModuleRef module,
   };
 
   int64_t ret;
-  if (globalOffset(segment->offset, ret)) {
+  if (globalOffset(((DataSegment*)segment)->offset, ret)) {
     return ret;
   }
-  if (auto* get = segment->offset->dynCast<GlobalGet>()) {
+  if (auto* get = ((DataSegment*)segment)->offset->dynCast<GlobalGet>()) {
     Global* global = wasm->getGlobal(get->name);
     if (globalOffset(global->init, ret)) {
       return ret;
@@ -5606,33 +5784,16 @@ bool BinaryenMemoryIs64(BinaryenModuleRef module, const char* name) {
   }
   return memory->is64();
 }
-size_t BinaryenGetMemorySegmentByteLength(BinaryenModuleRef module,
-                                          const char* segmentName) {
-  auto* wasm = (Module*)module;
-  const auto* segment = wasm->getDataSegmentOrNull(Name(segmentName));
-  if (segment == NULL) {
-    Fatal() << "invalid segment name.";
-  }
-  return segment->data.size();
+size_t BinaryenGetDataSegmentByteLength(BinaryenDataSegmentRef segment) {
+  return ((DataSegment*)segment)->data.size();
 }
-bool BinaryenGetMemorySegmentPassive(BinaryenModuleRef module,
-                                     const char* segmentName) {
-  auto* wasm = (Module*)module;
-  const auto* segment = wasm->getDataSegmentOrNull(Name(segmentName));
-  if (segment == NULL) {
-    Fatal() << "invalid segment name.";
-  }
-  return segment->isPassive;
+bool BinaryenGetDataSegmentPassive(BinaryenDataSegmentRef segment) {
+  return ((DataSegment*)segment)->isPassive();
 }
-void BinaryenCopyMemorySegmentData(BinaryenModuleRef module,
-                                   const char* segmentName,
-                                   char* buffer) {
-  auto* wasm = (Module*)module;
-  const auto* segment = wasm->getDataSegmentOrNull(Name(segmentName));
-  if (segment == NULL) {
-    Fatal() << "invalid segment name.";
-  }
-  std::copy(segment->data.cbegin(), segment->data.cend(), buffer);
+void BinaryenCopyDataSegmentData(BinaryenDataSegmentRef segment, char* buffer) {
+  std::copy(((DataSegment*)segment)->data.cbegin(),
+            ((DataSegment*)segment)->data.cend(),
+            buffer);
 }
 void BinaryenAddDataSegment(BinaryenModuleRef module,
                             const char* segmentName,
@@ -5644,12 +5805,12 @@ void BinaryenAddDataSegment(BinaryenModuleRef module,
   auto* wasm = (Module*)module;
   auto name =
     segmentName ? Name(segmentName) : Name::fromInt(wasm->dataSegments.size());
-  auto curr = Builder::makeDataSegment(name,
-                                       memoryName ? memoryName : "0",
-                                       segmentPassive,
-                                       (Expression*)segmentOffset,
-                                       segmentData,
-                                       segmentSize);
+  auto curr = Builder::makeDataSegment(
+    name,
+    segmentPassive ? Name() : (memoryName ? memoryName : "0"),
+    (Expression*)segmentOffset,
+    segmentData,
+    segmentSize);
   curr->hasExplicitName = segmentName ? true : false;
   wasm->addDataSegment(std::move(curr));
 }
@@ -5680,7 +5841,13 @@ void BinaryenModuleSetFeatures(BinaryenModuleRef module,
 //
 
 BinaryenModuleRef BinaryenModuleParse(const char* text) {
+  return BinaryenModuleParseWithFeatures(text, BinaryenFeatureMVP());
+}
+
+BinaryenModuleRef BinaryenModuleParseWithFeatures(const char* text,
+                                                  BinaryenFeatures features) {
   auto* wasm = new Module;
+  wasm->features.features = features;
   auto parsed = WATParser::parseModule(*wasm, text);
   if (auto* err = parsed.getErr()) {
     Fatal() << err->msg << "\n";
@@ -5749,9 +5916,13 @@ void BinaryenSetTrapsNeverHappen(bool on) {
   globalPassOptions.trapsNeverHappen = on;
 }
 
-bool BinaryenGetClosedWorld(void) { return globalPassOptions.closedWorld; }
+bool BinaryenGetClosedWorld(void) {
+  return globalPassOptions.worldMode == WorldMode::Closed;
+}
 
-void BinaryenSetClosedWorld(bool on) { globalPassOptions.closedWorld = on; }
+void BinaryenSetClosedWorld(bool on) {
+  globalPassOptions.worldMode = on ? WorldMode::Closed : WorldMode::Open;
+}
 
 bool BinaryenGetLowMemoryUnused(void) {
   return globalPassOptions.lowMemoryUnused;
@@ -5813,7 +5984,7 @@ void BinaryenClearPassArguments(void) { globalPassOptions.arguments.clear(); }
 
 bool BinaryenHasPassToSkip(const char* pass) {
   assert(pass);
-  return globalPassOptions.passesToSkip.count(pass);
+  return globalPassOptions.passesToSkip.contains(pass);
 }
 
 void BinaryenAddPassToSkip(const char* pass) {
@@ -5870,7 +6041,7 @@ void BinaryenModuleRunPasses(BinaryenModuleRef module,
   passRunner.options = globalPassOptions;
   for (BinaryenIndex i = 0; i < numPasses; i++) {
     passRunner.add(passes[i],
-                   globalPassOptions.arguments.count(passes[i]) > 0
+                   globalPassOptions.arguments.contains(passes[i])
                      ? globalPassOptions.arguments[passes[i]]
                      : std::optional<std::string>());
   }
@@ -6122,7 +6293,7 @@ void BinaryenFunctionRunPasses(BinaryenFunctionRef func,
   passRunner.options = globalPassOptions;
   for (BinaryenIndex i = 0; i < numPasses; i++) {
     passRunner.add(passes[i],
-                   globalPassOptions.arguments.count(passes[i]) > 0
+                   globalPassOptions.arguments.contains(passes[i])
                      ? globalPassOptions.arguments[passes[i]]
                      : std::optional<std::string>());
   }
@@ -6190,7 +6361,7 @@ void BinaryenElementSegmentSetTable(BinaryenElementSegmentRef elem,
   ((ElementSegment*)elem)->table = table;
 }
 bool BinaryenElementSegmentIsPassive(BinaryenElementSegmentRef elem) {
-  return ((ElementSegment*)elem)->table.isNull();
+  return ((ElementSegment*)elem)->isPassive();
 }
 
 //
@@ -6535,19 +6706,19 @@ ExpressionRunnerRunAndDispose(ExpressionRunnerRef runner,
 
 TypeBuilderErrorReason TypeBuilderErrorReasonSelfSupertype() {
   return static_cast<TypeBuilderErrorReason>(
-    TypeBuilder::ErrorReason::SelfSupertype);
+    TypeBuilder::ErrorReasonKind::SelfSupertype);
 }
 TypeBuilderErrorReason TypeBuilderErrorReasonInvalidSupertype() {
   return static_cast<TypeBuilderErrorReason>(
-    TypeBuilder::ErrorReason::InvalidSupertype);
+    TypeBuilder::ErrorReasonKind::InvalidSupertype);
 }
 TypeBuilderErrorReason TypeBuilderErrorReasonForwardSupertypeReference() {
   return static_cast<TypeBuilderErrorReason>(
-    TypeBuilder::ErrorReason::ForwardSupertypeReference);
+    TypeBuilder::ErrorReasonKind::ForwardSupertypeReference);
 }
 TypeBuilderErrorReason TypeBuilderErrorReasonForwardChildReference() {
   return static_cast<TypeBuilderErrorReason>(
-    TypeBuilder::ErrorReason::ForwardChildReference);
+    TypeBuilder::ErrorReasonKind::ForwardChildReference);
 }
 
 TypeBuilderRef TypeBuilderCreate(BinaryenIndex size) {
@@ -6646,7 +6817,7 @@ bool TypeBuilderBuildAndDispose(TypeBuilderRef builder,
       *errorIndex = err->index;
     }
     if (errorReason) {
-      *errorReason = static_cast<TypeBuilderErrorReason>(err->reason);
+      *errorReason = static_cast<TypeBuilderErrorReason>(err->reason.getKind());
     }
     delete B;
     return false;

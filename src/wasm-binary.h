@@ -22,6 +22,7 @@
 #define wasm_wasm_binary_h
 
 #include <cassert>
+#include <optional>
 #include <ostream>
 #include <type_traits>
 
@@ -41,6 +42,11 @@ namespace wasm {
 enum {
   // the maximum amount of bytes we emit per LEB
   MaxLEB32Bytes = 5,
+};
+
+enum class BackingType {
+  Memory,
+  Array,
 };
 
 template<typename T, typename MiniT> struct LEB {
@@ -358,8 +364,16 @@ enum BrOnCastFlag {
 
 constexpr uint32_t ExactImport = 1 << 5;
 
+constexpr uint32_t HasBackingArrayMask = 1 << 4;
 constexpr uint32_t HasMemoryOrderMask = 1 << 5;
 constexpr uint32_t HasMemoryIndexMask = 1 << 6;
+
+constexpr uint8_t HasTableInitializer = 0x40;
+constexpr uint8_t TableReservedByte = 0x00;
+
+// TODO(sbc): Use upstream names for these schemes if/when they are decided.
+constexpr uint8_t CompactImportsSharedModule = 0x7f;
+constexpr uint8_t CompactImportsSharedAll = 0x7e;
 
 enum EncodedType {
   // value types
@@ -462,6 +476,10 @@ extern const char* BulkMemoryOptFeature;
 extern const char* CallIndirectOverlongFeature;
 extern const char* CustomDescriptorsFeature;
 extern const char* RelaxedAtomicsFeature;
+extern const char* MultibyteFeature;
+extern const char* CustomPageSizesFeature;
+extern const char* WideArithmeticFeature;
+extern const char* CompactImportsFeature;
 
 enum Subsection {
   NameModule = 0,
@@ -702,6 +720,8 @@ enum ASTNodes {
   I64AtomicWait = 0x02,
   AtomicFence = 0x03,
   Pause = 0x04,
+  StructWait = 0x05,
+  StructNotify = 0x06,
 
   I32AtomicLoad = 0x10,
   I64AtomicLoad = 0x11,
@@ -1063,8 +1083,8 @@ enum ASTNodes {
   I32x4RelaxedTruncF32x4U = 0x102,
   I32x4RelaxedTruncF64x2SZero = 0x103,
   I32x4RelaxedTruncF64x2UZero = 0x104,
-  F16x8RelaxedMadd = 0x14e,
-  F16x8RelaxedNmadd = 0x14f,
+  F16x8Madd = 0x14e,
+  F16x8Nmadd = 0x14f,
   F32x4RelaxedMadd = 0x105,
   F32x4RelaxedNmadd = 0x106,
   F64x2RelaxedMadd = 0x107,
@@ -1112,6 +1132,9 @@ enum ASTNodes {
   I16x8TruncSatF16x8U = 0x146,
   F16x8ConvertI16x8S = 0x147,
   F16x8ConvertI16x8U = 0x148,
+  F16x8DemoteF32x4Zero = 0x149,
+  F16x8DemoteF64x2Zero = 0x14a,
+  F32x4PromoteLowF16x8 = 0x14b,
 
   // bulk memory opcodes
 
@@ -1119,6 +1142,13 @@ enum ASTNodes {
   DataDrop = 0x09,
   MemoryCopy = 0x0a,
   MemoryFill = 0x0b,
+
+  // wide arithmetic opcodes
+
+  I64Add128 = 0x13,
+  I64Sub128 = 0x14,
+  I64MulWideS = 0x15,
+  I64MulWideU = 0x16,
 
   // reference types opcodes
 
@@ -1265,7 +1295,12 @@ enum MemoryAccess {
   NaturalAlignment = 0
 };
 
-enum MemoryFlags { HasMaximum = 1 << 0, IsShared = 1 << 1, Is64 = 1 << 2 };
+enum MemoryFlags {
+  HasMaximum = 1 << 0,
+  IsShared = 1 << 1,
+  Is64 = 1 << 2,
+  HasCustomPageSize = 1 << 3
+};
 
 enum FeaturePrefix { FeatureUsed = '+', FeatureDisallowed = '-' };
 
@@ -1379,8 +1414,13 @@ public:
   void write();
   void writeHeader();
   int32_t writeU32LEBPlaceholder();
-  void writeResizableLimits(
-    Address initial, Address maximum, bool hasMaximum, bool shared, bool is64);
+  // pageSizeLog2 is only used for memory.
+  void writeResizableLimits(Address initial,
+                            Address maximum,
+                            bool hasMaximum,
+                            bool shared,
+                            bool is64,
+                            std::optional<uint8_t> pageSizeLog2 = std::nullopt);
   template<typename T> int32_t startSection(T code);
   void finishSection(int32_t start);
   int32_t startSubsection(BinaryConsts::CustomSections::Subsection code);
@@ -1445,10 +1485,10 @@ public:
   std::optional<BufferWithRandomAccess> getRemovableIfUnusedHintsBuffer();
   std::optional<BufferWithRandomAccess> getJSCalledHintsBuffer();
   std::optional<BufferWithRandomAccess> getIdempotentHintsBuffer();
+  std::optional<BufferWithRandomAccess> getToolchainInlineHintsBuffer();
 
   // helpers
   void writeInlineString(std::string_view name);
-  void writeEscapedName(std::string_view name);
   void writeInlineBuffer(const char* data, size_t size);
   void writeData(const char* data, size_t size);
 
@@ -1582,6 +1622,7 @@ public:
   bool more() { return pos < input.size(); }
 
   std::string_view getByteView(size_t size);
+  uint8_t peekInt8();
   uint8_t getInt8();
   uint16_t getInt16();
   uint32_t getInt32();
@@ -1638,8 +1679,26 @@ public:
                           Address& max,
                           bool& shared,
                           Type& addressType,
+                          uint8_t& pageSizeLog2,
                           Address defaultIfNoMax);
   void readImports();
+  void readImport(Name module, Name base, uint32_t kind);
+
+  void addImport(std::unique_ptr<Function> func);
+  void addImport(std::unique_ptr<Table> table);
+  void addImport(std::unique_ptr<Memory> memory);
+  void addImport(std::unique_ptr<Global> global);
+  void addImport(std::unique_ptr<Tag> tag);
+
+  std::unique_ptr<Function>
+  readFunctionImport(Name module, Name base, uint32_t kind);
+  std::unique_ptr<Table> readTableImport(Name module, Name base);
+  std::unique_ptr<Memory> readMemoryImport(Name module, Name base);
+  std::unique_ptr<Global> readGlobalImport(Name module, Name base);
+  std::unique_ptr<Tag> readTagImport(Name module, Name base);
+
+  template<typename T, typename ReadFunc>
+  void readCompactImportsShared(Name module, ReadFunc readFunc);
 
   // The signatures of each function, including imported functions, given in the
   // import and function sections. Store HeapTypes instead of Signatures because
@@ -1694,6 +1753,9 @@ public:
 
   void readExports();
 
+  Result<> readLoad(unsigned bytes, bool signed_, Type type);
+  Result<> readStore(unsigned bytes, Type type);
+
   // The strings in the strings section (which are referred to by StringConst).
   std::vector<Name> strings;
   void readStrings();
@@ -1717,7 +1779,6 @@ public:
 
   void readTags();
 
-  static Name escape(Name name);
   void readNames(size_t sectionPos, size_t payloadLen);
   void readFeatures(size_t sectionPos, size_t payloadLen);
   void readDylink(size_t payloadLen);
@@ -1740,12 +1801,13 @@ public:
   void readRemovableIfUnusedHints(size_t payloadLen);
   void readJSCalledHints(size_t payloadLen);
   void readIdempotentHints(size_t payloadLen);
+  void readToolchainInlineHints(size_t payloadLen);
 
-  std::tuple<Address, Address, Index, MemoryOrder>
+  std::tuple<Address, Address, Index, MemoryOrder, BackingType>
   readMemoryAccess(bool isAtomic, bool isRMW);
   std::tuple<Name, Address, Address, MemoryOrder> getAtomicMemarg();
   std::tuple<Name, Address, Address, MemoryOrder> getRMWMemarg();
-  std::tuple<Name, Address, Address> getMemarg();
+  std::tuple<Name, Address, Address, BackingType> getMemarg();
   MemoryOrder getMemoryOrder(bool isRMW = false);
 
   [[noreturn]] void throwError(std::string text) {

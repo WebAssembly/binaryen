@@ -14,6 +14,68 @@ full changeset diff at the end of each section.
 
 Current Trunk
 -------------
+
+- Add acqrel ordering support for atomic fences (#8845). Breaks the C API;
+  `BinaryenAtomicFence` now takes a memory order param. Use
+  `BinaryenMemoryOrderSeqCst()` to preserve the original behavior.
+
+v130
+----
+
+ - MarkJSCalled pass, to help configureAll users. (#8733)
+ - RemoveExports pass, to allow easy export removal (e.g. after merge) (#8670)
+ - Wide Arithmetic support (#8544)
+ - New fuzzer mode: PreserveImportsExportsJS (#8592)
+ - New fuzzer mode: Fuzz against JavaScript (#8655)
+ - Increase Alpine stack size to 8MB for release builds (#8595)
+ - Rename relaxed SIMD instructions to prepend the `relaxed_` prefix. (#8673)
+   - Rename C and JS API operations to prepend the `Relaxed` prefix:
+     - `LaneselectI8x16` to `RelaxedLaneselectI8x16`
+     - `LaneselectI16x8` to `RelaxedLaneselectI16x8`
+     - `LaneselectI32x4` to `RelaxedLaneselectI32x4`
+     - `LaneselectI64x2` to `RelaxedLaneselectI64x2`
+     - `DotI8x16I7x16AddSToVecI32x4` to `RelaxedDotI8x16I7x16AddSToVecI32x4`
+     - `DotI8x16I7x16SToVecI16x8` to `RelaxedDotI8x16I7x16SToVecI16x8`
+ - [JS & C API] Rename MemorySegment functions to DataSegment (#8576)
+   - Rename `BinaryenGetNumMemorySegments` to `BinaryenGetNumDataSegments` in c api.
+   - Rename `BinaryenGetMemorySegmentByteOffset` to `BinaryenGetDataSegmentByteOffset` in c api.
+   - Rename `BinaryenGetMemorySegmentByteLength` to `BinaryenGetDataSegmentByteLength` in c api.
+   - Rename `BinaryenGetMemorySegmentPassive` to `BinaryenGetDataSegmentPassive` in c api.
+   - Rename `BinaryenCopyMemorySegmentData` to `BinaryenCopyDataSegmentData` in c api.
+   - Rename `module.getNumMemorySegments` to `module.getNumDataSegments` in js api.
+   - Rename `module.getMemorySegmentInfo` to `module.getDataSegmentInfo` in js api.
+
+v129
+----
+
+ - Add a `BinaryenDataSegmentRef` type to the C API. (#8286)
+   - Add `BinaryenGetDataSegment` and `BinaryenGetDataSegmentByIndex` to the C API, which allow looking up a data segment by name or index.
+   - Add `BinaryenDataSegmentGetName` to the C API, which allows looking up a data segment's name.
+   - Convert `BinaryenGetMemorySegmentByteOffset`, `BinaryenGetMemorySegmentByteLength`, `BinaryenGetMemorySegmentPassive` and `BinaryenCopyMemorySegmentData` to take a `BinaryenDataSegmentRef` instead of a name.
+   - Add `module.getDataSegment`, `module.getDataSegmentByIndex` to the JS API, which allows looking up a data segment by name or index.
+   - Convert `module.getMemorySegmentInfo` to take a data segment reference instead of a name, and return the name as part of the info.
+ - Add support for non-nullable table types and initialization expressions for
+   tables. This comes with a breaking change to C API: `BinaryenAddTable` takes
+   an additional `BinaryenExpressionRef` parameter to provide an initialization
+   expression. This may be set to NULL for tables without an initializer. In JS
+   this parameter is optional and so is not breaking. (#8405)
+ - [multibyte] Add multibyte array store and load instructions. (#8059, #8504)
+ - MinifyImportsAndExports now has a new output format using JSON. This was
+   changed while fixing bugs with colliding module names (to avoid two breaking
+   changes to the output). (#8550)
+ - Update from C++17 to C++20 (#8218)
+
+v128
+----
+
+ - (bugfix release)
+
+v127
+----
+
+ - Implement the Custom Page Sizes proposal. (#8307)
+ - New intrinsic: `@binaryen.idempotent`. (#8354)
+ - Add --strip-debug option to wasm-split (#8432)
  - The emscripten build of binaryen no longer targets pure JS (via wasm2js) by
    default.  This allows us to enable WASM_BIGINT and other features that
    wasm2js does not support.  There is now just a single binaryen_js target.  It
@@ -24,7 +86,7 @@ Current Trunk
    and `setValueI64`, previously took a hi/low pair but now take a single value
    which can be bigint or a number. Passing two values to these APIs will now
    trigger an assertion. (#7984)
-
+ 
 v126
 ----
 

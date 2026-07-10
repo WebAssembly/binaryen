@@ -156,7 +156,8 @@ struct SignatureRefining : public Pass {
     }
 
     // Find the public types, which we must not modify.
-    for (auto type : ModuleUtils::getPublicHeapTypes(*module)) {
+    for (auto type :
+         ModuleUtils::getPublicHeapTypes(*module, getPassOptions().worldMode)) {
       if (type.isFunction()) {
         allInfo[type].canModify = false;
       }
@@ -166,6 +167,16 @@ struct SignatureRefining : public Pass {
     for (auto func : Intrinsics(*module).getJSCalledFunctions()) {
       allInfo[module->getFunction(func)->type.getHeapType()].canModifyParams =
         false;
+    }
+
+    // Continuations must not have params or results refined, because we do not
+    // update their users (e.g. cont.bind, resume) with new types.
+    if (module->features.hasStackSwitching()) {
+      for (auto type : ModuleUtils::collectHeapTypes(*module)) {
+        if (type.isContinuation()) {
+          allInfo[type.getContinuation().type].canModify = false;
+        }
+      }
     }
 
     // Also skip modifying types used in tags, even private tags, since we don't
@@ -327,7 +338,8 @@ struct SignatureRefining : public Pass {
     CodeUpdater(*this, *module).run(getPassRunner(), module);
 
     // Rewrite the types.
-    GlobalTypeRewriter::updateSignatures(newSignatures, *module);
+    GlobalTypeRewriter::updateSignatures(
+      newSignatures, *module, getPassOptions().worldMode);
 
     // Update intrinsics.
     updateIntrinsics(module, allInfo);

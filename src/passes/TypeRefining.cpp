@@ -145,7 +145,7 @@ struct TypeRefining : public Pass {
       return;
     }
 
-    if (!getPassOptions().closedWorld) {
+    if (getPassOptions().worldMode == WorldMode::Open) {
       Fatal() << "TypeRefining requires --closed-world";
     }
 
@@ -262,7 +262,8 @@ struct TypeRefining : public Pass {
     bool canOptimize = false;
 
     // We cannot modify public types.
-    auto publicTypes = ModuleUtils::getPublicHeapTypes(*module);
+    auto publicTypes =
+      ModuleUtils::getPublicHeapTypes(*module, getPassOptions().worldMode);
     std::unordered_set<HeapType> publicTypesSet(publicTypes.begin(),
                                                 publicTypes.end());
 
@@ -288,7 +289,7 @@ struct TypeRefining : public Pass {
         work.push(subType);
       }
 
-      if (publicTypesSet.count(type)) {
+      if (publicTypesSet.contains(type)) {
         continue;
       }
 
@@ -315,7 +316,7 @@ struct TypeRefining : public Pass {
           // The super's new type is either what we propagated, or, if it is
           // public, unchanged since we cannot optimize it
           Type newSuperType;
-          if (!publicTypesSet.count(*super)) {
+          if (!publicTypesSet.contains(*super)) {
             newSuperType = finalInfos[{*super, Inexact}][i].getLUB();
           } else {
             newSuperType = superFields[i].type;
@@ -454,7 +455,8 @@ struct TypeRefining : public Pass {
 
     public:
       TypeRewriter(Module& wasm, TypeRefining& parent)
-        : GlobalTypeRewriter(wasm), parent(parent) {}
+        : GlobalTypeRewriter(wasm, parent.getPassOptions().worldMode),
+          parent(parent) {}
 
       void modifyStruct(HeapType oldStructType, Struct& struct_) override {
         const auto& oldFields = oldStructType.getStruct().fields;
@@ -474,6 +476,8 @@ struct TypeRefining : public Pass {
 
     TypeRewriter(wasm, *this).update();
 
+    // Refinalization fixes up types and makes them fit in the places we write
+    // them to.
     ReFinalize().run(getPassRunner(), &wasm);
 
     // After refinalizing, we may still have situations that do not validate.
@@ -514,9 +518,7 @@ struct TypeRefining : public Pass {
         for (Index i = 0; i < fields.size(); i++) {
           auto*& operand = curr->operands[i];
           auto fieldType = fields[i].type;
-          if (!Type::isSubType(operand->type, fieldType)) {
-            operand = Builder(*getModule()).makeRefCast(operand, fieldType);
-          }
+          operand = fixType(operand, fieldType);
         }
       }
 
@@ -532,17 +534,71 @@ struct TypeRefining : public Pass {
         }
 
         auto fieldType = type.getStruct().fields[curr->index].type;
+        curr->value = fixType(curr->value, fieldType);
+      }
 
-        if (!Type::isSubType(curr->value->type, fieldType)) {
-          curr->value =
-            Builder(*getModule()).makeRefCast(curr->value, fieldType);
+      void visitStructRMW(StructRMW* curr) {
+        if (curr->type == Type::unreachable) {
+          return;
+        }
+        auto type = curr->ref->type.getHeapType();
+        if (type.isBottom()) {
+          return;
+        }
+
+        auto fieldType = type.getStruct().fields[curr->index].type;
+        curr->value = fixType(curr->value, fieldType);
+      }
+
+      void visitStructCmpxchg(StructCmpxchg* curr) {
+        if (curr->type == Type::unreachable) {
+          return;
+        }
+        auto type = curr->ref->type.getHeapType();
+        if (type.isBottom()) {
+          return;
+        }
+
+        auto fieldType = type.getStruct().fields[curr->index].type;
+        curr->replacement = fixType(curr->replacement, fieldType);
+      }
+
+      bool refinalize = false;
+
+      // Fix up a given value so it fits into the type the location it is
+      // written to.
+      Expression* fixType(Expression* value, Type type) {
+        if (Type::isSubType(value->type, type)) {
+          return value;
+        }
+        // We cast to fix this up. An exception is a bottom type, which we can
+        // handle by emitting a null (which works with types that cannot be
+        // cast, like continuations; it also explicitly provides the value being
+        // written, which other passes would do anyhow).
+        Builder builder(*getModule());
+        auto heapType = type.getHeapType();
+        if (heapType.isBottom()) {
+          auto* drop = builder.makeDrop(value);
+          if (type.isNonNullable()) {
+            // This will just trap. Make it trap, and update parents' types.
+            refinalize = true;
+            return builder.makeSequence(drop, builder.makeUnreachable());
+          } else {
+            return builder.makeSequence(drop, builder.makeRefNull(heapType));
+          }
+        }
+        return builder.makeRefCast(value, type);
+      }
+
+      void visitFunction(Function* func) {
+        if (refinalize) {
+          ReFinalize().walkFunctionInModule(func, getModule());
         }
       }
     };
 
     WriteUpdater updater;
     updater.run(getPassRunner(), &wasm);
-    updater.runOnModuleCode(getPassRunner(), &wasm);
   }
 };
 

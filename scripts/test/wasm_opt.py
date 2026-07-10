@@ -15,12 +15,14 @@
 import os
 import shutil
 import subprocess
+import sys
 
 from . import shared, support
+from .shared import print_heading
 
 
 def test_wasm_opt():
-    print('\n[ checking wasm-opt -o notation... ]\n')
+    print_heading('checking wasm-opt -o notation...')
 
     for extra_args in [[], ['--no-validation']]:
         wast = os.path.join(shared.options.binaryen_test, 'hello_world.wat')
@@ -30,7 +32,7 @@ def test_wasm_opt():
         support.run_command(cmd)
         shared.fail_if_not_identical_to_file(open(out).read(), wast)
 
-    print('\n[ checking wasm-opt binary reading/writing... ]\n')
+    print_heading('checking wasm-opt binary reading/writing...')
 
     shutil.copyfile(os.path.join(shared.options.binaryen_test, 'hello_world.wat'), 'a.wat')
     shared.delete_from_orbit('a.wasm')
@@ -40,7 +42,7 @@ def test_wasm_opt():
     support.run_command(shared.WASM_OPT + ['a.wasm', '-o', 'b.wast', '-S', '-q'])
     assert open('b.wast', 'rb').read()[0] != 0, 'we emit text with -S'
 
-    print('\n[ checking wasm-opt passes... ]\n')
+    print_heading('checking wasm-opt passes...')
 
     for t in shared.get_tests(shared.get_test_dir('passes'), ['.wast', '.wasm']):
         print('..', os.path.basename(t))
@@ -50,7 +52,7 @@ def test_wasm_opt():
         if ('translate-to-fuzz' in t or 'dwarf' in t) and \
            shared.skip_if_on_windows('fuzz translation tests'):
             continue
-        binary = '.wasm' in t
+        binary = t.endswith('.wasm')
         base = os.path.basename(t).replace('.wast', '').replace('.wasm', '')
         passname = base
         passes_file = os.path.join(shared.get_test_dir('passes'), passname + '.passes')
@@ -60,6 +62,12 @@ def test_wasm_opt():
         opts = [('--' + p if not p.startswith('O') and p != 'g' else '-' + p) for p in passes]
         actual = ''
         for module, asserts in support.split_wast(t):
+            # Flush stdout/stderr between each test.  This prevent confusing
+            # interleaving in output of github CI
+            # TODO: Find a better, more systematic way to achieve this that
+            # works for all test suites.
+            sys.stdout.flush()
+            sys.stderr.flush()
             assert len(asserts) == 0
             support.write_wast('split.wast', module)
             cmd = shared.WASM_OPT + opts + ['split.wast', '-q']
@@ -87,7 +95,7 @@ def test_wasm_opt():
             with open('a.wat') as actual:
                 shared.fail_if_not_identical_to_file(actual.read(), t + '.wat')
 
-    print('\n[ checking wasm-opt parsing & printing... ]\n')
+    print_heading('checking wasm-opt parsing & printing...')
 
     for t in shared.get_tests(shared.get_test_dir('print'), ['.wast']):
         print('..', os.path.basename(t))
@@ -104,13 +112,13 @@ def test_wasm_opt():
 
 
 def update_wasm_opt_tests():
-    print('\n[ updating wasm-opt -o notation... ]\n')
+    print_heading('updating wasm-opt -o notation...')
     wast = os.path.join(shared.options.binaryen_test, 'hello_world.wat')
     cmd = shared.WASM_OPT + [wast, '-o', 'a.wast', '-S']
     support.run_command(cmd)
     open(wast, 'w').write(open('a.wast').read())
 
-    print('\n[ updating wasm-opt parsing & printing... ]\n')
+    print_heading('updating wasm-opt parsing & printing...')
     for t in shared.get_tests(shared.get_test_dir('print'), ['.wast']):
         print('..', os.path.basename(t))
         wasm = t.replace('.wast', '')
@@ -126,7 +134,7 @@ def update_wasm_opt_tests():
         with open(wasm + '.minified.txt', 'wb') as o:
             o.write(actual)
 
-    print('\n[ updating wasm-opt passes... ]\n')
+    print_heading('updating wasm-opt passes...')
     for t in shared.get_tests(shared.get_test_dir('passes'), ['.wast', '.wasm']):
         print('..', os.path.basename(t))
         # windows has some failures that need to be investigated:

@@ -1,8 +1,6 @@
 #! /usr/bin/python3
 
-'''
-Generate test modules with all interesting casts
-'''
+"""Generate test modules with all interesting casts."""
 
 import argparse
 import itertools

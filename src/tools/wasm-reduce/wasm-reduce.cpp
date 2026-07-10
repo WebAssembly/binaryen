@@ -29,12 +29,13 @@
 
 #include "ir/branch-utils.h"
 #include "ir/iteration.h"
-#include "ir/literal-utils.h"
+#include "ir/localize.h"
 #include "ir/properties.h"
 #include "ir/utils.h"
 #include "pass.h"
 #include "support/colors.h"
 #include "support/command-line.h"
+#include "support/delta_debugging.h"
 #include "support/file.h"
 #include "support/hash.h"
 #include "support/path.h"
@@ -351,7 +352,7 @@ struct Reducer
   // @param factor how much to ignore. starting with a high factor skips through
   //               most of the file, which is often faster than going one by one
   //               from the start
-  size_t reduceDestructively(int factor_) {
+  size_t reduceDestructively(uint64_t factor_) {
     factor = factor_;
     // prepare
     loadWorking();
@@ -400,7 +401,7 @@ struct Reducer
   std::unique_ptr<Module> module;
   std::unique_ptr<Builder> builder;
   Index funcsSeen;
-  int factor;
+  uint64_t factor;
 
   // write the module and see if the command still fails on it as expected
   bool writeAndTestReduction() {
@@ -413,7 +414,7 @@ struct Reducer
     ModuleWriter writer(toolOptions.passOptions);
     writer.setBinary(binary);
     writer.setDebugInfo(debugInfo);
-    writer.write(*getModule(), test);
+    toolOptions.write(writer, *getModule(), test);
     // note that it is ok for the destructively-reduced module to be bigger
     // than the previous - each destructive reduction removes logical code,
     // and so is strictly better, even if the wasm binary format happens to
@@ -822,7 +823,7 @@ struct Reducer
 
     auto& data = segment->data;
     // when we succeed, try to shrink by more and more, similar to bisection
-    size_t skip = 1;
+    uint64_t skip = 1;
     for (size_t i = 0; i < data.size() && !data.empty(); i++) {
       if (justShrank || shouldTryToReduce(bonus)) {
         auto save = data;
@@ -838,7 +839,7 @@ struct Reducer
           std::cerr << "|      shrank segment from " << save.size() << " => "
                     << data.size() << " (skip: " << skip << ")\n";
           noteReduction();
-          skip = std::min(size_t(factor), 2 * skip);
+          skip = std::min(factor, 2 * skip);
         } else {
           data = std::move(save);
           return false;
@@ -894,71 +895,249 @@ struct Reducer
     }
   }
 
-  // Reduces entire functions at a time. Returns whether we did a significant
-  // amount of reduction that justifies doing even more.
-  bool reduceFunctions() {
-    // try to remove functions
-    std::vector<Name> functionNames;
-    for (auto& func : module->functions) {
-      functionNames.push_back(func->name);
+  bool isEmptyBody(Expression* body) {
+    if (body->is<Nop>() || body->is<Unreachable>()) {
+      return true;
     }
-    auto numFuncs = functionNames.size();
-    if (numFuncs == 0) {
-      return false;
+    if (auto* block = body->dynCast<Block>()) {
+      return block->list.empty();
     }
-    size_t skip = 1;
-    size_t maxSkip = 1;
-    // If we just removed some functions in the previous iteration, keep trying
-    // to remove more as this is one of the most efficient ways to reduce.
-    bool justReduced = true;
-    // Start from a new place each time.
-    size_t base = deterministicRandom(numFuncs);
-    std::cerr << "|    try to remove functions (base: " << base
-              << ", decisionCounter: " << decisionCounter << ", numFuncs "
-              << numFuncs << ")\n";
-    for (size_t x = 0; x < functionNames.size(); x++) {
-      size_t i = (base + x) % numFuncs;
-      if (!justReduced &&
-          functionsWeTriedToRemove.count(functionNames[i]) == 1 &&
-          !shouldTryToReduce(std::max((factor / 5) + 1, 20000))) {
+    return false;
+  }
+
+  void reduceFunctionBodies() {
+    std::cerr << "|    try to remove function bodies\n";
+    // Use function indices to speed up finding the complement of the kept
+    // partition.
+    std::vector<Index> nontrivialFuncIndices;
+    nontrivialFuncIndices.reserve(module->functions.size());
+    for (Index i = 0; i < module->functions.size(); ++i) {
+      auto& func = module->functions[i];
+      // Skip functions that already have trivial bodies.
+      if (func->imported() || isEmptyBody(func->body)) {
         continue;
       }
-      std::vector<Name> names;
-      for (size_t j = 0; names.size() < skip && i + j < functionNames.size();
-           j++) {
-        auto name = functionNames[i + j];
-        if (module->getFunctionOrNull(name)) {
-          names.push_back(name);
-          functionsWeTriedToRemove.insert(name);
+      nontrivialFuncIndices.push_back(i);
+    }
+    DeltaDebugger<Index> dd(std::move(nontrivialFuncIndices));
+    while (!dd.finished()) {
+      // Stop early if the partition size is less than the square root of
+      // the remaining set. We don't want to waste time on very fine-grained
+      // partitions when we could switch to another reduction strategy
+      // instead.
+      if (size_t sqrtRemaining = std::sqrt(dd.working.size());
+          dd.test.size() > 0 && dd.test.size() < sqrtRemaining) {
+        break;
+      }
+
+      std::cerr << "|     try partition " << dd.partitionIndex() + 1 << " / "
+                << dd.partitionCount() << " (size " << dd.test.size() << " / "
+                << dd.working.size() << ")\n";
+      Index removedSize = dd.working.size() - dd.test.size();
+      std::vector<Expression*> oldBodies(removedSize);
+
+      // We first need to remove each non-kept function body, and later we
+      // might need to restore the same function bodies. Abstract the logic
+      // for iterating over these function bodies. `f` takes a Function* and
+      // Expression*& for the stashed body.
+      auto forEachRemovedFuncBody = [&](auto f) {
+        Index bodyIndex = 0;
+        Index workingIndex = 0;
+        Index testIndex = 0;
+        while (workingIndex < dd.working.size()) {
+          if (testIndex < dd.test.size() &&
+              dd.working[workingIndex] == dd.test[testIndex]) {
+            // Kept, skip it.
+            workingIndex++;
+            testIndex++;
+          } else {
+            // Removed, process it
+            Index funcIndex = dd.working[workingIndex++];
+            f(module->functions[funcIndex].get(), oldBodies[bodyIndex++]);
+          }
+        }
+        assert(bodyIndex == removedSize);
+        assert(testIndex == dd.test.size());
+      };
+
+      // Stash the bodies.
+      forEachRemovedFuncBody([&](Function* func, Expression*& oldBody) {
+        oldBody = func->body;
+        Builder builder(*module);
+        if (func->getResults() == Type::none) {
+          func->body = builder.makeNop();
+        } else {
+          func->body = builder.makeUnreachable();
+        }
+      });
+
+      if (!writeAndTestReduction()) {
+        // Failure. Restore the bodies.
+        forEachRemovedFuncBody(
+          [](Function* func, Expression*& oldBody) { func->body = oldBody; });
+        dd.reject();
+      } else {
+        // Success!
+        noteReduction(removedSize);
+        dd.accept();
+      }
+    }
+  }
+
+  void reduceFunctions() {
+    std::cerr << "|    try to remove functions\n";
+
+    // Find functions referenced from module code (i.e. global initializers). We
+    // will not attempt to remove these functions because we cannot generally
+    // replace their references with something valid.
+    // TODO: Look at how the function references are used. If they can be
+    // nullable, we can still consider deleting the functions.
+    struct UnremovableFinder : public PostWalker<UnremovableFinder> {
+      std::unordered_set<Name> unremovable;
+      void visitRefFunc(RefFunc* curr) { unremovable.insert(curr->func); }
+    };
+    UnremovableFinder finder;
+    finder.walkModuleCode(module.get());
+
+    // Find the indices of functions we can consider removing or must not
+    // remove.
+    std::vector<Index> unremovableIndices;
+    std::vector<Index> initialCandidates;
+    initialCandidates.reserve(module->functions.size() -
+                              finder.unremovable.size());
+    for (Index i = 0; i < module->functions.size(); ++i) {
+      if (finder.unremovable.contains(module->functions[i]->name)) {
+        unremovableIndices.push_back(i);
+      } else {
+        initialCandidates.push_back(i);
+      }
+    }
+
+    if (initialCandidates.empty()) {
+      return;
+    }
+
+    // Indices will change as we remove functions. Map the original indices to
+    // the present indices so we can use the original indices as stable
+    // identifiers. (Function names are not necessarily preserved through
+    // round-tripping.)
+    std::vector<std::optional<Index>> currentIndices;
+    currentIndices.reserve(module->functions.size());
+    for (Index i = 0; i < module->functions.size(); ++i) {
+      currentIndices.push_back(i);
+    }
+
+    DeltaDebugger<Index> dd(std::move(initialCandidates));
+    while (!dd.finished()) {
+      // Exit early if the test set size is less than the square root of the
+      // working set size. We don't want to waste time on very fine-grained
+      // partitions when we could switch to a different reduction strategy
+      // instead.
+      if (size_t sqrtRemaining = std::sqrt(dd.working.size());
+          dd.test.size() > 0 && dd.test.size() < sqrtRemaining) {
+        break;
+      }
+
+      std::cerr << "|     try partition " << dd.partitionIndex() + 1 << " / "
+                << dd.partitionCount() << " (size " << dd.test.size() << " / "
+                << dd.working.size() << ")\n";
+
+      std::unordered_set<Index> keptIndices;
+      for (Index i : unremovableIndices) {
+        keptIndices.insert(*currentIndices[i]);
+      }
+      for (Index i : dd.test) {
+        keptIndices.insert(*currentIndices[i]);
+      }
+
+      // Get the list of kept functions and the new index mapping we will have
+      // to use if this reduction works.
+      std::vector<std::unique_ptr<Function>> newFuncs;
+      newFuncs.reserve(keptIndices.size());
+      std::vector<std::optional<Index>> newCurrentIndices;
+      newCurrentIndices.reserve(currentIndices.size());
+      for (size_t i = 0; i < currentIndices.size(); ++i) {
+        if (auto currIndex = currentIndices[i];
+            currIndex && keptIndices.contains(*currIndex)) {
+          newCurrentIndices.push_back(newFuncs.size());
+          newFuncs.emplace_back(std::move(module->functions[*currIndex]));
+        } else {
+          newCurrentIndices.push_back(std::nullopt);
         }
       }
-      if (names.size() == 0) {
-        continue;
+
+      module->functions = std::move(newFuncs);
+      module->updateFunctionsMap();
+
+      // Remove exports for functions we have removed.
+      std::vector<Name> exportsToRemove;
+      for (auto& exp : module->exports) {
+        if (exp->kind == ExternalKind::Function &&
+            !module->getFunctionOrNull(*exp->getInternalName())) {
+          exportsToRemove.push_back(exp->name);
+        }
       }
-      std::cerr << "|     trying at i=" << i << " of size " << names.size()
-                << "\n";
-      // Try to remove functions and/or empty them. Note that
-      // tryToRemoveFunctions() will reload the module if it fails, which means
-      // function names may change - for that reason, run it second.
-      justReduced = tryToEmptyFunctions(names) || tryToRemoveFunctions(names);
-      if (justReduced) {
-        noteReduction(names.size());
-        // Subtract 1 since the loop increments us anyhow by one: we want to
-        // skip over the skipped functions, and not any more.
-        x += skip - 1;
-        skip = std::min(size_t(factor), 2 * skip);
-        maxSkip = std::max(skip, maxSkip);
+      for (auto expName : exportsToRemove) {
+        module->removeExport(expName);
+      }
+
+      // We may have removed the start function.
+      if (module->start && !module->getFunctionOrNull(module->start)) {
+        module->start = Name();
+      }
+
+      struct FunctionReplacer
+        : public WalkerPass<PostWalker<FunctionReplacer>> {
+        bool isFunctionParallel() override { return true; }
+        std::unique_ptr<Pass> create() override {
+          return std::make_unique<FunctionReplacer>();
+        };
+        void visitCall(Call* curr) {
+          // Replace calls to functions we have removed.
+          if (getModule()->getFunctionOrNull(curr->target)) {
+            return;
+          }
+          Builder builder(*getModule());
+          auto* block =
+            ChildLocalizer(curr, getFunction(), *getModule(), getPassOptions())
+              .getChildrenReplacement();
+          auto originalType = curr->type;
+          auto* replacement = builder.replaceWithIdenticalType(curr);
+          // We may have failed to come up with a replacement (e.g. for
+          // non-nullable references), so manually add an `unreachable` in that
+          // case.
+          if (replacement == curr) {
+            replacement = builder.makeUnreachable();
+          }
+          block->list.push_back(replacement);
+          block->type = originalType;
+          replaceCurrent(block);
+        }
+        void visitRefFunc(RefFunc* curr) {
+          // Replace references to functions we have removed.
+          if (getModule()->getFunctionOrNull(curr->func)) {
+            return;
+          }
+          Builder builder(*getModule());
+          replaceCurrent(
+            builder.makeBlock({builder.makeUnreachable()}, curr->type));
+        }
+      };
+      PassRunner runner(module.get());
+      runner.add(std::make_unique<FunctionReplacer>());
+      runner.run();
+
+      assert(WasmValidator().validate(
+        *module, WasmValidator::Globally | WasmValidator::Quiet));
+      if (writeAndTestReduction()) {
+        noteReduction(dd.working.size() - dd.test.size());
+        currentIndices = std::move(newCurrentIndices);
+        dd.accept();
       } else {
-        skip = std::max(skip / 2, size_t(1)); // or 1?
-        x += factor / 100;
+        loadWorking();
+        dd.reject();
       }
     }
-    // If maxSkip is 1 then we never reduced at all. If it is 2 then we did
-    // manage to reduce individual functions, but all our attempts at
-    // exponential growth failed. Only suggest doing a new iteration of this
-    // function if we did in fact manage to grow, which indicated there are lots
-    // of opportunities here, and it is worth focusing on this.
-    return maxSkip > 2;
   }
 
   void visitModule([[maybe_unused]] Module* curr) {
@@ -968,10 +1147,8 @@ struct Reducer
     assert(curr == module.get());
     curr = nullptr;
 
-    // Reduction of entire functions at a time is very effective, and we do it
-    // with exponential growth and backoff, so keep doing it while it works.
-    while (reduceFunctions()) {
-    }
+    reduceFunctionBodies();
+    reduceFunctions();
 
     shrinkElementSegments();
 
@@ -981,9 +1158,9 @@ struct Reducer
     for (auto& exp : module->exports) {
       exports.push_back(*exp);
     }
-    size_t skip = 1;
+    uint64_t skip = 1;
     for (size_t i = 0; i < exports.size(); i++) {
-      if (!shouldTryToReduce(std::max((factor / 100) + 1, 1000))) {
+      if (!shouldTryToReduce(std::max((factor / 100) + 1, uint64_t(1000)))) {
         continue;
       }
       std::vector<Export> currExports;
@@ -1000,12 +1177,12 @@ struct Reducer
         for (auto exp : currExports) {
           module->addExport(new Export(exp));
         }
-        skip = std::max(skip / 2, size_t(1)); // or 1?
+        skip = std::max(skip / 2, uint64_t(1)); // or 1?
       } else {
         std::cerr << "|      removed " << currExports.size() << " exports\n";
         noteReduction(currExports.size());
         i += skip;
-        skip = std::min(size_t(factor), 2 * skip);
+        skip = std::min(factor, 2 * skip);
       }
     }
     // If we are left with a single function that is not exported or used in
@@ -1045,95 +1222,6 @@ struct Reducer
           func->body = funcBody;
         }
       }
-    }
-  }
-
-  // Try to empty out the bodies of some functions.
-  bool tryToEmptyFunctions(std::vector<Name> names) {
-    std::vector<Expression*> oldBodies;
-    size_t actuallyEmptied = 0;
-    for (auto name : names) {
-      auto* func = module->getFunction(name);
-      auto* oldBody = func->body;
-      oldBodies.push_back(oldBody);
-      // Nothing to do for imported functions (body is nullptr) or for bodies
-      // that have already been as reduced as we can make them.
-      if (func->imported() || oldBody->is<Unreachable>() ||
-          oldBody->is<Nop>()) {
-        continue;
-      }
-      actuallyEmptied++;
-      bool useUnreachable = func->getResults() != Type::none;
-      if (useUnreachable) {
-        func->body = builder->makeUnreachable();
-      } else {
-        func->body = builder->makeNop();
-      }
-    }
-    if (actuallyEmptied > 0 && writeAndTestReduction()) {
-      std::cerr << "|        emptied " << actuallyEmptied << " / "
-                << names.size() << " functions\n";
-      return true;
-    } else {
-      // Restore the bodies.
-      for (size_t i = 0; i < names.size(); i++) {
-        module->getFunction(names[i])->body = oldBodies[i];
-      }
-      return false;
-    }
-  }
-
-  // Try to actually remove functions. If they are somehow referred to, we will
-  // get a validation error and undo it.
-  bool tryToRemoveFunctions(std::vector<Name> names) {
-    for (auto name : names) {
-      module->removeFunction(name);
-    }
-
-    // remove all references to them
-    struct FunctionReferenceRemover
-      : public PostWalker<FunctionReferenceRemover> {
-      std::unordered_set<Name> names;
-      std::vector<Name> exportsToRemove;
-
-      FunctionReferenceRemover(std::vector<Name>& vec) {
-        for (auto name : vec) {
-          names.insert(name);
-        }
-      }
-      void visitCall(Call* curr) {
-        if (names.count(curr->target)) {
-          replaceCurrent(Builder(*getModule()).replaceWithIdenticalType(curr));
-        }
-      }
-      void visitRefFunc(RefFunc* curr) {
-        if (names.count(curr->func)) {
-          replaceCurrent(Builder(*getModule()).replaceWithIdenticalType(curr));
-        }
-      }
-      void visitExport(Export* curr) {
-        if (auto* name = curr->getInternalName(); name && names.count(*name)) {
-          exportsToRemove.push_back(curr->name);
-        }
-      }
-      void doWalkModule(Module* module) {
-        PostWalker<FunctionReferenceRemover>::doWalkModule(module);
-        for (auto name : exportsToRemove) {
-          module->removeExport(name);
-        }
-      }
-    };
-    FunctionReferenceRemover referenceRemover(names);
-    referenceRemover.walkModule(module.get());
-
-    if (WasmValidator().validate(
-          *module, WasmValidator::Globally | WasmValidator::Quiet) &&
-        writeAndTestReduction()) {
-      std::cerr << "|        removed " << names.size() << " functions\n";
-      return true;
-    } else {
-      loadWorking(); // restore it from orbit
-      return false;
     }
   }
 
@@ -1400,6 +1488,9 @@ More documentation can be found at
   if (debugInfo) {
     extraFlags += " -g ";
   }
+  if (options.emitModuleNames) {
+    extraFlags += " --emit-module-names ";
+  }
 
   if (test.size() == 0) {
     Fatal() << "test file not provided\n";
@@ -1457,7 +1548,7 @@ More documentation can be found at
       Module emptyModule;
       ModuleWriter writer(options.passOptions);
       writer.setBinary(true);
-      writer.write(emptyModule, test);
+      options.write(writer, emptyModule, test);
       ProgramResult resultOnValid(command);
       if (resultOnValid == expected) {
         Fatal()
@@ -1497,16 +1588,27 @@ More documentation can be found at
 
   std::cerr << "|starting reduction!\n";
 
-  int factor = binary ? workingSize * 2 : workingSize / 10;
+  uint64_t factor = binary ? uint64_t(workingSize) * 2 : workingSize / 10;
 
   size_t lastDestructiveReductions = 0;
   size_t lastPostPassesSize = 0;
 
   bool stopping = false;
 
+  bool first = true;
   while (1) {
     Reducer reducer(
       command, test, working, binary, deNan, verbose, debugInfo, options);
+
+    // For extremely large modules with slow reproduction commands, reducing
+    // function bodies first can be more effective than running passes. TODO:
+    // clean this up and reconsider the order of reducers.
+    if (first) {
+      reducer.loadWorking();
+      reducer.reduceFunctionBodies();
+      reducer.reduceFunctions();
+      first = false;
+    }
 
     // run binaryen optimization passes to reduce. passes are fast to run
     // and can often reduce large amounts of code efficiently, as opposed
@@ -1550,7 +1652,7 @@ More documentation can be found at
       // we get "stuck" cycling through them. In that case we simply need to do
       // more destructive reductions to make real progress. For that reason,
       // decrease the factor by some small percentage.
-      factor = std::max(1, (factor * 9) / 10);
+      factor = std::max(uint64_t(1), uint64_t(factor * 0.9));
     } else {
       if (factor > 10) {
         factor = (factor / 3) + 1;
@@ -1559,9 +1661,9 @@ More documentation can be found at
       }
     }
 
-    // no point in a factor lorger than the size
+    // no point in a factor larger than the size
     assert(newSize > 4); // wasm modules are >4 bytes anyhow
-    factor = std::min(factor, int(newSize) / 4);
+    factor = std::min(factor, uint64_t(newSize / 4));
 
     // try to reduce destructively. if a high factor fails to find anything,
     // quickly try a lower one (no point in doing passes until we reduce
@@ -1577,8 +1679,8 @@ More documentation can be found at
         stopping = true;
         break;
       }
-      factor = std::max(
-        1, factor / 4); // quickly now, try to find *something* we can reduce
+      // Quickly try to find *something* we can reduce.
+      factor = std::max(uint64_t(1), factor / 4);
     }
 
     std::cerr << "|  destructive reduction led to size: " << file_size(working)

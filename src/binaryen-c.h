@@ -58,7 +58,9 @@
 #if defined(__EMSCRIPTEN__)
 #include <emscripten.h>
 #define BINARYEN_API EMSCRIPTEN_KEEPALIVE
-#elif defined(_MSC_VER) && !defined(BUILD_STATIC_LIBRARY)
+#elif defined(_MSC_VER) && defined(BUILD_SHARED_LIBS)
+// TODO: This is not yet used since we disabled BUILD_SHARED_LIBS under
+// _MSC_VER in CMakeLists.txt
 #define BINARYEN_API __declspec(dllexport)
 #else
 #define BINARYEN_API
@@ -244,6 +246,10 @@ BINARYEN_API BinaryenFeatures BinaryenFeatureFP16(void);
 BINARYEN_API BinaryenFeatures BinaryenFeatureBulkMemoryOpt(void);
 BINARYEN_API BinaryenFeatures BinaryenFeatureCallIndirectOverlong(void);
 BINARYEN_API BinaryenFeatures BinaryenFeatureRelaxedAtomics(void);
+BINARYEN_API BinaryenFeatures BinaryenFeatureMultibyte(void);
+BINARYEN_API BinaryenFeatures BinaryenFeatureCustomPageSizes(void);
+BINARYEN_API BinaryenFeatures BinaryenFeatureWideArithmetic(void);
+BINARYEN_API BinaryenFeatures BinaryenFeatureCompactImports(void);
 BINARYEN_API BinaryenFeatures BinaryenFeatureAll(void);
 
 // Modules
@@ -428,6 +434,10 @@ BINARYEN_API BinaryenOp BinaryenLtFloat64(void);
 BINARYEN_API BinaryenOp BinaryenLeFloat64(void);
 BINARYEN_API BinaryenOp BinaryenGtFloat64(void);
 BINARYEN_API BinaryenOp BinaryenGeFloat64(void);
+BINARYEN_API BinaryenOp BinaryenAddInt128(void);
+BINARYEN_API BinaryenOp BinaryenSubInt128(void);
+BINARYEN_API BinaryenOp BinaryenMulWideSInt64(void);
+BINARYEN_API BinaryenOp BinaryenMulWideUInt64(void);
 BINARYEN_API BinaryenOp BinaryenAtomicRMWAdd(void);
 BINARYEN_API BinaryenOp BinaryenAtomicRMWSub(void);
 BINARYEN_API BinaryenOp BinaryenAtomicRMWAnd(void);
@@ -520,11 +530,11 @@ BINARYEN_API BinaryenOp BinaryenRelaxedMaddVecF32x4(void);
 BINARYEN_API BinaryenOp BinaryenRelaxedNmaddVecF32x4(void);
 BINARYEN_API BinaryenOp BinaryenRelaxedMaddVecF64x2(void);
 BINARYEN_API BinaryenOp BinaryenRelaxedNmaddVecF64x2(void);
-BINARYEN_API BinaryenOp BinaryenLaneselectI8x16(void);
-BINARYEN_API BinaryenOp BinaryenLaneselectI16x8(void);
-BINARYEN_API BinaryenOp BinaryenLaneselectI32x4(void);
-BINARYEN_API BinaryenOp BinaryenLaneselectI64x2(void);
-BINARYEN_API BinaryenOp BinaryenDotI8x16I7x16AddSToVecI32x4(void);
+BINARYEN_API BinaryenOp BinaryenRelaxedLaneselectI8x16(void);
+BINARYEN_API BinaryenOp BinaryenRelaxedLaneselectI16x8(void);
+BINARYEN_API BinaryenOp BinaryenRelaxedLaneselectI32x4(void);
+BINARYEN_API BinaryenOp BinaryenRelaxedLaneselectI64x2(void);
+BINARYEN_API BinaryenOp BinaryenRelaxedDotI8x16I7x16AddSToVecI32x4(void);
 BINARYEN_API BinaryenOp BinaryenAnyTrueVec128(void);
 BINARYEN_API BinaryenOp BinaryenPopcntVecI8x16(void);
 BINARYEN_API BinaryenOp BinaryenAbsVecI8x16(void);
@@ -682,6 +692,7 @@ BINARYEN_API BinaryenOp BinaryenTruncSatZeroSVecF64x2ToVecI32x4(void);
 BINARYEN_API BinaryenOp BinaryenTruncSatZeroUVecF64x2ToVecI32x4(void);
 BINARYEN_API BinaryenOp BinaryenDemoteZeroVecF64x2ToVecF32x4(void);
 BINARYEN_API BinaryenOp BinaryenPromoteLowVecF32x4ToVecF64x2(void);
+BINARYEN_API BinaryenOp BinaryenPromoteLowVecF16x8ToVecF32x4(void);
 BINARYEN_API BinaryenOp BinaryenRelaxedTruncSVecF32x4ToVecI32x4(void);
 BINARYEN_API BinaryenOp BinaryenRelaxedTruncUVecF32x4ToVecI32x4(void);
 BINARYEN_API BinaryenOp BinaryenRelaxedTruncZeroSVecF64x2ToVecI32x4(void);
@@ -693,7 +704,7 @@ BINARYEN_API BinaryenOp BinaryenRelaxedMaxVecF32x4(void);
 BINARYEN_API BinaryenOp BinaryenRelaxedMinVecF64x2(void);
 BINARYEN_API BinaryenOp BinaryenRelaxedMaxVecF64x2(void);
 BINARYEN_API BinaryenOp BinaryenRelaxedQ15MulrSVecI16x8(void);
-BINARYEN_API BinaryenOp BinaryenDotI8x16I7x16SToVecI16x8(void);
+BINARYEN_API BinaryenOp BinaryenRelaxedDotI8x16I7x16SToVecI16x8(void);
 BINARYEN_API BinaryenOp BinaryenRefAsNonNull(void);
 BINARYEN_API BinaryenOp BinaryenRefAsExternInternalize(void);
 BINARYEN_API BinaryenOp BinaryenRefAsExternExternalize(void);
@@ -837,6 +848,18 @@ BINARYEN_API BinaryenExpressionRef BinaryenBinary(BinaryenModuleRef module,
                                                   BinaryenExpressionRef left,
                                                   BinaryenExpressionRef right);
 BINARYEN_API BinaryenExpressionRef
+BinaryenWideIntAddSub(BinaryenModuleRef module,
+                      BinaryenOp op,
+                      BinaryenExpressionRef leftLow,
+                      BinaryenExpressionRef leftHigh,
+                      BinaryenExpressionRef rightLow,
+                      BinaryenExpressionRef rightHigh);
+BINARYEN_API BinaryenExpressionRef
+BinaryenWideIntMul(BinaryenModuleRef module,
+                   BinaryenOp op,
+                   BinaryenExpressionRef left,
+                   BinaryenExpressionRef right);
+BINARYEN_API BinaryenExpressionRef
 BinaryenSelect(BinaryenModuleRef module,
                BinaryenExpressionRef condition,
                BinaryenExpressionRef ifTrue,
@@ -907,7 +930,7 @@ BinaryenAtomicNotify(BinaryenModuleRef module,
                      BinaryenExpressionRef notifyCount,
                      const char* memoryName);
 BINARYEN_API BinaryenExpressionRef
-BinaryenAtomicFence(BinaryenModuleRef module);
+BinaryenAtomicFence(BinaryenModuleRef module, BinaryenMemoryOrder order);
 BINARYEN_API BinaryenExpressionRef
 BinaryenSIMDExtract(BinaryenModuleRef module,
                     BinaryenOp op,
@@ -1198,6 +1221,11 @@ BINARYEN_API void BinaryenExpressionFinalize(BinaryenExpressionRef expr);
 // Makes a deep copy of the given expression.
 BINARYEN_API BinaryenExpressionRef
 BinaryenExpressionCopy(BinaryenExpressionRef expr, BinaryenModuleRef module);
+// Serialize an expression in s-expression form. Implicitly allocates the
+// returned char* with malloc(), and expects the user to free() them manually
+// once not needed anymore.
+BINARYEN_API char*
+BinaryenExpressionAllocateAndWriteText(BinaryenExpressionRef expr);
 
 // Block
 
@@ -1700,6 +1728,62 @@ BinaryenBinaryGetRight(BinaryenExpressionRef expr);
 BINARYEN_API void BinaryenBinarySetRight(BinaryenExpressionRef expr,
                                          BinaryenExpressionRef rightExpr);
 
+// WideIntAddSub
+
+// Gets the operation being performed by a wide int add/sub expression.
+BINARYEN_API BinaryenOp BinaryenWideIntAddSubGetOp(BinaryenExpressionRef expr);
+// Sets the operation being performed by a wide int add/sub expression.
+BINARYEN_API void BinaryenWideIntAddSubSetOp(BinaryenExpressionRef expr,
+                                             BinaryenOp op);
+// Gets the left low expression of a wide int add/sub expression.
+BINARYEN_API BinaryenExpressionRef
+BinaryenWideIntAddSubGetLeftLow(BinaryenExpressionRef expr);
+// Sets the left low expression of a wide int add/sub expression.
+BINARYEN_API void
+BinaryenWideIntAddSubSetLeftLow(BinaryenExpressionRef expr,
+                                BinaryenExpressionRef leftLowExpr);
+// Gets the left high expression of a wide int add/sub expression.
+BINARYEN_API BinaryenExpressionRef
+BinaryenWideIntAddSubGetLeftHigh(BinaryenExpressionRef expr);
+// Sets the left high expression of a wide int add/sub expression.
+BINARYEN_API void
+BinaryenWideIntAddSubSetLeftHigh(BinaryenExpressionRef expr,
+                                 BinaryenExpressionRef leftHighExpr);
+// Gets the right low expression of a wide int add/sub expression.
+BINARYEN_API BinaryenExpressionRef
+BinaryenWideIntAddSubGetRightLow(BinaryenExpressionRef expr);
+// Sets the right low expression of a wide int add/sub expression.
+BINARYEN_API void
+BinaryenWideIntAddSubSetRightLow(BinaryenExpressionRef expr,
+                                 BinaryenExpressionRef rightLowExpr);
+// Gets the right high expression of a wide int add/sub expression.
+BINARYEN_API BinaryenExpressionRef
+BinaryenWideIntAddSubGetRightHigh(BinaryenExpressionRef expr);
+// Sets the right high expression of a wide int add/sub expression.
+BINARYEN_API void
+BinaryenWideIntAddSubSetRightHigh(BinaryenExpressionRef expr,
+                                  BinaryenExpressionRef rightHighExpr);
+
+// WideIntMul
+
+// Gets the operation being performed by a wide int mul expression.
+BINARYEN_API BinaryenOp BinaryenWideIntMulGetOp(BinaryenExpressionRef expr);
+// Sets the operation being performed by a wide int mul expression.
+BINARYEN_API void BinaryenWideIntMulSetOp(BinaryenExpressionRef expr,
+                                          BinaryenOp op);
+// Gets the left expression of a wide int mul expression.
+BINARYEN_API BinaryenExpressionRef
+BinaryenWideIntMulGetLeft(BinaryenExpressionRef expr);
+// Sets the left expression of a wide int mul expression.
+BINARYEN_API void BinaryenWideIntMulSetLeft(BinaryenExpressionRef expr,
+                                            BinaryenExpressionRef leftExpr);
+// Gets the right expression of a wide int mul expression.
+BINARYEN_API BinaryenExpressionRef
+BinaryenWideIntMulGetRight(BinaryenExpressionRef expr);
+// Sets the right expression of a wide int mul expression.
+BINARYEN_API void BinaryenWideIntMulSetRight(BinaryenExpressionRef expr,
+                                             BinaryenExpressionRef rightExpr);
+
 // Select
 
 // Gets the expression becoming selected by a `select` expression if the
@@ -1877,10 +1961,11 @@ BinaryenAtomicNotifySetNotifyCount(BinaryenExpressionRef expr,
 // AtomicFence
 
 // Gets the order of an `atomic.fence` expression.
-BINARYEN_API uint8_t BinaryenAtomicFenceGetOrder(BinaryenExpressionRef expr);
+BINARYEN_API BinaryenMemoryOrder
+BinaryenAtomicFenceGetOrder(BinaryenExpressionRef expr);
 // Sets the order of an `atomic.fence` expression.
 BINARYEN_API void BinaryenAtomicFenceSetOrder(BinaryenExpressionRef expr,
-                                              uint8_t order);
+                                              BinaryenMemoryOrder order);
 
 // SIMDExtract
 
@@ -2931,7 +3016,8 @@ BINARYEN_API BinaryenTableRef BinaryenAddTable(BinaryenModuleRef module,
                                                const char* table,
                                                BinaryenIndex initial,
                                                BinaryenIndex maximum,
-                                               BinaryenType tableType);
+                                               BinaryenType tableType,
+                                               BinaryenExpressionRef init);
 BINARYEN_API void BinaryenRemoveTable(BinaryenModuleRef module,
                                       const char* table);
 BINARYEN_API BinaryenIndex BinaryenGetNumTables(BinaryenModuleRef module);
@@ -3000,18 +3086,24 @@ BINARYEN_API bool BinaryenMemoryIsShared(BinaryenModuleRef module,
 BINARYEN_API bool BinaryenMemoryIs64(BinaryenModuleRef module,
                                      const char* name);
 
-// Memory segments. Query utilities.
+// Data segments. Query utilities.
 
-BINARYEN_API uint32_t BinaryenGetNumMemorySegments(BinaryenModuleRef module);
-BINARYEN_API uint32_t BinaryenGetMemorySegmentByteOffset(
-  BinaryenModuleRef module, const char* segmentName);
-BINARYEN_API size_t BinaryenGetMemorySegmentByteLength(BinaryenModuleRef module,
-                                                       const char* segmentName);
-BINARYEN_API bool BinaryenGetMemorySegmentPassive(BinaryenModuleRef module,
-                                                  const char* segmentName);
-BINARYEN_API void BinaryenCopyMemorySegmentData(BinaryenModuleRef module,
-                                                const char* segmentName,
-                                                char* buffer);
+BINARYEN_REF(DataSegment);
+
+BINARYEN_API uint32_t BinaryenGetNumDataSegments(BinaryenModuleRef module);
+BINARYEN_API BinaryenDataSegmentRef
+BinaryenGetDataSegment(BinaryenModuleRef module, const char* segmentName);
+BINARYEN_API BinaryenDataSegmentRef
+BinaryenGetDataSegmentByIndex(BinaryenModuleRef module, BinaryenIndex index);
+BINARYEN_API const char*
+BinaryenDataSegmentGetName(BinaryenDataSegmentRef segment);
+BINARYEN_API uint32_t BinaryenGetDataSegmentByteOffset(
+  BinaryenModuleRef module, BinaryenDataSegmentRef segment);
+BINARYEN_API size_t
+BinaryenGetDataSegmentByteLength(BinaryenDataSegmentRef segment);
+BINARYEN_API bool BinaryenGetDataSegmentPassive(BinaryenDataSegmentRef segment);
+BINARYEN_API void BinaryenCopyDataSegmentData(BinaryenDataSegmentRef segment,
+                                              char* buffer);
 BINARYEN_API void BinaryenAddDataSegment(BinaryenModuleRef module,
                                          const char* segmentName,
                                          const char* memoryName,
@@ -3039,8 +3131,12 @@ BINARYEN_API void BinaryenModuleSetFeatures(BinaryenModuleRef module,
 // ========== Module Operations ==========
 //
 
-// Parse a module in s-expression text format
+// Parse a module in s-expression text format, assuming the MVP feature set.
 BINARYEN_API BinaryenModuleRef BinaryenModuleParse(const char* text);
+
+// Parse a module in s-expression text format, enabling the given feature set.
+BINARYEN_API BinaryenModuleRef
+BinaryenModuleParseWithFeatures(const char* text, BinaryenFeatures features);
 
 // Print a module to stdout in s-expression text format. Useful for debugging.
 BINARYEN_API void BinaryenModulePrint(BinaryenModuleRef module);
@@ -3052,7 +3148,7 @@ BINARYEN_API void BinaryenModulePrintStackIR(BinaryenModuleRef module);
 BINARYEN_API void BinaryenModulePrintAsmjs(BinaryenModuleRef module);
 
 // Validate a module, showing errors on problems.
-//  @return 0 if an error occurred, 1 if validated succesfully
+//  @return 0 if an error occurred, 1 if validated successfully
 BINARYEN_API bool BinaryenModuleValidate(BinaryenModuleRef module);
 
 // Runs the standard optimization passes on the module. Uses the currently set
@@ -3273,7 +3369,7 @@ BINARYEN_API BinaryenModuleAllocateAndWriteResult
 BinaryenModuleAllocateAndWrite(BinaryenModuleRef module,
                                const char* sourceMapUrl);
 
-// Serialize a module in s-expression form. Implicity allocates the returned
+// Serialize a module in s-expression form. Implicitly allocates the returned
 // char* with malloc(), and expects the user to free() them manually
 // once not needed anymore.
 BINARYEN_API char* BinaryenModuleAllocateAndWriteText(BinaryenModuleRef module);

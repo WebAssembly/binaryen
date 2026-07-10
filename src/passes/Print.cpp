@@ -188,14 +188,14 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
       // Use indices for any remaining type names, skipping any that are already
       // used.
       for (auto type : types) {
-        if (parent.currModule->typeNames.count(type)) {
+        if (parent.currModule->typeNames.contains(type)) {
           ++i;
           continue;
         }
         Name name;
         do {
           name = std::to_string(i++);
-        } while (usedNames.count(name));
+        } while (usedNames.contains(name));
         fallbackNames[type] = {name, {}};
       }
     }
@@ -320,63 +320,6 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
   void visitTryTable(TryTable* curr);
 
   void printUnreachableReplacement(Expression* curr);
-  bool maybePrintUnreachableReplacement(Expression* curr, Type type);
-  void visitRefCast(RefCast* curr) {
-    if ((curr->desc && curr->desc->type != Type::unreachable) ||
-        !maybePrintUnreachableReplacement(curr, curr->type)) {
-      visitExpression(curr);
-    }
-  }
-  void visitStructNew(StructNew* curr) {
-    if (!maybePrintUnreachableReplacement(curr, curr->type)) {
-      visitExpression(curr);
-    }
-  }
-  void visitArrayNew(ArrayNew* curr) {
-    if (!maybePrintUnreachableReplacement(curr, curr->type)) {
-      visitExpression(curr);
-    }
-  }
-  void visitArrayNewData(ArrayNewData* curr) {
-    if (!maybePrintUnreachableReplacement(curr, curr->type)) {
-      visitExpression(curr);
-    }
-  }
-  void visitArrayNewElem(ArrayNewElem* curr) {
-    if (!maybePrintUnreachableReplacement(curr, curr->type)) {
-      visitExpression(curr);
-    }
-  }
-  void visitArrayNewFixed(ArrayNewFixed* curr) {
-    if (!maybePrintUnreachableReplacement(curr, curr->type)) {
-      visitExpression(curr);
-    }
-  }
-  void visitContNew(ContNew* curr) {
-    if (!maybePrintUnreachableReplacement(curr, curr->type)) {
-      visitExpression(curr);
-    }
-  }
-  void visitContBind(ContBind* curr) {
-    if (!maybePrintUnreachableReplacement(curr, curr->type)) {
-      visitExpression(curr);
-    }
-  }
-  void visitResume(Resume* curr) {
-    if (!maybePrintUnreachableReplacement(curr, curr->type)) {
-      visitExpression(curr);
-    }
-  }
-  void visitResumeThrow(ResumeThrow* curr) {
-    if (!maybePrintUnreachableReplacement(curr, curr->type)) {
-      visitExpression(curr);
-    }
-  }
-  void visitStackSwitch(StackSwitch* curr) {
-    if (!maybePrintUnreachableReplacement(curr, curr->type)) {
-      visitExpression(curr);
-    }
-  }
 
   // Module-level visitors
   void handleSignature(Function* curr, bool printImplicitNames = false);
@@ -435,6 +378,33 @@ struct PrintExpressionContents
 
   std::ostream& printBlockType(Signature sig) {
     return parent.printBlockType(sig);
+  }
+
+  void printMemoryPostfix(uint8_t bytes, Type type) {
+    switch (bytes) {
+      case 1:
+        o << '8';
+        break;
+      case 2:
+        if (type == Type::f32) {
+          o << "_f16";
+        } else {
+          o << "16";
+        }
+        break;
+      case 4:
+        o << "32";
+        break;
+      default:
+        abort();
+    }
+  }
+
+  std::ostream& printStorePostfix(uint8_t bytes, Type valueType) {
+    if (bytes < 4 || (valueType == Type::i64 && bytes < 8)) {
+      printMemoryPostfix(bytes, valueType);
+    }
+    return o;
   }
 
   void visitBlock(Block* curr) {
@@ -528,7 +498,10 @@ struct PrintExpressionContents
     printLocal(curr->index, currFunction, o);
   }
   void visitLocalSet(LocalSet* curr) {
-    if (curr->isTee()) {
+    // Print unreachable tees as sets. This makes the output valid WebAssembly
+    // in more cases because it avoids pushing a concrete type (which may not
+    // be the type required by the next instruction) onto a polymorphic stack.
+    if (curr->isTee() && curr->type != Type::unreachable) {
       printMedium(o, "local.tee ");
     } else {
       printMedium(o, "local.set ");
@@ -556,19 +529,7 @@ struct PrintExpressionContents
     o << ".load";
     if (curr->type != Type::unreachable &&
         curr->bytes < curr->type.getByteSize()) {
-      if (curr->bytes == 1) {
-        o << '8';
-      } else if (curr->bytes == 2) {
-        if (curr->type == Type::f32) {
-          o << "_f16";
-        } else {
-          o << "16";
-        }
-      } else if (curr->bytes == 4) {
-        o << "32";
-      } else {
-        abort();
-      }
+      printMemoryPostfix(curr->bytes, curr->type);
       if (curr->type != Type::f32) {
         o << (curr->signed_ ? "_s" : "_u");
       }
@@ -589,21 +550,7 @@ struct PrintExpressionContents
       o << ".atomic";
     }
     o << ".store";
-    if (curr->bytes < 4 || (curr->valueType == Type::i64 && curr->bytes < 8)) {
-      if (curr->bytes == 1) {
-        o << '8';
-      } else if (curr->bytes == 2) {
-        if (curr->valueType == Type::f32) {
-          o << "_f16";
-        } else {
-          o << "16";
-        }
-      } else if (curr->bytes == 4) {
-        o << "32";
-      } else {
-        abort();
-      }
-    }
+    printStorePostfix(curr->bytes, curr->valueType);
     restoreNormalColor(o);
     printMemoryName(curr->memory, o, wasm);
     printMemoryOrder(curr->order);
@@ -700,7 +647,10 @@ struct PrintExpressionContents
       o << " offset=" << curr->offset;
     }
   }
-  void visitAtomicFence(AtomicFence* curr) { printMedium(o, "atomic.fence"); }
+  void visitAtomicFence(AtomicFence* curr) {
+    printMedium(o, "atomic.fence");
+    printMemoryOrder(curr->order);
+  }
   void visitPause(Pause* curr) { printMedium(o, "pause"); }
   void visitSIMDExtract(SIMDExtract* curr) {
     prepareColor(o);
@@ -778,23 +728,23 @@ struct PrintExpressionContents
       case Bitselect:
         o << "v128.bitselect";
         break;
-      case LaneselectI8x16:
-        o << "i8x16.laneselect";
+      case RelaxedLaneselectI8x16:
+        o << "i8x16.relaxed_laneselect";
         break;
-      case LaneselectI16x8:
-        o << "i16x8.laneselect";
+      case RelaxedLaneselectI16x8:
+        o << "i16x8.relaxed_laneselect";
         break;
-      case LaneselectI32x4:
-        o << "i32x4.laneselect";
+      case RelaxedLaneselectI32x4:
+        o << "i32x4.relaxed_laneselect";
         break;
-      case LaneselectI64x2:
-        o << "i64x2.laneselect";
+      case RelaxedLaneselectI64x2:
+        o << "i64x2.relaxed_laneselect";
         break;
-      case RelaxedMaddVecF16x8:
-        o << "f16x8.relaxed_madd";
+      case MaddVecF16x8:
+        o << "f16x8.madd";
         break;
-      case RelaxedNmaddVecF16x8:
-        o << "f16x8.relaxed_nmadd";
+      case NmaddVecF16x8:
+        o << "f16x8.nmadd";
         break;
       case RelaxedMaddVecF32x4:
         o << "f32x4.relaxed_madd";
@@ -808,8 +758,8 @@ struct PrintExpressionContents
       case RelaxedNmaddVecF64x2:
         o << "f64x2.relaxed_nmadd";
         break;
-      case DotI8x16I7x16AddSToVecI32x4:
-        o << "i32x4.dot_i8x16_i7x16_add_s";
+      case RelaxedDotI8x16I7x16AddSToVecI32x4:
+        o << "i32x4.relaxed_dot_i8x16_i7x16_add_s";
         break;
     }
     restoreNormalColor(o);
@@ -1399,6 +1349,15 @@ struct PrintExpressionContents
         break;
       case ConvertUVecI16x8ToVecF16x8:
         o << "f16x8.convert_i16x8_u";
+        break;
+      case PromoteLowVecF16x8ToVecF32x4:
+        o << "f32x4.promote_low_f16x8";
+        break;
+      case DemoteZeroVecF32x4ToVecF16x8:
+        o << "f16x8.demote_f32x4_zero";
+        break;
+      case DemoteZeroVecF64x2ToVecF16x8:
+        o << "f16x8.demote_f64x2_zero";
         break;
       case InvalidUnary:
         WASM_UNREACHABLE("unvalid unary operator");
@@ -2069,12 +2028,40 @@ struct PrintExpressionContents
       case RelaxedQ15MulrSVecI16x8:
         o << "i16x8.relaxed_q15mulr_s";
         break;
-      case DotI8x16I7x16SToVecI16x8:
-        o << "i16x8.dot_i8x16_i7x16_s";
+      case RelaxedDotI8x16I7x16SToVecI16x8:
+        o << "i16x8.relaxed_dot_i8x16_i7x16_s";
         break;
 
       case InvalidBinary:
         WASM_UNREACHABLE("unvalid binary operator");
+    }
+    restoreNormalColor(o);
+  }
+  void visitWideIntAddSub(WideIntAddSub* curr) {
+    prepareColor(o);
+    switch (curr->op) {
+      case AddInt128: {
+        o << "i64.add128";
+        break;
+      }
+      case SubInt128: {
+        o << "i64.sub128";
+        break;
+      }
+    }
+    restoreNormalColor(o);
+  }
+  void visitWideIntMul(WideIntMul* curr) {
+    prepareColor(o);
+    switch (curr->op) {
+      case MulWideSInt64: {
+        o << "i64.mul_wide_s";
+        break;
+      }
+      case MulWideUInt64: {
+        o << "i64.mul_wide_u";
+        break;
+      }
     }
     restoreNormalColor(o);
   }
@@ -2405,6 +2392,20 @@ struct PrintExpressionContents
     o << ' ';
     printFieldName(heapType, curr->index);
   }
+  void visitStructWait(StructWait* curr) {
+    printMedium(o, "struct.wait");
+    o << ' ';
+    printHeapTypeName(curr->ref->type.getHeapType());
+    o << ' ';
+    o << curr->index;
+  }
+  void visitStructNotify(StructNotify* curr) {
+    printMedium(o, "struct.notify");
+    o << ' ';
+    printHeapTypeName(curr->ref->type.getHeapType());
+    o << ' ';
+    o << curr->index;
+  }
   void visitArrayNew(ArrayNew* curr) {
     printMedium(o, "array.new");
     if (curr->isWithDefault()) {
@@ -2462,6 +2463,35 @@ struct PrintExpressionContents
     printMemoryOrder(curr->order);
     o << ' ';
     printHeapTypeName(curr->ref->type.getHeapType());
+  }
+  void visitArrayLoad(ArrayLoad* curr) {
+    prepareColor(o) << forceConcrete(curr->type);
+    o << ".load";
+    if (curr->type != Type::unreachable &&
+        curr->bytes < curr->type.getByteSize()) {
+      printMemoryPostfix(curr->bytes, curr->type);
+      o << (curr->signed_ ? "_s" : "_u");
+    }
+    o << " ";
+    restoreNormalColor(o);
+
+    o << '(';
+    printMinor(o, "type ");
+    printHeapTypeName(curr->ref->type.getHeapType());
+    o << ')';
+  }
+
+  void visitArrayStore(ArrayStore* curr) {
+    prepareColor(o) << forceConcrete(curr->value->type);
+    o << ".store";
+    printStorePostfix(curr->bytes, curr->value->type);
+    o << " ";
+    restoreNormalColor(o);
+
+    o << '(';
+    printMinor(o, "type ");
+    printHeapTypeName(curr->ref->type.getHeapType());
+    o << ')';
   }
   void visitArrayLen(ArrayLen* curr) { printMedium(o, "array.len"); }
   void visitArrayCopy(ArrayCopy* curr) {
@@ -2542,7 +2572,7 @@ struct PrintExpressionContents
     // Re-encode from WTF-16 to WTF-8.
     std::stringstream wtf8;
     [[maybe_unused]] bool valid =
-      String::convertWTF16ToWTF8(wtf8, curr->string.str);
+      String::convertWTF16ToWTF8(wtf8, curr->string.view());
     assert(valid);
     // TODO: Use wtf8.view() once we have C++20.
     String::printEscaped(o, wtf8.str());
@@ -2811,6 +2841,17 @@ void PrintSExpression::printCodeAnnotations(const CodeAnnotation& annotation) {
   if (annotation.idempotent) {
     Colors::grey(o);
     o << "(@" << Annotations::IdempotentHint << ")\n";
+    restoreNormalColor(o);
+    doIndent(o, indent);
+  }
+  if (annotation.toolchainInline) {
+    Colors::grey(o);
+    std::ofstream saved;
+    saved.copyfmt(o);
+    o << "(@" << Annotations::ToolchainInlineHint << " \"\\" << std::hex
+      << std::setfill('0') << std::setw(2) << int(*annotation.toolchainInline)
+      << "\")\n";
+    o.copyfmt(saved);
     restoreNormalColor(o);
     doIndent(o, indent);
   }
@@ -3096,19 +3137,6 @@ void PrintSExpression::printUnreachableReplacement(Expression* curr) {
   decIndent();
 }
 
-bool PrintSExpression::maybePrintUnreachableReplacement(Expression* curr,
-                                                        Type type) {
-  // When we cannot print an instruction because the child from which it's
-  // supposed to get a type immediate is unreachable, then we print a
-  // semantically-equivalent block that drops each of the children and ends in
-  // an unreachable.
-  if (type == Type::unreachable) {
-    printUnreachableReplacement(curr);
-    return true;
-  }
-  return false;
-}
-
 static bool requiresExplicitFuncType(HeapType type) {
   // When the `(type $f)` in a function's typeuse is omitted, the typeuse
   // matches or declares an MVP function type. When the intended type is not an
@@ -3179,7 +3207,7 @@ void PrintSExpression::visitExport(Export* curr) {
   o << '(';
   printMedium(o, "export ");
   std::stringstream escaped;
-  String::printEscaped(escaped, curr->name.str);
+  String::printEscaped(escaped, curr->name.view());
   printText(o, escaped.str(), false) << " (";
   switch (curr->kind) {
     case ExternalKind::Function:
@@ -3208,8 +3236,8 @@ void PrintSExpression::visitExport(Export* curr) {
 void PrintSExpression::emitImportHeader(Importable* curr) {
   printMedium(o, "import ");
   std::stringstream escapedModule, escapedBase;
-  String::printEscaped(escapedModule, curr->module.str);
-  String::printEscaped(escapedBase, curr->base.str);
+  String::printEscaped(escapedModule, curr->module.view());
+  String::printEscaped(escapedBase, curr->base.view());
   printText(o, escapedModule.str(), false) << ' ';
   printText(o, escapedBase.str(), false) << ' ';
 }
@@ -3395,7 +3423,12 @@ void PrintSExpression::printTableHeader(Table* curr) {
     o << ' ' << curr->max;
   }
   o << ' ';
-  printType(curr->type) << ')';
+  printType(curr->type);
+  if (curr->init) {
+    o << ' ';
+    visit(curr->init);
+  }
+  o << ')';
 }
 
 void PrintSExpression::visitTable(Table* curr) {
@@ -3427,7 +3460,7 @@ void PrintSExpression::visitElementSegment(ElementSegment* curr) {
   printMedium(o, "elem ");
   curr->name.print(o);
 
-  if (curr->table.is()) {
+  if (curr->isActive()) {
     if (usesExpressions || currModule->tables.size() > 1) {
       // tableuse
       o << " (table ";
@@ -3484,6 +3517,11 @@ void PrintSExpression::printMemoryHeader(Memory* curr) {
   if (curr->shared) {
     printMedium(o, " shared");
   }
+  if (curr->pageSizeLog2 != Memory::kDefaultPageSizeLog2) {
+    o << " (";
+    printMedium(o, "pagesize") << ' ' << (1 << (curr->pageSizeLog2));
+    o << ')';
+  }
   o << ")";
 }
 
@@ -3502,7 +3540,7 @@ void PrintSExpression::visitMemory(Memory* curr) {
 }
 
 void PrintSExpression::visitDataSegment(DataSegment* curr) {
-  if (!curr->isPassive && !curr->offset) {
+  if (curr->isActive() && !curr->offset) {
     // This data segment must have been created from the datacount section but
     // not parsed yet. Skip it.
     return;
@@ -3512,7 +3550,7 @@ void PrintSExpression::visitDataSegment(DataSegment* curr) {
   printMajor(o, "data ");
   curr->name.print(o);
   o << ' ';
-  if (!curr->isPassive) {
+  if (curr->isActive()) {
     assert(!currModule || currModule->memories.size() > 0);
     if (!currModule || curr->memory != currModule->memories[0]->name) {
       o << "(memory ";
@@ -3712,7 +3750,7 @@ public:
 
 Pass* createMinifiedPrinterPass() { return new MinifiedPrinter(); }
 
-// Prints out a module withough elision, i.e., the full ast
+// Prints out a module without elision, i.e., the full ast
 
 class FullPrinter : public Printer {
 public:
@@ -3811,7 +3849,7 @@ printStackInst(StackInst* inst, std::ostream& o, Function* func) {
       break;
     }
     default:
-      WASM_UNREACHABLE("unexpeted op");
+      WASM_UNREACHABLE("unexpected op");
   }
   return o;
 }
@@ -3904,7 +3942,7 @@ static std::ostream& printStackIR(StackIR* ir, PrintSExpression& printer) {
         break;
       }
       default:
-        WASM_UNREACHABLE("unexpeted op");
+        WASM_UNREACHABLE("unexpected op");
     }
     o << '\n';
   }
@@ -3952,6 +3990,10 @@ std::ostream& operator<<(std::ostream& o, wasm::ModuleExpression pair) {
 }
 
 std::ostream& operator<<(std::ostream& o, wasm::ShallowExpression expression) {
+  if (Properties::hasUnwritableTypeImmediate(expression.expr)) {
+    o << "(; unreachable " << getExpressionName(expression.expr) << " ;)";
+    return o;
+  }
   wasm::PrintSExpression printer(o);
   printer.setModule(expression.module);
   wasm::PrintExpressionContents(printer).visit(expression.expr);
@@ -4002,6 +4044,13 @@ std::ostream& operator<<(std::ostream& o, const Table& table) {
   wasm::PrintSExpression printer(o);
   // TODO: printTableHeader should take a const Table*
   printer.printTableHeader(const_cast<Table*>(&table));
+  return o;
+}
+
+std::ostream& operator<<(std::ostream& o, const Global& global) {
+  wasm::PrintSExpression printer(o);
+  // TODO: visitGlobal should take a const Global*
+  printer.visitGlobal(const_cast<Global*>(&global));
   return o;
 }
 

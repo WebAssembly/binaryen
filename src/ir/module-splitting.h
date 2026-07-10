@@ -44,13 +44,14 @@
 #ifndef wasm_ir_module_splitting_h
 #define wasm_ir_module_splitting_h
 
+#include "pass.h"
 #include "wasm.h"
 
 namespace wasm::ModuleSplitting {
 
-static const Name LOAD_SECONDARY_MODULE("__load_secondary_module");
-
 struct Config {
+  // Pass options to use for effects analysis
+  PassOptions passOptions;
   // A vector of set of functions to split into that secondary. Each function
   // set belongs to a single secondary module. All others are kept in the
   // primary module. Must not include the start function if it exists. May or
@@ -77,9 +78,6 @@ struct Config {
   // false, the original function names will be used (after `newExportPrefix`)
   // as the new export names.
   bool minimizeNewExportNames = false;
-  // When JSPI support is enabled the secondary module loading is handled by an
-  // imported function.
-  bool jspi = false;
 };
 
 struct Results {

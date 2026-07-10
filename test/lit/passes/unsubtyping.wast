@@ -108,6 +108,18 @@
 
 (module
  ;; CHECK:      (rec
+ ;; CHECK-NEXT:  (type $super (sub (struct)))
+ (type $super (sub (struct)))
+ ;; CHECK:       (type $sub (sub $super (struct)))
+ (type $sub (sub $super (struct)))
+
+ ;; A table initializer requires subtyping.
+ ;; CHECK:      (table $t 1 1 (ref null $super) (struct.new_default $sub))
+ (table $t 1 1 (ref null $super) (struct.new_default $sub))
+)
+
+(module
+ ;; CHECK:      (rec
  ;; CHECK-NEXT:  (type $X (sub (struct)))
  (type $X (sub (struct)))
  ;; CHECK:       (type $Y (sub $X (struct)))
@@ -2018,7 +2030,7 @@
   ;; CHECK:      (func $test (type $3) (param $C (ref $C)) (result (ref $A) (ref $A))
   ;; CHECK-NEXT:  (local $Bs (tuple (ref $B) (ref $B)))
   ;; CHECK-NEXT:  (block $l
-  ;; CHECK-NEXT:   (local.tee $Bs
+  ;; CHECK-NEXT:   (local.set $Bs
   ;; CHECK-NEXT:    (block
   ;; CHECK-NEXT:     (tuple.drop 2
   ;; CHECK-NEXT:      (tuple.make 2

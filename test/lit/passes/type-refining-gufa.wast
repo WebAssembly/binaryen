@@ -524,8 +524,6 @@
  ;; GUFA:      (export "a" (func $a))
  ;; O3O3:      (type $3 (func (result (ref $cont))))
 
- ;; O3O3:      (elem declare func $ref)
-
  ;; O3O3:      (export "a" (func $a))
  (export "a" (func $a))
  ;; NRML:      (export "b" (func $b))
@@ -556,15 +554,10 @@
  ;; GUFA-NEXT:  )
  ;; GUFA-NEXT: )
  ;; O3O3:      (func $a (type $func)
- ;; O3O3-NEXT:  (drop
- ;; O3O3-NEXT:   (cont.new $cont
- ;; O3O3-NEXT:    (ref.func $ref)
- ;; O3O3-NEXT:   )
- ;; O3O3-NEXT:  )
+ ;; O3O3-NEXT:  (nop)
  ;; O3O3-NEXT: )
  (func $a
-  ;; GUFA cannot improve things here (-O3 can remove the struct operations,
-  ;; though).
+  ;; GUFA cannot improve things here (-O3 can remove everything, though).
   (drop
    (struct.get $wrap-cont 0
     (struct.new $wrap-cont
@@ -607,15 +600,63 @@
  ;; GUFA-NEXT:   )
  ;; GUFA-NEXT:  )
  ;; GUFA-NEXT: )
- ;; O3O3:      (func $ref (type $func)
- ;; O3O3-NEXT:  (nop)
- ;; O3O3-NEXT: )
  (func $ref (type $func)
   (drop
    (struct.new $wrap-array
     (array.new_default $array
      (i32.const 0)
     )
+   )
+  )
+ )
+)
+
+;; When refining to nullcontref we cannot use a cast. Just emit a null.
+(module
+ (rec
+  ;; NRML:      (rec
+  ;; NRML-NEXT:  (type $func (sub (func)))
+  ;; GUFA:      (rec
+  ;; GUFA-NEXT:  (type $func (sub (func)))
+  (type $func (sub (func)))
+  ;; NRML:       (type $cont (sub (cont $func)))
+  ;; GUFA:       (type $cont (sub (cont $func)))
+  (type $cont (sub (cont $func)))
+  ;; NRML:       (type $struct (struct (field (ref null $cont))))
+  ;; GUFA:       (type $struct (struct (field nullcontref)))
+  (type $struct (struct (field (ref null $cont))))
+ )
+
+ ;; NRML:      (type $3 (func))
+
+ ;; NRML:      (func $test (type $3)
+ ;; NRML-NEXT:  (local $null (ref null $cont))
+ ;; NRML-NEXT:  (drop
+ ;; NRML-NEXT:   (struct.new $struct
+ ;; NRML-NEXT:    (local.get $null)
+ ;; NRML-NEXT:   )
+ ;; NRML-NEXT:  )
+ ;; NRML-NEXT: )
+ ;; GUFA:       (type $3 (func))
+
+ ;; GUFA:      (func $test (type $3)
+ ;; GUFA-NEXT:  (local $null (ref null $cont))
+ ;; GUFA-NEXT:  (drop
+ ;; GUFA-NEXT:   (struct.new $struct
+ ;; GUFA-NEXT:    (block (result nullcontref)
+ ;; GUFA-NEXT:     (drop
+ ;; GUFA-NEXT:      (local.get $null)
+ ;; GUFA-NEXT:     )
+ ;; GUFA-NEXT:     (ref.null nocont)
+ ;; GUFA-NEXT:    )
+ ;; GUFA-NEXT:   )
+ ;; GUFA-NEXT:  )
+ ;; GUFA-NEXT: )
+ (func $test
+  (local $null (ref null $cont))
+  (drop
+   (struct.new $struct
+    (local.get $null)
    )
   )
  )

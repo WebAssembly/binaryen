@@ -63,7 +63,7 @@ enum class InliningMode {
   // We do not know yet if this function can be inlined, as that has
   // not been computed yet.
   Unknown,
-  // This function cannot be inlinined in any way.
+  // This function cannot be inlined in any way.
   Uninlineable,
   // This function can be inlined fully, that is, normally: the entire function
   // can be inlined. This is in contrast to split/partial inlining, see below.
@@ -114,6 +114,7 @@ struct FunctionInfo {
   bool usedGlobally;
   TrivialInstruction trivialInstruction;
   InliningMode inliningMode;
+  std::optional<uint8_t> toolchainInlineHint;
 
   FunctionInfo() { clear(); }
 
@@ -126,6 +127,7 @@ struct FunctionInfo {
     usedGlobally = false;
     trivialInstruction = TrivialInstruction::NotTrivial;
     inliningMode = InliningMode::Unknown;
+    toolchainInlineHint = std::nullopt;
   }
 
   // Provide an explicit = operator as the |refs| field lacks one by default.
@@ -138,6 +140,7 @@ struct FunctionInfo {
     usedGlobally = other.usedGlobally;
     trivialInstruction = other.trivialInstruction;
     inliningMode = other.inliningMode;
+    toolchainInlineHint = other.toolchainInlineHint;
     return *this;
   }
 
@@ -147,6 +150,13 @@ struct FunctionInfo {
     // FIXME https://github.com/WebAssembly/binaryen/issues/3634
     if (hasTryDelegate) {
       return false;
+    }
+    // Follow the toolchain hint, if present.
+    if (toolchainInlineHint == CodeAnnotation::NeverInline) {
+      return false;
+    }
+    if (toolchainInlineHint == CodeAnnotation::AlwaysInline) {
+      return true;
     }
     // If it's small enough that we always want to inline such things, do so.
     if (size <= options.inlining.alwaysInlineMaxSize) {
@@ -186,17 +196,6 @@ struct FunctionInfo {
   }
 };
 
-static bool canHandleParams(Function* func) {
-  // We cannot inline a function if we cannot handle placing its params in a
-  // locals, as all params become locals.
-  for (auto param : func->getParams()) {
-    if (!TypeUpdating::canHandleAsLocal(param)) {
-      return false;
-    }
-  }
-  return true;
-}
-
 using NameInfoMap = std::unordered_map<Name, FunctionInfo>;
 
 struct FunctionInfoScanner
@@ -218,7 +217,7 @@ struct FunctionInfoScanner
 
   void visitCall(Call* curr) {
     // can't add a new element in parallel
-    assert(infos.count(curr->target) > 0);
+    assert(infos.contains(curr->target));
     infos[curr->target].refs++;
     // having a call
     infos[getFunction()->name].hasCalls = true;
@@ -239,18 +238,15 @@ struct FunctionInfoScanner
   }
 
   void visitRefFunc(RefFunc* curr) {
-    assert(infos.count(curr->func) > 0);
+    assert(infos.contains(curr->func));
     infos[curr->func].refs++;
   }
 
   void visitFunction(Function* curr) {
     auto& info = infos[curr->name];
 
-    if (!canHandleParams(curr)) {
-      info.inliningMode = InliningMode::Uninlineable;
-    }
-
     info.size = Measurer::measure(curr->body);
+    info.toolchainInlineHint = curr->funcAnnotations.toolchainInline;
 
     // If the body is a simple instruction with roughly the same encoded size as
     // a `call` instruction, and arguments are function locals read in order,
@@ -352,10 +348,10 @@ struct Planner : public WalkerPass<TryDepthWalker<Planner>> {
     } else {
       isUnreachable = curr->type == Type::unreachable;
     }
-    if (state->inlinableFunctions.count(curr->target) && !isUnreachable &&
+    if (state->inlinableFunctions.contains(curr->target) && !isUnreachable &&
         curr->target != getFunction()->name) {
       // can't add a new element in parallel
-      assert(state->actionsForFunction.count(getFunction()->name) > 0);
+      assert(state->actionsForFunction.contains(getFunction()->name));
       state->actionsForFunction[getFunction()->name].emplace_back(
         getCurrentPointer(),
         getModule()->getFunction(curr->target),
@@ -485,7 +481,9 @@ struct Updater : public TryDepthWalker<Updater> {
       // callsite to branch out of it then execute the call before returning to
       // the caller.
       auto name = Names::getValidName(
-        "__return_call", [&](Name test) { return !blockNames.count(test); }, i);
+        "__return_call",
+        [&](Name test) { return !blockNames.contains(test); },
+        i);
       blockNames.insert(name);
       info.branch->name = name;
       Block* oldBody = builder->makeBlock(body->list, body->type);
@@ -559,7 +557,7 @@ static void doCodeInlining(Module* module,
     auto callNames = hoistCall ? BranchUtils::NameSet{}
                                : BranchUtils::BranchAccumulator::get(call);
     block->name = Names::getValidName(block->name, [&](Name test) {
-      return !fromNames.count(test) && !callNames.count(test);
+      return !fromNames.contains(test) && !callNames.contains(test);
     });
   }
 
@@ -583,7 +581,7 @@ static void doCodeInlining(Module* module,
     auto intoNames = BranchUtils::BranchAccumulator::get(into->body);
     auto bodyName =
       Names::getValidName(Name("__original_body"),
-                          [&](Name test) { return !intoNames.count(test); });
+                          [&](Name test) { return !intoNames.contains(test); });
     if (retType.isConcrete()) {
       into->body = builder.makeBlock(
         bodyName, {builder.makeReturn(into->body)}, Type::none);
@@ -1029,7 +1027,7 @@ struct FunctionSplitter {
     // Finish the locals check mentioned above.
     if (finalItem) {
       for (auto* get : FindAll<LocalGet>(finalItem).list) {
-        if (writtenLocals.count(get->index)) {
+        if (writtenLocals.contains(get->index)) {
           return InliningMode::Uninlineable;
         }
       }
@@ -1273,7 +1271,7 @@ struct Inlining : public Pass {
   // whether to optimize where we inline
   bool optimize = false;
 
-  // the information for each function. recomputed in each iteraction
+  // the information for each function. recomputed in each interaction
   NameInfoMap infos;
 
   std::unique_ptr<FunctionSplitter> functionSplitter;
@@ -1427,7 +1425,7 @@ struct Inlining : public Pass {
       // avoid risk of races
       // note that we do not risk stalling progress, as each iteration() will
       // inline at least one call before hitting this
-      if (inlinedUses.count(func->name)) {
+      if (inlinedUses.contains(func->name)) {
         continue;
       }
       for (auto& action : state.actionsForFunction[name]) {
@@ -1436,7 +1434,7 @@ struct Inlining : public Pass {
         // avoid risk of races
         // note that we do not risk stalling progress, as each iteration() will
         // inline at least one call before hitting this
-        if (inlinedInto.count(inlinedFunction)) {
+        if (inlinedInto.contains(inlinedFunction)) {
           continue;
         }
         Name inlinedName = inlinedFunction->name;
@@ -1487,7 +1485,7 @@ struct Inlining : public Pass {
     module->removeFunctions([&](Function* func) {
       auto name = func->name;
       auto& info = infos[name];
-      return inlinedUses.count(name) && inlinedUses[name] == info.refs &&
+      return inlinedUses.contains(name) && inlinedUses[name] == info.refs &&
              !info.usedGlobally;
     });
   }

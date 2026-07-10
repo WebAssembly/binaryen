@@ -16,11 +16,11 @@
 ;; First we call $get from this module. When we run the second module, we call
 ;; it once to get a ref to itself, then call_ref it, logging 10 twice.
 
-;; CHECK: [fuzz-exec] calling get
+;; CHECK: [fuzz-exec] export get
 ;; CHECK-NEXT: [LoggingExternalInterface logging 10]
 ;; CHECK-NEXT: [fuzz-exec] note result: get => function
 ;; CHECK-NEXT: [fuzz-exec] running second module
-;; CHECK-NEXT: [fuzz-exec] calling run
+;; CHECK-NEXT: [fuzz-exec] export run
 ;; CHECK-NEXT: [LoggingExternalInterface logging 10]
 ;; CHECK-NEXT: [LoggingExternalInterface logging 10]
 

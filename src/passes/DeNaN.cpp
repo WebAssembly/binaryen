@@ -201,7 +201,7 @@ struct DeNaN : public WalkerPass<
     module->addFunction(std::move(func));
   };
 
-  // Check if a contant v128 may contain f32 or f64 NaNs.
+  // Check if a constant v128 may contain f32 or f64 NaNs.
   bool hasNaNLane(Const* c) {
     assert(c->type == Type::v128);
     auto value = c->value;

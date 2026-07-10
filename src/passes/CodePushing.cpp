@@ -204,7 +204,7 @@ private:
       auto* pushable = isPushable(list[i]);
       if (pushable) {
         const auto& effects = getPushableEffects(pushable);
-        if (cumulativeEffects.invalidates(effects)) {
+        if (effects.orderedBefore(cumulativeEffects)) {
           // we can't push this, so further pushables must pass it
           cumulativeEffects.mergeIn(effects);
         } else {
@@ -354,7 +354,7 @@ private:
 
       const auto& effects = getPushableEffects(pushable);
 
-      if (cumulativeEffects.invalidates(effects)) {
+      if (effects.orderedBefore(cumulativeEffects)) {
         // This can't be moved forward. Add it to the things that are not
         // moving.
         cumulativeEffects.walk(list[i]);
@@ -396,13 +396,13 @@ private:
                                const Expression* otherArm,
                                EffectAnalyzer& armEffects,
                                const EffectAnalyzer& otherArmEffects) {
-        if (!arm || !armEffects.localsRead.count(index) ||
-            otherArmEffects.localsRead.count(index)) {
+        if (!arm || !armEffects.localsRead.contains(index) ||
+            otherArmEffects.localsRead.contains(index)) {
           // No arm, or this arm has no read of the index, or the other arm
           // reads the index.
           return false;
         }
-        if (postIfEffects.localsRead.count(index) &&
+        if (postIfEffects.localsRead.contains(index) &&
             (!otherArm || otherArm->type != Type::unreachable)) {
           // The local is read later, which is bad, and there is no unreachable
           // in the other arm which as mentioned above is the only thing that
@@ -424,7 +424,7 @@ private:
 
         // TODO: After pushing we could recurse and run both this function and
         //       optimizeSegment in that location. For now, leave that to later
-        //       cycles of the optimizer, as this case seems rairly rare.
+        //       cycles of the optimizer, as this case seems fairly rare.
         return true;
       };
 

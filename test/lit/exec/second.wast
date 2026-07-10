@@ -10,8 +10,8 @@
 ;; Test that --fuzz-exec-second will run a second wasm file that is
 ;; provided, and call its exports as well as the first module's.
 
-;; CHECK:      [fuzz-exec] calling first
+;; CHECK:      [fuzz-exec] export first
 ;; CHECK-NEXT: [fuzz-exec] note result: first => 42
-;; CHECK:      [fuzz-exec] calling second
+;; CHECK:      [fuzz-exec] export second
 ;; CHECK-NEXT: [fuzz-exec] note result: second => 1337
 

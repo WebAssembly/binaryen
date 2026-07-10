@@ -39,7 +39,7 @@ inline std::optional<bool> get(Expression* expr, Function* func) {
 inline void set(Expression* expr, std::optional<bool> likely, Function* func) {
   // When we are writing an empty hint, do not create an empty annotation if one
   // did not exist.
-  if (!likely && !func->codeAnnotations.count(expr)) {
+  if (!likely && !func->codeAnnotations.contains(expr)) {
     return;
   }
   func->codeAnnotations[expr].branchLikely = likely;

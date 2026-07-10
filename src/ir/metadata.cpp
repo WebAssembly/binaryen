@@ -74,9 +74,6 @@ void copyBetweenFunctions(Expression* origin,
       }
     }
   }
-
-  // Also copy function-level annotations, if any.
-  copyFunc->funcAnnotations = originFunc->funcAnnotations;
 }
 
 #pragma GCC diagnostic push

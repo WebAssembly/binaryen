@@ -1,0 +1,128 @@
+(module $longjmp.wasm
+ (type $0 (func (param i32 i32 i32)))
+ (type $1 (func (param i32 i32) (result i32)))
+ (type $2 (func (result i32)))
+ (type $3 (func (param i32 i32)))
+ (type $4 (func (param i32)))
+ (type $5 (func))
+ (import "env" "__wasm_setjmp" (func $__wasm_setjmp (param i32 i32 i32)))
+ (import "env" "emscripten_longjmp" (func $emscripten_longjmp (param i32 i32)))
+ (import "env" "invoke_vii" (func $invoke_vii (param i32 i32 i32)))
+ (import "env" "__wasm_setjmp_test" (func $__wasm_setjmp_test (param i32 i32) (result i32)))
+ (import "env" "setTempRet0" (func $setTempRet0 (param i32)))
+ (import "env" "getTempRet0" (func $getTempRet0 (result i32)))
+ (global $__stack_pointer (mut i32) (i32.const 66112))
+ (memory $0 2)
+ (table $0 2 2 funcref)
+ (elem $0 (i32.const 1) $emscripten_longjmp)
+ (export "memory" (memory $0))
+ (export "__wasm_call_ctors" (func $__wasm_call_ctors))
+ (export "main" (func $main))
+ (func $__wasm_call_ctors
+ )
+ (func $__original_main (result i32)
+  (local $0 i32)
+  (local $1 i32)
+  (local $2 i32)
+  (global.set $__stack_pointer
+   (local.tee $0
+    (i32.sub
+     (global.get $__stack_pointer)
+     (i32.const 16)
+    )
+   )
+  )
+  (call $__wasm_setjmp
+   (local.get $1)
+   (i32.const 1)
+   (i32.add
+    (local.get $0)
+    (i32.const 12)
+   )
+  )
+  (local.set $1
+   (i32.const 0)
+  )
+  (block $block2
+   (block $block
+    (loop $label
+     (br_if $block
+      (local.get $1)
+     )
+     (i32.store offset=568
+      (i32.const 0)
+      (i32.const 0)
+     )
+     (call $invoke_vii
+      (i32.const 1)
+      (local.get $1)
+      (i32.const 1)
+     )
+     (local.set $1
+      (i32.load offset=568
+       (i32.const 0)
+      )
+     )
+     (i32.store offset=568
+      (i32.const 0)
+      (i32.const 0)
+     )
+     (block $block1
+      (br_if $block1
+       (i32.eqz
+        (local.get $1)
+       )
+      )
+      (br_if $block1
+       (i32.eqz
+        (local.tee $2
+         (i32.load offset=572
+          (i32.const 0)
+         )
+        )
+       )
+      )
+      (br_if $block2
+       (i32.eqz
+        (call $__wasm_setjmp_test
+         (local.get $1)
+         (i32.add
+          (local.get $0)
+          (i32.const 12)
+         )
+        )
+       )
+      )
+      (call $setTempRet0
+       (local.get $2)
+      )
+     )
+     (local.set $1
+      (call $getTempRet0)
+     )
+     (br $label)
+    )
+   )
+   (global.set $__stack_pointer
+    (i32.add
+     (local.get $0)
+     (i32.const 16)
+    )
+   )
+   (return
+    (i32.const 0)
+   )
+  )
+  (call $emscripten_longjmp
+   (local.get $1)
+   (local.get $2)
+  )
+  (unreachable)
+ )
+ (func $main (param $0 i32) (param $1 i32) (result i32)
+  (call $__original_main)
+ )
+ ;; custom section "producers", size 115
+ ;; features section: mutable-globals, nontrapping-float-to-int, bulk-memory, sign-ext, reference-types, multivalue, bulk-memory-opt, call-indirect-overlong
+)
+

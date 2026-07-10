@@ -87,7 +87,7 @@ struct AbstractTypeRefining : public Pass {
       return;
     }
 
-    if (!getPassOptions().closedWorld) {
+    if (getPassOptions().worldMode == WorldMode::Open) {
       Fatal() << "AbstractTypeRefining requires --closed-world";
     }
 
@@ -116,7 +116,8 @@ struct AbstractTypeRefining : public Pass {
     //       module, given closed world, but we'd also need to make sure that
     //       we don't need to make any changes to public types that refer to
     //       them.
-    for (auto type : ModuleUtils::getPublicHeapTypes(*module)) {
+    for (auto type :
+         ModuleUtils::getPublicHeapTypes(*module, getPassOptions().worldMode)) {
       createdTypes.insert(type);
     }
 
@@ -128,7 +129,7 @@ struct AbstractTypeRefining : public Pass {
     for (auto type : subTypes.getSubTypesFirstSort()) {
       // If any of our subtypes are created, so are we.
       for (auto subType : subTypes.getImmediateSubTypes(type)) {
-        if (createdTypesOrSubTypes.count(subType)) {
+        if (createdTypesOrSubTypes.contains(subType)) {
           createdTypesOrSubTypes.insert(type);
           break;
         }
@@ -155,7 +156,7 @@ struct AbstractTypeRefining : public Pass {
     //       in particular).
     Types abstractTypes;
     for (auto type : subTypes.types) {
-      if (createdTypes.count(type) == 0) {
+      if (!createdTypes.contains(type)) {
         abstractTypes.insert(type);
       }
     }
@@ -168,7 +169,7 @@ struct AbstractTypeRefining : public Pass {
     // chains where we want to refine a type A to a subtype of a subtype of
     // it.
     for (auto type : subTypes.getSubTypesFirstSort()) {
-      if (!abstractTypes.count(type)) {
+      if (!abstractTypes.contains(type)) {
         continue;
       }
 
@@ -183,7 +184,7 @@ struct AbstractTypeRefining : public Pass {
         // is relevant, if nothing is ever created of the others or their
         // subtypes.
         for (auto subType : typeSubTypes) {
-          if (createdTypesOrSubTypes.count(subType)) {
+          if (createdTypesOrSubTypes.contains(subType)) {
             if (!refinedType) {
               // This is the first relevant thing, and hopefully will remain
               // the only one.
@@ -256,7 +257,7 @@ struct AbstractTypeRefining : public Pass {
       // never-created types to the bottom type.
       //
       // We check this first as it is the most powerful change.
-      if (createdTypesOrSubTypes.count(type) == 0) {
+      if (!createdTypesOrSubTypes.contains(type)) {
         mapping[type] = type.getBottom();
         continue;
       }
@@ -289,8 +290,10 @@ struct AbstractTypeRefining : public Pass {
     // that for Unsubtyping.
     class AbstractTypeRefiningTypeMapper : public TypeMapper {
     public:
-      AbstractTypeRefiningTypeMapper(Module& wasm, const TypeUpdates& mapping)
-        : TypeMapper(wasm, mapping) {}
+      AbstractTypeRefiningTypeMapper(Module& wasm,
+                                     const TypeUpdates& mapping,
+                                     WorldMode worldMode)
+        : TypeMapper(wasm, mapping, worldMode) {}
 
       std::optional<HeapType> getDeclaredSuperType(HeapType oldType) override {
         // We do not want to update subtype relationships.
@@ -298,7 +301,8 @@ struct AbstractTypeRefining : public Pass {
       }
     };
 
-    AbstractTypeRefiningTypeMapper(*module, mapping).map();
+    AbstractTypeRefiningTypeMapper(*module, mapping, getPassOptions().worldMode)
+      .map();
 
     // Refinalize to propagate the type changes we made. For example, a refined
     // cast may lead to a struct.get reading a more refined type using that

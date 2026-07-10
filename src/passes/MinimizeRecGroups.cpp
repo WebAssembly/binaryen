@@ -93,7 +93,7 @@ struct TypeSCCs
       includedTypes(types.cbegin(), types.cend()) {}
   void pushChildren(HeapType parent) {
     for (auto child : parent.getReferencedHeapTypes()) {
-      if (includedTypes.count(child)) {
+      if (includedTypes.contains(child)) {
         push(child);
       }
     }
@@ -302,6 +302,7 @@ struct MinimizeRecGroups : Pass {
 
     auto typeInfo = ModuleUtils::collectHeapTypeInfo(
       *module,
+      getPassOptions().worldMode,
       ModuleUtils::TypeInclusion::AllTypes,
       ModuleUtils::VisibilityHandling::FindVisibility);
 
@@ -311,10 +312,10 @@ struct MinimizeRecGroups : Pass {
     // generate new groups with the same shape.
     std::unordered_set<RecGroup> publicGroups;
     for (auto& [type, info] : typeInfo) {
+      typeIndices.insert({type, typeIndices.size()});
       if (info.visibility == ModuleUtils::Visibility::Private) {
         // We can optimize private types.
         types.push_back(type);
-        typeIndices.insert({type, typeIndices.size()});
       } else {
         publicGroups.insert(type.getRecGroup());
       }
@@ -651,7 +652,7 @@ struct MinimizeRecGroups : Pass {
       while (!workList.empty()) {
         auto curr = workList.back();
         workList.pop_back();
-        if (!typeSet.count(curr)) {
+        if (!typeSet.contains(curr)) {
           continue;
         }
         if (seen.insert(curr).second) {
@@ -771,7 +772,7 @@ struct MinimizeRecGroups : Pass {
         ++i;
       }
     }
-    GlobalTypeRewriter rewriter(wasm);
+    GlobalTypeRewriter rewriter(wasm, getPassOptions().worldMode);
     rewriter.mapTypes(oldToNew);
     rewriter.mapTypeNamesAndIndices(oldToNew);
   }

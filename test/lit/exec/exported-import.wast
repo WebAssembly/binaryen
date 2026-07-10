@@ -11,4 +11,4 @@
 ;; Note this file does not use automatic updating as that only works for
 ;; defined functions at the moment, and this module has none of those.
 
-;; CHECK: [fuzz-exec] calling __wasm_call_ctors
+;; CHECK: [fuzz-exec] export __wasm_call_ctors

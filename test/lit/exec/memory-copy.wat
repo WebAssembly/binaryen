@@ -27,7 +27,7 @@
   )
 
   ;; non-overlapping copy
-  ;; CHECK:      [fuzz-exec] calling test1
+  ;; CHECK:      [fuzz-exec] export test1
   ;; CHECK-NEXT: [LoggingExternalInterface logging 9]
   ;; CHECK-NEXT: [LoggingExternalInterface logging 0]
   ;; CHECK-NEXT: [LoggingExternalInterface logging 10]
@@ -72,7 +72,7 @@
     (call $assert_load (i32.const 14) (i32.const 0))
   )
   ;; Overlap, src > dst
-  ;; CHECK:      [fuzz-exec] calling test2
+  ;; CHECK:      [fuzz-exec] export test2
   ;; CHECK-NEXT: [LoggingExternalInterface logging 9]
   ;; CHECK-NEXT: [LoggingExternalInterface logging 187]
   ;; CHECK-NEXT: [LoggingExternalInterface logging 10]
@@ -100,7 +100,7 @@
     (call $assert_load (i32.const 13) (i32.const 0xdd))
   )
   ;; Overlap, src < dst
-  ;; CHECK:      [fuzz-exec] calling test3
+  ;; CHECK:      [fuzz-exec] export test3
   ;; CHECK-NEXT: [LoggingExternalInterface logging 9]
   ;; CHECK-NEXT: [LoggingExternalInterface logging 187]
   ;; CHECK-NEXT: [LoggingExternalInterface logging 10]
@@ -129,13 +129,13 @@
     (call $assert_load (i32.const 16) (i32.const 0))
   )
   ;; Overlap src < dst but size is OOB (but the address does not overflow)
-  ;; CHECK:      [fuzz-exec] calling test4a
+  ;; CHECK:      [fuzz-exec] export test4a
   ;; CHECK-NEXT: [trap out of bounds segment access in memory.copy]
   (func $test4a (export "test4a")
     (memory.copy (i32.const 13) (i32.const 11) (i32.const 0x10000))
     (call $print_memory) ;; not reached.
   )
-  ;; CHECK:      [fuzz-exec] calling test4b
+  ;; CHECK:      [fuzz-exec] export test4b
   (func $test4b (export "test4b")
     (call $assert_load (i32.const 10) (i32.const 0x0))
     (call $assert_load (i32.const 11) (i32.const 0xaa))
@@ -146,24 +146,24 @@
     (call $assert_load (i32.const 16) (i32.const 0))
   )
   ;; Copy ending at memory limit is ok
-  ;; CHECK:      [fuzz-exec] calling test5
+  ;; CHECK:      [fuzz-exec] export test5
   (func $test5 (export "test5")
     (memory.copy (i32.const 0xff00) (i32.const 0) (i32.const 0x100))
     (memory.copy (i32.const 0xfe00) (i32.const 0xff00) (i32.const 0x100))
   )
   ;; Succeed when copying 0 bytes at the end of the region
-  ;; CHECK:      [fuzz-exec] calling test6
+  ;; CHECK:      [fuzz-exec] export test6
   (func $test6 (export "test6")
     (memory.copy (i32.const 0x10000) (i32.const 0) (i32.const 0))
     (memory.copy (i32.const 0x0) (i32.const 0x10000) (i32.const 0))
   )
   ;; copying 0 bytes outside of the limit is not allowed.
-  ;; CHECK:      [fuzz-exec] calling test7
+  ;; CHECK:      [fuzz-exec] export test7
   ;; CHECK-NEXT: [trap out of bounds segment access in memory.copy]
   (func $test7 (export "test7")
     (memory.copy (i32.const 0x10001) (i32.const 0) (i32.const 0x0))
   )
-  ;; CHECK:      [fuzz-exec] calling test8
+  ;; CHECK:      [fuzz-exec] export test8
   ;; CHECK-NEXT: [trap out of bounds segment access in memory.copy]
   (func $test8 (export "test8")
     (memory.copy (i32.const 0x0) (i32.const 0x10001) (i32.const 0))
@@ -172,7 +172,7 @@
 
 
 
-;; CHECK:      [fuzz-exec] calling test1
+;; CHECK:      [fuzz-exec] export test1
 ;; CHECK-NEXT: [LoggingExternalInterface logging 9]
 ;; CHECK-NEXT: [LoggingExternalInterface logging 0]
 ;; CHECK-NEXT: [LoggingExternalInterface logging 10]
@@ -206,7 +206,7 @@
 ;; CHECK-NEXT: [LoggingExternalInterface logging 16]
 ;; CHECK-NEXT: [LoggingExternalInterface logging 0]
 
-;; CHECK:      [fuzz-exec] calling test2
+;; CHECK:      [fuzz-exec] export test2
 ;; CHECK-NEXT: [LoggingExternalInterface logging 9]
 ;; CHECK-NEXT: [LoggingExternalInterface logging 187]
 ;; CHECK-NEXT: [LoggingExternalInterface logging 10]
@@ -224,7 +224,7 @@
 ;; CHECK-NEXT: [LoggingExternalInterface logging 16]
 ;; CHECK-NEXT: [LoggingExternalInterface logging 0]
 
-;; CHECK:      [fuzz-exec] calling test3
+;; CHECK:      [fuzz-exec] export test3
 ;; CHECK-NEXT: [LoggingExternalInterface logging 9]
 ;; CHECK-NEXT: [LoggingExternalInterface logging 187]
 ;; CHECK-NEXT: [LoggingExternalInterface logging 10]
@@ -242,19 +242,19 @@
 ;; CHECK-NEXT: [LoggingExternalInterface logging 16]
 ;; CHECK-NEXT: [LoggingExternalInterface logging 0]
 
-;; CHECK:      [fuzz-exec] calling test4a
+;; CHECK:      [fuzz-exec] export test4a
 ;; CHECK-NEXT: [trap unreachable]
 
-;; CHECK:      [fuzz-exec] calling test4b
+;; CHECK:      [fuzz-exec] export test4b
 
-;; CHECK:      [fuzz-exec] calling test5
+;; CHECK:      [fuzz-exec] export test5
 
-;; CHECK:      [fuzz-exec] calling test6
+;; CHECK:      [fuzz-exec] export test6
 
-;; CHECK:      [fuzz-exec] calling test7
+;; CHECK:      [fuzz-exec] export test7
 ;; CHECK-NEXT: [trap unreachable]
 
-;; CHECK:      [fuzz-exec] calling test8
+;; CHECK:      [fuzz-exec] export test8
 ;; CHECK-NEXT: [trap unreachable]
 ;; CHECK-NEXT: [fuzz-exec] comparing test1
 ;; CHECK-NEXT: [fuzz-exec] comparing test2

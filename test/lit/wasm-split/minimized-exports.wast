@@ -5,8 +5,8 @@
 ;; PRIMARY:      (module
 ;; PRIMARY-NEXT:   (type $0 (func))
 ;; PRIMARY-NEXT:   (table $0 1 funcref)
-;; PRIMARY-NEXT:   (elem $0 (table $0) (i32.const 0) funcref (item (ref.null nofunc)))
-;; PRIMARY-NEXT:   (export "baz" (func $2)
+;; PRIMARY-NEXT:   (elem $0 (i32.const 0) $3)
+;; PRIMARY-NEXT:   (export "baz" (func $2))
 ;; PRIMARY-NEXT:   (export "%a" (func $1))
 ;; PRIMARY-NEXT:   (export "%b" (func $0))
 ;; PRIMARY-NEXT:   (export "%c" (table $0))
@@ -20,6 +20,9 @@
 ;; PRIMARY-NEXT:     (call_indirect (type $0)
 ;; PRIMARY-NEXT:       (i32.const 0)
 ;; PRIMARY-NEXT:     )
+;; PRIMARY-NEXT:   )
+;; PRIMARY-NEXT:   (func $3
+;; PRIMARY-NEXT:     (unreachable)
 ;; PRIMARY-NEXT:   )
 ;; PRIMARY-NEXT: )
 

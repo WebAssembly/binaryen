@@ -25,6 +25,7 @@
 #include "interpreter/exception.h"
 #include "ir/module-utils.h"
 #include "shared-constants.h"
+#include "support/bits.h"
 #include "support/name.h"
 #include "support/utilities.h"
 #include "wasm-interpreter.h"
@@ -33,20 +34,9 @@
 namespace wasm {
 
 struct ShellExternalInterface : ModuleRunner::ExternalInterface {
-  // The underlying memory can be accessed through unaligned pointers which
-  // isn't well-behaved in C++. WebAssembly nonetheless expects it to behave
-  // properly. Avoid emitting unaligned load/store by checking for alignment
-  // explicitly, and performing memcpy if unaligned.
-  //
-  // The allocated memory tries to have the same alignment as the memory being
-  // simulated.
   class Memory {
     // Use char because it doesn't run afoul of aliasing rules.
     std::vector<char> memory;
-    template<typename T> static bool aligned(const char* address) {
-      static_assert(!(sizeof(T) & (sizeof(T) - 1)), "must be a power of 2");
-      return 0 == (reinterpret_cast<uintptr_t>(address) & (sizeof(T) - 1));
-    }
 
   public:
     Memory() = default;
@@ -65,20 +55,10 @@ struct ShellExternalInterface : ModuleRunner::ExternalInterface {
       }
     }
     template<typename T> void set(size_t address, T value) {
-      if (aligned<T>(&memory[address])) {
-        *reinterpret_cast<T*>(&memory[address]) = value;
-      } else {
-        std::memcpy(&memory[address], &value, sizeof(T));
-      }
+      Bits::writeLE<T>(value, &memory[address]);
     }
     template<typename T> T get(size_t address) {
-      if (aligned<T>(&memory[address])) {
-        return *reinterpret_cast<T*>(&memory[address]);
-      } else {
-        T loaded;
-        std::memcpy(&loaded, &memory[address], sizeof(T));
-        return loaded;
-      }
+      return Bits::readLE<T>(&memory[address]);
     }
   };
 
@@ -111,7 +91,7 @@ struct ShellExternalInterface : ModuleRunner::ExternalInterface {
   void init(Module& wasm, ModuleRunner& instance) override {
     ModuleUtils::iterDefinedMemories(wasm, [&](wasm::Memory* memory) {
       auto shellMemory = Memory();
-      shellMemory.resize(memory->initial * wasm::Memory::kPageSize);
+      shellMemory.resize(memory->initial << memory->pageSizeLog2);
       memories[memory->name] = shellMemory;
     });
   }

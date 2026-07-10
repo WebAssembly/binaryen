@@ -78,7 +78,7 @@ struct MetaDCEGraph {
       // to be kept alive.
       module = ENV;
     }
-    return std::string(module.str) + " (*) " + std::string(base.str);
+    return std::string(module.view()) + " (*) " + std::string(base.view());
   }
 
   ImportId getImportId(ModuleItemKind kind, Name name) {
@@ -658,7 +658,7 @@ int main(int argc, const char* argv[]) {
   // Apply to the wasm
   graph.apply();
 
-  if (options.extra.count("output") > 0) {
+  if (options.extra.contains("output")) {
     ModuleWriter writer(options.passOptions);
     writer.setBinary(emitBinary);
     writer.setDebugInfo(debugInfo);
@@ -666,7 +666,7 @@ int main(int argc, const char* argv[]) {
       writer.setSourceMapFilename(outputSourceMapFilename);
       writer.setSourceMapUrl(outputSourceMapUrl);
     }
-    writer.write(wasm, options.extra["output"]);
+    options.write(writer, wasm, options.extra["output"]);
   }
 
   // Print out everything that we found is removable, the outside might use that

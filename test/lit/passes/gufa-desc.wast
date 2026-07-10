@@ -12,9 +12,9 @@
     (type $desc (sub (describes $struct) (struct (field funcref))))
   )
 
-  ;; CHECK:      (type $2 (func (result i32)))
+  ;; CHECK:      (type $2 (func))
 
-  ;; CHECK:      (type $3 (func))
+  ;; CHECK:      (type $3 (func (result i32)))
 
   ;; CHECK:      (global $desc (ref (exact $desc)) (struct.new $desc
   ;; CHECK-NEXT:  (ref.func $func)
@@ -42,38 +42,19 @@
 
   ;; CHECK:      (export "struct" (func $struct))
 
-  ;; CHECK:      (func $func (type $2) (result i32)
+  ;; CHECK:      (func $func (type $3) (result i32)
   ;; CHECK-NEXT:  (i32.const -1)
   ;; CHECK-NEXT: )
   (func $func (result i32)
     (i32.const -1)
   )
 
-  ;; CHECK:      (func $desc (type $3)
+  ;; CHECK:      (func $desc (type $2)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref (exact $desc)))
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.get_desc $struct
-  ;; CHECK-NEXT:      (global.get $struct)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (global.get $desc)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (global.get $desc)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref (exact $2)))
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block (result (ref (exact $desc)))
-  ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (ref.get_desc $struct
-  ;; CHECK-NEXT:        (global.get $struct)
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (global.get $desc)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (ref.func $func)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (ref.func $func)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $desc (export "desc")
@@ -93,7 +74,7 @@
     )
   )
 
-  ;; CHECK:      (func $struct (type $3)
+  ;; CHECK:      (func $struct (type $2)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.const 100)
   ;; CHECK-NEXT:  )
@@ -214,14 +195,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref (exact $6)))
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.get_desc $struct
-  ;; CHECK-NEXT:      (global.get $struct)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (ref.func $func)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (ref.func $func)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $desc (export "desc")
@@ -288,14 +262,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref (exact $subdesc)))
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.get_desc $sub
-  ;; CHECK-NEXT:      (local.get $temp)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (global.get $subdesc)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (global.get $subdesc)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.const 100)
@@ -452,10 +419,8 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result (ref (exact $desc)))
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.get_desc $struct
-  ;; CHECK-NEXT:      (ref.cast (ref (exact $struct))
-  ;; CHECK-NEXT:       (global.get $struct)
-  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     (ref.cast (ref (exact $struct))
+  ;; CHECK-NEXT:      (global.get $struct)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (global.get $desc)
@@ -473,10 +438,8 @@
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (block (result (ref (exact $desc)))
   ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (ref.get_desc $struct
-  ;; CHECK-NEXT:        (ref.cast (ref (exact $struct))
-  ;; CHECK-NEXT:         (global.get $struct)
-  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:       (ref.cast (ref (exact $struct))
+  ;; CHECK-NEXT:        (global.get $struct)
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (global.get $desc)
@@ -576,46 +539,13 @@
 
   ;; CHECK:      (func $test (type $3)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref (exact $B)))
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.get_desc $A
-  ;; CHECK-NEXT:      (global.get $A)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (global.get $B)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (global.get $B)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref (exact $C)))
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.get_desc $B
-  ;; CHECK-NEXT:      (global.get $B)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (global.get $C)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (global.get $C)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block (result (ref (exact $C)))
-  ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (ref.get_desc $B
-  ;; CHECK-NEXT:        (block (result (ref (exact $B)))
-  ;; CHECK-NEXT:         (drop
-  ;; CHECK-NEXT:          (ref.get_desc $A
-  ;; CHECK-NEXT:           (global.get $A)
-  ;; CHECK-NEXT:          )
-  ;; CHECK-NEXT:         )
-  ;; CHECK-NEXT:         (global.get $B)
-  ;; CHECK-NEXT:        )
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (global.get $C)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (i32.const 10)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 10)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $test (export "test")

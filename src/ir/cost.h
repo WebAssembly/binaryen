@@ -118,6 +118,14 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
     return AtomicCost + visit(curr->ptr) + visit(curr->expected) +
            visit(curr->timeout);
   }
+  CostType visitStructWait(StructWait* curr) {
+    return AtomicCost + nullCheckCost(curr->ref) + visit(curr->ref) +
+           visit(curr->expected) + visit(curr->timeout);
+  }
+  CostType visitStructNotify(StructNotify* curr) {
+    return AtomicCost + nullCheckCost(curr->ref) + visit(curr->ref) +
+           visit(curr->count);
+  }
   CostType visitAtomicNotify(AtomicNotify* curr) {
     return AtomicCost + visit(curr->ptr) + visit(curr->notifyCount);
   }
@@ -276,6 +284,9 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
       case TruncSatUVecF16x8ToVecI16x8:
       case ConvertSVecI16x8ToVecF16x8:
       case ConvertUVecI16x8ToVecF16x8:
+      case PromoteLowVecF16x8ToVecF32x4:
+      case DemoteZeroVecF32x4ToVecF16x8:
+      case DemoteZeroVecF64x2ToVecF16x8:
         ret = 1;
         break;
       case InvalidUnary:
@@ -556,13 +567,20 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
       case SwizzleVecI8x16:
       case RelaxedSwizzleVecI8x16:
       case RelaxedQ15MulrSVecI16x8:
-      case DotI8x16I7x16SToVecI16x8:
+      case RelaxedDotI8x16I7x16SToVecI16x8:
         ret = 1;
         break;
       case InvalidBinary:
         WASM_UNREACHABLE("invalid binary op");
     }
     return ret + visit(curr->left) + visit(curr->right);
+  }
+  CostType visitWideIntAddSub(WideIntAddSub* curr) {
+    return 1 + visit(curr->leftLow) + visit(curr->leftHigh) +
+           visit(curr->rightLow) + visit(curr->rightHigh);
+  }
+  CostType visitWideIntMul(WideIntMul* curr) {
+    return 4 + visit(curr->left) + visit(curr->right);
   }
   CostType visitSelect(Select* curr) {
     return 1 + visit(curr->condition) + visit(curr->ifTrue) +
@@ -597,17 +615,17 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
     CostType ret = 0;
     switch (curr->op) {
       case Bitselect:
-      case LaneselectI8x16:
-      case LaneselectI16x8:
-      case LaneselectI32x4:
-      case LaneselectI64x2:
-      case RelaxedMaddVecF16x8:
-      case RelaxedNmaddVecF16x8:
+      case RelaxedLaneselectI8x16:
+      case RelaxedLaneselectI16x8:
+      case RelaxedLaneselectI32x4:
+      case RelaxedLaneselectI64x2:
+      case MaddVecF16x8:
+      case NmaddVecF16x8:
       case RelaxedMaddVecF32x4:
       case RelaxedNmaddVecF32x4:
       case RelaxedMaddVecF64x2:
       case RelaxedNmaddVecF64x2:
-      case DotI8x16I7x16AddSToVecI32x4:
+      case RelaxedDotI8x16I7x16AddSToVecI32x4:
         ret = 1;
         break;
     }
@@ -742,6 +760,13 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
     return 1 + nullCheckCost(curr->ref) + visit(curr->ref) + visit(curr->index);
   }
   CostType visitArraySet(ArraySet* curr) {
+    return 2 + nullCheckCost(curr->ref) + visit(curr->ref) +
+           visit(curr->index) + visit(curr->value);
+  }
+  CostType visitArrayLoad(ArrayLoad* curr) {
+    return 1 + nullCheckCost(curr->ref) + visit(curr->ref) + visit(curr->index);
+  }
+  CostType visitArrayStore(ArrayStore* curr) {
     return 2 + nullCheckCost(curr->ref) + visit(curr->ref) +
            visit(curr->index) + visit(curr->value);
   }

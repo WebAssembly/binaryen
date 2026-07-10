@@ -16,6 +16,7 @@ import os
 import subprocess
 
 from . import shared, support
+from .shared import print_heading
 
 
 def make_js_test_header(binaryen_js):
@@ -52,7 +53,7 @@ def test_binaryen_js():
     if not os.path.exists(shared.BINARYEN_JS):
         shared.fail_with_error('no ' + shared.BINARYEN_JS + ' build to test')
 
-    print('\n[ checking binaryen.js testcases (' + shared.BINARYEN_JS + ')... ]\n')
+    print_heading(f'checking binaryen.js testcases ({shared.BINARYEN_JS})...')
 
     for s in shared.get_tests(shared.get_test_dir('binaryen.js'), ['.js']):
         outname = make_js_test(s, shared.BINARYEN_JS)
@@ -87,7 +88,7 @@ def update_binaryen_js_tests():
         print('no binaryen.js build to test')
         return
 
-    print('\n[ checking binaryen.js testcases... ]\n')
+    print_heading('checking binaryen.js testcases...')
     node_has_wasm = shared.NODEJS and support.node_has_webassembly(shared.NODEJS)
     for s in shared.get_tests(shared.get_test_dir('binaryen.js'), ['.js']):
         outname = make_js_test(s, shared.BINARYEN_JS)

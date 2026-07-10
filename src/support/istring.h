@@ -33,21 +33,55 @@ namespace wasm {
 
 struct IString {
 private:
-  static std::string_view interned(std::string_view s, bool reuse = true);
+  static const char* interned(std::string_view s);
 
 public:
-  const std::string_view str;
+  // Strings are stored in Pascal style: a size followed by the characters. We
+  // keep the internal pointer pointing to the data, so that data() is a no-op;
+  // computing the size, which is more rare, requires looking back and doing a
+  // load.
+  //
+  // The size is limited to 4 bytes, so the maximum string we support is 4GB.
+  //
+  // The alternative approach of using a string_view here, i.e., keeping the
+  // pointer and size in the IString, uses more more memory. That is, this
+  // optimization saves a lot of space, because while it adds 4 bytes to each
+  // interned string itself, we tend to have many views on each.
+  //
+  // We provide a View here, which is a simple interface. Users that need more
+  // convert to a std::string_view with .view() or a cast.
+  struct View {
+    const char* internal = nullptr;
+    const char* data() const { return internal; }
+    size_t size() const {
+      return internal ? *(const uint32_t*)(internal - 4) : 0;
+    }
+    char operator[](size_t x) const { return internal[x]; }
+    std::string_view view() const {
+      if (!internal) {
+        // No size to read.
+        return {};
+      }
+      return {internal, size()};
+    }
+  };
+  const View str;
 
-  IString() = default;
+  std::string_view view() const { return str.view(); }
 
-  // TODO: This is a wildly unsafe default inherited from the previous
-  // implementation. Change it?
-  IString(std::string_view str, bool reuse = true)
-    : str(interned(str, reuse)) {}
+  // Use an explicit constructor instead of `= default` because some older
+  // compilers (e.g. Apple Clang in older Xcode versions) delete the default
+  // constructor if there is a const member without an in-class initializer,
+  // even if that member's type has a default constructor.
+  // FIXME: Use `= default` once we bump the min clang/Xcode version that
+  // we support.
+  IString() : str({nullptr}) {}
 
-  // But other C strings generally do need to be copied.
-  IString(const char* str) : str(interned(str, false)) {}
-  IString(const std::string& str) : str(interned(str, false)) {}
+  IString(View v) : str(v) {}
+
+  IString(std::string_view s) : str{interned(s)} {}
+  IString(const char* str) : str{interned(str)} {}
+  IString(const std::string& str) : str{interned(str)} {}
 
   IString(const IString& other) = default;
 
@@ -57,17 +91,24 @@ public:
 
   bool operator==(const IString& other) const {
     // Fast! No need to compare contents due to interning
-    return str.data() == other.str.data();
+    return str.internal == other.str.internal;
   }
   bool operator!=(const IString& other) const { return !(*this == other); }
-  bool operator<(const IString& other) const { return str < other.str; }
-  bool operator<=(const IString& other) const { return str <= other.str; }
-  bool operator>(const IString& other) const { return str > other.str; }
-  bool operator>=(const IString& other) const { return str >= other.str; }
+  bool operator<(const IString& other) const {
+    if (str.internal == other.str.internal) {
+      return false;
+    }
+    return view() < other.view();
+  }
+  bool operator<=(const IString& other) const {
+    return *this == other || *this < other;
+  }
+  bool operator>(const IString& other) const { return !(*this <= other); }
+  bool operator>=(const IString& other) const { return !(*this < other); }
 
   char operator[](int x) const { return str[x]; }
 
-  explicit operator bool() const { return str.data() != nullptr; }
+  explicit operator bool() const { return str.internal != nullptr; }
 
   // TODO: deprecate?
   bool is() const { return bool(*this); }
@@ -75,13 +116,12 @@ public:
 
   std::string toString() const { return {str.data(), str.size()}; }
 
-  bool equals(std::string_view other) const { return str == other; }
+  bool equals(std::string_view other) const { return str.view() == other; }
 
   bool startsWith(std::string_view prefix) const {
-    // TODO: Use C++20 `starts_with`.
-    return str.substr(0, prefix.size()) == prefix;
+    return view().starts_with(prefix);
   }
-  bool startsWith(IString str) const { return startsWith(str.str); }
+  bool startsWith(IString other) const { return startsWith(other.view()); }
 
   // Disambiguate for string literals.
   template<int N> bool startsWith(const char (&str)[N]) const {
@@ -89,13 +129,9 @@ public:
   }
 
   bool endsWith(std::string_view suffix) const {
-    // TODO: Use C++20 `ends_with`.
-    if (suffix.size() > str.size()) {
-      return false;
-    }
-    return str.substr(str.size() - suffix.size()) == suffix;
+    return view().ends_with(suffix);
   }
-  bool endsWith(IString str) const { return endsWith(str.str); }
+  bool endsWith(IString other) const { return endsWith(other.view()); }
 
   // Disambiguate for string literals.
   template<int N> bool endsWith(const char (&str)[N]) const {
@@ -103,7 +139,7 @@ public:
   }
 
   IString substr(size_t pos, size_t len = std::string_view::npos) const {
-    return IString(str.substr(pos, len));
+    return IString(view().substr(pos, len));
   }
 
   size_t size() const { return str.size(); }
@@ -120,7 +156,7 @@ template<> struct hash<wasm::IString> {
 };
 
 inline std::ostream& operator<<(std::ostream& os, const wasm::IString& str) {
-  return os << str.str;
+  return os << str.view();
 }
 
 } // namespace std

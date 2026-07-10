@@ -16,7 +16,7 @@
   (i32.const 1337)
  )
 
- ;; CHECK:      [fuzz-exec] calling call-a
+ ;; CHECK:      [fuzz-exec] export call-a
  ;; CHECK-NEXT: [fuzz-exec] note result: call-a => 42
  (func $call-a (export "call-a") (result i32)
   ;; This call succeeds, and calls $i32-a which returns 42.
@@ -25,7 +25,7 @@
   )
  )
 
- ;; CHECK:      [fuzz-exec] calling call-b
+ ;; CHECK:      [fuzz-exec] export call-b
  ;; CHECK-NEXT: [fuzz-exec] note result: call-b => 1337
  (func $call-b (export "call-b") (result i32)
   ;; This call succeeds, and calls $i32-b which returns 1337.
@@ -34,7 +34,7 @@
   )
  )
 
- ;; CHECK:      [fuzz-exec] calling oob
+ ;; CHECK:      [fuzz-exec] export oob
  ;; CHECK-NEXT: [trap out of bounds table access]
  (func $oob (export "oob") (result i32)
   ;; This call traps on oob.
@@ -43,7 +43,7 @@
   )
  )
 
- ;; CHECK:      [fuzz-exec] calling oob-huge
+ ;; CHECK:      [fuzz-exec] export oob-huge
  ;; CHECK-NEXT: [trap out of bounds table access]
  (func $oob-huge (export "oob-huge") (result i32)
   ;; This call traps on oob with a value over 32 bits, 2**32 + 1, which if we
@@ -57,7 +57,7 @@
   )
  )
 
- ;; CHECK:      [fuzz-exec] calling null
+ ;; CHECK:      [fuzz-exec] export null
  ;; CHECK-NEXT: [trap null target in call_indirect]
  (func $null (export "null") (result i32)
   ;; This call traps on null
@@ -67,19 +67,19 @@
  )
 )
 
-;; CHECK:      [fuzz-exec] calling call-a
+;; CHECK:      [fuzz-exec] export call-a
 ;; CHECK-NEXT: [fuzz-exec] note result: call-a => 42
 
-;; CHECK:      [fuzz-exec] calling call-b
+;; CHECK:      [fuzz-exec] export call-b
 ;; CHECK-NEXT: [fuzz-exec] note result: call-b => 1337
 
-;; CHECK:      [fuzz-exec] calling oob
+;; CHECK:      [fuzz-exec] export oob
 ;; CHECK-NEXT: [trap out of bounds table access]
 
-;; CHECK:      [fuzz-exec] calling oob-huge
+;; CHECK:      [fuzz-exec] export oob-huge
 ;; CHECK-NEXT: [trap out of bounds table access]
 
-;; CHECK:      [fuzz-exec] calling null
+;; CHECK:      [fuzz-exec] export null
 ;; CHECK-NEXT: [trap null target in call_indirect]
 ;; CHECK-NEXT: [fuzz-exec] comparing call-a
 ;; CHECK-NEXT: [fuzz-exec] comparing call-b

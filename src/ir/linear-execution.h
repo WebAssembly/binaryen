@@ -80,11 +80,16 @@ struct LinearExecutionWalker : public PostWalker<SubType, VisitorType> {
   static void scan(SubType* self, Expression** currp) {
     Expression* curr = *currp;
 
-    auto handleCall = [&](bool isReturn) {
+    auto handleCall = [&](bool isReturn, bool refutesThrowEffect) {
+      bool mayThrow = !self->getModule() ||
+                      self->getModule()->features.hasExceptionHandling();
+      mayThrow = mayThrow && !refutesThrowEffect;
+
       if (!self->connectAdjacentBlocks) {
-        // Control is nonlinear if we return, or if EH is enabled or may be.
-        if (isReturn || !self->getModule() ||
-            self->getModule()->features.hasExceptionHandling()) {
+        // Control is nonlinear if we return or throw. Traps don't need to be
+        // taken into account since they don't break control flow in a way
+        // that's observable.
+        if (mayThrow || isReturn) {
           self->pushTask(SubType::doNoteNonLinear, currp);
         }
       }
@@ -153,12 +158,57 @@ struct LinearExecutionWalker : public PostWalker<SubType, VisitorType> {
         break;
       }
       case Expression::Id::CallId: {
-        handleCall(curr->cast<Call>()->isReturn);
-        return;
+        auto* call = curr->cast<Call>();
+
+        bool refutesThrowEffect = false;
+        if (self->getModule()) {
+          auto* func = self->getModule()->getFunctionOrNull(call->target);
+          // TODO: `func` might not exist here because of #8753. Fix this
+          // and remove the null check.
+          if (func && func->effects) {
+            refutesThrowEffect = !func->effects->throws_;
+          }
+        }
+
+        handleCall(call->isReturn, refutesThrowEffect);
+        break;
       }
       case Expression::Id::CallRefId: {
-        handleCall(curr->cast<CallRef>()->isReturn);
-        return;
+        auto* callRef = curr->cast<CallRef>();
+
+        bool refutesThrowEffect = [&]() {
+          if (!self->getModule()) {
+            return false;
+          }
+          if (!callRef->target->type.isRef()) {
+            // This is an unreachable, so no throws effect.
+            return true;
+          }
+
+          auto* effects = find_or_null(self->getModule()->indirectCallEffects,
+                                       callRef->target->type.getHeapType());
+          if (!effects) {
+            return false;
+          }
+          return !(*effects)->throws_;
+        }();
+
+        handleCall(callRef->isReturn, refutesThrowEffect);
+        break;
+      }
+      case Expression::Id::CallIndirectId: {
+        auto* callIndirect = curr->cast<CallIndirect>();
+
+        bool refutesThrowEffect = false;
+        if (self->getModule()) {
+          if (auto* effects = find_or_null(
+                self->getModule()->indirectCallEffects, callIndirect->heapType);
+              effects) {
+            refutesThrowEffect = !(*effects)->throws_;
+          }
+        }
+        handleCall(callIndirect->isReturn, refutesThrowEffect);
+        break;
       }
       case Expression::Id::TryId: {
         self->pushTask(SubType::doVisitTry, currp);

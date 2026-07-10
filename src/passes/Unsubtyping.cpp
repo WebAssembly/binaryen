@@ -19,6 +19,7 @@
 #include <memory>
 
 #include "ir/effects.h"
+#include "ir/js-utils.h"
 #include "ir/localize.h"
 #include "ir/module-utils.h"
 #include "ir/names.h"
@@ -171,9 +172,9 @@ struct TypeTree {
     // The index of the described and descriptor types, if they are necessary.
     std::optional<Index> described;
     std::optional<Index> descriptor;
-    // Whether this type might flow out to JS from a JS-called function or via
-    // extern.convert_any.
-    bool exposedToJS = false;
+    // Whether subtypes of this type might flow out to JS from a JS-called
+    // function or via extern.convert_any.
+    bool subtypesExposedToJS = false;
 
     Node(HeapType type, Index index) : type(type), parent(index) {}
   };
@@ -251,17 +252,17 @@ struct TypeTree {
     return std::nullopt;
   }
 
-  void setExposedToJS(HeapType type) {
+  void setSubtypesExposedToJS(HeapType type) {
     auto index = getIndex(type);
-    nodes[index].exposedToJS = true;
+    nodes[index].subtypesExposedToJS = true;
   }
 
-  bool isExposedToJS(HeapType type) const {
+  bool areSubtypesExposedToJS(HeapType type) const {
     auto index = maybeGetIndex(type);
     if (!index) {
       return false;
     }
-    return nodes[*index].exposedToJS;
+    return nodes[*index].subtypesExposedToJS;
   }
 
   struct SupertypeIterator {
@@ -420,8 +421,8 @@ struct TypeTree {
       for (auto child : node.children) {
         std::cerr << " " << ModuleHeapType(wasm, nodes[child].type);
       }
-      if (node.exposedToJS) {
-        std::cerr << ", exposed to JS";
+      if (node.subtypesExposedToJS) {
+        std::cerr << ", subtypes exposed to JS";
       }
       std::cerr << '\n';
     }
@@ -451,6 +452,8 @@ private:
 // the final update of data structures is different. This CRTP utility
 // deduplicates the shared logic.
 template<typename Self> struct Noter {
+  DBG(Module* wasm = nullptr);
+
   Self& self() { return *static_cast<Self*>(this); }
 
   void noteSubtype(HeapType sub, HeapType super) {
@@ -559,22 +562,16 @@ struct Unsubtyping : Pass, Noter<Unsubtyping> {
   // Map from cast source types to their destinations.
   Map<HeapType, std::vector<HeapType>> casts;
 
-  DBG(Module* wasm = nullptr);
-
   void run(Module* wasm) override {
     DBG(this->wasm = wasm);
     if (!wasm->features.hasGC()) {
       return;
     }
 
-    if (!getPassOptions().closedWorld) {
-      Fatal() << "Unsubtyping requires --closed-world";
-    }
-
     // Initialize the subtype relation based on what is immediately required to
     // keep the code and public types valid.
     analyzePublicTypes(*wasm);
-    analyzeJSCalledFunctions(*wasm);
+    analyzeJSInterface(*wasm);
     analyzeModule(*wasm);
 
     // Find further subtypings and iterate to a fixed point.
@@ -614,18 +611,28 @@ struct Unsubtyping : Pass, Noter<Unsubtyping> {
     work.push_back({Kind::Descriptor, described, descriptor});
   }
 
-  void noteExposedToJS(HeapType type) {
-    types.setExposedToJS(type);
+  void noteExposedToJS(Type type) {
+    if (!type.isRef()) {
+      return;
+    }
+    noteExposedToJS(type.getHeapType(), type.getExactness());
+  }
+
+  void noteExposedToJS(HeapType type, Exactness exact = Inexact) {
     // Keep any descriptor that may configure a prototype.
     if (auto desc = type.getDescriptorType();
-        desc && StructUtils::hasPossibleJSPrototypeField(*desc)) {
+        desc && JSUtils::hasPossibleJSPrototypeField(*desc)) {
       noteDescriptor(type, *desc);
+    }
+    if (exact == Inexact) {
+      types.setSubtypesExposedToJS(type);
     }
   }
 
   void analyzePublicTypes(Module& wasm) {
     // We cannot change supertypes for anything public.
-    for (auto type : ModuleUtils::getPublicHeapTypes(wasm)) {
+    for (auto type :
+         ModuleUtils::getPublicHeapTypes(wasm, getPassOptions().worldMode)) {
       if (auto super = type.getDeclaredSuperType()) {
         noteSubtype(type, *super);
       }
@@ -635,28 +642,30 @@ struct Unsubtyping : Pass, Noter<Unsubtyping> {
     }
   }
 
-  void analyzeJSCalledFunctions(Module& wasm) {
+  void analyzeJSInterface(const Module& wasm) {
     if (!wasm.features.hasCustomDescriptors()) {
       return;
     }
     Type anyref(HeapType::any, Nullable);
-    for (auto func : Intrinsics(wasm).getJSCalledFunctions()) {
-      // Parameter types flow into Wasm and are implicitly cast from any.
-      for (auto type : wasm.getFunction(func)->getParams()) {
-        if (Type::isSubType(type, anyref)) {
-          noteCast(HeapType::any, type);
-        }
+
+    // Values flowing in from JS are implicitly cast from any.
+    auto flowIn = [&](Type type) {
+      if (Type::isSubType(type, anyref)) {
+        noteCast(HeapType::any, type);
       }
-      for (auto type : wasm.getFunction(func)->getResults()) {
-        // Result types flow into JS and are implicitly converted from any to
-        // extern. They may also expose configured prototypes that we must keep.
-        if (Type::isSubType(type, anyref)) {
-          auto heapType = type.getHeapType();
-          noteSubtype(heapType, HeapType::any);
-          noteExposedToJS(heapType);
-        }
+    };
+
+    // Values flowing out to JS are converted to extern and might come back in
+    // as anyrefs. Their descriptors may need to be kept to configure JS
+    // prototypes.
+    auto flowOut = [&](Type type) {
+      if (Type::isSubType(type, anyref)) {
+        noteSubtype(type.getHeapType(), HeapType::any);
+        noteExposedToJS(type);
       }
-    }
+    };
+
+    JSUtils::iterJSInterface(wasm, flowIn, flowOut);
   }
 
   void analyzeModule(Module& wasm) {
@@ -671,7 +680,7 @@ struct Unsubtyping : Pass, Noter<Unsubtyping> {
       Set<std::pair<HeapType, HeapType>> descriptors;
 
       // Observed externalized types.
-      Set<HeapType> exposedToJS;
+      Set<Type> exposedToJS;
     };
 
     struct Collector
@@ -683,8 +692,10 @@ struct Unsubtyping : Pass, Noter<Unsubtyping> {
       Info& info;
       bool trapsNeverHappen;
 
-      Collector(Info& info, bool trapsNeverHappen)
-        : info(info), trapsNeverHappen(trapsNeverHappen) {}
+      Collector(Info& info, bool trapsNeverHappen, Module* wasm)
+        : info(info), trapsNeverHappen(trapsNeverHappen) {
+        DBG(this->wasm = wasm);
+      }
 
       void doNoteSubtype(HeapType sub, HeapType super) {
         info.subtypings.insert({sub, super});
@@ -772,7 +783,7 @@ struct Unsubtyping : Pass, Noter<Unsubtyping> {
         // extern.convert_any makes its operand type visible to JS, which may
         // require us to keep descriptors that configure prototypes.
         if (curr->op == ExternConvertAny && curr->value->type.isRef()) {
-          info.exposedToJS.insert(curr->value->type.getHeapType());
+          info.exposedToJS.insert(curr->value->type);
         }
       }
     };
@@ -783,7 +794,8 @@ struct Unsubtyping : Pass, Noter<Unsubtyping> {
     ModuleUtils::ParallelFunctionAnalysis<Info> analysis(
       wasm, [&](Function* func, Info& info) {
         if (!func->imported()) {
-          Collector(info, trapsNeverHappen).walkFunctionInModule(func, &wasm);
+          Collector(info, trapsNeverHappen, &wasm)
+            .walkFunctionInModule(func, &wasm);
         }
       });
 
@@ -799,11 +811,14 @@ struct Unsubtyping : Pass, Noter<Unsubtyping> {
     }
 
     // Collect constraints from module-level code as well.
-    Collector collector(collectedInfo, trapsNeverHappen);
+    Collector collector(collectedInfo, trapsNeverHappen, &wasm);
     collector.walkModuleCode(&wasm);
     collector.setModule(&wasm);
     for (auto& global : wasm.globals) {
       collector.visitGlobal(global.get());
+    }
+    for (auto& table : wasm.tables) {
+      collector.visitTable(table.get());
     }
     for (auto& segment : wasm.elementSegments) {
       collector.visitElementSegment(segment.get());
@@ -862,8 +877,22 @@ struct Unsubtyping : Pass, Noter<Unsubtyping> {
     types.setSupertype(sub, super);
 
     // If the supertype is exposed to JS, the subtype potentially is as well.
-    if (types.isExposedToJS(super)) {
-      noteExposedToJS(sub);
+    // `sub` may be the root of some existing subtype tree, and we have to
+    // propagate the exposure to JS to all those existing subtypes. We could
+    // just iterate over subtypes(), but manually traverse using
+    // immediateSubtypes() so we can avoid visiting subtrees that have already
+    // been marked.
+    if (types.areSubtypesExposedToJS(super)) {
+      std::vector<HeapType> work{{sub}};
+      while (!work.empty()) {
+        auto curr = work.back();
+        work.pop_back();
+        if (!types.areSubtypesExposedToJS(curr)) {
+          noteExposedToJS(curr);
+          auto subtypes = types.immediateSubtypes(curr);
+          work.insert(work.end(), subtypes.begin(), subtypes.end());
+        }
+      }
     }
 
     // Complete the descriptor squares to the left and right of the new
@@ -934,8 +963,10 @@ struct Unsubtyping : Pass, Noter<Unsubtyping> {
         noteSubtype(elem.type, super.getArray().element.type);
         break;
       }
-      case HeapTypeKind::Cont:
-        WASM_UNREACHABLE("TODO: cont");
+      case HeapTypeKind::Cont: {
+        noteSubtype(sub.getContinuation().type, super.getContinuation().type);
+        break;
+      }
       case HeapTypeKind::Basic:
         WASM_UNREACHABLE("unexpected kind");
     }
@@ -1004,7 +1035,8 @@ struct Unsubtyping : Pass, Noter<Unsubtyping> {
     struct Rewriter : GlobalTypeRewriter {
       Unsubtyping& parent;
       Rewriter(Unsubtyping& parent, Module& wasm)
-        : GlobalTypeRewriter(wasm), parent(parent) {}
+        : GlobalTypeRewriter(wasm, parent.getPassOptions().worldMode),
+          parent(parent) {}
       std::optional<HeapType> getDeclaredSuperType(HeapType type) override {
         if (auto super = parent.types.getSupertype(type);
             super && !super->isBasic()) {
@@ -1032,7 +1064,7 @@ struct Unsubtyping : Pass, Noter<Unsubtyping> {
     }
     // TODO: Consider running the fixup only if we are actually removing any
     // descriptors. This would require a better way of detecting this than
-    // collecing and iterating over all the types, though.
+    // collecting and iterating over all the types, though.
     struct Rewriter : WalkerPass<PostWalker<Rewriter>> {
       const TypeTree& types;
 

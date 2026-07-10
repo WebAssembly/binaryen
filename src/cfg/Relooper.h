@@ -15,7 +15,7 @@
  */
 
 /*
-This is an optimized C++ implemention of the Relooper algorithm originally
+This is an optimized C++ implementation of the Relooper algorithm originally
 developed as part of Emscripten. This implementation includes optimizations
 added since the original academic paper [1] was published about it.
 

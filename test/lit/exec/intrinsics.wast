@@ -5,7 +5,7 @@
 (module
   (import "binaryen-intrinsics" "call.without.effects" (func $cwe (param i32 funcref) (result i32)))
 
-  ;; CHECK:      [fuzz-exec] calling get-ref
+  ;; CHECK:      [fuzz-exec] export get-ref
   ;; CHECK-NEXT: [fuzz-exec] note result: get-ref => 42
   (func $get-ref (export "get-ref") (result i32)
     (call $cwe

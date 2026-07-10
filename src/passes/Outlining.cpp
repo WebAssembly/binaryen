@@ -222,7 +222,7 @@ std::vector<SuffixTree::RepeatedSubstring> StringifyProcessor::dedupe(
       // sequences with the same endIdx, and we generally prefer to outline
       // longer repeat sequences.
       uint32_t endIdx = substring.Length + startIdx;
-      if (seen.count(endIdx)) {
+      if (seen.contains(endIdx)) {
         seenEndIdx = true;
         break;
       }
@@ -662,7 +662,7 @@ struct ReconstructStringifyWalker
 };
 
 struct Outlining : public Pass {
-  void run(Module* module) {
+  void run(Module* module) override {
     HashStringifyWalker stringify;
     // Walk the module and create a "string representation" of the program.
     stringify.walkModule(module);

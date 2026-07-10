@@ -22,6 +22,21 @@
 
 namespace wasm {
 
+namespace {
+
+template<typename Value>
+const Value& getModuleElement(const std::unordered_map<Name, Value>& m,
+                              Name name,
+                              std::string_view funcName) {
+  auto iter = m.find(name);
+  if (iter == m.end()) {
+    Fatal() << "Module::" << funcName << ": " << name << " does not exist";
+  }
+  return iter->second;
+}
+
+} // namespace
+
 // shared constants
 
 Name RETURN_FLOW("*return:)*");
@@ -62,6 +77,10 @@ const char* BulkMemoryOptFeature = "bulk-memory-opt";
 const char* CallIndirectOverlongFeature = "call-indirect-overlong";
 const char* CustomDescriptorsFeature = "custom-descriptors";
 const char* RelaxedAtomicsFeature = "relaxed-atomics";
+const char* MultibyteFeature = "multibyte";
+const char* CustomPageSizesFeature = "custom-page-sizes";
+const char* WideArithmeticFeature = "wide-arithmetic";
+const char* CompactImportsFeature = "compact-imports";
 
 } // namespace BinaryConsts::CustomSections
 
@@ -72,6 +91,7 @@ const Name InlineHint = "metadata.code.inline";
 const Name RemovableIfUnusedHint = "binaryen.removable.if.unused";
 const Name JSCalledHint = "binaryen.js.called";
 const Name IdempotentHint = "binaryen.idempotent";
+const Name ToolchainInlineHint = "binaryen.inline";
 
 } // namespace Annotations
 
@@ -712,6 +732,9 @@ void Unary::finalize() {
     case TruncSatUVecF16x8ToVecI16x8:
     case ConvertSVecI16x8ToVecF16x8:
     case ConvertUVecI16x8ToVecF16x8:
+    case PromoteLowVecF16x8ToVecF32x4:
+    case DemoteZeroVecF32x4ToVecF16x8:
+    case DemoteZeroVecF64x2ToVecF16x8:
       type = Type::v128;
       break;
     case AnyTrueVec128:
@@ -779,6 +802,27 @@ void Binary::finalize() {
     type = Type::i32;
   } else {
     type = left->type;
+  }
+}
+
+void WideIntAddSub::finalize() {
+  if (leftLow->type == Type::unreachable ||
+      leftHigh->type == Type::unreachable ||
+      rightLow->type == Type::unreachable ||
+      rightHigh->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else {
+    static Type i64Pair = Types::getI64Pair();
+    type = i64Pair;
+  }
+}
+
+void WideIntMul::finalize() {
+  if (left->type == Type::unreachable || right->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else {
+    static Type i64Pair = Types::getI64Pair();
+    type = i64Pair;
   }
 }
 
@@ -1058,7 +1102,12 @@ void RefTest::finalize() {
   } else {
     type = Type::i32;
     // Do not unnecessarily lose type information.
-    castType = Type::getGreatestLowerBound(castType, ref->type);
+    auto newCastType = Type::getGreatestLowerBound(castType, ref->type);
+    if (newCastType == Type::unreachable) {
+      // This is invalid. Leave the existing types for the validator to catch.
+      return;
+    }
+    castType = newCastType;
   }
 }
 
@@ -1090,7 +1139,8 @@ void RefCast::finalize() {
 
   // We reach this before validation, so the input type might be totally wrong.
   // Return early in this case to avoid doing the wrong thing below.
-  if (!ref->type.isRef()) {
+  if (!ref->type.isRef() || !type.isRef() ||
+      ref->type.getHeapType().getTop() != type.getHeapType().getTop()) {
     return;
   }
 
@@ -1129,7 +1179,14 @@ void BrOn::finalize() {
     // cast type, we can improve the cast type in a way that will not change the
     // cast behavior. This satisfies the constraint we had before Custom
     // Descriptors that the cast type is a subtype of the input type.
-    castType = Type::getGreatestLowerBound(castType, ref->type);
+    auto newCastType = Type::getGreatestLowerBound(castType, ref->type);
+    if (newCastType == Type::unreachable) {
+      // This is not valid. Leave the original cast type in place for the
+      // validator to catch.
+      type = ref->type;
+      return;
+    }
+    castType = newCastType;
     assert(castType.isRef());
   } else if (op == BrOnCastDescEq || op == BrOnCastDescEqFail) {
     if (desc->type.isNull()) {
@@ -1276,6 +1333,10 @@ void StructCmpxchg::finalize() {
   }
 }
 
+void StructWait::finalize() { type = Type::i32; }
+
+void StructNotify::finalize() { type = Type::i32; }
+
 void ArrayNew::finalize() {
   if (size->type == Type::unreachable ||
       (init && init->type == Type::unreachable)) {
@@ -1318,7 +1379,22 @@ void ArrayGet::finalize() {
   }
 }
 
+void ArrayLoad::finalize() {
+  if (ref->type == Type::unreachable || index->type == Type::unreachable) {
+    type = Type::unreachable;
+  }
+}
+
 void ArraySet::finalize() {
+  if (ref->type == Type::unreachable || index->type == Type::unreachable ||
+      value->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else {
+    type = Type::none;
+  }
+}
+
+void ArrayStore::finalize() {
   if (ref->type == Type::unreachable || index->type == Type::unreachable ||
       value->type == Type::unreachable) {
     type = Type::unreachable;
@@ -1671,45 +1747,35 @@ void Function::clearDebugInfo() {
   epilogLocation.reset();
 }
 
-template<typename Map>
-typename Map::mapped_type&
-getModuleElement(Map& m, Name name, std::string_view funcName) {
-  auto iter = m.find(name);
-  if (iter == m.end()) {
-    Fatal() << "Module::" << funcName << ": " << name << " does not exist";
-  }
-  return iter->second;
-}
-
-Export* Module::getExport(Name name) {
+Export* Module::getExport(Name name) const {
   return getModuleElement(exportsMap, name, "getExport");
 }
 
-Function* Module::getFunction(Name name) {
+Function* Module::getFunction(Name name) const {
   return getModuleElement(functionsMap, name, "getFunction");
 }
 
-Table* Module::getTable(Name name) {
+Table* Module::getTable(Name name) const {
   return getModuleElement(tablesMap, name, "getTable");
 }
 
-ElementSegment* Module::getElementSegment(Name name) {
+ElementSegment* Module::getElementSegment(Name name) const {
   return getModuleElement(elementSegmentsMap, name, "getElementSegment");
 }
 
-Memory* Module::getMemory(Name name) {
+Memory* Module::getMemory(Name name) const {
   return getModuleElement(memoriesMap, name, "getMemory");
 }
 
-DataSegment* Module::getDataSegment(Name name) {
+DataSegment* Module::getDataSegment(Name name) const {
   return getModuleElement(dataSegmentsMap, name, "getDataSegment");
 }
 
-Global* Module::getGlobal(Name name) {
+Global* Module::getGlobal(Name name) const {
   return getModuleElement(globalsMap, name, "getGlobal");
 }
 
-Tag* Module::getTag(Name name) {
+Tag* Module::getTag(Name name) const {
   return getModuleElement(tagsMap, name, "getTag");
 }
 
@@ -1722,39 +1788,39 @@ typename Map::mapped_type getModuleElementOrNull(Map& m, Name name) {
   return iter->second;
 }
 
-Export* Module::getExportOrNull(Name name) {
+Export* Module::getExportOrNull(Name name) const {
   return getModuleElementOrNull(exportsMap, name);
 }
 
-Function* Module::getFunctionOrNull(Name name) {
+Function* Module::getFunctionOrNull(Name name) const {
   return getModuleElementOrNull(functionsMap, name);
 }
 
-Table* Module::getTableOrNull(Name name) {
+Table* Module::getTableOrNull(Name name) const {
   return getModuleElementOrNull(tablesMap, name);
 }
 
-ElementSegment* Module::getElementSegmentOrNull(Name name) {
+ElementSegment* Module::getElementSegmentOrNull(Name name) const {
   return getModuleElementOrNull(elementSegmentsMap, name);
 }
 
-Memory* Module::getMemoryOrNull(Name name) {
+Memory* Module::getMemoryOrNull(Name name) const {
   return getModuleElementOrNull(memoriesMap, name);
 }
 
-DataSegment* Module::getDataSegmentOrNull(Name name) {
+DataSegment* Module::getDataSegmentOrNull(Name name) const {
   return getModuleElementOrNull(dataSegmentsMap, name);
 }
 
-Global* Module::getGlobalOrNull(Name name) {
+Global* Module::getGlobalOrNull(Name name) const {
   return getModuleElementOrNull(globalsMap, name);
 }
 
-Tag* Module::getTagOrNull(Name name) {
+Tag* Module::getTagOrNull(Name name) const {
   return getModuleElementOrNull(tagsMap, name);
 }
 
-Importable* Module::getImport(ModuleItemKind kind, Name name) {
+Importable* Module::getImport(ModuleItemKind kind, Name name) const {
   switch (kind) {
     case ModuleItemKind::Function:
       return getFunction(name);
@@ -1775,7 +1841,7 @@ Importable* Module::getImport(ModuleItemKind kind, Name name) {
   WASM_UNREACHABLE("unexpected kind");
 }
 
-Importable* Module::getImportOrNull(ModuleItemKind kind, Name name) {
+Importable* Module::getImportOrNull(ModuleItemKind kind, Name name) const {
   auto doReturn = [](Importable* importable) {
     return importable ? importable->imported() ? importable : nullptr : nullptr;
   };

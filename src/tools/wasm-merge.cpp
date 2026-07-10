@@ -117,6 +117,11 @@ namespace {
 // have it as a global rather than pass it around all the time.
 Module merged;
 
+// Everything we merge is accumulated into |merged|, aside from the start
+// functions. To avoid incrementally adding a call each time, which can end up
+// nested, we add them here and generate a series of flat calls at the end.
+std::vector<Name> startFunctions;
+
 // Name conflicts on functions etc. are resolved by renaming things in a way
 // that only matters internally. Conflicting export names, however, are
 // observable, and so the user must decide how they want wasm-merge to handle
@@ -251,7 +256,7 @@ void updateNames(Module& wasm, KindNameUpdates& kindNameUpdates) {
         if (iter == updates.end()) {
           return name;
         }
-        if (visited.count(name)) {
+        if (visited.contains(name)) {
           // This is a loop of imports, which means we cannot resolve a useful
           // name. Report an error.
           Fatal() << "wasm-merge: infinite loop of imports on " << oldName;
@@ -299,32 +304,62 @@ void renameInputItems(Module& input) {
     }
   };
 
+  // Given a name in the input module, and lamdbdas that query for that name in
+  // both the merged and input module, return a valid name. We want a new name
+  // that is not in the merged module - we cannot collide with anything already
+  // there - but we must also be careful to not fix such collisions with names
+  // in the input module. That is, if we have $a and $a already exists in the
+  // merged module, $a_1 might be valid - but it is not valid if $a_1 is in the
+  // input module, as that means it is a valid name there, with things referring
+  // to it, which we would need to map. For simplicity, when fixing a collision,
+  // pick a totally novel name.
+  auto getValidName = [&](Name name, auto method, Index hint) {
+    return Names::getValidName(
+      name,
+      [&](Name test) {
+        // As explained above, a name is valid if it is not in the merged
+        // module, and also it is either the original name in the input module
+        // (no collision) or it does not appear there.
+        return !(merged.*method)(test) &&
+               (test == name || !(input.*method)(test));
+      },
+      hint);
+  };
+
   for (auto& curr : input.functions) {
-    auto name = Names::getValidFunctionName(merged, curr->name);
+    auto name = getValidName(
+      curr->name, &Module::getFunctionOrNull, merged.functions.size());
     maybeAdd(ModuleItemKind::Function, curr->name, name);
   }
   for (auto& curr : input.globals) {
-    auto name = Names::getValidGlobalName(merged, curr->name);
+    auto name =
+      getValidName(curr->name, &Module::getGlobalOrNull, merged.globals.size());
     maybeAdd(ModuleItemKind::Global, curr->name, name);
   }
   for (auto& curr : input.tags) {
-    auto name = Names::getValidTagName(merged, curr->name);
+    auto name =
+      getValidName(curr->name, &Module::getTagOrNull, merged.tags.size());
     maybeAdd(ModuleItemKind::Tag, curr->name, name);
   }
   for (auto& curr : input.elementSegments) {
-    auto name = Names::getValidElementSegmentName(merged, curr->name);
+    auto name = getValidName(curr->name,
+                             &Module::getElementSegmentOrNull,
+                             merged.elementSegments.size());
     maybeAdd(ModuleItemKind::ElementSegment, curr->name, name);
   }
   for (auto& curr : input.memories) {
-    auto name = Names::getValidMemoryName(merged, curr->name);
+    auto name = getValidName(
+      curr->name, &Module::getMemoryOrNull, merged.memories.size());
     maybeAdd(ModuleItemKind::Memory, curr->name, name);
   }
   for (auto& curr : input.dataSegments) {
-    auto name = Names::getValidDataSegmentName(merged, curr->name);
+    auto name = getValidName(
+      curr->name, &Module::getDataSegmentOrNull, merged.dataSegments.size());
     maybeAdd(ModuleItemKind::DataSegment, curr->name, name);
   }
   for (auto& curr : input.tables) {
-    auto name = Names::getValidTableName(merged, curr->name);
+    auto name =
+      getValidName(curr->name, &Module::getTableOrNull, merged.tables.size());
     maybeAdd(ModuleItemKind::Table, curr->name, name);
   }
 
@@ -363,28 +398,9 @@ void copyModuleContents(Module& input, Name inputName) {
     merged.addExport(std::move(copy));
   }
 
-  // Start functions must be merged.
-  if (input.start.is()) {
-    if (!merged.start.is()) {
-      // No previous start; just refer to the new one.
-      merged.start = input.start;
-    } else {
-      // Merge them, keeping the order. We copy both functions to avoid issues
-      // with other references to them, and just call the second one, leaving
-      // inlining to the optimizer if that makes sense to do.
-      auto copiedOldName =
-        Names::getValidFunctionName(merged, "merged.start.old");
-      auto copiedNewName =
-        Names::getValidFunctionName(merged, "merged.start.new");
-      auto* copiedOld = ModuleUtils::copyFunction(
-        merged.getFunction(merged.start), merged, copiedOldName);
-      ModuleUtils::copyFunction(
-        merged.getFunction(input.start), merged, copiedNewName);
-      Builder builder(merged);
-      copiedOld->body = builder.makeSequence(
-        copiedOld->body, builder.makeCall(copiedNewName, {}, Type::none));
-      merged.start = copiedOldName;
-    }
+  // Start functions are accumulated till the end.
+  if (input.start) {
+    startFunctions.push_back(input.start);
   }
 
   // TODO: type names, features, debug info, custom sections, dylink info, etc.
@@ -451,7 +467,7 @@ void fuseImportsAndExports(const PassOptions& options) {
   for (auto& ex : merged.exports) {
     // skip type exports
     if (auto* name = ex->getInternalName()) {
-      assert(exportModuleMap.count(ex.get()));
+      assert(exportModuleMap.contains(ex.get()));
       ExportInfo& exportInfo = exportModuleMap[ex.get()];
       kindModuleExportMaps[ex->kind][exportInfo.moduleName]
                           [exportInfo.baseName] = *name;
@@ -596,6 +612,34 @@ void updateTypes(Module& wasm) {
   updater.runOnModuleCode(&runner, &wasm);
 }
 
+// Merge the start functions, keeping the order. We add a new function that
+// calls them in sequence (leaving proper inlining, including handling of
+// control flow etc., to the optimizer).
+void mergeStartFunctions() {
+  if (startFunctions.empty()) {
+    return;
+  }
+
+  if (startFunctions.size() == 1) {
+    // Avoid adding a call here.
+    merged.start = startFunctions[0];
+    return;
+  }
+
+  auto combinedName =
+    Names::getValidFunctionName(merged, "merged.start.combined");
+  Builder builder(merged);
+  std::vector<Expression*> calls;
+  for (auto start : startFunctions) {
+    calls.push_back(builder.makeCall(start, {}, Type::none));
+  }
+  auto* body = builder.makeBlock(calls);
+  auto combined = builder.makeFunction(
+    combinedName, Signature(Type::none, Type::none), {}, body);
+  merged.addFunction(std::move(combined));
+  merged.start = combinedName;
+}
+
 // Merges an input module into an existing target module. The input module can
 // be modified, as it will no longer be needed (so it is intentionally not
 // marked as const here).
@@ -619,6 +663,12 @@ int main(int argc, const char* argv[]) {
   std::map<size_t, std::string> inputSourceMapFilenames;
   std::string outputSourceMapFilename;
   std::string outputSourceMapUrl;
+
+  // We can write wasm-split manifests that can later be fed to wasm-split to
+  // split the merged module back up along the lines of the original modules.
+  // Map modules to their functions so we can write the manifest.
+  std::string manifestFile;
+  std::unordered_map<Name, std::vector<Name>> moduleFuncs;
 
   const std::string WasmMergeOption = "wasm-merge options";
 
@@ -664,7 +714,7 @@ Input source maps can be specified by adding an -ism option right after the modu
          [&](Options* o, const std::string& argument) {
            size_t pos = inputFiles.size();
            if (pos == 0 || pos != inputFileNames.size() ||
-               inputSourceMapFilenames.count(pos - 1)) {
+               inputSourceMapFilenames.contains(pos - 1)) {
              std::cerr << "Option '-ism " << argument
                        << "' should be right after the module name\n";
              exit(EXIT_FAILURE);
@@ -686,6 +736,18 @@ Input source maps can be specified by adding an -ism option right after the modu
          Options::Arguments::One,
          [&outputSourceMapUrl](Options* o, const std::string& argument) {
            outputSourceMapUrl = argument;
+         })
+    .add("--output-manifest",
+         "",
+         "Write a wasm-split manifest to the specified file. This manifest can "
+         "be given to wasm-split to split the merged module along the lines of "
+         "the original modules. Implies --debuginfo to preserve function names "
+         "in the output module.",
+         WasmMergeOption,
+         Options::Arguments::One,
+         [&](Options* o, const std::string& argument) {
+           manifestFile = argument;
+           debugInfo = true;
          })
     .add("--rename-export-conflicts",
          "-rec",
@@ -776,9 +838,31 @@ Input source maps can be specified by adding an -ism option right after the modu
       for (auto& curr : merged.exports) {
         exportModuleMap[curr.get()] = ExportInfo{inputFileName, curr->name};
       }
+
+      // Start functions are accumulated till the end.
+      if (merged.start) {
+        startFunctions.push_back(merged.start);
+        merged.start = Name();
+      }
+
     } else {
       // This is a later module: do a full merge.
       mergeInto(*currModule, inputFileName);
+
+      // The functions in the module have been renamed and copied rather than
+      // moved, so we can get their final names directly. (We don't need this
+      // for the first module because it does not appear in the manifest.)
+      if (!manifestFile.empty()) {
+        auto& funcs = moduleFuncs[inputFileName];
+        for (auto& func : currModule->functions) {
+          if (!func->imported()) {
+            funcs.push_back(func->name);
+            // Even if the function name is empty, if we were to put it in the
+            // output manifest, it has to be emitted in the name section.
+            merged.getFunction(func->name)->hasExplicitName = true;
+          }
+        }
+      }
 
       // Validate after each merged module, when we are in pass-debug mode
       // (this can be quadratic time).
@@ -798,6 +882,9 @@ Input source maps can be specified by adding an -ism option right after the modu
 
   // Update types after combing and linking everything.
   updateTypes(merged);
+
+  // Merge the start functions, after everything else is set up.
+  mergeStartFunctions();
 
   {
     PassRunner passRunner(&merged);
@@ -822,7 +909,26 @@ Input source maps can be specified by adding an -ism option right after the modu
   }
 
   // Output.
-  if (options.extra.count("output") > 0) {
+  if (!manifestFile.empty()) {
+    std::ofstream manifest(manifestFile);
+    // Skip module 0 because it will be the primary module for the split and
+    // does not need to appear in the manifest.
+    for (size_t i = 1; i < inputFileNames.size(); i++) {
+      auto moduleName = inputFileNames[i];
+      const auto& funcs = moduleFuncs[moduleName];
+      if (funcs.empty()) {
+        continue;
+      }
+
+      manifest << moduleName << "\n";
+      for (auto func : funcs) {
+        manifest << func << "\n";
+      }
+      manifest << "\n";
+    }
+  }
+
+  if (options.extra.contains("output")) {
     ModuleWriter writer(options.passOptions);
     writer.setBinary(emitBinary);
     writer.setDebugInfo(debugInfo);
@@ -830,7 +936,7 @@ Input source maps can be specified by adding an -ism option right after the modu
       writer.setSourceMapFilename(outputSourceMapFilename);
       writer.setSourceMapUrl(outputSourceMapUrl);
     }
-    writer.write(merged, options.extra["output"]);
+    options.write(writer, merged, options.extra["output"]);
   }
 
   flush_and_quick_exit(0);

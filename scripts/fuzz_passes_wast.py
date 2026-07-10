@@ -14,13 +14,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-'''
-This fuzzes passes, by starting with a wast, then running
-random passes on the wast, and seeing if they break optimization
-or validation
+"""Script for fuzzing passes.
+
+Starting with a wast, then running random passes on the wast, and seeing
+if they break optimization or validation
 
 Usage: Provide the filename of the wast.
-'''
+"""
 
 
 import os

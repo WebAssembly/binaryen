@@ -5,7 +5,7 @@
   (type $ii (func (param i32 i32)))
   (table 1 1 funcref)
   (elem (i32.const 0))
-  (global $stack_ptr (mut i32) (global.get $STACKTOP$asm2wasm$import))
+  (global $__stack_pointer (mut i32) (global.get $STACKTOP$asm2wasm$import))
 
   (func $nothing
   )
@@ -176,10 +176,10 @@
   (type $ii (func (param i32 i32)))
   (table 1 1 funcref)
   (elem (i32.const 0))
-  (global $stack_ptr (mut i32) (i32.const 1716592))
+  (global $__stack_pointer (mut i32) (i32.const 1716592))
   (export "stackSave" (func $stack_save))
   (func $stack_save (result i32)
-    (global.get $stack_ptr)
+    (global.get $__stack_pointer)
   )
 
   (func $nothing

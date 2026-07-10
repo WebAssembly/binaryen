@@ -218,7 +218,7 @@ struct LazyLocalGraph : public LocalGraphBase {
     if (iter == SSAIndexes.end()) {
       auto ret = computeSSA(index);
       // The result must have been memoized.
-      assert(SSAIndexes.count(index));
+      assert(SSAIndexes.contains(index));
       return ret;
     }
     return iter->second;

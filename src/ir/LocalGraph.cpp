@@ -341,7 +341,7 @@ struct LocalGraphFlower
     auto index = get->index;
 
     // We must never repeat work.
-    assert(!getSetsMap.count(get));
+    assert(!getSetsMap.contains(get));
 
     // Regardless of what we do below, ensure an entry for this get, so that we
     // know we computed it.
@@ -410,7 +410,7 @@ struct LocalGraphFlower
     auto index = set->index;
 
     // We must never repeat work.
-    assert(!setInfluences.count(set));
+    assert(!setInfluences.contains(set));
 
     // In theory we could flow the set forward, but to keep things simple we
     // reuse the logic for flowing gets backwards: We flow all the gets of the
@@ -419,7 +419,7 @@ struct LocalGraphFlower
     // doing work for local indexes we don't care about.
     for (auto* get : getsByIndex[index]) {
       // Don't repeat work.
-      if (!getSetsMap.count(get)) {
+      if (!getSetsMap.contains(get)) {
         computeGetSets(get);
       }
     }
@@ -632,7 +632,7 @@ void LocalGraph::computeSSAIndexes() {
   }
 }
 
-bool LocalGraph::isSSA(Index x) { return SSAIndexes.count(x); }
+bool LocalGraph::isSSA(Index x) { return SSAIndexes.contains(x); }
 
 // LazyLocalGraph
 
@@ -672,7 +672,7 @@ LazyLocalGraph::~LazyLocalGraph() {
 
 void LazyLocalGraph::computeGetSets(LocalGet* get) const {
   // We must never repeat work.
-  assert(!getSetsMap.count(get));
+  assert(!getSetsMap.contains(get));
 
   if (!flower) {
     makeFlower();
@@ -682,7 +682,7 @@ void LazyLocalGraph::computeGetSets(LocalGet* get) const {
 
 void LazyLocalGraph::computeSetInfluences(LocalSet* set) const {
   // We must never repeat work.
-  assert(!setInfluences.count(set));
+  assert(!setInfluences.contains(set));
 
   if (!flower) {
     makeFlower();
@@ -705,7 +705,7 @@ void LazyLocalGraph::computeGetInfluences() const {
 
 bool LazyLocalGraph::computeSSA(Index index) const {
   // We must never repeat work.
-  assert(!SSAIndexes.count(index));
+  assert(!SSAIndexes.contains(index));
 
   if (!flower) {
     makeFlower();

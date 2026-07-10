@@ -13,14 +13,22 @@
   ;; INCLUDE:      (type $void (func))
   (type $void (func))
 
-  ;; WITHOUT:      (type $1 (func (result i32)))
+  ;; WITHOUT:      (type $indirect-type (func (param f32)))
+  ;; INCLUDE:      (type $indirect-type (func (param f32)))
+  (type $indirect-type (func (param f32)))
 
-  ;; WITHOUT:      (type $2 (func (param i32)))
+  ;; WITHOUT:      (type $2 (func (param (ref $indirect-type))))
+
+  ;; WITHOUT:      (type $3 (func (result i32)))
+
+  ;; WITHOUT:      (type $4 (func (param i32)))
 
   ;; WITHOUT:      (import "a" "b" (func $import (type $void)))
-  ;; INCLUDE:      (type $1 (func (result i32)))
+  ;; INCLUDE:      (type $2 (func (param (ref $indirect-type))))
 
-  ;; INCLUDE:      (type $2 (func (param i32)))
+  ;; INCLUDE:      (type $3 (func (result i32)))
+
+  ;; INCLUDE:      (type $4 (func (param i32)))
 
   ;; INCLUDE:      (import "a" "b" (func $import (type $void)))
   (import "a" "b" (func $import))
@@ -150,7 +158,7 @@
     (call $unreachable)
   )
 
-  ;; WITHOUT:      (func $unimportant-effects (type $1) (result i32)
+  ;; WITHOUT:      (func $unimportant-effects (type $3) (result i32)
   ;; WITHOUT-NEXT:  (local $x i32)
   ;; WITHOUT-NEXT:  (local.set $x
   ;; WITHOUT-NEXT:   (i32.const 100)
@@ -159,7 +167,7 @@
   ;; WITHOUT-NEXT:   (local.get $x)
   ;; WITHOUT-NEXT:  )
   ;; WITHOUT-NEXT: )
-  ;; INCLUDE:      (func $unimportant-effects (type $1) (result i32)
+  ;; INCLUDE:      (func $unimportant-effects (type $3) (result i32)
   ;; INCLUDE-NEXT:  (local $x i32)
   ;; INCLUDE-NEXT:  (local.set $x
   ;; INCLUDE-NEXT:   (i32.const 100)
@@ -380,7 +388,7 @@
     )
   )
 
-  ;; WITHOUT:      (func $call-throw-or-unreachable-and-catch (type $2) (param $x i32)
+  ;; WITHOUT:      (func $call-throw-or-unreachable-and-catch (type $4) (param $x i32)
   ;; WITHOUT-NEXT:  (block $tryend
   ;; WITHOUT-NEXT:   (try_table (catch_all $tryend)
   ;; WITHOUT-NEXT:    (if
@@ -395,7 +403,7 @@
   ;; WITHOUT-NEXT:   )
   ;; WITHOUT-NEXT:  )
   ;; WITHOUT-NEXT: )
-  ;; INCLUDE:      (func $call-throw-or-unreachable-and-catch (type $2) (param $x i32)
+  ;; INCLUDE:      (func $call-throw-or-unreachable-and-catch (type $4) (param $x i32)
   ;; INCLUDE-NEXT:  (block $tryend
   ;; INCLUDE-NEXT:   (try_table (catch_all $tryend)
   ;; INCLUDE-NEXT:    (if
@@ -472,5 +480,48 @@
     ;; that object, so it must check the object still exists).
     (call $cycle-with-unknown-call)
     (call $import)
+  )
+
+
+  ;; WITHOUT:      (func $nop-indirect (type $indirect-type) (param $0 f32)
+  ;; WITHOUT-NEXT:  (nop)
+  ;; WITHOUT-NEXT: )
+  ;; INCLUDE:      (func $nop-indirect (type $indirect-type) (param $0 f32)
+  ;; INCLUDE-NEXT:  (nop)
+  ;; INCLUDE-NEXT: )
+  (func $nop-indirect (type $indirect-type) (param f32)
+  )
+
+  ;; WITHOUT:      (func $unknown-indirect-call (type $2) (param $ref (ref $indirect-type))
+  ;; WITHOUT-NEXT:  (call_ref $indirect-type
+  ;; WITHOUT-NEXT:   (f32.const 1)
+  ;; WITHOUT-NEXT:   (local.get $ref)
+  ;; WITHOUT-NEXT:  )
+  ;; WITHOUT-NEXT: )
+  ;; INCLUDE:      (func $unknown-indirect-call (type $2) (param $ref (ref $indirect-type))
+  ;; INCLUDE-NEXT:  (call_ref $indirect-type
+  ;; INCLUDE-NEXT:   (f32.const 1)
+  ;; INCLUDE-NEXT:   (local.get $ref)
+  ;; INCLUDE-NEXT:  )
+  ;; INCLUDE-NEXT: )
+  (func $unknown-indirect-call (param $ref (ref $indirect-type))
+    (call_ref $indirect-type (f32.const 1) (local.get $ref))
+  )
+
+  ;; WITHOUT:      (func $calls-unknown-indirect-call (type $2) (param $ref (ref $indirect-type))
+  ;; WITHOUT-NEXT:  (call $unknown-indirect-call
+  ;; WITHOUT-NEXT:   (local.get $ref)
+  ;; WITHOUT-NEXT:  )
+  ;; WITHOUT-NEXT: )
+  ;; INCLUDE:      (func $calls-unknown-indirect-call (type $2) (param $ref (ref $indirect-type))
+  ;; INCLUDE-NEXT:  (call $unknown-indirect-call
+  ;; INCLUDE-NEXT:   (local.get $ref)
+  ;; INCLUDE-NEXT:  )
+  ;; INCLUDE-NEXT: )
+  (func $calls-unknown-indirect-call (param $ref (ref $indirect-type))
+    ;; In a closed world, we could determine that the ref can only possibly be
+    ;; $nop-direct and optimize it out. See global-effects-closed-world.wast
+    ;; for related tests.
+    (call $unknown-indirect-call (local.get $ref))
   )
 )

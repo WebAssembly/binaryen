@@ -475,38 +475,35 @@ public:
   std::set<Name> names;
   std::set<std::string> patterns;
   std::set<std::string> patternsMatched;
-  std::map<std::string, std::string> unescaped;
 
   PatternMatcher(std::string designation,
                  Module& module,
                  const String::Split& list)
     : designation(designation) {
     // The lists contain human-readable strings. Turn them into the
-    // internal escaped names for later comparisons
+    // internal names for later comparisons.
     for (auto& name : list) {
-      auto escaped = WasmBinaryReader::escape(name);
-      unescaped[escaped.toString()] = name;
       if (name.find('*') != std::string::npos) {
-        patterns.insert(escaped.toString());
+        patterns.insert(name);
       } else {
-        auto* func = module.getFunctionOrNull(escaped);
+        auto* func = module.getFunctionOrNull(name);
         if (!func) {
           std::cerr << "warning: Asyncify " << designation
-                    << "list contained a non-existing function name: " << name
-                    << " (" << escaped << ")\n";
+                    << "list contained a non-existing function name: '" << name
+                    << "'\n";
         } else if (func->imported()) {
           Fatal() << "Asyncify " << designation
                   << "list contained an imported function name (use the import "
                      "list for imports): "
                   << name << '\n';
         }
-        names.insert(escaped.str);
+        names.insert(name);
       }
     }
   }
 
   bool match(Name funcName) {
-    if (names.count(funcName) > 0) {
+    if (names.contains(funcName)) {
       return true;
     } else {
       for (auto& pattern : patterns) {
@@ -521,10 +518,10 @@ public:
 
   void checkPatternsMatches() {
     for (auto& pattern : patterns) {
-      if (patternsMatched.count(pattern) == 0) {
+      if (!patternsMatched.contains(pattern)) {
         std::cerr << "warning: Asyncify " << designation
-                  << "list contained a non-matching pattern: "
-                  << unescaped[pattern] << " (" << pattern << ")\n";
+                  << "list contained a non-matching pattern: '" << pattern
+                  << "'\n";
       }
     }
   }
@@ -1068,12 +1065,12 @@ private:
         // At least one of our children may change the state. Clump them as
         // necessary.
         while (1) {
-          if (processed.count(list[i])) {
+          if (processed.contains(list[i])) {
             list[i] = results.back();
             results.pop_back();
           } else {
             Index begin = i;
-            while (begin > 0 && !processed.count(list[begin - 1])) {
+            while (begin > 0 && !processed.contains(list[begin - 1])) {
               begin--;
             }
             // We have a range of [begin, i] in which the state cannot change,
@@ -1601,7 +1598,7 @@ private:
     // location. TODO look more precisely inside basic blocks, as one might stop
     // being live in the middle
     for (auto* block : walker.liveBlocks) {
-      if (walker.relevantBasicBlocks.count(block)) {
+      if (walker.relevantBasicBlocks.contains(block)) {
         for (auto local : block->contents.start) {
           relevantLiveLocals.insert(local);
         }
@@ -1617,7 +1614,7 @@ private:
     auto numLocals = func->getNumLocals();
     Index total = 0;
     for (Index i = 0; i < numLocals; i++) {
-      if (!relevantLiveLocals.count(i)) {
+      if (!relevantLiveLocals.contains(i)) {
         continue;
       }
       total += getByteSize(func->getLocalType(i));
@@ -1629,7 +1626,7 @@ private:
       builder->makeLocalSet(tempIndex, builder->makeGetStackPos()));
     Index offset = 0;
     for (Index i = 0; i < numLocals; i++) {
-      if (!relevantLiveLocals.count(i)) {
+      if (!relevantLiveLocals.contains(i)) {
         continue;
       }
       auto localType = func->getLocalType(i);
@@ -1674,7 +1671,7 @@ private:
       builder->makeLocalSet(tempIndex, builder->makeGetStackPos()));
     Index offset = 0;
     for (Index i = 0; i < numLocals; i++) {
-      if (!relevantLiveLocals.count(i)) {
+      if (!relevantLiveLocals.contains(i)) {
         continue;
       }
       auto localType = func->getLocalType(i);
@@ -1730,7 +1727,7 @@ private:
 } // anonymous namespace
 
 static std::string getFullImportName(Name module, Name base) {
-  return std::string(module.str) + '.' + base.toString();
+  return module.toString() + '.' + base.toString();
 }
 
 struct Asyncify : public Pass {

@@ -70,7 +70,7 @@
 
   ;; CHECK:       (type $2 (func))
 
-  ;; CHECK:       (type $f-sent (func))
+  ;; CHECK:       (type $f-sent (func (param i64)))
 
   ;; CHECK:       (type $f (func (param i32)))
   (type $f (func (param i32)))
@@ -79,14 +79,14 @@
   (type $f-sent (func (param i64)))
   (type $k-sent (cont $f-sent))
 
-  ;; CHECK:       (type $5 (func))
+  ;; CHECK:       (type $5 (func (result i64)))
 
   ;; CHECK:      (type $6 (func (param i32 (ref $k))))
 
   ;; CHECK:      (elem declare func $f $f-sent)
 
-  ;; CHECK:      (tag $e (type $5))
-  (tag $e)
+  ;; CHECK:      (tag $e (type $5) (result i64))
+  (tag $e (result i64))
 
   ;; CHECK:      (func $f (type $f) (param $0 i32)
   ;; CHECK-NEXT:  (drop
@@ -109,14 +109,14 @@
     (nop)
   )
 
-  ;; CHECK:      (func $f-sent (type $f-sent)
-  ;; CHECK-NEXT:  (local $0 i64)
+  ;; CHECK:      (func $f-sent (type $f-sent) (param $0 i64)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.func $f-sent)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $f-sent (type $f-sent) (param i64)
-    ;; This can be optimized.
+    ;; This cannot be optimized unless we also optimize out the matching results
+    ;; from the exception tag TODO.
     (drop
       (ref.func $f-sent)
     )
@@ -134,7 +134,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $resume (param $x i32) (param $k (ref $k))
-    ;; resume inhibits optimizations for the resumed continuation type, but not
+    ;; resume inhibits optimizations for the resumed continuation type and also
     ;; the continuation types it sends.
     (drop
       (block $l (result (ref null $k-sent))
@@ -156,7 +156,7 @@
 
   ;; CHECK:       (type $2 (func))
 
-  ;; CHECK:       (type $f-sent (func))
+  ;; CHECK:       (type $f-sent (func (param i64)))
 
   ;; CHECK:       (type $f (func (param i32)))
   (type $f (func (param i32)))
@@ -165,14 +165,18 @@
   (type $f-sent (func (param i64)))
   (type $k-sent (cont $f-sent))
 
-  ;; CHECK:       (type $5 (func))
+  ;; CHECK:       (type $5 (func (result i64)))
 
-  ;; CHECK:      (type $6 (func (param (ref $k))))
+  ;; CHECK:       (type $6 (func))
+
+  ;; CHECK:      (type $7 (func (param (ref $k))))
 
   ;; CHECK:      (elem declare func $f $f-sent)
 
-  ;; CHECK:      (tag $e (type $5))
-  (tag $e)
+  ;; CHECK:      (tag $throw (type $6))
+  (tag $throw)
+  ;; CHECK:      (tag $e (type $5) (result i64))
+  (tag $e (result i64))
 
   ;; CHECK:      (func $f (type $f) (param $0 i32)
   ;; CHECK-NEXT:  (drop
@@ -186,23 +190,23 @@
     )
   )
 
-  ;; CHECK:      (func $f-sent (type $f-sent)
-  ;; CHECK-NEXT:  (local $0 i64)
+  ;; CHECK:      (func $f-sent (type $f-sent) (param $0 i64)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.func $f-sent)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $f-sent (type $f-sent) (param i64)
-    ;; This can be optimized.
+    ;; This cannot be optimized unless we also optimize out the matching results
+    ;; from the exception tag TODO.
     (drop
       (ref.func $f-sent)
     )
   )
 
-  ;; CHECK:      (func $resume-throw (type $6) (param $k (ref $k))
+  ;; CHECK:      (func $resume-throw (type $7) (param $k (ref $k))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block $l (result (ref null $k-sent))
-  ;; CHECK-NEXT:    (resume_throw $k $e (on $e $l)
+  ;; CHECK-NEXT:    (resume_throw $k $throw (on $e $l)
   ;; CHECK-NEXT:     (local.get $k)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (unreachable)
@@ -210,11 +214,11 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $resume-throw (param $k (ref $k))
-    ;; resume_throw inhibits optimizations for the resumed continuation type,
-    ;; but not the continuation types it sends.
+    ;; resume_throw inhibits optimizations for the resumed continuation type and
+    ;; also the continuation types it sends.
     (drop
       (block $l (result (ref null $k-sent))
-        (resume_throw $k $e (on $e $l)
+        (resume_throw $k $throw (on $e $l)
           (local.get $k)
         )
         (unreachable)

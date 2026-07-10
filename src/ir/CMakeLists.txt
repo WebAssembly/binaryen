@@ -2,6 +2,7 @@ FILE(GLOB ir_HEADERS *.h)
 set(ir_SOURCES
   ExpressionAnalyzer.cpp
   ExpressionManipulator.cpp
+  constraint.cpp
   drop.cpp
   effects.cpp
   eh-utils.cpp
@@ -20,6 +21,7 @@ set(ir_SOURCES
   public-type-validator.cpp
   ReFinalize.cpp
   return-utils.cpp
+  runtime-global.cpp
   runtime-table.cpp
   stack-utils.cpp
   table-utils.cpp

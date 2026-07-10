@@ -15,7 +15,7 @@ set -e
 # This will emit one file for each stage of compilation, as output.wasm.N.wasm.
 #
 
-COMMON="--enable-exception-handling --enable-gc --enable-reference-types --enable-sign-ext --enable-strings --enable-nontrapping-float-to-int --enable-bulk-memory --closed-world --traps-never-happen"
+COMMON="--enable-exception-handling --enable-gc --enable-reference-types --enable-sign-ext --enable-strings --enable-nontrapping-float-to-int --enable-bulk-memory --enable-custom-descriptors --closed-world --traps-never-happen"
 
 echo "Stage 1"
 bin/wasm-opt $COMMON "--no-inline=*_<once>_*" -O3 --cfp-reftest --optimize-j2cl --gufa --unsubtyping -O3 --cfp-reftest --optimize-j2cl -O3 --cfp-reftest --optimize-j2cl $1 -o $2.1.wasm

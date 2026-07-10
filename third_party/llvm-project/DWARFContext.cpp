@@ -1296,7 +1296,7 @@ struct SymInfo {
 };
 
 /// Returns the address of symbol relocation used against and a section index.
-/// Used for futher relocations computation. Symbol's section load address is
+/// Used for further relocations computation. Symbol's section load address is
 static Expected<SymInfo> getSymbolInfo(const object::ObjectFile &Obj,
                                        const RelocationRef &Reloc,
                                        const LoadedObjectInfo *L,

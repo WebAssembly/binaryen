@@ -92,6 +92,8 @@ DELEGATE(ArrayNewElem);
 DELEGATE(ArrayNewFixed);
 DELEGATE(ArrayGet);
 DELEGATE(ArraySet);
+DELEGATE(ArrayLoad);
+DELEGATE(ArrayStore);
 DELEGATE(ArrayLen);
 DELEGATE(ArrayCopy);
 DELEGATE(ArrayFill);
@@ -115,5 +117,9 @@ DELEGATE(Suspend);
 DELEGATE(Resume);
 DELEGATE(ResumeThrow);
 DELEGATE(StackSwitch);
+DELEGATE(StructWait);
+DELEGATE(StructNotify);
+DELEGATE(WideIntAddSub);
+DELEGATE(WideIntMul);
 
 #undef DELEGATE

@@ -174,7 +174,7 @@ private:
   }
 };
 
-#if __cplusplus >= 202002L
+#if defined(__cpp_lib_concepts)
 static_assert(Lattice<ConeType>);
 static_assert(FullLattice<ConeType>);
 #endif
