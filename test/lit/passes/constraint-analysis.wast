@@ -3494,5 +3494,41 @@
       )
     )
   )
+
+  ;; CHECK:      (func $set-silly (type $0) (param $x i32)
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPTIN:      (func $set-silly (type $0) (param $x i32)
+  ;; OPTIN-NEXT:  (local.set $x
+  ;; OPTIN-NEXT:   (local.get $x)
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (if
+  ;; OPTIN-NEXT:   (i32.const 0)
+  ;; OPTIN-NEXT:   (then
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT: )
+  (func $set-silly (param $x i32)
+    ;; Setting x to x adds no information, and we do not store it in the IR. This
+    ;; must not lead to internal errors (we have asserts on not storing
+    ;; "proves-nothing" in the internal map, and if we wrote this, it would be
+    ;; that).
+    (local.set $x
+      (local.get $x)
+    )
+    ;; Add some control flow to exercise the assert.
+    (if
+      (i32.const 0)
+      (then
+      )
+    )
+  )
 )
 
