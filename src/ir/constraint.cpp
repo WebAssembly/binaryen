@@ -234,7 +234,16 @@ std::optional<LocalConstraint> LocalConstraint::parse(Expression* curr) {
 
   if (auto* binary = curr->dynCast<Binary>()) {
     // The operation must be one we recognize.
-    for (auto op : {Abstract::Eq, Abstract::Ne}) {
+    for (auto op : {Abstract::Eq,
+                    Abstract::Ne,
+                    Abstract::LtS,
+                    Abstract::LtU,
+                    Abstract::LeS,
+                    Abstract::LeU,
+                    Abstract::GtS,
+                    Abstract::GtU,
+                    Abstract::GeS,
+                    Abstract::GeU}) {
       if (Abstract::getBinary(binary->type, op) == binary->op) {
         return parseBinaryArguments(op, binary->left, binary->right);
       }
@@ -421,7 +430,7 @@ void BasicBlockConstraintMap::eraseStaleRefs(Index index) {
 }
 
 std::ostream& operator<<(std::ostream& o, const Constraint& c) {
-  o << "Constraint{" << int(c.op) << ", ";
+  o << "Constraint{" << c.op << ", ";
   if (auto* cc = std::get_if<Literal>(&c.term)) {
     o << *cc;
   } else if (auto* i = std::get_if<Index>(&c.term)) {
