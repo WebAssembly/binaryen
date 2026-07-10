@@ -6,7 +6,7 @@
  ;; CHECK:      (tag $tag (type $0) (param i32))
  (tag $tag (param i32))
 
- ;; CHECK:      (func $0 (type $1)
+ ;; CHECK:      (func $pop-unreachable (type $1)
  ;; CHECK-NEXT:  (local $x i32)
  ;; CHECK-NEXT:  (try
  ;; CHECK-NEXT:   (do
@@ -19,7 +19,7 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $0
+ (func $pop-unreachable
   (local $x i32)
   (try
    (do
@@ -30,6 +30,46 @@
     (local.set $x
      (pop i32)
     )
+   )
+  )
+ )
+
+ ;; CHECK:      (func $pop-unreachable-result (type $2) (result i32)
+ ;; CHECK-NEXT:  (local $x i32)
+ ;; CHECK-NEXT:  (local $1 i32)
+ ;; CHECK-NEXT:  (try (result i32)
+ ;; CHECK-NEXT:   (do
+ ;; CHECK-NEXT:    (i32.const 10)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (catch $tag
+ ;; CHECK-NEXT:    (local.set $1
+ ;; CHECK-NEXT:     (pop i32)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (block (result i32)
+ ;; CHECK-NEXT:     (block
+ ;; CHECK-NEXT:      (drop
+ ;; CHECK-NEXT:       (local.get $1)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (unreachable)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (i32.const 20)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $pop-unreachable-result (result i32)
+  (local $x i32)
+  ;; As above, but now with a result. This adds a block we need to fix up EH
+  ;; for.
+  (try (result i32)
+   (do
+    (i32.const 10)
+   )
+   (catch $tag
+    (local.set $x
+     (pop i32)
+    )
+    (i32.const 20)
    )
   )
  )
