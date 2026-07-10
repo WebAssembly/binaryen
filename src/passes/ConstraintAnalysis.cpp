@@ -196,8 +196,7 @@ struct ConstraintAnalysis
           *currp = getDroppedChildrenAndAppend(*currp,
                             *getModule(),
                             getPassOptions(),
-                            Builder(*getModule()).makeUnreachable(),
-                            DropMode::IgnoreParentEffects);
+                            Builder(*getModule()).makeUnreachable());
           refinalize = true;
         }
       }
