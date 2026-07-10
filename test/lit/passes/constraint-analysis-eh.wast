@@ -3,8 +3,22 @@
 ;; RUN: wasm-opt %s --constraint-analysis -all -S -o - | filecheck %s
 
 (module
+ ;; CHECK:      (tag $tag (type $0) (param i32))
  (tag $tag (param i32))
 
+ ;; CHECK:      (func $0 (type $1)
+ ;; CHECK-NEXT:  (local $x i32)
+ ;; CHECK-NEXT:  (try
+ ;; CHECK-NEXT:   (do
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (catch $tag
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (pop i32)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
  (func $0
   (local $x i32)
   (try
