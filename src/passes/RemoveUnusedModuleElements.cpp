@@ -507,11 +507,12 @@ struct Analyzer {
     // if it has the right type, we would not trap. (Note that we were using the
     // fact that we do not distinguish types of traps, in the case without an
     // initial value - we turned a trap on the wrong type to one on a null.)
+    //
+    // A related situation is a table with element segments that trample valid
+    // values with nulls or functions of the wrong type for a call: when they
+    // overwrite a valid function, they cause a trap, which we must preserve if
+    // traps can happen.
     if (!options.trapsNeverHappen) {
-      // A related situation is a table with element segments that trample
-      // valid values with nulls or functions of the wrong type for a call:
-      // when they overwrite a valid function, they cause a trap, which we
-      // must preserve if traps can.
       if (module->getTable(table)->init || info.mayHaveOverlappingElems) {
         // We only need to reference the elem, so it writes its functions - the
         // functions are not actually called, as we just trap.
