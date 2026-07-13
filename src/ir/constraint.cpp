@@ -148,6 +148,7 @@ void AndedConstraintSet::approximateAnd(const Constraint& c) {
 
   if (size() < MaxConstraints) {
     push_back(c);
+    sort();
     return;
   }
 
@@ -182,6 +183,10 @@ void AndedConstraintSet::approximateOr(const AndedConstraintSet& other) {
   // Otherwise, we don't know how to nicely OR these things, and expand to the
   // trivial set of no constraints.
   clear();
+}
+
+void AndedConstraintSet::sort() {
+  std::sort(begin(), end());
 }
 
 std::optional<LocalConstraint> LocalConstraint::parse(Expression* curr) {

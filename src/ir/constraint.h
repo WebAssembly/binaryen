@@ -165,6 +165,12 @@ struct AndedConstraintSet : inplace_vector<Constraint, MaxConstraints> {
     setProvesNothing();
     push_back(c);
   }
+
+private:
+  // While we are a vector, the order of constraints does not logically matter.
+  // We keep ourselves sorted in a canonical form, so that simple ==, != etc.
+  // comparisons work. The canonical order also makes debug printing nicer.
+  void sort();
 };
 
 // A local plus a constraint on it.
