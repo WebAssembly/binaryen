@@ -544,8 +544,8 @@ bool Literal::operator<(const Literal& other) const {
 
   assert(type.isRef());
   if (type.isNull()) {
-    // Pick nulls as the lowest.
-    return true;
+    // All nulls are equal, and hence not <
+    return false;
   }
   if (type.isFunction()) {
     return *funcData < *other.funcData;
