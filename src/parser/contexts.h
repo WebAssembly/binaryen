@@ -265,10 +265,10 @@ template<typename Ctx> struct TypeParserCtx {
     return HeapTypes::nocont.getBasic(share);
   }
   HeapTypeT makeWaitqueueType(Shareability share) {
-    return HeapType(HeapType::waitqueue).getBasic(share);
+    return HeapTypes::waitqueue.getBasic(share);
   }
   HeapTypeT makeNowaitqueueType(Shareability share) {
-    return HeapType(HeapType::nowaitqueue).getBasic(share);
+    return HeapTypes::nowaitqueue.getBasic(share);
   }
 
   HeapTypeT makeExact(HeapTypeT type) {

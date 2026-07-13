@@ -700,22 +700,11 @@ struct TransferFn : OverriddenVisitor<TransferFn> {
 
   void visitStructCmpxchg(StructCmpxchg* curr) { WASM_UNREACHABLE("TODO"); }
 
-  void visitStructWait(StructWait* curr) {
-    auto type = curr->ref->type.getHeapType();
-    if (type.isBottom()) {
-      // This will be emitted as unreachable. Do not require anything of the
-      // input, except that the ref remain bottom.
-      clearStack();
-      push(Type(HeapType::none, Nullable));
-      return;
-    }
+  void visitStructWait(StructWait* curr) { WASM_UNREACHABLE("TODO"); }
 
-    auto generalized = generalizeStructType(type, curr->index, Type::i32);
-    push(Type(generalized, Nullable));
-  }
+  void visitWaitqueueNew(WaitqueueNew* curr) { WASM_UNREACHABLE("TODO"); }
 
-  void visitWaitqueueNew(WaitqueueNew* curr) {}
-  void visitWaitqueueNotify(WaitqueueNotify* curr) {}
+  void visitWaitqueueNotify(WaitqueueNotify* curr) { WASM_UNREACHABLE("TODO"); }
 
   void visitArrayNew(ArrayNew* curr) {
     // We cannot yet generalize allocations. Push a requirement for the

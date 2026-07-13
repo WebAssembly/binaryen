@@ -123,7 +123,7 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
            nullCheckCost(curr->waitqueue) + visit(curr->waitqueue) +
            visit(curr->expected) + visit(curr->timeout);
   }
-  CostType visitWaitqueueNew(WaitqueueNew* curr) { return 1; }
+  CostType visitWaitqueueNew(WaitqueueNew* curr) { return AllocationCost; }
   CostType visitWaitqueueNotify(WaitqueueNotify* curr) {
     return AtomicCost + nullCheckCost(curr->waitqueue) +
            visit(curr->waitqueue) + visit(curr->count);

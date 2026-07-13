@@ -6586,6 +6586,8 @@ Exactness TranslateToFuzzReader::getSubType(Exactness exactness) {
 }
 
 HeapType TranslateToFuzzReader::getSubType(HeapType type) {
+  assert(wasm.features.hasReferenceTypes());
+
   if (oneIn(3)) {
     return type;
   }
@@ -6594,7 +6596,6 @@ HeapType TranslateToFuzzReader::getSubType(HeapType type) {
     switch (type.getBasic(Unshared)) {
       case HeapType::func:
         // TODO: Typed function references.
-        assert(wasm.features.hasReferenceTypes());
         return pick(FeatureOptions<HeapType>()
                       .add(HeapTypes::func)
                       .add(FeatureSet::GC, HeapTypes::nofunc))
@@ -6602,7 +6603,6 @@ HeapType TranslateToFuzzReader::getSubType(HeapType type) {
       case HeapType::cont:
         return pick(HeapTypes::cont, HeapTypes::nocont).getBasic(share);
       case HeapType::ext: {
-        assert(wasm.features.hasReferenceTypes());
         auto options = FeatureOptions<HeapType>()
                          .add(HeapTypes::ext)
                          .add(FeatureSet::GC, HeapTypes::noext);
@@ -6613,7 +6613,6 @@ HeapType TranslateToFuzzReader::getSubType(HeapType type) {
         return pick(options).getBasic(share);
       }
       case HeapType::any: {
-        assert(wasm.features.hasReferenceTypes());
         assert(wasm.features.hasGC());
         return pick(HeapTypes::any,
                     HeapTypes::eq,
@@ -6624,7 +6623,6 @@ HeapType TranslateToFuzzReader::getSubType(HeapType type) {
           .getBasic(share);
       }
       case HeapType::eq:
-        assert(wasm.features.hasReferenceTypes());
         assert(wasm.features.hasGC());
         return pick(HeapTypes::eq,
                     HeapTypes::i31,

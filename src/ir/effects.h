@@ -1093,7 +1093,7 @@ private:
       if (trapOnNull(curr->waitqueue)) {
         return;
       }
-      // AtomicNotify doesn't strictly write anything, but it does
+      // WaitqueueNotify doesn't strictly write anything, but it does
       // modify the waiters list associated with the waitqueue, which we
       // can think of as a write.
       parent.readsSharedMutableStruct = true;

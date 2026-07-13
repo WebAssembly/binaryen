@@ -1934,8 +1934,11 @@ void WasmBinaryWriter::writeType(Type type) {
           o << S32LEB(BinaryConsts::EncodedType::nullcontref);
           return;
         case HeapType::waitqueue:
+          o << S32LEB(BinaryConsts::EncodedHeapType::waitqueue);
+          return;
         case HeapType::nowaitqueue:
-          break; // No shorthand, encode as ref null
+          o << S32LEB(BinaryConsts::EncodedHeapType::nowaitqueue);
+          return;
       }
     }
     if (type.isNullable()) {
