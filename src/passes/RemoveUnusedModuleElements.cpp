@@ -302,7 +302,7 @@ struct Analyzer {
     // tramples it with a null or with a function of another type, then if we
     // call that index with the right type for A, the trampling causes a trap -
     // so we cannot remove the trampling segment, even though it has nothing
-    // can can be called, forcing us to keep it just to preserve the trap.
+    // that can be called, forcing us to keep it just to preserve the trap.
     //
     // We could be more precise here, as currently we "give up" on analyzing
     // exact overlap, and just stop removing element segments. But such an exact
