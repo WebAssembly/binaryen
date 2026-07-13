@@ -3530,6 +3530,56 @@
     )
   )
 
+  ;; CHECK:      (func $iloop (type $8) (param $0 f32)
+  ;; CHECK-NEXT:  (local $1 f32)
+  ;; CHECK-NEXT:  (local.set $0
+  ;; CHECK-NEXT:   (local.get $1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (loop
+  ;; CHECK-NEXT:     (local.set $1
+  ;; CHECK-NEXT:      (local.get $0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (else
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (loop $label
+  ;; CHECK-NEXT:   (loop
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (br_if $label
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPTIN:      (func $iloop (type $8) (param $0 f32)
+  ;; OPTIN-NEXT:  (local $1 f32)
+  ;; OPTIN-NEXT:  (local.set $0
+  ;; OPTIN-NEXT:   (local.get $1)
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (if
+  ;; OPTIN-NEXT:   (i32.const 0)
+  ;; OPTIN-NEXT:   (then
+  ;; OPTIN-NEXT:    (loop
+  ;; OPTIN-NEXT:     (local.set $1
+  ;; OPTIN-NEXT:      (local.get $0)
+  ;; OPTIN-NEXT:     )
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:   (else
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (loop $label
+  ;; OPTIN-NEXT:   (loop
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:   (br_if $label
+  ;; OPTIN-NEXT:    (i32.const 0)
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT: )
   (func $iloop (param $0 f32)
     ;; Regression test for an infinite loop: the specific cfg here + the
     ;; constraints lead to a situation where, if we were not careful, we would
@@ -3537,6 +3587,8 @@
     ;; end up updating a location to a combination of two constraints {A, B} and
     ;; then end up finding {B, A} in the next cycle, and then alternate those
     ;; two forever. This is fixed by sorting the constraints.
+    ;;
+    ;; (There is nothing to optimize here, we just should not hang or error.)
     (local $1 f32)
     (local.set $0
       (local.get $1)
