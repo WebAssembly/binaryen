@@ -185,9 +185,7 @@ void AndedConstraintSet::approximateOr(const AndedConstraintSet& other) {
   clear();
 }
 
-void AndedConstraintSet::sort() {
-  std::sort(begin(), end());
-}
+void AndedConstraintSet::sort() { std::sort(begin(), end()); }
 
 std::optional<LocalConstraint> LocalConstraint::parse(Expression* curr) {
   auto parseEqZArgument =
