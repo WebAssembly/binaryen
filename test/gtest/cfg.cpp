@@ -172,7 +172,7 @@ TEST_F(CFGTest, CallBlockWithModuleWithoutEH) {
   Module wasm;
   parseWast(wasm, moduleText);
 
-  CFG cfg = CFG::fromFunction(wasm.getFunction("foo"), wasm);
+  CFG cfg = CFG::fromFunction(wasm.getFunction("foo"), &wasm);
 
   std::stringstream ss;
   cfg.print(ss);
