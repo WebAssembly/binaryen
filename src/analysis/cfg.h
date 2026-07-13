@@ -79,6 +79,7 @@ struct CFG {
   const BasicBlock& operator[](size_t i) const { return *(begin() + i); }
 
   static CFG fromFunction(Function* func);
+  static CFG fromFunction(Function* func, Module* wasm);
 
   void print(std::ostream& os, Module* wasm = nullptr) const;
 

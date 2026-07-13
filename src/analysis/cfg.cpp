@@ -23,6 +23,10 @@
 namespace wasm::analysis {
 
 CFG CFG::fromFunction(Function* func) {
+  return CFG::fromFunction(func, nullptr);
+}
+
+CFG CFG::fromFunction(Function* func, Module* wasm) {
   struct CFGBuilder : CFGWalker<CFGBuilder,
                                 UnifiedExpressionVisitor<CFGBuilder>,
                                 std::vector<Expression*>> {
@@ -34,7 +38,11 @@ CFG CFG::fromFunction(Function* func) {
   };
 
   CFGBuilder builder;
-  builder.walkFunction(func);
+  if (wasm) {
+    builder.walkFunctionInModule(func, wasm);
+  } else {
+    builder.walkFunction(func);
+  }
 
   size_t numBlocks = builder.basicBlocks.size();
 
