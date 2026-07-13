@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+// Matchers for EffectAnalyzer
+
 #ifndef WASM_TEST_GTEST_MATCHERS_EFFECTS_H
 #define WASM_TEST_GTEST_MATCHERS_EFFECTS_H
 

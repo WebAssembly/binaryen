@@ -114,6 +114,8 @@ TEST_F(IndirectCallEffectsTest, SrcHasUnknownEffects) {
   auto merged =
     updateEffects(/*oldEffects=*/{{"B", effectsB}}, /*typeMap=*/{{"A", "B"}});
 
+  // $A had unknown effects since it wasn't present in indirectCallEffects. So
+  // $B's effects become unknown too.
   EXPECT_THAT(merged, IsEmpty());
 }
 
@@ -124,6 +126,9 @@ TEST_F(IndirectCallEffectsTest, DestHasUnknownEffects) {
   auto merged =
     updateEffects(/*oldEffects=*/{{"A", effectsA}}, /*typeMap=*/{{"A", "B"}});
 
+  // $B's effects are unknown and $B is not a new type (see the test fixure; $B
+  // already existed in the module), so when $A is merged with $B, the result
+  // still has unknown effects.
   EXPECT_THAT(merged, IsEmpty());
 }
 
@@ -136,6 +141,8 @@ TEST_F(IndirectCallEffectsTest, BothHaveEffects) {
   auto merged = updateEffects(/*oldEffects=*/{{"A", effectsA}, {"B", effectsB}},
                               /*typeMap=*/{{"A", "B"}});
 
+  // $A is rewritten to $B, so $B gains the effects of $A, and $A no longer has
+  // effects.
   EXPECT_THAT(merged,
               UnorderedElementsAre(Pair("B", AllOf(Calls(), WritesMemory()))));
 }
@@ -147,14 +154,23 @@ TEST_F(IndirectCallEffectsTest, MapToNewType) {
   auto merged = updateEffects(/*oldEffects=*/{{"A", effectsA}},
                               /*typeMap=*/{{"A", "new type"}});
 
-  // Pointer comparison
+  // $A is rewritten to a new type that didn't previously exist in the module.
+  // Because the type is brand new, we do *not* treat its absence in
+  // `indirectCallEffects` as 'unknown effects' like in `DestHasUnknownEffects`.
+  // Instead $"new type" just gains $A's effects. We do a pointer comparison
+  // here since the effects object can be re-used unchanged.
   EXPECT_THAT(merged, UnorderedElementsAre(Pair("new type", effectsA)));
 }
 
-TEST_F(IndirectCallEffectsTest, MapToNewTypeNoEffects) {
+TEST_F(IndirectCallEffectsTest, MapToNewTypeUnknownEffects) {
   auto merged = updateEffects(/*oldEffects=*/{},
                               /*typeMap=*/{{"A", "new type"}});
 
+  // Like `MapToNewType`, except the source type $A has unknown effects. Because
+  // $A *is* present in the module, its absence in `indirectCallEffects` does
+  // mean that its effects are unknown (GlobalEffects never computed it, maybe
+  // because $A didn't exist at the time that it ran). As a result $"new type"
+  // has unknown effects.
   EXPECT_THAT(merged, IsEmpty());
 }
 
@@ -180,6 +196,8 @@ TEST_F(IndirectCallEffectsTest, MergeNewTypeAndExistingWithEffects) {
     updateEffects(/*oldEffects=*/{{"A", effectsA}, {"B", effectsB}},
                   /*typeMap=*/{{"A", "new type"}, {"B", "new type"}});
 
+  // Like `BothHaveEffects`, except that the two types are both mapped into one
+  // new type. The new type inherits the effects of both source types.
   EXPECT_THAT(
     merged,
     UnorderedElementsAre(Pair("new type", AllOf(Calls(), WritesMemory()))));
