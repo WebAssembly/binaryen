@@ -281,6 +281,8 @@ GlobalTypeRewriter::rebuildTypes(std::vector<HeapType> types) {
 }
 
 void GlobalTypeRewriter::mapTypes(const TypeMap& oldToNewTypes) {
+  assert(std::all_of(oldToNewTypes.begin(), oldToNewTypes.end(), [this](const auto& pair) { return typeInfo.contains(pair.first); }));
+
   if (!wasm.indirectCallEffects.empty()) {
     wasm.indirectCallEffects =
       updateIndirectCallEffects(wasm, typeInfo, oldToNewTypes);

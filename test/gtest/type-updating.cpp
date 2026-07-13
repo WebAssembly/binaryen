@@ -140,35 +140,6 @@ TEST_F(IndirectCallEffectsTest, BothHaveEffects) {
               UnorderedElementsAre(Pair("B", AllOf(Calls(), WritesMemory()))));
 }
 
-TEST_F(IndirectCallEffectsTest, SrcTypeDoesntExist) {
-  auto effectsA = std::make_shared<EffectAnalyzer>(options, wasm);
-  effectsA->calls = true;
-  auto effectsB = std::make_shared<EffectAnalyzer>(options, wasm);
-  effectsB->writesMemory = true;
-
-  // "new type" doesn't appear in the module but has effects. It may have been
-  // computed by GlobalEffects earlier and later removed by another pass. Merge
-  // its effects as normal.
-  auto merged =
-    updateEffects(/*oldEffects=*/{{"new type", effectsA}, {"B", effectsB}},
-                  /*typeMap=*/{{"new type", "B"}});
-
-  EXPECT_THAT(merged,
-              UnorderedElementsAre(Pair("B", AllOf(Calls(), WritesMemory()))));
-}
-
-TEST_F(IndirectCallEffectsTest, SrcTypeDoesntExistAndNoEffects) {
-  auto effectsB = std::make_shared<EffectAnalyzer>(options, wasm);
-  effectsB->writesMemory = true;
-
-  // This probably doesn't happen in practice. Assume unknown effects for the
-  // source type.
-  auto merged = updateEffects(/*oldEffects=*/{{"B", effectsB}},
-                              /*typeMap=*/{{"new type", "B"}});
-
-  EXPECT_THAT(merged, IsEmpty());
-}
-
 TEST_F(IndirectCallEffectsTest, MapToNewType) {
   auto effectsA = std::make_shared<EffectAnalyzer>(options, wasm);
   effectsA->calls = true;
