@@ -3529,5 +3529,37 @@
       (then)
     )
   )
+
+  (func $iloop (param $0 f32)
+    ;; Regression test for an infinite loop: the specific cfg here + the
+    ;; constraints lead to a situation where, if we were not careful, we would
+    ;; think we have an infinite stream of updates in flow(). Specifically, we
+    ;; end up updating a location to a combination of two constraints {A, B} and
+    ;; then end up finding {B, A} in the next cycle, and then alternate those
+    ;; two forever. This is fixed by sorting the constraints.
+    (local $1 f32)
+    (local.set $0
+      (local.get $1)
+    )
+    (if
+      (i32.const 0)
+      (then
+        (loop
+          (local.set $1
+            (local.get $0)
+          )
+        )
+      )
+      (else
+      )
+    )
+    (loop $label
+      (loop
+      )
+      (br_if $label
+        (i32.const 0)
+      )
+    )
+  )
 )
 

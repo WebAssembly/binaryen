@@ -520,6 +520,64 @@ bool Literal::operator!=(const Literal& other) const {
   return !(*this == other);
 }
 
+bool Literal::operator<(const Literal& other) const {
+  if (type != other.type) {
+    return type.getID() < other.type.getID();
+  }
+  if (type.isBasic()) {
+    switch (type.getBasic()) {
+      case Type::none:
+        return false;
+      case Type::i32:
+      case Type::f32:
+        return i32 < other.i32;
+      case Type::i64:
+      case Type::f64:
+        return i64 < other.i64;
+      case Type::v128:
+        return memcmp(v128, other.v128, 16) < 0;
+      case Type::unreachable:
+        return false;
+    }
+  } else if (type.isRef()) {
+    assert(type.isRef());
+    if (type.isNull()) {
+      return false;
+    }
+    if (type.isFunction()) {
+      return *funcData < *other.funcData;
+    }
+    if (type.isString()) {
+      return std::lexicographical_compare(gcData->values.begin(),
+                                          gcData->values.end(),
+                                          other.gcData->values.begin(),
+                                          other.gcData->values.end());
+    }
+    if (type.isData()) {
+      return gcData < other.gcData;
+    }
+    auto heapType = type.getHeapType();
+    assert(heapType.isBasic());
+    if (heapType.isMaybeShared(HeapType::i31)) {
+      return i32 < other.i32;
+    }
+    if (heapType.isMaybeShared(HeapType::ext)) {
+      if (hasExternPayload() != other.hasExternPayload()) {
+        return hasExternPayload() < other.hasExternPayload();
+      }
+      if (hasExternPayload()) {
+        return getExternPayload() < other.getExternPayload();
+      }
+      return internalize() < other.internalize();
+    }
+    if (heapType.isMaybeShared(HeapType::any)) {
+      return externalize() < other.externalize();
+    }
+    WASM_UNREACHABLE("unexpected type");
+  }
+  WASM_UNREACHABLE("unexpected type");
+}
+
 bool Literal::isNaN() {
   if (type == Type::f32 && std::isnan(getf32())) {
     return true;

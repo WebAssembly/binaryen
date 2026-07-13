@@ -35,6 +35,15 @@ namespace wasm::constraint {
 // A term in a constraint, either a local index or literal value.
 struct Term : public std::variant<Index, Literal> {
   bool operator==(const Term&) const = default;
+  bool operator<(const Term& other) const {
+    if (index() != other.index()) {
+      return index() < other.index();
+    }
+    if (index() == 0) {
+      return std::get<Index>(*this) < std::get<Index>(other);
+    }
+    return std::get<Literal>(*this) < std::get<Literal>(other);
+  }
 };
 
 // A constraint: some operation and some value, like "is equal to 17" or "is
@@ -44,6 +53,12 @@ struct Constraint {
   Term term;
 
   bool operator==(const Constraint&) const = default;
+  bool operator<(const Constraint& other) const {
+    if (op != other.op) {
+      return op < other.op;
+    }
+    return term < other.term;
+  }
 
   Constraint negate() const {
     return Constraint{Abstract::negateRelational(op), term};

@@ -55,6 +55,22 @@ template<typename Parent, typename Iterator> struct ParentIndexIterator {
   bool operator!=(const ParentIndexIterator& other) const {
     return !(*this == other);
   }
+  bool operator<(const ParentIndexIterator& other) const {
+    assert(parent == other.parent);
+    return index < other.index;
+  }
+  bool operator<=(const ParentIndexIterator& other) const {
+    assert(parent == other.parent);
+    return index <= other.index;
+  }
+  bool operator>(const ParentIndexIterator& other) const {
+    assert(parent == other.parent);
+    return index > other.index;
+  }
+  bool operator>=(const ParentIndexIterator& other) const {
+    assert(parent == other.parent);
+    return index >= other.index;
+  }
   Iterator& operator++() {
     ++index;
     return self();
