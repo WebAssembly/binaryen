@@ -22,10 +22,6 @@
 
 namespace wasm::analysis {
 
-CFG CFG::fromFunction(Function* func) {
-  return CFG::fromFunction(func, nullptr);
-}
-
 CFG CFG::fromFunction(Function* func, Module* wasm) {
   struct CFGBuilder : CFGWalker<CFGBuilder,
                                 UnifiedExpressionVisitor<CFGBuilder>,
