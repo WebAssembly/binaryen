@@ -3,7 +3,7 @@
 ;; Test the optimal path of closed-world and traps-never happen, compared to the
 ;; default of open world with trapping.
 
-;; RUN: foreach %s %t wasm-opt --remove-unused-module-elements --closed-world -tnh -all -S -o - | filecheck %s
+;; RUN: foreach %s %t wasm-opt --remove-unused-module-elements --closed-world -tnh -all -S -o - | filecheck %s --check-prefix CLOSED_TNH
 ;; RUN: foreach %s %t wasm-opt --remove-unused-module-elements                     -all -S -o - | filecheck %s --check-prefix OPEN_TRAPS
 
 ;; A table with a single elem with non-constant offset that we can remove.
@@ -14,7 +14,7 @@
 ;; We also require traps-never-happen, as an elem with non-constant offset can
 ;; trap, normally. When both closed world and tnh, we remove elem $elem.
 (module
-  ;; CHECK:      (type $func (func))
+  ;; CLOSED_TNH:      (type $func (func))
   ;; OPEN_TRAPS:      (type $func (func))
   (type $func (func))
 
@@ -24,7 +24,7 @@
   ;; OPEN_TRAPS:      (import "a" "b" (global $offset i32))
   (import "a" "b" (global $offset i32))
 
-  ;; CHECK:      (table $table 6 6 funcref)
+  ;; CLOSED_TNH:      (table $table 6 6 funcref)
   ;; OPEN_TRAPS:      (table $table 6 6 funcref)
   (table $table 6 6 funcref)
 
@@ -40,13 +40,13 @@
     (i32.const 42)
   )
 
-  ;; CHECK:      (export "export" (func $export))
+  ;; CLOSED_TNH:      (export "export" (func $export))
 
-  ;; CHECK:      (func $export (type $func)
-  ;; CHECK-NEXT:  (call_indirect $table (type $func)
-  ;; CHECK-NEXT:   (i32.const 0)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
+  ;; CLOSED_TNH:      (func $export (type $func)
+  ;; CLOSED_TNH-NEXT:  (call_indirect $table (type $func)
+  ;; CLOSED_TNH-NEXT:   (i32.const 0)
+  ;; CLOSED_TNH-NEXT:  )
+  ;; CLOSED_TNH-NEXT: )
   ;; OPEN_TRAPS:      (func $export (type $func)
   ;; OPEN_TRAPS-NEXT:  (call_indirect $table (type $func)
   ;; OPEN_TRAPS-NEXT:   (i32.const 0)
@@ -65,7 +65,7 @@
 ;; traps, and remove elem $elem. (We cannot remove elem $second in either case,
 ;; as it contains a function we have an indirect call for its type.)
 (module
-  ;; CHECK:      (type $func (func))
+  ;; CLOSED_TNH:      (type $func (func))
   ;; OPEN_TRAPS:      (type $func (func))
   (type $func (func))
 
@@ -75,14 +75,14 @@
   ;; OPEN_TRAPS:      (import "a" "b" (global $offset i32))
   (import "a" "b" (global $offset i32))
 
-  ;; CHECK:      (table $table 6 6 funcref)
+  ;; CLOSED_TNH:      (table $table 6 6 funcref)
   ;; OPEN_TRAPS:      (table $table 6 6 funcref)
   (table $table 6 6 funcref)
 
   ;; OPEN_TRAPS:      (elem $elem (global.get $offset) $other)
   (elem $elem (global.get $offset) $other)
 
-  ;; CHECK:      (elem $second (i32.const 0) $export)
+  ;; CLOSED_TNH:      (elem $second (i32.const 0) $export)
   ;; OPEN_TRAPS:      (elem $second (i32.const 0) $export)
   (elem $second (i32.const 0) $export)
 
@@ -95,13 +95,13 @@
     (i32.const 42)
   )
 
-  ;; CHECK:      (export "export" (func $export))
+  ;; CLOSED_TNH:      (export "export" (func $export))
 
-  ;; CHECK:      (func $export (type $func)
-  ;; CHECK-NEXT:  (call_indirect $table (type $func)
-  ;; CHECK-NEXT:   (i32.const 0)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
+  ;; CLOSED_TNH:      (func $export (type $func)
+  ;; CLOSED_TNH-NEXT:  (call_indirect $table (type $func)
+  ;; CLOSED_TNH-NEXT:   (i32.const 0)
+  ;; CLOSED_TNH-NEXT:  )
+  ;; CLOSED_TNH-NEXT: )
   ;; OPEN_TRAPS:      (func $export (type $func)
   ;; OPEN_TRAPS-NEXT:  (call_indirect $table (type $func)
   ;; OPEN_TRAPS-NEXT:   (i32.const 0)
