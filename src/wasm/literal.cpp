@@ -550,13 +550,7 @@ bool Literal::operator<(const Literal& other) const {
   if (type.isFunction()) {
     return *funcData < *other.funcData;
   }
-  if (type.isString()) {
-    return std::lexicographical_compare(gcData->values.begin(),
-                                        gcData->values.end(),
-                                        other.gcData->values.begin(),
-                                        other.gcData->values.end());
-  }
-  if (type.isData()) {
+  if (type.isData() || type.isString()) {
     return gcData < other.gcData;
   }
   auto heapType = type.getHeapType();
