@@ -1317,6 +1317,33 @@
     )
   )
 
+  (func $contadiction-during-flipping
+    (local $x i32)
+    (local $y i32)
+    (local.set $y
+      (i32.const 1)
+    )
+    ;; $x == 0, $y == 1, so they are never equal, and the if body is
+    ;; unreachable. We find this out while applying the secondary facts of a
+    ;; constraint: we add $y == $x, and then apply $x's constraints to $y,
+    ;; ending up in $y with $y == 1 && $y == 0.
+    (if
+      (i32.eq
+        (local.get $y)
+        (local.get $x)
+      )
+      (then
+        ;; This becomes unreachable.
+        (drop
+          (i32.eq
+            (local.get $y)
+            (local.get $x)
+          )
+        )
+      )
+    )
+  )
+
   ;; CHECK:      (func $conditional-br_if (type $0) (param $param i32)
   ;; CHECK-NEXT:  (block $block
   ;; CHECK-NEXT:   (drop
