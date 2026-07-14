@@ -110,4 +110,3 @@ TEST_F(InplaceVectorTest, Insert) {
   EXPECT_EQ(vec.size(), 6u);
   EXPECT_EQ(vec[5], 50);
 }
-
