@@ -364,8 +364,8 @@ enum BrOnCastFlag {
 
 constexpr uint32_t ExactImport = 1 << 5;
 
-constexpr uint32_t HasBackingArrayMask = 1 << 4;
-constexpr uint32_t HasMemoryOrderMask = 1 << 5;
+constexpr uint32_t HasMemoryOrderMask = 1 << 4;
+constexpr uint32_t HasBackingArrayMask = 1 << 5;
 constexpr uint32_t HasMemoryIndexMask = 1 << 6;
 
 constexpr uint8_t HasTableInitializer = 0x40;
