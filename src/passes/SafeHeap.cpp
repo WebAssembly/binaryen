@@ -222,8 +222,7 @@ struct SafeHeap : public Pass {
     }
   }
 
-  bool
-  isPossibleAtomicOperation(Index align, Index bytes, Type type) {
+  bool isPossibleAtomicOperation(Index align, Index bytes, Type type) {
     return align == bytes && type.isInteger();
   }
 
