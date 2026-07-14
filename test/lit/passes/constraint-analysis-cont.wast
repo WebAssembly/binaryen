@@ -3,11 +3,26 @@
 ;; RUN: wasm-opt %s --constraint-analysis -all -S -o - | filecheck %s
 
 (module
+ ;; CHECK:      (type $func (func))
  (type $func (func))
+ ;; CHECK:      (type $cont (cont $func))
  (type $cont (cont $func))
 
+ ;; CHECK:      (tag $tag (type $func))
  (tag $tag (type $func))
 
+ ;; CHECK:      (func $func (type $2) (param $cont (ref $cont))
+ ;; CHECK-NEXT:  (block $out
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (block $in (result (ref $cont))
+ ;; CHECK-NEXT:     (resume $cont (on $tag $in)
+ ;; CHECK-NEXT:      (local.get $cont)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (br $out)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
  (func $func (param $cont (ref $cont))
   ;; Nothing to optimize here, but we should not hit an assert while handling
   ;; the resume and then the br.
