@@ -147,8 +147,8 @@ void AndedConstraintSet::approximateAnd(const Constraint& c) {
   }
 
   if (size() < MaxConstraints) {
-    push_back(c);
-    sort();
+    // Insert into the right place, keeping us sorted.
+    insert(std::upper_bound(begin(), end(), c), c);
     return;
   }
 
@@ -184,8 +184,6 @@ void AndedConstraintSet::approximateOr(const AndedConstraintSet& other) {
   // trivial set of no constraints.
   clear();
 }
-
-void AndedConstraintSet::sort() { std::sort(begin(), end()); }
 
 std::optional<LocalConstraint> LocalConstraint::parse(Expression* curr) {
   auto parseEqZArgument =

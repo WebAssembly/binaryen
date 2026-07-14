@@ -78,6 +78,10 @@ enum Result { True, False, Unknown };
 // the comments below, `x` is used for the thing all the constraints are talking
 // about, which looks like a local, but it could be a global or a struct field
 // or anything else in general.
+//
+// While we are a vector, the order of constraints does not logically matter,
+// and we keep ourselves sorted in a canonical form, so that simple ==, != etc.
+// comparisons work. The canonical order also makes debug printing nicer.
 struct AndedConstraintSet : inplace_vector<Constraint, MaxConstraints> {
   // We could represent a contradiction using two constraints that contradict
   // each other (== 0 && != 0), but for simplicity we mark this explicitly.
@@ -180,12 +184,6 @@ struct AndedConstraintSet : inplace_vector<Constraint, MaxConstraints> {
     setProvesNothing();
     push_back(c);
   }
-
-private:
-  // While we are a vector, the order of constraints does not logically matter.
-  // We keep ourselves sorted in a canonical form, so that simple ==, != etc.
-  // comparisons work. The canonical order also makes debug printing nicer.
-  void sort();
 };
 
 // A local plus a constraint on it.
