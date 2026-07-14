@@ -25,6 +25,7 @@
 #include "cfg/cfg-traversal.h"
 #include "ir/constraint.h"
 #include "ir/drop.h"
+#include "ir/eh-utils.h"
 #include "ir/literal-utils.h"
 #include "ir/local-graph.h"
 #include "ir/properties.h"
@@ -192,7 +193,11 @@ struct ConstraintAnalysis
           optimizeExpression(currp, constraints);
         } else {
           // This is unreachable code: just mark it so.
-          *currp = Builder(*getModule()).makeUnreachable();
+          *currp = getDroppedChildrenAndAppend(
+            *currp,
+            *getModule(),
+            getPassOptions(),
+            Builder(*getModule()).makeUnreachable());
           refinalize = true;
         }
       }
@@ -200,6 +205,7 @@ struct ConstraintAnalysis
 
     if (refinalize) {
       ReFinalize().walkFunctionInModule(getFunction(), getModule());
+      EHUtils::handleBlockNestedPops(getFunction(), *getModule());
     }
   }
 

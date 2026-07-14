@@ -3476,17 +3476,32 @@
   ;; CHECK:      (func $unreachable-loop (type $1)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (unreachable)
-  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (local.set $x
+  ;; CHECK-NEXT:    (loop $loop (result i32)
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; OPTIN:      (func $unreachable-loop (type $1)
   ;; OPTIN-NEXT:  (local $x i32)
   ;; OPTIN-NEXT:  (unreachable)
-  ;; OPTIN-NEXT:  (unreachable)
+  ;; OPTIN-NEXT:  (block
+  ;; OPTIN-NEXT:   (local.set $x
+  ;; OPTIN-NEXT:    (loop $loop (result i32)
+  ;; OPTIN-NEXT:     (i32.const 0)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:   (unreachable)
+  ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT: )
   (func $unreachable-loop
     (local $x i32)
     ;; The entire loop is unreachable. The control flow here should not cause any
-    ;; internal errors, and we can just optimize this to unreachable.
+    ;; internal errors, and we can just optimize this to unreachable (though we
+    ;; keep the local.set, because of non-nullable local validation).
     (unreachable)
     (local.set $x
       (loop $loop (result i32)
