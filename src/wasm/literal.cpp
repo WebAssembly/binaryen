@@ -522,6 +522,8 @@ bool Literal::operator!=(const Literal& other) const {
 
 bool Literal::operator<(const Literal& other) const {
   if (type != other.type) {
+    // This is not deterministic between runs, and also FuncData, below. If this
+    // matters some day, we would need to find a stable way to compute it.
     return type.getID() < other.type.getID();
   }
 
