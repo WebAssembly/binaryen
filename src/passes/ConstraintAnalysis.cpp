@@ -57,8 +57,11 @@ struct Info {
   BasicBlockConstraintMap startConstraints;
 
   void dump(Function* func) {
-    std::cout << "Info{" << actions.size() << ", " << brancher << ", "
-              << startConstraints << "}\n";
+    std::cout << "Info{" << actions.size();
+    if (brancher) {
+      std::cout << ", " << *brancher;
+    }
+    std::cout << ", " << startConstraints << "}\n";
   }
 };
 
@@ -123,6 +126,7 @@ struct ConstraintAnalysis
   // Flow infos around until we have inferred all we can about the constraints
   // in each location.
   void flow() {
+    dumpCFG("waka");
     // Start from the entry as the only reachable block. That block has incoming
     // values - defaults - for each var.
     entry->contents.startConstraints.setReachable();
