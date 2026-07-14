@@ -2565,8 +2565,7 @@ class BranchHintPreservation(TestCaseHandler):
 # The global list of all test case handlers
 testcase_handlers = [
     FuzzExec(),
-]
-'''    CompareVMs(),
+    CompareVMs(),
     CheckDeterminism(),
     Wasm2JS(),
     TrapsNeverHappen(),
@@ -2580,7 +2579,6 @@ testcase_handlers = [
     PreserveImportsExportsJS(),
     BranchHintPreservation(),
 ]
-'''
 
 
 # Do one test, given an input file for -ttf and some optimizations to run

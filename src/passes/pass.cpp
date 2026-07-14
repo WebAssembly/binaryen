@@ -738,8 +738,10 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
   addIfNoDWARFIssues(
     "remove-unused-names");           // remove-unused-brs opens opportunities
   addIfNoDWARFIssues("merge-blocks"); // clean up remove-unused-brs new blocks
-  // late propagation
+  // late propagation (and, optionally, constraint analysis which can generate
+  // more constants to propagate)
   if (options.optimizeLevel >= 3 || options.shrinkLevel >= 2) {
+    addIfNoDWARFIssues("constraint-analysis");
     addIfNoDWARFIssues("precompute-propagate");
   } else {
     addIfNoDWARFIssues("precompute");
