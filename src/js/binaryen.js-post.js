@@ -3382,8 +3382,8 @@ Module['readBinaryWithFeatures'] = function(data, features) {
   return wrapModule(ptr);
 };
 
-// Parses s-expression text format to a module with the given feature set enabled, defaulting to MVP
-Module['parseText'] = function(text, features = Module['Features']['MVP']) {
+// Parses s-expression text format to a module with the given feature set enabled
+Module['parseText'] = function(text, features) {
   const buffer = _malloc(text.length + 1);
   stringToAscii(text, buffer);
   const ptr = features === undefined
