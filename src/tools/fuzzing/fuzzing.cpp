@@ -6613,7 +6613,6 @@ HeapType TranslateToFuzzReader::getSubType(HeapType type) {
         return pick(options).getBasic(share);
       }
       case HeapType::any: {
-        assert(wasm.features.hasGC());
         return pick(HeapTypes::any,
                     HeapTypes::eq,
                     HeapTypes::i31,
@@ -6623,7 +6622,6 @@ HeapType TranslateToFuzzReader::getSubType(HeapType type) {
           .getBasic(share);
       }
       case HeapType::eq:
-        assert(wasm.features.hasGC());
         return pick(HeapTypes::eq,
                     HeapTypes::i31,
                     HeapTypes::struct_,
@@ -6643,8 +6641,7 @@ HeapType TranslateToFuzzReader::getSubType(HeapType type) {
         assert(share == Unshared);
         return HeapType::string;
       case HeapType::waitqueue:
-        return pick(HeapType(HeapType::waitqueue),
-                    HeapType(HeapType::nowaitqueue))
+        return pick(HeapTypes::waitqueue, HeapTypes::nowaitqueue)
           .getBasic(share);
       case HeapType::nowaitqueue:
       case HeapType::none:

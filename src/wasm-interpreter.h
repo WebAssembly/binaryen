@@ -2350,10 +2350,12 @@ public:
 
   Flow visitWaitqueueNew(WaitqueueNew* curr) {
     return self()->makeGCData(
-      {}, Type(HeapType(HeapType::waitqueue).getBasic(Shared), NonNullable));
+      {}, Type(HeapTypes::waitqueue.getBasic(Shared), NonNullable));
   }
 
   Flow visitWaitqueueNotify(WaitqueueNotify* curr) {
+    // See the TODO in `visitStructWait`. We only implement cases that don't
+    // block.
     VISIT(waitqueue, curr->waitqueue)
     VISIT(count, curr->count)
     auto data = waitqueue.getSingleValue().getGCData();

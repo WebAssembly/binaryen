@@ -359,9 +359,9 @@ std::optional<HeapType> getBasicHeapTypeLUB(HeapType::BasicHeapType a,
     case HeapType::string:
     case HeapType::waitqueue:
       // As the last non-bottom types in their hierarchies, it should not be
-      // possible for `a` to be array or string. We know that `b` != `a` and
-      // that `b` is not bottom, but that `b` and `a` are in the same hierarchy,
-      // so there are no possible value for `b`.
+      // possible for `a` to be array, string, or waitqueue. We know that `b` !=
+      // `a` and that `b` is not bottom, but that `b` and `a` are in the same
+      // hierarchy, so there are no possible value for `b`.
     case HeapType::none:
     case HeapType::noext:
     case HeapType::nofunc:
@@ -1295,7 +1295,7 @@ FeatureSet HeapType::getFeatures() const {
             return;
           case HeapType::waitqueue:
           case HeapType::nowaitqueue:
-            feats |= FeatureSet::SharedEverything;
+            feats |= FeatureSet::ReferenceTypes | FeatureSet::SharedEverything;
             return;
           case HeapType::noext:
           case HeapType::nofunc:
@@ -1603,9 +1603,6 @@ std::ostream& TypePrinter::print(Type type) {
         case HeapType::waitqueue:
           os << "waitqueueref";
           break;
-        case HeapType::nowaitqueue:
-          os << "nullwaitqueueref";
-          break;
         case HeapType::none:
           os << "nullref";
           break;
@@ -1620,6 +1617,9 @@ std::ostream& TypePrinter::print(Type type) {
           break;
         case HeapType::noexn:
           os << "nullexnref";
+          break;
+        case HeapType::nowaitqueue:
+          os << "nullwaitqueueref";
           break;
       }
       if (type.isExact()) {
@@ -1684,9 +1684,6 @@ std::ostream& TypePrinter::print(HeapType type) {
       case HeapType::waitqueue:
         os << "waitqueue";
         break;
-      case HeapType::nowaitqueue:
-        os << "nowaitqueue";
-        break;
       case HeapType::none:
         os << "none";
         break;
@@ -1701,6 +1698,9 @@ std::ostream& TypePrinter::print(HeapType type) {
         break;
       case HeapType::noexn:
         os << "noexn";
+        break;
+      case HeapType::nowaitqueue:
+        os << "nowaitqueue";
         break;
     }
     if (type.isShared()) {

@@ -94,14 +94,9 @@
 
   ;; CHECK:      (func $notify-unreachable (type $0)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block ;; (replaces unreachable WaitqueueNotify we can't emit)
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (unreachable)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.const 1)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   (waitqueue.notify
   ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -154,27 +149,17 @@
 
   ;; CHECK:      (func $notify-none (type $0)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block ;; (replaces unreachable WaitqueueNotify we can't emit)
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.null (shared nowaitqueue))
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.const 1)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   (waitqueue.notify
+  ;; CHECK-NEXT:    (ref.null (shared nowaitqueue))
+  ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; RTRIP:      (func $notify-none (type $0)
   ;; RTRIP-NEXT:  (drop
-  ;; RTRIP-NEXT:   (block ;; (replaces unreachable WaitqueueNotify we can't emit)
-  ;; RTRIP-NEXT:    (drop
-  ;; RTRIP-NEXT:     (ref.null (shared nowaitqueue))
-  ;; RTRIP-NEXT:    )
-  ;; RTRIP-NEXT:    (drop
-  ;; RTRIP-NEXT:     (i32.const 1)
-  ;; RTRIP-NEXT:    )
-  ;; RTRIP-NEXT:    (unreachable)
+  ;; RTRIP-NEXT:   (waitqueue.notify
+  ;; RTRIP-NEXT:    (ref.null (shared nowaitqueue))
+  ;; RTRIP-NEXT:    (i32.const 1)
   ;; RTRIP-NEXT:   )
   ;; RTRIP-NEXT:  )
   ;; RTRIP-NEXT: )
