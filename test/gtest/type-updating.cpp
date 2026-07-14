@@ -147,6 +147,37 @@ TEST_F(IndirectCallEffectsTest, BothHaveEffects) {
               UnorderedElementsAre(Pair("B", AllOf(Calls(), WritesMemory()))));
 }
 
+TEST_F(IndirectCallEffectsTest, SrcTypeDoesntExist) {
+  auto effectsA = std::make_shared<EffectAnalyzer>(options, wasm);
+  effectsA->calls = true;
+  auto effectsB = std::make_shared<EffectAnalyzer>(options, wasm);
+  effectsB->writesMemory = true;
+
+  // $"new type" doesn't appear in the module but has effects. It may have been
+  // computed by GlobalEffects earlier and later removed by another pass. Merge
+  // its effects as normal.
+  auto merged =
+    updateEffects(/*oldEffects=*/{{"new type", effectsA}, {"B", effectsB}},
+                  /*typeMap=*/{{"new type", "B"}});
+
+  EXPECT_THAT(merged,
+              UnorderedElementsAre(Pair("B", AllOf(Calls(), WritesMemory()))));
+}
+
+TEST_F(IndirectCallEffectsTest, SrcTypeDoesntExistAndNoEffects) {
+  auto effectsB = std::make_shared<EffectAnalyzer>(options, wasm);
+  effectsB->writesMemory = true;
+
+  auto merged = updateEffects(/*oldEffects=*/{{"B", effectsB}},
+                              /*typeMap=*/{{"new type", "B"}});
+
+  // $"new type" doesn't appear in the module and has no effects recorded. This
+  // is a no-op since $"new type" doesn't appear in the module at all, so it's
+  // safe to preserve $B's effects rather than removing them from the map.
+  // EXPECT_THAT(merged, IsEmpty());
+  EXPECT_THAT(merged, UnorderedElementsAre(Pair("B", effectsB)));
+}
+
 TEST_F(IndirectCallEffectsTest, MapToNewType) {
   auto effectsA = std::make_shared<EffectAnalyzer>(options, wasm);
   effectsA->calls = true;

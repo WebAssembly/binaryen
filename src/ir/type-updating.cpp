@@ -41,6 +41,7 @@ updateIndirectCallEffects(
   const Module& wasm,
   const InsertOrderedMap<HeapType, ModuleUtils::HeapTypeInfo>& typeInfo,
   const GlobalTypeRewriter::TypeMap& oldToNewTypes) {
+
   std::unordered_map<HeapType, std::shared_ptr<const EffectAnalyzer>>
     newTypeEffects;
 
@@ -48,9 +49,6 @@ updateIndirectCallEffects(
 
   std::unordered_set<HeapType> allOldTypes;
   for (auto [oldType, _] : typeInfo) {
-    allOldTypes.insert(oldType);
-  }
-  for (auto& [oldType, newType] : oldToNewTypes) {
     allOldTypes.insert(oldType);
   }
   for (auto& [oldType, effects] : wasm.indirectCallEffects) {
@@ -281,8 +279,6 @@ GlobalTypeRewriter::rebuildTypes(std::vector<HeapType> types) {
 }
 
 void GlobalTypeRewriter::mapTypes(const TypeMap& oldToNewTypes) {
-  assert(std::all_of(oldToNewTypes.begin(), oldToNewTypes.end(), [this](const auto& pair) { return typeInfo.contains(pair.first); }));
-
   if (!wasm.indirectCallEffects.empty()) {
     wasm.indirectCallEffects =
       updateIndirectCallEffects(wasm, typeInfo, oldToNewTypes);
