@@ -137,13 +137,22 @@ void AndedConstraintSet::approximateAnd(const Constraint& c) {
   auto result = proves(c);
   if (result == True) {
     // We already prove c to be true, so it adds nothing.
-    // TODO: we could also see if c proves us true, and replace things we
-    //       already have with c when possible
     return;
   } else if (result == False) {
     // We are now a contradiction.
     isContradiction = true;
     return;
+  }
+
+  // If c proves something already present to be true, it can just replace it.
+  for (auto& existing : *this) {
+    auto result = provesPair(c, existing);
+    if (result == True) {
+      existing = c;
+      return;
+    }
+    // There cannot be a contradiction here, because we checked for that above.
+    assert(result != False);
   }
 
   if (size() < MaxConstraints) {
