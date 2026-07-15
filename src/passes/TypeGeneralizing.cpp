@@ -928,7 +928,7 @@ struct TypeGeneralizing : WalkerPass<PostWalker<TypeGeneralizing>> {
     runner.add("dce");
     runner.runOnFunction(func);
 
-    auto cfg = CFG::fromFunction(func);
+    auto cfg = CFG::fromFunction(func, wasm);
     DBG(cfg.print(std::cerr));
     TransferFn txfn(*wasm, func, cfg);
     MonotoneCFGAnalyzer analyzer(txfn.lattice, txfn, cfg);
