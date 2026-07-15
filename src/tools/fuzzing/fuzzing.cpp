@@ -906,16 +906,20 @@ void TranslateToFuzzReader::finalizeMemory() {
   }
   memory->initial = std::max(memory->initial, fuzzParams->USABLE_MEMORY);
   // Avoid an unlimited memory size, which would make fuzzing very difficult
-  // as different VMs will run out of system memory in different ways.
-  if (memory->max == Memory::kUnlimitedSize) {
+  // as different VMs will run out of system memory in different ways. Also use
+  // the initial memory size as the maximum, if the initial is now larger
+  // (which can happen as we compute the initial size, above: this is where we
+  // update the maximum to make sense relative to that new initial size).
+  if (memory->max == Memory::kUnlimitedSize || memory->max < memory->initial) {
     memory->max = memory->initial;
   }
-  if (memory->max <= memory->initial) {
+  if (memory->max == memory->initial && oneIn(2)) {
     // To allow growth to work (which a testcase may assume), try to make the
-    // maximum larger than the initial.
+    // maximum larger than the initial, some of the time.
     // TODO: scan the wasm for grow instructions?
-    memory->max =
-      std::min(Address(memory->initial + 1), Address(memory->maxSize32()));
+    memory->max = std::min(
+      Address(memory->initial + 1),
+      Address(memory->is64() ? memory->maxSize64() : memory->maxSize32()));
   }
 
   if (!preserveImportsAndExports) {
