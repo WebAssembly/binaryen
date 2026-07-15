@@ -138,8 +138,8 @@ public:
       : wasm::ParentIndexIterator<inplace_vector<T, N>*, Iterator>{parent,
                                                                    index} {}
 
-    T& operator*() { return (*this->parent)[this->index]; }
-    T* operator->() { return &(*this->parent)[this->index]; }
+    T& operator*() const { return (*this->parent)[this->index]; }
+    T* operator->() const { return &(*this->parent)[this->index]; }
   };
 
   struct ConstIterator
