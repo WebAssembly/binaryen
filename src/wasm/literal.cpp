@@ -73,8 +73,6 @@ Literal::Literal(Type type) : type(type) {
 
   if (type.isRef() && type.getHeapType().isMaybeShared(HeapType::waitqueue)) {
     assert(type.isNonNullable());
-    new (&gcData) std::shared_ptr<GCData>(
-      std::make_shared<GCData>(Literals{Literal(int32_t{1})}));
     return;
   }
 
@@ -192,7 +190,6 @@ Literal::Literal(const Literal& other) : type(other.type) {
     case HeapType::ext:
     case HeapType::any:
     case HeapType::waitqueue:
-    case HeapType::nowaitqueue:
       // Externalized or internalized reference/payload.
       new (&gcData) std::shared_ptr<GCData>(other.gcData);
       return;
@@ -201,6 +198,7 @@ Literal::Literal(const Literal& other) : type(other.type) {
     case HeapType::nofunc:
     case HeapType::noexn:
     case HeapType::nocont:
+    case HeapType::nowaitqueue:
       WASM_UNREACHABLE("null literals should already have been handled");
     case HeapType::eq:
     case HeapType::func:
@@ -719,6 +717,9 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
         case HeapType::nocont:
           o << "nullcontref";
           break;
+        case HeapType::nowaitqueue:
+          o << "nullwaitqueue";
+          break;
         case HeapType::any: {
           auto data = literal.getGCData();
           assert(data->values.size() == 1);
@@ -766,14 +767,8 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
           }
           break;
         }
-        case HeapType::waitqueue:
-        case HeapType::nowaitqueue: {
-          auto data = literal.getGCData();
-          if (!data) {
-            o << "nullwaitqueue";
-          } else {
-            o << "waitqueue(" << data << ")";
-          }
+        case HeapType::waitqueue: {
+          o << "waitqueue";
           break;
         }
       }

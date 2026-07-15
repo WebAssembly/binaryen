@@ -581,18 +581,6 @@ public:
     return popConstrainedChildren(children);
   }
 
-  Result<> visitWaitqueueNew(WaitqueueNew* curr) {
-    std::vector<Child> children;
-    ConstraintCollector{builder, children}.visitWaitqueueNew(curr);
-    return popConstrainedChildren(children);
-  }
-
-  Result<> visitWaitqueueNotify(WaitqueueNotify* curr) {
-    std::vector<Child> children;
-    ConstraintCollector{builder, children}.visitWaitqueueNotify(curr);
-    return popConstrainedChildren(children);
-  }
-
   Result<> visitArrayGet(ArrayGet* curr,
                          std::optional<HeapType> ht = std::nullopt) {
     std::vector<Child> children;
@@ -2373,7 +2361,6 @@ Result<> IRBuilder::makeStructWait(HeapType type, Index index) {
 
 Result<> IRBuilder::makeWaitqueueNew() {
   WaitqueueNew curr(wasm.allocator);
-  CHECK_ERR(ChildPopper{*this}.visitWaitqueueNew(&curr));
   push(builder.makeWaitqueueNew());
   return Ok{};
 }

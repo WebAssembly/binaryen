@@ -786,7 +786,7 @@ void TranslateToFuzzReader::setupGlobals() {
       if (!FindAll<RefAs>(global->init).list.empty() ||
           !FindAll<ContNew>(global->init).list.empty()) {
         // When creating this initial value we ended up emitting a RefAs, which
-        // means we had to stop in the middle of an overly-nested struct or
+        // means we had to stop in the middle of an uninhabitable type, or an overly-nested struct or
         // array, which we can break out of using ref.as_non_null of a nullable
         // ref. That traps in normal code, which is bad enough, but it does not
         // even validate in a global. Switch to something safe instead.
@@ -4344,6 +4344,8 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
     case HeapType::waitqueue: {
       if (share == Unshared) {
         // Unshared waitqueue is uninhabited. Create a null instead.
+        // This is invalid if we're in a non-function context (ref.as_non_null is not a constant expression),
+        // but this will be fixed up by the caller (see `setupGlobals`).
         auto null =
           builder.makeRefNull(HeapType(HeapType::waitqueue).getBasic(share));
         if (!type.isNullable()) {
@@ -6412,6 +6414,9 @@ Type TranslateToFuzzReader::getSingleConcreteType() {
                      Type(HeapType::struct_, NonNullable),
                      Type(HeapType::array, Nullable),
                      Type(HeapType::array, NonNullable))
+                .add(FeatureSet::ReferenceTypes | FeatureSet::SharedEverything,
+                     Type(HeapTypes::sharedwaitqueue, Nullable),
+                     Type(HeapTypes::sharedwaitqueue, NonNullable))
                 .add(FeatureSet::Strings,
                      Type(HeapType::string, Nullable),
                      Type(HeapType::string, NonNullable)));
@@ -6438,6 +6443,9 @@ Type TranslateToFuzzReader::getReferenceType() {
                      Type(HeapType::struct_, NonNullable),
                      Type(HeapType::array, Nullable),
                      Type(HeapType::array, NonNullable))
+                .add(FeatureSet::ReferenceTypes | FeatureSet::GC | FeatureSet::SharedEverything,
+                     Type(HeapTypes::sharedwaitqueue, Nullable),
+                     Type(HeapTypes::sharedwaitqueue, NonNullable))
                 .add(FeatureSet::Strings,
                      Type(HeapType::string, Nullable),
                      Type(HeapType::string, NonNullable)));
@@ -6641,7 +6649,7 @@ HeapType TranslateToFuzzReader::getSubType(HeapType type) {
         assert(share == Unshared);
         return HeapType::string;
       case HeapType::waitqueue:
-        return pick(HeapTypes::waitqueue, HeapTypes::nowaitqueue)
+        return pick(HeapTypes::sharedwaitqueue, HeapTypes::sharednowaitqueue)
           .getBasic(share);
       case HeapType::nowaitqueue:
       case HeapType::none:

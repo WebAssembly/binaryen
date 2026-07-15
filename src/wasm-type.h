@@ -630,13 +630,13 @@ constexpr HeapType struct_ = HeapType::struct_;
 constexpr HeapType array = HeapType::array;
 constexpr HeapType exn = HeapType::exn;
 constexpr HeapType string = HeapType::string;
-constexpr HeapType waitqueue = HeapType::waitqueue;
+constexpr HeapType sharedwaitqueue = HeapType(HeapType::waitqueue).getBasic(Shared);
 constexpr HeapType none = HeapType::none;
 constexpr HeapType noext = HeapType::noext;
 constexpr HeapType nofunc = HeapType::nofunc;
 constexpr HeapType nocont = HeapType::nocont;
 constexpr HeapType noexn = HeapType::noexn;
-constexpr HeapType nowaitqueue = HeapType::nowaitqueue;
+constexpr HeapType sharednowaitqueue = HeapType(HeapType::nowaitqueue).getBasic(Shared);
 
 // Certain heap types are used by standard operations. Provide central accessors
 // for them to avoid having to build them everywhere they are used.

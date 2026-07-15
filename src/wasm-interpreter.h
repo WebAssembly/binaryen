@@ -2350,7 +2350,7 @@ public:
 
   Flow visitWaitqueueNew(WaitqueueNew* curr) {
     return self()->makeGCData(
-      {}, Type(HeapTypes::waitqueue.getBasic(Shared), NonNullable));
+      {}, Type(HeapTypes::sharedwaitqueue, NonNullable));
   }
 
   Flow visitWaitqueueNotify(WaitqueueNotify* curr) {

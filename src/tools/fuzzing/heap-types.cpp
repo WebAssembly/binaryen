@@ -343,7 +343,14 @@ struct HeapTypeGeneratorImpl {
       if (features.hasStackSwitching() && share == Unshared) {
         bottoms.push_back(HeapType::nocont);
       }
-      return rand.pick(bottoms).getBasic(share);
+      if (features.hasSharedEverything()) {
+        bottoms.push_back(HeapType::nowaitqueue);
+      }
+      auto ht = rand.pick(bottoms);
+      if (ht == HeapType::nowaitqueue && features.hasSharedEverything()) {
+        share = Shared;
+      }
+      return ht.getBasic(share);
     }
 
     // Sometimes emit shared in unshared contexts.
@@ -365,7 +372,13 @@ struct HeapTypeGeneratorImpl {
     if (features.hasExceptionHandling() && share == Unshared) {
       options.push_back(HeapType::exn);
     }
+    if (features.hasSharedEverything()) {
+      options.push_back(HeapType::waitqueue);
+    }
     auto ht = rand.pick(options);
+    if (ht == HeapType::waitqueue && features.hasSharedEverything()) {
+      share = Shared;
+    }
     return ht.getBasic(share);
   }
 
@@ -753,7 +766,7 @@ struct HeapTypeGeneratorImpl {
       case HeapType::waitqueue:
         break;
       case HeapType::nowaitqueue:
-        candidates.push_back(HeapTypes::waitqueue.getBasic(share));
+        candidates.push_back(HeapTypes::sharedwaitqueue.getBasic(share));
         break;
       case HeapType::none:
         return pickSubAny(share);
@@ -1350,6 +1363,9 @@ bool isUninhabitable(HeapType type,
                      std::unordered_set<HeapType>& visiting) {
   switch (type.getKind()) {
     case HeapTypeKind::Basic:
+      if (type.getBasic(Unshared) == HeapType::BasicHeapType::waitqueue && type.getShared() == Unshared) {
+        return true;
+      }
       return false;
     case HeapTypeKind::Func:
     case HeapTypeKind::Cont:

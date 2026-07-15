@@ -1037,7 +1037,7 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
     }
 
     note(&curr->ref, Type(*ht, Nullable));
-    note(&curr->waitqueue, Type(HeapType::waitqueue, Nullable));
+    note(&curr->waitqueue, Type(HeapTypes::sharedwaitqueue, Nullable));
     note(&curr->expected, Type(Type::BasicType::i32));
     note(&curr->timeout, Type(Type::BasicType::i64));
   }
@@ -1045,7 +1045,7 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
   void visitWaitqueueNew(WaitqueueNew* curr) {}
 
   void visitWaitqueueNotify(WaitqueueNotify* curr) {
-    note(&curr->waitqueue, Type(HeapType::waitqueue, Nullable));
+    note(&curr->waitqueue, Type(HeapTypes::sharedwaitqueue, Nullable));
     note(&curr->count, Type(Type::BasicType::i32));
   }
 

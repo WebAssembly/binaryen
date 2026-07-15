@@ -892,11 +892,10 @@ std::optional<HeapType> HeapType::getSuperType() const {
       case exn:
       case noexn:
       case waitqueue:
+      case nowaitqueue:
         return {};
       case string:
         return HeapType(ext).getBasic(share);
-      case nowaitqueue:
-        return HeapType(waitqueue).getBasic(share);
       case eq:
         return HeapType(any).getBasic(share);
       case i31:
