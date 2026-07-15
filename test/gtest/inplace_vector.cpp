@@ -84,3 +84,29 @@ TEST_F(InplaceVectorTest, EraseIf) {
   EXPECT_EQ(erased, 3u);
   EXPECT_TRUE(vec.empty());
 }
+
+TEST_F(InplaceVectorTest, Insert) {
+  inplace_vector<int, 6> vec{10, 30, 40};
+
+  // Insert single element in middle (20 at index 1)
+  auto it = vec.insert(vec.begin() + 1, 20);
+  EXPECT_EQ(*it, 20);
+  EXPECT_EQ(vec.size(), 4u);
+  EXPECT_EQ(vec[0], 10);
+  EXPECT_EQ(vec[1], 20);
+  EXPECT_EQ(vec[2], 30);
+  EXPECT_EQ(vec[3], 40);
+
+  // Insert at beginning (5 at index 0)
+  it = vec.insert(vec.begin(), 5);
+  EXPECT_EQ(*it, 5);
+  EXPECT_EQ(vec.size(), 5u);
+  EXPECT_EQ(vec[0], 5);
+  EXPECT_EQ(vec[1], 10);
+
+  // Insert at end (50 at index 5)
+  it = vec.insert(vec.end(), 50);
+  EXPECT_EQ(*it, 50);
+  EXPECT_EQ(vec.size(), 6u);
+  EXPECT_EQ(vec[5], 50);
+}

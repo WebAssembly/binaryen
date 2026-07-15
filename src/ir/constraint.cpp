@@ -147,13 +147,16 @@ void AndedConstraintSet::approximateAnd(const Constraint& c) {
   }
 
   if (size() < MaxConstraints) {
-    push_back(c);
+    // Insert into the right place, keeping us sorted.
+    insert(std::upper_bound(begin(), end(), c), c);
     return;
   }
 
   // Otherwise, just do not add this one.
   // TODO: We could try to be clever and see if one of the existing ones makes
-  //       more sense to drop.
+  //       more sense to drop. In particular, we should prefer "better" ones
+  //       like > over >= and so forth (sorting more precise ones earlier may be
+  //       useful to implement that).
 }
 
 void AndedConstraintSet::approximateOr(const AndedConstraintSet& other) {

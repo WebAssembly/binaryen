@@ -35,6 +35,15 @@ namespace wasm::constraint {
 // A term in a constraint, either a local index or literal value.
 struct Term : public std::variant<Index, Literal> {
   bool operator==(const Term&) const = default;
+  bool operator<(const Term& other) const {
+    if (index() != other.index()) {
+      return index() < other.index();
+    }
+    if (index() == 0) {
+      return std::get<Index>(*this) < std::get<Index>(other);
+    }
+    return std::get<Literal>(*this) < std::get<Literal>(other);
+  }
 };
 
 // A constraint: some operation and some value, like "is equal to 17" or "is
@@ -44,6 +53,12 @@ struct Constraint {
   Term term;
 
   bool operator==(const Constraint&) const = default;
+  bool operator<(const Constraint& other) const {
+    if (op != other.op) {
+      return op < other.op;
+    }
+    return term < other.term;
+  }
 
   Constraint negate() const {
     return Constraint{Abstract::negateRelational(op), term};
@@ -63,6 +78,10 @@ enum Result { True, False, Unknown };
 // the comments below, `x` is used for the thing all the constraints are talking
 // about, which looks like a local, but it could be a global or a struct field
 // or anything else in general.
+//
+// While we are a vector, the order of constraints does not logically matter,
+// and we keep ourselves sorted in a canonical form, so that simple ==, != etc.
+// comparisons work. The canonical order also makes debug printing nicer.
 struct AndedConstraintSet : inplace_vector<Constraint, MaxConstraints> {
   // We could represent a contradiction using two constraints that contradict
   // each other (== 0 && != 0), but for simplicity we mark this explicitly.
