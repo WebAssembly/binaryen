@@ -1317,6 +1317,69 @@
     )
   )
 
+  ;; CHECK:      (func $contadiction-during-flipping (type $1)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (local $y i32)
+  ;; CHECK-NEXT:  (local.set $y
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.eq
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPTIN:      (func $contadiction-during-flipping (type $1)
+  ;; OPTIN-NEXT:  (local $x i32)
+  ;; OPTIN-NEXT:  (local $y i32)
+  ;; OPTIN-NEXT:  (local.set $y
+  ;; OPTIN-NEXT:   (i32.const 1)
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (if
+  ;; OPTIN-NEXT:   (i32.eq
+  ;; OPTIN-NEXT:    (local.get $x)
+  ;; OPTIN-NEXT:    (local.get $y)
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:   (then
+  ;; OPTIN-NEXT:    (drop
+  ;; OPTIN-NEXT:     (unreachable)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT: )
+  (func $contadiction-during-flipping
+    (local $x i32)
+    (local $y i32)
+    (local.set $y
+      (i32.const 1)
+    )
+    ;; $x == 0, $y == 1, so they are never equal, and the if body is
+    ;; unreachable. We find this out while applying the secondary facts of a
+    ;; constraint: we add $y == $x, and then apply $x's constraints to $y,
+    ;; ending up in $y with $y == 1 && $y == 0.
+    (if
+      (i32.eq
+        (local.get $y)
+        (local.get $x)
+      )
+      (then
+        ;; This becomes unreachable.
+        (drop
+          (i32.eq
+            (local.get $y)
+            (local.get $x)
+          )
+        )
+      )
+    )
+  )
+
   ;; CHECK:      (func $conditional-br_if (type $0) (param $param i32)
   ;; CHECK-NEXT:  (block $block
   ;; CHECK-NEXT:   (drop

@@ -330,6 +330,9 @@ void BasicBlockConstraintMap::approximateAndInternal(Index index,
                                                      const Constraint& c,
                                                      bool flip,
                                                      bool isCopy) {
+  // We should not be applying constraints when already unreachable.
+  assert(!unreachable);
+
   Constraint actual = c;
   if (flip) {
     LocalConstraint flipped{index, c};
@@ -377,6 +380,10 @@ void BasicBlockConstraintMap::approximateAndInternal(Index index,
   // flipped one too.
   if (!flip && std::holds_alternative<Index>(actual.term)) {
     approximateAndInternal(index, actual, true, isCopy);
+    if (unreachable) {
+      // We just found a contradiction.
+      return;
+    }
   }
 
   // If this constraint is simply "== x", then we are equal to that other local
@@ -386,6 +393,9 @@ void BasicBlockConstraintMap::approximateAndInternal(Index index,
       if (actual.op == Abstract::Eq) {
         for (auto& otherC : get(*other)) {
           approximateAndInternal(index, otherC, false, true);
+          if (unreachable) {
+            return;
+          }
         }
       }
     }
