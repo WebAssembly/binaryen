@@ -193,6 +193,7 @@ struct ConstraintAnalysis
     auto* func = getFunction();
     for (Index i = func->getVarIndexBase(); i < func->getNumLocals(); i++) {
       if (!relevantLocals[i]) {
+        // No point to apply a constraint to an irrelevant local.
         continue;
       }
       auto type = func->getLocalType(i);
@@ -381,6 +382,7 @@ struct ConstraintAnalysis
                           BasicBlockConstraintMap& constraints) {
     if (auto* set = curr->dynCast<LocalSet>()) {
       if (!relevantLocals[set->index]) {
+        // No point to apply a constraint to an irrelevant local.
         return;
       }
       if (Properties::isSingleConstantExpression(set->value)) {
