@@ -1370,13 +1370,107 @@
             ;; contradiction, so it is unreachable. We optimize to unreachable
             ;; here, even though this is a Binary that we do not have anything
             ;; to do with otherwise (no constraint on a local is implied by this
-            ;; expression).
+            ;; expression). This checks that we optimize unreachability even
+            ;; when it is caused by locals that are not outside of if
+            ;; conditions.
             (drop
               (i32.add
                 (i32.const 10)
                 (i32.const 20)
               )
             )
+          )
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $conditional-binary-contradiction-other-default (type $1)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPTIN:      (func $conditional-binary-contradiction-other-default (type $1)
+  ;; OPTIN-NEXT:  (local $x i32)
+  ;; OPTIN-NEXT:  (if
+  ;; OPTIN-NEXT:   (local.get $x)
+  ;; OPTIN-NEXT:   (then
+  ;; OPTIN-NEXT:    (drop
+  ;; OPTIN-NEXT:     (i32.const 30)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT: )
+  (func $conditional-binary-contradiction-other-default
+    (local $x i32)
+    ;; As above, but now with a single if. The contradiction tested is
+    ;; between the default value and the if condition.
+    (if
+      (local.get $x)
+      (then
+        (drop
+          ;; This is unreachable.
+          (i32.add
+            (i32.const 10)
+            (i32.const 20)
+          )
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $conditional-binary-contradiction-other-set (type $1)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (i32.const 10)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPTIN:      (func $conditional-binary-contradiction-other-set (type $1)
+  ;; OPTIN-NEXT:  (local $x i32)
+  ;; OPTIN-NEXT:  (local.set $x
+  ;; OPTIN-NEXT:   (i32.const 10)
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (if
+  ;; OPTIN-NEXT:   (i32.const 0)
+  ;; OPTIN-NEXT:   (then
+  ;; OPTIN-NEXT:    (drop
+  ;; OPTIN-NEXT:     (i32.const 30)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT: )
+  (func $conditional-binary-contradiction-other-set
+    (local $x i32)
+    ;; As above, but now the contradiction tested is between a local.set and
+    ;; the if condition.
+    (local.set $x
+      (i32.const 10)
+    )
+    (if
+      (i32.eq
+        (local.get $x)
+        (i32.const 20)
+      )
+      (then
+        (drop
+          ;; This is unreachable.
+          (i32.add
+            (i32.const 10)
+            (i32.const 20)
           )
         )
       )

@@ -148,12 +148,22 @@ struct ConstraintAnalysis
     if (self->currBasicBlock) {
       self->currBasicBlock->contents.brancher = *currp;
     }
+    if (auto* iff = (*currp)->dynCast<If>()) {
+      self->markRelevant(iff->condition);
+    }
     Super::doStartIfTrue(self, currp);
   }
 
   static void doEndBranch(ConstraintAnalysis* self, Expression** currp) {
     if (self->currBasicBlock) {
       self->currBasicBlock->contents.brancher = *currp;
+    }
+    if (auto* br = (*currp)->dynCast<Break>()) {
+      if (br->condition) {
+        self->markRelevant(br->condition);
+      }
+    } else if (auto* brOn = (*currp)->dynCast<BrOn>()) {
+      self->markRelevant(brOn->ref);
     }
     Super::doEndBranch(self, currp);
   }
