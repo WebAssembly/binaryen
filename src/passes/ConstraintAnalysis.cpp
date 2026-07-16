@@ -289,7 +289,8 @@ struct ConstraintAnalysis
     // otherwise we might not be aware of the right constraints, as we ignored
     // irrelevant locals earlier.
     assert(relevantLocals[parsed->local]);
-    if ([[maybe_unused]] auto* other = std::get_if<Index>(&parsed->constraint.term)) {
+    if ([[maybe_unused]] auto* other =
+          std::get_if<Index>(&parsed->constraint.term)) {
       assert(relevantLocals[*other]);
     }
 
