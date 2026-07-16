@@ -356,6 +356,7 @@ public:
   // would be equal to itself, if the bits are equal).
   bool operator==(const Literal& other) const;
   bool operator!=(const Literal& other) const;
+  bool operator<(const Literal& other) const;
 
   bool isNaN();
   bool isCanonicalNaN();

@@ -159,6 +159,9 @@ struct FuncData {
   bool operator==(const FuncData& other) const {
     return name == other.name && self == other.self;
   }
+  bool operator<(const FuncData& other) const {
+    return std::tie(name, self) < std::tie(other.name, other.self);
+  }
 
   Flow doCall(const Literals& arguments) {
     assert(call);
