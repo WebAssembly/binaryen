@@ -1317,6 +1317,72 @@
     )
   )
 
+  ;; CHECK:      (func $conditional-binary-contradiction-other (type $0) (param $x i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.eq
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:     (then
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (unreachable)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPTIN:      (func $conditional-binary-contradiction-other (type $0) (param $x i32)
+  ;; OPTIN-NEXT:  (if
+  ;; OPTIN-NEXT:   (i32.eq
+  ;; OPTIN-NEXT:    (local.get $x)
+  ;; OPTIN-NEXT:    (i32.const 10)
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:   (then
+  ;; OPTIN-NEXT:    (if
+  ;; OPTIN-NEXT:     (i32.const 0)
+  ;; OPTIN-NEXT:     (then
+  ;; OPTIN-NEXT:      (drop
+  ;; OPTIN-NEXT:       (i32.const 30)
+  ;; OPTIN-NEXT:      )
+  ;; OPTIN-NEXT:     )
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT: )
+  (func $conditional-binary-contradiction-other (param $x i32)
+    (if
+      (i32.eq
+        (local.get $x)
+        (i32.const 10)
+      )
+      (then
+        (if
+          (i32.eq
+            (local.get $x)
+            (i32.const 20)
+          )
+          (then
+            ;; This is only reached if x is both 10 and 20, which is a
+            ;; contradiction, so it is unreachable. We optimize to unreachable
+            ;; here, even though this is a Binary that we do not have anything
+            ;; to do with otherwise (no constraint on a local is implied by this
+            ;; expression).
+            (drop
+              (i32.add
+                (i32.const 10)
+                (i32.const 20)
+              )
+            )
+          )
+        )
+      )
+    )
+  )
+
   ;; CHECK:      (func $contadiction-during-flipping (type $1)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (local $y i32)
