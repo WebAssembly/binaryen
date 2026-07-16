@@ -25,6 +25,7 @@
 #include "cfg/cfg-traversal.h"
 #include "ir/constraint.h"
 #include "ir/drop.h"
+#include "ir/eh-utils.h"
 #include "ir/literal-utils.h"
 #include "ir/local-graph.h"
 #include "ir/properties.h"
@@ -54,6 +55,14 @@ struct Info {
   // For each local index, we track the constraints we know about it. We only do
   // so at the start of each block, which is enough for the analysis below.
   BasicBlockConstraintMap startConstraints;
+
+  void dump(Function* func) {
+    std::cout << "Info{" << actions.size();
+    if (brancher) {
+      std::cout << ", " << *brancher;
+    }
+    std::cout << ", " << startConstraints << "}\n";
+  }
 };
 
 struct ConstraintAnalysis
@@ -182,17 +191,24 @@ struct ConstraintAnalysis
       // of course not needed at this stage.)
       auto& constraints = block->contents.startConstraints;
       for (auto** currp : block->contents.actions) {
-        applyToConstraints(*currp, constraints);
-        if (constraints.unreachable) {
-          *currp = Builder(*getModule()).makeUnreachable();
+        if (!constraints.unreachable) {
+          applyToConstraints(*currp, constraints);
+          optimizeExpression(currp, constraints);
+        } else {
+          // This is unreachable code: just mark it so.
+          *currp = getDroppedChildrenAndAppend(
+            *currp,
+            *getModule(),
+            getPassOptions(),
+            Builder(*getModule()).makeUnreachable());
           refinalize = true;
         }
-        optimizeExpression(currp, constraints);
       }
     }
 
     if (refinalize) {
       ReFinalize().walkFunctionInModule(getFunction(), getModule());
+      EHUtils::handleBlockNestedPops(getFunction(), *getModule());
     }
   }
 

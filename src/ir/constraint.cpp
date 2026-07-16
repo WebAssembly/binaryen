@@ -134,20 +134,29 @@ void AndedConstraintSet::approximateAnd(const Constraint& c) {
     return;
   }
 
-  if (proves(c) == False) {
+  auto result = proves(c);
+  if (result == True) {
+    // We already prove c to be true, so it adds nothing.
+    // TODO: we could also see if c proves us true, and replace things we
+    //       already have with c when possible
+    return;
+  } else if (result == False) {
     // We are now a contradiction.
     isContradiction = true;
     return;
   }
 
   if (size() < MaxConstraints) {
-    push_back(c);
+    // Insert into the right place, keeping us sorted.
+    insert(std::upper_bound(begin(), end(), c), c);
     return;
   }
 
   // Otherwise, just do not add this one.
   // TODO: We could try to be clever and see if one of the existing ones makes
-  //       more sense to drop.
+  //       more sense to drop. In particular, we should prefer "better" ones
+  //       like > over >= and so forth (sorting more precise ones earlier may be
+  //       useful to implement that).
 }
 
 void AndedConstraintSet::approximateOr(const AndedConstraintSet& other) {
@@ -228,7 +237,16 @@ std::optional<LocalConstraint> LocalConstraint::parse(Expression* curr) {
 
   if (auto* binary = curr->dynCast<Binary>()) {
     // The operation must be one we recognize.
-    for (auto op : {Abstract::Eq, Abstract::Ne}) {
+    for (auto op : {Abstract::Eq,
+                    Abstract::Ne,
+                    Abstract::LtS,
+                    Abstract::LtU,
+                    Abstract::LeS,
+                    Abstract::LeU,
+                    Abstract::GtS,
+                    Abstract::GtU,
+                    Abstract::GeS,
+                    Abstract::GeU}) {
       if (Abstract::getBinary(binary->type, op) == binary->op) {
         return parseBinaryArguments(op, binary->left, binary->right);
       }
@@ -268,15 +286,15 @@ void LocalConstraint::flip() {
 }
 
 void BasicBlockConstraintMap::set(Index index, const Constraint& c) {
+  // We should not set values in unreachable code.
   assert(!unreachable);
-  eraseStaleRefs(index);
-  map[index].set(c);
-  noteRefs(index, c);
 
-  // If the constraint refers to another local, add it there too.
-  if (std::holds_alternative<Index>(c.term)) {
-    approximateAndInternal(index, c, true);
-  }
+  // Clear the old state.
+  eraseStaleRefs(index);
+  map.erase(index);
+
+  // Apply the constraint.
+  approximateAnd(index, c);
 }
 
 void BasicBlockConstraintMap::setProvesNothing(Index index) {
@@ -313,7 +331,11 @@ void BasicBlockConstraintMap::approximateOr(
 
 void BasicBlockConstraintMap::approximateAndInternal(Index index,
                                                      const Constraint& c,
-                                                     bool flip) {
+                                                     bool flip,
+                                                     bool isCopy) {
+  // We should not be applying constraints when already unreachable.
+  assert(!unreachable);
+
   Constraint actual = c;
   if (flip) {
     LocalConstraint flipped{index, c};
@@ -322,10 +344,26 @@ void BasicBlockConstraintMap::approximateAndInternal(Index index,
     actual = flipped.constraint;
   }
 
-  auto combined = get(index);
-  combined.approximateAnd(actual);
+  // Never add constraints to ourselves (x == x, etc., which can happen due to
+  // copying/flipping).
+  if (auto* other = std::get_if<Index>(&actual.term)) {
+    if (*other == index) {
+      return;
+    }
+  }
 
-  if (combined.provesEverything()) {
+  // Refer to the constraints for this index. If this is the first access of
+  // the local, then we insert a new item into the map, which has a default of
+  // proxesEverything, which we need to flip (provesEverything cannot otherwise
+  // be found in the map, as we never store it).
+  auto [iter, _] = map.insert({index, AndedConstraintSet::makeProvesNothing()});
+  auto& indexConstraints = iter->second;
+  // As in ::set(), this makes the map temporarily invalid until the
+  // approximateAnd, as we don't store proves-nothing in the map, normally.
+
+  indexConstraints.approximateAnd(actual);
+
+  if (indexConstraints.provesEverything()) {
     // We just proved we are in unreachable code.
     unreachable = true;
     map.clear();
@@ -334,10 +372,7 @@ void BasicBlockConstraintMap::approximateAndInternal(Index index,
 
   // We just added a constraint, so we can prove something (we may lose some
   // information as this is an approximate AND, but we cannot lose it all).
-  assert(!combined.provesNothing());
-
-  // Otherwise, this is an interesting state; set it.
-  map[index] = std::move(combined);
+  assert(!indexConstraints.provesNothing());
 
   // Add a ref of what we are adding. Note that the approximation above may end
   // up not actually adding this, or adding only part of this, but it is safe to
@@ -347,7 +382,26 @@ void BasicBlockConstraintMap::approximateAndInternal(Index index,
   // If this is not the flipped version, and it refers to a local, add the
   // flipped one too.
   if (!flip && std::holds_alternative<Index>(actual.term)) {
-    approximateAndInternal(index, actual, true);
+    approximateAndInternal(index, actual, true, isCopy);
+    if (unreachable) {
+      // We just found a contradiction.
+      return;
+    }
+  }
+
+  // If this constraint is simply "== x", then we are equal to that other local
+  // x, and can copy its constraints (if we are not already such a copy).
+  if (!isCopy) {
+    if (auto* other = std::get_if<Index>(&actual.term)) {
+      if (actual.op == Abstract::Eq) {
+        for (auto& otherC : get(*other)) {
+          approximateAndInternal(index, otherC, false, true);
+          if (unreachable) {
+            return;
+          }
+        }
+      }
+    }
   }
 }
 
@@ -385,7 +439,7 @@ void BasicBlockConstraintMap::eraseStaleRefs(Index index) {
 }
 
 std::ostream& operator<<(std::ostream& o, const Constraint& c) {
-  o << "Constraint{" << int(c.op) << ", ";
+  o << "Constraint{" << c.op << ", ";
   if (auto* cc = std::get_if<Literal>(&c.term)) {
     o << *cc;
   } else if (auto* i = std::get_if<Index>(&c.term)) {
