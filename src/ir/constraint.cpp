@@ -149,8 +149,13 @@ void AndedConstraintSet::approximateAnd(const Constraint& c) {
     auto result = provesPair(c, existing);
     if (result == True) {
       existing = c;
+
+      // Sort to ensure we are in the right place.
+      std::sort(begin(), end());
+
       return;
     }
+
     // There cannot be a contradiction here, because we checked for that above.
     assert(result != False);
   }
