@@ -177,6 +177,8 @@ struct AndedConstraintSet : inplace_vector<Constraint, MaxConstraints> {
   //   { x >= 0 }
   //
   // If we become too imprecise, we lose the ability to imply anything useful.
+  //
+  // Returns whether we changed anything.
   bool approximateOr(const AndedConstraintSet& other);
 
   // Set a constraint, replacing all previous state.
@@ -266,6 +268,8 @@ struct BasicBlockConstraintMap {
   // Perform an OR as above. When a local only appears in one map, we treat it
   // as if it contains a contradiction there, that is, as if the code is
   // unreachable.
+  //
+  // Returns whether we changed anything.
   bool approximateOr(const BasicBlockConstraintMap& other);
 
   // Perform an AND as above, on a particular index.
