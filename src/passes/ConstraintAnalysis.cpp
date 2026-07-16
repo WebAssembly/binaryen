@@ -84,6 +84,29 @@ struct ConstraintAnalysis
   // state in the function.
   bool ignoreBranchesOutsideOfFunc = true;
 
+  // A relevant local is one that is used as part of an expression that we can
+  // optimize (often, many locals are irrelevant).
+  std::vector<bool> relevantLocals;
+  // Track local copies too, as if one local is relevant, another it is copied
+  // to is relevant as well. We store pairs here of [target, source].
+  std::vector<std::pair<Index, Index>> localCopies;
+
+  void markRelevant(Expression* curr) {
+    // If this parses into a constraint on a local, that local is relevant.
+    if (auto parsed = LocalConstraint::parseCondition(curr)) {
+      relevantLocals[parsed->local] = true;
+      if (auto* other = std::get_if<Index>(&parsed->constraint.term)) {
+        relevantLocals[*other] = true;
+      }
+    }
+  }
+
+  void doWalkFunction(Function* func) {
+    relevantLocals.assign(func->getNumLocals(), false);
+
+    Super::doWalkFunction(func);
+  }
+
   // Store the actions we care about.
   void addAction() {
     if (currBasicBlock) {
@@ -91,11 +114,33 @@ struct ConstraintAnalysis
     }
   }
 
-  void visitLocalSet(LocalSet* curr) { addAction(); }
-  void visitUnary(Unary* curr) { addAction(); }
-  void visitBinary(Binary* curr) { addAction(); }
-  void visitRefEq(RefEq* curr) { addAction(); }
-  void visitRefIsNull(RefIsNull* curr) { addAction(); }
+  void visitLocalSet(LocalSet* curr) {
+    addAction();
+    if (auto* get = curr->value->dynCast<LocalGet>()) {
+      // TODO: handle tees once we handle them elsewhere
+      localCopies.push_back({curr->index, get->index});
+    }
+  }
+
+  void visitUnary(Unary* curr) {
+    addAction();
+    markRelevant(curr);
+  }
+
+  void visitBinary(Binary* curr) {
+    addAction();
+    markRelevant(curr);
+  }
+
+  void visitRefEq(RefEq* curr) {
+    addAction();
+    markRelevant(curr);
+  }
+
+  void visitRefIsNull(RefIsNull* curr) {
+    addAction();
+    markRelevant(curr);
+  }
 
   static void doStartIfTrue(ConstraintAnalysis* self, Expression** currp) {
     // We are right after the condition, so we are in the block before the If's
@@ -103,12 +148,22 @@ struct ConstraintAnalysis
     if (self->currBasicBlock) {
       self->currBasicBlock->contents.brancher = *currp;
     }
+    if (auto* iff = (*currp)->dynCast<If>()) {
+      self->markRelevant(iff->condition);
+    }
     Super::doStartIfTrue(self, currp);
   }
 
   static void doEndBranch(ConstraintAnalysis* self, Expression** currp) {
     if (self->currBasicBlock) {
       self->currBasicBlock->contents.brancher = *currp;
+    }
+    if (auto* br = (*currp)->dynCast<Break>()) {
+      if (br->condition) {
+        self->markRelevant(br->condition);
+      }
+    } else if (auto* brOn = (*currp)->dynCast<BrOn>()) {
+      self->markRelevant(brOn->ref);
     }
     Super::doEndBranch(self, currp);
   }
@@ -118,9 +173,24 @@ struct ConstraintAnalysis
       // Body is unreachable, no entry block.
       return;
     }
-    // TODO: optimize for speed, find relevant locals etc.
+
+    computeRelevantLocals();
     flow();
     optimize();
+  }
+
+  void computeRelevantLocals() {
+    // Every relevant local makes the things it is copied to relevant as well.
+    bool changed = true;
+    while (changed) {
+      changed = false;
+      for (auto& [target, source] : localCopies) {
+        if (relevantLocals[source] && !relevantLocals[target]) {
+          relevantLocals[target] = true;
+          changed = true;
+        }
+      }
+    }
   }
 
   // Flow infos around until we have inferred all we can about the constraints
@@ -132,6 +202,9 @@ struct ConstraintAnalysis
     auto& entryConstraints = entry->contents.startConstraints;
     auto* func = getFunction();
     for (Index i = func->getVarIndexBase(); i < func->getNumLocals(); i++) {
+      if (!relevantLocals[i]) {
+        continue;
+      }
       auto type = func->getLocalType(i);
       // TODO: support tuples
       if (type.size() == 1 && LiteralUtils::canMakeZero(type)) {
@@ -317,6 +390,9 @@ struct ConstraintAnalysis
   void applyToConstraints(Expression* curr,
                           BasicBlockConstraintMap& constraints) {
     if (auto* set = curr->dynCast<LocalSet>()) {
+      if (!relevantLocals[set->index]) {
+        return;
+      }
       if (Properties::isSingleConstantExpression(set->value)) {
         // Apply a constraint to this value.
         auto value = Properties::getLiteral(set->value);
