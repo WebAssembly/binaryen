@@ -171,9 +171,7 @@ struct ConstraintAnalysis
         }
 
         // If anything changed at the start of the target block, flow onwards.
-        auto old = outStartConstraints;
-        outStartConstraints.approximateOr(sentConstraints);
-        if (outStartConstraints != old) {
+        if (outStartConstraints.approximateOr(sentConstraints)) {
           work.push(out);
         }
       }
