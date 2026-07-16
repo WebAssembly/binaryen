@@ -241,6 +241,7 @@ struct ConstraintAnalysis
         // branch, and use them.
         auto sentConstraints = constraints;
         if (auto branch = getBranchConstraints(block, out)) {
+          verifyRelevancy(*branch);
           sentConstraints.approximateAnd(branch->local, branch->constraint);
         }
 
@@ -295,14 +296,7 @@ struct ConstraintAnalysis
       return;
     }
 
-    // We are about to optimize this, so it must use only relevant locals -
-    // otherwise we might not be aware of the right constraints, as we ignored
-    // irrelevant locals earlier.
-    assert(relevantLocals[parsed->local]);
-    if ([[maybe_unused]] auto* other =
-          std::get_if<Index>(&parsed->constraint.term)) {
-      assert(relevantLocals[*other]);
-    }
+    verifyRelevancy(*parsed);
 
     auto localConstraints = constraints.get(parsed->local);
     Result result = localConstraints.proves(parsed->constraint);
@@ -415,6 +409,17 @@ struct ConstraintAnalysis
         // We know and can prove nothing.
         constraints.setProvesNothing(set->index);
       }
+    }
+  }
+
+  // When we are about to use or apply a constraint to a local, it must be on a
+  // relevant one - otherwise we misidentified which are relevant, which could
+  // lead to missed opportunities or misoptimizations.
+  void verifyRelevancy(const LocalConstraint& parsed) {
+    assert(relevantLocals[parsed.local]);
+    if ([[maybe_unused]] auto* other =
+          std::get_if<Index>(&parsed.constraint.term)) {
+      assert(relevantLocals[*other]);
     }
   }
 };
