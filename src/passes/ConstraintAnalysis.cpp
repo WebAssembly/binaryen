@@ -85,7 +85,15 @@ struct ConstraintAnalysis
   bool ignoreBranchesOutsideOfFunc = true;
 
   // A relevant local is one that is used as part of an expression that we can
-  // optimize (often, many locals are irrelevant).
+  // optimize (often, many locals are irrelevant). Note that this is a stronger
+  // property than just being able to be reason about constraints on that local:
+  // for example,
+  //
+  //   x = 0;
+  //   if (y) { ..; x = 1; }
+  //   return x;
+  //
+  // x XXX
   std::vector<bool> relevantLocals;
   // Track local copies too, as if one local is relevant, another it is copied
   // to is relevant as well. We store pairs here of [target, source].
@@ -148,22 +156,12 @@ struct ConstraintAnalysis
     if (self->currBasicBlock) {
       self->currBasicBlock->contents.brancher = *currp;
     }
-    if (auto* iff = (*currp)->dynCast<If>()) {
-      self->markRelevant(iff->condition);
-    }
     Super::doStartIfTrue(self, currp);
   }
 
   static void doEndBranch(ConstraintAnalysis* self, Expression** currp) {
     if (self->currBasicBlock) {
       self->currBasicBlock->contents.brancher = *currp;
-    }
-    if (auto* br = (*currp)->dynCast<Break>()) {
-      if (br->condition) {
-        self->markRelevant(br->condition);
-      }
-    } else if (auto* brOn = (*currp)->dynCast<BrOn>()) {
-      self->markRelevant(brOn->ref);
     }
     Super::doEndBranch(self, currp);
   }
