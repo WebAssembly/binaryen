@@ -369,14 +369,14 @@ struct DAE2 : public Pass {
     if (auto* l = std::get_if<FuncParamLoc>(&loc)) {
       return join(*l, other);
     }
-    if (std::get_if<FuncResultLoc>(&loc)) {
-      return join(std::get<FuncResultLoc>(loc), other);
+    if (auto* l = std::get_if<FuncResultLoc>(&loc)) {
+      return join(*l, other);
     }
     if (auto* l = std::get_if<TypeParamLoc>(&loc)) {
       return join(*l, other);
     }
-    if (std::get_if<TypeResultLoc>(&loc)) {
-      return join(std::get<TypeResultLoc>(loc), other);
+    if (auto* l = std::get_if<TypeResultLoc>(&loc)) {
+      return join(*l, other);
     }
     WASM_UNREACHABLE("unexpected loc");
   }
