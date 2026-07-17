@@ -127,8 +127,12 @@ jobs:
       run: python check.py --binaryen-bin=out/bin
 
   build-clang:
-    name: clang (LTO)
+    name: clang (LTO + libc++)
     runs-on: ubuntu-latest
+    env:
+      COMPILER_FLAGS: "-stdlib=libc++"
+      CC: "clang"
+      CXX: "clang++"
     steps:
     - uses: actions/setup-python@v5
       with:
@@ -137,7 +141,7 @@ jobs:
       with:
         submodules: true
     - name: install ninja
-      run: sudo apt-get install ninja-build
+      run: sudo apt-get install ninja-build libc++-dev libc++abi-dev
     - name: install v8
       run: |
         npm install jsvu -g
@@ -147,7 +151,7 @@ jobs:
     - name: cmake
       run: |
         mkdir -p out
-        cmake -S . -B out -G Ninja -DCMAKE_INSTALL_PREFIX=out/install -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DBYN_ENABLE_LTO=ON
+        cmake -S . -B out -G Ninja -DCMAKE_INSTALL_PREFIX=out/install -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DBYN_ENABLE_LTO=ON -DCMAKE_CXX_FLAGS="$COMPILER_FLAGS" -DCMAKE_EXE_LINKER_FLAGS="$COMPILER_FLAGS"
     - name: build
       run: cmake --build out -v
     - name: test binaryen-lit
