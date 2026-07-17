@@ -241,8 +241,9 @@ struct ConstraintAnalysis
         // branch, and use them.
         auto sentConstraints = constraints;
         if (auto branch = getBranchConstraints(block, out)) {
-          verifyRelevancy(*branch);
-          sentConstraints.approximateAnd(branch->local, branch->constraint);
+          if (checkRelevancy(*branch)) {
+            sentConstraints.approximateAnd(branch->local, branch->constraint);
+          }
         }
 
         // If anything changed at the start of the target block, flow onwards.
@@ -295,8 +296,9 @@ struct ConstraintAnalysis
     if (!parsed) {
       return;
     }
-
-    verifyRelevancy(*parsed);
+    if (!checkRelevancy(*parsed)) {
+      return;
+    }
 
     auto localConstraints = constraints.get(parsed->local);
     Result result = localConstraints.proves(parsed->constraint);
@@ -414,13 +416,30 @@ struct ConstraintAnalysis
 
   // When we are about to use or apply a constraint to a local, it must be on a
   // relevant one - otherwise we misidentified which are relevant, which could
-  // lead to missed opportunities or misoptimizations.
-  void verifyRelevancy(const LocalConstraint& parsed) {
-    assert(relevantLocals[parsed.local]);
+  // lead to missed opportunities or misoptimizations. This returns true if we
+  // are operating on proper, relevant data. Normally this is all that can
+  // happen, but intermediate optimizations can make things become relevant,
+  // consider this:
+  //
+  //  x == (y < 10)
+  //
+  // The outer == is initially not relevant: we are comparing x to something we
+  // can't parse into a constraint's term. However, if we get lucky and optimize
+  // y < 10 into a constant, then it does become parseable, but because we did
+  // not consider x as relevant (and so we do not have all the relevant
+  // information about it), we must return false here and not operate on it
+  // (later optimization cycles can get to it).
+  bool checkRelevancy(const LocalConstraint& parsed) {
+    if (!relevantLocals[parsed.local]) {
+      return false;
+    }
     if ([[maybe_unused]] auto* other =
           std::get_if<Index>(&parsed.constraint.term)) {
-      assert(relevantLocals[*other]);
+      if (!relevantLocals[*other]) {
+        return false;
+      }
     }
+    return true;
   }
 };
 
