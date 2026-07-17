@@ -114,15 +114,15 @@ using Params = std::vector<Used::Element>;
 // Function index and parameter index.
 using FuncParamLoc = std::pair<Index, Index>;
 
-// Function index identifying the function' result (we treat result tuples as a
-// single value).
+// Function index identifying the function's result (we treat result tuples as a
+// single value, so no index into the results is necessary).
 using FuncResultLoc = Index;
 
 // Function type and parameter index.
 using TypeParamLoc = std::pair<HeapType, Index>;
 
 // Function type identifying the function type's result (we treat result tuples
-// as a single value).
+// as a single value, so no index into the results is necessary).
 using TypeResultLoc = HeapType;
 
 using Location =
