@@ -21,7 +21,6 @@
   )
 )
 
-;; Test 8.2: JS-Called via configureAll
 (module
   ;; CHECK:      (type $externs (array (mut externref)))
   (type $externs (array (mut externref)))
