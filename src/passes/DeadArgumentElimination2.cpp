@@ -650,36 +650,28 @@ struct GraphBuilder : public WalkerPass<ExpressionStackWalker<GraphBuilder>> {
     }
   }
 
-  void visitCallIndirect(CallIndirect* curr) {
-    auto sig = curr->heapType.getSignature();
+  void handleIndirectCall(Expression* curr, HeapType type, bool isReturn) {
+    auto sig = type.getSignature();
     if (sig.results.isConcrete()) {
-      if (curr->isReturn) {
-        Location source = TypeResultLoc{getRootType(curr->heapType)};
+      HeapType rootType = getRootType(type);
+      Location source = TypeResultLoc{rootType};
+      if (isReturn) {
         forwardToResult(source);
-        funcInfos[index].tailCalleeTypes.push_back(getRootType(curr->heapType));
+        funcInfos[index].tailCalleeTypes.push_back(rootType);
       } else if (optimizeReferencedFuncs) {
-        Location source = TypeResultLoc{getRootType(curr->heapType)};
         getValueFromLocation(curr, source);
       }
     }
   }
 
+  void visitCallIndirect(CallIndirect* curr) {
+    handleIndirectCall(curr, curr->heapType, curr->isReturn);
+  }
+
   void visitCallRef(CallRef* curr) {
-    if (curr->target->type.isSignature()) {
-      auto sig = curr->target->type.getHeapType().getSignature();
-      if (sig.results.isConcrete()) {
-        if (curr->isReturn) {
-          Location source =
-            TypeResultLoc{getRootType(curr->target->type.getHeapType())};
-          forwardToResult(source);
-          auto heapType = curr->target->type.getHeapType();
-          funcInfos[index].tailCalleeTypes.push_back(getRootType(heapType));
-        } else if (optimizeReferencedFuncs) {
-          Location source =
-            TypeResultLoc{getRootType(curr->target->type.getHeapType())};
-          getValueFromLocation(curr, source);
-        }
-      }
+    auto targetType = curr->target->type;
+    if (targetType.isSignature()) {
+      handleIndirectCall(curr, targetType.getHeapType(), curr->isReturn);
     }
   }
 };
