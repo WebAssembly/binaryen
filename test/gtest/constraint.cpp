@@ -219,5 +219,26 @@ TEST(ConstraintTest, TestDeduplication) {
   EXPECT_EQ(s.size(), 1);
 }
 
+TEST(ConstraintTest, TestDeredundancy) {
+  Constraint eq0{Eq, {Literal(int32_t(0))}};
+  Constraint ne1{Ne, {Literal(int32_t(1))}};
+
+  // If x == 0, then x != 1 is redundant, and does not need to be added, is it
+  // is implied by x == 0.
+  AndedConstraintSet s;
+  s.set(eq0);
+  s.approximateAnd(ne1);
+  EXPECT_EQ(s.size(), 1);
+  EXPECT_EQ(s[0], eq0);
+
+  // Reverse order, same result, even though we added x == 0 last: we remove
+  // x != 1.
+  AndedConstraintSet t;
+  t.set(ne1);
+  t.approximateAnd(eq0);
+  EXPECT_EQ(t.size(), 1);
+  EXPECT_EQ(t[0], eq0);
+}
+
 // TODO: test an approximateOr of { x = 10 } and { x >= 0 }, once we support
 //       inequalities
