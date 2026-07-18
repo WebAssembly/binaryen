@@ -110,3 +110,15 @@ TEST_F(InplaceVectorTest, Insert) {
   EXPECT_EQ(vec.size(), 6u);
   EXPECT_EQ(vec[5], 50);
 }
+
+TEST_F(InplaceVectorTest, SortAndIteratorOps) {
+  inplace_vector<int, 5> vec{40, 10, 50, 20, 30};
+
+  // Test iterator subscripting and friend operator+
+  EXPECT_EQ(vec.begin()[1], 10);
+  EXPECT_EQ(*(2 + vec.begin()), 50);
+
+  // Test std::sort on inplace_vector iterators
+  std::sort(vec.begin(), vec.end());
+  EXPECT_EQ(vec, (inplace_vector<int, 5>{10, 20, 30, 40, 50}));
+}
