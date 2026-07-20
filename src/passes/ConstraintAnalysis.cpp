@@ -181,23 +181,20 @@ struct ConstraintAnalysis
 
   // Every relevant local makes the things it is copied to relevant as well.
   void computeRelevantLocals() {
-    UniqueDeferredQueue<localCopyTargets::iterator> work;
-    for (auto iter : localCopyTargets) {
-      if (relevantLocals(iter.first)) {
-        work.push(iter);
+    UniqueDeferredQueue<Index> work;
+    for (auto& [source, _] : localCopyTargets) {
+      if (relevantLocals[source]) {
+        work.push(source);
       }
     }
     while (!work.empty()) {
-      auto iter = work.pop();
-      auto source = iter->first;
+      auto source = work.pop();
       assert(relevantLocals[source]);
-      auto& targets = iter->second;
-
-      for (auto target : targets) {
-        if (!relevantLocals[target]) {
-          relevantLocals[target] = true;
-          if (auto iter = localCopyTargets.find(target); iter != localCopyTargets.end()) {
-            work.push(iter);
+      if (auto iter = localCopyTargets.find(source); iter != localCopyTargets.end()) {
+        for (auto target : iter->second) {
+          if (!relevantLocals[target]) {
+            relevantLocals[target] = true;
+            work.push(target);
           }
         }
       }
