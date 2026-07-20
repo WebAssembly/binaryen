@@ -190,7 +190,8 @@ struct ConstraintAnalysis
     while (!work.empty()) {
       auto source = work.pop();
       assert(relevantLocals[source]);
-      if (auto iter = localCopyTargets.find(source); iter != localCopyTargets.end()) {
+      if (auto iter = localCopyTargets.find(source);
+          iter != localCopyTargets.end()) {
         for (auto target : iter->second) {
           if (!relevantLocals[target]) {
             relevantLocals[target] = true;
@@ -443,8 +444,7 @@ struct ConstraintAnalysis
     if (!relevantLocals[parsed.local]) {
       return false;
     }
-    if (auto* other =
-          std::get_if<Index>(&parsed.constraint.term)) {
+    if (auto* other = std::get_if<Index>(&parsed.constraint.term)) {
       if (!relevantLocals[*other]) {
         return false;
       }
