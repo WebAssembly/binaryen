@@ -314,6 +314,8 @@ struct DAE2 : public Pass {
   void computeFixedPoint();
   void optimize();
 
+  template<typename F> void forEachSuccessor(Location loc, F&& f);
+
 #if DAE_STATS
   void collectStats();
 #endif // DAE_STATS
@@ -343,42 +345,22 @@ struct DAE2 : public Pass {
     getTypeTreeInfo(rootType).resultUsage = used.getTop();
   }
 
-  bool join(FuncParamLoc loc, const Used::Element& other) {
-    auto& elem = funcInfos[loc.first].paramUsages[loc.second];
-    return used.join(elem, other);
-  }
-
-  bool join(FuncResultLoc loc, const Used::Element& other) {
-    auto& elem = funcInfos[loc].resultUsage;
-    return used.join(elem, other);
-  }
-
-  bool join(TypeParamLoc loc, const Used::Element& other) {
-    assert(loc.first == getRootType(loc.first));
-    auto& elem = getTypeTreeInfo(loc.first).paramUsages[loc.second];
-    return used.join(elem, other);
-  }
-
-  bool join(TypeResultLoc loc, const Used::Element& other) {
-    assert(loc == getRootType(loc));
-    auto& elem = getTypeTreeInfo(loc).resultUsage;
-    return used.join(elem, other);
-  }
-
-  bool join(Location loc, const Used::Element& other) {
+  Used::Element& elem(Location loc) {
     if (auto* l = std::get_if<FuncParamLoc>(&loc)) {
-      return join(*l, other);
+      return funcInfos[l->first].paramUsages[l->second];
     }
     if (auto* l = std::get_if<FuncResultLoc>(&loc)) {
-      return join(*l, other);
+      return funcInfos[*l].resultUsage;
     }
     if (auto* l = std::get_if<TypeParamLoc>(&loc)) {
-      return join(*l, other);
+      assert(l->first == getRootType(l->first));
+      return getTypeTreeInfo(l->first).paramUsages[l->second];
     }
     if (auto* l = std::get_if<TypeResultLoc>(&loc)) {
-      return join(*l, other);
+      assert(*l == getRootType(*l));
+      return getTypeTreeInfo(*l).resultUsage;
     }
-    WASM_UNREACHABLE("unexpected loc");
+    WASM_UNREACHABLE("unexpected location");
   }
 };
 
@@ -847,6 +829,62 @@ void DAE2::prepareReverseGraph() {
   }
 }
 
+template<typename F> void DAE2::forEachSuccessor(Location loc, F&& f) {
+  if (auto* l = std::get_if<TypeParamLoc>(&loc)) {
+    auto [rootType, paramIndex] = *l;
+    auto& typeTreeInfo = getTypeTreeInfo(rootType);
+
+    // Propagate usage back to locations forwarded from indirect callers.
+    for (auto source : typeTreeInfo.paramSources[paramIndex]) {
+      f(source);
+    }
+    // Propagate usage to referenced functions with types in the same type tree
+    // to ensure their types can all be updated uniformly.
+    for (auto funcIndex : typeTreeInfo.referencedFuncs) {
+      f(FuncParamLoc{funcIndex, paramIndex});
+    }
+  } else if (auto* l = std::get_if<TypeResultLoc>(&loc)) {
+    auto& typeTreeInfo = getTypeTreeInfo(*l);
+    // Propagate usage to referenced functions with types in the same type tree
+    // to ensure their types can all be updated uniformly.
+    for (auto funcIndex : typeTreeInfo.referencedFuncs) {
+      f(FuncResultLoc{funcIndex});
+    }
+    // Propagate to tail callers.
+    for (auto source : typeTreeInfo.resultSources) {
+      f(source);
+    }
+  } else if (auto* l = std::get_if<FuncParamLoc>(&loc)) {
+    auto [calleeIndex, calleeParamIndex] = *l;
+    auto& calleeInfo = funcInfos[calleeIndex];
+    // Propagate usage back to locations forwarded from direct callers.
+    for (auto source : calleeInfo.paramSources[calleeParamIndex]) {
+      f(source);
+    }
+    if (calleeInfo.referenced) {
+      // Propagate the use to the function type. It will be propagated from
+      // there to indirect callers and other functions of this type.
+      auto calleeType = wasm->functions[calleeIndex]->type.getHeapType();
+      f(TypeParamLoc{getRootType(calleeType), calleeParamIndex});
+    }
+  } else if (auto* l = std::get_if<FuncResultLoc>(&loc)) {
+    auto calleeIndex = *l;
+    auto& calleeInfo = funcInfos[calleeIndex];
+    // Propagate usage back to sources of this result, including tail callers.
+    for (auto source : calleeInfo.resultSources) {
+      f(source);
+    }
+    if (calleeInfo.referenced) {
+      // Propagate the use to the function type. It will be propagated from
+      // there to other functions of this type.
+      auto calleeType = wasm->functions[calleeIndex]->type.getHeapType();
+      f(TypeResultLoc{getRootType(calleeType)});
+    }
+  } else {
+    WASM_UNREACHABLE("unexpected location");
+  }
+}
+
 // Performs a smallest fixed-point analysis to propagate parameter usage
 // information through the reverse call graph. If a parameter is used in a
 // function, then any caller parameters that were forwarded to the parameter are
@@ -884,88 +922,13 @@ void DAE2::computeFixedPoint() {
   while (!work.empty()) {
     auto loc = work.back();
     work.pop_back();
-
-    if (auto* l = std::get_if<TypeParamLoc>(&loc)) {
-      auto [rootType, paramIndex] = *l;
-      auto& typeTreeInfo = getTypeTreeInfo(rootType);
-      const auto& elem = typeTreeInfo.paramUsages[paramIndex];
-      assert(elem && "unexpected unused param");
-
-      // Propagate usage back to locations forwarded from indirect callers.
-      for (auto source : typeTreeInfo.paramSources[paramIndex]) {
-        if (join(source, elem)) {
-          work.push_back(source);
-        }
+    auto& e = elem(loc);
+    assert(e && "unexpected unused location");
+    forEachSuccessor(loc, [&](Location succ) {
+      if (used.join(elem(succ), e)) {
+        work.push_back(succ);
       }
-      // Propagate usage to referenced functions with types in the same type
-      // tree to ensure their types can all be updated uniformly.
-      for (auto funcIndex : typeTreeInfo.referencedFuncs) {
-        FuncParamLoc param = {funcIndex, paramIndex};
-        if (join(param, elem)) {
-          work.push_back(param);
-        }
-      }
-    } else if (auto* l = std::get_if<TypeResultLoc>(&loc)) {
-      auto& typeTreeInfo = getTypeTreeInfo(*l);
-      const auto& elem = typeTreeInfo.resultUsage;
-      assert(elem && "unexpected unused result");
-      // Propagate usage to referenced functions with types in the same type
-      // tree to ensure their types can all be updated uniformly.
-      for (auto funcIndex : typeTreeInfo.referencedFuncs) {
-        FuncResultLoc res = funcIndex;
-        if (join(res, elem)) {
-          work.push_back(res);
-        }
-      }
-      // Propagate to tail callers.
-      for (auto source : typeTreeInfo.resultSources) {
-        if (join(source, elem)) {
-          work.push_back(source);
-        }
-      }
-    } else if (auto* l = std::get_if<FuncParamLoc>(&loc)) {
-      auto [calleeIndex, calleeParamIndex] = *l;
-      auto& calleeInfo = funcInfos[calleeIndex];
-      const auto& elem = calleeInfo.paramUsages[calleeParamIndex];
-      assert(elem && "unexpected unused param");
-      // Propagate usage back to locations forwarded from direct callers.
-      for (auto source : calleeInfo.paramSources[calleeParamIndex]) {
-        if (join(source, elem)) {
-          work.push_back(source);
-        }
-      }
-      if (calleeInfo.referenced) {
-        // Propagate the use to the function type. It will be propagated from
-        // there to indirect callers and other functions of this type.
-        auto calleeType = wasm->functions[calleeIndex]->type.getHeapType();
-        TypeParamLoc param = {getRootType(calleeType), calleeParamIndex};
-        if (join(param, elem)) {
-          work.push_back(param);
-        }
-      }
-    } else if (auto* l = std::get_if<FuncResultLoc>(&loc)) {
-      auto calleeIndex = *l;
-      auto& calleeInfo = funcInfos[calleeIndex];
-      const auto& elem = calleeInfo.resultUsage;
-      assert(elem && "unexpected unused result");
-      // Propagate usage back to sources of this result, including tail callers.
-      for (auto source : calleeInfo.resultSources) {
-        if (join(source, elem)) {
-          work.push_back(source);
-        }
-      }
-      if (calleeInfo.referenced) {
-        // Propagate the use to the function type. It will be propagated from
-        // there to other functions of this type.
-        auto calleeType = wasm->functions[calleeIndex]->type.getHeapType();
-        TypeResultLoc res = getRootType(calleeType);
-        if (join(res, elem)) {
-          work.push_back(res);
-        }
-      }
-    } else {
-      WASM_UNREACHABLE("unexpected location");
-    }
+    });
   }
 }
 
@@ -1763,116 +1726,96 @@ void DAE2::makeUnreferencedFunctionTypes(const std::vector<HeapType>& oldTypes,
 
 #if DAE_STATS
 void DAE2::collectStats() {
-  // Count the number of removed parameters of unreferenced functions and
-  // function types as well as the number of removed parameters that are part of
-  // a parameter forwarding cycle.
-  Index removedUnreferenced = 0, removedType = 0, removedTotal = 0;
-  Index removedCycle = 0, largestCycle = 0, deepestChain = 0;
+  // Count the number of removed parameters and results of unreferenced
+  // functions and function types as well as the number of removed parameters
+  // and results that are part of a forwarding cycle.
+  Index removedParamUnreferenced = 0, removedParamReferenced = 0,
+        removedParamType = 0;
+  Index removedResultUnreferenced = 0, removedResultReferenced = 0,
+        removedResultType = 0;
+  Index removedParamCycle = 0, removedTypeParamCycle = 0;
+  Index removedResultCycle = 0, removedTypeResultCycle = 0;
+  Index largestCycle = 0, deepestChain = 0;
 
-  // Collect a graph of optimized parameters and forwarding edges so we can find
+  // Collect a graph of optimized locations and forwarding edges so we can find
   // optimized cycles.
-  using Node = std::variant<FuncParamLoc, TypeParamLoc>;
-  using Nodes = InsertOrderedSet<Node>;
-  Nodes optimizedNodes;
+  using Locations = InsertOrderedSet<Location>;
+  Locations optimizedLocations;
 
-  // Collect unreferenced function parameters and the total removed parameters.
+  // Collect unreferenced function parameters/results and total removed
+  // parameters/results.
   for (Index i = 0; i < funcInfos.size(); ++i) {
     for (Index j = 0; j < funcInfos[i].paramUsages.size(); ++j) {
       if (!funcInfos[i].paramUsages[j]) {
-        ++removedTotal;
-        if (!funcInfos[i].referenced) {
-          ++removedUnreferenced;
-          optimizedNodes.insert(FuncParamLoc{i, j});
-        }
+        ++(funcInfos[i].referenced ? removedParamReferenced
+                                   : removedParamUnreferenced);
+        optimizedLocations.insert(FuncParamLoc{i, j});
       }
+    }
+    if (wasm->functions[i]->getResults() != Type::none &&
+        !funcInfos[i].resultUsage) {
+      ++(funcInfos[i].referenced ? removedResultReferenced
+                                 : removedResultUnreferenced);
+      optimizedLocations.insert(FuncResultLoc{i});
     }
   }
 
-  // Collect function type parameters.
+  // Collect function type parameters and results.
   for (auto& [type, info] : typeTreeInfos) {
+    assert(getRootType(type) == type);
     for (Index i = 0; i < info.paramUsages.size(); ++i) {
-      assert(getRootType(type) == type);
       if (!info.paramUsages[i]) {
-        optimizedNodes.insert(TypeParamLoc{type, i});
-        ++removedType;
+        ++removedParamType;
+        optimizedLocations.insert(TypeParamLoc{type, i});
       }
+    }
+    if (type.getSignature().results != Type::none && !info.resultUsage) {
+      ++removedResultType;
+      optimizedLocations.insert(TypeResultLoc{type});
     }
   }
 
   // Find the strongly-connected components to find cycles. Consider only nodes
   // that have been optimized out when computing the graph.
-  struct ParamSCCs : SCCs<typename Nodes::iterator, ParamSCCs> {
+  struct LocationSCCs : SCCs<typename Locations::iterator, LocationSCCs> {
     DAE2& parent;
-    Nodes& optimizedNodes;
-    ParamSCCs(DAE2& parent, Nodes& optimizedNodes)
-      : SCCs(optimizedNodes.begin(), optimizedNodes.end()), parent(parent),
-        optimizedNodes(optimizedNodes) {}
-    void pushChildren(Node& node) {
-      if (auto* loc = std::get_if<FuncParamLoc>(&node)) {
-        auto [funcIndex, paramIndex] = *loc;
-        for (auto loc : parent.funcInfos[funcIndex].callerParams[paramIndex]) {
-          if (optimizedNodes.contains(loc)) {
-            push(loc);
-          }
+    Locations& optimizedLocations;
+    LocationSCCs(DAE2& parent, Locations& optimizedLocations)
+      : SCCs(optimizedLocations.begin(), optimizedLocations.end()),
+        parent(parent), optimizedLocations(optimizedLocations) {}
+    void pushChildren(Location& node) {
+      parent.forEachSuccessor(node, [&](Location succ) {
+        if (optimizedLocations.contains(succ)) {
+          push(succ);
         }
-      } else if (auto* loc = std::get_if<TypeParamLoc>(&node)) {
-        auto [funcType, paramIndex] = *loc;
-        if (auto it = parent.typeTreeInfos.find(funcType);
-            it != parent.typeTreeInfos.end()) {
-          for (auto loc : it->second.callerParams[paramIndex]) {
-            if (optimizedNodes.contains(loc)) {
-              push(loc);
-            }
-          }
-        }
-      } else {
-        WASM_UNREACHABLE("unexpected node");
-      }
+      });
     }
   };
 
-  // Track depths for each parameter to find the longest chain.
-  std::unordered_map<Node, Index> depths;
-  auto getDepth = [&](Node node) -> Index {
-    if (auto it = depths.find(node); it != depths.end()) {
+  // Track depths for each location to find the longest chain.
+  std::unordered_map<Location, Index> depths;
+  auto getDepth = [&](Location l) -> Index {
+    if (auto it = depths.find(l); it != depths.end()) {
       return it->second;
     }
     return 0;
   };
-  for (auto scc : ParamSCCs(*this, optimizedNodes)) {
-    std::vector<Node> sccNodes(scc.begin(), scc.end());
-    if (sccNodes.size() > 1) {
-      removedCycle += sccNodes.size();
-    }
+  for (auto scc : LocationSCCs(*this, optimizedLocations)) {
+    std::vector<Location> sccNodes(scc.begin(), scc.end());
     // Normally we can just take the SCC size as the cycle size, but SCCs of
     // size one are not necessarily cycles at all. Look for self-references to
     // determine whether we have a size-1 cycle.
     bool isCycle = sccNodes.size() > 1;
-    // Find the depth of this SCC, which one more than the max depth of its
+    // Find the depth of this SCC, which is one more than the max depth of its
     // children.
     Index maxChildDepth = 0;
     for (auto& node : sccNodes) {
-      if (auto* loc = std::get_if<FuncParamLoc>(&node)) {
-        auto [funcIndex, paramIndex] = *loc;
-        for (auto loc : funcInfos[funcIndex].callerParams[paramIndex]) {
-          maxChildDepth = std::max(maxChildDepth, getDepth(loc));
-          if (Node(loc) == node) {
-            isCycle = true;
-          }
+      forEachSuccessor(node, [&](Location succ) {
+        maxChildDepth = std::max(maxChildDepth, getDepth(succ));
+        if (succ == node) {
+          isCycle = true;
         }
-      } else if (auto* loc = std::get_if<TypeParamLoc>(&node)) {
-        auto [funcType, paramIndex] = *loc;
-        if (auto it = typeTreeInfos.find(funcType); it != typeTreeInfos.end()) {
-          for (auto loc : it->second.callerParams[paramIndex]) {
-            maxChildDepth = std::max(maxChildDepth, getDepth(loc));
-            if (Node(loc) == node) {
-              isCycle = true;
-            }
-          }
-        }
-      } else {
-        WASM_UNREACHABLE("unexpected node");
-      }
+      });
     }
     Index depth = maxChildDepth + 1;
     for (auto& node : sccNodes) {
@@ -1881,15 +1824,46 @@ void DAE2::collectStats() {
     deepestChain = std::max(deepestChain, depth);
     if (isCycle) {
       largestCycle = std::max(largestCycle, Index(sccNodes.size()));
+      for (auto& node : sccNodes) {
+        if (std::get_if<FuncParamLoc>(&node)) {
+          ++removedParamCycle;
+        } else if (std::get_if<FuncResultLoc>(&node)) {
+          ++removedResultCycle;
+        } else if (std::get_if<TypeParamLoc>(&node)) {
+          ++removedTypeParamCycle;
+        } else if (std::get_if<TypeResultLoc>(&node)) {
+          ++removedTypeResultCycle;
+        } else {
+          WASM_UNREACHABLE("unexpected location");
+        }
+      }
     }
   }
 
-  std::cout << "Total removed parameters: " << removedTotal << "\n";
+  std::cout << "Total removed parameters: "
+            << (removedParamUnreferenced + removedParamReferenced) << "\n";
   std::cout << "Parameters removed from unreferenced functions: "
-            << removedUnreferenced << "\n";
+            << removedParamUnreferenced << "\n";
+  std::cout << "Parameters removed from referenced functions: "
+            << removedParamReferenced << "\n";
   std::cout << "Parameters removed from inhabited function types: "
-            << removedType << "\n";
-  std::cout << "Parameters in forwarding cycles: " << removedCycle << "\n";
+            << removedParamType << "\n";
+  std::cout << "Function parameters removed in forwarding cycles: "
+            << removedParamCycle << "\n";
+  std::cout << "Function type parameters removed in forwarding cycles: "
+            << removedTypeParamCycle << "\n\n";
+  std::cout << "Total removed results: "
+            << (removedResultUnreferenced + removedResultReferenced) << "\n";
+  std::cout << "Results removed from unreferenced functions: "
+            << removedResultUnreferenced << "\n";
+  std::cout << "Results removed from referenced functions: "
+            << removedResultReferenced << "\n";
+  std::cout << "Results removed from inhabited function types: "
+            << removedResultType << "\n";
+  std::cout << "Function results removed in forwarding cycles: "
+            << removedResultCycle << "\n";
+  std::cout << "Function type results removed in forwarding cycles: "
+            << removedTypeResultCycle << "\n\n";
   std::cout << "Largest forwarding cycle: " << largestCycle << "\n";
   std::cout << "Deepest forwarding chain: " << deepestChain << "\n";
 }

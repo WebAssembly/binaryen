@@ -239,18 +239,20 @@ struct ConstraintAnalysis
 
         // Find the constraints sent to this specific successor, if there is a
         // branch, and use them.
-        auto sentConstraints = constraints;
-        if (auto branch = getBranchConstraints(block, out)) {
-          if (checkRelevancy(*branch)) {
-            sentConstraints.approximateAnd(branch->local, branch->constraint);
+        if (auto branch = getBranchConstraints(block, out);
+            branch && checkRelevancy(*branch)) {
+          auto sentConstraints = constraints;
+          sentConstraints.approximateAnd(branch->local, branch->constraint);
+          // If anything changed at the start of the target block, flow onwards.
+          if (outStartConstraints.approximateOr(sentConstraints)) {
+            work.push(out);
           }
-        }
-
-        // If anything changed at the start of the target block, flow onwards.
-        auto old = outStartConstraints;
-        outStartConstraints.approximateOr(sentConstraints);
-        if (outStartConstraints != old) {
-          work.push(out);
+        } else {
+          // There are no specific branch constraints, so send the unmodified
+          // |constraints|, avoiding a copy.
+          if (outStartConstraints.approximateOr(constraints)) {
+            work.push(out);
+          }
         }
       }
     }
