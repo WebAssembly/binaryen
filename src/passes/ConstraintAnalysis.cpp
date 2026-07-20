@@ -435,7 +435,7 @@ struct ConstraintAnalysis
     if (!relevantLocals[parsed.local]) {
       return false;
     }
-    if ([[maybe_unused]] auto* other =
+    if (auto* other =
           std::get_if<Index>(&parsed.constraint.term)) {
       if (!relevantLocals[*other]) {
         return false;
