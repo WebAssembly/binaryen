@@ -88,8 +88,8 @@ struct ConstraintAnalysis
   // optimize (often, many locals are irrelevant).
   std::vector<bool> relevantLocals;
   // Track local copies too, as if one local is relevant, another it is copied
-  // to is relevant as well. We store pairs here of [target, source].
-  std::vector<std::pair<Index, Index>> localCopies;
+  // to is relevant as well. We store pairs here of key=source, value=targets.
+  std::unordered_map<Index, std::vector<Index>> localCopyTargets;
 
   void markRelevant(Expression* curr) {
     // If this parses into a constraint on a local, that local is relevant.
@@ -118,7 +118,7 @@ struct ConstraintAnalysis
     addAction();
     if (auto* get = curr->value->dynCast<LocalGet>()) {
       // TODO: handle tees once we handle them elsewhere
-      localCopies.push_back({curr->index, get->index});
+      localCopyTargets[get->index].push_back(curr->index);
     }
   }
 
@@ -179,15 +179,26 @@ struct ConstraintAnalysis
     optimize();
   }
 
+  // Every relevant local makes the things it is copied to relevant as well.
   void computeRelevantLocals() {
-    // Every relevant local makes the things it is copied to relevant as well.
-    bool changed = true;
-    while (changed) {
-      changed = false;
-      for (auto& [target, source] : localCopies) {
-        if (relevantLocals[source] && !relevantLocals[target]) {
+    UniqueDeferredQueue<localCopyTargets::iterator> work;
+    for (auto iter : localCopyTargets) {
+      if (relevantLocals(iter.first)) {
+        work.push(iter);
+      }
+    }
+    while (!work.empty()) {
+      auto iter = work.pop();
+      auto source = iter->first;
+      assert(relevantLocals[source]);
+      auto& targets = iter->second;
+
+      for (auto target : targets) {
+        if (!relevantLocals[target]) {
           relevantLocals[target] = true;
-          changed = true;
+          if (auto iter = localCopyTargets.find(target); iter != localCopyTargets.end()) {
+            work.push(iter);
+          }
         }
       }
     }
