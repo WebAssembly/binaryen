@@ -1370,9 +1370,8 @@
             ;; contradiction, so it is unreachable. We optimize to unreachable
             ;; here, even though this is a Binary that we do not have anything
             ;; to do with otherwise (no constraint on a local is implied by this
-            ;; expression). This checks that we optimize unreachability even
-            ;; when it is caused by locals that are not outside of if
-            ;; conditions.
+            ;; expression). This checks that we optimize unreachability even on
+            ;; expressions without relevant locals.
             (drop
               (i32.add
                 (i32.const 10)
