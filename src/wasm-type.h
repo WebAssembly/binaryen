@@ -343,10 +343,9 @@ public:
                  Nullability nullable,
                  Exactness exact = Inexact)
     : Type(heapType.getID() | (nullable == Nullable ? NullMask : 0) |
-           (exact == Exact ? ExactMask : 0)) {
+           (exact == Exact && !heapType.isBasic() ? ExactMask : 0)) {
     assert(!(heapType.getID() &
              (TupleMask | NullMask | (heapType.isBasic() ? 0 : ExactMask))));
-    assert(!heapType.isBasic() || exact == Inexact);
   }
 
   // Predicates
@@ -809,13 +808,19 @@ struct TypeBuilder {
   template<typename F> void copyHeapType(size_t i, HeapType type, F map) {
     assert(!type.isBasic());
     if (auto super = type.getDeclaredSuperType()) {
-      setSubType(i, map(*super));
+      if (auto mapped = map(*super); !mapped.isBasic()) {
+        setSubType(i, map(*super));
+      }
     }
     if (auto desc = type.getDescriptorType()) {
-      setDescriptor(i, map(*desc));
+      if (auto mapped = map(*desc); !mapped.isBasic()) {
+        setDescriptor(i, map(*desc));
+      }
     }
     if (auto desc = type.getDescribedType()) {
-      setDescribed(i, map(*desc));
+      if (auto mapped = map(*desc); !mapped.isBasic()) {
+        setDescribed(i, map(*desc));
+      }
     }
     setOpen(i, type.isOpen());
     setShared(i, type.getShared());
