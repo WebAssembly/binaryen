@@ -24,8 +24,8 @@ namespace wasm {
 
 // A helper for defining iterators that contain references to some parent object
 // and indices into that parent object. Provides operator implementations for
-// equality, inequality, index updates, and index differences, but not for
-// dereferencing.
+// equality, inequality, index updates, index differences, and subscripting,
+// but not for dereferencing (`operator*` or `operator->`).
 //
 // Users of this utility should subclass ParentIndexIterator<...> and define the
 // following members in the subclass:
@@ -96,6 +96,10 @@ template<typename Parent, typename Iterator> struct ParentIndexIterator {
   Iterator operator+(difference_type off) const {
     return Iterator(self()) += off;
   }
+  friend Iterator operator+(difference_type off,
+                            const ParentIndexIterator& it) {
+    return it + off;
+  }
   Iterator& operator-=(difference_type off) {
     index -= off;
     return self();
@@ -106,6 +110,9 @@ template<typename Parent, typename Iterator> struct ParentIndexIterator {
   difference_type operator-(const Iterator& other) const {
     assert(parent == other.parent);
     return index - other.index;
+  }
+  decltype(auto) operator[](difference_type off) const {
+    return *(self() + off);
   }
 };
 
