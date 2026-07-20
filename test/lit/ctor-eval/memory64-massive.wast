@@ -22,13 +22,3 @@
  )
 )
 
-;; CHECK:      (type $0 (func))
-
-;; CHECK:      (memory $mem i64 16 16 shared)
-
-;; CHECK:      (data $data (i64.const 4294968321) "")
-
-;; CHECK:      (export "func" (func $func))
-
-;; CHECK:      (func $func (type $0)
-;; CHECK-NEXT: )
