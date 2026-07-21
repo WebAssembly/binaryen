@@ -48,6 +48,14 @@ Result provesConstantPair(Abstract::Op aOp,
         return TrueFalse(aConstant.gtS(bConstant));
       case Abstract::GeS:
         return TrueFalse(aConstant.geS(bConstant));
+      case Abstract::LtU:
+        return TrueFalse(aConstant.ltU(bConstant));
+      case Abstract::LeU:
+        return TrueFalse(aConstant.leU(bConstant));
+      case Abstract::GtU:
+        return TrueFalse(aConstant.gtU(bConstant));
+      case Abstract::GeU:
+        return TrueFalse(aConstant.geU(bConstant));
       default: {
       }
     }
