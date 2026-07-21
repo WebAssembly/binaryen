@@ -3962,6 +3962,7 @@
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT: )
   (func $constant-inequalities-lt_s
+    ;; A constant in $x is checked against inequalities using constants.
     (local $x i32)
     (local.set $x
       (i32.const 42)
