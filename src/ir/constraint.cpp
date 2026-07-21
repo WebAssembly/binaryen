@@ -32,7 +32,8 @@ Result TrueFalse(Literal x) { return TrueFalse(x.getUnsigned()); }
 Result provesConstantPair(Abstract::Op aOp,
                           const Literal& aConstant,
                           Abstract::Op bOp,
-                          const Literal& bConstant) {
+                          const Literal& bConstant,
+                          bool recursing=false) {
   // a == A =?=> a op B. Simply apply A to the operation against B.
   if (aOp == Abstract::Eq) {
     switch (bOp) {
@@ -72,6 +73,15 @@ Result provesConstantPair(Abstract::Op aOp,
   if (aOp == Abstract::Ne && bOp == Abstract::Ne) {
     if (aConstant == bConstant) {
       return True;
+    }
+  }
+
+  if (!recursing) {
+    // The flipped operation may tell us something:  y ==> !x  implies
+    // x ==> y  is false (because if not, then x would prove y, and y would
+    // prove !x, a contradiction).
+    if (provesConstantPair(bOp, bConstant, aOp, aConstant, true) == False) {
+      return False;
     }
   }
 
