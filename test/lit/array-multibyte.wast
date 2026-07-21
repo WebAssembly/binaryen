@@ -16,9 +16,13 @@
   ;; RTRIP:      (type $i8_array (array (mut i8)))
   (type $i8_array (array (mut i8)))
 
+  ;; CHECK:      (type $2 (func (param (ref $i8_array))))
+
   ;; CHECK:      (global $arr (ref $i8_array) (array.new_default $i8_array
   ;; CHECK-NEXT:  (i32.const 4)
   ;; CHECK-NEXT: ))
+  ;; RTRIP:      (type $2 (func (param (ref $i8_array))))
+
   ;; RTRIP:      (global $arr (ref $i8_array) (array.new_default $i8_array
   ;; RTRIP-NEXT:  (i32.const 4)
   ;; RTRIP-NEXT: ))
@@ -1007,5 +1011,60 @@
   ;; RTRIP-NEXT: )
   (func $loads_index_unreachable
     (drop (i32.load8_u (type $i8_array) (global.get $arr) (unreachable)))
+  )
+
+  ;; CHECK:      (func $immediates (type $2) (param $arr (ref $i8_array))
+  ;; CHECK-NEXT:  (i32.store8 (type $i8_array) offset=4
+  ;; CHECK-NEXT:   (local.get $arr)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (i32.const 42)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (i32.store (type $i8_array) offset=8
+  ;; CHECK-NEXT:   (local.get $arr)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (i32.const 1337)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.load8_u (type $i8_array) offset=4
+  ;; CHECK-NEXT:    (local.get $arr)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.load (type $i8_array) offset=8
+  ;; CHECK-NEXT:    (local.get $arr)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; RTRIP:      (func $immediates (type $2) (param $arr (ref $i8_array))
+  ;; RTRIP-NEXT:  (i32.store8 (type $i8_array) offset=4
+  ;; RTRIP-NEXT:   (local.get $arr)
+  ;; RTRIP-NEXT:   (i32.const 0)
+  ;; RTRIP-NEXT:   (i32.const 42)
+  ;; RTRIP-NEXT:  )
+  ;; RTRIP-NEXT:  (i32.store (type $i8_array) offset=8
+  ;; RTRIP-NEXT:   (local.get $arr)
+  ;; RTRIP-NEXT:   (i32.const 0)
+  ;; RTRIP-NEXT:   (i32.const 1337)
+  ;; RTRIP-NEXT:  )
+  ;; RTRIP-NEXT:  (drop
+  ;; RTRIP-NEXT:   (i32.load8_u (type $i8_array) offset=4
+  ;; RTRIP-NEXT:    (local.get $arr)
+  ;; RTRIP-NEXT:    (i32.const 0)
+  ;; RTRIP-NEXT:   )
+  ;; RTRIP-NEXT:  )
+  ;; RTRIP-NEXT:  (drop
+  ;; RTRIP-NEXT:   (i32.load (type $i8_array) offset=8
+  ;; RTRIP-NEXT:    (local.get $arr)
+  ;; RTRIP-NEXT:    (i32.const 0)
+  ;; RTRIP-NEXT:   )
+  ;; RTRIP-NEXT:  )
+  ;; RTRIP-NEXT: )
+  (func $immediates (param $arr (ref $i8_array))
+    (i32.store8 (type $i8_array) offset=4 align=1 (local.get $arr) (i32.const 0) (i32.const 42))
+    (i32.store (type $i8_array) offset=8 align=4 (local.get $arr) (i32.const 0) (i32.const 1337))
+    (drop (i32.load8_u (type $i8_array) offset=4 align=1 (local.get $arr) (i32.const 0)))
+    (drop (i32.load (type $i8_array) offset=8 align=4 (local.get $arr) (i32.const 0)))
   )
 )
