@@ -200,9 +200,6 @@ struct ConstraintAnalysis
         work.push(i);
       }
     }
-    if (work.empty()) {
-      return;
-    }
 
     // Flow.
     while (!work.empty()) {
