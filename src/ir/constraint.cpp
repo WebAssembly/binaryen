@@ -33,7 +33,7 @@ Result provesConstantPair(Abstract::Op aOp,
                           const Literal& aConstant,
                           Abstract::Op bOp,
                           const Literal& bConstant,
-                          bool recursing=false) {
+                          bool recursing = false) {
   // a == A =?=> a op B. Simply apply A to the operation against B.
   if (aOp == Abstract::Eq) {
     switch (bOp) {
