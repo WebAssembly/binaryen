@@ -91,7 +91,7 @@ struct ConstraintAnalysis
   // to is relevant as well. We store pairs here of key=source, value=targets.
   std::unordered_map<Index, std::vector<Index>> localCopyTargets;
 
-  void markRelevant(Expression* curr) {
+  void maybeMarkRelevant(Expression* curr) {
     // If this parses into a constraint on a local, that local is relevant.
     if (auto parsed = LocalConstraint::parseCondition(curr)) {
       relevantLocals[parsed->local] = true;
@@ -124,22 +124,22 @@ struct ConstraintAnalysis
 
   void visitUnary(Unary* curr) {
     addAction();
-    markRelevant(curr);
+    maybeMarkRelevant(curr);
   }
 
   void visitBinary(Binary* curr) {
     addAction();
-    markRelevant(curr);
+    maybeMarkRelevant(curr);
   }
 
   void visitRefEq(RefEq* curr) {
     addAction();
-    markRelevant(curr);
+    maybeMarkRelevant(curr);
   }
 
   void visitRefIsNull(RefIsNull* curr) {
     addAction();
-    markRelevant(curr);
+    maybeMarkRelevant(curr);
   }
 
   static void doStartIfTrue(ConstraintAnalysis* self, Expression** currp) {
@@ -149,7 +149,7 @@ struct ConstraintAnalysis
       self->currBasicBlock->contents.brancher = *currp;
     }
     if (auto* iff = (*currp)->dynCast<If>()) {
-      self->markRelevant(iff->condition);
+      self->maybeMarkRelevant(iff->condition);
     }
     Super::doStartIfTrue(self, currp);
   }
@@ -160,10 +160,10 @@ struct ConstraintAnalysis
     }
     if (auto* br = (*currp)->dynCast<Break>()) {
       if (br->condition) {
-        self->markRelevant(br->condition);
+        self->maybeMarkRelevant(br->condition);
       }
     } else if (auto* brOn = (*currp)->dynCast<BrOn>()) {
-      self->markRelevant(brOn->ref);
+      self->maybeMarkRelevant(brOn->ref);
     }
     Super::doEndBranch(self, currp);
   }
