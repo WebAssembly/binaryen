@@ -204,7 +204,7 @@ struct ConstraintAnalysis
     while (!work.empty()) {
       auto curr = work.pop();
       assert(relevantLocals[curr]);
-      for (auto& map : { localCopyTargets, localCopySources }) {
+      for (auto& map : {localCopyTargets, localCopySources}) {
         if (auto iter = map.find(curr); iter != map.end()) {
           for (auto other : iter->second) {
             if (!relevantLocals[other]) {
