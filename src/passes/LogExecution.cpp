@@ -36,7 +36,7 @@
 
 namespace wasm {
 
-Name LOGGER("log_execution");
+static const Name LOGGER("log_execution");
 
 struct LogExecution : public WalkerPass<PostWalker<LogExecution>> {
   // The module name the logger function is imported from.
