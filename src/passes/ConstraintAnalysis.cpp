@@ -87,9 +87,12 @@ struct ConstraintAnalysis
   // A relevant local is one that is used as part of an expression that we can
   // optimize (often, many locals are irrelevant).
   std::vector<bool> relevantLocals;
-  // Track local copies too, as if one local is relevant, another it is copied
-  // to is relevant as well. We store pairs here of key=source, value=targets.
-  std::unordered_map<Index, std::vector<Index>> localCopyTargets;
+  // Track local copies too, as if one local is relevant, it can make another
+  // relevant. We store pairs here of key=target, value=sources, which is the
+  // direction we will flow in the analysis: if we check x == 10, making it
+  // relevant, and x = y earlier, then we must track that source, y, so that we
+  // know what it writes to x.
+  std::unordered_map<Index, std::vector<Index>> localCopySources;
 
   void maybeMarkRelevant(Expression* curr) {
     // If this parses into a constraint on a local, that local is relevant.
@@ -118,7 +121,7 @@ struct ConstraintAnalysis
     addAction();
     if (auto* get = curr->value->dynCast<LocalGet>()) {
       // TODO: handle tees once we handle them elsewhere
-      localCopyTargets[get->index].push_back(curr->index);
+      localCopySources[curr->index].push_back(get->index);
     }
   }
 
@@ -192,25 +195,16 @@ struct ConstraintAnalysis
       return;
     }
 
-    // Reverse the map of targets, as we need to flow in both directions.
-    std::unordered_map<Index, std::vector<Index>> localCopySources;
-    for (auto& [source, targets] : localCopyTargets) {
-      for (auto target : targets) {
-        localCopySources[target].push_back(source);
-      }
-    }
-
     // Flow.
     while (!work.empty()) {
       auto curr = work.pop();
       assert(relevantLocals[curr]);
-      for (auto& map : {localCopyTargets, localCopySources}) {
-        if (auto iter = map.find(curr); iter != map.end()) {
-          for (auto other : iter->second) {
-            if (!relevantLocals[other]) {
-              relevantLocals[other] = true;
-              work.push(other);
-            }
+      if (auto iter = localCopySources.find(curr);
+          iter != localCopySources.end()) {
+        for (auto source : iter->second) {
+          if (!relevantLocals[source]) {
+            relevantLocals[source] = true;
+            work.push(source);
           }
         }
       }
