@@ -181,21 +181,36 @@ struct ConstraintAnalysis
 
   // Every relevant local makes the things it is copied to relevant as well.
   void computeRelevantLocals() {
+    // We'll start from all relevant locals, and flow from there.
     UniqueDeferredQueue<Index> work;
-    for (auto& [source, _] : localCopyTargets) {
-      if (relevantLocals[source]) {
-        work.push(source);
+    for (Index i = 0; i < relevantLocals.size(); i++) {
+      if (relevantLocals[i]) {
+        work.push(i);
       }
     }
+    if (work.empty()) {
+      return;
+    }
+
+    // Reverse the map of targets, as we need to flow in both directions.
+    std::unordered_map<Index, std::vector<Index>> localCopySources;
+    for (auto& [source, targets] : localCopyTargets) {
+      for (auto target : targets) {
+        localCopySources[target].push_back(source);
+      }
+    }
+
+    // Flow.
     while (!work.empty()) {
-      auto source = work.pop();
-      assert(relevantLocals[source]);
-      if (auto iter = localCopyTargets.find(source);
-          iter != localCopyTargets.end()) {
-        for (auto target : iter->second) {
-          if (!relevantLocals[target]) {
-            relevantLocals[target] = true;
-            work.push(target);
+      auto curr = work.pop();
+      assert(relevantLocals[curr]);
+      for (auto& map : { localCopyTargets, localCopySources }) {
+        if (auto iter = map.find(curr); iter != map.end()) {
+          for (auto other : iter->second) {
+            if (!relevantLocals[other]) {
+              relevantLocals[other] = true;
+              work.push(other);
+            }
           }
         }
       }

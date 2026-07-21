@@ -3888,5 +3888,41 @@
       )
     )
   )
+
+  ;; CHECK:      (func $relevant-copy (type $1)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (local $y i32)
+  ;; CHECK-NEXT:  (local.set $y
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPTIN:      (func $relevant-copy (type $1)
+  ;; OPTIN-NEXT:  (local $x i32)
+  ;; OPTIN-NEXT:  (local $y i32)
+  ;; OPTIN-NEXT:  (local.set $y
+  ;; OPTIN-NEXT:   (local.get $x)
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (drop
+  ;; OPTIN-NEXT:   (i32.const 1)
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT: )
+  (func $relevant-copy
+    (local $x i32)
+    (local $y i32)
+    ;; x is not relevant, but it is copied to y, which is, so we must track x as
+    ;; relevant too.
+    (local.set $y
+      (local.get $x)
+    )
+    (drop
+      (i32.eq
+        (local.get $y)
+        (i32.const 0)
+      )
+    )
+  )
 )
 
