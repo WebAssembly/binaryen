@@ -24,13 +24,9 @@ namespace wasm::constraint {
 
 namespace {
 
-Result TrueFalse(bool x) {
-  return x ? True : False;
-}
+Result TrueFalse(bool x) { return x ? True : False; }
 
-Result TrueFalse(Literal x) {
-  return TrueFalse(x.getUnsigned());
-}
+Result TrueFalse(Literal x) { return TrueFalse(x.getUnsigned()); }
 
 // Evaluate whether a => b, where a and b are operations on constants.
 Result provesConstantPair(Abstract::Op aOp,
@@ -52,7 +48,8 @@ Result provesConstantPair(Abstract::Op aOp,
         return TrueFalse(aConstant.gtS(bConstant));
       case Abstract::GeS:
         return TrueFalse(aConstant.geS(bConstant));
-      default: {}
+      default: {
+      }
     }
   }
 
@@ -68,7 +65,7 @@ Result provesConstantPair(Abstract::Op aOp,
     if (aConstant == bConstant) {
       return True;
     }
-  }  
+  }
 
   // TODO: handle all the rest of >, >=, <, and <=
   return Unknown;
