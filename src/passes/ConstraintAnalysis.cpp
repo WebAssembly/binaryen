@@ -110,10 +110,19 @@ struct ConstraintAnalysis
     Super::doWalkFunction(func);
   }
 
+#ifndef NDEBUG
+  // We use these in asserts, see below.
+  std::unordered_set<Expression*> originalActions;
+#endif
+
   // Store the actions we care about.
   void addAction() {
     if (currBasicBlock) {
-      currBasicBlock->contents.actions.push_back(getCurrentPointer());
+      auto* currp = getCurrentPointer();
+      currBasicBlock->contents.actions.push_back(currp);
+#ifndef NDEBUG
+      originalActions.insert(*currp);
+#endif
     }
   }
 
@@ -317,6 +326,12 @@ struct ConstraintAnalysis
       return;
     }
     if (!checkRelevancy(*parsed)) {
+#ifndef NDEBUG
+      // If this is not relevant, then it must be one of the original actions we
+      // care about, i.e., not the result of optimizations. See the comment
+      // below on checkRelevancy.
+      assert(originalActions.contains(curr));
+#endif
       return;
     }
 
