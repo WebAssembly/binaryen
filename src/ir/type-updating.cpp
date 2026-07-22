@@ -40,7 +40,7 @@ std::unordered_map<HeapType, std::shared_ptr<const EffectAnalyzer>>
 updateIndirectCallEffects(
   const Module& wasm,
   const InsertOrderedMap<HeapType, ModuleUtils::HeapTypeInfo>& typeInfo,
-  const GlobalTypeRewriter::TypeMap& oldToNewTypes) {
+  const GlobalTypeRewriter::TypeMap& typeMap) {
 
   std::unordered_map<HeapType, std::shared_ptr<const EffectAnalyzer>>
     newTypeEffects;
@@ -57,20 +57,17 @@ updateIndirectCallEffects(
   }
 
   for (auto oldType : allOldTypes) {
-    // This is different from `newTypes`. This refers to the type that we are
-    // rewriting to. It may or may not be a brand new type in the module (which
-    // is indicated by `newTypes`).
-    HeapType newType;
+    HeapType destType;
     {
-      auto it = oldToNewTypes.find(oldType);
-      if (it == oldToNewTypes.end()) {
-        newType = oldType;
+      auto it = typeMap.find(oldType);
+      if (it == typeMap.end()) {
+        destType = oldType;
       } else {
-        newType = it->second;
+        destType = it->second;
       }
     }
 
-    if (newTypes.contains(newType)) {
+    if (newTypes.contains(destType)) {
       continue;
     }
 
@@ -79,16 +76,16 @@ updateIndirectCallEffects(
 
     if (!oldEffects) {
       // oldType has no entry, which means its effects are explicitly unknown.
-      // Why? It's an old type in `oldToNewTypes`, so it must have appeared in
+      // Why? It's a source type in `typeMap`, so it must have appeared in
       // the module at some point, but GlobalEffects were never computed for it,
       // or GlobalEffects intentionally ommitted its entry because it couldn't
       // determine its effects (e.g. if an import has that type).
-      newTypes.insert(newType);
-      newTypeEffects.erase(newType);
+      newTypes.insert(destType);
+      newTypeEffects.erase(destType);
       continue;
     }
 
-    auto [it, inserted] = newTypeEffects.emplace(newType, *oldEffects);
+    auto [it, inserted] = newTypeEffects.emplace(destType, *oldEffects);
     if (!inserted) {
       auto merged = std::make_shared<EffectAnalyzer>(*it->second);
       merged->mergeIn(**oldEffects);
