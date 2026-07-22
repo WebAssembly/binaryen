@@ -1007,6 +1007,12 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
 
   Lexer in;
 
+  bool isFunctionImported() { return false; }
+  bool isTableImported() { return false; }
+  bool isMemoryImported() { return false; }
+  bool isGlobalImported() { return false; }
+  bool isTagImported() { return false; }
+
   // At this stage we only look at types to find implicit type definitions,
   // which are inserted directly into the context. We cannot materialize or
   // validate any types because we don't know what types exist yet.
@@ -1470,6 +1476,22 @@ struct ParseModuleTypesCtx : TypeParserCtx<ParseModuleTypesCtx>,
 
   bool skipFunctionBody() { return true; }
 
+  bool isFunctionImported() {
+    return index < wasm.functions.size() && wasm.functions[index]->imported();
+  }
+  bool isTableImported() {
+    return index < wasm.tables.size() && wasm.tables[index]->imported();
+  }
+  bool isMemoryImported() {
+    return index < wasm.memories.size() && wasm.memories[index]->imported();
+  }
+  bool isGlobalImported() {
+    return index < wasm.globals.size() && wasm.globals[index]->imported();
+  }
+  bool isTagImported() {
+    return index < wasm.tags.size() && wasm.tags[index]->imported();
+  }
+
   Result<HeapTypeT> getHeapTypeFromIdx(Index idx) {
     if (idx >= types.size()) {
       return in.err("type index out of bounds");
@@ -1643,6 +1665,22 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
   using OnClauseListT = std::vector<OnClauseInfo>;
 
   Lexer in;
+
+  bool isFunctionImported() {
+    return index < wasm.functions.size() && wasm.functions[index]->imported();
+  }
+  bool isTableImported() {
+    return index < wasm.tables.size() && wasm.tables[index]->imported();
+  }
+  bool isMemoryImported() {
+    return index < wasm.memories.size() && wasm.memories[index]->imported();
+  }
+  bool isGlobalImported() {
+    return index < wasm.globals.size() && wasm.globals[index]->imported();
+  }
+  bool isTagImported() {
+    return index < wasm.tags.size() && wasm.tags[index]->imported();
+  }
 
   Module& wasm;
   Builder builder;
