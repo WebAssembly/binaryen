@@ -8,43 +8,81 @@
 ;; In NO_INSTRMT below we run another pass, just to prove that not every pass
 ;; causes global effects to be discarded.
 
-;; RUN: foreach %s %t wasm-opt --generate-global-effects --instrument-locals --vacuum -S -o - | filecheck %s --check-prefix INSTRUMENT
-;; RUN: foreach %s %t wasm-opt --generate-global-effects --coalesce-locals   --vacuum -S -o - | filecheck %s --check-prefix NO_INSTRMT
+;; RUN: wasm-opt %s -all --closed-world --generate-global-effects --instrument-locals --vacuum -S -o - | filecheck %s --check-prefix INSTRUMENT
+;; RUN: wasm-opt %s -all --closed-world --generate-global-effects --coalesce-locals   --vacuum -S -o - | filecheck %s --check-prefix NO_INSTRMT
 
 (module
-  ;; INSTRUMENT:      (type $0 (func))
+  (rec
+    ;; INSTRUMENT:      (type $0 (func))
 
-  ;; INSTRUMENT:      (type $1 (func (param i32 i32 i32) (result i32)))
+    ;; INSTRUMENT:      (type $1 (func (param i32 i32 i32) (result i32)))
 
-  ;; INSTRUMENT:      (type $2 (func (param i32 i32 i64) (result i64)))
+    ;; INSTRUMENT:      (type $2 (func (param i32 i32 i64) (result i64)))
 
-  ;; INSTRUMENT:      (type $3 (func (param i32 i32 f32) (result f32)))
+    ;; INSTRUMENT:      (type $3 (func (param i32 i32 f32) (result f32)))
 
-  ;; INSTRUMENT:      (type $4 (func (param i32 i32 f64) (result f64)))
+    ;; INSTRUMENT:      (type $4 (func (param i32 i32 f64) (result f64)))
 
-  ;; INSTRUMENT:      (import "env" "get_i32" (func $get_i32 (param i32 i32 i32) (result i32)))
+    ;; INSTRUMENT:      (type $5 (func (param i32 i32 funcref) (result funcref)))
 
-  ;; INSTRUMENT:      (import "env" "get_i64" (func $get_i64 (param i32 i32 i64) (result i64)))
+    ;; INSTRUMENT:      (type $6 (func (param i32 i32 externref) (result externref)))
 
-  ;; INSTRUMENT:      (import "env" "get_f32" (func $get_f32 (param i32 i32 f32) (result f32)))
+    ;; INSTRUMENT:      (type $7 (func (param i32 i32 v128) (result v128)))
 
-  ;; INSTRUMENT:      (import "env" "get_f64" (func $get_f64 (param i32 i32 f64) (result f64)))
+    ;; INSTRUMENT:      (rec
+    ;; INSTRUMENT-NEXT:  (type $no-effects (func))
+    ;; NO_INSTRMT:      (type $0 (func))
 
-  ;; INSTRUMENT:      (import "env" "set_i32" (func $set_i32 (param i32 i32 i32) (result i32)))
+    ;; NO_INSTRMT:      (rec
+    ;; NO_INSTRMT-NEXT:  (type $no-effects (func))
+    (type $no-effects (func))
 
-  ;; INSTRUMENT:      (import "env" "set_i64" (func $set_i64 (param i32 i32 i64) (result i64)))
+    ;; Empty type to preserve the rec group.
+    (type (struct))
+  )
 
-  ;; INSTRUMENT:      (import "env" "set_f32" (func $set_f32 (param i32 i32 f32) (result f32)))
+  ;; INSTRUMENT:       (type $9 (struct))
 
-  ;; INSTRUMENT:      (import "env" "set_f64" (func $set_f64 (param i32 i32 f64) (result f64)))
+  ;; INSTRUMENT:      (import "env" "get_i32" (func $get_i32 (type $1) (param i32 i32 i32) (result i32)))
 
-  ;; INSTRUMENT:      (func $past-get
+  ;; INSTRUMENT:      (import "env" "get_i64" (func $get_i64 (type $2) (param i32 i32 i64) (result i64)))
+
+  ;; INSTRUMENT:      (import "env" "get_f32" (func $get_f32 (type $3) (param i32 i32 f32) (result f32)))
+
+  ;; INSTRUMENT:      (import "env" "get_f64" (func $get_f64 (type $4) (param i32 i32 f64) (result f64)))
+
+  ;; INSTRUMENT:      (import "env" "set_i32" (func $set_i32 (type $1) (param i32 i32 i32) (result i32)))
+
+  ;; INSTRUMENT:      (import "env" "set_i64" (func $set_i64 (type $2) (param i32 i32 i64) (result i64)))
+
+  ;; INSTRUMENT:      (import "env" "set_f32" (func $set_f32 (type $3) (param i32 i32 f32) (result f32)))
+
+  ;; INSTRUMENT:      (import "env" "set_f64" (func $set_f64 (type $4) (param i32 i32 f64) (result f64)))
+
+  ;; INSTRUMENT:      (import "env" "get_funcref" (func $get_funcref (type $5) (param i32 i32 funcref) (result funcref)))
+
+  ;; INSTRUMENT:      (import "env" "set_funcref" (func $set_funcref (type $5) (param i32 i32 funcref) (result funcref)))
+
+  ;; INSTRUMENT:      (import "env" "get_externref" (func $get_externref (type $6) (param i32 i32 externref) (result externref)))
+
+  ;; INSTRUMENT:      (import "env" "set_externref" (func $set_externref (type $6) (param i32 i32 externref) (result externref)))
+
+  ;; INSTRUMENT:      (import "env" "get_v128" (func $get_v128 (type $7) (param i32 i32 v128) (result v128)))
+
+  ;; INSTRUMENT:      (import "env" "set_v128" (func $set_v128 (type $7) (param i32 i32 v128) (result v128)))
+
+  ;; INSTRUMENT:      (elem declare func $nop)
+
+  ;; INSTRUMENT:      (func $past-get (type $0)
   ;; INSTRUMENT-NEXT:  (call $use-local)
   ;; INSTRUMENT-NEXT:  (call $nop)
+  ;; INSTRUMENT-NEXT:  (call_ref $no-effects
+  ;; INSTRUMENT-NEXT:   (ref.func $nop)
+  ;; INSTRUMENT-NEXT:  )
   ;; INSTRUMENT-NEXT: )
-  ;; NO_INSTRMT:      (type $0 (func))
+  ;; NO_INSTRMT:       (type $2 (struct))
 
-  ;; NO_INSTRMT:      (func $past-get
+  ;; NO_INSTRMT:      (func $past-get (type $0)
   ;; NO_INSTRMT-NEXT:  (nop)
   ;; NO_INSTRMT-NEXT: )
   (func $past-get
@@ -56,9 +94,14 @@
     ;; instrumented function (we don't track individual functions), so we'll
     ;; lose the ability to vacuum this function away as well in that case.
     (call $nop)
+
+    ;; GlobalEffects computed that this function can't possibly do anything
+    ;; but InstrumentLocals added effects, so we discarded indirectCallEffects
+    ;; and can't optimize
+    (call_ref $no-effects (ref.func $nop))
   )
 
-  ;; INSTRUMENT:      (func $use-local
+  ;; INSTRUMENT:      (func $use-local (type $0)
   ;; INSTRUMENT-NEXT:  (local $x i32)
   ;; INSTRUMENT-NEXT:  (local.set $x
   ;; INSTRUMENT-NEXT:   (call $set_i32
@@ -68,7 +111,7 @@
   ;; INSTRUMENT-NEXT:   )
   ;; INSTRUMENT-NEXT:  )
   ;; INSTRUMENT-NEXT: )
-  ;; NO_INSTRMT:      (func $use-local
+  ;; NO_INSTRMT:      (func $use-local (type $0)
   ;; NO_INSTRMT-NEXT:  (local $0 i32)
   ;; NO_INSTRMT-NEXT:  (nop)
   ;; NO_INSTRMT-NEXT: )
@@ -81,13 +124,13 @@
     )
   )
 
-  ;; INSTRUMENT:      (func $nop
+  ;; INSTRUMENT:      (func $nop (type $no-effects)
   ;; INSTRUMENT-NEXT:  (nop)
   ;; INSTRUMENT-NEXT: )
-  ;; NO_INSTRMT:      (func $nop
+  ;; NO_INSTRMT:      (func $nop (type $no-effects)
   ;; NO_INSTRMT-NEXT:  (nop)
   ;; NO_INSTRMT-NEXT: )
-  (func $nop
+  (func $nop (type $no-effects)
     ;; This function does nothing.
   )
 )

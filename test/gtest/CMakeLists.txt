@@ -35,6 +35,7 @@ set(unittest_SOURCES
   suffix_tree.cpp
   topological-sort.cpp
   type-builder.cpp
+  type-updating.cpp
   wat-lexer.cpp
   validator.cpp
   source-map.cpp
@@ -57,5 +58,5 @@ if(BUILD_FUZZTEST)
   target_link_libraries(binaryen-unittests PRIVATE gmock)
   gtest_discover_tests(binaryen-unittests)
 else()
-  target_link_libraries(binaryen-unittests PRIVATE gtest gtest_main)
+  target_link_libraries(binaryen-unittests PRIVATE gtest gtest_main gmock)
 endif()

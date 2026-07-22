@@ -2731,6 +2731,9 @@ public:
   Name name;
 
   std::unordered_map<HeapType, TypeNames> typeNames;
+
+  // The source binary's type indices. Used in some cases for preserving
+  // ordering of types.
   std::unordered_map<HeapType, Index> typeIndices;
 
   // Potential effects for bodies of indirect calls to this type. Populated by
@@ -2747,6 +2750,7 @@ public:
   // This data is only meaningful for indirect calls. If no indirect call
   // exists to a function, the data can be out of date (no effort is made to
   // clean up the data if e.g. all indirect calls to a function are removed).
+  //
   // TODO: Account for exactness here.
   std::unordered_map<HeapType, std::shared_ptr<const EffectAnalyzer>>
     indirectCallEffects;
