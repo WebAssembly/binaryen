@@ -214,6 +214,13 @@ namespace {
 // changed (otherwise, we return nullopt).
 std::optional<bool> approximateOrDisjoint(AndedConstraintSet& self,
                                           const AndedConstraintSet& other) {
+  // Simple range fusing, add a constant to turn > into >=:
+  //
+  //   { x == C } || { x > C && x <= D }  ===  { x >= C && x <= D }
+  //
+  // (note that we don't need to care about D: if the inequalities did not
+  // describe a contradiction before, they do not do so after, either)
+
   // Otherwise, we have no idea.
   return {};
 }

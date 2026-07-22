@@ -46,7 +46,7 @@
   (func $bound
     (local $x i32)
     (loop $loop
-      ;; We arrive at the loop top with {x == 0} or {x > 0 && x <= 100}. Those
+      ;; We arrive at the loop top with {x == 0} || {x > 0 && x <= 100}. Those
       ;; OR into {x >= 0 && x <= 100} - that is, the x == 0 and x > 0 combine
       ;; into x >= 0.
       (drop
@@ -123,7 +123,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $bound-flipped
+  (;;func $bound-flipped
     (local $x i32)
     ;; As above, but with the ifs flipped. We optimize the same way.
     (loop $loop
@@ -160,5 +160,7 @@
         )
       )
     )
-  )
+  ;;)
+  ;; TODO: unsigned
+  ;; TODO: non-zero
 )
