@@ -530,7 +530,7 @@ fuzztest::Domain<HeapTypePlan> AvailableStrictSubHeapType(TypeBuilderPlan plan,
           HeapTypePlan{HeapType(HeapTypes::noext.getBasic(share))});
       case HeapType::waitqueue:
         return fuzztest::Just(
-          HeapTypePlan{HeapType(HeapTypes::nowaitqueue.getBasic(share))});
+          HeapTypePlan{HeapType(HeapTypes::sharedNowaitqueue.getBasic(share))});
       case HeapType::none:
       case HeapType::noext:
       case HeapType::nofunc:
