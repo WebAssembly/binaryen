@@ -45,17 +45,20 @@ updateIndirectCallEffects(
   std::unordered_map<HeapType, std::shared_ptr<const EffectAnalyzer>>
     newTypeEffects;
 
-  std::unordered_set<HeapType> unknownNewTypes;
+  // Types that don't already appear in the module.
+  std::unordered_set<HeapType> newTypes;
 
   std::unordered_set<HeapType> allOldTypes;
   for (auto [oldType, _] : typeInfo) {
     allOldTypes.insert(oldType);
   }
-  for (auto& [oldType, effects] : wasm.indirectCallEffects) {
+  for (auto& [oldType, _] : wasm.indirectCallEffects) {
     allOldTypes.insert(oldType);
   }
 
   for (auto oldType : allOldTypes) {
+    // This is different from `newTypes`. This refers to the type that we are rewriting to. It may or may not be
+    // a brand new type in the module (which is indicated by `newTypes`).
     HeapType newType;
     {
       auto it = oldToNewTypes.find(oldType);
@@ -66,7 +69,7 @@ updateIndirectCallEffects(
       }
     }
 
-    if (unknownNewTypes.contains(newType)) {
+    if (newTypes.contains(newType)) {
       continue;
     }
 
@@ -74,8 +77,10 @@ updateIndirectCallEffects(
       find_or_null(wasm.indirectCallEffects, oldType);
 
     if (!oldEffects) {
-      // oldType has no entry, which means its effects are explicitly unknown.
-      unknownNewTypes.insert(newType);
+      // oldType has no entry, which means its effects are explicitly unknown. Why? It's an old type in `oldToNewTypes`, so it must
+      // have appeared in the module at some point, but GlobalEffects were never computed for it, or GlobalEffects intentionally
+      // ommitted its entry because it couldn't determine its effects (e.g. if an import has that type).
+      newTypes.insert(newType);
       newTypeEffects.erase(newType);
       continue;
     }
