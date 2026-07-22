@@ -2837,8 +2837,7 @@ void BinaryInstWriter::visitArrayLoad(ArrayLoad* curr) {
   }
   emitLoadOpcode(curr->bytes, curr->signed_, curr->type);
   uint32_t alignmentBits =
-    Bits::log2(curr->align ? curr->align : Address(curr->bytes)) |
-    BinaryConsts::HasBackingArrayMask;
+    Bits::log2(curr->align) | BinaryConsts::HasBackingArrayMask;
   o << U32LEB(alignmentBits);
   o << U32LEB(curr->offset);
   parent.writeIndexedHeapType(curr->ref->type.getHeapType());
@@ -2854,8 +2853,7 @@ void BinaryInstWriter::visitArrayStore(ArrayStore* curr) {
   }
   emitStoreOpcode(curr->bytes, curr->value->type);
   uint32_t alignmentBits =
-    Bits::log2(curr->align ? curr->align : Address(curr->bytes)) |
-    BinaryConsts::HasBackingArrayMask;
+    Bits::log2(curr->align) | BinaryConsts::HasBackingArrayMask;
   o << U32LEB(alignmentBits);
   o << U32LEB(curr->offset);
   parent.writeIndexedHeapType(curr->ref->type.getHeapType());

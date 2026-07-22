@@ -1024,6 +1024,11 @@
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (i32.const 1337)
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (i32.store (type $i8_array) offset=12 align=2
+  ;; CHECK-NEXT:   (local.get $arr)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (i32.const 1337)
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.load8_u (type $i8_array) offset=4
   ;; CHECK-NEXT:    (local.get $arr)
@@ -1032,6 +1037,12 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.load (type $i8_array) offset=8
+  ;; CHECK-NEXT:    (local.get $arr)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.load (type $i8_array) offset=12 align=2
   ;; CHECK-NEXT:    (local.get $arr)
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:   )
@@ -1048,6 +1059,11 @@
   ;; RTRIP-NEXT:   (i32.const 0)
   ;; RTRIP-NEXT:   (i32.const 1337)
   ;; RTRIP-NEXT:  )
+  ;; RTRIP-NEXT:  (i32.store (type $i8_array) offset=12 align=2
+  ;; RTRIP-NEXT:   (local.get $arr)
+  ;; RTRIP-NEXT:   (i32.const 0)
+  ;; RTRIP-NEXT:   (i32.const 1337)
+  ;; RTRIP-NEXT:  )
   ;; RTRIP-NEXT:  (drop
   ;; RTRIP-NEXT:   (i32.load8_u (type $i8_array) offset=4
   ;; RTRIP-NEXT:    (local.get $arr)
@@ -1060,11 +1076,19 @@
   ;; RTRIP-NEXT:    (i32.const 0)
   ;; RTRIP-NEXT:   )
   ;; RTRIP-NEXT:  )
+  ;; RTRIP-NEXT:  (drop
+  ;; RTRIP-NEXT:   (i32.load (type $i8_array) offset=12 align=2
+  ;; RTRIP-NEXT:    (local.get $arr)
+  ;; RTRIP-NEXT:    (i32.const 0)
+  ;; RTRIP-NEXT:   )
+  ;; RTRIP-NEXT:  )
   ;; RTRIP-NEXT: )
   (func $immediates (param $arr (ref $i8_array))
     (i32.store8 (type $i8_array) offset=4 align=1 (local.get $arr) (i32.const 0) (i32.const 42))
     (i32.store (type $i8_array) offset=8 align=4 (local.get $arr) (i32.const 0) (i32.const 1337))
+    (i32.store (type $i8_array) offset=12 align=2 (local.get $arr) (i32.const 0) (i32.const 1337))
     (drop (i32.load8_u (type $i8_array) offset=4 align=1 (local.get $arr) (i32.const 0)))
     (drop (i32.load (type $i8_array) offset=8 align=4 (local.get $arr) (i32.const 0)))
+    (drop (i32.load (type $i8_array) offset=12 align=2 (local.get $arr) (i32.const 0)))
   )
 )
