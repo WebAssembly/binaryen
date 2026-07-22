@@ -126,7 +126,7 @@ TEST_F(IndirectCallEffectsTest, DestHasUnknownEffects) {
   auto merged =
     updateEffects(/*oldEffects=*/{{"A", effectsA}}, /*typeMap=*/{{"A", "B"}});
 
-  // $B's effects are unknown and $B is not a new type (see the test fixure; $B
+  // $B's effects are unknown and $B is not a new type (see the test fixture; $B
   // already existed in the module), so when $A is merged with $B, the result
   // still has unknown effects.
   EXPECT_THAT(merged, IsEmpty());
