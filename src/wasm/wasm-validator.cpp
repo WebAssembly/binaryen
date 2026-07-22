@@ -3649,7 +3649,7 @@ void FunctionValidator::visitStructWait(StructWait* curr) {
     "struct.wait requires shared-everything [--enable-shared-everything]");
 
   shouldBeSubType(curr->waitqueue->type,
-                  Type(HeapTypes::sharedwaitqueue, Nullable),
+                  Type(HeapTypes::sharedWaitqueue, Nullable),
                   curr,
                   "struct.wait waitqueue must be a shared waitqueue reference");
   shouldBeEqual(curr->expected->type,
@@ -3683,7 +3683,7 @@ void FunctionValidator::visitWaitqueueNotify(WaitqueueNotify* curr) {
 
   shouldBeSubType(
     curr->waitqueue->type,
-    Type(HeapTypes::sharedwaitqueue, Nullable),
+    Type(HeapTypes::sharedWaitqueue, Nullable),
     curr,
     "waitqueue.notify waitqueue must be a shared waitqueue reference");
   shouldBeEqual(curr->count->type,

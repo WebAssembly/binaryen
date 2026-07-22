@@ -629,7 +629,7 @@ AvailableStrictSuperHeapType(TypeBuilderPlan plan, HeapTypePlan sub) {
           HeapTypePlan{HeapType(HeapTypes::exn.getBasic(share))});
       case HeapType::nowaitqueue:
         return fuzztest::Just(
-          HeapTypePlan{HeapType(HeapTypes::sharedwaitqueue.getBasic(share))});
+          HeapTypePlan{HeapType(HeapTypes::sharedWaitqueue.getBasic(share))});
     }
     WASM_UNREACHABLE("unexpected type");
   } else if (auto* index = sub.getIndex()) {

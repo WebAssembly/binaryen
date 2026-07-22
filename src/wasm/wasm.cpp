@@ -1344,7 +1344,7 @@ void StructWait::finalize() {
 }
 
 void WaitqueueNew::finalize() {
-  type = Type(HeapTypes::sharedwaitqueue, NonNullable);
+  type = Type(HeapTypes::sharedWaitqueue, NonNullable);
 }
 
 void WaitqueueNotify::finalize() {
