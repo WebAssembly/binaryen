@@ -1918,6 +1918,8 @@ public:
 
   uint8_t bytes;
   bool signed_ = false;
+  Address offset = 0;
+  Address align = 0;
   Expression* ref;
   Expression* index;
 
@@ -1930,6 +1932,8 @@ public:
   ArrayStore(MixedArena& allocator) {}
 
   uint8_t bytes;
+  Address offset = 0;
+  Address align = 0;
   Expression* ref;
   Expression* index;
   Expression* value;
