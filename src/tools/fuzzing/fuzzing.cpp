@@ -4352,6 +4352,11 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
       }
       return null;
     }
+
+    case HeapType::waitqueue:
+    case HeapType::nowaitqueue: {
+      WASM_UNREACHABLE("waitqueue is unimplemented in the fuzzer");
+    }
   }
   WASM_UNREACHABLE("invalid basic ref type");
 }
@@ -6637,6 +6642,10 @@ HeapType TranslateToFuzzReader::getSubType(HeapType type) {
       case HeapType::nocont:
       case HeapType::noexn:
         break;
+      case HeapType::waitqueue:
+      case HeapType::nowaitqueue: {
+        WASM_UNREACHABLE("waitqueue is unimplemented in the fuzzer");
+      }
     }
   }
   // Look for an interesting subtype.
