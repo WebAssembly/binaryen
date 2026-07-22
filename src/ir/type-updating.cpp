@@ -57,8 +57,9 @@ updateIndirectCallEffects(
   }
 
   for (auto oldType : allOldTypes) {
-    // This is different from `newTypes`. This refers to the type that we are rewriting to. It may or may not be
-    // a brand new type in the module (which is indicated by `newTypes`).
+    // This is different from `newTypes`. This refers to the type that we are
+    // rewriting to. It may or may not be a brand new type in the module (which
+    // is indicated by `newTypes`).
     HeapType newType;
     {
       auto it = oldToNewTypes.find(oldType);
@@ -77,9 +78,11 @@ updateIndirectCallEffects(
       find_or_null(wasm.indirectCallEffects, oldType);
 
     if (!oldEffects) {
-      // oldType has no entry, which means its effects are explicitly unknown. Why? It's an old type in `oldToNewTypes`, so it must
-      // have appeared in the module at some point, but GlobalEffects were never computed for it, or GlobalEffects intentionally
-      // ommitted its entry because it couldn't determine its effects (e.g. if an import has that type).
+      // oldType has no entry, which means its effects are explicitly unknown.
+      // Why? It's an old type in `oldToNewTypes`, so it must have appeared in
+      // the module at some point, but GlobalEffects were never computed for it,
+      // or GlobalEffects intentionally ommitted its entry because it couldn't
+      // determine its effects (e.g. if an import has that type).
       newTypes.insert(newType);
       newTypeEffects.erase(newType);
       continue;
