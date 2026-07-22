@@ -205,6 +205,21 @@ void AndedConstraintSet::approximateAnd(const Constraint& c) {
   //       useful to implement that).
 }
 
+namespace {
+
+// Do an approximate OR on two inputs that are incompatible, that is, that each
+// proves the other false. Such disjoint cases are sometimes simple to handle.
+//
+// If we recognize a pattern, we update |self| and return whether anything
+// changed (otherwise, we return nullopt).
+std::optional<bool> approximateOrDisjoint(AndedConstraintSet& self,
+                                          const AndedConstraintSet& other) {
+  // Otherwise, we have no idea.
+  return {};
+}
+
+} // anonymous namespace
+
 bool AndedConstraintSet::approximateOr(const AndedConstraintSet& other) {
   // If one proves everything, the only thing that matters is the other.
   if (other.provesEverything()) {
@@ -218,15 +233,22 @@ bool AndedConstraintSet::approximateOr(const AndedConstraintSet& other) {
   // If this is already implied by current constraints, then it is redundant.
   // E.g. if we are { x = 10 } and other is { x >= 0 } then all we need is
   // { x >= 0 } as the result of the OR.
-  if (other.proves(*this) == True) {
+  auto otherProves = other.proves(*this);
+  if (otherProves == True) {
     return false;
   }
-  if (proves(other) == True) {
+  auto thisProves = proves(other);
+  if (thisProves == True) {
     *this = other;
     return true;
   }
 
-  // TODO smarts: handle <= > and so forth
+  if (otherProves == False && thisProves == False) {
+    if (auto result = approximateOrDisjoint(*this, other)) {
+      return *result;
+    }
+  }
+  // TODO more smarts: handle <= > and so forth
 
   // Otherwise, we don't know how to nicely OR these things, and expand to the
   // trivial set of no constraints.
