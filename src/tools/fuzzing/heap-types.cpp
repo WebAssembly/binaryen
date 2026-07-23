@@ -691,6 +691,10 @@ struct HeapTypeGeneratorImpl {
         case HeapType::nocont:
         case HeapType::noexn:
           return type;
+        case HeapType::waitqueue:
+        case HeapType::nowaitqueue: {
+          WASM_UNREACHABLE("waitqueue is unimplemented in the fuzzer");
+        }
       }
       WASM_UNREACHABLE("unexpected type");
     }
@@ -763,6 +767,10 @@ struct HeapTypeGeneratorImpl {
       case HeapType::noexn:
         candidates.push_back(HeapTypes::exn.getBasic(share));
         break;
+      case HeapType::waitqueue:
+      case HeapType::nowaitqueue: {
+        WASM_UNREACHABLE("waitqueue is unimplemented in the fuzzer");
+      }
     }
     assert(!candidates.empty());
     return rand.pick(candidates);

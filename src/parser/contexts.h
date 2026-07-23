@@ -128,6 +128,8 @@ struct NullTypeParserCtx {
   HeapTypeT makeNofuncType(Shareability) { return Ok{}; }
   HeapTypeT makeNoexnType(Shareability) { return Ok{}; }
   HeapTypeT makeNocontType(Shareability) { return Ok{}; }
+  HeapTypeT makeWaitqueueType(Shareability) { return Ok{}; }
+  HeapTypeT makeNowaitqueueType(Shareability) { return Ok{}; }
 
   TypeT makeI32() { return Ok{}; }
   TypeT makeI64() { return Ok{}; }
@@ -156,7 +158,6 @@ struct NullTypeParserCtx {
 
   StorageT makeI8() { return Ok{}; }
   StorageT makeI16() { return Ok{}; }
-  StorageT makeWaitQueue() { return Ok{}; }
   StorageT makeStorageType(TypeT) { return Ok{}; }
 
   FieldT makeFieldType(StorageT, Mutability) { return Ok{}; }
@@ -269,6 +270,12 @@ template<typename Ctx> struct TypeParserCtx {
   HeapTypeT makeNocontType(Shareability share) {
     return HeapTypes::nocont.getBasic(share);
   }
+  HeapTypeT makeWaitqueueType(Shareability share) {
+    return HeapTypes::sharedWaitqueue.getBasic(share);
+  }
+  HeapTypeT makeNowaitqueueType(Shareability share) {
+    return HeapTypes::sharedNowaitqueue.getBasic(share);
+  }
 
   HeapTypeT makeExact(HeapTypeT type) {
     type.exactness = Exact;
@@ -314,7 +321,6 @@ template<typename Ctx> struct TypeParserCtx {
 
   StorageT makeI8() { return Field(Field::i8, Immutable); }
   StorageT makeI16() { return Field(Field::i16, Immutable); }
-  StorageT makeWaitQueue() { return Field(Field::WaitQueue, Immutable); }
   StorageT makeStorageType(TypeT type) { return Field(type, Immutable); }
 
   FieldT makeFieldType(FieldT field, Mutability mutability) {
@@ -836,11 +842,10 @@ struct NullInstrParserCtx {
   makeStructWait(Index, const std::vector<Annotation>&, HeapTypeT, FieldIdxT) {
     return Ok{};
   }
-  template<typename HeapTypeT>
-  Result<> makeStructNotify(Index,
-                            const std::vector<Annotation>&,
-                            HeapTypeT,
-                            FieldIdxT) {
+  Result<> makeWaitqueueNew(Index, const std::vector<Annotation>&) {
+    return Ok{};
+  }
+  Result<> makeWaitqueueNotify(Index, const std::vector<Annotation>&) {
     return Ok{};
   }
   template<typename HeapTypeT>
@@ -2857,11 +2862,14 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
     return withLoc(pos, irBuilder.makeStructWait(type, field));
   }
 
-  Result<> makeStructNotify(Index pos,
-                            const std::vector<Annotation>& annotations,
-                            HeapType type,
-                            Index field) {
-    return withLoc(pos, irBuilder.makeStructNotify(type, field));
+  Result<> makeWaitqueueNew(Index pos,
+                            const std::vector<Annotation>& annotations) {
+    return withLoc(pos, irBuilder.makeWaitqueueNew());
+  }
+
+  Result<> makeWaitqueueNotify(Index pos,
+                               const std::vector<Annotation>& annotations) {
+    return withLoc(pos, irBuilder.makeWaitqueueNotify());
   }
 
   Result<> makeArrayNew(Index pos,

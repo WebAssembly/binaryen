@@ -67,7 +67,12 @@ Literal::Literal(Type type) : type(type) {
   if (type.isRef() && type.getHeapType().isMaybeShared(HeapType::ext)) {
     assert(type.isNonNullable());
     new (&gcData) std::shared_ptr<GCData>(
-      std::make_shared<GCData>(Literals{Literal(int32_t(0))}));
+      std::make_shared<GCData>(Literals{Literal(int32_t{0})}));
+    return;
+  }
+
+  if (type.isRef() && type.getHeapType().isMaybeShared(HeapType::waitqueue)) {
+    assert(type.isNonNullable());
     return;
   }
 
@@ -108,6 +113,7 @@ Literal::Literal(std::shared_ptr<GCData> gcData, HeapType type)
   assert((isData() && gcData) ||
          (type.isMaybeShared(HeapType::ext) && gcData) ||
          (type.isMaybeShared(HeapType::string) && gcData) ||
+         (type.isMaybeShared(HeapType::waitqueue) && gcData) ||
          (type.isMaybeShared(HeapType::any) && gcData) ||
          (type.isBottom() && !gcData));
 }
@@ -183,6 +189,7 @@ Literal::Literal(const Literal& other) : type(other.type) {
       return;
     case HeapType::ext:
     case HeapType::any:
+    case HeapType::waitqueue:
       // Externalized or internalized reference/payload.
       new (&gcData) std::shared_ptr<GCData>(other.gcData);
       return;
@@ -191,6 +198,7 @@ Literal::Literal(const Literal& other) : type(other.type) {
     case HeapType::nofunc:
     case HeapType::noexn:
     case HeapType::nocont:
+    case HeapType::nowaitqueue:
       WASM_UNREACHABLE("null literals should already have been handled");
     case HeapType::eq:
     case HeapType::func:
@@ -363,8 +371,10 @@ std::shared_ptr<FuncData> Literal::getFuncData() const {
 }
 
 std::shared_ptr<GCData> Literal::getGCData() const {
-  assert(isNull() || isData() ||
-         (type.isRef() && type.getHeapType().isMaybeShared(HeapType::ext)));
+  assert(
+    isNull() || isData() ||
+    (type.isRef() && (type.getHeapType().isMaybeShared(HeapType::ext) ||
+                      type.getHeapType().isMaybeShared(HeapType::waitqueue))));
   return gcData;
 }
 
@@ -760,6 +770,9 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
         case HeapType::nocont:
           o << "nullcontref";
           break;
+        case HeapType::nowaitqueue:
+          o << "nullwaitqueue";
+          break;
         case HeapType::any: {
           auto data = literal.getGCData();
           assert(data->values.size() == 1);
@@ -805,6 +818,10 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
             String::printEscapedJSON(o, wtf16.str());
             o << ")";
           }
+          break;
+        }
+        case HeapType::waitqueue: {
+          o << "waitqueue";
           break;
         }
       }
