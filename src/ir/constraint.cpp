@@ -212,30 +212,46 @@ namespace {
 // Vars afterwards, e.g., whether one is greater than the other.
 struct Var {};
 
-// A match constraint: an abstraction over a normal Constraint, which can also
+// A matcher constraint: an abstraction over a normal Constraint, which can also
 // contain Vars.
-struct MC {
+struct MatcherConstraint {
   Abstract::Op op;
   Var& term;
 };
 
+// A matcher AndedConstraintSet, which abstracts over the normal one to support
+// MatcherConstraints.
+using MatcherSet = public inplace_vector<MatcherConstraint, MaxConstraints>;
+
 // A matcher object. This pattern-matches over AndedConstraintSets, in a way
 // that follows the rules of logic.
-struct Match {
-  // Add a set of constraints that contains one item. For convenience, this uses
-  // the builder pattern, i.e. it returns this Match object.
-  Match& set(MC& mc);
-
-  // Add above, but now the set contains two items, both provided here.
-  Match& set(MC& mc1, MC& mc2);
+struct Matcher {
+  // Set up a pattern containing two sets of constraints.
+  Matcher(const MatcherSet& ms1, const MatcherSet& ms2) 
 
   // Add a requirement on this pattern, a demand on the Vars.
-  Match& require(Var& a, Abstract::Op, Var& b);
+  //
+  // For convenience, return this Matcher object (i.e. the builder pattern).
+  Matcher& require(Var& a, Abstract::Op, Var& b);
 
   // Check if the pattern matches given inputs. The order of the inputs does not
   // matter.
-  bool checkUnordered(const AndedConstraintSets& a, const AndedConstraintSets& constraints b);
+  bool checkUnordered(const AndedConstraintSets& a, const AndedConstraintSets& constraints b) {
+    return checkUnorderedInternal(a, b);
+  }
+
+private:
+  bool checkUnorderedInternal(const AndedConstraintSets& a, const AndedConstraintSets& constraints b, bool flipped = false);
 };
+
+Matcher::Matcher(const MatcherSet& ms1, const MatcherSet& ms2) {
+}
+
+Matcher& Matcher::require(Var& a, Abstract::Op, Var& b) {
+}
+
+bool Matcher::checkUnorderedInternal(const AndedConstraintSets& a, const AndedConstraintSets& constraints b, bool flipped {
+}
 
 // Do an approximate OR on two inputs that are disjoint, that is, each proves
 // the other false.
@@ -244,17 +260,18 @@ struct Match {
 // changed (otherwise, we return nullopt).
 std::optional<bool> approximateOrDisjoint(AndedConstraintSet& self,
                                           const AndedConstraintSet& other) {
+  using M = Matcher;
+  using MC = MatcherConstraint;
+
   // Simple range fusing, add an equality to turn > into >= :
   //
   //   { x == A } || { x > A && x <= B } , A <= B   ===   { x >= A && X <= B }
   //
-  // XXX but we do need the other part of other, x < B and A < B
   Var A, B;
-  if (Match().set(MC(Abstract::Eq, A))
-             .set(MC(Abstract::GtS, A), MC(Abstract::LeS, B))
-             .require(A, LeS, B)
-             .check(self, other)) {
-    flipped? look for both and flipped, and return pointer to the first .set()?
+  if (M().set(MC(Abstract::Eq, A))
+               .set(MC(Abstract::GtS, A), MC(Abstract::LeS, B))
+               .require(A, LeS, B)
+               .check(self, other)) {
   }
 
   // Otherwise, we have no idea.
