@@ -369,7 +369,6 @@ std::optional<Matcher::VarTermMap> Matcher::checkUnorderedInternal(
 // changed (otherwise, we return nullopt).
 std::optional<bool> approximateOrDisjoint(AndedConstraintSet& self,
                                           const AndedConstraintSet& other) {
-  using MC = MatcherConstraint;
   using namespace Abstract;
 
   // Simple range fusing, add an equality to turn > into >= :
@@ -378,11 +377,11 @@ std::optional<bool> approximateOrDisjoint(AndedConstraintSet& self,
   //
   // (A < B is required to avoid a contradiction on the right)
   Var A, B;
-  if (auto result = Matcher({MC(Eq, A)}, {MC(GtS, A), MC(LeS, B)})
+  if (auto result = Matcher({{Eq, A}}, {{GtS, A}, {LeS, B}})
                       .require(A, LtS, B)
                       .checkUnordered(self, other)) {
     auto& values = *result;
-    self = AndedConstraintSet({{GeS, values[A]}, {LeS, values[B]}});
+    self = {{GeS, values[A]}, {LeS, values[B]}};
     return true;
     // TODO: unsigned etc.
   }
