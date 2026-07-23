@@ -281,4 +281,9 @@ TEST(ConstraintTest, TestOrOrDisjoint) {
   AndedConstraintSet left4{Constraint{Eq, {Literal(int32_t(4))}}};
   AndedConstraintSet empty{};
   checkOr(left4, right, empty);
+
+  // Change 5 on the right to 6. Again we fail to find anything
+  AndedConstraintSet right6(
+    {{GtS, {Literal(int32_t(6))}}, {LeS, {Literal(int32_t(42))}}});
+  checkOr(left, right6, empty);
 }
