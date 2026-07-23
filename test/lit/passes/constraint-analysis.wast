@@ -2854,7 +2854,7 @@
     )
   )
 
-  ;; CHECK:      (func $local-changes-if (type $6) (param $x i32) (param $y i32) (param $z i32) (param $w i32)
+  ;; CHECK:      (func $local-changes-if (type $7) (param $x i32) (param $y i32) (param $z i32) (param $w i32)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.eq
   ;; CHECK-NEXT:    (local.get $x)
@@ -2911,7 +2911,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; OPTIN:      (func $local-changes-if (type $6) (param $x i32) (param $y i32) (param $z i32) (param $w i32)
+  ;; OPTIN:      (func $local-changes-if (type $7) (param $x i32) (param $y i32) (param $z i32) (param $w i32)
   ;; OPTIN-NEXT:  (if
   ;; OPTIN-NEXT:   (i32.eq
   ;; OPTIN-NEXT:    (local.get $x)
@@ -3547,7 +3547,7 @@
     )
   )
 
-  ;; CHECK:      (func $simple-array-sum (type $7) (param $param (ref $array)) (result i32)
+  ;; CHECK:      (func $simple-array-sum (type $8) (param $param (ref $array)) (result i32)
   ;; CHECK-NEXT:  (local $index i32)
   ;; CHECK-NEXT:  (local $sum i32)
   ;; CHECK-NEXT:  (local $len i32)
@@ -3592,7 +3592,7 @@
   ;; CHECK-NEXT:   (br $loop)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; OPTIN:      (func $simple-array-sum (type $7) (param $param (ref $array)) (result i32)
+  ;; OPTIN:      (func $simple-array-sum (type $8) (param $param (ref $array)) (result i32)
   ;; OPTIN-NEXT:  (local $index i32)
   ;; OPTIN-NEXT:  (local $sum i32)
   ;; OPTIN-NEXT:  (local $len i32)
@@ -3767,7 +3767,7 @@
     )
   )
 
-  ;; CHECK:      (func $iloop (type $8) (param $0 f32)
+  ;; CHECK:      (func $iloop (type $9) (param $0 f32)
   ;; CHECK-NEXT:  (local $1 f32)
   ;; CHECK-NEXT:  (local.set $0
   ;; CHECK-NEXT:   (local.get $1)
@@ -3792,7 +3792,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; OPTIN:      (func $iloop (type $8) (param $0 f32)
+  ;; OPTIN:      (func $iloop (type $9) (param $0 f32)
   ;; OPTIN-NEXT:  (local $1 f32)
   ;; OPTIN-NEXT:  (local.set $0
   ;; OPTIN-NEXT:   (local.get $1)
@@ -3924,5 +3924,635 @@
       )
     )
   )
-)
 
+  ;; CHECK:      (func $constant-inequalities-lt_s (type $1)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (i32.const 42)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPTIN:      (func $constant-inequalities-lt_s (type $1)
+  ;; OPTIN-NEXT:  (local $x i32)
+  ;; OPTIN-NEXT:  (local.set $x
+  ;; OPTIN-NEXT:   (i32.const 42)
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (drop
+  ;; OPTIN-NEXT:   (i32.const 0)
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (drop
+  ;; OPTIN-NEXT:   (i32.const 0)
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (drop
+  ;; OPTIN-NEXT:   (i32.const 1)
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (drop
+  ;; OPTIN-NEXT:   (i32.const 0)
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT: )
+  (func $constant-inequalities-lt_s
+    ;; A constant in $x is checked against inequalities using constants.
+    (local $x i32)
+    (local.set $x
+      (i32.const 42)
+    )
+    (drop
+      (i32.lt_s
+        (local.get $x)
+        (i32.const 41)
+      )
+    )
+    (drop
+      (i32.lt_s
+        (local.get $x)
+        (i32.const 42)
+      )
+    )
+    (drop
+      (i32.lt_s
+        (local.get $x)
+        (i32.const 43)
+      )
+    )
+    (drop
+      (i32.lt_s
+        (local.get $x)
+        (i32.const -1)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $constant-inequalities-le_s (type $1)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (i32.const 42)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPTIN:      (func $constant-inequalities-le_s (type $1)
+  ;; OPTIN-NEXT:  (local $x i32)
+  ;; OPTIN-NEXT:  (local.set $x
+  ;; OPTIN-NEXT:   (i32.const 42)
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (drop
+  ;; OPTIN-NEXT:   (i32.const 0)
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (drop
+  ;; OPTIN-NEXT:   (i32.const 1)
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (drop
+  ;; OPTIN-NEXT:   (i32.const 1)
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (drop
+  ;; OPTIN-NEXT:   (i32.const 0)
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT: )
+  (func $constant-inequalities-le_s
+    (local $x i32)
+    (local.set $x
+      (i32.const 42)
+    )
+    (drop
+      (i32.le_s
+        (local.get $x)
+        (i32.const 41)
+      )
+    )
+    (drop
+      (i32.le_s
+        (local.get $x)
+        (i32.const 42)
+      )
+    )
+    (drop
+      (i32.le_s
+        (local.get $x)
+        (i32.const 43)
+      )
+    )
+    (drop
+      (i32.le_s
+        (local.get $x)
+        (i32.const -1)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $constant-inequalities-gt_s (type $1)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (i32.const 42)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPTIN:      (func $constant-inequalities-gt_s (type $1)
+  ;; OPTIN-NEXT:  (local $x i32)
+  ;; OPTIN-NEXT:  (local.set $x
+  ;; OPTIN-NEXT:   (i32.const 42)
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (drop
+  ;; OPTIN-NEXT:   (i32.const 1)
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (drop
+  ;; OPTIN-NEXT:   (i32.const 0)
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (drop
+  ;; OPTIN-NEXT:   (i32.const 0)
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (drop
+  ;; OPTIN-NEXT:   (i32.const 1)
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT: )
+  (func $constant-inequalities-gt_s
+    (local $x i32)
+    (local.set $x
+      (i32.const 42)
+    )
+    (drop
+      (i32.gt_s
+        (local.get $x)
+        (i32.const 41)
+      )
+    )
+    (drop
+      (i32.gt_s
+        (local.get $x)
+        (i32.const 42)
+      )
+    )
+    (drop
+      (i32.gt_s
+        (local.get $x)
+        (i32.const 43)
+      )
+    )
+    (drop
+      (i32.gt_s
+        (local.get $x)
+        (i32.const -1)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $constant-inequalities-ge_s (type $1)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (i32.const 42)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPTIN:      (func $constant-inequalities-ge_s (type $1)
+  ;; OPTIN-NEXT:  (local $x i32)
+  ;; OPTIN-NEXT:  (local.set $x
+  ;; OPTIN-NEXT:   (i32.const 42)
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (drop
+  ;; OPTIN-NEXT:   (i32.const 1)
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (drop
+  ;; OPTIN-NEXT:   (i32.const 1)
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (drop
+  ;; OPTIN-NEXT:   (i32.const 0)
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (drop
+  ;; OPTIN-NEXT:   (i32.const 1)
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT: )
+  (func $constant-inequalities-ge_s
+    (local $x i32)
+    (local.set $x
+      (i32.const 42)
+    )
+    (drop
+      (i32.ge_s
+        (local.get $x)
+        (i32.const 41)
+      )
+    )
+    (drop
+      (i32.ge_s
+        (local.get $x)
+        (i32.const 42)
+      )
+    )
+    (drop
+      (i32.ge_s
+        (local.get $x)
+        (i32.const 43)
+      )
+    )
+    (drop
+      (i32.ge_s
+        (local.get $x)
+        (i32.const -1)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $constant-inequalities-lt_u (type $1)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (i32.const 42)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPTIN:      (func $constant-inequalities-lt_u (type $1)
+  ;; OPTIN-NEXT:  (local $x i32)
+  ;; OPTIN-NEXT:  (local.set $x
+  ;; OPTIN-NEXT:   (i32.const 42)
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (drop
+  ;; OPTIN-NEXT:   (i32.const 0)
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (drop
+  ;; OPTIN-NEXT:   (i32.const 0)
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (drop
+  ;; OPTIN-NEXT:   (i32.const 1)
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (drop
+  ;; OPTIN-NEXT:   (i32.const 1)
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT: )
+  (func $constant-inequalities-lt_u
+    (local $x i32)
+    (local.set $x
+      (i32.const 42)
+    )
+    (drop
+      (i32.lt_u
+        (local.get $x)
+        (i32.const 41)
+      )
+    )
+    (drop
+      (i32.lt_u
+        (local.get $x)
+        (i32.const 42)
+      )
+    )
+    (drop
+      (i32.lt_u
+        (local.get $x)
+        (i32.const 43)
+      )
+    )
+    (drop
+      (i32.lt_u
+        (local.get $x)
+        (i32.const -1)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $constant-inequalities-le_u (type $1)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (i32.const 42)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPTIN:      (func $constant-inequalities-le_u (type $1)
+  ;; OPTIN-NEXT:  (local $x i32)
+  ;; OPTIN-NEXT:  (local.set $x
+  ;; OPTIN-NEXT:   (i32.const 42)
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (drop
+  ;; OPTIN-NEXT:   (i32.const 0)
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (drop
+  ;; OPTIN-NEXT:   (i32.const 1)
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (drop
+  ;; OPTIN-NEXT:   (i32.const 1)
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (drop
+  ;; OPTIN-NEXT:   (i32.const 1)
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT: )
+  (func $constant-inequalities-le_u
+    (local $x i32)
+    (local.set $x
+      (i32.const 42)
+    )
+    (drop
+      (i32.le_u
+        (local.get $x)
+        (i32.const 41)
+      )
+    )
+    (drop
+      (i32.le_u
+        (local.get $x)
+        (i32.const 42)
+      )
+    )
+    (drop
+      (i32.le_u
+        (local.get $x)
+        (i32.const 43)
+      )
+    )
+    (drop
+      (i32.le_u
+        (local.get $x)
+        (i32.const -1)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $constant-inequalities-gt_u (type $1)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (i32.const 42)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPTIN:      (func $constant-inequalities-gt_u (type $1)
+  ;; OPTIN-NEXT:  (local $x i32)
+  ;; OPTIN-NEXT:  (local.set $x
+  ;; OPTIN-NEXT:   (i32.const 42)
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (drop
+  ;; OPTIN-NEXT:   (i32.const 1)
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (drop
+  ;; OPTIN-NEXT:   (i32.const 0)
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (drop
+  ;; OPTIN-NEXT:   (i32.const 0)
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (drop
+  ;; OPTIN-NEXT:   (i32.const 0)
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT: )
+  (func $constant-inequalities-gt_u
+    (local $x i32)
+    (local.set $x
+      (i32.const 42)
+    )
+    (drop
+      (i32.gt_u
+        (local.get $x)
+        (i32.const 41)
+      )
+    )
+    (drop
+      (i32.gt_u
+        (local.get $x)
+        (i32.const 42)
+      )
+    )
+    (drop
+      (i32.gt_u
+        (local.get $x)
+        (i32.const 43)
+      )
+    )
+    (drop
+      (i32.gt_u
+        (local.get $x)
+        (i32.const -1)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $constant-inequalities-ge_u (type $1)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (i32.const 42)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPTIN:      (func $constant-inequalities-ge_u (type $1)
+  ;; OPTIN-NEXT:  (local $x i32)
+  ;; OPTIN-NEXT:  (local.set $x
+  ;; OPTIN-NEXT:   (i32.const 42)
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (drop
+  ;; OPTIN-NEXT:   (i32.const 1)
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (drop
+  ;; OPTIN-NEXT:   (i32.const 1)
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (drop
+  ;; OPTIN-NEXT:   (i32.const 0)
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (drop
+  ;; OPTIN-NEXT:   (i32.const 0)
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT: )
+  (func $constant-inequalities-ge_u
+    (local $x i32)
+    (local.set $x
+      (i32.const 42)
+    )
+    (drop
+      (i32.ge_u
+        (local.get $x)
+        (i32.const 41)
+      )
+    )
+    (drop
+      (i32.ge_u
+        (local.get $x)
+        (i32.const 42)
+      )
+    )
+    (drop
+      (i32.ge_u
+        (local.get $x)
+        (i32.const 43)
+      )
+    )
+    (drop
+      (i32.ge_u
+        (local.get $x)
+        (i32.const -1)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $flipped-contradiction (type $6) (result i32)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (loop $loop
+  ;; CHECK-NEXT:   (br_if $loop
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (br_if $loop
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPTIN:      (func $flipped-contradiction (type $6) (result i32)
+  ;; OPTIN-NEXT:  (local $x i32)
+  ;; OPTIN-NEXT:  (loop $loop
+  ;; OPTIN-NEXT:   (br_if $loop
+  ;; OPTIN-NEXT:    (i32.const 1)
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:   (br_if $loop
+  ;; OPTIN-NEXT:    (local.get $x)
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:   (unreachable)
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT: )
+  (func $flipped-contradiction (result i32)
+    (local $x i32)
+    (loop $loop (result i32)
+      ;; If we do not branch, we add the constraint x >= 1.
+      (br_if $loop
+        (i32.lt_u
+          (local.get $x)
+          (i32.const 1)
+        )
+      )
+      ;; If we do not branch, we add the constraint x == 0. This contradicts the
+      ;; one before, making the code after us unreachable.
+      (br_if $loop
+        (local.get $x)
+      )
+      ;; An eqz that will become unreachable.
+      (i32.eqz
+        (i32.const 0)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $flipped-contradiction-no (type $6) (result i32)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (loop $loop (result i32)
+  ;; CHECK-NEXT:   (br_if $loop
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (br_if $loop
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPTIN:      (func $flipped-contradiction-no (type $6) (result i32)
+  ;; OPTIN-NEXT:  (local $x i32)
+  ;; OPTIN-NEXT:  (loop $loop (result i32)
+  ;; OPTIN-NEXT:   (br_if $loop
+  ;; OPTIN-NEXT:    (i32.const 0)
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:   (br_if $loop
+  ;; OPTIN-NEXT:    (local.get $x)
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:   (i32.eqz
+  ;; OPTIN-NEXT:    (i32.const 0)
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT: )
+  (func $flipped-contradiction-no (result i32)
+    ;; As above, but with lt replaced by gt. Now the constraints are x <= 1 and
+    ;; x == 0, which do not contradict, and nothing becomes unreachable.
+    (local $x i32)
+    (loop $loop (result i32)
+      (br_if $loop
+        (i32.gt_u
+          (local.get $x)
+          (i32.const 1)
+        )
+      )
+      (br_if $loop
+        (local.get $x)
+      )
+      (i32.eqz
+        (i32.const 0)
+      )
+    )
+  )
+)

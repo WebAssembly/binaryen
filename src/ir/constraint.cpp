@@ -24,36 +24,68 @@ namespace wasm::constraint {
 
 namespace {
 
+Result TrueFalse(bool x) { return x ? True : False; }
+
+Result TrueFalse(Literal x) { return TrueFalse(x.getUnsigned()); }
+
 // Evaluate whether a => b, where a and b are operations on constants.
 Result provesConstantPair(Abstract::Op aOp,
                           const Literal& aConstant,
                           Abstract::Op bOp,
-                          const Literal& bConstant) {
-  // x == X =?=> x == Y. True iff X == Y.
-  if (aOp == Abstract::Eq && bOp == Abstract::Eq) {
-    return aConstant == bConstant ? True : False;
+                          const Literal& bConstant,
+                          bool recursing = false) {
+  // a == A =?=> a op B. Simply apply A to the operation against B.
+  if (aOp == Abstract::Eq) {
+    switch (bOp) {
+      case Abstract::Eq:
+        return TrueFalse(aConstant == bConstant);
+      case Abstract::Ne:
+        return TrueFalse(aConstant != bConstant);
+      case Abstract::LtS:
+        return TrueFalse(aConstant.ltS(bConstant));
+      case Abstract::LeS:
+        return TrueFalse(aConstant.leS(bConstant));
+      case Abstract::GtS:
+        return TrueFalse(aConstant.gtS(bConstant));
+      case Abstract::GeS:
+        return TrueFalse(aConstant.geS(bConstant));
+      case Abstract::LtU:
+        return TrueFalse(aConstant.ltU(bConstant));
+      case Abstract::LeU:
+        return TrueFalse(aConstant.leU(bConstant));
+      case Abstract::GtU:
+        return TrueFalse(aConstant.gtU(bConstant));
+      case Abstract::GeU:
+        return TrueFalse(aConstant.geU(bConstant));
+      default: {
+      }
+    }
   }
 
-  // x == X =?=> x != Y. True iff X != Y.
-  if (aOp == Abstract::Eq && bOp == Abstract::Ne) {
-    return aConstant == bConstant ? False : True;
-  }
-
-  // x != X =?=> x == Y. False if X = Y, else unknown.
+  // a != A =?=> a == B. False if A = B, else unknown.
   if (aOp == Abstract::Ne && bOp == Abstract::Eq) {
     if (aConstant == bConstant) {
       return False;
     }
   }
 
-  // x != X =?=> x != Y. True if X = Y, else unknown.
+  // a != A =?=> a != B. True if A = B, else unknown.
   if (aOp == Abstract::Ne && bOp == Abstract::Ne) {
     if (aConstant == bConstant) {
       return True;
     }
   }
 
-  // TODO: handle >, >=, <, and <=
+  if (!recursing) {
+    // The flipped operation may tell us something:  y ==> !x  implies
+    // x ==> y  is false (because if not, then x would prove y, and y would
+    // prove !x, a contradiction).
+    if (provesConstantPair(bOp, bConstant, aOp, aConstant, true) == False) {
+      return False;
+    }
+  }
+
+  // TODO: handle all the rest of >, >=, <, and <=
   return Unknown;
 }
 
