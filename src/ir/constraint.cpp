@@ -248,9 +248,9 @@ private:
   const MatcherSet& ms2;
 
   struct Requirement {
-    Var& a;
+    Var* a;
     Abstract::Op op;
-    Var& b;
+    Var* b;
   };
 
   SmallVector<Requirement, 2> requirements;
@@ -260,7 +260,7 @@ Matcher::Matcher(const MatcherSet& ms1, const MatcherSet& ms2) : ms1(ms1), ms2(m
 }
 
 Matcher& Matcher::require(Var& a, Abstract::Op op, Var& b) {
-  requirements.push_back({a, op, b});
+  requirements.push_back({&a, op, &b});
 }
 
 bool Matcher::checkUnorderedInternal(const AndedConstraintSets& a, const AndedConstraintSets& constraints b, bool flipped) {
@@ -306,7 +306,12 @@ bool Matcher::checkUnorderedInternal(const AndedConstraintSets& a, const AndedCo
   }
 
   // Check requirements on the vars.
-  ..
+  for (auto& [a, op, b] : requirements) {
+    auto aTerm = varTermMap[a];
+    auto bTerm = varTermMap[b];
+
+    if (provesPair(const Constraint& a, const Constraint& b) {
+  }
 
   return returnFalse();
 }
