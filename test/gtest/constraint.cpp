@@ -240,17 +240,34 @@ TEST(ConstraintTest, TestDeredundancy) {
   EXPECT_EQ(t[0], eq0);
 }
 
+static void checkOr(const AndedConstraintSet& a, const AndedConstraintSet& b, const AndedConstraintSet& result) {
+  auto ored = a;
+  ored.approximateOr(b);
+  EXPECT_EQ(ored, result);
+
+  ored = b;
+  ored.approximateOr(a);
+  EXPECT_EQ(ored, result);
+}
+
 TEST(ConstraintTest, TestOrInequality) {
   // x == 5 || x >= 0  =>  x >= 0
   AndedConstraintSet eq5{Constraint{Eq, {Literal(int32_t(5))}}};
   AndedConstraintSet ge0{Constraint{GeU, {Literal(int32_t(0))}}};
+  checkOr(eq5, ge0, ge0);
+}
 
-  auto ored = eq5;
-  ored.approximateOr(ge0);
-  EXPECT_EQ(ored, ge0);
+TEST(ConstraintTest, TestOrOrDisjoint) {
+  // { x == A } || { x > A && x <= B } , A <= B   ==>   { x >= A && X <= B }
 
-  ored = ge0;
-  ored.approximateOr(eq5);
-  EXPECT_EQ(ored, ge0);
+  AndedConstraintSet left{Constraint{Eq, {Literal(int32_t(5))}}};
+
+  AndedConstraintSet right({Constraint{GtS, {Literal(int32_t(5))}},
+                           Constraint{LeS, {Literal(int32_t(42)}});
+
+  AndedConstraintSet result({Constraint{GeS, {Literal(int32_t(5))}},
+                            Constraint{LeS, {Literal(int32_t(42)}});
+
+  checkOr(left, right, result);
 }
 

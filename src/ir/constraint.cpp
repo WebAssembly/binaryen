@@ -367,7 +367,7 @@ std::optional<bool> approximateOrDisjoint(AndedConstraintSet& self,
 
   // Simple range fusing, add an equality to turn > into >= :
   //
-  //   { x == A } || { x > A && x <= B } , A <= B   ===   { x >= A && X <= B }
+  //   { x == A } || { x > A && x <= B } , A <= B   ==>   { x >= A && X <= B }
   //
   Var A, B;
   if (auto result = Matcher({MC(Eq, A)}, {MC(GtS, A), MC(LeS, B)})
