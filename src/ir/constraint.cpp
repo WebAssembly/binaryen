@@ -217,7 +217,9 @@ struct Var {};
 // contain Vars.
 struct MatcherConstraint {
   Abstract::Op op;
-  Var& term;
+  Var* term;
+
+  MatcherConstraint(Abstract::Op op, Var& term) : op(op), term(&term) {}
 };
 
 // A matcher AndedConstraintSet, which abstracts over the normal one to support
