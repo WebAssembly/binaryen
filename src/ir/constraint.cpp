@@ -205,6 +205,24 @@ void AndedConstraintSet::approximateAnd(const Constraint& c) {
   //       useful to implement that).
 }
 
+namespace {
+
+AndedConstraintSet detailedApproximateOr(const AndedConstraintSet& a, const AndedConstraintSet& b) {
+  // We can process this in full detail by looking at all the combinations of
+  // individual constraints, because of the distributive property:
+  //
+  // (A & B) | (C & D) == ((A & B) | C) & ((A & B) | D)
+  //                   == (A | C) & (B | C) & (A | D) & (B | D)
+  //
+  // Also, note that we don't need to worry about new contradictions here: ORing
+  // things never leads to a contradiction, and we can assume the inputs are
+  // not contradictions.
+  assert(!a.provesEverything() && !b.provesEverything());
+
+}
+
+} // anonymous namespace
+
 bool AndedConstraintSet::approximateOr(const AndedConstraintSet& other) {
   // If one proves everything, the only thing that matters is the other.
   if (other.provesEverything()) {
@@ -226,12 +244,11 @@ bool AndedConstraintSet::approximateOr(const AndedConstraintSet& other) {
     return true;
   }
 
-  // TODO smarts: handle <= > and so forth
-
-  // Otherwise, we don't know how to nicely OR these things, and expand to the
-  // trivial set of no constraints.
-  clear();
-  return true;
+  // For more complex cases, do a detailed analysis.
+  auto result = detailedApproximateOr(*this, other);
+  auto changed = (result != *this);
+  *this = result;
+  return changed;
 }
 
 std::optional<LocalConstraint> LocalConstraint::parse(Expression* curr) {
