@@ -239,14 +239,16 @@ struct Matcher {
   Matcher& require(Var& a, Abstract::Op op, Var& b);
 
   // Check if the pattern matches given inputs. The order of the inputs does not
-  // matter.
-  bool checkUnordered(const AndedConstraintSet& a,
+  // matter. Returns the address of the input that matches the first of the
+  // patterns (that is, if a matches ms1 in the constructor, we return &a, and
+  // otherwise &b), or nullptr of the match failed.
+  const AndedConstraintSet* checkUnordered(const AndedConstraintSet& a,
                       const AndedConstraintSet& b) {
     return checkUnorderedInternal(a, b);
   }
 
 private:
-  bool checkUnorderedInternal(const AndedConstraintSet& a,
+  const AndedConstraintSet* checkUnorderedInternal(const AndedConstraintSet& a,
                               const AndedConstraintSet& b,
                               bool flipped = false);
 
@@ -270,20 +272,20 @@ Matcher& Matcher::require(Var& a, Abstract::Op op, Var& b) {
   return *this;
 }
 
-bool Matcher::checkUnorderedInternal(const AndedConstraintSet& a,
+const AndedConstraintSet* Matcher::checkUnorderedInternal(const AndedConstraintSet& a,
                                      const AndedConstraintSet& b,
                                      bool flipped) {
-  auto returnFalse = [&]() {
-    // Before returning false, see if the flipped inputs match, if we didn't
-    // already try that.
+  auto fail = [&]() -> const AndedConstraintSet* {
+    // We failed, but try the flipped inputs if we haven't already.
     if (!flipped) {
-      return checkUnorderedInternal(b, a, true);
+      // If we match, flip the output to return the right thing.
+      return checkUnorderedInternal(b, a, true) ? &b : nullptr;
     }
-    return false;
+    return nullptr;
   };
 
   if (a.size() != ms1.size() || b.size() != ms2.size()) {
-    return returnFalse();
+    return fail();
   }
 
   // The sizes match, at least. Parse in more detail, building up a mapping of
@@ -312,7 +314,7 @@ bool Matcher::checkUnorderedInternal(const AndedConstraintSet& a,
   };
 
   if (!parse(a, ms1) || !parse(b, ms2)) {
-    return returnFalse();
+    return fail();
   }
 
   // Check requirements on the vars.
@@ -323,11 +325,11 @@ bool Matcher::checkUnorderedInternal(const AndedConstraintSet& a,
     // Check if { x == a } proves { x op b } is true.
     if (provesPair(Constraint{Abstract::Eq, aTerm}, Constraint{op, bTerm}) !=
         True) {
-      return returnFalse();
+      return fail();
     }
   }
 
-  return returnFalse();
+  return &a;
 }
 
 // Do an approximate OR on two inputs that are disjoint, that is, each proves
@@ -345,10 +347,16 @@ std::optional<bool> approximateOrDisjoint(AndedConstraintSet& self,
   //   { x == A } || { x > A && x <= B } , A <= B   ===   { x >= A && X <= B }
   //
   Var A, B;
-  if (Matcher({MC(Eq, A)}, {MC(GtS, A), MC(LeS, B)})
+  if (auto* x = Matcher({MC(Eq, A)}, {MC(GtS, A), MC(LeS, B)})
         .require(A, LeS, B)
         .checkUnordered(self, other)) {
-    // ..
+    // x refers to the set with the equality constraint. We can reuse the other
+    // one, with a small change.
+    if (x == &self) {
+      self = other;
+    }
+    self[0].op = GeS;
+    return true;
   }
 
   // Otherwise, we have no idea.
