@@ -9,7 +9,7 @@
   ;; Compact Encoding 1: per-item import descriptions
   (import "env"
     (item $f1 "f1" (func (type $sig1)))
-    (item $f2 "f2" (func (param i32) (result i32)))
+    (item $f2 "f2" (func (exact (param i32) (result i32))))
     (item $g1 "g1" (global i32))
     (item $t1 "t1" (table 1 10 funcref))
     (item $m1 "m1" (memory 1 2))
@@ -21,6 +21,14 @@
     (item $cos "cos")
     (item $tan "tan")
     (func (param i32) (result i32))
+  )
+
+  ;; Same, but with an exact function type.
+  (import "math"
+    (item $sinh "sinh")
+    (item $cosh "cosh")
+    (item $tanh "tanh")
+    (func (exact (param i32) (result i32)))
   )
 
   ;; Compact Encoding 2: shared global import description
@@ -44,13 +52,19 @@
 
   ;; CHECK:      (import "env" "f1" (func $f1 (type $sig1) (param i32) (result i32)))
 
-  ;; CHECK:      (import "env" "f2" (func $f2 (type $sig1) (param i32) (result i32)))
+  ;; CHECK:      (import "env" "f2" (func $f2 (exact (type $sig1) (param i32) (result i32))))
 
   ;; CHECK:      (import "math" "sin" (func $sin (type $sig1) (param i32) (result i32)))
 
   ;; CHECK:      (import "math" "cos" (func $cos (type $sig1) (param i32) (result i32)))
 
   ;; CHECK:      (import "math" "tan" (func $tan (type $sig1) (param i32) (result i32)))
+
+  ;; CHECK:      (import "math" "sinh" (func $sinh (exact (type $sig1) (param i32) (result i32))))
+
+  ;; CHECK:      (import "math" "cosh" (func $cosh (exact (type $sig1) (param i32) (result i32))))
+
+  ;; CHECK:      (import "math" "tanh" (func $tanh (exact (type $sig1) (param i32) (result i32))))
 
   ;; CHECK:      (func $main (type $1) (result i32)
   ;; CHECK-NEXT:  (call $f1

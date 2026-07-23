@@ -81,12 +81,14 @@ Result<> parseDefs(Ctx& ctx,
     ctx.index = def.index;
     WithPosition with(ctx, def.pos);
     ctx.in.setAnnotations(def.annotations);
-    if (auto parsed = parser(ctx)) {
-      CHECK_ERR(parsed);
-    } else {
-      auto im = import_(ctx);
-      assert(im);
+    if (def.kind == DefKind::ImportDesc) {
+      auto im = importdesc(ctx, Name{}, Name{}, std::nullopt);
+      assert(!im.getErr());
       CHECK_ERR(im);
+    } else {
+      auto parsed = parser(ctx);
+      assert(parsed);
+      CHECK_ERR(parsed);
     }
   }
   return Ok{};

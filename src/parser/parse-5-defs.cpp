@@ -49,12 +49,14 @@ Result<> parseDefinitions(
     if (!f->imported()) {
       CHECK_ERR(ctx.visitFunctionStart(f));
     }
-    if (auto parsed = func(ctx)) {
-      CHECK_ERR(parsed);
-    } else {
-      auto im = import_(ctx);
-      assert(im);
+    if (decls.funcDefs[i].kind == DefKind::ImportDesc) {
+      auto im = importdesc(ctx, Name{}, Name{}, std::nullopt);
+      assert(!im.getErr());
       CHECK_ERR(im);
+    } else {
+      auto parsed = func(ctx);
+      assert(parsed);
+      CHECK_ERR(parsed);
     }
     if (!f->imported()) {
       auto end = ctx.irBuilder.visitEnd();

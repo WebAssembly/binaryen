@@ -3449,28 +3449,37 @@ Result<> importdesc(Ctx& ctx, Name mod, Name nm, std::optional<Name> id) {
     CHECK_ERR(use);
     auto [type, exact] = *use;
     // TODO: function import annotations
-    CHECK_ERR(
-      ctx.addFunc(name, {}, &names, type, exact, std::nullopt, {}, pos));
+    CHECK_ERR(ctx.addFunc(name,
+                          {},
+                          &names,
+                          type,
+                          exact,
+                          std::nullopt,
+                          {},
+                          pos,
+                          DefKind::ImportDesc));
   } else if (ctx.in.takeSExprStart("table"sv)) {
     auto name = getID();
     auto type = tabletype(ctx);
     CHECK_ERR(type);
-    CHECK_ERR(ctx.addTable(name, {}, &names, *type, std::nullopt, pos));
+    CHECK_ERR(ctx.addTable(
+      name, {}, &names, *type, std::nullopt, pos, DefKind::ImportDesc));
   } else if (ctx.in.takeSExprStart("memory"sv)) {
     auto name = getID();
     auto type = memtype(ctx);
     CHECK_ERR(type);
-    CHECK_ERR(ctx.addMemory(name, {}, &names, *type, pos));
+    CHECK_ERR(ctx.addMemory(name, {}, &names, *type, pos, DefKind::ImportDesc));
   } else if (ctx.in.takeSExprStart("global"sv)) {
     auto name = getID();
     auto type = globaltype(ctx);
     CHECK_ERR(type);
-    CHECK_ERR(ctx.addGlobal(name, {}, &names, *type, std::nullopt, pos));
+    CHECK_ERR(ctx.addGlobal(
+      name, {}, &names, *type, std::nullopt, pos, DefKind::ImportDesc));
   } else if (ctx.in.takeSExprStart("tag"sv)) {
     auto name = getID();
     auto type = typeuse(ctx);
     CHECK_ERR(type);
-    CHECK_ERR(ctx.addTag(name, {}, &names, *type, pos));
+    CHECK_ERR(ctx.addTag(name, {}, &names, *type, pos, DefKind::ImportDesc));
   } else {
     return ctx.in.err("expected import description");
   }
@@ -3577,14 +3586,12 @@ template<typename Ctx> MaybeResult<> func(Ctx& ctx) {
   auto import = inlineImport(ctx.in);
   CHECK_ERR(import);
 
-  bool isImport = import || ctx.isFunctionImported();
-
   typename Ctx::TypeUseT type;
   Exactness exact = Exact;
   std::optional<typename Ctx::LocalsT> localVars;
   bool skipped = false;
 
-  if (isImport) {
+  if (import) {
     auto use = exacttypeuse(ctx);
     CHECK_ERR(use);
     type = use->first;
@@ -3604,7 +3611,7 @@ template<typename Ctx> MaybeResult<> func(Ctx& ctx) {
     }
   }
 
-  if ((isImport || !skipped) && !ctx.in.takeRParen()) {
+  if ((import || !skipped) && !ctx.in.takeRParen()) {
     return ctx.in.err("expected end of function");
   }
 
@@ -3615,7 +3622,8 @@ template<typename Ctx> MaybeResult<> func(Ctx& ctx) {
                         exact,
                         localVars,
                         std::move(annotations),
-                        pos));
+                        pos,
+                        DefKind::Definition));
   return Ok{};
 }
 
@@ -3644,8 +3652,6 @@ template<typename Ctx> MaybeResult<> table(Ctx& ctx) {
   auto import = inlineImport(ctx.in);
   CHECK_ERR(import);
 
-  bool isImport = import || ctx.isTableImported();
-
   auto addressType = Type::i32;
   if (ctx.in.takeKeyword("i64"sv)) {
     addressType = Type::i64;
@@ -3665,7 +3671,7 @@ template<typename Ctx> MaybeResult<> table(Ctx& ctx) {
     if (!ctx.in.takeSExprStart("elem"sv)) {
       return ctx.in.err("expected table limits or inline elements");
     }
-    if (isImport) {
+    if (import) {
       return ctx.in.err("imported tables cannot have inline elements");
     }
 
@@ -3694,7 +3700,7 @@ template<typename Ctx> MaybeResult<> table(Ctx& ctx) {
     auto tabtype = tabletypeContinued(ctx, addressType);
     CHECK_ERR(tabtype);
     ttype = *tabtype;
-    if (ctx.in.peekLParen() && !isImport) {
+    if (ctx.in.peekLParen() && !import) {
       // Imported tables cannot have initialization expression.
       auto e = expr(ctx);
       CHECK_ERR(e);
@@ -3706,7 +3712,8 @@ template<typename Ctx> MaybeResult<> table(Ctx& ctx) {
     return ctx.in.err("expected end of table declaration");
   }
 
-  CHECK_ERR(ctx.addTable(name, *exports, import.getPtr(), *ttype, init, pos));
+  CHECK_ERR(ctx.addTable(
+    name, *exports, import.getPtr(), *ttype, init, pos, DefKind::Definition));
 
   if (elems) {
     CHECK_ERR(ctx.addImplicitElems(*type, std::move(*elems)));
@@ -3736,8 +3743,6 @@ template<typename Ctx> MaybeResult<> memory(Ctx& ctx) {
   auto import = inlineImport(ctx.in);
   CHECK_ERR(import);
 
-  bool isImport = import || ctx.isMemoryImported();
-
   auto addressType = Type::i32;
   if (ctx.in.takeKeyword("i64"sv)) {
     addressType = Type::i64;
@@ -3750,7 +3755,7 @@ template<typename Ctx> MaybeResult<> memory(Ctx& ctx) {
   MaybeResult<uint8_t> mempageSize = mempagesize(ctx);
   CHECK_ERR(mempageSize);
   if (ctx.in.takeSExprStart("data"sv)) {
-    if (isImport) {
+    if (import) {
       return ctx.in.err("imported memories cannot have inline data");
     }
     auto datastr = datastring(ctx);
@@ -3779,7 +3784,8 @@ template<typename Ctx> MaybeResult<> memory(Ctx& ctx) {
     return ctx.in.err("expected end of memory declaration");
   }
 
-  CHECK_ERR(ctx.addMemory(name, *exports, import.getPtr(), *mtype, pos));
+  CHECK_ERR(ctx.addMemory(
+    name, *exports, import.getPtr(), *mtype, pos, DefKind::Definition));
 
   if (data) {
     CHECK_ERR(ctx.addImplicitData(std::move(*data)));
@@ -3808,13 +3814,11 @@ template<typename Ctx> MaybeResult<> global(Ctx& ctx) {
   auto import = inlineImport(ctx.in);
   CHECK_ERR(import);
 
-  bool isImport = import || ctx.isGlobalImported();
-
   auto type = globaltype(ctx);
   CHECK_ERR(type);
 
   std::optional<typename Ctx::ExprT> exp;
-  if (!isImport) {
+  if (!import) {
     auto e = expr(ctx);
     CHECK_ERR(e);
     exp = *e;
@@ -3824,7 +3828,8 @@ template<typename Ctx> MaybeResult<> global(Ctx& ctx) {
     return ctx.in.err("expected end of global");
   }
 
-  CHECK_ERR(ctx.addGlobal(name, *exports, import.getPtr(), *type, exp, pos));
+  CHECK_ERR(ctx.addGlobal(
+    name, *exports, import.getPtr(), *type, exp, pos, DefKind::Definition));
   return Ok{};
 }
 
@@ -4097,7 +4102,8 @@ template<typename Ctx> MaybeResult<> tag(Ctx& ctx) {
     return ctx.in.err("expected end of tag");
   }
 
-  CHECK_ERR(ctx.addTag(name, *exports, import.getPtr(), *type, pos));
+  CHECK_ERR(ctx.addTag(
+    name, *exports, import.getPtr(), *type, pos, DefKind::Definition));
   return Ok{};
 }
 
