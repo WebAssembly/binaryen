@@ -205,6 +205,192 @@ void AndedConstraintSet::approximateAnd(const Constraint& c) {
   //       useful to implement that).
 }
 
+namespace {
+
+// A variable in a match. If we see the same Var - identified by address - in
+// two places, it must be equal in them. For example,
+//
+//  Var A;
+//  ..match expression with foo(A, A)..
+//
+// The matcher will check that foo is sent the same thing twice.
+struct Var {};
+
+// A matcher constraint: an abstraction over a normal Constraint, which can also
+// contain Vars.
+struct MatcherConstraint {
+  Abstract::Op op;
+  // Var addresses are how we identify them, so we store a pointer.
+  Var* term = nullptr;
+
+  MatcherConstraint() = default;
+  MatcherConstraint(Abstract::Op op, Var& term) : op(op), term(&term) {}
+
+  bool operator==(const MatcherConstraint&) const = default;
+  bool operator<(const MatcherConstraint& other) const {
+    // Ordered in a parallel way to Constraints, so that when we compare, things
+    // line up.
+    if (op != other.op) {
+      return op < other.op;
+    }
+    return term < other.term;
+  }
+};
+
+// A matcher AndedConstraintSet, which abstracts over the normal one to support
+// MatcherConstraints.
+using MatcherSet = inplace_vector<MatcherConstraint, MaxConstraints>;
+
+// A matcher object. This pattern-matches over abstractions of
+// AndedConstraintSets.
+struct Matcher {
+  // Set up a pattern containing two sets of constraints.
+  Matcher(const MatcherSet& ms1_, const MatcherSet& ms2_);
+
+  // Add a requirement on this pattern, a demand on the Vars. For example, we
+  // can require that Var A - whatever we matched it as - is less than Var B -
+  // whatever we matched that as.
+  //
+  // For convenience, return this Matcher object (i.e. the builder pattern).
+  Matcher& require(Var& a, Abstract::Op op, Var& b);
+
+  // When a match succeeds, we return a map of Vars to Terms, allowing the user
+  // to find out what each Var matched against. For example, the pattern foo(A)
+  // when matched successfully against foo(5) will provide a mapping of A to 5.
+  struct VarTermMap : public std::unordered_map<Var*, Term> {
+    // As a convenience, allow using the object instead of the pointer.
+    Term& operator[](Var& var) {
+      return std::unordered_map<Var*, Term>::operator[](&var);
+    }
+  };
+
+  // Check if the pattern matches given inputs. The order of the inputs does not
+  // matter. Returns the mapping described above, if we succeed.
+  std::optional<VarTermMap> checkUnordered(const AndedConstraintSet& a,
+                                           const AndedConstraintSet& b) {
+    return checkUnorderedInternal(a, b);
+  }
+
+private:
+  std::optional<VarTermMap> checkUnorderedInternal(const AndedConstraintSet& a,
+                                                   const AndedConstraintSet& b,
+                                                   bool flipped = false);
+
+  MatcherSet ms1;
+  MatcherSet ms2;
+
+  struct Requirement {
+    Var* a;
+    Abstract::Op op;
+    Var* b;
+  };
+
+  SmallVector<Requirement, 2> requirements;
+};
+
+Matcher::Matcher(const MatcherSet& ms1_, const MatcherSet& ms2_)
+  : ms1(ms1_), ms2(ms2_) {
+  // Sort the sets like Constraints are sorted, so that when we compare, things
+  // line up.
+  std::sort(ms1.begin(), ms1.end());
+  std::sort(ms2.begin(), ms2.end());
+}
+
+Matcher& Matcher::require(Var& a, Abstract::Op op, Var& b) {
+  requirements.push_back({&a, op, &b});
+  return *this;
+}
+
+std::optional<Matcher::VarTermMap> Matcher::checkUnorderedInternal(
+  const AndedConstraintSet& a, const AndedConstraintSet& b, bool flipped) {
+
+  // TODO: optimize all this for speed
+
+  auto fail = [&]() -> std::optional<Matcher::VarTermMap> {
+    // We failed, but try the flipped inputs if we haven't already.
+    if (!flipped) {
+      return checkUnorderedInternal(b, a, true);
+    }
+    return {};
+  };
+
+  if (a.size() != ms1.size() || b.size() != ms2.size()) {
+    return fail();
+  }
+
+  // The sizes match, at least. Parse in more detail, building up a mapping of
+  // Vars to concrete Terms.
+  VarTermMap varTermMap;
+
+  auto parse = [&](const AndedConstraintSet& input, const MatcherSet& pattern) {
+    for (Index i = 0; i < input.size(); i++) {
+      // The operation must match.
+      if (input[i].op != pattern[i].op) {
+        return false;
+      }
+
+      // The term must match, or define a new unknown value.
+      auto [iter, inserted] =
+        varTermMap.insert({pattern[i].term, input[i].term});
+      if (!inserted) {
+        // The Var in the pattern is already mapped and known. The input here
+        // must match the prior appearance.
+        if (input[i].term != iter->second) {
+          return false;
+        }
+      }
+    }
+    return true;
+  };
+
+  if (!parse(a, ms1) || !parse(b, ms2)) {
+    return fail();
+  }
+
+  // Check requirements on the vars.
+  for (auto& [a, op, b] : requirements) {
+    auto aTerm = varTermMap[*a];
+    auto bTerm = varTermMap[*b];
+
+    // Check if { x == a } proves { x op b } is true.
+    if (provesPair({Abstract::Eq, aTerm}, {op, bTerm}) != True) {
+      return fail();
+    }
+  }
+
+  return varTermMap;
+}
+
+// Do an approximate OR on two inputs that are disjoint, that is, each proves
+// the other false.
+//
+// If we recognize a pattern, we update |self| and return whether anything
+// changed (otherwise, we return nullopt).
+std::optional<bool> approximateOrDisjoint(AndedConstraintSet& self,
+                                          const AndedConstraintSet& other) {
+  using namespace Abstract;
+
+  // Simple range fusing, add an equality to turn > into >= :
+  //
+  //   { x == A } || { x > A && x <= B } , A < B   ==>   { x >= A && X <= B }
+  //
+  // (A < B is required to avoid a contradiction on the right)
+  Var A, B;
+  if (auto result = Matcher({{Eq, A}}, {{GtS, A}, {LeS, B}})
+                      .require(A, LtS, B)
+                      .checkUnordered(self, other)) {
+    auto& values = *result;
+    self = {{GeS, values[A]}, {LeS, values[B]}};
+    return true;
+    // TODO: unsigned etc.
+  }
+
+  // Otherwise, we have no idea.
+  return {};
+}
+
+} // anonymous namespace
+
 bool AndedConstraintSet::approximateOr(const AndedConstraintSet& other) {
   // If one proves everything, the only thing that matters is the other.
   if (other.provesEverything()) {
@@ -218,18 +404,28 @@ bool AndedConstraintSet::approximateOr(const AndedConstraintSet& other) {
   // If this is already implied by current constraints, then it is redundant.
   // E.g. if we are { x = 10 } and other is { x >= 0 } then all we need is
   // { x >= 0 } as the result of the OR.
-  if (other.proves(*this) == True) {
+  auto otherProves = other.proves(*this);
+  if (otherProves == True) {
     return false;
   }
-  if (proves(other) == True) {
+  auto thisProves = proves(other);
+  if (thisProves == True) {
     *this = other;
     return true;
   }
 
-  // TODO smarts: handle <= > and so forth
+  if (otherProves == False && thisProves == False) {
+    if (auto result = approximateOrDisjoint(*this, other)) {
+      return *result;
+    }
+  }
+  // TODO more smarts: handle <= > and so forth
 
   // Otherwise, we don't know how to nicely OR these things, and expand to the
   // trivial set of no constraints.
+  // TODO: We could keep constraints that appear on both sides and only drop the
+  //       others. In fact, we could do that first, and leave smarts only to the
+  //       others.
   clear();
   return true;
 }

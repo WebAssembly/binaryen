@@ -240,5 +240,78 @@ TEST(ConstraintTest, TestDeredundancy) {
   EXPECT_EQ(t[0], eq0);
 }
 
-// TODO: test an approximateOr of { x = 10 } and { x >= 0 }, once we support
-//       inequalities
+static void checkOr(const AndedConstraintSet& a,
+                    const AndedConstraintSet& b,
+                    const AndedConstraintSet& result) {
+  auto ored = a;
+  ored.approximateOr(b);
+  EXPECT_EQ(ored, result);
+
+  ored = b;
+  ored.approximateOr(a);
+  EXPECT_EQ(ored, result);
+}
+
+TEST(ConstraintTest, TestOrInequality) {
+  // x == 5 || x >= 0  =>  x >= 0
+  AndedConstraintSet eq5{Constraint{Eq, {Literal(int32_t(5))}}};
+  AndedConstraintSet ge0{Constraint{GeU, {Literal(int32_t(0))}}};
+  checkOr(eq5, ge0, ge0);
+}
+
+TEST(ConstraintTest, TestOrOrDisjoint) {
+  // { x == A } || { x > A && x <= B } , A < B   ==>   { x >= A && x <= B }
+
+  AndedConstraintSet left{Constraint{Eq, {Literal(int32_t(5))}}};
+
+  AndedConstraintSet right(
+    {{GtS, {Literal(int32_t(5))}}, {LeS, {Literal(int32_t(42))}}});
+
+  AndedConstraintSet result(
+    {{GeS, {Literal(int32_t(5))}}, {LeS, {Literal(int32_t(42))}}});
+
+  checkOr(left, right, result);
+
+  // Changes to constants:
+
+  // Change 5 on the left to 7. 7 is in the range on the right, so we end up
+  // with the right.
+  AndedConstraintSet left7{Constraint{Eq, {Literal(int32_t(7))}}};
+  checkOr(left7, right, right);
+
+  // Change 5 on the left to 99. Now we fail to find anything.
+  AndedConstraintSet left99{Constraint{Eq, {Literal(int32_t(99))}}};
+  AndedConstraintSet empty{};
+  checkOr(left99, right, empty);
+
+  // Change 5 on the left to 4. We fail.
+  AndedConstraintSet left4{Constraint{Eq, {Literal(int32_t(4))}}};
+  checkOr(left4, right, empty);
+
+  // Change 5 on the right to 6. We fail.
+  AndedConstraintSet right6(
+    {{GtS, {Literal(int32_t(6))}}, {LeS, {Literal(int32_t(42))}}});
+  checkOr(left, right6, empty);
+
+  // Changes to operations:
+
+  // Change the Eq on the left to Ne. We fail.
+  AndedConstraintSet leftNe{Constraint{Ne, {Literal(int32_t(5))}}};
+  checkOr(leftNe, right, empty);
+
+  // Change the GtS on the right to GtU. We fail.
+  AndedConstraintSet rightGtU(
+    {{GtU, {Literal(int32_t(5))}}, {LeS, {Literal(int32_t(42))}}});
+  checkOr(left, rightGtU, empty);
+
+  // Change the LeS on the right to LeU. We fail.
+  AndedConstraintSet rightLeU(
+    {{GtS, {Literal(int32_t(5))}}, {LeU, {Literal(int32_t(42))}}});
+  checkOr(left, rightLeU, empty);
+
+  // Add an operation on the right, x != 21. We fail. TODO: optimize here
+  AndedConstraintSet rightAdded({{GtS, {Literal(int32_t(5))}},
+                                 {LeS, {Literal(int32_t(42))}},
+                                 {Ne, {Literal(int32_t(21))}}});
+  checkOr(left, rightAdded, empty);
+}
