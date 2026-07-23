@@ -310,7 +310,10 @@ bool Matcher::checkUnorderedInternal(const AndedConstraintSets& a, const AndedCo
     auto aTerm = varTermMap[a];
     auto bTerm = varTermMap[b];
 
-    if (provesPair(const Constraint& a, const Constraint& b) {
+    // Check if { x == a } proves { x op b } is true.
+    if (provesPair(Constraint{Abstract::Eq, aTerm}, Constraint{op, bTerm}) != True) {
+      return returnFalse();
+    }
   }
 
   return returnFalse();
