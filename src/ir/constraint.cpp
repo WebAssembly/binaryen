@@ -368,8 +368,8 @@ std::optional<bool> approximateOrDisjoint(AndedConstraintSet& self,
   //
   Var A, B;
   if (auto result = Matcher({MC(Eq, A)}, {MC(GtS, A), MC(LeS, B)})
-                  .require(A, LeS, B)
-                  .checkUnordered(self, other)) {
+                      .require(A, LeS, B)
+                      .checkUnordered(self, other)) {
     Term aValue = (*result)[&A];
     Term bValue = (*result)[&B];
     self = AndedConstraintSet({{GeS, aValue}, {LeS, bValue}}); // TODO !&
