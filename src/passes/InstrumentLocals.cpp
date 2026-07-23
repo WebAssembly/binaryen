@@ -51,21 +51,21 @@
 
 namespace wasm {
 
-Name get_i32("get_i32");
-Name get_i64("get_i64");
-Name get_f32("get_f32");
-Name get_f64("get_f64");
-Name get_v128("get_v128");
-Name get_funcref("get_funcref");
-Name get_externref("get_externref");
+static const Name get_i32("get_i32");
+static const Name get_i64("get_i64");
+static const Name get_f32("get_f32");
+static const Name get_f64("get_f64");
+static const Name get_v128("get_v128");
+static const Name get_funcref("get_funcref");
+static const Name get_externref("get_externref");
 
-Name set_i32("set_i32");
-Name set_i64("set_i64");
-Name set_f32("set_f32");
-Name set_f64("set_f64");
-Name set_v128("set_v128");
-Name set_funcref("set_funcref");
-Name set_externref("set_externref");
+static const Name set_i32("set_i32");
+static const Name set_i64("set_i64");
+static const Name set_f32("set_f32");
+static const Name set_f64("set_f64");
+static const Name set_v128("set_v128");
+static const Name set_funcref("set_funcref");
+static const Name set_externref("set_externref");
 
 struct InstrumentLocals : public WalkerPass<PostWalker<InstrumentLocals>> {
   // Adds calls to new imports.

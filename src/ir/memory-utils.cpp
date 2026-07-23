@@ -20,6 +20,10 @@
 
 namespace wasm::MemoryUtils {
 
+// When flattening, do not generate a massive segment that will likely just
+// OOM.
+static uint64_t MaxFlatMemorySize = 4ULL * 1024 * 1024 * 1024;
+
 bool isSubType(const Memory& a, const Memory& b) {
   return a.shared == b.shared && a.addressType == b.addressType &&
          a.initial >= b.initial && a.max <= b.max &&
@@ -104,13 +108,16 @@ bool flatten(Module& wasm) {
   }
   for (auto& segment : dataSegments) {
     auto* offset = segment->offset->dynCast<Const>();
-    Index start = offset->value.getInteger();
-    Index size = segment->data.size();
-    Index end;
+    uint64_t start = offset->value.getUnsigned();
+    uint64_t size = segment->data.size();
+    uint64_t end;
     if (std::ckd_add(&end, start, size)) {
       return false;
     }
     if (end > data.size()) {
+      if (end > MaxFlatMemorySize) {
+        return false;
+      }
       data.resize(end);
     }
     std::copy(segment->data.begin(), segment->data.end(), data.begin() + start);

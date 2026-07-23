@@ -2463,8 +2463,11 @@ Result<> IRBuilder::makeArraySet(HeapType type, MemoryOrder order) {
   return Ok{};
 }
 
-Result<>
-IRBuilder::makeArrayStore(HeapType arrayType, unsigned bytes, Type type) {
+Result<> IRBuilder::makeArrayStore(HeapType arrayType,
+                                   unsigned bytes,
+                                   Address offset,
+                                   Address align,
+                                   Type type) {
   if (!arrayType.isArray()) {
     return Err{"expected array type annotation on array store"};
   }
@@ -2473,13 +2476,16 @@ IRBuilder::makeArrayStore(HeapType arrayType, unsigned bytes, Type type) {
   CHECK_ERR(ChildPopper{*this}.visitArrayStore(&curr, arrayType, type));
 
   CHECK_ERR(validateTypeAnnotation(arrayType, curr.ref));
-  push(builder.makeArrayStore(bytes, curr.ref, curr.index, curr.value));
+  push(builder.makeArrayStore(
+    bytes, offset, align, curr.ref, curr.index, curr.value));
   return Ok{};
 }
 
 Result<> IRBuilder::makeArrayLoad(HeapType arrayType,
                                   unsigned bytes,
                                   bool signed_,
+                                  Address offset,
+                                  Address align,
                                   Type type) {
   if (!arrayType.isArray()) {
     return Err{"expected array type annotation on array load"};
@@ -2489,7 +2495,8 @@ Result<> IRBuilder::makeArrayLoad(HeapType arrayType,
   CHECK_ERR(ChildPopper{*this}.visitArrayLoad(&curr, arrayType));
 
   CHECK_ERR(validateTypeAnnotation(arrayType, curr.ref));
-  push(builder.makeArrayLoad(bytes, signed_, curr.ref, curr.index, type));
+  push(builder.makeArrayLoad(
+    bytes, signed_, offset, align, curr.ref, curr.index, type));
   return Ok{};
 }
 

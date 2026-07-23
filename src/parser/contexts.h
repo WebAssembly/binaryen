@@ -584,14 +584,19 @@ struct NullInstrParserCtx {
                      MemoryOrder) {
     return Ok{};
   }
-  template<typename HeapTypeT>
-  Result<> makeArrayLoad(
-    Index, const std::vector<Annotation>&, Type, int, bool, HeapTypeT) {
+  template<typename MemargT, typename HeapTypeT>
+  Result<> makeArrayLoad(Index,
+                         const std::vector<Annotation>&,
+                         Type,
+                         int,
+                         bool,
+                         MemargT,
+                         HeapTypeT) {
     return Ok{};
   }
-  template<typename HeapTypeT>
-  Result<>
-  makeArrayStore(Index, const std::vector<Annotation>&, Type, int, HeapTypeT) {
+  template<typename MemargT, typename HeapTypeT>
+  Result<> makeArrayStore(
+    Index, const std::vector<Annotation>&, Type, int, MemargT, HeapTypeT) {
     return Ok{};
   }
   Result<> makeAtomicRMW(Index,
@@ -2415,17 +2420,23 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
                          Type type,
                          int bytes,
                          bool signed_,
+                         Memarg memarg,
                          HeapTypeT arrayType) {
-    return withLoc(pos,
-                   irBuilder.makeArrayLoad(arrayType, bytes, signed_, type));
+    return withLoc(
+      pos,
+      irBuilder.makeArrayLoad(
+        arrayType, bytes, signed_, memarg.offset, memarg.align, type));
   }
 
   Result<> makeArrayStore(Index pos,
                           const std::vector<Annotation>& annotations,
                           Type type,
                           int bytes,
+                          Memarg memarg,
                           HeapTypeT arrayType) {
-    return withLoc(pos, irBuilder.makeArrayStore(arrayType, bytes, type));
+    return withLoc(pos,
+                   irBuilder.makeArrayStore(
+                     arrayType, bytes, memarg.offset, memarg.align, type));
   }
 
   Result<> makeAtomicRMW(Index pos,

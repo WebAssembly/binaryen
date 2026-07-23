@@ -2479,6 +2479,12 @@ struct PrintExpressionContents
     printMinor(o, "type ");
     printHeapTypeName(curr->ref->type.getHeapType());
     o << ')';
+    if (curr->offset) {
+      o << " offset=" << curr->offset;
+    }
+    if (curr->align != curr->bytes) {
+      o << " align=" << curr->align;
+    }
   }
 
   void visitArrayStore(ArrayStore* curr) {
@@ -2492,6 +2498,12 @@ struct PrintExpressionContents
     printMinor(o, "type ");
     printHeapTypeName(curr->ref->type.getHeapType());
     o << ')';
+    if (curr->offset) {
+      o << " offset=" << curr->offset;
+    }
+    if (curr->align != curr->bytes) {
+      o << " align=" << curr->align;
+    }
   }
   void visitArrayLen(ArrayLen* curr) { printMedium(o, "array.len"); }
   void visitArrayCopy(ArrayCopy* curr) {
