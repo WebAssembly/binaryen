@@ -207,6 +207,36 @@ void AndedConstraintSet::approximateAnd(const Constraint& c) {
 
 namespace {
 
+// A variable in a match. If we see the same Var - identified by address - in
+// two places, it must be equal in them. We can also perform checks on different
+// Vars afterwards, e.g., whether one is greater than the other.
+struct Var {};
+
+// A match constraint: an abstraction over a normal Constraint, which can also
+// contain Vars.
+struct MC {
+  Abstract::Op op;
+  Var& term;
+};
+
+// A matcher object. This pattern-matches over AndedConstraintSets, in a way
+// that follows the rules of logic.
+struct Match {
+  // Add a set of constraints that contains one item. For convenience, this uses
+  // the builder pattern, i.e. it returns this Match object.
+  Match& set(MC& mc);
+
+  // Add above, but now the set contains two items, both provided here.
+  Match& set(MC& mc1, MC& mc2);
+
+  // Add a requirement on this pattern, a demand on the Vars.
+  Match& require(Var& a, Abstract::Op, Var& b);
+
+  // Check if the pattern matches given inputs. The order of the inputs does not
+  // matter.
+  bool checkUnordered(const AndedConstraintSets& a, const AndedConstraintSets& constraints b);
+};
+
 // Do an approximate OR on two inputs that are disjoint, that is, each proves
 // the other false.
 //
@@ -220,9 +250,10 @@ std::optional<bool> approximateOrDisjoint(AndedConstraintSet& self,
   //
   // XXX but we do need the other part of other, x < B and A < B
   Var A, B;
-  if (match().set(self, Abstract::Eq, A)
-             .set(other, Abstract::GtS, A, Abstract::LeS, B)
-             .require(A, LeS, B)) {
+  if (Match().set(MC(Abstract::Eq, A))
+             .set(MC(Abstract::GtS, A), MC(Abstract::LeS, B))
+             .require(A, LeS, B)
+             .check(self, other)) {
     flipped? look for both and flipped, and return pointer to the first .set()?
   }
 
