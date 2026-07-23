@@ -298,7 +298,7 @@ bool Matcher::checkUnorderedInternal(const AndedConstraintSet& a,
 
       // The term must match, or define a new unknown value.
       auto [iter, inserted] =
-        varTermMap.insert({&pattern[i].term, input[i].term});
+        varTermMap.insert({pattern[i].term, input[i].term});
       if (inserted) {
         // The Var in the pattern is already mapped and known. The input here
         // must match the prior appearance.
