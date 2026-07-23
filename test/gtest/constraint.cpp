@@ -264,11 +264,11 @@ TEST(ConstraintTest, TestOrOrDisjoint) {
 
   AndedConstraintSet left{Constraint{Eq, {Literal(int32_t(5))}}};
 
-  auto right = AndedConstraintSet({{GtS, {Literal(int32_t(5))}},
-                           {LeS, {Literal(int32_t(42)}});
+  AndedConstraintSet right({{GtS, {Literal(int32_t(5))}},
+                                   {LeS, {Literal(int32_t(42))}}});
 
   AndedConstraintSet result({{GeS, {Literal(int32_t(5))}},
-                            {LeS, {Literal(int32_t(42)}});
+                             {LeS, {Literal(int32_t(42))}}});
 
   checkOr(left, right, result);
 }
