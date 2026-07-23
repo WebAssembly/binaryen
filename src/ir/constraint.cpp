@@ -217,8 +217,9 @@ struct Var {};
 // contain Vars.
 struct MatcherConstraint {
   Abstract::Op op;
-  Var* term;
+  Var* term = nullptr;
 
+  MatcherConstraint() = default;
   MatcherConstraint(Abstract::Op op, Var& term) : op(op), term(&term) {}
 };
 
