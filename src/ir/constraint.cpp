@@ -262,7 +262,15 @@ Matcher& Matcher::require(Var& a, Abstract::Op op, Var& b) {
   requirements.push_back({a, op, b});
 }
 
-bool Matcher::checkUnorderedInternal(const AndedConstraintSets& a, const AndedConstraintSets& constraints b, bool flipped {
+bool Matcher::checkUnorderedInternal(const AndedConstraintSets& a, const AndedConstraintSets& constraints b, bool flipped) {
+
+
+  // Perhaps the flipped inputs match, if we didn't already try that.
+  if (!flipped) {
+    return checkUnorderedInternal(b, a, true);
+  }
+
+  return false;
 }
 
 // Do an approximate OR on two inputs that are disjoint, that is, each proves
