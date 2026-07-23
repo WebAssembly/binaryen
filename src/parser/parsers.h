@@ -3546,7 +3546,7 @@ template<typename Ctx> MaybeResult<> import_(Ctx& ctx) {
     }
 
     if (*hasSharedImportDesc) {
-      items.emplace_back(*id, *nm);
+      items.push_back(CompactItem{*id, *nm});
     } else {
       CHECK_ERR(importdesc(ctx, *mod, *nm, id))
     }
