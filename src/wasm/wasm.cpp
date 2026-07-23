@@ -805,8 +805,7 @@ void WideIntAddSub::finalize() {
       rightHigh->type == Type::unreachable) {
     type = Type::unreachable;
   } else {
-    static Type i64Pair = Types::getI64Pair();
-    type = i64Pair;
+    type = Types::getI64Pair();
   }
 }
 
@@ -814,8 +813,7 @@ void WideIntMul::finalize() {
   if (left->type == Type::unreachable || right->type == Type::unreachable) {
     type = Type::unreachable;
   } else {
-    static Type i64Pair = Types::getI64Pair();
-    type = i64Pair;
+    type = Types::getI64Pair();
   }
 }
 

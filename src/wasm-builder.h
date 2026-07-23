@@ -1162,12 +1162,16 @@ public:
   }
   ArrayLoad* makeArrayLoad(unsigned bytes,
                            bool signed_,
+                           Address offset,
+                           Address align,
                            Expression* ref,
                            Expression* index,
                            Type type) {
     auto* ret = wasm.allocator.alloc<ArrayLoad>();
     ret->bytes = bytes;
     ret->signed_ = signed_;
+    ret->offset = offset;
+    ret->align = align ? align : Address(bytes);
     ret->ref = ref;
     ret->index = index;
     ret->type = type;
@@ -1176,11 +1180,15 @@ public:
   }
 
   ArrayStore* makeArrayStore(unsigned bytes,
+                             Address offset,
+                             Address align,
                              Expression* ref,
                              Expression* index,
                              Expression* value) {
     auto* ret = wasm.allocator.alloc<ArrayStore>();
     ret->bytes = bytes;
+    ret->offset = offset;
+    ret->align = align ? align : Address(bytes);
     ret->ref = ref;
     ret->index = index;
     ret->value = value;

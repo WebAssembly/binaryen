@@ -1807,8 +1807,13 @@ Result<> makeLoad(Ctx& ctx,
                   bool signed_,
                   int bytes,
                   bool isAtomic) {
+  auto mem = maybeMemidx(ctx);
+  CHECK_ERR(mem);
 
   if (ctx.in.takeSExprStart("type"sv)) {
+    if (mem) {
+      return ctx.in.err("memory index is not allowed for array load");
+    }
     auto arrayType = typeidx(ctx);
     CHECK_ERR(arrayType);
 
@@ -1816,12 +1821,12 @@ Result<> makeLoad(Ctx& ctx,
       return ctx.in.err("expected end of type use");
     }
 
-    return ctx.makeArrayLoad(
-      pos, annotations, type, bytes, signed_, *arrayType);
-  }
+    auto arg = memarg(ctx, bytes);
+    CHECK_ERR(arg);
 
-  auto mem = maybeMemidx(ctx);
-  CHECK_ERR(mem);
+    return ctx.makeArrayLoad(
+      pos, annotations, type, bytes, signed_, *arg, *arrayType);
+  }
 
   // We could only parse this when `isAtomic`, but this way gives a clearer
   // error when a memorder is given for non-atomic operations
@@ -1855,7 +1860,13 @@ Result<> makeStore(Ctx& ctx,
                    Type type,
                    int bytes,
                    bool isAtomic) {
+  auto mem = maybeMemidx(ctx);
+  CHECK_ERR(mem);
+
   if (ctx.in.takeSExprStart("type"sv)) {
+    if (mem) {
+      return ctx.in.err("memory index is not allowed for array store");
+    }
     auto arrayType = typeidx(ctx);
     CHECK_ERR(arrayType);
 
@@ -1863,10 +1874,11 @@ Result<> makeStore(Ctx& ctx,
       return ctx.in.err("expected end of type use");
     }
 
-    return ctx.makeArrayStore(pos, annotations, type, bytes, *arrayType);
+    auto arg = memarg(ctx, bytes);
+    CHECK_ERR(arg);
+
+    return ctx.makeArrayStore(pos, annotations, type, bytes, *arg, *arrayType);
   }
-  auto mem = maybeMemidx(ctx);
-  CHECK_ERR(mem);
 
   auto maybeOrder = maybeMemOrder(ctx);
   CHECK_ERR(maybeOrder);

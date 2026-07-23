@@ -2828,24 +2828,34 @@ void BinaryInstWriter::visitArraySet(ArraySet* curr) {
 }
 
 void BinaryInstWriter::visitArrayLoad(ArrayLoad* curr) {
+  if (curr->type == Type::unreachable) {
+    return;
+  }
   if (curr->ref->type.isNull()) {
     emitUnreachable();
     return;
   }
   emitLoadOpcode(curr->bytes, curr->signed_, curr->type);
-  uint32_t alignmentBits = BinaryConsts::HasBackingArrayMask;
+  uint32_t alignmentBits =
+    Bits::log2(curr->align) | BinaryConsts::HasBackingArrayMask;
   o << U32LEB(alignmentBits);
+  o << U32LEB(curr->offset);
   parent.writeIndexedHeapType(curr->ref->type.getHeapType());
 }
 
 void BinaryInstWriter::visitArrayStore(ArrayStore* curr) {
+  if (curr->type == Type::unreachable) {
+    return;
+  }
   if (curr->ref->type.isNull()) {
     emitUnreachable();
     return;
   }
   emitStoreOpcode(curr->bytes, curr->value->type);
-  uint32_t alignmentBits = BinaryConsts::HasBackingArrayMask;
+  uint32_t alignmentBits =
+    Bits::log2(curr->align) | BinaryConsts::HasBackingArrayMask;
   o << U32LEB(alignmentBits);
+  o << U32LEB(curr->offset);
   parent.writeIndexedHeapType(curr->ref->type.getHeapType());
 }
 
