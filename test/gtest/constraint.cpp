@@ -272,6 +272,8 @@ TEST(ConstraintTest, TestOrOrDisjoint) {
 
   checkOr(left, right, result);
 
+  // Changes to constants:
+
   // Change 5 on the left to 7. 7 is in the range on the right, so we end up
   // with the right.
   AndedConstraintSet left7{Constraint{Eq, {Literal(int32_t(7))}}};
@@ -282,8 +284,15 @@ TEST(ConstraintTest, TestOrOrDisjoint) {
   AndedConstraintSet empty{};
   checkOr(left4, right, empty);
 
-  // Change 5 on the right to 6. Again we fail to find anything
+  // Change 5 on the right to 6. Again we fail to find anything.
   AndedConstraintSet right6(
     {{GtS, {Literal(int32_t(6))}}, {LeS, {Literal(int32_t(42))}}});
   checkOr(left, right6, empty);
+
+  // Changes to operations:
+
+  // Change the Eq on the left to Ne. We fail.
+  AndedConstraintSet leftNe{Constraint{Ne, {Literal(int32_t(5))}}};
+  checkOr(leftNe, right, empty);
+
 }
