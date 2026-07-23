@@ -271,4 +271,12 @@ TEST(ConstraintTest, TestOrOrDisjoint) {
     {{GeS, {Literal(int32_t(5))}}, {LeS, {Literal(int32_t(42))}}});
 
   checkOr(left, right, result);
+
+  // Change 5 on the left to 7. 7 is in the range on the right, so we end up
+  // with the right.
+  AndedConstraintSet left7{Constraint{Eq, {Literal(int32_t(7))}}};
+  checkOr(left7, right, right);
+
+  AndedConstraintSet empty{};
+  empty.setProvesNothing();
 }
