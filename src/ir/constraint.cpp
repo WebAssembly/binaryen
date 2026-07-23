@@ -227,12 +227,12 @@ using MatcherSet = public inplace_vector<MatcherConstraint, MaxConstraints>;
 // that follows the rules of logic.
 struct Matcher {
   // Set up a pattern containing two sets of constraints.
-  Matcher(const MatcherSet& ms1, const MatcherSet& ms2) 
+  Matcher(const MatcherSet& ms1, const MatcherSet& ms2);
 
   // Add a requirement on this pattern, a demand on the Vars.
   //
   // For convenience, return this Matcher object (i.e. the builder pattern).
-  Matcher& require(Var& a, Abstract::Op, Var& b);
+  Matcher& require(Var& a, Abstract::Op op, Var& b);
 
   // Check if the pattern matches given inputs. The order of the inputs does not
   // matter.
@@ -242,12 +242,24 @@ struct Matcher {
 
 private:
   bool checkUnorderedInternal(const AndedConstraintSets& a, const AndedConstraintSets& constraints b, bool flipped = false);
+
+  const MatcherSet& ms1;
+  const MatcherSet& ms2;
+
+  struct Requirement {
+    Var& a;
+    Abstract::Op op;
+    Var& b;
+  };
+
+  SmallVector<Requirement, 2> requirements;
 };
 
-Matcher::Matcher(const MatcherSet& ms1, const MatcherSet& ms2) {
+Matcher::Matcher(const MatcherSet& ms1, const MatcherSet& ms2) : ms1(ms1), ms2(ms2) {
 }
 
-Matcher& Matcher::require(Var& a, Abstract::Op, Var& b) {
+Matcher& Matcher::require(Var& a, Abstract::Op op, Var& b) {
+  requirements.push_back({a, op, b});
 }
 
 bool Matcher::checkUnorderedInternal(const AndedConstraintSets& a, const AndedConstraintSets& constraints b, bool flipped {
