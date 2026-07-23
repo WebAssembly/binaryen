@@ -37,7 +37,7 @@
 
 ;; Build to a binary wasm.
 ;;
-;; RUN: wasm-opt %s -o %t.wasm -q -all
+;; RUN: wasm-opt %s -o %t.wasm -q -all --disable-compact-imports
 
 ;; Run in node.
 ;;
