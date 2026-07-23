@@ -334,6 +334,7 @@ std::optional<bool> approximateOrDisjoint(AndedConstraintSet& self,
                                           const AndedConstraintSet& other) {
   using M = Matcher;
   using MC = MatcherConstraint;
+  using namespace Abstract;
 
   // Simple range fusing, add an equality to turn > into >= :
   //
@@ -341,8 +342,8 @@ std::optional<bool> approximateOrDisjoint(AndedConstraintSet& self,
   //
   Var A, B;
   if (M()
-        .set(MC(Abstract::Eq, A))
-        .set(MC(Abstract::GtS, A), MC(Abstract::LeS, B))
+        .set(MC(Eq, A))
+        .set(MC(GtS, A), MC(LeS, B))
         .require(A, LeS, B)
         .check(self, other)) {
   }
