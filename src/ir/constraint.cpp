@@ -353,8 +353,7 @@ std::optional<Matcher::VarTermMap> Matcher::checkUnorderedInternal(
     auto bTerm = varTermMap[*b];
 
     // Check if { x == a } proves { x op b } is true.
-    if (provesPair({Abstract::Eq, aTerm}, {op, bTerm}) !=
-        True) {
+    if (provesPair({Abstract::Eq, aTerm}, {op, bTerm}) != True) {
       return fail();
     }
   }
