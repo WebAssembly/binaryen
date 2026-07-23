@@ -260,7 +260,7 @@ TEST(ConstraintTest, TestOrInequality) {
 }
 
 TEST(ConstraintTest, TestOrOrDisjoint) {
-  // { x == A } || { x > A && x <= B } , A <= B   ==>   { x >= A && X <= B }
+  // { x == A } || { x > A && x <= B } , A < B   ==>   { x >= A && X <= B }
 
   AndedConstraintSet left{Constraint{Eq, {Literal(int32_t(5))}}};
 
@@ -304,4 +304,9 @@ TEST(ConstraintTest, TestOrOrDisjoint) {
   AndedConstraintSet rightLeU(
     {{GtS, {Literal(int32_t(5))}}, {LeU, {Literal(int32_t(42))}}});
   checkOr(left, rightLeU, empty);
+
+  // Add an operation on the right, x != 21. We fail. TODO
+  AndedConstraintSet rightAdded(
+    {{GtS, {Literal(int32_t(5))}}, {LeS, {Literal(int32_t(42))}}, {Ne, {Literal(int32_t(21))}}});
+  checkOr(left, rightAdded, empty);
 }
