@@ -363,21 +363,21 @@ namespace wasm {
 
 namespace {
 
-static const Name ASYNCIFY_STATE = "__asyncify_state";
-static const Name ASYNCIFY_GET_STATE = "asyncify_get_state";
-static const Name ASYNCIFY_DATA = "__asyncify_data";
-static const Name ASYNCIFY_START_UNWIND = "asyncify_start_unwind";
-static const Name ASYNCIFY_STOP_UNWIND = "asyncify_stop_unwind";
-static const Name ASYNCIFY_START_REWIND = "asyncify_start_rewind";
-static const Name ASYNCIFY_STOP_REWIND = "asyncify_stop_rewind";
-static const Name ASYNCIFY_UNWIND = "__asyncify_unwind";
-static const Name ASYNCIFY = "asyncify";
-static const Name START_UNWIND = "start_unwind";
-static const Name STOP_UNWIND = "stop_unwind";
-static const Name START_REWIND = "start_rewind";
-static const Name STOP_REWIND = "stop_rewind";
-static const Name ASYNCIFY_GET_CALL_INDEX = "__asyncify_get_call_index";
-static const Name ASYNCIFY_CHECK_CALL_INDEX = "__asyncify_check_call_index";
+static const Name ASYNCIFY_STATE("__asyncify_state");
+static const Name ASYNCIFY_GET_STATE("asyncify_get_state");
+static const Name ASYNCIFY_DATA("__asyncify_data");
+static const Name ASYNCIFY_START_UNWIND("asyncify_start_unwind");
+static const Name ASYNCIFY_STOP_UNWIND("asyncify_stop_unwind");
+static const Name ASYNCIFY_START_REWIND("asyncify_start_rewind");
+static const Name ASYNCIFY_STOP_REWIND("asyncify_stop_rewind");
+static const Name ASYNCIFY_UNWIND("__asyncify_unwind");
+static const Name ASYNCIFY("asyncify");
+static const Name START_UNWIND("start_unwind");
+static const Name STOP_UNWIND("stop_unwind");
+static const Name START_REWIND("start_rewind");
+static const Name STOP_REWIND("stop_rewind");
+static const Name ASYNCIFY_GET_CALL_INDEX("__asyncify_get_call_index");
+static const Name ASYNCIFY_CHECK_CALL_INDEX("__asyncify_check_call_index");
 
 // TODO: having just normal/unwind_or_rewind would decrease code
 //       size, but make debugging harder

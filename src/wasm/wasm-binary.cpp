@@ -3394,7 +3394,8 @@ Result<> WasmBinaryReader::readLoad(unsigned bytes, bool signed_, Type type) {
   auto [mem, align, offset, backing] = getMemarg();
   if (backing == BackingType::Array) {
     HeapType arrayType = getIndexedHeapType();
-    return builder.makeArrayLoad(arrayType, bytes, signed_, type);
+    return builder.makeArrayLoad(
+      arrayType, bytes, signed_, offset, align, type);
   }
   return builder.makeLoad(bytes, signed_, offset, align, type, mem);
 }
@@ -3403,7 +3404,7 @@ Result<> WasmBinaryReader::readStore(unsigned bytes, Type type) {
   auto [mem, align, offset, backing] = getMemarg();
   if (backing == BackingType::Array) {
     HeapType arrayType = getIndexedHeapType();
-    return builder.makeArrayStore(arrayType, bytes, type);
+    return builder.makeArrayStore(arrayType, bytes, offset, align, type);
   }
   return builder.makeStore(bytes, offset, align, type, mem);
 }
@@ -4111,12 +4112,10 @@ Result<> WasmBinaryReader::readInst() {
           return builder.makeElemDrop(elem);
         }
         case BinaryConsts::F32_F16LoadMem: {
-          auto [mem, align, offset, backing] = getMemarg();
-          return builder.makeLoad(2, false, offset, align, Type::f32, mem);
+          return readLoad(2, false, Type::f32);
         }
         case BinaryConsts::F32_F16StoreMem: {
-          auto [mem, align, offset, backing] = getMemarg();
-          return builder.makeStore(2, offset, align, Type::f32, mem);
+          return readStore(2, Type::f32);
         }
       }
       return Err{"unknown misc operation: " + std::to_string(op)};
@@ -4666,12 +4665,10 @@ Result<> WasmBinaryReader::readInst() {
         case BinaryConsts::V128Const:
           return builder.makeConst(getVec128Literal());
         case BinaryConsts::V128Store: {
-          auto [mem, align, offset, backing] = getMemarg();
-          return builder.makeStore(16, offset, align, Type::v128, mem);
+          return readStore(16, Type::v128);
         }
         case BinaryConsts::V128Load: {
-          auto [mem, align, offset, backing] = getMemarg();
-          return builder.makeLoad(16, false, offset, align, Type::v128, mem);
+          return readLoad(16, false, Type::v128);
         }
         case BinaryConsts::V128Load8Splat: {
           auto [mem, align, offset, backing] = getMemarg();
@@ -5759,6 +5756,7 @@ WasmBinaryReader::readMemoryAccess(bool isAtomic, bool isRMW) {
       throwError(
         "Memory index and memory order are not allowed for array backing.");
     }
+    offset = getU32LEB();
   } else {
     WASM_UNREACHABLE("Invalid backing type");
   }
