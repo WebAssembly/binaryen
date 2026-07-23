@@ -1,5 +1,5 @@
-import os
 from scripts.test import shared
+
 from . import utils
 
 
@@ -7,7 +7,7 @@ class CompactImportsTest(utils.BinaryenTestCase):
     def get_binary(self, wat_str, flags=[]):
         cmd = shared.WASM_OPT + ['--print-features', '-o', '-'] + flags
         p = shared.run_process(
-            cmd, input=wat_str, check=True, capture_output=True, decode_output=False
+            cmd, input=wat_str, check=True, capture_output=True, decode_output=False,
         )
         return p.stdout.encode('latin1') if isinstance(p.stdout, str) else p.stdout
 
@@ -72,4 +72,3 @@ class CompactImportsTest(utils.BinaryenTestCase):
         without_compact = self.get_binary(wat, ['--disable-compact-imports'])
         self.assertEqual(len(with_compact), 2098)
         self.assertEqual(len(without_compact), 8064)
-
