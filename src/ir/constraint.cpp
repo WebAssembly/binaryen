@@ -335,7 +335,6 @@ bool Matcher::checkUnorderedInternal(const AndedConstraintSet& a,
 std::optional<bool> approximateOrDisjoint(AndedConstraintSet& self,
                                           const AndedConstraintSet& other) {
   using MC = MatcherConstraint;
-  using MS = MatcherSet;
   using namespace Abstract;
 
   // Simple range fusing, add an equality to turn > into >= :
