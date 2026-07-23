@@ -278,25 +278,24 @@ bool Matcher::checkUnorderedInternal(const AndedConstraintSets& a, const AndedCo
   }
 
   // The sizes match, at least. Parse in more detail, building up a mapping of
-  // Vars to concrete Terms.
+  // Vars to concrete Terms
   std::unordered_map<Var*, Term> varTermMap;
 
   auto parse = [&](const AndedConstraintSet& input, const MatcherSet& pattern) {
     for (Index i = 0; i < input.size(); i++) {
+      // The operation must match.
       if (input[i].op != pattern[i].op) {
         return false;
       }
 
-      if (auto iter = varTermMap.find(&pattern.term);
-          iter != varTermMap.end()) {
+      // The term must match, or define a new unknown value.
+      auto [iter, inserted] = varTermMap.insert({&pattern.term, input[i].term});
+      if (inserted) {
         // The Var in the pattern is already mapped and known. The input here
         // must match the prior appearance.
         if (input[i].term != iter->second) {
           return false;
         }
-      } else {
-        // This is a new Var.
-        varTermMap[&pattern.term] = input[i].term;
       }
     }
     return true;
