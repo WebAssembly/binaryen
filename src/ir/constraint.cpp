@@ -248,17 +248,21 @@ struct Matcher {
   // For convenience, return this Matcher object (i.e. the builder pattern).
   Matcher& require(Var& a, Abstract::Op op, Var& b);
 
+  // When a match succeeds, we return a map of Vars to Terms, allowing the user
+  // to find out what each Var matched against.
+  using VarTermMap = std::unordered_map<Var*, Term>;
+
   // Check if the pattern matches given inputs. The order of the inputs does not
   // matter. Returns the address of the input that matches the first of the
   // patterns (that is, if a matches ms1 in the constructor, we return &a, and
   // otherwise &b), or nullptr of the match failed.
-  const AndedConstraintSet* checkUnordered(const AndedConstraintSet& a,
+  std::optional<VarTermMap> checkUnordered(const AndedConstraintSet& a,
                                            const AndedConstraintSet& b) {
     return checkUnorderedInternal(a, b);
   }
 
 private:
-  const AndedConstraintSet* checkUnorderedInternal(const AndedConstraintSet& a,
+  std::optional<VarTermMap> checkUnorderedInternal(const AndedConstraintSet& a,
                                                    const AndedConstraintSet& b,
                                                    bool flipped = false);
 
@@ -287,16 +291,15 @@ Matcher& Matcher::require(Var& a, Abstract::Op op, Var& b) {
   return *this;
 }
 
-const AndedConstraintSet* Matcher::checkUnorderedInternal(
+std::optional<Matcher::VarTermMap> Matcher::checkUnorderedInternal(
   const AndedConstraintSet& a, const AndedConstraintSet& b, bool flipped) {
 
-  auto fail = [&]() -> const AndedConstraintSet* {
+  auto fail = [&]() -> std::optional<Matcher::VarTermMap> {
     // We failed, but try the flipped inputs if we haven't already.
     if (!flipped) {
-      // If we match, flip the output to return the right thing.
-      return checkUnorderedInternal(b, a, true) ? &b : nullptr;
+      return checkUnorderedInternal(b, a, true);
     }
-    return nullptr;
+    return {};
   };
 
   if (a.size() != ms1.size() || b.size() != ms2.size()) {
@@ -305,7 +308,7 @@ const AndedConstraintSet* Matcher::checkUnorderedInternal(
 
   // The sizes match, at least. Parse in more detail, building up a mapping of
   // Vars to concrete Terms
-  std::unordered_map<Var*, Term> varTermMap;
+  VarTermMap varTermMap;
 
   auto parse = [&](const AndedConstraintSet& input, const MatcherSet& pattern) {
     for (Index i = 0; i < input.size(); i++) {
@@ -344,7 +347,7 @@ const AndedConstraintSet* Matcher::checkUnorderedInternal(
     }
   }
 
-  return &a;
+  return varTermMap;
 }
 
 // Do an approximate OR on two inputs that are disjoint, that is, each proves
@@ -364,16 +367,13 @@ std::optional<bool> approximateOrDisjoint(AndedConstraintSet& self,
   //   { x == A } || { x > A && x <= B } , A <= B   ===   { x >= A && X <= B }
   //
   Var A, B;
-  if (auto* x = Matcher({MC(Eq, A)}, {MC(GtS, A), MC(LeS, B)})
+  if (auto result = Matcher({MC(Eq, A)}, {MC(GtS, A), MC(LeS, B)})
                   .require(A, LeS, B)
                   .checkUnordered(self, other)) {
-    // x refers to the set with the equality constraint. We can reuse the other
-    // one, with a small change.
-    if (x == &self) {
-      self = other;
-    }
-    self[0].op = GeS;
-    std::cout << "MATACHHH\n";
+    Term aValue = (*result)[&A];
+    Term bValue = (*result)[&B];
+    self = AndedConstraintSet({GeS, aValue}, {LeS, bValue}); // TODO !&
+    std::cout << "MATACHHH " << self << "\n";
     return true;
   }
 
