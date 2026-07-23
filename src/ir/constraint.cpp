@@ -325,7 +325,7 @@ std::optional<Matcher::VarTermMap> Matcher::checkUnorderedInternal(
       // The term must match, or define a new unknown value.
       auto [iter, inserted] =
         varTermMap.insert({pattern[i].term, input[i].term});
-      if (inserted) {
+      if (!inserted) {
         // The Var in the pattern is already mapped and known. The input here
         // must match the prior appearance.
         if (input[i].term != iter->second) {

@@ -281,5 +281,5 @@ TEST(ConstraintTest, TestOrOrDisjoint) {
   AndedConstraintSet left4{Constraint{Eq, {Literal(int32_t(4))}}};
   AndedConstraintSet empty{};
   empty.setProvesNothing();
-  checkOr(left4, right, empty); XXX
+  checkOr(left4, right, empty); //XXX
 }
