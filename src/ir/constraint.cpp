@@ -372,7 +372,7 @@ std::optional<bool> approximateOrDisjoint(AndedConstraintSet& self,
                   .checkUnordered(self, other)) {
     Term aValue = (*result)[&A];
     Term bValue = (*result)[&B];
-    self = AndedConstraintSet({GeS, aValue}, {LeS, bValue}); // TODO !&
+    self = AndedConstraintSet({{GeS, aValue}, {LeS, bValue}}); // TODO !&
     std::cout << "MATACHHH " << self << "\n";
     return true;
   }

@@ -92,6 +92,13 @@ struct AndedConstraintSet : inplace_vector<Constraint, MaxConstraints> {
   // until something changes.
   bool isContradiction = true;
 
+  AndedConstraintSet() = default;
+  AndedConstraintSet(std::initializer_list<Constraint> constraints)
+    : inplace_vector<Constraint, MaxConstraints>(constraints),
+      isContradiction(false) {
+    std::sort(begin(), end());
+  }
+
   // Proving everything (even contradictions) is equivalent to being a
   // contradiction. (This and provesNothing can be seen as the top/bottom of a
   // poset, if one wants to think of things that way.)
