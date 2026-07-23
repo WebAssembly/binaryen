@@ -300,5 +300,8 @@ TEST(ConstraintTest, TestOrOrDisjoint) {
     {{GtU, {Literal(int32_t(5))}}, {LeS, {Literal(int32_t(42))}}});
   checkOr(left, rightGtU, empty);
 
-
+  // Change the LeS on the right to LeU. We fail.
+  AndedConstraintSet rightLeU(
+    {{GtS, {Literal(int32_t(5))}}, {LeU, {Literal(int32_t(42))}}});
+  checkOr(left, rightLeU, empty);
 }
