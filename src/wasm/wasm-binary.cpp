@@ -372,8 +372,7 @@ void WasmBinaryWriter::writeImports() {
     if (const auto* fa = std::get_if<Function*>(&a)) {
       auto* fb = std::get<Function*>(b);
       return (*fa)->type.isExact() == fb->type.isExact() &&
-             getTypeIndex((*fa)->type.getHeapType()) ==
-               getTypeIndex(fb->type.getHeapType());
+             (*fa)->type.getHeapType() == fb->type.getHeapType();
     }
     if (const auto* ga = std::get_if<Global*>(&a)) {
       auto* gb = std::get<Global*>(b);
@@ -381,7 +380,7 @@ void WasmBinaryWriter::writeImports() {
     }
     if (const auto* ta = std::get_if<Tag*>(&a)) {
       auto* tb = std::get<Tag*>(b);
-      return getTypeIndex((*ta)->type) == getTypeIndex(tb->type);
+      return (*ta)->type == tb->type;
     }
     if (const auto* ma = std::get_if<Memory*>(&a)) {
       auto* mb = std::get<Memory*>(b);
@@ -408,31 +407,34 @@ void WasmBinaryWriter::writeImports() {
   std::vector<ImportGroup> groups;
   if (wasm->features.hasCompactImports()) {
     size_t i = 0;
-    size_t N = imports.size();
-    while (i < N) {
-      if (i + 1 < N && getModule(imports[i]) == getModule(imports[i + 1]) &&
-          shareImportType(imports[i], imports[i + 1])) {
-        size_t j = i + 1;
-        while (j + 1 < N &&
-               getModule(imports[i]) == getModule(imports[j + 1]) &&
-               shareImportType(imports[i], imports[j + 1])) {
-          j++;
-        }
-        groups.push_back({ImportGroup::SharedAll, i, j - i + 1});
-        i = j + 1;
-      } else if (i + 1 < N &&
-                 getModule(imports[i]) == getModule(imports[i + 1])) {
-        size_t j = i + 1;
-        while (j + 1 < N &&
-               getModule(imports[i]) == getModule(imports[j + 1])) {
-          j++;
-        }
-        groups.push_back({ImportGroup::SharedModule, i, j - i + 1});
-        i = j + 1;
-      } else {
-        groups.push_back({ImportGroup::Single, i, 1});
-        i++;
+    size_t numImports = imports.size();
+    while (i < numImports) {
+      // If the next import shares the module and type, then greedily collect
+      // the following imports as long as they share both the module and type.
+      size_t run = 1;
+      while (i + run < numImports &&
+             getModule(imports[i]) == getModule(imports[i + run]) &&
+             shareImportType(imports[i], imports[i + run])) {
+        ++run;
       }
+      if (run > 1) {
+        groups.push_back({ImportGroup::SharedAll, i, run});
+        i += run;
+        continue;
+      }
+      // Otherwise, try greedily collecting imports that share just the module.
+      while (i + run < numImports &&
+             getModule(imports[i]) == getModule(imports[i + run])) {
+        ++run;
+      }
+      if (run > 1) {
+        groups.push_back({ImportGroup::SharedModule, i, run});
+        i += run;
+        continue;
+      }
+      // Otherwise, just use a normal import.
+      groups.push_back({ImportGroup::Single, i, 1});
+      ++i;
     }
   } else {
     for (size_t i = 0; i < imports.size(); ++i) {
@@ -442,7 +444,7 @@ void WasmBinaryWriter::writeImports() {
 
   o << U32LEB(groups.size());
 
-  auto writeImportDetails = [&](const ImportItem& item) {
+  auto writeImportDesc = [&](const ImportItem& item) {
     std::visit(Overloaded{[&](Function* func) {
                             uint32_t kind = ExternalKind::Function;
                             if (func->type.isExact()) {
@@ -458,8 +460,8 @@ void WasmBinaryWriter::writeImports() {
                           },
                           [&](Tag* tag) {
                             o << U32LEB(int32_t(ExternalKind::Tag));
-                            o << uint8_t(
-                              0); // Reserved 'attribute' field. Always 0.
+                            // Reserved 'attribute' field. Always 0.
+                            o << uint8_t(0);
                             o << U32LEB(getTypeIndex(tag->type));
                           },
                           [&](Memory* memory) {
@@ -484,31 +486,38 @@ void WasmBinaryWriter::writeImports() {
   };
 
   for (const auto& group : groups) {
-    if (group.kind == ImportGroup::Single) {
-      const auto& item = imports[group.start];
-      writeInlineString(getModule(item).view());
-      writeInlineString(getBase(item).view());
-      writeImportDetails(item);
-    } else if (group.kind == ImportGroup::SharedAll) {
-      const auto& item0 = imports[group.start];
-      writeInlineString(getModule(item0).view());
-      writeInlineString("");
-      o << uint8_t(BinaryConsts::CompactImportsSharedAll);
-      writeImportDetails(item0);
-      o << U32LEB(group.count);
-      for (size_t k = 0; k < group.count; ++k) {
-        writeInlineString(getBase(imports[group.start + k]).view());
-      }
-    } else if (group.kind == ImportGroup::SharedModule) {
-      const auto& item0 = imports[group.start];
-      writeInlineString(getModule(item0).view());
-      writeInlineString("");
-      o << uint8_t(BinaryConsts::CompactImportsSharedModule);
-      o << U32LEB(group.count);
-      for (size_t k = 0; k < group.count; ++k) {
-        const auto& item = imports[group.start + k];
+    switch (group.kind) {
+      case ImportGroup::Single: {
+        const auto& item = imports[group.start];
+        writeInlineString(getModule(item).view());
         writeInlineString(getBase(item).view());
-        writeImportDetails(item);
+        writeImportDesc(item);
+        continue;
+      }
+      case ImportGroup::SharedAll: {
+        const auto& first = imports[group.start];
+        writeInlineString(getModule(first).view());
+        writeInlineString("");
+        o << uint8_t(BinaryConsts::CompactImportsSharedAll);
+        writeImportDesc(first);
+        o << U32LEB(group.count);
+        for (size_t i = 0; i < group.count; ++i) {
+          writeInlineString(getBase(imports[group.start + i]).view());
+        }
+        continue;
+      }
+      case ImportGroup::SharedModule: {
+        const auto& first = imports[group.start];
+        writeInlineString(getModule(first).view());
+        writeInlineString("");
+        o << uint8_t(BinaryConsts::CompactImportsSharedModule);
+        o << U32LEB(group.count);
+        for (size_t i = 0; i < group.count; ++i) {
+          const auto& item = imports[group.start + i];
+          writeInlineString(getBase(item).view());
+          writeImportDesc(item);
+        }
+        continue;
       }
     }
   }
