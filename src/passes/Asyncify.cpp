@@ -363,21 +363,21 @@ namespace wasm {
 
 namespace {
 
-static const Name ASYNCIFY_STATE = "__asyncify_state";
-static const Name ASYNCIFY_GET_STATE = "asyncify_get_state";
-static const Name ASYNCIFY_DATA = "__asyncify_data";
-static const Name ASYNCIFY_START_UNWIND = "asyncify_start_unwind";
-static const Name ASYNCIFY_STOP_UNWIND = "asyncify_stop_unwind";
-static const Name ASYNCIFY_START_REWIND = "asyncify_start_rewind";
-static const Name ASYNCIFY_STOP_REWIND = "asyncify_stop_rewind";
-static const Name ASYNCIFY_UNWIND = "__asyncify_unwind";
-static const Name ASYNCIFY = "asyncify";
-static const Name START_UNWIND = "start_unwind";
-static const Name STOP_UNWIND = "stop_unwind";
-static const Name START_REWIND = "start_rewind";
-static const Name STOP_REWIND = "stop_rewind";
-static const Name ASYNCIFY_GET_CALL_INDEX = "__asyncify_get_call_index";
-static const Name ASYNCIFY_CHECK_CALL_INDEX = "__asyncify_check_call_index";
+static const Name ASYNCIFY_STATE("__asyncify_state");
+static const Name ASYNCIFY_GET_STATE("asyncify_get_state");
+static const Name ASYNCIFY_DATA("__asyncify_data");
+static const Name ASYNCIFY_START_UNWIND("asyncify_start_unwind");
+static const Name ASYNCIFY_STOP_UNWIND("asyncify_stop_unwind");
+static const Name ASYNCIFY_START_REWIND("asyncify_start_rewind");
+static const Name ASYNCIFY_STOP_REWIND("asyncify_stop_rewind");
+static const Name ASYNCIFY_UNWIND("__asyncify_unwind");
+static const Name ASYNCIFY("asyncify");
+static const Name START_UNWIND("start_unwind");
+static const Name STOP_UNWIND("stop_unwind");
+static const Name START_REWIND("start_rewind");
+static const Name STOP_REWIND("stop_rewind");
+static const Name ASYNCIFY_GET_CALL_INDEX("__asyncify_get_call_index");
+static const Name ASYNCIFY_CHECK_CALL_INDEX("__asyncify_check_call_index");
 
 // TODO: having just normal/unwind_or_rewind would decrease code
 //       size, but make debugging harder
@@ -475,32 +475,29 @@ public:
   std::set<Name> names;
   std::set<std::string> patterns;
   std::set<std::string> patternsMatched;
-  std::map<std::string, std::string> unescaped;
 
   PatternMatcher(std::string designation,
                  Module& module,
                  const String::Split& list)
     : designation(designation) {
     // The lists contain human-readable strings. Turn them into the
-    // internal escaped names for later comparisons
+    // internal names for later comparisons.
     for (auto& name : list) {
-      auto escaped = WasmBinaryReader::escape(name);
-      unescaped[escaped.toString()] = name;
       if (name.find('*') != std::string::npos) {
-        patterns.insert(escaped.toString());
+        patterns.insert(name);
       } else {
-        auto* func = module.getFunctionOrNull(escaped);
+        auto* func = module.getFunctionOrNull(name);
         if (!func) {
           std::cerr << "warning: Asyncify " << designation
-                    << "list contained a non-existing function name: " << name
-                    << " (" << escaped << ")\n";
+                    << "list contained a non-existing function name: '" << name
+                    << "'\n";
         } else if (func->imported()) {
           Fatal() << "Asyncify " << designation
                   << "list contained an imported function name (use the import "
                      "list for imports): "
                   << name << '\n';
         }
-        names.insert(escaped.str);
+        names.insert(name);
       }
     }
   }
@@ -523,8 +520,8 @@ public:
     for (auto& pattern : patterns) {
       if (!patternsMatched.contains(pattern)) {
         std::cerr << "warning: Asyncify " << designation
-                  << "list contained a non-matching pattern: "
-                  << unescaped[pattern] << " (" << pattern << ")\n";
+                  << "list contained a non-matching pattern: '" << pattern
+                  << "'\n";
       }
     }
   }

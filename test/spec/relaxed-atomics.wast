@@ -574,6 +574,9 @@
     (drop (i64.atomic.rmw32.cmpxchg_u 1 (i64.const 0) (i64.const 42) (i64.const 42)))
     (drop (i64.atomic.rmw32.cmpxchg_u 1 acqrel (i64.const 0) (i64.const 42) (i64.const 42)))
     (drop (i64.atomic.rmw32.cmpxchg_u 1 seqcst (i64.const 0) (i64.const 42) (i64.const 42)))
+    (atomic.fence)
+    (atomic.fence acqrel)
+    (atomic.fence seqcst)
   )
 )
 
@@ -591,8 +594,8 @@
   "\05\07\02" ;; Memory section
     "\01\01\01" ;; (memory i32 1 1)
     "\05\01\01" ;; (memory i64 1 1)
-  "\0a\a9\2d\01" ;; Code section
-  "\a6\2d\00" ;; func $test-all-ops
+  "\0a\af\2d\01" ;; Code section
+  "\ac\2d\00" ;; func $test-all-ops
 
     "\41\00" ;; (i32.const 0)
     "\fe\10" ;; i32.atomic.load
@@ -602,14 +605,14 @@
 
     "\41\00" ;; (i32.const 0)
     "\fe\10" ;; i32.atomic.load
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\01" ;; acqrel memory ordering
     "\00" ;; offset
     "\1a" ;; drop
 
     "\41\00" ;; (i32.const 0)
     "\fe\10" ;; i32.atomic.load
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -623,7 +626,7 @@
 
     "\41\00" ;; (i32.const 0)
     "\fe\10" ;; i32.atomic.load
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\01" ;; acqrel memory ordering
     "\00" ;; offset
@@ -631,7 +634,7 @@
 
     "\41\00" ;; (i32.const 0)
     "\fe\10" ;; i32.atomic.load
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -646,7 +649,7 @@
 
     "\42\00" ;; (i64.const 0)
     "\fe\10" ;; i32.atomic.load
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\01" ;; acqrel memory ordering
     "\00" ;; offset
@@ -654,7 +657,7 @@
 
     "\42\00" ;; (i64.const 0)
     "\fe\10" ;; i32.atomic.load
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -668,14 +671,14 @@
 
     "\41\00" ;; (i32.const 0)
     "\fe\11" ;; i64.atomic.load
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\01" ;; acqrel memory ordering
     "\00" ;; offset
     "\1a" ;; drop
 
     "\41\00" ;; (i32.const 0)
     "\fe\11" ;; i64.atomic.load
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -689,7 +692,7 @@
 
     "\41\00" ;; (i32.const 0)
     "\fe\11" ;; i64.atomic.load
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\01" ;; acqrel memory ordering
     "\00" ;; offset
@@ -697,7 +700,7 @@
 
     "\41\00" ;; (i32.const 0)
     "\fe\11" ;; i64.atomic.load
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -712,7 +715,7 @@
 
     "\42\00" ;; (i64.const 0)
     "\fe\11" ;; i64.atomic.load
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\01" ;; acqrel memory ordering
     "\00" ;; offset
@@ -720,7 +723,7 @@
 
     "\42\00" ;; (i64.const 0)
     "\fe\11" ;; i64.atomic.load
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -734,14 +737,14 @@
 
     "\41\00" ;; (i32.const 0)
     "\fe\12" ;; i32.atomic.load8_u
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\01" ;; acqrel memory ordering
     "\00" ;; offset
     "\1a" ;; drop
 
     "\41\00" ;; (i32.const 0)
     "\fe\12" ;; i32.atomic.load8_u
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -755,7 +758,7 @@
 
     "\41\00" ;; (i32.const 0)
     "\fe\12" ;; i32.atomic.load8_u
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\01" ;; acqrel memory ordering
     "\00" ;; offset
@@ -763,7 +766,7 @@
 
     "\41\00" ;; (i32.const 0)
     "\fe\12" ;; i32.atomic.load8_u
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -778,7 +781,7 @@
 
     "\42\00" ;; (i64.const 0)
     "\fe\12" ;; i32.atomic.load8_u
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\01" ;; acqrel memory ordering
     "\00" ;; offset
@@ -786,7 +789,7 @@
 
     "\42\00" ;; (i64.const 0)
     "\fe\12" ;; i32.atomic.load8_u
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -800,14 +803,14 @@
 
     "\41\00" ;; (i32.const 0)
     "\fe\13" ;; i32.atomic.load16_u
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\01" ;; acqrel memory ordering
     "\00" ;; offset
     "\1a" ;; drop
 
     "\41\00" ;; (i32.const 0)
     "\fe\13" ;; i32.atomic.load16_u
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -821,7 +824,7 @@
 
     "\41\00" ;; (i32.const 0)
     "\fe\13" ;; i32.atomic.load16_u
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\01" ;; acqrel memory ordering
     "\00" ;; offset
@@ -829,7 +832,7 @@
 
     "\41\00" ;; (i32.const 0)
     "\fe\13" ;; i32.atomic.load16_u
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -844,7 +847,7 @@
 
     "\42\00" ;; (i64.const 0)
     "\fe\13" ;; i32.atomic.load16_u
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\01" ;; acqrel memory ordering
     "\00" ;; offset
@@ -852,7 +855,7 @@
 
     "\42\00" ;; (i64.const 0)
     "\fe\13" ;; i32.atomic.load16_u
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -866,14 +869,14 @@
 
     "\41\00" ;; (i32.const 0)
     "\fe\14" ;; i64.atomic.load8_u
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\01" ;; acqrel memory ordering
     "\00" ;; offset
     "\1a" ;; drop
 
     "\41\00" ;; (i32.const 0)
     "\fe\14" ;; i64.atomic.load8_u
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -887,7 +890,7 @@
 
     "\41\00" ;; (i32.const 0)
     "\fe\14" ;; i64.atomic.load8_u
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\01" ;; acqrel memory ordering
     "\00" ;; offset
@@ -895,7 +898,7 @@
 
     "\41\00" ;; (i32.const 0)
     "\fe\14" ;; i64.atomic.load8_u
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -910,7 +913,7 @@
 
     "\42\00" ;; (i64.const 0)
     "\fe\14" ;; i64.atomic.load8_u
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\01" ;; acqrel memory ordering
     "\00" ;; offset
@@ -918,7 +921,7 @@
 
     "\42\00" ;; (i64.const 0)
     "\fe\14" ;; i64.atomic.load8_u
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -932,14 +935,14 @@
 
     "\41\00" ;; (i32.const 0)
     "\fe\15" ;; i64.atomic.load16_u
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\01" ;; acqrel memory ordering
     "\00" ;; offset
     "\1a" ;; drop
 
     "\41\00" ;; (i32.const 0)
     "\fe\15" ;; i64.atomic.load16_u
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -953,7 +956,7 @@
 
     "\41\00" ;; (i32.const 0)
     "\fe\15" ;; i64.atomic.load16_u
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\01" ;; acqrel memory ordering
     "\00" ;; offset
@@ -961,7 +964,7 @@
 
     "\41\00" ;; (i32.const 0)
     "\fe\15" ;; i64.atomic.load16_u
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -976,7 +979,7 @@
 
     "\42\00" ;; (i64.const 0)
     "\fe\15" ;; i64.atomic.load16_u
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\01" ;; acqrel memory ordering
     "\00" ;; offset
@@ -984,7 +987,7 @@
 
     "\42\00" ;; (i64.const 0)
     "\fe\15" ;; i64.atomic.load16_u
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -998,14 +1001,14 @@
 
     "\41\00" ;; (i32.const 0)
     "\fe\16" ;; i64.atomic.load32_u
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\01" ;; acqrel memory ordering
     "\00" ;; offset
     "\1a" ;; drop
 
     "\41\00" ;; (i32.const 0)
     "\fe\16" ;; i64.atomic.load32_u
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -1019,7 +1022,7 @@
 
     "\41\00" ;; (i32.const 0)
     "\fe\16" ;; i64.atomic.load32_u
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\01" ;; acqrel memory ordering
     "\00" ;; offset
@@ -1027,7 +1030,7 @@
 
     "\41\00" ;; (i32.const 0)
     "\fe\16" ;; i64.atomic.load32_u
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -1042,7 +1045,7 @@
 
     "\42\00" ;; (i64.const 0)
     "\fe\16" ;; i64.atomic.load32_u
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\01" ;; acqrel memory ordering
     "\00" ;; offset
@@ -1050,7 +1053,7 @@
 
     "\42\00" ;; (i64.const 0)
     "\fe\16" ;; i64.atomic.load32_u
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -1065,14 +1068,14 @@
     "\41\00" ;; (i32.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\17" ;; i32.atomic.store
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\01" ;; acqrel memory ordering
     "\00" ;; offset
 
     "\41\00" ;; (i32.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\17" ;; i32.atomic.store
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
 
@@ -1086,7 +1089,7 @@
     "\41\00" ;; (i32.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\17" ;; i32.atomic.store
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\01" ;; acqrel memory ordering
     "\00" ;; offset
@@ -1094,7 +1097,7 @@
     "\41\00" ;; (i32.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\17" ;; i32.atomic.store
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -1109,7 +1112,7 @@
     "\42\00" ;; (i64.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\17" ;; i32.atomic.store
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\01" ;; acqrel memory ordering
     "\00" ;; offset
@@ -1117,7 +1120,7 @@
     "\42\00" ;; (i64.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\17" ;; i32.atomic.store
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -1131,14 +1134,14 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\18" ;; i64.atomic.store
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\01" ;; acqrel memory ordering
     "\00" ;; offset
 
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\18" ;; i64.atomic.store
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
 
@@ -1152,7 +1155,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\18" ;; i64.atomic.store
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\01" ;; acqrel memory ordering
     "\00" ;; offset
@@ -1160,7 +1163,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\18" ;; i64.atomic.store
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -1175,7 +1178,7 @@
     "\42\00" ;; (i64.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\18" ;; i64.atomic.store
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\01" ;; acqrel memory ordering
     "\00" ;; offset
@@ -1183,7 +1186,7 @@
     "\42\00" ;; (i64.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\18" ;; i64.atomic.store
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -1197,14 +1200,14 @@
     "\41\00" ;; (i32.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\19" ;; i32.atomic.store8
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\01" ;; acqrel memory ordering
     "\00" ;; offset
 
     "\41\00" ;; (i32.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\19" ;; i32.atomic.store8
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
 
@@ -1218,7 +1221,7 @@
     "\41\00" ;; (i32.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\19" ;; i32.atomic.store8
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\01" ;; acqrel memory ordering
     "\00" ;; offset
@@ -1226,7 +1229,7 @@
     "\41\00" ;; (i32.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\19" ;; i32.atomic.store8
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -1241,7 +1244,7 @@
     "\42\00" ;; (i64.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\19" ;; i32.atomic.store8
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\01" ;; acqrel memory ordering
     "\00" ;; offset
@@ -1249,7 +1252,7 @@
     "\42\00" ;; (i64.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\19" ;; i32.atomic.store8
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -1263,14 +1266,14 @@
     "\41\00" ;; (i32.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\1a" ;; i32.atomic.store16
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\01" ;; acqrel memory ordering
     "\00" ;; offset
 
     "\41\00" ;; (i32.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\1a" ;; i32.atomic.store16
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
 
@@ -1284,7 +1287,7 @@
     "\41\00" ;; (i32.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\1a" ;; i32.atomic.store16
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\01" ;; acqrel memory ordering
     "\00" ;; offset
@@ -1292,7 +1295,7 @@
     "\41\00" ;; (i32.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\1a" ;; i32.atomic.store16
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -1307,7 +1310,7 @@
     "\42\00" ;; (i64.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\1a" ;; i32.atomic.store16
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\01" ;; acqrel memory ordering
     "\00" ;; offset
@@ -1315,7 +1318,7 @@
     "\42\00" ;; (i64.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\1a" ;; i32.atomic.store16
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -1329,14 +1332,14 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\1b" ;; i64.atomic.store8
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\01" ;; acqrel memory ordering
     "\00" ;; offset
 
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\1b" ;; i64.atomic.store8
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
 
@@ -1350,7 +1353,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\1b" ;; i64.atomic.store8
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\01" ;; acqrel memory ordering
     "\00" ;; offset
@@ -1358,7 +1361,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\1b" ;; i64.atomic.store8
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -1373,7 +1376,7 @@
     "\42\00" ;; (i64.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\1b" ;; i64.atomic.store8
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\01" ;; acqrel memory ordering
     "\00" ;; offset
@@ -1381,7 +1384,7 @@
     "\42\00" ;; (i64.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\1b" ;; i64.atomic.store8
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -1395,14 +1398,14 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\1c" ;; i64.atomic.store16
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\01" ;; acqrel memory ordering
     "\00" ;; offset
 
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\1c" ;; i64.atomic.store16
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
 
@@ -1416,7 +1419,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\1c" ;; i64.atomic.store16
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\01" ;; acqrel memory ordering
     "\00" ;; offset
@@ -1424,7 +1427,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\1c" ;; i64.atomic.store16
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -1439,7 +1442,7 @@
     "\42\00" ;; (i64.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\1c" ;; i64.atomic.store16
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\01" ;; acqrel memory ordering
     "\00" ;; offset
@@ -1447,7 +1450,7 @@
     "\42\00" ;; (i64.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\1c" ;; i64.atomic.store16
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -1461,14 +1464,14 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\1d" ;; i64.atomic.store32
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\01" ;; acqrel memory ordering
     "\00" ;; offset
 
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\1d" ;; i64.atomic.store32
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
 
@@ -1482,7 +1485,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\1d" ;; i64.atomic.store32
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\01" ;; acqrel memory ordering
     "\00" ;; offset
@@ -1490,7 +1493,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\1d" ;; i64.atomic.store32
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -1505,7 +1508,7 @@
     "\42\00" ;; (i64.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\1d" ;; i64.atomic.store32
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\01" ;; acqrel memory ordering
     "\00" ;; offset
@@ -1513,7 +1516,7 @@
     "\42\00" ;; (i64.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\1d" ;; i64.atomic.store32
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -1528,7 +1531,7 @@
     "\41\00" ;; (i32.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\1e" ;; i32.atomic.rmw.add
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -1536,7 +1539,7 @@
     "\41\00" ;; (i32.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\1e" ;; i32.atomic.rmw.add
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -1552,7 +1555,7 @@
     "\41\00" ;; (i32.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\1e" ;; i32.atomic.rmw.add
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -1561,7 +1564,7 @@
     "\41\00" ;; (i32.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\1e" ;; i32.atomic.rmw.add
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -1578,7 +1581,7 @@
     "\42\00" ;; (i64.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\1e" ;; i32.atomic.rmw.add
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -1587,7 +1590,7 @@
     "\42\00" ;; (i64.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\1e" ;; i32.atomic.rmw.add
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -1603,7 +1606,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\1f" ;; i64.atomic.rmw.add
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -1611,7 +1614,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\1f" ;; i64.atomic.rmw.add
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -1627,7 +1630,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\1f" ;; i64.atomic.rmw.add
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -1636,7 +1639,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\1f" ;; i64.atomic.rmw.add
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -1653,7 +1656,7 @@
     "\42\00" ;; (i64.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\1f" ;; i64.atomic.rmw.add
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -1662,7 +1665,7 @@
     "\42\00" ;; (i64.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\1f" ;; i64.atomic.rmw.add
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -1678,7 +1681,7 @@
     "\41\00" ;; (i32.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\20" ;; i32.atomic.rmw8.add_u
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -1686,7 +1689,7 @@
     "\41\00" ;; (i32.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\20" ;; i32.atomic.rmw8.add_u
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -1702,7 +1705,7 @@
     "\41\00" ;; (i32.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\20" ;; i32.atomic.rmw8.add_u
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -1711,7 +1714,7 @@
     "\41\00" ;; (i32.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\20" ;; i32.atomic.rmw8.add_u
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -1728,7 +1731,7 @@
     "\42\00" ;; (i64.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\20" ;; i32.atomic.rmw8.add_u
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -1737,7 +1740,7 @@
     "\42\00" ;; (i64.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\20" ;; i32.atomic.rmw8.add_u
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -1753,7 +1756,7 @@
     "\41\00" ;; (i32.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\21" ;; i32.atomic.rmw16.add_u
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -1761,7 +1764,7 @@
     "\41\00" ;; (i32.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\21" ;; i32.atomic.rmw16.add_u
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -1777,7 +1780,7 @@
     "\41\00" ;; (i32.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\21" ;; i32.atomic.rmw16.add_u
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -1786,7 +1789,7 @@
     "\41\00" ;; (i32.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\21" ;; i32.atomic.rmw16.add_u
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -1803,7 +1806,7 @@
     "\42\00" ;; (i64.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\21" ;; i32.atomic.rmw16.add_u
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -1812,7 +1815,7 @@
     "\42\00" ;; (i64.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\21" ;; i32.atomic.rmw16.add_u
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -1828,7 +1831,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\22" ;; i64.atomic.rmw8.add_u
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -1836,7 +1839,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\22" ;; i64.atomic.rmw8.add_u
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -1852,7 +1855,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\22" ;; i64.atomic.rmw8.add_u
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -1861,7 +1864,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\22" ;; i64.atomic.rmw8.add_u
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -1878,7 +1881,7 @@
     "\42\00" ;; (i64.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\22" ;; i64.atomic.rmw8.add_u
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -1887,7 +1890,7 @@
     "\42\00" ;; (i64.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\22" ;; i64.atomic.rmw8.add_u
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -1903,7 +1906,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\23" ;; i64.atomic.rmw16.add_u
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -1911,7 +1914,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\23" ;; i64.atomic.rmw16.add_u
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -1927,7 +1930,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\23" ;; i64.atomic.rmw16.add_u
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -1936,7 +1939,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\23" ;; i64.atomic.rmw16.add_u
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -1953,7 +1956,7 @@
     "\42\00" ;; (i64.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\23" ;; i64.atomic.rmw16.add_u
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -1962,7 +1965,7 @@
     "\42\00" ;; (i64.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\23" ;; i64.atomic.rmw16.add_u
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -1978,7 +1981,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\24" ;; i64.atomic.rmw32.add_u
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -1986,7 +1989,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\24" ;; i64.atomic.rmw32.add_u
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -2002,7 +2005,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\24" ;; i64.atomic.rmw32.add_u
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -2011,7 +2014,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\24" ;; i64.atomic.rmw32.add_u
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -2028,7 +2031,7 @@
     "\42\00" ;; (i64.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\24" ;; i64.atomic.rmw32.add_u
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -2037,7 +2040,7 @@
     "\42\00" ;; (i64.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\24" ;; i64.atomic.rmw32.add_u
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -2053,7 +2056,7 @@
     "\41\00" ;; (i32.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\25" ;; i32.atomic.rmw.sub
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -2061,7 +2064,7 @@
     "\41\00" ;; (i32.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\25" ;; i32.atomic.rmw.sub
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -2077,7 +2080,7 @@
     "\41\00" ;; (i32.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\25" ;; i32.atomic.rmw.sub
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -2086,7 +2089,7 @@
     "\41\00" ;; (i32.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\25" ;; i32.atomic.rmw.sub
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -2103,7 +2106,7 @@
     "\42\00" ;; (i64.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\25" ;; i32.atomic.rmw.sub
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -2112,7 +2115,7 @@
     "\42\00" ;; (i64.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\25" ;; i32.atomic.rmw.sub
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -2128,7 +2131,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\26" ;; i64.atomic.rmw.sub
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -2136,7 +2139,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\26" ;; i64.atomic.rmw.sub
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -2152,7 +2155,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\26" ;; i64.atomic.rmw.sub
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -2161,7 +2164,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\26" ;; i64.atomic.rmw.sub
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -2178,7 +2181,7 @@
     "\42\00" ;; (i64.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\26" ;; i64.atomic.rmw.sub
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -2187,7 +2190,7 @@
     "\42\00" ;; (i64.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\26" ;; i64.atomic.rmw.sub
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -2203,7 +2206,7 @@
     "\41\00" ;; (i32.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\27" ;; i32.atomic.rmw8.sub_u
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -2211,7 +2214,7 @@
     "\41\00" ;; (i32.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\27" ;; i32.atomic.rmw8.sub_u
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -2227,7 +2230,7 @@
     "\41\00" ;; (i32.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\27" ;; i32.atomic.rmw8.sub_u
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -2236,7 +2239,7 @@
     "\41\00" ;; (i32.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\27" ;; i32.atomic.rmw8.sub_u
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -2253,7 +2256,7 @@
     "\42\00" ;; (i64.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\27" ;; i32.atomic.rmw8.sub_u
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -2262,7 +2265,7 @@
     "\42\00" ;; (i64.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\27" ;; i32.atomic.rmw8.sub_u
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -2278,7 +2281,7 @@
     "\41\00" ;; (i32.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\28" ;; i32.atomic.rmw16.sub_u
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -2286,7 +2289,7 @@
     "\41\00" ;; (i32.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\28" ;; i32.atomic.rmw16.sub_u
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -2302,7 +2305,7 @@
     "\41\00" ;; (i32.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\28" ;; i32.atomic.rmw16.sub_u
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -2311,7 +2314,7 @@
     "\41\00" ;; (i32.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\28" ;; i32.atomic.rmw16.sub_u
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -2328,7 +2331,7 @@
     "\42\00" ;; (i64.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\28" ;; i32.atomic.rmw16.sub_u
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -2337,7 +2340,7 @@
     "\42\00" ;; (i64.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\28" ;; i32.atomic.rmw16.sub_u
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -2353,7 +2356,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\29" ;; i64.atomic.rmw8.sub_u
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -2361,7 +2364,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\29" ;; i64.atomic.rmw8.sub_u
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -2377,7 +2380,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\29" ;; i64.atomic.rmw8.sub_u
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -2386,7 +2389,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\29" ;; i64.atomic.rmw8.sub_u
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -2403,7 +2406,7 @@
     "\42\00" ;; (i64.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\29" ;; i64.atomic.rmw8.sub_u
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -2412,7 +2415,7 @@
     "\42\00" ;; (i64.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\29" ;; i64.atomic.rmw8.sub_u
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -2428,7 +2431,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\2a" ;; i64.atomic.rmw16.sub_u
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -2436,7 +2439,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\2a" ;; i64.atomic.rmw16.sub_u
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -2452,7 +2455,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\2a" ;; i64.atomic.rmw16.sub_u
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -2461,7 +2464,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\2a" ;; i64.atomic.rmw16.sub_u
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -2478,7 +2481,7 @@
     "\42\00" ;; (i64.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\2a" ;; i64.atomic.rmw16.sub_u
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -2487,7 +2490,7 @@
     "\42\00" ;; (i64.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\2a" ;; i64.atomic.rmw16.sub_u
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -2503,7 +2506,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\2b" ;; i64.atomic.rmw32.sub_u
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -2511,7 +2514,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\2b" ;; i64.atomic.rmw32.sub_u
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -2527,7 +2530,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\2b" ;; i64.atomic.rmw32.sub_u
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -2536,7 +2539,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\2b" ;; i64.atomic.rmw32.sub_u
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -2553,7 +2556,7 @@
     "\42\00" ;; (i64.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\2b" ;; i64.atomic.rmw32.sub_u
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -2562,7 +2565,7 @@
     "\42\00" ;; (i64.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\2b" ;; i64.atomic.rmw32.sub_u
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -2578,7 +2581,7 @@
     "\41\00" ;; (i32.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\2c" ;; i32.atomic.rmw.and
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -2586,7 +2589,7 @@
     "\41\00" ;; (i32.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\2c" ;; i32.atomic.rmw.and
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -2602,7 +2605,7 @@
     "\41\00" ;; (i32.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\2c" ;; i32.atomic.rmw.and
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -2611,7 +2614,7 @@
     "\41\00" ;; (i32.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\2c" ;; i32.atomic.rmw.and
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -2628,7 +2631,7 @@
     "\42\00" ;; (i64.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\2c" ;; i32.atomic.rmw.and
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -2637,7 +2640,7 @@
     "\42\00" ;; (i64.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\2c" ;; i32.atomic.rmw.and
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -2653,7 +2656,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\2d" ;; i64.atomic.rmw.and
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -2661,7 +2664,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\2d" ;; i64.atomic.rmw.and
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -2677,7 +2680,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\2d" ;; i64.atomic.rmw.and
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -2686,7 +2689,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\2d" ;; i64.atomic.rmw.and
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -2703,7 +2706,7 @@
     "\42\00" ;; (i64.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\2d" ;; i64.atomic.rmw.and
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -2712,7 +2715,7 @@
     "\42\00" ;; (i64.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\2d" ;; i64.atomic.rmw.and
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -2728,7 +2731,7 @@
     "\41\00" ;; (i32.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\2e" ;; i32.atomic.rmw8.and_u
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -2736,7 +2739,7 @@
     "\41\00" ;; (i32.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\2e" ;; i32.atomic.rmw8.and_u
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -2752,7 +2755,7 @@
     "\41\00" ;; (i32.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\2e" ;; i32.atomic.rmw8.and_u
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -2761,7 +2764,7 @@
     "\41\00" ;; (i32.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\2e" ;; i32.atomic.rmw8.and_u
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -2778,7 +2781,7 @@
     "\42\00" ;; (i64.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\2e" ;; i32.atomic.rmw8.and_u
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -2787,7 +2790,7 @@
     "\42\00" ;; (i64.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\2e" ;; i32.atomic.rmw8.and_u
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -2803,7 +2806,7 @@
     "\41\00" ;; (i32.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\2f" ;; i32.atomic.rmw16.and_u
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -2811,7 +2814,7 @@
     "\41\00" ;; (i32.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\2f" ;; i32.atomic.rmw16.and_u
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -2827,7 +2830,7 @@
     "\41\00" ;; (i32.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\2f" ;; i32.atomic.rmw16.and_u
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -2836,7 +2839,7 @@
     "\41\00" ;; (i32.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\2f" ;; i32.atomic.rmw16.and_u
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -2853,7 +2856,7 @@
     "\42\00" ;; (i64.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\2f" ;; i32.atomic.rmw16.and_u
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -2862,7 +2865,7 @@
     "\42\00" ;; (i64.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\2f" ;; i32.atomic.rmw16.and_u
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -2878,7 +2881,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\30" ;; i64.atomic.rmw8.and_u
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -2886,7 +2889,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\30" ;; i64.atomic.rmw8.and_u
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -2902,7 +2905,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\30" ;; i64.atomic.rmw8.and_u
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -2911,7 +2914,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\30" ;; i64.atomic.rmw8.and_u
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -2928,7 +2931,7 @@
     "\42\00" ;; (i64.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\30" ;; i64.atomic.rmw8.and_u
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -2937,7 +2940,7 @@
     "\42\00" ;; (i64.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\30" ;; i64.atomic.rmw8.and_u
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -2953,7 +2956,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\31" ;; i64.atomic.rmw16.and_u
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -2961,7 +2964,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\31" ;; i64.atomic.rmw16.and_u
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -2977,7 +2980,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\31" ;; i64.atomic.rmw16.and_u
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -2986,7 +2989,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\31" ;; i64.atomic.rmw16.and_u
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -3003,7 +3006,7 @@
     "\42\00" ;; (i64.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\31" ;; i64.atomic.rmw16.and_u
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -3012,7 +3015,7 @@
     "\42\00" ;; (i64.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\31" ;; i64.atomic.rmw16.and_u
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -3028,7 +3031,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\32" ;; i64.atomic.rmw32.and_u
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -3036,7 +3039,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\32" ;; i64.atomic.rmw32.and_u
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -3052,7 +3055,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\32" ;; i64.atomic.rmw32.and_u
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -3061,7 +3064,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\32" ;; i64.atomic.rmw32.and_u
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -3078,7 +3081,7 @@
     "\42\00" ;; (i64.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\32" ;; i64.atomic.rmw32.and_u
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -3087,7 +3090,7 @@
     "\42\00" ;; (i64.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\32" ;; i64.atomic.rmw32.and_u
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -3103,7 +3106,7 @@
     "\41\00" ;; (i32.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\33" ;; i32.atomic.rmw.or
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -3111,7 +3114,7 @@
     "\41\00" ;; (i32.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\33" ;; i32.atomic.rmw.or
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -3127,7 +3130,7 @@
     "\41\00" ;; (i32.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\33" ;; i32.atomic.rmw.or
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -3136,7 +3139,7 @@
     "\41\00" ;; (i32.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\33" ;; i32.atomic.rmw.or
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -3153,7 +3156,7 @@
     "\42\00" ;; (i64.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\33" ;; i32.atomic.rmw.or
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -3162,7 +3165,7 @@
     "\42\00" ;; (i64.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\33" ;; i32.atomic.rmw.or
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -3178,7 +3181,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\34" ;; i64.atomic.rmw.or
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -3186,7 +3189,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\34" ;; i64.atomic.rmw.or
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -3202,7 +3205,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\34" ;; i64.atomic.rmw.or
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -3211,7 +3214,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\34" ;; i64.atomic.rmw.or
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -3228,7 +3231,7 @@
     "\42\00" ;; (i64.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\34" ;; i64.atomic.rmw.or
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -3237,7 +3240,7 @@
     "\42\00" ;; (i64.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\34" ;; i64.atomic.rmw.or
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -3253,7 +3256,7 @@
     "\41\00" ;; (i32.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\35" ;; i32.atomic.rmw8.or_u
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -3261,7 +3264,7 @@
     "\41\00" ;; (i32.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\35" ;; i32.atomic.rmw8.or_u
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -3277,7 +3280,7 @@
     "\41\00" ;; (i32.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\35" ;; i32.atomic.rmw8.or_u
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -3286,7 +3289,7 @@
     "\41\00" ;; (i32.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\35" ;; i32.atomic.rmw8.or_u
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -3303,7 +3306,7 @@
     "\42\00" ;; (i64.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\35" ;; i32.atomic.rmw8.or_u
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -3312,7 +3315,7 @@
     "\42\00" ;; (i64.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\35" ;; i32.atomic.rmw8.or_u
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -3328,7 +3331,7 @@
     "\41\00" ;; (i32.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\36" ;; i32.atomic.rmw16.or_u
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -3336,7 +3339,7 @@
     "\41\00" ;; (i32.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\36" ;; i32.atomic.rmw16.or_u
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -3352,7 +3355,7 @@
     "\41\00" ;; (i32.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\36" ;; i32.atomic.rmw16.or_u
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -3361,7 +3364,7 @@
     "\41\00" ;; (i32.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\36" ;; i32.atomic.rmw16.or_u
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -3378,7 +3381,7 @@
     "\42\00" ;; (i64.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\36" ;; i32.atomic.rmw16.or_u
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -3387,7 +3390,7 @@
     "\42\00" ;; (i64.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\36" ;; i32.atomic.rmw16.or_u
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -3403,7 +3406,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\37" ;; i64.atomic.rmw8.or_u
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -3411,7 +3414,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\37" ;; i64.atomic.rmw8.or_u
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -3427,7 +3430,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\37" ;; i64.atomic.rmw8.or_u
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -3436,7 +3439,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\37" ;; i64.atomic.rmw8.or_u
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -3453,7 +3456,7 @@
     "\42\00" ;; (i64.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\37" ;; i64.atomic.rmw8.or_u
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -3462,7 +3465,7 @@
     "\42\00" ;; (i64.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\37" ;; i64.atomic.rmw8.or_u
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -3478,7 +3481,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\38" ;; i64.atomic.rmw16.or_u
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -3486,7 +3489,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\38" ;; i64.atomic.rmw16.or_u
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -3502,7 +3505,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\38" ;; i64.atomic.rmw16.or_u
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -3511,7 +3514,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\38" ;; i64.atomic.rmw16.or_u
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -3528,7 +3531,7 @@
     "\42\00" ;; (i64.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\38" ;; i64.atomic.rmw16.or_u
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -3537,7 +3540,7 @@
     "\42\00" ;; (i64.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\38" ;; i64.atomic.rmw16.or_u
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -3553,7 +3556,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\39" ;; i64.atomic.rmw32.or_u
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -3561,7 +3564,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\39" ;; i64.atomic.rmw32.or_u
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -3577,7 +3580,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\39" ;; i64.atomic.rmw32.or_u
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -3586,7 +3589,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\39" ;; i64.atomic.rmw32.or_u
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -3603,7 +3606,7 @@
     "\42\00" ;; (i64.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\39" ;; i64.atomic.rmw32.or_u
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -3612,7 +3615,7 @@
     "\42\00" ;; (i64.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\39" ;; i64.atomic.rmw32.or_u
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -3628,7 +3631,7 @@
     "\41\00" ;; (i32.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\3a" ;; i32.atomic.rmw.xor
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -3636,7 +3639,7 @@
     "\41\00" ;; (i32.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\3a" ;; i32.atomic.rmw.xor
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -3652,7 +3655,7 @@
     "\41\00" ;; (i32.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\3a" ;; i32.atomic.rmw.xor
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -3661,7 +3664,7 @@
     "\41\00" ;; (i32.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\3a" ;; i32.atomic.rmw.xor
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -3678,7 +3681,7 @@
     "\42\00" ;; (i64.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\3a" ;; i32.atomic.rmw.xor
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -3687,7 +3690,7 @@
     "\42\00" ;; (i64.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\3a" ;; i32.atomic.rmw.xor
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -3703,7 +3706,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\3b" ;; i64.atomic.rmw.xor
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -3711,7 +3714,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\3b" ;; i64.atomic.rmw.xor
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -3727,7 +3730,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\3b" ;; i64.atomic.rmw.xor
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -3736,7 +3739,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\3b" ;; i64.atomic.rmw.xor
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -3753,7 +3756,7 @@
     "\42\00" ;; (i64.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\3b" ;; i64.atomic.rmw.xor
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -3762,7 +3765,7 @@
     "\42\00" ;; (i64.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\3b" ;; i64.atomic.rmw.xor
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -3778,7 +3781,7 @@
     "\41\00" ;; (i32.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\3c" ;; i32.atomic.rmw8.xor_u
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -3786,7 +3789,7 @@
     "\41\00" ;; (i32.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\3c" ;; i32.atomic.rmw8.xor_u
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -3802,7 +3805,7 @@
     "\41\00" ;; (i32.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\3c" ;; i32.atomic.rmw8.xor_u
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -3811,7 +3814,7 @@
     "\41\00" ;; (i32.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\3c" ;; i32.atomic.rmw8.xor_u
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -3828,7 +3831,7 @@
     "\42\00" ;; (i64.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\3c" ;; i32.atomic.rmw8.xor_u
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -3837,7 +3840,7 @@
     "\42\00" ;; (i64.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\3c" ;; i32.atomic.rmw8.xor_u
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -3853,7 +3856,7 @@
     "\41\00" ;; (i32.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\3d" ;; i32.atomic.rmw16.xor_u
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -3861,7 +3864,7 @@
     "\41\00" ;; (i32.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\3d" ;; i32.atomic.rmw16.xor_u
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -3877,7 +3880,7 @@
     "\41\00" ;; (i32.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\3d" ;; i32.atomic.rmw16.xor_u
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -3886,7 +3889,7 @@
     "\41\00" ;; (i32.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\3d" ;; i32.atomic.rmw16.xor_u
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -3903,7 +3906,7 @@
     "\42\00" ;; (i64.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\3d" ;; i32.atomic.rmw16.xor_u
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -3912,7 +3915,7 @@
     "\42\00" ;; (i64.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\3d" ;; i32.atomic.rmw16.xor_u
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -3928,7 +3931,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\3e" ;; i64.atomic.rmw8.xor_u
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -3936,7 +3939,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\3e" ;; i64.atomic.rmw8.xor_u
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -3952,7 +3955,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\3e" ;; i64.atomic.rmw8.xor_u
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -3961,7 +3964,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\3e" ;; i64.atomic.rmw8.xor_u
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -3978,7 +3981,7 @@
     "\42\00" ;; (i64.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\3e" ;; i64.atomic.rmw8.xor_u
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -3987,7 +3990,7 @@
     "\42\00" ;; (i64.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\3e" ;; i64.atomic.rmw8.xor_u
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -4003,7 +4006,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\3f" ;; i64.atomic.rmw16.xor_u
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -4011,7 +4014,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\3f" ;; i64.atomic.rmw16.xor_u
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -4027,7 +4030,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\3f" ;; i64.atomic.rmw16.xor_u
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -4036,7 +4039,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\3f" ;; i64.atomic.rmw16.xor_u
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -4053,7 +4056,7 @@
     "\42\00" ;; (i64.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\3f" ;; i64.atomic.rmw16.xor_u
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -4062,7 +4065,7 @@
     "\42\00" ;; (i64.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\3f" ;; i64.atomic.rmw16.xor_u
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -4078,7 +4081,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\40" ;; i64.atomic.rmw32.xor_u
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -4086,7 +4089,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\40" ;; i64.atomic.rmw32.xor_u
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -4102,7 +4105,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\40" ;; i64.atomic.rmw32.xor_u
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -4111,7 +4114,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\40" ;; i64.atomic.rmw32.xor_u
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -4128,7 +4131,7 @@
     "\42\00" ;; (i64.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\40" ;; i64.atomic.rmw32.xor_u
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -4137,7 +4140,7 @@
     "\42\00" ;; (i64.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\40" ;; i64.atomic.rmw32.xor_u
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -4153,7 +4156,7 @@
     "\41\00" ;; (i32.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\41" ;; i32.atomic.rmw.xchg
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -4161,7 +4164,7 @@
     "\41\00" ;; (i32.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\41" ;; i32.atomic.rmw.xchg
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -4177,7 +4180,7 @@
     "\41\00" ;; (i32.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\41" ;; i32.atomic.rmw.xchg
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -4186,7 +4189,7 @@
     "\41\00" ;; (i32.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\41" ;; i32.atomic.rmw.xchg
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -4203,7 +4206,7 @@
     "\42\00" ;; (i64.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\41" ;; i32.atomic.rmw.xchg
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -4212,7 +4215,7 @@
     "\42\00" ;; (i64.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\41" ;; i32.atomic.rmw.xchg
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -4228,7 +4231,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\42" ;; i64.atomic.rmw.xchg
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -4236,7 +4239,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\42" ;; i64.atomic.rmw.xchg
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -4252,7 +4255,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\42" ;; i64.atomic.rmw.xchg
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -4261,7 +4264,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\42" ;; i64.atomic.rmw.xchg
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -4278,7 +4281,7 @@
     "\42\00" ;; (i64.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\42" ;; i64.atomic.rmw.xchg
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -4287,7 +4290,7 @@
     "\42\00" ;; (i64.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\42" ;; i64.atomic.rmw.xchg
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -4303,7 +4306,7 @@
     "\41\00" ;; (i32.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\43" ;; i32.atomic.rmw8.xchg_u
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -4311,7 +4314,7 @@
     "\41\00" ;; (i32.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\43" ;; i32.atomic.rmw8.xchg_u
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -4327,7 +4330,7 @@
     "\41\00" ;; (i32.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\43" ;; i32.atomic.rmw8.xchg_u
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -4336,7 +4339,7 @@
     "\41\00" ;; (i32.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\43" ;; i32.atomic.rmw8.xchg_u
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -4353,7 +4356,7 @@
     "\42\00" ;; (i64.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\43" ;; i32.atomic.rmw8.xchg_u
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -4362,7 +4365,7 @@
     "\42\00" ;; (i64.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\43" ;; i32.atomic.rmw8.xchg_u
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -4378,7 +4381,7 @@
     "\41\00" ;; (i32.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\44" ;; i32.atomic.rmw16.xchg_u
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -4386,7 +4389,7 @@
     "\41\00" ;; (i32.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\44" ;; i32.atomic.rmw16.xchg_u
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -4402,7 +4405,7 @@
     "\41\00" ;; (i32.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\44" ;; i32.atomic.rmw16.xchg_u
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -4411,7 +4414,7 @@
     "\41\00" ;; (i32.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\44" ;; i32.atomic.rmw16.xchg_u
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -4428,7 +4431,7 @@
     "\42\00" ;; (i64.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\44" ;; i32.atomic.rmw16.xchg_u
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -4437,7 +4440,7 @@
     "\42\00" ;; (i64.const 0)
     "\41\33" ;; (i32.const 51)
     "\fe\44" ;; i32.atomic.rmw16.xchg_u
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -4453,7 +4456,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\45" ;; i64.atomic.rmw8.xchg_u
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -4461,7 +4464,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\45" ;; i64.atomic.rmw8.xchg_u
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -4477,7 +4480,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\45" ;; i64.atomic.rmw8.xchg_u
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -4486,7 +4489,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\45" ;; i64.atomic.rmw8.xchg_u
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -4503,7 +4506,7 @@
     "\42\00" ;; (i64.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\45" ;; i64.atomic.rmw8.xchg_u
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -4512,7 +4515,7 @@
     "\42\00" ;; (i64.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\45" ;; i64.atomic.rmw8.xchg_u
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -4528,7 +4531,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\46" ;; i64.atomic.rmw16.xchg_u
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -4536,7 +4539,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\46" ;; i64.atomic.rmw16.xchg_u
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -4552,7 +4555,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\46" ;; i64.atomic.rmw16.xchg_u
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -4561,7 +4564,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\46" ;; i64.atomic.rmw16.xchg_u
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -4578,7 +4581,7 @@
     "\42\00" ;; (i64.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\46" ;; i64.atomic.rmw16.xchg_u
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -4587,7 +4590,7 @@
     "\42\00" ;; (i64.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\46" ;; i64.atomic.rmw16.xchg_u
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -4603,7 +4606,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\47" ;; i64.atomic.rmw32.xchg_u
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -4611,7 +4614,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\47" ;; i64.atomic.rmw32.xchg_u
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -4627,7 +4630,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\47" ;; i64.atomic.rmw32.xchg_u
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -4636,7 +4639,7 @@
     "\41\00" ;; (i32.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\47" ;; i64.atomic.rmw32.xchg_u
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -4653,7 +4656,7 @@
     "\42\00" ;; (i64.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\47" ;; i64.atomic.rmw32.xchg_u
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -4662,7 +4665,7 @@
     "\42\00" ;; (i64.const 0)
     "\42\33" ;; (i64.const 51)
     "\fe\47" ;; i64.atomic.rmw32.xchg_u
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -4680,7 +4683,7 @@
     "\41\33" ;; (i32.const 51)
     "\41\33" ;; (i32.const 51)
     "\fe\48" ;; i32.atomic.rmw.cmpxchg
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -4689,7 +4692,7 @@
     "\41\33" ;; (i32.const 51)
     "\41\33" ;; (i32.const 51)
     "\fe\48" ;; i32.atomic.rmw.cmpxchg
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -4707,7 +4710,7 @@
     "\41\33" ;; (i32.const 51)
     "\41\33" ;; (i32.const 51)
     "\fe\48" ;; i32.atomic.rmw.cmpxchg
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -4717,7 +4720,7 @@
     "\41\33" ;; (i32.const 51)
     "\41\33" ;; (i32.const 51)
     "\fe\48" ;; i32.atomic.rmw.cmpxchg
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -4736,7 +4739,7 @@
     "\41\33" ;; (i32.const 51)
     "\41\33" ;; (i32.const 51)
     "\fe\48" ;; i32.atomic.rmw.cmpxchg
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -4746,7 +4749,7 @@
     "\41\33" ;; (i32.const 51)
     "\41\33" ;; (i32.const 51)
     "\fe\48" ;; i32.atomic.rmw.cmpxchg
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -4764,7 +4767,7 @@
     "\42\33" ;; (i64.const 51)
     "\42\33" ;; (i64.const 51)
     "\fe\49" ;; i64.atomic.rmw.cmpxchg
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -4773,7 +4776,7 @@
     "\42\33" ;; (i64.const 51)
     "\42\33" ;; (i64.const 51)
     "\fe\49" ;; i64.atomic.rmw.cmpxchg
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -4791,7 +4794,7 @@
     "\42\33" ;; (i64.const 51)
     "\42\33" ;; (i64.const 51)
     "\fe\49" ;; i64.atomic.rmw.cmpxchg
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -4801,7 +4804,7 @@
     "\42\33" ;; (i64.const 51)
     "\42\33" ;; (i64.const 51)
     "\fe\49" ;; i64.atomic.rmw.cmpxchg
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -4820,7 +4823,7 @@
     "\42\33" ;; (i64.const 51)
     "\42\33" ;; (i64.const 51)
     "\fe\49" ;; i64.atomic.rmw.cmpxchg
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -4830,7 +4833,7 @@
     "\42\33" ;; (i64.const 51)
     "\42\33" ;; (i64.const 51)
     "\fe\49" ;; i64.atomic.rmw.cmpxchg
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -4848,7 +4851,7 @@
     "\41\33" ;; (i32.const 51)
     "\41\33" ;; (i32.const 51)
     "\fe\4a" ;; i32.atomic.rmw8.cmpxchg_u
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -4857,7 +4860,7 @@
     "\41\33" ;; (i32.const 51)
     "\41\33" ;; (i32.const 51)
     "\fe\4a" ;; i32.atomic.rmw8.cmpxchg_u
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -4875,7 +4878,7 @@
     "\41\33" ;; (i32.const 51)
     "\41\33" ;; (i32.const 51)
     "\fe\4a" ;; i32.atomic.rmw8.cmpxchg_u
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -4885,7 +4888,7 @@
     "\41\33" ;; (i32.const 51)
     "\41\33" ;; (i32.const 51)
     "\fe\4a" ;; i32.atomic.rmw8.cmpxchg_u
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -4904,7 +4907,7 @@
     "\41\33" ;; (i32.const 51)
     "\41\33" ;; (i32.const 51)
     "\fe\4a" ;; i32.atomic.rmw8.cmpxchg_u
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -4914,7 +4917,7 @@
     "\41\33" ;; (i32.const 51)
     "\41\33" ;; (i32.const 51)
     "\fe\4a" ;; i32.atomic.rmw8.cmpxchg_u
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -4932,7 +4935,7 @@
     "\41\33" ;; (i32.const 51)
     "\41\33" ;; (i32.const 51)
     "\fe\4b" ;; i32.atomic.rmw16.cmpxchg_u
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -4941,7 +4944,7 @@
     "\41\33" ;; (i32.const 51)
     "\41\33" ;; (i32.const 51)
     "\fe\4b" ;; i32.atomic.rmw16.cmpxchg_u
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -4959,7 +4962,7 @@
     "\41\33" ;; (i32.const 51)
     "\41\33" ;; (i32.const 51)
     "\fe\4b" ;; i32.atomic.rmw16.cmpxchg_u
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -4969,7 +4972,7 @@
     "\41\33" ;; (i32.const 51)
     "\41\33" ;; (i32.const 51)
     "\fe\4b" ;; i32.atomic.rmw16.cmpxchg_u
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -4988,7 +4991,7 @@
     "\41\33" ;; (i32.const 51)
     "\41\33" ;; (i32.const 51)
     "\fe\4b" ;; i32.atomic.rmw16.cmpxchg_u
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -4998,7 +5001,7 @@
     "\41\33" ;; (i32.const 51)
     "\41\33" ;; (i32.const 51)
     "\fe\4b" ;; i32.atomic.rmw16.cmpxchg_u
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -5016,7 +5019,7 @@
     "\42\33" ;; (i64.const 51)
     "\42\33" ;; (i64.const 51)
     "\fe\4c" ;; i64.atomic.rmw8.cmpxchg_u
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -5025,7 +5028,7 @@
     "\42\33" ;; (i64.const 51)
     "\42\33" ;; (i64.const 51)
     "\fe\4c" ;; i64.atomic.rmw8.cmpxchg_u
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -5043,7 +5046,7 @@
     "\42\33" ;; (i64.const 51)
     "\42\33" ;; (i64.const 51)
     "\fe\4c" ;; i64.atomic.rmw8.cmpxchg_u
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -5053,7 +5056,7 @@
     "\42\33" ;; (i64.const 51)
     "\42\33" ;; (i64.const 51)
     "\fe\4c" ;; i64.atomic.rmw8.cmpxchg_u
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -5072,7 +5075,7 @@
     "\42\33" ;; (i64.const 51)
     "\42\33" ;; (i64.const 51)
     "\fe\4c" ;; i64.atomic.rmw8.cmpxchg_u
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -5082,7 +5085,7 @@
     "\42\33" ;; (i64.const 51)
     "\42\33" ;; (i64.const 51)
     "\fe\4c" ;; i64.atomic.rmw8.cmpxchg_u
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -5100,7 +5103,7 @@
     "\42\33" ;; (i64.const 51)
     "\42\33" ;; (i64.const 51)
     "\fe\4d" ;; i64.atomic.rmw16.cmpxchg_u
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -5109,7 +5112,7 @@
     "\42\33" ;; (i64.const 51)
     "\42\33" ;; (i64.const 51)
     "\fe\4d" ;; i64.atomic.rmw16.cmpxchg_u
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -5127,7 +5130,7 @@
     "\42\33" ;; (i64.const 51)
     "\42\33" ;; (i64.const 51)
     "\fe\4d" ;; i64.atomic.rmw16.cmpxchg_u
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -5137,7 +5140,7 @@
     "\42\33" ;; (i64.const 51)
     "\42\33" ;; (i64.const 51)
     "\fe\4d" ;; i64.atomic.rmw16.cmpxchg_u
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -5156,7 +5159,7 @@
     "\42\33" ;; (i64.const 51)
     "\42\33" ;; (i64.const 51)
     "\fe\4d" ;; i64.atomic.rmw16.cmpxchg_u
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -5166,7 +5169,7 @@
     "\42\33" ;; (i64.const 51)
     "\42\33" ;; (i64.const 51)
     "\fe\4d" ;; i64.atomic.rmw16.cmpxchg_u
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -5184,7 +5187,7 @@
     "\42\33" ;; (i64.const 51)
     "\42\33" ;; (i64.const 51)
     "\fe\4e" ;; i64.atomic.rmw32.cmpxchg_u
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -5193,7 +5196,7 @@
     "\42\33" ;; (i64.const 51)
     "\42\33" ;; (i64.const 51)
     "\fe\4e" ;; i64.atomic.rmw32.cmpxchg_u
-    "\22" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows
+    "\12" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
     "\1a" ;; drop
@@ -5211,7 +5214,7 @@
     "\42\33" ;; (i64.const 51)
     "\42\33" ;; (i64.const 51)
     "\fe\4e" ;; i64.atomic.rmw32.cmpxchg_u
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -5221,7 +5224,7 @@
     "\42\33" ;; (i64.const 51)
     "\42\33" ;; (i64.const 51)
     "\fe\4e" ;; i64.atomic.rmw32.cmpxchg_u
-    "\62" ;; Alignment of 2 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\52" ;; Alignment of 2 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\00" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
@@ -5240,7 +5243,7 @@
     "\42\33" ;; (i64.const 51)
     "\42\33" ;; (i64.const 51)
     "\fe\4e" ;; i64.atomic.rmw32.cmpxchg_u
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\11" ;; acqrel memory ordering
     "\00" ;; offset
@@ -5250,11 +5253,17 @@
     "\42\33" ;; (i64.const 51)
     "\42\33" ;; (i64.const 51)
     "\fe\4e" ;; i64.atomic.rmw32.cmpxchg_u
-    "\63" ;; Alignment of 3 with bit 5 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
+    "\53" ;; Alignment of 3 with bit 4 set indicating that an ordering immediate follows and with bit 6 set indicating that a memory index immediate follows
     "\01" ;; memory index
     "\00" ;; seqcst memory ordering
     "\00" ;; offset
     "\1a" ;; drop
+
+    "\fe\03" ;; atomic.fence
+    "\01" ;; acqrel memory ordering
+
+    "\fe\03" ;; atomic.fence
+    "\00" ;; seqcst memory ordering
 
     "\0b" ;; end
 )
@@ -5338,6 +5347,7 @@
   (func (export "i64.atomic.rmw16.cmpxchg_u") (param $addr i32) (param $expected i64) (param $value i64) (result i64) (i64.atomic.rmw16.cmpxchg_u acqrel (local.get $addr) (local.get $expected) (local.get $value)))
   (func (export "i64.atomic.rmw32.cmpxchg_u") (param $addr i32) (param $expected i64) (param $value i64) (result i64) (i64.atomic.rmw32.cmpxchg_u acqrel (local.get $addr) (local.get $expected) (local.get $value)))
 
+  (func (export "atomic.fence") (atomic.fence acqrel))
 )
 
 ;; *.atomic.load*
@@ -5648,6 +5658,10 @@
 (invoke "init" (i64.const 0x1111111111111111))
 (assert_return (invoke "i64.atomic.rmw32.cmpxchg_u" (i32.const 0) (i64.const 0x11111111) (i64.const 0xcabba6e5cabba6e5)) (i64.const 0x11111111))
 (assert_return (invoke "i64.atomic.load" (i32.const 0)) (i64.const 0x11111111cabba6e5))
+
+;; atomic.fence
+
+(invoke "atomic.fence")
 
 
 ;; unaligned accesses

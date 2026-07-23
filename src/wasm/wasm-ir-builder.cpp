@@ -987,8 +987,10 @@ Result<> IRBuilder::visitCatch(Name tag) {
   if (binaryPos && func) {
     auto& delimiterLocs = func->delimiterLocations[tryy];
     delimiterLocs[delimiterLocs.size()] = lastBinaryPos - codeSectionOffset;
-    // TODO: As in visitElse, we likely need to stash the Try start. Here we
-    //       also need to account for multiple catches.
+    if (wasTry) {
+      func->expressionLocations[tryy].start =
+        scope.startPos - codeSectionOffset;
+    }
   }
 
   CHECK_ERR(pushScope(ScopeCtx::makeCatch(std::move(scope), tryy)));
@@ -1027,6 +1029,10 @@ Result<> IRBuilder::visitCatchAll() {
   if (binaryPos && func) {
     auto& delimiterLocs = func->delimiterLocations[tryy];
     delimiterLocs[delimiterLocs.size()] = lastBinaryPos - codeSectionOffset;
+    if (wasTry) {
+      func->expressionLocations[tryy].start =
+        scope.startPos - codeSectionOffset;
+    }
   }
 
   return pushScope(ScopeCtx::makeCatchAll(std::move(scope), tryy));
@@ -1635,8 +1641,8 @@ Result<> IRBuilder::makeAtomicNotify(Address offset, Name mem) {
   return Ok{};
 }
 
-Result<> IRBuilder::makeAtomicFence() {
-  push(builder.makeAtomicFence());
+Result<> IRBuilder::makeAtomicFence(MemoryOrder order) {
+  push(builder.makeAtomicFence(order));
   return Ok{};
 }
 
@@ -2457,8 +2463,11 @@ Result<> IRBuilder::makeArraySet(HeapType type, MemoryOrder order) {
   return Ok{};
 }
 
-Result<>
-IRBuilder::makeArrayStore(HeapType arrayType, unsigned bytes, Type type) {
+Result<> IRBuilder::makeArrayStore(HeapType arrayType,
+                                   unsigned bytes,
+                                   Address offset,
+                                   Address align,
+                                   Type type) {
   if (!arrayType.isArray()) {
     return Err{"expected array type annotation on array store"};
   }
@@ -2467,13 +2476,16 @@ IRBuilder::makeArrayStore(HeapType arrayType, unsigned bytes, Type type) {
   CHECK_ERR(ChildPopper{*this}.visitArrayStore(&curr, arrayType, type));
 
   CHECK_ERR(validateTypeAnnotation(arrayType, curr.ref));
-  push(builder.makeArrayStore(bytes, curr.ref, curr.index, curr.value));
+  push(builder.makeArrayStore(
+    bytes, offset, align, curr.ref, curr.index, curr.value));
   return Ok{};
 }
 
 Result<> IRBuilder::makeArrayLoad(HeapType arrayType,
                                   unsigned bytes,
                                   bool signed_,
+                                  Address offset,
+                                  Address align,
                                   Type type) {
   if (!arrayType.isArray()) {
     return Err{"expected array type annotation on array load"};
@@ -2483,7 +2495,8 @@ Result<> IRBuilder::makeArrayLoad(HeapType arrayType,
   CHECK_ERR(ChildPopper{*this}.visitArrayLoad(&curr, arrayType));
 
   CHECK_ERR(validateTypeAnnotation(arrayType, curr.ref));
-  push(builder.makeArrayLoad(bytes, signed_, curr.ref, curr.index, type));
+  push(builder.makeArrayLoad(
+    bytes, signed_, offset, align, curr.ref, curr.index, type));
   return Ok{};
 }
 

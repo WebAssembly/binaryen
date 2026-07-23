@@ -109,6 +109,9 @@
 ;; CHECK-NEXT:   --const-hoisting                              hoist repeated constants to a
 ;; CHECK-NEXT:                                                 local
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --constraint-analysis                         finds and uses mathematical
+;; CHECK-NEXT:                                                 constraints on locals
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --dae                                         removes arguments to calls in an
 ;; CHECK-NEXT:                                                 lto-like manner
 ;; CHECK-NEXT:
@@ -697,6 +700,10 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --experimental-poppy                          Parse wast files as Poppy IR for
 ;; CHECK-NEXT:                                                 testing purposes.
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --emit-module-names                           Emit module names, even if not
+;; CHECK-NEXT:                                                 emitting the rest of the names
+;; CHECK-NEXT:                                                 section
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --enable-sign-ext                             Enable sign extension operations
 ;; CHECK-NEXT:

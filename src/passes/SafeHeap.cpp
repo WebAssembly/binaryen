@@ -222,9 +222,8 @@ struct SafeHeap : public Pass {
     }
   }
 
-  bool
-  isPossibleAtomicOperation(Index align, Index bytes, bool shared, Type type) {
-    return align == bytes && shared && type.isInteger();
+  bool isPossibleAtomicOperation(Index align, Index bytes, Type type) {
+    return align == bytes && type.isInteger();
   }
 
   void addGlobals(Module* module, FeatureSet features) {
@@ -264,8 +263,8 @@ struct SafeHeap : public Pass {
             for (MemoryOrder memoryOrder : memoryOrdersToGenerate) {
               load.order = memoryOrder;
               if (load.isAtomic() &&
-                  !isPossibleAtomicOperation(
-                    align, bytes, module->memories[0]->shared, type)) {
+                  (!features.hasAtomics() ||
+                   !isPossibleAtomicOperation(align, bytes, type))) {
                 continue;
               }
               addLoadFunc(load, module);
@@ -300,8 +299,8 @@ struct SafeHeap : public Pass {
           for (auto memoryOrder : memoryOrdersToGenerate) {
             store.order = memoryOrder;
             if (store.isAtomic() &&
-                !isPossibleAtomicOperation(
-                  align, bytes, module->memories[0]->shared, valueType)) {
+                (!features.hasAtomics() ||
+                 !isPossibleAtomicOperation(align, bytes, valueType))) {
               continue;
             }
             addStoreFunc(store, module);

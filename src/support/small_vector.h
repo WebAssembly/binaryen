@@ -177,7 +177,7 @@ public:
       : ParentIndexIterator<SmallVector<T, N>*, Iterator>{parent, index} {}
     Iterator(const Iterator& other) = default;
 
-    T& operator*() { return (*this->parent)[this->index]; }
+    T& operator*() const { return (*this->parent)[this->index]; }
   };
 
   struct ConstIterator

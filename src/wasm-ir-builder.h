@@ -169,7 +169,7 @@ public:
     unsigned bytes, Address offset, Type type, Name mem, MemoryOrder order);
   Result<> makeAtomicWait(Type type, Address offset, Name mem);
   Result<> makeAtomicNotify(Address offset, Name mem);
-  Result<> makeAtomicFence();
+  Result<> makeAtomicFence(MemoryOrder order);
   Result<> makePause();
   Result<> makeSIMDExtract(SIMDExtractOp op, uint8_t lane);
   Result<> makeSIMDReplace(SIMDReplaceOp op, uint8_t lane);
@@ -253,9 +253,17 @@ public:
   Result<> makeArrayNewFixed(HeapType type, uint32_t arity);
   Result<> makeArrayGet(HeapType type, bool signed_, MemoryOrder order);
   Result<> makeArraySet(HeapType type, MemoryOrder order);
-  Result<>
-  makeArrayLoad(HeapType arrayType, unsigned bytes, bool signed_, Type type);
-  Result<> makeArrayStore(HeapType arrayType, unsigned bytes, Type type);
+  Result<> makeArrayLoad(HeapType arrayType,
+                         unsigned bytes,
+                         bool signed_,
+                         Address offset,
+                         Address align,
+                         Type type);
+  Result<> makeArrayStore(HeapType arrayType,
+                          unsigned bytes,
+                          Address offset,
+                          Address align,
+                          Type type);
   Result<> makeArrayLen();
   Result<> makeArrayCopy(HeapType destType, HeapType srcType);
   Result<> makeArrayFill(HeapType type);

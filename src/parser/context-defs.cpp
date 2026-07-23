@@ -55,7 +55,8 @@ Result<> ParseDefsCtx::addGlobal(Name,
                                  ImportNames*,
                                  GlobalTypeT,
                                  std::optional<ExprT> exp,
-                                 Index) {
+                                 Index,
+                                 DefKind) {
   if (exp) {
     wasm.globals[index]->init = *exp;
   }
@@ -67,7 +68,8 @@ Result<> ParseDefsCtx::addTable(Name,
                                 ImportNames*,
                                 TableTypeT,
                                 std::optional<ExprT> init,
-                                Index) {
+                                Index,
+                                DefKind) {
   if (init) {
     wasm.tables[index]->init = *init;
   }

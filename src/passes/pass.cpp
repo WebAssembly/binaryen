@@ -129,6 +129,9 @@ void PassRegistry::registerPasses() {
   registerPass("cfp-reftest",
                "propagate constant struct field values, using ref.test",
                createConstantFieldPropagationRefTestPass);
+  registerPass("constraint-analysis",
+               "finds and uses mathematical constraints on locals",
+               createConstraintAnalysisPass);
   registerPass(
     "dce", "removes unreachable code", createDeadCodeEliminationPass);
   registerPass("dealign",
@@ -1079,6 +1082,11 @@ void PassRunner::handleAfterEffects(Pass* pass, Function* func) {
   // Binaryen IR is modified, so we may have work here.
 
   if (!func) {
+    if (pass->addsEffects()) {
+      // Indirect call effects are now under-approximating. Clear them to avoid
+      // incorrect optimizations.
+      wasm->indirectCallEffects.clear();
+    }
     // If no function is provided, then this is not a function-parallel pass,
     // and it may have operated on any of the functions in theory, so run on
     // them all.

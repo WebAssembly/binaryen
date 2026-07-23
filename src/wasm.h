@@ -1110,10 +1110,7 @@ public:
   AtomicFence() = default;
   AtomicFence(MixedArena& allocator) : AtomicFence() {}
 
-  // Current wasm threads only supports sequentially consistent atomics, but
-  // other orderings may be added in the future. This field is reserved for
-  // that, and currently set to 0.
-  uint8_t order = 0;
+  MemoryOrder order = MemoryOrder::SeqCst;
 };
 
 class Pause : public SpecificExpression<Expression::PauseId> {
@@ -1921,6 +1918,8 @@ public:
 
   uint8_t bytes;
   bool signed_ = false;
+  Address offset = 0;
+  Address align = 0;
   Expression* ref;
   Expression* index;
 
@@ -1933,6 +1932,8 @@ public:
   ArrayStore(MixedArena& allocator) {}
 
   uint8_t bytes;
+  Address offset = 0;
+  Address align = 0;
   Expression* ref;
   Expression* index;
   Expression* value;
@@ -2730,6 +2731,9 @@ public:
   Name name;
 
   std::unordered_map<HeapType, TypeNames> typeNames;
+
+  // The source binary's type indices. Used in some cases for preserving
+  // ordering of types.
   std::unordered_map<HeapType, Index> typeIndices;
 
   // Potential effects for bodies of indirect calls to this type. Populated by
@@ -2746,6 +2750,7 @@ public:
   // This data is only meaningful for indirect calls. If no indirect call
   // exists to a function, the data can be out of date (no effort is made to
   // clean up the data if e.g. all indirect calls to a function are removed).
+  //
   // TODO: Account for exactness here.
   std::unordered_map<HeapType, std::shared_ptr<const EffectAnalyzer>>
     indirectCallEffects;

@@ -2481,8 +2481,8 @@ function wrapModule(module, self = {}) {
   };
 
   self['atomic'] = {
-    'fence'() {
-      return Module['_BinaryenAtomicFence'](module);
+    'fence'(order = Module['MemoryOrder']['seqcst']) {
+      return Module['_BinaryenAtomicFence'](module, order);
     }
   };
 
@@ -3382,11 +3382,13 @@ Module['readBinaryWithFeatures'] = function(data, features) {
   return wrapModule(ptr);
 };
 
-// Parses text format to a module
-Module['parseText'] = function(text) {
+// Parses text format to a module with the given feature set enabled.
+Module['parseText'] = function(text, features) {
   const buffer = _malloc(text.length + 1);
   stringToAscii(text, buffer);
-  const ptr = handleFatalError(() => Module['_BinaryenModuleParse'](buffer));
+  const ptr = features === undefined
+    ? handleFatalError(() => Module['_BinaryenModuleParse'](buffer))
+    : handleFatalError(() => Module['_BinaryenModuleParseWithFeatures'](buffer, features));
   _free(buffer);
   return wrapModule(ptr);
 };

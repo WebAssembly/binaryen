@@ -161,7 +161,7 @@
 )
 
 # AtomicFence
-(atomic.fence)
+(atomic.fence acqrel)
 
 # SIMDExtract
 (i16x8.extract_lane_s 1

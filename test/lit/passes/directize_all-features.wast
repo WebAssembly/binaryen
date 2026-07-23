@@ -2148,3 +2148,50 @@
  (func $target
  )
 )
+
+;; Set a function using one elem, then trample it with a null. We should use the
+;; null for the call_indirect.
+(module
+ ;; CHECK:      (type $func (func))
+ ;; IMMUT:      (type $func (func))
+ (type $func (func))
+
+ ;; CHECK:      (table $table 6 funcref)
+ ;; IMMUT:      (table $table 6 funcref)
+ (table $table 6 funcref)
+
+ ;; CHECK:      (elem $5 (i32.const 0) $nop)
+ ;; IMMUT:      (elem $5 (i32.const 0) $nop)
+ (elem $5 (i32.const 0) $nop)
+
+ ;; CHECK:      (elem $6 (table $table) (i32.const 0) funcref (item (ref.null nofunc)))
+ ;; IMMUT:      (elem $6 (table $table) (i32.const 0) funcref (item (ref.null nofunc)))
+ (elem $6 (i32.const 0) funcref (item (ref.null nofunc)))
+
+ ;; CHECK:      (export "call" (func $call))
+
+ ;; CHECK:      (func $nop (type $func)
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT: )
+ ;; IMMUT:      (export "call" (func $call))
+
+ ;; IMMUT:      (func $nop (type $func)
+ ;; IMMUT-NEXT:  (nop)
+ ;; IMMUT-NEXT: )
+ (func $nop (type $func)
+  (nop)
+ )
+
+ ;; CHECK:      (func $call (type $func)
+ ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT: )
+ ;; IMMUT:      (func $call (type $func)
+ ;; IMMUT-NEXT:  (unreachable)
+ ;; IMMUT-NEXT: )
+ (func $call (export "call")
+  ;; This can be optimized to an unreachable.
+  (call_indirect $table (type $func)
+   (i32.const 0)
+  )
+ )
+)

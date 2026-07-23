@@ -1446,10 +1446,20 @@ void FunctionValidator::visitAtomicFence(AtomicFence* curr) {
   shouldBeTrue(getModule()->features.hasAtomics(),
                curr,
                "Atomic operations require threads [--enable-threads]");
-  shouldBeTrue(curr->order == 0,
-               curr,
-               "Currently only sequentially consistent atomics are supported, "
-               "so AtomicFence's order should be 0");
+  switch (curr->order) {
+    case MemoryOrder::AcqRel: {
+      shouldBeTrue(getModule()->features.hasRelaxedAtomics(),
+                   curr,
+                   "Acquire/release operations require relaxed atomics "
+                   "[--enable-relaxed-atomics]");
+      break;
+    }
+    case MemoryOrder::SeqCst:
+      break;
+    case MemoryOrder::Unordered:
+      shouldBeTrue(false, curr, "Atomic fence cannot be unordered");
+      break;
+  }
 }
 
 void FunctionValidator::visitPause(Pause* curr) {
@@ -3858,6 +3868,11 @@ void FunctionValidator::visitArraySet(ArraySet* curr) {
   shouldBeTrue(element.mutable_, curr, "array.set type must be mutable");
 }
 
+static bool isValidMultibyteElement(const Field& element) {
+  return element.packedType == Field::i8 || element.packedType == Field::i16 ||
+         (element.packedType == Field::NotPacked && element.type.isNumber());
+}
+
 void FunctionValidator::visitArrayLoad(ArrayLoad* curr) {
   shouldBeTrue(getModule()->features.hasMultibyte(),
                curr,
@@ -3866,6 +3881,10 @@ void FunctionValidator::visitArrayLoad(ArrayLoad* curr) {
                                     Type(Type::i32),
                                     curr,
                                     "array load index must be an i32");
+  validateMemBytes(curr->bytes, curr->type, curr);
+  validateOffset(curr->offset, nullptr, curr);
+  validateAlignment(
+    curr->align, curr->type, curr->bytes, /*isAtomic=*/false, curr);
   if (curr->type == Type::unreachable) {
     return;
   }
@@ -3879,8 +3898,9 @@ void FunctionValidator::visitArrayLoad(ArrayLoad* curr) {
 
   auto heapType = curr->ref->type.getHeapType();
   const auto& element = heapType.getArray().element;
-  shouldBeTrue(
-    element.packedType == Field::i8, curr, "array load type must be i8");
+  shouldBeTrue(isValidMultibyteElement(element),
+               curr,
+               "array load type must be a numeric type");
 }
 
 void FunctionValidator::visitArrayStore(ArrayStore* curr) {
@@ -3891,6 +3911,10 @@ void FunctionValidator::visitArrayStore(ArrayStore* curr) {
                                     Type(Type::i32),
                                     curr,
                                     "array store index must be an i32");
+  validateMemBytes(curr->bytes, curr->value->type, curr);
+  validateOffset(curr->offset, nullptr, curr);
+  validateAlignment(
+    curr->align, curr->value->type, curr->bytes, /*isAtomic=*/false, curr);
   if (curr->type == Type::unreachable) {
     return;
   }
@@ -3904,8 +3928,9 @@ void FunctionValidator::visitArrayStore(ArrayStore* curr) {
 
   auto heapType = curr->ref->type.getHeapType();
   const auto& element = heapType.getArray().element;
-  shouldBeTrue(
-    element.packedType == Field::i8, curr, "array store type must be i8");
+  shouldBeTrue(isValidMultibyteElement(element),
+               curr,
+               "array store type must be a numeric type");
   shouldBeTrue(element.mutable_, curr, "array store type must be mutable");
 }
 
@@ -4832,7 +4857,8 @@ void FunctionValidator::visitFunction(Function* curr) {
 void FunctionValidator::validateOffset(Address offset,
                                        Memory* mem,
                                        Expression* curr) {
-  shouldBeTrue(mem->is64() || offset <= std::numeric_limits<uint32_t>::max(),
+  shouldBeTrue((mem && mem->is64()) ||
+                 offset <= std::numeric_limits<uint32_t>::max(),
                curr,
                "offset must be u32");
 }
