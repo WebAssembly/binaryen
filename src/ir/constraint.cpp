@@ -214,12 +214,17 @@ namespace {
 // changed (otherwise, we return nullopt).
 std::optional<bool> approximateOrDisjoint(AndedConstraintSet& self,
                                           const AndedConstraintSet& other) {
-  // Simple range fusing, add an equality to turn > into >=:
+  // Simple range fusing, add an equality to turn > into >= :
   //
-  //   x == A || x > X   ===   x >= A
+  //   { x == A } || { x > A && x <= B } , A <= B   ===   { x >= A && X <= B }
   //
-  Var A;
-  if (match(set(self, Abstract::Eq, A), set(other, Abstract::GtS, A),
+  // XXX but we do need the other part of other, x < B and A < B
+  Var A, B;
+  if (match().set(self, Abstract::Eq, A)
+             .set(other, Abstract::GtS, A, Abstract::LeS, B)
+             .require(A, LeS, B)) {
+    flipped? look for both and flipped, and return pointer to the first .set()?
+  }
 
   // Otherwise, we have no idea.
   return {};
@@ -259,6 +264,9 @@ bool AndedConstraintSet::approximateOr(const AndedConstraintSet& other) {
 
   // Otherwise, we don't know how to nicely OR these things, and expand to the
   // trivial set of no constraints.
+  // TODO: We could keep constraints that appear on both sides and only drop the
+  //       others. In fact, we could do that first, and leave smarts only to the
+  //       others.
   clear();
   return true;
 }
