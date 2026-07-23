@@ -334,8 +334,8 @@ bool Matcher::checkUnorderedInternal(const AndedConstraintSet& a,
 // changed (otherwise, we return nullopt).
 std::optional<bool> approximateOrDisjoint(AndedConstraintSet& self,
                                           const AndedConstraintSet& other) {
-  using M = Matcher;
   using MC = MatcherConstraint;
+  using MS = MatcherSet;
   using namespace Abstract;
 
   // Simple range fusing, add an equality to turn > into >= :
@@ -343,7 +343,7 @@ std::optional<bool> approximateOrDisjoint(AndedConstraintSet& self,
   //   { x == A } || { x > A && x <= B } , A <= B   ===   { x >= A && X <= B }
   //
   Var A, B;
-  if (M(MS(MC(Eq, A)), MS(MC(GtS, A), MC(LeS, B)))
+  if (Matcher({MC(Eq, A)}, {MC(GtS, A), MC(LeS, B)}) 
         .require(A, LeS, B)
         .check(self, other)) {
   }
