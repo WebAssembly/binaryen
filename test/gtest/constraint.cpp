@@ -240,7 +240,9 @@ TEST(ConstraintTest, TestDeredundancy) {
   EXPECT_EQ(t[0], eq0);
 }
 
-static void checkOr(const AndedConstraintSet& a, const AndedConstraintSet& b, const AndedConstraintSet& result) {
+static void checkOr(const AndedConstraintSet& a,
+                    const AndedConstraintSet& b,
+                    const AndedConstraintSet& result) {
   auto ored = a;
   ored.approximateOr(b);
   EXPECT_EQ(ored, result);
@@ -262,12 +264,11 @@ TEST(ConstraintTest, TestOrOrDisjoint) {
 
   AndedConstraintSet left{Constraint{Eq, {Literal(int32_t(5))}}};
 
-  AndedConstraintSet right({Constraint{GtS, {Literal(int32_t(5))}},
-                           Constraint{LeS, {Literal(int32_t(42)}});
+  auto right = AndedConstraintSet({{GtS, {Literal(int32_t(5))}},
+                           {LeS, {Literal(int32_t(42)}});
 
-  AndedConstraintSet result({Constraint{GeS, {Literal(int32_t(5))}},
-                            Constraint{LeS, {Literal(int32_t(42)}});
+  AndedConstraintSet result({{GeS, {Literal(int32_t(5))}},
+                            {LeS, {Literal(int32_t(42)}});
 
   checkOr(left, right, result);
 }
-
