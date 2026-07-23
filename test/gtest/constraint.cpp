@@ -306,7 +306,8 @@ TEST(ConstraintTest, TestOrOrDisjoint) {
   checkOr(left, rightLeU, empty);
 
   // Add an operation on the right, x != 21. We fail. TODO
-  AndedConstraintSet rightAdded(
-    {{GtS, {Literal(int32_t(5))}}, {LeS, {Literal(int32_t(42))}}, {Ne, {Literal(int32_t(21))}}});
+  AndedConstraintSet rightAdded({{GtS, {Literal(int32_t(5))}},
+                                 {LeS, {Literal(int32_t(42))}},
+                                 {Ne, {Literal(int32_t(21))}}});
   checkOr(left, rightAdded, empty);
 }
