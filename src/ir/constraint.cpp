@@ -210,6 +210,7 @@ namespace {
 // A variable in a match. If we see the same Var - identified by address - in
 // two places, it must be equal in them. We can also perform checks on different
 // Vars afterwards, e.g., whether one is greater than the other.
+// TODO: optimize all this, if it matters
 struct Var {};
 
 // A matcher constraint: an abstraction over a normal Constraint, which can also
@@ -263,14 +264,42 @@ Matcher& Matcher::require(Var& a, Abstract::Op op, Var& b) {
 }
 
 bool Matcher::checkUnorderedInternal(const AndedConstraintSets& a, const AndedConstraintSets& constraints b, bool flipped) {
+  auto returnFalse = [&]() {
+    // Before returning false, see if the flipped inputs match, if we didn't
+    // already try that.
+    if (!flipped) {
+      return checkUnorderedInternal(b, a, true);
+    }
+    return false;
+  };
 
-
-  // Perhaps the flipped inputs match, if we didn't already try that.
-  if (!flipped) {
-    return checkUnorderedInternal(b, a, true);
+  if (a.size() != ms1.size() || b.size() != ms2.size()) {
+    return returnFalse();
   }
 
-  return false;
+  // The sizes match, at least. Parse in more detail, building up a mapping of
+  // Vars to concrete Terms.
+  std::unordered_map<Var*, Term> varTermMap;
+
+  auto parse = [&](const AndedConstraintSet& input, const MatcherSet& pattern) {
+    for (Index i = 0; i < input.size(); i++) {
+      if (input[i].op != pattern[i].op) {
+        return false;
+      }
+
+      
+    }
+    return true;
+  };
+
+  if (!parse(a, ms1) || !parse(b, ms2)) {
+    return returnFalse();
+  }
+
+  // Check requirements on the vars.
+  ..
+
+  return returnFalse();
 }
 
 // Do an approximate OR on two inputs that are disjoint, that is, each proves
@@ -289,9 +318,9 @@ std::optional<bool> approximateOrDisjoint(AndedConstraintSet& self,
   //
   Var A, B;
   if (M().set(MC(Abstract::Eq, A))
-               .set(MC(Abstract::GtS, A), MC(Abstract::LeS, B))
-               .require(A, LeS, B)
-               .check(self, other)) {
+         .set(MC(Abstract::GtS, A), MC(Abstract::LeS, B))
+         .require(A, LeS, B)
+         .check(self, other)) {
   }
 
   // Otherwise, we have no idea.
