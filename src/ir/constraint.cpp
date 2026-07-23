@@ -243,14 +243,14 @@ struct Matcher {
   // patterns (that is, if a matches ms1 in the constructor, we return &a, and
   // otherwise &b), or nullptr of the match failed.
   const AndedConstraintSet* checkUnordered(const AndedConstraintSet& a,
-                      const AndedConstraintSet& b) {
+                                           const AndedConstraintSet& b) {
     return checkUnorderedInternal(a, b);
   }
 
 private:
   const AndedConstraintSet* checkUnorderedInternal(const AndedConstraintSet& a,
-                              const AndedConstraintSet& b,
-                              bool flipped = false);
+                                                   const AndedConstraintSet& b,
+                                                   bool flipped = false);
 
   const MatcherSet& ms1;
   const MatcherSet& ms2;
@@ -272,9 +272,8 @@ Matcher& Matcher::require(Var& a, Abstract::Op op, Var& b) {
   return *this;
 }
 
-const AndedConstraintSet* Matcher::checkUnorderedInternal(const AndedConstraintSet& a,
-                                     const AndedConstraintSet& b,
-                                     bool flipped) {
+const AndedConstraintSet* Matcher::checkUnorderedInternal(
+  const AndedConstraintSet& a, const AndedConstraintSet& b, bool flipped) {
   auto fail = [&]() -> const AndedConstraintSet* {
     // We failed, but try the flipped inputs if we haven't already.
     if (!flipped) {
@@ -348,8 +347,8 @@ std::optional<bool> approximateOrDisjoint(AndedConstraintSet& self,
   //
   Var A, B;
   if (auto* x = Matcher({MC(Eq, A)}, {MC(GtS, A), MC(LeS, B)})
-        .require(A, LeS, B)
-        .checkUnordered(self, other)) {
+                  .require(A, LeS, B)
+                  .checkUnordered(self, other)) {
     // x refers to the set with the equality constraint. We can reuse the other
     // one, with a small change.
     if (x == &self) {
