@@ -250,7 +250,12 @@ struct Matcher {
 
   // When a match succeeds, we return a map of Vars to Terms, allowing the user
   // to find out what each Var matched against.
-  using VarTermMap = std::unordered_map<Var*, Term>;
+  struct VarTermMap : public std::unordered_map<Var*, Term> {
+    // As a convenience, allow using the object instead of the pointer.
+    Term& operator[](Var& var) {
+      return std::unordered_map<Var*, Term>::operator[](&var);
+    }
+  };
 
   // Check if the pattern matches given inputs. The order of the inputs does not
   // matter. Returns the address of the input that matches the first of the
@@ -337,8 +342,8 @@ std::optional<Matcher::VarTermMap> Matcher::checkUnorderedInternal(
 
   // Check requirements on the vars.
   for (auto& [a, op, b] : requirements) {
-    auto aTerm = varTermMap[a];
-    auto bTerm = varTermMap[b];
+    auto aTerm = varTermMap[*a];
+    auto bTerm = varTermMap[*b];
 
     // Check if { x == a } proves { x op b } is true.
     if (provesPair(Constraint{Abstract::Eq, aTerm}, Constraint{op, bTerm}) !=
@@ -370,9 +375,9 @@ std::optional<bool> approximateOrDisjoint(AndedConstraintSet& self,
   if (auto result = Matcher({MC(Eq, A)}, {MC(GtS, A), MC(LeS, B)})
                       .require(A, LeS, B)
                       .checkUnordered(self, other)) {
-    Term aValue = (*result)[&A];
-    Term bValue = (*result)[&B];
-    self = AndedConstraintSet({{GeS, aValue}, {LeS, bValue}}); // TODO !&
+    Term aValue = (*result)[A];
+    Term bValue = (*result)[B];
+    self = AndedConstraintSet({{GeS, aValue}, {LeS, bValue}});
     std::cout << "MATACHHH " << self << "\n";
     return true;
   }
