@@ -2455,6 +2455,105 @@ public:
     data->values[i] = truncateForPacking(value.getSingleValue(), field);
     return Flow();
   }
+  // Reads a single byte at byte offset `subIndex` from an array element `elem`.
+  static uint8_t
+  readArrayByte(const Literal& elem, const Field& field, size_t subIndex) {
+    if (field.packedType == Field::i8) {
+      assert(subIndex == 0);
+      return static_cast<uint8_t>(elem.geti32());
+    } else if (field.packedType == Field::i16) {
+      assert(subIndex < 2);
+      uint32_t val = elem.geti32();
+      return static_cast<uint8_t>((val >> (subIndex * 8)) & 0xff);
+    } else if (field.type == Type::i32) {
+      assert(subIndex < 4);
+      uint32_t val = elem.geti32();
+      return static_cast<uint8_t>((val >> (subIndex * 8)) & 0xff);
+    } else if (field.type == Type::i64) {
+      assert(subIndex < 8);
+      uint64_t val = elem.geti64();
+      return static_cast<uint8_t>((val >> (subIndex * 8)) & 0xff);
+    } else if (field.type == Type::f32) {
+      assert(subIndex < 4);
+      uint32_t val = elem.reinterpreti32();
+      return static_cast<uint8_t>((val >> (subIndex * 8)) & 0xff);
+    } else if (field.type == Type::f64) {
+      assert(subIndex < 8);
+      uint64_t val = elem.reinterpreti64();
+      return static_cast<uint8_t>((val >> (subIndex * 8)) & 0xff);
+    } else if (field.type == Type::v128) {
+      assert(subIndex < 16);
+      auto v = elem.getv128();
+      return v[subIndex];
+    }
+    WASM_UNREACHABLE("invalid element type");
+  }
+
+  // Writes a single byte `byteVal` at byte offset `subIndex` into array element
+  // `elem`.
+  static void writeArrayByte(Literal& elem,
+                             const Field& field,
+                             size_t subIndex,
+                             uint8_t byteVal) {
+    if (field.packedType == Field::i8) {
+      assert(subIndex == 0);
+      elem = Literal(static_cast<int32_t>(byteVal));
+    } else if (field.packedType == Field::i16) {
+      assert(subIndex < 2);
+      uint32_t val = elem.geti32();
+      val = (val & ~(0xffu << (subIndex * 8))) |
+            (static_cast<uint32_t>(byteVal) << (subIndex * 8));
+      elem = Literal(static_cast<int32_t>(val & 0xffff));
+    } else if (field.type == Type::i32) {
+      assert(subIndex < 4);
+      uint32_t val = elem.geti32();
+      val = (val & ~(0xffu << (subIndex * 8))) |
+            (static_cast<uint32_t>(byteVal) << (subIndex * 8));
+      elem = Literal(static_cast<int32_t>(val));
+    } else if (field.type == Type::i64) {
+      assert(subIndex < 8);
+      uint64_t val = elem.geti64();
+      val = (val & ~(0xffull << (subIndex * 8))) |
+            (static_cast<uint64_t>(byteVal) << (subIndex * 8));
+      elem = Literal(static_cast<int64_t>(val));
+    } else if (field.type == Type::f32) {
+      assert(subIndex < 4);
+      uint32_t val = elem.reinterpreti32();
+      val = (val & ~(0xffu << (subIndex * 8))) |
+            (static_cast<uint32_t>(byteVal) << (subIndex * 8));
+      elem = Literal(bit_cast<float>(val));
+    } else if (field.type == Type::f64) {
+      assert(subIndex < 8);
+      uint64_t val = elem.reinterpreti64();
+      val = (val & ~(0xffull << (subIndex * 8))) |
+            (static_cast<uint64_t>(byteVal) << (subIndex * 8));
+      elem = Literal(bit_cast<double>(val));
+    } else if (field.type == Type::v128) {
+      assert(subIndex < 16);
+      auto v = elem.getv128();
+      v[subIndex] = byteVal;
+      elem = Literal(v.data());
+    } else {
+      WASM_UNREACHABLE("invalid element type");
+    }
+  }
+
+  template<typename T>
+  static T unpackBytes(const uint8_t* bytes, unsigned count) {
+    T val = 0;
+    for (unsigned b = 0; b < count; ++b) {
+      val |= static_cast<T>(bytes[b]) << (b * 8);
+    }
+    return val;
+  }
+
+  template<typename T>
+  static void packBytes(T val, uint8_t* bytes, unsigned count) {
+    for (unsigned b = 0; b < count; ++b) {
+      bytes[b] = static_cast<uint8_t>((val >> (b * 8)) & 0xff);
+    }
+  }
+
   Flow visitArrayLoad(ArrayLoad* curr) {
     VISIT(ref, curr->ref)
     VISIT(index, curr->index)
@@ -2462,17 +2561,29 @@ public:
     if (!data) {
       trap("null ref");
     }
-    Index i = index.getSingleValue().geti32();
-    size_t size = data->values.size();
-    if (i >= size || curr->bytes > (size - i)) {
+    uint64_t address = uint32_t(index.getSingleValue().geti32());
+    uint64_t ea = address + curr->offset;
+
+    auto field = curr->ref->type.getHeapType().getArray().element;
+    size_t elemSize = field.getByteSize();
+    uint64_t capacity = uint64_t(data->values.size()) * elemSize;
+
+    if (ea > capacity || curr->bytes > capacity - ea) {
       trap("array oob");
     }
-    uint64_t val = 0;
+
+    uint8_t loadedBytes[16] = {0};
+    assert(curr->bytes <= sizeof(loadedBytes));
     for (unsigned b = 0; b < curr->bytes; ++b) {
-      val |= static_cast<uint64_t>(data->values[i + b].geti32()) << (b * 8);
+      uint64_t byteOffset = ea + b;
+      size_t k = byteOffset / elemSize;
+      size_t subIndex = byteOffset % elemSize;
+      loadedBytes[b] = readArrayByte(data->values[k], field, subIndex);
     }
+
     switch (curr->type.getBasic()) {
       case Type::i32: {
+        uint32_t val = unpackBytes<uint32_t>(loadedBytes, curr->bytes);
         int32_t sval = static_cast<int32_t>(val);
         if (curr->signed_) {
           if (curr->bytes == 1) {
@@ -2484,6 +2595,7 @@ public:
         return Literal(sval);
       }
       case Type::i64: {
+        uint64_t val = unpackBytes<uint64_t>(loadedBytes, curr->bytes);
         int64_t sval = static_cast<int64_t>(val);
         if (curr->signed_) {
           if (curr->bytes == 1) {
@@ -2497,10 +2609,15 @@ public:
         return Literal(sval);
       }
       case Type::f32: {
-        return Literal(bit_cast<float>(static_cast<int32_t>(val)));
+        uint32_t val = unpackBytes<uint32_t>(loadedBytes, curr->bytes);
+        return Literal(bit_cast<float>(val));
       }
       case Type::f64: {
-        return Literal(bit_cast<double>(static_cast<int64_t>(val)));
+        uint64_t val = unpackBytes<uint64_t>(loadedBytes, curr->bytes);
+        return Literal(bit_cast<double>(val));
+      }
+      case Type::v128: {
+        return Literal(loadedBytes);
       }
       default:
         WASM_UNREACHABLE("invalid type");
@@ -2515,42 +2632,56 @@ public:
     if (!data) {
       trap("null ref");
     }
+    uint64_t address = uint32_t(index.getSingleValue().geti32());
+    uint64_t ea = address + curr->offset;
 
-    Index i = index.getSingleValue().geti32();
-    size_t size = data->values.size();
-    // Use subtraction to avoid overflow.
-    if (i >= size || curr->bytes > (size - i)) {
+    auto field = curr->ref->type.getHeapType().getArray().element;
+    size_t elemSize = field.getByteSize();
+    uint64_t capacity = uint64_t(data->values.size()) * elemSize;
+
+    if (ea > capacity || curr->bytes > capacity - ea) {
       trap("array oob");
     }
+
+    uint8_t bytesToStore[16] = {0};
+    assert(curr->bytes <= sizeof(bytesToStore));
     switch (curr->value->type.getBasic()) {
-      case Type::i32:
-        writeBytes(
-          value.getSingleValue().geti32(), curr->bytes, i, data->values);
+      case Type::i32: {
+        packBytes(value.getSingleValue().geti32(), bytesToStore, curr->bytes);
         break;
-      case Type::i64:
-        writeBytes(
-          value.getSingleValue().geti64(), curr->bytes, i, data->values);
+      }
+      case Type::i64: {
+        packBytes(value.getSingleValue().geti64(), bytesToStore, curr->bytes);
         break;
-      case Type::f32:
-        writeBytes(value.getSingleValue().reinterpreti32(),
-                   curr->bytes,
-                   i,
-                   data->values);
+      }
+      case Type::f32: {
+        packBytes(
+          value.getSingleValue().reinterpreti32(), bytesToStore, curr->bytes);
         break;
-      case Type::f64:
-        writeBytes(value.getSingleValue().reinterpreti64(),
-                   curr->bytes,
-                   i,
-                   data->values);
+      }
+      case Type::f64: {
+        packBytes(
+          value.getSingleValue().reinterpreti64(), bytesToStore, curr->bytes);
         break;
-      case Type::v128:
-        writeBytes(
-          value.getSingleValue().getv128(), curr->bytes, i, data->values);
+      }
+      case Type::v128: {
+        auto v = value.getSingleValue().getv128();
+        for (unsigned b = 0; b < curr->bytes; ++b) {
+          bytesToStore[b] = v[b];
+        }
         break;
-      case Type::none:
-      case Type::unreachable:
-        WASM_UNREACHABLE("unimp basic type");
+      }
+      default:
+        WASM_UNREACHABLE("invalid type");
     }
+
+    for (unsigned b = 0; b < curr->bytes; ++b) {
+      uint64_t byteOffset = ea + b;
+      size_t k = byteOffset / elemSize;
+      size_t subIndex = byteOffset % elemSize;
+      writeArrayByte(data->values[k], field, subIndex, bytesToStore[b]);
+    }
+
     return Flow();
   }
   Flow visitArrayLen(ArrayLen* curr) {
