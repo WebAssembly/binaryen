@@ -221,6 +221,16 @@ struct MatcherConstraint {
 
   MatcherConstraint() = default;
   MatcherConstraint(Abstract::Op op, Var& term) : op(op), term(&term) {}
+
+  bool operator==(const MatcherConstraint&) const = default;
+  bool operator<(const MatcherConstraint& other) const {
+    // Ordered in a parallel way to Constraints, so that when we compare, things
+    // line up.
+    if (op != other.op) {
+      return op < other.op;
+    }
+    return term < other.term;
+  }
 };
 
 // A matcher AndedConstraintSet, which abstracts over the normal one to support
@@ -231,7 +241,7 @@ using MatcherSet = inplace_vector<MatcherConstraint, MaxConstraints>;
 // that follows the rules of logic.
 struct Matcher {
   // Set up a pattern containing two sets of constraints.
-  Matcher(const MatcherSet& ms1, const MatcherSet& ms2);
+  Matcher(const MatcherSet& ms1_, const MatcherSet& ms2_);
 
   // Add a requirement on this pattern, a demand on the Vars.
   //
@@ -252,8 +262,8 @@ private:
                                                    const AndedConstraintSet& b,
                                                    bool flipped = false);
 
-  const MatcherSet& ms1;
-  const MatcherSet& ms2;
+  MatcherSet ms1;
+  MatcherSet ms2;
 
   struct Requirement {
     Var* a;
@@ -264,8 +274,13 @@ private:
   SmallVector<Requirement, 2> requirements;
 };
 
-Matcher::Matcher(const MatcherSet& ms1, const MatcherSet& ms2)
-  : ms1(ms1), ms2(ms2) {}
+Matcher::Matcher(const MatcherSet& ms1_, const MatcherSet& ms2_)
+  : ms1(ms1_), ms2(ms2_) {
+  // Sort the sets like Constraints are sorted, so that when we compare, things
+  // line up.
+  std::sort(ms1.begin(), ms1.end());
+  std::sort(ms2.begin(), ms2.end());
+}
 
 Matcher& Matcher::require(Var& a, Abstract::Op op, Var& b) {
   requirements.push_back({&a, op, &b});
@@ -274,6 +289,7 @@ Matcher& Matcher::require(Var& a, Abstract::Op op, Var& b) {
 
 const AndedConstraintSet* Matcher::checkUnorderedInternal(
   const AndedConstraintSet& a, const AndedConstraintSet& b, bool flipped) {
+
   auto fail = [&]() -> const AndedConstraintSet* {
     // We failed, but try the flipped inputs if we haven't already.
     if (!flipped) {
@@ -341,6 +357,8 @@ std::optional<bool> approximateOrDisjoint(AndedConstraintSet& self,
   using MC = MatcherConstraint;
   using namespace Abstract;
 
+std::cout << self << " OR " << other << '\n';
+
   // Simple range fusing, add an equality to turn > into >= :
   //
   //   { x == A } || { x > A && x <= B } , A <= B   ===   { x >= A && X <= B }
@@ -355,6 +373,7 @@ std::optional<bool> approximateOrDisjoint(AndedConstraintSet& self,
       self = other;
     }
     self[0].op = GeS;
+std::cout << "MATACHHH\n";
     return true;
   }
 
