@@ -319,7 +319,7 @@ std::optional<Matcher::VarTermMap> Matcher::checkUnorderedInternal(
   }
 
   // The sizes match, at least. Parse in more detail, building up a mapping of
-  // Vars to concrete Terms
+  // Vars to concrete Terms.
   VarTermMap varTermMap;
 
   auto parse = [&](const AndedConstraintSet& input, const MatcherSet& pattern) {
@@ -353,7 +353,7 @@ std::optional<Matcher::VarTermMap> Matcher::checkUnorderedInternal(
     auto bTerm = varTermMap[*b];
 
     // Check if { x == a } proves { x op b } is true.
-    if (provesPair(Constraint{Abstract::Eq, aTerm}, Constraint{op, bTerm}) !=
+    if (provesPair({Abstract::Eq, aTerm}, {op, bTerm}) !=
         True) {
       return fail();
     }
