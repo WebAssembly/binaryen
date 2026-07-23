@@ -365,8 +365,6 @@ std::optional<bool> approximateOrDisjoint(AndedConstraintSet& self,
   using MC = MatcherConstraint;
   using namespace Abstract;
 
-  std::cout << self << " OR " << other << '\n';
-
   // Simple range fusing, add an equality to turn > into >= :
   //
   //   { x == A } || { x > A && x <= B } , A <= B   ===   { x >= A && X <= B }
@@ -378,7 +376,6 @@ std::optional<bool> approximateOrDisjoint(AndedConstraintSet& self,
     Term aValue = (*result)[A];
     Term bValue = (*result)[B];
     self = AndedConstraintSet({{GeS, aValue}, {LeS, bValue}});
-    std::cout << "MATACHHH " << self << "\n";
     return true;
   }
 

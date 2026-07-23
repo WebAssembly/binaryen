@@ -80,7 +80,7 @@
     )
   )
 
-  ;; CHECK:      (func $bound-flipped (type $0)
+  ;; CHECK:      (func $bound-flipped-ifs (type $0)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (loop $loop
   ;; CHECK-NEXT:   (drop
@@ -111,7 +111,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $bound-flipped
+  (func $bound-flipped-ifs
     (local $x i32)
     ;; As above, but with the ifs flipped. We optimize the same way.
     (loop $loop
@@ -149,6 +149,87 @@
       )
     )
   )
+
+  ;; CHECK:      (func $bound-nonconstant (type $2) (param $p i32)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (loop $loop
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.ge_s
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (local.get $p)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.le_s
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i32.const 100)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.set $x
+  ;; CHECK-NEXT:    (call $import)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (if
+  ;; CHECK-NEXT:    (i32.gt_s
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (local.get $p)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (then
+  ;; CHECK-NEXT:     (if
+  ;; CHECK-NEXT:      (i32.le_s
+  ;; CHECK-NEXT:       (local.get $x)
+  ;; CHECK-NEXT:       (i32.const 100)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (then
+  ;; CHECK-NEXT:       (br $loop)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $bound-nonconstant (param $p i32)
+    (local $x i32)
+    ;; As above, but rather than zero we have an unknown param $p. We can't
+    ;; optimize since we don't know how $p relates to 100: if $p is negative,
+    ;; we have something like {x == 200} || {x > 200 && x <= 100}. The RHS is
+    ;; a contradiction (at runtime), and we don't want to get into the
+    ;; complexity of reasoning about such things, so we do not optimize here.
+    (loop $loop
+      (drop
+        (i32.ge_s
+          (local.get $x)
+          (local.get $p)
+        )
+      )
+      (drop
+        (i32.le_s
+          (local.get $x)
+          (i32.const 100)
+        )
+      )
+      (local.set $x
+        (call $import)
+      )
+      (if
+        (i32.gt_s
+          (local.get $x)
+          (local.get $p)
+        )
+        (then
+          (if
+            (i32.le_s
+              (local.get $x)
+              (i32.const 100)
+            )
+            (then
+              (br $loop)
+            )
+          )
+        )
+      )
+    )
+  )
+
   ;; TODO: unsigned
   ;; TODO: non-zero
 )
