@@ -260,7 +260,7 @@ TEST(ConstraintTest, TestOrInequality) {
 }
 
 TEST(ConstraintTest, TestOrOrDisjoint) {
-  // { x == A } || { x > A && x <= B } , A < B   ==>   { x >= A && X <= B }
+  // { x == A } || { x > A && x <= B } , A < B   ==>   { x >= A && x <= B }
 
   AndedConstraintSet left{Constraint{Eq, {Literal(int32_t(5))}}};
 
@@ -279,12 +279,16 @@ TEST(ConstraintTest, TestOrOrDisjoint) {
   AndedConstraintSet left7{Constraint{Eq, {Literal(int32_t(7))}}};
   checkOr(left7, right, right);
 
-  // Change 5 on the left to 4. Now we fail to find anything.
-  AndedConstraintSet left4{Constraint{Eq, {Literal(int32_t(4))}}};
+  // Change 5 on the left to 99. Now we fail to find anything.
+  AndedConstraintSet left99{Constraint{Eq, {Literal(int32_t(99))}}};
   AndedConstraintSet empty{};
+  checkOr(left99, right, empty);
+
+  // Change 5 on the left to 4. We fail.
+  AndedConstraintSet left4{Constraint{Eq, {Literal(int32_t(4))}}};
   checkOr(left4, right, empty);
 
-  // Change 5 on the right to 6. Again we fail to find anything.
+  // Change 5 on the right to 6. We fail.
   AndedConstraintSet right6(
     {{GtS, {Literal(int32_t(6))}}, {LeS, {Literal(int32_t(42))}}});
   checkOr(left, right6, empty);
@@ -305,7 +309,7 @@ TEST(ConstraintTest, TestOrOrDisjoint) {
     {{GtS, {Literal(int32_t(5))}}, {LeU, {Literal(int32_t(42))}}});
   checkOr(left, rightLeU, empty);
 
-  // Add an operation on the right, x != 21. We fail. TODO
+  // Add an operation on the right, x != 21. We fail. TODO: optimize here
   AndedConstraintSet rightAdded({{GtS, {Literal(int32_t(5))}},
                                  {LeS, {Literal(int32_t(42))}},
                                  {Ne, {Literal(int32_t(21))}}});
