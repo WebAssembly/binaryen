@@ -343,7 +343,7 @@ std::optional<bool> approximateOrDisjoint(AndedConstraintSet& self,
   //   { x == A } || { x > A && x <= B } , A <= B   ===   { x >= A && X <= B }
   //
   Var A, B;
-  if (Matcher({MC(Eq, A)}, {MC(GtS, A), MC(LeS, B)}) 
+  if (Matcher({MC(Eq, A)}, {MC(GtS, A), MC(LeS, B)})
         .require(A, LeS, B)
         .check(self, other)) {
   }
