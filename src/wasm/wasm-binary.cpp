@@ -18,6 +18,7 @@
 #include <fstream>
 #include <optional>
 
+#include "ir/memory-utils.h"
 #include "ir/module-utils.h"
 #include "ir/names.h"
 #include "ir/table-utils.h"
@@ -26,6 +27,7 @@
 #include "support/bits.h"
 #include "support/stdckdint.h"
 #include "support/string.h"
+#include "support/utilities.h"
 #include "wasm-annotations.h"
 #include "wasm-binary.h"
 #include "wasm-debug.h"
@@ -331,11 +333,6 @@ void WasmBinaryWriter::writeTypes() {
   finishSection(start);
 }
 
-template<class... Ts> struct Overloaded : Ts... {
-  using Ts::operator()...;
-};
-template<class... Ts> Overloaded(Ts...) -> Overloaded<Ts...>;
-
 void WasmBinaryWriter::writeImports() {
   auto num = importInfo->getNumImports();
   if (num == 0) {
@@ -347,16 +344,8 @@ void WasmBinaryWriter::writeImports() {
   std::vector<ImportItem> imports;
   imports.reserve(num);
 
-  ModuleUtils::iterImportedFunctions(
-    *wasm, [&](Function* func) { imports.push_back(func); });
-  ModuleUtils::iterImportedGlobals(
-    *wasm, [&](Global* global) { imports.push_back(global); });
-  ModuleUtils::iterImportedTags(*wasm,
-                                [&](Tag* tag) { imports.push_back(tag); });
-  ModuleUtils::iterImportedMemories(
-    *wasm, [&](Memory* memory) { imports.push_back(memory); });
-  ModuleUtils::iterImportedTables(
-    *wasm, [&](Table* table) { imports.push_back(table); });
+  ModuleUtils::iterImports(*wasm,
+                           [&](ImportItem item) { imports.push_back(item); });
 
   auto getModule = [](const ImportItem& item) -> Name {
     return std::visit([](auto* i) { return i->module; }, item);
@@ -371,8 +360,7 @@ void WasmBinaryWriter::writeImports() {
     }
     if (const auto* fa = std::get_if<Function*>(&a)) {
       auto* fb = std::get<Function*>(b);
-      return (*fa)->type.isExact() == fb->type.isExact() &&
-             (*fa)->type.getHeapType() == fb->type.getHeapType();
+      return (*fa)->type == fb->type;
     }
     if (const auto* ga = std::get_if<Global*>(&a)) {
       auto* gb = std::get<Global*>(b);
@@ -384,16 +372,11 @@ void WasmBinaryWriter::writeImports() {
     }
     if (const auto* ma = std::get_if<Memory*>(&a)) {
       auto* mb = std::get<Memory*>(b);
-      return (*ma)->initial == mb->initial && (*ma)->max == mb->max &&
-             (*ma)->hasMax() == mb->hasMax() && (*ma)->shared == mb->shared &&
-             (*ma)->is64() == mb->is64() &&
-             (*ma)->pageSizeLog2 == mb->pageSizeLog2;
+      return MemoryUtils::sameType(**ma, *mb);
     }
     if (const auto* ta = std::get_if<Table*>(&a)) {
       auto* tb = std::get<Table*>(b);
-      return (*ta)->type == tb->type && (*ta)->initial == tb->initial &&
-             (*ta)->max == tb->max && (*ta)->hasMax() == tb->hasMax() &&
-             (*ta)->is64() == tb->is64();
+      return TableUtils::sameType(**ta, *tb);
     }
     return false;
   };
@@ -445,7 +428,7 @@ void WasmBinaryWriter::writeImports() {
   o << U32LEB(groups.size());
 
   auto writeImportDesc = [&](const ImportItem& item) {
-    std::visit(Overloaded{[&](Function* func) {
+    std::visit(overloaded{[&](Function* func) {
                             uint32_t kind = ExternalKind::Function;
                             if (func->type.isExact()) {
                               kind |= BinaryConsts::ExactImport;

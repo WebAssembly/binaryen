@@ -6,7 +6,9 @@ from . import utils
 class CompactImportsTest(utils.BinaryenTestCase):
     def get_binary(self, wat_str, flags=[]):
         cmd = shared.WASM_OPT + ['--print-features', '-o', '-'] + flags
-        p = shared.run_process(cmd, input=wat_str, check=True, capture_output=True)
+        p = shared.run_process(
+            cmd, input=wat_str, check=True, capture_output=True, decode_output=False
+        )
         return p.stdout.encode('latin1') if isinstance(p.stdout, str) else p.stdout
 
     def test_shared_all_encoding(self):
@@ -59,3 +61,15 @@ class CompactImportsTest(utils.BinaryenTestCase):
         self.assertIn(b'\x03env\x00\x7e', wasm_bytes)
         self.assertIn(b'\x04math\x00\x7f', wasm_bytes)
         self.assertIn(b'\x06single\x02m1', wasm_bytes)
+
+    def test_identical_imports_size_reduction(self):
+        imports = '\n'.join(['(import "env" "f" (func (type $sig)))'] * 1000)
+        wat = f'''(module
+            (type $sig (func (param i32) (result i32)))
+            {imports}
+        )'''
+        with_compact = self.get_binary(wat, ['--enable-compact-imports'])
+        without_compact = self.get_binary(wat, ['--disable-compact-imports'])
+        self.assertEqual(len(with_compact), 2098)
+        self.assertEqual(len(without_compact), 8064)
+
