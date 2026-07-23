@@ -287,7 +287,17 @@ bool Matcher::checkUnorderedInternal(const AndedConstraintSets& a, const AndedCo
         return false;
       }
 
-      
+      if (auto iter = varTermMap.find(&pattern.term);
+          iter != varTermMap.end()) {
+        // The Var in the pattern is already mapped and known. The input here
+        // must match the prior appearance.
+        if (input[i].term != iter->second) {
+          return false;
+        }
+      } else {
+        // This is a new Var.
+        varTermMap[&pattern.term] = input[i].term;
+      }
     }
     return true;
   };
