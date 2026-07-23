@@ -237,12 +237,15 @@ struct Matcher {
 
   // Check if the pattern matches given inputs. The order of the inputs does not
   // matter.
-  bool checkUnordered(const AndedConstraintSets& a, const AndedConstraintSets& constraints b) {
+  bool checkUnordered(const AndedConstraintSets& a,
+                      const AndedConstraintSets& constraints b) {
     return checkUnorderedInternal(a, b);
   }
 
 private:
-  bool checkUnorderedInternal(const AndedConstraintSets& a, const AndedConstraintSets& constraints b, bool flipped = false);
+  bool checkUnorderedInternal(const AndedConstraintSets& a,
+                              const AndedConstraintSets& constraints b,
+                              bool flipped = false);
 
   const MatcherSet& ms1;
   const MatcherSet& ms2;
@@ -256,14 +259,16 @@ private:
   SmallVector<Requirement, 2> requirements;
 };
 
-Matcher::Matcher(const MatcherSet& ms1, const MatcherSet& ms2) : ms1(ms1), ms2(ms2) {
-}
+Matcher::Matcher(const MatcherSet& ms1, const MatcherSet& ms2)
+  : ms1(ms1), ms2(ms2) {}
 
 Matcher& Matcher::require(Var& a, Abstract::Op op, Var& b) {
   requirements.push_back({&a, op, &b});
 }
 
-bool Matcher::checkUnorderedInternal(const AndedConstraintSets& a, const AndedConstraintSets& constraints b, bool flipped) {
+bool Matcher::checkUnorderedInternal(const AndedConstraintSets& a,
+                                     const AndedConstraintSets& constraints b,
+                                     bool flipped) {
   auto returnFalse = [&]() {
     // Before returning false, see if the flipped inputs match, if we didn't
     // already try that.
@@ -311,7 +316,8 @@ bool Matcher::checkUnorderedInternal(const AndedConstraintSets& a, const AndedCo
     auto bTerm = varTermMap[b];
 
     // Check if { x == a } proves { x op b } is true.
-    if (provesPair(Constraint{Abstract::Eq, aTerm}, Constraint{op, bTerm}) != True) {
+    if (provesPair(Constraint{Abstract::Eq, aTerm}, Constraint{op, bTerm}) !=
+        True) {
       return returnFalse();
     }
   }
@@ -334,10 +340,11 @@ std::optional<bool> approximateOrDisjoint(AndedConstraintSet& self,
   //   { x == A } || { x > A && x <= B } , A <= B   ===   { x >= A && X <= B }
   //
   Var A, B;
-  if (M().set(MC(Abstract::Eq, A))
-         .set(MC(Abstract::GtS, A), MC(Abstract::LeS, B))
-         .require(A, LeS, B)
-         .check(self, other)) {
+  if (M()
+        .set(MC(Abstract::Eq, A))
+        .set(MC(Abstract::GtS, A), MC(Abstract::LeS, B))
+        .require(A, LeS, B)
+        .check(self, other)) {
   }
 
   // Otherwise, we have no idea.
