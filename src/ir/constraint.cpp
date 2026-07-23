@@ -222,7 +222,7 @@ struct MatcherConstraint {
 
 // A matcher AndedConstraintSet, which abstracts over the normal one to support
 // MatcherConstraints.
-using MatcherSet = public inplace_vector<MatcherConstraint, MaxConstraints>;
+using MatcherSet = inplace_vector<MatcherConstraint, MaxConstraints>;
 
 // A matcher object. This pattern-matches over AndedConstraintSets, in a way
 // that follows the rules of logic.
@@ -237,14 +237,14 @@ struct Matcher {
 
   // Check if the pattern matches given inputs. The order of the inputs does not
   // matter.
-  bool checkUnordered(const AndedConstraintSets& a,
-                      const AndedConstraintSets& constraints b) {
+  bool checkUnordered(const AndedConstraintSet& a,
+                      const AndedConstraintSet& b) {
     return checkUnorderedInternal(a, b);
   }
 
 private:
-  bool checkUnorderedInternal(const AndedConstraintSets& a,
-                              const AndedConstraintSets& constraints b,
+  bool checkUnorderedInternal(const AndedConstraintSet& a,
+                              const AndedConstraintSet& b,
                               bool flipped = false);
 
   const MatcherSet& ms1;
@@ -264,10 +264,11 @@ Matcher::Matcher(const MatcherSet& ms1, const MatcherSet& ms2)
 
 Matcher& Matcher::require(Var& a, Abstract::Op op, Var& b) {
   requirements.push_back({&a, op, &b});
+  return *this;
 }
 
-bool Matcher::checkUnorderedInternal(const AndedConstraintSets& a,
-                                     const AndedConstraintSets& constraints b,
+bool Matcher::checkUnorderedInternal(const AndedConstraintSet& a,
+                                     const AndedConstraintSet& b,
                                      bool flipped) {
   auto returnFalse = [&]() {
     // Before returning false, see if the flipped inputs match, if we didn't
@@ -294,7 +295,7 @@ bool Matcher::checkUnorderedInternal(const AndedConstraintSets& a,
       }
 
       // The term must match, or define a new unknown value.
-      auto [iter, inserted] = varTermMap.insert({&pattern.term, input[i].term});
+      auto [iter, inserted] = varTermMap.insert({&pattern[i].term, input[i].term});
       if (inserted) {
         // The Var in the pattern is already mapped and known. The input here
         // must match the prior appearance.
