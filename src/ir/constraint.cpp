@@ -357,7 +357,7 @@ std::optional<bool> approximateOrDisjoint(AndedConstraintSet& self,
   using MC = MatcherConstraint;
   using namespace Abstract;
 
-std::cout << self << " OR " << other << '\n';
+  std::cout << self << " OR " << other << '\n';
 
   // Simple range fusing, add an equality to turn > into >= :
   //
@@ -373,7 +373,7 @@ std::cout << self << " OR " << other << '\n';
       self = other;
     }
     self[0].op = GeS;
-std::cout << "MATACHHH\n";
+    std::cout << "MATACHHH\n";
     return true;
   }
 
