@@ -277,6 +277,8 @@ TEST(ConstraintTest, TestOrOrDisjoint) {
   AndedConstraintSet left7{Constraint{Eq, {Literal(int32_t(7))}}};
   checkOr(left7, right, right);
 
+  // Change 5 on the left to 4. Now we fail to find anything.
+  AndedConstraintSet left4{Constraint{Eq, {Literal(int32_t(4))}}};
   AndedConstraintSet empty{};
-  empty.setProvesNothing();
+  checkOr(left7, right, empty);
 }
