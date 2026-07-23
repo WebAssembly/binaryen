@@ -344,7 +344,8 @@ std::optional<bool> approximateOrDisjoint(AndedConstraintSet& self,
   Var A, B;
   if (Matcher({MC(Eq, A)}, {MC(GtS, A), MC(LeS, B)})
         .require(A, LeS, B)
-        .check(self, other)) {
+        .checkUnordered(self, other)) {
+    // ..
   }
 
   // Otherwise, we have no idea.
