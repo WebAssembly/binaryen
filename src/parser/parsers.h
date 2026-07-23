@@ -3454,30 +3454,49 @@ template<typename Ctx> MaybeResult<> import_(Ctx& ctx) {
     CHECK_ERR(use);
     auto [type, exact] = *use;
     // TODO: function import annotations
-    CHECK_ERR(ctx.addFunc(
-      name ? *name : Name{}, {}, &names, type, exact, std::nullopt, {}, pos));
+    CHECK_ERR(ctx.addFunc(name ? *name : Name{},
+                          {},
+                          &names,
+                          type,
+                          exact,
+                          std::nullopt,
+                          {},
+                          pos,
+                          DefKind::ImportDesc));
   } else if (ctx.in.takeSExprStart("table"sv)) {
     auto name = ctx.in.takeID();
     auto type = tabletype(ctx);
     CHECK_ERR(type);
-    CHECK_ERR(ctx.addTable(
-      name ? *name : Name{}, {}, &names, *type, std::nullopt, pos));
+    CHECK_ERR(ctx.addTable(name ? *name : Name{},
+                           {},
+                           &names,
+                           *type,
+                           std::nullopt,
+                           pos,
+                           DefKind::ImportDesc));
   } else if (ctx.in.takeSExprStart("memory"sv)) {
     auto name = ctx.in.takeID();
     auto type = memtype(ctx);
     CHECK_ERR(type);
-    CHECK_ERR(ctx.addMemory(name ? *name : Name{}, {}, &names, *type, pos));
+    CHECK_ERR(ctx.addMemory(
+      name ? *name : Name{}, {}, &names, *type, pos, DefKind::ImportDesc));
   } else if (ctx.in.takeSExprStart("global"sv)) {
     auto name = ctx.in.takeID();
     auto type = globaltype(ctx);
     CHECK_ERR(type);
-    CHECK_ERR(ctx.addGlobal(
-      name ? *name : Name{}, {}, &names, *type, std::nullopt, pos));
+    CHECK_ERR(ctx.addGlobal(name ? *name : Name{},
+                            {},
+                            &names,
+                            *type,
+                            std::nullopt,
+                            pos,
+                            DefKind::ImportDesc));
   } else if (ctx.in.takeSExprStart("tag"sv)) {
     auto name = ctx.in.takeID();
     auto type = typeuse(ctx);
     CHECK_ERR(type);
-    CHECK_ERR(ctx.addTag(name ? *name : Name{}, {}, &names, *type, pos));
+    CHECK_ERR(ctx.addTag(
+      name ? *name : Name{}, {}, &names, *type, pos, DefKind::ImportDesc));
   } else {
     return ctx.in.err("expected import description");
   }
@@ -3551,7 +3570,8 @@ template<typename Ctx> MaybeResult<> func(Ctx& ctx) {
                         exact,
                         localVars,
                         std::move(annotations),
-                        pos));
+                        pos,
+                        DefKind::Definition));
   return Ok{};
 }
 
@@ -3640,7 +3660,8 @@ template<typename Ctx> MaybeResult<> table(Ctx& ctx) {
     return ctx.in.err("expected end of table declaration");
   }
 
-  CHECK_ERR(ctx.addTable(name, *exports, import.getPtr(), *ttype, init, pos));
+  CHECK_ERR(ctx.addTable(
+    name, *exports, import.getPtr(), *ttype, init, pos, DefKind::Definition));
 
   if (elems) {
     CHECK_ERR(ctx.addImplicitElems(*type, std::move(*elems)));
@@ -3711,7 +3732,8 @@ template<typename Ctx> MaybeResult<> memory(Ctx& ctx) {
     return ctx.in.err("expected end of memory declaration");
   }
 
-  CHECK_ERR(ctx.addMemory(name, *exports, import.getPtr(), *mtype, pos));
+  CHECK_ERR(ctx.addMemory(
+    name, *exports, import.getPtr(), *mtype, pos, DefKind::Definition));
 
   if (data) {
     CHECK_ERR(ctx.addImplicitData(std::move(*data)));
@@ -3754,7 +3776,8 @@ template<typename Ctx> MaybeResult<> global(Ctx& ctx) {
     return ctx.in.err("expected end of global");
   }
 
-  CHECK_ERR(ctx.addGlobal(name, *exports, import.getPtr(), *type, exp, pos));
+  CHECK_ERR(ctx.addGlobal(
+    name, *exports, import.getPtr(), *type, exp, pos, DefKind::Definition));
   return Ok{};
 }
 
@@ -4027,7 +4050,8 @@ template<typename Ctx> MaybeResult<> tag(Ctx& ctx) {
     return ctx.in.err("expected end of tag");
   }
 
-  CHECK_ERR(ctx.addTag(name, *exports, import.getPtr(), *type, pos));
+  CHECK_ERR(ctx.addTag(
+    name, *exports, import.getPtr(), *type, pos, DefKind::Definition));
   return Ok{};
 }
 
