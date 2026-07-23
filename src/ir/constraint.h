@@ -93,10 +93,11 @@ struct AndedConstraintSet : inplace_vector<Constraint, MaxConstraints> {
   bool isContradiction = true;
 
   AndedConstraintSet() = default;
-  AndedConstraintSet(std::initializer_list<Constraint> constraints)
-    : inplace_vector<Constraint, MaxConstraints>(constraints),
-      isContradiction(false) {
-    std::sort(begin(), end());
+  AndedConstraintSet(std::initializer_list<Constraint> constraints) {
+    isContradiction = false;
+    for (auto& c : constraints) {
+      approximateAnd(c);
+    }
   }
 
   // Proving everything (even contradictions) is equivalent to being a

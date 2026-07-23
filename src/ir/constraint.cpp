@@ -377,6 +377,7 @@ std::optional<bool> approximateOrDisjoint(AndedConstraintSet& self,
     Term bValue = (*result)[B];
     self = AndedConstraintSet({{GeS, aValue}, {LeS, bValue}});
     return true;
+    // TODO: unsigned etc.
   }
 
   // Otherwise, we have no idea.

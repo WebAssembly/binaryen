@@ -240,5 +240,17 @@ TEST(ConstraintTest, TestDeredundancy) {
   EXPECT_EQ(t[0], eq0);
 }
 
-// TODO: test an approximateOr of { x = 10 } and { x >= 0 }, once we support
-//       inequalities
+TEST(ConstraintTest, TestOrInequality) {
+  // x == 5 || x >= 0  =>  x >= 0
+  AndedConstraintSet eq5{Constraint{Eq, {Literal(int32_t(5))}}};
+  AndedConstraintSet ge0{Constraint{GeU, {Literal(int32_t(0))}}};
+
+  auto ored = eq5;
+  ored.approximateOr(ge0);
+  EXPECT_EQ(ored, ge0);
+
+  ored = ge0;
+  ored.approximateOr(eq5);
+  EXPECT_EQ(ored, ge0);
+}
+
