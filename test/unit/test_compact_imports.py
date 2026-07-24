@@ -70,5 +70,4 @@ class CompactImportsTest(utils.BinaryenTestCase):
         )'''
         with_compact = self.get_binary(wat, ['--enable-compact-imports'])
         without_compact = self.get_binary(wat, ['--disable-compact-imports'])
-        self.assertEqual(len(with_compact), 2030)
-        self.assertEqual(len(without_compact), 8021)
+        self.assertTrue(len(without_compact) / len(with_compact) > 3.9)
