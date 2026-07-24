@@ -162,7 +162,7 @@
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (i32.le_s
   ;; CHECK-NEXT:     (local.get $x)
-  ;; CHECK-NEXT:     (i32.const 100)
+  ;; CHECK-NEXT:     (local.get $p)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (local.set $x
@@ -189,12 +189,9 @@
   ;; CHECK-NEXT: )
   (func $bound-nonconstant-no (param $p i32)
     (local $x i32)
-    ;; As above, but rather than zero we have an unknown param $p. We can't
-    ;; optimize since we don't know how $p relates to 100: if $p is negative,
-    ;; we have something like {x == 200} || {x > 200 && x <= 100}. The RHS is
-    ;; a contradiction (at runtime), and we don't want to get into the
-    ;; complexity of reasoning about such things, so we do not optimize here.
+    ;; As above, but rather than zero we have an unknown param $p.
     (loop $loop
+      ;; We can infer nothing here, as p is unknown, and x might be 0 or <= 100.
       (drop
         (i32.ge_s
           (local.get $x)
@@ -204,7 +201,7 @@
       (drop
         (i32.le_s
           (local.get $x)
-          (i32.const 100)
+          (local.get $p)
         )
       )
       (local.set $x
