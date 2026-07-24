@@ -209,8 +209,8 @@ namespace {
 
 // Do an OR of a pair of constraints where the terms are known to be equal. If
 // we can't find a good way to express their ORing, return nullopt.
-std::optional<Constraint> approximateOrTermedPair(const Constraint& a,
-                                                  const Constraint& b) {
+std::optional<Constraint> approximateOrTermEqualPair(const Constraint& a,
+                                                     const Constraint& b) {
   using namespace Abstract;
 
   // x == C || x > C  ===  x >= C
@@ -221,14 +221,58 @@ std::optional<Constraint> approximateOrTermedPair(const Constraint& a,
   return {};
 }
 
+std::optional<Constraint> approximateOrConstantPair(Abstract::Op aOp,
+                          const Literal& aConstant,
+                          Abstract::Op bOp,
+                          const Literal& bConstant) {
+  // a == A =?=> a op B. Simply apply A to the operation against B.
+  if (aOp == Abstract::Eq) {
+XXX
+    switch (bOp) {
+      case Abstract::Eq:
+        return TrueFalse(aConstant == bConstant);
+      case Abstract::Ne:
+        return TrueFalse(aConstant != bConstant);
+      case Abstract::LtS:
+        return TrueFalse(aConstant.ltS(bConstant));
+      case Abstract::LeS:
+        return TrueFalse(aConstant.leS(bConstant));
+      case Abstract::GtS:
+        return TrueFalse(aConstant.gtS(bConstant));
+      case Abstract::GeS:
+        return TrueFalse(aConstant.geS(bConstant));
+      case Abstract::LtU:
+        return TrueFalse(aConstant.ltU(bConstant));
+      case Abstract::LeU:
+        return TrueFalse(aConstant.leU(bConstant));
+      case Abstract::GtU:
+        return TrueFalse(aConstant.gtU(bConstant));
+      case Abstract::GeU:
+        return TrueFalse(aConstant.geU(bConstant));
+      default: {
+      }
+    }
+  }
+
+}
+
 // Do an OR of a pair of constraints. If we can't find a good way to express
 // their ORing, return nullopt.
 std::optional<Constraint> approximateOrPair(const Constraint& a,
                                             const Constraint& b,
                                             bool recursing = false) {
   if (a.term == b.term) {
-    if (auto result = approximateOrTermedPair(a, b)) {
+    if (auto result = approximateOrTermEqualPair(a, b)) {
       return result;
+    }
+  }
+
+  if (auto* ac = std::get_if<Literal>(&a.term)) {
+    if (auto* bc = std::get_if<Literal>(&b.term)) {
+      // If a proves b, e.g. x = 5 proves x >= 0 is true, then the OR is b.
+      if (provesConstantPair(a.op, *ac, b.op, *bc) == True) {
+        return b;
+      }
     }
   }
 
