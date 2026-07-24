@@ -272,20 +272,18 @@ TEST(ConstraintTest, TestOrLoop) {
   // Check common loop patterns:
   // { x == A } || { x > A && x <= B }   ==>   { x >= A && x <= B }
 
+  // { x == 5 } || { x > 5 && x <= 42 }   ==>   { x > 5 }
   AndedConstraintSet left{Constraint{Eq, {Literal(int32_t(5))}}};
-
   AndedConstraintSet right(
     {{GtS, {Literal(int32_t(5))}}, {LeS, {Literal(int32_t(42))}}});
-
   AndedConstraintSet result(
     {{GeS, {Literal(int32_t(5))}}, {LeS, {Literal(int32_t(42))}}});
-
   checkOr(left, right, result);
 
   // Changes to constants:
 
-  // Change 5 on the left to 7. 7 is in the range on the right, so we end up
-  // with the right.
+  // Change 5 on the left to 7:
+  // { x == 7 } || { x > 5 && x <= 42 }   ==>   { x > 5 }
   AndedConstraintSet left7{Constraint{Eq, {Literal(int32_t(7))}}};
   checkOr(left7, right, right);
 
@@ -301,17 +299,18 @@ TEST(ConstraintTest, TestOrLoop) {
   AndedConstraintSet rightOnly42({{LeS, {Literal(int32_t(42))}}});
   checkOr(left4, right, rightOnly42);
 
-  // Change 5 on the right to 6. We fail.
+  // Change 5 on the right to 6:
+  // { x == 5 } || { x > 6 && x <= 42 }   ==>   { x <= 42 }
   AndedConstraintSet right6(
     {{GtS, {Literal(int32_t(6))}}, {LeS, {Literal(int32_t(42))}}});
-  AndedConstraintSet empty;
-  empty.setProvesNothing();
-  checkOr(left, right6, empty);
+  checkOr(left, right6, rightOnly42);
 
   // Changes to operations:
 
   // Change the Eq on the left to Ne. We fail.
   AndedConstraintSet leftNe{Constraint{Ne, {Literal(int32_t(5))}}};
+  AndedConstraintSet empty;
+  empty.setProvesNothing();
   checkOr(leftNe, right, empty);
 
   // Change the GtS on the right to GtU. We fail.
