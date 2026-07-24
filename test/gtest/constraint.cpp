@@ -243,6 +243,7 @@ TEST(ConstraintTest, TestDeredundancy) {
 static void checkOr(const AndedConstraintSet& a,
                     const AndedConstraintSet& b,
                     const AndedConstraintSet& result) {
+std::cout << "checkOr " << a << " || " << b << '\n';
   auto ored = a;
   ored.approximateOr(b);
   EXPECT_EQ(ored, result);
@@ -257,10 +258,19 @@ TEST(ConstraintTest, TestOrInequality) {
   AndedConstraintSet eq5{Constraint{Eq, {Literal(int32_t(5))}}};
   AndedConstraintSet ge0{Constraint{GeU, {Literal(int32_t(0))}}};
   checkOr(eq5, ge0, ge0);
+
+  // x == 5 || x > 5  =>  x >= 5
+  AndedConstraintSet gts5{Constraint{GtS, {Literal(int32_t(5))}}};
+  AndedConstraintSet ges5{Constraint{GeS, {Literal(int32_t(5))}}};
+  checkOr(eq5, gts5, ges5);
+
+  // x == 5 || x >= 5  =>  x >= 5
+  checkOr(eq5, ges5, ges5);
 }
 
-TEST(ConstraintTest, TestOrOrDisjoint) {
-  // { x == A } || { x > A && x <= B } , A < B   ==>   { x >= A && x <= B }
+TEST(ConstraintTest, TestOrLoop) {
+  // Check common loop patterns:
+  // { x == A } || { x > A && x <= B }   ==>   { x >= A && x <= B }
 
   AndedConstraintSet left{Constraint{Eq, {Literal(int32_t(5))}}};
 

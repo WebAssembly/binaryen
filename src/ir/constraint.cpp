@@ -236,8 +236,10 @@ std::optional<Constraint> approximateOrPair(const Constraint& a,
 
   if (!recursing) {
     // The flipped form may be recognized.
-    return approximateOrPair(b, a);
+    return approximateOrPair(b, a, true);
   }
+
+  return {};
 }
 
 // Do an OR in full detail, looking at every constraint in each of the given
@@ -250,12 +252,16 @@ AndedConstraintSet detailedApproximateOr(const AndedConstraintSet& a,
   // (A & B) | (C & D) == ((A & B) | C) & ((A & B) | D)
   //                   == (A | C) & (B | C) & (A | D) & (B | D)
   //
+  // This is quadratic, but constraint sets are limited to a very small size,
+  // making this reasonable.
+  //
   // Also, note that we don't need to worry about new contradictions here: ORing
   // things never leads to a contradiction, and we can assume the inputs are
   // not contradictions.
   assert(!a.provesEverything() && !b.provesEverything());
 
   AndedConstraintSet result;
+  result.setProvesNothing();
   for (auto& ac : a) {
     for (auto& bc : b) {
       if (auto combined = approximateOrPair(ac, bc)) {
