@@ -271,7 +271,7 @@ TEST(ConstraintTest, TestOrLoop) {
   // Check common loop patterns:
   // { x == A } || { x > A && x <= B }   ==>   { x >= A && x <= B }
 
-  // { x == 5 } || { x > 5 && x <= 42 }   ==>   { x > 5 }
+  // { x == 5 } || { x > 5 && x <= 42 }   ==>   { x >= 5 && x <= 42 }
   AndedConstraintSet left{Constraint{Eq, {Literal(int32_t(5))}}};
   AndedConstraintSet right(
     {{GtS, {Literal(int32_t(5))}}, {LeS, {Literal(int32_t(42))}}});
