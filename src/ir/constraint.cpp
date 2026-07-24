@@ -207,6 +207,38 @@ void AndedConstraintSet::approximateAnd(const Constraint& c) {
 
 namespace {
 
+// Do an OR of a pair of constraints where the terms are known to be equal. If
+// we can't find a good way to express their ORing, return nullopt.
+std::optional<Constraint> approximateOrTermedPair(const Constraint& a, const Constraint &b) {
+  using namespace Abstract;
+
+  // x == C || x > C  ===  x >= C
+  if (a.op == Eq && b.op == GtS) {
+    return Constraint{GeS, a.term};
+  }
+
+  return {};
+}
+
+// Do an OR of a pair of constraints. If we can't find a good way to express
+// their ORing, return nullopt.
+std::optional<Constraint> approximateOrPair(const Constraint& a, const Constraint &b, bool recursing = false) {
+  if (a.term == b.term) {
+    if (auto result = approximateOrTermedPair(a, b)) {
+      return result;
+    }
+  }
+
+  // TODO: more smarts
+
+  if (!recursing) {
+    // The flipped form may be recognized.
+    return approximateOrPair(b, a);
+  }
+}
+
+// Do an OR in full detail, looking at every constraint in each of the given
+// sets.
 AndedConstraintSet detailedApproximateOr(const AndedConstraintSet& a, const AndedConstraintSet& b) {
   // We can process this in full detail by looking at all the combinations of
   // individual constraints, because of the distributive property:
@@ -219,6 +251,16 @@ AndedConstraintSet detailedApproximateOr(const AndedConstraintSet& a, const Ande
   // not contradictions.
   assert(!a.provesEverything() && !b.provesEverything());
 
+  AndedConstraintSet result;
+  for (auto& ac : a) {
+    for (auto& bc : b) {
+      if (auto combined = approximateOrPair(ac, bc)) {
+        // We found something useful by ORing them, keep it.
+        result.approximateAnd(*combined);
+      }
+    }
+  }
+  return result;
 }
 
 } // anonymous namespace
