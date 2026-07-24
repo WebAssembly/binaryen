@@ -4,7 +4,7 @@ from . import utils
 
 
 class CompactImportsTest(utils.BinaryenTestCase):
-    def get_binary(self, wat_str, flags=[]):
+    def get_binary(self, wat_str, flags):
         cmd = shared.WASM_OPT + ['-o', '-'] + flags
         p = shared.run_process(
             cmd, input=wat_str, check=True, capture_output=True, decode_output=False,
