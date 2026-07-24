@@ -403,7 +403,12 @@ TEST(ConstraintTest, TestAndLoop) {
   checkAnd(ley, lty, lty);
 
   // A non-constant with extra info.
-  // x <= y && x < y && x != 42  =>  x < y && x != 42
+  // { x <= y && x != 42 } && x < y  =>  x < y && x != 42
   Constraint ne42{Ne, {Literal(int32_t(42))}};
   checkAnd({ley[0], ne42}, lty, {lty[0], ne42});
+
+  // Extra info on the other side, same result.
+  // x <= y && { x < y && x != 42 }  =>  x < y && x != 42
+  Constraint ne42{Ne, {Literal(int32_t(42))}};
+  checkAnd(ley, {lty[0], ne42}, {lty[0], ne42});
 }
