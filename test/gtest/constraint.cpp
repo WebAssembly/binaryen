@@ -243,7 +243,6 @@ TEST(ConstraintTest, TestDeredundancy) {
 static void checkOr(const AndedConstraintSet& a,
                     const AndedConstraintSet& b,
                     const AndedConstraintSet& result) {
-std::cout << "checkOr " << a << " || " << b << '\n';
   auto ored = a;
   ored.approximateOr(b);
   EXPECT_EQ(ored, result);
