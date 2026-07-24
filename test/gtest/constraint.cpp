@@ -400,4 +400,9 @@ TEST(ConstraintTest, TestAndLoop) {
   AndedConstraintSet ley{{LeS, {Index(1)}}};
   AndedConstraintSet lty{{LtS, {Index(1)}}};
   checkAnd(ley, lty, lty);
+
+  // A non-constant with extra info.
+  // x <= y && x < y && x != 42  =>  x < y && x != 42
+  Constraint ne42{Ne, {Literal(int32_t(42))}};
+  checkAnd({ley[0], ne42}, lty, {lty[0], ne42});
 }
