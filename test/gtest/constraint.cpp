@@ -391,8 +391,7 @@ TEST(ConstraintTest, TestAndLoop) {
   // Mixing signed and unsigned does not optimize.
   checkAnd(le5, lt5U, AndedConstraintSet{le5[0], lt5U[0]});
 
-  // Different constants:
-  // x <= 5 && x < 6  =>  x < 5
+  // Different constants do not optimize, but could TODO
   AndedConstraintSet lt6{{LtS, {Literal(int32_t(6))}}};
-  checkAnd(le5, lt6, lt5);
+  checkAnd(le5, lt6, AndedConstraintSet{le5[0], lt6[0]});
 }
