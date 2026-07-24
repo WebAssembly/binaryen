@@ -326,7 +326,7 @@ TEST(ConstraintTest, TestOrLoop) {
   checkOr(left, rightLeU, rightGesLeU);
 
   // Add an operation on the right, x != 21:
-  // { x == 5 } || { x >  5 && x <= 42 && x != 21 }   ==>  
+  // { x == 5 } || { x >  5 && x <= 42 && x != 21 }   ==>
   //               { x >= 5 && x <= 42 && x != 21 }
   AndedConstraintSet rightAdded({{GtS, {Literal(int32_t(5))}},
                                  {LeS, {Literal(int32_t(42))}},
