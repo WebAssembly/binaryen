@@ -382,5 +382,4 @@ TEST(ConstraintTest, TestAndLoop) {
   AndedConstraintSet le5{{LeS, {Literal(int32_t(5))}}};
   AndedConstraintSet lt5{{LtS, {Literal(int32_t(5))}}};
   checkAnd(le5, lt5, lt5);
-
 }
