@@ -166,9 +166,7 @@ namespace {
 
 // Do an AND on a pair of constraints, looking for a way to fuse them together
 // into a single constraint that represents them both, while assuming the
-// constraints have an equal term.
-//
-// If we fail, return nullopt.
+// constraints have an equal term. If we fail, return nullopt.
 std::optional<Constraint> fusedApproximateAndTermEqualPair(
   const Abstract::Op aOp, const Abstract::Op bOp, const Term& term) {
   using namespace Abstract;
@@ -197,7 +195,6 @@ std::optional<Constraint> fusedApproximateAndPair(const Constraint& a,
     return a;
   }
 
-  // Pattern match important cases.
   if (a.term == b.term) {
     if (auto result = fusedApproximateAndTermEqualPair(a.op, b.op, a.term)) {
       return result;
