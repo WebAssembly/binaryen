@@ -394,4 +394,10 @@ TEST(ConstraintTest, TestAndLoop) {
   // Different constants do not optimize, but could TODO
   AndedConstraintSet lt6{{LtS, {Literal(int32_t(6))}}};
   checkAnd(le5, lt6, AndedConstraintSet{le5[0], lt6[0]});
+
+  // A non-constant.
+  // x <= y && x < y  =>  x < y
+  AndedConstraintSet ley{{LeS, {Index(1)}}};
+  AndedConstraintSet lty{{LtS, {Index(1)}}};
+  checkAnd(ley, lty, lty);
 }
