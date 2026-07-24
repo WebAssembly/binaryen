@@ -209,7 +209,8 @@ namespace {
 
 // Do an OR of a pair of constraints where the terms are known to be equal. If
 // we can't find a good way to express their ORing, return nullopt.
-std::optional<Constraint> approximateOrTermedPair(const Constraint& a, const Constraint &b) {
+std::optional<Constraint> approximateOrTermedPair(const Constraint& a,
+                                                  const Constraint& b) {
   using namespace Abstract;
 
   // x == C || x > C  ===  x >= C
@@ -222,7 +223,9 @@ std::optional<Constraint> approximateOrTermedPair(const Constraint& a, const Con
 
 // Do an OR of a pair of constraints. If we can't find a good way to express
 // their ORing, return nullopt.
-std::optional<Constraint> approximateOrPair(const Constraint& a, const Constraint &b, bool recursing = false) {
+std::optional<Constraint> approximateOrPair(const Constraint& a,
+                                            const Constraint& b,
+                                            bool recursing = false) {
   if (a.term == b.term) {
     if (auto result = approximateOrTermedPair(a, b)) {
       return result;
@@ -239,7 +242,8 @@ std::optional<Constraint> approximateOrPair(const Constraint& a, const Constrain
 
 // Do an OR in full detail, looking at every constraint in each of the given
 // sets.
-AndedConstraintSet detailedApproximateOr(const AndedConstraintSet& a, const AndedConstraintSet& b) {
+AndedConstraintSet detailedApproximateOr(const AndedConstraintSet& a,
+                                         const AndedConstraintSet& b) {
   // We can process this in full detail by looking at all the combinations of
   // individual constraints, because of the distributive property:
   //
