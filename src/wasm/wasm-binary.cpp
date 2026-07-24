@@ -355,30 +355,18 @@ void WasmBinaryWriter::writeImports() {
   };
 
   auto shareImportType = [&](const ImportItem& a, const ImportItem& b) -> bool {
-    if (a.index() != b.index()) {
-      return false;
-    }
-    if (const auto* fa = std::get_if<Function*>(&a)) {
-      auto* fb = std::get<Function*>(b);
-      return (*fa)->type == fb->type;
-    }
-    if (const auto* ga = std::get_if<Global*>(&a)) {
-      auto* gb = std::get<Global*>(b);
-      return (*ga)->type == gb->type && (*ga)->mutable_ == gb->mutable_;
-    }
-    if (const auto* ta = std::get_if<Tag*>(&a)) {
-      auto* tb = std::get<Tag*>(b);
-      return (*ta)->type == tb->type;
-    }
-    if (const auto* ma = std::get_if<Memory*>(&a)) {
-      auto* mb = std::get<Memory*>(b);
-      return MemoryUtils::sameType(**ma, *mb);
-    }
-    if (const auto* ta = std::get_if<Table*>(&a)) {
-      auto* tb = std::get<Table*>(b);
-      return TableUtils::sameType(**ta, *tb);
-    }
-    return false;
+    return std::visit(
+      overloaded{
+        [](Function* a, Function* b) { return a->type == b->type; },
+        [](Global* a, Global* b) {
+          return a->type == b->type && a->mutable_ == b->mutable_;
+        },
+        [](Tag* a, Tag* b) { return a->type == b->type; },
+        [](Memory* a, Memory* b) { return MemoryUtils::sameType(*a, *b); },
+        [](Table* a, Table* b) { return TableUtils::sameType(*a, *b); },
+        [](const auto& a, const auto& b) { return false; }},
+      a,
+      b);
   };
 
   struct ImportGroup {
