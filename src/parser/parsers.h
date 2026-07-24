@@ -393,6 +393,8 @@ template<typename Ctx> Result<> subtype(Ctx&);
 template<typename Ctx> MaybeResult<> typedef_(Ctx&);
 template<typename Ctx> MaybeResult<> rectype(Ctx&);
 template<typename Ctx> MaybeResult<typename Ctx::LocalsT> locals(Ctx&);
+template<typename Ctx>
+Result<> importdesc(Ctx&, Name, Name, std::optional<Name>);
 template<typename Ctx> MaybeResult<> import_(Ctx&);
 template<typename Ctx> MaybeResult<> func(Ctx&);
 template<typename Ctx> MaybeResult<> table(Ctx&);
@@ -3442,37 +3444,30 @@ template<typename Ctx> MaybeResult<typename Ctx::LocalsT> locals(Ctx& ctx) {
   return {};
 }
 
-// import ::= '(' 'import' mod:name nm:name importdesc ')'
 // importdesc ::= '(' 'func' id? exacttypeuse ')'
 //              | '(' 'table' id? tabletype ')'
 //              | '(' 'memory' id? memtype ')'
 //              | '(' 'global' id? globaltype ')'
 //              | '(' 'tag' id? typeuse ')'
-template<typename Ctx> MaybeResult<> import_(Ctx& ctx) {
+template<typename Ctx>
+Result<> importdesc(Ctx& ctx, Name mod, Name nm, std::optional<Name> id) {
   auto pos = ctx.in.getPos();
-
-  if (!ctx.in.takeSExprStart("import"sv)) {
-    return {};
-  }
-
-  auto mod = ctx.in.takeName();
-  if (!mod) {
-    return ctx.in.err("expected import module name");
-  }
-
-  auto nm = ctx.in.takeName();
-  if (!nm) {
-    return ctx.in.err("expected import name");
-  }
-  ImportNames names{*mod, *nm};
-
+  // We only try to parse an ID if `id` is nullopt.
+  auto getID = [&]() {
+    if (id) {
+      return *id;
+    }
+    auto parsed = ctx.in.takeID();
+    return parsed ? *parsed : Name{};
+  };
+  ImportNames names{mod, nm};
   if (ctx.in.takeSExprStart("func"sv)) {
-    auto name = ctx.in.takeID();
+    auto name = getID();
     auto use = exacttypeuse(ctx);
     CHECK_ERR(use);
     auto [type, exact] = *use;
     // TODO: function import annotations
-    CHECK_ERR(ctx.addFunc(name ? *name : Name{},
+    CHECK_ERR(ctx.addFunc(name,
                           {},
                           &names,
                           type,
@@ -3482,39 +3477,27 @@ template<typename Ctx> MaybeResult<> import_(Ctx& ctx) {
                           pos,
                           DefKind::ImportDesc));
   } else if (ctx.in.takeSExprStart("table"sv)) {
-    auto name = ctx.in.takeID();
+    auto name = getID();
     auto type = tabletype(ctx);
     CHECK_ERR(type);
-    CHECK_ERR(ctx.addTable(name ? *name : Name{},
-                           {},
-                           &names,
-                           *type,
-                           std::nullopt,
-                           pos,
-                           DefKind::ImportDesc));
+    CHECK_ERR(ctx.addTable(
+      name, {}, &names, *type, std::nullopt, pos, DefKind::ImportDesc));
   } else if (ctx.in.takeSExprStart("memory"sv)) {
-    auto name = ctx.in.takeID();
+    auto name = getID();
     auto type = memtype(ctx);
     CHECK_ERR(type);
-    CHECK_ERR(ctx.addMemory(
-      name ? *name : Name{}, {}, &names, *type, pos, DefKind::ImportDesc));
+    CHECK_ERR(ctx.addMemory(name, {}, &names, *type, pos, DefKind::ImportDesc));
   } else if (ctx.in.takeSExprStart("global"sv)) {
-    auto name = ctx.in.takeID();
+    auto name = getID();
     auto type = globaltype(ctx);
     CHECK_ERR(type);
-    CHECK_ERR(ctx.addGlobal(name ? *name : Name{},
-                            {},
-                            &names,
-                            *type,
-                            std::nullopt,
-                            pos,
-                            DefKind::ImportDesc));
+    CHECK_ERR(ctx.addGlobal(
+      name, {}, &names, *type, std::nullopt, pos, DefKind::ImportDesc));
   } else if (ctx.in.takeSExprStart("tag"sv)) {
-    auto name = ctx.in.takeID();
+    auto name = getID();
     auto type = typeuse(ctx);
     CHECK_ERR(type);
-    CHECK_ERR(ctx.addTag(
-      name ? *name : Name{}, {}, &names, *type, pos, DefKind::ImportDesc));
+    CHECK_ERR(ctx.addTag(name, {}, &names, *type, pos, DefKind::ImportDesc));
   } else {
     return ctx.in.err("expected import description");
   }
@@ -3522,6 +3505,75 @@ template<typename Ctx> MaybeResult<> import_(Ctx& ctx) {
   if (!ctx.in.takeRParen()) {
     return ctx.in.err("expected end of import description");
   }
+  return Ok{};
+}
+
+// import ::= '(' 'import' mod:name nm:name importdesc ')'
+//          | '(' 'import' mod:name (item id? nm:name importdesc)+ ')'
+//          | '(' 'import' mod:name (item id? nm:name)+ importdesc ')'
+template<typename Ctx> MaybeResult<> import_(Ctx& ctx) {
+  if (!ctx.in.takeSExprStart("import"sv)) {
+    return {};
+  }
+
+  auto mod = ctx.in.takeName();
+  if (!mod) {
+    return ctx.in.err("expected import module name");
+  }
+
+  if (auto nm = ctx.in.takeName()) {
+    CHECK_ERR(importdesc(ctx, *mod, *nm, std::nullopt));
+    if (!ctx.in.takeRParen()) {
+      return ctx.in.err("expected end of import");
+    }
+    return Ok{};
+  }
+
+  struct CompactItem {
+    Name id;
+    Name name;
+  };
+  std::vector<CompactItem> items;
+  std::optional<bool> hasSharedImportDesc;
+  while (ctx.in.takeSExprStart("item"sv)) {
+    auto id = ctx.in.takeID();
+    if (!id) {
+      // Do not allow parsing an id in the importdesc.
+      id = Name{};
+    }
+
+    auto nm = ctx.in.takeName();
+    if (!nm) {
+      return ctx.in.err("expected import name");
+    }
+
+    if (!hasSharedImportDesc.has_value()) {
+      hasSharedImportDesc = ctx.in.peekRParen();
+    }
+
+    if (*hasSharedImportDesc) {
+      items.emplace_back(*id, *nm);
+    } else {
+      CHECK_ERR(importdesc(ctx, *mod, *nm, id))
+    }
+
+    if (!ctx.in.takeRParen()) {
+      return ctx.in.err("expected end of import item");
+    }
+  }
+  if (!hasSharedImportDesc.has_value()) {
+    // There were no items.
+    return ctx.in.err("expected import name or item");
+  }
+
+  if (*hasSharedImportDesc) {
+    auto pos = ctx.in.getPos();
+    for (auto item : items) {
+      ctx.in.setPos(pos);
+      CHECK_ERR(importdesc(ctx, *mod, item.name, item.id));
+    }
+  }
+
   if (!ctx.in.takeRParen()) {
     return ctx.in.err("expected end of import");
   }

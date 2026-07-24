@@ -50,8 +50,8 @@ Result<> parseDefinitions(
       CHECK_ERR(ctx.visitFunctionStart(f));
     }
     if (decls.funcDefs[i].kind == DefKind::ImportDesc) {
-      auto im = import_(ctx);
-      assert(im);
+      auto im = importdesc(ctx, Name{}, Name{}, std::nullopt);
+      assert(!im.getErr());
       CHECK_ERR(im);
     } else {
       auto parsed = func(ctx);
