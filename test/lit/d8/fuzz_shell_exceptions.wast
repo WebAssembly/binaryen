@@ -41,7 +41,7 @@
 
 ;; Run in node.
 ;;
-;; RUN: v8 %S/../../../scripts/fuzz_shell.js -- %t.wasm | filecheck %s
+;; RUN: v8 --wasm-compact-imports %S/../../../scripts/fuzz_shell.js -- %t.wasm | filecheck %s
 ;;
 ;; CHECK: [fuzz-exec] export throwing-js
 ;; CHECK: exception thrown: Error: js exception

@@ -18,6 +18,7 @@
 #include <fstream>
 #include <optional>
 
+#include "ir/memory-utils.h"
 #include "ir/module-utils.h"
 #include "ir/names.h"
 #include "ir/table-utils.h"
@@ -26,6 +27,7 @@
 #include "support/bits.h"
 #include "support/stdckdint.h"
 #include "support/string.h"
+#include "support/utilities.h"
 #include "wasm-annotations.h"
 #include "wasm-binary.h"
 #include "wasm-debug.h"
@@ -337,51 +339,172 @@ void WasmBinaryWriter::writeImports() {
     return;
   }
   auto start = startSection(BinaryConsts::Section::Import);
-  o << U32LEB(num);
-  auto writeImportHeader = [&](Importable* import) {
-    writeInlineString(import->module.view());
-    writeInlineString(import->base.view());
+
+  using ImportItem = std::variant<Function*, Global*, Tag*, Memory*, Table*>;
+  std::vector<ImportItem> imports;
+  imports.reserve(num);
+
+  ModuleUtils::iterImports(*wasm,
+                           [&](ImportItem item) { imports.push_back(item); });
+
+  auto getModule = [](const ImportItem& item) -> Name {
+    return std::visit([](auto* i) { return i->module; }, item);
   };
-  ModuleUtils::iterImportedFunctions(*wasm, [&](Function* func) {
-    writeImportHeader(func);
-    uint32_t kind = ExternalKind::Function;
-    if (func->type.isExact()) {
-      kind |= BinaryConsts::ExactImport;
+  auto getBase = [](const ImportItem& item) -> Name {
+    return std::visit([](auto* i) { return i->base; }, item);
+  };
+
+  auto shareImportType = [&](const ImportItem& a, const ImportItem& b) -> bool {
+    if (a.index() != b.index()) {
+      return false;
     }
-    o << U32LEB(kind) << U32LEB(getTypeIndex(func->type.getHeapType()));
-  });
-  ModuleUtils::iterImportedGlobals(*wasm, [&](Global* global) {
-    writeImportHeader(global);
-    o << U32LEB(int32_t(ExternalKind::Global));
-    writeType(global->type);
-    o << U32LEB(global->mutable_);
-  });
-  ModuleUtils::iterImportedTags(*wasm, [&](Tag* tag) {
-    writeImportHeader(tag);
-    o << U32LEB(int32_t(ExternalKind::Tag));
-    o << uint8_t(0); // Reserved 'attribute' field. Always 0.
-    o << U32LEB(getTypeIndex(tag->type));
-  });
-  ModuleUtils::iterImportedMemories(*wasm, [&](Memory* memory) {
-    writeImportHeader(memory);
-    o << U32LEB(int32_t(ExternalKind::Memory));
-    writeResizableLimits(memory->initial,
-                         memory->max,
-                         memory->hasMax(),
-                         memory->shared,
-                         memory->is64(),
-                         memory->pageSizeLog2);
-  });
-  ModuleUtils::iterImportedTables(*wasm, [&](Table* table) {
-    writeImportHeader(table);
-    o << U32LEB(int32_t(ExternalKind::Table));
-    writeType(table->type);
-    writeResizableLimits(table->initial,
-                         table->max,
-                         table->hasMax(),
-                         /*shared=*/false,
-                         table->is64());
-  });
+    if (const auto* fa = std::get_if<Function*>(&a)) {
+      auto* fb = std::get<Function*>(b);
+      return (*fa)->type == fb->type;
+    }
+    if (const auto* ga = std::get_if<Global*>(&a)) {
+      auto* gb = std::get<Global*>(b);
+      return (*ga)->type == gb->type && (*ga)->mutable_ == gb->mutable_;
+    }
+    if (const auto* ta = std::get_if<Tag*>(&a)) {
+      auto* tb = std::get<Tag*>(b);
+      return (*ta)->type == tb->type;
+    }
+    if (const auto* ma = std::get_if<Memory*>(&a)) {
+      auto* mb = std::get<Memory*>(b);
+      return MemoryUtils::sameType(**ma, *mb);
+    }
+    if (const auto* ta = std::get_if<Table*>(&a)) {
+      auto* tb = std::get<Table*>(b);
+      return TableUtils::sameType(**ta, *tb);
+    }
+    return false;
+  };
+
+  struct ImportGroup {
+    enum Kind { Single, SharedAll, SharedModule } kind;
+    size_t start;
+    size_t count;
+  };
+
+  std::vector<ImportGroup> groups;
+  if (wasm->features.hasCompactImports()) {
+    size_t i = 0;
+    size_t numImports = imports.size();
+    while (i < numImports) {
+      // If the next import shares the module and type, then greedily collect
+      // the following imports as long as they share both the module and type.
+      size_t run = 1;
+      while (i + run < numImports &&
+             getModule(imports[i]) == getModule(imports[i + run]) &&
+             shareImportType(imports[i], imports[i + run])) {
+        ++run;
+      }
+      if (run > 1) {
+        groups.push_back({ImportGroup::SharedAll, i, run});
+        i += run;
+        continue;
+      }
+      // Otherwise, try greedily collecting imports that share just the module.
+      while (i + run < numImports &&
+             getModule(imports[i]) == getModule(imports[i + run])) {
+        ++run;
+      }
+      if (run > 1) {
+        groups.push_back({ImportGroup::SharedModule, i, run});
+        i += run;
+        continue;
+      }
+      // Otherwise, just use a normal import.
+      groups.push_back({ImportGroup::Single, i, 1});
+      ++i;
+    }
+  } else {
+    for (size_t i = 0; i < imports.size(); ++i) {
+      groups.push_back({ImportGroup::Single, i, 1});
+    }
+  }
+
+  o << U32LEB(groups.size());
+
+  auto writeImportDesc = [&](const ImportItem& item) {
+    std::visit(overloaded{[&](Function* func) {
+                            uint32_t kind = ExternalKind::Function;
+                            if (func->type.isExact()) {
+                              kind |= BinaryConsts::ExactImport;
+                            }
+                            o << U32LEB(kind)
+                              << U32LEB(getTypeIndex(func->type.getHeapType()));
+                          },
+                          [&](Global* global) {
+                            o << U32LEB(int32_t(ExternalKind::Global));
+                            writeType(global->type);
+                            o << U32LEB(global->mutable_);
+                          },
+                          [&](Tag* tag) {
+                            o << U32LEB(int32_t(ExternalKind::Tag));
+                            // Reserved 'attribute' field. Always 0.
+                            o << uint8_t(0);
+                            o << U32LEB(getTypeIndex(tag->type));
+                          },
+                          [&](Memory* memory) {
+                            o << U32LEB(int32_t(ExternalKind::Memory));
+                            writeResizableLimits(memory->initial,
+                                                 memory->max,
+                                                 memory->hasMax(),
+                                                 memory->shared,
+                                                 memory->is64(),
+                                                 memory->pageSizeLog2);
+                          },
+                          [&](Table* table) {
+                            o << U32LEB(int32_t(ExternalKind::Table));
+                            writeType(table->type);
+                            writeResizableLimits(table->initial,
+                                                 table->max,
+                                                 table->hasMax(),
+                                                 /*shared=*/false,
+                                                 table->is64());
+                          }},
+               item);
+  };
+
+  for (const auto& group : groups) {
+    switch (group.kind) {
+      case ImportGroup::Single: {
+        const auto& item = imports[group.start];
+        writeInlineString(getModule(item).view());
+        writeInlineString(getBase(item).view());
+        writeImportDesc(item);
+        continue;
+      }
+      case ImportGroup::SharedAll: {
+        const auto& first = imports[group.start];
+        writeInlineString(getModule(first).view());
+        writeInlineString("");
+        o << uint8_t(BinaryConsts::CompactImportsSharedAll);
+        writeImportDesc(first);
+        o << U32LEB(group.count);
+        for (size_t i = 0; i < group.count; ++i) {
+          writeInlineString(getBase(imports[group.start + i]).view());
+        }
+        continue;
+      }
+      case ImportGroup::SharedModule: {
+        const auto& first = imports[group.start];
+        writeInlineString(getModule(first).view());
+        writeInlineString("");
+        o << uint8_t(BinaryConsts::CompactImportsSharedModule);
+        o << U32LEB(group.count);
+        for (size_t i = 0; i < group.count; ++i) {
+          const auto& item = imports[group.start + i];
+          writeInlineString(getBase(item).view());
+          writeImportDesc(item);
+        }
+        continue;
+      }
+    }
+  }
+
   finishSection(start);
 }
 
