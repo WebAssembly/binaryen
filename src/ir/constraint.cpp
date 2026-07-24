@@ -34,28 +34,30 @@ Result provesConstantPair(Abstract::Op aOp,
                           Abstract::Op bOp,
                           const Literal& bConstant,
                           bool recursing = false) {
+  using namespace Abstract;
+
   // a == A =?=> a op B. Simply apply A to the operation against B.
-  if (aOp == Abstract::Eq) {
+  if (aOp == Eq) {
     switch (bOp) {
-      case Abstract::Eq:
+      case Eq:
         return TrueFalse(aConstant == bConstant);
-      case Abstract::Ne:
+      case Ne:
         return TrueFalse(aConstant != bConstant);
-      case Abstract::LtS:
+      case LtS:
         return TrueFalse(aConstant.ltS(bConstant));
-      case Abstract::LeS:
+      case LeS:
         return TrueFalse(aConstant.leS(bConstant));
-      case Abstract::GtS:
+      case GtS:
         return TrueFalse(aConstant.gtS(bConstant));
-      case Abstract::GeS:
+      case GeS:
         return TrueFalse(aConstant.geS(bConstant));
-      case Abstract::LtU:
+      case LtU:
         return TrueFalse(aConstant.ltU(bConstant));
-      case Abstract::LeU:
+      case LeU:
         return TrueFalse(aConstant.leU(bConstant));
-      case Abstract::GtU:
+      case GtU:
         return TrueFalse(aConstant.gtU(bConstant));
-      case Abstract::GeU:
+      case GeU:
         return TrueFalse(aConstant.geU(bConstant));
       default: {
       }
@@ -63,14 +65,14 @@ Result provesConstantPair(Abstract::Op aOp,
   }
 
   // a != A =?=> a == B. False if A = B, else unknown.
-  if (aOp == Abstract::Ne && bOp == Abstract::Eq) {
+  if (aOp == Ne && bOp == Eq) {
     if (aConstant == bConstant) {
       return False;
     }
   }
 
   // a != A =?=> a != B. True if A = B, else unknown.
-  if (aOp == Abstract::Ne && bOp == Abstract::Ne) {
+  if (aOp == Ne && bOp == Ne) {
     if (aConstant == bConstant) {
       return True;
     }
@@ -160,6 +162,55 @@ Result AndedConstraintSet::proves(const AndedConstraintSet& other) const {
   return hasUnknown ? Unknown : True;
 }
 
+namespace {
+
+// Do an AND on a pair of constraints, looking for a way to fuse them together
+// into a single constraint that represents them both, while assuming the
+// constraints have an equal term. If we fail, return nullopt.
+std::optional<Constraint> fusedApproximateAndTermEqualPair(
+  const Abstract::Op aOp, const Abstract::Op bOp, const Term& term) {
+  using namespace Abstract;
+
+  // x < C && x <= C  ===  x < C
+  if (aOp == LtS && bOp == LeS) {
+    return Constraint{LtS, term};
+  }
+  if (aOp == LtU && bOp == LeU) {
+    return Constraint{LtU, term};
+  }
+
+  // TODO: all the rest
+
+  return {};
+}
+
+// Do an AND on a pair of constraints, looking for a way to fuse them together
+// into a single constraint that represents them both. If we fail, return
+// nullopt.
+std::optional<Constraint> fusedApproximateAndPair(const Constraint& a,
+                                                  const Constraint& b,
+                                                  bool recursing = false) {
+  // If a proves b is true, all we need is a (e.g. { x == 5 && x > 0 } => x == 5
+  if (provesPair(a, b) == True) {
+    return a;
+  }
+
+  if (a.term == b.term) {
+    if (auto result = fusedApproximateAndTermEqualPair(a.op, b.op, a.term)) {
+      return result;
+    }
+  }
+
+  if (!recursing) {
+    // The flipped form may be recognized.
+    return fusedApproximateAndPair(b, a, true);
+  }
+
+  return {};
+}
+
+} // anonymous namespace
+
 void AndedConstraintSet::approximateAnd(const Constraint& c) {
   if (provesEverything()) {
     // Nothing to add.
@@ -172,24 +223,20 @@ void AndedConstraintSet::approximateAnd(const Constraint& c) {
     return;
   } else if (result == False) {
     // We are now a contradiction.
-    isContradiction = true;
+    setProvesEverything();
     return;
   }
 
-  // If c proves something already present to be true, it can just replace it.
   for (auto& existing : *this) {
-    auto result = provesPair(c, existing);
-    if (result == True) {
-      existing = c;
+    // Some ANDed constraints fuse together into a new constraint.
+    if (auto fused = fusedApproximateAndPair(existing, c)) {
+      existing = *fused;
 
       // Sort to ensure we are in the right place.
       std::sort(begin(), end());
 
       return;
     }
-
-    // There cannot be a contradiction here, because we checked for that above.
-    assert(result != False);
   }
 
   if (size() < MaxConstraints) {
