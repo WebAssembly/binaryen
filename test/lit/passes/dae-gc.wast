@@ -195,3 +195,81 @@
   (nop)
  )
 )
+
+;; After the first optimization, where we remove params from the call to $param,
+;; we update the IR incrementally, and must do so properly: we update $param and
+;; its callers $caller. $caller also calls $result, so we must update some of
+;; $result's callers but not all. Ditto with $caller2.
+(module
+ (rec
+  ;; CHECK:      (type $A (sub (struct (field (mut f64)) (field (mut funcref)))))
+  (type $A (sub (struct (field (mut f64)) (field (mut funcref)))))
+ )
+
+ ;; CHECK:      (func $nop (type $0)
+ ;; CHECK-NEXT: )
+ (func $nop
+  ;; Helper.
+ )
+
+ ;; CHECK:      (func $param (type $0)
+ ;; CHECK-NEXT:  (local $0 (ref $A))
+ ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT: )
+ (func $param (param $0 (ref $A))
+  ;; Helper with a param and lets us have calls inside it.
+  (unreachable)
+ )
+
+ ;; CHECK:      (func $caller (type $0)
+ ;; CHECK-NEXT:  (local $0 (ref (exact $A)))
+ ;; CHECK-NEXT:  (local.set $0
+ ;; CHECK-NEXT:   (struct.new $A
+ ;; CHECK-NEXT:    (call $result)
+ ;; CHECK-NEXT:    (ref.func $nop)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (call $param)
+ ;; CHECK-NEXT: )
+ (func $caller
+  (call $param
+   (struct.new $A
+    (call $result)
+    (ref.func $nop)
+   )
+  )
+ )
+
+ ;; CHECK:      (func $param2 (type $0)
+ ;; CHECK-NEXT:  (local $0 (ref any))
+ ;; CHECK-NEXT: )
+ (func $param2 (param $0 (ref any))
+ )
+
+ ;; CHECK:      (func $caller2 (type $0)
+ ;; CHECK-NEXT:  (call $param2)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (call $result)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $caller2
+  (call $param2
+   (struct.new $A
+    (f64.const 0)
+    (ref.func $param)
+   )
+  )
+  ;; The second call is not nested in this case, to test another form.
+  (drop
+   (call $result)
+  )
+ )
+
+ ;; CHECK:      (func $result (type $2) (result f64)
+ ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT: )
+ (func $result (result f64)
+  (unreachable)
+ )
+)
+
