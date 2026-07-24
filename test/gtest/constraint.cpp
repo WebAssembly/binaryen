@@ -360,17 +360,10 @@ static void checkAnd(const AndedConstraintSet& a,
 TEST(ConstraintTest, TestAndInequality) {
   // x == 5 && x >= 0  =>  x == 5
   AndedConstraintSet eq5{{Eq, {Literal(int32_t(5))}}};
-  AndedConstraintSet ge0{{GeU, {Literal(int32_t(0))}}};
+  AndedConstraintSet ge0{{GeS, {Literal(int32_t(0))}}};
   checkAnd(eq5, ge0, eq5);
 
-/*
-  // x == 5 || x > 5  =>  x >= 5
-  AndedConstraintSet gts5{{GtS, {Literal(int32_t(5))}}};
-  AndedConstraintSet ges5{{GeS, {Literal(int32_t(5))}}};
-  checkAnd(eq5, gts5, ges5);
-
-  // x == 5 || x >= 5  =>  x >= 5
-  checkAnd(eq5, ges5, ges5);
-*/
+  // x == 5 && x >= 5  =>  x == 5
+  AndedConstraintSet ge5{{GeS, {Literal(int32_t(5))}}};
+  checkAnd(eq5, ge5, eq5);
 }
-
