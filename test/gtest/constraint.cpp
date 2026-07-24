@@ -307,25 +307,33 @@ TEST(ConstraintTest, TestOrLoop) {
 
   // Changes to operations:
 
-  // Change the Eq on the left to Ne. We fail.
+  // Change the Eq on the left to Ne. We fail to find anything for the OR.
   AndedConstraintSet leftNe{Constraint{Ne, {Literal(int32_t(5))}}};
-  AndedConstraintSet empty;
-  empty.setProvesNothing();
+  auto empty = AndedConstraintSet::makeProvesNothing();
   checkOr(leftNe, right, empty);
 
-  // Change the GtS on the right to GtU. We fail.
+  // Change the GtS on the right to GtU:
+  // { x == 5 } || { x >U 5 && x <= 42 }   ==>   { x <= 42 }
   AndedConstraintSet rightGtU(
     {{GtU, {Literal(int32_t(5))}}, {LeS, {Literal(int32_t(42))}}});
-  checkOr(left, rightGtU, empty);
+  checkOr(left, rightGtU, rightOnly42);
 
-  // Change the LeS on the right to LeU. We fail.
+  // Change the LeS on the right to LeU:
+  // { x == 5 } || { x > 5 && x <=U 42 }   ==>   { x >= 5 && x <=U 42 }
   AndedConstraintSet rightLeU(
     {{GtS, {Literal(int32_t(5))}}, {LeU, {Literal(int32_t(42))}}});
-  checkOr(left, rightLeU, empty);
+  AndedConstraintSet rightGesLeU(
+    {{GeS, {Literal(int32_t(5))}}, {LeU, {Literal(int32_t(42))}}});
+  checkOr(left, rightLeU, rightGesLeU);
 
-  // Add an operation on the right, x != 21. We fail. TODO: optimize here
+  // Add an operation on the right, x != 21:
+  // { x == 5 } || { x >  5 && x <= 42 && x != 21 }   ==>  
+  //               { x >= 5 && x <= 42 && x != 21 }
   AndedConstraintSet rightAdded({{GtS, {Literal(int32_t(5))}},
                                  {LeS, {Literal(int32_t(42))}},
                                  {Ne, {Literal(int32_t(21))}}});
-  checkOr(left, rightAdded, empty);
+  AndedConstraintSet resultAdded({{GeS, {Literal(int32_t(5))}},
+                                  {LeS, {Literal(int32_t(42))}},
+                                  {Ne, {Literal(int32_t(21))}}});
+  checkOr(left, rightAdded, resultAdded);
 }
