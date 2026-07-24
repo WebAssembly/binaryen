@@ -1902,6 +1902,12 @@ void WasmBinaryWriter::writeType(Type type) {
         case HeapType::nocont:
           o << S32LEB(BinaryConsts::EncodedType::nullcontref);
           return;
+        case HeapType::waitqueue:
+          o << S32LEB(BinaryConsts::EncodedHeapType::waitqueue);
+          return;
+        case HeapType::nowaitqueue:
+          o << S32LEB(BinaryConsts::EncodedHeapType::nowaitqueue);
+          return;
       }
     }
     if (type.isNullable()) {
@@ -2004,6 +2010,12 @@ void WasmBinaryWriter::writeHeapType(HeapType type, Exactness exactness) {
     case HeapType::nocont:
       ret = BinaryConsts::EncodedHeapType::nocont;
       break;
+    case HeapType::waitqueue:
+      ret = BinaryConsts::EncodedHeapType::waitqueue;
+      break;
+    case HeapType::nowaitqueue:
+      ret = BinaryConsts::EncodedHeapType::nowaitqueue;
+      break;
   }
   o << S64LEB(ret); // TODO: Actually s33
 }
@@ -2018,8 +2030,6 @@ void WasmBinaryWriter::writeField(const Field& field) {
       o << S32LEB(BinaryConsts::EncodedType::i8);
     } else if (field.packedType == Field::i16) {
       o << S32LEB(BinaryConsts::EncodedType::i16);
-    } else if (field.packedType == Field::WaitQueue) {
-      o << S32LEB(BinaryConsts::EncodedType::waitQueue);
     } else {
       WASM_UNREACHABLE("invalid packed type");
     }
@@ -2477,6 +2487,12 @@ bool WasmBinaryReader::getBasicHeapType(int64_t code, HeapType& out) {
     case BinaryConsts::EncodedHeapType::nocont:
       out = HeapType::nocont;
       return true;
+    case BinaryConsts::EncodedHeapType::waitqueue:
+      out = HeapType::waitqueue;
+      return true;
+    case BinaryConsts::EncodedHeapType::nowaitqueue:
+      out = HeapType::nowaitqueue;
+      return true;
     default:
       return false;
   }
@@ -2762,10 +2778,6 @@ void WasmBinaryReader::readTypes() {
     if (typeCode == BinaryConsts::EncodedType::i16) {
       auto mutable_ = readMutability();
       return Field(Field::i16, mutable_);
-    }
-    if (typeCode == BinaryConsts::EncodedType::waitQueue) {
-      auto mutable_ = readMutability();
-      return Field(Field::WaitQueue, mutable_);
     }
     // It's a regular wasm value.
     auto type = makeType(typeCode);
@@ -4042,10 +4054,11 @@ Result<> WasmBinaryReader::readInst() {
           auto index = getU32LEB();
           return builder.makeStructWait(structType, index);
         }
-        case BinaryConsts::StructNotify: {
-          auto structType = getIndexedHeapType();
-          auto index = getU32LEB();
-          return builder.makeStructNotify(structType, index);
+        case BinaryConsts::WaitqueueNotify: {
+          return builder.makeWaitqueueNotify();
+        }
+        case BinaryConsts::WaitqueueNew: {
+          return builder.makeWaitqueueNew();
         }
       }
       return Err{"unknown atomic operation " + std::to_string(op)};
