@@ -5,11 +5,11 @@ from . import utils
 
 class CompactImportsTest(utils.BinaryenTestCase):
     def get_binary(self, wat_str, flags=[]):
-        cmd = shared.WASM_OPT + ['--print-features', '-o', '-'] + flags
+        cmd = shared.WASM_OPT + ['-o', '-'] + flags
         p = shared.run_process(
             cmd, input=wat_str, check=True, capture_output=True, decode_output=False,
         )
-        return p.stdout.encode('latin1') if isinstance(p.stdout, str) else p.stdout
+        return p.stdout
 
     def test_shared_all_encoding(self):
         wat = '''(module
@@ -70,5 +70,5 @@ class CompactImportsTest(utils.BinaryenTestCase):
         )'''
         with_compact = self.get_binary(wat, ['--enable-compact-imports'])
         without_compact = self.get_binary(wat, ['--disable-compact-imports'])
-        self.assertEqual(len(with_compact), 2098)
-        self.assertEqual(len(without_compact), 8064)
+        self.assertEqual(len(with_compact), 2030)
+        self.assertEqual(len(without_compact), 8021)
