@@ -209,7 +209,9 @@ namespace {
 
 // Do an OR of a pair of constraints where the terms are known to be equal. If
 // we can't find a good way to express their ORing, return nullopt.
-std::optional<Constraint> approximateOrTermEqualPair(const Abstract::Op aOp, const Abstract::Op bOp, const Term& term) {
+std::optional<Constraint> approximateOrTermEqualPair(const Abstract::Op aOp,
+                                                     const Abstract::Op bOp,
+                                                     const Term& term) {
   using namespace Abstract;
 
   // x == C || x > C  ===  x >= C
