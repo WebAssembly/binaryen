@@ -34,28 +34,30 @@ Result provesConstantPair(Abstract::Op aOp,
                           Abstract::Op bOp,
                           const Literal& bConstant,
                           bool recursing = false) {
+  using namespace Abstract;
+
   // a == A =?=> a op B. Simply apply A to the operation against B.
-  if (aOp == Abstract::Eq) {
+  if (aOp == Eq) {
     switch (bOp) {
-      case Abstract::Eq:
+      case Eq:
         return TrueFalse(aConstant == bConstant);
-      case Abstract::Ne:
+      case Ne:
         return TrueFalse(aConstant != bConstant);
-      case Abstract::LtS:
+      case LtS:
         return TrueFalse(aConstant.ltS(bConstant));
-      case Abstract::LeS:
+      case LeS:
         return TrueFalse(aConstant.leS(bConstant));
-      case Abstract::GtS:
+      case GtS:
         return TrueFalse(aConstant.gtS(bConstant));
-      case Abstract::GeS:
+      case GeS:
         return TrueFalse(aConstant.geS(bConstant));
-      case Abstract::LtU:
+      case LtU:
         return TrueFalse(aConstant.ltU(bConstant));
-      case Abstract::LeU:
+      case LeU:
         return TrueFalse(aConstant.leU(bConstant));
-      case Abstract::GtU:
+      case GtU:
         return TrueFalse(aConstant.gtU(bConstant));
-      case Abstract::GeU:
+      case GeU:
         return TrueFalse(aConstant.geU(bConstant));
       default: {
       }
@@ -63,14 +65,14 @@ Result provesConstantPair(Abstract::Op aOp,
   }
 
   // a != A =?=> a == B. False if A = B, else unknown.
-  if (aOp == Abstract::Ne && bOp == Abstract::Eq) {
+  if (aOp == Ne && bOp == Eq) {
     if (aConstant == bConstant) {
       return False;
     }
   }
 
   // a != A =?=> a != B. True if A = B, else unknown.
-  if (aOp == Abstract::Ne && bOp == Abstract::Ne) {
+  if (aOp == Ne && bOp == Ne) {
     if (aConstant == bConstant) {
       return True;
     }
