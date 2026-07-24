@@ -3305,7 +3305,8 @@ void FunctionValidator::visitBrOn(BrOn* curr) {
       curr->castType.isCastable(), curr, "br_on cannot cast to invalid type");
   }
 
-  if (curr->ref->type == Type::unreachable) {
+  if (curr->type == Type::unreachable ||
+      (curr->desc && curr->desc->type == Type::unreachable)) {
     return;
   }
   if (!shouldBeTrue(

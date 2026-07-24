@@ -5818,8 +5818,18 @@ Expression* TranslateToFuzzReader::makeBrOn(Type type) {
       WASM_UNREACHABLE("bad br_on op");
     }
   }
-  return fixFlowingType(
-    builder.makeBrOn(op, targetName, make(refType), castType));
+  auto* ref = make(refType);
+  if (op == BrOnCast || op == BrOnCastFail) {
+    auto desc = castType.getHeapType().getDescriptorType();
+    if (desc && !oneIn(2)) {
+      auto descOp = op == BrOnCast ? BrOnCastDescEq : BrOnCastDescEqFail;
+      auto descType = Type(*desc, Nullable, castType.getExactness());
+      auto* descRef = makeTrappingRefUse(descType);
+      auto* brOn = builder.makeBrOn(descOp, targetName, ref, castType, descRef);
+      return fixFlowingType(brOn);
+    }
+  }
+  return fixFlowingType(builder.makeBrOn(op, targetName, ref, castType));
 }
 
 Expression* TranslateToFuzzReader::makeContBind(Type type) {
