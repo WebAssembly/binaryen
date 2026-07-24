@@ -171,7 +171,7 @@ std::optional<Constraint> fusedApproximateAndTermEqualPair(
   const Abstract::Op aOp, const Abstract::Op bOp, const Term& term) {
   using namespace Abstract;
 
-  // x <= C && x < C  ===  x < C
+  // x < C && x <= C  ===  x < C
   if (aOp == LtS && bOp == LeS) {
     return Constraint{LtS, term};
   }
