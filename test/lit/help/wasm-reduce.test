@@ -122,7 +122,7 @@
 ;; CHECK-NEXT:                                        purposes.
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --emit-module-names                  Emit module names, even if not emitting
-;; CHECK-NEXT:                                        the rest of the names section
+;; CHECK-NEXT:                                        the rest of the names section.
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --enable-sign-ext                    Enable sign extension operations
 ;; CHECK-NEXT:
