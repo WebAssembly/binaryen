@@ -375,11 +375,12 @@ TEST(ConstraintTest, TestAndInequality) {
 }
 
 TEST(ConstraintTest, TestAndLoop) {
-  // Check common loop patterns after incrementing:
+  // Check common loop patterns after incrementing and bounds-checking:
   // x <= A && x < A  =>  x < A
 
   // x <= 5 && x < 5  =>  x < 5
   AndedConstraintSet le5{{LeS, {Literal(int32_t(5))}}};
   AndedConstraintSet lt5{{LtS, {Literal(int32_t(5))}}};
   checkAnd(le5, lt5, lt5);
+
 }
