@@ -37,11 +37,11 @@
 
 ;; Build to a binary wasm.
 ;;
-;; RUN: wasm-opt %s -o %t.wasm -q -all
+;; RUN: wasm-opt %s -o %t.wasm -q --enable-reference-types --enable-exception-handling
 
 ;; Run in node.
 ;;
-;; RUN: v8 --wasm-compact-imports %S/../../../scripts/fuzz_shell.js -- %t.wasm | filecheck %s
+;; RUN: v8 %S/../../../scripts/fuzz_shell.js -- %t.wasm | filecheck %s
 ;;
 ;; CHECK: [fuzz-exec] export throwing-js
 ;; CHECK: exception thrown: Error: js exception
