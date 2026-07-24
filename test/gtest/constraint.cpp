@@ -282,7 +282,7 @@ TEST(ConstraintTest, TestOrLoop) {
   // Changes to constants:
 
   // Change 5 on the left to 7:
-  // { x == 7 } || { x > 5 && x <= 42 }   ==>   { x > 5 }
+  // { x == 7 } || { x > 5 && x <= 42 }   ==>   { x > 5 && x <= 42}
   AndedConstraintSet left7{Constraint{Eq, {Literal(int32_t(7))}}};
   checkOr(left7, right, right);
 
