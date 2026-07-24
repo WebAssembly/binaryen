@@ -268,8 +268,7 @@ AndedConstraintSet detailedApproximateOr(const AndedConstraintSet& a,
   // not contradictions.
   assert(!a.provesEverything() && !b.provesEverything());
 
-  AndedConstraintSet result;
-  result.setProvesNothing();
+  auto result = AndedConstraintSet::makeProvesNothing();
   for (auto& ac : a) {
     for (auto& bc : b) {
       if (auto combined = approximateOrPair(ac, bc)) {
