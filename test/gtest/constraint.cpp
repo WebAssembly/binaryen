@@ -383,4 +383,11 @@ TEST(ConstraintTest, TestAndLoop) {
   AndedConstraintSet lt5{{LtS, {Literal(int32_t(5))}}};
   checkAnd(le5, lt5, lt5);
 
+  // Ditto, but unsigned.
+  AndedConstraintSet le5U{{LeU, {Literal(int32_t(5))}}};
+  AndedConstraintSet lt5U{{LtU, {Literal(int32_t(5))}}};
+  checkAnd(le5U, lt5U, lt5U);
+
+  // Mixing signed and unsigned does not optimize.
+  checkAnd(le5, lt5U, AndedConstraintSet{ le5, lt5U });
 }
