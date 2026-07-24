@@ -43,6 +43,7 @@
 #include "passes/passes.h"
 #include "support/base64.h"
 #include "support/file.h"
+#include "support/string.h"
 #include "wasm-builder.h"
 #include "wasm-io.h"
 #include "wasm-validator.h"
@@ -2656,6 +2657,15 @@ void Wasm2JSBuilder::addMemoryGrowFunc(Ref ast, Module* wasm) {
   ast->push_back(memoryGrowFunc);
 }
 
+// Escape a string for safe inclusion in a JavaScript string literal.
+// WebAssembly module/base names are arbitrary UTF-8 and may contain characters
+// that are JS string metacharacters (quotes, backslashes, newlines, etc.).
+static std::string escapeJSString(std::string_view str) {
+  std::ostringstream ss;
+  String::printEscapedJS(ss, str);
+  return ss.str();
+}
+
 // Wasm2JSBuilder emits the core of the module - the functions etc. that would
 // be the asm.js function in an asm.js world. This class emits the rest of the
 // "glue" around that.
@@ -2736,7 +2746,7 @@ void Wasm2JSGlue::emitPreES6() {
     baseModuleMap[base] = module;
     if (!seenModules.contains(module)) {
       out << "import * as " << asmangle(module.toString()) << " from '"
-          << module << "';\n";
+          << escapeJSString(module.toString()) << "';\n";
       seenModules.insert(module);
     }
   };
@@ -2799,7 +2809,7 @@ void Wasm2JSGlue::emitPostES6() {
     if (seenModules.contains(import->module)) {
       return;
     }
-    out << "  \"" << import->module
+    out << "  \"" << escapeJSString(import->module.toString())
         << "\": " << asmangle(import->module.toString()) << ",\n";
     seenModules.insert(import->module);
   });
@@ -2810,7 +2820,7 @@ void Wasm2JSGlue::emitPostES6() {
     if (ABI::wasm2js::isHelper(import->base)) {
       return;
     }
-    out << "  \"" << import->module << "\": {\n";
+    out << "  \"" << escapeJSString(import->module.toString()) << "\": {\n";
     out << "    " << asmangle(import->base.toString()) << ": { buffer : mem"
         << moduleName.str << " }\n";
     out << "  },\n";
@@ -2825,7 +2835,7 @@ void Wasm2JSGlue::emitPostES6() {
     if (seenModules.contains(import->module)) {
       return;
     }
-    out << "  \"" << import->module
+    out << "  \"" << escapeJSString(import->module.toString())
         << "\": " << asmangle(import->module.toString()) << ",\n";
     seenModules.insert(import->module);
   });
@@ -2929,8 +2939,9 @@ void Wasm2JSGlue::emitMemory() {
       if (auto* get = segment.offset->dynCast<GlobalGet>()) {
         auto internalName = get->name;
         auto importedGlobal = wasm.getGlobal(internalName);
-        return std::string("imports['") + importedGlobal->module.toString() +
-               "']['" + importedGlobal->base.toString() + "']";
+        return std::string("imports['") +
+               escapeJSString(importedGlobal->module.toString()) + "']['" +
+               escapeJSString(importedGlobal->base.toString()) + "']";
       }
       Fatal() << "non-constant offsets aren't supported yet\n";
     };

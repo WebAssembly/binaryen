@@ -468,6 +468,50 @@ std::ostream& printEscapedJSON(std::ostream& os, std::string_view str) {
   return os << '"';
 }
 
+std::ostream& printEscapedJS(std::ostream& os, std::string_view str) {
+  for (size_t i = 0; i < str.size(); i++) {
+    unsigned char c = str[i];
+    switch (c) {
+      case '\\':
+        os << "\\\\";
+        break;
+      case '\'':
+        os << "\\'";
+        break;
+      case '"':
+        os << "\\\"";
+        break;
+      case '\n':
+        os << "\\n";
+        break;
+      case '\r':
+        os << "\\r";
+        break;
+      default:
+        // Check for U+2028 (LINE SEPARATOR) and U+2029 (PARAGRAPH SEPARATOR)
+        // which are valid in JSON strings but act as line terminators in JS.
+        // They are encoded as E2 80 A8 and E2 80 A9 in UTF-8.
+        if (c == 0xE2 && i + 2 < str.size() &&
+            static_cast<unsigned char>(str[i + 1]) == 0x80) {
+          unsigned char c2 = str[i + 2];
+          if (c2 == 0xA8) {
+            os << "\\u2028";
+            i += 2;
+            break;
+          }
+          if (c2 == 0xA9) {
+            os << "\\u2029";
+            i += 2;
+            break;
+          }
+        }
+        os << char(c);
+        break;
+    }
+  }
+  return os;
+}
+
 bool isUTF8(std::string_view str) {
   while (str.size()) {
     auto u = takeWTF8CodePoint(str);
