@@ -389,5 +389,5 @@ TEST(ConstraintTest, TestAndLoop) {
   checkAnd(le5U, lt5U, lt5U);
 
   // Mixing signed and unsigned does not optimize.
-  checkAnd(le5, lt5U, AndedConstraintSet{ le5, lt5U });
+  checkAnd(le5, lt5U, AndedConstraintSet{le5, lt5U});
 }

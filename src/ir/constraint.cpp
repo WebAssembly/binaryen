@@ -169,9 +169,8 @@ namespace {
 // constraints have an equal term.
 //
 // If we fail, return nullopt.
-std::optional<Constraint> fusedApproximateAndTermEqualPair(const Abstract::Op aOp,
-                                                     const Abstract::Op bOp,
-                                                     const Term& term) {
+std::optional<Constraint> fusedApproximateAndTermEqualPair(
+  const Abstract::Op aOp, const Abstract::Op bOp, const Term& term) {
   using namespace Abstract;
 
   // x <= C && x < C  ===  x < C
@@ -187,12 +186,13 @@ std::optional<Constraint> fusedApproximateAndTermEqualPair(const Abstract::Op aO
   return {};
 }
 
-
 // Do an AND on a pair of constraints, looking for a way to fuse them together
 // into a single constraint that represents them both. If we fail, return
 // nullopt.
-std::optional<Constraint> fusedApproximateAndPair(const Constraint& a, const Constraint& b, bool recursing=false) {
-  // If a proves b is true, all we need is a (e.g. { x == 5 && x > 0 } => x == 5 
+std::optional<Constraint> fusedApproximateAndPair(const Constraint& a,
+                                                  const Constraint& b,
+                                                  bool recursing = false) {
+  // If a proves b is true, all we need is a (e.g. { x == 5 && x > 0 } => x == 5
   if (provesPair(a, b) == True) {
     return a;
   }
