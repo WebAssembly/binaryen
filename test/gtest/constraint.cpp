@@ -289,13 +289,16 @@ TEST(ConstraintTest, TestOrLoop) {
   AndedConstraintSet left7{Constraint{Eq, {Literal(int32_t(7))}}};
   checkOr(left7, right, right);
 
-  // Change 5 on the left to 99. Now we fail to find anything.
+  // Change 5 on the left to 99:
+  // { x == 99 } || { x > 5 && x <= 42 }   ==>   { x > 5 }
   AndedConstraintSet left99{Constraint{Eq, {Literal(int32_t(99))}}};
-  AndedConstraintSet empty{};
-  checkOr(left99, right, empty);
+  AndedConstraintSet rightOnly5{Constraint{GtS, {Literal(int32_t(5))}}};
+  checkOr(left99, right, rightOnly5);
 
   // Change 5 on the left to 4. We fail.
   AndedConstraintSet left4{Constraint{Eq, {Literal(int32_t(4))}}};
+  AndedConstraintSet empty;
+  empty.setProvesNothing();
   checkOr(left4, right, empty);
 
   // Change 5 on the right to 6. We fail.

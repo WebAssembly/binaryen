@@ -221,41 +221,6 @@ std::optional<Constraint> approximateOrTermEqualPair(const Constraint& a,
   return {};
 }
 
-std::optional<Constraint> approximateOrConstantPair(Abstract::Op aOp,
-                          const Literal& aConstant,
-                          Abstract::Op bOp,
-                          const Literal& bConstant) {
-  // a == A =?=> a op B. Simply apply A to the operation against B.
-  if (aOp == Abstract::Eq) {
-XXX
-    switch (bOp) {
-      case Abstract::Eq:
-        return TrueFalse(aConstant == bConstant);
-      case Abstract::Ne:
-        return TrueFalse(aConstant != bConstant);
-      case Abstract::LtS:
-        return TrueFalse(aConstant.ltS(bConstant));
-      case Abstract::LeS:
-        return TrueFalse(aConstant.leS(bConstant));
-      case Abstract::GtS:
-        return TrueFalse(aConstant.gtS(bConstant));
-      case Abstract::GeS:
-        return TrueFalse(aConstant.geS(bConstant));
-      case Abstract::LtU:
-        return TrueFalse(aConstant.ltU(bConstant));
-      case Abstract::LeU:
-        return TrueFalse(aConstant.leU(bConstant));
-      case Abstract::GtU:
-        return TrueFalse(aConstant.gtU(bConstant));
-      case Abstract::GeU:
-        return TrueFalse(aConstant.geU(bConstant));
-      default: {
-      }
-    }
-  }
-
-}
-
 // Do an OR of a pair of constraints. If we can't find a good way to express
 // their ORing, return nullopt.
 std::optional<Constraint> approximateOrPair(const Constraint& a,
