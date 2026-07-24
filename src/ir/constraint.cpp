@@ -172,7 +172,7 @@ void AndedConstraintSet::approximateAnd(const Constraint& c) {
     return;
   } else if (result == False) {
     // We are now a contradiction.
-    isContradiction = true;
+    setProvesEverything();
     return;
   }
 

@@ -366,4 +366,9 @@ TEST(ConstraintTest, TestAndInequality) {
   // x == 5 && x >= 5  =>  x == 5
   AndedConstraintSet ge5{{GeS, {Literal(int32_t(5))}}};
   checkAnd(eq5, ge5, eq5);
+
+  // x == 5 && x >= 6  =>  x == 5
+  AndedConstraintSet ge6{{GeS, {Literal(int32_t(6))}}};
+  AndedConstraintSet contradiction;
+  checkAnd(eq5, ge6, contradiction);
 }
