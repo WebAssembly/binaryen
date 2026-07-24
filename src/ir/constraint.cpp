@@ -165,19 +165,48 @@ Result AndedConstraintSet::proves(const AndedConstraintSet& other) const {
 namespace {
 
 // Do an AND on a pair of constraints, looking for a way to fuse them together
+// into a single constraint that represents them both, while assuming the
+// constraints have an equal term.
+//
+// If we fail, return nullopt.
+std::optional<Constraint> fusedApproximateAndTermEqualPair(const Abstract::Op aOp,
+                                                     const Abstract::Op bOp,
+                                                     const Term& term) {
+  using namespace Abstract;
+
+  // x <= C && x < C  ===  x < C
+  if (aOp == LtS && bOp == LeS) {
+    return Constraint{LtS, term};
+  }
+  if (aOp == LtU && bOp == LeU) {
+    return Constraint{LtU, term};
+  }
+
+  // TODO: all the rest
+
+  return {};
+}
+
+
+// Do an AND on a pair of constraints, looking for a way to fuse them together
 // into a single constraint that represents them both. If we fail, return
 // nullopt.
-std::optional<Constraint> fusedApproximateAnd(const Constraint& a, const Constraint& b, bool recursing=false) {
+std::optional<Constraint> fusedApproximateAndPair(const Constraint& a, const Constraint& b, bool recursing=false) {
   // If a proves b is true, all we need is a (e.g. { x == 5 && x > 0 } => x == 5 
   if (provesPair(a, b) == True) {
     return a;
   }
 
   // Pattern match important cases.
+  if (a.term == b.term) {
+    if (auto result = fusedApproximateAndTermEqualPair(a.op, b.op, a.term)) {
+      return result;
+    }
+  }
 
   if (!recursing) {
     // The flipped form may be recognized.
-    return fusedApproximateAnd(b, a, true);
+    return fusedApproximateAndPair(b, a, true);
   }
 
   return {};
@@ -203,7 +232,7 @@ void AndedConstraintSet::approximateAnd(const Constraint& c) {
 
   for (auto& existing : *this) {
     // Some ANDed constraints fuse together into a new constraint.
-    if (auto fused = fusedApproximateAnd(existing, c)) {
+    if (auto fused = fusedApproximateAndPair(existing, c)) {
       existing = *fused;
 
       // Sort to ensure we are in the right place.
