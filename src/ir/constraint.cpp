@@ -205,6 +205,83 @@ void AndedConstraintSet::approximateAnd(const Constraint& c) {
   //       useful to implement that).
 }
 
+namespace {
+
+// Do an OR of a pair of constraints where the terms are known to be equal. If
+// we can't find a good way to express their ORing, return nullopt.
+std::optional<Constraint> approximateOrTermEqualPair(const Abstract::Op aOp,
+                                                     const Abstract::Op bOp,
+                                                     const Term& term) {
+  using namespace Abstract;
+
+  // x == C || x > C  ===  x >= C
+  if (aOp == Eq && bOp == GtS) {
+    return Constraint{GeS, term};
+  }
+
+  // TODO: all the rest
+
+  return {};
+}
+
+// Do an OR of a pair of constraints. If we can't find a good way to express
+// their ORing, return nullopt.
+std::optional<Constraint> approximateOrPair(const Constraint& a,
+                                            const Constraint& b,
+                                            bool recursing = false) {
+  if (a.term == b.term) {
+    if (auto result = approximateOrTermEqualPair(a.op, b.op, a.term)) {
+      return result;
+    }
+  }
+
+  // If a proves b, e.g. x = 5 proves x >= 0 is true, then the OR is b.
+  if (provesPair(a, b) == True) {
+    return b;
+  }
+
+  // TODO: more smarts
+
+  if (!recursing) {
+    // The flipped form may be recognized.
+    return approximateOrPair(b, a, true);
+  }
+
+  return {};
+}
+
+// Do an OR in full detail, looking at every constraint in each of the given
+// sets.
+AndedConstraintSet detailedApproximateOr(const AndedConstraintSet& a,
+                                         const AndedConstraintSet& b) {
+  // We can process this in full detail by looking at all the combinations of
+  // individual constraints, because of the distributive property:
+  //
+  // (A & B) | (C & D) == ((A & B) | C) & ((A & B) | D)
+  //                   == (A | C) & (B | C) & (A | D) & (B | D)
+  //
+  // This is quadratic, but constraint sets are limited to a very small size,
+  // making this reasonable.
+  //
+  // Also, note that we don't need to worry about new contradictions here: ORing
+  // things never leads to a contradiction, and we can assume the inputs are
+  // not contradictions.
+  assert(!a.provesEverything() && !b.provesEverything());
+
+  auto result = AndedConstraintSet::makeProvesNothing();
+  for (auto& ac : a) {
+    for (auto& bc : b) {
+      if (auto combined = approximateOrPair(ac, bc)) {
+        // We found something useful by ORing them, keep it.
+        result.approximateAnd(*combined);
+      }
+    }
+  }
+  return result;
+}
+
+} // anonymous namespace
+
 bool AndedConstraintSet::approximateOr(const AndedConstraintSet& other) {
   // If one proves everything, the only thing that matters is the other.
   if (other.provesEverything()) {
@@ -226,12 +303,11 @@ bool AndedConstraintSet::approximateOr(const AndedConstraintSet& other) {
     return true;
   }
 
-  // TODO smarts: handle <= > and so forth
-
-  // Otherwise, we don't know how to nicely OR these things, and expand to the
-  // trivial set of no constraints.
-  clear();
-  return true;
+  // For more complex cases, do a detailed analysis.
+  auto result = detailedApproximateOr(*this, other);
+  auto changed = (result != *this);
+  *this = result;
+  return changed;
 }
 
 std::optional<LocalConstraint> LocalConstraint::parse(Expression* curr) {

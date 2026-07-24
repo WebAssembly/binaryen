@@ -240,5 +240,103 @@ TEST(ConstraintTest, TestDeredundancy) {
   EXPECT_EQ(t[0], eq0);
 }
 
-// TODO: test an approximateOr of { x = 10 } and { x >= 0 }, once we support
-//       inequalities
+static void checkOr(const AndedConstraintSet& a,
+                    const AndedConstraintSet& b,
+                    const AndedConstraintSet& result) {
+  auto ored = a;
+  ored.approximateOr(b);
+  EXPECT_EQ(ored, result);
+
+  ored = b;
+  ored.approximateOr(a);
+  EXPECT_EQ(ored, result);
+}
+
+TEST(ConstraintTest, TestOrInequality) {
+  // x == 5 || x >= 0  =>  x >= 0
+  AndedConstraintSet eq5{Constraint{Eq, {Literal(int32_t(5))}}};
+  AndedConstraintSet ge0{Constraint{GeU, {Literal(int32_t(0))}}};
+  checkOr(eq5, ge0, ge0);
+
+  // x == 5 || x > 5  =>  x >= 5
+  AndedConstraintSet gts5{Constraint{GtS, {Literal(int32_t(5))}}};
+  AndedConstraintSet ges5{Constraint{GeS, {Literal(int32_t(5))}}};
+  checkOr(eq5, gts5, ges5);
+
+  // x == 5 || x >= 5  =>  x >= 5
+  checkOr(eq5, ges5, ges5);
+}
+
+TEST(ConstraintTest, TestOrLoop) {
+  // Check common loop patterns:
+  // { x == A } || { x > A && x <= B }   ==>   { x >= A && x <= B }
+
+  // { x == 5 } || { x > 5 && x <= 42 }   ==>   { x >= 5 && x <= 42 }
+  AndedConstraintSet left{Constraint{Eq, {Literal(int32_t(5))}}};
+  AndedConstraintSet right(
+    {{GtS, {Literal(int32_t(5))}}, {LeS, {Literal(int32_t(42))}}});
+  AndedConstraintSet result(
+    {{GeS, {Literal(int32_t(5))}}, {LeS, {Literal(int32_t(42))}}});
+  checkOr(left, right, result);
+
+  // Changes to constants:
+
+  // Change 5 on the left to 7:
+  // { x == 7 } || { x > 5 && x <= 42 }   ==>   { x > 5 && x <= 42}
+  AndedConstraintSet left7{Constraint{Eq, {Literal(int32_t(7))}}};
+  checkOr(left7, right, right);
+
+  // Change 5 on the left to 99:
+  // { x == 99 } || { x > 5 && x <= 42 }   ==>   { x > 5 }
+  // TODO: we could emit a range (5, 99]
+  AndedConstraintSet left99{Constraint{Eq, {Literal(int32_t(99))}}};
+  AndedConstraintSet rightOnly5{Constraint{GtS, {Literal(int32_t(5))}}};
+  checkOr(left99, right, rightOnly5);
+
+  // Change 5 on the left to 4:
+  // { x == 4 } || { x > 5 && x <= 42 }   ==>   { x <= 42 }
+  // TODO: we could emit a range [4, 42]
+  AndedConstraintSet left4{Constraint{Eq, {Literal(int32_t(4))}}};
+  AndedConstraintSet rightOnly42({{LeS, {Literal(int32_t(42))}}});
+  checkOr(left4, right, rightOnly42);
+
+  // Change 5 on the right to 6:
+  // { x == 5 } || { x > 6 && x <= 42 }   ==>   { x <= 42 }
+  AndedConstraintSet right6(
+    {{GtS, {Literal(int32_t(6))}}, {LeS, {Literal(int32_t(42))}}});
+  checkOr(left, right6, rightOnly42);
+
+  // Changes to operations:
+
+  // Change the Eq on the left to Ne. We fail to find anything for the OR.
+  // { x != 5 } || { x > 5 && x <= 42 }   ==>   {}
+  // TODO: we could emit x != 5
+  AndedConstraintSet leftNe{Constraint{Ne, {Literal(int32_t(5))}}};
+  auto empty = AndedConstraintSet::makeProvesNothing();
+  checkOr(leftNe, right, empty);
+
+  // Change the GtS on the right to GtU:
+  // { x == 5 } || { x >U 5 && x <= 42 }   ==>   { x <= 42 }
+  AndedConstraintSet rightGtU(
+    {{GtU, {Literal(int32_t(5))}}, {LeS, {Literal(int32_t(42))}}});
+  checkOr(left, rightGtU, rightOnly42);
+
+  // Change the LeS on the right to LeU:
+  // { x == 5 } || { x > 5 && x <=U 42 }   ==>   { x >= 5 && x <=U 42 }
+  AndedConstraintSet rightLeU(
+    {{GtS, {Literal(int32_t(5))}}, {LeU, {Literal(int32_t(42))}}});
+  AndedConstraintSet rightGesLeU(
+    {{GeS, {Literal(int32_t(5))}}, {LeU, {Literal(int32_t(42))}}});
+  checkOr(left, rightLeU, rightGesLeU);
+
+  // Add an operation on the right, x != 21:
+  // { x == 5 } || { x >  5 && x <= 42 && x != 21 }   ==>
+  //               { x >= 5 && x <= 42 && x != 21 }
+  AndedConstraintSet rightAdded({{GtS, {Literal(int32_t(5))}},
+                                 {LeS, {Literal(int32_t(42))}},
+                                 {Ne, {Literal(int32_t(21))}}});
+  AndedConstraintSet resultAdded({{GeS, {Literal(int32_t(5))}},
+                                  {LeS, {Literal(int32_t(42))}},
+                                  {Ne, {Literal(int32_t(21))}}});
+  checkOr(left, rightAdded, resultAdded);
+}
