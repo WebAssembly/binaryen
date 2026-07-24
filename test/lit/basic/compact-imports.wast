@@ -13,6 +13,7 @@
     (item $g1 "g1" (global i32))
     (item $t1 "t1" (table 1 10 funcref))
     (item $m1 "m1" (memory 1 2))
+    (item "no-id" (func))
   )
 
   ;; Compact Encoding 2: shared import description
@@ -20,6 +21,7 @@
     (item $sin "sin")
     (item $cos "cos")
     (item $tan "tan")
+    (item "no-id")
     (func (param i32) (result i32))
   )
 
@@ -28,6 +30,7 @@
     (item $sinh "sinh")
     (item $cosh "cosh")
     (item $tanh "tanh")
+    (item "no-id-2")
     (func (exact (param i32) (result i32)))
   )
 
@@ -35,10 +38,13 @@
   (import "constants"
     (item $pi "pi")
     (item $e "e")
+    (item "other")
     (global f64)
   )
 
-  ;; CHECK:      (type $1 (func (result i32)))
+  ;; CHECK:      (type $1 (func))
+
+  ;; CHECK:      (type $2 (func (result i32)))
 
   ;; CHECK:      (import "env" "m1" (memory $m1 1 2))
 
@@ -50,9 +56,13 @@
 
   ;; CHECK:      (import "constants" "e" (global $e f64))
 
+  ;; CHECK:      (import "constants" "other" (global $gimport$0 f64))
+
   ;; CHECK:      (import "env" "f1" (func $f1 (type $sig1) (param i32) (result i32)))
 
   ;; CHECK:      (import "env" "f2" (func $f2 (exact (type $sig1) (param i32) (result i32))))
+
+  ;; CHECK:      (import "env" "no-id" (func $fimport$0 (type $1)))
 
   ;; CHECK:      (import "math" "sin" (func $sin (type $sig1) (param i32) (result i32)))
 
@@ -60,13 +70,17 @@
 
   ;; CHECK:      (import "math" "tan" (func $tan (type $sig1) (param i32) (result i32)))
 
+  ;; CHECK:      (import "math" "no-id" (func $fimport$1 (type $sig1) (param i32) (result i32)))
+
   ;; CHECK:      (import "math" "sinh" (func $sinh (exact (type $sig1) (param i32) (result i32))))
 
   ;; CHECK:      (import "math" "cosh" (func $cosh (exact (type $sig1) (param i32) (result i32))))
 
   ;; CHECK:      (import "math" "tanh" (func $tanh (exact (type $sig1) (param i32) (result i32))))
 
-  ;; CHECK:      (func $main (type $1) (result i32)
+  ;; CHECK:      (import "math" "no-id-2" (func $fimport$2 (exact (type $sig1) (param i32) (result i32))))
+
+  ;; CHECK:      (func $main (type $2) (result i32)
   ;; CHECK-NEXT:  (call $f1
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
