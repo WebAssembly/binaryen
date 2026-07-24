@@ -463,7 +463,7 @@ void WasmBinaryWriter::writeImports() {
         writeInlineString(getModule(item).view());
         writeInlineString(getBase(item).view());
         writeImportDesc(item);
-        continue;
+        break;
       }
       case ImportGroup::SharedAll: {
         const auto& first = imports[group.start];
@@ -475,7 +475,7 @@ void WasmBinaryWriter::writeImports() {
         for (size_t i = 0; i < group.count; ++i) {
           writeInlineString(getBase(imports[group.start + i]).view());
         }
-        continue;
+        break;
       }
       case ImportGroup::SharedModule: {
         const auto& first = imports[group.start];
@@ -488,7 +488,7 @@ void WasmBinaryWriter::writeImports() {
           writeInlineString(getBase(item).view());
           writeImportDesc(item);
         }
-        continue;
+        break;
       }
     }
   }
