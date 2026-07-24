@@ -268,7 +268,8 @@ TEST(ConstraintTest, TestOrInequality) {
 }
 
 TEST(ConstraintTest, TestOrLoop) {
-  // Check common loop patterns:
+  // Check common loop patterns at the loop top (merging an initial value with
+  // an incremented and bounded one):
   // { x == A } || { x > A && x <= B }   ==>   { x >= A && x <= B }
 
   // { x == 5 } || { x > 5 && x <= 42 }   ==>   { x >= 5 && x <= 42 }
@@ -371,4 +372,14 @@ TEST(ConstraintTest, TestAndInequality) {
   AndedConstraintSet ge6{{GeS, {Literal(int32_t(6))}}};
   AndedConstraintSet contradiction;
   checkAnd(eq5, ge6, contradiction);
+}
+
+TEST(ConstraintTest, TestAndLoop) {
+  // Check common loop patterns after incrementing:
+  // x <= A && x < A  =>  x < A
+
+  // x <= 5 && x < 5  =>  x < 5
+  AndedConstraintSet le5{{LeS, {Literal(int32_t(5))}}};
+  AndedConstraintSet lt5{{LtS, {Literal(int32_t(5))}}};
+  checkAnd(le5, lt5, lt5);
 }
