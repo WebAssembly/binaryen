@@ -162,6 +162,29 @@ Result AndedConstraintSet::proves(const AndedConstraintSet& other) const {
   return hasUnknown ? Unknown : True;
 }
 
+namespace {
+
+// Do an AND on a pair of constraints, looking for a way to fuse them together
+// into a single constraint that represents them both. If we fail, return
+// nullopt.
+std::optional<Constraint> fusedApproximateAnd(const Constraint& a, const Constraint& b, bool recursing=false) {
+  // If a proves b is true, all we need is a (e.g. { x == 5 && x > 0 } => x == 5 
+  if (provesPair(a, b) == True) {
+    return a;
+  }
+
+  // Pattern match important cases.
+
+  if (!recursing) {
+    // The flipped form may be recognized.
+    return fusedApproximateAnd(b, a, true);
+  }
+
+  return {};
+}
+
+} // anonymous namespace
+
 void AndedConstraintSet::approximateAnd(const Constraint& c) {
   if (provesEverything()) {
     // Nothing to add.
@@ -178,20 +201,16 @@ void AndedConstraintSet::approximateAnd(const Constraint& c) {
     return;
   }
 
-  // If c proves something already present to be true, it can just replace it.
   for (auto& existing : *this) {
-    auto result = provesPair(c, existing);
-    if (result == True) {
-      existing = c;
+    // Some ANDed constraints fuse together into a new constraint.
+    if (auto fused = fusedApproximateAnd(existing, c)) {
+      existing = *fused;
 
       // Sort to ensure we are in the right place.
       std::sort(begin(), end());
 
       return;
     }
-
-    // There cannot be a contradiction here, because we checked for that above.
-    assert(result != False);
   }
 
   if (size() < MaxConstraints) {
