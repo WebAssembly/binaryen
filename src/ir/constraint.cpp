@@ -233,13 +233,9 @@ std::optional<Constraint> approximateOrPair(const Constraint& a,
     }
   }
 
-  if (auto* ac = std::get_if<Literal>(&a.term)) {
-    if (auto* bc = std::get_if<Literal>(&b.term)) {
-      // If a proves b, e.g. x = 5 proves x >= 0 is true, then the OR is b.
-      if (provesConstantPair(a.op, *ac, b.op, *bc) == True) {
-        return b;
-      }
-    }
+  // If a proves b, e.g. x = 5 proves x >= 0 is true, then the OR is b.
+  if (provesPair(a, b) == True) {
+    return b;
   }
 
   // TODO: more smarts
