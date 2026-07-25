@@ -97,6 +97,7 @@
 // time, so we do not do it by default.
 //
 
+#include "ir/manipulation.h"
 #include "ir/module-utils.h"
 #include "ir/names.h"
 #include "ir/utils.h"
@@ -576,6 +577,47 @@ void fuseImportsAndExports(const PassOptions& options) {
   updateNames(merged, kindNameUpdates);
 }
 
+// Unlike global initializers and element segments (which under GC may refer to
+// preceding module-defined globals), a table initializer expression may only
+// refer to imported globals. Fusing can turn an imported global that a table
+// initializer refers to into a module-defined one, which would make the
+// initializer invalid. When that happens, inline the referenced global's
+// (immutable, constant) value so the initializer remains valid. The fused
+// global is necessarily immutable, since fusing requires the import and export
+// mutabilities to match and a table initializer could only refer to an
+// immutable global in the first place.
+void fixTableInitializers() {
+  struct Inliner : public PostWalker<Inliner> {
+    bool inlined = false;
+    void visitGlobalGet(GlobalGet* curr) {
+      auto* global = getModule()->getGlobalOrNull(curr->name);
+      if (global && !global->imported()) {
+        assert(global->init && !global->mutable_);
+        replaceCurrent(ExpressionManipulator::copy(global->init, *getModule()));
+        inlined = true;
+      }
+    }
+  };
+
+  for (auto& table : merged.tables) {
+    if (!table->init) {
+      continue;
+    }
+    // Inlining a global may expose further module-defined globals (if that
+    // global's initializer refers to another one), so iterate to a fixed point.
+    // Globals cannot form cycles, so this terminates. Any global.gets that
+    // remain refer to imported globals, which are valid in table initializers.
+    while (true) {
+      Inliner inliner;
+      inliner.setModule(&merged);
+      inliner.walk(table->init);
+      if (!inliner.inlined) {
+        break;
+      }
+    }
+  }
+}
+
 // Things may have been imported using supertypes, which means they can get
 // refined after merging.
 void updateTypes(Module& wasm) {
@@ -879,6 +921,10 @@ Input source maps can be specified by adding an -ism option right after the modu
   // Fuse imports and exports now that everything is all together in the merged
   // module.
   fuseImportsAndExports(options.passOptions);
+
+  // Fusing may have made table initializers refer to module-defined globals,
+  // which is not allowed; fix that up.
+  fixTableInitializers();
 
   // Update types after combing and linking everything.
   updateTypes(merged);
