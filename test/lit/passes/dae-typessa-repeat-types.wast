@@ -11,11 +11,11 @@
   ;; Trigger TypeSSA
   ;; CHECK:      (type $2 (func))
 
-  ;; CHECK:      (type $3 (func (result i32 (ref (exact $struct)))))
-
   ;; CHECK:      (type $array_1 (sub $array (array (mut i32))))
 
-  ;; CHECK:      (type $5 (func (result i32 (ref $struct))))
+  ;; CHECK:      (type $4 (func (result i32 (ref $struct))))
+
+  ;; CHECK:      (type $5 (func (result i32 (ref (exact $struct)))))
 
   ;; CHECK:      (global $array (ref $array) (array.new $array_1
   ;; CHECK-NEXT:  (i32.const 0)
@@ -43,15 +43,10 @@
   ;; CHECK:      (func $callee (type $2)
   ;; CHECK-NEXT:  (local $0 anyref)
   ;; CHECK-NEXT:  (tuple.drop 2
-  ;; CHECK-NEXT:   (block (type $3) (result i32 (ref (exact $struct)))
-  ;; CHECK-NEXT:    (local.set $0
-  ;; CHECK-NEXT:     (ref.null none)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (block (type $3) (result i32 (ref (exact $struct)))
-  ;; CHECK-NEXT:     (tuple.make 2
-  ;; CHECK-NEXT:      (i32.const 0)
-  ;; CHECK-NEXT:      (struct.new_default $struct)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:   (block (type $5) (result i32 (ref (exact $struct)))
+  ;; CHECK-NEXT:    (tuple.make 2
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:     (struct.new_default $struct)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -67,7 +62,7 @@
     )
   )
 
-  ;; CHECK:      (func $other (type $5) (result i32 (ref $struct))
+  ;; CHECK:      (func $other (type $4) (result i32 (ref $struct))
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $other (result i32 (ref $struct))

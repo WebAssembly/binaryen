@@ -179,15 +179,7 @@
  ;; CHECK:      (func $1 (type $0)
  ;; CHECK-NEXT:  (local $0 (ref string))
  ;; CHECK-NEXT:  (local $1 (ref string))
- ;; CHECK-NEXT:  (local.set $0
- ;; CHECK-NEXT:   (string.const "929")
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (block
- ;; CHECK-NEXT:   (local.set $1
- ;; CHECK-NEXT:    (string.const "310")
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (nop)
- ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  (func $1 (param $0 (ref string)) (param $1 (ref string))
   ;; The parameters here will be removed, and the constant values placed in the

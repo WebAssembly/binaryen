@@ -1309,9 +1309,6 @@
 
   ;; CHECK:      (func $other (type $other)
   ;; CHECK-NEXT:  (local $0 anyref)
-  ;; CHECK-NEXT:  (local.set $0
-  ;; CHECK-NEXT:   (ref.null none)
-  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $other (type $other) (param anyref)

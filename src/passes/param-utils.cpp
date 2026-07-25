@@ -262,6 +262,19 @@ SortedVector applyConstantValues(const std::vector<Function*>& funcs,
       continue;
     }
 
+    // If the parameter is not used in any of the functions, writing the
+    // constant value to it is redundant and creates a dead local set.
+    bool used = false;
+    for (auto* func : funcs) {
+      if (getUsedParams(func, module).count(i)) {
+        used = true;
+        break;
+      }
+    }
+    if (!used) {
+      continue;
+    }
+
     // Optimize: write the constant value in the function bodies, making them
     // ignore the parameter's value.
     Builder builder(*module);

@@ -116,9 +116,6 @@
 
   ;; CHECK:      (func $target (type $0) (param $0 i32)
   ;; CHECK-NEXT:  (local $1 f64)
-  ;; CHECK-NEXT:  (local.set $1
-  ;; CHECK-NEXT:   (f64.const 4.2)
-  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:  )

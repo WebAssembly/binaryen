@@ -30,11 +30,6 @@
   (elem (i32.const 0) $a9 $c8)
   ;; CHECK:      (func $a (type $0)
   ;; CHECK-NEXT:  (local $0 i32)
-  ;; CHECK-NEXT:  (local.set $0
-  ;; CHECK-NEXT:   (i32.const 1)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (block
-  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $a (param $x i32))
   ;; CHECK:      (func $b (type $0)
@@ -45,9 +40,6 @@
   )
   ;; CHECK:      (func $a1 (type $0)
   ;; CHECK-NEXT:  (local $0 i32)
-  ;; CHECK-NEXT:  (local.set $0
-  ;; CHECK-NEXT:   (i32.const 2)
-  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $a1 (param $x i32)
@@ -112,11 +104,6 @@
   )
   ;; CHECK:      (func $a4 (type $0)
   ;; CHECK-NEXT:  (local $0 i32)
-  ;; CHECK-NEXT:  (local.set $0
-  ;; CHECK-NEXT:   (i32.const 4)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (block
-  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $a4 (param $x i32)
     ;; This function is called with one constant and one unreachable. We can
@@ -244,13 +231,8 @@
   )
   ;; CHECK:      (func $a10 (type $0)
   ;; CHECK-NEXT:  (local $0 i32)
-  ;; CHECK-NEXT:  (local.set $0
-  ;; CHECK-NEXT:   (i32.const 1)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (block
-  ;; CHECK-NEXT:   (call $a10)
-  ;; CHECK-NEXT:   (call $a10)
-  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $a10)
+  ;; CHECK-NEXT:  (call $a10)
   ;; CHECK-NEXT: )
   (func $a10 (param $x i32) ;; recursion
     (call $a10 (i32.const 1))
@@ -417,9 +399,6 @@
   )
   ;; CHECK:      (func $bar (type $1) (result i32)
   ;; CHECK-NEXT:  (local $0 i32)
-  ;; CHECK-NEXT:  (local.set $0
-  ;; CHECK-NEXT:   (i32.const 0)
-  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (i32.const 7)
   ;; CHECK-NEXT: )
   (func $bar (param $x i32) (result i32)
@@ -436,9 +415,6 @@
 
   ;; CHECK:      (func $foo (type $T) (result i32)
   ;; CHECK-NEXT:  (local $0 i32)
-  ;; CHECK-NEXT:  (local.set $0
-  ;; CHECK-NEXT:   (i32.const 42)
-  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (return_call_indirect $0 (type $T)
   ;; CHECK-NEXT:    (i32.const 0)
@@ -669,22 +645,17 @@
 
  ;; CHECK:      (func $0 (type $0)
  ;; CHECK-NEXT:  (local $0 i32)
- ;; CHECK-NEXT:  (local.set $0
- ;; CHECK-NEXT:   (i32.const 1)
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (block
- ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (block
  ;; CHECK-NEXT:    (block
- ;; CHECK-NEXT:     (block
- ;; CHECK-NEXT:      (drop
- ;; CHECK-NEXT:       (i32.const 1)
- ;; CHECK-NEXT:      )
- ;; CHECK-NEXT:      (return)
+ ;; CHECK-NEXT:     (drop
+ ;; CHECK-NEXT:      (i32.const 1)
  ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (return)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (return)
  ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (return)
  ;; CHECK-NEXT: )
  (func $0 (param $0 i32) (result i32)
   ;; The returns here are nested in each other, and one is a recursive call to
@@ -835,15 +806,7 @@
  ;; CHECK-NEXT:  (local $0 i64)
  ;; CHECK-NEXT:  (local $1 i64)
  ;; CHECK-NEXT:  (local $2 v128)
- ;; CHECK-NEXT:  (local.set $0
- ;; CHECK-NEXT:   (i64.const 0)
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (block
- ;; CHECK-NEXT:   (local.set $1
- ;; CHECK-NEXT:    (i64.const 0)
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (unreachable)
- ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  (func $target (param $0 i64) (param $1 v128) (param $2 i64) (result f32)
   ;; All parameters here should vanish.

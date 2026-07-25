@@ -86,6 +86,8 @@ inline bool isSingleConstantExpression(const Expression* curr) {
     if (refAs->op == ExternConvertAny || refAs->op == AnyConvertExtern) {
       return isSingleConstantExpression(refAs->value);
     }
+  } else if (auto* i31 = curr->dynCast<RefI31>()) {
+    return isSingleConstantExpression(i31->value);
   }
   return curr->is<Const>() || curr->is<RefNull>() || curr->is<RefFunc>() ||
          curr->is<StringConst>();
