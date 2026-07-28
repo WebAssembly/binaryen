@@ -436,8 +436,12 @@ private:
   void add(Expression* expr, const BinaryLocations::Span span) {
     assert(!startMap.contains(span.start));
     startMap[span.start] = expr;
-    assert(!endMap.contains(span.end));
-    endMap[span.end] = expr;
+    // The end may be 0, which means we never noted an end for this expression.
+    // TODO: We are likely dropping some debug info in wasm-ir-builder.cpp
+    if (span.end) {
+      assert(!endMap.contains(span.end));
+      endMap[span.end] = expr;
+    }
   }
 
   void add(Expression* expr,
