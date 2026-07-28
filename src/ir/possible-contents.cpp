@@ -1865,7 +1865,7 @@ void TNHOracle::infer() {
 
     auto ensureCFG = [&]() {
       if (!blockIndexes) {
-        auto cfg = analysis::CFG::fromFunction(func);
+        auto cfg = analysis::CFG::fromFunction(func, &wasm);
         blockIndexes = analysis::CFGBlockIndexes(cfg);
       }
     };

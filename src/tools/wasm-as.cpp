@@ -144,7 +144,7 @@ int main(int argc, const char* argv[]) {
     if (symbolMap.size() > 0) {
       writer.setSymbolMap(symbolMap);
     }
-    writer.write(wasm, options.extra["output"]);
+    options.write(writer, wasm, options.extra["output"]);
   }
 
   if (options.debug) {

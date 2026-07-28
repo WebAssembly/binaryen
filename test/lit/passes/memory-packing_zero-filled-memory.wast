@@ -13,15 +13,110 @@
 
 ;; CHECK:      (data $0 (i32.const 1024) "x")
 (module
- ;; but we cannot optimize trampling on an imported memory: if a later segment
- ;; were to trap during instantiation, the data written before it remains
- ;; visible in the imported memory, so even the trampled "x" must be kept
+ ;; we can optimize trampling on an imported memory when every active segment
+ ;; is provably in bounds of the declared minimum size: then no segment can
+ ;; trap during instantiation, so only the final memory contents are
+ ;; observable, and the trampled "x" is zeroed out and removed along with the
+ ;; zero that tramples it.
  ;; CHECK:      (import "env" "memory" (memory $0 1 1))
  (import "env" "memory" (memory $0 1 1))
 
  (data (i32.const 1024) "x")
  (data (i32.const 1024) "\00")
 )
+
+(module
+ ;; the same, but with a nonzero trampling byte: the trampled "a" is removed
+ ;; while the rest of the segment and the trampler are kept.
+ ;; CHECK:      (import "env" "memory" (memory $0 1 1))
+ (import "env" "memory" (memory $0 1 1))
+
+ (data (i32.const 1024) "ab")
+ (data (i32.const 1024) "Z")
+)
+
+;; CHECK:      (data $0 (i32.const 1025) "b")
+
+;; CHECK:      (data $1 (i32.const 1024) "Z")
+(module
+ ;; but we cannot optimize when the trampling segment may be out of bounds
+ ;; (here it ends one byte past the declared minimum size of one page): if it
+ ;; traps during instantiation, the data written before it remains visible in
+ ;; the imported memory, so even the trampled "x" must be kept
+ ;; CHECK:      (import "env" "memory" (memory $0 1 1))
+ (import "env" "memory" (memory $0 1 1))
+
+ (data (i32.const 65535) "x")
+ (data (i32.const 65535) "\00\00")
+)
+
+;; CHECK:      (data $0 (i32.const 65535) "x")
+
+;; CHECK:      (data $1 (i32.const 65535) "\00\00")
+(module
+ ;; here the overlapping segments are both in bounds, but a possibly
+ ;; out-of-bounds segment elsewhere in the module still prevents the
+ ;; optimization: if it traps, the trampled "x" remains visible. (This is more
+ ;; conservative than necessary, as that segment is applied only after the
+ ;; trampling one; see the TODO in canOptimize.)
+ ;; CHECK:      (import "env" "memory" (memory $0 1 1))
+ (import "env" "memory" (memory $0 1 1))
+
+ (data (i32.const 1024) "x")
+ (data (i32.const 1024) "\00")
+ (data (i32.const 65535) "yy")
+)
 ;; CHECK:      (data $0 (i32.const 1024) "x")
 
 ;; CHECK:      (data $1 (i32.const 1024) "\00")
+
+;; CHECK:      (data $2 (i32.const 65535) "yy")
+(module
+ ;; a segment with a non-constant offset (here an imported global, as in
+ ;; dynamic linking) prevents any reasoning about overlap or bounds when
+ ;; there are multiple segments: we cannot tell what it tramples or whether
+ ;; it traps, so nothing is optimized and the zero is kept.
+ ;; CHECK:      (import "env" "memory" (memory $0 1 1))
+ (import "env" "memory" (memory $0 1 1))
+
+ ;; CHECK:      (import "env" "offset" (global $offset i32))
+ (import "env" "offset" (global $offset i32))
+
+ (data (i32.const 1024) "x")
+ (data (global.get $offset) "\00")
+)
+;; CHECK:      (data $0 (i32.const 1024) "x")
+
+;; CHECK:      (data $1 (global.get $offset) "\00")
+(module
+ ;; a memory64 memory with the maximal declared minimum size (2^48 pages):
+ ;; the size in bytes does not fit in 64 bits, but the in-bounds check
+ ;; compares page counts, so the overlapping segments are still optimized.
+ ;; CHECK:      (import "env" "memory" (memory $0 i64 281474976710656 281474976710656))
+ (import "env" "memory" (memory $0 i64 281474976710656 281474976710656))
+
+ (data (i64.const 1024) "x")
+ (data (i64.const 1024) "\00")
+)
+(module
+ ;; a memory64 segment whose offset does not fit in 32 bits and is out of
+ ;; bounds of the one-page memory: it traps during instantiation, so its
+ ;; zeros must not be removed. (This used to truncate the offset to 32 bits,
+ ;; conclude the segment was in bounds, and remove the trap.)
+ ;; CHECK:      (import "env" "memory" (memory $0 i64 1 1))
+ (import "env" "memory" (memory $0 i64 1 1))
+
+ (data (i64.const 4294968320) "\00\00")
+)
+;; CHECK:      (data $0 (i64.const 4294968321) "\00")
+(module
+ ;; a segment ending exactly at 2^64 bytes, the size of this maximal memory64:
+ ;; the byte end does not fit in 64 bits, but it is still provably in bounds,
+ ;; so the overlap optimization applies and all the segments are removed.
+ ;; CHECK:      (import "env" "memory" (memory $0 i64 281474976710656 281474976710656))
+ (import "env" "memory" (memory $0 i64 281474976710656 281474976710656))
+
+ (data (i64.const 1024) "x")
+ (data (i64.const 1024) "\00")
+ (data (i64.const -1) "\00")
+)

@@ -14,7 +14,7 @@
  (export "__data_end" (global $global$1))
  (func $__wasm_call_ctors
  )
- (func $used\28int\29 (param $0 i32) (result i32)
+ (func $"used(int)" (param $0 i32) (result i32)
   (local $1 i32)
   (local $2 i32)
   (local $3 i32)
@@ -183,7 +183,7 @@
   ;; code offset: 0x95
   (local.set $5
    ;; code offset: 0x8f
-   (call $used\28int\29
+   (call $"used(int)"
     ;; code offset: 0x8d
     (local.get $3)
    )
@@ -837,7 +837,7 @@ file_names[  1]:
  (export "__data_end" (global $global$1))
  (func $__wasm_call_ctors
  )
- (func $used\28int\29 (param $0 i32) (result i32)
+ (func $"used(int)" (param $0 i32) (result i32)
   (local $1 i32)
   (local $2 i32)
   (local $3 i32)
@@ -1006,7 +1006,7 @@ file_names[  1]:
   ;; code offset: 0xab
   (local.set $5
    ;; code offset: 0xa9
-   (call $used\28int\29
+   (call $"used(int)"
     ;; code offset: 0xa7
     (local.get $3)
    )

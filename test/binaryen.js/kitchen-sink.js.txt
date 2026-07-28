@@ -2145,7 +2145,7 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
         (i32.const 0)
        )
       )
-      (atomic.fence)
+      (atomic.fence acqrel)
       (tuple.drop 4
        (tuple.make 4
         (i32.const 13)
@@ -2838,6 +2838,17 @@ module loaded from text form:
  )
 )
 
+module loaded from text form with features:
+(module
+ (global $g anyref (ref.null none))
+)
+
+[wasm-validator error in module] unexpected false: all used types should be allowed, on 
+g
+[wasm-validator error in module] unexpected false: , on 
+g
+global type requires additional features [--enable-reference-types --enable-gc]
+validation with MVP features: 0
 sizeof Literal: 24
 (module
  (type $0 (func))
@@ -2871,6 +2882,7 @@ Load memory order: 2
 Store memory order: 2
 RMW memory order: 2
 Cmpxchg memory order: 2
+Fence memory order: 2
 (module
  (type $0 (func))
  (memory $0 1 1)
@@ -2899,6 +2911,7 @@ Cmpxchg memory order: 2
      (i32.const 1)
     )
    )
+   (atomic.fence acqrel)
   )
  )
 )

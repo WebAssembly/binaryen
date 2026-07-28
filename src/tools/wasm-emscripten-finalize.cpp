@@ -287,7 +287,7 @@ int main(int argc, const char* argv[]) {
       writer.setSourceMapFilename(outputSourceMapFilename);
       writer.setSourceMapUrl(outputSourceMapUrl);
     }
-    writer.write(wasm, output);
+    options.write(writer, wasm, output);
   }
 
   flush_and_quick_exit(0);

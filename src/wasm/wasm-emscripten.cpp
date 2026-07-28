@@ -33,6 +33,8 @@
 
 namespace wasm {
 
+static const Name STACK_POINTER("__stack_pointer");
+
 void addExportedFunction(Module& wasm, Function* function) {
   wasm.addFunction(function);
   wasm.addExport(

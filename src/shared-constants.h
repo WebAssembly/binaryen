@@ -21,7 +21,6 @@
 
 namespace wasm {
 
-extern Name STACK_POINTER;
 extern Name MODULE;
 extern Name START;
 extern Name FUNC;
@@ -41,20 +40,13 @@ extern Name TYPE;
 extern Name REF;
 extern Name NULL_;
 extern Name CALL;
-extern Name CALL_IMPORT;
 extern Name CALL_INDIRECT;
 extern Name BLOCK;
-extern Name BR_IF;
 extern Name THEN;
 extern Name ELSE;
-extern Name _NAN;
-extern Name _INFINITY;
-extern Name NEG_INFINITY;
-extern Name NEG_NAN;
 extern Name CASE;
 extern Name BR;
 extern Name FUNCREF;
-extern Name FAKE_RETURN;
 extern Name DELEGATE_CALLER_TARGET;
 extern Name MUT;
 extern Name SPECTEST;

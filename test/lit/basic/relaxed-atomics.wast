@@ -6,6 +6,7 @@
  (memory $0 23 256 shared)
 
  ;; RTRIP:      (func $acqrel (type $0)
+ ;; RTRIP-NEXT:  (atomic.fence acqrel)
  ;; RTRIP-NEXT:  (i32.atomic.store acqrel
  ;; RTRIP-NEXT:   (i32.const 1)
  ;; RTRIP-NEXT:   (i32.const 1)
@@ -17,6 +18,7 @@
  ;; RTRIP-NEXT:  )
  ;; RTRIP-NEXT: )
  (func $acqrel
+   (atomic.fence acqrel)
    (i32.atomic.store acqrel (i32.const 1) (i32.const 1))
    (drop
     (i32.atomic.load acqrel
@@ -26,6 +28,7 @@
 
  ;; Optional seqcst ordering is dropped in text output.
  ;; RTRIP:      (func $seqcst (type $0)
+ ;; RTRIP-NEXT:  (atomic.fence)
  ;; RTRIP-NEXT:  (i32.atomic.store
  ;; RTRIP-NEXT:   (i32.const 1)
  ;; RTRIP-NEXT:   (i32.const 1)
@@ -46,6 +49,7 @@
  ;; RTRIP-NEXT:  )
  ;; RTRIP-NEXT: )
  (func $seqcst
+   (atomic.fence seqcst)
    (i32.atomic.store seqcst (i32.const 1) (i32.const 1))
    (i32.atomic.store 0 seqcst (i32.const 1) (i32.const 1))
    (drop (i32.atomic.load seqcst

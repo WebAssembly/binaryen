@@ -917,7 +917,7 @@ void WasmBinaryWriter::writeNames() {
   if (emitModuleName && wasm->name.is()) {
     auto substart =
       startSubsection(BinaryConsts::CustomSections::Subsection::NameModule);
-    writeEscapedName(wasm->name.view());
+    writeInlineString(wasm->name.view());
     finishSubsection(substart);
   }
 
@@ -946,7 +946,7 @@ void WasmBinaryWriter::writeNames() {
       o << U32LEB(functionsWithNames.size());
       for (auto& [index, global] : functionsWithNames) {
         o << U32LEB(index);
-        writeEscapedName(global->name.view());
+        writeInlineString(global->name.view());
       }
       finishSubsection(substart);
     }
@@ -1006,7 +1006,7 @@ void WasmBinaryWriter::writeNames() {
         o << U32LEB(localsWithNames.size());
         for (auto& [indexInBinary, name] : localsWithNames) {
           o << U32LEB(indexInBinary);
-          writeEscapedName(name.view());
+          writeInlineString(name.view());
         }
         emitted++;
       }
@@ -1029,7 +1029,7 @@ void WasmBinaryWriter::writeNames() {
       o << U32LEB(namedTypes.size());
       for (auto type : namedTypes) {
         o << U32LEB(indexedTypes.indices[type]);
-        writeEscapedName(wasm->typeNames[type].name.view());
+        writeInlineString(wasm->typeNames[type].name.view());
       }
       finishSubsection(substart);
     }
@@ -1056,7 +1056,7 @@ void WasmBinaryWriter::writeNames() {
 
       for (auto& [index, table] : tablesWithNames) {
         o << U32LEB(index);
-        writeEscapedName(table->name.view());
+        writeInlineString(table->name.view());
       }
 
       finishSubsection(substart);
@@ -1082,7 +1082,7 @@ void WasmBinaryWriter::writeNames() {
       o << U32LEB(memoriesWithNames.size());
       for (auto& [index, memory] : memoriesWithNames) {
         o << U32LEB(index);
-        writeEscapedName(memory->name.view());
+        writeInlineString(memory->name.view());
       }
       finishSubsection(substart);
     }
@@ -1107,7 +1107,7 @@ void WasmBinaryWriter::writeNames() {
       o << U32LEB(globalsWithNames.size());
       for (auto& [index, global] : globalsWithNames) {
         o << U32LEB(index);
-        writeEscapedName(global->name.view());
+        writeInlineString(global->name.view());
       }
       finishSubsection(substart);
     }
@@ -1132,7 +1132,7 @@ void WasmBinaryWriter::writeNames() {
 
       for (auto& [index, elem] : elemsWithNames) {
         o << U32LEB(index);
-        writeEscapedName(elem->name.view());
+        writeInlineString(elem->name.view());
       }
 
       finishSubsection(substart);
@@ -1156,7 +1156,7 @@ void WasmBinaryWriter::writeNames() {
         auto& seg = wasm->dataSegments[i];
         if (seg->hasExplicitName) {
           o << U32LEB(i);
-          writeEscapedName(seg->name.view());
+          writeInlineString(seg->name.view());
         }
       }
       finishSubsection(substart);
@@ -1187,7 +1187,7 @@ void WasmBinaryWriter::writeNames() {
         o << U32LEB(fieldNames.size());
         for (auto& [index, name] : fieldNames) {
           o << U32LEB(index);
-          writeEscapedName(name.view());
+          writeInlineString(name.view());
         }
       }
       finishSubsection(substart);
@@ -1213,7 +1213,7 @@ void WasmBinaryWriter::writeNames() {
       o << U32LEB(tagsWithNames.size());
       for (auto& [index, tag] : tagsWithNames) {
         o << U32LEB(index);
-        writeEscapedName(tag->name.view());
+        writeInlineString(tag->name.view());
       }
       finishSubsection(substart);
     }
@@ -1844,37 +1844,6 @@ void WasmBinaryWriter::writeData(const char* data, size_t size) {
 
 void WasmBinaryWriter::writeInlineString(std::string_view name) {
   o.writeInlineString(name);
-}
-
-static bool isHexDigit(char ch) {
-  return (ch >= '0' && ch <= '9') || (ch >= 'a' && ch <= 'f') ||
-         (ch >= 'A' && ch <= 'F');
-}
-
-static int decodeHexNibble(char ch) {
-  return ch <= '9' ? ch & 15 : (ch & 15) + 9;
-}
-
-void WasmBinaryWriter::writeEscapedName(std::string_view name) {
-  if (name.find('\\') == std::string_view::npos) {
-    writeInlineString(name);
-    return;
-  }
-  // decode escaped by escapeName (see below) function names
-  std::string unescaped;
-  for (size_t i = 0; i < name.size();) {
-    char ch = name[i++];
-    // support only `\xx` escapes; ignore invalid or unsupported escapes
-    if (ch != '\\' || i + 1 >= name.size() || !isHexDigit(name[i]) ||
-        !isHexDigit(name[i + 1])) {
-      unescaped.push_back(ch);
-      continue;
-    }
-    unescaped.push_back(
-      char((decodeHexNibble(name[i]) << 4) | decodeHexNibble(name[i + 1])));
-    i += 2;
-  }
-  writeInlineString({unescaped.data(), unescaped.size()});
 }
 
 void WasmBinaryWriter::writeInlineBuffer(const char* data, size_t size) {
@@ -3425,7 +3394,8 @@ Result<> WasmBinaryReader::readLoad(unsigned bytes, bool signed_, Type type) {
   auto [mem, align, offset, backing] = getMemarg();
   if (backing == BackingType::Array) {
     HeapType arrayType = getIndexedHeapType();
-    return builder.makeArrayLoad(arrayType, bytes, signed_, type);
+    return builder.makeArrayLoad(
+      arrayType, bytes, signed_, offset, align, type);
   }
   return builder.makeLoad(bytes, signed_, offset, align, type, mem);
 }
@@ -3434,7 +3404,7 @@ Result<> WasmBinaryReader::readStore(unsigned bytes, Type type) {
   auto [mem, align, offset, backing] = getMemarg();
   if (backing == BackingType::Array) {
     HeapType arrayType = getIndexedHeapType();
-    return builder.makeArrayStore(arrayType, bytes, type);
+    return builder.makeArrayStore(arrayType, bytes, offset, align, type);
   }
   return builder.makeStore(bytes, offset, align, type, mem);
 }
@@ -3991,11 +3961,10 @@ Result<> WasmBinaryReader::readInst() {
           auto [mem, align, offset, memoryOrder] = getAtomicMemarg();
           return builder.makeAtomicNotify(offset, mem);
         }
-        case BinaryConsts::AtomicFence:
-          if (getInt8() != 0) {
-            return Err{"expected 0x00 byte immediate on atomic.fence"};
-          }
-          return builder.makeAtomicFence();
+        case BinaryConsts::AtomicFence: {
+          MemoryOrder order = getMemoryOrder(/*isRMW=*/false);
+          return builder.makeAtomicFence(order);
+        }
         case BinaryConsts::Pause:
           return builder.makePause();
         case BinaryConsts::StructAtomicGet:
@@ -4143,12 +4112,10 @@ Result<> WasmBinaryReader::readInst() {
           return builder.makeElemDrop(elem);
         }
         case BinaryConsts::F32_F16LoadMem: {
-          auto [mem, align, offset, backing] = getMemarg();
-          return builder.makeLoad(2, false, offset, align, Type::f32, mem);
+          return readLoad(2, false, Type::f32);
         }
         case BinaryConsts::F32_F16StoreMem: {
-          auto [mem, align, offset, backing] = getMemarg();
-          return builder.makeStore(2, offset, align, Type::f32, mem);
+          return readStore(2, Type::f32);
         }
       }
       return Err{"unknown misc operation: " + std::to_string(op)};
@@ -4698,12 +4665,10 @@ Result<> WasmBinaryReader::readInst() {
         case BinaryConsts::V128Const:
           return builder.makeConst(getVec128Literal());
         case BinaryConsts::V128Store: {
-          auto [mem, align, offset, backing] = getMemarg();
-          return builder.makeStore(16, offset, align, Type::v128, mem);
+          return readStore(16, Type::v128);
         }
         case BinaryConsts::V128Load: {
-          auto [mem, align, offset, backing] = getMemarg();
-          return builder.makeLoad(16, false, offset, align, Type::v128, mem);
+          return readLoad(16, false, Type::v128);
         }
         case BinaryConsts::V128Load8Splat: {
           auto [mem, align, offset, backing] = getMemarg();
@@ -5308,64 +5273,22 @@ void WasmBinaryReader::readTags() {
   }
 }
 
-static bool isIdChar(char ch) {
-  return (ch >= '0' && ch <= '9') || (ch >= 'A' && ch <= 'Z') ||
-         (ch >= 'a' && ch <= 'z') || ch == '!' || ch == '#' || ch == '$' ||
-         ch == '%' || ch == '&' || ch == '\'' || ch == '*' || ch == '+' ||
-         ch == '-' || ch == '.' || ch == '/' || ch == ':' || ch == '<' ||
-         ch == '=' || ch == '>' || ch == '?' || ch == '@' || ch == '^' ||
-         ch == '_' || ch == '`' || ch == '|' || ch == '~';
-}
-
-static char formatNibble(int nibble) {
-  return nibble < 10 ? '0' + nibble : 'a' - 10 + nibble;
-}
-
-Name WasmBinaryReader::escape(Name name) {
-  bool allIdChars = true;
-  for (char c : name.view()) {
-    if (!(allIdChars = isIdChar(c))) {
-      break;
-    }
-  }
-  if (allIdChars) {
-    return name;
-  }
-  // encode name, if at least one non-idchar (per WebAssembly spec) was found
-  std::string escaped;
-  for (char c : name.view()) {
-    if (isIdChar(c)) {
-      escaped.push_back(c);
-      continue;
-    }
-    // replace non-idchar with `\xx` escape
-    escaped.push_back('\\');
-    escaped.push_back(formatNibble((unsigned char)c >> 4));
-    escaped.push_back(formatNibble((unsigned char)c & 15));
-  }
-  return escaped;
-}
-
 namespace {
 
 // Performs necessary processing of names from the name section before using
-// them. Specifically it escapes and deduplicates them.
+// them. Specifically it deduplicates them.
 class NameProcessor {
 public:
-  // Returns a unique, escaped name. Notes that name for the items to follow to
+  // Returns a unique name. Notes that name for the items to follow to
   // keep them unique as well.
   Name process(Name name) {
-    return deduplicate(WasmBinaryReader::escape(name));
+    name = Names::getValidNameGivenExisting(name, usedNames);
+    usedNames.insert(name);
+    return name;
   }
 
 private:
   std::unordered_set<Name> usedNames;
-
-  Name deduplicate(Name base) {
-    auto name = Names::getValidNameGivenExisting(base, usedNames);
-    usedNames.insert(name);
-    return name;
-  }
 };
 
 } // anonymous namespace
@@ -5833,6 +5756,7 @@ WasmBinaryReader::readMemoryAccess(bool isAtomic, bool isRMW) {
       throwError(
         "Memory index and memory order are not allowed for array backing.");
     }
+    offset = getU32LEB();
   } else {
     WASM_UNREACHABLE("Invalid backing type");
   }

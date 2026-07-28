@@ -647,7 +647,10 @@ struct PrintExpressionContents
       o << " offset=" << curr->offset;
     }
   }
-  void visitAtomicFence(AtomicFence* curr) { printMedium(o, "atomic.fence"); }
+  void visitAtomicFence(AtomicFence* curr) {
+    printMedium(o, "atomic.fence");
+    printMemoryOrder(curr->order);
+  }
   void visitPause(Pause* curr) { printMedium(o, "pause"); }
   void visitSIMDExtract(SIMDExtract* curr) {
     prepareColor(o);
@@ -2476,6 +2479,12 @@ struct PrintExpressionContents
     printMinor(o, "type ");
     printHeapTypeName(curr->ref->type.getHeapType());
     o << ')';
+    if (curr->offset) {
+      o << " offset=" << curr->offset;
+    }
+    if (curr->align != curr->bytes) {
+      o << " align=" << curr->align;
+    }
   }
 
   void visitArrayStore(ArrayStore* curr) {
@@ -2489,6 +2498,12 @@ struct PrintExpressionContents
     printMinor(o, "type ");
     printHeapTypeName(curr->ref->type.getHeapType());
     o << ')';
+    if (curr->offset) {
+      o << " offset=" << curr->offset;
+    }
+    if (curr->align != curr->bytes) {
+      o << " align=" << curr->align;
+    }
   }
   void visitArrayLen(ArrayLen* curr) { printMedium(o, "array.len"); }
   void visitArrayCopy(ArrayCopy* curr) {

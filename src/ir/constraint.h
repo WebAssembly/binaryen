@@ -35,6 +35,15 @@ namespace wasm::constraint {
 // A term in a constraint, either a local index or literal value.
 struct Term : public std::variant<Index, Literal> {
   bool operator==(const Term&) const = default;
+  bool operator<(const Term& other) const {
+    if (index() != other.index()) {
+      return index() < other.index();
+    }
+    if (index() == 0) {
+      return std::get<Index>(*this) < std::get<Index>(other);
+    }
+    return std::get<Literal>(*this) < std::get<Literal>(other);
+  }
 };
 
 // A constraint: some operation and some value, like "is equal to 17" or "is
@@ -44,6 +53,16 @@ struct Constraint {
   Term term;
 
   bool operator==(const Constraint&) const = default;
+  bool operator<(const Constraint& other) const {
+    if (op != other.op) {
+      return op < other.op;
+    }
+    return term < other.term;
+  }
+
+  Constraint negate() const {
+    return Constraint{Abstract::negateRelational(op), term};
+  }
 };
 
 // We limit constraints to a low number to ensure good performance even with
@@ -59,7 +78,47 @@ enum Result { True, False, Unknown };
 // the comments below, `x` is used for the thing all the constraints are talking
 // about, which looks like a local, but it could be a global or a struct field
 // or anything else in general.
+//
+// While we are a vector, the order of constraints does not logically matter,
+// and we keep ourselves sorted in a canonical form, so that simple ==, != etc.
+// comparisons work. The canonical order also makes debug printing nicer.
 struct AndedConstraintSet : inplace_vector<Constraint, MaxConstraints> {
+  // We could represent a contradiction using two constraints that contradict
+  // each other (== 0 && != 0), but for simplicity we mark this explicitly.
+  //
+  // A contradiction is the default value here, because it represents
+  // unreachable code: if (x == 0 && x != 0) { .. unreachable ..}. That is, we
+  // assume we represent the constraints in code that has not been reached,
+  // until something changes.
+  bool isContradiction = true;
+
+  // Proving everything (even contradictions) is equivalent to being a
+  // contradiction. (This and provesNothing can be seen as the top/bottom of a
+  // poset, if one wants to think of things that way.)
+  bool provesEverything() const { return isContradiction; }
+
+  void setProvesEverything() {
+    clear();
+    isContradiction = true;
+    assert(provesEverything());
+  }
+
+  // An empty set of contradictions means we know nothing, and so anything is
+  // possible, and we can prove nothing.
+  bool provesNothing() const { return empty(); }
+
+  void setProvesNothing() {
+    clear();
+    isContradiction = false;
+    assert(provesNothing());
+  }
+
+  static AndedConstraintSet makeProvesNothing() {
+    AndedConstraintSet ret;
+    ret.setProvesNothing();
+    return ret;
+  }
+
   // Check a condition against this set, that is, whether the existing
   // constraints prove that it must be true, false, or unknown: whether
   //
@@ -118,8 +177,149 @@ struct AndedConstraintSet : inplace_vector<Constraint, MaxConstraints> {
   //   { x >= 0 }
   //
   // If we become too imprecise, we lose the ability to imply anything useful.
-  void approximateOr(const AndedConstraintSet& other);
+  //
+  // Returns whether we changed anything.
+  bool approximateOr(const AndedConstraintSet& other);
+
+  // Set a constraint, replacing all previous state.
+  void set(const Constraint& c) {
+    setProvesNothing();
+    push_back(c);
+  }
 };
+
+// A local plus a constraint on it.
+struct LocalConstraint {
+  Index local;
+  Constraint constraint;
+
+  // Try to parse BinaryenIR into a local to which a constraint is applied. For
+  // example
+  //
+  //   (i32.eq (local.get $r) (i32.const 10))
+  //
+  // parses into
+  //
+  //   LocalConstraint($r, { x == 10 })
+  //
+  static std::optional<LocalConstraint> parse(Expression* curr);
+
+  // Parse in a condition context, i.e., where (local.get $x) is the same as
+  // $x != 0 (e.g., in an if condition, or a br_on ref).
+  static std::optional<LocalConstraint> parseCondition(Expression* curr);
+
+  // Reverse the constraint. The constraint's term must, of course, be another
+  // local.
+  void flip();
+};
+
+// A map of locals and their constraints, representing the state at a basic
+// block. We use the following representation:
+//
+//  * When the basic block is unreachable, we mark ourselves so, and clear the
+//    map.
+//  * If any local is in a contradiction, we know we are unreachable, and mark
+//    ourselves so.
+//  * When we can prove nothing about a local - the common case - we leave it
+//    out of the map.
+//  * If a local is unusable - a non-nullable local before any set - then it is
+//    marked as being able to prove nothing. (We could also mark this as a
+//    contradiction, but both apply - we can indeed prove nothing, as the IR
+//    disallows any uses of it - and avoiding a contradiction avoids confusion
+//    with the case of the basic block being unreachable.)
+//
+// As a result, the map only contains interesting things, where we can prove
+// something (but not everything).
+//
+// Cross-local constraints (like x == y) are duplicated, that is, they appear in
+// the constraints for both x and y. This makes things simple by having all
+// constraints related to a local in the same place.
+struct BasicBlockConstraintMap {
+  // Blocks begin unreachable, like AndedConstraintSet.
+  bool unreachable = true;
+
+  void setReachable() {
+    unreachable = false;
+    assert(map.empty());
+  }
+
+  // Apply a constraint to a local.
+  void set(Index index, const Constraint& c);
+
+  // Mark a local as unknown and able to prove nothing.
+  void setProvesNothing(Index index);
+
+  // Get the constraints for a local.
+  AndedConstraintSet get(Index index) const {
+    // We should not be called in unreachable code.
+    assert(!unreachable);
+
+    if (auto iter = map.find(index); iter != map.end()) {
+      auto& constraints = iter->second;
+      // If we can prove nothing, we should have removed it from the map.
+      assert(!constraints.provesNothing());
+      // If we can prove everything, we should be entirely unreachable.
+      assert(!constraints.provesEverything());
+      return constraints;
+    }
+    return AndedConstraintSet::makeProvesNothing();
+  }
+
+  // Perform an OR as above. When a local only appears in one map, we treat it
+  // as if it contains a contradiction there, that is, as if the code is
+  // unreachable.
+  //
+  // Returns whether we changed anything.
+  bool approximateOr(const BasicBlockConstraintMap& other);
+
+  // Perform an AND as above, on a particular index.
+  void approximateAnd(Index index, const Constraint& c) {
+    approximateAndInternal(index, c);
+  }
+
+  // TODO: Add proves() here, which could do things like: if asked x == y, we
+  // can answer False if we see x == c1, y == c2, and the constants c1, c2
+  // differ.
+
+  bool operator!=(const BasicBlockConstraintMap& other) {
+    return unreachable != other.unreachable || map != other.map;
+  }
+
+  friend std::ostream& operator<<(std::ostream& o,
+                                  const BasicBlockConstraintMap& map);
+
+private:
+  std::unordered_map<Index, AndedConstraintSet> map;
+
+  // Maps an index to the locals that have constraints referring to it. When a
+  // local is modified, we need to wipe all those constraints, which become
+  // stale.
+  //
+  // It is ok (but unoptimal in efficiency) if we have stale refs here, e.g. due
+  // to approximation removing a constraint. Whenever there is a reference,
+  // however, it must be noted here, so that when things get stale we can remove
+  // them.
+  std::unordered_map<Index, std::unordered_set<Index>> refs;
+
+  // Given a constraint on a local, note refs.
+  void noteRefs(Index index, const Constraint& c);
+
+  // Given an index, erase constraints referring to it.
+  void eraseStaleRefs(Index index);
+
+  // Internal version, with a flag to flip the constraint. Whenever we apply
+  // e.g. x == y, we also apply y == x to y, to maintain the invariant described
+  // above. When flip is true, we flip the constraint and apply it to the other
+  // index (y == x, in this example). When isCopy is true, we are a copied
+  // constraint from another local, and we do not need to add new copies of it.
+  void approximateAndInternal(Index index,
+                              const Constraint& c,
+                              bool flip = false,
+                              bool isCopy = false);
+};
+
+std::ostream& operator<<(std::ostream& o, const Constraint& c);
+std::ostream& operator<<(std::ostream& o, const AndedConstraintSet& set);
 
 } // namespace wasm::constraint
 

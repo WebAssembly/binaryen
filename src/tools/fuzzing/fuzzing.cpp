@@ -906,16 +906,20 @@ void TranslateToFuzzReader::finalizeMemory() {
   }
   memory->initial = std::max(memory->initial, fuzzParams->USABLE_MEMORY);
   // Avoid an unlimited memory size, which would make fuzzing very difficult
-  // as different VMs will run out of system memory in different ways.
-  if (memory->max == Memory::kUnlimitedSize) {
+  // as different VMs will run out of system memory in different ways. Also use
+  // the initial memory size as the maximum, if the initial is now larger
+  // (which can happen as we compute the initial size, above: this is where we
+  // update the maximum to make sense relative to that new initial size).
+  if (memory->max == Memory::kUnlimitedSize || memory->max < memory->initial) {
     memory->max = memory->initial;
   }
-  if (memory->max <= memory->initial) {
+  if (memory->max == memory->initial && oneIn(2)) {
     // To allow growth to work (which a testcase may assume), try to make the
-    // maximum larger than the initial.
+    // maximum larger than the initial, some of the time.
     // TODO: scan the wasm for grow instructions?
-    memory->max =
-      std::min(Address(memory->initial + 1), Address(memory->maxSize32()));
+    memory->max = std::min(
+      Address(memory->initial + 1),
+      Address(memory->is64() ? memory->maxSize64() : memory->maxSize32()));
   }
 
   if (!preserveImportsAndExports) {
@@ -5200,7 +5204,7 @@ Expression* TranslateToFuzzReader::makeAtomic(Type type) {
   }
   wasm.memories[0]->shared = true;
   if (type == Type::none) {
-    return builder.makeAtomicFence();
+    return builder.makeAtomicFence(pick(atomicMemoryOrders));
   }
   if (type == Type::i32 && oneIn(2)) {
     if (ATOMIC_WAITS && oneIn(2)) {
@@ -5265,15 +5269,10 @@ Expression* TranslateToFuzzReader::makeAtomic(Type type) {
   auto* ptr = makePointer();
   if (oneIn(2)) {
     auto* value = make(type);
+    auto op = pick(RMWAdd, RMWSub, RMWAnd, RMWOr, RMWXor, RMWXchg);
+    auto order = pick(atomicMemoryOrders);
     return builder.makeAtomicRMW(
-      pick(RMWAdd, RMWSub, RMWAnd, RMWOr, RMWXor, RMWXchg),
-      bytes,
-      offset,
-      ptr,
-      value,
-      type,
-      wasm.memories[0]->name,
-      pick(atomicMemoryOrders));
+      op, bytes, offset, ptr, value, type, wasm.memories[0]->name, order);
   } else {
     auto* expected = make(type);
     auto* replacement = make(type);

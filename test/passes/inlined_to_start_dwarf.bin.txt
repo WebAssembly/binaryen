@@ -429,7 +429,7 @@ file_names[  1]:
  (export "__data_end" (global $global$1))
  (func $__wasm_call_ctors
  )
- (func $dsquare\28int\2c\20int\29 (param $0 i32) (param $1 i32) (result i32)
+ (func $"dsquare(int, int)" (param $0 i32) (param $1 i32) (result i32)
   ;; code offset: 0x10
   (i32.add
    ;; code offset: 0xa
@@ -450,7 +450,7 @@ file_names[  1]:
  )
  (func $main (param $0 i32) (param $1 i32) (result i32)
   ;; code offset: 0x18
-  (call $dsquare\28int\2c\20int\29
+  (call $"dsquare(int, int)"
    ;; code offset: 0x14
    (i32.const 6)
    ;; code offset: 0x16

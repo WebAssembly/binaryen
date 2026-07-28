@@ -3101,6 +3101,7 @@ Load memory order: 2
 Store memory order: 2
 RMW memory order: 2
 Cmpxchg memory order: 2
+Fence memory order: 2
 (module
  (type $0 (func))
  (memory $0 1 1)
@@ -3129,6 +3130,7 @@ Cmpxchg memory order: 2
      (i32.const 1)
     )
    )
+   (atomic.fence acqrel)
   )
  )
 )

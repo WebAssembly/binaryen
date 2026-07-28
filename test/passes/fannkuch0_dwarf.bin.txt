@@ -5209,7 +5209,7 @@ file_names[  3]:
  (export "__data_end" (global $global$1))
  (func $__wasm_call_ctors
  )
- (func $fannkuch_worker\28void*\29 (param $0 i32) (result i32)
+ (func $"fannkuch_worker(void*)" (param $0 i32) (result i32)
   (local $1 i32)
   (local $2 i32)
   (local $3 i32)
@@ -8117,7 +8117,7 @@ file_names[  3]:
    ;; code offset: 0xb83
    (local.set $31
     ;; code offset: 0xb81
-    (call $fannkuch\28int\29
+    (call $"fannkuch(int)"
      ;; code offset: 0xb7f
      (local.get $30)
     )
@@ -8198,7 +8198,7 @@ file_names[  3]:
    (local.get $34)
   )
  )
- (func $fannkuch\28int\29 (param $0 i32) (result i32)
+ (func $"fannkuch(int)" (param $0 i32) (result i32)
   (local $1 i32)
   (local $2 i32)
   (local $3 i32)
@@ -10004,7 +10004,7 @@ file_names[  3]:
     ;; code offset: 0x12ac
     (local.set $164
      ;; code offset: 0x12aa
-     (call $fannkuch_worker\28void*\29
+     (call $"fannkuch_worker(void*)"
       ;; code offset: 0x12a7
       (local.get $163)
      )

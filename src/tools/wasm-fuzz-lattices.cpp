@@ -990,7 +990,8 @@ struct Fuzzer {
   // Helper function to run per-function tests. latticeElementSeed is used to
   // generate three lattice elements randomly. It is also used to select which
   // analysis is to be tested for the function.
-  void runOnFunction(Function* func, uint64_t latticeElementSeed) {
+  void
+  runOnFunction(Module* wasm, Function* func, uint64_t latticeElementSeed) {
     RandEngine getFuncRand(latticeElementSeed);
 
     // Fewer bytes are needed to generate three random lattices.
@@ -1002,7 +1003,7 @@ struct Fuzzer {
     Random rand(std::move(funcBytes));
     checkLatticeProperties(rand, verbose);
 
-    CFG cfg = CFG::fromFunction(func);
+    CFG cfg = CFG::fromFunction(func, wasm);
 
     switch (rand.upTo(2)) {
       case 0: {
@@ -1047,13 +1048,14 @@ struct Fuzzer {
     // If a specific function and lattice element seed is specified, only run
     // that.
     if (latticeElementSeed && funcName) {
-      runOnFunction(testModule.getFunction(*funcName), *latticeElementSeed);
+      runOnFunction(
+        &testModule, testModule.getFunction(*funcName), *latticeElementSeed);
       return;
     }
 
     ModuleUtils::iterDefinedFunctions(testModule, [&](Function* func) {
       uint64_t funcSeed = getRand();
-      runOnFunction(func, funcSeed);
+      runOnFunction(&testModule, func, funcSeed);
     });
   }
 };

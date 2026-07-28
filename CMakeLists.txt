@@ -5,18 +5,12 @@ cmake_minimum_required(VERSION 3.16.3)
 # Needed for C++17 (std::path)
 set(CMAKE_OSX_DEPLOYMENT_TARGET "10.15" CACHE STRING "Minimum OS X deployment version")
 
-project(binaryen LANGUAGES C CXX VERSION 130)
+project(binaryen LANGUAGES C CXX VERSION 131)
 include(GNUInstallDirs)
 
 # The C++ standard whose features are required to build Binaryen.
 # Keep in sync with scripts/test/shared.py cxx_standard
-# The if condition allows embedding in a project with a higher default C++ standard set
-set(REQUIRED_CXX_STANDARD 20)
-if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD ${REQUIRED_CXX_STANDARD})
-elseif(CMAKE_CXX_STANDARD LESS ${REQUIRED_CXX_STANDARD})
-  message(SEND_ERROR "Building with C++ standards older than C++${REQUIRED_CXX_STANDARD} is not supported, change CMAKE_CXX_STANDARD to ${REQUIRED_CXX_STANDARD} or later")
-endif()
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -465,6 +459,7 @@ if(BUILD_SHARED_LIBS)
 else()
   message(STATUS "Building libbinaryen as statically linked library.")
 endif()
+target_compile_features(binaryen PUBLIC cxx_std_20)
 target_link_libraries(binaryen PUBLIC Threads::Threads)
 binaryen_setup_rpath(binaryen)
 if(BUILD_LLVM_DWARF)

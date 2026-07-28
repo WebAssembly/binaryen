@@ -452,11 +452,13 @@ struct CFGWalker : public PostWalker<SubType, VisitorType> {
     }
     auto handlerBlocks = BranchUtils::getUniqueTargets(*currp);
     // Add branches to the targets.
+    auto* last = self->currBasicBlock;
     for (auto target : handlerBlocks) {
       if (target) {
-        self->branches[target].push_back(self->currBasicBlock);
+        self->branches[target].push_back(last);
       }
     }
+    self->link(last, self->startBasicBlock()); // we might fall through
   }
 
   static bool isReturnCall(Expression* curr) {

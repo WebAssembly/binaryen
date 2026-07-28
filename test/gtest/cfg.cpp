@@ -139,6 +139,47 @@ TEST_F(CFGTest, CallBlock) {
   EXPECT_EQ(ss.str(), cfgText);
 }
 
+TEST_F(CFGTest, CallBlockWithModuleWithoutEH) {
+  // When a module is provided, the CFG can use its feature set to know that
+  // calls do not throw unless EH is enabled.
+  auto moduleText = R"wasm(
+    (module
+      (func $foo
+        (drop
+          (i32.const 0)
+        )
+        (call $bar)
+        (drop
+          (i32.const 1)
+        )
+      )
+      (func $bar)
+    )
+  )wasm";
+
+  auto cfgText = R"cfg(;; preds: [], succs: []
+;; entry
+;; exit
+0:
+  0: i32.const 0
+  1: drop
+  2: call $bar
+  3: i32.const 1
+  4: drop
+  5: block
+)cfg";
+
+  Module wasm;
+  parseWast(wasm, moduleText);
+
+  CFG cfg = CFG::fromFunction(wasm.getFunction("foo"), &wasm);
+
+  std::stringstream ss;
+  cfg.print(ss);
+
+  EXPECT_EQ(ss.str(), cfgText);
+}
+
 TEST_F(CFGTest, Empty) {
   // Check that we create a correct CFG for an empty function.
   auto moduleText = R"wasm(
