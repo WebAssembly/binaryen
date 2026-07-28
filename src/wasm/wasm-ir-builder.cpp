@@ -1078,24 +1078,45 @@ Result<> IRBuilder::visitEnd() {
   auto& label = isTry ? scope.branchLabel : scope.label;
   auto blockType = scope.getResultType();
 
+  // When we wrap an expression then push the wrapper, we would end up with the
+  // binary start location attached to the original expression and the end
+  // location attached to the wrapper. Move the binary start location to the
+  // wrapper to avoid splitting the span information.
+  auto moveBinaryPosToWrapper = [&](Expression* original, Expression* wrapper) {
+    if (!func) {
+      return;
+    }
+    if (auto it = func->expressionLocations.find(original);
+        it != func->expressionLocations.end()) {
+      auto span = it->second;
+      assert(span.end == 0);
+      func->expressionLocations.erase(it);
+      [[maybe_unused]] auto [_, inserted] =
+        func->expressionLocations.insert({wrapper, span});
+      assert(inserted);
+    }
+  };
+
   // If the scope expression cannot be directly labeled, we may need to wrap it
   // in a block.
   auto maybeWrapForLabel = [&](Expression* curr) -> Expression* {
     if (!label) {
       return curr;
     }
-    curr = fixExtraOutput(scope, label, curr);
+    auto* fixed = fixExtraOutput(scope, label, curr);
     // We can re-use unnamed blocks instead of wrapping them.
-    if (auto* block = curr->dynCast<Block>(); block && !block->name) {
+    if (auto* block = fixed->dynCast<Block>(); block && !block->name) {
       block->name = label;
       block->type = blockType;
+      moveBinaryPosToWrapper(curr, block);
       return block;
     }
     auto* block = builder.makeBlock();
     block->name = label;
-    block->list.push_back(curr);
+    block->list.push_back(fixed);
     block->finalize(blockType,
                     scope.labelUsed ? Block::HasBreak : Block::NoBreak);
+    moveBinaryPosToWrapper(curr, block);
     return block;
   };
 
