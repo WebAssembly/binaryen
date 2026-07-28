@@ -14,6 +14,46 @@
  * limitations under the License.
  */
 
+// IRBuilder constructs valid Binaryen IR expression trees from a flat stream of
+// WebAssembly instructions (e.g. from the binary or text parsers).
+//
+// Core Mechanism:
+//
+// - Maintain a stack of control scopes (`ScopeCtx`).
+//
+// - Track an expression stack (`exprStack`) withing each scope.
+//
+// - Pop children from `exprStack` (via `ChildPopper`), set them as operands on
+//   the new Expression, and push the Expression back onto `exprStack`.
+//
+// - At scope end (`visitEnd`), the scope's expressions are inserted into the
+//   scope's control flow Expression, which is pushed to the parent scope.
+//
+// There are extra complications necessary to bridge the gap between WebAssembly
+// and Binaryen IR:
+//
+// - Unreachability: When the instructions before an unreachable-typed
+//   Expression would be popped but do not satisfy the parent Expression's type
+//   requirements, they are instead dropped and new `unreachable` instructions
+//   are synthesized instead (`popConstrainedChildren`).
+//
+// - Branch targets: Wasm allows branching to any control structure (if, try,
+//   try_table, loop, block), whereas Binaryen IR branches can target only
+//   `Block` or `Loop`. IRBuilder wraps other control flow structures in
+//   synthetic named `Block`s when targeted by branches (`maybeWrapForLabel`).
+//
+// - Branch values and block inputs: Wasm supports sending extra values with any
+//   branch instruction and also supports input parameters to any control flow
+//   structure. Binaryen IR only supports sending extra values on br and br_if
+//   and never supports input parameters to control flow structures. IRBuilder
+//   lowers away sent values and control flow parameters using scratch locals
+//   and trampoline blocks (`fixLoopWithInput`, `fixExtraOutput`).
+//
+// - Exception handling pops: Wasm EH `catch` blocks implicitly pop exception
+//   payloads from the value stack. `IRBuilder` generates synthetic `Pop`
+//   Expressions and performs fixups for pops within nested blocks
+//   (`handleBlockNestedPops`).
+
 #include <cassert>
 
 #include "ir/child-typer.h"
