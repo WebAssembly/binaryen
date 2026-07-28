@@ -268,7 +268,7 @@ V8_OPTS = [
     '--experimental-wasm-js-interop',
     '--experimental-wasm-acquire-release',
     '--experimental-wasm-wide-arithmetic',
-    '--wasm-compact-imports',
+    '--experimental-wasm-compact-imports',
 ]
 
 # external tools
