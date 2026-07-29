@@ -244,8 +244,11 @@ struct ConstraintAnalysis
   // A naive approach is to just interpret this code. x starts as x == 0, then
   // x++ means x == 1, then at the loop top we have x >= 0 && x < 1, and so
   // forth - but this is not what we want! This would literally interpret the
-  // code 100 times, which is slow and will not work if the top bound is non-
-  // constant. So we must operate at a more abstract level.
+  // code 100 times. To avoid this in "Normal" mode, we do not do anything for
+  // x++ - we assume the value is unknown after the increment, so x does not go
+  // from 0 to 1 to 2 and so forth.
+  //
+  // In "Loops" mode,
   //
   // Even at an abstract level this is not trivial. We must consider three
   // things, as mentioned above: the initial value, the bounds, and the
