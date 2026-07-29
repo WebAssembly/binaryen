@@ -381,33 +381,45 @@ struct ConstraintAnalysis
       }
     }
 
-    doFlow(work, [](const LocalConstraint& branch, BasicBlockConstraintMap& constraints) {
-      // Extend ranges pessimistically. If the branch is x < M, and we were
-      // x == N where N < M, then extend to x >= N && x < M
-      // TODO: move helper matching stuff out of constraint.cpp?
-      if (auto* N = std::get_if<Literal>(&branch.constraint.term)) {
-        auto localConstraints = constraints.get(branch.local);
-        if (localConstraints.size() == 1 && localConstraints[0].op == Abstract::Eq) {
-          if (auto* M = std::get_if<Literal>(&localConstraints[0].term)) {
-            if (branch.constraint.op == Abstract::LtS &&
-                N->ltS(*M).getUnsigned()) {
-              constraints.set(branch.local, branch.constraint);
-              constraints.approximateAnd(branch.local, {GeS, *N});
-              return;
-            }
-            if (branch.constraint.op == Abstract::LtU &&
-                N->ltU(*M).getUnsigned()) {
-              constraints.set(branch.local, branch.constraint);
-              constraints.approximateAnd(branch.local, {GeU, *N});
-              return;
+    struct Handler {
+      bool doApplyToConstraints(Expression* curr, BasicBlockConstraintMap& constraints) {
+        // Operate on x++s.
+
+..
+
+        return false;
+      }
+
+      bool doBranch(const LocalConstraint& branch, BasicBlockConstraintMap& constraints) {
+        // Extend ranges pessimistically. If the branch is x < M, and we were
+        // x == N where N < M, then extend to x >= N && x < M
+        // TODO: move helper matching stuff out of constraint.cpp?
+        if (auto* N = std::get_if<Literal>(&branch.constraint.term)) {
+          auto localConstraints = constraints.get(branch.local);
+          if (localConstraints.size() == 1 && localConstraints[0].op == Abstract::Eq) {
+            if (auto* M = std::get_if<Literal>(&localConstraints[0].term)) {
+              if (branch.constraint.op == Abstract::LtS &&
+                  N->ltS(*M).getUnsigned()) {
+                constraints.set(branch.local, branch.constraint);
+                constraints.approximateAnd(branch.local, {GeS, *N});
+                return true;
+              }
+              if (branch.constraint.op == Abstract::LtU &&
+                  N->ltU(*M).getUnsigned()) {
+                constraints.set(branch.local, branch.constraint);
+                constraints.approximateAnd(branch.local, {GeU, *N});
+                return true;
+              }
             }
           }
         }
-      }
 
-      // Otherwise, AND normally
-      constraints.approximateAnd(branch.local, branch.constraint);
-    });
+        // We did nothing custom; use the default behavior.
+        return false;
+      }
+    };
+
+    doFlow(work, Handler());
   }
 
   // After inferring all we can, apply it to optimize the code.
