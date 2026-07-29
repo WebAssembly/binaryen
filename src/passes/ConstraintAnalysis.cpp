@@ -306,12 +306,14 @@ struct ConstraintAnalysis
     work.push(entry);
 
     struct Handler {
-      bool doApplyToConstraints(Expression* curr, BasicBlockConstraintMap& constraints) const {
+      bool doApplyToConstraints(Expression* curr,
+                                BasicBlockConstraintMap& constraints) const {
         // Nothing custom here; use the default behavior.
         return false;
       }
 
-      bool doBranch(const LocalConstraint& branch, BasicBlockConstraintMap& constraints) const {
+      bool doBranch(const LocalConstraint& branch,
+                    BasicBlockConstraintMap& constraints) const {
         // Nothing custom here; use the default behavior.
         return false;
       }
@@ -324,8 +326,10 @@ struct ConstraintAnalysis
   // until nothing remains. A handler is provided with two hooks,
   // doApplyToConstraints and doBranch, each of which returns true if it handled
   // the inputs (if not, we run the default behavior).
-  template<typename T> // can we template on the function itself? is this already fast?
-  void doFlow(UniqueDeferredQueue<BasicBlock*>& work, const T& handler) {
+  template<typename T> // can we template on the function itself? is this
+                       // already fast?
+                       void doFlow(UniqueDeferredQueue<BasicBlock*>& work,
+                                   const T& handler) {
     while (!work.empty()) {
       auto* block = work.pop();
 
@@ -385,7 +389,8 @@ struct ConstraintAnalysis
     }
 
     struct Handler {
-      bool doApplyToConstraints(Expression* curr, BasicBlockConstraintMap& constraints) const {
+      bool doApplyToConstraints(Expression* curr,
+                                BasicBlockConstraintMap& constraints) const {
         using namespace Match;
 
         // Operate on x++s.
@@ -398,14 +403,16 @@ struct ConstraintAnalysis
         return false;
       }
 
-      bool doBranch(const LocalConstraint& branch, BasicBlockConstraintMap& constraints) const {
+      bool doBranch(const LocalConstraint& branch,
+                    BasicBlockConstraintMap& constraints) const {
         // Extend ranges pessimistically. If the branch is x < M, and we were
         // x == N where N < M, then extend to x >= N && x < M
         // TODO: move helper matching stuff out of constraint.cpp?
         using namespace Abstract;
         if (auto* N = std::get_if<Literal>(&branch.constraint.term)) {
           auto localConstraints = constraints.get(branch.local);
-          if (localConstraints.size() == 1 && localConstraints[0].op == Abstract::Eq) {
+          if (localConstraints.size() == 1 &&
+              localConstraints[0].op == Abstract::Eq) {
             if (auto* M = std::get_if<Literal>(&localConstraints[0].term)) {
               if (branch.constraint.op == Abstract::LtS &&
                   N->ltS(*M).getUnsigned()) {
