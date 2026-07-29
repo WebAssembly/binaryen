@@ -892,7 +892,7 @@ inline decltype(auto) select(Select** binder, S1&& s1, S2&& s2, S3&& s3) {
 
 inline decltype(auto) local() {
   return Internal::LocalGetMatcher(
-    nullptr, Internal::Any());
+    nullptr, Internal::Any<Index>(nullptr));
 }
 inline decltype(auto) local(Index* binder) {
   return Internal::LocalGetMatcher(
