@@ -25,7 +25,7 @@ BINARYEN_CORES=1 BINARYEN_PASS_DEBUG=1 afl-fuzz -i afl-testcases/ -o afl-finding
 script covers different options being passed)
 """
 
-# ruff: noqa: COM819, ARG002
+# ruff: file-ignore[prohibited-trailing-comma, unused-method-argument]
 
 import contextlib
 import difflib
@@ -1149,7 +1149,7 @@ class Wasm2JS(TestCaseHandler):
             # of the wrong type - which would be cast on use, but if we remove
             # the casts, we end up returning null here and not 0, which the
             # fuzzer can notice.
-            x = re.sub(r' null', ' 0', x)
+            x = x.replace(r' null', ' 0')
 
             # wasm2js converts exports to valid JS forms, which affects some of
             # the names in the test suite. Fix those up.
@@ -2117,8 +2117,8 @@ class Two(TestCaseHandler):
                 assert b.startswith(FUZZ_EXEC_NOTE_RESULT)
                 assert a.count(' => ') == 1
                 assert b.count(' => ') == 1
-                a_prefix, a_result = a.split(' => ')
-                b_prefix, b_result = b.split(' => ')
+                a_prefix, _a_result = a.split(' => ')
+                _b_prefix, b_result = b.split(' => ')
                 # Copy a's prefix with b's result.
                 merged_output_lines[i] = a_prefix + ' => ' + b_result
 
