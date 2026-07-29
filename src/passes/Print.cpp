@@ -647,7 +647,10 @@ struct PrintExpressionContents
       o << " offset=" << curr->offset;
     }
   }
-  void visitAtomicFence(AtomicFence* curr) { printMedium(o, "atomic.fence"); }
+  void visitAtomicFence(AtomicFence* curr) {
+    printMedium(o, "atomic.fence");
+    printMemoryOrder(curr->order);
+  }
   void visitPause(Pause* curr) { printMedium(o, "pause"); }
   void visitSIMDExtract(SIMDExtract* curr) {
     prepareColor(o);
@@ -2396,12 +2399,11 @@ struct PrintExpressionContents
     o << ' ';
     o << curr->index;
   }
-  void visitStructNotify(StructNotify* curr) {
-    printMedium(o, "struct.notify");
-    o << ' ';
-    printHeapTypeName(curr->ref->type.getHeapType());
-    o << ' ';
-    o << curr->index;
+  void visitWaitqueueNew(WaitqueueNew* curr) {
+    printMedium(o, "waitqueue.new");
+  }
+  void visitWaitqueueNotify(WaitqueueNotify* curr) {
+    printMedium(o, "waitqueue.notify");
   }
   void visitArrayNew(ArrayNew* curr) {
     printMedium(o, "array.new");
@@ -2476,6 +2478,12 @@ struct PrintExpressionContents
     printMinor(o, "type ");
     printHeapTypeName(curr->ref->type.getHeapType());
     o << ')';
+    if (curr->offset) {
+      o << " offset=" << curr->offset;
+    }
+    if (curr->align != curr->bytes) {
+      o << " align=" << curr->align;
+    }
   }
 
   void visitArrayStore(ArrayStore* curr) {
@@ -2489,6 +2497,12 @@ struct PrintExpressionContents
     printMinor(o, "type ");
     printHeapTypeName(curr->ref->type.getHeapType());
     o << ')';
+    if (curr->offset) {
+      o << " offset=" << curr->offset;
+    }
+    if (curr->align != curr->bytes) {
+      o << " align=" << curr->align;
+    }
   }
   void visitArrayLen(ArrayLen* curr) { printMedium(o, "array.len"); }
   void visitArrayCopy(ArrayCopy* curr) {
@@ -2772,8 +2786,9 @@ void PrintSExpression::printMetadata(Expression* curr) {
       if (auto iter = currFunction->expressionLocations.find(curr);
           iter != currFunction->expressionLocations.end()) {
         Colors::grey(o);
-        o << ";; code offset: 0x" << std::hex << iter->second.start << std::dec
-          << '\n';
+        const auto& span = iter->second;
+        o << ";; code offset: 0x" << std::hex << span.start << " - 0x"
+          << span.end << std::dec << '\n';
         restoreNormalColor(o);
         doIndent(o, indent);
       }

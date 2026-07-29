@@ -207,9 +207,10 @@ struct DAE : public Pass {
 
   void run(Module* module) override {
 #if DAE_STATS
-    Index startParams = 0;
+    Index startParams = 0, startResults = 0;
     for (auto& func : module->functions) {
       startParams += func->getNumParams();
+      startResults += func->getResults().size();
     }
 #endif // DAE_STATS
 
@@ -236,11 +237,13 @@ struct DAE : public Pass {
     }
 
 #if DAE_STATS
-    Index endParams = 0;
+    Index endParams = 0, endResults = 0;
     for (auto& func : module->functions) {
       endParams += func->getNumParams();
+      endResults += func->getResults().size();
     }
     std::cout << "Removed parameters: " << (startParams - endParams) << "\n";
+    std::cout << "Removed results: " << (startResults - endResults) << "\n";
 #endif // DAE_STATS
   }
 

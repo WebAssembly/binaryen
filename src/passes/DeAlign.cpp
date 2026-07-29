@@ -36,6 +36,10 @@ struct DeAlign : public WalkerPass<PostWalker<DeAlign>> {
   void visitStore(Store* curr) { curr->align = 1; }
 
   void visitSIMDLoad(SIMDLoad* curr) { curr->align = 1; }
+
+  void visitArrayLoad(ArrayLoad* curr) { curr->align = 1; }
+
+  void visitArrayStore(ArrayStore* curr) { curr->align = 1; }
 };
 
 Pass* createDeAlignPass() { return new DeAlign(); }

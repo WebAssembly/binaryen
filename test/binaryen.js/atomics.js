@@ -79,7 +79,7 @@ module.addFunction("main", binaryen.none, binaryen.none, [], module.block("", [
     )
   ),
   // fence
-  module.atomic.fence()
+  module.atomic.fence(binaryen.MemoryOrder.seqcst)
 ]));
 
 module.setFeatures(binaryen.Features.Atomics);

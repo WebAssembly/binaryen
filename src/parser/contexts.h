@@ -63,6 +63,11 @@ struct TableType {
   Limits limits;
 };
 
+enum class DefKind {
+  ImportDesc,
+  Definition,
+};
+
 // The location, possible name, and index in the respective module index space
 // of a module-level definition in the input.
 struct DefPos {
@@ -70,6 +75,7 @@ struct DefPos {
   Index pos;
   Index index;
   std::vector<Annotation> annotations;
+  DefKind kind;
 };
 
 struct GlobalType {
@@ -122,6 +128,8 @@ struct NullTypeParserCtx {
   HeapTypeT makeNofuncType(Shareability) { return Ok{}; }
   HeapTypeT makeNoexnType(Shareability) { return Ok{}; }
   HeapTypeT makeNocontType(Shareability) { return Ok{}; }
+  HeapTypeT makeWaitqueueType(Shareability) { return Ok{}; }
+  HeapTypeT makeNowaitqueueType(Shareability) { return Ok{}; }
 
   TypeT makeI32() { return Ok{}; }
   TypeT makeI64() { return Ok{}; }
@@ -150,7 +158,6 @@ struct NullTypeParserCtx {
 
   StorageT makeI8() { return Ok{}; }
   StorageT makeI16() { return Ok{}; }
-  StorageT makeWaitQueue() { return Ok{}; }
   StorageT makeStorageType(TypeT) { return Ok{}; }
 
   FieldT makeFieldType(StorageT, Mutability) { return Ok{}; }
@@ -263,6 +270,12 @@ template<typename Ctx> struct TypeParserCtx {
   HeapTypeT makeNocontType(Shareability share) {
     return HeapTypes::nocont.getBasic(share);
   }
+  HeapTypeT makeWaitqueueType(Shareability share) {
+    return HeapTypes::sharedWaitqueue.getBasic(share);
+  }
+  HeapTypeT makeNowaitqueueType(Shareability share) {
+    return HeapTypes::sharedNowaitqueue.getBasic(share);
+  }
 
   HeapTypeT makeExact(HeapTypeT type) {
     type.exactness = Exact;
@@ -308,7 +321,6 @@ template<typename Ctx> struct TypeParserCtx {
 
   StorageT makeI8() { return Field(Field::i8, Immutable); }
   StorageT makeI16() { return Field(Field::i16, Immutable); }
-  StorageT makeWaitQueue() { return Field(Field::WaitQueue, Immutable); }
   StorageT makeStorageType(TypeT type) { return Field(type, Immutable); }
 
   FieldT makeFieldType(FieldT field, Mutability mutability) {
@@ -578,14 +590,19 @@ struct NullInstrParserCtx {
                      MemoryOrder) {
     return Ok{};
   }
-  template<typename HeapTypeT>
-  Result<> makeArrayLoad(
-    Index, const std::vector<Annotation>&, Type, int, bool, HeapTypeT) {
+  template<typename MemargT, typename HeapTypeT>
+  Result<> makeArrayLoad(Index,
+                         const std::vector<Annotation>&,
+                         Type,
+                         int,
+                         bool,
+                         MemargT,
+                         HeapTypeT) {
     return Ok{};
   }
-  template<typename HeapTypeT>
-  Result<>
-  makeArrayStore(Index, const std::vector<Annotation>&, Type, int, HeapTypeT) {
+  template<typename MemargT, typename HeapTypeT>
+  Result<> makeArrayStore(
+    Index, const std::vector<Annotation>&, Type, int, MemargT, HeapTypeT) {
     return Ok{};
   }
   Result<> makeAtomicRMW(Index,
@@ -617,7 +634,7 @@ struct NullInstrParserCtx {
                             MemargT) {
     return Ok{};
   }
-  Result<> makeAtomicFence(Index, const std::vector<Annotation>&) {
+  Result<> makeAtomicFence(Index, const std::vector<Annotation>&, MemoryOrder) {
     return Ok{};
   }
   Result<> makePause(Index, const std::vector<Annotation>&) { return Ok{}; }
@@ -825,11 +842,10 @@ struct NullInstrParserCtx {
   makeStructWait(Index, const std::vector<Annotation>&, HeapTypeT, FieldIdxT) {
     return Ok{};
   }
-  template<typename HeapTypeT>
-  Result<> makeStructNotify(Index,
-                            const std::vector<Annotation>&,
-                            HeapTypeT,
-                            FieldIdxT) {
+  Result<> makeWaitqueueNew(Index, const std::vector<Annotation>&) {
+    return Ok{};
+  }
+  Result<> makeWaitqueueNotify(Index, const std::vector<Annotation>&) {
     return Ok{};
   }
   template<typename HeapTypeT>
@@ -1074,13 +1090,15 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
   void setSupertype(HeapTypeT) {}
   void finishTypeDef(Name name, Index pos) {
     // TODO: type annotations
-    typeDefs.push_back({name, pos, Index(typeDefs.size()), {}});
+    typeDefs.push_back(
+      {name, pos, Index(typeDefs.size()), {}, DefKind::Definition});
   }
   size_t getRecGroupStartIndex() { return 0; }
   void addRecGroup(Index, size_t) {}
   void finishRectype(Index pos) {
     // TODO: type annotations
-    recTypeDefs.push_back({{}, pos, Index(recTypeDefs.size()), {}});
+    recTypeDefs.push_back(
+      {{}, pos, Index(recTypeDefs.size()), {}, DefKind::Definition});
   }
 
   bool skipFunctionBody();
@@ -1135,7 +1153,8 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
                    Exactness exact,
                    std::optional<LocalsT>,
                    std::vector<Annotation>&&,
-                   Index pos);
+                   Index pos,
+                   DefKind kind);
 
   Result<Table*> addTableDecl(Index pos,
                               Name name,
@@ -1146,7 +1165,8 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
                     ImportNames*,
                     TableType,
                     std::optional<ExprT>,
-                    Index);
+                    Index,
+                    DefKind kind);
 
   // TODO: Record index of implicit elem for use when parsing types and instrs.
   Result<> addImplicitElems(TypeT, ElemListT&& elems);
@@ -1158,7 +1178,8 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
                      const std::vector<Name>& exports,
                      ImportNames* import,
                      MemType type,
-                     Index pos);
+                     Index pos,
+                     DefKind kind);
 
   Result<> addImplicitData(DataStringT&& data);
 
@@ -1169,14 +1190,15 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
                      ImportNames* import,
                      GlobalTypeT,
                      std::optional<ExprT>,
-                     Index pos);
+                     Index pos,
+                     DefKind kind);
 
   Result<> addStart(FuncIdxT, Index pos) {
     if (!startDefs.empty()) {
       return Err{"unexpected extra 'start' function"};
     }
     // TODO: start function annotations.
-    startDefs.push_back({{}, pos, 0, {}});
+    startDefs.push_back({{}, pos, 0, {}, DefKind::Definition});
     return Ok{};
   }
 
@@ -1196,7 +1218,8 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
                   const std::vector<Name>& exports,
                   ImportNames* import,
                   TypeUseT type,
-                  Index pos);
+                  Index pos,
+                  DefKind kind);
 
   Result<> addExport(Index pos, Ok, Name, ExternalKind) {
     exportDefs.push_back(pos);
@@ -1526,7 +1549,8 @@ struct ParseModuleTypesCtx : TypeParserCtx<ParseModuleTypesCtx>,
                    Exactness exact,
                    std::optional<LocalsT> locals,
                    std::vector<Annotation>&& annotations,
-                   Index pos) {
+                   Index pos,
+                   DefKind kind) {
     auto& f = wasm.functions[index];
     if (!type.type.isSignature()) {
       return in.err(pos, "expected signature type");
@@ -1556,7 +1580,8 @@ struct ParseModuleTypesCtx : TypeParserCtx<ParseModuleTypesCtx>,
                     ImportNames*,
                     Type ttype,
                     std::optional<ExprT> init,
-                    Index pos) {
+                    Index pos,
+                    DefKind kind) {
     auto& t = wasm.tables[index];
     if (!ttype.isRef()) {
       return in.err(pos, "expected reference type");
@@ -1572,8 +1597,12 @@ struct ParseModuleTypesCtx : TypeParserCtx<ParseModuleTypesCtx>,
     return Ok{};
   }
 
-  Result<>
-  addMemory(Name, const std::vector<Name>&, ImportNames*, MemTypeT, Index) {
+  Result<> addMemory(Name,
+                     const std::vector<Name>&,
+                     ImportNames*,
+                     MemTypeT,
+                     Index,
+                     DefKind kind) {
     return Ok{};
   }
 
@@ -1584,7 +1613,8 @@ struct ParseModuleTypesCtx : TypeParserCtx<ParseModuleTypesCtx>,
                      ImportNames*,
                      GlobalType type,
                      std::optional<ExprT>,
-                     Index) {
+                     Index,
+                     DefKind kind) {
     auto& g = wasm.globals[index];
     g->mutable_ = type.mutability;
     g->type = type.type;
@@ -1600,8 +1630,12 @@ struct ParseModuleTypesCtx : TypeParserCtx<ParseModuleTypesCtx>,
 
   Result<> addDeclareElem(Name, ElemListT&&, Index) { return Ok{}; }
 
-  Result<>
-  addTag(Name, const std::vector<Name>&, ImportNames*, TypeUse use, Index pos) {
+  Result<> addTag(Name,
+                  const std::vector<Name>&,
+                  ImportNames*,
+                  TypeUse use,
+                  Index pos,
+                  DefKind kind) {
     auto& t = wasm.tags[index];
     if (!use.type.isSignature()) {
       return in.err(pos, "tag type must be a signature");
@@ -1916,7 +1950,8 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
                    Exactness,
                    std::optional<LocalsT>,
                    std::vector<Annotation>&&,
-                   Index) {
+                   Index,
+                   DefKind) {
     return Ok{};
   }
 
@@ -1925,10 +1960,11 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
                     ImportNames*,
                     TableTypeT,
                     std::optional<ExprT>,
-                    Index);
+                    Index,
+                    DefKind);
 
-  Result<>
-  addMemory(Name, const std::vector<Name>&, ImportNames*, TableTypeT, Index) {
+  Result<> addMemory(
+    Name, const std::vector<Name>&, ImportNames*, TableTypeT, Index, DefKind) {
     return Ok{};
   }
 
@@ -1937,7 +1973,8 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
                      ImportNames*,
                      GlobalTypeT,
                      std::optional<ExprT> exp,
-                     Index);
+                     Index,
+                     DefKind);
 
   Result<> addStart(Name name, Index pos) {
     wasm.start = name;
@@ -1961,8 +1998,8 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
   Result<>
   addData(Name, Name* mem, std::optional<ExprT> offset, DataStringT, Index pos);
 
-  Result<>
-  addTag(Name, const std::vector<Name>, ImportNames*, TypeUseT, Index) {
+  Result<> addTag(
+    Name, const std::vector<Name>, ImportNames*, TypeUseT, Index, DefKind) {
     return Ok{};
   }
 
@@ -2388,17 +2425,23 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
                          Type type,
                          int bytes,
                          bool signed_,
+                         Memarg memarg,
                          HeapTypeT arrayType) {
-    return withLoc(pos,
-                   irBuilder.makeArrayLoad(arrayType, bytes, signed_, type));
+    return withLoc(
+      pos,
+      irBuilder.makeArrayLoad(
+        arrayType, bytes, signed_, memarg.offset, memarg.align, type));
   }
 
   Result<> makeArrayStore(Index pos,
                           const std::vector<Annotation>& annotations,
                           Type type,
                           int bytes,
+                          Memarg memarg,
                           HeapTypeT arrayType) {
-    return withLoc(pos, irBuilder.makeArrayStore(arrayType, bytes, type));
+    return withLoc(pos,
+                   irBuilder.makeArrayStore(
+                     arrayType, bytes, memarg.offset, memarg.align, type));
   }
 
   Result<> makeAtomicRMW(Index pos,
@@ -2448,8 +2491,9 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
   }
 
   Result<> makeAtomicFence(Index pos,
-                           const std::vector<Annotation>& annotations) {
-    return withLoc(pos, irBuilder.makeAtomicFence());
+                           const std::vector<Annotation>& annotations,
+                           MemoryOrder order) {
+    return withLoc(pos, irBuilder.makeAtomicFence(order));
   }
 
   Result<> makePause(Index pos, const std::vector<Annotation>& annotations) {
@@ -2756,8 +2800,8 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
                     const std::vector<Annotation>& annotations,
                     Index label,
                     BrOnOp op,
-                    Type in = Type::none,
-                    Type out = Type::none) {
+                    std::optional<Type> in = std::nullopt,
+                    std::optional<Type> out = std::nullopt) {
     return withLoc(
       pos,
       irBuilder.makeBrOn(label, op, in, out, parseAnnotations(annotations)));
@@ -2818,11 +2862,14 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
     return withLoc(pos, irBuilder.makeStructWait(type, field));
   }
 
-  Result<> makeStructNotify(Index pos,
-                            const std::vector<Annotation>& annotations,
-                            HeapType type,
-                            Index field) {
-    return withLoc(pos, irBuilder.makeStructNotify(type, field));
+  Result<> makeWaitqueueNew(Index pos,
+                            const std::vector<Annotation>& annotations) {
+    return withLoc(pos, irBuilder.makeWaitqueueNew());
+  }
+
+  Result<> makeWaitqueueNotify(Index pos,
+                               const std::vector<Annotation>& annotations) {
+    return withLoc(pos, irBuilder.makeWaitqueueNotify());
   }
 
   Result<> makeArrayNew(Index pos,

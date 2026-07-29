@@ -93,11 +93,14 @@ BinaryenLiteral toBinaryenLiteral(Literal x) {
         WASM_UNREACHABLE("invalid type");
       case HeapType::string:
         WASM_UNREACHABLE("TODO: string literals");
+      case HeapType::waitqueue:
+        WASM_UNREACHABLE("TODO: waitqueue");
       case HeapType::none:
       case HeapType::noext:
       case HeapType::nofunc:
       case HeapType::nocont:
       case HeapType::noexn:
+      case HeapType::nowaitqueue:
         // Null.
         return ret;
     }
@@ -147,11 +150,14 @@ Literal fromBinaryenLiteral(BinaryenLiteral x) {
         WASM_UNREACHABLE("invalid type");
       case HeapType::string:
         WASM_UNREACHABLE("TODO: string literals");
+      case HeapType::waitqueue:
+        WASM_UNREACHABLE("TODO: waitqueue");
       case HeapType::none:
       case HeapType::noext:
       case HeapType::nofunc:
       case HeapType::nocont:
       case HeapType::noexn:
+      case HeapType::nowaitqueue:
         assert(type.isNullable());
         return Literal::makeNull(heapType);
     }
@@ -1500,8 +1506,10 @@ BinaryenExpressionRef BinaryenAtomicNotify(BinaryenModuleRef module,
                         0,
                         getMemoryName(module, memoryName)));
 }
-BinaryenExpressionRef BinaryenAtomicFence(BinaryenModuleRef module) {
-  return static_cast<Expression*>(Builder(*(Module*)module).makeAtomicFence());
+BinaryenExpressionRef BinaryenAtomicFence(BinaryenModuleRef module,
+                                          BinaryenMemoryOrder order) {
+  return Builder(*(Module*)module)
+    .makeAtomicFence(static_cast<MemoryOrder>(order));
 }
 BinaryenExpressionRef BinaryenSIMDExtract(BinaryenModuleRef module,
                                           BinaryenOp op,
@@ -3381,15 +3389,18 @@ void BinaryenAtomicNotifySetNotifyCount(BinaryenExpressionRef expr,
     (Expression*)notifyCountExpr;
 }
 // AtomicFence
-uint8_t BinaryenAtomicFenceGetOrder(BinaryenExpressionRef expr) {
+BinaryenMemoryOrder BinaryenAtomicFenceGetOrder(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<AtomicFence>());
-  return static_cast<AtomicFence*>(expression)->order;
+  return static_cast<BinaryenMemoryOrder>(
+    static_cast<AtomicFence*>(expression)->order);
 }
-void BinaryenAtomicFenceSetOrder(BinaryenExpressionRef expr, uint8_t order) {
+void BinaryenAtomicFenceSetOrder(BinaryenExpressionRef expr,
+                                 BinaryenMemoryOrder order) {
   auto* expression = (Expression*)expr;
   assert(expression->is<AtomicFence>());
-  static_cast<AtomicFence*>(expression)->order = order;
+  static_cast<AtomicFence*>(expression)->order =
+    static_cast<MemoryOrder>(order);
 }
 // SIMDExtract
 BinaryenOp BinaryenSIMDExtractGetOp(BinaryenExpressionRef expr) {
@@ -5836,7 +5847,13 @@ void BinaryenModuleSetFeatures(BinaryenModuleRef module,
 //
 
 BinaryenModuleRef BinaryenModuleParse(const char* text) {
+  return BinaryenModuleParseWithFeatures(text, BinaryenFeatureMVP());
+}
+
+BinaryenModuleRef BinaryenModuleParseWithFeatures(const char* text,
+                                                  BinaryenFeatures features) {
   auto* wasm = new Module;
+  wasm->features.features = features;
   auto parsed = WATParser::parseModule(*wasm, text);
   if (auto* err = parsed.getErr()) {
     Fatal() << err->msg << "\n";

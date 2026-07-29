@@ -355,25 +355,27 @@ def run_example_tests():
         return
 
     for t in shared.get_tests(shared.get_test_dir('example')):
-        output_file = 'example'
-        cmd = ['-I' + os.path.join(shared.options.binaryen_root, 't'), '-g', '-pthread', '-o', output_file]
         if not t.endswith(('.c', '.cpp')):
             continue
         src = os.path.join(shared.get_test_dir('example'), t)
         expected = os.path.join(shared.get_test_dir('example'), '.'.join(t.split('.')[:-1]) + '.txt')
         # build the C file separately
         libpath = shared.options.binaryen_lib
-        extra = [shared.NATIVECC, src, '-c', '-o', 'example.o',
+        output_file = os.path.basename(os.path.splitext(t)[0])
+        objfile = output_file + '.o'
+        compile = [shared.NATIVECC, src, '-c', '-o', objfile,
                  '-I' + os.path.join(shared.options.binaryen_root, 'src'), '-g', '-L' + libpath, '-pthread']
         if src.endswith('.cpp'):
-            extra += ['-std=c++' + str(shared.cxx_standard)]
+            compile += ['-std=c++' + str(shared.cxx_standard)]
         if os.environ.get('COMPILER_FLAGS'):
             for f in os.environ.get('COMPILER_FLAGS').split(' '):
-                extra.append(f)
-        print('build: ', ' '.join(extra))
-        subprocess.check_call(extra)
+                compile.append(f)
+        print('build: ', ' '.join(compile))
+        subprocess.check_call(compile)
+
+        cmd = ['-I' + os.path.join(shared.options.binaryen_root, 't'), '-g', '-pthread', '-o', output_file]
         # Link against the binaryen C library DSO, using an executable-relative rpath
-        cmd = ['example.o', '-L' + libpath, '-lbinaryen'] + cmd + ['-Wl,-rpath,' + libpath]
+        cmd = [objfile, '-L' + libpath, '-lbinaryen'] + cmd + ['-Wl,-rpath,' + libpath]
         print('  ', t, src, expected)
         if os.environ.get('COMPILER_FLAGS'):
             for f in os.environ.get('COMPILER_FLAGS').split(' '):
@@ -382,8 +384,7 @@ def run_example_tests():
         print('link: ', ' '.join(cmd))
         subprocess.check_call(cmd)
         print('run...', output_file)
-        actual = subprocess.check_output([os.path.abspath(output_file)]).decode('utf-8')
-        os.remove(output_file)
+        actual = subprocess.check_output([os.path.abspath(output_file)], text=True)
         shared.fail_if_not_identical_to_file(actual, expected)
 
 

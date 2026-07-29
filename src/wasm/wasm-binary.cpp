@@ -18,6 +18,7 @@
 #include <fstream>
 #include <optional>
 
+#include "ir/memory-utils.h"
 #include "ir/module-utils.h"
 #include "ir/names.h"
 #include "ir/table-utils.h"
@@ -26,6 +27,7 @@
 #include "support/bits.h"
 #include "support/stdckdint.h"
 #include "support/string.h"
+#include "support/utilities.h"
 #include "wasm-annotations.h"
 #include "wasm-binary.h"
 #include "wasm-debug.h"
@@ -337,51 +339,160 @@ void WasmBinaryWriter::writeImports() {
     return;
   }
   auto start = startSection(BinaryConsts::Section::Import);
-  o << U32LEB(num);
-  auto writeImportHeader = [&](Importable* import) {
-    writeInlineString(import->module.view());
-    writeInlineString(import->base.view());
+
+  using ImportItem = std::variant<Function*, Global*, Tag*, Memory*, Table*>;
+  std::vector<ImportItem> imports;
+  imports.reserve(num);
+
+  ModuleUtils::iterImports(*wasm,
+                           [&](ImportItem item) { imports.push_back(item); });
+
+  auto getModule = [](const ImportItem& item) -> Name {
+    return std::visit([](auto* i) { return i->module; }, item);
   };
-  ModuleUtils::iterImportedFunctions(*wasm, [&](Function* func) {
-    writeImportHeader(func);
-    uint32_t kind = ExternalKind::Function;
-    if (func->type.isExact()) {
-      kind |= BinaryConsts::ExactImport;
+  auto getBase = [](const ImportItem& item) -> Name {
+    return std::visit([](auto* i) { return i->base; }, item);
+  };
+
+  auto shareImportType = [&](const ImportItem& a, const ImportItem& b) -> bool {
+    return std::visit(
+      overloaded{
+        [](Function* a, Function* b) { return a->type == b->type; },
+        [](Global* a, Global* b) {
+          return a->type == b->type && a->mutable_ == b->mutable_;
+        },
+        [](Tag* a, Tag* b) { return a->type == b->type; },
+        [](Memory* a, Memory* b) { return MemoryUtils::sameType(*a, *b); },
+        [](Table* a, Table* b) { return TableUtils::sameType(*a, *b); },
+        [](const auto& a, const auto& b) { return false; }},
+      a,
+      b);
+  };
+
+  struct ImportGroup {
+    enum Kind { Single, SharedAll, SharedModule } kind;
+    size_t start;
+    size_t count;
+  };
+
+  std::vector<ImportGroup> groups;
+  if (wasm->features.hasCompactImports()) {
+    size_t i = 0;
+    size_t numImports = imports.size();
+    while (i < numImports) {
+      // If the next import shares the module and type, then greedily collect
+      // the following imports as long as they share both the module and type.
+      size_t run = 1;
+      while (i + run < numImports &&
+             getModule(imports[i]) == getModule(imports[i + run]) &&
+             shareImportType(imports[i], imports[i + run])) {
+        ++run;
+      }
+      if (run > 1) {
+        groups.push_back({ImportGroup::SharedAll, i, run});
+        i += run;
+        continue;
+      }
+      // Otherwise, try greedily collecting imports that share just the module.
+      while (i + run < numImports &&
+             getModule(imports[i]) == getModule(imports[i + run])) {
+        ++run;
+      }
+      if (run > 1) {
+        groups.push_back({ImportGroup::SharedModule, i, run});
+        i += run;
+        continue;
+      }
+      // Otherwise, just use a normal import.
+      groups.push_back({ImportGroup::Single, i, 1});
+      ++i;
     }
-    o << U32LEB(kind) << U32LEB(getTypeIndex(func->type.getHeapType()));
-  });
-  ModuleUtils::iterImportedGlobals(*wasm, [&](Global* global) {
-    writeImportHeader(global);
-    o << U32LEB(int32_t(ExternalKind::Global));
-    writeType(global->type);
-    o << U32LEB(global->mutable_);
-  });
-  ModuleUtils::iterImportedTags(*wasm, [&](Tag* tag) {
-    writeImportHeader(tag);
-    o << U32LEB(int32_t(ExternalKind::Tag));
-    o << uint8_t(0); // Reserved 'attribute' field. Always 0.
-    o << U32LEB(getTypeIndex(tag->type));
-  });
-  ModuleUtils::iterImportedMemories(*wasm, [&](Memory* memory) {
-    writeImportHeader(memory);
-    o << U32LEB(int32_t(ExternalKind::Memory));
-    writeResizableLimits(memory->initial,
-                         memory->max,
-                         memory->hasMax(),
-                         memory->shared,
-                         memory->is64(),
-                         memory->pageSizeLog2);
-  });
-  ModuleUtils::iterImportedTables(*wasm, [&](Table* table) {
-    writeImportHeader(table);
-    o << U32LEB(int32_t(ExternalKind::Table));
-    writeType(table->type);
-    writeResizableLimits(table->initial,
-                         table->max,
-                         table->hasMax(),
-                         /*shared=*/false,
-                         table->is64());
-  });
+  } else {
+    for (size_t i = 0; i < imports.size(); ++i) {
+      groups.push_back({ImportGroup::Single, i, 1});
+    }
+  }
+
+  o << U32LEB(groups.size());
+
+  auto writeImportDesc = [&](const ImportItem& item) {
+    std::visit(overloaded{[&](Function* func) {
+                            uint32_t kind = ExternalKind::Function;
+                            if (func->type.isExact()) {
+                              kind |= BinaryConsts::ExactImport;
+                            }
+                            o << U32LEB(kind)
+                              << U32LEB(getTypeIndex(func->type.getHeapType()));
+                          },
+                          [&](Global* global) {
+                            o << U32LEB(int32_t(ExternalKind::Global));
+                            writeType(global->type);
+                            o << U32LEB(global->mutable_);
+                          },
+                          [&](Tag* tag) {
+                            o << U32LEB(int32_t(ExternalKind::Tag));
+                            // Reserved 'attribute' field. Always 0.
+                            o << uint8_t(0);
+                            o << U32LEB(getTypeIndex(tag->type));
+                          },
+                          [&](Memory* memory) {
+                            o << U32LEB(int32_t(ExternalKind::Memory));
+                            writeResizableLimits(memory->initial,
+                                                 memory->max,
+                                                 memory->hasMax(),
+                                                 memory->shared,
+                                                 memory->is64(),
+                                                 memory->pageSizeLog2);
+                          },
+                          [&](Table* table) {
+                            o << U32LEB(int32_t(ExternalKind::Table));
+                            writeType(table->type);
+                            writeResizableLimits(table->initial,
+                                                 table->max,
+                                                 table->hasMax(),
+                                                 /*shared=*/false,
+                                                 table->is64());
+                          }},
+               item);
+  };
+
+  for (const auto& group : groups) {
+    switch (group.kind) {
+      case ImportGroup::Single: {
+        const auto& item = imports[group.start];
+        writeInlineString(getModule(item).view());
+        writeInlineString(getBase(item).view());
+        writeImportDesc(item);
+        break;
+      }
+      case ImportGroup::SharedAll: {
+        const auto& first = imports[group.start];
+        writeInlineString(getModule(first).view());
+        writeInlineString("");
+        o << uint8_t(BinaryConsts::CompactImportsSharedAll);
+        writeImportDesc(first);
+        o << U32LEB(group.count);
+        for (size_t i = 0; i < group.count; ++i) {
+          writeInlineString(getBase(imports[group.start + i]).view());
+        }
+        break;
+      }
+      case ImportGroup::SharedModule: {
+        const auto& first = imports[group.start];
+        writeInlineString(getModule(first).view());
+        writeInlineString("");
+        o << uint8_t(BinaryConsts::CompactImportsSharedModule);
+        o << U32LEB(group.count);
+        for (size_t i = 0; i < group.count; ++i) {
+          const auto& item = imports[group.start + i];
+          writeInlineString(getBase(item).view());
+          writeImportDesc(item);
+        }
+        break;
+      }
+    }
+  }
+
   finishSection(start);
 }
 
@@ -917,7 +1028,7 @@ void WasmBinaryWriter::writeNames() {
   if (emitModuleName && wasm->name.is()) {
     auto substart =
       startSubsection(BinaryConsts::CustomSections::Subsection::NameModule);
-    writeEscapedName(wasm->name.view());
+    writeInlineString(wasm->name.view());
     finishSubsection(substart);
   }
 
@@ -946,7 +1057,7 @@ void WasmBinaryWriter::writeNames() {
       o << U32LEB(functionsWithNames.size());
       for (auto& [index, global] : functionsWithNames) {
         o << U32LEB(index);
-        writeEscapedName(global->name.view());
+        writeInlineString(global->name.view());
       }
       finishSubsection(substart);
     }
@@ -1006,7 +1117,7 @@ void WasmBinaryWriter::writeNames() {
         o << U32LEB(localsWithNames.size());
         for (auto& [indexInBinary, name] : localsWithNames) {
           o << U32LEB(indexInBinary);
-          writeEscapedName(name.view());
+          writeInlineString(name.view());
         }
         emitted++;
       }
@@ -1029,7 +1140,7 @@ void WasmBinaryWriter::writeNames() {
       o << U32LEB(namedTypes.size());
       for (auto type : namedTypes) {
         o << U32LEB(indexedTypes.indices[type]);
-        writeEscapedName(wasm->typeNames[type].name.view());
+        writeInlineString(wasm->typeNames[type].name.view());
       }
       finishSubsection(substart);
     }
@@ -1056,7 +1167,7 @@ void WasmBinaryWriter::writeNames() {
 
       for (auto& [index, table] : tablesWithNames) {
         o << U32LEB(index);
-        writeEscapedName(table->name.view());
+        writeInlineString(table->name.view());
       }
 
       finishSubsection(substart);
@@ -1082,7 +1193,7 @@ void WasmBinaryWriter::writeNames() {
       o << U32LEB(memoriesWithNames.size());
       for (auto& [index, memory] : memoriesWithNames) {
         o << U32LEB(index);
-        writeEscapedName(memory->name.view());
+        writeInlineString(memory->name.view());
       }
       finishSubsection(substart);
     }
@@ -1107,7 +1218,7 @@ void WasmBinaryWriter::writeNames() {
       o << U32LEB(globalsWithNames.size());
       for (auto& [index, global] : globalsWithNames) {
         o << U32LEB(index);
-        writeEscapedName(global->name.view());
+        writeInlineString(global->name.view());
       }
       finishSubsection(substart);
     }
@@ -1132,7 +1243,7 @@ void WasmBinaryWriter::writeNames() {
 
       for (auto& [index, elem] : elemsWithNames) {
         o << U32LEB(index);
-        writeEscapedName(elem->name.view());
+        writeInlineString(elem->name.view());
       }
 
       finishSubsection(substart);
@@ -1156,7 +1267,7 @@ void WasmBinaryWriter::writeNames() {
         auto& seg = wasm->dataSegments[i];
         if (seg->hasExplicitName) {
           o << U32LEB(i);
-          writeEscapedName(seg->name.view());
+          writeInlineString(seg->name.view());
         }
       }
       finishSubsection(substart);
@@ -1187,7 +1298,7 @@ void WasmBinaryWriter::writeNames() {
         o << U32LEB(fieldNames.size());
         for (auto& [index, name] : fieldNames) {
           o << U32LEB(index);
-          writeEscapedName(name.view());
+          writeInlineString(name.view());
         }
       }
       finishSubsection(substart);
@@ -1213,7 +1324,7 @@ void WasmBinaryWriter::writeNames() {
       o << U32LEB(tagsWithNames.size());
       for (auto& [index, tag] : tagsWithNames) {
         o << U32LEB(index);
-        writeEscapedName(tag->name.view());
+        writeInlineString(tag->name.view());
       }
       finishSubsection(substart);
     }
@@ -1846,37 +1957,6 @@ void WasmBinaryWriter::writeInlineString(std::string_view name) {
   o.writeInlineString(name);
 }
 
-static bool isHexDigit(char ch) {
-  return (ch >= '0' && ch <= '9') || (ch >= 'a' && ch <= 'f') ||
-         (ch >= 'A' && ch <= 'F');
-}
-
-static int decodeHexNibble(char ch) {
-  return ch <= '9' ? ch & 15 : (ch & 15) + 9;
-}
-
-void WasmBinaryWriter::writeEscapedName(std::string_view name) {
-  if (name.find('\\') == std::string_view::npos) {
-    writeInlineString(name);
-    return;
-  }
-  // decode escaped by escapeName (see below) function names
-  std::string unescaped;
-  for (size_t i = 0; i < name.size();) {
-    char ch = name[i++];
-    // support only `\xx` escapes; ignore invalid or unsupported escapes
-    if (ch != '\\' || i + 1 >= name.size() || !isHexDigit(name[i]) ||
-        !isHexDigit(name[i + 1])) {
-      unescaped.push_back(ch);
-      continue;
-    }
-    unescaped.push_back(
-      char((decodeHexNibble(name[i]) << 4) | decodeHexNibble(name[i + 1])));
-    i += 2;
-  }
-  writeInlineString({unescaped.data(), unescaped.size()});
-}
-
 void WasmBinaryWriter::writeInlineBuffer(const char* data, size_t size) {
   o << U32LEB(size);
   writeData(data, size);
@@ -1932,6 +2012,12 @@ void WasmBinaryWriter::writeType(Type type) {
           return;
         case HeapType::nocont:
           o << S32LEB(BinaryConsts::EncodedType::nullcontref);
+          return;
+        case HeapType::waitqueue:
+          o << S32LEB(BinaryConsts::EncodedHeapType::waitqueue);
+          return;
+        case HeapType::nowaitqueue:
+          o << S32LEB(BinaryConsts::EncodedHeapType::nowaitqueue);
           return;
       }
     }
@@ -2035,6 +2121,12 @@ void WasmBinaryWriter::writeHeapType(HeapType type, Exactness exactness) {
     case HeapType::nocont:
       ret = BinaryConsts::EncodedHeapType::nocont;
       break;
+    case HeapType::waitqueue:
+      ret = BinaryConsts::EncodedHeapType::waitqueue;
+      break;
+    case HeapType::nowaitqueue:
+      ret = BinaryConsts::EncodedHeapType::nowaitqueue;
+      break;
   }
   o << S64LEB(ret); // TODO: Actually s33
 }
@@ -2049,8 +2141,6 @@ void WasmBinaryWriter::writeField(const Field& field) {
       o << S32LEB(BinaryConsts::EncodedType::i8);
     } else if (field.packedType == Field::i16) {
       o << S32LEB(BinaryConsts::EncodedType::i16);
-    } else if (field.packedType == Field::WaitQueue) {
-      o << S32LEB(BinaryConsts::EncodedType::waitQueue);
     } else {
       WASM_UNREACHABLE("invalid packed type");
     }
@@ -2508,6 +2598,12 @@ bool WasmBinaryReader::getBasicHeapType(int64_t code, HeapType& out) {
     case BinaryConsts::EncodedHeapType::nocont:
       out = HeapType::nocont;
       return true;
+    case BinaryConsts::EncodedHeapType::waitqueue:
+      out = HeapType::waitqueue;
+      return true;
+    case BinaryConsts::EncodedHeapType::nowaitqueue:
+      out = HeapType::nowaitqueue;
+      return true;
     default:
       return false;
   }
@@ -2793,10 +2889,6 @@ void WasmBinaryReader::readTypes() {
     if (typeCode == BinaryConsts::EncodedType::i16) {
       auto mutable_ = readMutability();
       return Field(Field::i16, mutable_);
-    }
-    if (typeCode == BinaryConsts::EncodedType::waitQueue) {
-      auto mutable_ = readMutability();
-      return Field(Field::WaitQueue, mutable_);
     }
     // It's a regular wasm value.
     auto type = makeType(typeCode);
@@ -3425,7 +3517,8 @@ Result<> WasmBinaryReader::readLoad(unsigned bytes, bool signed_, Type type) {
   auto [mem, align, offset, backing] = getMemarg();
   if (backing == BackingType::Array) {
     HeapType arrayType = getIndexedHeapType();
-    return builder.makeArrayLoad(arrayType, bytes, signed_, type);
+    return builder.makeArrayLoad(
+      arrayType, bytes, signed_, offset, align, type);
   }
   return builder.makeLoad(bytes, signed_, offset, align, type, mem);
 }
@@ -3434,7 +3527,7 @@ Result<> WasmBinaryReader::readStore(unsigned bytes, Type type) {
   auto [mem, align, offset, backing] = getMemarg();
   if (backing == BackingType::Array) {
     HeapType arrayType = getIndexedHeapType();
-    return builder.makeArrayStore(arrayType, bytes, type);
+    return builder.makeArrayStore(arrayType, bytes, offset, align, type);
   }
   return builder.makeStore(bytes, offset, align, type, mem);
 }
@@ -3991,11 +4084,10 @@ Result<> WasmBinaryReader::readInst() {
           auto [mem, align, offset, memoryOrder] = getAtomicMemarg();
           return builder.makeAtomicNotify(offset, mem);
         }
-        case BinaryConsts::AtomicFence:
-          if (getInt8() != 0) {
-            return Err{"expected 0x00 byte immediate on atomic.fence"};
-          }
-          return builder.makeAtomicFence();
+        case BinaryConsts::AtomicFence: {
+          MemoryOrder order = getMemoryOrder(/*isRMW=*/false);
+          return builder.makeAtomicFence(order);
+        }
         case BinaryConsts::Pause:
           return builder.makePause();
         case BinaryConsts::StructAtomicGet:
@@ -4073,10 +4165,11 @@ Result<> WasmBinaryReader::readInst() {
           auto index = getU32LEB();
           return builder.makeStructWait(structType, index);
         }
-        case BinaryConsts::StructNotify: {
-          auto structType = getIndexedHeapType();
-          auto index = getU32LEB();
-          return builder.makeStructNotify(structType, index);
+        case BinaryConsts::WaitqueueNotify: {
+          return builder.makeWaitqueueNotify();
+        }
+        case BinaryConsts::WaitqueueNew: {
+          return builder.makeWaitqueueNew();
         }
       }
       return Err{"unknown atomic operation " + std::to_string(op)};
@@ -4143,12 +4236,10 @@ Result<> WasmBinaryReader::readInst() {
           return builder.makeElemDrop(elem);
         }
         case BinaryConsts::F32_F16LoadMem: {
-          auto [mem, align, offset, backing] = getMemarg();
-          return builder.makeLoad(2, false, offset, align, Type::f32, mem);
+          return readLoad(2, false, Type::f32);
         }
         case BinaryConsts::F32_F16StoreMem: {
-          auto [mem, align, offset, backing] = getMemarg();
-          return builder.makeStore(2, offset, align, Type::f32, mem);
+          return readStore(2, Type::f32);
         }
       }
       return Err{"unknown misc operation: " + std::to_string(op)};
@@ -4698,12 +4789,10 @@ Result<> WasmBinaryReader::readInst() {
         case BinaryConsts::V128Const:
           return builder.makeConst(getVec128Literal());
         case BinaryConsts::V128Store: {
-          auto [mem, align, offset, backing] = getMemarg();
-          return builder.makeStore(16, offset, align, Type::v128, mem);
+          return readStore(16, Type::v128);
         }
         case BinaryConsts::V128Load: {
-          auto [mem, align, offset, backing] = getMemarg();
-          return builder.makeLoad(16, false, offset, align, Type::v128, mem);
+          return readLoad(16, false, Type::v128);
         }
         case BinaryConsts::V128Load8Splat: {
           auto [mem, align, offset, backing] = getMemarg();
@@ -5308,64 +5397,22 @@ void WasmBinaryReader::readTags() {
   }
 }
 
-static bool isIdChar(char ch) {
-  return (ch >= '0' && ch <= '9') || (ch >= 'A' && ch <= 'Z') ||
-         (ch >= 'a' && ch <= 'z') || ch == '!' || ch == '#' || ch == '$' ||
-         ch == '%' || ch == '&' || ch == '\'' || ch == '*' || ch == '+' ||
-         ch == '-' || ch == '.' || ch == '/' || ch == ':' || ch == '<' ||
-         ch == '=' || ch == '>' || ch == '?' || ch == '@' || ch == '^' ||
-         ch == '_' || ch == '`' || ch == '|' || ch == '~';
-}
-
-static char formatNibble(int nibble) {
-  return nibble < 10 ? '0' + nibble : 'a' - 10 + nibble;
-}
-
-Name WasmBinaryReader::escape(Name name) {
-  bool allIdChars = true;
-  for (char c : name.view()) {
-    if (!(allIdChars = isIdChar(c))) {
-      break;
-    }
-  }
-  if (allIdChars) {
-    return name;
-  }
-  // encode name, if at least one non-idchar (per WebAssembly spec) was found
-  std::string escaped;
-  for (char c : name.view()) {
-    if (isIdChar(c)) {
-      escaped.push_back(c);
-      continue;
-    }
-    // replace non-idchar with `\xx` escape
-    escaped.push_back('\\');
-    escaped.push_back(formatNibble((unsigned char)c >> 4));
-    escaped.push_back(formatNibble((unsigned char)c & 15));
-  }
-  return escaped;
-}
-
 namespace {
 
 // Performs necessary processing of names from the name section before using
-// them. Specifically it escapes and deduplicates them.
+// them. Specifically it deduplicates them.
 class NameProcessor {
 public:
-  // Returns a unique, escaped name. Notes that name for the items to follow to
+  // Returns a unique name. Notes that name for the items to follow to
   // keep them unique as well.
   Name process(Name name) {
-    return deduplicate(WasmBinaryReader::escape(name));
+    name = Names::getValidNameGivenExisting(name, usedNames);
+    usedNames.insert(name);
+    return name;
   }
 
 private:
   std::unordered_set<Name> usedNames;
-
-  Name deduplicate(Name base) {
-    auto name = Names::getValidNameGivenExisting(base, usedNames);
-    usedNames.insert(name);
-    return name;
-  }
 };
 
 } // anonymous namespace
@@ -5833,6 +5880,7 @@ WasmBinaryReader::readMemoryAccess(bool isAtomic, bool isRMW) {
       throwError(
         "Memory index and memory order are not allowed for array backing.");
     }
+    offset = getU32LEB();
   } else {
     WASM_UNREACHABLE("Invalid backing type");
   }

@@ -90,8 +90,24 @@ struct ShellExternalInterface : ModuleRunner::ExternalInterface {
 
   void init(Module& wasm, ModuleRunner& instance) override {
     ModuleUtils::iterDefinedMemories(wasm, [&](wasm::Memory* memory) {
+      // Compute the initial size in bytes carefully: the byte size of a
+      // maximal memory64 (2^48 pages of 64KiB) does not fit in 64 bits. If
+      // we let it wrap, instantiation would "succeed" with an empty buffer
+      // and every later access would spuriously trap as out of bounds.
+      uint64_t bytes = uint64_t(memory->initial) << memory->pageSizeLog2;
+      if ((bytes >> memory->pageSizeLog2) != uint64_t(memory->initial)) {
+        // The byte size is not even representable; we certainly cannot
+        // allocate it, just like a real VM could not.
+        hostLimit("memory too large");
+      }
       auto shellMemory = Memory();
-      shellMemory.resize(memory->initial << memory->pageSizeLog2);
+      try {
+        shellMemory.resize(bytes);
+      } catch (const std::exception&) {
+        // bad_alloc or length_error from the underlying vector: the memory
+        // is representable but too large to actually allocate.
+        hostLimit("memory too large");
+      }
       memories[memory->name] = shellMemory;
     });
   }
