@@ -376,6 +376,7 @@ struct ConstraintAnalysis
     for (auto& block : basicBlocks) {
       for (auto** currp : block->contents.actions) {
         // x = y + 1
+        using namespace Match;
         if (matches(*currp, binary(Abstract::Add, local(), ival(1)))) {
           work.push(block.get());
           break;
