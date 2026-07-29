@@ -103,8 +103,9 @@ static void* os_mmap(size_t size) {
   int map_prot = PROT_NONE;
   int map_flags = MAP_ANONYMOUS | MAP_PRIVATE;
   uint8_t* addr = mmap(NULL, size, map_prot, map_flags, -1, 0);
-  if (addr == MAP_FAILED)
+  if (addr == MAP_FAILED) {
     return NULL;
+  }
   return addr;
 }
 
