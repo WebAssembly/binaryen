@@ -248,29 +248,29 @@ struct ConstraintAnalysis
   // x++ - we assume the value is unknown after the increment, so x does not go
   // from 0 to 1 to 2 and so forth.
   //
-  // In "Loops" mode,
+  // In "Loops" mode, we do the following things differently:
   //
-  // Even at an abstract level this is not trivial. We must consider three
-  // things, as mentioned above: the initial value, the bounds, and the
-  // increment, and how they connect. So this requires some kind of flow or
-  // graph analysis - we cannot do this as a peephole optimization.
+  //  * x == 0, x++  =>  x == 1. This happens on the first loop iteration.
+  //  * When we see the loop backedge x < 100, which would normally be ANDed on
+  //    top of the value of x, we instead pessimistically extend the spane of
+  //    values to everything that would be possible in an incrementing loop.
+  //    Specifically:
+  //    * x == 1 && x < 100  =>  x > 0 && x < 100
+  //    (If we did a normal AND, we would end up with x == 1 here, and the loop
+  //    would then increment x to 2 and so forth.)
+  //  * We then run through the loop again, now starting with
+  //    x >= 0 && x < 100 (after we merge in the x == 0 from before the loop),
+  //    and do this:
+  //    * x >= 0 && x < 100, x++  =>  x > 0 && x <= 100
+  //    * x > 0 && x <= 100 && x < 100  => x > 0 && x < 100
+  //    No further changes occur, and this is the final stable state.
   //
-  // To handle this situation, we do a pessimistic span analysis, expanding the
-  // span of possible values eagerly, basically to what would "naturally" happen
-  // in a typical loop. For example, if we see x == 0 && x < 100 then we
-  // immediately expand this into [0, 100) (i.e., x >= 0 && x < 100), even
-  // though it is actually only x == 0. The specific rules we follow are:
-  //
-  //  * x == 0 && x < C  =>  x in [0, C)
-  //  * x in [0, C) && x++  =>  x in [0, C+1)  (we could increment the lower
-  //  side,
-  //    but this is not needed for loops, see below).
-  //  * x in [0, C) || x == 0  =>  x in [0, C)
-  //
-  // This is enough to handle the above loop: it will quickly converge on x in
-  // [0, 100). Because we pessimistically expand spans, we are an upper bound on
-  // possible values, and we can then apply our findings to the main constraint
-  // analysis where useful - specifically, where x++ happens.
+  // This is valid because the only imprecise operation we do is
+  //    * x == 1 && x < 100  =>  x > 0 && x < 100
+  // That is a valid inference, even if it is pessimistic and hence causes us to
+  // be able to prove less things. But this is useful because this pessimistic
+  // outcome is the common situation in a loop, so we find the proper bound on
+  // the loop variable here in just two iterations of the loop.
   enum FlowMode { Normal, Loops };
   void flow(FlowMode mode) {
     // Start from the entry as the only reachable block. That block has incoming
