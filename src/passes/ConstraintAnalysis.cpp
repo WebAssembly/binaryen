@@ -187,7 +187,8 @@ struct ConstraintAnalysis
     }
 
     computeRelevantLocals();
-    flow();
+    flow(Mode::Normal);
+    flow(Mode::Loops);
     optimize();
   }
 
@@ -219,7 +220,58 @@ struct ConstraintAnalysis
 
   // Flow infos around until we have inferred all we can about the constraints
   // in each location.
-  void flow() {
+  //
+  // We flow in one of two modes: Normal, and Loops. Normal infers constraints
+  // in the most precise way that we can. Loops does an analysis that is worse
+  // in some ways, but allows us to handle loop variable overflows. For example:
+  //
+  //  x = 0
+  //  do {
+  //    print(x >= 0 & x < 100)
+  //    x++
+  //  } while (x < 100) 
+  //
+  // This prints true 100 times. We want to be able to infer the value sent to
+  // print(). The second part, x < 100, is trivial: at the loop top, either x == 0
+  // from before the loop, or x < 100 from the loop backedge, and both prove
+  // x < 100. However x >= 0 is non-obvious: if x is *signed*, then we must rule
+  // out the possibility of it getting incremented so many times that it overflows
+  // and becomes negative. Proving that requires actually seeing that the loop
+  // variable x is incremented from 0 to 100, and no more, and that involves an
+  // interaction of the initial value, the increment, and the condition on the
+  // loop backedge.
+  //
+  // A naive approach is to just interpret this code. x starts as x == 0, then
+  // x++ means x == 1, then at the loop top we have x >= 0 && x < 1, and so
+  // forth - but this is not what we want! This would literally interpret the
+  // code 100 times, which is slow and will not work if the top bound is non-
+  // constant. So we must operate at a more abstract level.
+  //
+  // Even at an abstract level this is not trivial. We must consider three things,
+  // as mentioned above: the initial value, the bounds, and the increment, and how
+  // they connect. So this requires some kind of flow or graph analysis - we
+  // cannot do this as a peephole optimization.
+  //
+  // To handle this situation, we do a pessimistic span analysis, expanding the
+  // span of possible values eagerly, basically to what would "naturally" happen
+  // in a typical loop. For example, if we see x == 0 && x < 100 then we
+  // immediately expand this into [0, 100) (i.e., x >= 0 && x < 100), even though
+  // it is actually only x == 0. The specific rules we follow are:
+  //
+  //  * x == 0 && x < C  =>  x in [0, C)
+  //  * x in [0, C) && x++  =>  x in [0, C+1)  (we could increment the lower side,
+  //    but this is not needed for loops, see below).
+  //  * x in [0, C) || x == 0  =>  x in [0, C)
+  //
+  // This is enough to handle the above loop: it will quickly converge on x in
+  // [0, 100). Because we pessimistically expand spans, we are an upper bound on
+  // possible values, and we can then apply our findings to the main constraint
+  // analysis where useful - specifically, where x++ happens.
+  enum FlowMode {
+    Normal,
+    Loops
+  };
+  void flow(FlowMode mode) {
     // Start from the entry as the only reachable block. That block has incoming
     // values - defaults - for each var.
     entry->contents.startConstraints.setReachable();
