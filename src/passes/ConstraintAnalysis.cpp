@@ -306,12 +306,12 @@ struct ConstraintAnalysis
     work.push(entry);
 
     struct Handler {
-      bool doApplyToConstraints(Expression* curr, BasicBlockConstraintMap& constraints) {
+      bool doApplyToConstraints(Expression* curr, BasicBlockConstraintMap& constraints) const {
         // Nothing custom here; use the default behavior.
         return false;
       }
 
-      bool doBranch(const LocalConstraint& branch, BasicBlockConstraintMap& constraints) {
+      bool doBranch(const LocalConstraint& branch, BasicBlockConstraintMap& constraints) const {
         // Nothing custom here; use the default behavior.
         return false;
       }
@@ -385,20 +385,20 @@ struct ConstraintAnalysis
     }
 
     struct Handler {
-      bool doApplyToConstraints(Expression* curr, BasicBlockConstraintMap& constraints) {
+      bool doApplyToConstraints(Expression* curr, BasicBlockConstraintMap& constraints) const {
         using namespace Match;
 
         // Operate on x++s.
         // x = y + 1
         Index y;
-        if (matches(*currp, binary(Abstract::Add, local(&y), ival(1)))) {
+        if (matches(curr, binary(Abstract::Add, local(&y), ival(1)))) {
           // ..
         }
 
         return false;
       }
 
-      bool doBranch(const LocalConstraint& branch, BasicBlockConstraintMap& constraints) {
+      bool doBranch(const LocalConstraint& branch, BasicBlockConstraintMap& constraints) const {
         // Extend ranges pessimistically. If the branch is x < M, and we were
         // x == N where N < M, then extend to x >= N && x < M
         // TODO: move helper matching stuff out of constraint.cpp?
@@ -410,13 +410,13 @@ struct ConstraintAnalysis
               if (branch.constraint.op == Abstract::LtS &&
                   N->ltS(*M).getUnsigned()) {
                 constraints.set(branch.local, branch.constraint);
-                constraints.approximateAnd(branch.local, {GeS, *N});
+                constraints.approximateAnd(branch.local, {GeS, {*N}});
                 return true;
               }
               if (branch.constraint.op == Abstract::LtU &&
                   N->ltU(*M).getUnsigned()) {
                 constraints.set(branch.local, branch.constraint);
-                constraints.approximateAnd(branch.local, {GeU, *N});
+                constraints.approximateAnd(branch.local, {GeU, {*N}});
                 return true;
               }
             }
