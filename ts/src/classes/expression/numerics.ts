@@ -26,7 +26,7 @@ export class Const extends Expression {
 		super(ExpressionId.Const, expr);
 	}
 
-	get value(): number | number[] {
+	get value(): number | bigint | number[] {
 		const this_type = this.type;
 		switch (this_type) {
 			case i32: { return this.#valueI32; }
@@ -41,8 +41,8 @@ export class Const extends Expression {
 	get #valueI32(): number { return BinaryenObj["_BinaryenConstGetValueI32"](this._ptr); }
 	set #valueI32(value: number) { BinaryenObj["_BinaryenConstSetValueI32"](this._ptr, value); }
 
-	get #valueI64(): number { return BinaryenObj["_BinaryenConstGetValueI64"](this._ptr); }
-	set #valueI64(value: number) { BinaryenObj["_BinaryenConstSetValueI64"](this._ptr, BigInt(value)); }
+	get #valueI64(): bigint { return BinaryenObj["_BinaryenConstGetValueI64"](this._ptr) as unknown as bigint; }
+	set #valueI64(value: bigint) { BinaryenObj["_BinaryenConstSetValueI64"](this._ptr, value); }
 
 	get #valueF32(): number { return BinaryenObj["_BinaryenConstGetValueF32"](this._ptr); }
 	set #valueF32(value: number) { BinaryenObj["_BinaryenConstSetValueF32"](this._ptr, value); }

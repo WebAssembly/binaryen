@@ -92,42 +92,43 @@ Add to this checklist as the JS is updated; check when migrated to TS.
 | `br_on_cast_fail`       |           | generic.ts           | [x] | [x] | [ ] |
 | `struct`                | line 2557 | aggregate.ts         | [x] | [x] | [ ] |
 | `array`                 |           | aggregate.ts         | [x] | [x] | [ ] |
+| `string`                |           | string.ts            | [x] | [x] | [ ] |
 
 
 ### class `Module` — Module Operations
 | Name                       | JS Loc    | TS Loc            | Code | API Overview | Tests |
 | -------------------------- | --------- | ----------------- | ---- | ------------ | ----- |
-| `addFunction`              | line 2616 | Function.ts       | [x] | [x] | [ ] |
-| `getFunction`              |           | Function.ts       | [x] | [x] | [ ] |
-| `removeFunction`           |           | Function.ts       | [x] | [x] | [ ] |
-| `addGlobal`                |           | Global.ts         | [x] | [x] | [ ] |
-| `getGlobal`                |           | Global.ts         | [x] | [x] | [ ] |
-| `addTable`                 |           | Table.ts          | [x] | [x] | [ ] |
-| `getTable`                 |           | Table.ts          | [x] | [x] | [ ] |
+| `addFunction`              | line 2616 | Function.ts       | [x] | [x] | [x] |
+| `getFunction`              |           | Function.ts       | [x] | [x] | [x] |
+| `removeFunction`           |           | Function.ts       | [x] | [x] | [x] |
+| `addGlobal`                |           | Global.ts         | [x] | [x] | [x] |
+| `getGlobal`                |           | Global.ts         | [x] | [x] | [x] |
+| `addTable`                 |           | Table.ts          | [x] | [x] | [x] |
+| `getTable`                 |           | Table.ts          | [x] | [x] | [x] |
 | `addActiveElementSegment`  |           | ElementSegment.ts | [x] | [x] | [ ] |
 | `addPassiveElementSegment` |           | ElementSegment.ts | [x] | [x] | [ ] |
 | `getElementSegment`        |           | ElementSegment.ts | [x] | [x] | [ ] |
 | `getTableSegments`         |           | Table.ts          | [x] | [x] | [ ] |
-| `removeGlobal`             |           | Global.ts         | [x] | [x] | [ ] |
+| `removeGlobal`             |           | Global.ts         | [x] | [x] | [x] |
 | `removeTable`              |           | Table.ts          | [x] | [x] | [ ] |
 | `removeElementSegment`     |           | ElementSegment.ts | [x] | [x] | [ ] |
-| `addTag`                   |           | Tag.ts            | [x] | [x] | [ ] |
-| `getTag`                   |           | Tag.ts            | [x] | [x] | [ ] |
-| `removeTag`                |           | Tag.ts            | [x] | [x] | [ ] |
+| `addTag`                   |           | Tag.ts            | [x] | [x] | [x] |
+| `getTag`                   |           | Tag.ts            | [x] | [x] | [x] |
+| `removeTag`                |           | Tag.ts            | [x] | [x] | [x] |
 | `addFunctionImport`        |           | Import.ts         | [x] | [x] | [ ] |
 | `addTableImport`           |           | Import.ts         | [x] | [x] | [ ] |
-| `addMemoryImport`          |           | Import.ts         | [x] | [x] | [ ] |
-| `addGlobalImport`          |           | Import.ts         | [x] | [x] | [ ] |
-| `addTagImport`             |           | Import.ts         | [x] | [x] | [ ] |
+| `addMemoryImport`          |           | Import.ts         | [x] | [x] | [x] |
+| `addGlobalImport`          |           | Import.ts         | [x] | [x] | [x] |
+| `addTagImport`             |           | Import.ts         | [x] | [x] | [x] |
 | `addFunctionExport`        |           | Export.ts         | [x] | [x] | [ ] |
 | `addTableExport`           |           | Export.ts         | [x] | [x] | [ ] |
-| `addMemoryExport`          |           | Export.ts         | [x] | [x] | [ ] |
-| `addGlobalExport`          |           | Export.ts         | [x] | [x] | [ ] |
-| `addTagExport`             |           | Export.ts         | [x] | [x] | [ ] |
+| `addMemoryExport`          |           | Export.ts         | [x] | [x] | [x] |
+| `addGlobalExport`          |           | Export.ts         | [x] | [x] | [x] |
+| `addTagExport`             |           | Export.ts         | [x] | [x] | [x] |
 | `removeExport`             |           | Export.ts         | [x] | [x] | [ ] |
-| `setMemory`                |           | Memory.ts         | [x] | [x] | [ ] |
-| `hasMemory`                |           | Memory.ts         | [x] | [x] | [ ] |
-| `getMemoryInfo`            |           | Module.ts         | [x] | [x] | [ ] |
+| `setMemory`                |           | Memory.ts         | [x] | [x] | [x] |
+| `hasMemory`                |           | Memory.ts         | [x] | [x] | [x] |
+| `getMemoryInfo`            |           | Module.ts         | [x] | [x] | [x] |
 | `getNumDataSegments`       |           | DataSegment.ts    | [x] | [x] | [ ] |
 | `getDataSegmentByIndex`    |           | DataSegment.ts    | [x] | [x] | [ ] |
 | `getDataSegmentInfo`       |           | DataSegment.ts    | [x] | [x] | [ ] |
@@ -141,10 +142,10 @@ Add to this checklist as the JS is updated; check when migrated to TS.
 | `getExport`                |           | Export.ts         | [x] | [x] | [ ] |
 | `getNumExports`            |           | Export.ts         | [x] | [x] | [ ] |
 | `getExportByIndex`         |           | Export.ts         | [x] | [x] | [ ] |
-| `getNumFunctions`          |           | Function.ts       | [x] | [x] | [ ] |
+| `getNumFunctions`          |           | Function.ts       | [x] | [x] | [x] |
 | `getFunctionByIndex`       |           | Function.ts       | [x] | [x] | [ ] |
-| `getNumGlobals`            |           | Global.ts         | [x] | [x] | [ ] |
-| `getNumTables`             |           | Table.ts          | [x] | [x] | [ ] |
+| `getNumGlobals`            |           | Global.ts         | [x] | [x] | [x] |
+| `getNumTables`             |           | Table.ts          | [x] | [x] | [x] |
 | `getNumElementSegments`    |           | ElementSegment.ts | [x] | [x] | [ ] |
 | `getGlobalByIndex`         |           | Global.ts         | [x] | [x] | [ ] |
 | `getTableByIndex`          |           | Table.ts          | [x] | [x] | [ ] |
@@ -162,7 +163,7 @@ Add to this checklist as the JS is updated; check when migrated to TS.
 | `updateMaps`           |           | Module.ts  | [x] | [x] | [ ] |
 | `optimizeFunction`     |           | Module.ts  | [x] | [x] | [ ] |
 | `runPasses`            |           | Module.ts  | [x] | [x] | [ ] |
-| `runPassesOnFunction`  |           | Module.ts  | [x] | [x] | [ ] |
+| `runPassesOnFunction`  |           | Module.ts  | [x] | [x] | [x] |
 | `dispose`              |           | Module.ts  | [x] | [x] | [ ] |
 | `emitBinary`           |           | Module.ts  | [x] | [x] | [ ] |
 | `interpret`            |           | Module.ts  | [x] | [x] | [ ] |
@@ -197,10 +198,10 @@ Add to this checklist as the JS is updated; check when migrated to TS.
 | `createType`            | line 3210 | global.ts         | [x] | [x] | [ ] |
 | `expandType`            |           | global.ts         | [x] | [x] | [ ] |
 | `getFunctionInfo`       | line 3228 | Function.ts       | [x] | [x] | [ ] |
-| `getGlobalInfo`         |           | Function.ts       | [x] | [x] | [ ] |
-| `getTableInfo`          |           | Table.ts          | [x] | [x] | [ ] |
+| `getGlobalInfo`         |           | Function.ts       | [x] | [x] | [x] |
+| `getTableInfo`          |           | Table.ts          | [x] | [x] | [x] |
 | `getElementSegmentInfo` |           | ElementSegment.ts | [x] | [x] | [ ] |
-| `getTagInfo`            |           | Tag.ts            | [x] | [x] | [ ] |
+| `getTagInfo`            |           | Tag.ts            | [x] | [x] | [x] |
 | `getExportInfo`         |           | Export.ts         | [x] | [x] | [ ] |
 
 
@@ -328,8 +329,8 @@ Add to this checklist as the JS is updated; check when migrated to TS.
 ### Component Wrappers
 | Name        | JS Loc    | TS Loc      | Code | API Overview | Tests |
 | ----------- | --------- | ----------- | ---- | ------------ | ----- |
-| `Function`  | line 5388 | Function.ts | [x] | [x] | [ ] |
-| `Table`     | line 5445 | Table.ts    | [x] | [x] | [ ] |
+| `Function`  | line 5388 | Function.ts | [x] | [x] | [x] |
+| `Table`     | line 5445 | Table.ts    | [x] | [x] | [x] |
 
 
 ### Additional
@@ -340,4 +341,10 @@ Add to this checklist as the JS is updated; check when migrated to TS.
 
 
 ## Test Migration — `/test/binaryen.js/`
-TODO
+
+- Module Components
+	- `/test/binaryen.js/tag.js`         &rarr; `/ts/test/module/Tag.test.ts`
+	- `/test/binaryen.js/global.js`      &rarr; `/ts/test/module/Global.test.ts`
+	- `/test/binaryen.js/memory-info.js` &rarr; `/ts/test/module/Memory.test.ts`
+	- `/test/binaryen.js/tables.js`      &rarr; `/ts/test/module/Table.test.ts`
+	- `/test/binaryen.js/functions.js`   &rarr; `/ts/test/module/Function.test.ts`
