@@ -666,7 +666,7 @@ int main(int argc, const char* argv[]) {
       writer.setSourceMapFilename(outputSourceMapFilename);
       writer.setSourceMapUrl(outputSourceMapUrl);
     }
-    writer.write(wasm, options.extra["output"]);
+    options.write(writer, wasm, options.extra["output"]);
   }
 
   // Print out everything that we found is removable, the outside might use that

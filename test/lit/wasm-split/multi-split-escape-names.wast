@@ -24,44 +24,44 @@
 
  ;; MOD1:      (import "primary" "table" (table $timport$0 3 funcref))
 
- ;; MOD1:      (import "primary" "trampoline_std::operator<<\\28std::__2::basic_ostream<char\\2c\\20std::__2::char_traits<char>>&\\2c\\20wasm::Module&\\29" (func $trampoline_std::operator<<\28std::__2::basic_ostream<char\2c\20std::__2::char_traits<char>>&\2c\20wasm::Module&\29 (exact (result f32))))
+ ;; MOD1:      (import "primary" "trampoline_std::operator<<(std::__2::basic_ostream<char, std::__2::char_traits<char>>&, wasm::Module&)" (func $"trampoline_std::operator<<(std::__2::basic_ostream<char, std::__2::char_traits<char>>&, wasm::Module&)" (exact (result f32))))
 
- ;; MOD1:      (import "primary" "trampoline_wasm::Literal::Literal\\28std::__2::array<wasm::Literal\\2c\\204ul>\\20const&\\29" (func $trampoline_wasm::Literal::Literal\28std::__2::array<wasm::Literal\2c\204ul>\20const&\29 (exact (result i64))))
+ ;; MOD1:      (import "primary" "trampoline_wasm::Literal::Literal(std::__2::array<wasm::Literal, 4ul> const&)" (func $"trampoline_wasm::Literal::Literal(std::__2::array<wasm::Literal, 4ul> const&)" (exact (result i64))))
 
- ;; MOD1:      (elem $0 (i32.const 2) $wasm::Type::getFeatures\28\29\20const)
+ ;; MOD1:      (elem $0 (i32.const 2) $"wasm::Type::getFeatures() const")
 
- ;; MOD1:      (func $wasm::Type::getFeatures\28\29\20const (result i32)
+ ;; MOD1:      (func $"wasm::Type::getFeatures() const" (result i32)
  ;; MOD1-NEXT:  (drop
  ;; MOD1-NEXT:   (call_ref $2
- ;; MOD1-NEXT:    (ref.func $wasm::Type::getFeatures\28\29\20const)
+ ;; MOD1-NEXT:    (ref.func $"wasm::Type::getFeatures() const")
  ;; MOD1-NEXT:   )
  ;; MOD1-NEXT:  )
  ;; MOD1-NEXT:  (drop
  ;; MOD1-NEXT:   (call_ref $1
- ;; MOD1-NEXT:    (ref.func $trampoline_wasm::Literal::Literal\28std::__2::array<wasm::Literal\2c\204ul>\20const&\29)
+ ;; MOD1-NEXT:    (ref.func $"trampoline_wasm::Literal::Literal(std::__2::array<wasm::Literal, 4ul> const&)")
  ;; MOD1-NEXT:   )
  ;; MOD1-NEXT:  )
  ;; MOD1-NEXT:  (drop
  ;; MOD1-NEXT:   (call_ref $0
- ;; MOD1-NEXT:    (ref.func $trampoline_std::operator<<\28std::__2::basic_ostream<char\2c\20std::__2::char_traits<char>>&\2c\20wasm::Module&\29)
+ ;; MOD1-NEXT:    (ref.func $"trampoline_std::operator<<(std::__2::basic_ostream<char, std::__2::char_traits<char>>&, wasm::Module&)")
  ;; MOD1-NEXT:   )
  ;; MOD1-NEXT:  )
  ;; MOD1-NEXT:  (i32.const 0)
  ;; MOD1-NEXT: )
- (func $wasm::Type::getFeatures\28\29\20const (type $ret-i32) (result i32)
+ (func $"wasm::Type::getFeatures() const" (type $ret-i32) (result i32)
   (drop
    (call_ref $ret-i32
-    (ref.func $wasm::Type::getFeatures\28\29\20const)
+    (ref.func $"wasm::Type::getFeatures() const")
    )
   )
   (drop
    (call_ref $ret-i64
-    (ref.func $wasm::Literal::Literal\28std::__2::array<wasm::Literal\2c\204ul>\20const&\29)
+    (ref.func $"wasm::Literal::Literal(std::__2::array<wasm::Literal, 4ul> const&)")
    )
   )
   (drop
    (call_ref $ret-f32
-    (ref.func $std::operator<<\28std::__2::basic_ostream<char\2c\20std::__2::char_traits<char>>&\2c\20wasm::Module&\29)
+    (ref.func $"std::operator<<(std::__2::basic_ostream<char, std::__2::char_traits<char>>&, wasm::Module&)")
    )
   )
   (i32.const 0)
@@ -75,44 +75,44 @@
 
  ;; MOD2:      (import "primary" "table" (table $timport$0 3 funcref))
 
- ;; MOD2:      (import "primary" "trampoline_std::operator<<\\28std::__2::basic_ostream<char\\2c\\20std::__2::char_traits<char>>&\\2c\\20wasm::Module&\\29" (func $trampoline_std::operator<<\28std::__2::basic_ostream<char\2c\20std::__2::char_traits<char>>&\2c\20wasm::Module&\29 (exact (result f32))))
+ ;; MOD2:      (import "primary" "trampoline_std::operator<<(std::__2::basic_ostream<char, std::__2::char_traits<char>>&, wasm::Module&)" (func $"trampoline_std::operator<<(std::__2::basic_ostream<char, std::__2::char_traits<char>>&, wasm::Module&)" (exact (result f32))))
 
- ;; MOD2:      (import "primary" "trampoline_wasm::Type::getFeatures\\28\\29\\20const" (func $trampoline_wasm::Type::getFeatures\28\29\20const (exact (result i32))))
+ ;; MOD2:      (import "primary" "trampoline_wasm::Type::getFeatures() const" (func $"trampoline_wasm::Type::getFeatures() const" (exact (result i32))))
 
- ;; MOD2:      (elem $0 (i32.const 0) $wasm::Literal::Literal\28std::__2::array<wasm::Literal\2c\204ul>\20const&\29)
+ ;; MOD2:      (elem $0 (i32.const 0) $"wasm::Literal::Literal(std::__2::array<wasm::Literal, 4ul> const&)")
 
- ;; MOD2:      (func $wasm::Literal::Literal\28std::__2::array<wasm::Literal\2c\204ul>\20const&\29 (result i64)
+ ;; MOD2:      (func $"wasm::Literal::Literal(std::__2::array<wasm::Literal, 4ul> const&)" (result i64)
  ;; MOD2-NEXT:  (drop
  ;; MOD2-NEXT:   (call_ref $1
- ;; MOD2-NEXT:    (ref.func $trampoline_wasm::Type::getFeatures\28\29\20const)
+ ;; MOD2-NEXT:    (ref.func $"trampoline_wasm::Type::getFeatures() const")
  ;; MOD2-NEXT:   )
  ;; MOD2-NEXT:  )
  ;; MOD2-NEXT:  (drop
  ;; MOD2-NEXT:   (call_ref $2
- ;; MOD2-NEXT:    (ref.func $wasm::Literal::Literal\28std::__2::array<wasm::Literal\2c\204ul>\20const&\29)
+ ;; MOD2-NEXT:    (ref.func $"wasm::Literal::Literal(std::__2::array<wasm::Literal, 4ul> const&)")
  ;; MOD2-NEXT:   )
  ;; MOD2-NEXT:  )
  ;; MOD2-NEXT:  (drop
  ;; MOD2-NEXT:   (call_ref $0
- ;; MOD2-NEXT:    (ref.func $trampoline_std::operator<<\28std::__2::basic_ostream<char\2c\20std::__2::char_traits<char>>&\2c\20wasm::Module&\29)
+ ;; MOD2-NEXT:    (ref.func $"trampoline_std::operator<<(std::__2::basic_ostream<char, std::__2::char_traits<char>>&, wasm::Module&)")
  ;; MOD2-NEXT:   )
  ;; MOD2-NEXT:  )
  ;; MOD2-NEXT:  (i64.const 0)
  ;; MOD2-NEXT: )
- (func $wasm::Literal::Literal\28std::__2::array<wasm::Literal\2c\204ul>\20const&\29 (type $ret-i64) (result i64)
+ (func $"wasm::Literal::Literal(std::__2::array<wasm::Literal, 4ul> const&)" (type $ret-i64) (result i64)
   (drop
    (call_ref $ret-i32
-    (ref.func $wasm::Type::getFeatures\28\29\20const)
+    (ref.func $"wasm::Type::getFeatures() const")
    )
   )
   (drop
    (call_ref $ret-i64
-    (ref.func $wasm::Literal::Literal\28std::__2::array<wasm::Literal\2c\204ul>\20const&\29)
+    (ref.func $"wasm::Literal::Literal(std::__2::array<wasm::Literal, 4ul> const&)")
    )
   )
   (drop
    (call_ref $ret-f32
-    (ref.func $std::operator<<\28std::__2::basic_ostream<char\2c\20std::__2::char_traits<char>>&\2c\20wasm::Module&\29)
+    (ref.func $"std::operator<<(std::__2::basic_ostream<char, std::__2::char_traits<char>>&, wasm::Module&)")
    )
   )
   (i64.const 0)
@@ -126,44 +126,44 @@
 
  ;; MOD3:      (import "primary" "table" (table $timport$0 3 funcref))
 
- ;; MOD3:      (import "primary" "trampoline_wasm::Literal::Literal\\28std::__2::array<wasm::Literal\\2c\\204ul>\\20const&\\29" (func $trampoline_wasm::Literal::Literal\28std::__2::array<wasm::Literal\2c\204ul>\20const&\29 (exact (result i64))))
+ ;; MOD3:      (import "primary" "trampoline_wasm::Literal::Literal(std::__2::array<wasm::Literal, 4ul> const&)" (func $"trampoline_wasm::Literal::Literal(std::__2::array<wasm::Literal, 4ul> const&)" (exact (result i64))))
 
- ;; MOD3:      (import "primary" "trampoline_wasm::Type::getFeatures\\28\\29\\20const" (func $trampoline_wasm::Type::getFeatures\28\29\20const (exact (result i32))))
+ ;; MOD3:      (import "primary" "trampoline_wasm::Type::getFeatures() const" (func $"trampoline_wasm::Type::getFeatures() const" (exact (result i32))))
 
- ;; MOD3:      (elem $0 (i32.const 1) $std::operator<<\28std::__2::basic_ostream<char\2c\20std::__2::char_traits<char>>&\2c\20wasm::Module&\29)
+ ;; MOD3:      (elem $0 (i32.const 1) $"std::operator<<(std::__2::basic_ostream<char, std::__2::char_traits<char>>&, wasm::Module&)")
 
- ;; MOD3:      (func $std::operator<<\28std::__2::basic_ostream<char\2c\20std::__2::char_traits<char>>&\2c\20wasm::Module&\29 (result f32)
+ ;; MOD3:      (func $"std::operator<<(std::__2::basic_ostream<char, std::__2::char_traits<char>>&, wasm::Module&)" (result f32)
  ;; MOD3-NEXT:  (drop
  ;; MOD3-NEXT:   (call_ref $1
- ;; MOD3-NEXT:    (ref.func $trampoline_wasm::Type::getFeatures\28\29\20const)
+ ;; MOD3-NEXT:    (ref.func $"trampoline_wasm::Type::getFeatures() const")
  ;; MOD3-NEXT:   )
  ;; MOD3-NEXT:  )
  ;; MOD3-NEXT:  (drop
  ;; MOD3-NEXT:   (call_ref $0
- ;; MOD3-NEXT:    (ref.func $trampoline_wasm::Literal::Literal\28std::__2::array<wasm::Literal\2c\204ul>\20const&\29)
+ ;; MOD3-NEXT:    (ref.func $"trampoline_wasm::Literal::Literal(std::__2::array<wasm::Literal, 4ul> const&)")
  ;; MOD3-NEXT:   )
  ;; MOD3-NEXT:  )
  ;; MOD3-NEXT:  (drop
  ;; MOD3-NEXT:   (call_ref $2
- ;; MOD3-NEXT:    (ref.func $std::operator<<\28std::__2::basic_ostream<char\2c\20std::__2::char_traits<char>>&\2c\20wasm::Module&\29)
+ ;; MOD3-NEXT:    (ref.func $"std::operator<<(std::__2::basic_ostream<char, std::__2::char_traits<char>>&, wasm::Module&)")
  ;; MOD3-NEXT:   )
  ;; MOD3-NEXT:  )
  ;; MOD3-NEXT:  (f32.const 0)
  ;; MOD3-NEXT: )
- (func $std::operator<<\28std::__2::basic_ostream<char\2c\20std::__2::char_traits<char>>&\2c\20wasm::Module&\29 (type $ret-f32) (result f32)
+ (func $"std::operator<<(std::__2::basic_ostream<char, std::__2::char_traits<char>>&, wasm::Module&)" (type $ret-f32) (result f32)
   (drop
    (call_ref $ret-i32
-    (ref.func $wasm::Type::getFeatures\28\29\20const)
+    (ref.func $"wasm::Type::getFeatures() const")
    )
   )
   (drop
    (call_ref $ret-i64
-    (ref.func $wasm::Literal::Literal\28std::__2::array<wasm::Literal\2c\204ul>\20const&\29)
+    (ref.func $"wasm::Literal::Literal(std::__2::array<wasm::Literal, 4ul> const&)")
    )
   )
   (drop
    (call_ref $ret-f32
-    (ref.func $std::operator<<\28std::__2::basic_ostream<char\2c\20std::__2::char_traits<char>>&\2c\20wasm::Module&\29)
+    (ref.func $"std::operator<<(std::__2::basic_ostream<char, std::__2::char_traits<char>>&, wasm::Module&)")
    )
   )
   (f32.const 0)
@@ -179,27 +179,27 @@
 
 ;; PRIMARY:      (elem $0 (i32.const 0) $placeholder_0 $placeholder_1 $placeholder_2)
 
-;; PRIMARY:      (export "trampoline_std::operator<<\\28std::__2::basic_ostream<char\\2c\\20std::__2::char_traits<char>>&\\2c\\20wasm::Module&\\29" (func $trampoline_std::operator<<\28std::__2::basic_ostream<char\2c\20std::__2::char_traits<char>>&\2c\20wasm::Module&\29))
+;; PRIMARY:      (export "trampoline_std::operator<<(std::__2::basic_ostream<char, std::__2::char_traits<char>>&, wasm::Module&)" (func $"trampoline_std::operator<<(std::__2::basic_ostream<char, std::__2::char_traits<char>>&, wasm::Module&)"))
 
-;; PRIMARY:      (export "trampoline_wasm::Literal::Literal\\28std::__2::array<wasm::Literal\\2c\\204ul>\\20const&\\29" (func $trampoline_wasm::Literal::Literal\28std::__2::array<wasm::Literal\2c\204ul>\20const&\29))
+;; PRIMARY:      (export "trampoline_wasm::Literal::Literal(std::__2::array<wasm::Literal, 4ul> const&)" (func $"trampoline_wasm::Literal::Literal(std::__2::array<wasm::Literal, 4ul> const&)"))
 
-;; PRIMARY:      (export "trampoline_wasm::Type::getFeatures\\28\\29\\20const" (func $trampoline_wasm::Type::getFeatures\28\29\20const))
+;; PRIMARY:      (export "trampoline_wasm::Type::getFeatures() const" (func $"trampoline_wasm::Type::getFeatures() const"))
 
 ;; PRIMARY:      (export "table" (table $0))
 
-;; PRIMARY:      (func $trampoline_wasm::Literal::Literal\28std::__2::array<wasm::Literal\2c\204ul>\20const&\29 (result i64)
+;; PRIMARY:      (func $"trampoline_wasm::Literal::Literal(std::__2::array<wasm::Literal, 4ul> const&)" (result i64)
 ;; PRIMARY-NEXT:  (call_indirect (type $ret-i64)
 ;; PRIMARY-NEXT:   (i32.const 0)
 ;; PRIMARY-NEXT:  )
 ;; PRIMARY-NEXT: )
 
-;; PRIMARY:      (func $trampoline_std::operator<<\28std::__2::basic_ostream<char\2c\20std::__2::char_traits<char>>&\2c\20wasm::Module&\29 (result f32)
+;; PRIMARY:      (func $"trampoline_std::operator<<(std::__2::basic_ostream<char, std::__2::char_traits<char>>&, wasm::Module&)" (result f32)
 ;; PRIMARY-NEXT:  (call_indirect (type $ret-f32)
 ;; PRIMARY-NEXT:   (i32.const 1)
 ;; PRIMARY-NEXT:  )
 ;; PRIMARY-NEXT: )
 
-;; PRIMARY:      (func $trampoline_wasm::Type::getFeatures\28\29\20const (result i32)
+;; PRIMARY:      (func $"trampoline_wasm::Type::getFeatures() const" (result i32)
 ;; PRIMARY-NEXT:  (call_indirect (type $ret-i32)
 ;; PRIMARY-NEXT:   (i32.const 2)
 ;; PRIMARY-NEXT:  )

@@ -702,7 +702,9 @@ struct TransferFn : OverriddenVisitor<TransferFn> {
 
   void visitStructWait(StructWait* curr) { WASM_UNREACHABLE("TODO"); }
 
-  void visitStructNotify(StructNotify* curr) { WASM_UNREACHABLE("TODO"); }
+  void visitWaitqueueNew(WaitqueueNew* curr) { WASM_UNREACHABLE("TODO"); }
+
+  void visitWaitqueueNotify(WaitqueueNotify* curr) { WASM_UNREACHABLE("TODO"); }
 
   void visitArrayNew(ArrayNew* curr) {
     // We cannot yet generalize allocations. Push a requirement for the
@@ -928,7 +930,7 @@ struct TypeGeneralizing : WalkerPass<PostWalker<TypeGeneralizing>> {
     runner.add("dce");
     runner.runOnFunction(func);
 
-    auto cfg = CFG::fromFunction(func);
+    auto cfg = CFG::fromFunction(func, wasm);
     DBG(cfg.print(std::cerr));
     TransferFn txfn(*wasm, func, cfg);
     MonotoneCFGAnalyzer analyzer(txfn.lattice, txfn, cfg);

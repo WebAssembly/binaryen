@@ -72,7 +72,6 @@ suite("binaryen", () => {
 		assert.strictEqual(typeof binaryen.readBinary, "function");
 		assert.strictEqual(typeof binaryen.readBinaryWithFeatures, "function");
 		assert.strictEqual(typeof binaryen.parseText, "function");
-		assert.strictEqual(typeof binaryen.parseTextWithFeatures, "function");
 		assert.strictEqual(typeof binaryen.exit, "function");
 		assert.strictEqual(typeof binaryen.createType, "function");
 		assert.strictEqual(typeof binaryen.expandType, "function");
@@ -87,7 +86,6 @@ suite("binaryen", () => {
 		assert.ok(binaryen.readBinary.toString().startsWith("function"));
 		assert.ok(binaryen.readBinaryWithFeatures.toString().startsWith("function"));
 		assert.ok(binaryen.parseText.toString().startsWith("function"));
-		assert.ok(binaryen.parseTextWithFeatures.toString().startsWith("function"));
 		assert.ok(binaryen.exit.toString().startsWith("function"));
 		assert.ok(binaryen.createType.toString().startsWith("function"));
 		assert.ok(binaryen.expandType.toString().startsWith("function"));
@@ -315,8 +313,8 @@ suite("binaryen", () => {
 		assert.strictEqual(binaryen.ExpressionId.StringWTF16Get, 96);
 		assert.strictEqual(binaryen.ExpressionId.StringSliceWTF, 97);
 
-		assert.strictEqual(binaryen.ExpressionId.WideIntAddSub, 106);
-		assert.strictEqual(binaryen.ExpressionId.WideIntMul, 107);
+		assert.strictEqual(binaryen.ExpressionId.WideIntAddSub, 105);
+		assert.strictEqual(binaryen.ExpressionId.WideIntMul, 106);
 	});
 
 

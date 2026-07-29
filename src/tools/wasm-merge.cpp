@@ -852,10 +852,15 @@ Input source maps can be specified by adding an -ism option right after the modu
       // The functions in the module have been renamed and copied rather than
       // moved, so we can get their final names directly. (We don't need this
       // for the first module because it does not appear in the manifest.)
-      auto& funcs = moduleFuncs[inputFileName];
-      for (auto& func : currModule->functions) {
-        if (!func->imported()) {
-          funcs.push_back(func->name);
+      if (!manifestFile.empty()) {
+        auto& funcs = moduleFuncs[inputFileName];
+        for (auto& func : currModule->functions) {
+          if (!func->imported()) {
+            funcs.push_back(func->name);
+            // Even if the function name is empty, if we were to put it in the
+            // output manifest, it has to be emitted in the name section.
+            merged.getFunction(func->name)->hasExplicitName = true;
+          }
         }
       }
 
@@ -931,7 +936,7 @@ Input source maps can be specified by adding an -ism option right after the modu
       writer.setSourceMapFilename(outputSourceMapFilename);
       writer.setSourceMapUrl(outputSourceMapUrl);
     }
-    writer.write(merged, options.extra["output"]);
+    options.write(writer, merged, options.extra["output"]);
   }
 
   flush_and_quick_exit(0);

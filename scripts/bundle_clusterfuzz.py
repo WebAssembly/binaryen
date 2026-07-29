@@ -88,9 +88,11 @@ if len(sys.argv) >= 3:
     # Delete the argument, as importing |shared| scans it.
     sys.argv.pop()
 
-from test import fuzzing # noqa
-from test import shared # noqa
-from test import support # noqa
+from test import (  # ruff: ignore[module-import-not-at-top-of-file]
+    fuzzing,
+    shared,
+    support,
+)
 
 # Pick where to get the builds
 if build_dir:

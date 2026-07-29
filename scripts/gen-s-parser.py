@@ -18,7 +18,7 @@ import sys
 
 assert sys.version_info >= (3, 10), 'requires Python 3.10'
 
-# ruff: noqa: E241
+# ruff: file-ignore[multiple-spaces-after-comma]
 
 instructions = [
     ("unreachable",    "makeUnreachable()"),
@@ -213,7 +213,8 @@ instructions = [
     # atomic instructions
     ("memory.atomic.notify",    "makeAtomicNotify()"),
     ("struct.wait",             "makeStructWait()"),
-    ("struct.notify",           "makeStructNotify()"),
+    ("waitqueue.new",           "makeWaitqueueNew()"),
+    ("waitqueue.notify",        "makeWaitqueueNotify()"),
     ("memory.atomic.wait32",    "makeAtomicWait(Type::i32)"),
     ("memory.atomic.wait64",    "makeAtomicWait(Type::i64)"),
     ("atomic.fence",            "makeAtomicFence()"),
@@ -626,15 +627,12 @@ instructions = [
     ("i31.get_u",            "makeI31Get(false)"),
     ("ref.test",             "makeRefTest()"),
     ("ref.cast",             "makeRefCast(false)"),
-    ("ref.cast_desc",        "makeRefCast(true)"),  # Deprecated
     ("ref.cast_desc_eq",     "makeRefCast(true)"),
     ("ref.get_desc",         "makeRefGetDesc()"),
     ("br_on_null",           "makeBrOnNull()"),
     ("br_on_non_null",       "makeBrOnNull(true)"),
     ("br_on_cast",           "makeBrOnCast(BrOnCast)"),
     ("br_on_cast_fail",      "makeBrOnCast(BrOnCastFail)"),
-    ("br_on_cast_desc",      "makeBrOnCast(BrOnCastDescEq)"),  # Deprecated
-    ("br_on_cast_desc_fail", "makeBrOnCast(BrOnCastDescEqFail)"),  # Deprecated
     ("br_on_cast_desc_eq",      "makeBrOnCast(BrOnCastDescEq)"),
     ("br_on_cast_desc_eq_fail", "makeBrOnCast(BrOnCastDescEqFail)"),
     ("struct.new",           "makeStructNew(false, false)"),
@@ -682,8 +680,6 @@ instructions = [
     ("array.atomic.rmw.xchg", "makeArrayRMW(RMWXchg)"),
     ("array.atomic.rmw.cmpxchg", "makeArrayCmpxchg()"),
     ("ref.as_non_null",      "makeRefAs(RefAsNonNull)"),
-    ("extern.internalize",   "makeRefAs(AnyConvertExtern)"),  # Deprecated
-    ("extern.externalize",   "makeRefAs(ExternConvertAny)"),  # Deprecated
     ("any.convert_extern",   "makeRefAs(AnyConvertExtern)"),
     ("extern.convert_any",   "makeRefAs(ExternConvertAny)"),
     ("string.new_lossy_utf8_array",  "makeStringNew(StringNewLossyUTF8Array)"),

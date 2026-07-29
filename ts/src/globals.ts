@@ -216,20 +216,13 @@ export function readBinaryWithFeatures(data: Uint8Array, features: Feature): Mod
 	return wrapModule(ptr);
 }
 
-/** Creates a module from Binaryen’s s-expression text format (not official stack-style text format). */
-export function parseText(text: string): Module {
-	const buffer = _malloc(text.length + 1);
-	stringToAscii(text, buffer);
-	const ptr = handleFatalError(() => BinaryenObj["_BinaryenModuleParse"](buffer));
-	_free(buffer);
-	return wrapModule(ptr);
-}
-
 /** Parses text format to a module with the given feature set enabled. */
-export function parseTextWithFeatures(text: string, features: Feature): Module {
+export function parseText(text: string, features?: Feature): Module {
 	const buffer = _malloc(text.length + 1);
 	stringToAscii(text, buffer);
-	const ptr = handleFatalError(() => BinaryenObj["_BinaryenModuleParseWithFeatures"](buffer, features));
+	const ptr = features === undefined
+		? handleFatalError(() => BinaryenObj["_BinaryenModuleParse"](buffer))
+		: handleFatalError(() => BinaryenObj["_BinaryenModuleParseWithFeatures"](buffer, features));
 	_free(buffer);
 	return wrapModule(ptr);
 }

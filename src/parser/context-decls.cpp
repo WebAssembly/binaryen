@@ -71,13 +71,14 @@ Result<> ParseDeclsCtx::addFunc(Name name,
                                 Exactness exact,
                                 std::optional<LocalsT>,
                                 std::vector<Annotation>&& annotations,
-                                Index pos) {
+                                Index pos,
+                                DefKind kind) {
   CHECK_ERR(checkImport(pos, import));
   auto f = addFuncDecl(pos, name, import);
   CHECK_ERR(f);
   CHECK_ERR(addExports(in, wasm, *f, exports, ExternalKind::Function));
   funcDefs.push_back(
-    {name, pos, Index(funcDefs.size()), std::move(annotations)});
+    {name, pos, Index(funcDefs.size()), std::move(annotations), kind});
   return Ok{};
 }
 
@@ -110,13 +111,14 @@ Result<> ParseDeclsCtx::addTable(Name name,
                                  ImportNames* import,
                                  TableType type,
                                  std::optional<ExprT>,
-                                 Index pos) {
+                                 Index pos,
+                                 DefKind kind) {
   CHECK_ERR(checkImport(pos, import));
   auto t = addTableDecl(pos, name, import, type);
   CHECK_ERR(t);
   CHECK_ERR(addExports(in, wasm, *t, exports, ExternalKind::Table));
   // TODO: table annotations
-  tableDefs.push_back({name, pos, Index(tableDefs.size()), {}});
+  tableDefs.push_back({name, pos, Index(tableDefs.size()), {}, kind});
   return Ok{};
 }
 
@@ -167,13 +169,14 @@ Result<> ParseDeclsCtx::addMemory(Name name,
                                   const std::vector<Name>& exports,
                                   ImportNames* import,
                                   MemType type,
-                                  Index pos) {
+                                  Index pos,
+                                  DefKind kind) {
   CHECK_ERR(checkImport(pos, import));
   auto m = addMemoryDecl(pos, name, import, type);
   CHECK_ERR(m);
   CHECK_ERR(addExports(in, wasm, *m, exports, ExternalKind::Memory));
   // TODO: memory annotations
-  memoryDefs.push_back({name, pos, Index(memoryDefs.size()), {}});
+  memoryDefs.push_back({name, pos, Index(memoryDefs.size()), {}, kind});
   return Ok{};
 }
 
@@ -213,13 +216,14 @@ Result<> ParseDeclsCtx::addGlobal(Name name,
                                   ImportNames* import,
                                   GlobalTypeT,
                                   std::optional<ExprT>,
-                                  Index pos) {
+                                  Index pos,
+                                  DefKind kind) {
   CHECK_ERR(checkImport(pos, import));
   auto g = addGlobalDecl(pos, name, import);
   CHECK_ERR(g);
   CHECK_ERR(addExports(in, wasm, *g, exports, ExternalKind::Global));
   // TODO: global annotations
-  globalDefs.push_back({name, pos, Index(globalDefs.size()), {}});
+  globalDefs.push_back({name, pos, Index(globalDefs.size()), {}, kind});
   return Ok{};
 }
 
@@ -239,7 +243,8 @@ Result<> ParseDeclsCtx::addElem(
     e->name = name;
   }
   // TODO: element segment annotations
-  elemDefs.push_back({name, pos, Index(wasm.elementSegments.size()), {}});
+  elemDefs.push_back(
+    {name, pos, Index(wasm.elementSegments.size()), {}, DefKind::Definition});
   wasm.addElementSegment(std::move(e));
   return Ok{};
 }
@@ -264,7 +269,8 @@ Result<> ParseDeclsCtx::addData(Name name,
   }
   d->data = std::move(data);
   // TODO: data segment annotations
-  dataDefs.push_back({name, pos, Index(wasm.dataSegments.size()), {}});
+  dataDefs.push_back(
+    {name, pos, Index(wasm.dataSegments.size()), {}, DefKind::Definition});
   wasm.addDataSegment(std::move(d));
   return Ok{};
 }
@@ -292,13 +298,14 @@ Result<> ParseDeclsCtx::addTag(Name name,
                                const std::vector<Name>& exports,
                                ImportNames* import,
                                TypeUseT type,
-                               Index pos) {
+                               Index pos,
+                               DefKind kind) {
   CHECK_ERR(checkImport(pos, import));
   auto t = addTagDecl(pos, name, import);
   CHECK_ERR(t);
   CHECK_ERR(addExports(in, wasm, *t, exports, ExternalKind::Tag));
   // TODO: tag annotations
-  tagDefs.push_back({name, pos, Index(tagDefs.size()), {}});
+  tagDefs.push_back({name, pos, Index(tagDefs.size()), {}, kind});
   return Ok{};
 }
 

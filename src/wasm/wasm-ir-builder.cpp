@@ -14,6 +14,46 @@
  * limitations under the License.
  */
 
+// IRBuilder constructs valid Binaryen IR expression trees from a flat stream of
+// WebAssembly instructions (e.g. from the binary or text parsers).
+//
+// Core Mechanism:
+//
+// - Maintain a stack of control scopes (`ScopeCtx`).
+//
+// - Track an expression stack (`exprStack`) withing each scope.
+//
+// - Pop children from `exprStack` (via `ChildPopper`), set them as operands on
+//   the new Expression, and push the Expression back onto `exprStack`.
+//
+// - At scope end (`visitEnd`), the scope's expressions are inserted into the
+//   scope's control flow Expression, which is pushed to the parent scope.
+//
+// There are extra complications necessary to bridge the gap between WebAssembly
+// and Binaryen IR:
+//
+// - Unreachability: When the instructions before an unreachable-typed
+//   Expression would be popped but do not satisfy the parent Expression's type
+//   requirements, they are instead dropped and new `unreachable` instructions
+//   are synthesized instead (`popConstrainedChildren`).
+//
+// - Branch targets: Wasm allows branching to any control structure (if, try,
+//   try_table, loop, block), whereas Binaryen IR branches can target only
+//   `Block` or `Loop`. IRBuilder wraps other control flow structures in
+//   synthetic named `Block`s when targeted by branches (`maybeWrapForLabel`).
+//
+// - Branch values and block inputs: Wasm supports sending extra values with any
+//   branch instruction and also supports input parameters to any control flow
+//   structure. Binaryen IR only supports sending extra values on br and br_if
+//   and never supports input parameters to control flow structures. IRBuilder
+//   lowers away sent values and control flow parameters using scratch locals
+//   and trampoline blocks (`fixLoopWithInput`, `fixExtraOutput`).
+//
+// - Exception handling pops: Wasm EH `catch` blocks implicitly pop exception
+//   payloads from the value stack. `IRBuilder` generates synthetic `Pop`
+//   Expressions and performs fixups for pops within nested blocks
+//   (`handleBlockNestedPops`).
+
 #include <cassert>
 
 #include "ir/child-typer.h"
@@ -23,6 +63,7 @@
 #include "ir/properties.h"
 #include "ir/utils.h"
 #include "wasm-ir-builder.h"
+#include "wasm.h"
 
 #ifndef IR_BUILDER_DEBUG
 #define IR_BUILDER_DEBUG 0
@@ -581,14 +622,6 @@ public:
     return popConstrainedChildren(children);
   }
 
-  Result<>
-  visitStructNotify(StructNotify* curr,
-                    std::optional<HeapType> structType = std::nullopt) {
-    std::vector<Child> children;
-    ConstraintCollector{builder, children}.visitStructNotify(curr, structType);
-    return popConstrainedChildren(children);
-  }
-
   Result<> visitArrayGet(ArrayGet* curr,
                          std::optional<HeapType> ht = std::nullopt) {
     std::vector<Child> children;
@@ -679,6 +712,14 @@ public:
                       std::optional<Type> labelType = std::nullopt) {
     std::vector<Child> children;
     ConstraintCollector{builder, children}.visitBreak(curr, labelType);
+    return popConstrainedChildren(children);
+  }
+
+  Result<> visitBrOn(BrOn* curr,
+                     std::optional<Type> in = std::nullopt,
+                     std::optional<Type> out = std::nullopt) {
+    std::vector<Child> children;
+    ConstraintCollector{builder, children}.visitBrOn(curr, in, out);
     return popConstrainedChildren(children);
   }
 
@@ -987,8 +1028,10 @@ Result<> IRBuilder::visitCatch(Name tag) {
   if (binaryPos && func) {
     auto& delimiterLocs = func->delimiterLocations[tryy];
     delimiterLocs[delimiterLocs.size()] = lastBinaryPos - codeSectionOffset;
-    // TODO: As in visitElse, we likely need to stash the Try start. Here we
-    //       also need to account for multiple catches.
+    if (wasTry) {
+      func->expressionLocations[tryy].start =
+        scope.startPos - codeSectionOffset;
+    }
   }
 
   CHECK_ERR(pushScope(ScopeCtx::makeCatch(std::move(scope), tryy)));
@@ -1027,6 +1070,10 @@ Result<> IRBuilder::visitCatchAll() {
   if (binaryPos && func) {
     auto& delimiterLocs = func->delimiterLocations[tryy];
     delimiterLocs[delimiterLocs.size()] = lastBinaryPos - codeSectionOffset;
+    if (wasTry) {
+      func->expressionLocations[tryy].start =
+        scope.startPos - codeSectionOffset;
+    }
   }
 
   return pushScope(ScopeCtx::makeCatchAll(std::move(scope), tryy));
@@ -1080,24 +1127,45 @@ Result<> IRBuilder::visitEnd() {
   auto& label = isTry ? scope.branchLabel : scope.label;
   auto blockType = scope.getResultType();
 
+  // When we wrap an expression then push the wrapper, we would end up with the
+  // binary start location attached to the original expression and the end
+  // location attached to the wrapper. Move the binary start location to the
+  // wrapper to avoid splitting the span information.
+  auto moveBinaryPosToWrapper = [&](Expression* original, Expression* wrapper) {
+    if (!func) {
+      return;
+    }
+    if (auto it = func->expressionLocations.find(original);
+        it != func->expressionLocations.end()) {
+      auto span = it->second;
+      assert(span.end == 0);
+      func->expressionLocations.erase(it);
+      [[maybe_unused]] auto [_, inserted] =
+        func->expressionLocations.insert({wrapper, span});
+      assert(inserted);
+    }
+  };
+
   // If the scope expression cannot be directly labeled, we may need to wrap it
   // in a block.
   auto maybeWrapForLabel = [&](Expression* curr) -> Expression* {
     if (!label) {
       return curr;
     }
-    curr = fixExtraOutput(scope, label, curr);
+    auto* fixed = fixExtraOutput(scope, label, curr);
     // We can re-use unnamed blocks instead of wrapping them.
-    if (auto* block = curr->dynCast<Block>(); block && !block->name) {
+    if (auto* block = fixed->dynCast<Block>(); block && !block->name) {
       block->name = label;
       block->type = blockType;
+      moveBinaryPosToWrapper(curr, block);
       return block;
     }
     auto* block = builder.makeBlock();
     block->name = label;
-    block->list.push_back(curr);
+    block->list.push_back(fixed);
     block->finalize(blockType,
                     scope.labelUsed ? Block::HasBreak : Block::NoBreak);
+    moveBinaryPosToWrapper(curr, block);
     return block;
   };
 
@@ -1635,8 +1703,8 @@ Result<> IRBuilder::makeAtomicNotify(Address offset, Name mem) {
   return Ok{};
 }
 
-Result<> IRBuilder::makeAtomicFence() {
-  push(builder.makeAtomicFence());
+Result<> IRBuilder::makeAtomicFence(MemoryOrder order) {
+  push(builder.makeAtomicFence(order));
   return Ok{};
 }
 
@@ -2089,13 +2157,16 @@ Result<> IRBuilder::makeRefGetDesc(HeapType type) {
 
 Result<> IRBuilder::makeBrOn(Index label,
                              BrOnOp op,
-                             Type in,
-                             Type out,
+                             std::optional<Type> in,
+                             std::optional<Type> out,
                              const CodeAnnotation& annotations) {
+  bool isCast = op != BrOnNull && op != BrOnNonNull;
+  bool isDescCast = op == BrOnCastDescEq || op == BrOnCastDescEqFail;
+  assert(bool(in) == bool(out) && bool(in) == isCast);
   std::optional<HeapType> descriptor;
-  if (op == BrOnCastDescEq || op == BrOnCastDescEqFail) {
-    assert(out.isRef());
-    descriptor = out.getHeapType().getDescriptorType();
+  if (isDescCast) {
+    assert(out && out->isRef());
+    descriptor = out->getHeapType().getDescriptorType();
     if (!descriptor) {
       return Err{"cast target must have descriptor"};
     }
@@ -2103,12 +2174,12 @@ Result<> IRBuilder::makeBrOn(Index label,
 
   BrOn curr;
   curr.op = op;
-  curr.castType = out;
+  curr.castType = isCast ? *out : Type::none;
   curr.desc = nullptr;
-  if (op != BrOnNull && op != BrOnNonNull && !out.isCastable()) {
+  if (isCast && !out->isCastable()) {
     return Err{"br_on cannot cast to invalid type"};
   }
-  CHECK_ERR(visitBrOn(&curr));
+  CHECK_ERR(ChildPopper{*this}.visitBrOn(&curr, in, out));
 
   // Validate things that would cause errors later.
   if (curr.ref->type != Type::unreachable && !curr.ref->type.isRef()) {
@@ -2126,14 +2197,14 @@ Result<> IRBuilder::makeBrOn(Index label,
       break;
     case BrOnCastDescEq:
     case BrOnCastDescEqFail: {
-      CHECK_ERR(validateTypeAnnotation(out.with(*descriptor).with(Nullable),
+      CHECK_ERR(validateTypeAnnotation(out->with(*descriptor).with(Nullable),
                                        curr.desc));
     }
       [[fallthrough]];
     case BrOnCast:
     case BrOnCastFail:
-      assert(in.isRef());
-      CHECK_ERR(validateTypeAnnotation(in, curr.ref));
+      assert(in->isRef());
+      CHECK_ERR(validateTypeAnnotation(*in, curr.ref));
   }
 
   // Extra values need to be sent in a scratch local.
@@ -2170,7 +2241,7 @@ Result<> IRBuilder::makeBrOn(Index label,
     case BrOnCastFail:
     case BrOnCastDescEq:
     case BrOnCastDescEqFail:
-      testType = in;
+      testType = *in;
       break;
   }
 
@@ -2183,7 +2254,7 @@ Result<> IRBuilder::makeBrOn(Index label,
     auto name = getLabelName(label);
     CHECK_ERR(name);
 
-    auto* br = builder.makeBrOn(op, *name, curr.ref, out, curr.desc);
+    auto* br = builder.makeBrOn(op, *name, curr.ref, curr.castType, curr.desc);
     applyAnnotations(br, annotations);
     push(br);
     return Ok{};
@@ -2207,7 +2278,8 @@ Result<> IRBuilder::makeBrOn(Index label,
 
   // Perform the branch.
   CHECK_ERR(visitBrOn(&curr));
-  auto* br = builder.makeBrOn(op, extraLabel, curr.ref, out, curr.desc);
+  auto* br =
+    builder.makeBrOn(op, extraLabel, curr.ref, curr.castType, curr.desc);
   applyAnnotations(br, annotations);
   push(br);
 
@@ -2229,18 +2301,18 @@ Result<> IRBuilder::makeBrOn(Index label,
       WASM_UNREACHABLE("unexpected op");
     case BrOnCast:
     case BrOnCastDescEq:
-      if (out.isNullable()) {
-        resultType = Type(in.getHeapType(), NonNullable);
+      if (out->isNullable()) {
+        resultType = Type(in->getHeapType(), NonNullable);
       } else {
-        resultType = in;
+        resultType = *in;
       }
       break;
     case BrOnCastFail:
     case BrOnCastDescEqFail:
-      if (in.isNonNullable()) {
-        resultType = Type(out.getHeapType(), NonNullable);
+      if (in->isNonNullable()) {
+        resultType = Type(out->getHeapType(), NonNullable);
       } else {
-        resultType = out;
+        resultType = *out;
       }
       break;
   }
@@ -2353,36 +2425,24 @@ Result<> IRBuilder::makeStructWait(HeapType type, Index index) {
     return Err{"struct.wait field index out of bounds"};
   }
 
-  if (type.getStruct().fields.at(index).packedType !=
-      Field::PackedType::WaitQueue) {
-    return Err{"struct.wait field index must contain a `waitqueue`"};
-  }
-
   StructWait curr(wasm.allocator);
   CHECK_ERR(ChildPopper{*this}.visitStructWait(&curr, type));
   CHECK_ERR(validateTypeAnnotation(type, curr.ref));
-  push(builder.makeStructWait(index, curr.ref, curr.expected, curr.timeout));
+  push(builder.makeStructWait(
+    index, curr.ref, curr.waitqueue, curr.expected, curr.timeout));
   return Ok{};
 }
 
-Result<> IRBuilder::makeStructNotify(HeapType type, Index index) {
-  if (!type.isStruct()) {
-    return Err{"expected struct type annotation on struct.notify"};
-  }
-  // This is likely checked in the caller by the `fieldidx` parser.
-  if (index >= type.getStruct().fields.size()) {
-    return Err{"struct.notify field index out of bounds"};
-  }
+Result<> IRBuilder::makeWaitqueueNew() {
+  WaitqueueNew curr(wasm.allocator);
+  push(builder.makeWaitqueueNew());
+  return Ok{};
+}
 
-  if (type.getStruct().fields.at(index).packedType !=
-      Field::PackedType::WaitQueue) {
-    return Err{"struct.notify field index must contain a `waitqueue`"};
-  }
-
-  StructNotify curr(wasm.allocator);
-  CHECK_ERR(ChildPopper{*this}.visitStructNotify(&curr, type));
-  CHECK_ERR(validateTypeAnnotation(type, curr.ref));
-  push(builder.makeStructNotify(index, curr.ref, curr.count));
+Result<> IRBuilder::makeWaitqueueNotify() {
+  WaitqueueNotify curr(wasm.allocator);
+  CHECK_ERR(ChildPopper{*this}.visitWaitqueueNotify(&curr));
+  push(builder.makeWaitqueueNotify(curr.waitqueue, curr.count));
   return Ok{};
 }
 
@@ -2457,8 +2517,11 @@ Result<> IRBuilder::makeArraySet(HeapType type, MemoryOrder order) {
   return Ok{};
 }
 
-Result<>
-IRBuilder::makeArrayStore(HeapType arrayType, unsigned bytes, Type type) {
+Result<> IRBuilder::makeArrayStore(HeapType arrayType,
+                                   unsigned bytes,
+                                   Address offset,
+                                   Address align,
+                                   Type type) {
   if (!arrayType.isArray()) {
     return Err{"expected array type annotation on array store"};
   }
@@ -2467,13 +2530,16 @@ IRBuilder::makeArrayStore(HeapType arrayType, unsigned bytes, Type type) {
   CHECK_ERR(ChildPopper{*this}.visitArrayStore(&curr, arrayType, type));
 
   CHECK_ERR(validateTypeAnnotation(arrayType, curr.ref));
-  push(builder.makeArrayStore(bytes, curr.ref, curr.index, curr.value));
+  push(builder.makeArrayStore(
+    bytes, offset, align, curr.ref, curr.index, curr.value));
   return Ok{};
 }
 
 Result<> IRBuilder::makeArrayLoad(HeapType arrayType,
                                   unsigned bytes,
                                   bool signed_,
+                                  Address offset,
+                                  Address align,
                                   Type type) {
   if (!arrayType.isArray()) {
     return Err{"expected array type annotation on array load"};
@@ -2483,7 +2549,8 @@ Result<> IRBuilder::makeArrayLoad(HeapType arrayType,
   CHECK_ERR(ChildPopper{*this}.visitArrayLoad(&curr, arrayType));
 
   CHECK_ERR(validateTypeAnnotation(arrayType, curr.ref));
-  push(builder.makeArrayLoad(bytes, signed_, curr.ref, curr.index, type));
+  push(builder.makeArrayLoad(
+    bytes, signed_, offset, align, curr.ref, curr.index, type));
   return Ok{};
 }
 

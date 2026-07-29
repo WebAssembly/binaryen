@@ -7,20 +7,26 @@ using namespace wasm::Abstract;
 using namespace wasm::constraint;
 
 TEST(ConstraintTest, TestEq) {
-  // Sets start empty.
-  AndedConstraintSet s;
-  EXPECT_TRUE(s.empty());
-
   // x == 5 (we use "x" for the name of the thing being compared, in these
   // comments).
   Constraint c{Eq, {Literal(int32_t(5))}};
 
-  // We can't infer anything using an empty set.
+  // Sets start as proving anything, as representing unreachable code.
+  AndedConstraintSet s;
+  EXPECT_TRUE(s.provesEverything());
+  EXPECT_EQ(s.proves(c), True);
+
+  // We can't infer anything if told so.
+  s.setProvesNothing();
   EXPECT_EQ(s.proves(c), Unknown);
 
   // If we add it, then things check out: a thing always proves itself true.
   s.approximateAnd(c);
   EXPECT_EQ(s.size(), 1);
+  EXPECT_EQ(s.proves(c), True);
+
+  // Ditto using set();
+  s.set(c);
   EXPECT_EQ(s.proves(c), True);
 
   // x == 10, a different number: we can infer false.
@@ -37,7 +43,7 @@ TEST(ConstraintTest, TestNe) {
   AndedConstraintSet s;
   // x != 5
   Constraint c{Ne, {Literal(int32_t(5))}};
-  s.approximateAnd(c);
+  s.set(c);
 
   // Checks out versus itself.
   EXPECT_EQ(s.proves(c), True);
@@ -57,7 +63,7 @@ TEST(ConstraintTest, TestMulti) {
   // x != 5 && x != 10
   Constraint c{Ne, {Literal(int32_t(5))}};
   Constraint d{Ne, {Literal(int32_t(10))}};
-  s.approximateAnd(c);
+  s.set(c);
   s.approximateAnd(d);
 
   // Each checks out versus itself.
@@ -87,27 +93,22 @@ TEST(ConstraintTest, TestSets) {
   EXPECT_EQ(s.proves(s), True);
 
   // Ditto after adding something.
-  s.approximateAnd(c);
+  s.set(c);
   EXPECT_EQ(s.proves(s), True);
 
   // Another set, empty.
   AndedConstraintSet t;
 
-  // Any set always proves an empty set to be true.
-  EXPECT_EQ(s.proves(t), True);
-
   // Make both sets contain the same stuff.
-  t.approximateAnd(c);
+  t.set(c);
   EXPECT_EQ(s.proves(t), True);
 
   // Now t has *different* stuff, x == 10, which given s is false.
-  t.clear();
-  t.approximateAnd(Constraint{Eq, {Literal(int32_t(10))}});
+  t.set(Constraint{Eq, {Literal(int32_t(10))}});
   EXPECT_EQ(s.proves(t), False);
 
   // Same, with x != 10. Now we know it is true.
-  t.clear();
-  t.approximateAnd(Constraint{Ne, {Literal(int32_t(10))}});
+  t.set(Constraint{Ne, {Literal(int32_t(10))}});
   EXPECT_EQ(s.proves(t), True);
 
   // In reverse, we can infer nothing: knowing x != 10 does not say if x == 5.
@@ -118,36 +119,38 @@ TEST(ConstraintTest, TestSetsUnknown) {
   // x != 5
   // x != 10
   AndedConstraintSet s;
-  s.approximateAnd(Constraint{Ne, {Literal(int32_t(5))}});
+  s.set(Constraint{Ne, {Literal(int32_t(5))}});
   s.approximateAnd(Constraint{Ne, {Literal(int32_t(10))}});
 
   // x != 20, which is unknown by s.
   AndedConstraintSet t;
-  t.approximateAnd(Constraint{Ne, {Literal(int32_t(20))}});
+  t.set(Constraint{Ne, {Literal(int32_t(20))}});
   EXPECT_EQ(s.proves(t), Unknown);
 
   // Add x == 10, which is false by s, and so the whole thing is false.
-  t.approximateAnd(Constraint{Eq, {Literal(int32_t(10))}});
+  t.set(Constraint{Eq, {Literal(int32_t(10))}});
   EXPECT_EQ(s.proves(t), False);
 }
 
 TEST(ConstraintTest, TestOrTrivial) {
   // { x == 5 }
   AndedConstraintSet s;
-  s.approximateAnd(Constraint{Eq, {Literal(int32_t(5))}});
+  s.set(Constraint{Eq, {Literal(int32_t(5))}});
 
   // { }
   AndedConstraintSet empty;
+  empty.setProvesNothing();
 
-  // Anything ORed with the empty set is unchanged.
+  // Anything ORed with the empty set becomes the empty set: if one side can
+  // prove nothing, neither can the result.
   auto t = s;
   t.approximateOr(empty);
-  EXPECT_EQ(t, s);
+  EXPECT_EQ(t, empty);
 
   // Flipped.
   t = empty;
   t.approximateOr(s);
-  EXPECT_EQ(t, s);
+  EXPECT_EQ(t, empty);
 
   // ORing with oneself changes nothing
   t = s;
@@ -158,11 +161,11 @@ TEST(ConstraintTest, TestOrTrivial) {
 TEST(ConstraintTest, TestOrImplies) {
   // { x == 5 }
   AndedConstraintSet s;
-  s.approximateAnd(Constraint{Eq, {Literal(int32_t(5))}});
+  s.set(Constraint{Eq, {Literal(int32_t(5))}});
 
   // { x != 10 }
   AndedConstraintSet t;
-  t.approximateAnd(Constraint{Ne, {Literal(int32_t(10))}});
+  t.set(Constraint{Ne, {Literal(int32_t(10))}});
 
   // ORing these leaves us with x != 10.
   auto u = s;
@@ -184,7 +187,7 @@ TEST(ConstraintTest, TestMaxCapacity) {
   Constraint not30{Ne, {Literal(int32_t(30))}};
 
   AndedConstraintSet s;
-  s.approximateAnd(not10);
+  s.set(not10);
   s.approximateAnd(not20);
   s.approximateAnd(not30);
 
@@ -204,5 +207,207 @@ TEST(ConstraintTest, TestMaxCapacity) {
   EXPECT_EQ(s.proves(not40), Unknown);
 }
 
-// TODO: test an approximateOr of { x = 10 } and { x >= 0 }, once we support
-//       inequalities
+TEST(ConstraintTest, TestDeduplication) {
+  Constraint eq10{Eq, {Literal(int32_t(10))}};
+
+  AndedConstraintSet s;
+  EXPECT_EQ(s.size(), 0);
+  s.set(eq10);
+  EXPECT_EQ(s.size(), 1);
+  // The size does not increase when we add eq10 again.
+  s.approximateAnd(eq10);
+  EXPECT_EQ(s.size(), 1);
+}
+
+TEST(ConstraintTest, TestDeredundancy) {
+  Constraint eq0{Eq, {Literal(int32_t(0))}};
+  Constraint ne1{Ne, {Literal(int32_t(1))}};
+
+  // If x == 0, then x != 1 is redundant, and does not need to be added, is it
+  // is implied by x == 0.
+  AndedConstraintSet s;
+  s.set(eq0);
+  s.approximateAnd(ne1);
+  EXPECT_EQ(s.size(), 1);
+  EXPECT_EQ(s[0], eq0);
+
+  // Reverse order, same result, even though we added x == 0 last: we remove
+  // x != 1.
+  AndedConstraintSet t;
+  t.set(ne1);
+  t.approximateAnd(eq0);
+  EXPECT_EQ(t.size(), 1);
+  EXPECT_EQ(t[0], eq0);
+}
+
+static void checkOr(const AndedConstraintSet& a,
+                    const AndedConstraintSet& b,
+                    const AndedConstraintSet& result) {
+  auto ored = a;
+  ored.approximateOr(b);
+  EXPECT_EQ(ored, result);
+
+  ored = b;
+  ored.approximateOr(a);
+  EXPECT_EQ(ored, result);
+}
+
+TEST(ConstraintTest, TestOrInequality) {
+  // x == 5 || x >= 0  =>  x >= 0
+  AndedConstraintSet eq5{{Eq, {Literal(int32_t(5))}}};
+  AndedConstraintSet ge0{{GeU, {Literal(int32_t(0))}}};
+  checkOr(eq5, ge0, ge0);
+
+  // x == 5 || x > 5  =>  x >= 5
+  AndedConstraintSet gts5{{GtS, {Literal(int32_t(5))}}};
+  AndedConstraintSet ges5{{GeS, {Literal(int32_t(5))}}};
+  checkOr(eq5, gts5, ges5);
+
+  // x == 5 || x >= 5  =>  x >= 5
+  checkOr(eq5, ges5, ges5);
+}
+
+TEST(ConstraintTest, TestOrLoop) {
+  // Check common loop patterns at the loop top (merging an initial value with
+  // an incremented and bounded one):
+  // { x == A } || { x > A && x <= B }   ==>   { x >= A && x <= B }
+
+  // { x == 5 } || { x > 5 && x <= 42 }   ==>   { x >= 5 && x <= 42 }
+  AndedConstraintSet left{{Eq, {Literal(int32_t(5))}}};
+  AndedConstraintSet right(
+    {{GtS, {Literal(int32_t(5))}}, {LeS, {Literal(int32_t(42))}}});
+  AndedConstraintSet result(
+    {{GeS, {Literal(int32_t(5))}}, {LeS, {Literal(int32_t(42))}}});
+  checkOr(left, right, result);
+
+  // Changes to constants:
+
+  // Change 5 on the left to 7:
+  // { x == 7 } || { x > 5 && x <= 42 }   ==>   { x > 5 && x <= 42}
+  AndedConstraintSet left7{{Eq, {Literal(int32_t(7))}}};
+  checkOr(left7, right, right);
+
+  // Change 5 on the left to 99:
+  // { x == 99 } || { x > 5 && x <= 42 }   ==>   { x > 5 }
+  // TODO: we could emit a range (5, 99]
+  AndedConstraintSet left99{{Eq, {Literal(int32_t(99))}}};
+  AndedConstraintSet rightOnly5{{GtS, {Literal(int32_t(5))}}};
+  checkOr(left99, right, rightOnly5);
+
+  // Change 5 on the left to 4:
+  // { x == 4 } || { x > 5 && x <= 42 }   ==>   { x <= 42 }
+  // TODO: we could emit a range [4, 42]
+  AndedConstraintSet left4{{Eq, {Literal(int32_t(4))}}};
+  AndedConstraintSet rightOnly42({{LeS, {Literal(int32_t(42))}}});
+  checkOr(left4, right, rightOnly42);
+
+  // Change 5 on the right to 6:
+  // { x == 5 } || { x > 6 && x <= 42 }   ==>   { x <= 42 }
+  AndedConstraintSet right6(
+    {{GtS, {Literal(int32_t(6))}}, {LeS, {Literal(int32_t(42))}}});
+  checkOr(left, right6, rightOnly42);
+
+  // Changes to operations:
+
+  // Change the Eq on the left to Ne. We fail to find anything for the OR.
+  // { x != 5 } || { x > 5 && x <= 42 }   ==>   {}
+  // TODO: we could emit x != 5
+  AndedConstraintSet leftNe{{Ne, {Literal(int32_t(5))}}};
+  auto empty = AndedConstraintSet::makeProvesNothing();
+  checkOr(leftNe, right, empty);
+
+  // Change the GtS on the right to GtU:
+  // { x == 5 } || { x >U 5 && x <= 42 }   ==>   { x <= 42 }
+  AndedConstraintSet rightGtU(
+    {{GtU, {Literal(int32_t(5))}}, {LeS, {Literal(int32_t(42))}}});
+  checkOr(left, rightGtU, rightOnly42);
+
+  // Change the LeS on the right to LeU:
+  // { x == 5 } || { x > 5 && x <=U 42 }   ==>   { x >= 5 && x <=U 42 }
+  AndedConstraintSet rightLeU(
+    {{GtS, {Literal(int32_t(5))}}, {LeU, {Literal(int32_t(42))}}});
+  AndedConstraintSet rightGesLeU(
+    {{GeS, {Literal(int32_t(5))}}, {LeU, {Literal(int32_t(42))}}});
+  checkOr(left, rightLeU, rightGesLeU);
+
+  // Add an operation on the right, x != 21:
+  // { x == 5 } || { x >  5 && x <= 42 && x != 21 }   ==>
+  //               { x >= 5 && x <= 42 && x != 21 }
+  AndedConstraintSet rightAdded({{GtS, {Literal(int32_t(5))}},
+                                 {LeS, {Literal(int32_t(42))}},
+                                 {Ne, {Literal(int32_t(21))}}});
+  AndedConstraintSet resultAdded({{GeS, {Literal(int32_t(5))}},
+                                  {LeS, {Literal(int32_t(42))}},
+                                  {Ne, {Literal(int32_t(21))}}});
+  checkOr(left, rightAdded, resultAdded);
+}
+
+static void checkAnd(const AndedConstraintSet& a,
+                     const AndedConstraintSet& b,
+                     const AndedConstraintSet& result) {
+  auto anded = a;
+  for (auto& bc : b) {
+    anded.approximateAnd(bc);
+  }
+  EXPECT_EQ(anded, result);
+
+  anded = b;
+  for (auto& ac : a) {
+    anded.approximateAnd(ac);
+  }
+  EXPECT_EQ(anded, result);
+}
+
+TEST(ConstraintTest, TestAndInequality) {
+  // x == 5 && x >= 0  =>  x == 5
+  AndedConstraintSet eq5{{Eq, {Literal(int32_t(5))}}};
+  AndedConstraintSet ge0{{GeS, {Literal(int32_t(0))}}};
+  checkAnd(eq5, ge0, eq5);
+
+  // x == 5 && x >= 5  =>  x == 5
+  AndedConstraintSet ge5{{GeS, {Literal(int32_t(5))}}};
+  checkAnd(eq5, ge5, eq5);
+
+  // x == 5 && x >= 6  =>  contradiction
+  AndedConstraintSet ge6{{GeS, {Literal(int32_t(6))}}};
+  AndedConstraintSet contradiction;
+  checkAnd(eq5, ge6, contradiction);
+}
+
+TEST(ConstraintTest, TestAndLoop) {
+  // Check common loop patterns after incrementing and bounds-checking:
+  // x <= A && x < A  =>  x < A
+
+  // x <= 5 && x < 5  =>  x < 5
+  AndedConstraintSet le5{{LeS, {Literal(int32_t(5))}}};
+  AndedConstraintSet lt5{{LtS, {Literal(int32_t(5))}}};
+  checkAnd(le5, lt5, lt5);
+
+  // Ditto, but unsigned.
+  AndedConstraintSet le5U{{LeU, {Literal(int32_t(5))}}};
+  AndedConstraintSet lt5U{{LtU, {Literal(int32_t(5))}}};
+  checkAnd(le5U, lt5U, lt5U);
+
+  // Mixing signed and unsigned does not optimize (so we just end up ANDing both
+  // inputs).
+  checkAnd(le5, lt5U, AndedConstraintSet{le5[0], lt5U[0]});
+
+  // Different constants do not optimize, but could TODO
+  AndedConstraintSet lt6{{LtS, {Literal(int32_t(6))}}};
+  checkAnd(le5, lt6, AndedConstraintSet{le5[0], lt6[0]});
+
+  // A non-constant.
+  // x <= y && x < y  =>  x < y
+  AndedConstraintSet ley{{LeS, {Index(1)}}};
+  AndedConstraintSet lty{{LtS, {Index(1)}}};
+  checkAnd(ley, lty, lty);
+
+  // A non-constant with extra info.
+  // { x <= y && x != 42 } && x < y  =>  x < y && x != 42
+  Constraint ne42{Ne, {Literal(int32_t(42))}};
+  checkAnd({ley[0], ne42}, lty, {lty[0], ne42});
+
+  // Extra info on the other side, same result.
+  // x <= y && { x < y && x != 42 }  =>  x < y && x != 42
+  checkAnd(ley, {lty[0], ne42}, {lty[0], ne42});
+}
