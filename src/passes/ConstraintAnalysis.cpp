@@ -429,6 +429,8 @@ struct ConstraintAnalysis
     };
 
     doFlow(work, Handler());
+
+    // TODO: copy old flow data, only merge us in when we actually improve?
   }
 
   // After inferring all we can, apply it to optimize the code.
@@ -444,6 +446,7 @@ struct ConstraintAnalysis
       for (auto** currp : block->contents.actions) {
         if (!constraints.unreachable) {
           applyToConstraints(*currp, constraints);
+          // TODO: can apply x++ here too
           optimizeExpression(currp, constraints);
         } else {
           // This is unreachable code: just mark it so.
