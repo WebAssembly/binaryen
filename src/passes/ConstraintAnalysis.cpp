@@ -271,6 +271,10 @@ struct ConstraintAnalysis
   // be able to prove less things. But this is useful because this pessimistic
   // outcome is the common situation in a loop, so we find the proper bound on
   // the loop variable here in just two iterations of the loop.
+  //
+  // At a high level, we first do the Normal flow, which is as precise as we can
+  // be. We then do the Loops flow afterwards, adding more information but not
+  // making anything worse.
   enum FlowMode { Normal, Loops };
   void flow(FlowMode mode) {
     // Start from the entry as the only reachable block. That block has incoming
