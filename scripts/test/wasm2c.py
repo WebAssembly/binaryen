@@ -13,14 +13,13 @@
 # limitations under the License.
 
 import pathlib
-import subprocess
-import tempfile
 
 from . import shared, support
 from .shared import print_heading
 
 spec_tests = [
 ]
+
 
 def test_wasm2c_spec_output():
     for t in shared.options.spec_tests:
@@ -37,7 +36,7 @@ def test_wasm2c_spec_output():
         test_subdir_path.mkdir(exist_ok=True)
 
         wasm2c_cmd = [shared.WASM2C[0], t, '-o', f'{test_subdir}/{test_path.stem}.c', '--allow-asserts']
-        support.run_command(wasm2c_cmd, expected_status = (1 if is_fail_test else 0))
+        support.run_command(wasm2c_cmd, expected_status=(1 if is_fail_test else 0))
 
         c_sources = sorted(test_subdir_path.glob('*.c'))
 
@@ -59,6 +58,7 @@ def test_wasm2c_spec_output():
 
         # Run spec test runner binary and assert success
         support.run_command([f'{test_subdir}/spec_test_runner'])
+
 
 def test_wasm2c_spec():
     print_heading('checking wasm2c spec testcases...')

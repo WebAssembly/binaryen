@@ -25,7 +25,15 @@ from contextlib import contextmanager
 from multiprocessing.pool import ThreadPool
 from pathlib import Path
 
-from scripts.test import binaryenjs, finalize, shared, support, wasm2js, wasm2c, wasm_opt
+from scripts.test import (
+    binaryenjs,
+    finalize,
+    shared,
+    support,
+    wasm2c,
+    wasm2js,
+    wasm_opt,
+)
 from scripts.test.shared import print_heading
 
 assert sys.version_info >= (3, 10), 'requires Python 3.10'
