@@ -303,6 +303,7 @@ struct ConstraintAnalysis
     // Starting from the entry, keep going while we find something new.
     UniqueDeferredQueue<BasicBlock*> work;
     work.push(entry);
+
     doFlow(work, [](const LocalConstraint& branch, BasicBlockConstraintMap& constraints) {
       // The normal flow behavior, given a branch that applies a constraint to a
       // local, is to simply AND that constraint onto everything else we know.
@@ -351,6 +352,26 @@ struct ConstraintAnalysis
   }
 
   void flowLoops() {
+    // As described above, we do two things differently in the Loop flow: we
+    // process x++ operations, and we apply branch constraints in a
+    // "pessimistic" way, which can help those x++s expand into the full range
+    // for the loop. All this only helps if we actually have x++s, so we find
+    // those and flow from their blocks.
+    UniqueDeferredQueue<BasicBlock*> work;
+    for (auto& block : basicBlocks) {
+      for (auto** currp : block->contents.actions) {
+        if (isIncrement(*currp)) {
+          work.push(block.get());
+          break;
+        }
+      }
+    }
+
+    doFlow(work, [](const LocalConstraint& branch, BasicBlockConstraintMap& constraints) {
+      // Extend ranges pessimistically:
+      //   * x == 0 && x < 100  =>  x >= 0 && x < 100
+      constraints.approximateAnd(branch.local, branch.constraint);
+    });
   }
 
   // After inferring all we can, apply it to optimize the code.
