@@ -613,6 +613,18 @@ SelectMatcher(Select** binder, S1&& s1, S2&& s2, S3&& s3) {
   return Matcher<Select*, S1, S2, S3>(binder, {}, s1, s2, s3);
 }
 
+// LocalGet
+template<> struct NumComponents<LocalGet*> {
+  static constexpr size_t value = 1;
+};
+template<> struct GetComponent<LocalGet*, 0> {
+  Index operator()(LocalGet* curr) { return curr->index; }
+};
+template<class S>
+inline decltype(auto) LocalGetMatcher(LocalGet** binder, S&& s) {
+  return Matcher<LocalGet*, S>(binder, {}, s);
+}
+
 } // namespace Internal
 
 // Public matching API
@@ -876,6 +888,11 @@ inline decltype(auto) select(S1&& s1, S2&& s2, S3&& s3) {
 template<class S1, class S2, class S3>
 inline decltype(auto) select(Select** binder, S1&& s1, S2&& s2, S3&& s3) {
   return Internal::SelectMatcher(binder, s1, s2, s3);
+}
+
+inline decltype(auto) local(Index* binder) {
+  return Internal::LocalGetMatcher(
+    nullptr, Internal::Any(binder));
 }
 
 } // namespace wasm::Match

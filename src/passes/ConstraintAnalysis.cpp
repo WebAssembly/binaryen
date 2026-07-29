@@ -28,6 +28,7 @@
 #include "ir/eh-utils.h"
 #include "ir/literal-utils.h"
 #include "ir/local-graph.h"
+#include "ir/match.h"
 #include "ir/properties.h"
 #include "ir/utils.h"
 #include "pass.h"
@@ -374,7 +375,8 @@ struct ConstraintAnalysis
     UniqueDeferredQueue<BasicBlock*> work;
     for (auto& block : basicBlocks) {
       for (auto** currp : block->contents.actions) {
-        if (isIncrement(*currp)) {
+        // x = y + 1
+        if (matches(*currp, binary(Abstract::Add, local(), ival(1)))) {
           work.push(block.get());
           break;
         }
@@ -385,7 +387,7 @@ struct ConstraintAnalysis
       bool doApplyToConstraints(Expression* curr, BasicBlockConstraintMap& constraints) {
         // Operate on x++s.
 
-..
+//..
 
         return false;
       }
