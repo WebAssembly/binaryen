@@ -392,12 +392,56 @@ struct ConstraintAnalysis
       bool doApplyToConstraints(Expression* curr,
                                 BasicBlockConstraintMap& constraints) const {
         using namespace Match;
+        using namespace Abstract;
+
+        auto* set = curr->dynCast<LocalSet>();
+        if (!set) {
+          return false;
+        }
 
         // Operate on x++s.
         // x = y + 1
         Index y;
-        if (matches(curr, binary(Abstract::Add, local(&y), ival(1)))) {
-          // ..
+        if (matches(set->value, binary(Abstract::Add, local(&y), ival(1)))) {
+          auto old = constraints.get(y);
+          if (old.empty()) {
+            // Nothing we know how to increment.
+            return false;
+          }
+
+          for (auto& c : old) {
+            if (auto* N = std::get_if<Literal>(&c.term)) {
+              switch (c.op) {
+                // x == N, x++  =>  x == N+1.
+                case Eq:
+                  // TODO: overflows here and below
+                  c.term = N->add(Literal::fromInt32(1, N->type));
+                  continue;
+                // x >= N, x++  =>  x > N
+                case GeS:
+                  c.term = GtS;
+                  continue;
+                case GeU:
+                  c.term = GtU;
+                  continue;
+                // x < N, x++  =>  x <= N
+                case LtS:
+                  c.term = LeS;
+                  continue;
+                case LtU:
+                  c.term = GeU;
+                  continue;
+                default:
+                  // Something we don't recognize.
+                  return false;
+              }
+            }
+          }
+
+          // We processed the old constraints into their new forms without
+          // problems. Apply them and we are done.
+          constraints.set(set->index, old);
+          return true;
         }
 
         return false;
