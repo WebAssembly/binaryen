@@ -188,7 +188,7 @@ struct ConstraintAnalysis
 
     computeRelevantLocals();
     flowNormally();
-    //flowLoops();
+    flowLoops();
     optimize();
   }
 
@@ -348,6 +348,9 @@ struct ConstraintAnalysis
         }
       }
     }
+  }
+
+  void flowLoops() {
   }
 
   // After inferring all we can, apply it to optimize the code.
