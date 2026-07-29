@@ -1,5 +1,4 @@
-const char* SpecTop = R"w2c_template(
-#include <assert.h>
+const char* SpecTop = R"w2c_template(#include <assert.h>
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 #include <math.h>

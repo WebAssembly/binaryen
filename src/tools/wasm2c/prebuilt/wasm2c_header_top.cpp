@@ -1,5 +1,4 @@
-const char* HeaderTop = R"w2c_template(
-#include <stdint.h>
+const char* HeaderTop = R"w2c_template(#include <stdint.h>
 
 #ifndef WASM_RT_CORE_TYPES_DEFINED
 #define WASM_RT_CORE_TYPES_DEFINED
