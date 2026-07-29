@@ -368,8 +368,27 @@ struct ConstraintAnalysis
     }
 
     doFlow(work, [](const LocalConstraint& branch, BasicBlockConstraintMap& constraints) {
-      // Extend ranges pessimistically:
-      //   * x == 0 && x < 100  =>  x >= 0 && x < 100
+      // Extend ranges pessimistically. If the branch is x < M, and we were
+      // x == N where N < M, then extend to x >= N && x < M
+      if (auto* N = std::get_if<Literal>(&branch.constraint.term)) {
+        auto localConstraints = constraints.get(branch.local);
+        if (localConstraints.size() == 1 && localConstraints[0].op == Abstract::Eq) {
+          if (auto* M = std::get_if<Literal>(&localConstraints[0].term)) {
+            if (branch.constraint.op == Abstract::LtS &&
+                N->ltS(*M).getUnsigned()) {
+              constraints.approximateAnd(branch.local, {GeS, *N});
+              return;
+            }
+            if (branch.constraint.op == Abstract::LtU &&
+                N->ltU(*M).getUnsigned()) {
+              constraints.approximateAnd(branch.local, {GeU, *N});
+              return;
+            }
+          }
+        }
+      }
+
+      // Otherwise, AND normally
       constraints.approximateAnd(branch.local, branch.constraint);
     });
   }
