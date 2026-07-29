@@ -467,6 +467,23 @@ void BasicBlockConstraintMap::set(Index index, const Constraint& c) {
   approximateAnd(index, c);
 }
 
+void BasicBlockConstraintMap::set(Index index,
+                                  const AndedConstraintSet& constraints) {
+  // As above, but with a loop after.
+  assert(!unreachable);
+  eraseStaleRefs(index);
+  map.erase(index);
+
+  // Apply the constraints, if there are any.
+  if (constraints.provesNothing()) {
+    setProvesNothing(index);
+  } else {
+    for (auto& c : constraints) {
+      approximateAnd(index, c);
+    }
+  }
+}
+
 void BasicBlockConstraintMap::setProvesNothing(Index index) {
   assert(!unreachable);
   eraseStaleRefs(index);

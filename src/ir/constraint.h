@@ -251,8 +251,11 @@ struct BasicBlockConstraintMap {
     assert(map.empty());
   }
 
-  // Apply a constraint to a local.
+  // Apply a constraint to a local, replacing anything before.
   void set(Index index, const Constraint& c);
+
+  // Apply a set of constraints to a local, replacing anything before.
+  void set(Index index, const AndedConstraintSet& constraints);
 
   // Mark a local as unknown and able to prove nothing.
   void setProvesNothing(Index index);

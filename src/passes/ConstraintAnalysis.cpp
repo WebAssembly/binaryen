@@ -415,21 +415,21 @@ struct ConstraintAnalysis
                 // x == N, x++  =>  x == N+1.
                 case Eq:
                   // TODO: overflows here and below
-                  c.term = N->add(Literal::makeFromInt32(1, N->type));
+                  c.term = Term(N->add(Literal::makeFromInt32(1, N->type)));
                   continue;
                 // x >= N, x++  =>  x > N
                 case GeS:
-                  c.term = GtS;
+                  c.op = GtS;
                   continue;
                 case GeU:
-                  c.term = GtU;
+                  c.op = GtU;
                   continue;
                 // x < N, x++  =>  x <= N
                 case LtS:
-                  c.term = LeS;
+                  c.op = LeS;
                   continue;
                 case LtU:
-                  c.term = GeU;
+                  c.op = GeU;
                   continue;
                 default:
                   // Something we don't recognize.
