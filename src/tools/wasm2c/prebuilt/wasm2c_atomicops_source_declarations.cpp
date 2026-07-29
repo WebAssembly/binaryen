@@ -235,5 +235,4 @@ DEFINE_ATOMIC_CMP_XCHG(i64_atomic_rmw32_cmpxchg_u, u64, u32);
 DEFINE_ATOMIC_CMP_XCHG(i64_atomic_rmw_cmpxchg, u64, u64);
 
 #define atomic_fence() atomic_thread_fence(memory_order_seq_cst)
-)w2c_template"
-;
+)w2c_template";

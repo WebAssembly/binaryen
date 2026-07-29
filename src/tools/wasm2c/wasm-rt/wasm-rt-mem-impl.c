@@ -29,20 +29,20 @@
 extern void WASM_RT_GROW_FAILED_HANDLER();
 #endif
 
-#define PTHREAD_MEMORY_LOCK_VAR_INIT(name)      \
-  if (pthread_mutex_init(&(name), NULL) != 0) { \
-    fprintf(stderr, "Lock init failed\n");      \
-    abort();                                    \
+#define PTHREAD_MEMORY_LOCK_VAR_INIT(name)                                     \
+  if (pthread_mutex_init(&(name), NULL) != 0) {                                \
+    fprintf(stderr, "Lock init failed\n");                                     \
+    abort();                                                                   \
   }
-#define PTHREAD_MEMORY_LOCK_AQUIRE(name)      \
-  if (pthread_mutex_lock(&(name)) != 0) {     \
-    fprintf(stderr, "Lock acquire failed\n"); \
-    abort();                                  \
+#define PTHREAD_MEMORY_LOCK_AQUIRE(name)                                       \
+  if (pthread_mutex_lock(&(name)) != 0) {                                      \
+    fprintf(stderr, "Lock acquire failed\n");                                  \
+    abort();                                                                   \
   }
-#define PTHREAD_MEMORY_LOCK_RELEASE(name)     \
-  if (pthread_mutex_unlock(&(name)) != 0) {   \
-    fprintf(stderr, "Lock release failed\n"); \
-    abort();                                  \
+#define PTHREAD_MEMORY_LOCK_RELEASE(name)                                      \
+  if (pthread_mutex_unlock(&(name)) != 0) {                                    \
+    fprintf(stderr, "Lock release failed\n");                                  \
+    abort();                                                                   \
   }
 
 #define WIN_MEMORY_LOCK_VAR_INIT(name) InitializeCriticalSection(&(name))
@@ -81,11 +81,15 @@ static void os_print_last_error(const char* msg) {
   if (errorMessageID != 0) {
     LPSTR messageBuffer = 0;
     // The api creates the buffer that holds the message
-    size_t size = FormatMessageA(
-        FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM |
-            FORMAT_MESSAGE_IGNORE_INSERTS,
-        NULL, errorMessageID, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-        (LPSTR)&messageBuffer, 0, NULL);
+    size_t size = FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER |
+                                   FORMAT_MESSAGE_FROM_SYSTEM |
+                                   FORMAT_MESSAGE_IGNORE_INSERTS,
+                                 NULL,
+                                 errorMessageID,
+                                 MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+                                 (LPSTR)&messageBuffer,
+                                 0,
+                                 NULL);
     (void)size;
     printf("%s. %s\n", msg, messageBuffer);
     LocalFree(messageBuffer);
@@ -104,9 +108,7 @@ static void* os_mmap(size_t size) {
   return addr;
 }
 
-static int os_munmap(void* addr, size_t size) {
-  return munmap(addr, size);
-}
+static int os_munmap(void* addr, size_t size) { return munmap(addr, size); }
 
 static int os_mprotect(void* addr, size_t size) {
   if (size == 0) {
@@ -115,9 +117,7 @@ static int os_mprotect(void* addr, size_t size) {
   return mprotect(addr, size, PROT_READ | PROT_WRITE);
 }
 
-static void os_print_last_error(const char* msg) {
-  perror(msg);
-}
+static void os_print_last_error(const char* msg) { perror(msg); }
 
 #endif /* _WIN32 */
 

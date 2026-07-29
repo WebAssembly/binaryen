@@ -341,5 +341,4 @@ DEFINE_SIMD_STORE_LANE(v128_store64_lane1, simde_wasm_v128_store64_lane, u64, 1)
 #define v128_f64x2_convert_low_u32x4 simde_wasm_f64x2_convert_low_u32x4
 #endif
 // clang-format on
-)w2c_template"
-;
+)w2c_template";

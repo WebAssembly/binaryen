@@ -26,8 +26,7 @@ namespace wasm {
 
 class AssertionEmitter {
 public:
-  AssertionEmitter(WATParser::WASTScript& script,
-                   Wasm2CBuilder::Flags flags);
+  AssertionEmitter(WATParser::WASTScript& script, Wasm2CBuilder::Flags flags);
 
   void emit(std::ostream& cOut, const std::string& outputCPath);
 

@@ -18,5 +18,4 @@ typedef double f64;
 #ifdef __cplusplus
 extern "C" {
 #endif
-)w2c_template"
-;
+)w2c_template";

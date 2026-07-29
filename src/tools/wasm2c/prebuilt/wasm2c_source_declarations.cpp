@@ -723,5 +723,4 @@ DEFINE_TABLE_FILL(externref)
   __attribute__((weak)) void func(void** instance_ptr, void* tail_call_stack, \
                                   wasm_rt_tailcallee_t* next)
 #endif
-)w2c_template"
-;
+)w2c_template";

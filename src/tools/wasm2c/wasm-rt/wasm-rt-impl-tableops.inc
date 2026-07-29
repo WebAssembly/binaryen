@@ -18,18 +18,16 @@
 // funcref or externref. For this, the file must be included after defining
 // either WASM_RT_TABLE_OPS_FUNCREF or WASM_RT_TABLE_OPS_EXTERNREF
 
-#if defined(WASM_RT_TABLE_OPS_FUNCREF) +       \
-        defined(WASM_RT_TABLE_OPS_EXTERNREF) + \
-        defined(WASM_RT_TABLE_OPS_EXNREF) >    \
-    1
-#error \
-    "Expected only one of { WASM_RT_TABLE_OPS_FUNCREF, WASM_RT_TABLE_OPS_EXTERNREF, WASM_RT_TABLE_OPS_EXNREF } to be defined"
-#elif defined(WASM_RT_TABLE_OPS_FUNCREF) +     \
-        defined(WASM_RT_TABLE_OPS_EXTERNREF) + \
-        defined(WASM_RT_TABLE_OPS_EXNREF) <    \
-    1
-#error \
-    "Expected one of { WASM_RT_TABLE_OPS_FUNCREF, WASM_RT_TABLE_OPS_EXTERNREF, WASM_RT_TABLE_OPS_EXNREF } to be defined"
+#if defined(WASM_RT_TABLE_OPS_FUNCREF) +                                       \
+    defined(WASM_RT_TABLE_OPS_EXTERNREF) + defined(WASM_RT_TABLE_OPS_EXNREF) > \
+  1
+#error                                                                         \
+  "Expected only one of { WASM_RT_TABLE_OPS_FUNCREF, WASM_RT_TABLE_OPS_EXTERNREF, WASM_RT_TABLE_OPS_EXNREF } to be defined"
+#elif defined(WASM_RT_TABLE_OPS_FUNCREF) +                                     \
+    defined(WASM_RT_TABLE_OPS_EXTERNREF) + defined(WASM_RT_TABLE_OPS_EXNREF) < \
+  1
+#error                                                                         \
+  "Expected one of { WASM_RT_TABLE_OPS_FUNCREF, WASM_RT_TABLE_OPS_EXTERNREF, WASM_RT_TABLE_OPS_EXNREF } to be defined"
 #endif
 
 #if defined(WASM_RT_TABLE_OPS_FUNCREF)
@@ -70,7 +68,7 @@ uint32_t WASM_RT_TABLE_APINAME(wasm_rt_grow)(WASM_RT_TABLE_TYPE* table,
     return (uint32_t)-1;
   }
   void* new_data =
-      realloc(table->data, new_elems * sizeof(WASM_RT_TABLE_ELEMENT_TYPE));
+    realloc(table->data, new_elems * sizeof(WASM_RT_TABLE_ELEMENT_TYPE));
   if (!new_data) {
     return (uint32_t)-1;
   }

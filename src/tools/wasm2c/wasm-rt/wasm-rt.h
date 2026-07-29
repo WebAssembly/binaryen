@@ -113,8 +113,8 @@ extern "C" {
 #define WASM_RT_MEMCHECK_BOUNDS_CHECK 1
 #endif
 
-#warning \
-    "WASM_RT_MEMCHECK_SIGNAL_HANDLER has been deprecated in favor of WASM_RT_USE_MMAP and WASM_RT_MEMORY_CHECK_* macros"
+#warning                                                                       \
+  "WASM_RT_MEMCHECK_SIGNAL_HANDLER has been deprecated in favor of WASM_RT_USE_MMAP and WASM_RT_MEMORY_CHECK_* macros"
 #endif
 
 /**
@@ -157,8 +157,8 @@ extern "C" {
 #endif
 
 /** Specify defaults for memory checks if unspecified */
-#if !defined(WASM_RT_MEMCHECK_GUARD_PAGES) && \
-    !defined(WASM_RT_MEMCHECK_BOUNDS_CHECK)
+#if !defined(WASM_RT_MEMCHECK_GUARD_PAGES) &&                                  \
+  !defined(WASM_RT_MEMCHECK_BOUNDS_CHECK)
 #if WASM_RT_GUARD_PAGES_SUPPORTED
 #define WASM_RT_MEMCHECK_GUARD_PAGES 1
 #else
@@ -176,17 +176,17 @@ extern "C" {
 
 /** Sanity check the use of guard pages */
 #if WASM_RT_MEMCHECK_GUARD_PAGES && !WASM_RT_GUARD_PAGES_SUPPORTED
-#error \
-    "WASM_RT_MEMCHECK_GUARD_PAGES not supported on this platform/configuration"
+#error                                                                         \
+  "WASM_RT_MEMCHECK_GUARD_PAGES not supported on this platform/configuration"
 #endif
 
 #if WASM_RT_MEMCHECK_GUARD_PAGES && WASM_RT_MEMCHECK_BOUNDS_CHECK
-#error \
-    "Cannot use both WASM_RT_MEMCHECK_GUARD_PAGES and WASM_RT_MEMCHECK_BOUNDS_CHECK"
+#error                                                                         \
+  "Cannot use both WASM_RT_MEMCHECK_GUARD_PAGES and WASM_RT_MEMCHECK_BOUNDS_CHECK"
 
 #elif !WASM_RT_MEMCHECK_GUARD_PAGES && !WASM_RT_MEMCHECK_BOUNDS_CHECK
-#error \
-    "Must choose at least one from WASM_RT_MEMCHECK_GUARD_PAGES and WASM_RT_MEMCHECK_BOUNDS_CHECK"
+#error                                                                         \
+  "Must choose at least one from WASM_RT_MEMCHECK_GUARD_PAGES and WASM_RT_MEMCHECK_BOUNDS_CHECK"
 #endif
 
 /**
@@ -246,11 +246,11 @@ extern "C" {
 //     eliminates windows for now
 //
 // While more OS can be supported in the future, we only support linux for now
-#if WASM_RT_ALLOW_SEGUE && !WASM_RT_BIG_ENDIAN &&                            \
-    (defined(__x86_64__) || defined(_M_X64)) && __clang__ &&              \
-    (__clang_major__ >= 9) && __has_builtin(__builtin_ia32_wrgsbase64) && \
-    !defined(_WIN32) && !defined(__ANDROID__) &&                          \
-    (defined(__linux__) || defined(__FreeBSD__))
+#if WASM_RT_ALLOW_SEGUE && !WASM_RT_BIG_ENDIAN &&                              \
+  (defined(__x86_64__) || defined(_M_X64)) && __clang__ &&                     \
+  (__clang_major__ >= 9) && __has_builtin(__builtin_ia32_wrgsbase64) &&        \
+  !defined(_WIN32) && !defined(__ANDROID__) &&                                 \
+  (defined(__linux__) || defined(__FreeBSD__))
 #define WASM_RT_USE_SEGUE 1
 #else
 #define WASM_RT_USE_SEGUE 0
@@ -273,9 +273,9 @@ extern "C" {
  * platform additionally seems to have issues with stack guard pages, so we play
  * it safe and use stack counting on big endian platforms.
  */
-#if !defined(WASM_RT_STACK_DEPTH_COUNT) &&        \
-    !defined(WASM_RT_STACK_EXHAUSTION_HANDLER) && \
-    !WASM_RT_NONCONFORMING_UNCHECKED_STACK_EXHAUSTION
+#if !defined(WASM_RT_STACK_DEPTH_COUNT) &&                                     \
+  !defined(WASM_RT_STACK_EXHAUSTION_HANDLER) &&                                \
+  !WASM_RT_NONCONFORMING_UNCHECKED_STACK_EXHAUSTION
 
 #if WASM_RT_INSTALL_SIGNAL_HANDLER && !defined(_WIN32) && !WASM_RT_BIG_ENDIAN
 #define WASM_RT_STACK_EXHAUSTION_HANDLER 1
@@ -296,25 +296,25 @@ extern "C" {
 #if WASM_RT_NONCONFORMING_UNCHECKED_STACK_EXHAUSTION
 
 #if (WASM_RT_STACK_EXHAUSTION_HANDLER + WASM_RT_STACK_DEPTH_COUNT) != 0
-#error \
-    "Cannot specify WASM_RT_NONCONFORMING_UNCHECKED_STACK_EXHAUSTION along with WASM_RT_STACK_EXHAUSTION_HANDLER or WASM_RT_STACK_DEPTH_COUNT"
+#error                                                                         \
+  "Cannot specify WASM_RT_NONCONFORMING_UNCHECKED_STACK_EXHAUSTION along with WASM_RT_STACK_EXHAUSTION_HANDLER or WASM_RT_STACK_DEPTH_COUNT"
 #endif
 
 #else
 
 #if (WASM_RT_STACK_EXHAUSTION_HANDLER + WASM_RT_STACK_DEPTH_COUNT) > 1
-#error \
-    "Cannot specify multiple options from WASM_RT_STACK_EXHAUSTION_HANDLER , WASM_RT_STACK_DEPTH_COUNT"
+#error                                                                         \
+  "Cannot specify multiple options from WASM_RT_STACK_EXHAUSTION_HANDLER , WASM_RT_STACK_DEPTH_COUNT"
 #elif (WASM_RT_STACK_EXHAUSTION_HANDLER + WASM_RT_STACK_DEPTH_COUNT) == 0
-#error \
-    "Must specify one of WASM_RT_STACK_EXHAUSTION_HANDLER , WASM_RT_STACK_DEPTH_COUNT"
+#error                                                                         \
+  "Must specify one of WASM_RT_STACK_EXHAUSTION_HANDLER , WASM_RT_STACK_DEPTH_COUNT"
 #endif
 
 #endif
 
 #if WASM_RT_STACK_EXHAUSTION_HANDLER && !WASM_RT_INSTALL_SIGNAL_HANDLER
-#error \
-    "WASM_RT_STACK_EXHAUSTION_HANDLER  can only be used if WASM_RT_INSTALL_SIGNAL_HANDLER is enabled"
+#error                                                                         \
+  "WASM_RT_STACK_EXHAUSTION_HANDLER  can only be used if WASM_RT_INSTALL_SIGNAL_HANDLER is enabled"
 #endif
 
 #if WASM_RT_STACK_DEPTH_COUNT
@@ -457,7 +457,7 @@ typedef struct {
 } wasm_rt_funcref_t;
 
 /** Default (null) value of a funcref */
-#define wasm_rt_funcref_null_value \
+#define wasm_rt_funcref_null_value                                             \
   ((wasm_rt_funcref_t){NULL, NULL, {NULL}, NULL})
 
 /** The type of an external reference (opaque to WebAssembly). */
@@ -579,9 +579,9 @@ typedef struct {
 #define WASM_RT_SETJMP_TRAP_SETBUF(buf) sigsetjmp(buf, 1)
 
 /**
- * On macOS XNU, there is a bug where nested `sigsetjmp` and `siglongjmp` 
- * across threads that have an allocated alternate signal stack (`SS_ONSTACK`) 
- * will erroneously cause the kernel to preserve the `SS_ONSTACK` flag in the 
+ * On macOS XNU, there is a bug where nested `sigsetjmp` and `siglongjmp`
+ * across threads that have an allocated alternate signal stack (`SS_ONSTACK`)
+ * will erroneously cause the kernel to preserve the `SS_ONSTACK` flag in the
  * thread state
  *
  * See: https://github.com/WebAssembly/wabt/issues/2654
@@ -593,9 +593,9 @@ typedef struct {
 #define WASM_RT_SETJMP_EXN_SETBUF(buf) setjmp(buf)
 #endif
 
-#define WASM_RT_SETJMP(buf) \
+#define WASM_RT_SETJMP(buf)                                                    \
   ((buf).initialized = true, WASM_RT_SETJMP_TRAP_SETBUF((buf).buffer))
-#define WASM_RT_SETJMP_EXN(buf) \
+#define WASM_RT_SETJMP_EXN(buf)                                                \
   ((buf).initialized = true, WASM_RT_SETJMP_EXN_SETBUF((buf).buffer))
 
 #ifndef _WIN32
@@ -604,11 +604,11 @@ typedef struct {
 #define WASM_RT_LONGJMP_UNCHECKED(buf, val) longjmp(buf, val)
 #endif
 
-#define WASM_RT_LONGJMP(buf, val)                                   \
-  /** Abort on failure as this may be called in the trap handler */ \
-  if (!((buf).initialized))                                         \
-    abort();                                                        \
-  (buf).initialized = false;                                        \
+#define WASM_RT_LONGJMP(buf, val)                                              \
+  /** Abort on failure as this may be called in the trap handler */            \
+  if (!((buf).initialized))                                                    \
+    abort();                                                                   \
+  (buf).initialized = false;                                                   \
   WASM_RT_LONGJMP_UNCHECKED((buf).buffer, val)
 
 /**

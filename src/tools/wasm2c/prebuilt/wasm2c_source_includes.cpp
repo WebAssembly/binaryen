@@ -14,5 +14,4 @@ const char* SourceIncludes = R"w2c_template(#include <assert.h>
 #else
 #include <alloca.h>
 #endif
-)w2c_template"
-;
+)w2c_template";

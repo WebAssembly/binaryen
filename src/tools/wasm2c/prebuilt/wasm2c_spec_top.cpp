@@ -501,5 +501,4 @@ int main(int argc, char** argv) {
 #endif
   return g_tests_passed != g_tests_run;
 }
-)w2c_template"
-;
+)w2c_template";

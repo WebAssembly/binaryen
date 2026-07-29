@@ -56,14 +56,14 @@ bool wasm_rt_fsgsbase_inst_supported = false;
 #ifdef __GLIBC__
 #include <gnu/libc-version.h>
 #endif
-#include <asm/prctl.h>    // For ARCH_SET_GS
-#include <sys/syscall.h>  // For SYS_arch_prctl
-#include <unistd.h>       // For syscall
+#include <asm/prctl.h>   // For ARCH_SET_GS
+#include <sys/syscall.h> // For SYS_arch_prctl
+#include <unistd.h>      // For syscall
 #ifndef HWCAP2_FSGSBASE
 #define HWCAP2_FSGSBASE (1 << 1)
 #endif
 #elif defined(__FreeBSD__)
-#include <machine/sysarch.h>  // For amd64_set_gsbase etc.
+#include <machine/sysarch.h> // For amd64_set_gsbase etc.
 #endif
 #endif
 
@@ -115,7 +115,7 @@ static LONG os_signal_handler(PEXCEPTION_POINTERS info) {
 
 static void os_install_signal_handler(void) {
   g_sig_handler_handle =
-      AddVectoredExceptionHandler(1 /* CALL_FIRST */, os_signal_handler);
+    AddVectoredExceptionHandler(1 /* CALL_FIRST */, os_signal_handler);
 }
 
 static void os_cleanup_signal_handler(void) {
@@ -219,7 +219,7 @@ static void os_disable_and_deallocate_altstack(void) {
   if ((!g_alt_stack) || (ss.ss_flags & SS_DISABLE) ||
       (ss.ss_sp != g_alt_stack) || (ss.ss_size != SIGSTKSZ)) {
     DEBUG_PRINTF(
-        "wasm-rt warning: alternate stack was modified unexpectedly\n");
+      "wasm-rt warning: alternate stack was modified unexpectedly\n");
     return;
   }
 
@@ -241,14 +241,12 @@ static void os_disable_and_deallocate_altstack(void) {
 #endif
 
 #if WASM_RT_USE_SEGUE && defined(__FreeBSD__)
-static void call_cpuid(uint64_t* rax,
-                       uint64_t* rbx,
-                       uint64_t* rcx,
-                       uint64_t* rdx) {
+static void
+call_cpuid(uint64_t* rax, uint64_t* rbx, uint64_t* rcx, uint64_t* rdx) {
   __asm__ volatile(
-      "cpuid"
-      : "=a"(*rax), "=b"(*rbx), "=c"(*rcx), "=d"(*rdx)  // output operands
-      : "a"(*rax), "c"(*rcx)                            // input operands
+    "cpuid"
+    : "=a"(*rax), "=b"(*rbx), "=c"(*rcx), "=d"(*rdx) // output operands
+    : "a"(*rax), "c"(*rcx)                           // input operands
   );
 }
 #endif
@@ -263,8 +261,8 @@ void wasm_rt_init(void) {
 #endif
 
 #if WASM_RT_USE_SEGUE
-#if defined(__linux__) && defined(__GLIBC__) && __GLIBC__ >= 2 && \
-    __GLIBC_MINOR__ >= 18
+#if defined(__linux__) && defined(__GLIBC__) && __GLIBC__ >= 2 &&              \
+  __GLIBC_MINOR__ >= 18
   // Check for support for userspace wrgsbase instructions
   unsigned long val = getauxval(AT_HWCAP2);
   wasm_rt_fsgsbase_inst_supported = val & HWCAP2_FSGSBASE;

@@ -55,17 +55,11 @@ void wasm_rt_set_unwind_target(WASM_RT_UNWIND_TARGET* target) {
   g_unwind_target = target;
 }
 
-wasm_rt_tag_t wasm_rt_exception_tag(void) {
-  return g_active_exception_tag;
-}
+wasm_rt_tag_t wasm_rt_exception_tag(void) { return g_active_exception_tag; }
 
-uint32_t wasm_rt_exception_size(void) {
-  return g_active_exception_size;
-}
+uint32_t wasm_rt_exception_size(void) { return g_active_exception_size; }
 
-void* wasm_rt_exception(void) {
-  return g_active_exception;
-}
+void* wasm_rt_exception(void) { return g_active_exception; }
 
 // Include table operations for exnref
 #define WASM_RT_TABLE_OPS_EXNREF

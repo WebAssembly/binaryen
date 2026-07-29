@@ -19,16 +19,16 @@
 // WASM_RT_MEM_OPS or WASM_RT_MEM_OPS_SHARED.
 
 #if defined(WASM_RT_MEM_OPS) && defined(WASM_RT_MEM_OPS_SHARED)
-#error \
-    "Expected only one of { WASM_RT_MEM_OPS, WASM_RT_MEM_OPS_SHARED } to be defined"
+#error                                                                         \
+  "Expected only one of { WASM_RT_MEM_OPS, WASM_RT_MEM_OPS_SHARED } to be defined"
 #elif !defined(WASM_RT_MEM_OPS) && !defined(WASM_RT_MEM_OPS_SHARED)
-#error \
-    "Expected one of { WASM_RT_MEM_OPS, WASM_RT_MEM_OPS_SHARED } to be defined"
+#error                                                                         \
+  "Expected one of { WASM_RT_MEM_OPS, WASM_RT_MEM_OPS_SHARED } to be defined"
 #endif
 
 // Shared memory operations are defined only if we have C11
-#if defined(WASM_RT_MEM_OPS) || \
-    (defined(WASM_RT_MEM_OPS_SHARED) && defined(WASM_RT_C11_AVAILABLE))
+#if defined(WASM_RT_MEM_OPS) ||                                                \
+  (defined(WASM_RT_MEM_OPS_SHARED) && defined(WASM_RT_C11_AVAILABLE))
 
 #ifdef WASM_RT_MEM_OPS
 
@@ -79,7 +79,7 @@ void MEMORY_API_NAME(wasm_rt_allocate_memory)(MEMORY_TYPE* memory,
 #if WASM_RT_USE_MMAP
   if (MEMORY_API_NAME(wasm_rt_memory_is_default32)(memory)) {
     const uint64_t mmap_size =
-        get_alloc_size_for_mmap_default32(memory->max_pages);
+      get_alloc_size_for_mmap_default32(memory->max_pages);
     uint8_t* addr = os_mmap(mmap_size);
     if (!addr) {
       os_print_last_error("os_mmap failed.");
@@ -151,8 +151,8 @@ static uint64_t MEMORY_API_NAME(grow_memory_impl)(MEMORY_TYPE* memory,
   uint64_t new_size = new_pages * memory->page_size;
   uint64_t delta_size = delta * memory->page_size;
 
-  int err = MEMORY_API_NAME(expand_data_allocation)(memory, old_size, new_size,
-                                                    delta_size);
+  int err = MEMORY_API_NAME(expand_data_allocation)(
+    memory, old_size, new_size, delta_size);
   if (err != 0) {
     return (uint64_t)-1;
   }
@@ -179,8 +179,8 @@ void MEMORY_API_NAME(wasm_rt_free_memory)(MEMORY_TYPE* memory) {
 #if WASM_RT_USE_MMAP
   if (MEMORY_API_NAME(wasm_rt_memory_is_default32)(memory)) {
     const uint64_t mmap_size =
-        get_alloc_size_for_mmap_default32(memory->max_pages);
-    os_munmap((void*)memory->data, mmap_size);  // ignore error
+      get_alloc_size_for_mmap_default32(memory->max_pages);
+    os_munmap((void*)memory->data, mmap_size); // ignore error
     return;
   }
 #endif
