@@ -303,8 +303,10 @@ struct ConstraintAnalysis
     // Starting from the entry, keep going while we find something new.
     UniqueDeferredQueue<BasicBlock*> work;
     work.push(entry);
-    doFlow(work, [](const LocalConstraint& branchConstraint, BasicBlockConstraintMap& constraints) {
-      sentConstraints.approximateAnd(branch.local, branch.constraint);
+    doFlow(work, [](const LocalConstraint& branch, BasicBlockConstraintMap& constraints) {
+      // The normal flow behavior, given a branch that applies a constraint to a
+      // local, is to simply AND that constraint onto everything else we know.
+      constraints.approximateAnd(branch.local, branch.constraint);
     });
   }
 
@@ -312,7 +314,7 @@ struct ConstraintAnalysis
   // until nothing remains. A lambda is provided to control how we handle branch
   // constraints.
   template<typename T> // can we template on the function itself? is this already fast?
-  void flow(UniqueDeferredQueue<BasicBlock*>& work, T& handleBranch) {
+  void doFlow(UniqueDeferredQueue<BasicBlock*>& work, T& handleBranch) {
     while (!work.empty()) {
       auto* block = work.pop();
 
