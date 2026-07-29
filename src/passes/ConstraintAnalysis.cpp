@@ -415,7 +415,7 @@ struct ConstraintAnalysis
                 // x == N, x++  =>  x == N+1.
                 case Eq:
                   // TODO: overflows here and below
-                  c.term = N->add(Literal::fromInt32(1, N->type));
+                  c.term = N->add(Literal::makeFromInt32(1, N->type));
                   continue;
                 // x >= N, x++  =>  x > N
                 case GeS:
