@@ -187,8 +187,8 @@ struct ConstraintAnalysis
     }
 
     computeRelevantLocals();
-    flow(Mode::Normal);
-    flow(Mode::Loops);
+    flowNormally();
+    //flowLoops();
     optimize();
   }
 
@@ -275,8 +275,7 @@ struct ConstraintAnalysis
   // At a high level, we first do the Normal flow, which is as precise as we can
   // be. We then do the Loops flow afterwards, adding more information but not
   // making anything worse.
-  enum FlowMode { Normal, Loops };
-  void flow(FlowMode mode) {
+  void flowNormally() {
     // Start from the entry as the only reachable block. That block has incoming
     // values - defaults - for each var.
     entry->contents.startConstraints.setReachable();
@@ -304,6 +303,16 @@ struct ConstraintAnalysis
     // Starting from the entry, keep going while we find something new.
     UniqueDeferredQueue<BasicBlock*> work;
     work.push(entry);
+    doFlow(work, [](const LocalConstraint& branchConstraint, BasicBlockConstraintMap& constraints) {
+      sentConstraints.approximateAnd(branch.local, branch.constraint);
+    });
+  }
+
+  // Given a worklist initialized to the starting point, keep processing it
+  // until nothing remains. A lambda is provided to control how we handle branch
+  // constraints.
+  template<typename T> // can we template on the function itself? is this already fast?
+  void flow(UniqueDeferredQueue<BasicBlock*>& work, T& handleBranch) {
     while (!work.empty()) {
       auto* block = work.pop();
 
@@ -323,7 +332,7 @@ struct ConstraintAnalysis
         if (auto branch = getBranchConstraints(block, out);
             branch && checkRelevancy(*branch)) {
           auto sentConstraints = constraints;
-          sentConstraints.approximateAnd(branch->local, branch->constraint);
+          handleBranch(*branch, sentConstraints);
           // If anything changed at the start of the target block, flow onwards.
           if (outStartConstraints.approximateOr(sentConstraints)) {
             work.push(out);
