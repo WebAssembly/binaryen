@@ -15,9 +15,16 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
+v131
+----
+
+- [Intrinsics] Add @binaryen.inline, parallel to @metadata.code.inline (#8820)
 - Add acqrel ordering support for atomic fences (#8845). Breaks the C API;
   `BinaryenAtomicFence` now takes a memory order param. Use
   `BinaryenMemoryOrderSeqCst()` to preserve the original behavior.
+- [JS API] Merge `Module['parseTextWithFeatures']` into `Module['parseText']`
+  (#8901)
+- Add a ConstraintAnalysis pass (#8853)
 
 v130
 ----

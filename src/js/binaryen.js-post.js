@@ -2612,6 +2612,15 @@ function wrapModule(module, self = {}) {
   };
   
   // TODO: string.*
+  self['string'] = {
+    /**
+     * Creates a new string from the literal string contents.
+     * This instruction is constant and can be used in global variable initializers.
+     */
+    'const'(value) {
+      return preserveStack(() => Module['_BinaryenStringConst'](module, strToStack(value)));
+    }
+  };
 
   // 'Module' operations
   self['addFunction'] = function(name, params, results, varTypes, body) {
@@ -3382,20 +3391,13 @@ Module['readBinaryWithFeatures'] = function(data, features) {
   return wrapModule(ptr);
 };
 
-// Parses text format to a module
-Module['parseText'] = function(text) {
+// Parses text format to a module with the given feature set enabled.
+Module['parseText'] = function(text, features) {
   const buffer = _malloc(text.length + 1);
   stringToAscii(text, buffer);
-  const ptr = handleFatalError(() => Module['_BinaryenModuleParse'](buffer));
-  _free(buffer);
-  return wrapModule(ptr);
-};
-
-// Parses text format to a module with the given feature set enabled
-Module['parseTextWithFeatures'] = function(text, features) {
-  const buffer = _malloc(text.length + 1);
-  stringToAscii(text, buffer);
-  const ptr = handleFatalError(() => Module['_BinaryenModuleParseWithFeatures'](buffer, features));
+  const ptr = features === undefined
+    ? handleFatalError(() => Module['_BinaryenModuleParse'](buffer))
+    : handleFatalError(() => Module['_BinaryenModuleParseWithFeatures'](buffer, features));
   _free(buffer);
   return wrapModule(ptr);
 };

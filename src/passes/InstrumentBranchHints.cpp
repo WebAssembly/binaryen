@@ -110,8 +110,8 @@ namespace wasm {
 namespace {
 
 // The module and base names of our import.
-const Name MODULE = "fuzzing-support";
-const Name BASE = "log-branch";
+static const Name MODULE("fuzzing-support");
+static const Name BASE("log-branch");
 
 // Finds our import, if it exists.
 Name getLogBranchImport(Module* module) {

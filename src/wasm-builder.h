@@ -1162,12 +1162,16 @@ public:
   }
   ArrayLoad* makeArrayLoad(unsigned bytes,
                            bool signed_,
+                           Address offset,
+                           Address align,
                            Expression* ref,
                            Expression* index,
                            Type type) {
     auto* ret = wasm.allocator.alloc<ArrayLoad>();
     ret->bytes = bytes;
     ret->signed_ = signed_;
+    ret->offset = offset;
+    ret->align = align ? align : Address(bytes);
     ret->ref = ref;
     ret->index = index;
     ret->type = type;
@@ -1176,11 +1180,15 @@ public:
   }
 
   ArrayStore* makeArrayStore(unsigned bytes,
+                             Address offset,
+                             Address align,
                              Expression* ref,
                              Expression* index,
                              Expression* value) {
     auto* ret = wasm.allocator.alloc<ArrayStore>();
     ret->bytes = bytes;
+    ret->offset = offset;
+    ret->align = align ? align : Address(bytes);
     ret->ref = ref;
     ret->index = index;
     ret->value = value;
@@ -1438,22 +1446,29 @@ public:
 
   StructWait* makeStructWait(Index index,
                              Expression* ref,
+                             Expression* waitqueue,
                              Expression* expected,
                              Expression* timeout) {
     auto* ret = wasm.allocator.alloc<StructWait>();
     ret->index = index;
     ret->ref = ref;
+    ret->waitqueue = waitqueue;
     ret->expected = expected;
     ret->timeout = timeout;
     ret->finalize();
     return ret;
   }
 
-  StructNotify*
-  makeStructNotify(Index index, Expression* ref, Expression* count) {
-    auto* ret = wasm.allocator.alloc<StructNotify>();
-    ret->index = index;
-    ret->ref = ref;
+  WaitqueueNew* makeWaitqueueNew() {
+    auto* ret = wasm.allocator.alloc<WaitqueueNew>();
+    ret->finalize();
+    return ret;
+  }
+
+  WaitqueueNotify* makeWaitqueueNotify(Expression* waitqueue,
+                                       Expression* count) {
+    auto* ret = wasm.allocator.alloc<WaitqueueNotify>();
+    ret->waitqueue = waitqueue;
     ret->count = count;
     ret->finalize();
     return ret;

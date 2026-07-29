@@ -349,6 +349,8 @@ inline bool isRelationalAntisymmetric(Op op) {
   }
 }
 
+std::ostream& operator<<(std::ostream& o, Op op);
+
 } // namespace wasm::Abstract
 
 #endif // wasm_ir_abstract_h

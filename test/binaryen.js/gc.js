@@ -19,7 +19,7 @@ var arrayType = binaryen.getTypeFromHeapType(arrayHeapType, true);
 var funcArrayType = binaryen.getTypeFromHeapType(funcArrayHeapType, true);
 
 var module = new binaryen.Module();
-module.setFeatures(binaryen.Features.ReferenceTypes | binaryen.Features.BulkMemory | binaryen.Features.GC);
+module.setFeatures(binaryen.Features.ReferenceTypes | binaryen.Features.BulkMemory | binaryen.Features.GC | binaryen.Features.Strings);
 
 module.addFunction("add", binaryen.createType([binaryen.i32, binaryen.i32]), binaryen.i32, [],
   module.i32.add(
@@ -157,7 +157,10 @@ var valueList = [
     module.i32.const(0),
     module.i32.const(1),
     module.i32.const(2)
-  )
+  ),
+
+  // string
+  module.string.const("hello 🌎"),
 ];
 module.addFunction("main", binaryen.none, binaryen.none, [],
   module.block(

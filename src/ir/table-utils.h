@@ -25,6 +25,11 @@
 
 namespace wasm::TableUtils {
 
+inline bool sameType(const Table& a, const Table& b) {
+  return a.type == b.type && a.initial == b.initial && a.max == b.max &&
+         a.addressType == b.addressType;
+}
+
 struct FlatTable {
   std::vector<Name> names;
   bool valid;

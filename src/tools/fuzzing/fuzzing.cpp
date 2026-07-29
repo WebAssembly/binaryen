@@ -906,16 +906,20 @@ void TranslateToFuzzReader::finalizeMemory() {
   }
   memory->initial = std::max(memory->initial, fuzzParams->USABLE_MEMORY);
   // Avoid an unlimited memory size, which would make fuzzing very difficult
-  // as different VMs will run out of system memory in different ways.
-  if (memory->max == Memory::kUnlimitedSize) {
+  // as different VMs will run out of system memory in different ways. Also use
+  // the initial memory size as the maximum, if the initial is now larger
+  // (which can happen as we compute the initial size, above: this is where we
+  // update the maximum to make sense relative to that new initial size).
+  if (memory->max == Memory::kUnlimitedSize || memory->max < memory->initial) {
     memory->max = memory->initial;
   }
-  if (memory->max <= memory->initial) {
+  if (memory->max == memory->initial && oneIn(2)) {
     // To allow growth to work (which a testcase may assume), try to make the
-    // maximum larger than the initial.
+    // maximum larger than the initial, some of the time.
     // TODO: scan the wasm for grow instructions?
-    memory->max =
-      std::min(Address(memory->initial + 1), Address(memory->maxSize32()));
+    memory->max = std::min(
+      Address(memory->initial + 1),
+      Address(memory->is64() ? memory->maxSize64() : memory->maxSize32()));
   }
 
   if (!preserveImportsAndExports) {
@@ -4352,6 +4356,11 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
       }
       return null;
     }
+
+    case HeapType::waitqueue:
+    case HeapType::nowaitqueue: {
+      WASM_UNREACHABLE("waitqueue is unimplemented in the fuzzer");
+    }
   }
   WASM_UNREACHABLE("invalid basic ref type");
 }
@@ -5200,7 +5209,7 @@ Expression* TranslateToFuzzReader::makeAtomic(Type type) {
   }
   wasm.memories[0]->shared = true;
   if (type == Type::none) {
-    return builder.makeAtomicFence(MemoryOrder::SeqCst);
+    return builder.makeAtomicFence(pick(atomicMemoryOrders));
   }
   if (type == Type::i32 && oneIn(2)) {
     if (ATOMIC_WAITS && oneIn(2)) {
@@ -5265,15 +5274,10 @@ Expression* TranslateToFuzzReader::makeAtomic(Type type) {
   auto* ptr = makePointer();
   if (oneIn(2)) {
     auto* value = make(type);
+    auto op = pick(RMWAdd, RMWSub, RMWAnd, RMWOr, RMWXor, RMWXchg);
+    auto order = pick(atomicMemoryOrders);
     return builder.makeAtomicRMW(
-      pick(RMWAdd, RMWSub, RMWAnd, RMWOr, RMWXor, RMWXchg),
-      bytes,
-      offset,
-      ptr,
-      value,
-      type,
-      wasm.memories[0]->name,
-      pick(atomicMemoryOrders));
+      op, bytes, offset, ptr, value, type, wasm.memories[0]->name, order);
   } else {
     auto* expected = make(type);
     auto* replacement = make(type);
@@ -5814,8 +5818,18 @@ Expression* TranslateToFuzzReader::makeBrOn(Type type) {
       WASM_UNREACHABLE("bad br_on op");
     }
   }
-  return fixFlowingType(
-    builder.makeBrOn(op, targetName, make(refType), castType));
+  auto* ref = make(refType);
+  if (op == BrOnCast || op == BrOnCastFail) {
+    auto desc = castType.getHeapType().getDescriptorType();
+    if (desc && !oneIn(2)) {
+      auto descOp = op == BrOnCast ? BrOnCastDescEq : BrOnCastDescEqFail;
+      auto descType = Type(*desc, Nullable, castType.getExactness());
+      auto* descRef = makeTrappingRefUse(descType);
+      auto* brOn = builder.makeBrOn(descOp, targetName, ref, castType, descRef);
+      return fixFlowingType(brOn);
+    }
+  }
+  return fixFlowingType(builder.makeBrOn(op, targetName, ref, castType));
 }
 
 Expression* TranslateToFuzzReader::makeContBind(Type type) {
@@ -6573,6 +6587,7 @@ Exactness TranslateToFuzzReader::getSubType(Exactness exactness) {
 }
 
 HeapType TranslateToFuzzReader::getSubType(HeapType type) {
+  assert(wasm.features.hasReferenceTypes());
   if (oneIn(3)) {
     return type;
   }
@@ -6581,7 +6596,6 @@ HeapType TranslateToFuzzReader::getSubType(HeapType type) {
     switch (type.getBasic(Unshared)) {
       case HeapType::func:
         // TODO: Typed function references.
-        assert(wasm.features.hasReferenceTypes());
         return pick(FeatureOptions<HeapType>()
                       .add(HeapTypes::func)
                       .add(FeatureSet::GC, HeapTypes::nofunc))
@@ -6589,7 +6603,6 @@ HeapType TranslateToFuzzReader::getSubType(HeapType type) {
       case HeapType::cont:
         return pick(HeapTypes::cont, HeapTypes::nocont).getBasic(share);
       case HeapType::ext: {
-        assert(wasm.features.hasReferenceTypes());
         auto options = FeatureOptions<HeapType>()
                          .add(HeapTypes::ext)
                          .add(FeatureSet::GC, HeapTypes::noext);
@@ -6600,7 +6613,6 @@ HeapType TranslateToFuzzReader::getSubType(HeapType type) {
         return pick(options).getBasic(share);
       }
       case HeapType::any: {
-        assert(wasm.features.hasReferenceTypes());
         assert(wasm.features.hasGC());
         return pick(HeapTypes::any,
                     HeapTypes::eq,
@@ -6611,7 +6623,6 @@ HeapType TranslateToFuzzReader::getSubType(HeapType type) {
           .getBasic(share);
       }
       case HeapType::eq:
-        assert(wasm.features.hasReferenceTypes());
         assert(wasm.features.hasGC());
         return pick(HeapTypes::eq,
                     HeapTypes::i31,
@@ -6637,6 +6648,10 @@ HeapType TranslateToFuzzReader::getSubType(HeapType type) {
       case HeapType::nocont:
       case HeapType::noexn:
         break;
+      case HeapType::waitqueue:
+      case HeapType::nowaitqueue: {
+        WASM_UNREACHABLE("waitqueue is unimplemented in the fuzzer");
+      }
     }
   }
   // Look for an interesting subtype.
