@@ -314,7 +314,7 @@ struct ConstraintAnalysis
   // until nothing remains. A lambda is provided to control how we handle branch
   // constraints.
   template<typename T> // can we template on the function itself? is this already fast?
-  void doFlow(UniqueDeferredQueue<BasicBlock*>& work, T& handleBranch) {
+  void doFlow(UniqueDeferredQueue<BasicBlock*>& work, const T& handleBranch) {
     while (!work.empty()) {
       auto* block = work.pop();
 
