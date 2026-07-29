@@ -328,8 +328,7 @@ struct ConstraintAnalysis
   // the inputs (if not, we run the default behavior).
   template<typename T> // can we template on the function itself? is this
                        // already fast?
-                       void doFlow(UniqueDeferredQueue<BasicBlock*>& work,
-                                   const T& handler) {
+  void doFlow(UniqueDeferredQueue<BasicBlock*>& work, const T& handler) {
     while (!work.empty()) {
       auto* block = work.pop();
 
