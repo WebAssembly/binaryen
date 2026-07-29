@@ -386,9 +386,14 @@ struct ConstraintAnalysis
 
     struct Handler {
       bool doApplyToConstraints(Expression* curr, BasicBlockConstraintMap& constraints) {
-        // Operate on x++s.
+        using namespace Match;
 
-//..
+        // Operate on x++s.
+        // x = y + 1
+        Index y;
+        if (matches(*currp, binary(Abstract::Add, local(&y), ival(1)))) {
+          // ..
+        }
 
         return false;
       }
