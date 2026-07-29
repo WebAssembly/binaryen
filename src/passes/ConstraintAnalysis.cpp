@@ -376,11 +376,13 @@ struct ConstraintAnalysis
           if (auto* M = std::get_if<Literal>(&localConstraints[0].term)) {
             if (branch.constraint.op == Abstract::LtS &&
                 N->ltS(*M).getUnsigned()) {
+              constraints.set(branch.local, branch.constraint);
               constraints.approximateAnd(branch.local, {GeS, *N});
               return;
             }
             if (branch.constraint.op == Abstract::LtU &&
                 N->ltU(*M).getUnsigned()) {
+              constraints.set(branch.local, branch.constraint);
               constraints.approximateAnd(branch.local, {GeU, *N});
               return;
             }
