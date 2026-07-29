@@ -304,25 +304,37 @@ struct ConstraintAnalysis
     UniqueDeferredQueue<BasicBlock*> work;
     work.push(entry);
 
-    doFlow(work, [](const LocalConstraint& branch, BasicBlockConstraintMap& constraints) {
-      // The normal flow behavior, given a branch that applies a constraint to a
-      // local, is to simply AND that constraint onto everything else we know.
-      constraints.approximateAnd(branch.local, branch.constraint);
-    });
+    struct Handler {
+      bool doApplyToConstraints(Expression* curr, BasicBlockConstraintMap& constraints) {
+        // Nothing custom here; use the default behavior.
+        return false;
+      }
+
+      bool doBranch(const LocalConstraint& branch, BasicBlockConstraintMap& constraints) {
+        // Nothing custom here; use the default behavior.
+        return false;
+      }
+    };
+
+    doFlow(work, Handler());
   }
 
   // Given a worklist initialized to the starting point, keep processing it
-  // until nothing remains. A lambda is provided to control how we handle branch
-  // constraints.
+  // until nothing remains. A handler is provided with two hooks,
+  // doApplyToConstraints and doBranch, each of which returns true if it handled
+  // the inputs (if not, we run the default behavior).
   template<typename T> // can we template on the function itself? is this already fast?
-  void doFlow(UniqueDeferredQueue<BasicBlock*>& work, const T& handleBranch) {
+  void doFlow(UniqueDeferredQueue<BasicBlock*>& work, const T& handler) {
     while (!work.empty()) {
       auto* block = work.pop();
 
       // Start at the top of the block, then go through, applying things.
       BasicBlockConstraintMap constraints = block->contents.startConstraints;
       for (auto** currp : block->contents.actions) {
-        applyToConstraints(*currp, constraints);
+        // Try the handler first.
+        if (!handler.doApplyToConstraints(*currp, constraints)) {
+          applyToConstraints(*currp, constraints);
+        }
       }
 
       // We now know the values at the end of the block. Flow it onward, and
@@ -335,7 +347,9 @@ struct ConstraintAnalysis
         if (auto branch = getBranchConstraints(block, out);
             branch && checkRelevancy(*branch)) {
           auto sentConstraints = constraints;
-          handleBranch(*branch, sentConstraints);
+          if (!handler.doBranch(*branch, sentConstraints)) {
+            sentConstraints.approximateAnd(branch->local, branch->constraint);
+          }
           // If anything changed at the start of the target block, flow onwards.
           if (outStartConstraints.approximateOr(sentConstraints)) {
             work.push(out);
@@ -370,6 +384,7 @@ struct ConstraintAnalysis
     doFlow(work, [](const LocalConstraint& branch, BasicBlockConstraintMap& constraints) {
       // Extend ranges pessimistically. If the branch is x < M, and we were
       // x == N where N < M, then extend to x >= N && x < M
+      // TODO: move helper matching stuff out of constraint.cpp?
       if (auto* N = std::get_if<Literal>(&branch.constraint.term)) {
         auto localConstraints = constraints.get(branch.local);
         if (localConstraints.size() == 1 && localConstraints[0].op == Abstract::Eq) {
