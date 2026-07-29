@@ -23,6 +23,7 @@
 #include "ir/properties.h"
 #include "ir/utils.h"
 #include "wasm-ir-builder.h"
+#include "wasm.h"
 
 #ifndef IR_BUILDER_DEBUG
 #define IR_BUILDER_DEBUG 0
@@ -671,6 +672,14 @@ public:
                       std::optional<Type> labelType = std::nullopt) {
     std::vector<Child> children;
     ConstraintCollector{builder, children}.visitBreak(curr, labelType);
+    return popConstrainedChildren(children);
+  }
+
+  Result<> visitBrOn(BrOn* curr,
+                     std::optional<Type> in = std::nullopt,
+                     std::optional<Type> out = std::nullopt) {
+    std::vector<Child> children;
+    ConstraintCollector{builder, children}.visitBrOn(curr, in, out);
     return popConstrainedChildren(children);
   }
 
@@ -2087,13 +2096,16 @@ Result<> IRBuilder::makeRefGetDesc(HeapType type) {
 
 Result<> IRBuilder::makeBrOn(Index label,
                              BrOnOp op,
-                             Type in,
-                             Type out,
+                             std::optional<Type> in,
+                             std::optional<Type> out,
                              const CodeAnnotation& annotations) {
+  bool isCast = op != BrOnNull && op != BrOnNonNull;
+  bool isDescCast = op == BrOnCastDescEq || op == BrOnCastDescEqFail;
+  assert(bool(in) == bool(out) && bool(in) == isCast);
   std::optional<HeapType> descriptor;
-  if (op == BrOnCastDescEq || op == BrOnCastDescEqFail) {
-    assert(out.isRef());
-    descriptor = out.getHeapType().getDescriptorType();
+  if (isDescCast) {
+    assert(out && out->isRef());
+    descriptor = out->getHeapType().getDescriptorType();
     if (!descriptor) {
       return Err{"cast target must have descriptor"};
     }
@@ -2101,12 +2113,12 @@ Result<> IRBuilder::makeBrOn(Index label,
 
   BrOn curr;
   curr.op = op;
-  curr.castType = out;
+  curr.castType = isCast ? *out : Type::none;
   curr.desc = nullptr;
-  if (op != BrOnNull && op != BrOnNonNull && !out.isCastable()) {
+  if (isCast && !out->isCastable()) {
     return Err{"br_on cannot cast to invalid type"};
   }
-  CHECK_ERR(visitBrOn(&curr));
+  CHECK_ERR(ChildPopper{*this}.visitBrOn(&curr, in, out));
 
   // Validate things that would cause errors later.
   if (curr.ref->type != Type::unreachable && !curr.ref->type.isRef()) {
@@ -2124,14 +2136,14 @@ Result<> IRBuilder::makeBrOn(Index label,
       break;
     case BrOnCastDescEq:
     case BrOnCastDescEqFail: {
-      CHECK_ERR(validateTypeAnnotation(out.with(*descriptor).with(Nullable),
+      CHECK_ERR(validateTypeAnnotation(out->with(*descriptor).with(Nullable),
                                        curr.desc));
     }
       [[fallthrough]];
     case BrOnCast:
     case BrOnCastFail:
-      assert(in.isRef());
-      CHECK_ERR(validateTypeAnnotation(in, curr.ref));
+      assert(in->isRef());
+      CHECK_ERR(validateTypeAnnotation(*in, curr.ref));
   }
 
   // Extra values need to be sent in a scratch local.
@@ -2168,7 +2180,7 @@ Result<> IRBuilder::makeBrOn(Index label,
     case BrOnCastFail:
     case BrOnCastDescEq:
     case BrOnCastDescEqFail:
-      testType = in;
+      testType = *in;
       break;
   }
 
@@ -2181,7 +2193,7 @@ Result<> IRBuilder::makeBrOn(Index label,
     auto name = getLabelName(label);
     CHECK_ERR(name);
 
-    auto* br = builder.makeBrOn(op, *name, curr.ref, out, curr.desc);
+    auto* br = builder.makeBrOn(op, *name, curr.ref, curr.castType, curr.desc);
     applyAnnotations(br, annotations);
     push(br);
     return Ok{};
@@ -2205,7 +2217,8 @@ Result<> IRBuilder::makeBrOn(Index label,
 
   // Perform the branch.
   CHECK_ERR(visitBrOn(&curr));
-  auto* br = builder.makeBrOn(op, extraLabel, curr.ref, out, curr.desc);
+  auto* br =
+    builder.makeBrOn(op, extraLabel, curr.ref, curr.castType, curr.desc);
   applyAnnotations(br, annotations);
   push(br);
 
@@ -2227,18 +2240,18 @@ Result<> IRBuilder::makeBrOn(Index label,
       WASM_UNREACHABLE("unexpected op");
     case BrOnCast:
     case BrOnCastDescEq:
-      if (out.isNullable()) {
-        resultType = Type(in.getHeapType(), NonNullable);
+      if (out->isNullable()) {
+        resultType = Type(in->getHeapType(), NonNullable);
       } else {
-        resultType = in;
+        resultType = *in;
       }
       break;
     case BrOnCastFail:
     case BrOnCastDescEqFail:
-      if (in.isNonNullable()) {
-        resultType = Type(out.getHeapType(), NonNullable);
+      if (in->isNonNullable()) {
+        resultType = Type(out->getHeapType(), NonNullable);
       } else {
-        resultType = out;
+        resultType = *out;
       }
       break;
   }

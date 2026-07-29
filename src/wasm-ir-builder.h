@@ -233,8 +233,8 @@ public:
   Result<> makeRefGetDesc(HeapType type);
   Result<> makeBrOn(Index label,
                     BrOnOp op,
-                    Type in = Type::none,
-                    Type out = Type::none,
+                    std::optional<Type> in = std::nullopt,
+                    std::optional<Type> out = std::nullopt,
                     const CodeAnnotation& annotations = {});
   Result<> makeStructNew(HeapType type, bool isDesc);
   Result<> makeStructNewDefault(HeapType type, bool isDesc);
