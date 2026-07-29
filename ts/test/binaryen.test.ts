@@ -303,8 +303,8 @@ suite("binaryen", () => {
 		assert.strictEqual(binaryen.ExpressionId.StringWTF16Get, 96);
 		assert.strictEqual(binaryen.ExpressionId.StringSliceWTF, 97);
 
-		assert.strictEqual(binaryen.ExpressionId.WideIntAddSub, 106);
-		assert.strictEqual(binaryen.ExpressionId.WideIntMul, 107);
+		assert.strictEqual(binaryen.ExpressionId.WideIntAddSub, 105);
+		assert.strictEqual(binaryen.ExpressionId.WideIntMul, 106);
 	});
 
 
