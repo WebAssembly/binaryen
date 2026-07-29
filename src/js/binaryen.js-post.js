@@ -2612,6 +2612,15 @@ function wrapModule(module, self = {}) {
   };
   
   // TODO: string.*
+  self['string'] = {
+    /**
+     * Creates a new string from the literal string contents.
+     * This instruction is constant and can be used in global variable initializers.
+     */
+    'const'(value) {
+      return preserveStack(() => Module['_BinaryenStringConst'](module, strToStack(value)));
+    }
+  };
 
   // 'Module' operations
   self['addFunction'] = function(name, params, results, varTypes, body) {
