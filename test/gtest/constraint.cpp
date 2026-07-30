@@ -277,6 +277,9 @@ TEST(ConstraintTest, TestOrInequality) {
 
   // x > 5 || x >= 6  =>  x > 5
   checkOr(gts5, ges6, gts5);
+
+  // x > 5 || x >= 5  =>  x >= 5
+  checkOr(gts5, ges5, ges5);
 }
 
 TEST(ConstraintTest, TestOrLoop) {
