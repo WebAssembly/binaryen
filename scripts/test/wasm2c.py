@@ -18,6 +18,7 @@ from . import shared, support
 from .shared import print_heading
 
 spec_tests = [
+    'i32.wast',
 ]
 
 

@@ -14,8 +14,12 @@
  * limitations under the License.
  */
 
+#include <cassert>
 #include <iostream>
 #include <string>
+#include <unordered_map>
+#include <unordered_set>
+#include <vector>
 
 #include "parser/wat-parser.h"
 #include "support/file.h"
@@ -50,6 +54,42 @@ inline std::string getBasename(const std::string& path) {
   return path.substr(lastSlash + 1);
 }
 
+std::string mangleName(const std::string& name) {
+  if (name.empty()) {
+    return "";
+  }
+  std::string result;
+  bool isFirst = true;
+  for (char c : name) {
+    if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') ||
+        (c >= '0' && c <= '9')) {
+      result += c;
+      isFirst = false;
+    } else if (c == '_') {
+      if (isFirst) {
+        result += "0x5F";
+        isFirst = false;
+      } else {
+        result += '_';
+      }
+    } else {
+      char buf[8];
+      snprintf(buf, sizeof(buf), "0x%02X", (unsigned char)c);
+      result += buf;
+      isFirst = false;
+    }
+  }
+  return result;
+}
+
+std::string literalToCLiteral(const Literal& lit) {
+  if (lit.type == Type::i32) {
+    return std::to_string(static_cast<uint32_t>(lit.geti32())) + "u";
+  }
+  Fatal() << "Unsupported literal type for C emission: " << lit.type;
+  return "";
+}
+
 } // anonymous namespace
 
 AssertionEmitter::AssertionEmitter(WATParser::WASTScript& script,
@@ -64,7 +104,13 @@ void AssertionEmitter::emit(std::ostream& cOut,
     outputCPath.empty() ? "spec" : stripExtension(outputCPath);
   std::string baseBasename = getBasename(basePath);
 
-  // Loop sequentially through WASTScript AST commands
+  std::vector<std::string> modulePrefixes;
+  std::unordered_map<Name, std::string> moduleNameToPrefix;
+  std::unordered_map<std::string, std::unordered_set<std::string>>
+    moduleExports;
+  std::string lastModulePrefix;
+
+  // First pass: Process modules and generate files
   for (size_t i = 0; i < script.size(); i++) {
     auto& entry = script[i];
     auto& cmd = entry.cmd;
@@ -79,6 +125,21 @@ void AssertionEmitter::emit(std::ostream& cOut,
       auto wasm = *w;
       size_t currentIdx = moduleCounter++;
       std::string prefix = "spec_" + std::to_string(currentIdx);
+      modulePrefixes.push_back(prefix);
+      lastModulePrefix = prefix;
+
+      if (wasm->name.is()) {
+        moduleNameToPrefix[wasm->name] = prefix;
+      }
+
+      // Collect exports
+      std::unordered_set<std::string> exports;
+      for (auto& exp : wasm->exports) {
+        if (exp->kind == ExternalKind::Function) {
+          exports.insert(exp->name.toString());
+        }
+      }
+      moduleExports[prefix] = exports;
 
       // Generate separate files for this module
       std::string modHFilename =
@@ -98,19 +159,140 @@ void AssertionEmitter::emit(std::ostream& cOut,
       builder.processWasm(wasm.get(), modCOut.getStream(), modHOut.getStream());
 
       c << "#include \"" << modHFilename << "\"" << endl;
-      c << SpecTop << endl << endl;
-
-    } else if (std::get_if<WATParser::Register>(&cmd)) {
-      Fatal() << "register is not yet supported";
-    } else if (std::get_if<WATParser::Assertion>(&cmd)) {
-      Fatal() << "assertions are not yet supported";
-    } else {
-      Fatal() << "unsupported command";
     }
   }
 
+  c << SpecTop << endl << endl;
+
+  // Declare static instances
+  for (const auto& prefix : modulePrefixes) {
+    c << "static w2c_" << prefix << " instance_" << prefix << ";" << endl;
+  }
+  c << endl;
+
   // Write main execution entry point
   c << "void run_spec_tests() {" << endl;
+  c.indent();
+
+  // Instantiate modules
+  for (const auto& prefix : modulePrefixes) {
+    c << "wasm2c_" << prefix << "_instantiate(&instance_" << prefix << ");"
+      << endl;
+  }
+  c << endl;
+
+  // Process assertions
+  for (size_t i = 0; i < script.size(); i++) {
+    auto& entry = script[i];
+    auto& cmd = entry.cmd;
+
+    if (auto* assertCmd = std::get_if<WATParser::Assertion>(&cmd)) {
+      if (auto* assertReturn =
+            std::get_if<WATParser::AssertReturn>(assertCmd)) {
+        auto* invoke =
+          std::get_if<WATParser::InvokeAction>(&assertReturn->action);
+        if (!invoke) {
+          Fatal() << "Only InvokeAction is supported in AssertReturn";
+        }
+
+        std::string activePrefix;
+        if (invoke->base.has_value()) {
+          auto it = moduleNameToPrefix.find(invoke->base.value());
+          if (it != moduleNameToPrefix.end()) {
+            activePrefix = it->second;
+          } else {
+            Fatal() << "Unknown module reference: " << invoke->base.value();
+          }
+        } else {
+          activePrefix = lastModulePrefix;
+        }
+
+        // Verify export exists
+        auto expIt = moduleExports.find(activePrefix);
+        if (expIt == moduleExports.end() ||
+            !expIt->second.count(invoke->name.toString())) {
+          Fatal() << "Invoked function is not exported: " << invoke->name;
+        }
+
+        std::string callStr = "w2c_" + activePrefix + "_" +
+                              mangleName(invoke->name.toString()) +
+                              "(&instance_" + activePrefix;
+        for (const auto& arg : invoke->args) {
+          callStr += ", " + literalToCLiteral(arg);
+        }
+        callStr += ")";
+
+        if (assertReturn->expected.empty()) {
+          c << "ASSERT_RETURN(" << callStr << ");" << endl;
+        } else if (assertReturn->expected.size() == 1) {
+          auto& alts = assertReturn->expected[0];
+          if (alts.size() != 1) {
+            Fatal() << "Multiple alternatives in expected result not supported";
+          }
+          auto& expectedRes = alts[0];
+          if (auto* lit = std::get_if<Literal>(&expectedRes)) {
+            if (lit->type == Type::i32) {
+              c << "ASSERT_RETURN_I32(" << callStr << ", "
+                << literalToCLiteral(*lit) << ");" << endl;
+            } else {
+              Fatal() << "Unsupported expected result type: " << lit->type;
+            }
+          } else {
+            Fatal() << "Unsupported expected result kind";
+          }
+        } else {
+          Fatal() << "Multi-value return assertions not supported";
+        }
+
+      } else if (auto* assertAction =
+                   std::get_if<WATParser::AssertAction>(assertCmd)) {
+        if (assertAction->type != WATParser::ActionAssertionType::Trap) {
+          Fatal() << "Only Trap assertion is supported in AssertAction";
+        }
+        auto* invoke =
+          std::get_if<WATParser::InvokeAction>(&assertAction->action);
+        if (!invoke) {
+          Fatal() << "Only InvokeAction is supported in AssertAction";
+        }
+
+        std::string activePrefix;
+        if (invoke->base.has_value()) {
+          auto it = moduleNameToPrefix.find(invoke->base.value());
+          if (it != moduleNameToPrefix.end()) {
+            activePrefix = it->second;
+          } else {
+            Fatal() << "Unknown module reference: " << invoke->base.value();
+          }
+        } else {
+          activePrefix = lastModulePrefix;
+        }
+
+        // Verify export exists
+        auto expIt = moduleExports.find(activePrefix);
+        if (expIt == moduleExports.end() ||
+            !expIt->second.count(invoke->name.toString())) {
+          Fatal() << "Invoked function is not exported: " << invoke->name;
+        }
+
+        std::string callStr = "w2c_" + activePrefix + "_" +
+                              mangleName(invoke->name.toString()) +
+                              "(&instance_" + activePrefix;
+        for (const auto& arg : invoke->args) {
+          callStr += ", " + literalToCLiteral(arg);
+        }
+        callStr += ")";
+
+        c << "ASSERT_TRAP(" << callStr << ");" << endl;
+      }
+    }
+  }
+
+  // Free modules
+  for (const auto& prefix : modulePrefixes) {
+    c << "wasm2c_" << prefix << "_free(&instance_" << prefix << ");" << endl;
+  }
+
+  c.outdent();
   c << "}" << endl;
 }
 
