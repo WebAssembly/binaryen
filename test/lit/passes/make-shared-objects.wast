@@ -156,6 +156,7 @@
   ;; TODO: Handle exnref, contref.
 )
 
+;; Recursive function types should be updated correctly.
 (module
   ;; CHECK:      (type $func (func (param (ref (shared i31))) (result (ref (shared i31)))))
   (type $func (func (param (ref $func)) (result (ref $func))))
@@ -272,6 +273,9 @@
   )
 )
 
+;; Check that references to different functions are consistently assigned
+;; different indices. This module does not use the references with a call or
+;; cast, so it does not get the new table.
 (module
   ;; CHECK:      (type $f (func))
   (type $f (func))
@@ -349,6 +353,7 @@
   )
 )
 
+;; Test replacement of references in module locations and lowering of calls.
 (module
   (type $sig (func (param i32) (result i32)))
   ;; CHECK:      (type $0 (func (result i32)))
@@ -584,6 +589,7 @@
   )
 )
 
+;; Test lowering of ref.test and ref.cast.
 (module
   (type $sig (func (param i32) (result i32)))
   ;; CHECK:      (type $shared-sig (func (param i32) (result i32)))
