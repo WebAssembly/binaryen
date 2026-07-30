@@ -284,12 +284,12 @@ std::optional<Constraint> approximateOrAdjacentConstantPair(
 
   // x == C || x >= C+1  ===  x >= C
   if (aOp == Eq && bOp == GeS) {
-    return Constraint{GeS, aConstant};
+    return Constraint{GeS, {aConstant}};
   }
 
   // x > C || x >= C+1  ===  x > C
   if (aOp == GtS && bOp == GeS) {
-    return Constraint{GtS, aConstant};
+    return Constraint{GtS, {aConstant}};
   }
 
   // TODO: all the rest
