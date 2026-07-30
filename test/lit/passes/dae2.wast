@@ -1599,7 +1599,7 @@
     ;; CHECK:      (rec
     ;; CHECK-NEXT:  (type $super (sub (func (param i32 i32))))
     (type $super (sub (func (param i32 i32))))
-    ;; CHECK:       (type $sub2 (sub $super (func (param i32 i32))))
+    ;; CHECK:       (type $sub1_0 (sub $super (func (param i32 i32))))
 
     ;; CHECK:       (type $sub1 (sub $super (func (param i32 i32))))
     (type $sub1 (sub $super (func (param i32 i32))))
@@ -1612,7 +1612,7 @@
   ;; CHECK:      (elem declare func $referenced1 $referenced2)
 
   ;; CHECK:      (func $referenced1 (type $sub1) (param $0 i32) (param $1 i32)
-  ;; CHECK-NEXT:  (call_ref $sub2
+  ;; CHECK-NEXT:  (call_ref $sub1_0
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:   (ref.func $referenced2)
@@ -1634,7 +1634,7 @@
     )
   )
 
-  ;; CHECK:      (func $referenced2 (type $sub2) (param $0 i32) (param $1 i32)
+  ;; CHECK:      (func $referenced2 (type $sub1_0) (param $0 i32) (param $1 i32)
   ;; CHECK-NEXT:  (call_ref $sub1
   ;; CHECK-NEXT:   (local.get $1)
   ;; CHECK-NEXT:   (i32.const 1)
