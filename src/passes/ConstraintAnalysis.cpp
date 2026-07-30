@@ -450,12 +450,14 @@ std::cout << "f4 (doBranch)\n";
         // x == N where N < M, then extend to x >= N && x < M
         // TODO: move helper matching stuff out of constraint.cpp?
         using namespace Abstract;
-        if (auto* N = std::get_if<Literal>(&branch.constraint.term)) {
+        if (auto* M = std::get_if<Literal>(&branch.constraint.term)) {
           auto localConstraints = constraints.get(branch.local);
 std::cout << "fl5 " << branch.constraint << " vs " << localConstraints << "\n";
           if (localConstraints.size() == 1 &&
               localConstraints[0].op == Abstract::Eq) {
-            if (auto* M = std::get_if<Literal>(&localConstraints[0].term)) {
+std::cout << "fl5.1\n";
+            if (auto* N = std::get_if<Literal>(&localConstraints[0].term)) {
+std::cout << "fl5.2 " << (branch.constraint.op == Abstract::LtS) << " : " << *N << " <? " << *M << "\n";
               if (branch.constraint.op == Abstract::LtS &&
                   N->ltS(*M).getUnsigned()) {
                 constraints.set(branch.local, branch.constraint);
