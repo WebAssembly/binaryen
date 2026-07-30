@@ -15,6 +15,9 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
+- [JS API] support `BinaryenStringConst` (#8951)
+- [JS API] Merge `Module['readBinaryWithFeatures']` into `Module['readBinary']`
+
 v131
 ----
 
