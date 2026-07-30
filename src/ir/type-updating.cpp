@@ -423,7 +423,14 @@ void GlobalTypeRewriter::mapTypeNamesAndIndices(const TypeMap& oldToNewTypes) {
     }
     if (auto it = wasm.typeNames.find(old); it != wasm.typeNames.end()) {
       auto& names = it->second;
-      newTypeNames[new_] = names;
+      auto [newIt, inserted] = newTypeNames.insert({new_, names});
+      if (!inserted) {
+        // Multiple old type names are being merged into the same new type.
+        // Deterministically keep the lesser name.
+        if (names.name.view() < newIt->second.name.view()) {
+          newIt->second = names;
+        }
+      }
       // Use the existing name in the new type, as usually it completely
       // replaces the old. Rename the old name in a unique way to avoid
       // confusion in the case that it remains used.
@@ -437,9 +444,12 @@ void GlobalTypeRewriter::mapTypeNamesAndIndices(const TypeMap& oldToNewTypes) {
       }
     }
     if (auto it = wasm.typeIndices.find(old); it != wasm.typeIndices.end()) {
-      // It's ok if we end up with duplicate indices. Ties will be resolved in
-      // some arbitrary manner.
-      newTypeIndices[new_] = it->second;
+      auto [newIt, inserted] = newTypeIndices.insert({new_, it->second});
+      if (!inserted) {
+        // Multiple old type indices are being merged into the same new type.
+        // Deterministically keep the lesser index.
+        newIt->second = std::min(newIt->second, it->second);
+      }
     }
   }
   newTypeNames.merge(wasm.typeNames);
