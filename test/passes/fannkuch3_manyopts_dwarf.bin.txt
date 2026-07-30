@@ -4712,211 +4712,211 @@ file_names[  4]:
   (local $16 i32)
   (local $scratch i32)
   (local $scratch_18 i32)
-  ;; code offset: 0x35
+  ;; code offset: 0x35 - 0x37
   (local.set $3
-   ;; code offset: 0x33
+   ;; code offset: 0x33 - 0x35
    (call $malloc
-    ;; code offset: 0x31
+    ;; code offset: 0x31 - 0x33
     (local.tee $12
-     ;; code offset: 0x30
+     ;; code offset: 0x30 - 0x31
      (i32.shl
-      ;; code offset: 0x2c
+      ;; code offset: 0x2c - 0x2e
       (local.tee $2
-       ;; code offset: 0x29
+       ;; code offset: 0x29 - 0x2c
        (i32.load offset=4
-        ;; code offset: 0x27
+        ;; code offset: 0x27 - 0x29
         (local.get $0)
        )
       )
-      ;; code offset: 0x2e
+      ;; code offset: 0x2e - 0x30
       (i32.const 2)
      )
     )
    )
   )
-  ;; code offset: 0x3b
+  ;; code offset: 0x3b - 0x3d
   (local.set $8
-   ;; code offset: 0x39
+   ;; code offset: 0x39 - 0x3b
    (call $malloc
-    ;; code offset: 0x37
+    ;; code offset: 0x37 - 0x39
     (local.get $12)
    )
   )
-  ;; code offset: 0x41
+  ;; code offset: 0x41 - 0x43
   (local.set $9
-   ;; code offset: 0x3f
+   ;; code offset: 0x3f - 0x41
    (call $malloc
-    ;; code offset: 0x3d
+    ;; code offset: 0x3d - 0x3f
     (local.get $12)
    )
   )
-  ;; code offset: 0x43
+  ;; code offset: 0x43 - 0x372
   (block $block2
-   ;; code offset: 0x45
+   ;; code offset: 0x45 - 0x21c
    (block $block
-    ;; code offset: 0x4c
+    ;; code offset: 0x4c - 0x1f5
     (if
-     ;; code offset: 0x4b
+     ;; code offset: 0x4b - 0x4c
      (i32.gt_s
-      ;; code offset: 0x47
+      ;; code offset: 0x47 - 0x49
       (local.get $2)
-      ;; code offset: 0x49
+      ;; code offset: 0x49 - 0x4b
       (i32.const 0)
      )
      (then
-      ;; code offset: 0x4e
+      ;; code offset: 0x4e - 0x6a
       (loop $label
-       ;; code offset: 0x5a
+       ;; code offset: 0x5a - 0x5d
        (i32.store
-        ;; code offset: 0x57
+        ;; code offset: 0x57 - 0x58
         (i32.add
-         ;; code offset: 0x50
+         ;; code offset: 0x50 - 0x52
          (local.get $3)
-         ;; code offset: 0x56
+         ;; code offset: 0x56 - 0x57
          (i32.shl
-          ;; code offset: 0x52
+          ;; code offset: 0x52 - 0x54
           (local.get $1)
-          ;; code offset: 0x54
+          ;; code offset: 0x54 - 0x56
           (i32.const 2)
          )
         )
-        ;; code offset: 0x58
+        ;; code offset: 0x58 - 0x5a
         (local.get $1)
        )
-       ;; code offset: 0x67
+       ;; code offset: 0x67 - 0x69
        (br_if $label
-        ;; code offset: 0x66
+        ;; code offset: 0x66 - 0x67
         (i32.ne
-         ;; code offset: 0x62
+         ;; code offset: 0x62 - 0x64
          (local.tee $1
-          ;; code offset: 0x61
+          ;; code offset: 0x61 - 0x62
           (i32.add
-           ;; code offset: 0x5d
+           ;; code offset: 0x5d - 0x5f
            (local.get $1)
-           ;; code offset: 0x5f
+           ;; code offset: 0x5f - 0x61
            (i32.const 1)
           )
          )
-         ;; code offset: 0x64
+         ;; code offset: 0x64 - 0x66
          (local.get $2)
         )
        )
       )
-      ;; code offset: 0x7e
+      ;; code offset: 0x7e - 0x81
       (i32.store
-       ;; code offset: 0x76
+       ;; code offset: 0x76 - 0x77
        (i32.add
-        ;; code offset: 0x6a
+        ;; code offset: 0x6a - 0x6c
         (local.get $3)
-        ;; code offset: 0x75
+        ;; code offset: 0x75 - 0x76
         (i32.shl
-         ;; code offset: 0x71
+         ;; code offset: 0x71 - 0x73
          (local.tee $1
-          ;; code offset: 0x6e
+          ;; code offset: 0x6e - 0x71
           (i32.load
-           ;; code offset: 0x6c
+           ;; code offset: 0x6c - 0x6e
            (local.get $0)
           )
          )
-         ;; code offset: 0x73
+         ;; code offset: 0x73 - 0x75
          (i32.const 2)
         )
        )
-       ;; code offset: 0x7c
+       ;; code offset: 0x7c - 0x7e
        (local.tee $4
-        ;; code offset: 0x7b
+        ;; code offset: 0x7b - 0x7c
         (i32.sub
-         ;; code offset: 0x77
+         ;; code offset: 0x77 - 0x79
          (local.get $2)
-         ;; code offset: 0x79
+         ;; code offset: 0x79 - 0x7b
          (i32.const 1)
         )
        )
       )
-      ;; code offset: 0x8d
+      ;; code offset: 0x8d - 0x90
       (i32.store
-       ;; code offset: 0x89
+       ;; code offset: 0x89 - 0x8b
        (local.tee $13
-        ;; code offset: 0x88
+        ;; code offset: 0x88 - 0x89
         (i32.add
-         ;; code offset: 0x81
+         ;; code offset: 0x81 - 0x83
          (local.get $3)
-         ;; code offset: 0x87
+         ;; code offset: 0x87 - 0x88
          (i32.shl
-          ;; code offset: 0x83
+          ;; code offset: 0x83 - 0x85
           (local.get $4)
-          ;; code offset: 0x85
+          ;; code offset: 0x85 - 0x87
           (i32.const 2)
          )
         )
        )
-       ;; code offset: 0x8b
+       ;; code offset: 0x8b - 0x8d
        (local.get $1)
       )
-      ;; code offset: 0x95
+      ;; code offset: 0x95 - 0x97
       (br_if $block
-       ;; code offset: 0x94
+       ;; code offset: 0x94 - 0x95
        (i32.le_s
-        ;; code offset: 0x90
+        ;; code offset: 0x90 - 0x92
         (local.get $2)
-        ;; code offset: 0x92
+        ;; code offset: 0x92 - 0x94
         (i32.const 0)
        )
       )
-      ;; code offset: 0x97
+      ;; code offset: 0x97 - 0x1f3
       (loop $label5
-       ;; code offset: 0x9e
+       ;; code offset: 0x9e - 0xc1
        (if
-        ;; code offset: 0x9d
+        ;; code offset: 0x9d - 0x9e
         (i32.gt_s
-         ;; code offset: 0x99
+         ;; code offset: 0x99 - 0x9b
          (local.get $2)
-         ;; code offset: 0x9b
+         ;; code offset: 0x9b - 0x9d
          (i32.const 1)
         )
         (then
-         ;; code offset: 0xa0
+         ;; code offset: 0xa0 - 0xc0
          (loop $label1
-          ;; code offset: 0xb1
+          ;; code offset: 0xb1 - 0xb4
           (i32.store
-           ;; code offset: 0xae
+           ;; code offset: 0xae - 0xaf
            (i32.add
-            ;; code offset: 0xa2
+            ;; code offset: 0xa2 - 0xa4
             (local.get $9)
-            ;; code offset: 0xad
+            ;; code offset: 0xad - 0xae
             (i32.shl
-             ;; code offset: 0xa9
+             ;; code offset: 0xa9 - 0xab
              (local.tee $1
-              ;; code offset: 0xa8
+              ;; code offset: 0xa8 - 0xa9
               (i32.sub
-               ;; code offset: 0xa4
+               ;; code offset: 0xa4 - 0xa6
                (local.get $2)
-               ;; code offset: 0xa6
+               ;; code offset: 0xa6 - 0xa8
                (i32.const 1)
               )
              )
-             ;; code offset: 0xab
+             ;; code offset: 0xab - 0xad
              (i32.const 2)
             )
            )
-           ;; code offset: 0xaf
+           ;; code offset: 0xaf - 0xb1
            (local.get $2)
           )
-          ;; code offset: 0xbd
+          ;; code offset: 0xbd - 0xbf
           (br_if $label1
            (block (result i32)
             (local.set $scratch
-             ;; code offset: 0xb8
+             ;; code offset: 0xb8 - 0xb9
              (i32.gt_s
-              ;; code offset: 0xb4
+              ;; code offset: 0xb4 - 0xb6
               (local.get $2)
-              ;; code offset: 0xb6
+              ;; code offset: 0xb6 - 0xb8
               (i32.const 2)
              )
             )
-            ;; code offset: 0xbb
+            ;; code offset: 0xbb - 0xbd
             (local.set $2
-             ;; code offset: 0xb9
+             ;; code offset: 0xb9 - 0xbb
              (local.get $1)
             )
             (local.get $scratch)
@@ -4925,164 +4925,164 @@ file_names[  4]:
          )
         )
        )
-       ;; code offset: 0xc1
+       ;; code offset: 0xc1 - 0x172
        (block $block1
-        ;; code offset: 0xcb
+        ;; code offset: 0xcb - 0xcd
         (br_if $block1
-         ;; code offset: 0xca
+         ;; code offset: 0xca - 0xcb
          (i32.eqz
-          ;; code offset: 0xc8
+          ;; code offset: 0xc8 - 0xca
           (local.tee $10
-           ;; code offset: 0xc5
+           ;; code offset: 0xc5 - 0xc8
            (i32.load
-            ;; code offset: 0xc3
+            ;; code offset: 0xc3 - 0xc5
             (local.get $3)
            )
           )
          )
         )
-        ;; code offset: 0xd5
+        ;; code offset: 0xd5 - 0xd7
         (br_if $block1
-         ;; code offset: 0xd4
+         ;; code offset: 0xd4 - 0xd5
          (i32.eq
-          ;; code offset: 0xcf
+          ;; code offset: 0xcf - 0xd2
           (i32.load
-           ;; code offset: 0xcd
+           ;; code offset: 0xcd - 0xcf
            (local.get $13)
           )
-          ;; code offset: 0xd2
+          ;; code offset: 0xd2 - 0xd4
           (local.get $4)
          )
         )
-        ;; code offset: 0xe4
+        ;; code offset: 0xe4 - 0xe6
         (local.set $6
-         ;; code offset: 0xe1
+         ;; code offset: 0xe1 - 0xe4
          (i32.load
-          ;; code offset: 0xdf
+          ;; code offset: 0xdf - 0xe1
           (local.tee $11
-           ;; code offset: 0xdd
+           ;; code offset: 0xdd - 0xdf
            (call $memcpy
-            ;; code offset: 0xd7
+            ;; code offset: 0xd7 - 0xd9
             (local.get $8)
-            ;; code offset: 0xd9
+            ;; code offset: 0xd9 - 0xdb
             (local.get $3)
-            ;; code offset: 0xdb
+            ;; code offset: 0xdb - 0xdd
             (local.get $12)
            )
           )
          )
         )
-        ;; code offset: 0xe8
+        ;; code offset: 0xe8 - 0xea
         (local.set $0
-         ;; code offset: 0xe6
+         ;; code offset: 0xe6 - 0xe8
          (i32.const 0)
         )
-        ;; code offset: 0xea
+        ;; code offset: 0xea - 0x165
         (loop $label3
-         ;; code offset: 0xee
+         ;; code offset: 0xee - 0xf0
          (local.set $16
-          ;; code offset: 0xec
+          ;; code offset: 0xec - 0xee
           (local.get $0)
          )
-         ;; code offset: 0xf5
+         ;; code offset: 0xf5 - 0x13f
          (if
-          ;; code offset: 0xf4
+          ;; code offset: 0xf4 - 0xf5
           (i32.ge_s
-           ;; code offset: 0xf0
+           ;; code offset: 0xf0 - 0xf2
            (local.get $6)
-           ;; code offset: 0xf2
+           ;; code offset: 0xf2 - 0xf4
            (i32.const 3)
           )
           (then
-           ;; code offset: 0xfc
+           ;; code offset: 0xfc - 0xfe
            (local.set $1
-            ;; code offset: 0xfb
+            ;; code offset: 0xfb - 0xfc
             (i32.sub
-             ;; code offset: 0xf7
+             ;; code offset: 0xf7 - 0xf9
              (local.get $6)
-             ;; code offset: 0xf9
+             ;; code offset: 0xf9 - 0xfb
              (i32.const 1)
             )
            )
-           ;; code offset: 0x100
+           ;; code offset: 0x100 - 0x102
            (local.set $0
-            ;; code offset: 0xfe
+            ;; code offset: 0xfe - 0x100
             (i32.const 1)
            )
-           ;; code offset: 0x102
+           ;; code offset: 0x102 - 0x13e
            (loop $label2
-            ;; code offset: 0x111
+            ;; code offset: 0x111 - 0x113
             (local.set $15
-             ;; code offset: 0x10e
+             ;; code offset: 0x10e - 0x111
              (i32.load
-              ;; code offset: 0x10c
+              ;; code offset: 0x10c - 0x10e
               (local.tee $14
-               ;; code offset: 0x10b
+               ;; code offset: 0x10b - 0x10c
                (i32.add
-                ;; code offset: 0x104
+                ;; code offset: 0x104 - 0x106
                 (local.get $11)
-                ;; code offset: 0x10a
+                ;; code offset: 0x10a - 0x10b
                 (i32.shl
-                 ;; code offset: 0x106
+                 ;; code offset: 0x106 - 0x108
                  (local.get $0)
-                 ;; code offset: 0x108
+                 ;; code offset: 0x108 - 0x10a
                  (i32.const 2)
                 )
                )
               )
              )
             )
-            ;; code offset: 0x122
+            ;; code offset: 0x122 - 0x125
             (i32.store
-             ;; code offset: 0x113
+             ;; code offset: 0x113 - 0x115
              (local.get $14)
-             ;; code offset: 0x11f
+             ;; code offset: 0x11f - 0x122
              (i32.load
-              ;; code offset: 0x11d
+              ;; code offset: 0x11d - 0x11f
               (local.tee $7
-               ;; code offset: 0x11c
+               ;; code offset: 0x11c - 0x11d
                (i32.add
-                ;; code offset: 0x115
+                ;; code offset: 0x115 - 0x117
                 (local.get $11)
-                ;; code offset: 0x11b
+                ;; code offset: 0x11b - 0x11c
                 (i32.shl
-                 ;; code offset: 0x117
+                 ;; code offset: 0x117 - 0x119
                  (local.get $1)
-                 ;; code offset: 0x119
+                 ;; code offset: 0x119 - 0x11b
                  (i32.const 2)
                 )
                )
               )
              )
             )
-            ;; code offset: 0x129
+            ;; code offset: 0x129 - 0x12c
             (i32.store
-             ;; code offset: 0x125
+             ;; code offset: 0x125 - 0x127
              (local.get $7)
-             ;; code offset: 0x127
+             ;; code offset: 0x127 - 0x129
              (local.get $15)
             )
-            ;; code offset: 0x13b
+            ;; code offset: 0x13b - 0x13d
             (br_if $label2
-             ;; code offset: 0x13a
+             ;; code offset: 0x13a - 0x13b
              (i32.lt_s
-              ;; code offset: 0x131
+              ;; code offset: 0x131 - 0x133
               (local.tee $0
-               ;; code offset: 0x130
+               ;; code offset: 0x130 - 0x131
                (i32.add
-                ;; code offset: 0x12c
+                ;; code offset: 0x12c - 0x12e
                 (local.get $0)
-                ;; code offset: 0x12e
+                ;; code offset: 0x12e - 0x130
                 (i32.const 1)
                )
               )
-              ;; code offset: 0x138
+              ;; code offset: 0x138 - 0x13a
               (local.tee $1
-               ;; code offset: 0x137
+               ;; code offset: 0x137 - 0x138
                (i32.sub
-                ;; code offset: 0x133
+                ;; code offset: 0x133 - 0x135
                 (local.get $1)
-                ;; code offset: 0x135
+                ;; code offset: 0x135 - 0x137
                 (i32.const 1)
                )
               )
@@ -5091,358 +5091,358 @@ file_names[  4]:
            )
           )
          )
-         ;; code offset: 0x14c
+         ;; code offset: 0x14c - 0x14e
          (local.set $1
-          ;; code offset: 0x149
+          ;; code offset: 0x149 - 0x14c
           (i32.load
-           ;; code offset: 0x147
+           ;; code offset: 0x147 - 0x149
            (local.tee $0
-            ;; code offset: 0x146
+            ;; code offset: 0x146 - 0x147
             (i32.add
-             ;; code offset: 0x13f
+             ;; code offset: 0x13f - 0x141
              (local.get $11)
-             ;; code offset: 0x145
+             ;; code offset: 0x145 - 0x146
              (i32.shl
-              ;; code offset: 0x141
+              ;; code offset: 0x141 - 0x143
               (local.get $6)
-              ;; code offset: 0x143
+              ;; code offset: 0x143 - 0x145
               (i32.const 2)
              )
             )
            )
           )
          )
-         ;; code offset: 0x152
+         ;; code offset: 0x152 - 0x155
          (i32.store
-          ;; code offset: 0x14e
+          ;; code offset: 0x14e - 0x150
           (local.get $0)
-          ;; code offset: 0x150
+          ;; code offset: 0x150 - 0x152
           (local.get $6)
          )
-         ;; code offset: 0x15a
+         ;; code offset: 0x15a - 0x15c
          (local.set $0
-          ;; code offset: 0x159
+          ;; code offset: 0x159 - 0x15a
           (i32.add
-           ;; code offset: 0x155
+           ;; code offset: 0x155 - 0x157
            (local.get $16)
-           ;; code offset: 0x157
+           ;; code offset: 0x157 - 0x159
            (i32.const 1)
           )
          )
-         ;; code offset: 0x15e
+         ;; code offset: 0x15e - 0x160
          (local.set $6
-          ;; code offset: 0x15c
+          ;; code offset: 0x15c - 0x15e
           (local.get $1)
          )
-         ;; code offset: 0x162
+         ;; code offset: 0x162 - 0x164
          (br_if $label3
-          ;; code offset: 0x160
+          ;; code offset: 0x160 - 0x162
           (local.get $1)
          )
         )
-        ;; code offset: 0x16f
+        ;; code offset: 0x16f - 0x171
         (local.set $5
-         ;; code offset: 0x16e
+         ;; code offset: 0x16e - 0x16f
          (select
-          ;; code offset: 0x165
+          ;; code offset: 0x165 - 0x167
           (local.get $5)
-          ;; code offset: 0x167
+          ;; code offset: 0x167 - 0x169
           (local.get $0)
-          ;; code offset: 0x16d
+          ;; code offset: 0x16d - 0x16e
           (i32.gt_s
-           ;; code offset: 0x169
+           ;; code offset: 0x169 - 0x16b
            (local.get $5)
-           ;; code offset: 0x16b
+           ;; code offset: 0x16b - 0x16d
            (local.get $16)
           )
          )
         )
        )
-       ;; code offset: 0x177
+       ;; code offset: 0x177 - 0x179
        (br_if $block2
-        ;; code offset: 0x176
+        ;; code offset: 0x176 - 0x177
         (i32.ge_s
-         ;; code offset: 0x172
+         ;; code offset: 0x172 - 0x174
          (local.get $2)
-         ;; code offset: 0x174
+         ;; code offset: 0x174 - 0x176
          (local.get $4)
         )
        )
-       ;; code offset: 0x179
+       ;; code offset: 0x179 - 0x1f1
        (loop $label6
-        ;; code offset: 0x17d
+        ;; code offset: 0x17d - 0x17f
         (local.set $1
-         ;; code offset: 0x17b
+         ;; code offset: 0x17b - 0x17d
          (i32.const 0)
         )
-        ;; code offset: 0x184
+        ;; code offset: 0x184 - 0x1b0
         (if
-         ;; code offset: 0x183
+         ;; code offset: 0x183 - 0x184
          (i32.gt_s
-          ;; code offset: 0x17f
+          ;; code offset: 0x17f - 0x181
           (local.get $2)
-          ;; code offset: 0x181
+          ;; code offset: 0x181 - 0x183
           (i32.const 0)
          )
          (then
-          ;; code offset: 0x186
+          ;; code offset: 0x186 - 0x1ab
           (loop $label4
-           ;; code offset: 0x1a0
+           ;; code offset: 0x1a0 - 0x1a3
            (i32.store
-            ;; code offset: 0x18f
+            ;; code offset: 0x18f - 0x190
             (i32.add
-             ;; code offset: 0x188
+             ;; code offset: 0x188 - 0x18a
              (local.get $3)
-             ;; code offset: 0x18e
+             ;; code offset: 0x18e - 0x18f
              (i32.shl
-              ;; code offset: 0x18a
+              ;; code offset: 0x18a - 0x18c
               (local.get $1)
-              ;; code offset: 0x18c
+              ;; code offset: 0x18c - 0x18e
               (i32.const 2)
              )
             )
-            ;; code offset: 0x19d
+            ;; code offset: 0x19d - 0x1a0
             (i32.load
-             ;; code offset: 0x19c
+             ;; code offset: 0x19c - 0x19d
              (i32.add
-              ;; code offset: 0x190
+              ;; code offset: 0x190 - 0x192
               (local.get $3)
-              ;; code offset: 0x19b
+              ;; code offset: 0x19b - 0x19c
               (i32.shl
-               ;; code offset: 0x197
+               ;; code offset: 0x197 - 0x199
                (local.tee $1
-                ;; code offset: 0x196
+                ;; code offset: 0x196 - 0x197
                 (i32.add
-                 ;; code offset: 0x192
+                 ;; code offset: 0x192 - 0x194
                  (local.get $1)
-                 ;; code offset: 0x194
+                 ;; code offset: 0x194 - 0x196
                  (i32.const 1)
                 )
                )
-               ;; code offset: 0x199
+               ;; code offset: 0x199 - 0x19b
                (i32.const 2)
               )
              )
             )
            )
-           ;; code offset: 0x1a8
+           ;; code offset: 0x1a8 - 0x1aa
            (br_if $label4
-            ;; code offset: 0x1a7
+            ;; code offset: 0x1a7 - 0x1a8
             (i32.ne
-             ;; code offset: 0x1a3
+             ;; code offset: 0x1a3 - 0x1a5
              (local.get $1)
-             ;; code offset: 0x1a5
+             ;; code offset: 0x1a5 - 0x1a7
              (local.get $2)
             )
            )
           )
-          ;; code offset: 0x1ad
+          ;; code offset: 0x1ad - 0x1af
           (local.set $1
-           ;; code offset: 0x1ab
+           ;; code offset: 0x1ab - 0x1ad
            (local.get $2)
           )
          )
         )
-        ;; code offset: 0x1ba
+        ;; code offset: 0x1ba - 0x1bd
         (i32.store
-         ;; code offset: 0x1b7
+         ;; code offset: 0x1b7 - 0x1b8
          (i32.add
-          ;; code offset: 0x1b0
+          ;; code offset: 0x1b0 - 0x1b2
           (local.get $3)
-          ;; code offset: 0x1b6
+          ;; code offset: 0x1b6 - 0x1b7
           (i32.shl
-           ;; code offset: 0x1b2
+           ;; code offset: 0x1b2 - 0x1b4
            (local.get $1)
-           ;; code offset: 0x1b4
+           ;; code offset: 0x1b4 - 0x1b6
            (i32.const 2)
           )
          )
-         ;; code offset: 0x1b8
+         ;; code offset: 0x1b8 - 0x1ba
          (local.get $10)
         )
-        ;; code offset: 0x1d1
+        ;; code offset: 0x1d1 - 0x1d4
         (i32.store
-         ;; code offset: 0x1c5
+         ;; code offset: 0x1c5 - 0x1c7
          (local.tee $1
-          ;; code offset: 0x1c4
+          ;; code offset: 0x1c4 - 0x1c5
           (i32.add
-           ;; code offset: 0x1bd
+           ;; code offset: 0x1bd - 0x1bf
            (local.get $9)
-           ;; code offset: 0x1c3
+           ;; code offset: 0x1c3 - 0x1c4
            (i32.shl
-            ;; code offset: 0x1bf
+            ;; code offset: 0x1bf - 0x1c1
             (local.get $2)
-            ;; code offset: 0x1c1
+            ;; code offset: 0x1c1 - 0x1c3
             (i32.const 2)
            )
           )
          )
-         ;; code offset: 0x1d0
+         ;; code offset: 0x1d0 - 0x1d1
          (i32.sub
-          ;; code offset: 0x1cc
+          ;; code offset: 0x1cc - 0x1ce
           (local.tee $1
-           ;; code offset: 0x1c9
+           ;; code offset: 0x1c9 - 0x1cc
            (i32.load
-            ;; code offset: 0x1c7
+            ;; code offset: 0x1c7 - 0x1c9
             (local.get $1)
            )
           )
-          ;; code offset: 0x1ce
+          ;; code offset: 0x1ce - 0x1d0
           (i32.const 1)
          )
         )
-        ;; code offset: 0x1d9
+        ;; code offset: 0x1d9 - 0x1db
         (br_if $label5
-         ;; code offset: 0x1d8
+         ;; code offset: 0x1d8 - 0x1d9
          (i32.gt_s
-          ;; code offset: 0x1d4
+          ;; code offset: 0x1d4 - 0x1d6
           (local.get $1)
-          ;; code offset: 0x1d6
+          ;; code offset: 0x1d6 - 0x1d8
           (i32.const 1)
          )
         )
-        ;; code offset: 0x1e5
+        ;; code offset: 0x1e5 - 0x1e7
         (br_if $block2
-         ;; code offset: 0x1e4
+         ;; code offset: 0x1e4 - 0x1e5
          (i32.eq
-          ;; code offset: 0x1e0
+          ;; code offset: 0x1e0 - 0x1e2
           (local.tee $2
-           ;; code offset: 0x1df
+           ;; code offset: 0x1df - 0x1e0
            (i32.add
-            ;; code offset: 0x1db
+            ;; code offset: 0x1db - 0x1dd
             (local.get $2)
-            ;; code offset: 0x1dd
+            ;; code offset: 0x1dd - 0x1df
             (i32.const 1)
            )
           )
-          ;; code offset: 0x1e2
+          ;; code offset: 0x1e2 - 0x1e4
           (local.get $4)
          )
         )
-        ;; code offset: 0x1ec
+        ;; code offset: 0x1ec - 0x1ee
         (local.set $10
-         ;; code offset: 0x1e9
+         ;; code offset: 0x1e9 - 0x1ec
          (i32.load
-          ;; code offset: 0x1e7
+          ;; code offset: 0x1e7 - 0x1e9
           (local.get $3)
          )
         )
-        ;; code offset: 0x1ee
+        ;; code offset: 0x1ee - 0x1f0
         (br $label6)
        )
-       ;; code offset: 0x1f1
+       ;; code offset: 0x1f1 - 0x1f2
        (unreachable)
       )
-      ;; code offset: 0x1f3
+      ;; code offset: 0x1f3 - 0x1f4
       (unreachable)
      )
     )
-    ;; code offset: 0x209
+    ;; code offset: 0x209 - 0x20c
     (i32.store
-     ;; code offset: 0x201
+     ;; code offset: 0x201 - 0x202
      (i32.add
-      ;; code offset: 0x1f5
+      ;; code offset: 0x1f5 - 0x1f7
       (local.get $3)
-      ;; code offset: 0x200
+      ;; code offset: 0x200 - 0x201
       (i32.shl
-       ;; code offset: 0x1fc
+       ;; code offset: 0x1fc - 0x1fe
        (local.tee $1
-        ;; code offset: 0x1f9
+        ;; code offset: 0x1f9 - 0x1fc
         (i32.load
-         ;; code offset: 0x1f7
+         ;; code offset: 0x1f7 - 0x1f9
          (local.get $0)
         )
        )
-       ;; code offset: 0x1fe
+       ;; code offset: 0x1fe - 0x200
        (i32.const 2)
       )
      )
-     ;; code offset: 0x207
+     ;; code offset: 0x207 - 0x209
      (local.tee $4
-      ;; code offset: 0x206
+      ;; code offset: 0x206 - 0x207
       (i32.sub
-       ;; code offset: 0x202
+       ;; code offset: 0x202 - 0x204
        (local.get $2)
-       ;; code offset: 0x204
+       ;; code offset: 0x204 - 0x206
        (i32.const 1)
       )
      )
     )
-    ;; code offset: 0x218
+    ;; code offset: 0x218 - 0x21b
     (i32.store
-     ;; code offset: 0x214
+     ;; code offset: 0x214 - 0x216
      (local.tee $13
-      ;; code offset: 0x213
+      ;; code offset: 0x213 - 0x214
       (i32.add
-       ;; code offset: 0x20c
+       ;; code offset: 0x20c - 0x20e
        (local.get $3)
-       ;; code offset: 0x212
+       ;; code offset: 0x212 - 0x213
        (i32.shl
-        ;; code offset: 0x20e
+        ;; code offset: 0x20e - 0x210
         (local.get $4)
-        ;; code offset: 0x210
+        ;; code offset: 0x210 - 0x212
         (i32.const 2)
        )
       )
      )
-     ;; code offset: 0x216
+     ;; code offset: 0x216 - 0x218
      (local.get $1)
     )
    )
-   ;; code offset: 0x21c
+   ;; code offset: 0x21c - 0x370
    (loop $label11
-    ;; code offset: 0x223
+    ;; code offset: 0x223 - 0x246
     (if
-     ;; code offset: 0x222
+     ;; code offset: 0x222 - 0x223
      (i32.ge_s
-      ;; code offset: 0x21e
+      ;; code offset: 0x21e - 0x220
       (local.get $2)
-      ;; code offset: 0x220
+      ;; code offset: 0x220 - 0x222
       (i32.const 2)
      )
      (then
-      ;; code offset: 0x225
+      ;; code offset: 0x225 - 0x245
       (loop $label7
-       ;; code offset: 0x236
+       ;; code offset: 0x236 - 0x239
        (i32.store
-        ;; code offset: 0x233
+        ;; code offset: 0x233 - 0x234
         (i32.add
-         ;; code offset: 0x227
+         ;; code offset: 0x227 - 0x229
          (local.get $9)
-         ;; code offset: 0x232
+         ;; code offset: 0x232 - 0x233
          (i32.shl
-          ;; code offset: 0x22e
+          ;; code offset: 0x22e - 0x230
           (local.tee $1
-           ;; code offset: 0x22d
+           ;; code offset: 0x22d - 0x22e
            (i32.sub
-            ;; code offset: 0x229
+            ;; code offset: 0x229 - 0x22b
             (local.get $2)
-            ;; code offset: 0x22b
+            ;; code offset: 0x22b - 0x22d
             (i32.const 1)
            )
           )
-          ;; code offset: 0x230
+          ;; code offset: 0x230 - 0x232
           (i32.const 2)
          )
         )
-        ;; code offset: 0x234
+        ;; code offset: 0x234 - 0x236
         (local.get $2)
        )
-       ;; code offset: 0x242
+       ;; code offset: 0x242 - 0x244
        (br_if $label7
         (block (result i32)
          (local.set $scratch_18
-          ;; code offset: 0x23d
+          ;; code offset: 0x23d - 0x23e
           (i32.gt_s
-           ;; code offset: 0x239
+           ;; code offset: 0x239 - 0x23b
            (local.get $2)
-           ;; code offset: 0x23b
+           ;; code offset: 0x23b - 0x23d
            (i32.const 2)
           )
          )
-         ;; code offset: 0x240
+         ;; code offset: 0x240 - 0x242
          (local.set $2
-          ;; code offset: 0x23e
+          ;; code offset: 0x23e - 0x240
           (local.get $1)
          )
          (local.get $scratch_18)
@@ -5451,154 +5451,154 @@ file_names[  4]:
       )
      )
     )
-    ;; code offset: 0x246
+    ;; code offset: 0x246 - 0x2ef
     (block $block3
-     ;; code offset: 0x250
+     ;; code offset: 0x250 - 0x252
      (br_if $block3
-      ;; code offset: 0x24f
+      ;; code offset: 0x24f - 0x250
       (i32.eqz
-       ;; code offset: 0x24d
+       ;; code offset: 0x24d - 0x24f
        (local.tee $6
-        ;; code offset: 0x24a
+        ;; code offset: 0x24a - 0x24d
         (i32.load
-         ;; code offset: 0x248
+         ;; code offset: 0x248 - 0x24a
          (local.get $3)
         )
        )
       )
      )
-     ;; code offset: 0x25a
+     ;; code offset: 0x25a - 0x25c
      (br_if $block3
-      ;; code offset: 0x259
+      ;; code offset: 0x259 - 0x25a
       (i32.eq
-       ;; code offset: 0x254
+       ;; code offset: 0x254 - 0x257
        (i32.load
-        ;; code offset: 0x252
+        ;; code offset: 0x252 - 0x254
         (local.get $13)
        )
-       ;; code offset: 0x257
+       ;; code offset: 0x257 - 0x259
        (local.get $4)
       )
      )
-     ;; code offset: 0x261
+     ;; code offset: 0x261 - 0x263
      (local.set $7
-      ;; code offset: 0x25e
+      ;; code offset: 0x25e - 0x261
       (i32.load
-       ;; code offset: 0x25c
+       ;; code offset: 0x25c - 0x25e
        (local.get $8)
       )
      )
-     ;; code offset: 0x265
+     ;; code offset: 0x265 - 0x267
      (local.set $0
-      ;; code offset: 0x263
+      ;; code offset: 0x263 - 0x265
       (i32.const 0)
      )
-     ;; code offset: 0x267
+     ;; code offset: 0x267 - 0x2e2
      (loop $label9
-      ;; code offset: 0x26b
+      ;; code offset: 0x26b - 0x26d
       (local.set $10
-       ;; code offset: 0x269
+       ;; code offset: 0x269 - 0x26b
        (local.get $0)
       )
-      ;; code offset: 0x272
+      ;; code offset: 0x272 - 0x2bc
       (if
-       ;; code offset: 0x271
+       ;; code offset: 0x271 - 0x272
        (i32.ge_s
-        ;; code offset: 0x26d
+        ;; code offset: 0x26d - 0x26f
         (local.get $7)
-        ;; code offset: 0x26f
+        ;; code offset: 0x26f - 0x271
         (i32.const 3)
        )
        (then
-        ;; code offset: 0x279
+        ;; code offset: 0x279 - 0x27b
         (local.set $1
-         ;; code offset: 0x278
+         ;; code offset: 0x278 - 0x279
          (i32.sub
-          ;; code offset: 0x274
+          ;; code offset: 0x274 - 0x276
           (local.get $7)
-          ;; code offset: 0x276
+          ;; code offset: 0x276 - 0x278
           (i32.const 1)
          )
         )
-        ;; code offset: 0x27d
+        ;; code offset: 0x27d - 0x27f
         (local.set $0
-         ;; code offset: 0x27b
+         ;; code offset: 0x27b - 0x27d
          (i32.const 1)
         )
-        ;; code offset: 0x27f
+        ;; code offset: 0x27f - 0x2bb
         (loop $label8
-         ;; code offset: 0x28e
+         ;; code offset: 0x28e - 0x290
          (local.set $14
-          ;; code offset: 0x28b
+          ;; code offset: 0x28b - 0x28e
           (i32.load
-           ;; code offset: 0x289
+           ;; code offset: 0x289 - 0x28b
            (local.tee $11
-            ;; code offset: 0x288
+            ;; code offset: 0x288 - 0x289
             (i32.add
-             ;; code offset: 0x281
+             ;; code offset: 0x281 - 0x283
              (local.get $8)
-             ;; code offset: 0x287
+             ;; code offset: 0x287 - 0x288
              (i32.shl
-              ;; code offset: 0x283
+              ;; code offset: 0x283 - 0x285
               (local.get $0)
-              ;; code offset: 0x285
+              ;; code offset: 0x285 - 0x287
               (i32.const 2)
              )
             )
            )
           )
          )
-         ;; code offset: 0x29f
+         ;; code offset: 0x29f - 0x2a2
          (i32.store
-          ;; code offset: 0x290
+          ;; code offset: 0x290 - 0x292
           (local.get $11)
-          ;; code offset: 0x29c
+          ;; code offset: 0x29c - 0x29f
           (i32.load
-           ;; code offset: 0x29a
+           ;; code offset: 0x29a - 0x29c
            (local.tee $15
-            ;; code offset: 0x299
+            ;; code offset: 0x299 - 0x29a
             (i32.add
-             ;; code offset: 0x292
+             ;; code offset: 0x292 - 0x294
              (local.get $8)
-             ;; code offset: 0x298
+             ;; code offset: 0x298 - 0x299
              (i32.shl
-              ;; code offset: 0x294
+              ;; code offset: 0x294 - 0x296
               (local.get $1)
-              ;; code offset: 0x296
+              ;; code offset: 0x296 - 0x298
               (i32.const 2)
              )
             )
            )
           )
          )
-         ;; code offset: 0x2a6
+         ;; code offset: 0x2a6 - 0x2a9
          (i32.store
-          ;; code offset: 0x2a2
+          ;; code offset: 0x2a2 - 0x2a4
           (local.get $15)
-          ;; code offset: 0x2a4
+          ;; code offset: 0x2a4 - 0x2a6
           (local.get $14)
          )
-         ;; code offset: 0x2b8
+         ;; code offset: 0x2b8 - 0x2ba
          (br_if $label8
-          ;; code offset: 0x2b7
+          ;; code offset: 0x2b7 - 0x2b8
           (i32.lt_s
-           ;; code offset: 0x2ae
+           ;; code offset: 0x2ae - 0x2b0
            (local.tee $0
-            ;; code offset: 0x2ad
+            ;; code offset: 0x2ad - 0x2ae
             (i32.add
-             ;; code offset: 0x2a9
+             ;; code offset: 0x2a9 - 0x2ab
              (local.get $0)
-             ;; code offset: 0x2ab
+             ;; code offset: 0x2ab - 0x2ad
              (i32.const 1)
             )
            )
-           ;; code offset: 0x2b5
+           ;; code offset: 0x2b5 - 0x2b7
            (local.tee $1
-            ;; code offset: 0x2b4
+            ;; code offset: 0x2b4 - 0x2b5
             (i32.sub
-             ;; code offset: 0x2b0
+             ;; code offset: 0x2b0 - 0x2b2
              (local.get $1)
-             ;; code offset: 0x2b2
+             ;; code offset: 0x2b2 - 0x2b4
              (i32.const 1)
             )
            )
@@ -5607,267 +5607,267 @@ file_names[  4]:
         )
        )
       )
-      ;; code offset: 0x2c9
+      ;; code offset: 0x2c9 - 0x2cb
       (local.set $1
-       ;; code offset: 0x2c6
+       ;; code offset: 0x2c6 - 0x2c9
        (i32.load
-        ;; code offset: 0x2c4
+        ;; code offset: 0x2c4 - 0x2c6
         (local.tee $0
-         ;; code offset: 0x2c3
+         ;; code offset: 0x2c3 - 0x2c4
          (i32.add
-          ;; code offset: 0x2bc
+          ;; code offset: 0x2bc - 0x2be
           (local.get $8)
-          ;; code offset: 0x2c2
+          ;; code offset: 0x2c2 - 0x2c3
           (i32.shl
-           ;; code offset: 0x2be
+           ;; code offset: 0x2be - 0x2c0
            (local.get $7)
-           ;; code offset: 0x2c0
+           ;; code offset: 0x2c0 - 0x2c2
            (i32.const 2)
           )
          )
         )
        )
       )
-      ;; code offset: 0x2cf
+      ;; code offset: 0x2cf - 0x2d2
       (i32.store
-       ;; code offset: 0x2cb
+       ;; code offset: 0x2cb - 0x2cd
        (local.get $0)
-       ;; code offset: 0x2cd
+       ;; code offset: 0x2cd - 0x2cf
        (local.get $7)
       )
-      ;; code offset: 0x2d7
+      ;; code offset: 0x2d7 - 0x2d9
       (local.set $0
-       ;; code offset: 0x2d6
+       ;; code offset: 0x2d6 - 0x2d7
        (i32.add
-        ;; code offset: 0x2d2
+        ;; code offset: 0x2d2 - 0x2d4
         (local.get $10)
-        ;; code offset: 0x2d4
+        ;; code offset: 0x2d4 - 0x2d6
         (i32.const 1)
        )
       )
-      ;; code offset: 0x2db
+      ;; code offset: 0x2db - 0x2dd
       (local.set $7
-       ;; code offset: 0x2d9
+       ;; code offset: 0x2d9 - 0x2db
        (local.get $1)
       )
-      ;; code offset: 0x2df
+      ;; code offset: 0x2df - 0x2e1
       (br_if $label9
-       ;; code offset: 0x2dd
+       ;; code offset: 0x2dd - 0x2df
        (local.get $1)
       )
      )
-     ;; code offset: 0x2ec
+     ;; code offset: 0x2ec - 0x2ee
      (local.set $5
-      ;; code offset: 0x2eb
+      ;; code offset: 0x2eb - 0x2ec
       (select
-       ;; code offset: 0x2e2
+       ;; code offset: 0x2e2 - 0x2e4
        (local.get $5)
-       ;; code offset: 0x2e4
+       ;; code offset: 0x2e4 - 0x2e6
        (local.get $0)
-       ;; code offset: 0x2ea
+       ;; code offset: 0x2ea - 0x2eb
        (i32.gt_s
-        ;; code offset: 0x2e6
+        ;; code offset: 0x2e6 - 0x2e8
         (local.get $5)
-        ;; code offset: 0x2e8
+        ;; code offset: 0x2e8 - 0x2ea
         (local.get $10)
        )
       )
      )
     )
-    ;; code offset: 0x2f4
+    ;; code offset: 0x2f4 - 0x2f6
     (br_if $block2
-     ;; code offset: 0x2f3
+     ;; code offset: 0x2f3 - 0x2f4
      (i32.ge_s
-      ;; code offset: 0x2ef
+      ;; code offset: 0x2ef - 0x2f1
       (local.get $2)
-      ;; code offset: 0x2f1
+      ;; code offset: 0x2f1 - 0x2f3
       (local.get $4)
      )
     )
-    ;; code offset: 0x2f6
+    ;; code offset: 0x2f6 - 0x36e
     (loop $label12
-     ;; code offset: 0x2fa
+     ;; code offset: 0x2fa - 0x2fc
      (local.set $1
-      ;; code offset: 0x2f8
+      ;; code offset: 0x2f8 - 0x2fa
       (i32.const 0)
      )
-     ;; code offset: 0x301
+     ;; code offset: 0x301 - 0x32d
      (if
-      ;; code offset: 0x300
+      ;; code offset: 0x300 - 0x301
       (i32.gt_s
-       ;; code offset: 0x2fc
+       ;; code offset: 0x2fc - 0x2fe
        (local.get $2)
-       ;; code offset: 0x2fe
+       ;; code offset: 0x2fe - 0x300
        (i32.const 0)
       )
       (then
-       ;; code offset: 0x303
+       ;; code offset: 0x303 - 0x328
        (loop $label10
-        ;; code offset: 0x31d
+        ;; code offset: 0x31d - 0x320
         (i32.store
-         ;; code offset: 0x30c
+         ;; code offset: 0x30c - 0x30d
          (i32.add
-          ;; code offset: 0x305
+          ;; code offset: 0x305 - 0x307
           (local.get $3)
-          ;; code offset: 0x30b
+          ;; code offset: 0x30b - 0x30c
           (i32.shl
-           ;; code offset: 0x307
+           ;; code offset: 0x307 - 0x309
            (local.get $1)
-           ;; code offset: 0x309
+           ;; code offset: 0x309 - 0x30b
            (i32.const 2)
           )
          )
-         ;; code offset: 0x31a
+         ;; code offset: 0x31a - 0x31d
          (i32.load
-          ;; code offset: 0x319
+          ;; code offset: 0x319 - 0x31a
           (i32.add
-           ;; code offset: 0x30d
+           ;; code offset: 0x30d - 0x30f
            (local.get $3)
-           ;; code offset: 0x318
+           ;; code offset: 0x318 - 0x319
            (i32.shl
-            ;; code offset: 0x314
+            ;; code offset: 0x314 - 0x316
             (local.tee $1
-             ;; code offset: 0x313
+             ;; code offset: 0x313 - 0x314
              (i32.add
-              ;; code offset: 0x30f
+              ;; code offset: 0x30f - 0x311
               (local.get $1)
-              ;; code offset: 0x311
+              ;; code offset: 0x311 - 0x313
               (i32.const 1)
              )
             )
-            ;; code offset: 0x316
+            ;; code offset: 0x316 - 0x318
             (i32.const 2)
            )
           )
          )
         )
-        ;; code offset: 0x325
+        ;; code offset: 0x325 - 0x327
         (br_if $label10
-         ;; code offset: 0x324
+         ;; code offset: 0x324 - 0x325
          (i32.ne
-          ;; code offset: 0x320
+          ;; code offset: 0x320 - 0x322
           (local.get $1)
-          ;; code offset: 0x322
+          ;; code offset: 0x322 - 0x324
           (local.get $2)
          )
         )
        )
-       ;; code offset: 0x32a
+       ;; code offset: 0x32a - 0x32c
        (local.set $1
-        ;; code offset: 0x328
+        ;; code offset: 0x328 - 0x32a
         (local.get $2)
        )
       )
      )
-     ;; code offset: 0x337
+     ;; code offset: 0x337 - 0x33a
      (i32.store
-      ;; code offset: 0x334
+      ;; code offset: 0x334 - 0x335
       (i32.add
-       ;; code offset: 0x32d
+       ;; code offset: 0x32d - 0x32f
        (local.get $3)
-       ;; code offset: 0x333
+       ;; code offset: 0x333 - 0x334
        (i32.shl
-        ;; code offset: 0x32f
+        ;; code offset: 0x32f - 0x331
         (local.get $1)
-        ;; code offset: 0x331
+        ;; code offset: 0x331 - 0x333
         (i32.const 2)
        )
       )
-      ;; code offset: 0x335
+      ;; code offset: 0x335 - 0x337
       (local.get $6)
      )
-     ;; code offset: 0x34e
+     ;; code offset: 0x34e - 0x351
      (i32.store
-      ;; code offset: 0x342
+      ;; code offset: 0x342 - 0x344
       (local.tee $1
-       ;; code offset: 0x341
+       ;; code offset: 0x341 - 0x342
        (i32.add
-        ;; code offset: 0x33a
+        ;; code offset: 0x33a - 0x33c
         (local.get $9)
-        ;; code offset: 0x340
+        ;; code offset: 0x340 - 0x341
         (i32.shl
-         ;; code offset: 0x33c
+         ;; code offset: 0x33c - 0x33e
          (local.get $2)
-         ;; code offset: 0x33e
+         ;; code offset: 0x33e - 0x340
          (i32.const 2)
         )
        )
       )
-      ;; code offset: 0x34d
+      ;; code offset: 0x34d - 0x34e
       (i32.sub
-       ;; code offset: 0x349
+       ;; code offset: 0x349 - 0x34b
        (local.tee $1
-        ;; code offset: 0x346
+        ;; code offset: 0x346 - 0x349
         (i32.load
-         ;; code offset: 0x344
+         ;; code offset: 0x344 - 0x346
          (local.get $1)
         )
        )
-       ;; code offset: 0x34b
+       ;; code offset: 0x34b - 0x34d
        (i32.const 1)
       )
      )
-     ;; code offset: 0x356
+     ;; code offset: 0x356 - 0x358
      (br_if $label11
-      ;; code offset: 0x355
+      ;; code offset: 0x355 - 0x356
       (i32.gt_s
-       ;; code offset: 0x351
+       ;; code offset: 0x351 - 0x353
        (local.get $1)
-       ;; code offset: 0x353
+       ;; code offset: 0x353 - 0x355
        (i32.const 1)
       )
      )
-     ;; code offset: 0x362
+     ;; code offset: 0x362 - 0x364
      (br_if $block2
-      ;; code offset: 0x361
+      ;; code offset: 0x361 - 0x362
       (i32.eq
-       ;; code offset: 0x35d
+       ;; code offset: 0x35d - 0x35f
        (local.tee $2
-        ;; code offset: 0x35c
+        ;; code offset: 0x35c - 0x35d
         (i32.add
-         ;; code offset: 0x358
+         ;; code offset: 0x358 - 0x35a
          (local.get $2)
-         ;; code offset: 0x35a
+         ;; code offset: 0x35a - 0x35c
          (i32.const 1)
         )
        )
-       ;; code offset: 0x35f
+       ;; code offset: 0x35f - 0x361
        (local.get $4)
       )
      )
-     ;; code offset: 0x369
+     ;; code offset: 0x369 - 0x36b
      (local.set $6
-      ;; code offset: 0x366
+      ;; code offset: 0x366 - 0x369
       (i32.load
-       ;; code offset: 0x364
+       ;; code offset: 0x364 - 0x366
        (local.get $3)
       )
      )
-     ;; code offset: 0x36b
+     ;; code offset: 0x36b - 0x36d
      (br $label12)
     )
-    ;; code offset: 0x36e
+    ;; code offset: 0x36e - 0x36f
     (unreachable)
    )
-   ;; code offset: 0x370
+   ;; code offset: 0x370 - 0x371
    (unreachable)
   )
-  ;; code offset: 0x374
+  ;; code offset: 0x374 - 0x376
   (call $free
-   ;; code offset: 0x372
+   ;; code offset: 0x372 - 0x374
    (local.get $3)
   )
-  ;; code offset: 0x378
+  ;; code offset: 0x378 - 0x37a
   (call $free
-   ;; code offset: 0x376
+   ;; code offset: 0x376 - 0x378
    (local.get $8)
   )
-  ;; code offset: 0x37c
+  ;; code offset: 0x37c - 0x37e
   (call $free
-   ;; code offset: 0x37a
+   ;; code offset: 0x37a - 0x37c
    (local.get $9)
   )
-  ;; code offset: 0x37e
+  ;; code offset: 0x37e - 0x380
   (local.get $5)
  )
  (func $main (param $0 i32) (param $1 i32) (result i32)
@@ -5880,393 +5880,393 @@ file_names[  4]:
   (local $8 i32)
   (local $scratch i32)
   (local $scratch_10 i32)
-  ;; code offset: 0x399
+  ;; code offset: 0x399 - 0x39b
   (global.set $global$0
-   ;; code offset: 0x397
+   ;; code offset: 0x397 - 0x399
    (local.tee $8
-    ;; code offset: 0x396
+    ;; code offset: 0x396 - 0x397
     (i32.sub
-     ;; code offset: 0x392
+     ;; code offset: 0x392 - 0x394
      (global.get $global$0)
-     ;; code offset: 0x394
+     ;; code offset: 0x394 - 0x396
      (i32.const 32)
     )
    )
   )
-  ;; code offset: 0x39b
+  ;; code offset: 0x39b - 0x658
   (block $block1
-   ;; code offset: 0x39d
+   ;; code offset: 0x39d - 0x3c2
    (block $block
-    ;; code offset: 0x3a4
+    ;; code offset: 0x3a4 - 0x3b5
     (if
-     ;; code offset: 0x3a3
+     ;; code offset: 0x3a3 - 0x3a4
      (i32.ge_s
-      ;; code offset: 0x39f
+      ;; code offset: 0x39f - 0x3a1
       (local.get $0)
-      ;; code offset: 0x3a1
+      ;; code offset: 0x3a1 - 0x3a3
       (i32.const 2)
      )
      (then
-      ;; code offset: 0x3b2
+      ;; code offset: 0x3b2 - 0x3b4
       (br_if $block
-       ;; code offset: 0x3b1
+       ;; code offset: 0x3b1 - 0x3b2
        (i32.gt_s
-        ;; code offset: 0x3ad
+        ;; code offset: 0x3ad - 0x3af
         (local.tee $3
-         ;; code offset: 0x3ab
+         ;; code offset: 0x3ab - 0x3ad
          (call $atoi
-          ;; code offset: 0x3a8
+          ;; code offset: 0x3a8 - 0x3ab
           (i32.load offset=4
-           ;; code offset: 0x3a6
+           ;; code offset: 0x3a6 - 0x3a8
            (local.get $1)
           )
          )
         )
-        ;; code offset: 0x3af
+        ;; code offset: 0x3af - 0x3b1
         (i32.const 0)
        )
       )
      )
     )
-    ;; code offset: 0x3ba
+    ;; code offset: 0x3ba - 0x3bb
     (drop
-     ;; code offset: 0x3b8
+     ;; code offset: 0x3b8 - 0x3ba
      (call $puts
-      ;; code offset: 0x3b5
+      ;; code offset: 0x3b5 - 0x3b8
       (i32.const 1050)
      )
     )
-    ;; code offset: 0x3bd
+    ;; code offset: 0x3bd - 0x3bf
     (local.set $5
-     ;; code offset: 0x3bb
+     ;; code offset: 0x3bb - 0x3bd
      (i32.const 1)
     )
-    ;; code offset: 0x3bf
+    ;; code offset: 0x3bf - 0x3c1
     (br $block1)
    )
-   ;; code offset: 0x3c7
+   ;; code offset: 0x3c7 - 0x405
    (if
-    ;; code offset: 0x3c6
+    ;; code offset: 0x3c6 - 0x3c7
     (i32.ne
-     ;; code offset: 0x3c2
+     ;; code offset: 0x3c2 - 0x3c4
      (local.get $3)
-     ;; code offset: 0x3c4
+     ;; code offset: 0x3c4 - 0x3c6
      (i32.const 1)
     )
     (then
-     ;; code offset: 0x3ce
+     ;; code offset: 0x3ce - 0x3d0
      (local.set $2
-      ;; code offset: 0x3cd
+      ;; code offset: 0x3cd - 0x3ce
       (i32.sub
-       ;; code offset: 0x3c9
+       ;; code offset: 0x3c9 - 0x3cb
        (local.get $3)
-       ;; code offset: 0x3cb
+       ;; code offset: 0x3cb - 0x3cd
        (i32.const 1)
       )
      )
-     ;; code offset: 0x3d2
+     ;; code offset: 0x3d2 - 0x3d4
      (local.set $1
-      ;; code offset: 0x3d0
+      ;; code offset: 0x3d0 - 0x3d2
       (i32.const 0)
      )
-     ;; code offset: 0x3d6
+     ;; code offset: 0x3d6 - 0x3d8
      (local.set $0
-      ;; code offset: 0x3d4
+      ;; code offset: 0x3d4 - 0x3d6
       (i32.const 0)
      )
-     ;; code offset: 0x3d8
+     ;; code offset: 0x3d8 - 0x404
      (loop $label
-      ;; code offset: 0x3e2
+      ;; code offset: 0x3e2 - 0x3e5
       (i32.store offset=8
-       ;; code offset: 0x3de
+       ;; code offset: 0x3de - 0x3e0
        (local.tee $4
-        ;; code offset: 0x3dc
+        ;; code offset: 0x3dc - 0x3de
         (call $malloc
-         ;; code offset: 0x3da
+         ;; code offset: 0x3da - 0x3dc
          (i32.const 12)
         )
        )
-       ;; code offset: 0x3e0
+       ;; code offset: 0x3e0 - 0x3e2
        (local.get $1)
       )
-      ;; code offset: 0x3e9
+      ;; code offset: 0x3e9 - 0x3ec
       (i32.store offset=4
-       ;; code offset: 0x3e5
+       ;; code offset: 0x3e5 - 0x3e7
        (local.get $4)
-       ;; code offset: 0x3e7
+       ;; code offset: 0x3e7 - 0x3e9
        (local.get $3)
       )
-      ;; code offset: 0x3f0
+      ;; code offset: 0x3f0 - 0x3f3
       (i32.store
-       ;; code offset: 0x3ec
+       ;; code offset: 0x3ec - 0x3ee
        (local.get $4)
-       ;; code offset: 0x3ee
+       ;; code offset: 0x3ee - 0x3f0
        (local.get $0)
       )
-      ;; code offset: 0x3f5
+      ;; code offset: 0x3f5 - 0x3f7
       (local.set $1
-       ;; code offset: 0x3f3
+       ;; code offset: 0x3f3 - 0x3f5
        (local.get $4)
       )
-      ;; code offset: 0x401
+      ;; code offset: 0x401 - 0x403
       (br_if $label
-       ;; code offset: 0x400
+       ;; code offset: 0x400 - 0x401
        (i32.ne
-        ;; code offset: 0x3fc
+        ;; code offset: 0x3fc - 0x3fe
         (local.tee $0
-         ;; code offset: 0x3fb
+         ;; code offset: 0x3fb - 0x3fc
          (i32.add
-          ;; code offset: 0x3f7
+          ;; code offset: 0x3f7 - 0x3f9
           (local.get $0)
-          ;; code offset: 0x3f9
+          ;; code offset: 0x3f9 - 0x3fb
           (i32.const 1)
          )
         )
-        ;; code offset: 0x3fe
+        ;; code offset: 0x3fe - 0x400
         (local.get $2)
        )
       )
      )
     )
    )
-   ;; code offset: 0x407
+   ;; code offset: 0x407 - 0x409
    (local.set $0
-    ;; code offset: 0x405
+    ;; code offset: 0x405 - 0x407
     (i32.const 0)
    )
-   ;; code offset: 0x412
+   ;; code offset: 0x412 - 0x414
    (local.set $1
-    ;; code offset: 0x410
+    ;; code offset: 0x410 - 0x412
     (call $malloc
-     ;; code offset: 0x40e
+     ;; code offset: 0x40e - 0x410
      (local.tee $2
-      ;; code offset: 0x40d
+      ;; code offset: 0x40d - 0x40e
       (i32.shl
-       ;; code offset: 0x409
+       ;; code offset: 0x409 - 0x40b
        (local.get $3)
-       ;; code offset: 0x40b
+       ;; code offset: 0x40b - 0x40d
        (i32.const 2)
       )
      )
     )
    )
-   ;; code offset: 0x418
+   ;; code offset: 0x418 - 0x41a
    (local.set $5
-    ;; code offset: 0x416
+    ;; code offset: 0x416 - 0x418
     (call $malloc
-     ;; code offset: 0x414
+     ;; code offset: 0x414 - 0x416
      (local.get $2)
     )
    )
-   ;; code offset: 0x41a
+   ;; code offset: 0x41a - 0x604
    (block $block4
-    ;; code offset: 0x41c
+    ;; code offset: 0x41c - 0x548
     (block $block3
-     ;; code offset: 0x41e
+     ;; code offset: 0x41e - 0x459
      (block $block2
-      ;; code offset: 0x425
+      ;; code offset: 0x425 - 0x44e
       (if
-       ;; code offset: 0x424
+       ;; code offset: 0x424 - 0x425
        (i32.gt_s
-        ;; code offset: 0x420
+        ;; code offset: 0x420 - 0x422
         (local.get $3)
-        ;; code offset: 0x422
+        ;; code offset: 0x422 - 0x424
         (i32.const 0)
        )
        (then
-        ;; code offset: 0x427
+        ;; code offset: 0x427 - 0x443
         (loop $label1
-         ;; code offset: 0x433
+         ;; code offset: 0x433 - 0x436
          (i32.store
-          ;; code offset: 0x430
+          ;; code offset: 0x430 - 0x431
           (i32.add
-           ;; code offset: 0x429
+           ;; code offset: 0x429 - 0x42b
            (local.get $1)
-           ;; code offset: 0x42f
+           ;; code offset: 0x42f - 0x430
            (i32.shl
-            ;; code offset: 0x42b
+            ;; code offset: 0x42b - 0x42d
             (local.get $0)
-            ;; code offset: 0x42d
+            ;; code offset: 0x42d - 0x42f
             (i32.const 2)
            )
           )
-          ;; code offset: 0x431
+          ;; code offset: 0x431 - 0x433
           (local.get $0)
          )
-         ;; code offset: 0x440
+         ;; code offset: 0x440 - 0x442
          (br_if $label1
-          ;; code offset: 0x43f
+          ;; code offset: 0x43f - 0x440
           (i32.ne
-           ;; code offset: 0x43b
+           ;; code offset: 0x43b - 0x43d
            (local.tee $0
-            ;; code offset: 0x43a
+            ;; code offset: 0x43a - 0x43b
             (i32.add
-             ;; code offset: 0x436
+             ;; code offset: 0x436 - 0x438
              (local.get $0)
-             ;; code offset: 0x438
+             ;; code offset: 0x438 - 0x43a
              (i32.const 1)
             )
            )
-           ;; code offset: 0x43d
+           ;; code offset: 0x43d - 0x43f
            (local.get $3)
           )
          )
         )
-        ;; code offset: 0x445
+        ;; code offset: 0x445 - 0x447
         (local.set $6
-         ;; code offset: 0x443
+         ;; code offset: 0x443 - 0x445
          (i32.const 30)
         )
-        ;; code offset: 0x449
+        ;; code offset: 0x449 - 0x44b
         (local.set $2
-         ;; code offset: 0x447
+         ;; code offset: 0x447 - 0x449
          (local.get $3)
         )
-        ;; code offset: 0x44b
+        ;; code offset: 0x44b - 0x44d
         (br $block2)
        )
       )
-      ;; code offset: 0x450
+      ;; code offset: 0x450 - 0x452
       (local.set $6
-       ;; code offset: 0x44e
+       ;; code offset: 0x44e - 0x450
        (i32.const 30)
       )
-      ;; code offset: 0x454
+      ;; code offset: 0x454 - 0x456
       (local.set $2
-       ;; code offset: 0x452
+       ;; code offset: 0x452 - 0x454
        (local.get $3)
       )
-      ;; code offset: 0x456
+      ;; code offset: 0x456 - 0x458
       (br $block3)
      )
-     ;; code offset: 0x459
+     ;; code offset: 0x459 - 0x545
      (loop $label6
-      ;; code offset: 0x45d
+      ;; code offset: 0x45d - 0x45f
       (local.set $0
-       ;; code offset: 0x45b
+       ;; code offset: 0x45b - 0x45d
        (i32.const 0)
       )
-      ;; code offset: 0x45f
+      ;; code offset: 0x45f - 0x48c
       (loop $label2
-       ;; code offset: 0x471
+       ;; code offset: 0x471 - 0x474
        (i32.store offset=16
-        ;; code offset: 0x461
+        ;; code offset: 0x461 - 0x463
         (local.get $8)
-        ;; code offset: 0x470
+        ;; code offset: 0x470 - 0x471
         (i32.add
-         ;; code offset: 0x46b
+         ;; code offset: 0x46b - 0x46e
          (i32.load
-          ;; code offset: 0x46a
+          ;; code offset: 0x46a - 0x46b
           (i32.add
-           ;; code offset: 0x463
+           ;; code offset: 0x463 - 0x465
            (local.get $1)
-           ;; code offset: 0x469
+           ;; code offset: 0x469 - 0x46a
            (i32.shl
-            ;; code offset: 0x465
+            ;; code offset: 0x465 - 0x467
             (local.get $0)
-            ;; code offset: 0x467
+            ;; code offset: 0x467 - 0x469
             (i32.const 2)
            )
           )
          )
-         ;; code offset: 0x46e
+         ;; code offset: 0x46e - 0x470
          (i32.const 1)
         )
        )
-       ;; code offset: 0x47e
+       ;; code offset: 0x47e - 0x47f
        (drop
-        ;; code offset: 0x47c
+        ;; code offset: 0x47c - 0x47e
         (call $iprintf
-         ;; code offset: 0x474
+         ;; code offset: 0x474 - 0x477
          (i32.const 1047)
-         ;; code offset: 0x47b
+         ;; code offset: 0x47b - 0x47c
          (i32.add
-          ;; code offset: 0x477
+          ;; code offset: 0x477 - 0x479
           (local.get $8)
-          ;; code offset: 0x479
+          ;; code offset: 0x479 - 0x47b
           (i32.const 16)
          )
         )
        )
-       ;; code offset: 0x489
+       ;; code offset: 0x489 - 0x48b
        (br_if $label2
-        ;; code offset: 0x488
+        ;; code offset: 0x488 - 0x489
         (i32.ne
-         ;; code offset: 0x484
+         ;; code offset: 0x484 - 0x486
          (local.tee $0
-          ;; code offset: 0x483
+          ;; code offset: 0x483 - 0x484
           (i32.add
-           ;; code offset: 0x47f
+           ;; code offset: 0x47f - 0x481
            (local.get $0)
-           ;; code offset: 0x481
+           ;; code offset: 0x481 - 0x483
            (i32.const 1)
           )
          )
-         ;; code offset: 0x486
+         ;; code offset: 0x486 - 0x488
          (local.get $3)
         )
        )
       )
-      ;; code offset: 0x490
+      ;; code offset: 0x490 - 0x491
       (drop
-       ;; code offset: 0x48e
+       ;; code offset: 0x48e - 0x490
        (call $putchar
-        ;; code offset: 0x48c
+        ;; code offset: 0x48c - 0x48e
         (i32.const 10)
        )
       )
-      ;; code offset: 0x496
+      ;; code offset: 0x496 - 0x4b9
       (if
-       ;; code offset: 0x495
+       ;; code offset: 0x495 - 0x496
        (i32.gt_s
-        ;; code offset: 0x491
+        ;; code offset: 0x491 - 0x493
         (local.get $2)
-        ;; code offset: 0x493
+        ;; code offset: 0x493 - 0x495
         (i32.const 1)
        )
        (then
-        ;; code offset: 0x498
+        ;; code offset: 0x498 - 0x4b8
         (loop $label3
-         ;; code offset: 0x4a9
+         ;; code offset: 0x4a9 - 0x4ac
          (i32.store
-          ;; code offset: 0x4a6
+          ;; code offset: 0x4a6 - 0x4a7
           (i32.add
-           ;; code offset: 0x49a
+           ;; code offset: 0x49a - 0x49c
            (local.get $5)
-           ;; code offset: 0x4a5
+           ;; code offset: 0x4a5 - 0x4a6
            (i32.shl
-            ;; code offset: 0x4a1
+            ;; code offset: 0x4a1 - 0x4a3
             (local.tee $0
-             ;; code offset: 0x4a0
+             ;; code offset: 0x4a0 - 0x4a1
              (i32.sub
-              ;; code offset: 0x49c
+              ;; code offset: 0x49c - 0x49e
               (local.get $2)
-              ;; code offset: 0x49e
+              ;; code offset: 0x49e - 0x4a0
               (i32.const 1)
              )
             )
-            ;; code offset: 0x4a3
+            ;; code offset: 0x4a3 - 0x4a5
             (i32.const 2)
            )
           )
-          ;; code offset: 0x4a7
+          ;; code offset: 0x4a7 - 0x4a9
           (local.get $2)
          )
-         ;; code offset: 0x4b5
+         ;; code offset: 0x4b5 - 0x4b7
          (br_if $label3
           (block (result i32)
            (local.set $scratch
-            ;; code offset: 0x4b0
+            ;; code offset: 0x4b0 - 0x4b1
             (i32.gt_s
-             ;; code offset: 0x4ac
+             ;; code offset: 0x4ac - 0x4ae
              (local.get $2)
-             ;; code offset: 0x4ae
+             ;; code offset: 0x4ae - 0x4b0
              (i32.const 2)
             )
            )
-           ;; code offset: 0x4b3
+           ;; code offset: 0x4b3 - 0x4b5
            (local.set $2
-            ;; code offset: 0x4b1
+            ;; code offset: 0x4b1 - 0x4b3
             (local.get $0)
            )
            (local.get $scratch)
@@ -6275,261 +6275,261 @@ file_names[  4]:
         )
        )
       )
-      ;; code offset: 0x4be
+      ;; code offset: 0x4be - 0x4c0
       (br_if $block4
-       ;; code offset: 0x4bd
+       ;; code offset: 0x4bd - 0x4be
        (i32.eq
-        ;; code offset: 0x4b9
+        ;; code offset: 0x4b9 - 0x4bb
         (local.get $2)
-        ;; code offset: 0x4bb
+        ;; code offset: 0x4bb - 0x4bd
         (local.get $3)
        )
       )
-      ;; code offset: 0x4c5
+      ;; code offset: 0x4c5 - 0x4c7
       (local.set $6
-       ;; code offset: 0x4c4
+       ;; code offset: 0x4c4 - 0x4c5
        (i32.sub
-        ;; code offset: 0x4c0
+        ;; code offset: 0x4c0 - 0x4c2
         (local.get $6)
-        ;; code offset: 0x4c2
+        ;; code offset: 0x4c2 - 0x4c4
         (i32.const 1)
        )
       )
-      ;; code offset: 0x4c7
+      ;; code offset: 0x4c7 - 0x540
       (loop $label5
-       ;; code offset: 0x4cb
+       ;; code offset: 0x4cb - 0x4cd
        (local.set $0
-        ;; code offset: 0x4c9
+        ;; code offset: 0x4c9 - 0x4cb
         (i32.const 0)
        )
-       ;; code offset: 0x4d2
+       ;; code offset: 0x4d2 - 0x4d4
        (local.set $7
-        ;; code offset: 0x4cf
+        ;; code offset: 0x4cf - 0x4d2
         (i32.load
-         ;; code offset: 0x4cd
+         ;; code offset: 0x4cd - 0x4cf
          (local.get $1)
         )
        )
-       ;; code offset: 0x4d9
+       ;; code offset: 0x4d9 - 0x505
        (if
-        ;; code offset: 0x4d8
+        ;; code offset: 0x4d8 - 0x4d9
         (i32.gt_s
-         ;; code offset: 0x4d4
+         ;; code offset: 0x4d4 - 0x4d6
          (local.get $2)
-         ;; code offset: 0x4d6
+         ;; code offset: 0x4d6 - 0x4d8
          (i32.const 0)
         )
         (then
-         ;; code offset: 0x4db
+         ;; code offset: 0x4db - 0x500
          (loop $label4
-          ;; code offset: 0x4f5
+          ;; code offset: 0x4f5 - 0x4f8
           (i32.store
-           ;; code offset: 0x4e4
+           ;; code offset: 0x4e4 - 0x4e5
            (i32.add
-            ;; code offset: 0x4dd
+            ;; code offset: 0x4dd - 0x4df
             (local.get $1)
-            ;; code offset: 0x4e3
+            ;; code offset: 0x4e3 - 0x4e4
             (i32.shl
-             ;; code offset: 0x4df
+             ;; code offset: 0x4df - 0x4e1
              (local.get $0)
-             ;; code offset: 0x4e1
+             ;; code offset: 0x4e1 - 0x4e3
              (i32.const 2)
             )
            )
-           ;; code offset: 0x4f2
+           ;; code offset: 0x4f2 - 0x4f5
            (i32.load
-            ;; code offset: 0x4f1
+            ;; code offset: 0x4f1 - 0x4f2
             (i32.add
-             ;; code offset: 0x4e5
+             ;; code offset: 0x4e5 - 0x4e7
              (local.get $1)
-             ;; code offset: 0x4f0
+             ;; code offset: 0x4f0 - 0x4f1
              (i32.shl
-              ;; code offset: 0x4ec
+              ;; code offset: 0x4ec - 0x4ee
               (local.tee $0
-               ;; code offset: 0x4eb
+               ;; code offset: 0x4eb - 0x4ec
                (i32.add
-                ;; code offset: 0x4e7
+                ;; code offset: 0x4e7 - 0x4e9
                 (local.get $0)
-                ;; code offset: 0x4e9
+                ;; code offset: 0x4e9 - 0x4eb
                 (i32.const 1)
                )
               )
-              ;; code offset: 0x4ee
+              ;; code offset: 0x4ee - 0x4f0
               (i32.const 2)
              )
             )
            )
           )
-          ;; code offset: 0x4fd
+          ;; code offset: 0x4fd - 0x4ff
           (br_if $label4
-           ;; code offset: 0x4fc
+           ;; code offset: 0x4fc - 0x4fd
            (i32.ne
-            ;; code offset: 0x4f8
+            ;; code offset: 0x4f8 - 0x4fa
             (local.get $0)
-            ;; code offset: 0x4fa
+            ;; code offset: 0x4fa - 0x4fc
             (local.get $2)
            )
           )
          )
-         ;; code offset: 0x502
+         ;; code offset: 0x502 - 0x504
          (local.set $0
-          ;; code offset: 0x500
+          ;; code offset: 0x500 - 0x502
           (local.get $2)
          )
         )
        )
-       ;; code offset: 0x50f
+       ;; code offset: 0x50f - 0x512
        (i32.store
-        ;; code offset: 0x50c
+        ;; code offset: 0x50c - 0x50d
         (i32.add
-         ;; code offset: 0x505
+         ;; code offset: 0x505 - 0x507
          (local.get $1)
-         ;; code offset: 0x50b
+         ;; code offset: 0x50b - 0x50c
          (i32.shl
-          ;; code offset: 0x507
+          ;; code offset: 0x507 - 0x509
           (local.get $0)
-          ;; code offset: 0x509
+          ;; code offset: 0x509 - 0x50b
           (i32.const 2)
          )
         )
-        ;; code offset: 0x50d
+        ;; code offset: 0x50d - 0x50f
         (local.get $7)
        )
-       ;; code offset: 0x526
+       ;; code offset: 0x526 - 0x529
        (i32.store
-        ;; code offset: 0x51a
+        ;; code offset: 0x51a - 0x51c
         (local.tee $0
-         ;; code offset: 0x519
+         ;; code offset: 0x519 - 0x51a
          (i32.add
-          ;; code offset: 0x512
+          ;; code offset: 0x512 - 0x514
           (local.get $5)
-          ;; code offset: 0x518
+          ;; code offset: 0x518 - 0x519
           (i32.shl
-           ;; code offset: 0x514
+           ;; code offset: 0x514 - 0x516
            (local.get $2)
-           ;; code offset: 0x516
+           ;; code offset: 0x516 - 0x518
            (i32.const 2)
           )
          )
         )
-        ;; code offset: 0x525
+        ;; code offset: 0x525 - 0x526
         (i32.sub
-         ;; code offset: 0x521
+         ;; code offset: 0x521 - 0x523
          (local.tee $0
-          ;; code offset: 0x51e
+          ;; code offset: 0x51e - 0x521
           (i32.load
-           ;; code offset: 0x51c
+           ;; code offset: 0x51c - 0x51e
            (local.get $0)
           )
          )
-         ;; code offset: 0x523
+         ;; code offset: 0x523 - 0x525
          (i32.const 1)
         )
        )
-       ;; code offset: 0x52e
+       ;; code offset: 0x52e - 0x53f
        (if
-        ;; code offset: 0x52d
+        ;; code offset: 0x52d - 0x52e
         (i32.le_s
-         ;; code offset: 0x529
+         ;; code offset: 0x529 - 0x52b
          (local.get $0)
-         ;; code offset: 0x52b
+         ;; code offset: 0x52b - 0x52d
          (i32.const 1)
         )
         (then
-         ;; code offset: 0x53a
+         ;; code offset: 0x53a - 0x53c
          (br_if $label5
-          ;; code offset: 0x539
+          ;; code offset: 0x539 - 0x53a
           (i32.ne
-           ;; code offset: 0x535
+           ;; code offset: 0x535 - 0x537
            (local.tee $2
-            ;; code offset: 0x534
+            ;; code offset: 0x534 - 0x535
             (i32.add
-             ;; code offset: 0x530
+             ;; code offset: 0x530 - 0x532
              (local.get $2)
-             ;; code offset: 0x532
+             ;; code offset: 0x532 - 0x534
              (i32.const 1)
             )
            )
-           ;; code offset: 0x537
+           ;; code offset: 0x537 - 0x539
            (local.get $3)
           )
          )
-         ;; code offset: 0x53c
+         ;; code offset: 0x53c - 0x53e
          (br $block4)
         )
        )
       )
-      ;; code offset: 0x542
+      ;; code offset: 0x542 - 0x544
       (br_if $label6
-       ;; code offset: 0x540
+       ;; code offset: 0x540 - 0x542
        (local.get $6)
       )
      )
-     ;; code offset: 0x545
+     ;; code offset: 0x545 - 0x547
      (br $block4)
     )
-    ;; code offset: 0x548
+    ;; code offset: 0x548 - 0x603
     (loop $label10
-     ;; code offset: 0x54e
+     ;; code offset: 0x54e - 0x54f
      (drop
-      ;; code offset: 0x54c
+      ;; code offset: 0x54c - 0x54e
       (call $putchar
-       ;; code offset: 0x54a
+       ;; code offset: 0x54a - 0x54c
        (i32.const 10)
       )
      )
-     ;; code offset: 0x554
+     ;; code offset: 0x554 - 0x577
      (if
-      ;; code offset: 0x553
+      ;; code offset: 0x553 - 0x554
       (i32.gt_s
-       ;; code offset: 0x54f
+       ;; code offset: 0x54f - 0x551
        (local.get $2)
-       ;; code offset: 0x551
+       ;; code offset: 0x551 - 0x553
        (i32.const 1)
       )
       (then
-       ;; code offset: 0x556
+       ;; code offset: 0x556 - 0x576
        (loop $label7
-        ;; code offset: 0x567
+        ;; code offset: 0x567 - 0x56a
         (i32.store
-         ;; code offset: 0x564
+         ;; code offset: 0x564 - 0x565
          (i32.add
-          ;; code offset: 0x558
+          ;; code offset: 0x558 - 0x55a
           (local.get $5)
-          ;; code offset: 0x563
+          ;; code offset: 0x563 - 0x564
           (i32.shl
-           ;; code offset: 0x55f
+           ;; code offset: 0x55f - 0x561
            (local.tee $0
-            ;; code offset: 0x55e
+            ;; code offset: 0x55e - 0x55f
             (i32.sub
-             ;; code offset: 0x55a
+             ;; code offset: 0x55a - 0x55c
              (local.get $2)
-             ;; code offset: 0x55c
+             ;; code offset: 0x55c - 0x55e
              (i32.const 1)
             )
            )
-           ;; code offset: 0x561
+           ;; code offset: 0x561 - 0x563
            (i32.const 2)
           )
          )
-         ;; code offset: 0x565
+         ;; code offset: 0x565 - 0x567
          (local.get $2)
         )
-        ;; code offset: 0x573
+        ;; code offset: 0x573 - 0x575
         (br_if $label7
          (block (result i32)
           (local.set $scratch_10
-           ;; code offset: 0x56e
+           ;; code offset: 0x56e - 0x56f
            (i32.gt_s
-            ;; code offset: 0x56a
+            ;; code offset: 0x56a - 0x56c
             (local.get $2)
-            ;; code offset: 0x56c
+            ;; code offset: 0x56c - 0x56e
             (i32.const 2)
            )
           )
-          ;; code offset: 0x571
+          ;; code offset: 0x571 - 0x573
           (local.set $2
-           ;; code offset: 0x56f
+           ;; code offset: 0x56f - 0x571
            (local.get $0)
           )
           (local.get $scratch_10)
@@ -6538,311 +6538,311 @@ file_names[  4]:
        )
       )
      )
-     ;; code offset: 0x57c
+     ;; code offset: 0x57c - 0x57e
      (br_if $block4
-      ;; code offset: 0x57b
+      ;; code offset: 0x57b - 0x57c
       (i32.eq
-       ;; code offset: 0x577
+       ;; code offset: 0x577 - 0x579
        (local.get $2)
-       ;; code offset: 0x579
+       ;; code offset: 0x579 - 0x57b
        (local.get $3)
       )
      )
-     ;; code offset: 0x583
+     ;; code offset: 0x583 - 0x585
      (local.set $6
-      ;; code offset: 0x582
+      ;; code offset: 0x582 - 0x583
       (i32.sub
-       ;; code offset: 0x57e
+       ;; code offset: 0x57e - 0x580
        (local.get $6)
-       ;; code offset: 0x580
+       ;; code offset: 0x580 - 0x582
        (i32.const 1)
       )
      )
-     ;; code offset: 0x585
+     ;; code offset: 0x585 - 0x5fe
      (loop $label9
-      ;; code offset: 0x58c
+      ;; code offset: 0x58c - 0x58e
       (local.set $7
-       ;; code offset: 0x589
+       ;; code offset: 0x589 - 0x58c
        (i32.load
-        ;; code offset: 0x587
+        ;; code offset: 0x587 - 0x589
         (local.get $1)
        )
       )
-      ;; code offset: 0x590
+      ;; code offset: 0x590 - 0x592
       (local.set $0
-       ;; code offset: 0x58e
+       ;; code offset: 0x58e - 0x590
        (i32.const 0)
       )
-      ;; code offset: 0x597
+      ;; code offset: 0x597 - 0x5c3
       (if
-       ;; code offset: 0x596
+       ;; code offset: 0x596 - 0x597
        (i32.gt_s
-        ;; code offset: 0x592
+        ;; code offset: 0x592 - 0x594
         (local.get $2)
-        ;; code offset: 0x594
+        ;; code offset: 0x594 - 0x596
         (i32.const 0)
        )
        (then
-        ;; code offset: 0x599
+        ;; code offset: 0x599 - 0x5be
         (loop $label8
-         ;; code offset: 0x5b3
+         ;; code offset: 0x5b3 - 0x5b6
          (i32.store
-          ;; code offset: 0x5a2
+          ;; code offset: 0x5a2 - 0x5a3
           (i32.add
-           ;; code offset: 0x59b
+           ;; code offset: 0x59b - 0x59d
            (local.get $1)
-           ;; code offset: 0x5a1
+           ;; code offset: 0x5a1 - 0x5a2
            (i32.shl
-            ;; code offset: 0x59d
+            ;; code offset: 0x59d - 0x59f
             (local.get $0)
-            ;; code offset: 0x59f
+            ;; code offset: 0x59f - 0x5a1
             (i32.const 2)
            )
           )
-          ;; code offset: 0x5b0
+          ;; code offset: 0x5b0 - 0x5b3
           (i32.load
-           ;; code offset: 0x5af
+           ;; code offset: 0x5af - 0x5b0
            (i32.add
-            ;; code offset: 0x5a3
+            ;; code offset: 0x5a3 - 0x5a5
             (local.get $1)
-            ;; code offset: 0x5ae
+            ;; code offset: 0x5ae - 0x5af
             (i32.shl
-             ;; code offset: 0x5aa
+             ;; code offset: 0x5aa - 0x5ac
              (local.tee $0
-              ;; code offset: 0x5a9
+              ;; code offset: 0x5a9 - 0x5aa
               (i32.add
-               ;; code offset: 0x5a5
+               ;; code offset: 0x5a5 - 0x5a7
                (local.get $0)
-               ;; code offset: 0x5a7
+               ;; code offset: 0x5a7 - 0x5a9
                (i32.const 1)
               )
              )
-             ;; code offset: 0x5ac
+             ;; code offset: 0x5ac - 0x5ae
              (i32.const 2)
             )
            )
           )
          )
-         ;; code offset: 0x5bb
+         ;; code offset: 0x5bb - 0x5bd
          (br_if $label8
-          ;; code offset: 0x5ba
+          ;; code offset: 0x5ba - 0x5bb
           (i32.ne
-           ;; code offset: 0x5b6
+           ;; code offset: 0x5b6 - 0x5b8
            (local.get $0)
-           ;; code offset: 0x5b8
+           ;; code offset: 0x5b8 - 0x5ba
            (local.get $2)
           )
          )
         )
-        ;; code offset: 0x5c0
+        ;; code offset: 0x5c0 - 0x5c2
         (local.set $0
-         ;; code offset: 0x5be
+         ;; code offset: 0x5be - 0x5c0
          (local.get $2)
         )
        )
       )
-      ;; code offset: 0x5cd
+      ;; code offset: 0x5cd - 0x5d0
       (i32.store
-       ;; code offset: 0x5ca
+       ;; code offset: 0x5ca - 0x5cb
        (i32.add
-        ;; code offset: 0x5c3
+        ;; code offset: 0x5c3 - 0x5c5
         (local.get $1)
-        ;; code offset: 0x5c9
+        ;; code offset: 0x5c9 - 0x5ca
         (i32.shl
-         ;; code offset: 0x5c5
+         ;; code offset: 0x5c5 - 0x5c7
          (local.get $0)
-         ;; code offset: 0x5c7
+         ;; code offset: 0x5c7 - 0x5c9
          (i32.const 2)
         )
        )
-       ;; code offset: 0x5cb
+       ;; code offset: 0x5cb - 0x5cd
        (local.get $7)
       )
-      ;; code offset: 0x5e4
+      ;; code offset: 0x5e4 - 0x5e7
       (i32.store
-       ;; code offset: 0x5d8
+       ;; code offset: 0x5d8 - 0x5da
        (local.tee $0
-        ;; code offset: 0x5d7
+        ;; code offset: 0x5d7 - 0x5d8
         (i32.add
-         ;; code offset: 0x5d0
+         ;; code offset: 0x5d0 - 0x5d2
          (local.get $5)
-         ;; code offset: 0x5d6
+         ;; code offset: 0x5d6 - 0x5d7
          (i32.shl
-          ;; code offset: 0x5d2
+          ;; code offset: 0x5d2 - 0x5d4
           (local.get $2)
-          ;; code offset: 0x5d4
+          ;; code offset: 0x5d4 - 0x5d6
           (i32.const 2)
          )
         )
        )
-       ;; code offset: 0x5e3
+       ;; code offset: 0x5e3 - 0x5e4
        (i32.sub
-        ;; code offset: 0x5df
+        ;; code offset: 0x5df - 0x5e1
         (local.tee $0
-         ;; code offset: 0x5dc
+         ;; code offset: 0x5dc - 0x5df
          (i32.load
-          ;; code offset: 0x5da
+          ;; code offset: 0x5da - 0x5dc
           (local.get $0)
          )
         )
-        ;; code offset: 0x5e1
+        ;; code offset: 0x5e1 - 0x5e3
         (i32.const 1)
        )
       )
-      ;; code offset: 0x5ec
+      ;; code offset: 0x5ec - 0x5fd
       (if
-       ;; code offset: 0x5eb
+       ;; code offset: 0x5eb - 0x5ec
        (i32.le_s
-        ;; code offset: 0x5e7
+        ;; code offset: 0x5e7 - 0x5e9
         (local.get $0)
-        ;; code offset: 0x5e9
+        ;; code offset: 0x5e9 - 0x5eb
         (i32.const 1)
        )
        (then
-        ;; code offset: 0x5f8
+        ;; code offset: 0x5f8 - 0x5fa
         (br_if $label9
-         ;; code offset: 0x5f7
+         ;; code offset: 0x5f7 - 0x5f8
          (i32.ne
-          ;; code offset: 0x5f3
+          ;; code offset: 0x5f3 - 0x5f5
           (local.tee $2
-           ;; code offset: 0x5f2
+           ;; code offset: 0x5f2 - 0x5f3
            (i32.add
-            ;; code offset: 0x5ee
+            ;; code offset: 0x5ee - 0x5f0
             (local.get $2)
-            ;; code offset: 0x5f0
+            ;; code offset: 0x5f0 - 0x5f2
             (i32.const 1)
            )
           )
-          ;; code offset: 0x5f5
+          ;; code offset: 0x5f5 - 0x5f7
           (local.get $3)
          )
         )
-        ;; code offset: 0x5fa
+        ;; code offset: 0x5fa - 0x5fc
         (br $block4)
        )
       )
      )
-     ;; code offset: 0x600
+     ;; code offset: 0x600 - 0x602
      (br_if $label10
-      ;; code offset: 0x5fe
+      ;; code offset: 0x5fe - 0x600
       (local.get $6)
      )
     )
    )
-   ;; code offset: 0x606
+   ;; code offset: 0x606 - 0x608
    (call $free
-    ;; code offset: 0x604
+    ;; code offset: 0x604 - 0x606
     (local.get $1)
    )
-   ;; code offset: 0x60a
+   ;; code offset: 0x60a - 0x60c
    (call $free
-    ;; code offset: 0x608
+    ;; code offset: 0x608 - 0x60a
     (local.get $5)
    )
-   ;; code offset: 0x60e
+   ;; code offset: 0x60e - 0x610
    (local.set $5
-    ;; code offset: 0x60c
+    ;; code offset: 0x60c - 0x60e
     (i32.const 0)
    )
-   ;; code offset: 0x612
+   ;; code offset: 0x612 - 0x614
    (local.set $0
-    ;; code offset: 0x610
+    ;; code offset: 0x610 - 0x612
     (i32.const 0)
    )
-   ;; code offset: 0x616
+   ;; code offset: 0x616 - 0x641
    (if
-    ;; code offset: 0x614
+    ;; code offset: 0x614 - 0x616
     (local.get $4)
     (then
-     ;; code offset: 0x618
+     ;; code offset: 0x618 - 0x640
      (loop $label11
-      ;; code offset: 0x61e
+      ;; code offset: 0x61e - 0x620
       (local.set $1
-       ;; code offset: 0x61c
+       ;; code offset: 0x61c - 0x61e
        (call $"fannkuch_worker(void*)"
-        ;; code offset: 0x61a
+        ;; code offset: 0x61a - 0x61c
         (local.get $4)
        )
       )
-      ;; code offset: 0x625
+      ;; code offset: 0x625 - 0x627
       (local.set $2
-       ;; code offset: 0x622
+       ;; code offset: 0x622 - 0x625
        (i32.load offset=8
-        ;; code offset: 0x620
+        ;; code offset: 0x620 - 0x622
         (local.get $4)
        )
       )
-      ;; code offset: 0x629
+      ;; code offset: 0x629 - 0x62b
       (call $free
-       ;; code offset: 0x627
+       ;; code offset: 0x627 - 0x629
        (local.get $4)
       )
-      ;; code offset: 0x635
+      ;; code offset: 0x635 - 0x637
       (local.set $0
-       ;; code offset: 0x634
+       ;; code offset: 0x634 - 0x635
        (select
-        ;; code offset: 0x62b
+        ;; code offset: 0x62b - 0x62d
         (local.get $1)
-        ;; code offset: 0x62d
+        ;; code offset: 0x62d - 0x62f
         (local.get $0)
-        ;; code offset: 0x633
+        ;; code offset: 0x633 - 0x634
         (i32.lt_s
-         ;; code offset: 0x62f
+         ;; code offset: 0x62f - 0x631
          (local.get $0)
-         ;; code offset: 0x631
+         ;; code offset: 0x631 - 0x633
          (local.get $1)
         )
        )
       )
-      ;; code offset: 0x639
+      ;; code offset: 0x639 - 0x63b
       (local.set $4
-       ;; code offset: 0x637
+       ;; code offset: 0x637 - 0x639
        (local.get $2)
       )
-      ;; code offset: 0x63d
+      ;; code offset: 0x63d - 0x63f
       (br_if $label11
-       ;; code offset: 0x63b
+       ;; code offset: 0x63b - 0x63d
        (local.get $2)
       )
      )
     )
    )
-   ;; code offset: 0x645
+   ;; code offset: 0x645 - 0x648
    (i32.store offset=4
-    ;; code offset: 0x641
+    ;; code offset: 0x641 - 0x643
     (local.get $8)
-    ;; code offset: 0x643
+    ;; code offset: 0x643 - 0x645
     (local.get $0)
    )
-   ;; code offset: 0x64c
+   ;; code offset: 0x64c - 0x64f
    (i32.store
-    ;; code offset: 0x648
+    ;; code offset: 0x648 - 0x64a
     (local.get $8)
-    ;; code offset: 0x64a
+    ;; code offset: 0x64a - 0x64c
     (local.get $3)
    )
-   ;; code offset: 0x656
+   ;; code offset: 0x656 - 0x657
    (drop
-    ;; code offset: 0x654
+    ;; code offset: 0x654 - 0x656
     (call $iprintf
-     ;; code offset: 0x64f
+     ;; code offset: 0x64f - 0x652
      (i32.const 1024)
-     ;; code offset: 0x652
+     ;; code offset: 0x652 - 0x654
      (local.get $8)
     )
    )
   )
-  ;; code offset: 0x65d
+  ;; code offset: 0x65d - 0x65f
   (global.set $global$0
-   ;; code offset: 0x65c
+   ;; code offset: 0x65c - 0x65d
    (i32.add
-    ;; code offset: 0x658
+    ;; code offset: 0x658 - 0x65a
     (local.get $8)
-    ;; code offset: 0x65a
+    ;; code offset: 0x65a - 0x65c
     (i32.const 32)
    )
   )
-  ;; code offset: 0x65f
+  ;; code offset: 0x65f - 0x661
   (local.get $5)
  )
  ;; custom section ".debug_info", size 851

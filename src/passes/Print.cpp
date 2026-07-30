@@ -2786,8 +2786,9 @@ void PrintSExpression::printMetadata(Expression* curr) {
       if (auto iter = currFunction->expressionLocations.find(curr);
           iter != currFunction->expressionLocations.end()) {
         Colors::grey(o);
-        o << ";; code offset: 0x" << std::hex << iter->second.start << std::dec
-          << '\n';
+        const auto& span = iter->second;
+        o << ";; code offset: 0x" << std::hex << span.start << " - 0x"
+          << span.end << std::dec << '\n';
         restoreNormalColor(o);
         doIndent(o, indent);
       }

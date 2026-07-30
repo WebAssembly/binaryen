@@ -273,41 +273,19 @@ switch (buf[0]) {
                   case '_': {
                     switch (buf[11]) {
                       case 'd': {
-                        switch (buf[15]) {
+                        switch (buf[18]) {
                           case '\0':
-                            if (op == "br_on_cast_desc"sv) {
+                            if (op == "br_on_cast_desc_eq"sv) {
                               CHECK_ERR(makeBrOnCast(ctx, pos, annotations, BrOnCastDescEq));
                               return Ok{};
                             }
                             goto parse_error;
-                          case '_': {
-                            switch (buf[16]) {
-                              case 'e': {
-                                switch (buf[18]) {
-                                  case '\0':
-                                    if (op == "br_on_cast_desc_eq"sv) {
-                                      CHECK_ERR(makeBrOnCast(ctx, pos, annotations, BrOnCastDescEq));
-                                      return Ok{};
-                                    }
-                                    goto parse_error;
-                                  case '_':
-                                    if (op == "br_on_cast_desc_eq_fail"sv) {
-                                      CHECK_ERR(makeBrOnCast(ctx, pos, annotations, BrOnCastDescEqFail));
-                                      return Ok{};
-                                    }
-                                    goto parse_error;
-                                  default: goto parse_error;
-                                }
-                              }
-                              case 'f':
-                                if (op == "br_on_cast_desc_fail"sv) {
-                                  CHECK_ERR(makeBrOnCast(ctx, pos, annotations, BrOnCastDescEqFail));
-                                  return Ok{};
-                                }
-                                goto parse_error;
-                              default: goto parse_error;
+                          case '_':
+                            if (op == "br_on_cast_desc_eq_fail"sv) {
+                              CHECK_ERR(makeBrOnCast(ctx, pos, annotations, BrOnCastDescEqFail));
+                              return Ok{};
                             }
-                          }
+                            goto parse_error;
                           default: goto parse_error;
                         }
                       }
@@ -430,29 +408,12 @@ switch (buf[0]) {
           return Ok{};
         }
         goto parse_error;
-      case 'x': {
-        switch (buf[7]) {
-          case 'c':
-            if (op == "extern.convert_any"sv) {
-              CHECK_ERR(makeRefAs(ctx, pos, annotations, ExternConvertAny));
-              return Ok{};
-            }
-            goto parse_error;
-          case 'e':
-            if (op == "extern.externalize"sv) {
-              CHECK_ERR(makeRefAs(ctx, pos, annotations, ExternConvertAny));
-              return Ok{};
-            }
-            goto parse_error;
-          case 'i':
-            if (op == "extern.internalize"sv) {
-              CHECK_ERR(makeRefAs(ctx, pos, annotations, AnyConvertExtern));
-              return Ok{};
-            }
-            goto parse_error;
-          default: goto parse_error;
+      case 'x':
+        if (op == "extern.convert_any"sv) {
+          CHECK_ERR(makeRefAs(ctx, pos, annotations, ExternConvertAny));
+          return Ok{};
         }
-      }
+        goto parse_error;
       default: goto parse_error;
     }
   }
@@ -5008,23 +4969,12 @@ switch (buf[0]) {
                   return Ok{};
                 }
                 goto parse_error;
-              case '_': {
-                switch (buf[13]) {
-                  case '\0':
-                    if (op == "ref.cast_desc"sv) {
-                      CHECK_ERR(makeRefCast(ctx, pos, annotations, true));
-                      return Ok{};
-                    }
-                    goto parse_error;
-                  case '_':
-                    if (op == "ref.cast_desc_eq"sv) {
-                      CHECK_ERR(makeRefCast(ctx, pos, annotations, true));
-                      return Ok{};
-                    }
-                    goto parse_error;
-                  default: goto parse_error;
+              case '_':
+                if (op == "ref.cast_desc_eq"sv) {
+                  CHECK_ERR(makeRefCast(ctx, pos, annotations, true));
+                  return Ok{};
                 }
-              }
+                goto parse_error;
               default: goto parse_error;
             }
           }

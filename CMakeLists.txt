@@ -250,9 +250,6 @@ if(MSVC)
 
   # workaround for https://github.com/WebAssembly/binaryen/issues/3661
   add_compile_flag("/D_SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING")
-  # Visual Studio 2018 15.8 implemented conformant support for std::aligned_storage, but the conformant support is only enabled when the following flag is passed, to avoid
-  # breaking backwards compatibility with code that relied on the non-conformant behavior (the old nonconformant behavior is not used with Binaryen)
-  add_compile_flag("/D_ENABLE_EXTENDED_ALIGNED_STORAGE")
   # Don't warn about using "strdup" as a reserved name.
   add_compile_flag("/D_CRT_NONSTDC_NO_DEPRECATE")
 
@@ -412,8 +409,8 @@ else() # MSVC
   add_compile_flag("-Wno-unknown-warning-option")
   add_compile_flag("-Wswitch") # we explicitly expect this in the code
   add_compile_flag("-Wimplicit-fallthrough")
-  add_compile_flag("-Wnon-virtual-dtor")
-  add_compile_flag("-Wsuggest-override")
+  add_compile_flag("-Wnon-virtual-dtor" "CXX_ONLY")
+  add_compile_flag("-Wsuggest-override" "CXX_ONLY")
 
   if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
     # Google style requires this, so make sure we compile cleanly with it.

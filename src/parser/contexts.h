@@ -2800,8 +2800,8 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
                     const std::vector<Annotation>& annotations,
                     Index label,
                     BrOnOp op,
-                    Type in = Type::none,
-                    Type out = Type::none) {
+                    std::optional<Type> in = std::nullopt,
+                    std::optional<Type> out = std::nullopt) {
     return withLoc(
       pos,
       irBuilder.makeBrOn(label, op, in, out, parseAnnotations(annotations)));
