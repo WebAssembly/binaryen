@@ -14,10 +14,27 @@
  * limitations under the License.
  */
 
+// Make all structs and arrays shared and makes all functions unshared. This
+// serves two purposes: 1) converts unshared Wasm GC programs to use the shared
+// heap for testing, and 2) lowers shared Wasm GC programs that use shared
+// functions so they can run on experimental implementations that do not support
+// shared functions.
+//
+// Because shared structs and arrays cannot contain unshared function
+// references, replace function references in structs and arrays with indices
+// into a function table that will be duplicated on each thread. Because
+// arbitrary unknown function references may be written into structs and arrays
+// and there is no way to look up a table index given a function reference,
+// function references cannot be replaced only inside structs and arrays.
+// Replace all function references in the module with table indices and fix up
+// all instructions that consume function references (e.g. call_ref, casts)
+// accordingly. Use i31 references to represent the table indices to avoid
+// further complications from mapping function references to non-reference
+// values.
+
 #include "ir/drop.h"
 #include "ir/module-utils.h"
 #include "ir/names.h"
-#include "ir/properties.h"
 #include "ir/type-updating.h"
 #include "ir/utils.h"
 #include "literal.h"
