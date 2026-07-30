@@ -272,7 +272,7 @@ std::optional<Constraint> approximateOrTermEqualPair(const Abstract::Op aOp,
 }
 
 // Do an OR of a pair of constraints where the terms are adjacent constants: a
-// operations on N, and b on N+1.
+// operations on C, and b on C+1.
 std::optional<Constraint> approximateOrAdjacentConstantPair(const Abstract::Op aOp,
                                                      const Literal& aConstant,
                                                      const Abstract::Op bOp) {
@@ -281,6 +281,11 @@ std::optional<Constraint> approximateOrAdjacentConstantPair(const Abstract::Op a
   // x == C || x >= C+1  ===  x >= C
   if (aOp == Eq && bOp == GeS) {
     return Constraint{GeS, aConstant};
+  }
+
+  // x > C || x >= C+1  ===  x > C
+  if (aOp == GtS && bOp == GeS) {
+    return Constraint{GtS, aConstant};
   }
 
   // TODO: all the rest
