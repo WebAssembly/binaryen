@@ -367,7 +367,6 @@ struct ConstraintAnalysis
             work.push(out);
           }
         }
-
       }
     }
   }
