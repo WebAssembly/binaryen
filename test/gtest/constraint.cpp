@@ -271,8 +271,9 @@ TEST(ConstraintTest, TestOrInequality) {
   checkOr(eq5, ges6, ges5);
 
   // TODO: x == 5 || x >= 7  =>  x >= 5  TODO
-  //AndedConstraintSet ges6{{GeS, {Literal(int32_t(6))}}};
-  //checkOr(eq5, ges6, ges5);
+  AndedConstraintSet ges7{{GeS, {Literal(int32_t(7))}}};
+  auto empty = AndedConstraintSet::makeProvesNothing();
+  checkOr(eq5, ges7, empty);
 }
 
 TEST(ConstraintTest, TestOrLoop) {
