@@ -328,7 +328,7 @@ static f32 make_nan_f32(u32 x) {
   return res;
 }
 )w2c_template"
-R"w2c_template(
+                      R"w2c_template(
 static f64 make_nan_f64(u64 x) {
   x |= 0x7ff0000000000000;
   f64 res;

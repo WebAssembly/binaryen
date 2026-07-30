@@ -420,7 +420,7 @@ POPCOUNT_DEFINE_PORTABLE(I64_POPCNT, u64)
   TRUNC_SAT_S(u64, s64, f64, (f64)INT64_MIN, INT64_MIN, >=, (f64)INT64_MAX, \
               INT64_MAX, x)
 )w2c_template"
-R"w2c_template(
+                                 R"w2c_template(
 #define TRUNC_SAT_U(ut, ft, max, smax, x) \
   ((UNLIKELY((x) != (x)))          ? 0    \
    : (UNLIKELY(!((x) > (ft) - 1))) ? 0    \
