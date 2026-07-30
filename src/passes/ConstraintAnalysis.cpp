@@ -335,20 +335,17 @@ struct ConstraintAnalysis
 
       // Start at the top of the block, then go through, applying things.
       BasicBlockConstraintMap constraints = block->contents.startConstraints;
-std::cout << "block start: " << constraints << "\n";
       for (auto** currp : block->contents.actions) {
         // Try the handler first.
         if (!handler.doApplyToConstraints(*currp, constraints)) {
           applyToConstraints(*currp, constraints);
         }
       }
-std::cout << "block end  : " << constraints << "\n";
 
       // We now know the values at the end of the block. Flow it onward, and
       // where it causes changes, queue more work.
       for (auto* out : block->out) {
         auto& outStartConstraints = out->contents.startConstraints;
-std::cout << "  flowing to out with start: " << outStartConstraints << "\n";
 
         // Find the constraints sent to this specific successor, if there is a
         // branch, and use them.
@@ -357,9 +354,8 @@ std::cout << "  flowing to out with start: " << outStartConstraints << "\n";
           auto sentConstraints = constraints;
           if (!handler.doBranch(*branch, sentConstraints)) {
             sentConstraints.approximateAnd(branch->local, branch->constraint);
-std::cout << "    branch " << branch->local << ":" << branch->constraint << " ANDED to: " << sentConstraints << "\n";
           }
-else std::cout << "  custom branch handling led to: " << sentConstraints << "\n";
+
           // If anything changed at the start of the target block, flow onwards.
           if (outStartConstraints.approximateOr(sentConstraints)) {
             work.push(out);
@@ -372,13 +368,11 @@ else std::cout << "  custom branch handling led to: " << sentConstraints << "\n"
           }
         }
 
-std::cout << "  flowed to out, now  start: " << outStartConstraints << "\n\n";
       }
     }
   }
 
   void flowLoops() {
-std::cout << "fl\n";
 
     struct Handler {
       bool doApplyToConstraints(Expression* curr,
@@ -393,12 +387,9 @@ std::cout << "fl\n";
 
         // Operate on x++s.
         // x = y + 1
-std::cout << "f2 9doApplyToConstraints" << *curr << "\n";
         Index y;
         if (matches(set->value, binary(Abstract::Add, local(&y), ival(1)))) {
-std::cout << "f3\n";
           auto old = constraints.get(y);
-std::cout << "f3 " << old << "\n";
           if (old.empty()) {
             // Nothing we know how to increment.
             return false;
@@ -436,7 +427,6 @@ std::cout << "f3 " << old << "\n";
           // We processed the old constraints into their new forms without
           // problems. Apply them and we are done.
           constraints.set(set->index, old);
-std::cout << "fl3.5 " << old << "\n";
           return true;
         }
 
@@ -445,32 +435,25 @@ std::cout << "fl3.5 " << old << "\n";
 
       bool doBranch(const LocalConstraint& branch,
                     BasicBlockConstraintMap& constraints) const {
-std::cout << "f4 (doBranch)\n";
         // Extend ranges pessimistically. If the branch is x < M, and we were
         // x == N where N < M, then extend to x >= N && x < M
         // TODO: move helper matching stuff out of constraint.cpp?
         using namespace Abstract;
         if (auto* M = std::get_if<Literal>(&branch.constraint.term)) {
           auto localConstraints = constraints.get(branch.local);
-std::cout << "fl5 " << branch.constraint << " vs " << localConstraints << "\n";
           if (localConstraints.size() == 1 &&
               localConstraints[0].op == Abstract::Eq) {
-std::cout << "fl5.1\n";
             if (auto* N = std::get_if<Literal>(&localConstraints[0].term)) {
-std::cout << "fl5.2 " << (branch.constraint.op == Abstract::LtS) << " : " << *N << " <? " << *M << "\n";
               if (branch.constraint.op == Abstract::LtS &&
                   N->ltS(*M).getUnsigned()) {
                 constraints.set(branch.local, branch.constraint);
                 constraints.approximateAnd(branch.local, {GeS, {*N}});
-std::cout << "fl5.3\n"; // TODO
                 return true;
               }
               if (branch.constraint.op == Abstract::LtU &&
                   N->ltU(*M).getUnsigned()) {
                 constraints.set(branch.local, branch.constraint);
                 constraints.approximateAnd(branch.local, {GeU, {*N}});
-std::cout << "fl5.7\n"; // TODO
-abort(); // TODO: update like abovve
                 return true;
               }
             }
@@ -482,8 +465,6 @@ abort(); // TODO: update like abovve
       }
     };
 
-std::cout << "fl1.5: now doing Loop flow!!1\n";
-// XXX can't continue flow, must start from scratchh before was ruinnedd
     doFlow(Handler());
 
     // TODO: copy old flow data, only merge us in when we actually improve?
