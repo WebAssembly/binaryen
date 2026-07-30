@@ -24,36 +24,70 @@ namespace wasm::constraint {
 
 namespace {
 
+Result TrueFalse(bool x) { return x ? True : False; }
+
+Result TrueFalse(Literal x) { return TrueFalse(x.getUnsigned()); }
+
 // Evaluate whether a => b, where a and b are operations on constants.
 Result provesConstantPair(Abstract::Op aOp,
                           const Literal& aConstant,
                           Abstract::Op bOp,
-                          const Literal& bConstant) {
-  // x == X =?=> x == Y. True iff X == Y.
-  if (aOp == Abstract::Eq && bOp == Abstract::Eq) {
-    return aConstant == bConstant ? True : False;
+                          const Literal& bConstant,
+                          bool recursing = false) {
+  using namespace Abstract;
+
+  // a == A =?=> a op B. Simply apply A to the operation against B.
+  if (aOp == Eq) {
+    switch (bOp) {
+      case Eq:
+        return TrueFalse(aConstant == bConstant);
+      case Ne:
+        return TrueFalse(aConstant != bConstant);
+      case LtS:
+        return TrueFalse(aConstant.ltS(bConstant));
+      case LeS:
+        return TrueFalse(aConstant.leS(bConstant));
+      case GtS:
+        return TrueFalse(aConstant.gtS(bConstant));
+      case GeS:
+        return TrueFalse(aConstant.geS(bConstant));
+      case LtU:
+        return TrueFalse(aConstant.ltU(bConstant));
+      case LeU:
+        return TrueFalse(aConstant.leU(bConstant));
+      case GtU:
+        return TrueFalse(aConstant.gtU(bConstant));
+      case GeU:
+        return TrueFalse(aConstant.geU(bConstant));
+      default: {
+      }
+    }
   }
 
-  // x == X =?=> x != Y. True iff X != Y.
-  if (aOp == Abstract::Eq && bOp == Abstract::Ne) {
-    return aConstant == bConstant ? False : True;
-  }
-
-  // x != X =?=> x == Y. False if X = Y, else unknown.
-  if (aOp == Abstract::Ne && bOp == Abstract::Eq) {
+  // a != A =?=> a == B. False if A = B, else unknown.
+  if (aOp == Ne && bOp == Eq) {
     if (aConstant == bConstant) {
       return False;
     }
   }
 
-  // x != X =?=> x != Y. True if X = Y, else unknown.
-  if (aOp == Abstract::Ne && bOp == Abstract::Ne) {
+  // a != A =?=> a != B. True if A = B, else unknown.
+  if (aOp == Ne && bOp == Ne) {
     if (aConstant == bConstant) {
       return True;
     }
   }
 
-  // TODO: handle >, >=, <, and <=
+  if (!recursing) {
+    // The flipped operation may tell us something:  y ==> !x  implies
+    // x ==> y  is false (because if not, then x would prove y, and y would
+    // prove !x, a contradiction).
+    if (provesConstantPair(bOp, bConstant, aOp, aConstant, true) == False) {
+      return False;
+    }
+  }
+
+  // TODO: handle all the rest of >, >=, <, and <=
   return Unknown;
 }
 
@@ -128,6 +162,55 @@ Result AndedConstraintSet::proves(const AndedConstraintSet& other) const {
   return hasUnknown ? Unknown : True;
 }
 
+namespace {
+
+// Do an AND on a pair of constraints, looking for a way to fuse them together
+// into a single constraint that represents them both, while assuming the
+// constraints have an equal term. If we fail, return nullopt.
+std::optional<Constraint> fusedApproximateAndTermEqualPair(
+  const Abstract::Op aOp, const Abstract::Op bOp, const Term& term) {
+  using namespace Abstract;
+
+  // x < C && x <= C  ===  x < C
+  if (aOp == LtS && bOp == LeS) {
+    return Constraint{LtS, term};
+  }
+  if (aOp == LtU && bOp == LeU) {
+    return Constraint{LtU, term};
+  }
+
+  // TODO: all the rest
+
+  return {};
+}
+
+// Do an AND on a pair of constraints, looking for a way to fuse them together
+// into a single constraint that represents them both. If we fail, return
+// nullopt.
+std::optional<Constraint> fusedApproximateAndPair(const Constraint& a,
+                                                  const Constraint& b,
+                                                  bool recursing = false) {
+  // If a proves b is true, all we need is a (e.g. { x == 5 && x > 0 } => x == 5
+  if (provesPair(a, b) == True) {
+    return a;
+  }
+
+  if (a.term == b.term) {
+    if (auto result = fusedApproximateAndTermEqualPair(a.op, b.op, a.term)) {
+      return result;
+    }
+  }
+
+  if (!recursing) {
+    // The flipped form may be recognized.
+    return fusedApproximateAndPair(b, a, true);
+  }
+
+  return {};
+}
+
+} // anonymous namespace
+
 void AndedConstraintSet::approximateAnd(const Constraint& c) {
   if (provesEverything()) {
     // Nothing to add.
@@ -137,51 +220,141 @@ void AndedConstraintSet::approximateAnd(const Constraint& c) {
   auto result = proves(c);
   if (result == True) {
     // We already prove c to be true, so it adds nothing.
-    // TODO: we could also see if c proves us true, and replace things we
-    //       already have with c when possible
     return;
   } else if (result == False) {
     // We are now a contradiction.
-    isContradiction = true;
+    setProvesEverything();
     return;
   }
 
+  for (auto& existing : *this) {
+    // Some ANDed constraints fuse together into a new constraint.
+    if (auto fused = fusedApproximateAndPair(existing, c)) {
+      existing = *fused;
+
+      // Sort to ensure we are in the right place.
+      std::sort(begin(), end());
+
+      return;
+    }
+  }
+
   if (size() < MaxConstraints) {
-    push_back(c);
+    // Insert into the right place, keeping us sorted.
+    insert(std::upper_bound(begin(), end(), c), c);
     return;
   }
 
   // Otherwise, just do not add this one.
   // TODO: We could try to be clever and see if one of the existing ones makes
-  //       more sense to drop.
+  //       more sense to drop. In particular, we should prefer "better" ones
+  //       like > over >= and so forth (sorting more precise ones earlier may be
+  //       useful to implement that).
 }
 
-void AndedConstraintSet::approximateOr(const AndedConstraintSet& other) {
+namespace {
+
+// Do an OR of a pair of constraints where the terms are known to be equal. If
+// we can't find a good way to express their ORing, return nullopt.
+std::optional<Constraint> approximateOrTermEqualPair(const Abstract::Op aOp,
+                                                     const Abstract::Op bOp,
+                                                     const Term& term) {
+  using namespace Abstract;
+
+  // x == C || x > C  ===  x >= C
+  if (aOp == Eq && bOp == GtS) {
+    return Constraint{GeS, term};
+  }
+
+  // TODO: all the rest
+
+  return {};
+}
+
+// Do an OR of a pair of constraints. If we can't find a good way to express
+// their ORing, return nullopt.
+std::optional<Constraint> approximateOrPair(const Constraint& a,
+                                            const Constraint& b,
+                                            bool recursing = false) {
+  if (a.term == b.term) {
+    if (auto result = approximateOrTermEqualPair(a.op, b.op, a.term)) {
+      return result;
+    }
+  }
+
+  // If a proves b, e.g. x = 5 proves x >= 0 is true, then the OR is b.
+  if (provesPair(a, b) == True) {
+    return b;
+  }
+
+  // TODO: more smarts
+
+  if (!recursing) {
+    // The flipped form may be recognized.
+    return approximateOrPair(b, a, true);
+  }
+
+  return {};
+}
+
+// Do an OR in full detail, looking at every constraint in each of the given
+// sets.
+AndedConstraintSet detailedApproximateOr(const AndedConstraintSet& a,
+                                         const AndedConstraintSet& b) {
+  // We can process this in full detail by looking at all the combinations of
+  // individual constraints, because of the distributive property:
+  //
+  // (A & B) | (C & D) == ((A & B) | C) & ((A & B) | D)
+  //                   == (A | C) & (B | C) & (A | D) & (B | D)
+  //
+  // This is quadratic, but constraint sets are limited to a very small size,
+  // making this reasonable.
+  //
+  // Also, note that we don't need to worry about new contradictions here: ORing
+  // things never leads to a contradiction, and we can assume the inputs are
+  // not contradictions.
+  assert(!a.provesEverything() && !b.provesEverything());
+
+  auto result = AndedConstraintSet::makeProvesNothing();
+  for (auto& ac : a) {
+    for (auto& bc : b) {
+      if (auto combined = approximateOrPair(ac, bc)) {
+        // We found something useful by ORing them, keep it.
+        result.approximateAnd(*combined);
+      }
+    }
+  }
+  return result;
+}
+
+} // anonymous namespace
+
+bool AndedConstraintSet::approximateOr(const AndedConstraintSet& other) {
   // If one proves everything, the only thing that matters is the other.
+  if (other.provesEverything()) {
+    return false;
+  }
   if (provesEverything()) {
     *this = other;
-    return;
-  }
-  if (other.provesEverything()) {
-    return;
+    return true;
   }
 
   // If this is already implied by current constraints, then it is redundant.
   // E.g. if we are { x = 10 } and other is { x >= 0 } then all we need is
   // { x >= 0 } as the result of the OR.
+  if (other.proves(*this) == True) {
+    return false;
+  }
   if (proves(other) == True) {
     *this = other;
-    return;
-  }
-  if (other.proves(*this) == True) {
-    return;
+    return true;
   }
 
-  // TODO smarts: handle <= > and so forth
-
-  // Otherwise, we don't know how to nicely OR these things, and expand to the
-  // trivial set of no constraints.
-  clear();
+  // For more complex cases, do a detailed analysis.
+  auto result = detailedApproximateOr(*this, other);
+  auto changed = (result != *this);
+  *this = result;
+  return changed;
 }
 
 std::optional<LocalConstraint> LocalConstraint::parse(Expression* curr) {
@@ -300,21 +473,22 @@ void BasicBlockConstraintMap::setProvesNothing(Index index) {
   map.erase(index);
 }
 
-void BasicBlockConstraintMap::approximateOr(
+bool BasicBlockConstraintMap::approximateOr(
   const BasicBlockConstraintMap& other) {
   // If one is unreachable, it adds nothing to the other.
   if (other.unreachable) {
-    return;
+    return false;
   }
   if (unreachable) {
     *this = other;
-    return;
+    return true;
   }
 
   // We only need to loop on our locals, as any local that is missing in us is
   // one that would end up proving nothing (and get removed).
+  bool changed = false;
   for (auto& [local, constraints] : map) {
-    constraints.approximateOr(other.get(local));
+    changed |= constraints.approximateOr(other.get(local));
   }
 
   // Anything that became trivial after the OR must be removed.
@@ -322,14 +496,23 @@ void BasicBlockConstraintMap::approximateOr(
     const auto& [local, constraints] = item;
     // We do not store contradictions.
     assert(!constraints.provesEverything());
-    return constraints.provesNothing();
+    if (constraints.provesNothing()) {
+      changed = true;
+      return true;
+    }
+    return false;
   });
+
+  return changed;
 }
 
 void BasicBlockConstraintMap::approximateAndInternal(Index index,
                                                      const Constraint& c,
                                                      bool flip,
                                                      bool isCopy) {
+  // We should not be applying constraints when already unreachable.
+  assert(!unreachable);
+
   Constraint actual = c;
   if (flip) {
     LocalConstraint flipped{index, c};
@@ -377,6 +560,10 @@ void BasicBlockConstraintMap::approximateAndInternal(Index index,
   // flipped one too.
   if (!flip && std::holds_alternative<Index>(actual.term)) {
     approximateAndInternal(index, actual, true, isCopy);
+    if (unreachable) {
+      // We just found a contradiction.
+      return;
+    }
   }
 
   // If this constraint is simply "== x", then we are equal to that other local
@@ -386,6 +573,9 @@ void BasicBlockConstraintMap::approximateAndInternal(Index index,
       if (actual.op == Abstract::Eq) {
         for (auto& otherC : get(*other)) {
           approximateAndInternal(index, otherC, false, true);
+          if (unreachable) {
+            return;
+          }
         }
       }
     }

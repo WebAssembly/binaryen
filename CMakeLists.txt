@@ -5,18 +5,12 @@ cmake_minimum_required(VERSION 3.16.3)
 # Needed for C++17 (std::path)
 set(CMAKE_OSX_DEPLOYMENT_TARGET "10.15" CACHE STRING "Minimum OS X deployment version")
 
-project(binaryen LANGUAGES C CXX VERSION 130)
+project(binaryen LANGUAGES C CXX VERSION 131)
 include(GNUInstallDirs)
 
 # The C++ standard whose features are required to build Binaryen.
 # Keep in sync with scripts/test/shared.py cxx_standard
-# The if condition allows embedding in a project with a higher default C++ standard set
-set(REQUIRED_CXX_STANDARD 20)
-if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD ${REQUIRED_CXX_STANDARD})
-elseif(CMAKE_CXX_STANDARD LESS ${REQUIRED_CXX_STANDARD})
-  message(SEND_ERROR "Building with C++ standards older than C++${REQUIRED_CXX_STANDARD} is not supported, change CMAKE_CXX_STANDARD to ${REQUIRED_CXX_STANDARD} or later")
-endif()
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -256,9 +250,6 @@ if(MSVC)
 
   # workaround for https://github.com/WebAssembly/binaryen/issues/3661
   add_compile_flag("/D_SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING")
-  # Visual Studio 2018 15.8 implemented conformant support for std::aligned_storage, but the conformant support is only enabled when the following flag is passed, to avoid
-  # breaking backwards compatibility with code that relied on the non-conformant behavior (the old nonconformant behavior is not used with Binaryen)
-  add_compile_flag("/D_ENABLE_EXTENDED_ALIGNED_STORAGE")
   # Don't warn about using "strdup" as a reserved name.
   add_compile_flag("/D_CRT_NONSTDC_NO_DEPRECATE")
 
@@ -418,8 +409,8 @@ else() # MSVC
   add_compile_flag("-Wno-unknown-warning-option")
   add_compile_flag("-Wswitch") # we explicitly expect this in the code
   add_compile_flag("-Wimplicit-fallthrough")
-  add_compile_flag("-Wnon-virtual-dtor")
-  add_compile_flag("-Wsuggest-override")
+  add_compile_flag("-Wnon-virtual-dtor" "CXX_ONLY")
+  add_compile_flag("-Wsuggest-override" "CXX_ONLY")
 
   if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
     # Google style requires this, so make sure we compile cleanly with it.
@@ -465,6 +456,7 @@ if(BUILD_SHARED_LIBS)
 else()
   message(STATUS "Building libbinaryen as statically linked library.")
 endif()
+target_compile_features(binaryen PUBLIC cxx_std_20)
 target_link_libraries(binaryen PUBLIC Threads::Threads)
 binaryen_setup_rpath(binaryen)
 if(BUILD_LLVM_DWARF)

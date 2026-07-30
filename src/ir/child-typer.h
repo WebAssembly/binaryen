@@ -914,13 +914,15 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
     note(&curr->ref, VarRef{Nullable, VarDefHeapType{VarExactness{0u}, *ht}});
   }
 
-  void visitBrOn(BrOn* curr, std::optional<Type> target = std::nullopt) {
+  void visitBrOn(BrOn* curr,
+                 std::optional<Type> in = std::nullopt,
+                 std::optional<Type> out = std::nullopt) {
     switch (curr->op) {
       case BrOnNull:
       case BrOnNonNull:
         // br_on(_non)_null is polymorphic over reference types and does not
         // take a type immediate.
-        assert(!target);
+        assert(!in && !out);
         // Polymorphic over heap types.
         note(&curr->ref, VarRef{Nullable, VarHeapType{0u}});
         return;
@@ -928,14 +930,15 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
       case BrOnCastFail:
       case BrOnCastDescEq:
       case BrOnCastDescEqFail: {
-        if (!target) {
+        assert(!!in == !!out);
+        if (!out) {
           assert(curr->castType.isRef());
-          target = curr->castType;
+          out = curr->castType;
+          in = Type(out->getHeapType().getTop(), Nullable);
         }
-        auto top = target->getHeapType().getTop();
-        note(&curr->ref, Type(top, Nullable));
+        note(&curr->ref, *in);
         if (curr->op == BrOnCastDescEq || curr->op == BrOnCastDescEqFail) {
-          auto desc = target->getHeapType().getDescriptorType();
+          auto desc = out->getHeapType().getDescriptorType();
           assert(desc);
           note(&curr->desc, Type(*desc, Nullable));
         }
@@ -1037,21 +1040,15 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
     }
 
     note(&curr->ref, Type(*ht, Nullable));
+    note(&curr->waitqueue, Type(HeapTypes::sharedWaitqueue, Nullable));
     note(&curr->expected, Type(Type::BasicType::i32));
     note(&curr->timeout, Type(Type::BasicType::i64));
   }
 
-  void visitStructNotify(StructNotify* curr,
-                         std::optional<HeapType> ht = std::nullopt) {
-    if (!ht) {
-      if (!curr->ref->type.isStruct()) {
-        self().noteUnknown();
-        return;
-      }
-      ht = curr->ref->type.getHeapType();
-    }
+  void visitWaitqueueNew(WaitqueueNew* curr) {}
 
-    note(&curr->ref, Type(*ht, Nullable));
+  void visitWaitqueueNotify(WaitqueueNotify* curr) {
+    note(&curr->waitqueue, Type(HeapTypes::sharedWaitqueue, Nullable));
     note(&curr->count, Type(Type::BasicType::i32));
   }
 

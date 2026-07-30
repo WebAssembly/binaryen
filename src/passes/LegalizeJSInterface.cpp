@@ -46,13 +46,13 @@ namespace {
 
 // These are aliases for getTempRet0/setTempRet0 which emscripten defines in
 // compiler-rt and exports under these names.
-static Name GET_TEMP_RET_EXPORT("__get_temp_ret");
-static Name SET_TEMP_RET_EXPORT("__set_temp_ret");
+static const Name GET_TEMP_RET_EXPORT("__get_temp_ret");
+static const Name SET_TEMP_RET_EXPORT("__set_temp_ret");
 
 // For non-emscripten module we expect the host to define these functions so
 // and we import them under these names.
-static Name GET_TEMP_RET_IMPORT("getTempRet0");
-static Name SET_TEMP_RET_IMPORT("setTempRet0");
+static const Name GET_TEMP_RET_IMPORT("getTempRet0");
+static const Name SET_TEMP_RET_IMPORT("setTempRet0");
 
 struct LegalizeJSInterface : public Pass {
   // Adds calls to new imports.

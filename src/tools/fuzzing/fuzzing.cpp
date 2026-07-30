@@ -4356,6 +4356,11 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
       }
       return null;
     }
+
+    case HeapType::waitqueue:
+    case HeapType::nowaitqueue: {
+      WASM_UNREACHABLE("waitqueue is unimplemented in the fuzzer");
+    }
   }
   WASM_UNREACHABLE("invalid basic ref type");
 }
@@ -5813,8 +5818,18 @@ Expression* TranslateToFuzzReader::makeBrOn(Type type) {
       WASM_UNREACHABLE("bad br_on op");
     }
   }
-  return fixFlowingType(
-    builder.makeBrOn(op, targetName, make(refType), castType));
+  auto* ref = make(refType);
+  if (op == BrOnCast || op == BrOnCastFail) {
+    auto desc = castType.getHeapType().getDescriptorType();
+    if (desc && !oneIn(2)) {
+      auto descOp = op == BrOnCast ? BrOnCastDescEq : BrOnCastDescEqFail;
+      auto descType = Type(*desc, Nullable, castType.getExactness());
+      auto* descRef = makeTrappingRefUse(descType);
+      auto* brOn = builder.makeBrOn(descOp, targetName, ref, castType, descRef);
+      return fixFlowingType(brOn);
+    }
+  }
+  return fixFlowingType(builder.makeBrOn(op, targetName, ref, castType));
 }
 
 Expression* TranslateToFuzzReader::makeContBind(Type type) {
@@ -6572,6 +6587,7 @@ Exactness TranslateToFuzzReader::getSubType(Exactness exactness) {
 }
 
 HeapType TranslateToFuzzReader::getSubType(HeapType type) {
+  assert(wasm.features.hasReferenceTypes());
   if (oneIn(3)) {
     return type;
   }
@@ -6580,7 +6596,6 @@ HeapType TranslateToFuzzReader::getSubType(HeapType type) {
     switch (type.getBasic(Unshared)) {
       case HeapType::func:
         // TODO: Typed function references.
-        assert(wasm.features.hasReferenceTypes());
         return pick(FeatureOptions<HeapType>()
                       .add(HeapTypes::func)
                       .add(FeatureSet::GC, HeapTypes::nofunc))
@@ -6588,7 +6603,6 @@ HeapType TranslateToFuzzReader::getSubType(HeapType type) {
       case HeapType::cont:
         return pick(HeapTypes::cont, HeapTypes::nocont).getBasic(share);
       case HeapType::ext: {
-        assert(wasm.features.hasReferenceTypes());
         auto options = FeatureOptions<HeapType>()
                          .add(HeapTypes::ext)
                          .add(FeatureSet::GC, HeapTypes::noext);
@@ -6599,7 +6613,6 @@ HeapType TranslateToFuzzReader::getSubType(HeapType type) {
         return pick(options).getBasic(share);
       }
       case HeapType::any: {
-        assert(wasm.features.hasReferenceTypes());
         assert(wasm.features.hasGC());
         return pick(HeapTypes::any,
                     HeapTypes::eq,
@@ -6610,7 +6623,6 @@ HeapType TranslateToFuzzReader::getSubType(HeapType type) {
           .getBasic(share);
       }
       case HeapType::eq:
-        assert(wasm.features.hasReferenceTypes());
         assert(wasm.features.hasGC());
         return pick(HeapTypes::eq,
                     HeapTypes::i31,
@@ -6636,6 +6648,10 @@ HeapType TranslateToFuzzReader::getSubType(HeapType type) {
       case HeapType::nocont:
       case HeapType::noexn:
         break;
+      case HeapType::waitqueue:
+      case HeapType::nowaitqueue: {
+        WASM_UNREACHABLE("waitqueue is unimplemented in the fuzzer");
+      }
     }
   }
   // Look for an interesting subtype.

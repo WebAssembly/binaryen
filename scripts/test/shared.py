@@ -213,6 +213,7 @@ WASM_OPT = [os.path.join(options.binaryen_bin, 'wasm-opt')]
 WASM_AS = [os.path.join(options.binaryen_bin, 'wasm-as')]
 WASM_DIS = [os.path.join(options.binaryen_bin, 'wasm-dis')]
 WASM2JS = [os.path.join(options.binaryen_bin, 'wasm2js')]
+WASM2C = [os.path.join(options.binaryen_bin, 'wasm2c')]
 WASM_CTOR_EVAL = [os.path.join(options.binaryen_bin, 'wasm-ctor-eval')]
 WASM_SHELL = [os.path.join(options.binaryen_bin, 'wasm-shell')]
 WASM_REDUCE = [os.path.join(options.binaryen_bin, 'wasm-reduce')]
@@ -268,6 +269,7 @@ V8_OPTS = [
     '--experimental-wasm-js-interop',
     '--experimental-wasm-acquire-release',
     '--experimental-wasm-wide-arithmetic',
+    '--wasm-compact-imports',
 ]
 
 # external tools

@@ -264,46 +264,6 @@
   )
 )
 
-(module
-  ;; CHECK:      (type $0 (func (result i64)))
-
-  ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $1 (func (param i32) (result i64)))
-
-  ;; CHECK:       (type $2 (struct))
-
-  ;; CHECK:      (global $g (mut i32) (i32.const 0))
-  (global $g (mut i32) (i32.const 0))
-
-  ;; CHECK:      (func $caller (type $1) (param $used i32) (result i64)
-  ;; CHECK-NEXT:  (global.set $g
-  ;; CHECK-NEXT:   (local.get $used)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (block (result i64)
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (local.get $used)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (call $callee)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $caller (param $used i32) (result i64)
-    ;; Same, but now both functions have a concrete result.
-    (global.set $g
-      (local.get $used)
-    )
-    (call $callee
-      (local.get $used)
-    )
-  )
-
-  ;; CHECK:      (func $callee (type $0) (result i64)
-  ;; CHECK-NEXT:  (local $unused i32)
-  ;; CHECK-NEXT:  (i64.const 0)
-  ;; CHECK-NEXT: )
-  (func $callee (param $unused i32) (result i64)
-    (i64.const 0)
-  )
-)
 
 ;; Tests with indirect function calls.
 
@@ -1873,18 +1833,14 @@
 (module
   ;; CHECK:      (type $0 (func))
 
-  ;; CHECK:      (type $1 (func (result (ref any))))
-
   ;; CHECK:      (import "" "" (func $effect (type $0)))
   (import "" "" (func $effect))
 
-  ;; CHECK:      (func $test (type $1) (result (ref any))
+  ;; CHECK:      (func $test (type $0)
   ;; CHECK-NEXT:  (local $unused (ref any))
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref any))
-  ;; CHECK-NEXT:    (call $effect)
-  ;; CHECK-NEXT:    (call $test)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (call $effect)
+  ;; CHECK-NEXT:   (call $test)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (local.set $unused
@@ -1895,23 +1851,20 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.get $unused)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (local.get $unused)
   ;; CHECK-NEXT: )
-  (func $test (param $unused (ref any)) (result (ref any))
+  (func $test (param $unused (ref any))
     ;; Same, but now there are also subsequent gets of the local. The get that
     ;; can read the original parameter value must be removed.
-    (drop
-      (call $test
-        (block (result (ref any))
-          (call $effect)
-          (local.get $unused)
-        )
+    (call $test
+      (block (result (ref any))
+        (call $effect)
+        (local.get $unused)
       )
     )
     (drop
       (local.get $unused)
     )
-    ;; The gets after this do not actually use the parameter and are not
+    ;; The get after this does not actually use the parameter and is not
     ;; removed.
     (local.set $unused
       (ref.i31
@@ -1921,7 +1874,6 @@
     (drop
       (local.get $unused)
     )
-    (local.get $unused)
   )
 )
 
@@ -2172,22 +2124,6 @@
     (global.set $g
       (local.get $used)
     )
-  )
-)
-
-(module
-  ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $0 (func (param i32) (result i32)))
-
-  ;; CHECK:       (type $1 (struct))
-
-  ;; CHECK:      (func $test (type $0) (param $used i32) (result i32)
-  ;; CHECK-NEXT:  (local.get $used)
-  ;; CHECK-NEXT: )
-  (func $test (param $used i32) (result i32)
-    ;; Returning the result of the local.get counts as using it.
-    ;; TODO: Optimize out unused function results as well.
-    (local.get $used)
   )
 )
 
@@ -2835,18 +2771,14 @@
   ;; CHECK:      (rec
   ;; CHECK-NEXT:  (type $2 (func))
 
-  ;; CHECK:       (type $3 (func (result i32)))
+  ;; CHECK:       (type $3 (func))
 
   ;; CHECK:       (type $4 (func))
 
-  ;; CHECK:       (type $5 (func))
-
-  ;; CHECK:      (type $6 (func (param i32) (result i32)))
-
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $7 (func (param i32)))
+  ;; CHECK-NEXT:  (type $5 (func (param i32)))
 
-  ;; CHECK:       (type $8 (struct))
+  ;; CHECK:       (type $6 (struct))
 
   ;; CHECK:      (import "" "" (func $effect (type $1) (result i32)))
   (import "" "" (func $effect (result i32)))
@@ -2927,7 +2859,7 @@
     )
   )
 
-  ;; CHECK:      (func $br-if (type $7) (param $used i32)
+  ;; CHECK:      (func $br-if (type $5) (param $used i32)
   ;; CHECK-NEXT:  (local $unused i32)
   ;; CHECK-NEXT:  (block $trampoline0
   ;; CHECK-NEXT:   (drop
@@ -2973,59 +2905,63 @@
     )
   )
 
-  ;; CHECK:      (func $br-table-mixed (type $6) (param $used i32) (result i32)
+  ;; CHECK:      (func $br-table-mixed (type $5) (param $used i32)
   ;; CHECK-NEXT:  (local $unused i32)
-  ;; CHECK-NEXT:  (block $outer (result i32)
-  ;; CHECK-NEXT:   (block $trampoline0
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block $l (result i32)
-  ;; CHECK-NEXT:      (block
-  ;; CHECK-NEXT:       (drop
-  ;; CHECK-NEXT:        (call $effect)
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:       (drop
-  ;; CHECK-NEXT:        (block $inner (result i32)
-  ;; CHECK-NEXT:         (br_table $inner $l $outer
-  ;; CHECK-NEXT:          (i32.const 0)
-  ;; CHECK-NEXT:          (local.get $used)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block $outer (result i32)
+  ;; CHECK-NEXT:    (block $trampoline0
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (block $l (result i32)
+  ;; CHECK-NEXT:       (block
+  ;; CHECK-NEXT:        (drop
+  ;; CHECK-NEXT:         (call $effect)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (drop
+  ;; CHECK-NEXT:         (block $inner (result i32)
+  ;; CHECK-NEXT:          (br_table $inner $l $outer
+  ;; CHECK-NEXT:           (i32.const 0)
+  ;; CHECK-NEXT:           (local.get $used)
+  ;; CHECK-NEXT:          )
   ;; CHECK-NEXT:         )
   ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (drop
+  ;; CHECK-NEXT:         (call $effect)
+  ;; CHECK-NEXT:        )
   ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:       (drop
-  ;; CHECK-NEXT:        (call $effect)
-  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (br $trampoline0)
   ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (br $trampoline0)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $br-table-mixed (param $unused i32) (param $used i32) (result i32)
+  (func $br-table-mixed (param $unused i32) (param $used i32)
     ;; This is a case where it would be impossible to remove the branch values
     ;; because they also go out to labels we are not modifying.
-    (block $outer (result i32)
-      (drop
-        (block $l (result i32)
-          (drop
-            (call $effect)
-          )
-          (drop
-            (block $inner (result i32)
-              (br_table $inner $l $outer
-                (i32.const 0)
-                (local.get $used)
+    (drop
+      (block $outer (result i32)
+        (drop
+          (block $l (result i32)
+            (drop
+              (call $effect)
+            )
+            (drop
+              (block $inner (result i32)
+                (br_table $inner $l $outer
+                  (i32.const 0)
+                  (local.get $used)
+                )
               )
             )
+            (drop
+              (call $effect)
+            )
+            (local.get $unused)
           )
-          (drop
-            (call $effect)
-          )
-          (local.get $unused)
         )
+        (i32.const 1)
       )
-      (i32.const 1)
     )
   )
 
@@ -3551,34 +3487,41 @@
 )
 
 (module
-  ;; CHECK:      (type $0 (func (result i32)))
+  ;; CHECK:      (type $0 (func))
 
-  ;; CHECK:      (func $test (type $0) (result i32)
+  ;; CHECK:      (global $g (mut i32) (i32.const 0))
+  (global $g (mut i32) (i32.const 0))
+
+  ;; CHECK:      (func $test (type $0)
   ;; CHECK-NEXT:  (local $unused i32)
-  ;; CHECK-NEXT:  (if
-  ;; CHECK-NEXT:   (unreachable)
-  ;; CHECK-NEXT:   (then
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:  (global.set $g
+  ;; CHECK-NEXT:   (if
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (then
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $test (param $unused i32) (result i32)
+  (func $test (param $unused i32)
     ;; If we did not remove the If from the set of removed expressions after
     ;; processing it once, then when we process it a second time it would fail
     ;; the assertion that removed Ifs must have two arms.
-    (i32.add
-      (if (result i32)
-        (unreachable)
-        (then
-          (i32.const 0)
+    (global.set $g
+      (i32.add
+        (if (result i32)
+          (unreachable)
+          (then
+            (i32.const 0)
+          )
+          (else
+            (local.get $unused)
+          )
         )
-        (else
-          (local.get $unused)
-        )
+        (local.get $unused)
       )
-      (local.get $unused)
     )
   )
 )

@@ -225,9 +225,9 @@ def bin_statement_lines(template: Template, mem_idx: int, mem_ptr_type: ValueTyp
     has_ordering = ordering is not None
     has_mem_idx = mem_idx is not None
     raw_alignment = int(math.log2(mem_ptr_type.value // 8))
-    alignment = raw_alignment | (has_ordering << 5) | (has_mem_idx << 6)
+    alignment = raw_alignment | (has_ordering << 4) | (has_mem_idx << 6)
     comment = f"Alignment of {raw_alignment}" \
-              f'{" with bit 5 set indicating that an ordering immediate follows" if has_ordering else ""}' \
+              f'{" with bit 4 set indicating that an ordering immediate follows" if has_ordering else ""}' \
               f'{" and" if has_ordering and has_mem_idx else ""}' \
               f'{" with bit 6 set indicating that a memory index immediate follows" if has_mem_idx else ""}'
 

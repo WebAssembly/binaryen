@@ -778,9 +778,10 @@ public:
     ResumeThrowId,
     StackSwitchId,
     StructWaitId,
-    StructNotifyId,
     WideIntAddSubId,
     WideIntMulId,
+    WaitqueueNewId,
+    WaitqueueNotifyId,
     NumExpressionIds
   };
   Id _id;
@@ -1812,6 +1813,7 @@ public:
   StructWait(MixedArena& allocator) : StructWait() {}
 
   Expression* ref;
+  Expression* waitqueue;
   Expression* expected;
   Expression* timeout;
   Index index;
@@ -1819,14 +1821,22 @@ public:
   void finalize();
 };
 
-class StructNotify : public SpecificExpression<Expression::StructNotifyId> {
+class WaitqueueNew : public SpecificExpression<Expression::WaitqueueNewId> {
 public:
-  StructNotify() = default;
-  StructNotify(MixedArena& allocator) : StructNotify() {}
+  WaitqueueNew() = default;
+  WaitqueueNew(MixedArena& allocator) : WaitqueueNew() {}
 
-  Expression* ref;
+  void finalize();
+};
+
+class WaitqueueNotify
+  : public SpecificExpression<Expression::WaitqueueNotifyId> {
+public:
+  WaitqueueNotify() = default;
+  WaitqueueNotify(MixedArena& allocator) : WaitqueueNotify() {}
+
+  Expression* waitqueue;
   Expression* count;
-  Index index;
 
   void finalize();
 };
@@ -1918,6 +1928,8 @@ public:
 
   uint8_t bytes;
   bool signed_ = false;
+  Address offset = 0;
+  Address align = 0;
   Expression* ref;
   Expression* index;
 
@@ -1930,6 +1942,8 @@ public:
   ArrayStore(MixedArena& allocator) {}
 
   uint8_t bytes;
+  Address offset = 0;
+  Address align = 0;
   Expression* ref;
   Expression* index;
   Expression* value;
@@ -2727,6 +2741,9 @@ public:
   Name name;
 
   std::unordered_map<HeapType, TypeNames> typeNames;
+
+  // The source binary's type indices. Used in some cases for preserving
+  // ordering of types.
   std::unordered_map<HeapType, Index> typeIndices;
 
   // Potential effects for bodies of indirect calls to this type. Populated by
@@ -2743,6 +2760,7 @@ public:
   // This data is only meaningful for indirect calls. If no indirect call
   // exists to a function, the data can be out of date (no effort is made to
   // clean up the data if e.g. all indirect calls to a function are removed).
+  //
   // TODO: Account for exactness here.
   std::unordered_map<HeapType, std::shared_ptr<const EffectAnalyzer>>
     indirectCallEffects;

@@ -393,6 +393,8 @@ template<typename Ctx> Result<> subtype(Ctx&);
 template<typename Ctx> MaybeResult<> typedef_(Ctx&);
 template<typename Ctx> MaybeResult<> rectype(Ctx&);
 template<typename Ctx> MaybeResult<typename Ctx::LocalsT> locals(Ctx&);
+template<typename Ctx>
+Result<> importdesc(Ctx&, Name, Name, std::optional<Name>);
 template<typename Ctx> MaybeResult<> import_(Ctx&);
 template<typename Ctx> MaybeResult<> func(Ctx&);
 template<typename Ctx> MaybeResult<> table(Ctx&);
@@ -460,6 +462,12 @@ Result<typename Ctx::HeapTypeT> absheaptype(Ctx& ctx, Shareability share) {
   }
   if (ctx.in.takeKeyword("nocont"sv)) {
     return ctx.makeNocontType(share);
+  }
+  if (ctx.in.takeKeyword("waitqueue"sv)) {
+    return ctx.makeWaitqueueType(share);
+  }
+  if (ctx.in.takeKeyword("nowaitqueue"sv)) {
+    return ctx.makeNowaitqueueType(share);
   }
   return ctx.in.err("expected abstract heap type");
 }
@@ -726,9 +734,6 @@ template<typename Ctx> Result<typename Ctx::FieldT> storagetype(Ctx& ctx) {
   }
   if (ctx.in.takeKeyword("i16"sv)) {
     return ctx.makeI16();
-  }
-  if (ctx.in.takeKeyword("waitqueue"sv)) {
-    return ctx.makeWaitQueue();
   }
 
   auto type = valtype(ctx);
@@ -1807,8 +1812,13 @@ Result<> makeLoad(Ctx& ctx,
                   bool signed_,
                   int bytes,
                   bool isAtomic) {
+  auto mem = maybeMemidx(ctx);
+  CHECK_ERR(mem);
 
   if (ctx.in.takeSExprStart("type"sv)) {
+    if (mem) {
+      return ctx.in.err("memory index is not allowed for array load");
+    }
     auto arrayType = typeidx(ctx);
     CHECK_ERR(arrayType);
 
@@ -1816,12 +1826,12 @@ Result<> makeLoad(Ctx& ctx,
       return ctx.in.err("expected end of type use");
     }
 
-    return ctx.makeArrayLoad(
-      pos, annotations, type, bytes, signed_, *arrayType);
-  }
+    auto arg = memarg(ctx, bytes);
+    CHECK_ERR(arg);
 
-  auto mem = maybeMemidx(ctx);
-  CHECK_ERR(mem);
+    return ctx.makeArrayLoad(
+      pos, annotations, type, bytes, signed_, *arg, *arrayType);
+  }
 
   // We could only parse this when `isAtomic`, but this way gives a clearer
   // error when a memorder is given for non-atomic operations
@@ -1855,7 +1865,13 @@ Result<> makeStore(Ctx& ctx,
                    Type type,
                    int bytes,
                    bool isAtomic) {
+  auto mem = maybeMemidx(ctx);
+  CHECK_ERR(mem);
+
   if (ctx.in.takeSExprStart("type"sv)) {
+    if (mem) {
+      return ctx.in.err("memory index is not allowed for array store");
+    }
     auto arrayType = typeidx(ctx);
     CHECK_ERR(arrayType);
 
@@ -1863,10 +1879,11 @@ Result<> makeStore(Ctx& ctx,
       return ctx.in.err("expected end of type use");
     }
 
-    return ctx.makeArrayStore(pos, annotations, type, bytes, *arrayType);
+    auto arg = memarg(ctx, bytes);
+    CHECK_ERR(arg);
+
+    return ctx.makeArrayStore(pos, annotations, type, bytes, *arg, *arrayType);
   }
-  auto mem = maybeMemidx(ctx);
-  CHECK_ERR(mem);
 
   auto maybeOrder = maybeMemOrder(ctx);
   CHECK_ERR(maybeOrder);
@@ -2575,14 +2592,17 @@ Result<> makeStructWait(Ctx& ctx,
 }
 
 template<typename Ctx>
-Result<> makeStructNotify(Ctx& ctx,
+Result<> makeWaitqueueNew(Ctx& ctx,
                           Index pos,
                           const std::vector<Annotation>& annotations) {
-  auto type = typeidx(ctx);
-  CHECK_ERR(type);
-  auto field = fieldidx(ctx, *type);
-  CHECK_ERR(field);
-  return ctx.makeStructNotify(pos, annotations, *type, *field);
+  return ctx.makeWaitqueueNew(pos, annotations);
+}
+
+template<typename Ctx>
+Result<> makeWaitqueueNotify(Ctx& ctx,
+                             Index pos,
+                             const std::vector<Annotation>& annotations) {
+  return ctx.makeWaitqueueNotify(pos, annotations);
 }
 
 template<typename Ctx>
@@ -3424,15 +3444,74 @@ template<typename Ctx> MaybeResult<typename Ctx::LocalsT> locals(Ctx& ctx) {
   return {};
 }
 
-// import ::= '(' 'import' mod:name nm:name importdesc ')'
 // importdesc ::= '(' 'func' id? exacttypeuse ')'
 //              | '(' 'table' id? tabletype ')'
 //              | '(' 'memory' id? memtype ')'
 //              | '(' 'global' id? globaltype ')'
 //              | '(' 'tag' id? typeuse ')'
-template<typename Ctx> MaybeResult<> import_(Ctx& ctx) {
+template<typename Ctx>
+Result<> importdesc(Ctx& ctx, Name mod, Name nm, std::optional<Name> id) {
   auto pos = ctx.in.getPos();
+  // We only try to parse an ID if `id` is nullopt.
+  auto getID = [&]() {
+    if (id) {
+      return *id;
+    }
+    auto parsed = ctx.in.takeID();
+    return parsed ? *parsed : Name{};
+  };
+  ImportNames names{mod, nm};
+  if (ctx.in.takeSExprStart("func"sv)) {
+    auto name = getID();
+    auto use = exacttypeuse(ctx);
+    CHECK_ERR(use);
+    auto [type, exact] = *use;
+    // TODO: function import annotations
+    CHECK_ERR(ctx.addFunc(name,
+                          {},
+                          &names,
+                          type,
+                          exact,
+                          std::nullopt,
+                          {},
+                          pos,
+                          DefKind::ImportDesc));
+  } else if (ctx.in.takeSExprStart("table"sv)) {
+    auto name = getID();
+    auto type = tabletype(ctx);
+    CHECK_ERR(type);
+    CHECK_ERR(ctx.addTable(
+      name, {}, &names, *type, std::nullopt, pos, DefKind::ImportDesc));
+  } else if (ctx.in.takeSExprStart("memory"sv)) {
+    auto name = getID();
+    auto type = memtype(ctx);
+    CHECK_ERR(type);
+    CHECK_ERR(ctx.addMemory(name, {}, &names, *type, pos, DefKind::ImportDesc));
+  } else if (ctx.in.takeSExprStart("global"sv)) {
+    auto name = getID();
+    auto type = globaltype(ctx);
+    CHECK_ERR(type);
+    CHECK_ERR(ctx.addGlobal(
+      name, {}, &names, *type, std::nullopt, pos, DefKind::ImportDesc));
+  } else if (ctx.in.takeSExprStart("tag"sv)) {
+    auto name = getID();
+    auto type = typeuse(ctx);
+    CHECK_ERR(type);
+    CHECK_ERR(ctx.addTag(name, {}, &names, *type, pos, DefKind::ImportDesc));
+  } else {
+    return ctx.in.err("expected import description");
+  }
 
+  if (!ctx.in.takeRParen()) {
+    return ctx.in.err("expected end of import description");
+  }
+  return Ok{};
+}
+
+// import ::= '(' 'import' mod:name nm:name importdesc ')'
+//          | '(' 'import' mod:name (item id? nm:name importdesc)+ ')'
+//          | '(' 'import' mod:name (item id? nm:name)+ importdesc ')'
+template<typename Ctx> MaybeResult<> import_(Ctx& ctx) {
   if (!ctx.in.takeSExprStart("import"sv)) {
     return {};
   }
@@ -3442,49 +3521,59 @@ template<typename Ctx> MaybeResult<> import_(Ctx& ctx) {
     return ctx.in.err("expected import module name");
   }
 
-  auto nm = ctx.in.takeName();
-  if (!nm) {
-    return ctx.in.err("expected import name");
-  }
-  ImportNames names{*mod, *nm};
-
-  if (ctx.in.takeSExprStart("func"sv)) {
-    auto name = ctx.in.takeID();
-    auto use = exacttypeuse(ctx);
-    CHECK_ERR(use);
-    auto [type, exact] = *use;
-    // TODO: function import annotations
-    CHECK_ERR(ctx.addFunc(
-      name ? *name : Name{}, {}, &names, type, exact, std::nullopt, {}, pos));
-  } else if (ctx.in.takeSExprStart("table"sv)) {
-    auto name = ctx.in.takeID();
-    auto type = tabletype(ctx);
-    CHECK_ERR(type);
-    CHECK_ERR(ctx.addTable(
-      name ? *name : Name{}, {}, &names, *type, std::nullopt, pos));
-  } else if (ctx.in.takeSExprStart("memory"sv)) {
-    auto name = ctx.in.takeID();
-    auto type = memtype(ctx);
-    CHECK_ERR(type);
-    CHECK_ERR(ctx.addMemory(name ? *name : Name{}, {}, &names, *type, pos));
-  } else if (ctx.in.takeSExprStart("global"sv)) {
-    auto name = ctx.in.takeID();
-    auto type = globaltype(ctx);
-    CHECK_ERR(type);
-    CHECK_ERR(ctx.addGlobal(
-      name ? *name : Name{}, {}, &names, *type, std::nullopt, pos));
-  } else if (ctx.in.takeSExprStart("tag"sv)) {
-    auto name = ctx.in.takeID();
-    auto type = typeuse(ctx);
-    CHECK_ERR(type);
-    CHECK_ERR(ctx.addTag(name ? *name : Name{}, {}, &names, *type, pos));
-  } else {
-    return ctx.in.err("expected import description");
+  if (auto nm = ctx.in.takeName()) {
+    CHECK_ERR(importdesc(ctx, *mod, *nm, std::nullopt));
+    if (!ctx.in.takeRParen()) {
+      return ctx.in.err("expected end of import");
+    }
+    return Ok{};
   }
 
-  if (!ctx.in.takeRParen()) {
-    return ctx.in.err("expected end of import description");
+  struct CompactItem {
+    Name id;
+    Name name;
+  };
+  std::vector<CompactItem> items;
+  std::optional<bool> hasSharedImportDesc;
+  while (ctx.in.takeSExprStart("item"sv)) {
+    auto id = ctx.in.takeID();
+    if (!id) {
+      // Do not allow parsing an id in the importdesc.
+      id = Name{};
+    }
+
+    auto nm = ctx.in.takeName();
+    if (!nm) {
+      return ctx.in.err("expected import name");
+    }
+
+    if (!hasSharedImportDesc.has_value()) {
+      hasSharedImportDesc = ctx.in.peekRParen();
+    }
+
+    if (*hasSharedImportDesc) {
+      items.push_back(CompactItem{*id, *nm});
+    } else {
+      CHECK_ERR(importdesc(ctx, *mod, *nm, id))
+    }
+
+    if (!ctx.in.takeRParen()) {
+      return ctx.in.err("expected end of import item");
+    }
   }
+  if (!hasSharedImportDesc.has_value()) {
+    // There were no items.
+    return ctx.in.err("expected import name or item");
+  }
+
+  if (*hasSharedImportDesc) {
+    auto pos = ctx.in.getPos();
+    for (auto item : items) {
+      ctx.in.setPos(pos);
+      CHECK_ERR(importdesc(ctx, *mod, item.name, item.id));
+    }
+  }
+
   if (!ctx.in.takeRParen()) {
     return ctx.in.err("expected end of import");
   }
@@ -3551,7 +3640,8 @@ template<typename Ctx> MaybeResult<> func(Ctx& ctx) {
                         exact,
                         localVars,
                         std::move(annotations),
-                        pos));
+                        pos,
+                        DefKind::Definition));
   return Ok{};
 }
 
@@ -3640,7 +3730,8 @@ template<typename Ctx> MaybeResult<> table(Ctx& ctx) {
     return ctx.in.err("expected end of table declaration");
   }
 
-  CHECK_ERR(ctx.addTable(name, *exports, import.getPtr(), *ttype, init, pos));
+  CHECK_ERR(ctx.addTable(
+    name, *exports, import.getPtr(), *ttype, init, pos, DefKind::Definition));
 
   if (elems) {
     CHECK_ERR(ctx.addImplicitElems(*type, std::move(*elems)));
@@ -3711,7 +3802,8 @@ template<typename Ctx> MaybeResult<> memory(Ctx& ctx) {
     return ctx.in.err("expected end of memory declaration");
   }
 
-  CHECK_ERR(ctx.addMemory(name, *exports, import.getPtr(), *mtype, pos));
+  CHECK_ERR(ctx.addMemory(
+    name, *exports, import.getPtr(), *mtype, pos, DefKind::Definition));
 
   if (data) {
     CHECK_ERR(ctx.addImplicitData(std::move(*data)));
@@ -3754,7 +3846,8 @@ template<typename Ctx> MaybeResult<> global(Ctx& ctx) {
     return ctx.in.err("expected end of global");
   }
 
-  CHECK_ERR(ctx.addGlobal(name, *exports, import.getPtr(), *type, exp, pos));
+  CHECK_ERR(ctx.addGlobal(
+    name, *exports, import.getPtr(), *type, exp, pos, DefKind::Definition));
   return Ok{};
 }
 
@@ -4027,7 +4120,8 @@ template<typename Ctx> MaybeResult<> tag(Ctx& ctx) {
     return ctx.in.err("expected end of tag");
   }
 
-  CHECK_ERR(ctx.addTag(name, *exports, import.getPtr(), *type, pos));
+  CHECK_ERR(ctx.addTag(
+    name, *exports, import.getPtr(), *type, pos, DefKind::Definition));
   return Ok{};
 }
 

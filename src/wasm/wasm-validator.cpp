@@ -568,7 +568,8 @@ public:
   void visitArrayRMW(ArrayRMW* curr);
   void visitArrayCmpxchg(ArrayCmpxchg* curr);
   void visitStructWait(StructWait* curr);
-  void visitStructNotify(StructNotify* curr);
+  void visitWaitqueueNew(WaitqueueNew* curr);
+  void visitWaitqueueNotify(WaitqueueNotify* curr);
   void visitStringNew(StringNew* curr);
   void visitStringConst(StringConst* curr);
   void visitStringMeasure(StringMeasure* curr);
@@ -3304,7 +3305,8 @@ void FunctionValidator::visitBrOn(BrOn* curr) {
       curr->castType.isCastable(), curr, "br_on cannot cast to invalid type");
   }
 
-  if (curr->ref->type == Type::unreachable) {
+  if (curr->type == Type::unreachable ||
+      (curr->desc && curr->desc->type == Type::unreachable)) {
     return;
   }
   if (!shouldBeTrue(
@@ -3647,6 +3649,10 @@ void FunctionValidator::visitStructWait(StructWait* curr) {
     curr,
     "struct.wait requires shared-everything [--enable-shared-everything]");
 
+  shouldBeSubType(curr->waitqueue->type,
+                  Type(HeapTypes::sharedWaitqueue, Nullable),
+                  curr,
+                  "struct.wait waitqueue must be a shared waitqueue reference");
   shouldBeEqual(curr->expected->type,
                 Type(Type::BasicType::i32),
                 curr,
@@ -3661,26 +3667,30 @@ void FunctionValidator::visitStructWait(StructWait* curr) {
   // * The reference arg is a subtype of the type immediate
   // * The index immediate is a valid field index of the type immediate (and
   // thus valid for the reference's type too)
-  // * The index points to a packed waitqueue field
 }
 
-void FunctionValidator::visitStructNotify(StructNotify* curr) {
+void FunctionValidator::visitWaitqueueNew(WaitqueueNew* curr) {
   shouldBeTrue(
     !getModule() || getModule()->features.hasSharedEverything(),
     curr,
-    "struct.notify requires shared-everything [--enable-shared-everything]");
+    "waitqueue.new requires shared-everything [--enable-shared-everything]");
+}
 
+void FunctionValidator::visitWaitqueueNotify(WaitqueueNotify* curr) {
+  shouldBeTrue(
+    !getModule() || getModule()->features.hasSharedEverything(),
+    curr,
+    "waitqueue.notify requires shared-everything [--enable-shared-everything]");
+
+  shouldBeSubType(
+    curr->waitqueue->type,
+    Type(HeapTypes::sharedWaitqueue, Nullable),
+    curr,
+    "waitqueue.notify waitqueue must be a shared waitqueue reference");
   shouldBeEqual(curr->count->type,
                 Type(Type::BasicType::i32),
                 curr,
-                "struct.notify count must be an i32");
-
-  // Checks to the ref argument's type are done in IRBuilder where we have the
-  // type annotation immediate available. We check that
-  // * The reference arg is a subtype of the type immediate
-  // * The index immediate is a valid field index of the type immediate (and
-  // thus valid for the reference's type too)
-  // * The index points to a packed waitqueue field
+                "waitqueue.notify count must be an i32");
 }
 
 void FunctionValidator::visitArrayNew(ArrayNew* curr) {
@@ -3868,6 +3878,11 @@ void FunctionValidator::visitArraySet(ArraySet* curr) {
   shouldBeTrue(element.mutable_, curr, "array.set type must be mutable");
 }
 
+static bool isValidMultibyteElement(const Field& element) {
+  return element.packedType == Field::i8 || element.packedType == Field::i16 ||
+         (element.packedType == Field::NotPacked && element.type.isNumber());
+}
+
 void FunctionValidator::visitArrayLoad(ArrayLoad* curr) {
   shouldBeTrue(getModule()->features.hasMultibyte(),
                curr,
@@ -3876,6 +3891,10 @@ void FunctionValidator::visitArrayLoad(ArrayLoad* curr) {
                                     Type(Type::i32),
                                     curr,
                                     "array load index must be an i32");
+  validateMemBytes(curr->bytes, curr->type, curr);
+  validateOffset(curr->offset, nullptr, curr);
+  validateAlignment(
+    curr->align, curr->type, curr->bytes, /*isAtomic=*/false, curr);
   if (curr->type == Type::unreachable) {
     return;
   }
@@ -3889,8 +3908,9 @@ void FunctionValidator::visitArrayLoad(ArrayLoad* curr) {
 
   auto heapType = curr->ref->type.getHeapType();
   const auto& element = heapType.getArray().element;
-  shouldBeTrue(
-    element.packedType == Field::i8, curr, "array load type must be i8");
+  shouldBeTrue(isValidMultibyteElement(element),
+               curr,
+               "array load type must be a numeric type");
 }
 
 void FunctionValidator::visitArrayStore(ArrayStore* curr) {
@@ -3901,6 +3921,10 @@ void FunctionValidator::visitArrayStore(ArrayStore* curr) {
                                     Type(Type::i32),
                                     curr,
                                     "array store index must be an i32");
+  validateMemBytes(curr->bytes, curr->value->type, curr);
+  validateOffset(curr->offset, nullptr, curr);
+  validateAlignment(
+    curr->align, curr->value->type, curr->bytes, /*isAtomic=*/false, curr);
   if (curr->type == Type::unreachable) {
     return;
   }
@@ -3914,8 +3938,9 @@ void FunctionValidator::visitArrayStore(ArrayStore* curr) {
 
   auto heapType = curr->ref->type.getHeapType();
   const auto& element = heapType.getArray().element;
-  shouldBeTrue(
-    element.packedType == Field::i8, curr, "array store type must be i8");
+  shouldBeTrue(isValidMultibyteElement(element),
+               curr,
+               "array store type must be a numeric type");
   shouldBeTrue(element.mutable_, curr, "array store type must be mutable");
 }
 
@@ -4842,7 +4867,8 @@ void FunctionValidator::visitFunction(Function* curr) {
 void FunctionValidator::validateOffset(Address offset,
                                        Memory* mem,
                                        Expression* curr) {
-  shouldBeTrue(mem->is64() || offset <= std::numeric_limits<uint32_t>::max(),
+  shouldBeTrue((mem && mem->is64()) ||
+                 offset <= std::numeric_limits<uint32_t>::max(),
                curr,
                "offset must be u32");
 }

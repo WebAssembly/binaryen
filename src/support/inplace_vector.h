@@ -138,8 +138,8 @@ public:
       : wasm::ParentIndexIterator<inplace_vector<T, N>*, Iterator>{parent,
                                                                    index} {}
 
-    T& operator*() { return (*this->parent)[this->index]; }
-    T* operator->() { return &(*this->parent)[this->index]; }
+    T& operator*() const { return (*this->parent)[this->index]; }
+    T* operator->() const { return &(*this->parent)[this->index]; }
   };
 
   struct ConstIterator
@@ -151,6 +151,9 @@ public:
     ConstIterator(const inplace_vector<T, N>* parent, size_t index)
       : wasm::ParentIndexIterator<const inplace_vector<T, N>*, ConstIterator>{
           parent, index} {}
+    ConstIterator(const Iterator& other)
+      : wasm::ParentIndexIterator<const inplace_vector<T, N>*, ConstIterator>{
+          other.parent, other.index} {}
     ConstIterator(const ConstIterator& other) = default;
 
     const T& operator*() const { return (*this->parent)[this->index]; }
@@ -161,6 +164,18 @@ public:
   Iterator end() { return Iterator(this, size()); }
   ConstIterator begin() const { return ConstIterator(this, 0); }
   ConstIterator end() const { return ConstIterator(this, size()); }
+
+  Iterator insert(ConstIterator pos, const T& x) {
+    assert(usedFixed < N);
+    assert(pos.index <= usedFixed);
+    size_t index = pos.index;
+    std::move_backward(fixed.begin() + index,
+                       fixed.begin() + usedFixed,
+                       fixed.begin() + usedFixed + 1);
+    fixed[index] = x;
+    usedFixed++;
+    return Iterator(this, index);
+  }
 
   Iterator erase(ConstIterator first, ConstIterator last) {
     assert(first.index <= last.index);

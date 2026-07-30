@@ -31,10 +31,14 @@
 
 namespace wasm {
 
-Name I64S_REM("i64s-rem");
-Name I64U_REM("i64u-rem");
-Name I64S_DIV("i64s-div");
-Name I64U_DIV("i64u-div");
+static const Name I64S_REM("i64s-rem");
+static const Name I64U_REM("i64u-rem");
+static const Name I64S_DIV("i64s-div");
+static const Name I64U_DIV("i64u-div");
+static const Name F64_TO_INT64("f64-to-int64");
+static const Name F64_TO_UINT64("f64-to-uint64");
+static const Name F32_TO_INT64("f32-to-int64");
+static const Name F32_TO_UINT64("f32-to-uint64");
 
 static Expression* ensureDouble(Expression* expr, MixedArena& allocator) {
   if (expr->type == Type::f32) {
