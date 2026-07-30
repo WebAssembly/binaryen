@@ -18,7 +18,7 @@ import sys
 
 assert sys.version_info >= (3, 10), 'requires Python 3.10'
 
-# ruff: noqa: E241
+# ruff: file-ignore[multiple-spaces-after-comma]
 
 instructions = [
     ("unreachable",    "makeUnreachable()"),

@@ -228,7 +228,7 @@ file_names[  1]:
  (export "stackRestore" (func $fimport$6))
  (export "__growWasmMemory" (func $fimport$7))
  (func $0 (result i32)
-  ;; code offset: 0x3
+  ;; code offset: 0x3 - 0x6
   (i32.const 1024)
  )
  ;; custom section "sourceMappingURL", size 15
