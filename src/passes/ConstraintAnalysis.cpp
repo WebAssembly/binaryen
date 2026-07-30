@@ -277,6 +277,31 @@ struct ConstraintAnalysis
   // be. We then do the Loops flow afterwards, adding more information but not
   // making anything worse.
   void flowNormally() {
+    struct Handler {
+      bool doApplyToConstraints(Expression* curr,
+                                BasicBlockConstraintMap& constraints) const {
+        // Nothing custom here; use the default behavior.
+        return false;
+      }
+
+      bool doBranch(const LocalConstraint& branch,
+                    BasicBlockConstraintMap& constraints) const {
+        // Nothing custom here; use the default behavior.
+        return false;
+      }
+    };
+
+    doFlow(Handler());
+  }
+
+  // Given a worklist initialized to the starting point, keep processing it
+  // until nothing remains. A handler is provided with two hooks,
+  // doApplyToConstraints and doBranch, each of which returns true if it handled
+  // the inputs (if not, we run the default behavior).
+  template<typename T> // can we template on the function itself? is this
+                       // already fast?
+  void doFlow(const T& handler) {
+
     // Start from the entry as the only reachable block. That block has incoming
     // values - defaults - for each var.
     entry->contents.startConstraints.setReachable();
@@ -305,30 +330,6 @@ struct ConstraintAnalysis
     UniqueDeferredQueue<BasicBlock*> work;
     work.push(entry);
 
-    struct Handler {
-      bool doApplyToConstraints(Expression* curr,
-                                BasicBlockConstraintMap& constraints) const {
-        // Nothing custom here; use the default behavior.
-        return false;
-      }
-
-      bool doBranch(const LocalConstraint& branch,
-                    BasicBlockConstraintMap& constraints) const {
-        // Nothing custom here; use the default behavior.
-        return false;
-      }
-    };
-
-    doFlow(work, Handler());
-  }
-
-  // Given a worklist initialized to the starting point, keep processing it
-  // until nothing remains. A handler is provided with two hooks,
-  // doApplyToConstraints and doBranch, each of which returns true if it handled
-  // the inputs (if not, we run the default behavior).
-  template<typename T> // can we template on the function itself? is this
-                       // already fast?
-  void doFlow(UniqueDeferredQueue<BasicBlock*>& work, const T& handler) {
     while (!work.empty()) {
       auto* block = work.pop();
 
@@ -378,24 +379,6 @@ std::cout << "  flowed to out, now  start: " << outStartConstraints << "\n\n";
 
   void flowLoops() {
 std::cout << "fl\n";
-
-    // As described above, we do two things differently in the Loop flow: we
-    // process x++ operations, and we apply branch constraints in a
-    // "pessimistic" way, which can help those x++s expand into the full range
-    // for the loop. All this only helps if we actually have x++s, so we find
-    // those and flow from their blocks.
-    UniqueDeferredQueue<BasicBlock*> work;
-    for (auto& block : basicBlocks) {
-      for (auto** currp : block->contents.actions) {
-        // x = y + 1
-        using namespace Match;
-        if (matches(*currp, binary(Abstract::Add, local(), ival(1)))) {
-std::cout << "fl1\n";
-          work.push(block.get());
-          break;
-        }
-      }
-    }
 
     struct Handler {
       bool doApplyToConstraints(Expression* curr,
@@ -498,7 +481,7 @@ std::cout << "fl5.7\n"; // TODO
 
 std::cout << "fl1.5: now doing Loop flow!!1\n";
 // XXX can't continue flow, must start from scratchh before was ruinnedd
-    doFlow(work, Handler());
+    doFlow(Handler());
 
     // TODO: copy old flow data, only merge us in when we actually improve?
   }
