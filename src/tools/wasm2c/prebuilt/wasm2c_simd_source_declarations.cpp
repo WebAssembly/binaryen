@@ -204,7 +204,8 @@ DEFINE_SIMD_STORE_LANE(v128_store32_lane3, simde_wasm_v128_store32_lane, u32, 3)
 DEFINE_SIMD_STORE_LANE(v128_store64_lane0, simde_wasm_v128_store64_lane, u64, 0)
 DEFINE_SIMD_STORE_LANE(v128_store64_lane1, simde_wasm_v128_store64_lane, u64, 1)
 #endif
-
+)w2c_template"
+R"w2c_template(
 #if WASM_RT_BIG_ENDIAN
 #define v128_const(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p) simde_wasm_i8x16_const(p,o,n,m,l,k,j,i,h,g,f,e,d,c,b,a)
 #define v128_i8x16_extract_lane(v, l) simde_wasm_i8x16_extract_lane(v, 15-(l))
