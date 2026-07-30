@@ -342,7 +342,7 @@ std::cout << "block start: " << constraints << "\n";
           applyToConstraints(*currp, constraints);
         }
       }
-std::cout << "block end: " << constraints << "\n";
+std::cout << "block end  : " << constraints << "\n";
 
       // We now know the values at the end of the block. Flow it onward, and
       // where it causes changes, queue more work.
@@ -470,6 +470,7 @@ std::cout << "fl5.3\n"; // TODO
                 constraints.set(branch.local, branch.constraint);
                 constraints.approximateAnd(branch.local, {GeU, {*N}});
 std::cout << "fl5.7\n"; // TODO
+abort(); // TODO: update like abovve
                 return true;
               }
             }

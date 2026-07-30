@@ -265,6 +265,14 @@ TEST(ConstraintTest, TestOrInequality) {
 
   // x == 5 || x >= 5  =>  x >= 5
   checkOr(eq5, ges5, ges5);
+
+  // x == 5 || x >= 6  =>  x >= 5
+  AndedConstraintSet ges6{{GeS, {Literal(int32_t(6))}}};
+  checkOr(eq5, ges6, ges5);
+
+  // TODO: x == 5 || x >= 7  =>  x >= 5  TODO
+  //AndedConstraintSet ges6{{GeS, {Literal(int32_t(6))}}};
+  //checkOr(eq5, ges6, ges5);
 }
 
 TEST(ConstraintTest, TestOrLoop) {
