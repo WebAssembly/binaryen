@@ -266,7 +266,7 @@ std::optional<Constraint> approximateOrTermEqualPair(const Abstract::Op aOp,
     return Constraint{GeS, term};
   }
 
-  // x >= C || x > C  ===  x >= C
+  // x > C || x >= C  ===  x >= C
   if (aOp == GtS && bOp == GeS) {
     return Constraint{GeS, term};
   }
