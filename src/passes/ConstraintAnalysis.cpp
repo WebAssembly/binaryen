@@ -188,7 +188,7 @@ struct ConstraintAnalysis
     }
 
     computeRelevantLocals();
-    flowNormally();
+    //flowNormally();
     flowLoops();
     optimize();
   }
@@ -497,6 +497,7 @@ std::cout << "fl5.7\n"; // TODO
     };
 
 std::cout << "fl1.5: now doing Loop flow!!1\n";
+// XXX can't continue flow, must start from scratchh before was ruinnedd
     doFlow(work, Handler());
 
     // TODO: copy old flow data, only merge us in when we actually improve?
