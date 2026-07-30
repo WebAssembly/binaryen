@@ -343,9 +343,10 @@ public:
                  Nullability nullable,
                  Exactness exact = Inexact)
     : Type(heapType.getID() | (nullable == Nullable ? NullMask : 0) |
-           (exact == Exact && !heapType.isBasic() ? ExactMask : 0)) {
+           (exact == Exact ? ExactMask : 0)) {
     assert(!(heapType.getID() &
              (TupleMask | NullMask | (heapType.isBasic() ? 0 : ExactMask))));
+    assert(!heapType.isBasic() || exact == Inexact);
   }
 
   // Predicates
@@ -807,19 +808,21 @@ struct TypeBuilder {
   // function.
   template<typename F> void copyHeapType(size_t i, HeapType type, F map) {
     assert(!type.isBasic());
+    // Supertypes, descriptor types, and described types cannot be basic heap
+    // types. Only set them if the mapping takes them to defined types.
     if (auto super = type.getDeclaredSuperType()) {
       if (auto mapped = map(*super); !mapped.isBasic()) {
-        setSubType(i, map(*super));
+        setSubType(i, mapped);
       }
     }
     if (auto desc = type.getDescriptorType()) {
       if (auto mapped = map(*desc); !mapped.isBasic()) {
-        setDescriptor(i, map(*desc));
+        setDescriptor(i, mapped);
       }
     }
     if (auto desc = type.getDescribedType()) {
       if (auto mapped = map(*desc); !mapped.isBasic()) {
-        setDescribed(i, map(*desc));
+        setDescribed(i, mapped);
       }
     }
     setOpen(i, type.isOpen());
@@ -830,8 +833,10 @@ struct TypeBuilder {
         return t;
       }
       assert(t.isRef());
-      return getTempRefType(
-        map(t.getHeapType()), t.getNullability(), t.getExactness());
+      auto mapped = map(t.getHeapType());
+      auto null = t.getNullability();
+      auto exact = mapped.isBasic() ? Inexact : t.getExactness();
+      return getTempRefType(mapped, null, exact);
     };
     auto copyType = [&](Type t) -> Type {
       if (t.isTuple()) {
