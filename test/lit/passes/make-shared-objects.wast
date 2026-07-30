@@ -1350,9 +1350,6 @@
 
 (module
   (type $sig (func (param i32) (result i32)))
-
-  ;; Test that types in if, loop, result
-
   ;; Test that function types in globals, tables, element segments, and tags are updated.
   ;; CHECK:      (type $0 (func (param (ref null (shared i31)))))
 
@@ -1379,6 +1376,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $control-types (param i32) (result (ref null $sig))
+    ;; The result of the If should be updated.
     (if (result (ref null $sig)) (local.get 0)
       (then (ref.null $sig))
       (else (ref.null $sig))
