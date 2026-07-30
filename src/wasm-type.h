@@ -835,6 +835,7 @@ struct TypeBuilder {
       assert(t.isRef());
       auto mapped = map(t.getHeapType());
       auto null = t.getNullability();
+      // References to basic heap types cannot be exact.
       auto exact = mapped.isBasic() ? Inexact : t.getExactness();
       return getTempRefType(mapped, null, exact);
     };
