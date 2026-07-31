@@ -351,7 +351,6 @@ struct ConstraintAnalysis
       for (auto** currp : block->contents.actions) {
         if (!constraints.unreachable) {
           applyToConstraints(*currp, constraints);
-          // TODO: can apply x++ here too
           optimizeExpression(currp, constraints);
         } else {
           // This is unreachable code: just mark it so.
