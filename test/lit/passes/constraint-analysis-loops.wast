@@ -389,7 +389,7 @@
   (func $bound-incremented
     (local $x i32)
     (loop $loop
-      ;; A realistic loop, with an $x++ and a single bounds check. We must infer
+      ;; A realistic do-while loop, with $x++ and a bounds check. We must infer
       ;; that no overflow happens in order to prove these two checks are true.
       ;;
       ;; The first is trivially true, as x starts at 0 - fulfilling x < 100 -
@@ -653,4 +653,109 @@
       )
     )
   )
+
+  ;; CHECK:      (func $bound-incremented-while (type $0)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (block $out
+  ;; CHECK-NEXT:   (loop $loop
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (i32.ge_s
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:      (i32.const 100)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (then
+  ;; CHECK-NEXT:      (br $out)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.ge_s
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $x
+  ;; CHECK-NEXT:     (i32.add
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (br $loop)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; LOOPS:      (func $bound-incremented-while (type $0)
+  ;; LOOPS-NEXT:  (local $x i32)
+  ;; LOOPS-NEXT:  (block $out
+  ;; LOOPS-NEXT:   (loop $loop
+  ;; LOOPS-NEXT:    (if
+  ;; LOOPS-NEXT:     (i32.ge_s
+  ;; LOOPS-NEXT:      (local.get $x)
+  ;; LOOPS-NEXT:      (i32.const 100)
+  ;; LOOPS-NEXT:     )
+  ;; LOOPS-NEXT:     (then
+  ;; LOOPS-NEXT:      (br $out)
+  ;; LOOPS-NEXT:     )
+  ;; LOOPS-NEXT:    )
+  ;; LOOPS-NEXT:    (drop
+  ;; LOOPS-NEXT:     (i32.const 1)
+  ;; LOOPS-NEXT:    )
+  ;; LOOPS-NEXT:    (drop
+  ;; LOOPS-NEXT:     (i32.const 1)
+  ;; LOOPS-NEXT:    )
+  ;; LOOPS-NEXT:    (local.set $x
+  ;; LOOPS-NEXT:     (i32.add
+  ;; LOOPS-NEXT:      (local.get $x)
+  ;; LOOPS-NEXT:      (i32.const 1)
+  ;; LOOPS-NEXT:     )
+  ;; LOOPS-NEXT:    )
+  ;; LOOPS-NEXT:    (br $loop)
+  ;; LOOPS-NEXT:   )
+  ;; LOOPS-NEXT:  )
+  ;; LOOPS-NEXT: )
+  (func $bound-incremented-while
+    ;; Similar to above, but before we had a do-while loop (loop condition at
+    ;; the bottom) and now it is at the top.
+    (local $x i32)
+    (block $out
+      (loop $loop
+        ;; Conditional branch at the top.
+        (if
+          (i32.ge_s
+            (local.get $x)
+            (i32.const 100)
+          )
+          (then
+            (br $out)
+          )
+        )
+        ;; We can infer both of these to be true in loops mode (in normal mode,
+        ;; only the easy one, the first).
+        (drop
+          (i32.lt_s
+            (local.get $x)
+            (i32.const 100)
+          )
+        )
+        (drop
+          (i32.ge_s
+            (local.get $x)
+            (i32.const 0)
+          )
+        )
+        (local.set $x
+          (i32.add
+            (local.get $x)
+            (i32.const 1)
+          )
+        )
+        ;; Unconditional branch at the bottom.
+        (br $loop)
+      )
+    )
+  )
+
+  ;; TODO: with the increment before the condition
 )
