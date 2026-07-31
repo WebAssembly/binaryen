@@ -241,10 +241,11 @@ struct ConstraintAnalysis
     }
 
     computeRelevantLocals();
-    // Wait, why is loop flow good enough for all our tests..? is it good enough
-    // for real?
-    // flowNormally();
-    flowLoops();
+    if (loops) {
+      flowLoops();
+    } else {
+      flowNormally();
+    }
     optimize();
   }
 
