@@ -629,7 +629,6 @@ struct ConstraintAnalysis
     // "Jump ahead" and extend ranges. If the branch is x < M, and we were
     // x == N where N < M, then extend to x >= N && x < M, as described in the
     // top level comment.
-    // TODO: move helper matching stuff out of constraint.cpp?
     if (auto* M = std::get_if<Literal>(&branch.constraint.term)) {
       auto localConstraints = constraints.get(branch.local);
       if (localConstraints.size() == 1 &&
