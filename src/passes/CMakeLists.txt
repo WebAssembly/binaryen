@@ -66,6 +66,7 @@ set(passes_SOURCES
   LocalSubtyping.cpp
   LogExecution.cpp
   LoopInvariantCodeMotion.cpp
+  MakeSharedObjects.cpp
   MarkJSCalled.cpp
   Memory64Lowering.cpp
   MemoryPacking.cpp

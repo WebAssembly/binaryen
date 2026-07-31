@@ -259,6 +259,9 @@
 ;; CHECK-NEXT:   --log-execution                               instrument the build with
 ;; CHECK-NEXT:                                                 logging of where execution goes
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --make-shared-objects                         Make structs and arrays shared
+;; CHECK-NEXT:                                                 and functions unshared
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --mark-js-called                              mark js called functions (using
 ;; CHECK-NEXT:                                                 configureAll) as doing so
 ;; CHECK-NEXT:

@@ -3368,30 +3368,23 @@ function handleFatalError(func) {
   }
 }
 
-// Parses a binary to a module
-
 // If building with Emscripten ASSERTIONS, there is a property added to
 // Module to guard against users mistakening using the removed readBinary()
 // API. We must defuse that carefully.
 Object.defineProperty(Module, 'readBinary', { writable: true });
 
-Module['readBinary'] = function(data) {
+// Parses a binary to a module with the given feature set enabled. `features` defaults to MVP.
+Module['readBinary'] = function(data, features) {
   const buffer = _malloc(data.length);
   HEAP8.set(data, buffer);
-  const ptr = handleFatalError(() => Module['_BinaryenModuleRead'](buffer, data.length));
+  const ptr = features === undefined
+    ? handleFatalError(() => Module['_BinaryenModuleRead'](buffer, data.length))
+    : handleFatalError(() => Module['_BinaryenModuleReadWithFeatures'](buffer, data.length, features));
   _free(buffer);
   return wrapModule(ptr);
 };
 
-Module['readBinaryWithFeatures'] = function(data, features) {
-  const buffer = _malloc(data.length);
-  HEAP8.set(data, buffer);
-  const ptr = handleFatalError(() => Module['_BinaryenModuleReadWithFeatures'](buffer, data.length, features));
-  _free(buffer);
-  return wrapModule(ptr);
-};
-
-// Parses text format to a module with the given feature set enabled.
+// Parses text format to a module with the given feature set enabled. `features` defaults to MVP.
 Module['parseText'] = function(text, features) {
   const buffer = _malloc(text.length + 1);
   stringToAscii(text, buffer);
