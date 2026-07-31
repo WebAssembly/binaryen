@@ -241,11 +241,7 @@ struct ConstraintAnalysis
     }
 
     computeRelevantLocals();
-    if (loops) {
-      flowLoops();
-    } else {
-      flowNormally();
-    }
+    flow();
     optimize();
   }
 
@@ -277,33 +273,7 @@ struct ConstraintAnalysis
 
   // Flow infos around until we have inferred all we can about the constraints
   // in each location.
-  //
-  void flowNormally() {
-    struct Handler {
-      bool doApplyToConstraints(Expression* curr,
-                                BasicBlockConstraintMap& constraints) const {
-        // Nothing custom here; use the default behavior.
-        return false;
-      }
-
-      bool doBranch(const LocalConstraint& branch,
-                    BasicBlockConstraintMap& constraints) const {
-        // Nothing custom here; use the default behavior.
-        return false;
-      }
-    };
-
-    doFlow(Handler());
-  }
-
-  // Given a worklist initialized to the starting point, keep processing it
-  // until nothing remains. A handler is provided with two hooks,
-  // doApplyToConstraints and doBranch, each of which returns true if it handled
-  // the inputs (if not, we run the default behavior).
-  template<typename T> // can we template on the function itself? is this
-                       // already fast?
-  void doFlow(const T& handler) {
-
+  void flow() {
     // Start from the entry as the only reachable block. That block has incoming
     // values - defaults - for each var.
     entry->contents.startConstraints.setReachable();
@@ -338,10 +308,7 @@ struct ConstraintAnalysis
       // Start at the top of the block, then go through, applying things.
       BasicBlockConstraintMap constraints = block->contents.startConstraints;
       for (auto** currp : block->contents.actions) {
-        // Try the handler first.
-        if (!handler.doApplyToConstraints(*currp, constraints)) {
-          applyToConstraints(*currp, constraints);
-        }
+        applyToConstraints(*currp, constraints);
       }
 
       // We now know the values at the end of the block. Flow it onward, and
@@ -354,9 +321,7 @@ struct ConstraintAnalysis
         if (auto branch = getBranchConstraints(block, out);
             branch && checkRelevancy(*branch)) {
           auto sentConstraints = constraints;
-          if (!handler.doBranch(*branch, sentConstraints)) {
-            sentConstraints.approximateAnd(branch->local, branch->constraint);
-          }
+          applyBranchConstraints(*branch, sentConstraints);
 
           // If anything changed at the start of the target block, flow onwards.
           if (outStartConstraints.approximateOr(sentConstraints)) {
@@ -371,107 +336,6 @@ struct ConstraintAnalysis
         }
       }
     }
-  }
-
-  void flowLoops() {
-
-    struct Handler {
-      bool doApplyToConstraints(Expression* curr,
-                                BasicBlockConstraintMap& constraints) const {
-        using namespace Match;
-        using namespace Abstract;
-
-        auto* set = curr->dynCast<LocalSet>();
-        if (!set) {
-          return false;
-        }
-
-        // Operate on x++s.
-        // x = y + 1
-        Index y;
-        if (matches(set->value, binary(Abstract::Add, local(&y), ival(1)))) {
-          auto old = constraints.get(y);
-          if (old.empty()) {
-            // Nothing we know how to increment.
-            return false;
-          }
-
-          for (auto& c : old) {
-            auto* N = std::get_if<Literal>(&c.term);
-            if (!N) {
-              // A non-constant term, which we don't know how to increment.
-              return false;
-            }
-            switch (c.op) {
-              // x == N, x++  =>  x == N+1.
-              case Eq:
-                // TODO: overflows here and below
-                c.term = Term(N->add(Literal::makeFromInt32(1, N->type)));
-                continue;
-              // x >= N, x++  =>  x > N
-              case GeS:
-                c.op = GtS;
-                continue;
-              case GeU:
-                c.op = GtU;
-                continue;
-              // x < N, x++  =>  x <= N
-              case LtS:
-                c.op = LeS;
-                continue;
-              case LtU:
-                c.op = GeU;
-                continue;
-              default:
-                // Something we don't recognize.
-                return false;
-            }
-          }
-
-          // We processed the old constraints into their new forms without
-          // problems. Apply them and we are done.
-          constraints.set(set->index, old);
-          return true;
-        }
-
-        return false;
-      }
-
-      bool doBranch(const LocalConstraint& branch,
-                    BasicBlockConstraintMap& constraints) const {
-        // Extend ranges pessimistically. If the branch is x < M, and we were
-        // x == N where N < M, then extend to x >= N && x < M
-        // TODO: move helper matching stuff out of constraint.cpp?
-        using namespace Abstract;
-        if (auto* M = std::get_if<Literal>(&branch.constraint.term)) {
-          auto localConstraints = constraints.get(branch.local);
-          if (localConstraints.size() == 1 &&
-              localConstraints[0].op == Abstract::Eq) {
-            if (auto* N = std::get_if<Literal>(&localConstraints[0].term)) {
-              if (branch.constraint.op == Abstract::LtS &&
-                  N->ltS(*M).getUnsigned()) {
-                constraints.set(branch.local, branch.constraint);
-                constraints.approximateAnd(branch.local, {GeS, {*N}});
-                return true;
-              }
-              if (branch.constraint.op == Abstract::LtU &&
-                  N->ltU(*M).getUnsigned()) {
-                constraints.set(branch.local, branch.constraint);
-                constraints.approximateAnd(branch.local, {GeU, {*N}});
-                return true;
-              }
-            }
-          }
-        }
-
-        // We did nothing custom; use the default behavior.
-        return false;
-      }
-    };
-
-    doFlow(Handler());
-
-    // TODO: copy old flow data, only merge us in when we actually improve?
   }
 
   // After inferring all we can, apply it to optimize the code.
@@ -620,11 +484,17 @@ struct ConstraintAnalysis
   // sets the value for that local.
   void applyToConstraints(Expression* curr,
                           BasicBlockConstraintMap& constraints) {
+    // In "loops" mode, apply an increment if this is one.
+    if (loops && applyIncrementToConstraints(curr, constraints)) {
+      return;
+    }
+
     if (auto* set = curr->dynCast<LocalSet>()) {
       if (!relevantLocals[set->index]) {
         // No point to apply a constraint to an irrelevant local.
         return;
       }
+
       if (Properties::isSingleConstantExpression(set->value)) {
         // Apply a constraint to this value.
         auto value = Properties::getLiteral(set->value);
@@ -664,6 +534,114 @@ struct ConstraintAnalysis
       }
     }
     return true;
+  }
+
+  // Apply an increment, in loops mode. Returns true if we found and applied
+  // one.
+  bool applyIncrementToConstraints(Expression* curr,
+                            BasicBlockConstraintMap& constraints) const {
+    assert(loops);
+
+    using namespace Match;
+    using namespace Abstract;
+
+    auto* set = curr->dynCast<LocalSet>();
+    if (!set) {
+      return false;
+    }
+
+    // x = y + 1
+    Index y;
+    if (!matches(set->value, binary(Abstract::Add, local(&y), ival(1)))) {
+      return false;
+    }
+
+    auto old = constraints.get(y);
+    if (old.empty()) {
+      // Nothing we know how to increment.
+      return false;
+    }
+
+    for (auto& c : old) {
+      auto* N = std::get_if<Literal>(&c.term);
+      if (!N) {
+        // A non-constant term, which we don't know how to increment.
+        return false;
+      }
+
+      switch (c.op) {
+        // x == N, x++  =>  x == N+1.
+        case Eq:
+          // TODO: overflows here and below
+          c.term = Term(N->add(Literal::makeFromInt32(1, N->type)));
+          continue;
+        // x >= N, x++  =>  x > N
+        case GeS:
+          c.op = GtS;
+          continue;
+        case GeU:
+          c.op = GtU;
+          continue;
+        // x < N, x++  =>  x <= N
+        case LtS:
+          c.op = LeS;
+          continue;
+        case LtU:
+          c.op = GeU;
+          continue;
+        default:
+          // Something we don't recognize.
+          return false;
+      }
+    }
+
+    // We processed the old constraints into their new forms without
+    // problems. Apply them and we are done.
+    constraints.set(set->index, old);
+    return true;
+  }
+
+  // Apply branch constraints to the current set of constraints.
+  void applyBranchConstraints(const LocalConstraint& branch, BasicBlockConstraintMap& constraints) {
+    // In "loops" mode, extend the range of values in the "jump ahead" manner.
+    if (loops && applyBranchRangeExtensionToConstraints(branch, constraints)) {
+      return;
+    }
+
+    constraints.approximateAnd(branch.local, branch.constraint);
+  }
+
+  bool applyBranchRangeExtensionToConstraints(const LocalConstraint& branch, BasicBlockConstraintMap& constraints) {
+    assert(loops);
+
+    using namespace Abstract;
+
+    // "Jump ahead" and extend ranges. If the branch is x < M, and we were
+    // x == N where N < M, then extend to x >= N && x < M, as described in the
+    // top level comment.
+    // TODO: move helper matching stuff out of constraint.cpp?
+    if (auto* M = std::get_if<Literal>(&branch.constraint.term)) {
+      auto localConstraints = constraints.get(branch.local);
+      if (localConstraints.size() == 1 &&
+          localConstraints[0].op == Abstract::Eq) {
+        if (auto* N = std::get_if<Literal>(&localConstraints[0].term)) {
+          if (branch.constraint.op == Abstract::LtS &&
+              N->ltS(*M).getUnsigned()) {
+            constraints.set(branch.local, branch.constraint);
+            constraints.approximateAnd(branch.local, {GeS, {*N}});
+            return true;
+          }
+          if (branch.constraint.op == Abstract::LtU &&
+              N->ltU(*M).getUnsigned()) {
+            constraints.set(branch.local, branch.constraint);
+            constraints.approximateAnd(branch.local, {GeU, {*N}});
+            return true;
+          }
+        }
+      }
+    }
+
+    return false;
   }
 };
 
