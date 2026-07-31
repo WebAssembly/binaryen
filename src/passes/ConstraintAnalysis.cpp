@@ -594,7 +594,7 @@ struct ConstraintAnalysis
           c.op = LeS;
           continue;
         case LtU:
-          c.op = GeU;
+          c.op = LeU;
           continue;
         default:
           // Something we don't recognize.

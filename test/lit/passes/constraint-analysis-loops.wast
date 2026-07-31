@@ -477,7 +477,10 @@
   ;; LOOPS-NEXT:    )
   ;; LOOPS-NEXT:   )
   ;; LOOPS-NEXT:   (if
-  ;; LOOPS-NEXT:    (i32.const 0)
+  ;; LOOPS-NEXT:    (i32.lt_u
+  ;; LOOPS-NEXT:     (local.get $x)
+  ;; LOOPS-NEXT:     (i32.const 100)
+  ;; LOOPS-NEXT:    )
   ;; LOOPS-NEXT:    (then
   ;; LOOPS-NEXT:     (br $loop)
   ;; LOOPS-NEXT:    )
