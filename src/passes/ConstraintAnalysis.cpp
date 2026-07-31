@@ -21,6 +21,72 @@
 //    assert(x != 0); // redundant and can be removed.
 //  }
 //
+// The normal version of this pass flows constraints around in the most precise
+// way that we can. However, while doing so, it must avoid optimizing loop
+// variables, because of the following problem:
+//
+//  x = 0
+//  do {
+//    print(x >= 0 & x < 100)
+//    x++
+//  } while (x < 100)
+//
+// Say that we flow information around precisely. Then initially x is 0 at the
+// top of the loop, and x++ turns it into 1. 1 < 100 so we return to the top of
+// the loop, and now x can be 0 or 1. We will then interpret this loop for 100
+// iterations at compile time, which is obviously not a good idea.
+//
+// Instead, in "normal" mode we just don't increment variables when we see x++.
+// This does limit us, but only on loops, in practice - if x is not in a loop,
+// and we know its constant value, then x++ would be optimized away by other
+// passes. And, by avoiding a precise execution of x++, we avoid the problem of
+// interpreting loops at compile time.
+//
+// But we do want to optimize loops like the example above. The second part,
+// x < 100, is trivial: at the loop top, either x == 0 from before the loop, or
+// x < 100 from the loop backedge, and both prove x < 100. However x >= 0 is
+// non-obvious: if x is *signed*, then we must rule out the possibility of it
+// getting incremented so many times that it overflows and becomes negative.
+// Proving that requires actually seeing that the loop variable x is incremented
+// from 0 to 100, and no more, and that involves an interaction of the initial
+// value, the increment, and the condition on the loop backedge.
+//
+// To optimize this, in "loops" mode
+// A naive approach is to just interpret this code. x starts as x == 0, then
+// x++ means x == 1, then at the loop top we have x >= 0 && x < 1, and so
+// forth - but this is not what we want! This would literally interpret the
+// code 100 times. To avoid this in "Normal" mode, we do not do anything for
+// x++ - we assume the value is unknown after the increment, so x does not go
+// from 0 to 1 to 2 and so forth.
+//
+// In "Loops" mode, we do the following things differently:
+//
+//  * x == 0, x++  =>  x == 1. This happens on the first loop iteration.
+//  * When we see the loop backedge x < 100, which would normally be ANDed on
+//    top of the value of x, we instead pessimistically extend the spane of
+//    values to everything that would be possible in an incrementing loop.
+//    Specifically:
+//    * x == 1 && x < 100  =>  x > 0 && x < 100
+//    (If we did a normal AND, we would end up with x == 1 here, and the loop
+//    would then increment x to 2 and so forth.)
+//  * We then run through the loop again, now starting with
+//    x >= 0 && x < 100 (after we merge in the x == 0 from before the loop),
+//    and do this:
+//    * x >= 0 && x < 100, x++  =>  x > 0 && x <= 100
+//    * x > 0 && x <= 100 && x < 100  => x > 0 && x < 100
+//    No further changes occur, and this is the final stable state.
+//
+// This is valid because the only imprecise operation we do is
+//    * x == 1 && x < 100  =>  x > 0 && x < 100
+// That is a valid inference, even if it is pessimistic and hence causes us to
+// be able to prove less things. But this is useful because this pessimistic
+// outcome is the common situation in a loop, so we find the proper bound on
+// the loop variable here in just two iterations of the loop.
+//
+// At a high level, we first do the Normal flow, which is as precise as we can
+// be. We then do the Loops flow afterwards, adding more information but not
+// making anything worse.
+
 
 #include "cfg/cfg-traversal.h"
 #include "ir/constraint.h"
@@ -78,7 +144,7 @@ struct ConstraintAnalysis
     return std::make_unique<ConstraintAnalysis>(loops);
   }
 
-  // Whether we are in "loops" mode, see above TODO move it
+  // Whether we are in "loops" mode, see above.
   bool loops;
 
   ConstraintAnalysis(bool loops) : loops(loops) {}
@@ -229,60 +295,6 @@ struct ConstraintAnalysis
   // Flow infos around until we have inferred all we can about the constraints
   // in each location.
   //
-  // We flow in one of two modes: Normal, and Loops. Normal infers constraints
-  // in the most precise way that we can. Loops does an analysis that is worse
-  // in some ways, but allows us to handle loop variable overflows. For example:
-  //
-  //  x = 0
-  //  do {
-  //    print(x >= 0 & x < 100)
-  //    x++
-  //  } while (x < 100)
-  //
-  // This prints true 100 times. We want to be able to infer the value sent to
-  // print(). The second part, x < 100, is trivial: at the loop top, either x ==
-  // 0 from before the loop, or x < 100 from the loop backedge, and both prove
-  // x < 100. However x >= 0 is non-obvious: if x is *signed*, then we must rule
-  // out the possibility of it getting incremented so many times that it
-  // overflows and becomes negative. Proving that requires actually seeing that
-  // the loop variable x is incremented from 0 to 100, and no more, and that
-  // involves an interaction of the initial value, the increment, and the
-  // condition on the loop backedge.
-  //
-  // A naive approach is to just interpret this code. x starts as x == 0, then
-  // x++ means x == 1, then at the loop top we have x >= 0 && x < 1, and so
-  // forth - but this is not what we want! This would literally interpret the
-  // code 100 times. To avoid this in "Normal" mode, we do not do anything for
-  // x++ - we assume the value is unknown after the increment, so x does not go
-  // from 0 to 1 to 2 and so forth.
-  //
-  // In "Loops" mode, we do the following things differently:
-  //
-  //  * x == 0, x++  =>  x == 1. This happens on the first loop iteration.
-  //  * When we see the loop backedge x < 100, which would normally be ANDed on
-  //    top of the value of x, we instead pessimistically extend the spane of
-  //    values to everything that would be possible in an incrementing loop.
-  //    Specifically:
-  //    * x == 1 && x < 100  =>  x > 0 && x < 100
-  //    (If we did a normal AND, we would end up with x == 1 here, and the loop
-  //    would then increment x to 2 and so forth.)
-  //  * We then run through the loop again, now starting with
-  //    x >= 0 && x < 100 (after we merge in the x == 0 from before the loop),
-  //    and do this:
-  //    * x >= 0 && x < 100, x++  =>  x > 0 && x <= 100
-  //    * x > 0 && x <= 100 && x < 100  => x > 0 && x < 100
-  //    No further changes occur, and this is the final stable state.
-  //
-  // This is valid because the only imprecise operation we do is
-  //    * x == 1 && x < 100  =>  x > 0 && x < 100
-  // That is a valid inference, even if it is pessimistic and hence causes us to
-  // be able to prove less things. But this is useful because this pessimistic
-  // outcome is the common situation in a loop, so we find the proper bound on
-  // the loop variable here in just two iterations of the loop.
-  //
-  // At a high level, we first do the Normal flow, which is as precise as we can
-  // be. We then do the Loops flow afterwards, adding more information but not
-  // making anything worse.
   void flowNormally() {
     struct Handler {
       bool doApplyToConstraints(Expression* curr,
