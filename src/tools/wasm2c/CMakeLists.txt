@@ -37,4 +37,4 @@ set_source_files_properties(${WASM_RT_INCLUDES}
     PROPERTIES LANGUAGE C
 )
 
-add_library(wasm-rt ${WASM_RT_SOURCES})
+add_library(wasm-rt STATIC EXCLUDE_FROM_ALL ${WASM_RT_SOURCES})
