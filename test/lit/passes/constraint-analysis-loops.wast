@@ -8,6 +8,7 @@
 
 (module
   ;; CHECK:      (import "a" "b" (func $import (type $2) (result i32)))
+  ;; LOOPS:      (import "a" "b" (func $import (type $2) (result i32)))
   (import "a" "b" (func $import (result i32)))
 
   ;; CHECK:      (func $bound (type $0)
@@ -41,6 +42,37 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
+  ;; LOOPS:      (func $bound (type $0)
+  ;; LOOPS-NEXT:  (local $x i32)
+  ;; LOOPS-NEXT:  (loop $loop
+  ;; LOOPS-NEXT:   (drop
+  ;; LOOPS-NEXT:    (i32.const 1)
+  ;; LOOPS-NEXT:   )
+  ;; LOOPS-NEXT:   (drop
+  ;; LOOPS-NEXT:    (i32.const 1)
+  ;; LOOPS-NEXT:   )
+  ;; LOOPS-NEXT:   (local.set $x
+  ;; LOOPS-NEXT:    (call $import)
+  ;; LOOPS-NEXT:   )
+  ;; LOOPS-NEXT:   (if
+  ;; LOOPS-NEXT:    (i32.gt_s
+  ;; LOOPS-NEXT:     (local.get $x)
+  ;; LOOPS-NEXT:     (i32.const 0)
+  ;; LOOPS-NEXT:    )
+  ;; LOOPS-NEXT:    (then
+  ;; LOOPS-NEXT:     (if
+  ;; LOOPS-NEXT:      (i32.le_s
+  ;; LOOPS-NEXT:       (local.get $x)
+  ;; LOOPS-NEXT:       (i32.const 100)
+  ;; LOOPS-NEXT:      )
+  ;; LOOPS-NEXT:      (then
+  ;; LOOPS-NEXT:       (br $loop)
+  ;; LOOPS-NEXT:      )
+  ;; LOOPS-NEXT:     )
+  ;; LOOPS-NEXT:    )
+  ;; LOOPS-NEXT:   )
+  ;; LOOPS-NEXT:  )
+  ;; LOOPS-NEXT: )
   (func $bound
     (local $x i32)
     (loop $loop
@@ -115,6 +147,37 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
+  ;; LOOPS:      (func $bound-flipped-ifs (type $0)
+  ;; LOOPS-NEXT:  (local $x i32)
+  ;; LOOPS-NEXT:  (loop $loop
+  ;; LOOPS-NEXT:   (drop
+  ;; LOOPS-NEXT:    (i32.const 1)
+  ;; LOOPS-NEXT:   )
+  ;; LOOPS-NEXT:   (drop
+  ;; LOOPS-NEXT:    (i32.const 1)
+  ;; LOOPS-NEXT:   )
+  ;; LOOPS-NEXT:   (local.set $x
+  ;; LOOPS-NEXT:    (call $import)
+  ;; LOOPS-NEXT:   )
+  ;; LOOPS-NEXT:   (if
+  ;; LOOPS-NEXT:    (i32.le_s
+  ;; LOOPS-NEXT:     (local.get $x)
+  ;; LOOPS-NEXT:     (i32.const 100)
+  ;; LOOPS-NEXT:    )
+  ;; LOOPS-NEXT:    (then
+  ;; LOOPS-NEXT:     (if
+  ;; LOOPS-NEXT:      (i32.gt_s
+  ;; LOOPS-NEXT:       (local.get $x)
+  ;; LOOPS-NEXT:       (i32.const 0)
+  ;; LOOPS-NEXT:      )
+  ;; LOOPS-NEXT:      (then
+  ;; LOOPS-NEXT:       (br $loop)
+  ;; LOOPS-NEXT:      )
+  ;; LOOPS-NEXT:     )
+  ;; LOOPS-NEXT:    )
+  ;; LOOPS-NEXT:   )
+  ;; LOOPS-NEXT:  )
+  ;; LOOPS-NEXT: )
   (func $bound-flipped-ifs
     (local $x i32)
     ;; As above, but with the ifs flipped. We optimize the same way.
@@ -191,6 +254,43 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
+  ;; LOOPS:      (func $bound-nonconstant-no (type $1) (param $p i32)
+  ;; LOOPS-NEXT:  (local $x i32)
+  ;; LOOPS-NEXT:  (loop $loop
+  ;; LOOPS-NEXT:   (drop
+  ;; LOOPS-NEXT:    (i32.ge_s
+  ;; LOOPS-NEXT:     (local.get $x)
+  ;; LOOPS-NEXT:     (local.get $p)
+  ;; LOOPS-NEXT:    )
+  ;; LOOPS-NEXT:   )
+  ;; LOOPS-NEXT:   (drop
+  ;; LOOPS-NEXT:    (i32.le_s
+  ;; LOOPS-NEXT:     (local.get $x)
+  ;; LOOPS-NEXT:     (local.get $p)
+  ;; LOOPS-NEXT:    )
+  ;; LOOPS-NEXT:   )
+  ;; LOOPS-NEXT:   (local.set $x
+  ;; LOOPS-NEXT:    (call $import)
+  ;; LOOPS-NEXT:   )
+  ;; LOOPS-NEXT:   (if
+  ;; LOOPS-NEXT:    (i32.gt_s
+  ;; LOOPS-NEXT:     (local.get $x)
+  ;; LOOPS-NEXT:     (local.get $p)
+  ;; LOOPS-NEXT:    )
+  ;; LOOPS-NEXT:    (then
+  ;; LOOPS-NEXT:     (if
+  ;; LOOPS-NEXT:      (i32.le_s
+  ;; LOOPS-NEXT:       (local.get $x)
+  ;; LOOPS-NEXT:       (i32.const 100)
+  ;; LOOPS-NEXT:      )
+  ;; LOOPS-NEXT:      (then
+  ;; LOOPS-NEXT:       (br $loop)
+  ;; LOOPS-NEXT:      )
+  ;; LOOPS-NEXT:     )
+  ;; LOOPS-NEXT:    )
+  ;; LOOPS-NEXT:   )
+  ;; LOOPS-NEXT:  )
+  ;; LOOPS-NEXT: )
   (func $bound-nonconstant-no (param $p i32)
     (local $x i32)
     ;; As above, but rather than zero we have an unknown param $p.
@@ -238,7 +338,10 @@
   ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:    (i32.ge_s
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (local.set $x
   ;; CHECK-NEXT:    (i32.add
@@ -257,6 +360,32 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
+  ;; LOOPS:      (func $bound-incremented (type $0)
+  ;; LOOPS-NEXT:  (local $x i32)
+  ;; LOOPS-NEXT:  (loop $loop
+  ;; LOOPS-NEXT:   (drop
+  ;; LOOPS-NEXT:    (i32.const 1)
+  ;; LOOPS-NEXT:   )
+  ;; LOOPS-NEXT:   (drop
+  ;; LOOPS-NEXT:    (i32.const 1)
+  ;; LOOPS-NEXT:   )
+  ;; LOOPS-NEXT:   (local.set $x
+  ;; LOOPS-NEXT:    (i32.add
+  ;; LOOPS-NEXT:     (local.get $x)
+  ;; LOOPS-NEXT:     (i32.const 1)
+  ;; LOOPS-NEXT:    )
+  ;; LOOPS-NEXT:   )
+  ;; LOOPS-NEXT:   (if
+  ;; LOOPS-NEXT:    (i32.lt_s
+  ;; LOOPS-NEXT:     (local.get $x)
+  ;; LOOPS-NEXT:     (i32.const 100)
+  ;; LOOPS-NEXT:    )
+  ;; LOOPS-NEXT:    (then
+  ;; LOOPS-NEXT:     (br $loop)
+  ;; LOOPS-NEXT:    )
+  ;; LOOPS-NEXT:   )
+  ;; LOOPS-NEXT:  )
+  ;; LOOPS-NEXT: )
   (func $bound-incremented
     (local $x i32)
     (loop $loop
@@ -302,6 +431,8 @@
 
   ;; CHECK:      (func $bound-incremented-2-no (type $0)
   ;; CHECK-NEXT: )
+  ;; LOOPS:      (func $bound-incremented-2-no (type $0)
+  ;; LOOPS-NEXT: )
   (func $bound-incremented-2-no
     ;; TODO
   )
@@ -348,6 +479,48 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
+  ;; LOOPS:      (func $increment-non-constant (type $1) (param $p i32)
+  ;; LOOPS-NEXT:  (local $a i32)
+  ;; LOOPS-NEXT:  (local $b i32)
+  ;; LOOPS-NEXT:  (local $scratch i32)
+  ;; LOOPS-NEXT:  (drop
+  ;; LOOPS-NEXT:   (block (result i32)
+  ;; LOOPS-NEXT:    (local.set $scratch
+  ;; LOOPS-NEXT:     (i32.lt_s
+  ;; LOOPS-NEXT:      (local.get $p)
+  ;; LOOPS-NEXT:      (i32.const 0)
+  ;; LOOPS-NEXT:     )
+  ;; LOOPS-NEXT:    )
+  ;; LOOPS-NEXT:    (if
+  ;; LOOPS-NEXT:     (i32.le_s
+  ;; LOOPS-NEXT:      (local.get $a)
+  ;; LOOPS-NEXT:      (local.get $b)
+  ;; LOOPS-NEXT:     )
+  ;; LOOPS-NEXT:     (then
+  ;; LOOPS-NEXT:      (local.set $p
+  ;; LOOPS-NEXT:       (local.get $a)
+  ;; LOOPS-NEXT:      )
+  ;; LOOPS-NEXT:      (local.set $a
+  ;; LOOPS-NEXT:       (i32.add
+  ;; LOOPS-NEXT:        (local.get $a)
+  ;; LOOPS-NEXT:        (i32.const 1)
+  ;; LOOPS-NEXT:       )
+  ;; LOOPS-NEXT:      )
+  ;; LOOPS-NEXT:      (drop
+  ;; LOOPS-NEXT:       (i32.eq
+  ;; LOOPS-NEXT:        (local.get $a)
+  ;; LOOPS-NEXT:        (i32.const 1)
+  ;; LOOPS-NEXT:       )
+  ;; LOOPS-NEXT:      )
+  ;; LOOPS-NEXT:      (drop
+  ;; LOOPS-NEXT:       (i32.const 1)
+  ;; LOOPS-NEXT:      )
+  ;; LOOPS-NEXT:     )
+  ;; LOOPS-NEXT:    )
+  ;; LOOPS-NEXT:    (local.get $scratch)
+  ;; LOOPS-NEXT:   )
+  ;; LOOPS-NEXT:  )
+  ;; LOOPS-NEXT: )
   (func $increment-non-constant (param $p i32)
     (local $a i32)
     (local $b i32)
