@@ -375,6 +375,65 @@ TEST(ConstraintTest, TestOrLoop) {
   checkOr(left, rightAdded, resultAdded);
 }
 
+TEST(ConstraintTest, TestOrLoopUnsigned) {
+  // As above, but unsigned.
+
+  // { x == 5 } || { x > 5 && x <= 42 }   ==>   { x >= 5 && x <= 42 }
+  AndedConstraintSet left{{Eq, {Literal(int32_t(5))}}};
+  AndedConstraintSet right(
+    {{GtU, {Literal(int32_t(5))}}, {LeU, {Literal(int32_t(42))}}});
+  AndedConstraintSet result(
+    {{GeU, {Literal(int32_t(5))}}, {LeU, {Literal(int32_t(42))}}});
+  checkOr(left, right, result);
+
+  // Changes to constants:
+
+  // Change 5 on the left to 7:
+  // { x == 7 } || { x > 5 && x <= 42 }   ==>   { x > 5 && x <= 42}
+  AndedConstraintSet left7{{Eq, {Literal(int32_t(7))}}};
+  checkOr(left7, right, right);
+
+  // Change 5 on the left to 99:
+  // { x == 99 } || { x > 5 && x <= 42 }   ==>   { x > 5 }
+  // TODO: we could emit a range (5, 99]
+  AndedConstraintSet left99{{Eq, {Literal(int32_t(99))}}};
+  AndedConstraintSet rightOnly5{{GtU, {Literal(int32_t(5))}}};
+  checkOr(left99, right, rightOnly5);
+
+  // Change 5 on the left to 4:
+  // { x == 4 } || { x > 5 && x <= 42 }   ==>   { x <= 42 }
+  // TODO: we could emit a range [4, 42]
+  AndedConstraintSet left4{{Eq, {Literal(int32_t(4))}}};
+  AndedConstraintSet rightOnly42({{LeU, {Literal(int32_t(42))}}});
+  checkOr(left4, right, rightOnly42);
+
+  // Change 5 on the right to 6:
+  // { x == 5 } || { x > 6 && x <= 42 }   ==>   { x <= 42 }
+  AndedConstraintSet right6(
+    {{GtU, {Literal(int32_t(6))}}, {LeU, {Literal(int32_t(42))}}});
+  checkOr(left, right6, rightOnly42);
+
+  // Changes to operations:
+
+  // Change the Eq on the left to Ne. We fail to find anything for the OR.
+  // { x != 5 } || { x > 5 && x <= 42 }   ==>   {}
+  // TODO: we could emit x != 5
+  AndedConstraintSet leftNe{{Ne, {Literal(int32_t(5))}}};
+  auto empty = AndedConstraintSet::makeProvesNothing();
+  checkOr(leftNe, right, empty);
+
+  // Add an operation on the right, x != 21:
+  // { x == 5 } || { x >  5 && x <= 42 && x != 21 }   ==>
+  //               { x >= 5 && x <= 42 && x != 21 }
+  AndedConstraintSet rightAdded({{GtU, {Literal(int32_t(5))}},
+                                 {LeU, {Literal(int32_t(42))}},
+                                 {Ne, {Literal(int32_t(21))}}});
+  AndedConstraintSet resultAdded({{GeU, {Literal(int32_t(5))}},
+                                  {LeU, {Literal(int32_t(42))}},
+                                  {Ne, {Literal(int32_t(21))}}});
+  checkOr(left, rightAdded, resultAdded);
+}
+
 static void checkAnd(const AndedConstraintSet& a,
                      const AndedConstraintSet& b,
                      const AndedConstraintSet& result) {
