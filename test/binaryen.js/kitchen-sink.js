@@ -1059,14 +1059,14 @@ function test_binaries_with_features() {
   binaryen.setDebugInfo(false);
   module.dispose();
 
-  module = binaryen.readBinaryWithFeatures(buffer, features);
+  module = binaryen.readBinary(buffer, features);
 
   assert(module.validate());
   console.log("module loaded from binary with features:");
   console.log(module.emitText());
   module.dispose();
 
-  module = binaryen.readBinaryWithFeatures(buffer, binaryen.Features.MVP);
+  module = binaryen.readBinary(buffer, binaryen.Features.MVP);
   assert(!module.validate());
   module.dispose();
 }

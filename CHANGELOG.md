@@ -15,6 +15,10 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
+- [JS API] support `BinaryenStringConst` (#8951)
+- [JS API] Replace `Module['readBinaryWithFeatures']` with an
+  optional `features` parameter to `Module['readBinary']` (#8954)
+
 v131
 ----
 
@@ -22,8 +26,8 @@ v131
 - Add acqrel ordering support for atomic fences (#8845). Breaks the C API;
   `BinaryenAtomicFence` now takes a memory order param. Use
   `BinaryenMemoryOrderSeqCst()` to preserve the original behavior.
-- [JS API] Merge `Module['parseTextWithFeatures']` into `Module['parseText']`
-  (#8901)
+- [JS API] Replace `Module['parseTextWithFeatures']` with an
+  optional `features` parameter to `Module['parseText']` (#8901)
 - Add a ConstraintAnalysis pass (#8853)
 
 v130
