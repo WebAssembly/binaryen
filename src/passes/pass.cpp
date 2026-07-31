@@ -132,6 +132,9 @@ void PassRegistry::registerPasses() {
   registerPass("constraint-analysis",
                "finds and uses mathematical constraints on locals",
                createConstraintAnalysisPass);
+  registerPass("constraint-analysis-loops",
+               "constraint-analysis that also optimizes loops",
+               createConstraintAnalysisLoopsPass);
   registerPass(
     "dce", "removes unreachable code", createDeadCodeEliminationPass);
   registerPass("dealign",

@@ -75,8 +75,13 @@ struct ConstraintAnalysis
   bool requiresNonNullableLocalFixups() override { return false; }
 
   std::unique_ptr<Pass> create() override {
-    return std::make_unique<ConstraintAnalysis>();
+    return std::make_unique<ConstraintAnalysis>(loops);
   }
+
+  // Whether we are in "loops" mode, see above TODO move it
+  bool loops;
+
+  ConstraintAnalysis(bool loops) : loops(loops) {}
 
   using Super = WalkerPass<
     CFGWalker<ConstraintAnalysis, Visitor<ConstraintAnalysis>, Info>>;
@@ -669,6 +674,7 @@ struct ConstraintAnalysis
 
 } // anonymous namespace
 
-Pass* createConstraintAnalysisPass() { return new ConstraintAnalysis(); }
+Pass* createConstraintAnalysisPass() { return new ConstraintAnalysis(false); }
+Pass* createConstraintAnalysisLoopsPass() { return new ConstraintAnalysis(true); }
 
 } // namespace wasm
