@@ -97,9 +97,8 @@ Classes (see generated docs for descriptions):
 
 Functions (see generated docs for descriptions):
 - `emitText(expr: ExpressionRef): string`
-- `readBinary(data: Uint8Array): Module`
-- `readBinaryWithFeatures(data: Uint8Array, features: Feature): Module`
-- `parseText(text: string): Module`
+- `readBinary(data: Uint8Array, features?: Feature): Module`
+- `parseText(text: string, features?: Feature): Module`
 - `exit(status: number): void`
 - `createType(types: readonly Type[]): Type`
 - `expandType(typ: Type): Type[]`

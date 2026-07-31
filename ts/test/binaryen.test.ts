@@ -70,7 +70,6 @@ suite("binaryen", () => {
 		// functions
 		assert.strictEqual(typeof binaryen.emitText, "function");
 		assert.strictEqual(typeof binaryen.readBinary, "function");
-		assert.strictEqual(typeof binaryen.readBinaryWithFeatures, "function");
 		assert.strictEqual(typeof binaryen.parseText, "function");
 		assert.strictEqual(typeof binaryen.exit, "function");
 		assert.strictEqual(typeof binaryen.createType, "function");
@@ -84,7 +83,6 @@ suite("binaryen", () => {
 		*/
 		assert.ok(binaryen.emitText.toString().startsWith("function"));
 		assert.ok(binaryen.readBinary.toString().startsWith("function"));
-		assert.ok(binaryen.readBinaryWithFeatures.toString().startsWith("function"));
 		assert.ok(binaryen.parseText.toString().startsWith("function"));
 		assert.ok(binaryen.exit.toString().startsWith("function"));
 		assert.ok(binaryen.createType.toString().startsWith("function"));
@@ -157,47 +155,9 @@ suite("binaryen", () => {
 	});
 
 
-	test(".Feature", () => {
-		// NOTE: the length is twice the number of members due to how TypeScript emits enums.
-		assert.strictEqual(Object.entries(binaryen.Feature).length, 54);
-
-		assert.strictEqual(binaryen.Feature.MVP, 0);
-		assert.strictEqual(binaryen.Feature.Atomics, 1 << 0);
-		assert.strictEqual(binaryen.Feature.MutableGlobals, 1 << 1);
-		assert.strictEqual(binaryen.Feature.NontrappingFPToInt, 1 << 2);
-		assert.strictEqual(binaryen.Feature.SIMD128, 1 << 3);
-		assert.strictEqual(binaryen.Feature.BulkMemory, 1 << 4);
-		assert.strictEqual(binaryen.Feature.SignExt, 1 << 5);
-		assert.strictEqual(binaryen.Feature.ExceptionHandling, 1 << 6);
-		assert.strictEqual(binaryen.Feature.TailCall, 1 << 7);
-		assert.strictEqual(binaryen.Feature.ReferenceTypes, 1 << 8);
-		assert.strictEqual(binaryen.Feature.Multivalue, 1 << 9);
-		assert.strictEqual(binaryen.Feature.GC, 1 << 10);
-		assert.strictEqual(binaryen.Feature.Memory64, 1 << 11);
-		assert.strictEqual(binaryen.Feature.RelaxedSIMD, 1 << 12);
-		assert.strictEqual(binaryen.Feature.ExtendedConst, 1 << 13);
-		assert.strictEqual(binaryen.Feature.Strings, 1 << 14);
-		assert.strictEqual(binaryen.Feature.MultiMemory, 1 << 15);
-		assert.strictEqual(binaryen.Feature.StackSwitching, 1 << 16);
-		assert.strictEqual(binaryen.Feature.SharedEverything, 1 << 17);
-		assert.strictEqual(binaryen.Feature.FP16, 1 << 18);
-		assert.strictEqual(binaryen.Feature.BulkMemoryOpt, 1 << 19);
-		assert.strictEqual(binaryen.Feature.CallIndirectOverlong, 1 << 20);
-		// @ts-expect-error
-		assert.strictEqual(binaryen.Feature.CustomDescriptors, undefined); assert.notStrictEqual(binaryen.Feature.CustomDescriptors, 1 << 21);
-		assert.strictEqual(binaryen.Feature.RelaxedAtomics, 1 << 22);
-		assert.strictEqual(binaryen.Feature.CustomPageSizes, 1 << 23);
-		// @ts-expect-error
-		assert.strictEqual(binaryen.Feature.Multibyte, undefined); assert.notStrictEqual(binaryen.Feature.Multibyte, 1 << 24);
-		assert.strictEqual(binaryen.Feature.WideArithmetic, 1 << 25);
-		assert.strictEqual(binaryen.Feature.CompactImports, 1 << 26);
-		assert.strictEqual(binaryen.Feature.All, (1 << 27) - 1);
-	});
-
-
 	test(".ExpressionId", () => {
 		// NOTE: the length is twice the number of members due to how TypeScript emits enums.
-		assert.strictEqual(Object.entries(binaryen.ExpressionId).length, 170);
+		assert.strictEqual(Object.entries(binaryen.ExpressionId).length, 85 * 2);
 
 		assert.strictEqual(binaryen.ExpressionId.Invalid, 0);
 		assert.strictEqual(binaryen.ExpressionId.Block, 1);
@@ -318,14 +278,95 @@ suite("binaryen", () => {
 	});
 
 
+	test(".SideEffect", () => {
+		// NOTE: the length is twice the number of members due to how TypeScript emits enums.
+		assert.strictEqual(Object.entries(binaryen.SideEffect).length, 17 * 2);
+
+		assert.strictEqual(binaryen.SideEffect.None, 0);
+		assert.strictEqual(binaryen.SideEffect.Branches, 1 << 0);
+		assert.strictEqual(binaryen.SideEffect.Calls, 1 << 1);
+		assert.strictEqual(binaryen.SideEffect.ReadsLocal, 1 << 2);
+		assert.strictEqual(binaryen.SideEffect.WritesLocal, 1 << 3);
+		assert.strictEqual(binaryen.SideEffect.ReadsGlobal, 1 << 4);
+		assert.strictEqual(binaryen.SideEffect.WritesGlobal, 1 << 5);
+		assert.strictEqual(binaryen.SideEffect.ReadsMemory, 1 << 6);
+		assert.strictEqual(binaryen.SideEffect.WritesMemory, 1 << 7);
+		assert.strictEqual(binaryen.SideEffect.ReadsTable, 1 << 8);
+		assert.strictEqual(binaryen.SideEffect.WritesTable, 1 << 9);
+		assert.strictEqual(binaryen.SideEffect.ImplicitTrap, 1 << 10);
+		assert.strictEqual(binaryen.SideEffect.IsAtomic, 1 << 11);
+		assert.strictEqual(binaryen.SideEffect.Throws, 1 << 12);
+		assert.strictEqual(binaryen.SideEffect.DanglingPop, 1 << 13);
+		assert.strictEqual(binaryen.SideEffect.TrapsNeverHappen, 1 << 14);
+		assert.strictEqual(binaryen.SideEffect.Any, (1 << 15) - 1);
+	});
+
+
 	test(".ExternalKind", () => {
 		// NOTE: the length is twice the number of members due to how TypeScript emits enums.
-		assert.strictEqual(Object.entries(binaryen.ExternalKind).length, 10);
+		assert.strictEqual(Object.entries(binaryen.ExternalKind).length, 5 * 2);
 
 		assert.strictEqual(binaryen.ExternalKind.ExternalFunction, 0);
 		assert.strictEqual(binaryen.ExternalKind.ExternalTable, 1);
 		assert.strictEqual(binaryen.ExternalKind.ExternalMemory, 2);
 		assert.strictEqual(binaryen.ExternalKind.ExternalGlobal, 3);
 		assert.strictEqual(binaryen.ExternalKind.ExternalTag, 4);
+	});
+
+
+	test(".MemoryOrder", () => {
+		// NOTE: the length is twice the number of members due to how TypeScript emits enums.
+		assert.strictEqual(Object.entries(binaryen.MemoryOrder).length, 3 * 2);
+
+		assert.strictEqual(binaryen.MemoryOrder.Unordered, 0);
+		assert.strictEqual(binaryen.MemoryOrder.SeqCst, 1);
+		assert.strictEqual(binaryen.MemoryOrder.AcqRel, 2);
+	});
+
+
+	test(".Feature", () => {
+		// NOTE: the length is twice the number of members due to how TypeScript emits enums.
+		assert.strictEqual(Object.entries(binaryen.Feature).length, 27 * 2);
+
+		assert.strictEqual(binaryen.Feature.MVP, 0);
+		assert.strictEqual(binaryen.Feature.Atomics, 1 << 0);
+		assert.strictEqual(binaryen.Feature.MutableGlobals, 1 << 1);
+		assert.strictEqual(binaryen.Feature.NontrappingFPToInt, 1 << 2);
+		assert.strictEqual(binaryen.Feature.SIMD128, 1 << 3);
+		assert.strictEqual(binaryen.Feature.BulkMemory, 1 << 4);
+		assert.strictEqual(binaryen.Feature.SignExt, 1 << 5);
+		assert.strictEqual(binaryen.Feature.ExceptionHandling, 1 << 6);
+		assert.strictEqual(binaryen.Feature.TailCall, 1 << 7);
+		assert.strictEqual(binaryen.Feature.ReferenceTypes, 1 << 8);
+		assert.strictEqual(binaryen.Feature.Multivalue, 1 << 9);
+		assert.strictEqual(binaryen.Feature.GC, 1 << 10);
+		assert.strictEqual(binaryen.Feature.Memory64, 1 << 11);
+		assert.strictEqual(binaryen.Feature.RelaxedSIMD, 1 << 12);
+		assert.strictEqual(binaryen.Feature.ExtendedConst, 1 << 13);
+		assert.strictEqual(binaryen.Feature.Strings, 1 << 14);
+		assert.strictEqual(binaryen.Feature.MultiMemory, 1 << 15);
+		assert.strictEqual(binaryen.Feature.StackSwitching, 1 << 16);
+		assert.strictEqual(binaryen.Feature.SharedEverything, 1 << 17);
+		assert.strictEqual(binaryen.Feature.FP16, 1 << 18);
+		assert.strictEqual(binaryen.Feature.BulkMemoryOpt, 1 << 19);
+		assert.strictEqual(binaryen.Feature.CallIndirectOverlong, 1 << 20);
+		// @ts-expect-error
+		assert.strictEqual(binaryen.Feature.CustomDescriptors, undefined); assert.notStrictEqual(binaryen.Feature.CustomDescriptors, 1 << 21);
+		assert.strictEqual(binaryen.Feature.RelaxedAtomics, 1 << 22);
+		assert.strictEqual(binaryen.Feature.CustomPageSizes, 1 << 23);
+		// @ts-expect-error
+		assert.strictEqual(binaryen.Feature.Multibyte, undefined); assert.notStrictEqual(binaryen.Feature.Multibyte, 1 << 24);
+		assert.strictEqual(binaryen.Feature.WideArithmetic, 1 << 25);
+		assert.strictEqual(binaryen.Feature.CompactImports, 1 << 26);
+		assert.strictEqual(binaryen.Feature.All, (1 << 27) - 1);
+	});
+
+
+	test(".ExpressionRunnerFlag", () => {
+		// NOTE: the length is twice the number of members due to how TypeScript emits enums.
+		assert.strictEqual(Object.entries(binaryen.ExpressionRunnerFlag).length, 2 * 2);
+
+		assert.strictEqual(binaryen.ExpressionRunnerFlag.Default, 0);
+		assert.strictEqual(binaryen.ExpressionRunnerFlag.PreserveSideeffects, 1);
 	});
 });
