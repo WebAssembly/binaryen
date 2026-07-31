@@ -777,13 +777,13 @@
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.const 1)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (i32.gt_s
   ;; CHECK-NEXT:      (local.get $x)
   ;; CHECK-NEXT:      (i32.const 0)
   ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (br $loop)
   ;; CHECK-NEXT:   )
@@ -843,15 +843,119 @@
         )
         ;; x > 0 && x < 100 here (0 is impossible, compared to before).
         (drop
+          (i32.gt_s
+            (local.get $x)
+            (i32.const 0)
+          )
+        )
+        (drop
           (i32.lt_s
             (local.get $x)
             (i32.const 100)
           )
         )
+        (br $loop)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $bound-incremented-inc-first-less (type $0)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (block $out
+  ;; CHECK-NEXT:   (loop $loop
+  ;; CHECK-NEXT:    (local.set $x
+  ;; CHECK-NEXT:     (i32.add
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (i32.gt_s
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:      (i32.const 100)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (then
+  ;; CHECK-NEXT:      (br $out)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.gt_s
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (br $loop)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; LOOPS:      (func $bound-incremented-inc-first-less (type $0)
+  ;; LOOPS-NEXT:  (local $x i32)
+  ;; LOOPS-NEXT:  (block $out
+  ;; LOOPS-NEXT:   (loop $loop
+  ;; LOOPS-NEXT:    (local.set $x
+  ;; LOOPS-NEXT:     (i32.add
+  ;; LOOPS-NEXT:      (local.get $x)
+  ;; LOOPS-NEXT:      (i32.const 1)
+  ;; LOOPS-NEXT:     )
+  ;; LOOPS-NEXT:    )
+  ;; LOOPS-NEXT:    (if
+  ;; LOOPS-NEXT:     (i32.gt_s
+  ;; LOOPS-NEXT:      (local.get $x)
+  ;; LOOPS-NEXT:      (i32.const 100)
+  ;; LOOPS-NEXT:     )
+  ;; LOOPS-NEXT:     (then
+  ;; LOOPS-NEXT:      (br $out)
+  ;; LOOPS-NEXT:     )
+  ;; LOOPS-NEXT:    )
+  ;; LOOPS-NEXT:    (drop
+  ;; LOOPS-NEXT:     (i32.gt_s
+  ;; LOOPS-NEXT:      (local.get $x)
+  ;; LOOPS-NEXT:      (i32.const 0)
+  ;; LOOPS-NEXT:     )
+  ;; LOOPS-NEXT:    )
+  ;; LOOPS-NEXT:    (drop
+  ;; LOOPS-NEXT:     (i32.const 1)
+  ;; LOOPS-NEXT:    )
+  ;; LOOPS-NEXT:    (br $loop)
+  ;; LOOPS-NEXT:   )
+  ;; LOOPS-NEXT:  )
+  ;; LOOPS-NEXT: )
+  (func $bound-incremented-inc-first-less
+    ;; As in the last testcase, but the if's condition changed.
+    (local $x i32)
+    (block $out
+      (loop $loop
+        (local.set $x
+          (i32.add
+            (local.get $x)
+            (i32.const 1)
+          )
+        )
+        ;; Before we left the loop when x >= 100. Now we leave then x > 100,
+        ;; so we do actually reach 100 in the code below.
+        (if
+          (i32.gt_s
+            (local.get $x)
+            (i32.const 100)
+          )
+          (then
+            (br $out)
+          )
+        )
+        ;; x > 0 && x <= 100 here.
         (drop
           (i32.gt_s
             (local.get $x)
             (i32.const 0)
+          )
+        )
+        (drop
+          (i32.le_s
+            (local.get $x)
+            (i32.const 100)
           )
         )
         (br $loop)
