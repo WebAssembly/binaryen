@@ -69,6 +69,14 @@
 // changes will happen: we successfully "jumped ahead" to the end state of the
 // loop variable.
 //
+// In theory, "normal" mode may optimize some things better than "loops" mode,
+// as the "jump ahead" behavior extends ranges of variables eagerly, before we
+// know they actually can fill out that range. In practice, however, it is rare
+// to see a constant to which is applied a bound like x < 100, unless it is
+// actually a loop variable: if it isn't a loop variable, then other passes
+// would propagate the constant and remove the bounds check. Still, both modes
+// of this pass are kept for comparison purposes.
+//
 
 #include "cfg/cfg-traversal.h"
 #include "ir/constraint.h"
