@@ -93,6 +93,12 @@
 #include "wasm-builder.h"
 #include "wasm.h"
 
+#define CONSTRAINT_DEBUG 1
+
+#ifndef CONSTRAINT_DEBUG
+#define CONSTRAINT_DEBUG 0
+#endif
+
 namespace wasm {
 
 using namespace wasm::constraint;
@@ -315,9 +321,18 @@ struct ConstraintAnalysis
 
       // Start at the top of the block, then go through, applying things.
       BasicBlockConstraintMap constraints = block->contents.startConstraints;
+
+#if CONSTRAINT_DEBUG
+      std::cout << block << " start constraints: " << constraints << '\n';
+#endif
+
       for (auto** currp : block->contents.actions) {
         applyToConstraints(*currp, constraints);
       }
+
+#if CONSTRAINT_DEBUG
+      std::cout << block << " end   constraints: " << constraints << '\n';
+#endif
 
       // We now know the values at the end of the block. Flow it onward, and
       // where it causes changes, queue more work.
