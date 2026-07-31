@@ -640,14 +640,12 @@ struct ConstraintAnalysis
             constraints.approximateAnd(branch.local, {GeS, {*N}});
             return true;
           }
-#if 0
           if (branch.constraint.op == Abstract::LtU &&
               N->ltU(*M).getUnsigned()) {
             constraints.set(branch.local, branch.constraint);
             constraints.approximateAnd(branch.local, {GeU, {*N}});
             return true;
           }
-#endif
         }
       }
     }

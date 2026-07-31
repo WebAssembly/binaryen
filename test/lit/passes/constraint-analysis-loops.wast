@@ -429,12 +429,94 @@
     )
   )
 
-  ;; CHECK:      (func $bound-incremented-2-no (type $0)
+  ;; CHECK:      (func $bound-incremented-unsigned (type $0)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (loop $loop
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.ge_u
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.set $x
+  ;; CHECK-NEXT:    (i32.add
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (if
+  ;; CHECK-NEXT:    (i32.lt_u
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i32.const 100)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (then
+  ;; CHECK-NEXT:     (br $loop)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; LOOPS:      (func $bound-incremented-2-no (type $0)
+  ;; LOOPS:      (func $bound-incremented-unsigned (type $0)
+  ;; LOOPS-NEXT:  (local $x i32)
+  ;; LOOPS-NEXT:  (loop $loop
+  ;; LOOPS-NEXT:   (drop
+  ;; LOOPS-NEXT:    (i32.const 1)
+  ;; LOOPS-NEXT:   )
+  ;; LOOPS-NEXT:   (drop
+  ;; LOOPS-NEXT:    (i32.ge_u
+  ;; LOOPS-NEXT:     (local.get $x)
+  ;; LOOPS-NEXT:     (i32.const 0)
+  ;; LOOPS-NEXT:    )
+  ;; LOOPS-NEXT:   )
+  ;; LOOPS-NEXT:   (local.set $x
+  ;; LOOPS-NEXT:    (i32.add
+  ;; LOOPS-NEXT:     (local.get $x)
+  ;; LOOPS-NEXT:     (i32.const 1)
+  ;; LOOPS-NEXT:    )
+  ;; LOOPS-NEXT:   )
+  ;; LOOPS-NEXT:   (if
+  ;; LOOPS-NEXT:    (i32.const 0)
+  ;; LOOPS-NEXT:    (then
+  ;; LOOPS-NEXT:     (br $loop)
+  ;; LOOPS-NEXT:    )
+  ;; LOOPS-NEXT:   )
+  ;; LOOPS-NEXT:  )
   ;; LOOPS-NEXT: )
-  (func $bound-incremented-2-no
-    ;; TODO
+  (func $bound-incremented-unsigned
+    ;; As above, but with unsigned operations. This is simpler, and we optimize
+    ;; it even without "loops" mode.
+    (local $x i32)
+    (loop $loop
+      (drop
+        (i32.lt_u
+          (local.get $x)
+          (i32.const 100)
+        )
+      )
+      (drop
+        (i32.ge_u
+          (local.get $x)
+          (i32.const 0)
+        )
+      )
+      (local.set $x
+        (i32.add
+          (local.get $x)
+          (i32.const 1)
+        )
+      )
+      (if
+        (i32.lt_u
+          (local.get $x)
+          (i32.const 100)
+        )
+        (then
+          (br $loop)
+        )
+      )
+    )
   )
 
   ;; CHECK:      (func $increment-non-constant (type $1) (param $p i32)
