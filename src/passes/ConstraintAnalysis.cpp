@@ -346,13 +346,15 @@ struct ConstraintAnalysis
           auto sentConstraints = constraints;
           applyBranchConstraints(*branch, sentConstraints);
 #if CONSTRAINT_DEBUG
-          std::cout << block << " sending branch to " << out << " with sent constraints: " << sentConstraints << '\n';
+          std::cout << block << " sending branch to " << out
+                    << " with sent constraints: " << sentConstraints << '\n';
 #endif
 
           // If anything changed at the start of the target block, flow onwards.
           if (outStartConstraints.approximateOr(sentConstraints)) {
 #if CONSTRAINT_DEBUG
-            std::cout << block << " branch-modified " << out << " to start with: " << outStartConstraints << '\n';
+            std::cout << block << " branch-modified " << out
+                      << " to start with: " << outStartConstraints << '\n';
 #endif
             work.push(out);
           }
@@ -361,7 +363,8 @@ struct ConstraintAnalysis
           // |constraints|, avoiding a copy.
           if (outStartConstraints.approximateOr(constraints)) {
 #if CONSTRAINT_DEBUG
-            std::cout << block << " modified " << out << " to start with: " << outStartConstraints << '\n';
+            std::cout << block << " modified " << out
+                      << " to start with: " << outStartConstraints << '\n';
 #endif
             work.push(out);
           }
