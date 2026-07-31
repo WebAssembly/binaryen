@@ -381,6 +381,9 @@ struct ConstraintAnalysis
       // of course not needed at this stage.)
       auto& constraints = block->contents.startConstraints;
       for (auto** currp : block->contents.actions) {
+#if CONSTRAINT_DEBUG
+        std::cout << block << " trying to optimize " << **currp << '\n';
+#endif
         if (!constraints.unreachable) {
           applyToConstraints(*currp, constraints);
           optimizeExpression(currp, constraints);
