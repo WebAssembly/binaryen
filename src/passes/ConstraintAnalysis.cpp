@@ -397,31 +397,34 @@ struct ConstraintAnalysis
           }
 
           for (auto& c : old) {
-            if (auto* N = std::get_if<Literal>(&c.term)) {
-              switch (c.op) {
-                // x == N, x++  =>  x == N+1.
-                case Eq:
-                  // TODO: overflows here and below
-                  c.term = Term(N->add(Literal::makeFromInt32(1, N->type)));
-                  continue;
-                // x >= N, x++  =>  x > N
-                case GeS:
-                  c.op = GtS;
-                  continue;
-                case GeU:
-                  c.op = GtU;
-                  continue;
-                // x < N, x++  =>  x <= N
-                case LtS:
-                  c.op = LeS;
-                  continue;
-                case LtU:
-                  c.op = GeU;
-                  continue;
-                default:
-                  // Something we don't recognize.
-                  return false;
-              }
+            auto* N = std::get_if<Literal>(&c.term);
+            if (!N) {
+              // A non-constant term, which we don't know how to increment.
+              return false;
+            }
+            switch (c.op) {
+              // x == N, x++  =>  x == N+1.
+              case Eq:
+                // TODO: overflows here and below
+                c.term = Term(N->add(Literal::makeFromInt32(1, N->type)));
+                continue;
+              // x >= N, x++  =>  x > N
+              case GeS:
+                c.op = GtS;
+                continue;
+              case GeU:
+                c.op = GtU;
+                continue;
+              // x < N, x++  =>  x <= N
+              case LtS:
+                c.op = LeS;
+                continue;
+              case LtU:
+                c.op = GeU;
+                continue;
+              default:
+                // Something we don't recognize.
+                return false;
             }
           }
 

@@ -3,7 +3,7 @@
 ;; RUN: wasm-opt %s --constraint-analysis -all -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (import "a" "b" (func $import (type $1) (result i32)))
+  ;; CHECK:      (import "a" "b" (func $import (type $2) (result i32)))
   (import "a" "b" (func $import (result i32)))
 
   ;; CHECK:      (func $bound (type $0)
@@ -150,7 +150,7 @@
     )
   )
 
-  ;; CHECK:      (func $bound-nonconstant-no (type $2) (param $p i32)
+  ;; CHECK:      (func $bound-nonconstant-no (type $1) (param $p i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (loop $loop
   ;; CHECK-NEXT:   (drop
@@ -298,5 +298,99 @@
   ;; CHECK:      (func $bound-incremented-2-no (type $0)
   ;; CHECK-NEXT: )
   (func $bound-incremented-2-no
+    ;; TODO
+  )
+
+  ;; CHECK:      (func $increment-non-constant (type $1) (param $p i32)
+  ;; CHECK-NEXT:  (local $a i32)
+  ;; CHECK-NEXT:  (local $b i32)
+  ;; CHECK-NEXT:  (local $scratch i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (local.set $scratch
+  ;; CHECK-NEXT:     (i32.lt_s
+  ;; CHECK-NEXT:      (local.get $p)
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (i32.le_s
+  ;; CHECK-NEXT:      (local.get $a)
+  ;; CHECK-NEXT:      (local.get $b)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (then
+  ;; CHECK-NEXT:      (local.set $p
+  ;; CHECK-NEXT:       (local.get $a)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.set $a
+  ;; CHECK-NEXT:       (i32.add
+  ;; CHECK-NEXT:        (local.get $a)
+  ;; CHECK-NEXT:        (i32.const 1)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (i32.eq
+  ;; CHECK-NEXT:        (local.get $a)
+  ;; CHECK-NEXT:        (i32.const 1)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (i32.const 1)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $scratch)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $increment-non-constant (param $p i32)
+    (local $a i32)
+    (local $b i32)
+    (drop
+      (i32.lt_s
+        (local.get $p)
+        (i32.const 0)
+      )
+      (if
+        (i32.le_s
+          (local.get $a)
+          (local.get $b)
+        )
+        (then
+          ;; Before this set, this is what we know about $a:
+          ;; $a == 0 && $a <= $b
+          (local.set $p
+            (local.get $a)
+          )
+          ;; We just set $p to $a, so now we know this about $a:
+          ;; $a == 0 && $a <= $b, $a == $p
+          ;; We then proceed to do $a++, trying to increment each of those three
+          ;; constraints. We should not hit an internal error on trying to increment
+          ;; any of the three, ending up failing on the third (though, with a higher-
+          ;; level view, we could use the fact that $p == 0).
+          (local.set $a
+            (i32.add
+              (local.get $a)
+              (i32.const 1)
+            )
+          )
+          ;; Since we failed to know things about $a after $a++, we cannot
+          ;; prove this.
+          (drop
+            (i32.eq
+              (local.get $a)
+              (i32.const 1)
+            )
+          )
+          ;; But we did not forget about $b.
+          (drop
+            (i32.eq
+              (local.get $b)
+              (i32.const 0)
+            )
+          )
+        )
+      )
+    )
   )
 )
