@@ -266,6 +266,32 @@ std::optional<Constraint> approximateOrTermEqualPair(const Abstract::Op aOp,
     return Constraint{GeS, term};
   }
 
+  // x > C || x >= C  ===  x >= C
+  if (aOp == GtS && bOp == GeS) {
+    return Constraint{GeS, term};
+  }
+
+  // TODO: all the rest
+
+  return {};
+}
+
+// Do an OR of a pair of constraints where the terms are adjacent constants: a
+// operates on C, and b on C+1.
+std::optional<Constraint> approximateOrAdjacentConstantPair(
+  const Abstract::Op aOp, const Literal& aConstant, const Abstract::Op bOp) {
+  using namespace Abstract;
+
+  // x == C || x >= C+1  ===  x >= C, if C+1 does not overflow.
+  if (aOp == Eq && bOp == GeS && !aConstant.isSignedMax()) {
+    return Constraint{GeS, {aConstant}};
+  }
+
+  // x > C || x >= C+1  ===  x > C, if C+1 does not overflow.
+  if (aOp == GtS && bOp == GeS && !aConstant.isSignedMax()) {
+    return Constraint{GtS, {aConstant}};
+  }
+
   // TODO: all the rest
 
   return {};
@@ -279,6 +305,18 @@ std::optional<Constraint> approximateOrPair(const Constraint& a,
   if (a.term == b.term) {
     if (auto result = approximateOrTermEqualPair(a.op, b.op, a.term)) {
       return result;
+    }
+  }
+
+  // See if we operate on constants N, N+1.
+  if (auto* ac = std::get_if<Literal>(&a.term)) {
+    if (auto* bc = std::get_if<Literal>(&b.term)) {
+      if (ac->type == bc->type && ac->type.isInteger() &&
+          ac->add(Literal::makeFromInt32(1, ac->type)) == *bc) {
+        if (auto result = approximateOrAdjacentConstantPair(a.op, *ac, b.op)) {
+          return result;
+        }
+      }
     }
   }
 

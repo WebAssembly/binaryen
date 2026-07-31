@@ -409,8 +409,8 @@ else() # MSVC
   add_compile_flag("-Wno-unknown-warning-option")
   add_compile_flag("-Wswitch") # we explicitly expect this in the code
   add_compile_flag("-Wimplicit-fallthrough")
-  add_compile_flag("-Wnon-virtual-dtor")
-  add_compile_flag("-Wsuggest-override")
+  add_compile_flag("-Wnon-virtual-dtor" "CXX_ONLY")
+  add_compile_flag("-Wsuggest-override" "CXX_ONLY")
 
   if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
     # Google style requires this, so make sure we compile cleanly with it.
