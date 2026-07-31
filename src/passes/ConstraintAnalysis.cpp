@@ -539,7 +539,7 @@ struct ConstraintAnalysis
   // Apply an increment, in loops mode. Returns true if we found and applied
   // one.
   bool applyIncrementToConstraints(Expression* curr,
-                            BasicBlockConstraintMap& constraints) const {
+                                   BasicBlockConstraintMap& constraints) const {
     assert(loops);
 
     using namespace Match;
@@ -602,7 +602,8 @@ struct ConstraintAnalysis
   }
 
   // Apply branch constraints to the current set of constraints.
-  void applyBranchConstraints(const LocalConstraint& branch, BasicBlockConstraintMap& constraints) {
+  void applyBranchConstraints(const LocalConstraint& branch,
+                              BasicBlockConstraintMap& constraints) {
     // In "loops" mode, extend the range of values in the "jump ahead" manner.
     if (loops && applyBranchRangeExtensionToConstraints(branch, constraints)) {
       return;
@@ -611,7 +612,9 @@ struct ConstraintAnalysis
     constraints.approximateAnd(branch.local, branch.constraint);
   }
 
-  bool applyBranchRangeExtensionToConstraints(const LocalConstraint& branch, BasicBlockConstraintMap& constraints) {
+  bool
+  applyBranchRangeExtensionToConstraints(const LocalConstraint& branch,
+                                         BasicBlockConstraintMap& constraints) {
     assert(loops);
 
     using namespace Abstract;
