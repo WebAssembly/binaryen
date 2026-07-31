@@ -51,42 +51,24 @@
 // from 0 to 100, and no more, and that involves an interaction of the initial
 // value, the increment, and the condition on the loop backedge.
 //
-// To optimize this, in "loops" mode
-// A naive approach is to just interpret this code. x starts as x == 0, then
-// x++ means x == 1, then at the loop top we have x >= 0 && x < 1, and so
-// forth - but this is not what we want! This would literally interpret the
-// code 100 times. To avoid this in "Normal" mode, we do not do anything for
-// x++ - we assume the value is unknown after the increment, so x does not go
-// from 0 to 1 to 2 and so forth.
+// To optimize this, in "loops" mode we "jump ahead" to what is likely a loop
+// limit: if we see a loop variable that is branched on, we expand the range of
+// values the variable can take up to that bound. Concretely, we do this:
 //
-// In "Loops" mode, we do the following things differently:
+//   * We do implement x++, turning x from 0 to 1 in the example above, in the
+//     first iteration of the loop.
+//   * When we then see x == 1 that branches with x < 100, we turn that into
+//     x >= 1 && x < 100. This is "imprecise", because perhaps the local will
+//     not actually get incremented all the way to 100, but it is an upper
+//     bound that ends up getting us to the result we want in common loop
+//     shapes. (And it is safe to do because we allow more values for x, meaning
+//     we can prove fewer things, so we won't prove anything false.)
 //
-//  * x == 0, x++  =>  x == 1. This happens on the first loop iteration.
-//  * When we see the loop backedge x < 100, which would normally be ANDed on
-//    top of the value of x, we instead pessimistically extend the spane of
-//    values to everything that would be possible in an incrementing loop.
-//    Specifically:
-//    * x == 1 && x < 100  =>  x > 0 && x < 100
-//    (If we did a normal AND, we would end up with x == 1 here, and the loop
-//    would then increment x to 2 and so forth.)
-//  * We then run through the loop again, now starting with
-//    x >= 0 && x < 100 (after we merge in the x == 0 from before the loop),
-//    and do this:
-//    * x >= 0 && x < 100, x++  =>  x > 0 && x <= 100
-//    * x > 0 && x <= 100 && x < 100  => x > 0 && x < 100
-//    No further changes occur, and this is the final stable state.
+// After doing that, we return to the top of the loop, where now we can see
+// x >= 0 && x < 100. After running that through the loop a second time, no more
+// changes will happen: we successfully "jumped ahead" to the end state of the
+// loop variable.
 //
-// This is valid because the only imprecise operation we do is
-//    * x == 1 && x < 100  =>  x > 0 && x < 100
-// That is a valid inference, even if it is pessimistic and hence causes us to
-// be able to prove less things. But this is useful because this pessimistic
-// outcome is the common situation in a loop, so we find the proper bound on
-// the loop variable here in just two iterations of the loop.
-//
-// At a high level, we first do the Normal flow, which is as precise as we can
-// be. We then do the Loops flow afterwards, adding more information but not
-// making anything worse.
-
 
 #include "cfg/cfg-traversal.h"
 #include "ir/constraint.h"
