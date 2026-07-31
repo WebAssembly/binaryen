@@ -670,6 +670,8 @@ struct ConstraintAnalysis
 } // anonymous namespace
 
 Pass* createConstraintAnalysisPass() { return new ConstraintAnalysis(false); }
-Pass* createConstraintAnalysisLoopsPass() { return new ConstraintAnalysis(true); }
+Pass* createConstraintAnalysisLoopsPass() {
+  return new ConstraintAnalysis(true);
+}
 
 } // namespace wasm
