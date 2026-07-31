@@ -280,6 +280,9 @@ void PassRegistry::registerPasses() {
   registerPass("limit-segments",
                "attempt to merge segments to fit within web limits",
                createLimitSegmentsPass);
+  registerPass("make-shared-objects",
+               "Make structs and arrays shared and functions unshared",
+               createMakeSharedObjectsPass);
   registerPass("mark-js-called",
                "mark js called functions (using configureAll) as doing so",
                createMarkJSCalledPass);
