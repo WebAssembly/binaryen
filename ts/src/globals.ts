@@ -196,24 +196,18 @@ export function emitText(expr: ExpressionRef): string {
 	}
 }
 
-/** Creates a module from binary data. */
-export function readBinary(data: Uint8Array): Module {
+/** Parses a binary to a module with the given feature set enabled. `features` defaults to MVP. */
+export function readBinary(data: Uint8Array, features?: Feature): Module {
 	const buffer = _malloc(data.length);
 	BinaryenObj.HEAP8.set(data, buffer);
-	const ptr = handleFatalError(() => BinaryenObj["_BinaryenModuleRead"](buffer, data.length));
+	const ptr = features === undefined
+		? handleFatalError(() => BinaryenObj["_BinaryenModuleRead"](buffer, data.length))
+		: handleFatalError(() => BinaryenObj["_BinaryenModuleReadWithFeatures"](buffer, data.length, features));
 	_free(buffer);
 	return wrapModule(ptr);
 }
 
-export function readBinaryWithFeatures(data: Uint8Array, features: Feature): Module {
-	const buffer = _malloc(data.length);
-	BinaryenObj.HEAP8.set(data, buffer);
-	const ptr = handleFatalError(() => BinaryenObj["_BinaryenModuleReadWithFeatures"](buffer, data.length, features));
-	_free(buffer);
-	return wrapModule(ptr);
-}
-
-/** Parses text format to a module with the given feature set enabled. */
+/** Parses text format to a module with the given feature set enabled. `features` defaults to MVP. */
 export function parseText(text: string, features?: Feature): Module {
 	const buffer = _malloc(text.length + 1);
 	stringToAscii(text, buffer);

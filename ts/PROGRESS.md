@@ -210,7 +210,6 @@ Add to this checklist as the JS is updated; check when migrated to TS.
 | ------------------------------------ | --------- | ------------------ | ---- | ------------ | ----- |
 | `emitText`                           | line 3307 | globals.ts         | [x] | [x] | [ ] |
 | `readBinary`                         | line 3358 | globals.ts         | [x] | [x] | [ ] |
-| `readBinaryWithFeatures`             |           | globals.ts         | [x] | [x] | [ ] |
 | `parseText`                          |           | globals.ts         | [x] | [x] | [ ] |
 | `getOptimizeLevel`                   | line 3384 | SettingsService.ts | [x] | [x] | [ ] |
 | `setOptimizeLevel`                   |           | SettingsService.ts | [x] | [x] | [ ] |

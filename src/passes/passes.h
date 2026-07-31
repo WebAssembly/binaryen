@@ -88,6 +88,7 @@ Pass* createInstrumentLocalsPass();
 Pass* createInstrumentMemoryPass();
 Pass* createLLVMMemoryCopyFillLoweringPass();
 Pass* createLoopInvariantCodeMotionPass();
+Pass* createMakeSharedObjectsPass();
 Pass* createMarkJSCalledPass();
 Pass* createMemory64LoweringPass();
 Pass* createMemoryPackingPass();

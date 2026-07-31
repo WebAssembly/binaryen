@@ -70,7 +70,6 @@ suite("binaryen", () => {
 		// functions
 		assert.strictEqual(typeof binaryen.emitText, "function");
 		assert.strictEqual(typeof binaryen.readBinary, "function");
-		assert.strictEqual(typeof binaryen.readBinaryWithFeatures, "function");
 		assert.strictEqual(typeof binaryen.parseText, "function");
 		assert.strictEqual(typeof binaryen.exit, "function");
 		assert.strictEqual(typeof binaryen.createType, "function");
@@ -82,7 +81,6 @@ suite("binaryen", () => {
 		assert.strictEqual(typeof binaryen.getExpressionInfo, "function");
 		assert.ok(binaryen.emitText.toString().startsWith("function"));
 		assert.ok(binaryen.readBinary.toString().startsWith("function"));
-		assert.ok(binaryen.readBinaryWithFeatures.toString().startsWith("function"));
 		assert.ok(binaryen.parseText.toString().startsWith("function"));
 		assert.ok(binaryen.exit.toString().startsWith("function"));
 		assert.ok(binaryen.createType.toString().startsWith("function"));

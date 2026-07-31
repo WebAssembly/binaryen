@@ -405,17 +405,16 @@ void GlobalTypeRewriter::mapTypes(const TypeMap& oldToNewTypes) {
 }
 
 void GlobalTypeRewriter::mapTypeNamesAndIndices(const TypeMap& oldToNewTypes) {
-  // Track all the existing names to avoid creating duplicates.
-  std::unordered_set<Name> seenTypeNames;
-  for (auto& [type, info] : wasm.typeNames) {
-    seenTypeNames.insert(info.name);
-  }
   // Collect new and updated type names and indices. Do not mutate the module's
   // names and indices until the end to avoid iteration order affecting the
   // results in the case where oldToNewTypes maps old types to different old
   // types.
   std::unordered_map<HeapType, TypeNames> newTypeNames;
   std::unordered_map<HeapType, Index> newTypeIndices;
+
+  // Assign names and indices to new types. To avoid any dependencies on the
+  // iteration order, deterministically keep the lesser names or indices in the
+  // case of merges and do not mutate typeNames as we iterate over it.
   for (auto& [old, new_] : oldToNewTypes) {
     if (old == new_) {
       // The type is being mapped to itself; no need to rename anything.
@@ -423,25 +422,38 @@ void GlobalTypeRewriter::mapTypeNamesAndIndices(const TypeMap& oldToNewTypes) {
     }
     if (auto it = wasm.typeNames.find(old); it != wasm.typeNames.end()) {
       auto& names = it->second;
-      newTypeNames[new_] = names;
-      // Use the existing name in the new type, as usually it completely
-      // replaces the old. Rename the old name in a unique way to avoid
-      // confusion in the case that it remains used.
-      auto deduped = Names::getValidName(
-        names.name, [&](Name test) { return !seenTypeNames.contains(test); });
-      names.name = deduped;
-      // Use `insert` to avoid overwriting the entry for the old type if it has
-      // already appeared as a new type.
-      if (newTypeNames.insert({old, names}).second) {
-        seenTypeNames.insert(names.name);
+      auto [newIt, inserted] = newTypeNames.insert({new_, names});
+      if (!inserted) {
+        if (names.name.view() < newIt->second.name.view()) {
+          newIt->second = names;
+        }
       }
     }
     if (auto it = wasm.typeIndices.find(old); it != wasm.typeIndices.end()) {
-      // It's ok if we end up with duplicate indices. Ties will be resolved in
-      // some arbitrary manner.
-      newTypeIndices[new_] = it->second;
+      auto [newIt, inserted] = newTypeIndices.insert({new_, it->second});
+      if (!inserted) {
+        newIt->second = std::min(newIt->second, it->second);
+      }
     }
   }
+
+  // Assign old types that have been mapped to other types unique deduplicated
+  // names in case they remain used despite the mapping. In cases where the old
+  // types are also mapped _to_, the mapping will take precedence when we do the
+  // merge below.
+  std::unordered_set<Name> seenTypeNames;
+  for (auto& [_, names] : wasm.typeNames) {
+    seenTypeNames.insert(names.name);
+  }
+  for (auto& [type, names] : wasm.typeNames) {
+    if (auto it = oldToNewTypes.find(type);
+        it != oldToNewTypes.end() && it->second != type) {
+      names.name = Names::getValidName(names.name, [&](Name name) {
+        return seenTypeNames.insert(name).second;
+      });
+    }
+  }
+
   newTypeNames.merge(wasm.typeNames);
   wasm.typeNames = std::move(newTypeNames);
   newTypeIndices.merge(wasm.typeIndices);
