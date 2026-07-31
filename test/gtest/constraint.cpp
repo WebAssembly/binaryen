@@ -265,6 +265,37 @@ TEST(ConstraintTest, TestOrInequality) {
 
   // x == 5 || x >= 5  =>  x >= 5
   checkOr(eq5, ges5, ges5);
+
+  // x == 5 || x >= 6  =>  x >= 5
+  AndedConstraintSet ges6{{GeS, {Literal(int32_t(6))}}};
+  checkOr(eq5, ges6, ges5);
+
+  // TODO: x == 5 || x >= 7  =>  x >= 5  TODO
+  AndedConstraintSet ges7{{GeS, {Literal(int32_t(7))}}};
+  auto empty = AndedConstraintSet::makeProvesNothing();
+  checkOr(eq5, ges7, empty);
+
+  // x > 5 || x >= 6  =>  x > 5
+  checkOr(gts5, ges6, gts5);
+
+  // x > 5 || x >= 5  =>  x >= 5
+  checkOr(gts5, ges5, ges5);
+
+  // Careful of overflow:
+  // x == signed_max || x >= (signed_max + 1 === signed_min) != x >= signed_max
+  AndedConstraintSet eqMax{
+    {Eq, {Literal(std::numeric_limits<int32_t>::max())}}};
+  AndedConstraintSet gesMin{
+    {GeS, {Literal(std::numeric_limits<int32_t>::min())}}};
+  // TODO: x >= signed_min is always true, so this could be empty
+  checkOr(eqMax, gesMin, gesMin);
+
+  // Careful of overflow:
+  // x > signed_max || x >= (signed_max + 1 === signed_min) != x > signed_max
+  AndedConstraintSet gtsMax{
+    {GtS, {Literal(std::numeric_limits<int32_t>::max())}}};
+  // TODO: x > signed_max is always false, so this could return a contradiction
+  checkOr(gtsMax, gesMin, empty);
 }
 
 TEST(ConstraintTest, TestOrLoop) {
