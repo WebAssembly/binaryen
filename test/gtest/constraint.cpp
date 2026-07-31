@@ -348,10 +348,12 @@ TEST(ConstraintTest, TestOrLoop) {
   checkOr(leftNe, right, empty);
 
   // Change the GtS on the right to GtU:
-  // { x == 5 } || { x >U 5 && x <= 42 }   ==>   { x <= 42 }
+  // { x == 5 } || { x >U 5 && x <= 42 }   ==>   { x >=U 5 && x <= 42 }
   AndedConstraintSet rightGtU(
     {{GtU, {Literal(int32_t(5))}}, {LeS, {Literal(int32_t(42))}}});
-  checkOr(left, rightGtU, rightOnly42);
+  AndedConstraintSet resultMixed(
+    {{GeU, {Literal(int32_t(5))}}, {LeS, {Literal(int32_t(42))}}});
+  checkOr(left, rightGtU, resultMixed);
 
   // Change the LeS on the right to LeU:
   // { x == 5 } || { x > 5 && x <=U 42 }   ==>   { x >= 5 && x <=U 42 }
