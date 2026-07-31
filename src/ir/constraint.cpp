@@ -265,10 +265,16 @@ std::optional<Constraint> approximateOrTermEqualPair(const Abstract::Op aOp,
   if (aOp == Eq && bOp == GtS) {
     return Constraint{GeS, term};
   }
+  if (aOp == Eq && bOp == GtU) {
+    return Constraint{GeU, term};
+  }
 
   // x > C || x >= C  ===  x >= C
   if (aOp == GtS && bOp == GeS) {
     return Constraint{GeS, term};
+  }
+  if (aOp == GtS && bOp == GeU) {
+    return Constraint{GeU, term};
   }
 
   // TODO: all the rest
@@ -286,10 +292,16 @@ std::optional<Constraint> approximateOrAdjacentConstantPair(
   if (aOp == Eq && bOp == GeS && !aConstant.isSignedMax()) {
     return Constraint{GeS, {aConstant}};
   }
+  if (aOp == Eq && bOp == GeU && !aConstant.isUnsignedMax()) {
+    return Constraint{GeU, {aConstant}};
+  }
 
   // x > C || x >= C+1  ===  x > C, if C+1 does not overflow.
   if (aOp == GtS && bOp == GeS && !aConstant.isSignedMax()) {
     return Constraint{GtS, {aConstant}};
+  }
+  if (aOp == GtU && bOp == GeU && !aConstant.isUnsignedMax()) {
+    return Constraint{GtU, {aConstant}};
   }
 
   // TODO: all the rest
