@@ -465,10 +465,7 @@
   ;; LOOPS-NEXT:    (i32.const 1)
   ;; LOOPS-NEXT:   )
   ;; LOOPS-NEXT:   (drop
-  ;; LOOPS-NEXT:    (i32.ge_u
-  ;; LOOPS-NEXT:     (local.get $x)
-  ;; LOOPS-NEXT:     (i32.const 0)
-  ;; LOOPS-NEXT:    )
+  ;; LOOPS-NEXT:    (i32.const 1)
   ;; LOOPS-NEXT:   )
   ;; LOOPS-NEXT:   (local.set $x
   ;; LOOPS-NEXT:    (i32.add
