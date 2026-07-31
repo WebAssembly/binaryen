@@ -1169,6 +1169,21 @@ Result<> IRBuilder::visitEnd() {
     return block;
   };
 
+  auto pushWrapped = [&](Expression* curr) {
+    auto* wrapped = maybeWrapForLabel(curr);
+    if (wrapped != curr) {
+      if (binaryPos && func) {
+        if (auto iter = func->expressionLocations.find(wrapped);
+            iter != func->expressionLocations.end()) {
+          iter->second.end = *binaryPos - codeSectionOffset;
+        }
+      }
+      pushSynthetic(wrapped);
+    } else {
+      push(curr);
+    }
+  };
+
   // The binary position we record for the block instruction should start at the
   // beginning of the block, not at the beginning of the `end`.
   lastBinaryPos = scope.startPos;
@@ -1215,27 +1230,27 @@ Result<> IRBuilder::visitEnd() {
       iff->ifFalse = nullptr;
     }
     iff->finalize(iff->type);
-    push(maybeWrapForLabel(iff));
+    pushWrapped(iff);
   } else if (auto* iff = scope.getElse()) {
     iff->ifFalse = *expr;
     iff->finalize(iff->type);
-    push(maybeWrapForLabel(iff));
+    pushWrapped(iff);
   } else if (auto* tryy = scope.getTry()) {
     tryy->body = *expr;
     tryy->name = scope.label;
     tryy->finalize(tryy->type);
-    push(maybeWrapForLabel(tryy));
+    pushWrapped(tryy);
   } else if (Try* tryy;
              (tryy = scope.getCatch()) || (tryy = scope.getCatchAll())) {
     auto index = scope.getIndex();
     setCatchBody(tryy, *expr, index);
     tryy->name = scope.label;
     tryy->finalize(tryy->type);
-    push(maybeWrapForLabel(tryy));
+    pushWrapped(tryy);
   } else if (auto* trytable = scope.getTryTable()) {
     trytable->body = *expr;
     trytable->finalize(trytable->type, &wasm);
-    push(maybeWrapForLabel(trytable));
+    pushWrapped(trytable);
   } else {
     WASM_UNREACHABLE("unexpected scope kind");
   }
