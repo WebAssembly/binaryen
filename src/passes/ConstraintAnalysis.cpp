@@ -665,14 +665,18 @@ std::cout << "out's start after  " << outStartConstraints << '\n';
       if (localConstraints.size() == 1 &&
           localConstraints[0].op == Abstract::Eq) {
         if (auto* N = std::get_if<Literal>(&localConstraints[0].term)) {
-          if (branch.constraint.op == Abstract::LtS &&
-              N->ltS(*M).getUnsigned()) {
+          // We can handle both x < M as the branch, as described above, or
+          // x <= M (if N <= M).
+          if ((branch.constraint.op == Abstract::LtS &&
+               N->ltS(*M).getUnsigned()) || (branch.constraint.op == Abstract::LeS &&
+               N->leS(*M).getUnsigned())) {
             constraints.set(branch.local, branch.constraint);
             constraints.approximateAnd(branch.local, {GeS, {*N}});
             return true;
           }
-          if (branch.constraint.op == Abstract::LtU &&
-              N->ltU(*M).getUnsigned()) {
+          if ((branch.constraint.op == Abstract::LtU &&
+              N->ltU(*M).getUnsigned()) || (branch.constraint.op == Abstract::LeU &&
+              N->leU(*M).getUnsigned())) {
             constraints.set(branch.local, branch.constraint);
             constraints.approximateAnd(branch.local, {GeU, {*N}});
             return true;
