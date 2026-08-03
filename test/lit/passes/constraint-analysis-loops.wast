@@ -934,7 +934,7 @@
             (i32.const 1)
           )
         )
-        ;; Before we left the loop when x >= 100. Now we leave then x > 100,
+        ;; Before we left the loop when x >= 100. Now we leave when x > 100,
         ;; so we do actually reach 100 in the code below.
         (if
           (i32.gt_s

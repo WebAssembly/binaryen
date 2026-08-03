@@ -349,10 +349,11 @@ struct ConstraintAnalysis
           std::cout << block << " sending branch to " << out
                     << " with sent constraints: " << sentConstraints << '\n';
 #endif
-
+std::cout << "out's start before " << outStartConstraints << '\n';
           // If anything changed at the start of the target block, flow onwards.
           if (outStartConstraints.approximateOr(sentConstraints)) {
 #if CONSTRAINT_DEBUG
+std::cout << "out's start after  " << outStartConstraints << '\n';
             std::cout << block << " branch-modified " << out
                       << " to start with: " << outStartConstraints << '\n';
 #endif
