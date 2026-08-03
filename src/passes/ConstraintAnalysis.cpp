@@ -349,11 +349,11 @@ struct ConstraintAnalysis
           std::cout << block << " sending branch to " << out
                     << " with sent constraints: " << sentConstraints << '\n';
 #endif
-std::cout << "out's start before " << outStartConstraints << '\n';
+          std::cout << "out's start before " << outStartConstraints << '\n';
           // If anything changed at the start of the target block, flow onwards.
           if (outStartConstraints.approximateOr(sentConstraints)) {
 #if CONSTRAINT_DEBUG
-std::cout << "out's start after  " << outStartConstraints << '\n';
+            std::cout << "out's start after  " << outStartConstraints << '\n';
             std::cout << block << " branch-modified " << out
                       << " to start with: " << outStartConstraints << '\n';
 #endif
@@ -668,15 +668,17 @@ std::cout << "out's start after  " << outStartConstraints << '\n';
           // We can handle both x < M as the branch, as described above, or
           // x <= M (if N <= M).
           if ((branch.constraint.op == Abstract::LtS &&
-               N->ltS(*M).getUnsigned()) || (branch.constraint.op == Abstract::LeS &&
+               N->ltS(*M).getUnsigned()) ||
+              (branch.constraint.op == Abstract::LeS &&
                N->leS(*M).getUnsigned())) {
             constraints.set(branch.local, branch.constraint);
             constraints.approximateAnd(branch.local, {GeS, {*N}});
             return true;
           }
           if ((branch.constraint.op == Abstract::LtU &&
-              N->ltU(*M).getUnsigned()) || (branch.constraint.op == Abstract::LeU &&
-              N->leU(*M).getUnsigned())) {
+               N->ltU(*M).getUnsigned()) ||
+              (branch.constraint.op == Abstract::LeU &&
+               N->leU(*M).getUnsigned())) {
             constraints.set(branch.local, branch.constraint);
             constraints.approximateAnd(branch.local, {GeU, {*N}});
             return true;
