@@ -93,7 +93,7 @@
 #include "wasm-builder.h"
 #include "wasm.h"
 
-#define CONSTRAINT_DEBUG 1
+#define CONSTRAINT_DEBUG 0
 
 #ifndef CONSTRAINT_DEBUG
 #define CONSTRAINT_DEBUG 0
