@@ -607,6 +607,22 @@ TEST(ConstraintTest, TestIncrement) {
   map.set(0, &add);
   check(map.get(0), {LeU, Literal(int32_t(6))});
 
+  // $0 <= max_signed, $0++  =>  nothing, because it would overflow
+  map.set(0, {LeS, Literal::makeSignedMax(Type::i32)});
+  map.set(0, &add);
+  EXPECT_TRUE(map.get(0).provesNothing());
+
+  // $0 <= max_unsigned, $0++  =>  nothing, because it would overflow
+  map.set(0, {LeU, Literal::makeUnsignedMax(Type::i32)});
+  map.set(0, &add);
+  EXPECT_TRUE(map.get(0).provesNothing());
+
+  // However, an unsigned operation on the signed max is fine.
+  map.set(0, {LeU, Literal::makeSignedMax(Type::i32)});
+  map.set(0, &add);
+  auto one = Literal::makeFromInt32(1, Type::i32);
+  check(map.get(0), {LeU, Literal::makeSignedMax(Type::i32).add(one)});
+
   // Multiple constraints at once:
   // $0 >= 10 && $0 < 20, $0++  =>  $0 > 10 && $0 <= 20
   map.set(0, {GeS, Literal(int32_t(10))});
