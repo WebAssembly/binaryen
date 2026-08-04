@@ -534,7 +534,6 @@ void BasicBlockConstraintMap::set(Index index,
   }
 }
 
-// Set the value in an expression to a local, replacing anything before.
 void BasicBlockConstraintMap::set(Index index, Expression* value) {
   using namespace Match;
   using namespace Abstract;
