@@ -571,7 +571,6 @@ void BasicBlockConstraintMap::set(Index index, Expression* value) {
       switch (c.op) {
         // x == N, x++  =>  x == N+1.
         case Eq:
-          // TODO: overflows here and below
           c.term = Term(N->add(Literal::makeFromInt32(1, N->type)));
           continue;
         // x >= N, x++  =>  x > N
