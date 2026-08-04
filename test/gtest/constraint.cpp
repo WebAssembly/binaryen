@@ -578,7 +578,15 @@ TEST(ConstraintTest, TestIncrement) {
   map.set(0, &add);
   check(map.get(0), {Eq, Literal(int32_t(1))});
 
+  // $0 >= 5, $0++  =>  $0 > 5 (signed)
+  map.set(0, {GeS, Literal(int32_t(5))});
+  map.set(0, &add);
+  check(map.get(0), {GtS, Literal(int32_t(5))});
 
+  // Ditto, unsigned
+  map.set(0, {GeU, Literal(int32_t(5))});
+  map.set(0, &add);
+  check(map.get(0), {GtU, Literal(int32_t(5))});
 
 
 
