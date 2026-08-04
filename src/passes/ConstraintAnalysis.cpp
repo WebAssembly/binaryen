@@ -322,7 +322,7 @@ struct ConstraintAnalysis
         if (auto branch = getBranchConstraints(block, out);
             branch && checkRelevancy(*branch)) {
           auto sentConstraints = constraints;
-          applyBranchConstraints(*branch, sentConstraints);
+          sentConstraints.approximateAnd(branch->local, branch->constraint);
 #if CONSTRAINT_DEBUG
           std::cout << block << " sending branch to " << out
                     << " with sent constraints: " << sentConstraints << '\n';
@@ -506,9 +506,9 @@ struct ConstraintAnalysis
       }
 
       // The only binary operation we match is an increment (x + 1), and we do
-      // not always want to apply it: only in loops mode, and even then, only
-      // when we are allowed to keep working (see above).
-      if (set->value->is<Binary>() && (!loops || !maxWorkLeft)) {
+      // not always want to apply it: only when we are allowed to keep working
+      // (see above).
+      if (set->value->is<Binary>() && !maxWorkLeft) {
         constraints.setProvesNothing(set->index);
         return;
       }
