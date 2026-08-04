@@ -1361,6 +1361,8 @@ void FunctionValidator::visitAtomicRMW(AtomicRMW* curr) {
                                     "AtomicRMW result type must match operand");
   shouldBeIntOrUnreachable(
     curr->type, curr, "Atomic operations are only valid on int types");
+  validateAlignment(
+    curr->align, curr->type, curr->bytes, /*isAtomic=*/true, curr);
 }
 
 void FunctionValidator::visitAtomicCmpxchg(AtomicCmpxchg* curr) {
@@ -1423,6 +1425,8 @@ void FunctionValidator::visitAtomicCmpxchg(AtomicCmpxchg* curr) {
   shouldBeIntOrUnreachable(curr->expected->type,
                            curr,
                            "Atomic operations are only valid on int types");
+  validateAlignment(
+    curr->align, curr->type, curr->bytes, /*isAtomic=*/true, curr);
 }
 
 void FunctionValidator::visitAtomicWait(AtomicWait* curr) {
@@ -1449,6 +1453,11 @@ void FunctionValidator::visitAtomicWait(AtomicWait* curr) {
                                     Type(Type::i64),
                                     curr,
                                     "AtomicWait timeout type must be i64");
+  validateAlignment(curr->align,
+                    curr->expectedType,
+                    curr->expectedType.getByteSize(),
+                    /*isAtomic=*/true,
+                    curr);
 }
 
 void FunctionValidator::visitAtomicNotify(AtomicNotify* curr) {
@@ -1469,6 +1478,8 @@ void FunctionValidator::visitAtomicNotify(AtomicNotify* curr) {
     Type(Type::i32),
     curr,
     "AtomicNotify notifyCount type must be i32");
+  validateAlignment(
+    curr->align, Type::i32, 4, /*isAtomic=*/true, curr);
 }
 
 void FunctionValidator::visitAtomicFence(AtomicFence* curr) {

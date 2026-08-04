@@ -1634,29 +1634,39 @@ Result<> IRBuilder::makeStore(
   return Ok{};
 }
 
-Result<> IRBuilder::makeAtomicLoad(
-  unsigned bytes, Address offset, Type type, Name mem, MemoryOrder order) {
+Result<> IRBuilder::makeAtomicLoad(unsigned bytes,
+                                   Address offset,
+                                   Address align,
+                                   Type type,
+                                   Name mem,
+                                   MemoryOrder order) {
   Load curr;
   curr.memory = mem;
   CHECK_ERR(visitLoad(&curr));
-  push(builder.makeAtomicLoad(bytes, offset, curr.ptr, type, mem, order));
+  push(builder.makeAtomicLoad(
+    bytes, offset, align, curr.ptr, type, mem, order));
   return Ok{};
 }
 
-Result<> IRBuilder::makeAtomicStore(
-  unsigned bytes, Address offset, Type type, Name mem, MemoryOrder order) {
+Result<> IRBuilder::makeAtomicStore(unsigned bytes,
+                                    Address offset,
+                                    Address align,
+                                    Type type,
+                                    Name mem,
+                                    MemoryOrder order) {
   Store curr;
   curr.memory = mem;
   curr.valueType = type;
   CHECK_ERR(visitStore(&curr));
   push(builder.makeAtomicStore(
-    bytes, offset, curr.ptr, curr.value, type, mem, order));
+    bytes, offset, align, curr.ptr, curr.value, type, mem, order));
   return Ok{};
 }
 
 Result<> IRBuilder::makeAtomicRMW(AtomicRMWOp op,
                                   unsigned bytes,
                                   Address offset,
+                                  Address align,
                                   Type type,
                                   Name mem,
                                   MemoryOrder order) {
@@ -1665,17 +1675,22 @@ Result<> IRBuilder::makeAtomicRMW(AtomicRMWOp op,
   curr.type = type;
   CHECK_ERR(visitAtomicRMW(&curr));
   push(builder.makeAtomicRMW(
-    op, bytes, offset, curr.ptr, curr.value, type, mem, order));
+    op, bytes, offset, align, curr.ptr, curr.value, type, mem, order));
   return Ok{};
 }
 
-Result<> IRBuilder::makeAtomicCmpxchg(
-  unsigned bytes, Address offset, Type type, Name mem, MemoryOrder order) {
+Result<> IRBuilder::makeAtomicCmpxchg(unsigned bytes,
+                                      Address offset,
+                                      Address align,
+                                      Type type,
+                                      Name mem,
+                                      MemoryOrder order) {
   AtomicCmpxchg curr;
   curr.memory = mem;
   CHECK_ERR(ChildPopper{*this}.visitAtomicCmpxchg(&curr, type));
   push(builder.makeAtomicCmpxchg(bytes,
                                  offset,
+                                 align,
                                  curr.ptr,
                                  curr.expected,
                                  curr.replacement,
@@ -1685,21 +1700,21 @@ Result<> IRBuilder::makeAtomicCmpxchg(
   return Ok{};
 }
 
-Result<> IRBuilder::makeAtomicWait(Type type, Address offset, Name mem) {
+Result<> IRBuilder::makeAtomicWait(Type type, Address offset, Address align, Name mem) {
   AtomicWait curr;
   curr.memory = mem;
   curr.expectedType = type;
   CHECK_ERR(visitAtomicWait(&curr));
   push(builder.makeAtomicWait(
-    curr.ptr, curr.expected, curr.timeout, type, offset, mem));
+    curr.ptr, curr.expected, curr.timeout, type, offset, align, mem));
   return Ok{};
 }
 
-Result<> IRBuilder::makeAtomicNotify(Address offset, Name mem) {
+Result<> IRBuilder::makeAtomicNotify(Address offset, Address align, Name mem) {
   AtomicNotify curr;
   curr.memory = mem;
   CHECK_ERR(visitAtomicNotify(&curr));
-  push(builder.makeAtomicNotify(curr.ptr, curr.notifyCount, offset, mem));
+  push(builder.makeAtomicNotify(curr.ptr, curr.notifyCount, offset, align, mem));
   return Ok{};
 }
 
