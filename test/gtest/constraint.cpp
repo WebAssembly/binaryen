@@ -503,3 +503,86 @@ TEST(ConstraintTest, TestAndLoop) {
   // x <= y && { x < y && x != 42 }  =>  x < y && x != 42
   checkAnd(ley, {lty[0], ne42}, {lty[0], ne42});
 }
+
+TEST(ConstraintTest, TestBasicBlockConstraintMap) {
+  // Maps begin unreachable.
+  BasicBlockConstraintMap map;
+
+  EXPECT_TRUE(map.unreachable);
+  map.setReachable();
+  EXPECT_FALSE(map.unreachable);
+}
+
+// Check that a set is equal to a constraint.
+static void check(const AndedConstraintSet& s, const Constraint& c) {
+std::cout << "chak " << s << " vs " << c << '\n';
+  EXPECT_EQ(s.size(), 1);
+  EXPECT_EQ(s[0], c);
+}
+
+TEST(ConstraintTest, TestBasicBlockConstraintMap_Set) {
+  Constraint eq0{Eq, {Literal(int32_t(0))}};
+  Constraint eq1{Eq, {Literal(int32_t(1))}};
+  Constraint eq2{Eq, {Literal(int32_t(2))}};
+
+  BasicBlockConstraintMap map;
+  map.setReachable();
+
+  // Set local 0 to 0. It should read back the same.
+  map.set(0, eq0);
+  check(map.get(0), eq0);
+
+  // Set another value, replacing the first.
+  map.set(0, eq1);
+  check(map.get(0), eq1);
+
+  // Set a value using an expression.
+  Const c;
+  c.value = Literal(int32_t(2));
+  c.type = Type::i32;
+  map.set(0, &c);
+  check(map.get(0), eq2);
+
+  // Set an unfamiliar expression, leading to us knowing nothing.
+  Nop nop;
+  map.set(0, &nop);
+  EXPECT_TRUE(map.get(0).provesNothing());
+}
+
+TEST(ConstraintTest, TestIncrement) {
+  BasicBlockConstraintMap map;
+  map.setReachable();
+
+  // Set up an increment operation, an add which does x + 1
+  LocalGet get;
+  get.index = 0;
+  get.type = Type::i32;
+
+  Const c;
+  c.value = Literal(int32_t(1));
+  c.type = Type::i32;
+
+  Binary add;
+  add.op = AddInt32;
+  add.type = Type::i32;
+  add.left = &get;
+  add.right = &c;
+
+  // Local 0 starts out less than 5.
+  Constraint lts_c5{LtS, {Literal(int32_t(5))}};
+  map.set(0, lts_c5);
+  check(map.get(0), lts_c5);
+
+  // Local 1 is equal to local $0 plus 1. That means it is less than, or equal
+  // to, 5.
+  map.set(1, &add);
+  Constraint les_c5{LeS, {Literal(int32_t(5))}};
+  check(map.get(1), les_c5);
+
+  // Local 0 did not change.
+  check(map.get(0), lts_c5);
+
+  // Setting 0 to an add of itself also works.
+  map.set(0, &add);
+  check(map.get(0), les_c5);
+}
