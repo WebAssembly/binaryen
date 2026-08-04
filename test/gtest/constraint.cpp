@@ -588,6 +588,15 @@ TEST(ConstraintTest, TestIncrement) {
   map.set(0, &add);
   check(map.get(0), {GtU, Literal(int32_t(5))});
 
+  // $0 < 5, $0++  =>  $0 <= 5 (signed)
+  map.set(0, {LtS, Literal(int32_t(5))});
+  map.set(0, &add);
+  check(map.get(0), {LeS, Literal(int32_t(5))});
+
+  // Ditto, unsigned
+  map.set(0, {LtU, Literal(int32_t(5))});
+  map.set(0, &add);
+  check(map.get(0), {LeU, Literal(int32_t(5))});
 
 
 
