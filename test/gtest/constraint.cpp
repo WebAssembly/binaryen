@@ -515,7 +515,6 @@ TEST(ConstraintTest, TestBasicBlockConstraintMap) {
 
 // Check that a set is equal to a constraint.
 static void check(const AndedConstraintSet& s, const Constraint& c) {
-  std::cout << "chak " << s << " vs " << c << '\n';
   EXPECT_EQ(s.size(), 1);
   EXPECT_EQ(s[0], c);
 }
