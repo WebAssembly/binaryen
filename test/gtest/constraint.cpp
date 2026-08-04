@@ -613,6 +613,6 @@ TEST(ConstraintTest, TestIncrement) {
   map.approximateAnd(0, {LtS, Literal(int32_t(20))});
   map.set(0, &add);
   EXPECT_EQ(map.get(0),
-            AndedConstraintSet{{GtS, Literal(int32_t(10))},
-                               {LeS, Literal(int32_t(20))}});
+            (AndedConstraintSet{{GtS, Literal(int32_t(10))},
+                                {LeS, Literal(int32_t(20))}}));
 }
