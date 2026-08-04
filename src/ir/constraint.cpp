@@ -534,6 +534,93 @@ void BasicBlockConstraintMap::set(Index index,
   }
 }
 
+
+// Set the value in an expression to a local, replacing anything before.
+void BasicBlockConstraintMap::set(Index index, Expression* value) {
+  using namespace Match;
+  using namespace Abstract;
+
+  // Apply a constraint to a value, x = C.
+  if (Properties::isSingleConstantExpression(value)) {
+    auto c = Properties::getLiteral(value);
+    set(index, Constraint{Abstract::Eq, {c}});
+    return;
+  }
+
+  // Apply a constraint to a local, x = y.
+  if (auto* get = value->dynCast<LocalGet>()) {
+    set(index, Constraint{Abstract::Eq, {get->index}});
+    return;
+  }
+
+  // Apply an increment of a local, x = y + 1.
+  Index y;
+  if (matches(value, binary(Abstract::Add, local(&y), ival(1)))) {
+    // The local y must have old constraints that we know how to increment.
+    auto old = get(y);
+
+    // Iterate over the old constraints and increment each one.
+    auto success = true;
+    for (auto& c : old) {
+      auto* N = std::get_if<Literal>(&c.term);
+      if (!N) {
+        // A non-constant term, which we don't know how to increment.
+        success = false;
+        break;
+      }
+
+      switch (c.op) {
+        // x == N, x++  =>  x == N+1.
+        case Eq:
+          // TODO: overflows here and below
+          c.term = Term(N->add(Literal::makeFromInt32(1, N->type)));
+          continue;
+        // x >= N, x++  =>  x > N
+        case GeS:
+          c.op = GtS;
+          continue;
+        case GeU:
+          c.op = GtU;
+          continue;
+        // x < N, x++  =>  x <= N
+        case LtS:
+          c.op = LeS;
+          continue;
+        case LtU:
+          c.op = LeU;
+          continue;
+        // x <= N, x++ => x <= N+1 if no overflow
+        case LeS:
+          if (N->isSignedMax()) {
+            success = false;
+            break;
+          }
+          *N = N->add(Literal::makeFromInt32(1, N->type));
+          continue;
+        case LeU:
+          if (N->isUnsignedMax()) {
+            success = false;
+            break;
+          }
+          *N = N->add(Literal::makeFromInt32(1, N->type));
+          continue;
+        default:
+          // Something we don't recognize.
+          success = false;
+          break;
+      }
+    }
+
+    if (success) {
+      set(index, old);
+      return;
+    }
+  }
+
+  // We know and can prove nothing.
+  setProvesNothing(index);
+}
+
 void BasicBlockConstraintMap::setProvesNothing(Index index) {
   assert(!unreachable);
   eraseStaleRefs(index);

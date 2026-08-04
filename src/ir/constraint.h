@@ -257,6 +257,9 @@ struct BasicBlockConstraintMap {
   // Apply a set of constraints to a local, replacing anything before.
   void set(Index index, const AndedConstraintSet& constraints);
 
+  // Set the value in an expression to a local, replacing anything before.
+  void set(Index index, Expression* value);
+
   // Mark a local as unknown and able to prove nothing.
   void setProvesNothing(Index index);
 

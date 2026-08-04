@@ -525,28 +525,20 @@ struct ConstraintAnalysis
   // sets the value for that local.
   void applyToConstraints(Expression* curr,
                           BasicBlockConstraintMap& constraints) {
-    // In "loops" mode, apply an increment if this is one.
-    if (loops && applyIncrementToConstraints(curr, constraints)) {
-      return;
-    }
-
     if (auto* set = curr->dynCast<LocalSet>()) {
       if (!relevantLocals[set->index]) {
         // No point to apply a constraint to an irrelevant local.
         return;
       }
 
-      if (Properties::isSingleConstantExpression(set->value)) {
-        // Apply a constraint to this value.
-        auto value = Properties::getLiteral(set->value);
-        constraints.set(set->index, Constraint{Abstract::Eq, {value}});
-      } else if (auto* get = set->value->dynCast<LocalGet>()) {
-        // Apply a constraint to this local.
-        constraints.set(set->index, Constraint{Abstract::Eq, {get->index}});
-      } else {
-        // We know and can prove nothing.
+      // We only apply an increment in "loops" mode. Such increments are the
+      // only binary operations we match, so just disallow them all here.
+      if (!loops && set->value->is<Binary>()) {
         constraints.setProvesNothing(set->index);
+        return;
       }
+
+      constraints.set(set->index, set->value);
     }
   }
 
@@ -574,84 +566,6 @@ struct ConstraintAnalysis
         return false;
       }
     }
-    return true;
-  }
-
-  // Apply an increment, in loops mode. Returns true if we found and applied
-  // one.
-  bool applyIncrementToConstraints(Expression* curr,
-                                   BasicBlockConstraintMap& constraints) const {
-    assert(loops);
-
-    using namespace Match;
-    using namespace Abstract;
-
-    auto* set = curr->dynCast<LocalSet>();
-    if (!set) {
-      return false;
-    }
-
-    // x = y + 1
-    Index y;
-    if (!matches(set->value, binary(Abstract::Add, local(&y), ival(1)))) {
-      return false;
-    }
-
-    auto old = constraints.get(y);
-    if (old.empty()) {
-      // Nothing we know how to increment.
-      return false;
-    }
-
-    for (auto& c : old) {
-      auto* N = std::get_if<Literal>(&c.term);
-      if (!N) {
-        // A non-constant term, which we don't know how to increment.
-        return false;
-      }
-
-      switch (c.op) {
-        // x == N, x++  =>  x == N+1.
-        case Eq:
-          // TODO: overflows here and below
-          c.term = Term(N->add(Literal::makeFromInt32(1, N->type)));
-          continue;
-        // x >= N, x++  =>  x > N
-        case GeS:
-          c.op = GtS;
-          continue;
-        case GeU:
-          c.op = GtU;
-          continue;
-        // x < N, x++  =>  x <= N
-        case LtS:
-          c.op = LeS;
-          continue;
-        case LtU:
-          c.op = LeU;
-          continue;
-        // x <= N, x++ => x <= N+1 if no overflow
-        case LeS:
-          if (N->isSignedMax()) {
-            return false;
-          }
-          *N = N->add(Literal::makeFromInt32(1, N->type));
-          continue;
-        case LeU:
-          if (N->isUnsignedMax()) {
-            return false;
-          }
-          *N = N->add(Literal::makeFromInt32(1, N->type));
-          continue;
-        default:
-          // Something we don't recognize.
-          return false;
-      }
-    }
-
-    // We processed the old constraints into their new forms without
-    // problems. Apply them and we are done.
-    constraints.set(set->index, old);
     return true;
   }
 
