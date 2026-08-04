@@ -864,8 +864,10 @@ class D8:
 
     @override
     def can_compare_to_self(self):
-        # With nans or relaxed SIMD, VM differences can confuse us, so only very
-        # simple VMs can compare to themselves after binaryen opts in that case.
+        # With nans or relaxed SIMD, VM differences can confuse us, including
+        # differences between binaryen and V8 (binaryen's behavior can get
+        # "baked" into the wasm when it precomputes code, so we cannot compare
+        # V8's output before binaryen opts and after binaryen opts).
         return not NANS and all_disallowed(['relaxed-simd'])
 
     @override
