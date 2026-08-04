@@ -515,7 +515,7 @@ TEST(ConstraintTest, TestBasicBlockConstraintMap) {
 
 // Check that a set is equal to a constraint.
 static void check(const AndedConstraintSet& s, const Constraint& c) {
-std::cout << "chak " << s << " vs " << c << '\n';
+  std::cout << "chak " << s << " vs " << c << '\n';
   EXPECT_EQ(s.size(), 1);
   EXPECT_EQ(s[0], c);
 }
@@ -611,7 +611,9 @@ TEST(ConstraintTest, TestIncrement) {
   // Multiple constraints at once:
   // $0 >= 10 && $0 < 20, $0++  =>  $0 > 10 && $0 <= 20
   map.set(0, {GeS, Literal(int32_t(10))});
-  map.approximateAnd(0, {LtS, Literal(int32_t(20)) });
+  map.approximateAnd(0, {LtS, Literal(int32_t(20))});
   map.set(0, &add);
-  EXPECT_EQ(map.get(0), AndedConstraintSet{{GtS, Literal(int32_t(10))}, {LeS, Literal(int32_t(20))}});
+  EXPECT_EQ(map.get(0),
+            AndedConstraintSet{{GtS, Literal(int32_t(10))},
+                               {LeS, Literal(int32_t(20))}});
 }
