@@ -553,7 +553,7 @@ TEST(ConstraintTest, TestIncrement) {
   BasicBlockConstraintMap map;
   map.setReachable();
 
-  // Set up an increment operation, an add which does x + 1
+  // Set up an increment operation, an add which does $0 + 1
   LocalGet get;
   get.index = 0;
   get.type = Type::i32;
@@ -567,6 +567,19 @@ TEST(ConstraintTest, TestIncrement) {
   add.type = Type::i32;
   add.left = &get;
   add.right = &c;
+
+  // $0 = 0, $1 = $0 + 1, so $1 = 1 (and $0 is unchanged).
+  map.set(0, {Eq, Literal(int32_t(0))});
+  map.set(1, &add);
+  check(map.get(0), {Eq, Literal(int32_t(0))});
+  check(map.get(1), {Eq, Literal(int32_t(1))});
+
+
+
+
+
+
+
 
   // Local 0 starts out less than 5.
   Constraint lts_c5{LtS, {Literal(int32_t(5))}};
