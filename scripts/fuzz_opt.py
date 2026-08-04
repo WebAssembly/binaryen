@@ -2052,7 +2052,7 @@ class Two(TestCaseHandler):
         # outputs from V8), and we must disallow features that don't even work
         # in V8.
         # TODO: relax some of these
-        if NANS or all_disallowed(['relaxed-simd']) or not all_disallowed(DISALLOWED_FEATURES_IN_V8):
+        if NANS or not all_disallowed(['relaxed-simd']) or not all_disallowed(DISALLOWED_FEATURES_IN_V8):
             return
 
         output = run_d8_wasm(wasm, args=[second_wasm])
