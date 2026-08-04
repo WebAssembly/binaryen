@@ -84,7 +84,6 @@
 #include "ir/eh-utils.h"
 #include "ir/literal-utils.h"
 #include "ir/local-graph.h"
-#include "ir/match.h"
 #include "ir/properties.h"
 #include "ir/utils.h"
 #include "pass.h"
