@@ -1055,6 +1055,7 @@ public:
   AtomicRMWOp op;
   uint8_t bytes;
   Address offset;
+  Address align;
   Expression* ptr;
   Expression* value;
   Name memory;
@@ -1070,6 +1071,7 @@ public:
 
   uint8_t bytes;
   Address offset;
+  Address align;
   Expression* ptr;
   Expression* expected;
   Expression* replacement;
@@ -1085,6 +1087,7 @@ public:
   AtomicWait(MixedArena& allocator) : AtomicWait() {}
 
   Address offset;
+  Address align;
   Expression* ptr;
   Expression* expected;
   Expression* timeout;
@@ -1100,6 +1103,7 @@ public:
   AtomicNotify(MixedArena& allocator) : AtomicNotify() {}
 
   Address offset;
+  Address align;
   Expression* ptr;
   Expression* notifyCount;
   Name memory;

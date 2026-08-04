@@ -548,7 +548,7 @@ void BinaryInstWriter::visitAtomicRMW(AtomicRMW* curr) {
     default:
       WASM_UNREACHABLE("unexpected op");
   }
-  emitMemoryAccess(curr->bytes,
+  emitMemoryAccess(curr->align,
                    curr->bytes,
                    curr->offset,
                    curr->memory,
@@ -595,7 +595,7 @@ void BinaryInstWriter::visitAtomicCmpxchg(AtomicCmpxchg* curr) {
     default:
       WASM_UNREACHABLE("unexpected type");
   }
-  emitMemoryAccess(curr->bytes,
+  emitMemoryAccess(curr->align,
                    curr->bytes,
                    curr->offset,
                    curr->memory,
@@ -608,14 +608,22 @@ void BinaryInstWriter::visitAtomicWait(AtomicWait* curr) {
   switch (curr->expectedType.getBasic()) {
     case Type::i32: {
       o << static_cast<int8_t>(BinaryConsts::I32AtomicWait);
-      emitMemoryAccess(
-        4, 4, curr->offset, curr->memory, MemoryOrder::SeqCst, /*isRMW=*/false);
+      emitMemoryAccess(curr->align,
+                       4,
+                       curr->offset,
+                       curr->memory,
+                       MemoryOrder::SeqCst,
+                       /*isRMW=*/false);
       break;
     }
     case Type::i64: {
       o << static_cast<int8_t>(BinaryConsts::I64AtomicWait);
-      emitMemoryAccess(
-        8, 8, curr->offset, curr->memory, MemoryOrder::SeqCst, /*isRMW=*/false);
+      emitMemoryAccess(curr->align,
+                       8,
+                       curr->offset,
+                       curr->memory,
+                       MemoryOrder::SeqCst,
+                       /*isRMW=*/false);
       break;
     }
     default:
@@ -626,8 +634,12 @@ void BinaryInstWriter::visitAtomicWait(AtomicWait* curr) {
 void BinaryInstWriter::visitAtomicNotify(AtomicNotify* curr) {
   o << static_cast<int8_t>(BinaryConsts::AtomicPrefix)
     << static_cast<int8_t>(BinaryConsts::AtomicNotify);
-  emitMemoryAccess(
-    4, 4, curr->offset, curr->memory, MemoryOrder::SeqCst, /*isRMW=*/false);
+  emitMemoryAccess(curr->align,
+                   4,
+                   curr->offset,
+                   curr->memory,
+                   MemoryOrder::SeqCst,
+                   /*isRMW=*/false);
 }
 
 void BinaryInstWriter::visitAtomicFence(AtomicFence* curr) {

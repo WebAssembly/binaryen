@@ -389,6 +389,7 @@ public:
   }
   Load* makeAtomicLoad(unsigned bytes,
                        Address offset,
+                       Address align,
                        Expression* ptr,
                        Type type,
                        Name memory,
@@ -396,18 +397,28 @@ public:
     assert(order != MemoryOrder::Unordered &&
            "Atomic loads can't be unordered");
 
-    Load* load = makeLoad(bytes, false, offset, bytes, ptr, type, memory);
+    Load* load = makeLoad(bytes, false, offset, align, ptr, type, memory);
     load->order = order;
     return load;
+  }
+  Load* makeAtomicLoad(unsigned bytes,
+                       Address offset,
+                       Expression* ptr,
+                       Type type,
+                       Name memory,
+                       MemoryOrder order) {
+    return makeAtomicLoad(bytes, offset, bytes, ptr, type, memory, order);
   }
   AtomicWait* makeAtomicWait(Expression* ptr,
                              Expression* expected,
                              Expression* timeout,
                              Type expectedType,
                              Address offset,
+                             Address align,
                              Name memory) {
     auto* wait = wasm.allocator.alloc<AtomicWait>();
     wait->offset = offset;
+    wait->align = align;
     wait->ptr = ptr;
     wait->expected = expected;
     wait->timeout = timeout;
@@ -416,17 +427,39 @@ public:
     wait->memory = memory;
     return wait;
   }
+  AtomicWait* makeAtomicWait(Expression* ptr,
+                             Expression* expected,
+                             Expression* timeout,
+                             Type expectedType,
+                             Address offset,
+                             Name memory) {
+    return makeAtomicWait(ptr,
+                          expected,
+                          timeout,
+                          expectedType,
+                          offset,
+                          expectedType.getByteSize(),
+                          memory);
+  }
   AtomicNotify* makeAtomicNotify(Expression* ptr,
                                  Expression* notifyCount,
                                  Address offset,
+                                 Address align,
                                  Name memory) {
     auto* notify = wasm.allocator.alloc<AtomicNotify>();
     notify->offset = offset;
+    notify->align = align;
     notify->ptr = ptr;
     notify->notifyCount = notifyCount;
     notify->finalize();
     notify->memory = memory;
     return notify;
+  }
+  AtomicNotify* makeAtomicNotify(Expression* ptr,
+                                 Expression* notifyCount,
+                                 Address offset,
+                                 Name memory) {
+    return makeAtomicNotify(ptr, notifyCount, offset, 4, memory);
   }
   AtomicFence* makeAtomicFence(MemoryOrder order) {
     auto* ret = wasm.allocator.alloc<AtomicFence>();
@@ -455,6 +488,7 @@ public:
   }
   Store* makeAtomicStore(unsigned bytes,
                          Address offset,
+                         Address align,
                          Expression* ptr,
                          Expression* value,
                          Type type,
@@ -463,13 +497,24 @@ public:
     assert(order != MemoryOrder::Unordered &&
            "Atomic stores can't be unordered");
 
-    Store* store = makeStore(bytes, offset, bytes, ptr, value, type, memory);
+    Store* store = makeStore(bytes, offset, align, ptr, value, type, memory);
     store->order = order;
     return store;
+  }
+  Store* makeAtomicStore(unsigned bytes,
+                         Address offset,
+                         Expression* ptr,
+                         Expression* value,
+                         Type type,
+                         Name memory,
+                         MemoryOrder order) {
+    return makeAtomicStore(
+      bytes, offset, bytes, ptr, value, type, memory, order);
   }
   AtomicRMW* makeAtomicRMW(AtomicRMWOp op,
                            unsigned bytes,
                            Address offset,
+                           Address align,
                            Expression* ptr,
                            Expression* value,
                            Type type,
@@ -479,8 +524,42 @@ public:
     ret->op = op;
     ret->bytes = bytes;
     ret->offset = offset;
+    ret->align = align;
     ret->ptr = ptr;
     ret->value = value;
+    ret->type = type;
+    ret->memory = memory;
+    ret->order = order;
+    ret->finalize();
+    return ret;
+  }
+  AtomicRMW* makeAtomicRMW(AtomicRMWOp op,
+                           unsigned bytes,
+                           Address offset,
+                           Expression* ptr,
+                           Expression* value,
+                           Type type,
+                           Name memory,
+                           MemoryOrder order) {
+    return makeAtomicRMW(
+      op, bytes, offset, bytes, ptr, value, type, memory, order);
+  }
+  AtomicCmpxchg* makeAtomicCmpxchg(unsigned bytes,
+                                   Address offset,
+                                   Address align,
+                                   Expression* ptr,
+                                   Expression* expected,
+                                   Expression* replacement,
+                                   Type type,
+                                   Name memory,
+                                   MemoryOrder order) {
+    auto* ret = wasm.allocator.alloc<AtomicCmpxchg>();
+    ret->bytes = bytes;
+    ret->offset = offset;
+    ret->align = align;
+    ret->ptr = ptr;
+    ret->expected = expected;
+    ret->replacement = replacement;
     ret->type = type;
     ret->memory = memory;
     ret->order = order;
@@ -495,17 +574,15 @@ public:
                                    Type type,
                                    Name memory,
                                    MemoryOrder order) {
-    auto* ret = wasm.allocator.alloc<AtomicCmpxchg>();
-    ret->bytes = bytes;
-    ret->offset = offset;
-    ret->ptr = ptr;
-    ret->expected = expected;
-    ret->replacement = replacement;
-    ret->type = type;
-    ret->memory = memory;
-    ret->order = order;
-    ret->finalize();
-    return ret;
+    return makeAtomicCmpxchg(bytes,
+                               offset,
+                               bytes,
+                               ptr,
+                               expected,
+                               replacement,
+                               type,
+                               memory,
+                               order);
   }
   SIMDExtract*
   makeSIMDExtract(SIMDExtractOp op, Expression* vec, uint8_t index) {
