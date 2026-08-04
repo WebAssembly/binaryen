@@ -864,9 +864,9 @@ class D8:
 
     @override
     def can_compare_to_self(self):
-        # With nans, VM differences can confuse us, so only very simple VMs
-        # can compare to themselves after opts in that case.
-        return not NANS
+        # With nans or relaxed SIMD, VM differences can confuse us, so only very
+        # simple VMs can compare to themselves after binaryen opts in that case.
+        return not NANS and all_disallowed(['relaxed-simd'])
 
     @override
     def can_compare_to_other(self, other):
