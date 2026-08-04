@@ -608,23 +608,10 @@ TEST(ConstraintTest, TestIncrement) {
   map.set(0, &add);
   check(map.get(0), {LeU, Literal(int32_t(6))});
 
-
-
-  // Local 0 starts out less than 5.
-  Constraint lts_c5{LtS, {Literal(int32_t(5))}};
-  map.set(0, lts_c5);
-  check(map.get(0), lts_c5);
-
-  // Local 1 is equal to local $0 plus 1. That means it is less than, or equal
-  // to, 5.
-  map.set(1, &add);
-  Constraint les_c5{LeS, {Literal(int32_t(5))}};
-  check(map.get(1), les_c5);
-
-  // Local 0 did not change.
-  check(map.get(0), lts_c5);
-
-  // Setting 0 to an add of itself also works.
+  // Multiple constraints at once:
+  // $0 >= 10 && $0 < 20, $0++  =>  $0 > 10 && $0 <= 20
+  map.set(0, {GeS, Literal(int32_t(10))});
+  map.approximateAnd(0, {LtS, Literal(int32_t(20)) });
   map.set(0, &add);
-  check(map.get(0), les_c5);
+  EXPECT_EQ(map.get(0), AndedConstraintSet{{GtS, Literal(int32_t(10))}, {LeS, Literal(int32_t(20))}});
 }
