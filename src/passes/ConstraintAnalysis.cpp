@@ -309,7 +309,7 @@ struct ConstraintAnalysis
     maxWorkLeft *= 3;
   }
 
-  void decMaxOperations() {
+  void decMaxWork() {
     if (maxWorkLeft > 0) {
       maxWorkLeft--;
     }
@@ -353,7 +353,7 @@ struct ConstraintAnalysis
     while (!work.empty()) {
       auto* block = work.pop();
 
-      decMaxOperations();
+      decMaxWork();
 
       // Start at the top of the block, then go through, applying things.
       BasicBlockConstraintMap constraints = block->contents.startConstraints;
@@ -365,7 +365,7 @@ struct ConstraintAnalysis
       for (auto** currp : block->contents.actions) {
         applyToConstraints(*currp, constraints);
 
-        decMaxOperations();
+        decMaxWork();
       }
 
 #if CONSTRAINT_DEBUG
@@ -375,7 +375,7 @@ struct ConstraintAnalysis
       // We now know the values at the end of the block. Flow it onward, and
       // where it causes changes, queue more work.
       for (auto* out : block->out) {
-        decMaxOperations();
+        decMaxWork();
 
         auto& outStartConstraints = out->contents.startConstraints;
 
