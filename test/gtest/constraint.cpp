@@ -574,6 +574,9 @@ TEST(ConstraintTest, TestIncrement) {
   check(map.get(0), {Eq, Literal(int32_t(0))});
   check(map.get(1), {Eq, Literal(int32_t(1))});
 
+  // $0 = $0 + 1, where $0 was 0, so it is now 1.
+  map.set(0, &add);
+  check(map.get(0), {Eq, Literal(int32_t(1))});
 
 
 
