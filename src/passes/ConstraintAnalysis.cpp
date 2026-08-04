@@ -627,6 +627,19 @@ struct ConstraintAnalysis
         case LtU:
           c.op = LeU;
           continue;
+        // x <= N, x++ => x <= N+1 if no overflow
+        case LeS:
+          if (N->isSignedMax()) {
+            return false;
+          }
+          *N = N->add(Literal::makeFromInt32(1, N->type));
+          continue;
+        case LeU:
+          if (N->isUnsignedMax()) {
+            return false;
+          }
+          *N = N->add(Literal::makeFromInt32(1, N->type));
+          continue;
         default:
           // Something we don't recognize.
           return false;

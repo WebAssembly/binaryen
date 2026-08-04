@@ -911,10 +911,7 @@
   ;; LOOPS-NEXT:     )
   ;; LOOPS-NEXT:    )
   ;; LOOPS-NEXT:    (drop
-  ;; LOOPS-NEXT:     (i32.gt_s
-  ;; LOOPS-NEXT:      (local.get $x)
-  ;; LOOPS-NEXT:      (i32.const 0)
-  ;; LOOPS-NEXT:     )
+  ;; LOOPS-NEXT:     (i32.const 1)
   ;; LOOPS-NEXT:    )
   ;; LOOPS-NEXT:    (drop
   ;; LOOPS-NEXT:     (i32.const 1)
