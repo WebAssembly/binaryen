@@ -36,6 +36,12 @@
 #include "wasm-builder.h"
 #include "wasm.h"
 
+#define CONSTRAINT_DEBUG 0
+
+#ifndef CONSTRAINT_DEBUG
+#define CONSTRAINT_DEBUG 0
+#endif
+
 namespace wasm {
 
 using namespace wasm::constraint;
@@ -187,6 +193,7 @@ struct ConstraintAnalysis
     }
 
     computeRelevantLocals();
+    prepareToFlow();
     flow();
     optimize();
   }
@@ -217,9 +224,42 @@ struct ConstraintAnalysis
     }
   }
 
+  // Maintain a maximum amount of operations. The one non-linear thing that can
+  // happen is when we increment a local in a loop: it may go from 0 to 1, then
+  // branch back to the top and merge, making it in the range [0, 1], then get
+  // incremented and loop again, leading to [0, 2] and so forth, only stopping
+  // when it reaches the loop bound, which may be very high. We don't want to
+  // spend significant time on such constant operations, as other passes will
+  // propagate them anyhow, so we keep our time bounded. When this reaches 0,
+  // we will not do loop operations that might lead to such incrementing.
+  Index maxWorkLeft = 0;
+
+  void prepareToFlow() {
+    // Compute a bound for maxOperations. flow() will spend time on each block,
+    // operation in a block, and branch, so add all those up.
+    for (auto& block : basicBlocks) {
+      maxWorkLeft += 1 + block->contents.actions.size() + block->out.size();
+    }
+
+    // We also allow a multiple of all the above: loop optimization generally
+    // requires us to process it twice (so that we see the merge at the top).
+    // Use a constant of 3 to make sure to work enough.
+    maxWorkLeft *= 3;
+  }
+
+  void decMaxWork() {
+    if (maxWorkLeft > 0) {
+      maxWorkLeft--;
+    }
+  }
+
   // Flow infos around until we have inferred all we can about the constraints
   // in each location.
   void flow() {
+#if CONSTRAINT_DEBUG
+    dumpCFG("flow");
+#endif
+
     // Start from the entry as the only reachable block. That block has incoming
     // values - defaults - for each var.
     entry->contents.startConstraints.setReachable();
@@ -247,18 +287,34 @@ struct ConstraintAnalysis
     // Starting from the entry, keep going while we find something new.
     UniqueDeferredQueue<BasicBlock*> work;
     work.push(entry);
+
     while (!work.empty()) {
       auto* block = work.pop();
 
+      decMaxWork();
+
       // Start at the top of the block, then go through, applying things.
       BasicBlockConstraintMap constraints = block->contents.startConstraints;
+
+#if CONSTRAINT_DEBUG
+      std::cout << block << " start constraints: " << constraints << '\n';
+#endif
+
       for (auto** currp : block->contents.actions) {
         applyToConstraints(*currp, constraints);
+
+        decMaxWork();
       }
+
+#if CONSTRAINT_DEBUG
+      std::cout << block << " end   constraints: " << constraints << '\n';
+#endif
 
       // We now know the values at the end of the block. Flow it onward, and
       // where it causes changes, queue more work.
       for (auto* out : block->out) {
+        decMaxWork();
+
         auto& outStartConstraints = out->contents.startConstraints;
 
         // Find the constraints sent to this specific successor, if there is a
@@ -266,15 +322,28 @@ struct ConstraintAnalysis
         if (auto branch = getBranchConstraints(block, out);
             branch && checkRelevancy(*branch)) {
           auto sentConstraints = constraints;
-          sentConstraints.approximateAnd(branch->local, branch->constraint);
+          applyBranchConstraints(*branch, sentConstraints);
+#if CONSTRAINT_DEBUG
+          std::cout << block << " sending branch to " << out
+                    << " with sent constraints: " << sentConstraints << '\n';
+#endif
           // If anything changed at the start of the target block, flow onwards.
           if (outStartConstraints.approximateOr(sentConstraints)) {
+#if CONSTRAINT_DEBUG
+            std::cout << "out's start after  " << outStartConstraints << '\n';
+            std::cout << block << " branch-modified " << out
+                      << " to start with: " << outStartConstraints << '\n';
+#endif
             work.push(out);
           }
         } else {
           // There are no specific branch constraints, so send the unmodified
           // |constraints|, avoiding a copy.
           if (outStartConstraints.approximateOr(constraints)) {
+#if CONSTRAINT_DEBUG
+            std::cout << block << " modified " << out
+                      << " to start with: " << outStartConstraints << '\n';
+#endif
             work.push(out);
           }
         }
@@ -293,6 +362,9 @@ struct ConstraintAnalysis
       // of course not needed at this stage.)
       auto& constraints = block->contents.startConstraints;
       for (auto** currp : block->contents.actions) {
+#if CONSTRAINT_DEBUG
+        std::cout << block << " trying to optimize " << **currp << '\n';
+#endif
         if (!constraints.unreachable) {
           applyToConstraints(*currp, constraints);
           optimizeExpression(currp, constraints);
@@ -432,17 +504,16 @@ struct ConstraintAnalysis
         // No point to apply a constraint to an irrelevant local.
         return;
       }
-      if (Properties::isSingleConstantExpression(set->value)) {
-        // Apply a constraint to this value.
-        auto value = Properties::getLiteral(set->value);
-        constraints.set(set->index, Constraint{Abstract::Eq, {value}});
-      } else if (auto* get = set->value->dynCast<LocalGet>()) {
-        // Apply a constraint to this local.
-        constraints.set(set->index, Constraint{Abstract::Eq, {get->index}});
-      } else {
-        // We know and can prove nothing.
+
+      // The only binary operation we match is an increment (x + 1), and we do
+      // not always want to apply it: only in loops mode, and even then, only
+      // when we are allowed to keep working (see above).
+      if (set->value->is<Binary>() && (!loops || !maxWorkLeft)) {
         constraints.setProvesNothing(set->index);
+        return;
       }
+
+      constraints.set(set->index, set->value);
     }
   }
 
