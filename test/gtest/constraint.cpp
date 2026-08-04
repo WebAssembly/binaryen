@@ -568,67 +568,67 @@ TEST(ConstraintTest, TestIncrement) {
   add.right = &c;
 
   // $0 = 0, $1 = $0 + 1, so $1 = 1 (and $0 is unchanged).
-  map.set(0, {Eq, Literal(int32_t(0))});
+  map.set(0, {Eq, {Literal(int32_t(0))}});
   map.set(1, &add);
-  check(map.get(0), {Eq, Literal(int32_t(0))});
-  check(map.get(1), {Eq, Literal(int32_t(1))});
+  check(map.get(0), {Eq, {Literal(int32_t(0))}});
+  check(map.get(1), {Eq, {Literal(int32_t(1))}});
 
   // $0 = $0 + 1, where $0 was 0, so it is now 1.
   map.set(0, &add);
-  check(map.get(0), {Eq, Literal(int32_t(1))});
+  check(map.get(0), {Eq, {Literal(int32_t(1))}});
 
   // $0 >= 5, $0++  =>  $0 > 5 (signed)
-  map.set(0, {GeS, Literal(int32_t(5))});
+  map.set(0, {GeS, {Literal(int32_t(5))}});
   map.set(0, &add);
-  check(map.get(0), {GtS, Literal(int32_t(5))});
+  check(map.get(0), {GtS, {Literal(int32_t(5))}});
 
   // Ditto, unsigned
-  map.set(0, {GeU, Literal(int32_t(5))});
+  map.set(0, {GeU, {Literal(int32_t(5))}});
   map.set(0, &add);
-  check(map.get(0), {GtU, Literal(int32_t(5))});
+  check(map.get(0), {GtU, {Literal(int32_t(5))}});
 
   // $0 < 5, $0++  =>  $0 <= 5 (signed)
-  map.set(0, {LtS, Literal(int32_t(5))});
+  map.set(0, {LtS, {Literal(int32_t(5))}});
   map.set(0, &add);
-  check(map.get(0), {LeS, Literal(int32_t(5))});
+  check(map.get(0), {LeS, {Literal(int32_t(5))}});
 
   // Ditto, unsigned
-  map.set(0, {LtU, Literal(int32_t(5))});
+  map.set(0, {LtU, {Literal(int32_t(5))}});
   map.set(0, &add);
-  check(map.get(0), {LeU, Literal(int32_t(5))});
+  check(map.get(0), {LeU, {Literal(int32_t(5))}});
 
   // $0 <= 5, $0++  =>  $0 <= 6 (signed)
-  map.set(0, {LeS, Literal(int32_t(5))});
+  map.set(0, {LeS, {Literal(int32_t(5))}});
   map.set(0, &add);
-  check(map.get(0), {LeS, Literal(int32_t(6))});
+  check(map.get(0), {LeS, {Literal(int32_t(6))}});
 
   // Ditto, unsigned
-  map.set(0, {LeU, Literal(int32_t(5))});
+  map.set(0, {LeU, {Literal(int32_t(5))}});
   map.set(0, &add);
-  check(map.get(0), {LeU, Literal(int32_t(6))});
+  check(map.get(0), {LeU, {Literal(int32_t(6))}});
 
   // $0 <= max_signed, $0++  =>  nothing, because it would overflow
-  map.set(0, {LeS, Literal::makeSignedMax(Type::i32)});
+  map.set(0, {LeS, {Literal::makeSignedMax(Type::i32)}});
   map.set(0, &add);
   EXPECT_TRUE(map.get(0).provesNothing());
 
   // $0 <= max_unsigned, $0++  =>  nothing, because it would overflow
-  map.set(0, {LeU, Literal::makeUnsignedMax(Type::i32)});
+  map.set(0, {LeU, {Literal::makeUnsignedMax(Type::i32)}});
   map.set(0, &add);
   EXPECT_TRUE(map.get(0).provesNothing());
 
   // However, an unsigned operation on the signed max is fine.
-  map.set(0, {LeU, Literal::makeSignedMax(Type::i32)});
+  map.set(0, {LeU, {Literal::makeSignedMax(Type::i32)}});
   map.set(0, &add);
   auto one = Literal::makeFromInt32(1, Type::i32);
-  check(map.get(0), {LeU, Literal::makeSignedMax(Type::i32).add(one)});
+  check(map.get(0), {LeU, {Literal::makeSignedMax(Type::i32).add(one)}});
 
   // Multiple constraints at once:
   // $0 >= 10 && $0 < 20, $0++  =>  $0 > 10 && $0 <= 20
-  map.set(0, {GeS, Literal(int32_t(10))});
-  map.approximateAnd(0, {LtS, Literal(int32_t(20))});
+  map.set(0, {GeS, {Literal(int32_t(10))}});
+  map.approximateAnd(0, {LtS, {Literal(int32_t(20))}});
   map.set(0, &add);
   EXPECT_EQ(map.get(0),
-            (AndedConstraintSet{{GtS, Literal(int32_t(10))},
-                                {LeS, Literal(int32_t(20))}}));
+            (AndedConstraintSet{{GtS, {Literal(int32_t(10))}},
+                                {LeS, {Literal(int32_t(20))}}}));
 }
