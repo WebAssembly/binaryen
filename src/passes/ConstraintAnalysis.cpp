@@ -288,6 +288,10 @@ struct ConstraintAnalysis
   // Flow infos around until we have inferred all we can about the constraints
   // in each location.
   void flow() {
+#if CONSTRAINT_DEBUG
+    dumpCFG("flow");
+#endif
+
     // Start from the entry as the only reachable block. That block has incoming
     // values - defaults - for each var.
     entry->contents.startConstraints.setReachable();
@@ -349,7 +353,6 @@ struct ConstraintAnalysis
           std::cout << block << " sending branch to " << out
                     << " with sent constraints: " << sentConstraints << '\n';
 #endif
-          std::cout << "out's start before " << outStartConstraints << '\n';
           // If anything changed at the start of the target block, flow onwards.
           if (outStartConstraints.approximateOr(sentConstraints)) {
 #if CONSTRAINT_DEBUG
