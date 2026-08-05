@@ -655,9 +655,6 @@ struct Shell {
 };
 
 int main(int argc, const char* argv[]) {
-  Name entry;
-  std::set<size_t> skipped;
-
   // Read stdin by default.
   std::string infile = "-";
   Options options("wasm-shell", "Execute .wast files");

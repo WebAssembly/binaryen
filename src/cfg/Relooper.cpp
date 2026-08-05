@@ -333,7 +333,6 @@ wasm::Expression* Block::Render(RelooperBuilder& Builder, bool InLoop) {
     auto Base = std::string("switch$") + std::to_string(Id);
     auto SwitchDefault = wasm::Name(Base + "$default");
     auto SwitchLeave = wasm::Name(Base + "$leave");
-    std::map<Block*, wasm::Name> BlockNameMap;
     auto* Outer = Builder.makeBlock();
     auto* Inner = Outer;
     std::vector<wasm::Name> Table;
