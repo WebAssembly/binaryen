@@ -31,4 +31,10 @@
 #define WASM_BUILTIN_UNREACHABLE __assume(false)
 #endif
 
+#if defined(__GNUC__) || defined(__clang__)
+#define BYN_WARN_UNUSED [[gnu::warn_unused]]
+#else
+#define BYN_WARN_UNUSED
+#endif
+
 #endif // wasm_compiler_support_h
