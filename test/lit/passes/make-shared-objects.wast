@@ -1424,3 +1424,23 @@
   ;; CHECK:      (import "" "" (global $g-sig (ref null (shared i31))))
   (import "" "" (global $g-sig (ref null $sig)))
 )
+
+(module
+  ;; Struct gets of signature fields must be properly refinalized to shared
+  ;; i31 after rewriteTypes rewrites the struct types to shared.
+  (type $sig (func))
+  ;; CHECK:      (type $struct (shared (struct (field (ref (shared i31))))))
+  (type $struct (struct (field (ref $sig))))
+  ;; CHECK:      (type $1 (func (param (ref $struct)) (result (ref (shared i31)))))
+
+  ;; CHECK:      (func $struct-get (type $1) (param $0 (ref $struct)) (result (ref (shared i31)))
+  ;; CHECK-NEXT:  (struct.get $struct 0
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $struct-get (param (ref $struct)) (result (ref $sig))
+    (struct.get $struct 0
+      (local.get 0)
+    )
+  )
+)
