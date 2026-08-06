@@ -1212,7 +1212,7 @@ void BrOn::finalize() {
       if (castType.isNullable()) {
         // Nulls take the branch, so the result is non-nullable.
         type = ref->type.with(NonNullable);
-      } else if (desc->type.isNull()) {
+      } else if (desc && desc->type.isNull()) {
         // Cast will never be executed and the instruction will not be emitted.
         // Model this with an uninhabitable cast type.
         type = desc->type.with(NonNullable);
