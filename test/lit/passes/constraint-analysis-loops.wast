@@ -477,20 +477,14 @@
     (local $x i32)
     (loop $loop
       ;; A realistic do-while loop, with $x++ and a bounds check. We must infer
-      ;; that no overflow happens in order to prove these two checks are true.
-      ;;
-      ;; The first is trivially true, as x starts at 0 - fulfilling x < 100 -
-      ;; and the branch back to the loop top arrives with x < 100.
+      ;; that no overflow happens in order to prove these two checks are true,
+      ;; and only loops mode manages that.
       (drop
         (i32.lt_s
           (local.get $x)
           (i32.const 100)
         )
       )
-      ;; This is non-trivial, as we must rule out a possible overflow. The
-      ;; only reason that x never gets incremented so many times that it becomes
-      ;; negative is that the incrementation process is stopped at 100. We only
-      ;; manage to optimize this in "loops" mode.
       (drop
         (i32.ge_s
           (local.get $x)
@@ -575,8 +569,8 @@
   ;; LOOPS-NEXT:  )
   ;; LOOPS-NEXT: )
   (func $bound-incremented-unsigned
-    ;; As above, but with unsigned operations. This is simpler, and we optimize
-    ;; it even without "loops" mode.
+    ;; As above, but with unsigned operations. Again, we need loops mode to
+    ;; optimize.
     (local $x i32)
     (loop $loop
       (drop
