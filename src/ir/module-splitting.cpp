@@ -77,6 +77,7 @@
 #include "ir/find_all.h"
 #include "ir/module-utils.h"
 #include "ir/names.h"
+#include "support/small_vector.h"
 #include "support/stdckdint.h"
 #include "wasm-builder.h"
 #include "wasm.h"
@@ -313,6 +314,130 @@ TableSlotManager::Slot TableSlotManager::getSlot(Name func, HeapType type) {
   return newSlot;
 }
 
+// Module items ownership tracking
+
+// Struct containing sets of used module elements of a single module
+struct UsedNames {
+  std::unordered_set<Name> globals;
+  std::unordered_set<Name> memories;
+  std::unordered_set<Name> tables;
+  std::unordered_set<Name> tags;
+  std::unordered_set<Name> dataSegments;
+  std::unordered_set<Name> elementSegments;
+};
+
+// A tracker that, given a module element, tracks which module is its owner,
+// i.e., where the element should be placed, and the list of secondary modules
+// using this element.
+struct OwnershipTracker {
+  UsedNames primaryUsed;
+  std::vector<UsedNames> secondaryUsed;
+
+  struct ItemInfo {
+    UsedNames* owner = nullptr;
+    SmallVector<Module*, 2> usingSecondaries;
+  };
+
+  std::unordered_map<Name, ItemInfo> tables;
+  std::unordered_map<Name, ItemInfo> memories;
+  std::unordered_map<Name, ItemInfo> globals;
+  std::unordered_map<Name, ItemInfo> tags;
+  std::unordered_map<Name, ItemInfo> dataSegments;
+  std::unordered_map<Name, ItemInfo> elementSegments;
+
+  std::unordered_map<UsedNames*, Module*> usedToSecondary;
+
+  using FieldType = std::unordered_set<Name> UsedNames::*;
+  using MapType = std::unordered_map<Name, ItemInfo> OwnershipTracker::*;
+
+  void insert(Name name, UsedNames* owner, MapType mapField, FieldType field) {
+    (owner->*field).insert(name);
+    // Figure out which module the 'owner' is of this item. If it is used by a
+    // single secondary module, that secondary module is the owner. If it is
+    // used by the primary module or multiple secondary modules, the primary
+    // module is the owner.
+    auto [it, inserted] = (this->*mapField).insert({name, ItemInfo{owner, {}}});
+    Module* mod = usedToSecondary[owner];
+    if (inserted) {
+      if (mod) {
+        it->second.usingSecondaries.push_back(mod);
+      }
+    } else {
+      if (it->second.owner != owner) {
+        it->second.owner = &primaryUsed;
+        (primaryUsed.*field).insert(name);
+      }
+      if (mod) {
+        auto& vec = it->second.usingSecondaries;
+        if (std::find(vec.begin(), vec.end(), mod) == vec.end()) {
+          vec.push_back(mod);
+        }
+      }
+    }
+  }
+
+  void build(const std::vector<std::unique_ptr<Module>>& secondaries) {
+    usedToSecondary[&primaryUsed] = nullptr;
+    for (size_t i = 0; i < secondaryUsed.size(); ++i) {
+      usedToSecondary[&secondaryUsed[i]] = secondaries[i].get();
+    }
+
+    auto buildMap = [&](FieldType field,
+                        std::unordered_map<Name, ItemInfo>& map) {
+      for (auto& name : (primaryUsed.*field)) {
+        map[name].owner = &primaryUsed;
+      }
+      for (size_t i = 0; i < secondaryUsed.size(); ++i) {
+        auto& sec = secondaryUsed[i];
+        auto* mod = secondaries[i].get();
+        for (auto& name : (sec.*field)) {
+          auto [it, inserted] = map.insert({name, ItemInfo{&sec, {}}});
+          it->second.usingSecondaries.push_back(mod);
+          if (!inserted) {
+            it->second.owner = &primaryUsed;
+          }
+        }
+      }
+    };
+    buildMap(&UsedNames::tables, tables);
+    buildMap(&UsedNames::memories, memories);
+    buildMap(&UsedNames::globals, globals);
+    buildMap(&UsedNames::tags, tags);
+    buildMap(&UsedNames::dataSegments, dataSegments);
+    buildMap(&UsedNames::elementSegments, elementSegments);
+  }
+
+  UsedNames* getOwner(Name name,
+                      const std::unordered_map<Name, ItemInfo>& map) {
+    auto it = map.find(name);
+    if (it != map.end()) {
+      return it->second.owner;
+    }
+    return nullptr;
+  }
+
+  const SmallVector<Module*, 2>&
+  getUsingSecondaries(Name name,
+                      const std::unordered_map<Name, ItemInfo>& map) {
+    auto it = map.find(name);
+    if (it != map.end()) {
+      return it->second.usingSecondaries;
+    }
+    static SmallVector<Module*, 2> empty;
+    return empty;
+  }
+
+  bool useEmpty(Name name, const std::unordered_map<Name, ItemInfo>& map) {
+    return getOwner(name, map) == nullptr;
+  }
+
+  bool usedBySingleSecondary(Name name,
+                             const std::unordered_map<Name, ItemInfo>& map) {
+    auto* owner = getOwner(name, map);
+    return owner != nullptr && owner != &primaryUsed;
+  }
+};
+
 struct ModuleSplitter {
   const Config& config;
   std::vector<std::unique_ptr<Module>> secondaries;
@@ -359,17 +484,9 @@ struct ModuleSplitter {
                         ExternalKind kind);
   Name getTrampoline(Name funcName);
 
-  struct UsedNames {
-    std::unordered_set<Name> globals;
-    std::unordered_set<Name> memories;
-    std::unordered_set<Name> tables;
-    std::unordered_set<Name> tags;
-    std::unordered_set<Name> dataSegments;
-    std::unordered_set<Name> elementSegments;
-  };
-  using PrimarySecondaryUsedNames =
-    std::pair<UsedNames, std::vector<UsedNames>>;
-  PrimarySecondaryUsedNames computeUsedNames();
+  OwnershipTracker tracker;
+
+  void computeUsedNames();
 
   // Main splitting steps
   void classifyFunctions();
@@ -649,12 +766,18 @@ void ModuleSplitter::thunkExportedSecondaryFunctions() {
   }
 }
 
-ModuleSplitter::PrimarySecondaryUsedNames ModuleSplitter::computeUsedNames() {
+void ModuleSplitter::computeUsedNames() {
+  UsedNames& primaryUsed = tracker.primaryUsed;
+  std::vector<UsedNames>& secondaryUsed = tracker.secondaryUsed;
+
   struct NameCollector
     : public PostWalker<NameCollector,
                         UnifiedExpressionVisitor<NameCollector>> {
     UsedNames& used;
-    NameCollector(UsedNames& used) : used(used) {}
+    OwnershipTracker* tracker = nullptr;
+
+    NameCollector(UsedNames& used, OwnershipTracker* tracker = nullptr)
+      : used(used), tracker(tracker) {}
 
     void visitExpression(Expression* curr) {
 #define DELEGATE_ID curr->_id
@@ -670,26 +793,36 @@ ModuleSplitter::PrimarySecondaryUsedNames ModuleSplitter::computeUsedNames() {
 #define DELEGATE_FIELD_SCOPE_NAME_USE(id, field)
 #define DELEGATE_FIELD_ADDRESS(id, field)
 
+// In the initial building phase, we just directly add to a UsedName struct.
+// After OwnershipTracker is constructed, we all its insert() method to update
+// owner modules and using secondary modules correctly.
+#define ADD_ITEM(FIELD, VAL)                                                   \
+  if (tracker) {                                                               \
+    tracker->insert(VAL, &used, &OwnershipTracker::FIELD, &UsedNames::FIELD);  \
+  } else {                                                                     \
+    used.FIELD.insert(VAL);                                                    \
+  }
+
 #define DELEGATE_FIELD_NAME_KIND(id, field, kind)                              \
   if (cast->field.is()) {                                                      \
     switch (kind) {                                                            \
       case ModuleItemKind::Table:                                              \
-        used.tables.insert(cast->field);                                       \
+        ADD_ITEM(tables, cast->field);                                         \
         break;                                                                 \
       case ModuleItemKind::Memory:                                             \
-        used.memories.insert(cast->field);                                     \
+        ADD_ITEM(memories, cast->field);                                       \
         break;                                                                 \
       case ModuleItemKind::Global:                                             \
-        used.globals.insert(cast->field);                                      \
+        ADD_ITEM(globals, cast->field);                                        \
         break;                                                                 \
       case ModuleItemKind::Tag:                                                \
-        used.tags.insert(cast->field);                                         \
+        ADD_ITEM(tags, cast->field);                                           \
         break;                                                                 \
       case ModuleItemKind::DataSegment:                                        \
-        used.dataSegments.insert(cast->field);                                 \
+        ADD_ITEM(dataSegments, cast->field);                                   \
         break;                                                                 \
       case ModuleItemKind::ElementSegment:                                     \
-        used.elementSegments.insert(cast->field);                              \
+        ADD_ITEM(elementSegments, cast->field);                                \
         break;                                                                 \
       case ModuleItemKind::Function:                                           \
       case ModuleItemKind::Invalid:                                            \
@@ -698,6 +831,7 @@ ModuleSplitter::PrimarySecondaryUsedNames ModuleSplitter::computeUsedNames() {
   }
 
 #include "wasm-delegations-fields.def"
+#undef ADD_ITEM
     }
   };
 
@@ -727,8 +861,7 @@ ModuleSplitter::PrimarySecondaryUsedNames ModuleSplitter::computeUsedNames() {
     return used;
   };
 
-  UsedNames primaryUsed = scanModule(primary);
-  std::vector<UsedNames> secondaryUsed;
+  primaryUsed = scanModule(primary);
   for (auto& secondaryPtr : secondaries) {
     secondaryUsed.push_back(scanModule(*secondaryPtr));
   }
@@ -783,27 +916,7 @@ ModuleSplitter::PrimarySecondaryUsedNames ModuleSplitter::computeUsedNames() {
     }
   }
 
-  // Given a name and a module item kind (field pointer), find which module
-  // "owns" it. If it is used by exactly one secondary module, that secondary
-  // module is the owner. If it is used by the primary module or multiple
-  // secondary modules, the primary module is the owner. If it is not used,
-  // returns nullptr.
-  auto getOwner = [&](Name name, auto UsedNames::* field) -> UsedNames* {
-    UsedNames* owner = nullptr;
-    if ((primaryUsed.*field).contains(name)) {
-      owner = &primaryUsed;
-    }
-    for (auto& sec : secondaryUsed) {
-      if ((sec.*field).contains(name)) {
-        if (owner) {
-          owner = &primaryUsed;
-          break;
-        }
-        owner = &sec;
-      }
-    }
-    return owner;
-  };
+  tracker.build(secondaries);
 
   // Scan table initializers into their owning modules. If a table is used by a
   // single secondary module, its initializer dependencies are marked as "used"
@@ -814,8 +927,8 @@ ModuleSplitter::PrimarySecondaryUsedNames ModuleSplitter::computeUsedNames() {
       if (!table->init) {
         continue;
       }
-      if (UsedNames* owner = getOwner(table->name, &UsedNames::tables)) {
-        NameCollector(*owner).walk(table->init);
+      if (UsedNames* owner = tracker.getOwner(table->name, tracker.tables)) {
+        NameCollector(*owner, &tracker).walk(table->init);
       }
     }
   }
@@ -864,13 +977,16 @@ ModuleSplitter::PrimarySecondaryUsedNames ModuleSplitter::computeUsedNames() {
     return false;
   };
 
+#define ADD_ITEM_TO_TRACKER(FIELD, VAL)                                        \
+  tracker.insert(VAL, owner, &OwnershipTracker::FIELD, &UsedNames::FIELD)
+
   // Iterate on active data and element segments. If its table or memory is
   // used by a single secondary module, mark it "used" there. Only scan its
   // 'offset' or 'data'(in case of ElementSegment) and add it to that module's
   // used only when it is a sole secondary owner. If not assign it to the
   // primary module and scan it there.
   ModuleUtils::iterActiveDataSegments(primary, [&](DataSegment* segment) {
-    UsedNames* owner = getOwner(segment->memory, &UsedNames::memories);
+    UsedNames* owner = tracker.getOwner(segment->memory, tracker.memories);
     // Trapping segments should be kept in the primary module because they are
     // evaluated at the instantiation time.
     if (mayTrap(segment)) {
@@ -879,15 +995,15 @@ ModuleSplitter::PrimarySecondaryUsedNames ModuleSplitter::computeUsedNames() {
     if (!owner) {
       return;
     }
-    owner->dataSegments.insert(segment->name);
-    owner->memories.insert(segment->memory);
+    ADD_ITEM_TO_TRACKER(dataSegments, segment->name);
+    ADD_ITEM_TO_TRACKER(memories, segment->memory);
     if (segment->offset) {
-      NameCollector(*owner).walk(segment->offset);
+      NameCollector(*owner, &tracker).walk(segment->offset);
     }
   });
 
   ModuleUtils::iterActiveElementSegments(primary, [&](ElementSegment* segment) {
-    UsedNames* owner = getOwner(segment->table, &UsedNames::tables);
+    UsedNames* owner = tracker.getOwner(segment->table, tracker.tables);
 
     // If placeholders are NOT used, and if all functions in an element segment
     // belong to a single secondary module, we can move the segment to that
@@ -934,13 +1050,13 @@ ModuleSplitter::PrimarySecondaryUsedNames ModuleSplitter::computeUsedNames() {
     if (!owner) {
       return;
     }
-    owner->elementSegments.insert(segment->name);
-    owner->tables.insert(segment->table);
+    ADD_ITEM_TO_TRACKER(elementSegments, segment->name);
+    ADD_ITEM_TO_TRACKER(tables, segment->table);
     if (segment->offset) {
-      NameCollector(*owner).walk(segment->offset);
+      NameCollector(*owner, &tracker).walk(segment->offset);
     }
     for (auto* item : segment->data) {
-      NameCollector(*owner).walk(item);
+      NameCollector(*owner, &tracker).walk(item);
     }
   });
 
@@ -952,7 +1068,7 @@ ModuleSplitter::PrimarySecondaryUsedNames ModuleSplitter::computeUsedNames() {
     if (segment->isPassive() &&
         primaryUsed.elementSegments.contains(segment->name)) {
       for (auto* item : segment->data) {
-        NameCollector(primaryUsed).walk(item);
+        NameCollector(primaryUsed, &tracker).walk(item);
       }
     }
   }
@@ -969,32 +1085,16 @@ ModuleSplitter::PrimarySecondaryUsedNames ModuleSplitter::computeUsedNames() {
     if (!global->init) {
       continue;
     }
-    if (UsedNames* owner = getOwner(global->name, &UsedNames::globals)) {
+    if (UsedNames* owner = tracker.getOwner(global->name, tracker.globals)) {
       for (auto* get : FindAll<GlobalGet>(global->init).list) {
-        owner->globals.insert(get->name);
+        ADD_ITEM_TO_TRACKER(globals, get->name);
       }
     }
   }
-
-  return std::make_pair(primaryUsed, secondaryUsed);
 }
 
 void ModuleSplitter::shareImportableItems() {
-  auto usedNames = computeUsedNames();
-  auto& primaryUsed = usedNames.first;
-  auto& secondaryUsed = usedNames.second;
-
-  // Given a name and module item kind, returns the list of secondary modules
-  // using that name
-  auto getUsingSecondaries = [&](const Name& name, auto UsedNames::* field) {
-    std::vector<Module*> usingModules;
-    for (size_t i = 0; i < secondaries.size(); ++i) {
-      if ((secondaryUsed[i].*field).contains(name)) {
-        usingModules.push_back(secondaries[i].get());
-      }
-    }
-    return usingModules;
-  };
+  computeUsedNames();
 
   // Share module items with secondary modules.
   // 1. Only share an item with the modules that use it
@@ -1005,18 +1105,16 @@ void ModuleSplitter::shareImportableItems() {
 
   std::vector<Name> memoriesToRemove;
   for (auto& memory : primary.memories) {
-    auto usingSecondaries =
-      getUsingSecondaries(memory->name, &UsedNames::memories);
-    bool inPrimary = primaryUsed.memories.contains(memory->name);
-
-    if (!inPrimary && usingSecondaries.empty()) {
+    if (tracker.useEmpty(memory->name, tracker.memories)) {
       memoriesToRemove.push_back(memory->name);
-    } else if (!inPrimary && usingSecondaries.size() == 1) {
-      auto* secondary = usingSecondaries[0];
+    } else if (tracker.usedBySingleSecondary(memory->name, tracker.memories)) {
+      auto* secondary =
+        tracker.getUsingSecondaries(memory->name, tracker.memories)[0];
       ModuleUtils::copyMemory(memory.get(), *secondary);
       memoriesToRemove.push_back(memory->name);
     } else {
-      for (auto* secondary : usingSecondaries) {
+      for (auto* secondary :
+           tracker.getUsingSecondaries(memory->name, tracker.memories)) {
         auto* secondaryMemory =
           ModuleUtils::copyMemory(memory.get(), *secondary);
         makeImportExport(
@@ -1030,19 +1128,17 @@ void ModuleSplitter::shareImportableItems() {
 
   std::vector<Name> tablesToRemove;
   for (auto& table : primary.tables) {
-    auto usingSecondaries =
-      getUsingSecondaries(table->name, &UsedNames::tables);
-    bool inPrimary = primaryUsed.tables.contains(table->name);
-
-    if (!inPrimary && usingSecondaries.empty()) {
+    if (tracker.useEmpty(table->name, tracker.tables)) {
       tablesToRemove.push_back(table->name);
-    } else if (!inPrimary && usingSecondaries.size() == 1) {
-      auto* secondary = usingSecondaries[0];
+    } else if (tracker.usedBySingleSecondary(table->name, tracker.tables)) {
+      auto* secondary =
+        tracker.getUsingSecondaries(table->name, tracker.tables)[0];
       assert(!secondary->getTableOrNull(table->name));
       ModuleUtils::copyTable(table.get(), *secondary);
       tablesToRemove.push_back(table->name);
     } else {
-      for (auto* secondary : usingSecondaries) {
+      for (auto* secondary :
+           tracker.getUsingSecondaries(table->name, tracker.tables)) {
         auto* secondaryTable = ModuleUtils::copyTable(table.get(), *secondary);
         makeImportExport(*table, *secondaryTable, "table", ExternalKind::Table);
       }
@@ -1059,18 +1155,16 @@ void ModuleSplitter::shareImportableItems() {
              "TODO: add wrapper functions for disallowed mutable globals");
     }
 
-    auto usingSecondaries =
-      getUsingSecondaries(global->name, &UsedNames::globals);
-    bool inPrimary = primaryUsed.globals.contains(global->name);
-
-    if (!inPrimary && usingSecondaries.empty()) {
+    if (tracker.useEmpty(global->name, tracker.globals)) {
       globalsToRemove.push_back(global->name);
-    } else if (!inPrimary && usingSecondaries.size() == 1) {
-      auto* secondary = usingSecondaries[0];
+    } else if (tracker.usedBySingleSecondary(global->name, tracker.globals)) {
+      auto* secondary =
+        tracker.getUsingSecondaries(global->name, tracker.globals)[0];
       ModuleUtils::copyGlobal(global.get(), *secondary);
       globalsToRemove.push_back(global->name);
     } else {
-      for (auto* secondary : usingSecondaries) {
+      for (auto* secondary :
+           tracker.getUsingSecondaries(global->name, tracker.globals)) {
         auto* secondaryGlobal =
           ModuleUtils::copyGlobal(global.get(), *secondary);
         makeImportExport(
@@ -1084,17 +1178,15 @@ void ModuleSplitter::shareImportableItems() {
 
   std::vector<Name> tagsToRemove;
   for (auto& tag : primary.tags) {
-    auto usingSecondaries = getUsingSecondaries(tag->name, &UsedNames::tags);
-    bool inPrimary = primaryUsed.tags.contains(tag->name);
-
-    if (!inPrimary && usingSecondaries.empty()) {
+    if (tracker.useEmpty(tag->name, tracker.tags)) {
       tagsToRemove.push_back(tag->name);
-    } else if (!inPrimary && usingSecondaries.size() == 1) {
-      auto* secondary = usingSecondaries[0];
+    } else if (tracker.usedBySingleSecondary(tag->name, tracker.tags)) {
+      auto* secondary = tracker.getUsingSecondaries(tag->name, tracker.tags)[0];
       ModuleUtils::copyTag(tag.get(), *secondary);
       tagsToRemove.push_back(tag->name);
     } else {
-      for (auto* secondary : usingSecondaries) {
+      for (auto* secondary :
+           tracker.getUsingSecondaries(tag->name, tracker.tags)) {
         auto* secondaryTag = ModuleUtils::copyTag(tag.get(), *secondary);
         makeImportExport(*tag, *secondaryTag, "tag", ExternalKind::Tag);
       }
@@ -1110,14 +1202,12 @@ void ModuleSplitter::shareImportableItems() {
 
   std::vector<Name> dataSegmentsToRemove;
   for (auto& dataSegment : primary.dataSegments) {
-    auto usingSecondaries =
-      getUsingSecondaries(dataSegment->name, &UsedNames::dataSegments);
-    bool inPrimary = primaryUsed.dataSegments.contains(dataSegment->name);
-
-    if (!inPrimary && usingSecondaries.empty()) {
+    if (tracker.useEmpty(dataSegment->name, tracker.dataSegments)) {
       dataSegmentsToRemove.push_back(dataSegment->name);
-    } else if (!inPrimary && usingSecondaries.size() == 1) {
-      auto* secondary = usingSecondaries[0];
+    } else if (tracker.usedBySingleSecondary(dataSegment->name,
+                                             tracker.dataSegments)) {
+      auto* secondary =
+        tracker.getUsingSecondaries(dataSegment->name, tracker.dataSegments)[0];
       ModuleUtils::copyDataSegment(dataSegment.get(), *secondary);
       dataSegmentsToRemove.push_back(dataSegment->name);
     }
@@ -1128,14 +1218,12 @@ void ModuleSplitter::shareImportableItems() {
 
   std::vector<Name> elementSegmentsToRemove;
   for (auto& elementSegment : primary.elementSegments) {
-    auto usingSecondaries =
-      getUsingSecondaries(elementSegment->name, &UsedNames::elementSegments);
-    bool inPrimary = primaryUsed.elementSegments.contains(elementSegment->name);
-
-    if (!inPrimary && usingSecondaries.empty()) {
+    if (tracker.useEmpty(elementSegment->name, tracker.elementSegments)) {
       elementSegmentsToRemove.push_back(elementSegment->name);
-    } else if (!inPrimary && usingSecondaries.size() == 1) {
-      auto* secondary = usingSecondaries[0];
+    } else if (tracker.usedBySingleSecondary(elementSegment->name,
+                                             tracker.elementSegments)) {
+      auto* secondary = tracker.getUsingSecondaries(elementSegment->name,
+                                                    tracker.elementSegments)[0];
       ModuleUtils::copyElementSegment(elementSegment.get(), *secondary);
       elementSegmentsToRemove.push_back(elementSegment->name);
     }
