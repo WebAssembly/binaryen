@@ -416,8 +416,6 @@ public:
 //
 
 int main(int argc, const char* argv[]) {
-  Name entry;
-  std::vector<std::string> passes;
   bool emitBinary = true;
   bool debugInfo = false;
   std::string graphFile;
