@@ -193,7 +193,6 @@ struct ConstraintAnalysis
     }
 
     computeRelevantLocals();
-    prepareToFlow();
     flow();
     optimize();
   }
@@ -221,35 +220,6 @@ struct ConstraintAnalysis
           }
         }
       }
-    }
-  }
-
-  // Maintain a maximum amount of operations. The one non-linear thing that can
-  // happen is when we increment a local in a loop: it may go from 0 to 1, then
-  // branch back to the top and merge, making it in the range [0, 1], then get
-  // incremented and loop again, leading to [0, 2] and so forth, only stopping
-  // when it reaches the loop bound, which may be very high. We don't want to
-  // spend significant time on such constant operations, as other passes will
-  // propagate them anyhow, so we keep our time bounded. When this reaches 0,
-  // we will not do loop operations that might lead to such incrementing.
-  Index maxWorkLeft = 0;
-
-  void prepareToFlow() {
-    // Compute a bound for maxOperations. flow() will spend time on each block,
-    // operation in a block, and branch, so add all those up.
-    for (auto& block : basicBlocks) {
-      maxWorkLeft += 1 + block->contents.actions.size() + block->out.size();
-    }
-
-    // We also allow a multiple of all the above: loop optimization generally
-    // requires us to process it twice (so that we see the merge at the top).
-    // Use a constant of 3 to make sure to work enough.
-    maxWorkLeft *= 3;
-  }
-
-  void decMaxWork() {
-    if (maxWorkLeft > 0) {
-      maxWorkLeft--;
     }
   }
 
@@ -291,8 +261,6 @@ struct ConstraintAnalysis
     while (!work.empty()) {
       auto* block = work.pop();
 
-      decMaxWork();
-
       // Start at the top of the block, then go through, applying things.
       BasicBlockConstraintMap constraints = block->contents.startConstraints;
 
@@ -302,8 +270,6 @@ struct ConstraintAnalysis
 
       for (auto** currp : block->contents.actions) {
         applyToConstraints(*currp, constraints);
-
-        decMaxWork();
       }
 
 #if CONSTRAINT_DEBUG
@@ -313,8 +279,6 @@ struct ConstraintAnalysis
       // We now know the values at the end of the block. Flow it onward, and
       // where it causes changes, queue more work.
       for (auto* out : block->out) {
-        decMaxWork();
-
         auto& outStartConstraints = out->contents.startConstraints;
 
         // Find the constraints sent to this specific successor, if there is a
@@ -495,6 +459,19 @@ struct ConstraintAnalysis
     return parsed;
   }
 
+  // When applying constraints for a binary operation like x = y + 1, we may
+  // end up with lots of nonlinear work, in a loop: x may go from 0 to 1, then
+  // branch back to the top and merge, making it in the range [0, 1], then get
+  // incremented and loop again, leading to [0, 2] and so forth, only stopping
+  // when it reaches the loop bound, which may be very high. We don't want to
+  // spend significant time on such constant operations, as other passes will
+  // propagate them anyhow, so we limit how many times we apply such x = y + 1
+  // operations before marking them as unknown values.
+  static const Index MaxBinaryActions = 5;
+
+  // How many times we processed each Binary action.
+  std::unordered_map<Binary*, Index> binaryActionCounts;
+
   // Given an expression, apply it to the constraints. For example, a local.set
   // sets the value for that local.
   void applyToConstraints(Expression* curr,
@@ -508,9 +485,13 @@ struct ConstraintAnalysis
       // The only binary operation we match is an increment (x + 1), and we do
       // not always want to apply it: only when we are allowed to keep working
       // (see above).
-      if (set->value->is<Binary>() && !maxWorkLeft) {
-        constraints.setProvesNothing(set->index);
-        return;
+      if (auto* binary = set->value->dynCast<Binary>()) {
+        auto& count = binaryActionCounts[binary];
+        if (count >= MaxBinaryActions) {
+          constraints.setProvesNothing(set->index);
+          return;
+        }
+        count++;
       }
 
       constraints.set(set->index, set->value);
