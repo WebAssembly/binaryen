@@ -506,21 +506,15 @@ void LocalConstraint::flip() {
 }
 
 void BasicBlockConstraintMap::set(Index index, const Constraint& c) {
-  // We should not set values in unreachable code.
-  assert(!unreachable);
-
-  // Clear the old state.
-  eraseStaleRefs(index);
-  map.erase(index);
-
-  // Apply the constraint.
-  approximateAnd(index, c);
+  set(index, AndedConstraintSet{c});
 }
 
 void BasicBlockConstraintMap::set(Index index,
                                   const AndedConstraintSet& constraints) {
-  // As above, but with a loop after.
+  // We should not set values in unreachable code.
   assert(!unreachable);
+
+  // Clear the old state.
   eraseStaleRefs(index);
   map.erase(index);
 
