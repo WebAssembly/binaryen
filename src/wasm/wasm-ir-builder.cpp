@@ -199,6 +199,12 @@ MaybeResult<IRBuilder::HoistedVal> IRBuilder::hoistLastValue(bool greedy) {
     if (isWasmUnreachableValue(entry.expr, entry.wasmStackType)) {
       break;
     }
+    // Unreachable-typed control flow (e.g. void blocks) keeps expr->type even
+    // when wasmStackType is none. This matches baseline hoist behavior.
+    if (Properties::isControlFlowStructure(entry.expr) &&
+        entry.expr->type != Type::none) {
+      break;
+    }
   }
   if (valIndex < 0) {
     // There is no value-producing expression.
@@ -221,7 +227,10 @@ MaybeResult<IRBuilder::HoistedVal> IRBuilder::hoistLastValue(bool greedy) {
   }
   auto*& expr = stack[valIndex].expr;
   if (stack[valIndex].wasmStackType == Type::unreachable ||
-      isWasmUnreachableValue(expr, stack[valIndex].wasmStackType)) {
+      isWasmUnreachableValue(expr, stack[valIndex].wasmStackType) ||
+      (Properties::isControlFlowStructure(expr) &&
+       stack[valIndex].wasmStackType == Type::none &&
+       expr->type != Type::none)) {
     // No need for a scratch local to hoist an unreachable.
     return HoistedVal{Index(hoistIndex), nullptr};
   }
@@ -730,7 +739,10 @@ private:
     // Unreachable stack types satisfy any size when used as Binaryen IR operands.
     if (entry.wasmStackType.size() == size ||
         entry.wasmStackType == Type::unreachable ||
-        isWasmUnreachableValue(entry.expr, entry.wasmStackType)) {
+        isWasmUnreachableValue(entry.expr, entry.wasmStackType) ||
+        (Properties::isControlFlowStructure(entry.expr) &&
+         entry.wasmStackType == Type::none &&
+         entry.expr->type != Type::none)) {
       auto* ret = entry.expr;
       scope.exprStack.pop_back();
       return ret;
