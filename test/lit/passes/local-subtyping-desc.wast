@@ -48,7 +48,18 @@
  (func $test (result (ref null $1))
   ;; We can refine both these locals to (ref none). While doing so we must
   ;; refinalize the br_on properly, below, to that same type (it is never
-  ;; executed).
+  ;; executed). In more detail, we end up doing two iterations of refining in
+  ;; the pass, refinalizing each time. Here is what happens to the BrOn:
+  ;;
+  ;;  * The first time, the types of its inputs are ref=nullref, desc=(ref $3).
+  ;;    That refinalizes into (ref none) for the BrOn.
+  ;;  * The first time, the types of its inputs are ref=nullref, desc=(ref none).
+  ;;    This test verifies that we fixed a bug where the BrOn was given the
+  ;;    type of the ref, i.e., nullref - which led to an assert, as we refined
+  ;;    (ref none) into nullref. That is, the code path handling a null
+  ;;    descriptor type did not consider that it might need to emit a non-
+  ;;    nullable type even if the ref is nullable.
+  ;;
   (local $1 (ref $3))
   (local $2 (ref $1))
   (block $block (result (ref null $1))
