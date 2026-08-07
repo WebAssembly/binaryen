@@ -289,16 +289,10 @@
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (loop $loop
   ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (i32.lt_s
-  ;; CHECK-NEXT:     (local.get $x)
-  ;; CHECK-NEXT:     (i32.const 100)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (i32.ge_s
-  ;; CHECK-NEXT:     (local.get $x)
-  ;; CHECK-NEXT:     (i32.const 0)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (local.set $x
   ;; CHECK-NEXT:    (i32.add
@@ -320,9 +314,8 @@
   (func $bound-incremented
     (local $x i32)
     (loop $loop
-      ;; A realistic do-while loop, with $x++ and a bounds check. We must infer
-      ;; that no overflow happens in order to prove these two checks are true,
-      ;; and only loops mode manages that.
+      ;; A realistic do-while loop, with $x++ and a bounds check. We can infer
+      ;; that no overflow happens, and prove these two checks are true.
       (drop
         (i32.lt_s
           (local.get $x)
@@ -358,16 +351,10 @@
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (loop $loop
   ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (i32.lt_u
-  ;; CHECK-NEXT:     (local.get $x)
-  ;; CHECK-NEXT:     (i32.const 100)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (i32.ge_u
-  ;; CHECK-NEXT:     (local.get $x)
-  ;; CHECK-NEXT:     (i32.const 0)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (local.set $x
   ;; CHECK-NEXT:    (i32.add
@@ -387,8 +374,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $bound-incremented-unsigned
-    ;; As above, but with unsigned operations. Again, we need loops mode to
-    ;; optimize.
+    ;; As above, but with unsigned operations. Again, we optimize these to 1.
     (local $x i32)
     (loop $loop
       (drop
@@ -487,7 +473,7 @@
           ;; We then proceed to do $a++, trying to increment each of those three
           ;; constraints. We should not hit an internal error on trying to increment
           ;; any of the three, ending up failing on the third (though, with a higher-
-          ;; level view, we could use the fact that $p == 0).
+          ;; level view, we could use the fact that $p == 0). TODO
           (local.set $a
             (i32.add
               (local.get $a)
@@ -531,10 +517,7 @@
   ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.ge_s
-  ;; CHECK-NEXT:      (local.get $x)
-  ;; CHECK-NEXT:      (i32.const 0)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.set $x
   ;; CHECK-NEXT:     (i32.add
@@ -562,8 +545,7 @@
             (br $out)
           )
         )
-        ;; We can infer both of these to be true in loops mode (in normal mode,
-        ;; only the easy one, the first).
+        ;; We can infer both of these to be 1.
         (drop
           (i32.lt_s
             (local.get $x)
@@ -608,10 +590,7 @@
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.gt_s
-  ;; CHECK-NEXT:      (local.get $x)
-  ;; CHECK-NEXT:      (i32.const 0)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (i32.const 1)
@@ -681,10 +660,7 @@
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.gt_s
-  ;; CHECK-NEXT:      (local.get $x)
-  ;; CHECK-NEXT:      (i32.const 0)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (i32.const 1)
@@ -715,7 +691,7 @@
             (br $out)
           )
         )
-        ;; x > 0 && x <= 100 here (but we need loops mode to get both).
+        ;; x > 0 && x <= 100 here.
         (drop
           (i32.gt_s
             (local.get $x)
@@ -753,10 +729,7 @@
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.gt_u
-  ;; CHECK-NEXT:      (local.get $x)
-  ;; CHECK-NEXT:      (i32.const 0)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (i32.const 1)
