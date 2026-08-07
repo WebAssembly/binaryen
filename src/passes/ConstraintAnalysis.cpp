@@ -622,6 +622,4 @@ struct ConstraintAnalysis
 
 Pass* createConstraintAnalysisPass() { return new ConstraintAnalysis(); }
 
-// see a.txt
-
 } // namespace wasm
