@@ -3,9 +3,13 @@
 ;; RUN: foreach %s %t wasm-opt -all --dae2 --closed-world -S -o - | filecheck %s --check-prefix=CLOSED
 
 (module
+  ;; OPEN:      (type $0 (func (result i32)))
+
   ;; OPEN:      (func $target (type $0) (result i32)
   ;; OPEN-NEXT:  (i32.const 42)
   ;; OPEN-NEXT: )
+  ;; CLOSED:      (type $0 (func (result i32)))
+
   ;; CLOSED:      (func $target (type $0) (result i32)
   ;; CLOSED-NEXT:  (i32.const 42)
   ;; CLOSED-NEXT: )
@@ -30,7 +34,11 @@
 )
 
 (module
+  ;; OPEN:      (type $0 (func (result i32)))
+
   ;; OPEN:      (import "env" "target" (func $target (type $0) (result i32)))
+  ;; CLOSED:      (type $0 (func (result i32)))
+
   ;; CLOSED:      (import "env" "target" (func $target (type $0) (result i32)))
   (import "env" "target" (func $target (result i32)))
   ;; OPEN:      (func $caller (type $1)
@@ -51,6 +59,9 @@
 
 (module
   ;; OPEN:      (type $sig (func (result i32)))
+  ;; CLOSED:      (rec
+  ;; CLOSED-NEXT:  (type $0 (func))
+
   ;; CLOSED:       (type $sig (func))
   (type $sig (func (result i32)))
   ;; OPEN:      (func $target (type $sig) (result i32)
@@ -76,5 +87,55 @@
     ;; $target is referenced and $sig's result is unused. We can optimize in
     ;; closed world but not open world.
     (drop (ref.func $target))
+  )
+)
+
+(module
+  ;; OPEN:      (type $0 (func (result i32)))
+  ;; CLOSED:      (type $0 (func))
+  (type $0 (func (result i32)))
+  ;; OPEN:      (table $0 1 funcref)
+  ;; CLOSED:      (table $0 1 funcref)
+  (table $0 1 funcref)
+  ;; OPEN:      (func $caller (type $0) (result i32)
+  ;; OPEN-NEXT:  (return_call_indirect $0 (type $0)
+  ;; OPEN-NEXT:   (i32.const 0)
+  ;; OPEN-NEXT:  )
+  ;; OPEN-NEXT: )
+  ;; CLOSED:      (func $caller (type $0)
+  ;; CLOSED-NEXT:  (return_call_indirect $0 (type $0)
+  ;; CLOSED-NEXT:   (i32.const 0)
+  ;; CLOSED-NEXT:  )
+  ;; CLOSED-NEXT: )
+  (func $caller (type $0) (result i32)
+    ;; In open world, indirect call signatures cannot be modified, so the caller
+    ;; cannot have its result removed even though the result is unused. In closed
+    ;; world, both the signature and the caller can be optimized.
+    (return_call_indirect $0 (type $0)
+      (i32.const 0)
+    )
+  )
+)
+
+(module
+  ;; OPEN:      (type $0 (func (result i32)))
+  ;; CLOSED:      (rec
+  ;; CLOSED-NEXT:  (type $0 (func))
+  (type $0 (func (result i32)))
+  ;; OPEN:      (func $caller (type $1) (param $ref (ref $0)) (result i32)
+  ;; OPEN-NEXT:  (return_call_ref $0
+  ;; OPEN-NEXT:   (local.get $ref)
+  ;; OPEN-NEXT:  )
+  ;; OPEN-NEXT: )
+  ;; CLOSED:      (func $caller (type $2) (param $ref (ref $0))
+  ;; CLOSED-NEXT:  (return_call_ref $0
+  ;; CLOSED-NEXT:   (local.get $ref)
+  ;; CLOSED-NEXT:  )
+  ;; CLOSED-NEXT: )
+  (func $caller (param $ref (ref $0)) (result i32)
+    ;; Same with return_call_ref.
+    (return_call_ref $0
+      (local.get $ref)
+    )
   )
 )
