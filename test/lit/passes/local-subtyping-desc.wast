@@ -13,12 +13,14 @@
 
  ;; CHECK:      (func $test (type $2) (result (ref null $struct))
  ;; CHECK-NEXT:  (local $struct (ref none))
- ;; CHECK-NEXT:  (local $desc (ref none))
  ;; CHECK-NEXT:  (block $block (result (ref none))
- ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (block ;; (replaces unreachable StructGet we can't emit)
+ ;; CHECK-NEXT:   (local.set $struct
+ ;; CHECK-NEXT:    (block ;; (replaces unreachable BrOn we can't emit)
  ;; CHECK-NEXT:     (drop
- ;; CHECK-NEXT:      (local.tee $struct
+ ;; CHECK-NEXT:      (ref.null none)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (drop
+ ;; CHECK-NEXT:      (block (result (ref none))
  ;; CHECK-NEXT:       (ref.as_non_null
  ;; CHECK-NEXT:        (ref.null none)
  ;; CHECK-NEXT:       )
@@ -27,51 +29,35 @@
  ;; CHECK-NEXT:     (unreachable)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (local.set $desc
- ;; CHECK-NEXT:    (block ;; (replaces unreachable BrOn we can't emit)
- ;; CHECK-NEXT:     (drop
- ;; CHECK-NEXT:      (ref.null none)
- ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (drop
- ;; CHECK-NEXT:      (local.get $struct)
- ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (unreachable)
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $test (result (ref null $struct))
-  ;; We can refine both these locals to (ref none). While doing so we must
+  ;; We can refine both the local to (ref none). While doing so we must
   ;; refinalize the br_on properly, below, to that same type (it is never
-  ;; executed). In more detail, we end up doing two iterations of refining in
-  ;; the pass, refinalizing each time. Here is what happens to the BrOn:
+  ;; executed). In more detail:
   ;;
-  ;;  * The first time, the types of its inputs are ref=nullref, desc=(ref $desc).
+  ;;  * Initially, after parsing, the types of its inputs are
+  ;;      ref=nullref, desc=(ref $desc).
   ;;    That refinalizes into (ref none) for the BrOn.
-  ;;  * The first time, the types of its inputs are ref=nullref, desc=(ref none).
+  ;;  * When we refinalize, the types of its inputs are
+  ;;      ref=nullref, desc=(ref none).
   ;;    This test verifies that we fixed a bug where the BrOn was given the
   ;;    type of the ref, i.e., nullref - which led to an assert, as we refined
   ;;    (ref none) into nullref. That is, the code path handling a null
   ;;    descriptor type did not consider that it might need to emit a non-
   ;;    nullable type even if the ref is nullable.
   ;;
-  (local $struct (ref $desc))
-  (local $desc (ref $struct))
+  (local $struct (ref $struct))
   (block $block (result (ref null $struct))
-   (drop
-    (struct.get $desc 0
-     (local.tee $struct
+   (local.set $struct
+    (br_on_cast_desc_eq $block (ref null $struct) (ref null $struct)
+     (ref.null $struct)
+     (block (result (ref $desc))
       (ref.as_non_null
        (ref.null none)
       )
      )
-    )
-   )
-   (local.set $desc
-    (br_on_cast_desc_eq $block (ref null $struct) (ref null $struct)
-     (ref.null $struct)
-     (local.get $struct)
     )
    )
    (unreachable)
