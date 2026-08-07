@@ -43,8 +43,9 @@
   ;; We can monomorphize the call to $target, pushing the ref.is_null into
   ;; $target_2. The parameter we send there is now nullref, so everything there
   ;; gets optimized away. In this function, after refinalizing we end up with
-  ;; an unreachable br_on, and while doing so, we should not hit an internal
-  ;; error on how we process that now-unreachable instruction.
+  ;; an unprintable br_on (we don't have defined types for the null inputs, and
+  ;; in fact the br_on is never taken). While doing so, we should not hit an
+  ;; internal error.
   (block $block (result (ref $A))
    (call $target
     (ref.is_null
