@@ -472,8 +472,11 @@
           ;; $a == 0 && $a <= $b, $a == $p
           ;; We then proceed to do $a++, trying to increment each of those three
           ;; constraints. We should not hit an internal error on trying to increment
-          ;; any of the three, ending up failing on the third (though, with a higher-
-          ;; level view, we could use the fact that $p == 0). TODO
+          ;; any of the three, ending up failing on the third.
+          ;; TODO: We should use the fact that $a == 0 to infer $a == 1, as we
+          ;;       do not even need the others. We should not add constraints on
+          ;;       $a when it is a constant, and apply constraints to the others
+          ;;       ($b >= 0 and $p == 0 can be inferred for them).
           (local.set $a
             (i32.add
               (local.get $a)
