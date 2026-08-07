@@ -45,7 +45,7 @@
   ;;      ref=nullref, desc=(ref none).
   ;;    This test verifies that we fixed a bug where the BrOn was given the
   ;;    type of the ref, i.e., nullref - which led to an assert, as we refined
-  ;;    (ref none) into nullref. That is, the code path handling a null
+  ;;    (ref $struct) into nullref. That is, the code path handling a null
   ;;    descriptor type did not consider that it might need to emit a non-
   ;;    nullable type even if the ref is nullable.
   ;;
