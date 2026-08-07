@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef wasm_features_h
-#define wasm_features_h
+#ifndef wasm_wasm_features_h
+#define wasm_wasm_features_h
 
 #include <stdint.h>
 #include <string>
@@ -259,4 +259,4 @@ struct FeatureSet {
 
 } // namespace wasm
 
-#endif // wasm_features_h
+#endif // wasm_wasm_features_h

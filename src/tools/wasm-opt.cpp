@@ -74,7 +74,6 @@ willRemoveDebugInfo(const std::vector<OptimizationOptions::PassInfo>& passes) {
 //
 
 int main(int argc, const char* argv[]) {
-  Name entry;
   bool emitBinary = true;
   bool converge = false;
   bool fuzzExecBefore = false;
