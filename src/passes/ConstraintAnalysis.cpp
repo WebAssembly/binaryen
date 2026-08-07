@@ -36,7 +36,7 @@
 // which is obviously not a good idea.
 //
 // Instead, we do something similar to "widening" in abstract interpretation
-// (which at a loop header, where a merge occurs, widen the range of values
+// (which at a loop header, where a merge occurs, widens the range of values
 // based on the bounds check that it sees elsewhere). We do something even
 // simpler here, which can be accomplished in an eager way as follows:
 //
@@ -59,7 +59,11 @@
 // x < D". While imprecise, if we see "x == C, branch with x < D", then this is
 // a situation inside a loop: if it were not, then x would get constant-
 // propagatated to the branch anyhow by other passes. And, if this is in a loop,
-// then this widening is exactly what we want.
+// then this widening is exactly what we want. This eager approach avoids us
+// needing to analyze loops shapes specifically and/or to consider branch
+// conditions "from afar" (seeing a branch on "x < D", but *not* applying it
+// eagerly, and instead using it later at the loop header or in some whole-
+// function analysis).
 //
 
 #include "cfg/cfg-traversal.h"
