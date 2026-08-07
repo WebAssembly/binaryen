@@ -789,6 +789,7 @@
 
   ;; CHECK:      (func $0 (type $A) (param $0 (ref null $A)) (result (ref null $A))
   ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $0 (type $B) (param $0 (ref null $A)) (result (ref null $B))
     (unreachable)
@@ -891,7 +892,13 @@
 
  ;; CHECK:      (func $test (type $D) (result (ref any) (ref $B))
  ;; CHECK-NEXT:  (block $l
- ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:   (tuple.make 2
+ ;; CHECK-NEXT:    (block
+ ;; CHECK-NEXT:     (unreachable)
+ ;; CHECK-NEXT:     (unreachable)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $test (type $D) (result (ref any) (ref $C))
@@ -1092,8 +1099,10 @@
   ;; CHECK-NEXT:      (local.get $a)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:     (unreachable)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )

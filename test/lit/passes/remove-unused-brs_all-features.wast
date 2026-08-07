@@ -74,11 +74,13 @@
  ;; CHECK-NEXT:    (else
  ;; CHECK-NEXT:     (block $block (result f64)
  ;; CHECK-NEXT:      (nop)
- ;; CHECK-NEXT:      (br_if $loop
- ;; CHECK-NEXT:       (i32.eqz
- ;; CHECK-NEXT:        (i32.const 0)
+ ;; CHECK-NEXT:      (if
+ ;; CHECK-NEXT:       (i32.const 0)
+ ;; CHECK-NEXT:       (then
+ ;; CHECK-NEXT:        (unreachable)
  ;; CHECK-NEXT:       )
  ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (br $loop)
  ;; CHECK-NEXT:      (unreachable)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
@@ -111,6 +113,7 @@
  )
 
  ;; CHECK:      (func $none_=>_i32 (type $5) (result i32)
+ ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  (func $none_=>_i32 (result i32)
@@ -229,6 +232,7 @@
  ;; CHECK-NEXT:    (local.get $x)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $br_on_non_null (param $x funcref) (result funcref)
@@ -265,6 +269,7 @@
  ;; CHECK-NEXT:     (ref.null nofunc)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )

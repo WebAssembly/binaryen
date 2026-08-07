@@ -411,6 +411,7 @@
 
   ;; CHECK:      (func $get-eqref (type $32) (result eqref)
   ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $get-eqref (result eqref)
     (unreachable)
@@ -2334,6 +2335,7 @@
 
   ;; CHECK:      (func $impossible (type $40) (result (ref none))
   ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $impossible (result (ref none))
     (unreachable)
@@ -2979,7 +2981,8 @@
   ;; CHECK-NEXT:  (local $0 funcref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.set $0
-  ;; CHECK-NEXT:    (loop
+  ;; CHECK-NEXT:    (block
+  ;; CHECK-NEXT:     (unreachable)
   ;; CHECK-NEXT:     (unreachable)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
@@ -3017,7 +3020,8 @@
   ;; CHECK-NEXT:  (local $0 funcref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $0
-  ;; CHECK-NEXT:    (loop (result (ref nofunc))
+  ;; CHECK-NEXT:    (block (result (ref nofunc))
+  ;; CHECK-NEXT:     (unreachable)
   ;; CHECK-NEXT:     (unreachable)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
@@ -3039,7 +3043,8 @@
   ;; CHECK:      (func $non-null-bottom-ref-test-notee (type $8) (result i32)
   ;; CHECK-NEXT:  (local $0 funcref)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (loop (result (ref nofunc))
+  ;; CHECK-NEXT:   (block (result (ref nofunc))
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -3195,6 +3200,7 @@
 
   ;; CHECK:      (func $struct_i64_helper (type $struct_i64) (param $0 structref) (result i64)
   ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $struct_i64_helper (type $struct_i64) (param $0 (ref null struct)) (result i64)
     (unreachable)
@@ -3210,6 +3216,7 @@
   ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:     (then
   ;; CHECK-NEXT:      (br $block)
+  ;; CHECK-NEXT:      (unreachable)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (else
   ;; CHECK-NEXT:      (i32.const 10)

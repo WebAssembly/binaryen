@@ -408,7 +408,13 @@
     (type $B (sub $A (struct)))
   )
   ;; CHECK:      (func $test (type $3) (param $0 i32) (result (ref $A) (ref $B))
-  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT:  (tuple.make 2
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $test (param i32) (result (ref $A) (ref $B))
     (block (type $multi) (result (ref $A) (ref $B))

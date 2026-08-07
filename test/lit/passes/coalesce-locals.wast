@@ -1766,6 +1766,7 @@
   ;; CHECK-NEXT:  (return
   ;; CHECK-NEXT:   (local.get $3)
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $_memcpy (type $FUNCSIG$iiii) (param $i1 i32) (param $i2 i32) (param $i3 i32) (result i32)
     (local $i4 i32)
@@ -2326,6 +2327,7 @@
   ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:     (then
   ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:      (unreachable)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (else
   ;; CHECK-NEXT:      (local.get $0)
@@ -2369,6 +2371,7 @@
   ;; CHECK-NEXT:    (if (result i32)
   ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:     (then
+  ;; CHECK-NEXT:      (unreachable)
   ;; CHECK-NEXT:      (unreachable)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (else
@@ -2507,6 +2510,7 @@
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (else
   ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:      (unreachable)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
@@ -2541,6 +2545,7 @@
   ;; CHECK-NEXT:    (if (result f64)
   ;; CHECK-NEXT:     (local.get $1)
   ;; CHECK-NEXT:     (then
+  ;; CHECK-NEXT:      (unreachable)
   ;; CHECK-NEXT:      (unreachable)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (else

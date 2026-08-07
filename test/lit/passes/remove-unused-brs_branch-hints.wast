@@ -634,6 +634,7 @@
   ;; CHECK-NEXT:    (block $value (result i32)
   ;; CHECK-NEXT:     (nop)
   ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:     (unreachable)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -656,13 +657,17 @@
   ;; CHECK:      (func $set-if-br-arm (type $0) (param $x i32)
   ;; CHECK-NEXT:  (local $temp i32)
   ;; CHECK-NEXT:  (block $out
-  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:   (local.set $temp
   ;; CHECK-NEXT:    (@metadata.code.branch_hint "\00")
-  ;; CHECK-NEXT:    (br_if $out
+  ;; CHECK-NEXT:    (if (result i32)
   ;; CHECK-NEXT:     (local.get $x)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.set $temp
-  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:     (then
+  ;; CHECK-NEXT:      (br $out)
+  ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (else
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -689,15 +694,17 @@
   ;; CHECK:      (func $set-if-br-arm-flip (type $0) (param $x i32)
   ;; CHECK-NEXT:  (local $temp i32)
   ;; CHECK-NEXT:  (block $out
-  ;; CHECK-NEXT:   (block
-  ;; CHECK-NEXT:    (@metadata.code.branch_hint "\01")
-  ;; CHECK-NEXT:    (br_if $out
-  ;; CHECK-NEXT:     (i32.eqz
-  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:   (local.set $temp
+  ;; CHECK-NEXT:    (@metadata.code.branch_hint "\00")
+  ;; CHECK-NEXT:    (if (result i32)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (then
+  ;; CHECK-NEXT:      (i32.const 0)
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.set $temp
-  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:     (else
+  ;; CHECK-NEXT:      (br $out)
+  ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )

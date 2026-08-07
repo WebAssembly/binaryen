@@ -1101,6 +1101,7 @@
 
   ;; ALWAYS:      (func $target (type $3) (param $0 anyref) (param $1 anyref) (result i32)
   ;; ALWAYS-NEXT:  (unreachable)
+  ;; ALWAYS-NEXT:  (unreachable)
   ;; ALWAYS-NEXT: )
   ;; CAREFUL:      (func $target (type $2) (param $0 anyref) (param $1 anyref) (result i32)
   ;; CAREFUL-NEXT:  (unreachable)
@@ -1114,35 +1115,49 @@
 ;; ALWAYS:      (func $target_3 (type $1)
 ;; ALWAYS-NEXT:  (local $0 anyref)
 ;; ALWAYS-NEXT:  (local $1 anyref)
-;; ALWAYS-NEXT:  (local.set $0
-;; ALWAYS-NEXT:   (array.new_default $array
-;; ALWAYS-NEXT:    (i32.const 1)
+;; ALWAYS-NEXT:  (drop
+;; ALWAYS-NEXT:   (block (result i32)
+;; ALWAYS-NEXT:    (local.set $0
+;; ALWAYS-NEXT:     (array.new_default $array
+;; ALWAYS-NEXT:      (i32.const 1)
+;; ALWAYS-NEXT:     )
+;; ALWAYS-NEXT:    )
+;; ALWAYS-NEXT:    (local.set $1
+;; ALWAYS-NEXT:     (array.new $array
+;; ALWAYS-NEXT:      (i32.const 2)
+;; ALWAYS-NEXT:      (i32.const 3)
+;; ALWAYS-NEXT:     )
+;; ALWAYS-NEXT:    )
+;; ALWAYS-NEXT:    (block (result i32)
+;; ALWAYS-NEXT:     (unreachable)
+;; ALWAYS-NEXT:     (unreachable)
+;; ALWAYS-NEXT:    )
 ;; ALWAYS-NEXT:   )
 ;; ALWAYS-NEXT:  )
-;; ALWAYS-NEXT:  (local.set $1
-;; ALWAYS-NEXT:   (array.new $array
-;; ALWAYS-NEXT:    (i32.const 2)
-;; ALWAYS-NEXT:    (i32.const 3)
-;; ALWAYS-NEXT:   )
-;; ALWAYS-NEXT:  )
-;; ALWAYS-NEXT:  (unreachable)
 ;; ALWAYS-NEXT: )
 
 ;; ALWAYS:      (func $target_4 (type $4) (param $0 i32) (param $1 i32) (param $2 i32)
 ;; ALWAYS-NEXT:  (local $3 anyref)
 ;; ALWAYS-NEXT:  (local $4 anyref)
-;; ALWAYS-NEXT:  (local.set $3
-;; ALWAYS-NEXT:   (array.new_default $array
-;; ALWAYS-NEXT:    (local.get $0)
+;; ALWAYS-NEXT:  (drop
+;; ALWAYS-NEXT:   (block (result i32)
+;; ALWAYS-NEXT:    (local.set $3
+;; ALWAYS-NEXT:     (array.new_default $array
+;; ALWAYS-NEXT:      (local.get $0)
+;; ALWAYS-NEXT:     )
+;; ALWAYS-NEXT:    )
+;; ALWAYS-NEXT:    (local.set $4
+;; ALWAYS-NEXT:     (array.new $array
+;; ALWAYS-NEXT:      (local.get $1)
+;; ALWAYS-NEXT:      (local.get $2)
+;; ALWAYS-NEXT:     )
+;; ALWAYS-NEXT:    )
+;; ALWAYS-NEXT:    (block (result i32)
+;; ALWAYS-NEXT:     (unreachable)
+;; ALWAYS-NEXT:     (unreachable)
+;; ALWAYS-NEXT:    )
 ;; ALWAYS-NEXT:   )
 ;; ALWAYS-NEXT:  )
-;; ALWAYS-NEXT:  (local.set $4
-;; ALWAYS-NEXT:   (array.new $array
-;; ALWAYS-NEXT:    (local.get $1)
-;; ALWAYS-NEXT:    (local.get $2)
-;; ALWAYS-NEXT:   )
-;; ALWAYS-NEXT:  )
-;; ALWAYS-NEXT:  (unreachable)
 ;; ALWAYS-NEXT: )
 
 ;; CAREFUL:      (func $target_3 (type $0)
@@ -1192,6 +1207,7 @@
 
   ;; ALWAYS:      (func $target (type $1) (param $0 anyref) (result anyref)
   ;; ALWAYS-NEXT:  (unreachable)
+  ;; ALWAYS-NEXT:  (unreachable)
   ;; ALWAYS-NEXT: )
   ;; CAREFUL:      (func $target (type $0) (param $0 anyref) (result anyref)
   ;; CAREFUL-NEXT:  (unreachable)
@@ -1218,7 +1234,10 @@
 ;; ALWAYS-NEXT:    )
 ;; ALWAYS-NEXT:   )
 ;; ALWAYS-NEXT:  )
-;; ALWAYS-NEXT:  (unreachable)
+;; ALWAYS-NEXT:  (block (result anyref)
+;; ALWAYS-NEXT:   (unreachable)
+;; ALWAYS-NEXT:   (unreachable)
+;; ALWAYS-NEXT:  )
 ;; ALWAYS-NEXT: )
 
 ;; CAREFUL:      (func $target_2 (type $0) (param $0 anyref) (result anyref)

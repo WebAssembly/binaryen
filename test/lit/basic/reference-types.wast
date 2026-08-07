@@ -642,6 +642,7 @@
   ;; CHECK-TEXT-NEXT:        (local.get $local_eqref)
   ;; CHECK-TEXT-NEXT:       )
   ;; CHECK-TEXT-NEXT:      )
+  ;; CHECK-TEXT-NEXT:      (unreachable)
   ;; CHECK-TEXT-NEXT:     )
   ;; CHECK-TEXT-NEXT:    )
   ;; CHECK-TEXT-NEXT:    (ref.null none)
@@ -656,6 +657,7 @@
   ;; CHECK-TEXT-NEXT:        (ref.func $foo)
   ;; CHECK-TEXT-NEXT:       )
   ;; CHECK-TEXT-NEXT:      )
+  ;; CHECK-TEXT-NEXT:      (unreachable)
   ;; CHECK-TEXT-NEXT:     )
   ;; CHECK-TEXT-NEXT:    )
   ;; CHECK-TEXT-NEXT:    (ref.null nofunc)
@@ -670,6 +672,7 @@
   ;; CHECK-TEXT-NEXT:        (local.get $local_eqref)
   ;; CHECK-TEXT-NEXT:       )
   ;; CHECK-TEXT-NEXT:      )
+  ;; CHECK-TEXT-NEXT:      (unreachable)
   ;; CHECK-TEXT-NEXT:     )
   ;; CHECK-TEXT-NEXT:    )
   ;; CHECK-TEXT-NEXT:    (ref.null none)
@@ -684,6 +687,7 @@
   ;; CHECK-TEXT-NEXT:        (ref.null none)
   ;; CHECK-TEXT-NEXT:       )
   ;; CHECK-TEXT-NEXT:      )
+  ;; CHECK-TEXT-NEXT:      (unreachable)
   ;; CHECK-TEXT-NEXT:     )
   ;; CHECK-TEXT-NEXT:    )
   ;; CHECK-TEXT-NEXT:    (local.get $local_eqref)
@@ -1245,6 +1249,7 @@
   ;; CHECK-BIN-NEXT:        (local.get $local_eqref)
   ;; CHECK-BIN-NEXT:       )
   ;; CHECK-BIN-NEXT:      )
+  ;; CHECK-BIN-NEXT:      (unreachable)
   ;; CHECK-BIN-NEXT:     )
   ;; CHECK-BIN-NEXT:    )
   ;; CHECK-BIN-NEXT:    (ref.null none)
@@ -1259,6 +1264,7 @@
   ;; CHECK-BIN-NEXT:        (ref.func $foo)
   ;; CHECK-BIN-NEXT:       )
   ;; CHECK-BIN-NEXT:      )
+  ;; CHECK-BIN-NEXT:      (unreachable)
   ;; CHECK-BIN-NEXT:     )
   ;; CHECK-BIN-NEXT:    )
   ;; CHECK-BIN-NEXT:    (ref.null nofunc)
@@ -1273,6 +1279,7 @@
   ;; CHECK-BIN-NEXT:        (local.get $local_eqref)
   ;; CHECK-BIN-NEXT:       )
   ;; CHECK-BIN-NEXT:      )
+  ;; CHECK-BIN-NEXT:      (unreachable)
   ;; CHECK-BIN-NEXT:     )
   ;; CHECK-BIN-NEXT:    )
   ;; CHECK-BIN-NEXT:    (ref.null none)
@@ -1287,6 +1294,7 @@
   ;; CHECK-BIN-NEXT:        (ref.null none)
   ;; CHECK-BIN-NEXT:       )
   ;; CHECK-BIN-NEXT:      )
+  ;; CHECK-BIN-NEXT:      (unreachable)
   ;; CHECK-BIN-NEXT:     )
   ;; CHECK-BIN-NEXT:    )
   ;; CHECK-BIN-NEXT:    (local.get $local_eqref)
@@ -1967,12 +1975,14 @@
   ;; CHECK-TEXT-NEXT:  (return
   ;; CHECK-TEXT-NEXT:   (ref.null none)
   ;; CHECK-TEXT-NEXT:  )
+  ;; CHECK-TEXT-NEXT:  (unreachable)
   ;; CHECK-TEXT-NEXT: )
   ;; CHECK-BIN:      (func $returns_eqref (type $6) (result eqref)
   ;; CHECK-BIN-NEXT:  (local $local_eqref eqref)
   ;; CHECK-BIN-NEXT:  (return
   ;; CHECK-BIN-NEXT:   (local.get $local_eqref)
   ;; CHECK-BIN-NEXT:  )
+  ;; CHECK-BIN-NEXT:  (unreachable)
   ;; CHECK-BIN-NEXT: )
   (func $returns_eqref (result eqref)
     (local $local_eqref eqref)
@@ -1995,12 +2005,14 @@
   ;; CHECK-TEXT-NEXT:  (return
   ;; CHECK-TEXT-NEXT:   (ref.null nofunc)
   ;; CHECK-TEXT-NEXT:  )
+  ;; CHECK-TEXT-NEXT:  (unreachable)
   ;; CHECK-TEXT-NEXT: )
   ;; CHECK-BIN:      (func $returns_funcref (type $4) (result funcref)
   ;; CHECK-BIN-NEXT:  (local $local_funcref funcref)
   ;; CHECK-BIN-NEXT:  (return
   ;; CHECK-BIN-NEXT:   (local.get $local_funcref)
   ;; CHECK-BIN-NEXT:  )
+  ;; CHECK-BIN-NEXT:  (unreachable)
   ;; CHECK-BIN-NEXT: )
   (func $returns_funcref (result funcref)
     (local $local_funcref funcref)
@@ -2021,12 +2033,14 @@
   ;; CHECK-TEXT-NEXT:  (return
   ;; CHECK-TEXT-NEXT:   (ref.null none)
   ;; CHECK-TEXT-NEXT:  )
+  ;; CHECK-TEXT-NEXT:  (unreachable)
   ;; CHECK-TEXT-NEXT: )
   ;; CHECK-BIN:      (func $returns_anyref (type $0) (result anyref)
   ;; CHECK-BIN-NEXT:  (local $local_anyref anyref)
   ;; CHECK-BIN-NEXT:  (return
   ;; CHECK-BIN-NEXT:   (local.get $local_anyref)
   ;; CHECK-BIN-NEXT:  )
+  ;; CHECK-BIN-NEXT:  (unreachable)
   ;; CHECK-BIN-NEXT: )
   (func $returns_anyref (result anyref)
     (local $local_anyref anyref)
@@ -2049,6 +2063,7 @@
   ;; CHECK-TEXT-NEXT:  (return
   ;; CHECK-TEXT-NEXT:   (ref.null none)
   ;; CHECK-TEXT-NEXT:  )
+  ;; CHECK-TEXT-NEXT:  (unreachable)
   ;; CHECK-TEXT-NEXT: )
   ;; CHECK-BIN:      (func $returns_anyref2 (type $0) (result anyref)
   ;; CHECK-BIN-NEXT:  (local $local_eqref eqref)
@@ -2056,6 +2071,7 @@
   ;; CHECK-BIN-NEXT:  (return
   ;; CHECK-BIN-NEXT:   (local.get $local_eqref)
   ;; CHECK-BIN-NEXT:  )
+  ;; CHECK-BIN-NEXT:  (unreachable)
   ;; CHECK-BIN-NEXT: )
   (func $returns_anyref2 (result anyref)
     (local $local_eqref eqref)
@@ -2582,6 +2598,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:        (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:       )
 ;; CHECK-BIN-NODEBUG-NEXT:      )
+;; CHECK-BIN-NODEBUG-NEXT:      (unreachable)
 ;; CHECK-BIN-NODEBUG-NEXT:     )
 ;; CHECK-BIN-NODEBUG-NEXT:    )
 ;; CHECK-BIN-NODEBUG-NEXT:    (ref.null none)
@@ -2596,6 +2613,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:        (ref.func $3)
 ;; CHECK-BIN-NODEBUG-NEXT:       )
 ;; CHECK-BIN-NODEBUG-NEXT:      )
+;; CHECK-BIN-NODEBUG-NEXT:      (unreachable)
 ;; CHECK-BIN-NODEBUG-NEXT:     )
 ;; CHECK-BIN-NODEBUG-NEXT:    )
 ;; CHECK-BIN-NODEBUG-NEXT:    (ref.null nofunc)
@@ -2610,6 +2628,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:        (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:       )
 ;; CHECK-BIN-NODEBUG-NEXT:      )
+;; CHECK-BIN-NODEBUG-NEXT:      (unreachable)
 ;; CHECK-BIN-NODEBUG-NEXT:     )
 ;; CHECK-BIN-NODEBUG-NEXT:    )
 ;; CHECK-BIN-NODEBUG-NEXT:    (ref.null none)
@@ -2624,6 +2643,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:        (ref.null none)
 ;; CHECK-BIN-NODEBUG-NEXT:       )
 ;; CHECK-BIN-NODEBUG-NEXT:      )
+;; CHECK-BIN-NODEBUG-NEXT:      (unreachable)
 ;; CHECK-BIN-NODEBUG-NEXT:     )
 ;; CHECK-BIN-NODEBUG-NEXT:    )
 ;; CHECK-BIN-NODEBUG-NEXT:    (local.get $0)
@@ -2772,6 +2792,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  (return
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
+;; CHECK-BIN-NODEBUG-NEXT:  (unreachable)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
 ;; CHECK-BIN-NODEBUG:      (func $19 (type $4) (result funcref)
@@ -2779,6 +2800,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  (return
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
+;; CHECK-BIN-NODEBUG-NEXT:  (unreachable)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
 ;; CHECK-BIN-NODEBUG:      (func $20 (type $0) (result anyref)
@@ -2786,6 +2808,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  (return
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
+;; CHECK-BIN-NODEBUG-NEXT:  (unreachable)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
 ;; CHECK-BIN-NODEBUG:      (func $21 (type $0) (result anyref)
@@ -2794,6 +2817,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  (return
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
+;; CHECK-BIN-NODEBUG-NEXT:  (unreachable)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
 ;; CHECK-BIN-NODEBUG:      (func $22 (type $3)

@@ -71,6 +71,7 @@
   ;; CHECK-NEXT:    (br $val
   ;; CHECK-NEXT:     (i32.const 102)
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (nop)
@@ -376,6 +377,7 @@
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (block $label$3
   ;; CHECK-NEXT:       (unreachable)
+  ;; CHECK-NEXT:       (unreachable)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
@@ -526,6 +528,7 @@
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $one-break-value-and-it-is-unreachable (result f64)

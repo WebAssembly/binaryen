@@ -751,6 +751,7 @@
 
  ;; CHECK:      (func $helper (type $14) (param $0 i32) (result i32)
  ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  (func $helper (param i32) (result i32)
   (unreachable)
@@ -867,6 +868,7 @@
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (block
  ;; CHECK-NEXT:     (unreachable)
+ ;; CHECK-NEXT:     (unreachable)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (unreachable)
@@ -890,6 +892,7 @@
  ;; CHECK-NEXT:     (struct.new_default $empty)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )

@@ -433,7 +433,10 @@
   )
 
   ;; CHECK:      (func $unreachable-call-ref (type $0) (result i32)
-  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $unreachable-call-ref (result i32)
@@ -441,10 +444,13 @@
   )
 
   ;; CHECK:      (func $unreachable-call-ref-effect (type $0) (result i32)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (call $effect)
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (call $effect)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $unreachable-call-ref-effect (result i32)
@@ -481,7 +487,10 @@
   )
 
   ;; CHECK:      (func $shared-unreachable-call-ref (type $0) (result i32)
-  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $shared-unreachable-call-ref (result i32)
@@ -489,10 +498,13 @@
   )
 
   ;; CHECK:      (func $shared-unreachable-call-ref-effect (type $0) (result i32)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (call $effect)
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (call $effect)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $shared-unreachable-call-ref-effect (result i32)
@@ -523,6 +535,7 @@
   ;; CHECK-NEXT:    (local.get $0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $return-call-ref (param (ref $sig) i32) (result i32)
     (return_call_ref $sig (local.get 1) (local.get 0))
@@ -553,6 +566,7 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $unreachable-call-indirect (result i32)
     (call_indirect $t (type $sig) (i32.const 0) (unreachable))
@@ -583,6 +597,7 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $unreachable-param-call-indirect (param i32) (result i32)
     (call_indirect $t (type $sig) (unreachable) (local.get 0))
@@ -894,6 +909,7 @@
   ;; CHECK-NEXT:  (ref.test (ref null $shared-sig)
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $ref-test-unreachable-input (result i32)
     (ref.test (ref null $sig) (unreachable))
@@ -1278,6 +1294,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $ref-cast-unreachable-input (result (ref null $sig))
     (ref.cast (ref null $sig) (unreachable))

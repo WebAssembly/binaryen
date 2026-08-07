@@ -1005,11 +1005,10 @@
 )
 
 (module
-  ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $A (sub (struct (field (mut (ref $A))))))
+  ;; CHECK:      (type $A (sub (struct (field (mut (ref null $A))))))
   (type $A (sub (struct (field (mut (ref null $A))))))
 
-  ;; CHECK:       (type $1 (func (param (ref $A) (ref null $A))))
+  ;; CHECK:      (type $1 (func (param (ref $A) (ref null $A))))
 
   ;; CHECK:      (func $non-nullability-block (type $1) (param $nn (ref $A)) (param $A (ref null $A))
   ;; CHECK-NEXT:  (struct.set $A 0
@@ -1018,7 +1017,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (struct.set $A 0
   ;; CHECK-NEXT:   (local.get $A)
-  ;; CHECK-NEXT:   (if (result (ref $A))
+  ;; CHECK-NEXT:   (if (result (ref null $A))
   ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:    (then
   ;; CHECK-NEXT:     (struct.get $A 0
@@ -1027,12 +1026,13 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (else
   ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:     (unreachable)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new $A
-  ;; CHECK-NEXT:    (if (result (ref $A))
+  ;; CHECK-NEXT:    (if (result (ref null $A))
   ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:     (then
   ;; CHECK-NEXT:      (struct.get $A 0
@@ -1040,6 +1040,7 @@
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (else
+  ;; CHECK-NEXT:      (unreachable)
   ;; CHECK-NEXT:      (unreachable)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )

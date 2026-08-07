@@ -25,6 +25,8 @@
   )
 
   (rec
+    ;; CHECK:      (type $final-root (struct))
+
     ;; CHECK:      (rec
     ;; CHECK-NEXT:  (type $super-func (sub (func (param (ref $sub-array)) (result (ref $super-array)))))
     (type $super-func (sub (func (param (ref $sub-array)) (result (ref $super-array)))))
@@ -34,7 +36,6 @@
     (type $final-func (sub final $sub-func (func (param (ref $super-array)) (result (ref $final-array)))))
   )
 
-  ;; CHECK:      (type $final-root (struct))
   (type $final-root (sub final (struct)))
 
   ;; CHECK:      (func $make-super-struct (type $10) (result (ref $super-struct))
@@ -45,6 +46,7 @@
   )
 
   ;; CHECK:      (func $make-final-struct (type $11) (result (ref $final-struct))
+  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $make-final-struct (result (ref $final-struct))
@@ -60,6 +62,7 @@
 
   ;; CHECK:      (func $make-final-array (type $13) (result (ref $final-array))
   ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $make-final-array (result (ref $final-array))
     (unreachable)
@@ -74,12 +77,14 @@
 
   ;; CHECK:      (func $make-final-func (type $15) (result (ref $final-func))
   ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $make-final-func (result (ref $final-func))
     (unreachable)
   )
 
   ;; CHECK:      (func $make-final-root (type $16) (result (ref $final-root))
+  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $make-final-root (result (ref $final-root))

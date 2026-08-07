@@ -1080,6 +1080,7 @@
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (then
   ;; CHECK-NEXT:     (return)
+  ;; CHECK-NEXT:     (unreachable)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (else
   ;; CHECK-NEXT:     (ref.cast (ref $A)

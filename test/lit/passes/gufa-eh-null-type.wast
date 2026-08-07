@@ -23,6 +23,7 @@
  ;; CHECK-NEXT:     (throw $tag)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (return)
+ ;; CHECK-NEXT:    (unreachable)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (try

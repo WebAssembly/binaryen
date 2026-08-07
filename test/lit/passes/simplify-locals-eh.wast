@@ -24,6 +24,7 @@
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (br $tryend)
+  ;; CHECK-NEXT:     (unreachable)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -58,6 +59,7 @@
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (br $tryend)
+  ;; CHECK-NEXT:     (unreachable)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -90,6 +92,7 @@
   ;; CHECK-NEXT:      (i32.const 0)
   ;; CHECK-NEXT:      (then
   ;; CHECK-NEXT:       (return_call $return-call-can-be-sinked-into-try_table)
+  ;; CHECK-NEXT:       (unreachable)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (else
   ;; CHECK-NEXT:       (i32.const 1)

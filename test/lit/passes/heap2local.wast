@@ -1049,6 +1049,7 @@
   ;; CHECK-NEXT:  (return
   ;; CHECK-NEXT:   (local.get $ref)
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $escape-return (result anyref)
     (local $ref (ref null $struct.A))
@@ -1575,6 +1576,7 @@
   ;; CHECK-NEXT:     (return
   ;; CHECK-NEXT:      (f64.const 2.1828)
   ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (unreachable)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (local.get $2)
@@ -1623,6 +1625,7 @@
   ;; CHECK-NEXT:    (return
   ;; CHECK-NEXT:     (f64.const 2.1828)
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -1674,6 +1677,7 @@
   ;; CHECK-NEXT:    (return
   ;; CHECK-NEXT:     (f64.const 2.1828)
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -1720,6 +1724,7 @@
   ;; CHECK-NEXT:    (return
   ;; CHECK-NEXT:     (f64.const 2.1828)
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -1872,6 +1877,7 @@
   ;; CHECK-NEXT:    (return
   ;; CHECK-NEXT:     (f64.const 2.1828)
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.get $2)
@@ -2233,6 +2239,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $ref-eq-unreachable (result i32)
     ;; When a child is unreachable, the result does not matter (but we should
@@ -2269,6 +2276,7 @@
   ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $ref-eq-unreachable-flipped (result i32)
     ;; As above, but with children flipped.
@@ -4845,6 +4853,7 @@
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (return)
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )

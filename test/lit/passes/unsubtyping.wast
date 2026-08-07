@@ -179,6 +179,7 @@
 
  ;; CHECK:      (func $foo (type $B) (param $0 (ref $X')) (result (ref $Y))
  ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  (func $foo (type $B)
   (unreachable)
@@ -245,6 +246,7 @@
  ;; CHECK-NEXT:      (br $other
  ;; CHECK-NEXT:       (struct.new_default $opt)
  ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (unreachable)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (struct.new_default $super)
@@ -354,8 +356,10 @@
  ;; CHECK-NEXT:       (struct.new_default $sub)
  ;; CHECK-NEXT:       (i32.const 0)
  ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (unreachable)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (unreachable)
  ;; CHECK-NEXT:    (unreachable)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
@@ -396,8 +400,10 @@
  ;; CHECK-NEXT:       (struct.new_default $sub)
  ;; CHECK-NEXT:       (i32.const 0)
  ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (unreachable)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (unreachable)
  ;; CHECK-NEXT:    (unreachable)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
@@ -455,6 +461,7 @@
 
  ;; CHECK:      (func $return-call (type $2) (result (ref $super))
  ;; CHECK-NEXT:  (return_call $callee)
+ ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  (func $return-call (result (ref $super))
   ;; This requires $sub <: $super
@@ -462,6 +469,7 @@
  )
 
  ;; CHECK:      (func $callee (type $3) (result (ref $sub))
+ ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  (func $callee (result (ref $sub))
@@ -514,6 +522,7 @@
  ;; CHECK-NEXT:  (return_call_indirect $t (type $3)
  ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  (func $return-call-indirect (result (ref $super))
   ;; This requires $sub <: $super.
@@ -670,6 +679,7 @@
  ;; CHECK-NEXT:  (return
  ;; CHECK-NEXT:   (struct.new_default $sub)
  ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  (func $return (result (ref $super))
   (return
@@ -717,11 +727,17 @@
  ;; CHECK:       (type $4 (func (result (ref $super1) (ref $super2))))
 
  ;; CHECK:      (func $return-many (type $4) (result (ref $super1) (ref $super2))
- ;; CHECK-NEXT:  (return
- ;; CHECK-NEXT:   (tuple.make 2
- ;; CHECK-NEXT:    (struct.new_default $sub1)
- ;; CHECK-NEXT:    (struct.new_default $sub2)
+ ;; CHECK-NEXT:  (tuple.make 2
+ ;; CHECK-NEXT:   (block
+ ;; CHECK-NEXT:    (return
+ ;; CHECK-NEXT:     (tuple.make 2
+ ;; CHECK-NEXT:      (struct.new_default $sub1)
+ ;; CHECK-NEXT:      (struct.new_default $sub2)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (unreachable)
  ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $return-many (result (ref $super1) (ref $super2))
@@ -1027,6 +1043,7 @@
  ;; CHECK-NEXT:  (return_call_ref $f
  ;; CHECK-NEXT:   (ref.func $callee)
  ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  (func $return-call-ref (result (ref $super))
   ;; This requires $sub <: $super.
@@ -1036,6 +1053,7 @@
  )
 
  ;; CHECK:      (func $callee (type $f) (result (ref $sub))
+ ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  (func $callee (result (ref $sub))
@@ -1811,6 +1829,7 @@
  ;; CHECK-NEXT:   (try_table (catch $tag $label)
  ;; CHECK-NEXT:    (unreachable)
  ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $test (result (ref $super))
@@ -2030,16 +2049,22 @@
   ;; CHECK:      (func $test (type $3) (param $C (ref $C)) (result (ref $A) (ref $A))
   ;; CHECK-NEXT:  (local $Bs (tuple (ref $B) (ref $B)))
   ;; CHECK-NEXT:  (block $l
-  ;; CHECK-NEXT:   (local.set $Bs
+  ;; CHECK-NEXT:   (tuple.make 2
   ;; CHECK-NEXT:    (block
-  ;; CHECK-NEXT:     (tuple.drop 2
-  ;; CHECK-NEXT:      (tuple.make 2
-  ;; CHECK-NEXT:       (local.get $C)
-  ;; CHECK-NEXT:       (local.get $C)
+  ;; CHECK-NEXT:     (local.set $Bs
+  ;; CHECK-NEXT:      (block
+  ;; CHECK-NEXT:       (tuple.drop 2
+  ;; CHECK-NEXT:        (tuple.make 2
+  ;; CHECK-NEXT:         (local.get $C)
+  ;; CHECK-NEXT:         (local.get $C)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (unreachable)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (unreachable)
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )

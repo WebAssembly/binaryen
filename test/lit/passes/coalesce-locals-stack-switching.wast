@@ -29,6 +29,7 @@
  ;; CHECK-NEXT:       (return
  ;; CHECK-NEXT:        (i32.const 0)
  ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:       (unreachable)
  ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:     (return_call $resume
@@ -38,6 +39,7 @@
  ;; CHECK-NEXT:    (return
  ;; CHECK-NEXT:     (i32.const 0)
  ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (unreachable)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (local.get $1)
@@ -86,6 +88,7 @@
  ;; CHECK-NEXT:       (return
  ;; CHECK-NEXT:        (i32.const 0)
  ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:       (unreachable)
  ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:     (return_call $resume
@@ -95,6 +98,7 @@
  ;; CHECK-NEXT:    (return
  ;; CHECK-NEXT:     (i32.const 0)
  ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (unreachable)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (local.get $1)
@@ -140,6 +144,7 @@
  ;; CHECK-NEXT:    (return
  ;; CHECK-NEXT:     (i32.const 0)
  ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (unreachable)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (local.get $0)
@@ -173,6 +178,7 @@
  ;; CHECK-NEXT:    (return
  ;; CHECK-NEXT:     (i32.const 0)
  ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (unreachable)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (local.get $1)

@@ -842,6 +842,7 @@
   ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:     (then
   ;; CHECK-NEXT:      (br $label)
+  ;; CHECK-NEXT:      (unreachable)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (else
   ;; CHECK-NEXT:      (i32.const 42)
@@ -978,6 +979,7 @@
   ;; CHECK-NEXT:       (return
   ;; CHECK-NEXT:        (i32.const 42)
   ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (unreachable)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (else
   ;; CHECK-NEXT:       (i32.const 42)
@@ -1120,6 +1122,7 @@
   ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:     (then
   ;; CHECK-NEXT:      (br $loop)
+  ;; CHECK-NEXT:      (unreachable)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (else
   ;; CHECK-NEXT:      (i32.const 42)
@@ -1182,6 +1185,7 @@
   ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:     (then
   ;; CHECK-NEXT:      (br $loop)
+  ;; CHECK-NEXT:      (unreachable)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (else
   ;; CHECK-NEXT:      (i32.const 42)

@@ -5,18 +5,19 @@
 (module
   ;; CHECK:      (type $A (struct))
   (type $A (struct))
+  ;; CHECK:      (type $C (struct (field i32) (field f64)))
+
   ;; CHECK:      (type $B (struct (field i32)))
   (type $B (struct (field i32)))
-  ;; CHECK:      (type $2 (func (param externref)))
-
-  ;; CHECK:      (type $3 (func (result externref)))
-
-  ;; CHECK:      (type $4 (func (param anyref) (result anyref)))
-
-  ;; CHECK:      (type $5 (func (param externref) (result externref)))
-
-  ;; CHECK:      (type $C (struct (field i32) (field f64)))
   (type $C (struct (field i32 f64)))
+
+  ;; CHECK:      (type $3 (func (param externref)))
+
+  ;; CHECK:      (type $4 (func (result externref)))
+
+  ;; CHECK:      (type $5 (func (param anyref) (result anyref)))
+
+  ;; CHECK:      (type $6 (func (param externref) (result externref)))
 
   ;; CHECK:      (type $7 (func (param i32) (result f64)))
 
@@ -58,13 +59,14 @@
     (f64.const 3.14159)
   )
 
-  ;; CHECK:      (func $externref-param (type $2) (param $x externref)
+  ;; CHECK:      (func $externref-param (type $3) (param $x externref)
   ;; CHECK-NEXT: )
   (func $externref-param (export "externref-param") (param $x externref)
     ;; An externref param is fine, we don't need to do anything.
   )
 
-  ;; CHECK:      (func $externref-result (type $3) (result externref)
+  ;; CHECK:      (func $externref-result (type $4) (result externref)
+  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $externref-result (export "externref-result") (result externref)
@@ -81,13 +83,15 @@
 
   ;; CHECK:      (func $anyref-result (type $9) (result anyref)
   ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $anyref-result (export "anyref-result") (result anyref)
     ;; An anyref result also requires a fixup.
     (unreachable)
   )
 
-  ;; CHECK:      (func $anyref-both (type $4) (param $x anyref) (result anyref)
+  ;; CHECK:      (func $anyref-both (type $5) (param $x anyref) (result anyref)
+  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $anyref-both (export "anyref-both") (param $x anyref) (result anyref)
@@ -95,7 +99,8 @@
     (unreachable)
   )
 
-  ;; CHECK:      (func $anyref-both-dupe (type $4) (param $x anyref) (result anyref)
+  ;; CHECK:      (func $anyref-both-dupe (type $5) (param $x anyref) (result anyref)
+  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $anyref-both-dupe (export "anyref-both-dupe") (param $x anyref) (result anyref)
@@ -106,6 +111,7 @@
   )
 
   ;; CHECK:      (func $many (type $10) (param $a (ref $A)) (param $b (ref null $B)) (result (ref $C))
+  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $many (export "many") (param $a (ref $A)) (param $b (ref null $B)) (result (ref $C))
@@ -121,7 +127,7 @@
   )
 )
 
-;; CHECK:      (func $stub$anyref-param (type $2) (param $0 externref)
+;; CHECK:      (func $stub$anyref-param (type $3) (param $0 externref)
 ;; CHECK-NEXT:  (call $anyref-param
 ;; CHECK-NEXT:   (ref.cast anyref
 ;; CHECK-NEXT:    (any.convert_extern
@@ -131,13 +137,13 @@
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $stub$anyref-result (type $3) (result externref)
+;; CHECK:      (func $stub$anyref-result (type $4) (result externref)
 ;; CHECK-NEXT:  (extern.convert_any
 ;; CHECK-NEXT:   (call $anyref-result)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $stub$anyref-both (type $5) (param $0 externref) (result externref)
+;; CHECK:      (func $stub$anyref-both (type $6) (param $0 externref) (result externref)
 ;; CHECK-NEXT:  (extern.convert_any
 ;; CHECK-NEXT:   (call $anyref-both
 ;; CHECK-NEXT:    (ref.cast anyref
@@ -149,7 +155,7 @@
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $stub$anyref-both-dupe (type $5) (param $0 externref) (result externref)
+;; CHECK:      (func $stub$anyref-both-dupe (type $6) (param $0 externref) (result externref)
 ;; CHECK-NEXT:  (extern.convert_any
 ;; CHECK-NEXT:   (call $anyref-both-dupe
 ;; CHECK-NEXT:    (ref.cast anyref
@@ -206,6 +212,7 @@
   ;; CHECK:      (export "b" (func $stub$anyref-both_2))
 
   ;; CHECK:      (func $anyref-both (type $1) (param $x anyref) (result anyref)
+  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $anyref-both (param $x anyref) (result anyref)

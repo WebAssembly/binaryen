@@ -159,6 +159,7 @@
   ;; CHECK-NEXT:      (i32.const 0)
   ;; CHECK-NEXT:      (then
   ;; CHECK-NEXT:       (return_call $return-call-can-be-sinked-into-try)
+  ;; CHECK-NEXT:       (unreachable)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (else
   ;; CHECK-NEXT:       (i32.const 1)

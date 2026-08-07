@@ -261,7 +261,13 @@
   ;; CHECK-NEXT:       (try_table (catch_ref $e-i32 $catch1)
   ;; CHECK-NEXT:        (call $foo)
   ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:       (br $outer1)
+  ;; CHECK-NEXT:       (tuple.make 2
+  ;; CHECK-NEXT:        (block
+  ;; CHECK-NEXT:         (br $outer1)
+  ;; CHECK-NEXT:         (unreachable)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (unreachable)
+  ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (local.set $exn

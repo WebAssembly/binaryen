@@ -9,6 +9,8 @@
 (module
   ;; CHECK:      (type $0 (func))
 
+  ;; CHECK:      (type $1 (func (result i32)))
+
   ;; CHECK:      (func $call-trap
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.const 42)
@@ -43,17 +45,13 @@
 
   ;; CHECK:      (func $call-trap-value
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (if
+  ;; CHECK-NEXT:   (if (result i32)
   ;; CHECK-NEXT:    (i32.const 42)
   ;; CHECK-NEXT:    (then
-  ;; CHECK-NEXT:     (block $__inlined_func$trap-value$2
-  ;; CHECK-NEXT:      (unreachable)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (call $trap-value)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (else
-  ;; CHECK-NEXT:     (block $__inlined_func$trap-value$3
-  ;; CHECK-NEXT:      (unreachable)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (call $trap-value)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -72,6 +70,10 @@
     )
   )
 
+  ;; CHECK:      (func $trap-value (result i32)
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
   (func $trap-value (result i32)
     (unreachable)
   )

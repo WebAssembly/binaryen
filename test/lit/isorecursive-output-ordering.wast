@@ -34,7 +34,15 @@
  )
 
  ;; CHECK:      (func $use (type $8) (param $0 (ref $used-a-lot)) (param $1 (ref $used-a-lot)) (param $2 (ref $used-a-lot)) (param $3 (ref $used-a-lot)) (param $4 (ref $used-a-lot)) (param $5 (ref $used-a-lot)) (result (ref $used-a-bit) (ref $used-a-bit) (ref $used-a-bit) (ref $used-a-bit))
- ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT:  (tuple.make 4
+ ;; CHECK-NEXT:   (block
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $use (param (ref $used-a-lot) (ref $used-a-lot) (ref $used-a-lot) (ref $used-a-lot) (ref $used-a-lot) (ref $used-a-lot)) (result (ref $used-a-bit) (ref $used-a-bit) (ref $used-a-bit) (ref $used-a-bit))
   (unreachable)
@@ -87,7 +95,14 @@
  ;; CHECK-NEXT:  (local $10 (ref null $used-a-ton))
  ;; CHECK-NEXT:  (local $11 (ref null $used-a-ton))
  ;; CHECK-NEXT:  (local $12 (ref null $used-a-ton))
- ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT:  (tuple.make 3
+ ;; CHECK-NEXT:   (block
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $use (param (ref $used-a-lot) (ref $used-a-lot) (ref $used-a-lot) (ref $used-a-lot) (ref $used-a-lot) (ref $used-a-lot)) (result (ref $used-a-bit) (ref $used-a-bit) (ref $used-a-bit))
   (local (ref null $used-a-ton) (ref null $used-a-ton) (ref null $used-a-ton) (ref null $used-a-ton) (ref null $used-a-ton) (ref null $used-a-ton) (ref null $used-a-ton))

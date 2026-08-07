@@ -65,16 +65,49 @@
   ;; CHECK_0-NEXT:  )
   ;; CHECK_0-NEXT: )
   ;; CHECK_1:      (func $main (type $0)
-  ;; CHECK_1-NEXT:  (nop)
+  ;; CHECK_1-NEXT:  (if
+  ;; CHECK_1-NEXT:   (call $pointless-work
+  ;; CHECK_1-NEXT:    (i32.const 0)
+  ;; CHECK_1-NEXT:   )
+  ;; CHECK_1-NEXT:   (then
+  ;; CHECK_1-NEXT:    (drop
+  ;; CHECK_1-NEXT:     (call $pointless-work
+  ;; CHECK_1-NEXT:      (i32.const 1)
+  ;; CHECK_1-NEXT:     )
+  ;; CHECK_1-NEXT:    )
+  ;; CHECK_1-NEXT:   )
+  ;; CHECK_1-NEXT:  )
   ;; CHECK_1-NEXT: )
   ;; CHECK_3:      (func $main (type $0)
   ;; CHECK_3-NEXT:  (nop)
   ;; CHECK_3-NEXT: )
   ;; CHECK_s:      (func $main (type $0)
-  ;; CHECK_s-NEXT:  (nop)
+  ;; CHECK_s-NEXT:  (if
+  ;; CHECK_s-NEXT:   (call $pointless-work
+  ;; CHECK_s-NEXT:    (i32.const 0)
+  ;; CHECK_s-NEXT:   )
+  ;; CHECK_s-NEXT:   (then
+  ;; CHECK_s-NEXT:    (drop
+  ;; CHECK_s-NEXT:     (call $pointless-work
+  ;; CHECK_s-NEXT:      (i32.const 1)
+  ;; CHECK_s-NEXT:     )
+  ;; CHECK_s-NEXT:    )
+  ;; CHECK_s-NEXT:   )
+  ;; CHECK_s-NEXT:  )
   ;; CHECK_s-NEXT: )
   ;; CHECK_O:      (func $main (type $0)
-  ;; CHECK_O-NEXT:  (nop)
+  ;; CHECK_O-NEXT:  (if
+  ;; CHECK_O-NEXT:   (call $pointless-work
+  ;; CHECK_O-NEXT:    (i32.const 0)
+  ;; CHECK_O-NEXT:   )
+  ;; CHECK_O-NEXT:   (then
+  ;; CHECK_O-NEXT:    (drop
+  ;; CHECK_O-NEXT:     (call $pointless-work
+  ;; CHECK_O-NEXT:      (i32.const 1)
+  ;; CHECK_O-NEXT:     )
+  ;; CHECK_O-NEXT:    )
+  ;; CHECK_O-NEXT:   )
+  ;; CHECK_O-NEXT:  )
   ;; CHECK_O-NEXT: )
   (func $main
     ;; This calls a function that does pointless work. After generating global
@@ -205,6 +238,7 @@
   ;; CHECK_0-NEXT:  (return
   ;; CHECK_0-NEXT:   (local.get $x)
   ;; CHECK_0-NEXT:  )
+  ;; CHECK_0-NEXT:  (unreachable)
   ;; CHECK_0-NEXT: )
   ;; CHECK_1:      (func $pointless-work (type $1) (param $0 i32) (result i32)
   ;; CHECK_1-NEXT:  (if (result i32)
@@ -337,6 +371,7 @@
   ;; CHECK_0-NEXT:  (return
   ;; CHECK_0-NEXT:   (local.get $x)
   ;; CHECK_0-NEXT:  )
+  ;; CHECK_0-NEXT:  (unreachable)
   ;; CHECK_0-NEXT: )
   ;; CHECK_1:      (func $infinite-work (type $1) (param $0 i32) (result i32)
   ;; CHECK_1-NEXT:  (loop $loop

@@ -95,7 +95,10 @@
 
   ;; CHECK:      (func $try-unreachable-body (type $1) (result i32)
   ;; CHECK-NEXT:  (i32.add
-  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )

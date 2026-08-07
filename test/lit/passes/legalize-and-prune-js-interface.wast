@@ -177,6 +177,7 @@
 
   ;; CHECK:      (func $export-64 (type $2) (param $x i64) (result i64)
   ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $export-64 (export "export-64") (param $x i64) (result i64)
     ;; This can be legalized. Note we have two params, but that's no problem.
@@ -193,6 +194,7 @@
 
   ;; CHECK:      (func $export-v128-result (type $4) (result v128)
   ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $export-v128-result (export "export-v128-result") (result v128)
     ;; This will be pruned.
@@ -200,7 +202,13 @@
   )
 
   ;; CHECK:      (func $export-mv (type $5) (result i32 i32)
-  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT:  (tuple.make 2
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $export-mv (export "export-mv") (result i32 i32)
     ;; This will be pruned.

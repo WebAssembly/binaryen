@@ -523,8 +523,13 @@
   )
 
   ;; CHECK:      (func $caller (type $caller) (param $callee (ref $callee))
-  ;; CHECK-NEXT:  (return_call_ref $callee
-  ;; CHECK-NEXT:   (local.get $callee)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (return_call_ref $callee
+  ;; CHECK-NEXT:     (local.get $callee)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $caller (type $caller) (param $callee (ref $callee)) (result i32)
@@ -564,6 +569,7 @@
   ;; CHECK-NEXT:  (return_call_ref $callee
   ;; CHECK-NEXT:   (local.get $callee)
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $caller (type $caller) (param $callee (ref $callee)) (result i32)
     (return_call_ref $callee (local.get $callee))

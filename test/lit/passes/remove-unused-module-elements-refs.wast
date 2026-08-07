@@ -1395,6 +1395,7 @@
   ;; CHECK-NEXT:   (struct.get $substruct 0
   ;; CHECK-NEXT:    (block (result (ref $substruct))
   ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:     (unreachable)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -1419,6 +1420,7 @@
   ;; OPEN_WORLD-NEXT:  (drop
   ;; OPEN_WORLD-NEXT:   (struct.get $substruct 0
   ;; OPEN_WORLD-NEXT:    (block (result (ref $substruct))
+  ;; OPEN_WORLD-NEXT:     (unreachable)
   ;; OPEN_WORLD-NEXT:     (unreachable)
   ;; OPEN_WORLD-NEXT:    )
   ;; OPEN_WORLD-NEXT:   )
@@ -1622,6 +1624,7 @@
   ;; CHECK-NEXT:   (struct.get $A 0
   ;; CHECK-NEXT:    (block (result (ref $A))
   ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:     (unreachable)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -1642,6 +1645,7 @@
   ;; OPEN_WORLD-NEXT:  (drop
   ;; OPEN_WORLD-NEXT:   (struct.get $A 0
   ;; OPEN_WORLD-NEXT:    (block (result (ref $A))
+  ;; OPEN_WORLD-NEXT:     (unreachable)
   ;; OPEN_WORLD-NEXT:     (unreachable)
   ;; OPEN_WORLD-NEXT:    )
   ;; OPEN_WORLD-NEXT:   )
@@ -1728,12 +1732,14 @@
   ;; CHECK-NEXT:   (struct.get $A 0
   ;; CHECK-NEXT:    (block (result (ref $A))
   ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:     (unreachable)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.get $B 0
   ;; CHECK-NEXT:    (block (result (ref $B))
+  ;; CHECK-NEXT:     (unreachable)
   ;; CHECK-NEXT:     (unreachable)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
@@ -1756,12 +1762,14 @@
   ;; OPEN_WORLD-NEXT:   (struct.get $A 0
   ;; OPEN_WORLD-NEXT:    (block (result (ref $A))
   ;; OPEN_WORLD-NEXT:     (unreachable)
+  ;; OPEN_WORLD-NEXT:     (unreachable)
   ;; OPEN_WORLD-NEXT:    )
   ;; OPEN_WORLD-NEXT:   )
   ;; OPEN_WORLD-NEXT:  )
   ;; OPEN_WORLD-NEXT:  (drop
   ;; OPEN_WORLD-NEXT:   (struct.get $B 0
   ;; OPEN_WORLD-NEXT:    (block (result (ref $B))
+  ;; OPEN_WORLD-NEXT:     (unreachable)
   ;; OPEN_WORLD-NEXT:     (unreachable)
   ;; OPEN_WORLD-NEXT:    )
   ;; OPEN_WORLD-NEXT:   )

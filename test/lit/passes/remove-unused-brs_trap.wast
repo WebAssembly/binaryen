@@ -23,13 +23,14 @@
   ;; CHECK-NEXT:    (else
   ;; CHECK-NEXT:     (call $import)
   ;; CHECK-NEXT:     (call $import)
-  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:     (br $trap)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (return
   ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $jump-to-trap (param $x i32) (result i32)

@@ -16,6 +16,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result (ref array))
   ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -26,6 +27,7 @@
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $i8-bad-array (result (ref string))
     ;; This is not a specific array type, so it must not be popped as the first
@@ -42,6 +44,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result (ref $array16))
   ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -52,6 +55,7 @@
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $i8-bad-array16 (result (ref string))
     ;; As above, with an array with the wrong element type.
@@ -67,10 +71,12 @@
   ;; CHECK-NEXT:  (string.new_lossy_utf8_array
   ;; CHECK-NEXT:   (block (result (ref $array8))
   ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $i8-ok (result (ref string))
     ;; Now we have the correct type, so it can be popped as the first child of
@@ -87,10 +93,12 @@
   ;; CHECK-NEXT:  (string.new_lossy_utf8_array
   ;; CHECK-NEXT:   (block (result (ref none))
   ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $i8-ok-none (result (ref string))
     ;; Due to subsumption, bottom references must also be valid.
@@ -106,6 +114,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result (ref $shared-array8))
   ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -116,6 +125,7 @@
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $i8-bad-shared (result (ref string))
     ;; Shared arrays do not work as well. TODO: find a good way to support them.
@@ -131,6 +141,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result (ref (shared none)))
   ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -141,6 +152,7 @@
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $i8-bad-shared-none (result (ref string))
     ;; Shared bottom references also do not work.
@@ -156,6 +168,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result (ref array))
   ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -166,6 +179,7 @@
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $i16-bad-array (result (ref string))
     block (result (ref array))
@@ -180,6 +194,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result (ref $array8))
   ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -190,6 +205,7 @@
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $i16-bad-array8 (result (ref string))
     block (result (ref $array8))
@@ -204,10 +220,12 @@
   ;; CHECK-NEXT:  (string.new_wtf16_array
   ;; CHECK-NEXT:   (block (result (ref $array16))
   ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $i16-ok (result (ref string))
     block (result (ref $array16))
@@ -222,10 +240,12 @@
   ;; CHECK-NEXT:  (string.new_wtf16_array
   ;; CHECK-NEXT:   (block (result (ref none))
   ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $i16-ok-none (result (ref string))
     block (result (ref none))
@@ -240,6 +260,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result (ref $shared-array16))
   ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -250,6 +271,7 @@
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $i16-bad-shared (result (ref string))
     block (result (ref $shared-array16))
@@ -264,6 +286,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result (ref (shared none)))
   ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -274,6 +297,7 @@
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $i16-bad-shared-none (result (ref string))
     block (result (ref (shared none)))

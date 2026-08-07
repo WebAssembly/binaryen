@@ -1822,6 +1822,7 @@
   ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (return)
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -1843,6 +1844,7 @@
   ;; OPTIN-NEXT:     (i32.const 1)
   ;; OPTIN-NEXT:    )
   ;; OPTIN-NEXT:    (return)
+  ;; OPTIN-NEXT:    (unreachable)
   ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (drop

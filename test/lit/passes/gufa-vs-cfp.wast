@@ -383,6 +383,8 @@
   ;; CHECK-NEXT:      (call $import)
   ;; CHECK-NEXT:      (then
   ;; CHECK-NEXT:       (unreachable)
+  ;; CHECK-NEXT:       (unreachable)
+  ;; CHECK-NEXT:       (unreachable)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (else
   ;; CHECK-NEXT:       (f32.const 42)

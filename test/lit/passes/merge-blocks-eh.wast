@@ -8,10 +8,10 @@
   ;; CHECK:      (tag $empty (type $0))
   (tag $empty)
 
-  ;; CHECK:      (tag $i32 (type $1) (param i32))
+  ;; CHECK:      (tag $i32 (type $2) (param i32))
   (tag $i32 (param i32))
 
-  ;; CHECK:      (tag $exnref (type $2) (param exnref))
+  ;; CHECK:      (tag $exnref (type $3) (param exnref))
   (tag $exnref (param exnref))
 
   ;; CHECK:      (func $drop-block-try_catch_all_ref (type $0)
@@ -20,6 +20,7 @@
   ;; CHECK-NEXT:    (call $import)
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $drop-block-try_catch_all_ref
@@ -41,6 +42,7 @@
   ;; CHECK-NEXT:    (call $import)
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $drop-block-try_catch_ref
@@ -62,6 +64,7 @@
   ;; CHECK-NEXT:    (call $import)
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $drop-block-try_catch_multi
@@ -78,10 +81,16 @@
 
   ;; CHECK:      (func $drop-block-try_catch_all_i32 (type $0)
   ;; CHECK-NEXT:  (tuple.drop 2
-  ;; CHECK-NEXT:   (block $catch (type $3) (result i32 exnref)
-  ;; CHECK-NEXT:    (try_table (catch_ref $i32 $catch)
-  ;; CHECK-NEXT:     (call $import)
-  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:   (block $catch (type $1) (result i32 (ref exn))
+  ;; CHECK-NEXT:    (block
+  ;; CHECK-NEXT:     (try_table (catch_ref $i32 $catch)
+  ;; CHECK-NEXT:      (call $import)
+  ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (tuple.make 2
+  ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -100,14 +109,21 @@
 
   ;; CHECK:      (func $drop-block-try_catch_multi_partial (type $0)
   ;; CHECK-NEXT:  (tuple.drop 2
-  ;; CHECK-NEXT:   (block $outer (type $4) (result i32 (ref exn))
+  ;; CHECK-NEXT:   (block $outer (type $1) (result i32 (ref exn))
   ;; CHECK-NEXT:    (block $inner
   ;; CHECK-NEXT:     (try_table (catch_ref $i32 $outer) (catch_all $inner)
   ;; CHECK-NEXT:      (call $import)
   ;; CHECK-NEXT:      (unreachable)
   ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (unreachable)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (block
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:     (tuple.make 2
+  ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -135,6 +151,7 @@
   ;; CHECK-NEXT:     (call $import)
   ;; CHECK-NEXT:     (unreachable)
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -196,6 +213,7 @@
   ;; CHECK-NEXT:     (call $import)
   ;; CHECK-NEXT:     (unreachable)
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )

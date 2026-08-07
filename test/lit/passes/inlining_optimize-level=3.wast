@@ -381,6 +381,7 @@
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (block $__inlined_func$bar
  ;; CHECK-NEXT:     (br $__inlined_func$bar_0)
+ ;; CHECK-NEXT:     (unreachable)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
@@ -408,7 +409,10 @@
  ;; CHECK-NEXT:       (i32.const 0)
  ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (unreachable)
+ ;; CHECK-NEXT:     (block
+ ;; CHECK-NEXT:      (unreachable)
+ ;; CHECK-NEXT:      (unreachable)
+ ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
@@ -457,7 +461,10 @@
  ;; CHECK-NEXT:    (block $__inlined_func$C$2 (result f32)
  ;; CHECK-NEXT:     (local.set $0
  ;; CHECK-NEXT:      (block $__inlined_func$D$1
- ;; CHECK-NEXT:       (unreachable)
+ ;; CHECK-NEXT:       (block
+ ;; CHECK-NEXT:        (unreachable)
+ ;; CHECK-NEXT:        (unreachable)
+ ;; CHECK-NEXT:       )
  ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:     (local.get $0)
