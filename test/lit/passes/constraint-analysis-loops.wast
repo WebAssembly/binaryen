@@ -3,7 +3,7 @@
 ;; RUN: wasm-opt %s --constraint-analysis -all -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (import "a" "b" (func $import (type $2) (result i32)))
+  ;; CHECK:      (import "a" "b" (func $import (type $1) (result i32)))
   (import "a" "b" (func $import (result i32)))
 
   ;; CHECK:      (func $infinite-loop (type $0)
@@ -208,7 +208,7 @@
     )
   )
 
-  ;; CHECK:      (func $bound-nonconstant-no (type $1) (param $p i32)
+  ;; CHECK:      (func $bound-nonconstant-no (type $2) (param $p i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (loop $loop
   ;; CHECK-NEXT:   (drop
