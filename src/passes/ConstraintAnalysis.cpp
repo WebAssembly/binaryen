@@ -21,9 +21,7 @@
 //    assert(x != 0); // redundant and can be removed.
 //  }
 //
-// The normal version of this pass flows constraints around in the most precise
-// way that we can. However, while doing so, it must avoid optimizing loop
-// variables, because of the following problem:
+// For loops, we must avoid the following problem:
 //
 //  x = 0
 //  do {
@@ -34,48 +32,34 @@
 // Say that we flow information around precisely. Then initially x is 0 at the
 // top of the loop, and x++ turns it into 1. 1 < 100 so we return to the top of
 // the loop, and now x can be 0 or 1. We will then interpret this loop for 100
-// iterations at compile time, which is obviously not a good idea.
+// iterations at compile time, going from [0] to [0, 1] to [0, 2] and so forth,
+// which is obviously not a good idea.
 //
-// Instead, in "normal" mode we just don't increment variables when we see x++.
-// This does limit us, but only on loops, in practice - if x is not in a loop,
-// and we know its constant value, then x++ would be optimized away by other
-// passes. And, by avoiding a precise execution of x++, we avoid the problem of
-// interpreting loops at compile time.
+// Instead, we do something similar to "widening" in abstract interpretation
+// (which at a loop header, where a merge occurs, widen the range of values
+// based on the bounds check that it sees elsewhere). We do something even
+// simpler here, which can be accomplished in an eager way as follows:
 //
-// But we do want to optimize loops like the example above. The second part,
-// x < 100, is trivial: at the loop top, either x == 0 from before the loop, or
-// x < 100 from the loop backedge, and both prove x < 100. However x >= 0 is
-// non-obvious: if x is *signed*, then we must rule out the possibility of it
-// getting incremented so many times that it overflows and becomes negative.
-// Proving that requires actually seeing that the loop variable x is incremented
-// from 0 to 100, and no more, and that involves an interaction of the initial
-// value, the increment, and the condition on the loop backedge.
-//
-// To optimize this, in "loops" mode we "jump ahead" to what is likely a loop
-// limit: if we see a loop variable that is branched on, we expand the range of
-// values the variable can take up to that bound. Concretely, we do this:
-//
-//   * We do implement x++, turning x from 0 to 1 in the example above, in the
-//     first iteration of the loop.
+//   * x++ turns x from 0 to 1 in the example above, in the first iteration of
+//     the loop.
 //   * When we then see x == 1 that branches with x < 100, we turn that into
 //     x >= 1 && x < 100. This is "imprecise", because perhaps the local will
 //     not actually get incremented all the way to 100, but it is an upper
 //     bound that ends up getting us to the result we want in common loop
 //     shapes. (And it is safe to do because we allow more values for x, meaning
 //     we can prove fewer things, so we won't prove anything false.)
+//   * After doing that, we return to the top of the loop, where now we can see
+//     x >= 0 && x < 100. After running that through the loop a second time, no
+//     more happen: we successfully "jumped ahead" to the end state of the
+//     loop variable.
 //
-// After doing that, we return to the top of the loop, where now we can see
-// x >= 0 && x < 100. After running that through the loop a second time, no more
-// changes will happen: we successfully "jumped ahead" to the end state of the
-// loop variable.
-//
-// In theory, "normal" mode may optimize some things better than "loops" mode,
-// as the "jump ahead" behavior extends ranges of variables eagerly, before we
-// know they actually can fill out that range. In practice, however, it is rare
-// to see a constant to which is applied a bound like x < 100, unless it is
-// actually a loop variable: if it isn't a loop variable, then other passes
-// would propagate the constant and remove the bounds check. Still, both modes
-// of this pass are kept for comparison purposes.
+// Doing this eagerly when we see a branch, rather than identifying specific
+// loop headers and analyzing their bounds more precisely, is good enough for
+// us: the only imprecision we add is "x == C, branch with x < D  =>  x >= C &&
+// x < D". While imprecise, if we see "x == C, branch with x < D", then this is
+// a situation inside a loop: if it were not, then x would get constant-
+// propagatated to the branch anyhow by other passes. And, if this is in a loop,
+// then this widening is exactly what we want.
 //
 
 #include "cfg/cfg-traversal.h"
@@ -136,13 +120,8 @@ struct ConstraintAnalysis
   bool requiresNonNullableLocalFixups() override { return false; }
 
   std::unique_ptr<Pass> create() override {
-    return std::make_unique<ConstraintAnalysis>(loops);
+    return std::make_unique<ConstraintAnalysis>();
   }
-
-  // Whether we are in "loops" mode, see above.
-  bool loops;
-
-  ConstraintAnalysis(bool loops) : loops(loops) {}
 
   using Super = WalkerPass<
     CFGWalker<ConstraintAnalysis, Visitor<ConstraintAnalysis>, Info>>;
@@ -586,24 +565,24 @@ struct ConstraintAnalysis
   // Apply branch constraints to the current set of constraints.
   void applyBranchConstraints(const LocalConstraint& branch,
                               BasicBlockConstraintMap& constraints) {
-    // In "loops" mode, extend the range of values in the "jump ahead" manner.
-    if (loops && applyBranchRangeExtensionToConstraints(branch, constraints)) {
+    // Extend the range of values in the "jump ahead" manner described in the
+    // top-level comment.
+    if (applyBranchRangeExtensionToConstraints(branch, constraints)) {
       return;
     }
 
+    // Otherwise, apply the constraint normally.
     constraints.approximateAnd(branch.local, branch.constraint);
   }
 
   bool
   applyBranchRangeExtensionToConstraints(const LocalConstraint& branch,
                                          BasicBlockConstraintMap& constraints) {
-    assert(loops);
-
     using namespace Abstract;
 
     // "Jump ahead" and extend ranges. If the branch is x < M, and we were
-    // x == N where N < M, then extend to x >= N && x < M, as described in the
-    // top level comment.
+    // x == N where N < M, then extend to x >= N && x < M (see top-level
+    // comment).
     if (auto* M = std::get_if<Literal>(&branch.constraint.term)) {
       auto localConstraints = constraints.get(branch.local);
       if (localConstraints.size() == 1 &&
@@ -637,10 +616,7 @@ struct ConstraintAnalysis
 
 } // anonymous namespace
 
-Pass* createConstraintAnalysisPass() { return new ConstraintAnalysis(false); }
-Pass* createConstraintAnalysisLoopsPass() {
-  return new ConstraintAnalysis(true);
-}
+Pass* createConstraintAnalysisPass() { return new ConstraintAnalysis(); }
 
 // see a.txt
 
