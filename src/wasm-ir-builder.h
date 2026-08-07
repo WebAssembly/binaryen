@@ -346,6 +346,9 @@ private:
 
   struct ChildPopper;
 
+  Result<> validateTypeAnnotation(Type type, Expression* child);
+  Result<> validateTypeAnnotation(HeapType type, Expression* child);
+
   void applyDebugLoc(Expression* expr);
   void pushStackEntry(Expression* expr, Type wasmStackType, Origin origin);
 

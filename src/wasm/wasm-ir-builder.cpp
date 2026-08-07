@@ -81,17 +81,6 @@ namespace wasm {
 
 namespace {
 
-Result<> validateTypeAnnotation(Type type, Expression* child) {
-  if (!Type::isSubType(child->type, type)) {
-    return Err{"invalid type on stack"};
-  }
-  return Ok{};
-}
-
-Result<> validateTypeAnnotation(HeapType type, Expression* child) {
-  return validateTypeAnnotation(Type(type, Nullable), child);
-}
-
 bool hasNonFallthroughControlFlow(Expression* expr);
 
 bool blockHasNonFallthroughControlFlow(Block* block) {
@@ -106,6 +95,15 @@ bool blockHasNonFallthroughControlFlow(Block* block) {
 bool hasNonFallthroughControlFlow(Expression* expr) {
   if (expr->is<Return>() || expr->is<Break>() || expr->is<Throw>() ||
       expr->is<Rethrow>() || expr->is<Switch>()) {
+    return true;
+  }
+  if (auto* call = expr->dynCast<Call>(); call && call->isReturn) {
+    return true;
+  }
+  if (auto* call = expr->dynCast<CallIndirect>(); call && call->isReturn) {
+    return true;
+  }
+  if (auto* call = expr->dynCast<CallRef>(); call && call->isReturn) {
     return true;
   }
   if (auto* block = expr->dynCast<Block>()) {
@@ -160,6 +158,17 @@ std::vector<Expression*> stackExprs(
 }
 
 } // anonymous namespace
+
+Result<> IRBuilder::validateTypeAnnotation(Type type, Expression* child) {
+  if (!Type::isSubType(child->type, type)) {
+    return Err{"invalid type on stack"};
+  }
+  return Ok{};
+}
+
+Result<> IRBuilder::validateTypeAnnotation(HeapType type, Expression* child) {
+  return validateTypeAnnotation(Type(type, Nullable), child);
+}
 
 Result<Index> IRBuilder::addScratchLocal(Type type) {
   if (!func) {
@@ -331,11 +340,12 @@ void IRBuilder::pushControlFlow(Expression* expr,
                                 Origin origin) {
   auto& scope = getScope();
   Type stackType = wasmStackResult;
-  if (wasmStackResult == Type::none && expr->type == Type::unreachable) {
+  if (expr->type == Type::unreachable && !wasmStackResult.isConcrete()) {
     if (expr->is<If>()) {
       // Unlike other void control flow, a void if that is unreachable in IR
       // leaves the enclosing Wasm stack polymorphic when it completes.
       scope.unreachable = true;
+      stackType = Type::none;
     } else if (hasNonFallthroughControlFlow(expr)) {
       // Control flow that does not fall through remains usable as a Binaryen
       // IR operand via unreachable typing.
@@ -543,6 +553,26 @@ private:
       // Pop a child normally. Pop greedily for children other than the first
       // (i.e. the last to be popped).
       bool greedy = i > 0;
+      if (!scope.exprStack.empty()) {
+        auto& top = scope.exprStack.back();
+        bool wantsConcrete = false;
+        for (auto& constraint : children[i].constraint) {
+          if (auto* type = std::get_if<Type>(&constraint)) {
+            if (type->isConcrete()) {
+              wantsConcrete = true;
+              break;
+            }
+          }
+        }
+        if (wantsConcrete && top.wasmStackType == Type::none &&
+            top.expr->type == Type::unreachable &&
+            Properties::isControlFlowStructure(top.expr) &&
+            !hasNonFallthroughControlFlow(top.expr)) {
+          *children[i].childp = top.expr;
+          scope.exprStack.pop_back();
+          continue;
+        }
+      }
       auto val = pop(children[i].constraint.size(), greedy);
       CHECK_ERR(val);
       *children[i].childp = *val;
@@ -1019,10 +1049,25 @@ Result<Expression*> IRBuilder::finishScope(Block* block) {
     auto hoisted = hoistLastValue();
     CHECK_ERR(hoisted);
     if (!hoisted) {
-      if (scope.unreachable || scope.labelUsed) {
-        // Unreachable arms of concretely typed control flow, or scopes that
-        // receive values via breaks rather than fallthrough, do not require a
-        // Wasm stack value at scope end.
+      bool unreachableFallthroughCF = false;
+      for (int i = int(scope.exprStack.size()) - 1; i >= 0; --i) {
+        auto& entry = scope.exprStack[i];
+        if (entry.wasmStackType != Type::none) {
+          break;
+        }
+        auto* expr = entry.expr;
+        if (expr->type == Type::unreachable &&
+            Properties::isControlFlowStructure(expr) &&
+            !hasNonFallthroughControlFlow(expr)) {
+          unreachableFallthroughCF = true;
+          break;
+        }
+      }
+      if (scope.unreachable || scope.labelUsed || unreachableFallthroughCF) {
+        // Unreachable arms of concretely typed control flow, scopes that
+        // receive values via breaks rather than fallthrough, and void
+        // fallthrough unreachable control flow do not require a Wasm stack
+        // value at scope end.
         pushSynthetic(builder.makeUnreachable());
       } else {
         return Err{"popping from empty stack"};
@@ -2491,8 +2536,12 @@ Result<> IRBuilder::makeStructGet(HeapType type,
   StructGet curr;
   CHECK_ERR(ChildPopper{*this}.visitStructGet(&curr, type));
   CHECK_ERR(validateTypeAnnotation(type, curr.ref));
+  auto resultType = fields[field].type;
+  if (curr.ref->type == Type::unreachable) {
+    resultType = Type::unreachable;
+  }
   push(
-    builder.makeStructGet(field, curr.ref, order, fields[field].type, signed_));
+    builder.makeStructGet(field, curr.ref, order, resultType, signed_));
   return Ok{};
 }
 
