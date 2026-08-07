@@ -18,8 +18,8 @@
 // Support for code annotations.
 //
 
-#ifndef wasm_annotations_h
-#define wasm_annotations_h
+#ifndef wasm_wasm_annotations_h
+#define wasm_wasm_annotations_h
 
 #include "support/name.h"
 
@@ -34,4 +34,4 @@ extern const Name ToolchainInlineHint;
 
 } // namespace wasm::Annotations
 
-#endif // wasm_annotations_h
+#endif // wasm_wasm_annotations_h
