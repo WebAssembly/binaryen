@@ -83,6 +83,13 @@ namespace {
 
 bool hasNonFallthroughControlFlow(Expression* expr);
 
+// Unreachable instructions leave wasmStackType none on the polymorphic Wasm stack
+// but remain distinct from ordinary void instructions (drop, local.set, etc.).
+bool isWasmUnreachableValue(Expression* expr, Type wasmStackType) {
+  return wasmStackType == Type::none && expr->type == Type::unreachable &&
+         !Properties::isControlFlowStructure(expr);
+}
+
 bool blockHasNonFallthroughControlFlow(Block* block) {
   for (auto* child : block->list) {
     if (hasNonFallthroughControlFlow(child)) {
@@ -185,7 +192,11 @@ MaybeResult<IRBuilder::HoistedVal> IRBuilder::hoistLastValue(bool greedy) {
   }
   int valIndex = stack.size() - 1;
   for (; valIndex >= 0; --valIndex) {
-    if (stack[valIndex].wasmStackType != Type::none) {
+    auto& entry = stack[valIndex];
+    if (entry.wasmStackType != Type::none) {
+      break;
+    }
+    if (isWasmUnreachableValue(entry.expr, entry.wasmStackType)) {
       break;
     }
   }
@@ -197,7 +208,9 @@ MaybeResult<IRBuilder::HoistedVal> IRBuilder::hoistLastValue(bool greedy) {
   int hoistIndex = valIndex;
   if (greedy) {
     while (hoistIndex > 0 &&
-           stack[hoistIndex - 1].wasmStackType == Type::none) {
+           stack[hoistIndex - 1].wasmStackType == Type::none &&
+           !isWasmUnreachableValue(stack[hoistIndex - 1].expr,
+                                   stack[hoistIndex - 1].wasmStackType)) {
       --hoistIndex;
     }
   }
@@ -207,7 +220,8 @@ MaybeResult<IRBuilder::HoistedVal> IRBuilder::hoistLastValue(bool greedy) {
     return HoistedVal{Index(hoistIndex), nullptr};
   }
   auto*& expr = stack[valIndex].expr;
-  if (stack[valIndex].wasmStackType == Type::unreachable) {
+  if (stack[valIndex].wasmStackType == Type::unreachable ||
+      isWasmUnreachableValue(expr, stack[valIndex].wasmStackType)) {
     // No need for a scratch local to hoist an unreachable.
     return HoistedVal{Index(hoistIndex), nullptr};
   }
@@ -624,7 +638,12 @@ private:
             return unreachableFallbackSize;
           }
           --stackIndex;
-          stackTupleIndex = scope.exprStack[stackIndex].wasmStackType.size() - 1;
+          auto& entry = scope.exprStack[stackIndex];
+          if (isWasmUnreachableValue(entry.expr, entry.wasmStackType)) {
+            stackTupleIndex = 0;
+            break;
+          }
+          stackTupleIndex = entry.wasmStackType.size() - 1;
         }
 
         // Skip expressions that don't produce values.
@@ -641,7 +660,10 @@ private:
       // We have an available type and a constraint. Only check constraints if
       // we are deeper than an unreachable, since otherwise we can leave
       // problems to be caught by the validator later.
-      auto type = scope.exprStack[stackIndex].wasmStackType[stackTupleIndex];
+      auto& entry = scope.exprStack[stackIndex];
+      auto type = isWasmUnreachableValue(entry.expr, entry.wasmStackType)
+                    ? Type::unreachable
+                    : entry.wasmStackType[stackTupleIndex];
       if (unreachableFallbackSize || lastSkippedNoneAbove) {
         auto constraint = children[childIndex].constraint[childTupleIndex];
         if (!PrincipalType::matches(type, constraint)) {
@@ -707,7 +729,8 @@ private:
     // If the top value has the correct size, we can pop it and be done.
     // Unreachable stack types satisfy any size when used as Binaryen IR operands.
     if (entry.wasmStackType.size() == size ||
-        entry.wasmStackType == Type::unreachable) {
+        entry.wasmStackType == Type::unreachable ||
+        isWasmUnreachableValue(entry.expr, entry.wasmStackType)) {
       auto* ret = entry.expr;
       scope.exprStack.pop_back();
       return ret;
@@ -1122,10 +1145,18 @@ Result<Expression*> IRBuilder::finishScope(Block* block) {
   } else {
     // More than one expression, so we need a block. Allocate one if we weren't
     // already given one.
+    auto exprs = stackExprs(scope.exprStack);
+    if (type.isConcrete() && exprs.size() > 1) {
+      for (size_t i = 0; i + 1 < exprs.size(); ++i) {
+        if (scope.exprStack[i].wasmStackType.isConcrete()) {
+          exprs[i] = builder.dropIfConcretelyTyped(exprs[i]);
+        }
+      }
+    }
     if (block) {
-      block->list.set(stackExprs(scope.exprStack));
+      block->list.set(exprs);
     } else {
-      block = builder.makeBlock(stackExprs(scope.exprStack), type);
+      block = builder.makeBlock(exprs, type);
     }
     ret = block;
   }
