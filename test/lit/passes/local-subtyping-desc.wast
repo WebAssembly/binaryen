@@ -33,13 +33,14 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $test (result (ref null $struct))
-  ;; We can refine both the local to (ref none). While doing so we must
+  ;; We can refine the local to (ref none). While doing so we must
   ;; refinalize the br_on properly, below, to that same type (it is never
   ;; executed). In more detail:
   ;;
   ;;  * Initially, after parsing, the types of its inputs are
   ;;      ref=nullref, desc=(ref $desc).
   ;;    That refinalizes into (ref none) for the BrOn.
+  ;;
   ;;  * When we refinalize, the types of its inputs are
   ;;      ref=nullref, desc=(ref none).
   ;;    This test verifies that we fixed a bug where the BrOn was given the
