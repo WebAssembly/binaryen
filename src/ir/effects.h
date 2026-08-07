@@ -1044,10 +1044,8 @@ private:
     }
     void visitRefGetDesc(RefGetDesc* curr) { trapOnNull(curr->ref); }
     void visitBrOn(BrOn* curr) {
-      if (trapOnNull(curr->desc)) {
-        return;
-      }
       parent.breakTargets.insert(curr->name);
+      trapOnNull(curr->desc);
     }
     void visitStructNew(StructNew* curr) { trapOnNull(curr->desc); }
     void visitStructGet(StructGet* curr) {
