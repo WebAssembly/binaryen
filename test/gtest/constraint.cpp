@@ -503,3 +503,132 @@ TEST(ConstraintTest, TestAndLoop) {
   // x <= y && { x < y && x != 42 }  =>  x < y && x != 42
   checkAnd(ley, {lty[0], ne42}, {lty[0], ne42});
 }
+
+TEST(ConstraintTest, TestBasicBlockConstraintMap) {
+  // Maps begin unreachable.
+  BasicBlockConstraintMap map;
+
+  EXPECT_TRUE(map.unreachable);
+  map.setReachable();
+  EXPECT_FALSE(map.unreachable);
+}
+
+// Check that a set is equal to a constraint.
+static void check(const AndedConstraintSet& s, const Constraint& c) {
+  EXPECT_EQ(s.size(), 1);
+  EXPECT_EQ(s[0], c);
+}
+
+TEST(ConstraintTest, TestBasicBlockConstraintMap_Set) {
+  Constraint eq0{Eq, {Literal(int32_t(0))}};
+  Constraint eq1{Eq, {Literal(int32_t(1))}};
+  Constraint eq2{Eq, {Literal(int32_t(2))}};
+
+  BasicBlockConstraintMap map;
+  map.setReachable();
+
+  // Set local 0 to 0. It should read back the same.
+  map.set(0, eq0);
+  check(map.get(0), eq0);
+
+  // Set another value, replacing the first.
+  map.set(0, eq1);
+  check(map.get(0), eq1);
+
+  // Set a value using an expression.
+  Const c;
+  c.value = Literal(int32_t(2));
+  c.type = Type::i32;
+  map.set(0, &c);
+  check(map.get(0), eq2);
+
+  // Set an unfamiliar expression, leading to us knowing nothing.
+  Nop nop;
+  map.set(0, &nop);
+  EXPECT_TRUE(map.get(0).provesNothing());
+}
+
+TEST(ConstraintTest, TestIncrement) {
+  BasicBlockConstraintMap map;
+  map.setReachable();
+
+  // Set up an increment operation, an add which does $0 + 1
+  LocalGet get;
+  get.index = 0;
+  get.type = Type::i32;
+
+  Const c;
+  c.value = Literal(int32_t(1));
+  c.type = Type::i32;
+
+  Binary add;
+  add.op = AddInt32;
+  add.type = Type::i32;
+  add.left = &get;
+  add.right = &c;
+
+  // $0 = 0, $1 = $0 + 1, so $1 = 1 (and $0 is unchanged).
+  map.set(0, {Eq, {Literal(int32_t(0))}});
+  map.set(1, &add);
+  check(map.get(0), {Eq, {Literal(int32_t(0))}});
+  check(map.get(1), {Eq, {Literal(int32_t(1))}});
+
+  // $0 = $0 + 1, where $0 was 0, so it is now 1.
+  map.set(0, &add);
+  check(map.get(0), {Eq, {Literal(int32_t(1))}});
+
+  // $0 >= 5, $0++  =>  $0 > 5 (signed)
+  map.set(0, {GeS, {Literal(int32_t(5))}});
+  map.set(0, &add);
+  check(map.get(0), {GtS, {Literal(int32_t(5))}});
+
+  // Ditto, unsigned
+  map.set(0, {GeU, {Literal(int32_t(5))}});
+  map.set(0, &add);
+  check(map.get(0), {GtU, {Literal(int32_t(5))}});
+
+  // $0 < 5, $0++  =>  $0 <= 5 (signed)
+  map.set(0, {LtS, {Literal(int32_t(5))}});
+  map.set(0, &add);
+  check(map.get(0), {LeS, {Literal(int32_t(5))}});
+
+  // Ditto, unsigned
+  map.set(0, {LtU, {Literal(int32_t(5))}});
+  map.set(0, &add);
+  check(map.get(0), {LeU, {Literal(int32_t(5))}});
+
+  // $0 <= 5, $0++  =>  $0 <= 6 (signed)
+  map.set(0, {LeS, {Literal(int32_t(5))}});
+  map.set(0, &add);
+  check(map.get(0), {LeS, {Literal(int32_t(6))}});
+
+  // Ditto, unsigned
+  map.set(0, {LeU, {Literal(int32_t(5))}});
+  map.set(0, &add);
+  check(map.get(0), {LeU, {Literal(int32_t(6))}});
+
+  // $0 <= max_signed, $0++  =>  nothing, because it would overflow
+  map.set(0, {LeS, {Literal::makeSignedMax(Type::i32)}});
+  map.set(0, &add);
+  EXPECT_TRUE(map.get(0).provesNothing());
+
+  // $0 <= max_unsigned, $0++  =>  nothing, because it would overflow
+  map.set(0, {LeU, {Literal::makeUnsignedMax(Type::i32)}});
+  map.set(0, &add);
+  EXPECT_TRUE(map.get(0).provesNothing());
+
+  // However, an unsigned operation on the signed max is fine.
+  map.set(0, {LeU, {Literal::makeSignedMax(Type::i32)}});
+  map.set(0, &add);
+  auto one = Literal::makeFromInt32(1, Type::i32);
+  check(map.get(0), {LeU, {Literal::makeSignedMax(Type::i32).add(one)}});
+
+  // Multiple constraints at once:
+  // $0 >= 10 && $0 < 20, $0++  =>  $0 > 10 && $0 <= 20
+  map.set(0, {GeS, {Literal(int32_t(10))}});
+  map.approximateAnd(0, {LtS, {Literal(int32_t(20))}});
+  map.set(0, &add);
+  EXPECT_EQ(map.get(0),
+            (AndedConstraintSet{{GtS, {Literal(int32_t(10))}},
+                                {LeS, {Literal(int32_t(20))}}}));
+}
