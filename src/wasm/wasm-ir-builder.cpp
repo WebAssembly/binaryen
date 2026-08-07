@@ -183,12 +183,6 @@ MaybeResult<IRBuilder::HoistedVal> IRBuilder::hoistLastValue(bool greedy) {
   if (stack.empty()) {
     return {};
   }
-  if (!stack.empty() && stack.back().wasmStackType == Type::none &&
-      getScope().unreachable) {
-    // In unreachable scopes, void instructions on top mask deeper values for the
-    // next pop, matching Wasm polymorphic stack semantics.
-    return {};
-  }
   int valIndex = stack.size() - 1;
   for (; valIndex >= 0; --valIndex) {
     if (stack[valIndex].wasmStackType != Type::none) {
