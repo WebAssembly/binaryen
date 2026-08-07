@@ -590,6 +590,10 @@ private:
     // Whether we are deeper than some concrete expression.
     bool seenConcrete = false;
 
+    // The void stack entry immediately above the current requirement's matched
+    // value, if we skipped void entries in an unreachable scope.
+    std::optional<size_t> lastSkippedNoneAbove;
+
     // Check whether the values on the stack will be able to meet the given
     // requirements.
     while (true) {
@@ -603,6 +607,7 @@ private:
         }
         --childIndex;
         childTupleIndex = children[childIndex].constraint.size() - 1;
+        lastSkippedNoneAbove = std::nullopt;
       }
 
       // Advance to the next available value on the stack.
@@ -624,6 +629,9 @@ private:
 
         // Skip expressions that don't produce values.
         if (scope.exprStack[stackIndex].wasmStackType == Type::none) {
+          if (scope.unreachable) {
+            lastSkippedNoneAbove = stackIndex;
+          }
           stackTupleIndex = 0;
           continue;
         }
@@ -634,9 +642,12 @@ private:
       // we are deeper than an unreachable, since otherwise we can leave
       // problems to be caught by the validator later.
       auto type = scope.exprStack[stackIndex].wasmStackType[stackTupleIndex];
-      if (unreachableFallbackSize) {
+      if (unreachableFallbackSize || lastSkippedNoneAbove) {
         auto constraint = children[childIndex].constraint[childTupleIndex];
         if (!PrincipalType::matches(type, constraint)) {
+          if (lastSkippedNoneAbove) {
+            return *lastSkippedNoneAbove + 1;
+          }
           return unreachableFallbackSize;
         }
       }
@@ -655,6 +666,9 @@ private:
         // must be concrete.
         assert(type.isConcrete());
         seenConcrete = true;
+        if (lastSkippedNoneAbove && scope.unreachable) {
+          unreachableFallbackSize = *lastSkippedNoneAbove + 1;
+        }
       }
     }
 
