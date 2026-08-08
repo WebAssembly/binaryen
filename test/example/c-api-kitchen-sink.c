@@ -485,9 +485,9 @@ void test_core() {
                         temp15 = makeInt32(module, 110),
                         temp16 = makeInt64(module, 111);
   BinaryenExpressionRef externrefExpr =
-    BinaryenRefNull(module, BinaryenTypeNullExternref());
+    BinaryenRefNull(module, BinaryenHeapTypeNoext());
   BinaryenExpressionRef funcrefExpr =
-    BinaryenRefNull(module, BinaryenTypeNullFuncref());
+    BinaryenRefNull(module, BinaryenHeapTypeNofunc());
   funcrefExpr =
     BinaryenRefFunc(module, "kitchen()sinker", kitchenSinkerRefType);
   BinaryenExpressionRef i31refExpr =
@@ -1065,21 +1065,21 @@ void test_core() {
     BinaryenSelect(
       module,
       temp10,
-      BinaryenRefNull(module, BinaryenTypeNullFuncref()),
+      BinaryenRefNull(module, BinaryenHeapTypeNofunc()),
       BinaryenRefFunc(module, "kitchen()sinker", kitchenSinkerRefType)),
     // GC
     BinaryenRefEq(module,
-                  BinaryenRefNull(module, BinaryenTypeNullref()),
-                  BinaryenRefNull(module, BinaryenTypeNullref())),
+                  BinaryenRefNull(module, BinaryenHeapTypeNone()),
+                  BinaryenRefNull(module, BinaryenHeapTypeNone())),
     BinaryenRefAs(module,
                   BinaryenRefAsNonNull(),
-                  BinaryenRefNull(module, BinaryenTypeNullref())),
+                  BinaryenRefNull(module, BinaryenHeapTypeNone())),
     BinaryenRefAs(module,
                   BinaryenRefAsAnyConvertExtern(),
-                  BinaryenRefNull(module, BinaryenTypeNullExternref())),
+                  BinaryenRefNull(module, BinaryenHeapTypeNoext())),
     BinaryenRefAs(module,
                   BinaryenRefAsExternConvertAny(),
-                  BinaryenRefNull(module, BinaryenTypeNullref())),
+                  BinaryenRefNull(module, BinaryenHeapTypeNone())),
     // Exception handling
     BinaryenTry(module, NULL, tryBody, catchTags, 1, catchBodies, 2, NULL),
     // (try $try_outer
@@ -1360,7 +1360,7 @@ void test_core() {
     BinaryenArrayNew(module,
                      BinaryenTypeGetHeapType(funcArray),
                      makeInt32(module, 0),
-                     BinaryenRefNull(module, BinaryenTypeNullFuncref())));
+                     BinaryenRefNull(module, BinaryenHeapTypeNofunc())));
   BinaryenAddGlobal(
     module,
     "i32Struct-global",
@@ -1429,7 +1429,7 @@ void test_core() {
   BinaryenTableSizeSetTable(tablesize, table);
 
   BinaryenExpressionRef valueExpr =
-    BinaryenRefNull(module, BinaryenTypeNullFuncref());
+    BinaryenRefNull(module, BinaryenHeapTypeNofunc());
   BinaryenExpressionRef sizeExpr = makeInt32(module, 0);
   BinaryenExpressionRef growExpr =
     BinaryenTableGrow(module, "0", valueExpr, sizeExpr);

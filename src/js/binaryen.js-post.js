@@ -2438,8 +2438,8 @@ function wrapModule(module, self = {}) {
   };
 
   self['ref'] = {
-    'null'(type) {
-      return Module['_BinaryenRefNull'](module, type);
+    'null'(heaptype) {
+      return Module['_BinaryenRefNull'](module, heaptype);
     },
     'is_null'(value) {
       return Module['_BinaryenRefIsNull'](module, value);
