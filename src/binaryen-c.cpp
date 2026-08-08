@@ -1740,7 +1740,8 @@ BinaryenExpressionRef BinaryenTableGrow(BinaryenModuleRef module,
                                         BinaryenExpressionRef delta) {
   if (value == nullptr) {
     auto tableType = (*(Module*)module).getTableOrNull(name)->type;
-    value = BinaryenRefNull(module, (BinaryenHeapType)tableType.getHeapType().getID());
+    value = BinaryenRefNull(module,
+                            (BinaryenHeapType)tableType.getHeapType().getID());
   }
   return static_cast<Expression*>(
     Builder(*(Module*)module)
