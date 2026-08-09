@@ -15,6 +15,7 @@
  */
 
 #include "wasm-debug.h"
+#include "dwarf-ranges.h"
 #include "wasm.h"
 
 #ifdef BUILD_LLVM_DWARF
@@ -60,7 +61,17 @@ bool hasDWARFSections(const Module& wasm) {
 #ifdef BUILD_LLVM_DWARF
 
 // In wasm32 the address size is 32 bits.
-static const size_t AddressSize = 4;
+static constexpr size_t AddressSize = 4;
+static constexpr size_t RangeEntrySize = 2 * AddressSize;
+
+// DWARF v6 reserves the all-ones address for a non-existent entity. LLVM also
+// recognizes max-minus-one in legacy range and location data, where all-ones
+// is already the base-address-selection marker. Zero is a historical linker
+// tombstone, but is context-dependent because it can also be a valid address.
+static constexpr BinaryLocation DwarfTombstone = BinaryLocation(-1);
+static constexpr BinaryLocation LegacyRangeTombstone = BinaryLocation(-2);
+static constexpr BinaryLocation EmptyRangeAddress = 1;
+static constexpr size_t NoParent = size_t(-1);
 
 struct BinaryenDWARFInfo {
   llvm::StringMap<std::unique_ptr<llvm::MemoryBuffer>> sections;
@@ -670,16 +681,13 @@ struct LocationUpdater {
   }
 };
 
-// A tombstone value is a value that is placed where something used to exist,
-// but no longer does, like a reference to a function that was DCE'd out during
-// linking. In theory the value can be any invalid location, and tools will
-// basically ignore it.
-// Earlier LLVM used to use 0 there, and newer versions use -1 or -2 depending
-// on the DWARF section. For now, support them all, but TODO stop supporting 0,
-// as there are apparently some possible corner cases where 0 is a valid value.
-static bool isTombstone(uint32_t x) {
-  return x == 0 || x == uint32_t(-1) || x == uint32_t(-2);
+static bool isNonzeroTombstone(BinaryLocation location) {
+  return location == DwarfTombstone || location == LegacyRangeTombstone;
 }
+
+// Keep accepting the historical zero tombstone. Callers whose encoding permits
+// a real address zero must use isNonzeroTombstone instead.
+static bool isTombstone(uint32_t x) { return x == 0 || isNonzeroTombstone(x); }
 
 // Update debug lines, and update the locationUpdater with debug line offset
 // changes so we can update offsets into the debug line section.
@@ -835,10 +843,9 @@ static void updateDIE(const llvm::DWARFDebugInfoEntry& DIE,
         // This is an address.
         BinaryLocation oldValue = yamlValue.Value, newValue = 0;
         lowPCValue = &yamlValue;
-        // Preserve LLVM's nonzero tombstone addresses. Mapping them as if
-        // they were instruction offsets turns dead DIEs into live ranges at
-        // address zero.
-        if (oldValue == BinaryLocation(-1) || oldValue == BinaryLocation(-2)) {
+        // Preserve reserved dead-address sentinels. Mapping them as instruction
+        // offsets would turn dead DIEs into live ranges at address zero.
+        if (isNonzeroTombstone(oldValue)) {
           newValue = oldValue;
         } else if (tag == llvm::dwarf::DW_TAG_GNU_call_site ||
                    tag == llvm::dwarf::DW_TAG_inlined_subroutine ||
@@ -858,8 +865,7 @@ static void updateDIE(const llvm::DWARFDebugInfoEntry& DIE,
                   << llvm::dwarf::TagString(tag).str();
         }
         unresolvedZeroLowPC = tag != llvm::dwarf::DW_TAG_compile_unit &&
-                              newValue == 0 && oldValue != BinaryLocation(-1) &&
-                              oldValue != BinaryLocation(-2);
+                              newValue == 0 && !isNonzeroTombstone(oldValue);
         oldLowPC = oldValue;
         newLowPC = newValue;
         yamlValue.Value = newValue;
@@ -890,7 +896,7 @@ static void updateDIE(const llvm::DWARFDebugInfoEntry& DIE,
       if (isRelative) {
         oldValue += oldLowPC;
       }
-      if (newLowPC == BinaryLocation(-1) || newLowPC == BinaryLocation(-2)) {
+      if (isNonzeroTombstone(newLowPC)) {
         newValue = newLowPC;
       } else if (tag == llvm::dwarf::DW_TAG_GNU_call_site ||
                  tag == llvm::dwarf::DW_TAG_inlined_subroutine ||
@@ -907,11 +913,11 @@ static void updateDIE(const llvm::DWARFDebugInfoEntry& DIE,
       // If one endpoint disappeared or moved before the other, the exact
       // scope can no longer be represented by this low/high pair. Tombstone
       // the DIE instead of emitting a wrapping or unrelated address range.
-      if (newLowPC != BinaryLocation(-1) && newLowPC != BinaryLocation(-2) &&
+      if (!isNonzeroTombstone(newLowPC) &&
           tag != llvm::dwarf::DW_TAG_compile_unit &&
           (newValue == 0 || newValue < newLowPC)) {
-        newLowPC = BinaryLocation(-1);
-        newValue = isRelative ? newLowPC : BinaryLocation(-1);
+        newLowPC = DwarfTombstone;
+        newValue = isRelative ? newLowPC : DwarfTombstone;
         assert(lowPCValue);
         lowPCValue->Value = newLowPC;
       } else if (newValue > newLowPC) {
@@ -926,7 +932,7 @@ static void updateDIE(const llvm::DWARFDebugInfoEntry& DIE,
     });
   if (unresolvedZeroLowPC) {
     assert(lowPCValue);
-    lowPCValue->Value = BinaryLocation(-1);
+    lowPCValue->Value = DwarfTombstone;
   }
 }
 
@@ -976,12 +982,12 @@ static void updateRanges(llvm::DWARFYAML::Data& yaml,
   for (auto& range : yaml.Ranges) {
     BinaryLocation oldStart = range.Start, oldEnd = range.End, newStart = 0,
                    newEnd = 0;
-    if ((oldStart == 0 && oldEnd == 0) || oldStart == BinaryLocation(-1)) {
+    if ((oldStart == 0 && oldEnd == 0) || oldStart == DwarfTombstone) {
       newStart = oldStart;
       newEnd = oldEnd;
-    } else if (oldStart == BinaryLocation(-2) || isTombstone(oldEnd)) {
-      newStart = 1;
-      newEnd = 1;
+    } else if (oldStart == LegacyRangeTombstone || isTombstone(oldEnd)) {
+      newStart = EmptyRangeAddress;
+      newEnd = EmptyRangeAddress;
     } else {
       // Zero is a valid offset from the current range-list base. It is only a
       // tombstone when paired with a zero end as handled above.
@@ -989,8 +995,8 @@ static void updateRanges(llvm::DWARFYAML::Data& yaml,
       newEnd = locationUpdater.getNewEnd(oldEnd);
       if ((oldStart != 0 && isTombstone(newStart)) || isTombstone(newEnd) ||
           newEnd <= newStart) {
-        newStart = 1;
-        newEnd = 1;
+        newStart = EmptyRangeAddress;
+        newEnd = EmptyRangeAddress;
       }
       // TODO even if range start and end markers have been preserved,
       // instructions in the middle may have moved around, making the range no
@@ -1012,8 +1018,8 @@ struct DIEAddressInfo {
   const llvm::DWARFAbbreviationDeclaration* abbrevDecl = nullptr;
   llvm::dwarf::Tag tag = llvm::dwarf::DW_TAG_null;
   uint32_t depth = 0;
-  size_t parent = size_t(-1);
-  std::vector<std::pair<uint64_t, uint64_t>> ranges;
+  size_t parent = NoParent;
+  DwarfRanges ranges;
   bool hasRangeDescription = false;
   bool rangeListDirty = false;
   bool malformed = false;
@@ -1046,7 +1052,6 @@ static void readDIEAddressRanges(DIEAddressInfo& info,
 
   if (rangesOffset) {
     info.hasRangeDescription = true;
-    constexpr size_t RangeEntrySize = 2 * AddressSize;
     if (*rangesOffset % RangeEntrySize != 0 ||
         *rangesOffset / RangeEntrySize >= yaml.Ranges.size()) {
       info.malformed = true;
@@ -1062,13 +1067,13 @@ static void readDIEAddressRanges(DIEAddressInfo& info,
         terminated = true;
         break;
       }
-      if (start == BinaryLocation(-1)) {
+      if (start == DwarfTombstone) {
         base = end;
         continue;
       }
       // A zero start is a valid offset from the current base. Only (0, 0),
       // handled above, terminates the list.
-      if (start == BinaryLocation(-2) || isTombstone(end)) {
+      if (start == LegacyRangeTombstone || isTombstone(end)) {
         continue;
       }
       auto absoluteStart = base + start;
@@ -1076,7 +1081,7 @@ static void readDIEAddressRanges(DIEAddressInfo& info,
       if (absoluteStart > absoluteEnd) {
         info.malformed = true;
       } else if (absoluteStart < absoluteEnd) {
-        info.ranges.emplace_back(absoluteStart, absoluteEnd);
+        info.ranges.add(absoluteStart, absoluteEnd);
       }
     }
     if (!terminated) {
@@ -1084,109 +1089,48 @@ static void readDIEAddressRanges(DIEAddressInfo& info,
     }
   } else if (lowPC && highPC) {
     info.hasRangeDescription = true;
-    if (!isTombstone(*lowPC)) {
+    // Unlike a range-list terminator, zero is a valid low_pc when paired with
+    // a nonzero high_pc. Only the reserved nonzero sentinels are unambiguously
+    // unavailable in this encoding.
+    if (!isNonzeroTombstone(*lowPC)) {
       uint64_t start = *lowPC;
       uint64_t end = highPCIsRelative ? start + *highPC : *highPC;
       if (start > end) {
         info.malformed = true;
       } else if (start < end) {
-        info.ranges.emplace_back(start, end);
+        info.ranges.add(start, end);
       }
     }
   }
 
-  auto original = info.ranges;
-  std::sort(info.ranges.begin(), info.ranges.end());
-  size_t written = 0;
-  for (auto range : info.ranges) {
-    if (written && range.first <= info.ranges[written - 1].second) {
-      info.ranges[written - 1].second =
-        std::max(info.ranges[written - 1].second, range.second);
-    } else {
-      info.ranges[written++] = range;
-    }
-  }
-  info.ranges.resize(written);
-  info.rangeListDirty |= info.rangesValue && info.ranges != original;
-}
-
-static bool containsRanges(const DIEAddressInfo& parent,
-                           const DIEAddressInfo& child) {
-  size_t parentIndex = 0;
-  for (auto childRange : child.ranges) {
-    while (parentIndex < parent.ranges.size() &&
-           parent.ranges[parentIndex].second <= childRange.first) {
-      ++parentIndex;
-    }
-    if (parentIndex == parent.ranges.size() ||
-        parent.ranges[parentIndex].first > childRange.first ||
-        parent.ranges[parentIndex].second < childRange.second) {
-      return false;
-    }
-  }
-  return true;
-}
-
-static bool rangesOverlap(const DIEAddressInfo& left,
-                          const DIEAddressInfo& right) {
-  size_t leftIndex = 0, rightIndex = 0;
-  while (leftIndex < left.ranges.size() && rightIndex < right.ranges.size()) {
-    auto leftRange = left.ranges[leftIndex];
-    auto rightRange = right.ranges[rightIndex];
-    if (leftRange.first < rightRange.second &&
-        rightRange.first < leftRange.second) {
-      return true;
-    }
-    if (leftRange.second <= rightRange.first) {
-      ++leftIndex;
-    } else {
-      ++rightIndex;
-    }
-  }
-  return false;
-}
-
-static void addRanges(DIEAddressInfo& destination,
-                      const DIEAddressInfo& source) {
-  if (source.ranges.empty()) {
-    return;
-  }
-  auto original = destination.ranges;
-  destination.ranges.insert(
-    destination.ranges.end(), source.ranges.begin(), source.ranges.end());
-  std::sort(destination.ranges.begin(), destination.ranges.end());
-  size_t written = 0;
-  for (auto range : destination.ranges) {
-    if (written && range.first <= destination.ranges[written - 1].second) {
-      destination.ranges[written - 1].second =
-        std::max(destination.ranges[written - 1].second, range.second);
-    } else {
-      destination.ranges[written++] = range;
-    }
-  }
-  destination.ranges.resize(written);
-  destination.rangeListDirty |= destination.ranges != original;
+  info.rangeListDirty |= info.rangesValue && info.ranges.normalize();
 }
 
 static void writeRangeList(DIEAddressInfo& info, llvm::DWARFYAML::Data& yaml) {
   assert(info.rangesValue);
-  constexpr size_t RangeEntrySize = 2 * AddressSize;
   info.rangesValue->Value = yaml.Ranges.size() * RangeEntrySize;
   // Use an explicit zero base so the new entries remain absolute and can be
   // updated again without recovering an implicit compile-unit base.
-  yaml.Ranges.push_back(llvm::DWARFYAML::Range{BinaryLocation(-1), 0, 0});
-  for (auto [start, end] : info.ranges) {
+  yaml.Ranges.push_back(llvm::DWARFYAML::Range{DwarfTombstone, 0, 0});
+  for (auto [start, end] : info.ranges.get()) {
     yaml.Ranges.push_back(llvm::DWARFYAML::Range{start, end, 0});
   }
   yaml.Ranges.push_back(llvm::DWARFYAML::Range{0, 0, 0});
 }
 
-static void markUnavailable(std::vector<DIEAddressInfo>& infos, size_t root) {
-  auto depth = infos[root].depth;
-  for (size_t i = root;
-       i < infos.size() && (i == root || infos[i].depth > depth);
-       ++i) {
-    infos[i].unavailable = true;
+static void markUnavailable(std::vector<DIEAddressInfo>& infos,
+                            const std::vector<std::vector<size_t>>& children,
+                            size_t root) {
+  std::vector<size_t> pending{root};
+  // Follow the explicit tree rather than scanning by depth. Null DIE
+  // terminators do not have abbreviation data and would stop a depth scan
+  // before all descendants were reached.
+  while (!pending.empty()) {
+    auto index = pending.back();
+    pending.pop_back();
+    infos[index].unavailable = true;
+    pending.insert(
+      pending.end(), children[index].begin(), children[index].end());
   }
 }
 
@@ -1200,12 +1144,11 @@ writeUnavailableDIE(DIEAddressInfo& info,
     [&](const llvm::DWARFAbbreviationDeclaration::AttributeSpec& attrSpec,
         llvm::DWARFYAML::FormValue& yamlValue) {
       if (attrSpec.Attr == llvm::dwarf::DW_AT_low_pc) {
-        yamlValue.Value = BinaryLocation(-1);
+        yamlValue.Value = DwarfTombstone;
       } else if (attrSpec.Attr == llvm::dwarf::DW_AT_high_pc) {
         yamlValue.Value =
-          attrSpec.Form == llvm::dwarf::DW_FORM_data4 ? 0 : BinaryLocation(-1);
+          attrSpec.Form == llvm::dwarf::DW_FORM_data4 ? 0 : DwarfTombstone;
       } else if (attrSpec.Attr == llvm::dwarf::DW_AT_ranges) {
-        constexpr size_t RangeEntrySize = 2 * AddressSize;
         if (!emptyRangeListOffset) {
           emptyRangeListOffset = yaml.Ranges.size() * RangeEntrySize;
           yaml.Ranges.push_back(llvm::DWARFYAML::Range{0, 0, 0});
@@ -1263,78 +1206,77 @@ static void repairDIEAddressRanges(const BinaryenDWARFInfo& dwarfInfo,
       }
       assert(yamlEntry == yamlUnit.Entries.end());
 
+      std::vector<std::vector<size_t>> children(infos.size());
+      for (size_t i = 0; i < infos.size(); ++i) {
+        if (infos[i].abbrevDecl && infos[i].parent != NoParent) {
+          children[infos[i].parent].push_back(i);
+        }
+      }
+
+      // Compute this once bottom-up instead of rescanning every subtree.
+      std::vector<bool> hasRangedDescendant(infos.size());
+      for (size_t i = infos.size(); i-- > 0;) {
+        if (infos[i].parent != NoParent &&
+            (!infos[i].ranges.empty() || hasRangedDescendant[i])) {
+          hasRangedDescendant[infos[i].parent] = true;
+        }
+      }
       for (size_t i = 0; i < infos.size(); ++i) {
         if (!infos[i].abbrevDecl) {
           continue;
         }
-        bool hasRangedDescendant = false;
-        for (size_t child = i + 1;
-             child < infos.size() && infos[child].depth > infos[i].depth;
-             ++child) {
-          if (!infos[child].ranges.empty()) {
-            hasRangedDescendant = true;
-            break;
-          }
-        }
         if (infos[i].malformed ||
             (!infos[i].rangesValue && infos[i].hasRangeDescription &&
-             infos[i].ranges.empty() && hasRangedDescendant)) {
-          markUnavailable(infos, i);
+             infos[i].ranges.empty() && hasRangedDescendant[i])) {
+          markUnavailable(infos, children, i);
         }
       }
 
-      std::vector<std::vector<size_t>> children(infos.size());
-      for (size_t i = 0; i < infos.size(); ++i) {
-        if (infos[i].abbrevDecl && !infos[i].unavailable &&
-            infos[i].parent != size_t(-1) && !infos[i].ranges.empty()) {
-          children[infos[i].parent].push_back(i);
+      // Process each sibling group after its children have reached their final
+      // ranges. This ensures that extending a range-list child cannot create an
+      // overlap that was checked only against its old endpoints.
+      for (size_t parentIndex = infos.size(); parentIndex-- > 0;) {
+        auto& parent = infos[parentIndex];
+        if (!parent.abbrevDecl || parent.unavailable) {
+          continue;
         }
-      }
-      for (auto& siblings : children) {
+        auto& siblings = children[parentIndex];
         for (size_t i = 0; i < siblings.size(); ++i) {
           for (size_t j = i + 1; j < siblings.size(); ++j) {
             if (!infos[siblings[i]].unavailable &&
                 !infos[siblings[j]].unavailable &&
-                rangesOverlap(infos[siblings[i]], infos[siblings[j]])) {
-              markUnavailable(infos, siblings[i]);
-              markUnavailable(infos, siblings[j]);
+                !infos[siblings[i]].ranges.empty() &&
+                !infos[siblings[j]].ranges.empty() &&
+                infos[siblings[i]].ranges.overlaps(infos[siblings[j]].ranges)) {
+              markUnavailable(infos, children, siblings[i]);
+              markUnavailable(infos, children, siblings[j]);
             }
           }
         }
-      }
 
-      // A range-list parent can represent the exact union of its surviving
-      // children's mapped ranges. Rebuild that union bottom-up rather than
-      // discarding a valid child merely because optimization moved it outside
-      // the old parent endpoints.
-      for (size_t i = infos.size(); i-- > 0;) {
-        auto& child = infos[i];
-        if (!child.abbrevDecl || child.unavailable || child.ranges.empty() ||
-            child.parent == size_t(-1)) {
-          continue;
+        // A range-list parent can represent the union of its existing ranges
+        // and its surviving children. Extend it before it is checked as a
+        // child at the next level of the tree.
+        if (parent.rangesValue) {
+          for (auto childIndex : siblings) {
+            auto& child = infos[childIndex];
+            if (!child.unavailable) {
+              parent.rangeListDirty |= parent.ranges.add(child.ranges);
+            }
+          }
         }
-        auto& parent = infos[child.parent];
-        if (!parent.unavailable && parent.rangesValue) {
-          addRanges(parent, child);
-        }
-      }
 
-      for (size_t i = 0; i < infos.size(); ++i) {
-        auto& child = infos[i];
-        if (!child.abbrevDecl || child.unavailable ||
-            child.parent == size_t(-1)) {
-          continue;
-        }
-        auto& parent = infos[child.parent];
-        if (parent.unavailable) {
-          markUnavailable(infos, i);
-          continue;
-        }
-        bool subprogramPair = child.tag == llvm::dwarf::DW_TAG_subprogram &&
-                              parent.tag == llvm::dwarf::DW_TAG_subprogram;
-        if (!subprogramPair && !child.ranges.empty() &&
-            !parent.ranges.empty() && !containsRanges(parent, child)) {
-          markUnavailable(infos, i);
+        for (auto childIndex : siblings) {
+          auto& child = infos[childIndex];
+          if (child.unavailable) {
+            continue;
+          }
+          bool subprogramPair = child.tag == llvm::dwarf::DW_TAG_subprogram &&
+                                parent.tag == llvm::dwarf::DW_TAG_subprogram;
+          if (!subprogramPair && !child.ranges.empty() &&
+              !parent.ranges.empty() && !parent.ranges.contains(child.ranges)) {
+            markUnavailable(infos, children, childIndex);
+          }
         }
       }
 
@@ -1349,12 +1291,8 @@ static void repairDIEAddressRanges(const BinaryenDWARFInfo& dwarfInfo,
     });
 }
 
-// A location that is ignoreable, i.e., not a special value like 0 or -1 (which
-// would indicate an end or a base in .debug_loc).
-static const BinaryLocation IGNOREABLE_LOCATION = 1;
-
 static bool isNewBaseLoc(const llvm::DWARFYAML::Loc& loc) {
-  return loc.Start == BinaryLocation(-1);
+  return loc.Start == DwarfTombstone;
 }
 
 static bool isEndMarkerLoc(const llvm::DWARFYAML::Loc& loc) {
@@ -1404,7 +1342,7 @@ static void updateLoc(llvm::DWARFYAML::Data& yaml,
           locationUpdater.getNewStart(futureLoc.Start + oldBase);
         // If we found a valid mapping, this is a relevant value for us. If the
         // optimizer removed it, it's a 0, and we can ignore it here - we will
-        // emit IGNOREABLE_LOCATION for it later anyhow.
+        // emit EmptyRangeAddress for it later anyhow.
         if (updatedStart != 0) {
           smallest = std::min(smallest, updatedStart);
         }
@@ -1412,7 +1350,7 @@ static void updateLoc(llvm::DWARFYAML::Data& yaml,
       // If we found no valid values that will be relativized here, just use 0
       // as the new (never-to-be-used) base, which is less confusing (otherwise
       // the value looks like it means something).
-      if (smallest == BinaryLocation(-1)) {
+      if (smallest == DwarfTombstone) {
         smallest = 0;
       }
       newBase = newEnd = smallest;
@@ -1428,7 +1366,7 @@ static void updateLoc(llvm::DWARFYAML::Data& yaml,
       if (newStart == 0 || newEnd == 0 || newStart > newEnd) {
         // This part of the loc no longer has a mapping, or after the mapping
         // it is no longer a proper span, so we must ignore it.
-        newStart = newEnd = IGNOREABLE_LOCATION;
+        newStart = newEnd = EmptyRangeAddress;
       } else {
         // We picked a new base that ensures it is smaller than the values we
         // will relativize to it.
@@ -1443,7 +1381,7 @@ static void updateLoc(llvm::DWARFYAML::Data& yaml,
           // This can happen if the very first span in a compile unit is an
           // empty span, in which case relative to the base of the compile unit
           // we would have (0, 0).
-          newStart = newEnd = IGNOREABLE_LOCATION;
+          newStart = newEnd = EmptyRangeAddress;
         }
       }
       // The loc start and end markers have been preserved. However, TODO

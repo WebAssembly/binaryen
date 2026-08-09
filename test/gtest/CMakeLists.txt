@@ -14,6 +14,7 @@ set(unittest_SOURCES
   delta_debugging.cpp
   dfa_minimization.cpp
   disjoint_sets.cpp
+  dwarf-ranges.cpp
   graph.cpp
   int128.cpp
   leaves.cpp
