@@ -61,15 +61,15 @@ bool hasDWARFSections(const Module& wasm) {
 #ifdef BUILD_LLVM_DWARF
 
 // In wasm32 the address size is 32 bits.
-static constexpr size_t AddressSize = 4;
+static const size_t AddressSize = 4;
 static constexpr size_t RangeEntrySize = 2 * AddressSize;
 
 // DWARF v6 reserves the all-ones address for a non-existent entity. LLVM also
 // recognizes max-minus-one in legacy range and location data, where all-ones
 // is already the base-address-selection marker. Zero is a historical linker
 // tombstone, but is context-dependent because it can also be a valid address.
-static constexpr BinaryLocation DwarfTombstone = BinaryLocation(-1);
-static constexpr BinaryLocation LegacyRangeTombstone = BinaryLocation(-2);
+static constexpr BinaryLocation AllOnesAddress = BinaryLocation(-1);
+static constexpr BinaryLocation LegacyTombstoneAddress = BinaryLocation(-2);
 static constexpr BinaryLocation EmptyRangeAddress = 1;
 static constexpr size_t NoParent = size_t(-1);
 
@@ -682,7 +682,7 @@ struct LocationUpdater {
 };
 
 static bool isNonzeroTombstone(BinaryLocation location) {
-  return location == DwarfTombstone || location == LegacyRangeTombstone;
+  return location == AllOnesAddress || location == LegacyTombstoneAddress;
 }
 
 // Keep accepting the historical zero tombstone. Callers whose encoding permits
@@ -916,8 +916,8 @@ static void updateDIE(const llvm::DWARFDebugInfoEntry& DIE,
       if (!isNonzeroTombstone(newLowPC) &&
           tag != llvm::dwarf::DW_TAG_compile_unit &&
           (newValue == 0 || newValue < newLowPC)) {
-        newLowPC = DwarfTombstone;
-        newValue = isRelative ? newLowPC : DwarfTombstone;
+        newLowPC = AllOnesAddress;
+        newValue = isRelative ? newLowPC : AllOnesAddress;
         assert(lowPCValue);
         lowPCValue->Value = newLowPC;
       } else if (newValue > newLowPC) {
@@ -932,7 +932,7 @@ static void updateDIE(const llvm::DWARFDebugInfoEntry& DIE,
     });
   if (unresolvedZeroLowPC) {
     assert(lowPCValue);
-    lowPCValue->Value = DwarfTombstone;
+    lowPCValue->Value = AllOnesAddress;
   }
 }
 
@@ -982,10 +982,10 @@ static void updateRanges(llvm::DWARFYAML::Data& yaml,
   for (auto& range : yaml.Ranges) {
     BinaryLocation oldStart = range.Start, oldEnd = range.End, newStart = 0,
                    newEnd = 0;
-    if ((oldStart == 0 && oldEnd == 0) || oldStart == DwarfTombstone) {
+    if ((oldStart == 0 && oldEnd == 0) || oldStart == AllOnesAddress) {
       newStart = oldStart;
       newEnd = oldEnd;
-    } else if (oldStart == LegacyRangeTombstone || isTombstone(oldEnd)) {
+    } else if (oldStart == LegacyTombstoneAddress || isTombstone(oldEnd)) {
       newStart = EmptyRangeAddress;
       newEnd = EmptyRangeAddress;
     } else {
@@ -1067,13 +1067,13 @@ static void readDIEAddressRanges(DIEAddressInfo& info,
         terminated = true;
         break;
       }
-      if (start == DwarfTombstone) {
+      if (start == AllOnesAddress) {
         base = end;
         continue;
       }
       // A zero start is a valid offset from the current base. Only (0, 0),
       // handled above, terminates the list.
-      if (start == LegacyRangeTombstone || isTombstone(end)) {
+      if (start == LegacyTombstoneAddress || isTombstone(end)) {
         continue;
       }
       auto absoluteStart = base + start;
@@ -1111,7 +1111,7 @@ static void writeRangeList(DIEAddressInfo& info, llvm::DWARFYAML::Data& yaml) {
   info.rangesValue->Value = yaml.Ranges.size() * RangeEntrySize;
   // Use an explicit zero base so the new entries remain absolute and can be
   // updated again without recovering an implicit compile-unit base.
-  yaml.Ranges.push_back(llvm::DWARFYAML::Range{DwarfTombstone, 0, 0});
+  yaml.Ranges.push_back(llvm::DWARFYAML::Range{AllOnesAddress, 0, 0});
   for (auto [start, end] : info.ranges.get()) {
     yaml.Ranges.push_back(llvm::DWARFYAML::Range{start, end, 0});
   }
@@ -1144,10 +1144,10 @@ writeUnavailableDIE(DIEAddressInfo& info,
     [&](const llvm::DWARFAbbreviationDeclaration::AttributeSpec& attrSpec,
         llvm::DWARFYAML::FormValue& yamlValue) {
       if (attrSpec.Attr == llvm::dwarf::DW_AT_low_pc) {
-        yamlValue.Value = DwarfTombstone;
+        yamlValue.Value = AllOnesAddress;
       } else if (attrSpec.Attr == llvm::dwarf::DW_AT_high_pc) {
         yamlValue.Value =
-          attrSpec.Form == llvm::dwarf::DW_FORM_data4 ? 0 : DwarfTombstone;
+          attrSpec.Form == llvm::dwarf::DW_FORM_data4 ? 0 : AllOnesAddress;
       } else if (attrSpec.Attr == llvm::dwarf::DW_AT_ranges) {
         if (!emptyRangeListOffset) {
           emptyRangeListOffset = yaml.Ranges.size() * RangeEntrySize;
@@ -1291,8 +1291,12 @@ static void repairDIEAddressRanges(const BinaryenDWARFInfo& dwarfInfo,
     });
 }
 
+// A location that is ignoreable, i.e., not a special value like 0 or -1 (which
+// would indicate an end or a base in .debug_loc).
+static const BinaryLocation IGNOREABLE_LOCATION = 1;
+
 static bool isNewBaseLoc(const llvm::DWARFYAML::Loc& loc) {
-  return loc.Start == DwarfTombstone;
+  return loc.Start == BinaryLocation(-1);
 }
 
 static bool isEndMarkerLoc(const llvm::DWARFYAML::Loc& loc) {
@@ -1342,7 +1346,7 @@ static void updateLoc(llvm::DWARFYAML::Data& yaml,
           locationUpdater.getNewStart(futureLoc.Start + oldBase);
         // If we found a valid mapping, this is a relevant value for us. If the
         // optimizer removed it, it's a 0, and we can ignore it here - we will
-        // emit EmptyRangeAddress for it later anyhow.
+        // emit IGNOREABLE_LOCATION for it later anyhow.
         if (updatedStart != 0) {
           smallest = std::min(smallest, updatedStart);
         }
@@ -1350,7 +1354,7 @@ static void updateLoc(llvm::DWARFYAML::Data& yaml,
       // If we found no valid values that will be relativized here, just use 0
       // as the new (never-to-be-used) base, which is less confusing (otherwise
       // the value looks like it means something).
-      if (smallest == DwarfTombstone) {
+      if (smallest == BinaryLocation(-1)) {
         smallest = 0;
       }
       newBase = newEnd = smallest;
@@ -1366,7 +1370,7 @@ static void updateLoc(llvm::DWARFYAML::Data& yaml,
       if (newStart == 0 || newEnd == 0 || newStart > newEnd) {
         // This part of the loc no longer has a mapping, or after the mapping
         // it is no longer a proper span, so we must ignore it.
-        newStart = newEnd = EmptyRangeAddress;
+        newStart = newEnd = IGNOREABLE_LOCATION;
       } else {
         // We picked a new base that ensures it is smaller than the values we
         // will relativize to it.
@@ -1381,7 +1385,7 @@ static void updateLoc(llvm::DWARFYAML::Data& yaml,
           // This can happen if the very first span in a compile unit is an
           // empty span, in which case relative to the base of the compile unit
           // we would have (0, 0).
-          newStart = newEnd = EmptyRangeAddress;
+          newStart = newEnd = IGNOREABLE_LOCATION;
         }
       }
       // The loc start and end markers have been preserved. However, TODO
