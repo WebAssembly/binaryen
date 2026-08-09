@@ -30,27 +30,20 @@
 
 namespace wasm {
 
-template<typename T> struct UniqueDeferredQueue {
-  // implemented as an internal queue, plus a map
-  // that says how many times an element appears. we
-  // can then skip non-final appearances. this lets us
-  // avoid needing to remove elements from the middle
-  // when there are duplicates.
-  std::queue<T> data;
-  std::unordered_map<T, size_t> count;
-
-  size_t size() { return data.size(); }
-  bool empty() { return size() == 0; }
+template<typename T> class UniqueDeferredQueue {
+public:
+  size_t size() const { return data.size(); }
+  bool empty() const { return size() == 0; }
 
   void push(T item) {
-    data.push(item);
     count[item]++;
+    data.push(std::move(item));
   }
 
   T pop() {
     while (1) {
       assert(!empty());
-      T item = data.front();
+      T item = std::move(data.front());
       count[item]--;
       data.pop();
       if (count[item] == 0) {
@@ -65,17 +58,28 @@ template<typename T> struct UniqueDeferredQueue {
     std::swap(data, empty);
     count.clear();
   }
+
+private:
+  // implemented as an internal queue, plus a map
+  // that says how many times an element appears. we
+  // can then skip non-final appearances. this lets us
+  // avoid needing to remove elements from the middle
+  // when there are duplicates.
+  std::queue<T> data;
+  std::unordered_map<T, size_t> count;
 };
 
 // As UniqueDeferredQueue, but once an item has been processed through the queue
 // (that is, popped) it will be ignored from then on in later pushes.
 template<typename T>
-struct UniqueNonrepeatingDeferredQueue : UniqueDeferredQueue<T> {
-  std::unordered_set<T> processed;
+class UniqueNonrepeatingDeferredQueue : private UniqueDeferredQueue<T> {
+public:
+  using UniqueDeferredQueue<T>::size;
+  using UniqueDeferredQueue<T>::empty;
 
   void push(T item) {
     if (!processed.contains(item)) {
-      UniqueDeferredQueue<T>::push(item);
+      UniqueDeferredQueue<T>::push(std::move(item));
     }
   }
 
@@ -84,6 +88,9 @@ struct UniqueNonrepeatingDeferredQueue : UniqueDeferredQueue<T> {
     processed.insert(ret);
     return ret;
   }
+
+private:
+  std::unordered_set<T> processed;
 };
 
 } // namespace wasm
