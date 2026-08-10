@@ -33,7 +33,7 @@ Features.RelaxedSIMD: 4096
 Features.ExtendedConst: 8192
 Features.Strings: 16384
 Features.MultiMemory: 32768
-Features.RelaxedAtomics: 4194304
+Features.AcquireReleaseAtomics: 4194304
 Features.CustomPageSizes: 8388608
 Features.WideArithmetic: 33554432
 Features.CompactImports: 67108864
@@ -2887,7 +2887,7 @@ Fence memory order: 2
  (type $0 (func))
  (memory $0 1 1)
  (export "memory" (memory $0))
- (func $relaxed-atomics (type $0)
+ (func $acquire-release-atomics (type $0)
   (block $body
    (drop
     (i32.atomic.load acqrel

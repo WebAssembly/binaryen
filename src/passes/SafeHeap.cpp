@@ -230,7 +230,7 @@ struct SafeHeap : public Pass {
     // load funcs
     Load load;
     std::vector<MemoryOrder> memoryOrdersToGenerate(
-      features.hasRelaxedAtomics()
+      features.hasAcquireReleaseAtomics()
         ? std::initializer_list<MemoryOrder>{MemoryOrder::Unordered,
                                              MemoryOrder::AcqRel,
                                              MemoryOrder::SeqCst}
