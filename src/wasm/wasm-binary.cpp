@@ -1602,6 +1602,8 @@ void WasmBinaryWriter::writeFeaturesSection() {
         return BinaryConsts::CustomSections::WideArithmeticFeature;
       case FeatureSet::CompactImports:
         return BinaryConsts::CustomSections::CompactImportsFeature;
+      case FeatureSet::RelaxedAtomics:
+        return BinaryConsts::CustomSections::RelaxedAtomicsFeature;
       case FeatureSet::None:
       case FeatureSet::Default:
       case FeatureSet::All:
@@ -5627,6 +5629,8 @@ void WasmBinaryReader::readFeatures(size_t sectionPos, size_t payloadLen) {
       feature = FeatureSet::WideArithmetic;
     } else if (name == BinaryConsts::CustomSections::CompactImportsFeature) {
       feature = FeatureSet::CompactImports;
+    } else if (name == BinaryConsts::CustomSections::RelaxedAtomicsFeature) {
+      feature = FeatureSet::RelaxedAtomics;
     } else {
       // Silently ignore unknown features (this may be and old binaryen running
       // on a new wasm).
