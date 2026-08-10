@@ -1594,8 +1594,8 @@ void WasmBinaryWriter::writeFeaturesSection() {
         return BinaryConsts::CustomSections::CallIndirectOverlongFeature;
       case FeatureSet::CustomDescriptors:
         return BinaryConsts::CustomSections::CustomDescriptorsFeature;
-      case FeatureSet::RelaxedAtomics:
-        return BinaryConsts::CustomSections::RelaxedAtomicsFeature;
+      case FeatureSet::AcquireReleaseAtomics:
+        return BinaryConsts::CustomSections::AcquireReleaseAtomicsFeature;
       case FeatureSet::CustomPageSizes:
         return BinaryConsts::CustomSections::CustomPageSizesFeature;
       case FeatureSet::WideArithmetic:
@@ -5618,8 +5618,9 @@ void WasmBinaryReader::readFeatures(size_t sectionPos, size_t payloadLen) {
       feature = FeatureSet::FP16;
     } else if (name == BinaryConsts::CustomSections::CustomDescriptorsFeature) {
       feature = FeatureSet::CustomDescriptors;
-    } else if (name == BinaryConsts::CustomSections::RelaxedAtomicsFeature) {
-      feature = FeatureSet::RelaxedAtomics;
+    } else if (name ==
+               BinaryConsts::CustomSections::AcquireReleaseAtomicsFeature) {
+      feature = FeatureSet::AcquireReleaseAtomics;
     } else if (name == BinaryConsts::CustomSections::CustomPageSizesFeature) {
       feature = FeatureSet::CustomPageSizes;
     } else if (name == BinaryConsts::CustomSections::WideArithmeticFeature) {

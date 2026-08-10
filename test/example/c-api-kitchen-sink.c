@@ -374,8 +374,8 @@ void test_features() {
   printf("BinaryenFeatureRelaxedSIMD: %d\n", BinaryenFeatureRelaxedSIMD());
   printf("BinaryenFeatureExtendedConst: %d\n", BinaryenFeatureExtendedConst());
   printf("BinaryenFeatureStrings: %d\n", BinaryenFeatureStrings());
-  printf("BinaryenFeatureRelaxedAtomics: %d\n",
-         BinaryenFeatureRelaxedAtomics());
+  printf("BinaryenFeatureAcquireReleaseAtomics: %d\n",
+         BinaryenFeatureAcquireReleaseAtomics());
   printf("BinaryenFeatureCustomPageSizes: %d\n",
          BinaryenFeatureCustomPageSizes());
   printf("BinaryenFeatureMultibyte: %d\n", BinaryenFeatureMultibyte());
@@ -2384,7 +2384,7 @@ void test_relaxed_atomics() {
                   BinaryenTypeAuto());
 
   BinaryenFunctionRef tiny = BinaryenAddFunction(module,
-                                                 "relaxed-atomics",
+                                                 "acquire-release-atomics",
                                                  BinaryenTypeNone(),
                                                  BinaryenTypeNone(),
                                                  NULL,

@@ -342,7 +342,7 @@ suite("binaryen", () => {
 		assert.strictEqual(binaryen.Feature.CallIndirectOverlong, 1 << 20);
 		// @ts-expect-error
 		assert.strictEqual(binaryen.Feature.CustomDescriptors, undefined); assert.notStrictEqual(binaryen.Feature.CustomDescriptors, 1 << 21);
-		assert.strictEqual(binaryen.Feature.RelaxedAtomics, 1 << 22);
+		assert.strictEqual(binaryen.Feature.AcquireReleaseAtomics, 1 << 22);
 		assert.strictEqual(binaryen.Feature.CustomPageSizes, 1 << 23);
 		// @ts-expect-error
 		assert.strictEqual(binaryen.Feature.Multibyte, undefined); assert.notStrictEqual(binaryen.Feature.Multibyte, 1 << 24);

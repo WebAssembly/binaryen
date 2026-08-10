@@ -456,7 +456,7 @@ class TargetFeaturesSectionTest(utils.BinaryenTestCase):
             '--enable-bulk-memory-opt',
             '--enable-call-indirect-overlong',
             '--enable-custom-descriptors',
-            '--enable-relaxed-atomics',
+            '--enable-acquire-release-atomics',
             '--enable-custom-page-sizes',
             '--enable-wide-arithmetic',
             '--enable-compact-imports',
