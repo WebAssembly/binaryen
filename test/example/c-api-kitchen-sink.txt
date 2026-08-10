@@ -47,7 +47,7 @@ BinaryenFeatureMemory64: 2048
 BinaryenFeatureRelaxedSIMD: 4096
 BinaryenFeatureExtendedConst: 8192
 BinaryenFeatureStrings: 16384
-BinaryenFeatureRelaxedAtomics: 4194304
+BinaryenFeatureAcquireReleaseAtomics: 4194304
 BinaryenFeatureCustomPageSizes: 8388608
 BinaryenFeatureMultibyte: 16777216
 BinaryenFeatureWideArithmetic: 33554432
@@ -3106,7 +3106,7 @@ Fence memory order: 2
  (type $0 (func))
  (memory $0 1 1)
  (export "memory" (memory $0))
- (func $relaxed-atomics (type $0)
+ (func $acquire-release-atomics (type $0)
   (block $body
    (drop
     (i32.atomic.load acqrel
