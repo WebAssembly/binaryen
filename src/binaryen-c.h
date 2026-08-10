@@ -245,7 +245,7 @@ BINARYEN_API BinaryenFeatures BinaryenFeatureSharedEverything(void);
 BINARYEN_API BinaryenFeatures BinaryenFeatureFP16(void);
 BINARYEN_API BinaryenFeatures BinaryenFeatureBulkMemoryOpt(void);
 BINARYEN_API BinaryenFeatures BinaryenFeatureCallIndirectOverlong(void);
-BINARYEN_API BinaryenFeatures BinaryenFeatureRelaxedAtomics(void);
+BINARYEN_API BinaryenFeatures BinaryenFeatureAcquireReleaseAtomics(void);
 BINARYEN_API BinaryenFeatures BinaryenFeatureMultibyte(void);
 BINARYEN_API BinaryenFeatures BinaryenFeatureCustomPageSizes(void);
 BINARYEN_API BinaryenFeatures BinaryenFeatureWideArithmetic(void);

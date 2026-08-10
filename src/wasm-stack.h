@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef wasm_stack_h
-#define wasm_stack_h
+#ifndef wasm_wasm_stack_h
+#define wasm_wasm_stack_h
 
 #include "ir/branch-utils.h"
 #include "ir/find_all.h"
@@ -656,4 +656,4 @@ namespace std {
 std::ostream& operator<<(std::ostream& o, wasm::StackInst& inst);
 } // namespace std
 
-#endif // wasm_stack_h
+#endif // wasm_wasm_stack_h

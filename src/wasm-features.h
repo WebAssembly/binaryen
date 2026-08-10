@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef wasm_features_h
-#define wasm_features_h
+#ifndef wasm_wasm_features_h
+#define wasm_wasm_features_h
 
 #include <stdint.h>
 #include <string>
@@ -55,7 +55,7 @@ struct FeatureSet {
     // it does nothing. Binaryen always accepts LEB call-indirect encodings.
     CallIndirectOverlong = 1 << 20,
     CustomDescriptors = 1 << 21,
-    RelaxedAtomics = 1 << 22,
+    AcquireReleaseAtomics = 1 << 22,
     CustomPageSizes = 1 << 23,
     Multibyte = 1 << 24,
     WideArithmetic = 1 << 25,
@@ -113,8 +113,8 @@ struct FeatureSet {
         return "call-indirect-overlong";
       case CustomDescriptors:
         return "custom-descriptors";
-      case RelaxedAtomics:
-        return "relaxed-atomics";
+      case AcquireReleaseAtomics:
+        return "acquire-release-atomics";
       case CustomPageSizes:
         return "custom-page-sizes";
       case Multibyte:
@@ -183,7 +183,9 @@ struct FeatureSet {
   bool hasCustomDescriptors() const {
     return (features & CustomDescriptors) != 0;
   }
-  bool hasRelaxedAtomics() const { return (features & RelaxedAtomics) != 0; }
+  bool hasAcquireReleaseAtomics() const {
+    return (features & AcquireReleaseAtomics) != 0;
+  }
   bool hasCustomPageSizes() const { return (features & CustomPageSizes) != 0; }
   bool hasMultibyte() const { return (features & Multibyte) != 0; }
   bool hasWideArithmetic() const { return (features & WideArithmetic) != 0; }
@@ -214,7 +216,9 @@ struct FeatureSet {
   void setFP16(bool v = true) { set(FP16, v); }
   void setBulkMemoryOpt(bool v = true) { set(BulkMemoryOpt, v); }
   void setCustomDescriptors(bool v = true) { set(CustomDescriptors, v); }
-  void setRelaxedAtomics(bool v = true) { set(RelaxedAtomics, v); }
+  void setAcquireReleaseAtomics(bool v = true) {
+    set(AcquireReleaseAtomics, v);
+  }
   void setMultibyte(bool v = true) { set(Multibyte, v); }
   void setWideArithmetic(bool v = true) { set(WideArithmetic, v); }
   void setCompactImports(bool v = true) { set(CompactImports, v); }
@@ -259,4 +263,4 @@ struct FeatureSet {
 
 } // namespace wasm
 
-#endif // wasm_features_h
+#endif // wasm_wasm_features_h

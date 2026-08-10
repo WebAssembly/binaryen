@@ -1220,10 +1220,10 @@ void FunctionValidator::visitLoad(Load* curr) {
   }
   switch (curr->order) {
     case MemoryOrder::AcqRel: {
-      shouldBeTrue(getModule()->features.hasRelaxedAtomics(),
+      shouldBeTrue(getModule()->features.hasAcquireReleaseAtomics(),
                    curr,
                    "Acquire/release operations require relaxed atomics "
-                   "[--enable-relaxed-atomics]");
+                   "[--enable-acquire-release-atomics]");
       break;
     }
     case MemoryOrder::Unordered:
@@ -1265,10 +1265,10 @@ void FunctionValidator::visitStore(Store* curr) {
   }
   switch (curr->order) {
     case MemoryOrder::AcqRel: {
-      shouldBeTrue(getModule()->features.hasRelaxedAtomics(),
+      shouldBeTrue(getModule()->features.hasAcquireReleaseAtomics(),
                    curr,
                    "Acquire/release operations require relaxed atomics "
-                   "[--enable-relaxed-atomics]");
+                   "[--enable-acquire-release-atomics]");
       break;
     }
     case MemoryOrder::Unordered:
@@ -1310,10 +1310,10 @@ void FunctionValidator::visitAtomicRMW(AtomicRMW* curr) {
 
   switch (curr->order) {
     case MemoryOrder::AcqRel: {
-      shouldBeTrue(getModule()->features.hasRelaxedAtomics(),
+      shouldBeTrue(getModule()->features.hasAcquireReleaseAtomics(),
                    curr,
                    "Acquire/release operations require relaxed atomics "
-                   "[--enable-relaxed-atomics]");
+                   "[--enable-acquire-release-atomics]");
       break;
     }
     // Unordered RMW should be impossible unless there's a bug in the parser.
@@ -1351,10 +1351,10 @@ void FunctionValidator::visitAtomicCmpxchg(AtomicCmpxchg* curr) {
 
   switch (curr->order) {
     case MemoryOrder::AcqRel: {
-      shouldBeTrue(getModule()->features.hasRelaxedAtomics(),
+      shouldBeTrue(getModule()->features.hasAcquireReleaseAtomics(),
                    curr,
                    "Acquire/release operations require relaxed atomics "
-                   "[--enable-relaxed-atomics]");
+                   "[--enable-acquire-release-atomics]");
       break;
     }
     // Unordered cmpxchg should be impossible unless there's a bug in the
@@ -1449,10 +1449,10 @@ void FunctionValidator::visitAtomicFence(AtomicFence* curr) {
                "Atomic operations require threads [--enable-threads]");
   switch (curr->order) {
     case MemoryOrder::AcqRel: {
-      shouldBeTrue(getModule()->features.hasRelaxedAtomics(),
+      shouldBeTrue(getModule()->features.hasAcquireReleaseAtomics(),
                    curr,
                    "Acquire/release operations require relaxed atomics "
-                   "[--enable-relaxed-atomics]");
+                   "[--enable-acquire-release-atomics]");
       break;
     }
     case MemoryOrder::SeqCst:

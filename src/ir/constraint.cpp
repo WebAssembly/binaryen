@@ -265,10 +265,16 @@ std::optional<Constraint> approximateOrTermEqualPair(const Abstract::Op aOp,
   if (aOp == Eq && bOp == GtS) {
     return Constraint{GeS, term};
   }
+  if (aOp == Eq && bOp == GtU) {
+    return Constraint{GeU, term};
+  }
 
   // x > C || x >= C  ===  x >= C
   if (aOp == GtS && bOp == GeS) {
     return Constraint{GeS, term};
+  }
+  if (aOp == GtU && bOp == GeU) {
+    return Constraint{GeU, term};
   }
 
   // TODO: all the rest
@@ -286,10 +292,16 @@ std::optional<Constraint> approximateOrAdjacentConstantPair(
   if (aOp == Eq && bOp == GeS && !aConstant.isSignedMax()) {
     return Constraint{GeS, {aConstant}};
   }
+  if (aOp == Eq && bOp == GeU && !aConstant.isUnsignedMax()) {
+    return Constraint{GeU, {aConstant}};
+  }
 
   // x > C || x >= C+1  ===  x > C, if C+1 does not overflow.
   if (aOp == GtS && bOp == GeS && !aConstant.isSignedMax()) {
     return Constraint{GtS, {aConstant}};
+  }
+  if (aOp == GtU && bOp == GeU && !aConstant.isUnsignedMax()) {
+    return Constraint{GtU, {aConstant}};
   }
 
   // TODO: all the rest
@@ -494,6 +506,11 @@ void LocalConstraint::flip() {
 }
 
 void BasicBlockConstraintMap::set(Index index, const Constraint& c) {
+  set(index, AndedConstraintSet{c});
+}
+
+void BasicBlockConstraintMap::set(Index index,
+                                  const AndedConstraintSet& constraints) {
   // We should not set values in unreachable code.
   assert(!unreachable);
 
@@ -501,8 +518,98 @@ void BasicBlockConstraintMap::set(Index index, const Constraint& c) {
   eraseStaleRefs(index);
   map.erase(index);
 
-  // Apply the constraint.
-  approximateAnd(index, c);
+  // Apply the constraints, if there are any.
+  if (constraints.provesNothing()) {
+    setProvesNothing(index);
+  } else {
+    for (auto& c : constraints) {
+      approximateAnd(index, c);
+    }
+  }
+}
+
+void BasicBlockConstraintMap::set(Index index, Expression* value) {
+  using namespace Match;
+  using namespace Abstract;
+
+  // Apply a constraint to a value, x = C.
+  if (Properties::isSingleConstantExpression(value)) {
+    auto c = Properties::getLiteral(value);
+    set(index, Constraint{Abstract::Eq, {c}});
+    return;
+  }
+
+  // Apply a constraint to a local, x = y.
+  if (auto* get = value->dynCast<LocalGet>()) {
+    set(index, Constraint{Abstract::Eq, {get->index}});
+    return;
+  }
+
+  // Apply an increment of a local, x = y + 1.
+  Index y;
+  if (matches(value, binary(Abstract::Add, local(&y), ival(1)))) {
+    // The local y must have old constraints that we know how to increment.
+    auto old = get(y);
+
+    // Iterate over the old constraints and increment each one.
+    auto success = true;
+    for (auto& c : old) {
+      auto* N = std::get_if<Literal>(&c.term);
+      if (!N) {
+        // A non-constant term, which we don't know how to increment.
+        success = false;
+        break;
+      }
+
+      switch (c.op) {
+        // x == N, x++  =>  x == N+1.
+        case Eq:
+          *N = N->add(Literal::makeFromInt32(1, N->type));
+          continue;
+        // x >= N, x++  =>  x > N
+        case GeS:
+          c.op = GtS;
+          continue;
+        case GeU:
+          c.op = GtU;
+          continue;
+        // x < N, x++  =>  x <= N
+        case LtS:
+          c.op = LeS;
+          continue;
+        case LtU:
+          c.op = LeU;
+          continue;
+        // x <= N, x++ => x <= N+1 if no overflow
+        case LeS:
+          if (N->isSignedMax()) {
+            success = false;
+            break;
+          }
+          *N = N->add(Literal::makeFromInt32(1, N->type));
+          continue;
+        case LeU:
+          if (N->isUnsignedMax()) {
+            success = false;
+            break;
+          }
+          *N = N->add(Literal::makeFromInt32(1, N->type));
+          continue;
+        default:
+          // Something we don't recognize.
+          success = false;
+          break;
+      }
+    }
+
+    if (success) {
+      set(index, old);
+      return;
+    }
+  }
+
+  // We know and can prove nothing.
+  setProvesNothing(index);
 }
 
 void BasicBlockConstraintMap::setProvesNothing(Index index) {
