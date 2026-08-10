@@ -1214,7 +1214,7 @@ void BrOn::finalize() {
         type = ref->type.with(NonNullable);
       } else if (desc && desc->type.isNull()) {
         // Cast will never be executed and the instruction will not be emitted.
-        // Model this with an uninhabitable cast type.
+        // Model this with an uninhabitable result type.
         type = desc->type.with(NonNullable);
       } else {
         // Nulls do not take the branch, so the result is non-nullable only if
