@@ -134,7 +134,6 @@ struct MakeSharedObjects
     CallRefCollector collector(callRefTypes);
     collector.walk(curr->body);
     WalkerPass::walkFunction(curr);
-    ReFinalize().walkFunctionInModule(curr, getModule());
   }
 
   void visitCallRef(CallRef* curr) {
@@ -325,6 +324,7 @@ struct MakeSharedObjects
   void visitModule(Module* wasm) {
     rewriteTypes();
     addFunctionTable();
+    ReFinalize().run(getPassRunner(), wasm);
   }
 
   void rewriteTypes() {

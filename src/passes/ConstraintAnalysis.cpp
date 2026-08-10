@@ -36,6 +36,12 @@
 #include "wasm-builder.h"
 #include "wasm.h"
 
+#define CONSTRAINT_DEBUG 0
+
+#ifndef CONSTRAINT_DEBUG
+#define CONSTRAINT_DEBUG 0
+#endif
+
 namespace wasm {
 
 using namespace wasm::constraint;
@@ -220,6 +226,10 @@ struct ConstraintAnalysis
   // Flow infos around until we have inferred all we can about the constraints
   // in each location.
   void flow() {
+#if CONSTRAINT_DEBUG
+    dumpCFG("flow");
+#endif
+
     // Start from the entry as the only reachable block. That block has incoming
     // values - defaults - for each var.
     entry->contents.startConstraints.setReachable();
@@ -247,14 +257,24 @@ struct ConstraintAnalysis
     // Starting from the entry, keep going while we find something new.
     UniqueDeferredQueue<BasicBlock*> work;
     work.push(entry);
+
     while (!work.empty()) {
       auto* block = work.pop();
 
       // Start at the top of the block, then go through, applying things.
       BasicBlockConstraintMap constraints = block->contents.startConstraints;
+
+#if CONSTRAINT_DEBUG
+      std::cout << block << " start constraints: " << constraints << '\n';
+#endif
+
       for (auto** currp : block->contents.actions) {
         applyToConstraints(*currp, constraints);
       }
+
+#if CONSTRAINT_DEBUG
+      std::cout << block << " end   constraints: " << constraints << '\n';
+#endif
 
       // We now know the values at the end of the block. Flow it onward, and
       // where it causes changes, queue more work.
@@ -267,14 +287,27 @@ struct ConstraintAnalysis
             branch && checkRelevancy(*branch)) {
           auto sentConstraints = constraints;
           sentConstraints.approximateAnd(branch->local, branch->constraint);
+#if CONSTRAINT_DEBUG
+          std::cout << block << " sending branch to " << out
+                    << " with sent constraints: " << sentConstraints << '\n';
+#endif
           // If anything changed at the start of the target block, flow onwards.
           if (outStartConstraints.approximateOr(sentConstraints)) {
+#if CONSTRAINT_DEBUG
+            std::cout << "out's start after  " << outStartConstraints << '\n';
+            std::cout << block << " branch-modified " << out
+                      << " to start with: " << outStartConstraints << '\n';
+#endif
             work.push(out);
           }
         } else {
           // There are no specific branch constraints, so send the unmodified
           // |constraints|, avoiding a copy.
           if (outStartConstraints.approximateOr(constraints)) {
+#if CONSTRAINT_DEBUG
+            std::cout << block << " modified " << out
+                      << " to start with: " << outStartConstraints << '\n';
+#endif
             work.push(out);
           }
         }
@@ -293,6 +326,9 @@ struct ConstraintAnalysis
       // of course not needed at this stage.)
       auto& constraints = block->contents.startConstraints;
       for (auto** currp : block->contents.actions) {
+#if CONSTRAINT_DEBUG
+        std::cout << block << " trying to optimize " << **currp << '\n';
+#endif
         if (!constraints.unreachable) {
           applyToConstraints(*currp, constraints);
           optimizeExpression(currp, constraints);
@@ -423,6 +459,21 @@ struct ConstraintAnalysis
     return parsed;
   }
 
+  // When applying constraints for a binary operation like x = y + 1, we may
+  // end up with lots of nonlinear work, in a loop: x may go from 0 to 1, then
+  // branch back to the top and merge, making it in the range [0, 1], then get
+  // incremented and loop again, leading to [0, 2] and so forth, only stopping
+  // when it reaches the loop bound, which may be very high. We don't want to
+  // spend significant time on such constant operations, as other passes will
+  // propagate them anyhow, so we verify that we don't apply such x = y + 1
+  // operations too many times.
+#ifndef NDEBUG
+  static const Index MaxBinaryActions = 5;
+
+  // How many times we processed each Binary action.
+  std::unordered_map<Binary*, Index> binaryActionCounts;
+#endif
+
   // Given an expression, apply it to the constraints. For example, a local.set
   // sets the value for that local.
   void applyToConstraints(Expression* curr,
@@ -432,17 +483,15 @@ struct ConstraintAnalysis
         // No point to apply a constraint to an irrelevant local.
         return;
       }
-      if (Properties::isSingleConstantExpression(set->value)) {
-        // Apply a constraint to this value.
-        auto value = Properties::getLiteral(set->value);
-        constraints.set(set->index, Constraint{Abstract::Eq, {value}});
-      } else if (auto* get = set->value->dynCast<LocalGet>()) {
-        // Apply a constraint to this local.
-        constraints.set(set->index, Constraint{Abstract::Eq, {get->index}});
-      } else {
-        // We know and can prove nothing.
-        constraints.setProvesNothing(set->index);
+
+#ifndef NDEBUG
+      // See above on binary action counting limits.
+      if (auto* binary = set->value->dynCast<Binary>()) {
+        assert(binaryActionCounts[binary]++ <= MaxBinaryActions);
       }
+#endif
+
+      constraints.set(set->index, set->value);
     }
   }
 

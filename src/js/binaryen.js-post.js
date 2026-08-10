@@ -192,7 +192,7 @@ function initializeConstants() {
     'FP16',
     'BulkMemoryOpt',
     'CallIndirectOverlong',
-    'RelaxedAtomics',
+    'AcquireReleaseAtomics',
     'CustomPageSizes',
     'WideArithmetic',
     'CompactImports',

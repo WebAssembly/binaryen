@@ -6,6 +6,64 @@
   ;; CHECK:      (import "a" "b" (func $import (type $1) (result i32)))
   (import "a" "b" (func $import (result i32)))
 
+  ;; CHECK:      (func $infinite-loop (type $0)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (loop $loop
+  ;; CHECK-NEXT:   (local.set $x
+  ;; CHECK-NEXT:    (i32.add
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (br $loop)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $infinite-loop
+    (local $x i32)
+    ;; An infinite loop. We should not hang, but nothing can be optimized.
+    (loop $loop
+      (local.set $x
+        (i32.add
+          (local.get $x)
+          (i32.const 1)
+        )
+      )
+      (br $loop)
+    )
+  )
+
+  ;; CHECK:      (func $almost-infinite-loop (type $0)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (loop $loop
+  ;; CHECK-NEXT:   (local.set $x
+  ;; CHECK-NEXT:    (i32.add
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (br_if $loop
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $almost-infinite-loop
+    (local $x i32)
+    ;; A loop that continues until an overflow happens. We should not hang, but
+    ;; nothing can be optimized.
+    (loop $loop
+      (local.set $x
+        (i32.add
+          (local.get $x)
+          (i32.const 1)
+        )
+      )
+      ;; Stop looping after we go all the way back to 0.
+      (br_if $loop
+        (local.get $x)
+      )
+    )
+  )
+
   ;; CHECK:      (func $bound (type $0)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (loop $loop

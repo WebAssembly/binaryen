@@ -54,7 +54,7 @@ std::vector<Type> getLoggableTypes(const FeatureSet& features) {
 }
 
 std::vector<MemoryOrder> getMemoryOrders(const FeatureSet& features) {
-  return features.hasRelaxedAtomics()
+  return features.hasAcquireReleaseAtomics()
            ? std::vector{MemoryOrder::AcqRel, MemoryOrder::SeqCst}
            : std::vector{MemoryOrder::SeqCst};
 }
