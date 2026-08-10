@@ -1235,6 +1235,7 @@ enum ASTNodes {
 
   OrderSeqCst = 0x0,
   OrderAcqRel = 0x1,
+  OrderRelaxed = 0x2,
   StructAtomicGet = 0x5c,
   StructAtomicGetS = 0x5d,
   StructAtomicGetU = 0x5e,

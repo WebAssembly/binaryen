@@ -158,8 +158,10 @@ public:
       case MemoryOrder::SeqCst:
         // This can never be precomputed away because it synchronizes with other
         // threads.
+        // TODO: Unify with other memory orderings below.
         return Flow(NONCONSTANT_FLOW);
       case MemoryOrder::AcqRel:
+      case MemoryOrder::Relaxed:
         // This synchronizes only with writes to the same data, so it can still
         // be precomputed if the data is not shared with other threads.
         if (curr->ref->type.getHeapType().isShared()) {
@@ -201,8 +203,10 @@ public:
       case MemoryOrder::SeqCst:
         // This can never be precomputed away because it synchronizes with other
         // threads.
+        // TODO: Unify with other memory orderings below.
         return Flow(NONCONSTANT_FLOW);
       case MemoryOrder::AcqRel:
+      case MemoryOrder::Relaxed:
         // This synchronizes only with writes to the same data, so it can still
         // be precomputed if the data is not shared with other threads.
         if (curr->ref->type.getHeapType().isShared()) {

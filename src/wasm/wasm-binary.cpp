@@ -2164,6 +2164,9 @@ void WasmBinaryWriter::writeMemoryOrder(MemoryOrder order, bool isRMW) {
     case MemoryOrder::AcqRel:
       code = BinaryConsts::OrderAcqRel;
       break;
+    case MemoryOrder::Relaxed:
+      code = BinaryConsts::OrderRelaxed;
+      break;
   }
   if (isRMW) {
     o << uint8_t((code << 4) | code);
@@ -5930,6 +5933,16 @@ MemoryOrder WasmBinaryReader::getMemoryOrder(bool isRMW) {
     case ((BinaryConsts::OrderAcqRel << 4) | BinaryConsts::OrderAcqRel):
       if (isRMW) {
         return MemoryOrder::AcqRel;
+      }
+      break;
+    case BinaryConsts::OrderRelaxed:
+      if (!isRMW) {
+        return MemoryOrder::Relaxed;
+      }
+      throwError("RMW memory orders must match");
+    case ((BinaryConsts::OrderRelaxed << 4) | BinaryConsts::OrderRelaxed):
+      if (isRMW) {
+        return MemoryOrder::Relaxed;
       }
       break;
   }

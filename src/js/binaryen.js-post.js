@@ -162,8 +162,9 @@ function initializeConstants() {
   // MemoryOrder for atomic operations
   Module['MemoryOrder'] = {};
   [ 'Unordered',
-    'SeqCst',
+    'Relaxed',
     'AcqRel'
+    'SeqCst',
    ].forEach(name => {
     Module['MemoryOrder'][name.toLowerCase()] = Module['_BinaryenMemoryOrder' + name]()
    });
