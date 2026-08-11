@@ -556,7 +556,9 @@ void BasicBlockConstraintMap::set(Index index, Expression* value) {
       auto& c = *iter;
       auto* N = std::get_if<Literal>(&c.term);
       if (!N) {
-        // A non-constant term, which we don't know how to increment.
+        // A non-constant term, which we don't know how to increment. Simply
+        // remove it: we are losing proving power here, but doing so is never
+        // invalid.
         iter = old.erase(iter);
         continue;
       }
