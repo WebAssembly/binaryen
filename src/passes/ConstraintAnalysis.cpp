@@ -606,18 +606,14 @@ struct ConstraintAnalysis
 
     // We can handle both x < M as the branch, as described above, or
     // x <= M (if N <= M).
-    if ((branch.constraint.op == Abstract::LtS &&
-         N->ltS(*M).getUnsigned()) ||
-        (branch.constraint.op == Abstract::LeS &&
-         N->leS(*M).getUnsigned())) {
+    if ((branch.constraint.op == Abstract::LtS && N->ltS(*M).getUnsigned()) ||
+        (branch.constraint.op == Abstract::LeS && N->leS(*M).getUnsigned())) {
       constraints.set(branch.local, branch.constraint);
       constraints.approximateAnd(branch.local, {GeS, {*N}});
       return true;
     }
-    if ((branch.constraint.op == Abstract::LtU &&
-         N->ltU(*M).getUnsigned()) ||
-        (branch.constraint.op == Abstract::LeU &&
-         N->leU(*M).getUnsigned())) {
+    if ((branch.constraint.op == Abstract::LtU && N->ltU(*M).getUnsigned()) ||
+        (branch.constraint.op == Abstract::LeU && N->leU(*M).getUnsigned())) {
       constraints.set(branch.local, branch.constraint);
       constraints.approximateAnd(branch.local, {GeU, {*N}});
       return true;
