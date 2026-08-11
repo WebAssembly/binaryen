@@ -134,6 +134,9 @@ void PassRegistry::registerPasses() {
                createConstraintAnalysisPass);
   registerPass(
     "dce", "removes unreachable code", createDeadCodeEliminationPass);
+  registerPass("ldse",
+               "removes dead stores (only looking at local info)",
+               createLocalDeadStoreEliminationPass);
   registerPass("dealign",
                "forces all loads and stores to have alignment 1",
                createDeAlignPass);
