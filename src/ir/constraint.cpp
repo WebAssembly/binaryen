@@ -552,60 +552,60 @@ void BasicBlockConstraintMap::set(Index index, Expression* value) {
     auto old = get(y);
 
     // Iterate over the old constraints and increment each one.
-    auto success = true;
-    for (auto& c : old) {
+    for (auto iter = old.begin(); iter != old.end();) {
+      auto& c = *iter;
       auto* N = std::get_if<Literal>(&c.term);
       if (!N) {
         // A non-constant term, which we don't know how to increment.
-        success = false;
-        break;
+        iter = old.erase(iter);
+        continue;
       }
 
       switch (c.op) {
         // x == N, x++  =>  x == N+1.
         case Eq:
           *N = N->add(Literal::makeFromInt32(1, N->type));
-          continue;
+          break;
         // x >= N, x++  =>  x > N
         case GeS:
           c.op = GtS;
-          continue;
+          break;
         case GeU:
           c.op = GtU;
-          continue;
+          break;
         // x < N, x++  =>  x <= N
         case LtS:
           c.op = LeS;
-          continue;
+          break;
         case LtU:
           c.op = LeU;
-          continue;
+          break;
         // x <= N, x++ => x <= N+1 if no overflow
         case LeS:
           if (N->isSignedMax()) {
-            success = false;
-            break;
+            iter = old.erase(iter);
+            continue;
           }
           *N = N->add(Literal::makeFromInt32(1, N->type));
-          continue;
+          break;
         case LeU:
           if (N->isUnsignedMax()) {
-            success = false;
-            break;
+            iter = old.erase(iter);
+            continue;
           }
           *N = N->add(Literal::makeFromInt32(1, N->type));
-          continue;
+          break;
         default:
           // Something we don't recognize.
-          success = false;
-          break;
+          iter = old.erase(iter);
+          continue;
       }
+
+      ++iter;
     }
 
-    if (success) {
-      set(index, old);
-      return;
-    }
+    set(index, old);
+    return;
   }
 
   // We know and can prove nothing.

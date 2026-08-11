@@ -712,10 +712,10 @@
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.gt_u
-  ;; CHECK-NEXT:      (local.get $x)
-  ;; CHECK-NEXT:      (i32.const 0)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (i32.const 1)
@@ -758,7 +758,7 @@
         )
 
         (drop
-          (i32.gt_u ;; XXX may eneed ge_u 1, not gt 0
+          (i32.gt_u
             (local.get $x)
             (i32.const 0)
           )
@@ -767,6 +767,13 @@
           (i32.le_u
             (local.get $x)
             (i32.const 100)
+          )
+        )
+        ;; And we also optimize that extra constraint: this is true.
+        (drop
+          (i32.ne
+            (local.get $x)
+            (i32.const 42)
           )
         )
         (br $loop)
