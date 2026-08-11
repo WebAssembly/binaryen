@@ -632,7 +632,8 @@ TEST(ConstraintTest, TestIncrement) {
             (AndedConstraintSet{{GtS, {Literal(int32_t(10))}},
                                 {LeS, {Literal(int32_t(20))}}}));
 
-  // $0 >= 10 && $0 <= max_signed, $0++  =>  $0 > 10 (overflowing constraint removed)
+  // $0 >= 10 && $0 <= max_signed, $0++  =>  $0 > 10 (overflowing constraint
+  // removed)
   map.set(0, {GeS, {Literal(int32_t(10))}});
   map.approximateAnd(0, {LeS, {Literal::makeSignedMax(Type::i32)}});
   map.set(0, &add);
