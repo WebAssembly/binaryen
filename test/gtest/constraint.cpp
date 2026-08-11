@@ -632,3 +632,21 @@ TEST(ConstraintTest, TestIncrement) {
             (AndedConstraintSet{{GtS, {Literal(int32_t(10))}},
                                 {LeS, {Literal(int32_t(20))}}}));
 }
+
+TEST(ConstraintTest, TestEqConstraints) {
+  BasicBlockConstraintMap map;
+  map.setReachable();
+
+  // $0 == 42
+  map.set(0, {Eq, Literal(int32_t(42))});
+  // $0 < $1
+  map.approximateAnd(0, {LtS, {Index(int32_t(1))}});
+
+  // $0 still has just one constraint: we did not add one for the < $1, as
+  // knowing $0 == 42 is the most precise thing we can possibly know.
+  check(map.get(0), {Eq, {Literal(int32_t(42))}});
+
+  // $1 has $1 > 42: we constant-propagated the value of $0. This is better than
+  // having $1 > $0 and needing to look $0 up.
+  check(map.get(1), {GtS, {Literal(int32_t(42))}});
+}
