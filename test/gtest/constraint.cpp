@@ -639,6 +639,7 @@ TEST(ConstraintTest, TestEqConstraints) {
 
   // $0 == 42
   map.set(0, {Eq, Literal(int32_t(42))});
+
   // $0 < $1
   map.approximateAnd(0, {LtS, {Index(int32_t(1))}});
 

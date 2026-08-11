@@ -209,6 +209,16 @@ std::optional<Constraint> fusedApproximateAndPair(const Constraint& a,
   return {};
 }
 
+// If a set of constraints shows us as equal to a literal, return it.
+std::optional<Literal> equalToLiteral(const AndedConstraintSet& set) {
+  if (set.size() == 1) {
+    if (auto* c = std::get_if<Literal>(&set[0].term)) {
+      return *c;
+    }
+  }
+  return {};
+}
+
 } // anonymous namespace
 
 void AndedConstraintSet::approximateAnd(const Constraint& c) {
@@ -224,6 +234,14 @@ void AndedConstraintSet::approximateAnd(const Constraint& c) {
   } else if (result == False) {
     // We are now a contradiction.
     setProvesEverything();
+    return;
+  }
+
+  // If we are already equal to a literal, add nothing further. E.g. if x == 42
+  // then adding x < 100 is useless (already handled above), but also x < y is
+  // useless since it adds nothing for x (though it does say y > 42, if we
+  // propagate the constant, which we do below).
+  if (equalToLiteral(*this)) {
     return;
   }
 
@@ -666,11 +684,19 @@ void BasicBlockConstraintMap::approximateAndInternal(Index index,
     actual = flipped.constraint;
   }
 
-  // Never add constraints to ourselves (x == x, etc., which can happen due to
-  // copying/flipping).
   if (auto* other = std::get_if<Index>(&actual.term)) {
+    // Never add constraints to ourselves (x == x, etc., which can happen due to
+    // copying/flipping).
     if (*other == index) {
       return;
+    }
+
+    // If we are applying a constraint to another local, and we know that
+    // local's value, propagate it. That is, if x == 42, then if we try to apply
+    // y < x we instead apply y < 42, which is better.
+    auto otherConstraints = get(*other);
+    if (auto lit = equalToLiteral(otherConstraints)) {
+      actual.term = Term(*lit);
     }
   }
 
