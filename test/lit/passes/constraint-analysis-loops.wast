@@ -758,7 +758,7 @@
         )
 
         (drop
-          (i32.gt_u
+          (i32.gt_u ;; XXX may eneed ge_u 1, not gt 0
             (local.get $x)
             (i32.const 0)
           )
