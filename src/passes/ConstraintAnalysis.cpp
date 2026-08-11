@@ -587,33 +587,40 @@ struct ConstraintAnalysis
     // "Jump ahead" and extend ranges. If the branch is x < M, and we were
     // x == N where N < M, then extend to x >= N && x < M (see top-level
     // comment).
-    if (auto* M = std::get_if<Literal>(&branch.constraint.term)) {
-      auto localConstraints = constraints.get(branch.local);
-      // Handle the case of simple equality of the local to a constant.
-      // TODO: Handle more constraints here as well, and non-constant ones.
-      if (localConstraints.size() == 1 &&
-          localConstraints[0].op == Abstract::Eq) {
-        if (auto* N = std::get_if<Literal>(&localConstraints[0].term)) {
-          // We can handle both x < M as the branch, as described above, or
-          // x <= M (if N <= M).
-          if ((branch.constraint.op == Abstract::LtS &&
-               N->ltS(*M).getUnsigned()) ||
-              (branch.constraint.op == Abstract::LeS &&
-               N->leS(*M).getUnsigned())) {
-            constraints.set(branch.local, branch.constraint);
-            constraints.approximateAnd(branch.local, {GeS, {*N}});
-            return true;
-          }
-          if ((branch.constraint.op == Abstract::LtU &&
-               N->ltU(*M).getUnsigned()) ||
-              (branch.constraint.op == Abstract::LeU &&
-               N->leU(*M).getUnsigned())) {
-            constraints.set(branch.local, branch.constraint);
-            constraints.approximateAnd(branch.local, {GeU, {*N}});
-            return true;
-          }
-        }
-      }
+    auto* M = std::get_if<Literal>(&branch.constraint.term);
+    if (!M) {
+      return false;
+    }
+
+    auto localConstraints = constraints.get(branch.local);
+    // Handle the case of simple equality of the local to a constant.
+    // TODO: Handle more constraints here as well, and non-constant ones.
+    if (localConstraints.size() != 1 ||
+        localConstraints[0].op != Abstract::Eq) {
+      return false;
+    }
+    auto* N = std::get_if<Literal>(&localConstraints[0].term);
+    if (!N) {
+      return false;
+    }
+
+    // We can handle both x < M as the branch, as described above, or
+    // x <= M (if N <= M).
+    if ((branch.constraint.op == Abstract::LtS &&
+         N->ltS(*M).getUnsigned()) ||
+        (branch.constraint.op == Abstract::LeS &&
+         N->leS(*M).getUnsigned())) {
+      constraints.set(branch.local, branch.constraint);
+      constraints.approximateAnd(branch.local, {GeS, {*N}});
+      return true;
+    }
+    if ((branch.constraint.op == Abstract::LtU &&
+         N->ltU(*M).getUnsigned()) ||
+        (branch.constraint.op == Abstract::LeU &&
+         N->leU(*M).getUnsigned())) {
+      constraints.set(branch.local, branch.constraint);
+      constraints.approximateAnd(branch.local, {GeU, {*N}});
+      return true;
     }
 
     return false;
