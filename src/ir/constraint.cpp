@@ -677,7 +677,7 @@ void BasicBlockConstraintMap::approximateAndInternal(Index index,
     // local's value, propagate it. That is, if x == 42, then if we try to apply
     // y < x we instead apply y < 42, which is better.
     auto otherConstraints = get(*other);
-    if (auto lit = equalToLiteral(otherConstraints)) {
+    if (auto lit = otherConstraints.getLiteral()) {
       actual.term = Term(*lit);
     }
   }

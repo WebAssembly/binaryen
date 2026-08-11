@@ -196,7 +196,7 @@ struct AndedConstraintSet : inplace_vector<Constraint, MaxConstraints> {
   }
 
   // If the set of constraints shows us as equal to a literal, return it.
-  std::optional<Literal> equalToLiteral() const {
+  std::optional<Literal> getLiteral() const {
     for (auto& c : *this) {
       if (c.op == Abstract::Eq) {
         if (auto* cc = std::get_if<Literal>(&c.term)) {
