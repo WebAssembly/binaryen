@@ -516,7 +516,7 @@ void LocalConstraint::flip() {
   constraint.term = Term{local};
   local = other;
   if (Abstract::isRelationalAntisymmetric(constraint.op)) {
-    constraint.op = Abstract::negateRelational(constraint.op);
+    constraint.op = Abstract::flipRelational(constraint.op);
   } else {
     // All we support for now are symmetric and antisymmetric operations.
     assert(Abstract::isRelationalSymmetric(constraint.op));
