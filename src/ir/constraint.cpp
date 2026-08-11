@@ -237,14 +237,6 @@ void AndedConstraintSet::approximateAnd(const Constraint& c) {
     return;
   }
 
-  // If we are already equal to a literal, add nothing further. E.g. if x == 42
-  // then adding x < 100 is useless (already handled above), but also x < y is
-  // useless since it adds nothing for x (though it does say y > 42, if we
-  // propagate the constant, which we do below).
-  if (equalToLiteral(*this)) {
-    return;
-  }
-
   for (auto& existing : *this) {
     // Some ANDed constraints fuse together into a new constraint.
     if (auto fused = fusedApproximateAndPair(existing, c)) {

@@ -3569,10 +3569,7 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (if
-  ;; CHECK-NEXT:    (i32.ge_u
-  ;; CHECK-NEXT:     (local.get $index)
-  ;; CHECK-NEXT:     (local.get $len)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (then
   ;; CHECK-NEXT:     (unreachable)
   ;; CHECK-NEXT:    )
@@ -3617,10 +3614,7 @@
   ;; OPTIN-NEXT:    )
   ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:   (if
-  ;; OPTIN-NEXT:    (i32.ge_u
-  ;; OPTIN-NEXT:     (local.get $index)
-  ;; OPTIN-NEXT:     (local.get $len)
-  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:    (i32.const 0)
   ;; OPTIN-NEXT:    (then
   ;; OPTIN-NEXT:     (unreachable)
   ;; OPTIN-NEXT:    )
