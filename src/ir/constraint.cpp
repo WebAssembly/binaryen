@@ -211,9 +211,11 @@ std::optional<Constraint> fusedApproximateAndPair(const Constraint& a,
 
 // If a set of constraints shows us as equal to a literal, return it.
 std::optional<Literal> equalToLiteral(const AndedConstraintSet& set) {
-  if (set.size() == 1 && set[0].op == Abstract::Eq) {
-    if (auto* c = std::get_if<Literal>(&set[0].term)) {
-      return *c;
+  for (auto& c : set) {
+    if (set[0].op == Abstract::Eq) {
+      if (auto* cc = std::get_if<Literal>(&c.term)) {
+        return *cc;
+      }
     }
   }
   return {};
