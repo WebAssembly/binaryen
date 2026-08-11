@@ -2866,8 +2866,10 @@ Expression* TranslateToFuzzReader::_makeConcrete(Type type) {
     if (type.isCastable()) {
       // Exact casts are only allowed with custom descriptors enabled.
       if (type.isInexact() || wasm.features.hasCustomDescriptors()) {
+        // Casts are very fundamental to WasmGC, and a potential source of
+        // security issues, so we prioritize them as very important.
         options.add(FeatureSet::ReferenceTypes | FeatureSet::GC,
-                    &Self::makeRefCast);
+                    WeightedOption{&Self::makeRefCast, VeryImportant});
       }
     }
     if (heapType.getDescribedType()) {
