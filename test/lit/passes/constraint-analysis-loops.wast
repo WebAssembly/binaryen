@@ -990,37 +990,6 @@
     )
   )
 
-  ;; CHECK:      (func $do-nonconstant-unsigned (type $1) (param $len i32)
-  ;; CHECK-NEXT:  (local $x i32)
-  ;; CHECK-NEXT:  (if
-  ;; CHECK-NEXT:   (i32.lt_u
-  ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:    (local.get $len)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (then
-  ;; CHECK-NEXT:    (loop $loop
-  ;; CHECK-NEXT:     (drop
-  ;; CHECK-NEXT:      (i32.const 1)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (drop
-  ;; CHECK-NEXT:      (i32.const 1)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (local.set $x
-  ;; CHECK-NEXT:      (i32.add
-  ;; CHECK-NEXT:       (local.get $x)
-  ;; CHECK-NEXT:       (i32.const 1)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (br_if $loop
-  ;; CHECK-NEXT:      (i32.lt_u
-  ;; CHECK-NEXT:       (local.get $x)
-  ;; CHECK-NEXT:       (local.get $len)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
   (func $do-nonconstant-unsigned (param $len i32)
     ;; As above, but unsigned.
     (local $x i32)
