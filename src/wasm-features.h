@@ -60,11 +60,12 @@ struct FeatureSet {
     Multibyte = 1 << 24,
     WideArithmetic = 1 << 25,
     CompactImports = 1 << 26,
+    RelaxedAtomics = 1 << 27,
     MVP = None,
     // Keep in sync with llvm default features:
     // https://github.com/llvm/llvm-project/blob/c7576cb89d6c95f03968076e902d3adfd1996577/clang/lib/Basic/Targets/WebAssembly.cpp#L150-L153
     Default = SignExt | MutableGlobals,
-    All = (1 << 27) - 1,
+    All = (1 << 28) - 1,
   };
 
   static std::string toString(Feature f) {
@@ -123,6 +124,8 @@ struct FeatureSet {
         return "wide-arithmetic";
       case CompactImports:
         return "compact-imports";
+      case RelaxedAtomics:
+        return "relaxed-atomics";
       case MVP:
       case Default:
       case All:
@@ -190,6 +193,7 @@ struct FeatureSet {
   bool hasMultibyte() const { return (features & Multibyte) != 0; }
   bool hasWideArithmetic() const { return (features & WideArithmetic) != 0; }
   bool hasCompactImports() const { return (features & CompactImports) != 0; }
+  bool hasRelaxedAtomics() const { return (features & RelaxedAtomics) != 0; }
   bool hasAll() const { return (features & All) != 0; }
 
   void set(FeatureSet f, bool v = true) {
@@ -219,9 +223,11 @@ struct FeatureSet {
   void setAcquireReleaseAtomics(bool v = true) {
     set(AcquireReleaseAtomics, v);
   }
+  void setCustomPageSizes(bool v = true) { set(CustomPageSizes, v); }
   void setMultibyte(bool v = true) { set(Multibyte, v); }
   void setWideArithmetic(bool v = true) { set(WideArithmetic, v); }
   void setCompactImports(bool v = true) { set(CompactImports, v); }
+  void setRelaxedAtomics(bool v = true) { set(RelaxedAtomics, v); }
   void setMVP() { features = MVP; }
   void setAll() { features = All; }
 

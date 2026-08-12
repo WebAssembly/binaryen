@@ -52,7 +52,8 @@ BinaryenFeatureCustomPageSizes: 8388608
 BinaryenFeatureMultibyte: 16777216
 BinaryenFeatureWideArithmetic: 33554432
 BinaryenFeatureCompactImports: 67108864
-BinaryenFeatureAll: 134217727
+BinaryenFeatureRelaxedAtomics: 134217728
+BinaryenFeatureAll: 268435455
 (f32.neg
  (f32.const -33.61199951171875)
 )
@@ -3131,6 +3132,43 @@ Fence memory order: 2
     )
    )
    (atomic.fence acqrel)
+  )
+ )
+)
+Load memory order: 1
+Store memory order: 1
+RMW memory order: 1
+Cmpxchg memory order: 1
+Fence memory order: 1
+(module
+ (type $0 (func))
+ (memory $0 1 1)
+ (export "memory" (memory $0))
+ (func $relaxed-atomics (type $0)
+  (block $body
+   (drop
+    (i32.atomic.load relaxed
+     (i32.const 0)
+    )
+   )
+   (i32.atomic.store relaxed
+    (i32.const 0)
+    (i32.const 1)
+   )
+   (drop
+    (i32.atomic.rmw.add relaxed
+     (i32.const 0)
+     (i32.const 1)
+    )
+   )
+   (drop
+    (i32.atomic.rmw.cmpxchg relaxed
+     (i32.const 0)
+     (i32.const 0)
+     (i32.const 1)
+    )
+   )
+   (atomic.fence relaxed)
   )
  )
 )
