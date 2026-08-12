@@ -33,5 +33,6 @@ export enum Feature {
 	// TODO: Multibyte
 	WideArithmetic = BinaryenObj["_BinaryenFeatureWideArithmetic"](),
 	CompactImports = BinaryenObj["_BinaryenFeatureCompactImports"](),
+	RelaxedAtomics = BinaryenObj["_BinaryenFeatureRelaxedAtomics"](),
 	All = BinaryenObj["_BinaryenFeatureAll"](),
 }

@@ -3541,7 +3541,8 @@ void BinaryInstWriter::emitMemoryAccess(size_t alignment,
     case MemoryOrder::Unordered:
     case MemoryOrder::SeqCst:
       break;
-    case MemoryOrder::AcqRel: {
+    case MemoryOrder::AcqRel:
+    case MemoryOrder::Relaxed: {
       shouldWriteMemoryOrder = true;
       alignmentBits |= BinaryConsts::HasMemoryOrderMask;
       break;

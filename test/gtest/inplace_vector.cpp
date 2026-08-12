@@ -6,9 +6,9 @@ using InplaceVectorTest = ::testing::Test;
 using namespace wasm;
 
 TEST_F(InplaceVectorTest, Size) {
-  inplace_vector<int64_t, 10> vec;
+  inplace_vector<int32_t, 10> vec;
   // An inplace_vector is just a size plus the in-place storage.
-  EXPECT_EQ(sizeof(vec), sizeof(size_t) + 10 * sizeof(int64_t));
+  EXPECT_EQ(sizeof(vec), sizeof(size_t) + 10 * sizeof(int32_t));
 }
 
 TEST_F(InplaceVectorTest, Basics) {
