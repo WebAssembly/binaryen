@@ -540,7 +540,8 @@ struct ConstraintAnalysis
       // not change while falling through. For a local, the only way for the
       // local to change while falling through is to go through a tee of that
       // local - but that would keep the same value there anyhow.
-      auto* value = Properties::getFallthrough(set->value, getPassOptions(), *getModule());
+      auto* value =
+        Properties::getFallthrough(set->value, getPassOptions(), *getModule());
       constraints.set(set->index, value);
     }
   }
