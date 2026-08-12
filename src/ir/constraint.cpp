@@ -680,7 +680,7 @@ void BasicBlockConstraintMap::approximateAndInternal(Index index,
     // y < x we instead apply y < 42, which is better.
     auto otherConstraints = get(*other);
     if (auto lit = otherConstraints.getLiteral()) {
-      actual.term = Term(*lit);
+      actual.term = Term{*lit};
     }
   }
 
