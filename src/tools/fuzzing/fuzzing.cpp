@@ -54,7 +54,7 @@ std::vector<Type> getLoggableTypes(const FeatureSet& features) {
 }
 
 std::vector<MemoryOrder> getMemoryOrders(const FeatureSet& features) {
-  return features.hasRelaxedAtomics()
+  return features.hasAcquireReleaseAtomics()
            ? std::vector{MemoryOrder::AcqRel, MemoryOrder::SeqCst}
            : std::vector{MemoryOrder::SeqCst};
 }
@@ -2866,8 +2866,10 @@ Expression* TranslateToFuzzReader::_makeConcrete(Type type) {
     if (type.isCastable()) {
       // Exact casts are only allowed with custom descriptors enabled.
       if (type.isInexact() || wasm.features.hasCustomDescriptors()) {
+        // Casts are very fundamental to WasmGC, and a potential source of
+        // security issues, so we prioritize them as very important.
         options.add(FeatureSet::ReferenceTypes | FeatureSet::GC,
-                    &Self::makeRefCast);
+                    WeightedOption{&Self::makeRefCast, VeryImportant});
       }
     }
     if (heapType.getDescribedType()) {

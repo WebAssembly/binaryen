@@ -49,12 +49,16 @@ static Name getLoadName(Load* curr) {
       parts.push_back(std::to_string(curr->align));
       break;
     }
-    case MemoryOrder::SeqCst: {
-      parts.push_back("SC");
+    case MemoryOrder::Relaxed: {
+      parts.push_back("RLX");
       break;
     }
     case MemoryOrder::AcqRel: {
       parts.push_back("AR");
+      break;
+    }
+    case MemoryOrder::SeqCst: {
+      parts.push_back("SC");
       break;
     }
   }
@@ -70,12 +74,17 @@ static Name getStoreName(Store* curr) {
       parts.push_back(std::to_string(curr->align));
       break;
     }
-    case MemoryOrder::SeqCst: {
-      parts.push_back("SC");
+    case MemoryOrder::Relaxed: {
+      parts.push_back("RLX");
       break;
     }
     case MemoryOrder::AcqRel: {
       parts.push_back("AR");
+      break;
+    }
+    case MemoryOrder::SeqCst: {
+      parts.push_back("SC");
+      break;
     }
   }
   return "SAFE_HEAP_STORE_" + String::join(parts, "_");
@@ -229,13 +238,14 @@ struct SafeHeap : public Pass {
   void addGlobals(Module* module, FeatureSet features) {
     // load funcs
     Load load;
-    std::vector<MemoryOrder> memoryOrdersToGenerate(
-      features.hasRelaxedAtomics()
-        ? std::initializer_list<MemoryOrder>{MemoryOrder::Unordered,
-                                             MemoryOrder::AcqRel,
-                                             MemoryOrder::SeqCst}
-        : std::initializer_list<MemoryOrder>{MemoryOrder::Unordered,
-                                             MemoryOrder::SeqCst});
+    std::vector<MemoryOrder> memoryOrdersToGenerate{MemoryOrder::Unordered,
+                                                    MemoryOrder::SeqCst};
+    if (features.hasRelaxedAtomics()) {
+      memoryOrdersToGenerate.push_back(MemoryOrder::Relaxed);
+    }
+    if (features.hasAcquireReleaseAtomics()) {
+      memoryOrdersToGenerate.push_back(MemoryOrder::AcqRel);
+    }
     for (Type type : {Type::i32, Type::i64, Type::f32, Type::f64, Type::v128}) {
       if (type == Type::v128 && !features.hasSIMD()) {
         continue;

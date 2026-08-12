@@ -1220,9 +1220,16 @@ void FunctionValidator::visitLoad(Load* curr) {
   }
   switch (curr->order) {
     case MemoryOrder::AcqRel: {
-      shouldBeTrue(getModule()->features.hasRelaxedAtomics(),
+      shouldBeTrue(getModule()->features.hasAcquireReleaseAtomics(),
                    curr,
                    "Acquire/release operations require relaxed atomics "
+                   "[--enable-acquire-release-atomics]");
+      break;
+    }
+    case MemoryOrder::Relaxed: {
+      shouldBeTrue(getModule()->features.hasRelaxedAtomics(),
+                   curr,
+                   "Relaxed operations require relaxed atomics "
                    "[--enable-relaxed-atomics]");
       break;
     }
@@ -1265,9 +1272,16 @@ void FunctionValidator::visitStore(Store* curr) {
   }
   switch (curr->order) {
     case MemoryOrder::AcqRel: {
-      shouldBeTrue(getModule()->features.hasRelaxedAtomics(),
+      shouldBeTrue(getModule()->features.hasAcquireReleaseAtomics(),
                    curr,
                    "Acquire/release operations require relaxed atomics "
+                   "[--enable-acquire-release-atomics]");
+      break;
+    }
+    case MemoryOrder::Relaxed: {
+      shouldBeTrue(getModule()->features.hasRelaxedAtomics(),
+                   curr,
+                   "Relaxed operations require relaxed atomics "
                    "[--enable-relaxed-atomics]");
       break;
     }
@@ -1310,9 +1324,16 @@ void FunctionValidator::visitAtomicRMW(AtomicRMW* curr) {
 
   switch (curr->order) {
     case MemoryOrder::AcqRel: {
-      shouldBeTrue(getModule()->features.hasRelaxedAtomics(),
+      shouldBeTrue(getModule()->features.hasAcquireReleaseAtomics(),
                    curr,
                    "Acquire/release operations require relaxed atomics "
+                   "[--enable-acquire-release-atomics]");
+      break;
+    }
+    case MemoryOrder::Relaxed: {
+      shouldBeTrue(getModule()->features.hasRelaxedAtomics(),
+                   curr,
+                   "Relaxed operations require relaxed atomics "
                    "[--enable-relaxed-atomics]");
       break;
     }
@@ -1351,9 +1372,16 @@ void FunctionValidator::visitAtomicCmpxchg(AtomicCmpxchg* curr) {
 
   switch (curr->order) {
     case MemoryOrder::AcqRel: {
-      shouldBeTrue(getModule()->features.hasRelaxedAtomics(),
+      shouldBeTrue(getModule()->features.hasAcquireReleaseAtomics(),
                    curr,
                    "Acquire/release operations require relaxed atomics "
+                   "[--enable-acquire-release-atomics]");
+      break;
+    }
+    case MemoryOrder::Relaxed: {
+      shouldBeTrue(getModule()->features.hasRelaxedAtomics(),
+                   curr,
+                   "Relaxed operations require relaxed atomics "
                    "[--enable-relaxed-atomics]");
       break;
     }
@@ -1449,9 +1477,16 @@ void FunctionValidator::visitAtomicFence(AtomicFence* curr) {
                "Atomic operations require threads [--enable-threads]");
   switch (curr->order) {
     case MemoryOrder::AcqRel: {
-      shouldBeTrue(getModule()->features.hasRelaxedAtomics(),
+      shouldBeTrue(getModule()->features.hasAcquireReleaseAtomics(),
                    curr,
                    "Acquire/release operations require relaxed atomics "
+                   "[--enable-acquire-release-atomics]");
+      break;
+    }
+    case MemoryOrder::Relaxed: {
+      shouldBeTrue(getModule()->features.hasRelaxedAtomics(),
+                   curr,
+                   "Relaxed operations require relaxed atomics "
                    "[--enable-relaxed-atomics]");
       break;
     }

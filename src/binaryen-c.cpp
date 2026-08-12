@@ -430,6 +430,9 @@ BinaryenExternalKind BinaryenExternalTag(void) {
 BINARYEN_API BinaryenMemoryOrder BinaryenMemoryOrderUnordered(void) {
   return static_cast<BinaryenMemoryOrder>(MemoryOrder::Unordered);
 }
+BINARYEN_API BinaryenMemoryOrder BinaryenMemoryOrderRelaxed(void) {
+  return static_cast<BinaryenMemoryOrder>(MemoryOrder::Relaxed);
+}
 BINARYEN_API BinaryenMemoryOrder BinaryenMemoryOrderAcqRel(void) {
   return static_cast<BinaryenMemoryOrder>(MemoryOrder::AcqRel);
 }
@@ -505,8 +508,8 @@ BinaryenFeatures BinaryenFeatureBulkMemoryOpt(void) {
 BinaryenFeatures BinaryenFeatureCallIndirectOverlong(void) {
   return static_cast<BinaryenFeatures>(FeatureSet::CallIndirectOverlong);
 }
-BinaryenFeatures BinaryenFeatureRelaxedAtomics(void) {
-  return static_cast<BinaryenFeatures>(FeatureSet::RelaxedAtomics);
+BinaryenFeatures BinaryenFeatureAcquireReleaseAtomics(void) {
+  return static_cast<BinaryenFeatures>(FeatureSet::AcquireReleaseAtomics);
 }
 BinaryenFeatures BinaryenFeatureMultibyte(void) {
   return static_cast<BinaryenFeatures>(FeatureSet::Multibyte);
@@ -519,6 +522,9 @@ BinaryenFeatures BinaryenFeatureWideArithmetic(void) {
 }
 BinaryenFeatures BinaryenFeatureCompactImports(void) {
   return static_cast<BinaryenFeatures>(FeatureSet::CompactImports);
+}
+BinaryenFeatures BinaryenFeatureRelaxedAtomics(void) {
+  return static_cast<BinaryenFeatures>(FeatureSet::RelaxedAtomics);
 }
 BinaryenFeatures BinaryenFeatureAll(void) {
   return static_cast<BinaryenFeatures>(FeatureSet::All);

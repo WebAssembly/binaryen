@@ -194,6 +194,18 @@ struct AndedConstraintSet : inplace_vector<Constraint, MaxConstraints> {
     setProvesNothing();
     push_back(c);
   }
+
+  // If the set of constraints shows us as equal to a literal, return it.
+  std::optional<Literal> getLiteral() const {
+    for (auto& c : *this) {
+      if (c.op == Abstract::Eq) {
+        if (auto* cc = std::get_if<Literal>(&c.term)) {
+          return *cc;
+        }
+      }
+    }
+    return {};
+  }
 };
 
 // A local plus a constraint on it.
@@ -251,8 +263,14 @@ struct BasicBlockConstraintMap {
     assert(map.empty());
   }
 
-  // Apply a constraint to a local.
+  // Apply a constraint to a local, replacing anything before.
   void set(Index index, const Constraint& c);
+
+  // Apply a set of constraints to a local, replacing anything before.
+  void set(Index index, const AndedConstraintSet& constraints);
+
+  // Set the value in an expression to a local, replacing anything before.
+  void set(Index index, Expression* value);
 
   // Mark a local as unknown and able to prove nothing.
   void setProvesNothing(Index index);

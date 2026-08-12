@@ -70,8 +70,9 @@ struct Address {
 
 enum class MemoryOrder : uint8_t {
   Unordered,
-  SeqCst,
+  Relaxed,
   AcqRel,
+  SeqCst,
 };
 
 enum class IRProfile { Normal, Poppy };

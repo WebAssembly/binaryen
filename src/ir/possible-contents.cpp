@@ -898,7 +898,6 @@ struct InfoCollector
   }
 
   void visitCall(Call* curr) {
-    Name targetName;
     if (!Intrinsics(*getModule()).isCallWithoutEffects(curr)) {
       // This is just a normal call.
       handleDirectCall(curr, curr->target);

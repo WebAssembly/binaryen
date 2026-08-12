@@ -6,6 +6,64 @@
   ;; CHECK:      (import "a" "b" (func $import (type $1) (result i32)))
   (import "a" "b" (func $import (result i32)))
 
+  ;; CHECK:      (func $infinite-loop (type $0)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (loop $loop
+  ;; CHECK-NEXT:   (local.set $x
+  ;; CHECK-NEXT:    (i32.add
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (br $loop)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $infinite-loop
+    (local $x i32)
+    ;; An infinite loop. We should not hang, but nothing can be optimized.
+    (loop $loop
+      (local.set $x
+        (i32.add
+          (local.get $x)
+          (i32.const 1)
+        )
+      )
+      (br $loop)
+    )
+  )
+
+  ;; CHECK:      (func $almost-infinite-loop (type $0)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (loop $loop
+  ;; CHECK-NEXT:   (local.set $x
+  ;; CHECK-NEXT:    (i32.add
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (br_if $loop
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $almost-infinite-loop
+    (local $x i32)
+    ;; A loop that continues until an overflow happens. We should not hang, but
+    ;; nothing can be optimized.
+    (loop $loop
+      (local.set $x
+        (i32.add
+          (local.get $x)
+          (i32.const 1)
+        )
+      )
+      ;; Stop looping after we go all the way back to 0.
+      (br_if $loop
+        (local.get $x)
+      )
+    )
+  )
+
   ;; CHECK:      (func $bound (type $0)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (loop $loop
@@ -223,6 +281,505 @@
             )
           )
         )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $bound-incremented (type $0)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (loop $loop
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.set $x
+  ;; CHECK-NEXT:    (i32.add
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (if
+  ;; CHECK-NEXT:    (i32.lt_s
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i32.const 100)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (then
+  ;; CHECK-NEXT:     (br $loop)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $bound-incremented
+    (local $x i32)
+    (loop $loop
+      ;; A realistic do-while loop, with $x++ and a bounds check. We can infer
+      ;; that no overflow happens, and prove these two checks are true.
+      (drop
+        (i32.lt_s
+          (local.get $x)
+          (i32.const 100)
+        )
+      )
+      (drop
+        (i32.ge_s
+          (local.get $x)
+          (i32.const 0)
+        )
+      )
+      ;; This changed compared to previous testcases: now we have x++.
+      (local.set $x
+        (i32.add
+          (local.get $x)
+          (i32.const 1)
+        )
+      )
+      (if
+        (i32.lt_s
+          (local.get $x)
+          (i32.const 100)
+        )
+        (then
+          (br $loop)
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $bound-incremented-unsigned (type $0)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (loop $loop
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.set $x
+  ;; CHECK-NEXT:    (i32.add
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (if
+  ;; CHECK-NEXT:    (i32.lt_u
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i32.const 100)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (then
+  ;; CHECK-NEXT:     (br $loop)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $bound-incremented-unsigned
+    ;; As above, but with unsigned operations. Again, we optimize these to 1.
+    (local $x i32)
+    (loop $loop
+      (drop
+        (i32.lt_u
+          (local.get $x)
+          (i32.const 100)
+        )
+      )
+      (drop
+        (i32.ge_u
+          (local.get $x)
+          (i32.const 0)
+        )
+      )
+      (local.set $x
+        (i32.add
+          (local.get $x)
+          (i32.const 1)
+        )
+      )
+      (if
+        (i32.lt_u
+          (local.get $x)
+          (i32.const 100)
+        )
+        (then
+          (br $loop)
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $bound-incremented-while (type $0)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (block $out
+  ;; CHECK-NEXT:   (loop $loop
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (i32.ge_s
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:      (i32.const 100)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (then
+  ;; CHECK-NEXT:      (br $out)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $x
+  ;; CHECK-NEXT:     (i32.add
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (br $loop)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $bound-incremented-while
+    ;; Similar to above, but before we had a do-while loop (loop condition at
+    ;; the bottom) and now it is at the top.
+    (local $x i32)
+    (block $out
+      (loop $loop
+        ;; Conditional branch at the top.
+        (if
+          (i32.ge_s
+            (local.get $x)
+            (i32.const 100)
+          )
+          (then
+            (br $out)
+          )
+        )
+        ;; We can infer both of these to be 1.
+        (drop
+          (i32.lt_s
+            (local.get $x)
+            (i32.const 100)
+          )
+        )
+        (drop
+          (i32.ge_s
+            (local.get $x)
+            (i32.const 0)
+          )
+        )
+        (local.set $x
+          (i32.add
+            (local.get $x)
+            (i32.const 1)
+          )
+        )
+        ;; Unconditional branch at the bottom.
+        (br $loop)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $bound-incremented-inc-first (type $0)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (block $out
+  ;; CHECK-NEXT:   (loop $loop
+  ;; CHECK-NEXT:    (local.set $x
+  ;; CHECK-NEXT:     (i32.add
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (i32.ge_s
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:      (i32.const 100)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (then
+  ;; CHECK-NEXT:      (br $out)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (br $loop)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $bound-incremented-inc-first
+    ;; Similar to the above "while" loop, but now with the increment before the
+    ;; if.
+    (local $x i32)
+    (block $out
+      (loop $loop
+        ;; Increment at the top.
+        (local.set $x
+          (i32.add
+            (local.get $x)
+            (i32.const 1)
+          )
+        )
+        ;; If after the increment.
+        (if
+          (i32.ge_s
+            (local.get $x)
+            (i32.const 100)
+          )
+          (then
+            (br $out)
+          )
+        )
+        ;; x > 0 && x < 100 here (0 is impossible, compared to before).
+        (drop
+          (i32.gt_s
+            (local.get $x)
+            (i32.const 0)
+          )
+        )
+        (drop
+          (i32.lt_s
+            (local.get $x)
+            (i32.const 100)
+          )
+        )
+        (br $loop)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $bound-incremented-inc-first-less (type $0)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (block $out
+  ;; CHECK-NEXT:   (loop $loop
+  ;; CHECK-NEXT:    (local.set $x
+  ;; CHECK-NEXT:     (i32.add
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (i32.gt_s
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:      (i32.const 100)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (then
+  ;; CHECK-NEXT:      (br $out)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (br $loop)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $bound-incremented-inc-first-less
+    ;; As in the last testcase, but the if's condition changed.
+    (local $x i32)
+    (block $out
+      (loop $loop
+        (local.set $x
+          (i32.add
+            (local.get $x)
+            (i32.const 1)
+          )
+        )
+        ;; Before we left the loop when x >= 100. Now we leave when x > 100,
+        ;; so we do actually reach 100 in the code below.
+        (if
+          (i32.gt_s
+            (local.get $x)
+            (i32.const 100)
+          )
+          (then
+            (br $out)
+          )
+        )
+        ;; x > 0 && x <= 100 here.
+        (drop
+          (i32.gt_s
+            (local.get $x)
+            (i32.const 0)
+          )
+        )
+        (drop
+          (i32.le_s
+            (local.get $x)
+            (i32.const 100)
+          )
+        )
+        (br $loop)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $bound-incremented-inc-first-less-unsigned (type $0)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (block $out
+  ;; CHECK-NEXT:   (loop $loop
+  ;; CHECK-NEXT:    (local.set $x
+  ;; CHECK-NEXT:     (i32.add
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (i32.gt_u
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:      (i32.const 100)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (then
+  ;; CHECK-NEXT:      (br $out)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (br $loop)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $bound-incremented-inc-first-less-unsigned
+    ;; As in the last testcase, but unsigned.
+    (local $x i32)
+    (block $out
+      (loop $loop
+        (local.set $x
+          (i32.add
+            (local.get $x)
+            (i32.const 1)
+          )
+        )
+        (if
+          (i32.gt_u
+            (local.get $x)
+            (i32.const 100)
+          )
+          (then
+            (br $out)
+          )
+        )
+        ;; x > 0 && x <= 100 here (but we need loops mode to get both).
+        (drop
+          (i32.gt_u
+            (local.get $x)
+            (i32.const 0)
+          )
+        )
+        (drop
+          (i32.le_u
+            (local.get $x)
+            (i32.const 100)
+          )
+        )
+        (br $loop)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $extra-constraint (type $0)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (block $out
+  ;; CHECK-NEXT:   (loop $loop
+  ;; CHECK-NEXT:    (local.set $x
+  ;; CHECK-NEXT:     (i32.add
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (i32.gt_u
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:      (i32.const 100)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (then
+  ;; CHECK-NEXT:      (br $out)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (i32.eq
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:      (i32.const 42)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (then
+  ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (br $loop)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $extra-constraint
+    ;; As in the last testcase, but with extra code below.
+    (local $x i32)
+    (block $out
+      (loop $loop
+        (local.set $x
+          (i32.add
+            (local.get $x)
+            (i32.const 1)
+          )
+        )
+        (if
+          (i32.gt_u
+            (local.get $x)
+            (i32.const 100)
+          )
+          (then
+            (br $out)
+          )
+        )
+
+        ;; An extra constraint gets added to the local here. We should still be
+        ;; able to optimize the things below.
+        (if
+          (i32.eq
+            (local.get $x)
+            (i32.const 42)
+          )
+          (then
+            (unreachable)
+          )
+        )
+
+        (drop
+          (i32.gt_u
+            (local.get $x)
+            (i32.const 0)
+          )
+        )
+        (drop
+          (i32.le_u
+            (local.get $x)
+            (i32.const 100)
+          )
+        )
+        ;; And we also optimize that extra constraint: this is true. Note that
+        ;; this shows we optimize three separate constraints (a range 0-100 plus
+        ;; an additional fact, i.e., we can optimize more than simple numerical
+        ;; spans).
+        (drop
+          (i32.ne
+            (local.get $x)
+            (i32.const 42)
+          )
+        )
+        (br $loop)
       )
     )
   )

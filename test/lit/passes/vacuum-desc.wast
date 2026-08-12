@@ -169,7 +169,7 @@
 
   ;; CHECK:      (func $br-on-cast-null-desc (type $2) (param $ref anyref) (param $desc nullref)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block $l (result anyref)
+  ;; CHECK-NEXT:   (block $l (result (ref none))
   ;; CHECK-NEXT:    (block ;; (replaces unreachable BrOn we can't emit)
   ;; CHECK-NEXT:     (drop
   ;; CHECK-NEXT:      (local.get $ref)
@@ -184,7 +184,7 @@
   ;; CHECK-NEXT: )
   ;; CKIIT:      (func $br-on-cast-null-desc (type $2) (param $ref anyref) (param $desc nullref)
   ;; CKIIT-NEXT:  (drop
-  ;; CKIIT-NEXT:   (block $l (result anyref)
+  ;; CKIIT-NEXT:   (block $l (result (ref none))
   ;; CKIIT-NEXT:    (block ;; (replaces unreachable BrOn we can't emit)
   ;; CKIIT-NEXT:     (drop
   ;; CKIIT-NEXT:      (local.get $ref)

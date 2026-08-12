@@ -211,6 +211,9 @@ typedef uint8_t BinaryenMemoryOrder;
 
 BINARYEN_API BinaryenMemoryOrder BinaryenMemoryOrderUnordered(void);
 
+// Relaxed atomic memory operation.
+BINARYEN_API BinaryenMemoryOrder BinaryenMemoryOrderRelaxed(void);
+
 // Acquire/Release atomic memory operation; acquire for loads, release for
 // stores.
 BINARYEN_API BinaryenMemoryOrder BinaryenMemoryOrderAcqRel(void);
@@ -245,11 +248,12 @@ BINARYEN_API BinaryenFeatures BinaryenFeatureSharedEverything(void);
 BINARYEN_API BinaryenFeatures BinaryenFeatureFP16(void);
 BINARYEN_API BinaryenFeatures BinaryenFeatureBulkMemoryOpt(void);
 BINARYEN_API BinaryenFeatures BinaryenFeatureCallIndirectOverlong(void);
-BINARYEN_API BinaryenFeatures BinaryenFeatureRelaxedAtomics(void);
+BINARYEN_API BinaryenFeatures BinaryenFeatureAcquireReleaseAtomics(void);
 BINARYEN_API BinaryenFeatures BinaryenFeatureMultibyte(void);
 BINARYEN_API BinaryenFeatures BinaryenFeatureCustomPageSizes(void);
 BINARYEN_API BinaryenFeatures BinaryenFeatureWideArithmetic(void);
 BINARYEN_API BinaryenFeatures BinaryenFeatureCompactImports(void);
+BINARYEN_API BinaryenFeatures BinaryenFeatureRelaxedAtomics(void);
 BINARYEN_API BinaryenFeatures BinaryenFeatureAll(void);
 
 // Modules

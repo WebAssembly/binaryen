@@ -821,10 +821,10 @@
 ;; CHECK-NEXT:   --disable-multibyte                           Disable multibyte array loads
 ;; CHECK-NEXT:                                                 and stores
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --enable-relaxed-atomics                      Enable acquire/release atomic
+;; CHECK-NEXT:   --enable-acquire-release-atomics              Enable acquire/release atomic
 ;; CHECK-NEXT:                                                 memory operations
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --disable-relaxed-atomics                     Disable acquire/release atomic
+;; CHECK-NEXT:   --disable-acquire-release-atomics             Disable acquire/release atomic
 ;; CHECK-NEXT:                                                 memory operations
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --enable-custom-page-sizes                    Enable custom page sizes
@@ -838,6 +838,12 @@
 ;; CHECK-NEXT:   --enable-compact-imports                      Enable compact import section
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --disable-compact-imports                     Disable compact import section
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-relaxed-atomics                      Enable relaxed atomic memory
+;; CHECK-NEXT:                                                 operations
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-relaxed-atomics                     Disable relaxed atomic memory
+;; CHECK-NEXT:                                                 operations
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --enable-typed-function-references            Deprecated compatibility flag
 ;; CHECK-NEXT:

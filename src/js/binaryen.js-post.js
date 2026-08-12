@@ -162,8 +162,9 @@ function initializeConstants() {
   // MemoryOrder for atomic operations
   Module['MemoryOrder'] = {};
   [ 'Unordered',
-    'SeqCst',
-    'AcqRel'
+    'Relaxed',
+    'AcqRel',
+    'SeqCst'
    ].forEach(name => {
     Module['MemoryOrder'][name.toLowerCase()] = Module['_BinaryenMemoryOrder' + name]()
    });
@@ -192,10 +193,11 @@ function initializeConstants() {
     'FP16',
     'BulkMemoryOpt',
     'CallIndirectOverlong',
-    'RelaxedAtomics',
+    'AcquireReleaseAtomics',
     'CustomPageSizes',
     'WideArithmetic',
     'CompactImports',
+    'RelaxedAtomics',
     'All'
   ].forEach(name => {
     Module['Features'][name] = Module['_BinaryenFeature' + name]();

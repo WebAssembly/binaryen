@@ -100,10 +100,11 @@ function test_features() {
   console.log("Features.ExtendedConst: " + binaryen.Features.ExtendedConst);
   console.log("Features.Strings: " + binaryen.Features.Strings);
   console.log("Features.MultiMemory: " + binaryen.Features.MultiMemory);
-  console.log("Features.RelaxedAtomics: " + binaryen.Features.RelaxedAtomics);
+  console.log("Features.AcquireReleaseAtomics: " + binaryen.Features.AcquireReleaseAtomics);
   console.log("Features.CustomPageSizes: " + binaryen.Features.CustomPageSizes);
   console.log("Features.WideArithmetic: " + binaryen.Features.WideArithmetic);
   console.log("Features.CompactImports: " + binaryen.Features.CompactImports);
+  console.log("Features.RelaxedAtomics: " + binaryen.Features.RelaxedAtomics);
   console.log("Features.All: " + binaryen.Features.All);
 }
 
@@ -1295,7 +1296,7 @@ function test_relaxed_atomics() {
     fence,
   ], binaryen.auto);
 
-  module.addFunction("relaxed-atomics", binaryen.none, binaryen.none, [], body);
+  module.addFunction("acquire-release-atomics", binaryen.none, binaryen.none, [], body);
 
   console.log(module.emitText());
   module.dispose();
