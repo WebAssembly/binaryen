@@ -3,7 +3,7 @@
 ;; RUN: wasm-opt %s --constraint-analysis -all -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (import "a" "b" (func $import (type $1) (result i32)))
+  ;; CHECK:      (import "a" "b" (func $import (type $2) (result i32)))
   (import "a" "b" (func $import (result i32)))
 
   ;; CHECK:      (func $infinite-loop (type $0)
@@ -208,7 +208,7 @@
     )
   )
 
-  ;; CHECK:      (func $bound-nonconstant-no (type $2) (param $p i32)
+  ;; CHECK:      (func $bound-nonconstant-no (type $1) (param $p i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (loop $loop
   ;; CHECK-NEXT:   (drop
@@ -783,4 +783,76 @@
       )
     )
   )
+
+  ;; CHECK:      (func $while-nonconstant (type $1) (param $len i32)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (block $out
+  ;; CHECK-NEXT:   (loop $loop
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (i32.ge_s
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:      (local.get $len)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (then
+  ;; CHECK-NEXT:      (br $out)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.ge_s
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $x
+  ;; CHECK-NEXT:     (i32.add
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (br $loop)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $while-nonconstant (param $len i32)
+    ;; A while loop whose upper bound is a local and not a constant.
+    (local $x i32)
+    (block $out
+      (loop $loop
+        (if
+          (i32.ge_s
+            (local.get $x)
+            (local.get $len)
+          )
+          (then
+            (br $out)
+          )
+        )
+        ;; We can infer both of these to be 1.
+        (drop
+          (i32.lt_s
+            (local.get $x)
+            (local.get $len)
+          )
+        )
+        (drop
+          (i32.ge_s
+            (local.get $x)
+            (i32.const 0)
+          )
+        )
+        (local.set $x
+          (i32.add
+            (local.get $x)
+            (i32.const 1)
+          )
+        )
+        (br $loop)
+      )
+    )
+  )
+
+  ;; TODO do-while
 )
