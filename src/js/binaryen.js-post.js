@@ -163,8 +163,8 @@ function initializeConstants() {
   Module['MemoryOrder'] = {};
   [ 'Unordered',
     'Relaxed',
-    'AcqRel'
-    'SeqCst',
+    'AcqRel',
+    'SeqCst'
    ].forEach(name => {
     Module['MemoryOrder'][name.toLowerCase()] = Module['_BinaryenMemoryOrder' + name]()
    });

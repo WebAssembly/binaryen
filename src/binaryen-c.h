@@ -211,6 +211,9 @@ typedef uint8_t BinaryenMemoryOrder;
 
 BINARYEN_API BinaryenMemoryOrder BinaryenMemoryOrderUnordered(void);
 
+// Relaxed atomic memory operation.
+BINARYEN_API BinaryenMemoryOrder BinaryenMemoryOrderRelaxed(void);
+
 // Acquire/Release atomic memory operation; acquire for loads, release for
 // stores.
 BINARYEN_API BinaryenMemoryOrder BinaryenMemoryOrderAcqRel(void);
