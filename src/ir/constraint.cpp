@@ -544,6 +544,10 @@ void BasicBlockConstraintMap::set(Index index, Expression* value) {
     set(index, Constraint{Abstract::Eq, {get->index}});
     return;
   }
+  if (auto* tee = value->dynCast<LocalSet>()) {
+    set(index, Constraint{Abstract::Eq, {tee->index}});
+    return;
+  }
 
   // Apply an increment of a local, x = y + 1.
   Index y;

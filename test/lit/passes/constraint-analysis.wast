@@ -4555,4 +4555,57 @@
       )
     )
   )
+
+  ;; CHECK:      (func $tee (type $1)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (local $y i32)
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (local.tee $y
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPTIN:      (func $tee (type $1)
+  ;; OPTIN-NEXT:  (local $x i32)
+  ;; OPTIN-NEXT:  (local $y i32)
+  ;; OPTIN-NEXT:  (local.set $x
+  ;; OPTIN-NEXT:   (local.tee $y
+  ;; OPTIN-NEXT:    (i32.const 10)
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (drop
+  ;; OPTIN-NEXT:   (i32.const 1)
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (drop
+  ;; OPTIN-NEXT:   (i32.const 1)
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT: )
+  (func $tee
+    ;; We can read values through tees.
+    (local $x i32)
+    (local $y i32)
+    (local.set $x
+      (local.tee $y
+        (i32.const 10)
+      )
+    )
+    (drop
+      (i32.eq
+        (local.get $x)
+        (i32.const 10)
+      )
+    )
+    (drop
+      (i32.eq
+        (local.get $y)
+        (i32.const 10)
+      )
+    )
+  )
 )
