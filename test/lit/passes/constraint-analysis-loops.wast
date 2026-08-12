@@ -801,10 +801,7 @@
   ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.ge_s
-  ;; CHECK-NEXT:      (local.get $x)
-  ;; CHECK-NEXT:      (i32.const 0)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.set $x
   ;; CHECK-NEXT:     (i32.add
@@ -854,5 +851,72 @@
     )
   )
 
-  ;; TODO do-while
+  ;; CHECK:      (func $while-nonconstant-unsigned (type $1) (param $len i32)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (block $out
+  ;; CHECK-NEXT:   (loop $loop
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (i32.ge_u
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:      (local.get $len)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (then
+  ;; CHECK-NEXT:      (br $out)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $x
+  ;; CHECK-NEXT:     (i32.add
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (br $loop)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $while-nonconstant-unsigned (param $len i32)
+    ;; As above, but unsigned.
+    (local $x i32)
+    (block $out
+      (loop $loop
+        (if
+          (i32.ge_u
+            (local.get $x)
+            (local.get $len)
+          )
+          (then
+            (br $out)
+          )
+        )
+        ;; We can infer both of these to be 1.
+        (drop
+          (i32.lt_u
+            (local.get $x)
+            (local.get $len)
+          )
+        )
+        (drop
+          (i32.ge_u
+            (local.get $x)
+            (i32.const 0)
+          )
+        )
+        (local.set $x
+          (i32.add
+            (local.get $x)
+            (i32.const 1)
+          )
+        )
+        (br $loop)
+      )
+    )
+  )
+
+  ;; TODO do-while, and signed/unsigned for bothh
 )

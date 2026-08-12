@@ -585,15 +585,14 @@ struct ConstraintAnalysis
     using namespace Abstract;
 
     // "Jump ahead" and extend ranges. If the branch is x < M, and we were
-    // x == N where N < M, then extend to x >= N && x < M (see top-level
-    // comment).
-    auto* M = std::get_if<Literal>(&branch.constraint.term);
-    if (!M) {
-      return false;
-    }
+    // x == N, then extend to x >= N && x < M (see top-level comment). Note that
+    // we don't need to worry about a contradiction here: this code is only
+    // reached if x == N && x < M. If it is reached, that is not a
+    // contradiction, and extending x == N to x >= N is also not.
+    auto M = branch.constraint.term;
 
-    // Handle the case of simple equality of the local to a constant.
-    // TODO: Handle non-constant ones.
+    // Handle the case of N being a constant.
+    // TODO: Handle non-constant lower bounds.
     auto N = constraints.get(branch.local).getLiteral();
     if (!N) {
       return false;
@@ -601,14 +600,14 @@ struct ConstraintAnalysis
 
     // We can handle both x < M as the branch, as described above, or
     // x <= M (if N <= M).
-    if ((branch.constraint.op == Abstract::LtS && N->ltS(*M).getUnsigned()) ||
-        (branch.constraint.op == Abstract::LeS && N->leS(*M).getUnsigned())) {
+    if (branch.constraint.op == Abstract::LtS ||
+        branch.constraint.op == Abstract::LeS) {
       constraints.set(branch.local, branch.constraint);
       constraints.approximateAnd(branch.local, {GeS, {*N}});
       return true;
     }
-    if ((branch.constraint.op == Abstract::LtU && N->ltU(*M).getUnsigned()) ||
-        (branch.constraint.op == Abstract::LeU && N->leU(*M).getUnsigned())) {
+    if (branch.constraint.op == Abstract::LtU ||
+        branch.constraint.op == Abstract::LeU) {
       constraints.set(branch.local, branch.constraint);
       constraints.approximateAnd(branch.local, {GeU, {*N}});
       return true;
