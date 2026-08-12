@@ -364,6 +364,12 @@ public:
     if (danglingPop) {
       return true;
     }
+    // Relaxed (or stronger) loads cannot be reordered after relaxed (or
+    // stronger) stores.
+    if (readOrder >= MemoryOrder::Relaxed &&
+        other.writeOrder >= MemoryOrder::Relaxed) {
+      return true;
+    }
     // Shared location accesses cannot be reordered after (but may be able to be
     // reordered before) release stores.
     if (other.writeOrder >= MemoryOrder::AcqRel &&

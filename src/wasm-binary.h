@@ -481,6 +481,7 @@ extern const char* MultibyteFeature;
 extern const char* CustomPageSizesFeature;
 extern const char* WideArithmeticFeature;
 extern const char* CompactImportsFeature;
+extern const char* RelaxedAtomicsFeature;
 
 enum Subsection {
   NameModule = 0,
@@ -1234,6 +1235,7 @@ enum ASTNodes {
 
   OrderSeqCst = 0x0,
   OrderAcqRel = 0x1,
+  OrderRelaxed = 0x2,
   StructAtomicGet = 0x5c,
   StructAtomicGetS = 0x5d,
   StructAtomicGetU = 0x5e,

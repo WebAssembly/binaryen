@@ -2329,6 +2329,9 @@ struct PrintExpressionContents
       case MemoryOrder::AcqRel:
         o << " acqrel";
         break;
+      case MemoryOrder::Relaxed:
+        o << " relaxed";
+        break;
     }
   }
 
@@ -4041,6 +4044,9 @@ std::ostream& operator<<(std::ostream& os, wasm::MemoryOrder mo) {
   switch (mo) {
     case wasm::MemoryOrder::Unordered:
       os << "Unordered";
+      break;
+    case wasm::MemoryOrder::Relaxed:
+      os << "Relaxed";
       break;
     case wasm::MemoryOrder::SeqCst:
       os << "SeqCst";
