@@ -510,9 +510,10 @@ struct ConstraintAnalysis
   // when it reaches the loop bound, which may be very high. We don't want to
   // spend significant time on such constant operations, as other passes will
   // propagate them anyhow, so we verify that we don't apply such x = y + 1
-  // operations too many times.
+  // operations a ridiculous number of times (enough that it suggests we are
+  // in that bad situation where we increment until an integer overflow).
 #ifndef NDEBUG
-  static const Index MaxBinaryActions = 5;
+  static const Index MaxBinaryActions = 1024 * 1024;
 
   // How many times we processed each Binary action.
   std::unordered_map<Binary*, Index> binaryActionCounts;
