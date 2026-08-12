@@ -28,6 +28,7 @@
     "prepublishOnly": "npm run make && npm run check && npm run build"
   },
   "files": [
+    "./CHANGELOG.md",
     "./build/",
     "./dist/"
   ],
