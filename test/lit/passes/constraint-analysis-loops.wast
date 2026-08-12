@@ -769,7 +769,10 @@
             (i32.const 100)
           )
         )
-        ;; And we also optimize that extra constraint: this is true.
+        ;; And we also optimize that extra constraint: this is true. Note that
+        ;; this shows we optimize three separate constraints (a range 0-100 plus
+        ;; an additional fact, i.e., we can optimize more than simple numerical
+        ;; spans).
         (drop
           (i32.ne
             (local.get $x)
