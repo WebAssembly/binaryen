@@ -592,14 +592,9 @@ struct ConstraintAnalysis
       return false;
     }
 
-    auto localConstraints = constraints.get(branch.local);
     // Handle the case of simple equality of the local to a constant.
-    // TODO: Handle more constraints here as well, and non-constant ones.
-    if (localConstraints.size() != 1 ||
-        localConstraints[0].op != Abstract::Eq) {
-      return false;
-    }
-    auto* N = std::get_if<Literal>(&localConstraints[0].term);
+    // TODO: Handle non-constant ones.
+    auto N = constraints.get(branch.local).getLiteral();
     if (!N) {
       return false;
     }

@@ -682,4 +682,105 @@
       )
     )
   )
+
+  ;; CHECK:      (func $extra-constraint (type $0)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (block $out
+  ;; CHECK-NEXT:   (loop $loop
+  ;; CHECK-NEXT:    (local.set $x
+  ;; CHECK-NEXT:     (i32.add
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (i32.gt_u
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:      (i32.const 100)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (then
+  ;; CHECK-NEXT:      (br $out)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (i32.eq
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:      (i32.const 42)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (then
+  ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (br $loop)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $extra-constraint
+    ;; As in the last testcase, but with extra code below.
+    (local $x i32)
+    (block $out
+      (loop $loop
+        (local.set $x
+          (i32.add
+            (local.get $x)
+            (i32.const 1)
+          )
+        )
+        (if
+          (i32.gt_u
+            (local.get $x)
+            (i32.const 100)
+          )
+          (then
+            (br $out)
+          )
+        )
+
+        ;; An extra constraint gets added to the local here. We should still be
+        ;; able to optimize the things below.
+        (if
+          (i32.eq
+            (local.get $x)
+            (i32.const 42)
+          )
+          (then
+            (unreachable)
+          )
+        )
+
+        (drop
+          (i32.gt_u
+            (local.get $x)
+            (i32.const 0)
+          )
+        )
+        (drop
+          (i32.le_u
+            (local.get $x)
+            (i32.const 100)
+          )
+        )
+        ;; And we also optimize that extra constraint: this is true. Note that
+        ;; this shows we optimize three separate constraints (a range 0-100 plus
+        ;; an additional fact, i.e., we can optimize more than simple numerical
+        ;; spans).
+        (drop
+          (i32.ne
+            (local.get $x)
+            (i32.const 42)
+          )
+        )
+        (br $loop)
+      )
+    )
+  )
 )
