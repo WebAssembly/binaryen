@@ -15,7 +15,7 @@
 
  ;; CHECK:      (type $3 (func (result anyref)))
 
- ;; CHECK:      (type $4 (func (param nullref)))
+ ;; CHECK:      (type $4 (func (param (ref none))))
 
  ;; CHECK:      (func $target (type $2) (param $0 i32)
  ;; CHECK-NEXT:  (nop)
@@ -60,6 +60,6 @@
  )
 )
 
-;; CHECK:      (func $target_2 (type $4) (param $0 nullref)
+;; CHECK:      (func $target_2 (type $4) (param $0 (ref none))
 ;; CHECK-NEXT:  (nop)
 ;; CHECK-NEXT: )

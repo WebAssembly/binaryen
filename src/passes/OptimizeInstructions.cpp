@@ -1913,6 +1913,7 @@ struct OptimizeInstructions
     trapOnNull(curr, curr->ref);
     // Relax acquire loads of unshared fields to unordered because they cannot
     // synchronize with other threads.
+    // TODO: Relax all other memory orderings as well.
     if (curr->order == MemoryOrder::AcqRel && curr->ref->type.isRef() &&
         !curr->ref->type.getHeapType().isShared()) {
       curr->order = MemoryOrder::Unordered;
@@ -1936,6 +1937,7 @@ struct OptimizeInstructions
 
     // Relax release stores of unshared fields to unordered because they cannot
     // synchronize with other threads.
+    // TODO: Relax all other memory orderings as well.
     if (curr->order == MemoryOrder::AcqRel && curr->ref->type.isRef() &&
         !curr->ref->type.getHeapType().isShared()) {
       curr->order = MemoryOrder::Unordered;

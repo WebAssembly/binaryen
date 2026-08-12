@@ -316,17 +316,18 @@ suite("binaryen", () => {
 
 	test(".MemoryOrder", () => {
 		// NOTE: the length is twice the number of members due to how TypeScript emits enums.
-		assert.strictEqual(Object.entries(binaryen.MemoryOrder).length, 3 * 2);
+		assert.strictEqual(Object.entries(binaryen.MemoryOrder).length, 4 * 2);
 
 		assert.strictEqual(binaryen.MemoryOrder.Unordered, 0);
-		assert.strictEqual(binaryen.MemoryOrder.SeqCst, 1);
+		assert.strictEqual(binaryen.MemoryOrder.Relaxed, 1);
 		assert.strictEqual(binaryen.MemoryOrder.AcqRel, 2);
+		assert.strictEqual(binaryen.MemoryOrder.SeqCst, 3);
 	});
 
 
 	test(".Feature", () => {
 		// NOTE: the length is twice the number of members due to how TypeScript emits enums.
-		assert.strictEqual(Object.entries(binaryen.Feature).length, 27 * 2);
+		assert.strictEqual(Object.entries(binaryen.Feature).length, 28 * 2);
 
 		assert.strictEqual(binaryen.Feature.MVP, 0);
 		assert.strictEqual(binaryen.Feature.Atomics, 1 << 0);
@@ -358,7 +359,8 @@ suite("binaryen", () => {
 		assert.strictEqual(binaryen.Feature.Multibyte, undefined); assert.notStrictEqual(binaryen.Feature.Multibyte, 1 << 24);
 		assert.strictEqual(binaryen.Feature.WideArithmetic, 1 << 25);
 		assert.strictEqual(binaryen.Feature.CompactImports, 1 << 26);
-		assert.strictEqual(binaryen.Feature.All, (1 << 27) - 1);
+		assert.strictEqual(binaryen.Feature.RelaxedAtomics, 1 << 27);
+		assert.strictEqual(binaryen.Feature.All, (1 << 28) - 1);
 	});
 
 

@@ -746,6 +746,7 @@ export enum Operation {
  */
 export enum MemoryOrder {
 	Unordered = BinaryenObj["_BinaryenMemoryOrderUnordered"](),
-	SeqCst = BinaryenObj["_BinaryenMemoryOrderSeqCst"](),
+	Relaxed = BinaryenObj["_BinaryenMemoryOrderRelaxed"](),
 	AcqRel = BinaryenObj["_BinaryenMemoryOrderAcqRel"](),
+	SeqCst = BinaryenObj["_BinaryenMemoryOrderSeqCst"](),
 }
