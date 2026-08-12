@@ -3135,6 +3135,43 @@ Fence memory order: 2
   )
  )
 )
+Load memory order: 1
+Store memory order: 1
+RMW memory order: 1
+Cmpxchg memory order: 1
+Fence memory order: 1
+(module
+ (type $0 (func))
+ (memory $0 1 1)
+ (export "memory" (memory $0))
+ (func $relaxed-atomics (type $0)
+  (block $body
+   (drop
+    (i32.atomic.load relaxed
+     (i32.const 0)
+    )
+   )
+   (i32.atomic.store relaxed
+    (i32.const 0)
+    (i32.const 1)
+   )
+   (drop
+    (i32.atomic.rmw.add relaxed
+     (i32.const 0)
+     (i32.const 1)
+    )
+   )
+   (drop
+    (i32.atomic.rmw.cmpxchg relaxed
+     (i32.const 0)
+     (i32.const 0)
+     (i32.const 1)
+    )
+   )
+   (atomic.fence relaxed)
+  )
+ )
+)
 (module
  (type $0 (func))
  (func $wide-arithmetic-test
