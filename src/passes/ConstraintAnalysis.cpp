@@ -591,8 +591,22 @@ struct ConstraintAnalysis
     // contradiction, and extending x == N to x >= N is also not.
     auto M = branch.constraint.term;
 
-    // Handle the case of N being a constant.
-    // TODO: Handle non-constant lower bounds.
+    // We only handle the case of N being a constant, for two reasons:
+    //
+    //  * As mentioned above, if a constant reaches a conditional branch, then
+    //    other passes would have propagated it into the branch check itself,
+    //    if that were possible. The only case where it isn't possible is when
+    //    it is a loop variable (so it looks like a constant at first, but gets
+    //    written another value by the branch back to the loop top). By only
+    //    handling constants here, we only extend ranges for loop variables (and
+    //    extending ranges can have downsides, so it is good we do it in a
+    //    targeted way).
+    //  * The case of a constant is exactly what we want to optimize here: most
+    //    typical loop patterns iterate from 0 or 1 or such.
+    //
+    // So things work out perfectly here: constants are safe to optimize (no
+    // risk of extension causing  downsides) and are exactly what we want to
+    // optimize.
     auto N = constraints.get(branch.local).getLiteral();
     if (!N) {
       return false;
