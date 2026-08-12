@@ -900,7 +900,7 @@ Result<typename Ctx::MemTypeT> memtypeContinued(Ctx& ctx, Type addressType) {
   return ctx.makeMemType(addressType, *limits, shared, pageSizeLog2);
 }
 
-// memorder ::= 'seqcst' | 'acqrel'
+// memorder ::= 'seqcst' | 'acqrel' | 'relaxed'
 template<typename Ctx> MaybeResult<MemoryOrder> maybeMemOrder(Ctx& ctx) {
   if (ctx.in.takeKeyword("seqcst"sv)) {
     return MemoryOrder::SeqCst;
@@ -908,11 +908,14 @@ template<typename Ctx> MaybeResult<MemoryOrder> maybeMemOrder(Ctx& ctx) {
   if (ctx.in.takeKeyword("acqrel"sv)) {
     return MemoryOrder::AcqRel;
   }
+  if (ctx.in.takeKeyword("relaxed"sv)) {
+    return MemoryOrder::Relaxed;
+  }
 
   return {};
 }
 
-// memorder ::= '' | 'seqcst' | 'acqrel'
+// memorder ::= '' | 'seqcst' | 'acqrel' | 'relaxed'
 template<typename Ctx> Result<MemoryOrder> memorder(Ctx& ctx) {
   auto order = maybeMemOrder(ctx);
   CHECK_ERR(order);

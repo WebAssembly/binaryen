@@ -21,6 +21,50 @@
 //    assert(x != 0); // redundant and can be removed.
 //  }
 //
+// For loops, we must avoid the following problem:
+//
+//  x = 0
+//  do {
+//    print(x >= 0 & x < 100)
+//    x++
+//  } while (x < 100)
+//
+// Say that we flow information around precisely. Then initially x is 0 at the
+// top of the loop, and x++ turns it into 1. 1 < 100 so we return to the top of
+// the loop, and now x can be 0 or 1. We will then interpret this loop for 100
+// iterations at compile time, going from [0] to [0, 1] to [0, 2] and so forth,
+// which is obviously not a good idea.
+//
+// Instead, we do something similar to "widening" in abstract interpretation
+// (which at a loop header, where a merge occurs, widens the range of values
+// based on the bounds check that it sees elsewhere). We do something even
+// simpler here, which can be accomplished in an eager way as follows:
+//
+//   * x++ turns x from 0 to 1 in the example above, in the first iteration of
+//     the loop.
+//   * When we then see x == 1 that branches with x < 100, we turn that into
+//     x >= 1 && x < 100. This is "imprecise", because perhaps the local will
+//     not actually get incremented all the way to 100, but it is an upper
+//     bound that ends up getting us to the result we want in common loop
+//     shapes. (And it is safe to do because we allow more values for x, meaning
+//     we can prove fewer things, so we won't prove anything false.)
+//   * After doing that, we return to the top of the loop, where now we can see
+//     x >= 0 && x < 100. After running that through the loop a second time, no
+//     more happen: we successfully "jumped ahead" to the end state of the
+//     loop variable.
+//
+// Doing this eagerly when we see a branch, rather than identifying specific
+// loop headers and analyzing their bounds more precisely, is good enough for
+// us: the only imprecision we add is "x == C, branch with x < D  =>  x >= C &&
+// x < D". While imprecise, if we see "x == C, branch with x < D", then this is
+// a situation inside a loop: if it were not, then x would get constant-
+// propagatated to the branch anyhow by other passes. And, if this is in a loop,
+// then this widening is exactly what we want. This eager approach avoids us
+// needing to analyze loops shapes specifically and/or to consider branch
+// conditions "from afar" (seeing a branch on "x < D", but *not* applying it
+// eagerly, and instead using it later at the loop header or in some whole-
+// function analysis).
+//
 
 #include "cfg/cfg-traversal.h"
 #include "ir/constraint.h"
@@ -286,7 +330,7 @@ struct ConstraintAnalysis
         if (auto branch = getBranchConstraints(block, out);
             branch && checkRelevancy(*branch)) {
           auto sentConstraints = constraints;
-          sentConstraints.approximateAnd(branch->local, branch->constraint);
+          applyBranchConstraints(*branch, sentConstraints);
 #if CONSTRAINT_DEBUG
           std::cout << block << " sending branch to " << out
                     << " with sent constraints: " << sentConstraints << '\n';
@@ -520,6 +564,62 @@ struct ConstraintAnalysis
       }
     }
     return true;
+  }
+
+  // Apply branch constraints to the current set of constraints.
+  void applyBranchConstraints(const LocalConstraint& branch,
+                              BasicBlockConstraintMap& constraints) {
+    // Extend the range of values in the "jump ahead" manner described in the
+    // top-level comment.
+    if (applyBranchRangeExtensionToConstraints(branch, constraints)) {
+      return;
+    }
+
+    // Otherwise, apply the constraint normally.
+    constraints.approximateAnd(branch.local, branch.constraint);
+  }
+
+  bool
+  applyBranchRangeExtensionToConstraints(const LocalConstraint& branch,
+                                         BasicBlockConstraintMap& constraints) {
+    using namespace Abstract;
+
+    // "Jump ahead" and extend ranges. If the branch is x < M, and we were
+    // x == N where N < M, then extend to x >= N && x < M (see top-level
+    // comment).
+    auto* M = std::get_if<Literal>(&branch.constraint.term);
+    if (!M) {
+      return false;
+    }
+
+    auto localConstraints = constraints.get(branch.local);
+    // Handle the case of simple equality of the local to a constant.
+    // TODO: Handle more constraints here as well, and non-constant ones.
+    if (localConstraints.size() != 1 ||
+        localConstraints[0].op != Abstract::Eq) {
+      return false;
+    }
+    auto* N = std::get_if<Literal>(&localConstraints[0].term);
+    if (!N) {
+      return false;
+    }
+
+    // We can handle both x < M as the branch, as described above, or
+    // x <= M (if N <= M).
+    if ((branch.constraint.op == Abstract::LtS && N->ltS(*M).getUnsigned()) ||
+        (branch.constraint.op == Abstract::LeS && N->leS(*M).getUnsigned())) {
+      constraints.set(branch.local, branch.constraint);
+      constraints.approximateAnd(branch.local, {GeS, {*N}});
+      return true;
+    }
+    if ((branch.constraint.op == Abstract::LtU && N->ltU(*M).getUnsigned()) ||
+        (branch.constraint.op == Abstract::LeU && N->leU(*M).getUnsigned())) {
+      constraints.set(branch.local, branch.constraint);
+      constraints.approximateAnd(branch.local, {GeU, {*N}});
+      return true;
+    }
+
+    return false;
   }
 };
 
