@@ -918,5 +918,77 @@
     )
   )
 
+  ;; CHECK:      (func $do-nonconstant (type $1) (param $len i32)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.lt_s
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (local.get $len)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (loop $loop
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.set $x
+  ;; CHECK-NEXT:      (i32.add
+  ;; CHECK-NEXT:       (local.get $x)
+  ;; CHECK-NEXT:       (i32.const 1)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (br_if $loop
+  ;; CHECK-NEXT:      (i32.lt_s
+  ;; CHECK-NEXT:       (local.get $x)
+  ;; CHECK-NEXT:       (local.get $len)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $do-nonconstant (param $len i32)
+    ;; A do loop whose upper bound is a local and not a constant. The loop must
+    ;; be entered only if at least one iteration would run.
+    (local $x i32)
+    (if
+      (i32.lt_s
+        (local.get $x)
+        (local.get $len)
+      )
+      (then
+        (loop $loop
+          ;; We can infer both of these to be 1.
+          (drop
+            (i32.lt_s
+              (local.get $x)
+              (local.get $len)
+            )
+          )
+          (drop
+            (i32.ge_s
+              (local.get $x)
+              (i32.const 0)
+            )
+          )
+          (local.set $x
+            (i32.add
+              (local.get $x)
+              (i32.const 1)
+            )
+          )
+          (br_if $loop
+            (i32.lt_s
+              (local.get $x)
+              (local.get $len)
+            )
+          )
+        )
+      )
+    )
+  )
+
   ;; TODO do-while, and signed/unsigned for bothh
 )
