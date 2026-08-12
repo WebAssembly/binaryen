@@ -520,6 +520,9 @@ BinaryenFeatures BinaryenFeatureWideArithmetic(void) {
 BinaryenFeatures BinaryenFeatureCompactImports(void) {
   return static_cast<BinaryenFeatures>(FeatureSet::CompactImports);
 }
+BinaryenFeatures BinaryenFeatureRelaxedAtomics(void) {
+  return static_cast<BinaryenFeatures>(FeatureSet::RelaxedAtomics);
+}
 BinaryenFeatures BinaryenFeatureAll(void) {
   return static_cast<BinaryenFeatures>(FeatureSet::All);
 }

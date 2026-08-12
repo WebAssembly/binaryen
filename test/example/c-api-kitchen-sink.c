@@ -383,6 +383,8 @@ void test_features() {
          BinaryenFeatureWideArithmetic());
   printf("BinaryenFeatureCompactImports: %d\n",
          BinaryenFeatureCompactImports());
+  printf("BinaryenFeatureRelaxedAtomics: %d\n",
+         BinaryenFeatureRelaxedAtomics());
   printf("BinaryenFeatureAll: %d\n", BinaryenFeatureAll());
 }
 
