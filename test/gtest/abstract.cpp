@@ -58,7 +58,16 @@ TEST(AbstractTest, FlipRelational) {
 
 TEST(AbstractTest, RelationalInvolutions) {
   const Op relationalOps[] = {
-    Eq, Ne, LtS, LtU, LeS, LeU, GtS, GtU, GeS, GeU,
+    Eq,
+    Ne,
+    LtS,
+    LtU,
+    LeS,
+    LeU,
+    GtS,
+    GtU,
+    GeS,
+    GeU,
   };
 
   for (auto op : relationalOps) {
