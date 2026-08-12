@@ -1103,129 +1103,86 @@ void ModuleSplitter::shareImportableItems() {
   //    the primary and secondary modules), export the item from the primary and
   //    import it from the using secondary modules.
 
-  std::unordered_set<Name> memoriesToRemove;
-  for (auto& memory : primary.memories) {
-    if (tracker.useEmpty(memory->name, tracker.memories)) {
-      memoriesToRemove.insert(memory->name);
-    } else if (tracker.usedBySingleSecondary(memory->name, tracker.memories)) {
-      auto* secondary =
-        tracker.getUsingSecondaries(memory->name, tracker.memories)[0];
-      ModuleUtils::copyMemory(memory.get(), *secondary);
-      memoriesToRemove.insert(memory->name);
-    } else {
-      for (auto* secondary :
-           tracker.getUsingSecondaries(memory->name, tracker.memories)) {
-        auto* secondaryMemory =
-          ModuleUtils::copyMemory(memory.get(), *secondary);
-        makeImportExport(
-          *memory, *secondaryMemory, "memory", ExternalKind::Memory);
+  auto shareElements = [&](auto& elements,
+                           auto& trackerElements,
+                           auto copyElement,
+                           auto removeElements,
+                           const char* exportName = nullptr,
+                           ExternalKind kind = ExternalKind::Invalid) {
+    std::unordered_set<Name> elementsToRemove;
+    for (auto& element : elements) {
+      if (tracker.useEmpty(element->name, trackerElements)) {
+        elementsToRemove.insert(element->name);
+      } else if (tracker.usedBySingleSecondary(element->name,
+                                               trackerElements)) {
+        auto* secondary =
+          tracker.getUsingSecondaries(element->name, trackerElements)[0];
+        copyElement(element.get(), *secondary);
+        elementsToRemove.insert(element->name);
+      } else {
+        // We only import and export Importables, i.e., we don't do this for
+        // segments.
+        using T = std::remove_pointer_t<decltype(element.get())>;
+        if constexpr (std::is_base_of_v<Importable, T>) {
+          for (auto* secondary :
+               tracker.getUsingSecondaries(element->name, trackerElements)) {
+            auto* secondaryElement = copyElement(element.get(), *secondary);
+            makeImportExport(*element, *secondaryElement, exportName, kind);
+          }
+        }
       }
     }
-  }
-  primary.removeMemories(
-    [&](Memory* memory) { return memoriesToRemove.count(memory->name); });
+    (primary.*removeElements)(
+      [&](auto* element) { return elementsToRemove.count(element->name); });
+  };
 
-  std::unordered_set<Name> tablesToRemove;
-  for (auto& table : primary.tables) {
-    if (tracker.useEmpty(table->name, tracker.tables)) {
-      tablesToRemove.insert(table->name);
-    } else if (tracker.usedBySingleSecondary(table->name, tracker.tables)) {
-      auto* secondary =
-        tracker.getUsingSecondaries(table->name, tracker.tables)[0];
-      assert(!secondary->getTableOrNull(table->name));
-      ModuleUtils::copyTable(table.get(), *secondary);
-      tablesToRemove.insert(table->name);
-    } else {
-      for (auto* secondary :
-           tracker.getUsingSecondaries(table->name, tracker.tables)) {
-        auto* secondaryTable = ModuleUtils::copyTable(table.get(), *secondary);
-        makeImportExport(*table, *secondaryTable, "table", ExternalKind::Table);
-      }
-    }
-  }
-  primary.removeTables(
-    [&](Table* table) { return tablesToRemove.count(table->name); });
+  shareElements(primary.memories,
+                tracker.memories,
+                ModuleUtils::copyMemory,
+                &Module::removeMemories,
+                "memory",
+                ExternalKind::Memory);
 
-  std::unordered_set<Name> globalsToRemove;
+  shareElements(primary.tables,
+                tracker.tables,
+                ModuleUtils::copyTable,
+                &Module::removeTables,
+                "table",
+                ExternalKind::Table);
+
   for (auto& global : primary.globals) {
     if (global->mutable_) {
       assert(primary.features.hasMutableGlobals() &&
              "TODO: add wrapper functions for disallowed mutable globals");
     }
-
-    if (tracker.useEmpty(global->name, tracker.globals)) {
-      globalsToRemove.insert(global->name);
-    } else if (tracker.usedBySingleSecondary(global->name, tracker.globals)) {
-      auto* secondary =
-        tracker.getUsingSecondaries(global->name, tracker.globals)[0];
-      ModuleUtils::copyGlobal(global.get(), *secondary);
-      globalsToRemove.insert(global->name);
-    } else {
-      for (auto* secondary :
-           tracker.getUsingSecondaries(global->name, tracker.globals)) {
-        auto* secondaryGlobal =
-          ModuleUtils::copyGlobal(global.get(), *secondary);
-        makeImportExport(
-          *global, *secondaryGlobal, "global", ExternalKind::Global);
-      }
-    }
   }
-  primary.removeGlobals(
-    [&](Global* global) { return globalsToRemove.count(global->name); });
+  shareElements(primary.globals,
+                tracker.globals,
+                ModuleUtils::copyGlobal,
+                &Module::removeGlobals,
+                "global",
+                ExternalKind::Global);
 
-  std::unordered_set<Name> tagsToRemove;
-  for (auto& tag : primary.tags) {
-    if (tracker.useEmpty(tag->name, tracker.tags)) {
-      tagsToRemove.insert(tag->name);
-    } else if (tracker.usedBySingleSecondary(tag->name, tracker.tags)) {
-      auto* secondary = tracker.getUsingSecondaries(tag->name, tracker.tags)[0];
-      ModuleUtils::copyTag(tag.get(), *secondary);
-      tagsToRemove.insert(tag->name);
-    } else {
-      for (auto* secondary :
-           tracker.getUsingSecondaries(tag->name, tracker.tags)) {
-        auto* secondaryTag = ModuleUtils::copyTag(tag.get(), *secondary);
-        makeImportExport(*tag, *secondaryTag, "tag", ExternalKind::Tag);
-      }
-    }
-  }
-  primary.removeTags([&](Tag* tag) { return tagsToRemove.count(tag->name); });
+  shareElements(primary.tags,
+                tracker.tags,
+                ModuleUtils::copyTag,
+                &Module::removeTags,
+                "tag",
+                ExternalKind::Tag);
 
   // Move segments that are exclusively used in a secondary module. If not, do
   // nothing. (Segments cannot be imported / exported. They will be handled in
   // indirectReferencesToSecondaryFunctions.)
 
-  std::unordered_set<Name> dataSegmentsToRemove;
-  for (auto& dataSegment : primary.dataSegments) {
-    if (tracker.useEmpty(dataSegment->name, tracker.dataSegments)) {
-      dataSegmentsToRemove.insert(dataSegment->name);
-    } else if (tracker.usedBySingleSecondary(dataSegment->name,
-                                             tracker.dataSegments)) {
-      auto* secondary =
-        tracker.getUsingSecondaries(dataSegment->name, tracker.dataSegments)[0];
-      ModuleUtils::copyDataSegment(dataSegment.get(), *secondary);
-      dataSegmentsToRemove.insert(dataSegment->name);
-    }
-  }
-  primary.removeDataSegments([&](DataSegment* dataSegment) {
-    return dataSegmentsToRemove.count(dataSegment->name);
-  });
+  shareElements(primary.dataSegments,
+                tracker.dataSegments,
+                ModuleUtils::copyDataSegment,
+                &Module::removeDataSegments);
 
-  std::unordered_set<Name> elementSegmentsToRemove;
-  for (auto& elementSegment : primary.elementSegments) {
-    if (tracker.useEmpty(elementSegment->name, tracker.elementSegments)) {
-      elementSegmentsToRemove.insert(elementSegment->name);
-    } else if (tracker.usedBySingleSecondary(elementSegment->name,
-                                             tracker.elementSegments)) {
-      auto* secondary = tracker.getUsingSecondaries(elementSegment->name,
-                                                    tracker.elementSegments)[0];
-      ModuleUtils::copyElementSegment(elementSegment.get(), *secondary);
-      elementSegmentsToRemove.insert(elementSegment->name);
-    }
-  }
-  primary.removeElementSegments([&](ElementSegment* elementSegment) {
-    return elementSegmentsToRemove.count(elementSegment->name);
-  });
+  shareElements(primary.elementSegments,
+                tracker.elementSegments,
+                ModuleUtils::copyElementSegment,
+                &Module::removeElementSegments);
 }
 
 void ModuleSplitter::indirectReferencesToSecondaryFunctions() {
