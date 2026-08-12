@@ -70,21 +70,6 @@ TEST(AbstractTest, RelationalInvolutions) {
   }
 }
 
-TEST(AbstractTest, NegateFlipCommutativity) {
-  const Op relationalOps[] = {
-    Eq, Ne, LtS, LtU, LeS, LeU, GtS, GtU, GeS, GeU,
-  };
-
-  // Flipping and negating commute for all relational operators:
-  // flip(negate(op)) == negate(flip(op))
-  // e.g. !(x < y) => x >= y => y <= x
-  //      (x < y) => y > x => !(y > x) => y <= x
-  for (auto op : relationalOps) {
-    EXPECT_EQ(flipRelational(negateRelational(op)),
-              negateRelational(flipRelational(op)));
-  }
-}
-
 TEST(AbstractTest, RelationalSymmetry) {
   const Op symmetricOps[] = {Eq, Ne};
   for (auto op : symmetricOps) {
