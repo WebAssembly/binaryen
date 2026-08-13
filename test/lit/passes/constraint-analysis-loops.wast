@@ -1198,7 +1198,145 @@
     )
   )
 
-  ;; CHECK:      (func $nested-2 (type $1) (param $len i32)
+  ;; CHECK:      (func $nested-increment-i-later (type $1) (param $len i32)
+  ;; CHECK-NEXT:  (local $i i32)
+  ;; CHECK-NEXT:  (local $j i32)
+  ;; CHECK-NEXT:  (block $out
+  ;; CHECK-NEXT:   (loop $outer
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (i32.ge_s
+  ;; CHECK-NEXT:      (local.get $i)
+  ;; CHECK-NEXT:      (local.get $len)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (then
+  ;; CHECK-NEXT:      (br $out)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (block $in
+  ;; CHECK-NEXT:     (local.set $j
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (loop $inner
+  ;; CHECK-NEXT:      (if
+  ;; CHECK-NEXT:       (i32.ge_s
+  ;; CHECK-NEXT:        (local.get $j)
+  ;; CHECK-NEXT:        (local.get $i)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (then
+  ;; CHECK-NEXT:        (br $in)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (i32.const 1)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (i32.const 1)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.set $j
+  ;; CHECK-NEXT:       (i32.add
+  ;; CHECK-NEXT:        (local.get $j)
+  ;; CHECK-NEXT:        (i32.const 1)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (br $inner)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $i
+  ;; CHECK-NEXT:     (i32.add
+  ;; CHECK-NEXT:      (local.get $i)
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (br $outer)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $nested-increment-i-later (param $len i32)
+    ;; As $nested, but i is incremented after the inner loop.
+    (local $i i32)
+    (local $j i32)
+    (block $out
+      (loop $outer
+        (if
+          (i32.ge_s
+            (local.get $i)
+            (local.get $len)
+          )
+          (then
+            (br $out)
+          )
+        )
+        ;; We can infer both of these to be 1.
+        (drop
+          (i32.lt_s
+            (local.get $i)
+            (local.get $len)
+          )
+        )
+        (drop
+          (i32.ge_s
+            (local.get $i)
+            (i32.const 0)
+          )
+        )
+
+        ;; Inner loop.
+        (block $in
+          (local.set $j
+            (i32.const 0)
+          )
+          (loop $inner
+            (if
+              (i32.ge_s
+                (local.get $j)
+                (local.get $i)
+              )
+              (then
+                (br $in)
+              )
+            )
+            ;; We can infer both of these to be 1.
+            (drop
+              (i32.lt_s
+                (local.get $j)
+                (local.get $i)
+              )
+            )
+            (drop
+              (i32.ge_s
+                (local.get $j)
+                (i32.const 0)
+              )
+            )
+            (local.set $j
+              (i32.add
+                (local.get $j)
+                (i32.const 1)
+              )
+            )
+            (br $inner)
+          )
+        )
+
+        ;; Outer loop's increment+branch.
+        (local.set $i
+          (i32.add
+            (local.get $i)
+            (i32.const 1)
+          )
+        )
+        (br $outer)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $nested-from-nonconstant-no (type $1) (param $len i32)
   ;; CHECK-NEXT:  (local $i i32)
   ;; CHECK-NEXT:  (local $j i32)
   ;; CHECK-NEXT:  (block $out
@@ -1260,7 +1398,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $nested-2 (param $len i32)
+  (func $nested-from-nonconstant-no (param $len i32)
     ;; As above, but the inner loop is i..len rather than 0..i
     (local $i i32)
     (local $j i32)
