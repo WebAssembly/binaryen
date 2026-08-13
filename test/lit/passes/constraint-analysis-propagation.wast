@@ -5,16 +5,16 @@
 (module
  ;; CHECK:      (func $no-immediate-propagation (type $0) (param $0 i32) (param $1 i32)
  ;; CHECK-NEXT:  (local $2 i32)
- ;; CHECK-NEXT:  (local.set $1
- ;; CHECK-NEXT:   (local.get $0)
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (block $out
- ;; CHECK-NEXT:   (br_if $out
+ ;; CHECK-NEXT:  (block $label
+ ;; CHECK-NEXT:   (local.set $1
+ ;; CHECK-NEXT:    (local.get $0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (br_if $label
  ;; CHECK-NEXT:    (i32.eqz
  ;; CHECK-NEXT:     (local.get $1)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (br_if $out
+ ;; CHECK-NEXT:   (br_if $label
  ;; CHECK-NEXT:    (local.get $0)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (local.set $2
@@ -35,35 +35,33 @@
   )
   ;; Here we have $1 == $0
 
-  (block $out
-   (br_if $out
-    (i32.eqz
-     (local.get $1)
-    )
-   )
-   ;; Here we also have $1 == 0
-
-   (br_if $out
-    (local.get $0)
-   )
-   ;; Here we also have $0 != 0, which leads to a contradiction with the
-   ;; above ($0 and $1 are equal, and their value cannot be both == 0 and != 0).
-   ;; However, we do not detect the contradiction, since we do not fully
-   ;; process all existing constraints immediately, each time we add a new one.
-   ;; TODO: should we, if it's fast enough?
-   ;; As a result, we do not remove the following code as unreachable.
-
-   (local.set $2
+  (br_if 0
+   (i32.eqz
     (local.get $1)
    )
-   ;; Now $2 == 1, and since $1 == 0, we apply $2 == 0, $2 == $1, $2 == $0.
+  )
+  ;; Here we also have $1 == 0
 
-   ;; Finally, we set $0 == $2. Applying the constraints here leads us to
-   ;; actually notice the contradiction. We should not error, and the code
-   ;; after us is unreachable, so we emit an unreachable right after.
-   (local.set $0
-    (local.get $2)
-   )
+  (br_if 0
+   (local.get $0)
+  )
+  ;; Here we also have $0 != 0, which leads to a contradiction with the
+  ;; above ($0 and $1 are equal, and their value cannot be both == 0 and != 0).
+  ;; However, we do not detect the contradiction, since we do not fully
+  ;; process all existing constraints immediately, each time we add a new one.
+  ;; TODO: should we, if it's fast enough?
+  ;; As a result, we do not remove the following code as unreachable.
+
+  (local.set $2
+   (local.get $1)
+  )
+  ;; Now $2 == 1, and since $1 == 0, we apply $2 == 0, $2 == $1, $2 == $0.
+
+  ;; Finally, we set $0 == $2. Applying the constraints here leads us to
+  ;; actually notice the contradiction. We should not error, and the code
+  ;; after us is unreachable, so we emit an unreachable right after.
+  (local.set $0
+   (local.get $2)
   )
  )
 
