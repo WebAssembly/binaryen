@@ -313,6 +313,9 @@ struct ConstraintAnalysis
 #endif
 
       for (auto** currp : block->contents.actions) {
+        if (constraints.unreachable) {
+          break;
+        }
         applyToConstraints(*currp, constraints);
       }
 
