@@ -48,8 +48,6 @@
 ;; Critical section guarding an unordered memory access
 (module $Mem
   (memory (export "shared") 1 1 shared)
-  (global (export "flag") (mut i32) (i32.const 0))
-  (global (export "payload") (mut i32) (i32.const 0))
 )
 (register "mem" $Mem)
 
@@ -69,11 +67,10 @@
 (thread $reader (shared (module $Mem))
   (module
     (memory (import "mem" "shared") 1 1 shared)
-    (global $flag (import "mem" "flag") (mut i32))
-    (global $payload (import "mem" "payload") (mut i32))
     (func (export "run")
-      (global.set $flag (i32.atomic.load acqrel (i32.const 0)))
-      (global.set $payload (i32.load (i32.const 4)))
+      ;; Store observed flag at address 8, observed payload at address 12
+      (i32.store (i32.const 8) (i32.atomic.load acqrel (i32.const 0)))
+      (i32.store (i32.const 12) (i32.load (i32.const 4)))
     )
   )
   (invoke "run")
@@ -83,14 +80,13 @@
 (wait $reader)
 
 (module
-  (global $flag (import "mem" "flag") (mut i32))
-  (global $payload (import "mem" "payload") (mut i32))
+  (memory (import "mem" "shared") 1 1 shared)
   (func (export "check") (result i32)
     ;; If the flag is set, the payload must be set
     ;; If the flag is unset, the payload may or may not be set.
     (i32.or
-      (i32.eqz (global.get $flag))
-      (i32.eq (global.get $payload) (i32.const 42))
+      (i32.eqz (i32.load (i32.const 8)))
+      (i32.eq (i32.load (i32.const 12)) (i32.const 42))
     )
   )
 )
@@ -102,8 +98,6 @@
 ;; Similar to above, critical section guarding a flag
 (module $Mem
   (memory (export "shared") 1 1 shared)
-  (global (export "flag") (mut i32) (i32.const 0))
-  (global (export "payload") (mut i32) (i32.const 0))
 )
 (register "mem" $Mem)
 
@@ -130,17 +124,17 @@
 (thread $reader (shared (module $Mem))
   (module
     (memory (import "mem" "shared") 1 1 shared)
-    (global $flag (import "mem" "flag") (mut i32))
-    (global $payload (import "mem" "payload") (mut i32))
     (func (export "run")
       ;; A relaxed ordering would be sufficient here but we don't have it.
       ;; In practice this and the fence together are redundant.
-      (global.set $flag (i32.atomic.load acqrel (i32.const 0)))
+      ;; Observed flag - address 8
+      (i32.store (i32.const 8) (i32.atomic.load acqrel (i32.const 0)))
 
       ;; Acquire barrier
       (atomic.fence acqrel)
 
-      (global.set $payload (i32.load (i32.const 4)))
+      ;; Observed payload - address 12
+      (i32.store (i32.const 12) (i32.load (i32.const 4)))
     )
   )
   (invoke "run")
@@ -150,14 +144,13 @@
 (wait $reader)
 
 (module
-  (global $flag (import "mem" "flag") (mut i32))
-  (global $payload (import "mem" "payload") (mut i32))
+  (memory (import "mem" "shared") 1 1 shared)
   (func (export "check") (result i32)
     ;; If the flag is set, the payload must be set
     ;; If the flag is unset, the payload may or may not be set.
     (i32.or
-      (i32.eqz (global.get $flag))
-      (i32.eq (global.get $payload) (i32.const 42))
+      (i32.eqz (i32.load (i32.const 8)))
+      (i32.eq (i32.load (i32.const 12)) (i32.const 42))
     )
   )
 )
@@ -259,10 +252,6 @@
 ;; independent reads of independent writes
 (module $Mem
   (memory (export "shared") 1 1 shared)
-  (global (export "x1") (mut i32) (i32.const 0))
-  (global (export "y1") (mut i32) (i32.const 0))
-  (global (export "x2") (mut i32) (i32.const 0))
-  (global (export "y2") (mut i32) (i32.const 0))
 )
 (register "mem" $Mem)
 
@@ -289,28 +278,26 @@
 )
 
 ;; Read x, then y
+;; Store observed x1 in 8, observed y1 in 12
 (thread $reader1 (shared (module $Mem))
   (module
     (memory (import "mem" "shared") 1 1 shared)
-    (global $x1 (import "mem" "x1") (mut i32))
-    (global $y1 (import "mem" "y1") (mut i32))
     (func (export "run")
-      (global.set $x1 (i32.atomic.load acqrel (i32.const 0)))
-      (global.set $y1 (i32.atomic.load acqrel (i32.const 4)))
+      (i32.store (i32.const 8) (i32.atomic.load acqrel (i32.const 0)))
+      (i32.store (i32.const 12) (i32.atomic.load acqrel (i32.const 4)))
     )
   )
   (invoke "run")
 )
 
 ;; Read y, then x
+;; Store observed x2 in 16, observed y2 in 20
 (thread $reader2 (shared (module $Mem))
   (module
     (memory (import "mem" "shared") 1 1 shared)
-    (global $x2 (import "mem" "x2") (mut i32))
-    (global $y2 (import "mem" "y2") (mut i32))
     (func (export "run")
-      (global.set $y2 (i32.atomic.load acqrel (i32.const 4)))
-      (global.set $x2 (i32.atomic.load acqrel (i32.const 0)))
+      (i32.store (i32.const 20) (i32.atomic.load acqrel (i32.const 4)))
+      (i32.store (i32.const 16) (i32.atomic.load acqrel (i32.const 0)))
     )
   )
   (invoke "run")
@@ -322,15 +309,12 @@
 (wait $reader2)
 
 (module
-  (global $x1 (import "mem" "x1") (mut i32))
-  (global $y1 (import "mem" "y1") (mut i32))
-  (global $x2 (import "mem" "x2") (mut i32))
-  (global $y2 (import "mem" "y2") (mut i32))
+  (memory (import "mem" "shared") 1 1 shared)
   (func (export "check") (result i32 i32 i32 i32)
-    (global.get $x1)
-    (global.get $y1)
-    (global.get $y2)
-    (global.get $x2)
+    (i32.load (i32.const 8))
+    (i32.load (i32.const 12))
+    (i32.load (i32.const 16))
+    (i32.load (i32.const 20))
   )
 )
 
