@@ -313,7 +313,15 @@ struct ConstraintAnalysis
 #endif
 
       for (auto** currp : block->contents.actions) {
+        if (constraints.unreachable) {
+          break;
+        }
         applyToConstraints(*currp, constraints);
+      }
+
+      if (constraints.unreachable) {
+        // Nothing to send.
+        continue;
       }
 
 #if CONSTRAINT_DEBUG
