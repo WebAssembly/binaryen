@@ -3,6 +3,31 @@
 ;; RUN: wasm-opt %s --constraint-analysis -all -S -o - | filecheck %s
 
 (module
+ ;; CHECK:      (func $no-immediate-propagation (type $0) (param $0 i32) (param $1 i32)
+ ;; CHECK-NEXT:  (local $2 i32)
+ ;; CHECK-NEXT:  (local.set $1
+ ;; CHECK-NEXT:   (local.get $0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (block $out
+ ;; CHECK-NEXT:   (br_if $out
+ ;; CHECK-NEXT:    (i32.eqz
+ ;; CHECK-NEXT:     (local.get $1)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (br_if $out
+ ;; CHECK-NEXT:    (local.get $0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (local.set $2
+ ;; CHECK-NEXT:    (local.get $1)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (block
+ ;; CHECK-NEXT:    (local.set $0
+ ;; CHECK-NEXT:     (local.get $2)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
  (func $no-immediate-propagation (param $0 i32) (param $1 i32)
   (local $2 i32)
   (local.set $1
@@ -35,16 +60,9 @@
 
    ;; Finally, we set $0 == $2. Applying the constraints here leads us to
    ;; actually notice the contradiction. We should not error, and the code
-   ;; after us is unreachable.
+   ;; after us is unreachable, so we emit an unreachable right after.
    (local.set $0
     (local.get $2)
-   )
-
-   ;; This can be removed.
-   (drop
-    (i32.eqz
-     (local.get $0)
-    )
    )
   )
  )
