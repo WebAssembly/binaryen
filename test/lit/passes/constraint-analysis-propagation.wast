@@ -66,5 +66,53 @@
    )
   )
  )
+
+ ;; CHECK:      (func $$no-immediate-propagation-branch (type $1) (param $0 i32)
+ ;; CHECK-NEXT:  (local $1 i32)
+ ;; CHECK-NEXT:  (local $2 i32)
+ ;; CHECK-NEXT:  (block $label
+ ;; CHECK-NEXT:   (local.set $1
+ ;; CHECK-NEXT:    (local.get $0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (br_if $label
+ ;; CHECK-NEXT:    (local.get $0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (br_if $label
+ ;; CHECK-NEXT:    (i32.eqz
+ ;; CHECK-NEXT:     (local.get $1)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (local.set $2
+ ;; CHECK-NEXT:    (local.get $1)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (br_if $label
+ ;; CHECK-NEXT:    (local.get $0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (block
+ ;; CHECK-NEXT:    (local.set $0
+ ;; CHECK-NEXT:     (local.get $2)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $$no-immediate-propagation-branch (param $0 i32) (local $1 i32) (local $2 i32)
+  ;; Similar to above, but now the contradiction is noticed during a branch.
+
+  (local.set $1 (local.get $0))        ;; $1 == $0
+
+  (br_if 0 (local.get $0))             ;; after this, $0 != 0
+
+  (br_if 0 (i32.eqz (local.get $1)))   ;; after this, $1 == 0, which is a
+                                       ;; contradiction we don't notice yet, as
+                                       ;; in the prior testcase
+
+  (local.set $2 (local.get $1))        ;; $2 == $1
+
+  (br_if 0 (local.get $0))             ;; this once again applies $0 != 0, and
+                                       ;; now we notice the contradiction
+
+  (local.set $0 (local.get $2))        ;; we add an unreachable after this
+ )
 )
 

@@ -319,6 +319,11 @@ struct ConstraintAnalysis
         applyToConstraints(*currp, constraints);
       }
 
+      if (constraints.unreachable) {
+        // Nothing to send.
+        continue;
+      }
+
 #if CONSTRAINT_DEBUG
       std::cout << block << " end   constraints: " << constraints << '\n';
 #endif
