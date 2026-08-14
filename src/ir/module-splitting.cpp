@@ -345,7 +345,7 @@ struct OwnershipTracker {
   std::unordered_map<Name, ItemInfo> dataSegments;
   std::unordered_map<Name, ItemInfo> elementSegments;
 
-  std::unordered_map<UsedNames*, Module*> usedToSecondary;
+  const std::vector<std::unique_ptr<Module>>* secondaries = nullptr;
 
   using FieldType = std::unordered_set<Name> UsedNames::*;
   using MapType = std::unordered_map<Name, ItemInfo> OwnershipTracker::*;
@@ -357,30 +357,31 @@ struct OwnershipTracker {
     // used by the primary module or multiple secondary modules, the primary
     // module is the owner.
     auto [it, inserted] = (this->*mapField).insert({name, ItemInfo{owner, {}}});
-    Module* mod = usedToSecondary[owner];
+    Module* secondary = nullptr;
+    if (owner != &primaryUsed) {
+      size_t index = owner - secondaryUsed.data();
+      secondary = (*secondaries)[index].get();
+    }
     if (inserted) {
-      if (mod) {
-        it->second.usingSecondaries.push_back(mod);
+      if (secondary) {
+        it->second.usingSecondaries.push_back(secondary);
       }
     } else {
       if (it->second.owner != owner) {
         it->second.owner = &primaryUsed;
         (primaryUsed.*field).insert(name);
       }
-      if (mod) {
+      if (secondary) {
         auto& vec = it->second.usingSecondaries;
-        if (std::find(vec.begin(), vec.end(), mod) == vec.end()) {
-          vec.push_back(mod);
+        if (std::find(vec.begin(), vec.end(), secondary) == vec.end()) {
+          vec.push_back(secondary);
         }
       }
     }
   }
 
   void build(const std::vector<std::unique_ptr<Module>>& secondaries) {
-    usedToSecondary[&primaryUsed] = nullptr;
-    for (size_t i = 0; i < secondaryUsed.size(); ++i) {
-      usedToSecondary[&secondaryUsed[i]] = secondaries[i].get();
-    }
+    this->secondaries = &secondaries;
 
     auto buildMap = [&](FieldType field,
                         std::unordered_map<Name, ItemInfo>& map) {
