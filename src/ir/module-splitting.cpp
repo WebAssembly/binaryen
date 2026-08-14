@@ -350,6 +350,10 @@ struct OwnershipTracker {
   using FieldType = std::unordered_set<Name> UsedNames::*;
   using MapType = std::unordered_map<Name, ItemInfo> OwnershipTracker::*;
 
+  // 'mapField' points to one of OwnershipTracker's maps, such as
+  //   std::unordered_map<Name, ItemInfo> globals;
+  // 'field' points to one of UsedName's sets, such as
+  //   std::unordered_set<Name> globals;
   void insert(Name name, UsedNames* owner, MapType mapField, FieldType field) {
     (owner->*field).insert(name);
     // Figure out which module the 'owner' is of this item. If it is used by a
@@ -383,6 +387,10 @@ struct OwnershipTracker {
   void build(const std::vector<std::unique_ptr<Module>>& secondaries) {
     this->secondaries = &secondaries;
 
+    // Build initial maps of a module element Name to an ItemInfo for each
+    // module element type.
+    // 'field' points to one of UsedName's sets, such as
+    //   std::unordered_set<Name> globals;
     auto buildMap = [&](FieldType field,
                         std::unordered_map<Name, ItemInfo>& map) {
       for (auto& name : (primaryUsed.*field)) {
