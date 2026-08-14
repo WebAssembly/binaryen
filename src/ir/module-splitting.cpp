@@ -389,11 +389,11 @@ struct OwnershipTracker {
         map[name].owner = &primaryUsed;
       }
       for (size_t i = 0; i < secondaryUsed.size(); ++i) {
-        auto& sec = secondaryUsed[i];
-        auto* mod = secondaries[i].get();
-        for (auto& name : (sec.*field)) {
-          auto [it, inserted] = map.insert({name, ItemInfo{&sec, {}}});
-          it->second.usingSecondaries.push_back(mod);
+        auto& secUsed = secondaryUsed[i];
+        auto* secondary = secondaries[i].get();
+        for (auto& name : (secUsed.*field)) {
+          auto [it, inserted] = map.insert({name, ItemInfo{&secUsed, {}}});
+          it->second.usingSecondaries.push_back(secondary);
           if (!inserted) {
             it->second.owner = &primaryUsed;
           }
