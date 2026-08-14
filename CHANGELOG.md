@@ -15,6 +15,11 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
+v132
+----
+
+- Add relaxed-atomics feature flag (#8983)
+- Opportunisticly emit compact imports (#8926)
 - [JS API] support `BinaryenStringConst` (#8951)
 - [JS API] Replace `Module['readBinaryWithFeatures']` with an
   optional `features` parameter to `Module['readBinary']` (#8954)

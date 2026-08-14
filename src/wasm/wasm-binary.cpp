@@ -1602,6 +1602,8 @@ void WasmBinaryWriter::writeFeaturesSection() {
         return BinaryConsts::CustomSections::WideArithmeticFeature;
       case FeatureSet::CompactImports:
         return BinaryConsts::CustomSections::CompactImportsFeature;
+      case FeatureSet::RelaxedAtomics:
+        return BinaryConsts::CustomSections::RelaxedAtomicsFeature;
       case FeatureSet::None:
       case FeatureSet::Default:
       case FeatureSet::All:
@@ -2161,6 +2163,9 @@ void WasmBinaryWriter::writeMemoryOrder(MemoryOrder order, bool isRMW) {
       break;
     case MemoryOrder::AcqRel:
       code = BinaryConsts::OrderAcqRel;
+      break;
+    case MemoryOrder::Relaxed:
+      code = BinaryConsts::OrderRelaxed;
       break;
   }
   if (isRMW) {
@@ -5627,6 +5632,8 @@ void WasmBinaryReader::readFeatures(size_t sectionPos, size_t payloadLen) {
       feature = FeatureSet::WideArithmetic;
     } else if (name == BinaryConsts::CustomSections::CompactImportsFeature) {
       feature = FeatureSet::CompactImports;
+    } else if (name == BinaryConsts::CustomSections::RelaxedAtomicsFeature) {
+      feature = FeatureSet::RelaxedAtomics;
     } else {
       // Silently ignore unknown features (this may be and old binaryen running
       // on a new wasm).
@@ -5926,6 +5933,16 @@ MemoryOrder WasmBinaryReader::getMemoryOrder(bool isRMW) {
     case ((BinaryConsts::OrderAcqRel << 4) | BinaryConsts::OrderAcqRel):
       if (isRMW) {
         return MemoryOrder::AcqRel;
+      }
+      break;
+    case BinaryConsts::OrderRelaxed:
+      if (!isRMW) {
+        return MemoryOrder::Relaxed;
+      }
+      throwError("RMW memory orders must match");
+    case ((BinaryConsts::OrderRelaxed << 4) | BinaryConsts::OrderRelaxed):
+      if (isRMW) {
+        return MemoryOrder::Relaxed;
       }
       break;
   }

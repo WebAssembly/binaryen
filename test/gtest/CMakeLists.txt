@@ -6,6 +6,7 @@ else()
 endif()
 
 set(unittest_SOURCES
+  abstract.cpp
   arena.cpp
   cast-check.cpp
   cfg.cpp
