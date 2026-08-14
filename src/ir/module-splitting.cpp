@@ -799,9 +799,9 @@ void ModuleSplitter::computeUsedNames() {
 // owner modules and using secondary modules correctly.
 #define ADD_ITEM(field, val)                                                   \
   if (tracker) {                                                               \
-    tracker->insert(VAL, &used, &OwnershipTracker::FIELD, &UsedNames::FIELD);  \
+    tracker->insert(val, &used, &OwnershipTracker::field, &UsedNames::field);  \
   } else {                                                                     \
-    used.FIELD.insert(VAL);                                                    \
+    used.field.insert(val);                                                    \
   }
 
 #define DELEGATE_FIELD_NAME_KIND(id, field, kind)                              \
