@@ -8,6 +8,8 @@
   (module
     (memory (import "mem" "shared") 1 1 shared)
     (func (export "run")
+      ;; a =rel 1
+      ;; b =rel 2
       (i32.atomic.store acqrel (i32.const 0) (i32.const 1))
       (i32.atomic.store acqrel (i32.const 4) (i32.const 2))
     )
@@ -19,6 +21,8 @@
   (module
     (memory (import "mem" "shared") 1 1 shared)
     (func (export "run")
+      ;; b =rel 3
+      ;; a =rel 4
       (i32.atomic.store acqrel (i32.const 4) (i32.const 3))
       (i32.atomic.store acqrel (i32.const 0) (i32.const 4))
     )
@@ -32,13 +36,14 @@
 (module
   (memory (import "mem" "shared") 1 1 shared)
   (func (export "check") (result i32 i32)
+    ;; read a, b
     (i32.load (i32.const 0))
     (i32.load (i32.const 4))
   )
 )
 
 ;; Nothing is synchronized so all 4 interleavings are possible.
-;; 1, 3 is only possible with acqrel, while others are also possible with
+;; a=1, b=3 is only possible with acqrel, while others are also possible with
 ;; seqcst.
 (assert_return (invoke "check")
   (either (i32.const 1) (i32.const 4))
@@ -55,9 +60,9 @@
   (module
     (memory (import "mem" "shared") 1 1 shared)
     (func (export "run")
-      ;; payload
+      ;; payload =un 42
       (i32.store (i32.const 4) (i32.const 42))
-      ;; flag indicating that the payload was written
+      ;; flag =rel 1 indicating that the payload was written
       (i32.atomic.store acqrel (i32.const 0) (i32.const 1))
     )
   )
@@ -68,8 +73,10 @@
   (module
     (memory (import "mem" "shared") 1 1 shared)
     (func (export "run")
-      ;; Store observed flag at address 8, observed payload at address 12
+      ;; observed_flag =acq flag
       (i32.store (i32.const 8) (i32.atomic.load acqrel (i32.const 0)))
+
+      ;; observed_payload =un payload
       (i32.store (i32.const 12) (i32.load (i32.const 4)))
     )
   )
@@ -84,6 +91,7 @@
   (func (export "check") (result i32)
     ;; If the flag is set, the payload must be set
     ;; If the flag is unset, the payload may or may not be set.
+    ;; !observed_flag || observed_payload == 42
     (i32.or
       (i32.eqz (i32.load (i32.const 8)))
       (i32.eq (i32.load (i32.const 12)) (i32.const 42))
@@ -105,7 +113,7 @@
   (module
     (memory (import "mem" "shared") 1 1 shared)
     (func (export "run")
-      ;; payload
+      ;; payload =un 42
       (i32.store (i32.const 4) (i32.const 42))
 
       ;; Release barrier
@@ -115,6 +123,7 @@
       ;; A relaxed ordering would be sufficient here but there's no such thing
       ;; at the moment.
       ;; In practice this and the fence together are redundant.
+      ;; flag =rel 1
       (i32.atomic.store acqrel (i32.const 0) (i32.const 1))
     )
   )
@@ -127,13 +136,13 @@
     (func (export "run")
       ;; A relaxed ordering would be sufficient here but we don't have it.
       ;; In practice this and the fence together are redundant.
-      ;; Observed flag - address 8
+      ;; observed_flag =acq flag
       (i32.store (i32.const 8) (i32.atomic.load acqrel (i32.const 0)))
 
       ;; Acquire barrier
       (atomic.fence acqrel)
 
-      ;; Observed payload - address 12
+      ;; observed_payload =un payload
       (i32.store (i32.const 12) (i32.load (i32.const 4)))
     )
   )
@@ -148,6 +157,7 @@
   (func (export "check") (result i32)
     ;; If the flag is set, the payload must be set
     ;; If the flag is unset, the payload may or may not be set.
+    ;; !observed_flag || observed_payload == 42
     (i32.or
       (i32.eqz (i32.load (i32.const 8)))
       (i32.eq (i32.load (i32.const 12)) (i32.const 42))
@@ -174,6 +184,7 @@
     
     (func $lock
       (loop $spin
+        ;; Try to swap 0 with 1 at the lock address 0
         (if (i32.eqz (i32.atomic.rmw.cmpxchg acqrel (i32.const 0) (i32.const 0) (i32.const 1)))
           (then (return))
         )
@@ -183,12 +194,14 @@
     )
     
     (func $unlock
+      ;; lock =rel 0
       (i32.atomic.store acqrel (i32.const 0) (i32.const 0))
     )
 
     (func (export "run")
       (call $lock)
       
+      ;; payload +=un 1
       (i32.store (i32.const 4) 
         (i32.add (i32.load (i32.const 4)) (i32.const 1))
       )
@@ -206,6 +219,7 @@
     
     (func $lock
       (loop $spin
+        ;; Try to swap 0 with 1 at the lock address 0
         (if (i32.eqz (i32.atomic.rmw.cmpxchg acqrel (i32.const 0) (i32.const 0) (i32.const 1)))
           (then (return))
         )
@@ -215,12 +229,14 @@
     )
     
     (func $unlock
+      ;; lock =rel 0
       (i32.atomic.store acqrel (i32.const 0) (i32.const 0))
     )
 
     (func (export "run")
       (call $lock)
       
+      ;; payload +=un 10
       (i32.store (i32.const 4) 
         (i32.add (i32.load (i32.const 4)) (i32.const 10))
       )
@@ -237,6 +253,7 @@
 (module
   (memory (import "mem" "shared") 1 1 shared)
   (func (export "check") (result i32) (result i32)
+    ;; read payload, lock
     (i32.load (i32.const 4))
     (i32.load (i32.const 0))
   )
@@ -255,34 +272,34 @@
 )
 (register "mem" $Mem)
 
-;; Set x = 1
 (thread $writerX (shared (module $Mem))
   (module
     (memory (import "mem" "shared") 1 1 shared)
     (func (export "run")
+      ;; x =rel 1
       (i32.atomic.store acqrel (i32.const 0) (i32.const 1))
     )
   )
   (invoke "run")
 )
 
-;; Set y = 1
 (thread $writerY (shared (module $Mem))
   (module
     (memory (import "mem" "shared") 1 1 shared)
     (func (export "run")
+      ;; y =rel 1
       (i32.atomic.store acqrel (i32.const 4) (i32.const 1))
     )
   )
   (invoke "run")
 )
 
-;; Read x, then y
-;; Store observed x1 in 8, observed y1 in 12
 (thread $reader1 (shared (module $Mem))
   (module
     (memory (import "mem" "shared") 1 1 shared)
     (func (export "run")
+      ;; x1 =acq x
+      ;; y1 =acq y
       (i32.store (i32.const 8) (i32.atomic.load acqrel (i32.const 0)))
       (i32.store (i32.const 12) (i32.atomic.load acqrel (i32.const 4)))
     )
@@ -290,12 +307,12 @@
   (invoke "run")
 )
 
-;; Read y, then x
-;; Store observed x2 in 16, observed y2 in 20
 (thread $reader2 (shared (module $Mem))
   (module
     (memory (import "mem" "shared") 1 1 shared)
     (func (export "run")
+      ;; y2 =acq y
+      ;; x2 =acq x
       (i32.store (i32.const 20) (i32.atomic.load acqrel (i32.const 4)))
       (i32.store (i32.const 16) (i32.atomic.load acqrel (i32.const 0)))
     )
@@ -311,6 +328,7 @@
 (module
   (memory (import "mem" "shared") 1 1 shared)
   (func (export "check") (result i32 i32 i32 i32)
+    ;; read x1, y1, x2, y2
     (i32.load (i32.const 8))
     (i32.load (i32.const 12))
     (i32.load (i32.const 16))
