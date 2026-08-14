@@ -796,7 +796,7 @@ void ModuleSplitter::computeUsedNames() {
 // In the initial building phase, we just directly add to a UsedName struct.
 // After OwnershipTracker is constructed, we all its insert() method to update
 // owner modules and using secondary modules correctly.
-#define ADD_ITEM(FIELD, VAL)                                                   \
+#define ADD_ITEM(field, val)                                                   \
   if (tracker) {                                                               \
     tracker->insert(VAL, &used, &OwnershipTracker::FIELD, &UsedNames::FIELD);  \
   } else {                                                                     \
