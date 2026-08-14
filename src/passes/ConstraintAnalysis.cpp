@@ -609,12 +609,17 @@ struct ConstraintAnalysis
     //    handling constants here, we only extend ranges for loop variables (and
     //    extending ranges can have downsides, so it is good we do it in a
     //    targeted way).
-    //  * The case of a constant is exactly what we want to optimize here: most
-    //    typical loop patterns iterate from 0 or 1 or such.
+    //  * The case of a constant for the initial value N is exactly what we want
+    //    to optimize here: most typical loop patterns iterate from 0 or 1 or
+    //    such.
     //
     // So things work out perfectly here: constants are safe to optimize (no
     // risk of extension causing  downsides) and are exactly what we want to
     // optimize.
+    //
+    // (Note that there is no limitation on *M*, the upper bound of the loop: we
+    // can iterate up to a constant or to a local. I.e. loops from 0 to 100 and
+    // 5 to x work, but not loops from x to 100 or x to y.)
     auto N = constraints.get(branch.local).getLiteral();
     if (!N) {
       return false;
