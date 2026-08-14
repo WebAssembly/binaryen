@@ -356,7 +356,7 @@ struct OwnershipTracker {
   //   std::unordered_set<Name> globals;
   void insert(Name name, UsedNames* owner, MapType mapField, FieldType field) {
     (owner->*field).insert(name);
-    // Figure out which module the 'owner' is of this item. If it is used by a
+    // Figure out which module is the 'owner' of this item. If it is used by a
     // single secondary module, that secondary module is the owner. If it is
     // used by the primary module or multiple secondary modules, the primary
     // module is the owner.
@@ -803,7 +803,7 @@ void ModuleSplitter::computeUsedNames() {
 #define DELEGATE_FIELD_ADDRESS(id, field)
 
 // In the initial building phase, we just directly add to a UsedName struct.
-// After OwnershipTracker is constructed, we all its insert() method to update
+// After OwnershipTracker is constructed, we call its insert() method to update
 // owner modules and using secondary modules correctly.
 #define ADD_ITEM(field, val)                                                   \
   if (tracker) {                                                               \
