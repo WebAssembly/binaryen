@@ -313,7 +313,15 @@ struct ConstraintAnalysis
 #endif
 
       for (auto** currp : block->contents.actions) {
+        if (constraints.unreachable) {
+          break;
+        }
         applyToConstraints(*currp, constraints);
+      }
+
+      if (constraints.unreachable) {
+        // Nothing to send.
+        continue;
       }
 
 #if CONSTRAINT_DEBUG
@@ -611,15 +619,28 @@ struct ConstraintAnalysis
     using namespace Abstract;
 
     // "Jump ahead" and extend ranges. If the branch is x < M, and we were
-    // x == N where N < M, then extend to x >= N && x < M (see top-level
-    // comment).
-    auto* M = std::get_if<Literal>(&branch.constraint.term);
-    if (!M) {
-      return false;
-    }
+    // x == N, then extend to x >= N && x < M (see top-level comment). Note that
+    // we don't need to worry about a contradiction here: this code is only
+    // reached if x == N && x < M. If it is reached, that is not a
+    // contradiction, and extending x == N to x >= N is also not.
+    auto M = branch.constraint.term;
 
-    // Handle the case of simple equality of the local to a constant.
-    // TODO: Handle non-constant ones.
+    // We only handle the case of N being a constant, for two reasons:
+    //
+    //  * As mentioned above, if a constant reaches a conditional branch, then
+    //    other passes would have propagated it into the branch check itself,
+    //    if that were possible. The only case where it isn't possible is when
+    //    it is a loop variable (so it looks like a constant at first, but gets
+    //    written another value by the branch back to the loop top). By only
+    //    handling constants here, we only extend ranges for loop variables (and
+    //    extending ranges can have downsides, so it is good we do it in a
+    //    targeted way).
+    //  * The case of a constant is exactly what we want to optimize here: most
+    //    typical loop patterns iterate from 0 or 1 or such.
+    //
+    // So things work out perfectly here: constants are safe to optimize (no
+    // risk of extension causing  downsides) and are exactly what we want to
+    // optimize.
     auto N = constraints.get(branch.local).getLiteral();
     if (!N) {
       return false;
@@ -627,14 +648,14 @@ struct ConstraintAnalysis
 
     // We can handle both x < M as the branch, as described above, or
     // x <= M (if N <= M).
-    if ((branch.constraint.op == Abstract::LtS && N->ltS(*M).getUnsigned()) ||
-        (branch.constraint.op == Abstract::LeS && N->leS(*M).getUnsigned())) {
+    if (branch.constraint.op == Abstract::LtS ||
+        branch.constraint.op == Abstract::LeS) {
       constraints.set(branch.local, branch.constraint);
       constraints.approximateAnd(branch.local, {GeS, {*N}});
       return true;
     }
-    if ((branch.constraint.op == Abstract::LtU && N->ltU(*M).getUnsigned()) ||
-        (branch.constraint.op == Abstract::LeU && N->leU(*M).getUnsigned())) {
+    if (branch.constraint.op == Abstract::LtU ||
+        branch.constraint.op == Abstract::LeU) {
       constraints.set(branch.local, branch.constraint);
       constraints.approximateAnd(branch.local, {GeU, {*N}});
       return true;
