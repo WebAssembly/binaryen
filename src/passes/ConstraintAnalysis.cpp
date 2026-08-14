@@ -543,7 +543,33 @@ struct ConstraintAnalysis
       }
 #endif
 
-      constraints.set(set->index, set->value);
+      // Look at the fallthrough. It is valid to do so, because our constraints
+      // only track two things, constants and locals. For a constant, it does
+      // not change while falling through. For a local, the only way for the
+      // local to change while falling through is to go through a tee of that
+      // local - but that would keep the same value there anyhow. That is:
+      //
+      //  (local.set $other
+      //    (block
+      //      ..
+      //      (local.tee $source
+      //        (block
+      //          ..
+      //          (local.get $source)
+      //        )
+      //      )
+      //    )
+      //  )
+      //
+      // The fallthrough here is the local.get of $source. We can set $other to
+      // the value in $source, because while $source did have a write while
+      // falling through, it did not alter the value, and there is no
+      // opportunity to write any other value while falling through. (And, any
+      // local.tee appearing here would have been reached earlier in the
+      // traversal, and handled.)
+      auto* value =
+        Properties::getFallthrough(set->value, getPassOptions(), *getModule());
+      constraints.set(set->index, value);
     }
   }
 
