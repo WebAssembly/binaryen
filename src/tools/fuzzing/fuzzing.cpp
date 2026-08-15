@@ -2839,6 +2839,10 @@ Expression* TranslateToFuzzReader::_makeConcrete(Type type) {
                 &Self::makeStringMeasure,
                 &Self::makeStringGet);
   }
+  if (type == Type::i64) {
+    options.add(FeatureSet::WideArithmetic | FeatureSet::Multivalue,
+                &Self::makeWideIntExtract);
+  }
   if (type.isTuple()) {
     if (type == Types::getI64Pair() && oneIn(2)) {
       options.add(FeatureSet::WideArithmetic, &Self::makeWideIntExpression);
@@ -2866,8 +2870,10 @@ Expression* TranslateToFuzzReader::_makeConcrete(Type type) {
     if (type.isCastable()) {
       // Exact casts are only allowed with custom descriptors enabled.
       if (type.isInexact() || wasm.features.hasCustomDescriptors()) {
+        // Casts are very fundamental to WasmGC, and a potential source of
+        // security issues, so we prioritize them as very important.
         options.add(FeatureSet::ReferenceTypes | FeatureSet::GC,
-                    &Self::makeRefCast);
+                    WeightedOption{&Self::makeRefCast, VeryImportant});
       }
     }
     if (heapType.getDescribedType()) {
@@ -3549,6 +3555,15 @@ Expression* TranslateToFuzzReader::makeWideIntMul(Type type) {
 
 Expression* TranslateToFuzzReader::makeWideIntExpression(Type type) {
   return oneIn(2) ? makeWideIntAddSub(type) : makeWideIntMul(type);
+}
+
+Expression* TranslateToFuzzReader::makeWideIntExtract(Type type) {
+  assert(wasm.features.hasWideArithmetic());
+  assert(wasm.features.hasMultivalue());
+  assert(type == Type::i64);
+  auto* child = makeWideIntExpression(Types::getI64Pair());
+  Index index = upTo(2);
+  return builder.makeTupleExtract(child, index);
 }
 
 Expression* TranslateToFuzzReader::makeTupleExtract(Type type) {

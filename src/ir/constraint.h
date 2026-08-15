@@ -194,6 +194,18 @@ struct AndedConstraintSet : inplace_vector<Constraint, MaxConstraints> {
     setProvesNothing();
     push_back(c);
   }
+
+  // If the set of constraints shows us as equal to a literal, return it.
+  std::optional<Literal> getLiteral() const {
+    for (auto& c : *this) {
+      if (c.op == Abstract::Eq) {
+        if (auto* cc = std::get_if<Literal>(&c.term)) {
+          return *cc;
+        }
+      }
+    }
+    return {};
+  }
 };
 
 // A local plus a constraint on it.
