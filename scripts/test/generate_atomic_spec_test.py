@@ -4,7 +4,7 @@ from collections.abc import Iterator
 from dataclasses import dataclass
 from enum import Enum
 
-from relaxed_atomic_execution_tests import acqrel_execution_tests
+from acquire_release_atomics_execution_tests import acqrel_execution_tests
 
 # Workaround for python <3.10, escape characters can't appear in f-strings.
 # Although we require 3.10 in some places, the formatter complains without this.
