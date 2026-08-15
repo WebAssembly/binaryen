@@ -776,16 +776,21 @@ void ModuleSplitter::thunkExportedSecondaryFunctions() {
 }
 
 void ModuleSplitter::computeUsedNames() {
+  tracker.secondaries = &secondaries;
+  tracker.secondaryUsed.resize(secondaries.size());
   UsedNames& primaryUsed = tracker.primaryUsed;
   std::vector<UsedNames>& secondaryUsed = tracker.secondaryUsed;
+
+#define ADD_ITEM_TO_TRACKER(field, val, owner)                                 \
+  tracker.insert(val, owner, &OwnershipTracker::field, &UsedNames::field)
 
   struct NameCollector
     : public PostWalker<NameCollector,
                         UnifiedExpressionVisitor<NameCollector>> {
     UsedNames& used;
-    OwnershipTracker* tracker = nullptr;
+    OwnershipTracker& tracker;
 
-    NameCollector(UsedNames& used, OwnershipTracker* tracker = nullptr)
+    NameCollector(UsedNames& used, OwnershipTracker& tracker)
       : used(used), tracker(tracker) {}
 
     void visitExpression(Expression* curr) {
@@ -802,36 +807,26 @@ void ModuleSplitter::computeUsedNames() {
 #define DELEGATE_FIELD_SCOPE_NAME_USE(id, field)
 #define DELEGATE_FIELD_ADDRESS(id, field)
 
-// In the initial building phase, we just directly add to a UsedName struct.
-// After OwnershipTracker is constructed, we call its insert() method to update
-// owner modules and using secondary modules correctly.
-#define ADD_ITEM(field, val)                                                   \
-  if (tracker) {                                                               \
-    tracker->insert(val, &used, &OwnershipTracker::field, &UsedNames::field);  \
-  } else {                                                                     \
-    used.field.insert(val);                                                    \
-  }
-
 #define DELEGATE_FIELD_NAME_KIND(id, field, kind)                              \
   if (cast->field.is()) {                                                      \
     switch (kind) {                                                            \
       case ModuleItemKind::Table:                                              \
-        ADD_ITEM(tables, cast->field);                                         \
+        ADD_ITEM_TO_TRACKER(tables, cast->field, &used);                       \
         break;                                                                 \
       case ModuleItemKind::Memory:                                             \
-        ADD_ITEM(memories, cast->field);                                       \
+        ADD_ITEM_TO_TRACKER(memories, cast->field, &used);                     \
         break;                                                                 \
       case ModuleItemKind::Global:                                             \
-        ADD_ITEM(globals, cast->field);                                        \
+        ADD_ITEM_TO_TRACKER(globals, cast->field, &used);                      \
         break;                                                                 \
       case ModuleItemKind::Tag:                                                \
-        ADD_ITEM(tags, cast->field);                                           \
+        ADD_ITEM_TO_TRACKER(tags, cast->field, &used);                         \
         break;                                                                 \
       case ModuleItemKind::DataSegment:                                        \
-        ADD_ITEM(dataSegments, cast->field);                                   \
+        ADD_ITEM_TO_TRACKER(dataSegments, cast->field, &used);                 \
         break;                                                                 \
       case ModuleItemKind::ElementSegment:                                     \
-        ADD_ITEM(elementSegments, cast->field);                                \
+        ADD_ITEM_TO_TRACKER(elementSegments, cast->field, &used);              \
         break;                                                                 \
       case ModuleItemKind::Function:                                           \
       case ModuleItemKind::Invalid:                                            \
@@ -840,25 +835,22 @@ void ModuleSplitter::computeUsedNames() {
   }
 
 #include "wasm-delegations-fields.def"
-#undef ADD_ITEM
     }
   };
 
   // Given a module, collect names used in the module
-  auto scanModule = [&](Module& module) {
-    UsedNames used;
-    NameCollector collector(used);
+  auto scanModule = [&](Module& module, UsedNames& used) {
+    NameCollector collector(used, tracker);
     for (auto& func : module.functions) {
       if (!func->imported()) {
         collector.walk(func->body);
       }
     }
-    return used;
   };
 
-  primaryUsed = scanModule(primary);
-  for (auto& secondaryPtr : secondaries) {
-    secondaryUsed.push_back(scanModule(*secondaryPtr));
+  scanModule(primary, primaryUsed);
+  for (size_t i = 0; i < secondaries.size(); ++i) {
+    scanModule(*secondaries[i], secondaryUsed[i]);
   }
 
   // If primary module has exports, they are "used" in it. Secondary modules
@@ -866,16 +858,16 @@ void ModuleSplitter::computeUsedNames() {
   for (auto& ex : primary.exports) {
     switch (ex->kind) {
       case ExternalKind::Global:
-        primaryUsed.globals.insert(*ex->getInternalName());
+        ADD_ITEM_TO_TRACKER(globals, *ex->getInternalName(), &primaryUsed);
         break;
       case ExternalKind::Memory:
-        primaryUsed.memories.insert(*ex->getInternalName());
+        ADD_ITEM_TO_TRACKER(memories, *ex->getInternalName(), &primaryUsed);
         break;
       case ExternalKind::Table:
-        primaryUsed.tables.insert(*ex->getInternalName());
+        ADD_ITEM_TO_TRACKER(tables, *ex->getInternalName(), &primaryUsed);
         break;
       case ExternalKind::Tag:
-        primaryUsed.tags.insert(*ex->getInternalName());
+        ADD_ITEM_TO_TRACKER(tags, *ex->getInternalName(), &primaryUsed);
         break;
       default:
         break;
@@ -885,10 +877,10 @@ void ModuleSplitter::computeUsedNames() {
   // We need to assume the dispatch table and its base global are used in the
   // primary module, because we will create segments there later.
   if (tableManager.dispatchTable) {
-    primaryUsed.tables.insert(tableManager.dispatchTable->name);
+    ADD_ITEM_TO_TRACKER(tables, tableManager.dispatchTable->name, &primaryUsed);
   }
   if (tableManager.dispatchBase.global) {
-    primaryUsed.globals.insert(tableManager.dispatchBase.global);
+    ADD_ITEM_TO_TRACKER(globals, tableManager.dispatchBase.global, &primaryUsed);
   }
 
   // If custom-descirptors is enabled, global and table initializers can trap.
@@ -899,19 +891,17 @@ void ModuleSplitter::computeUsedNames() {
       if (global->init &&
           EffectAnalyzer(config.passOptions, primary, global->init)
             .hasUnremovableSideEffects()) {
-        primaryUsed.globals.insert(global->name);
+        ADD_ITEM_TO_TRACKER(globals, global->name, &primaryUsed);
       }
     }
     for (auto& table : primary.tables) {
       if (table->init &&
           EffectAnalyzer(config.passOptions, primary, table->init)
             .hasUnremovableSideEffects()) {
-        primaryUsed.tables.insert(table->name);
+        ADD_ITEM_TO_TRACKER(tables, table->name, &primaryUsed);
       }
     }
   }
-
-  tracker.build(secondaries);
 
   // Scan table initializers into their owning modules. If a table is used by a
   // single secondary module, its initializer dependencies are marked as "used"
@@ -923,7 +913,7 @@ void ModuleSplitter::computeUsedNames() {
         continue;
       }
       if (UsedNames* owner = tracker.getOwner(table->name, tracker.tables)) {
-        NameCollector(*owner, &tracker).walk(table->init);
+        NameCollector(*owner, tracker).walk(table->init);
       }
     }
   }
@@ -972,7 +962,7 @@ void ModuleSplitter::computeUsedNames() {
     return false;
   };
 
-#define ADD_ITEM_TO_TRACKER(FIELD, VAL)                                        \
+#define ADD_ITEM_TO_TRACKER_TO_TRACKER(FIELD, VAL)                             \
   tracker.insert(VAL, owner, &OwnershipTracker::FIELD, &UsedNames::FIELD)
 
   // Iterate on active data and element segments. If its table or memory is
@@ -990,10 +980,10 @@ void ModuleSplitter::computeUsedNames() {
     if (!owner) {
       return;
     }
-    ADD_ITEM_TO_TRACKER(dataSegments, segment->name);
-    ADD_ITEM_TO_TRACKER(memories, segment->memory);
+    ADD_ITEM_TO_TRACKER(dataSegments, segment->name, owner);
+    ADD_ITEM_TO_TRACKER(memories, segment->memory, owner);
     if (segment->offset) {
-      NameCollector(*owner, &tracker).walk(segment->offset);
+      NameCollector(*owner, tracker).walk(segment->offset);
     }
   });
 
@@ -1045,13 +1035,13 @@ void ModuleSplitter::computeUsedNames() {
     if (!owner) {
       return;
     }
-    ADD_ITEM_TO_TRACKER(elementSegments, segment->name);
-    ADD_ITEM_TO_TRACKER(tables, segment->table);
+    ADD_ITEM_TO_TRACKER(elementSegments, segment->name, owner);
+    ADD_ITEM_TO_TRACKER(tables, segment->table, owner);
     if (segment->offset) {
-      NameCollector(*owner, &tracker).walk(segment->offset);
+      NameCollector(*owner, tracker).walk(segment->offset);
     }
     for (auto* item : segment->data) {
-      NameCollector(*owner, &tracker).walk(item);
+      NameCollector(*owner, tracker).walk(item);
     }
   });
 
@@ -1063,7 +1053,7 @@ void ModuleSplitter::computeUsedNames() {
     if (segment->isPassive() &&
         primaryUsed.elementSegments.contains(segment->name)) {
       for (auto* item : segment->data) {
-        NameCollector(primaryUsed, &tracker).walk(item);
+        NameCollector(primaryUsed, tracker).walk(item);
       }
     }
   }
@@ -1082,10 +1072,11 @@ void ModuleSplitter::computeUsedNames() {
     }
     if (UsedNames* owner = tracker.getOwner(global->name, tracker.globals)) {
       for (auto* get : FindAll<GlobalGet>(global->init).list) {
-        ADD_ITEM_TO_TRACKER(globals, get->name);
+        ADD_ITEM_TO_TRACKER(globals, get->name, owner);
       }
     }
   }
+#undef ADD_ITEM_TO_TRACKER
 }
 
 void ModuleSplitter::shareImportableItems() {
