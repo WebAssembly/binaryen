@@ -1127,7 +1127,7 @@ void ModuleSplitter::shareImportableItems() {
     }
   }
   primary.removeMemories(
-    [&](Memory* memory) { return memoriesToRemove.count(memory->name); });
+    [&](Memory* memory) { return memoriesToRemove.contains(memory->name); });
 
   std::unordered_set<Name> tablesToRemove;
   for (auto& table : primary.tables) {
