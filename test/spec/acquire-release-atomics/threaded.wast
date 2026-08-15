@@ -8,8 +8,8 @@
   (module
     (memory (import "mem" "shared") 1 1 shared)
     (func (export "run")
-      ;; a =rel 1
-      ;; b =rel 2
+      ;; x =rel 1
+      ;; y =rel 2
       (i32.atomic.store acqrel (i32.const 0) (i32.const 1))
       (i32.atomic.store acqrel (i32.const 4) (i32.const 2))
     )
@@ -21,8 +21,8 @@
   (module
     (memory (import "mem" "shared") 1 1 shared)
     (func (export "run")
-      ;; b =rel 3
-      ;; a =rel 4
+      ;; y =rel 3
+      ;; x =rel 4
       (i32.atomic.store acqrel (i32.const 4) (i32.const 3))
       (i32.atomic.store acqrel (i32.const 0) (i32.const 4))
     )
@@ -36,14 +36,14 @@
 (module
   (memory (import "mem" "shared") 1 1 shared)
   (func (export "check") (result i32 i32)
-    ;; read a, b
+    ;; read x, y
     (i32.load (i32.const 0))
     (i32.load (i32.const 4))
   )
 )
 
 ;; Nothing is synchronized so all 4 interleavings are possible.
-;; a=1, b=3 is only possible with acqrel, while others are also possible with
+;; x=1, y=3 is only possible with acqrel, while others are also possible with
 ;; seqcst.
 (assert_return (invoke "check")
   (either (i32.const 1) (i32.const 4))
