@@ -898,4 +898,1198 @@
     (atomic.fence)
     (local.get $x)
   )
+
+  ;; Relaxed tests
+
+  ;; Relaxed with Unordered (Normal)
+
+  ;; CHECK:      (func $read-relaxed-read (type $2) (param $shared (ref null $shared-struct)) (param $shared-array (ref null $shared-array)) (result i32)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.atomic.get relaxed $shared-struct 0
+  ;; CHECK-NEXT:    (local.get $shared)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (array.get $shared-array
+  ;; CHECK-NEXT:   (local.get $shared-array)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $read-relaxed-read (param $shared (ref null $shared-struct))
+                           (param $shared-array (ref null $shared-array))
+                           (result i32)
+    ;; A normal read can be moved past a relaxed read.
+    (local $x i32)
+    (local.set $x
+      (array.get $shared-array
+        (local.get $shared-array)
+        (i32.const 0)
+      )
+    )
+    (drop
+      (struct.atomic.get relaxed $shared-struct 0
+        (local.get $shared)
+      )
+    )
+    (local.get $x)
+  )
+
+  ;; CHECK:      (func $relaxed-read-read (type $2) (param $shared (ref null $shared-struct)) (param $shared-array (ref null $shared-array)) (result i32)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (array.get $shared-array
+  ;; CHECK-NEXT:    (local.get $shared-array)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.atomic.get relaxed $shared-struct 0
+  ;; CHECK-NEXT:   (local.get $shared)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $relaxed-read-read (param $shared (ref null $shared-struct))
+                           (param $shared-array (ref null $shared-array))
+                           (result i32)
+    ;; A relaxed read can be moved past a normal read.
+    (local $x i32)
+    (local.set $x
+      (struct.atomic.get relaxed $shared-struct 0
+        (local.get $shared)
+      )
+    )
+    (drop
+      (array.get $shared-array
+        (local.get $shared-array)
+        (i32.const 0)
+      )
+    )
+    (local.get $x)
+  )
+
+  ;; CHECK:      (func $read-relaxed-store (type $2) (param $shared (ref null $shared-struct)) (param $shared-array (ref null $shared-array)) (result i32)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (struct.atomic.set relaxed $shared-struct 0
+  ;; CHECK-NEXT:   (local.get $shared)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (array.get $shared-array
+  ;; CHECK-NEXT:   (local.get $shared-array)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $read-relaxed-store (param $shared (ref null $shared-struct))
+                            (param $shared-array (ref null $shared-array))
+                            (result i32)
+    ;; A normal read can be moved past a relaxed store.
+    (local $x i32)
+    (local.set $x
+      (array.get $shared-array
+        (local.get $shared-array)
+        (i32.const 0)
+      )
+    )
+    (struct.atomic.set relaxed $shared-struct 0
+      (local.get $shared)
+      (i32.const 0)
+    )
+    (local.get $x)
+  )
+
+  ;; CHECK:      (func $relaxed-store-read (type $2) (param $shared (ref null $shared-struct)) (param $shared-array (ref null $shared-array)) (result i32)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (array.get $shared-array
+  ;; CHECK-NEXT:    (local.get $shared-array)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block (result i32)
+  ;; CHECK-NEXT:   (struct.atomic.set relaxed $shared-struct 0
+  ;; CHECK-NEXT:    (local.get $shared)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $relaxed-store-read (param $shared (ref null $shared-struct))
+                            (param $shared-array (ref null $shared-array))
+                            (result i32)
+    ;; A relaxed store can be moved past a non-aliasing normal read.
+    (local $x i32)
+    (local.set $x
+      (block (result i32)
+        (struct.atomic.set relaxed $shared-struct 0
+          (local.get $shared)
+          (i32.const 0)
+        )
+        (i32.const 1)
+      )
+    )
+    (drop
+      (array.get $shared-array
+        (local.get $shared-array)
+        (i32.const 0)
+      )
+    )
+    (local.get $x)
+  )
+
+  ;; CHECK:      (func $store-relaxed-read (type $2) (param $shared (ref null $shared-struct)) (param $shared-array (ref null $shared-array)) (result i32)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.atomic.get relaxed $shared-struct 0
+  ;; CHECK-NEXT:    (local.get $shared)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block (result i32)
+  ;; CHECK-NEXT:   (array.set $shared-array
+  ;; CHECK-NEXT:    (local.get $shared-array)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $store-relaxed-read (param $shared (ref null $shared-struct))
+                            (param $shared-array (ref null $shared-array))
+                            (result i32)
+    ;; A normal store can be moved past a relaxed read.
+    (local $x i32)
+    (local.set $x
+      (block (result i32)
+        (array.set $shared-array
+          (local.get $shared-array)
+          (i32.const 0)
+          (i32.const 0)
+        )
+        (i32.const 1)
+      )
+    )
+    (drop
+      (struct.atomic.get relaxed $shared-struct 0
+        (local.get $shared)
+      )
+    )
+    (local.get $x)
+  )
+
+  ;; CHECK:      (func $relaxed-read-store (type $2) (param $shared (ref null $shared-struct)) (param $shared-array (ref null $shared-array)) (result i32)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (array.set $shared-array
+  ;; CHECK-NEXT:   (local.get $shared-array)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.atomic.get relaxed $shared-struct 0
+  ;; CHECK-NEXT:   (local.get $shared)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $relaxed-read-store (param $shared (ref null $shared-struct))
+                            (param $shared-array (ref null $shared-array))
+                            (result i32)
+    ;; A relaxed read can be moved past a normal store.
+    (local $x i32)
+    (local.set $x
+      (struct.atomic.get relaxed $shared-struct 0
+        (local.get $shared)
+      )
+    )
+    (array.set $shared-array
+      (local.get $shared-array)
+      (i32.const 0)
+      (i32.const 0)
+    )
+    (local.get $x)
+  )
+
+  ;; CHECK:      (func $store-relaxed-store (type $2) (param $shared (ref null $shared-struct)) (param $shared-array (ref null $shared-array)) (result i32)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (struct.atomic.set relaxed $shared-struct 0
+  ;; CHECK-NEXT:   (local.get $shared)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block (result i32)
+  ;; CHECK-NEXT:   (array.set $shared-array
+  ;; CHECK-NEXT:    (local.get $shared-array)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $store-relaxed-store (param $shared (ref null $shared-struct))
+                             (param $shared-array (ref null $shared-array))
+                             (result i32)
+    ;; A normal store can be moved past a non-aliasing relaxed store.
+    (local $x i32)
+    (local.set $x
+      (block (result i32)
+        (array.set $shared-array
+          (local.get $shared-array)
+          (i32.const 0)
+          (i32.const 0)
+        )
+        (i32.const 1)
+      )
+    )
+    (struct.atomic.set relaxed $shared-struct 0
+      (local.get $shared)
+      (i32.const 0)
+    )
+    (local.get $x)
+  )
+
+  ;; CHECK:      (func $relaxed-store-store (type $2) (param $shared (ref null $shared-struct)) (param $shared-array (ref null $shared-array)) (result i32)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (array.set $shared-array
+  ;; CHECK-NEXT:   (local.get $shared-array)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block (result i32)
+  ;; CHECK-NEXT:   (struct.atomic.set relaxed $shared-struct 0
+  ;; CHECK-NEXT:    (local.get $shared)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $relaxed-store-store (param $shared (ref null $shared-struct))
+                             (param $shared-array (ref null $shared-array))
+                             (result i32)
+    ;; A relaxed store can be moved past a non-aliasing normal store.
+    (local $x i32)
+    (local.set $x
+      (block (result i32)
+        (struct.atomic.set relaxed $shared-struct 0
+          (local.get $shared)
+          (i32.const 0)
+        )
+        (i32.const 1)
+      )
+    )
+    (array.set $shared-array
+      (local.get $shared-array)
+      (i32.const 0)
+      (i32.const 0)
+    )
+    (local.get $x)
+  )
+
+  ;; Relaxed with Relaxed
+
+  ;; CHECK:      (func $relaxed-read-relaxed-read (type $2) (param $shared (ref null $shared-struct)) (param $shared-array (ref null $shared-array)) (result i32)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.atomic.get relaxed $shared-struct 0
+  ;; CHECK-NEXT:    (local.get $shared)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (array.atomic.get relaxed $shared-array
+  ;; CHECK-NEXT:   (local.get $shared-array)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $relaxed-read-relaxed-read (param $shared (ref null $shared-struct))
+                                   (param $shared-array (ref null $shared-array))
+                                   (result i32)
+    ;; A relaxed read can be moved past a relaxed read.
+    (local $x i32)
+    (local.set $x
+      (array.atomic.get relaxed $shared-array
+        (local.get $shared-array)
+        (i32.const 0)
+      )
+    )
+    (drop
+      (struct.atomic.get relaxed $shared-struct 0
+        (local.get $shared)
+      )
+    )
+    (local.get $x)
+  )
+
+  ;; CHECK:      (func $relaxed-store-relaxed-store (type $2) (param $shared (ref null $shared-struct)) (param $shared-array (ref null $shared-array)) (result i32)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (struct.atomic.set relaxed $shared-struct 0
+  ;; CHECK-NEXT:   (local.get $shared)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block (result i32)
+  ;; CHECK-NEXT:   (array.atomic.set relaxed $shared-array
+  ;; CHECK-NEXT:    (local.get $shared-array)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $relaxed-store-relaxed-store (param $shared (ref null $shared-struct))
+                                     (param $shared-array (ref null $shared-array))
+                                     (result i32)
+    ;; A relaxed store can be moved past a non-aliasing relaxed store.
+    (local $x i32)
+    (local.set $x
+      (block (result i32)
+        (array.atomic.set relaxed $shared-array
+          (local.get $shared-array)
+          (i32.const 0)
+          (i32.const 0)
+        )
+        (i32.const 1)
+      )
+    )
+    (struct.atomic.set relaxed $shared-struct 0
+      (local.get $shared)
+      (i32.const 0)
+    )
+    (local.get $x)
+  )
+
+  ;; CHECK:      (func $relaxed-read-relaxed-store (type $2) (param $shared (ref null $shared-struct)) (param $shared-array (ref null $shared-array)) (result i32)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (array.atomic.get relaxed $shared-array
+  ;; CHECK-NEXT:    (local.get $shared-array)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.atomic.set relaxed $shared-struct 0
+  ;; CHECK-NEXT:   (local.get $shared)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.get $x)
+  ;; CHECK-NEXT: )
+  (func $relaxed-read-relaxed-store (param $shared (ref null $shared-struct))
+                                    (param $shared-array (ref null $shared-array))
+                                    (result i32)
+    ;; A relaxed read cannot be moved forward past a relaxed store.
+    (local $x i32)
+    (local.set $x
+      (array.atomic.get relaxed $shared-array
+        (local.get $shared-array)
+        (i32.const 0)
+      )
+    )
+    (struct.atomic.set relaxed $shared-struct 0
+      (local.get $shared)
+      (i32.const 0)
+    )
+    (local.get $x)
+  )
+
+  ;; CHECK:      (func $relaxed-store-relaxed-read (type $2) (param $shared (ref null $shared-struct)) (param $shared-array (ref null $shared-array)) (result i32)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (array.atomic.get relaxed $shared-array
+  ;; CHECK-NEXT:    (local.get $shared-array)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block (result i32)
+  ;; CHECK-NEXT:   (struct.atomic.set relaxed $shared-struct 0
+  ;; CHECK-NEXT:    (local.get $shared)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $relaxed-store-relaxed-read (param $shared (ref null $shared-struct))
+                                    (param $shared-array (ref null $shared-array))
+                                    (result i32)
+    ;; But a relaxed store can be moved forward past a non-aliasing relaxed read.
+    (local $x i32)
+    (local.set $x
+      (block (result i32)
+        (struct.atomic.set relaxed $shared-struct 0
+          (local.get $shared)
+          (i32.const 0)
+        )
+        (i32.const 1)
+      )
+    )
+    (drop
+      (array.atomic.get relaxed $shared-array
+        (local.get $shared-array)
+        (i32.const 0)
+      )
+    )
+    (local.get $x)
+  )
+
+  ;; Relaxed with AcqRel
+
+  ;; CHECK:      (func $relaxed-read-acquire (type $2) (param $shared (ref null $shared-struct)) (param $shared-array (ref null $shared-array)) (result i32)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.atomic.get acqrel $shared-struct 0
+  ;; CHECK-NEXT:    (local.get $shared)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (array.atomic.get relaxed $shared-array
+  ;; CHECK-NEXT:   (local.get $shared-array)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $relaxed-read-acquire (param $shared (ref null $shared-struct))
+                              (param $shared-array (ref null $shared-array))
+                              (result i32)
+    ;; A relaxed read can be moved forward past an acquire read.
+    (local $x i32)
+    (local.set $x
+      (array.atomic.get relaxed $shared-array
+        (local.get $shared-array)
+        (i32.const 0)
+      )
+    )
+    (drop
+      (struct.atomic.get acqrel $shared-struct 0
+        (local.get $shared)
+      )
+    )
+    (local.get $x)
+  )
+
+  ;; CHECK:      (func $acquire-relaxed-read (type $2) (param $shared (ref null $shared-struct)) (param $shared-array (ref null $shared-array)) (result i32)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (struct.atomic.get acqrel $shared-struct 0
+  ;; CHECK-NEXT:    (local.get $shared)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (array.atomic.get relaxed $shared-array
+  ;; CHECK-NEXT:    (local.get $shared-array)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.get $x)
+  ;; CHECK-NEXT: )
+  (func $acquire-relaxed-read (param $shared (ref null $shared-struct))
+                              (param $shared-array (ref null $shared-array))
+                              (result i32)
+    ;; But an acquire read cannot be moved forward past a relaxed read.
+    (local $x i32)
+    (local.set $x
+      (struct.atomic.get acqrel $shared-struct 0
+        (local.get $shared)
+      )
+    )
+    (drop
+      (array.atomic.get relaxed $shared-array
+        (local.get $shared-array)
+        (i32.const 0)
+      )
+    )
+    (local.get $x)
+  )
+
+  ;; CHECK:      (func $relaxed-store-acquire (type $2) (param $shared (ref null $shared-struct)) (param $shared-array (ref null $shared-array)) (result i32)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.atomic.get acqrel $shared-struct 0
+  ;; CHECK-NEXT:    (local.get $shared)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block (result i32)
+  ;; CHECK-NEXT:   (array.atomic.set relaxed $shared-array
+  ;; CHECK-NEXT:    (local.get $shared-array)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $relaxed-store-acquire (param $shared (ref null $shared-struct))
+                               (param $shared-array (ref null $shared-array))
+                               (result i32)
+    ;; A relaxed store can be moved forward past a non-aliasing acquire read.
+    (local $x i32)
+    (local.set $x
+      (block (result i32)
+        (array.atomic.set relaxed $shared-array
+          (local.get $shared-array)
+          (i32.const 0)
+          (i32.const 0)
+        )
+        (i32.const 1)
+      )
+    )
+    (drop
+      (struct.atomic.get acqrel $shared-struct 0
+        (local.get $shared)
+      )
+    )
+    (local.get $x)
+  )
+
+  ;; CHECK:      (func $acquire-relaxed-store (type $2) (param $shared (ref null $shared-struct)) (param $shared-array (ref null $shared-array)) (result i32)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (struct.atomic.get acqrel $shared-struct 0
+  ;; CHECK-NEXT:    (local.get $shared)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (array.atomic.set relaxed $shared-array
+  ;; CHECK-NEXT:   (local.get $shared-array)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.get $x)
+  ;; CHECK-NEXT: )
+  (func $acquire-relaxed-store (param $shared (ref null $shared-struct))
+                               (param $shared-array (ref null $shared-array))
+                               (result i32)
+    ;; But an acquire read cannot be moved forward past a relaxed store.
+    (local $x i32)
+    (local.set $x
+      (struct.atomic.get acqrel $shared-struct 0
+        (local.get $shared)
+      )
+    )
+    (array.atomic.set relaxed $shared-array
+      (local.get $shared-array)
+      (i32.const 0)
+      (i32.const 0)
+    )
+    (local.get $x)
+  )
+
+  ;; CHECK:      (func $relaxed-read-release (type $2) (param $shared (ref null $shared-struct)) (param $shared-array (ref null $shared-array)) (result i32)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (array.atomic.get relaxed $shared-array
+  ;; CHECK-NEXT:    (local.get $shared-array)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.atomic.set acqrel $shared-struct 0
+  ;; CHECK-NEXT:   (local.get $shared)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.get $x)
+  ;; CHECK-NEXT: )
+  (func $relaxed-read-release (param $shared (ref null $shared-struct))
+                              (param $shared-array (ref null $shared-array))
+                              (result i32)
+    ;; A relaxed read cannot be moved forward past a release store.
+    (local $x i32)
+    (local.set $x
+      (array.atomic.get relaxed $shared-array
+        (local.get $shared-array)
+        (i32.const 0)
+      )
+    )
+    (struct.atomic.set acqrel $shared-struct 0
+      (local.get $shared)
+      (i32.const 0)
+    )
+    (local.get $x)
+  )
+
+  ;; CHECK:      (func $release-relaxed-read (type $2) (param $shared (ref null $shared-struct)) (param $shared-array (ref null $shared-array)) (result i32)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (array.atomic.get relaxed $shared-array
+  ;; CHECK-NEXT:    (local.get $shared-array)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block (result i32)
+  ;; CHECK-NEXT:   (struct.atomic.set acqrel $shared-struct 0
+  ;; CHECK-NEXT:    (local.get $shared)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $release-relaxed-read (param $shared (ref null $shared-struct))
+                              (param $shared-array (ref null $shared-array))
+                              (result i32)
+    ;; But a release store can be moved forward past a non-aliasing relaxed read.
+    (local $x i32)
+    (local.set $x
+      (block (result i32)
+        (struct.atomic.set acqrel $shared-struct 0
+          (local.get $shared)
+          (i32.const 0)
+        )
+        (i32.const 1)
+      )
+    )
+    (drop
+      (array.atomic.get relaxed $shared-array
+        (local.get $shared-array)
+        (i32.const 0)
+      )
+    )
+    (local.get $x)
+  )
+
+  ;; CHECK:      (func $relaxed-store-release (type $2) (param $shared (ref null $shared-struct)) (param $shared-array (ref null $shared-array)) (result i32)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (array.atomic.set relaxed $shared-array
+  ;; CHECK-NEXT:     (local.get $shared-array)
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.atomic.set acqrel $shared-struct 0
+  ;; CHECK-NEXT:   (local.get $shared)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.get $x)
+  ;; CHECK-NEXT: )
+  (func $relaxed-store-release (param $shared (ref null $shared-struct))
+                               (param $shared-array (ref null $shared-array))
+                               (result i32)
+    ;; A relaxed store cannot be moved forward past a release store.
+    (local $x i32)
+    (local.set $x
+      (block (result i32)
+        (array.atomic.set relaxed $shared-array
+          (local.get $shared-array)
+          (i32.const 0)
+          (i32.const 0)
+        )
+        (i32.const 1)
+      )
+    )
+    (struct.atomic.set acqrel $shared-struct 0
+      (local.get $shared)
+      (i32.const 0)
+    )
+    (local.get $x)
+  )
+
+  ;; CHECK:      (func $release-relaxed-store (type $2) (param $shared (ref null $shared-struct)) (param $shared-array (ref null $shared-array)) (result i32)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (array.atomic.set relaxed $shared-array
+  ;; CHECK-NEXT:   (local.get $shared-array)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block (result i32)
+  ;; CHECK-NEXT:   (struct.atomic.set acqrel $shared-struct 0
+  ;; CHECK-NEXT:    (local.get $shared)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $release-relaxed-store (param $shared (ref null $shared-struct))
+                               (param $shared-array (ref null $shared-array))
+                               (result i32)
+    ;; But a release store can be moved forward past a non-aliasing relaxed store.
+    (local $x i32)
+    (local.set $x
+      (block (result i32)
+        (struct.atomic.set acqrel $shared-struct 0
+          (local.get $shared)
+          (i32.const 0)
+        )
+        (i32.const 1)
+      )
+    )
+    (array.atomic.set relaxed $shared-array
+      (local.get $shared-array)
+      (i32.const 0)
+      (i32.const 0)
+    )
+    (local.get $x)
+  )
+
+  ;; Relaxed with SeqCst
+
+  ;; CHECK:      (func $relaxed-read-seqcst-read (type $2) (param $shared (ref null $shared-struct)) (param $shared-array (ref null $shared-array)) (result i32)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (array.atomic.get relaxed $shared-array
+  ;; CHECK-NEXT:    (local.get $shared-array)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.atomic.get $shared-struct 0
+  ;; CHECK-NEXT:    (local.get $shared)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.get $x)
+  ;; CHECK-NEXT: )
+  (func $relaxed-read-seqcst-read (param $shared (ref null $shared-struct))
+                                  (param $shared-array (ref null $shared-array))
+                                  (result i32)
+    ;; A relaxed read cannot be moved past a seqcst read.
+    (local $x i32)
+    (local.set $x
+      (array.atomic.get relaxed $shared-array
+        (local.get $shared-array)
+        (i32.const 0)
+      )
+    )
+    (drop
+      (struct.atomic.get seqcst $shared-struct 0
+        (local.get $shared)
+      )
+    )
+    (local.get $x)
+  )
+
+  ;; CHECK:      (func $seqcst-read-relaxed-read (type $2) (param $shared (ref null $shared-struct)) (param $shared-array (ref null $shared-array)) (result i32)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (struct.atomic.get $shared-struct 0
+  ;; CHECK-NEXT:    (local.get $shared)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (array.atomic.get relaxed $shared-array
+  ;; CHECK-NEXT:    (local.get $shared-array)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.get $x)
+  ;; CHECK-NEXT: )
+  (func $seqcst-read-relaxed-read (param $shared (ref null $shared-struct))
+                                  (param $shared-array (ref null $shared-array))
+                                  (result i32)
+    ;; A seqcst read cannot be moved past a relaxed read.
+    (local $x i32)
+    (local.set $x
+      (struct.atomic.get seqcst $shared-struct 0
+        (local.get $shared)
+      )
+    )
+    (drop
+      (array.atomic.get relaxed $shared-array
+        (local.get $shared-array)
+        (i32.const 0)
+      )
+    )
+    (local.get $x)
+  )
+
+  ;; CHECK:      (func $relaxed-store-seqcst-read (type $2) (param $shared (ref null $shared-struct)) (param $shared-array (ref null $shared-array)) (result i32)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (array.atomic.set relaxed $shared-array
+  ;; CHECK-NEXT:     (local.get $shared-array)
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.atomic.get $shared-struct 0
+  ;; CHECK-NEXT:    (local.get $shared)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.get $x)
+  ;; CHECK-NEXT: )
+  (func $relaxed-store-seqcst-read (param $shared (ref null $shared-struct))
+                                   (param $shared-array (ref null $shared-array))
+                                   (result i32)
+    ;; A relaxed store cannot be moved past a seqcst read.
+    (local $x i32)
+    (local.set $x
+      (block (result i32)
+        (array.atomic.set relaxed $shared-array
+          (local.get $shared-array)
+          (i32.const 0)
+          (i32.const 0)
+        )
+        (i32.const 1)
+      )
+    )
+    (drop
+      (struct.atomic.get seqcst $shared-struct 0
+        (local.get $shared)
+      )
+    )
+    (local.get $x)
+  )
+
+  ;; CHECK:      (func $seqcst-read-relaxed-store (type $2) (param $shared (ref null $shared-struct)) (param $shared-array (ref null $shared-array)) (result i32)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (struct.atomic.get $shared-struct 0
+  ;; CHECK-NEXT:    (local.get $shared)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (array.atomic.set relaxed $shared-array
+  ;; CHECK-NEXT:   (local.get $shared-array)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.get $x)
+  ;; CHECK-NEXT: )
+  (func $seqcst-read-relaxed-store (param $shared (ref null $shared-struct))
+                                   (param $shared-array (ref null $shared-array))
+                                   (result i32)
+    ;; A seqcst read cannot be moved past a relaxed store.
+    (local $x i32)
+    (local.set $x
+      (struct.atomic.get seqcst $shared-struct 0
+        (local.get $shared)
+      )
+    )
+    (array.atomic.set relaxed $shared-array
+      (local.get $shared-array)
+      (i32.const 0)
+      (i32.const 0)
+    )
+    (local.get $x)
+  )
+
+  ;; CHECK:      (func $relaxed-read-seqcst-store (type $2) (param $shared (ref null $shared-struct)) (param $shared-array (ref null $shared-array)) (result i32)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (array.atomic.get relaxed $shared-array
+  ;; CHECK-NEXT:    (local.get $shared-array)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.atomic.set $shared-struct 0
+  ;; CHECK-NEXT:   (local.get $shared)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.get $x)
+  ;; CHECK-NEXT: )
+  (func $relaxed-read-seqcst-store (param $shared (ref null $shared-struct))
+                                   (param $shared-array (ref null $shared-array))
+                                   (result i32)
+    ;; A relaxed read cannot be moved past a seqcst store.
+    (local $x i32)
+    (local.set $x
+      (array.atomic.get relaxed $shared-array
+        (local.get $shared-array)
+        (i32.const 0)
+      )
+    )
+    (struct.atomic.set seqcst $shared-struct 0
+      (local.get $shared)
+      (i32.const 0)
+    )
+    (local.get $x)
+  )
+
+  ;; CHECK:      (func $seqcst-store-relaxed-read (type $2) (param $shared (ref null $shared-struct)) (param $shared-array (ref null $shared-array)) (result i32)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (struct.atomic.set $shared-struct 0
+  ;; CHECK-NEXT:     (local.get $shared)
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (array.atomic.get relaxed $shared-array
+  ;; CHECK-NEXT:    (local.get $shared-array)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.get $x)
+  ;; CHECK-NEXT: )
+  (func $seqcst-store-relaxed-read (param $shared (ref null $shared-struct))
+                                   (param $shared-array (ref null $shared-array))
+                                   (result i32)
+    ;; A seqcst store cannot be moved past a relaxed read.
+    (local $x i32)
+    (local.set $x
+      (block (result i32)
+        (struct.atomic.set seqcst $shared-struct 0
+          (local.get $shared)
+          (i32.const 0)
+        )
+        (i32.const 1)
+      )
+    )
+    (drop
+      (array.atomic.get relaxed $shared-array
+        (local.get $shared-array)
+        (i32.const 0)
+      )
+    )
+    (local.get $x)
+  )
+
+  ;; CHECK:      (func $relaxed-store-seqcst-store (type $2) (param $shared (ref null $shared-struct)) (param $shared-array (ref null $shared-array)) (result i32)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (array.atomic.set relaxed $shared-array
+  ;; CHECK-NEXT:     (local.get $shared-array)
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.atomic.set $shared-struct 0
+  ;; CHECK-NEXT:   (local.get $shared)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.get $x)
+  ;; CHECK-NEXT: )
+  (func $relaxed-store-seqcst-store (param $shared (ref null $shared-struct))
+                                    (param $shared-array (ref null $shared-array))
+                                    (result i32)
+    ;; A relaxed store cannot be moved past a seqcst store.
+    (local $x i32)
+    (local.set $x
+      (block (result i32)
+        (array.atomic.set relaxed $shared-array
+          (local.get $shared-array)
+          (i32.const 0)
+          (i32.const 0)
+        )
+        (i32.const 1)
+      )
+    )
+    (struct.atomic.set seqcst $shared-struct 0
+      (local.get $shared)
+      (i32.const 0)
+    )
+    (local.get $x)
+  )
+
+  ;; CHECK:      (func $seqcst-store-relaxed-store (type $2) (param $shared (ref null $shared-struct)) (param $shared-array (ref null $shared-array)) (result i32)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (struct.atomic.set $shared-struct 0
+  ;; CHECK-NEXT:     (local.get $shared)
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (array.atomic.set relaxed $shared-array
+  ;; CHECK-NEXT:   (local.get $shared-array)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.get $x)
+  ;; CHECK-NEXT: )
+  (func $seqcst-store-relaxed-store (param $shared (ref null $shared-struct))
+                                    (param $shared-array (ref null $shared-array))
+                                    (result i32)
+    ;; A seqcst store cannot be moved past a relaxed store.
+    (local $x i32)
+    (local.set $x
+      (block (result i32)
+        (struct.atomic.set seqcst $shared-struct 0
+          (local.get $shared)
+          (i32.const 0)
+        )
+        (i32.const 1)
+      )
+    )
+    (array.atomic.set relaxed $shared-array
+      (local.get $shared-array)
+      (i32.const 0)
+      (i32.const 0)
+    )
+    (local.get $x)
+  )
+
+  ;; Relaxed with Fence
+
+  ;; CHECK:      (func $read-relaxed-fence (type $3) (param $shared (ref null $shared-struct)) (result i32)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (struct.atomic.get relaxed $shared-struct 0
+  ;; CHECK-NEXT:    (local.get $shared)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (atomic.fence)
+  ;; CHECK-NEXT:  (local.get $x)
+  ;; CHECK-NEXT: )
+  (func $read-relaxed-fence (param $shared (ref null $shared-struct)) (result i32)
+    (local $x i32)
+    ;; A relaxed struct read cannot be moved past an atomic.fence.
+    (local.set $x
+      (struct.atomic.get relaxed $shared-struct 0 (local.get $shared))
+    )
+    (atomic.fence)
+    (local.get $x)
+  )
+
+  ;; CHECK:      (func $write-relaxed-fence (type $3) (param $shared (ref null $shared-struct)) (result i32)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (struct.atomic.set relaxed $shared-struct 0
+  ;; CHECK-NEXT:     (local.get $shared)
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (atomic.fence)
+  ;; CHECK-NEXT:  (local.get $x)
+  ;; CHECK-NEXT: )
+  (func $write-relaxed-fence (param $shared (ref null $shared-struct)) (result i32)
+    (local $x i32)
+    ;; A relaxed struct write cannot be moved past an atomic.fence.
+    (local.set $x
+      (block (result i32)
+        (struct.atomic.set relaxed $shared-struct 0
+          (local.get $shared)
+          (i32.const 0)
+        )
+        (i32.const 1)
+      )
+    )
+    (atomic.fence)
+    (local.get $x)
+  )
+
+  ;; Branch-on tests for backward reordering across branches
+
+  ;; CHECK:      (func $br-on-relaxed-store-relaxed-read (type $2) (param $shared (ref null $shared-struct)) (param $shared-array (ref null $shared-array)) (result i32)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (block $l
+  ;; CHECK-NEXT:   (br_if $l
+  ;; CHECK-NEXT:    (block (result i32)
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (array.atomic.get relaxed $shared-array
+  ;; CHECK-NEXT:       (local.get $shared-array)
+  ;; CHECK-NEXT:       (i32.const 0)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.set $x
+  ;; CHECK-NEXT:      (block (result i32)
+  ;; CHECK-NEXT:       (struct.atomic.set relaxed $shared-struct 0
+  ;; CHECK-NEXT:        (local.get $shared)
+  ;; CHECK-NEXT:        (i32.const 0)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (i32.const 42)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.set $x
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.get $x)
+  ;; CHECK-NEXT: )
+  (func $br-on-relaxed-store-relaxed-read (param $shared (ref null $shared-struct))
+                                          (param $shared-array (ref null $shared-array))
+                                          (result i32)
+    (local $x i32)
+    (block $l
+      (br_if $l
+        (block (result i32)
+          ;; A relaxed store cannot be moved backward past a relaxed read.
+          (drop
+            (array.atomic.get relaxed $shared-array
+              (local.get $shared-array)
+              (i32.const 0)
+            )
+          )
+          (local.set $x
+            (block (result i32)
+              (struct.atomic.set relaxed $shared-struct 0
+                (local.get $shared)
+                (i32.const 0)
+              )
+              (i32.const 42)
+            )
+          )
+          (i32.const 1)
+        )
+      )
+      (local.set $x
+        (i32.const 0)
+      )
+    )
+    (local.get $x)
+  )
+
+  ;; CHECK:      (func $br-on-relaxed-read-relaxed-store (type $2) (param $shared (ref null $shared-struct)) (param $shared-array (ref null $shared-array)) (result i32)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (block $l (result i32)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (br_if $l
+  ;; CHECK-NEXT:     (block (result i32)
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (array.atomic.get relaxed $shared-array
+  ;; CHECK-NEXT:        (local.get $shared-array)
+  ;; CHECK-NEXT:        (i32.const 0)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (i32.const 42)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (block (result i32)
+  ;; CHECK-NEXT:      (struct.atomic.set relaxed $shared-struct 0
+  ;; CHECK-NEXT:       (local.get $shared)
+  ;; CHECK-NEXT:       (i32.const 0)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (nop)
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (nop)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $br-on-relaxed-read-relaxed-store (param $shared (ref null $shared-struct))
+                                          (param $shared-array (ref null $shared-array))
+                                          (result i32)
+    (local $x i32)
+    (block $l
+      (br_if $l
+        (block (result i32)
+          ;; A relaxed read can be moved backward past a relaxed store.
+          (struct.atomic.set relaxed $shared-struct 0
+            (local.get $shared)
+            (i32.const 0)
+          )
+          (local.set $x
+            (block (result i32)
+              (drop
+                (array.atomic.get relaxed $shared-array
+                  (local.get $shared-array)
+                  (i32.const 0)
+                )
+              )
+              (i32.const 42)
+            )
+          )
+          (i32.const 1)
+        )
+      )
+      (local.set $x
+        (i32.const 0)
+      )
+    )
+    (local.get $x)
+  )
 )
