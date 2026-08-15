@@ -847,26 +847,12 @@ void ModuleSplitter::computeUsedNames() {
   // Given a module, collect names used in the module
   auto scanModule = [&](Module& module) {
     UsedNames used;
-    ModuleUtils::ParallelFunctionAnalysis<UsedNames> nameCollector(
-      module, [&](Function* func, UsedNames& used) {
-        if (!func->imported()) {
-          NameCollector(used).walk(func->body);
-        }
-      });
-
-    for (auto& [_, funcUsed] : nameCollector.map) {
-      used.globals.insert(funcUsed.globals.begin(), funcUsed.globals.end());
-      used.memories.insert(funcUsed.memories.begin(), funcUsed.memories.end());
-      used.tables.insert(funcUsed.tables.begin(), funcUsed.tables.end());
-      used.tags.insert(funcUsed.tags.begin(), funcUsed.tags.end());
-      used.dataSegments.insert(funcUsed.dataSegments.begin(),
-                               funcUsed.dataSegments.end());
-      used.elementSegments.insert(funcUsed.elementSegments.begin(),
-                                  funcUsed.elementSegments.end());
-    }
-
     NameCollector collector(used);
-
+    for (auto& func : module.functions) {
+      if (!func->imported()) {
+        collector.walk(func->body);
+      }
+    }
     return used;
   };
 
