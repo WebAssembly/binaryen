@@ -993,6 +993,14 @@ void TranslateToFuzzReader::finalizeTable() {
         table->init = makeConst(table->type);
       }
     }
+
+    if (table->init && (!FindAll<RefAs>(table->init).list.empty() ||
+                        !FindAll<ContNew>(table->init).list.empty())) {
+      // Similar to in setupGlobals(), if we emit RefAs or ContNew for a table
+      // initializer, it's not valid. Switch to a safe type.
+      table->type = Type(HeapType::func, Nullable);
+      table->init = makeConst(table->type);
+    }
   }
 }
 
