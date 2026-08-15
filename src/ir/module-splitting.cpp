@@ -350,11 +350,33 @@ struct OwnershipTracker {
   using FieldType = std::unordered_set<Name> UsedNames::*;
   using MapType = std::unordered_map<Name, ItemInfo> OwnershipTracker::*;
 
+  template<typename T> void insert(Name name, UsedNames* owner) {
+    if constexpr (std::is_same_v<T, Table>) {
+      insertImpl(name, owner, &OwnershipTracker::tables, &UsedNames::tables);
+    } else if constexpr (std::is_same_v<T, Memory>) {
+      insertImpl(
+        name, owner, &OwnershipTracker::memories, &UsedNames::memories);
+    } else if constexpr (std::is_same_v<T, Global>) {
+      insertImpl(name, owner, &OwnershipTracker::globals, &UsedNames::globals);
+    } else if constexpr (std::is_same_v<T, Tag>) {
+      insertImpl(name, owner, &OwnershipTracker::tags, &UsedNames::tags);
+    } else if constexpr (std::is_same_v<T, DataSegment>) {
+      insertImpl(
+        name, owner, &OwnershipTracker::dataSegments, &UsedNames::dataSegments);
+    } else if constexpr (std::is_same_v<T, ElementSegment>) {
+      insertImpl(name,
+                 owner,
+                 &OwnershipTracker::elementSegments,
+                 &UsedNames::elementSegments);
+    }
+  }
+
   // 'mapField' points to one of OwnershipTracker's maps, such as
   //   std::unordered_map<Name, ItemInfo> globals;
   // 'field' points to one of UsedName's sets, such as
   //   std::unordered_set<Name> globals;
-  void insert(Name name, UsedNames* owner, MapType mapField, FieldType field) {
+  void
+  insertImpl(Name name, UsedNames* owner, MapType mapField, FieldType field) {
     (owner->*field).insert(name);
     // Figure out which module is the 'owner' of this item. If it is used by a
     // single secondary module, that secondary module is the owner. If it is
@@ -781,9 +803,6 @@ void ModuleSplitter::computeUsedNames() {
   UsedNames& primaryUsed = tracker.primaryUsed;
   std::vector<UsedNames>& secondaryUsed = tracker.secondaryUsed;
 
-#define ADD_ITEM_TO_TRACKER(field, val, owner)                                 \
-  tracker.insert(val, owner, &OwnershipTracker::field, &UsedNames::field)
-
   struct NameCollector
     : public PostWalker<NameCollector,
                         UnifiedExpressionVisitor<NameCollector>> {
@@ -811,22 +830,22 @@ void ModuleSplitter::computeUsedNames() {
   if (cast->field.is()) {                                                      \
     switch (kind) {                                                            \
       case ModuleItemKind::Table:                                              \
-        ADD_ITEM_TO_TRACKER(tables, cast->field, &used);                       \
+        tracker.insert<Table>(cast->field, &used);                             \
         break;                                                                 \
       case ModuleItemKind::Memory:                                             \
-        ADD_ITEM_TO_TRACKER(memories, cast->field, &used);                     \
+        tracker.insert<Memory>(cast->field, &used);                            \
         break;                                                                 \
       case ModuleItemKind::Global:                                             \
-        ADD_ITEM_TO_TRACKER(globals, cast->field, &used);                      \
+        tracker.insert<Global>(cast->field, &used);                            \
         break;                                                                 \
       case ModuleItemKind::Tag:                                                \
-        ADD_ITEM_TO_TRACKER(tags, cast->field, &used);                         \
+        tracker.insert<Tag>(cast->field, &used);                               \
         break;                                                                 \
       case ModuleItemKind::DataSegment:                                        \
-        ADD_ITEM_TO_TRACKER(dataSegments, cast->field, &used);                 \
+        tracker.insert<DataSegment>(cast->field, &used);                       \
         break;                                                                 \
       case ModuleItemKind::ElementSegment:                                     \
-        ADD_ITEM_TO_TRACKER(elementSegments, cast->field, &used);              \
+        tracker.insert<ElementSegment>(cast->field, &used);                    \
         break;                                                                 \
       case ModuleItemKind::Function:                                           \
       case ModuleItemKind::Invalid:                                            \
@@ -858,16 +877,16 @@ void ModuleSplitter::computeUsedNames() {
   for (auto& ex : primary.exports) {
     switch (ex->kind) {
       case ExternalKind::Global:
-        ADD_ITEM_TO_TRACKER(globals, *ex->getInternalName(), &primaryUsed);
+        tracker.insert<Global>(*ex->getInternalName(), &primaryUsed);
         break;
       case ExternalKind::Memory:
-        ADD_ITEM_TO_TRACKER(memories, *ex->getInternalName(), &primaryUsed);
+        tracker.insert<Memory>(*ex->getInternalName(), &primaryUsed);
         break;
       case ExternalKind::Table:
-        ADD_ITEM_TO_TRACKER(tables, *ex->getInternalName(), &primaryUsed);
+        tracker.insert<Table>(*ex->getInternalName(), &primaryUsed);
         break;
       case ExternalKind::Tag:
-        ADD_ITEM_TO_TRACKER(tags, *ex->getInternalName(), &primaryUsed);
+        tracker.insert<Tag>(*ex->getInternalName(), &primaryUsed);
         break;
       default:
         break;
@@ -877,10 +896,10 @@ void ModuleSplitter::computeUsedNames() {
   // We need to assume the dispatch table and its base global are used in the
   // primary module, because we will create segments there later.
   if (tableManager.dispatchTable) {
-    ADD_ITEM_TO_TRACKER(tables, tableManager.dispatchTable->name, &primaryUsed);
+    tracker.insert<Table>(tableManager.dispatchTable->name, &primaryUsed);
   }
   if (tableManager.dispatchBase.global) {
-    ADD_ITEM_TO_TRACKER(globals, tableManager.dispatchBase.global, &primaryUsed);
+    tracker.insert<Global>(tableManager.dispatchBase.global, &primaryUsed);
   }
 
   // If custom-descirptors is enabled, global and table initializers can trap.
@@ -891,14 +910,14 @@ void ModuleSplitter::computeUsedNames() {
       if (global->init &&
           EffectAnalyzer(config.passOptions, primary, global->init)
             .hasUnremovableSideEffects()) {
-        ADD_ITEM_TO_TRACKER(globals, global->name, &primaryUsed);
+        tracker.insert<Global>(global->name, &primaryUsed);
       }
     }
     for (auto& table : primary.tables) {
       if (table->init &&
           EffectAnalyzer(config.passOptions, primary, table->init)
             .hasUnremovableSideEffects()) {
-        ADD_ITEM_TO_TRACKER(tables, table->name, &primaryUsed);
+        tracker.insert<Table>(table->name, &primaryUsed);
       }
     }
   }
@@ -980,8 +999,8 @@ void ModuleSplitter::computeUsedNames() {
     if (!owner) {
       return;
     }
-    ADD_ITEM_TO_TRACKER(dataSegments, segment->name, owner);
-    ADD_ITEM_TO_TRACKER(memories, segment->memory, owner);
+    tracker.insert<DataSegment>(segment->name, owner);
+    tracker.insert<Memory>(segment->memory, owner);
     if (segment->offset) {
       NameCollector(*owner, tracker).walk(segment->offset);
     }
@@ -1035,8 +1054,8 @@ void ModuleSplitter::computeUsedNames() {
     if (!owner) {
       return;
     }
-    ADD_ITEM_TO_TRACKER(elementSegments, segment->name, owner);
-    ADD_ITEM_TO_TRACKER(tables, segment->table, owner);
+    tracker.insert<ElementSegment>(segment->name, owner);
+    tracker.insert<Table>(segment->table, owner);
     if (segment->offset) {
       NameCollector(*owner, tracker).walk(segment->offset);
     }
@@ -1072,11 +1091,10 @@ void ModuleSplitter::computeUsedNames() {
     }
     if (UsedNames* owner = tracker.getOwner(global->name, tracker.globals)) {
       for (auto* get : FindAll<GlobalGet>(global->init).list) {
-        ADD_ITEM_TO_TRACKER(globals, get->name, owner);
+        tracker.insert<Global>(get->name, owner);
       }
     }
   }
-#undef ADD_ITEM_TO_TRACKER
 }
 
 void ModuleSplitter::shareImportableItems() {
