@@ -613,9 +613,6 @@ struct PrintExpressionContents
     if (curr->offset) {
       o << " offset=" << curr->offset;
     }
-    if (curr->align != curr->bytes) {
-      o << " align=" << curr->align;
-    }
   }
   void visitAtomicCmpxchg(AtomicCmpxchg* curr) {
     prepareColor(o);
@@ -631,9 +628,6 @@ struct PrintExpressionContents
     if (curr->offset) {
       o << " offset=" << curr->offset;
     }
-    if (curr->align != curr->bytes) {
-      o << " align=" << curr->align;
-    }
   }
   void visitAtomicWait(AtomicWait* curr) {
     prepareColor(o);
@@ -645,19 +639,12 @@ struct PrintExpressionContents
     if (curr->offset) {
       o << " offset=" << curr->offset;
     }
-    Index natural = type == Type::i32 ? 4 : 8;
-    if (curr->align != natural) {
-      o << " align=" << curr->align;
-    }
   }
   void visitAtomicNotify(AtomicNotify* curr) {
     printMedium(o, "memory.atomic.notify");
     printMemoryName(curr->memory, o, wasm);
     if (curr->offset) {
       o << " offset=" << curr->offset;
-    }
-    if (curr->align != 4) {
-      o << " align=" << curr->align;
     }
   }
   void visitAtomicFence(AtomicFence* curr) {

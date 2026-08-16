@@ -8,21 +8,21 @@
  ;; RTRIP:      (func $acqrel (type $0)
  ;; RTRIP-NEXT:  (atomic.fence acqrel)
  ;; RTRIP-NEXT:  (i32.atomic.store acqrel
- ;; RTRIP-NEXT:   (i32.const 1)
+ ;; RTRIP-NEXT:   (i32.const 0)
  ;; RTRIP-NEXT:   (i32.const 1)
  ;; RTRIP-NEXT:  )
  ;; RTRIP-NEXT:  (drop
  ;; RTRIP-NEXT:   (i32.atomic.load acqrel
- ;; RTRIP-NEXT:    (i32.const 1)
+ ;; RTRIP-NEXT:    (i32.const 0)
  ;; RTRIP-NEXT:   )
  ;; RTRIP-NEXT:  )
  ;; RTRIP-NEXT: )
  (func $acqrel
    (atomic.fence acqrel)
-   (i32.atomic.store acqrel (i32.const 1) (i32.const 1))
+   (i32.atomic.store acqrel (i32.const 0) (i32.const 1))
    (drop
     (i32.atomic.load acqrel
-     (i32.const 1)
+     (i32.const 0)
    ))
  )
 
@@ -30,56 +30,56 @@
  ;; RTRIP:      (func $seqcst (type $0)
  ;; RTRIP-NEXT:  (atomic.fence)
  ;; RTRIP-NEXT:  (i32.atomic.store
- ;; RTRIP-NEXT:   (i32.const 1)
+ ;; RTRIP-NEXT:   (i32.const 0)
  ;; RTRIP-NEXT:   (i32.const 1)
  ;; RTRIP-NEXT:  )
  ;; RTRIP-NEXT:  (i32.atomic.store
- ;; RTRIP-NEXT:   (i32.const 1)
+ ;; RTRIP-NEXT:   (i32.const 0)
  ;; RTRIP-NEXT:   (i32.const 1)
  ;; RTRIP-NEXT:  )
  ;; RTRIP-NEXT:  (drop
  ;; RTRIP-NEXT:   (i32.atomic.load
- ;; RTRIP-NEXT:    (i32.const 1)
+ ;; RTRIP-NEXT:    (i32.const 0)
  ;; RTRIP-NEXT:   )
  ;; RTRIP-NEXT:  )
  ;; RTRIP-NEXT:  (drop
  ;; RTRIP-NEXT:   (i32.atomic.load
- ;; RTRIP-NEXT:    (i32.const 1)
+ ;; RTRIP-NEXT:    (i32.const 0)
  ;; RTRIP-NEXT:   )
  ;; RTRIP-NEXT:  )
  ;; RTRIP-NEXT: )
  (func $seqcst
    (atomic.fence seqcst)
-   (i32.atomic.store seqcst (i32.const 1) (i32.const 1))
-   (i32.atomic.store 0 seqcst (i32.const 1) (i32.const 1))
+   (i32.atomic.store seqcst (i32.const 0) (i32.const 1))
+   (i32.atomic.store 0 seqcst (i32.const 0) (i32.const 1))
    (drop (i32.atomic.load seqcst
-    (i32.const 1)
+    (i32.const 0)
    ))
    ;; allows memory index before memory ordering immediate
    (drop
     (i32.atomic.load 0 seqcst
-    (i32.const 1)
+    (i32.const 0)
    ))
  )
 
  ;; RTRIP:      (func $relaxed (type $0)
  ;; RTRIP-NEXT:  (atomic.fence relaxed)
  ;; RTRIP-NEXT:  (i32.atomic.store relaxed
- ;; RTRIP-NEXT:   (i32.const 1)
+ ;; RTRIP-NEXT:   (i32.const 0)
  ;; RTRIP-NEXT:   (i32.const 1)
  ;; RTRIP-NEXT:  )
  ;; RTRIP-NEXT:  (drop
  ;; RTRIP-NEXT:   (i32.atomic.load relaxed
- ;; RTRIP-NEXT:    (i32.const 1)
+ ;; RTRIP-NEXT:    (i32.const 0)
  ;; RTRIP-NEXT:   )
  ;; RTRIP-NEXT:  )
  ;; RTRIP-NEXT: )
  (func $relaxed
    (atomic.fence relaxed)
-   (i32.atomic.store relaxed (i32.const 1) (i32.const 1))
+   (i32.atomic.store relaxed (i32.const 0) (i32.const 1))
    (drop
     (i32.atomic.load relaxed
-     (i32.const 1)
+     (i32.const 0)
     )
    )
  )
