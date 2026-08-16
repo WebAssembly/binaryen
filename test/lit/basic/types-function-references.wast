@@ -187,14 +187,7 @@
   ;; CHECK-TEXT:      (func $type-only-in-tuple-block (type $void)
   ;; CHECK-TEXT-NEXT:  (tuple.drop 3
   ;; CHECK-TEXT-NEXT:   (block $block (type $10) (result i32 (ref null $mixed_results) f64)
-  ;; CHECK-TEXT-NEXT:    (tuple.make 3
-  ;; CHECK-TEXT-NEXT:     (block
-  ;; CHECK-TEXT-NEXT:      (unreachable)
-  ;; CHECK-TEXT-NEXT:      (unreachable)
-  ;; CHECK-TEXT-NEXT:     )
-  ;; CHECK-TEXT-NEXT:     (unreachable)
-  ;; CHECK-TEXT-NEXT:     (unreachable)
-  ;; CHECK-TEXT-NEXT:    )
+  ;; CHECK-TEXT-NEXT:    (unreachable)
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
@@ -208,14 +201,7 @@
   ;; CHECK-BIN-NEXT:     (tuple.extract 3 0
   ;; CHECK-BIN-NEXT:      (local.tee $scratch
   ;; CHECK-BIN-NEXT:       (block (type $10) (result i32 (ref null $mixed_results) f64)
-  ;; CHECK-BIN-NEXT:        (tuple.make 3
-  ;; CHECK-BIN-NEXT:         (block
-  ;; CHECK-BIN-NEXT:          (unreachable)
-  ;; CHECK-BIN-NEXT:          (unreachable)
-  ;; CHECK-BIN-NEXT:         )
-  ;; CHECK-BIN-NEXT:         (unreachable)
-  ;; CHECK-BIN-NEXT:         (unreachable)
-  ;; CHECK-BIN-NEXT:        )
+  ;; CHECK-BIN-NEXT:        (unreachable)
   ;; CHECK-BIN-NEXT:       )
   ;; CHECK-BIN-NEXT:      )
   ;; CHECK-BIN-NEXT:     )
@@ -445,14 +431,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:     (tuple.extract 3 0
 ;; CHECK-BIN-NODEBUG-NEXT:      (local.tee $scratch
 ;; CHECK-BIN-NODEBUG-NEXT:       (block (type $10) (result i32 (ref null $0) f64)
-;; CHECK-BIN-NODEBUG-NEXT:        (tuple.make 3
-;; CHECK-BIN-NODEBUG-NEXT:         (block
-;; CHECK-BIN-NODEBUG-NEXT:          (unreachable)
-;; CHECK-BIN-NODEBUG-NEXT:          (unreachable)
-;; CHECK-BIN-NODEBUG-NEXT:         )
-;; CHECK-BIN-NODEBUG-NEXT:         (unreachable)
-;; CHECK-BIN-NODEBUG-NEXT:         (unreachable)
-;; CHECK-BIN-NODEBUG-NEXT:        )
+;; CHECK-BIN-NODEBUG-NEXT:        (unreachable)
 ;; CHECK-BIN-NODEBUG-NEXT:       )
 ;; CHECK-BIN-NODEBUG-NEXT:      )
 ;; CHECK-BIN-NODEBUG-NEXT:     )

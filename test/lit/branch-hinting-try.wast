@@ -28,13 +28,7 @@
  ;; CHECK-NEXT:   (catch $tag
  ;; CHECK-NEXT:    (@metadata.code.branch_hint "\01")
  ;; CHECK-NEXT:    (nop)
- ;; CHECK-NEXT:    (tuple.make 2
- ;; CHECK-NEXT:     (block
- ;; CHECK-NEXT:      (unreachable)
- ;; CHECK-NEXT:      (unreachable)
- ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (unreachable)
- ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (unreachable)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )

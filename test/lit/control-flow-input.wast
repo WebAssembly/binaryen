@@ -315,13 +315,7 @@
   ;; CHECK-NEXT:     (br $label10)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (tuple.make 2
-  ;; CHECK-NEXT:    (block
-  ;; CHECK-NEXT:     (unreachable)
-  ;; CHECK-NEXT:     (unreachable)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $nested-loops-multivalue (result i32 i64)

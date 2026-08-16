@@ -68,13 +68,7 @@
   )
 
   ;; CHECK:      (func $other (type $5) (result i32 (ref $struct))
-  ;; CHECK-NEXT:  (tuple.make 2
-  ;; CHECK-NEXT:   (block
-  ;; CHECK-NEXT:    (unreachable)
-  ;; CHECK-NEXT:    (unreachable)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (unreachable)
-  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $other (result i32 (ref $struct))
     ;; This will keep the (result i32 (ref $struct)) signature, which will

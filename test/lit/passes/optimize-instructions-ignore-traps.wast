@@ -101,7 +101,6 @@
   ;; CHECK-NEXT:  (return
   ;; CHECK-NEXT:   (local.get $5)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $conditionals (type $0) (param $0 i32) (param $1 i32) (result i32)
     (local $2 i32)
@@ -279,7 +278,6 @@
   ;; CHECK-NEXT:  (return
   ;; CHECK-NEXT:   (local.get $5)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $side-effect (type $0) (param $0 i32) (param $1 i32) (result i32)
     (local $2 i32)
@@ -458,7 +456,6 @@
   ;; CHECK-NEXT:  (return
   ;; CHECK-NEXT:   (local.get $5)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $flip (type $0) (param $0 i32) (param $1 i32) (result i32)
     (local $2 i32)
@@ -583,7 +580,6 @@
   ;; CHECK-NEXT:  (return
   ;; CHECK-NEXT:   (local.get $1)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $invalidate-conditionalizeExpensiveOnBitwise (param $0 i32) (param $1 i32) (result i32)
    (if
@@ -654,7 +650,6 @@
   ;; CHECK-NEXT:  (return
   ;; CHECK-NEXT:   (local.get $1)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $invalidate-conditionalizeExpensiveOnBitwise-ok (param $0 i32) (param $1 i32) (result i32)
    (if
@@ -721,7 +716,6 @@
  ;; CHECK-NEXT:         )
  ;; CHECK-NEXT:        )
  ;; CHECK-NEXT:       )
- ;; CHECK-NEXT:       (unreachable)
  ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:     (f32.const 1)

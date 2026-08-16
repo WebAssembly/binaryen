@@ -672,7 +672,6 @@
  ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:   (i32.const 1)
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  (func $add-unreachable (result i32)
   unreachable
@@ -685,7 +684,6 @@
  ;; CHECK-NEXT:   (i32.const 1)
  ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  (func $add-unreachable-2 (result i32)
   i32.const 1
@@ -700,7 +698,6 @@
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (i32.const 2)
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  (func $add-unreachable-3 (result i32)
@@ -843,13 +840,7 @@
  ;; CHECK-NEXT:    (i32.const 4)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (tuple.make 2
- ;; CHECK-NEXT:   (block
- ;; CHECK-NEXT:    (unreachable)
- ;; CHECK-NEXT:    (unreachable)
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (unreachable)
- ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  (func $add-twice-unreachable-3 (type $ret2)
   i32.const 1
@@ -1004,13 +995,7 @@
  ;; CHECK-NEXT:   (block $l (type $ret2) (result i32 i32)
  ;; CHECK-NEXT:    (nop)
  ;; CHECK-NEXT:    (nop)
- ;; CHECK-NEXT:    (tuple.make 2
- ;; CHECK-NEXT:     (block
- ;; CHECK-NEXT:      (unreachable)
- ;; CHECK-NEXT:      (unreachable)
- ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (unreachable)
- ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (unreachable)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (unreachable)
@@ -1669,19 +1654,17 @@
 
  ;; CHECK:      (func $if-else-brs-i32 (type $1) (result i32)
  ;; CHECK-NEXT:  (block $label (result i32)
- ;; CHECK-NEXT:   (if (result i32)
+ ;; CHECK-NEXT:   (if
  ;; CHECK-NEXT:    (i32.const 0)
  ;; CHECK-NEXT:    (then
  ;; CHECK-NEXT:     (br $label
  ;; CHECK-NEXT:      (i32.const 1)
  ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (unreachable)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (else
  ;; CHECK-NEXT:     (br $label
  ;; CHECK-NEXT:      (i32.const 2)
  ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (unreachable)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
@@ -2465,7 +2448,6 @@
  ;; CHECK-NEXT:  (block $label (result exnref)
  ;; CHECK-NEXT:   (try_table (result exnref) (catch_ref $empty $label)
  ;; CHECK-NEXT:    (unreachable)
- ;; CHECK-NEXT:    (unreachable)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -2492,7 +2474,6 @@
  ;; CHECK-NEXT:  (block $label (result exnref)
  ;; CHECK-NEXT:   (try_table (result exnref) (catch_all_ref $label)
  ;; CHECK-NEXT:    (unreachable)
- ;; CHECK-NEXT:    (unreachable)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -2515,11 +2496,9 @@
  ;; CHECK-NEXT:         )
  ;; CHECK-NEXT:        )
  ;; CHECK-NEXT:        (unreachable)
- ;; CHECK-NEXT:        (unreachable)
  ;; CHECK-NEXT:       )
  ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (unreachable)
  ;; CHECK-NEXT:     (unreachable)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
@@ -2692,7 +2671,6 @@
  ;; CHECK-NEXT:   (br $label
  ;; CHECK-NEXT:    (i32.const 0)
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $br-value (result i32)
@@ -2708,7 +2686,6 @@
  ;; CHECK-NEXT:   (br $label
  ;; CHECK-NEXT:    (i32.const 1)
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $br-value-drop (result i32)
@@ -2719,17 +2696,11 @@
 
  ;; CHECK:      (func $br-multivalue (type $5) (result i32 i64)
  ;; CHECK-NEXT:  (block $label (type $5) (result i32 i64)
- ;; CHECK-NEXT:   (tuple.make 2
- ;; CHECK-NEXT:    (block
- ;; CHECK-NEXT:     (br $label
- ;; CHECK-NEXT:      (tuple.make 2
- ;; CHECK-NEXT:       (i32.const 0)
- ;; CHECK-NEXT:       (i64.const 1)
- ;; CHECK-NEXT:      )
- ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (unreachable)
+ ;; CHECK-NEXT:   (br $label
+ ;; CHECK-NEXT:    (tuple.make 2
+ ;; CHECK-NEXT:     (i32.const 0)
+ ;; CHECK-NEXT:     (i64.const 1)
  ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (unreachable)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -2744,17 +2715,11 @@
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (f32.const 0)
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (tuple.make 2
- ;; CHECK-NEXT:    (block
- ;; CHECK-NEXT:     (br $label
- ;; CHECK-NEXT:      (tuple.make 2
- ;; CHECK-NEXT:       (i32.const 1)
- ;; CHECK-NEXT:       (i64.const 2)
- ;; CHECK-NEXT:      )
- ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (unreachable)
+ ;; CHECK-NEXT:   (br $label
+ ;; CHECK-NEXT:    (tuple.make 2
+ ;; CHECK-NEXT:     (i32.const 1)
+ ;; CHECK-NEXT:     (i64.const 2)
  ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (unreachable)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -2773,7 +2738,6 @@
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (unreachable)
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $br-mismatch-after (result i32)
@@ -2793,7 +2757,6 @@
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (unreachable)
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $br-mismatch-after-extra (result i32)
@@ -2970,7 +2933,6 @@
  ;; CHECK-NEXT:     (i32.const 42)
  ;; CHECK-NEXT:     (i32.const 0)
  ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (unreachable)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -2987,18 +2949,12 @@
  ;; CHECK:      (func $br-table-multivalue (type $5) (result i32 i64)
  ;; CHECK-NEXT:  (block $a (type $5) (result i32 i64)
  ;; CHECK-NEXT:   (block $b (type $5) (result i32 i64)
- ;; CHECK-NEXT:    (tuple.make 2
- ;; CHECK-NEXT:     (block
- ;; CHECK-NEXT:      (br_table $a $b
- ;; CHECK-NEXT:       (tuple.make 2
- ;; CHECK-NEXT:        (i32.const 42)
- ;; CHECK-NEXT:        (i64.const 42)
- ;; CHECK-NEXT:       )
- ;; CHECK-NEXT:       (i32.const 0)
- ;; CHECK-NEXT:      )
- ;; CHECK-NEXT:      (unreachable)
+ ;; CHECK-NEXT:    (br_table $a $b
+ ;; CHECK-NEXT:     (tuple.make 2
+ ;; CHECK-NEXT:      (i32.const 42)
+ ;; CHECK-NEXT:      (i64.const 42)
  ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (unreachable)
+ ;; CHECK-NEXT:     (i32.const 0)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
@@ -3016,28 +2972,16 @@
 
  ;; CHECK:      (func $br-table-multivalue-glb (type $48) (result anyref anyref)
  ;; CHECK-NEXT:  (block $a (type $95) (result arrayref structref)
- ;; CHECK-NEXT:   (tuple.make 2
- ;; CHECK-NEXT:    (block
- ;; CHECK-NEXT:     (return
- ;; CHECK-NEXT:      (block $b (type $94) (result structref arrayref)
- ;; CHECK-NEXT:       (tuple.make 2
- ;; CHECK-NEXT:        (block
- ;; CHECK-NEXT:         (br_table $a $b
- ;; CHECK-NEXT:          (tuple.make 2
- ;; CHECK-NEXT:           (ref.null none)
- ;; CHECK-NEXT:           (ref.null none)
- ;; CHECK-NEXT:          )
- ;; CHECK-NEXT:          (unreachable)
- ;; CHECK-NEXT:         )
- ;; CHECK-NEXT:         (unreachable)
- ;; CHECK-NEXT:        )
- ;; CHECK-NEXT:        (unreachable)
- ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:   (return
+ ;; CHECK-NEXT:    (block $b (type $94) (result structref arrayref)
+ ;; CHECK-NEXT:     (br_table $a $b
+ ;; CHECK-NEXT:      (tuple.make 2
+ ;; CHECK-NEXT:       (ref.null none)
+ ;; CHECK-NEXT:       (ref.null none)
  ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (unreachable)
  ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (unreachable)
  ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (unreachable)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -3063,7 +3007,6 @@
  ;; CHECK-NEXT:    (br_table $a $b
  ;; CHECK-NEXT:     (i32.const 0)
  ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (unreachable)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -3687,7 +3630,6 @@
  ;; CHECK-NEXT:  (return
  ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  (func $return-one (param i32) (result i32)
   local.get 0
@@ -3695,17 +3637,11 @@
  )
 
  ;; CHECK:      (func $return-two (type $21) (param $0 i32) (param $1 i64) (result i32 i64)
- ;; CHECK-NEXT:  (tuple.make 2
- ;; CHECK-NEXT:   (block
- ;; CHECK-NEXT:    (return
- ;; CHECK-NEXT:     (tuple.make 2
- ;; CHECK-NEXT:      (local.get $0)
- ;; CHECK-NEXT:      (local.get $1)
- ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:  (return
+ ;; CHECK-NEXT:   (tuple.make 2
+ ;; CHECK-NEXT:    (local.get $0)
+ ;; CHECK-NEXT:    (local.get $1)
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $return-two (param i32 i64) (result i32 i64)
@@ -3715,17 +3651,11 @@
  )
 
  ;; CHECK:      (func $return-two-first-unreachable (type $55) (param $0 i64) (result i32 i64)
- ;; CHECK-NEXT:  (tuple.make 2
- ;; CHECK-NEXT:   (block
- ;; CHECK-NEXT:    (return
- ;; CHECK-NEXT:     (tuple.make 2
- ;; CHECK-NEXT:      (unreachable)
- ;; CHECK-NEXT:      (local.get $0)
- ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:  (return
+ ;; CHECK-NEXT:   (tuple.make 2
  ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:    (local.get $0)
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $return-two-first-unreachable (param i64) (result i32 i64)
@@ -3738,13 +3668,7 @@
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (tuple.make 2
- ;; CHECK-NEXT:   (block
- ;; CHECK-NEXT:    (return
- ;; CHECK-NEXT:     (unreachable)
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (unreachable)
- ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  (return
  ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -3755,17 +3679,11 @@
  )
 
  ;; CHECK:      (func $return-two-second-unreachable-tuple (type $28) (param $0 i32) (result i32 i64)
- ;; CHECK-NEXT:  (tuple.make 2
- ;; CHECK-NEXT:   (block
- ;; CHECK-NEXT:    (return
- ;; CHECK-NEXT:     (tuple.make 2
- ;; CHECK-NEXT:      (local.get $0)
- ;; CHECK-NEXT:      (unreachable)
- ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:  (return
+ ;; CHECK-NEXT:   (tuple.make 2
+ ;; CHECK-NEXT:    (local.get $0)
  ;; CHECK-NEXT:    (unreachable)
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $return-two-second-unreachable-tuple (param i32) (result i32 i64)
@@ -3776,14 +3694,8 @@
  )
 
  ;; CHECK:      (func $return-multivalue (type $5) (result i32 i64)
- ;; CHECK-NEXT:  (tuple.make 2
- ;; CHECK-NEXT:   (block
- ;; CHECK-NEXT:    (return
- ;; CHECK-NEXT:     (call $return-multivalue)
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (unreachable)
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  (return
+ ;; CHECK-NEXT:   (call $return-multivalue)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $return-multivalue (result i32 i64)
@@ -4179,7 +4091,6 @@
  ;; CHECK-NEXT:     (local.get $0)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (unreachable)
- ;; CHECK-NEXT:    (unreachable)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -4203,7 +4114,6 @@
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (unreachable)
- ;; CHECK-NEXT:    (unreachable)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -4226,10 +4136,8 @@
  ;; CHECK-NEXT:      (br_on_cast $block i31ref i31ref
  ;; CHECK-NEXT:       (unreachable)
  ;; CHECK-NEXT:      )
- ;; CHECK-NEXT:      (unreachable)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (unreachable)
  ;; CHECK-NEXT:    (unreachable)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
@@ -4256,7 +4164,6 @@
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (unreachable)
- ;; CHECK-NEXT:    (unreachable)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -4279,10 +4186,8 @@
  ;; CHECK-NEXT:      (br_on_cast_fail $block i31ref i31ref
  ;; CHECK-NEXT:       (unreachable)
  ;; CHECK-NEXT:      )
- ;; CHECK-NEXT:      (unreachable)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (unreachable)
  ;; CHECK-NEXT:    (unreachable)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
@@ -4754,7 +4659,6 @@
  ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:   (local.get $1)
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  (func $return_call (param i32 i64) (result f32)
   local.get 0
@@ -5039,17 +4943,9 @@
  ;; CHECK-NEXT:         (local.get $ct)
  ;; CHECK-NEXT:        )
  ;; CHECK-NEXT:       )
- ;; CHECK-NEXT:       (tuple.make 3
- ;; CHECK-NEXT:        (block
- ;; CHECK-NEXT:         (unreachable)
- ;; CHECK-NEXT:         (unreachable)
- ;; CHECK-NEXT:        )
- ;; CHECK-NEXT:        (unreachable)
- ;; CHECK-NEXT:        (unreachable)
- ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:       (unreachable)
  ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (unreachable)
  ;; CHECK-NEXT:     (unreachable)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
@@ -5129,8 +5025,6 @@
  ;; CHECK-NEXT:    (block (result i32)
  ;; CHECK-NEXT:     ;;@ src.cpp:70:1
  ;; CHECK-NEXT:     (loop (result i32)
- ;; CHECK-NEXT:      ;;@ src.cpp:80:1
- ;; CHECK-NEXT:      (unreachable)
  ;; CHECK-NEXT:      ;;@ src.cpp:80:1
  ;; CHECK-NEXT:      (unreachable)
  ;; CHECK-NEXT:     )

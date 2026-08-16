@@ -508,21 +508,13 @@
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (br $outer0
-  ;; CHECK-NEXT:      (block (result i32)
-  ;; CHECK-NEXT:       (throw_ref
-  ;; CHECK-NEXT:        (local.get $0)
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:       (unreachable)
-  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     (throw_ref
+  ;; CHECK-NEXT:      (local.get $0)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (throw_ref
-  ;; CHECK-NEXT:     (local.get $0)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   (throw_ref
+  ;; CHECK-NEXT:    (local.get $0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -646,16 +638,12 @@
   ;; CHECK-NEXT:       (throw_ref
   ;; CHECK-NEXT:        (local.get $0)
   ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:       (unreachable)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (throw_ref
-  ;; CHECK-NEXT:     (local.get $0)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   (throw_ref
+  ;; CHECK-NEXT:    (local.get $0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -810,16 +798,12 @@
   ;; CHECK-NEXT:       (throw_ref
   ;; CHECK-NEXT:        (local.get $0)
   ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:       (unreachable)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (throw_ref
-  ;; CHECK-NEXT:     (local.get $0)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   (throw_ref
+  ;; CHECK-NEXT:    (local.get $0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -964,25 +948,13 @@
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (tuple.make 2
-  ;; CHECK-NEXT:      (block
-  ;; CHECK-NEXT:       (throw_ref
-  ;; CHECK-NEXT:        (local.get $0)
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:       (unreachable)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (unreachable)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (tuple.make 2
-  ;; CHECK-NEXT:    (block
   ;; CHECK-NEXT:     (throw_ref
   ;; CHECK-NEXT:      (local.get $0)
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (unreachable)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (throw_ref
+  ;; CHECK-NEXT:    (local.get $0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -1135,27 +1107,15 @@
   ;; CHECK-NEXT:       (drop
   ;; CHECK-NEXT:        (local.get $1)
   ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:       (tuple.make 2
-  ;; CHECK-NEXT:        (block
-  ;; CHECK-NEXT:         (throw_ref
-  ;; CHECK-NEXT:          (local.get $0)
-  ;; CHECK-NEXT:         )
-  ;; CHECK-NEXT:         (unreachable)
-  ;; CHECK-NEXT:        )
-  ;; CHECK-NEXT:        (unreachable)
+  ;; CHECK-NEXT:       (throw_ref
+  ;; CHECK-NEXT:        (local.get $0)
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (tuple.make 2
-  ;; CHECK-NEXT:    (block
-  ;; CHECK-NEXT:     (throw_ref
-  ;; CHECK-NEXT:      (local.get $0)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (unreachable)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   (throw_ref
+  ;; CHECK-NEXT:    (local.get $0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -1321,27 +1281,15 @@
   ;; CHECK-NEXT:       (tuple.drop 2
   ;; CHECK-NEXT:        (local.get $1)
   ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:       (tuple.make 2
-  ;; CHECK-NEXT:        (block
-  ;; CHECK-NEXT:         (throw_ref
-  ;; CHECK-NEXT:          (local.get $0)
-  ;; CHECK-NEXT:         )
-  ;; CHECK-NEXT:         (unreachable)
-  ;; CHECK-NEXT:        )
-  ;; CHECK-NEXT:        (unreachable)
+  ;; CHECK-NEXT:       (throw_ref
+  ;; CHECK-NEXT:        (local.get $0)
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (tuple.make 2
-  ;; CHECK-NEXT:    (block
-  ;; CHECK-NEXT:     (throw_ref
-  ;; CHECK-NEXT:      (local.get $0)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (unreachable)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   (throw_ref
+  ;; CHECK-NEXT:    (local.get $0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -2183,12 +2131,9 @@
   ;; CHECK-NEXT:  (throw_ref
   ;; CHECK-NEXT:   (block $__binaryen_delegate_caller_target0 (result exnref)
   ;; CHECK-NEXT:    (return
-  ;; CHECK-NEXT:     (block (result i32)
-  ;; CHECK-NEXT:      (block
-  ;; CHECK-NEXT:       (try_table (catch_all_ref $__binaryen_delegate_caller_target0)
-  ;; CHECK-NEXT:        (call $foo)
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:       (unreachable)
+  ;; CHECK-NEXT:     (block
+  ;; CHECK-NEXT:      (try_table (catch_all_ref $__binaryen_delegate_caller_target0)
+  ;; CHECK-NEXT:       (call $foo)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (unreachable)
   ;; CHECK-NEXT:     )

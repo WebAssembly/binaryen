@@ -40,7 +40,10 @@ namespace wasm {
 // globals, tables, functions, etc.) to already exist in the module.
 class IRBuilder : public UnifiedExpressionVisitor<IRBuilder, Result<>> {
 public:
-  IRBuilder(Module& wasm) : wasm(wasm), builder(wasm) {}
+  IRBuilder(Module& wasm, bool validateWasmStack = true)
+    : wasm(wasm), builder(wasm), validateWasmStack(validateWasmStack) {}
+
+  void setValidateWasmStack(bool value) { validateWasmStack = value; }
 
   // Get the valid Binaryen IR expression representing the sequence of visited
   // instructions. The IRBuilder is reset and can be used with a fresh sequence
@@ -327,6 +330,7 @@ private:
   Module& wasm;
   Function* func = nullptr;
   Builder builder;
+  bool validateWasmStack = true;
 
   // Used for setting DWARF expression locations.
   size_t* binaryPos = nullptr;

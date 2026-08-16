@@ -72,6 +72,7 @@ int main(int argc, const char* argv[]) {
   wasm.features = FeatureSet::All;
 
   auto moduleReader = ModuleReader();
+  moduleReader.setValidate(options.passOptions.validate);
   try {
     moduleReader.readBinary(options.extra["infile"], wasm, sourceMapFilename);
   } catch (ParseException& p) {

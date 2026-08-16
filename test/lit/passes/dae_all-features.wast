@@ -345,28 +345,16 @@
     (local.get $x)
   )
   ;; CHECK:      (func $c6 (type $0)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (unreachable)
-  ;; CHECK-NEXT:    (unreachable)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $c6 (result i32)
     (unreachable)
   )
   ;; CHECK:      (func $c7 (type $0)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (block
-  ;; CHECK-NEXT:     (drop
-  ;; CHECK-NEXT:      (i32.const 4)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (return)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 4)
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (return)
   ;; CHECK-NEXT: )
   (func $c7 (result i32)
     (return (i32.const 4))
@@ -451,13 +439,10 @@
   ;; CHECK-NEXT:  (local.set $0
   ;; CHECK-NEXT:   (i32.const 42)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (block (result i32)
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (return_call_indirect $0 (type $T)
-  ;; CHECK-NEXT:     (i32.const 0)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (return_call_indirect $0 (type $T)
+  ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $foo (param $x i32) (result i32)
@@ -491,7 +476,6 @@
 
  ;; CHECK:      (func $0 (type $0) (param $0 funcref) (param $1 i32) (param $2 f64) (result i64)
  ;; CHECK-NEXT:  (nop)
- ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  (func $0 (param $0 funcref) (param $1 i32) (param $2 f64) (result i64)
@@ -688,23 +672,18 @@
  ;; CHECK-NEXT:  (local.set $0
  ;; CHECK-NEXT:   (i32.const 1)
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (block (result i32)
+ ;; CHECK-NEXT:  (block
+ ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (block
- ;; CHECK-NEXT:     (drop
- ;; CHECK-NEXT:      (block
- ;; CHECK-NEXT:       (block
- ;; CHECK-NEXT:        (drop
- ;; CHECK-NEXT:         (i32.const 1)
- ;; CHECK-NEXT:        )
- ;; CHECK-NEXT:        (return)
- ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:     (block
+ ;; CHECK-NEXT:      (drop
+ ;; CHECK-NEXT:       (i32.const 1)
  ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (return)
  ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (return)
  ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (unreachable)
  ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (return)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $0 (param $0 i32) (result i32)
@@ -749,7 +728,6 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  (func $no-caller (type $A) (result (ref $A))
   ;; This return_call is to a bottom type, which we should ignore and not error
@@ -860,14 +838,11 @@
  ;; CHECK-NEXT:  (local.set $0
  ;; CHECK-NEXT:   (i64.const 0)
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (block (result f32)
+ ;; CHECK-NEXT:  (block
  ;; CHECK-NEXT:   (local.set $1
  ;; CHECK-NEXT:    (i64.const 0)
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (block (result f32)
- ;; CHECK-NEXT:    (unreachable)
- ;; CHECK-NEXT:    (unreachable)
- ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $target (param $0 i64) (param $1 v128) (param $2 i64) (result f32)
@@ -950,7 +925,6 @@
  ;; CHECK-NEXT:    (drop
  ;; CHECK-NEXT:     (local.get $1)
  ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (unreachable)
  ;; CHECK-NEXT:    (unreachable)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )

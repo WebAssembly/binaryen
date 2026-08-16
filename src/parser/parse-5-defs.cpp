@@ -33,7 +33,8 @@ Result<> parseDefinitions(
                    implicitTypes,
                    typeNames,
                    decls.implicitElemIndices,
-                   typeIndices);
+                   typeIndices,
+                   decls.validateWasmStack);
   CHECK_ERR(parseDefs(ctx, decls.tableDefs, table));
   CHECK_ERR(parseDefs(ctx, decls.globalDefs, global));
   CHECK_ERR(parseDefs(ctx, decls.startDefs, start));

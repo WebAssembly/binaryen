@@ -816,6 +816,7 @@ Input source maps can be specified by adding an -ism option right after the modu
     options.applyOptionsBeforeParse(*currModule);
 
     ModuleReader reader;
+    reader.setValidate(options.passOptions.validate);
     try {
       reader.read(inputFile, *currModule, inputSourceMapFilename);
     } catch (ParseException& p) {

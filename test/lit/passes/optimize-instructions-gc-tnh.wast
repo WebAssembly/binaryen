@@ -673,7 +673,6 @@
   ;; NO_TNH-NEXT:    (i32.const 1)
   ;; NO_TNH-NEXT:    (then
   ;; NO_TNH-NEXT:     (unreachable)
-  ;; NO_TNH-NEXT:     (unreachable)
   ;; NO_TNH-NEXT:    )
   ;; NO_TNH-NEXT:    (else
   ;; NO_TNH-NEXT:     (local.get $x)
@@ -710,7 +709,6 @@
   ;; NO_TNH-NEXT:     (local.get $x)
   ;; NO_TNH-NEXT:    )
   ;; NO_TNH-NEXT:    (else
-  ;; NO_TNH-NEXT:     (unreachable)
   ;; NO_TNH-NEXT:     (unreachable)
   ;; NO_TNH-NEXT:    )
   ;; NO_TNH-NEXT:   )
@@ -925,12 +923,12 @@
   ;; TNH-NEXT:  (drop
   ;; TNH-NEXT:   (block
   ;; TNH-NEXT:    (drop
-  ;; TNH-NEXT:     (block
-  ;; TNH-NEXT:      (drop
-  ;; TNH-NEXT:       (i32.const 1)
-  ;; TNH-NEXT:      )
-  ;; TNH-NEXT:      (block
+  ;; TNH-NEXT:     (if
+  ;; TNH-NEXT:      (i32.const 1)
+  ;; TNH-NEXT:      (then
   ;; TNH-NEXT:       (return)
+  ;; TNH-NEXT:      )
+  ;; TNH-NEXT:      (else
   ;; TNH-NEXT:       (unreachable)
   ;; TNH-NEXT:      )
   ;; TNH-NEXT:     )
@@ -947,10 +945,8 @@
   ;; NO_TNH-NEXT:      (i32.const 1)
   ;; NO_TNH-NEXT:      (then
   ;; NO_TNH-NEXT:       (return)
-  ;; NO_TNH-NEXT:       (unreachable)
   ;; NO_TNH-NEXT:      )
   ;; NO_TNH-NEXT:      (else
-  ;; NO_TNH-NEXT:       (unreachable)
   ;; NO_TNH-NEXT:       (unreachable)
   ;; NO_TNH-NEXT:      )
   ;; NO_TNH-NEXT:     )
@@ -1035,10 +1031,8 @@
 
   ;; TNH:      (func $get-i32 (type $2) (result i32)
   ;; TNH-NEXT:  (unreachable)
-  ;; TNH-NEXT:  (unreachable)
   ;; TNH-NEXT: )
   ;; NO_TNH:      (func $get-i32 (type $2) (result i32)
-  ;; NO_TNH-NEXT:  (unreachable)
   ;; NO_TNH-NEXT:  (unreachable)
   ;; NO_TNH-NEXT: )
   (func $get-i32 (result i32)
@@ -1046,10 +1040,8 @@
   )
   ;; TNH:      (func $get-ref (type $13) (result (ref $struct))
   ;; TNH-NEXT:  (unreachable)
-  ;; TNH-NEXT:  (unreachable)
   ;; TNH-NEXT: )
   ;; NO_TNH:      (func $get-ref (type $13) (result (ref $struct))
-  ;; NO_TNH-NEXT:  (unreachable)
   ;; NO_TNH-NEXT:  (unreachable)
   ;; NO_TNH-NEXT: )
   (func $get-ref (result (ref $struct))
@@ -1057,10 +1049,8 @@
   )
   ;; TNH:      (func $get-null (type $14) (result nullref)
   ;; TNH-NEXT:  (unreachable)
-  ;; TNH-NEXT:  (unreachable)
   ;; TNH-NEXT: )
   ;; NO_TNH:      (func $get-null (type $14) (result nullref)
-  ;; NO_TNH-NEXT:  (unreachable)
   ;; NO_TNH-NEXT:  (unreachable)
   ;; NO_TNH-NEXT: )
   (func $get-null (result (ref null none))

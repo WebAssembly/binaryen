@@ -1593,6 +1593,7 @@ class WasmBinaryReader {
   bool debugInfo = true;
   bool DWARF = false;
   bool skipFunctionBodies = false;
+  bool validateWasmStack = true;
 
   // Internal state.
 
@@ -1617,6 +1618,10 @@ public:
   void setDWARF(bool value) { DWARF = value; }
   void setSkipFunctionBodies(bool skipFunctionBodies_) {
     skipFunctionBodies = skipFunctionBodies_;
+  }
+  void setValidateWasmStack(bool validateWasmStack_) {
+    validateWasmStack = validateWasmStack_;
+    builder.setValidateWasmStack(validateWasmStack_);
   }
   void read();
   void readCustomSection(size_t payloadLen);

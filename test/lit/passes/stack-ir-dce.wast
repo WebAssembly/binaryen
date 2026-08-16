@@ -14,7 +14,6 @@
   ;; ROUNDTRIP-NEXT:   (call $drop-unreachable)
   ;; ROUNDTRIP-NEXT:  )
   ;; ROUNDTRIP-NEXT:  (unreachable)
-  ;; ROUNDTRIP-NEXT:  (unreachable)
   ;; ROUNDTRIP-NEXT: )
   (func $drop-unreachable (result i32)
     ;; This drop can be removed.
@@ -28,7 +27,6 @@
   ;; CHECK-NEXT:  unreachable
   ;; CHECK-NEXT: )
   ;; ROUNDTRIP:      (func $unreachable (type $0) (result i32)
-  ;; ROUNDTRIP-NEXT:  (unreachable)
   ;; ROUNDTRIP-NEXT:  (unreachable)
   ;; ROUNDTRIP-NEXT: )
   (func $unreachable (result i32)
@@ -73,13 +71,11 @@
   ;; ROUNDTRIP-NEXT:      (call $drop-unreachable)
   ;; ROUNDTRIP-NEXT:     )
   ;; ROUNDTRIP-NEXT:     (unreachable)
-  ;; ROUNDTRIP-NEXT:     (unreachable)
   ;; ROUNDTRIP-NEXT:    )
   ;; ROUNDTRIP-NEXT:    (else
   ;; ROUNDTRIP-NEXT:     (drop
   ;; ROUNDTRIP-NEXT:      (call $drop-unreachable)
   ;; ROUNDTRIP-NEXT:     )
-  ;; ROUNDTRIP-NEXT:     (unreachable)
   ;; ROUNDTRIP-NEXT:     (unreachable)
   ;; ROUNDTRIP-NEXT:    )
   ;; ROUNDTRIP-NEXT:   )
@@ -87,7 +83,6 @@
   ;; ROUNDTRIP-NEXT:  (drop
   ;; ROUNDTRIP-NEXT:   (call $drop-unreachable)
   ;; ROUNDTRIP-NEXT:  )
-  ;; ROUNDTRIP-NEXT:  (unreachable)
   ;; ROUNDTRIP-NEXT:  (unreachable)
   ;; ROUNDTRIP-NEXT: )
   (func $many-drop-unreachable (result i32)

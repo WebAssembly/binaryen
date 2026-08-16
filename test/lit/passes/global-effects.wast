@@ -59,9 +59,6 @@
   ;; INCLUDE:      (func $main (type $void)
   ;; INCLUDE-NEXT:  (call $unreachable)
   ;; INCLUDE-NEXT:  (call $call-unreachable)
-  ;; INCLUDE-NEXT:  (drop
-  ;; INCLUDE-NEXT:   (call $unimportant-effects)
-  ;; INCLUDE-NEXT:  )
   ;; INCLUDE-NEXT:  (call $throw)
   ;; INCLUDE-NEXT:  (call $throw-and-import)
   ;; INCLUDE-NEXT: )

@@ -51,17 +51,11 @@
  ;; CHECK-TEXT:      (func $go (type $2) (param $x (ref $ct)) (result i32)
  ;; CHECK-TEXT-NEXT:  (tuple.extract 2 0
  ;; CHECK-TEXT-NEXT:   (block $handler (type $3) (result i32 (ref $ct))
- ;; CHECK-TEXT-NEXT:    (tuple.make 2
- ;; CHECK-TEXT-NEXT:     (block
- ;; CHECK-TEXT-NEXT:      (return
- ;; CHECK-TEXT-NEXT:       (resume $ct (on $t $handler)
- ;; CHECK-TEXT-NEXT:        (i32.const 123)
- ;; CHECK-TEXT-NEXT:        (local.get $x)
- ;; CHECK-TEXT-NEXT:       )
- ;; CHECK-TEXT-NEXT:      )
- ;; CHECK-TEXT-NEXT:      (unreachable)
+ ;; CHECK-TEXT-NEXT:    (return
+ ;; CHECK-TEXT-NEXT:     (resume $ct (on $t $handler)
+ ;; CHECK-TEXT-NEXT:      (i32.const 123)
+ ;; CHECK-TEXT-NEXT:      (local.get $x)
  ;; CHECK-TEXT-NEXT:     )
- ;; CHECK-TEXT-NEXT:     (unreachable)
  ;; CHECK-TEXT-NEXT:    )
  ;; CHECK-TEXT-NEXT:   )
  ;; CHECK-TEXT-NEXT:  )
@@ -73,17 +67,11 @@
  ;; CHECK-BIN-NEXT:   (tuple.extract 2 0
  ;; CHECK-BIN-NEXT:    (local.tee $scratch
  ;; CHECK-BIN-NEXT:     (block $block (type $3) (result i32 (ref $ct))
- ;; CHECK-BIN-NEXT:      (tuple.make 2
- ;; CHECK-BIN-NEXT:       (block
- ;; CHECK-BIN-NEXT:        (return
- ;; CHECK-BIN-NEXT:         (resume $ct (on $t $block)
- ;; CHECK-BIN-NEXT:          (i32.const 123)
- ;; CHECK-BIN-NEXT:          (local.get $x)
- ;; CHECK-BIN-NEXT:         )
- ;; CHECK-BIN-NEXT:        )
- ;; CHECK-BIN-NEXT:        (unreachable)
+ ;; CHECK-BIN-NEXT:      (return
+ ;; CHECK-BIN-NEXT:       (resume $ct (on $t $block)
+ ;; CHECK-BIN-NEXT:        (i32.const 123)
+ ;; CHECK-BIN-NEXT:        (local.get $x)
  ;; CHECK-BIN-NEXT:       )
- ;; CHECK-BIN-NEXT:       (unreachable)
  ;; CHECK-BIN-NEXT:      )
  ;; CHECK-BIN-NEXT:     )
  ;; CHECK-BIN-NEXT:    )
@@ -150,17 +138,11 @@
 ;; CHECK-BIN-NODEBUG-NEXT:   (tuple.extract 2 0
 ;; CHECK-BIN-NODEBUG-NEXT:    (local.tee $scratch
 ;; CHECK-BIN-NODEBUG-NEXT:     (block $block (type $3) (result i32 (ref $1))
-;; CHECK-BIN-NODEBUG-NEXT:      (tuple.make 2
-;; CHECK-BIN-NODEBUG-NEXT:       (block
-;; CHECK-BIN-NODEBUG-NEXT:        (return
-;; CHECK-BIN-NODEBUG-NEXT:         (resume $1 (on $tag$0 $block)
-;; CHECK-BIN-NODEBUG-NEXT:          (i32.const 123)
-;; CHECK-BIN-NODEBUG-NEXT:          (local.get $0)
-;; CHECK-BIN-NODEBUG-NEXT:         )
-;; CHECK-BIN-NODEBUG-NEXT:        )
-;; CHECK-BIN-NODEBUG-NEXT:        (unreachable)
+;; CHECK-BIN-NODEBUG-NEXT:      (return
+;; CHECK-BIN-NODEBUG-NEXT:       (resume $1 (on $tag$0 $block)
+;; CHECK-BIN-NODEBUG-NEXT:        (i32.const 123)
+;; CHECK-BIN-NODEBUG-NEXT:        (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:       )
-;; CHECK-BIN-NODEBUG-NEXT:       (unreachable)
 ;; CHECK-BIN-NODEBUG-NEXT:      )
 ;; CHECK-BIN-NODEBUG-NEXT:     )
 ;; CHECK-BIN-NODEBUG-NEXT:    )

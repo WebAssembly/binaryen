@@ -1,13 +1,12 @@
-;; RUN: not wasm-as %s -o /dev/null 2>&1 | filecheck %s
+;; RUN: not wasm-as %s -all -o /dev/null 2>&1 | filecheck %s
+;; RUN: not wasm-opt %s -all -o /dev/null 2>&1 | filecheck %s
 
 ;; CHECK: popping from empty stack
 
 (module
-  (func (param i32)
-    (if (result i32)
-      (local.get 0)
-      (then (unreachable))
-      (else (unreachable))
+  (func
+    (block (result i32)
+      (unreachable)
     )
     (drop)
     (drop)

@@ -947,6 +947,7 @@ int main(int argc, const char* argv[]) {
       wasm = std::make_shared<Module>();
       options.applyOptionsBeforeParse(*wasm);
       ModuleReader reader;
+      reader.setValidate(options.passOptions.validate);
       reader.read(input, *wasm, "");
     } else {
       auto input(read_file<std::string>(options.extra["infile"], Flags::Text));

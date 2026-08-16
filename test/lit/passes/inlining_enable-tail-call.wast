@@ -79,11 +79,8 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block $__inlined_func$return$11 (result i32)
-  ;; CHECK-NEXT:    (block
-  ;; CHECK-NEXT:     (br $__inlined_func$return$11
-  ;; CHECK-NEXT:      (i32.const 5)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    (br $__inlined_func$return$11
+  ;; CHECK-NEXT:     (i32.const 5)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -221,7 +218,6 @@
   ;; CHECK-NEXT:  (call $child
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $parent (result i32)
     (call $child
@@ -298,7 +294,6 @@
  ;; CHECK-NEXT:       )
  ;; CHECK-NEXT:       (then
  ;; CHECK-NEXT:        (br $label$0)
- ;; CHECK-NEXT:        (unreachable)
  ;; CHECK-NEXT:       )
  ;; CHECK-NEXT:       (else
  ;; CHECK-NEXT:        (i32.const 0)
@@ -306,7 +301,6 @@
  ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:     (else
- ;; CHECK-NEXT:      (unreachable)
  ;; CHECK-NEXT:      (unreachable)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
@@ -388,10 +382,8 @@
  ;; CHECK-NEXT:     (i32.const 0)
  ;; CHECK-NEXT:     (then
  ;; CHECK-NEXT:      (unreachable)
- ;; CHECK-NEXT:      (unreachable)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:     (else
- ;; CHECK-NEXT:      (unreachable)
  ;; CHECK-NEXT:      (unreachable)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
@@ -495,7 +487,6 @@
  ;; CHECK-NEXT:    (i32.const 42)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  (func $caller (result i32)
   (return_call $callee)
@@ -596,7 +587,6 @@
  ;; CHECK-NEXT:    (local.get $0)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  (func $caller (result i32)
   (return_call $callee
@@ -825,31 +815,27 @@
  ;; CHECK-NEXT:    (local.set $3
  ;; CHECK-NEXT:     (local.get $y)
  ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (block
- ;; CHECK-NEXT:     (return
- ;; CHECK-NEXT:      (block $__inlined_func$third$1 (result i32)
- ;; CHECK-NEXT:       (local.set $4
- ;; CHECK-NEXT:        (local.get $2)
+ ;; CHECK-NEXT:    (return
+ ;; CHECK-NEXT:     (block $__inlined_func$third$1 (result i32)
+ ;; CHECK-NEXT:      (local.set $4
+ ;; CHECK-NEXT:       (local.get $2)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (local.set $5
+ ;; CHECK-NEXT:       (local.get $3)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (block (result i32)
+ ;; CHECK-NEXT:       (drop
+ ;; CHECK-NEXT:        (local.get $4)
  ;; CHECK-NEXT:       )
- ;; CHECK-NEXT:       (local.set $5
- ;; CHECK-NEXT:        (local.get $3)
+ ;; CHECK-NEXT:       (drop
+ ;; CHECK-NEXT:        (local.get $5)
  ;; CHECK-NEXT:       )
- ;; CHECK-NEXT:       (block (result i32)
- ;; CHECK-NEXT:        (drop
- ;; CHECK-NEXT:         (local.get $4)
- ;; CHECK-NEXT:        )
- ;; CHECK-NEXT:        (drop
- ;; CHECK-NEXT:         (local.get $5)
- ;; CHECK-NEXT:        )
- ;; CHECK-NEXT:        (i32.const 42)
- ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:       (i32.const 42)
  ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (unreachable)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  (func $first (result i32)
   (local $x i32)
@@ -972,13 +958,10 @@
  ;; CHECK:      (func $first
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (block $__inlined_func$second (result i32)
- ;; CHECK-NEXT:    (block
- ;; CHECK-NEXT:     (br $__inlined_func$second
- ;; CHECK-NEXT:      (block $__inlined_func$third$2 (result i32)
- ;; CHECK-NEXT:       (i32.const 42)
- ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:    (br $__inlined_func$second
+ ;; CHECK-NEXT:     (block $__inlined_func$third$2 (result i32)
+ ;; CHECK-NEXT:      (i32.const 42)
  ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (unreachable)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
@@ -1175,7 +1158,6 @@
  ;; CHECK-NEXT:    (call $third
  ;; CHECK-NEXT:     (block
  ;; CHECK-NEXT:      (br $__inlined_func$second)
- ;; CHECK-NEXT:      (unreachable)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (br $__inlined_func$second)
@@ -1196,7 +1178,6 @@
  ;; CHECK-NEXT:       (local.set $0
  ;; CHECK-NEXT:        (block
  ;; CHECK-NEXT:         (br $__inlined_func$second-2$1)
- ;; CHECK-NEXT:         (unreachable)
  ;; CHECK-NEXT:        )
  ;; CHECK-NEXT:       )
  ;; CHECK-NEXT:       (br $__return_call)
@@ -1259,14 +1240,11 @@
  ;; CHECK:      (func $caller
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (block $__inlined_func$callee (result i32)
- ;; CHECK-NEXT:    (block
- ;; CHECK-NEXT:     (br $__inlined_func$callee
- ;; CHECK-NEXT:      (call_indirect (type $T)
- ;; CHECK-NEXT:       (i32.const 42)
- ;; CHECK-NEXT:       (i32.const 0)
- ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:    (br $__inlined_func$callee
+ ;; CHECK-NEXT:     (call_indirect (type $T)
+ ;; CHECK-NEXT:      (i32.const 42)
+ ;; CHECK-NEXT:      (i32.const 0)
  ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (unreachable)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
@@ -1556,12 +1534,10 @@
  ;; CHECK-NEXT:          (i32.const 1)
  ;; CHECK-NEXT:         )
  ;; CHECK-NEXT:        )
- ;; CHECK-NEXT:        (unreachable)
  ;; CHECK-NEXT:       )
  ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (unreachable)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )

@@ -37,14 +37,12 @@
  ;; CHECK-NEXT:     (block $label$3
  ;; CHECK-NEXT:      (call_indirect $0 (type $13)
  ;; CHECK-NEXT:       (block $label$4 (result f32)
- ;; CHECK-NEXT:        (nop)
  ;; CHECK-NEXT:        (br $label$3)
- ;; CHECK-NEXT:        (unreachable)
  ;; CHECK-NEXT:       )
  ;; CHECK-NEXT:       (i32.const 105)
  ;; CHECK-NEXT:      )
- ;; CHECK-NEXT:      (nop)
  ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (nop)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
@@ -402,16 +400,12 @@
  ;; CHECK-NEXT:      (unreachable)
  ;; CHECK-NEXT:      (unreachable)
  ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (drop
- ;; CHECK-NEXT:      (i32.const 1)
- ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:     (br $label$1)
- ;; CHECK-NEXT:     (unreachable)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (i32.const 1)
- ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i32.const 1)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $leave-inner-block-type
@@ -629,25 +623,19 @@
  )
 
  ;; CHECK:      (func $br-and-fallthrough-with-value (type $2) (result i32)
- ;; CHECK-NEXT:  (block $l (result i32)
+ ;; CHECK-NEXT:  (block $l
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (block (result i32)
- ;; CHECK-NEXT:     (br $l
- ;; CHECK-NEXT:      (i32.const 1)
- ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (unreachable)
+ ;; CHECK-NEXT:     (br $l)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (block (result i32)
- ;; CHECK-NEXT:     (br $l
- ;; CHECK-NEXT:      (i32.const 1)
- ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (unreachable)
+ ;; CHECK-NEXT:     (br $l)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (i32.const 1)
  ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (i32.const 1)
  ;; CHECK-NEXT: )
  (func $br-and-fallthrough-with-value (result i32)
   (block $l (result i32)
@@ -710,31 +698,23 @@
  )
 
  ;; CHECK:      (func $br-and-fallthrough-with-value-and-more (type $2) (result i32)
- ;; CHECK-NEXT:  (block $l (result i32)
+ ;; CHECK-NEXT:  (block $l
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (block (result i32)
  ;; CHECK-NEXT:     (nop)
- ;; CHECK-NEXT:     (nop)
- ;; CHECK-NEXT:     (br $l
- ;; CHECK-NEXT:      (i32.const 1)
- ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (unreachable)
+ ;; CHECK-NEXT:     (br $l)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (block (result i32)
  ;; CHECK-NEXT:     (nop)
  ;; CHECK-NEXT:     (nop)
- ;; CHECK-NEXT:     (nop)
- ;; CHECK-NEXT:     (br $l
- ;; CHECK-NEXT:      (i32.const 1)
- ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (unreachable)
+ ;; CHECK-NEXT:     (br $l)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (nop)
- ;; CHECK-NEXT:   (i32.const 1)
  ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT:  (i32.const 1)
  ;; CHECK-NEXT: )
  (func $br-and-fallthrough-with-value-and-more (result i32)
   (block $l (result i32)
@@ -868,7 +848,6 @@
  ;; CHECK-NEXT:    (block (result i32)
  ;; CHECK-NEXT:     (call $br-on-null)
  ;; CHECK-NEXT:     (br $block)
- ;; CHECK-NEXT:     (unreachable)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (call $br-on-null)

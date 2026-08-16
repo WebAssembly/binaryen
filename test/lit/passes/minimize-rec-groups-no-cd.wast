@@ -26,13 +26,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.func $referenced)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (tuple.make 2
-  ;; CHECK-NEXT:   (block
-  ;; CHECK-NEXT:    (unreachable)
-  ;; CHECK-NEXT:    (unreachable)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (unreachable)
-  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $referenced (type $exact)
     (drop (ref.func $referenced))
@@ -42,13 +36,7 @@
   ;; CHECK:      (func $control-flow-type (type $2)
   ;; CHECK-NEXT:  (tuple.drop 2
   ;; CHECK-NEXT:   (block $l (type $3) (result (ref $struct) i32)
-  ;; CHECK-NEXT:    (tuple.make 2
-  ;; CHECK-NEXT:     (block
-  ;; CHECK-NEXT:      (unreachable)
-  ;; CHECK-NEXT:      (unreachable)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (unreachable)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )

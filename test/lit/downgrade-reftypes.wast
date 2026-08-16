@@ -17,7 +17,6 @@
   ;; CHECK-NEXT:    (br $block
   ;; CHECK-NEXT:     (ref.func $foo)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -25,7 +24,6 @@
   ;; CHECK-NEXT:    (br $block1
   ;; CHECK-NEXT:     (ref.null nofunc)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -33,7 +31,6 @@
   ;; CHECK-NEXT:    (br $block2
   ;; CHECK-NEXT:     (ref.null noextern)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -41,7 +38,6 @@
   ;; CHECK-NEXT:    (br $block3
   ;; CHECK-NEXT:     (string.const "hello world")
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )

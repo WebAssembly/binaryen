@@ -546,7 +546,6 @@
 
   ;; CHECK:      (func $func-unreachable (type $sig-unreachable) (result anyref)
   ;; CHECK-NEXT:  (unreachable)
-  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $func-unreachable (type $sig-unreachable) (result anyref)
     (unreachable)
@@ -561,7 +560,6 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (else
   ;; CHECK-NEXT:     (unreachable)
-  ;; CHECK-NEXT:     (unreachable)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -574,7 +572,6 @@
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (else
-  ;; CHECK-NEXT:     (unreachable)
   ;; CHECK-NEXT:     (unreachable)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
@@ -653,7 +650,6 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (unreachable)
-  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $func-4 (type $sig) (result anyref)
     (if
@@ -730,7 +726,6 @@
   ;; CHECK-NEXT:  (block
   ;; CHECK-NEXT:   (call $foo
   ;; CHECK-NEXT:    (block
-  ;; CHECK-NEXT:     (unreachable)
   ;; CHECK-NEXT:     (unreachable)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (i32.const 0)

@@ -81,8 +81,6 @@ namespace wasm {
 
 namespace {
 
-bool hasNonFallthroughControlFlow(Expression* expr);
-
 // Unreachable instructions leave wasmStackType none on the polymorphic Wasm stack
 // but remain distinct from ordinary void instructions (drop, local.set, etc.).
 bool isWasmUnreachableValue(Expression* expr, Type wasmStackType) {
@@ -90,57 +88,38 @@ bool isWasmUnreachableValue(Expression* expr, Type wasmStackType) {
          !Properties::isControlFlowStructure(expr);
 }
 
-bool blockHasNonFallthroughControlFlow(Block* block) {
-  for (auto* child : block->list) {
-    if (hasNonFallthroughControlFlow(child)) {
-      return true;
+MaybeResult<Index>
+findLastWasmStackValueIndex(const std::vector<IRBuilder::StackEntry>& stack) {
+  for (int i = int(stack.size()) - 1; i >= 0; --i) {
+    if (stack[i].wasmStackType != Type::none) {
+      return Index(i);
+    }
+    if (isWasmUnreachableValue(stack[i].expr, stack[i].wasmStackType)) {
+      return Index(i);
     }
   }
-  return false;
+  return {};
 }
 
-bool hasNonFallthroughControlFlow(Expression* expr) {
-  if (expr->is<Return>() || expr->is<Break>() || expr->is<Throw>() ||
-      expr->is<Rethrow>() || expr->is<Switch>()) {
-    return true;
+Result<> validateWasmStackOperand(bool validateWasmStack,
+                                  const std::vector<IRBuilder::StackEntry>& stack,
+                                  bool unreachable) {
+  if (!validateWasmStack) {
+    return Ok{};
   }
-  if (auto* call = expr->dynCast<Call>(); call && call->isReturn) {
-    return true;
-  }
-  if (auto* call = expr->dynCast<CallIndirect>(); call && call->isReturn) {
-    return true;
-  }
-  if (auto* call = expr->dynCast<CallRef>(); call && call->isReturn) {
-    return true;
-  }
-  if (auto* block = expr->dynCast<Block>()) {
-    return blockHasNonFallthroughControlFlow(block);
-  }
-  if (auto* loop = expr->dynCast<Loop>()) {
-    return hasNonFallthroughControlFlow(loop->body);
-  }
-  if (auto* iff = expr->dynCast<If>()) {
-    if (hasNonFallthroughControlFlow(iff->ifTrue)) {
-      return true;
+  auto idx = findLastWasmStackValueIndex(stack);
+  if (!idx) {
+    if (!unreachable) {
+      return Err{"popping from empty stack"};
     }
-    if (iff->ifFalse && hasNonFallthroughControlFlow(iff->ifFalse)) {
-      return true;
-    }
+    return Ok{};
   }
-  if (auto* tryy = expr->dynCast<Try>()) {
-    if (hasNonFallthroughControlFlow(tryy->body)) {
-      return true;
-    }
-    for (auto* catchBody : tryy->catchBodies) {
-      if (hasNonFallthroughControlFlow(catchBody)) {
-        return true;
-      }
-    }
+  auto& entry = stack[*idx];
+  if (entry.wasmStackType == Type::none &&
+      !isWasmUnreachableValue(entry.expr, entry.wasmStackType)) {
+    return Err{"popping from empty stack"};
   }
-  if (auto* trytable = expr->dynCast<TryTable>()) {
-    return hasNonFallthroughControlFlow(trytable->body);
-  }
-  return false;
+  return Ok{};
 }
 
 std::vector<Expression*>
@@ -187,36 +166,20 @@ Result<Index> IRBuilder::addScratchLocal(Type type) {
 
 MaybeResult<IRBuilder::HoistedVal> IRBuilder::hoistLastValue(bool greedy) {
   auto& stack = getScope().exprStack;
-  if (stack.empty()) {
-    return {};
-  }
   int valIndex = stack.size() - 1;
   for (; valIndex >= 0; --valIndex) {
-    auto& entry = stack[valIndex];
-    if (entry.wasmStackType != Type::none) {
-      break;
-    }
-    if (isWasmUnreachableValue(entry.expr, entry.wasmStackType)) {
-      break;
-    }
-    // Unreachable-typed control flow (e.g. void blocks) keeps expr->type even
-    // when wasmStackType is none. This matches baseline hoist behavior.
-    if (Properties::isControlFlowStructure(entry.expr) &&
-        entry.expr->type != Type::none) {
+    if (stack[valIndex].expr->type != Type::none) {
       break;
     }
   }
   if (valIndex < 0) {
-    // There is no value-producing expression.
+    // There is no value-producing or unreachable expression.
     return {};
   }
 
   int hoistIndex = valIndex;
   if (greedy) {
-    while (hoistIndex > 0 &&
-           stack[hoistIndex - 1].wasmStackType == Type::none &&
-           !isWasmUnreachableValue(stack[hoistIndex - 1].expr,
-                                   stack[hoistIndex - 1].wasmStackType)) {
+    while (hoistIndex > 0 && stack[hoistIndex - 1].expr->type == Type::none) {
       --hoistIndex;
     }
   }
@@ -226,11 +189,7 @@ MaybeResult<IRBuilder::HoistedVal> IRBuilder::hoistLastValue(bool greedy) {
     return HoistedVal{Index(hoistIndex), nullptr};
   }
   auto*& expr = stack[valIndex].expr;
-  if (stack[valIndex].wasmStackType == Type::unreachable ||
-      isWasmUnreachableValue(expr, stack[valIndex].wasmStackType) ||
-      (Properties::isControlFlowStructure(expr) &&
-       stack[valIndex].wasmStackType == Type::none &&
-       expr->type != Type::none)) {
+  if (expr->type == Type::unreachable) {
     // No need for a scratch local to hoist an unreachable.
     return HoistedVal{Index(hoistIndex), nullptr};
   }
@@ -242,8 +201,7 @@ MaybeResult<IRBuilder::HoistedVal> IRBuilder::hoistLastValue(bool greedy) {
   // text roundtripping if the block type would conflict after binary writing
   // with another function type in the module. Avoid this problem by
   // generalizing the scratch local type eagerly.
-  auto type =
-    stack[valIndex].wasmStackType.asWrittenGivenFeatures(wasm.features);
+  auto type = expr->type.asWrittenGivenFeatures(wasm.features);
   auto scratchIdx = addScratchLocal(type);
   CHECK_ERR(scratchIdx);
   expr = builder.makeLocalSet(*scratchIdx, expr);
@@ -270,7 +228,7 @@ Result<> IRBuilder::packageHoistedValue(const HoistedVal& hoisted,
     pushSynthetic(block);
   };
 
-  auto type = scope.exprStack.back().wasmStackType;
+  auto type = scope.exprStack.back().expr->type;
   if (type == Type::none) {
     // If we did not have a value on top of the stack and did not add a scratch
     // local, then there must have been an unreachable.
@@ -355,21 +313,14 @@ void IRBuilder::push(Expression* expr, Origin origin) {
 void IRBuilder::pushControlFlow(Expression* expr,
                                 Type wasmStackResult,
                                 Origin origin) {
-  auto& scope = getScope();
   Type stackType = wasmStackResult;
   if (expr->type == Type::unreachable && !wasmStackResult.isConcrete()) {
     if (expr->is<If>()) {
       // Unlike other void control flow, a void if that is unreachable in IR
       // leaves the enclosing Wasm stack polymorphic when it completes.
-      scope.unreachable = true;
-      stackType = Type::none;
-    } else if (hasNonFallthroughControlFlow(expr)) {
-      // Control flow that does not fall through remains usable as a Binaryen
-      // IR operand via unreachable typing.
-      stackType = Type::unreachable;
-    } else {
-      stackType = Type::none;
+      getScope().unreachable = true;
     }
+    stackType = Type::none;
   }
   pushStackEntry(expr, stackType, origin);
 }
@@ -570,26 +521,6 @@ private:
       // Pop a child normally. Pop greedily for children other than the first
       // (i.e. the last to be popped).
       bool greedy = i > 0;
-      if (!scope.exprStack.empty()) {
-        auto& top = scope.exprStack.back();
-        bool wantsConcrete = false;
-        for (auto& constraint : children[i].constraint) {
-          if (auto* type = std::get_if<Type>(&constraint)) {
-            if (type->isConcrete()) {
-              wantsConcrete = true;
-              break;
-            }
-          }
-        }
-        if (wantsConcrete && top.wasmStackType == Type::none &&
-            top.expr->type == Type::unreachable &&
-            Properties::isControlFlowStructure(top.expr) &&
-            !hasNonFallthroughControlFlow(top.expr)) {
-          *children[i].childp = top.expr;
-          scope.exprStack.pop_back();
-          continue;
-        }
-      }
       auto val = pop(children[i].constraint.size(), greedy);
       CHECK_ERR(val);
       *children[i].childp = *val;
@@ -613,10 +544,6 @@ private:
     // Whether we are deeper than some concrete expression.
     bool seenConcrete = false;
 
-    // The void stack entry immediately above the current requirement's matched
-    // value, if we skipped void entries in an unreachable scope.
-    std::optional<size_t> lastSkippedNoneAbove;
-
     // Check whether the values on the stack will be able to meet the given
     // requirements.
     while (true) {
@@ -630,7 +557,6 @@ private:
         }
         --childIndex;
         childTupleIndex = children[childIndex].constraint.size() - 1;
-        lastSkippedNoneAbove = std::nullopt;
       }
 
       // Advance to the next available value on the stack.
@@ -647,19 +573,12 @@ private:
             return unreachableFallbackSize;
           }
           --stackIndex;
-          auto& entry = scope.exprStack[stackIndex];
-          if (isWasmUnreachableValue(entry.expr, entry.wasmStackType)) {
-            stackTupleIndex = 0;
-            break;
-          }
-          stackTupleIndex = entry.wasmStackType.size() - 1;
+          stackTupleIndex =
+            scope.exprStack[stackIndex].expr->type.size() - 1;
         }
 
         // Skip expressions that don't produce values.
-        if (scope.exprStack[stackIndex].wasmStackType == Type::none) {
-          if (scope.unreachable) {
-            lastSkippedNoneAbove = stackIndex;
-          }
+        if (scope.exprStack[stackIndex].expr->type == Type::none) {
           stackTupleIndex = 0;
           continue;
         }
@@ -669,16 +588,10 @@ private:
       // We have an available type and a constraint. Only check constraints if
       // we are deeper than an unreachable, since otherwise we can leave
       // problems to be caught by the validator later.
-      auto& entry = scope.exprStack[stackIndex];
-      auto type = isWasmUnreachableValue(entry.expr, entry.wasmStackType)
-                    ? Type::unreachable
-                    : entry.wasmStackType[stackTupleIndex];
-      if (unreachableFallbackSize || lastSkippedNoneAbove) {
+      auto type = scope.exprStack[stackIndex].expr->type[stackTupleIndex];
+      if (unreachableFallbackSize) {
         auto constraint = children[childIndex].constraint[childTupleIndex];
         if (!PrincipalType::matches(type, constraint)) {
-          if (lastSkippedNoneAbove) {
-            return *lastSkippedNoneAbove + 1;
-          }
           return unreachableFallbackSize;
         }
       }
@@ -697,9 +610,6 @@ private:
         // must be concrete.
         assert(type.isConcrete());
         seenConcrete = true;
-        if (lastSkippedNoneAbove && scope.unreachable) {
-          unreachableFallbackSize = *lastSkippedNoneAbove + 1;
-        }
       }
     }
 
@@ -732,18 +642,15 @@ private:
       return Err{"popping from empty stack"};
     }
 
+    CHECK_ERR(validateWasmStackOperand(
+      builder.validateWasmStack, scope.exprStack, scope.unreachable));
+
     CHECK_ERR(builder.packageHoistedValue(*hoisted, size));
 
-    auto& entry = scope.exprStack.back();
+    auto* ret = scope.exprStack.back().expr;
     // If the top value has the correct size, we can pop it and be done.
-    // Unreachable stack types satisfy any size when used as Binaryen IR operands.
-    if (entry.wasmStackType.size() == size ||
-        entry.wasmStackType == Type::unreachable ||
-        isWasmUnreachableValue(entry.expr, entry.wasmStackType) ||
-        (Properties::isControlFlowStructure(entry.expr) &&
-         entry.wasmStackType == Type::none &&
-         entry.expr->type != Type::none)) {
-      auto* ret = entry.expr;
+    // Unreachable values satisfy any size.
+    if (ret->type.size() == size || ret->type == Type::unreachable) {
       scope.exprStack.pop_back();
       return ret;
     }
@@ -1092,38 +999,21 @@ Result<Expression*> IRBuilder::finishScope(Block* block) {
     auto hoisted = hoistLastValue();
     CHECK_ERR(hoisted);
     if (!hoisted) {
-      bool unreachableFallthroughCF = false;
-      for (int i = int(scope.exprStack.size()) - 1; i >= 0; --i) {
-        auto& entry = scope.exprStack[i];
-        if (entry.wasmStackType != Type::none) {
-          break;
-        }
-        auto* expr = entry.expr;
-        if (expr->type == Type::unreachable &&
-            Properties::isControlFlowStructure(expr) &&
-            !hasNonFallthroughControlFlow(expr)) {
-          unreachableFallthroughCF = true;
-          break;
-        }
-      }
-      if (scope.unreachable || scope.labelUsed || unreachableFallthroughCF) {
-        // Unreachable arms of concretely typed control flow, scopes that
-        // receive values via breaks rather than fallthrough, and void
-        // fallthrough unreachable control flow do not require a Wasm stack
-        // value at scope end.
-        pushSynthetic(builder.makeUnreachable());
-      } else {
-        return Err{"popping from empty stack"};
-      }
-    } else if (scope.exprStack.back().wasmStackType == Type::none) {
+      return Err{"popping from empty stack"};
+    }
+
+    CHECK_ERR(validateWasmStackOperand(
+      validateWasmStack, scope.exprStack, scope.unreachable));
+
+    if (scope.exprStack.back().expr->type == Type::none) {
       // Nothing was hoisted, which means there must have been an unreachable
       // buried under none-type expressions. It is not valid to end a concretely
       // typed block with none-typed expressions, so add an extra unreachable.
       pushSynthetic(builder.makeUnreachable());
     }
 
-    if (type.isTuple() && hoisted) {
-      auto hoistedType = scope.exprStack.back().wasmStackType;
+    if (type.isTuple()) {
+      auto hoistedType = scope.exprStack.back().expr->type;
       if (hoistedType != Type::unreachable &&
           hoistedType.size() != type.size()) {
         // We cannot propagate the hoisted value directly because it does not
@@ -1158,13 +1048,6 @@ Result<Expression*> IRBuilder::finishScope(Block* block) {
     // More than one expression, so we need a block. Allocate one if we weren't
     // already given one.
     auto exprs = stackExprs(scope.exprStack);
-    if (type.isConcrete() && exprs.size() > 1) {
-      for (size_t i = 0; i + 1 < exprs.size(); ++i) {
-        if (scope.exprStack[i].wasmStackType.isConcrete()) {
-          exprs[i] = builder.dropIfConcretelyTyped(exprs[i]);
-        }
-      }
-    }
     if (block) {
       block->list.set(exprs);
     } else {

@@ -221,7 +221,6 @@
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (unreachable)
-  ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $throw-caught-ref-later-all (result exnref)
@@ -446,7 +445,6 @@
   ;; CHECK-NEXT:      (i32.const 0)
   ;; CHECK-NEXT:      (then
   ;; CHECK-NEXT:       (br $label)
-  ;; CHECK-NEXT:       (unreachable)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (else
   ;; CHECK-NEXT:       (i32.const 42)

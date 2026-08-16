@@ -37,8 +37,9 @@ namespace wasm {
 static void readTextData(std::optional<std::string> filename,
                          std::string& input,
                          Module& wasm,
-                         IRProfile profile) {
-  if (auto parsed = WATParser::parseModule(wasm, input, filename);
+                         IRProfile profile,
+                         bool validateWasmStack) {
+  if (auto parsed = WATParser::parseModule(wasm, input, filename, validateWasmStack);
       auto err = parsed.getErr()) {
     Fatal() << err->msg;
   }
@@ -47,7 +48,7 @@ static void readTextData(std::optional<std::string> filename,
 void ModuleReader::readText(std::string filename, Module& wasm) {
   BYN_TRACE("reading text from " << filename << "\n");
   auto input(read_file<std::string>(filename, Flags::Text));
-  readTextData(filename, input, wasm, profile);
+  readTextData(filename, input, wasm, profile, validate);
 }
 
 void ModuleReader::readBinaryData(std::vector<char>& input,
@@ -64,6 +65,7 @@ void ModuleReader::readBinaryData(std::vector<char>& input,
   parser.setDebugInfo(debugInfo);
   parser.setDWARF(DWARF);
   parser.setSkipFunctionBodies(skipFunctionBodies);
+  parser.setValidateWasmStack(validate);
   parser.read();
   if (wasm.hasFeaturesSection) {
     featuresSectionFeatures = parser.getFeaturesSectionFeatures();
@@ -120,7 +122,7 @@ void ModuleReader::readStdin(Module& wasm, std::string sourceMapFilename) {
     std::ostringstream s;
     s.write(input.data(), input.size());
     std::string input_str = s.str();
-    readTextData(std::nullopt, input_str, wasm, profile);
+    readTextData(std::nullopt, input_str, wasm, profile, validate);
   }
 }
 

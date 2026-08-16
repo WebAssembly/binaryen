@@ -548,6 +548,7 @@ int main(int argc, const char* argv[]) {
       std::cerr << "reading...\n";
     }
     ModuleReader reader;
+    reader.setValidate(options.passOptions.validate);
     reader.setDWARF(debugInfo);
     try {
       reader.read(options.extra["infile"], wasm, inputSourceMapFilename);

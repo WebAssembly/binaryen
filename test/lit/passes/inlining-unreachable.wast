@@ -32,10 +32,7 @@
 
   ;; CHECK:      (func $call-trap-result (type $1) (result i32)
   ;; CHECK-NEXT:  (block $__inlined_func$trap-result$1
-  ;; CHECK-NEXT:   (block
-  ;; CHECK-NEXT:    (unreachable)
-  ;; CHECK-NEXT:    (unreachable)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $call-trap-result (result i32)
@@ -79,10 +76,7 @@
   ;; CHECK:      (func $caller (type $0)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block $__inlined_func$callee
-  ;; CHECK-NEXT:    (block
-  ;; CHECK-NEXT:     (call $imported
-  ;; CHECK-NEXT:      (unreachable)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    (call $imported
   ;; CHECK-NEXT:     (unreachable)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
@@ -182,15 +176,11 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (return
   ;; CHECK-NEXT:   (block $__inlined_func$1
-  ;; CHECK-NEXT:    (block
-  ;; CHECK-NEXT:     (block $block0
-  ;; CHECK-NEXT:      (unreachable)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    (block $block0
   ;; CHECK-NEXT:     (unreachable)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $0 (result f64)
     (block $block

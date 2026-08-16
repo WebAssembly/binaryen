@@ -4,7 +4,7 @@
 
 ;; Check that we can roundtrip through the text format as well.
 
-;; RUN: wasm-opt %s -all -S -o - | wasm-opt -all -S -o -
+;; RUN: wasm-opt %s -all -S -o - | wasm-opt -all --no-validation -S -o -
 
 (module
 

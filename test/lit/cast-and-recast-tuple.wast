@@ -43,13 +43,7 @@
   ;; CHECK-NEXT:     (local.get $scratch_3)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (tuple.make 2
-  ;; CHECK-NEXT:    (block
-  ;; CHECK-NEXT:     (unreachable)
-  ;; CHECK-NEXT:     (unreachable)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $test-local-tuple-1 (param $B (ref $B)) (param $x i32) (result anyref i32)
@@ -100,13 +94,7 @@
   ;; CHECK-NEXT:     (local.get $scratch_5)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (tuple.make 2
-  ;; CHECK-NEXT:    (block
-  ;; CHECK-NEXT:     (unreachable)
-  ;; CHECK-NEXT:     (unreachable)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $test-local-tuple-2 (param $B (ref $B)) (param $x i32) (result i32 i32)
@@ -156,13 +144,7 @@
   ;; CHECK-NEXT:     (local.get $scratch_5)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (tuple.make 2
-  ;; CHECK-NEXT:    (block
-  ;; CHECK-NEXT:     (unreachable)
-  ;; CHECK-NEXT:     (unreachable)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $test-local-tuple-3 (param $B (ref $B)) (param $x i32) (result anyref i32)
@@ -248,13 +230,7 @@
   ;; CHECK-NEXT:     (local.get $scratch_11)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (tuple.make 2
-  ;; CHECK-NEXT:    (block
-  ;; CHECK-NEXT:     (unreachable)
-  ;; CHECK-NEXT:     (unreachable)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $test-local-tuple-4-bad (param $B (ref $B)) (param $x i32) (result anyref i32)
@@ -393,14 +369,7 @@
   ;; CHECK-NEXT:     (local.get $scratch_19)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (tuple.make 3
-  ;; CHECK-NEXT:    (block
-  ;; CHECK-NEXT:     (unreachable)
-  ;; CHECK-NEXT:     (unreachable)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
-  ;; CHECK-NEXT:    (unreachable)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $test-local-tuple-4-bad-dupes (param $B (ref $B)) (param $x i32) (result i32 anyref i32)

@@ -85,26 +85,10 @@
   ;; CHECK-NEXT:    (br $block
   ;; CHECK-NEXT:     (struct.new_default $struct)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block (result nullref)
-  ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (block $block2 (result nullref)
-  ;; CHECK-NEXT:        (br $block2
-  ;; CHECK-NEXT:         (ref.null none)
-  ;; CHECK-NEXT:        )
-  ;; CHECK-NEXT:        (unreachable)
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (ref.null none)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $breaks
@@ -130,8 +114,6 @@
   )
 
   ;; CHECK:      (func $get-nothing (type $2) (result (ref $struct))
-  ;; CHECK-NEXT:  (unreachable)
-  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $get-nothing (result (ref $struct))
@@ -300,8 +282,6 @@
   ;; CHECK-NEXT:  (return
   ;; CHECK-NEXT:   (struct.new_default $struct)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (unreachable)
-  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $get-something-return (result (ref $struct))
     ;; Return a value using an explicit return. Helper for later code.
@@ -1016,7 +996,6 @@
   ;; CHECK-NEXT:        )
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:       (unreachable)
-  ;; CHECK-NEXT:       (unreachable)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (unreachable)
@@ -1100,7 +1079,6 @@
   ;; CHECK-NEXT:       (ref.null none)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (unreachable)
-  ;; CHECK-NEXT:      (unreachable)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (ref.null none)
@@ -1113,7 +1091,6 @@
   ;; CHECK-NEXT:      (br $block0
   ;; CHECK-NEXT:       (ref.null none)
   ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (unreachable)
   ;; CHECK-NEXT:      (unreachable)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
@@ -1134,7 +1111,6 @@
   ;; CHECK-NEXT:        (ref.null none)
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (unreachable)
   ;; CHECK-NEXT:      (unreachable)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
@@ -2242,7 +2218,6 @@
   ;; CHECK-NEXT:     (ref.null none)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (unreachable)
-  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (unreachable)
@@ -3266,8 +3241,6 @@
 
   ;; CHECK:      (func $unreachable (type $8) (result (ref eq))
   ;; CHECK-NEXT:  (unreachable)
-  ;; CHECK-NEXT:  (unreachable)
-  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $unreachable (result (ref eq))
     (unreachable)
@@ -3902,7 +3875,6 @@
   ;; CHECK-NEXT:       (i32.const 1)
   ;; CHECK-NEXT:       (i32.const 2)
   ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (unreachable)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (i32.const 1)
@@ -5385,7 +5357,6 @@
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (unreachable)
-  ;; CHECK-NEXT:      (unreachable)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (unreachable)
@@ -5402,7 +5373,6 @@
   ;; CHECK-NEXT:        )
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (unreachable)
   ;; CHECK-NEXT:      (unreachable)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )

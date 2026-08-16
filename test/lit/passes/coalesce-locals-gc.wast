@@ -254,7 +254,6 @@
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  (func $replace-i31-local (result i32)
   (local $local i31ref)
@@ -276,7 +275,6 @@
  ;; CHECK:      (func $replace-struct-param (type $9) (param $0 f64) (param $1 (ref null $A)) (result f32)
  ;; CHECK-NEXT:  (call $replace-struct-param
  ;; CHECK-NEXT:   (block (result f64)
- ;; CHECK-NEXT:    (unreachable)
  ;; CHECK-NEXT:    (unreachable)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (ref.cast (ref null $A)

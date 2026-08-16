@@ -1166,14 +1166,8 @@
   ;; CHECK-NEXT:         (local.get $scratch)
   ;; CHECK-NEXT:        )
   ;; CHECK-NEXT:        (br $l
-  ;; CHECK-NEXT:         (tuple.make 2
-  ;; CHECK-NEXT:          (block
-  ;; CHECK-NEXT:           (return
-  ;; CHECK-NEXT:            (local.get $scratch_3)
-  ;; CHECK-NEXT:           )
-  ;; CHECK-NEXT:           (unreachable)
-  ;; CHECK-NEXT:          )
-  ;; CHECK-NEXT:          (unreachable)
+  ;; CHECK-NEXT:         (return
+  ;; CHECK-NEXT:          (local.get $scratch_3)
   ;; CHECK-NEXT:         )
   ;; CHECK-NEXT:        )
   ;; CHECK-NEXT:       )

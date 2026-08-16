@@ -419,7 +419,6 @@
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:    (then
   ;; CHECK-NEXT:     (unreachable)
-  ;; CHECK-NEXT:     (unreachable)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (else
   ;; CHECK-NEXT:     (f32.const 42)
@@ -444,8 +443,13 @@
   )
   ;; CHECK:      (func $get (type $3) (param $struct (ref null $struct))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.get $struct 0
-  ;; CHECK-NEXT:    (local.get $struct)
+  ;; CHECK-NEXT:   (block (result f32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $struct)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (f32.const 42)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )

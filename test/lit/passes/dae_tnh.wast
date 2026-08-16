@@ -69,9 +69,6 @@
   ;; CHECK:      (type $1 (func (param i32) (result i32)))
 
   ;; CHECK:      (func $caller (type $0) (result i32)
-  ;; CHECK-NEXT:  (block
-  ;; CHECK-NEXT:   (unreachable)
-  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $caller (result i32)

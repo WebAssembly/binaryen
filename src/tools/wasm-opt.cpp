@@ -321,6 +321,7 @@ For more on how to optimize effectively, see
     ModuleReader reader;
     // Enable DWARF parsing if we were asked for debug info, and were not
     // asked to remove it.
+    reader.setValidate(options.passOptions.validate);
     reader.setDWARF(options.passOptions.debugInfo &&
                     !willRemoveDebugInfo(options.passes));
     reader.setProfile(options.profile);
@@ -382,7 +383,9 @@ For more on how to optimize effectively, see
       // Add the second module.
       Module second;
       second.features = wasm.features;
-      ModuleReader().read(fuzzExecSecond, second);
+      ModuleReader secondReader;
+      secondReader.setValidate(options.passOptions.validate);
+      secondReader.read(fuzzExecSecond, second);
 
       results.collect(wasm, &second);
     }

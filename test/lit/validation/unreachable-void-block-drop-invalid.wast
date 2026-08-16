@@ -1,7 +1,8 @@
-;; RUN: wasm-opt %s -all -o /dev/null
-;; RUN: wasm-as %s -all -o /dev/null
+;; RUN: not wasm-opt %s -all -o /dev/null 2>&1 | filecheck %s
+;; RUN: not wasm-as %s -all -o /dev/null 2>&1 | filecheck %s
+;; RUN: wasm-opt %s -all --no-validation -o /dev/null
+;; RUN: wasm-as %s -all --no-validation -o /dev/null
 
-;; Parser accepts this IR (same as baseline). Wasm validation of the resulting
-;; module is not checked here.
+;; CHECK: popping from empty stack
 
 (module (func (block (unreachable)) (drop)))

@@ -815,13 +815,7 @@
   ;; CHECK:      (export "f" (func $f))
   (export "f" (func $f))
   ;; CHECK:      (func $f (type $sig) (param $0 (ref (exact $param-exact))) (param $1 (ref $param-inexact)) (result (ref (exact $result-exact)) (ref $result-inexact))
-  ;; CHECK-NEXT:  (tuple.make 2
-  ;; CHECK-NEXT:   (block
-  ;; CHECK-NEXT:    (unreachable)
-  ;; CHECK-NEXT:    (unreachable)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (unreachable)
-  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $f (type $sig) (param (ref (exact $param-exact)) (ref $param-inexact)) (result (ref (exact $result-exact)) (ref $result-inexact))
     (unreachable)
