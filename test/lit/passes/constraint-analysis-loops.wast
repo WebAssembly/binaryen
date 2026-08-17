@@ -1475,4 +1475,17 @@
       )
     )
   )
+
+  (func $add-overflow (param $x i32)
+    (if
+      (i32.ge_s (local.get $x) (i32.const 0))
+      (then
+        ;; The add here overflows if we are called with MAX_INT. We must
+        ;; not misoptimize the operation after us to 1 - that is true in all
+        ;; cases *except* for the add overflowing.
+        (local.set $x (i32.add (local.get $x) (i32.const 1)))
+        (drop (i32.gt_s (local.get $x) (i32.const 0)))
+      )
+    )
+  )
 )
