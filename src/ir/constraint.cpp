@@ -535,35 +535,37 @@ void BasicBlockConstraintMap::set(Index index, Expression* value) {
   // Apply a constraint to a value, x = C.
   if (Properties::isSingleConstantExpression(value)) {
     auto c = Properties::getLiteral(value);
-    set(index, Constraint{Abstract::Eq, {c}});
+    set(index, Constraint{Eq, {c}});
     return;
   }
 
   // Apply a constraint to a local, x = y.
   if (auto* get = value->dynCast<LocalGet>()) {
-    set(index, Constraint{Abstract::Eq, {get->index}});
+    set(index, Constraint{Eq, {get->index}});
     return;
   }
   if (auto* tee = value->dynCast<LocalSet>()) {
-    set(index, Constraint{Abstract::Eq, {tee->index}});
+    set(index, Constraint{Eq, {tee->index}});
     return;
   }
 
   // Apply an increment of a local, x = y + 1.
   Index y;
-  if (matches(value, binary(Abstract::Add, local(&y), ival(1)))) {
-    // The local y must have old constraints that we know how to increment.
-    auto old = get(y);
+  if (matches(value, binary(Add, local(&y), ival(1)))) {
+    // The local y must have old constraints that we know how to increment and
+    // transform into new ones.
+    const auto old = get(y);
+    auto new_ = old;
 
     // Iterate over the old constraints and increment each one.
-    for (auto iter = old.begin(); iter != old.end();) {
+    for (auto iter = new_.begin(); iter != new_.end();) {
       auto& c = *iter;
       auto* N = std::get_if<Literal>(&c.term);
       if (!N) {
         // A non-constant term, which we don't know how to increment. Simply
         // remove it: we are losing proving power here, but doing so is never
         // invalid.
-        iter = old.erase(iter);
+        iter = new_.erase(iter);
         continue;
       }
 
@@ -572,11 +574,19 @@ void BasicBlockConstraintMap::set(Index index, Expression* value) {
         case Eq:
           *N = N->add(Literal::makeFromInt32(1, N->type));
           break;
-        // x >= N, x++  =>  x > N
+        // x >= N, x++  =>  x > N if no overflow
         case GeS:
+          if (old.proves({LtS, Literal::makeSignedMax(N->type)}) != True) {
+            iter = new_.erase(iter);
+            continue;
+          }
           c.op = GtS;
           break;
         case GeU:
+          if (old.proves({LtU, Literal::makeUnsignedMax(N->type)}) != True) {
+            iter = new_.erase(iter);
+            continue;
+          }
           c.op = GtU;
           break;
         // x < N, x++  =>  x <= N
@@ -589,28 +599,28 @@ void BasicBlockConstraintMap::set(Index index, Expression* value) {
         // x <= N, x++ => x <= N+1 if no overflow
         case LeS:
           if (N->isSignedMax()) {
-            iter = old.erase(iter);
+            iter = new_.erase(iter);
             continue;
           }
           *N = N->add(Literal::makeFromInt32(1, N->type));
           break;
         case LeU:
           if (N->isUnsignedMax()) {
-            iter = old.erase(iter);
+            iter = new_.erase(iter);
             continue;
           }
           *N = N->add(Literal::makeFromInt32(1, N->type));
           break;
         default:
           // Something we don't recognize.
-          iter = old.erase(iter);
+          iter = new_.erase(iter);
           continue;
       }
 
       ++iter;
     }
 
-    set(index, old);
+    set(index, new_);
     return;
   }
 
