@@ -29,6 +29,7 @@
 #include <limits>
 #include <ostream>
 #include <set>
+#include <sstream>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
@@ -37,6 +38,7 @@
 #include "snprintf.h"
 #include "support/mixed_arena.h"
 #include "support/safe_integer.h"
+#include "support/string.h"
 
 #define errv(str, ...) fprintf(stderr, str "\n", __VA_ARGS__);
 #define printErr(str) fprintf(stderr, str "\n");
@@ -1080,8 +1082,12 @@ struct JSPrinter {
   }
 
   void printString(Ref node) {
+    // String contents (e.g. wasm module and base names) are arbitrary and may
+    // contain JS string metacharacters, so they must be escaped.
+    std::ostringstream escaped;
+    wasm::String::printEscapedJS(escaped, node[1]->getCString());
     emit('"');
-    emit(node[1]->getCString());
+    emit(escaped.str().c_str());
     emit('"');
   }
 

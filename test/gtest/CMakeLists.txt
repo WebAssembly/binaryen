@@ -31,6 +31,7 @@ set(unittest_SOURCES
   printing.cpp
   public-type-validator.cpp
   scc.cpp
+  string.cpp
   stringify.cpp
   subtype-exprs.cpp
   suffix_tree.cpp
