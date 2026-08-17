@@ -243,24 +243,24 @@
 
 (module
   (rec
+    (type $super (sub (descriptor $super.desc) (struct)))
+    (type $super.desc (sub (describes $super) (struct)))
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $super (sub (struct)))
-    (type $super (sub (struct)))
-    ;; CHECK:       (type $sub (sub (struct)))
-    (type $sub (sub $super (descriptor $desc) (struct)))
-    (type $desc (describes $sub) (struct (field externref)))
+    ;; CHECK-NEXT:  (type $sub (sub (struct)))
+    (type $sub (sub $super (descriptor $sub.desc) (struct)))
+    (type $sub.desc (sub $super.desc (describes $sub) (struct (field externref))))
   )
 
-  ;; CHECK:       (type $2 (func (result (ref null $super))))
+  ;; CHECK:       (type $1 (func (result eqref)))
 
   ;; CHECK:      (@binaryen.js.called)
-  ;; CHECK-NEXT: (func $expose-super (type $2) (result (ref null $super))
+  ;; CHECK-NEXT: (func $expose-super (type $1) (result eqref)
   ;; CHECK-NEXT:  (local $sub (ref null $sub))
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (@binaryen.js.called)
-  (func $expose-super (result (ref null $super))
-    ;; Returning $super to JS does not on its own require $sub to keep its
+  (func $expose-super (result (ref null eq))
+    ;; Returning eq to JS does not on its own require $sub to keep its
     ;; descriptor because $sub never flows into a $sub location.
     (local $sub (ref null $sub))
     (unreachable)
@@ -269,25 +269,25 @@
 
 (module
   (rec
+    (type $super (sub (descriptor $super.desc) (struct)))
+    (type $super.desc (sub (describes $super) (struct)))
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $super (sub (struct)))
-    (type $super (sub (struct)))
-    ;; CHECK:       (type $sub (sub $super (descriptor $desc) (struct)))
-    (type $sub (sub $super (descriptor $desc) (struct)))
-    ;; CHECK:       (type $desc (describes $sub) (struct (field externref)))
-    (type $desc (describes $sub) (struct (field externref)))
+    ;; CHECK-NEXT:  (type $sub (sub (descriptor $sub.desc) (struct)))
+    (type $sub (sub $super (descriptor $sub.desc) (struct)))
+    ;; CHECK:       (type $sub.desc (sub (describes $sub) (struct (field externref))))
+    (type $sub.desc (sub $super.desc (describes $sub) (struct (field externref))))
   )
 
-  ;; CHECK:       (type $3 (func (result (ref null $super))))
+  ;; CHECK:       (type $2 (func (result eqref)))
 
   ;; CHECK:      (@binaryen.js.called)
-  ;; CHECK-NEXT: (func $expose-super (type $3) (result (ref null $super))
+  ;; CHECK-NEXT: (func $expose-super (type $2) (result eqref)
   ;; CHECK-NEXT:  (local $sub (ref null $sub))
   ;; CHECK-NEXT:  (local.get $sub)
   ;; CHECK-NEXT: )
   (@binaryen.js.called)
-  (func $expose-super (result (ref null $super))
-    ;; Now $sub is exposed to JS via $super, so it must keep its descriptor.
+  (func $expose-super (result (ref null eq))
+    ;; Now $sub is exposed to JS via eq, so it must keep its descriptor.
     (local $sub (ref null $sub))
     (local.get $sub)
   )
@@ -295,23 +295,23 @@
 
 (module
   (rec
+    (type $super (sub (descriptor $super.desc) (struct)))
+    (type $super.desc (sub (describes $super) (struct)))
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $super (sub (struct)))
-    (type $super (sub (struct)))
-    ;; CHECK:       (type $sub (sub $super (struct)))
-    (type $sub (sub $super (descriptor $desc) (struct)))
-    (type $desc (describes $sub) (struct (field nullexternref)))
+    ;; CHECK-NEXT:  (type $sub (sub (struct)))
+    (type $sub (sub $super (descriptor $sub.desc) (struct)))
+    (type $sub.desc (sub $super.desc (describes $sub) (struct (field nullexternref))))
   )
 
-  ;; CHECK:       (type $2 (func (result (ref null $super))))
+  ;; CHECK:       (type $1 (func (result eqref)))
 
   ;; CHECK:      (@binaryen.js.called)
-  ;; CHECK-NEXT: (func $expose-super (type $2) (result (ref null $super))
+  ;; CHECK-NEXT: (func $expose-super (type $1) (result eqref)
   ;; CHECK-NEXT:  (local $sub (ref null $sub))
   ;; CHECK-NEXT:  (local.get $sub)
   ;; CHECK-NEXT: )
   (@binaryen.js.called)
-  (func $expose-super (result (ref null $super))
+  (func $expose-super (result (ref null eq))
     ;; Now the descriptor cannot configure a JS prototype, so we can still
     ;; optimize it out.
     (local $sub (ref null $sub))
@@ -421,10 +421,12 @@
   (rec
     ;; CHECK:      (rec
     ;; CHECK-NEXT:  (type $super (sub (struct)))
-    (type $super (sub (struct)))
+    (type $super (sub (descriptor $super.desc) (struct)))
+    (type $super.desc (sub (describes $super) (struct)))
     ;; CHECK:       (type $sub (sub (struct)))
-    (type $sub (sub $super (descriptor $desc) (struct)))
-    (type $desc (describes $sub) (struct (field externref)))
+    (type $sub (sub $super (descriptor $sub.desc) (struct)))
+    (type $sub.desc (sub $super.desc (describes $sub) (struct (field externref))))
+
   )
 
   ;; CHECK:       (type $2 (func))
@@ -454,17 +456,19 @@
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $super (sub (struct)))
-    (type $super (sub (struct)))
-    ;; CHECK:       (type $sub (sub $super (descriptor $desc) (struct)))
-    (type $sub (sub $super (descriptor $desc) (struct)))
-    ;; CHECK:       (type $desc (describes $sub) (struct (field externref)))
-    (type $desc (describes $sub) (struct (field externref)))
+    ;; CHECK-NEXT:  (type $super (sub (descriptor $super.desc) (struct)))
+    (type $super (sub (descriptor $super.desc) (struct)))
+    ;; CHECK:       (type $super.desc (sub (describes $super) (struct)))
+    (type $super.desc (sub (describes $super) (struct)))
+    ;; CHECK:       (type $sub (sub $super (descriptor $sub.desc) (struct)))
+    (type $sub (sub $super (descriptor $sub.desc) (struct)))
+    ;; CHECK:       (type $sub.desc (sub $super.desc (describes $sub) (struct (field externref))))
+    (type $sub.desc (sub $super.desc (describes $sub) (struct (field externref))))
   )
 
-  ;; CHECK:       (type $3 (func (result (ref null $super))))
+  ;; CHECK:       (type $4 (func (result (ref null $super))))
 
-  ;; CHECK:      (func $externalize (type $3) (result (ref null $super))
+  ;; CHECK:      (func $externalize (type $4) (result (ref null $super))
   ;; CHECK-NEXT:  (local $super (ref null $super))
   ;; CHECK-NEXT:  (local $sub (ref null $sub))
   ;; CHECK-NEXT:  (drop
@@ -476,7 +480,7 @@
   ;; CHECK-NEXT: )
   (func $externalize (result (ref null $super))
     ;; Expose $super to JS by externalizing it. Now also require $sub <: $super,
-    ;; we we must keep $sub's descriptor.
+    ;; so we must keep $sub's descriptor.
     (local $super (ref null $super))
     (local $sub (ref null $sub))
     (drop
@@ -492,10 +496,11 @@
   (rec
     ;; CHECK:      (rec
     ;; CHECK-NEXT:  (type $public-super (sub (struct)))
-    (type $public-super (sub (struct)))
+    (type $public-super (sub (descriptor $super.desc) (struct)))
+    (type $super.desc (sub (describes $public-super) (struct)))
     ;; CHECK:       (type $private-sub (sub (struct)))
-    (type $private-sub (sub $public-super (descriptor $desc) (struct)))
-    (type $desc (describes $private-sub) (struct (field externref)))
+    (type $private-sub (sub $public-super (descriptor $sub.desc) (struct)))
+    (type $sub.desc (sub $super.desc (describes $private-sub) (struct (field externref))))
   )
 
   ;; Since we assume with a closed world that the environment does not do
@@ -517,20 +522,25 @@
 
 (module
   ;; Exported function. Parameters flow in and results flow out.
-  ;; CHECK:      (type $super (sub (struct)))
-  (type $super (sub (struct)))
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $sub (sub $super (descriptor $desc) (struct (field i32))))
-    (type $sub (sub $super (descriptor $desc) (struct (field i32))))
-    ;; CHECK:       (type $desc (describes $sub) (struct (field externref)))
-    (type $desc (describes $sub) (struct (field externref)))
+    ;; CHECK-NEXT:  (type $super (sub (descriptor $super.desc) (struct)))
+    (type $super (sub (descriptor $super.desc) (struct)))
+    ;; CHECK:       (type $super.desc (sub (describes $super) (struct)))
+    (type $super.desc (sub (describes $super) (struct)))
   )
-  ;; CHECK:      (type $3 (func (param (ref $super)) (result anyref)))
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $sub (sub $super (descriptor $sub.desc) (struct (field i32))))
+    (type $sub (sub $super (descriptor $sub.desc) (struct (field i32))))
+    ;; CHECK:       (type $sub.desc (sub $super.desc (describes $sub) (struct (field externref))))
+    (type $sub.desc (sub $super.desc (describes $sub) (struct (field externref))))
+  )
+  ;; CHECK:      (type $4 (func (param (ref $super)) (result anyref)))
 
   ;; CHECK:      (export "test" (func $test))
 
-  ;; CHECK:      (func $test (type $3) (param $0 (ref $super)) (result anyref)
+  ;; CHECK:      (func $test (type $4) (param $0 (ref $super)) (result anyref)
   ;; CHECK-NEXT:  (local $sub (ref null $sub))
   ;; CHECK-NEXT:  (local.get $sub)
   ;; CHECK-NEXT: )
@@ -544,20 +554,25 @@
 
 (module
   ;; Same, but now with an exact type flowing in.
-  ;; CHECK:      (type $super (sub (struct)))
-  (type $super (sub (struct)))
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $sub (sub (descriptor $desc) (struct (field i32))))
-    (type $sub (sub $super (descriptor $desc) (struct (field i32))))
-    ;; CHECK:       (type $desc (describes $sub) (struct (field externref)))
-    (type $desc (describes $sub) (struct (field externref)))
+    ;; CHECK-NEXT:  (type $super (sub (descriptor $super.desc) (struct)))
+    (type $super (sub (descriptor $super.desc) (struct)))
+    ;; CHECK:       (type $super.desc (sub (describes $super) (struct)))
+    (type $super.desc (sub (describes $super) (struct)))
   )
-  ;; CHECK:      (type $3 (func (param (ref (exact $super))) (result anyref)))
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $sub (sub (descriptor $sub.desc) (struct (field i32))))
+    (type $sub (sub $super (descriptor $sub.desc) (struct (field i32))))
+    ;; CHECK:       (type $sub.desc (sub (describes $sub) (struct (field externref))))
+    (type $sub.desc (sub $super.desc (describes $sub) (struct (field externref))))
+  )
+  ;; CHECK:      (type $4 (func (param (ref (exact $super))) (result anyref)))
 
   ;; CHECK:      (export "test" (func $test))
 
-  ;; CHECK:      (func $test (type $3) (param $0 (ref (exact $super))) (result anyref)
+  ;; CHECK:      (func $test (type $4) (param $0 (ref (exact $super))) (result anyref)
   ;; CHECK-NEXT:  (local $sub (ref null $sub))
   ;; CHECK-NEXT:  (local.get $sub)
   ;; CHECK-NEXT: )
@@ -571,22 +586,27 @@
 
 (module
   ;; Imported function. Parameters flow out and results flow in.
-  ;; CHECK:      (type $super (sub (struct)))
-  (type $super (sub (struct)))
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $sub (sub $super (descriptor $desc) (struct (field i32))))
-    (type $sub (sub $super (descriptor $desc) (struct (field i32))))
-    ;; CHECK:       (type $desc (describes $sub) (struct (field externref)))
-    (type $desc (describes $sub) (struct (field externref)))
+    ;; CHECK-NEXT:  (type $super (sub (descriptor $super.desc) (struct)))
+    (type $super (sub (descriptor $super.desc) (struct)))
+    ;; CHECK:       (type $super.desc (sub (describes $super) (struct)))
+    (type $super.desc (sub (describes $super) (struct)))
   )
-  ;; CHECK:       (type $3 (func))
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $sub (sub $super (descriptor $sub.desc) (struct (field i32))))
+    (type $sub (sub $super (descriptor $sub.desc) (struct (field i32))))
+    ;; CHECK:       (type $sub.desc (sub $super.desc (describes $sub) (struct (field externref))))
+    (type $sub.desc (sub $super.desc (describes $sub) (struct (field externref))))
+  )
+  ;; CHECK:       (type $4 (func))
 
-  ;; CHECK:      (type $4 (func (param anyref) (result (ref $super))))
+  ;; CHECK:      (type $5 (func (param anyref) (result (ref $super))))
 
-  ;; CHECK:      (import "" "" (func $import (type $4) (param anyref) (result (ref $super))))
+  ;; CHECK:      (import "" "" (func $import (type $5) (param anyref) (result (ref $super))))
   (import "" "" (func $import (param anyref) (result (ref $super))))
-  ;; CHECK:      (func $test (type $3)
+  ;; CHECK:      (func $test (type $4)
   ;; CHECK-NEXT:  (local $sub (ref null $sub))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (call $import
@@ -609,22 +629,27 @@
 
 (module
   ;; Same, but now with an exact type flowing in.
-  ;; CHECK:      (type $super (sub (struct)))
-  (type $super (sub (struct)))
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $sub (sub (descriptor $desc) (struct (field i32))))
-    (type $sub (sub $super (descriptor $desc) (struct (field i32))))
-    ;; CHECK:       (type $desc (describes $sub) (struct (field externref)))
-    (type $desc (describes $sub) (struct (field externref)))
+    ;; CHECK-NEXT:  (type $super (sub (descriptor $super.desc) (struct)))
+    (type $super (sub (descriptor $super.desc) (struct)))
+    ;; CHECK:       (type $super.desc (sub (describes $super) (struct)))
+    (type $super.desc (sub (describes $super) (struct)))
   )
-  ;; CHECK:       (type $3 (func))
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $sub (sub (descriptor $sub.desc) (struct (field i32))))
+    (type $sub (sub $super (descriptor $sub.desc) (struct (field i32))))
+    ;; CHECK:       (type $sub.desc (sub (describes $sub) (struct (field externref))))
+    (type $sub.desc (sub $super.desc (describes $sub) (struct (field externref))))
+  )
+  ;; CHECK:       (type $4 (func))
 
-  ;; CHECK:      (type $4 (func (param anyref) (result (ref (exact $super)))))
+  ;; CHECK:      (type $5 (func (param anyref) (result (ref (exact $super)))))
 
-  ;; CHECK:      (import "" "" (func $import (type $4) (param anyref) (result (ref (exact $super)))))
+  ;; CHECK:      (import "" "" (func $import (type $5) (param anyref) (result (ref (exact $super)))))
   (import "" "" (func $import (param anyref) (result (ref (exact $super)))))
-  ;; CHECK:      (func $test (type $3)
+  ;; CHECK:      (func $test (type $4)
   ;; CHECK-NEXT:  (local $sub (ref null $sub))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (call $import
@@ -647,30 +672,36 @@
 
 (module
   ;; Exported immutable global flows out.
-  ;; CHECK:      (type $super (sub (struct)))
-  (type $super (sub (struct)))
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $super (sub (descriptor $super.desc) (struct)))
+    (type $super (sub (descriptor $super.desc) (struct)))
+    ;; CHECK:       (type $super.desc (sub (describes $super) (struct)))
+    (type $super.desc (sub (describes $super) (struct)))
+  )
   (rec
     ;; CHECK:      (rec
     ;; CHECK-NEXT:  (type $sub-in (sub (struct)))
-    (type $sub-in (sub $super (struct)))
-    ;; CHECK:       (type $sub-out (sub $super (descriptor $desc) (struct (field i32))))
-    (type $sub-out (sub $super (descriptor $desc) (struct (field i32))))
-    ;; CHECK:       (type $desc (describes $sub-out) (struct (field externref)))
-    (type $desc (describes $sub-out) (struct (field externref)))
+    (type $sub-in (sub $super (descriptor $sub-in.desc) (struct)))
+    (type $sub-in.desc (sub $super.desc (describes $sub-in) (struct)))
+    ;; CHECK:       (type $sub-out (sub $super (descriptor $sub-out.desc) (struct (field i32))))
+    (type $sub-out (sub $super (descriptor $sub-out.desc) (struct (field i32))))
+    ;; CHECK:       (type $sub-out.desc (sub $super.desc (describes $sub-out) (struct (field externref))))
+    (type $sub-out.desc (sub $super.desc (describes $sub-out) (struct (field externref))))
   )
 
   ;; $super flows out via the exported global, but does not flow back in because
   ;; the global is immutable.
-  ;; CHECK:       (type $4 (func (result anyref)))
+  ;; CHECK:       (type $5 (func (result anyref)))
 
-  ;; CHECK:       (type $5 (func (result (ref null $super))))
+  ;; CHECK:       (type $6 (func (result (ref null $super))))
 
   ;; CHECK:      (global $g (ref null $super) (ref.null none))
   (global $g (export "g") (ref null $super) (ref.null none))
 
   ;; CHECK:      (export "g" (global $g))
 
-  ;; CHECK:      (func $test-in (type $4) (result anyref)
+  ;; CHECK:      (func $test-in (type $5) (result anyref)
   ;; CHECK-NEXT:  (local $sub-in (ref null $sub-in))
   ;; CHECK-NEXT:  (local.get $sub-in)
   ;; CHECK-NEXT: )
@@ -682,7 +713,7 @@
     (local.get $sub-in)
   )
 
-  ;; CHECK:      (func $test-out (type $5) (result (ref null $super))
+  ;; CHECK:      (func $test-out (type $6) (result (ref null $super))
   ;; CHECK-NEXT:  (local $sub-out (ref null $sub-out))
   ;; CHECK-NEXT:  (local.get $sub-out)
   ;; CHECK-NEXT: )
@@ -696,30 +727,37 @@
 
 (module
   ;; Exported mutable global flows in and out.
-  ;; CHECK:      (type $super (sub (struct)))
-  (type $super (sub (struct)))
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $sub-in (sub $super (struct)))
-    (type $sub-in (sub $super (struct)))
-    ;; CHECK:       (type $sub-out (sub $super (descriptor $desc) (struct (field i32))))
-    (type $sub-out (sub $super (descriptor $desc) (struct (field i32))))
-    ;; CHECK:       (type $desc (describes $sub-out) (struct (field externref)))
-    (type $desc (describes $sub-out) (struct (field externref)))
+    ;; CHECK-NEXT:  (type $super (sub (descriptor $super.desc) (struct)))
+    (type $super (sub (descriptor $super.desc) (struct)))
+    ;; CHECK:       (type $super.desc (sub (describes $super) (struct)))
+    (type $super.desc (sub (describes $super) (struct)))
+  )
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $sub-in (sub $super (descriptor $sub-in.desc) (struct)))
+    (type $sub-in (sub $super (descriptor $sub-in.desc) (struct)))
+    ;; CHECK:       (type $sub-in.desc (sub $super.desc (describes $sub-in) (struct)))
+    (type $sub-in.desc (sub $super.desc (describes $sub-in) (struct)))
+    ;; CHECK:       (type $sub-out (sub $super (descriptor $sub-out.desc) (struct (field i32))))
+    (type $sub-out (sub $super (descriptor $sub-out.desc) (struct (field i32))))
+    ;; CHECK:       (type $sub-out.desc (sub $super.desc (describes $sub-out) (struct (field externref))))
+    (type $sub-out.desc (sub $super.desc (describes $sub-out) (struct (field externref))))
   )
 
   ;; $super flows out via the exported global and also flows back in because the
   ;; global is mutable.
-  ;; CHECK:       (type $4 (func (result anyref)))
+  ;; CHECK:       (type $6 (func (result anyref)))
 
-  ;; CHECK:       (type $5 (func (result (ref null $super))))
+  ;; CHECK:       (type $7 (func (result (ref null $super))))
 
   ;; CHECK:      (global $g (mut (ref null $super)) (ref.null none))
   (global $g (export "g") (mut (ref null $super)) (ref.null none))
 
   ;; CHECK:      (export "g" (global $g))
 
-  ;; CHECK:      (func $test-in (type $4) (result anyref)
+  ;; CHECK:      (func $test-in (type $6) (result anyref)
   ;; CHECK-NEXT:  (local $sub-in (ref null $sub-in))
   ;; CHECK-NEXT:  (local.get $sub-in)
   ;; CHECK-NEXT: )
@@ -731,7 +769,7 @@
     (local.get $sub-in)
   )
 
-  ;; CHECK:      (func $test-out (type $5) (result (ref null $super))
+  ;; CHECK:      (func $test-out (type $7) (result (ref null $super))
   ;; CHECK-NEXT:  (local $sub-out (ref null $sub-out))
   ;; CHECK-NEXT:  (local.get $sub-out)
   ;; CHECK-NEXT: )
@@ -745,29 +783,36 @@
 
 (module
   ;; Same, but now with an exact global type.
-  ;; CHECK:      (type $super (sub (struct)))
-  (type $super (sub (struct)))
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $super (sub (descriptor $super.desc) (struct)))
+    (type $super (sub (descriptor $super.desc) (struct)))
+    ;; CHECK:       (type $super.desc (sub (describes $super) (struct)))
+    (type $super.desc (sub (describes $super) (struct)))
+  )
   (rec
     ;; CHECK:      (rec
     ;; CHECK-NEXT:  (type $sub-in (sub (struct)))
-    (type $sub-in (sub $super (struct)))
-    ;; CHECK:       (type $sub-out (sub $super (struct (field i32))))
-    (type $sub-out (sub $super (descriptor $desc) (struct (field i32))))
-    (type $desc (describes $sub-out) (struct (field externref)))
+    (type $sub-in (sub $super (descriptor $sub-in.desc) (struct)))
+    (type $sub-in.desc (sub $super.desc (describes $sub-in) (struct)))
+    ;; CHECK:       (type $sub-out (sub $super (descriptor $sub-out.desc) (struct (field i32))))
+    (type $sub-out (sub $super (descriptor $sub-out.desc) (struct (field i32))))
+    ;; CHECK:       (type $sub-out.desc (sub $super.desc (describes $sub-out) (struct (field externref))))
+    (type $sub-out.desc (sub $super.desc (describes $sub-out) (struct (field externref))))
   )
 
   ;; $super flows out via the exported global and also flows back in because the
   ;; global is mutable.
-  ;; CHECK:       (type $3 (func (result anyref)))
+  ;; CHECK:       (type $5 (func (result anyref)))
 
-  ;; CHECK:       (type $4 (func (result (ref null $super))))
+  ;; CHECK:       (type $6 (func (result (ref null $super))))
 
   ;; CHECK:      (global $g (mut (ref null (exact $super))) (ref.null none))
   (global $g (export "g") (mut (ref null (exact $super))) (ref.null none))
 
   ;; CHECK:      (export "g" (global $g))
 
-  ;; CHECK:      (func $test-in (type $3) (result anyref)
+  ;; CHECK:      (func $test-in (type $5) (result anyref)
   ;; CHECK-NEXT:  (local $sub-in (ref null $sub-in))
   ;; CHECK-NEXT:  (local.get $sub-in)
   ;; CHECK-NEXT: )
@@ -779,7 +824,7 @@
     (local.get $sub-in)
   )
 
-  ;; CHECK:      (func $test-out (type $4) (result (ref null $super))
+  ;; CHECK:      (func $test-out (type $6) (result (ref null $super))
   ;; CHECK-NEXT:  (local $sub-out (ref null $sub-out))
   ;; CHECK-NEXT:  (local.get $sub-out)
   ;; CHECK-NEXT: )
@@ -794,27 +839,35 @@
 
 (module
   ;; Imported immutable global flows in.
-  ;; CHECK:      (type $super (sub (struct)))
-  (type $super (sub (struct)))
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $sub-in (sub $super (struct)))
-    (type $sub-in (sub $super (struct)))
-    ;; CHECK:       (type $sub-out (sub $super (struct (field i32))))
-    (type $sub-out (sub $super (descriptor $desc) (struct (field i32))))
-    (type $desc (describes $sub-out) (struct (field externref)))
+    ;; CHECK-NEXT:  (type $super (sub (descriptor $super.desc) (struct)))
+    (type $super (sub (descriptor $super.desc) (struct)))
+    ;; CHECK:       (type $super.desc (sub (describes $super) (struct)))
+    (type $super.desc (sub (describes $super) (struct)))
+  )
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $sub-in (sub $super (descriptor $sub-in.desc) (struct)))
+    (type $sub-in (sub $super (descriptor $sub-in.desc) (struct)))
+    ;; CHECK:       (type $sub-in.desc (sub $super.desc (describes $sub-in) (struct)))
+    (type $sub-in.desc (sub $super.desc (describes $sub-in) (struct)))
+    ;; CHECK:       (type $sub-out (sub $super (descriptor $sub-out.desc) (struct (field i32))))
+    (type $sub-out (sub $super (descriptor $sub-out.desc) (struct (field i32))))
+    ;; CHECK:       (type $sub-out.desc (sub $super.desc (describes $sub-out) (struct (field externref))))
+    (type $sub-out.desc (sub $super.desc (describes $sub-out) (struct (field externref))))
   )
 
   ;; $super flows in via the imported global, but does not flow out because the
   ;; global is immutable.
-  ;; CHECK:       (type $3 (func (result anyref)))
+  ;; CHECK:       (type $6 (func (result anyref)))
 
-  ;; CHECK:       (type $4 (func (result (ref null $super))))
+  ;; CHECK:       (type $7 (func (result (ref null $super))))
 
   ;; CHECK:      (import "" "" (global $g (ref null $super)))
   (import "" "" (global $g (ref null $super)))
 
-  ;; CHECK:      (func $test-in (type $3) (result anyref)
+  ;; CHECK:      (func $test-in (type $6) (result anyref)
   ;; CHECK-NEXT:  (local $sub-in (ref null $sub-in))
   ;; CHECK-NEXT:  (local.get $sub-in)
   ;; CHECK-NEXT: )
@@ -826,7 +879,7 @@
     (local.get $sub-in)
   )
 
-  ;; CHECK:      (func $test-out (type $4) (result (ref null $super))
+  ;; CHECK:      (func $test-out (type $7) (result (ref null $super))
   ;; CHECK-NEXT:  (local $sub-out (ref null $sub-out))
   ;; CHECK-NEXT:  (local.get $sub-out)
   ;; CHECK-NEXT: )
@@ -840,28 +893,35 @@
 
 (module
   ;; Imported mutable global flows in and out.
-  ;; CHECK:      (type $super (sub (struct)))
-  (type $super (sub (struct)))
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $sub-in (sub $super (struct)))
-    (type $sub-in (sub $super (struct)))
-    ;; CHECK:       (type $sub-out (sub $super (descriptor $desc) (struct (field i32))))
-    (type $sub-out (sub $super (descriptor $desc) (struct (field i32))))
-    ;; CHECK:       (type $desc (describes $sub-out) (struct (field externref)))
-    (type $desc (describes $sub-out) (struct (field externref)))
+    ;; CHECK-NEXT:  (type $super (sub (descriptor $super.desc) (struct)))
+    (type $super (sub (descriptor $super.desc) (struct)))
+    ;; CHECK:       (type $super.desc (sub (describes $super) (struct)))
+    (type $super.desc (sub (describes $super) (struct)))
+  )
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $sub-in (sub $super (descriptor $sub-in.desc) (struct)))
+    (type $sub-in (sub $super (descriptor $sub-in.desc) (struct)))
+    ;; CHECK:       (type $sub-in.desc (sub $super.desc (describes $sub-in) (struct)))
+    (type $sub-in.desc (sub $super.desc (describes $sub-in) (struct)))
+    ;; CHECK:       (type $sub-out (sub $super (descriptor $sub-out.desc) (struct (field i32))))
+    (type $sub-out (sub $super (descriptor $sub-out.desc) (struct (field i32))))
+    ;; CHECK:       (type $sub-out.desc (sub $super.desc (describes $sub-out) (struct (field externref))))
+    (type $sub-out.desc (sub $super.desc (describes $sub-out) (struct (field externref))))
   )
 
   ;; $super flows in via the imported global and also flows back out because the
   ;; global is mutable.
-  ;; CHECK:       (type $4 (func (result anyref)))
+  ;; CHECK:       (type $6 (func (result anyref)))
 
-  ;; CHECK:       (type $5 (func (result (ref null $super))))
+  ;; CHECK:       (type $7 (func (result (ref null $super))))
 
   ;; CHECK:      (import "" "" (global $g (mut (ref null $super))))
   (import "" "" (global $g (mut (ref null $super))))
 
-  ;; CHECK:      (func $test-in (type $4) (result anyref)
+  ;; CHECK:      (func $test-in (type $6) (result anyref)
   ;; CHECK-NEXT:  (local $sub-in (ref null $sub-in))
   ;; CHECK-NEXT:  (local.get $sub-in)
   ;; CHECK-NEXT: )
@@ -873,7 +933,7 @@
     (local.get $sub-in)
   )
 
-  ;; CHECK:      (func $test-out (type $5) (result (ref null $super))
+  ;; CHECK:      (func $test-out (type $7) (result (ref null $super))
   ;; CHECK-NEXT:  (local $sub-out (ref null $sub-out))
   ;; CHECK-NEXT:  (local.get $sub-out)
   ;; CHECK-NEXT: )
@@ -887,30 +947,37 @@
 
 (module
   ;; Exported table flows in and out.
-  ;; CHECK:      (type $super (sub (struct)))
-  (type $super (sub (struct)))
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $sub-in (sub $super (struct)))
-    (type $sub-in (sub $super (struct)))
-    ;; CHECK:       (type $sub-out (sub $super (descriptor $desc) (struct (field i32))))
-    (type $sub-out (sub $super (descriptor $desc) (struct (field i32))))
-    ;; CHECK:       (type $desc (describes $sub-out) (struct (field externref)))
-    (type $desc (describes $sub-out) (struct (field externref)))
+    ;; CHECK-NEXT:  (type $super (sub (descriptor $super.desc) (struct)))
+    (type $super (sub (descriptor $super.desc) (struct)))
+    ;; CHECK:       (type $super.desc (sub (describes $super) (struct)))
+    (type $super.desc (sub (describes $super) (struct)))
+  )
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $sub-in (sub $super (descriptor $sub-in.desc) (struct)))
+    (type $sub-in (sub $super (descriptor $sub-in.desc) (struct)))
+    ;; CHECK:       (type $sub-in.desc (sub $super.desc (describes $sub-in) (struct)))
+    (type $sub-in.desc (sub $super.desc (describes $sub-in) (struct)))
+    ;; CHECK:       (type $sub-out (sub $super (descriptor $sub-out.desc) (struct (field i32))))
+    (type $sub-out (sub $super (descriptor $sub-out.desc) (struct (field i32))))
+    ;; CHECK:       (type $sub-out.desc (sub $super.desc (describes $sub-out) (struct (field externref))))
+    (type $sub-out.desc (sub $super.desc (describes $sub-out) (struct (field externref))))
   )
 
   ;; $super flows out via the exported table and also flows back in because
   ;; tables are mutable.
-  ;; CHECK:       (type $4 (func (result anyref)))
+  ;; CHECK:       (type $6 (func (result anyref)))
 
-  ;; CHECK:       (type $5 (func (result (ref null $super))))
+  ;; CHECK:       (type $7 (func (result (ref null $super))))
 
   ;; CHECK:      (table $t 1 (ref null $super))
   (table $t (export "t") 1 (ref null $super))
 
   ;; CHECK:      (export "t" (table $t))
 
-  ;; CHECK:      (func $test-in (type $4) (result anyref)
+  ;; CHECK:      (func $test-in (type $6) (result anyref)
   ;; CHECK-NEXT:  (local $sub-in (ref null $sub-in))
   ;; CHECK-NEXT:  (local.get $sub-in)
   ;; CHECK-NEXT: )
@@ -922,7 +989,7 @@
     (local.get $sub-in)
   )
 
-  ;; CHECK:      (func $test-out (type $5) (result (ref null $super))
+  ;; CHECK:      (func $test-out (type $7) (result (ref null $super))
   ;; CHECK-NEXT:  (local $sub-out (ref null $sub-out))
   ;; CHECK-NEXT:  (local.get $sub-out)
   ;; CHECK-NEXT: )
@@ -936,28 +1003,35 @@
 
 (module
   ;; Imported table flows in and out.
-  ;; CHECK:      (type $super (sub (struct)))
-  (type $super (sub (struct)))
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $sub-in (sub $super (struct)))
-    (type $sub-in (sub $super (struct)))
-    ;; CHECK:       (type $sub-out (sub $super (descriptor $desc) (struct (field i32))))
-    (type $sub-out (sub $super (descriptor $desc) (struct (field i32))))
-    ;; CHECK:       (type $desc (describes $sub-out) (struct (field externref)))
-    (type $desc (describes $sub-out) (struct (field externref)))
+    ;; CHECK-NEXT:  (type $super (sub (descriptor $super.desc) (struct)))
+    (type $super (sub (descriptor $super.desc) (struct)))
+    ;; CHECK:       (type $super.desc (sub (describes $super) (struct)))
+    (type $super.desc (sub (describes $super) (struct)))
+  )
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $sub-in (sub $super (descriptor $sub-in.desc) (struct)))
+    (type $sub-in (sub $super (descriptor $sub-in.desc) (struct)))
+    ;; CHECK:       (type $sub-in.desc (sub $super.desc (describes $sub-in) (struct)))
+    (type $sub-in.desc (sub $super.desc (describes $sub-in) (struct)))
+    ;; CHECK:       (type $sub-out (sub $super (descriptor $sub-out.desc) (struct (field i32))))
+    (type $sub-out (sub $super (descriptor $sub-out.desc) (struct (field i32))))
+    ;; CHECK:       (type $sub-out.desc (sub $super.desc (describes $sub-out) (struct (field externref))))
+    (type $sub-out.desc (sub $super.desc (describes $sub-out) (struct (field externref))))
   )
 
   ;; $super flows in via the imported table and also flows back out because
   ;; tables are mutable.
-  ;; CHECK:       (type $4 (func (result anyref)))
+  ;; CHECK:       (type $6 (func (result anyref)))
 
-  ;; CHECK:       (type $5 (func (result (ref null $super))))
+  ;; CHECK:       (type $7 (func (result (ref null $super))))
 
   ;; CHECK:      (import "" "" (table $t 1 (ref null $super)))
   (import "" "" (table $t 1 (ref null $super)))
 
-  ;; CHECK:      (func $test-in (type $4) (result anyref)
+  ;; CHECK:      (func $test-in (type $6) (result anyref)
   ;; CHECK-NEXT:  (local $sub-in (ref null $sub-in))
   ;; CHECK-NEXT:  (local.get $sub-in)
   ;; CHECK-NEXT: )
@@ -969,7 +1043,7 @@
     (local.get $sub-in)
   )
 
-  ;; CHECK:      (func $test-out (type $5) (result (ref null $super))
+  ;; CHECK:      (func $test-out (type $7) (result (ref null $super))
   ;; CHECK-NEXT:  (local $sub-out (ref null $sub-out))
   ;; CHECK-NEXT:  (local.get $sub-out)
   ;; CHECK-NEXT: )
@@ -983,27 +1057,34 @@
 
 (module
   ;; Same, but with an exact table type.
-  ;; CHECK:      (type $super (sub (struct)))
-  (type $super (sub (struct)))
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $super (sub (descriptor $super.desc) (struct)))
+    (type $super (sub (descriptor $super.desc) (struct)))
+    ;; CHECK:       (type $super.desc (sub (describes $super) (struct)))
+    (type $super.desc (sub (describes $super) (struct)))
+  )
   (rec
     ;; CHECK:      (rec
     ;; CHECK-NEXT:  (type $sub-in (sub (struct)))
-    (type $sub-in (sub $super (struct)))
-    ;; CHECK:       (type $sub-out (sub $super (struct (field i32))))
-    (type $sub-out (sub $super (descriptor $desc) (struct (field i32))))
-    (type $desc (describes $sub-out) (struct (field externref)))
+    (type $sub-in (sub $super (descriptor $sub-in.desc) (struct)))
+    (type $sub-in.desc (sub $super.desc (describes $sub-in) (struct)))
+    ;; CHECK:       (type $sub-out (sub $super (descriptor $sub-out.desc) (struct (field i32))))
+    (type $sub-out (sub $super (descriptor $sub-out.desc) (struct (field i32))))
+    ;; CHECK:       (type $sub-out.desc (sub $super.desc (describes $sub-out) (struct (field externref))))
+    (type $sub-out.desc (sub $super.desc (describes $sub-out) (struct (field externref))))
   )
 
   ;; $super flows in via the imported table and also flows back out because
   ;; tables are mutable.
-  ;; CHECK:       (type $3 (func (result anyref)))
+  ;; CHECK:       (type $5 (func (result anyref)))
 
-  ;; CHECK:       (type $4 (func (result (ref null $super))))
+  ;; CHECK:       (type $6 (func (result (ref null $super))))
 
   ;; CHECK:      (import "" "" (table $t 1 (ref null (exact $super))))
   (import "" "" (table $t 1 (ref null (exact $super))))
 
-  ;; CHECK:      (func $test-in (type $3) (result anyref)
+  ;; CHECK:      (func $test-in (type $5) (result anyref)
   ;; CHECK-NEXT:  (local $sub-in (ref null $sub-in))
   ;; CHECK-NEXT:  (local.get $sub-in)
   ;; CHECK-NEXT: )
@@ -1015,7 +1096,7 @@
     (local.get $sub-in)
   )
 
-  ;; CHECK:      (func $test-out (type $4) (result (ref null $super))
+  ;; CHECK:      (func $test-out (type $6) (result (ref null $super))
   ;; CHECK-NEXT:  (local $sub-out (ref null $sub-out))
   ;; CHECK-NEXT:  (local.get $sub-out)
   ;; CHECK-NEXT: )
@@ -1036,15 +1117,17 @@
   ;; propagated down to $struct, so its descriptor would be removed.
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $super (sub (struct)))
-    (type $super (sub (struct)))
+    ;; CHECK-NEXT:  (type $super (sub (descriptor $super.desc) (struct)))
+    (type $super (sub (descriptor $super.desc) (struct)))
+    ;; CHECK:       (type $super.desc (sub (describes $super) (struct)))
+    (type $super.desc (sub (describes $super) (struct)))
     ;; CHECK:       (type $struct (sub $super (descriptor $desc) (struct)))
     (type $struct (sub $super (descriptor $desc) (struct)))
-    ;; CHECK:       (type $desc (describes $struct) (struct (field externref)))
-    (type $desc (describes $struct) (struct (field externref)))
+    ;; CHECK:       (type $desc (sub $super.desc (describes $struct) (struct (field externref))))
+    (type $desc (sub $super.desc (describes $struct) (struct (field externref))))
   )
 
-  ;; CHECK:       (type $3 (func (result anyref)))
+  ;; CHECK:       (type $4 (func (result anyref)))
 
   ;; CHECK:      (global $any (mut anyref) (ref.null none))
   (global $any (mut anyref) (ref.null none))
@@ -1055,7 +1138,7 @@
 
   ;; any exposed to JS.
   ;; CHECK:      (@binaryen.js.called)
-  ;; CHECK-NEXT: (func $expose-anyref (type $3) (result anyref)
+  ;; CHECK-NEXT: (func $expose-anyref (type $4) (result anyref)
   ;; CHECK-NEXT:  (global.set $any
   ;; CHECK-NEXT:   (global.get $super)
   ;; CHECK-NEXT:  )

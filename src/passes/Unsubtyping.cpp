@@ -23,7 +23,6 @@
 #include "ir/localize.h"
 #include "ir/module-utils.h"
 #include "ir/names.h"
-#include "ir/struct-utils.h"
 #include "ir/subtype-exprs.h"
 #include "ir/type-updating.h"
 #include "ir/utils.h"
@@ -926,8 +925,10 @@ struct Unsubtyping : Pass, Noter<Unsubtyping> {
     types.setDescriptor(described, descriptor);
 
     // Complete the descriptor squares above and below the new descriptor edge.
-    completeDescriptorSquare(
-      std::nullopt, types.getSupertype(descriptor), described, descriptor);
+    completeDescriptorSquare(types.getSupertype(described),
+                             types.getSupertype(descriptor),
+                             described,
+                             descriptor);
     for (auto sub : types.immediateSubtypes(described)) {
       completeDescriptorSquare(
         described, descriptor, sub, types.getDescriptor(sub));
@@ -1019,8 +1020,7 @@ struct Unsubtyping : Pass, Noter<Unsubtyping> {
     } else if (!subDesc) {
       subDesc = sub->getDescriptorType();
     } else if (!superDesc) {
-      // This is the only type that is allowed to be missing.
-      return;
+      superDesc = super->getDescriptorType();
     }
     // Add all the edges. Don't worry about duplicating existing edges because
     // checking whether they're necessary now would be about as expensive as
