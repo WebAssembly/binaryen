@@ -16,7 +16,7 @@ Current Trunk
 -------------
 
 - Add a new `--constraint-analysis` pass which propagates logical facts along
-  branches.
+  branches. (#9010)
 
 v132
 ----
