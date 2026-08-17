@@ -4,10 +4,32 @@
 
 (module
   (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $struct (descriptor $desc) (struct))
     (type $struct (descriptor $desc) (struct))
+    ;; CHECK:       (type $desc (describes $struct) (struct))
     (type $desc (describes $struct) (struct))
   )
 
+  ;; CHECK:      (func $test (type $2) (param $ref (ref null $struct)) (result (ref $struct))
+  ;; CHECK-NEXT:  (local $temp (ref $desc))
+  ;; CHECK-NEXT:  (block $block (result (ref none))
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (block ;; (replaces unreachable BrOn we can't emit)
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (local.get $ref)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (ref.as_non_null
+  ;; CHECK-NEXT:       (ref.null none)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $test (param $ref (ref null $struct)) (result (ref $struct))
     ;; The tee below can be removed - nothing reads from it - and after that,
     ;; we must still validate properly: the br_on must send a non-null value to
