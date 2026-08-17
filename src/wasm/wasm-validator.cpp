@@ -3694,10 +3694,10 @@ void FunctionValidator::visitStructWait(StructWait* curr) {
                   Type(HeapTypes::sharedWaitqueue, Nullable),
                   curr,
                   "struct.wait waitqueue must be a shared waitqueue reference");
-  shouldBeEqual(curr->timeout->type,
-                Type(Type::BasicType::i64),
-                curr,
-                "struct.wait timeout must be an i64");
+  shouldBeEqualOrFirstIsUnreachable(curr->timeout->type,
+                                    Type(Type::BasicType::i64),
+                                    curr,
+                                    "struct.wait timeout must be an i64");
 
   if (curr->ref->type == Type::unreachable || curr->ref->type.isNull()) {
     return;
@@ -3752,10 +3752,10 @@ void FunctionValidator::visitWaitqueueNotify(WaitqueueNotify* curr) {
     Type(HeapTypes::sharedWaitqueue, Nullable),
     curr,
     "waitqueue.notify waitqueue must be a shared waitqueue reference");
-  shouldBeEqual(curr->count->type,
-                Type(Type::BasicType::i32),
-                curr,
-                "waitqueue.notify count must be an i32");
+  shouldBeEqualOrFirstIsUnreachable(curr->count->type,
+                                    Type(Type::BasicType::i32),
+                                    curr,
+                                    "waitqueue.notify count must be an i32");
 }
 
 void FunctionValidator::visitArrayNew(ArrayNew* curr) {
