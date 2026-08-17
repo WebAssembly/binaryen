@@ -5348,6 +5348,8 @@
   (func (export "i64.atomic.rmw32.cmpxchg_u") (param $addr i32) (param $expected i64) (param $value i64) (result i64) (i64.atomic.rmw32.cmpxchg_u acqrel (local.get $addr) (local.get $expected) (local.get $value)))
 
   (func (export "atomic.fence") (atomic.fence acqrel))
+
+  (func (export "pause") (pause))
 )
 
 ;; *.atomic.load*
@@ -5662,6 +5664,10 @@
 ;; atomic.fence
 
 (invoke "atomic.fence")
+
+;; pause
+
+(invoke "pause")
 
 
 ;; unaligned accesses
