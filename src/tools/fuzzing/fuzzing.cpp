@@ -560,11 +560,19 @@ void TranslateToFuzzReader::setupHeapTypes() {
         interestingHeapSubTypes[struct_].push_back(type);
         interestingHeapSubTypes[eq].push_back(type);
         interestingHeapSubTypes[any].push_back(type);
-        // Note the mutable fields.
+        // Note the mutable fields and fields that can be waited on.
         auto& fields = type.getStruct().fields;
         for (Index i = 0; i < fields.size(); i++) {
           if (fields[i].mutable_) {
             mutableStructFields.push_back(StructField{type, i});
+          }
+          if (!fields[i].isPacked()) {
+            auto fieldType = fields[i].type;
+            if (fieldType == Type::i32 || fieldType == Type::i64 ||
+                Type::isSubType(
+                  fieldType, Type(HeapTypes::eq.getBasic(Shared), Nullable))) {
+              structWaitFields.push_back(StructField{type, i});
+            }
           }
         }
         break;
@@ -1709,6 +1717,18 @@ void TranslateToFuzzReader::processFunctions() {
     }
   }
 
+  if (!ATOMIC_WAITS) {
+    for (auto& func : wasm.functions) {
+      if (!func->imported()) {
+        for (auto* wait : FindAll<StructWait>(func->body).list) {
+          if (wait->timeout->type == Type::i64) {
+            wait->timeout = builder.makeConst(int64_t(0));
+          }
+        }
+      }
+    }
+  }
+
   // Also fix up closed world, if we need to. We must do this at the end, so
   // nothing can break the closed world assumptions after.
   if (worldMode == WorldMode::Closed) {
@@ -1856,6 +1876,13 @@ void TranslateToFuzzReader::addHangLimitChecks(Function* func) {
     if (!oneIn(100)) {
       arrayNew->size = builder.makeBinary(
         AndInt32, arrayNew->size, builder.makeConst(int32_t(1024 - 1)));
+    }
+  }
+  if (!ATOMIC_WAITS) {
+    for (auto* wait : FindAll<StructWait>(func->body).list) {
+      if (wait->timeout->type == Type::i64) {
+        wait->timeout = builder.makeConst(int64_t(0));
+      }
     }
   }
 }
@@ -2393,6 +2420,14 @@ void TranslateToFuzzReader::fixAfterChanges(Function* func) {
   } fixer(wasm, *this);
   fixer.walk(func->body);
 
+  if (!ATOMIC_WAITS) {
+    for (auto* wait : FindAll<StructWait>(func->body).list) {
+      if (wait->timeout->type == Type::i64) {
+        wait->timeout = builder.makeConst(int64_t(0));
+      }
+    }
+  }
+
   // Refinalize at the end, after labels are all fixed up.
   ReFinalize().walkFunctionInModule(func, &wasm);
 }
@@ -2838,6 +2873,11 @@ Expression* TranslateToFuzzReader::_makeConcrete(Type type) {
                 &Self::makeStringEq,
                 &Self::makeStringMeasure,
                 &Self::makeStringGet);
+    options.add(FeatureSet::ReferenceTypes | FeatureSet::SharedEverything,
+                &Self::makeWaitqueueNotify);
+    options.add(FeatureSet::ReferenceTypes | FeatureSet::GC |
+                  FeatureSet::SharedEverything,
+                &Self::makeStructWait);
   }
   if (type == Type::i64) {
     options.add(FeatureSet::WideArithmetic | FeatureSet::Multivalue,
@@ -4364,7 +4404,8 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
     case HeapType::noext:
     case HeapType::nofunc:
     case HeapType::nocont:
-    case HeapType::noexn: {
+    case HeapType::noexn:
+    case HeapType::nowaitqueue: {
       auto null = builder.makeRefNull(heapType.getBasic(share));
       if (!type.isNullable()) {
         return builder.makeRefAs(RefAsNonNull, null);
@@ -4372,9 +4413,11 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
       return null;
     }
 
-    case HeapType::waitqueue:
-    case HeapType::nowaitqueue: {
-      WASM_UNREACHABLE("waitqueue is unimplemented in the fuzzer");
+    case HeapType::waitqueue: {
+      if (type.isNullable() && oneIn(2)) {
+        return builder.makeRefNull(HeapTypes::sharedWaitqueue.getBasic(share));
+      }
+      return builder.makeWaitqueueNew();
     }
   }
   WASM_UNREACHABLE("invalid basic ref type");
@@ -6017,8 +6060,11 @@ Expression* TranslateToFuzzReader::makeStructSet(Type type) {
     return makeTrivial(type);
   }
   auto [structType, fieldIndex] = pick(mutableStructFields);
-  auto fieldType = structType.getStruct().fields[fieldIndex].type;
   auto* ref = makeTrappingRefUse(structType);
+  auto fieldType = structType.getStruct().fields[fieldIndex].type;
+  if (ref->type.isStruct()) {
+    fieldType = ref->type.getHeapType().getStruct().fields[fieldIndex].type;
+  }
   auto* value = make(fieldType);
   auto order = MemoryOrder::Unordered;
   if (wasm.features.hasAtomics() && wasm.features.hasSharedEverything() &&
@@ -6026,6 +6072,35 @@ Expression* TranslateToFuzzReader::makeStructSet(Type type) {
     order = oneIn(2) ? MemoryOrder::SeqCst : MemoryOrder::AcqRel;
   }
   return builder.makeStructSet(fieldIndex, ref, value, order);
+}
+
+Expression* TranslateToFuzzReader::makeStructWait(Type type) {
+  assert(type == Type::i32);
+  if (structWaitFields.empty()) {
+    return makeTrivial(type);
+  }
+  auto [structType, fieldIndex] = pick(structWaitFields);
+  auto* ref = makeTrappingRefUse(structType);
+  auto* waitqueue = make(Type(HeapTypes::sharedWaitqueue, Nullable));
+  auto fieldType = structType.getStruct().fields[fieldIndex].type;
+  if (ref->type.isStruct()) {
+    fieldType = ref->type.getHeapType().getStruct().fields[fieldIndex].type;
+  }
+  auto* expected = make(fieldType);
+  Expression* timeout = nullptr;
+  if (ATOMIC_WAITS && oneIn(2)) {
+    timeout = make(Type::i64);
+  } else {
+    timeout = builder.makeConst(int64_t(0));
+  }
+  return builder.makeStructWait(fieldIndex, ref, waitqueue, expected, timeout);
+}
+
+Expression* TranslateToFuzzReader::makeWaitqueueNotify(Type type) {
+  assert(type == Type::i32);
+  auto* waitqueue = make(Type(HeapTypes::sharedWaitqueue, Nullable));
+  auto* count = make(Type::i32);
+  return builder.makeWaitqueueNotify(waitqueue, count);
 }
 
 // Make a bounds check for an array operation, given a ref + index. An optional
@@ -6662,11 +6737,11 @@ HeapType TranslateToFuzzReader::getSubType(HeapType type) {
       case HeapType::nofunc:
       case HeapType::nocont:
       case HeapType::noexn:
+      case HeapType::nowaitqueue:
         break;
       case HeapType::waitqueue:
-      case HeapType::nowaitqueue: {
-        WASM_UNREACHABLE("waitqueue is unimplemented in the fuzzer");
-      }
+        return pick(HeapTypes::sharedWaitqueue, HeapTypes::sharedNowaitqueue)
+          .getBasic(share);
     }
   }
   // Look for an interesting subtype.
