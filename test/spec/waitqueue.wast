@@ -211,7 +211,7 @@
 
 ;; $control1 is the control word, wait 0ns and return 2.
 (assert_return (invoke "wait_control1") (i32.const 2))
-;; $control2 is not the control work, don't wait and return 1.
+;; $control2 is not the control word, don't wait and return 1.
 (assert_return (invoke "wait_control2") (i32.const 1))
 ;; ditto for null.
 (assert_return (invoke "wait_null") (i32.const 1))
