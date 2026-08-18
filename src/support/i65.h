@@ -86,6 +86,15 @@ struct I65 {
       }
     }
   }
+  bool operator<=(const I65& other) const {
+    return *this < other || *this == other;
+  }
+  bool operator>(const I65& other) const {
+    return !(*this <= other);
+  }
+  bool operator>=(const I65& other) const {
+    return !(*this < other);
+  }
 } // namespace wasm
 
 #endif // wasm_support_i65_h
