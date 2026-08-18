@@ -35,6 +35,7 @@ class Template:
     value_type: object
     args: int
     should_drop: bool
+    # atomic.fence doesn't have an alignment
     align: int | None = None
     bin: bytes = b""
 
