@@ -60,6 +60,32 @@ struct I65 {
     }
   }
 
+  bool operator==(const I65& other) const {
+    return value == other.value && negative == other.negative;
+  }
+  bool operator!=(const I65& other) const {
+    return !(*this == other);
+  }
+
+  bool operator<(const I65& other) const {
+    if (negative) {
+      if (other.negative) {
+        // Both negative; we are smaller if absolute value is larger.
+        return value > other.value;
+      } else {
+        // Only we are negative, so we are smaller.
+        return true;
+      }
+    } else {
+      if (other.negative) {
+        // Only the other is negative, so we are larger.
+        return false;
+      } else {
+        // Both positive; we are smaller if absolute value is smaller.
+        return value < other.value;
+      }
+    }
+  }
 } // namespace wasm
 
 #endif // wasm_support_i65_h
