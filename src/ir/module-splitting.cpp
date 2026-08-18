@@ -942,9 +942,6 @@ void ModuleSplitter::computeUsedNames() {
     return false;
   };
 
-#define ADD_ITEM_TO_TRACKER_TO_TRACKER(FIELD, VAL)                             \
-  tracker.insert(VAL, owner, &OwnershipTracker::FIELD, &UsedNames::FIELD)
-
   // Iterate on active data and element segments. If its table or memory is
   // used by a single secondary module, mark it "used" there. Only scan its
   // 'offset' or 'data'(in case of ElementSegment) and add it to that module's
