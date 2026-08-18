@@ -399,38 +399,6 @@ struct OwnershipTracker {
     }
   }
 
-  void build(const std::vector<std::unique_ptr<Module>>& secondaries) {
-    this->secondaries = &secondaries;
-
-    // Build initial maps of a module element Name to an ItemInfo for each
-    // module element type.
-    // 'field' points to one of UsedName's sets, such as
-    //   std::unordered_set<Name> globals;
-    auto buildMap = [&](FieldType field,
-                        std::unordered_map<Name, ItemInfo>& map) {
-      for (auto& name : (primaryUsed.*field)) {
-        map[name].owner = &primaryUsed;
-      }
-      for (size_t i = 0; i < secondaryUsed.size(); ++i) {
-        auto& secUsed = secondaryUsed[i];
-        auto* secondary = secondaries[i].get();
-        for (auto& name : (secUsed.*field)) {
-          auto [it, inserted] = map.insert({name, ItemInfo{&secUsed, {}}});
-          it->second.usingSecondaries.push_back(secondary);
-          if (!inserted) {
-            it->second.owner = &primaryUsed;
-          }
-        }
-      }
-    };
-    buildMap(&UsedNames::tables, tables);
-    buildMap(&UsedNames::memories, memories);
-    buildMap(&UsedNames::globals, globals);
-    buildMap(&UsedNames::tags, tags);
-    buildMap(&UsedNames::dataSegments, dataSegments);
-    buildMap(&UsedNames::elementSegments, elementSegments);
-  }
-
   UsedNames* getOwner(Name name,
                       const std::unordered_map<Name, ItemInfo>& map) {
     auto it = map.find(name);
