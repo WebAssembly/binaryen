@@ -79,7 +79,9 @@ template<typename T> struct Span {
   }
 
   // Checks whether two spans have any overlap at all.
-  bool hasOverlap(const Span& other) const { return !intersection(other).isEmpty(); }
+  bool hasOverlap(const Span& other) const {
+    return !intersection(other).isEmpty();
+  }
 
   // Check whether we contain another span (possibly being equal).
   bool contains(const Span& other) const {
@@ -92,9 +94,7 @@ template<typename T> struct Span {
     }
     return !other.isEmpty() && min == other.min && max == other.max;
   }
-  bool operator!=(const Span& other) const {
-    return !(*this == other);
-  }
+  bool operator!=(const Span& other) const { return !(*this == other); }
 };
 
 template<typename T>

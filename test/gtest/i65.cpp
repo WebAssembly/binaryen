@@ -168,8 +168,7 @@ TEST(I65Test, EqualityAndInequality) {
 
   EXPECT_NE(I65(int32_t(1)), I65(int32_t(-1)));
   EXPECT_NE(I65(uint64_t(0xffffffffffffffffULL)), I65(int64_t(-1)));
-  EXPECT_NE(I65(std::numeric_limits<int64_t>::min()),
-            I65(uint64_t(1) << 63));
+  EXPECT_NE(I65(std::numeric_limits<int64_t>::min()), I65(uint64_t(1) << 63));
 }
 
 TEST(I65Test, TotalOrdering) {

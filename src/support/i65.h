@@ -93,12 +93,8 @@ struct I65 {
   constexpr bool operator<=(const I65& other) const {
     return *this < other || *this == other;
   }
-  constexpr bool operator>(const I65& other) const {
-    return !(*this <= other);
-  }
-  constexpr bool operator>=(const I65& other) const {
-    return !(*this < other);
-  }
+  constexpr bool operator>(const I65& other) const { return !(*this <= other); }
+  constexpr bool operator>=(const I65& other) const { return !(*this < other); }
 };
 
 inline std::ostream& operator<<(std::ostream& os, const I65& x) {
@@ -141,9 +137,7 @@ public:
   static constexpr wasm::I65 min() noexcept {
     return wasm::I65(std::numeric_limits<int64_t>::min());
   }
-  static constexpr wasm::I65 lowest() noexcept {
-    return min();
-  }
+  static constexpr wasm::I65 lowest() noexcept { return min(); }
   static constexpr wasm::I65 max() noexcept {
     return wasm::I65(std::numeric_limits<uint64_t>::max());
   }
