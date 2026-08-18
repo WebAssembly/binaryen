@@ -36,11 +36,11 @@ class Template:
     args: int
     should_drop: bool
     # atomic.fence doesn't have an alignment
-    align: int | None = None
+    align: int | None
     bin: bytes = b""
 
 
-atomic_fence_template = Template(op="atomic.fence", value_type=None, args=0, should_drop=False, bin=b"\xfe\x03")
+atomic_fence_template = Template(op="atomic.fence", value_type=None, args=0, should_drop=False, align=None, bin=b"\xfe\x03")
 load_store_acqrel_templates = [
     Template(op="i32.atomic.load", value_type=ValueType.i32, args=1, should_drop=True, align=4, bin=b"\xfe\x10"),
     Template(op="i64.atomic.load", value_type=ValueType.i64, args=1, should_drop=True, align=8, bin=b"\xfe\x11"),
