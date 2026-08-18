@@ -2457,13 +2457,8 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
     auto m = getMemory(pos, mem);
     CHECK_ERR(m);
     return withLoc(pos,
-                   irBuilder.makeAtomicRMW(op,
-                                           bytes,
-                                           memarg.offset,
-                                           memarg.align,
-                                           type,
-                                           *m,
-                                           order));
+                   irBuilder.makeAtomicRMW(
+                     op, bytes, memarg.offset, memarg.align, type, *m, order));
   }
 
   Result<> makeAtomicCmpxchg(Index pos,
@@ -2497,8 +2492,8 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
                             Memarg memarg) {
     auto m = getMemory(pos, mem);
     CHECK_ERR(m);
-    return withLoc(
-      pos, irBuilder.makeAtomicNotify(memarg.offset, memarg.align, *m));
+    return withLoc(pos,
+                   irBuilder.makeAtomicNotify(memarg.offset, memarg.align, *m));
   }
 
   Result<> makeAtomicFence(Index pos,
