@@ -17,16 +17,28 @@
 #ifndef wasm_support_span_h
 #define wasm_support_span_h
 
-#include "src/support/i65.h"
+#include <algorithm>
+#include <cassert>
+#include <iostream>
+#include <limits>
+
+#include "support/i65.h"
 
 namespace wasm {
 
-// A span of  values.
+// A span of values.
 //
 // Span{min, max} means [min, max], inclusive of both sides. To represent an
 // empty span, we use min > max.
 template<typename T> struct Span {
-  T min, max;
+  static constexpr T Min = std::numeric_limits<T>::lowest();
+  static constexpr T Max = std::numeric_limits<T>::max();
+
+  T min = Min;
+  T max = Max;
+
+  constexpr Span() = default;
+  constexpr Span(T min, T max) : min(min), max(max) {}
 
   // Set a single value as possible.
   void set(T value) { min = max = value; }
@@ -67,13 +79,31 @@ template<typename T> struct Span {
   }
 
   // Checks whether two spans have any overlap at all.
-  bool hasOverlap(const Span& other) { return !intersection(other).isEmpty(); }
+  bool hasOverlap(const Span& other) const { return !intersection(other).isEmpty(); }
 
   // Check whether we contain another span (possibly being equal).
   bool contains(const Span& other) const {
     return intersection(other) == other;
   }
+
+  bool operator==(const Span& other) const {
+    if (isEmpty()) {
+      return other.isEmpty();
+    }
+    return !other.isEmpty() && min == other.min && max == other.max;
+  }
+  bool operator!=(const Span& other) const {
+    return !(*this == other);
+  }
 };
+
+template<typename T>
+inline std::ostream& operator<<(std::ostream& os, const Span<T>& span) {
+  if (span.isEmpty()) {
+    return os << "[empty]";
+  }
+  return os << '[' << span.min << ", " << span.max << ']';
+}
 
 } // namespace wasm
 
