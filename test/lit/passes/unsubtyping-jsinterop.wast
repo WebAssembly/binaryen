@@ -1160,3 +1160,65 @@
     (unreachable)
   )
 )
+
+(module
+  ;; Regression test for a bug where unsubtyping $C <: $A and $C.desc <: $B.desc
+  ;; caused completeDescriptorSquare to attempt to form a descriptor edge between
+  ;; $A and $B.desc.
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $A (sub (descriptor $A.desc) (struct)))
+    (type $A (sub (descriptor $A.desc) (struct)))
+    ;; CHECK:       (type $A.desc (sub (describes $A) (struct (field externref))))
+    (type $A.desc (sub (describes $A) (struct (field externref))))
+    ;; CHECK:       (type $B (sub $A (descriptor $B.desc) (struct)))
+    (type $B (sub $A (descriptor $B.desc) (struct)))
+    ;; CHECK:       (type $B.desc (sub $A.desc (describes $B) (struct (field externref))))
+    (type $B.desc (sub $A.desc (describes $B) (struct (field externref))))
+    ;; CHECK:       (type $C (sub $B (descriptor $C.desc) (struct)))
+    (type $C (sub $B (descriptor $C.desc) (struct)))
+    ;; CHECK:       (type $C.desc (sub $B.desc (describes $C) (struct (field externref))))
+    (type $C.desc (sub $B.desc (describes $C) (struct (field externref))))
+  )
+
+  ;; Expose $C to JS so $C -> $C.desc is preserved.
+  ;; CHECK:       (type $6 (func (result (ref null $C))))
+
+  ;; CHECK:       (type $7 (func (param (ref $C))))
+
+  ;; CHECK:       (type $8 (func (param (ref $C.desc))))
+
+  ;; CHECK:      (@binaryen.js.called)
+  ;; CHECK-NEXT: (func $export-C (type $6) (result (ref null $C))
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (@binaryen.js.called)
+  (func $export-C (result (ref null $C))
+    (unreachable)
+  )
+
+  ;; Require $C <: $A
+  ;; CHECK:      (func $require-C-sub-A (type $7) (param $0 (ref $C))
+  ;; CHECK-NEXT:  (local $1 (ref $A))
+  ;; CHECK-NEXT:  (local.set $1
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $require-C-sub-A (param (ref $C))
+    (local (ref $A))
+    (local.set 1 (local.get 0))
+  )
+
+  ;; Require $C.desc <: $B.desc
+  ;; CHECK:      (func $require-Cdesc-sub-Bdesc (type $8) (param $0 (ref $C.desc))
+  ;; CHECK-NEXT:  (local $1 (ref $B.desc))
+  ;; CHECK-NEXT:  (local.set $1
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $require-Cdesc-sub-Bdesc (param (ref $C.desc))
+    (local (ref $B.desc))
+    (local.set 1 (local.get 0))
+  )
+)
+

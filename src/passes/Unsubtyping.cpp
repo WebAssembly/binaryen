@@ -925,10 +925,14 @@ struct Unsubtyping : Pass, Noter<Unsubtyping> {
     types.setDescriptor(described, descriptor);
 
     // Complete the descriptor squares above and below the new descriptor edge.
-    completeDescriptorSquare(types.getSupertype(described),
-                             types.getSupertype(descriptor),
-                             described,
-                             descriptor);
+    if (auto super = types.getSupertype(described)) {
+      completeDescriptorSquare(
+        super, types.getDescriptor(*super), described, descriptor);
+    }
+    if (auto superDesc = types.getSupertype(descriptor)) {
+      completeDescriptorSquare(
+        types.getDescribed(*superDesc), superDesc, described, descriptor);
+    }
     for (auto sub : types.immediateSubtypes(described)) {
       completeDescriptorSquare(
         described, descriptor, sub, types.getDescriptor(sub));
@@ -1022,6 +1026,7 @@ struct Unsubtyping : Pass, Noter<Unsubtyping> {
     } else if (!superDesc) {
       superDesc = super->getDescriptorType();
     }
+    assert(super && superDesc && sub && subDesc);
     // Add all the edges. Don't worry about duplicating existing edges because
     // checking whether they're necessary now would be about as expensive as
     // discarding them later.
