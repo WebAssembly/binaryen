@@ -4007,7 +4007,7 @@ Result<> WasmBinaryReader::readInst() {
 #define RMW(op)                                                                \
   case BinaryConsts::I32AtomicRMW##op: {                                       \
     auto [mem, align, offset, memoryOrder] = getRMWMemarg();                   \
-    return builder.makeAtomicRMW(                                                \
+    return builder.makeAtomicRMW(                                              \
       RMW##op, 4, offset, align, Type::i32, mem, memoryOrder);                 \
   }                                                                            \
   case BinaryConsts::I32AtomicRMW##op##8U: {                                   \

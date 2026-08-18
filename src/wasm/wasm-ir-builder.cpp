@@ -1709,7 +1709,8 @@ Result<> IRBuilder::makeAtomicCmpxchg(unsigned bytes,
   return Ok{};
 }
 
-Result<> IRBuilder::makeAtomicWait(Type type, Address offset, Address align, Name mem) {
+Result<>
+IRBuilder::makeAtomicWait(Type type, Address offset, Address align, Name mem) {
   CHECK_ERR(requireNaturalAtomicAlign(align, type == Type::i32 ? 4 : 8));
   AtomicWait curr;
   curr.memory = mem;

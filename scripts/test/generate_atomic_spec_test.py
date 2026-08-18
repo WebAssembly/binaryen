@@ -38,6 +38,21 @@ class Template:
     bin: bytes = b""
 
 
+def natural_access_bytes(op: str) -> int:
+    """Natural alignment width in bytes for an atomic memory operation."""
+    if "load32" in op or "store32" in op or "rmw32" in op:
+        return 4
+    if "load16" in op or "store16" in op or "rmw16" in op:
+        return 2
+    if "load8" in op or "store8" in op or "rmw8" in op:
+        return 1
+    if op.startswith("i64."):
+        return 8
+    if op.startswith("i32."):
+        return 4
+    raise ValueError(f"unknown atomic op: {op}")
+
+
 atomic_fence_template = Template(op="atomic.fence", value_type=None, args=0, should_drop=False, bin=b"\xfe\x03")
 load_store_acqrel_templates = [
     Template(op="i32.atomic.load", value_type=ValueType.i32, args=1, should_drop=True, bin=b"\xfe\x10"),
@@ -224,7 +239,7 @@ def bin_statement_lines(template: Template, mem_idx: int, mem_ptr_type: ValueTyp
 
     has_ordering = ordering is not None
     has_mem_idx = mem_idx is not None
-    raw_alignment = int(math.log2(template.value_type.value // 8))
+    raw_alignment = int(math.log2(natural_access_bytes(template.op)))
     alignment = raw_alignment | (has_ordering << 4) | (has_mem_idx << 6)
     comment = f"Alignment of {raw_alignment}" \
               f'{" with bit 4 set indicating that an ordering immediate follows" if has_ordering else ""}' \
