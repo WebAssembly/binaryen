@@ -355,14 +355,12 @@ struct OwnershipTracker {
   if constexpr (std::is_same_v<T, ItemType>) {                                 \
     insertImpl(name, owner, &OwnershipTracker::field, &UsedNames::field);      \
   }
-
     INSERT_ITEM(Table, tables)
-    else INSERT_ITEM(Memory, memories) else INSERT_ITEM(Global, globals) else INSERT_ITEM(
-      Tag,
-      tags) else INSERT_ITEM(DataSegment,
-                             dataSegments) else INSERT_ITEM(ElementSegment,
-                                                            elementSegments)
-
+    INSERT_ITEM(Memory, memories)
+    INSERT_ITEM(Global, globals)
+    INSERT_ITEM(Tag, tags)
+    INSERT_ITEM(DataSegment, dataSegments)
+    INSERT_ITEM(ElementSegment, elementSegments)
 #undef INSERT_ITEM
   }
 
