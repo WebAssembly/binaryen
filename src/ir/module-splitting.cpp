@@ -419,7 +419,7 @@ struct OwnershipTracker {
     return empty;
   }
 
-  bool useEmpty(Name name, const std::unordered_map<Name, ItemInfo>& map) {
+  bool isUnused(Name name, const std::unordered_map<Name, ItemInfo>& map) {
     return getOwner(name, map) == nullptr;
   }
 
@@ -942,9 +942,6 @@ void ModuleSplitter::computeUsedNames() {
     return false;
   };
 
-#define ADD_ITEM_TO_TRACKER_TO_TRACKER(FIELD, VAL)                             \
-  tracker.insert(VAL, owner, &OwnershipTracker::FIELD, &UsedNames::FIELD)
-
   // Iterate on active data and element segments. If its table or memory is
   // used by a single secondary module, mark it "used" there. Only scan its
   // 'offset' or 'data'(in case of ElementSegment) and add it to that module's
@@ -1070,7 +1067,7 @@ void ModuleSplitter::shareImportableItems() {
 
   std::vector<Name> memoriesToRemove;
   for (auto& memory : primary.memories) {
-    if (tracker.useEmpty(memory->name, tracker.memories)) {
+    if (tracker.isUnused(memory->name, tracker.memories)) {
       memoriesToRemove.push_back(memory->name);
     } else if (tracker.usedBySingleSecondary(memory->name, tracker.memories)) {
       auto* secondary =
@@ -1093,7 +1090,7 @@ void ModuleSplitter::shareImportableItems() {
 
   std::vector<Name> tablesToRemove;
   for (auto& table : primary.tables) {
-    if (tracker.useEmpty(table->name, tracker.tables)) {
+    if (tracker.isUnused(table->name, tracker.tables)) {
       tablesToRemove.push_back(table->name);
     } else if (tracker.usedBySingleSecondary(table->name, tracker.tables)) {
       auto* secondary =
@@ -1120,7 +1117,7 @@ void ModuleSplitter::shareImportableItems() {
              "TODO: add wrapper functions for disallowed mutable globals");
     }
 
-    if (tracker.useEmpty(global->name, tracker.globals)) {
+    if (tracker.isUnused(global->name, tracker.globals)) {
       globalsToRemove.push_back(global->name);
     } else if (tracker.usedBySingleSecondary(global->name, tracker.globals)) {
       auto* secondary =
@@ -1143,7 +1140,7 @@ void ModuleSplitter::shareImportableItems() {
 
   std::vector<Name> tagsToRemove;
   for (auto& tag : primary.tags) {
-    if (tracker.useEmpty(tag->name, tracker.tags)) {
+    if (tracker.isUnused(tag->name, tracker.tags)) {
       tagsToRemove.push_back(tag->name);
     } else if (tracker.usedBySingleSecondary(tag->name, tracker.tags)) {
       auto* secondary = tracker.getUsingSecondaries(tag->name, tracker.tags)[0];
@@ -1167,7 +1164,7 @@ void ModuleSplitter::shareImportableItems() {
 
   std::vector<Name> dataSegmentsToRemove;
   for (auto& dataSegment : primary.dataSegments) {
-    if (tracker.useEmpty(dataSegment->name, tracker.dataSegments)) {
+    if (tracker.isUnused(dataSegment->name, tracker.dataSegments)) {
       dataSegmentsToRemove.push_back(dataSegment->name);
     } else if (tracker.usedBySingleSecondary(dataSegment->name,
                                              tracker.dataSegments)) {
@@ -1183,7 +1180,7 @@ void ModuleSplitter::shareImportableItems() {
 
   std::vector<Name> elementSegmentsToRemove;
   for (auto& elementSegment : primary.elementSegments) {
-    if (tracker.useEmpty(elementSegment->name, tracker.elementSegments)) {
+    if (tracker.isUnused(elementSegment->name, tracker.elementSegments)) {
       elementSegmentsToRemove.push_back(elementSegment->name);
     } else if (tracker.usedBySingleSecondary(elementSegment->name,
                                              tracker.elementSegments)) {
