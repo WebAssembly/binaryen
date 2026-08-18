@@ -352,16 +352,16 @@ struct OwnershipTracker {
 
   template<typename T> void insert(Name name, UsedNames* owner) {
 #define INSERT_ITEM(ItemType, field)                                           \
-    if constexpr (std::is_same_v<T, ItemType>) {                               \
-      insertImpl(name, owner, &OwnershipTracker::field, &UsedNames::field);    \
-    }
+  if constexpr (std::is_same_v<T, ItemType>) {                                 \
+    insertImpl(name, owner, &OwnershipTracker::field, &UsedNames::field);      \
+  }
 
     INSERT_ITEM(Table, tables)
-    else INSERT_ITEM(Memory, memories)
-    else INSERT_ITEM(Global, globals)
-    else INSERT_ITEM(Tag, tags)
-    else INSERT_ITEM(DataSegment, dataSegments)
-    else INSERT_ITEM(ElementSegment, elementSegments)
+    else INSERT_ITEM(Memory, memories) else INSERT_ITEM(Global, globals) else INSERT_ITEM(
+      Tag,
+      tags) else INSERT_ITEM(DataSegment,
+                             dataSegments) else INSERT_ITEM(ElementSegment,
+                                                            elementSegments)
 
 #undef INSERT_ITEM
   }
