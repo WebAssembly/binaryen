@@ -25,8 +25,7 @@ namespace wasm {
 //
 // This allows an I65 to represent any 32 or 64-bit number, signed *or*
 // unsigned.
-struct I65 {
-};
+struct I65 {};
 
 } // namespace wasm
 

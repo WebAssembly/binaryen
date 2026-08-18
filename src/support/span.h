@@ -25,14 +25,11 @@ namespace wasm {
 //
 // Span{min, max} means [min, max], inclusive of both sides. To represent an
 // empty span, we use min > max.
-template<typename T>
-struct Span {
+template<typename T> struct Span {
   T min, max;
 
   // Set a single value as possible.
-  void set(T value) {
-    min = max = value;
-  }
+  void set(T value) { min = max = value; }
 
   // To represent an empty span, we use min > max, an impossible span.
   void setEmpty() {
@@ -70,9 +67,7 @@ struct Span {
   }
 
   // Checks whether two spans have any overlap at all.
-  bool hasOverlap(const Span& other) {
-    return !intersection(other).isEmpty();
-  }
+  bool hasOverlap(const Span& other) { return !intersection(other).isEmpty(); }
 
   // Check whether we contain another span (possibly being equal).
   bool contains(const Span& other) const {
