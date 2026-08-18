@@ -355,14 +355,12 @@ struct OwnershipTracker {
   if constexpr (std::is_same_v<T, ItemType>) {                                 \
     insertImpl(name, owner, &OwnershipTracker::field, &UsedNames::field);      \
   }
-
     INSERT_ITEM(Table, tables)
-    else INSERT_ITEM(Memory, memories) else INSERT_ITEM(Global, globals) else INSERT_ITEM(
-      Tag,
-      tags) else INSERT_ITEM(DataSegment,
-                             dataSegments) else INSERT_ITEM(ElementSegment,
-                                                            elementSegments)
-
+    INSERT_ITEM(Memory, memories)
+    INSERT_ITEM(Global, globals)
+    INSERT_ITEM(Tag, tags)
+    INSERT_ITEM(DataSegment, dataSegments)
+    INSERT_ITEM(ElementSegment, elementSegments)
 #undef INSERT_ITEM
   }
 
@@ -401,38 +399,6 @@ struct OwnershipTracker {
     }
   }
 
-  void build(const std::vector<std::unique_ptr<Module>>& secondaries) {
-    this->secondaries = &secondaries;
-
-    // Build initial maps of a module element Name to an ItemInfo for each
-    // module element type.
-    // 'field' points to one of UsedName's sets, such as
-    //   std::unordered_set<Name> globals;
-    auto buildMap = [&](FieldType field,
-                        std::unordered_map<Name, ItemInfo>& map) {
-      for (auto& name : (primaryUsed.*field)) {
-        map[name].owner = &primaryUsed;
-      }
-      for (size_t i = 0; i < secondaryUsed.size(); ++i) {
-        auto& secUsed = secondaryUsed[i];
-        auto* secondary = secondaries[i].get();
-        for (auto& name : (secUsed.*field)) {
-          auto [it, inserted] = map.insert({name, ItemInfo{&secUsed, {}}});
-          it->second.usingSecondaries.push_back(secondary);
-          if (!inserted) {
-            it->second.owner = &primaryUsed;
-          }
-        }
-      }
-    };
-    buildMap(&UsedNames::tables, tables);
-    buildMap(&UsedNames::memories, memories);
-    buildMap(&UsedNames::globals, globals);
-    buildMap(&UsedNames::tags, tags);
-    buildMap(&UsedNames::dataSegments, dataSegments);
-    buildMap(&UsedNames::elementSegments, elementSegments);
-  }
-
   UsedNames* getOwner(Name name,
                       const std::unordered_map<Name, ItemInfo>& map) {
     auto it = map.find(name);
@@ -453,7 +419,7 @@ struct OwnershipTracker {
     return empty;
   }
 
-  bool useEmpty(Name name, const std::unordered_map<Name, ItemInfo>& map) {
+  bool isUnused(Name name, const std::unordered_map<Name, ItemInfo>& map) {
     return getOwner(name, map) == nullptr;
   }
 
@@ -976,9 +942,6 @@ void ModuleSplitter::computeUsedNames() {
     return false;
   };
 
-#define ADD_ITEM_TO_TRACKER_TO_TRACKER(FIELD, VAL)                             \
-  tracker.insert(VAL, owner, &OwnershipTracker::FIELD, &UsedNames::FIELD)
-
   // Iterate on active data and element segments. If its table or memory is
   // used by a single secondary module, mark it "used" there. Only scan its
   // 'offset' or 'data'(in case of ElementSegment) and add it to that module's
@@ -1110,7 +1073,7 @@ void ModuleSplitter::shareImportableItems() {
                            ExternalKind kind = ExternalKind::Invalid) {
     std::unordered_set<Name> elementsToRemove;
     for (auto& element : elements) {
-      if (tracker.useEmpty(element->name, trackerElements)) {
+      if (tracker.isUnused(element->name, trackerElements)) {
         elementsToRemove.insert(element->name);
       } else if (tracker.usedBySingleSecondary(element->name,
                                                trackerElements)) {
