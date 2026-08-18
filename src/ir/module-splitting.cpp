@@ -355,14 +355,12 @@ struct OwnershipTracker {
   if constexpr (std::is_same_v<T, ItemType>) {                                 \
     insertImpl(name, owner, &OwnershipTracker::field, &UsedNames::field);      \
   }
-
     INSERT_ITEM(Table, tables)
-    else INSERT_ITEM(Memory, memories) else INSERT_ITEM(Global, globals) else INSERT_ITEM(
-      Tag,
-      tags) else INSERT_ITEM(DataSegment,
-                             dataSegments) else INSERT_ITEM(ElementSegment,
-                                                            elementSegments)
-
+    INSERT_ITEM(Memory, memories)
+    INSERT_ITEM(Global, globals)
+    INSERT_ITEM(Tag, tags)
+    INSERT_ITEM(DataSegment, dataSegments)
+    INSERT_ITEM(ElementSegment, elementSegments)
 #undef INSERT_ITEM
   }
 
@@ -401,38 +399,6 @@ struct OwnershipTracker {
     }
   }
 
-  void build(const std::vector<std::unique_ptr<Module>>& secondaries) {
-    this->secondaries = &secondaries;
-
-    // Build initial maps of a module element Name to an ItemInfo for each
-    // module element type.
-    // 'field' points to one of UsedName's sets, such as
-    //   std::unordered_set<Name> globals;
-    auto buildMap = [&](FieldType field,
-                        std::unordered_map<Name, ItemInfo>& map) {
-      for (auto& name : (primaryUsed.*field)) {
-        map[name].owner = &primaryUsed;
-      }
-      for (size_t i = 0; i < secondaryUsed.size(); ++i) {
-        auto& secUsed = secondaryUsed[i];
-        auto* secondary = secondaries[i].get();
-        for (auto& name : (secUsed.*field)) {
-          auto [it, inserted] = map.insert({name, ItemInfo{&secUsed, {}}});
-          it->second.usingSecondaries.push_back(secondary);
-          if (!inserted) {
-            it->second.owner = &primaryUsed;
-          }
-        }
-      }
-    };
-    buildMap(&UsedNames::tables, tables);
-    buildMap(&UsedNames::memories, memories);
-    buildMap(&UsedNames::globals, globals);
-    buildMap(&UsedNames::tags, tags);
-    buildMap(&UsedNames::dataSegments, dataSegments);
-    buildMap(&UsedNames::elementSegments, elementSegments);
-  }
-
   UsedNames* getOwner(Name name,
                       const std::unordered_map<Name, ItemInfo>& map) {
     auto it = map.find(name);
@@ -453,7 +419,7 @@ struct OwnershipTracker {
     return empty;
   }
 
-  bool useEmpty(Name name, const std::unordered_map<Name, ItemInfo>& map) {
+  bool isUnused(Name name, const std::unordered_map<Name, ItemInfo>& map) {
     return getOwner(name, map) == nullptr;
   }
 
@@ -1104,7 +1070,7 @@ void ModuleSplitter::shareImportableItems() {
 
   std::unordered_set<Name> memoriesToRemove;
   for (auto& memory : primary.memories) {
-    if (tracker.useEmpty(memory->name, tracker.memories)) {
+    if (tracker.isUnused(memory->name, tracker.memories)) {
       memoriesToRemove.insert(memory->name);
     } else if (tracker.usedBySingleSecondary(memory->name, tracker.memories)) {
       auto* secondary =
@@ -1126,7 +1092,7 @@ void ModuleSplitter::shareImportableItems() {
 
   std::unordered_set<Name> tablesToRemove;
   for (auto& table : primary.tables) {
-    if (tracker.useEmpty(table->name, tracker.tables)) {
+    if (tracker.isUnused(table->name, tracker.tables)) {
       tablesToRemove.insert(table->name);
     } else if (tracker.usedBySingleSecondary(table->name, tracker.tables)) {
       auto* secondary =
@@ -1152,7 +1118,7 @@ void ModuleSplitter::shareImportableItems() {
              "TODO: add wrapper functions for disallowed mutable globals");
     }
 
-    if (tracker.useEmpty(global->name, tracker.globals)) {
+    if (tracker.isUnused(global->name, tracker.globals)) {
       globalsToRemove.insert(global->name);
     } else if (tracker.usedBySingleSecondary(global->name, tracker.globals)) {
       auto* secondary =
@@ -1174,7 +1140,7 @@ void ModuleSplitter::shareImportableItems() {
 
   std::unordered_set<Name> tagsToRemove;
   for (auto& tag : primary.tags) {
-    if (tracker.useEmpty(tag->name, tracker.tags)) {
+    if (tracker.isUnused(tag->name, tracker.tags)) {
       tagsToRemove.insert(tag->name);
     } else if (tracker.usedBySingleSecondary(tag->name, tracker.tags)) {
       auto* secondary = tracker.getUsingSecondaries(tag->name, tracker.tags)[0];
@@ -1196,7 +1162,7 @@ void ModuleSplitter::shareImportableItems() {
 
   std::unordered_set<Name> dataSegmentsToRemove;
   for (auto& dataSegment : primary.dataSegments) {
-    if (tracker.useEmpty(dataSegment->name, tracker.dataSegments)) {
+    if (tracker.isUnused(dataSegment->name, tracker.dataSegments)) {
       dataSegmentsToRemove.insert(dataSegment->name);
     } else if (tracker.usedBySingleSecondary(dataSegment->name,
                                              tracker.dataSegments)) {
@@ -1212,7 +1178,7 @@ void ModuleSplitter::shareImportableItems() {
 
   std::unordered_set<Name> elementSegmentsToRemove;
   for (auto& elementSegment : primary.elementSegments) {
-    if (tracker.useEmpty(elementSegment->name, tracker.elementSegments)) {
+    if (tracker.isUnused(elementSegment->name, tracker.elementSegments)) {
       elementSegmentsToRemove.insert(elementSegment->name);
     } else if (tracker.usedBySingleSecondary(elementSegment->name,
                                              tracker.elementSegments)) {
