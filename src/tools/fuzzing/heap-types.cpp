@@ -321,6 +321,8 @@ struct HeapTypeGeneratorImpl {
             builder[index] =
               generateSubContinuation(supertype.getContinuation());
             break;
+          case wasm::HeapTypeKind::Fiber:
+            WASM_UNREACHABLE("unexpected kind");
           case wasm::HeapTypeKind::Basic:
             WASM_UNREACHABLE("unexpected kind");
         }
@@ -680,10 +682,12 @@ struct HeapTypeGeneratorImpl {
         case HeapType::ext:
         case HeapType::exn:
         case HeapType::string:
+        case HeapType::fiber:
         case HeapType::none:
         case HeapType::noext:
         case HeapType::nofunc:
         case HeapType::nocont:
+        case HeapType::nofiber:
         case HeapType::noexn:
           return type;
         case HeapType::waitqueue:
@@ -736,6 +740,7 @@ struct HeapTypeGeneratorImpl {
       case HeapType::func:
       case HeapType::exn:
       case HeapType::cont:
+      case HeapType::fiber:
       case HeapType::any:
         break;
       case HeapType::eq:
@@ -756,6 +761,9 @@ struct HeapTypeGeneratorImpl {
         return pickSubFunc(share);
       case HeapType::nocont:
         return pickSubCont(share);
+      case HeapType::nofiber:
+        candidates.push_back(HeapTypes::fiber.getBasic(share));
+        break;
       case HeapType::noext:
         candidates.push_back(HeapTypes::ext.getBasic(share));
         break;
@@ -953,7 +961,8 @@ struct Inhabitator {
 
 Inhabitator::Variance Inhabitator::getVariance(FieldPos fieldPos) {
   auto [type, idx] = fieldPos;
-  assert(!type.isBasic() && !type.isSignature() && !type.isContinuation());
+  assert(!type.isBasic() && !type.isSignature() && !type.isContinuation() &&
+         !type.isFiber());
   auto field = GCTypeUtils::getField(type, idx);
   assert(field);
   if (field->mutable_ == Mutable) {
@@ -1013,7 +1022,7 @@ void Inhabitator::markNullable(FieldPos field) {
 
 void Inhabitator::markBottomRefsNullable() {
   for (auto type : types) {
-    if (type.isSignature() || type.isContinuation()) {
+    if (type.isSignature() || type.isContinuation() || type.isFiber()) {
       // Functions/continuations can always be instantiated, even if their types
       // refer to uninhabitable types.
       continue;
@@ -1035,7 +1044,7 @@ void Inhabitator::markExternRefsNullable() {
   // TODO: Remove this once the fuzzer imports externref globals or gets some
   // other way to instantiate externrefs.
   for (auto type : types) {
-    if (type.isSignature() || type.isContinuation()) {
+    if (type.isSignature() || type.isContinuation() || type.isFiber()) {
       // Functions/continuations can always be instantiated, even if their types
       // refer to uninhabitable types.
       continue;
@@ -1250,6 +1259,19 @@ std::vector<HeapType> Inhabitator::build() {
         builder[i] = copy;
         continue;
       }
+      case HeapTypeKind::Fiber: {
+        Fiber copy = type.getFiber();
+        if (auto it = typeIndices.find(copy.resumeType);
+            it != typeIndices.end()) {
+          copy.resumeType = builder.getTempHeapType(it->second);
+        }
+        if (auto it = typeIndices.find(copy.suspendType);
+            it != typeIndices.end()) {
+          copy.suspendType = builder.getTempHeapType(it->second);
+        }
+        builder[i] = copy;
+        continue;
+      }
       case HeapTypeKind::Basic:
         break;
     }
@@ -1351,6 +1373,7 @@ bool isUninhabitable(HeapType type,
       return false;
     case HeapTypeKind::Func:
     case HeapTypeKind::Cont:
+    case HeapTypeKind::Fiber:
       // Function types are always inhabitable.
       return false;
     case HeapTypeKind::Struct:
@@ -1385,6 +1408,7 @@ bool isUninhabitable(HeapType type,
     case HeapTypeKind::Basic:
     case HeapTypeKind::Func:
     case HeapTypeKind::Cont:
+    case HeapTypeKind::Fiber:
       WASM_UNREACHABLE("unexpected kind");
   }
   visiting.erase(it);

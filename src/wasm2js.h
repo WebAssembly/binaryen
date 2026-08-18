@@ -2491,6 +2491,18 @@ Ref Wasm2JSBuilder::processExpression(Expression* curr,
       unimplemented(curr);
       WASM_UNREACHABLE("unimp");
     }
+    Ref visitFiberNew(FiberNew* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE("unimp");
+    }
+    Ref visitFiberResume(FiberResume* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE("unimp");
+    }
+    Ref visitFiberSuspend(FiberSuspend* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE("unimp");
+    }
 
   private:
     Ref makePointer(Expression* ptr, Address offset) {

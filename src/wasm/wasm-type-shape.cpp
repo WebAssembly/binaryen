@@ -91,6 +91,9 @@ template<typename CompareTypes> struct RecGroupComparator {
       case HeapTypeKind::Cont:
         assert(a.isContinuation() && b.isContinuation());
         return compare(a.getContinuation(), b.getContinuation());
+      case HeapTypeKind::Fiber:
+        assert(a.isFiber() && b.isFiber());
+        return compare(a.getFiber(), b.getFiber());
       case HeapTypeKind::Basic:
         break;
     }
@@ -120,6 +123,13 @@ template<typename CompareTypes> struct RecGroupComparator {
 
   Comparison compare(Continuation a, Continuation b) {
     return compare(a.type, b.type);
+  }
+
+  Comparison compare(Fiber a, Fiber b) {
+    if (auto cmp = compare(a.resumeType, b.resumeType); cmp != EQ) {
+      return cmp;
+    }
+    return compare(a.suspendType, b.suspendType);
   }
 
   Comparison compare(Field a, Field b) {
@@ -264,6 +274,11 @@ struct RecGroupHasher {
         wasm::rehash(digest, 2381496927);
         hash_combine(digest, hash(type.getContinuation()));
         return digest;
+      case HeapTypeKind::Fiber:
+        assert(type.isFiber());
+        wasm::rehash(digest, 1592653589);
+        hash_combine(digest, hash(type.getFiber()));
+        return digest;
       case HeapTypeKind::Basic:
         break;
     }
@@ -287,6 +302,12 @@ struct RecGroupHasher {
   size_t hash(Array array) { return hash(array.element); }
 
   size_t hash(Continuation cont) { return hash(cont.type); }
+
+  size_t hash(Fiber fiber) {
+    size_t digest = hash(fiber.resumeType);
+    hash_combine(digest, hash(fiber.suspendType));
+    return digest;
+  }
 
   size_t hash(Field field) {
     size_t digest = wasm::hash(field.mutable_);

@@ -771,6 +771,20 @@ public:
     ConstraintCollector{builder, children}.visitStackSwitch(curr, ct);
     return popConstrainedChildren(children);
   }
+
+  Result<> visitFiberResume(FiberResume* curr,
+                            std::optional<HeapType> ft = std::nullopt) {
+    std::vector<Child> children;
+    ConstraintCollector{builder, children}.visitFiberResume(curr, ft);
+    return popConstrainedChildren(children);
+  }
+
+  Result<> visitFiberSuspend(FiberSuspend* curr,
+                             std::optional<HeapType> ft = std::nullopt) {
+    std::vector<Child> children;
+    ConstraintCollector{builder, children}.visitFiberSuspend(curr, ft);
+    return popConstrainedChildren(children);
+  }
 };
 
 Result<> IRBuilder::visit(Expression* curr) {
@@ -2900,6 +2914,63 @@ Result<> IRBuilder::makeStackSwitch(HeapType ct, Name tag) {
   CHECK_ERR(validateTypeAnnotation(ct, curr.cont));
 
   push(builder.makeStackSwitch(tag, std::move(curr.operands), curr.cont));
+  return Ok{};
+}
+
+Result<> IRBuilder::makeFiberNew(HeapType type, Name func) {
+  if (!type.isFiber()) {
+    return Err{"expected fiber type"};
+  }
+  auto* funcObj = wasm.getFunctionOrNull(func);
+  if (!funcObj) {
+    return Err{std::string("unknown function ") + func.toString()};
+  }
+  FiberNew curr(wasm.allocator);
+  curr.type = Type(type, NonNullable, Exact);
+  curr.func = func;
+  auto resumeParams = type.getFiber().resumeType.getSignature().params;
+  auto funcParams = funcObj->getParams();
+  if (funcParams.size() < 1 + resumeParams.size()) {
+    return Err{
+      "function signature does not have enough parameters for fiber.new"};
+  }
+  curr.operands.resize(funcParams.size() - 1 - resumeParams.size());
+  CHECK_ERR(visitFiberNew(&curr));
+
+  push(builder.makeFiberNew(type, func, std::move(curr.operands)));
+  return Ok{};
+}
+
+Result<> IRBuilder::makeFiberResume(HeapType type, Index label) {
+  if (!type.isFiber()) {
+    return Err{"expected fiber type"};
+  }
+  Result<Name> labelName = getLabelName(label);
+  CHECK_ERR(labelName);
+  Result<Type> labelType = getLabelType(label);
+  CHECK_ERR(labelType);
+
+  FiberResume curr(wasm.allocator);
+  curr.handler = *labelName;
+  auto resumeParams = type.getFiber().resumeType.getSignature().params;
+  curr.operands.resize(resumeParams.size());
+  CHECK_ERR(ChildPopper{*this}.visitFiberResume(&curr, type));
+
+  push(builder.makeFiberResume(
+    type, *labelName, std::move(curr.operands), curr.fiber));
+  return Ok{};
+}
+
+Result<> IRBuilder::makeFiberSuspend(HeapType type) {
+  if (!type.isFiber()) {
+    return Err{"expected fiber type"};
+  }
+  FiberSuspend curr(wasm.allocator);
+  auto suspendParams = type.getFiber().suspendType.getSignature().params;
+  curr.operands.resize(suspendParams.size());
+  CHECK_ERR(ChildPopper{*this}.visitFiberSuspend(&curr, type));
+
+  push(builder.makeFiberSuspend(type, std::move(curr.operands), curr.fiber));
   return Ok{};
 }
 

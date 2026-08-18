@@ -778,6 +778,9 @@ public:
     ResumeId,
     ResumeThrowId,
     StackSwitchId,
+    FiberNewId,
+    FiberResumeId,
+    FiberSuspendId,
     StructWaitId,
     WideIntAddSubId,
     WideIntMulId,
@@ -2270,6 +2273,37 @@ public:
   Expression* cont;
 
   // We need access to the module to obtain the signature of the tag.
+  void finalize();
+};
+
+class FiberNew : public SpecificExpression<Expression::FiberNewId> {
+public:
+  FiberNew(MixedArena& allocator) : operands(allocator) {}
+
+  Name func;
+  ExpressionList operands;
+
+  void finalize();
+};
+
+class FiberResume : public SpecificExpression<Expression::FiberResumeId> {
+public:
+  FiberResume(MixedArena& allocator) : operands(allocator) {}
+
+  Name handler;
+  ExpressionList operands;
+  Expression* fiber = nullptr;
+
+  void finalize();
+};
+
+class FiberSuspend : public SpecificExpression<Expression::FiberSuspendId> {
+public:
+  FiberSuspend(MixedArena& allocator) : operands(allocator) {}
+
+  ExpressionList operands;
+  Expression* fiber = nullptr;
+
   void finalize();
 };
 

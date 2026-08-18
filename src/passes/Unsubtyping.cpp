@@ -968,6 +968,11 @@ struct Unsubtyping : Pass, Noter<Unsubtyping> {
         noteSubtype(sub.getContinuation().type, super.getContinuation().type);
         break;
       }
+      case HeapTypeKind::Fiber: {
+        noteSubtype(super.getFiber().resumeType, sub.getFiber().resumeType);
+        noteSubtype(sub.getFiber().suspendType, super.getFiber().suspendType);
+        break;
+      }
       case HeapTypeKind::Basic:
         WASM_UNREACHABLE("unexpected kind");
     }

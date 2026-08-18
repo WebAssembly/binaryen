@@ -130,6 +130,9 @@ struct SubTypes {
         case HeapTypeKind::Cont:
           basic = HeapTypes::cont.getBasic(share);
           break;
+        case HeapTypeKind::Fiber:
+          basic = HeapTypes::fiber.getBasic(share);
+          break;
         case HeapTypeKind::Basic:
           WASM_UNREACHABLE("unexpected kind");
       }
@@ -157,12 +160,14 @@ struct SubTypes {
       depths[HeapTypes::noext.getBasic(share)] = 0;
       depths[HeapTypes::nofunc.getBasic(share)] = 0;
       depths[HeapTypes::nocont.getBasic(share)] = 0;
+      depths[HeapTypes::nofiber.getBasic(share)] = 0;
       depths[HeapTypes::noexn.getBasic(share)] = 0;
 
       // func would appear already if we saw function types, but if not, ensure
-      // it exists here. Ditto for cont.
+      // it exists here. Ditto for cont and fiber.
       depths[HeapTypes::func.getBasic(share)];
       depths[HeapTypes::cont.getBasic(share)];
+      depths[HeapTypes::fiber.getBasic(share)];
     }
 
     return depths;
