@@ -1065,15 +1065,15 @@ void ModuleSplitter::shareImportableItems() {
   //    the primary and secondary modules), export the item from the primary and
   //    import it from the using secondary modules.
 
-  std::vector<Name> memoriesToRemove;
+  std::unordered_set<Name> memoriesToRemove;
   for (auto& memory : primary.memories) {
     if (tracker.isUnused(memory->name, tracker.memories)) {
-      memoriesToRemove.push_back(memory->name);
+      memoriesToRemove.insert(memory->name);
     } else if (tracker.usedBySingleSecondary(memory->name, tracker.memories)) {
       auto* secondary =
         tracker.getUsingSecondaries(memory->name, tracker.memories)[0];
       ModuleUtils::copyMemory(memory.get(), *secondary);
-      memoriesToRemove.push_back(memory->name);
+      memoriesToRemove.insert(memory->name);
     } else {
       for (auto* secondary :
            tracker.getUsingSecondaries(memory->name, tracker.memories)) {
@@ -1084,20 +1084,19 @@ void ModuleSplitter::shareImportableItems() {
       }
     }
   }
-  for (auto& name : memoriesToRemove) {
-    primary.removeMemory(name);
-  }
+  primary.removeMemories(
+    [&](Memory* memory) { return memoriesToRemove.contains(memory->name); });
 
-  std::vector<Name> tablesToRemove;
+  std::unordered_set<Name> tablesToRemove;
   for (auto& table : primary.tables) {
     if (tracker.isUnused(table->name, tracker.tables)) {
-      tablesToRemove.push_back(table->name);
+      tablesToRemove.insert(table->name);
     } else if (tracker.usedBySingleSecondary(table->name, tracker.tables)) {
       auto* secondary =
         tracker.getUsingSecondaries(table->name, tracker.tables)[0];
       assert(!secondary->getTableOrNull(table->name));
       ModuleUtils::copyTable(table.get(), *secondary);
-      tablesToRemove.push_back(table->name);
+      tablesToRemove.insert(table->name);
     } else {
       for (auto* secondary :
            tracker.getUsingSecondaries(table->name, tracker.tables)) {
@@ -1106,11 +1105,10 @@ void ModuleSplitter::shareImportableItems() {
       }
     }
   }
-  for (auto& name : tablesToRemove) {
-    primary.removeTable(name);
-  }
+  primary.removeTables(
+    [&](Table* table) { return tablesToRemove.count(table->name); });
 
-  std::vector<Name> globalsToRemove;
+  std::unordered_set<Name> globalsToRemove;
   for (auto& global : primary.globals) {
     if (global->mutable_) {
       assert(primary.features.hasMutableGlobals() &&
@@ -1118,12 +1116,12 @@ void ModuleSplitter::shareImportableItems() {
     }
 
     if (tracker.isUnused(global->name, tracker.globals)) {
-      globalsToRemove.push_back(global->name);
+      globalsToRemove.insert(global->name);
     } else if (tracker.usedBySingleSecondary(global->name, tracker.globals)) {
       auto* secondary =
         tracker.getUsingSecondaries(global->name, tracker.globals)[0];
       ModuleUtils::copyGlobal(global.get(), *secondary);
-      globalsToRemove.push_back(global->name);
+      globalsToRemove.insert(global->name);
     } else {
       for (auto* secondary :
            tracker.getUsingSecondaries(global->name, tracker.globals)) {
@@ -1134,18 +1132,17 @@ void ModuleSplitter::shareImportableItems() {
       }
     }
   }
-  for (auto& name : globalsToRemove) {
-    primary.removeGlobal(name);
-  }
+  primary.removeGlobals(
+    [&](Global* global) { return globalsToRemove.count(global->name); });
 
-  std::vector<Name> tagsToRemove;
+  std::unordered_set<Name> tagsToRemove;
   for (auto& tag : primary.tags) {
     if (tracker.isUnused(tag->name, tracker.tags)) {
-      tagsToRemove.push_back(tag->name);
+      tagsToRemove.insert(tag->name);
     } else if (tracker.usedBySingleSecondary(tag->name, tracker.tags)) {
       auto* secondary = tracker.getUsingSecondaries(tag->name, tracker.tags)[0];
       ModuleUtils::copyTag(tag.get(), *secondary);
-      tagsToRemove.push_back(tag->name);
+      tagsToRemove.insert(tag->name);
     } else {
       for (auto* secondary :
            tracker.getUsingSecondaries(tag->name, tracker.tags)) {
@@ -1154,45 +1151,43 @@ void ModuleSplitter::shareImportableItems() {
       }
     }
   }
-  for (auto& name : tagsToRemove) {
-    primary.removeTag(name);
-  }
+  primary.removeTags([&](Tag* tag) { return tagsToRemove.count(tag->name); });
 
   // Move segments that are exclusively used in a secondary module. If not, do
   // nothing. (Segments cannot be imported / exported. They will be handled in
   // indirectReferencesToSecondaryFunctions.)
 
-  std::vector<Name> dataSegmentsToRemove;
+  std::unordered_set<Name> dataSegmentsToRemove;
   for (auto& dataSegment : primary.dataSegments) {
     if (tracker.isUnused(dataSegment->name, tracker.dataSegments)) {
-      dataSegmentsToRemove.push_back(dataSegment->name);
+      dataSegmentsToRemove.insert(dataSegment->name);
     } else if (tracker.usedBySingleSecondary(dataSegment->name,
                                              tracker.dataSegments)) {
       auto* secondary =
         tracker.getUsingSecondaries(dataSegment->name, tracker.dataSegments)[0];
       ModuleUtils::copyDataSegment(dataSegment.get(), *secondary);
-      dataSegmentsToRemove.push_back(dataSegment->name);
+      dataSegmentsToRemove.insert(dataSegment->name);
     }
   }
-  for (auto& name : dataSegmentsToRemove) {
-    primary.removeDataSegment(name);
-  }
+  primary.removeDataSegments([&](DataSegment* dataSegment) {
+    return dataSegmentsToRemove.count(dataSegment->name);
+  });
 
-  std::vector<Name> elementSegmentsToRemove;
+  std::unordered_set<Name> elementSegmentsToRemove;
   for (auto& elementSegment : primary.elementSegments) {
     if (tracker.isUnused(elementSegment->name, tracker.elementSegments)) {
-      elementSegmentsToRemove.push_back(elementSegment->name);
+      elementSegmentsToRemove.insert(elementSegment->name);
     } else if (tracker.usedBySingleSecondary(elementSegment->name,
                                              tracker.elementSegments)) {
       auto* secondary = tracker.getUsingSecondaries(elementSegment->name,
                                                     tracker.elementSegments)[0];
       ModuleUtils::copyElementSegment(elementSegment.get(), *secondary);
-      elementSegmentsToRemove.push_back(elementSegment->name);
+      elementSegmentsToRemove.insert(elementSegment->name);
     }
   }
-  for (auto& name : elementSegmentsToRemove) {
-    primary.removeElementSegment(name);
-  }
+  primary.removeElementSegments([&](ElementSegment* elementSegment) {
+    return elementSegmentsToRemove.count(elementSegment->name);
+  });
 }
 
 void ModuleSplitter::indirectReferencesToSecondaryFunctions() {
