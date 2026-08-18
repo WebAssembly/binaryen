@@ -351,24 +351,19 @@ struct OwnershipTracker {
   using MapType = std::unordered_map<Name, ItemInfo> OwnershipTracker::*;
 
   template<typename T> void insert(Name name, UsedNames* owner) {
-    if constexpr (std::is_same_v<T, Table>) {
-      insertImpl(name, owner, &OwnershipTracker::tables, &UsedNames::tables);
-    } else if constexpr (std::is_same_v<T, Memory>) {
-      insertImpl(
-        name, owner, &OwnershipTracker::memories, &UsedNames::memories);
-    } else if constexpr (std::is_same_v<T, Global>) {
-      insertImpl(name, owner, &OwnershipTracker::globals, &UsedNames::globals);
-    } else if constexpr (std::is_same_v<T, Tag>) {
-      insertImpl(name, owner, &OwnershipTracker::tags, &UsedNames::tags);
-    } else if constexpr (std::is_same_v<T, DataSegment>) {
-      insertImpl(
-        name, owner, &OwnershipTracker::dataSegments, &UsedNames::dataSegments);
-    } else if constexpr (std::is_same_v<T, ElementSegment>) {
-      insertImpl(name,
-                 owner,
-                 &OwnershipTracker::elementSegments,
-                 &UsedNames::elementSegments);
-    }
+#define INSERT_ITEM(ItemType, field)                                           \
+  if constexpr (std::is_same_v<T, ItemType>) {                                 \
+    insertImpl(name, owner, &OwnershipTracker::field, &UsedNames::field);      \
+  }
+
+    INSERT_ITEM(Table, tables)
+    else INSERT_ITEM(Memory, memories) else INSERT_ITEM(Global, globals) else INSERT_ITEM(
+      Tag,
+      tags) else INSERT_ITEM(DataSegment,
+                             dataSegments) else INSERT_ITEM(ElementSegment,
+                                                            elementSegments)
+
+#undef INSERT_ITEM
   }
 
   // 'mapField' points to one of OwnershipTracker's maps, such as
