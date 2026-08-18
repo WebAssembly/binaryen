@@ -1324,7 +1324,7 @@
 
   ;; CHECK:      (func $br_on_cast_desc_eq_fail-trap-on-null (type $7) (param $ref (ref null $struct)) (param $desc (ref null (exact $desc)))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block $l (result (ref null $struct))
+  ;; CHECK-NEXT:   (block $l (result (ref none))
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (block
   ;; CHECK-NEXT:      (drop
@@ -1349,7 +1349,7 @@
   ;; CHECK-NEXT: )
   ;; NTRAP:      (func $br_on_cast_desc_eq_fail-trap-on-null (type $7) (param $ref (ref null $struct)) (param $desc (ref null (exact $desc)))
   ;; NTRAP-NEXT:  (drop
-  ;; NTRAP-NEXT:   (block $l (result (ref null $struct))
+  ;; NTRAP-NEXT:   (block $l (result (ref none))
   ;; NTRAP-NEXT:    (drop
   ;; NTRAP-NEXT:     (block
   ;; NTRAP-NEXT:      (drop
