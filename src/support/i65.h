@@ -51,7 +51,7 @@ struct I65 {
     } else {
       negative = true;
 
-      // We cannot simply negate MIN_INT64.
+      // One does not simply negate MIN_INT64.
       if (x == std::numeric_limits<int64_t>::min()) {
         value = uint64_t(1) << 31;
       } else {
