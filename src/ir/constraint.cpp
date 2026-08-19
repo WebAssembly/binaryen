@@ -22,6 +22,74 @@
 
 namespace wasm::constraint {
 
+std::optional<Span<IU64>> Constraint::makeSpan() const {
+  auto* c = std::get_if<Literal>(&term);
+  if (!c) {
+    // Not comparing to a constant, so cannot be a constant span.
+    return {};
+  }
+
+  switch (op) {
+    case Eq: {
+      auto x = c->getUnsigned();
+      if (x <= std::numeric_limits<int32_t>::max()) {
+        // This is in the range of both signed and unsigned values, so there is
+        // no ambiguity. That is, we cannot convert the bit pattern
+        // 0xffffffffffffffff into a Span, as it might be either uint64_t(-1)
+        // or actually negative (but a bit pattern like 0x0000000000000001 is
+        // always fine as it can only ever be "1").
+        return Span<IU64>{x, x};
+      }
+      break;
+    }
+
+    case LtS:
+      if (c->getInteger() == std::numeric_limits<int64_t>::min()) {
+        // Less than the lowest possible number is an empty span.
+        return Span<IU64>::empty();
+      } else {
+        return Span<IU64>{std::numeric_limits<int64_t>::min(), c->getInteger() - 1};
+      }
+      break;
+    case LtU:
+      if (c->getInteger() == 0) {
+        // Less than the lowest possible number is an empty span.
+        return Span<IU64>::empty();
+      } else {
+        return Span<IU64>{0, c->getUnsigned() - 1};
+      }
+      break;
+    case LeS:
+      return Span<IU64>{std::numeric_limits<int64_t>::min(), c->getInteger()};
+    case LeU:
+      return Span<IU64>{0, c->getUnsigned()};
+
+    case GtS:
+      if (c->getInteger() == std::numeric_limits<int64_t>::max()) {
+        // Greater than the highest possible number is an empty span.
+        return Span<IU64>::empty();
+      } else {
+        return Span<IU64>{c->getInteger() + 1, std::numeric_limits<int64_t>::max};
+      }
+      break;
+    case GtU:
+      if (c->getInteger() == 0) {
+        // Greater than the highest possible number is an empty span.
+        return Span<IU64>::empty();
+      } else {
+        return Span<IU64>{0, c->getUnsigned() - 1};
+      }
+      break;
+    case GeS:
+      return Span<IU64>{std::numeric_limits<int64_t>::min(), c->getInteger()};
+    case GeU:
+      return Span<IU64>{0, c->getUnsigned()};
+
+    default: {}
+  }
+
+  return {};
+}
 namespace {
 
 Result TrueFalse(bool x) { return x ? True : False; }
