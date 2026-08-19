@@ -663,6 +663,8 @@ void BasicBlockConstraintMap::set(Index index, Expression* value) {
     auto new_ = old;
 
     // Iterate over the old constraints and increment each one.
+    // TODO: We could add new ones too. E.g. if x does not overflow, then after
+    //       x++ we have x > 0 (unsigned).
     for (auto iter = new_.begin(); iter != new_.end();) {
       auto& c = *iter;
       auto* N = std::get_if<Literal>(&c.term);
