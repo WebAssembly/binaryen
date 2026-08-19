@@ -6,7 +6,7 @@
   ;; CHECK:      (import "a" "b" (func $import (type $2) (result i32)))
   (import "a" "b" (func $import (result i32)))
 
-  ;; CHECK:      (func $infinite-loop (type $0)
+  ;; CHECK:      (func $infinite-loop (type $1)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (loop $loop
   ;; CHECK-NEXT:   (local.set $x
@@ -32,7 +32,7 @@
     )
   )
 
-  ;; CHECK:      (func $almost-infinite-loop (type $0)
+  ;; CHECK:      (func $almost-infinite-loop (type $1)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (loop $loop
   ;; CHECK-NEXT:   (local.set $x
@@ -64,7 +64,7 @@
     )
   )
 
-  ;; CHECK:      (func $bound (type $0)
+  ;; CHECK:      (func $bound (type $1)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (loop $loop
   ;; CHECK-NEXT:   (drop
@@ -138,7 +138,7 @@
     )
   )
 
-  ;; CHECK:      (func $bound-flipped-ifs (type $0)
+  ;; CHECK:      (func $bound-flipped-ifs (type $1)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (loop $loop
   ;; CHECK-NEXT:   (drop
@@ -208,7 +208,7 @@
     )
   )
 
-  ;; CHECK:      (func $bound-nonconstant-no (type $1) (param $p i32)
+  ;; CHECK:      (func $bound-nonconstant-no (type $0) (param $p i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (loop $loop
   ;; CHECK-NEXT:   (drop
@@ -285,7 +285,7 @@
     )
   )
 
-  ;; CHECK:      (func $bound-incremented (type $0)
+  ;; CHECK:      (func $bound-incremented (type $1)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (loop $loop
   ;; CHECK-NEXT:   (drop
@@ -347,7 +347,7 @@
     )
   )
 
-  ;; CHECK:      (func $bound-incremented-unsigned (type $0)
+  ;; CHECK:      (func $bound-incremented-unsigned (type $1)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (loop $loop
   ;; CHECK-NEXT:   (drop
@@ -407,7 +407,7 @@
     )
   )
 
-  ;; CHECK:      (func $bound-incremented-while (type $0)
+  ;; CHECK:      (func $bound-incremented-while (type $1)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (block $out
   ;; CHECK-NEXT:   (loop $loop
@@ -477,7 +477,7 @@
     )
   )
 
-  ;; CHECK:      (func $bound-incremented-inc-first (type $0)
+  ;; CHECK:      (func $bound-incremented-inc-first (type $1)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (block $out
   ;; CHECK-NEXT:   (loop $loop
@@ -547,7 +547,7 @@
     )
   )
 
-  ;; CHECK:      (func $bound-incremented-inc-first-less (type $0)
+  ;; CHECK:      (func $bound-incremented-inc-first-less (type $1)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (block $out
   ;; CHECK-NEXT:   (loop $loop
@@ -616,7 +616,7 @@
     )
   )
 
-  ;; CHECK:      (func $bound-incremented-inc-first-less-unsigned (type $0)
+  ;; CHECK:      (func $bound-incremented-inc-first-less-unsigned (type $1)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (block $out
   ;; CHECK-NEXT:   (loop $loop
@@ -686,7 +686,7 @@
     )
   )
 
-  ;; CHECK:      (func $extra-constraint (type $0)
+  ;; CHECK:      (func $extra-constraint (type $1)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (block $out
   ;; CHECK-NEXT:   (loop $loop
@@ -790,7 +790,7 @@
     )
   )
 
-  ;; CHECK:      (func $while-nonconstant (type $1) (param $len i32)
+  ;; CHECK:      (func $while-nonconstant (type $0) (param $len i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (block $out
   ;; CHECK-NEXT:   (loop $loop
@@ -860,7 +860,7 @@
     )
   )
 
-  ;; CHECK:      (func $while-nonconstant-unsigned (type $1) (param $len i32)
+  ;; CHECK:      (func $while-nonconstant-unsigned (type $0) (param $len i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (block $out
   ;; CHECK-NEXT:   (loop $loop
@@ -930,7 +930,7 @@
     )
   )
 
-  ;; CHECK:      (func $do-nonconstant (type $1) (param $len i32)
+  ;; CHECK:      (func $do-nonconstant (type $0) (param $len i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.lt_s
@@ -1005,7 +1005,7 @@
     )
   )
 
-  ;; CHECK:      (func $do-nonconstant-unsigned (type $1) (param $len i32)
+  ;; CHECK:      (func $do-nonconstant-unsigned (type $0) (param $len i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.lt_u
@@ -1079,7 +1079,7 @@
     )
   )
 
-  ;; CHECK:      (func $nested (type $1) (param $len i32)
+  ;; CHECK:      (func $nested (type $0) (param $len i32)
   ;; CHECK-NEXT:  (local $i i32)
   ;; CHECK-NEXT:  (local $j i32)
   ;; CHECK-NEXT:  (block $out
@@ -1222,7 +1222,7 @@
     )
   )
 
-  ;; CHECK:      (func $nested-increment-i-later (type $1) (param $len i32)
+  ;; CHECK:      (func $nested-increment-i-later (type $0) (param $len i32)
   ;; CHECK-NEXT:  (local $i i32)
   ;; CHECK-NEXT:  (local $j i32)
   ;; CHECK-NEXT:  (block $out
@@ -1366,7 +1366,7 @@
     )
   )
 
-  ;; CHECK:      (func $nested-from-nonconstant-no (type $1) (param $len i32)
+  ;; CHECK:      (func $nested-from-nonconstant-no (type $0) (param $len i32)
   ;; CHECK-NEXT:  (local $i i32)
   ;; CHECK-NEXT:  (local $j i32)
   ;; CHECK-NEXT:  (block $out
@@ -1509,7 +1509,7 @@
     )
   )
 
-  ;; CHECK:      (func $add-overflow (type $1) (param $x i32)
+  ;; CHECK:      (func $add-overflow (type $0) (param $x i32)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.ge_s
   ;; CHECK-NEXT:    (local.get $x)
@@ -1556,7 +1556,7 @@
     )
   )
 
-  ;; CHECK:      (func $add-overflow-yes (type $1) (param $x i32)
+  ;; CHECK:      (func $add-overflow-yes (type $0) (param $x i32)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.ge_s
   ;; CHECK-NEXT:    (local.get $x)
@@ -1608,6 +1608,114 @@
               (i32.gt_s
                 (local.get $x)
                 (i32.const 0)
+              )
+            )
+          )
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $add-overflow-unsigned (type $0) (param $x i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.ge_u
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (local.set $x
+  ;; CHECK-NEXT:     (i32.add
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.gt_u
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $add-overflow-unsigned (param $x i32)
+    ;; As above, but unsigned. We change the 0 to 1, as x >= 0 is always true
+    ;; for unsigned anyhow.
+    (if
+      (i32.ge_u
+        (local.get $x)
+        (i32.const 1)
+      )
+      (then
+        (local.set $x
+          (i32.add
+            (local.get $x)
+            (i32.const 1)
+          )
+        )
+        ;; We do not optimize, due to the risk of overflow.
+        (drop
+          (i32.gt_u
+            (local.get $x)
+            (i32.const 1)
+          )
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $add-overflow-unsigned-yes (type $0) (param $x i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.ge_u
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (i32.le_u
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:      (i32.const 1000)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (then
+  ;; CHECK-NEXT:      (local.set $x
+  ;; CHECK-NEXT:       (i32.add
+  ;; CHECK-NEXT:        (local.get $x)
+  ;; CHECK-NEXT:        (i32.const 1)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (i32.const 1)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $add-overflow-unsigned-yes (param $x i32)
+    ;; As above, but unsigned.
+    (if
+      (i32.ge_u
+        (local.get $x)
+        (i32.const 1)
+      )
+      (then
+        (if
+          (i32.le_u
+            (local.get $x)
+            (i32.const 1000)
+          )
+          (then
+            (local.set $x
+              (i32.add
+                (local.get $x)
+                (i32.const 1)
+              )
+            )
+            ;; We do optimize to 1.
+            (drop
+              (i32.gt_u
+                (local.get $x)
+                (i32.const 1)
               )
             )
           )
