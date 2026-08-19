@@ -740,10 +740,10 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
     "remove-unused-brs"); // coalesce-locals opens opportunities
   addIfNoDWARFIssues(
     "remove-unused-names");           // remove-unused-brs opens opportunities
-  addIfNoDWARFIssues("merge-blocks"); // clean up remove-unused-brs new blocks
   if (options.optimizeLevel >= 3 || options.shrinkLevel >= 1) {
     addIfNoDWARFIssues("constraint-analysis");
   }
+  addIfNoDWARFIssues("merge-blocks"); // clean up new blocks from last passes
   // late propagation
   if (options.optimizeLevel >= 3 || options.shrinkLevel >= 2) {
     addIfNoDWARFIssues("precompute-propagate");
