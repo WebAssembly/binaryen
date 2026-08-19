@@ -1669,11 +1669,10 @@ BinaryenExpressionRef BinaryenPop(BinaryenModuleRef module, BinaryenType type) {
 }
 
 BinaryenExpressionRef BinaryenRefNull(BinaryenModuleRef module,
-                                      BinaryenType type) {
-  Type type_(type);
-  assert(type_.isNullable());
+                                      BinaryenHeapType heaptype) {
+  HeapType heaptype_(heaptype);
   return static_cast<Expression*>(
-    Builder(*(Module*)module).makeRefNull(type_.getHeapType()));
+    Builder(*(Module*)module).makeRefNull(heaptype_));
 }
 
 BinaryenExpressionRef BinaryenRefIsNull(BinaryenModuleRef module,
@@ -1747,7 +1746,8 @@ BinaryenExpressionRef BinaryenTableGrow(BinaryenModuleRef module,
                                         BinaryenExpressionRef delta) {
   if (value == nullptr) {
     auto tableType = (*(Module*)module).getTableOrNull(name)->type;
-    value = BinaryenRefNull(module, (BinaryenType)tableType.getID());
+    value = BinaryenRefNull(module,
+                            (BinaryenHeapType)tableType.getHeapType().getID());
   }
   return static_cast<Expression*>(
     Builder(*(Module*)module)
