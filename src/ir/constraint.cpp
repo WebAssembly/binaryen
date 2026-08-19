@@ -48,7 +48,8 @@ std::optional<Span<IU64>> Constraint::makeSpan() const {
         // Less than the lowest possible number is an empty span.
         return Span<IU64>::empty();
       } else {
-        return Span<IU64>{std::numeric_limits<int64_t>::min(), c->getInteger() - 1};
+        return Span<IU64>{std::numeric_limits<int64_t>::min(),
+                          c->getInteger() - 1};
       }
       break;
     case LtU:
@@ -69,7 +70,8 @@ std::optional<Span<IU64>> Constraint::makeSpan() const {
         // Greater than the highest possible number is an empty span.
         return Span<IU64>::empty();
       } else {
-        return Span<IU64>{c->getInteger() + 1, std::numeric_limits<int64_t>::max};
+        return Span<IU64>{c->getInteger() + 1,
+                          std::numeric_limits<int64_t>::max};
       }
       break;
     case GtU:
@@ -77,7 +79,8 @@ std::optional<Span<IU64>> Constraint::makeSpan() const {
         // Greater than the highest possible number is an empty span.
         return Span<IU64>::empty();
       } else {
-        return Span<IU64>{c->getUnsigned() + 1, std::numeric_limits<uint64_t>::max};
+        return Span<IU64>{c->getUnsigned() + 1,
+                          std::numeric_limits<uint64_t>::max};
       }
       break;
     case GeS:
@@ -85,7 +88,8 @@ std::optional<Span<IU64>> Constraint::makeSpan() const {
     case GeU:
       return Span<IU64>{c->getUnsigned(), std::numeric_limits<uint64_t>::max()};
 
-    default: {}
+    default: {
+    }
   }
 
   return {};
