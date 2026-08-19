@@ -15,6 +15,8 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
+- Reject non-natural alignment for atomic memory operations at parse time (#8962)
+
 v132
 ----
 

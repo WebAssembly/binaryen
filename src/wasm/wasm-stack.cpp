@@ -608,14 +608,22 @@ void BinaryInstWriter::visitAtomicWait(AtomicWait* curr) {
   switch (curr->expectedType.getBasic()) {
     case Type::i32: {
       o << static_cast<int8_t>(BinaryConsts::I32AtomicWait);
-      emitMemoryAccess(
-        4, 4, curr->offset, curr->memory, MemoryOrder::SeqCst, /*isRMW=*/false);
+      emitMemoryAccess(4,
+                       4,
+                       curr->offset,
+                       curr->memory,
+                       MemoryOrder::SeqCst,
+                       /*isRMW=*/false);
       break;
     }
     case Type::i64: {
       o << static_cast<int8_t>(BinaryConsts::I64AtomicWait);
-      emitMemoryAccess(
-        8, 8, curr->offset, curr->memory, MemoryOrder::SeqCst, /*isRMW=*/false);
+      emitMemoryAccess(8,
+                       8,
+                       curr->offset,
+                       curr->memory,
+                       MemoryOrder::SeqCst,
+                       /*isRMW=*/false);
       break;
     }
     default:
@@ -626,8 +634,12 @@ void BinaryInstWriter::visitAtomicWait(AtomicWait* curr) {
 void BinaryInstWriter::visitAtomicNotify(AtomicNotify* curr) {
   o << static_cast<int8_t>(BinaryConsts::AtomicPrefix)
     << static_cast<int8_t>(BinaryConsts::AtomicNotify);
-  emitMemoryAccess(
-    4, 4, curr->offset, curr->memory, MemoryOrder::SeqCst, /*isRMW=*/false);
+  emitMemoryAccess(4,
+                   4,
+                   curr->offset,
+                   curr->memory,
+                   MemoryOrder::SeqCst,
+                   /*isRMW=*/false);
 }
 
 void BinaryInstWriter::visitAtomicFence(AtomicFence* curr) {

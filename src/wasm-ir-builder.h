@@ -155,20 +155,33 @@ public:
                     Name mem);
   Result<> makeStore(
     unsigned bytes, Address offset, unsigned align, Type type, Name mem);
-  Result<> makeAtomicLoad(
-    unsigned bytes, Address offset, Type type, Name mem, MemoryOrder order);
-  Result<> makeAtomicStore(
-    unsigned bytes, Address offset, Type type, Name mem, MemoryOrder order);
+  Result<> makeAtomicLoad(unsigned bytes,
+                          Address offset,
+                          Address align,
+                          Type type,
+                          Name mem,
+                          MemoryOrder order);
+  Result<> makeAtomicStore(unsigned bytes,
+                           Address offset,
+                           Address align,
+                           Type type,
+                           Name mem,
+                           MemoryOrder order);
   Result<> makeAtomicRMW(AtomicRMWOp op,
                          unsigned bytes,
                          Address offset,
+                         Address align,
                          Type type,
                          Name mem,
                          MemoryOrder order);
-  Result<> makeAtomicCmpxchg(
-    unsigned bytes, Address offset, Type type, Name mem, MemoryOrder order);
-  Result<> makeAtomicWait(Type type, Address offset, Name mem);
-  Result<> makeAtomicNotify(Address offset, Name mem);
+  Result<> makeAtomicCmpxchg(unsigned bytes,
+                             Address offset,
+                             Address align,
+                             Type type,
+                             Name mem,
+                             MemoryOrder order);
+  Result<> makeAtomicWait(Type type, Address offset, Address align, Name mem);
+  Result<> makeAtomicNotify(Address offset, Address align, Name mem);
   Result<> makeAtomicFence(MemoryOrder order);
   Result<> makePause();
   Result<> makeSIMDExtract(SIMDExtractOp op, uint8_t lane);

@@ -92,6 +92,13 @@ Result<> validateTypeAnnotation(HeapType type, Expression* child) {
   return validateTypeAnnotation(Type(type, Nullable), child);
 }
 
+Result<> requireNaturalAtomicAlign(Address align, Address natural) {
+  if (align != natural) {
+    return Err{"atomic accesses must have natural alignment"};
+  }
+  return Ok{};
+}
+
 } // anonymous namespace
 
 Result<Index> IRBuilder::addScratchLocal(Type type) {
@@ -1634,8 +1641,13 @@ Result<> IRBuilder::makeStore(
   return Ok{};
 }
 
-Result<> IRBuilder::makeAtomicLoad(
-  unsigned bytes, Address offset, Type type, Name mem, MemoryOrder order) {
+Result<> IRBuilder::makeAtomicLoad(unsigned bytes,
+                                   Address offset,
+                                   Address align,
+                                   Type type,
+                                   Name mem,
+                                   MemoryOrder order) {
+  CHECK_ERR(requireNaturalAtomicAlign(align, bytes));
   Load curr;
   curr.memory = mem;
   CHECK_ERR(visitLoad(&curr));
@@ -1643,8 +1655,13 @@ Result<> IRBuilder::makeAtomicLoad(
   return Ok{};
 }
 
-Result<> IRBuilder::makeAtomicStore(
-  unsigned bytes, Address offset, Type type, Name mem, MemoryOrder order) {
+Result<> IRBuilder::makeAtomicStore(unsigned bytes,
+                                    Address offset,
+                                    Address align,
+                                    Type type,
+                                    Name mem,
+                                    MemoryOrder order) {
+  CHECK_ERR(requireNaturalAtomicAlign(align, bytes));
   Store curr;
   curr.memory = mem;
   curr.valueType = type;
@@ -1657,9 +1674,11 @@ Result<> IRBuilder::makeAtomicStore(
 Result<> IRBuilder::makeAtomicRMW(AtomicRMWOp op,
                                   unsigned bytes,
                                   Address offset,
+                                  Address align,
                                   Type type,
                                   Name mem,
                                   MemoryOrder order) {
+  CHECK_ERR(requireNaturalAtomicAlign(align, bytes));
   AtomicRMW curr;
   curr.memory = mem;
   curr.type = type;
@@ -1669,8 +1688,13 @@ Result<> IRBuilder::makeAtomicRMW(AtomicRMWOp op,
   return Ok{};
 }
 
-Result<> IRBuilder::makeAtomicCmpxchg(
-  unsigned bytes, Address offset, Type type, Name mem, MemoryOrder order) {
+Result<> IRBuilder::makeAtomicCmpxchg(unsigned bytes,
+                                      Address offset,
+                                      Address align,
+                                      Type type,
+                                      Name mem,
+                                      MemoryOrder order) {
+  CHECK_ERR(requireNaturalAtomicAlign(align, bytes));
   AtomicCmpxchg curr;
   curr.memory = mem;
   CHECK_ERR(ChildPopper{*this}.visitAtomicCmpxchg(&curr, type));
@@ -1685,7 +1709,9 @@ Result<> IRBuilder::makeAtomicCmpxchg(
   return Ok{};
 }
 
-Result<> IRBuilder::makeAtomicWait(Type type, Address offset, Name mem) {
+Result<>
+IRBuilder::makeAtomicWait(Type type, Address offset, Address align, Name mem) {
+  CHECK_ERR(requireNaturalAtomicAlign(align, type == Type::i32 ? 4 : 8));
   AtomicWait curr;
   curr.memory = mem;
   curr.expectedType = type;
@@ -1695,7 +1721,8 @@ Result<> IRBuilder::makeAtomicWait(Type type, Address offset, Name mem) {
   return Ok{};
 }
 
-Result<> IRBuilder::makeAtomicNotify(Address offset, Name mem) {
+Result<> IRBuilder::makeAtomicNotify(Address offset, Address align, Name mem) {
+  CHECK_ERR(requireNaturalAtomicAlign(align, 4));
   AtomicNotify curr;
   curr.memory = mem;
   CHECK_ERR(visitAtomicNotify(&curr));
