@@ -1265,6 +1265,11 @@ Type BrOn::getSentType() {
       if (ref->type == Type::unreachable) {
         return Type::unreachable;
       }
+      if (desc && desc->type.isNull()) {
+        // Cast will never be executed and the branch will not be taken.
+        // Model this with an uninhabitable sent type.
+        return desc->type.with(NonNullable);
+      }
       if (castType.isNullable()) {
         return ref->type.with(NonNullable);
       } else {

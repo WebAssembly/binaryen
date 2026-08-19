@@ -27,6 +27,8 @@
 
 #include "ir/abstract.h"
 #include "support/inplace_vector.h"
+#include "support/iu64.h"
+#include "support/span.h"
 #include "support/utilities.h"
 #include "wasm.h"
 
@@ -63,6 +65,10 @@ struct Constraint {
   Constraint negate() const {
     return Constraint{Abstract::negateRelational(op), term};
   }
+
+  // Convert the constraint into a constant span, if possible. For example,
+  // "< 100 (unsigned)" turns into the span [0, 100].
+  std::optional<Span<IU64>> getSpan() const;
 };
 
 // We limit constraints to a low number to ensure good performance even with
