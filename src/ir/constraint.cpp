@@ -151,6 +151,22 @@ Result provesConstantPair(Abstract::Op aOp,
     }
   }
 
+  // If we can represent both as spans, we can calculate that way.
+  if (auto aSpan = Constraint{aOp, aConstant}.getSpan()) {
+    if (auto bSpan = Constraint{bOp, bConstant}.getSpan()) {
+      if (bSpan->contains(*aSpan)) {
+        // b's values contains a's, e.g., b = { 0 < x < 10 } and
+        // a = { 3 < x < 7 }, so a => b.
+        return True;
+      }
+      if (!bSpan->hasOverlap(*aSpan)) {
+        // There is no overlap at all, e.g., { 0 < x < 10 } vs { 20 < x < 30 },
+        // both cannot be true and each proves the other false.
+        return False;
+      }
+    }
+  }
+
   if (!recursing) {
     // The flipped operation may tell us something:  y ==> !x  implies
     // x ==> y  is false (because if not, then x would prove y, and y would
