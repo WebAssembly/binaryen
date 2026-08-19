@@ -925,6 +925,8 @@ struct Unsubtyping : Pass, Noter<Unsubtyping> {
     types.setDescriptor(described, descriptor);
 
     // Complete the descriptor squares above and below the new descriptor edge.
+    // The four cases here correspond to the four potentially missing corners of
+    // the square.
     if (auto super = types.getSupertype(described)) {
       completeDescriptorSquare(
         super, types.getDescriptor(*super), described, descriptor);
