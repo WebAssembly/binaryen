@@ -652,8 +652,7 @@ TEST(ConstraintTest, TestIncrement) {
   map.set(0, {LeU, {Literal::makeSignedMax(Type::i32)}});
   map.set(0, &add);
   auto one = Literal::makeFromInt32(1, Type::i32);
-  check(map.get(0), {LeU, {Literal::makeSignedMax(Type::i32).add(one)}});
-abort();
+  EXPECT_EQ(map.get(0), (AndedConstraintSet{{LeU, {Literal::makeSignedMax(Type::i32).add(one)}}, gtu0}));
 
   // Multiple constraints at once:
   // $0 >= 10 && $0 < 20, $0++  =>  $0 > 10 && $0 <= 20
