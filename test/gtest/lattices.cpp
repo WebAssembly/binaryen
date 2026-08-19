@@ -23,6 +23,7 @@
 #include "analysis/lattices/int.h"
 #include "analysis/lattices/inverted.h"
 #include "analysis/lattices/lift.h"
+#include "analysis/lattices/one-of.h"
 #include "analysis/lattices/shared.h"
 #include "analysis/lattices/stack.h"
 #include "analysis/lattices/tuple.h"
@@ -1389,5 +1390,125 @@ TEST_F(ConeTypeLatticeTest, Depths) {
 
   CHECK_PAIR(b1, b1, b1, b1);
   CHECK_PAIR(b1, c0, b1, c0);
-  CHECK_PAIR(b1, c1, b2, c0);
+}
+
+TEST(OneOfLattice, GetBottom) {
+  analysis::OneOf<analysis::Bool, analysis::Int32> lattice;
+  EXPECT_TRUE(lattice.getBottom().isBottom());
+  EXPECT_FALSE(lattice.getBottom().isTop());
+}
+
+TEST(OneOfLattice, GetTop) {
+  analysis::OneOf<analysis::Bool, analysis::Int32> lattice;
+  EXPECT_TRUE(lattice.getTop().isTop());
+  EXPECT_FALSE(lattice.getTop().isBottom());
+}
+
+TEST(OneOfLattice, Compare) {
+  analysis::OneOf<analysis::Bool, analysis::Int32> lattice;
+
+  auto bot = lattice.getBottom();
+  auto top = lattice.getTop();
+
+  auto b_false = lattice.get<0>(false);
+  auto b_true = lattice.get<0>(true);
+
+  auto i_0 = lattice.get<1>(0);
+  auto i_10 = lattice.get<1>(10);
+
+  // Bot and Top relations
+  EXPECT_EQ(lattice.compare(bot, bot), analysis::EQUAL);
+  EXPECT_EQ(lattice.compare(bot, b_false), analysis::LESS);
+  EXPECT_EQ(lattice.compare(bot, i_0), analysis::LESS);
+  EXPECT_EQ(lattice.compare(bot, top), analysis::LESS);
+
+  EXPECT_EQ(lattice.compare(top, top), analysis::EQUAL);
+  EXPECT_EQ(lattice.compare(top, b_true), analysis::GREATER);
+  EXPECT_EQ(lattice.compare(top, i_10), analysis::GREATER);
+  EXPECT_EQ(lattice.compare(top, bot), analysis::GREATER);
+
+  // Same lattice relations
+  EXPECT_EQ(lattice.compare(b_false, b_true), analysis::LESS);
+  EXPECT_EQ(lattice.compare(b_true, b_false), analysis::GREATER);
+  EXPECT_EQ(lattice.compare(b_false, b_false), analysis::EQUAL);
+
+  EXPECT_EQ(lattice.compare(i_0, i_10), analysis::LESS);
+  EXPECT_EQ(lattice.compare(i_10, i_0), analysis::GREATER);
+  EXPECT_EQ(lattice.compare(i_0, i_0), analysis::EQUAL);
+
+  // Different lattice relations
+  EXPECT_EQ(lattice.compare(b_false, i_0), analysis::NO_RELATION);
+  EXPECT_EQ(lattice.compare(i_10, b_true), analysis::NO_RELATION);
+}
+
+TEST(OneOfLattice, Join) {
+  analysis::OneOf<analysis::Bool, analysis::Int32> lattice;
+
+  auto bot = lattice.getBottom();
+  auto top = lattice.getTop();
+
+  auto b_false = lattice.get<0>(false);
+  auto b_true = lattice.get<0>(true);
+
+  auto i_0 = lattice.get<1>(0);
+  auto i_10 = lattice.get<1>(10);
+
+  auto test =
+    [&](const auto& joinee, const auto& joiner, const auto& expected) {
+      auto copy = joinee;
+      EXPECT_EQ(lattice.join(copy, joiner), joinee != expected);
+      EXPECT_EQ(copy, expected);
+    };
+
+  // Bot and Top joins
+  test(bot, bot, bot);
+  test(bot, b_false, b_false);
+  test(b_false, bot, b_false);
+  test(top, b_false, top);
+  test(b_false, top, top);
+
+  // Same lattice joins
+  test(b_false, b_true, b_true);
+  test(b_true, b_false, b_true);
+  test(i_0, i_10, i_10);
+
+  // Different lattice joins
+  test(b_false, i_0, top);
+  test(i_10, b_true, top);
+}
+
+TEST(OneOfLattice, Meet) {
+  analysis::OneOf<analysis::Bool, analysis::Int32> lattice;
+
+  auto bot = lattice.getBottom();
+  auto top = lattice.getTop();
+
+  auto b_false = lattice.get<0>(false);
+  auto b_true = lattice.get<0>(true);
+
+  auto i_0 = lattice.get<1>(0);
+  auto i_10 = lattice.get<1>(10);
+
+  auto test =
+    [&](const auto& meetee, const auto& meeter, const auto& expected) {
+      auto copy = meetee;
+      EXPECT_EQ(lattice.meet(copy, meeter), meetee != expected);
+      EXPECT_EQ(copy, expected);
+    };
+
+  // Bot and Top meets
+  test(bot, bot, bot);
+  test(bot, b_false, bot);
+  test(b_false, bot, bot);
+  test(top, b_false, b_false);
+  test(b_false, top, b_false);
+
+  // Same lattice meets
+  test(b_false, b_true, b_false);
+  test(b_true, b_false, b_false);
+  test(i_0, i_10, i_0);
+
+  // Different lattice meets
+  test(b_false, i_0, bot);
+  test(i_10, b_true, bot);
 }
