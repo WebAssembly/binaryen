@@ -24,37 +24,37 @@
 
 using namespace wasm;
 
-TEST(I65Test, DefaultConstruct) {
-  I65 x;
+TEST(IU64Test, DefaultConstruct) {
+  IU64 x;
   EXPECT_EQ(x.value, 0u);
   EXPECT_FALSE(x.negative);
-  EXPECT_EQ(x, I65(0));
+  EXPECT_EQ(x, IU64(0));
 }
 
-TEST(I65Test, ConstructFromUnsigned32) {
+TEST(IU64Test, ConstructFromUnsigned32) {
   uint32_t zero = 0;
   uint32_t one = 1;
   uint32_t mid = 12345678;
   uint32_t maxU32 = std::numeric_limits<uint32_t>::max();
 
-  I65 iZero(zero);
+  IU64 iZero(zero);
   EXPECT_EQ(iZero.value, 0u);
   EXPECT_FALSE(iZero.negative);
 
-  I65 iOne(one);
+  IU64 iOne(one);
   EXPECT_EQ(iOne.value, 1u);
   EXPECT_FALSE(iOne.negative);
 
-  I65 iMid(mid);
+  IU64 iMid(mid);
   EXPECT_EQ(iMid.value, mid);
   EXPECT_FALSE(iMid.negative);
 
-  I65 iMax(maxU32);
+  IU64 iMax(maxU32);
   EXPECT_EQ(iMax.value, uint64_t(maxU32));
   EXPECT_FALSE(iMax.negative);
 }
 
-TEST(I65Test, ConstructFromSigned32) {
+TEST(IU64Test, ConstructFromSigned32) {
   int32_t zero = 0;
   int32_t one = 1;
   int32_t maxI32 = std::numeric_limits<int32_t>::max();
@@ -62,32 +62,32 @@ TEST(I65Test, ConstructFromSigned32) {
   int32_t negMid = -12345678;
   int32_t minI32 = std::numeric_limits<int32_t>::min();
 
-  I65 iZero(zero);
+  IU64 iZero(zero);
   EXPECT_EQ(iZero.value, 0u);
   EXPECT_FALSE(iZero.negative);
 
-  I65 iOne(one);
+  IU64 iOne(one);
   EXPECT_EQ(iOne.value, 1u);
   EXPECT_FALSE(iOne.negative);
 
-  I65 iMax(maxI32);
+  IU64 iMax(maxI32);
   EXPECT_EQ(iMax.value, uint64_t(maxI32));
   EXPECT_FALSE(iMax.negative);
 
-  I65 iNegOne(negOne);
+  IU64 iNegOne(negOne);
   EXPECT_EQ(iNegOne.value, 1u);
   EXPECT_TRUE(iNegOne.negative);
 
-  I65 iNegMid(negMid);
+  IU64 iNegMid(negMid);
   EXPECT_EQ(iNegMid.value, 12345678u);
   EXPECT_TRUE(iNegMid.negative);
 
-  I65 iMin(minI32);
+  IU64 iMin(minI32);
   EXPECT_EQ(iMin.value, 2147483648ULL);
   EXPECT_TRUE(iMin.negative);
 }
 
-TEST(I65Test, ConstructFromUnsigned64) {
+TEST(IU64Test, ConstructFromUnsigned64) {
   uint64_t zero = 0;
   uint64_t one = 1;
   uint64_t maxU32 = std::numeric_limits<uint32_t>::max();
@@ -95,32 +95,32 @@ TEST(I65Test, ConstructFromUnsigned64) {
   uint64_t highBitOnly = uint64_t(1) << 63;
   uint64_t maxU64 = std::numeric_limits<uint64_t>::max();
 
-  I65 iZero(zero);
+  IU64 iZero(zero);
   EXPECT_EQ(iZero.value, 0u);
   EXPECT_FALSE(iZero.negative);
 
-  I65 iOne(one);
+  IU64 iOne(one);
   EXPECT_EQ(iOne.value, 1u);
   EXPECT_FALSE(iOne.negative);
 
-  I65 iMaxU32(maxU32);
+  IU64 iMaxU32(maxU32);
   EXPECT_EQ(iMaxU32.value, maxU32);
   EXPECT_FALSE(iMaxU32.negative);
 
-  I65 iMaxI64(maxI64);
+  IU64 iMaxI64(maxI64);
   EXPECT_EQ(iMaxI64.value, maxI64);
   EXPECT_FALSE(iMaxI64.negative);
 
-  I65 iHighBit(highBitOnly);
+  IU64 iHighBit(highBitOnly);
   EXPECT_EQ(iHighBit.value, highBitOnly);
   EXPECT_FALSE(iHighBit.negative);
 
-  I65 iMaxU64(maxU64);
+  IU64 iMaxU64(maxU64);
   EXPECT_EQ(iMaxU64.value, maxU64);
   EXPECT_FALSE(iMaxU64.negative);
 }
 
-TEST(I65Test, ConstructFromSigned64) {
+TEST(IU64Test, ConstructFromSigned64) {
   int64_t zero = 0;
   int64_t one = 1;
   int64_t maxI64 = std::numeric_limits<int64_t>::max();
@@ -128,71 +128,71 @@ TEST(I65Test, ConstructFromSigned64) {
   int64_t minI64 = std::numeric_limits<int64_t>::min();
   int64_t minI64PlusOne = std::numeric_limits<int64_t>::min() + 1;
 
-  I65 iZero(zero);
+  IU64 iZero(zero);
   EXPECT_EQ(iZero.value, 0u);
   EXPECT_FALSE(iZero.negative);
 
-  I65 iOne(one);
+  IU64 iOne(one);
   EXPECT_EQ(iOne.value, 1u);
   EXPECT_FALSE(iOne.negative);
 
-  I65 iMax(maxI64);
+  IU64 iMax(maxI64);
   EXPECT_EQ(iMax.value, uint64_t(maxI64));
   EXPECT_FALSE(iMax.negative);
 
-  I65 iNegOne(negOne);
+  IU64 iNegOne(negOne);
   EXPECT_EQ(iNegOne.value, 1u);
   EXPECT_TRUE(iNegOne.negative);
 
-  I65 iMin(minI64);
+  IU64 iMin(minI64);
   EXPECT_EQ(iMin.value, uint64_t(1) << 63);
   EXPECT_TRUE(iMin.negative);
 
-  I65 iMinPlusOne(minI64PlusOne);
+  IU64 iMinPlusOne(minI64PlusOne);
   EXPECT_EQ(iMinPlusOne.value, uint64_t(std::numeric_limits<int64_t>::max()));
   EXPECT_TRUE(iMinPlusOne.negative);
 }
 
-TEST(I65Test, EqualityAndInequality) {
-  EXPECT_EQ(I65(int32_t(0)), I65(uint32_t(0)));
-  EXPECT_EQ(I65(int32_t(0)), I65(int64_t(0)));
-  EXPECT_EQ(I65(int32_t(0)), I65(uint64_t(0)));
+TEST(IU64Test, EqualityAndInequality) {
+  EXPECT_EQ(IU64(int32_t(0)), IU64(uint32_t(0)));
+  EXPECT_EQ(IU64(int32_t(0)), IU64(int64_t(0)));
+  EXPECT_EQ(IU64(int32_t(0)), IU64(uint64_t(0)));
 
-  EXPECT_EQ(I65(int32_t(42)), I65(uint32_t(42)));
-  EXPECT_EQ(I65(int32_t(42)), I65(int64_t(42)));
-  EXPECT_EQ(I65(int32_t(42)), I65(uint64_t(42)));
+  EXPECT_EQ(IU64(int32_t(42)), IU64(uint32_t(42)));
+  EXPECT_EQ(IU64(int32_t(42)), IU64(int64_t(42)));
+  EXPECT_EQ(IU64(int32_t(42)), IU64(uint64_t(42)));
 
-  EXPECT_EQ(I65(int32_t(-42)), I65(int64_t(-42)));
-  EXPECT_EQ(I65(std::numeric_limits<int32_t>::min()),
-            I65(int64_t(std::numeric_limits<int32_t>::min())));
+  EXPECT_EQ(IU64(int32_t(-42)), IU64(int64_t(-42)));
+  EXPECT_EQ(IU64(std::numeric_limits<int32_t>::min()),
+            IU64(int64_t(std::numeric_limits<int32_t>::min())));
 
-  EXPECT_NE(I65(int32_t(1)), I65(int32_t(-1)));
-  EXPECT_NE(I65(uint64_t(0xffffffffffffffffULL)), I65(int64_t(-1)));
-  EXPECT_NE(I65(std::numeric_limits<int64_t>::min()), I65(uint64_t(1) << 63));
+  EXPECT_NE(IU64(int32_t(1)), IU64(int32_t(-1)));
+  EXPECT_NE(IU64(uint64_t(0xffffffffffffffffULL)), IU64(int64_t(-1)));
+  EXPECT_NE(IU64(std::numeric_limits<int64_t>::min()), IU64(uint64_t(1) << 63));
 }
 
-TEST(I65Test, TotalOrdering) {
-  std::vector<I65> sortedValues = {
-    I65(std::numeric_limits<int64_t>::min()),
-    I65(std::numeric_limits<int64_t>::min() + 1),
-    I65(int64_t(-0x100000000LL)),
-    I65(std::numeric_limits<int32_t>::min()),
-    I65(int32_t(-12345)),
-    I65(int64_t(-2)),
-    I65(int64_t(-1)),
-    I65(0),
-    I65(1),
-    I65(2),
-    I65(int32_t(12345)),
-    I65(std::numeric_limits<int32_t>::max()),
-    I65(uint64_t(std::numeric_limits<int32_t>::max()) + 1),
-    I65(std::numeric_limits<uint32_t>::max()),
-    I65(uint64_t(std::numeric_limits<uint32_t>::max()) + 1),
-    I65(std::numeric_limits<int64_t>::max() - 1),
-    I65(std::numeric_limits<int64_t>::max()),
-    I65(uint64_t(std::numeric_limits<int64_t>::max()) + 1),
-    I65(std::numeric_limits<uint64_t>::max() - 1),
-    I65(std::numeric_limits<uint64_t>::max()),
+TEST(IU64Test, TotalOrdering) {
+  std::vector<IU64> sortedValues = {
+    IU64(std::numeric_limits<int64_t>::min()),
+    IU64(std::numeric_limits<int64_t>::min() + 1),
+    IU64(int64_t(-0x100000000LL)),
+    IU64(std::numeric_limits<int32_t>::min()),
+    IU64(int32_t(-12345)),
+    IU64(int64_t(-2)),
+    IU64(int64_t(-1)),
+    IU64(0),
+    IU64(1),
+    IU64(2),
+    IU64(int32_t(12345)),
+    IU64(std::numeric_limits<int32_t>::max()),
+    IU64(uint64_t(std::numeric_limits<int32_t>::max()) + 1),
+    IU64(std::numeric_limits<uint32_t>::max()),
+    IU64(uint64_t(std::numeric_limits<uint32_t>::max()) + 1),
+    IU64(std::numeric_limits<int64_t>::max() - 1),
+    IU64(std::numeric_limits<int64_t>::max()),
+    IU64(uint64_t(std::numeric_limits<int64_t>::max()) + 1),
+    IU64(std::numeric_limits<uint64_t>::max() - 1),
+    IU64(std::numeric_limits<uint64_t>::max()),
   };
 
   for (size_t i = 0; i < sortedValues.size(); ++i) {
@@ -228,31 +228,31 @@ TEST(I65Test, TotalOrdering) {
   }
 }
 
-TEST(I65Test, NumericLimits) {
-  EXPECT_TRUE(std::numeric_limits<I65>::is_specialized);
-  EXPECT_TRUE(std::numeric_limits<I65>::is_signed);
-  EXPECT_TRUE(std::numeric_limits<I65>::is_integer);
+TEST(IU64Test, NumericLimits) {
+  EXPECT_TRUE(std::numeric_limits<IU64>::is_specialized);
+  EXPECT_TRUE(std::numeric_limits<IU64>::is_signed);
+  EXPECT_TRUE(std::numeric_limits<IU64>::is_integer);
 
-  EXPECT_EQ(std::numeric_limits<I65>::min(),
-            I65(std::numeric_limits<int64_t>::min()));
-  EXPECT_EQ(std::numeric_limits<I65>::lowest(),
-            I65(std::numeric_limits<int64_t>::min()));
-  EXPECT_EQ(std::numeric_limits<I65>::max(),
-            I65(std::numeric_limits<uint64_t>::max()));
+  EXPECT_EQ(std::numeric_limits<IU64>::min(),
+            IU64(std::numeric_limits<int64_t>::min()));
+  EXPECT_EQ(std::numeric_limits<IU64>::lowest(),
+            IU64(std::numeric_limits<int64_t>::min()));
+  EXPECT_EQ(std::numeric_limits<IU64>::max(),
+            IU64(std::numeric_limits<uint64_t>::max()));
 }
 
-TEST(I65Test, StreamOutput) {
-  auto toString = [](const I65& x) {
+TEST(IU64Test, StreamOutput) {
+  auto toString = [](const IU64& x) {
     std::ostringstream ss;
     ss << x;
     return ss.str();
   };
 
-  EXPECT_EQ(toString(I65(0)), "0");
-  EXPECT_EQ(toString(I65(42)), "42");
-  EXPECT_EQ(toString(I65(-42)), "-42");
-  EXPECT_EQ(toString(I65(std::numeric_limits<int64_t>::min())),
+  EXPECT_EQ(toString(IU64(0)), "0");
+  EXPECT_EQ(toString(IU64(42)), "42");
+  EXPECT_EQ(toString(IU64(-42)), "-42");
+  EXPECT_EQ(toString(IU64(std::numeric_limits<int64_t>::min())),
             "-9223372036854775808");
-  EXPECT_EQ(toString(I65(std::numeric_limits<uint64_t>::max())),
+  EXPECT_EQ(toString(IU64(std::numeric_limits<uint64_t>::max())),
             "18446744073709551615");
 }

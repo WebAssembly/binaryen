@@ -23,25 +23,25 @@
 
 namespace wasm {
 
-// A 65-bit integer, capable of representing numbers in the range
+// An integer capable of representing numbers in the combined range of 32 and
+// 64-bit integers, both signed and unsigned. That is, in the range
 //
 //  std::numeric_limits<int64_t>::min() .. std::numeric_limits<uint64_t>::max()
 //
-// This allows an I65 to represent any 32 or 64-bit number, signed *or*
-// unsigned.
-struct I65 {
+// This is basically an i64 combined with a u64 in terms of range, hence "IU64".
+struct IU64 {
   // A 64-bit payload with an extra 65th sign bit.
   uint64_t value = 0;
   bool negative = false;
 
-  constexpr I65() = default;
+  constexpr IU64() = default;
 
   // Unsigned values are simple.
-  constexpr I65(uint32_t x) : value(x) {}
-  constexpr I65(uint64_t x) : value(x) {}
+  constexpr IU64(uint32_t x) : value(x) {}
+  constexpr IU64(uint64_t x) : value(x) {}
 
   // Signed values need to be checked for being negative.
-  constexpr I65(int32_t x) {
+  constexpr IU64(int32_t x) {
     if (x >= 0) {
       value = x;
     } else {
@@ -49,7 +49,7 @@ struct I65 {
       value = -int64_t(x);
     }
   }
-  constexpr I65(int64_t x) {
+  constexpr IU64(int64_t x) {
     if (x >= 0) {
       value = x;
     } else {
@@ -64,14 +64,14 @@ struct I65 {
     }
   }
 
-  constexpr bool operator==(const I65& other) const {
+  constexpr bool operator==(const IU64& other) const {
     return value == other.value && negative == other.negative;
   }
-  constexpr bool operator!=(const I65& other) const {
+  constexpr bool operator!=(const IU64& other) const {
     return !(*this == other);
   }
 
-  constexpr bool operator<(const I65& other) const {
+  constexpr bool operator<(const IU64& other) const {
     if (negative) {
       if (other.negative) {
         // Both negative; we are smaller if absolute value is larger.
@@ -90,14 +90,14 @@ struct I65 {
       }
     }
   }
-  constexpr bool operator<=(const I65& other) const {
+  constexpr bool operator<=(const IU64& other) const {
     return *this < other || *this == other;
   }
-  constexpr bool operator>(const I65& other) const { return !(*this <= other); }
-  constexpr bool operator>=(const I65& other) const { return !(*this < other); }
+  constexpr bool operator>(const IU64& other) const { return !(*this <= other); }
+  constexpr bool operator>=(const IU64& other) const { return !(*this < other); }
 };
 
-inline std::ostream& operator<<(std::ostream& os, const I65& x) {
+inline std::ostream& operator<<(std::ostream& os, const IU64& x) {
   if (x.negative) {
     os << '-';
   }
@@ -108,7 +108,7 @@ inline std::ostream& operator<<(std::ostream& os, const I65& x) {
 
 namespace std {
 
-template<> class numeric_limits<wasm::I65> {
+template<> class numeric_limits<wasm::IU64> {
 public:
   static constexpr bool is_specialized = true;
   static constexpr bool is_signed = true;
@@ -134,12 +134,12 @@ public:
   static constexpr bool traps = false;
   static constexpr bool tinyness_before = false;
 
-  static constexpr wasm::I65 min() noexcept {
-    return wasm::I65(std::numeric_limits<int64_t>::min());
+  static constexpr wasm::IU64 min() noexcept {
+    return wasm::IU64(std::numeric_limits<int64_t>::min());
   }
-  static constexpr wasm::I65 lowest() noexcept { return min(); }
-  static constexpr wasm::I65 max() noexcept {
-    return wasm::I65(std::numeric_limits<uint64_t>::max());
+  static constexpr wasm::IU64 lowest() noexcept { return min(); }
+  static constexpr wasm::IU64 max() noexcept {
+    return wasm::IU64(std::numeric_limits<uint64_t>::max());
   }
 };
 
