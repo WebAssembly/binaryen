@@ -965,6 +965,15 @@ TEST(ConstraintTest, SpanOptimizations) {
   Constraint lts100{LtS, {Literal(int32_t(100))}};
   Constraint lts200{LtS, {Literal(int32_t(200))}};
   EXPECT_EQ(AndedConstraintSet{lts100}.proves(lts200), True);
+
+  // Mixing signed and unsigned works fine: x in [0, 100] (x <= 100 unsigned)
+  // proves x in [-MIN_INT, 200] (x < 200 signed) is true.
+  Constraint leu100{LtU, {Literal(int32_t(100))}};
+  EXPECT_EQ(AndedConstraintSet{leu100}.proves(lts200), True);
+
+  // Replacing 100 with 500, we can no longer prove anything.
+  Constraint leu500{LtU, {Literal(int32_t(500))}};
+  EXPECT_EQ(AndedConstraintSet{leu500}.proves(lts200), Unknown);
 }
 
 TEST(ConstraintTest, EmptySpanContradiction) {
