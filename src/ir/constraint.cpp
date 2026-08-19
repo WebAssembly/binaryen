@@ -31,14 +31,18 @@ std::optional<Span<IU64>> Constraint::getSpan() const {
     return {};
   }
 
+  auto minSigned = c->type == Type::i32 ? std::numeric_limits<int32_t>::min() : std::numeric_limits<int64_t>::min();
+  auto maxSigned = c->type == Type::i32 ? std::numeric_limits<int32_t>::max() : std::numeric_limits<int64_t>::max();
+  auto maxUnsigned = c->type == Type::i32 ? std::numeric_limits<uint32_t>::max() : std::numeric_limits<uint64_t>::max();
+
   switch (op) {
     case Eq: {
       auto x = c->getUnsigned();
-      if (x <= std::numeric_limits<int32_t>::max()) {
+      if (x <= uint64_(maxSigned)) {
         // This is in the range of both signed and unsigned values, so there is
         // no ambiguity. That is, we cannot convert the bit pattern
-        // 0xffffffffffffffff into a Span, as it might be either uint64_t(-1)
-        // or actually negative (but a bit pattern like 0x0000000000000001 is
+        // 0xffffffff into a Span, as it might be either uint32_t(-1)
+        // or actually negative (but a bit pattern like 0x00000001 is
         // always fine as it can only ever be "1").
         return Span<IU64>{x, x};
       }
@@ -46,11 +50,11 @@ std::optional<Span<IU64>> Constraint::getSpan() const {
     }
 
     case LtS:
-      if (c->getInteger() == std::numeric_limits<int64_t>::min()) {
+      if (c->getInteger() == minSigned) {
         // Less than the lowest possible number is an empty span.
         return Span<IU64>::empty();
       } else {
-        return Span<IU64>{std::numeric_limits<int64_t>::min(),
+        return Span<IU64>{minSigned,
                           c->getInteger() - 1};
       }
       break;
@@ -63,32 +67,32 @@ std::optional<Span<IU64>> Constraint::getSpan() const {
       }
       break;
     case LeS:
-      return Span<IU64>{std::numeric_limits<int64_t>::min(), c->getInteger()};
+      return Span<IU64>{minSigned, c->getInteger()};
     case LeU:
       return Span<IU64>{0, c->getUnsigned()};
 
     case GtS:
-      if (c->getInteger() == std::numeric_limits<int64_t>::max()) {
+      if (c->getInteger() == maxSigned) {
         // Greater than the highest possible number is an empty span.
         return Span<IU64>::empty();
       } else {
         return Span<IU64>{c->getInteger() + 1,
-                          std::numeric_limits<int64_t>::max()};
+                          maxSigned};
       }
       break;
     case GtU:
-      if (c->getUnsigned() == std::numeric_limits<uint64_t>::max()) {
+      if (c->getUnsigned() == maxUnsigned) {
         // Greater than the highest possible number is an empty span.
         return Span<IU64>::empty();
       } else {
         return Span<IU64>{c->getUnsigned() + 1,
-                          std::numeric_limits<uint64_t>::max()};
+                          maxUnsigned};
       }
       break;
     case GeS:
-      return Span<IU64>{c->getInteger(), std::numeric_limits<int64_t>::max()};
+      return Span<IU64>{c->getInteger(), maxSigned};
     case GeU:
-      return Span<IU64>{c->getUnsigned(), std::numeric_limits<uint64_t>::max()};
+      return Span<IU64>{c->getUnsigned(), maxUnsigned};
 
     default: {
     }
@@ -156,6 +160,15 @@ Result provesConstantPair(Abstract::Op aOp,
   // If we can represent both as spans, we can calculate that way.
   if (auto aSpan = Constraint{aOp, aConstant}.getSpan()) {
     if (auto bSpan = Constraint{bOp, bConstant}.getSpan()) {
+      if (aSpan->isEmpty()) {
+        // An empty span implies a contradiction (e.g. x > MAX_INT), as it means
+        // no possible number can apply. And contradictions prove anything.
+        return True;
+      }
+      if (bSpan->isEmpty()) {
+        // Nothing that is not a contradiction can prove a contradiction.
+        return False;
+      }
       if (bSpan->contains(*aSpan)) {
         // b's values contains a's, e.g., b = { 0 < x < 10 } and
         // a = { 3 < x < 7 }, so a => b.
