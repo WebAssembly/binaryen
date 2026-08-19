@@ -22,8 +22,6 @@
 #include <iostream>
 #include <limits>
 
-#include "support/i65.h"
-
 namespace wasm {
 
 // A span of values.

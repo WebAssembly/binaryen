@@ -19,7 +19,7 @@
 #include <sstream>
 #include <vector>
 
-#include "support/i65.h"
+#include "support/iu64.h"
 #include "gtest/gtest.h"
 
 using namespace wasm;

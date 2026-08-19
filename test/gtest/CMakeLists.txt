@@ -17,7 +17,7 @@ set(unittest_SOURCES
   disjoint_sets.cpp
   graph.cpp
   int128.cpp
-  i65.cpp
+  iu64.cpp
   leaves.cpp
   glbs.cpp
   inplace_vector.cpp
