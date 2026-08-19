@@ -38,7 +38,7 @@ std::optional<Span<IU64>> Constraint::getSpan() const {
   switch (op) {
     case Eq: {
       auto x = c->getUnsigned();
-      if (x <= uint64_(maxSigned)) {
+      if (x <= uint64_t(maxSigned)) {
         // This is in the range of both signed and unsigned values, so there is
         // no ambiguity. That is, we cannot convert the bit pattern
         // 0xffffffff into a Span, as it might be either uint32_t(-1)
