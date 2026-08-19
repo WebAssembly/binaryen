@@ -73,23 +73,24 @@ std::optional<Span<IU64>> Constraint::makeSpan() const {
       }
       break;
     case GtU:
-      if (c->getInteger() == 0) {
+      if (c->getInteger() == std::numeric_limits<uint64_t>::max()) {
         // Greater than the highest possible number is an empty span.
         return Span<IU64>::empty();
       } else {
-        return Span<IU64>{0, c->getUnsigned() - 1};
+        return Span<IU64>{c->getUnsigned() + 1, std::numeric_limits<uint64_t>::max};
       }
       break;
     case GeS:
-      return Span<IU64>{std::numeric_limits<int64_t>::min(), c->getInteger()};
+      return Span<IU64>{c->getInteger(), std::numeric_limits<int64_t>::max()};
     case GeU:
-      return Span<IU64>{0, c->getUnsigned()};
+      return Span<IU64>{c->getUnsigned(), std::numeric_limits<uint64_t>::max()};
 
     default: {}
   }
 
   return {};
 }
+
 namespace {
 
 Result TrueFalse(bool x) { return x ? True : False; }
