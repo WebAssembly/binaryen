@@ -668,7 +668,7 @@
             (br $out)
           )
         )
-        ;; x > 0 && x <= 100 here (but we need loops mode to get both).
+        ;; x > 0 && x <= 100 here (but we need loops mode to get both). XXX
         (drop
           (i32.gt_u
             (local.get $x)
