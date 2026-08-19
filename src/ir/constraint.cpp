@@ -22,7 +22,9 @@
 
 namespace wasm::constraint {
 
-std::optional<Span<IU64>> Constraint::makeSpan() const {
+std::optional<Span<IU64>> Constraint::getSpan() const {
+  using namespace Abstract;
+
   auto* c = std::get_if<Literal>(&term);
   if (!c) {
     // Not comparing to a constant, so cannot be a constant span.
@@ -71,16 +73,16 @@ std::optional<Span<IU64>> Constraint::makeSpan() const {
         return Span<IU64>::empty();
       } else {
         return Span<IU64>{c->getInteger() + 1,
-                          std::numeric_limits<int64_t>::max};
+                          int64_t(std::numeric_limits<int64_t>::max)};
       }
       break;
     case GtU:
-      if (c->getInteger() == std::numeric_limits<uint64_t>::max()) {
+      if (c->getUnsigned() == std::numeric_limits<uint64_t>::max()) {
         // Greater than the highest possible number is an empty span.
         return Span<IU64>::empty();
       } else {
         return Span<IU64>{c->getUnsigned() + 1,
-                          std::numeric_limits<uint64_t>::max};
+                          uint64_t(std::numeric_limits<uint64_t>::max)};
       }
       break;
     case GeS:

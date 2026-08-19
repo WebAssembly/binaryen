@@ -68,7 +68,7 @@ struct Constraint {
 
   // Convert the constraint into a constant span, if possible. For example,
   // "< 100 (unsigned)" turns into the span [0, 100].
-  std::optional<Span<IU64>> makeSpan() const;
+  std::optional<Span<IU64>> getSpan() const;
 };
 
 // We limit constraints to a low number to ensure good performance even with
