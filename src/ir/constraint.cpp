@@ -31,9 +31,13 @@ std::optional<Span<IU64>> Constraint::getSpan() const {
     return {};
   }
 
-  auto minSigned = c->type == Type::i32 ? std::numeric_limits<int32_t>::min() : std::numeric_limits<int64_t>::min();
-  auto maxSigned = c->type == Type::i32 ? std::numeric_limits<int32_t>::max() : std::numeric_limits<int64_t>::max();
-  auto maxUnsigned = c->type == Type::i32 ? std::numeric_limits<uint32_t>::max() : std::numeric_limits<uint64_t>::max();
+  auto minSigned = c->type == Type::i32 ? std::numeric_limits<int32_t>::min()
+                                        : std::numeric_limits<int64_t>::min();
+  auto maxSigned = c->type == Type::i32 ? std::numeric_limits<int32_t>::max()
+                                        : std::numeric_limits<int64_t>::max();
+  auto maxUnsigned = c->type == Type::i32
+                       ? std::numeric_limits<uint32_t>::max()
+                       : std::numeric_limits<uint64_t>::max();
 
   switch (op) {
     case Eq: {
@@ -54,8 +58,7 @@ std::optional<Span<IU64>> Constraint::getSpan() const {
         // Less than the lowest possible number is an empty span.
         return Span<IU64>::empty();
       } else {
-        return Span<IU64>{minSigned,
-                          c->getInteger() - 1};
+        return Span<IU64>{minSigned, c->getInteger() - 1};
       }
       break;
     case LtU:
@@ -76,8 +79,7 @@ std::optional<Span<IU64>> Constraint::getSpan() const {
         // Greater than the highest possible number is an empty span.
         return Span<IU64>::empty();
       } else {
-        return Span<IU64>{c->getInteger() + 1,
-                          maxSigned};
+        return Span<IU64>{c->getInteger() + 1, maxSigned};
       }
       break;
     case GtU:
@@ -85,8 +87,7 @@ std::optional<Span<IU64>> Constraint::getSpan() const {
         // Greater than the highest possible number is an empty span.
         return Span<IU64>::empty();
       } else {
-        return Span<IU64>{c->getUnsigned() + 1,
-                          maxUnsigned};
+        return Span<IU64>{c->getUnsigned() + 1, maxUnsigned};
       }
       break;
     case GeS:
