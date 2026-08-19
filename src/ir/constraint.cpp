@@ -73,7 +73,7 @@ std::optional<Span<IU64>> Constraint::getSpan() const {
         return Span<IU64>::empty();
       } else {
         return Span<IU64>{c->getInteger() + 1,
-                          int64_t(std::numeric_limits<int64_t>::max)};
+                          std::numeric_limits<int64_t>::max()};
       }
       break;
     case GtU:
@@ -82,7 +82,7 @@ std::optional<Span<IU64>> Constraint::getSpan() const {
         return Span<IU64>::empty();
       } else {
         return Span<IU64>{c->getUnsigned() + 1,
-                          uint64_t(std::numeric_limits<uint64_t>::max)};
+                          std::numeric_limits<uint64_t>::max()};
       }
       break;
     case GeS:
