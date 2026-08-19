@@ -699,7 +699,9 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     BinaryOp ge, gt, min, div, sub;
     switch (curr->op) {
       case TruncSFloat32ToInt64:
-      case TruncUFloat32ToInt64: {
+      case TruncSatSFloat32ToInt64:
+      case TruncUFloat32ToInt64:
+      case TruncSatUFloat32ToInt64: {
         litZero = Literal((float)0);
         litOne = Literal((float)1);
         u32Max = Literal(((float)UINT_MAX) + 1);
@@ -717,7 +719,9 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
         break;
       }
       case TruncSFloat64ToInt64:
-      case TruncUFloat64ToInt64: {
+      case TruncSatSFloat64ToInt64:
+      case TruncUFloat64ToInt64:
+      case TruncSatUFloat64ToInt64: {
         litZero = Literal((double)0);
         litOne = Literal((double)1);
         u32Max = Literal(((double)UINT_MAX) + 1);
@@ -930,9 +934,13 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
       case ExtendUInt32:
       case WrapInt64:
       case TruncSFloat32ToInt64:
+      case TruncSatSFloat32ToInt64:
       case TruncUFloat32ToInt64:
+      case TruncSatUFloat32ToInt64:
       case TruncSFloat64ToInt64:
+      case TruncSatSFloat64ToInt64:
       case TruncUFloat64ToInt64:
+      case TruncSatUFloat64ToInt64:
       case ReinterpretFloat64:
       case ConvertSInt64ToFloat32:
       case ConvertSInt64ToFloat64:
@@ -981,9 +989,13 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
         lowerReinterpretInt64(curr);
         break;
       case TruncSFloat32ToInt64:
+      case TruncSatSFloat32ToInt64:
       case TruncUFloat32ToInt64:
+      case TruncSatUFloat32ToInt64:
       case TruncSFloat64ToInt64:
+      case TruncSatSFloat64ToInt64:
       case TruncUFloat64ToInt64:
+      case TruncSatUFloat64ToInt64:
         lowerTruncFloatToInt(curr);
         break;
       case ConvertSInt64ToFloat32:
