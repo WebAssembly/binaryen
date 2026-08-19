@@ -223,7 +223,7 @@ TEST(SpanIU64Test, Empty) {
 TEST(SpanIU64Test, SingletonsAtExtremes) {
   // Min int64 singleton
   Span<IU64> minI64{IU64(std::numeric_limits<int64_t>::min()),
-                   IU64(std::numeric_limits<int64_t>::min())};
+                    IU64(std::numeric_limits<int64_t>::min())};
   EXPECT_FALSE(minI64.isEmpty());
   EXPECT_FALSE(minI64.isFull());
   EXPECT_EQ(minI64.min, IU64(std::numeric_limits<int64_t>::min()));
@@ -243,7 +243,7 @@ TEST(SpanIU64Test, SingletonsAtExtremes) {
 
   // Max int64 singleton
   Span<IU64> maxI64{IU64(std::numeric_limits<int64_t>::max()),
-                   IU64(std::numeric_limits<int64_t>::max())};
+                    IU64(std::numeric_limits<int64_t>::max())};
   EXPECT_FALSE(maxI64.isEmpty());
 
   // 2^63 singleton (above int64_t max, into uint64_t territory)
@@ -252,7 +252,7 @@ TEST(SpanIU64Test, SingletonsAtExtremes) {
 
   // Max uint64 singleton
   Span<IU64> maxU64{IU64(std::numeric_limits<uint64_t>::max()),
-                   IU64(std::numeric_limits<uint64_t>::max())};
+                    IU64(std::numeric_limits<uint64_t>::max())};
   EXPECT_FALSE(maxU64.isEmpty());
 }
 
@@ -286,7 +286,8 @@ TEST(SpanIU64Test, NegativeAndPositiveIntersections) {
   Span<IU64> touchNegZero{IU64(-10), IU64(0)};
   Span<IU64> touchZeroPos{IU64(0), IU64(10)};
   EXPECT_TRUE(touchNegZero.hasOverlap(touchZeroPos));
-  EXPECT_EQ(touchNegZero.intersection(touchZeroPos), Span<IU64>(IU64(0), IU64(0)));
+  EXPECT_EQ(touchNegZero.intersection(touchZeroPos),
+            Span<IU64>(IU64(0), IU64(0)));
 
   Span<IU64> overlap{IU64(-50), IU64(50)};
   EXPECT_EQ(neg.intersection(overlap), Span<IU64>(IU64(-50), IU64(-10)));
@@ -319,9 +320,9 @@ TEST(SpanIU64Test, SignedUnsignedBoundary) {
 
 TEST(SpanIU64Test, ExtremeBoundaries) {
   Span<IU64> minPart(IU64(std::numeric_limits<int64_t>::min()),
-                    IU64(std::numeric_limits<int64_t>::min() + 100));
+                     IU64(std::numeric_limits<int64_t>::min() + 100));
   Span<IU64> maxPart(IU64(std::numeric_limits<uint64_t>::max() - 100),
-                    IU64(std::numeric_limits<uint64_t>::max()));
+                     IU64(std::numeric_limits<uint64_t>::max()));
 
   EXPECT_FALSE(minPart.hasOverlap(maxPart));
   EXPECT_TRUE(minPart.intersection(maxPart).isEmpty());

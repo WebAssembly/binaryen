@@ -93,8 +93,12 @@ struct IU64 {
   constexpr bool operator<=(const IU64& other) const {
     return *this < other || *this == other;
   }
-  constexpr bool operator>(const IU64& other) const { return !(*this <= other); }
-  constexpr bool operator>=(const IU64& other) const { return !(*this < other); }
+  constexpr bool operator>(const IU64& other) const {
+    return !(*this <= other);
+  }
+  constexpr bool operator>=(const IU64& other) const {
+    return !(*this < other);
+  }
 };
 
 inline std::ostream& operator<<(std::ostream& os, const IU64& x) {
