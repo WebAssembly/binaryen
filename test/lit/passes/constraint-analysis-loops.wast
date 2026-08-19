@@ -636,7 +636,10 @@
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:     (i32.gt_u
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (i32.const 1)
@@ -712,7 +715,10 @@
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:     (i32.gt_u
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (i32.const 1)
@@ -801,7 +807,10 @@
   ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:     (i32.ge_s
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.set $x
   ;; CHECK-NEXT:     (i32.add
@@ -868,7 +877,10 @@
   ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:     (i32.ge_u
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.set $x
   ;; CHECK-NEXT:     (i32.add
@@ -931,7 +943,10 @@
   ;; CHECK-NEXT:      (i32.const 1)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (drop
-  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:      (i32.ge_s
+  ;; CHECK-NEXT:       (local.get $x)
+  ;; CHECK-NEXT:       (i32.const 0)
+  ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (local.set $x
   ;; CHECK-NEXT:      (i32.add
@@ -1003,7 +1018,10 @@
   ;; CHECK-NEXT:      (i32.const 1)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (drop
-  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:      (i32.ge_u
+  ;; CHECK-NEXT:       (local.get $x)
+  ;; CHECK-NEXT:       (i32.const 0)
+  ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (local.set $x
   ;; CHECK-NEXT:      (i32.add
@@ -1079,7 +1097,10 @@
   ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:     (i32.ge_s
+  ;; CHECK-NEXT:      (local.get $i)
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.set $i
   ;; CHECK-NEXT:     (i32.add
@@ -1105,7 +1126,10 @@
   ;; CHECK-NEXT:       (i32.const 1)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (i32.const 1)
+  ;; CHECK-NEXT:       (i32.ge_s
+  ;; CHECK-NEXT:        (local.get $j)
+  ;; CHECK-NEXT:        (i32.const 0)
+  ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (local.set $j
   ;; CHECK-NEXT:       (i32.add
@@ -1216,7 +1240,10 @@
   ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:     (i32.ge_s
+  ;; CHECK-NEXT:      (local.get $i)
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (block $in
   ;; CHECK-NEXT:     (local.set $j
@@ -1236,7 +1263,10 @@
   ;; CHECK-NEXT:       (i32.const 1)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (i32.const 1)
+  ;; CHECK-NEXT:       (i32.ge_s
+  ;; CHECK-NEXT:        (local.get $j)
+  ;; CHECK-NEXT:        (i32.const 0)
+  ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (local.set $j
   ;; CHECK-NEXT:       (i32.add
@@ -1354,7 +1384,10 @@
   ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:     (i32.ge_s
+  ;; CHECK-NEXT:      (local.get $i)
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.set $i
   ;; CHECK-NEXT:     (i32.add
@@ -1476,15 +1509,109 @@
     )
   )
 
+  ;; CHECK:      (func $add-overflow (type $1) (param $x i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.ge_s
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (local.set $x
+  ;; CHECK-NEXT:     (i32.add
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.gt_s
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $add-overflow (param $x i32)
     (if
-      (i32.ge_s (local.get $x) (i32.const 0))
+      (i32.ge_s
+        (local.get $x)
+        (i32.const 0)
+      )
       (then
-        ;; The add here overflows if we are called with MAX_INT. We must
-        ;; not misoptimize the operation after us to 1 - that is true in all
-        ;; cases *except* for the add overflowing.
-        (local.set $x (i32.add (local.get $x) (i32.const 1)))
-        (drop (i32.gt_s (local.get $x) (i32.const 0)))
+        ;; Normally, x >= 0 and x++ lead to x > 0. However, we overflow if
+        ;; x == MAX_INT, so we cannot optimize the dropped value below us.
+        (local.set $x
+          (i32.add
+            (local.get $x)
+            (i32.const 1)
+          )
+        )
+        (drop
+          (i32.gt_s
+            (local.get $x)
+            (i32.const 0)
+          )
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $add-overflow-yes (type $1) (param $x i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.ge_s
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (i32.le_s
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:      (i32.const 1000)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (then
+  ;; CHECK-NEXT:      (local.set $x
+  ;; CHECK-NEXT:       (i32.add
+  ;; CHECK-NEXT:        (local.get $x)
+  ;; CHECK-NEXT:        (i32.const 1)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (i32.const 1)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $add-overflow-yes (param $x i32)
+    ;; As above, but we add an inner if that does x < 1000. Now x cannot be
+    ;; MAX_INT, so we do optimize to 1.
+    (if
+      (i32.ge_s
+        (local.get $x)
+        (i32.const 0)
+      )
+      (then
+        (if
+          (i32.le_s
+            (local.get $x)
+            (i32.const 1000)
+          )
+          (then
+            (local.set $x
+              (i32.add
+                (local.get $x)
+                (i32.const 1)
+              )
+            )
+            (drop
+              (i32.gt_s
+                (local.get $x)
+                (i32.const 0)
+              )
+            )
+          )
+        )
       )
     )
   )
