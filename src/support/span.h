@@ -49,9 +49,7 @@ template<typename T> struct Span {
 
   bool isEmpty() const { return min > max; }
 
-  static Span<T> empty() {
-    return Span{Max, Min};
-  }
+  static Span<T> empty() { return Span{Max, Min}; }
 
   void setFull() {
     *this = Span();
@@ -60,9 +58,7 @@ template<typename T> struct Span {
 
   bool isFull() const { return min == Min && max == Max; }
 
-  static Span<T> full() {
-    return Span{};
-  }
+  static Span<T> full() { return Span{}; }
 
   // Intersect this with another span, returning a (possibly empty) span.
   Span<T> intersection(const Span& other) const {
