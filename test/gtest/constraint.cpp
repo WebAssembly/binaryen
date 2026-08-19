@@ -663,18 +663,18 @@ TEST(ConstraintTest, TestIncrement) {
             (AndedConstraintSet{{GtS, {Literal(int32_t(10))}},
                                 {LeS, {Literal(int32_t(20))}}}));
 
-  // $0 >= 10 && $0 <= max_signed, $0++  =>  $0 > 10 (overflowing constraint
-  // removed)
+  // $0 >= 10 && $0 <= max_signed, $0++  =>  nothing, as we may overflow.
   map.set(0, {GeS, {Literal(int32_t(10))}});
   map.approximateAnd(0, {LeS, {Literal::makeSignedMax(Type::i32)}});
   map.set(0, &add);
-  EXPECT_EQ(map.get(0), (AndedConstraintSet{{GtS, {Literal(int32_t(10))}}}));
+  EXPECT_EQ(map.get(0).size(), 0);
 
-  // $0 >= 10 && $0 == $2, $0++  =>  $0 > 10 (non-constant term removed)
-  map.set(0, {GeS, {Literal(int32_t(10))}});
+  // $0 >= 5 && $0 < 100 && $0 != $2, $0++  =>  we increment and remove the non-
+  // constant term, leaving $0 >= 6 && $0 <= 100.
+  map.set(0, {{GeS, {Literal(int32_t(5))}}, lts100});
   map.approximateAnd(0, {Eq, {Index(2)}});
   map.set(0, &add);
-  EXPECT_EQ(map.get(0), (AndedConstraintSet{{GtS, {Literal(int32_t(10))}}}));
+  EXPECT_EQ(map.get(0), (AndedConstraintSet{{GtS, {Literal(int32_t(5))}}, les100}));
 }
 
 TEST(ConstraintTest, TestEqConstraints) {
