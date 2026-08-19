@@ -302,7 +302,6 @@ TEST(ConstraintTest, TestOrInequality) {
   // x > signed_max || x >= (signed_max + 1 === signed_min) != x > signed_max
   AndedConstraintSet gtsMax{
     {GtS, {Literal(std::numeric_limits<int32_t>::max())}}};
-  // x > signed_max implies x >= signed_min, so ORing them yields x >= signed_min. XXX fix!
   checkOr(gtsMax, gesMin, gesMin);
 }
 
