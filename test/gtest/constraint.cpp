@@ -616,17 +616,18 @@ TEST(ConstraintTest, TestIncrement) {
   map.set(0, &add);
   EXPECT_EQ(map.get(0), (AndedConstraintSet{{GtU, {Literal(int32_t(5))}}, leu100}));
 
-abort();
   // $0 < 5, $0++  =>  $0 <= 5 (signed)
   map.set(0, {LtS, {Literal(int32_t(5))}});
   map.set(0, &add);
   check(map.get(0), {LeS, {Literal(int32_t(5))}});
 
-  // Ditto, unsigned
+  // Ditto, unsigned. We also add a lower bound here, as after $0++, $0 > 0
+  // (due to no overflow, proven by the upper bound).
+  Constraint gtu0{GtU, {Literal(int32_t(0))}};
   map.set(0, {LtU, {Literal(int32_t(5))}});
   map.set(0, &add);
-  check(map.get(0), {LeU, {Literal(int32_t(5))}});
-
+  EXPECT_EQ(map.get(0), (AndedConstraintSet{{LeU, {Literal(int32_t(5))}}, gtu0}));
+abort();
   // $0 <= 5, $0++  =>  $0 <= 6 (signed)
   map.set(0, {LeS, {Literal(int32_t(5))}});
   map.set(0, &add);
