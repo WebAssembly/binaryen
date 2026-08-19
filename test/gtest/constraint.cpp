@@ -960,6 +960,13 @@ TEST(ConstraintTest, GetSpan) {
             (Span<IU64>{maxU64, maxU64}));
 }
 
+TEST(ConstraintTest, SpanOptimizations) {
+  // Using spans, we can optimize things like {x < 100} => {x < 200}.
+  Constraint lts100{LtS, {Literal(int32_t(100))}};
+  Constraint lts200{LtS, {Literal(int32_t(200))}};
+  EXPECT_EQ(AndedConstraintSet{lts100}.proves(lts200), True);
+}
+
 TEST(ConstraintTest, EmptySpanContradiction) {
   // Impossible constraints produce empty spans.
   Constraint gtsMax32{GtS, {Literal(std::numeric_limits<int32_t>::max())}};

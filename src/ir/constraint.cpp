@@ -167,7 +167,7 @@ Result provesConstantPair(Abstract::Op aOp,
         return True;
       }
       if (bSpan->isEmpty()) {
-        // Nothing that is not a contradiction can prove a contradiction.
+        // Anything that is not a contradiction can prove a contradiction.
         return False;
       }
       if (bSpan->contains(*aSpan)) {
