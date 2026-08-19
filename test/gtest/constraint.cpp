@@ -592,16 +592,31 @@ TEST(ConstraintTest, TestIncrement) {
   map.set(0, &add);
   check(map.get(0), {Eq, {Literal(int32_t(1))}});
 
-  // $0 >= 5, $0++  =>  $0 > 5 (signed)
+  // $0 >= 5, $0++  =>  nothing, since the ++ might overflow into negative
   map.set(0, {GeS, {Literal(int32_t(5))}});
   map.set(0, &add);
-  check(map.get(0), {GtS, {Literal(int32_t(5))}});
+  EXPECT_TRUE(map.get(0).empty());
 
-  // Ditto, unsigned
+  // $0 >= 5, $0 < 100, $0++  =>  $0 > 5, $0 <= 100 (signed)
+  Constraint lts100{LtS, {Literal(int32_t(100))}};
+  Constraint les100{LeS, {Literal(int32_t(100))}};
+  map.set(0, {{GeS, {Literal(int32_t(5))}}, lts100});
+  map.set(0, &add);
+  EXPECT_EQ(map.get(0), (AndedConstraintSet{{GtS, {Literal(int32_t(5))}}, les100}));
+
+  // Ditto, unsigned: without an upper bound we can overflow.
   map.set(0, {GeU, {Literal(int32_t(5))}});
   map.set(0, &add);
-  check(map.get(0), {GtU, {Literal(int32_t(5))}});
+  EXPECT_TRUE(map.get(0).empty());
 
+  // With an upper bound, we can optimize like before.
+  Constraint ltu100{LtU, {Literal(int32_t(100))}};
+  Constraint leu100{LeU, {Literal(int32_t(100))}};
+  map.set(0, {{GeU, {Literal(int32_t(5))}}, ltu100});
+  map.set(0, &add);
+  EXPECT_EQ(map.get(0), (AndedConstraintSet{{GtU, {Literal(int32_t(5))}}, leu100}));
+
+abort();
   // $0 < 5, $0++  =>  $0 <= 5 (signed)
   map.set(0, {LtS, {Literal(int32_t(5))}});
   map.set(0, &add);
