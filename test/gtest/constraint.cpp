@@ -602,7 +602,8 @@ TEST(ConstraintTest, TestIncrement) {
   Constraint les100{LeS, {Literal(int32_t(100))}};
   map.set(0, {{GeS, {Literal(int32_t(5))}}, lts100});
   map.set(0, &add);
-  EXPECT_EQ(map.get(0), (AndedConstraintSet{{GtS, {Literal(int32_t(5))}}, les100}));
+  EXPECT_EQ(map.get(0),
+            (AndedConstraintSet{{GtS, {Literal(int32_t(5))}}, les100}));
 
   // Ditto, unsigned: without an upper bound we can overflow.
   map.set(0, {GeU, {Literal(int32_t(5))}});
@@ -614,7 +615,8 @@ TEST(ConstraintTest, TestIncrement) {
   Constraint leu100{LeU, {Literal(int32_t(100))}};
   map.set(0, {{GeU, {Literal(int32_t(5))}}, ltu100});
   map.set(0, &add);
-  EXPECT_EQ(map.get(0), (AndedConstraintSet{{GtU, {Literal(int32_t(5))}}, leu100}));
+  EXPECT_EQ(map.get(0),
+            (AndedConstraintSet{{GtU, {Literal(int32_t(5))}}, leu100}));
 
   // $0 < 5, $0++  =>  $0 <= 5 (signed)
   map.set(0, {LtS, {Literal(int32_t(5))}});
@@ -626,7 +628,8 @@ TEST(ConstraintTest, TestIncrement) {
   Constraint gtu0{GtU, {Literal(int32_t(0))}};
   map.set(0, {LtU, {Literal(int32_t(5))}});
   map.set(0, &add);
-  EXPECT_EQ(map.get(0), (AndedConstraintSet{{LeU, {Literal(int32_t(5))}}, gtu0}));
+  EXPECT_EQ(map.get(0),
+            (AndedConstraintSet{{LeU, {Literal(int32_t(5))}}, gtu0}));
 
   // $0 <= 5, $0++  =>  $0 <= 6 (signed)
   map.set(0, {LeS, {Literal(int32_t(5))}});
@@ -636,7 +639,8 @@ TEST(ConstraintTest, TestIncrement) {
   // Ditto, unsigned
   map.set(0, {LeU, {Literal(int32_t(5))}});
   map.set(0, &add);
-  EXPECT_EQ(map.get(0), (AndedConstraintSet{{LeU, {Literal(int32_t(6))}}, gtu0}));
+  EXPECT_EQ(map.get(0),
+            (AndedConstraintSet{{LeU, {Literal(int32_t(6))}}, gtu0}));
 
   // $0 <= max_signed, $0++  =>  nothing, because it would overflow
   map.set(0, {LeS, {Literal::makeSignedMax(Type::i32)}});
@@ -652,7 +656,9 @@ TEST(ConstraintTest, TestIncrement) {
   map.set(0, {LeU, {Literal::makeSignedMax(Type::i32)}});
   map.set(0, &add);
   auto one = Literal::makeFromInt32(1, Type::i32);
-  EXPECT_EQ(map.get(0), (AndedConstraintSet{{LeU, {Literal::makeSignedMax(Type::i32).add(one)}}, gtu0}));
+  EXPECT_EQ(map.get(0),
+            (AndedConstraintSet{
+              {LeU, {Literal::makeSignedMax(Type::i32).add(one)}}, gtu0}));
 
   // Multiple constraints at once:
   // $0 >= 10 && $0 < 20, $0++  =>  $0 > 10 && $0 <= 20
@@ -674,7 +680,8 @@ TEST(ConstraintTest, TestIncrement) {
   map.set(0, {{GeS, {Literal(int32_t(5))}}, lts100});
   map.approximateAnd(0, {Eq, {Index(2)}});
   map.set(0, &add);
-  EXPECT_EQ(map.get(0), (AndedConstraintSet{{GtS, {Literal(int32_t(5))}}, les100}));
+  EXPECT_EQ(map.get(0),
+            (AndedConstraintSet{{GtS, {Literal(int32_t(5))}}, les100}));
 }
 
 TEST(ConstraintTest, TestEqConstraints) {
