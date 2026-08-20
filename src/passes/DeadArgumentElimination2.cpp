@@ -638,8 +638,12 @@ struct GraphBuilder : public WalkerPass<ExpressionStackWalker<GraphBuilder>> {
       HeapType rootType = getRootType(type);
       Location source = TypeResultLoc{rootType};
       if (isReturn) {
-        forwardToResult(source);
-        funcInfos[index].tailCalleeTypes.push_back(rootType);
+        if (optimizeReferencedFuncs) {
+          forwardToResult(source);
+          funcInfos[index].tailCalleeTypes.push_back(rootType);
+        } else {
+          funcInfos[index].resultUsage = used.getTop();
+        }
       } else if (optimizeReferencedFuncs) {
         getValueFromLocation(curr, source);
       }

@@ -62,6 +62,32 @@ export const f64: Type = BinaryenObj["_BinaryenTypeFloat64"]();
 /** 128-bit vector (SIMD). */
 export const v128: Type = BinaryenObj["_BinaryenTypeVec128"]();
 
+// ### Heap Types ### //
+/** Heap type `any`. */
+export const any: Type = BinaryenObj["_BinaryenHeapTypeAny"]();
+/** Heap type `eq`. */
+export const eq: Type = BinaryenObj["_BinaryenHeapTypeEq"]();
+/** Heap type `i31`. */
+export const i31: Type = BinaryenObj["_BinaryenHeapTypeI31"]();
+/** Heap type `struct`. */
+export const struct: Type = BinaryenObj["_BinaryenHeapTypeStruct"]();
+/** Heap type `array`. */
+export const array: Type = BinaryenObj["_BinaryenHeapTypeArray"]();
+/** Heap type `none`. */
+// export const none: Type = BinaryenObj["_BinaryenHeapTypeNone"](); // TODO: reconcile with the `none` type above, defined as `BinaryenObj["_BinaryenTypeNone"]()`
+/** Heap type `func`. */
+export const func: Type = BinaryenObj["_BinaryenHeapTypeFunc"]();
+/** Heap type `exn`. */
+// export const exn: Type = BinaryenObj["_BinaryenHeapTypeExn"](); // TODO: uncomment once supported in Binaryen
+/** Heap type `extern`. */
+export const extern: Type = BinaryenObj["_BinaryenHeapTypeExt"]();
+/** Heap type `nofunc`. */
+export const nofunc: Type = BinaryenObj["_BinaryenHeapTypeNofunc"]();
+/** Heap type `noexn`. */
+// export const noexn: Type = BinaryenObj["_BinaryenHeapTypeNoexn"](); // TODO: uncomment once supported in Binaryen
+/** Heap type `noextern`. */
+export const noextern: Type = BinaryenObj["_BinaryenHeapTypeNoext"]();
+
 // ### Reference Types ### //
 /** `(ref null any)` */
 export const anyref: Type = BinaryenObj["_BinaryenTypeAnyref"]();
@@ -97,6 +123,8 @@ export const i16: PackedType = BinaryenObj["_BinaryenPackedTypeInt16"]();
 // These types are not yet in the WASM spec. Move them to their respective sections once finalized.
 /** `(ref null string)` */
 export const stringref: Type = BinaryenObj["_BinaryenTypeStringref"]();
+/** Heap type `string`. */
+export const string: Type = BinaryenObj["_BinaryenHeapTypeString"]();
 
 
 

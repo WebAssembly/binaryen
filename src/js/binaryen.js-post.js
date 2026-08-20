@@ -52,6 +52,26 @@ function initializeConstants() {
     Module[entry[0]] = Module['_BinaryenType' + entry[1]]();
   });
 
+  [
+    ['func', 'Func'],
+    ['extern', 'Ext'],
+    ['any', 'Any'],
+    ['eq', 'Eq'],
+    ['i31', 'I31'],
+    ['struct', 'Struct'],
+    ['array', 'Array'],
+    ['string', 'String'],
+    /*
+    TODO: Reconcile with `none` above (line 32).
+    Maybe keep this as 'none' and change the above to 'void'?
+    ['none', 'None'],
+    */
+    ['noextern', 'Noext'],
+    ['nofunc', 'Nofunc'],
+  ].forEach(entry => {
+    Module[entry[0]] = Module['_BinaryenHeapType' + entry[1]]();
+  });
+
   [ ['notPacked', 'NotPacked'],
     ['i8', 'Int8'],
     ['i16', 'Int16']
@@ -2440,8 +2460,8 @@ function wrapModule(module, self = {}) {
   };
 
   self['ref'] = {
-    'null'(type) {
-      return Module['_BinaryenRefNull'](module, type);
+    'null'(heaptype) {
+      return Module['_BinaryenRefNull'](module, heaptype);
     },
     'is_null'(value) {
       return Module['_BinaryenRefIsNull'](module, value);

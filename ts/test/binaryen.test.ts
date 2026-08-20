@@ -39,6 +39,20 @@ suite("binaryen", () => {
 		assert.ok(binaryen.f32);
 		assert.ok(binaryen.f64);
 		assert.ok(binaryen.v128);
+		assert.ok(binaryen.any);
+		assert.ok(binaryen.eq);
+		assert.ok(binaryen.i31);
+		assert.ok(binaryen.struct);
+		assert.ok(binaryen.array);
+		assert.ok(!binaryen.none); // TODO: update after changing `none` above
+		assert.ok(binaryen.func);
+		// @ts-expect-error
+		assert.ok(!binaryen.exn);
+		assert.ok(binaryen.extern);
+		assert.ok(binaryen.nofunc);
+		// @ts-expect-error
+		assert.ok(!binaryen.noexn);
+		assert.ok(binaryen.noextern);
 		assert.ok(binaryen.anyref);
 		assert.ok(binaryen.eqref);
 		assert.ok(binaryen.i31ref);
@@ -57,6 +71,7 @@ suite("binaryen", () => {
 		assert.ok(binaryen.i8);
 		assert.ok(binaryen.i16);
 		assert.ok(binaryen.stringref);
+		assert.ok(binaryen.string);
 
 		// enums
 		assert.strictEqual(typeof binaryen.ExpressionId, "object");

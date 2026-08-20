@@ -480,6 +480,7 @@ private:
   Expression* makeWideIntAddSub(Type type);
   Expression* makeWideIntMul(Type type);
   Expression* makeWideIntExpression(Type type);
+  Expression* makeWideIntExtract(Type type);
   Expression* makeTupleExtract(Type type);
   Expression* makePointer();
   Expression* makeNonAtomicLoad(Type type);

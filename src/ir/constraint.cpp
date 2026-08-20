@@ -498,7 +498,7 @@ void LocalConstraint::flip() {
   constraint.term = Term{local};
   local = other;
   if (Abstract::isRelationalAntisymmetric(constraint.op)) {
-    constraint.op = Abstract::negateRelational(constraint.op);
+    constraint.op = Abstract::flipRelational(constraint.op);
   } else {
     // All we support for now are symmetric and antisymmetric operations.
     assert(Abstract::isRelationalSymmetric(constraint.op));
@@ -544,6 +544,10 @@ void BasicBlockConstraintMap::set(Index index, Expression* value) {
     set(index, Constraint{Abstract::Eq, {get->index}});
     return;
   }
+  if (auto* tee = value->dynCast<LocalSet>()) {
+    set(index, Constraint{Abstract::Eq, {tee->index}});
+    return;
+  }
 
   // Apply an increment of a local, x = y + 1.
   Index y;
@@ -552,60 +556,62 @@ void BasicBlockConstraintMap::set(Index index, Expression* value) {
     auto old = get(y);
 
     // Iterate over the old constraints and increment each one.
-    auto success = true;
-    for (auto& c : old) {
+    for (auto iter = old.begin(); iter != old.end();) {
+      auto& c = *iter;
       auto* N = std::get_if<Literal>(&c.term);
       if (!N) {
-        // A non-constant term, which we don't know how to increment.
-        success = false;
-        break;
+        // A non-constant term, which we don't know how to increment. Simply
+        // remove it: we are losing proving power here, but doing so is never
+        // invalid.
+        iter = old.erase(iter);
+        continue;
       }
 
       switch (c.op) {
         // x == N, x++  =>  x == N+1.
         case Eq:
           *N = N->add(Literal::makeFromInt32(1, N->type));
-          continue;
+          break;
         // x >= N, x++  =>  x > N
         case GeS:
           c.op = GtS;
-          continue;
+          break;
         case GeU:
           c.op = GtU;
-          continue;
+          break;
         // x < N, x++  =>  x <= N
         case LtS:
           c.op = LeS;
-          continue;
+          break;
         case LtU:
           c.op = LeU;
-          continue;
+          break;
         // x <= N, x++ => x <= N+1 if no overflow
         case LeS:
           if (N->isSignedMax()) {
-            success = false;
-            break;
+            iter = old.erase(iter);
+            continue;
           }
           *N = N->add(Literal::makeFromInt32(1, N->type));
-          continue;
+          break;
         case LeU:
           if (N->isUnsignedMax()) {
-            success = false;
-            break;
+            iter = old.erase(iter);
+            continue;
           }
           *N = N->add(Literal::makeFromInt32(1, N->type));
-          continue;
+          break;
         default:
           // Something we don't recognize.
-          success = false;
-          break;
+          iter = old.erase(iter);
+          continue;
       }
+
+      ++iter;
     }
 
-    if (success) {
-      set(index, old);
-      return;
-    }
+    set(index, old);
+    return;
   }
 
   // We know and can prove nothing.
@@ -666,11 +672,19 @@ void BasicBlockConstraintMap::approximateAndInternal(Index index,
     actual = flipped.constraint;
   }
 
-  // Never add constraints to ourselves (x == x, etc., which can happen due to
-  // copying/flipping).
   if (auto* other = std::get_if<Index>(&actual.term)) {
+    // Never add constraints to ourselves (x == x, etc., which can happen due to
+    // copying/flipping).
     if (*other == index) {
       return;
+    }
+
+    // If we are applying a constraint to another local, and we know that
+    // local's value, propagate it. That is, if x == 42, then if we try to apply
+    // y < x we instead apply y < 42, which is better.
+    auto otherConstraints = get(*other);
+    if (auto lit = otherConstraints.getLiteral()) {
+      actual.term = Term{*lit};
     }
   }
 
