@@ -1253,7 +1253,7 @@ class Wasm2JS(TestCaseHandler):
         # implement wasm suspending using JS async/await.
         if JSPI:
             return False
-        return all_disallowed(['exception-handling', 'simd', 'threads', 'bulk-memory', 'nontrapping-float-to-int', 'tail-call', 'sign-ext', 'reference-types', 'multivalue', 'gc', 'multimemory', 'memory64', 'custom-descriptors', 'acquire-release-atomics', 'relaxed-atomics', 'wide-arithmetic'])
+        return all_disallowed(['exception-handling', 'simd', 'threads', 'tail-call', 'reference-types', 'multivalue', 'gc', 'multimemory', 'memory64', 'custom-descriptors', 'acquire-release-atomics', 'relaxed-atomics', 'wide-arithmetic'])
 
 
 # Returns the wat for a wasm file. If it is already wat, it just returns that
