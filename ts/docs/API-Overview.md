@@ -58,15 +58,29 @@ import {type Type, type ExpressionRef, i32} from "binaryen.ts";
 - `f64`: 64-bit float
 - `v128`: 128-bit vector (SIMD)
 >
+- `any`:         heap type *any*
+- `eq`:          heap type *eq*
+- `i31`:         heap type *i31*
+- `struct`:      heap type *struct*
+- `array`:       heap type *array*
+- ~~`none`~~:    ⛔️ reserved for heap type *none* (would like to rename `none` above)
+- `func`:        heap type *func*
+- ~~`exn`~~:     ⛔️ reserved for heap type *exn*
+- `extern`:      heap type *extern*
+- `nullfunc`:    heap type *nofunc*
+- ~~`nullexn`~~: ⛔️ reserved for heap type *noexn*
+- `nullextern`:  heap type *noextern*
+- `string`:      🌱 planned for heap type *string*
+>
 - `anyref`:         *(ref null any)*
 - `eqref`:          *(ref null eq)*
 - `i31ref`:         *(ref null i31)*
 - `structref`:      *(ref null struct)*
 - `arrayref`:       *(ref null array)*
+- `nullref`:        *(ref null none)*
 - `funcref`:        *(ref null func)*
 - ~~`exnref`~~:     ⛔️ reserved for *(ref null exn)*
 - `externref`:      *(ref null extern)*
-- `nullref`:        *(ref null none)*
 - `nullfuncref`:    *(ref null nofunc)*
 - ~~`nullexnref`~~: ⛔️ reserved for *(ref null noexn)*
 - `nullexternref`:  *(ref null noextern)*
