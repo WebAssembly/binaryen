@@ -88,10 +88,8 @@ public:
 // undefined.
 #ifndef NDEBUG
 #define WASM_UNREACHABLE(msg) wasm::handle_unreachable(msg, __FILE__, __LINE__)
-#elif defined(WASM_BUILTIN_UNREACHABLE)
-#define WASM_UNREACHABLE(msg) WASM_BUILTIN_UNREACHABLE
 #else
-#define WASM_UNREACHABLE(msg) wasm::handle_unreachable()
+#define WASM_UNREACHABLE(msg) WASM_BUILTIN_UNREACHABLE
 #endif
 
 // Helper to create an invocable with an overloaded operator(), for use with
