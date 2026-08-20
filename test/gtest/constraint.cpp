@@ -607,10 +607,13 @@ TEST(ConstraintTest, TestIncrement) {
   map.set(0, &add);
   check(map.get(0), {LeS, {Literal(int32_t(5))}});
 
-  // Ditto, unsigned
+  // Ditto, unsigned. We also add a lower bound here, as after $0++, $0 > 0
+  // (due to no overflow, proven by the upper bound).
+  Constraint gtu0{GtU, {Literal(int32_t(0))}};
   map.set(0, {LtU, {Literal(int32_t(5))}});
   map.set(0, &add);
-  check(map.get(0), {LeU, {Literal(int32_t(5))}});
+  EXPECT_EQ(map.get(0),
+            (AndedConstraintSet{{LeU, {Literal(int32_t(5))}}, gtu0}));
 
   // $0 <= 5, $0++  =>  $0 <= 6 (signed)
   map.set(0, {LeS, {Literal(int32_t(5))}});
@@ -620,7 +623,8 @@ TEST(ConstraintTest, TestIncrement) {
   // Ditto, unsigned
   map.set(0, {LeU, {Literal(int32_t(5))}});
   map.set(0, &add);
-  check(map.get(0), {LeU, {Literal(int32_t(6))}});
+  EXPECT_EQ(map.get(0),
+            (AndedConstraintSet{{LeU, {Literal(int32_t(6))}}, gtu0}));
 
   // $0 <= max_signed, $0++  =>  nothing, because it would overflow
   map.set(0, {LeS, {Literal::makeSignedMax(Type::i32)}});
@@ -636,7 +640,9 @@ TEST(ConstraintTest, TestIncrement) {
   map.set(0, {LeU, {Literal::makeSignedMax(Type::i32)}});
   map.set(0, &add);
   auto one = Literal::makeFromInt32(1, Type::i32);
-  check(map.get(0), {LeU, {Literal::makeSignedMax(Type::i32).add(one)}});
+  EXPECT_EQ(map.get(0),
+            (AndedConstraintSet{
+              {LeU, {Literal::makeSignedMax(Type::i32).add(one)}}, gtu0}));
 
   // Multiple constraints at once:
   // $0 >= 10 && $0 < 20, $0++  =>  $0 > 10 && $0 <= 20
