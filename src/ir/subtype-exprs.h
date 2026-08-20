@@ -390,9 +390,7 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
       return;
     }
     const auto& fields = curr->ref->type.getHeapType().getStruct().fields;
-    if (curr->index < fields.size()) {
-      self()->noteSubtype(curr->expected, fields[curr->index].type);
-    }
+    self()->noteSubtype(curr->expected, fields[curr->index].type);
   }
   void visitWaitqueueNew(WaitqueueNew* curr) {}
   void visitWaitqueueNotify(WaitqueueNotify* curr) {
