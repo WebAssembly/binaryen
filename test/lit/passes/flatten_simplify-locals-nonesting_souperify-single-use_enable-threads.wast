@@ -3133,9 +3133,7 @@
   ;; CHECK-NEXT:   (local.set $y
   ;; CHECK-NEXT:    (i32.const 2)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (local.set $z
-  ;; CHECK-NEXT:    (i32.const 3)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (nop)
   ;; CHECK-NEXT:   (loop $loopy
   ;; CHECK-NEXT:    (local.set $x
   ;; CHECK-NEXT:     (i32.const 4)
@@ -3151,18 +3149,18 @@
   ;; CHECK-NEXT:    (br_if $loopy
   ;; CHECK-NEXT:     (local.get $t)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.set $z
-  ;; CHECK-NEXT:     (i32.const 6)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (nop)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (nop)
   ;; CHECK-NEXT:   (nop)
-  ;; CHECK-NEXT:   (nop)
+  ;; CHECK-NEXT:   (local.set $8
+  ;; CHECK-NEXT:    (i32.const 6)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (local.set $9
   ;; CHECK-NEXT:    (select
   ;; CHECK-NEXT:     (local.get $x)
   ;; CHECK-NEXT:     (local.get $y)
-  ;; CHECK-NEXT:     (local.get $z)
+  ;; CHECK-NEXT:     (local.get $8)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (return
@@ -3534,13 +3532,13 @@
   ;; CHECK-NEXT:      (nop)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (nop)
-  ;; CHECK-NEXT:     (local.set $10
-  ;; CHECK-NEXT:      (f64.const 0)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (nop)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (nop)
+  ;; CHECK-NEXT:    (local.set $11
+  ;; CHECK-NEXT:     (f64.const 0)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (local.get $10)
+  ;; CHECK-NEXT:     (local.get $11)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )

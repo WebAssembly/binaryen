@@ -38,17 +38,16 @@
 
   ;; CHECK:      (func $read-g-with-throw-in-between (type $1) (result i32)
   ;; CHECK-NEXT:  (local $x i32)
-  ;; CHECK-NEXT:  (local.set $x
-  ;; CHECK-NEXT:   (global.get $g)
-  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (call $throws)
-  ;; CHECK-NEXT:  (local.get $x)
+  ;; CHECK-NEXT:  (global.get $g)
   ;; CHECK-NEXT: )
   (func $read-g-with-throw-in-between (result i32)
     (local $x i32)
     (local.set $x (global.get $g))
 
-    ;; A potential throw halts our optimizations.
+    ;; Sinking across a throw is valid here because reading the global has no
+    ;; side effects.
     (call $throws)
 
     (local.get $x)
@@ -132,22 +131,19 @@
 
   ;; CHECK:      (func $read-g-with-effectful-call-ref (type $3) (param $ref (ref $throw-type)) (result i32)
   ;; CHECK-NEXT:  (local $x i32)
-  ;; CHECK-NEXT:  (local.set $x
-  ;; CHECK-NEXT:   (global.get $g)
-  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (call_ref $throw-type
   ;; CHECK-NEXT:    (local.get $ref)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (local.get $x)
+  ;; CHECK-NEXT:  (global.get $g)
   ;; CHECK-NEXT: )
   (func $read-g-with-effectful-call-ref (param $ref (ref $throw-type)) (result i32)
     (local $x i32)
     (local.set $x (global.get $g))
 
-    ;; Similar to above, except here we can tell that the indirect call may
-    ;; throw so optimization is halted.
+    ;; Sinking across a potentially throwing call is valid here.
     (drop (call_ref $throw-type (local.get $ref)))
 
     (local.get $x)
@@ -155,22 +151,19 @@
 
   ;; CHECK:      (func $read-g-with-effectful-call-indirect (type $3) (param $ref (ref $throw-type)) (result i32)
   ;; CHECK-NEXT:  (local $x i32)
-  ;; CHECK-NEXT:  (local.set $x
-  ;; CHECK-NEXT:   (global.get $g)
-  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (call_indirect $t (type $throw-type)
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (local.get $x)
+  ;; CHECK-NEXT:  (global.get $g)
   ;; CHECK-NEXT: )
   (func $read-g-with-effectful-call-indirect (param $ref (ref $throw-type)) (result i32)
     (local $x i32)
     (local.set $x (global.get $g))
 
-    ;; Similar to above, except here we can tell that the indirect call may
-    ;; throw so optimization is halted.
+    ;; Sinking across a potentially throwing call is valid here.
     (drop (call_indirect (type $throw-type) (i32.const 0)))
 
     (local.get $x)

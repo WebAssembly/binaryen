@@ -76,6 +76,7 @@ struct LinearExecutionWalker : public PostWalker<SubType, VisitorType> {
   // cases (calls, if without an else) and it has very low overhead (we still
   // only do a simple postorder walk on the IR, no CFG is constructed, etc.).
   bool connectAdjacentBlocks = false;
+  bool connectAdjacentCalls = false;
 
   static void scan(SubType* self, Expression** currp) {
     Expression* curr = *currp;
@@ -89,7 +90,7 @@ struct LinearExecutionWalker : public PostWalker<SubType, VisitorType> {
         // Control is nonlinear if we return or throw. Traps don't need to be
         // taken into account since they don't break control flow in a way
         // that's observable.
-        if (mayThrow || isReturn) {
+        if (isReturn || (!self->connectAdjacentCalls && mayThrow)) {
           self->pushTask(SubType::doNoteNonLinear, currp);
         }
       }

@@ -138,9 +138,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.get $0)
-  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $equivalent-set-removal-call (param $0 i32)
     (local $1 i32)
