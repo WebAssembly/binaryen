@@ -2426,6 +2426,7 @@ Result<> IRBuilder::makeStructWait(HeapType type, Index index) {
   }
 
   StructWait curr(wasm.allocator);
+  curr.index = index;
   CHECK_ERR(ChildPopper{*this}.visitStructWait(&curr, type));
   CHECK_ERR(validateTypeAnnotation(type, curr.ref));
   push(builder.makeStructWait(
