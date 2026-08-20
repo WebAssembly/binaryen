@@ -159,8 +159,8 @@ Result provesConstantPair(Abstract::Op aOp,
   }
 
   // If we can represent both as spans, we can calculate that way.
-  if (auto aSpan = Constraint{aOp, aConstant}.getSpan()) {
-    if (auto bSpan = Constraint{bOp, bConstant}.getSpan()) {
+  if (auto aSpan = Constraint{aOp, {aConstant}}.getSpan()) {
+    if (auto bSpan = Constraint{bOp, {bConstant}}.getSpan()) {
       if (aSpan->isEmpty()) {
         // An empty span implies a contradiction (e.g. x > MAX_INT), as it means
         // no possible number can apply. And contradictions prove anything.
@@ -737,7 +737,7 @@ void BasicBlockConstraintMap::set(Index index, Expression* value) {
     if (hasUnsignedUpperBound && !hasUnsignedLowerBound) {
       // We know we did not overflow (we are bounded from above), and don't have
       // any lower bound, so add x > 0.
-      new_.approximateAnd({GtU, Literal::makeFromInt32(0, type)});
+      new_.approximateAnd({GtU, {Literal::makeFromInt32(0, type)}});
     }
 
     set(index, new_);
