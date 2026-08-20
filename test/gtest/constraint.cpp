@@ -631,4 +631,32 @@ TEST(ConstraintTest, TestIncrement) {
   EXPECT_EQ(map.get(0),
             (AndedConstraintSet{{GtS, {Literal(int32_t(10))}},
                                 {LeS, {Literal(int32_t(20))}}}));
+
+  // $0 >= 10 && $0 <= max_signed, $0++  =>  $0 > 10 (overflowing constraint
+  // removed)
+  map.set(0, {GeS, {Literal(int32_t(10))}});
+  map.approximateAnd(0, {LeS, {Literal::makeSignedMax(Type::i32)}});
+  map.set(0, &add);
+  EXPECT_EQ(map.get(0), (AndedConstraintSet{{GtS, {Literal(int32_t(10))}}}));
+
+  // $0 >= 10 && $0 == $2, $0++  =>  $0 > 10 (non-constant term removed)
+  map.set(0, {GeS, {Literal(int32_t(10))}});
+  map.approximateAnd(0, {Eq, {Index(2)}});
+  map.set(0, &add);
+  EXPECT_EQ(map.get(0), (AndedConstraintSet{{GtS, {Literal(int32_t(10))}}}));
+}
+
+TEST(ConstraintTest, TestEqConstraints) {
+  BasicBlockConstraintMap map;
+  map.setReachable();
+
+  // $0 == 42
+  map.set(0, {Eq, {Literal(int32_t(42))}});
+
+  // $0 < $1
+  map.approximateAnd(0, {LtS, {Index(int32_t(1))}});
+
+  // $1 has $1 > 42: we constant-propagated the value of $0. This is better than
+  // having $1 > $0 and needing to look $0 up.
+  check(map.get(1), {GtS, {Literal(int32_t(42))}});
 }

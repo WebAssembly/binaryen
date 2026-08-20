@@ -1,6 +1,8 @@
 # TypeScript API Changelog
 
 ## Current Trunk
+- Expose WASM heap types (`binaryen.struct`, `binaryen.array`, `binaryen.func`, etc.). (#8981)
+- Update `ExpressionBuilder#ref.null()` to take a heap type argument.
 - Replace old `Feature.RelaxedAtomics` with `Feature.AcquireReleaseAtomics`,
 	then add new `Feature.RelaxedAtomics`. (#8982, #8983)
 - Add `MemoryOrder.Relaxed`. (#8984)

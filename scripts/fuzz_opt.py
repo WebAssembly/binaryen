@@ -76,6 +76,7 @@ DISALLOWED_FEATURES_IN_V8 = [
     'strings',
     'stack-switching',
     'multibyte',
+    'relaxed-atomics',
 ]
 
 
