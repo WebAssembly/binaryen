@@ -14,7 +14,7 @@
     (func (param $expected i32) (param $timeout i64) (result i32)
       (struct.wait $t 2 (ref.null $t) (global.get $wq) (local.get $expected) (local.get $timeout))
     )
-  ) "struct index out of bounds"
+  ) "out of bounds struct.wait field"
 )
 
 (assert_invalid
@@ -25,7 +25,29 @@
     (func (param $expected i32) (param $timeout i64) (result i32)
       (struct.wait $t 0 (global.get $g) (global.get $wq) (i64.const 0) (local.get $timeout))
     )
-  ) "struct.wait expected must be an i32"
+  ) "struct.wait expected value must match the field immediate"
+)
+
+(assert_invalid
+  (module
+    (type $t (shared (struct (field f32))))
+    (global $g (ref $t) (struct.new $t (f32.const 0)))
+    (global $wq (ref (shared waitqueue)) (waitqueue.new))
+    (func (param $expected f32) (param $timeout i64) (result i32)
+      (struct.wait $t 0 (global.get $g) (global.get $wq) (local.get $expected) (local.get $timeout))
+    )
+  ) "struct.wait control word field must be i32, i64 or a subtype of (ref null (shared eq))"
+)
+
+(assert_invalid
+  (module
+    (type $t (shared (struct (field i8))))
+    (global $g (ref $t) (struct.new $t (i32.const 0)))
+    (global $wq (ref (shared waitqueue)) (waitqueue.new))
+    (func (param $expected i32) (param $timeout i64) (result i32)
+      (struct.wait $t 0 (global.get $g) (global.get $wq) (local.get $expected) (local.get $timeout))
+    )
+  ) "struct.wait field must not be packed"
 )
 
 (assert_invalid
@@ -41,8 +63,6 @@
 
 (assert_invalid
   (module
-    (type $t (shared (struct (field i32))))
-    (global $wq (ref (shared waitqueue)) (waitqueue.new))
     (func (param $count i32) (result i32)
       (waitqueue.notify (ref.null waitqueue) (local.get $count))
     )
@@ -62,18 +82,29 @@
 ;; unreachable is allowed
 (module
   (type $t (shared (struct (field i32))))
+  (global $g (ref $t) (struct.new $t (i32.const 0)))
   (global $wq (ref (shared waitqueue)) (waitqueue.new))
   (func (param $expected i32) (param $timeout i64) (result i32)
     (struct.wait $t 0 (unreachable) (global.get $wq) (local.get $expected) (local.get $timeout))
   )
   (func (param $expected i32) (param $timeout i64) (result i32)
-    (struct.wait $t 0 (ref.null $t) (unreachable) (local.get $expected) (local.get $timeout))
+    (struct.wait $t 0 (global.get $g) (unreachable) (local.get $expected) (local.get $timeout))
+  )
+  (func (param $timeout i64) (result i32)
+    (struct.wait $t 0 (global.get $g) (global.get $wq) (unreachable) (local.get $timeout))
+  )
+  (func (param $expected i32) (result i32)
+    (struct.wait $t 0 (global.get $g) (global.get $wq) (local.get $expected) (unreachable))
   )
   (func (param $count i32) (result i32)
     (waitqueue.notify (unreachable) (local.get $count))
   )
+  (func (result i32)
+    (waitqueue.notify (global.get $wq) (unreachable))
+  )
 )
 
+;; i32 control word
 (module
   (type $t (shared (struct (field (mut i32)))))
 
@@ -118,6 +149,78 @@
 
 (assert_trap (invoke "struct.wait" (i32.const 0) (i64.const 0)) "null ref")
 (assert_trap (invoke "waitqueue.notify" (i32.const 0)) "null ref")
+
+;; i64 control word
+(module
+  (type $t (shared (struct (field (mut i64)))))
+
+  (global $g (mut (ref null $t)) (struct.new $t (i64.const 0)))
+  (global $wq (mut (ref (shared waitqueue))) (waitqueue.new))
+
+  (func (export "struct.wait") (param $expected i64) (param $timeout i64) (result i32)
+    (struct.wait $t 0 (global.get $g) (global.get $wq) (local.get $expected) (local.get $timeout))
+  )
+
+  (func (export "struct.set") (param $val i64)
+    (struct.set $t 0 (global.get $g) (local.get $val))
+  )
+
+  (func (export "struct.get") (result i64)
+    (struct.get $t 0 (global.get $g))
+  )
+)
+
+(invoke "struct.set" (i64.const 42))
+(assert_return (invoke "struct.get") (i64.const 42))
+(assert_return (invoke "struct.wait" (i64.const 0) (i64.const 100)) (i32.const 1))
+(assert_return (invoke "struct.wait" (i64.const 42) (i64.const 0)) (i32.const 2))
+
+;; (ref null (shared eq)) control word
+(module
+  (type $control (shared (struct)))
+
+  (type $t (shared (struct
+    (field (mut (ref null (shared eq))))
+  )))
+
+  (global $control1 (ref $control) (struct.new $control))
+  (global $control2 (ref $control) (struct.new $control))
+
+  (global $g (mut (ref null $t)) (struct.new $t
+    (global.get $control1)
+  ))
+
+  (global $wq (mut (ref null (shared waitqueue))) (waitqueue.new))
+
+  (func (export "wait_control1") (result i32)
+    (struct.wait $t 0 (global.get $g) (global.get $wq) (global.get $control1) (i64.const 0))
+  )
+
+  (func (export "wait_control2") (result i32)
+    (struct.wait $t 0 (global.get $g) (global.get $wq) (global.get $control2) (i64.const 0))
+  )
+
+  (func (export "wait_null") (result i32)
+    (struct.wait $t 0 (global.get $g) (global.get $wq) (ref.null (shared eq)) (i64.const 0))
+  )
+
+  (func (export "set_control_to_null")
+    (struct.set $t 0 (global.get $g) (ref.null (shared eq)))
+  )
+)
+
+;; $control1 is the control word, wait 0ns and return 2.
+(assert_return (invoke "wait_control1") (i32.const 2))
+;; $control2 is not the control word, don't wait and return 1.
+(assert_return (invoke "wait_control2") (i32.const 1))
+;; ditto for null.
+(assert_return (invoke "wait_null") (i32.const 1))
+
+(invoke "set_control_to_null")
+
+;; null is now the control word.
+(assert_return (invoke "wait_null") (i32.const 2))
+(assert_return (invoke "wait_control1") (i32.const 1))
 
 ;; Binary format test for waitqueue and nowaitqueue.
 (module binary
