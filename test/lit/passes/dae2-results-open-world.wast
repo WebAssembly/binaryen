@@ -78,3 +78,53 @@
     (drop (ref.func $target))
   )
 )
+
+(module
+  ;; OPEN:      (type $f (func (result i32)))
+  ;; CLOSED:      (type $f (func))
+  (type $f (func (result i32)))
+  ;; OPEN:      (table $t 1 funcref)
+  ;; CLOSED:      (table $t 1 funcref)
+  (table $t 1 funcref)
+  ;; OPEN:      (func $caller (type $f) (result i32)
+  ;; OPEN-NEXT:  (return_call_indirect $t (type $f)
+  ;; OPEN-NEXT:   (i32.const 0)
+  ;; OPEN-NEXT:  )
+  ;; OPEN-NEXT: )
+  ;; CLOSED:      (func $caller (type $f)
+  ;; CLOSED-NEXT:  (return_call_indirect $t (type $f)
+  ;; CLOSED-NEXT:   (i32.const 0)
+  ;; CLOSED-NEXT:  )
+  ;; CLOSED-NEXT: )
+  (func $caller (type $f) (result i32)
+    ;; In open world, indirect call signatures cannot be modified, so the caller
+    ;; cannot have its result removed even though the result is unused. In closed
+    ;; world, both the signature and the caller can be optimized.
+    (return_call_indirect $t (type $f)
+      (i32.const 0)
+    )
+  )
+)
+
+(module
+  ;; OPEN:      (type $f (func (result i32)))
+  ;; CLOSED:      (rec
+  ;; CLOSED-NEXT:  (type $f (func))
+  (type $f (func (result i32)))
+  ;; OPEN:      (func $caller (type $1) (param $ref (ref $f)) (result i32)
+  ;; OPEN-NEXT:  (return_call_ref $f
+  ;; OPEN-NEXT:   (local.get $ref)
+  ;; OPEN-NEXT:  )
+  ;; OPEN-NEXT: )
+  ;; CLOSED:      (func $caller (type $2) (param $ref (ref $f))
+  ;; CLOSED-NEXT:  (return_call_ref $f
+  ;; CLOSED-NEXT:   (local.get $ref)
+  ;; CLOSED-NEXT:  )
+  ;; CLOSED-NEXT: )
+  (func $caller (param $ref (ref $f)) (result i32)
+    ;; Same with return_call_ref.
+    (return_call_ref $f
+      (local.get $ref)
+    )
+  )
+)

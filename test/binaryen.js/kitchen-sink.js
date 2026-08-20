@@ -604,13 +604,13 @@ function test_core() {
     module.return_call_indirect("t0", makeInt32(2449), [ makeInt32(13), makeInt64(37, 0), makeFloat32(1.3), makeFloat64(3.7) ], iIfF, binaryen.i32),
 
     // Reference types
-    module.ref.is_null(module.ref.null(binaryen.externref)),
-    module.ref.is_null(module.ref.null(binaryen.funcref)),
+    module.ref.is_null(module.ref.null(binaryen.extern)),
+    module.ref.is_null(module.ref.null(binaryen.func)),
     module.ref.is_null(module.ref.func("foobar", foobarType)),
-    module.select(temp10, module.ref.null(binaryen.funcref), module.ref.func("foobar", foobarType)),
+    module.select(temp10, module.ref.null(binaryen.func), module.ref.func("foobar", foobarType)),
 
     // GC
-    module.ref.eq(module.ref.null(binaryen.eqref), module.ref.null(binaryen.eqref)),
+    module.ref.eq(module.ref.null(binaryen.eq), module.ref.null(binaryen.eq)),
 
     // Exception handling
     module.try(

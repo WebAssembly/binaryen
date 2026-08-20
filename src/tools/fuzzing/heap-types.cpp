@@ -263,23 +263,16 @@ struct HeapTypeGeneratorImpl {
     // by a described type. Only structs may have descriptor chains.
     if (!isDescriptor && std::get_if<StructKind>(&typeKinds.back()) &&
         remainingUncommitted && features.hasCustomDescriptors()) {
-      if (super) {
-        // If we have a supertype, our descriptor chain must be at least as
-        // long as the supertype's descriptor chain.
-        size_t length = descriptorChainLengths[*super];
-        if (rand.oneIn(2)) {
-          length += rand.upToSquared(remainingUncommitted - length);
-        }
-        descriptorChainLengths[i] = length;
-        numPlannedDescriptors += length;
-      } else {
-        // We can choose to start a brand new chain at this type.
-        if (rand.oneIn(2)) {
-          size_t length = rand.upToSquared(remainingUncommitted);
-          descriptorChainLengths[i] = length;
-          numPlannedDescriptors += length;
-        }
+      // If we have a supertype, our descriptor chain must be at least as
+      // long as the supertype's descriptor chain.
+      size_t length = super ? descriptorChainLengths[*super] : 0;
+      // If we have space, usually add at least one descriptor.
+      if (remainingUncommitted > length && !rand.oneIn(4)) {
+        length += 1 + rand.upToSquared(remainingUncommitted - length);
       }
+      assert(length <= remainingUncommitted);
+      descriptorChainLengths[i] = length;
+      numPlannedDescriptors += length;
     }
     // If this type has a descriptor chain, then we need to be able to
     // choose to generate the next type in the chain in the future.

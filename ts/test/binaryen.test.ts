@@ -39,23 +39,42 @@ suite("binaryen", () => {
 		assert.ok(binaryen.f32);
 		assert.ok(binaryen.f64);
 		assert.ok(binaryen.v128);
+
+		assert.ok(binaryen.any);
+		assert.ok(binaryen.eq);
+		assert.ok(binaryen.i31);
+		assert.ok(binaryen.struct);
+		assert.ok(binaryen.array);
+		assert.ok(!binaryen.none); // TODO: update after changing `none` above
+		assert.ok(binaryen.func);
+		// @ts-expect-error
+		assert.ok(!binaryen.exn);
+		assert.ok(binaryen.extern);
+		assert.ok(binaryen.nofunc);
+		// @ts-expect-error
+		assert.ok(!binaryen.noexn);
+		assert.ok(binaryen.noextern);
+
 		assert.ok(binaryen.anyref);
 		assert.ok(binaryen.eqref);
 		assert.ok(binaryen.i31ref);
 		assert.ok(binaryen.structref);
 		assert.ok(binaryen.arrayref);
+		assert.ok(binaryen.nullref);
 		assert.ok(binaryen.funcref);
 		// @ts-expect-error
 		assert.ok(!binaryen.exnref);
 		assert.ok(binaryen.externref);
-		assert.ok(binaryen.nullref);
 		assert.ok(binaryen.nullfuncref);
 		// @ts-expect-error
 		assert.ok(!binaryen.nullexnref);
 		assert.ok(binaryen.nullexternref);
-		assert.strictEqual(binaryen.notPacked, 0);
+
+		assert.ok("notPacked" in binaryen);
 		assert.ok(binaryen.i8);
 		assert.ok(binaryen.i16);
+
+		assert.ok(binaryen.string);
 		assert.ok(binaryen.stringref);
 
 		// enums
