@@ -137,31 +137,50 @@ suite("binaryen", () => {
 
 
 	test("types.", () => {
-		assert.strictEqual(binaryen.auto, -1);
-		assert.strictEqual(binaryen.none, 0);
 		assert.strictEqual(binaryen.unreachable, 1);
+		assert.strictEqual(binaryen.none, 0);
+		assert.strictEqual(binaryen.auto, -1);
 		assert.strictEqual(binaryen.i32, 2);
 		assert.strictEqual(binaryen.i64, 3);
 		assert.strictEqual(binaryen.f32, 4);
 		assert.strictEqual(binaryen.f64, 5);
 		assert.strictEqual(binaryen.v128, 6);
+
+		assert.strictEqual(binaryen.any, 0x20);
+		assert.strictEqual(binaryen.eq, 0x28);
+		assert.strictEqual(binaryen.i31, 0x30);
+		assert.strictEqual(binaryen.struct, 0x38);
+		assert.strictEqual(binaryen.array, 0x40);
+		assert.strictEqual(binaryen.none, 0x00); // TODO: update after changing `none` above
+		assert.strictEqual(binaryen.func, 0x10);
+		// @ts-expect-error
+		assert.strictEqual(binaryen.exn, undefined);
+		assert.strictEqual(binaryen.extern, 0x08);
+		assert.strictEqual(binaryen.nofunc, 0x68);
+		// @ts-expect-error
+		assert.strictEqual(binaryen.noexn, undefined);
+		assert.strictEqual(binaryen.noextern, 0x60);
+
 		assert.strictEqual(binaryen.anyref, 0x22);
 		assert.strictEqual(binaryen.eqref, 0x2a);
 		assert.strictEqual(binaryen.i31ref, 0x32);
 		assert.strictEqual(binaryen.structref, 0x3a);
 		assert.strictEqual(binaryen.arrayref, 0x42);
+		assert.strictEqual(binaryen.nullref, 0x5a);
 		assert.strictEqual(binaryen.funcref, 0x12);
 		// @ts-expect-error
 		assert.strictEqual(binaryen.exnref, undefined);
 		assert.strictEqual(binaryen.externref, 0x0a);
-		assert.strictEqual(binaryen.nullref, 0x5a);
 		assert.strictEqual(binaryen.nullfuncref, 0x6a);
 		// @ts-expect-error
 		assert.strictEqual(binaryen.nullexnref, undefined);
 		assert.strictEqual(binaryen.nullexternref, 0x62);
+
 		assert.strictEqual(binaryen.notPacked, 0);
 		assert.strictEqual(binaryen.i8, 1);
 		assert.strictEqual(binaryen.i16, 2);
+
+		assert.strictEqual(binaryen.string, 0x50);
 		assert.strictEqual(binaryen.stringref, 0x52);
 
 		const i32_pair = binaryen.createType([binaryen.i32, binaryen.i32]);
