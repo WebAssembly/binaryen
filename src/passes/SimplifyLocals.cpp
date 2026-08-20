@@ -76,13 +76,16 @@ struct SimplifyLocals
       SimplifyLocals<allowTee, allowStructure, allowNesting>>();
   }
 
+  bool connectAdjacentCalls = true;
+
   // information for a local.set we can sink
   struct SinkableInfo {
     Expression** item;
     EffectAnalyzer effects;
 
     SinkableInfo(Expression** item, PassOptions& passOptions, Module& module)
-      : item(item), effects(passOptions, module, *item) {}
+      : item(item),
+        effects(passOptions, module, (*item)->cast<LocalSet>()->value) {}
   };
 
   // a list of sinkables in a linear execution trace

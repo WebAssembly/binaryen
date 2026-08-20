@@ -2,15 +2,15 @@
 ;; RUN: wasm-opt %s --simplify-locals -all -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (tag $e-i32 (type $2) (param i32))
+  ;; CHECK:      (tag $e-i32 (type $1) (param i32))
   (tag $e-i32 (param i32))
 
-  ;; CHECK:      (func $bar (type $0) (result i32)
+  ;; CHECK:      (func $bar (type $2) (result i32)
   ;; CHECK-NEXT:  (i32.const 3)
   ;; CHECK-NEXT: )
   (func $bar (result i32) (i32.const 3))
 
-  ;; CHECK:      (func $call-cannot-be-sinked-into-try_table (type $1)
+  ;; CHECK:      (func $call-cannot-be-sinked-into-try_table (type $0)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (local.set $0
   ;; CHECK-NEXT:   (call $bar)
@@ -46,7 +46,7 @@
     )
   )
 
-  ;; CHECK:      (func $non-call-can-be-sinked-into-try_table (type $1)
+  ;; CHECK:      (func $non-call-can-be-sinked-into-try_table (type $0)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (block $tryend
@@ -80,7 +80,7 @@
     )
   )
 
-  ;; CHECK:      (func $return-call-can-be-sinked-into-try_table (type $0) (result i32)
+  ;; CHECK:      (func $return-call-can-be-sinked-into-try_table (type $2) (result i32)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (block $tryend (result i32)
@@ -125,7 +125,7 @@
     )
   )
 
-  ;; CHECK:      (func $equivalent-set-removal-call (type $2) (param $0 i32)
+  ;; CHECK:      (func $equivalent-set-removal-call (type $1) (param $0 i32)
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (drop
@@ -138,9 +138,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.get $0)
-  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $equivalent-set-removal-call (param $0 i32)
     (local $1 i32)
@@ -224,17 +222,15 @@
     (drop (local.get $1))
   )
 
-  ;; CHECK:      (func $nop (type $1)
+  ;; CHECK:      (func $nop (type $0)
   ;; CHECK-NEXT: )
   (func $nop)
 
   ;; CHECK:      (func $sink-across-control-flow (type $4) (param $bool i32) (result i32)
   ;; CHECK-NEXT:  (local $l i32)
-  ;; CHECK-NEXT:  (local.set $l
-  ;; CHECK-NEXT:   (i32.const 2)
-  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (call $nop)
-  ;; CHECK-NEXT:  (local.get $l)
+  ;; CHECK-NEXT:  (i32.const 2)
   ;; CHECK-NEXT: )
   (func $sink-across-control-flow (param $bool i32) (result i32)
     (local $l i32)

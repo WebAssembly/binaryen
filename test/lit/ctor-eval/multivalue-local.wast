@@ -44,13 +44,6 @@
 ;; CHECK:      (export "multivalue-local" (func $multivalue-local_2))
 
 ;; CHECK:      (func $multivalue-local_2 (type $1) (result i32)
-;; CHECK-NEXT:  (local $0 i32)
-;; CHECK-NEXT:  (local.set $0
-;; CHECK-NEXT:   (i32.const 42)
-;; CHECK-NEXT:  )
 ;; CHECK-NEXT:  (call $import)
-;; CHECK-NEXT:  (i32.add
-;; CHECK-NEXT:   (local.get $0)
-;; CHECK-NEXT:   (local.get $0)
-;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (i32.const 84)
 ;; CHECK-NEXT: )
