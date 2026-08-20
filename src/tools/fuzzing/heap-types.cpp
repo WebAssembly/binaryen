@@ -336,6 +336,9 @@ struct HeapTypeGeneratorImpl {
       if (features.hasStackSwitching() && share == Unshared) {
         bottoms.push_back(HeapType::nocont);
       }
+      if (features.hasSharedEverything() && share == Shared) {
+        bottoms.push_back(HeapType::nowaitqueue);
+      }
       return rand.pick(bottoms).getBasic(share);
     }
 
@@ -357,6 +360,9 @@ struct HeapTypeGeneratorImpl {
     // Avoid shared exn, which we cannot generate.
     if (features.hasExceptionHandling() && share == Unshared) {
       options.push_back(HeapType::exn);
+    }
+    if (features.hasSharedEverything() && share == Shared) {
+      options.push_back(HeapType::waitqueue);
     }
     auto ht = rand.pick(options);
     return ht.getBasic(share);
@@ -683,11 +689,13 @@ struct HeapTypeGeneratorImpl {
         case HeapType::nofunc:
         case HeapType::nocont:
         case HeapType::noexn:
+        case HeapType::nowaitqueue:
           return type;
         case HeapType::waitqueue:
-        case HeapType::nowaitqueue: {
-          WASM_UNREACHABLE("waitqueue is unimplemented in the fuzzer");
-        }
+          if (rand.oneIn(2)) {
+            return HeapTypes::sharedNowaitqueue.getBasic(share);
+          }
+          return type;
       }
       WASM_UNREACHABLE("unexpected type");
     }
@@ -735,6 +743,7 @@ struct HeapTypeGeneratorImpl {
       case HeapType::exn:
       case HeapType::cont:
       case HeapType::any:
+      case HeapType::waitqueue:
         break;
       case HeapType::eq:
         candidates.push_back(HeapTypes::any.getBasic(share));
@@ -760,10 +769,9 @@ struct HeapTypeGeneratorImpl {
       case HeapType::noexn:
         candidates.push_back(HeapTypes::exn.getBasic(share));
         break;
-      case HeapType::waitqueue:
-      case HeapType::nowaitqueue: {
-        WASM_UNREACHABLE("waitqueue is unimplemented in the fuzzer");
-      }
+      case HeapType::nowaitqueue:
+        candidates.push_back(HeapTypes::sharedWaitqueue.getBasic(share));
+        break;
     }
     assert(!candidates.empty());
     return rand.pick(candidates);
