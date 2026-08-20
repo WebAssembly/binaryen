@@ -644,37 +644,50 @@ void BasicBlockConstraintMap::set(Index index, Expression* value) {
   // Apply a constraint to a value, x = C.
   if (Properties::isSingleConstantExpression(value)) {
     auto c = Properties::getLiteral(value);
-    set(index, Constraint{Abstract::Eq, {c}});
+    set(index, Constraint{Eq, {c}});
     return;
   }
 
   // Apply a constraint to a local, x = y.
   if (auto* get = value->dynCast<LocalGet>()) {
-    set(index, Constraint{Abstract::Eq, {get->index}});
+    set(index, Constraint{Eq, {get->index}});
     return;
   }
   if (auto* tee = value->dynCast<LocalSet>()) {
-    set(index, Constraint{Abstract::Eq, {tee->index}});
+    set(index, Constraint{Eq, {tee->index}});
     return;
   }
 
   // Apply an increment of a local, x = y + 1.
   Index y;
-  if (matches(value, binary(Abstract::Add, local(&y), ival(1)))) {
-    // The local y must have old constraints that we know how to increment.
-    auto old = get(y);
+  if (matches(value, binary(Add, local(&y), ival(1)))) {
+    // The local y must have old constraints that we know how to increment and
+    // transform into new ones.
+    const auto old = get(y);
+    auto new_ = old;
+
+    // If we see an unsigned upper bound but not a lower one, we can add a
+    // lower one (if we do not overflow). That is, if we see x < 100, x++, then
+    // we can not only update x < 100 to x <= 100, but also add x > 0 (since 0
+    // is impossible after the ++). This is not possible for signed operations,
+    // since x++ does not prove x > 0 there (0 is not the only value that is
+    // <= 0).
+    bool hasUnsignedUpperBound = false;
+    bool hasUnsignedLowerBound = false;
+    Type type;
 
     // Iterate over the old constraints and increment each one.
-    for (auto iter = old.begin(); iter != old.end();) {
+    for (auto iter = new_.begin(); iter != new_.end();) {
       auto& c = *iter;
       auto* N = std::get_if<Literal>(&c.term);
       if (!N) {
         // A non-constant term, which we don't know how to increment. Simply
         // remove it: we are losing proving power here, but doing so is never
         // invalid.
-        iter = old.erase(iter);
+        iter = new_.erase(iter);
         continue;
       }
+      type = N->type;
 
       switch (c.op) {
         // x == N, x++  =>  x == N+1.
@@ -694,32 +707,40 @@ void BasicBlockConstraintMap::set(Index index, Expression* value) {
           break;
         case LtU:
           c.op = LeU;
+          hasUnsignedUpperBound = true;
           break;
         // x <= N, x++ => x <= N+1 if no overflow
         case LeS:
           if (N->isSignedMax()) {
-            iter = old.erase(iter);
+            iter = new_.erase(iter);
             continue;
           }
           *N = N->add(Literal::makeFromInt32(1, N->type));
           break;
         case LeU:
           if (N->isUnsignedMax()) {
-            iter = old.erase(iter);
+            iter = new_.erase(iter);
             continue;
           }
           *N = N->add(Literal::makeFromInt32(1, N->type));
+          hasUnsignedUpperBound = true;
           break;
         default:
           // Something we don't recognize.
-          iter = old.erase(iter);
+          iter = new_.erase(iter);
           continue;
       }
 
       ++iter;
     }
 
-    set(index, old);
+    if (hasUnsignedUpperBound && !hasUnsignedLowerBound) {
+      // We know we did not overflow (we are bounded from above), and don't have
+      // any lower bound, so add x > 0.
+      new_.approximateAnd({GtU, Literal::makeFromInt32(0, type)});
+    }
+
+    set(index, new_);
     return;
   }
 
