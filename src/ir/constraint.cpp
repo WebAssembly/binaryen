@@ -344,6 +344,8 @@ void AndedConstraintSet::approximateAnd(const Constraint& c) {
     }
   }
 
+  // TODO: use Spans here when possible
+
   if (size() < MaxConstraints) {
     // Insert into the right place, keeping us sorted.
     insert(std::upper_bound(begin(), end(), c), c);
@@ -504,6 +506,8 @@ bool AndedConstraintSet::approximateOr(const AndedConstraintSet& other) {
     *this = other;
     return true;
   }
+
+  // TODO: use Spans here when possible
 
   // For more complex cases, do a detailed analysis.
   auto result = detailedApproximateOr(*this, other);
