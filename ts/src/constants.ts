@@ -99,14 +99,14 @@ export const i31ref: Type = BinaryenObj["_BinaryenTypeI31ref"]();
 export const structref: Type = BinaryenObj["_BinaryenTypeStructref"]();
 /** `(ref null array)` */
 export const arrayref: Type = BinaryenObj["_BinaryenTypeArrayref"]();
+/** `(ref null none)` */
+export const nullref: Type = BinaryenObj["_BinaryenTypeNullref"]();
 /** `(ref null func)` */
 export const funcref: Type = BinaryenObj["_BinaryenTypeFuncref"]();
 /** `(ref null exn)` */
 // export const exnref: Type = BinaryenObj["_BinaryenTypeExnref"](); // TODO: uncomment once supported in Binaryen
 /** `(ref null extern)` */
 export const externref: Type = BinaryenObj["_BinaryenTypeExternref"]();
-/** `(ref null none)` */
-export const nullref: Type = BinaryenObj["_BinaryenTypeNullref"]();
 /** `(ref null nofunc)` */
 export const nullfuncref: Type = BinaryenObj["_BinaryenTypeNullFuncref"]();
 /** `(ref null noexn)` */
@@ -121,10 +121,10 @@ export const i16: PackedType = BinaryenObj["_BinaryenPackedTypeInt16"]();
 
 // ### Proposed Types ### //
 // These types are not yet in the WASM spec. Move them to their respective sections once finalized.
-/** `(ref null string)` */
-export const stringref: Type = BinaryenObj["_BinaryenTypeStringref"]();
 /** Heap type `string`. */
 export const string: Type = BinaryenObj["_BinaryenHeapTypeString"]();
+/** `(ref null string)` */
+export const stringref: Type = BinaryenObj["_BinaryenTypeStringref"]();
 
 
 
