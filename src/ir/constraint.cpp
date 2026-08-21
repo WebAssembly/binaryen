@@ -24,7 +24,8 @@ namespace wasm::constraint {
 
 namespace {
 
-std::optional<Span<IU64>> getSpanInternal(const Constraint& c, std::optional<Type> type, bool exact) {
+std::optional<Span<IU64>>
+getSpanInternal(const Constraint& c, std::optional<Type> type, bool exact) {
   using namespace Abstract;
 
   auto* cc = std::get_if<Literal>(&c.term);
@@ -139,7 +140,8 @@ std::optional<Span<IU64>> Constraint::getSpan(std::optional<Type> type) const {
   return getSpanInternal(*this, type, true);
 }
 
-std::optional<Span<IU64>> Constraint::getProvenSpan(std::optional<Type> type) const {
+std::optional<Span<IU64>>
+Constraint::getProvenSpan(std::optional<Type> type) const {
   return getSpanInternal(*this, type, false);
 }
 
