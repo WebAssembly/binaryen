@@ -529,7 +529,7 @@ std::optional<LocalConstraint> LocalConstraint::parse(Expression* curr) {
   };
 
   if (auto* unary = curr->dynCast<Unary>()) {
-    if (Abstract::getUnary(unary->type, Abstract::EqZ) == unary->op) {
+    if (Abstract::getUnary(unary->value->type, Abstract::EqZ) == unary->op) {
       return parseEqZArgument(unary->value);
     }
     return {};
@@ -576,7 +576,7 @@ std::optional<LocalConstraint> LocalConstraint::parse(Expression* curr) {
                     Abstract::GtU,
                     Abstract::GeS,
                     Abstract::GeU}) {
-      if (Abstract::getBinary(binary->type, op) == binary->op) {
+      if (Abstract::getBinary(binary->left->type, op) == binary->op) {
         return parseBinaryArguments(op, binary->left, binary->right);
       }
     }
