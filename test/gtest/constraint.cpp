@@ -1127,3 +1127,9 @@ TEST(ConstraintTest, EmptySpanContradiction) {
   AndedConstraintSet impossible{gtsMax32};
   checkOr(valid, impossible, valid);
 }
+
+TEST(ConstraintTest, GetSpanGC) {
+  // Reference types do not cause errors.
+  EXPECT_EQ((Constraint{Eq, {Literal::makeNull(HeapType::eq)}}.getSpan()),
+            std::nullopt);
+}
