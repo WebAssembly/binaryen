@@ -72,6 +72,13 @@ struct Constraint {
   // An optional type may be passed in. If not, the type is inferred from the
   // term, when possible.
   std::optional<Span<IU64>> getSpan(std::optional<Type> type = {}) const;
+
+  // Get a span we can prove. This is less precise than getSpan, which gets an
+  // *exact* span to represent the Constraint. Here we only return a span we can
+  // prove is true. For example, x < y cannot be represented exactly using a
+  // span (y is not a constant), but that x is smaller than *something* proves
+  // x is not MAX_INT, so we can return the span [MIN_INT, MAX_INT - 1].
+  std::optional<Span<IU64>> getProvenSpan(std::optional<Type> type = {}) const;
 };
 
 // We limit constraints to a low number to ensure good performance even with

@@ -22,15 +22,17 @@
 
 namespace wasm::constraint {
 
-std::optional<Span<IU64>> Constraint::getSpan(std::optional<Type> type) const {
+namespace {
+
+std::optional<Span<IU64>> getSpanInternal(const Constraint& c, std::optional<Type> type, bool exact) {
   using namespace Abstract;
 
-  auto* c = std::get_if<Literal>(&term);
-  if (c) {
+  auto* cc = std::get_if<Literal>(&c.term);
+  if (cc) {
     // If passed in, the type must be right.
-    assert(!type || *type == c->type);
+    assert(!type || *type == cc->type);
 
-    type = c->type;
+    type = cc->type;
   }
 
   auto minSigned = type && *type == Type::i32
@@ -43,11 +45,11 @@ std::optional<Span<IU64>> Constraint::getSpan(std::optional<Type> type) const {
                        ? std::numeric_limits<uint32_t>::max()
                        : std::numeric_limits<uint64_t>::max();
 
-  if (!c) {
-    // Not comparing to a constant, so we can infer very little here, and only
-    // if we know the type.
-    if (type) {
-      switch (op) {
+  if (!cc) {
+    // Not comparing to a constant, so we can't infer anything exact, but might
+    // if we just need something we can prove, and if we know the type.
+    if (!exact && type) {
+      switch (c.op) {
         // x < y, i.e., x is less than *something*, proves x < MAX_INT.
         case LtS:
           return Span<IU64>{minSigned, maxSigned - 1};
@@ -68,9 +70,9 @@ std::optional<Span<IU64>> Constraint::getSpan(std::optional<Type> type) const {
     return {};
   }
 
-  switch (op) {
+  switch (c.op) {
     case Eq: {
-      auto x = c->getUnsigned();
+      auto x = cc->getUnsigned();
       if (x <= uint64_t(maxSigned)) {
         // This is in the range of both signed and unsigned values, so there is
         // no ambiguity. That is, we cannot convert the bit pattern
@@ -83,52 +85,62 @@ std::optional<Span<IU64>> Constraint::getSpan(std::optional<Type> type) const {
     }
 
     case LtS:
-      if (c->getInteger() == minSigned) {
+      if (cc->getInteger() == minSigned) {
         // Less than the lowest possible number is an empty span.
         return Span<IU64>::empty();
       } else {
-        return Span<IU64>{minSigned, c->getInteger() - 1};
+        return Span<IU64>{minSigned, cc->getInteger() - 1};
       }
       break;
     case LtU:
-      if (c->getInteger() == 0) {
+      if (cc->getInteger() == 0) {
         // Less than the lowest possible number is an empty span.
         return Span<IU64>::empty();
       } else {
-        return Span<IU64>{0, c->getUnsigned() - 1};
+        return Span<IU64>{0, cc->getUnsigned() - 1};
       }
       break;
     case LeS:
-      return Span<IU64>{minSigned, c->getInteger()};
+      return Span<IU64>{minSigned, cc->getInteger()};
     case LeU:
-      return Span<IU64>{0, c->getUnsigned()};
+      return Span<IU64>{0, cc->getUnsigned()};
 
     case GtS:
-      if (c->getInteger() == maxSigned) {
+      if (cc->getInteger() == maxSigned) {
         // Greater than the highest possible number is an empty span.
         return Span<IU64>::empty();
       } else {
-        return Span<IU64>{c->getInteger() + 1, maxSigned};
+        return Span<IU64>{cc->getInteger() + 1, maxSigned};
       }
       break;
     case GtU:
-      if (c->getUnsigned() == maxUnsigned) {
+      if (cc->getUnsigned() == maxUnsigned) {
         // Greater than the highest possible number is an empty span.
         return Span<IU64>::empty();
       } else {
-        return Span<IU64>{c->getUnsigned() + 1, maxUnsigned};
+        return Span<IU64>{cc->getUnsigned() + 1, maxUnsigned};
       }
       break;
     case GeS:
-      return Span<IU64>{c->getInteger(), maxSigned};
+      return Span<IU64>{cc->getInteger(), maxSigned};
     case GeU:
-      return Span<IU64>{c->getUnsigned(), maxUnsigned};
+      return Span<IU64>{cc->getUnsigned(), maxUnsigned};
 
     default: {
     }
   }
 
   return {};
+}
+
+} // anonymous namespace
+
+std::optional<Span<IU64>> Constraint::getSpan(std::optional<Type> type) const {
+  return getSpanInternal(*this, type, true);
+}
+
+std::optional<Span<IU64>> Constraint::getProvenSpan(std::optional<Type> type) const {
+  return getSpanInternal(*this, type, false);
 }
 
 namespace {
@@ -226,9 +238,10 @@ Result provesPair(const Constraint& a, const Constraint& b) {
   // must be a constant in this case, so that we know the type.
   if (aConstant || bConstant) {
     auto type = aConstant ? aConstant->type : bConstant->type;
-    if (auto aSpan = a.getSpan(type)) {
+    // Use a proven span for a, and an exact one for b. This allows us to do
+    // a => proven span for a => exact span for b => b.
+    if (auto aSpan = a.getProvenSpan(type)) {
       if (auto bSpan = b.getSpan(type)) {
-
         if (aSpan->isEmpty()) {
           // An empty span implies a contradiction (e.g. x > MAX_INT), as it
           // means no possible number can apply. And contradictions prove
