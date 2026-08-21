@@ -230,8 +230,9 @@ Result provesPair(const Constraint& a, const Constraint& b) {
       if (auto bSpan = b.getSpan(type)) {
 
         if (aSpan->isEmpty()) {
-          // An empty span implies a contradiction (e.g. x > MAX_INT), as it means
-          // no possible number can apply. And contradictions prove anything.
+          // An empty span implies a contradiction (e.g. x > MAX_INT), as it
+          // means no possible number can apply. And contradictions prove
+          // anything.
           return True;
         }
         if (bSpan->isEmpty()) {
@@ -244,8 +245,8 @@ Result provesPair(const Constraint& a, const Constraint& b) {
           return True;
         }
         if (!bSpan->hasOverlap(*aSpan)) {
-          // There is no overlap at all, e.g., { 0 < x < 10 } vs { 20 < x < 30 },
-          // both cannot be true and each proves the other false.
+          // There is no overlap at all, e.g., { 0 < x < 10 } vs { 20 < x < 30
+          // }, both cannot be true and each proves the other false.
           return False;
         }
       }
@@ -360,12 +361,10 @@ bool isImmediateContradiction(const Constraint& c) {
     return false;
   }
 
-  auto minSigned = cc->type == Type::i32
-                     ? std::numeric_limits<int32_t>::min()
-                     : std::numeric_limits<int64_t>::min();
-  auto maxSigned = cc->type == Type::i32
-                     ? std::numeric_limits<int32_t>::max()
-                     : std::numeric_limits<int64_t>::max();
+  auto minSigned = cc->type == Type::i32 ? std::numeric_limits<int32_t>::min()
+                                         : std::numeric_limits<int64_t>::min();
+  auto maxSigned = cc->type == Type::i32 ? std::numeric_limits<int32_t>::max()
+                                         : std::numeric_limits<int64_t>::max();
   auto maxUnsigned = cc->type == Type::i32
                        ? std::numeric_limits<uint32_t>::max()
                        : std::numeric_limits<uint64_t>::max();

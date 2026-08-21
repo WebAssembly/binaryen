@@ -720,7 +720,6 @@ TEST(ConstraintTest, TestEqConstraints) {
   check(map.get(1), {GtS, {Literal(int32_t(42))}});
 }
 
-
 TEST(ConstraintTest, ComplexOrRegression) {
   // $0 == 0
   BasicBlockConstraintMap left;
@@ -734,10 +733,10 @@ TEST(ConstraintTest, ComplexOrRegression) {
 
   // $0 == 0 || $0 <= 100  =>  $0 <= 100  (0 is included in <= 100), but the
   // other constraint, $0 > $1, was only on one side, and vanishes.
-std::cout << "\n\n\nNOW\n\n";
+  std::cout << "\n\n\nNOW\n\n";
 
   right.approximateOr(left);
-std::cout << right << '\n';
+  std::cout << right << '\n';
   check(right.get(0), {LeS, {Literal(int32_t(100))}});
 
   EXPECT_TRUE(right.get(1).empty());
@@ -1153,4 +1152,3 @@ TEST(ConstraintTest, EmptySpanContradiction) {
   AndedConstraintSet impossible{gtsMax32};
   checkOr(valid, impossible, valid);
 }
-
