@@ -53,6 +53,8 @@ public:
     skipFunctionBodies = skipFunctionBodies_;
   }
 
+  void setValidate(bool validate_) { validate = validate_; }
+
   // read text
   void readText(std::string filename, Module& wasm);
   // read binary
@@ -74,6 +76,8 @@ private:
   IRProfile profile = IRProfile::Normal;
 
   bool skipFunctionBodies = false;
+
+  bool validate = true;
 
   FeatureSet featuresSectionFeatures = FeatureSet::MVP;
 

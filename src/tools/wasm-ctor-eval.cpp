@@ -1617,6 +1617,7 @@ int main(int argc, const char* argv[]) {
       std::cout << "reading...\n";
     }
     ModuleReader reader;
+    reader.setValidate(options.passOptions.validate);
     try {
       reader.read(options.extra["infile"], wasm);
     } catch (ParseException& p) {
@@ -1643,6 +1644,7 @@ int main(int argc, const char* argv[]) {
       ModuleUtils::clearModule(wasm);
       wasm.features = features;
       ModuleReader reader;
+      reader.setValidate(options.passOptions.validate);
       reader.read(options.extra["infile"], wasm);
     }
 

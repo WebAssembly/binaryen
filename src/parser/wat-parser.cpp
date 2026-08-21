@@ -109,8 +109,11 @@ Result<> parseModuleWithDecls(ParseDeclsCtx& decls) {
   return Ok{};
 }
 
-Result<> doParseModule(Module& wasm, Lexer& input, bool allowExtra) {
-  ParseDeclsCtx decls(input, wasm);
+Result<> doParseModule(Module& wasm,
+                       Lexer& input,
+                       bool allowExtra,
+                       bool validateWasmStack) {
+  ParseDeclsCtx decls(input, wasm, validateWasmStack);
   CHECK_ERR(parseModule(decls));
   if (!allowExtra && !decls.in.empty()) {
     return decls.in.err("Unexpected tokens after module");
@@ -128,22 +131,23 @@ Result<> doParseModule(Module& wasm, Lexer& input, bool allowExtra) {
 
 Result<> parseModule(Module& wasm,
                      std::string_view in,
-                     std::optional<std::string> filename) {
+                     std::optional<std::string> filename,
+                     bool validateWasmStack) {
   Lexer lexer(in, filename);
-  return doParseModule(wasm, lexer, /*allowExtra=*/false);
+  return doParseModule(wasm, lexer, /*allowExtra=*/false, validateWasmStack);
 }
 
 Result<> parseModule(Module& wasm, std::string_view in) {
   Lexer lexer(in);
-  return doParseModule(wasm, lexer, /*allowExtra=*/false);
+  return doParseModule(wasm, lexer, /*allowExtra=*/false, /*validateWasmStack=*/true);
 }
 
-Result<> parseModule(Module& wasm, Lexer& lexer) {
-  return doParseModule(wasm, lexer, /*allowExtra=*/true);
+Result<> parseModule(Module& wasm, Lexer& lexer, bool validateWasmStack) {
+  return doParseModule(wasm, lexer, /*allowExtra=*/true, validateWasmStack);
 }
 
-Result<> parseModuleBody(Module& wasm, Lexer& lexer) {
-  ParseDeclsCtx decls(lexer, wasm);
+Result<> parseModuleBody(Module& wasm, Lexer& lexer, bool validateWasmStack) {
+  ParseDeclsCtx decls(lexer, wasm, validateWasmStack);
   CHECK_ERR(parseModuleBody(decls));
   CHECK_ERR(parseModuleWithDecls(decls));
 

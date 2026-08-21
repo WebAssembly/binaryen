@@ -397,7 +397,8 @@ struct ReconstructStringifyWalker
   : public StringifyWalker<ReconstructStringifyWalker> {
 
   ReconstructStringifyWalker(Module* wasm, Function* func)
-    : existingBuilder(*wasm), outlinedBuilder(*wasm), func(func) {
+    : existingBuilder(*wasm, /*validateWasmStack=*/false),
+      outlinedBuilder(*wasm, /*validateWasmStack=*/false), func(func) {
     this->setModule(wasm);
     ODBG(std::cerr << "\nexistingBuilder: " << &existingBuilder
                    << " outlinedBuilder: " << &outlinedBuilder << "\n");

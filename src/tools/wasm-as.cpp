@@ -109,7 +109,11 @@ int main(int argc, const char* argv[]) {
   Module wasm;
   options.applyOptionsBeforeParse(wasm);
 
-  auto parsed = WATParser::parseModule(wasm, input);
+  auto parsed = WATParser::parseModule(
+    wasm,
+    input,
+    std::nullopt,
+    options.passOptions.validate && options.extra["validate"] != "none");
   if (auto* err = parsed.getErr()) {
     Fatal() << err->msg;
   }

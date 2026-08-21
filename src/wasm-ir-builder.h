@@ -40,7 +40,10 @@ namespace wasm {
 // globals, tables, functions, etc.) to already exist in the module.
 class IRBuilder : public UnifiedExpressionVisitor<IRBuilder, Result<>> {
 public:
-  IRBuilder(Module& wasm) : wasm(wasm), builder(wasm) {}
+  IRBuilder(Module& wasm, bool validateWasmStack = true)
+    : wasm(wasm), builder(wasm), validateWasmStack(validateWasmStack) {}
+
+  void setValidateWasmStack(bool value) { validateWasmStack = value; }
 
   // Get the valid Binaryen IR expression representing the sequence of visited
   // instructions. The IRBuilder is reset and can be used with a fresh sequence
@@ -69,6 +72,12 @@ public:
   // Like visit, but pushes the expression onto the stack as-is without popping
   // any children or refinalization.
   void push(Expression*, Origin origin = Origin::Binary);
+  // Push a control flow construct using its declared Wasm stack result type,
+  // which may differ from its Binaryen IR type when the construct is typed
+  // unreachable internally.
+  void pushControlFlow(Expression* expr,
+                       Type wasmStackResult,
+                       Origin origin = Origin::Binary);
   void pushSynthetic(Expression* expr) { push(expr, Origin::Synthetic); }
 
   // Set the debug location to be attached to the next visited, created, or
@@ -309,10 +318,19 @@ public:
   // when visiting the beginnings of try blocks.
   Result<> visitPop(Pop*) { return Ok{}; }
 
+  // An entry on the expression stack, tracking both the Binaryen IR node and
+  // the Wasm operand-stack type it produces. These may differ for unreachable
+  // control flow (see StackIRGenerator::makeStackInst in wasm-stack.cpp).
+  struct StackEntry {
+    Expression* expr;
+    Type wasmStackType;
+  };
+
 private:
   Module& wasm;
   Function* func = nullptr;
   Builder builder;
+  bool validateWasmStack = true;
 
   // Used for setting DWARF expression locations.
   size_t* binaryPos = nullptr;
@@ -332,7 +350,11 @@ private:
 
   struct ChildPopper;
 
+  Result<> validateTypeAnnotation(Type type, Expression* child);
+  Result<> validateTypeAnnotation(HeapType type, Expression* child);
+
   void applyDebugLoc(Expression* expr);
+  void pushStackEntry(Expression* expr, Type wasmStackType, Origin origin);
 
   // The context for a single block scope, including the instructions parsed
   // inside that scope so far and the ultimate result type we expect this block
@@ -418,7 +440,7 @@ private:
     std::vector<Name> outputLabels;
 
     // The stack of instructions being built in this scope.
-    std::vector<Expression*> exprStack;
+    std::vector<StackEntry> exprStack;
 
     // Whether we have seen an unreachable instruction and are in
     // stack-polymorphic unreachable mode.

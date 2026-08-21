@@ -1054,6 +1054,8 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
   // where we can parse their types and instructions.
   std::unordered_map<Index, Index> implicitElemIndices;
 
+  bool validateWasmStack = true;
+
   // Counters used for generating names for module elements.
   int funcCounter = 0;
   int tableCounter = 0;
@@ -1077,7 +1079,8 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
     return Ok{};
   }
 
-  ParseDeclsCtx(Lexer& in, Module& wasm) : in(in), wasm(wasm) {}
+  ParseDeclsCtx(Lexer& in, Module& wasm, bool validateWasmStack = true)
+    : in(in), wasm(wasm), validateWasmStack(validateWasmStack) {}
 
   void addFuncType(SignatureT) {}
   void addContType(ContinuationT) {}
@@ -1713,10 +1716,12 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
     const std::unordered_map<HeapType, std::unordered_map<Name, Index>>&
       typeNames,
     const std::unordered_map<Index, Index>& implicitElemIndices,
-    const IndexMap& typeIndices)
+    const IndexMap& typeIndices,
+    bool validateWasmStack = true)
     : TypeParserCtx(typeIndices), in(in), wasm(wasm), builder(wasm),
       types(types), implicitTypes(implicitTypes), typeNames(typeNames),
-      implicitElemIndices(implicitElemIndices), irBuilder(wasm) {}
+      implicitElemIndices(implicitElemIndices),
+      irBuilder(wasm, validateWasmStack) {}
 
   template<typename T> Result<T> withLoc(Index pos, Result<T> res) {
     if (auto err = res.getErr()) {

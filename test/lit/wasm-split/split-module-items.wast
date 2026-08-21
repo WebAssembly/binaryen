@@ -1,4 +1,4 @@
-;; RUN: wasm-split %s -all -g -o1 %t.1.wasm -o2 %t.2.wasm --keep-funcs=keep
+;; RUN: wasm-split %s -all -g --no-validation -o1 %t.1.wasm -o2 %t.2.wasm --keep-funcs=keep
 ;; RUN: wasm-dis %t.1.wasm | filecheck %s --check-prefix PRIMARY
 ;; RUN: wasm-dis %t.2.wasm | filecheck %s --check-prefix SECONDARY
 

@@ -39,6 +39,7 @@ namespace {
 void parseInput(Module& wasm, const WasmSplitOptions& options) {
   options.applyOptionsBeforeParse(wasm);
   ModuleReader reader;
+  reader.setValidate(options.passOptions.validate);
   reader.setProfile(options.profile);
   try {
     reader.read(options.inputFiles[0], wasm);

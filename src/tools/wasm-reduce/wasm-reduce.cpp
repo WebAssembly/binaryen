@@ -381,6 +381,7 @@ struct Reducer
     module->features = FeatureSet::All;
 
     ModuleReader reader;
+    reader.setValidate(toolOptions.passOptions.validate);
     try {
       reader.read(working, *module);
     } catch (ParseException& p) {

@@ -81,18 +81,80 @@ namespace wasm {
 
 namespace {
 
-Result<> validateTypeAnnotation(Type type, Expression* child) {
+// Unreachable instructions leave wasmStackType none on the polymorphic Wasm stack
+// but remain distinct from ordinary void instructions (drop, local.set, etc.).
+bool isWasmUnreachableValue(Expression* expr, Type wasmStackType) {
+  return wasmStackType == Type::none && expr->type == Type::unreachable &&
+         !Properties::isControlFlowStructure(expr);
+}
+
+MaybeResult<Index>
+findLastWasmStackValueIndex(const std::vector<IRBuilder::StackEntry>& stack) {
+  for (int i = int(stack.size()) - 1; i >= 0; --i) {
+    if (stack[i].wasmStackType != Type::none) {
+      return Index(i);
+    }
+    if (isWasmUnreachableValue(stack[i].expr, stack[i].wasmStackType)) {
+      return Index(i);
+    }
+  }
+  return {};
+}
+
+Result<> validateWasmStackOperand(bool validateWasmStack,
+                                  const std::vector<IRBuilder::StackEntry>& stack,
+                                  bool unreachable) {
+  if (!validateWasmStack) {
+    return Ok{};
+  }
+  auto idx = findLastWasmStackValueIndex(stack);
+  if (!idx) {
+    if (!unreachable) {
+      return Err{"popping from empty stack"};
+    }
+    return Ok{};
+  }
+  auto& entry = stack[*idx];
+  if (entry.wasmStackType == Type::none &&
+      !isWasmUnreachableValue(entry.expr, entry.wasmStackType)) {
+    return Err{"popping from empty stack"};
+  }
+  return Ok{};
+}
+
+std::vector<Expression*>
+stackExprs(const std::vector<IRBuilder::StackEntry>& stack) {
+  std::vector<Expression*> exprs;
+  exprs.reserve(stack.size());
+  for (auto& entry : stack) {
+    exprs.push_back(entry.expr);
+  }
+  return exprs;
+}
+
+std::vector<Expression*> stackExprs(
+  std::vector<IRBuilder::StackEntry>::const_iterator begin,
+  std::vector<IRBuilder::StackEntry>::const_iterator end) {
+  std::vector<Expression*> exprs;
+  exprs.reserve(end - begin);
+  for (auto it = begin; it != end; ++it) {
+    exprs.push_back(it->expr);
+  }
+  return exprs;
+}
+
+} // anonymous namespace
+
+Result<> IRBuilder::validateTypeAnnotation(Type type, Expression* child) {
   if (!Type::isSubType(child->type, type)) {
     return Err{"invalid type on stack"};
   }
   return Ok{};
 }
 
-Result<> validateTypeAnnotation(HeapType type, Expression* child) {
+Result<> IRBuilder::validateTypeAnnotation(HeapType type, Expression* child) {
   return validateTypeAnnotation(Type(type, Nullable), child);
 }
-
-} // anonymous namespace
 
 Result<Index> IRBuilder::addScratchLocal(Type type) {
   if (!func) {
@@ -106,7 +168,7 @@ MaybeResult<IRBuilder::HoistedVal> IRBuilder::hoistLastValue(bool greedy) {
   auto& stack = getScope().exprStack;
   int valIndex = stack.size() - 1;
   for (; valIndex >= 0; --valIndex) {
-    if (stack[valIndex]->type != Type::none) {
+    if (stack[valIndex].expr->type != Type::none) {
       break;
     }
   }
@@ -117,7 +179,7 @@ MaybeResult<IRBuilder::HoistedVal> IRBuilder::hoistLastValue(bool greedy) {
 
   int hoistIndex = valIndex;
   if (greedy) {
-    while (hoistIndex > 0 && stack[hoistIndex - 1]->type == Type::none) {
+    while (hoistIndex > 0 && stack[hoistIndex - 1].expr->type == Type::none) {
       --hoistIndex;
     }
   }
@@ -126,7 +188,7 @@ MaybeResult<IRBuilder::HoistedVal> IRBuilder::hoistLastValue(bool greedy) {
     // Value-producing expression already on top of the stack.
     return HoistedVal{Index(hoistIndex), nullptr};
   }
-  auto*& expr = stack[valIndex];
+  auto*& expr = stack[valIndex].expr;
   if (expr->type == Type::unreachable) {
     // No need for a scratch local to hoist an unreachable.
     return HoistedVal{Index(hoistIndex), nullptr};
@@ -159,14 +221,14 @@ Result<> IRBuilder::packageHoistedValue(const HoistedVal& hoisted,
     // we are synthesizing a block to help us determine later whether we need to
     // run the nested pop fixup.
     scopeStack[0].noteSyntheticBlock();
-    std::vector<Expression*> exprs(scope.exprStack.begin() + hoisted.hoistIndex,
-                                   scope.exprStack.end());
+    auto exprs = stackExprs(scope.exprStack.begin() + hoisted.hoistIndex,
+                            scope.exprStack.end());
     auto* block = builder.makeBlock(exprs, type);
     scope.exprStack.resize(hoisted.hoistIndex);
     pushSynthetic(block);
   };
 
-  auto type = scope.exprStack.back()->type;
+  auto type = scope.exprStack.back().expr->type;
   if (type == Type::none) {
     // If we did not have a value on top of the stack and did not add a scratch
     // local, then there must have been an unreachable.
@@ -187,14 +249,16 @@ Result<> IRBuilder::packageHoistedValue(const HoistedVal& hoisted,
   Index scratchIdx;
   if (hoisted.get) {
     // Update the get on top of the stack to just return the first element.
-    scope.exprStack.back() = builder.makeTupleExtract(hoisted.get, 0);
+    scope.exprStack.back().expr = builder.makeTupleExtract(hoisted.get, 0);
+    scope.exprStack.back().wasmStackType = type[0];
     packageAsBlock(type[0]);
     scratchIdx = hoisted.get->index;
   } else {
     auto scratch = addScratchLocal(type);
     CHECK_ERR(scratch);
-    scope.exprStack.back() = builder.makeTupleExtract(
-      builder.makeLocalTee(*scratch, scope.exprStack.back(), type), 0);
+    scope.exprStack.back().expr = builder.makeTupleExtract(
+      builder.makeLocalTee(*scratch, scope.exprStack.back().expr, type), 0);
+    scope.exprStack.back().wasmStackType = type[0];
     scratchIdx = *scratch;
   }
   for (Index i = 1, size = type.size(); i < size; ++i) {
@@ -204,12 +268,11 @@ Result<> IRBuilder::packageHoistedValue(const HoistedVal& hoisted,
   return Ok{};
 }
 
-void IRBuilder::push(Expression* expr, Origin origin) {
+void IRBuilder::pushStackEntry(Expression* expr,
+                               Type wasmStackType,
+                               Origin origin) {
   auto& scope = getScope();
-  if (expr->type == Type::unreachable) {
-    scope.unreachable = true;
-  }
-  scope.exprStack.push_back(expr);
+  scope.exprStack.push_back({expr, wasmStackType});
 
   if (origin == Origin::Binary) {
     applyDebugLoc(expr);
@@ -235,6 +298,33 @@ void IRBuilder::push(Expression* expr, Origin origin) {
   DBG(dump());
 }
 
+void IRBuilder::push(Expression* expr, Origin origin) {
+  Type wasmStackType = expr->type;
+  // Unreachable control flow does not push a value or enter polymorphic mode in
+  // the enclosing scope (see StackIRGenerator::makeStackInst in wasm-stack.cpp).
+  if (expr->type == Type::unreachable &&
+      !Properties::isControlFlowStructure(expr)) {
+    getScope().unreachable = true;
+    wasmStackType = Type::none;
+  }
+  pushStackEntry(expr, wasmStackType, origin);
+}
+
+void IRBuilder::pushControlFlow(Expression* expr,
+                                Type wasmStackResult,
+                                Origin origin) {
+  Type stackType = wasmStackResult;
+  if (expr->type == Type::unreachable && !wasmStackResult.isConcrete()) {
+    if (expr->is<If>()) {
+      // Unlike other void control flow, a void if that is unreachable in IR
+      // leaves the enclosing Wasm stack polymorphic when it completes.
+      getScope().unreachable = true;
+    }
+    stackType = Type::none;
+  }
+  pushStackEntry(expr, stackType, origin);
+}
+
 Result<Expression*> IRBuilder::build() {
   if (scopeStack.empty()) {
     return builder.makeBlock();
@@ -246,7 +336,7 @@ Result<Expression*> IRBuilder::build() {
     return Err{"unused expressions without block context"};
   }
   assert(scopeStack.back().exprStack.size() == 1);
-  auto* expr = scopeStack.back().exprStack.back();
+  auto* expr = scopeStack.back().exprStack.back().expr;
   scopeStack.clear();
   labelDepths.clear();
   return expr;
@@ -347,9 +437,10 @@ void IRBuilder::dump() {
 
     std::cerr << ":\n";
 
-    for (auto* expr : scope.exprStack) {
-      std::cerr << "    " << ShallowExpression{expr} << " (; "
-                << expr->type.toString() << " ;)\n";
+    for (auto& entry : scope.exprStack) {
+      std::cerr << "    " << ShallowExpression{entry.expr} << " (; "
+                << entry.expr->type.toString() << " / stack "
+                << entry.wasmStackType.toString() << " ;)\n";
     }
   }
 #endif // IR_BUILDER_DEBUG
@@ -482,11 +573,12 @@ private:
             return unreachableFallbackSize;
           }
           --stackIndex;
-          stackTupleIndex = scope.exprStack[stackIndex]->type.size() - 1;
+          stackTupleIndex =
+            scope.exprStack[stackIndex].expr->type.size() - 1;
         }
 
         // Skip expressions that don't produce values.
-        if (scope.exprStack[stackIndex]->type == Type::none) {
+        if (scope.exprStack[stackIndex].expr->type == Type::none) {
           stackTupleIndex = 0;
           continue;
         }
@@ -496,7 +588,7 @@ private:
       // We have an available type and a constraint. Only check constraints if
       // we are deeper than an unreachable, since otherwise we can leave
       // problems to be caught by the validator later.
-      auto type = scope.exprStack[stackIndex]->type[stackTupleIndex];
+      auto type = scope.exprStack[stackIndex].expr->type[stackTupleIndex];
       if (unreachableFallbackSize) {
         auto constraint = children[childIndex].constraint[childTupleIndex];
         if (!PrincipalType::matches(type, constraint)) {
@@ -550,9 +642,12 @@ private:
       return Err{"popping from empty stack"};
     }
 
+    CHECK_ERR(validateWasmStackOperand(
+      builder.validateWasmStack, scope.exprStack, scope.unreachable));
+
     CHECK_ERR(builder.packageHoistedValue(*hoisted, size));
 
-    auto* ret = scope.exprStack.back();
+    auto* ret = scope.exprStack.back().expr;
     // If the top value has the correct size, we can pop it and be done.
     // Unreachable values satisfy any size.
     if (ret->type.size() == size || ret->type == Type::unreachable) {
@@ -891,8 +986,10 @@ Result<Expression*> IRBuilder::finishScope(Block* block) {
     bool sawUnreachable = false;
     for (int i = scope.exprStack.size() - 1; i >= 0; --i) {
       if (sawUnreachable) {
-        scope.exprStack[i] = builder.dropIfConcretelyTyped(scope.exprStack[i]);
-      } else if (scope.exprStack[i]->type == Type::unreachable) {
+        scope.exprStack[i].expr =
+          builder.dropIfConcretelyTyped(scope.exprStack[i].expr);
+        scope.exprStack[i].wasmStackType = Type::none;
+      } else if (scope.exprStack[i].expr->type == Type::unreachable) {
         sawUnreachable = true;
       }
     }
@@ -905,7 +1002,10 @@ Result<Expression*> IRBuilder::finishScope(Block* block) {
       return Err{"popping from empty stack"};
     }
 
-    if (scope.exprStack.back()->type == Type::none) {
+    CHECK_ERR(validateWasmStackOperand(
+      validateWasmStack, scope.exprStack, scope.unreachable));
+
+    if (scope.exprStack.back().expr->type == Type::none) {
       // Nothing was hoisted, which means there must have been an unreachable
       // buried under none-type expressions. It is not valid to end a concretely
       // typed block with none-typed expressions, so add an extra unreachable.
@@ -913,7 +1013,7 @@ Result<Expression*> IRBuilder::finishScope(Block* block) {
     }
 
     if (type.isTuple()) {
-      auto hoistedType = scope.exprStack.back()->type;
+      auto hoistedType = scope.exprStack.back().expr->type;
       if (hoistedType != Type::unreachable &&
           hoistedType.size() != type.size()) {
         // We cannot propagate the hoisted value directly because it does not
@@ -939,18 +1039,19 @@ Result<Expression*> IRBuilder::finishScope(Block* block) {
     // We can put our single expression directly into the surrounding scope.
     if (block) {
       block->list.resize(1);
-      block->list[0] = scope.exprStack.back();
+      block->list[0] = scope.exprStack.back().expr;
       ret = block;
     } else {
-      ret = scope.exprStack.back();
+      ret = scope.exprStack.back().expr;
     }
   } else {
     // More than one expression, so we need a block. Allocate one if we weren't
     // already given one.
+    auto exprs = stackExprs(scope.exprStack);
     if (block) {
-      block->list.set(scope.exprStack);
+      block->list.set(exprs);
     } else {
-      block = builder.makeBlock(scope.exprStack, type);
+      block = builder.makeBlock(exprs, type);
     }
     ret = block;
   }
@@ -1192,7 +1293,7 @@ Result<> IRBuilder::visitEnd() {
     block->name = label;
     block->finalize(block->type,
                     scope.labelUsed ? Block::HasBreak : Block::NoBreak);
-    push(block);
+    pushControlFlow(block, blockType);
   } else if (auto* loop = scope.getLoop()) {
     loop->body = fixExtraOutput(scope, label, *expr);
     loop->name = scope.label;
@@ -1203,7 +1304,7 @@ Result<> IRBuilder::visitEnd() {
       fixLoopWithInput(loop, scope.inputType, scope.inputLocal);
     }
     loop->finalize(loop->type);
-    push(loop);
+    pushControlFlow(loop, blockType);
   } else if (auto* iff = scope.getIf()) {
     iff->ifTrue = *expr;
     if (scope.inputType != Type::none) {
@@ -1215,27 +1316,27 @@ Result<> IRBuilder::visitEnd() {
       iff->ifFalse = nullptr;
     }
     iff->finalize(iff->type);
-    push(maybeWrapForLabel(iff));
+    pushControlFlow(maybeWrapForLabel(iff), blockType);
   } else if (auto* iff = scope.getElse()) {
     iff->ifFalse = *expr;
     iff->finalize(iff->type);
-    push(maybeWrapForLabel(iff));
+    pushControlFlow(maybeWrapForLabel(iff), blockType);
   } else if (auto* tryy = scope.getTry()) {
     tryy->body = *expr;
     tryy->name = scope.label;
     tryy->finalize(tryy->type);
-    push(maybeWrapForLabel(tryy));
+    pushControlFlow(maybeWrapForLabel(tryy), blockType);
   } else if (Try* tryy;
              (tryy = scope.getCatch()) || (tryy = scope.getCatchAll())) {
     auto index = scope.getIndex();
     setCatchBody(tryy, *expr, index);
     tryy->name = scope.label;
     tryy->finalize(tryy->type);
-    push(maybeWrapForLabel(tryy));
+    pushControlFlow(maybeWrapForLabel(tryy), blockType);
   } else if (auto* trytable = scope.getTryTable()) {
     trytable->body = *expr;
     trytable->finalize(trytable->type, &wasm);
-    push(maybeWrapForLabel(trytable));
+    pushControlFlow(maybeWrapForLabel(trytable), blockType);
   } else {
     WASM_UNREACHABLE("unexpected scope kind");
   }
@@ -1895,11 +1996,11 @@ Result<> IRBuilder::makePop(Type type) {
   // type as the Pop we have already made.
   auto& scope = getScope();
   if (!scope.getCatch() || scope.exprStack.size() != 1 ||
-      !scope.exprStack[0]->is<Pop>()) {
+      !scope.exprStack[0].expr->is<Pop>()) {
     return Err{
       "pop instructions may only appear at the beginning of catch blocks"};
   }
-  auto expectedType = scope.exprStack[0]->type;
+  auto expectedType = scope.exprStack[0].expr->type;
   if (!Type::isSubType(expectedType, type)) {
     return Err{std::string("Expected pop of type ") + expectedType.toString()};
   }
@@ -2264,7 +2365,7 @@ Result<> IRBuilder::makeBrOn(Index label,
   CHECK_ERR(testLocal);
 
   // Put the value under test back on the stack and stash it.
-  getScope().exprStack.push_back(curr.ref);
+  getScope().exprStack.push_back({curr.ref, curr.ref->type});
   CHECK_ERR(makeLocalSet(*testLocal));
 
   // Now we can stash the extra values.
@@ -2369,8 +2470,12 @@ Result<> IRBuilder::makeStructGet(HeapType type,
   StructGet curr;
   CHECK_ERR(ChildPopper{*this}.visitStructGet(&curr, type));
   CHECK_ERR(validateTypeAnnotation(type, curr.ref));
+  auto resultType = fields[field].type;
+  if (curr.ref->type == Type::unreachable) {
+    resultType = Type::unreachable;
+  }
   push(
-    builder.makeStructGet(field, curr.ref, order, fields[field].type, signed_));
+    builder.makeStructGet(field, curr.ref, order, resultType, signed_));
   return Ok{};
 }
 

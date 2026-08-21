@@ -101,6 +101,7 @@ int main(int argc, const char* argv[]) {
     options.applyOptionsBeforeParse(wasm);
     try {
       ModuleReader reader;
+      reader.setValidate(options.passOptions.validate);
       reader.read(options.infile, wasm, "");
     } catch (ParseException& p) {
       p.dump(std::cerr);

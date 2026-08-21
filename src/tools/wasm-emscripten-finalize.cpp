@@ -188,6 +188,7 @@ int main(int argc, const char* argv[]) {
   Module wasm;
   options.applyOptionsBeforeParse(wasm);
   ModuleReader reader;
+  reader.setValidate(options.passOptions.validate);
   // If we are not writing output then we definitely don't need to read debug
   // info. However, if we emit output then definitely load the names section so
   // that we roundtrip names properly.
