@@ -864,11 +864,14 @@ bool BasicBlockConstraintMap::approximateOr(
     return true;
   }
 
+std::cout << "aOr\n";
   // We only need to loop on our locals, as any local that is missing in us is
   // one that would end up proving nothing (and get removed).
   bool changed = false;
   for (auto& [local, constraints] : map) {
+std::cout << "Doing " << local << " : " << constraints << " with " << other.get(local) << "\n";
     changed |= constraints.approximateOr(other.get(local));
+std::cout << "  => " << constraints << "\n";
   }
 
   // Anything that became trivial after the OR must be removed.

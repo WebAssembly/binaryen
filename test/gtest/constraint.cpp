@@ -731,9 +731,13 @@ TEST(ConstraintTest, ComplexOrRegression) {
 
   // $0 == 0 || $0 <= 100  =>  $0 <= 100  (0 is included in <= 100), but the
   // other constraint, $0 > $1, was only on one side, and vanishes.
+std::cout << "\n\n\nNOW\n\n";
+
   right.approximateOr(left);
 std::cout << right << '\n';
   check(right.get(0), {LeS, {Literal(int32_t(100))}});
+
+  EXPECT_TRUE(right.get(1).empty());
   abort();
 }
 
