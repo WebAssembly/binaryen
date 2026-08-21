@@ -25,12 +25,6 @@ namespace wasm::constraint {
 std::optional<Span<IU64>> Constraint::getSpan() const {
   using namespace Abstract;
 
-  auto* c = std::get_if<Literal>(&term);
-  if (!c) {
-    // Not comparing to a constant, so cannot be a constant span.
-    return {};
-  }
-
   auto minSigned = c->type == Type::i32 ? std::numeric_limits<int32_t>::min()
                                         : std::numeric_limits<int64_t>::min();
   auto maxSigned = c->type == Type::i32 ? std::numeric_limits<int32_t>::max()
@@ -38,6 +32,29 @@ std::optional<Span<IU64>> Constraint::getSpan() const {
   auto maxUnsigned = c->type == Type::i32
                        ? std::numeric_limits<uint32_t>::max()
                        : std::numeric_limits<uint64_t>::max();
+
+  auto* c = std::get_if<Literal>(&term);
+  if (!c) {
+    // Not comparing to a constant, so we can infer very little here - but not
+    // nothing!
+    switch (op) {
+      // x < y, i.e., x is less than *something*, proves x < MAX_INT.
+      case LtS:
+        return Span<IU64>{minSigned, maxSigned - 1};
+      case LtU:
+        return Span<IU64>{0, maxUnsigned - 1};
+
+      // Similarly, x > y proves x > MIN_INT.
+      case GtS:
+        return Span<IU64>{minSigned + 1, maxSigned};
+      case GtU:
+        return Span<IU64>{1, maxUnsigned};
+
+      default: {
+      }
+    }
+    return {};
+  }
 
   switch (op) {
     case Eq: {
