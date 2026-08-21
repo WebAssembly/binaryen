@@ -673,7 +673,6 @@ void BasicBlockConstraintMap::set(Index index, Expression* value) {
     // since x++ does not prove x > 0 there (0 is not the only value that is
     // <= 0).
     bool hasUnsignedUpperBound = false;
-    bool hasUnsignedLowerBound = false;
     Type type;
 
     // Iterate over the old constraints and increment each one.
@@ -742,9 +741,8 @@ void BasicBlockConstraintMap::set(Index index, Expression* value) {
       ++iter;
     }
 
-    if (hasUnsignedUpperBound && !hasUnsignedLowerBound) {
-      // We know we did not overflow (we are bounded from above), and don't have
-      // any lower bound, so add x > 0.
+    if (hasUnsignedUpperBound) {
+      // We know we did not overflow (we are bounded from above), so add x > 0.
       new_.approximateAnd({GtU, {Literal::makeFromInt32(0, type)}});
     }
 
