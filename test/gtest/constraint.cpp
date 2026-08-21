@@ -39,6 +39,9 @@ TEST(ConstraintTest, TestEq) {
 
   // x != 5: we can infer false.
   EXPECT_EQ(s.proves(Constraint{Ne, {Literal(int32_t(5))}}), False);
+
+  // x > y: we can infer nothing.
+  EXPECT_EQ(s.proves(Constraint{GtS, {Index(1)}}), Unknown);
 }
 
 TEST(ConstraintTest, TestNe) {

@@ -228,6 +228,8 @@ Result provesPair(const Constraint& a, const Constraint& b) {
     auto type = aConstant ? aConstant->type : bConstant->type;
     if (auto aSpan = a.getSpan(type)) {
       if (auto bSpan = b.getSpan(type)) {
+
+std::cout << "a " << *aSpan << " : " << *bSpan << "\n";
         if (aSpan->isEmpty()) {
           // An empty span implies a contradiction (e.g. x > MAX_INT), as it means
           // no possible number can apply. And contradictions prove anything.
@@ -289,15 +291,21 @@ Result AndedConstraintSet::proves(const AndedConstraintSet& other) const {
 
   bool hasUnknown = false;
 
+std::cout << "looping proves for << " << *this << '\n';
   for (auto& c : other) {
+std::cout << " " << c << "\n";
     auto result = proves(c);
     if (result == False) {
+std::cout << "  nope\n";
       // The entire conjunction is proven false.
       return False;
     }
     if (result == Unknown) {
+std::cout << "  dunno\n";
       hasUnknown = true;
     }
+else
+std::cout << "  yass\n";
   }
 
   return hasUnknown ? Unknown : True;
@@ -593,6 +601,8 @@ bool AndedConstraintSet::approximateOr(const AndedConstraintSet& other) {
   // E.g. if we are { x = 10 } and other is { x >= 0 } then all we need is
   // { x >= 0 } as the result of the OR.
   if (other.proves(*this) == True) {
+std::cout << "a3\n";
+  
     return false;
   }
   if (proves(other) == True) {
