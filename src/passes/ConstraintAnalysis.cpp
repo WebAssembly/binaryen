@@ -517,14 +517,12 @@ struct ConstraintAnalysis
   // incremented and loop again, leading to [0, 2] and so forth, only stopping
   // when it reaches the loop bound, which may be very high. We don't want to
   // spend significant time on such constant operations, as other passes will
-  // propagate them anyhow, so we verify that we don't apply such x = y + 1
-  // operations too many times.
-#ifndef NDEBUG
-  static const Index MaxBinaryActions = 5;
+  // propagate them anyhow, so we stop before applying such x = y + 1
+  // operations a ridiculous number of times, by widening to a worst case.
+  static const Index MaxBinaryActions = 20;
 
   // How many times we processed each Binary action.
   std::unordered_map<Binary*, Index> binaryActionCounts;
-#endif
 
   // Given an expression, apply it to the constraints. For example, a local.set
   // sets the value for that local.
@@ -536,12 +534,13 @@ struct ConstraintAnalysis
         return;
       }
 
-#ifndef NDEBUG
       // See above on binary action counting limits.
       if (auto* binary = set->value->dynCast<Binary>()) {
-        assert(binaryActionCounts[binary]++ <= MaxBinaryActions);
+        if (binaryActionCounts[binary]++ >= MaxBinaryActions) {
+          constraints.setProvesNothing(set->index);
+          return;
+        }
       }
-#endif
 
       // Look at the fallthrough. It is valid to do so, because our constraints
       // only track two things, constants and locals. For a constant, it does

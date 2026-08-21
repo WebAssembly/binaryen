@@ -129,10 +129,9 @@
 //
 // If any three of these types exist in these relations with the others, then
 // the validation rules require that the fourth type also exist and be in these
-// relations. The only exception is that A.desc is allowed to be missing. This
-// complex and recursive relationship between subtyping and descriptor relations
-// is why we optimize out unneeded descriptors in this pass rather than e.g.
-// GlobalTypeOptimization.
+// relations. This recursive relationship between subtyping and descriptor
+// relations is why we optimize out unneeded descriptors in this pass rather
+// than e.g. GlobalTypeOptimization.
 //
 // Starting with the initial subtype and descriptor relations determined by
 // walking the IR, repeatedly search for new subtypings and descriptors by
@@ -925,10 +924,16 @@ struct Unsubtyping : Pass, Noter<Unsubtyping> {
     types.setDescriptor(described, descriptor);
 
     // Complete the descriptor squares above and below the new descriptor edge.
-    completeDescriptorSquare(types.getSupertype(described),
-                             types.getSupertype(descriptor),
-                             described,
-                             descriptor);
+    // The four cases here correspond to the four potentially missing corners of
+    // the square.
+    if (auto super = types.getSupertype(described)) {
+      completeDescriptorSquare(
+        super, types.getDescriptor(*super), described, descriptor);
+    }
+    if (auto superDesc = types.getSupertype(descriptor)) {
+      completeDescriptorSquare(
+        types.getDescribed(*superDesc), superDesc, described, descriptor);
+    }
     for (auto sub : types.immediateSubtypes(described)) {
       completeDescriptorSquare(
         described, descriptor, sub, types.getDescriptor(sub));
@@ -1027,6 +1032,7 @@ struct Unsubtyping : Pass, Noter<Unsubtyping> {
     } else if (!superDesc) {
       superDesc = super->getDescriptorType();
     }
+    assert(super && superDesc && sub && subDesc);
     // Add all the edges. Don't worry about duplicating existing edges because
     // checking whether they're necessary now would be about as expensive as
     // discarding them later.

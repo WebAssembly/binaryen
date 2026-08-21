@@ -22,6 +22,86 @@
 
 namespace wasm::constraint {
 
+std::optional<Span<IU64>> Constraint::getSpan() const {
+  using namespace Abstract;
+
+  auto* c = std::get_if<Literal>(&term);
+  if (!c) {
+    // Not comparing to a constant, so cannot be a constant span.
+    return {};
+  }
+
+  auto minSigned = c->type == Type::i32 ? std::numeric_limits<int32_t>::min()
+                                        : std::numeric_limits<int64_t>::min();
+  auto maxSigned = c->type == Type::i32 ? std::numeric_limits<int32_t>::max()
+                                        : std::numeric_limits<int64_t>::max();
+  auto maxUnsigned = c->type == Type::i32
+                       ? std::numeric_limits<uint32_t>::max()
+                       : std::numeric_limits<uint64_t>::max();
+
+  switch (op) {
+    case Eq: {
+      auto x = c->getUnsigned();
+      if (x <= uint64_t(maxSigned)) {
+        // This is in the range of both signed and unsigned values, so there is
+        // no ambiguity. That is, we cannot convert the bit pattern
+        // 0xffffffff into a Span, as it might be either uint32_t(-1)
+        // or actually negative (but a bit pattern like 0x00000001 is
+        // always fine as it can only ever be "1").
+        return Span<IU64>{x, x};
+      }
+      break;
+    }
+
+    case LtS:
+      if (c->getInteger() == minSigned) {
+        // Less than the lowest possible number is an empty span.
+        return Span<IU64>::empty();
+      } else {
+        return Span<IU64>{minSigned, c->getInteger() - 1};
+      }
+      break;
+    case LtU:
+      if (c->getInteger() == 0) {
+        // Less than the lowest possible number is an empty span.
+        return Span<IU64>::empty();
+      } else {
+        return Span<IU64>{0, c->getUnsigned() - 1};
+      }
+      break;
+    case LeS:
+      return Span<IU64>{minSigned, c->getInteger()};
+    case LeU:
+      return Span<IU64>{0, c->getUnsigned()};
+
+    case GtS:
+      if (c->getInteger() == maxSigned) {
+        // Greater than the highest possible number is an empty span.
+        return Span<IU64>::empty();
+      } else {
+        return Span<IU64>{c->getInteger() + 1, maxSigned};
+      }
+      break;
+    case GtU:
+      if (c->getUnsigned() == maxUnsigned) {
+        // Greater than the highest possible number is an empty span.
+        return Span<IU64>::empty();
+      } else {
+        return Span<IU64>{c->getUnsigned() + 1, maxUnsigned};
+      }
+      break;
+    case GeS:
+      return Span<IU64>{c->getInteger(), maxSigned};
+    case GeU:
+      return Span<IU64>{c->getUnsigned(), maxUnsigned};
+
+    default: {
+    }
+  }
+
+  return {};
+}
+
 namespace {
 
 Result TrueFalse(bool x) { return x ? True : False; }
@@ -75,6 +155,31 @@ Result provesConstantPair(Abstract::Op aOp,
   if (aOp == Ne && bOp == Ne) {
     if (aConstant == bConstant) {
       return True;
+    }
+  }
+
+  // If we can represent both as spans, we can calculate that way.
+  if (auto aSpan = Constraint{aOp, {aConstant}}.getSpan()) {
+    if (auto bSpan = Constraint{bOp, {bConstant}}.getSpan()) {
+      if (aSpan->isEmpty()) {
+        // An empty span implies a contradiction (e.g. x > MAX_INT), as it means
+        // no possible number can apply. And contradictions prove anything.
+        return True;
+      }
+      if (bSpan->isEmpty()) {
+        // Anything that is not a contradiction can prove a contradiction.
+        return False;
+      }
+      if (bSpan->contains(*aSpan)) {
+        // b's values contains a's, e.g., b = { 0 < x < 10 } and
+        // a = { 3 < x < 7 }, so a => b.
+        return True;
+      }
+      if (!bSpan->hasOverlap(*aSpan)) {
+        // There is no overlap at all, e.g., { 0 < x < 10 } vs { 20 < x < 30 },
+        // both cannot be true and each proves the other false.
+        return False;
+      }
     }
   }
 
@@ -239,6 +344,8 @@ void AndedConstraintSet::approximateAnd(const Constraint& c) {
     }
   }
 
+  // TODO: use Spans here when possible
+
   if (size() < MaxConstraints) {
     // Insert into the right place, keeping us sorted.
     insert(std::upper_bound(begin(), end(), c), c);
@@ -400,6 +507,8 @@ bool AndedConstraintSet::approximateOr(const AndedConstraintSet& other) {
     return true;
   }
 
+  // TODO: use Spans here when possible
+
   // For more complex cases, do a detailed analysis.
   auto result = detailedApproximateOr(*this, other);
   auto changed = (result != *this);
@@ -420,7 +529,7 @@ std::optional<LocalConstraint> LocalConstraint::parse(Expression* curr) {
   };
 
   if (auto* unary = curr->dynCast<Unary>()) {
-    if (Abstract::getUnary(unary->type, Abstract::EqZ) == unary->op) {
+    if (Abstract::getUnary(unary->value->type, Abstract::EqZ) == unary->op) {
       return parseEqZArgument(unary->value);
     }
     return {};
@@ -467,7 +576,7 @@ std::optional<LocalConstraint> LocalConstraint::parse(Expression* curr) {
                     Abstract::GtU,
                     Abstract::GeS,
                     Abstract::GeU}) {
-      if (Abstract::getBinary(binary->type, op) == binary->op) {
+      if (Abstract::getBinary(binary->left->type, op) == binary->op) {
         return parseBinaryArguments(op, binary->left, binary->right);
       }
     }
@@ -535,37 +644,49 @@ void BasicBlockConstraintMap::set(Index index, Expression* value) {
   // Apply a constraint to a value, x = C.
   if (Properties::isSingleConstantExpression(value)) {
     auto c = Properties::getLiteral(value);
-    set(index, Constraint{Abstract::Eq, {c}});
+    set(index, Constraint{Eq, {c}});
     return;
   }
 
   // Apply a constraint to a local, x = y.
   if (auto* get = value->dynCast<LocalGet>()) {
-    set(index, Constraint{Abstract::Eq, {get->index}});
+    set(index, Constraint{Eq, {get->index}});
     return;
   }
   if (auto* tee = value->dynCast<LocalSet>()) {
-    set(index, Constraint{Abstract::Eq, {tee->index}});
+    set(index, Constraint{Eq, {tee->index}});
     return;
   }
 
   // Apply an increment of a local, x = y + 1.
   Index y;
-  if (matches(value, binary(Abstract::Add, local(&y), ival(1)))) {
-    // The local y must have old constraints that we know how to increment.
-    auto old = get(y);
+  if (matches(value, binary(Add, local(&y), ival(1)))) {
+    // The local y must have old constraints that we know how to increment and
+    // transform into new ones.
+    const auto old = get(y);
+    auto new_ = old;
+
+    // If we see an unsigned upper bound but not a lower one, we can add a
+    // lower one (if we do not overflow). That is, if we see x < 100, x++, then
+    // we can not only update x < 100 to x <= 100, but also add x > 0 (since 0
+    // is impossible after the ++). This is not possible for signed operations,
+    // since x++ does not prove x > 0 there (0 is not the only value that is
+    // <= 0).
+    bool hasUnsignedUpperBound = false;
+    Type type;
 
     // Iterate over the old constraints and increment each one.
-    for (auto iter = old.begin(); iter != old.end();) {
+    for (auto iter = new_.begin(); iter != new_.end();) {
       auto& c = *iter;
       auto* N = std::get_if<Literal>(&c.term);
       if (!N) {
         // A non-constant term, which we don't know how to increment. Simply
         // remove it: we are losing proving power here, but doing so is never
         // invalid.
-        iter = old.erase(iter);
+        iter = new_.erase(iter);
         continue;
       }
+      type = N->type;
 
       switch (c.op) {
         // x == N, x++  =>  x == N+1.
@@ -585,32 +706,39 @@ void BasicBlockConstraintMap::set(Index index, Expression* value) {
           break;
         case LtU:
           c.op = LeU;
+          hasUnsignedUpperBound = true;
           break;
         // x <= N, x++ => x <= N+1 if no overflow
         case LeS:
           if (N->isSignedMax()) {
-            iter = old.erase(iter);
+            iter = new_.erase(iter);
             continue;
           }
           *N = N->add(Literal::makeFromInt32(1, N->type));
           break;
         case LeU:
           if (N->isUnsignedMax()) {
-            iter = old.erase(iter);
+            iter = new_.erase(iter);
             continue;
           }
           *N = N->add(Literal::makeFromInt32(1, N->type));
+          hasUnsignedUpperBound = true;
           break;
         default:
           // Something we don't recognize.
-          iter = old.erase(iter);
+          iter = new_.erase(iter);
           continue;
       }
 
       ++iter;
     }
 
-    set(index, old);
+    if (hasUnsignedUpperBound) {
+      // We know we did not overflow (we are bounded from above), so add x > 0.
+      new_.approximateAnd({GtU, {Literal::makeFromInt32(0, type)}});
+    }
+
+    set(index, new_);
     return;
   }
 
