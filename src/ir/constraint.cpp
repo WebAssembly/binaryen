@@ -350,11 +350,68 @@ std::optional<Constraint> fusedApproximateAndPair(const Constraint& a,
   return {};
 }
 
+bool isImmediateContradiction(const Constraint& c) {
+  using namespace Abstract;
+
+  auto* cc = std::get_if<Literal>(&c.term);
+  if (!cc) {
+    // Only operations on constants can be immediate contradictions.
+    return false;
+  }
+
+  auto minSigned = cc->type == Type::i32
+                     ? std::numeric_limits<int32_t>::min()
+                     : std::numeric_limits<int64_t>::min();
+  auto maxSigned = cc->type == Type::i32
+                     ? std::numeric_limits<int32_t>::max()
+                     : std::numeric_limits<int64_t>::max();
+  auto maxUnsigned = cc->type == Type::i32
+                       ? std::numeric_limits<uint32_t>::max()
+                       : std::numeric_limits<uint64_t>::max();
+
+  switch (c.op) {
+    case LtS:
+      if (cc->getInteger() == minSigned) {
+        // Less than the lowest possible number.
+        return true;
+      }
+      break;
+    case LtU:
+      if (cc->getInteger() == 0) {
+        // Less than the lowest possible number.
+        return true;
+      }
+      break;
+    case GtS:
+      if (cc->getInteger() == maxSigned) {
+        // Greater than the highest possible number.
+        return true;
+      }
+      break;
+    case GtU:
+      if (cc->getUnsigned() == maxUnsigned) {
+        // Greater than the highest possible number.
+        return true;
+      }
+      break;
+    default: {
+    }
+  }
+
+  return false;
+}
+
 } // anonymous namespace
 
 void AndedConstraintSet::approximateAnd(const Constraint& c) {
   if (provesEverything()) {
     // Nothing to add.
+    return;
+  }
+
+  // We don't store contradictions: identify them and mark us as such.
+  if (isImmediateContradiction(c)) {
+    setProvesEverything();
     return;
   }
 
