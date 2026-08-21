@@ -229,7 +229,6 @@ Result provesPair(const Constraint& a, const Constraint& b) {
     if (auto aSpan = a.getSpan(type)) {
       if (auto bSpan = b.getSpan(type)) {
 
-std::cout << "a " << *aSpan << " : " << *bSpan << "\n";
         if (aSpan->isEmpty()) {
           // An empty span implies a contradiction (e.g. x > MAX_INT), as it means
           // no possible number can apply. And contradictions prove anything.
@@ -291,21 +290,15 @@ Result AndedConstraintSet::proves(const AndedConstraintSet& other) const {
 
   bool hasUnknown = false;
 
-std::cout << "looping proves for << " << *this << '\n';
   for (auto& c : other) {
-std::cout << " " << c << "\n";
     auto result = proves(c);
     if (result == False) {
-std::cout << "  nope\n";
       // The entire conjunction is proven false.
       return False;
     }
     if (result == Unknown) {
-std::cout << "  dunno\n";
       hasUnknown = true;
     }
-else
-std::cout << "  yass\n";
   }
 
   return hasUnknown ? Unknown : True;
@@ -601,8 +594,6 @@ bool AndedConstraintSet::approximateOr(const AndedConstraintSet& other) {
   // E.g. if we are { x = 10 } and other is { x >= 0 } then all we need is
   // { x >= 0 } as the result of the OR.
   if (other.proves(*this) == True) {
-std::cout << "a3\n";
-  
     return false;
   }
   if (proves(other) == True) {
@@ -874,14 +865,11 @@ bool BasicBlockConstraintMap::approximateOr(
     return true;
   }
 
-std::cout << "aOr\n";
   // We only need to loop on our locals, as any local that is missing in us is
   // one that would end up proving nothing (and get removed).
   bool changed = false;
   for (auto& [local, constraints] : map) {
-std::cout << "Doing " << local << " : " << constraints << " with " << other.get(local) << "\n";
     changed |= constraints.approximateOr(other.get(local));
-std::cout << "  => " << constraints << "\n";
   }
 
   // Anything that became trivial after the OR must be removed.
