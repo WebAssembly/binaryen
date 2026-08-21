@@ -129,10 +129,9 @@
 //
 // If any three of these types exist in these relations with the others, then
 // the validation rules require that the fourth type also exist and be in these
-// relations. The only exception is that A.desc is allowed to be missing. This
-// complex and recursive relationship between subtyping and descriptor relations
-// is why we optimize out unneeded descriptors in this pass rather than e.g.
-// GlobalTypeOptimization.
+// relations. This recursive relationship between subtyping and descriptor
+// relations is why we optimize out unneeded descriptors in this pass rather
+// than e.g. GlobalTypeOptimization.
 //
 // Starting with the initial subtype and descriptor relations determined by
 // walking the IR, repeatedly search for new subtypings and descriptors by
