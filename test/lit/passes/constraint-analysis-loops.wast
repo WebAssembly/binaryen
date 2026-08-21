@@ -64,6 +64,51 @@
     )
   )
 
+  ;; CHECK:      (func $infinite-loop-with-branch (type $0)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (loop $loop
+  ;; CHECK-NEXT:   (if
+  ;; CHECK-NEXT:    (i32.gt_s
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (then
+  ;; CHECK-NEXT:     (nop)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.set $x
+  ;; CHECK-NEXT:    (i32.add
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (br $loop)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $infinite-loop-with-branch
+    (local $x i32)
+    ;; An infinite loop that *looks* like it might not be infinite. We have a
+    ;; branch with a loop-like condition, but it is just a nop.
+    (loop $loop
+      (if
+        (i32.gt_s
+          (local.get $x)
+          (i32.const 0)
+       )
+       (then
+         (nop)
+       )
+      )
+      (local.set $x
+        (i32.add
+          (local.get $x)
+          (i32.const 1)
+        )
+      )
+      (br $loop)
+    )
+  )
+
   ;; CHECK:      (func $bound (type $0)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (loop $loop
@@ -665,7 +710,7 @@
             (br $out)
           )
         )
-        ;; x > 0 && x <= 100 here (but we need loops mode to get both).
+        ;; x > 0 && x <= 100 here.
         (drop
           (i32.gt_u
             (local.get $x)
