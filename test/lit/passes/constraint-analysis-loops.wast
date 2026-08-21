@@ -263,10 +263,7 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (i32.le_s
-  ;; CHECK-NEXT:     (local.get $x)
-  ;; CHECK-NEXT:     (local.get $p)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (local.set $x
   ;; CHECK-NEXT:    (call $import)
@@ -846,10 +843,7 @@
   ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.ge_s
-  ;; CHECK-NEXT:      (local.get $x)
-  ;; CHECK-NEXT:      (i32.const 0)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.set $x
   ;; CHECK-NEXT:     (i32.add
@@ -916,10 +910,7 @@
   ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.ge_u
-  ;; CHECK-NEXT:      (local.get $x)
-  ;; CHECK-NEXT:      (i32.const 0)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.set $x
   ;; CHECK-NEXT:     (i32.add
@@ -972,20 +963,14 @@
   ;; CHECK:      (func $do-nonconstant (type $1) (param $len i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (if
-  ;; CHECK-NEXT:   (i32.lt_s
-  ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:    (local.get $len)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:   (then
   ;; CHECK-NEXT:    (loop $loop
   ;; CHECK-NEXT:     (drop
   ;; CHECK-NEXT:      (i32.const 1)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (drop
-  ;; CHECK-NEXT:      (i32.ge_s
-  ;; CHECK-NEXT:       (local.get $x)
-  ;; CHECK-NEXT:       (i32.const 0)
-  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (i32.const 1)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (local.set $x
   ;; CHECK-NEXT:      (i32.add
@@ -1047,20 +1032,14 @@
   ;; CHECK:      (func $do-nonconstant-unsigned (type $1) (param $len i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (if
-  ;; CHECK-NEXT:   (i32.lt_u
-  ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:    (local.get $len)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:   (then
   ;; CHECK-NEXT:    (loop $loop
   ;; CHECK-NEXT:     (drop
   ;; CHECK-NEXT:      (i32.const 1)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (drop
-  ;; CHECK-NEXT:      (i32.ge_u
-  ;; CHECK-NEXT:       (local.get $x)
-  ;; CHECK-NEXT:       (i32.const 0)
-  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (i32.const 1)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (local.set $x
   ;; CHECK-NEXT:      (i32.add
@@ -1136,10 +1115,7 @@
   ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.ge_s
-  ;; CHECK-NEXT:      (local.get $i)
-  ;; CHECK-NEXT:      (i32.const 0)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.set $i
   ;; CHECK-NEXT:     (i32.add
@@ -1165,10 +1141,7 @@
   ;; CHECK-NEXT:       (i32.const 1)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (i32.ge_s
-  ;; CHECK-NEXT:        (local.get $j)
-  ;; CHECK-NEXT:        (i32.const 0)
-  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (i32.const 1)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (local.set $j
   ;; CHECK-NEXT:       (i32.add
@@ -1279,10 +1252,7 @@
   ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.ge_s
-  ;; CHECK-NEXT:      (local.get $i)
-  ;; CHECK-NEXT:      (i32.const 0)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (block $in
   ;; CHECK-NEXT:     (local.set $j
@@ -1302,10 +1272,7 @@
   ;; CHECK-NEXT:       (i32.const 1)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (i32.ge_s
-  ;; CHECK-NEXT:        (local.get $j)
-  ;; CHECK-NEXT:        (i32.const 0)
-  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (i32.const 1)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (local.set $j
   ;; CHECK-NEXT:       (i32.add
@@ -1423,10 +1390,7 @@
   ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.ge_s
-  ;; CHECK-NEXT:      (local.get $i)
-  ;; CHECK-NEXT:      (i32.const 0)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.set $i
   ;; CHECK-NEXT:     (i32.add
