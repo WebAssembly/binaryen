@@ -672,7 +672,11 @@
 
  (elem (i32.const 0) $f)
 
- ;; CHECK:      (type $0 (func (result i32)))
+ ;; CHECK:      (type $0 (func (param f32) (result i32)))
+
+ ;; CHECK:      (type $1 (func (param f64) (result i32)))
+
+ ;; CHECK:      (type $2 (func (result i32)))
 
  ;; CHECK:      (global $i64toi32_i32$HIGH_BITS (mut i32) (i32.const 0))
 
@@ -680,11 +684,407 @@
 
  ;; CHECK:      (elem $0 (i32.const 0) $f)
 
- ;; CHECK:      (func $f (type $0) (result i32)
+ ;; CHECK:      (func $f (type $2) (result i32)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  (func $f (result i64)
   (unreachable)
+ )
+ ;; CHECK:      (func $trunc_sat_f32_s (type $0) (param $f f32) (result i32)
+ ;; CHECK-NEXT:  (local $1 f32)
+ ;; CHECK-NEXT:  (local $2 i32)
+ ;; CHECK-NEXT:  (local $2$hi i32)
+ ;; CHECK-NEXT:  (local $i64toi32_i32$0 f32)
+ ;; CHECK-NEXT:  (local $i64toi32_i32$1 i32)
+ ;; CHECK-NEXT:  (local $i64toi32_i32$2 i32)
+ ;; CHECK-NEXT:  (local.set $1
+ ;; CHECK-NEXT:   (local.get $f)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (block
+ ;; CHECK-NEXT:   (local.set $2
+ ;; CHECK-NEXT:    (block (result i32)
+ ;; CHECK-NEXT:     (local.set $i64toi32_i32$0
+ ;; CHECK-NEXT:      (local.get $1)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (local.set $i64toi32_i32$1
+ ;; CHECK-NEXT:      (if (result i32)
+ ;; CHECK-NEXT:       (f32.ge
+ ;; CHECK-NEXT:        (f32.abs
+ ;; CHECK-NEXT:         (local.get $i64toi32_i32$0)
+ ;; CHECK-NEXT:        )
+ ;; CHECK-NEXT:        (f32.const 1)
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:       (then
+ ;; CHECK-NEXT:        (if (result i32)
+ ;; CHECK-NEXT:         (f32.gt
+ ;; CHECK-NEXT:          (local.get $i64toi32_i32$0)
+ ;; CHECK-NEXT:          (f32.const 0)
+ ;; CHECK-NEXT:         )
+ ;; CHECK-NEXT:         (then
+ ;; CHECK-NEXT:          (i32.trunc_f32_u
+ ;; CHECK-NEXT:           (f32.min
+ ;; CHECK-NEXT:            (f32.floor
+ ;; CHECK-NEXT:             (f32.div
+ ;; CHECK-NEXT:              (local.get $i64toi32_i32$0)
+ ;; CHECK-NEXT:              (f32.const 4294967296)
+ ;; CHECK-NEXT:             )
+ ;; CHECK-NEXT:            )
+ ;; CHECK-NEXT:            (f32.sub
+ ;; CHECK-NEXT:             (f32.const 4294967296)
+ ;; CHECK-NEXT:             (f32.const 1)
+ ;; CHECK-NEXT:            )
+ ;; CHECK-NEXT:           )
+ ;; CHECK-NEXT:          )
+ ;; CHECK-NEXT:         )
+ ;; CHECK-NEXT:         (else
+ ;; CHECK-NEXT:          (i32.trunc_f32_u
+ ;; CHECK-NEXT:           (f32.ceil
+ ;; CHECK-NEXT:            (f32.div
+ ;; CHECK-NEXT:             (f32.sub
+ ;; CHECK-NEXT:              (local.get $i64toi32_i32$0)
+ ;; CHECK-NEXT:              (f32.convert_i32_u
+ ;; CHECK-NEXT:               (i32.trunc_f32_u
+ ;; CHECK-NEXT:                (local.get $i64toi32_i32$0)
+ ;; CHECK-NEXT:               )
+ ;; CHECK-NEXT:              )
+ ;; CHECK-NEXT:             )
+ ;; CHECK-NEXT:             (f32.const 4294967296)
+ ;; CHECK-NEXT:            )
+ ;; CHECK-NEXT:           )
+ ;; CHECK-NEXT:          )
+ ;; CHECK-NEXT:         )
+ ;; CHECK-NEXT:        )
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:       (else
+ ;; CHECK-NEXT:        (i32.const 0)
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (i32.trunc_f32_u
+ ;; CHECK-NEXT:      (local.get $i64toi32_i32$0)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (local.set $2$hi
+ ;; CHECK-NEXT:    (local.get $i64toi32_i32$1)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (block
+ ;; CHECK-NEXT:   (local.set $i64toi32_i32$2
+ ;; CHECK-NEXT:    (block (result i32)
+ ;; CHECK-NEXT:     (local.set $i64toi32_i32$1
+ ;; CHECK-NEXT:      (local.get $2$hi)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (local.get $2)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (global.set $i64toi32_i32$HIGH_BITS
+ ;; CHECK-NEXT:    (local.get $i64toi32_i32$1)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (return
+ ;; CHECK-NEXT:    (local.get $i64toi32_i32$2)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $trunc_sat_f32_s (param $f f32) (result i64)
+  (i64.trunc_sat_f32_s (local.get $f))
+ )
+ ;; CHECK:      (func $trunc_sat_f32_u (type $0) (param $f f32) (result i32)
+ ;; CHECK-NEXT:  (local $1 f32)
+ ;; CHECK-NEXT:  (local $2 i32)
+ ;; CHECK-NEXT:  (local $2$hi i32)
+ ;; CHECK-NEXT:  (local $i64toi32_i32$0 f32)
+ ;; CHECK-NEXT:  (local $i64toi32_i32$1 i32)
+ ;; CHECK-NEXT:  (local $i64toi32_i32$2 i32)
+ ;; CHECK-NEXT:  (local.set $1
+ ;; CHECK-NEXT:   (local.get $f)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (block
+ ;; CHECK-NEXT:   (local.set $2
+ ;; CHECK-NEXT:    (block (result i32)
+ ;; CHECK-NEXT:     (local.set $i64toi32_i32$0
+ ;; CHECK-NEXT:      (local.get $1)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (local.set $i64toi32_i32$1
+ ;; CHECK-NEXT:      (if (result i32)
+ ;; CHECK-NEXT:       (f32.ge
+ ;; CHECK-NEXT:        (f32.abs
+ ;; CHECK-NEXT:         (local.get $i64toi32_i32$0)
+ ;; CHECK-NEXT:        )
+ ;; CHECK-NEXT:        (f32.const 1)
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:       (then
+ ;; CHECK-NEXT:        (if (result i32)
+ ;; CHECK-NEXT:         (f32.gt
+ ;; CHECK-NEXT:          (local.get $i64toi32_i32$0)
+ ;; CHECK-NEXT:          (f32.const 0)
+ ;; CHECK-NEXT:         )
+ ;; CHECK-NEXT:         (then
+ ;; CHECK-NEXT:          (i32.trunc_f32_u
+ ;; CHECK-NEXT:           (f32.min
+ ;; CHECK-NEXT:            (f32.floor
+ ;; CHECK-NEXT:             (f32.div
+ ;; CHECK-NEXT:              (local.get $i64toi32_i32$0)
+ ;; CHECK-NEXT:              (f32.const 4294967296)
+ ;; CHECK-NEXT:             )
+ ;; CHECK-NEXT:            )
+ ;; CHECK-NEXT:            (f32.sub
+ ;; CHECK-NEXT:             (f32.const 4294967296)
+ ;; CHECK-NEXT:             (f32.const 1)
+ ;; CHECK-NEXT:            )
+ ;; CHECK-NEXT:           )
+ ;; CHECK-NEXT:          )
+ ;; CHECK-NEXT:         )
+ ;; CHECK-NEXT:         (else
+ ;; CHECK-NEXT:          (i32.trunc_f32_u
+ ;; CHECK-NEXT:           (f32.ceil
+ ;; CHECK-NEXT:            (f32.div
+ ;; CHECK-NEXT:             (f32.sub
+ ;; CHECK-NEXT:              (local.get $i64toi32_i32$0)
+ ;; CHECK-NEXT:              (f32.convert_i32_u
+ ;; CHECK-NEXT:               (i32.trunc_f32_u
+ ;; CHECK-NEXT:                (local.get $i64toi32_i32$0)
+ ;; CHECK-NEXT:               )
+ ;; CHECK-NEXT:              )
+ ;; CHECK-NEXT:             )
+ ;; CHECK-NEXT:             (f32.const 4294967296)
+ ;; CHECK-NEXT:            )
+ ;; CHECK-NEXT:           )
+ ;; CHECK-NEXT:          )
+ ;; CHECK-NEXT:         )
+ ;; CHECK-NEXT:        )
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:       (else
+ ;; CHECK-NEXT:        (i32.const 0)
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (i32.trunc_f32_u
+ ;; CHECK-NEXT:      (local.get $i64toi32_i32$0)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (local.set $2$hi
+ ;; CHECK-NEXT:    (local.get $i64toi32_i32$1)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (block
+ ;; CHECK-NEXT:   (local.set $i64toi32_i32$2
+ ;; CHECK-NEXT:    (block (result i32)
+ ;; CHECK-NEXT:     (local.set $i64toi32_i32$1
+ ;; CHECK-NEXT:      (local.get $2$hi)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (local.get $2)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (global.set $i64toi32_i32$HIGH_BITS
+ ;; CHECK-NEXT:    (local.get $i64toi32_i32$1)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (return
+ ;; CHECK-NEXT:    (local.get $i64toi32_i32$2)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $trunc_sat_f32_u (param $f f32) (result i64)
+  (i64.trunc_sat_f32_u (local.get $f))
+ )
+ ;; CHECK:      (func $trunc_sat_f64_s (type $1) (param $f f64) (result i32)
+ ;; CHECK-NEXT:  (local $1 f64)
+ ;; CHECK-NEXT:  (local $2 i32)
+ ;; CHECK-NEXT:  (local $2$hi i32)
+ ;; CHECK-NEXT:  (local $i64toi32_i32$0 f64)
+ ;; CHECK-NEXT:  (local $i64toi32_i32$1 i32)
+ ;; CHECK-NEXT:  (local $i64toi32_i32$2 i32)
+ ;; CHECK-NEXT:  (local.set $1
+ ;; CHECK-NEXT:   (local.get $f)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (block
+ ;; CHECK-NEXT:   (local.set $2
+ ;; CHECK-NEXT:    (block (result i32)
+ ;; CHECK-NEXT:     (local.set $i64toi32_i32$0
+ ;; CHECK-NEXT:      (local.get $1)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (local.set $i64toi32_i32$1
+ ;; CHECK-NEXT:      (if (result i32)
+ ;; CHECK-NEXT:       (f64.ge
+ ;; CHECK-NEXT:        (f64.abs
+ ;; CHECK-NEXT:         (local.get $i64toi32_i32$0)
+ ;; CHECK-NEXT:        )
+ ;; CHECK-NEXT:        (f64.const 1)
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:       (then
+ ;; CHECK-NEXT:        (if (result i32)
+ ;; CHECK-NEXT:         (f64.gt
+ ;; CHECK-NEXT:          (local.get $i64toi32_i32$0)
+ ;; CHECK-NEXT:          (f64.const 0)
+ ;; CHECK-NEXT:         )
+ ;; CHECK-NEXT:         (then
+ ;; CHECK-NEXT:          (i32.trunc_f64_u
+ ;; CHECK-NEXT:           (f64.min
+ ;; CHECK-NEXT:            (f64.floor
+ ;; CHECK-NEXT:             (f64.div
+ ;; CHECK-NEXT:              (local.get $i64toi32_i32$0)
+ ;; CHECK-NEXT:              (f64.const 4294967296)
+ ;; CHECK-NEXT:             )
+ ;; CHECK-NEXT:            )
+ ;; CHECK-NEXT:            (f64.sub
+ ;; CHECK-NEXT:             (f64.const 4294967296)
+ ;; CHECK-NEXT:             (f64.const 1)
+ ;; CHECK-NEXT:            )
+ ;; CHECK-NEXT:           )
+ ;; CHECK-NEXT:          )
+ ;; CHECK-NEXT:         )
+ ;; CHECK-NEXT:         (else
+ ;; CHECK-NEXT:          (i32.trunc_f64_u
+ ;; CHECK-NEXT:           (f64.ceil
+ ;; CHECK-NEXT:            (f64.div
+ ;; CHECK-NEXT:             (f64.sub
+ ;; CHECK-NEXT:              (local.get $i64toi32_i32$0)
+ ;; CHECK-NEXT:              (f64.convert_i32_u
+ ;; CHECK-NEXT:               (i32.trunc_f64_u
+ ;; CHECK-NEXT:                (local.get $i64toi32_i32$0)
+ ;; CHECK-NEXT:               )
+ ;; CHECK-NEXT:              )
+ ;; CHECK-NEXT:             )
+ ;; CHECK-NEXT:             (f64.const 4294967296)
+ ;; CHECK-NEXT:            )
+ ;; CHECK-NEXT:           )
+ ;; CHECK-NEXT:          )
+ ;; CHECK-NEXT:         )
+ ;; CHECK-NEXT:        )
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:       (else
+ ;; CHECK-NEXT:        (i32.const 0)
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (i32.trunc_f64_u
+ ;; CHECK-NEXT:      (local.get $i64toi32_i32$0)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (local.set $2$hi
+ ;; CHECK-NEXT:    (local.get $i64toi32_i32$1)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (block
+ ;; CHECK-NEXT:   (local.set $i64toi32_i32$2
+ ;; CHECK-NEXT:    (block (result i32)
+ ;; CHECK-NEXT:     (local.set $i64toi32_i32$1
+ ;; CHECK-NEXT:      (local.get $2$hi)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (local.get $2)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (global.set $i64toi32_i32$HIGH_BITS
+ ;; CHECK-NEXT:    (local.get $i64toi32_i32$1)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (return
+ ;; CHECK-NEXT:    (local.get $i64toi32_i32$2)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $trunc_sat_f64_s (param $f f64) (result i64)
+  (i64.trunc_sat_f64_s (local.get $f))
+ )
+ ;; CHECK:      (func $trunc_sat_f64_u (type $1) (param $f f64) (result i32)
+ ;; CHECK-NEXT:  (local $1 f64)
+ ;; CHECK-NEXT:  (local $2 i32)
+ ;; CHECK-NEXT:  (local $2$hi i32)
+ ;; CHECK-NEXT:  (local $i64toi32_i32$0 f64)
+ ;; CHECK-NEXT:  (local $i64toi32_i32$1 i32)
+ ;; CHECK-NEXT:  (local $i64toi32_i32$2 i32)
+ ;; CHECK-NEXT:  (local.set $1
+ ;; CHECK-NEXT:   (local.get $f)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (block
+ ;; CHECK-NEXT:   (local.set $2
+ ;; CHECK-NEXT:    (block (result i32)
+ ;; CHECK-NEXT:     (local.set $i64toi32_i32$0
+ ;; CHECK-NEXT:      (local.get $1)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (local.set $i64toi32_i32$1
+ ;; CHECK-NEXT:      (if (result i32)
+ ;; CHECK-NEXT:       (f64.ge
+ ;; CHECK-NEXT:        (f64.abs
+ ;; CHECK-NEXT:         (local.get $i64toi32_i32$0)
+ ;; CHECK-NEXT:        )
+ ;; CHECK-NEXT:        (f64.const 1)
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:       (then
+ ;; CHECK-NEXT:        (if (result i32)
+ ;; CHECK-NEXT:         (f64.gt
+ ;; CHECK-NEXT:          (local.get $i64toi32_i32$0)
+ ;; CHECK-NEXT:          (f64.const 0)
+ ;; CHECK-NEXT:         )
+ ;; CHECK-NEXT:         (then
+ ;; CHECK-NEXT:          (i32.trunc_f64_u
+ ;; CHECK-NEXT:           (f64.min
+ ;; CHECK-NEXT:            (f64.floor
+ ;; CHECK-NEXT:             (f64.div
+ ;; CHECK-NEXT:              (local.get $i64toi32_i32$0)
+ ;; CHECK-NEXT:              (f64.const 4294967296)
+ ;; CHECK-NEXT:             )
+ ;; CHECK-NEXT:            )
+ ;; CHECK-NEXT:            (f64.sub
+ ;; CHECK-NEXT:             (f64.const 4294967296)
+ ;; CHECK-NEXT:             (f64.const 1)
+ ;; CHECK-NEXT:            )
+ ;; CHECK-NEXT:           )
+ ;; CHECK-NEXT:          )
+ ;; CHECK-NEXT:         )
+ ;; CHECK-NEXT:         (else
+ ;; CHECK-NEXT:          (i32.trunc_f64_u
+ ;; CHECK-NEXT:           (f64.ceil
+ ;; CHECK-NEXT:            (f64.div
+ ;; CHECK-NEXT:             (f64.sub
+ ;; CHECK-NEXT:              (local.get $i64toi32_i32$0)
+ ;; CHECK-NEXT:              (f64.convert_i32_u
+ ;; CHECK-NEXT:               (i32.trunc_f64_u
+ ;; CHECK-NEXT:                (local.get $i64toi32_i32$0)
+ ;; CHECK-NEXT:               )
+ ;; CHECK-NEXT:              )
+ ;; CHECK-NEXT:             )
+ ;; CHECK-NEXT:             (f64.const 4294967296)
+ ;; CHECK-NEXT:            )
+ ;; CHECK-NEXT:           )
+ ;; CHECK-NEXT:          )
+ ;; CHECK-NEXT:         )
+ ;; CHECK-NEXT:        )
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:       (else
+ ;; CHECK-NEXT:        (i32.const 0)
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (i32.trunc_f64_u
+ ;; CHECK-NEXT:      (local.get $i64toi32_i32$0)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (local.set $2$hi
+ ;; CHECK-NEXT:    (local.get $i64toi32_i32$1)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (block
+ ;; CHECK-NEXT:   (local.set $i64toi32_i32$2
+ ;; CHECK-NEXT:    (block (result i32)
+ ;; CHECK-NEXT:     (local.set $i64toi32_i32$1
+ ;; CHECK-NEXT:      (local.get $2$hi)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (local.get $2)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (global.set $i64toi32_i32$HIGH_BITS
+ ;; CHECK-NEXT:    (local.get $i64toi32_i32$1)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (return
+ ;; CHECK-NEXT:    (local.get $i64toi32_i32$2)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $trunc_sat_f64_u (param $f f64) (result i64)
+  (i64.trunc_sat_f64_u (local.get $f))
  )
 )

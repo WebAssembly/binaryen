@@ -64,9 +64,6 @@
     )
   )
 
-<<<<<<< HEAD
-  ;; CHECK:      (func $bound (type $1)
-=======
   ;; CHECK:      (func $infinite-loop-with-branch (type $0)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (loop $loop

@@ -17,6 +17,8 @@ Current Trunk
 
 - Add a new `--constraint-analysis` pass which propagates logical facts along
   branches. (#9010)
+- Replace the `BINARYEN_ROOT` environment variable (used by developers who are
+  doing out-of-tree builds of binaryen) with `BINARYEN_BIN` (#9023)
 
 v132
 ----
