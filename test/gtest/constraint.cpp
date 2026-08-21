@@ -717,6 +717,26 @@ TEST(ConstraintTest, TestEqConstraints) {
   check(map.get(1), {GtS, {Literal(int32_t(42))}});
 }
 
+
+TEST(ConstraintTest, ComplexOrRegression) {
+  // $0 == 0
+  BasicBlockConstraintMap left;
+  left.setReachable();
+  left.set(0, {Eq, {Literal(int32_t(0))}});
+
+  // $0 <= 100, $0 > $1
+  BasicBlockConstraintMap right;
+  right.setReachable();
+  right.set(0, {{LeS, {Literal(int32_t(100))}}, {GtS, {Index(1)}}});
+
+  // $0 == 0 || $0 <= 100  =>  $0 <= 100  (0 is included in <= 100), but the
+  // other constraint, $0 > $1, was only on one side, and vanishes.
+  right.approximateOr(left);
+std::cout << right << '\n';
+  check(right.get(0), {LeS, {Literal(int32_t(100))}});
+  abort();
+}
+
 TEST(ConstraintTest, GetSpan) {
   const IU64 minI32(std::numeric_limits<int32_t>::min());
   const IU64 maxI32(std::numeric_limits<int32_t>::max());
@@ -1126,3 +1146,4 @@ TEST(ConstraintTest, EmptySpanContradiction) {
   AndedConstraintSet impossible{gtsMax32};
   checkOr(valid, impossible, valid);
 }
+

@@ -839,9 +839,6 @@ void BasicBlockConstraintMap::set(Index index, Expression* value) {
       new_.approximateAnd({GtU, {Literal::makeFromInt32(0, type)}});
     }
 
-std::cout << old << " -> " << new_ << '\n';
-
-
     set(index, new_);
     return;
   }
@@ -1011,7 +1008,7 @@ std::ostream& operator<<(std::ostream& o, const Constraint& c) {
   if (auto* cc = std::get_if<Literal>(&c.term)) {
     o << *cc;
   } else if (auto* i = std::get_if<Index>(&c.term)) {
-    o << "Index(" << *i << ')';
+    o << "$" << *i;
   }
   o << '}';
   return o;
