@@ -1030,6 +1030,7 @@ TEST(ConstraintTest, GetSpanType) {
 
   // But it does help with others: x < y means x cannot be MAX_INT.
   EXPECT_EQ((Constraint{LtS, {Index(0)}}.getSpan(Type::i32)), (Span<IU64>{minI32, maxI32Minus1}));
+  EXPECT_EQ((Constraint{LtS, {Index(0)}}.getSpan(Type::i64)), (Span<IU64>{minI64, maxI64Minus1}));
 }
 
 TEST(ConstraintTest, SpanOptimizations) {
