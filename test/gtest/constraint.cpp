@@ -1003,11 +1003,22 @@ TEST(ConstraintTest, GetSpan) {
 
 TEST(ConstraintTest, GetSpanType) {
   const IU64 minI32(std::numeric_limits<int32_t>::min());
+  const IU64 minI32Plus1(std::numeric_limits<int32_t>::min() + 1);
+
   const IU64 maxI32(std::numeric_limits<int32_t>::max());
+  const IU64 maxI32Minus1(std::numeric_limits<int32_t>::max() - 1);
+
   const IU64 maxU32(std::numeric_limits<uint32_t>::max());
+  const IU64 maxU32Minus1(std::numeric_limits<uint32_t>::max() - 1);
+
   const IU64 minI64(std::numeric_limits<int64_t>::min());
+  const IU64 minI64Plus1(std::numeric_limits<int64_t>::min() + 1);
+
   const IU64 maxI64(std::numeric_limits<int64_t>::max());
+  const IU64 maxI64Minus1(std::numeric_limits<int64_t>::max() - 1);
+
   const IU64 maxU64(std::numeric_limits<uint64_t>::max());
+  const IU64 maxU64Minus1(std::numeric_limits<uint64_t>::max() - 1);
 
   // Providing the type to getSpan() doesn't help with certain things.
   EXPECT_EQ((Constraint{Eq, {Index(0)}}.getSpan(Type::i32)), std::nullopt);
@@ -1018,7 +1029,7 @@ TEST(ConstraintTest, GetSpanType) {
   EXPECT_EQ((Constraint{LeS, {Index(2)}}.getSpan(Type::i32)), std::nullopt);
 
   // But it does help with others: x < y means x cannot be MAX_INT.
-//  EXPECT_EQ((Constraint{LtS, {Index(1)}}.getSpan()), (Span<IU64>{IU64(0), maxU64}));
+  EXPECT_EQ((Constraint{LtS, {Index(0)}}.getSpan(Type::i32)), (Span<IU64>{minI32, maxI32Minus1}));
 }
 
 TEST(ConstraintTest, SpanOptimizations) {
