@@ -3681,10 +3681,6 @@ void FunctionValidator::visitStructCmpxchg(StructCmpxchg* curr) {
 }
 
 void FunctionValidator::visitStructWait(StructWait* curr) {
-  // In IRBuilder, we check that the struct ref matches the type immediate.
-  // We can't check this here because we've already discarded the type immediate
-  // at this point. All other validations are here.
-
   shouldBeTrue(
     !getModule() || getModule()->features.hasSharedEverything(),
     curr,
