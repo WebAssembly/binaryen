@@ -71,7 +71,7 @@ struct Constraint {
   //
   // An optional type may be passed in. If not, the type is inferred from the
   // term, when possible.
-  std::optional<Span<IU64>> getSpan(std::optional<Type> type={}) const;
+  std::optional<Span<IU64>> getSpan(std::optional<Type> type = {}) const;
 };
 
 // We limit constraints to a low number to ensure good performance even with

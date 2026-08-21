@@ -1029,17 +1029,25 @@ TEST(ConstraintTest, GetSpanType) {
   EXPECT_EQ((Constraint{LeS, {Index(2)}}.getSpan(Type::i32)), std::nullopt);
 
   // But it does help with others: x < y means x cannot be MAX_INT.
-  EXPECT_EQ((Constraint{LtS, {Index(0)}}.getSpan(Type::i32)), (Span<IU64>{minI32, maxI32Minus1}));
-  EXPECT_EQ((Constraint{LtS, {Index(1)}}.getSpan(Type::i64)), (Span<IU64>{minI64, maxI64Minus1}));
+  EXPECT_EQ((Constraint{LtS, {Index(0)}}.getSpan(Type::i32)),
+            (Span<IU64>{minI32, maxI32Minus1}));
+  EXPECT_EQ((Constraint{LtS, {Index(1)}}.getSpan(Type::i64)),
+            (Span<IU64>{minI64, maxI64Minus1}));
 
-  EXPECT_EQ((Constraint{LtU, {Index(2)}}.getSpan(Type::i32)), (Span<IU64>{0, maxU32Minus1}));
-  EXPECT_EQ((Constraint{LtU, {Index(0)}}.getSpan(Type::i64)), (Span<IU64>{0, maxU64Minus1}));
+  EXPECT_EQ((Constraint{LtU, {Index(2)}}.getSpan(Type::i32)),
+            (Span<IU64>{0, maxU32Minus1}));
+  EXPECT_EQ((Constraint{LtU, {Index(0)}}.getSpan(Type::i64)),
+            (Span<IU64>{0, maxU64Minus1}));
 
-  EXPECT_EQ((Constraint{GtS, {Index(1)}}.getSpan(Type::i32)), (Span<IU64>{minI32Plus1, maxI32}));
-  EXPECT_EQ((Constraint{GtS, {Index(2)}}.getSpan(Type::i64)), (Span<IU64>{minI64Plus1, maxI64}));
+  EXPECT_EQ((Constraint{GtS, {Index(1)}}.getSpan(Type::i32)),
+            (Span<IU64>{minI32Plus1, maxI32}));
+  EXPECT_EQ((Constraint{GtS, {Index(2)}}.getSpan(Type::i64)),
+            (Span<IU64>{minI64Plus1, maxI64}));
 
-  EXPECT_EQ((Constraint{GtU, {Index(0)}}.getSpan(Type::i32)), (Span<IU64>{1, maxU32}));
-  EXPECT_EQ((Constraint{GtU, {Index(1)}}.getSpan(Type::i64)), (Span<IU64>{1, maxU64}));
+  EXPECT_EQ((Constraint{GtU, {Index(0)}}.getSpan(Type::i32)),
+            (Span<IU64>{1, maxU32}));
+  EXPECT_EQ((Constraint{GtU, {Index(1)}}.getSpan(Type::i64)),
+            (Span<IU64>{1, maxU64}));
 }
 
 TEST(ConstraintTest, SpanOptimizations) {

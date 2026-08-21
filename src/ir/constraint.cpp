@@ -33,10 +33,12 @@ std::optional<Span<IU64>> Constraint::getSpan(std::optional<Type> type) const {
     type = c->type;
   }
 
-  auto minSigned = type && *type == Type::i32 ? std::numeric_limits<int32_t>::min()
-                                        : std::numeric_limits<int64_t>::min();
-  auto maxSigned = type && *type == Type::i32 ? std::numeric_limits<int32_t>::max()
-                                        : std::numeric_limits<int64_t>::max();
+  auto minSigned = type && *type == Type::i32
+                     ? std::numeric_limits<int32_t>::min()
+                     : std::numeric_limits<int64_t>::min();
+  auto maxSigned = type && *type == Type::i32
+                     ? std::numeric_limits<int32_t>::max()
+                     : std::numeric_limits<int64_t>::max();
   auto maxUnsigned = type && *type == Type::i32
                        ? std::numeric_limits<uint32_t>::max()
                        : std::numeric_limits<uint64_t>::max();
