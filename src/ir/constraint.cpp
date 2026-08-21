@@ -187,31 +187,6 @@ Result provesConstantPair(Abstract::Op aOp,
     }
   }
 
-  // If we can represent both as spans, we can calculate that way.
-  if (auto aSpan = Constraint{aOp, {aConstant}}.getSpan(aConstant.type)) {
-    if (auto bSpan = Constraint{bOp, {bConstant}}.getSpan(bConstant.type)) {
-      if (aSpan->isEmpty()) {
-        // An empty span implies a contradiction (e.g. x > MAX_INT), as it means
-        // no possible number can apply. And contradictions prove anything.
-        return True;
-      }
-      if (bSpan->isEmpty()) {
-        // Anything that is not a contradiction can prove a contradiction.
-        return False;
-      }
-      if (bSpan->contains(*aSpan)) {
-        // b's values contains a's, e.g., b = { 0 < x < 10 } and
-        // a = { 3 < x < 7 }, so a => b.
-        return True;
-      }
-      if (!bSpan->hasOverlap(*aSpan)) {
-        // There is no overlap at all, e.g., { 0 < x < 10 } vs { 20 < x < 30 },
-        // both cannot be true and each proves the other false.
-        return False;
-      }
-    }
-  }
-
   if (!recursing) {
     // The flipped operation may tell us something:  y ==> !x  implies
     // x ==> y  is false (because if not, then x would prove y, and y would
@@ -241,7 +216,39 @@ Result provesPair(const Constraint& a, const Constraint& b) {
   auto* aConstant = std::get_if<Literal>(&a.term);
   auto* bConstant = std::get_if<Literal>(&b.term);
   if (aConstant && bConstant) {
-    return provesConstantPair(a.op, *aConstant, b.op, *bConstant);
+    auto result = provesConstantPair(a.op, *aConstant, b.op, *bConstant);
+    if (result != Unknown) {
+      return result;
+    }
+  }
+
+  // If we can represent both as spans, we can calculate that way. At least one
+  // must be a constant in this case, so that we know the type.
+  if (aConstant || bConstant) {
+    auto type = aConstant ? aConstant->type : bConstant->type;
+    if (auto aSpan = a.getSpan(type)) {
+      if (auto bSpan = b.getSpan(type)) {
+        if (aSpan->isEmpty()) {
+          // An empty span implies a contradiction (e.g. x > MAX_INT), as it means
+          // no possible number can apply. And contradictions prove anything.
+          return True;
+        }
+        if (bSpan->isEmpty()) {
+          // Anything that is not a contradiction can prove a contradiction.
+          return False;
+        }
+        if (bSpan->contains(*aSpan)) {
+          // b's values contains a's, e.g., b = { 0 < x < 10 } and
+          // a = { 3 < x < 7 }, so a => b.
+          return True;
+        }
+        if (!bSpan->hasOverlap(*aSpan)) {
+          // There is no overlap at all, e.g., { 0 < x < 10 } vs { 20 < x < 30 },
+          // both cannot be true and each proves the other false.
+          return False;
+        }
+      }
+    }
   }
 
   return Unknown;
@@ -739,7 +746,7 @@ void BasicBlockConstraintMap::set(Index index, Expression* value) {
           break;
         // x < N, x++  =>  x <= N
         case LtS:
-          c.op = LeS;
+          c.op = LeS; // do we need it on non-constants too?
           break;
         case LtU:
           c.op = LeU;
@@ -774,6 +781,9 @@ void BasicBlockConstraintMap::set(Index index, Expression* value) {
       // We know we did not overflow (we are bounded from above), so add x > 0.
       new_.approximateAnd({GtU, {Literal::makeFromInt32(0, type)}});
     }
+
+std::cout << old << " -> " << new_ << '\n';
+
 
     set(index, new_);
     return;
