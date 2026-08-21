@@ -188,8 +188,8 @@ Result provesConstantPair(Abstract::Op aOp,
   }
 
   // If we can represent both as spans, we can calculate that way.
-  if (auto aSpan = Constraint{aOp, {aConstant}}.getSpan()) {
-    if (auto bSpan = Constraint{bOp, {bConstant}}.getSpan()) {
+  if (auto aSpan = Constraint{aOp, {aConstant}}.getSpan(aConstant.type)) {
+    if (auto bSpan = Constraint{bOp, {bConstant}}.getSpan(bConstant.type)) {
       if (aSpan->isEmpty()) {
         // An empty span implies a contradiction (e.g. x > MAX_INT), as it means
         // no possible number can apply. And contradictions prove anything.
