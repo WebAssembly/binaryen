@@ -681,6 +681,18 @@ TEST(ConstraintTest, TestIncrement) {
   map.set(0, &add);
   EXPECT_EQ(map.get(0).size(), 0);
 
+  // Ditto, 64-bit signed.
+  map.set(0, {GeS, {Literal(int64_t(10))}});
+  map.approximateAnd(0, {LeS, {Literal::makeSignedMax(Type::i64)}});
+  map.set(0, &add);
+  EXPECT_EQ(map.get(0).size(), 0);
+
+  // Ditto, 64-bit unsigned.
+  map.set(0, {GeU, {Literal(int64_t(10))}});
+  map.approximateAnd(0, {LeU, {Literal::makeUnsignedMax(Type::i64)}});
+  map.set(0, &add);
+  EXPECT_EQ(map.get(0).size(), 0);
+
   // $0 >= 5 && $0 < 100 && $0 != $2, $0++  =>  we increment and remove the non-
   // constant term, leaving $0 >= 6 && $0 <= 100.
   map.set(0, {{GeS, {Literal(int32_t(5))}}, lts100});
