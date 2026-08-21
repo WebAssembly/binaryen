@@ -36,7 +36,7 @@ getSpanInternal(const Constraint& c, std::optional<Type> type, bool exact) {
     type = cc->type;
   }
 
-  if (type && !type->isNumber()) {
+  if (type && !type->isInteger()) {
     // References etc. do not convert to spans.
     return {};
   }
