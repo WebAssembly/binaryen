@@ -400,6 +400,8 @@ enum EncodedType {
   nullable = -0x1d,     // 0x63
   contref = -0x18,      // 0x68
   nullcontref = -0x0b,  // 0x75
+  fiberref = -0x27,     // 0x59
+  nullfiberref = -0x28, // 0x58
   // exception handling
   exnref = -0x17,    // 0x69
   nullexnref = -0xc, // 0x74
@@ -408,6 +410,7 @@ enum EncodedType {
   // type forms
   Func = 0x60,
   Cont = 0x5d,
+  Fiber = 0x57,
   Struct = 0x5f,
   Array = 0x5e,
   Sub = 0x50,
@@ -435,6 +438,8 @@ enum EncodedHeapType {
   noexn = -0xc,        // 0x74
   cont = -0x18,        // 0x68
   nocont = -0x0b,      // 0x75
+  fiber = -0x27,       // 0x59
+  nofiber = -0x28,     // 0x58
   i31 = -0x14,         // 0x6c
   struct_ = -0x15,     // 0x6b
   array = -0x16,       // 0x6a
@@ -471,6 +476,7 @@ extern const char* ExtendedConstFeature;
 extern const char* StringsFeature;
 extern const char* MultiMemoryFeature;
 extern const char* StackSwitchingFeature;
+extern const char* ReifiedFibersFeature;
 extern const char* SharedEverythingFeature;
 extern const char* FP16Feature;
 extern const char* BulkMemoryOptFeature;
@@ -1286,9 +1292,12 @@ enum ASTNodes {
   Resume = 0xe3,
   ResumeThrow = 0xe4,
   ResumeThrowRef = 0xe5,
-  Switch = 0xe6,  // NOTE(dhil): the internal class is known as
-                  // StackSwitch to avoid conflict with the existing
-                  // 'switch table'.
+  Switch = 0xe6, // NOTE(dhil): the internal class is known as
+                 // StackSwitch to avoid conflict with the existing
+                 // 'switch table'.
+  FiberNew = 0xe7,
+  FiberResume = 0xe8,
+  FiberSuspend = 0xe9,
   OnLabel = 0x00, // (on $tag $label)
   OnSwitch = 0x01 // (on $tag switch)
 };

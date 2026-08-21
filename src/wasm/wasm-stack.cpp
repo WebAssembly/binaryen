@@ -3192,6 +3192,31 @@ void BinaryInstWriter::visitStackSwitch(StackSwitch* curr) {
   o << U32LEB(parent.getTagIndex(curr->tag));
 }
 
+void BinaryInstWriter::visitFiberNew(FiberNew* curr) {
+  o << static_cast<int8_t>(BinaryConsts::FiberNew);
+  parent.writeIndexedHeapType(curr->type.getHeapType());
+  o << U32LEB(parent.getFunctionIndex(curr->func));
+}
+
+void BinaryInstWriter::visitFiberResume(FiberResume* curr) {
+  if (curr->fiber->type.isNull()) {
+    emitUnreachable();
+    return;
+  }
+  o << static_cast<int8_t>(BinaryConsts::FiberResume);
+  parent.writeIndexedHeapType(curr->fiber->type.getHeapType());
+  o << U32LEB(getBreakIndex(curr->handler));
+}
+
+void BinaryInstWriter::visitFiberSuspend(FiberSuspend* curr) {
+  if (curr->fiber->type.isNull()) {
+    emitUnreachable();
+    return;
+  }
+  o << static_cast<int8_t>(BinaryConsts::FiberSuspend);
+  parent.writeIndexedHeapType(curr->fiber->type.getHeapType());
+}
+
 void BinaryInstWriter::emitScopeEnd(Expression* curr) {
   assert(!breakStack.empty());
   breakStack.pop_back();

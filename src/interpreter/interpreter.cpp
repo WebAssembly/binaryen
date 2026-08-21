@@ -290,6 +290,9 @@ struct ExpressionInterpreter : OverriddenVisitor<ExpressionInterpreter, Flow> {
   Flow visitResume(Resume* curr) { WASM_UNREACHABLE("TODO"); }
   Flow visitResumeThrow(ResumeThrow* curr) { WASM_UNREACHABLE("TODO"); }
   Flow visitStackSwitch(StackSwitch* curr) { WASM_UNREACHABLE("TODO"); }
+  Flow visitFiberNew(FiberNew* curr) { WASM_UNREACHABLE("TODO"); }
+  Flow visitFiberResume(FiberResume* curr) { WASM_UNREACHABLE("TODO"); }
+  Flow visitFiberSuspend(FiberSuspend* curr) { WASM_UNREACHABLE("TODO"); }
 };
 
 } // anonymous namespace

@@ -156,6 +156,10 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --disable-relaxed-atomics            Disable relaxed atomic memory operations
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-reified-fibers              Enable reified fibers
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-reified-fibers             Disable reified fibers
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --enable-typed-function-references   Deprecated compatibility flag
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --disable-typed-function-references  Deprecated compatibility flag

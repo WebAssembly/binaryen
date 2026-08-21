@@ -211,6 +211,18 @@ void ReFinalize::visitResumeThrow(ResumeThrow* curr) {
   }
 }
 void ReFinalize::visitStackSwitch(StackSwitch* curr) { curr->finalize(); }
+void ReFinalize::visitFiberNew(FiberNew* curr) { curr->finalize(); }
+void ReFinalize::visitFiberResume(FiberResume* curr) {
+  curr->finalize();
+  if (curr->fiber->type.isFiber()) {
+    updateBreakValueType(curr->handler,
+                         curr->fiber->type.getHeapType()
+                           .getFiber()
+                           .suspendType.getSignature()
+                           .params);
+  }
+}
+void ReFinalize::visitFiberSuspend(FiberSuspend* curr) { curr->finalize(); }
 
 void ReFinalize::visitExport(Export* curr) { WASM_UNREACHABLE("unimp"); }
 void ReFinalize::visitGlobal(Global* curr) { WASM_UNREACHABLE("unimp"); }

@@ -2703,6 +2703,25 @@ struct PrintExpressionContents
     o << ' ';
     curr->tag.print(o);
   }
+  void visitFiberNew(FiberNew* curr) {
+    assert(curr->type.isFiber());
+    printMedium(o, "fiber.new ");
+    printHeapTypeName(curr->type.getHeapType());
+    o << ' ';
+    curr->func.print(o);
+  }
+  void visitFiberResume(FiberResume* curr) {
+    assert(curr->fiber->type.isFiber());
+    printMedium(o, "fiber.resume ");
+    printHeapTypeName(curr->fiber->type.getHeapType());
+    o << ' ';
+    curr->handler.print(o);
+  }
+  void visitFiberSuspend(FiberSuspend* curr) {
+    assert(curr->fiber->type.isFiber());
+    printMedium(o, "fiber.suspend ");
+    printHeapTypeName(curr->fiber->type.getHeapType());
+  }
 };
 
 void PrintSExpression::setModule(Module* module) {

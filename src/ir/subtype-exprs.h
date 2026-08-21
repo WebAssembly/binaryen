@@ -628,6 +628,9 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
                     .type.getSignature();
     self()->noteSubtype(currResult, retSig.results);
   }
+  void visitFiberNew(FiberNew* curr) { WASM_UNREACHABLE("unimp"); }
+  void visitFiberResume(FiberResume* curr) { WASM_UNREACHABLE("unimp"); }
+  void visitFiberSuspend(FiberSuspend* curr) { WASM_UNREACHABLE("unimp"); }
 };
 
 } // namespace wasm

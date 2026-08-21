@@ -324,6 +324,9 @@ void Fuzzer::checkCanonicalization() {
           case HeapTypeKind::Cont:
             builder[index] = getContinuation(type.getContinuation());
             continue;
+          case HeapTypeKind::Fiber:
+            builder[index] = getFiber(type.getFiber());
+            continue;
           case HeapTypeKind::Basic:
             break;
         }
@@ -470,6 +473,12 @@ void Fuzzer::checkCanonicalization() {
 
     Continuation getContinuation(Continuation old) {
       old.type = getChildHeapType(old.type).get();
+      return old;
+    }
+
+    Fiber getFiber(Fiber old) {
+      old.resumeType = getChildHeapType(old.resumeType).get();
+      old.suspendType = getChildHeapType(old.suspendType).get();
       return old;
     }
   };

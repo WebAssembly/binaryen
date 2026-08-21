@@ -213,6 +213,7 @@ bool shapeEq(const Struct& a, const Struct& b);
 bool shapeEq(Array a, Array b);
 bool shapeEq(Signature a, Signature b);
 bool shapeEq(Continuation a, Continuation b);
+bool shapeEq(Fiber a, Fiber b);
 bool shapeEq(Field a, Field b);
 bool shapeEq(Type a, Type b);
 bool shapeEq(const Tuple& a, const Tuple& b);
@@ -222,6 +223,7 @@ size_t shapeHash(const Struct& a);
 size_t shapeHash(Array a);
 size_t shapeHash(Signature a);
 size_t shapeHash(Continuation a);
+size_t shapeHash(Fiber a);
 size_t shapeHash(Field a);
 size_t shapeHash(Type a);
 size_t shapeHash(const Tuple& a);
@@ -692,6 +694,11 @@ bool shapeEq(HeapType a, HeapType b) {
           return false;
         }
         break;
+      case HeapTypeKind::Fiber:
+        if (!shapeEq(a.getFiber(), b.getFiber())) {
+          return false;
+        }
+        break;
       case HeapTypeKind::Basic:
         WASM_UNREACHABLE("unexpected kind");
     }
@@ -721,6 +728,9 @@ size_t shapeHash(HeapType a) {
         continue;
       case HeapTypeKind::Cont:
         hash_combine(digest, shapeHash(type.getContinuation()));
+        continue;
+      case HeapTypeKind::Fiber:
+        hash_combine(digest, shapeHash(type.getFiber()));
         continue;
       case HeapTypeKind::Basic:
         continue;
@@ -767,6 +777,17 @@ size_t shapeHash(Signature a) {
 bool shapeEq(Continuation a, Continuation b) { return shapeEq(a.type, b.type); }
 
 size_t shapeHash(Continuation a) { return shapeHash(a.type); }
+
+bool shapeEq(Fiber a, Fiber b) {
+  return shapeEq(a.resumeType, b.resumeType) &&
+         shapeEq(a.suspendType, b.suspendType);
+}
+
+size_t shapeHash(Fiber a) {
+  auto digest = shapeHash(a.resumeType);
+  hash_combine(digest, shapeHash(a.suspendType));
+  return digest;
+}
 
 bool shapeEq(Field a, Field b) {
   return a.packedType == b.packedType && a.mutable_ == b.mutable_ &&

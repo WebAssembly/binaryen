@@ -59,6 +59,7 @@ struct DefaultTypeNameGenerator
   : TypeNameGeneratorBase<DefaultTypeNameGenerator> {
   size_t funcCount = 0;
   size_t contCount = 0;
+  size_t fiberCount = 0;
   size_t structCount = 0;
   size_t arrayCount = 0;
 

@@ -100,6 +100,7 @@ struct NullTypeParserCtx {
   using BlockTypeT = Ok;
   using SignatureT = Ok;
   using ContinuationT = Ok;
+  using FiberT = Ok;
   using StorageT = Ok;
   using FieldT = Ok;
   using FieldsT = Ok;
@@ -123,11 +124,13 @@ struct NullTypeParserCtx {
   HeapTypeT makeExnType(Shareability) { return Ok{}; }
   HeapTypeT makeStringType(Shareability) { return Ok{}; }
   HeapTypeT makeContType(Shareability) { return Ok{}; }
+  HeapTypeT makeFiberType(Shareability) { return Ok{}; }
   HeapTypeT makeNoneType(Shareability) { return Ok{}; }
   HeapTypeT makeNoextType(Shareability) { return Ok{}; }
   HeapTypeT makeNofuncType(Shareability) { return Ok{}; }
   HeapTypeT makeNoexnType(Shareability) { return Ok{}; }
   HeapTypeT makeNocontType(Shareability) { return Ok{}; }
+  HeapTypeT makeNofiberType(Shareability) { return Ok{}; }
   HeapTypeT makeWaitqueueType(Shareability) { return Ok{}; }
   HeapTypeT makeNowaitqueueType(Shareability) { return Ok{}; }
 
@@ -155,6 +158,7 @@ struct NullTypeParserCtx {
 
   SignatureT makeFuncType(ParamsT*, ResultsT*) { return Ok{}; }
   ContinuationT makeContType(HeapTypeT) { return Ok{}; }
+  FiberT makeFiberType(HeapTypeT, HeapTypeT) { return Ok{}; }
 
   StorageT makeI8() { return Ok{}; }
   StorageT makeI16() { return Ok{}; }
@@ -208,6 +212,7 @@ template<typename Ctx> struct TypeParserCtx {
   using BlockTypeT = HeapType;
   using SignatureT = Signature;
   using ContinuationT = Continuation;
+  using FiberT = Fiber;
   using StorageT = Field;
   using FieldT = Field;
   using FieldsT = std::pair<std::vector<Name>, std::vector<Field>>;
@@ -255,6 +260,9 @@ template<typename Ctx> struct TypeParserCtx {
   HeapTypeT makeContType(Shareability share) {
     return HeapTypes::cont.getBasic(share);
   }
+  HeapTypeT makeFiberType(Shareability share) {
+    return HeapTypes::fiber.getBasic(share);
+  }
   HeapTypeT makeNoneType(Shareability share) {
     return HeapTypes::none.getBasic(share);
   }
@@ -269,6 +277,9 @@ template<typename Ctx> struct TypeParserCtx {
   }
   HeapTypeT makeNocontType(Shareability share) {
     return HeapTypes::nocont.getBasic(share);
+  }
+  HeapTypeT makeNofiberType(Shareability share) {
+    return HeapTypes::nofiber.getBasic(share);
   }
   HeapTypeT makeWaitqueueType(Shareability share) {
     return HeapTypes::sharedWaitqueue.getBasic(share);
@@ -318,6 +329,9 @@ template<typename Ctx> struct TypeParserCtx {
   }
 
   ContinuationT makeContType(HeapTypeT ft) { return Continuation(ft); }
+  FiberT makeFiberType(HeapTypeT resumeType, HeapTypeT suspendType) {
+    return Fiber(resumeType, suspendType);
+  }
 
   StorageT makeI8() { return Field(Field::i8, Immutable); }
   StorageT makeI16() { return Field(Field::i16, Immutable); }
@@ -1001,6 +1015,20 @@ struct NullInstrParserCtx {
   makeStackSwitch(Index, const std::vector<Annotation>&, HeapTypeT, TagIdxT) {
     return Ok{};
   }
+  template<typename HeapTypeT>
+  Result<>
+  makeFiberNew(Index, const std::vector<Annotation>&, HeapTypeT, FuncIdxT) {
+    return Ok{};
+  }
+  template<typename HeapTypeT>
+  Result<>
+  makeFiberResume(Index, const std::vector<Annotation>&, HeapTypeT, LabelIdxT) {
+    return Ok{};
+  }
+  template<typename HeapTypeT>
+  Result<> makeFiberSuspend(Index, const std::vector<Annotation>&, HeapTypeT) {
+    return Ok{};
+  }
 };
 
 struct NullCtx : NullTypeParserCtx, NullInstrParserCtx {
@@ -1081,6 +1109,7 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
 
   void addFuncType(SignatureT) {}
   void addContType(ContinuationT) {}
+  void addFiberType(FiberT) {}
   Result<> addStructType(StructT) { return Ok{}; }
   void addArrayType(ArrayT) {}
   void setOpen() {}
@@ -1261,6 +1290,7 @@ struct ParseTypeDefsCtx : TypeParserCtx<ParseTypeDefsCtx> {
 
   void addFuncType(SignatureT& type) { builder[index] = type; }
   void addContType(ContinuationT& type) { builder[index] = type; }
+  void addFiberType(FiberT& type) { builder[index] = type; }
 
   Result<> addStructType(StructT& type) {
     auto& [fieldNames, str] = type;
@@ -3106,6 +3136,26 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
                            HeapType type,
                            Name tag) {
     return withLoc(pos, irBuilder.makeStackSwitch(type, tag));
+  }
+
+  Result<> makeFiberNew(Index pos,
+                        const std::vector<Annotation>& annotations,
+                        HeapType type,
+                        Name func) {
+    return withLoc(pos, irBuilder.makeFiberNew(type, func));
+  }
+
+  Result<> makeFiberResume(Index pos,
+                           const std::vector<Annotation>& annotations,
+                           HeapType type,
+                           Index label) {
+    return withLoc(pos, irBuilder.makeFiberResume(type, label));
+  }
+
+  Result<> makeFiberSuspend(Index pos,
+                            const std::vector<Annotation>& annotations,
+                            HeapType type) {
+    return withLoc(pos, irBuilder.makeFiberSuspend(type));
   }
 };
 
