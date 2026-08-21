@@ -36,6 +36,11 @@ getSpanInternal(const Constraint& c, std::optional<Type> type, bool exact) {
     type = cc->type;
   }
 
+  if (type && !type->isNumber()) {
+    // References etc. do not convert to spans.
+    return {};
+  }
+
   auto minSigned = type && *type == Type::i32
                      ? std::numeric_limits<int32_t>::min()
                      : std::numeric_limits<int64_t>::min();
