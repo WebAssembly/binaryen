@@ -107,19 +107,21 @@
   )
 )
 
-;; As above, but now we have a parent and subtype of $struct. The parent has no
-;; descriptor, while the subtype does.
+;; As above, but now we have a parent and subtype of $struct.
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $parent (sub (struct (field i32) (field i32) (field i32))))
-    (type $parent (sub (struct (field i32) (field i32) (field i32))))
+    ;; CHECK-NEXT:  (type $parent (sub (descriptor $parentdesc) (struct (field i32) (field i32) (field i32))))
+    (type $parent (sub (descriptor $parentdesc) (struct (field i32) (field i32) (field i32))))
+
+    ;; CHECK:       (type $parentdesc (sub (describes $parent) (struct)))
+    (type $parentdesc (sub (describes $parent) (struct)))
 
     ;; CHECK:       (type $struct (sub $parent (descriptor $desc) (struct (field i32) (field i32) (field i32))))
     (type $struct (sub $parent (descriptor $desc) (struct (field i32) (field i32) (field i32))))
 
-    ;; CHECK:       (type $desc (sub (describes $struct) (struct (field funcref))))
-    (type $desc (sub (describes $struct) (struct (field funcref))))
+    ;; CHECK:       (type $desc (sub $parentdesc (describes $struct) (struct (field funcref))))
+    (type $desc (sub $parentdesc (describes $struct) (struct (field funcref))))
 
     ;; CHECK:       (type $sub (sub $struct (descriptor $subdesc) (struct (field i32) (field i32) (field i32))))
     (type $sub (sub $struct (descriptor $subdesc) (struct (field i32) (field i32) (field i32))))
@@ -129,19 +131,21 @@
   )
 
 
-  ;; CHECK:      (type $5 (func))
+  ;; CHECK:      (type $6 (func))
 
-  ;; CHECK:      (type $6 (func (result i32)))
+  ;; CHECK:      (type $7 (func (result i32)))
 
-  ;; CHECK:      (global $parent (ref $parent) (struct.new $parent
+  ;; CHECK:      (global $parent (ref $parent) (struct.new_desc $parent
   ;; CHECK-NEXT:  (i32.const 10)
   ;; CHECK-NEXT:  (i32.const 200)
   ;; CHECK-NEXT:  (i32.const 300)
+  ;; CHECK-NEXT:  (struct.new_default $parentdesc)
   ;; CHECK-NEXT: ))
-  (global $parent (ref $parent) (struct.new $parent
+  (global $parent (ref $parent) (struct.new_desc $parent
     (i32.const 10)  ;; disagrees with the child
     (i32.const 200) ;; agrees with the child
     (i32.const 300) ;; agrees with the child
+    (struct.new $parentdesc)
   ))
 
   ;; CHECK:      (global $desc (ref (exact $desc)) (struct.new $desc
@@ -181,14 +185,14 @@
 
   ;; CHECK:      (export "struct" (func $struct))
 
-  ;; CHECK:      (func $func (type $6) (result i32)
+  ;; CHECK:      (func $func (type $7) (result i32)
   ;; CHECK-NEXT:  (i32.const -1)
   ;; CHECK-NEXT: )
   (func $func (result i32)
     (i32.const -1)
   )
 
-  ;; CHECK:      (func $desc (type $5)
+  ;; CHECK:      (func $desc (type $6)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.get_desc $struct
   ;; CHECK-NEXT:    (global.get $struct)
@@ -216,7 +220,7 @@
     )
   )
 
-  ;; CHECK:      (func $parent (type $5)
+  ;; CHECK:      (func $parent (type $6)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.get $parent 0
   ;; CHECK-NEXT:    (global.get $parent)
@@ -251,7 +255,7 @@
     )
   )
 
-  ;; CHECK:      (func $sub (type $5)
+  ;; CHECK:      (func $sub (type $6)
   ;; CHECK-NEXT:  (local $temp (ref $sub))
   ;; CHECK-NEXT:  (local.set $temp
   ;; CHECK-NEXT:   (struct.new_desc $sub
@@ -309,7 +313,7 @@
     )
   )
 
-  ;; CHECK:      (func $struct (type $5)
+  ;; CHECK:      (func $struct (type $6)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.const 100)
   ;; CHECK-NEXT:  )
