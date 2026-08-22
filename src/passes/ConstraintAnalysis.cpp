@@ -655,13 +655,17 @@ struct ConstraintAnalysis
     if (branch.constraint.op == Abstract::LtS ||
         branch.constraint.op == Abstract::LeS) {
       constraints.set(branch.local, branch.constraint);
-      constraints.approximateAnd(branch.local, {GeS, {*N}});
+      if (!constraints.unreachable) {
+        constraints.approximateAnd(branch.local, {GeS, {*N}});
+      }
       return true;
     }
     if (branch.constraint.op == Abstract::LtU ||
         branch.constraint.op == Abstract::LeU) {
       constraints.set(branch.local, branch.constraint);
-      constraints.approximateAnd(branch.local, {GeU, {*N}});
+      if (!constraints.unreachable) {
+        constraints.approximateAnd(branch.local, {GeU, {*N}});
+      }
       return true;
     }
 
