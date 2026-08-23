@@ -16,6 +16,8 @@
 
 #include "wat-parser-internal.h"
 
+#include "ir/type-updating.h"
+
 namespace wasm::WATParser {
 
 Result<> parseDefinitions(
@@ -63,6 +65,7 @@ Result<> parseDefinitions(
       if (auto* err = end.getErr()) {
         return ctx.in.err(decls.funcDefs[i].pos, err->msg);
       }
+      TypeUpdating::handleNonDefaultableLocals(f, decls.wasm);
     }
   }
 
