@@ -1163,6 +1163,12 @@ TEST(ConstraintTest, EmptySpanContradiction) {
   checkOr(valid, impossible, valid);
 }
 
+TEST(ConstraintTest, GetSpanFloat) {
+  // Non-integer types do not cause errors.
+  EXPECT_EQ((Constraint{Eq, {Literal(float(3.14159))}}.getSpan()),
+            std::nullopt);
+}
+
 TEST(ConstraintTest, GetSpanGC) {
   // Reference types do not cause errors.
   EXPECT_EQ((Constraint{Eq, {Literal::makeNull(HeapType::eq)}}.getSpan()),
