@@ -54,22 +54,24 @@ getSpanInternal(const Constraint& c, std::optional<Type> type, bool exact) {
   if (!cc) {
     // Not comparing to a constant, so we can't infer anything exact, but might
     // if we just need something we can prove, and if we know the type.
-    if (!exact && type) {
-      switch (c.op) {
-        // x < y, i.e., x is less than *something*, proves x < MAX_INT.
-        case LtS:
-          return Span<IU64>{minSigned, maxSigned - 1};
-        case LtU:
-          return Span<IU64>{0, maxUnsigned - 1};
+    if (exact || !type) {
+      return {};
+    }
 
-        // Similarly, x > y proves x > MIN_INT.
-        case GtS:
-          return Span<IU64>{minSigned + 1, maxSigned};
-        case GtU:
-          return Span<IU64>{1, maxUnsigned};
+    switch (c.op) {
+      // x < y, i.e., x is less than *something*, proves x < MAX_INT.
+      case LtS:
+        return Span<IU64>{minSigned, maxSigned - 1};
+      case LtU:
+        return Span<IU64>{0, maxUnsigned - 1};
 
-        default: {
-        }
+      // Similarly, x > y proves x > MIN_INT.
+      case GtS:
+        return Span<IU64>{minSigned + 1, maxSigned};
+      case GtU:
+        return Span<IU64>{1, maxUnsigned};
+
+      default: {
       }
     }
 
