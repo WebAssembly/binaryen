@@ -825,7 +825,7 @@ void BasicBlockConstraintMap::set(Index index, Expression* value) {
           break;
         // x < N, x++  =>  x <= N
         case LtS:
-          c.op = LeS; // do we need it on non-constants too?
+          c.op = LeS;
           break;
         case LtU:
           c.op = LeU;
