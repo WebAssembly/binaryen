@@ -1520,4 +1520,57 @@
       )
     )
   )
+
+  ;; CHECK:      (func $impossible-branch (type $0)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (local $y i32)
+  ;; CHECK-NEXT:  (loop $loop
+  ;; CHECK-NEXT:   (br_if $loop
+  ;; CHECK-NEXT:    (i32.lt_s
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $impossible-branch
+    (local $x i32)
+    (local $y i32)
+    (loop $loop
+      ;; x == y == 0, so x < y leads to a contradiction, and we never branch
+      ;; back up to the loop. We should not error here.
+      (br_if $loop
+        (i32.lt_s
+          (local.get $x)
+          (local.get $y)
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $impossible-branch-unsigned (type $0)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (local $y i32)
+  ;; CHECK-NEXT:  (loop $loop
+  ;; CHECK-NEXT:   (br_if $loop
+  ;; CHECK-NEXT:    (i32.lt_u
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $impossible-branch-unsigned
+    (local $x i32)
+    (local $y i32)
+    ;; As above, but unsigned.
+    (loop $loop
+      (br_if $loop
+        (i32.lt_u
+          (local.get $x)
+          (local.get $y)
+        )
+      )
+    )
+  )
 )
