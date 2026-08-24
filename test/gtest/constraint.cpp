@@ -1042,3 +1042,30 @@ TEST(ConstraintTest, EmptySpanContradiction) {
   AndedConstraintSet impossible{gtsMax32};
   checkOr(valid, impossible, valid);
 }
+
+TEST(ConstraintTest, SignedUnsigned) {
+  // x == 5 proves x < 10, signed or unsigned.
+  Constraint eq5{Eq, {Literal(int32_t(5))}};
+  Constraint lts10{LtS, {Literal(int32_t(10))}};
+  Constraint ltu10{LtU, {Literal(int32_t(10))}};
+  EXPECT_EQ(AndedConstraintSet{eq5}.proves(lts10), True);
+  EXPECT_EQ(AndedConstraintSet{eq5}.proves(ltu10), True);
+
+  // x == 5 proves x < -10 signed is false, but unsigned is true (since -10 is
+  // a very large positive number).
+  Constraint lts_minus10{LtS, {Literal(int32_t(-10))}};
+  Constraint ltu_minus10{LtU, {Literal(int32_t(-10))}};
+  EXPECT_EQ(AndedConstraintSet{eq5}.proves(lts_minus10), False);
+  EXPECT_EQ(AndedConstraintSet{eq5}.proves(ltu_minus10), True);
+}
+
+TEST(ConstraintTest, SignedUnsignedMix) {
+  // x < 10, signed and the same but unsigned, have some overlap (0 to 10) but
+  // the signed version has more possible values.
+  Constraint lts10{LtS, {Literal(int32_t(10))}};
+  Constraint ltu10{LtU, {Literal(int32_t(10))}};
+  // x might be negative, which would not prove x < 10 unsigned.
+  EXPECT_EQ(AndedConstraintSet{lts10}.proves(ltu10), Unknown);
+  // x is definitely in [0, 10], so x < 10 signed is also true.
+  EXPECT_EQ(AndedConstraintSet{ltu10}.proves(lts10), True);
+}
