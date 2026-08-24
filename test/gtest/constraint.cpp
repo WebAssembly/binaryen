@@ -1073,9 +1073,18 @@ TEST(ConstraintTest, SignedUnsignedMix) {
   Constraint lts_minus10{LtS, {Literal(int32_t(-10))}};
   Constraint ltu_minus10{LtU, {Literal(int32_t(-10))}};
   // x < -10 signed means all the numbers with the high/sign bit set, except for
-  // -1 to -10 (which are the very highest in unsigned terms).
-  EXPECT_EQ(AndedConstraintSet{lts_minus10}.proves(ltu_minus10), Unknown);
+  // -1 to -10 (which are the very highest in unsigned terms), that is,
+  // [1, large number] in the unsigned representation of bits. x < -10
+  // *un*signed is similar, but *does* include 0, so the unsigned one does not
+  // prove the signed.
+  EXPECT_EQ(AndedConstraintSet{lts_minus10}.proves(ltu_minus10), True);
+  EXPECT_EQ(AndedConstraintSet{ltu_minus10}.proves(lts_minus10), Unknown);
 
+  // gt rather than lt for all the above
+
+  // -20 vs -10, not -10/-10
+
+  // mixtures of gt_s lt_u (not just signed/unsigned but gt/lt)
 }
 
 /*
