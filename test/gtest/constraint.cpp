@@ -1068,4 +1068,62 @@ TEST(ConstraintTest, SignedUnsignedMix) {
   EXPECT_EQ(AndedConstraintSet{lts10}.proves(ltu10), Unknown);
   // x is definitely in [0, 10], so x < 10 signed is also true.
   EXPECT_EQ(AndedConstraintSet{ltu10}.proves(lts10), True);
+
+  // Now with -10 instead of 10.
+  Constraint lts_minus10{LtS, {Literal(int32_t(-10))}};
+  Constraint ltu_minus10{LtU, {Literal(int32_t(-10))}};
+  // x < -10 signed means all the numbers with the high/sign bit set, except for
+  // -1 to -10 (which are the very highest in unsigned terms).
+  EXPECT_EQ(AndedConstraintSet{lts_minus10}.proves(ltu_minus10), Unknown);
+
 }
+
+/*
+(module $a.wasm
+ (func $scalbn (param $0 i32)
+  (local $1 f64)
+  (local.set $1
+   (f64.const 1)
+  )
+  (block $block
+   (br_if $block
+    (i32.ge_s
+     (local.get $0)
+     (i32.const 1024)
+    )
+   )
+   ;; Here we know  $0 <_s 1024. This includes all numbers with the sign bit,
+   ;; which implies the following *unsigned* inequality is true, as it
+   ;; includes only ones with the high bit set.
+   (drop
+    (i32.gt_u
+     (local.get $0)
+     (i32.const -1992)
+    )
+   )
+  )
+ )
+
+ (func $scalbn2 (param $0 i32)
+  (local $1 f64)
+  (local.set $1
+   (f64.const 1)
+  )
+  (block $block
+   (br_if $block
+    (i32.gt_s
+     (local.get $0)
+     (i32.const -1023)
+    )
+   )
+   ;; Here we know  $0 <=_s -1023
+   (drop
+    (i32.gt_u
+     (local.get $0)
+     (i32.const -1992)
+    )
+   )
+  )
+ )
+)*/
+
