@@ -2307,6 +2307,20 @@ BinaryenFeatureAll: 268435455
        (i32.const 0)
       )
       (drop
+       (struct.wait $1 0
+        (global.get $i32Struct-global)
+        (waitqueue.new)
+        (i32.const 0)
+        (i64.const 0)
+       )
+      )
+      (drop
+       (waitqueue.notify
+        (waitqueue.new)
+        (i32.const 0)
+       )
+      )
+      (drop
        (array.new_default $0
         (i32.const 3)
        )
