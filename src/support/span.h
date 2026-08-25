@@ -89,7 +89,7 @@ template<typename T> struct Span {
   bool operator!=(const Span& other) const { return !(*this == other); }
 };
 
-// A union of spans
+// A union of spans, which we assume are disjoint.
 template<typename T, size_t N> struct Spans {
   inplace_vector<Span<T>, N> spans;
 
@@ -107,16 +107,23 @@ template<typename T, size_t N> struct Spans {
   }
 
   bool hasOverlap(const Spans<T, N>& other) const {
+    // There is overlap if any of our spans overlaps with any of other's.
     return std::any_of(spans.begin(), spans.end(), [](const Span<T>& span) {
       return std::any_of(other.spans.begin(), other.spans.end(), [](const Span<T>& otherSpan) {
         return span.hasOverlap(otherSpan);
-      }
+      });
     });
   }
 
-  // Check whether we contain another span (possibly being equal).
   bool contains(const Spans<T, N>& other) const {
-    return intersection(other) == other;
+    // We contain other if each of their spans is contained in us.
+    return std::all_of(other.spans.begin(), other.spans.end(), [](const Span<T>& otherSpan) {
+      // Because our spans are assumed to be disjoint, exactly one of our spans
+      // must contain otherSpan.
+      return std::any_of(spans.begin(), spans.end(), [](const Span<T>& span) {
+        return span.contains(otherSpan);
+      });
+    });
   }
 };
 
