@@ -915,6 +915,8 @@ TEST(ConstraintTest, GetSpans) {
                .getSpans()),
             (SpansU2{0, maxU64}));
 
+waka
+
   // GtS (i32):
   EXPECT_EQ((Constraint{GtS, {Literal(int32_t(10))}}.getSpans()),
             (SpansU2{11, maxI32}));
@@ -1227,8 +1229,8 @@ TEST(ConstraintTest, SignedUnsignedLessMix) {
   // x < -10 signed means all the numbers with the high/sign bit set, except for
   // -1 to -10 (which are the very highest in unsigned terms), that is,
   // [minI32, large number] in the unsigned representation of bits. x < -10
-  // *un*signed is similar, but *does* include 0, so the unsigned one does not
-  // prove the signed.
+  // *un*signed does actually include 0 and other values, so the unsigned one
+  // does not prove the signed.
   EXPECT_EQ(AndedConstraintSet{lts_minus10}.proves(ltu_minus10), True);
   EXPECT_EQ(AndedConstraintSet{ltu_minus10}.proves(lts_minus10), Unknown);
 
