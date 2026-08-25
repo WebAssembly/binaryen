@@ -43,11 +43,11 @@ getSpanInternal(const Constraint& c, std::optional<Type> type, bool exact) {
 
   // Maximum values, as represented as uint64_t's.
   uint64_t maxUnsigned = type && *type == Type::i32
-                       ? std::numeric_limits<uint32_t>::max()
-                       : std::numeric_limits<uint64_t>::max();
+                           ? std::numeric_limits<uint32_t>::max()
+                           : std::numeric_limits<uint64_t>::max();
   uint64_t maxSigned = type && *type == Type::i32
-                     ? std::numeric_limits<int32_t>::max()
-                     : std::numeric_limits<int64_t>::max();
+                         ? std::numeric_limits<int32_t>::max()
+                         : std::numeric_limits<int64_t>::max();
   uint64_t minSigned = maxSigned + 1;
 
   if (!cc) {
@@ -167,7 +167,7 @@ getSpanInternal(const Constraint& c, std::optional<Type> type, bool exact) {
 
     default: {
     }
-  }
+}
 
   return {};
 }

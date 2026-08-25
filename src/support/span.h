@@ -122,21 +122,23 @@ template<typename T, size_t N> struct Spans {
   bool hasOverlap(const Spans<T, N>& other) const {
     // There is overlap if any of our spans overlaps with any of other's.
     return std::any_of(spans.begin(), spans.end(), [](const Span<T>& span) {
-      return std::any_of(other.spans.begin(), other.spans.end(), [](const Span<T>& otherSpan) {
-        return span.hasOverlap(otherSpan);
-      });
+      return std::any_of(
+        other.spans.begin(), other.spans.end(), [](const Span<T>& otherSpan) {
+          return span.hasOverlap(otherSpan);
+        });
     });
   }
 
   bool contains(const Spans<T, N>& other) const {
     // We contain other if each of their spans is contained in us.
-    return std::all_of(other.spans.begin(), other.spans.end(), [](const Span<T>& otherSpan) {
-      // Because our spans are assumed to be disjoint, exactly one of our spans
-      // must contain otherSpan.
-      return std::any_of(spans.begin(), spans.end(), [](const Span<T>& span) {
-        return span.contains(otherSpan);
+    return std::all_of(
+      other.spans.begin(), other.spans.end(), [](const Span<T>& otherSpan) {
+        // Because our spans are assumed to be disjoint, exactly one of our
+        // spans must contain otherSpan.
+        return std::any_of(spans.begin(), spans.end(), [](const Span<T>& span) {
+          return span.contains(otherSpan);
+        });
       });
-    });
   }
 };
 
