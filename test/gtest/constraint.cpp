@@ -1059,7 +1059,7 @@ TEST(ConstraintTest, SignedUnsigned) {
   EXPECT_EQ(AndedConstraintSet{eq5}.proves(ltu_minus10), True);
 }
 
-TEST(ConstraintTest, SignedUnsignedMix) {
+TEST(ConstraintTest, SignedUnsignedLessMix) {
   // x < 10, signed and the same but unsigned, have some overlap (0 to 10) but
   // the signed version has more possible values.
   Constraint lts10{LtS, {Literal(int32_t(10))}};
@@ -1080,9 +1080,27 @@ TEST(ConstraintTest, SignedUnsignedMix) {
   EXPECT_EQ(AndedConstraintSet{lts_minus10}.proves(ltu_minus10), True);
   EXPECT_EQ(AndedConstraintSet{ltu_minus10}.proves(lts_minus10), Unknown);
 
-  // gt rather than lt for all the above
+  // x < -10 signed means all numbers with the high bit set, except for the very
+  // highest. This rules out x < 10 unsigned.
+  EXPECT_EQ(AndedConstraintSet{lts_minus10}.proves(ltu10), False);
+  // x < 10 signed means all numbers with the sign bit, and 0..10. This has
+  // partial overlap with x < -10 unsigned.
+  EXPECT_EQ(AndedConstraintSet{lts10}.proves(ltu_minus10), Unknown);
 
-  // -20 vs -10, not -10/-10
+  // Flip cases of the above pair.
+  EXPECT_EQ(AndedConstraintSet{ltu_minus10}.proves(lts10), Unknown);
+  EXPECT_EQ(AndedConstraintSet{ltu10}.proves(lts_minus10), False);
+}
+
+TEST(ConstraintTest, SignedUnsignedMoreMix) {
+  // x > 10, signed and the same but unsigned. The signed version does not
+  // include numbers with the highest bit set.
+  Constraint gts10{GtS, {Literal(int32_t(10))}};
+  Constraint gtu10{GtU, {Literal(int32_t(10))}};
+  EXPECT_EQ(AndedConstraintSet{gts10}.proves(gtu10), True);
+  EXPECT_EQ(AndedConstraintSet{gtu10}.proves(gts10), Unknown);
+
+  // gt rather than lt for all the above
 
   // mixtures of gt_s lt_u (not just signed/unsigned but gt/lt)
 }
