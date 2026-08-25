@@ -583,7 +583,7 @@ bool Literal::operator<(const Literal& other) const {
   return externalize() < other.externalize();
 }
 
-bool Literal::isNaN() {
+bool Literal::isNaN() const {
   if (type == Type::f32 && std::isnan(getf32())) {
     return true;
   }
@@ -594,7 +594,7 @@ bool Literal::isNaN() {
   return false;
 }
 
-bool Literal::isCanonicalNaN() {
+bool Literal::isCanonicalNaN() const {
   if (!isNaN()) {
     return false;
   }
@@ -602,7 +602,7 @@ bool Literal::isCanonicalNaN() {
          (type == Type::f64 && NaNPayload(getf64()) == (1ull << 51));
 }
 
-bool Literal::isArithmeticNaN() {
+bool Literal::isArithmeticNaN() const {
   if (!isNaN()) {
     return false;
   }
@@ -1602,37 +1602,53 @@ Literal Literal::rotR(const Literal& other) const {
 }
 
 Literal Literal::eq(const Literal& other) const {
-  switch (type.getBasic()) {
-    case Type::i32:
-      return Literal(i32 == other.i32);
-    case Type::i64:
-      return Literal(i64 == other.i64);
-    case Type::f32:
-      return Literal(getf32() == other.getf32());
-    case Type::f64:
-      return Literal(getf64() == other.getf64());
-    case Type::v128:
-    case Type::none:
-    case Type::unreachable:
-      WASM_UNREACHABLE("unexpected type");
+  if (type != other.type) {
+    return Literal(int32_t(0));
+  }
+  if (type.isBasic()) {
+    switch (type.getBasic()) {
+      case Type::i32:
+        return Literal(i32 == other.i32);
+      case Type::i64:
+        return Literal(i64 == other.i64);
+      case Type::f32:
+        return Literal(getf32() == other.getf32());
+      case Type::f64:
+        return Literal(getf64() == other.getf64());
+      case Type::v128:
+      case Type::none:
+      case Type::unreachable:
+        WASM_UNREACHABLE("unexpected type");
+    }
+  }
+  if (type.isRef()) {
+    return Literal(int32_t(*this == other));
   }
   WASM_UNREACHABLE("unexpected type");
 }
 
 Literal Literal::ne(const Literal& other) const {
-  switch (type.getBasic()) {
-    case Type::i32:
-      return Literal(i32 != other.i32);
-    case Type::i64:
-      return Literal(i64 != other.i64);
-    case Type::f32:
-      return Literal(getf32() != other.getf32());
-    case Type::f64:
-      return Literal(getf64() != other.getf64());
-    case Type::v128:
-    case Type::none:
-    case Type::unreachable:
-      WASM_UNREACHABLE("unexpected type");
+  if (type != other.type) {
+    return Literal(int32_t(1));
+  }
+  if (type.isBasic()) {
+    switch (type.getBasic()) {
+      case Type::i32:
+        return Literal(i32 != other.i32);
+      case Type::i64:
+        return Literal(i64 != other.i64);
+      case Type::f32:
+        return Literal(getf32() != other.getf32());
+      case Type::f64:
+        return Literal(getf64() != other.getf64());
+      case Type::v128:
+      case Type::none:
+      case Type::unreachable:
+        WASM_UNREACHABLE("unexpected type");
+    }
+  }
+  if (type.isRef()) {
+    return Literal(int32_t(*this != other));
   }
   WASM_UNREACHABLE("unexpected type");
 }

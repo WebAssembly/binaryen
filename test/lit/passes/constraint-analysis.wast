@@ -4559,7 +4559,7 @@
   ;; CHECK:      (func $float-negative-zero (type $1)
   ;; CHECK-NEXT:  (local $f f64)
   ;; CHECK-NEXT:  (if
-  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:   (then
   ;; CHECK-NEXT:    (nop)
   ;; CHECK-NEXT:   )
@@ -4574,7 +4574,7 @@
   ;; OPTIN:      (func $float-negative-zero (type $1)
   ;; OPTIN-NEXT:  (local $f f64)
   ;; OPTIN-NEXT:  (if
-  ;; OPTIN-NEXT:   (i32.const 0)
+  ;; OPTIN-NEXT:   (i32.const 1)
   ;; OPTIN-NEXT:   (then
   ;; OPTIN-NEXT:    (nop)
   ;; OPTIN-NEXT:   )
@@ -4589,7 +4589,7 @@
   (func $float-negative-zero
     (local $f f64)
     ;; Negative zero is equal to zero, even though it has a different bit
-    ;; pattern. Both conditions here should be optimized to 1. FIXME
+    ;; pattern. Both conditions here should be optimized to 1.
     (if
       (f64.eq
         (local.get $f)

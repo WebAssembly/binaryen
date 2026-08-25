@@ -1174,3 +1174,31 @@ TEST(ConstraintTest, GetSpanGC) {
   EXPECT_EQ((Constraint{Eq, {Literal::makeNull(HeapType::eq)}}.getSpan()),
             std::nullopt);
 }
+
+TEST(ConstraintTest, FloatNegativeZero) {
+  // f == 0.0 proves f == -0.0 is True.
+  AndedConstraintSet s;
+  s.set(Constraint{Eq, {Literal(double(0.0))}});
+  EXPECT_EQ(s.proves(Constraint{Eq, {Literal(double(-0.0))}}), True);
+  EXPECT_EQ(s.proves(Constraint{Ne, {Literal(double(-0.0))}}), False);
+  EXPECT_EQ(s.proves(Constraint{Eq, {Literal(double(1.0))}}), False);
+  EXPECT_EQ(s.proves(Constraint{Ne, {Literal(double(1.0))}}), True);
+
+  // f == -0.0 proves f == 0.0 is True.
+  AndedConstraintSet sNeg;
+  sNeg.set(Constraint{Eq, {Literal(double(-0.0))}});
+  EXPECT_EQ(sNeg.proves(Constraint{Eq, {Literal(double(0.0))}}), True);
+  EXPECT_EQ(sNeg.proves(Constraint{Ne, {Literal(double(0.0))}}), False);
+
+  // f != 0.0 proves f == -0.0 is False, and f != -0.0 is True.
+  AndedConstraintSet sNe;
+  sNe.set(Constraint{Ne, {Literal(double(0.0))}});
+  EXPECT_EQ(sNe.proves(Constraint{Eq, {Literal(double(-0.0))}}), False);
+  EXPECT_EQ(sNe.proves(Constraint{Ne, {Literal(double(-0.0))}}), True);
+
+  // Same for f32.
+  AndedConstraintSet s32;
+  s32.set(Constraint{Eq, {Literal(float(0.0f))}});
+  EXPECT_EQ(s32.proves(Constraint{Eq, {Literal(float(-0.0f))}}), True);
+  EXPECT_EQ(s32.proves(Constraint{Ne, {Literal(float(-0.0f))}}), False);
+}
