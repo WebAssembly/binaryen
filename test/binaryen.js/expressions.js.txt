@@ -285,6 +285,23 @@
  (local.get $3)
 )
 
+# StructWait
+(struct.wait $struct.0 0
+ (local.get $0)
+ (local.get $3)
+ (local.get $1)
+ (local.get $2)
+)
+
+# WaitqueueNew
+(waitqueue.new)
+
+# WaitqueueNotify
+(waitqueue.notify
+ (local.get $0)
+ (local.get $1)
+)
+
 # ArrayNew
 (array.new $array.0
  (i32.const 3)
