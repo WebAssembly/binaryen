@@ -90,7 +90,8 @@ template<typename T> struct Span {
 };
 
 // A union of spans, which we assume are disjoint.
-template<typename T, size_t N> struct Spans : public inplace_vector<Span<T>, N> {
+template<typename T, size_t N>
+struct Spans : public inplace_vector<Span<T>, N> {
   static constexpr T Min = std::numeric_limits<T>::lowest();
   static constexpr T Max = std::numeric_limits<T>::max();
 
