@@ -96,8 +96,8 @@ getSpanInternal(const Constraint& c, std::optional<Type> type, bool exact) {
       if (cc->getInteger() == minSigned) {
         // Less than the lowest possible number is an empty span.
         return SpansU2{};
-      } else {
-        return SpansU2{minSigned, cc->getInteger() - 1};
+      }
+      return SpansU2{minSigned, cc->getInteger() - 1};
       }
       break;
     case LtU:
