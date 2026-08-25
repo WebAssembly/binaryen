@@ -135,20 +135,33 @@ getSpanInternal(const Constraint& c, std::optional<Type> type, bool exact) {
       if (x == maxSigned) {
         // Greater than the highest possible number is an empty span.
         return SpansU2{};
-      } else {
+      }
+      if (x <= maxSigned) {
+        // A non-negative number, so just a single span.
         return SpansU2{x + 1, maxSigned};
       }
-      break;
+      if (x == maxUnsigned) {
+        // GtS negative one, so 0 and above.
+        return SpansU2{0, maxSigned};
+      }
+      // A negative number, so all positive ones are possible, and some
+      // negative.
+      return SpansU2{0, maxSigned, x + 1, maxUnsigned};
     case GtU:
       if (x == maxUnsigned) {
         // Greater than the highest possible number is an empty span.
         return SpansU2{};
-      } else {
-        return SpansU2{x + 1, maxUnsigned};
       }
+      return SpansU2{x + 1, maxUnsigned};
       break;
     case GeS:
-      return SpansU2{x, maxSigned};
+      if (x <= maxSigned) {
+        // A non-negative number, so just a single span.
+        return SpansU2{x, maxSigned};
+      }
+      // A negative number, so all positive ones are possible, and some
+      // negative.
+      return SpansU2{0, maxSigned, x, maxUnsigned};
     case GeU:
       return SpansU2{x, maxUnsigned};
 
