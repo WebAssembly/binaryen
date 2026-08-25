@@ -79,6 +79,8 @@ getSpanInternal(const Constraint& c, std::optional<Type> type, bool exact) {
     return {};
   }
 
+  auto x = cc->getUnsigned();
+
   switch (c.op) {
     case Eq:
       return SpansU2{x, x};
@@ -93,46 +95,62 @@ getSpanInternal(const Constraint& c, std::optional<Type> type, bool exact) {
     }
 
     case LtS:
-      if (cc->getInteger() == minSigned) {
+      if (x == minSigned) {
         // Less than the lowest possible number is an empty span.
         return SpansU2{};
       }
-      return SpansU2{minSigned, cc->getInteger() - 1};
+      if (x > maxSigned) {
+        // A negative number, so just a single span.
+        return SpansU2{maxSigned + 1, x - 1};
       }
-      break;
+      if (x == 0) {
+        // All negative numbers are possible.
+        return SpansU2{maxSigned + 1, maxUnsigned};
+      }
+      // A positive number, so all negative ones are possible, and some
+      // positive.
+      return SpansU2{0, x - 1, maxSigned + 1, maxUnsigned};
     case LtU:
-      if (cc->getInteger() == 0) {
+      if (x == 0) {
         // Less than the lowest possible number is an empty span.
         return SpansU2{};
-      } else {
-        return SpansU2{0, cc->getUnsigned() - 1};
       }
-      break;
+      return SpansU2{0, x - 1};
     case LeS:
-      return SpansU2{minSigned, cc->getInteger()};
+      if (x > maxSigned) {
+        // A negative number, so just a single span.
+        return SpansU2{maxSigned + 1, x};
+      }
+      if (x == maxSigned) {
+        // All numbers are possible.
+        return SpansU2{0, maxUnSigned};
+      }
+      // A non-negative number, so all negative ones are possible, and some
+      // positive.
+      return SpansU2{0, x, maxSigned + 1, maxUnsigned};
     case LeU:
-      return SpansU2{0, cc->getUnsigned()};
+      return SpansU2{0, x};
 
     case GtS:
-      if (cc->getInteger() == maxSigned) {
+      if (x == maxSigned) {
         // Greater than the highest possible number is an empty span.
         return SpansU2{};
       } else {
-        return SpansU2{cc->getInteger() + 1, maxSigned};
+        return SpansU2{x + 1, maxSigned};
       }
       break;
     case GtU:
-      if (cc->getUnsigned() == maxUnsigned) {
+      if (x == maxUnsigned) {
         // Greater than the highest possible number is an empty span.
         return SpansU2{};
       } else {
-        return SpansU2{cc->getUnsigned() + 1, maxUnsigned};
+        return SpansU2{x + 1, maxUnsigned};
       }
       break;
     case GeS:
-      return SpansU2{cc->getInteger(), maxSigned};
+      return SpansU2{x, maxSigned};
     case GeU:
-      return SpansU2{cc->getUnsigned(), maxUnsigned};
+      return SpansU2{x, maxUnsigned};
 
     default: {
     }
