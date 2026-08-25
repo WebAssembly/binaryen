@@ -915,8 +915,6 @@ TEST(ConstraintTest, GetSpans) {
                .getSpans()),
             (SpansU2{0, maxU64}));
 
-waka
-
   // GtS (i32):
   EXPECT_EQ((Constraint{GtS, {Literal(int32_t(10))}}.getSpans()),
             (SpansU2{11, maxI32}));
