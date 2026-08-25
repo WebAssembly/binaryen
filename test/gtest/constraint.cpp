@@ -1100,57 +1100,20 @@ TEST(ConstraintTest, SignedUnsignedMoreMix) {
   EXPECT_EQ(AndedConstraintSet{gts10}.proves(gtu10), True);
   EXPECT_EQ(AndedConstraintSet{gtu10}.proves(gts10), Unknown);
 
-  // gt rather than lt for all the above
-
-  // mixtures of gt_s lt_u (not just signed/unsigned but gt/lt)
+  // TODO: add negative cases
 }
 
-/*
-(module $a.wasm
- (func $scalbn (param $0 i32)
-  (local $1 f64)
-  (local.set $1
-   (f64.const 1)
-  )
-  (block $block
-   (br_if $block
-    (i32.ge_s
-     (local.get $0)
-     (i32.const 1024)
-    )
-   )
-   ;; Here we know  $0 <_s 1024. This includes all numbers with the sign bit,
-   ;; which implies the following *unsigned* inequality is true, as it
-   ;; includes only ones with the high bit set.
-   (drop
-    (i32.gt_u
-     (local.get $0)
-     (i32.const -1992)
-    )
-   )
-  )
- )
+TEST(ConstraintTest, SignedUnsignedLessAndMoreMix) {
+  // Use > and < together.
+  Constraint lts10{LtS, {Literal(int32_t(10))}};
+  Constraint ltu10{LtU, {Literal(int32_t(10))}};
+  Constraint gts10{GtS, {Literal(int32_t(10))}};
+  Constraint gtu10{GtU, {Literal(int32_t(10))}};
 
- (func $scalbn2 (param $0 i32)
-  (local $1 f64)
-  (local.set $1
-   (f64.const 1)
-  )
-  (block $block
-   (br_if $block
-    (i32.gt_s
-     (local.get $0)
-     (i32.const -1023)
-    )
-   )
-   ;; Here we know  $0 <=_s -1023
-   (drop
-    (i32.gt_u
-     (local.get $0)
-     (i32.const -1992)
-    )
-   )
-  )
- )
-)*/
+  EXPECT_EQ(AndedConstraintSet{lts10}.proves(gtu10), Unknown);
+  EXPECT_EQ(AndedConstraintSet{ltu10}.proves(gts10), False);
+  EXPECT_EQ(AndedConstraintSet{gts10}.proves(ltu10), False);
+  EXPECT_EQ(AndedConstraintSet{gtu10}.proves(lts10), Unknown);
 
+  // TODO: add negative cases
+}
