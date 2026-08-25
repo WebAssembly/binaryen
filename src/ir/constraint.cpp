@@ -383,10 +383,6 @@ bool isImmediateContradiction(const Constraint& c) {
     return false;
   }
 
-  if (cc->type.isFloat()) {
-    return c.op == Eq && cc->isNaN();
-  }
-
   if (!cc->type.isInteger()) {
     return false;
   }

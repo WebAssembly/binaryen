@@ -1202,18 +1202,3 @@ TEST(ConstraintTest, FloatNegativeZero) {
   EXPECT_EQ(s32.proves(Constraint{Eq, {Literal(float(-0.0f))}}), True);
   EXPECT_EQ(s32.proves(Constraint{Ne, {Literal(float(-0.0f))}}), False);
 }
-
-TEST(ConstraintTest, FloatNaNContradiction) {
-  // float == NaN is a contradiction, because x == NaN always returns false.
-  AndedConstraintSet s;
-  auto NaN = std::numeric_limits<float>::quiet_NaN();
-  s.setProvesNothing();
-  s.approximateAnd({Eq, {Literal(float(NaN))}});
-  EXPECT_TRUE(s.provesEverything());
-
-  // float != NaN is fine, though.
-  AndedConstraintSet t;
-  t.setProvesNothing();
-  t.approximateAnd({Ne, {Literal(float(NaN))}});
-  EXPECT_FALSE(t.provesEverything());
-}
