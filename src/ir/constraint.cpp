@@ -808,11 +808,19 @@ void BasicBlockConstraintMap::set(Index index, Expression* value) {
         case Eq:
           *N = N->add(Literal::makeFromInt32(1, N->type));
           break;
-        // x >= N, x++  =>  x > N
+        // x >= N, x++  =>  x > N if no overflow
         case GeS:
+          if (old.proves({LtS, {Literal::makeSignedMax(N->type)}}) != True) {
+            iter = new_.erase(iter);
+            continue;
+          }
           c.op = GtS;
           break;
         case GeU:
+          if (old.proves({LtU, {Literal::makeUnsignedMax(N->type)}}) != True) {
+            iter = new_.erase(iter);
+            continue;
+          }
           c.op = GtU;
           break;
         // x < N, x++  =>  x <= N
@@ -1022,7 +1030,7 @@ std::ostream& operator<<(std::ostream& o, const Constraint& c) {
   if (auto* cc = std::get_if<Literal>(&c.term)) {
     o << *cc;
   } else if (auto* i = std::get_if<Index>(&c.term)) {
-    o << "Index(" << *i << ')';
+    o << "$" << *i;
   }
   o << '}';
   return o;

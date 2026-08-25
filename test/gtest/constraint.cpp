@@ -595,15 +595,31 @@ TEST(ConstraintTest, TestIncrement) {
   map.set(0, &add);
   check(map.get(0), {Eq, {Literal(int32_t(1))}});
 
-  // $0 >= 5, $0++  =>  $0 > 5 (signed)
+  // $0 >= 5, $0++  =>  nothing, since the ++ might overflow into negative
   map.set(0, {GeS, {Literal(int32_t(5))}});
   map.set(0, &add);
-  check(map.get(0), {GtS, {Literal(int32_t(5))}});
+  EXPECT_TRUE(map.get(0).empty());
 
-  // Ditto, unsigned
+  // $0 >= 5, $0 < 100, $0++  =>  $0 > 5, $0 <= 100 (signed)
+  Constraint lts100{LtS, {Literal(int32_t(100))}};
+  Constraint les100{LeS, {Literal(int32_t(100))}};
+  map.set(0, {{GeS, {Literal(int32_t(5))}}, lts100});
+  map.set(0, &add);
+  EXPECT_EQ(map.get(0),
+            (AndedConstraintSet{{GtS, {Literal(int32_t(5))}}, les100}));
+
+  // Ditto, unsigned: without an upper bound we can overflow.
   map.set(0, {GeU, {Literal(int32_t(5))}});
   map.set(0, &add);
-  check(map.get(0), {GtU, {Literal(int32_t(5))}});
+  EXPECT_TRUE(map.get(0).empty());
+
+  // With an upper bound, we can optimize like before.
+  Constraint ltu100{LtU, {Literal(int32_t(100))}};
+  Constraint leu100{LeU, {Literal(int32_t(100))}};
+  map.set(0, {{GeU, {Literal(int32_t(5))}}, ltu100});
+  map.set(0, &add);
+  EXPECT_EQ(map.get(0),
+            (AndedConstraintSet{{GtU, {Literal(int32_t(5))}}, leu100}));
 
   // $0 < 5, $0++  =>  $0 <= 5 (signed)
   map.set(0, {LtS, {Literal(int32_t(5))}});
@@ -656,18 +672,37 @@ TEST(ConstraintTest, TestIncrement) {
             (AndedConstraintSet{{GtS, {Literal(int32_t(10))}},
                                 {LeS, {Literal(int32_t(20))}}}));
 
-  // $0 >= 10 && $0 <= max_signed, $0++  =>  $0 > 10 (overflowing constraint
-  // removed)
+  // $0 >= 10 && $0 <= max_signed, $0++  =>  nothing, as we may overflow.
   map.set(0, {GeS, {Literal(int32_t(10))}});
   map.approximateAnd(0, {LeS, {Literal::makeSignedMax(Type::i32)}});
   map.set(0, &add);
-  EXPECT_EQ(map.get(0), (AndedConstraintSet{{GtS, {Literal(int32_t(10))}}}));
+  EXPECT_EQ(map.get(0).size(), 0);
 
-  // $0 >= 10 && $0 == $2, $0++  =>  $0 > 10 (non-constant term removed)
-  map.set(0, {GeS, {Literal(int32_t(10))}});
+  // Ditto, unsigned.
+  map.set(0, {GeU, {Literal(int32_t(10))}});
+  map.approximateAnd(0, {LeU, {Literal::makeUnsignedMax(Type::i32)}});
+  map.set(0, &add);
+  EXPECT_EQ(map.get(0).size(), 0);
+
+  // Ditto, 64-bit signed.
+  map.set(0, {GeS, {Literal(int64_t(10))}});
+  map.approximateAnd(0, {LeS, {Literal::makeSignedMax(Type::i64)}});
+  map.set(0, &add);
+  EXPECT_EQ(map.get(0).size(), 0);
+
+  // Ditto, 64-bit unsigned.
+  map.set(0, {GeU, {Literal(int64_t(10))}});
+  map.approximateAnd(0, {LeU, {Literal::makeUnsignedMax(Type::i64)}});
+  map.set(0, &add);
+  EXPECT_EQ(map.get(0).size(), 0);
+
+  // $0 >= 5 && $0 < 100 && $0 == $2, $0++  =>  we increment and remove the non-
+  // constant term, leaving $0 > 5 && $0 <= 100.
+  map.set(0, {{GeS, {Literal(int32_t(5))}}, lts100});
   map.approximateAnd(0, {Eq, {Index(2)}});
   map.set(0, &add);
-  EXPECT_EQ(map.get(0), (AndedConstraintSet{{GtS, {Literal(int32_t(10))}}}));
+  EXPECT_EQ(map.get(0),
+            (AndedConstraintSet{{GtS, {Literal(int32_t(5))}}, les100}));
 }
 
 TEST(ConstraintTest, TestEqConstraints) {
