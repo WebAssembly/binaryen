@@ -22,6 +22,8 @@
 #include <iostream>
 #include <limits>
 
+#include "support/inplace_vector.h"
+
 namespace wasm {
 
 // A span of values.
@@ -86,6 +88,65 @@ template<typename T> struct Span {
   }
   bool operator!=(const Span& other) const { return !(*this == other); }
 };
+
+// A union of spans
+template<typename T, size_t N> struct Spans {
+  inplace_vector<Span<T>, N> spans;
+
+  static constexpr T Min = std::numeric_limits<T>::lowest();
+  static constexpr T Max = std::numeric_limits<T>::max();
+
+  T min = Min;
+  T max = Max;
+
+  constexpr Spans() = default;
+  Spans(std::initializer_list<Span<T>> init) {
+    for (auto& span : init) {
+      spans.push_back(span);
+    }
+  }
+
+  Spans<T, N> intersection(const Spans<T, N>& other) const {
+    // (s1 U s2) ^ (s3 U s4) == (s1 ^ (s3 U s4)) U (s2 ^ (s3 U s4)) etc.
+    Spans<T, N> ret;
+    for (auto& span : *this) {
+      // Starting from span, intersect it with other's spans, and unify those.
+      // This must end up a single span, as we assume other's spans are
+      // disjoint. XXX
+      auto curr = Span<T>::empty();
+      for (auto& otherSpan : other) {
+        curr
+    if (isEmpty() || other.isEmpty()) {
+      return empty();
+    }
+    return Span<T>{std::max(min, other.min), std::min(max, other.max)};
+  }
+
+  // Checks whether two spans have any overlap at all.
+  bool hasOverlap(const Spans<T, N>& other) const {
+    return !intersection(other).isEmpty();
+  }
+
+  // Check whether we contain another span (possibly being equal).
+  bool contains(const Spans<T, N>& other) const {
+    return intersection(other) == other;
+  }
+
+  bool operator==(const Spans<T, N>& other) const {
+    if (isEmpty()) {
+      return other.isEmpty();
+    }
+    return !other.isEmpty() && min == other.min && max == other.max;
+  }
+  bool operator!=(const Spans<T, N>& other) const { return !(*this == other); }
+
+};
+
+// A useful set of 2 spans that can contain any integer value. 2 spans is enough
+// to contain spans for any inequality, signed or unsigned: we represent numbers
+// as unsigned internally, and so e.g. signed x < 10 ends up as two disjoint
+// spans, [0..10] and [2^32..MAX_INT].
+using Spans2 = Spans<uint64_t, 2>;
 
 template<typename T>
 inline std::ostream& operator<<(std::ostream& os, const Span<T>& span) {
