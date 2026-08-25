@@ -100,9 +100,22 @@ template<typename T, size_t N> struct Spans {
   T max = Max;
 
   constexpr Spans() = default;
+
+  // Initialize with Spans.
   Spans(std::initializer_list<Span<T>> init) {
+    spans.reserve(init.size());
     for (auto& span : init) {
       spans.push_back(span);
+    }
+  }
+
+  // Initialize with pairs of coordinates.
+  Spans(std::initializer_list<T> init) {
+    assert(init.size() % 2 == 0);
+
+    spans.reserve(init.size() / 2);
+    for (auto it = init.begin(); it != init.end(); it += 2) {
+      spans.push_back(Span<T>{*it, *(it + 1)});
     }
   }
 
