@@ -25,7 +25,7 @@ namespace wasm::constraint {
 namespace {
 
 std::optional<SpansU2>
-getSpanInternal(const Constraint& c, std::optional<Type> type, bool exact) {
+getSpansInternal(const Constraint& c, std::optional<Type> type, bool exact) {
   using namespace Abstract;
 
   auto* cc = std::get_if<Literal>(&c.term);
@@ -174,13 +174,13 @@ getSpanInternal(const Constraint& c, std::optional<Type> type, bool exact) {
 
 } // anonymous namespace
 
-std::optional<SpansU2> Constraint::getSpan(std::optional<Type> type) const {
-  return getSpanInternal(*this, type, true);
+std::optional<SpansU2> Constraint::getSpans(std::optional<Type> type) const {
+  return getSpansInternal(*this, type, true);
 }
 
 std::optional<SpansU2>
-Constraint::getProvenSpan(std::optional<Type> type) const {
-  return getSpanInternal(*this, type, false);
+Constraint::getProvenSpans(std::optional<Type> type) const {
+  return getSpansInternal(*this, type, false);
 }
 
 namespace {
@@ -278,26 +278,26 @@ Result provesPair(const Constraint& a, const Constraint& b) {
   // must be a constant in this case, so that we know the type.
   if (aConstant || bConstant) {
     auto type = aConstant ? aConstant->type : bConstant->type;
-    // Use a proven span for a, and an exact one for b. This allows us to do
-    // a => proven span for a => exact span for b => b.
-    if (auto aSpan = a.getProvenSpan(type)) {
-      if (auto bSpan = b.getSpan(type)) {
-        if (aSpan->isEmpty()) {
+    // Use proven spans for a, and exact for b. This allows us to do
+    // a => proven spans for a => exact spans for b => b.
+    if (auto aSpans = a.getProvenSpans(type)) {
+      if (auto bSpans = b.getSpans(type)) {
+        if (aSpans->empty()) {
           // An empty span implies a contradiction (e.g. x > MAX_INT), as it
           // means no possible number can apply. And contradictions prove
           // anything.
           return True;
         }
-        if (bSpan->isEmpty()) {
+        if (bSpans->empty()) {
           // Anything that is not a contradiction can prove a contradiction.
           return False;
         }
-        if (bSpan->contains(*aSpan)) {
+        if (bSpans->contains(*aSpans)) {
           // b's values contains a's, e.g., b = { 0 < x < 10 } and
           // a = { 3 < x < 7 }, so a => b.
           return True;
         }
-        if (!bSpan->hasOverlap(*aSpan)) {
+        if (!bSpans->hasOverlap(*aSpans)) {
           // There is no overlap at all, e.g., { 0 < x < 10 } vs { 20 < x < 30
           // }, both cannot be true and each proves the other false.
           return False;

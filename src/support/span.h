@@ -90,9 +90,7 @@ template<typename T> struct Span {
 };
 
 // A union of spans, which we assume are disjoint.
-template<typename T, size_t N> struct Spans {
-  inplace_vector<Span<T>, N> spans;
-
+template<typename T, size_t N> struct Spans : public inplace_vector<Span<T>, N> {
   static constexpr T Min = std::numeric_limits<T>::lowest();
   static constexpr T Max = std::numeric_limits<T>::max();
 
@@ -103,9 +101,9 @@ template<typename T, size_t N> struct Spans {
 
   // Initialize with Spans.
   Spans(std::initializer_list<Span<T>> init) {
-    spans.reserve(init.size());
+    reserve(init.size());
     for (auto& span : init) {
-      spans.push_back(span);
+      push_back(span);
     }
   }
 
@@ -113,17 +111,17 @@ template<typename T, size_t N> struct Spans {
   Spans(std::initializer_list<T> init) {
     assert(init.size() % 2 == 0);
 
-    spans.reserve(init.size() / 2);
+    reserve(init.size() / 2);
     for (auto it = init.begin(); it != init.end(); it += 2) {
-      spans.push_back(Span<T>{*it, *(it + 1)});
+      push_back(Span<T>{*it, *(it + 1)});
     }
   }
 
   bool hasOverlap(const Spans<T, N>& other) const {
     // There is overlap if any of our spans overlaps with any of other's.
-    return std::any_of(spans.begin(), spans.end(), [](const Span<T>& span) {
+    return std::any_of(begin(), end(), [](const Span<T>& span) {
       return std::any_of(
-        other.spans.begin(), other.spans.end(), [](const Span<T>& otherSpan) {
+        other.begin(), other.end(), [](const Span<T>& otherSpan) {
           return span.hasOverlap(otherSpan);
         });
     });
@@ -132,10 +130,10 @@ template<typename T, size_t N> struct Spans {
   bool contains(const Spans<T, N>& other) const {
     // We contain other if each of their spans is contained in us.
     return std::all_of(
-      other.spans.begin(), other.spans.end(), [](const Span<T>& otherSpan) {
+      other.begin(), other.end(), [](const Span<T>& otherSpan) {
         // Because our spans are assumed to be disjoint, exactly one of our
         // spans must contain otherSpan.
-        return std::any_of(spans.begin(), spans.end(), [](const Span<T>& span) {
+        return std::any_of(begin(), end(), [](const Span<T>& span) {
           return span.contains(otherSpan);
         });
       });
