@@ -80,17 +80,16 @@ getSpanInternal(const Constraint& c, std::optional<Type> type, bool exact) {
   }
 
   switch (c.op) {
-    case Eq: {
-      auto x = cc->getUnsigned();
-      if (x <= uint64_t(maxSigned)) {
-        // This is in the range of both signed and unsigned values, so there is
-        // no ambiguity. That is, we cannot convert the bit pattern
-        // 0xffffffff into a Span, as it might be either uint32_t(-1)
-        // or actually negative (but a bit pattern like 0x00000001 is
-        // always fine as it can only ever be "1").
-        return SpansU2{x, x};
+    case Eq:
+      return SpansU2{x, x};
+    case Ne:
+      if (x == 0) {
+        return SpansU2{1, maxUnsigned};
       }
-      break;
+      if (x == maxUnsigned) {
+        return SpansU2{0, maxUnsigned - 1};
+      }
+      return SpansU2{0, x - 1, x + 1, maxUnsigned};
     }
 
     case LtS:
