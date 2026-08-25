@@ -810,14 +810,14 @@ void BasicBlockConstraintMap::set(Index index, Expression* value) {
           break;
         // x >= N, x++  =>  x > N if no overflow
         case GeS:
-          if (old.proves({LtS, Literal::makeSignedMax(N->type)}) != True) {
+          if (old.proves({LtS, {Literal::makeSignedMax(N->type)}}) != True) {
             iter = new_.erase(iter);
             continue;
           }
           c.op = GtS;
           break;
         case GeU:
-          if (old.proves({LtU, Literal::makeUnsignedMax(N->type)}) != True) {
+          if (old.proves({LtU, {Literal::makeUnsignedMax(N->type)}}) != True) {
             iter = new_.erase(iter);
             continue;
           }
