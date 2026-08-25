@@ -41,7 +41,8 @@ getSpansInternal(const Constraint& c, std::optional<Type> type, bool exact) {
     return {};
   }
 
-  // Maximum values, as represented as uint64_t's.
+  // Maximum values, as represented as uint64_t's. We generate spans on unsigned
+  // values, converting signed ones to their unsigned representations.
   uint64_t maxUnsigned = type && *type == Type::i32
                            ? std::numeric_limits<uint32_t>::max()
                            : std::numeric_limits<uint64_t>::max();
