@@ -1217,4 +1217,3 @@ TEST(ConstraintTest, FloatNaNContradiction) {
   t.approximateAnd({Ne, {Literal(float(NaN))}});
   EXPECT_FALSE(t.provesEverything());
 }
-
