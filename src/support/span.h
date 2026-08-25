@@ -126,9 +126,10 @@ struct Spans : public inplace_vector<Span<T>, N> {
       other.begin(), other.end(), [&](const Span<T>& otherSpan) {
         // Because our spans are assumed to be disjoint, exactly one of our
         // spans must contain otherSpan.
-        return std::any_of(this->begin(), this->end(), [&](const Span<T>& span) {
-          return span.contains(otherSpan);
-        });
+        return std::any_of(
+          this->begin(), this->end(), [&](const Span<T>& span) {
+            return span.contains(otherSpan);
+          });
       });
   }
 };

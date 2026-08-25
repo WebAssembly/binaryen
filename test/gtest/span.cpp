@@ -261,7 +261,8 @@ TEST(SpansTest, Contains) {
   SpansU2 s5{50, 150};
   SpansU2 s6{10, 20, 250, 350};
 
-  // Empty contains empty, non-empty contains empty, empty does not contain non-empty
+  // Empty contains empty, non-empty contains empty, empty does not contain
+  // non-empty
   EXPECT_TRUE(empty.contains(empty));
   EXPECT_TRUE(s1.contains(empty));
   EXPECT_FALSE(empty.contains(s1));
