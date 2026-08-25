@@ -92,19 +92,12 @@ template<typename T> struct Span {
 // A union of spans, which we assume are disjoint.
 template<typename T, size_t N>
 struct Spans : public inplace_vector<Span<T>, N> {
-  static constexpr T Min = std::numeric_limits<T>::lowest();
-  static constexpr T Max = std::numeric_limits<T>::max();
-
-  T min = Min;
-  T max = Max;
-
   constexpr Spans() = default;
 
   // Initialize with Spans.
   Spans(std::initializer_list<Span<T>> init) {
-    reserve(init.size());
-    for (auto& span : init) {
-      push_back(span);
+    for (const auto& span : init) {
+      this->push_back(span);
     }
   }
 
@@ -112,17 +105,16 @@ struct Spans : public inplace_vector<Span<T>, N> {
   Spans(std::initializer_list<T> init) {
     assert(init.size() % 2 == 0);
 
-    reserve(init.size() / 2);
     for (auto it = init.begin(); it != init.end(); it += 2) {
-      push_back(Span<T>{*it, *(it + 1)});
+      this->push_back(Span<T>{*it, *(it + 1)});
     }
   }
 
   bool hasOverlap(const Spans<T, N>& other) const {
     // There is overlap if any of our spans overlaps with any of other's.
-    return std::any_of(begin(), end(), [](const Span<T>& span) {
+    return std::any_of(this->begin(), this->end(), [&](const Span<T>& span) {
       return std::any_of(
-        other.begin(), other.end(), [](const Span<T>& otherSpan) {
+        other.begin(), other.end(), [&](const Span<T>& otherSpan) {
           return span.hasOverlap(otherSpan);
         });
     });
@@ -131,10 +123,10 @@ struct Spans : public inplace_vector<Span<T>, N> {
   bool contains(const Spans<T, N>& other) const {
     // We contain other if each of their spans is contained in us.
     return std::all_of(
-      other.begin(), other.end(), [](const Span<T>& otherSpan) {
+      other.begin(), other.end(), [&](const Span<T>& otherSpan) {
         // Because our spans are assumed to be disjoint, exactly one of our
         // spans must contain otherSpan.
-        return std::any_of(begin(), end(), [](const Span<T>& span) {
+        return std::any_of(this->begin(), this->end(), [&](const Span<T>& span) {
           return span.contains(otherSpan);
         });
       });
@@ -153,6 +145,21 @@ inline std::ostream& operator<<(std::ostream& os, const Span<T>& span) {
     return os << "[empty]";
   }
   return os << '[' << span.min << ", " << span.max << ']';
+}
+
+template<typename T, size_t N>
+inline std::ostream& operator<<(std::ostream& os, const Spans<T, N>& spans) {
+  if (spans.empty()) {
+    return os << "{empty}";
+  }
+  os << '{';
+  for (size_t i = 0; i < spans.size(); ++i) {
+    if (i > 0) {
+      os << ", ";
+    }
+    os << spans[i];
+  }
+  return os << '}';
 }
 
 } // namespace wasm

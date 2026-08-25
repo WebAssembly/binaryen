@@ -18,7 +18,6 @@
 #include <limits>
 #include <sstream>
 
-#include "support/iu64.h"
 #include "support/span.h"
 #include "gtest/gtest.h"
 
@@ -185,178 +184,164 @@ TEST(SpanTest, StreamOutput) {
 }
 
 // ============================================================================
-// Span<IU64> tests (corner cases, sign mixing, large range)
+// Spans<T, N> and SpansU2 tests
 // ============================================================================
 
-TEST(SpanIU64Test, FullAndLimits) {
-  EXPECT_EQ(Span<IU64>::Min, IU64(std::numeric_limits<int64_t>::min()));
-  EXPECT_EQ(Span<IU64>::Max, IU64(std::numeric_limits<uint64_t>::max()));
+TEST(SpansTest, Construction) {
+  SpansU2 empty;
+  EXPECT_TRUE(empty.empty());
+  EXPECT_EQ(empty.size(), 0u);
 
-  Span<IU64> full = Span<IU64>::full();
-  EXPECT_TRUE(full.isFull());
-  EXPECT_FALSE(full.isEmpty());
-  EXPECT_EQ(full.min, IU64(std::numeric_limits<int64_t>::min()));
-  EXPECT_EQ(full.max, IU64(std::numeric_limits<uint64_t>::max()));
+  SpansU2 fromSpans{Span<uint64_t>(0, 10), Span<uint64_t>(20, 30)};
+  EXPECT_FALSE(fromSpans.empty());
+  EXPECT_EQ(fromSpans.size(), 2u);
+  EXPECT_EQ(fromSpans[0], Span<uint64_t>(0, 10));
+  EXPECT_EQ(fromSpans[1], Span<uint64_t>(20, 30));
 
-  // Default constructed span is full
-  Span<IU64> def;
-  EXPECT_TRUE(def.isFull());
-  EXPECT_FALSE(def.isEmpty());
-  EXPECT_EQ(def, full);
+  SpansU2 fromCoords{0, 10, 20, 30};
+  EXPECT_EQ(fromCoords.size(), 2u);
+  EXPECT_EQ(fromCoords[0], Span<uint64_t>(0, 10));
+  EXPECT_EQ(fromCoords[1], Span<uint64_t>(20, 30));
+
+  SpansU2 single{5, 15};
+  EXPECT_EQ(single.size(), 1u);
+  EXPECT_EQ(single[0], Span<uint64_t>(5, 15));
 }
 
-TEST(SpanIU64Test, Empty) {
-  Span<IU64> empty = Span<IU64>::empty();
-  EXPECT_TRUE(empty.isEmpty());
-  EXPECT_FALSE(empty.isFull());
+TEST(SpansTest, Equality) {
+  EXPECT_EQ(SpansU2(), SpansU2());
+  EXPECT_EQ((SpansU2{0, 10}), (SpansU2{0, 10}));
+  EXPECT_EQ((SpansU2{0, 10, 20, 30}), (SpansU2{0, 10, 20, 30}));
 
-  Span<IU64> empty2{IU64(100), IU64(-100)};
-  EXPECT_TRUE(empty2.isEmpty());
-  EXPECT_FALSE(empty2.isFull());
-  EXPECT_EQ(empty, empty2);
-
-  Span<IU64> empty3{IU64(uint64_t(1)), IU64(int64_t(-1))};
-  EXPECT_TRUE(empty3.isEmpty());
-  EXPECT_EQ(empty, empty3);
+  EXPECT_NE((SpansU2{0, 10}), SpansU2());
+  EXPECT_NE((SpansU2{0, 10}), (SpansU2{0, 11}));
+  EXPECT_NE((SpansU2{0, 10}), (SpansU2{0, 10, 20, 30}));
 }
 
-TEST(SpanIU64Test, SingletonsAtExtremes) {
-  // Min int64 singleton
-  Span<IU64> minI64{IU64(std::numeric_limits<int64_t>::min()),
-                    IU64(std::numeric_limits<int64_t>::min())};
-  EXPECT_FALSE(minI64.isEmpty());
-  EXPECT_FALSE(minI64.isFull());
-  EXPECT_EQ(minI64.min, IU64(std::numeric_limits<int64_t>::min()));
-  EXPECT_EQ(minI64.max, IU64(std::numeric_limits<int64_t>::min()));
+TEST(SpansTest, HasOverlap) {
+  SpansU2 empty;
+  SpansU2 s1{0, 10, 20, 30};
+  SpansU2 s2{5, 15};
+  SpansU2 s3{25, 35};
+  SpansU2 s4{11, 19};
+  SpansU2 s5{31, 40};
+  SpansU2 s6{10, 20};
 
-  // -1 singleton
-  Span<IU64> negOne{IU64(-1), IU64(-1)};
-  EXPECT_FALSE(negOne.isEmpty());
+  EXPECT_FALSE(empty.hasOverlap(s1));
+  EXPECT_FALSE(s1.hasOverlap(empty));
+  EXPECT_FALSE(empty.hasOverlap(empty));
 
-  // 0 singleton
-  Span<IU64> zero{IU64(0), IU64(0)};
-  EXPECT_FALSE(zero.isEmpty());
-
-  // 1 singleton
-  Span<IU64> one{IU64(1), IU64(1)};
-  EXPECT_FALSE(one.isEmpty());
-
-  // Max int64 singleton
-  Span<IU64> maxI64{IU64(std::numeric_limits<int64_t>::max()),
-                    IU64(std::numeric_limits<int64_t>::max())};
-  EXPECT_FALSE(maxI64.isEmpty());
-
-  // 2^63 singleton (above int64_t max, into uint64_t territory)
-  Span<IU64> highBit{IU64(uint64_t(1) << 63), IU64(uint64_t(1) << 63)};
-  EXPECT_FALSE(highBit.isEmpty());
-
-  // Max uint64 singleton
-  Span<IU64> maxU64{IU64(std::numeric_limits<uint64_t>::max()),
-                    IU64(std::numeric_limits<uint64_t>::max())};
-  EXPECT_FALSE(maxU64.isEmpty());
-}
-
-TEST(SpanIU64Test, CrossingZero) {
-  Span<IU64> span{IU64(-10), IU64(10)};
-  EXPECT_FALSE(span.isEmpty());
-  EXPECT_FALSE(span.isFull());
-
-  // Contains points inside
-  EXPECT_TRUE(span.contains(Span<IU64>(IU64(-10), IU64(-10))));
-  EXPECT_TRUE(span.contains(Span<IU64>(IU64(-5), IU64(5))));
-  EXPECT_TRUE(span.contains(Span<IU64>(IU64(0), IU64(0))));
-  EXPECT_TRUE(span.contains(Span<IU64>(IU64(10), IU64(10))));
-
-  // Does not contain points outside
-  EXPECT_FALSE(span.contains(Span<IU64>(IU64(-11), IU64(-11))));
-  EXPECT_FALSE(span.contains(Span<IU64>(IU64(11), IU64(11))));
-  EXPECT_FALSE(span.contains(Span<IU64>(IU64(-15), IU64(5))));
-  EXPECT_FALSE(span.contains(Span<IU64>(IU64(-5), IU64(15))));
-}
-
-TEST(SpanIU64Test, NegativeAndPositiveIntersections) {
-  Span<IU64> neg{IU64(-100), IU64(-10)};
-  Span<IU64> pos{IU64(10), IU64(100)};
-
-  EXPECT_FALSE(neg.hasOverlap(pos));
-  EXPECT_FALSE(pos.hasOverlap(neg));
-  EXPECT_TRUE(neg.intersection(pos).isEmpty());
-  EXPECT_TRUE(pos.intersection(neg).isEmpty());
-
-  Span<IU64> touchNegZero{IU64(-10), IU64(0)};
-  Span<IU64> touchZeroPos{IU64(0), IU64(10)};
-  EXPECT_TRUE(touchNegZero.hasOverlap(touchZeroPos));
-  EXPECT_EQ(touchNegZero.intersection(touchZeroPos),
-            Span<IU64>(IU64(0), IU64(0)));
-
-  Span<IU64> overlap{IU64(-50), IU64(50)};
-  EXPECT_EQ(neg.intersection(overlap), Span<IU64>(IU64(-50), IU64(-10)));
-  EXPECT_EQ(pos.intersection(overlap), Span<IU64>(IU64(10), IU64(50)));
-}
-
-TEST(SpanIU64Test, SignedUnsignedBoundary) {
-  // Test around INT64_MAX and 2^63
-  int64_t maxI64 = std::numeric_limits<int64_t>::max();
-  uint64_t highBit = uint64_t(maxI64) + 1; // 0x8000000000000000ULL
-
-  Span<IU64> s1(IU64(maxI64 - 100), IU64(highBit + 50));
-  Span<IU64> s2(IU64(highBit), IU64(highBit + 100));
-
+  // Overlap with first span
   EXPECT_TRUE(s1.hasOverlap(s2));
-  EXPECT_EQ(s1.intersection(s2), Span<IU64>(IU64(highBit), IU64(highBit + 50)));
+  EXPECT_TRUE(s2.hasOverlap(s1));
 
-  // Disjoint near 2^63 boundary
-  Span<IU64> s3{IU64(maxI64 - 200), IU64(maxI64)};
-  Span<IU64> s4{IU64(highBit + 1), IU64(highBit + 100)};
-  EXPECT_FALSE(s3.hasOverlap(s4));
-  EXPECT_TRUE(s3.intersection(s4).isEmpty());
+  // Overlap with second span
+  EXPECT_TRUE(s1.hasOverlap(s3));
+  EXPECT_TRUE(s3.hasOverlap(s1));
 
-  // Adjacent touching at 2^63
-  Span<IU64> s5{IU64(maxI64), IU64(highBit)};
-  Span<IU64> s6{IU64(highBit), IU64(highBit + 10)};
-  EXPECT_TRUE(s5.hasOverlap(s6));
-  EXPECT_EQ(s5.intersection(s6), Span<IU64>(IU64(highBit), IU64(highBit)));
+  // In the gap between spans: no overlap
+  EXPECT_FALSE(s1.hasOverlap(s4));
+  EXPECT_FALSE(s4.hasOverlap(s1));
+
+  // Beyond all spans: no overlap
+  EXPECT_FALSE(s1.hasOverlap(s5));
+  EXPECT_FALSE(s5.hasOverlap(s1));
+
+  // Touching at endpoints: overlaps
+  EXPECT_TRUE(s1.hasOverlap(s6));
+  EXPECT_TRUE(s6.hasOverlap(s1));
 }
 
-TEST(SpanIU64Test, ExtremeBoundaries) {
-  Span<IU64> minPart(IU64(std::numeric_limits<int64_t>::min()),
-                     IU64(std::numeric_limits<int64_t>::min() + 100));
-  Span<IU64> maxPart(IU64(std::numeric_limits<uint64_t>::max() - 100),
-                     IU64(std::numeric_limits<uint64_t>::max()));
+TEST(SpansTest, Contains) {
+  SpansU2 empty;
+  SpansU2 s1{0, 100, 200, 300};
+  SpansU2 s2{10, 20};
+  SpansU2 s3{210, 220};
+  SpansU2 s4{10, 20, 210, 220};
+  SpansU2 s5{50, 150};
+  SpansU2 s6{10, 20, 250, 350};
 
-  EXPECT_FALSE(minPart.hasOverlap(maxPart));
-  EXPECT_TRUE(minPart.intersection(maxPart).isEmpty());
+  // Empty contains empty, non-empty contains empty, empty does not contain non-empty
+  EXPECT_TRUE(empty.contains(empty));
+  EXPECT_TRUE(s1.contains(empty));
+  EXPECT_FALSE(empty.contains(s1));
 
-  Span<IU64> full = Span<IU64>::full();
-  EXPECT_TRUE(full.contains(minPart));
-  EXPECT_TRUE(full.contains(maxPart));
-  EXPECT_EQ(full.intersection(minPart), minPart);
-  EXPECT_EQ(full.intersection(maxPart), maxPart);
-  EXPECT_TRUE(full.hasOverlap(minPart));
-  EXPECT_TRUE(full.hasOverlap(maxPart));
+  // Identity
+  EXPECT_TRUE(s1.contains(s1));
+  EXPECT_TRUE(s2.contains(s2));
 
-  Span<IU64> allNeg(IU64(std::numeric_limits<int64_t>::min()), IU64(-1));
-  Span<IU64> allNonNeg(IU64(0), IU64(std::numeric_limits<uint64_t>::max()));
+  // Contained within first span
+  EXPECT_TRUE(s1.contains(s2));
+  EXPECT_FALSE(s2.contains(s1));
 
-  EXPECT_FALSE(allNeg.hasOverlap(allNonNeg));
-  EXPECT_TRUE(allNeg.intersection(allNonNeg).isEmpty());
-  EXPECT_TRUE(full.contains(allNeg));
-  EXPECT_TRUE(full.contains(allNonNeg));
+  // Contained within second span
+  EXPECT_TRUE(s1.contains(s3));
+  EXPECT_FALSE(s3.contains(s1));
+
+  // Multiple spans each contained in one of s1's spans
+  EXPECT_TRUE(s1.contains(s4));
+  EXPECT_FALSE(s4.contains(s1));
+
+  // Straddles gap: not contained
+  EXPECT_FALSE(s1.contains(s5));
+
+  // One span contained, but second span extends past s1: not contained
+  EXPECT_FALSE(s1.contains(s6));
 }
 
-TEST(SpanIU64Test, SetAndMutate) {
-  Span<IU64> s;
-  EXPECT_TRUE(s.isFull());
+TEST(SpansTest, ExtremeBoundaries) {
+  uint64_t maxU64 = std::numeric_limits<uint64_t>::max();
+  uint64_t highBit = uint64_t(1) << 63;
 
-  s.set(IU64(-12345));
-  EXPECT_FALSE(s.isFull());
-  EXPECT_FALSE(s.isEmpty());
-  EXPECT_EQ(s.min, IU64(-12345));
-  EXPECT_EQ(s.max, IU64(-12345));
+  SpansU2 lowPart{0, 100};
+  SpansU2 highPart{maxU64 - 100, maxU64};
+  SpansU2 midPart{highBit - 10, highBit + 10};
 
-  s.setEmpty();
-  EXPECT_TRUE(s.isEmpty());
+  EXPECT_FALSE(lowPart.hasOverlap(highPart));
+  EXPECT_FALSE(highPart.hasOverlap(lowPart));
+  EXPECT_FALSE(lowPart.hasOverlap(midPart));
+  EXPECT_FALSE(midPart.hasOverlap(highPart));
 
-  s.setFull();
-  EXPECT_TRUE(s.isFull());
+  SpansU2 split{0, 100, maxU64 - 100, maxU64};
+  EXPECT_TRUE(split.contains(lowPart));
+  EXPECT_TRUE(split.contains(highPart));
+  EXPECT_FALSE(split.contains(midPart));
+
+  SpansU2 fullRange{0, maxU64};
+  EXPECT_TRUE(fullRange.contains(split));
+  EXPECT_TRUE(fullRange.contains(lowPart));
+  EXPECT_TRUE(fullRange.contains(highPart));
+  EXPECT_TRUE(fullRange.contains(midPart));
+}
+
+TEST(SpansTest, Mutation) {
+  SpansU2 s;
+  EXPECT_TRUE(s.empty());
+
+  s.push_back(Span<uint64_t>(10, 20));
+  EXPECT_EQ(s.size(), 1u);
+  EXPECT_EQ(s[0], Span<uint64_t>(10, 20));
+
+  s.push_back(Span<uint64_t>(30, 40));
+  EXPECT_EQ(s.size(), 2u);
+  EXPECT_EQ(s[1], Span<uint64_t>(30, 40));
+
+  s.pop_back();
+  EXPECT_EQ(s.size(), 1u);
+  EXPECT_EQ(s[0], Span<uint64_t>(10, 20));
+
+  s.clear();
+  EXPECT_TRUE(s.empty());
+}
+
+TEST(SpansTest, StreamOutput) {
+  auto toString = [](const auto& spans) {
+    std::ostringstream ss;
+    ss << spans;
+    return ss.str();
+  };
+
+  EXPECT_EQ(toString(SpansU2{}), "{empty}");
+  EXPECT_EQ(toString(SpansU2{1, 10}), "{[1, 10]}");
+  EXPECT_EQ(toString(SpansU2{1, 10, 20, 30}), "{[1, 10], [20, 30]}");
 }

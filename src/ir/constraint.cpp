@@ -92,7 +92,6 @@ getSpansInternal(const Constraint& c, std::optional<Type> type, bool exact) {
         return SpansU2{0, maxUnsigned - 1};
       }
       return SpansU2{0, x - 1, x + 1, maxUnsigned};
-    }
 
     case LtS:
       if (x == minSigned) {
@@ -123,7 +122,7 @@ getSpansInternal(const Constraint& c, std::optional<Type> type, bool exact) {
       }
       if (x == maxSigned) {
         // All numbers are possible.
-        return SpansU2{0, maxUnSigned};
+        return SpansU2{0, maxUnsigned};
       }
       // A non-negative number, so all negative ones are possible, and some
       // positive.
@@ -153,8 +152,11 @@ getSpansInternal(const Constraint& c, std::optional<Type> type, bool exact) {
         return SpansU2{};
       }
       return SpansU2{x + 1, maxUnsigned};
-      break;
     case GeS:
+      if (x == minSigned) {
+        // All numbers are possible.
+        return SpansU2{0, maxUnsigned};
+      }
       if (x <= maxSigned) {
         // A non-negative number, so just a single span.
         return SpansU2{x, maxSigned};
@@ -167,7 +169,7 @@ getSpansInternal(const Constraint& c, std::optional<Type> type, bool exact) {
 
     default: {
     }
-}
+  }
 
   return {};
 }
