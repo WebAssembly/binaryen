@@ -41,15 +41,14 @@ getSpanInternal(const Constraint& c, std::optional<Type> type, bool exact) {
     return {};
   }
 
-  auto minSigned = type && *type == Type::i32
-                     ? std::numeric_limits<int32_t>::min()
-                     : std::numeric_limits<int64_t>::min();
-  auto maxSigned = type && *type == Type::i32
-                     ? std::numeric_limits<int32_t>::max()
-                     : std::numeric_limits<int64_t>::max();
-  auto maxUnsigned = type && *type == Type::i32
+  // Maximum values, as represented as uint64_t's.
+  uint64_t maxUnsigned = type && *type == Type::i32
                        ? std::numeric_limits<uint32_t>::max()
                        : std::numeric_limits<uint64_t>::max();
+  uint64_t maxSigned = type && *type == Type::i32
+                     ? std::numeric_limits<int32_t>::max()
+                     : std::numeric_limits<int64_t>::max();
+  uint64_t minSigned = maxSigned + 1;
 
   if (!cc) {
     // Not comparing to a constant, so we can't infer anything exact, but might
@@ -59,15 +58,17 @@ getSpanInternal(const Constraint& c, std::optional<Type> type, bool exact) {
     }
 
     switch (c.op) {
-      // x < y, i.e., x is less than *something*, proves x < MAX_INT.
+      // x < y, i.e., x is less than *something*, proves x != MAX_INT.
       case LtS:
-        return SpansU2{minSigned, maxSigned - 1};
+        // In the signed case, this is a pair of spans: all to the left and all
+        // to the right of MAX_INT.
+        return SpansU2{0, maxSigned - 1, maxSigned + 1, maxUnsigned};
       case LtU:
         return SpansU2{0, maxUnsigned - 1};
 
-      // Similarly, x > y proves x > MIN_INT.
+      // Similarly, x > y proves x != MIN_INT.
       case GtS:
-        return SpansU2{minSigned + 1, maxSigned};
+        return SpansU2{0, minSigned - 1, minSigned + 1, maxUnsigned};
       case GtU:
         return SpansU2{1, maxUnsigned};
 
@@ -95,7 +96,7 @@ getSpanInternal(const Constraint& c, std::optional<Type> type, bool exact) {
     case LtS:
       if (cc->getInteger() == minSigned) {
         // Less than the lowest possible number is an empty span.
-        return SpansU2::empty();
+        return SpansU2{};
       } else {
         return SpansU2{minSigned, cc->getInteger() - 1};
       }
@@ -103,7 +104,7 @@ getSpanInternal(const Constraint& c, std::optional<Type> type, bool exact) {
     case LtU:
       if (cc->getInteger() == 0) {
         // Less than the lowest possible number is an empty span.
-        return SpansU2::empty();
+        return SpansU2{};
       } else {
         return SpansU2{0, cc->getUnsigned() - 1};
       }
@@ -116,7 +117,7 @@ getSpanInternal(const Constraint& c, std::optional<Type> type, bool exact) {
     case GtS:
       if (cc->getInteger() == maxSigned) {
         // Greater than the highest possible number is an empty span.
-        return SpansU2::empty();
+        return SpansU2{};
       } else {
         return SpansU2{cc->getInteger() + 1, maxSigned};
       }
@@ -124,7 +125,7 @@ getSpanInternal(const Constraint& c, std::optional<Type> type, bool exact) {
     case GtU:
       if (cc->getUnsigned() == maxUnsigned) {
         // Greater than the highest possible number is an empty span.
-        return SpansU2::empty();
+        return SpansU2{};
       } else {
         return SpansU2{cc->getUnsigned() + 1, maxUnsigned};
       }
