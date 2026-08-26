@@ -4556,6 +4556,60 @@
     )
   )
 
+  ;; CHECK:      (func $float-negative-zero (type $1)
+  ;; CHECK-NEXT:  (local $f f64)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (nop)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (nop)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPTIN:      (func $float-negative-zero (type $1)
+  ;; OPTIN-NEXT:  (local $f f64)
+  ;; OPTIN-NEXT:  (if
+  ;; OPTIN-NEXT:   (i32.const 1)
+  ;; OPTIN-NEXT:   (then
+  ;; OPTIN-NEXT:    (nop)
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (if
+  ;; OPTIN-NEXT:   (i32.const 1)
+  ;; OPTIN-NEXT:   (then
+  ;; OPTIN-NEXT:    (nop)
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT: )
+  (func $float-negative-zero
+    (local $f f64)
+    ;; Negative zero is equal to zero, even though it has a different bit
+    ;; pattern. Both conditions here should be optimized to 1.
+    (if
+      (f64.eq
+        (local.get $f)
+        (f64.const -0)
+      )
+      (then
+        (nop)
+      )
+    )
+    (if
+      (f64.eq
+        (local.get $f)
+        (f64.const 0)
+      )
+      (then
+        (nop)
+      )
+    )
+  )
+
   ;; CHECK:      (func $tee (type $1)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (local $y i32)
