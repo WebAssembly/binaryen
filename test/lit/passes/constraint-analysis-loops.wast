@@ -3,7 +3,7 @@
 ;; RUN: wasm-opt %s --constraint-analysis -all -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (import "a" "b" (func $import (type $2) (result i32)))
+  ;; CHECK:      (import "a" "b" (func $import (type $3) (result i32)))
   (import "a" "b" (func $import (result i32)))
 
   ;; CHECK:      (func $infinite-loop (type $0)
@@ -61,6 +61,51 @@
       (br_if $loop
         (local.get $x)
       )
+    )
+  )
+
+  ;; CHECK:      (func $infinite-loop-with-branch (type $0)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (loop $loop
+  ;; CHECK-NEXT:   (if
+  ;; CHECK-NEXT:    (i32.gt_s
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (then
+  ;; CHECK-NEXT:     (nop)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.set $x
+  ;; CHECK-NEXT:    (i32.add
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (br $loop)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $infinite-loop-with-branch
+    (local $x i32)
+    ;; An infinite loop that *looks* like it might not be infinite. We have a
+    ;; branch with a loop-like condition, but it is just a nop.
+    (loop $loop
+      (if
+        (i32.gt_s
+          (local.get $x)
+          (i32.const 0)
+       )
+       (then
+         (nop)
+       )
+      )
+      (local.set $x
+        (i32.add
+          (local.get $x)
+          (i32.const 1)
+        )
+      )
+      (br $loop)
     )
   )
 
@@ -665,7 +710,7 @@
             (br $out)
           )
         )
-        ;; x > 0 && x <= 100 here (but we need loops mode to get both).
+        ;; x > 0 && x <= 100 here.
         (drop
           (i32.gt_u
             (local.get $x)
@@ -1472,6 +1517,396 @@
         )
 
         (br $outer)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $impossible-branch (type $0)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (local $y i32)
+  ;; CHECK-NEXT:  (loop $loop
+  ;; CHECK-NEXT:   (br_if $loop
+  ;; CHECK-NEXT:    (i32.lt_s
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $impossible-branch
+    (local $x i32)
+    (local $y i32)
+    (loop $loop
+      ;; x == y == 0, so x < y leads to a contradiction, and we never branch
+      ;; back up to the loop. We should not error here.
+      (br_if $loop
+        (i32.lt_s
+          (local.get $x)
+          (local.get $y)
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $impossible-branch-unsigned (type $0)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (local $y i32)
+  ;; CHECK-NEXT:  (loop $loop
+  ;; CHECK-NEXT:   (br_if $loop
+  ;; CHECK-NEXT:    (i32.lt_u
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $impossible-branch-unsigned
+    (local $x i32)
+    (local $y i32)
+    ;; As above, but unsigned.
+    (loop $loop
+      (br_if $loop
+        (i32.lt_u
+          (local.get $x)
+          (local.get $y)
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $add-overflow (type $1) (param $x i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.ge_s
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (local.set $x
+  ;; CHECK-NEXT:     (i32.add
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.gt_s
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $add-overflow (param $x i32)
+    (if
+      (i32.ge_s
+        (local.get $x)
+        (i32.const 0)
+      )
+      (then
+        ;; Normally, x >= 0 and x++ lead to x > 0. However, we overflow if
+        ;; x == MAX_INT, so we cannot optimize the dropped value below us.
+        (local.set $x
+          (i32.add
+            (local.get $x)
+            (i32.const 1)
+          )
+        )
+        (drop
+          (i32.gt_s
+            (local.get $x)
+            (i32.const 0)
+          )
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $add-overflow-yes (type $1) (param $x i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.ge_s
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (i32.le_s
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:      (i32.const 1000)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (then
+  ;; CHECK-NEXT:      (local.set $x
+  ;; CHECK-NEXT:       (i32.add
+  ;; CHECK-NEXT:        (local.get $x)
+  ;; CHECK-NEXT:        (i32.const 1)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (i32.const 1)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $add-overflow-yes (param $x i32)
+    ;; As above, but we add an inner if that does x < 1000. Now x cannot be
+    ;; MAX_INT, so we do optimize to 1.
+    (if
+      (i32.ge_s
+        (local.get $x)
+        (i32.const 0)
+      )
+      (then
+        (if
+          (i32.le_s
+            (local.get $x)
+            (i32.const 1000)
+          )
+          (then
+            (local.set $x
+              (i32.add
+                (local.get $x)
+                (i32.const 1)
+              )
+            )
+            (drop
+              (i32.gt_s
+                (local.get $x)
+                (i32.const 0)
+              )
+            )
+          )
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $add-overflow-unsigned (type $1) (param $x i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.ge_u
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (local.set $x
+  ;; CHECK-NEXT:     (i32.add
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.gt_u
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $add-overflow-unsigned (param $x i32)
+    ;; As above, but unsigned. We change the 0 to 1, as x >= 0 is always true
+    ;; for unsigned anyhow.
+    (if
+      (i32.ge_u
+        (local.get $x)
+        (i32.const 1)
+      )
+      (then
+        (local.set $x
+          (i32.add
+            (local.get $x)
+            (i32.const 1)
+          )
+        )
+        ;; We do not optimize, due to the risk of overflow.
+        (drop
+          (i32.gt_u
+            (local.get $x)
+            (i32.const 1)
+          )
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $add-overflow-unsigned-yes (type $1) (param $x i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.ge_u
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (i32.le_u
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:      (i32.const 1000)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (then
+  ;; CHECK-NEXT:      (local.set $x
+  ;; CHECK-NEXT:       (i32.add
+  ;; CHECK-NEXT:        (local.get $x)
+  ;; CHECK-NEXT:        (i32.const 1)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (i32.const 1)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $add-overflow-unsigned-yes (param $x i32)
+    ;; As above, but unsigned.
+    (if
+      (i32.ge_u
+        (local.get $x)
+        (i32.const 1)
+      )
+      (then
+        (if
+          (i32.le_u
+            (local.get $x)
+            (i32.const 1000)
+          )
+          (then
+            (local.set $x
+              (i32.add
+                (local.get $x)
+                (i32.const 1)
+              )
+            )
+            ;; We do optimize to 1.
+            (drop
+              (i32.gt_u
+                (local.get $x)
+                (i32.const 1)
+              )
+            )
+          )
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $add-overflow-unsigned-yes-nonconstant (type $2) (param $x i32) (param $y i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.ge_u
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (i32.lt_u
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:      (local.get $y)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (then
+  ;; CHECK-NEXT:      (local.set $x
+  ;; CHECK-NEXT:       (i32.add
+  ;; CHECK-NEXT:        (local.get $x)
+  ;; CHECK-NEXT:        (i32.const 1)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (i32.const 1)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $add-overflow-unsigned-yes-nonconstant (param $x i32) (param $y i32)
+    ;; As above, but the upper bound is not a constant, it is $y, another
+    ;; unknown value. This is still enough: $x < $y means $x++ cannot overflow,
+    ;; as it was not MAX_INT.
+    (if
+      (i32.ge_u
+        (local.get $x)
+        (i32.const 1)
+      )
+      (then
+        (if
+          (i32.lt_u
+            (local.get $x)
+            (local.get $y)
+          )
+          (then
+            (local.set $x
+              (i32.add
+                (local.get $x)
+                (i32.const 1)
+              )
+            )
+            ;; We do optimize to 1.
+            (drop
+              (i32.gt_u
+                (local.get $x)
+                (i32.const 1)
+              )
+            )
+          )
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $add-overflow-signed-yes-nonconstant (type $2) (param $x i32) (param $y i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.ge_s
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (i32.lt_s
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:      (local.get $y)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (then
+  ;; CHECK-NEXT:      (local.set $x
+  ;; CHECK-NEXT:       (i32.add
+  ;; CHECK-NEXT:        (local.get $x)
+  ;; CHECK-NEXT:        (i32.const 1)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (i32.const 1)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $add-overflow-signed-yes-nonconstant (param $x i32) (param $y i32)
+    ;; Ditto, signed.
+    (if
+      (i32.ge_s
+        (local.get $x)
+        (i32.const 1)
+      )
+      (then
+        (if
+          (i32.lt_s
+            (local.get $x)
+            (local.get $y)
+          )
+          (then
+            (local.set $x
+              (i32.add
+                (local.get $x)
+                (i32.const 1)
+              )
+            )
+            ;; We do optimize to 1.
+            (drop
+              (i32.gt_s
+                (local.get $x)
+                (i32.const 1)
+              )
+            )
+          )
+        )
       )
     )
   )

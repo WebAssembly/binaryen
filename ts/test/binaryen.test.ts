@@ -193,7 +193,7 @@ suite("binaryen", () => {
 
 	test(".ExpressionId", () => {
 		// NOTE: the length is twice the number of members due to how TypeScript emits enums.
-		assert.strictEqual(Object.entries(binaryen.ExpressionId).length, 85 * 2);
+		assert.strictEqual(Object.entries(binaryen.ExpressionId).length, 88 * 2);
 
 		assert.strictEqual(binaryen.ExpressionId.Invalid, 0);
 		assert.strictEqual(binaryen.ExpressionId.Block, 1);
@@ -309,8 +309,11 @@ suite("binaryen", () => {
 		assert.strictEqual(binaryen.ExpressionId.StringWTF16Get, 96);
 		assert.strictEqual(binaryen.ExpressionId.StringSliceWTF, 97);
 
+		assert.strictEqual(binaryen.ExpressionId.StructWait, 104);
 		assert.strictEqual(binaryen.ExpressionId.WideIntAddSub, 105);
 		assert.strictEqual(binaryen.ExpressionId.WideIntMul, 106);
+		assert.strictEqual(binaryen.ExpressionId.WaitqueueNew, 107);
+		assert.strictEqual(binaryen.ExpressionId.WaitqueueNotify, 108);
 	});
 
 

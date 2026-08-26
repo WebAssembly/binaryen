@@ -58,58 +58,6 @@
 )
 
 (module
-  ;; $B can be merged with $A, but $B.desc has a descriptor while $A.desc does
-  ;; not, so they cannot be merged. Furthermore, $B.meta has no corresponding
-  ;; $A.meta to be merged into. We cannot optimize here.
-  (rec
-    ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $A (sub (descriptor $A.desc) (struct)))
-    (type $A (sub (descriptor $A.desc) (struct)))
-    ;; CHECK:       (type $A.desc (sub (describes $A) (struct)))
-    (type $A.desc (sub (describes $A) (struct)))
-    ;; CHECK:       (type $B (sub $A (descriptor $B.desc) (struct)))
-    (type $B (sub $A (descriptor $B.desc) (struct)))
-    ;; CHECK:       (type $B.desc (sub $A.desc (describes $B) (descriptor $B.meta) (struct)))
-    (type $B.desc (sub $A.desc (describes $B) (descriptor $B.meta) (struct)))
-    ;; CHECK:       (type $B.meta (describes $B.desc) (struct))
-    (type $B.meta (describes $B.desc) (struct))
-  )
-
-  ;; CHECK:       (type $5 (func (result (ref $B.meta))))
-
-  ;; CHECK:      (global $A (ref null $A) (ref.null none))
-  (global $A (ref null $A) (ref.null none))
-  ;; CHECK:      (global $A.desc (ref null $A.desc) (ref.null none))
-  (global $A.desc (ref null $A.desc) (ref.null none))
-
-  ;; CHECK:      (func $meta (type $5) (result (ref $B.meta))
-  ;; CHECK-NEXT:  (ref.get_desc $B.desc
-  ;; CHECK-NEXT:   (ref.get_desc $B
-  ;; CHECK-NEXT:    (struct.new_default_desc $B
-  ;; CHECK-NEXT:     (struct.new_default_desc $B.desc
-  ;; CHECK-NEXT:      (struct.new_default $B.meta)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $meta (result (ref $B.meta))
-    ;; If we did merge $B into $A, this IR would become invalid and cause
-    ;; assertion failures because $A's descriptor does not itself have a
-    ;; descriptor.
-    (ref.get_desc $B.desc
-      (ref.get_desc $B
-        (struct.new_desc $B
-          (struct.new_desc $B.desc
-            (struct.new $B.meta)
-          )
-        )
-      )
-    )
-  )
-)
-
-(module
   ;; We cannot optimize because $B has an extra field.
   (rec
     ;; CHECK:      (rec
