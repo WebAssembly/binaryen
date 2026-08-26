@@ -2337,10 +2337,9 @@ bool isValidSupertype(const HeapTypeInfo& sub, const HeapTypeInfo& super) {
     return false;
   }
   if (sub.descriptor) {
-    // A supertype of a type with a (descriptor $x) must either not have a
-    // descriptor or have a (descriptor $y) where $y is the declared supertype
-    // of $x.
-    if (super.descriptor && sub.descriptor->supertype != super.descriptor) {
+    // A supertype of a type with a (descriptor $x) must have a (descriptor $y)
+    // where $y is the declared supertype of $x.
+    if (!super.descriptor || sub.descriptor->supertype != super.descriptor) {
       return false;
     }
   } else {

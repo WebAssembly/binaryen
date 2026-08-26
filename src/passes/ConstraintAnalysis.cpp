@@ -178,9 +178,28 @@ struct ConstraintAnalysis
 
   void visitLocalSet(LocalSet* curr) {
     addAction();
-    if (auto* get = curr->value->dynCast<LocalGet>()) {
-      // TODO: handle tees once we handle them elsewhere
-      localCopySources[curr->index].push_back(get->index);
+
+    auto* value = curr->value;
+    while (true) {
+      if (auto* get = value->dynCast<LocalGet>()) {
+        localCopySources[curr->index].push_back(get->index);
+        // No children to look into.
+        break;
+      }
+
+      if (auto* tee = value->dynCast<LocalSet>()) {
+        localCopySources[curr->index].push_back(tee->index);
+        value = tee->value;
+        continue;
+      }
+
+      // Look for other possible tees and gets that fall through.
+      auto* next = Properties::getImmediateFallthrough(
+        value, getPassOptions(), *getModule());
+      if (next == value) {
+        break;
+      }
+      value = next;
     }
   }
 
@@ -655,13 +674,17 @@ struct ConstraintAnalysis
     if (branch.constraint.op == Abstract::LtS ||
         branch.constraint.op == Abstract::LeS) {
       constraints.set(branch.local, branch.constraint);
-      constraints.approximateAnd(branch.local, {GeS, {*N}});
+      if (!constraints.unreachable) {
+        constraints.approximateAnd(branch.local, {GeS, {*N}});
+      }
       return true;
     }
     if (branch.constraint.op == Abstract::LtU ||
         branch.constraint.op == Abstract::LeU) {
       constraints.set(branch.local, branch.constraint);
-      constraints.approximateAnd(branch.local, {GeU, {*N}});
+      if (!constraints.unreachable) {
+        constraints.approximateAnd(branch.local, {GeU, {*N}});
+      }
       return true;
     }
 

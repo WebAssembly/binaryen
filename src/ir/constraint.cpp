@@ -22,84 +22,168 @@
 
 namespace wasm::constraint {
 
-std::optional<Span<IU64>> Constraint::getSpan() const {
+namespace {
+
+std::optional<SpansU2>
+getSpansInternal(const Constraint& c, std::optional<Type> type, bool exact) {
   using namespace Abstract;
 
-  auto* c = std::get_if<Literal>(&term);
-  if (!c) {
-    // Not comparing to a constant, so cannot be a constant span.
+  auto* cc = std::get_if<Literal>(&c.term);
+  if (cc) {
+    // If passed in, the type must be right.
+    assert(!type || *type == cc->type);
+
+    type = cc->type;
+  }
+
+  if (type && !type->isInteger()) {
+    // References etc. do not convert to spans.
     return {};
   }
 
-  auto minSigned = c->type == Type::i32 ? std::numeric_limits<int32_t>::min()
-                                        : std::numeric_limits<int64_t>::min();
-  auto maxSigned = c->type == Type::i32 ? std::numeric_limits<int32_t>::max()
-                                        : std::numeric_limits<int64_t>::max();
-  auto maxUnsigned = c->type == Type::i32
-                       ? std::numeric_limits<uint32_t>::max()
-                       : std::numeric_limits<uint64_t>::max();
+  // Maximum values, as represented as uint64_t's. We generate spans on unsigned
+  // values, converting signed ones to their unsigned representations.
+  uint64_t maxUnsigned = type && *type == Type::i32
+                           ? std::numeric_limits<uint32_t>::max()
+                           : std::numeric_limits<uint64_t>::max();
+  uint64_t maxSigned = type && *type == Type::i32
+                         ? std::numeric_limits<int32_t>::max()
+                         : std::numeric_limits<int64_t>::max();
+  uint64_t minSigned = maxSigned + 1;
 
-  switch (op) {
-    case Eq: {
-      auto x = c->getUnsigned();
-      if (x <= uint64_t(maxSigned)) {
-        // This is in the range of both signed and unsigned values, so there is
-        // no ambiguity. That is, we cannot convert the bit pattern
-        // 0xffffffff into a Span, as it might be either uint32_t(-1)
-        // or actually negative (but a bit pattern like 0x00000001 is
-        // always fine as it can only ever be "1").
-        return Span<IU64>{x, x};
-      }
-      break;
+  if (!cc) {
+    // Not comparing to a constant, so we can't infer anything exact, but might
+    // if we just need something we can prove, and if we know the type.
+    if (exact || !type) {
+      return {};
     }
 
+    switch (c.op) {
+      // x < y, i.e., x is less than *something*, proves x != MAX_INT.
+      case LtS:
+        // In the signed case, this is a pair of spans: all to the left and all
+        // to the right of MAX_INT.
+        return SpansU2{{0, maxSigned - 1}, {maxSigned + 1, maxUnsigned}};
+      case LtU:
+        return SpansU2{{0, maxUnsigned - 1}};
+
+      // Similarly, x > y proves x != MIN_INT.
+      case GtS:
+        return SpansU2{{0, minSigned - 1}, {minSigned + 1, maxUnsigned}};
+      case GtU:
+        return SpansU2{{1, maxUnsigned}};
+
+      default: {
+      }
+    }
+
+    return {};
+  }
+
+  auto x = cc->getUnsigned();
+
+  switch (c.op) {
+    case Eq:
+      return SpansU2{{x, x}};
+    case Ne:
+      if (x == 0) {
+        return SpansU2{{1, maxUnsigned}};
+      }
+      if (x == maxUnsigned) {
+        return SpansU2{{0, maxUnsigned - 1}};
+      }
+      return SpansU2{{0, x - 1}, {x + 1, maxUnsigned}};
+
     case LtS:
-      if (c->getInteger() == minSigned) {
+      if (x == minSigned) {
         // Less than the lowest possible number is an empty span.
-        return Span<IU64>::empty();
-      } else {
-        return Span<IU64>{minSigned, c->getInteger() - 1};
+        return SpansU2{};
       }
-      break;
+      if (x > maxSigned) {
+        // A negative number, so just a single span.
+        return SpansU2{{maxSigned + 1, x - 1}};
+      }
+      if (x == 0) {
+        // All negative numbers are possible.
+        return SpansU2{{maxSigned + 1, maxUnsigned}};
+      }
+      // A positive number, so all negative ones are possible, and some
+      // positive.
+      return SpansU2{{0, x - 1}, {maxSigned + 1, maxUnsigned}};
     case LtU:
-      if (c->getInteger() == 0) {
+      if (x == 0) {
         // Less than the lowest possible number is an empty span.
-        return Span<IU64>::empty();
-      } else {
-        return Span<IU64>{0, c->getUnsigned() - 1};
+        return SpansU2{};
       }
-      break;
+      return SpansU2{{0, x - 1}};
     case LeS:
-      return Span<IU64>{minSigned, c->getInteger()};
+      if (x > maxSigned) {
+        // A negative number, so just a single span.
+        return SpansU2{{maxSigned + 1, x}};
+      }
+      if (x == maxSigned) {
+        // All numbers are possible.
+        return SpansU2{{0, maxUnsigned}};
+      }
+      // A non-negative number, so all negative ones are possible, and some
+      // positive.
+      return SpansU2{{0, x}, {maxSigned + 1, maxUnsigned}};
     case LeU:
-      return Span<IU64>{0, c->getUnsigned()};
+      return SpansU2{{0, x}};
 
     case GtS:
-      if (c->getInteger() == maxSigned) {
+      if (x == maxSigned) {
         // Greater than the highest possible number is an empty span.
-        return Span<IU64>::empty();
-      } else {
-        return Span<IU64>{c->getInteger() + 1, maxSigned};
+        return SpansU2{};
       }
-      break;
+      if (x <= maxSigned) {
+        // A non-negative number, so just a single span.
+        return SpansU2{{x + 1, maxSigned}};
+      }
+      if (x == maxUnsigned) {
+        // GtS negative one, so 0 and above.
+        return SpansU2{{0, maxSigned}};
+      }
+      // A negative number, so all positive ones are possible, and some
+      // negative.
+      return SpansU2{{0, maxSigned}, {x + 1, maxUnsigned}};
     case GtU:
-      if (c->getUnsigned() == maxUnsigned) {
+      if (x == maxUnsigned) {
         // Greater than the highest possible number is an empty span.
-        return Span<IU64>::empty();
-      } else {
-        return Span<IU64>{c->getUnsigned() + 1, maxUnsigned};
+        return SpansU2{};
       }
-      break;
+      return SpansU2{{x + 1, maxUnsigned}};
     case GeS:
-      return Span<IU64>{c->getInteger(), maxSigned};
+      if (x == minSigned) {
+        // All numbers are possible.
+        return SpansU2{{0, maxUnsigned}};
+      }
+      if (x <= maxSigned) {
+        // A non-negative number, so just a single span.
+        return SpansU2{{x, maxSigned}};
+      }
+      // A negative number, so all positive ones are possible, and some
+      // negative.
+      return SpansU2{{0, maxSigned}, {x, maxUnsigned}};
     case GeU:
-      return Span<IU64>{c->getUnsigned(), maxUnsigned};
+      return SpansU2{{x, maxUnsigned}};
 
     default: {
     }
   }
 
   return {};
+}
+
+} // anonymous namespace
+
+std::optional<SpansU2> Constraint::getSpans(std::optional<Type> type) const {
+  return getSpansInternal(*this, type, true);
+}
+
+std::optional<SpansU2>
+Constraint::getProvenSpans(std::optional<Type> type) const {
+  return getSpansInternal(*this, type, false);
 }
 
 namespace {
@@ -120,9 +204,9 @@ Result provesConstantPair(Abstract::Op aOp,
   if (aOp == Eq) {
     switch (bOp) {
       case Eq:
-        return TrueFalse(aConstant == bConstant);
+        return TrueFalse(aConstant.eq(bConstant));
       case Ne:
-        return TrueFalse(aConstant != bConstant);
+        return TrueFalse(aConstant.ne(bConstant));
       case LtS:
         return TrueFalse(aConstant.ltS(bConstant));
       case LeS:
@@ -146,40 +230,15 @@ Result provesConstantPair(Abstract::Op aOp,
 
   // a != A =?=> a == B. False if A = B, else unknown.
   if (aOp == Ne && bOp == Eq) {
-    if (aConstant == bConstant) {
+    if (aConstant.eq(bConstant).getInteger()) {
       return False;
     }
   }
 
   // a != A =?=> a != B. True if A = B, else unknown.
   if (aOp == Ne && bOp == Ne) {
-    if (aConstant == bConstant) {
+    if (aConstant.eq(bConstant).getInteger()) {
       return True;
-    }
-  }
-
-  // If we can represent both as spans, we can calculate that way.
-  if (auto aSpan = Constraint{aOp, {aConstant}}.getSpan()) {
-    if (auto bSpan = Constraint{bOp, {bConstant}}.getSpan()) {
-      if (aSpan->isEmpty()) {
-        // An empty span implies a contradiction (e.g. x > MAX_INT), as it means
-        // no possible number can apply. And contradictions prove anything.
-        return True;
-      }
-      if (bSpan->isEmpty()) {
-        // Anything that is not a contradiction can prove a contradiction.
-        return False;
-      }
-      if (bSpan->contains(*aSpan)) {
-        // b's values contains a's, e.g., b = { 0 < x < 10 } and
-        // a = { 3 < x < 7 }, so a => b.
-        return True;
-      }
-      if (!bSpan->hasOverlap(*aSpan)) {
-        // There is no overlap at all, e.g., { 0 < x < 10 } vs { 20 < x < 30 },
-        // both cannot be true and each proves the other false.
-        return False;
-      }
     }
   }
 
@@ -212,7 +271,42 @@ Result provesPair(const Constraint& a, const Constraint& b) {
   auto* aConstant = std::get_if<Literal>(&a.term);
   auto* bConstant = std::get_if<Literal>(&b.term);
   if (aConstant && bConstant) {
-    return provesConstantPair(a.op, *aConstant, b.op, *bConstant);
+    auto result = provesConstantPair(a.op, *aConstant, b.op, *bConstant);
+    if (result != Unknown) {
+      return result;
+    }
+  }
+
+  // If we can represent both as spans, we can calculate that way. At least one
+  // must be a constant in this case, so that we know the type.
+  if (aConstant || bConstant) {
+    auto type = aConstant ? aConstant->type : bConstant->type;
+    // Use proven spans for a, and exact for b. This allows us to do
+    // a => proven spans for a => exact spans for b => b.
+    if (auto aSpans = a.getProvenSpans(type)) {
+      if (auto bSpans = b.getSpans(type)) {
+        if (aSpans->empty()) {
+          // An empty span implies a contradiction (e.g. x > MAX_INT), as it
+          // means no possible number can apply. And contradictions prove
+          // anything.
+          return True;
+        }
+        if (bSpans->empty()) {
+          // Anything that is not a contradiction can prove a contradiction.
+          return False;
+        }
+        if (bSpans->contains(*aSpans)) {
+          // b's values contains a's, e.g., b = { 0 < x < 10 } and
+          // a = { 3 < x < 7 }, so a => b.
+          return True;
+        }
+        if (!bSpans->hasOverlap(*aSpans)) {
+          // There is no overlap at all, e.g., { 0 < x < 10 } vs { 20 < x < 30
+          // }, both cannot be true and each proves the other false.
+          return False;
+        }
+      }
+    }
   }
 
   return Unknown;
@@ -314,11 +408,70 @@ std::optional<Constraint> fusedApproximateAndPair(const Constraint& a,
   return {};
 }
 
+bool isImmediateContradiction(const Constraint& c) {
+  using namespace Abstract;
+
+  auto* cc = std::get_if<Literal>(&c.term);
+  if (!cc) {
+    // Only operations on constants can be immediate contradictions.
+    return false;
+  }
+
+  if (!cc->type.isInteger()) {
+    return false;
+  }
+
+  auto minSigned = cc->type == Type::i32 ? std::numeric_limits<int32_t>::min()
+                                         : std::numeric_limits<int64_t>::min();
+  auto maxSigned = cc->type == Type::i32 ? std::numeric_limits<int32_t>::max()
+                                         : std::numeric_limits<int64_t>::max();
+  auto maxUnsigned = cc->type == Type::i32
+                       ? std::numeric_limits<uint32_t>::max()
+                       : std::numeric_limits<uint64_t>::max();
+
+  switch (c.op) {
+    case LtS:
+      if (cc->getInteger() == minSigned) {
+        // Less than the lowest possible number.
+        return true;
+      }
+      break;
+    case LtU:
+      if (cc->getInteger() == 0) {
+        // Less than the lowest possible number.
+        return true;
+      }
+      break;
+    case GtS:
+      if (cc->getInteger() == maxSigned) {
+        // Greater than the highest possible number.
+        return true;
+      }
+      break;
+    case GtU:
+      if (cc->getUnsigned() == maxUnsigned) {
+        // Greater than the highest possible number.
+        return true;
+      }
+      break;
+    default: {
+    }
+  }
+
+  return false;
+}
+
 } // anonymous namespace
 
 void AndedConstraintSet::approximateAnd(const Constraint& c) {
   if (provesEverything()) {
     // Nothing to add.
+    return;
+  }
+
+  // We don't store contradictions: identify them and mark us as such.
+  if (isImmediateContradiction(c)) {
+    setProvesEverything();
     return;
   }
 
@@ -529,7 +682,7 @@ std::optional<LocalConstraint> LocalConstraint::parse(Expression* curr) {
   };
 
   if (auto* unary = curr->dynCast<Unary>()) {
-    if (Abstract::getUnary(unary->type, Abstract::EqZ) == unary->op) {
+    if (Abstract::getUnary(unary->value->type, Abstract::EqZ) == unary->op) {
       return parseEqZArgument(unary->value);
     }
     return {};
@@ -576,7 +729,7 @@ std::optional<LocalConstraint> LocalConstraint::parse(Expression* curr) {
                     Abstract::GtU,
                     Abstract::GeS,
                     Abstract::GeU}) {
-      if (Abstract::getBinary(binary->type, op) == binary->op) {
+      if (Abstract::getBinary(binary->left->type, op) == binary->op) {
         return parseBinaryArguments(op, binary->left, binary->right);
       }
     }
@@ -693,11 +846,19 @@ void BasicBlockConstraintMap::set(Index index, Expression* value) {
         case Eq:
           *N = N->add(Literal::makeFromInt32(1, N->type));
           break;
-        // x >= N, x++  =>  x > N
+        // x >= N, x++  =>  x > N if no overflow
         case GeS:
+          if (old.proves({LtS, {Literal::makeSignedMax(N->type)}}) != True) {
+            iter = new_.erase(iter);
+            continue;
+          }
           c.op = GtS;
           break;
         case GeU:
+          if (old.proves({LtU, {Literal::makeUnsignedMax(N->type)}}) != True) {
+            iter = new_.erase(iter);
+            continue;
+          }
           c.op = GtU;
           break;
         // x < N, x++  =>  x <= N
@@ -907,7 +1068,7 @@ std::ostream& operator<<(std::ostream& o, const Constraint& c) {
   if (auto* cc = std::get_if<Literal>(&c.term)) {
     o << *cc;
   } else if (auto* i = std::get_if<Index>(&c.term)) {
-    o << "Index(" << *i << ')';
+    o << "$" << *i;
   }
   o << '}';
   return o;

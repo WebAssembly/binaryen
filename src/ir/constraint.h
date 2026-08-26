@@ -27,7 +27,6 @@
 
 #include "ir/abstract.h"
 #include "support/inplace_vector.h"
-#include "support/iu64.h"
 #include "support/span.h"
 #include "support/utilities.h"
 #include "wasm.h"
@@ -66,9 +65,21 @@ struct Constraint {
     return Constraint{Abstract::negateRelational(op), term};
   }
 
-  // Convert the constraint into a constant span, if possible. For example,
-  // "<= 100 (unsigned)" turns into the span [0, 100].
-  std::optional<Span<IU64>> getSpan() const;
+  // Convert the constraint into constant spans, if possible. For example,
+  // "<= 100 (unsigned)" turns into the span [0, 100]. We use SpansU2 because
+  // that can also handle signed operations stored in the unsigned range (see
+  // span.h).
+  //
+  // An optional type may be passed in. If not, the type is inferred from the
+  // term, when possible.
+  std::optional<SpansU2> getSpans(std::optional<Type> type = {}) const;
+
+  // Get spans we can prove. This is less precise than getSpans, which gets
+  // *exact* spans for the Constraint. Here we only return spans that we can
+  // prove are true. For example, x < y cannot be represented exactly using a
+  // span (y is not a constant), but that x is smaller than *something* proves
+  // x is not MAX_INT, so we can return the span [MIN_INT, MAX_INT - 1].
+  std::optional<SpansU2> getProvenSpans(std::optional<Type> type = {}) const;
 };
 
 // We limit constraints to a low number to ensure good performance even with

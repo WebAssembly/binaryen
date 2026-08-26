@@ -616,9 +616,13 @@
 
   ;; CHECK:      (type $10 (func (result (ref null (shared i31)))))
 
-  ;; CHECK:      (type $11 (func (param (ref null $struct)) (result i32)))
+  ;; CHECK:      (type $11 (func (param (ref null (shared any))) (result i32)))
 
-  ;; CHECK:      (type $12 (func (param (ref null $struct)) (result (ref null $struct))))
+  ;; CHECK:      (type $12 (func (param (ref null $struct)) (result i32)))
+
+  ;; CHECK:      (type $13 (func (param (ref null (shared any))) (result (ref null (shared i31)))))
+
+  ;; CHECK:      (type $14 (func (param (ref null $struct)) (result (ref null $struct))))
 
   ;; CHECK:      (table $funcs 0 0 funcref)
 
@@ -694,6 +698,15 @@
   ;; CHECK-NEXT: )
   (func $ref-test-null-shared-nofunc (param (ref null (shared func))) (result i32)
     (ref.test (ref null (shared nofunc)) (local.get 0))
+  )
+
+  ;; CHECK:      (func $ref-test-i31 (type $11) (param $0 (ref null (shared any))) (result i32)
+  ;; CHECK-NEXT:  (ref.test (ref null (shared i31))
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ref-test-i31 (param (ref null any)) (result i32)
+    (ref.test (ref null i31) (local.get 0))
   )
 
   ;; CHECK:      (func $ref-test-no-nulls (type $5) (param $0 (ref (shared i31))) (result i32)
@@ -900,7 +913,7 @@
   )
 
   ;; ref.test of non-function type.
-  ;; CHECK:      (func $ref-test-non-func (type $11) (param $0 (ref null $struct)) (result i32)
+  ;; CHECK:      (func $ref-test-non-func (type $12) (param $0 (ref null $struct)) (result i32)
   ;; CHECK-NEXT:  (ref.test (ref null $struct)
   ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:  )
@@ -980,6 +993,15 @@
   ;; CHECK-NEXT: )
   (func $ref-cast-null-shared-nofunc (param (ref null (shared func))) (result (ref null (shared nofunc)))
     (ref.cast (ref null (shared nofunc)) (local.get 0))
+  )
+
+  ;; CHECK:      (func $ref-cast-i31 (type $13) (param $0 (ref null (shared any))) (result (ref null (shared i31)))
+  ;; CHECK-NEXT:  (ref.cast (ref null (shared i31))
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ref-cast-i31 (param (ref null any)) (result (ref null i31))
+    (ref.cast (ref null i31) (local.get 0))
   )
 
   ;; CHECK:      (func $ref-cast-no-nulls (type $9) (param $0 (ref (shared i31))) (result (ref (shared i31)))
@@ -1283,7 +1305,7 @@
     (ref.cast (ref null $sig) (unreachable))
   )
 
-  ;; CHECK:      (func $ref-cast-non-func (type $12) (param $0 (ref null $struct)) (result (ref null $struct))
+  ;; CHECK:      (func $ref-cast-non-func (type $14) (param $0 (ref null $struct)) (result (ref null $struct))
   ;; CHECK-NEXT:  (ref.cast (ref null $struct)
   ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:  )

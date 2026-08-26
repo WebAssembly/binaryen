@@ -1097,6 +1097,19 @@ BinaryenStructSet(BinaryenModuleRef module,
                   BinaryenIndex index,
                   BinaryenExpressionRef ref,
                   BinaryenExpressionRef value);
+BINARYEN_API BinaryenExpressionRef
+BinaryenStructWait(BinaryenModuleRef module,
+                   BinaryenExpressionRef ref,
+                   BinaryenIndex index,
+                   BinaryenExpressionRef expected,
+                   BinaryenExpressionRef timeout,
+                   BinaryenExpressionRef waitqueue);
+BINARYEN_API BinaryenExpressionRef
+BinaryenWaitqueueNew(BinaryenModuleRef module);
+BINARYEN_API BinaryenExpressionRef
+BinaryenWaitqueueNotify(BinaryenModuleRef module,
+                        BinaryenExpressionRef waitqueue,
+                        BinaryenExpressionRef count);
 BINARYEN_API BinaryenExpressionRef BinaryenArrayNew(BinaryenModuleRef module,
                                                     BinaryenHeapType type,
                                                     BinaryenExpressionRef size,
@@ -2565,6 +2578,45 @@ BINARYEN_API BinaryenExpressionRef
 BinaryenStructSetGetValue(BinaryenExpressionRef expr);
 BINARYEN_API void BinaryenStructSetSetValue(BinaryenExpressionRef expr,
                                             BinaryenExpressionRef valueExpr);
+
+// StructWait
+
+BINARYEN_API BinaryenExpressionRef
+BinaryenStructWaitGetRef(BinaryenExpressionRef expr);
+BINARYEN_API void BinaryenStructWaitSetRef(BinaryenExpressionRef expr,
+                                           BinaryenExpressionRef refExpr);
+BINARYEN_API BinaryenIndex
+BinaryenStructWaitGetIndex(BinaryenExpressionRef expr);
+BINARYEN_API void BinaryenStructWaitSetIndex(BinaryenExpressionRef expr,
+                                             BinaryenIndex index);
+BINARYEN_API BinaryenExpressionRef
+BinaryenStructWaitGetExpected(BinaryenExpressionRef expr);
+BINARYEN_API void
+BinaryenStructWaitSetExpected(BinaryenExpressionRef expr,
+                              BinaryenExpressionRef expectedExpr);
+BINARYEN_API BinaryenExpressionRef
+BinaryenStructWaitGetTimeout(BinaryenExpressionRef expr);
+BINARYEN_API void
+BinaryenStructWaitSetTimeout(BinaryenExpressionRef expr,
+                             BinaryenExpressionRef timeoutExpr);
+BINARYEN_API BinaryenExpressionRef
+BinaryenStructWaitGetWaitqueue(BinaryenExpressionRef expr);
+BINARYEN_API void
+BinaryenStructWaitSetWaitqueue(BinaryenExpressionRef expr,
+                               BinaryenExpressionRef waitqueueExpr);
+
+// WaitqueueNotify
+
+BINARYEN_API BinaryenExpressionRef
+BinaryenWaitqueueNotifyGetWaitqueue(BinaryenExpressionRef expr);
+BINARYEN_API void
+BinaryenWaitqueueNotifySetWaitqueue(BinaryenExpressionRef expr,
+                                    BinaryenExpressionRef waitqueueExpr);
+BINARYEN_API BinaryenExpressionRef
+BinaryenWaitqueueNotifyGetCount(BinaryenExpressionRef expr);
+BINARYEN_API void
+BinaryenWaitqueueNotifySetCount(BinaryenExpressionRef expr,
+                                BinaryenExpressionRef countExpr);
 
 // ArrayNew
 

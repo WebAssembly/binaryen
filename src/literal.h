@@ -358,9 +358,9 @@ public:
   bool operator!=(const Literal& other) const;
   bool operator<(const Literal& other) const;
 
-  bool isNaN();
-  bool isCanonicalNaN();
-  bool isArithmeticNaN();
+  bool isNaN() const;
+  bool isCanonicalNaN() const;
+  bool isArithmeticNaN() const;
 
   static uint32_t NaNPayload(float f);
   static uint64_t NaNPayload(double f);
@@ -425,9 +425,10 @@ public:
   Literal rotL(const Literal& other) const;
   Literal rotR(const Literal& other) const;
 
-  // Note that these functions perform equality checks based
-  // on the type of the literal, so that (unlike the == operator)
-  // a float nan would not be identical to itself.
+  // Note that these functions perform equality checks based on the type of the
+  // literal, and using the wasm semantics. That is, eq() works like i32.eq or
+  // ref.eq. For example, f32.eq of 0 and -0 returns 1 (they are equal), while
+  // the == operator would return false (because they are different Literals).
   Literal eq(const Literal& other) const;
   Literal ne(const Literal& other) const;
   Literal ltS(const Literal& other) const;

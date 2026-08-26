@@ -4556,6 +4556,60 @@
     )
   )
 
+  ;; CHECK:      (func $float-negative-zero (type $1)
+  ;; CHECK-NEXT:  (local $f f64)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (nop)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (nop)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPTIN:      (func $float-negative-zero (type $1)
+  ;; OPTIN-NEXT:  (local $f f64)
+  ;; OPTIN-NEXT:  (if
+  ;; OPTIN-NEXT:   (i32.const 1)
+  ;; OPTIN-NEXT:   (then
+  ;; OPTIN-NEXT:    (nop)
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (if
+  ;; OPTIN-NEXT:   (i32.const 1)
+  ;; OPTIN-NEXT:   (then
+  ;; OPTIN-NEXT:    (nop)
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT: )
+  (func $float-negative-zero
+    (local $f f64)
+    ;; Negative zero is equal to zero, even though it has a different bit
+    ;; pattern. Both conditions here should be optimized to 1.
+    (if
+      (f64.eq
+        (local.get $f)
+        (f64.const -0)
+      )
+      (then
+        (nop)
+      )
+    )
+    (if
+      (f64.eq
+        (local.get $f)
+        (f64.const 0)
+      )
+      (then
+        (nop)
+      )
+    )
+  )
+
   ;; CHECK:      (func $tee (type $1)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (local $y i32)
@@ -4646,6 +4700,401 @@
       (i32.eq
         (local.get $x)
         (i32.const 10)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $fallthrough-get (type $1)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (local $z i32)
+  ;; CHECK-NEXT:  (local $w i32)
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (local.get $z)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $z
+  ;; CHECK-NEXT:   (i32.const 42)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $w
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (local.get $z)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.eq
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (local.get $w)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPTIN:      (func $fallthrough-get (type $1)
+  ;; OPTIN-NEXT:  (local $x i32)
+  ;; OPTIN-NEXT:  (local $z i32)
+  ;; OPTIN-NEXT:  (local $w i32)
+  ;; OPTIN-NEXT:  (local.set $x
+  ;; OPTIN-NEXT:   (block (result i32)
+  ;; OPTIN-NEXT:    (local.get $z)
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (local.set $z
+  ;; OPTIN-NEXT:   (i32.const 42)
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (local.set $w
+  ;; OPTIN-NEXT:   (block (result i32)
+  ;; OPTIN-NEXT:    (local.get $z)
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (drop
+  ;; OPTIN-NEXT:   (i32.eq
+  ;; OPTIN-NEXT:    (local.get $x)
+  ;; OPTIN-NEXT:    (local.get $w)
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT: )
+  (func $fallthrough-get
+    (local $x i32)
+    (local $z i32)
+    (local $w i32)
+    ;; $x gets the initial value of $z (0) via block fallthrough. We should
+    ;; notice that $z is relevant, i.e., we need to track its values, even
+    ;; though we get it through a fallthrough and not directly.
+    (local.set $x
+      (block (result i32)
+        (local.get $z)
+      )
+    )
+
+    ;; $z is modified to 42.
+    (local.set $z (i32.const 42))
+
+    ;; $w gets the updated value of $z (42), also via block fallthrough.
+    (local.set $w
+      (block (result i32)
+        (local.get $z)
+      )
+    )
+
+    ;; 0 == 42 is 0 at runtime. If we did not mark $z as relevant, we would see
+    ;; $x and $w as both equal to $z, i.e., that they are themselves equal, and
+    ;; misoptimize this to 1. The actual value at runtime is 0.
+    ;; TODO: actually optimize this to 0
+    (drop
+      (i32.eq
+        (local.get $x)
+        (local.get $w)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $fallthrough-tee (type $0) (param $param i32)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (local $z i32)
+  ;; CHECK-NEXT:  (local $w i32)
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (local.tee $param
+  ;; CHECK-NEXT:    (local.get $z)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $z
+  ;; CHECK-NEXT:   (i32.const 42)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $w
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (local.get $z)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.eq
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (local.get $w)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPTIN:      (func $fallthrough-tee (type $0) (param $param i32)
+  ;; OPTIN-NEXT:  (local $x i32)
+  ;; OPTIN-NEXT:  (local $z i32)
+  ;; OPTIN-NEXT:  (local $w i32)
+  ;; OPTIN-NEXT:  (local.set $x
+  ;; OPTIN-NEXT:   (local.tee $param
+  ;; OPTIN-NEXT:    (local.get $z)
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (local.set $z
+  ;; OPTIN-NEXT:   (i32.const 42)
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (local.set $w
+  ;; OPTIN-NEXT:   (block (result i32)
+  ;; OPTIN-NEXT:    (local.get $z)
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (drop
+  ;; OPTIN-NEXT:   (i32.eq
+  ;; OPTIN-NEXT:    (local.get $x)
+  ;; OPTIN-NEXT:    (local.get $w)
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT: )
+  (func $fallthrough-tee (param $param i32)
+    (local $x i32)
+    (local $z i32)
+    (local $w i32)
+    ;; Similar to above, but now a tee is used for the fallthrough.
+    (local.set $x
+      (local.tee $param ;; this changed
+        (local.get $z)
+      )
+    )
+
+    (local.set $z (i32.const 42))
+
+    (local.set $w
+      (block (result i32)
+        (local.get $z)
+      )
+    )
+
+    ;; As before, this should not be optimized to 1, and could be optimized to
+    ;; 0 (TODO).
+    (drop
+      (i32.eq
+        (local.get $x)
+        (local.get $w)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $eqz-condition (type $0) (param $x i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPTIN:      (func $eqz-condition (type $0) (param $x i32)
+  ;; OPTIN-NEXT:  (if
+  ;; OPTIN-NEXT:   (i32.eqz
+  ;; OPTIN-NEXT:    (local.get $x)
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:   (then
+  ;; OPTIN-NEXT:    (drop
+  ;; OPTIN-NEXT:     (i32.const 1)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT: )
+  (func $eqz-condition (param $x i32)
+    ;; Verify we parse an eqz condition and can optimize after it.
+    (if
+      (i32.eqz
+        (local.get $x)
+      )
+      (then
+        ;; Also test we parse this binary properly, and see it is equivalent to
+        ;; the eqz.
+        (drop
+          (i32.eq
+            (local.get $x)
+            (i32.const 0)
+          )
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $eqz-condition-64 (type $10) (param $x i64)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i64.eqz
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPTIN:      (func $eqz-condition-64 (type $10) (param $x i64)
+  ;; OPTIN-NEXT:  (if
+  ;; OPTIN-NEXT:   (i64.eqz
+  ;; OPTIN-NEXT:    (local.get $x)
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:   (then
+  ;; OPTIN-NEXT:    (drop
+  ;; OPTIN-NEXT:     (i32.const 1)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT: )
+  (func $eqz-condition-64 (param $x i64)
+    ;; As above, but i64.
+    (if
+      (i64.eqz
+        (local.get $x)
+      )
+      (then
+        (drop
+          (i64.eq
+            (local.get $x)
+            (i64.const 0)
+          )
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $sign-unsigned-less-more-mix (type $0) (param $0 i32)
+  ;; CHECK-NEXT:  (block $block
+  ;; CHECK-NEXT:   (br_if $block
+  ;; CHECK-NEXT:    (i32.ge_s
+  ;; CHECK-NEXT:     (local.get $0)
+  ;; CHECK-NEXT:     (i32.const 1024)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.gt_u
+  ;; CHECK-NEXT:     (local.get $0)
+  ;; CHECK-NEXT:     (i32.const -1992)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPTIN:      (func $sign-unsigned-less-more-mix (type $0) (param $0 i32)
+  ;; OPTIN-NEXT:  (block $block
+  ;; OPTIN-NEXT:   (br_if $block
+  ;; OPTIN-NEXT:    (i32.ge_s
+  ;; OPTIN-NEXT:     (local.get $0)
+  ;; OPTIN-NEXT:     (i32.const 1024)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:   (drop
+  ;; OPTIN-NEXT:    (i32.gt_u
+  ;; OPTIN-NEXT:     (local.get $0)
+  ;; OPTIN-NEXT:     (i32.const -1992)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT: )
+  (func $sign-unsigned-less-more-mix (param $0 i32)
+    (block $block
+      (br_if $block
+        (i32.ge_s
+          (local.get $0)
+          (i32.const 1024)
+        )
+      )
+      ;; Here we know  $0 <_s 1024. That includes non-negative numbers like 0 as
+      ;; well as negative numbers. The following *unsigned* inequality might or
+      ;; might not be true, so we optimize nothing.
+      (drop
+        (i32.gt_u
+          (local.get $0)
+          (i32.const -1992)
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $sign-unsigned-less-more-mix-2 (type $0) (param $0 i32)
+  ;; CHECK-NEXT:  (block $block
+  ;; CHECK-NEXT:   (br_if $block
+  ;; CHECK-NEXT:    (i32.gt_s
+  ;; CHECK-NEXT:     (local.get $0)
+  ;; CHECK-NEXT:     (i32.const -1023)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.gt_u
+  ;; CHECK-NEXT:     (local.get $0)
+  ;; CHECK-NEXT:     (i32.const -1992)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPTIN:      (func $sign-unsigned-less-more-mix-2 (type $0) (param $0 i32)
+  ;; OPTIN-NEXT:  (block $block
+  ;; OPTIN-NEXT:   (br_if $block
+  ;; OPTIN-NEXT:    (i32.gt_s
+  ;; OPTIN-NEXT:     (local.get $0)
+  ;; OPTIN-NEXT:     (i32.const -1023)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:   (drop
+  ;; OPTIN-NEXT:    (i32.gt_u
+  ;; OPTIN-NEXT:     (local.get $0)
+  ;; OPTIN-NEXT:     (i32.const -1992)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT: )
+  (func $sign-unsigned-less-more-mix-2 (param $0 i32)
+    ;; Similar to the above, but the 1024 was replaced by -1023.
+    (block $block
+      (br_if $block
+        (i32.gt_s
+          (local.get $0)
+          (i32.const -1023) ;; this changed
+        )
+      )
+      ;; Here we know  $0 <=_s -1023. This includes most numbers with the sign
+      ;; bit set, except for the lowest in absolute value. That implies the
+      ;; following *unsigned* inequality might or might not be true, so we
+      ;; optimize nothing.
+      (drop
+        (i32.gt_u
+          (local.get $0)
+          (i32.const -1992)
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $sign-unsigned-less-more-mix-3-yes (type $0) (param $0 i32)
+  ;; CHECK-NEXT:  (block $block
+  ;; CHECK-NEXT:   (br_if $block
+  ;; CHECK-NEXT:    (i32.gt_s
+  ;; CHECK-NEXT:     (local.get $0)
+  ;; CHECK-NEXT:     (i32.const -4096)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPTIN:      (func $sign-unsigned-less-more-mix-3-yes (type $0) (param $0 i32)
+  ;; OPTIN-NEXT:  (block $block
+  ;; OPTIN-NEXT:   (br_if $block
+  ;; OPTIN-NEXT:    (i32.gt_s
+  ;; OPTIN-NEXT:     (local.get $0)
+  ;; OPTIN-NEXT:     (i32.const -4096)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:   (drop
+  ;; OPTIN-NEXT:    (i32.const 0)
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT: )
+  (func $sign-unsigned-less-more-mix-3-yes (param $0 i32)
+    ;; Similar to the above, but the 1024 was replaced by -4096.
+    (block $block
+      (br_if $block
+        (i32.gt_s
+          (local.get $0)
+          (i32.const -4096) ;; this changed
+        )
+      )
+      ;; Now we can optimize: there is no overlap possible, so this is 0.
+      (drop
+        (i32.gt_u
+          (local.get $0)
+          (i32.const -1992)
+        )
       )
     )
   )
