@@ -19,6 +19,7 @@
 
 #include <array>
 #include <iostream>
+#include <variant>
 
 #include "support/bits.h"
 #include "support/hash.h"
@@ -212,7 +213,7 @@ public:
     }
   }
 
-  static Literal makeFromMemory(void* p, Type type);
+  static Literal makeFromMemory(const void* p, Type type);
 
   static Literal makeSignedMin(Type type) {
     switch (type.getBasic()) {
@@ -784,15 +785,49 @@ std::ostream& operator<<(std::ostream& o, wasm::Literals literals);
 // A GC Struct, Array, or String is a set of values with a type saying how it
 // should be interpreted.
 struct GCData {
-  // The element or field values.
-  Literals values;
+  Type type;
+
+  // The element or field values. Primitive numeric arrays use raw byte buffers
+  // (std::vector<uint8_t>), while reference arrays, structs, strings, and other
+  // reference allocations use Literals.
+  std::variant<std::vector<uint8_t>, Literals> storage;
 
   // The descriptor, if it exists, or null.
   Literal desc;
 
-  GCData(Literals&& values,
+  GCData(Type type,
+         Literals&& values,
          const Literal& desc = Literal::makeNull(HeapType::none))
-    : values(std::move(values)), desc(desc) {}
+    : type(type), storage(std::move(values)), desc(desc) {}
+
+  GCData(Type type,
+         std::vector<uint8_t>&& data,
+         const Literal& desc = Literal::makeNull(HeapType::none))
+    : type(type), storage(std::move(data)), desc(desc) {}
+
+  bool isRawBytes() const {
+    return std::holds_alternative<std::vector<uint8_t>>(storage);
+  }
+
+  const std::vector<uint8_t>& getRawBytes() const {
+    return std::get<std::vector<uint8_t>>(storage);
+  }
+
+  std::vector<uint8_t>& getRawBytes() {
+    return std::get<std::vector<uint8_t>>(storage);
+  }
+
+  const Literals& getLiterals() const { return std::get<Literals>(storage); }
+
+  Literals& getLiterals() { return std::get<Literals>(storage); }
+
+  size_t getNumElements() const;
+  Literal getElement(size_t index, bool signed_ = false) const;
+  void setElement(size_t index, Literal value);
+
+  static void writeField(void* p, const Field& field, Literal value);
+  static Literal
+  readField(const void* p, const Field& field, bool signed_ = false);
 };
 
 inline bool Literal::hasExternPayload() const {
@@ -800,12 +835,13 @@ inline bool Literal::hasExternPayload() const {
     return false;
   }
   assert(type.getHeapType().isMaybeShared(HeapType::ext));
-  return gcData->values[0].type == Type::i32;
+  return !gcData->getLiterals().empty() &&
+         gcData->getLiterals()[0].type == Type::i32;
 }
 
 inline int32_t Literal::getExternPayload() const {
   assert(hasExternPayload());
-  return gcData->values[0].geti32();
+  return gcData->getLiterals()[0].geti32();
 }
 
 } // namespace wasm
@@ -869,7 +905,7 @@ template<> struct hash<wasm::Literal> {
         return digest;
       }
       if (a.type.isString()) {
-        auto& values = a.getGCData()->values;
+        auto& values = a.getGCData()->getLiterals();
         wasm::rehash(digest, values.size());
         for (auto c : values) {
           wasm::rehash(digest, c.getInteger());

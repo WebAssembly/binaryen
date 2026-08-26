@@ -1103,7 +1103,7 @@ private:
   // string.
   bool isValidUTF16Literal(const Literal& value) {
     bool expectLowSurrogate = false;
-    for (auto& v : value.getGCData()->values) {
+    for (auto& v : value.getGCData()->getLiterals()) {
       auto c = v.getInteger();
       if (c >= 0xDC00 && c <= 0xDFFF) {
         if (expectLowSurrogate) {
