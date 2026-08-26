@@ -4947,4 +4947,155 @@
       )
     )
   )
+
+  ;; CHECK:      (func $sign-unsigned-less-more-mix (type $0) (param $0 i32)
+  ;; CHECK-NEXT:  (block $block
+  ;; CHECK-NEXT:   (br_if $block
+  ;; CHECK-NEXT:    (i32.ge_s
+  ;; CHECK-NEXT:     (local.get $0)
+  ;; CHECK-NEXT:     (i32.const 1024)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.gt_u
+  ;; CHECK-NEXT:     (local.get $0)
+  ;; CHECK-NEXT:     (i32.const -1992)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPTIN:      (func $sign-unsigned-less-more-mix (type $0) (param $0 i32)
+  ;; OPTIN-NEXT:  (block $block
+  ;; OPTIN-NEXT:   (br_if $block
+  ;; OPTIN-NEXT:    (i32.ge_s
+  ;; OPTIN-NEXT:     (local.get $0)
+  ;; OPTIN-NEXT:     (i32.const 1024)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:   (drop
+  ;; OPTIN-NEXT:    (i32.gt_u
+  ;; OPTIN-NEXT:     (local.get $0)
+  ;; OPTIN-NEXT:     (i32.const -1992)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT: )
+  (func $sign-unsigned-less-more-mix (param $0 i32)
+    (block $block
+      (br_if $block
+        (i32.ge_s
+          (local.get $0)
+          (i32.const 1024)
+        )
+      )
+      ;; Here we know  $0 <_s 1024. That includes non-negative numbers like 0 as
+      ;; well as negative numbers. The following *unsigned* inequality might or
+      ;; might not be true, so we optimize nothing.
+      (drop
+        (i32.gt_u
+          (local.get $0)
+          (i32.const -1992)
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $sign-unsigned-less-more-mix-2 (type $0) (param $0 i32)
+  ;; CHECK-NEXT:  (block $block
+  ;; CHECK-NEXT:   (br_if $block
+  ;; CHECK-NEXT:    (i32.gt_s
+  ;; CHECK-NEXT:     (local.get $0)
+  ;; CHECK-NEXT:     (i32.const -1023)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.gt_u
+  ;; CHECK-NEXT:     (local.get $0)
+  ;; CHECK-NEXT:     (i32.const -1992)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPTIN:      (func $sign-unsigned-less-more-mix-2 (type $0) (param $0 i32)
+  ;; OPTIN-NEXT:  (block $block
+  ;; OPTIN-NEXT:   (br_if $block
+  ;; OPTIN-NEXT:    (i32.gt_s
+  ;; OPTIN-NEXT:     (local.get $0)
+  ;; OPTIN-NEXT:     (i32.const -1023)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:   (drop
+  ;; OPTIN-NEXT:    (i32.gt_u
+  ;; OPTIN-NEXT:     (local.get $0)
+  ;; OPTIN-NEXT:     (i32.const -1992)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT: )
+  (func $sign-unsigned-less-more-mix-2 (param $0 i32)
+    ;; Similar to the above, but the 1024 was replaced by -1023.
+    (block $block
+      (br_if $block
+        (i32.gt_s
+          (local.get $0)
+          (i32.const -1023) ;; this changed
+        )
+      )
+      ;; Here we know  $0 <=_s -1023. This includes most numbers with the sign
+      ;; bit set, except for the lowest in absolute value. That implies the
+      ;; following *unsigned* inequality might or might not be true, so we
+      ;; optimize nothing.
+      (drop
+        (i32.gt_u
+          (local.get $0)
+          (i32.const -1992)
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $sign-unsigned-less-more-mix-3-yes (type $0) (param $0 i32)
+  ;; CHECK-NEXT:  (block $block
+  ;; CHECK-NEXT:   (br_if $block
+  ;; CHECK-NEXT:    (i32.gt_s
+  ;; CHECK-NEXT:     (local.get $0)
+  ;; CHECK-NEXT:     (i32.const -4096)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPTIN:      (func $sign-unsigned-less-more-mix-3-yes (type $0) (param $0 i32)
+  ;; OPTIN-NEXT:  (block $block
+  ;; OPTIN-NEXT:   (br_if $block
+  ;; OPTIN-NEXT:    (i32.gt_s
+  ;; OPTIN-NEXT:     (local.get $0)
+  ;; OPTIN-NEXT:     (i32.const -4096)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:   (drop
+  ;; OPTIN-NEXT:    (i32.const 0)
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT: )
+  (func $sign-unsigned-less-more-mix-3-yes (param $0 i32)
+    ;; Similar to the above, but the 1024 was replaced by -4096.
+    (block $block
+      (br_if $block
+        (i32.gt_s
+          (local.get $0)
+          (i32.const -4096) ;; this changed
+        )
+      )
+      ;; Now we can optimize: there is no overlap possible, so this is 0.
+      (drop
+        (i32.gt_u
+          (local.get $0)
+          (i32.const -1992)
+        )
+      )
+    )
+  )
 )
