@@ -106,6 +106,9 @@ bool flatten(Module& wasm) {
       return false;
     }
   }
+
+  // If we have more data than can fit in memory, we will trap anyhow, and it
+  // makes no sense to flatten.
   auto& memory = wasm.memories[0];
   uint64_t memoryInitialSizeBytes;
   if (std::ckd_mul(&memoryInitialSizeBytes,

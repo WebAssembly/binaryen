@@ -15,10 +15,10 @@
  ;; CHECK:      (data $0 (i32.const -1) "\00")
  (data $0 (i32.const -1) "\00")
 
- ;; CHECK:      (export "func" (func $0))
+ ;; CHECK:      (export "func" (func $func))
  (export "func" (func $func))
 
- ;; CHECK:      (func $0 (type $0) (result i32)
+ ;; CHECK:      (func $func (type $0) (result i32)
  ;; CHECK-NEXT:  (i32.load
  ;; CHECK-NEXT:   (i32.const 10)
  ;; CHECK-NEXT:  )
