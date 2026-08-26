@@ -104,25 +104,33 @@ struct Spans : public inplace_vector<Span<T>, N> {
 
   bool hasOverlap(const Spans<T, N>& other) const {
     // There is overlap if any of our spans overlaps with any of other's.
-    return std::any_of(this->begin(), this->end(), [&](const Span<T>& span) {
-      return std::any_of(
-        other.begin(), other.end(), [&](const Span<T>& otherSpan) {
-          return span.hasOverlap(otherSpan);
-        });
-    });
+    for (const auto& span : *this) {
+      for (const auto& otherSpan : other) {
+        if (span.hasOverlap(otherSpan)) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   bool contains(const Spans<T, N>& other) const {
     // We contain other if each of their spans is contained in us.
-    return std::all_of(
-      other.begin(), other.end(), [&](const Span<T>& otherSpan) {
-        // Because our spans are assumed to be disjoint, exactly one of our
-        // spans must contain otherSpan.
-        return std::any_of(
-          this->begin(), this->end(), [&](const Span<T>& span) {
-            return span.contains(otherSpan);
-          });
-      });
+    for (const auto& otherSpan : other) {
+      // Because our spans are assumed to be disjoint, exactly one of our
+      // spans must contain otherSpan.
+      bool found = false;
+      for (const auto& span : *this) {
+        if (span.contains(otherSpan)) {
+          found = true;
+          break;
+        }
+      }
+      if (!found) {
+        return false;
+      }
+    }
+    return true;
   }
 };
 
