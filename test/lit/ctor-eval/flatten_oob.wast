@@ -3,7 +3,7 @@
 ;; RUN: wasm-ctor-eval %s --ctors=func --kept-exports=func --quiet -all -S -o - | filecheck %s
 
 ;; The data segment here is at an offset that is out of bounds of the initial
-;; memory. We should flatten memory here, as this traps anyhow, and we can
+;; memory. We should not flatten memory here, as this traps anyhow, and we can
 ;; leave the module unchanged.
 
 (module
