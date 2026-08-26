@@ -1526,10 +1526,7 @@
   ;; CHECK-NEXT:  (local $y i32)
   ;; CHECK-NEXT:  (loop $loop
   ;; CHECK-NEXT:   (br_if $loop
-  ;; CHECK-NEXT:    (i32.lt_s
-  ;; CHECK-NEXT:     (local.get $x)
-  ;; CHECK-NEXT:     (local.get $y)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -1538,7 +1535,8 @@
     (local $y i32)
     (loop $loop
       ;; x == y == 0, so x < y leads to a contradiction, and we never branch
-      ;; back up to the loop. We should not error here.
+      ;; back up to the loop. We should not error here, and in fact infer a 0
+      ;; for this condition.
       (br_if $loop
         (i32.lt_s
           (local.get $x)
@@ -1553,10 +1551,7 @@
   ;; CHECK-NEXT:  (local $y i32)
   ;; CHECK-NEXT:  (loop $loop
   ;; CHECK-NEXT:   (br_if $loop
-  ;; CHECK-NEXT:    (i32.lt_u
-  ;; CHECK-NEXT:     (local.get $x)
-  ;; CHECK-NEXT:     (local.get $y)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )

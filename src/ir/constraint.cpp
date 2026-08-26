@@ -996,6 +996,19 @@ void BasicBlockConstraintMap::approximateAndInternal(Index index,
   }
 }
 
+Result BasicBlockConstraintMap::proves(LocalConstraint condition) const {
+  // As in approximateAnd, above, if the term is a local that we know something
+  // about, propagate it.
+  if (auto* other = std::get_if<Index>(&condition.constraint.term)) {
+    auto otherConstraints = get(*other);
+    if (auto lit = otherConstraints.getLiteral()) {
+      condition.constraint.term = Term{*lit};
+    }
+  }
+
+  return get(condition.local).proves(condition.constraint);
+}
+
 void BasicBlockConstraintMap::noteRefs(Index index, const Constraint& c) {
   if (auto* i = std::get_if<Index>(&c.term)) {
     refs[*i].insert(index);
