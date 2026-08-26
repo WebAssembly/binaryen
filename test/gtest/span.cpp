@@ -198,34 +198,34 @@ TEST(SpansTest, Construction) {
   EXPECT_EQ(fromSpans[0], Span<uint64_t>(0, 10));
   EXPECT_EQ(fromSpans[1], Span<uint64_t>(20, 30));
 
-  SpansU2 fromCoords{0, 10, 20, 30};
+  SpansU2 fromCoords{{0, 10}, {20, 30}};
   EXPECT_EQ(fromCoords.size(), 2u);
   EXPECT_EQ(fromCoords[0], Span<uint64_t>(0, 10));
   EXPECT_EQ(fromCoords[1], Span<uint64_t>(20, 30));
 
-  SpansU2 single{5, 15};
+  SpansU2 single{{5, 15}};
   EXPECT_EQ(single.size(), 1u);
   EXPECT_EQ(single[0], Span<uint64_t>(5, 15));
 }
 
 TEST(SpansTest, Equality) {
   EXPECT_EQ(SpansU2(), SpansU2());
-  EXPECT_EQ((SpansU2{0, 10}), (SpansU2{0, 10}));
-  EXPECT_EQ((SpansU2{0, 10, 20, 30}), (SpansU2{0, 10, 20, 30}));
+  EXPECT_EQ((SpansU2{{0, 10}}), (SpansU2{{0, 10}}));
+  EXPECT_EQ((SpansU2{{0, 10}, {20, 30}}), (SpansU2{{0, 10}, {20, 30}}));
 
-  EXPECT_NE((SpansU2{0, 10}), SpansU2());
-  EXPECT_NE((SpansU2{0, 10}), (SpansU2{0, 11}));
-  EXPECT_NE((SpansU2{0, 10}), (SpansU2{0, 10, 20, 30}));
+  EXPECT_NE((SpansU2{{0, 10}}), SpansU2());
+  EXPECT_NE((SpansU2{{0, 10}}), (SpansU2{{0, 11}}));
+  EXPECT_NE((SpansU2{{0, 10}}), (SpansU2{{0, 10}, {20, 30}}));
 }
 
 TEST(SpansTest, HasOverlap) {
   SpansU2 empty;
-  SpansU2 s1{0, 10, 20, 30};
-  SpansU2 s2{5, 15};
-  SpansU2 s3{25, 35};
-  SpansU2 s4{11, 19};
-  SpansU2 s5{31, 40};
-  SpansU2 s6{10, 20};
+  SpansU2 s1{{0, 10}, {20, 30}};
+  SpansU2 s2{{5, 15}};
+  SpansU2 s3{{25, 35}};
+  SpansU2 s4{{11, 19}};
+  SpansU2 s5{{31, 40}};
+  SpansU2 s6{{10, 20}};
 
   EXPECT_FALSE(empty.hasOverlap(s1));
   EXPECT_FALSE(s1.hasOverlap(empty));
@@ -254,12 +254,12 @@ TEST(SpansTest, HasOverlap) {
 
 TEST(SpansTest, Contains) {
   SpansU2 empty;
-  SpansU2 s1{0, 100, 200, 300};
-  SpansU2 s2{10, 20};
-  SpansU2 s3{210, 220};
-  SpansU2 s4{10, 20, 210, 220};
-  SpansU2 s5{50, 150};
-  SpansU2 s6{10, 20, 250, 350};
+  SpansU2 s1{{0, 100}, {200, 300}};
+  SpansU2 s2{{10, 20}};
+  SpansU2 s3{{210, 220}};
+  SpansU2 s4{{10, 20}, {210, 220}};
+  SpansU2 s5{{50, 150}};
+  SpansU2 s6{{10, 20}, {250, 350}};
 
   // Empty contains empty, non-empty contains empty, empty does not contain
   // non-empty
@@ -294,21 +294,21 @@ TEST(SpansTest, ExtremeBoundaries) {
   uint64_t maxU64 = std::numeric_limits<uint64_t>::max();
   uint64_t highBit = uint64_t(1) << 63;
 
-  SpansU2 lowPart{0, 100};
-  SpansU2 highPart{maxU64 - 100, maxU64};
-  SpansU2 midPart{highBit - 10, highBit + 10};
+  SpansU2 lowPart{{0, 100}};
+  SpansU2 highPart{{maxU64 - 100, maxU64}};
+  SpansU2 midPart{{highBit - 10, highBit + 10}};
 
   EXPECT_FALSE(lowPart.hasOverlap(highPart));
   EXPECT_FALSE(highPart.hasOverlap(lowPart));
   EXPECT_FALSE(lowPart.hasOverlap(midPart));
   EXPECT_FALSE(midPart.hasOverlap(highPart));
 
-  SpansU2 split{0, 100, maxU64 - 100, maxU64};
+  SpansU2 split{{0, 100}, {maxU64 - 100, maxU64}};
   EXPECT_TRUE(split.contains(lowPart));
   EXPECT_TRUE(split.contains(highPart));
   EXPECT_FALSE(split.contains(midPart));
 
-  SpansU2 fullRange{0, maxU64};
+  SpansU2 fullRange{{0, maxU64}};
   EXPECT_TRUE(fullRange.contains(split));
   EXPECT_TRUE(fullRange.contains(lowPart));
   EXPECT_TRUE(fullRange.contains(highPart));
@@ -343,6 +343,6 @@ TEST(SpansTest, StreamOutput) {
   };
 
   EXPECT_EQ(toString(SpansU2{}), "{empty}");
-  EXPECT_EQ(toString(SpansU2{1, 10}), "{[1, 10]}");
-  EXPECT_EQ(toString(SpansU2{1, 10, 20, 30}), "{[1, 10], [20, 30]}");
+  EXPECT_EQ(toString(SpansU2{{1, 10}}), "{[1, 10]}");
+  EXPECT_EQ(toString(SpansU2{{1, 10}, {20, 30}}), "{[1, 10], [20, 30]}");
 }

@@ -101,15 +101,6 @@ struct Spans : public inplace_vector<Span<T>, N> {
     }
   }
 
-  // Initialize with pairs of coordinates.
-  Spans(std::initializer_list<T> init) {
-    assert(init.size() % 2 == 0);
-
-    for (auto it = init.begin(); it != init.end(); it += 2) {
-      this->push_back(Span<T>{*it, *(it + 1)});
-    }
-  }
-
   bool hasOverlap(const Spans<T, N>& other) const {
     // There is overlap if any of our spans overlaps with any of other's.
     return std::any_of(this->begin(), this->end(), [&](const Span<T>& span) {

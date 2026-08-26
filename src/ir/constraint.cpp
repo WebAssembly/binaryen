@@ -63,15 +63,15 @@ getSpansInternal(const Constraint& c, std::optional<Type> type, bool exact) {
       case LtS:
         // In the signed case, this is a pair of spans: all to the left and all
         // to the right of MAX_INT.
-        return SpansU2{0, maxSigned - 1, maxSigned + 1, maxUnsigned};
+        return SpansU2{{0, maxSigned - 1}, {maxSigned + 1, maxUnsigned}};
       case LtU:
-        return SpansU2{0, maxUnsigned - 1};
+        return SpansU2{{0, maxUnsigned - 1}};
 
       // Similarly, x > y proves x != MIN_INT.
       case GtS:
-        return SpansU2{0, minSigned - 1, minSigned + 1, maxUnsigned};
+        return SpansU2{{0, minSigned - 1}, {minSigned + 1, maxUnsigned}};
       case GtU:
-        return SpansU2{1, maxUnsigned};
+        return SpansU2{{1, maxUnsigned}};
 
       default: {
       }
@@ -84,15 +84,15 @@ getSpansInternal(const Constraint& c, std::optional<Type> type, bool exact) {
 
   switch (c.op) {
     case Eq:
-      return SpansU2{x, x};
+      return SpansU2{{x, x}};
     case Ne:
       if (x == 0) {
-        return SpansU2{1, maxUnsigned};
+        return SpansU2{{1, maxUnsigned}};
       }
       if (x == maxUnsigned) {
-        return SpansU2{0, maxUnsigned - 1};
+        return SpansU2{{0, maxUnsigned - 1}};
       }
-      return SpansU2{0, x - 1, x + 1, maxUnsigned};
+      return SpansU2{{0, x - 1}, {x + 1, maxUnsigned}};
 
     case LtS:
       if (x == minSigned) {
@@ -101,35 +101,35 @@ getSpansInternal(const Constraint& c, std::optional<Type> type, bool exact) {
       }
       if (x > maxSigned) {
         // A negative number, so just a single span.
-        return SpansU2{maxSigned + 1, x - 1};
+        return SpansU2{{maxSigned + 1, x - 1}};
       }
       if (x == 0) {
         // All negative numbers are possible.
-        return SpansU2{maxSigned + 1, maxUnsigned};
+        return SpansU2{{maxSigned + 1, maxUnsigned}};
       }
       // A positive number, so all negative ones are possible, and some
       // positive.
-      return SpansU2{0, x - 1, maxSigned + 1, maxUnsigned};
+      return SpansU2{{0, x - 1}, {maxSigned + 1, maxUnsigned}};
     case LtU:
       if (x == 0) {
         // Less than the lowest possible number is an empty span.
         return SpansU2{};
       }
-      return SpansU2{0, x - 1};
+      return SpansU2{{0, x - 1}};
     case LeS:
       if (x > maxSigned) {
         // A negative number, so just a single span.
-        return SpansU2{maxSigned + 1, x};
+        return SpansU2{{maxSigned + 1, x}};
       }
       if (x == maxSigned) {
         // All numbers are possible.
-        return SpansU2{0, maxUnsigned};
+        return SpansU2{{0, maxUnsigned}};
       }
       // A non-negative number, so all negative ones are possible, and some
       // positive.
-      return SpansU2{0, x, maxSigned + 1, maxUnsigned};
+      return SpansU2{{0, x}, {maxSigned + 1, maxUnsigned}};
     case LeU:
-      return SpansU2{0, x};
+      return SpansU2{{0, x}};
 
     case GtS:
       if (x == maxSigned) {
@@ -138,35 +138,35 @@ getSpansInternal(const Constraint& c, std::optional<Type> type, bool exact) {
       }
       if (x <= maxSigned) {
         // A non-negative number, so just a single span.
-        return SpansU2{x + 1, maxSigned};
+        return SpansU2{{x + 1, maxSigned}};
       }
       if (x == maxUnsigned) {
         // GtS negative one, so 0 and above.
-        return SpansU2{0, maxSigned};
+        return SpansU2{{0, maxSigned}};
       }
       // A negative number, so all positive ones are possible, and some
       // negative.
-      return SpansU2{0, maxSigned, x + 1, maxUnsigned};
+      return SpansU2{{0, maxSigned}, {x + 1, maxUnsigned}};
     case GtU:
       if (x == maxUnsigned) {
         // Greater than the highest possible number is an empty span.
         return SpansU2{};
       }
-      return SpansU2{x + 1, maxUnsigned};
+      return SpansU2{{x + 1, maxUnsigned}};
     case GeS:
       if (x == minSigned) {
         // All numbers are possible.
-        return SpansU2{0, maxUnsigned};
+        return SpansU2{{0, maxUnsigned}};
       }
       if (x <= maxSigned) {
         // A non-negative number, so just a single span.
-        return SpansU2{x, maxSigned};
+        return SpansU2{{x, maxSigned}};
       }
       // A negative number, so all positive ones are possible, and some
       // negative.
-      return SpansU2{0, maxSigned, x, maxUnsigned};
+      return SpansU2{{0, maxSigned}, {x, maxUnsigned}};
     case GeU:
-      return SpansU2{x, maxUnsigned};
+      return SpansU2{{x, maxUnsigned}};
 
     default: {
     }

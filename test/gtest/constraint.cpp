@@ -749,76 +749,76 @@ TEST(ConstraintTest, GetSpans) {
 
   // Ne operation
   EXPECT_EQ((Constraint{Ne, {Literal(int32_t(0))}}.getSpans()),
-            (SpansU2{1, maxU32}));
+            (SpansU2{{1, maxU32}}));
   EXPECT_EQ((Constraint{Ne, {Literal(int32_t(5))}}.getSpans()),
-            (SpansU2{0, 4, 6, maxU32}));
+            (SpansU2{{0, 4}, {6, maxU32}}));
   EXPECT_EQ((Constraint{Ne, {Literal(uint32_t(maxU32))}}.getSpans()),
-            (SpansU2{0, maxU32 - 1}));
+            (SpansU2{{0, maxU32 - 1}}));
 
   EXPECT_EQ((Constraint{Ne, {Literal(int64_t(0))}}.getSpans()),
-            (SpansU2{1, maxU64}));
+            (SpansU2{{1, maxU64}}));
   EXPECT_EQ((Constraint{Ne, {Literal(int64_t(5))}}.getSpans()),
-            (SpansU2{0, 4, 6, maxU64}));
+            (SpansU2{{0, 4}, {6, maxU64}}));
   EXPECT_EQ((Constraint{Ne, {Literal(uint64_t(maxU64))}}.getSpans()),
-            (SpansU2{0, maxU64 - 1}));
+            (SpansU2{{0, maxU64 - 1}}));
 
   // Eq (i32)
   EXPECT_EQ((Constraint{Eq, {Literal(int32_t(0))}}.getSpans()),
-            (SpansU2{0, 0}));
+            (SpansU2{{0, 0}}));
   EXPECT_EQ((Constraint{Eq, {Literal(int32_t(1))}}.getSpans()),
-            (SpansU2{1, 1}));
+            (SpansU2{{1, 1}}));
   EXPECT_EQ((Constraint{Eq, {Literal(int32_t(42))}}.getSpans()),
-            (SpansU2{42, 42}));
+            (SpansU2{{42, 42}}));
   EXPECT_EQ(
     (Constraint{Eq, {Literal(std::numeric_limits<int32_t>::max())}}.getSpans()),
-    (SpansU2{maxI32, maxI32}));
+    (SpansU2{{maxI32, maxI32}}));
   EXPECT_EQ((Constraint{Eq, {Literal(int32_t(-1))}}.getSpans()),
-            (SpansU2{maxU32, maxU32}));
+            (SpansU2{{maxU32, maxU32}}));
   EXPECT_EQ((Constraint{Eq, {Literal(int32_t(-42))}}.getSpans()),
-            (SpansU2{uint32_t(-42), uint32_t(-42)}));
+            (SpansU2{{uint32_t(-42), uint32_t(-42)}}));
   EXPECT_EQ(
     (Constraint{Eq, {Literal(std::numeric_limits<int32_t>::min())}}.getSpans()),
-    (SpansU2{minI32, minI32}));
+    (SpansU2{{minI32, minI32}}));
   EXPECT_EQ((Constraint{Eq, {Literal(uint32_t(0x80000000u))}}.getSpans()),
-            (SpansU2{0x80000000u, 0x80000000u}));
+            (SpansU2{{0x80000000u, 0x80000000u}}));
   EXPECT_EQ((Constraint{Eq, {Literal(std::numeric_limits<uint32_t>::max())}}
                .getSpans()),
-            (SpansU2{maxU32, maxU32}));
+            (SpansU2{{maxU32, maxU32}}));
 
   // Eq (i64)
   EXPECT_EQ((Constraint{Eq, {Literal(int64_t(0))}}.getSpans()),
-            (SpansU2{0, 0}));
+            (SpansU2{{0, 0}}));
   EXPECT_EQ((Constraint{Eq, {Literal(int64_t(42))}}.getSpans()),
-            (SpansU2{42, 42}));
+            (SpansU2{{42, 42}}));
   EXPECT_EQ(
     (Constraint{Eq, {Literal(int64_t(std::numeric_limits<int32_t>::max()) + 1)}}
        .getSpans()),
-    (SpansU2{uint64_t(std::numeric_limits<int32_t>::max()) + 1,
-             uint64_t(std::numeric_limits<int32_t>::max()) + 1}));
+    (SpansU2{{uint64_t(std::numeric_limits<int32_t>::max()) + 1,
+              uint64_t(std::numeric_limits<int32_t>::max()) + 1}}));
   EXPECT_EQ(
     (Constraint{Eq, {Literal(std::numeric_limits<int64_t>::max())}}.getSpans()),
-    (SpansU2{maxI64, maxI64}));
+    (SpansU2{{maxI64, maxI64}}));
   EXPECT_EQ((Constraint{Eq, {Literal(int64_t(-1))}}.getSpans()),
-            (SpansU2{maxU64, maxU64}));
+            (SpansU2{{maxU64, maxU64}}));
   EXPECT_EQ(
     (Constraint{Eq, {Literal(std::numeric_limits<int64_t>::min())}}.getSpans()),
-    (SpansU2{minI64, minI64}));
+    (SpansU2{{minI64, minI64}}));
   EXPECT_EQ((Constraint{Eq, {Literal(uint64_t(uint64_t(1) << 63))}}.getSpans()),
-            (SpansU2{minI64, minI64}));
+            (SpansU2{{minI64, minI64}}));
   EXPECT_EQ((Constraint{Eq, {Literal(std::numeric_limits<uint64_t>::max())}}
                .getSpans()),
-            (SpansU2{maxU64, maxU64}));
+            (SpansU2{{maxU64, maxU64}}));
 
   // LtS (i32):
   EXPECT_EQ((Constraint{LtS, {Literal(int32_t(10))}}.getSpans()),
-            (SpansU2{0, 9, minI32, maxU32}));
+            (SpansU2{{0, 9}, {minI32, maxU32}}));
   EXPECT_EQ((Constraint{LtS, {Literal(int32_t(0))}}.getSpans()),
-            (SpansU2{minI32, maxU32}));
+            (SpansU2{{minI32, maxU32}}));
   EXPECT_EQ((Constraint{LtS, {Literal(int32_t(-5))}}.getSpans()),
-            (SpansU2{minI32, uint32_t(-6)}));
+            (SpansU2{{minI32, uint32_t(-6)}}));
   EXPECT_EQ((Constraint{LtS, {Literal(std::numeric_limits<int32_t>::max())}}
                .getSpans()),
-            (SpansU2{0, maxI32 - 1, minI32, maxU32}));
+            (SpansU2{{0, maxI32 - 1}, {minI32, maxU32}}));
   // LtS min signed (i32): empty span
   auto ltsMin32 =
     Constraint{LtS, {Literal(std::numeric_limits<int32_t>::min())}}.getSpans();
@@ -828,14 +828,14 @@ TEST(ConstraintTest, GetSpans) {
 
   // LtS (i64):
   EXPECT_EQ((Constraint{LtS, {Literal(int64_t(100))}}.getSpans()),
-            (SpansU2{0, 99, minI64, maxU64}));
+            (SpansU2{{0, 99}, {minI64, maxU64}}));
   EXPECT_EQ((Constraint{LtS, {Literal(int64_t(0))}}.getSpans()),
-            (SpansU2{minI64, maxU64}));
+            (SpansU2{{minI64, maxU64}}));
   EXPECT_EQ((Constraint{LtS, {Literal(int64_t(-5))}}.getSpans()),
-            (SpansU2{minI64, uint64_t(-6)}));
+            (SpansU2{{minI64, uint64_t(-6)}}));
   EXPECT_EQ((Constraint{LtS, {Literal(std::numeric_limits<int64_t>::max())}}
                .getSpans()),
-            (SpansU2{0, maxI64 - 1, minI64, maxU64}));
+            (SpansU2{{0, maxI64 - 1}, {minI64, maxU64}}));
   // LtS min signed (i64): empty span
   auto ltsMin64 =
     Constraint{LtS, {Literal(std::numeric_limits<int64_t>::min())}}.getSpans();
@@ -845,12 +845,12 @@ TEST(ConstraintTest, GetSpans) {
 
   // LtU (i32): [0, C - 1]
   EXPECT_EQ((Constraint{LtU, {Literal(uint32_t(10))}}.getSpans()),
-            (SpansU2{0, 9}));
+            (SpansU2{{0, 9}}));
   EXPECT_EQ((Constraint{LtU, {Literal(uint32_t(1))}}.getSpans()),
-            (SpansU2{0, 0}));
+            (SpansU2{{0, 0}}));
   EXPECT_EQ((Constraint{LtU, {Literal(std::numeric_limits<uint32_t>::max())}}
                .getSpans()),
-            (SpansU2{0, maxU32 - 1}));
+            (SpansU2{{0, maxU32 - 1}}));
   // LtU 0 (i32): empty span
   auto ltuZero32 = Constraint{LtU, {Literal(uint32_t(0))}}.getSpans();
   ASSERT_TRUE(ltuZero32.has_value());
@@ -859,10 +859,10 @@ TEST(ConstraintTest, GetSpans) {
 
   // LtU (i64): [0, C - 1]
   EXPECT_EQ((Constraint{LtU, {Literal(uint64_t(100))}}.getSpans()),
-            (SpansU2{0, 99}));
+            (SpansU2{{0, 99}}));
   EXPECT_EQ((Constraint{LtU, {Literal(std::numeric_limits<uint64_t>::max())}}
                .getSpans()),
-            (SpansU2{0, maxU64 - 1}));
+            (SpansU2{{0, maxU64 - 1}}));
   // LtU 0 (i64): empty span
   auto ltuZero64 = Constraint{LtU, {Literal(uint64_t(0))}}.getSpans();
   ASSERT_TRUE(ltuZero64.has_value());
@@ -871,65 +871,65 @@ TEST(ConstraintTest, GetSpans) {
 
   // LeS (i32):
   EXPECT_EQ((Constraint{LeS, {Literal(int32_t(10))}}.getSpans()),
-            (SpansU2{0, 10, minI32, maxU32}));
+            (SpansU2{{0, 10}, {minI32, maxU32}}));
   EXPECT_EQ((Constraint{LeS, {Literal(int32_t(0))}}.getSpans()),
-            (SpansU2{0, 0, minI32, maxU32}));
+            (SpansU2{{0, 0}, {minI32, maxU32}}));
   EXPECT_EQ((Constraint{LeS, {Literal(int32_t(-5))}}.getSpans()),
-            (SpansU2{minI32, uint32_t(-5)}));
+            (SpansU2{{minI32, uint32_t(-5)}}));
   EXPECT_EQ((Constraint{LeS, {Literal(std::numeric_limits<int32_t>::min())}}
                .getSpans()),
-            (SpansU2{minI32, minI32}));
+            (SpansU2{{minI32, minI32}}));
   EXPECT_EQ((Constraint{LeS, {Literal(std::numeric_limits<int32_t>::max())}}
                .getSpans()),
-            (SpansU2{0, maxU32}));
+            (SpansU2{{0, maxU32}}));
 
   // LeS (i64):
   EXPECT_EQ((Constraint{LeS, {Literal(int64_t(10))}}.getSpans()),
-            (SpansU2{0, 10, minI64, maxU64}));
+            (SpansU2{{0, 10}, {minI64, maxU64}}));
   EXPECT_EQ((Constraint{LeS, {Literal(int64_t(0))}}.getSpans()),
-            (SpansU2{0, 0, minI64, maxU64}));
+            (SpansU2{{0, 0}, {minI64, maxU64}}));
   EXPECT_EQ((Constraint{LeS, {Literal(int64_t(-5))}}.getSpans()),
-            (SpansU2{minI64, uint64_t(-5)}));
+            (SpansU2{{minI64, uint64_t(-5)}}));
   EXPECT_EQ((Constraint{LeS, {Literal(std::numeric_limits<int64_t>::min())}}
                .getSpans()),
-            (SpansU2{minI64, minI64}));
+            (SpansU2{{minI64, minI64}}));
   EXPECT_EQ((Constraint{LeS, {Literal(std::numeric_limits<int64_t>::max())}}
                .getSpans()),
-            (SpansU2{0, maxU64}));
+            (SpansU2{{0, maxU64}}));
 
   // LeU (i32): [0, C]
   EXPECT_EQ((Constraint{LeU, {Literal(uint32_t(0))}}.getSpans()),
-            (SpansU2{0, 0}));
+            (SpansU2{{0, 0}}));
   EXPECT_EQ((Constraint{LeU, {Literal(uint32_t(10))}}.getSpans()),
-            (SpansU2{0, 10}));
+            (SpansU2{{0, 10}}));
   EXPECT_EQ((Constraint{LeU, {Literal(std::numeric_limits<uint32_t>::max())}}
                .getSpans()),
-            (SpansU2{0, maxU32}));
+            (SpansU2{{0, maxU32}}));
 
   // LeU (i64): [0, C]
   EXPECT_EQ((Constraint{LeU, {Literal(uint64_t(0))}}.getSpans()),
-            (SpansU2{0, 0}));
+            (SpansU2{{0, 0}}));
   EXPECT_EQ((Constraint{LeU, {Literal(uint64_t(10))}}.getSpans()),
-            (SpansU2{0, 10}));
+            (SpansU2{{0, 10}}));
   EXPECT_EQ((Constraint{LeU, {Literal(std::numeric_limits<uint64_t>::max())}}
                .getSpans()),
-            (SpansU2{0, maxU64}));
+            (SpansU2{{0, maxU64}}));
 
   // GtS (i32):
   EXPECT_EQ((Constraint{GtS, {Literal(int32_t(10))}}.getSpans()),
-            (SpansU2{11, maxI32}));
+            (SpansU2{{11, maxI32}}));
   EXPECT_EQ((Constraint{GtS, {Literal(int32_t(0))}}.getSpans()),
-            (SpansU2{1, maxI32}));
+            (SpansU2{{1, maxI32}}));
   EXPECT_EQ((Constraint{GtS, {Literal(int32_t(-5))}}.getSpans()),
-            (SpansU2{0, maxI32, uint32_t(-4), maxU32}));
+            (SpansU2{{0, maxI32}, {uint32_t(-4), maxU32}}));
   EXPECT_EQ((Constraint{GtS, {Literal(int32_t(-1))}}.getSpans()),
-            (SpansU2{0, maxI32}));
+            (SpansU2{{0, maxI32}}));
   EXPECT_EQ((Constraint{GtS, {Literal(std::numeric_limits<int32_t>::min())}}
                .getSpans()),
-            (SpansU2{0, maxI32, minI32 + 1, maxU32}));
+            (SpansU2{{0, maxI32}, {minI32 + 1, maxU32}}));
   EXPECT_EQ((Constraint{GtS, {Literal(std::numeric_limits<int32_t>::max() - 1)}}
                .getSpans()),
-            (SpansU2{maxI32, maxI32}));
+            (SpansU2{{maxI32, maxI32}}));
   // GtS max signed (i32): empty span
   auto gtsMax32 =
     Constraint{GtS, {Literal(std::numeric_limits<int32_t>::max())}}.getSpans();
@@ -939,19 +939,19 @@ TEST(ConstraintTest, GetSpans) {
 
   // GtS (i64):
   EXPECT_EQ((Constraint{GtS, {Literal(int64_t(10))}}.getSpans()),
-            (SpansU2{11, maxI64}));
+            (SpansU2{{11, maxI64}}));
   EXPECT_EQ((Constraint{GtS, {Literal(int64_t(0))}}.getSpans()),
-            (SpansU2{1, maxI64}));
+            (SpansU2{{1, maxI64}}));
   EXPECT_EQ((Constraint{GtS, {Literal(int64_t(-5))}}.getSpans()),
-            (SpansU2{0, maxI64, uint64_t(-4), maxU64}));
+            (SpansU2{{0, maxI64}, {uint64_t(-4), maxU64}}));
   EXPECT_EQ((Constraint{GtS, {Literal(int64_t(-1))}}.getSpans()),
-            (SpansU2{0, maxI64}));
+            (SpansU2{{0, maxI64}}));
   EXPECT_EQ((Constraint{GtS, {Literal(std::numeric_limits<int64_t>::min())}}
                .getSpans()),
-            (SpansU2{0, maxI64, minI64 + 1, maxU64}));
+            (SpansU2{{0, maxI64}, {minI64 + 1, maxU64}}));
   EXPECT_EQ((Constraint{GtS, {Literal(std::numeric_limits<int64_t>::max() - 1)}}
                .getSpans()),
-            (SpansU2{maxI64, maxI64}));
+            (SpansU2{{maxI64, maxI64}}));
   // GtS max signed (i64): empty span
   auto gtsMax64 =
     Constraint{GtS, {Literal(std::numeric_limits<int64_t>::max())}}.getSpans();
@@ -961,13 +961,13 @@ TEST(ConstraintTest, GetSpans) {
 
   // GtU (i32): [C + 1, maxU32]
   EXPECT_EQ((Constraint{GtU, {Literal(uint32_t(0))}}.getSpans()),
-            (SpansU2{1, maxU32}));
+            (SpansU2{{1, maxU32}}));
   EXPECT_EQ((Constraint{GtU, {Literal(uint32_t(10))}}.getSpans()),
-            (SpansU2{11, maxU32}));
+            (SpansU2{{11, maxU32}}));
   EXPECT_EQ(
     (Constraint{GtU, {Literal(std::numeric_limits<uint32_t>::max() - 1)}}
        .getSpans()),
-    (SpansU2{maxU32, maxU32}));
+    (SpansU2{{maxU32, maxU32}}));
   // GtU max unsigned (i32): empty span
   auto gtuMax32 =
     Constraint{GtU, {Literal(std::numeric_limits<uint32_t>::max())}}.getSpans();
@@ -977,13 +977,13 @@ TEST(ConstraintTest, GetSpans) {
 
   // GtU (i64): [C + 1, maxU64]
   EXPECT_EQ((Constraint{GtU, {Literal(uint64_t(0))}}.getSpans()),
-            (SpansU2{1, maxU64}));
+            (SpansU2{{1, maxU64}}));
   EXPECT_EQ((Constraint{GtU, {Literal(uint64_t(10))}}.getSpans()),
-            (SpansU2{11, maxU64}));
+            (SpansU2{{11, maxU64}}));
   EXPECT_EQ(
     (Constraint{GtU, {Literal(std::numeric_limits<uint64_t>::max() - 1)}}
        .getSpans()),
-    (SpansU2{maxU64, maxU64}));
+    (SpansU2{{maxU64, maxU64}}));
   // GtU max unsigned (i64): empty span
   auto gtuMax64 =
     Constraint{GtU, {Literal(std::numeric_limits<uint64_t>::max())}}.getSpans();
@@ -993,53 +993,53 @@ TEST(ConstraintTest, GetSpans) {
 
   // GeS (i32):
   EXPECT_EQ((Constraint{GeS, {Literal(int32_t(10))}}.getSpans()),
-            (SpansU2{10, maxI32}));
+            (SpansU2{{10, maxI32}}));
   EXPECT_EQ((Constraint{GeS, {Literal(int32_t(0))}}.getSpans()),
-            (SpansU2{0, maxI32}));
+            (SpansU2{{0, maxI32}}));
   EXPECT_EQ((Constraint{GeS, {Literal(int32_t(-5))}}.getSpans()),
-            (SpansU2{0, maxI32, uint32_t(-5), maxU32}));
+            (SpansU2{{0, maxI32}, {uint32_t(-5), maxU32}}));
   EXPECT_EQ((Constraint{GeS, {Literal(int32_t(-1))}}.getSpans()),
-            (SpansU2{0, maxI32, maxU32, maxU32}));
+            (SpansU2{{0, maxI32}, {maxU32, maxU32}}));
   EXPECT_EQ((Constraint{GeS, {Literal(std::numeric_limits<int32_t>::min())}}
                .getSpans()),
-            (SpansU2{0, maxU32}));
+            (SpansU2{{0, maxU32}}));
   EXPECT_EQ((Constraint{GeS, {Literal(std::numeric_limits<int32_t>::max())}}
                .getSpans()),
-            (SpansU2{maxI32, maxI32}));
+            (SpansU2{{maxI32, maxI32}}));
 
   // GeS (i64):
   EXPECT_EQ((Constraint{GeS, {Literal(int64_t(10))}}.getSpans()),
-            (SpansU2{10, maxI64}));
+            (SpansU2{{10, maxI64}}));
   EXPECT_EQ((Constraint{GeS, {Literal(int64_t(0))}}.getSpans()),
-            (SpansU2{0, maxI64}));
+            (SpansU2{{0, maxI64}}));
   EXPECT_EQ((Constraint{GeS, {Literal(int64_t(-5))}}.getSpans()),
-            (SpansU2{0, maxI64, uint64_t(-5), maxU64}));
+            (SpansU2{{0, maxI64}, {uint64_t(-5), maxU64}}));
   EXPECT_EQ((Constraint{GeS, {Literal(int64_t(-1))}}.getSpans()),
-            (SpansU2{0, maxI64, maxU64, maxU64}));
+            (SpansU2{{0, maxI64}, {maxU64, maxU64}}));
   EXPECT_EQ((Constraint{GeS, {Literal(std::numeric_limits<int64_t>::min())}}
                .getSpans()),
-            (SpansU2{0, maxU64}));
+            (SpansU2{{0, maxU64}}));
   EXPECT_EQ((Constraint{GeS, {Literal(std::numeric_limits<int64_t>::max())}}
                .getSpans()),
-            (SpansU2{maxI64, maxI64}));
+            (SpansU2{{maxI64, maxI64}}));
 
   // GeU (i32): [C, maxU32]
   EXPECT_EQ((Constraint{GeU, {Literal(uint32_t(0))}}.getSpans()),
-            (SpansU2{0, maxU32}));
+            (SpansU2{{0, maxU32}}));
   EXPECT_EQ((Constraint{GeU, {Literal(uint32_t(10))}}.getSpans()),
-            (SpansU2{10, maxU32}));
+            (SpansU2{{10, maxU32}}));
   EXPECT_EQ((Constraint{GeU, {Literal(std::numeric_limits<uint32_t>::max())}}
                .getSpans()),
-            (SpansU2{maxU32, maxU32}));
+            (SpansU2{{maxU32, maxU32}}));
 
   // GeU (i64): [C, maxU64]
   EXPECT_EQ((Constraint{GeU, {Literal(uint64_t(0))}}.getSpans()),
-            (SpansU2{0, maxU64}));
+            (SpansU2{{0, maxU64}}));
   EXPECT_EQ((Constraint{GeU, {Literal(uint64_t(10))}}.getSpans()),
-            (SpansU2{10, maxU64}));
+            (SpansU2{{10, maxU64}}));
   EXPECT_EQ((Constraint{GeU, {Literal(std::numeric_limits<uint64_t>::max())}}
                .getSpans()),
-            (SpansU2{maxU64, maxU64}));
+            (SpansU2{{maxU64, maxU64}}));
 }
 
 TEST(ConstraintTest, GetSpansType) {
@@ -1072,24 +1072,24 @@ TEST(ConstraintTest, GetSpansType) {
   // But it does help with others: x < y means x cannot be MAX_INT, so we can
   // report a *proven* span, if not an exact one.
   EXPECT_EQ((Constraint{LtS, {Index(0)}}.getProvenSpans(Type::i32)),
-            (SpansU2{0, maxI32Minus1, minI32, maxU32}));
+            (SpansU2{{0, maxI32Minus1}, {minI32, maxU32}}));
   EXPECT_EQ((Constraint{LtS, {Index(1)}}.getProvenSpans(Type::i64)),
-            (SpansU2{0, maxI64Minus1, minI64, maxU64}));
+            (SpansU2{{0, maxI64Minus1}, {minI64, maxU64}}));
 
   EXPECT_EQ((Constraint{LtU, {Index(2)}}.getProvenSpans(Type::i32)),
-            (SpansU2{0, maxU32Minus1}));
+            (SpansU2{{0, maxU32Minus1}}));
   EXPECT_EQ((Constraint{LtU, {Index(0)}}.getProvenSpans(Type::i64)),
-            (SpansU2{0, maxU64Minus1}));
+            (SpansU2{{0, maxU64Minus1}}));
 
   EXPECT_EQ((Constraint{GtS, {Index(1)}}.getProvenSpans(Type::i32)),
-            (SpansU2{0, maxI32, minI32Plus1, maxU32}));
+            (SpansU2{{0, maxI32}, {minI32Plus1, maxU32}}));
   EXPECT_EQ((Constraint{GtS, {Index(2)}}.getProvenSpans(Type::i64)),
-            (SpansU2{0, maxI64, minI64Plus1, maxU64}));
+            (SpansU2{{0, maxI64}, {minI64Plus1, maxU64}}));
 
   EXPECT_EQ((Constraint{GtU, {Index(0)}}.getProvenSpans(Type::i32)),
-            (SpansU2{1, maxU32}));
+            (SpansU2{{1, maxU32}}));
   EXPECT_EQ((Constraint{GtU, {Index(1)}}.getProvenSpans(Type::i64)),
-            (SpansU2{1, maxU64}));
+            (SpansU2{{1, maxU64}}));
 
   // But all the last things are impossible with an exact span.
   EXPECT_EQ((Constraint{LtS, {Index(0)}}.getSpans(Type::i32)), std::nullopt);
@@ -1103,7 +1103,7 @@ TEST(ConstraintTest, GetSpansType) {
 
   // Proven spans are otherwise like normal ones.
   EXPECT_EQ((Constraint{Eq, {Literal(int32_t(42))}}.getProvenSpans()),
-            (SpansU2{42, 42}));
+            (SpansU2{{42, 42}}));
 }
 
 TEST(ConstraintTest, SpanOptimizations) {
