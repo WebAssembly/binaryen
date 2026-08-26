@@ -136,7 +136,7 @@ struct Spans : public inplace_vector<Span<T>, N> {
 
 // A useful set of 2 spans that can contain any integer value. 2 spans is enough
 // to contain spans for any inequality, signed or unsigned: we represent numbers
-// as unsigned internally, and so e.g. signed x < 10 ends up as two disjoint
+// as unsigned internally, and so e.g. signed x <= 10 ends up as two disjoint
 // spans, [0..10] and [2^32..MAX_INT].
 using SpansU2 = Spans<uint64_t, 2>;
 
