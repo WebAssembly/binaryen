@@ -383,9 +383,20 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
     self()->noteSubtype(curr->expected, expectedType);
     self()->noteSubtype(curr->replacement, type);
   }
-  void visitStructWait(StructWait* curr) {}
+  void visitStructWait(StructWait* curr) {
+    self()->noteSubtype(curr->waitqueue,
+                        Type(HeapTypes::sharedWaitqueue, Nullable));
+    if (!curr->ref->type.isStruct()) {
+      return;
+    }
+    const auto& fields = curr->ref->type.getHeapType().getStruct().fields;
+    self()->noteSubtype(curr->expected, fields[curr->index].type);
+  }
   void visitWaitqueueNew(WaitqueueNew* curr) {}
-  void visitWaitqueueNotify(WaitqueueNotify* curr) {}
+  void visitWaitqueueNotify(WaitqueueNotify* curr) {
+    self()->noteSubtype(curr->waitqueue,
+                        Type(HeapTypes::sharedWaitqueue, Nullable));
+  }
   void visitArrayNew(ArrayNew* curr) {
     if (!curr->type.isArray() || curr->isWithDefault()) {
       return;

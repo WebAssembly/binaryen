@@ -1894,6 +1894,28 @@ BinaryenExpressionRef BinaryenStructSet(BinaryenModuleRef module,
       .makeStructSet(
         index, (Expression*)ref, (Expression*)value, MemoryOrder::Unordered));
 }
+BinaryenExpressionRef BinaryenStructWait(BinaryenModuleRef module,
+                                         BinaryenExpressionRef ref,
+                                         BinaryenIndex index,
+                                         BinaryenExpressionRef expected,
+                                         BinaryenExpressionRef timeout,
+                                         BinaryenExpressionRef waitqueue) {
+  return Builder(*(Module*)module)
+    .makeStructWait(index,
+                    (Expression*)ref,
+                    (Expression*)waitqueue,
+                    (Expression*)expected,
+                    (Expression*)timeout);
+}
+BinaryenExpressionRef BinaryenWaitqueueNew(BinaryenModuleRef module) {
+  return Builder(*(Module*)module).makeWaitqueueNew();
+}
+BinaryenExpressionRef BinaryenWaitqueueNotify(BinaryenModuleRef module,
+                                              BinaryenExpressionRef waitqueue,
+                                              BinaryenExpressionRef count) {
+  return Builder(*(Module*)module)
+    .makeWaitqueueNotify((Expression*)waitqueue, (Expression*)count);
+}
 BinaryenExpressionRef BinaryenArrayNew(BinaryenModuleRef module,
                                        BinaryenHeapType type,
                                        BinaryenExpressionRef size,
@@ -4519,6 +4541,101 @@ void BinaryenStructSetSetValue(BinaryenExpressionRef expr,
   assert(valueExpr);
   static_cast<StructSet*>(expression)->value = (Expression*)valueExpr;
 }
+
+// StructWait
+
+BinaryenExpressionRef BinaryenStructWaitGetRef(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<StructWait>());
+  return static_cast<StructWait*>(expression)->ref;
+}
+void BinaryenStructWaitSetRef(BinaryenExpressionRef expr,
+                              BinaryenExpressionRef refExpr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<StructWait>());
+  assert(refExpr);
+  static_cast<StructWait*>(expression)->ref = (Expression*)refExpr;
+}
+BinaryenIndex BinaryenStructWaitGetIndex(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<StructWait>());
+  return static_cast<StructWait*>(expression)->index;
+}
+void BinaryenStructWaitSetIndex(BinaryenExpressionRef expr,
+                                BinaryenIndex index) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<StructWait>());
+  static_cast<StructWait*>(expression)->index = index;
+}
+BinaryenExpressionRef
+BinaryenStructWaitGetExpected(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<StructWait>());
+  return static_cast<StructWait*>(expression)->expected;
+}
+void BinaryenStructWaitSetExpected(BinaryenExpressionRef expr,
+                                   BinaryenExpressionRef expectedExpr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<StructWait>());
+  assert(expectedExpr);
+  static_cast<StructWait*>(expression)->expected = (Expression*)expectedExpr;
+}
+BinaryenExpressionRef BinaryenStructWaitGetTimeout(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<StructWait>());
+  return static_cast<StructWait*>(expression)->timeout;
+}
+void BinaryenStructWaitSetTimeout(BinaryenExpressionRef expr,
+                                  BinaryenExpressionRef timeoutExpr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<StructWait>());
+  assert(timeoutExpr);
+  static_cast<StructWait*>(expression)->timeout = (Expression*)timeoutExpr;
+}
+BinaryenExpressionRef
+BinaryenStructWaitGetWaitqueue(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<StructWait>());
+  return static_cast<StructWait*>(expression)->waitqueue;
+}
+void BinaryenStructWaitSetWaitqueue(BinaryenExpressionRef expr,
+                                    BinaryenExpressionRef waitqueueExpr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<StructWait>());
+  assert(waitqueueExpr);
+  static_cast<StructWait*>(expression)->waitqueue = (Expression*)waitqueueExpr;
+}
+
+// WaitqueueNotify
+
+BinaryenExpressionRef
+BinaryenWaitqueueNotifyGetWaitqueue(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<WaitqueueNotify>());
+  return static_cast<WaitqueueNotify*>(expression)->waitqueue;
+}
+void BinaryenWaitqueueNotifySetWaitqueue(BinaryenExpressionRef expr,
+                                         BinaryenExpressionRef waitqueueExpr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<WaitqueueNotify>());
+  assert(waitqueueExpr);
+  static_cast<WaitqueueNotify*>(expression)->waitqueue =
+    (Expression*)waitqueueExpr;
+}
+BinaryenExpressionRef
+BinaryenWaitqueueNotifyGetCount(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<WaitqueueNotify>());
+  return static_cast<WaitqueueNotify*>(expression)->count;
+}
+void BinaryenWaitqueueNotifySetCount(BinaryenExpressionRef expr,
+                                     BinaryenExpressionRef countExpr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<WaitqueueNotify>());
+  assert(countExpr);
+  static_cast<WaitqueueNotify*>(expression)->count = (Expression*)countExpr;
+}
+
 // ArrayNew
 BinaryenExpressionRef BinaryenArrayNewGetInit(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;

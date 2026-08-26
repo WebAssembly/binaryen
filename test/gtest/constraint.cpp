@@ -39,6 +39,9 @@ TEST(ConstraintTest, TestEq) {
 
   // x != 5: we can infer false.
   EXPECT_EQ(s.proves(Constraint{Ne, {Literal(int32_t(5))}}), False);
+
+  // x > y: we can infer nothing.
+  EXPECT_EQ(s.proves(Constraint{GtS, {Index(1)}}), Unknown);
 }
 
 TEST(ConstraintTest, TestNe) {
@@ -592,15 +595,31 @@ TEST(ConstraintTest, TestIncrement) {
   map.set(0, &add);
   check(map.get(0), {Eq, {Literal(int32_t(1))}});
 
-  // $0 >= 5, $0++  =>  $0 > 5 (signed)
+  // $0 >= 5, $0++  =>  nothing, since the ++ might overflow into negative
   map.set(0, {GeS, {Literal(int32_t(5))}});
   map.set(0, &add);
-  check(map.get(0), {GtS, {Literal(int32_t(5))}});
+  EXPECT_TRUE(map.get(0).empty());
 
-  // Ditto, unsigned
+  // $0 >= 5, $0 < 100, $0++  =>  $0 > 5, $0 <= 100 (signed)
+  Constraint lts100{LtS, {Literal(int32_t(100))}};
+  Constraint les100{LeS, {Literal(int32_t(100))}};
+  map.set(0, {{GeS, {Literal(int32_t(5))}}, lts100});
+  map.set(0, &add);
+  EXPECT_EQ(map.get(0),
+            (AndedConstraintSet{{GtS, {Literal(int32_t(5))}}, les100}));
+
+  // Ditto, unsigned: without an upper bound we can overflow.
   map.set(0, {GeU, {Literal(int32_t(5))}});
   map.set(0, &add);
-  check(map.get(0), {GtU, {Literal(int32_t(5))}});
+  EXPECT_TRUE(map.get(0).empty());
+
+  // With an upper bound, we can optimize like before.
+  Constraint ltu100{LtU, {Literal(int32_t(100))}};
+  Constraint leu100{LeU, {Literal(int32_t(100))}};
+  map.set(0, {{GeU, {Literal(int32_t(5))}}, ltu100});
+  map.set(0, &add);
+  EXPECT_EQ(map.get(0),
+            (AndedConstraintSet{{GtU, {Literal(int32_t(5))}}, leu100}));
 
   // $0 < 5, $0++  =>  $0 <= 5 (signed)
   map.set(0, {LtS, {Literal(int32_t(5))}});
@@ -653,18 +672,37 @@ TEST(ConstraintTest, TestIncrement) {
             (AndedConstraintSet{{GtS, {Literal(int32_t(10))}},
                                 {LeS, {Literal(int32_t(20))}}}));
 
-  // $0 >= 10 && $0 <= max_signed, $0++  =>  $0 > 10 (overflowing constraint
-  // removed)
+  // $0 >= 10 && $0 <= max_signed, $0++  =>  nothing, as we may overflow.
   map.set(0, {GeS, {Literal(int32_t(10))}});
   map.approximateAnd(0, {LeS, {Literal::makeSignedMax(Type::i32)}});
   map.set(0, &add);
-  EXPECT_EQ(map.get(0), (AndedConstraintSet{{GtS, {Literal(int32_t(10))}}}));
+  EXPECT_EQ(map.get(0).size(), 0);
 
-  // $0 >= 10 && $0 == $2, $0++  =>  $0 > 10 (non-constant term removed)
-  map.set(0, {GeS, {Literal(int32_t(10))}});
+  // Ditto, unsigned.
+  map.set(0, {GeU, {Literal(int32_t(10))}});
+  map.approximateAnd(0, {LeU, {Literal::makeUnsignedMax(Type::i32)}});
+  map.set(0, &add);
+  EXPECT_EQ(map.get(0).size(), 0);
+
+  // Ditto, 64-bit signed.
+  map.set(0, {GeS, {Literal(int64_t(10))}});
+  map.approximateAnd(0, {LeS, {Literal::makeSignedMax(Type::i64)}});
+  map.set(0, &add);
+  EXPECT_EQ(map.get(0).size(), 0);
+
+  // Ditto, 64-bit unsigned.
+  map.set(0, {GeU, {Literal(int64_t(10))}});
+  map.approximateAnd(0, {LeU, {Literal::makeUnsignedMax(Type::i64)}});
+  map.set(0, &add);
+  EXPECT_EQ(map.get(0).size(), 0);
+
+  // $0 >= 5 && $0 < 100 && $0 == $2, $0++  =>  we increment and remove the non-
+  // constant term, leaving $0 > 5 && $0 <= 100.
+  map.set(0, {{GeS, {Literal(int32_t(5))}}, lts100});
   map.approximateAnd(0, {Eq, {Index(2)}});
   map.set(0, &add);
-  EXPECT_EQ(map.get(0), (AndedConstraintSet{{GtS, {Literal(int32_t(10))}}}));
+  EXPECT_EQ(map.get(0),
+            (AndedConstraintSet{{GtS, {Literal(int32_t(5))}}, les100}));
 }
 
 TEST(ConstraintTest, TestEqConstraints) {
@@ -680,6 +718,24 @@ TEST(ConstraintTest, TestEqConstraints) {
   // $1 has $1 > 42: we constant-propagated the value of $0. This is better than
   // having $1 > $0 and needing to look $0 up.
   check(map.get(1), {GtS, {Literal(int32_t(42))}});
+}
+
+TEST(ConstraintTest, ComplexOrRegression) {
+  // $0 == 0
+  BasicBlockConstraintMap left;
+  left.setReachable();
+  left.set(0, {Eq, {Literal(int32_t(0))}});
+
+  // $0 <= 100, $0 > $1
+  BasicBlockConstraintMap right;
+  right.setReachable();
+  right.set(0, {{LeS, {Literal(int32_t(100))}}, {GtS, {Index(1)}}});
+
+  // $0 == 0 || $0 <= 100  =>  $0 <= 100  (0 is included in <= 100), but the
+  // other constraint, $0 > $1, was only on one side, and vanishes.
+  right.approximateOr(left);
+  check(right.get(0), {LeS, {Literal(int32_t(100))}});
+  EXPECT_TRUE(right.get(1).empty());
 }
 
 TEST(ConstraintTest, GetSpan) {
@@ -966,6 +1022,70 @@ TEST(ConstraintTest, GetSpan) {
             (Span<IU64>{maxU64, maxU64}));
 }
 
+TEST(ConstraintTest, GetSpanType) {
+  const IU64 minI32(std::numeric_limits<int32_t>::min());
+  const IU64 minI32Plus1(std::numeric_limits<int32_t>::min() + 1);
+
+  const IU64 maxI32(std::numeric_limits<int32_t>::max());
+  const IU64 maxI32Minus1(std::numeric_limits<int32_t>::max() - 1);
+
+  const IU64 maxU32(std::numeric_limits<uint32_t>::max());
+  const IU64 maxU32Minus1(std::numeric_limits<uint32_t>::max() - 1);
+
+  const IU64 minI64(std::numeric_limits<int64_t>::min());
+  const IU64 minI64Plus1(std::numeric_limits<int64_t>::min() + 1);
+
+  const IU64 maxI64(std::numeric_limits<int64_t>::max());
+  const IU64 maxI64Minus1(std::numeric_limits<int64_t>::max() - 1);
+
+  const IU64 maxU64(std::numeric_limits<uint64_t>::max());
+  const IU64 maxU64Minus1(std::numeric_limits<uint64_t>::max() - 1);
+
+  // Providing the type to getSpan() doesn't help with certain things.
+  EXPECT_EQ((Constraint{Eq, {Index(0)}}.getSpan(Type::i32)), std::nullopt);
+  EXPECT_EQ((Constraint{Ne, {Index(1)}}.getSpan(Type::i64)), std::nullopt);
+  EXPECT_EQ((Constraint{GeU, {Index(2)}}.getSpan(Type::i32)), std::nullopt);
+  EXPECT_EQ((Constraint{GeS, {Index(0)}}.getSpan(Type::i64)), std::nullopt);
+  EXPECT_EQ((Constraint{LeU, {Index(1)}}.getSpan(Type::i64)), std::nullopt);
+  EXPECT_EQ((Constraint{LeS, {Index(2)}}.getSpan(Type::i32)), std::nullopt);
+
+  // But it does help with others: x < y means x cannot be MAX_INT, so we can
+  // report a *proven* span, if not an exact one.
+  EXPECT_EQ((Constraint{LtS, {Index(0)}}.getProvenSpan(Type::i32)),
+            (Span<IU64>{minI32, maxI32Minus1}));
+  EXPECT_EQ((Constraint{LtS, {Index(1)}}.getProvenSpan(Type::i64)),
+            (Span<IU64>{minI64, maxI64Minus1}));
+
+  EXPECT_EQ((Constraint{LtU, {Index(2)}}.getProvenSpan(Type::i32)),
+            (Span<IU64>{0, maxU32Minus1}));
+  EXPECT_EQ((Constraint{LtU, {Index(0)}}.getProvenSpan(Type::i64)),
+            (Span<IU64>{0, maxU64Minus1}));
+
+  EXPECT_EQ((Constraint{GtS, {Index(1)}}.getProvenSpan(Type::i32)),
+            (Span<IU64>{minI32Plus1, maxI32}));
+  EXPECT_EQ((Constraint{GtS, {Index(2)}}.getProvenSpan(Type::i64)),
+            (Span<IU64>{minI64Plus1, maxI64}));
+
+  EXPECT_EQ((Constraint{GtU, {Index(0)}}.getProvenSpan(Type::i32)),
+            (Span<IU64>{1, maxU32}));
+  EXPECT_EQ((Constraint{GtU, {Index(1)}}.getProvenSpan(Type::i64)),
+            (Span<IU64>{1, maxU64}));
+
+  // But all the last things are impossible with an exact span.
+  EXPECT_EQ((Constraint{LtS, {Index(0)}}.getSpan(Type::i32)), std::nullopt);
+  EXPECT_EQ((Constraint{LtS, {Index(1)}}.getSpan(Type::i64)), std::nullopt);
+  EXPECT_EQ((Constraint{LtU, {Index(2)}}.getSpan(Type::i32)), std::nullopt);
+  EXPECT_EQ((Constraint{LtU, {Index(0)}}.getSpan(Type::i64)), std::nullopt);
+  EXPECT_EQ((Constraint{GtS, {Index(1)}}.getSpan(Type::i32)), std::nullopt);
+  EXPECT_EQ((Constraint{GtS, {Index(2)}}.getSpan(Type::i64)), std::nullopt);
+  EXPECT_EQ((Constraint{GtU, {Index(0)}}.getSpan(Type::i32)), std::nullopt);
+  EXPECT_EQ((Constraint{GtU, {Index(1)}}.getSpan(Type::i64)), std::nullopt);
+
+  // Proven spans are otherwise like normal ones.
+  EXPECT_EQ((Constraint{Eq, {Literal(int32_t(42))}}.getProvenSpan()),
+            (Span<IU64>{42, 42}));
+}
+
 TEST(ConstraintTest, SpanOptimizations) {
   // Using spans, we can optimize things like {x < 100} => {x < 200}.
   Constraint lts100{LtS, {Literal(int32_t(100))}};
@@ -1041,4 +1161,16 @@ TEST(ConstraintTest, EmptySpanContradiction) {
   AndedConstraintSet valid{{Eq, {Literal(int32_t(42))}}};
   AndedConstraintSet impossible{gtsMax32};
   checkOr(valid, impossible, valid);
+}
+
+TEST(ConstraintTest, GetSpanFloat) {
+  // Non-integer types do not cause errors.
+  EXPECT_EQ((Constraint{Eq, {Literal(float(3.14159))}}.getSpan()),
+            std::nullopt);
+}
+
+TEST(ConstraintTest, GetSpanGC) {
+  // Reference types do not cause errors.
+  EXPECT_EQ((Constraint{Eq, {Literal::makeNull(HeapType::eq)}}.getSpan()),
+            std::nullopt);
 }
