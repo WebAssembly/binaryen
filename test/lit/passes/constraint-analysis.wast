@@ -4556,6 +4556,60 @@
     )
   )
 
+  ;; CHECK:      (func $float-negative-zero (type $1)
+  ;; CHECK-NEXT:  (local $f f64)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (nop)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (nop)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPTIN:      (func $float-negative-zero (type $1)
+  ;; OPTIN-NEXT:  (local $f f64)
+  ;; OPTIN-NEXT:  (if
+  ;; OPTIN-NEXT:   (i32.const 1)
+  ;; OPTIN-NEXT:   (then
+  ;; OPTIN-NEXT:    (nop)
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (if
+  ;; OPTIN-NEXT:   (i32.const 1)
+  ;; OPTIN-NEXT:   (then
+  ;; OPTIN-NEXT:    (nop)
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT: )
+  (func $float-negative-zero
+    (local $f f64)
+    ;; Negative zero is equal to zero, even though it has a different bit
+    ;; pattern. Both conditions here should be optimized to 1.
+    (if
+      (f64.eq
+        (local.get $f)
+        (f64.const -0)
+      )
+      (then
+        (nop)
+      )
+    )
+    (if
+      (f64.eq
+        (local.get $f)
+        (f64.const 0)
+      )
+      (then
+        (nop)
+      )
+    )
+  )
+
   ;; CHECK:      (func $tee (type $1)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (local $y i32)
@@ -4646,6 +4700,166 @@
       (i32.eq
         (local.get $x)
         (i32.const 10)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $fallthrough-get (type $1)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (local $z i32)
+  ;; CHECK-NEXT:  (local $w i32)
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (local.get $z)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $z
+  ;; CHECK-NEXT:   (i32.const 42)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $w
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (local.get $z)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.eq
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (local.get $w)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPTIN:      (func $fallthrough-get (type $1)
+  ;; OPTIN-NEXT:  (local $x i32)
+  ;; OPTIN-NEXT:  (local $z i32)
+  ;; OPTIN-NEXT:  (local $w i32)
+  ;; OPTIN-NEXT:  (local.set $x
+  ;; OPTIN-NEXT:   (block (result i32)
+  ;; OPTIN-NEXT:    (local.get $z)
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (local.set $z
+  ;; OPTIN-NEXT:   (i32.const 42)
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (local.set $w
+  ;; OPTIN-NEXT:   (block (result i32)
+  ;; OPTIN-NEXT:    (local.get $z)
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (drop
+  ;; OPTIN-NEXT:   (i32.eq
+  ;; OPTIN-NEXT:    (local.get $x)
+  ;; OPTIN-NEXT:    (local.get $w)
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT: )
+  (func $fallthrough-get
+    (local $x i32)
+    (local $z i32)
+    (local $w i32)
+    ;; $x gets the initial value of $z (0) via block fallthrough. We should
+    ;; notice that $z is relevant, i.e., we need to track its values, even
+    ;; though we get it through a fallthrough and not directly.
+    (local.set $x
+      (block (result i32)
+        (local.get $z)
+      )
+    )
+
+    ;; $z is modified to 42.
+    (local.set $z (i32.const 42))
+
+    ;; $w gets the updated value of $z (42), also via block fallthrough.
+    (local.set $w
+      (block (result i32)
+        (local.get $z)
+      )
+    )
+
+    ;; 0 == 42 is 0 at runtime. If we did not mark $z as relevant, we would see
+    ;; $x and $w as both equal to $z, i.e., that they are themselves equal, and
+    ;; misoptimize this to 1. The actual value at runtime is 0.
+    ;; TODO: actually optimize this to 0
+    (drop
+      (i32.eq
+        (local.get $x)
+        (local.get $w)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $fallthrough-tee (type $0) (param $param i32)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (local $z i32)
+  ;; CHECK-NEXT:  (local $w i32)
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (local.tee $param
+  ;; CHECK-NEXT:    (local.get $z)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $z
+  ;; CHECK-NEXT:   (i32.const 42)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $w
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (local.get $z)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.eq
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (local.get $w)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPTIN:      (func $fallthrough-tee (type $0) (param $param i32)
+  ;; OPTIN-NEXT:  (local $x i32)
+  ;; OPTIN-NEXT:  (local $z i32)
+  ;; OPTIN-NEXT:  (local $w i32)
+  ;; OPTIN-NEXT:  (local.set $x
+  ;; OPTIN-NEXT:   (local.tee $param
+  ;; OPTIN-NEXT:    (local.get $z)
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (local.set $z
+  ;; OPTIN-NEXT:   (i32.const 42)
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (local.set $w
+  ;; OPTIN-NEXT:   (block (result i32)
+  ;; OPTIN-NEXT:    (local.get $z)
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (drop
+  ;; OPTIN-NEXT:   (i32.eq
+  ;; OPTIN-NEXT:    (local.get $x)
+  ;; OPTIN-NEXT:    (local.get $w)
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT: )
+  (func $fallthrough-tee (param $param i32)
+    (local $x i32)
+    (local $z i32)
+    (local $w i32)
+    ;; Similar to above, but now a tee is used for the fallthrough.
+    (local.set $x
+      (local.tee $param ;; this changed
+        (local.get $z)
+      )
+    )
+
+    (local.set $z (i32.const 42))
+
+    (local.set $w
+      (block (result i32)
+        (local.get $z)
+      )
+    )
+
+    ;; As before, this should not be optimized to 1, and could be optimized to
+    ;; 0 (TODO).
+    (drop
+      (i32.eq
+        (local.get $x)
+        (local.get $w)
       )
     )
   )

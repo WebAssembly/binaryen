@@ -204,9 +204,9 @@ Result provesConstantPair(Abstract::Op aOp,
   if (aOp == Eq) {
     switch (bOp) {
       case Eq:
-        return TrueFalse(aConstant == bConstant);
+        return TrueFalse(aConstant.eq(bConstant));
       case Ne:
-        return TrueFalse(aConstant != bConstant);
+        return TrueFalse(aConstant.ne(bConstant));
       case LtS:
         return TrueFalse(aConstant.ltS(bConstant));
       case LeS:
@@ -230,14 +230,14 @@ Result provesConstantPair(Abstract::Op aOp,
 
   // a != A =?=> a == B. False if A = B, else unknown.
   if (aOp == Ne && bOp == Eq) {
-    if (aConstant == bConstant) {
+    if (aConstant.eq(bConstant).getInteger()) {
       return False;
     }
   }
 
   // a != A =?=> a != B. True if A = B, else unknown.
   if (aOp == Ne && bOp == Ne) {
-    if (aConstant == bConstant) {
+    if (aConstant.eq(bConstant).getInteger()) {
       return True;
     }
   }
@@ -414,6 +414,10 @@ bool isImmediateContradiction(const Constraint& c) {
   auto* cc = std::get_if<Literal>(&c.term);
   if (!cc) {
     // Only operations on constants can be immediate contradictions.
+    return false;
+  }
+
+  if (!cc->type.isInteger()) {
     return false;
   }
 
