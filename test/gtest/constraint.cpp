@@ -1,3 +1,5 @@
+#include <limits>
+
 #include "ir/constraint.h"
 #include "ir/abstract.h"
 #include "gtest/gtest.h"
@@ -37,6 +39,9 @@ TEST(ConstraintTest, TestEq) {
 
   // x != 5: we can infer false.
   EXPECT_EQ(s.proves(Constraint{Ne, {Literal(int32_t(5))}}), False);
+
+  // x > y: we can infer nothing.
+  EXPECT_EQ(s.proves(Constraint{GtS, {Index(1)}}), Unknown);
 }
 
 TEST(ConstraintTest, TestNe) {
@@ -275,8 +280,14 @@ TEST(ConstraintTest, TestOrInequality) {
   auto empty = AndedConstraintSet::makeProvesNothing();
   checkOr(eq5, ges7, empty);
 
-  // x > 5 || x >= 6  =>  x > 5
-  checkOr(gts5, ges6, gts5);
+  // x > 5 and x >= 6 are equivalent, so ORing them does not change either.
+  auto ored1 = gts5;
+  ored1.approximateOr(ges6);
+  EXPECT_EQ(ored1, gts5);
+
+  auto ored2 = ges6;
+  ored2.approximateOr(gts5);
+  EXPECT_EQ(ored2, ges6);
 
   // x > 5 || x >= 5  =>  x >= 5
   checkOr(gts5, ges5, ges5);
@@ -294,8 +305,8 @@ TEST(ConstraintTest, TestOrInequality) {
   // x > signed_max || x >= (signed_max + 1 === signed_min) != x > signed_max
   AndedConstraintSet gtsMax{
     {GtS, {Literal(std::numeric_limits<int32_t>::max())}}};
-  // TODO: x > signed_max is always false, so this could return a contradiction
-  checkOr(gtsMax, gesMin, empty);
+  // x > signed_max is impossible, so it vanishes in the OR.
+  checkOr(gtsMax, gesMin, gesMin);
 }
 
 TEST(ConstraintTest, TestOrLoop) {
@@ -484,9 +495,16 @@ TEST(ConstraintTest, TestAndLoop) {
   // inputs).
   checkAnd(le5, lt5U, AndedConstraintSet{le5[0], lt5U[0]});
 
-  // Different constants do not optimize, but could TODO
+  // Different constants optimize when one implies the other (x <= 5 and x < 6
+  // are equivalent).
   AndedConstraintSet lt6{{LtS, {Literal(int32_t(6))}}};
-  checkAnd(le5, lt6, AndedConstraintSet{le5[0], lt6[0]});
+  auto anded1 = le5;
+  anded1.approximateAnd(lt6[0]);
+  EXPECT_EQ(anded1, le5);
+
+  auto anded2 = lt6;
+  anded2.approximateAnd(le5[0]);
+  EXPECT_EQ(anded2, lt6);
 
   // A non-constant.
   // x <= y && x < y  =>  x < y
@@ -577,25 +595,44 @@ TEST(ConstraintTest, TestIncrement) {
   map.set(0, &add);
   check(map.get(0), {Eq, {Literal(int32_t(1))}});
 
-  // $0 >= 5, $0++  =>  $0 > 5 (signed)
+  // $0 >= 5, $0++  =>  nothing, since the ++ might overflow into negative
   map.set(0, {GeS, {Literal(int32_t(5))}});
   map.set(0, &add);
-  check(map.get(0), {GtS, {Literal(int32_t(5))}});
+  EXPECT_TRUE(map.get(0).empty());
 
-  // Ditto, unsigned
+  // $0 >= 5, $0 < 100, $0++  =>  $0 > 5, $0 <= 100 (signed)
+  Constraint lts100{LtS, {Literal(int32_t(100))}};
+  Constraint les100{LeS, {Literal(int32_t(100))}};
+  map.set(0, {{GeS, {Literal(int32_t(5))}}, lts100});
+  map.set(0, &add);
+  EXPECT_EQ(map.get(0),
+            (AndedConstraintSet{{GtS, {Literal(int32_t(5))}}, les100}));
+
+  // Ditto, unsigned: without an upper bound we can overflow.
   map.set(0, {GeU, {Literal(int32_t(5))}});
   map.set(0, &add);
-  check(map.get(0), {GtU, {Literal(int32_t(5))}});
+  EXPECT_TRUE(map.get(0).empty());
+
+  // With an upper bound, we can optimize like before.
+  Constraint ltu100{LtU, {Literal(int32_t(100))}};
+  Constraint leu100{LeU, {Literal(int32_t(100))}};
+  map.set(0, {{GeU, {Literal(int32_t(5))}}, ltu100});
+  map.set(0, &add);
+  EXPECT_EQ(map.get(0),
+            (AndedConstraintSet{{GtU, {Literal(int32_t(5))}}, leu100}));
 
   // $0 < 5, $0++  =>  $0 <= 5 (signed)
   map.set(0, {LtS, {Literal(int32_t(5))}});
   map.set(0, &add);
   check(map.get(0), {LeS, {Literal(int32_t(5))}});
 
-  // Ditto, unsigned
+  // Ditto, unsigned. We also add a lower bound here, as after $0++, $0 > 0
+  // (due to no overflow, proven by the upper bound).
+  Constraint gtu0{GtU, {Literal(int32_t(0))}};
   map.set(0, {LtU, {Literal(int32_t(5))}});
   map.set(0, &add);
-  check(map.get(0), {LeU, {Literal(int32_t(5))}});
+  EXPECT_EQ(map.get(0),
+            (AndedConstraintSet{{LeU, {Literal(int32_t(5))}}, gtu0}));
 
   // $0 <= 5, $0++  =>  $0 <= 6 (signed)
   map.set(0, {LeS, {Literal(int32_t(5))}});
@@ -605,7 +642,8 @@ TEST(ConstraintTest, TestIncrement) {
   // Ditto, unsigned
   map.set(0, {LeU, {Literal(int32_t(5))}});
   map.set(0, &add);
-  check(map.get(0), {LeU, {Literal(int32_t(6))}});
+  EXPECT_EQ(map.get(0),
+            (AndedConstraintSet{{LeU, {Literal(int32_t(6))}}, gtu0}));
 
   // $0 <= max_signed, $0++  =>  nothing, because it would overflow
   map.set(0, {LeS, {Literal::makeSignedMax(Type::i32)}});
@@ -621,7 +659,9 @@ TEST(ConstraintTest, TestIncrement) {
   map.set(0, {LeU, {Literal::makeSignedMax(Type::i32)}});
   map.set(0, &add);
   auto one = Literal::makeFromInt32(1, Type::i32);
-  check(map.get(0), {LeU, {Literal::makeSignedMax(Type::i32).add(one)}});
+  EXPECT_EQ(map.get(0),
+            (AndedConstraintSet{
+              {LeU, {Literal::makeSignedMax(Type::i32).add(one)}}, gtu0}));
 
   // Multiple constraints at once:
   // $0 >= 10 && $0 < 20, $0++  =>  $0 > 10 && $0 <= 20
@@ -632,18 +672,37 @@ TEST(ConstraintTest, TestIncrement) {
             (AndedConstraintSet{{GtS, {Literal(int32_t(10))}},
                                 {LeS, {Literal(int32_t(20))}}}));
 
-  // $0 >= 10 && $0 <= max_signed, $0++  =>  $0 > 10 (overflowing constraint
-  // removed)
+  // $0 >= 10 && $0 <= max_signed, $0++  =>  nothing, as we may overflow.
   map.set(0, {GeS, {Literal(int32_t(10))}});
   map.approximateAnd(0, {LeS, {Literal::makeSignedMax(Type::i32)}});
   map.set(0, &add);
-  EXPECT_EQ(map.get(0), (AndedConstraintSet{{GtS, {Literal(int32_t(10))}}}));
+  EXPECT_EQ(map.get(0).size(), 0);
 
-  // $0 >= 10 && $0 == $2, $0++  =>  $0 > 10 (non-constant term removed)
-  map.set(0, {GeS, {Literal(int32_t(10))}});
+  // Ditto, unsigned.
+  map.set(0, {GeU, {Literal(int32_t(10))}});
+  map.approximateAnd(0, {LeU, {Literal::makeUnsignedMax(Type::i32)}});
+  map.set(0, &add);
+  EXPECT_EQ(map.get(0).size(), 0);
+
+  // Ditto, 64-bit signed.
+  map.set(0, {GeS, {Literal(int64_t(10))}});
+  map.approximateAnd(0, {LeS, {Literal::makeSignedMax(Type::i64)}});
+  map.set(0, &add);
+  EXPECT_EQ(map.get(0).size(), 0);
+
+  // Ditto, 64-bit unsigned.
+  map.set(0, {GeU, {Literal(int64_t(10))}});
+  map.approximateAnd(0, {LeU, {Literal::makeUnsignedMax(Type::i64)}});
+  map.set(0, &add);
+  EXPECT_EQ(map.get(0).size(), 0);
+
+  // $0 >= 5 && $0 < 100 && $0 == $2, $0++  =>  we increment and remove the non-
+  // constant term, leaving $0 > 5 && $0 <= 100.
+  map.set(0, {{GeS, {Literal(int32_t(5))}}, lts100});
   map.approximateAnd(0, {Eq, {Index(2)}});
   map.set(0, &add);
-  EXPECT_EQ(map.get(0), (AndedConstraintSet{{GtS, {Literal(int32_t(10))}}}));
+  EXPECT_EQ(map.get(0),
+            (AndedConstraintSet{{GtS, {Literal(int32_t(5))}}, les100}));
 }
 
 TEST(ConstraintTest, TestEqConstraints) {
@@ -659,4 +718,459 @@ TEST(ConstraintTest, TestEqConstraints) {
   // $1 has $1 > 42: we constant-propagated the value of $0. This is better than
   // having $1 > $0 and needing to look $0 up.
   check(map.get(1), {GtS, {Literal(int32_t(42))}});
+}
+
+TEST(ConstraintTest, ComplexOrRegression) {
+  // $0 == 0
+  BasicBlockConstraintMap left;
+  left.setReachable();
+  left.set(0, {Eq, {Literal(int32_t(0))}});
+
+  // $0 <= 100, $0 > $1
+  BasicBlockConstraintMap right;
+  right.setReachable();
+  right.set(0, {{LeS, {Literal(int32_t(100))}}, {GtS, {Index(1)}}});
+
+  // $0 == 0 || $0 <= 100  =>  $0 <= 100  (0 is included in <= 100), but the
+  // other constraint, $0 > $1, was only on one side, and vanishes.
+  right.approximateOr(left);
+  check(right.get(0), {LeS, {Literal(int32_t(100))}});
+  EXPECT_TRUE(right.get(1).empty());
+}
+
+TEST(ConstraintTest, GetSpan) {
+  const IU64 minI32(std::numeric_limits<int32_t>::min());
+  const IU64 maxI32(std::numeric_limits<int32_t>::max());
+  const IU64 maxU32(std::numeric_limits<uint32_t>::max());
+  const IU64 minI64(std::numeric_limits<int64_t>::min());
+  const IU64 maxI64(std::numeric_limits<int64_t>::max());
+  const IU64 maxU64(std::numeric_limits<uint64_t>::max());
+
+  // Non-literal terms have no constant span.
+  EXPECT_EQ((Constraint{Eq, {Index(0)}}.getSpan()), std::nullopt);
+  EXPECT_EQ((Constraint{LtS, {Index(1)}}.getSpan()), std::nullopt);
+  EXPECT_EQ((Constraint{GeU, {Index(2)}}.getSpan()), std::nullopt);
+
+  // Unsupported operations (e.g. Ne) have no constant span.
+  EXPECT_EQ((Constraint{Ne, {Literal(int32_t(5))}}.getSpan()), std::nullopt);
+  EXPECT_EQ((Constraint{Ne, {Literal(int32_t(0))}}.getSpan()), std::nullopt);
+
+  // Eq (i32): non-negative values up to int32_t max have an unambiguous span.
+  EXPECT_EQ((Constraint{Eq, {Literal(int32_t(0))}}.getSpan()),
+            (Span<IU64>{0, 0}));
+  EXPECT_EQ((Constraint{Eq, {Literal(int32_t(1))}}.getSpan()),
+            (Span<IU64>{1, 1}));
+  EXPECT_EQ((Constraint{Eq, {Literal(int32_t(42))}}.getSpan()),
+            (Span<IU64>{42, 42}));
+  EXPECT_EQ(
+    (Constraint{Eq, {Literal(std::numeric_limits<int32_t>::max())}}.getSpan()),
+    (Span<IU64>{maxI32, maxI32}));
+
+  // Eq (i32) with negative or large unsigned values returns nullopt due to
+  // signed/unsigned ambiguity.
+  EXPECT_EQ((Constraint{Eq, {Literal(int32_t(-1))}}.getSpan()), std::nullopt);
+  EXPECT_EQ((Constraint{Eq, {Literal(int32_t(-42))}}.getSpan()), std::nullopt);
+  EXPECT_EQ(
+    (Constraint{Eq, {Literal(std::numeric_limits<int32_t>::min())}}.getSpan()),
+    std::nullopt);
+  EXPECT_EQ((Constraint{Eq, {Literal(uint32_t(0x80000000u))}}.getSpan()),
+            std::nullopt);
+  EXPECT_EQ(
+    (Constraint{Eq, {Literal(std::numeric_limits<uint32_t>::max())}}.getSpan()),
+    std::nullopt);
+
+  // Eq (i64): non-negative values up to int64_t max have an unambiguous span.
+  EXPECT_EQ((Constraint{Eq, {Literal(int64_t(0))}}.getSpan()),
+            (Span<IU64>{0, 0}));
+  EXPECT_EQ((Constraint{Eq, {Literal(int64_t(42))}}.getSpan()),
+            (Span<IU64>{42, 42}));
+  EXPECT_EQ(
+    (Constraint{Eq, {Literal(int64_t(std::numeric_limits<int32_t>::max()) + 1)}}
+       .getSpan()),
+    (Span<IU64>{uint64_t(std::numeric_limits<int32_t>::max()) + 1,
+                uint64_t(std::numeric_limits<int32_t>::max()) + 1}));
+  EXPECT_EQ(
+    (Constraint{Eq, {Literal(std::numeric_limits<int64_t>::max())}}.getSpan()),
+    (Span<IU64>{maxI64, maxI64}));
+
+  // Eq (i64) with negative or large unsigned values returns nullopt.
+  EXPECT_EQ((Constraint{Eq, {Literal(int64_t(-1))}}.getSpan()), std::nullopt);
+  EXPECT_EQ(
+    (Constraint{Eq, {Literal(std::numeric_limits<int64_t>::min())}}.getSpan()),
+    std::nullopt);
+  EXPECT_EQ((Constraint{Eq, {Literal(uint64_t(uint64_t(1) << 63))}}.getSpan()),
+            std::nullopt);
+  EXPECT_EQ(
+    (Constraint{Eq, {Literal(std::numeric_limits<uint64_t>::max())}}.getSpan()),
+    std::nullopt);
+
+  // LtS (i32): [minI32, C - 1]
+  EXPECT_EQ((Constraint{LtS, {Literal(int32_t(10))}}.getSpan()),
+            (Span<IU64>{minI32, IU64(9)}));
+  EXPECT_EQ((Constraint{LtS, {Literal(int32_t(0))}}.getSpan()),
+            (Span<IU64>{minI32, IU64(-1)}));
+  EXPECT_EQ((Constraint{LtS, {Literal(int32_t(-5))}}.getSpan()),
+            (Span<IU64>{minI32, IU64(-6)}));
+  EXPECT_EQ(
+    (Constraint{LtS, {Literal(std::numeric_limits<int32_t>::max())}}.getSpan()),
+    (Span<IU64>{minI32, IU64(std::numeric_limits<int32_t>::max() - 1)}));
+  // LtS min signed (i32): empty span
+  auto ltsMin32 =
+    Constraint{LtS, {Literal(std::numeric_limits<int32_t>::min())}}.getSpan();
+  ASSERT_TRUE(ltsMin32.has_value());
+  EXPECT_TRUE(ltsMin32->isEmpty());
+  EXPECT_EQ(ltsMin32, Span<IU64>::empty());
+
+  // LtS (i64): [minI64, C - 1]
+  EXPECT_EQ((Constraint{LtS, {Literal(int64_t(100))}}.getSpan()),
+            (Span<IU64>{minI64, IU64(99)}));
+  EXPECT_EQ((Constraint{LtS, {Literal(int64_t(0))}}.getSpan()),
+            (Span<IU64>{minI64, IU64(-1)}));
+  EXPECT_EQ(
+    (Constraint{LtS, {Literal(std::numeric_limits<int64_t>::max())}}.getSpan()),
+    (Span<IU64>{minI64, IU64(std::numeric_limits<int64_t>::max() - 1)}));
+  // LtS min signed (i64): empty span
+  auto ltsMin64 =
+    Constraint{LtS, {Literal(std::numeric_limits<int64_t>::min())}}.getSpan();
+  ASSERT_TRUE(ltsMin64.has_value());
+  EXPECT_TRUE(ltsMin64->isEmpty());
+  EXPECT_EQ(ltsMin64, Span<IU64>::empty());
+
+  // LtU (i32): [0, C - 1]
+  EXPECT_EQ((Constraint{LtU, {Literal(uint32_t(10))}}.getSpan()),
+            (Span<IU64>{IU64(0), IU64(9)}));
+  EXPECT_EQ((Constraint{LtU, {Literal(uint32_t(1))}}.getSpan()),
+            (Span<IU64>{IU64(0), IU64(0)}));
+  EXPECT_EQ(
+    (Constraint{LtU, {Literal(std::numeric_limits<uint32_t>::max())}}
+       .getSpan()),
+    (Span<IU64>{IU64(0),
+                IU64(uint64_t(std::numeric_limits<uint32_t>::max()) - 1)}));
+  // LtU 0 (i32): empty span
+  auto ltuZero32 = Constraint{LtU, {Literal(uint32_t(0))}}.getSpan();
+  ASSERT_TRUE(ltuZero32.has_value());
+  EXPECT_TRUE(ltuZero32->isEmpty());
+  EXPECT_EQ(ltuZero32, Span<IU64>::empty());
+
+  // LtU (i64): [0, C - 1]
+  EXPECT_EQ((Constraint{LtU, {Literal(uint64_t(100))}}.getSpan()),
+            (Span<IU64>{IU64(0), IU64(99)}));
+  EXPECT_EQ(
+    (Constraint{LtU, {Literal(std::numeric_limits<uint64_t>::max())}}
+       .getSpan()),
+    (Span<IU64>{IU64(0), IU64(std::numeric_limits<uint64_t>::max() - 1)}));
+  // LtU 0 (i64): empty span
+  auto ltuZero64 = Constraint{LtU, {Literal(uint64_t(0))}}.getSpan();
+  ASSERT_TRUE(ltuZero64.has_value());
+  EXPECT_TRUE(ltuZero64->isEmpty());
+  EXPECT_EQ(ltuZero64, Span<IU64>::empty());
+
+  // LeS (i32): [minI32, C]
+  EXPECT_EQ((Constraint{LeS, {Literal(int32_t(10))}}.getSpan()),
+            (Span<IU64>{minI32, IU64(10)}));
+  EXPECT_EQ((Constraint{LeS, {Literal(int32_t(0))}}.getSpan()),
+            (Span<IU64>{minI32, IU64(0)}));
+  EXPECT_EQ((Constraint{LeS, {Literal(int32_t(-5))}}.getSpan()),
+            (Span<IU64>{minI32, IU64(-5)}));
+  EXPECT_EQ(
+    (Constraint{LeS, {Literal(std::numeric_limits<int32_t>::min())}}.getSpan()),
+    (Span<IU64>{minI32, minI32}));
+  EXPECT_EQ(
+    (Constraint{LeS, {Literal(std::numeric_limits<int32_t>::max())}}.getSpan()),
+    (Span<IU64>{minI32, maxI32}));
+
+  // LeS (i64): [minI64, C]
+  EXPECT_EQ((Constraint{LeS, {Literal(int64_t(10))}}.getSpan()),
+            (Span<IU64>{minI64, IU64(10)}));
+  EXPECT_EQ(
+    (Constraint{LeS, {Literal(std::numeric_limits<int64_t>::min())}}.getSpan()),
+    (Span<IU64>{minI64, minI64}));
+  EXPECT_EQ(
+    (Constraint{LeS, {Literal(std::numeric_limits<int64_t>::max())}}.getSpan()),
+    (Span<IU64>{minI64, maxI64}));
+
+  // LeU (i32): [0, C]
+  EXPECT_EQ((Constraint{LeU, {Literal(uint32_t(0))}}.getSpan()),
+            (Span<IU64>{IU64(0), IU64(0)}));
+  EXPECT_EQ((Constraint{LeU, {Literal(uint32_t(10))}}.getSpan()),
+            (Span<IU64>{IU64(0), IU64(10)}));
+  EXPECT_EQ((Constraint{LeU, {Literal(std::numeric_limits<uint32_t>::max())}}
+               .getSpan()),
+            (Span<IU64>{IU64(0), maxU32}));
+
+  // LeU (i64): [0, C]
+  EXPECT_EQ((Constraint{LeU, {Literal(uint64_t(0))}}.getSpan()),
+            (Span<IU64>{IU64(0), IU64(0)}));
+  EXPECT_EQ((Constraint{LeU, {Literal(uint64_t(10))}}.getSpan()),
+            (Span<IU64>{IU64(0), IU64(10)}));
+  EXPECT_EQ((Constraint{LeU, {Literal(std::numeric_limits<uint64_t>::max())}}
+               .getSpan()),
+            (Span<IU64>{IU64(0), maxU64}));
+
+  // GtS (i32): [C + 1, maxI32]
+  EXPECT_EQ((Constraint{GtS, {Literal(int32_t(10))}}.getSpan()),
+            (Span<IU64>{IU64(11), maxI32}));
+  EXPECT_EQ((Constraint{GtS, {Literal(int32_t(0))}}.getSpan()),
+            (Span<IU64>{IU64(1), maxI32}));
+  EXPECT_EQ((Constraint{GtS, {Literal(int32_t(-5))}}.getSpan()),
+            (Span<IU64>{IU64(-4), maxI32}));
+  EXPECT_EQ(
+    (Constraint{GtS, {Literal(std::numeric_limits<int32_t>::min())}}.getSpan()),
+    (Span<IU64>{IU64(std::numeric_limits<int32_t>::min() + 1), maxI32}));
+  EXPECT_EQ((Constraint{GtS, {Literal(std::numeric_limits<int32_t>::max() - 1)}}
+               .getSpan()),
+            (Span<IU64>{maxI32, maxI32}));
+  // GtS max signed (i32): empty span
+  auto gtsMax32 =
+    Constraint{GtS, {Literal(std::numeric_limits<int32_t>::max())}}.getSpan();
+  ASSERT_TRUE(gtsMax32.has_value());
+  EXPECT_TRUE(gtsMax32->isEmpty());
+  EXPECT_EQ(gtsMax32, Span<IU64>::empty());
+
+  // GtS (i64): [C + 1, maxI64]
+  EXPECT_EQ((Constraint{GtS, {Literal(int64_t(10))}}.getSpan()),
+            (Span<IU64>{IU64(11), maxI64}));
+  EXPECT_EQ((Constraint{GtS, {Literal(int64_t(0))}}.getSpan()),
+            (Span<IU64>{IU64(1), maxI64}));
+  EXPECT_EQ(
+    (Constraint{GtS, {Literal(std::numeric_limits<int64_t>::min())}}.getSpan()),
+    (Span<IU64>{IU64(std::numeric_limits<int64_t>::min() + 1), maxI64}));
+  EXPECT_EQ((Constraint{GtS, {Literal(std::numeric_limits<int64_t>::max() - 1)}}
+               .getSpan()),
+            (Span<IU64>{maxI64, maxI64}));
+  // GtS max signed (i64): empty span
+  auto gtsMax64 =
+    Constraint{GtS, {Literal(std::numeric_limits<int64_t>::max())}}.getSpan();
+  ASSERT_TRUE(gtsMax64.has_value());
+  EXPECT_TRUE(gtsMax64->isEmpty());
+  EXPECT_EQ(gtsMax64, Span<IU64>::empty());
+
+  // GtU (i32): [C + 1, maxU32]
+  EXPECT_EQ((Constraint{GtU, {Literal(uint32_t(0))}}.getSpan()),
+            (Span<IU64>{IU64(1), maxU32}));
+  EXPECT_EQ((Constraint{GtU, {Literal(uint32_t(10))}}.getSpan()),
+            (Span<IU64>{IU64(11), maxU32}));
+  EXPECT_EQ(
+    (Constraint{GtU, {Literal(std::numeric_limits<uint32_t>::max() - 1)}}
+       .getSpan()),
+    (Span<IU64>{maxU32, maxU32}));
+  // GtU max unsigned (i32): empty span
+  auto gtuMax32 =
+    Constraint{GtU, {Literal(std::numeric_limits<uint32_t>::max())}}.getSpan();
+  ASSERT_TRUE(gtuMax32.has_value());
+  EXPECT_TRUE(gtuMax32->isEmpty());
+  EXPECT_EQ(gtuMax32, Span<IU64>::empty());
+
+  // GtU (i64): [C + 1, maxU64]
+  EXPECT_EQ((Constraint{GtU, {Literal(uint64_t(0))}}.getSpan()),
+            (Span<IU64>{IU64(1), maxU64}));
+  EXPECT_EQ((Constraint{GtU, {Literal(uint64_t(10))}}.getSpan()),
+            (Span<IU64>{IU64(11), maxU64}));
+  EXPECT_EQ(
+    (Constraint{GtU, {Literal(std::numeric_limits<uint64_t>::max() - 1)}}
+       .getSpan()),
+    (Span<IU64>{maxU64, maxU64}));
+  // GtU max unsigned (i64): empty span
+  auto gtuMax64 =
+    Constraint{GtU, {Literal(std::numeric_limits<uint64_t>::max())}}.getSpan();
+  ASSERT_TRUE(gtuMax64.has_value());
+  EXPECT_TRUE(gtuMax64->isEmpty());
+  EXPECT_EQ(gtuMax64, Span<IU64>::empty());
+
+  // GeS (i32): [C, maxI32]
+  EXPECT_EQ((Constraint{GeS, {Literal(int32_t(10))}}.getSpan()),
+            (Span<IU64>{IU64(10), maxI32}));
+  EXPECT_EQ((Constraint{GeS, {Literal(int32_t(0))}}.getSpan()),
+            (Span<IU64>{IU64(0), maxI32}));
+  EXPECT_EQ((Constraint{GeS, {Literal(int32_t(-5))}}.getSpan()),
+            (Span<IU64>{IU64(-5), maxI32}));
+  EXPECT_EQ(
+    (Constraint{GeS, {Literal(std::numeric_limits<int32_t>::min())}}.getSpan()),
+    (Span<IU64>{minI32, maxI32}));
+  EXPECT_EQ(
+    (Constraint{GeS, {Literal(std::numeric_limits<int32_t>::max())}}.getSpan()),
+    (Span<IU64>{maxI32, maxI32}));
+
+  // GeS (i64): [C, maxI64]
+  EXPECT_EQ((Constraint{GeS, {Literal(int64_t(10))}}.getSpan()),
+            (Span<IU64>{IU64(10), maxI64}));
+  EXPECT_EQ((Constraint{GeS, {Literal(int64_t(0))}}.getSpan()),
+            (Span<IU64>{IU64(0), maxI64}));
+  EXPECT_EQ(
+    (Constraint{GeS, {Literal(std::numeric_limits<int64_t>::min())}}.getSpan()),
+    (Span<IU64>{minI64, maxI64}));
+  EXPECT_EQ(
+    (Constraint{GeS, {Literal(std::numeric_limits<int64_t>::max())}}.getSpan()),
+    (Span<IU64>{maxI64, maxI64}));
+
+  // GeU (i32): [C, maxU32]
+  EXPECT_EQ((Constraint{GeU, {Literal(uint32_t(0))}}.getSpan()),
+            (Span<IU64>{IU64(0), maxU32}));
+  EXPECT_EQ((Constraint{GeU, {Literal(uint32_t(10))}}.getSpan()),
+            (Span<IU64>{IU64(10), maxU32}));
+  EXPECT_EQ((Constraint{GeU, {Literal(std::numeric_limits<uint32_t>::max())}}
+               .getSpan()),
+            (Span<IU64>{maxU32, maxU32}));
+
+  // GeU (i64): [C, maxU64]
+  EXPECT_EQ((Constraint{GeU, {Literal(uint64_t(0))}}.getSpan()),
+            (Span<IU64>{IU64(0), maxU64}));
+  EXPECT_EQ((Constraint{GeU, {Literal(uint64_t(10))}}.getSpan()),
+            (Span<IU64>{IU64(10), maxU64}));
+  EXPECT_EQ((Constraint{GeU, {Literal(std::numeric_limits<uint64_t>::max())}}
+               .getSpan()),
+            (Span<IU64>{maxU64, maxU64}));
+}
+
+TEST(ConstraintTest, GetSpanType) {
+  const IU64 minI32(std::numeric_limits<int32_t>::min());
+  const IU64 minI32Plus1(std::numeric_limits<int32_t>::min() + 1);
+
+  const IU64 maxI32(std::numeric_limits<int32_t>::max());
+  const IU64 maxI32Minus1(std::numeric_limits<int32_t>::max() - 1);
+
+  const IU64 maxU32(std::numeric_limits<uint32_t>::max());
+  const IU64 maxU32Minus1(std::numeric_limits<uint32_t>::max() - 1);
+
+  const IU64 minI64(std::numeric_limits<int64_t>::min());
+  const IU64 minI64Plus1(std::numeric_limits<int64_t>::min() + 1);
+
+  const IU64 maxI64(std::numeric_limits<int64_t>::max());
+  const IU64 maxI64Minus1(std::numeric_limits<int64_t>::max() - 1);
+
+  const IU64 maxU64(std::numeric_limits<uint64_t>::max());
+  const IU64 maxU64Minus1(std::numeric_limits<uint64_t>::max() - 1);
+
+  // Providing the type to getSpan() doesn't help with certain things.
+  EXPECT_EQ((Constraint{Eq, {Index(0)}}.getSpan(Type::i32)), std::nullopt);
+  EXPECT_EQ((Constraint{Ne, {Index(1)}}.getSpan(Type::i64)), std::nullopt);
+  EXPECT_EQ((Constraint{GeU, {Index(2)}}.getSpan(Type::i32)), std::nullopt);
+  EXPECT_EQ((Constraint{GeS, {Index(0)}}.getSpan(Type::i64)), std::nullopt);
+  EXPECT_EQ((Constraint{LeU, {Index(1)}}.getSpan(Type::i64)), std::nullopt);
+  EXPECT_EQ((Constraint{LeS, {Index(2)}}.getSpan(Type::i32)), std::nullopt);
+
+  // But it does help with others: x < y means x cannot be MAX_INT, so we can
+  // report a *proven* span, if not an exact one.
+  EXPECT_EQ((Constraint{LtS, {Index(0)}}.getProvenSpan(Type::i32)),
+            (Span<IU64>{minI32, maxI32Minus1}));
+  EXPECT_EQ((Constraint{LtS, {Index(1)}}.getProvenSpan(Type::i64)),
+            (Span<IU64>{minI64, maxI64Minus1}));
+
+  EXPECT_EQ((Constraint{LtU, {Index(2)}}.getProvenSpan(Type::i32)),
+            (Span<IU64>{0, maxU32Minus1}));
+  EXPECT_EQ((Constraint{LtU, {Index(0)}}.getProvenSpan(Type::i64)),
+            (Span<IU64>{0, maxU64Minus1}));
+
+  EXPECT_EQ((Constraint{GtS, {Index(1)}}.getProvenSpan(Type::i32)),
+            (Span<IU64>{minI32Plus1, maxI32}));
+  EXPECT_EQ((Constraint{GtS, {Index(2)}}.getProvenSpan(Type::i64)),
+            (Span<IU64>{minI64Plus1, maxI64}));
+
+  EXPECT_EQ((Constraint{GtU, {Index(0)}}.getProvenSpan(Type::i32)),
+            (Span<IU64>{1, maxU32}));
+  EXPECT_EQ((Constraint{GtU, {Index(1)}}.getProvenSpan(Type::i64)),
+            (Span<IU64>{1, maxU64}));
+
+  // But all the last things are impossible with an exact span.
+  EXPECT_EQ((Constraint{LtS, {Index(0)}}.getSpan(Type::i32)), std::nullopt);
+  EXPECT_EQ((Constraint{LtS, {Index(1)}}.getSpan(Type::i64)), std::nullopt);
+  EXPECT_EQ((Constraint{LtU, {Index(2)}}.getSpan(Type::i32)), std::nullopt);
+  EXPECT_EQ((Constraint{LtU, {Index(0)}}.getSpan(Type::i64)), std::nullopt);
+  EXPECT_EQ((Constraint{GtS, {Index(1)}}.getSpan(Type::i32)), std::nullopt);
+  EXPECT_EQ((Constraint{GtS, {Index(2)}}.getSpan(Type::i64)), std::nullopt);
+  EXPECT_EQ((Constraint{GtU, {Index(0)}}.getSpan(Type::i32)), std::nullopt);
+  EXPECT_EQ((Constraint{GtU, {Index(1)}}.getSpan(Type::i64)), std::nullopt);
+
+  // Proven spans are otherwise like normal ones.
+  EXPECT_EQ((Constraint{Eq, {Literal(int32_t(42))}}.getProvenSpan()),
+            (Span<IU64>{42, 42}));
+}
+
+TEST(ConstraintTest, SpanOptimizations) {
+  // Using spans, we can optimize things like {x < 100} => {x < 200}.
+  Constraint lts100{LtS, {Literal(int32_t(100))}};
+  Constraint lts200{LtS, {Literal(int32_t(200))}};
+  EXPECT_EQ(AndedConstraintSet{lts100}.proves(lts200), True);
+
+  // Mixing signed and unsigned works fine: x in [0, 100] (x <= 100 unsigned)
+  // proves x in [-MIN_INT, 200] (x < 200 signed) is true.
+  Constraint leu100{LtU, {Literal(int32_t(100))}};
+  EXPECT_EQ(AndedConstraintSet{leu100}.proves(lts200), True);
+
+  // Replacing 100 with 500, we can no longer prove anything.
+  Constraint leu500{LtU, {Literal(int32_t(500))}};
+  EXPECT_EQ(AndedConstraintSet{leu500}.proves(lts200), Unknown);
+}
+
+TEST(ConstraintTest, EmptySpanContradiction) {
+  // Impossible constraints produce empty spans.
+  Constraint gtsMax32{GtS, {Literal(std::numeric_limits<int32_t>::max())}};
+  Constraint ltsMin32{LtS, {Literal(std::numeric_limits<int32_t>::min())}};
+  Constraint ltuZero32{LtU, {Literal(uint32_t(0))}};
+  Constraint gtuMax32{GtU, {Literal(std::numeric_limits<uint32_t>::max())}};
+
+  Constraint gtsMax64{GtS, {Literal(std::numeric_limits<int64_t>::max())}};
+  Constraint ltsMin64{LtS, {Literal(std::numeric_limits<int64_t>::min())}};
+  Constraint ltuZero64{LtU, {Literal(uint64_t(0))}};
+  Constraint gtuMax64{GtU, {Literal(std::numeric_limits<uint64_t>::max())}};
+
+  Constraint eq5{Eq, {Literal(int32_t(5))}};
+  Constraint ge0{GeS, {Literal(int32_t(0))}};
+  Constraint eq100_64{Eq, {Literal(int64_t(100))}};
+
+  // An impossible constraint proves anything is True.
+  EXPECT_EQ(AndedConstraintSet{gtsMax32}.proves(eq5), True);
+  EXPECT_EQ(AndedConstraintSet{ltsMin32}.proves(ge0), True);
+  EXPECT_EQ(AndedConstraintSet{ltuZero32}.proves(eq5), True);
+  EXPECT_EQ(AndedConstraintSet{gtuMax32}.proves(ge0), True);
+
+  EXPECT_EQ(AndedConstraintSet{gtsMax64}.proves(eq100_64), True);
+  EXPECT_EQ(AndedConstraintSet{ltsMin64}.proves(eq100_64), True);
+  EXPECT_EQ(AndedConstraintSet{ltuZero64}.proves(eq100_64), True);
+  EXPECT_EQ(AndedConstraintSet{gtuMax64}.proves(eq100_64), True);
+
+  // Impossible constraint proves another impossible constraint is True.
+  EXPECT_EQ(AndedConstraintSet{gtsMax32}.proves(ltsMin32), True);
+  EXPECT_EQ(AndedConstraintSet{ltuZero32}.proves(gtuMax32), True);
+
+  // A normal constraint proves an impossible constraint is False.
+  EXPECT_EQ(AndedConstraintSet{eq5}.proves(gtsMax32), False);
+  EXPECT_EQ(AndedConstraintSet{eq5}.proves(ltsMin32), False);
+  EXPECT_EQ(AndedConstraintSet{eq5}.proves(ltuZero32), False);
+  EXPECT_EQ(AndedConstraintSet{eq5}.proves(gtuMax32), False);
+
+  EXPECT_EQ(AndedConstraintSet{eq100_64}.proves(gtsMax64), False);
+  EXPECT_EQ(AndedConstraintSet{eq100_64}.proves(ltsMin64), False);
+  EXPECT_EQ(AndedConstraintSet{eq100_64}.proves(ltuZero64), False);
+  EXPECT_EQ(AndedConstraintSet{eq100_64}.proves(gtuMax64), False);
+
+  // An impossible constraint in a set proves any condition.
+  AndedConstraintSet s{gtsMax32};
+  EXPECT_EQ(s.proves(eq5), True);
+  EXPECT_EQ(s.proves(ge0), True);
+
+  // Adding an impossible constraint to a non-empty set proves False and turns
+  // the set into an explicit contradiction (provesEverything() == true).
+  AndedConstraintSet s2;
+  s2.set(eq5);
+  s2.approximateAnd(ltuZero32);
+  EXPECT_TRUE(s2.provesEverything());
+
+  // ORing an impossible constraint (which has no models) with a valid set
+  // leaves the valid set.
+  AndedConstraintSet valid{{Eq, {Literal(int32_t(42))}}};
+  AndedConstraintSet impossible{gtsMax32};
+  checkOr(valid, impossible, valid);
+}
+
+TEST(ConstraintTest, GetSpanFloat) {
+  // Non-integer types do not cause errors.
+  EXPECT_EQ((Constraint{Eq, {Literal(float(3.14159))}}.getSpan()),
+            std::nullopt);
+}
+
+TEST(ConstraintTest, GetSpanGC) {
+  // Reference types do not cause errors.
+  EXPECT_EQ((Constraint{Eq, {Literal::makeNull(HeapType::eq)}}.getSpan()),
+            std::nullopt);
 }

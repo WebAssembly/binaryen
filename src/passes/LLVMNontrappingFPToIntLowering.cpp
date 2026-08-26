@@ -4,6 +4,10 @@
 #include <limits>
 #include <memory>
 
+// Note: This pass is no longer used either in emscripten, or internally by any
+// other part of binaryen.  Unless there are other uses that show up we may
+// consider this pass for removal.
+
 // By default LLVM emits nontrapping float-to-int instructions to implement its
 // fptoui/fptosi conversion instructions. This pass replaces these instructions
 // with code sequences which also implement LLVM's fptoui/fptosi, but which are

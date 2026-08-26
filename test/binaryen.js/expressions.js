@@ -2446,6 +2446,87 @@ console.log("# StructSet");
   module.dispose();
 })();
 
+console.log("# StructWait");
+(function testStructWait() {
+  const builder = new binaryen.TypeBuilder(1);
+  builder.setStructType(0, [
+    { type: binaryen.i32, packedType: binaryen.notPacked, mutable: true },
+  ]);
+  var [
+    struct0Type
+  ] = builder.buildAndDispose();
+
+  const module = new binaryen.Module();
+
+  var ref = module.local.get(0, struct0Type);
+  var index = 0;
+  var expected = module.local.get(1, binaryen.i32);
+  var timeout = module.local.get(2, binaryen.i64);
+  var waitqueue = module.local.get(3, binaryen.anyref);
+  const theStructWait = binaryen.StructWait(module.struct.wait(ref, index, expected, timeout, waitqueue));
+  assert(theStructWait instanceof binaryen.StructWait);
+  assert(theStructWait instanceof binaryen.Expression);
+  assert(theStructWait.ref === ref);
+  assert(theStructWait.index === index);
+  assert(theStructWait.expected === expected);
+  assert(theStructWait.timeout === timeout);
+  assert(theStructWait.waitqueue === waitqueue);
+  assert(theStructWait.type === binaryen.i32);
+
+  var info = binaryen.getExpressionInfo(theStructWait);
+  assert(info.id === theStructWait.id);
+  assert(info.type === theStructWait.type);
+  assert(info.ref === theStructWait.ref);
+  assert(info.index === theStructWait.index);
+  assert(info.expected === theStructWait.expected);
+  assert(info.timeout === theStructWait.timeout);
+  assert(info.waitqueue === theStructWait.waitqueue);
+
+  console.log(theStructWait.toText());
+
+  module.dispose();
+})();
+
+console.log("# WaitqueueNew");
+(function testWaitqueueNew() {
+  const module = new binaryen.Module();
+
+  const theWaitqueueNew = binaryen.WaitqueueNew(module.waitqueue.new());
+  assert(theWaitqueueNew instanceof binaryen.WaitqueueNew);
+  assert(theWaitqueueNew instanceof binaryen.Expression);
+
+  var info = binaryen.getExpressionInfo(theWaitqueueNew);
+  assert(info.id === theWaitqueueNew.id);
+  assert(info.type === theWaitqueueNew.type);
+
+  console.log(theWaitqueueNew.toText());
+
+  module.dispose();
+})();
+
+console.log("# WaitqueueNotify");
+(function testWaitqueueNotify() {
+  const module = new binaryen.Module();
+
+  var waitqueue = module.local.get(0, binaryen.anyref);
+  var count = module.local.get(1, binaryen.i32);
+  const theWaitqueueNotify = binaryen.WaitqueueNotify(module.waitqueue.notify(waitqueue, count));
+  assert(theWaitqueueNotify instanceof binaryen.WaitqueueNotify);
+  assert(theWaitqueueNotify instanceof binaryen.Expression);
+  assert(theWaitqueueNotify.waitqueue === waitqueue);
+  assert(theWaitqueueNotify.count === count);
+
+  var info = binaryen.getExpressionInfo(theWaitqueueNotify);
+  assert(info.id === theWaitqueueNotify.id);
+  assert(info.type === theWaitqueueNotify.type);
+  assert(info.waitqueue === theWaitqueueNotify.waitqueue);
+  assert(info.count === theWaitqueueNotify.count);
+
+  console.log(theWaitqueueNotify.toText());
+
+  module.dispose();
+})();
+
 console.log("# ArrayNew");
 (function testArrayNew() {
   const builder = new binaryen.TypeBuilder(2);

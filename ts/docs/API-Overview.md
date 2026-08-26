@@ -228,6 +228,9 @@ Note: For brevity, glob-like syntax `_{s,u}` is used to mean “`_s` and `_u`”
 	- `.struct.new()`, `.struct.new_default()`
 	- `.struct.get()`, `.struct.get_{s,u}()`
 	- `.struct.set()`
+	- `.struct.wait()`
+	- `.waitqueue.new()`
+	- `.waitqueue.notify()`
 	- `.array.new()`, `.array.new_default()`, `.array.new_fixed()`, `.array.new_data()`, `.array.new_elem()`
 	- `.array.get()`, `.array.get_{s,u}()`
 	- `.array.set()`
@@ -388,6 +391,9 @@ See generated docs for fields, methods, and descriptions of each.
 	- `expressions.StructNew`
 	- `expressions.StructGet`
 	- `expressions.StructSet`
+	- `expressions.StructWait`
+	- `expressions.WaitqueueNew`
+	- `expressions.WaitqueueNotify`
 	- `expressions.ArrayNew`
 	- `expressions.ArrayNewFixed`
 	- `expressions.ArrayNewData`

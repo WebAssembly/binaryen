@@ -183,6 +183,7 @@ struct MakeSharedObjects
       return;
     }
     if (!castHeapType.isSignature()) {
+      updateType(curr->castType);
       return;
     }
     Builder builder(*getModule());
@@ -224,6 +225,7 @@ struct MakeSharedObjects
       return;
     }
     if (!castHeapType.isSignature()) {
+      updateType(curr->type);
       return;
     }
     if (getPassOptions().trapsNeverHappen) {
