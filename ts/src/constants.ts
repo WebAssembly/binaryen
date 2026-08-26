@@ -209,6 +209,9 @@ export enum ExpressionId {
 	StructSet = BinaryenObj["_BinaryenStructSetId"](),
 	// TODO: StructRMW
 	// TODO: StructCmpxchg
+	StructWait = BinaryenObj["_BinaryenStructWaitId"](),
+	WaitqueueNew = BinaryenObj["_BinaryenWaitqueueNewId"](),
+	WaitqueueNotify = BinaryenObj["_BinaryenWaitqueueNotifyId"](),
 	ArrayNew = BinaryenObj["_BinaryenArrayNewId"](),
 	ArrayNewFixed = BinaryenObj["_BinaryenArrayNewFixedId"](),
 	ArrayNewData = BinaryenObj["_BinaryenArrayNewDataId"](),

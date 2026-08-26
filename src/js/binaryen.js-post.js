@@ -144,6 +144,9 @@ function initializeConstants() {
     'StructNew',
     'StructGet',
     'StructSet',
+    'StructWait',
+    'WaitqueueNew',
+    'WaitqueueNotify',
     'ArrayNew',
     'ArrayNewFixed',
     'ArrayNewData',
@@ -2591,6 +2594,18 @@ function wrapModule(module, self = {}) {
     },
     'set'(index, ref, value) {
       return Module['_BinaryenStructSet'](module, index, ref, value);
+    },
+    'wait'(ref, index, expected, timeout, waitqueue) {
+      return Module['_BinaryenStructWait'](module, ref, index, expected, timeout, waitqueue);
+    }
+  };
+
+  self['waitqueue'] = {
+    'new'() {
+      return Module['_BinaryenWaitqueueNew'](module);
+    },
+    'notify'(waitqueue, count) {
+      return Module['_BinaryenWaitqueueNotify'](module, waitqueue, count);
     }
   };
 
@@ -4926,6 +4941,56 @@ Module['StructSet'] = makeExpressionWrapper(Module['_BinaryenStructSetId'](), {
   },
   'setValue'(expr, value) {
     Module['_BinaryenStructSetSetValue'](expr, value);
+  }
+});
+
+Module['StructWait'] = makeExpressionWrapper(Module['_BinaryenStructWaitId'](), {
+  'getRef'(expr) {
+    return Module['_BinaryenStructWaitGetRef'](expr);
+  },
+  'setRef'(expr, ref) {
+    Module['_BinaryenStructWaitSetRef'](expr, ref);
+  },
+  'getIndex'(expr) {
+    return Module['_BinaryenStructWaitGetIndex'](expr);
+  },
+  'setIndex'(expr, index) {
+    Module['_BinaryenStructWaitSetIndex'](expr, index);
+  },
+  'getExpected'(expr) {
+    return Module['_BinaryenStructWaitGetExpected'](expr);
+  },
+  'setExpected'(expr, expectedExpr) {
+    Module['_BinaryenStructWaitSetExpected'](expr, expectedExpr);
+  },
+  'getTimeout'(expr) {
+    return Module['_BinaryenStructWaitGetTimeout'](expr);
+  },
+  'setTimeout'(expr, timeoutExpr) {
+    Module['_BinaryenStructWaitSetTimeout'](expr, timeoutExpr);
+  },
+  'getWaitqueue'(expr) {
+    return Module['_BinaryenStructWaitGetWaitqueue'](expr);
+  },
+  'setWaitqueue'(expr, waitqueueExpr) {
+    Module['_BinaryenStructWaitSetWaitqueue'](expr, waitqueueExpr);
+  }
+});
+
+Module['WaitqueueNew'] = makeExpressionWrapper(Module['_BinaryenWaitqueueNewId'](), {});
+
+Module['WaitqueueNotify'] = makeExpressionWrapper(Module['_BinaryenWaitqueueNotifyId'](), {
+  'getWaitqueue'(expr) {
+    return Module['_BinaryenWaitqueueNotifyGetWaitqueue'](expr);
+  },
+  'setWaitqueue'(expr, waitqueueExpr) {
+    Module['_BinaryenWaitqueueNotifySetWaitqueue'](expr, waitqueueExpr);
+  },
+  'getCount'(expr) {
+    return Module['_BinaryenWaitqueueNotifyGetCount'](expr);
+  },
+  'setCount'(expr, countExpr) {
+    Module['_BinaryenWaitqueueNotifySetCount'](expr, countExpr);
   }
 });
 

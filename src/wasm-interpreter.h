@@ -407,6 +407,24 @@ protected:
     }
   }
 
+  static Literal applyRMW(AtomicRMWOp op, Literal lhs, Literal rhs) {
+    switch (op) {
+      case RMWAdd:
+        return lhs.add(rhs);
+      case RMWSub:
+        return lhs.sub(rhs);
+      case RMWAnd:
+        return lhs.and_(rhs);
+      case RMWOr:
+        return lhs.or_(rhs);
+      case RMWXor:
+        return lhs.xor_(rhs);
+      case RMWXchg:
+        return rhs;
+    }
+    WASM_UNREACHABLE("unexpected op");
+  }
+
 public:
   // Indicates no limit of maxDepth or maxLoopIterations.
   static const Index NO_LIMIT = 0;
@@ -2282,27 +2300,7 @@ public:
     }
     auto& field = data->values[curr->index];
     auto oldVal = field;
-    auto newVal = value.getSingleValue();
-    switch (curr->op) {
-      case RMWAdd:
-        field = field.add(newVal);
-        break;
-      case RMWSub:
-        field = field.sub(newVal);
-        break;
-      case RMWAnd:
-        field = field.and_(newVal);
-        break;
-      case RMWOr:
-        field = field.or_(newVal);
-        break;
-      case RMWXor:
-        field = field.xor_(newVal);
-        break;
-      case RMWXchg:
-        field = newVal;
-        break;
-    }
+    field = applyRMW(curr->op, oldVal, value.getSingleValue());
     return oldVal;
   }
 
@@ -2324,6 +2322,7 @@ public:
 
   Flow visitStructWait(StructWait* curr) {
     VISIT(ref, curr->ref)
+    VISIT(waitqueue, curr->waitqueue)
     VISIT(expected, curr->expected)
     VISIT(timeout, curr->timeout)
 
@@ -2335,8 +2334,11 @@ public:
     if (!data) {
       trap("null ref");
     }
+    if (!waitqueue.getSingleValue().getGCData()) {
+      trap("null ref");
+    }
     auto& field = data->values[curr->index];
-    if (field.geti32() != expected.getSingleValue().geti32()) {
+    if (field != expected.getSingleValue()) {
       return Literal(int32_t{1}); // not equal
     }
     // TODO: Add threads support. For now, report a host limit here, as there
@@ -2643,27 +2645,7 @@ public:
     }
     auto& field = data->values[indexVal];
     auto oldVal = field;
-    auto newVal = value.getSingleValue();
-    switch (curr->op) {
-      case RMWAdd:
-        field = field.add(newVal);
-        break;
-      case RMWSub:
-        field = field.sub(newVal);
-        break;
-      case RMWAnd:
-        field = field.and_(newVal);
-        break;
-      case RMWOr:
-        field = field.or_(newVal);
-        break;
-      case RMWXor:
-        field = field.xor_(newVal);
-        break;
-      case RMWXchg:
-        field = newVal;
-        break;
-    }
+    field = applyRMW(curr->op, oldVal, value.getSingleValue());
     return oldVal;
   }
 
@@ -4338,26 +4320,7 @@ public:
       curr, ptr.getSingleValue(), memorySizeBytes);
     auto loaded = info.instance->doAtomicLoad(
       addr, curr->bytes, curr->type, info.name, memorySizeBytes, curr->order);
-    auto computed = value.getSingleValue();
-    switch (curr->op) {
-      case RMWAdd:
-        computed = loaded.add(computed);
-        break;
-      case RMWSub:
-        computed = loaded.sub(computed);
-        break;
-      case RMWAnd:
-        computed = loaded.and_(computed);
-        break;
-      case RMWOr:
-        computed = loaded.or_(computed);
-        break;
-      case RMWXor:
-        computed = loaded.xor_(computed);
-        break;
-      case RMWXchg:
-        break;
-    }
+    auto computed = this->applyRMW(curr->op, loaded, value.getSingleValue());
     info.instance->doAtomicStore(
       addr, curr->bytes, computed, info.name, memorySizeBytes);
     return loaded;

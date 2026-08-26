@@ -168,6 +168,51 @@ export class StructSet extends Expression {
 
 
 
+export class StructWait extends Expression {
+	constructor(expr: ExpressionRef) {
+		super(ExpressionId.StructWait, expr);
+	}
+
+	get ref(): ExpressionRef { return BinaryenObj["_BinaryenStructWaitGetRef"](this._ptr); }
+	set ref(ref: ExpressionRef) { BinaryenObj["_BinaryenStructWaitSetRef"](this._ptr, ref); }
+
+	get index(): number { return BinaryenObj["_BinaryenStructWaitGetIndex"](this._ptr); }
+	set index(index: number) { BinaryenObj["_BinaryenStructWaitSetIndex"](this._ptr, index); }
+
+	get expected(): ExpressionRef { return BinaryenObj["_BinaryenStructWaitGetExpected"](this._ptr); }
+	set expected(expected: ExpressionRef) { BinaryenObj["_BinaryenStructWaitSetExpected"](this._ptr, expected); }
+
+	get timeout(): ExpressionRef { return BinaryenObj["_BinaryenStructWaitGetTimeout"](this._ptr); }
+	set timeout(timeout: ExpressionRef) { BinaryenObj["_BinaryenStructWaitSetTimeout"](this._ptr, timeout); }
+
+	get waitqueue(): ExpressionRef { return BinaryenObj["_BinaryenStructWaitGetWaitqueue"](this._ptr); }
+	set waitqueue(waitqueue: ExpressionRef) { BinaryenObj["_BinaryenStructWaitSetWaitqueue"](this._ptr, waitqueue); }
+}
+
+
+
+export class WaitqueueNew extends Expression {
+	constructor(expr: ExpressionRef) {
+		super(ExpressionId.WaitqueueNew, expr);
+	}
+}
+
+
+
+export class WaitqueueNotify extends Expression {
+	constructor(expr: ExpressionRef) {
+		super(ExpressionId.WaitqueueNotify, expr);
+	}
+
+	get waitqueue(): ExpressionRef { return BinaryenObj["_BinaryenWaitqueueNotifyGetWaitqueue"](this._ptr); }
+	set waitqueue(waitqueue: ExpressionRef) { BinaryenObj["_BinaryenWaitqueueNotifySetWaitqueue"](this._ptr, waitqueue); }
+
+	get count(): ExpressionRef { return BinaryenObj["_BinaryenWaitqueueNotifyGetCount"](this._ptr); }
+	set count(count: ExpressionRef) { BinaryenObj["_BinaryenWaitqueueNotifySetCount"](this._ptr, count); }
+}
+
+
+
 export class ArrayNew extends Expression {
 	constructor(expr: ExpressionRef) {
 		super(ExpressionId.ArrayNew, expr);

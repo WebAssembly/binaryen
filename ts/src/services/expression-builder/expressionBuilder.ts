@@ -16,6 +16,7 @@ import {
 	array,
 	struct,
 	tuple,
+	waitqueue,
 } from "./aggregate.ts";
 import {f32} from "./f32.ts";
 import {f32x4} from "./f32x4.ts";
@@ -87,6 +88,7 @@ export function expressionBuilder(mod: Module) {
 		// TODO: any.convert_extern
 		tuple: tuple(mod),
 		struct: struct(mod),
+		waitqueue: waitqueue(mod),
 		array: array(mod),
 		string: string(mod),
 		i32: i32(mod),

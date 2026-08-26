@@ -1168,6 +1168,14 @@ void test_core() {
                       0,
                       BinaryenGlobalGet(module, "i32Struct-global", i32Struct),
                       makeInt32(module, 0)),
+    BinaryenStructWait(module,
+                       BinaryenGlobalGet(module, "i32Struct-global", i32Struct),
+                       0,
+                       makeInt32(module, 0),
+                       makeInt64(module, 0),
+                       BinaryenWaitqueueNew(module)),
+    BinaryenWaitqueueNotify(
+      module, BinaryenWaitqueueNew(module), makeInt32(module, 0)),
     BinaryenArrayNew(
       module, BinaryenTypeGetHeapType(i8Array), makeInt32(module, 3), 0),
     BinaryenArrayNew(module,

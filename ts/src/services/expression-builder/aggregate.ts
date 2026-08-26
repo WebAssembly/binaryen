@@ -82,6 +82,26 @@ export function struct(mod: Module) {
 		set: (index: number, ref: ExpressionRef, value: ExpressionRef): ExpressionRef => (
 			BinaryenObj["_BinaryenStructSet"](mod[PTR], index, ref, value)
 		),
+
+		/** [description] */
+		wait: (ref: ExpressionRef, index: number, expected: ExpressionRef, timeout: ExpressionRef, queue: ExpressionRef): ExpressionRef => (
+			BinaryenObj["_BinaryenStructWait"](mod[PTR], ref, index, expected, timeout, queue)
+		),
+	} as const;
+}
+
+
+
+export function waitqueue(mod: Module) {
+	return {
+		/** [description] */
+		new: (): ExpressionRef => (
+			BinaryenObj["_BinaryenWaitqueueNew"](mod[PTR])
+		),
+		/** [description] */
+		notify: (queue: ExpressionRef, count: ExpressionRef): ExpressionRef => (
+			BinaryenObj["_BinaryenWaitqueueNew"](mod[PTR], queue, count)
+		),
 	} as const;
 }
 
