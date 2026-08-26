@@ -193,7 +193,7 @@ struct ConstraintAnalysis
         continue;
       }
 
-      // Look through block fallthroughs to other possible tees and gets.
+      // Look for other possible tees and gets that fall through.
       auto* next = Properties::getImmediateFallthrough(
         value, getPassOptions(), *getModule());
       if (next == value) {
