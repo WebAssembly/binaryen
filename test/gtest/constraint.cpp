@@ -735,12 +735,12 @@ TEST(ConstraintTest, ComplexOrRegression) {
 }
 
 TEST(ConstraintTest, GetSpans) {
-  const uint64_t minI32(uint32_t(std::numeric_limits<int32_t>::min()));
-  const uint64_t maxI32(std::numeric_limits<int32_t>::max());
-  const uint64_t maxU32(std::numeric_limits<uint32_t>::max());
-  const uint64_t minI64(uint64_t(std::numeric_limits<int64_t>::min()));
-  const uint64_t maxI64(std::numeric_limits<int64_t>::max());
-  const uint64_t maxU64(std::numeric_limits<uint64_t>::max());
+  const uint64_t minI32 = uint32_t(std::numeric_limits<int32_t>::min());
+  const uint64_t maxI32 = std::numeric_limits<int32_t>::max();
+  const uint64_t maxU32 = std::numeric_limits<uint32_t>::max();
+  const uint64_t minI64 = uint64_t(std::numeric_limits<int64_t>::min());
+  const uint64_t maxI64 = std::numeric_limits<int64_t>::max();
+  const uint64_t maxU64 = std::numeric_limits<uint64_t>::max();
 
   // Non-literal terms have no constant span.
   EXPECT_EQ((Constraint{Eq, {Index(0)}}.getSpans()), std::nullopt);
@@ -1043,23 +1043,23 @@ TEST(ConstraintTest, GetSpans) {
 }
 
 TEST(ConstraintTest, GetSpansType) {
-  const uint64_t minI32(uint32_t(std::numeric_limits<int32_t>::min()));
-  const uint64_t minI32Plus1(minI32 + 1);
+  const uint64_t minI32 = uint32_t(std::numeric_limits<int32_t>::min());
+  const uint64_t minI32Plus1 = minI32 + 1;
 
-  const uint64_t maxI32(std::numeric_limits<int32_t>::max());
-  const uint64_t maxI32Minus1(maxI32 - 1);
+  const uint64_t maxI32 = std::numeric_limits<int32_t>::max();
+  const uint64_t maxI32Minus1 = maxI32 - 1;
 
-  const uint64_t maxU32(std::numeric_limits<uint32_t>::max());
-  const uint64_t maxU32Minus1(maxU32 - 1);
+  const uint64_t maxU32 = std::numeric_limits<uint32_t>::max();
+  const uint64_t maxU32Minus1 = maxU32 - 1;
 
-  const uint64_t minI64(uint64_t(std::numeric_limits<int64_t>::min()));
-  const uint64_t minI64Plus1(minI64 + 1);
+  const uint64_t minI64 = uint64_t(std::numeric_limits<int64_t>::min());
+  const uint64_t minI64Plus1 = minI64 + 1;
 
-  const uint64_t maxI64(std::numeric_limits<int64_t>::max());
-  const uint64_t maxI64Minus1(maxI64 - 1);
+  const uint64_t maxI64 = std::numeric_limits<int64_t>::max();
+  const uint64_t maxI64Minus1 = maxI64 - 1;
 
-  const uint64_t maxU64(std::numeric_limits<uint64_t>::max());
-  const uint64_t maxU64Minus1(maxU64 - 1);
+  const uint64_t maxU64 = std::numeric_limits<uint64_t>::max();
+  const uint64_t maxU64Minus1 = maxU64 - 1;
 
   // Providing the type to getSpans() doesn't help with certain things.
   EXPECT_EQ((Constraint{Eq, {Index(0)}}.getSpans(Type::i32)), std::nullopt);
