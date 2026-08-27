@@ -697,7 +697,8 @@ SmallVector<LocalConstraint, 1> LocalConstraint::parse(Expression* curr) {
       if (Abstract::getUnary(unary->value->type, Abstract::EqZ) == unary->op) {
         // EqZ of EqZ means a check that the value is *not* zero.
         if (auto* nested = unary->value->dynCast<Unary>()) {
-          if (Abstract::getUnary(nested->value->type, Abstract::EqZ) == nested->op) {
+          if (Abstract::getUnary(nested->value->type, Abstract::EqZ) ==
+              nested->op) {
             if (auto* get = nested->value->dynCast<LocalGet>()) {
               auto value = Literal::makeZero(get->type);
               ret.push_back(
@@ -741,7 +742,8 @@ SmallVector<LocalConstraint, 1> LocalConstraint::parse(Expression* curr) {
 
     if (auto* binary = curr->dynCast<Binary>()) {
       // An AND can be recursively processed: both sides must be true.
-      if (Abstract::getBinary(binary->left->type, Abstract::And) == binary->op) {
+      if (Abstract::getBinary(binary->left->type, Abstract::And) ==
+          binary->op) {
         work.push_back(binary->left);
         work.push_back(binary->right);
         continue;
