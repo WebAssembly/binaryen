@@ -27,6 +27,7 @@
 
 #include "ir/abstract.h"
 #include "support/inplace_vector.h"
+#include "support/small_vector.h"
 #include "support/span.h"
 #include "support/utilities.h"
 #include "wasm.h"
@@ -239,11 +240,20 @@ struct LocalConstraint {
   //
   //   LocalConstraint($r, { x == 10 })
   //
-  static std::optional<LocalConstraint> parse(Expression* curr);
+  // Usually a single constraint is found, but if the expression is an AND over
+  // several, a vector is returned:
+  //
+  //   (i32.and (..A..) (..B..))
+  //
+  // parses into
+  //
+  //   [ A, B ]
+  //
+  static SmallVector<LocalConstraint, 1> parse(Expression* curr);
 
   // Parse in a condition context, i.e., where (local.get $x) is the same as
   // $x != 0 (e.g., in an if condition, or a br_on ref).
-  static std::optional<LocalConstraint> parseCondition(Expression* curr);
+  static SmallVector<LocalConstraint, 1> parseCondition(Expression* curr);
 
   // Reverse the constraint. The constraint's term must, of course, be another
   // local.

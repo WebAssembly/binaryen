@@ -669,91 +669,100 @@ bool AndedConstraintSet::approximateOr(const AndedConstraintSet& other) {
   return changed;
 }
 
-std::optional<LocalConstraint> LocalConstraint::parse(Expression* curr) {
-  auto parseEqZArgument =
-    [&](Expression* value) -> std::optional<LocalConstraint> {
-    if (auto* get = value->dynCast<LocalGet>()) {
-      // Canonicalize EqZ to Eq of 0.
-      auto value = Literal::makeZero(get->type);
-      return LocalConstraint{get->index, Constraint{Abstract::Eq, {value}}};
-    }
-    // TODO: Recursively parse and reverse a constraint
-    return {};
-  };
+SmallVector<LocalConstraint, 1> LocalConstraint::parse(Expression* curr) {
+  // The final return value.
+  SmallVector<LocalConstraint, 1> ret;
 
-  if (auto* unary = curr->dynCast<Unary>()) {
-    if (Abstract::getUnary(unary->value->type, Abstract::EqZ) == unary->op) {
-      return parseEqZArgument(unary->value);
-    }
-    return {};
-  }
+  // Starting form |curr|, parse and recurse into sub-trees: when we see an AND,
+  // for example, we can push both children as further work.
+  SmallVector<Expression*, 3> work;
+  work.push_pack(curr);
+  while (!work.empty()) {
+    auto* curr = work.pop_back();
 
-  if (auto* refIsNull = curr->dynCast<RefIsNull>()) {
-    return parseEqZArgument(refIsNull->value);
-  }
-
-  // Parse a get or a constant.
-  auto parseTerm = [&](Expression* expr) -> std::optional<Term> {
-    if (auto* get = expr->dynCast<LocalGet>()) {
-      return Term{get->index};
-    }
-    if (Properties::isSingleConstantExpression(expr)) {
-      return Term{Properties::getLiteral(expr)};
-    }
-    return {};
-  };
-
-  auto parseBinaryArguments =
-    [&](Abstract::Op op,
-        Expression* left,
-        Expression* right) -> std::optional<LocalConstraint> {
-    // The left must be a get.
-    if (auto* get = left->dynCast<LocalGet>()) {
-      // The right can be any term.
-      if (auto value = parseTerm(right)) {
-        return LocalConstraint{get->index, Constraint{op, *value}};
+    auto parseEqZArgument =
+      [&](Expression* value) -> SmallVector<LocalConstraint, 1> {
+      if (auto* get = value->dynCast<LocalGet>()) {
+        // Canonicalize EqZ to Eq of 0.
+        auto value = Literal::makeZero(get->type);
+        ret.push_back(LocalConstraint{get->index, Constraint{Abstract::Eq, {value}}});
       }
-    }
-    return {};
-  };
+      // TODO: Recursively parse and reverse a constraint
+    };
 
-  if (auto* binary = curr->dynCast<Binary>()) {
-    // The operation must be one we recognize.
-    for (auto op : {Abstract::Eq,
-                    Abstract::Ne,
-                    Abstract::LtS,
-                    Abstract::LtU,
-                    Abstract::LeS,
-                    Abstract::LeU,
-                    Abstract::GtS,
-                    Abstract::GtU,
-                    Abstract::GeS,
-                    Abstract::GeU}) {
-      if (Abstract::getBinary(binary->left->type, op) == binary->op) {
-        return parseBinaryArguments(op, binary->left, binary->right);
+    if (auto* unary = curr->dynCast<Unary>()) {
+      if (Abstract::getUnary(unary->value->type, Abstract::EqZ) == unary->op) {
+        parseEqZArgument(unary->value);
       }
+      continue;
     }
-    return {};
+
+    if (auto* refIsNull = curr->dynCast<RefIsNull>()) {
+      return parseEqZArgument(refIsNull->value);
+    }
+
+    // Parse a get or a constant.
+    auto parseTerm = [&](Expression* expr) -> std::optional<Term> {
+      if (auto* get = expr->dynCast<LocalGet>()) {
+        return Term{get->index};
+      }
+      if (Properties::isSingleConstantExpression(expr)) {
+        return Term{Properties::getLiteral(expr)};
+      }
+      return {};
+    };
+
+    auto parseBinaryArguments =
+      [&](Abstract::Op op,
+          Expression* left,
+          Expression* right) {
+      // The left must be a get.
+      if (auto* get = left->dynCast<LocalGet>()) {
+        // The right can be any term.
+        if (auto value = parseTerm(right)) {
+          ret.push_back(LocalConstraint{get->index, Constraint{op, *value}});
+        }
+      }
+    };
+
+    if (auto* binary = curr->dynCast<Binary>()) {
+      // The operation must be one we recognize.
+      for (auto op : {Abstract::Eq,
+                      Abstract::Ne,
+                      Abstract::LtS,
+                      Abstract::LtU,
+                      Abstract::LeS,
+                      Abstract::LeU,
+                      Abstract::GtS,
+                      Abstract::GtU,
+                      Abstract::GeS,
+                      Abstract::GeU}) {
+        if (Abstract::getBinary(binary->left->type, op) == binary->op) {
+          parseBinaryArguments(op, binary->left, binary->right);
+        }
+      }
+      continue;
+    }
+
+    if (auto* refEq = curr->dynCast<RefEq>()) {
+      parseBinaryArguments(Abstract::Eq, refEq->left, refEq->right);
+    }
   }
 
-  if (auto* refEq = curr->dynCast<RefEq>()) {
-    return parseBinaryArguments(Abstract::Eq, refEq->left, refEq->right);
-  }
-
-  return {};
+  return ret;
 }
 
-std::optional<LocalConstraint>
+SmallVector<LocalConstraint, 1>
 LocalConstraint::parseCondition(Expression* curr) {
   // A get by itself is a check for not being null.
   if (auto* get = curr->dynCast<LocalGet>()) {
     auto value = Literal::makeZero(get->type);
-    return LocalConstraint{get->index, Constraint{Abstract::Ne, {value}}};
+    return {LocalConstraint{get->index, Constraint{Abstract::Ne, {value}}}};
   }
 
   // Otherwise, parse normally.
   return parse(curr);
-};
+}
 
 void LocalConstraint::flip() {
   auto other = std::get<Index>(constraint.term);
