@@ -631,16 +631,18 @@ struct ConstraintAnalysis
   }
 
   // Apply branch constraints to the current set of constraints.
-  void applyBranchConstraints(const LocalConstraint& branch,
+  void applyBranchConstraints(const const SmallVector<LocalConstraint, 1>& branch,
                               BasicBlockConstraintMap& constraints) {
-    // Extend the range of values in the "jump ahead" manner described in the
-    // top-level comment.
-    if (applyBranchRangeExtensionToConstraints(branch, constraints)) {
-      return;
-    }
+    for (auto& pair : branch) {
+      // Extend the range of values in the "jump ahead" manner described in the
+      // top-level comment.
+      if (applyBranchRangeExtensionToConstraints(pair, constraints)) {
+        return;
+      }
 
-    // Otherwise, apply the constraint normally.
-    constraints.approximateAnd(branch.local, branch.constraint);
+      // Otherwise, apply the constraint normally.
+      constraints.approximateAnd(pair.local, pair.constraint);
+    }
   }
 
   bool
