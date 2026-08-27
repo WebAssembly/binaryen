@@ -625,7 +625,7 @@ struct ConstraintAnalysis
   }
 
   bool checkRelevancy(const SmallVector<LocalConstraint, 1>& parsed) {
-    return std::any_of([&](const LocalConstraint& pair) {
+    return std::any_true([&](const LocalConstraint& pair) {
       return checkRelevancy(pair);
     });
   }
