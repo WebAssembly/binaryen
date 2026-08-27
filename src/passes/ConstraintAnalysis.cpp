@@ -148,7 +148,7 @@ struct ConstraintAnalysis
     // If this parses into a constraint on a local, that local is relevant.
     for (const auto& parsed : LocalConstraint::parseCondition(curr)) {
       relevantLocals[parsed.local] = true;
-      if (auto* other = std::get_if<Index>(parsed->constraint.term)) {
+      if (auto* other = std::get_if<Index>(parsed.constraint.term)) {
         relevantLocals[*other] = true;
       }
     }
@@ -492,8 +492,8 @@ struct ConstraintAnalysis
     auto parsed = LocalConstraint::parseCondition(iff->condition);
     if (!physicalSuccessor) {
       // We are in the ifFalse, so negate the condition.
-      for (auto& constraint : parsed) {
-        constraint = constraint.negate();
+      for (auto& pair : parsed) {
+        pair.constraint = pair.constraint.negate();
       }
     }
     return parsed;
@@ -508,8 +508,8 @@ struct ConstraintAnalysis
     auto parsed = LocalConstraint::parseCondition(br->condition);
     if (physicalSuccessor) {
       // The branch was not taken, so negate the condition.
-      for (auto& constraint : parsed) {
-        constraint = constraint.negate();
+      for (auto& pair : parsed) {
+        pair.constraint = pair.constraint.negate();
       }
     }
     return parsed;
@@ -529,8 +529,8 @@ struct ConstraintAnalysis
     auto parsed = LocalConstraint::parseCondition(brOn->ref);
     // Negate depending on the op and (similar to Break) the successor.
     if ((brOn->op == BrOnNull) ^ physicalSuccessor) {
-      for (auto& constraint : parsed) {
-        constraint = constraint.negate();
+      for (auto& pair : parsed) {
+        pair.constraint = pair.constraint.negate();
       }
     }
     return parsed;
