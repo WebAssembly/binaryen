@@ -163,6 +163,8 @@ struct ConstraintAnalysis
     // excluded middle). Constraints follow the rules of logic, so we cannot
     // operate on floats unless we have fast-math enabled (which assures us we
     // can ignore NaNs).
+    // TODO: when values are constant and non-NaN, we could optimize even
+    //       without fast-math
     return !type.isFloat() || fastMath;
   }
 
