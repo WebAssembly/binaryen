@@ -460,7 +460,7 @@ struct ConstraintAnalysis
   // Given a predecessor and one of its successors, find new constraints that
   // can be added due to the flow to that specific successor.
   SmallVector<LocalConstraint, 1> getBranchConstraints(BasicBlock* pred,
-                                                      BasicBlock* succ) {
+                                                       BasicBlock* succ) {
     auto* brancher = pred->contents.brancher;
     if (!brancher) {
       return {};
@@ -490,7 +490,7 @@ struct ConstraintAnalysis
   }
 
   SmallVector<LocalConstraint, 1> getConstraintsFromIf(If* iff,
-                                                      bool physicalSuccessor) {
+                                                       bool physicalSuccessor) {
     auto parsed = LocalConstraint::parseCondition(iff->condition);
     if (!physicalSuccessor) {
       // We are in the ifFalse, so negate the condition.
@@ -627,9 +627,10 @@ struct ConstraintAnalysis
   }
 
   bool checkRelevancy(const SmallVector<LocalConstraint, 1>& parsed) {
-    return std::any_of(parsed.begin(), parsed.end(), [&](const LocalConstraint& pair) {
-      return checkRelevancy(pair);
-    });
+    return std::any_of(
+      parsed.begin(), parsed.end(), [&](const LocalConstraint& pair) {
+        return checkRelevancy(pair);
+      });
   }
 
   // Apply branch constraints to the current set of constraints.

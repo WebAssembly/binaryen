@@ -681,8 +681,7 @@ SmallVector<LocalConstraint, 1> LocalConstraint::parse(Expression* curr) {
     auto* curr = work.back();
     work.pop_back();
 
-    auto parseEqZArgument =
-      [&](Expression* value) {
+    auto parseEqZArgument = [&](Expression* value) {
       if (auto* get = value->dynCast<LocalGet>()) {
         // Canonicalize EqZ to Eq of 0.
         auto value = Literal::makeZero(get->type);
