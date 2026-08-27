@@ -1483,10 +1483,7 @@
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (if
-  ;; CHECK-NEXT:   (i32.eq
-  ;; CHECK-NEXT:    (local.get $y)
-  ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (then
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (unreachable)
@@ -1501,10 +1498,7 @@
   ;; OPTIN-NEXT:   (i32.const 1)
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (if
-  ;; OPTIN-NEXT:   (i32.eq
-  ;; OPTIN-NEXT:    (local.get $x)
-  ;; OPTIN-NEXT:    (local.get $y)
-  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:   (i32.const 0)
   ;; OPTIN-NEXT:   (then
   ;; OPTIN-NEXT:    (drop
   ;; OPTIN-NEXT:     (unreachable)
@@ -1521,7 +1515,8 @@
     ;; $x == 0, $y == 1, so they are never equal, and the if body is
     ;; unreachable. We find this out while applying the secondary facts of a
     ;; constraint: we add $y == $x, and then apply $x's constraints to $y,
-    ;; ending up in $y with $y == 1 && $y == 0.
+    ;; ending up in $y with $y == 1 && $y == 0. We can also infer 0 for the if
+    ;; condition.
     (if
       (i32.eq
         (local.get $y)
@@ -4722,10 +4717,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.eq
-  ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:    (local.get $w)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; OPTIN:      (func $fallthrough-get (type $1)
@@ -4746,10 +4738,7 @@
   ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (drop
-  ;; OPTIN-NEXT:   (i32.eq
-  ;; OPTIN-NEXT:    (local.get $x)
-  ;; OPTIN-NEXT:    (local.get $w)
-  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:   (i32.const 0)
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT: )
   (func $fallthrough-get
@@ -4777,8 +4766,7 @@
 
     ;; 0 == 42 is 0 at runtime. If we did not mark $z as relevant, we would see
     ;; $x and $w as both equal to $z, i.e., that they are themselves equal, and
-    ;; misoptimize this to 1. The actual value at runtime is 0.
-    ;; TODO: actually optimize this to 0
+    ;; misoptimize this to 1. We optimize to 0 here.
     (drop
       (i32.eq
         (local.get $x)
@@ -4805,10 +4793,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.eq
-  ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:    (local.get $w)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; OPTIN:      (func $fallthrough-tee (type $0) (param $param i32)
@@ -4829,10 +4814,7 @@
   ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (drop
-  ;; OPTIN-NEXT:   (i32.eq
-  ;; OPTIN-NEXT:    (local.get $x)
-  ;; OPTIN-NEXT:    (local.get $w)
-  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:   (i32.const 0)
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT: )
   (func $fallthrough-tee (param $param i32)
@@ -4854,8 +4836,7 @@
       )
     )
 
-    ;; As before, this should not be optimized to 1, and could be optimized to
-    ;; 0 (TODO).
+    ;; As before, this is optimized to 0.
     (drop
       (i32.eq
         (local.get $x)

@@ -439,8 +439,7 @@ struct ConstraintAnalysis
       return;
     }
 
-    auto localConstraints = constraints.get(parsed->local);
-    Result result = localConstraints.proves(parsed->constraint);
+    auto result = constraints.proves(*parsed);
     if (result == Unknown) {
       // If we parsed something using two locals, like x != y, we can also look
       // for the flipped condition among y's constraints TODO
