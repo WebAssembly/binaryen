@@ -355,9 +355,9 @@ struct ConstraintAnalysis
         // Find the constraints sent to this specific successor, if there is a
         // branch, and use them.
         if (auto branch = getBranchConstraints(block, out);
-            branch && checkRelevancy(*branch)) {
+            !branch.empty() && checkRelevancy(branch)) {
           auto sentConstraints = constraints;
-          applyBranchConstraints(*branch, sentConstraints);
+          applyBranchConstraints(branch, sentConstraints);
 #if CONSTRAINT_DEBUG
           std::cout << block << " sending branch to " << out
                     << " with sent constraints: " << sentConstraints << '\n';
@@ -622,6 +622,12 @@ struct ConstraintAnalysis
       }
     }
     return true;
+  }
+
+  bool checkRelevancy(const SmallVector<LocalConstraint, 1>& parsed) {
+    return std::any_of([&](const LocalConstraint& pair) {
+      return checkRelevancy(pair);
+    });
   }
 
   // Apply branch constraints to the current set of constraints.
