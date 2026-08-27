@@ -9,7 +9,7 @@
 
 ;; CHECK:      second
 ;; CHECK-NEXT: baz
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT: third
 ;; CHECK-NEXT: qux
 

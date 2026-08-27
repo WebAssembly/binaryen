@@ -1,339 +1,339 @@
 ;; RUN: wasm-split --help | filecheck %s
 ;; CHECK: ================================================================================
 ;; CHECK-NEXT: wasm-split INFILES
-;; CHECK-NEXT:
-;; CHECK-NEXT: Split a module into a primary module and a secondary module, or instrument a
-;; CHECK-NEXT: module to gather a profile that can inform future splitting, or manage such
+;; CHECK-EMPTY:
+;; CHECK-NEXT: Split a module into a primary module and a secondary module, or instrument a 
+;; CHECK-NEXT: module to gather a profile that can inform future splitting, or manage such 
 ;; CHECK-NEXT: profiles. Options that are only accepted in particular modes are marked with the
 ;; CHECK-NEXT: accepted "[<modes>]" in their descriptions.
 ;; CHECK-NEXT: ================================================================================
-;; CHECK-NEXT:
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT: wasm-split options:
 ;; CHECK-NEXT: -------------------
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --split                              Split an input module into two output
+;; CHECK-EMPTY:
+;; CHECK-NEXT:   --split                              Split an input module into two output 
 ;; CHECK-NEXT:                                        modules. The default mode.
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --multi-split                        Split an input module into an arbitrary
+;; CHECK-EMPTY:
+;; CHECK-NEXT:   --multi-split                        Split an input module into an arbitrary 
 ;; CHECK-NEXT:                                        number of output modules.
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --instrument                         Instrument an input module to allow it to
-;; CHECK-NEXT:                                        generate a profile that can be used to
+;; CHECK-NEXT:                                        generate a profile that can be used to 
 ;; CHECK-NEXT:                                        guide splitting.
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --merge-profiles                     Merge multiple profiles for the same
+;; CHECK-EMPTY:
+;; CHECK-NEXT:   --merge-profiles                     Merge multiple profiles for the same 
 ;; CHECK-NEXT:                                        module into a single profile.
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --print-profile                      [print-profile] Print profile contents in
 ;; CHECK-NEXT:                                        a human-readable format.
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --profile                            [split] The profile to use to guide
+;; CHECK-EMPTY:
+;; CHECK-NEXT:   --profile                            [split] The profile to use to guide 
 ;; CHECK-NEXT:                                        splitting.
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --keep-funcs                         [split] Comma-separated list of functions
-;; CHECK-NEXT:                                        to keep in the primary module. The rest
-;; CHECK-NEXT:                                        will be split out. Can be used alongside
+;; CHECK-NEXT:                                        to keep in the primary module. The rest 
+;; CHECK-NEXT:                                        will be split out. Can be used alongside 
 ;; CHECK-NEXT:                                        --profile and --split-funcs. You can also
 ;; CHECK-NEXT:                                        pass a file with one function per line by
 ;; CHECK-NEXT:                                        passing @filename.
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --split-funcs                        [split] Comma-separated list of functions
 ;; CHECK-NEXT:                                        to split out to the secondary module. The
-;; CHECK-NEXT:                                        rest will be kept. Can be used alongside
-;; CHECK-NEXT:                                        --profile and --keep-funcs. This takes
-;; CHECK-NEXT:                                        precedence over other split options. You
-;; CHECK-NEXT:                                        can also pass a file with one function
+;; CHECK-NEXT:                                        rest will be kept. Can be used alongside 
+;; CHECK-NEXT:                                        --profile and --keep-funcs. This takes 
+;; CHECK-NEXT:                                        precedence over other split options. You 
+;; CHECK-NEXT:                                        can also pass a file with one function 
 ;; CHECK-NEXT:                                        per line by passing @filename.
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --manifest                           [multi-split] File describing the
-;; CHECK-NEXT:                                        functions to be split into each module.
-;; CHECK-NEXT:                                        Each section separated by a blank line
-;; CHECK-NEXT:                                        begins with the base name of an output
-;; CHECK-NEXT:                                        module, which is followed by a list of
-;; CHECK-NEXT:                                        functions to place in that module, one
+;; CHECK-EMPTY:
+;; CHECK-NEXT:   --manifest                           [multi-split] File describing the 
+;; CHECK-NEXT:                                        functions to be split into each module. 
+;; CHECK-NEXT:                                        Each section separated by a blank line 
+;; CHECK-NEXT:                                        begins with the base name of an output 
+;; CHECK-NEXT:                                        module, which is followed by a list of 
+;; CHECK-NEXT:                                        functions to place in that module, one 
 ;; CHECK-NEXT:                                        per line.
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --out-prefix                         [multi-split] Prefix prepended to module
-;; CHECK-NEXT:                                        names in the manifest file to create
+;; CHECK-EMPTY:
+;; CHECK-NEXT:   --out-prefix                         [multi-split] Prefix prepended to module 
+;; CHECK-NEXT:                                        names in the manifest file to create 
 ;; CHECK-NEXT:                                        output file names.
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --primary-output,-o1                 [split] Output file for the primary
+;; CHECK-EMPTY:
+;; CHECK-NEXT:   --primary-output,-o1                 [split] Output file for the primary 
 ;; CHECK-NEXT:                                        module.
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --secondary-output,-o2               [split] Output file for the secondary
+;; CHECK-EMPTY:
+;; CHECK-NEXT:   --secondary-output,-o2               [split] Output file for the secondary 
 ;; CHECK-NEXT:                                        module.
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --symbolmap                          [split, multi-split] Write a symbol map
+;; CHECK-EMPTY:
+;; CHECK-NEXT:   --symbolmap                          [split, multi-split] Write a symbol map 
 ;; CHECK-NEXT:                                        file for each of the output modules.
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --no-placeholders                    [split, multi-split] Do not import
+;; CHECK-EMPTY:
+;; CHECK-NEXT:   --no-placeholders                    [split, multi-split] Do not import 
 ;; CHECK-NEXT:                                        placeholder functions. Calls to secondary
-;; CHECK-NEXT:                                        functions will fail before the secondary
+;; CHECK-NEXT:                                        functions will fail before the secondary 
 ;; CHECK-NEXT:                                        module has been instantiated.
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --placeholdermap                     [split, multi-split] Write a file mapping
-;; CHECK-NEXT:                                        placeholder indices to the function
+;; CHECK-NEXT:                                        placeholder indices to the function 
 ;; CHECK-NEXT:                                        names.
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --import-namespace                   [split, multi-split, instrument] When
-;; CHECK-NEXT:                                        provided as an option for module
-;; CHECK-NEXT:                                        splitting, the namespace from which to
-;; CHECK-NEXT:                                        import objects from the primary module
-;; CHECK-NEXT:                                        into the secondary module. In instrument
-;; CHECK-NEXT:                                        mode, refers to the namespace from which
+;; CHECK-EMPTY:
+;; CHECK-NEXT:   --import-namespace                   [split, multi-split, instrument] When 
+;; CHECK-NEXT:                                        provided as an option for module 
+;; CHECK-NEXT:                                        splitting, the namespace from which to 
+;; CHECK-NEXT:                                        import objects from the primary module 
+;; CHECK-NEXT:                                        into the secondary module. In instrument 
+;; CHECK-NEXT:                                        mode, refers to the namespace from which 
 ;; CHECK-NEXT:                                        to import the secondary memory, if any.
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --placeholder-namespace-prefix       [split, multi-split] The prefix for the
-;; CHECK-NEXT:                                        namespaces from which to import
-;; CHECK-NEXT:                                        placeholder functions into the primary
-;; CHECK-NEXT:                                        module. The namespaces will be
-;; CHECK-NEXT:                                        concatenations of the prefix and the
+;; CHECK-EMPTY:
+;; CHECK-NEXT:   --placeholder-namespace-prefix       [split, multi-split] The prefix for the 
+;; CHECK-NEXT:                                        namespaces from which to import 
+;; CHECK-NEXT:                                        placeholder functions into the primary 
+;; CHECK-NEXT:                                        module. The namespaces will be 
+;; CHECK-NEXT:                                        concatenations of the prefix and the 
 ;; CHECK-NEXT:                                        module name.
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --placeholder-namespace              [split, multi-split] The same as
+;; CHECK-EMPTY:
+;; CHECK-NEXT:   --placeholder-namespace              [split, multi-split] The same as 
 ;; CHECK-NEXT:                                        --placeholder-namespace-prefix.
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --export-prefix                      [split, multi-split] An identifying
-;; CHECK-NEXT:                                        prefix to prepend to new export names
+;; CHECK-EMPTY:
+;; CHECK-NEXT:   --export-prefix                      [split, multi-split] An identifying 
+;; CHECK-NEXT:                                        prefix to prepend to new export names 
 ;; CHECK-NEXT:                                        created by module splitting.
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --profile-export                     [instrument] The export name of the
-;; CHECK-NEXT:                                        function the embedder calls to write the
-;; CHECK-NEXT:                                        profile into memory. Defaults to
+;; CHECK-EMPTY:
+;; CHECK-NEXT:   --profile-export                     [instrument] The export name of the 
+;; CHECK-NEXT:                                        function the embedder calls to write the 
+;; CHECK-NEXT:                                        profile into memory. Defaults to 
 ;; CHECK-NEXT:                                        `__write_profile`.
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --in-memory                          [instrument] Store profile information in
-;; CHECK-NEXT:                                        memory (starting at address 0 and taking
-;; CHECK-NEXT:                                        one byte per function) rather than
-;; CHECK-NEXT:                                        globals (the default) so that it can be
-;; CHECK-NEXT:                                        shared between multiple threads. Users
-;; CHECK-NEXT:                                        are responsible for ensuring that the
-;; CHECK-NEXT:                                        module does not use the initial memory
+;; CHECK-NEXT:                                        memory (starting at address 0 and taking 
+;; CHECK-NEXT:                                        one byte per function) rather than 
+;; CHECK-NEXT:                                        globals (the default) so that it can be 
+;; CHECK-NEXT:                                        shared between multiple threads. Users 
+;; CHECK-NEXT:                                        are responsible for ensuring that the 
+;; CHECK-NEXT:                                        module does not use the initial memory 
 ;; CHECK-NEXT:                                        region for anything else.
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --in-secondary-memory                [instrument] Store profile information in
-;; CHECK-NEXT:                                        a separate memory, rather than in module
-;; CHECK-NEXT:                                        main memory or globals (the default).
-;; CHECK-NEXT:                                        With this option, users do not need to
-;; CHECK-NEXT:                                        reserve the initial memory region for
-;; CHECK-NEXT:                                        profile data and the data can be shared
+;; CHECK-NEXT:                                        a separate memory, rather than in module 
+;; CHECK-NEXT:                                        main memory or globals (the default). 
+;; CHECK-NEXT:                                        With this option, users do not need to 
+;; CHECK-NEXT:                                        reserve the initial memory region for 
+;; CHECK-NEXT:                                        profile data and the data can be shared 
 ;; CHECK-NEXT:                                        between multiple threads.
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --secondary-memory-name              [instrument] The name of the secondary
-;; CHECK-NEXT:                                        memory created to store profile
+;; CHECK-EMPTY:
+;; CHECK-NEXT:   --secondary-memory-name              [instrument] The name of the secondary 
+;; CHECK-NEXT:                                        memory created to store profile 
 ;; CHECK-NEXT:                                        information.
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --initial-table                      [split, instrument] A hack to ensure the
-;; CHECK-NEXT:                                        split and instrumented modules have the
-;; CHECK-NEXT:                                        same table size when using Emscripten's
-;; CHECK-NEXT:                                        SPLIT_MODULE mode with dynamic linking.
-;; CHECK-NEXT:                                        TODO: Figure out a more elegant solution
+;; CHECK-EMPTY:
+;; CHECK-NEXT:   --initial-table                      [split, instrument] A hack to ensure the 
+;; CHECK-NEXT:                                        split and instrumented modules have the 
+;; CHECK-NEXT:                                        same table size when using Emscripten's 
+;; CHECK-NEXT:                                        SPLIT_MODULE mode with dynamic linking. 
+;; CHECK-NEXT:                                        TODO: Figure out a more elegant solution 
 ;; CHECK-NEXT:                                        for that use case and remove this.
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --emit-text,-S                       [split, multi-split, instrument] Emit
-;; CHECK-NEXT:                                        text instead of binary for the output
+;; CHECK-EMPTY:
+;; CHECK-NEXT:   --emit-text,-S                       [split, multi-split, instrument] Emit 
+;; CHECK-NEXT:                                        text instead of binary for the output 
 ;; CHECK-NEXT:                                        file or files.
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --debuginfo,-g                       [split, multi-split, instrument] Emit
-;; CHECK-NEXT:                                        names section in wasm binary (or full
+;; CHECK-EMPTY:
+;; CHECK-NEXT:   --debuginfo,-g                       [split, multi-split, instrument] Emit 
+;; CHECK-NEXT:                                        names section in wasm binary (or full 
 ;; CHECK-NEXT:                                        debuginfo in wast)
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --strip-debug                        [split, multi-split, instrument] Strip
+;; CHECK-EMPTY:
+;; CHECK-NEXT:   --strip-debug                        [split, multi-split, instrument] Strip 
 ;; CHECK-NEXT:                                        debug info (including the names section)
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --traps-never-happen,-tnh            [split, multi-split] Split under the
-;; CHECK-NEXT:                                        helpful assumption that no trap is
-;; CHECK-NEXT:                                        reached at runtime (from load, div/mod,
+;; CHECK-EMPTY:
+;; CHECK-NEXT:   --traps-never-happen,-tnh            [split, multi-split] Split under the 
+;; CHECK-NEXT:                                        helpful assumption that no trap is 
+;; CHECK-NEXT:                                        reached at runtime (from load, div/mod, 
 ;; CHECK-NEXT:                                        etc.)
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --output,-o                          [instrument, merge-profiles, multi-split]
 ;; CHECK-NEXT:                                        Output file.
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --verbose,-v                         Verbose output mode. Prints the functions
-;; CHECK-NEXT:                                        that will be kept and split out when
+;; CHECK-NEXT:                                        that will be kept and split out when 
 ;; CHECK-NEXT:                                        splitting a module.
-;; CHECK-NEXT:
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT: Tool options:
 ;; CHECK-NEXT: -------------
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --mvp-features,-mvp                  Disable all non-MVP features
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --all-features,-all                  Enable all features
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --detect-features                    (deprecated - this flag does nothing)
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --quiet,-q                           Emit less verbose output and hide trivial
 ;; CHECK-NEXT:                                        warnings.
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --experimental-poppy                 Parse wast files as Poppy IR for testing
+;; CHECK-EMPTY:
+;; CHECK-NEXT:   --experimental-poppy                 Parse wast files as Poppy IR for testing 
 ;; CHECK-NEXT:                                        purposes.
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --emit-module-names                  Emit module names, even if not emitting
+;; CHECK-EMPTY:
+;; CHECK-NEXT:   --emit-module-names                  Emit module names, even if not emitting 
 ;; CHECK-NEXT:                                        the rest of the names section.
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --enable-sign-ext                    Enable sign extension operations
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --disable-sign-ext                   Disable sign extension operations
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --enable-threads                     Enable atomic operations
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --disable-threads                    Disable atomic operations
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --enable-mutable-globals             Enable mutable globals
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --disable-mutable-globals            Disable mutable globals
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --enable-nontrapping-float-to-int    Enable nontrapping float-to-int
+;; CHECK-EMPTY:
+;; CHECK-NEXT:   --enable-nontrapping-float-to-int    Enable nontrapping float-to-int 
 ;; CHECK-NEXT:                                        operations
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --disable-nontrapping-float-to-int   Disable nontrapping float-to-int
+;; CHECK-EMPTY:
+;; CHECK-NEXT:   --disable-nontrapping-float-to-int   Disable nontrapping float-to-int 
 ;; CHECK-NEXT:                                        operations
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --enable-simd                        Enable SIMD operations and types
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --disable-simd                       Disable SIMD operations and types
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --enable-bulk-memory                 Enable bulk memory operations
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --disable-bulk-memory                Disable bulk memory operations
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --enable-bulk-memory-opt             Enable memory.copy and memory.fill
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --disable-bulk-memory-opt            Disable memory.copy and memory.fill
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --enable-call-indirect-overlong      Enable LEB encoding of call-indirect
-;; CHECK-NEXT:                                        (Ignored for compatibility as it has no
+;; CHECK-EMPTY:
+;; CHECK-NEXT:   --enable-call-indirect-overlong      Enable LEB encoding of call-indirect 
+;; CHECK-NEXT:                                        (Ignored for compatibility as it has no 
 ;; CHECK-NEXT:                                        effect on Binaryen)
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --disable-call-indirect-overlong     Disable LEB encoding of call-indirect
-;; CHECK-NEXT:                                        (Ignored for compatibility as it has no
+;; CHECK-EMPTY:
+;; CHECK-NEXT:   --disable-call-indirect-overlong     Disable LEB encoding of call-indirect 
+;; CHECK-NEXT:                                        (Ignored for compatibility as it has no 
 ;; CHECK-NEXT:                                        effect on Binaryen)
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --enable-exception-handling          Enable exception handling operations
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --disable-exception-handling         Disable exception handling operations
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --enable-tail-call                   Enable tail call operations
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --disable-tail-call                  Disable tail call operations
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --enable-reference-types             Enable reference types
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --disable-reference-types            Disable reference types
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --enable-multivalue                  Enable multivalue functions
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --disable-multivalue                 Disable multivalue functions
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --enable-gc                          Enable garbage collection
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --disable-gc                         Disable garbage collection
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --enable-memory64                    Enable memory64
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --disable-memory64                   Disable memory64
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --enable-relaxed-simd                Enable relaxed SIMD
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --disable-relaxed-simd               Disable relaxed SIMD
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --enable-extended-const              Enable extended const expressions
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --disable-extended-const             Disable extended const expressions
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --enable-strings                     Enable strings
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --disable-strings                    Disable strings
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --enable-multimemory                 Enable multimemory
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --disable-multimemory                Disable multimemory
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --enable-stack-switching             Enable stack switching
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --disable-stack-switching            Disable stack switching
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --enable-shared-everything           Enable shared-everything threads
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --disable-shared-everything          Disable shared-everything threads
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --enable-fp16                        Enable float 16 operations
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --disable-fp16                       Disable float 16 operations
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --enable-custom-descriptors          Enable custom descriptors (RTTs) and
+;; CHECK-EMPTY:
+;; CHECK-NEXT:   --enable-custom-descriptors          Enable custom descriptors (RTTs) and 
 ;; CHECK-NEXT:                                        exact references
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --disable-custom-descriptors         Disable custom descriptors (RTTs) and
+;; CHECK-EMPTY:
+;; CHECK-NEXT:   --disable-custom-descriptors         Disable custom descriptors (RTTs) and 
 ;; CHECK-NEXT:                                        exact references
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --enable-multibyte                   Enable multibyte array loads and stores
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --disable-multibyte                  Disable multibyte array loads and stores
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --enable-acquire-release-atomics     Enable acquire/release atomic memory
+;; CHECK-EMPTY:
+;; CHECK-NEXT:   --enable-acquire-release-atomics     Enable acquire/release atomic memory 
 ;; CHECK-NEXT:                                        operations
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --disable-acquire-release-atomics    Disable acquire/release atomic memory
+;; CHECK-EMPTY:
+;; CHECK-NEXT:   --disable-acquire-release-atomics    Disable acquire/release atomic memory 
 ;; CHECK-NEXT:                                        operations
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --enable-custom-page-sizes           Enable custom page sizes
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --disable-custom-page-sizes          Disable custom page sizes
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --enable-wide-arithmetic             Enable wide arithmetic
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --disable-wide-arithmetic            Disable wide arithmetic
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --enable-compact-imports             Enable compact import section
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --disable-compact-imports            Disable compact import section
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --enable-relaxed-atomics             Enable relaxed atomic memory operations
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --disable-relaxed-atomics            Disable relaxed atomic memory operations
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --enable-typed-function-references   Deprecated compatibility flag
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --disable-typed-function-references  Deprecated compatibility flag
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --no-validation,-n                   Disables validation, assumes inputs are
+;; CHECK-EMPTY:
+;; CHECK-NEXT:   --no-validation,-n                   Disables validation, assumes inputs are 
 ;; CHECK-NEXT:                                        correct
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --pass-arg,-pa                       An argument passed along to optimization
-;; CHECK-NEXT:                                        passes being run. Must be in the form
-;; CHECK-NEXT:                                        KEY@VALUE.  If KEY is the name of a pass
-;; CHECK-NEXT:                                        then it applies to the closest instance
+;; CHECK-EMPTY:
+;; CHECK-NEXT:   --pass-arg,-pa                       An argument passed along to optimization 
+;; CHECK-NEXT:                                        passes being run. Must be in the form 
+;; CHECK-NEXT:                                        KEY@VALUE.  If KEY is the name of a pass 
+;; CHECK-NEXT:                                        then it applies to the closest instance 
 ;; CHECK-NEXT:                                        of that pass before us. If KEY is not the
 ;; CHECK-NEXT:                                        name of a pass then it is a global option
-;; CHECK-NEXT:                                        that applies to all pass instances that
+;; CHECK-NEXT:                                        that applies to all pass instances that 
 ;; CHECK-NEXT:                                        read it.
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --closed-world,-cw                   Assume code outside of the module does
-;; CHECK-NEXT:                                        not inspect or interact with GC and
-;; CHECK-NEXT:                                        function references, even if they are
-;; CHECK-NEXT:                                        passed out. The outside may hold on to
-;; CHECK-NEXT:                                        them and pass them back in, but not
+;; CHECK-EMPTY:
+;; CHECK-NEXT:   --closed-world,-cw                   Assume code outside of the module does 
+;; CHECK-NEXT:                                        not inspect or interact with GC and 
+;; CHECK-NEXT:                                        function references, even if they are 
+;; CHECK-NEXT:                                        passed out. The outside may hold on to 
+;; CHECK-NEXT:                                        them and pass them back in, but not 
 ;; CHECK-NEXT:                                        inspect their contents or call them.
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --preserve-type-order                Preserve the order of types from the
+;; CHECK-EMPTY:
+;; CHECK-NEXT:   --preserve-type-order                Preserve the order of types from the 
 ;; CHECK-NEXT:                                        input (useful for debugging and testing)
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --generate-stack-ir                  generate StackIR during writing
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --optimize-stack-ir                  optimize StackIR during writing
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --print-stack-ir                     print StackIR during writing
-;; CHECK-NEXT:
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT: General options:
 ;; CHECK-NEXT: ----------------
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --version                            Output version information and exit
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --help,-h                            Show this help message and exit
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --debug,-d                           Print debug information to stderr
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
