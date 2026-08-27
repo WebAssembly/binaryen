@@ -631,7 +631,7 @@ struct ConstraintAnalysis
   }
 
   // Apply branch constraints to the current set of constraints.
-  void applyBranchConstraints(const const SmallVector<LocalConstraint, 1>& branch,
+  void applyBranchConstraints(const SmallVector<LocalConstraint, 1>& branch,
                               BasicBlockConstraintMap& constraints) {
     for (auto& pair : branch) {
       // Extend the range of values in the "jump ahead" manner described in the
