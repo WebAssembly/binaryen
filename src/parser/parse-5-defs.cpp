@@ -48,6 +48,7 @@ Result<> parseDefinitions(
     WithPosition with(ctx, decls.funcDefs[i].pos);
     ctx.setSrcLoc(decls.funcDefs[i].annotations);
     ctx.in.setAnnotations(std::move(decls.funcDefs[i].annotations));
+    auto firstScratchLocal = f->getNumLocals();
     if (!f->imported()) {
       CHECK_ERR(ctx.visitFunctionStart(f));
     }
@@ -65,7 +66,8 @@ Result<> parseDefinitions(
       if (auto* err = end.getErr()) {
         return ctx.in.err(decls.funcDefs[i].pos, err->msg);
       }
-      TypeUpdating::handleNonDefaultableLocals(f, decls.wasm);
+      TypeUpdating::handleNonDefaultableLocals(
+        f, decls.wasm, firstScratchLocal);
     }
   }
 

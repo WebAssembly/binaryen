@@ -564,7 +564,10 @@ namespace TypeUpdating {
 // them. Atm this turns them into nullable ones, and adds ref.as_non_null on
 // their uses (which keeps the type of the users identical).
 // This may also handle other types of nondefaultable locals in the future.
-void handleNonDefaultableLocals(Function* func, Module& wasm);
+// Ignore locals before firstLocal, if specified.
+void handleNonDefaultableLocals(Function* func,
+                                Module& wasm,
+                                Index firstLocal = 0);
 
 // Returns the type that a local should be, after handling of non-
 // defaultability.
