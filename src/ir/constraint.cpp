@@ -687,7 +687,21 @@ SmallVector<LocalConstraint, 1> LocalConstraint::parse(Expression* curr) {
         auto value = Literal::makeZero(get->type);
         ret.push_back(
           LocalConstraint{get->index, Constraint{Abstract::Eq, {value}}});
+        return;
       }
+
+      // EqZ of EqZ means a check that the value is *not* zero.
+      if (auto* nested = value->dynCast<Unary>()) {
+        if (Abstract::getUnary(nested->value->type, Abstract::EqZ) == nested->op) {
+          if (auto* get = value->dynCast<LocalGet>()) {
+            auto value = Literal::makeZero(get->type);
+            ret.push_back(
+              LocalConstraint{get->index, Constraint{Abstract::Ne, {value}}});
+            return;
+          }
+        }
+      }
+
       // TODO: Recursively parse and reverse a constraint
     };
 

@@ -5079,4 +5079,98 @@
       )
     )
   )
+
+  (func $eqz_eqz (param $a i32)
+    (if
+      ;; !!a => a is not 0.
+      (i32.eqz
+        (i32.eqz
+          (local.get $a)
+        )
+      )
+      (then
+        (drop
+          ;; This is true.
+          (i32.ne
+            (local.get $a)
+            (i32.const 0)
+          )
+        )
+      )
+    )
+  )
+
+  (func $several (param $a i32) (param $b i32) (param $c i32) (param $d i32) (param $e i32) 
+    ;; Four constraints in one if condition.
+    (if
+      (i32.and
+        (i32.and
+          ;; !!a => a is not 0.
+          (i32.eqz
+            (i32.eqz
+              (local.get $a)
+            )
+          )
+          ;; b == 10
+          (i32.eq
+            (local.get $b)
+            (i32.const 10)
+          )
+        )
+        (i32.and
+          ;; d == 20
+          (i32.eq
+            (local.get $b)
+            (i32.const 10)
+          )
+          ;; e == 30
+          (i32.eq
+            (local.get $b)
+            (i32.const 10)
+          )
+        )
+      )
+      (then
+        ;; These are all true.
+        (drop
+          (i32.ne
+            (local.get $a)
+            (i32.const 0)
+          )
+        )
+        (drop
+          (i32.eq
+            (local.get $b)
+            (i32.const 10)
+          )
+        )
+        (drop
+          (i32.eq
+            (local.get $d)
+            (i32.const 20)
+          )
+        )
+        (drop
+          (i32.eq
+            (local.get $e)
+            (i32.const 30)
+          )
+        )
+        ;; This is false.
+        (drop
+          (i32.eq
+            (local.get $a)
+            (i32.const 0)
+          )
+        )
+        ;; This local is unknown.
+        (drop
+          (i32.eq
+            (local.get $c)
+            (i32.const 40)
+          )
+        )
+      )
+    )
+  )
 )
