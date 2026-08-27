@@ -740,7 +740,14 @@ SmallVector<LocalConstraint, 1> LocalConstraint::parse(Expression* curr) {
       };
 
     if (auto* binary = curr->dynCast<Binary>()) {
-      // The operation must be one we recognize.
+      // An AND can be recursively processed: both sides must be true.
+      if (Abstract::getBinary(binary->left->type, Abstract::And) == binary->op) {
+        work.push_back(binary->left);
+        work.push_back(binary->right);
+        continue;
+      }
+
+      // Otherwise, the operation must be one we can express as a constraint.
       for (auto op : {Abstract::Eq,
                       Abstract::Ne,
                       Abstract::LtS,

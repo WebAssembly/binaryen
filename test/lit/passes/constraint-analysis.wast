@@ -5140,45 +5140,30 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (i32.and
   ;; CHECK-NEXT:     (i32.eq
-  ;; CHECK-NEXT:      (local.get $b)
-  ;; CHECK-NEXT:      (i32.const 10)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (i32.eq
-  ;; CHECK-NEXT:      (local.get $b)
-  ;; CHECK-NEXT:      (i32.const 10)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (then
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.ne
-  ;; CHECK-NEXT:      (local.get $a)
-  ;; CHECK-NEXT:      (i32.const 0)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.eq
-  ;; CHECK-NEXT:      (local.get $b)
-  ;; CHECK-NEXT:      (i32.const 10)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.eq
   ;; CHECK-NEXT:      (local.get $d)
   ;; CHECK-NEXT:      (i32.const 20)
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (i32.eq
   ;; CHECK-NEXT:      (local.get $e)
   ;; CHECK-NEXT:      (i32.const 30)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (then
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.eq
-  ;; CHECK-NEXT:      (local.get $a)
-  ;; CHECK-NEXT:      (i32.const 0)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (i32.eq
@@ -5192,44 +5177,42 @@
   ;; OPTIN:      (func $several (type $11) (param $a i32) (param $b i32) (param $c i32) (param $d i32) (param $e i32)
   ;; OPTIN-NEXT:  (if
   ;; OPTIN-NEXT:   (i32.and
-  ;; OPTIN-NEXT:    (i32.eq
-  ;; OPTIN-NEXT:     (local.get $b)
-  ;; OPTIN-NEXT:     (i32.const 10)
-  ;; OPTIN-NEXT:    )
-  ;; OPTIN-NEXT:    (i32.ne
-  ;; OPTIN-NEXT:     (local.get $a)
-  ;; OPTIN-NEXT:     (i32.const 0)
-  ;; OPTIN-NEXT:    )
-  ;; OPTIN-NEXT:   )
-  ;; OPTIN-NEXT:   (then
-  ;; OPTIN-NEXT:    (drop
+  ;; OPTIN-NEXT:    (i32.and
+  ;; OPTIN-NEXT:     (i32.eq
+  ;; OPTIN-NEXT:      (local.get $b)
+  ;; OPTIN-NEXT:      (i32.const 10)
+  ;; OPTIN-NEXT:     )
   ;; OPTIN-NEXT:     (i32.ne
   ;; OPTIN-NEXT:      (local.get $a)
   ;; OPTIN-NEXT:      (i32.const 0)
   ;; OPTIN-NEXT:     )
   ;; OPTIN-NEXT:    )
-  ;; OPTIN-NEXT:    (drop
-  ;; OPTIN-NEXT:     (i32.eq
-  ;; OPTIN-NEXT:      (local.get $b)
-  ;; OPTIN-NEXT:      (i32.const 10)
-  ;; OPTIN-NEXT:     )
-  ;; OPTIN-NEXT:    )
-  ;; OPTIN-NEXT:    (drop
+  ;; OPTIN-NEXT:    (i32.and
   ;; OPTIN-NEXT:     (i32.eq
   ;; OPTIN-NEXT:      (local.get $d)
   ;; OPTIN-NEXT:      (i32.const 20)
   ;; OPTIN-NEXT:     )
-  ;; OPTIN-NEXT:    )
-  ;; OPTIN-NEXT:    (drop
   ;; OPTIN-NEXT:     (i32.eq
   ;; OPTIN-NEXT:      (local.get $e)
   ;; OPTIN-NEXT:      (i32.const 30)
   ;; OPTIN-NEXT:     )
   ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:   (then
   ;; OPTIN-NEXT:    (drop
-  ;; OPTIN-NEXT:     (i32.eqz
-  ;; OPTIN-NEXT:      (local.get $a)
-  ;; OPTIN-NEXT:     )
+  ;; OPTIN-NEXT:     (i32.const 1)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:    (drop
+  ;; OPTIN-NEXT:     (i32.const 1)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:    (drop
+  ;; OPTIN-NEXT:     (i32.const 1)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:    (drop
+  ;; OPTIN-NEXT:     (i32.const 1)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:    (drop
+  ;; OPTIN-NEXT:     (i32.const 0)
   ;; OPTIN-NEXT:    )
   ;; OPTIN-NEXT:    (drop
   ;; OPTIN-NEXT:     (i32.eq
@@ -5260,13 +5243,13 @@
         (i32.and
           ;; d == 20
           (i32.eq
-            (local.get $b)
-            (i32.const 10)
+            (local.get $d)
+            (i32.const 20)
           )
           ;; e == 30
           (i32.eq
-            (local.get $b)
-            (i32.const 10)
+            (local.get $e)
+            (i32.const 30)
           )
         )
       )
