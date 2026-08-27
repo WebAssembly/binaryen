@@ -66,6 +66,8 @@
 // function analysis).
 //
 
+#include <algorithm>
+
 #include "cfg/cfg-traversal.h"
 #include "ir/constraint.h"
 #include "ir/drop.h"
@@ -625,7 +627,7 @@ struct ConstraintAnalysis
   }
 
   bool checkRelevancy(const SmallVector<LocalConstraint, 1>& parsed) {
-    return std::any_true([&](const LocalConstraint& pair) {
+    return std::any_of(parsed.begin(), parsed.end(), [&](const LocalConstraint& pair) {
       return checkRelevancy(pair);
     });
   }
