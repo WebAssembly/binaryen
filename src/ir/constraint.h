@@ -19,6 +19,11 @@
 // inference whether other things are true given a set of constraints, like
 // { x == 10 } => { x >= 5 }.
 //
+// This code follows the basic rules of logic, like the law of the excluded
+// middle and so forth. Things that do not follow basic logic, like floating-
+// point NaNs (where both x < y and x >= y are possible, with NaNs), may not be
+// handled correctly. The caller must ensure that no such input is possible.
+//
 
 #ifndef wasm_ir_constraint_h
 #define wasm_ir_constraint_h
