@@ -690,23 +690,23 @@ SmallVector<LocalConstraint, 1> LocalConstraint::parse(Expression* curr) {
         return;
       }
 
-      // EqZ of EqZ means a check that the value is *not* zero.
-      if (auto* nested = value->dynCast<Unary>()) {
-        if (Abstract::getUnary(nested->value->type, Abstract::EqZ) == nested->op) {
-          if (auto* get = value->dynCast<LocalGet>()) {
-            auto value = Literal::makeZero(get->type);
-            ret.push_back(
-              LocalConstraint{get->index, Constraint{Abstract::Ne, {value}}});
-            return;
-          }
-        }
-      }
-
       // TODO: Recursively parse and reverse a constraint
     };
 
     if (auto* unary = curr->dynCast<Unary>()) {
       if (Abstract::getUnary(unary->value->type, Abstract::EqZ) == unary->op) {
+        // EqZ of EqZ means a check that the value is *not* zero.
+        if (auto* nested = unary->value->dynCast<Unary>()) {
+          if (Abstract::getUnary(nested->value->type, Abstract::EqZ) == nested->op) {
+            if (auto* get = nested->value->dynCast<LocalGet>()) {
+              auto value = Literal::makeZero(get->type);
+              ret.push_back(
+                LocalConstraint{get->index, Constraint{Abstract::Ne, {value}}});
+              continue;
+            }
+          }
+        }
+
         parseEqZArgument(unary->value);
       }
       continue;

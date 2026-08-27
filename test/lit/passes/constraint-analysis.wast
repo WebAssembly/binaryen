@@ -5089,10 +5089,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (then
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.ne
-  ;; CHECK-NEXT:      (local.get $a)
-  ;; CHECK-NEXT:      (i32.const 0)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
