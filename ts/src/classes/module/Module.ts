@@ -107,6 +107,29 @@ export class Module {
 	 */
 	readonly [PTR]: ModuleRef = BinaryenObj["_BinaryenModuleCreate"]();
 
+	// ## Expression Manipulation ## //
+	/**
+	 * This module’s WASM expression builder.
+	 *
+	 * See {@link ExpressionBuilder} for its type signature.
+	 *
+	 * N.B.: For convenience, developers may want to destructure the module to free `wasm`:
+	 * ```ts
+	 * const mod = new Module();
+	 * const {wasm} = mod;
+	 * wasm.drop(wasm.i32.add(wasm.i32.const(3), wasm.i32.const(5)));
+	 * ```
+	 * or to free its properties:
+	 * ```ts
+	 * const {i32, drop} = mod.wasm;
+	 * drop(i32.add(i32.const(3), i32.const(5)));
+	 * ```
+	 * @category Expression Manipulation
+	 */
+	/*
+	readonly wasm: ExpressionBuilder = expressionBuilder(this);
+	*/
+
 	/**
 	 * Pseudo-instruction enabling Binaryen to reason about multiple values on the stack.
 	 * @category Expression Manipulation
@@ -155,6 +178,14 @@ export class Module {
 	 */
 	get start(): FunctionRef { return BinaryenObj["_BinaryenGetStart"](this[PTR]); }
 	set start(start: FunctionRef) { BinaryenObj["_BinaryenSetStart"](this[PTR], start); }
+
+	/**
+	 * The WebAssembly features enabled for this module.
+	 * Features are a bitmask of `Feature` enum members.
+	 * @category Module Component Operations
+	 */
+	get features(): Feature { return BinaryenObj["_BinaryenModuleGetFeatures"](this[PTR]); }
+	set features(features: Feature) { BinaryenObj["_BinaryenModuleSetFeatures"](this[PTR], features); }
 
 	/** @category Module Component Operations */
 	/*
