@@ -685,7 +685,8 @@ SmallVector<LocalConstraint, 1> LocalConstraint::parse(Expression* curr) {
       if (auto* get = value->dynCast<LocalGet>()) {
         // Canonicalize EqZ to Eq of 0.
         auto value = Literal::makeZero(get->type);
-        ret.push_back(LocalConstraint{get->index, Constraint{Abstract::Eq, {value}}});
+        ret.push_back(
+          LocalConstraint{get->index, Constraint{Abstract::Eq, {value}}});
       }
       // TODO: Recursively parse and reverse a constraint
     };
@@ -713,17 +714,15 @@ SmallVector<LocalConstraint, 1> LocalConstraint::parse(Expression* curr) {
     };
 
     auto parseBinaryArguments =
-      [&](Abstract::Op op,
-          Expression* left,
-          Expression* right) {
-      // The left must be a get.
-      if (auto* get = left->dynCast<LocalGet>()) {
-        // The right can be any term.
-        if (auto value = parseTerm(right)) {
-          ret.push_back(LocalConstraint{get->index, Constraint{op, *value}});
+      [&](Abstract::Op op, Expression* left, Expression* right) {
+        // The left must be a get.
+        if (auto* get = left->dynCast<LocalGet>()) {
+          // The right can be any term.
+          if (auto value = parseTerm(right)) {
+            ret.push_back(LocalConstraint{get->index, Constraint{op, *value}});
+          }
         }
-      }
-    };
+      };
 
     if (auto* binary = curr->dynCast<Binary>()) {
       // The operation must be one we recognize.
