@@ -748,6 +748,7 @@ SmallVector<LocalConstraint, 1> LocalConstraint::parse(Expression* curr) {
         work.push_back(binary->right);
         continue;
       }
+      // TODO: support OR
 
       // Otherwise, the operation must be one we can express as a constraint.
       for (auto op : {Abstract::Eq,
