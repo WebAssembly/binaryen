@@ -320,9 +320,8 @@ struct BasicBlockConstraintMap {
     approximateAndInternal(index, c);
   }
 
-  // TODO: Add proves() here, which could do things like: if asked x == y, we
-  // can answer False if we see x == c1, y == c2, and the constants c1, c2
-  // differ.
+  // Check a condition on a local, given all we know about all other locals.
+  Result proves(LocalConstraint condition) const;
 
   bool operator!=(const BasicBlockConstraintMap& other) {
     return unreachable != other.unreachable || map != other.map;
