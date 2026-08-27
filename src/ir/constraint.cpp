@@ -675,13 +675,13 @@ SmallVector<LocalConstraint, 1> LocalConstraint::parse(Expression* curr) {
 
   // Starting form |curr|, parse and recurse into sub-trees: when we see an AND,
   // for example, we can push both children as further work.
-  SmallVector<Expression*, 3> work;
-  work.push_pack(curr);
+  SmallVector<Expression*, 4> work;
+  work.push_back(curr);
   while (!work.empty()) {
     auto* curr = work.pop_back();
 
     auto parseEqZArgument =
-      [&](Expression* value) -> SmallVector<LocalConstraint, 1> {
+      [&](Expression* value) {
       if (auto* get = value->dynCast<LocalGet>()) {
         // Canonicalize EqZ to Eq of 0.
         auto value = Literal::makeZero(get->type);

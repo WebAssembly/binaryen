@@ -146,9 +146,9 @@ struct ConstraintAnalysis
 
   void maybeMarkRelevant(Expression* curr) {
     // If this parses into a constraint on a local, that local is relevant.
-    if (auto parsed = LocalConstraint::parseCondition(curr)) {
-      relevantLocals[parsed->local] = true;
-      if (auto* other = std::get_if<Index>(&parsed->constraint.term)) {
+    for (const auto& parsed : LocalConstraint::parseCondition(curr)) {
+      relevantLocals[parsed.local] = true;
+      if (auto* other = std::get_if<Index>(parsed->constraint.term)) {
         relevantLocals[*other] = true;
       }
     }
@@ -426,10 +426,11 @@ struct ConstraintAnalysis
                           const BasicBlockConstraintMap& constraints) {
     auto* curr = *currp;
     auto parsed = LocalConstraint::parse(curr);
-    if (!parsed) {
+    // TODO: optimize cases of more than one.
+    if (parsed.size() != 1) {
       return;
     }
-    if (!checkRelevancy(*parsed)) {
+    if (!checkRelevancy(parsed[0])) {
 #ifndef NDEBUG
       // If this is not relevant, then it must be one of the original actions we
       // care about, i.e., not the result of optimizations. See the comment
@@ -439,7 +440,7 @@ struct ConstraintAnalysis
       return;
     }
 
-    auto result = constraints.proves(*parsed);
+    auto result = constraints.proves(parsed[0]);
     if (result == Unknown) {
       // If we parsed something using two locals, like x != y, we can also look
       // for the flipped condition among y's constraints TODO
@@ -456,7 +457,7 @@ struct ConstraintAnalysis
 
   // Given a predecessor and one of its successors, find new constraints that
   // can be added due to the flow to that specific successor.
-  std::optional<LocalConstraint> getBranchConstraints(BasicBlock* pred,
+  SmallVector<LocalConstraint, 1> getBranchConstraints(BasicBlock* pred,
                                                       BasicBlock* succ) {
     auto* brancher = pred->contents.brancher;
     if (!brancher) {
@@ -486,31 +487,35 @@ struct ConstraintAnalysis
     return {};
   }
 
-  std::optional<LocalConstraint> getConstraintsFromIf(If* iff,
+  SmallVector<LocalConstraint, 1> getConstraintsFromIf(If* iff,
                                                       bool physicalSuccessor) {
     auto parsed = LocalConstraint::parseCondition(iff->condition);
-    if (parsed && !physicalSuccessor) {
+    if (!physicalSuccessor) {
       // We are in the ifFalse, so negate the condition.
-      parsed->constraint = parsed->constraint.negate();
+      for (auto& constraint : parsed) {
+        constraint = constraint.negate();
+      }
     }
     return parsed;
   }
 
-  std::optional<LocalConstraint>
+  SmallVector<LocalConstraint, 1>
   getConstraintsFromBreak(Break* br, bool physicalSuccessor) {
     // We get here when there is more than one successor, so there must be a
     // condition.
     assert(br->condition);
 
     auto parsed = LocalConstraint::parseCondition(br->condition);
-    if (parsed && physicalSuccessor) {
+    if (physicalSuccessor) {
       // The branch was not taken, so negate the condition.
-      parsed->constraint = parsed->constraint.negate();
+      for (auto& constraint : parsed) {
+        constraint = constraint.negate();
+      }
     }
     return parsed;
   }
 
-  std::optional<LocalConstraint>
+  SmallVector<LocalConstraint, 1>
   getConstraintsFromBrOn(BrOn* brOn, bool physicalSuccessor) {
     // The constraint on that local depends on the op.
     // TODO: Handle BrOnCast* etc using subtyping operations.
@@ -523,8 +528,10 @@ struct ConstraintAnalysis
     // can reuse it.
     auto parsed = LocalConstraint::parseCondition(brOn->ref);
     // Negate depending on the op and (similar to Break) the successor.
-    if (parsed && ((brOn->op == BrOnNull) ^ physicalSuccessor)) {
-      parsed->constraint = parsed->constraint.negate();
+    if ((brOn->op == BrOnNull) ^ physicalSuccessor) {
+      for (auto& constraint : parsed) {
+        constraint = constraint.negate();
+      }
     }
     return parsed;
   }
