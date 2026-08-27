@@ -678,7 +678,8 @@ SmallVector<LocalConstraint, 1> LocalConstraint::parse(Expression* curr) {
   SmallVector<Expression*, 4> work;
   work.push_back(curr);
   while (!work.empty()) {
-    auto* curr = work.pop_back();
+    auto* curr = work.back();
+    work.pop_back();
 
     auto parseEqZArgument =
       [&](Expression* value) {
@@ -699,7 +700,8 @@ SmallVector<LocalConstraint, 1> LocalConstraint::parse(Expression* curr) {
     }
 
     if (auto* refIsNull = curr->dynCast<RefIsNull>()) {
-      return parseEqZArgument(refIsNull->value);
+      parseEqZArgument(refIsNull->value);
+      continue;
     }
 
     // Parse a get or a constant.
@@ -738,6 +740,7 @@ SmallVector<LocalConstraint, 1> LocalConstraint::parse(Expression* curr) {
                       Abstract::GeU}) {
         if (Abstract::getBinary(binary->left->type, op) == binary->op) {
           parseBinaryArguments(op, binary->left, binary->right);
+          break;
         }
       }
       continue;
@@ -745,6 +748,7 @@ SmallVector<LocalConstraint, 1> LocalConstraint::parse(Expression* curr) {
 
     if (auto* refEq = curr->dynCast<RefEq>()) {
       parseBinaryArguments(Abstract::Eq, refEq->left, refEq->right);
+      continue;
     }
   }
 
