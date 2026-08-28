@@ -256,7 +256,7 @@ Result provesConstantPair(Abstract::Op aOp,
 }
 
 // Evaluate whether a => b, where a and b are operations on identical terms.
-Result provesEqualTermPair(Abstract::Op aOp, Abstract::Op bOp) {
+Result provesTermEqualPair(Abstract::Op aOp, Abstract::Op bOp) {
   using namespace Abstract;
 
   // Trivial cases where aOp == bOp or aOp == !bOp are taken care of elsewhere.
@@ -273,11 +273,11 @@ Result provesEqualTermPair(Abstract::Op aOp, Abstract::Op bOp) {
       }
       break;
     case LtS:
-      // < proves <= true and >, >= false
+      // < proves <= true and ==, >, >= false
       if (bOp == LeS) {
         return True;
       }
-      if (bOp == GtS || bOp == GeS) {
+      if (bOp == Eq || bOp == GtS || bOp == GeS) {
         return False;
       }
       break;
@@ -292,7 +292,7 @@ Result provesEqualTermPair(Abstract::Op aOp, Abstract::Op bOp) {
       if (bOp == GeS) {
         return True;
       }
-      if (bOp == LtS || bOp == LeS) {
+      if (bOp == Eq || bOp == LtS || bOp == LeS) {
         return False;
       }
       break;
@@ -306,7 +306,7 @@ Result provesEqualTermPair(Abstract::Op aOp, Abstract::Op bOp) {
       if (bOp == LeU) {
         return True;
       }
-      if (bOp == GtU || bOp == GeU) {
+      if (bOp == Eq || bOp == GtU || bOp == GeU) {
         return False;
       }
       break;
@@ -321,7 +321,7 @@ Result provesEqualTermPair(Abstract::Op aOp, Abstract::Op bOp) {
       if (bOp == GeU) {
         return True;
       }
-      if (bOp == LtU || bOp == LeU) {
+      if (bOp == Eq || bOp == LtU || bOp == LeU) {
         return False;
       }
       break;
@@ -392,7 +392,7 @@ Result provesPair(const Constraint& a, const Constraint& b) {
   }
 
   if (a.term == b.term) {
-    return provesEqualTermPair(a.op, b.op);
+    return provesTermEqualPair(a.op, b.op);
   }
 
   return Unknown;
