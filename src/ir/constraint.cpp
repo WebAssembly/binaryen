@@ -255,6 +255,88 @@ Result provesConstantPair(Abstract::Op aOp,
   return Unknown;
 }
 
+// Evaluate whether a => b, where a and b are operations on identical terms.
+Result provesEqualTermPair(Abstract::Op aOp, Abstract::Op bOp) {
+  using namespace Abstract;
+
+  // Trivial cases where aOp == bOp or aOp == !bOp are taken care of elsewhere.
+  assert(aOp != bOp && aOp != Abstract::negateRelational(bOp));
+
+  switch (aOp) {
+    case Eq:
+      // == proves >= etc. true, and > (without =) false
+      if (bOp == LeU || bOp == LeS || bOp == GeU || bOp == GeS) {
+        return True;
+      }
+      if (bOp == LtU || bOp == LtS || bOp == GtU || bOp == GtS) {
+        return False;
+      }
+      break;
+    case LtS:
+      // < proves <= true and >, >= false
+      if (bOp == LeS) {
+        return True;
+      }
+      if (bOp == GtS || bOp == GeS) {
+        return False;
+      }
+      break;
+    case LeS:
+      // <= proves > false
+      if (bOp == GtS) {
+        return False;
+      }
+      break;
+    case GtS:
+      // Ditto, with G instead of L.
+      if (bOp == GeS) {
+        return True;
+      }
+      if (bOp == LtS || bOp == LeS) {
+        return False;
+      }
+      break;
+    case GeS:
+      if (bOp == LtS) {
+        return False;
+      }
+      break;
+    case LtU:
+      // Ditto, with unsigned.
+      if (bOp == LeU) {
+        return True;
+      }
+      if (bOp == GtU || bOp == GeU) {
+        return False;
+      }
+      break;
+    case LeU:
+      // <= proves > false
+      if (bOp == GtU) {
+        return False;
+      }
+      break;
+    case GtU:
+      // Ditto, with G instead of L.
+      if (bOp == GeU) {
+        return True;
+      }
+      if (bOp == LtU || bOp == LeU) {
+        return False;
+      }
+      break;
+    case GeU:
+      if (bOp == LtU) {
+        return False;
+      }
+      break;
+    default: {
+    }
+  }
+
+  return Unknown;
+}
+
 // Core comparison of two constraints: whether a => b
 Result provesPair(const Constraint& a, const Constraint& b) {
   // A thing always implies itself.
@@ -307,6 +389,10 @@ Result provesPair(const Constraint& a, const Constraint& b) {
         }
       }
     }
+  }
+
+  if (a.term == b.term) {
+    return provesEqualTermPair(a.op, b.op);
   }
 
   return Unknown;
