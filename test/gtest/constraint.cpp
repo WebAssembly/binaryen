@@ -1452,16 +1452,16 @@ TEST(ConstraintTest, EqualTermPairs) {
   EXPECT_EQ(AndedConstraintSet{eq1}.proves(ne1), False);
 
   // 2. LtS (x <_s $1):
-  // < proves <= is True.
+  // < proves <= and != are True.
   EXPECT_EQ(AndedConstraintSet{ltS1}.proves(leS1), True);
-  // < proves > and >= are False.
+  EXPECT_EQ(AndedConstraintSet{ltS1}.proves(ne1), True);
+  // < proves ==, >, and >= are False.
+  EXPECT_EQ(AndedConstraintSet{ltS1}.proves(eq1), False);
   EXPECT_EQ(AndedConstraintSet{ltS1}.proves(gtS1), False);
   EXPECT_EQ(AndedConstraintSet{ltS1}.proves(geS1), False);
   // Self
   EXPECT_EQ(AndedConstraintSet{ltS1}.proves(ltS1), True);
-  // Cross-signedness and equality are Unknown.
-  EXPECT_EQ(AndedConstraintSet{ltS1}.proves(eq1), Unknown);
-  EXPECT_EQ(AndedConstraintSet{ltS1}.proves(ne1), Unknown);
+  // Cross-signedness are Unknown.
   EXPECT_EQ(AndedConstraintSet{ltS1}.proves(ltU1), Unknown);
   EXPECT_EQ(AndedConstraintSet{ltS1}.proves(leU1), Unknown);
   EXPECT_EQ(AndedConstraintSet{ltS1}.proves(gtU1), Unknown);
@@ -1483,16 +1483,16 @@ TEST(ConstraintTest, EqualTermPairs) {
   EXPECT_EQ(AndedConstraintSet{leS1}.proves(geU1), Unknown);
 
   // 4. GtS (x >_s $1):
-  // > proves >= is True.
+  // > proves >= and != are True.
   EXPECT_EQ(AndedConstraintSet{gtS1}.proves(geS1), True);
-  // > proves < and <= are False.
+  EXPECT_EQ(AndedConstraintSet{gtS1}.proves(ne1), True);
+  // > proves ==, <, and <= are False.
+  EXPECT_EQ(AndedConstraintSet{gtS1}.proves(eq1), False);
   EXPECT_EQ(AndedConstraintSet{gtS1}.proves(ltS1), False);
   EXPECT_EQ(AndedConstraintSet{gtS1}.proves(leS1), False);
   // Self
   EXPECT_EQ(AndedConstraintSet{gtS1}.proves(gtS1), True);
-  // Cross-signedness and equality are Unknown.
-  EXPECT_EQ(AndedConstraintSet{gtS1}.proves(eq1), Unknown);
-  EXPECT_EQ(AndedConstraintSet{gtS1}.proves(ne1), Unknown);
+  // Cross-signedness are Unknown.
   EXPECT_EQ(AndedConstraintSet{gtS1}.proves(ltU1), Unknown);
   EXPECT_EQ(AndedConstraintSet{gtS1}.proves(leU1), Unknown);
   EXPECT_EQ(AndedConstraintSet{gtS1}.proves(gtU1), Unknown);
@@ -1514,16 +1514,16 @@ TEST(ConstraintTest, EqualTermPairs) {
   EXPECT_EQ(AndedConstraintSet{geS1}.proves(geU1), Unknown);
 
   // 6. LtU (x <_u $1):
-  // < proves <= is True.
+  // < proves <= and != are True.
   EXPECT_EQ(AndedConstraintSet{ltU1}.proves(leU1), True);
-  // < proves > and >= are False.
+  EXPECT_EQ(AndedConstraintSet{ltU1}.proves(ne1), True);
+  // < proves ==, >, and >= are False.
+  EXPECT_EQ(AndedConstraintSet{ltU1}.proves(eq1), False);
   EXPECT_EQ(AndedConstraintSet{ltU1}.proves(gtU1), False);
   EXPECT_EQ(AndedConstraintSet{ltU1}.proves(geU1), False);
   // Self
   EXPECT_EQ(AndedConstraintSet{ltU1}.proves(ltU1), True);
-  // Cross-signedness and equality are Unknown.
-  EXPECT_EQ(AndedConstraintSet{ltU1}.proves(eq1), Unknown);
-  EXPECT_EQ(AndedConstraintSet{ltU1}.proves(ne1), Unknown);
+  // Cross-signedness are Unknown.
   EXPECT_EQ(AndedConstraintSet{ltU1}.proves(ltS1), Unknown);
   EXPECT_EQ(AndedConstraintSet{ltU1}.proves(leS1), Unknown);
   EXPECT_EQ(AndedConstraintSet{ltU1}.proves(gtS1), Unknown);
@@ -1545,16 +1545,16 @@ TEST(ConstraintTest, EqualTermPairs) {
   EXPECT_EQ(AndedConstraintSet{leU1}.proves(geS1), Unknown);
 
   // 8. GtU (x >_u $1):
-  // > proves >= is True.
+  // > proves >= and != are True.
   EXPECT_EQ(AndedConstraintSet{gtU1}.proves(geU1), True);
-  // > proves < and <= are False.
+  EXPECT_EQ(AndedConstraintSet{gtU1}.proves(ne1), True);
+  // > proves ==, <, and <= are False.
+  EXPECT_EQ(AndedConstraintSet{gtU1}.proves(eq1), False);
   EXPECT_EQ(AndedConstraintSet{gtU1}.proves(ltU1), False);
   EXPECT_EQ(AndedConstraintSet{gtU1}.proves(leU1), False);
   // Self
   EXPECT_EQ(AndedConstraintSet{gtU1}.proves(gtU1), True);
-  // Cross-signedness and equality are Unknown.
-  EXPECT_EQ(AndedConstraintSet{gtU1}.proves(eq1), Unknown);
-  EXPECT_EQ(AndedConstraintSet{gtU1}.proves(ne1), Unknown);
+  // Cross-signedness are Unknown.
   EXPECT_EQ(AndedConstraintSet{gtU1}.proves(ltS1), Unknown);
   EXPECT_EQ(AndedConstraintSet{gtU1}.proves(leS1), Unknown);
   EXPECT_EQ(AndedConstraintSet{gtU1}.proves(gtS1), Unknown);
@@ -1603,8 +1603,44 @@ TEST(ConstraintTest, EqualTermPairs) {
   EXPECT_EQ(sEq.size(), 1);
   EXPECT_EQ(sEq[0], eq1);
 
+  AndedConstraintSet sLtS{ltS1};
+  sLtS.approximateAnd(ne1);
+  EXPECT_EQ(sLtS.size(), 1);
+  EXPECT_EQ(sLtS[0], ltS1);
+
+  AndedConstraintSet sGtS{gtS1};
+  sGtS.approximateAnd(ne1);
+  EXPECT_EQ(sGtS.size(), 1);
+  EXPECT_EQ(sGtS[0], gtS1);
+
+  AndedConstraintSet sLtU{ltU1};
+  sLtU.approximateAnd(ne1);
+  EXPECT_EQ(sLtU.size(), 1);
+  EXPECT_EQ(sLtU[0], ltU1);
+
+  AndedConstraintSet sGtU{gtU1};
+  sGtU.approximateAnd(ne1);
+  EXPECT_EQ(sGtU.size(), 1);
+  EXPECT_EQ(sGtU[0], gtU1);
+
   // Contradicting constraints turn the set into a contradiction.
   AndedConstraintSet sEqContra{eq1};
   sEqContra.approximateAnd(ltS1);
   EXPECT_TRUE(sEqContra.provesEverything());
+
+  AndedConstraintSet sLtSContra{ltS1};
+  sLtSContra.approximateAnd(eq1);
+  EXPECT_TRUE(sLtSContra.provesEverything());
+
+  AndedConstraintSet sGtSContra{gtS1};
+  sGtSContra.approximateAnd(eq1);
+  EXPECT_TRUE(sGtSContra.provesEverything());
+
+  AndedConstraintSet sLtUContra{ltU1};
+  sLtUContra.approximateAnd(eq1);
+  EXPECT_TRUE(sLtUContra.provesEverything());
+
+  AndedConstraintSet sGtUContra{gtU1};
+  sGtUContra.approximateAnd(eq1);
+  EXPECT_TRUE(sGtUContra.provesEverything());
 }

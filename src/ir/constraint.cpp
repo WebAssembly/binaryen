@@ -273,60 +273,38 @@ Result provesTermEqualPair(Abstract::Op aOp, Abstract::Op bOp) {
       }
       break;
     case LtS:
-      // < proves <= true and ==, >, >= false
-      if (bOp == LeS) {
+      // < proves <=, != true and ==, > false
+      if (bOp == LeS || bOp == Ne) {
         return True;
       }
-      if (bOp == Eq || bOp == GtS || bOp == GeS) {
-        return False;
-      }
-      break;
-    case LeS:
-      // <= proves > false
-      if (bOp == GtS) {
+      if (bOp == Eq || bOp == GtS) {
         return False;
       }
       break;
     case GtS:
       // Ditto, with G instead of L.
-      if (bOp == GeS) {
+      if (bOp == GeS || bOp == Ne) {
         return True;
       }
-      if (bOp == Eq || bOp == LtS || bOp == LeS) {
-        return False;
-      }
-      break;
-    case GeS:
-      if (bOp == LtS) {
+      if (bOp == Eq || bOp == LtS) {
         return False;
       }
       break;
     case LtU:
       // Ditto, with unsigned.
-      if (bOp == LeU) {
+      if (bOp == LeU || bOp == Ne) {
         return True;
       }
-      if (bOp == Eq || bOp == GtU || bOp == GeU) {
-        return False;
-      }
-      break;
-    case LeU:
-      // <= proves > false
-      if (bOp == GtU) {
+      if (bOp == Eq || bOp == GtU) {
         return False;
       }
       break;
     case GtU:
       // Ditto, with G instead of L.
-      if (bOp == GeU) {
+      if (bOp == GeU || bOp == Ne) {
         return True;
       }
-      if (bOp == Eq || bOp == LtU || bOp == LeU) {
-        return False;
-      }
-      break;
-    case GeU:
-      if (bOp == LtU) {
+      if (bOp == Eq || bOp == LtU) {
         return False;
       }
       break;
