@@ -19,8 +19,11 @@
 
 #include <algorithm>
 #include <cassert>
+#include <cstdint>
 #include <iostream>
 #include <limits>
+
+#include "support/inplace_vector.h"
 
 namespace wasm {
 
@@ -87,12 +90,77 @@ template<typename T> struct Span {
   bool operator!=(const Span& other) const { return !(*this == other); }
 };
 
+// A union of spans, which we assume are disjoint.
+template<typename T, size_t N>
+struct Spans : public inplace_vector<Span<T>, N> {
+  constexpr Spans() = default;
+
+  // Initialize with Spans.
+  Spans(std::initializer_list<Span<T>> init) {
+    for (const auto& span : init) {
+      this->push_back(span);
+    }
+  }
+
+  bool hasOverlap(const Spans<T, N>& other) const {
+    // There is overlap if any of our spans overlaps with any of other's.
+    for (const auto& span : *this) {
+      for (const auto& otherSpan : other) {
+        if (span.hasOverlap(otherSpan)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  bool contains(const Spans<T, N>& other) const {
+    // We contain other if each of their spans is contained in us.
+    for (const auto& otherSpan : other) {
+      // Because our spans are assumed to be disjoint, exactly one of our
+      // spans must contain otherSpan.
+      bool found = false;
+      for (const auto& span : *this) {
+        if (span.contains(otherSpan)) {
+          found = true;
+          break;
+        }
+      }
+      if (!found) {
+        return false;
+      }
+    }
+    return true;
+  }
+};
+
+// A useful set of 2 spans that can contain any integer value. 2 spans is enough
+// to contain spans for any inequality, signed or unsigned: we represent numbers
+// as unsigned internally, and so e.g. signed x <= 10 ends up as two disjoint
+// spans, [0..10] and [2^31..MAX_INT].
+using SpansU2 = Spans<uint64_t, 2>;
+
 template<typename T>
 inline std::ostream& operator<<(std::ostream& os, const Span<T>& span) {
   if (span.isEmpty()) {
     return os << "[empty]";
   }
   return os << '[' << span.min << ", " << span.max << ']';
+}
+
+template<typename T, size_t N>
+inline std::ostream& operator<<(std::ostream& os, const Spans<T, N>& spans) {
+  if (spans.empty()) {
+    return os << "{empty}";
+  }
+  os << '{';
+  for (size_t i = 0; i < spans.size(); ++i) {
+    if (i > 0) {
+      os << ", ";
+    }
+    os << spans[i];
+  }
+  return os << '}';
 }
 
 } // namespace wasm

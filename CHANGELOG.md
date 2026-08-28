@@ -19,6 +19,7 @@ Current Trunk
   branches. (#9010)
 - Replace the `BINARYEN_ROOT` environment variable (used by developers who are
   doing out-of-tree builds of binaryen) with `BINARYEN_BIN` (#9023)
+- Reject non-natural alignment for atomic memory operations at parse time (#8962)
 
 v132
 ----
