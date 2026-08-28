@@ -1467,7 +1467,7 @@ public:
                                Expression* fiber) {
     auto* ret = wasm.allocator.alloc<FiberResume>();
     if (fiberType.isFiber()) {
-      ret->type = fiberType.getFiber().resumeType.getSignature().results;
+      ret->type = fiberType.getFiber().type.getSignature().results;
     }
     ret->handler = handler;
     ret->operands = std::move(operands);
@@ -1482,7 +1482,7 @@ public:
                                Expression* fiber) {
     auto* ret = wasm.allocator.alloc<FiberResume>();
     if (fiberType.isFiber()) {
-      ret->type = fiberType.getFiber().resumeType.getSignature().results;
+      ret->type = fiberType.getFiber().type.getSignature().results;
     }
     ret->handler = handler;
     ret->operands.set(operands);
@@ -1495,7 +1495,7 @@ public:
                                  Expression* fiber) {
     auto* ret = wasm.allocator.alloc<FiberSuspend>();
     if (fiberType.isFiber()) {
-      ret->type = fiberType.getFiber().resumeType.getSignature().params;
+      ret->type = fiberType.getFiber().type.getSignature().params;
     }
     ret->operands = std::move(operands);
     ret->fiber = fiber;
@@ -1507,7 +1507,7 @@ public:
   makeFiberSuspend(HeapType fiberType, const T& operands, Expression* fiber) {
     auto* ret = wasm.allocator.alloc<FiberSuspend>();
     if (fiberType.isFiber()) {
-      ret->type = fiberType.getFiber().resumeType.getSignature().params;
+      ret->type = fiberType.getFiber().type.getSignature().params;
     }
     ret->operands.set(operands);
     ret->fiber = fiber;

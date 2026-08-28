@@ -477,8 +477,7 @@ void Fuzzer::checkCanonicalization() {
     }
 
     Fiber getFiber(Fiber old) {
-      old.resumeType = getChildHeapType(old.resumeType).get();
-      old.suspendType = getChildHeapType(old.suspendType).get();
+      old.type = getChildHeapType(old.type).get();
       return old;
     }
   };

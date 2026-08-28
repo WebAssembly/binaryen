@@ -745,7 +745,7 @@ MaybeResult<typename Ctx::ContinuationT> conttype(Ctx& ctx) {
   return ctx.makeContType(*x);
 }
 
-// fibertype ::= '(' 'fiber'  x:typeidx y:typeidx ')' => fiber x y
+// fibertype ::= '(' 'fiber'  x:typeidx ')' => fiber x
 template<typename Ctx> MaybeResult<typename Ctx::FiberT> fibertype(Ctx& ctx) {
   if (!ctx.in.takeSExprStart("fiber"sv)) {
     return {};
@@ -754,14 +754,11 @@ template<typename Ctx> MaybeResult<typename Ctx::FiberT> fibertype(Ctx& ctx) {
   auto x = typeidx(ctx);
   CHECK_ERR(x);
 
-  auto y = typeidx(ctx);
-  CHECK_ERR(y);
-
   if (!ctx.in.takeRParen()) {
     return ctx.in.err("expected end of fiber type");
   }
 
-  return ctx.makeFiberType(*x, *y);
+  return ctx.makeFiberType(*x);
 }
 
 // storagetype ::= valtype | packedtype

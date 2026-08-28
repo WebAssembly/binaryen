@@ -1702,9 +1702,9 @@ void FiberResume::finalize() {
     return;
   }
   if (fiber->type.isFiber()) {
-    const Signature& resumeSig =
-      fiber->type.getHeapType().getFiber().resumeType.getSignature();
-    type = resumeSig.results;
+    const Signature& sig =
+      fiber->type.getHeapType().getFiber().type.getSignature();
+    type = sig.results;
     return;
   }
   type = Type::none;
@@ -1723,9 +1723,9 @@ void FiberSuspend::finalize() {
     return;
   }
   if (fiber->type.isFiber()) {
-    const Signature& resumeSig =
-      fiber->type.getHeapType().getFiber().resumeType.getSignature();
-    type = resumeSig.params;
+    const Signature& sig =
+      fiber->type.getHeapType().getFiber().type.getSignature();
+    type = sig.params;
   }
 }
 

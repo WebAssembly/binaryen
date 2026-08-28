@@ -974,8 +974,7 @@ struct Unsubtyping : Pass, Noter<Unsubtyping> {
         break;
       }
       case HeapTypeKind::Fiber: {
-        noteSubtype(super.getFiber().resumeType, sub.getFiber().resumeType);
-        noteSubtype(sub.getFiber().suspendType, super.getFiber().suspendType);
+        noteSubtype(sub.getFiber().type, super.getFiber().type);
         break;
       }
       case HeapTypeKind::Basic:

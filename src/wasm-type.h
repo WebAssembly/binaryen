@@ -714,13 +714,9 @@ struct Continuation {
 };
 
 struct Fiber {
-  HeapType resumeType;
-  HeapType suspendType;
-  Fiber(HeapType resumeType, HeapType suspendType)
-    : resumeType(resumeType), suspendType(suspendType) {}
-  bool operator==(const Fiber& other) const {
-    return resumeType == other.resumeType && suspendType == other.suspendType;
-  }
+  HeapType type;
+  Fiber(HeapType type) : type(type) {}
+  bool operator==(const Fiber& other) const { return type == other.type; }
   bool operator!=(const Fiber& other) const { return !(*this == other); }
   std::string toString() const;
 };
@@ -905,8 +901,7 @@ struct TypeBuilder {
       }
       case HeapTypeKind::Fiber: {
         auto fiber = type.getFiber();
-        fiber.resumeType = map(fiber.resumeType);
-        fiber.suspendType = map(fiber.suspendType);
+        fiber.type = map(fiber.type);
         setHeapType(i, fiber);
         return;
       }

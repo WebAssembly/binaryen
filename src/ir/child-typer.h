@@ -1467,7 +1467,7 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
       return;
     }
     note(&curr->fiber, Type(*ft, Nullable));
-    auto params = ft->getFiber().resumeType.getSignature().params;
+    auto params = ft->getFiber().type.getSignature().params;
     assert(params.size() == curr->operands.size());
     for (size_t i = 0; i < params.size(); ++i) {
       note(&curr->operands[i], params[i]);
@@ -1487,10 +1487,10 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
       self().noteUnknown();
       return;
     }
-    auto params = ft->getFiber().suspendType.getSignature().params;
-    assert(params.size() == curr->operands.size());
-    for (size_t i = 0; i < params.size(); ++i) {
-      note(&curr->operands[i], params[i]);
+    auto results = ft->getFiber().type.getSignature().results;
+    assert(results.size() == curr->operands.size());
+    for (size_t i = 0; i < results.size(); ++i) {
+      note(&curr->operands[i], results[i]);
     }
     note(&curr->fiber, Type(*ft, Nullable));
   }

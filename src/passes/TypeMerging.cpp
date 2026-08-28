@@ -778,16 +778,9 @@ bool shapeEq(Continuation a, Continuation b) { return shapeEq(a.type, b.type); }
 
 size_t shapeHash(Continuation a) { return shapeHash(a.type); }
 
-bool shapeEq(Fiber a, Fiber b) {
-  return shapeEq(a.resumeType, b.resumeType) &&
-         shapeEq(a.suspendType, b.suspendType);
-}
+bool shapeEq(Fiber a, Fiber b) { return shapeEq(a.type, b.type); }
 
-size_t shapeHash(Fiber a) {
-  auto digest = shapeHash(a.resumeType);
-  hash_combine(digest, shapeHash(a.suspendType));
-  return digest;
-}
+size_t shapeHash(Fiber a) { return shapeHash(a.type); }
 
 bool shapeEq(Field a, Field b) {
   return a.packedType == b.packedType && a.mutable_ == b.mutable_ &&

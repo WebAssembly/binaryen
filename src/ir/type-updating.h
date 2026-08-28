@@ -535,8 +535,7 @@ public:
     continuation.type = getNewHeapType(oldType.getContinuation().type);
   }
   void modifyFiber(HeapType oldType, Fiber& fiber) override {
-    fiber.resumeType = getNewHeapType(oldType.getFiber().resumeType);
-    fiber.suspendType = getNewHeapType(oldType.getFiber().suspendType);
+    fiber.type = getNewHeapType(oldType.getFiber().type);
   }
   void modifySignature(HeapType oldSignatureType, Signature& sig) override {
     auto getUpdatedTypeList = [&](Type type) {

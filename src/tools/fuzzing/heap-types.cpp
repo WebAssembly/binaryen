@@ -1261,13 +1261,8 @@ std::vector<HeapType> Inhabitator::build() {
       }
       case HeapTypeKind::Fiber: {
         Fiber copy = type.getFiber();
-        if (auto it = typeIndices.find(copy.resumeType);
-            it != typeIndices.end()) {
-          copy.resumeType = builder.getTempHeapType(it->second);
-        }
-        if (auto it = typeIndices.find(copy.suspendType);
-            it != typeIndices.end()) {
-          copy.suspendType = builder.getTempHeapType(it->second);
+        if (auto it = typeIndices.find(copy.type); it != typeIndices.end()) {
+          copy.type = builder.getTempHeapType(it->second);
         }
         builder[i] = copy;
         continue;

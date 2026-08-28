@@ -215,11 +215,9 @@ void ReFinalize::visitFiberNew(FiberNew* curr) { curr->finalize(); }
 void ReFinalize::visitFiberResume(FiberResume* curr) {
   curr->finalize();
   if (curr->fiber->type.isFiber()) {
-    updateBreakValueType(curr->handler,
-                         curr->fiber->type.getHeapType()
-                           .getFiber()
-                           .suspendType.getSignature()
-                           .params);
+    updateBreakValueType(
+      curr->handler,
+      curr->fiber->type.getHeapType().getFiber().type.getSignature().results);
   }
 }
 void ReFinalize::visitFiberSuspend(FiberSuspend* curr) { curr->finalize(); }

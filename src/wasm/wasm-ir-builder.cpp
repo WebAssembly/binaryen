@@ -2956,7 +2956,7 @@ Result<> IRBuilder::makeFiberNew(HeapType type, Name func) {
   FiberNew curr(wasm.allocator);
   curr.type = Type(type, NonNullable, Exact);
   curr.func = func;
-  auto resumeParams = type.getFiber().resumeType.getSignature().params;
+  auto resumeParams = type.getFiber().type.getSignature().params;
   auto funcParams = funcObj->getParams();
   if (funcParams.size() < 1 + resumeParams.size()) {
     return Err{
@@ -2980,7 +2980,7 @@ Result<> IRBuilder::makeFiberResume(HeapType type, Index label) {
 
   FiberResume curr(wasm.allocator);
   curr.handler = *labelName;
-  auto resumeParams = type.getFiber().resumeType.getSignature().params;
+  auto resumeParams = type.getFiber().type.getSignature().params;
   curr.operands.resize(resumeParams.size());
   CHECK_ERR(ChildPopper{*this}.visitFiberResume(&curr, type));
 
@@ -2994,7 +2994,7 @@ Result<> IRBuilder::makeFiberSuspend(HeapType type) {
     return Err{"expected fiber type"};
   }
   FiberSuspend curr(wasm.allocator);
-  auto suspendParams = type.getFiber().suspendType.getSignature().params;
+  auto suspendParams = type.getFiber().type.getSignature().results;
   curr.operands.resize(suspendParams.size());
   CHECK_ERR(ChildPopper{*this}.visitFiberSuspend(&curr, type));
 

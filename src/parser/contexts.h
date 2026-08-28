@@ -158,7 +158,7 @@ struct NullTypeParserCtx {
 
   SignatureT makeFuncType(ParamsT*, ResultsT*) { return Ok{}; }
   ContinuationT makeContType(HeapTypeT) { return Ok{}; }
-  FiberT makeFiberType(HeapTypeT, HeapTypeT) { return Ok{}; }
+  FiberT makeFiberType(HeapTypeT) { return Ok{}; }
 
   StorageT makeI8() { return Ok{}; }
   StorageT makeI16() { return Ok{}; }
@@ -329,9 +329,7 @@ template<typename Ctx> struct TypeParserCtx {
   }
 
   ContinuationT makeContType(HeapTypeT ft) { return Continuation(ft); }
-  FiberT makeFiberType(HeapTypeT resumeType, HeapTypeT suspendType) {
-    return Fiber(resumeType, suspendType);
-  }
+  FiberT makeFiberType(HeapTypeT ft) { return Fiber(ft); }
 
   StorageT makeI8() { return Field(Field::i8, Immutable); }
   StorageT makeI16() { return Field(Field::i16, Immutable); }

@@ -224,8 +224,7 @@ protected:
         taskList.push_back(Task::scan(&info->continuation.type));
         break;
       case HeapTypeKind::Fiber:
-        taskList.push_back(Task::scan(&info->fiber.suspendType));
-        taskList.push_back(Task::scan(&info->fiber.resumeType));
+        taskList.push_back(Task::scan(&info->fiber.type));
         break;
       case HeapTypeKind::Struct: {
         auto& fields = info->struct_.fields;
@@ -1902,9 +1901,7 @@ std::ostream& TypePrinter::print(const Continuation& continuation) {
 
 std::ostream& TypePrinter::print(const Fiber& fiber) {
   os << "(fiber ";
-  printHeapTypeName(fiber.resumeType);
-  os << ' ';
-  printHeapTypeName(fiber.suspendType);
+  printHeapTypeName(fiber.type);
   return os << ')';
 }
 
@@ -2053,10 +2050,9 @@ size_t RecGroupHasher::hash(const Continuation& continuation) const {
 }
 
 size_t RecGroupHasher::hash(const Fiber& fiber) const {
-  // We throw in a magic constant to distinguish (fiber $r $s) from other types
+  // We throw in a magic constant to distinguish (fiber $sig) from other types
   size_t magic = 0xf1be7;
-  size_t digest = hash(fiber.resumeType);
-  hash_combine(digest, hash(fiber.suspendType));
+  size_t digest = hash(fiber.type);
   rehash(digest, magic);
   return digest;
 }
@@ -2208,7 +2204,7 @@ bool RecGroupEquator::eq(const Continuation& a, const Continuation& b) const {
 }
 
 bool RecGroupEquator::eq(const Fiber& a, const Fiber& b) const {
-  return eq(a.resumeType, b.resumeType) && eq(a.suspendType, b.suspendType);
+  return eq(a.type, b.type);
 }
 
 bool RecGroupEquator::eq(const Struct& a, const Struct& b) const {
@@ -2417,8 +2413,7 @@ bool isValidSupertype(const Continuation& a, const Continuation& b) {
 }
 
 bool isValidSupertype(const Fiber& a, const Fiber& b) {
-  return HeapType::isSubType(b.resumeType, a.resumeType) &&
-         HeapType::isSubType(a.suspendType, b.suspendType);
+  return HeapType::isSubType(a.type, b.type);
 }
 
 bool isValidSupertype(const Struct& a, const Struct& b) {
@@ -2553,11 +2548,10 @@ validateContinuation(Continuation cont, FeatureSet feats, bool isShared) {
 
 std::optional<TypeBuilder::ErrorReason>
 validateFiber(Fiber fiber, FeatureSet feats, bool isShared) {
-  if (!fiber.resumeType.isSignature() || !fiber.suspendType.isSignature()) {
+  if (!fiber.type.isSignature()) {
     return TypeBuilder::ErrorReasonKind::InvalidFuncType;
   }
-  if (isShared != fiber.resumeType.isShared() ||
-      isShared != fiber.suspendType.isShared()) {
+  if (isShared != fiber.type.isShared()) {
     return TypeBuilder::ErrorReasonKind::InvalidFuncType;
   }
   return std::nullopt;
@@ -2971,10 +2965,8 @@ hash<wasm::Continuation>::operator()(const wasm::Continuation& cont) const {
 }
 
 size_t hash<wasm::Fiber>::operator()(const wasm::Fiber& fiber) const {
-  // We throw in a magic constant to distinguish (fiber $r $s) from other types
   auto magic = 0xf1be7;
-  auto digest = wasm::hash(fiber.resumeType);
-  wasm::rehash(digest, fiber.suspendType);
+  auto digest = wasm::hash(fiber.type);
   wasm::rehash(digest, magic);
   return digest;
 }

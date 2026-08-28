@@ -328,8 +328,7 @@ void WasmBinaryWriter::writeTypes() {
         break;
       case HeapTypeKind::Fiber:
         o << uint8_t(BinaryConsts::EncodedType::Fiber);
-        writeHeapType(type.getFiber().resumeType, Inexact);
-        writeHeapType(type.getFiber().suspendType, Inexact);
+        writeHeapType(type.getFiber().type, Inexact);
         break;
       case HeapTypeKind::Basic:
         WASM_UNREACHABLE("unexpected kind");
@@ -2904,21 +2903,14 @@ void WasmBinaryReader::readTypes() {
   };
 
   auto readFiberDef = [&]() {
-    auto [resumeHt, resumeExactness] = readHeapType();
-    if (resumeExactness != Inexact) {
+    auto [ht, exactness] = readHeapType();
+    if (exactness != Inexact) {
       throw ParseException("invalid exact type in fiber definition");
     }
-    if (!resumeHt.isSignature()) {
-      throw ParseException("fiber resume types must be function types");
+    if (!ht.isSignature()) {
+      throw ParseException("fiber types must be built from function types");
     }
-    auto [suspendHt, suspendExactness] = readHeapType();
-    if (suspendExactness != Inexact) {
-      throw ParseException("invalid exact type in fiber definition");
-    }
-    if (!suspendHt.isSignature()) {
-      throw ParseException("fiber suspend types must be function types");
-    }
-    return Fiber(resumeHt, suspendHt);
+    return Fiber(ht);
   };
 
   auto readMutability = [&]() {

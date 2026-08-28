@@ -125,12 +125,7 @@ template<typename CompareTypes> struct RecGroupComparator {
     return compare(a.type, b.type);
   }
 
-  Comparison compare(Fiber a, Fiber b) {
-    if (auto cmp = compare(a.resumeType, b.resumeType); cmp != EQ) {
-      return cmp;
-    }
-    return compare(a.suspendType, b.suspendType);
-  }
+  Comparison compare(Fiber a, Fiber b) { return compare(a.type, b.type); }
 
   Comparison compare(Field a, Field b) {
     if (a.mutable_ != b.mutable_) {
@@ -303,11 +298,7 @@ struct RecGroupHasher {
 
   size_t hash(Continuation cont) { return hash(cont.type); }
 
-  size_t hash(Fiber fiber) {
-    size_t digest = hash(fiber.resumeType);
-    hash_combine(digest, hash(fiber.suspendType));
-    return digest;
-  }
+  size_t hash(Fiber fiber) { return hash(fiber.type); }
 
   size_t hash(Field field) {
     size_t digest = wasm::hash(field.mutable_);

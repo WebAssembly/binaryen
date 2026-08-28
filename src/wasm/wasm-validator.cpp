@@ -4890,9 +4890,9 @@ void FunctionValidator::visitFiberNew(FiberNew* curr) {
   }
 
   auto fiber = curr->type.getHeapType().getFiber();
-  assert(fiber.resumeType.isSignature());
-  auto resumeParams = fiber.resumeType.getSignature().params;
-  auto resumeResults = fiber.resumeType.getSignature().results;
+  assert(fiber.type.isSignature());
+  auto resumeParams = fiber.type.getSignature().params;
+  auto resumeResults = fiber.type.getSignature().results;
   auto funcParams = func->getParams();
   auto funcResults = func->getResults();
 
@@ -4976,9 +4976,8 @@ void FunctionValidator::visitFiberResume(FiberResume* curr) {
   }
 
   auto fiber = type.getFiber();
-  auto resumeParams = fiber.resumeType.getSignature().params;
-  auto resumeResults = fiber.resumeType.getSignature().results;
-  auto suspendParams = fiber.suspendType.getSignature().params;
+  auto resumeParams = fiber.type.getSignature().params;
+  auto resumeResults = fiber.type.getSignature().results;
 
   if (!shouldBeTrue(curr->operands.size() == resumeParams.size(),
                     curr,
@@ -5000,7 +4999,7 @@ void FunctionValidator::visitFiberResume(FiberResume* curr) {
   shouldBeEqualOrFirstIsUnreachable(
     curr->type, resumeResults, curr, "fiber.resume result type mismatch");
 
-  noteBreak(curr->handler, suspendParams, curr);
+  noteBreak(curr->handler, resumeResults, curr);
 }
 
 void FunctionValidator::visitFiberSuspend(FiberSuspend* curr) {
@@ -5033,18 +5032,18 @@ void FunctionValidator::visitFiberSuspend(FiberSuspend* curr) {
   }
 
   auto fiber = type.getFiber();
-  auto resumeParams = fiber.resumeType.getSignature().params;
-  auto suspendParams = fiber.suspendType.getSignature().params;
+  auto resumeParams = fiber.type.getSignature().params;
+  auto suspendValues = fiber.type.getSignature().results;
 
-  if (!shouldBeTrue(curr->operands.size() == suspendParams.size(),
+  if (!shouldBeTrue(curr->operands.size() == suspendValues.size(),
                     curr,
                     "fiber.suspend argument count mismatch")) {
     return;
   }
 
-  for (Index i = 0; i < suspendParams.size(); ++i) {
+  for (Index i = 0; i < suspendValues.size(); ++i) {
     if (!shouldBeSubType(curr->operands[i]->type,
-                         suspendParams[i],
+                         suspendValues[i],
                          curr,
                          "fiber.suspend argument type mismatch")) {
       if (!info.quiet) {

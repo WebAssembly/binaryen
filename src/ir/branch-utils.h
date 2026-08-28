@@ -107,8 +107,8 @@ void operateOnScopeNameUsesAndSentTypes(Expression* expr, T func) {
             fr->fiber->type.getHeapType().isFiber()) {
           sent = fr->fiber->type.getHeapType()
                    .getFiber()
-                   .suspendType.getSignature()
-                   .params;
+                   .type.getSignature()
+                   .results;
         }
         func(name, sent);
       }

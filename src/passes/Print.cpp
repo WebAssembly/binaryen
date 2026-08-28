@@ -2711,16 +2711,22 @@ struct PrintExpressionContents
     curr->func.print(o);
   }
   void visitFiberResume(FiberResume* curr) {
-    assert(curr->fiber->type.isFiber());
     printMedium(o, "fiber.resume ");
-    printHeapTypeName(curr->fiber->type.getHeapType());
+    if (curr->fiber->type.isFiber()) {
+      printHeapTypeName(curr->fiber->type.getHeapType());
+    } else {
+      o << "<invalid-fiber-type>";
+    }
     o << ' ';
     curr->handler.print(o);
   }
   void visitFiberSuspend(FiberSuspend* curr) {
-    assert(curr->fiber->type.isFiber());
     printMedium(o, "fiber.suspend ");
-    printHeapTypeName(curr->fiber->type.getHeapType());
+    if (curr->fiber->type.isFiber()) {
+      printHeapTypeName(curr->fiber->type.getHeapType());
+    } else {
+      o << "<invalid-fiber-type>";
+    }
   }
 };
 
