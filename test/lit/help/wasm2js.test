@@ -643,8 +643,8 @@
 ;; CHECK-NEXT:                                                 application
 ;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --fast-math,-ffm                              Optimize floats without handling
-;; CHECK-NEXT:                                                 corner cases of NaNs and 
-;; CHECK-NEXT:                                                 rounding
+;; CHECK-NEXT:                                                 corner cases of NaNs, rounding, 
+;; CHECK-NEXT:                                                 and negative zero
 ;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --zero-filled-memory,-uim                     Assume that an imported memory 
 ;; CHECK-NEXT:                                                 will be zero-initialized
