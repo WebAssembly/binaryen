@@ -511,9 +511,7 @@ struct ConstraintAnalysis
     auto parsed = LocalConstraint::parseCondition(iff->condition);
     if (!physicalSuccessor) {
       // We are in the ifFalse, so negate the condition.
-      for (auto& pair : parsed) {
-        pair.constraint = pair.constraint.negate();
-      }
+      negate(parsed);
     }
     return parsed;
   }
@@ -527,9 +525,7 @@ struct ConstraintAnalysis
     auto parsed = LocalConstraint::parseCondition(br->condition);
     if (physicalSuccessor) {
       // The branch was not taken, so negate the condition.
-      for (auto& pair : parsed) {
-        pair.constraint = pair.constraint.negate();
-      }
+      negate(parsed);
     }
     return parsed;
   }
@@ -548,11 +544,22 @@ struct ConstraintAnalysis
     auto parsed = LocalConstraint::parseCondition(brOn->ref);
     // Negate depending on the op and (similar to Break) the successor.
     if ((brOn->op == BrOnNull) ^ physicalSuccessor) {
-      for (auto& pair : parsed) {
-        pair.constraint = pair.constraint.negate();
-      }
+      negate(parsed);
     }
     return parsed;
+  }
+
+  // Given a list of parsed constraints on locals, negate them.
+  void negate(SmallVector<LocalConstraint, 1>& parsed) {
+    // The input is a list of constraints all applying at once, A & B & C. The
+    // negation is !A | !B | !C, but we cannot expression a general OR like
+    // that, so we only negate a list of one. TODO: if all the constraints are
+    // on the same local, we could use approximateOr.
+    if (parsed.size() == 1) {
+      parsed[0].constraint = parsed[0].constraint.negate();
+    } else {
+      parsed.clear();
+    }
   }
 
   // When applying constraints for a binary operation like x = y + 1, we may
@@ -656,12 +663,14 @@ struct ConstraintAnalysis
     for (auto& pair : branch) {
       // Extend the range of values in the "jump ahead" manner described in the
       // top-level comment.
-      if (applyBranchRangeExtensionToConstraints(pair, constraints)) {
-        return;
+      if (!applyBranchRangeExtensionToConstraints(pair, constraints)) {
+        // Otherwise, apply the constraint normally.
+        constraints.approximateAnd(pair.local, pair.constraint);
       }
 
-      // Otherwise, apply the constraint normally.
-      constraints.approximateAnd(pair.local, pair.constraint);
+      if (constraints.unreachable) {
+        return;
+      }
     }
   }
 
