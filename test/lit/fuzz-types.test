@@ -28,9 +28,9 @@
 ;; CHECK-NEXT:  (type $18 (sub final $13 (describes $17) (struct (field (ref noextern)) (field (ref $10)) (field (mut i32)) (field (mut i16)) (field (mut (ref null $1))) (field i8))))
 ;; CHECK-NEXT:  (type $19 (sub $8 (struct (field i32) (field (mut i8)))))
 ;; CHECK-NEXT: )
-;; CHECK-NEXT: 
+;; CHECK-EMPTY:
 ;; CHECK-NEXT: Inhabitable types:
-;; CHECK-NEXT: 
+;; CHECK-EMPTY:
 ;; CHECK-NEXT: Built 20 types:
 ;; CHECK-NEXT: (rec
 ;; CHECK-NEXT:  (type $0 (sub (shared (func (param i64 f64 exnref (ref null $0)) (result (ref cont))))))
