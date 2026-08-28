@@ -149,14 +149,31 @@ struct ConstraintAnalysis
   void maybeMarkRelevant(Expression* curr) {
     // If this parses into a constraint on a local, that local is relevant.
     for (auto& pair : LocalConstraint::parseCondition(curr)) {
-      relevantLocals[pair.local] = true;
-      if (auto* other = std::get_if<Index>(&pair.constraint.term)) {
-        relevantLocals[*other] = true;
+      if (isRelevantType(getFunction()->getLocalType(pair.local)) {
+        relevantLocals[pair.local] = true;
+        if (auto* other = std::get_if<Index>(&pair.constraint.term)) {
+          relevantLocals[*other] = true;
+        }
       }
     }
   }
 
+  bool fastMath;
+
+  bool isRelevantType(Type type) {
+    // Floating-point math does not follow the basic rules of logic (for
+    // example, NaN < NaN and NaN >= NaN are both false, despite the law of the
+    // excluded middle). Constraints follow the rules of logic, so we cannot
+    // operate on floats unless we have fast-math enabled (which assures us we
+    // can ignore NaNs).
+    // TODO: when values are constant and non-NaN, we could optimize even
+    //       without fast-math
+    return !type.isFloat() || fastMath;
+  }
+
   void doWalkFunction(Function* func) {
+    fastMath = getPassOptions().fastMath;
+
     relevantLocals.assign(func->getNumLocals(), false);
 
     Super::doWalkFunction(func);
