@@ -1408,3 +1408,203 @@ TEST(ConstraintTest, FloatNegativeZero) {
   EXPECT_EQ(s32.proves(Constraint{Eq, {Literal(float(-0.0f))}}), True);
   EXPECT_EQ(s32.proves(Constraint{Ne, {Literal(float(-0.0f))}}), False);
 }
+
+TEST(ConstraintTest, EqualTermPairs) {
+  // Constraints with the term equal to local $1.
+  Constraint eq1{Eq, {Index(1)}};
+  Constraint ne1{Ne, {Index(1)}};
+  Constraint ltS1{LtS, {Index(1)}};
+  Constraint leS1{LeS, {Index(1)}};
+  Constraint gtS1{GtS, {Index(1)}};
+  Constraint geS1{GeS, {Index(1)}};
+  Constraint ltU1{LtU, {Index(1)}};
+  Constraint leU1{LeU, {Index(1)}};
+  Constraint gtU1{GtU, {Index(1)}};
+  Constraint geU1{GeU, {Index(1)}};
+
+  // Constraints with a different term, local $2.
+  Constraint eq2{Eq, {Index(2)}};
+  Constraint ne2{Ne, {Index(2)}};
+  Constraint ltS2{LtS, {Index(2)}};
+  Constraint leS2{LeS, {Index(2)}};
+  Constraint gtS2{GtS, {Index(2)}};
+  Constraint geS2{GeS, {Index(2)}};
+  Constraint ltU2{LtU, {Index(2)}};
+  Constraint leU2{LeU, {Index(2)}};
+  Constraint gtU2{GtU, {Index(2)}};
+  Constraint geU2{GeU, {Index(2)}};
+
+  // 1. Eq (x == $1):
+  // == proves <= and >= (both signed and unsigned) are True.
+  EXPECT_EQ(AndedConstraintSet{eq1}.proves(leS1), True);
+  EXPECT_EQ(AndedConstraintSet{eq1}.proves(leU1), True);
+  EXPECT_EQ(AndedConstraintSet{eq1}.proves(geS1), True);
+  EXPECT_EQ(AndedConstraintSet{eq1}.proves(geU1), True);
+
+  // == proves < and > (both signed and unsigned) are False.
+  EXPECT_EQ(AndedConstraintSet{eq1}.proves(ltS1), False);
+  EXPECT_EQ(AndedConstraintSet{eq1}.proves(ltU1), False);
+  EXPECT_EQ(AndedConstraintSet{eq1}.proves(gtS1), False);
+  EXPECT_EQ(AndedConstraintSet{eq1}.proves(gtU1), False);
+
+  // == proves == is True, and != is False.
+  EXPECT_EQ(AndedConstraintSet{eq1}.proves(eq1), True);
+  EXPECT_EQ(AndedConstraintSet{eq1}.proves(ne1), False);
+
+  // 2. LtS (x <_s $1):
+  // < proves <= is True.
+  EXPECT_EQ(AndedConstraintSet{ltS1}.proves(leS1), True);
+  // < proves > and >= are False.
+  EXPECT_EQ(AndedConstraintSet{ltS1}.proves(gtS1), False);
+  EXPECT_EQ(AndedConstraintSet{ltS1}.proves(geS1), False);
+  // Self
+  EXPECT_EQ(AndedConstraintSet{ltS1}.proves(ltS1), True);
+  // Cross-signedness and equality are Unknown.
+  EXPECT_EQ(AndedConstraintSet{ltS1}.proves(eq1), Unknown);
+  EXPECT_EQ(AndedConstraintSet{ltS1}.proves(ne1), Unknown);
+  EXPECT_EQ(AndedConstraintSet{ltS1}.proves(ltU1), Unknown);
+  EXPECT_EQ(AndedConstraintSet{ltS1}.proves(leU1), Unknown);
+  EXPECT_EQ(AndedConstraintSet{ltS1}.proves(gtU1), Unknown);
+  EXPECT_EQ(AndedConstraintSet{ltS1}.proves(geU1), Unknown);
+
+  // 3. LeS (x <=_s $1):
+  // <= proves > is False.
+  EXPECT_EQ(AndedConstraintSet{leS1}.proves(gtS1), False);
+  // Self
+  EXPECT_EQ(AndedConstraintSet{leS1}.proves(leS1), True);
+  // Others are Unknown.
+  EXPECT_EQ(AndedConstraintSet{leS1}.proves(ltS1), Unknown);
+  EXPECT_EQ(AndedConstraintSet{leS1}.proves(geS1), Unknown);
+  EXPECT_EQ(AndedConstraintSet{leS1}.proves(eq1), Unknown);
+  EXPECT_EQ(AndedConstraintSet{leS1}.proves(ne1), Unknown);
+  EXPECT_EQ(AndedConstraintSet{leS1}.proves(ltU1), Unknown);
+  EXPECT_EQ(AndedConstraintSet{leS1}.proves(leU1), Unknown);
+  EXPECT_EQ(AndedConstraintSet{leS1}.proves(gtU1), Unknown);
+  EXPECT_EQ(AndedConstraintSet{leS1}.proves(geU1), Unknown);
+
+  // 4. GtS (x >_s $1):
+  // > proves >= is True.
+  EXPECT_EQ(AndedConstraintSet{gtS1}.proves(geS1), True);
+  // > proves < and <= are False.
+  EXPECT_EQ(AndedConstraintSet{gtS1}.proves(ltS1), False);
+  EXPECT_EQ(AndedConstraintSet{gtS1}.proves(leS1), False);
+  // Self
+  EXPECT_EQ(AndedConstraintSet{gtS1}.proves(gtS1), True);
+  // Cross-signedness and equality are Unknown.
+  EXPECT_EQ(AndedConstraintSet{gtS1}.proves(eq1), Unknown);
+  EXPECT_EQ(AndedConstraintSet{gtS1}.proves(ne1), Unknown);
+  EXPECT_EQ(AndedConstraintSet{gtS1}.proves(ltU1), Unknown);
+  EXPECT_EQ(AndedConstraintSet{gtS1}.proves(leU1), Unknown);
+  EXPECT_EQ(AndedConstraintSet{gtS1}.proves(gtU1), Unknown);
+  EXPECT_EQ(AndedConstraintSet{gtS1}.proves(geU1), Unknown);
+
+  // 5. GeS (x >=_s $1):
+  // >= proves < is False.
+  EXPECT_EQ(AndedConstraintSet{geS1}.proves(ltS1), False);
+  // Self
+  EXPECT_EQ(AndedConstraintSet{geS1}.proves(geS1), True);
+  // Others are Unknown.
+  EXPECT_EQ(AndedConstraintSet{geS1}.proves(gtS1), Unknown);
+  EXPECT_EQ(AndedConstraintSet{geS1}.proves(leS1), Unknown);
+  EXPECT_EQ(AndedConstraintSet{geS1}.proves(eq1), Unknown);
+  EXPECT_EQ(AndedConstraintSet{geS1}.proves(ne1), Unknown);
+  EXPECT_EQ(AndedConstraintSet{geS1}.proves(ltU1), Unknown);
+  EXPECT_EQ(AndedConstraintSet{geS1}.proves(leU1), Unknown);
+  EXPECT_EQ(AndedConstraintSet{geS1}.proves(gtU1), Unknown);
+  EXPECT_EQ(AndedConstraintSet{geS1}.proves(geU1), Unknown);
+
+  // 6. LtU (x <_u $1):
+  // < proves <= is True.
+  EXPECT_EQ(AndedConstraintSet{ltU1}.proves(leU1), True);
+  // < proves > and >= are False.
+  EXPECT_EQ(AndedConstraintSet{ltU1}.proves(gtU1), False);
+  EXPECT_EQ(AndedConstraintSet{ltU1}.proves(geU1), False);
+  // Self
+  EXPECT_EQ(AndedConstraintSet{ltU1}.proves(ltU1), True);
+  // Cross-signedness and equality are Unknown.
+  EXPECT_EQ(AndedConstraintSet{ltU1}.proves(eq1), Unknown);
+  EXPECT_EQ(AndedConstraintSet{ltU1}.proves(ne1), Unknown);
+  EXPECT_EQ(AndedConstraintSet{ltU1}.proves(ltS1), Unknown);
+  EXPECT_EQ(AndedConstraintSet{ltU1}.proves(leS1), Unknown);
+  EXPECT_EQ(AndedConstraintSet{ltU1}.proves(gtS1), Unknown);
+  EXPECT_EQ(AndedConstraintSet{ltU1}.proves(geS1), Unknown);
+
+  // 7. LeU (x <=_u $1):
+  // <= proves > is False.
+  EXPECT_EQ(AndedConstraintSet{leU1}.proves(gtU1), False);
+  // Self
+  EXPECT_EQ(AndedConstraintSet{leU1}.proves(leU1), True);
+  // Others are Unknown.
+  EXPECT_EQ(AndedConstraintSet{leU1}.proves(ltU1), Unknown);
+  EXPECT_EQ(AndedConstraintSet{leU1}.proves(geU1), Unknown);
+  EXPECT_EQ(AndedConstraintSet{leU1}.proves(eq1), Unknown);
+  EXPECT_EQ(AndedConstraintSet{leU1}.proves(ne1), Unknown);
+  EXPECT_EQ(AndedConstraintSet{leU1}.proves(ltS1), Unknown);
+  EXPECT_EQ(AndedConstraintSet{leU1}.proves(leS1), Unknown);
+  EXPECT_EQ(AndedConstraintSet{leU1}.proves(gtS1), Unknown);
+  EXPECT_EQ(AndedConstraintSet{leU1}.proves(geS1), Unknown);
+
+  // 8. GtU (x >_u $1):
+  // > proves >= is True.
+  EXPECT_EQ(AndedConstraintSet{gtU1}.proves(geU1), True);
+  // > proves < and <= are False.
+  EXPECT_EQ(AndedConstraintSet{gtU1}.proves(ltU1), False);
+  EXPECT_EQ(AndedConstraintSet{gtU1}.proves(leU1), False);
+  // Self
+  EXPECT_EQ(AndedConstraintSet{gtU1}.proves(gtU1), True);
+  // Cross-signedness and equality are Unknown.
+  EXPECT_EQ(AndedConstraintSet{gtU1}.proves(eq1), Unknown);
+  EXPECT_EQ(AndedConstraintSet{gtU1}.proves(ne1), Unknown);
+  EXPECT_EQ(AndedConstraintSet{gtU1}.proves(ltS1), Unknown);
+  EXPECT_EQ(AndedConstraintSet{gtU1}.proves(leS1), Unknown);
+  EXPECT_EQ(AndedConstraintSet{gtU1}.proves(gtS1), Unknown);
+  EXPECT_EQ(AndedConstraintSet{gtU1}.proves(geS1), Unknown);
+
+  // 9. GeU (x >=_u $1):
+  // >= proves < is False.
+  EXPECT_EQ(AndedConstraintSet{geU1}.proves(ltU1), False);
+  // Self
+  EXPECT_EQ(AndedConstraintSet{geU1}.proves(geU1), True);
+  // Others are Unknown.
+  EXPECT_EQ(AndedConstraintSet{geU1}.proves(gtU1), Unknown);
+  EXPECT_EQ(AndedConstraintSet{geU1}.proves(leU1), Unknown);
+  EXPECT_EQ(AndedConstraintSet{geU1}.proves(eq1), Unknown);
+  EXPECT_EQ(AndedConstraintSet{geU1}.proves(ne1), Unknown);
+  EXPECT_EQ(AndedConstraintSet{geU1}.proves(ltS1), Unknown);
+  EXPECT_EQ(AndedConstraintSet{geU1}.proves(leS1), Unknown);
+  EXPECT_EQ(AndedConstraintSet{geU1}.proves(gtS1), Unknown);
+  EXPECT_EQ(AndedConstraintSet{geU1}.proves(geS1), Unknown);
+
+  // 10. Ne (x != $1):
+  EXPECT_EQ(AndedConstraintSet{ne1}.proves(ne1), True);
+  EXPECT_EQ(AndedConstraintSet{ne1}.proves(eq1), False);
+  EXPECT_EQ(AndedConstraintSet{ne1}.proves(ltS1), Unknown);
+  EXPECT_EQ(AndedConstraintSet{ne1}.proves(leS1), Unknown);
+  EXPECT_EQ(AndedConstraintSet{ne1}.proves(gtS1), Unknown);
+  EXPECT_EQ(AndedConstraintSet{ne1}.proves(geS1), Unknown);
+  EXPECT_EQ(AndedConstraintSet{ne1}.proves(ltU1), Unknown);
+  EXPECT_EQ(AndedConstraintSet{ne1}.proves(leU1), Unknown);
+  EXPECT_EQ(AndedConstraintSet{ne1}.proves(gtU1), Unknown);
+  EXPECT_EQ(AndedConstraintSet{ne1}.proves(geU1), Unknown);
+
+  // 11. Different terms ($1 != $2) cannot prove one another.
+  EXPECT_EQ(AndedConstraintSet{eq1}.proves(eq2), Unknown);
+  EXPECT_EQ(AndedConstraintSet{eq1}.proves(leS2), Unknown);
+  EXPECT_EQ(AndedConstraintSet{eq1}.proves(ltS2), Unknown);
+  EXPECT_EQ(AndedConstraintSet{ltS1}.proves(leS2), Unknown);
+  EXPECT_EQ(AndedConstraintSet{gtS1}.proves(geS2), Unknown);
+  EXPECT_EQ(AndedConstraintSet{ltU1}.proves(leU2), Unknown);
+  EXPECT_EQ(AndedConstraintSet{gtU1}.proves(geU2), Unknown);
+
+  // 12. ANDing equal-term constraints:
+  // Redundant constraints are ignored.
+  AndedConstraintSet sEq{eq1};
+  sEq.approximateAnd(leS1);
+  EXPECT_EQ(sEq.size(), 1);
+  EXPECT_EQ(sEq[0], eq1);
+
+  // Contradicting constraints turn the set into a contradiction.
+  AndedConstraintSet sEqContra{eq1};
+  sEqContra.approximateAnd(ltS1);
+  EXPECT_TRUE(sEqContra.provesEverything());
+}
