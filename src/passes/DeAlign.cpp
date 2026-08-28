@@ -31,9 +31,19 @@ struct DeAlign : public WalkerPass<PostWalker<DeAlign>> {
     return std::make_unique<DeAlign>();
   }
 
-  void visitLoad(Load* curr) { curr->align = 1; }
+  void visitLoad(Load* curr) {
+    if (curr->isAtomic()) {
+      return;
+    }
+    curr->align = 1;
+  }
 
-  void visitStore(Store* curr) { curr->align = 1; }
+  void visitStore(Store* curr) {
+    if (curr->isAtomic()) {
+      return;
+    }
+    curr->align = 1;
+  }
 
   void visitSIMDLoad(SIMDLoad* curr) { curr->align = 1; }
 

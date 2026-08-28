@@ -162,6 +162,9 @@ struct SubTypes {
       depths[HeapTypes::nocont.getBasic(share)] = 0;
       depths[HeapTypes::nofiber.getBasic(share)] = 0;
       depths[HeapTypes::noexn.getBasic(share)] = 0;
+      depths[HeapTypes::sharedNowaitqueue.getBasic(share)] = 0;
+
+      depths[HeapTypes::sharedWaitqueue.getBasic(share)] = 1;
 
       // func would appear already if we saw function types, but if not, ensure
       // it exists here. Ditto for cont and fiber.

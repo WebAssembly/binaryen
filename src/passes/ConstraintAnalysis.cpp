@@ -146,7 +146,8 @@ struct ConstraintAnalysis
 
   void maybeMarkRelevant(Expression* curr) {
     // If this parses into a constraint on a local, that local is relevant.
-    if (auto parsed = LocalConstraint::parseCondition(curr)) {
+    if (auto parsed = LocalConstraint::parseCondition(curr);
+        parsed && isRelevantType(getFunction()->getLocalType(parsed->local))) {
       relevantLocals[parsed->local] = true;
       if (auto* other = std::get_if<Index>(&parsed->constraint.term)) {
         relevantLocals[*other] = true;
@@ -154,7 +155,22 @@ struct ConstraintAnalysis
     }
   }
 
+  bool fastMath;
+
+  bool isRelevantType(Type type) {
+    // Floating-point math does not follow the basic rules of logic (for
+    // example, NaN < NaN and NaN >= NaN are both false, despite the law of the
+    // excluded middle). Constraints follow the rules of logic, so we cannot
+    // operate on floats unless we have fast-math enabled (which assures us we
+    // can ignore NaNs).
+    // TODO: when values are constant and non-NaN, we could optimize even
+    //       without fast-math
+    return !type.isFloat() || fastMath;
+  }
+
   void doWalkFunction(Function* func) {
+    fastMath = getPassOptions().fastMath;
+
     relevantLocals.assign(func->getNumLocals(), false);
 
     Super::doWalkFunction(func);
@@ -178,9 +194,28 @@ struct ConstraintAnalysis
 
   void visitLocalSet(LocalSet* curr) {
     addAction();
-    if (auto* get = curr->value->dynCast<LocalGet>()) {
-      // TODO: handle tees once we handle them elsewhere
-      localCopySources[curr->index].push_back(get->index);
+
+    auto* value = curr->value;
+    while (true) {
+      if (auto* get = value->dynCast<LocalGet>()) {
+        localCopySources[curr->index].push_back(get->index);
+        // No children to look into.
+        break;
+      }
+
+      if (auto* tee = value->dynCast<LocalSet>()) {
+        localCopySources[curr->index].push_back(tee->index);
+        value = tee->value;
+        continue;
+      }
+
+      // Look for other possible tees and gets that fall through.
+      auto* next = Properties::getImmediateFallthrough(
+        value, getPassOptions(), *getModule());
+      if (next == value) {
+        break;
+      }
+      value = next;
     }
   }
 
@@ -420,8 +455,7 @@ struct ConstraintAnalysis
       return;
     }
 
-    auto localConstraints = constraints.get(parsed->local);
-    Result result = localConstraints.proves(parsed->constraint);
+    auto result = constraints.proves(*parsed);
     if (result == Unknown) {
       // If we parsed something using two locals, like x != y, we can also look
       // for the flipped condition among y's constraints TODO
