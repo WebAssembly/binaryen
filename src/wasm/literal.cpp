@@ -376,8 +376,6 @@ std::shared_ptr<GCData> Literal::getGCData() const {
   assert(
     isNull() || isData() ||
     (type.isRef() && (type.getHeapType().isMaybeShared(HeapType::ext) ||
-                      type.getHeapType().isMaybeShared(HeapType::string) ||
-                      type.getHeapType().isMaybeShared(HeapType::any) ||
                       type.getHeapType().isMaybeShared(HeapType::waitqueue))));
   return gcData;
 }
@@ -3202,14 +3200,14 @@ void GCData::setElement(size_t index, Literal value) {
   getLiterals()[index] = value;
 }
 
-void GCData::writeField(void* p, const Field& field, Literal value) {
+void GCData::writeField(void* dest, const Field& field, Literal value) {
   if (field.isPacked()) {
     assert(field.type == Type::i32);
     int32_t c = value.geti32();
     if (field.packedType == Field::i8) {
-      Bits::writeLE<int8_t>(static_cast<int8_t>(c), p);
+      Bits::writeLE<int8_t>(static_cast<int8_t>(c), dest);
     } else if (field.packedType == Field::i16) {
-      Bits::writeLE<int16_t>(static_cast<int16_t>(c), p);
+      Bits::writeLE<int16_t>(static_cast<int16_t>(c), dest);
     } else {
       WASM_UNREACHABLE("invalid packed type");
     }
@@ -3217,19 +3215,20 @@ void GCData::writeField(void* p, const Field& field, Literal value) {
   }
 
   uint8_t buf[16];
+  assert(field.getByteSize() <= sizeof(buf));
   value.getBits(buf);
-  memcpy(p, buf, field.getByteSize());
+  memcpy(dest, buf, field.getByteSize());
 }
 
-Literal GCData::readField(const void* p, const Field& field, bool signed_) {
+Literal GCData::readField(const void* src, const Field& field, bool signed_) {
   if (field.isPacked()) {
     assert(field.type == Type::i32);
     if (field.packedType == Field::i8) {
-      int8_t val = Bits::readLE<int8_t>(p);
+      int8_t val = Bits::readLE<int8_t>(src);
       return Literal(signed_ ? int32_t(val)
                              : int32_t(static_cast<uint8_t>(val)));
     } else if (field.packedType == Field::i16) {
-      int16_t val = Bits::readLE<int16_t>(p);
+      int16_t val = Bits::readLE<int16_t>(src);
       return Literal(signed_ ? int32_t(val)
                              : int32_t(static_cast<uint16_t>(val)));
     } else {
@@ -3237,7 +3236,7 @@ Literal GCData::readField(const void* p, const Field& field, bool signed_) {
     }
   }
 
-  return Literal::makeFromMemory(p, field.type);
+  return Literal::makeFromMemory(src, field.type);
 }
 
 } // namespace wasm

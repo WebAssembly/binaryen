@@ -825,9 +825,11 @@ struct GCData {
   Literal getElement(size_t index, bool signed_ = false) const;
   void setElement(size_t index, Literal value);
 
-  static void writeField(void* p, const Field& field, Literal value);
+  // Writes a field value to the byte buffer at `dest`.
+  static void writeField(void* dest, const Field& field, Literal value);
+  // Reads a field value from the byte buffer at `src`.
   static Literal
-  readField(const void* p, const Field& field, bool signed_ = false);
+  readField(const void* src, const Field& field, bool signed_ = false);
 };
 
 inline bool Literal::hasExternPayload() const {
