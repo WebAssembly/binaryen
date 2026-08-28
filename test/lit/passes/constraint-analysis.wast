@@ -5070,6 +5070,93 @@
     )
   )
 
+  ;; CHECK:      (func $pair (type $2) (param $a i32) (param $b i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.and
+  ;; CHECK-NEXT:    (i32.eqz
+  ;; CHECK-NEXT:     (local.get $a)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.eq
+  ;; CHECK-NEXT:     (local.get $b)
+  ;; CHECK-NEXT:     (i32.const 42)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPTIN:      (func $pair (type $2) (param $a i32) (param $b i32)
+  ;; OPTIN-NEXT:  (if
+  ;; OPTIN-NEXT:   (i32.and
+  ;; OPTIN-NEXT:    (i32.eqz
+  ;; OPTIN-NEXT:     (local.get $a)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:    (i32.eq
+  ;; OPTIN-NEXT:     (local.get $b)
+  ;; OPTIN-NEXT:     (i32.const 42)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:   (then
+  ;; OPTIN-NEXT:    (drop
+  ;; OPTIN-NEXT:     (i32.const 1)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:    (drop
+  ;; OPTIN-NEXT:     (i32.const 1)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:    (drop
+  ;; OPTIN-NEXT:     (i32.const 0)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT: )
+  (func $pair (param $a i32) (param $b i32)
+    ;; Two constraints in one if condition.
+    (if
+      (i32.and
+        ;; a == 0
+        (i32.eqz
+          (local.get $a)
+        )
+        ;; b == 42
+        (i32.eq
+          (local.get $b)
+          (i32.const 42)
+        )
+      )
+      (then
+        ;; These are all true.
+        (drop
+          (i32.eq
+            (local.get $a)
+            (i32.const 0)
+          )
+        )
+        (drop
+          (i32.eq
+            (local.get $b)
+            (i32.const 42)
+          )
+        )
+        ;; This is not.
+        (drop
+          (i32.eq
+            (local.get $a)
+            (i32.const 42)
+          )
+        )
+      )
+    )
+  )
+
   ;; CHECK:      (func $several (type $11) (param $a i32) (param $b i32) (param $c i32) (param $d i32) (param $e i32)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.and
