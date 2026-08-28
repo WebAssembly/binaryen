@@ -306,7 +306,8 @@ struct OptimizationOptions : public ToolOptions {
       .add(
         "--fast-math",
         "-ffm",
-        "Optimize floats without handling corner cases of NaNs and rounding",
+        "Optimize floats without handling corner cases of NaNs, rounding, and "
+        "negative zero",
         OptimizationOptionsCategory,
         Options::Arguments::Zero,
         [this](Options*, const std::string&) { passOptions.fastMath = true; })
