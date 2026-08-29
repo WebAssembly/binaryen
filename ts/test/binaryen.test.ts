@@ -129,6 +129,9 @@ suite("binaryen", () => {
 
 
 	test("types.", () => {
+		const used_bits = 3;
+		const nullish = 2;
+
 		assert.strictEqual(binaryen.unreachable, 1);
 		assert.strictEqual(binaryen.none, 0);
 		assert.strictEqual(binaryen.auto, -1);
@@ -138,38 +141,37 @@ suite("binaryen", () => {
 		assert.strictEqual(binaryen.f64, 5);
 		assert.strictEqual(binaryen.v128, 6);
 
-		assert.strictEqual(binaryen.any, 0x20);
-		assert.strictEqual(binaryen.eq, 0x28);
-		assert.strictEqual(binaryen.i31, 0x30);
-		assert.strictEqual(binaryen.struct, 0x38);
-		assert.strictEqual(binaryen.array, 0x40);
-		assert.strictEqual(binaryen.none, 0x00); // TODO: update after changing `none` above
-		assert.strictEqual(binaryen.func, 0x10);
-		assert.strictEqual(binaryen.nofunc, 0x68);
-		assert.strictEqual(binaryen.exn, 0x48);
-		assert.strictEqual(binaryen.noexn, 0x78);
-		assert.strictEqual(binaryen.extern, 0x08);
-		assert.strictEqual(binaryen.noextern, 0x60);
+		assert.strictEqual(binaryen.extern, 1 << used_bits);
+		assert.strictEqual(binaryen.func, 2 << used_bits);
+		assert.strictEqual(binaryen.any, 4 << used_bits);
+		assert.strictEqual(binaryen.eq, 5 << used_bits);
+		assert.strictEqual(binaryen.i31, 6 << used_bits);
+		assert.strictEqual(binaryen.struct, 7 << used_bits);
+		assert.strictEqual(binaryen.array, 8 << used_bits);
+		assert.strictEqual(binaryen.exn, 9 << used_bits);
+		assert.strictEqual(binaryen.string, 10 << used_bits);
+		assert.notStrictEqual(binaryen.none, 11 << used_bits); // TODO: update after changing `none` above
+		assert.strictEqual(binaryen.noextern, 12 << used_bits);
+		assert.strictEqual(binaryen.nofunc, 13 << used_bits);
+		assert.strictEqual(binaryen.noexn, 15 << used_bits);
 
-		assert.strictEqual(binaryen.anyref, 0x22);
-		assert.strictEqual(binaryen.eqref, 0x2a);
-		assert.strictEqual(binaryen.i31ref, 0x32);
-		assert.strictEqual(binaryen.structref, 0x3a);
-		assert.strictEqual(binaryen.arrayref, 0x42);
-		assert.strictEqual(binaryen.nullref, 0x5a);
-		assert.strictEqual(binaryen.funcref, 0x12);
-		assert.strictEqual(binaryen.nullfuncref, 0x6a);
-		assert.strictEqual(binaryen.exnref, 0x4a);
-		assert.strictEqual(binaryen.nullexnref, 0x7a);
-		assert.strictEqual(binaryen.externref, 0x0a);
-		assert.strictEqual(binaryen.nullexternref, 0x62);
+		assert.strictEqual(binaryen.externref, binaryen.extern + nullish);
+		assert.strictEqual(binaryen.funcref, binaryen.func + nullish);
+		assert.strictEqual(binaryen.anyref, binaryen.any + nullish);
+		assert.strictEqual(binaryen.eqref, binaryen.eq + nullish);
+		assert.strictEqual(binaryen.i31ref, binaryen.i31 + nullish);
+		assert.strictEqual(binaryen.structref, binaryen.struct + nullish);
+		assert.strictEqual(binaryen.arrayref, binaryen.array + nullish);
+		assert.strictEqual(binaryen.exnref, binaryen.exn + nullish);
+		assert.strictEqual(binaryen.stringref, binaryen.string + nullish);
+		assert.strictEqual(binaryen.nullref, (11 << used_bits) + nullish); // TODO: use `binaryen.none + nullish`
+		assert.strictEqual(binaryen.nullexternref, binaryen.noextern + nullish);
+		assert.strictEqual(binaryen.nullfuncref, binaryen.nofunc + nullish);
+		assert.strictEqual(binaryen.nullexnref, binaryen.noexn + nullish);
 
 		assert.strictEqual(binaryen.notPacked, 0);
 		assert.strictEqual(binaryen.i8, 1);
 		assert.strictEqual(binaryen.i16, 2);
-
-		assert.strictEqual(binaryen.string, 0x50);
-		assert.strictEqual(binaryen.stringref, 0x52);
 
 		/*
 		const i32_pair = binaryen.createType([binaryen.i32, binaryen.i32]);
