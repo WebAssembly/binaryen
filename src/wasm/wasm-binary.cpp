@@ -3934,105 +3934,111 @@ Result<> WasmBinaryReader::readInst() {
       auto op = getU32LEB();
       switch (op) {
         case BinaryConsts::I32AtomicLoad8U: {
-          // TODO: pass align through for validation.
           auto [mem, align, offset, memoryOrder] = getAtomicMemarg();
-          return builder.makeAtomicLoad(1, offset, Type::i32, mem, memoryOrder);
+          return builder.makeAtomicLoad(
+            1, offset, align, Type::i32, mem, memoryOrder);
         }
         case BinaryConsts::I32AtomicLoad16U: {
           auto [mem, align, offset, memoryOrder] = getAtomicMemarg();
-          return builder.makeAtomicLoad(2, offset, Type::i32, mem, memoryOrder);
+          return builder.makeAtomicLoad(
+            2, offset, align, Type::i32, mem, memoryOrder);
         }
         case BinaryConsts::I32AtomicLoad: {
           auto [mem, align, offset, memoryOrder] = getAtomicMemarg();
-          return builder.makeAtomicLoad(4, offset, Type::i32, mem, memoryOrder);
+          return builder.makeAtomicLoad(
+            4, offset, align, Type::i32, mem, memoryOrder);
         }
         case BinaryConsts::I64AtomicLoad8U: {
           auto [mem, align, offset, memoryOrder] = getAtomicMemarg();
-          return builder.makeAtomicLoad(1, offset, Type::i64, mem, memoryOrder);
+          return builder.makeAtomicLoad(
+            1, offset, align, Type::i64, mem, memoryOrder);
         }
         case BinaryConsts::I64AtomicLoad16U: {
           auto [mem, align, offset, memoryOrder] = getAtomicMemarg();
-          return builder.makeAtomicLoad(2, offset, Type::i64, mem, memoryOrder);
+          return builder.makeAtomicLoad(
+            2, offset, align, Type::i64, mem, memoryOrder);
         }
         case BinaryConsts::I64AtomicLoad32U: {
           auto [mem, align, offset, memoryOrder] = getAtomicMemarg();
-          return builder.makeAtomicLoad(4, offset, Type::i64, mem, memoryOrder);
+          return builder.makeAtomicLoad(
+            4, offset, align, Type::i64, mem, memoryOrder);
         }
         case BinaryConsts::I64AtomicLoad: {
           auto [mem, align, offset, memoryOrder] = getAtomicMemarg();
-          return builder.makeAtomicLoad(8, offset, Type::i64, mem, memoryOrder);
+          return builder.makeAtomicLoad(
+            8, offset, align, Type::i64, mem, memoryOrder);
         }
         case BinaryConsts::I32AtomicStore8: {
           auto [mem, align, offset, memoryOrder] = getAtomicMemarg();
           return builder.makeAtomicStore(
-            1, offset, Type::i32, mem, memoryOrder);
+            1, offset, align, Type::i32, mem, memoryOrder);
         }
         case BinaryConsts::I32AtomicStore16: {
           auto [mem, align, offset, memoryOrder] = getAtomicMemarg();
           return builder.makeAtomicStore(
-            2, offset, Type::i32, mem, memoryOrder);
+            2, offset, align, Type::i32, mem, memoryOrder);
         }
         case BinaryConsts::I32AtomicStore: {
           auto [mem, align, offset, memoryOrder] = getAtomicMemarg();
           return builder.makeAtomicStore(
-            4, offset, Type::i32, mem, memoryOrder);
+            4, offset, align, Type::i32, mem, memoryOrder);
         }
         case BinaryConsts::I64AtomicStore8: {
           auto [mem, align, offset, memoryOrder] = getAtomicMemarg();
           return builder.makeAtomicStore(
-            1, offset, Type::i64, mem, memoryOrder);
+            1, offset, align, Type::i64, mem, memoryOrder);
         }
         case BinaryConsts::I64AtomicStore16: {
           auto [mem, align, offset, memoryOrder] = getAtomicMemarg();
           return builder.makeAtomicStore(
-            2, offset, Type::i64, mem, memoryOrder);
+            2, offset, align, Type::i64, mem, memoryOrder);
         }
         case BinaryConsts::I64AtomicStore32: {
           auto [mem, align, offset, memoryOrder] = getAtomicMemarg();
           return builder.makeAtomicStore(
-            4, offset, Type::i64, mem, memoryOrder);
+            4, offset, align, Type::i64, mem, memoryOrder);
         }
         case BinaryConsts::I64AtomicStore: {
           auto [mem, align, offset, memoryOrder] = getAtomicMemarg();
           return builder.makeAtomicStore(
-            8, offset, Type::i64, mem, memoryOrder);
+            8, offset, align, Type::i64, mem, memoryOrder);
         }
 
 #define RMW(op)                                                                \
   case BinaryConsts::I32AtomicRMW##op: {                                       \
     auto [mem, align, offset, memoryOrder] = getRMWMemarg();                   \
     return builder.makeAtomicRMW(                                              \
-      RMW##op, 4, offset, Type::i32, mem, memoryOrder);                        \
+      RMW##op, 4, offset, align, Type::i32, mem, memoryOrder);                 \
   }                                                                            \
   case BinaryConsts::I32AtomicRMW##op##8U: {                                   \
     auto [mem, align, offset, memoryOrder] = getRMWMemarg();                   \
     return builder.makeAtomicRMW(                                              \
-      RMW##op, 1, offset, Type::i32, mem, memoryOrder);                        \
+      RMW##op, 1, offset, align, Type::i32, mem, memoryOrder);                 \
   }                                                                            \
   case BinaryConsts::I32AtomicRMW##op##16U: {                                  \
     auto [mem, align, offset, memoryOrder] = getRMWMemarg();                   \
     return builder.makeAtomicRMW(                                              \
-      RMW##op, 2, offset, Type::i32, mem, memoryOrder);                        \
+      RMW##op, 2, offset, align, Type::i32, mem, memoryOrder);                 \
   }                                                                            \
   case BinaryConsts::I64AtomicRMW##op: {                                       \
     auto [mem, align, offset, memoryOrder] = getRMWMemarg();                   \
     return builder.makeAtomicRMW(                                              \
-      RMW##op, 8, offset, Type::i64, mem, memoryOrder);                        \
+      RMW##op, 8, offset, align, Type::i64, mem, memoryOrder);                 \
   }                                                                            \
   case BinaryConsts::I64AtomicRMW##op##8U: {                                   \
     auto [mem, align, offset, memoryOrder] = getRMWMemarg();                   \
     return builder.makeAtomicRMW(                                              \
-      RMW##op, 1, offset, Type::i64, mem, memoryOrder);                        \
+      RMW##op, 1, offset, align, Type::i64, mem, memoryOrder);                 \
   }                                                                            \
   case BinaryConsts::I64AtomicRMW##op##16U: {                                  \
     auto [mem, align, offset, memoryOrder] = getRMWMemarg();                   \
     return builder.makeAtomicRMW(                                              \
-      RMW##op, 2, offset, Type::i64, mem, memoryOrder);                        \
+      RMW##op, 2, offset, align, Type::i64, mem, memoryOrder);                 \
   }                                                                            \
   case BinaryConsts::I64AtomicRMW##op##32U: {                                  \
     auto [mem, align, offset, memoryOrder] = getRMWMemarg();                   \
     return builder.makeAtomicRMW(                                              \
-      RMW##op, 4, offset, Type::i64, mem, memoryOrder);                        \
+      RMW##op, 4, offset, align, Type::i64, mem, memoryOrder);                 \
   }
 
           RMW(Add);
@@ -4045,49 +4051,49 @@ Result<> WasmBinaryReader::readInst() {
         case BinaryConsts::I32AtomicCmpxchg: {
           auto [mem, align, offset, memoryOrder] = getRMWMemarg();
           return builder.makeAtomicCmpxchg(
-            4, offset, Type::i32, mem, memoryOrder);
+            4, offset, align, Type::i32, mem, memoryOrder);
         }
         case BinaryConsts::I32AtomicCmpxchg8U: {
           auto [mem, align, offset, memoryOrder] = getRMWMemarg();
           return builder.makeAtomicCmpxchg(
-            1, offset, Type::i32, mem, memoryOrder);
+            1, offset, align, Type::i32, mem, memoryOrder);
         }
         case BinaryConsts::I32AtomicCmpxchg16U: {
           auto [mem, align, offset, memoryOrder] = getRMWMemarg();
           return builder.makeAtomicCmpxchg(
-            2, offset, Type::i32, mem, memoryOrder);
+            2, offset, align, Type::i32, mem, memoryOrder);
         }
         case BinaryConsts::I64AtomicCmpxchg: {
           auto [mem, align, offset, memoryOrder] = getRMWMemarg();
           return builder.makeAtomicCmpxchg(
-            8, offset, Type::i64, mem, memoryOrder);
+            8, offset, align, Type::i64, mem, memoryOrder);
         }
         case BinaryConsts::I64AtomicCmpxchg8U: {
           auto [mem, align, offset, memoryOrder] = getRMWMemarg();
           return builder.makeAtomicCmpxchg(
-            1, offset, Type::i64, mem, memoryOrder);
+            1, offset, align, Type::i64, mem, memoryOrder);
         }
         case BinaryConsts::I64AtomicCmpxchg16U: {
           auto [mem, align, offset, memoryOrder] = getRMWMemarg();
           return builder.makeAtomicCmpxchg(
-            2, offset, Type::i64, mem, memoryOrder);
+            2, offset, align, Type::i64, mem, memoryOrder);
         }
         case BinaryConsts::I64AtomicCmpxchg32U: {
           auto [mem, align, offset, memoryOrder] = getRMWMemarg();
           return builder.makeAtomicCmpxchg(
-            4, offset, Type::i64, mem, memoryOrder);
+            4, offset, align, Type::i64, mem, memoryOrder);
         }
         case BinaryConsts::I32AtomicWait: {
           auto [mem, align, offset, memoryOrder] = getAtomicMemarg();
-          return builder.makeAtomicWait(Type::i32, offset, mem);
+          return builder.makeAtomicWait(Type::i32, offset, align, mem);
         }
         case BinaryConsts::I64AtomicWait: {
           auto [mem, align, offset, memoryOrder] = getAtomicMemarg();
-          return builder.makeAtomicWait(Type::i64, offset, mem);
+          return builder.makeAtomicWait(Type::i64, offset, align, mem);
         }
         case BinaryConsts::AtomicNotify: {
           auto [mem, align, offset, memoryOrder] = getAtomicMemarg();
-          return builder.makeAtomicNotify(offset, mem);
+          return builder.makeAtomicNotify(offset, align, mem);
         }
         case BinaryConsts::AtomicFence: {
           MemoryOrder order = getMemoryOrder(/*isRMW=*/false);

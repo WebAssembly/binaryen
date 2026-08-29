@@ -46,6 +46,8 @@ function initializeConstants() {
     ['nullref', 'Nullref'],
     ['nullexternref', 'NullExternref'],
     ['nullfuncref', 'NullFuncref'],
+    ['exnref', 'Exnref'],
+    ['nullexnref', 'NullExnref'],
     ['unreachable', 'Unreachable'],
     ['auto', 'Auto']
   ].forEach(entry => {
@@ -68,6 +70,8 @@ function initializeConstants() {
     */
     ['noextern', 'Noext'],
     ['nofunc', 'Nofunc'],
+    ['exn', 'Exn'],
+    ['noexn', 'Noexn'],
   ].forEach(entry => {
     Module[entry[0]] = Module['_BinaryenHeapType' + entry[1]]();
   });
@@ -130,8 +134,10 @@ function initializeConstants() {
     'TableSize',
     'TableGrow',
     'Try',
+    'TryTable',
     'Throw',
     'Rethrow',
+    'ThrowRef',
     'TupleMake',
     'TupleExtract',
     'Pop',
@@ -2515,11 +2521,23 @@ function wrapModule(module, self = {}) {
     return preserveStack(() =>
       Module['_BinaryenTry'](module, name ? strToStack(name) : 0, body, i32sToStack(catchTags.map(strToStack)), catchTags.length, i32sToStack(catchBodies), catchBodies.length, delegateTarget ? strToStack(delegateTarget) : 0));
   };
+  self['try_table'] = function(body, catches) {
+    return preserveStack(() => {
+      const numCatches = catches.length;
+      const tagsPtr = i32sToStack(catches.map(c => c['tag'] ? strToStack(c['tag']) : 0));
+      const destsPtr = i32sToStack(catches.map(c => strToStack(c['dest'])));
+      const refsPtr = i8sToStack(catches.map(c => c['ref'] ? 1 : 0));
+      return Module['_BinaryenTryTable'](module, body, tagsPtr, destsPtr, refsPtr, numCatches);
+    });
+  };
   self['throw'] = function(tag, operands) {
     return preserveStack(() => Module['_BinaryenThrow'](module, strToStack(tag), i32sToStack(operands), operands.length));
   };
   self['rethrow'] = function(target) {
     return preserveStack(() => Module['_BinaryenRethrow'](module, strToStack(target)));
+  };
+  self['throw_ref'] = function(exnref) {
+    return Module['_BinaryenThrowRef'](module, exnref);
   };
 
   self['tuple'] = {
@@ -5343,6 +5361,76 @@ Module['Try'] = makeExpressionWrapper(Module['_BinaryenTryId'](), {
   }
 });
 
+function getTryTableCatchAt(expr, index) {
+  const tagPtr = Module['_BinaryenTryTableGetCatchTagAt'](expr, index);
+  return {
+    'tag': tagPtr ? UTF8ToString(tagPtr) : null,
+    'dest': UTF8ToString(Module['_BinaryenTryTableGetCatchDestAt'](expr, index)),
+    'ref': Boolean(Module['_BinaryenTryTableIsCatchRefAt'](expr, index))
+  };
+}
+
+Module['TryTable'] = makeExpressionWrapper(Module['_BinaryenTryTableId'](), {
+  'getBody'(expr) {
+    return Module['_BinaryenTryTableGetBody'](expr);
+  },
+  'setBody'(expr, bodyExpr) {
+    Module['_BinaryenTryTableSetBody'](expr, bodyExpr);
+  },
+  'getNumCatches'(expr) {
+    return Module['_BinaryenTryTableGetNumCatches'](expr);
+  },
+  'getCatches'(expr) {
+    const num = Module['_BinaryenTryTableGetNumCatches'](expr);
+    const ret = new Array(num);
+    for (let i = 0; i < num; ++i) ret[i] = getTryTableCatchAt(expr, i);
+    return ret;
+  },
+  'setCatches'(expr, catches) {
+    const num = catches.length;
+    let prevNum = Module['_BinaryenTryTableGetNumCatches'](expr);
+    preserveStack(() => {
+      for (let i = 0; i < num; ++i) {
+        const c = catches[i];
+        const tag = c['tag'] ? strToStack(c['tag']) : 0;
+        const dest = strToStack(c['dest']);
+        const ref = c['ref'] ? 1 : 0;
+        if (i < prevNum) {
+          Module['_BinaryenTryTableSetCatchTagAt'](expr, i, tag);
+          Module['_BinaryenTryTableSetCatchDestAt'](expr, i, dest);
+          Module['_BinaryenTryTableSetCatchRefAt'](expr, i, ref);
+        } else {
+          Module['_BinaryenTryTableAppendCatch'](expr, tag, dest, ref);
+        }
+      }
+    });
+    while (prevNum > num) Module['_BinaryenTryTableRemoveCatchAt'](expr, --prevNum);
+  },
+  'getCatchAt': getTryTableCatchAt,
+  'setCatchAt'(expr, index, c) {
+    preserveStack(() => {
+      Module['_BinaryenTryTableSetCatchTagAt'](expr, index, c['tag'] ? strToStack(c['tag']) : 0);
+      Module['_BinaryenTryTableSetCatchDestAt'](expr, index, strToStack(c['dest']));
+      Module['_BinaryenTryTableSetCatchRefAt'](expr, index, c['ref'] ? 1 : 0);
+    });
+  },
+  'appendCatch'(expr, c) {
+    return preserveStack(() =>
+      Module['_BinaryenTryTableAppendCatch'](expr, c['tag'] ? strToStack(c['tag']) : 0, strToStack(c['dest']), c['ref'] ? 1 : 0));
+  },
+  'insertCatchAt'(expr, index, c) {
+    preserveStack(() => {
+      Module['_BinaryenTryTableInsertCatchAt'](expr, index, c['tag'] ? strToStack(c['tag']) : 0, strToStack(c['dest']), c['ref'] ? 1 : 0);
+    });
+  },
+  'removeCatchAt'(expr, index) {
+    return UTF8ToString(Module['_BinaryenTryTableRemoveCatchAt'](expr, index));
+  },
+  'hasCatchAll'(expr) {
+    return Boolean(Module['_BinaryenTryTableHasCatchAll'](expr));
+  }
+});
+
 Module['Throw'] = makeExpressionWrapper(Module['_BinaryenThrowId'](), {
   'getTag'(expr) {
     return UTF8ToString(Module['_BinaryenThrowGetTag'](expr));
@@ -5383,6 +5471,15 @@ Module['Rethrow'] = makeExpressionWrapper(Module['_BinaryenRethrowId'](), {
   },
   'setTarget'(expr, target) {
     preserveStack(() => { Module['_BinaryenRethrowSetTarget'](expr, strToStack(target)) });
+  }
+});
+
+Module['ThrowRef'] = makeExpressionWrapper(Module['_BinaryenThrowRefId'](), {
+  'getExnref'(expr) {
+    return Module['_BinaryenThrowRefGetExnref'](expr);
+  },
+  'setExnref'(expr, exnrefExpr) {
+    Module['_BinaryenThrowRefSetExnref'](expr, exnrefExpr);
   }
 });
 

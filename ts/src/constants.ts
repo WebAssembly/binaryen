@@ -78,13 +78,13 @@ export const array: Type = BinaryenObj["_BinaryenHeapTypeArray"]();
 /** Heap type `func`. */
 export const func: Type = BinaryenObj["_BinaryenHeapTypeFunc"]();
 /** Heap type `exn`. */
-// export const exn: Type = BinaryenObj["_BinaryenHeapTypeExn"](); // TODO: uncomment once supported in Binaryen
+export const exn: Type = BinaryenObj["_BinaryenHeapTypeExn"]();
 /** Heap type `extern`. */
 export const extern: Type = BinaryenObj["_BinaryenHeapTypeExt"]();
 /** Heap type `nofunc`. */
 export const nofunc: Type = BinaryenObj["_BinaryenHeapTypeNofunc"]();
 /** Heap type `noexn`. */
-// export const noexn: Type = BinaryenObj["_BinaryenHeapTypeNoexn"](); // TODO: uncomment once supported in Binaryen
+export const noexn: Type = BinaryenObj["_BinaryenHeapTypeNoexn"]();
 /** Heap type `noextern`. */
 export const noextern: Type = BinaryenObj["_BinaryenHeapTypeNoext"]();
 
@@ -104,13 +104,13 @@ export const nullref: Type = BinaryenObj["_BinaryenTypeNullref"]();
 /** `(ref null func)` */
 export const funcref: Type = BinaryenObj["_BinaryenTypeFuncref"]();
 /** `(ref null exn)` */
-// export const exnref: Type = BinaryenObj["_BinaryenTypeExnref"](); // TODO: uncomment once supported in Binaryen
+export const exnref: Type = BinaryenObj["_BinaryenTypeExnref"]();
 /** `(ref null extern)` */
 export const externref: Type = BinaryenObj["_BinaryenTypeExternref"]();
 /** `(ref null nofunc)` */
 export const nullfuncref: Type = BinaryenObj["_BinaryenTypeNullFuncref"]();
 /** `(ref null noexn)` */
-// export const nullexnref: Type = BinaryenObj["_BinaryenTypeNullExnref"](); // TODO: uncomment once supported in Binaryen
+export const nullexnref: Type = BinaryenObj["_BinaryenTypeNullExnref"]();
 /** `(ref null noextern)` */
 export const nullexternref: Type = BinaryenObj["_BinaryenTypeNullExternref"]();
 
@@ -157,9 +157,9 @@ export enum ExpressionId {
 	Return = BinaryenObj["_BinaryenReturnId"](),
 	Throw = BinaryenObj["_BinaryenThrowId"](),
 	Rethrow = BinaryenObj["_BinaryenRethrowId"](),
-	// TODO: ThrowRef
+	ThrowRef = BinaryenObj["_BinaryenThrowRefId"](),
 	Try = BinaryenObj["_BinaryenTryId"](),
-	// TODO: TryTable
+	TryTable = BinaryenObj["_BinaryenTryTableId"](),
 
 	// ### Variable Instruction Ids ### //
 	LocalGet = BinaryenObj["_BinaryenLocalGetId"](),

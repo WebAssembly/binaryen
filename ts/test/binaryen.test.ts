@@ -47,12 +47,10 @@ suite("binaryen", () => {
 		assert.ok(binaryen.array);
 		assert.ok(!binaryen.none); // TODO: update after changing `none` above
 		assert.ok(binaryen.func);
-		// @ts-expect-error
-		assert.ok(!binaryen.exn);
+		assert.ok(binaryen.exn);
 		assert.ok(binaryen.extern);
 		assert.ok(binaryen.nofunc);
-		// @ts-expect-error
-		assert.ok(!binaryen.noexn);
+		assert.ok(binaryen.noexn);
 		assert.ok(binaryen.noextern);
 
 		assert.ok(binaryen.anyref);
@@ -62,12 +60,10 @@ suite("binaryen", () => {
 		assert.ok(binaryen.arrayref);
 		assert.ok(binaryen.nullref);
 		assert.ok(binaryen.funcref);
-		// @ts-expect-error
-		assert.ok(!binaryen.exnref);
+		assert.ok(binaryen.exnref);
 		assert.ok(binaryen.externref);
 		assert.ok(binaryen.nullfuncref);
-		// @ts-expect-error
-		assert.ok(!binaryen.nullexnref);
+		assert.ok(binaryen.nullexnref);
 		assert.ok(binaryen.nullexternref);
 
 		assert.ok("notPacked" in binaryen);
@@ -149,12 +145,10 @@ suite("binaryen", () => {
 		assert.strictEqual(binaryen.array, 0x40);
 		assert.strictEqual(binaryen.none, 0x00); // TODO: update after changing `none` above
 		assert.strictEqual(binaryen.func, 0x10);
-		// @ts-expect-error
-		assert.strictEqual(binaryen.exn, undefined);
+		assert.strictEqual(binaryen.exn, 0x48);
 		assert.strictEqual(binaryen.extern, 0x08);
 		assert.strictEqual(binaryen.nofunc, 0x68);
-		// @ts-expect-error
-		assert.strictEqual(binaryen.noexn, undefined);
+		assert.strictEqual(binaryen.noexn, 0x78);
 		assert.strictEqual(binaryen.noextern, 0x60);
 
 		assert.strictEqual(binaryen.anyref, 0x22);
@@ -164,12 +158,10 @@ suite("binaryen", () => {
 		assert.strictEqual(binaryen.arrayref, 0x42);
 		assert.strictEqual(binaryen.nullref, 0x5a);
 		assert.strictEqual(binaryen.funcref, 0x12);
-		// @ts-expect-error
-		assert.strictEqual(binaryen.exnref, undefined);
+		assert.strictEqual(binaryen.exnref, 0x4a);
 		assert.strictEqual(binaryen.externref, 0x0a);
 		assert.strictEqual(binaryen.nullfuncref, 0x6a);
-		// @ts-expect-error
-		assert.strictEqual(binaryen.nullexnref, undefined);
+		assert.strictEqual(binaryen.nullexnref, 0x7a);
 		assert.strictEqual(binaryen.nullexternref, 0x62);
 
 		assert.strictEqual(binaryen.notPacked, 0);
@@ -193,7 +185,7 @@ suite("binaryen", () => {
 
 	test(".ExpressionId", () => {
 		// NOTE: the length is twice the number of members due to how TypeScript emits enums.
-		assert.strictEqual(Object.entries(binaryen.ExpressionId).length, 88 * 2);
+		assert.strictEqual(Object.entries(binaryen.ExpressionId).length, 90 * 2);
 
 		assert.strictEqual(binaryen.ExpressionId.Invalid, 0);
 		assert.strictEqual(binaryen.ExpressionId.Block, 1);
@@ -255,12 +247,10 @@ suite("binaryen", () => {
 		// @ts-expect-error
 		assert.strictEqual(binaryen.ExpressionId.ElemDrop, undefined); assert.notStrictEqual(binaryen.ExpressionId.ElemDrop, 53);
 		assert.strictEqual(binaryen.ExpressionId.Try, 54);
-		// @ts-expect-error
-		assert.strictEqual(binaryen.ExpressionId.TryTable, undefined); assert.notStrictEqual(binaryen.ExpressionId.TryTable, 55);
+		assert.strictEqual(binaryen.ExpressionId.TryTable, 55);
 		assert.strictEqual(binaryen.ExpressionId.Throw, 56);
 		assert.strictEqual(binaryen.ExpressionId.Rethrow, 57);
-		// @ts-expect-error
-		assert.strictEqual(binaryen.ExpressionId.ThrowRef, undefined); assert.notStrictEqual(binaryen.ExpressionId.ThrowRef, 58);
+		assert.strictEqual(binaryen.ExpressionId.ThrowRef, 58);
 		assert.strictEqual(binaryen.ExpressionId.TupleMake, 59);
 		assert.strictEqual(binaryen.ExpressionId.TupleExtract, 60);
 		assert.strictEqual(binaryen.ExpressionId.RefI31, 61);
