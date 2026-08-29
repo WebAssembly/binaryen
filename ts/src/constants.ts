@@ -77,14 +77,14 @@ export const array: Type = BinaryenObj["_BinaryenHeapTypeArray"]();
 // export const none: Type = BinaryenObj["_BinaryenHeapTypeNone"](); // TODO: reconcile with the `none` type above, defined as `BinaryenObj["_BinaryenTypeNone"]()`
 /** Heap type `func`. */
 export const func: Type = BinaryenObj["_BinaryenHeapTypeFunc"]();
-/** Heap type `exn`. */
-export const exn: Type = BinaryenObj["_BinaryenHeapTypeExn"]();
-/** Heap type `extern`. */
-export const extern: Type = BinaryenObj["_BinaryenHeapTypeExt"]();
 /** Heap type `nofunc`. */
 export const nofunc: Type = BinaryenObj["_BinaryenHeapTypeNofunc"]();
+/** Heap type `exn`. */
+export const exn: Type = BinaryenObj["_BinaryenHeapTypeExn"]();
 /** Heap type `noexn`. */
 export const noexn: Type = BinaryenObj["_BinaryenHeapTypeNoexn"]();
+/** Heap type `extern`. */
+export const extern: Type = BinaryenObj["_BinaryenHeapTypeExt"]();
 /** Heap type `noextern`. */
 export const noextern: Type = BinaryenObj["_BinaryenHeapTypeNoext"]();
 
@@ -103,14 +103,14 @@ export const arrayref: Type = BinaryenObj["_BinaryenTypeArrayref"]();
 export const nullref: Type = BinaryenObj["_BinaryenTypeNullref"]();
 /** `(ref null func)` */
 export const funcref: Type = BinaryenObj["_BinaryenTypeFuncref"]();
-/** `(ref null exn)` */
-export const exnref: Type = BinaryenObj["_BinaryenTypeExnref"]();
-/** `(ref null extern)` */
-export const externref: Type = BinaryenObj["_BinaryenTypeExternref"]();
 /** `(ref null nofunc)` */
 export const nullfuncref: Type = BinaryenObj["_BinaryenTypeNullFuncref"]();
+/** `(ref null exn)` */
+export const exnref: Type = BinaryenObj["_BinaryenTypeExnref"]();
 /** `(ref null noexn)` */
 export const nullexnref: Type = BinaryenObj["_BinaryenTypeNullExnref"]();
+/** `(ref null extern)` */
+export const externref: Type = BinaryenObj["_BinaryenTypeExternref"]();
 /** `(ref null noextern)` */
 export const nullexternref: Type = BinaryenObj["_BinaryenTypeNullExternref"]();
 

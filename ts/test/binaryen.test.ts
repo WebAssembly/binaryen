@@ -47,10 +47,10 @@ suite("binaryen", () => {
 		assert.ok(binaryen.array);
 		assert.ok(!binaryen.none); // TODO: update after changing `none` above
 		assert.ok(binaryen.func);
-		assert.ok(binaryen.exn);
-		assert.ok(binaryen.extern);
 		assert.ok(binaryen.nofunc);
+		assert.ok(binaryen.exn);
 		assert.ok(binaryen.noexn);
+		assert.ok(binaryen.extern);
 		assert.ok(binaryen.noextern);
 
 		assert.ok(binaryen.anyref);
@@ -60,10 +60,10 @@ suite("binaryen", () => {
 		assert.ok(binaryen.arrayref);
 		assert.ok(binaryen.nullref);
 		assert.ok(binaryen.funcref);
-		assert.ok(binaryen.exnref);
-		assert.ok(binaryen.externref);
 		assert.ok(binaryen.nullfuncref);
+		assert.ok(binaryen.exnref);
 		assert.ok(binaryen.nullexnref);
+		assert.ok(binaryen.externref);
 		assert.ok(binaryen.nullexternref);
 
 		assert.ok("notPacked" in binaryen);
@@ -145,10 +145,10 @@ suite("binaryen", () => {
 		assert.strictEqual(binaryen.array, 0x40);
 		assert.strictEqual(binaryen.none, 0x00); // TODO: update after changing `none` above
 		assert.strictEqual(binaryen.func, 0x10);
-		assert.strictEqual(binaryen.exn, 0x48);
-		assert.strictEqual(binaryen.extern, 0x08);
 		assert.strictEqual(binaryen.nofunc, 0x68);
+		assert.strictEqual(binaryen.exn, 0x48);
 		assert.strictEqual(binaryen.noexn, 0x78);
+		assert.strictEqual(binaryen.extern, 0x08);
 		assert.strictEqual(binaryen.noextern, 0x60);
 
 		assert.strictEqual(binaryen.anyref, 0x22);
@@ -158,10 +158,10 @@ suite("binaryen", () => {
 		assert.strictEqual(binaryen.arrayref, 0x42);
 		assert.strictEqual(binaryen.nullref, 0x5a);
 		assert.strictEqual(binaryen.funcref, 0x12);
-		assert.strictEqual(binaryen.exnref, 0x4a);
-		assert.strictEqual(binaryen.externref, 0x0a);
 		assert.strictEqual(binaryen.nullfuncref, 0x6a);
+		assert.strictEqual(binaryen.exnref, 0x4a);
 		assert.strictEqual(binaryen.nullexnref, 0x7a);
+		assert.strictEqual(binaryen.externref, 0x0a);
 		assert.strictEqual(binaryen.nullexternref, 0x62);
 
 		assert.strictEqual(binaryen.notPacked, 0);
