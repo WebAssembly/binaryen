@@ -336,6 +336,7 @@ struct OwnershipTracker {
   struct ItemInfo {
     UsedNames* owner = nullptr;
     SmallVector<Module*, 2> usingSecondaries;
+    bool usedByPrimary = false;
   };
 
   std::unordered_map<Name, ItemInfo> tables;
@@ -376,6 +377,9 @@ struct OwnershipTracker {
     // used by the primary module or multiple secondary modules, the primary
     // module is the owner.
     auto [it, inserted] = (this->*mapField).insert({name, ItemInfo{owner, {}}});
+    if (owner == &primaryUsed) {
+      it->second.usedByPrimary = true;
+    }
     Module* secondary = nullptr;
     if (owner != &primaryUsed) {
       size_t index = owner - secondaryUsed.data();
@@ -420,13 +424,29 @@ struct OwnershipTracker {
   }
 
   bool isUnused(Name name, const std::unordered_map<Name, ItemInfo>& map) {
-    return getOwner(name, map) == nullptr;
+    auto it = map.find(name);
+    if (it != map.end()) {
+      return !it->second.usedByPrimary && it->second.usingSecondaries.empty();
+    }
+    return true;
+  }
+
+  bool isUsedByPrimary(Name name,
+                       const std::unordered_map<Name, ItemInfo>& map) {
+    auto it = map.find(name);
+    if (it != map.end()) {
+      return it->second.usedByPrimary;
+    }
+    return false;
   }
 
   bool usedBySingleSecondary(Name name,
                              const std::unordered_map<Name, ItemInfo>& map) {
-    auto* owner = getOwner(name, map);
-    return owner != nullptr && owner != &primaryUsed;
+    auto it = map.find(name);
+    if (it != map.end()) {
+      return !it->second.usedByPrimary && it->second.usingSecondaries.size() == 1;
+    }
+    return false;
   }
 };
 
@@ -1047,9 +1067,39 @@ void ModuleSplitter::computeUsedNames() {
     if (!global->init) {
       continue;
     }
-    if (UsedNames* owner = tracker.getOwner(global->name, tracker.globals)) {
-      for (auto* get : FindAll<GlobalGet>(global->init).list) {
-        tracker.insert<Global>(get->name, owner);
+    auto gets = FindAll<GlobalGet>(global->init).list;
+    if (gets.empty()) {
+      continue;
+    }
+
+    // In case of mutable globals, we cannot have multiple copies. Compute the
+    // 'owner' of the global and insert its dependent globals there.
+    if (global->mutable_) {
+      if (UsedNames* owner = tracker.getOwner(global->name, tracker.globals)) {
+        for (auto* get : gets) {
+          tracker.insert<Global>(get->name, owner);
+        }
+      }
+      continue;
+    }
+
+    // In case of immutable globals, we can have multiple copies of it. To
+    // reduce the primary module size, we just copy the globals to all secondary
+    // modules using them. So here we insert the global in all using modules.
+    if (tracker.isUsedByPrimary(global->name, tracker.globals)) {
+      for (auto* get : gets) {
+        tracker.insert<Global>(get->name, &primaryUsed);
+      }
+    }
+    auto& usingSecs =
+      tracker.getUsingSecondaries(global->name, tracker.globals);
+    for (size_t i = 0; i < secondaries.size(); ++i) {
+      Module* sec = secondaries[i].get();
+      if (std::find(usingSecs.begin(), usingSecs.end(), sec) !=
+          usingSecs.end()) {
+        for (auto* get : gets) {
+          tracker.insert<Global>(get->name, &secondaryUsed[i]);
+        }
       }
     }
   }
@@ -1063,8 +1113,8 @@ void ModuleSplitter::shareImportableItems() {
   // 2. If an item is used by only a single secondary module, move the item to
   //    that secondary module. If an item is used by multiple modules (including
   //    the primary and secondary modules), export the item from the primary and
-  //    import it from the using secondary modules.
-
+  //    import it from the using secondary modules. (except for immutable
+  //    globals, which we just copy to using secondary modules)
   auto shareElements = [&](auto& elements,
                            auto& trackerElements,
                            auto copyElement,
@@ -1073,18 +1123,43 @@ void ModuleSplitter::shareImportableItems() {
                            ExternalKind kind = ExternalKind::Invalid) {
     std::unordered_set<Name> elementsToRemove;
     for (auto& element : elements) {
+      using T = std::remove_pointer_t<decltype(element.get())>;
+      bool isImmutableGlobal = false;
+      if constexpr (std::is_same_v<T, Global>) {
+        if (!element->mutable_) {
+          isImmutableGlobal = true;
+        }
+      }
+
       if (tracker.isUnused(element->name, trackerElements)) {
+        // If this element is not used anywhere, just remove it
         elementsToRemove.insert(element->name);
       } else if (tracker.usedBySingleSecondary(element->name,
                                                trackerElements)) {
+        // If this element is used in a single secondary module, move it to the
+        // secondary module
         auto* secondary =
           tracker.getUsingSecondaries(element->name, trackerElements)[0];
         copyElement(element.get(), *secondary);
         elementsToRemove.insert(element->name);
+      } else if (isImmutableGlobal) {
+        // If this element is an immutable global, copy it to all using
+        // secondary modules to reduce the primary module size, because we can
+        // have multiple copies. If it is not used in the primary module, remove
+        // it from there.
+        if (!tracker.isUsedByPrimary(element->name, trackerElements)) {
+          elementsToRemove.insert(element->name);
+        }
+        for (auto* secondary :
+             tracker.getUsingSecondaries(element->name, trackerElements)) {
+          copyElement(element.get(), *secondary);
+        }
       } else {
+        // If this element is used by multiple modules (primary + multiple
+        // secondaries or just multiple secondaries), export them from the
+        // primary module and import them from using secondary modules.
         // We only import and export Importables, i.e., we don't do this for
         // segments.
-        using T = std::remove_pointer_t<decltype(element.get())>;
         if constexpr (std::is_base_of_v<Importable, T>) {
           for (auto* secondary :
                tracker.getUsingSecondaries(element->name, trackerElements)) {

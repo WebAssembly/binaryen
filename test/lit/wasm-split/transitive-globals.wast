@@ -3,13 +3,14 @@
 ;; RUN: wasm-dis %t.2.wasm | filecheck %s --check-prefix SECONDARY
 
 ;; Check that transitive dependencies in global initializers are correctly
-;; analyzed and moved to the secondary module.
+;; analyzed and copied to the secondary module.
 
 (module
-  ;; There are two dependency chains: $a->$b->$c and $d->$e->$f. While all of
-  ;; $a, $b, and $c can be moved to the secondary module because all f them are
-  ;; used only there, $e is used in the primary module, preventing $e and $f
-  ;; from being moved to the secondary module.
+  ;; There are two dependency chains: $a->$b->$c and $d->$e->$f. Because these
+  ;; are immutable globals, globals are copied to whichever module they are
+  ;; used. The secondary module uses $a and $d, so it will have all globals
+  ;; copied to it. The primary module only uses $e, so it will have $e and its
+  ;; dependency $f.
 
   (global $c i32 (i32.const 42))
   (global $b i32 (global.get $c))
@@ -29,7 +30,6 @@
     )
   )
 
-  ;; Exclusively uses $a and $d, causing them to move to the secondary module
   (func $split
     (drop
       (global.get $a)
@@ -44,7 +44,6 @@
 ;; PRIMARY-NEXT:  (type $0 (func))
 ;; PRIMARY-NEXT:  (global $f i32 (i32.const 42))
 ;; PRIMARY-NEXT:  (global $e i32 (global.get $f))
-;; PRIMARY-NEXT:  (export "global" (global $e))
 ;; PRIMARY-NEXT:  (func $keep
 ;; PRIMARY-NEXT:   (drop
 ;; PRIMARY-NEXT:    (global.get $e)
@@ -54,10 +53,11 @@
 
 ;; SECONDARY:      (module
 ;; SECONDARY-NEXT:  (type $0 (func))
-;; SECONDARY-NEXT:  (import "primary" "global" (global $e i32))
 ;; SECONDARY-NEXT:  (global $c i32 (i32.const 42))
 ;; SECONDARY-NEXT:  (global $b i32 (global.get $c))
 ;; SECONDARY-NEXT:  (global $a i32 (global.get $b))
+;; SECONDARY-NEXT:  (global $f i32 (i32.const 42))
+;; SECONDARY-NEXT:  (global $e i32 (global.get $f))
 ;; SECONDARY-NEXT:  (global $d i32 (global.get $e))
 ;; SECONDARY-NEXT:  (func $split
 ;; SECONDARY-NEXT:   (drop
