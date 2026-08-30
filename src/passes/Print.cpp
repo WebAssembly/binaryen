@@ -1360,7 +1360,7 @@ struct PrintExpressionContents
         o << "f16x8.demote_f64x2_zero";
         break;
       case InvalidUnary:
-        WASM_UNREACHABLE("unvalid unary operator");
+        WASM_UNREACHABLE("invalid unary operator");
     }
     restoreNormalColor(o);
   }
@@ -2033,7 +2033,7 @@ struct PrintExpressionContents
         break;
 
       case InvalidBinary:
-        WASM_UNREACHABLE("unvalid binary operator");
+        WASM_UNREACHABLE("invalid binary operator");
     }
     restoreNormalColor(o);
   }

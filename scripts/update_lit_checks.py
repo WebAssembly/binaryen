@@ -167,7 +167,7 @@ def find_annotations(module, start):
                 else:
                     # Found something that isn't an annotation.
                     break
-    # Look for the start of the line containin the first annoation.
+    # Look for the start of the line containing the first annotation.
     for i in range(annotation - 1, -1, -1):
         if module[i] == '\n':
             return i + 1

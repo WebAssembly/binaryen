@@ -1717,7 +1717,7 @@ struct OptimizeInstructions
 
       if (auto* select = ref->dynCast<Select>()) {
         // We must check for unreachability explicitly here because a full
-        // refinalize only happens at the end. That is, the select may stil be
+        // refinalize only happens at the end. That is, the select may still be
         // reachable after we turned one child into an unreachable, and we are
         // calling getResultOfFirst which will error on unreachability.
         if (flowsOutNull(select->ifTrue) &&
@@ -4704,7 +4704,7 @@ private:
       }
     }
     {
-      // TODO: Add cancelation for some large constants when shrinkLevel > 0
+      // TODO: Add cancellation for some large constants when shrinkLevel > 0
       // in FinalOptimizer.
 
       // (x >> C)  << C   =>   x & -(1 << C)
@@ -4729,7 +4729,7 @@ private:
       }
     }
     {
-      // TODO: Add cancelation for some large constants when shrinkLevel > 0
+      // TODO: Add cancellation for some large constants when shrinkLevel > 0
       // in FinalOptimizer.
 
       // (x << C) >>> C   =>   x & (-1 >>> C)

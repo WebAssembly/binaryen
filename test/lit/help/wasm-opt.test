@@ -317,7 +317,7 @@
 ;; CHECK-NEXT:   --merge-locals                                merges locals when beneficial
 ;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --merge-similar-functions                     merges similar functions when 
-;; CHECK-NEXT:                                                 benefical
+;; CHECK-NEXT:                                                 beneficial
 ;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --metrics                                     reports metrics (with an 
 ;; CHECK-NEXT:                                                 optional title, 

@@ -21,7 +21,7 @@
 //
 // - Maintain a stack of control scopes (`ScopeCtx`).
 //
-// - Track an expression stack (`exprStack`) withing each scope.
+// - Track an expression stack (`exprStack`) within each scope.
 //
 // - Pop children from `exprStack` (via `ChildPopper`), set them as operands on
 //   the new Expression, and push the Expression back onto `exprStack`.
@@ -1160,7 +1160,7 @@ Result<> IRBuilder::visitEnd() {
       return curr;
     }
     auto* fixed = fixExtraOutput(scope, label, curr);
-    // We can re-use unnamed blocks instead of wrapping them.
+    // We can reuse unnamed blocks instead of wrapping them.
     if (auto* block = fixed->dynCast<Block>(); block && !block->name) {
       block->name = label;
       block->type = blockType;

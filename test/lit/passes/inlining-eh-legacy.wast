@@ -121,7 +121,7 @@
       (do)
       (catch $tag$0
         ;; After this $callee-b is inlined, there will be an additional block
-        ;; surrouding this 'pop'. However, that block has no breaks to it, and
+        ;; surrounding this 'pop'. However, that block has no breaks to it, and
         ;; will be considered the implicit block of the catch scope, so no
         ;; fixups are done.
         (call $callee-b
