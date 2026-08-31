@@ -339,7 +339,6 @@ struct ConstraintAnalysis
 
     while (!work.empty()) {
       auto* block = work.pop();
-
       // Start at the top of the block, then go through, applying things.
       BasicBlockConstraintMap constraints = block->contents.startConstraints;
 
@@ -570,7 +569,12 @@ struct ConstraintAnalysis
 
       // See above on binary action counting limits.
       if (auto* binary = set->value->dynCast<Binary>()) {
-        if (binaryActionCounts[binary]++ >= MaxBinaryActions) {
+        // The count may exceed the limit sometimes, but add a hard assert on
+        // never going up so high it is likely doing an unbounded computation.
+        auto& count = binaryActionCounts[binary];
+        assert(count < MaxBinaryActions * 10);
+        count++;
+        if (count >= MaxBinaryActions) {
           constraints.setProvesNothing(set->index);
           return;
         }
@@ -600,8 +604,29 @@ struct ConstraintAnalysis
       // opportunity to write any other value while falling through. (And, any
       // local.tee appearing here would have been reached earlier in the
       // traversal, and handled.)
-      auto* value =
-        Properties::getFallthrough(set->value, getPassOptions(), *getModule());
+      //
+      // We find the first tee in the fallthrough and apply that. This is both
+      // more efficient - we don't need to look any further - and also it avoids
+      // a problem where MaxBinaryActions is not properly applied. Imagine that
+      // we have an increment with a tee in the middle:
+      //
+      //  (local.set $y (local.tee $x (i32.add (local.get $y) (i32.const 1))))
+      //
+      // If this executes too many times, we will stop calculating $x (see the
+      // above code). Then $y should just copy $x's state.
+      auto* value = set->value;
+      while (1) {
+        if (value->is<LocalSet>()) {
+          break;
+        }
+        auto* next = Properties::getImmediateFallthrough(
+          value, getPassOptions(), *getModule());
+        if (value == next) {
+          break;
+        } else {
+          value = next;
+        }
+      }
       constraints.set(set->index, value);
     }
   }
