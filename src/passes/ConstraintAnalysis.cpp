@@ -592,12 +592,12 @@ struct ConstraintAnalysis
       // opportunity to write any other value while falling through. (And, any
       // local.tee appearing here would have been reached earlier in the
       // traversal, and handled.)
-      //
-      // We find the first tee in the fallthrough and apply that. This is more
-      // efficient - we don't need to look any further.
       auto* value = set->value;
       while (1) {
         if (value->is<LocalSet>()) {
+          // We stop at the first tee: we don't need to look any further, and
+          // will just apply that local's values to ourselves, saving repeated
+          // work.
           break;
         }
         auto* next = Properties::getImmediateFallthrough(
