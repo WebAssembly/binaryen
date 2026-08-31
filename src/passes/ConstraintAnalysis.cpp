@@ -339,6 +339,7 @@ struct ConstraintAnalysis
 
     while (!work.empty()) {
       auto* block = work.pop();
+
       // Start at the top of the block, then go through, applying things.
       BasicBlockConstraintMap constraints = block->contents.startConstraints;
 
