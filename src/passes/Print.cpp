@@ -3909,13 +3909,13 @@ static std::ostream& printStackIR(StackIR* ir, PrintSExpression& printer) {
     }
     switch (inst->op) {
       case StackInst::Basic: {
-        doIndent();
         // Pop is a pseudo instruction and should not be printed in the stack IR
         // format to make it valid wat form.
         if (inst->origin->is<Pop>()) {
-          break;
+          continue;
         }
 
+        doIndent();
         PrintExpressionContents(printer).visit(inst->origin);
         break;
       }

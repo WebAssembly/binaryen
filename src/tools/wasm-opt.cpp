@@ -110,7 +110,7 @@ For more on how to optimize effectively, see
 
   https://github.com/WebAssembly/binaryen/wiki/Optimizer-Cookbook
   https://github.com/WebAssembly/binaryen/wiki/GC-Optimization-Guidebook
-                            )");
+)");
 
   options
     .add("--output",

@@ -1,13 +1,13 @@
 ;; RUN: wasm-reduce --help | filecheck %s
 ;; CHECK: ================================================================================
 ;; CHECK-NEXT: wasm-reduce INFILE
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT: Reduce a wasm file to a smaller one with the same behavior on a given command.
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT: Typical usage:
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   wasm-reduce orig.wasm '--command=bash a.sh' --test t.wasm --working w.wasm
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT: The original file orig.wasm is where we begin. We then repeatedly test a small
 ;; CHECK-NEXT: reduction of it by writing that modification to the 'test file' (specified by
 ;; CHECK-NEXT: '--test'), and we run the command, in this example 'bash a.sh'. That command
@@ -18,21 +18,21 @@
 ;; CHECK-NEXT: same stdout and the result return code. Each time reduction works we continue to
 ;; CHECK-NEXT: reduce from that point (and each time it fails, we go back and try something
 ;; CHECK-NEXT: else).
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT: As mentioned above, the command should run on the test file. That is, the first
 ;; CHECK-NEXT: thing that wasm-reduce does on the example above is, effectively,
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   cp orig.wasm t.wasm
 ;; CHECK-NEXT:   bash a.sh
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT: In other words, it copies the original to the test file, and runs the command.
 ;; CHECK-NEXT: Whatever the command does, we will preserve as we copy progressively smaller
 ;; CHECK-NEXT: files to t.wasm. As we make progress, the smallest file will be written to
 ;; CHECK-NEXT: the working file, w.wasm, and when reduction is done you will find the final
 ;; CHECK-NEXT: result there.
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT: Comparison to creduce:
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT: 1. creduce requires the command to return 0. wasm-reduce is often used to reduce
 ;; CHECK-NEXT:    crashes, which have non-zero return codes, so it is natural to allow any
 ;; CHECK-NEXT:    return code. As mentioned above, we preserve the return code as we reduce.
@@ -50,245 +50,241 @@
 ;; CHECK-NEXT:    the testcase is a combination of JavaScript and wasm). wasm-reduce runs the
 ;; CHECK-NEXT:    command in the current directory (of course, your command can be a script
 ;; CHECK-NEXT:    that changes directory to anywhere else).
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT: More documentation can be found at
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   https://github.com/WebAssembly/binaryen/wiki/Fuzzing#reducing
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT: ================================================================================
-;; CHECK-NEXT:
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT: wasm-reduce options:
 ;; CHECK-NEXT: --------------------
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --command,-cmd                       The command to run on the test, that we
-;; CHECK-NEXT:                                        want to reduce while keeping the
-;; CHECK-NEXT:                                        command's output identical. We look at
+;; CHECK-EMPTY:
+;; CHECK-NEXT:   --command,-cmd                       The command to run on the test, that we 
+;; CHECK-NEXT:                                        want to reduce while keeping the 
+;; CHECK-NEXT:                                        command's output identical. We look at 
 ;; CHECK-NEXT:                                        the command's return code and stdout here
-;; CHECK-NEXT:                                        (TODO: stderr), and we reduce while
+;; CHECK-NEXT:                                        (TODO: stderr), and we reduce while 
 ;; CHECK-NEXT:                                        keeping those unchanged.
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --test,-t                            Test file (this will be written to test,
-;; CHECK-NEXT:                                        the given command should read it when we
+;; CHECK-EMPTY:
+;; CHECK-NEXT:   --test,-t                            Test file (this will be written to test, 
+;; CHECK-NEXT:                                        the given command should read it when we 
 ;; CHECK-NEXT:                                        call it)
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --working,-w                         Working file (this will contain the
-;; CHECK-NEXT:                                        current good state while doing temporary
-;; CHECK-NEXT:                                        computations, and will contain the final
+;; CHECK-EMPTY:
+;; CHECK-NEXT:   --working,-w                         Working file (this will contain the 
+;; CHECK-NEXT:                                        current good state while doing temporary 
+;; CHECK-NEXT:                                        computations, and will contain the final 
 ;; CHECK-NEXT:                                        best result at the end)
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --binaries,-b                        binaryen binaries location (bin/
+;; CHECK-EMPTY:
+;; CHECK-NEXT:   --binaries,-b                        binaryen binaries location (bin/ 
 ;; CHECK-NEXT:                                        directory)
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --text,-S                            Emit intermediate files as text, instead
-;; CHECK-NEXT:                                        of binary (also make sure the test and
-;; CHECK-NEXT:                                        working files have a .wat or .wast
+;; CHECK-EMPTY:
+;; CHECK-NEXT:   --text,-S                            Emit intermediate files as text, instead 
+;; CHECK-NEXT:                                        of binary (also make sure the test and 
+;; CHECK-NEXT:                                        working files have a .wat or .wast 
 ;; CHECK-NEXT:                                        suffix)
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --denan                              Avoid nans when reducing
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --verbose,-v                         Verbose output mode
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --debugInfo,-g                       Keep debug info in binaries
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --force,-f                           Force the reduction attempt, ignoring
-;; CHECK-NEXT:                                        problems that imply it is unlikely to
+;; CHECK-EMPTY:
+;; CHECK-NEXT:   --force,-f                           Force the reduction attempt, ignoring 
+;; CHECK-NEXT:                                        problems that imply it is unlikely to 
 ;; CHECK-NEXT:                                        succeed
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --timeout,-to                        A timeout to apply to each execution of
+;; CHECK-EMPTY:
+;; CHECK-NEXT:   --timeout,-to                        A timeout to apply to each execution of 
 ;; CHECK-NEXT:                                        the command, in seconds (default: 2)
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --extra-flags,-ef                    Extra commandline flags to pass to
-;; CHECK-NEXT:                                        wasm-opt while reducing. (default:
+;; CHECK-EMPTY:
+;; CHECK-NEXT:   --extra-flags,-ef                    Extra commandline flags to pass to 
+;; CHECK-NEXT:                                        wasm-opt while reducing. (default: 
 ;; CHECK-NEXT:                                        --enable-all)
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --save-all-working,-saw              Save all intermediate working files, as
+;; CHECK-EMPTY:
+;; CHECK-NEXT:   --save-all-working,-saw              Save all intermediate working files, as 
 ;; CHECK-NEXT:                                        $WORKING.0, .1, .2 etc
-;; CHECK-NEXT:
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT: Tool options:
 ;; CHECK-NEXT: -------------
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --mvp-features,-mvp                  Disable all non-MVP features
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --all-features,-all                  Enable all features
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --detect-features                    (deprecated - this flag does nothing)
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --quiet,-q                           Emit less verbose output and hide trivial
 ;; CHECK-NEXT:                                        warnings.
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --experimental-poppy                 Parse wast files as Poppy IR for testing
+;; CHECK-EMPTY:
+;; CHECK-NEXT:   --experimental-poppy                 Parse wast files as Poppy IR for testing 
 ;; CHECK-NEXT:                                        purposes.
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --emit-module-names                  Emit module names, even if not emitting
+;; CHECK-EMPTY:
+;; CHECK-NEXT:   --emit-module-names                  Emit module names, even if not emitting 
 ;; CHECK-NEXT:                                        the rest of the names section.
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --enable-sign-ext                    Enable sign extension operations
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --disable-sign-ext                   Disable sign extension operations
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --enable-threads                     Enable atomic operations
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --disable-threads                    Disable atomic operations
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --enable-mutable-globals             Enable mutable globals
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --disable-mutable-globals            Disable mutable globals
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --enable-nontrapping-float-to-int    Enable nontrapping float-to-int
+;; CHECK-EMPTY:
+;; CHECK-NEXT:   --enable-nontrapping-float-to-int    Enable nontrapping float-to-int 
 ;; CHECK-NEXT:                                        operations
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --disable-nontrapping-float-to-int   Disable nontrapping float-to-int
+;; CHECK-EMPTY:
+;; CHECK-NEXT:   --disable-nontrapping-float-to-int   Disable nontrapping float-to-int 
 ;; CHECK-NEXT:                                        operations
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --enable-simd                        Enable SIMD operations and types
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --disable-simd                       Disable SIMD operations and types
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --enable-bulk-memory                 Enable bulk memory operations
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --disable-bulk-memory                Disable bulk memory operations
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --enable-bulk-memory-opt             Enable memory.copy and memory.fill
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --disable-bulk-memory-opt            Disable memory.copy and memory.fill
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --enable-call-indirect-overlong      Enable LEB encoding of call-indirect
-;; CHECK-NEXT:                                        (Ignored for compatibility as it has no
+;; CHECK-EMPTY:
+;; CHECK-NEXT:   --enable-call-indirect-overlong      Enable LEB encoding of call-indirect 
+;; CHECK-NEXT:                                        (Ignored for compatibility as it has no 
 ;; CHECK-NEXT:                                        effect on Binaryen)
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --disable-call-indirect-overlong     Disable LEB encoding of call-indirect
-;; CHECK-NEXT:                                        (Ignored for compatibility as it has no
+;; CHECK-EMPTY:
+;; CHECK-NEXT:   --disable-call-indirect-overlong     Disable LEB encoding of call-indirect 
+;; CHECK-NEXT:                                        (Ignored for compatibility as it has no 
 ;; CHECK-NEXT:                                        effect on Binaryen)
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --enable-exception-handling          Enable exception handling operations
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --disable-exception-handling         Disable exception handling operations
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --enable-tail-call                   Enable tail call operations
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --disable-tail-call                  Disable tail call operations
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --enable-reference-types             Enable reference types
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --disable-reference-types            Disable reference types
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --enable-multivalue                  Enable multivalue functions
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --disable-multivalue                 Disable multivalue functions
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --enable-gc                          Enable garbage collection
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --disable-gc                         Disable garbage collection
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --enable-memory64                    Enable memory64
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --disable-memory64                   Disable memory64
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --enable-relaxed-simd                Enable relaxed SIMD
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --disable-relaxed-simd               Disable relaxed SIMD
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --enable-extended-const              Enable extended const expressions
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --disable-extended-const             Disable extended const expressions
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --enable-strings                     Enable strings
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --disable-strings                    Disable strings
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --enable-multimemory                 Enable multimemory
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --disable-multimemory                Disable multimemory
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --enable-stack-switching             Enable stack switching
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --disable-stack-switching            Disable stack switching
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --enable-shared-everything           Enable shared-everything threads
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --disable-shared-everything          Disable shared-everything threads
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --enable-fp16                        Enable float 16 operations
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --disable-fp16                       Disable float 16 operations
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --enable-custom-descriptors          Enable custom descriptors (RTTs) and
+;; CHECK-EMPTY:
+;; CHECK-NEXT:   --enable-custom-descriptors          Enable custom descriptors (RTTs) and 
 ;; CHECK-NEXT:                                        exact references
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --disable-custom-descriptors         Disable custom descriptors (RTTs) and
+;; CHECK-EMPTY:
+;; CHECK-NEXT:   --disable-custom-descriptors         Disable custom descriptors (RTTs) and 
 ;; CHECK-NEXT:                                        exact references
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --enable-multibyte                   Enable multibyte array loads and stores
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --disable-multibyte                  Disable multibyte array loads and stores
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --enable-acquire-release-atomics     Enable acquire/release atomic memory
+;; CHECK-EMPTY:
+;; CHECK-NEXT:   --enable-acquire-release-atomics     Enable acquire/release atomic memory 
 ;; CHECK-NEXT:                                        operations
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --disable-acquire-release-atomics    Disable acquire/release atomic memory
+;; CHECK-EMPTY:
+;; CHECK-NEXT:   --disable-acquire-release-atomics    Disable acquire/release atomic memory 
 ;; CHECK-NEXT:                                        operations
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --enable-custom-page-sizes           Enable custom page sizes
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --disable-custom-page-sizes          Disable custom page sizes
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --enable-wide-arithmetic             Enable wide arithmetic
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --disable-wide-arithmetic            Disable wide arithmetic
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --enable-compact-imports             Enable compact import section
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --disable-compact-imports            Disable compact import section
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --enable-relaxed-atomics             Enable relaxed atomic memory operations
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --disable-relaxed-atomics            Disable relaxed atomic memory operations
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --enable-reified-fibers              Enable reified fibers
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --disable-reified-fibers             Disable reified fibers
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --enable-typed-function-references   Deprecated compatibility flag
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --disable-typed-function-references  Deprecated compatibility flag
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --no-validation,-n                   Disables validation, assumes inputs are
+;; CHECK-EMPTY:
+;; CHECK-NEXT:   --no-validation,-n                   Disables validation, assumes inputs are 
 ;; CHECK-NEXT:                                        correct
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --pass-arg,-pa                       An argument passed along to optimization
-;; CHECK-NEXT:                                        passes being run. Must be in the form
-;; CHECK-NEXT:                                        KEY@VALUE.  If KEY is the name of a pass
-;; CHECK-NEXT:                                        then it applies to the closest instance
+;; CHECK-EMPTY:
+;; CHECK-NEXT:   --pass-arg,-pa                       An argument passed along to optimization 
+;; CHECK-NEXT:                                        passes being run. Must be in the form 
+;; CHECK-NEXT:                                        KEY@VALUE.  If KEY is the name of a pass 
+;; CHECK-NEXT:                                        then it applies to the closest instance 
 ;; CHECK-NEXT:                                        of that pass before us. If KEY is not the
 ;; CHECK-NEXT:                                        name of a pass then it is a global option
-;; CHECK-NEXT:                                        that applies to all pass instances that
+;; CHECK-NEXT:                                        that applies to all pass instances that 
 ;; CHECK-NEXT:                                        read it.
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --closed-world,-cw                   Assume code outside of the module does
-;; CHECK-NEXT:                                        not inspect or interact with GC and
-;; CHECK-NEXT:                                        function references, even if they are
-;; CHECK-NEXT:                                        passed out. The outside may hold on to
-;; CHECK-NEXT:                                        them and pass them back in, but not
+;; CHECK-EMPTY:
+;; CHECK-NEXT:   --closed-world,-cw                   Assume code outside of the module does 
+;; CHECK-NEXT:                                        not inspect or interact with GC and 
+;; CHECK-NEXT:                                        function references, even if they are 
+;; CHECK-NEXT:                                        passed out. The outside may hold on to 
+;; CHECK-NEXT:                                        them and pass them back in, but not 
 ;; CHECK-NEXT:                                        inspect their contents or call them.
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --preserve-type-order                Preserve the order of types from the
+;; CHECK-EMPTY:
+;; CHECK-NEXT:   --preserve-type-order                Preserve the order of types from the 
 ;; CHECK-NEXT:                                        input (useful for debugging and testing)
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --generate-stack-ir                  generate StackIR during writing
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --optimize-stack-ir                  optimize StackIR during writing
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --print-stack-ir                     print StackIR during writing
-;; CHECK-NEXT:
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT: General options:
 ;; CHECK-NEXT: ----------------
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --version                            Output version information and exit
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --help,-h                            Show this help message and exit
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --debug,-d                           Print debug information to stderr
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
