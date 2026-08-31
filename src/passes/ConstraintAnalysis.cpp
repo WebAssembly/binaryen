@@ -611,7 +611,7 @@ struct ConstraintAnalysis
 
       // Now that we know the value, check binary action counting limits (see
       // above).
-      if (auto* binary = set->value->dynCast<Binary>()) {
+      if (auto* binary = value->dynCast<Binary>()) {
         // The count may exceed the limit sometimes, but add a hard assert on
         // never going up so high it is likely doing an unbounded computation.
         auto& count = binaryActionCounts[binary];
