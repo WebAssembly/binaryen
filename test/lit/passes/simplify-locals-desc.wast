@@ -11,7 +11,13 @@
     (type $desc (describes $struct) (struct))
   )
 
-  ;; CHECK:      (func $test (type $2) (param $ref (ref null $struct)) (result (ref $struct))
+  ;; CHECK:      (type $none (func))
+  (type $none (func))
+
+  ;; CHECK:      (tag $tag (type $none))
+  (tag $tag (type $none))
+
+  ;; CHECK:      (func $test (type $3) (param $ref (ref null $struct)) (result (ref $struct))
   ;; CHECK-NEXT:  (local $temp (ref $desc))
   ;; CHECK-NEXT:  (block $block (result (ref none))
   ;; CHECK-NEXT:   (drop
@@ -42,6 +48,75 @@
           (local.tee $temp
             (ref.as_non_null
               (ref.null none)
+            )
+          )
+        )
+      )
+      (unreachable)
+    )
+  )
+
+  ;; CHECK:      (func $br_on_cast_desc_eq_in_block (type $4) (result (ref $struct))
+  ;; CHECK-NEXT:  (local $0 (ref null $desc))
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (block $out (result (ref $struct))
+  ;; CHECK-NEXT:   (if
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (then
+  ;; CHECK-NEXT:     (block $block
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (block (result i32)
+  ;; CHECK-NEXT:        (drop
+  ;; CHECK-NEXT:         (br_on_cast_desc_eq_fail $out (ref (exact $struct)) (ref $struct)
+  ;; CHECK-NEXT:          (struct.new_default_desc $struct
+  ;; CHECK-NEXT:           (ref.null none)
+  ;; CHECK-NEXT:          )
+  ;; CHECK-NEXT:          (try_table (result (ref $desc)) (catch $tag $block)
+  ;; CHECK-NEXT:           (ref.as_non_null
+  ;; CHECK-NEXT:            (local.get $0)
+  ;; CHECK-NEXT:           )
+  ;; CHECK-NEXT:          )
+  ;; CHECK-NEXT:         )
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (i32.const 0)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $br_on_cast_desc_eq_in_block (result (ref $struct))
+    (local $0 (ref null $desc))
+    (local $1 i32)
+    ;; While simplifying locals here, we must be aware that the br_on
+    ;; instruction has a descriptor, and must visit it. If we do not, then we'd
+    ;; see no branches to $block, and move the tee out of it, breaking
+    ;; validation.
+    (block $out (result (ref $struct))
+      (if
+        (i32.const 0)
+        (then
+          (block $block
+            (drop
+              (local.tee $1
+                (block (result i32)
+                  (drop
+                    (br_on_cast_desc_eq_fail $out (ref (exact $struct)) (ref $struct)
+                      (struct.new_default_desc $struct
+                        (ref.null none)
+                      )
+                      (try_table (result (ref $desc)) (catch $tag $block)
+                        (ref.as_non_null
+                          (local.get $0)
+                        )
+                      )
+                    )
+                  )
+                  (i32.const 0)
+                )
+              )
             )
           )
         )
