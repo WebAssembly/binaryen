@@ -2555,7 +2555,9 @@ struct OptimizeInstructions
         if (curr->desc) {
           // There is another child here, whose effects we must consider (the
           // same ordering situation as in skipNonNullCast: we want to move a
-          // trap past later children).
+          // trap past later children. That is, we are removing a cast, with the
+          // result that if it trapped, the later cast will still trap, so the
+          // trap is moving. And it must not move past effectful things).
           auto& options = getPassOptions();
           EffectAnalyzer descEffects(options, *getModule(), curr->desc);
           ShallowEffectAnalyzer movingEffects(options, *getModule(), curr->ref);
