@@ -1463,7 +1463,9 @@
   ;; CHECK:      (func $ref.cast_desc_eq-ref.cast (type $22) (param $x anyref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.cast_desc_eq (ref $struct)
-  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (ref.cast (ref $struct)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (block (result (ref null $desc))
   ;; CHECK-NEXT:     (return)
   ;; CHECK-NEXT:    )
@@ -1503,7 +1505,8 @@
   ;; NTRAP-NEXT: )
   (func $ref.cast_desc_eq-ref.cast (param $x anyref)
     ;; As above with ref.as_non_null, removing the inner ref.cast would allow
-    ;; reaching the return before the cast check.
+    ;; reaching the return before the cast check, so we do not optimize. (In
+    ;; NTRAP mode we end up removing the outer cast, separately.)
     (drop
       (ref.cast_desc_eq (ref $struct)
         (ref.cast (ref $struct)
@@ -1520,7 +1523,7 @@
         (ref.cast (ref $struct)
           (local.get $x)
         )
-        (struct.new $desc)
+        (struct.new $desc)  ;; this has no effects
       )
     )
   )
