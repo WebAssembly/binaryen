@@ -568,14 +568,6 @@ struct ConstraintAnalysis
         return;
       }
 
-      // See above on binary action counting limits.
-      if (auto* binary = set->value->dynCast<Binary>()) {
-        if (binaryActionCounts[binary]++ >= MaxBinaryActions) {
-          constraints.setProvesNothing(set->index);
-          return;
-        }
-      }
-
       // Look at the fallthrough. It is valid to do so, because our constraints
       // only track two things, constants and locals. For a constant, it does
       // not change while falling through. For a local, the only way for the
@@ -600,8 +592,37 @@ struct ConstraintAnalysis
       // opportunity to write any other value while falling through. (And, any
       // local.tee appearing here would have been reached earlier in the
       // traversal, and handled.)
-      auto* value =
-        Properties::getFallthrough(set->value, getPassOptions(), *getModule());
+      auto* value = set->value;
+      while (1) {
+        if (value->is<LocalSet>()) {
+          // We stop at the first tee: we don't need to look any further, and
+          // will just apply that local's values to ourselves, saving repeated
+          // work.
+          break;
+        }
+        auto* next = Properties::getImmediateFallthrough(
+          value, getPassOptions(), *getModule());
+        if (value == next) {
+          break;
+        } else {
+          value = next;
+        }
+      }
+
+      // Now that we know the value, check binary action counting limits (see
+      // above).
+      if (auto* binary = value->dynCast<Binary>()) {
+        // The count may exceed the limit sometimes, but add a hard assert on
+        // never going up so high it is likely doing an unbounded computation.
+        auto& count = binaryActionCounts[binary];
+        assert(count < MaxBinaryActions * 10);
+        count++;
+        if (count >= MaxBinaryActions) {
+          constraints.setProvesNothing(set->index);
+          return;
+        }
+      }
+
       constraints.set(set->index, value);
     }
   }

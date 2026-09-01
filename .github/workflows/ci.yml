@@ -56,11 +56,6 @@ jobs:
         # currently macos-13, but unfortunately that doesn't exist in github
         # actions so we settle for macos-14.
         os: [ubuntu-22.04, ubuntu-latest, macos-14, windows-latest, windows-11-arm]
-    env:
-      # Enable UTF-8 mode for Python on Windows. This is required for filecheck
-      # 1.0.3 to handle Unicode filenames/checks and should be unnecessary in
-      # future versions of filecheck.
-      PYTHONUTF8: 1
     steps:
     - uses: actions/setup-python@v5
       with:
