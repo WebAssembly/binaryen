@@ -933,8 +933,8 @@ public:
         definingGlobals[data] = DefiningGlobalInfo{definingGlobalName, type};
       }
 
-      for (size_t i = 0; i < data->getNumElements(); i++) {
-        auto* serialized = getSerialization(data->getElement(i));
+      for (size_t i = 0; i < value.getNumElements(); i++) {
+        auto* serialized = getSerialization(value.getElement(i));
         if (!serialized) {
           return nullptr;
         }

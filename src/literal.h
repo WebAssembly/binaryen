@@ -313,6 +313,9 @@ public:
   Name getFunc() const;
   std::shared_ptr<FuncData> getFuncData() const;
   std::shared_ptr<GCData> getGCData() const;
+  size_t getNumElements() const;
+  Literal getElement(size_t index, bool signed_ = false) const;
+  void setElement(size_t index, Literal value);
   std::shared_ptr<ExnData> getExnData() const;
   std::shared_ptr<ContData> getContData() const;
 
@@ -785,8 +788,6 @@ std::ostream& operator<<(std::ostream& o, wasm::Literals literals);
 // A GC Struct, Array, or String is a set of values with a type saying how it
 // should be interpreted.
 struct GCData {
-  Type type;
-
   // The element or field values. Primitive numeric arrays use raw byte buffers
   // (std::vector<uint8_t>), while reference arrays, structs, strings, and other
   // reference allocations use Literals.
@@ -795,15 +796,13 @@ struct GCData {
   // The descriptor, if it exists, or null.
   Literal desc;
 
-  GCData(Type type,
-         Literals&& values,
+  GCData(Literals&& values,
          const Literal& desc = Literal::makeNull(HeapType::none))
-    : type(type), storage(std::move(values)), desc(desc) {}
+    : storage(std::move(values)), desc(desc) {}
 
-  GCData(Type type,
-         std::vector<uint8_t>&& data,
+  GCData(std::vector<uint8_t>&& data,
          const Literal& desc = Literal::makeNull(HeapType::none))
-    : type(type), storage(std::move(data)), desc(desc) {}
+    : storage(std::move(data)), desc(desc) {}
 
   bool isRawBytes() const {
     return std::holds_alternative<std::vector<uint8_t>>(storage);
@@ -821,10 +820,6 @@ struct GCData {
 
   Literals& getLiterals() { return std::get<Literals>(storage); }
 
-  size_t getNumElements() const;
-  Literal getElement(size_t index, bool signed_ = false) const;
-  void setElement(size_t index, Literal value);
-
   // Writes a field value to the byte buffer at `dest`.
   static void writeField(void* dest, const Field& field, Literal value);
   // Reads a field value from the byte buffer at `src`.
@@ -837,8 +832,7 @@ inline bool Literal::hasExternPayload() const {
     return false;
   }
   assert(type.getHeapType().isMaybeShared(HeapType::ext));
-  return !gcData->getLiterals().empty() &&
-         gcData->getLiterals()[0].type == Type::i32;
+  return gcData->getLiterals()[0].type == Type::i32;
 }
 
 inline int32_t Literal::getExternPayload() const {

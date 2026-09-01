@@ -67,7 +67,7 @@ Literal::Literal(Type type) : type(type) {
   if (type.isRef() && type.getHeapType().isMaybeShared(HeapType::ext)) {
     assert(type.isNonNullable());
     new (&gcData) std::shared_ptr<GCData>(
-      std::make_shared<GCData>(type, Literals{Literal(int32_t{0})}));
+      std::make_shared<GCData>(Literals{Literal(int32_t{0})}));
     return;
   }
 
@@ -100,9 +100,7 @@ Literal Literal::makeFunc(Name func, Module& wasm) {
 
 Literal Literal::makeExtern(int32_t payload, Shareability share) {
   auto ext = HeapTypes::ext.getBasic(share);
-  return Literal(std::make_shared<GCData>(Type(ext, NonNullable),
-                                          Literals{Literal(payload)}),
-                 ext);
+  return Literal(std::make_shared<GCData>(Literals{Literal(payload)}), ext);
 }
 
 Literal::Literal(std::shared_ptr<GCData> gcData, HeapType type)
@@ -139,7 +137,7 @@ Literal::Literal(std::string_view string)
     int32_t u = uint8_t(string[i]) | (uint8_t(string[i + 1]) << 8);
     contents.push_back(Literal(u));
   }
-  gcData = std::make_shared<GCData>(type, std::move(contents));
+  gcData = std::make_shared<GCData>(std::move(contents));
 }
 
 Literal::Literal(const Literal& other) : type(other.type) {
@@ -847,14 +845,14 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
       auto data = literal.getGCData();
       assert(data);
       o << "[ref " << literal.type.getHeapType() << ' ';
-      for (size_t i = 0; i < data->getNumElements(); i++) {
+      for (size_t i = 0; i < literal.getNumElements(); i++) {
         if (i > 0) {
           o << ' ';
         }
-        o << data->getElement(i);
+        o << literal.getElement(i);
       }
       if (!data->desc.isNull()) {
-        if (data->getNumElements() > 0) {
+        if (literal.getNumElements() > 0) {
           o << ", ";
         }
         o << "desc=" << data->desc;
@@ -3115,8 +3113,7 @@ Literal Literal::externalize() const {
   }
   // This is an internal reference. Wrap it.
   auto ext = HeapTypes::ext.getBasic(heapType.getShared());
-  return Literal(
-    std::make_shared<GCData>(Type(ext, NonNullable), Literals{*this}), ext);
+  return Literal(std::make_shared<GCData>(Literals{*this}), ext);
 }
 
 Literal Literal::internalize() const {
@@ -3130,8 +3127,7 @@ Literal Literal::internalize() const {
   if (isString() || hasExternPayload()) {
     // This is an external reference. Wrap it.
     auto any = HeapTypes::any.getBasic(heapType.getShared());
-    return Literal(
-      std::make_shared<GCData>(Type(any, NonNullable), Literals{*this}), any);
+    return Literal(std::make_shared<GCData>(Literals{*this}), any);
   }
   // This is an externalized internal reference; just unwrap it.
   assert(gcData->getLiterals().size() == 1);
@@ -3171,33 +3167,37 @@ Literal Literal::getJSPrototype() const {
   return Literal::makeNull(HeapType::none);
 }
 
-size_t GCData::getNumElements() const {
-  if (isRawBytes()) {
+size_t Literal::getNumElements() const {
+  assert(isData());
+  if (gcData->isRawBytes()) {
     auto field = type.getHeapType().getArray().element;
-    return getRawBytes().size() / field.getByteSize();
+    return gcData->getRawBytes().size() / field.getByteSize();
   }
-  return getLiterals().size();
+  return gcData->getLiterals().size();
 }
 
-Literal GCData::getElement(size_t index, bool signed_) const {
-  if (isRawBytes()) {
+Literal Literal::getElement(size_t index, bool signed_) const {
+  assert(isData());
+  if (gcData->isRawBytes()) {
     auto field = type.getHeapType().getArray().element;
     size_t elemSize = field.getByteSize();
-    assert((index + 1) * elemSize <= getRawBytes().size());
-    return readField(&getRawBytes()[index * elemSize], field, signed_);
+    assert((index + 1) * elemSize <= gcData->getRawBytes().size());
+    return GCData::readField(
+      &gcData->getRawBytes()[index * elemSize], field, signed_);
   }
-  return getLiterals()[index];
+  return gcData->getLiterals()[index];
 }
 
-void GCData::setElement(size_t index, Literal value) {
-  if (isRawBytes()) {
+void Literal::setElement(size_t index, Literal value) {
+  assert(isData());
+  if (gcData->isRawBytes()) {
     auto field = type.getHeapType().getArray().element;
     size_t elemSize = field.getByteSize();
-    assert((index + 1) * elemSize <= getRawBytes().size());
-    writeField(&getRawBytes()[index * elemSize], field, value);
+    assert((index + 1) * elemSize <= gcData->getRawBytes().size());
+    GCData::writeField(&gcData->getRawBytes()[index * elemSize], field, value);
     return;
   }
-  getLiterals()[index] = value;
+  gcData->getLiterals()[index] = value;
 }
 
 void GCData::writeField(void* dest, const Field& field, Literal value) {
