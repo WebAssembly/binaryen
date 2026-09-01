@@ -2552,6 +2552,17 @@ struct OptimizeInstructions
       bool notWeaker = Type::isSubType(curr->type, child->type);
       bool safe = !child->desc || getPassOptions().trapsNeverHappen;
       if (notWeaker && safe) {
+        if (curr->desc) {
+          // There is another child here, whose effects we must consider (the
+          // same ordering situation as in skipNonNullCast: we want to move a
+          // trap past later children).
+          auto& options = getPassOptions();
+          EffectAnalyzer descEffects(options, *getModule(), curr->desc);
+          ShallowEffectAnalyzer movingEffects(options, *getModule(), curr->ref);
+          if (movingEffects.orderedBefore(descEffects)) {
+            return;
+          }
+        }
         if (child->desc) {
           // Reorder the child's reference past its dropped descriptor if
           // necessary.
