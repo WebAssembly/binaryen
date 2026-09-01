@@ -617,9 +617,10 @@ struct ConstraintAnalysis
         // unbounded work on this binary, however, we may end up reaching this
         // basic block an even larger number of times for other reasons, i.e.,
         // just because of a very complex CFG. That should be very rare, but can
-        // happen. We do put a very high limit on it, though, intending to throw
-        // an assert rather than just hang in the case of a bug (as assert is
-        // easier to diagnose, even if it happens after a long delay).
+        // happen. In debug builds we check we do not exceed a very high limit
+        // there, intending to throw an assert rather than just hang in the case
+        // of a bug (as assert is easier to diagnose, even if it happens after a
+        // long delay).
         auto& count = binaryActionCounts[binary];
         static const Index MaxBasicBlockActions = 1024 * 1024;
         assert(count < MaxBasicBlockActions);
