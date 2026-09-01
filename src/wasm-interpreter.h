@@ -2465,11 +2465,11 @@ public:
       trap("null ref");
     }
     Index i = index.getSingleValue().geti32();
-    size_t size = refVal.getGCData()->getRawBytes().size();
+    size_t size = refVal.getRawBytes().size();
     if (i >= size || curr->bytes > (size - i)) {
       trap("array oob");
     }
-    const uint8_t* p = &refVal.getGCData()->getRawBytes()[i];
+    const uint8_t* p = &refVal.getRawBytes()[i];
     switch (curr->type.getBasic()) {
       case Type::i32: {
         switch (curr->bytes) {
@@ -2537,12 +2537,12 @@ public:
     }
 
     Index i = index.getSingleValue().geti32();
-    size_t size = refVal.getGCData()->getRawBytes().size();
+    size_t size = refVal.getRawBytes().size();
     // Use subtraction to avoid overflow.
     if (i >= size || curr->bytes > (size - i)) {
       trap("array oob");
     }
-    uint8_t* p = &refVal.getGCData()->getRawBytes()[i];
+    uint8_t* p = &refVal.getRawBytes()[i];
     auto val = value.getSingleValue();
     if (curr->value->type == Type::f32 && curr->bytes == 2) {
       float f32 = bit_cast<float>(val.reinterpreti32());
@@ -2585,16 +2585,14 @@ public:
     if (srcIdx + lengthVal > srcVal.getNumElements()) {
       trap("oob");
     }
-    auto destData = destVal.getGCData();
-    auto srcData = srcVal.getGCData();
     // Fast path: bulk copy raw byte buffers directly with memmove rather than
     // extracting and setting elements one-by-one via Literals.
-    if (destData->isRawBytes() && srcData->isRawBytes()) {
+    if (destVal.isRawBytes() && srcVal.isRawBytes()) {
       if (lengthVal > 0) {
         auto elemSize =
           destVal.type.getHeapType().getArray().element.getByteSize();
-        memmove(&destData->getRawBytes()[destIdx * elemSize],
-                &srcData->getRawBytes()[srcIdx * elemSize],
+        memmove(&destVal.getRawBytes()[destIdx * elemSize],
+                &srcVal.getRawBytes()[srcIdx * elemSize],
                 lengthVal * elemSize);
       }
       return Flow();
@@ -4801,10 +4799,9 @@ public:
         droppedDataSegments.contains(curr->segment)) {
       trap("out of bounds segment access in array.init_data");
     }
-    auto data = refVal.getGCData();
-    assert(data->isRawBytes());
+    assert(refVal.isRawBytes());
     if (sizeVal > 0) {
-      memcpy(&data->getRawBytes()[indexVal * elemSize],
+      memcpy(&refVal.getRawBytes()[indexVal * elemSize],
              &seg->data[offsetVal],
              sizeVal * elemSize);
     }

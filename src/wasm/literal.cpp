@@ -3176,31 +3176,9 @@ size_t Literal::getNumElements() const {
   return gcData->getLiterals().size();
 }
 
-Literal Literal::getElement(size_t index, bool signed_) const {
-  assert(isData());
-  if (gcData->isRawBytes()) {
-    auto field = type.getHeapType().getArray().element;
-    size_t elemSize = field.getByteSize();
-    assert((index + 1) * elemSize <= gcData->getRawBytes().size());
-    return GCData::readField(
-      &gcData->getRawBytes()[index * elemSize], field, signed_);
-  }
-  return gcData->getLiterals()[index];
-}
+namespace {
 
-void Literal::setElement(size_t index, Literal value) {
-  assert(isData());
-  if (gcData->isRawBytes()) {
-    auto field = type.getHeapType().getArray().element;
-    size_t elemSize = field.getByteSize();
-    assert((index + 1) * elemSize <= gcData->getRawBytes().size());
-    GCData::writeField(&gcData->getRawBytes()[index * elemSize], field, value);
-    return;
-  }
-  gcData->getLiterals()[index] = value;
-}
-
-void GCData::writeField(void* dest, const Field& field, Literal value) {
+void writeField(void* dest, const Field& field, Literal value) {
   if (field.isPacked()) {
     assert(field.type == Type::i32);
     int32_t c = value.geti32();
@@ -3220,7 +3198,7 @@ void GCData::writeField(void* dest, const Field& field, Literal value) {
   memcpy(dest, buf, field.getByteSize());
 }
 
-Literal GCData::readField(const void* src, const Field& field, bool signed_) {
+Literal readField(const void* src, const Field& field, bool signed_) {
   if (field.isPacked()) {
     assert(field.type == Type::i32);
     if (field.packedType == Field::i8) {
@@ -3237,6 +3215,31 @@ Literal GCData::readField(const void* src, const Field& field, bool signed_) {
   }
 
   return Literal::makeFromMemory(src, field.type);
+}
+
+} // anonymous namespace
+
+Literal Literal::getElement(size_t index, bool signed_) const {
+  assert(isData());
+  if (gcData->isRawBytes()) {
+    auto field = type.getHeapType().getArray().element;
+    size_t elemSize = field.getByteSize();
+    assert((index + 1) * elemSize <= gcData->getRawBytes().size());
+    return readField(&gcData->getRawBytes()[index * elemSize], field, signed_);
+  }
+  return gcData->getLiterals()[index];
+}
+
+void Literal::setElement(size_t index, Literal value) {
+  assert(isData());
+  if (gcData->isRawBytes()) {
+    auto field = type.getHeapType().getArray().element;
+    size_t elemSize = field.getByteSize();
+    assert((index + 1) * elemSize <= gcData->getRawBytes().size());
+    writeField(&gcData->getRawBytes()[index * elemSize], field, value);
+    return;
+  }
+  gcData->getLiterals()[index] = value;
 }
 
 } // namespace wasm

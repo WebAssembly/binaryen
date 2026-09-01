@@ -316,6 +316,9 @@ public:
   size_t getNumElements() const;
   Literal getElement(size_t index, bool signed_ = false) const;
   void setElement(size_t index, Literal value);
+  bool isRawBytes() const;
+  const std::vector<uint8_t>& getRawBytes() const;
+  std::vector<uint8_t>& getRawBytes();
   std::shared_ptr<ExnData> getExnData() const;
   std::shared_ptr<ContData> getContData() const;
 
@@ -819,13 +822,22 @@ struct GCData {
   const Literals& getLiterals() const { return std::get<Literals>(storage); }
 
   Literals& getLiterals() { return std::get<Literals>(storage); }
-
-  // Writes a field value to the byte buffer at `dest`.
-  static void writeField(void* dest, const Field& field, Literal value);
-  // Reads a field value from the byte buffer at `src`.
-  static Literal
-  readField(const void* src, const Field& field, bool signed_ = false);
 };
+
+inline bool Literal::isRawBytes() const {
+  assert(isData());
+  return gcData->isRawBytes();
+}
+
+inline const std::vector<uint8_t>& Literal::getRawBytes() const {
+  assert(isData());
+  return gcData->getRawBytes();
+}
+
+inline std::vector<uint8_t>& Literal::getRawBytes() {
+  assert(isData());
+  return gcData->getRawBytes();
+}
 
 inline bool Literal::hasExternPayload() const {
   if (isNull()) {
