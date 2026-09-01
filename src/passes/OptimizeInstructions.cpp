@@ -2550,26 +2550,41 @@ struct OptimizeInstructions
       // traps are allowed, then we cannot remove the potentially-trapping
       // child, though.
       bool notWeaker = Type::isSubType(curr->type, child->type);
-      bool safe = !child->desc || getPassOptions().trapsNeverHappen;
-      if (notWeaker && safe) {
-        if (curr->desc) {
-          // There is another child here, whose effects we must consider (the
-          // same ordering situation as in skipNonNullCast: we want to move a
-          // trap past later children. That is, we are removing a cast, with the
-          // result that if it trapped, the later cast will still trap, so the
-          // trap is moving. And it must not move past effectful things).
-          auto& options = getPassOptions();
-          EffectAnalyzer descEffects(options, *getModule(), curr->desc);
-          ShallowEffectAnalyzer movingEffects(options, *getModule(), curr->ref);
-          if (movingEffects.orderedBefore(descEffects)) {
-            return;
-          }
+      auto& options = getPassOptions();
+      auto canTrap = !options.trapsNeverHappen;
+      bool safe = !child->desc || !canTrap;
+      bool canOptimize = notWeaker && safe;
+      if (canOptimize && curr->desc && canTrap) {
+        // There is another child here, which might trap, and we need to
+        // consider that in this situation:
+        //
+        //  (outer.cast
+        //    (inner.cast (inner.ref))
+        //    (descriptor with effects)
+        //  )
+        //
+        //  =>
+        //
+        //  (outer.cast
+        //    (inner.ref)                ;; inner cast was removed
+        //    (descriptor with effects)
+        //  )
+        //
+        // It is safe to remove the inner cast, as if it trapped, the outer one
+        // would still trap. But if there is a descriptor, then we are moving
+        // the trap across the descriptor, and shouldn't cross effects there.
+        EffectAnalyzer descEffects(options, *getModule(), curr->desc);
+        ShallowEffectAnalyzer movingEffects(options, *getModule(), curr->ref);
+        if (movingEffects.orderedBefore(descEffects)) {
+          canOptimize = false;
         }
+      }
+      if (canOptimize) {
         if (child->desc) {
           // Reorder the child's reference past its dropped descriptor if
           // necessary.
           auto* block =
-            ChildLocalizer(child, getFunction(), *getModule(), getPassOptions())
+            ChildLocalizer(child, getFunction(), *getModule(), options)
               .getChildrenReplacement();
           block->list.push_back(child->ref);
           block->type = child->ref->type;
