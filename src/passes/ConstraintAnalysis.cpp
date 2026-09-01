@@ -622,8 +622,10 @@ struct ConstraintAnalysis
         // of a bug (as assert is easier to diagnose, even if it happens after a
         // long delay).
         auto& count = binaryActionCounts[binary];
+#ifndef NDEBUG
         static const Index MaxBasicBlockActions = 1024 * 1024;
         assert(count < MaxBasicBlockActions);
+#endif
         count++;
         if (count >= MaxBinaryActions) {
           constraints.setProvesNothing(set->index);
