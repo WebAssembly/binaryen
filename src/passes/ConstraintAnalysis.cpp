@@ -612,10 +612,20 @@ struct ConstraintAnalysis
       // Now that we know the value, check binary action counting limits (see
       // above).
       if (auto* binary = value->dynCast<Binary>()) {
-        // The count may exceed the limit sometimes, but add a hard assert on
-        // never going up so high it is likely doing an unbounded computation.
+        // The code below will stop calculating this binary once we pass
+        // MaxBinaryActions operations on it. That is enough to prevent
+        // unbounded work on this binary, however, we may end up reaching this
+        // basic block an even larger number of times for other reasons, i.e.,
+        // just because of a very complex CFG. That should be very rare, but we
+        // do not want to put an arbitrary limit on how many times we reach a
+        // binary. We do put a huge limit, however, on the number of times we
+        // reach this code for a particular binary (which is the number of
+        // times we reach the basic block); asserting on that is meant to throw
+        // an assert rather than just hang in the case of a bug (as assert is
+        // easier to diagnose, even if it happens after a long delay).
         auto& count = binaryActionCounts[binary];
-        assert(count < MaxBinaryActions * 10);
+        static const Index MaxBasicBlockActions = 1024 * 1024;
+        assert(count < MaxBasicBlockActions);
         count++;
         if (count >= MaxBinaryActions) {
           constraints.setProvesNothing(set->index);
