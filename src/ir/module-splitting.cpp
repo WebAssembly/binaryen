@@ -444,7 +444,8 @@ struct OwnershipTracker {
                              const std::unordered_map<Name, ItemInfo>& map) {
     auto it = map.find(name);
     if (it != map.end()) {
-      return !it->second.usedByPrimary && it->second.usingSecondaries.size() == 1;
+      return !it->second.usedByPrimary &&
+             it->second.usingSecondaries.size() == 1;
     }
     return false;
   }
