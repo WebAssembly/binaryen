@@ -733,9 +733,9 @@ bool AndedConstraintSet::approximateOr(const AndedConstraintSet& other) {
   return changed;
 }
 
-Parsed LocalConstraint::parse(Expression* curr) {
+ParsedAndedConstraints ParsedAndedConstraints::parse(Expression* curr) {
   // The final return value.
-  Parsed ret;
+  ParsedAndedConstraints ret;
 
   // Starting form |curr|, parse and recurse into sub-trees: when we see an AND,
   // for example, we can push both children as further work.
@@ -842,8 +842,8 @@ Parsed LocalConstraint::parse(Expression* curr) {
   return ret;
 }
 
-Parsed
-LocalConstraint::parseCondition(Expression* curr) {
+ParsedAndedConstraints
+ParsedAndedConstraints::parseCondition(Expression* curr) {
   // A get by itself is a check for not being null.
   if (auto* get = curr->dynCast<LocalGet>()) {
     auto value = Literal::makeZero(get->type);

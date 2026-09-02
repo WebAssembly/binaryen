@@ -236,41 +236,42 @@ struct LocalConstraint {
   Index local;
   Constraint constraint;
 
-  // Try to parse BinaryenIR into local to whom constraints are all applied. For
-  // example
-  //
-  //   (i32.eq (local.get $r) (i32.const 10))
-  //
-  // parses into
-  //
-  //   [ LocalConstraint($r, { x == 10 }) ]
-  //
-  // If the expression is an AND over several constraints, a vector is returned:
-  //
-  //   (i32.and (..A..) (..B..))
-  //
-  // parses into
-  //
-  //   [ A, B ]
-  //
-  struct Parsed : public Parsed {
-    // Whether, in addition to the expressions we parsed into constraints, there
-    // were also other unknown things. For example,
-    //
-    //   (i32.and (i32.eq (local.get $r) (i32.const 10)) (call $unknown))
-    //
-    // Would parse into $r == 10 and also set hasUnknown.
-    bool hasUnknown = false;
-  };
-  static Parsed parse(Expression* curr);
-
-  // Parse in a condition context, i.e., where (local.get $x) is the same as
-  // $x != 0 (e.g., in an if condition, or a br_on ref).
-  static Parsed parseCondition(Expression* curr);
-
   // Reverse the constraint. The constraint's term must, of course, be another
   // local.
   void flip();
+};
+
+// A utility to parse BinaryenIR into local and constraints on them. For
+// example:
+//
+//   (i32.eq (local.get $r) (i32.const 10))
+//
+// parses into
+//
+//   [ LocalConstraint($r, { x == 10 }) ]
+//
+// If the expression is an AND over several constraints, a vector is returned:
+//
+//   (i32.and (..A..) (..B..))
+//
+// parses into
+//
+//   [ A, B ]
+//
+struct ParsedAndedConstraints : public SmallVector<LocalConstraint, 1> {
+  // Whether, in addition to the expressions we parsed into constraints, there
+  // were also other unknown things. For example,
+  //
+  //   (i32.and (i32.eq (local.get $r) (i32.const 10)) (call $unknown))
+  //
+  // Would parse into $r == 10 and also set hasUnknown.
+  bool hasUnknown = false;
+
+  static ParsedAndedConstraints parse(Expression* curr);
+
+  // Parse in a condition context, i.e., where (local.get $x) is the same as
+  // $x != 0 (e.g., in an if condition, or a br_on ref).
+  static ParsedAndedConstraints parseCondition(Expression* curr);
 };
 
 // A map of locals and their constraints, representing the state at a basic
