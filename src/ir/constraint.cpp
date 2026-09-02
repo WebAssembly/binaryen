@@ -837,6 +837,9 @@ ParsedAndedConstraints ParsedAndedConstraints::parse(Expression* curr) {
       parseBinaryArguments(Abstract::Eq, refEq->left, refEq->right);
       continue;
     }
+
+    // We failed to parse this.
+    ret.hasUnknown = true;
   }
 
   return ret;

@@ -552,10 +552,10 @@ struct ConstraintAnalysis
   // Given a list of parsed constraints on locals, negate them.
   void negate(ParsedAndedConstraints& parsed) {
     // The input is a list of constraints all applying at once, A & B & C. The
-    // negation is !A | !B | !C, but we cannot expression a general OR like
-    // that, so we only negate a list of one. TODO: if all the constraints are
-    // on the same local, we could use approximateOr.
-    if (parsed.size() == 1) {
+    // negation is !A | !B | !C, but we cannot express a general OR like that,
+    // so we only negate a list of one (and where nothing else exists).
+    // TODO: if all the constraints are on the same local, use approximateOr.
+    if (parsed.size() == 1 && !parsed.hasUnknown) {
       parsed[0].constraint = parsed[0].constraint.negate();
     } else {
       parsed.clear();

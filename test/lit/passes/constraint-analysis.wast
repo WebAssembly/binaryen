@@ -5250,7 +5250,10 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (else
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:     (i32.eq
+  ;; CHECK-NEXT:      (local.get $a)
+  ;; CHECK-NEXT:      (i32.const 42)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (i32.const 42)
@@ -5274,7 +5277,10 @@
   ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:   (else
   ;; OPTIN-NEXT:    (drop
-  ;; OPTIN-NEXT:     (i32.const 0)
+  ;; OPTIN-NEXT:     (i32.eq
+  ;; OPTIN-NEXT:      (local.get $a)
+  ;; OPTIN-NEXT:      (i32.const 42)
+  ;; OPTIN-NEXT:     )
   ;; OPTIN-NEXT:    )
   ;; OPTIN-NEXT:    (drop
   ;; OPTIN-NEXT:     (i32.const 42)
