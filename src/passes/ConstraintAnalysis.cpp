@@ -445,8 +445,8 @@ struct ConstraintAnalysis
                           const BasicBlockConstraintMap& constraints) {
     auto* curr = *currp;
     auto parsed = ParsedAndedConstraints::parse(curr);
-    // TODO: optimize cases of more than one.
-    if (parsed.size() != 1) {
+    // TODO: optimize cases of more than one, and with unknowns
+    if (parsed.size() != 1 || parsed.hasUnknown) {
       return;
     }
     if (!checkRelevancy(parsed[0])) {

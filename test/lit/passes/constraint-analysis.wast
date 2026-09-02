@@ -5816,4 +5816,40 @@
       )
     )
   )
+
+  ;; CHECK:      (func $optimize-unknown (type $1)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.and
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:    (call $import)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPTIN:      (func $optimize-unknown (type $1)
+  ;; OPTIN-NEXT:  (local $x i32)
+  ;; OPTIN-NEXT:  (drop
+  ;; OPTIN-NEXT:   (i32.and
+  ;; OPTIN-NEXT:    (call $import)
+  ;; OPTIN-NEXT:    (i32.const 1)
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT: )
+  (func $optimize-unknown
+    (local $x i32)
+    ;; We can optimize the i32.eq (x == 0 as the default value), but we should
+    ;; not do anything to the i32.and (it might appear like something we can
+    ;; optimize, as one arm is parseable, but the other is not; in any event, we
+    ;; process the i32.eq first, so we don't even get the chance to mis-optimize
+    ;; here, but this test at least verifies the i32.and is not touched).
+    (drop
+      (i32.and
+        (i32.eq
+          (local.get $x)
+          (i32.const 0)
+        )
+        (call $import)
+      )
+    )
+  )
 )

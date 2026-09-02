@@ -250,7 +250,8 @@ struct LocalConstraint {
 //
 //   [ LocalConstraint($r, { x == 10 }) ]
 //
-// If the expression is an AND over several constraints, a vector is returned:
+// If the expression is an AND over several things, several constraints may be
+// returned:
 //
 //   (i32.and (..A..) (..B..))
 //
