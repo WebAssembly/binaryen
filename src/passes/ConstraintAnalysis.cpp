@@ -477,7 +477,7 @@ struct ConstraintAnalysis
   // Given a predecessor and one of its successors, find new constraints that
   // can be added due to the flow to that specific successor.
   ParsedAndedConstraints getBranchConstraints(BasicBlock* pred,
-                                                       BasicBlock* succ) {
+                                              BasicBlock* succ) {
     auto* brancher = pred->contents.brancher;
     if (!brancher) {
       return {};
@@ -506,8 +506,7 @@ struct ConstraintAnalysis
     return {};
   }
 
-  ParsedAndedConstraints getConstraintsFromIf(If* iff,
-                                                       bool physicalSuccessor) {
+  ParsedAndedConstraints getConstraintsFromIf(If* iff, bool physicalSuccessor) {
     auto parsed = ParsedAndedConstraints::parseCondition(iff->condition);
     if (!physicalSuccessor) {
       // We are in the ifFalse, so negate the condition.
@@ -516,8 +515,8 @@ struct ConstraintAnalysis
     return parsed;
   }
 
-  ParsedAndedConstraints
-  getConstraintsFromBreak(Break* br, bool physicalSuccessor) {
+  ParsedAndedConstraints getConstraintsFromBreak(Break* br,
+                                                 bool physicalSuccessor) {
     // We get here when there is more than one successor, so there must be a
     // condition.
     assert(br->condition);
@@ -530,8 +529,8 @@ struct ConstraintAnalysis
     return parsed;
   }
 
-  ParsedAndedConstraints
-  getConstraintsFromBrOn(BrOn* brOn, bool physicalSuccessor) {
+  ParsedAndedConstraints getConstraintsFromBrOn(BrOn* brOn,
+                                                bool physicalSuccessor) {
     // The constraint on that local depends on the op.
     // TODO: Handle BrOnCast* etc using subtyping operations.
     if (brOn->op != BrOnNull && brOn->op != BrOnNonNull) {
