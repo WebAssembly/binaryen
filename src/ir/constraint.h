@@ -259,6 +259,8 @@ struct LocalConstraint {
 //   [ A, B ]
 //
 struct ParsedAndedConstraints : public SmallVector<LocalConstraint, 1> {
+  using SmallVector<LocalConstraint, 1>::SmallVector;
+
   // Whether, in addition to the expressions we parsed into constraints, there
   // were also other unknown things. For example,
   //

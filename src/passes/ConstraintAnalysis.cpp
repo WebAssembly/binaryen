@@ -148,7 +148,7 @@ struct ConstraintAnalysis
 
   void maybeMarkRelevant(Expression* curr) {
     // If this parses into a constraint on a local, that local is relevant.
-    for (auto& pair : LocalConstraint::parseCondition(curr)) {
+    for (auto& pair : ParsedAndedConstraints::parseCondition(curr)) {
       if (isRelevantType(getFunction()->getLocalType(pair.local))) {
         relevantLocals[pair.local] = true;
         if (auto* other = std::get_if<Index>(&pair.constraint.term)) {
