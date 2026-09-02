@@ -586,7 +586,7 @@ struct ConstraintAnalysis
     AndedConstraintSet anded;
     anded.set(parsed[0].constraint);
     for (Index i = 1; i < parsed.size(); i++) {
-      anded.approximateOr(parsed[i].constraint);
+      anded.approximateOr({parsed[i].constraint});
       if (anded.provesNothing()) {
         // We have nothing useful here.
         parsed.clear();
