@@ -1,6 +1,6 @@
 ;; RUN: wasm-fuzz-types -v --seed=3 | filecheck %s
 
-;; CHECK:      Running with seed 3
+;; CHECK:       Running with seed 3
 ;; CHECK-NEXT: Built 20 types:
 ;; CHECK-NEXT: (rec
 ;; CHECK-NEXT:  (type $0 (sub (shared (func (param i64 f64 exnref (ref null $0)) (result (ref cont))))))
