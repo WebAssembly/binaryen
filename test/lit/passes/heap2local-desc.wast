@@ -870,8 +870,8 @@
     ;; CHECK:      (rec
     ;; CHECK-NEXT:  (type $struct (sub (descriptor $desc) (struct)))
     (type $struct (sub (descriptor $desc) (struct)))
-    ;; CHECK:       (type $desc (describes $struct) (struct))
-    (type $desc (describes $struct) (struct))
+    ;; CHECK:       (type $desc (sub (describes $struct) (struct)))
+    (type $desc (sub (describes $struct) (struct)))
   )
 
   ;; CHECK:      (type $2 (func (result (ref (exact $desc)))))
@@ -1016,7 +1016,7 @@
 (module
   (rec
     (type $A (descriptor $B) (struct))
-    (type $B (sub (describes $A) (struct)))
+    (type $B (describes $A) (struct))
   )
   ;; CHECK:      (type $0 (func))
 
@@ -1156,8 +1156,8 @@
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $A (shared (descriptor $B) (struct)))
-    (type $A (shared (descriptor $B) (struct)))
+    ;; CHECK-NEXT:  (type $A (sub (shared (descriptor $B) (struct))))
+    (type $A (sub (shared (descriptor $B) (struct))))
     ;; CHECK:       (type $B (sub (shared (describes $A) (descriptor $C) (struct))))
     (type $B (sub (shared (describes $A) (descriptor $C) (struct))))
     ;; CHECK:       (type $C (sub (shared (describes $B) (struct))))
@@ -1229,10 +1229,10 @@
 (module
   (rec
    ;; CHECK:      (rec
-   ;; CHECK-NEXT:  (type $struct (sub (descriptor $desc) (struct)))
-   (type $struct (sub (descriptor $desc) (struct)))
+   ;; CHECK-NEXT:  (type $struct (descriptor $desc) (struct))
+   (type $struct (descriptor $desc) (struct))
    ;; CHECK:       (type $desc (describes $struct) (struct))
-   (type $desc (sub final (describes $struct) (struct)))
+   (type $desc (describes $struct) (struct))
   )
 
   ;; CHECK:      (type $2 (func (result i32)))
@@ -1293,8 +1293,8 @@
     ;; CHECK:      (rec
     ;; CHECK-NEXT:  (type $struct (descriptor $desc) (struct))
     (type $struct (descriptor $desc) (struct))
-    ;; CHECK:       (type $desc (sub (describes $struct) (struct (field funcref))))
-    (type $desc (sub (describes $struct) (struct (field funcref))))
+    ;; CHECK:       (type $desc (describes $struct) (struct (field funcref)))
+    (type $desc (describes $struct) (struct (field funcref)))
   )
 
   ;; CHECK:      (type $2 (func))
@@ -1374,8 +1374,8 @@
     ;; CHECK:      (rec
     ;; CHECK-NEXT:  (type $struct (descriptor $desc) (struct))
     (type $struct (descriptor $desc) (struct))
-    ;; CHECK:       (type $desc (sub (describes $struct) (struct)))
-    (type $desc (sub (describes $struct) (struct)))
+    ;; CHECK:       (type $desc (describes $struct) (struct))
+    (type $desc (describes $struct) (struct))
   )
 
   ;; CHECK:      (type $2 (func))

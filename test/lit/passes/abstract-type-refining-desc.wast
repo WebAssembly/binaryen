@@ -1031,9 +1031,9 @@
     ;; NO_TNH:      (rec
     ;; NO_TNH-NEXT:  (type $A (sub (descriptor $B) (struct)))
     (type $A (sub (descriptor $B) (struct)))
-    ;; YESTNH:       (type $B (describes $A) (struct))
-    ;; NO_TNH:       (type $B (describes $A) (struct))
-    (type $B (describes $A) (struct))
+    ;; YESTNH:       (type $B (sub (describes $A) (struct)))
+    ;; NO_TNH:       (type $B (sub (describes $A) (struct)))
+    (type $B (sub (describes $A) (struct)))
   )
 
   ;; YESTNH:       (type $2 (func (result (ref none))))

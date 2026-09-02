@@ -286,8 +286,14 @@ struct HeapTypeGeneratorImpl {
   void populateTypes() {
     // Create the heap types.
     for (; index < builder.size(); ++index) {
-      // Types without nontrivial subtypes may be marked final.
-      builder[index].setOpen(subtypeIndices[index].size() > 1 || rand.oneIn(2));
+      // Types without nontrivial subtypes may be marked final. Descriptors
+      // must have the same finality as their described types.
+      if (describedIndices[index]) {
+        builder[index].setOpen(builder[*describedIndices[index]].isOpen());
+      } else {
+        builder[index].setOpen(subtypeIndices[index].size() > 1 ||
+                               rand.oneIn(2));
+      }
       auto kind = typeKinds[index];
       auto share = HeapType(builder[index]).getShared();
       bool isDesc = describedIndices[index].has_value();
