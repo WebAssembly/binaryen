@@ -5206,7 +5206,6 @@
       (else
         ;; The same expressions as in the (then ..). Here, at least one must be
         ;; false, not not necessarily all of them, so we infer nothing.
-        ;; These are all true.
         (drop
           (i32.eq
             (local.get $a)
@@ -5229,6 +5228,96 @@
         ;; folding the if-else arms.
         (drop
           (i32.const 42)
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $pair-same-local (type $0) (param $a i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.and
+  ;; CHECK-NEXT:    (i32.gt_u
+  ;; CHECK-NEXT:     (local.get $a)
+  ;; CHECK-NEXT:     (i32.const 42)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.gt_u
+  ;; CHECK-NEXT:     (local.get $a)
+  ;; CHECK-NEXT:     (i32.const 1337)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (else
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.le_u
+  ;; CHECK-NEXT:      (local.get $a)
+  ;; CHECK-NEXT:      (i32.const 42)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPTIN:      (func $pair-same-local (type $0) (param $a i32)
+  ;; OPTIN-NEXT:  (drop
+  ;; OPTIN-NEXT:   (if (result i32)
+  ;; OPTIN-NEXT:    (i32.and
+  ;; OPTIN-NEXT:     (i32.gt_u
+  ;; OPTIN-NEXT:      (local.get $a)
+  ;; OPTIN-NEXT:      (i32.const 42)
+  ;; OPTIN-NEXT:     )
+  ;; OPTIN-NEXT:     (i32.gt_u
+  ;; OPTIN-NEXT:      (local.get $a)
+  ;; OPTIN-NEXT:      (i32.const 1337)
+  ;; OPTIN-NEXT:     )
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:    (then
+  ;; OPTIN-NEXT:     (i32.const 1)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:    (else
+  ;; OPTIN-NEXT:     (i32.le_u
+  ;; OPTIN-NEXT:      (local.get $a)
+  ;; OPTIN-NEXT:      (i32.const 42)
+  ;; OPTIN-NEXT:     )
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT: )
+  (func $pair-same-local (param $a i32)
+    ;; Similar to above, but now the two ANDed conditions are about the same
+    ;; local
+    (if
+      (i32.and
+        ;; a > 42
+        (i32.gt_u
+          (local.get $a)
+          (i32.const 42)
+        )
+        ;; a > 1337
+        (i32.gt_u
+          (local.get $a)
+          (i32.const 1337)
+        )
+      )
+      (then
+        ;; This is true.
+        (drop
+          (i32.gt_u
+            (local.get $a)
+            (i32.const 1337)
+          )
+        )
+      )
+      (else
+        ;; The negation of  a > 42 && a > 1337  is  a <= 42 || a <= 1337, so we
+        ;; can infer a <= 42.
+        (drop
+          (i32.le_u
+            (local.get $a)
+            (i32.const 42)
+          )
         )
       )
     )
