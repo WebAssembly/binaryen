@@ -550,6 +550,10 @@ struct ConstraintAnalysis
 
   // Given a list of parsed constraints on locals, negate them.
   void negate(ParsedAndedConstraints& parsed) {
+    if (parsed.empty()) {
+      return;
+    }
+
     if (parsed.hasUnknown) {
       // This includes things we don't know about, and don't know how to negate.
       parsed.clear();
@@ -558,13 +562,32 @@ struct ConstraintAnalysis
 
     // The input is a list of constraints all applying at once, A & B & C. The
     // negation is !A | !B | !C, but we cannot express a general OR like that,
-    // except in the simple case of one constraint.
-    if (parsed.size() == 1) {
-      parsed[0].constraint = parsed[0].constraint.negate();
-      return;
-    } else {
-      parsed.clear();
+    // except in the simple case where they all talk about the same local: then
+    // we can at least approximateOr them all into one constraint.
+    for (Index i = 1; i < parsed.size(); i++) {
+      if (parsed[i].local != parsed[0].local) {
+        // They refer to different locals. Give up.
+        parsed.clear();
+        return;
+      }
     }
+
+    // Negate them, then OR.
+    for (auto& pair : parsed) {
+      pair.constraint = pair.constraint.negate();
+    }
+
+    for (Index i = 1; i < parsed.size(); i++) {
+      parsed[0].constraint.approximateOr(parsed[i].constraint);
+      if (parsed[0].constraint.provesNothing()) {
+        // We have nothing useful here.
+        parsed.clear();
+        return;
+      }
+    }
+
+    // Return only the OR'ed result.
+    parsed.resize(1);
   }
 
   // When applying constraints for a binary operation like x = y + 1, we may
