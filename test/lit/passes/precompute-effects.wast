@@ -16,7 +16,7 @@
  (func $loop
   (local $temp i32)
   ;; We should not try to precompute this loop. If we attempted to replace it
-  ;; with its children, we'd need to handle the effects of chidren properly,
+  ;; with its children, we'd need to handle the effects of children properly,
   ;; which we do not do in this pass.
   (loop
    (local.set $temp

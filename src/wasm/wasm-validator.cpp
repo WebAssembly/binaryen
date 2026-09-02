@@ -2627,7 +2627,7 @@ void FunctionValidator::visitRefAs(RefAs* curr) {
     case AnyConvertExtern: {
       shouldBeTrue(getModule()->features.hasGC(),
                    curr,
-                   "any.convert_extern requries GC [--enable-gc]");
+                   "any.convert_extern requires GC [--enable-gc]");
       if (curr->type == Type::unreachable) {
         return;
       }
@@ -2641,7 +2641,7 @@ void FunctionValidator::visitRefAs(RefAs* curr) {
     case ExternConvertAny: {
       shouldBeTrue(getModule()->features.hasGC(),
                    curr,
-                   "extern.convert_any requries GC [--enable-gc]");
+                   "extern.convert_any requires GC [--enable-gc]");
       if (curr->type == Type::unreachable) {
         return;
       }
@@ -5170,7 +5170,7 @@ void validateGlobals(Module& module, ValidationInfo& info) {
     }
     FunctionValidator(module, &info).validate(curr->init);
     // If GC is enabled (which means globals can refer to other non-imported
-    // globals), check that globals only refer to preceeding globals.
+    // globals), check that globals only refer to preceding globals.
     if (module.features.hasGC() && curr->init) {
       for (auto* get : FindAll<GlobalGet>(curr->init).list) {
         auto* global = module.getGlobalOrNull(get->name);

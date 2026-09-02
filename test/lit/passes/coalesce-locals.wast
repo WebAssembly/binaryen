@@ -3101,7 +3101,7 @@
    ;; all. However, we only analyze copied values *inside* blocks, which means
    ;; that in each of the if arms we see that $3 is assigned either the value
    ;; of $1 or $2, but we don't know that those values are both equal to $0. As
-   ;; a result, we will infer that $3 interfers with $0, as their live ranges
+   ;; a result, we will infer that $3 interferes with $0, as their live ranges
    ;; overlap and $3 is assigned a value that looks different than $0. This
    ;; will prevent $3 being coalesced with all the others. (However, see the
    ;; next testcase for more on this.)
