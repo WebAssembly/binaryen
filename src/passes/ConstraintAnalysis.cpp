@@ -476,7 +476,7 @@ struct ConstraintAnalysis
 
   // Given a predecessor and one of its successors, find new constraints that
   // can be added due to the flow to that specific successor.
-  SmallVector<LocalConstraint, 1> getBranchConstraints(BasicBlock* pred,
+  LocalConstraint::Parsed getBranchConstraints(BasicBlock* pred,
                                                        BasicBlock* succ) {
     auto* brancher = pred->contents.brancher;
     if (!brancher) {
@@ -506,7 +506,7 @@ struct ConstraintAnalysis
     return {};
   }
 
-  SmallVector<LocalConstraint, 1> getConstraintsFromIf(If* iff,
+  LocalConstraint::Parsed getConstraintsFromIf(If* iff,
                                                        bool physicalSuccessor) {
     auto parsed = LocalConstraint::parseCondition(iff->condition);
     if (!physicalSuccessor) {
@@ -516,7 +516,7 @@ struct ConstraintAnalysis
     return parsed;
   }
 
-  SmallVector<LocalConstraint, 1>
+  LocalConstraint::Parsed
   getConstraintsFromBreak(Break* br, bool physicalSuccessor) {
     // We get here when there is more than one successor, so there must be a
     // condition.
@@ -530,7 +530,7 @@ struct ConstraintAnalysis
     return parsed;
   }
 
-  SmallVector<LocalConstraint, 1>
+  LocalConstraint::Parsed
   getConstraintsFromBrOn(BrOn* brOn, bool physicalSuccessor) {
     // The constraint on that local depends on the op.
     // TODO: Handle BrOnCast* etc using subtyping operations.
@@ -550,7 +550,7 @@ struct ConstraintAnalysis
   }
 
   // Given a list of parsed constraints on locals, negate them.
-  void negate(SmallVector<LocalConstraint, 1>& parsed) {
+  void negate(LocalConstraint::Parsed& parsed) {
     // The input is a list of constraints all applying at once, A & B & C. The
     // negation is !A | !B | !C, but we cannot expression a general OR like
     // that, so we only negate a list of one. TODO: if all the constraints are
@@ -681,7 +681,7 @@ struct ConstraintAnalysis
     return true;
   }
 
-  bool checkRelevancy(const SmallVector<LocalConstraint, 1>& parsed) {
+  bool checkRelevancy(const LocalConstraint::Parsed& parsed) {
     return std::any_of(
       parsed.begin(), parsed.end(), [&](const LocalConstraint& pair) {
         return checkRelevancy(pair);
@@ -689,7 +689,7 @@ struct ConstraintAnalysis
   }
 
   // Apply branch constraints to the current set of constraints.
-  void applyBranchConstraints(const SmallVector<LocalConstraint, 1>& branch,
+  void applyBranchConstraints(const LocalConstraint::Parsed& branch,
                               BasicBlockConstraintMap& constraints) {
     for (auto& pair : branch) {
       // Extend the range of values in the "jump ahead" manner described in the

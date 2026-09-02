@@ -253,11 +253,20 @@ struct LocalConstraint {
   //
   //   [ A, B ]
   //
-  static SmallVector<LocalConstraint, 1> parse(Expression* curr);
+  struct Parsed : public Parsed {
+    // Whether, in addition to the expressions we parsed into constraints, there
+    // were also other unknown things. For example,
+    //
+    //   (i32.and (i32.eq (local.get $r) (i32.const 10)) (call $unknown))
+    //
+    // Would parse into $r == 10 and also set hasUnknown.
+    bool hasUnknown = false;
+  };
+  static Parsed parse(Expression* curr);
 
   // Parse in a condition context, i.e., where (local.get $x) is the same as
   // $x != 0 (e.g., in an if condition, or a br_on ref).
-  static SmallVector<LocalConstraint, 1> parseCondition(Expression* curr);
+  static Parsed parseCondition(Expression* curr);
 
   // Reverse the constraint. The constraint's term must, of course, be another
   // local.
