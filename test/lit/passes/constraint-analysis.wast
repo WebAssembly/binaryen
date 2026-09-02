@@ -5317,6 +5317,163 @@
     )
   )
 
+  ;; CHECK:      (func $pair-same-local-bad-or (type $0) (param $a i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.and
+  ;; CHECK-NEXT:    (i32.ne
+  ;; CHECK-NEXT:     (local.get $a)
+  ;; CHECK-NEXT:     (i32.const 42)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.ne
+  ;; CHECK-NEXT:     (local.get $a)
+  ;; CHECK-NEXT:     (i32.const 1337)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.ne
+  ;; CHECK-NEXT:      (local.get $a)
+  ;; CHECK-NEXT:      (i32.const 500)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (else
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.eq
+  ;; CHECK-NEXT:      (local.get $a)
+  ;; CHECK-NEXT:      (i32.const 42)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.eq
+  ;; CHECK-NEXT:      (local.get $a)
+  ;; CHECK-NEXT:      (i32.const 1337)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.eq
+  ;; CHECK-NEXT:      (local.get $a)
+  ;; CHECK-NEXT:      (i32.const 500)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPTIN:      (func $pair-same-local-bad-or (type $0) (param $a i32)
+  ;; OPTIN-NEXT:  (if
+  ;; OPTIN-NEXT:   (i32.and
+  ;; OPTIN-NEXT:    (i32.ne
+  ;; OPTIN-NEXT:     (local.get $a)
+  ;; OPTIN-NEXT:     (i32.const 42)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:    (i32.ne
+  ;; OPTIN-NEXT:     (local.get $a)
+  ;; OPTIN-NEXT:     (i32.const 1337)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:   (then
+  ;; OPTIN-NEXT:    (drop
+  ;; OPTIN-NEXT:     (i32.const 1)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:    (drop
+  ;; OPTIN-NEXT:     (i32.const 1)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:    (drop
+  ;; OPTIN-NEXT:     (i32.ne
+  ;; OPTIN-NEXT:      (local.get $a)
+  ;; OPTIN-NEXT:      (i32.const 500)
+  ;; OPTIN-NEXT:     )
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:   (else
+  ;; OPTIN-NEXT:    (drop
+  ;; OPTIN-NEXT:     (i32.eq
+  ;; OPTIN-NEXT:      (local.get $a)
+  ;; OPTIN-NEXT:      (i32.const 42)
+  ;; OPTIN-NEXT:     )
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:    (drop
+  ;; OPTIN-NEXT:     (i32.eq
+  ;; OPTIN-NEXT:      (local.get $a)
+  ;; OPTIN-NEXT:      (i32.const 1337)
+  ;; OPTIN-NEXT:     )
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:    (drop
+  ;; OPTIN-NEXT:     (i32.eq
+  ;; OPTIN-NEXT:      (local.get $a)
+  ;; OPTIN-NEXT:      (i32.const 500)
+  ;; OPTIN-NEXT:     )
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT: )
+  (func $pair-same-local-bad-or (param $a i32)
+    ;; As above, but the OR we do for the else fails.
+    (if
+      (i32.and
+        ;; a != 42 && a != 1337
+        (i32.ne
+          (local.get $a)
+          (i32.const 42)
+        )
+        (i32.ne
+          (local.get $a)
+          (i32.const 1337)
+        )
+      )
+      (then
+        ;; These are true.
+        (drop
+          (i32.ne
+            (local.get $a)
+            (i32.const 42)
+          )
+        )
+        (drop
+          (i32.ne
+            (local.get $a)
+            (i32.const 1337)
+          )
+        )
+        ;; This is unknown.
+        (drop
+          (i32.ne
+            (local.get $a)
+            (i32.const 500)
+          )
+        )
+      )
+      (else
+        ;; ORing a == 42 || a == 1337, we get nothing useful, and can prove
+        ;; nothing. TODO: we could infer a span here
+        (drop
+          (i32.eq
+            (local.get $a)
+            (i32.const 42)
+          )
+        )
+        (drop
+          (i32.eq
+            (local.get $a)
+            (i32.const 1337)
+          )
+        )
+        (drop
+          (i32.eq
+            (local.get $a)
+            (i32.const 500)
+          )
+        )
+      )
+    )
+  )
+
   ;; CHECK:      (func $pair-partial (type $0) (param $a i32)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.and
