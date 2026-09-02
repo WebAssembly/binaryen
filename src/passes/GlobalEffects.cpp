@@ -143,7 +143,7 @@ std::map<Function*, FuncInfo> analyzeFuncs(Module& module,
         // well. If we see something else that throws or suspends, below, then
         // we'll note that there.
         funcInfo.effects->throws_ = false;
-        funcInfo.effects->suspends_ = false;
+        funcInfo.effects->suspends = false;
 
         struct CallScanner
           : public PostWalker<CallScanner,
@@ -188,8 +188,8 @@ std::map<Function*, FuncInfo> analyzeFuncs(Module& module,
               if (effects.throws_ && funcInfo.effects) {
                 funcInfo.effects->throws_ = true;
               }
-              if (effects.suspends_ && funcInfo.effects) {
-                funcInfo.effects->suspends_ = true;
+              if (effects.suspends && funcInfo.effects) {
+                funcInfo.effects->suspends = true;
               }
             }
           }

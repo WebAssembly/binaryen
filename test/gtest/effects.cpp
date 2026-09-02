@@ -54,31 +54,26 @@ TEST_F(EffectAnalyzerTest, Suspend) {
   EffectAnalyzer effects(options, wasm, func->body);
 
   // Suspension detection
-  EXPECT_TRUE(effects.suspends());
+  EXPECT_TRUE(effects.suspends);
   EXPECT_THAT(&effects, Suspends());
   EXPECT_TRUE(effects.getSideEffects() & EffectAnalyzer::SideEffects::Suspends);
 
-  // Decoupled from call graph edges
-  EXPECT_FALSE(effects.calls);
-  EXPECT_THAT(&effects, Not(Calls()));
+  // Suspending executes arbitrary other code in the handler before resuming,
+  // modeled as a call.
+  EXPECT_TRUE(effects.calls);
+  EXPECT_THAT(&effects, Calls());
 
-  // Clobbers all global mutable state
-  EXPECT_TRUE(effects.readsMemory);
-  EXPECT_TRUE(effects.writesMemory);
-  EXPECT_TRUE(effects.readsSharedMemory);
-  EXPECT_TRUE(effects.writesSharedMemory);
-  EXPECT_TRUE(effects.readsTable);
-  EXPECT_TRUE(effects.writesTable);
-  EXPECT_TRUE(effects.readsMutableStruct);
-  EXPECT_TRUE(effects.writesStruct);
-  EXPECT_TRUE(effects.readsSharedMutableStruct);
-  EXPECT_TRUE(effects.writesSharedStruct);
-  EXPECT_TRUE(effects.readsMutableArray);
-  EXPECT_TRUE(effects.writesArray);
-  EXPECT_TRUE(effects.readsSharedMutableArray);
-  EXPECT_TRUE(effects.writesSharedArray);
+  // Accesses all global mutable state via calls
+  EXPECT_TRUE(effects.accessesMemory());
+  EXPECT_TRUE(effects.accessesSharedMemory());
+  EXPECT_TRUE(effects.accessesTable());
+  EXPECT_TRUE(effects.accessesMutableStruct());
+  EXPECT_TRUE(effects.accessesSharedMutableStruct());
+  EXPECT_TRUE(effects.accessesArray());
+  EXPECT_TRUE(effects.accessesSharedArray());
   EXPECT_TRUE(effects.writesGlobalState());
   EXPECT_TRUE(effects.readsMutableGlobalState());
+  EXPECT_TRUE(effects.accessesSharedGlobalState());
 
   // Control flow & side effect queries
   EXPECT_TRUE(effects.transfersControlFlow());
@@ -107,12 +102,12 @@ TEST_F(EffectAnalyzerTest, UnknownCall) {
   // suspension.
   wasm.features.setStackSwitching(true);
   EffectAnalyzer effectsWithStackSwitch(options, wasm, caller->body);
-  EXPECT_TRUE(effectsWithStackSwitch.suspends());
+  EXPECT_TRUE(effectsWithStackSwitch.suspends);
 
   // With stack switching disabled, calls do not suspend.
   wasm.features.setStackSwitching(false);
   EffectAnalyzer effectsWithoutStackSwitch(options, wasm, caller->body);
-  EXPECT_FALSE(effectsWithoutStackSwitch.suspends());
+  EXPECT_FALSE(effectsWithoutStackSwitch.suspends);
 }
 
 } // anonymous namespace
