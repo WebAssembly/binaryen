@@ -1505,7 +1505,7 @@ struct OptimizeInstructions
       return;
     }
 
-    if (!target->effects || target->effects->suspends()) {
+    if (!target->effects || target->effects->suspends) {
       return;
     }
 

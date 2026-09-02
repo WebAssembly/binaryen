@@ -96,7 +96,7 @@ std::ostream& operator<<(std::ostream& o, const EffectAnalyzer& effects) {
   if (effects.throws_) {
     o << "throws_\n";
   }
-  if (effects.suspends_) {
+  if (effects.suspends) {
     o << "suspends_\n";
   }
   if (effects.tryDepth) {

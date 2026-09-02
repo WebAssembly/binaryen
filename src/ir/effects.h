@@ -23,7 +23,6 @@
 #include "ir/intrinsics.h"
 #include "pass.h"
 #include "support/name.h"
-#include "support/utilities.h"
 #include "wasm-traversal.h"
 #include "wasm-type.h"
 #include "wasm.h"
@@ -44,7 +43,7 @@ public:
       readsMutableArray(false), writesArray(false),
       readsSharedMutableArray(false), writesSharedArray(false), trap(false),
       implicitTrap(false), throws_(false), danglingPop(false),
-      mayNotReturn(false), hasReturnCallThrow(false), suspends_(false),
+      mayNotReturn(false), hasReturnCallThrow(false), suspends(false),
       module(module), features(module.features) {}
 
   EffectAnalyzer(const PassOptions& passOptions,
@@ -138,7 +137,7 @@ public:
   // more here.)
   bool hasReturnCallThrow : 1;
 
-  bool suspends_ : 1;
+  bool suspends : 1;
 
   const Module& module;
   FeatureSet features;
@@ -230,7 +229,7 @@ public:
     return calls || readsSharedMutableArray || writesSharedArray;
   }
   bool throws() const { return throws_ || !delegateTargets.empty(); }
-  bool suspends() const { return suspends_; }
+
   // Check whether this may transfer control flow to somewhere outside of this
   // expression (aside from just flowing out normally). That includes a break,
   // a throw (if the throw is not known to be caught inside this expression;
@@ -240,25 +239,7 @@ public:
   // transferred inside the function, but this expression does not know that),
   // or a suspension.
   bool transfersControlFlow() const {
-    return branchesOut || throws() || hasExternalBreakTargets() || suspends();
-  }
-
-  // Explicitly marks all global mutable state as clobbered (read and written).
-  void clobbersGlobalState() {
-    readsMemory = true;
-    writesMemory = true;
-    readsSharedMemory = true;
-    writesSharedMemory = true;
-    readsTable = true;
-    writesTable = true;
-    readsMutableStruct = true;
-    writesStruct = true;
-    readsSharedMutableStruct = true;
-    writesSharedStruct = true;
-    readsMutableArray = true;
-    writesArray = true;
-    readsSharedMutableArray = true;
-    writesSharedArray = true;
+    return branchesOut || suspends || throws() || hasExternalBreakTargets();
   }
 
   // Changes something in globally-stored state.
@@ -286,7 +267,7 @@ public:
   bool hasNonTrapSideEffects() const {
     return localsWritten.size() > 0 || danglingPop || writesGlobalState() ||
            throws() || transfersControlFlow() || hasSynchronization() ||
-           mayNotReturn || suspends();
+           mayNotReturn;
   }
 
   bool hasSideEffects() const { return trap || hasNonTrapSideEffects(); }
@@ -502,7 +483,7 @@ public:
     danglingPop = danglingPop || other.danglingPop;
     mayNotReturn = mayNotReturn || other.mayNotReturn;
     hasReturnCallThrow = hasReturnCallThrow || other.hasReturnCallThrow;
-    suspends_ = suspends_ || other.suspends_;
+    suspends = suspends || other.suspends;
     readOrder = std::max(readOrder, other.readOrder);
     writeOrder = std::max(writeOrder, other.writeOrder);
 
@@ -1296,8 +1277,8 @@ private:
     void visitSuspend(Suspend* curr) {
       // Suspending transfers control to an enclosing handler and executes
       // arbitrary other code before we may resume here.
-      parent.suspends_ = true;
-      parent.clobbersGlobalState();
+      parent.suspends = true;
+      parent.calls = true;
       if (parent.features.hasExceptionHandling() && parent.tryDepth == 0) {
         parent.throws_ = true;
       }
@@ -1397,7 +1378,7 @@ private:
       // If stack switching is enabled and we don't have global effects
       // information, assume that the call target may suspend.
       if (parent.features.hasStackSwitching()) {
-        parent.suspends_ = true;
+        parent.suspends = true;
       }
     }
   };
@@ -1489,7 +1470,7 @@ public:
     if (danglingPop) {
       effects |= SideEffects::DanglingPop;
     }
-    if (suspends_) {
+    if (suspends) {
       effects |= SideEffects::Suspends;
     }
     return effects;
@@ -1507,7 +1488,7 @@ public:
     breakTargets.clear();
     throws_ = false;
     delegateTargets.clear();
-    suspends_ = false;
+    suspends = false;
     assert(!transfersControlFlow());
   }
 
