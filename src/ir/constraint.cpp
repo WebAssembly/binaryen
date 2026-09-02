@@ -754,7 +754,9 @@ ParsedAndedConstraints ParsedAndedConstraints::parse(Expression* curr) {
         return;
       }
 
-      // TODO: Recursively parse and reverse a constraint
+      // We did not recognize this, so the output contains unknown things.
+      // TODO: Recursively parse and negate things other than local.get
+      ret.hasUnknown = true;
     };
 
     if (auto* unary = curr->dynCast<Unary>()) {
@@ -773,7 +775,10 @@ ParsedAndedConstraints ParsedAndedConstraints::parse(Expression* curr) {
         }
 
         parseEqZArgument(unary->value);
+        continue;
       }
+
+      ret.hasUnknown = true;
       continue;
     }
 
@@ -790,6 +795,7 @@ ParsedAndedConstraints ParsedAndedConstraints::parse(Expression* curr) {
       if (Properties::isSingleConstantExpression(expr)) {
         return Term{Properties::getLiteral(expr)};
       }
+      ret.hasUnknown = true;
       return {};
     };
 
@@ -800,8 +806,11 @@ ParsedAndedConstraints ParsedAndedConstraints::parse(Expression* curr) {
           // The right can be any term.
           if (auto value = parseTerm(right)) {
             ret.push_back(LocalConstraint{get->index, Constraint{op, *value}});
+            return;
           }
         }
+
+        ret.hasUnknown = true;
       };
 
     if (auto* binary = curr->dynCast<Binary>()) {
@@ -815,6 +824,7 @@ ParsedAndedConstraints ParsedAndedConstraints::parse(Expression* curr) {
       // TODO: support OR
 
       // Otherwise, the operation must be one we can express as a constraint.
+      bool handled = false;
       for (auto op : {Abstract::Eq,
                       Abstract::Ne,
                       Abstract::LtS,
@@ -827,9 +837,15 @@ ParsedAndedConstraints ParsedAndedConstraints::parse(Expression* curr) {
                       Abstract::GeU}) {
         if (Abstract::getBinary(binary->left->type, op) == binary->op) {
           parseBinaryArguments(op, binary->left, binary->right);
+          handled = true;
           break;
         }
       }
+
+      if (!handled) {
+        ret.hasUnknown = true;
+      }
+
       continue;
     }
 
