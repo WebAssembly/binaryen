@@ -5252,10 +5252,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (else
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.le_u
-  ;; CHECK-NEXT:      (local.get $a)
-  ;; CHECK-NEXT:      (i32.const 42)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -5277,10 +5274,7 @@
   ;; OPTIN-NEXT:     (i32.const 1)
   ;; OPTIN-NEXT:    )
   ;; OPTIN-NEXT:    (else
-  ;; OPTIN-NEXT:     (i32.le_u
-  ;; OPTIN-NEXT:      (local.get $a)
-  ;; OPTIN-NEXT:      (i32.const 42)
-  ;; OPTIN-NEXT:     )
+  ;; OPTIN-NEXT:     (i32.const 1)
   ;; OPTIN-NEXT:    )
   ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
@@ -5312,11 +5306,11 @@
       )
       (else
         ;; The negation of  a > 42 && a > 1337  is  a <= 42 || a <= 1337, so we
-        ;; can infer a <= 42.
+        ;; can infer a <= 1337.
         (drop
           (i32.le_u
             (local.get $a)
-            (i32.const 42)
+            (i32.const 1337)
           )
         )
       )
