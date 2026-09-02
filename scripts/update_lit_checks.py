@@ -167,7 +167,7 @@ def find_annotations(module, start):
                 else:
                     # Found something that isn't an annotation.
                     break
-    # Look for the start of the line containin the first annoation.
+    # Look for the start of the line containing the first annotation.
     for i in range(annotation - 1, -1, -1):
         if module[i] == '\n':
             return i + 1
@@ -331,7 +331,7 @@ def update_test(args, test, lines, tmp):
 
     prefixes = {prefix for module_output in command_output for prefix in module_output.keys()}
     check_line_re = re.compile(r'^\s*;;\s*(' + '|'.join(prefixes) +
-                               r')(?:-NEXT|-LABEL|-NOT)?:.*$')
+                               r')(?:-[A-Z0-9]+)?:.*$')
 
     # Filter out whitespace between check blocks
     if lines:
@@ -353,8 +353,14 @@ def update_test(args, test, lines, tmp):
     def emit_checks(indent, prefix, lines):
         def pad(line):
             return line if not line or line.startswith(' ') else ' ' + line
-        output_lines.append(f'{indent};; {prefix}:     {pad(lines[0])}')
-        output_lines.extend(f'{indent};; {prefix}-NEXT:{pad(line)}' for line in lines[1:])
+
+        for i, line in enumerate(lines):
+            if not line.strip():
+                output_lines.append(f'{indent};; {prefix}-EMPTY:')
+            elif i == 0:
+                output_lines.append(f'{indent};; {prefix}:     {pad(line)}')
+            else:
+                output_lines.append(f'{indent};; {prefix}-NEXT:{pad(line)}')
 
     input_modules = [m.split('\n') for m in split_modules('\n'.join(lines))]
     if len(input_modules) > len(command_output):

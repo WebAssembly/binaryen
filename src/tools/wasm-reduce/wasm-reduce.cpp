@@ -1396,7 +1396,7 @@ Comparison to creduce:
 More documentation can be found at
 
   https://github.com/WebAssembly/binaryen/wiki/Fuzzing#reducing
-                      )");
+)");
   options
     .add("--command",
          "-cmd",

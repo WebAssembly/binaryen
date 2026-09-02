@@ -452,7 +452,7 @@ class ClusterFuzz(utils.BinaryenTestCase):
                 # An execution is valid if we exited without error, and if we
                 # managed to run some code before exiting (modules with no
                 # exports will be considered "invalid" here, but that is very
-                # rare, and in a sense they are actually unuseful).
+                # rare, and in a sense they are actually useless).
                 if proc.returncode == 0 and b'[fuzz-exec] export ' in proc.stdout:
                     valid_executions += 1
                 else:

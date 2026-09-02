@@ -604,7 +604,7 @@ struct MultiMemoryLowering : public Pass {
         builder.makeReturn(builder.makeConst(-1))));
 
     // If we are not growing the last memory, then we need to copy data,
-    // shifting it over to accomodate the increase from page_delta
+    // shifting it over to accommodate the increase from page_delta
     if (!isLastMemory(memIdx)) {
       // This offset is the starting pt for copying
       auto offsetGlobalName = getOffsetGlobal(memIdx + 1);

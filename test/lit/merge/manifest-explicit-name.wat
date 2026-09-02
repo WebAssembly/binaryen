@@ -8,7 +8,7 @@
 
 ;; CHECK:      second
 ;; CHECK-NEXT: 0_1
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 
 ;; MERGED:      (module
 ;; MERGED-NEXT:  (type $0 (func))

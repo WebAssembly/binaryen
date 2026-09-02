@@ -43,7 +43,7 @@
   (func $final-desc (result (ref $struct))
     ;; We could optimize the allocation of the struct, but we would need to
     ;; update the descriptor to be a corresponding new subtype. The descriptor
-    ;; is final, so this is not posssible and we cannot optimize.
+    ;; is final, so this is not possible and we cannot optimize.
     (struct.new_default_desc $struct
       (struct.new $desc)
     )
