@@ -30,28 +30,6 @@ import sys
 import threading
 import time
 
-try:
-    import resource
-except ImportError:
-    resource = None
-
-
-def set_stack_limit():
-    """Avoid stack overflows in interpreter by setting stack limit to unlimited."""
-    if resource is None:
-        return
-    try:
-        resource.setrlimit(
-            resource.RLIMIT_STACK,
-            (resource.RLIM_INFINITY, resource.RLIM_INFINITY),
-        )
-    except Exception:
-        try:
-            _, hard = resource.getrlimit(resource.RLIMIT_STACK)
-            resource.setrlimit(resource.RLIMIT_STACK, (hard, hard))
-        except Exception:
-            pass
-
 
 class FuzzMonitor:
     """Monitors fuzzer output stream, manages log files, and tracks state."""
@@ -138,11 +116,13 @@ class FuzzMonitor:
 
 
 def parse_args():
+    default_log_dir = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), 'out', 'test')
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         '--log-dir',
-        default=os.environ.get('LOG_DIR', '.'),
-        help='Directory to save fuzz.log (default: current directory or $LOG_DIR)',
+        default=os.environ.get('LOG_DIR', default_log_dir),
+        help='Directory to save fuzz.log (default: $LOG_DIR or ./out/test)',
     )
     parser.add_argument(
         '--max-iters',
@@ -190,8 +170,6 @@ def main():
 
     os.makedirs(args.log_dir, exist_ok=True)
     log_file_path = os.path.join(args.log_dir, 'fuzz.log')
-
-    set_stack_limit()
 
     monitor = FuzzMonitor(
         log_path=log_file_path,
