@@ -236,17 +236,16 @@ struct LocalConstraint {
   Index local;
   Constraint constraint;
 
-  // Try to parse BinaryenIR into a local to which a constraint is applied. For
+  // Try to parse BinaryenIR into local to whom constraints are all applied. For
   // example
   //
   //   (i32.eq (local.get $r) (i32.const 10))
   //
   // parses into
   //
-  //   LocalConstraint($r, { x == 10 })
+  //   [ LocalConstraint($r, { x == 10 }) ]
   //
-  // Usually a single constraint is found, but if the expression is an AND over
-  // several, a vector is returned:
+  // If the expression is an AND over several constraints, a vector is returned:
   //
   //   (i32.and (..A..) (..B..))
   //
