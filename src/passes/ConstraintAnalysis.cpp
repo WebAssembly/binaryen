@@ -568,14 +568,6 @@ struct ConstraintAnalysis
         return;
       }
 
-      // See above on binary action counting limits.
-      if (auto* binary = set->value->dynCast<Binary>()) {
-        if (binaryActionCounts[binary]++ >= MaxBinaryActions) {
-          constraints.setProvesNothing(set->index);
-          return;
-        }
-      }
-
       // Look at the fallthrough. It is valid to do so, because our constraints
       // only track two things, constants and locals. For a constant, it does
       // not change while falling through. For a local, the only way for the
@@ -600,8 +592,47 @@ struct ConstraintAnalysis
       // opportunity to write any other value while falling through. (And, any
       // local.tee appearing here would have been reached earlier in the
       // traversal, and handled.)
-      auto* value =
-        Properties::getFallthrough(set->value, getPassOptions(), *getModule());
+      auto* value = set->value;
+      while (1) {
+        if (value->is<LocalSet>()) {
+          // We stop at the first tee: we don't need to look any further, and
+          // will just apply that local's values to ourselves, saving repeated
+          // work.
+          break;
+        }
+        auto* next = Properties::getImmediateFallthrough(
+          value, getPassOptions(), *getModule());
+        if (value == next) {
+          break;
+        } else {
+          value = next;
+        }
+      }
+
+      // Now that we know the value, check binary action counting limits (see
+      // above).
+      if (auto* binary = value->dynCast<Binary>()) {
+        // The code below will stop calculating this binary once we pass
+        // MaxBinaryActions operations on it. That is enough to prevent
+        // unbounded work on this binary, however, we may end up reaching this
+        // basic block an even larger number of times for other reasons, i.e.,
+        // just because of a very complex CFG. That should be very rare, but can
+        // happen. In debug builds we check we do not exceed a very high limit
+        // there, intending to throw an assert rather than just hang in the case
+        // of a bug (as assert is easier to diagnose, even if it happens after a
+        // long delay).
+        auto& count = binaryActionCounts[binary];
+#ifndef NDEBUG
+        static const Index MaxBasicBlockActions = 1024 * 1024;
+        assert(count < MaxBasicBlockActions);
+#endif
+        count++;
+        if (count >= MaxBinaryActions) {
+          constraints.setProvesNothing(set->index);
+          return;
+        }
+      }
+
       constraints.set(set->index, value);
     }
   }
