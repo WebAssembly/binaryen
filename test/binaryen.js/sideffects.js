@@ -14,6 +14,7 @@ console.log("SideEffects.IsAtomic=" + binaryen.SideEffects.IsAtomic);
 console.log("SideEffects.Throws=" + binaryen.SideEffects.Throws);
 console.log("SideEffects.DanglingPop=" + binaryen.SideEffects.DanglingPop);
 console.log("SideEffects.TrapsNeverHappen=" + binaryen.SideEffects.TrapsNeverHappen);
+console.log("SideEffects.Suspends=" + binaryen.SideEffects.Suspends);
 console.log("SideEffects.Any=" + binaryen.SideEffects.Any);
 
 var module = new binaryen.Module();

@@ -45,6 +45,7 @@ MATCHER(Throws, "") { return arg->throws_; }
 MATCHER(DanglingPop, "") { return arg->danglingPop; }
 MATCHER(MayNotReturn, "") { return arg->mayNotReturn; }
 MATCHER(HasReturnCallThrow, "") { return arg->hasReturnCallThrow; }
+MATCHER(Suspends, "") { return arg->suspends(); }
 
 } // namespace wasm
 
