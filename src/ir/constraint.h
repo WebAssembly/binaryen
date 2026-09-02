@@ -236,6 +236,8 @@ struct LocalConstraint {
   Index local;
   Constraint constraint;
 
+  bool operator==(const LocalConstraint&) const = default;
+
   // Reverse the constraint. The constraint's term must, of course, be another
   // local.
   void flip();
@@ -388,6 +390,7 @@ private:
 };
 
 std::ostream& operator<<(std::ostream& o, const Constraint& c);
+std::ostream& operator<<(std::ostream& o, const LocalConstraint& c);
 std::ostream& operator<<(std::ostream& o, const AndedConstraintSet& set);
 
 } // namespace wasm::constraint

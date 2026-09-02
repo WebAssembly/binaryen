@@ -737,7 +737,7 @@ ParsedAndedConstraints ParsedAndedConstraints::parse(Expression* curr) {
   // The final return value.
   ParsedAndedConstraints ret;
 
-  // Starting form |curr|, parse and recurse into sub-trees: when we see an AND,
+  // Starting from |curr|, parse and recurse into sub-trees: when we see an AND,
   // for example, we can push both children as further work.
   SmallVector<Expression*, 4> work;
   work.push_back(curr);
@@ -1203,6 +1203,11 @@ std::ostream& operator<<(std::ostream& o, const Constraint& c) {
     o << "$" << *i;
   }
   o << '}';
+  return o;
+}
+
+std::ostream& operator<<(std::ostream& o, const LocalConstraint& c) {
+  o << "LocalConstraint{$" << c.local << ", " << c.constraint << '}';
   return o;
 }
 
