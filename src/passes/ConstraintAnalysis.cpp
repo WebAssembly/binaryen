@@ -572,14 +572,22 @@ struct ConstraintAnalysis
       }
     }
 
-    // Negate them, then OR.
+    // Negate them before the OR.
     for (auto& pair : parsed) {
       pair.constraint = pair.constraint.negate();
     }
 
+    if (parsed.size() == 1) {
+      // The simple case of 1 doesn't need any more work.
+      return;
+    }
+
+    // Do the OR.
+    AndedConstraintSet anded;
+    anded.set(parsed[0].constraint);
     for (Index i = 1; i < parsed.size(); i++) {
-      parsed[0].constraint.approximateOr(parsed[i].constraint);
-      if (parsed[0].constraint.provesNothing()) {
+      anded.approximateOr(parsed[i].constraint);
+      if (anded.provesNothing()) {
         // We have nothing useful here.
         parsed.clear();
         return;
@@ -587,7 +595,11 @@ struct ConstraintAnalysis
     }
 
     // Return only the OR'ed result.
-    parsed.resize(1);
+    auto local = parsed[0].local;
+    parsed.clear();
+    for (auto& c : anded) {
+      parsed.emplace_back(local, c);
+    }
   }
 
   // When applying constraints for a binary operation like x = y + 1, we may
