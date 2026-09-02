@@ -585,6 +585,70 @@ TEST_F(TypeTest, CanonicalizeDescriptors) {
   EXPECT_NE(built[0].getRecGroup(), built[4].getRecGroup());
 }
 
+TEST_F(TypeTest, MismatchedDescriptorFinality) {
+  // Described type is final, descriptor type is open.
+  {
+    TypeBuilder builder(2);
+    builder.createRecGroup(0, 2);
+    builder[0] = Struct{};
+    builder[1].setOpen() = Struct{};
+    builder[0].descriptor(builder[1]);
+    builder[1].describes(builder[0]);
+
+    auto result = builder.build();
+    EXPECT_FALSE(result);
+    const auto* error = result.getError();
+    ASSERT_TRUE(error);
+    EXPECT_EQ(error->reason,
+              TypeBuilder::ErrorReasonKind::MismatchedDescriptorFinality);
+    EXPECT_EQ(error->index, 0u);
+  }
+
+  // Described type is open, descriptor type is final.
+  {
+    TypeBuilder builder(2);
+    builder.createRecGroup(0, 2);
+    builder[0].setOpen() = Struct{};
+    builder[1] = Struct{};
+    builder[0].descriptor(builder[1]);
+    builder[1].describes(builder[0]);
+
+    auto result = builder.build();
+    EXPECT_FALSE(result);
+    const auto* error = result.getError();
+    ASSERT_TRUE(error);
+    EXPECT_EQ(error->reason,
+              TypeBuilder::ErrorReasonKind::MismatchedDescriptorFinality);
+    EXPECT_EQ(error->index, 0u);
+  }
+
+  // Both are final: succeeds.
+  {
+    TypeBuilder builder(2);
+    builder.createRecGroup(0, 2);
+    builder[0] = Struct{};
+    builder[1] = Struct{};
+    builder[0].descriptor(builder[1]);
+    builder[1].describes(builder[0]);
+
+    auto result = builder.build();
+    EXPECT_TRUE(result);
+  }
+
+  // Both are open: succeeds.
+  {
+    TypeBuilder builder(2);
+    builder.createRecGroup(0, 2);
+    builder[0].setOpen() = Struct{};
+    builder[1].setOpen() = Struct{};
+    builder[0].descriptor(builder[1]);
+    builder[1].describes(builder[0]);
+
+    auto result = builder.build();
+    EXPECT_TRUE(result);
+  }
+}
+
 TEST_F(TypeTest, CanonicalizeFinal) {
   // Types are different if their finality flag is different.
   TypeBuilder builder(2);
