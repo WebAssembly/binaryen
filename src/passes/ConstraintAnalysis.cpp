@@ -444,12 +444,14 @@ struct ConstraintAnalysis
   void optimizeExpression(Expression** currp,
                           const BasicBlockConstraintMap& constraints) {
     auto* curr = *currp;
-    auto parsed = ParsedAndedConstraints::parse(curr);
-    // TODO: optimize cases of more than one, and with unknowns
-    if (parsed.size() != 1 || parsed.hasUnknown) {
+    // Note that we don't need to try to parse a series of constraints with
+    // ParsedAndedConstraints: if there is such a tree, we will simply optimize
+    // it as we walk it.
+    auto parsed = LocalConstraint::parse(curr);
+    if (!parsed) {
       return;
     }
-    if (!checkRelevancy(parsed[0])) {
+    if (!checkRelevancy(*parsed)) {
 #ifndef NDEBUG
       // If this is not relevant, then it must be one of the original actions we
       // care about, i.e., not the result of optimizations. See the comment
@@ -459,7 +461,7 @@ struct ConstraintAnalysis
       return;
     }
 
-    auto result = constraints.proves(parsed[0]);
+    auto result = constraints.proves(*parsed);
     if (result == Unknown) {
       // If we parsed something using two locals, like x != y, we can also look
       // for the flipped condition among y's constraints TODO
