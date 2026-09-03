@@ -747,8 +747,21 @@ std::optional<LocalConstraint> LocalConstraint::parse(Expression* curr) {
 
   if (auto* unary = curr->dynCast<Unary>()) {
     if (Abstract::getUnary(unary->value->type, Abstract::EqZ) == unary->op) {
+      // EqZ of EqZ means a check that the value is *not* zero.
+      if (auto* nested = unary->value->dynCast<Unary>()) {
+        if (Abstract::getUnary(nested->value->type, Abstract::EqZ) ==
+            nested->op) {
+          if (auto* get = nested->value->dynCast<LocalGet>()) {
+            auto value = Literal::makeZero(get->type);
+            return
+              LocalConstraint{get->index, Constraint{Abstract::Ne, {value}}};
+          }
+        }
+      }
+
       return parseEqZArgument(unary->value);
     }
+
     return {};
   }
 
