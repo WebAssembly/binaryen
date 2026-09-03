@@ -666,6 +666,7 @@ function initializeConstants() {
     'Throws',
     'DanglingPop',
     'TrapsNeverHappen',
+    'Suspends',
     'Any'
   ].forEach(name => {
     Module['SideEffects'][name] = Module['_BinaryenSideEffect' + name]();

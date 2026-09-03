@@ -6687,6 +6687,10 @@ BinaryenSideEffects BinaryenSideEffectDanglingPop(void) {
   return static_cast<BinaryenSideEffects>(
     EffectAnalyzer::SideEffects::DanglingPop);
 }
+BinaryenSideEffects BinaryenSideEffectSuspends(void) {
+  return static_cast<BinaryenSideEffects>(
+    EffectAnalyzer::SideEffects::Suspends);
+}
 BinaryenSideEffects BinaryenSideEffectAny(void) {
   return static_cast<BinaryenSideEffects>(EffectAnalyzer::SideEffects::Any);
 }
