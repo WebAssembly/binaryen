@@ -254,25 +254,24 @@ struct LocalConstraint {
   void flip();
 };
 
-// A utility to parse BinaryenIR into local and constraints on them. This is
+// A utility to parse BinaryenIR into locals and constraints on them. This is
 // similar to LocalConstraint::parse, but that parses a single constraint, while
 // this can handle a list of ANDed ones:
 //
 //   (i32.and (..A..) (..B..))
 //
-// parses into
+// parses into [ A, B ].
 //
-//   [ A, B ]
+// We also set a field |hasUnknown| if we saw things we could not parse. E.g.
 //
+//   (i32.and (call $unknown) (i32.eqz (local.get $x)))
+//
+// This parses into [ $x == 0 ] and sets hasUnknown=true. Even if there are
+// unknown things, we do know that definitely $x == 0 at least, which is useful
+// in some cases.
 struct ParsedAndedConstraints : public SmallVector<LocalConstraint, 1> {
   using SmallVector<LocalConstraint, 1>::SmallVector;
 
-  // Whether, in addition to the expressions we parsed into constraints, there
-  // were also other unknown things. For example,
-  //
-  //   (i32.and (i32.eq (local.get $r) (i32.const 10)) (call $unknown))
-  //
-  // Would parse into $r == 10 and also set hasUnknown.
   bool hasUnknown = false;
 
   static ParsedAndedConstraints parse(Expression* curr);

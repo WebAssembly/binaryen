@@ -825,7 +825,7 @@ ParsedAndedConstraints ParsedAndedConstraints::parse(Expression* curr) {
   ParsedAndedConstraints ret;
 
   // Starting from |curr|, parse and recurse into sub-trees: when we see an AND,
-  // for example, we can push both children as further work.
+  // we push both children as further work.
   SmallVector<Expression*, 4> work;
   work.push_back(curr);
   while (!work.empty()) {

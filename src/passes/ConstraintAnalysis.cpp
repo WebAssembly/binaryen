@@ -445,8 +445,8 @@ struct ConstraintAnalysis
                           const BasicBlockConstraintMap& constraints) {
     auto* curr = *currp;
     // Note that we don't need to try to parse a series of constraints with
-    // ParsedAndedConstraints: if there is such a tree, we will simply optimize
-    // it as we walk it.
+    // ParsedAndedConstraints: if there is a tree of ANDed things, we will
+    // simply optimize it as we walk it, each time handling one.
     auto parsed = LocalConstraint::parse(curr);
     if (!parsed) {
       return;
