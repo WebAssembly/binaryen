@@ -1651,7 +1651,6 @@ TEST(ConstraintTest, ParseUnaryEqZ) {
   Builder builder(wasm);
 
   // 1. Single i32.eqz of a local.get: parsed as x == 0.
-  // Covers: parseEqZArgument with LocalGet, Return 1, Continue 2.
   {
     auto* expr =
       builder.makeUnary(EqZInt32, builder.makeLocalGet(0, Type::i32));
@@ -1674,7 +1673,6 @@ TEST(ConstraintTest, ParseUnaryEqZ) {
   }
 
   // 3. Nested eqz of eqz: parsed as x != 0.
-  // Covers: Continue 1.
   {
     auto* inner =
       builder.makeUnary(EqZInt32, builder.makeLocalGet(0, Type::i32));
@@ -1699,7 +1697,6 @@ TEST(ConstraintTest, ParseUnaryEqZ) {
   }
 
   // 5. eqz of non-local.get (e.g. call): unhandled, sets hasUnknown.
-  // Covers: Unknown 1 (in parseEqZArgument), Continue 2.
   {
     auto* call = builder.makeCall("foo", {}, Type::i32);
     auto* expr = builder.makeUnary(EqZInt32, call);
@@ -1719,7 +1716,6 @@ TEST(ConstraintTest, ParseUnaryEqZ) {
   }
 
   // 7. Unary operation that is not EqZ: sets hasUnknown.
-  // Covers: Unknown 2, Continue 3.
   {
     auto* expr =
       builder.makeUnary(ClzInt32, builder.makeLocalGet(0, Type::i32));
@@ -1735,7 +1731,6 @@ TEST(ConstraintTest, ParseRefIsNull) {
   auto anyref = Type(HeapType::any, Nullable);
 
   // 1. ref.is_null of local.get: parsed as x == null.
-  // Covers: Continue 4, Return 1.
   {
     auto* expr = builder.makeRefIsNull(builder.makeLocalGet(0, anyref));
     auto parsed = ParsedAndedConstraints::parse(expr);
@@ -1747,7 +1742,6 @@ TEST(ConstraintTest, ParseRefIsNull) {
   }
 
   // 2. ref.is_null of non-local.get (e.g. call): unhandled, sets hasUnknown.
-  // Covers: Unknown 1 (in parseEqZArgument via RefIsNull), Continue 4.
   {
     auto* call = builder.makeCall("foo", {}, anyref);
     auto* expr = builder.makeRefIsNull(call);
@@ -1770,7 +1764,6 @@ TEST(ConstraintTest, ParseBinary) {
   Builder builder(wasm);
 
   // 1. Binary comparison with constant on right: parsed as local constraint.
-  // Covers: Return 3, Return 5, Continue 6.
   {
     auto* expr = builder.makeBinary(EqInt32,
                                     builder.makeLocalGet(0, Type::i32),
@@ -1783,7 +1776,6 @@ TEST(ConstraintTest, ParseBinary) {
   }
 
   // 2. Binary comparison with local.get on right: parsed as local constraint
-  // with local term. Covers: Return 2, Return 5, Continue 6.
   {
     auto* expr = builder.makeBinary(NeInt32,
                                     builder.makeLocalGet(0, Type::i32),
@@ -1804,7 +1796,7 @@ TEST(ConstraintTest, ParseBinary) {
          std::pair{LeUInt32, LeU},
          std::pair{GtSInt32, GtS},
          std::pair{GtUInt32, GtU},
-         std::pair{GeSInt32, GeS},
+           std::pair{GeSInt32, GeS},
          std::pair{GeUInt32, GeU},
        }) {
     auto* expr = builder.makeBinary(wasmOp,
@@ -1831,7 +1823,7 @@ TEST(ConstraintTest, ParseBinary) {
   }
 
   // 4. Comparison where right is not a term (e.g. call): unhandled, sets
-  // hasUnknown. Covers: Unknown 3 (in parseTerm), Return 4, Continue 6.
+  // hasUnknown.
   {
     auto* call = builder.makeCall("foo", {}, Type::i32);
     auto* expr =
@@ -1842,7 +1834,6 @@ TEST(ConstraintTest, ParseBinary) {
   }
 
   // 5. Comparison where left is not a local.get: unhandled, sets hasUnknown.
-  // Covers: Unknown 4 (in parseBinaryArguments), Continue 6.
   {
     auto* expr = builder.makeBinary(EqInt32,
                                     builder.makeConst(Literal(int32_t(1))),
@@ -1851,6 +1842,7 @@ TEST(ConstraintTest, ParseBinary) {
     EXPECT_TRUE(parsed.empty());
     EXPECT_TRUE(parsed.hasUnknown);
   }
+  // Ditto, local on right.
   {
     auto* expr = builder.makeBinary(EqInt32,
                                     builder.makeConst(Literal(int32_t(1))),
@@ -1861,8 +1853,7 @@ TEST(ConstraintTest, ParseBinary) {
   }
 
   // 6. Binary operation that is not a comparison or AND (e.g. Add, Sub, Mul,
-  // Or, Xor): sets hasUnknown. Covers: Unknown 5 (in Binary when !handled),
-  // Continue 6.
+  // Or, Xor): sets hasUnknown.
   for (auto op : {AddInt32, SubInt32, MulInt32, OrInt32, XorInt32}) {
     auto* expr = builder.makeBinary(op,
                                     builder.makeLocalGet(0, Type::i32),
@@ -1879,7 +1870,6 @@ TEST(ConstraintTest, ParseRefEq) {
   auto anyref = Type(HeapType::any, Nullable);
 
   // 1. ref.eq with local.get on both sides.
-  // Covers: Continue 7, Return 2, Return 5.
   {
     auto* expr = builder.makeRefEq(builder.makeLocalGet(0, anyref),
                                    builder.makeLocalGet(1, anyref));
@@ -1890,7 +1880,6 @@ TEST(ConstraintTest, ParseRefEq) {
   }
 
   // 2. ref.eq with local.get and ref.null.
-  // Covers: Continue 7, Return 3, Return 5.
   {
     auto* expr = builder.makeRefEq(builder.makeLocalGet(0, anyref),
                                    builder.makeRefNull(HeapType::any));
@@ -1903,8 +1892,7 @@ TEST(ConstraintTest, ParseRefEq) {
   }
 
   // 3. ref.eq where left is not a local.get (e.g. null on left): sets
-  // hasUnknown. Covers: Unknown 4 (in parseBinaryArguments via RefEq),
-  // Continue 7.
+  // hasUnknown.
   {
     auto* expr = builder.makeRefEq(builder.makeRefNull(HeapType::any),
                                    builder.makeLocalGet(0, anyref));
@@ -1914,7 +1902,6 @@ TEST(ConstraintTest, ParseRefEq) {
   }
 
   // 4. ref.eq where right is not a term (e.g. call): sets hasUnknown.
-  // Covers: Unknown 3 (in parseTerm via RefEq), Return 4, Continue 7.
   {
     auto* call = builder.makeCall("foo", {}, anyref);
     auto* expr = builder.makeRefEq(builder.makeLocalGet(0, anyref), call);
@@ -1929,7 +1916,6 @@ TEST(ConstraintTest, ParseAnd) {
   Builder builder(wasm);
 
   // 1. AND over two valid comparisons: both constraints returned.
-  // Covers: Continue 5.
   {
     auto* left = builder.makeBinary(EqInt32,
                                     builder.makeLocalGet(0, Type::i32),
@@ -2040,7 +2026,6 @@ TEST(ConstraintTest, ParseOtherUnknowns) {
   Builder builder(wasm);
 
   // General expression types not handled by parse:
-  // Covers: Unknown 6 (bottom of loop), Return 6.
   for (Expression* expr : {
          (Expression*)builder.makeCall("foo", {}, Type::i32),
          (Expression*)builder.makeConst(Literal(int32_t(42))),
