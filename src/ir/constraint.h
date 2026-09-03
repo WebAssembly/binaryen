@@ -238,22 +238,25 @@ struct LocalConstraint {
 
   bool operator==(const LocalConstraint&) const = default;
 
+  // Try to parse BinaryenIR into a local to which a constraint is applied. For
+  // example
+  //
+  //   (i32.eq (local.get $r) (i32.const 10))
+  //
+  // parses into
+  //
+  //   LocalConstraint($r, { x == 10 })
+  //
+  static std::optional<LocalConstraint> parse(Expression* curr);
+
   // Reverse the constraint. The constraint's term must, of course, be another
   // local.
   void flip();
 };
 
-// A utility to parse BinaryenIR into local and constraints on them. For
-// example:
-//
-//   (i32.eq (local.get $r) (i32.const 10))
-//
-// parses into
-//
-//   [ LocalConstraint($r, { x == 10 }) ]
-//
-// If the expression is an AND over several things, several constraints may be
-// returned:
+// A utility to parse BinaryenIR into local and constraints on them. This is
+// similar to LocalConstraint::parse, but that parses a single constraint, while
+// this can handle a list of ANDed ones:
 //
 //   (i32.and (..A..) (..B..))
 //

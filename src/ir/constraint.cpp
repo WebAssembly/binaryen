@@ -733,6 +733,80 @@ bool AndedConstraintSet::approximateOr(const AndedConstraintSet& other) {
   return changed;
 }
 
+std::optional<LocalConstraint> LocalConstraint::parse(Expression* curr) {
+  auto parseEqZArgument =
+    [&](Expression* value) -> std::optional<LocalConstraint> {
+    if (auto* get = value->dynCast<LocalGet>()) {
+      // Canonicalize EqZ to Eq of 0.
+      auto value = Literal::makeZero(get->type);
+      return LocalConstraint{get->index, Constraint{Abstract::Eq, {value}}};
+    }
+    // TODO: Recursively parse and reverse a constraint
+    return {};
+  };
+
+  if (auto* unary = curr->dynCast<Unary>()) {
+    if (Abstract::getUnary(unary->value->type, Abstract::EqZ) == unary->op) {
+      return parseEqZArgument(unary->value);
+    }
+    return {};
+  }
+
+  if (auto* refIsNull = curr->dynCast<RefIsNull>()) {
+    return parseEqZArgument(refIsNull->value);
+  }
+
+  // Parse a get or a constant.
+  auto parseTerm = [&](Expression* expr) -> std::optional<Term> {
+    if (auto* get = expr->dynCast<LocalGet>()) {
+      return Term{get->index};
+    }
+    if (Properties::isSingleConstantExpression(expr)) {
+      return Term{Properties::getLiteral(expr)};
+    }
+    return {};
+  };
+
+  auto parseBinaryArguments =
+    [&](Abstract::Op op,
+        Expression* left,
+        Expression* right) -> std::optional<LocalConstraint> {
+    // The left must be a get.
+    if (auto* get = left->dynCast<LocalGet>()) {
+      // The right can be any term.
+      if (auto value = parseTerm(right)) {
+        return LocalConstraint{get->index, Constraint{op, *value}};
+      }
+    }
+    return {};
+  };
+
+  if (auto* binary = curr->dynCast<Binary>()) {
+    // The operation must be one we recognize.
+    for (auto op : {Abstract::Eq,
+                    Abstract::Ne,
+                    Abstract::LtS,
+                    Abstract::LtU,
+                    Abstract::LeS,
+                    Abstract::LeU,
+                    Abstract::GtS,
+                    Abstract::GtU,
+                    Abstract::GeS,
+                    Abstract::GeU}) {
+      if (Abstract::getBinary(binary->left->type, op) == binary->op) {
+        return parseBinaryArguments(op, binary->left, binary->right);
+      }
+    }
+    return {};
+  }
+
+  if (auto* refEq = curr->dynCast<RefEq>()) {
+    return parseBinaryArguments(Abstract::Eq, refEq->left, refEq->right);
+  }
+
+  return {};
+}
+
 ParsedAndedConstraints ParsedAndedConstraints::parse(Expression* curr) {
   // The final return value.
   ParsedAndedConstraints ret;
@@ -745,73 +819,11 @@ ParsedAndedConstraints ParsedAndedConstraints::parse(Expression* curr) {
     auto* curr = work.back();
     work.pop_back();
 
-    auto parseEqZArgument = [&](Expression* value) {
-      if (auto* get = value->dynCast<LocalGet>()) {
-        // Canonicalize EqZ to Eq of 0.
-        auto value = Literal::makeZero(get->type);
-        ret.push_back(
-          LocalConstraint{get->index, Constraint{Abstract::Eq, {value}}});
-        return;
-      }
-
-      // We did not recognize this, so the output contains unknown things.
-      // TODO: Recursively parse and negate things other than local.get
-      ret.hasUnknown = true;
-    };
-
-    if (auto* unary = curr->dynCast<Unary>()) {
-      if (Abstract::getUnary(unary->value->type, Abstract::EqZ) == unary->op) {
-        // EqZ of EqZ means a check that the value is *not* zero.
-        if (auto* nested = unary->value->dynCast<Unary>()) {
-          if (Abstract::getUnary(nested->value->type, Abstract::EqZ) ==
-              nested->op) {
-            if (auto* get = nested->value->dynCast<LocalGet>()) {
-              auto value = Literal::makeZero(get->type);
-              ret.push_back(
-                LocalConstraint{get->index, Constraint{Abstract::Ne, {value}}});
-              continue;
-            }
-          }
-        }
-
-        parseEqZArgument(unary->value);
-        continue;
-      }
-
-      ret.hasUnknown = true;
+    auto parsed = LocalConstraint::parse(curr);
+    if (parsed) {
+      ret.push_back(*parsed);
       continue;
     }
-
-    if (auto* refIsNull = curr->dynCast<RefIsNull>()) {
-      parseEqZArgument(refIsNull->value);
-      continue;
-    }
-
-    // Parse a get or a constant.
-    auto parseTerm = [&](Expression* expr) -> std::optional<Term> {
-      if (auto* get = expr->dynCast<LocalGet>()) {
-        return Term{get->index};
-      }
-      if (Properties::isSingleConstantExpression(expr)) {
-        return Term{Properties::getLiteral(expr)};
-      }
-      ret.hasUnknown = true;
-      return {};
-    };
-
-    auto parseBinaryArguments =
-      [&](Abstract::Op op, Expression* left, Expression* right) {
-        // The left must be a get.
-        if (auto* get = left->dynCast<LocalGet>()) {
-          // The right can be any term.
-          if (auto value = parseTerm(right)) {
-            ret.push_back(LocalConstraint{get->index, Constraint{op, *value}});
-            return;
-          }
-        }
-
-        ret.hasUnknown = true;
-      };
 
     if (auto* binary = curr->dynCast<Binary>()) {
       // An AND can be recursively processed: both sides must be true.
@@ -822,36 +834,6 @@ ParsedAndedConstraints ParsedAndedConstraints::parse(Expression* curr) {
         continue;
       }
       // TODO: support OR
-
-      // Otherwise, the operation must be one we can express as a constraint.
-      bool handled = false;
-      for (auto op : {Abstract::Eq,
-                      Abstract::Ne,
-                      Abstract::LtS,
-                      Abstract::LtU,
-                      Abstract::LeS,
-                      Abstract::LeU,
-                      Abstract::GtS,
-                      Abstract::GtU,
-                      Abstract::GeS,
-                      Abstract::GeU}) {
-        if (Abstract::getBinary(binary->left->type, op) == binary->op) {
-          parseBinaryArguments(op, binary->left, binary->right);
-          handled = true;
-          break;
-        }
-      }
-
-      if (!handled) {
-        ret.hasUnknown = true;
-      }
-
-      continue;
-    }
-
-    if (auto* refEq = curr->dynCast<RefEq>()) {
-      parseBinaryArguments(Abstract::Eq, refEq->left, refEq->right);
-      continue;
     }
 
     // We failed to parse this.
