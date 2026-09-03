@@ -115,7 +115,7 @@ assert(
 );
 
 // If exception handling feature is enabled, calls can throw
-module.setFeatures(binaryen.Features.All);
+module.setFeatures(binaryen.Features.ExceptionHandling);
 assert(
   binaryen.getSideEffects(
     module.call("test", [], binaryen.i32),
@@ -123,6 +123,28 @@ assert(
   )
   ==
   (binaryen.SideEffects.Calls | binaryen.SideEffects.Throws)
+);
+
+// If stack switching feature is enabled, calls can suspend
+module.setFeatures(binaryen.Features.StackSwitching);
+assert(
+  binaryen.getSideEffects(
+    module.call("test", [], binaryen.i32),
+    module
+  )
+  ==
+  (binaryen.SideEffects.Calls | binaryen.SideEffects.Suspends)
+);
+
+// If all features are enabled, calls can throw and suspend
+module.setFeatures(binaryen.Features.All);
+assert(
+  binaryen.getSideEffects(
+    module.call("test", [], binaryen.i32),
+    module
+  )
+  ==
+  (binaryen.SideEffects.Calls | binaryen.SideEffects.Throws | binaryen.SideEffects.Suspends)
 );
 
 assert(
