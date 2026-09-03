@@ -1119,38 +1119,10 @@ private:
           !heapType.isMaybeShared(HeapType::any)) {
         return;
       }
-      // TODO: Modeling `publish` as an arbitrary call is not sufficient. While
-      // it conservatively prevents writes to global state (shared or unshared
-      // structs/arrays, globals, memory, tables) from reordering across
-      // `publish`, it has two major shortcomings:
-      //
-      // 1. It is overly conservative for reads and independent writes: it
-      //    prevents reads of all kinds from reordering around `publish`, even
-      //    though reads of all memory orders should be allowed to reorder
-      //    freely. It also blocks unrelated writes from reordering.
-      // 2. It does NOT prevent writes of the published object to local
-      //    variables from moving before `publish`, because calls do not
-      //    conflict with local accesses. For example, in:
-      //      (local.set $p (publish (local.get $s)))
-      //      (local.set $x (local.get $s))
-      //    `SimplifyLocals` could sink `publish` past `local.set $x`, moving
-      //    the write of `$s` to `$x` before `publish`.
-      //
-      // A potential design to model `publish` properly would track new data in
-      // `EffectAnalyzer`:
-      //
-      // - `publishedLocals`: A set of local indices published by `publish`
-      //   (e.g. from `curr->ref`). Any expression that writes to a local or
-      //   global state while reading a published local would conflict with
-      //   `publish`, preventing writes of the published object to unshared
-      //   locations or locals from hoisting before `publish`. Pure reads would
-      //   not be marked as writing and could reorder freely.
-      // - `publishedHeapTypes` and `writtenValueHeapTypes`: To safely handle
-      //   aliasing across locals and non-local expressions without external
-      //   analysis, `EffectAnalyzer` could track the heap types of published
-      //   references and compare them against the types of values being
-      //   written in `LocalSet`, `GlobalSet`, `TableSet`, `StructSet`, and
-      //   `ArraySet`.
+      // TODO: Modeling `publish` as an arbitrary call is overly conservative.
+      // We need to prevent writes to the published object from being moved
+      // after the publish and we need to prevent writes of the published object
+      // to anywhere else from being moved before the publish.
       parent.calls = true;
     }
     void visitArrayNew(ArrayNew* curr) {}
