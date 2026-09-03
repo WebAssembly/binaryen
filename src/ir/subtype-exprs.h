@@ -397,6 +397,7 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
     self()->noteSubtype(curr->waitqueue,
                         Type(HeapTypes::sharedWaitqueue, Nullable));
   }
+  void visitPublish(Publish* curr) {}
   void visitArrayNew(ArrayNew* curr) {
     if (!curr->type.isArray() || curr->isWithDefault()) {
       return;

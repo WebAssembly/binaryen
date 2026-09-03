@@ -1474,6 +1474,13 @@ public:
     return ret;
   }
 
+  Publish* makePublish(Expression* ref) {
+    auto* ret = wasm.allocator.alloc<Publish>();
+    ret->ref = ref;
+    ret->finalize();
+    return ret;
+  }
+
   // Additional helpers
 
   Drop* makeDrop(Expression* value) {

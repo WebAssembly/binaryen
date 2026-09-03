@@ -2474,6 +2474,13 @@ Result<> IRBuilder::makeWaitqueueNotify() {
   return Ok{};
 }
 
+Result<> IRBuilder::makePublish() {
+  Publish curr(wasm.allocator);
+  CHECK_ERR(ChildPopper{*this}.visitPublish(&curr));
+  push(builder.makePublish(curr.ref));
+  return Ok{};
+}
+
 Result<> IRBuilder::makeArrayNew(HeapType type) {
   if (!type.isArray()) {
     return Err{"expected array type annotation on array.new"};
