@@ -1796,7 +1796,7 @@ TEST(ConstraintTest, ParseBinary) {
          std::pair{LeUInt32, LeU},
          std::pair{GtSInt32, GtS},
          std::pair{GtUInt32, GtU},
-           std::pair{GeSInt32, GeS},
+         std::pair{GeSInt32, GeS},
          std::pair{GeUInt32, GeU},
        }) {
     auto* expr = builder.makeBinary(wasmOp,

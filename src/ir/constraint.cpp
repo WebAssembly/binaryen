@@ -753,8 +753,8 @@ std::optional<LocalConstraint> LocalConstraint::parse(Expression* curr) {
             nested->op) {
           if (auto* get = nested->value->dynCast<LocalGet>()) {
             auto value = Literal::makeZero(get->type);
-            return
-              LocalConstraint{get->index, Constraint{Abstract::Ne, {value}}};
+            return LocalConstraint{get->index,
+                                   Constraint{Abstract::Ne, {value}}};
           }
         }
       }
