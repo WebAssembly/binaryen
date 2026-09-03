@@ -175,6 +175,8 @@
   ;; SIMPLIFY-NEXT:  (local.get $x)
   ;; SIMPLIFY-NEXT: )
   (func $test-simplify-memory (result i32)
+    ;; Simplify-locals cannot move the load across a possibly-suspending call
+    ;; because the handler might modify memory before resuming.
     (local $x i32)
     (local.set $x (i32.load (i32.const 0)))
     (call $caller-of-suspending)
@@ -208,6 +210,8 @@
   ;; SIMPLIFY-NEXT:  )
   ;; SIMPLIFY-NEXT: )
   (func $test-simplify-pure (result i32)
+    ;; When global effects tells us the callee will never suspend (or have other
+    ;; effects), simplify-locals can safely move a load across it.
     (local $x i32)
     (local.set $x (i32.load (i32.const 0)))
     (call $caller-of-pure)
@@ -282,6 +286,7 @@
   ;; SIMPLIFY-NEXT:  )
   ;; SIMPLIFY-NEXT: )
   (func $test-indirect-suspend (param $ref (ref $sig-suspending))
+    ;; This has the suspend effect, so it cannot be vacuumed away.
     (call_ref $sig-suspending (i32.const 0) (local.get $ref))
   )
 
@@ -301,6 +306,8 @@
   ;; SIMPLIFY-NEXT:  )
   ;; SIMPLIFY-NEXT: )
   (func $test-indirect-pure (param $ref (ref $sig-pure))
+    ;; With a closed world, global effects tells us that functions of this type
+    ;; never suspend (or have other side effects), so we can vacuum this away.
     (call_ref $sig-pure (i64.const 0) (local.get $ref))
   )
 
