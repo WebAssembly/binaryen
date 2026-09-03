@@ -17,9 +17,9 @@
 
   ;; NO-TNH:      (type $sig-any (func (param (ref any)) (result (ref any))))
 
-  ;; NO-TNH:      (type $sig-unary (func (param i32) (result i32)))
-
   ;; NO-TNH:      (type $cont-any (cont $sig-any))
+
+  ;; NO-TNH:      (type $sig-unary (func (param i32) (result i32)))
 
   ;; NO-TNH:      (import "env" "imported" (func $imported (type $sig-none)))
   ;; TNH:      (type $sig-none (func))
@@ -32,9 +32,9 @@
 
   ;; TNH:      (type $sig-any (func (param (ref any)) (result (ref any))))
 
-  ;; TNH:      (type $sig-unary (func (param i32) (result i32)))
-
   ;; TNH:      (type $cont-any (cont $sig-any))
+
+  ;; TNH:      (type $sig-unary (func (param i32) (result i32)))
 
   ;; TNH:      (import "env" "imported" (func $imported (type $sig-none)))
   ;; VACUUM:      (type $sig-none (func))
@@ -47,9 +47,9 @@
 
   ;; VACUUM:      (type $sig-any (func (param (ref any)) (result (ref any))))
 
-  ;; VACUUM:      (type $sig-unary (func (param i32) (result i32)))
-
   ;; VACUUM:      (type $cont-any (cont $sig-any))
+
+  ;; VACUUM:      (type $sig-unary (func (param i32) (result i32)))
 
   ;; VACUUM:      (import "env" "imported" (func $imported (type $sig-none)))
   (import "env" "imported" (func $imported (type $sig-none)))
@@ -373,7 +373,7 @@
     )
   )
 
-  ;; NO-TNH:      (func $test-resume-null-arm-tnh (type $7) (param $cond i32) (param $c (ref $cont-none))
+  ;; NO-TNH:      (func $test-resume-null-arm-tnh (type $8) (param $cond i32) (param $c (ref $cont-none))
   ;; NO-TNH-NEXT:  (resume $cont-none
   ;; NO-TNH-NEXT:   (if (result (ref null $cont-none))
   ;; NO-TNH-NEXT:    (local.get $cond)
@@ -386,7 +386,7 @@
   ;; NO-TNH-NEXT:   )
   ;; NO-TNH-NEXT:  )
   ;; NO-TNH-NEXT: )
-  ;; TNH:      (func $test-resume-null-arm-tnh (type $7) (param $cond i32) (param $c (ref $cont-none))
+  ;; TNH:      (func $test-resume-null-arm-tnh (type $8) (param $cond i32) (param $c (ref $cont-none))
   ;; TNH-NEXT:  (resume $cont-none
   ;; TNH-NEXT:   (block (result (ref $cont-none))
   ;; TNH-NEXT:    (drop
@@ -396,7 +396,7 @@
   ;; TNH-NEXT:   )
   ;; TNH-NEXT:  )
   ;; TNH-NEXT: )
-  ;; VACUUM:      (func $test-resume-null-arm-tnh (type $7) (param $cond i32) (param $c (ref $cont-none))
+  ;; VACUUM:      (func $test-resume-null-arm-tnh (type $8) (param $cond i32) (param $c (ref $cont-none))
   ;; VACUUM-NEXT:  (resume $cont-none
   ;; VACUUM-NEXT:   (if (result (ref null $cont-none))
   ;; VACUUM-NEXT:    (local.get $cond)
@@ -424,7 +424,7 @@
     )
   )
 
-  ;; NO-TNH:      (func $test-resume-null-select-tnh (type $7) (param $cond i32) (param $c (ref $cont-none))
+  ;; NO-TNH:      (func $test-resume-null-select-tnh (type $8) (param $cond i32) (param $c (ref $cont-none))
   ;; NO-TNH-NEXT:  (resume $cont-none
   ;; NO-TNH-NEXT:   (select (result (ref null $cont-none))
   ;; NO-TNH-NEXT:    (ref.null nocont)
@@ -433,7 +433,7 @@
   ;; NO-TNH-NEXT:   )
   ;; NO-TNH-NEXT:  )
   ;; NO-TNH-NEXT: )
-  ;; TNH:      (func $test-resume-null-select-tnh (type $7) (param $cond i32) (param $c (ref $cont-none))
+  ;; TNH:      (func $test-resume-null-select-tnh (type $8) (param $cond i32) (param $c (ref $cont-none))
   ;; TNH-NEXT:  (resume $cont-none
   ;; TNH-NEXT:   (block (result (ref $cont-none))
   ;; TNH-NEXT:    (drop
@@ -448,7 +448,7 @@
   ;; TNH-NEXT:   )
   ;; TNH-NEXT:  )
   ;; TNH-NEXT: )
-  ;; VACUUM:      (func $test-resume-null-select-tnh (type $7) (param $cond i32) (param $c (ref $cont-none))
+  ;; VACUUM:      (func $test-resume-null-select-tnh (type $8) (param $cond i32) (param $c (ref $cont-none))
   ;; VACUUM-NEXT:  (resume $cont-none
   ;; VACUUM-NEXT:   (select (result (ref null $cont-none))
   ;; VACUUM-NEXT:    (ref.null nocont)
@@ -568,8 +568,9 @@
   ;; NO-TNH-NEXT: )
   ;; TNH:      (func $test-tee (type $11) (result (ref $cont-none))
   ;; TNH-NEXT:  (local $c (ref null $cont-none))
+  ;; TNH-NEXT:  (local $1 (ref null $cont-none))
   ;; TNH-NEXT:  (block
-  ;; TNH-NEXT:   (drop
+  ;; TNH-NEXT:   (local.set $1
   ;; TNH-NEXT:    (local.tee $c
   ;; TNH-NEXT:     (cont.new $cont-none
   ;; TNH-NEXT:      (ref.func $pure)
@@ -625,22 +626,19 @@
   ;; NO-TNH-NEXT: )
   ;; TNH:      (func $test-tee-params (type $12) (result (ref $cont-binary))
   ;; TNH-NEXT:  (local $c (ref null $cont-binary))
-  ;; TNH-NEXT:  (local $1 i32)
+  ;; TNH-NEXT:  (local $1 (ref null $cont-binary))
   ;; TNH-NEXT:  (drop
-  ;; TNH-NEXT:   (call $pure-binary
-  ;; TNH-NEXT:    (i32.const 1)
-  ;; TNH-NEXT:    (block (result i32)
-  ;; TNH-NEXT:     (local.set $1
-  ;; TNH-NEXT:      (i32.const 2)
-  ;; TNH-NEXT:     )
-  ;; TNH-NEXT:     (drop
-  ;; TNH-NEXT:      (local.tee $c
-  ;; TNH-NEXT:       (cont.new $cont-binary
-  ;; TNH-NEXT:        (ref.func $pure-binary)
-  ;; TNH-NEXT:       )
+  ;; TNH-NEXT:   (block (result i32)
+  ;; TNH-NEXT:    (local.set $1
+  ;; TNH-NEXT:     (local.tee $c
+  ;; TNH-NEXT:      (cont.new $cont-binary
+  ;; TNH-NEXT:       (ref.func $pure-binary)
   ;; TNH-NEXT:      )
   ;; TNH-NEXT:     )
-  ;; TNH-NEXT:     (local.get $1)
+  ;; TNH-NEXT:    )
+  ;; TNH-NEXT:    (call $pure-binary
+  ;; TNH-NEXT:     (i32.const 1)
+  ;; TNH-NEXT:     (i32.const 2)
   ;; TNH-NEXT:    )
   ;; TNH-NEXT:   )
   ;; TNH-NEXT:  )
@@ -801,62 +799,71 @@
 
   ;; NO-TNH:      (func $test-eval-order (type $2) (result i32)
   ;; NO-TNH-NEXT:  (local $0 i32)
-  ;; NO-TNH-NEXT:  (call $pure-binary
+  ;; NO-TNH-NEXT:  (local $1 i32)
+  ;; NO-TNH-NEXT:  (local $2 (ref $cont-binary))
+  ;; NO-TNH-NEXT:  (local.set $0
   ;; NO-TNH-NEXT:   (call $side-effect-1)
-  ;; NO-TNH-NEXT:   (block (result i32)
-  ;; NO-TNH-NEXT:    (local.set $0
-  ;; NO-TNH-NEXT:     (call $side-effect-2)
+  ;; NO-TNH-NEXT:  )
+  ;; NO-TNH-NEXT:  (local.set $1
+  ;; NO-TNH-NEXT:   (call $side-effect-2)
+  ;; NO-TNH-NEXT:  )
+  ;; NO-TNH-NEXT:  (local.set $2
+  ;; NO-TNH-NEXT:   (block (result (ref $cont-binary))
+  ;; NO-TNH-NEXT:    (call $side-effect-3)
+  ;; NO-TNH-NEXT:    (cont.new $cont-binary
+  ;; NO-TNH-NEXT:     (ref.func $pure-binary)
   ;; NO-TNH-NEXT:    )
-  ;; NO-TNH-NEXT:    (drop
-  ;; NO-TNH-NEXT:     (block (result (ref $cont-binary))
-  ;; NO-TNH-NEXT:      (call $side-effect-3)
-  ;; NO-TNH-NEXT:      (cont.new $cont-binary
-  ;; NO-TNH-NEXT:       (ref.func $pure-binary)
-  ;; NO-TNH-NEXT:      )
-  ;; NO-TNH-NEXT:     )
-  ;; NO-TNH-NEXT:    )
-  ;; NO-TNH-NEXT:    (local.get $0)
   ;; NO-TNH-NEXT:   )
+  ;; NO-TNH-NEXT:  )
+  ;; NO-TNH-NEXT:  (call $pure-binary
+  ;; NO-TNH-NEXT:   (local.get $0)
+  ;; NO-TNH-NEXT:   (local.get $1)
   ;; NO-TNH-NEXT:  )
   ;; NO-TNH-NEXT: )
   ;; TNH:      (func $test-eval-order (type $2) (result i32)
   ;; TNH-NEXT:  (local $0 i32)
-  ;; TNH-NEXT:  (call $pure-binary
+  ;; TNH-NEXT:  (local $1 i32)
+  ;; TNH-NEXT:  (local $2 (ref $cont-binary))
+  ;; TNH-NEXT:  (local.set $0
   ;; TNH-NEXT:   (call $side-effect-1)
-  ;; TNH-NEXT:   (block (result i32)
-  ;; TNH-NEXT:    (local.set $0
-  ;; TNH-NEXT:     (call $side-effect-2)
+  ;; TNH-NEXT:  )
+  ;; TNH-NEXT:  (local.set $1
+  ;; TNH-NEXT:   (call $side-effect-2)
+  ;; TNH-NEXT:  )
+  ;; TNH-NEXT:  (local.set $2
+  ;; TNH-NEXT:   (block (result (ref $cont-binary))
+  ;; TNH-NEXT:    (call $side-effect-3)
+  ;; TNH-NEXT:    (cont.new $cont-binary
+  ;; TNH-NEXT:     (ref.func $pure-binary)
   ;; TNH-NEXT:    )
-  ;; TNH-NEXT:    (drop
-  ;; TNH-NEXT:     (block (result (ref $cont-binary))
-  ;; TNH-NEXT:      (call $side-effect-3)
-  ;; TNH-NEXT:      (cont.new $cont-binary
-  ;; TNH-NEXT:       (ref.func $pure-binary)
-  ;; TNH-NEXT:      )
-  ;; TNH-NEXT:     )
-  ;; TNH-NEXT:    )
-  ;; TNH-NEXT:    (local.get $0)
   ;; TNH-NEXT:   )
+  ;; TNH-NEXT:  )
+  ;; TNH-NEXT:  (call $pure-binary
+  ;; TNH-NEXT:   (local.get $0)
+  ;; TNH-NEXT:   (local.get $1)
   ;; TNH-NEXT:  )
   ;; TNH-NEXT: )
   ;; VACUUM:      (func $test-eval-order (type $2) (result i32)
   ;; VACUUM-NEXT:  (local $0 i32)
-  ;; VACUUM-NEXT:  (call $pure-binary
+  ;; VACUUM-NEXT:  (local $1 i32)
+  ;; VACUUM-NEXT:  (local $2 (ref $cont-binary))
+  ;; VACUUM-NEXT:  (local.set $0
   ;; VACUUM-NEXT:   (call $side-effect-1)
-  ;; VACUUM-NEXT:   (block (result i32)
-  ;; VACUUM-NEXT:    (local.set $0
-  ;; VACUUM-NEXT:     (call $side-effect-2)
+  ;; VACUUM-NEXT:  )
+  ;; VACUUM-NEXT:  (local.set $1
+  ;; VACUUM-NEXT:   (call $side-effect-2)
+  ;; VACUUM-NEXT:  )
+  ;; VACUUM-NEXT:  (local.set $2
+  ;; VACUUM-NEXT:   (block (result (ref (exact $cont-binary)))
+  ;; VACUUM-NEXT:    (call $side-effect-3)
+  ;; VACUUM-NEXT:    (cont.new $cont-binary
+  ;; VACUUM-NEXT:     (ref.func $pure-binary)
   ;; VACUUM-NEXT:    )
-  ;; VACUUM-NEXT:    (drop
-  ;; VACUUM-NEXT:     (block (result (ref (exact $cont-binary)))
-  ;; VACUUM-NEXT:      (call $side-effect-3)
-  ;; VACUUM-NEXT:      (cont.new $cont-binary
-  ;; VACUUM-NEXT:       (ref.func $pure-binary)
-  ;; VACUUM-NEXT:      )
-  ;; VACUUM-NEXT:     )
-  ;; VACUUM-NEXT:    )
-  ;; VACUUM-NEXT:    (local.get $0)
   ;; VACUUM-NEXT:   )
+  ;; VACUUM-NEXT:  )
+  ;; VACUUM-NEXT:  (call $pure-binary
+  ;; VACUUM-NEXT:   (local.get $0)
+  ;; VACUUM-NEXT:   (local.get $1)
   ;; VACUUM-NEXT:  )
   ;; VACUUM-NEXT: )
   (func $test-eval-order (result i32)
@@ -875,7 +882,9 @@
   ;; NO-TNH:      (func $test-handler-elimination (type $sig-none)
   ;; NO-TNH-NEXT:  (drop
   ;; NO-TNH-NEXT:   (block $handler (result (ref $cont-none))
-  ;; NO-TNH-NEXT:    (call $pure)
+  ;; NO-TNH-NEXT:    (block
+  ;; NO-TNH-NEXT:     (call $pure)
+  ;; NO-TNH-NEXT:    )
   ;; NO-TNH-NEXT:    (return)
   ;; NO-TNH-NEXT:   )
   ;; NO-TNH-NEXT:  )
@@ -883,7 +892,9 @@
   ;; TNH:      (func $test-handler-elimination (type $sig-none)
   ;; TNH-NEXT:  (drop
   ;; TNH-NEXT:   (block $handler (result (ref $cont-none))
-  ;; TNH-NEXT:    (call $pure)
+  ;; TNH-NEXT:    (block
+  ;; TNH-NEXT:     (call $pure)
+  ;; TNH-NEXT:    )
   ;; TNH-NEXT:    (return)
   ;; TNH-NEXT:   )
   ;; TNH-NEXT:  )
@@ -1025,7 +1036,8 @@
   )
 
   ;; NO-TNH:      (func $test-eval-order-no-operands (type $sig-none)
-  ;; NO-TNH-NEXT:  (drop
+  ;; NO-TNH-NEXT:  (local $0 (ref $cont-none))
+  ;; NO-TNH-NEXT:  (local.set $0
   ;; NO-TNH-NEXT:   (block (result (ref $cont-none))
   ;; NO-TNH-NEXT:    (call $side-effect-3)
   ;; NO-TNH-NEXT:    (cont.new $cont-none
@@ -1036,7 +1048,8 @@
   ;; NO-TNH-NEXT:  (call $pure)
   ;; NO-TNH-NEXT: )
   ;; TNH:      (func $test-eval-order-no-operands (type $sig-none)
-  ;; TNH-NEXT:  (drop
+  ;; TNH-NEXT:  (local $0 (ref $cont-none))
+  ;; TNH-NEXT:  (local.set $0
   ;; TNH-NEXT:   (block (result (ref $cont-none))
   ;; TNH-NEXT:    (call $side-effect-3)
   ;; TNH-NEXT:    (cont.new $cont-none
@@ -1047,7 +1060,8 @@
   ;; TNH-NEXT:  (call $pure)
   ;; TNH-NEXT: )
   ;; VACUUM:      (func $test-eval-order-no-operands (type $sig-none)
-  ;; VACUUM-NEXT:  (drop
+  ;; VACUUM-NEXT:  (local $0 (ref $cont-none))
+  ;; VACUUM-NEXT:  (local.set $0
   ;; VACUUM-NEXT:   (block (result (ref (exact $cont-none)))
   ;; VACUUM-NEXT:    (call $side-effect-3)
   ;; VACUUM-NEXT:    (cont.new $cont-none
@@ -1068,60 +1082,45 @@
   )
 
   ;; NO-TNH:      (func $test-eval-order-non-nullable (type $sig-any) (param $x (ref any)) (result (ref any))
-  ;; NO-TNH-NEXT:  (local $1 (ref any))
-  ;; NO-TNH-NEXT:  (call $pure-any
-  ;; NO-TNH-NEXT:   (block (result (ref any))
-  ;; NO-TNH-NEXT:    (local.set $1
-  ;; NO-TNH-NEXT:     (local.get $x)
+  ;; NO-TNH-NEXT:  (local $1 (ref $cont-any))
+  ;; NO-TNH-NEXT:  (local.set $1
+  ;; NO-TNH-NEXT:   (block (result (ref $cont-any))
+  ;; NO-TNH-NEXT:    (call $side-effect-3)
+  ;; NO-TNH-NEXT:    (cont.new $cont-any
+  ;; NO-TNH-NEXT:     (ref.func $pure-any)
   ;; NO-TNH-NEXT:    )
-  ;; NO-TNH-NEXT:    (drop
-  ;; NO-TNH-NEXT:     (block (result (ref $cont-any))
-  ;; NO-TNH-NEXT:      (call $side-effect-3)
-  ;; NO-TNH-NEXT:      (cont.new $cont-any
-  ;; NO-TNH-NEXT:       (ref.func $pure-any)
-  ;; NO-TNH-NEXT:      )
-  ;; NO-TNH-NEXT:     )
-  ;; NO-TNH-NEXT:    )
-  ;; NO-TNH-NEXT:    (local.get $1)
   ;; NO-TNH-NEXT:   )
+  ;; NO-TNH-NEXT:  )
+  ;; NO-TNH-NEXT:  (call $pure-any
+  ;; NO-TNH-NEXT:   (local.get $x)
   ;; NO-TNH-NEXT:  )
   ;; NO-TNH-NEXT: )
   ;; TNH:      (func $test-eval-order-non-nullable (type $sig-any) (param $x (ref any)) (result (ref any))
-  ;; TNH-NEXT:  (local $1 (ref any))
-  ;; TNH-NEXT:  (call $pure-any
-  ;; TNH-NEXT:   (block (result (ref any))
-  ;; TNH-NEXT:    (local.set $1
-  ;; TNH-NEXT:     (local.get $x)
+  ;; TNH-NEXT:  (local $1 (ref $cont-any))
+  ;; TNH-NEXT:  (local.set $1
+  ;; TNH-NEXT:   (block (result (ref $cont-any))
+  ;; TNH-NEXT:    (call $side-effect-3)
+  ;; TNH-NEXT:    (cont.new $cont-any
+  ;; TNH-NEXT:     (ref.func $pure-any)
   ;; TNH-NEXT:    )
-  ;; TNH-NEXT:    (drop
-  ;; TNH-NEXT:     (block (result (ref $cont-any))
-  ;; TNH-NEXT:      (call $side-effect-3)
-  ;; TNH-NEXT:      (cont.new $cont-any
-  ;; TNH-NEXT:       (ref.func $pure-any)
-  ;; TNH-NEXT:      )
-  ;; TNH-NEXT:     )
-  ;; TNH-NEXT:    )
-  ;; TNH-NEXT:    (local.get $1)
   ;; TNH-NEXT:   )
+  ;; TNH-NEXT:  )
+  ;; TNH-NEXT:  (call $pure-any
+  ;; TNH-NEXT:   (local.get $x)
   ;; TNH-NEXT:  )
   ;; TNH-NEXT: )
   ;; VACUUM:      (func $test-eval-order-non-nullable (type $sig-any) (param $x (ref any)) (result (ref any))
-  ;; VACUUM-NEXT:  (local $1 (ref any))
-  ;; VACUUM-NEXT:  (call $pure-any
-  ;; VACUUM-NEXT:   (block (result (ref any))
-  ;; VACUUM-NEXT:    (local.set $1
-  ;; VACUUM-NEXT:     (local.get $x)
+  ;; VACUUM-NEXT:  (local $1 (ref $cont-any))
+  ;; VACUUM-NEXT:  (local.set $1
+  ;; VACUUM-NEXT:   (block (result (ref (exact $cont-any)))
+  ;; VACUUM-NEXT:    (call $side-effect-3)
+  ;; VACUUM-NEXT:    (cont.new $cont-any
+  ;; VACUUM-NEXT:     (ref.func $pure-any)
   ;; VACUUM-NEXT:    )
-  ;; VACUUM-NEXT:    (drop
-  ;; VACUUM-NEXT:     (block (result (ref (exact $cont-any)))
-  ;; VACUUM-NEXT:      (call $side-effect-3)
-  ;; VACUUM-NEXT:      (cont.new $cont-any
-  ;; VACUUM-NEXT:       (ref.func $pure-any)
-  ;; VACUUM-NEXT:      )
-  ;; VACUUM-NEXT:     )
-  ;; VACUUM-NEXT:    )
-  ;; VACUUM-NEXT:    (local.get $1)
   ;; VACUUM-NEXT:   )
+  ;; VACUUM-NEXT:  )
+  ;; VACUUM-NEXT:  (call $pure-any
+  ;; VACUUM-NEXT:   (local.get $x)
   ;; VACUUM-NEXT:  )
   ;; VACUUM-NEXT: )
   (func $test-eval-order-non-nullable (param $x (ref any)) (result (ref any))

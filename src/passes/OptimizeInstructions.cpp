@@ -1509,38 +1509,15 @@ struct OptimizeInstructions
       return;
     }
 
+    auto* block =
+      ChildLocalizer(curr, getFunction(), *getModule(), getPassOptions())
+        .getChildrenReplacement();
     Builder builder(*getModule());
-
-    // If the continuation expression has no side effects, we can eliminate it
-    // entirely and replace the resume with a direct call.
-    if (!effects(curr->cont).hasSideEffects()) {
-      replaceCurrent(
-        builder.makeCall(target->name, curr->operands, target->getResults()));
-      return;
-    }
-
-    // The continuation expression has side effects. In Wasm, resume operands
-    // are evaluated before the continuation expression. If there are no
-    // operands, evaluate the continuation (dropped) and then call.
-    if (curr->operands.empty()) {
-      replaceCurrent(builder.makeSequence(
-        builder.makeDrop(curr->cont),
-        builder.makeCall(target->name, {}, target->getResults())));
-      return;
-    }
-
-    // In the presence of operands, execute the code in curr->cont after the
-    // operands and before the call happens by spilling the last operand to a
-    // temporary local.
-    auto* lastOperand = curr->operands.back();
-    auto lastOperandType = lastOperand->type;
-    Index tempLocal = builder.addVar(getFunction(), lastOperandType);
-    auto* set = builder.makeLocalSet(tempLocal, lastOperand);
-    auto* drop = builder.makeDrop(curr->cont);
-    auto* get = builder.makeLocalGet(tempLocal, lastOperandType);
-    curr->operands.back() = builder.makeBlock({set, drop, get});
-    replaceCurrent(
-      builder.makeCall(target->name, curr->operands, target->getResults()));
+    Type results = target->getResults();
+    block->list.push_back(
+      builder.makeCall(target->name, curr->operands, results));
+    block->type = results;
+    replaceCurrent(block);
   }
 
   // Note on removing casts (which the following utilities, skipNonNullCast and
