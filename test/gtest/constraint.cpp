@@ -1934,9 +1934,8 @@ TEST(ConstraintTest, ParseAnd) {
               (LocalConstraint{0, Constraint{Eq, {Literal(int32_t(1))}}}));
   }
 
-  // 2. AND with known constraint and unknown expression (the case motivating
-  // commit 68bca391): (i32.and (i32.eq (local.get $0) (i32.const 10)) (call
-  // $unknown)) Parses the constraint and also sets hasUnknown.
+  // 2. AND with known constraint and unknown expression (call): Parses the
+  // constraint and also sets hasUnknown.
   {
     auto* left = builder.makeBinary(EqInt32,
                                     builder.makeLocalGet(0, Type::i32),
