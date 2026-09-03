@@ -1504,7 +1504,7 @@ public:
       // The string is already WTF-16, but we need to convert from `Literals` to
       // actual string.
       std::stringstream wtf16;
-      for (auto c : value.getGCData()->values) {
+      for (auto c : value.getGCData()->getLiterals()) {
         auto u = c.getInteger();
         assert(u < 0x10000);
         wtf16 << uint8_t(u & 0xFF);
