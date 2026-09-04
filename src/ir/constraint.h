@@ -279,6 +279,11 @@ struct ParsedAndedConstraints : public SmallVector<LocalConstraint, 1> {
   // Parse in a condition context, i.e., where (local.get $x) is the same as
   // $x != 0 (e.g., in an if condition, or a br_on ref).
   static ParsedAndedConstraints parseCondition(Expression* curr);
+
+  // Negate the entire list of constraints. If we fail to generate something
+  // that can be represented as a list of ANDed constraints, the list will be
+  // empty (i.e., we can prove nothing).
+  void negate();
 };
 
 // A map of locals and their constraints, representing the state at a basic

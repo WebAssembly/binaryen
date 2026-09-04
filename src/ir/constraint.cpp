@@ -868,6 +868,60 @@ ParsedAndedConstraints::parseCondition(Expression* curr) {
   return parse(curr);
 }
 
+void ParsedAndedConstraints::negate() {
+  if (empty()) {
+    return;
+  }
+
+  if (hasUnknown) {
+    // This includes things we don't know about, and don't know how to negate.
+    clear();
+    return;
+  }
+
+  // The input is a list of constraints all applying at once, A & B & C. The
+  // negation is !A | !B | !C, but we cannot express a general OR like that,
+  // except in the simple case where they all talk about the same local: then
+  // we can at least approximateOr them all into one constraint.
+  auto& self = *this;
+  for (Index i = 1; i < size(); i++) {
+    if (self[i].local != self[0].local) {
+      // They refer to different locals. Give up.
+      clear();
+      return;
+    }
+  }
+
+  // Negate them before the OR.
+  for (auto& pair : self) {
+    pair.constraint = pair.constraint.negate();
+  }
+
+  if (size() == 1) {
+    // The simple case of 1 doesn't need any more work.
+    return;
+  }
+
+  // Do the OR.
+  AndedConstraintSet anded;
+  anded.set(self[0].constraint);
+  for (Index i = 1; i < size(); i++) {
+    anded.approximateOr({self[i].constraint});
+    if (anded.provesNothing()) {
+      // We have nothing useful here.
+      clear();
+      return;
+    }
+  }
+
+  // Return only the OR'ed result.
+  auto local = self[0].local;
+  clear();
+  for (auto& c : anded) {
+    emplace_back(local, c);
+  }
+}
+
 void LocalConstraint::flip() {
   auto other = std::get<Index>(constraint.term);
   constraint.term = Term{local};

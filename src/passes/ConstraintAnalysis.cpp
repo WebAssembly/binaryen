@@ -512,7 +512,7 @@ struct ConstraintAnalysis
     auto parsed = ParsedAndedConstraints::parseCondition(iff->condition);
     if (!physicalSuccessor) {
       // We are in the ifFalse, so negate the condition.
-      negate(parsed);
+      parsed.negate();
     }
     return parsed;
   }
@@ -526,7 +526,7 @@ struct ConstraintAnalysis
     auto parsed = ParsedAndedConstraints::parseCondition(br->condition);
     if (physicalSuccessor) {
       // The branch was not taken, so negate the condition.
-      negate(parsed);
+      parsed.negate();
     }
     return parsed;
   }
@@ -545,63 +545,9 @@ struct ConstraintAnalysis
     auto parsed = ParsedAndedConstraints::parseCondition(brOn->ref);
     // Negate depending on the op and (similar to Break) the successor.
     if ((brOn->op == BrOnNull) ^ physicalSuccessor) {
-      negate(parsed);
+      parsed.negate();
     }
     return parsed;
-  }
-
-  // Given a list of parsed constraints on locals, negate them.
-  void negate(ParsedAndedConstraints& parsed) {
-    if (parsed.empty()) {
-      return;
-    }
-
-    if (parsed.hasUnknown) {
-      // This includes things we don't know about, and don't know how to negate.
-      parsed.clear();
-      return;
-    }
-
-    // The input is a list of constraints all applying at once, A & B & C. The
-    // negation is !A | !B | !C, but we cannot express a general OR like that,
-    // except in the simple case where they all talk about the same local: then
-    // we can at least approximateOr them all into one constraint.
-    for (Index i = 1; i < parsed.size(); i++) {
-      if (parsed[i].local != parsed[0].local) {
-        // They refer to different locals. Give up.
-        parsed.clear();
-        return;
-      }
-    }
-
-    // Negate them before the OR.
-    for (auto& pair : parsed) {
-      pair.constraint = pair.constraint.negate();
-    }
-
-    if (parsed.size() == 1) {
-      // The simple case of 1 doesn't need any more work.
-      return;
-    }
-
-    // Do the OR.
-    AndedConstraintSet anded;
-    anded.set(parsed[0].constraint);
-    for (Index i = 1; i < parsed.size(); i++) {
-      anded.approximateOr({parsed[i].constraint});
-      if (anded.provesNothing()) {
-        // We have nothing useful here.
-        parsed.clear();
-        return;
-      }
-    }
-
-    // Return only the OR'ed result.
-    auto local = parsed[0].local;
-    parsed.clear();
-    for (auto& c : anded) {
-      parsed.emplace_back(local, c);
-    }
   }
 
   // When applying constraints for a binary operation like x = y + 1, we may
