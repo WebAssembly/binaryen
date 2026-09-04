@@ -50,13 +50,11 @@ int32_t wasm::toSInteger32(double x) {
 }
 
 bool wasm::isUInteger64(double x) {
-  return !std::signbit(x) && isInteger(x) &&
-         x <= static_cast<double>(std::numeric_limits<uint64_t>::max());
+  return !std::signbit(x) && isInteger(x) && x < 0x1p64;
 }
 
 bool wasm::isSInteger64(double x) {
-  return isInteger(x) && x >= std::numeric_limits<int64_t>::min() &&
-         x <= static_cast<double>(std::numeric_limits<int64_t>::max());
+  return isInteger(x) && x >= -0x1p63 && x < 0x1p63;
 }
 
 uint64_t wasm::toUInteger64(double x) {
