@@ -31,9 +31,46 @@
 #include "wasm-io.h"
 #include "wasm-type.h"
 
+#include "tools/fuzzing/fuzz-stats.h"
+
 namespace wasm {
 
 namespace {
+
+struct FuzzStatsVisitor : public FuzzStats::Visitor<FuzzStatsVisitor> {
+  void visitBrOn(BrOn* curr) {
+    switch (curr->op) {
+      case BrOnNull:
+        record("br_on_null");
+        break;
+      case BrOnNonNull:
+        record("br_on_non_null");
+        break;
+      case BrOnCast:
+        record("br_on_cast");
+        break;
+      case BrOnCastFail:
+        record("br_on_cast_fail");
+        break;
+      case BrOnCastDescEq:
+        record("br_on_cast_desc_eq");
+        break;
+      case BrOnCastDescEqFail:
+        record("br_on_cast_desc_eq_fail");
+        break;
+    }
+  }
+
+  void visitRefCast(RefCast* curr) {
+    if (curr->desc) {
+      record("ref_cast_desc_eq");
+    } else {
+      record("ref_cast");
+    }
+  }
+
+  void visitRefTest(RefTest* curr) { record("ref_test"); }
+};
 
 std::vector<Type> getLoggableTypes(const FeatureSet& features) {
   std::vector<Type> loggableTypes = {
@@ -418,6 +455,8 @@ void TranslateToFuzzReader::build() {
   if (againstJS) {
     mutateJSBoundary();
   }
+
+  FuzzStatsVisitor().collect(wasm);
 }
 
 void TranslateToFuzzReader::setupMemory() {
