@@ -374,7 +374,7 @@ struct ConstraintAnalysis
         // Find the constraints sent to this specific successor, if there is a
         // branch, and use them.
         if (auto branch = getBranchConstraints(block, out);
-            !branch.empty() && checkRelevancy(branch)) {
+            filterRelevant(branch), !branch.empty()) {
           auto sentConstraints = constraints;
           applyBranchConstraints(branch, sentConstraints);
 #if CONSTRAINT_DEBUG
@@ -669,11 +669,14 @@ struct ConstraintAnalysis
     return true;
   }
 
-  bool checkRelevancy(const ParsedAndedConstraints& parsed) {
-    return std::any_of(
-      parsed.begin(), parsed.end(), [&](const LocalConstraint& pair) {
-        return checkRelevancy(pair);
-      });
+  // Filters out constraints on irrelevant locals.
+  void filterRelevant(ParsedAndedConstraints& parsed) {
+    parsed.erase(
+      std::remove_if(
+        parsed.begin(),
+        parsed.end(),
+        [&](const LocalConstraint& pair) { return !checkRelevancy(pair); }),
+      parsed.end());
   }
 
   // Apply branch constraints to the current set of constraints.
