@@ -1244,6 +1244,11 @@ void FunctionValidator::visitLoad(Load* curr) {
                  curr,
                  "SIMD operations require SIMD [--enable-simd]");
   }
+  if (curr->type == Type::f32 && curr->bytes == 2) {
+    shouldBeTrue(getModule()->features.hasFP16(),
+                 curr,
+                 "FP16 operations require FP16 [--enable-fp16]");
+  }
   validateMemBytes(curr->bytes, curr->type, curr);
   validateOffset(curr->offset, memory, curr);
   validateAlignment(
@@ -1295,6 +1300,11 @@ void FunctionValidator::visitStore(Store* curr) {
     shouldBeTrue(getModule()->features.hasSIMD(),
                  curr,
                  "SIMD operations require SIMD [--enable-simd]");
+  }
+  if (curr->valueType == Type::f32 && curr->bytes == 2) {
+    shouldBeTrue(getModule()->features.hasFP16(),
+                 curr,
+                 "FP16 operations require FP16 [--enable-fp16]");
   }
   validateMemBytes(curr->bytes, curr->valueType, curr);
   validateOffset(curr->offset, memory, curr);
@@ -2378,6 +2388,13 @@ void FunctionValidator::visitUnary(Unary* curr) {
     case FloorVecF16x8:
     case TruncVecF16x8:
     case NearestVecF16x8:
+    case PromoteLowVecF16x8ToVecF32x4:
+    case DemoteZeroVecF32x4ToVecF16x8:
+    case DemoteZeroVecF64x2ToVecF16x8:
+    case TruncSatSVecF16x8ToVecI16x8:
+    case TruncSatUVecF16x8ToVecI16x8:
+    case ConvertSVecI16x8ToVecF16x8:
+    case ConvertUVecI16x8ToVecF16x8:
       shouldBeTrue(getModule()->features.hasFP16(),
                    curr,
                    "FP16 operations require FP16 [--enable-fp16]");
@@ -2432,17 +2449,10 @@ void FunctionValidator::visitUnary(Unary* curr) {
     case TruncSatZeroUVecF64x2ToVecI32x4:
     case DemoteZeroVecF64x2ToVecF32x4:
     case PromoteLowVecF32x4ToVecF64x2:
-    case PromoteLowVecF16x8ToVecF32x4:
-    case DemoteZeroVecF32x4ToVecF16x8:
-    case DemoteZeroVecF64x2ToVecF16x8:
     case RelaxedTruncSVecF32x4ToVecI32x4:
     case RelaxedTruncUVecF32x4ToVecI32x4:
     case RelaxedTruncZeroSVecF64x2ToVecI32x4:
     case RelaxedTruncZeroUVecF64x2ToVecI32x4:
-    case TruncSatSVecF16x8ToVecI16x8:
-    case TruncSatUVecF16x8ToVecI16x8:
-    case ConvertSVecI16x8ToVecF16x8:
-    case ConvertUVecI16x8ToVecF16x8:
       shouldBeEqual(curr->type, Type(Type::v128), curr, "expected v128 type");
       shouldBeEqual(
         curr->value->type, Type(Type::v128), curr, "expected v128 operand");
@@ -2617,7 +2627,7 @@ void FunctionValidator::visitRefAs(RefAs* curr) {
     case AnyConvertExtern: {
       shouldBeTrue(getModule()->features.hasGC(),
                    curr,
-                   "any.convert_extern requries GC [--enable-gc]");
+                   "any.convert_extern requires GC [--enable-gc]");
       if (curr->type == Type::unreachable) {
         return;
       }
@@ -2631,7 +2641,7 @@ void FunctionValidator::visitRefAs(RefAs* curr) {
     case ExternConvertAny: {
       shouldBeTrue(getModule()->features.hasGC(),
                    curr,
-                   "extern.convert_any requries GC [--enable-gc]");
+                   "extern.convert_any requires GC [--enable-gc]");
       if (curr->type == Type::unreachable) {
         return;
       }
@@ -5160,7 +5170,7 @@ void validateGlobals(Module& module, ValidationInfo& info) {
     }
     FunctionValidator(module, &info).validate(curr->init);
     // If GC is enabled (which means globals can refer to other non-imported
-    // globals), check that globals only refer to preceeding globals.
+    // globals), check that globals only refer to preceding globals.
     if (module.features.hasGC() && curr->init) {
       for (auto* get : FindAll<GlobalGet>(curr->init).list) {
         auto* global = module.getGlobalOrNull(get->name);

@@ -972,7 +972,7 @@
     (local $cont (ref null $cont))
     (tuple.drop 2
       (block $l (result (ref null $super) (ref null $cont))
-        ;; Now with a resume_throw_ref. This requies $sub <: $super.
+        ;; Now with a resume_throw_ref. This requires $sub <: $super.
         (resume_throw_ref $cont (on $send-sub $l)
           (local.get $exn)
           (local.get $cont)

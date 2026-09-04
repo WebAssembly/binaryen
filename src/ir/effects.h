@@ -23,7 +23,6 @@
 #include "ir/intrinsics.h"
 #include "pass.h"
 #include "support/name.h"
-#include "support/utilities.h"
 #include "wasm-traversal.h"
 #include "wasm-type.h"
 #include "wasm.h"
@@ -44,8 +43,8 @@ public:
       readsMutableArray(false), writesArray(false),
       readsSharedMutableArray(false), writesSharedArray(false), trap(false),
       implicitTrap(false), throws_(false), danglingPop(false),
-      mayNotReturn(false), hasReturnCallThrow(false), module(module),
-      features(module.features) {}
+      mayNotReturn(false), hasReturnCallThrow(false), suspends(false),
+      module(module), features(module.features) {}
 
   EffectAnalyzer(const PassOptions& passOptions,
                  const Module& module,
@@ -138,6 +137,8 @@ public:
   // more here.)
   bool hasReturnCallThrow : 1;
 
+  bool suspends : 1;
+
   const Module& module;
   FeatureSet features;
 
@@ -228,15 +229,17 @@ public:
     return calls || readsSharedMutableArray || writesSharedArray;
   }
   bool throws() const { return throws_ || !delegateTargets.empty(); }
+
   // Check whether this may transfer control flow to somewhere outside of this
-  // expression (aside from just flowing out normally). That includes a break
-  // or a throw (if the throw is not known to be caught inside this expression;
+  // expression (aside from just flowing out normally). That includes a break,
+  // a throw (if the throw is not known to be caught inside this expression;
   // note that if the throw is not caught in this expression then it might be
   // caught in this function but outside of this expression, or it might not be
   // caught in the function at all, which would mean control flow cannot be
-  // transferred inside the function, but this expression does not know that).
+  // transferred inside the function, but this expression does not know that),
+  // or a suspension.
   bool transfersControlFlow() const {
-    return branchesOut || throws() || hasExternalBreakTargets();
+    return branchesOut || suspends || throws() || hasExternalBreakTargets();
   }
 
   // Changes something in globally-stored state.
@@ -480,6 +483,7 @@ public:
     danglingPop = danglingPop || other.danglingPop;
     mayNotReturn = mayNotReturn || other.mayNotReturn;
     hasReturnCallThrow = hasReturnCallThrow || other.hasReturnCallThrow;
+    suspends = suspends || other.suspends;
     readOrder = std::max(readOrder, other.readOrder);
     writeOrder = std::max(writeOrder, other.writeOrder);
 
@@ -1271,8 +1275,9 @@ private:
       parent.calls = true;
     }
     void visitSuspend(Suspend* curr) {
-      // Similar to resume/call: Suspending means that we execute arbitrary
-      // other code before we may resume here.
+      // Suspending transfers control to an enclosing handler and executes
+      // arbitrary other code before we may resume here.
+      parent.suspends = true;
       parent.calls = true;
       if (parent.features.hasExceptionHandling() && parent.tryDepth == 0) {
         parent.throws_ = true;
@@ -1370,6 +1375,11 @@ private:
           parent.throws_ = true;
         }
       }
+      // If stack switching is enabled and we don't have global effects
+      // information, assume that the call target may suspend.
+      if (parent.features.hasStackSwitching()) {
+        parent.suspends = true;
+      }
     }
   };
 
@@ -1407,7 +1417,8 @@ public:
     Throws = 1 << 12,
     DanglingPop = 1 << 13,
     TrapsNeverHappen = 1 << 14,
-    Any = (1 << 15) - 1
+    Suspends = 1 << 15,
+    Any = (1 << 16) - 1
   };
   uint32_t getSideEffects() const {
     uint32_t effects = 0;
@@ -1459,12 +1470,15 @@ public:
     if (danglingPop) {
       effects |= SideEffects::DanglingPop;
     }
+    if (suspends) {
+      effects |= SideEffects::Suspends;
+    }
     return effects;
   }
 
-  // Ignores all forms of control flow transfers: breaks, returns, and
-  // exceptions. (Note that traps are not considered relevant here - a trap does
-  // not just transfer control flow, but can be seen as halting the entire
+  // Ignores all forms of control flow transfers: breaks, returns, exceptions,
+  // and suspensions. (Note that traps are not considered relevant here - a trap
+  // does not just transfer control flow, but can be seen as halting the entire
   // program.)
   //
   // This function matches transfersControlFlow(), that is, after calling this
@@ -1474,6 +1488,7 @@ public:
     breakTargets.clear();
     throws_ = false;
     delegateTargets.clear();
+    suspends = false;
     assert(!transfersControlFlow());
   }
 

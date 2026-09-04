@@ -83,7 +83,7 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
     }
   }
 
-  // Disambiguate betwween Type and VarType.
+  // Disambiguate between Type and VarType.
   void note(Expression** childp, Type::BasicType type) {
     note(childp, VarType{Type(type)});
   }

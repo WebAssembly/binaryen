@@ -574,7 +574,7 @@ void checkLatticeProperties(Random& rand, bool verbose) {
                   << LatticeComparisonNames[ij]
                   << "\nSecond to third relation: "
                   << LatticeComparisonNames[jk]
-                  << "\nFirst to thrid relation: " << LatticeComparisonNames[ik]
+                  << "\nFirst to third relation: " << LatticeComparisonNames[ik]
                   << "\n";
         }
       }

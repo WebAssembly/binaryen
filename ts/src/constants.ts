@@ -280,6 +280,7 @@ export enum SideEffect {
 	Throws = BinaryenObj["_BinaryenSideEffectThrows"](),
 	DanglingPop = BinaryenObj["_BinaryenSideEffectDanglingPop"](),
 	TrapsNeverHappen = BinaryenObj["_BinaryenSideEffectTrapsNeverHappen"](),
+	Suspends = BinaryenObj["_BinaryenSideEffectSuspends"](),
 	Any = BinaryenObj["_BinaryenSideEffectAny"](),
 }
 

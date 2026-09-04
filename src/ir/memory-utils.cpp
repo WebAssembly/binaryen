@@ -106,6 +106,17 @@ bool flatten(Module& wasm) {
       return false;
     }
   }
+
+  // If we have more data than can fit in memory, we will trap anyhow, and it
+  // makes no sense to flatten.
+  auto& memory = wasm.memories[0];
+  uint64_t memoryInitialSizeBytes;
+  if (std::ckd_mul(&memoryInitialSizeBytes,
+                   (uint64_t)memory->initial,
+                   memory->pageSize())) {
+    return false;
+  }
+
   for (auto& segment : dataSegments) {
     auto* offset = segment->offset->dynCast<Const>();
     uint64_t start = offset->value.getUnsigned();
@@ -114,10 +125,10 @@ bool flatten(Module& wasm) {
     if (std::ckd_add(&end, start, size)) {
       return false;
     }
+    if (end > memoryInitialSizeBytes || end > MaxFlatMemorySize) {
+      return false;
+    }
     if (end > data.size()) {
-      if (end > MaxFlatMemorySize) {
-        return false;
-      }
       data.resize(end);
     }
     std::copy(segment->data.begin(), segment->data.end(), data.begin() + start);
