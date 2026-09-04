@@ -671,12 +671,12 @@ struct ConstraintAnalysis
 
   // Filters out constraints on irrelevant locals.
   void filterRelevant(ParsedAndedConstraints& parsed) {
-    parsed.erase(
-      std::remove_if(
-        parsed.begin(),
-        parsed.end(),
-        [&](const LocalConstraint& pair) { return !checkRelevancy(pair); }),
-      parsed.end());
+    parsed.erase(std::remove_if(parsed.begin(),
+                                parsed.end(),
+                                [&](const LocalConstraint& pair) {
+                                  return !checkRelevancy(pair);
+                                }),
+                 parsed.end());
   }
 
   // Apply branch constraints to the current set of constraints.
