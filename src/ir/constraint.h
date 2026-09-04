@@ -236,6 +236,10 @@ struct LocalConstraint {
   Index local;
   Constraint constraint;
 
+  LocalConstraint() = default;
+  LocalConstraint(Index local, Constraint constraint)
+    : local(local), constraint(std::move(constraint)) {}
+
   bool operator==(const LocalConstraint&) const = default;
 
   // Try to parse BinaryenIR into a local to which a constraint is applied. For
