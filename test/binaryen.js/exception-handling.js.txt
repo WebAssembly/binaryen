@@ -31,10 +31,22 @@
     (nop)
    )
   )
+  (block $catch_all_dest
+   (try_table (catch_all $catch_all_dest)
+    (throw $e
+     (i32.const 0)
+    )
+   )
+  )
+  (throw_ref
+   (ref.null noexn)
+  )
  )
 )
 
 getExpressionInfo(throw) = {"id":56,"type":1,"tag":"e"}
 getExpressionInfo(rethrow) = {"id":57,"type":1,"target":"l0"}
-getExpressionInfo(try_catch) = {"id":54,"type":1,"name":"l0","hasCatchAll":false,"delegateTarget":null,"isDelegate":false}
-getExpressionInfo(try_delegate) = {"id":54,"type":0,"name":"try_outer","hasCatchAll":true,"delegateTarget":null,"isDelegate":false}
+getExpressionInfo(try_catch) = {"id":54,"type":1,"name":"l0","catchTags":["e"],"hasCatchAll":false,"delegateTarget":null,"isDelegate":false}
+getExpressionInfo(try_delegate) = {"id":54,"type":0,"name":"try_outer","catchTags":[],"hasCatchAll":true,"delegateTarget":null,"isDelegate":false}
+getExpressionInfo(try_table) = {"id":55,"type":1,"numCatches":1,"catches":[{"tag":null,"dest":"catch_all_dest","ref":false}],"hasCatchAll":true}
+getExpressionInfo(throw_ref) = {"id":58,"type":1}
