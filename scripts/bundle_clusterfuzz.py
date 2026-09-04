@@ -115,6 +115,7 @@ features = [
     '--disable-relaxed-atomics',
 ]
 
+# Use fast compression (level 1) to speed up bundling with only a modest size increase.
 with tarfile.open(output_file, 'w:gz', compresslevel=1) as tar:
     # run.py
     run = os.path.join(shared.options.binaryen_root, 'scripts', 'clusterfuzz', 'run.py')
