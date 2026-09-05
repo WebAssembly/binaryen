@@ -31,6 +31,8 @@
 #include "wasm-io.h"
 #include "wasm-type.h"
 
+#include "tools/fuzzing/fuzz-stats.h"
+
 namespace wasm {
 
 namespace {
@@ -418,6 +420,8 @@ void TranslateToFuzzReader::build() {
   if (againstJS) {
     mutateJSBoundary();
   }
+
+  FuzzStats::collect(wasm);
 }
 
 void TranslateToFuzzReader::setupMemory() {
