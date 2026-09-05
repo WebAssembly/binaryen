@@ -311,7 +311,7 @@ Result<> Interpreter::instantiate(Instance& instance) {
   return Ok{};
 }
 
-// This is a temporary convenience while stil using gTests to validate this
+// This is a temporary convenience while still using gTests to validate this
 // interpreter. Once spec tests can run, this shall be deleted.
 std::vector<Literal> Interpreter::runTest(Expression* root) {
   static std::shared_ptr<wasm::Module> dummyModule = std::make_shared<Module>();

@@ -93,7 +93,7 @@ unfuzzable = [
     'string-lifting-section.wast',
     # TODO: fuzzer support for uninhabitable imported globals
     'exact-references.wast',
-    # We do not have full suppor for these imports in all parts of the fuzzer.
+    # We do not have full support for these imports in all parts of the fuzzer.
     'instrument-branch-hints.wast',
     # Contains a subtype chain that exceeds depth limits.
     'reorder-types-real.wast',

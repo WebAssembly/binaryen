@@ -3725,10 +3725,10 @@ BINARYEN_API void RelooperAddBranchForSwitch(RelooperBlockRef from,
                                              BinaryenIndex numIndexes,
                                              BinaryenExpressionRef code);
 
-// Generate structed wasm control flow from the CFG of blocks and branches that
-// were created on this relooper instance. This returns the rendered output, and
-// also disposes of the relooper and its blocks and branches, as they are no
-// longer needed.
+// Generate structured wasm control flow from the CFG of blocks and branches
+// that were created on this relooper instance. This returns the rendered
+// output, and also disposes of the relooper and its blocks and branches, as
+// they are no longer needed.
 // @param labelHelper To render irreducible control flow, we may need a helper
 //        variable to guide us to the right target label. This value should be
 //        an index of an i32 local variable that is free for us to use.

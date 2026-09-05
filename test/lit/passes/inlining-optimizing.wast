@@ -24,7 +24,7 @@
  (func $1
   ;; $0 will be inlined into here. We will then optimize this function - but
   ;; we do so *without* optimizing $0 (as inlining-optimizing only optimizes
-  ;; where it inlines, for efficiency). As part of the optimiziations, we will
+  ;; where it inlines, for efficiency). As part of the optimizations, we will
   ;; try to precompute the cast here, which will try to look up $0. We should
   ;; not hit an assertion, rather we should skip precomputing it, the same as if
   ;; we were optimizing $1 before $0 were added to the module. (In fact, we will

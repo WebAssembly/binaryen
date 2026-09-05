@@ -722,7 +722,7 @@
   (func $move-cast-5 (param $x (ref struct))
     (drop
       ;; The first location is already the most refined cast, so nothing will be moved up.
-      ;; (But we will save the cast to a local and re-use it below.)
+      ;; (But we will save the cast to a local and reuse it below.)
       (ref.cast (ref $B)
         (local.get $x)
       )

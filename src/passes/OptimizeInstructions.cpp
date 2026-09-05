@@ -1776,7 +1776,7 @@ struct OptimizeInstructions
 
       if (auto* select = ref->dynCast<Select>()) {
         // We must check for unreachability explicitly here because a full
-        // refinalize only happens at the end. That is, the select may stil be
+        // refinalize only happens at the end. That is, the select may still be
         // reachable after we turned one child into an unreachable, and we are
         // calling getResultOfFirst which will error on unreachability.
         if (flowsOutNull(select->ifTrue) &&
@@ -2609,13 +2609,41 @@ struct OptimizeInstructions
       // traps are allowed, then we cannot remove the potentially-trapping
       // child, though.
       bool notWeaker = Type::isSubType(curr->type, child->type);
-      bool safe = !child->desc || getPassOptions().trapsNeverHappen;
-      if (notWeaker && safe) {
+      auto& options = getPassOptions();
+      auto canTrap = !options.trapsNeverHappen;
+      bool safe = !child->desc || !canTrap;
+      bool canOptimize = notWeaker && safe;
+      if (canOptimize && curr->desc && canTrap) {
+        // There is another child here, which might trap, and we need to
+        // consider that in this situation:
+        //
+        //  (outer.cast
+        //    (inner.cast (inner.ref))
+        //    (descriptor with effects)
+        //  )
+        //
+        //  =>
+        //
+        //  (outer.cast
+        //    (inner.ref)                ;; inner cast was removed
+        //    (descriptor with effects)
+        //  )
+        //
+        // It is safe to remove the inner cast, as if it trapped, the outer one
+        // would still trap. But if there is a descriptor, then we are moving
+        // the trap across the descriptor, and shouldn't cross effects there.
+        EffectAnalyzer descEffects(options, *getModule(), curr->desc);
+        ShallowEffectAnalyzer movingEffects(options, *getModule(), curr->ref);
+        if (movingEffects.orderedBefore(descEffects)) {
+          canOptimize = false;
+        }
+      }
+      if (canOptimize) {
         if (child->desc) {
           // Reorder the child's reference past its dropped descriptor if
           // necessary.
           auto* block =
-            ChildLocalizer(child, getFunction(), *getModule(), getPassOptions())
+            ChildLocalizer(child, getFunction(), *getModule(), options)
               .getChildrenReplacement();
           block->list.push_back(child->ref);
           block->type = child->ref->type;
@@ -4763,7 +4791,7 @@ private:
       }
     }
     {
-      // TODO: Add cancelation for some large constants when shrinkLevel > 0
+      // TODO: Add cancellation for some large constants when shrinkLevel > 0
       // in FinalOptimizer.
 
       // (x >> C)  << C   =>   x & -(1 << C)
@@ -4788,7 +4816,7 @@ private:
       }
     }
     {
-      // TODO: Add cancelation for some large constants when shrinkLevel > 0
+      // TODO: Add cancellation for some large constants when shrinkLevel > 0
       // in FinalOptimizer.
 
       // (x << C) >>> C   =>   x & (-1 >>> C)

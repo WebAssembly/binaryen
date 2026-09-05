@@ -189,7 +189,7 @@ TEST_F(IndirectCallEffectsTest, MapToNewType) {
   // Because the type is brand new, we do *not* treat its absence in
   // `indirectCallEffects` as 'unknown effects' like in `DestHasUnknownEffects`.
   // Instead $"new type" just gains $A's effects. We do a pointer comparison
-  // here since the effects object can be re-used unchanged.
+  // here since the effects object can be reused unchanged.
   EXPECT_THAT(merged, UnorderedElementsAre(Pair("new type", effectsA)));
 }
 

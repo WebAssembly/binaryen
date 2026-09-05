@@ -315,7 +315,7 @@ struct EarlyCastFinder
     // (ref.cast $B (ref.cast $B (local.get $x)))
     //
     // We initially choose to move the inner ref.cast $B. When we consider the
-    // outer ref.cast $B, we can see that it has the same type as tge existing
+    // outer ref.cast $B, we can see that it has the same type as the existing
     // ref.cast $B, so we ignore it.
     //
     // Case 4:

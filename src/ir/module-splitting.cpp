@@ -156,7 +156,7 @@ TableSlotManager::TableSlotManager(
   Module& module, const std::vector<std::unique_ptr<Module>>& secondaries)
   : module(module), secondaries(secondaries) {
   // If possible, just create a new table to manage all primary-to-secondary
-  // calls lazily. Do not re-use slots for functions that will already be in
+  // calls lazily. Do not reuse slots for functions that will already be in
   // existing tables, since that is not correct in the face of table mutations.
   // However, do not do this for emscripten; its loader code (and dynamic
   // loading in particular) do not support this yet.

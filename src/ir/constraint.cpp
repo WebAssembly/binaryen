@@ -255,6 +255,66 @@ Result provesConstantPair(Abstract::Op aOp,
   return Unknown;
 }
 
+// Evaluate whether a => b, where a and b are operations on identical terms.
+Result provesTermEqualPair(Abstract::Op aOp, Abstract::Op bOp) {
+  using namespace Abstract;
+
+  // Trivial cases where aOp == bOp or aOp == !bOp are taken care of elsewhere.
+  assert(aOp != bOp && aOp != Abstract::negateRelational(bOp));
+
+  switch (aOp) {
+    case Eq:
+      // == proves >= etc. true, and > (without =) false
+      if (bOp == LeU || bOp == LeS || bOp == GeU || bOp == GeS) {
+        return True;
+      }
+      if (bOp == LtU || bOp == LtS || bOp == GtU || bOp == GtS) {
+        return False;
+      }
+      break;
+    case LtS:
+      // < proves <=, != true and ==, > false
+      if (bOp == LeS || bOp == Ne) {
+        return True;
+      }
+      if (bOp == Eq || bOp == GtS) {
+        return False;
+      }
+      break;
+    case GtS:
+      // Ditto, with G instead of L.
+      if (bOp == GeS || bOp == Ne) {
+        return True;
+      }
+      if (bOp == Eq || bOp == LtS) {
+        return False;
+      }
+      break;
+    case LtU:
+      // Ditto, with unsigned.
+      if (bOp == LeU || bOp == Ne) {
+        return True;
+      }
+      if (bOp == Eq || bOp == GtU) {
+        return False;
+      }
+      break;
+    case GtU:
+      // Ditto, with G instead of L.
+      if (bOp == GeU || bOp == Ne) {
+        return True;
+      }
+      if (bOp == Eq || bOp == LtU) {
+        return False;
+      }
+      break;
+    default: {
+    }
+  }
+
+  return Unknown;
+}
+
 // Core comparison of two constraints: whether a => b
 Result provesPair(const Constraint& a, const Constraint& b) {
   // A thing always implies itself.
@@ -307,6 +367,10 @@ Result provesPair(const Constraint& a, const Constraint& b) {
         }
       }
     }
+  }
+
+  if (a.term == b.term) {
+    return provesTermEqualPair(a.op, b.op);
   }
 
   return Unknown;
