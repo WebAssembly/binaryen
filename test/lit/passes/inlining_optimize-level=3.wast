@@ -567,7 +567,7 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $middle3 (param $x i32) (param $y i32) (param $z i32)
-  ;; Not trivial, becaues of the eqz.
+  ;; Not trivial, because of the eqz.
   (call $top
    (local.get $z)
    (i32.eqz

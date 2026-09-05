@@ -2370,6 +2370,11 @@ public:
     return Literal(int32_t{0}); // none woken up
   }
 
+  Flow visitPublish(Publish* curr) {
+    VISIT(ref, curr->ref)
+    return ref;
+  }
+
   // Arbitrary deterministic limit on size. If we need to allocate a Literals
   // vector that takes around 1-2GB of memory then we are likely to hit memory
   // limits on 32-bit machines, and in particular on wasm32 VMs that do not
@@ -3111,6 +3116,7 @@ public:
   Flow visitWaitqueueNotify(WaitqueueNotify* curr) {
     return Flow(NONCONSTANT_FLOW);
   }
+  Flow visitPublish(Publish* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitSIMDLoad(SIMDLoad* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitSIMDLoadSplat(SIMDLoad* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitSIMDLoadExtend(SIMDLoad* curr) { return Flow(NONCONSTANT_FLOW); }

@@ -277,7 +277,7 @@
     (func 
       (ref.null $ct)   
       (i32.const 0)
-      (resume_throw $ct $exn) ;; exception tag does not take paramter
+      (resume_throw $ct $exn) ;; exception tag does not take parameter
       (unreachable)))
   "type mismatch")
 
