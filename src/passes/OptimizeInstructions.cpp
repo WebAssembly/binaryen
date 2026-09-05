@@ -1461,6 +1461,65 @@ struct OptimizeInstructions
     }
   }
 
+  void visitResume(Resume* curr) {
+    skipNonNullCast(curr->cont, curr);
+    if (trapOnNull(curr, curr->cont)) {
+      return;
+    }
+    if (curr->type == Type::unreachable) {
+      return;
+    }
+
+    // If this resume operates on a freshly-created continuation of an exact
+    // function that is known never to suspend, we can turn the resumption into
+    // a direct call, avoiding the continuation allocation and handler overhead.
+
+    // Continuations are single-shot, so resuming a continuation that has
+    // already been consumed will trap. If traps are assumed never to happen, we
+    // can assume this continuation was not consumed on another path and look
+    // through tees and conditional branches. Otherwise, avoid looking through
+    // them to ensure the continuation cannot be consumed elsewhere.
+    auto behavior = getPassOptions().trapsNeverHappen
+                      ? Properties::FallthroughBehavior::AllowTeeBrIf
+                      : Properties::FallthroughBehavior::NoTeeBrIf;
+
+    auto* contExpr = Properties::getFallthrough(
+      curr->cont, getPassOptions(), *getModule(), behavior);
+    auto* contNew = contExpr->dynCast<ContNew>();
+    if (!contNew) {
+      return;
+    }
+    if (contNew->func->type == Type::unreachable) {
+      return;
+    }
+
+    auto* funcExpr = Properties::getFallthrough(
+      contNew->func, getPassOptions(), *getModule(), behavior);
+    auto* refFunc = funcExpr->dynCast<RefFunc>();
+    if (!refFunc) {
+      return;
+    }
+
+    auto* target = getModule()->getFunctionOrNull(refFunc->func);
+    if (!target || target->imported()) {
+      return;
+    }
+
+    if (!target->effects || target->effects->suspends) {
+      return;
+    }
+
+    auto* block =
+      ChildLocalizer(curr, getFunction(), *getModule(), getPassOptions())
+        .getChildrenReplacement();
+    Builder builder(*getModule());
+    Type results = target->getResults();
+    block->list.push_back(
+      builder.makeCall(target->name, curr->operands, results));
+    block->type = results;
+    replaceCurrent(block);
+  }
+
   // Note on removing casts (which the following utilities, skipNonNullCast and
   // skipCast do): removing a cast is potentially dangerous, as it removes
   // information from the IR. For example:
