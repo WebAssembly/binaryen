@@ -4182,6 +4182,9 @@ Result<> WasmBinaryReader::readInst() {
         case BinaryConsts::WaitqueueNew: {
           return builder.makeWaitqueueNew();
         }
+        case BinaryConsts::Publish: {
+          return builder.makePublish();
+        }
       }
       return Err{"unknown atomic operation " + std::to_string(op)};
     }

@@ -1056,6 +1056,11 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
     note(&curr->count, Type(Type::BasicType::i32));
   }
 
+  void visitPublish(Publish* curr) {
+    // Polymorphic over heap types.
+    note(&curr->ref, VarRef{Nullable, VarHeapType{0u}});
+  }
+
   void visitArrayNew(ArrayNew* curr) {
     if (!curr->isWithDefault()) {
       if (!curr->type.isRef()) {

@@ -2408,6 +2408,7 @@ struct PrintExpressionContents
   void visitWaitqueueNotify(WaitqueueNotify* curr) {
     printMedium(o, "waitqueue.notify");
   }
+  void visitPublish(Publish* curr) { printMedium(o, "publish"); }
   void visitArrayNew(ArrayNew* curr) {
     printMedium(o, "array.new");
     if (curr->isWithDefault()) {
