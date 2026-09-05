@@ -326,6 +326,10 @@ void WasmBinaryWriter::writeTypes() {
         o << uint8_t(BinaryConsts::EncodedType::Cont);
         writeHeapType(type.getContinuation().type, Inexact);
         break;
+      case HeapTypeKind::Fiber:
+        o << uint8_t(BinaryConsts::EncodedType::Fiber);
+        writeHeapType(type.getFiber().type, Inexact);
+        break;
       case HeapTypeKind::Basic:
         WASM_UNREACHABLE("unexpected kind");
     }
@@ -1584,6 +1588,8 @@ void WasmBinaryWriter::writeFeaturesSection() {
         return BinaryConsts::CustomSections::MultiMemoryFeature;
       case FeatureSet::StackSwitching:
         return BinaryConsts::CustomSections::StackSwitchingFeature;
+      case FeatureSet::ReifiedFibers:
+        return BinaryConsts::CustomSections::ReifiedFibersFeature;
       case FeatureSet::SharedEverything:
         return BinaryConsts::CustomSections::SharedEverythingFeature;
       case FeatureSet::FP16:
@@ -2015,6 +2021,12 @@ void WasmBinaryWriter::writeType(Type type) {
         case HeapType::nocont:
           o << S32LEB(BinaryConsts::EncodedType::nullcontref);
           return;
+        case HeapType::fiber:
+          o << S32LEB(BinaryConsts::EncodedType::fiberref);
+          return;
+        case HeapType::nofiber:
+          o << S32LEB(BinaryConsts::EncodedType::nullfiberref);
+          return;
         case HeapType::waitqueue:
           o << S32LEB(BinaryConsts::EncodedHeapType::waitqueue);
           return;
@@ -2122,6 +2134,12 @@ void WasmBinaryWriter::writeHeapType(HeapType type, Exactness exactness) {
       break;
     case HeapType::nocont:
       ret = BinaryConsts::EncodedHeapType::nocont;
+      break;
+    case HeapType::fiber:
+      ret = BinaryConsts::EncodedHeapType::fiber;
+      break;
+    case HeapType::nofiber:
+      ret = BinaryConsts::EncodedHeapType::nofiber;
       break;
     case HeapType::waitqueue:
       ret = BinaryConsts::EncodedHeapType::waitqueue;
@@ -2512,6 +2530,9 @@ bool WasmBinaryReader::getBasicType(int32_t code, Type& out) {
     case BinaryConsts::EncodedType::contref:
       out = Type(HeapType::cont, Nullable);
       return true;
+    case BinaryConsts::EncodedType::fiberref:
+      out = Type(HeapType::fiber, Nullable);
+      return true;
     case BinaryConsts::EncodedType::externref:
       out = Type(HeapType::ext, Nullable);
       return true;
@@ -2551,6 +2572,9 @@ bool WasmBinaryReader::getBasicType(int32_t code, Type& out) {
     case BinaryConsts::EncodedType::nullcontref:
       out = Type(HeapType::nocont, Nullable);
       return true;
+    case BinaryConsts::EncodedType::nullfiberref:
+      out = Type(HeapType::nofiber, Nullable);
+      return true;
     default:
       return false;
   }
@@ -2563,6 +2587,9 @@ bool WasmBinaryReader::getBasicHeapType(int64_t code, HeapType& out) {
       return true;
     case BinaryConsts::EncodedHeapType::cont:
       out = HeapType::cont;
+      return true;
+    case BinaryConsts::EncodedHeapType::fiber:
+      out = HeapType::fiber;
       return true;
     case BinaryConsts::EncodedHeapType::ext:
       out = HeapType::ext;
@@ -2602,6 +2629,9 @@ bool WasmBinaryReader::getBasicHeapType(int64_t code, HeapType& out) {
       return true;
     case BinaryConsts::EncodedHeapType::nocont:
       out = HeapType::nocont;
+      return true;
+    case BinaryConsts::EncodedHeapType::nofiber:
+      out = HeapType::nofiber;
       return true;
     case BinaryConsts::EncodedHeapType::waitqueue:
       out = HeapType::waitqueue;
@@ -2872,6 +2902,17 @@ void WasmBinaryReader::readTypes() {
     return Continuation(ht);
   };
 
+  auto readFiberDef = [&]() {
+    auto [ht, exactness] = readHeapType();
+    if (exactness != Inexact) {
+      throw ParseException("invalid exact type in fiber definition");
+    }
+    if (!ht.isSignature()) {
+      throw ParseException("fiber types must be built from function types");
+    }
+    return Fiber(ht);
+  };
+
   auto readMutability = [&]() {
     switch (getU32LEB()) {
       case 0:
@@ -2967,6 +3008,8 @@ void WasmBinaryReader::readTypes() {
       builder[i] = readSignatureDef();
     } else if (form == BinaryConsts::EncodedType::Cont) {
       builder[i] = readContinuationDef();
+    } else if (form == BinaryConsts::EncodedType::Fiber) {
+      builder[i] = readFiberDef();
     } else if (form == BinaryConsts::EncodedType::Struct) {
       builder[i] = readStructDef();
     } else if (form == BinaryConsts::EncodedType::Array) {
@@ -3731,6 +3774,20 @@ Result<> WasmBinaryReader::readInst() {
       auto type = getIndexedHeapType();
       auto tag = getTagName(getU32LEB());
       return builder.makeStackSwitch(type, tag);
+    }
+    case BinaryConsts::FiberNew: {
+      auto type = getIndexedHeapType();
+      auto func = getFunctionName(getU32LEB());
+      return builder.makeFiberNew(type, func);
+    }
+    case BinaryConsts::FiberResume: {
+      auto type = getIndexedHeapType();
+      auto label = getU32LEB();
+      return builder.makeFiberResume(type, label);
+    }
+    case BinaryConsts::FiberSuspend: {
+      auto type = getIndexedHeapType();
+      return builder.makeFiberSuspend(type);
     }
 
 #define BINARY_INT(code)                                                       \
@@ -5623,6 +5680,8 @@ void WasmBinaryReader::readFeatures(size_t sectionPos, size_t payloadLen) {
       feature = FeatureSet::MultiMemory;
     } else if (name == BinaryConsts::CustomSections::StackSwitchingFeature) {
       feature = FeatureSet::StackSwitching;
+    } else if (name == BinaryConsts::CustomSections::ReifiedFibersFeature) {
+      feature = FeatureSet::ReifiedFibers;
     } else if (name == BinaryConsts::CustomSections::SharedEverythingFeature) {
       feature = FeatureSet::SharedEverything;
     } else if (name == BinaryConsts::CustomSections::FP16Feature) {

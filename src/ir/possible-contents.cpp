@@ -1442,6 +1442,9 @@ struct InfoCollector
     // TODO: optimize when possible
     addRoot(curr);
   }
+  void visitFiberNew(FiberNew* curr) { WASM_UNREACHABLE("unimp"); }
+  void visitFiberResume(FiberResume* curr) { WASM_UNREACHABLE("unimp"); }
+  void visitFiberSuspend(FiberSuspend* curr) { WASM_UNREACHABLE("unimp"); }
 
   void visitFunction(Function* func) {
     // Functions with a result can flow a value out from their body.

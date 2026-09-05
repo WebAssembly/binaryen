@@ -66,6 +66,7 @@ struct TypePrinter {
   std::ostream& print(const Field& field);
   std::ostream& print(const Signature& sig);
   std::ostream& print(const Continuation& cont);
+  std::ostream& print(const Fiber& fiber);
   std::ostream& print(const Struct& struct_,
                       const std::unordered_map<Index, Name>& fieldNames);
   std::ostream& print(const Array& array);
@@ -92,6 +93,7 @@ struct RecGroupHasher {
   size_t hash(const Field& field) const;
   size_t hash(const Signature& sig) const;
   size_t hash(const Continuation& sig) const;
+  size_t hash(const Fiber& fiber) const;
   size_t hash(const Struct& struct_) const;
   size_t hash(const Array& array) const;
 };
@@ -118,6 +120,7 @@ struct RecGroupEquator {
   bool eq(const Field& a, const Field& b) const;
   bool eq(const Signature& a, const Signature& b) const;
   bool eq(const Continuation& a, const Continuation& b) const;
+  bool eq(const Fiber& a, const Fiber& b) const;
   bool eq(const Struct& a, const Struct& b) const;
   bool eq(const Array& a, const Array& b) const;
 };
@@ -220,6 +223,9 @@ protected:
       case HeapTypeKind::Cont:
         taskList.push_back(Task::scan(&info->continuation.type));
         break;
+      case HeapTypeKind::Fiber:
+        taskList.push_back(Task::scan(&info->fiber.type));
+        break;
       case HeapTypeKind::Struct: {
         auto& fields = info->struct_.fields;
         for (auto field = fields.rbegin(); field != fields.rend(); ++field) {
@@ -310,6 +316,8 @@ HeapType::BasicHeapType getBasicHeapSupertype(HeapType type) {
       return HeapTypes::func.getBasic(info->share);
     case HeapTypeKind::Cont:
       return HeapTypes::cont.getBasic(info->share);
+    case HeapTypeKind::Fiber:
+      return HeapTypes::fiber.getBasic(info->share);
     case HeapTypeKind::Struct:
       return HeapTypes::struct_.getBasic(info->share);
     case HeapTypeKind::Array:
@@ -345,6 +353,7 @@ std::optional<HeapType> getBasicHeapTypeLUB(HeapType::BasicHeapType a,
       break;
     case HeapType::func:
     case HeapType::cont:
+    case HeapType::fiber:
     case HeapType::exn:
       WASM_UNREACHABLE("Unexpected non-bottom type in same hierarchy");
     case HeapType::any:
@@ -366,6 +375,7 @@ std::optional<HeapType> getBasicHeapTypeLUB(HeapType::BasicHeapType a,
     case HeapType::noext:
     case HeapType::nofunc:
     case HeapType::nocont:
+    case HeapType::nofiber:
     case HeapType::noexn:
     case HeapType::nowaitqueue:
       // Bottom types already handled.
@@ -384,6 +394,9 @@ HeapTypeInfo::~HeapTypeInfo() {
       return;
     case HeapTypeKind::Cont:
       continuation.~Continuation();
+      return;
+    case HeapTypeKind::Fiber:
+      fiber.~Fiber();
       return;
     case HeapTypeKind::Struct:
       struct_.~Struct();
@@ -819,6 +832,11 @@ HeapType::HeapType(Continuation continuation) {
     globalRecGroupStore.insert(std::make_unique<HeapTypeInfo>(continuation)));
 }
 
+HeapType::HeapType(Fiber fiber) {
+  new (this)
+    HeapType(globalRecGroupStore.insert(std::make_unique<HeapTypeInfo>(fiber)));
+}
+
 HeapType::HeapType(const Struct& struct_) {
   new (this) HeapType(
     globalRecGroupStore.insert(std::make_unique<HeapTypeInfo>(struct_)));
@@ -836,7 +854,8 @@ HeapType::HeapType(Array array) {
 
 bool HeapType::isCastable() {
   return !isContinuation() && !isMaybeShared(HeapType::cont) &&
-         !isMaybeShared(HeapType::nocont);
+         !isMaybeShared(HeapType::nocont) && !isFiber() &&
+         !isMaybeShared(HeapType::fiber) && !isMaybeShared(HeapType::nofiber);
 }
 
 Signature HeapType::getSignature() const {
@@ -847,6 +866,11 @@ Signature HeapType::getSignature() const {
 Continuation HeapType::getContinuation() const {
   assert(isContinuation());
   return getHeapTypeInfo(*this)->continuation;
+}
+
+Fiber HeapType::getFiber() const {
+  assert(isFiber());
+  return getHeapTypeInfo(*this)->fiber;
 }
 
 const Struct& HeapType::getStruct() const {
@@ -887,6 +911,8 @@ std::optional<HeapType> HeapType::getSuperType() const {
       case nofunc:
       case cont:
       case nocont:
+      case fiber:
+      case nofiber:
       case any:
       case none:
       case exn:
@@ -911,6 +937,8 @@ std::optional<HeapType> HeapType::getSuperType() const {
       return HeapType(func).getBasic(share);
     case HeapTypeKind::Cont:
       return HeapType(cont).getBasic(share);
+    case HeapTypeKind::Fiber:
+      return HeapType(fiber).getBasic(share);
     case HeapTypeKind::Struct:
       return HeapType(struct_).getBasic(share);
     case HeapTypeKind::Array:
@@ -958,6 +986,7 @@ size_t HeapType::getDepth() const {
         case HeapType::ext:
         case HeapType::func:
         case HeapType::cont:
+        case HeapType::fiber:
         case HeapType::any:
         case HeapType::exn:
         case HeapType::waitqueue:
@@ -974,6 +1003,7 @@ size_t HeapType::getDepth() const {
         case HeapType::none:
         case HeapType::nofunc:
         case HeapType::nocont:
+        case HeapType::nofiber:
         case HeapType::noext:
         case HeapType::noexn:
         case HeapType::nowaitqueue:
@@ -983,6 +1013,7 @@ size_t HeapType::getDepth() const {
       break;
     case HeapTypeKind::Func:
     case HeapTypeKind::Cont:
+    case HeapTypeKind::Fiber:
       ++depth;
       break;
     case HeapTypeKind::Struct:
@@ -1006,6 +1037,8 @@ HeapType::BasicHeapType HeapType::getUnsharedBottom() const {
         return nofunc;
       case cont:
         return nocont;
+      case fiber:
+        return nofiber;
       case exn:
         return noexn;
       case any:
@@ -1025,6 +1058,8 @@ HeapType::BasicHeapType HeapType::getUnsharedBottom() const {
         return nofunc;
       case nocont:
         return nocont;
+      case nofiber:
+        return nofiber;
       case noexn:
         return noexn;
     }
@@ -1035,6 +1070,8 @@ HeapType::BasicHeapType HeapType::getUnsharedBottom() const {
       return nofunc;
     case HeapTypeKind::Cont:
       return nocont;
+    case HeapTypeKind::Fiber:
+      return nofiber;
     case HeapTypeKind::Struct:
     case HeapTypeKind::Array:
       return none;
@@ -1052,6 +1089,8 @@ HeapType::BasicHeapType HeapType::getUnsharedTop() const {
       return func;
     case nocont:
       return cont;
+    case nofiber:
+      return fiber;
     case noext:
       return ext;
     case noexn:
@@ -1061,6 +1100,7 @@ HeapType::BasicHeapType HeapType::getUnsharedTop() const {
     case ext:
     case func:
     case cont:
+    case fiber:
     case any:
     case eq:
     case i31:
@@ -1091,6 +1131,8 @@ bool HeapType::isSubType(HeapType a, HeapType b) {
         return aTop == HeapType::func;
       case HeapType::cont:
         return aTop == HeapType::cont;
+      case HeapType::fiber:
+        return aTop == HeapType::fiber;
       case HeapType::exn:
         return aTop == HeapType::exn;
       case HeapType::any:
@@ -1113,6 +1155,7 @@ bool HeapType::isSubType(HeapType a, HeapType b) {
       case HeapType::noext:
       case HeapType::nofunc:
       case HeapType::nocont:
+      case HeapType::nofiber:
       case HeapType::noexn:
       case HeapType::nowaitqueue:
         return false;
@@ -1161,6 +1204,7 @@ std::vector<Type> HeapType::getTypeChildren() const {
     case HeapTypeKind::Array:
       return {getArray().element.type};
     case HeapTypeKind::Cont:
+    case HeapTypeKind::Fiber:
       return {};
   }
   WASM_UNREACHABLE("unexpected kind");
@@ -1310,6 +1354,10 @@ FeatureSet HeapType::getFeatures() const {
           case HeapType::nocont:
             feats |= FeatureSet::StackSwitching;
             return;
+          case HeapType::fiber:
+          case HeapType::nofiber:
+            feats |= FeatureSet::ReifiedFibers;
+            return;
         }
       }
 
@@ -1339,6 +1387,8 @@ FeatureSet HeapType::getFeatures() const {
         }
       } else if (heapType.isContinuation()) {
         feats |= FeatureSet::StackSwitching;
+      } else if (heapType.isFiber()) {
+        feats |= FeatureSet::ReifiedFibers;
       }
 
       // In addition, scan their non-ref children, to add dependencies on
@@ -1400,6 +1450,9 @@ TypeNames DefaultTypeNameGenerator::getNames(HeapType type) {
       case HeapTypeKind::Cont:
         stream << "cont." << contCount++;
         break;
+      case HeapTypeKind::Fiber:
+        stream << "fiber." << fiberCount++;
+        break;
       case HeapTypeKind::Basic:
         WASM_UNREACHABLE("unexpected kind");
     }
@@ -1417,6 +1470,7 @@ std::string Type::toString() const { return genericToString(*this); }
 std::string HeapType::toString() const { return genericToString(*this); }
 std::string Signature::toString() const { return genericToString(*this); }
 std::string Continuation::toString() const { return genericToString(*this); }
+std::string Fiber::toString() const { return genericToString(*this); }
 std::string Struct::toString() const { return genericToString(*this); }
 std::string Array::toString() const { return genericToString(*this); }
 
@@ -1440,6 +1494,9 @@ std::ostream& operator<<(std::ostream& os, Signature sig) {
 }
 std::ostream& operator<<(std::ostream& os, Continuation cont) {
   return TypePrinter(os).print(cont);
+}
+std::ostream& operator<<(std::ostream& os, Fiber fiber) {
+  return TypePrinter(os).print(fiber);
 }
 std::ostream& operator<<(std::ostream& os, Field field) {
   return TypePrinter(os).print(field);
@@ -1580,6 +1637,9 @@ std::ostream& TypePrinter::print(Type type) {
         case HeapType::cont:
           os << "contref";
           break;
+        case HeapType::fiber:
+          os << "fiberref";
+          break;
         case HeapType::any:
           os << "anyref";
           break;
@@ -1615,6 +1675,9 @@ std::ostream& TypePrinter::print(Type type) {
           break;
         case HeapType::nocont:
           os << "nullcontref";
+          break;
+        case HeapType::nofiber:
+          os << "nullfiberref";
           break;
         case HeapType::noexn:
           os << "nullexnref";
@@ -1661,6 +1724,9 @@ std::ostream& TypePrinter::print(HeapType type) {
       case HeapType::cont:
         os << "cont";
         break;
+      case HeapType::fiber:
+        os << "fiber";
+        break;
       case HeapType::any:
         os << "any";
         break;
@@ -1696,6 +1762,9 @@ std::ostream& TypePrinter::print(HeapType type) {
         break;
       case HeapType::nocont:
         os << "nocont";
+        break;
+      case HeapType::nofiber:
+        os << "nofiber";
         break;
       case HeapType::noexn:
         os << "noexn";
@@ -1757,6 +1826,9 @@ std::ostream& TypePrinter::print(HeapType type) {
       break;
     case HeapTypeKind::Cont:
       print(type.getContinuation());
+      break;
+    case HeapTypeKind::Fiber:
+      print(type.getFiber());
       break;
     case HeapTypeKind::Basic:
       WASM_UNREACHABLE("unexpected kind");
@@ -1826,6 +1898,12 @@ std::ostream& TypePrinter::print(const Signature& sig) {
 std::ostream& TypePrinter::print(const Continuation& continuation) {
   os << "(cont ";
   printHeapTypeName(continuation.type);
+  return os << ')';
+}
+
+std::ostream& TypePrinter::print(const Fiber& fiber) {
+  os << "(fiber ";
+  printHeapTypeName(fiber.type);
   return os << ')';
 }
 
@@ -1929,6 +2007,9 @@ size_t RecGroupHasher::hash(const HeapTypeInfo& info) const {
     case HeapTypeKind::Cont:
       hash_combine(digest, hash(info.continuation));
       return digest;
+    case HeapTypeKind::Fiber:
+      hash_combine(digest, hash(info.fiber));
+      return digest;
     case HeapTypeKind::Struct:
       hash_combine(digest, hash(info.struct_));
       return digest;
@@ -1966,6 +2047,14 @@ size_t RecGroupHasher::hash(const Continuation& continuation) const {
   // We throw in a magic constant to distinguish (cont $foo) from $foo
   size_t magic = 0xc0117;
   size_t digest = hash(continuation.type);
+  rehash(digest, magic);
+  return digest;
+}
+
+size_t RecGroupHasher::hash(const Fiber& fiber) const {
+  // We throw in a magic constant to distinguish (fiber $sig) from other types
+  size_t magic = 0xf1be7;
+  size_t digest = hash(fiber.type);
   rehash(digest, magic);
   return digest;
 }
@@ -2084,6 +2173,8 @@ bool RecGroupEquator::eq(const HeapTypeInfo& a, const HeapTypeInfo& b) const {
       return eq(a.signature, b.signature);
     case HeapTypeKind::Cont:
       return eq(a.continuation, b.continuation);
+    case HeapTypeKind::Fiber:
+      return eq(a.fiber, b.fiber);
     case HeapTypeKind::Struct:
       return eq(a.struct_, b.struct_);
     case HeapTypeKind::Array:
@@ -2111,6 +2202,10 @@ bool RecGroupEquator::eq(const Signature& a, const Signature& b) const {
 }
 
 bool RecGroupEquator::eq(const Continuation& a, const Continuation& b) const {
+  return eq(a.type, b.type);
+}
+
+bool RecGroupEquator::eq(const Fiber& a, const Fiber& b) const {
   return eq(a.type, b.type);
 }
 
@@ -2155,6 +2250,9 @@ struct TypeBuilder::Impl {
           break;
         case HeapTypeKind::Cont:
           info->continuation = hti.continuation;
+          break;
+        case HeapTypeKind::Fiber:
+          info->fiber = hti.fiber;
           break;
         case HeapTypeKind::Struct:
           info->struct_ = std::move(hti.struct_);
@@ -2214,6 +2312,11 @@ void TypeBuilder::setHeapType(size_t i, Signature signature) {
 void TypeBuilder::setHeapType(size_t i, Continuation continuation) {
   assert(i < size() && "index out of bounds");
   impl->entries[i].set(continuation);
+}
+
+void TypeBuilder::setHeapType(size_t i, Fiber fiber) {
+  assert(i < size() && "index out of bounds");
+  impl->entries[i].set(fiber);
 }
 
 void TypeBuilder::setHeapType(size_t i, const Struct& struct_) {
@@ -2316,6 +2419,10 @@ bool isValidSupertype(const Continuation& a, const Continuation& b) {
   return HeapType::isSubType(a.type, b.type);
 }
 
+bool isValidSupertype(const Fiber& a, const Fiber& b) {
+  return HeapType::isSubType(a.type, b.type);
+}
+
 bool isValidSupertype(const Struct& a, const Struct& b) {
   // There may be more fields on the left, but not fewer.
   if (a.fields.size() < b.fields.size()) {
@@ -2374,6 +2481,8 @@ bool isValidSupertype(const HeapTypeInfo& sub, const HeapTypeInfo& super) {
       return isValidSupertype(sub.signature, super.signature);
     case HeapTypeKind::Cont:
       return isValidSupertype(sub.continuation, super.continuation);
+    case HeapTypeKind::Fiber:
+      return isValidSupertype(sub.fiber, super.fiber);
     case HeapTypeKind::Struct:
       return isValidSupertype(sub.struct_, super.struct_);
     case HeapTypeKind::Array:
@@ -2445,6 +2554,17 @@ validateContinuation(Continuation cont, FeatureSet feats, bool isShared) {
 }
 
 std::optional<TypeBuilder::ErrorReason>
+validateFiber(Fiber fiber, FeatureSet feats, bool isShared) {
+  if (!fiber.type.isSignature()) {
+    return TypeBuilder::ErrorReasonKind::InvalidFuncType;
+  }
+  if (isShared != fiber.type.isShared()) {
+    return TypeBuilder::ErrorReasonKind::InvalidFuncType;
+  }
+  return std::nullopt;
+}
+
+std::optional<TypeBuilder::ErrorReason>
 validateTypeInfo(HeapTypeInfo& info,
                  std::unordered_set<HeapType>& seenTypes,
                  FeatureSet features) {
@@ -2502,6 +2622,9 @@ validateTypeInfo(HeapTypeInfo& info,
       break;
     case HeapTypeKind::Cont:
       return validateContinuation(info.continuation, features, isShared);
+      break;
+    case HeapTypeKind::Fiber:
+      return validateFiber(info.fiber, features, isShared);
       break;
     case HeapTypeKind::Struct:
       return validateStruct(info.struct_, features, isShared);
@@ -2848,6 +2971,13 @@ hash<wasm::Continuation>::operator()(const wasm::Continuation& cont) const {
   // We throw in a magic constant to distinguish (cont $foo) from $foo
   auto magic = 0xc0117;
   auto digest = wasm::hash(cont.type);
+  wasm::rehash(digest, magic);
+  return digest;
+}
+
+size_t hash<wasm::Fiber>::operator()(const wasm::Fiber& fiber) const {
+  auto magic = 0xf1be7;
+  auto digest = wasm::hash(fiber.type);
   wasm::rehash(digest, magic);
   return digest;
 }

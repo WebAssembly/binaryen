@@ -251,6 +251,12 @@ GlobalTypeRewriter::rebuildTypes(std::vector<HeapType> types) {
         typeBuilder[i] = newCont;
         break;
       }
+      case HeapTypeKind::Fiber: {
+        auto newFiber = HeapType(typeBuilder[i]).getFiber();
+        modifyFiber(type, newFiber);
+        typeBuilder[i] = newFiber;
+        break;
+      }
       case HeapTypeKind::Basic:
         WASM_UNREACHABLE("unexpected kind");
     }

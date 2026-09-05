@@ -71,6 +71,7 @@ const char* ExtendedConstFeature = "extended-const";
 const char* StringsFeature = "strings";
 const char* MultiMemoryFeature = "multimemory";
 const char* StackSwitchingFeature = "stack-switching";
+const char* ReifiedFibersFeature = "reified-fibers";
 const char* SharedEverythingFeature = "shared-everything";
 const char* FP16Feature = "fp16";
 const char* BulkMemoryOptFeature = "bulk-memory-opt";
@@ -1684,6 +1685,48 @@ void StackSwitch::finalize() {
   Type cont = params[params.size() - 1];
   assert(cont.isContinuation());
   type = cont.getHeapType().getContinuation().type.getSignature().params;
+}
+
+void FiberNew::finalize() { handleUnreachableOperands(this); }
+
+void FiberResume::finalize() {
+  if (fiber->type == Type::unreachable) {
+    type = Type::unreachable;
+    return;
+  }
+  if (handleUnreachableOperands(this)) {
+    return;
+  }
+  if (fiber->type.isNull()) {
+    type = getMaximallyUninhabitable(type);
+    return;
+  }
+  if (fiber->type.isFiber()) {
+    const Signature& sig =
+      fiber->type.getHeapType().getFiber().type.getSignature();
+    type = sig.results;
+    return;
+  }
+  type = Type::none;
+}
+
+void FiberSuspend::finalize() {
+  if (fiber->type == Type::unreachable) {
+    type = Type::unreachable;
+    return;
+  }
+  if (handleUnreachableOperands(this)) {
+    return;
+  }
+  if (fiber->type.isNull()) {
+    type = getMaximallyUninhabitable(type);
+    return;
+  }
+  if (fiber->type.isFiber()) {
+    const Signature& sig =
+      fiber->type.getHeapType().getFiber().type.getSignature();
+    type = sig.params;
+  }
 }
 
 size_t Function::getNumParams() { return getParams().size(); }

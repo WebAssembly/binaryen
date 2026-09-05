@@ -581,6 +581,10 @@ void TranslateToFuzzReader::setupHeapTypes() {
         interestingHeapSubTypes[cont].push_back(type);
         sigConts[type.getContinuation().type].push_back(type);
         break;
+      case HeapTypeKind::Fiber:
+        interestingHeapSubTypes[HeapTypes::fiber.getBasic(share)].push_back(
+          type);
+        break;
       case HeapTypeKind::Basic:
         WASM_UNREACHABLE("unexpected kind");
     }
@@ -784,7 +788,8 @@ void TranslateToFuzzReader::setupGlobals() {
         assert(global->init->is<TupleMake>());
       }
       if (!FindAll<RefAs>(global->init).list.empty() ||
-          !FindAll<ContNew>(global->init).list.empty()) {
+          !FindAll<ContNew>(global->init).list.empty() ||
+          !FindAll<FiberNew>(global->init).list.empty()) {
         // When creating this initial value we ended up emitting a RefAs, which
         // means we had to stop in the middle of an overly-nested struct or
         // array, which we can break out of using ref.as_non_null of a nullable
@@ -4364,6 +4369,7 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
     case HeapType::noext:
     case HeapType::nofunc:
     case HeapType::nocont:
+    case HeapType::nofiber:
     case HeapType::noexn: {
       auto null = builder.makeRefNull(heapType.getBasic(share));
       if (!type.isNullable()) {
@@ -4375,6 +4381,9 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
     case HeapType::waitqueue:
     case HeapType::nowaitqueue: {
       WASM_UNREACHABLE("waitqueue is unimplemented in the fuzzer");
+    }
+    case HeapType::fiber: {
+      WASM_UNREACHABLE("reified fibers is unimplemented in the fuzzer");
     }
   }
   WASM_UNREACHABLE("invalid basic ref type");
@@ -4478,6 +4487,9 @@ Expression* TranslateToFuzzReader::makeCompoundRef(Type type) {
     case HeapTypeKind::Cont: {
       auto funcType = heapType.getContinuation().type;
       return builder.makeContNew(heapType, makeTrappingRefUse(funcType));
+    }
+    case HeapTypeKind::Fiber: {
+      WASM_UNREACHABLE("reified fibers is unimplemented in the fuzzer");
     }
     case HeapTypeKind::Basic:
       break;
@@ -6617,6 +6629,8 @@ HeapType TranslateToFuzzReader::getSubType(HeapType type) {
           .getBasic(share);
       case HeapType::cont:
         return pick(HeapTypes::cont, HeapTypes::nocont).getBasic(share);
+      case HeapType::fiber:
+        return pick(HeapTypes::fiber, HeapTypes::nofiber).getBasic(share);
       case HeapType::ext: {
         auto options = FeatureOptions<HeapType>()
                          .add(HeapTypes::ext)
@@ -6661,6 +6675,7 @@ HeapType TranslateToFuzzReader::getSubType(HeapType type) {
       case HeapType::noext:
       case HeapType::nofunc:
       case HeapType::nocont:
+      case HeapType::nofiber:
       case HeapType::noexn:
         break;
       case HeapType::waitqueue:

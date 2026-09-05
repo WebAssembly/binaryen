@@ -44,6 +44,7 @@ template<typename Ctx> Result<typename Ctx::FieldT> fieldtype(Ctx&);
 template<typename Ctx> Result<typename Ctx::FieldsT> fields(Ctx&);
 template<typename Ctx> MaybeResult<typename Ctx::StructT> structtype(Ctx&);
 template<typename Ctx> MaybeResult<typename Ctx::ArrayT> arraytype(Ctx&);
+template<typename Ctx> MaybeResult<typename Ctx::FiberT> fibertype(Ctx&);
 template<typename Ctx> Result<typename Ctx::LimitsT> limits32(Ctx&);
 template<typename Ctx> Result<typename Ctx::LimitsT> limits64(Ctx&);
 template<typename Ctx> Result<typename Ctx::MemTypeT> memtype(Ctx&);
@@ -349,6 +350,12 @@ template<typename Ctx>
 Result<> makeResumeThrow(Ctx&, Index, const std::vector<Annotation>&);
 template<typename Ctx>
 Result<> makeStackSwitch(Ctx&, Index, const std::vector<Annotation>&);
+template<typename Ctx>
+Result<> makeFiberNew(Ctx&, Index, const std::vector<Annotation>&);
+template<typename Ctx>
+Result<> makeFiberResume(Ctx&, Index, const std::vector<Annotation>&);
+template<typename Ctx>
+Result<> makeFiberSuspend(Ctx&, Index, const std::vector<Annotation>&);
 
 template<typename Ctx>
 Result<> ignore(Ctx&, Index, const std::vector<Annotation>&) {
@@ -448,6 +455,9 @@ Result<typename Ctx::HeapTypeT> absheaptype(Ctx& ctx, Shareability share) {
   if (ctx.in.takeKeyword("cont"sv)) {
     return ctx.makeContType(share);
   }
+  if (ctx.in.takeKeyword("fiber"sv)) {
+    return ctx.makeFiberType(share);
+  }
   if (ctx.in.takeKeyword("none"sv)) {
     return ctx.makeNoneType(share);
   }
@@ -462,6 +472,9 @@ Result<typename Ctx::HeapTypeT> absheaptype(Ctx& ctx, Shareability share) {
   }
   if (ctx.in.takeKeyword("nocont"sv)) {
     return ctx.makeNocontType(share);
+  }
+  if (ctx.in.takeKeyword("nofiber"sv)) {
+    return ctx.makeNofiberType(share);
   }
   if (ctx.in.takeKeyword("waitqueue"sv)) {
     return ctx.makeWaitqueueType(share);
@@ -539,6 +552,9 @@ template<typename Ctx> MaybeResult<typename Ctx::TypeT> maybeReftype(Ctx& ctx) {
   if (ctx.in.takeKeyword("contref"sv)) {
     return ctx.makeRefType(ctx.makeContType(Unshared), Nullable);
   }
+  if (ctx.in.takeKeyword("fiberref"sv)) {
+    return ctx.makeRefType(ctx.makeFiberType(Unshared), Nullable);
+  }
   if (ctx.in.takeKeyword("nullref"sv)) {
     return ctx.makeRefType(ctx.makeNoneType(Unshared), Nullable);
   }
@@ -553,6 +569,9 @@ template<typename Ctx> MaybeResult<typename Ctx::TypeT> maybeReftype(Ctx& ctx) {
   }
   if (ctx.in.takeKeyword("nullcontref"sv)) {
     return ctx.makeRefType(ctx.makeNocontType(Unshared), Nullable);
+  }
+  if (ctx.in.takeKeyword("nullfiberref"sv)) {
+    return ctx.makeRefType(ctx.makeNofiberType(Unshared), Nullable);
   }
 
   if (!ctx.in.takeSExprStart("ref"sv)) {
@@ -724,6 +743,22 @@ MaybeResult<typename Ctx::ContinuationT> conttype(Ctx& ctx) {
   }
 
   return ctx.makeContType(*x);
+}
+
+// fibertype ::= '(' 'fiber'  x:typeidx ')' => fiber x
+template<typename Ctx> MaybeResult<typename Ctx::FiberT> fibertype(Ctx& ctx) {
+  if (!ctx.in.takeSExprStart("fiber"sv)) {
+    return {};
+  }
+
+  auto x = typeidx(ctx);
+  CHECK_ERR(x);
+
+  if (!ctx.in.takeRParen()) {
+    return ctx.in.err("expected end of fiber type");
+  }
+
+  return ctx.makeFiberType(*x);
 }
 
 // storagetype ::= valtype | packedtype
@@ -2966,6 +3001,44 @@ Result<> makeStackSwitch(Ctx& ctx,
   return ctx.makeStackSwitch(pos, annotations, *type, *tag);
 }
 
+// fibernew ::= 'fiber.new' typeidx funcidx
+template<typename Ctx>
+Result<>
+makeFiberNew(Ctx& ctx, Index pos, const std::vector<Annotation>& annotations) {
+  auto type = typeidx(ctx);
+  CHECK_ERR(type);
+
+  auto func = funcidx(ctx);
+  CHECK_ERR(func);
+
+  return ctx.makeFiberNew(pos, annotations, *type, *func);
+}
+
+// fiberresume ::= 'fiber.resume' typeidx labelidx
+template<typename Ctx>
+Result<> makeFiberResume(Ctx& ctx,
+                         Index pos,
+                         const std::vector<Annotation>& annotations) {
+  auto type = typeidx(ctx);
+  CHECK_ERR(type);
+
+  auto label = labelidx(ctx);
+  CHECK_ERR(label);
+
+  return ctx.makeFiberResume(pos, annotations, *type, *label);
+}
+
+// fibersuspend ::= 'fiber.suspend' typeidx
+template<typename Ctx>
+Result<> makeFiberSuspend(Ctx& ctx,
+                          Index pos,
+                          const std::vector<Annotation>& annotations) {
+  auto type = typeidx(ctx);
+  CHECK_ERR(type);
+
+  return ctx.makeFiberSuspend(pos, annotations, *type);
+}
+
 // =======
 // Modules
 // =======
@@ -3287,6 +3360,11 @@ template<typename Ctx> Result<> comptype(Ctx& ctx) {
   if (auto type = conttype(ctx)) {
     CHECK_ERR(type);
     ctx.addContType(*type);
+    return Ok{};
+  }
+  if (auto type = fibertype(ctx)) {
+    CHECK_ERR(type);
+    ctx.addFiberType(*type);
     return Ok{};
   }
   if (auto type = structtype(ctx)) {

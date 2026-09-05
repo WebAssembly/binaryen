@@ -314,6 +314,9 @@ public:
     return makeResumeThrow(ct, Name(), tags, labels);
   }
   Result<> makeStackSwitch(HeapType ct, Name tag);
+  Result<> makeFiberNew(HeapType fiberType, Name func);
+  Result<> makeFiberResume(HeapType fiberType, Index label);
+  Result<> makeFiberSuspend(HeapType fiberType);
 
   // Private functions that must be public for technical reasons.
   Result<> visitExpression(Expression*);

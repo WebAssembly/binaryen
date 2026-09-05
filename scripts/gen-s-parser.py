@@ -620,6 +620,10 @@ instructions = [
     ("resume_throw",         "makeResumeThrow()"),
     ("resume_throw_ref",     "makeResumeThrowRef()"),
     ("switch",               "makeStackSwitch()"),
+    # Reified fibers instructions
+    ("fiber.new",            "makeFiberNew()"),
+    ("fiber.resume",         "makeFiberResume()"),
+    ("fiber.suspend",        "makeFiberSuspend()"),
     # GC
     ("ref.i31",              "makeRefI31(Unshared)"),
     ("ref.i31_shared",       "makeRefI31(Shared)"),

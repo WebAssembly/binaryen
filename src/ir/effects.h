@@ -1321,6 +1321,26 @@ private:
         parent.throws_ = true;
       }
     }
+    void visitFiberNew(FiberNew* curr) {}
+    void visitFiberResume(FiberResume* curr) {
+      if (trapOnNull(curr->fiber)) {
+        return;
+      }
+      parent.calls = true;
+      if (parent.features.hasExceptionHandling() && parent.tryDepth == 0) {
+        parent.throws_ = true;
+      }
+    }
+    void visitFiberSuspend(FiberSuspend* curr) {
+      if (trapOnNull(curr->fiber)) {
+        return;
+      }
+      parent.calls = true;
+      if (parent.features.hasExceptionHandling() && parent.tryDepth == 0) {
+        parent.throws_ = true;
+      }
+      parent.implicitTrap = true;
+    }
 
   private:
     // Populate a call's effects using effects computed from GlobalEffects. Note

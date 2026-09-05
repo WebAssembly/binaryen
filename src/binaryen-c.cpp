@@ -87,6 +87,7 @@ BinaryenLiteral toBinaryenLiteral(Literal x) {
       case HeapType::eq:
       case HeapType::func:
       case HeapType::cont:
+      case HeapType::fiber:
       case HeapType::struct_:
       case HeapType::array:
       case HeapType::exn:
@@ -99,6 +100,7 @@ BinaryenLiteral toBinaryenLiteral(Literal x) {
       case HeapType::noext:
       case HeapType::nofunc:
       case HeapType::nocont:
+      case HeapType::nofiber:
       case HeapType::noexn:
       case HeapType::nowaitqueue:
         // Null.
@@ -144,6 +146,7 @@ Literal fromBinaryenLiteral(BinaryenLiteral x) {
       case HeapType::eq:
       case HeapType::func:
       case HeapType::cont:
+      case HeapType::fiber:
       case HeapType::struct_:
       case HeapType::array:
       case HeapType::exn:
@@ -156,6 +159,7 @@ Literal fromBinaryenLiteral(BinaryenLiteral x) {
       case HeapType::noext:
       case HeapType::nofunc:
       case HeapType::nocont:
+      case HeapType::nofiber:
       case HeapType::noexn:
       case HeapType::nowaitqueue:
         assert(type.isNullable());
@@ -525,6 +529,9 @@ BinaryenFeatures BinaryenFeatureCompactImports(void) {
 }
 BinaryenFeatures BinaryenFeatureRelaxedAtomics(void) {
   return static_cast<BinaryenFeatures>(FeatureSet::RelaxedAtomics);
+}
+BinaryenFeatures BinaryenFeatureReifiedFibers(void) {
+  return static_cast<BinaryenFeatures>(FeatureSet::ReifiedFibers);
 }
 BinaryenFeatures BinaryenFeatureAll(void) {
   return static_cast<BinaryenFeatures>(FeatureSet::All);

@@ -589,6 +589,9 @@ public:
   void visitResume(Resume* curr);
   void visitResumeThrow(ResumeThrow* curr);
   void visitStackSwitch(StackSwitch* curr);
+  void visitFiberNew(FiberNew* curr);
+  void visitFiberResume(FiberResume* curr);
+  void visitFiberSuspend(FiberSuspend* curr);
 
   void visitFunction(Function* curr);
 
@@ -4854,6 +4857,203 @@ void FunctionValidator::visitStackSwitch(StackSwitch* curr) {
   // NB: Intentionally not doing a subtype check here.
   shouldBeEqualOrFirstIsUnreachable(
     curr->type, sig2.params, curr, "switch result type mismatch");
+}
+
+void FunctionValidator::visitFiberNew(FiberNew* curr) {
+  if (!shouldBeTrue(
+        !getModule() || getModule()->features.hasReifiedFibers(),
+        curr,
+        "fiber.new requires reified-fibers [--enable-reified-fibers]")) {
+    return;
+  }
+
+  if (curr->type == Type::unreachable) {
+    return;
+  }
+
+  if (!shouldBeTrue(curr->type.isNonNullable(),
+                    curr,
+                    "fiber.new should have a non-nullable reference type")) {
+    return;
+  }
+  shouldBeTrue(curr->type.isExact(), curr, "fiber.new should be exact");
+
+  if (!shouldBeTrue(curr->type.isRef() && curr->type.getHeapType().isFiber(),
+                    curr,
+                    "fiber.new must be annotated with a fiber type")) {
+    return;
+  }
+
+  auto* func = getModule()->getFunctionOrNull(curr->func);
+  if (!shouldBeTrue(!!func, curr, "fiber.new function must exist")) {
+    return;
+  }
+
+  auto fiber = curr->type.getHeapType().getFiber();
+  assert(fiber.type.isSignature());
+  auto resumeParams = fiber.type.getSignature().params;
+  auto resumeResults = fiber.type.getSignature().results;
+  auto funcParams = func->getParams();
+  auto funcResults = func->getResults();
+
+  if (!shouldBeSubType(funcResults,
+                       resumeResults,
+                       curr,
+                       "fiber.new target function result type mismatch")) {
+    return;
+  }
+
+  if (!shouldBeTrue(funcParams.size() ==
+                      1 + curr->operands.size() + resumeParams.size(),
+                    curr,
+                    "fiber.new function parameter count mismatch")) {
+    return;
+  }
+
+  // First parameter of the target function must be a supertype of (ref $F).
+  if (!shouldBeSubType(Type(curr->type.getHeapType(), NonNullable, Exact),
+                       funcParams[0],
+                       curr,
+                       "fiber.new target function first parameter must accept "
+                       "fiber reference")) {
+    return;
+  }
+
+  // Prefix operands must match target function prefix parameters.
+  for (size_t i = 0; i < curr->operands.size(); ++i) {
+    if (!shouldBeSubType(curr->operands[i]->type,
+                         funcParams[1 + i],
+                         curr,
+                         "fiber.new operand type mismatch")) {
+      if (!info.quiet) {
+        getStream() << "(at index " << i << ")\n";
+      }
+    }
+  }
+
+  // Trailing parameters of the target function must match resume parameters.
+  for (size_t i = 0; i < resumeParams.size(); ++i) {
+    size_t paramIdx = 1 + curr->operands.size() + i;
+    if (!shouldBeSubType(
+          resumeParams[i],
+          funcParams[paramIdx],
+          curr,
+          "fiber.new target function resume parameter type mismatch")) {
+      if (!info.quiet) {
+        getStream() << "(at index " << paramIdx << ")\n";
+      }
+    }
+  }
+}
+
+void FunctionValidator::visitFiberResume(FiberResume* curr) {
+  if (!shouldBeTrue(
+        !getModule() || getModule()->features.hasReifiedFibers(),
+        curr,
+        "fiber.resume requires reified-fibers [--enable-reified-fibers]")) {
+    return;
+  }
+
+  if (curr->fiber->type == Type::unreachable) {
+    return;
+  }
+
+  if (!shouldBeTrue(curr->fiber->type.isRef(),
+                    curr,
+                    "fiber.resume fiber must be a reference")) {
+    return;
+  }
+
+  auto type = curr->fiber->type.getHeapType();
+  if (type.isMaybeShared(HeapType::nofiber)) {
+    return;
+  }
+
+  if (!shouldBeTrue(type.isFiber(),
+                    curr,
+                    "fiber.resume fiber must have a defined fiber type")) {
+    return;
+  }
+
+  auto fiber = type.getFiber();
+  auto resumeParams = fiber.type.getSignature().params;
+  auto resumeResults = fiber.type.getSignature().results;
+
+  if (!shouldBeTrue(curr->operands.size() == resumeParams.size(),
+                    curr,
+                    "fiber.resume argument count mismatch")) {
+    return;
+  }
+
+  for (Index i = 0; i < resumeParams.size(); ++i) {
+    if (!shouldBeSubType(curr->operands[i]->type,
+                         resumeParams[i],
+                         curr,
+                         "fiber.resume argument type mismatch")) {
+      if (!info.quiet) {
+        getStream() << "(at index " << i << ")\n";
+      }
+    }
+  }
+
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->type, resumeResults, curr, "fiber.resume result type mismatch");
+
+  noteBreak(curr->handler, resumeResults, curr);
+}
+
+void FunctionValidator::visitFiberSuspend(FiberSuspend* curr) {
+  if (!shouldBeTrue(
+        !getModule() || getModule()->features.hasReifiedFibers(),
+        curr,
+        "fiber.suspend requires reified-fibers [--enable-reified-fibers]")) {
+    return;
+  }
+
+  if (curr->fiber->type == Type::unreachable) {
+    return;
+  }
+
+  if (!shouldBeTrue(curr->fiber->type.isRef(),
+                    curr,
+                    "fiber.suspend fiber must be a reference")) {
+    return;
+  }
+
+  auto type = curr->fiber->type.getHeapType();
+  if (type.isMaybeShared(HeapType::nofiber)) {
+    return;
+  }
+
+  if (!shouldBeTrue(type.isFiber(),
+                    curr,
+                    "fiber.suspend fiber must have a defined fiber type")) {
+    return;
+  }
+
+  auto fiber = type.getFiber();
+  auto resumeParams = fiber.type.getSignature().params;
+  auto suspendValues = fiber.type.getSignature().results;
+
+  if (!shouldBeTrue(curr->operands.size() == suspendValues.size(),
+                    curr,
+                    "fiber.suspend argument count mismatch")) {
+    return;
+  }
+
+  for (Index i = 0; i < suspendValues.size(); ++i) {
+    if (!shouldBeSubType(curr->operands[i]->type,
+                         suspendValues[i],
+                         curr,
+                         "fiber.suspend argument type mismatch")) {
+      if (!info.quiet) {
+        getStream() << "(at index " << i << ")\n";
+      }
+    }
+  }
+
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->type, resumeParams, curr, "fiber.suspend result type mismatch");
 }
 
 void FunctionValidator::visitFunction(Function* curr) {

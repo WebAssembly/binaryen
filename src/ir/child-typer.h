@@ -1442,6 +1442,58 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
     }
     note(&curr->cont, Type(*ct, Nullable));
   }
+
+  void visitFiberNew(FiberNew* curr) {
+    if (auto* func = wasm.getFunctionOrNull(curr->func)) {
+      auto params = func->getParams();
+      for (size_t i = 0; i < curr->operands.size() && (1 + i) < params.size();
+           ++i) {
+        note(&curr->operands[i], params[1 + i]);
+      }
+    }
+  }
+
+  void visitFiberResume(FiberResume* curr,
+                        std::optional<HeapType> ft = std::nullopt) {
+    if (!ft) {
+      if (!curr->fiber->type.isRef()) {
+        self().noteUnknown();
+        return;
+      }
+      ft = curr->fiber->type.getHeapType();
+    }
+    if (!ft->isFiber()) {
+      self().noteUnknown();
+      return;
+    }
+    note(&curr->fiber, Type(*ft, Nullable));
+    auto params = ft->getFiber().type.getSignature().params;
+    assert(params.size() == curr->operands.size());
+    for (size_t i = 0; i < params.size(); ++i) {
+      note(&curr->operands[i], params[i]);
+    }
+  }
+
+  void visitFiberSuspend(FiberSuspend* curr,
+                         std::optional<HeapType> ft = std::nullopt) {
+    if (!ft) {
+      if (!curr->fiber->type.isRef()) {
+        self().noteUnknown();
+        return;
+      }
+      ft = curr->fiber->type.getHeapType();
+    }
+    if (!ft->isFiber()) {
+      self().noteUnknown();
+      return;
+    }
+    auto results = ft->getFiber().type.getSignature().results;
+    assert(results.size() == curr->operands.size());
+    for (size_t i = 0; i < results.size(); ++i) {
+      note(&curr->operands[i], results[i]);
+    }
+    note(&curr->fiber, Type(*ft, Nullable));
+  }
 };
 
 } // namespace wasm
