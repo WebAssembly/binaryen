@@ -31,7 +31,7 @@
     ;; CHECK:       (type $sub-param (sub $super-param (struct)))
     (type $sub-param (sub $super-param (struct)))
 
-    ;; Returning a type to JS means it flows into an anyref posistion, which
+    ;; Returning a type to JS means it flows into an anyref position, which
     ;; can cause the subytpe relationship to be kept.
     ;; CHECK:       (type $super-result (sub (struct)))
     (type $super-result (sub (struct)))

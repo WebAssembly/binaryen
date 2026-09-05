@@ -303,7 +303,7 @@ void PassRegistry::registerPasses() {
   registerPass(
     "merge-blocks", "merges blocks to their parents", createMergeBlocksPass);
   registerPass("merge-similar-functions",
-               "merges similar functions when benefical",
+               "merges similar functions when beneficial",
                createMergeSimilarFunctionsPass);
   registerPass(
     "merge-locals", "merges locals when beneficial", createMergeLocalsPass);

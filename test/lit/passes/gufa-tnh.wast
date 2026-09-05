@@ -801,7 +801,7 @@
   (func $caller (export "out") (param $any anyref)
     ;; All three params get similar blocks+casts, but the middle one might
     ;; transfer control flow, so we cannot optimize the first parameter (we
-    ;; might not reach the call, so we can't assume the call's cast suceeds).
+    ;; might not reach the call, so we can't assume the call's cast succeeds).
     ;; As a result, only the last two casts are refined to $B, but not the
     ;; first.
     (call $called

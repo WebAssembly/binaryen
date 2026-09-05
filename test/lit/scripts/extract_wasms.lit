@@ -6,7 +6,7 @@
 ;; A difference in the second byte, so we won't.
 ;; RUN: echo "bad1(new Uint8Array([0x00, 0xff, 0x73, 0x6D, 0x01]));" >> %t.js
 
-;; The last byte is unparseable as an integer, so we won't.
+;; The last byte is unparsable as an integer, so we won't.
 ;; RUN: echo "bad2(new Uint8Array([0x00, 0x61, 0x73, 0x6D, 6Dx0]));" >> %t.js
 
 ;; This is not a Uint8Array, so we do nothing.

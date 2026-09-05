@@ -966,7 +966,7 @@
   )
 )
 
-;; Corner case: Optimization opportunties in unreachable code (which we can
+;; Corner case: Optimization opportunities in unreachable code (which we can
 ;; ignore, but should not error on).
 (module
   ;; CHECK:      (type $0 (func))

@@ -706,6 +706,8 @@ struct TransferFn : OverriddenVisitor<TransferFn> {
 
   void visitWaitqueueNotify(WaitqueueNotify* curr) { WASM_UNREACHABLE("TODO"); }
 
+  void visitPublish(Publish* curr) { WASM_UNREACHABLE("TODO"); }
+
   void visitArrayNew(ArrayNew* curr) {
     // We cannot yet generalize allocations. Push a requirement for the
     // reference type needed to initialize the array, if any.

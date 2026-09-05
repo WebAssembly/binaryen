@@ -788,7 +788,7 @@
 )
 
 ;; A parent with two children, and there are only reads of the parent. Those
-;; reads might be of data of either child, of course (as a refernce to the
+;; reads might be of data of either child, of course (as a reference to the
 ;; parent might point to them), so we cannot optimize here.
 (module
   (rec

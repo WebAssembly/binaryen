@@ -795,7 +795,7 @@
   )
 )
 
-;; Regresssion test for a bug in which we merged A into A', but
+;; Regression test for a bug in which we merged A into A', but
 ;; type-updating.cpp ordered B before A', so the supertype ordering was
 ;; incorrect.
 (module

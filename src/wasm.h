@@ -786,6 +786,7 @@ public:
     WideIntMulId,
     WaitqueueNewId,
     WaitqueueNotifyId,
+    PublishId,
     NumExpressionIds
   };
   Id _id;
@@ -1841,6 +1842,16 @@ public:
 
   Expression* waitqueue;
   Expression* count;
+
+  void finalize();
+};
+
+class Publish : public SpecificExpression<Expression::PublishId> {
+public:
+  Publish() = default;
+  Publish(MixedArena& allocator) : Publish() {}
+
+  Expression* ref;
 
   void finalize();
 };

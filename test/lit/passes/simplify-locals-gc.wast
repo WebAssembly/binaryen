@@ -409,7 +409,7 @@
   ;; CHECK-NEXT: )
   (func $pick-fallthrough (param $x i32)
     (local $t i32)
-    ;; Similar to the above test wth looking through a cast, but using a non-gc
+    ;; Similar to the above test with looking through a cast, but using a non-gc
     ;; type of fallthrough value.
     (local.set $t
       (block (result i32)

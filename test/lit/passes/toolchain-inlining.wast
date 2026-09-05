@@ -17,7 +17,7 @@
   )
 
   (func $never-unannotated (result i32)
-    ;; Idential to above, but without the annotation. This will be inlined,
+    ;; Identical to above, but without the annotation. This will be inlined,
     ;; showing the hint works.
     (i32.const 42)
   )
@@ -61,7 +61,7 @@
   ;; CHECK-NEXT: )
   (func $always-unannotated (result i32)
     (local $x i32)
-    ;; Idential to above, but without the annotation. This will not be inlined,
+    ;; Identical to above, but without the annotation. This will not be inlined,
     ;; showing the hint works.
     (loop $loop
       (local.set $x

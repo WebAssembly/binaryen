@@ -138,10 +138,12 @@ std::map<Function*, FuncInfo> analyzeFuncs(Module& module,
         // below.
         funcInfo.effects->calls = false;
 
-        // Clear throws as well, as we are "forgetting" calls right now, and
-        // want to forget their throwing effect as well. If we see something
-        // else that throws, below, then we'll note that there.
+        // Clear throws and suspends as well, as we are "forgetting" calls right
+        // now, and want to forget their throwing and suspending effects as
+        // well. If we see something else that throws or suspends, below, then
+        // we'll note that there.
         funcInfo.effects->throws_ = false;
+        funcInfo.effects->suspends = false;
 
         struct CallScanner
           : public PostWalker<CallScanner,
@@ -179,11 +181,15 @@ std::map<Function*, FuncInfo> analyzeFuncs(Module& module,
               assert(options.worldMode == WorldMode::Open);
               funcInfo.effects = std::nullopt;
             } else {
-              // No call here, but update throwing if we see it. (Only do so,
-              // however, if we have effects; if we cleared it - see before -
-              // then we assume the worst anyhow, and have nothing to update.)
+              // No call here, but update throwing and suspending if we see it.
+              // (Only do so, however, if we have effects; if we cleared it -
+              // see before - then we assume the worst anyhow, and have nothing
+              // to update.)
               if (effects.throws_ && funcInfo.effects) {
                 funcInfo.effects->throws_ = true;
+              }
+              if (effects.suspends && funcInfo.effects) {
+                funcInfo.effects->suspends = true;
               }
             }
           }

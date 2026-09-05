@@ -720,7 +720,7 @@ struct TranslateToExnref : public WalkerPass<PostWalker<TranslateToExnref>> {
     // rethrows, we can assume the exnref we want to rethrow is located in that
     // exnref local at this point. We ensure this to happen when converting the
     // corresponding 'try' to 'try_table' by using catch_ref/catch_all_ref and
-    // assining the exnref to that local.
+    // assigning the exnref to that local.
     Builder builder(*getModule());
     Index exnrefLocal = *localAssigner->getExnrefLocal(curr->target);
     replaceCurrent(builder.makeThrowRef(

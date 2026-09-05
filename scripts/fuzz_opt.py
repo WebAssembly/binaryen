@@ -1008,7 +1008,7 @@ class CompareVMs(TestCaseHandler):
                     D8(),
                     D8Liftoff(),
                     D8Turboshaft(),
-                    # FIXME: Temprorary disable. See issue #4741 for more details
+                    # FIXME: Temporary disable. See issue #4741 for more details
                     # Wasm2C(),
                     # Wasm2C2Wasm()
                     ]
@@ -1372,7 +1372,7 @@ class TrapsNeverHappen(TestCaseHandler):
             # "[fuzz-exec] export bar".
             call_start = before.rfind(FUZZ_EXEC_EXPORT_PREFIX, 0, trap_index)
             if call_start < 0:
-                # the trap happened before we called an export, so it occured
+                # the trap happened before we called an export, so it occurred
                 # during startup (the start function, or memory segment
                 # operations, etc.). in that case there is nothing for us to
                 # compare here; just leave.
@@ -2575,7 +2575,7 @@ testcase_handlers = [
     TrapsNeverHappen(),
     CtorEval(),
     Merge(),
-#    Split(), # Will reenable after stabilized
+#    Split(), # Will re-enable after stabilized
     RoundtripText(),
     ClusterFuzz(),
     Two(),

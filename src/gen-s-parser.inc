@@ -4971,6 +4971,12 @@ switch (buf[0]) {
           return Ok{};
         }
         goto parse_error;
+      case 'u':
+        if (op == "publish"sv) {
+          CHECK_ERR(makePublish(ctx, pos, annotations));
+          return Ok{};
+        }
+        goto parse_error;
       default: goto parse_error;
     }
   }

@@ -935,6 +935,7 @@ struct TypeBuilder {
   void createRecGroup(size_t i, size_t length);
 
   void setOpen(size_t i, bool open = true);
+  bool isOpen(size_t i) const;
   void setShared(size_t i, Shareability share = Shared);
 
   enum class ErrorReasonKind {
@@ -972,6 +973,8 @@ struct TypeBuilder {
     InvalidUnsharedDescribes,
     // The custom descriptors feature is missing.
     RequiresCustomDescriptors,
+    // The descriptor and described types have mismatched finality.
+    MismatchedDescriptorFinality,
     // Two rec groups with different shapes would have the same shapes after
     // the binary writer generalizes refined types that use disabled features.
     RecGroupCollision,
@@ -1065,6 +1068,7 @@ struct TypeBuilder {
       builder.setOpen(index, open);
       return *this;
     }
+    bool isOpen() const { return builder.isOpen(index); }
     Entry& setShared(Shareability share = Shared) {
       builder.setShared(index, share);
       return *this;

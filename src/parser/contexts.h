@@ -650,6 +650,7 @@ struct NullInstrParserCtx {
     return Ok{};
   }
   Result<> makePause(Index, const std::vector<Annotation>&) { return Ok{}; }
+  Result<> makePublish(Index, const std::vector<Annotation>&) { return Ok{}; }
   Result<> makeSIMDExtract(Index,
                            const std::vector<Annotation>&,
                            SIMDExtractOp,
@@ -2532,6 +2533,10 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
 
   Result<> makePause(Index pos, const std::vector<Annotation>& annotations) {
     return withLoc(pos, irBuilder.makePause());
+  }
+
+  Result<> makePublish(Index pos, const std::vector<Annotation>& annotations) {
+    return withLoc(pos, irBuilder.makePublish());
   }
 
   Result<> makeSIMDExtract(Index pos,

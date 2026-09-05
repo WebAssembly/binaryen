@@ -147,6 +147,7 @@ function initializeConstants() {
     'StructWait',
     'WaitqueueNew',
     'WaitqueueNotify',
+    'Publish',
     'ArrayNew',
     'ArrayNewFixed',
     'ArrayNewData',
@@ -666,6 +667,7 @@ function initializeConstants() {
     'Throws',
     'DanglingPop',
     'TrapsNeverHappen',
+    'Suspends',
     'Any'
   ].forEach(name => {
     Module['SideEffects'][name] = Module['_BinaryenSideEffect' + name]();
@@ -2607,6 +2609,10 @@ function wrapModule(module, self = {}) {
     'notify'(waitqueue, count) {
       return Module['_BinaryenWaitqueueNotify'](module, waitqueue, count);
     }
+  };
+
+  self['publish'] = function(ref) {
+    return Module['_BinaryenPublish'](module, ref);
   };
 
   self['array'] = {
@@ -4991,6 +4997,15 @@ Module['WaitqueueNotify'] = makeExpressionWrapper(Module['_BinaryenWaitqueueNoti
   },
   'setCount'(expr, countExpr) {
     Module['_BinaryenWaitqueueNotifySetCount'](expr, countExpr);
+  }
+});
+
+Module['Publish'] = makeExpressionWrapper(Module['_BinaryenPublishId'](), {
+  'getRef'(expr) {
+    return Module['_BinaryenPublishGetRef'](expr);
+  },
+  'setRef'(expr, refExpr) {
+    Module['_BinaryenPublishSetRef'](expr, refExpr);
   }
 });
 
