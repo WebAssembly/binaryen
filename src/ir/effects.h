@@ -1108,6 +1108,27 @@ private:
       parent.writesSharedStruct = true;
       parent.readOrder = parent.writeOrder = MemoryOrder::SeqCst;
     }
+    void visitPublish(Publish* curr) {
+      // Publish is a no-op on anything besides shared structs and arrays.
+      if (!curr->ref->type.isRef()) {
+        return;
+      }
+      auto heapType = curr->ref->type.getHeapType();
+      if (!heapType.isShared()) {
+        return;
+      }
+      if (!heapType.isStruct() && !heapType.isMaybeShared(HeapType::struct_) &&
+          !heapType.isArray() && !heapType.isMaybeShared(HeapType::array) &&
+          !heapType.isMaybeShared(HeapType::eq) &&
+          !heapType.isMaybeShared(HeapType::any)) {
+        return;
+      }
+      // TODO: Modeling `publish` as an arbitrary call is overly conservative.
+      // We need to prevent writes to the published object from being moved
+      // after the publish and we need to prevent writes of the published object
+      // to anywhere else from being moved before the publish.
+      parent.calls = true;
+    }
     void visitArrayNew(ArrayNew* curr) {}
     void visitArrayNewData(ArrayNewData* curr) {
       // Traps on out of bounds access to segments or access to dropped

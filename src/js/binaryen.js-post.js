@@ -147,6 +147,7 @@ function initializeConstants() {
     'StructWait',
     'WaitqueueNew',
     'WaitqueueNotify',
+    'Publish',
     'ArrayNew',
     'ArrayNewFixed',
     'ArrayNewData',
@@ -2610,6 +2611,10 @@ function wrapModule(module, self = {}) {
     }
   };
 
+  self['publish'] = function(ref) {
+    return Module['_BinaryenPublish'](module, ref);
+  };
+
   self['array'] = {
     'new'(type, size, init) {
       return Module['_BinaryenArrayNew'](module, type, size, init);
@@ -4992,6 +4997,15 @@ Module['WaitqueueNotify'] = makeExpressionWrapper(Module['_BinaryenWaitqueueNoti
   },
   'setCount'(expr, countExpr) {
     Module['_BinaryenWaitqueueNotifySetCount'](expr, countExpr);
+  }
+});
+
+Module['Publish'] = makeExpressionWrapper(Module['_BinaryenPublishId'](), {
+  'getRef'(expr) {
+    return Module['_BinaryenPublishGetRef'](expr);
+  },
+  'setRef'(expr, refExpr) {
+    Module['_BinaryenPublishSetRef'](expr, refExpr);
   }
 });
 

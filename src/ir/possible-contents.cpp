@@ -1098,6 +1098,7 @@ struct InfoCollector
   void visitStructWait(StructWait* curr) { addRoot(curr); }
   void visitWaitqueueNew(WaitqueueNew* curr) { addRoot(curr); }
   void visitWaitqueueNotify(WaitqueueNotify* curr) { addRoot(curr); }
+  void visitPublish(Publish* curr) { receiveChildValue(curr->ref, curr); }
   // Array operations access the array's location, parallel to how structs work.
   void visitArrayGet(ArrayGet* curr) {
     if (!isRelevant(curr->ref)) {

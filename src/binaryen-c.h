@@ -1110,6 +1110,8 @@ BINARYEN_API BinaryenExpressionRef
 BinaryenWaitqueueNotify(BinaryenModuleRef module,
                         BinaryenExpressionRef waitqueue,
                         BinaryenExpressionRef count);
+BINARYEN_API BinaryenExpressionRef BinaryenPublish(BinaryenModuleRef module,
+                                                   BinaryenExpressionRef ref);
 BINARYEN_API BinaryenExpressionRef BinaryenArrayNew(BinaryenModuleRef module,
                                                     BinaryenHeapType type,
                                                     BinaryenExpressionRef size,
@@ -2617,6 +2619,13 @@ BinaryenWaitqueueNotifyGetCount(BinaryenExpressionRef expr);
 BINARYEN_API void
 BinaryenWaitqueueNotifySetCount(BinaryenExpressionRef expr,
                                 BinaryenExpressionRef countExpr);
+
+// Publish
+
+BINARYEN_API BinaryenExpressionRef
+BinaryenPublishGetRef(BinaryenExpressionRef expr);
+BINARYEN_API void BinaryenPublishSetRef(BinaryenExpressionRef expr,
+                                        BinaryenExpressionRef refExpr);
 
 // ArrayNew
 
