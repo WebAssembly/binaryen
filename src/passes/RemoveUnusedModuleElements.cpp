@@ -35,6 +35,10 @@
 // reference forces us to keep something in the IR to be referred to, but only
 // a use actually makes us keep its contents as well.
 //
+// The remove-unused-module-elements-consider-empty-exports-unused pass
+// argument treats exports of empty functions as unused. This is useful for
+// runtimes where such exports are optional.
+//
 
 #include <memory>
 #include <vector>
@@ -886,6 +890,31 @@ struct RemoveUnusedModuleElements : public Pass {
 
   void run(Module* module) override {
     prepare(module);
+
+    // Some runtimes treat missing exports as optional. For those runtimes,
+    // allow exported functions that do nothing to be handled like other
+    // unused module elements. Remove the exports before finding roots so that
+    // an otherwise-unreferenced function can be removed as well.
+    if (!rootAllFunctions &&
+        hasArgument(
+          "remove-unused-module-elements-consider-empty-exports-unused")) {
+      module->removeExports([&](Export* curr) {
+        if (curr->kind != ExternalKind::Function) {
+          return false;
+        }
+        auto* func = module->getFunction(*curr->getInternalName());
+        if (func->imported()) {
+          return false;
+        }
+        if (func->body->is<Nop>()) {
+          return true;
+        }
+        if (auto* block = func->body->dynCast<Block>()) {
+          return block->list.empty();
+        }
+        return false;
+      });
+    }
 
     std::vector<ModuleElement> roots;
     // Module start is a root.
