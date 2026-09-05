@@ -70,16 +70,20 @@ struct FieldInfo {
 
 struct FieldInfoScanner
   : public StructUtils::StructScanner<FieldInfo, FieldInfoScanner> {
+  std::unordered_map<Function*, std::vector<Type>>& jsExposedTypes;
+
   std::unique_ptr<Pass> create() override {
-    return std::make_unique<FieldInfoScanner>(functionNewInfos,
-                                              functionSetGetInfos);
+    return std::make_unique<FieldInfoScanner>(
+      functionNewInfos, functionSetGetInfos, jsExposedTypes);
   }
 
   FieldInfoScanner(
     StructUtils::FunctionStructValuesMap<FieldInfo>& functionNewInfos,
-    StructUtils::FunctionStructValuesMap<FieldInfo>& functionSetGetInfos)
+    StructUtils::FunctionStructValuesMap<FieldInfo>& functionSetGetInfos,
+    std::unordered_map<Function*, std::vector<Type>>& jsExposedTypes)
     : StructUtils::StructScanner<FieldInfo, FieldInfoScanner>(
-        functionNewInfos, functionSetGetInfos) {}
+        functionNewInfos, functionSetGetInfos),
+      jsExposedTypes(jsExposedTypes) {}
 
   void noteExpression(Expression* expr,
                       HeapType type,
@@ -116,16 +120,8 @@ struct FieldInfoScanner
   // Converting a reference to externref makes the prototype field on its
   // descriptor available to be read by JS, if such a field exists.
   void visitRefAs(RefAs* curr) {
-    if (curr->op != ExternConvertAny) {
-      return;
-    }
-    if (!curr->value->type.isRef()) {
-      return;
-    }
-    if (auto desc = curr->value->type.getHeapType().getDescriptorType();
-        desc && JSUtils::hasPossibleJSPrototypeField(*desc)) {
-      auto exact = curr->value->type.getExactness();
-      functionSetGetInfos[getFunction()][{*desc, exact}][0].noteRead();
+    if (curr->op == ExternConvertAny && curr->value->type.isRef()) {
+      jsExposedTypes.at(getFunction()).push_back(curr->value->type);
     }
   }
 };
@@ -139,6 +135,11 @@ struct GlobalTypeOptimization : public Pass {
   // rare).
   std::unordered_map<HeapType, std::vector<bool>> canBecomeImmutable;
 
+  // Descriptor types that are exposed to JS but do _not_ configure prototypes
+  // for their described types. We must avoid optimizing these types such that
+  // they start configuring prototypes.
+  std::unordered_set<HeapType> exposedNoProtoDescs;
+
   // Maps each field to its new index after field removals. That is, this
   // takes into account that fields before this one may have been removed,
   // which would then reduce this field's index. If a field itself is removed,
@@ -149,6 +150,28 @@ struct GlobalTypeOptimization : public Pass {
   static const Index RemovedField = Index(-1);
   std::unordered_map<HeapType, std::vector<Index>> indexesAfterRemovals;
 
+  struct IndexAnalysis {
+    Index newSize = 0;
+    bool hasPlaceholder = false;
+
+    IndexAnalysis(const std::vector<Index>& indexes) {
+      Index maxIndex = 0;
+      bool hasKept = false;
+      bool hasIndexZero = false;
+      for (auto idx : indexes) {
+        if (idx != RemovedField) {
+          hasKept = true;
+          maxIndex = std::max(maxIndex, idx);
+          if (idx == 0) {
+            hasIndexZero = true;
+          }
+        }
+      }
+      newSize = hasKept ? maxIndex + 1 : 0;
+      hasPlaceholder = hasKept && !hasIndexZero;
+    }
+  };
+
   void run(Module* module) override {
     if (!module->features.hasGC()) {
       return;
@@ -157,21 +180,32 @@ struct GlobalTypeOptimization : public Pass {
       Fatal() << "GTO requires --closed-world";
     }
 
+    std::unordered_map<Function*, std::vector<Type>> jsExposedTypesByFunction;
+    jsExposedTypesByFunction[nullptr];
+    for (auto& func : module->functions) {
+      jsExposedTypesByFunction[func.get()];
+    }
+
     // Find and analyze struct operations inside each function.
     StructUtils::FunctionStructValuesMap<FieldInfo> functionNewInfos(*module),
       functionSetGetInfos(*module);
-    FieldInfoScanner scanner(functionNewInfos, functionSetGetInfos);
+    FieldInfoScanner scanner(
+      functionNewInfos, functionSetGetInfos, jsExposedTypesByFunction);
     scanner.run(getPassRunner(), module);
     scanner.runOnModuleCode(getPassRunner(), module);
 
     // Combine the data from the functions.
     functionSetGetInfos.combineInto(combinedSetGetInfos);
+    std::vector<Type> jsExposedTypes;
+    for (auto& [_, types] : jsExposedTypesByFunction) {
+      jsExposedTypes.insert(jsExposedTypes.end(), types.begin(), types.end());
+    }
 
     SubTypes subTypes(*module);
 
     // Analyze the JS interface to find fields holding configured prototypes
     // that cannot be removed.
-    analyzeJSInterface(*module, subTypes);
+    analyzeJSInterface(*module, subTypes, jsExposedTypes);
 
     // Propagate information to super and subtypes on set/get infos:
     //
@@ -291,15 +325,16 @@ struct GlobalTypeOptimization : public Pass {
       }
 
       // We need to compute the new set of indexes if we are removing fields, or
-      // if our parent removed fields. In the latter case, our parent may have
-      // reordered fields even if we ourselves are not removing anything, and we
-      // must update to match the parent's order.
+      // if our parent removed fields, or if we might need a placeholder. If we
+      // have a parent, it may have reordered fields even if we ourselves are
+      // not removing anything, and we must update to match the parent's order.
       auto super = type.getDeclaredSuperType();
       auto superHasUpdates = super && indexesAfterRemovals.contains(*super);
-      if (!removableIndexes.empty() || superHasUpdates) {
-        // We are removing fields. Reorder them to allow that, as in the general
-        // case we can only remove fields from the end, so that if our subtypes
-        // still need the fields they can append them. For example:
+      bool isExposedNoProto = exposedNoProtoDescs.contains(type);
+      if (!removableIndexes.empty() || superHasUpdates || isExposedNoProto) {
+        // We might be removing fields. Reorder them to allow that, as in the
+        // general case we can only remove fields from the end, so that if our
+        // subtypes still need the fields they can append them. For example:
         //
         //  type A     = { x: i32, y: f64 };
         //  type B : A = { x: 132, y: f64, z: v128 };
@@ -392,6 +427,37 @@ struct GlobalTypeOptimization : public Pass {
           }
         }
 
+        // If the type has no supertype (or its supertype has no fields), check
+        // if its first field becomes prototype-exposing. If so, add a
+        // placeholder at index 0 and shift all computed indices.
+        if (isExposedNoProto && (!super || super->getStruct().fields.empty())) {
+          // Find the field that will become field 0.
+          Index i = 0;
+          for (; i < fields.size(); ++i) {
+            if (indexesAfterRemoval[i] == 0) {
+              break;
+            }
+          }
+          // Check whether that field would expose a prototype.
+          if (i < fields.size()) {
+            Field optimizedField = fields[i];
+            if (auto it = canBecomeImmutable.find(type);
+                it != canBecomeImmutable.end() && i < it->second.size() &&
+                it->second[i]) {
+              optimizedField.mutable_ = Immutable;
+            }
+            if (JSUtils::isPossibleJSPrototypeField(optimizedField)) {
+              // The field exposes a prototype. Increment all field indices to
+              // make room for a placeholder first field.
+              for (auto& idx : indexesAfterRemoval) {
+                if (idx != RemovedField) {
+                  ++idx;
+                }
+              }
+            }
+          }
+        }
+
         // Only store the new indexes we computed if we found something
         // interesting. We might not, if e.g. our parent removes fields and we
         // add them back in the exact order we started with. In such cases,
@@ -416,7 +482,9 @@ struct GlobalTypeOptimization : public Pass {
     }
   }
 
-  void analyzeJSInterface(Module& wasm, const SubTypes& subTypes) {
+  void analyzeJSInterface(Module& wasm,
+                          const SubTypes& subTypes,
+                          const std::vector<Type>& jsExposedTypes) {
     if (!wasm.features.hasCustomDescriptors()) {
       return;
     }
@@ -426,10 +494,16 @@ struct GlobalTypeOptimization : public Pass {
     // Mark the relevant prototype field as read and return true iff we newly
     // know we have to propagate the exposure to subtypes.
     auto noteExposed = [&](HeapType type, Exactness exact = Inexact) -> bool {
-      if (auto desc = type.getDescriptorType();
-          desc && JSUtils::hasPossibleJSPrototypeField(*desc)) {
-        // This field holds a JS-visible prototype. Do not remove it.
-        combinedSetGetInfos[std::make_pair(*desc, exact)][0].noteRead();
+      if (auto desc = type.getDescriptorType()) {
+        if (JSUtils::hasPossibleJSPrototypeField(*desc)) {
+          // This descriptor configures a JS-visible prototype. Do not remove
+          // it.
+          combinedSetGetInfos[std::make_pair(*desc, exact)][0].noteRead();
+        } else {
+          // This descriptor does _not_ configure a JS prototype. Do not add
+          // one.
+          exposedNoProtoDescs.insert(*desc);
+        }
       }
       if (exact == Inexact) {
         return subtypesExposed.insert(type).second;
@@ -448,6 +522,12 @@ struct GlobalTypeOptimization : public Pass {
     auto flowIn = [&](Type type) {};
 
     JSUtils::iterJSInterface(wasm, flowIn, flowOut);
+
+    for (auto type : jsExposedTypes) {
+      if (type.isRef()) {
+        noteExposed(type.getHeapType(), type.getExactness());
+      }
+    }
 
     // Any type that is a subtype of an exposed type is also exposed. Propagate
     // from supertypes to subtypes.
@@ -468,6 +548,19 @@ struct GlobalTypeOptimization : public Pass {
           if (noteExposed(sub)) {
             work.push_back(sub);
           }
+        }
+      }
+    }
+
+    // Also propagate exposed descriptors to supertypes so that descriptor
+    // hierarchies have consistent layouts. Do not propagate to supertypes that
+    // actually expose a prototype.
+    for (auto type : subTypes.types) {
+      if (exposedNoProtoDescs.contains(type)) {
+        auto curr = type.getDeclaredSuperType();
+        while (curr && !JSUtils::hasPossibleJSPrototypeField(*curr)) {
+          exposedNoProtoDescs.insert(*curr);
+          curr = curr->getDeclaredSuperType();
         }
       }
     }
@@ -499,17 +592,19 @@ struct GlobalTypeOptimization : public Pass {
         auto remIter = parent.indexesAfterRemovals.find(oldStructType);
         if (remIter != parent.indexesAfterRemovals.end()) {
           auto& indexesAfterRemoval = remIter->second;
-          Index removed = 0;
+          IndexAnalysis analysis(indexesAfterRemoval);
           auto copy = newFields;
-          for (Index i = 0; i < newFields.size(); i++) {
+          newFields.resize(analysis.newSize);
+          if (analysis.hasPlaceholder) {
+            newFields[0] = Field(Field::i8, Immutable);
+          }
+          for (Index i = 0; i < copy.size(); i++) {
             auto newIndex = indexesAfterRemoval[i];
             if (newIndex != RemovedField) {
+              assert(newIndex < newFields.size());
               newFields[newIndex] = copy[i];
-            } else {
-              removed++;
             }
           }
-          newFields.resize(newFields.size() - removed);
 
           // Update field names as well. The Type Rewriter cannot do this for
           // us, as it does not know which old fields map to which new ones (it
@@ -595,26 +690,30 @@ struct GlobalTypeOptimization : public Pass {
         auto& operands = curr->operands;
         assert(indexesAfterRemoval.size() == operands.size());
 
-        Index removed = 0;
+        IndexAnalysis analysis(indexesAfterRemoval);
         std::vector<Expression*> old(operands.begin(), operands.end());
         for (Index i = 0; i < operands.size(); ++i) {
-          auto newIndex = indexesAfterRemoval[i];
-          if (newIndex != RemovedField) {
-            assert(newIndex < operands.size());
-            operands[newIndex] = old[i];
-          } else {
-            ++removed;
+          if (indexesAfterRemoval[i] == RemovedField) {
             if (!func &&
                 EffectAnalyzer(getPassOptions(), *getModule(), old[i]).trap) {
               removedTrappingInits.push_back(old[i]);
             }
           }
         }
-        if (removed) {
-          operands.resize(operands.size() - removed);
-        } else {
-          // If we didn't remove anything then we must have reordered (or else
-          // we have done pointless work).
+        operands.resize(analysis.newSize);
+        if (analysis.hasPlaceholder) {
+          operands[0] = Builder(*getModule()).makeConst(Literal(int32_t(0)));
+        }
+        for (Index i = 0; i < old.size(); ++i) {
+          auto newIndex = indexesAfterRemoval[i];
+          if (newIndex != RemovedField) {
+            assert(newIndex < operands.size());
+            operands[newIndex] = old[i];
+          }
+        }
+        if (analysis.newSize == old.size() && !analysis.hasPlaceholder) {
+          // If we didn't remove or insert anything then we must have reordered
+          // (or else we have done pointless work).
           assert(indexesAfterRemoval !=
                  makeIdentity(indexesAfterRemoval.size()));
         }
@@ -697,7 +796,7 @@ struct GlobalTypeOptimization : public Pass {
         }
         auto& indexesAfterRemoval = iter->second;
         auto newIndex = indexesAfterRemoval[index];
-        assert(newIndex < indexesAfterRemoval.size() ||
+        assert(newIndex < IndexAnalysis(indexesAfterRemoval).newSize ||
                newIndex == RemovedField);
         return newIndex;
       }
