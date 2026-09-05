@@ -13,6 +13,10 @@
   ;; OPTIN:      (type $array (array (mut i32)))
   (type $array (array (mut i32)))
 
+  ;; CHECK:      (import "a" "b" (func $import (type $3) (result i32)))
+  ;; OPTIN:      (import "a" "b" (func $import (type $3) (result i32)))
+  (import "a" "b" (func $import (result i32)))
+
   ;; CHECK:      (func $simple (type $1)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (local.set $x
@@ -1731,7 +1735,7 @@
     )
   )
 
-  ;; CHECK:      (func $br_on_null (type $5) (param $param anyref)
+  ;; CHECK:      (func $br_on_null (type $6) (param $param anyref)
   ;; CHECK-NEXT:  (block $block
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (ref.is_null
@@ -1752,7 +1756,7 @@
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; OPTIN:      (func $br_on_null (type $5) (param $param anyref)
+  ;; OPTIN:      (func $br_on_null (type $6) (param $param anyref)
   ;; OPTIN-NEXT:  (block $block
   ;; OPTIN-NEXT:   (drop
   ;; OPTIN-NEXT:    (ref.is_null
@@ -1802,7 +1806,7 @@
     )
   )
 
-  ;; CHECK:      (func $br_on_non_null (type $5) (param $param anyref)
+  ;; CHECK:      (func $br_on_non_null (type $6) (param $param anyref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block $block (result (ref any))
   ;; CHECK-NEXT:    (drop
@@ -1823,7 +1827,7 @@
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; OPTIN:      (func $br_on_non_null (type $5) (param $param anyref)
+  ;; OPTIN:      (func $br_on_non_null (type $6) (param $param anyref)
   ;; OPTIN-NEXT:  (drop
   ;; OPTIN-NEXT:   (block $block (result (ref any))
   ;; OPTIN-NEXT:    (drop
@@ -2476,7 +2480,7 @@
     )
   )
 
-  ;; CHECK:      (func $local-changes (type $3) (param $x i32) (param $y i32) (param $z i32)
+  ;; CHECK:      (func $local-changes (type $4) (param $x i32) (param $y i32) (param $z i32)
   ;; CHECK-NEXT:  (local.set $x
   ;; CHECK-NEXT:   (local.get $y)
   ;; CHECK-NEXT:  )
@@ -2532,7 +2536,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; OPTIN:      (func $local-changes (type $3) (param $x i32) (param $y i32) (param $z i32)
+  ;; OPTIN:      (func $local-changes (type $4) (param $x i32) (param $y i32) (param $z i32)
   ;; OPTIN-NEXT:  (local.set $x
   ;; OPTIN-NEXT:   (local.get $y)
   ;; OPTIN-NEXT:  )
@@ -2662,7 +2666,7 @@
     )
   )
 
-  ;; CHECK:      (func $local-changes-2 (type $3) (param $x i32) (param $y i32) (param $z i32)
+  ;; CHECK:      (func $local-changes-2 (type $4) (param $x i32) (param $y i32) (param $z i32)
   ;; CHECK-NEXT:  (local.set $x
   ;; CHECK-NEXT:   (local.get $y)
   ;; CHECK-NEXT:  )
@@ -2718,7 +2722,7 @@
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; OPTIN:      (func $local-changes-2 (type $3) (param $x i32) (param $y i32) (param $z i32)
+  ;; OPTIN:      (func $local-changes-2 (type $4) (param $x i32) (param $y i32) (param $z i32)
   ;; OPTIN-NEXT:  (local.set $x
   ;; OPTIN-NEXT:   (local.get $y)
   ;; OPTIN-NEXT:  )
@@ -3052,7 +3056,7 @@
     )
   )
 
-  ;; CHECK:      (func $local-changes-ne (type $3) (param $x i32) (param $y i32) (param $z i32)
+  ;; CHECK:      (func $local-changes-ne (type $4) (param $x i32) (param $y i32) (param $z i32)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.ne
   ;; CHECK-NEXT:    (local.get $x)
@@ -3104,7 +3108,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; OPTIN:      (func $local-changes-ne (type $3) (param $x i32) (param $y i32) (param $z i32)
+  ;; OPTIN:      (func $local-changes-ne (type $4) (param $x i32) (param $y i32) (param $z i32)
   ;; OPTIN-NEXT:  (if
   ;; OPTIN-NEXT:   (i32.ne
   ;; OPTIN-NEXT:    (local.get $x)
@@ -4457,7 +4461,7 @@
     )
   )
 
-  ;; CHECK:      (func $flipped-contradiction (type $6) (result i32)
+  ;; CHECK:      (func $flipped-contradiction (type $3) (result i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (loop $loop
   ;; CHECK-NEXT:   (br_if $loop
@@ -4469,7 +4473,7 @@
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; OPTIN:      (func $flipped-contradiction (type $6) (result i32)
+  ;; OPTIN:      (func $flipped-contradiction (type $3) (result i32)
   ;; OPTIN-NEXT:  (local $x i32)
   ;; OPTIN-NEXT:  (loop $loop
   ;; OPTIN-NEXT:   (br_if $loop
@@ -4503,7 +4507,7 @@
     )
   )
 
-  ;; CHECK:      (func $flipped-contradiction-no (type $6) (result i32)
+  ;; CHECK:      (func $flipped-contradiction-no (type $3) (result i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (loop $loop (result i32)
   ;; CHECK-NEXT:   (br_if $loop
@@ -4517,7 +4521,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; OPTIN:      (func $flipped-contradiction-no (type $6) (result i32)
+  ;; OPTIN:      (func $flipped-contradiction-no (type $3) (result i32)
   ;; OPTIN-NEXT:  (local $x i32)
   ;; OPTIN-NEXT:  (loop $loop (result i32)
   ;; OPTIN-NEXT:   (br_if $loop
@@ -5022,6 +5026,891 @@
           (local.get $0)
           (i32.const -1992)
         )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $eqz_eqz (type $0) (param $a i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (i32.eqz
+  ;; CHECK-NEXT:     (local.get $a)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPTIN:      (func $eqz_eqz (type $0) (param $a i32)
+  ;; OPTIN-NEXT:  (if
+  ;; OPTIN-NEXT:   (local.get $a)
+  ;; OPTIN-NEXT:   (then
+  ;; OPTIN-NEXT:    (drop
+  ;; OPTIN-NEXT:     (i32.const 1)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT: )
+  (func $eqz_eqz (param $a i32)
+    (if
+      ;; !!a => a is not 0.
+      (i32.eqz
+        (i32.eqz
+          (local.get $a)
+        )
+      )
+      (then
+        (drop
+          ;; This is true.
+          (i32.ne
+            (local.get $a)
+            (i32.const 0)
+          )
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $pair (type $2) (param $a i32) (param $b i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.and
+  ;; CHECK-NEXT:    (i32.eqz
+  ;; CHECK-NEXT:     (local.get $a)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.eq
+  ;; CHECK-NEXT:     (local.get $b)
+  ;; CHECK-NEXT:     (i32.const 42)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (else
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.eq
+  ;; CHECK-NEXT:      (local.get $a)
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.eq
+  ;; CHECK-NEXT:      (local.get $b)
+  ;; CHECK-NEXT:      (i32.const 42)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.eq
+  ;; CHECK-NEXT:      (local.get $a)
+  ;; CHECK-NEXT:      (i32.const 42)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 42)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPTIN:      (func $pair (type $2) (param $a i32) (param $b i32)
+  ;; OPTIN-NEXT:  (if
+  ;; OPTIN-NEXT:   (i32.and
+  ;; OPTIN-NEXT:    (i32.eqz
+  ;; OPTIN-NEXT:     (local.get $a)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:    (i32.eq
+  ;; OPTIN-NEXT:     (local.get $b)
+  ;; OPTIN-NEXT:     (i32.const 42)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:   (then
+  ;; OPTIN-NEXT:    (drop
+  ;; OPTIN-NEXT:     (i32.const 1)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:    (drop
+  ;; OPTIN-NEXT:     (i32.const 1)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:    (drop
+  ;; OPTIN-NEXT:     (i32.const 0)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:   (else
+  ;; OPTIN-NEXT:    (drop
+  ;; OPTIN-NEXT:     (i32.eqz
+  ;; OPTIN-NEXT:      (local.get $a)
+  ;; OPTIN-NEXT:     )
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:    (drop
+  ;; OPTIN-NEXT:     (i32.eq
+  ;; OPTIN-NEXT:      (local.get $b)
+  ;; OPTIN-NEXT:      (i32.const 42)
+  ;; OPTIN-NEXT:     )
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:    (drop
+  ;; OPTIN-NEXT:     (i32.eq
+  ;; OPTIN-NEXT:      (local.get $a)
+  ;; OPTIN-NEXT:      (i32.const 42)
+  ;; OPTIN-NEXT:     )
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:    (drop
+  ;; OPTIN-NEXT:     (i32.const 42)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT: )
+  (func $pair (param $a i32) (param $b i32)
+    ;; Two constraints in one if condition.
+    (if
+      (i32.and
+        ;; a == 0
+        (i32.eqz
+          (local.get $a)
+        )
+        ;; b == 42
+        (i32.eq
+          (local.get $b)
+          (i32.const 42)
+        )
+      )
+      (then
+        ;; These are all true.
+        (drop
+          (i32.eq
+            (local.get $a)
+            (i32.const 0)
+          )
+        )
+        (drop
+          (i32.eq
+            (local.get $b)
+            (i32.const 42)
+          )
+        )
+        ;; This is not.
+        (drop
+          (i32.eq
+            (local.get $a)
+            (i32.const 42)
+          )
+        )
+      )
+      (else
+        ;; The same expressions as in the (then ..). Here, at least one must be
+        ;; false, not not necessarily all of them, so we infer nothing.
+        (drop
+          (i32.eq
+            (local.get $a)
+            (i32.const 0)
+          )
+        )
+        (drop
+          (i32.eq
+            (local.get $b)
+            (i32.const 42)
+          )
+        )
+        (drop
+          (i32.eq
+            (local.get $a)
+            (i32.const 42)
+          )
+        )
+        ;; A silly extra instruction to stop optimize-instructions from
+        ;; folding the if-else arms.
+        (drop
+          (i32.const 42)
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $pair-same-local (type $0) (param $a i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.and
+  ;; CHECK-NEXT:    (i32.gt_u
+  ;; CHECK-NEXT:     (local.get $a)
+  ;; CHECK-NEXT:     (i32.const 42)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.gt_u
+  ;; CHECK-NEXT:     (local.get $a)
+  ;; CHECK-NEXT:     (i32.const 1337)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (else
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPTIN:      (func $pair-same-local (type $0) (param $a i32)
+  ;; OPTIN-NEXT:  (drop
+  ;; OPTIN-NEXT:   (if (result i32)
+  ;; OPTIN-NEXT:    (i32.and
+  ;; OPTIN-NEXT:     (i32.gt_u
+  ;; OPTIN-NEXT:      (local.get $a)
+  ;; OPTIN-NEXT:      (i32.const 42)
+  ;; OPTIN-NEXT:     )
+  ;; OPTIN-NEXT:     (i32.gt_u
+  ;; OPTIN-NEXT:      (local.get $a)
+  ;; OPTIN-NEXT:      (i32.const 1337)
+  ;; OPTIN-NEXT:     )
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:    (then
+  ;; OPTIN-NEXT:     (i32.const 1)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:    (else
+  ;; OPTIN-NEXT:     (i32.const 1)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT: )
+  (func $pair-same-local (param $a i32)
+    ;; Similar to above, but now the two ANDed conditions are about the same
+    ;; local
+    (if
+      (i32.and
+        ;; a > 42
+        (i32.gt_u
+          (local.get $a)
+          (i32.const 42)
+        )
+        ;; a > 1337
+        (i32.gt_u
+          (local.get $a)
+          (i32.const 1337)
+        )
+      )
+      (then
+        ;; This is true.
+        (drop
+          (i32.gt_u
+            (local.get $a)
+            (i32.const 1337)
+          )
+        )
+      )
+      (else
+        ;; The negation of  a > 42 && a > 1337  is  a <= 42 || a <= 1337, so we
+        ;; can infer a <= 1337.
+        (drop
+          (i32.le_u
+            (local.get $a)
+            (i32.const 1337)
+          )
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $pair-same-local-bad-or (type $0) (param $a i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.and
+  ;; CHECK-NEXT:    (i32.ne
+  ;; CHECK-NEXT:     (local.get $a)
+  ;; CHECK-NEXT:     (i32.const 42)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.ne
+  ;; CHECK-NEXT:     (local.get $a)
+  ;; CHECK-NEXT:     (i32.const 1337)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.ne
+  ;; CHECK-NEXT:      (local.get $a)
+  ;; CHECK-NEXT:      (i32.const 500)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (else
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.eq
+  ;; CHECK-NEXT:      (local.get $a)
+  ;; CHECK-NEXT:      (i32.const 42)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.eq
+  ;; CHECK-NEXT:      (local.get $a)
+  ;; CHECK-NEXT:      (i32.const 1337)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.eq
+  ;; CHECK-NEXT:      (local.get $a)
+  ;; CHECK-NEXT:      (i32.const 500)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPTIN:      (func $pair-same-local-bad-or (type $0) (param $a i32)
+  ;; OPTIN-NEXT:  (if
+  ;; OPTIN-NEXT:   (i32.and
+  ;; OPTIN-NEXT:    (i32.ne
+  ;; OPTIN-NEXT:     (local.get $a)
+  ;; OPTIN-NEXT:     (i32.const 42)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:    (i32.ne
+  ;; OPTIN-NEXT:     (local.get $a)
+  ;; OPTIN-NEXT:     (i32.const 1337)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:   (then
+  ;; OPTIN-NEXT:    (drop
+  ;; OPTIN-NEXT:     (i32.const 1)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:    (drop
+  ;; OPTIN-NEXT:     (i32.const 1)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:    (drop
+  ;; OPTIN-NEXT:     (i32.ne
+  ;; OPTIN-NEXT:      (local.get $a)
+  ;; OPTIN-NEXT:      (i32.const 500)
+  ;; OPTIN-NEXT:     )
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:   (else
+  ;; OPTIN-NEXT:    (drop
+  ;; OPTIN-NEXT:     (i32.eq
+  ;; OPTIN-NEXT:      (local.get $a)
+  ;; OPTIN-NEXT:      (i32.const 42)
+  ;; OPTIN-NEXT:     )
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:    (drop
+  ;; OPTIN-NEXT:     (i32.eq
+  ;; OPTIN-NEXT:      (local.get $a)
+  ;; OPTIN-NEXT:      (i32.const 1337)
+  ;; OPTIN-NEXT:     )
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:    (drop
+  ;; OPTIN-NEXT:     (i32.eq
+  ;; OPTIN-NEXT:      (local.get $a)
+  ;; OPTIN-NEXT:      (i32.const 500)
+  ;; OPTIN-NEXT:     )
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT: )
+  (func $pair-same-local-bad-or (param $a i32)
+    ;; As above, but the OR we do for the else fails.
+    (if
+      (i32.and
+        ;; a != 42 && a != 1337
+        (i32.ne
+          (local.get $a)
+          (i32.const 42)
+        )
+        (i32.ne
+          (local.get $a)
+          (i32.const 1337)
+        )
+      )
+      (then
+        ;; These are true.
+        (drop
+          (i32.ne
+            (local.get $a)
+            (i32.const 42)
+          )
+        )
+        (drop
+          (i32.ne
+            (local.get $a)
+            (i32.const 1337)
+          )
+        )
+        ;; This is unknown.
+        (drop
+          (i32.ne
+            (local.get $a)
+            (i32.const 500)
+          )
+        )
+      )
+      (else
+        ;; ORing a == 42 || a == 1337, we get nothing useful, and can prove
+        ;; nothing. TODO: we could infer a span here
+        (drop
+          (i32.eq
+            (local.get $a)
+            (i32.const 42)
+          )
+        )
+        (drop
+          (i32.eq
+            (local.get $a)
+            (i32.const 1337)
+          )
+        )
+        (drop
+          (i32.eq
+            (local.get $a)
+            (i32.const 500)
+          )
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $pair-partial (type $0) (param $a i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.and
+  ;; CHECK-NEXT:    (i32.eq
+  ;; CHECK-NEXT:     (local.get $a)
+  ;; CHECK-NEXT:     (i32.const 42)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (call $import)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (else
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.eq
+  ;; CHECK-NEXT:      (local.get $a)
+  ;; CHECK-NEXT:      (i32.const 42)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 42)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPTIN:      (func $pair-partial (type $0) (param $a i32)
+  ;; OPTIN-NEXT:  (if
+  ;; OPTIN-NEXT:   (i32.and
+  ;; OPTIN-NEXT:    (call $import)
+  ;; OPTIN-NEXT:    (i32.eq
+  ;; OPTIN-NEXT:     (local.get $a)
+  ;; OPTIN-NEXT:     (i32.const 42)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:   (then
+  ;; OPTIN-NEXT:    (drop
+  ;; OPTIN-NEXT:     (i32.const 1)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:   (else
+  ;; OPTIN-NEXT:    (drop
+  ;; OPTIN-NEXT:     (i32.eq
+  ;; OPTIN-NEXT:      (local.get $a)
+  ;; OPTIN-NEXT:      (i32.const 42)
+  ;; OPTIN-NEXT:     )
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:    (drop
+  ;; OPTIN-NEXT:     (i32.const 42)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT: )
+  (func $pair-partial (param $a i32)
+    (if
+      (i32.and
+        ;; a == 42
+        (i32.eq
+          (local.get $a)
+          (i32.const 42)
+        )
+        ;; ANDed with something we know nothing about
+        (call $import)
+      )
+      (then
+        ;; a must be 42, to get here.
+        (drop
+          (i32.eq
+            (local.get $a)
+            (i32.const 42)
+          )
+        )
+      )
+      (else
+        ;; But we don't know anything about a here: we get to this place when
+        ;; a != 42 OR the unknown was 0, so a could be anything.
+        (drop
+          (i32.eq
+            (local.get $a)
+            (i32.const 42)
+          )
+        )
+        ;; A silly extra instruction to stop optimize-instructions from
+        ;; folding the if-else arms.
+        (drop
+          (i32.const 42)
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $several (type $11) (param $a i32) (param $b i32) (param $c i32) (param $d i32) (param $e i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.and
+  ;; CHECK-NEXT:    (i32.and
+  ;; CHECK-NEXT:     (i32.eqz
+  ;; CHECK-NEXT:      (i32.eqz
+  ;; CHECK-NEXT:       (local.get $a)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.eq
+  ;; CHECK-NEXT:      (local.get $b)
+  ;; CHECK-NEXT:      (i32.const 10)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.and
+  ;; CHECK-NEXT:     (i32.eq
+  ;; CHECK-NEXT:      (local.get $d)
+  ;; CHECK-NEXT:      (i32.const 20)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.eq
+  ;; CHECK-NEXT:      (local.get $e)
+  ;; CHECK-NEXT:      (i32.const 30)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.eq
+  ;; CHECK-NEXT:      (local.get $c)
+  ;; CHECK-NEXT:      (i32.const 40)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPTIN:      (func $several (type $11) (param $a i32) (param $b i32) (param $c i32) (param $d i32) (param $e i32)
+  ;; OPTIN-NEXT:  (if
+  ;; OPTIN-NEXT:   (i32.and
+  ;; OPTIN-NEXT:    (i32.and
+  ;; OPTIN-NEXT:     (i32.eq
+  ;; OPTIN-NEXT:      (local.get $b)
+  ;; OPTIN-NEXT:      (i32.const 10)
+  ;; OPTIN-NEXT:     )
+  ;; OPTIN-NEXT:     (i32.ne
+  ;; OPTIN-NEXT:      (local.get $a)
+  ;; OPTIN-NEXT:      (i32.const 0)
+  ;; OPTIN-NEXT:     )
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:    (i32.and
+  ;; OPTIN-NEXT:     (i32.eq
+  ;; OPTIN-NEXT:      (local.get $d)
+  ;; OPTIN-NEXT:      (i32.const 20)
+  ;; OPTIN-NEXT:     )
+  ;; OPTIN-NEXT:     (i32.eq
+  ;; OPTIN-NEXT:      (local.get $e)
+  ;; OPTIN-NEXT:      (i32.const 30)
+  ;; OPTIN-NEXT:     )
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:   (then
+  ;; OPTIN-NEXT:    (drop
+  ;; OPTIN-NEXT:     (i32.const 1)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:    (drop
+  ;; OPTIN-NEXT:     (i32.const 1)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:    (drop
+  ;; OPTIN-NEXT:     (i32.const 1)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:    (drop
+  ;; OPTIN-NEXT:     (i32.const 1)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:    (drop
+  ;; OPTIN-NEXT:     (i32.const 0)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:    (drop
+  ;; OPTIN-NEXT:     (i32.eq
+  ;; OPTIN-NEXT:      (local.get $c)
+  ;; OPTIN-NEXT:      (i32.const 40)
+  ;; OPTIN-NEXT:     )
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT: )
+  (func $several (param $a i32) (param $b i32) (param $c i32) (param $d i32) (param $e i32)
+    ;; Four constraints in one if condition.
+    (if
+      (i32.and
+        (i32.and
+          ;; !!a => a is not 0.
+          (i32.eqz
+            (i32.eqz
+              (local.get $a)
+            )
+          )
+          ;; b == 10
+          (i32.eq
+            (local.get $b)
+            (i32.const 10)
+          )
+        )
+        (i32.and
+          ;; d == 20
+          (i32.eq
+            (local.get $d)
+            (i32.const 20)
+          )
+          ;; e == 30
+          (i32.eq
+            (local.get $e)
+            (i32.const 30)
+          )
+        )
+      )
+      (then
+        ;; These are all true.
+        (drop
+          (i32.ne
+            (local.get $a)
+            (i32.const 0)
+          )
+        )
+        (drop
+          (i32.eq
+            (local.get $b)
+            (i32.const 10)
+          )
+        )
+        (drop
+          (i32.eq
+            (local.get $d)
+            (i32.const 20)
+          )
+        )
+        (drop
+          (i32.eq
+            (local.get $e)
+            (i32.const 30)
+          )
+        )
+        ;; This is false.
+        (drop
+          (i32.eq
+            (local.get $a)
+            (i32.const 0)
+          )
+        )
+        ;; This local is unknown.
+        (drop
+          (i32.eq
+            (local.get $c)
+            (i32.const 40)
+          )
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $three.contradiction.middle (type $0) (param $x i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.and
+  ;; CHECK-NEXT:    (i32.eqz
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.and
+  ;; CHECK-NEXT:     (i32.lt_s
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.ge_s
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPTIN:      (func $three.contradiction.middle (type $0) (param $x i32)
+  ;; OPTIN-NEXT:  (if
+  ;; OPTIN-NEXT:   (i32.and
+  ;; OPTIN-NEXT:    (i32.eqz
+  ;; OPTIN-NEXT:     (local.get $x)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:    (i32.and
+  ;; OPTIN-NEXT:     (i32.lt_s
+  ;; OPTIN-NEXT:      (local.get $x)
+  ;; OPTIN-NEXT:      (i32.const 0)
+  ;; OPTIN-NEXT:     )
+  ;; OPTIN-NEXT:     (i32.ge_s
+  ;; OPTIN-NEXT:      (local.get $x)
+  ;; OPTIN-NEXT:      (i32.const 0)
+  ;; OPTIN-NEXT:     )
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:   (then
+  ;; OPTIN-NEXT:    (drop
+  ;; OPTIN-NEXT:     (unreachable)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT: )
+  (func $three.contradiction.middle (param $x i32)
+    ;; First we set x == 0, then x < 0, then x >= 0. The first two are a
+    ;; contradiction. We should not error (after a contradiction, we should not
+    ;; apply further constraints), and can optimize away the if body.
+    (if
+      (i32.and
+        (i32.eqz
+          (local.get $x)
+        )
+        (i32.and
+          (i32.lt_s
+            (local.get $x)
+            (i32.const 0)
+          )
+          (i32.ge_s
+            (local.get $x)
+            (i32.const 0)
+          )
+        )
+      )
+      (then
+        (drop
+          (i32.eqz
+            (local.get $x)
+          )
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $br_if_and (type $0) (param $param i32)
+  ;; CHECK-NEXT:  (block $block
+  ;; CHECK-NEXT:   (br_if $block
+  ;; CHECK-NEXT:    (i32.and
+  ;; CHECK-NEXT:     (i32.ne
+  ;; CHECK-NEXT:      (local.get $param)
+  ;; CHECK-NEXT:      (i32.const 10)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.ne
+  ;; CHECK-NEXT:      (local.get $param)
+  ;; CHECK-NEXT:      (i32.const 20)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (return)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.and
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.ne
+  ;; CHECK-NEXT:    (local.get $param)
+  ;; CHECK-NEXT:    (i32.const 30)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPTIN:      (func $br_if_and (type $0) (param $param i32)
+  ;; OPTIN-NEXT:  (block $block
+  ;; OPTIN-NEXT:   (br_if $block
+  ;; OPTIN-NEXT:    (i32.and
+  ;; OPTIN-NEXT:     (i32.ne
+  ;; OPTIN-NEXT:      (local.get $param)
+  ;; OPTIN-NEXT:      (i32.const 10)
+  ;; OPTIN-NEXT:     )
+  ;; OPTIN-NEXT:     (i32.ne
+  ;; OPTIN-NEXT:      (local.get $param)
+  ;; OPTIN-NEXT:      (i32.const 20)
+  ;; OPTIN-NEXT:     )
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:   (return)
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (drop
+  ;; OPTIN-NEXT:   (i32.and
+  ;; OPTIN-NEXT:    (i32.const 1)
+  ;; OPTIN-NEXT:    (i32.const 1)
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (drop
+  ;; OPTIN-NEXT:   (i32.ne
+  ;; OPTIN-NEXT:    (local.get $param)
+  ;; OPTIN-NEXT:    (i32.const 30)
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT: )
+  (func $br_if_and (param $param i32)
+    ;; An AND in a br_if condition.
+    (block $block
+      (br_if $block
+        (i32.and
+          (i32.ne
+            (local.get $param)
+            (i32.const 10)
+          )
+          (i32.ne
+            (local.get $param)
+            (i32.const 20)
+          )
+        )
+      )
+      (return)
+    )
+    ;; If we get here, param != 10 && param != 20. We optimize each arm of the
+    ;; AND here.
+    (drop
+      (i32.and
+        (i32.ne
+          (local.get $param)
+          (i32.const 10)
+        )
+        (i32.ne
+          (local.get $param)
+          (i32.const 20)
+        )
+      )
+    )
+    ;; This one we don't know.
+    (drop
+      (i32.ne
+        (local.get $param)
+        (i32.const 30)
       )
     )
   )

@@ -1,7 +1,8 @@
 #include <limits>
 
-#include "ir/constraint.h"
 #include "ir/abstract.h"
+#include "ir/constraint.h"
+#include "wasm-builder.h"
 #include "gtest/gtest.h"
 
 using namespace wasm;
@@ -1643,4 +1644,410 @@ TEST(ConstraintTest, EqualTermPairs) {
   AndedConstraintSet sGtUContra{gtU1};
   sGtUContra.approximateAnd(eq1);
   EXPECT_TRUE(sGtUContra.provesEverything());
+}
+
+TEST(ConstraintTest, ParseUnaryEqZ) {
+  Module wasm;
+  Builder builder(wasm);
+
+  // 1. Single i32.eqz of a local.get: parsed as x == 0.
+  {
+    auto* expr =
+      builder.makeUnary(EqZInt32, builder.makeLocalGet(0, Type::i32));
+    auto parsed = ParsedAndedConstraints::parse(expr);
+    EXPECT_FALSE(parsed.hasUnknown);
+    ASSERT_EQ(parsed.size(), 1);
+    EXPECT_EQ(parsed[0],
+              (LocalConstraint{0, Constraint{Eq, {Literal(int32_t(0))}}}));
+  }
+
+  // 2. Single i64.eqz of a local.get: parsed as x == 0_i64.
+  {
+    auto* expr =
+      builder.makeUnary(EqZInt64, builder.makeLocalGet(1, Type::i64));
+    auto parsed = ParsedAndedConstraints::parse(expr);
+    EXPECT_FALSE(parsed.hasUnknown);
+    ASSERT_EQ(parsed.size(), 1);
+    EXPECT_EQ(parsed[0],
+              (LocalConstraint{1, Constraint{Eq, {Literal(int64_t(0))}}}));
+  }
+
+  // 3. Nested eqz of eqz: parsed as x != 0.
+  {
+    auto* inner =
+      builder.makeUnary(EqZInt32, builder.makeLocalGet(0, Type::i32));
+    auto* expr = builder.makeUnary(EqZInt32, inner);
+    auto parsed = ParsedAndedConstraints::parse(expr);
+    EXPECT_FALSE(parsed.hasUnknown);
+    ASSERT_EQ(parsed.size(), 1);
+    EXPECT_EQ(parsed[0],
+              (LocalConstraint{0, Constraint{Ne, {Literal(int32_t(0))}}}));
+  }
+
+  // 4. Nested eqz of eqz with 64-bit inner: parsed as x != 0_i64.
+  {
+    auto* inner =
+      builder.makeUnary(EqZInt64, builder.makeLocalGet(1, Type::i64));
+    auto* expr = builder.makeUnary(EqZInt32, inner);
+    auto parsed = ParsedAndedConstraints::parse(expr);
+    EXPECT_FALSE(parsed.hasUnknown);
+    ASSERT_EQ(parsed.size(), 1);
+    EXPECT_EQ(parsed[0],
+              (LocalConstraint{1, Constraint{Ne, {Literal(int64_t(0))}}}));
+  }
+
+  // 5. eqz of non-local.get (e.g. call): unhandled, sets hasUnknown.
+  {
+    auto* call = builder.makeCall("foo", {}, Type::i32);
+    auto* expr = builder.makeUnary(EqZInt32, call);
+    auto parsed = ParsedAndedConstraints::parse(expr);
+    EXPECT_TRUE(parsed.empty());
+    EXPECT_TRUE(parsed.hasUnknown);
+  }
+
+  // 6. Double eqz where inner value is not a local.get: sets hasUnknown.
+  {
+    auto* call = builder.makeCall("foo", {}, Type::i32);
+    auto* inner = builder.makeUnary(EqZInt32, call);
+    auto* expr = builder.makeUnary(EqZInt32, inner);
+    auto parsed = ParsedAndedConstraints::parse(expr);
+    EXPECT_TRUE(parsed.empty());
+    EXPECT_TRUE(parsed.hasUnknown);
+  }
+
+  // 7. Unary operation that is not EqZ: sets hasUnknown.
+  {
+    auto* expr =
+      builder.makeUnary(ClzInt32, builder.makeLocalGet(0, Type::i32));
+    auto parsed = ParsedAndedConstraints::parse(expr);
+    EXPECT_TRUE(parsed.empty());
+    EXPECT_TRUE(parsed.hasUnknown);
+  }
+}
+
+TEST(ConstraintTest, ParseRefIsNull) {
+  Module wasm;
+  Builder builder(wasm);
+  auto anyref = Type(HeapType::any, Nullable);
+
+  // 1. ref.is_null of local.get: parsed as x == null.
+  {
+    auto* expr = builder.makeRefIsNull(builder.makeLocalGet(0, anyref));
+    auto parsed = ParsedAndedConstraints::parse(expr);
+    EXPECT_FALSE(parsed.hasUnknown);
+    ASSERT_EQ(parsed.size(), 1);
+    EXPECT_EQ(
+      parsed[0],
+      (LocalConstraint{0, Constraint{Eq, {Literal::makeNull(HeapType::any)}}}));
+  }
+
+  // 2. ref.is_null of non-local.get (e.g. call): unhandled, sets hasUnknown.
+  {
+    auto* call = builder.makeCall("foo", {}, anyref);
+    auto* expr = builder.makeRefIsNull(call);
+    auto parsed = ParsedAndedConstraints::parse(expr);
+    EXPECT_TRUE(parsed.empty());
+    EXPECT_TRUE(parsed.hasUnknown);
+  }
+
+  // 3. ref.is_null of constant: unhandled, sets hasUnknown.
+  {
+    auto* expr = builder.makeRefIsNull(builder.makeRefNull(HeapType::any));
+    auto parsed = ParsedAndedConstraints::parse(expr);
+    EXPECT_TRUE(parsed.empty());
+    EXPECT_TRUE(parsed.hasUnknown);
+  }
+}
+
+TEST(ConstraintTest, ParseBinary) {
+  Module wasm;
+  Builder builder(wasm);
+
+  // 1. Binary comparison with constant on right: parsed as local constraint.
+  {
+    auto* expr = builder.makeBinary(EqInt32,
+                                    builder.makeLocalGet(0, Type::i32),
+                                    builder.makeConst(Literal(int32_t(42))));
+    auto parsed = ParsedAndedConstraints::parse(expr);
+    EXPECT_FALSE(parsed.hasUnknown);
+    ASSERT_EQ(parsed.size(), 1);
+    EXPECT_EQ(parsed[0],
+              (LocalConstraint{0, Constraint{Eq, {Literal(int32_t(42))}}}));
+  }
+
+  // 2. Binary comparison with local.get on right: parsed as local constraint
+  {
+    auto* expr = builder.makeBinary(NeInt32,
+                                    builder.makeLocalGet(0, Type::i32),
+                                    builder.makeLocalGet(1, Type::i32));
+    auto parsed = ParsedAndedConstraints::parse(expr);
+    EXPECT_FALSE(parsed.hasUnknown);
+    ASSERT_EQ(parsed.size(), 1);
+    EXPECT_EQ(parsed[0], (LocalConstraint{0, Constraint{Ne, {Index(1)}}}));
+  }
+
+  // 3. All relational binary operators:
+  for (auto [wasmOp, abstractOp] : {
+         std::pair{EqInt32, Eq},
+         std::pair{NeInt32, Ne},
+         std::pair{LtSInt32, LtS},
+         std::pair{LtUInt32, LtU},
+         std::pair{LeSInt32, LeS},
+         std::pair{LeUInt32, LeU},
+         std::pair{GtSInt32, GtS},
+         std::pair{GtUInt32, GtU},
+         std::pair{GeSInt32, GeS},
+         std::pair{GeUInt32, GeU},
+       }) {
+    auto* expr = builder.makeBinary(wasmOp,
+                                    builder.makeLocalGet(0, Type::i32),
+                                    builder.makeConst(Literal(int32_t(5))));
+    auto parsed = ParsedAndedConstraints::parse(expr);
+    EXPECT_FALSE(parsed.hasUnknown);
+    ASSERT_EQ(parsed.size(), 1);
+    EXPECT_EQ(
+      parsed[0],
+      (LocalConstraint{0, Constraint{abstractOp, {Literal(int32_t(5))}}}));
+  }
+
+  // 64-bit comparison:
+  {
+    auto* expr = builder.makeBinary(LtSInt64,
+                                    builder.makeLocalGet(0, Type::i64),
+                                    builder.makeConst(Literal(int64_t(100))));
+    auto parsed = ParsedAndedConstraints::parse(expr);
+    EXPECT_FALSE(parsed.hasUnknown);
+    ASSERT_EQ(parsed.size(), 1);
+    EXPECT_EQ(parsed[0],
+              (LocalConstraint{0, Constraint{LtS, {Literal(int64_t(100))}}}));
+  }
+
+  // 4. Comparison where right is not a term (e.g. call): unhandled, sets
+  // hasUnknown.
+  {
+    auto* call = builder.makeCall("foo", {}, Type::i32);
+    auto* expr =
+      builder.makeBinary(EqInt32, builder.makeLocalGet(0, Type::i32), call);
+    auto parsed = ParsedAndedConstraints::parse(expr);
+    EXPECT_TRUE(parsed.empty());
+    EXPECT_TRUE(parsed.hasUnknown);
+  }
+
+  // 5. Comparison where left is not a local.get: unhandled, sets hasUnknown.
+  {
+    auto* expr = builder.makeBinary(EqInt32,
+                                    builder.makeConst(Literal(int32_t(1))),
+                                    builder.makeConst(Literal(int32_t(2))));
+    auto parsed = ParsedAndedConstraints::parse(expr);
+    EXPECT_TRUE(parsed.empty());
+    EXPECT_TRUE(parsed.hasUnknown);
+  }
+  // Ditto, local on right.
+  {
+    auto* expr = builder.makeBinary(EqInt32,
+                                    builder.makeConst(Literal(int32_t(1))),
+                                    builder.makeLocalGet(0, Type::i32));
+    auto parsed = ParsedAndedConstraints::parse(expr);
+    EXPECT_TRUE(parsed.empty());
+    EXPECT_TRUE(parsed.hasUnknown);
+  }
+
+  // 6. Binary operation that is not a comparison or AND (e.g. Add, Sub, Mul,
+  // Or, Xor): sets hasUnknown.
+  for (auto op : {AddInt32, SubInt32, MulInt32, OrInt32, XorInt32}) {
+    auto* expr = builder.makeBinary(op,
+                                    builder.makeLocalGet(0, Type::i32),
+                                    builder.makeConst(Literal(int32_t(1))));
+    auto parsed = ParsedAndedConstraints::parse(expr);
+    EXPECT_TRUE(parsed.empty());
+    EXPECT_TRUE(parsed.hasUnknown);
+  }
+}
+
+TEST(ConstraintTest, ParseRefEq) {
+  Module wasm;
+  Builder builder(wasm);
+  auto anyref = Type(HeapType::any, Nullable);
+
+  // 1. ref.eq with local.get on both sides.
+  {
+    auto* expr = builder.makeRefEq(builder.makeLocalGet(0, anyref),
+                                   builder.makeLocalGet(1, anyref));
+    auto parsed = ParsedAndedConstraints::parse(expr);
+    EXPECT_FALSE(parsed.hasUnknown);
+    ASSERT_EQ(parsed.size(), 1);
+    EXPECT_EQ(parsed[0], (LocalConstraint{0, Constraint{Eq, {Index(1)}}}));
+  }
+
+  // 2. ref.eq with local.get and ref.null.
+  {
+    auto* expr = builder.makeRefEq(builder.makeLocalGet(0, anyref),
+                                   builder.makeRefNull(HeapType::any));
+    auto parsed = ParsedAndedConstraints::parse(expr);
+    EXPECT_FALSE(parsed.hasUnknown);
+    ASSERT_EQ(parsed.size(), 1);
+    EXPECT_EQ(
+      parsed[0],
+      (LocalConstraint{0, Constraint{Eq, {Literal::makeNull(HeapType::any)}}}));
+  }
+
+  // 3. ref.eq where left is not a local.get (e.g. null on left): sets
+  // hasUnknown.
+  {
+    auto* expr = builder.makeRefEq(builder.makeRefNull(HeapType::any),
+                                   builder.makeLocalGet(0, anyref));
+    auto parsed = ParsedAndedConstraints::parse(expr);
+    EXPECT_TRUE(parsed.empty());
+    EXPECT_TRUE(parsed.hasUnknown);
+  }
+
+  // 4. ref.eq where right is not a term (e.g. call): sets hasUnknown.
+  {
+    auto* call = builder.makeCall("foo", {}, anyref);
+    auto* expr = builder.makeRefEq(builder.makeLocalGet(0, anyref), call);
+    auto parsed = ParsedAndedConstraints::parse(expr);
+    EXPECT_TRUE(parsed.empty());
+    EXPECT_TRUE(parsed.hasUnknown);
+  }
+}
+
+TEST(ConstraintTest, ParseAnd) {
+  Module wasm;
+  Builder builder(wasm);
+
+  // 1. AND over two valid comparisons: both constraints returned.
+  {
+    auto* left = builder.makeBinary(EqInt32,
+                                    builder.makeLocalGet(0, Type::i32),
+                                    builder.makeConst(Literal(int32_t(1))));
+    auto* right = builder.makeBinary(EqInt32,
+                                     builder.makeLocalGet(1, Type::i32),
+                                     builder.makeConst(Literal(int32_t(2))));
+    auto* expr = builder.makeBinary(AndInt32, left, right);
+    auto parsed = ParsedAndedConstraints::parse(expr);
+    EXPECT_FALSE(parsed.hasUnknown);
+    ASSERT_EQ(parsed.size(), 2);
+    // Work stack processes right then left.
+    EXPECT_EQ(parsed[0],
+              (LocalConstraint{1, Constraint{Eq, {Literal(int32_t(2))}}}));
+    EXPECT_EQ(parsed[1],
+              (LocalConstraint{0, Constraint{Eq, {Literal(int32_t(1))}}}));
+  }
+
+  // 2. AND with known constraint and unknown expression (call): Parses the
+  // constraint and also sets hasUnknown.
+  {
+    auto* left = builder.makeBinary(EqInt32,
+                                    builder.makeLocalGet(0, Type::i32),
+                                    builder.makeConst(Literal(int32_t(10))));
+    auto* right = builder.makeCall("unknown", {}, Type::i32);
+    auto* expr = builder.makeBinary(AndInt32, left, right);
+    auto parsed = ParsedAndedConstraints::parse(expr);
+    EXPECT_TRUE(parsed.hasUnknown);
+    ASSERT_EQ(parsed.size(), 1);
+    EXPECT_EQ(parsed[0],
+              (LocalConstraint{0, Constraint{Eq, {Literal(int32_t(10))}}}));
+  }
+
+  // 3. Same as above with unknown on left:
+  {
+    auto* left = builder.makeCall("unknown", {}, Type::i32);
+    auto* right = builder.makeBinary(EqInt32,
+                                     builder.makeLocalGet(0, Type::i32),
+                                     builder.makeConst(Literal(int32_t(10))));
+    auto* expr = builder.makeBinary(AndInt32, left, right);
+    auto parsed = ParsedAndedConstraints::parse(expr);
+    EXPECT_TRUE(parsed.hasUnknown);
+    ASSERT_EQ(parsed.size(), 1);
+    EXPECT_EQ(parsed[0],
+              (LocalConstraint{0, Constraint{Eq, {Literal(int32_t(10))}}}));
+  }
+
+  // 4. AND with known constraint and unhandled binary op (e.g. Add):
+  {
+    auto* left = builder.makeBinary(EqInt32,
+                                    builder.makeLocalGet(0, Type::i32),
+                                    builder.makeConst(Literal(int32_t(1))));
+    auto* right = builder.makeBinary(AddInt32,
+                                     builder.makeLocalGet(1, Type::i32),
+                                     builder.makeConst(Literal(int32_t(2))));
+    auto* expr = builder.makeBinary(AndInt32, left, right);
+    auto parsed = ParsedAndedConstraints::parse(expr);
+    EXPECT_TRUE(parsed.hasUnknown);
+    ASSERT_EQ(parsed.size(), 1);
+    EXPECT_EQ(parsed[0],
+              (LocalConstraint{0, Constraint{Eq, {Literal(int32_t(1))}}}));
+  }
+
+  // 5. AND with known constraint and unhandled unary op (e.g. Clz):
+  {
+    auto* left = builder.makeBinary(EqInt32,
+                                    builder.makeLocalGet(0, Type::i32),
+                                    builder.makeConst(Literal(int32_t(1))));
+    auto* right =
+      builder.makeUnary(ClzInt32, builder.makeLocalGet(1, Type::i32));
+    auto* expr = builder.makeBinary(AndInt32, left, right);
+    auto parsed = ParsedAndedConstraints::parse(expr);
+    EXPECT_TRUE(parsed.hasUnknown);
+    ASSERT_EQ(parsed.size(), 1);
+    EXPECT_EQ(parsed[0],
+              (LocalConstraint{0, Constraint{Eq, {Literal(int32_t(1))}}}));
+  }
+
+  // 6. AND with known constraint and unhandled eqz argument:
+  {
+    auto* left = builder.makeBinary(EqInt32,
+                                    builder.makeLocalGet(0, Type::i32),
+                                    builder.makeConst(Literal(int32_t(1))));
+    auto* right =
+      builder.makeUnary(EqZInt32, builder.makeCall("foo", {}, Type::i32));
+    auto* expr = builder.makeBinary(AndInt32, left, right);
+    auto parsed = ParsedAndedConstraints::parse(expr);
+    EXPECT_TRUE(parsed.hasUnknown);
+    ASSERT_EQ(parsed.size(), 1);
+    EXPECT_EQ(parsed[0],
+              (LocalConstraint{0, Constraint{Eq, {Literal(int32_t(1))}}}));
+  }
+
+  // 7. AND with two unknowns:
+  {
+    auto* left = builder.makeCall("foo", {}, Type::i32);
+    auto* right = builder.makeCall("bar", {}, Type::i32);
+    auto* expr = builder.makeBinary(AndInt32, left, right);
+    auto parsed = ParsedAndedConstraints::parse(expr);
+    EXPECT_TRUE(parsed.hasUnknown);
+    EXPECT_TRUE(parsed.empty());
+  }
+}
+
+TEST(ConstraintTest, ParseOtherUnknowns) {
+  Module wasm;
+  Builder builder(wasm);
+
+  // General expression types not handled by parse:
+  for (Expression* expr : {
+         (Expression*)builder.makeCall("foo", {}, Type::i32),
+         (Expression*)builder.makeConst(Literal(int32_t(42))),
+         (Expression*)builder.makeLocalGet(0, Type::i32),
+         (Expression*)builder.makeNop(),
+         (Expression*)builder.makeBlock(),
+       }) {
+    auto parsed = ParsedAndedConstraints::parse(expr);
+    EXPECT_TRUE(parsed.empty());
+    EXPECT_TRUE(parsed.hasUnknown);
+  }
+
+  // Contrast parse vs parseCondition for a bare local.get:
+  // parse treats it as an unhandled expression (unknown), while
+  // parseCondition recognizes it as x != 0 in a condition context.
+  auto* get = builder.makeLocalGet(0, Type::i32);
+  auto parsedAsExpr = ParsedAndedConstraints::parse(get);
+  EXPECT_TRUE(parsedAsExpr.empty());
+  EXPECT_TRUE(parsedAsExpr.hasUnknown);
+
+  auto parsedAsCondition = ParsedAndedConstraints::parseCondition(get);
+  EXPECT_FALSE(parsedAsCondition.hasUnknown);
+  ASSERT_EQ(parsedAsCondition.size(), 1);
+  EXPECT_EQ(parsedAsCondition[0],
+            (LocalConstraint{0, Constraint{Ne, {Literal(int32_t(0))}}}));
 }

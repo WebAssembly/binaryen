@@ -66,6 +66,8 @@
 // function analysis).
 //
 
+#include <algorithm>
+
 #include "cfg/cfg-traversal.h"
 #include "ir/constraint.h"
 #include "ir/drop.h"
@@ -146,11 +148,12 @@ struct ConstraintAnalysis
 
   void maybeMarkRelevant(Expression* curr) {
     // If this parses into a constraint on a local, that local is relevant.
-    if (auto parsed = LocalConstraint::parseCondition(curr);
-        parsed && isRelevantType(getFunction()->getLocalType(parsed->local))) {
-      relevantLocals[parsed->local] = true;
-      if (auto* other = std::get_if<Index>(&parsed->constraint.term)) {
-        relevantLocals[*other] = true;
+    for (auto& pair : ParsedAndedConstraints::parseCondition(curr)) {
+      if (isRelevantType(getFunction()->getLocalType(pair.local))) {
+        relevantLocals[pair.local] = true;
+        if (auto* other = std::get_if<Index>(&pair.constraint.term)) {
+          relevantLocals[*other] = true;
+        }
       }
     }
   }
@@ -371,9 +374,9 @@ struct ConstraintAnalysis
         // Find the constraints sent to this specific successor, if there is a
         // branch, and use them.
         if (auto branch = getBranchConstraints(block, out);
-            branch && checkRelevancy(*branch)) {
+            filterRelevant(branch), !branch.empty()) {
           auto sentConstraints = constraints;
-          applyBranchConstraints(*branch, sentConstraints);
+          applyBranchConstraints(branch, sentConstraints);
 #if CONSTRAINT_DEBUG
           std::cout << block << " sending branch to " << out
                     << " with sent constraints: " << sentConstraints << '\n';
@@ -441,6 +444,9 @@ struct ConstraintAnalysis
   void optimizeExpression(Expression** currp,
                           const BasicBlockConstraintMap& constraints) {
     auto* curr = *currp;
+    // Note that we don't need to try to parse a series of constraints with
+    // ParsedAndedConstraints: if there is a tree of ANDed things, we will
+    // simply optimize it as we walk it, each time handling one.
     auto parsed = LocalConstraint::parse(curr);
     if (!parsed) {
       return;
@@ -472,8 +478,8 @@ struct ConstraintAnalysis
 
   // Given a predecessor and one of its successors, find new constraints that
   // can be added due to the flow to that specific successor.
-  std::optional<LocalConstraint> getBranchConstraints(BasicBlock* pred,
-                                                      BasicBlock* succ) {
+  ParsedAndedConstraints getBranchConstraints(BasicBlock* pred,
+                                              BasicBlock* succ) {
     auto* brancher = pred->contents.brancher;
     if (!brancher) {
       return {};
@@ -502,32 +508,31 @@ struct ConstraintAnalysis
     return {};
   }
 
-  std::optional<LocalConstraint> getConstraintsFromIf(If* iff,
-                                                      bool physicalSuccessor) {
-    auto parsed = LocalConstraint::parseCondition(iff->condition);
-    if (parsed && !physicalSuccessor) {
+  ParsedAndedConstraints getConstraintsFromIf(If* iff, bool physicalSuccessor) {
+    auto parsed = ParsedAndedConstraints::parseCondition(iff->condition);
+    if (!physicalSuccessor) {
       // We are in the ifFalse, so negate the condition.
-      parsed->constraint = parsed->constraint.negate();
+      parsed.negate();
     }
     return parsed;
   }
 
-  std::optional<LocalConstraint>
-  getConstraintsFromBreak(Break* br, bool physicalSuccessor) {
+  ParsedAndedConstraints getConstraintsFromBreak(Break* br,
+                                                 bool physicalSuccessor) {
     // We get here when there is more than one successor, so there must be a
     // condition.
     assert(br->condition);
 
-    auto parsed = LocalConstraint::parseCondition(br->condition);
-    if (parsed && physicalSuccessor) {
+    auto parsed = ParsedAndedConstraints::parseCondition(br->condition);
+    if (physicalSuccessor) {
       // The branch was not taken, so negate the condition.
-      parsed->constraint = parsed->constraint.negate();
+      parsed.negate();
     }
     return parsed;
   }
 
-  std::optional<LocalConstraint>
-  getConstraintsFromBrOn(BrOn* brOn, bool physicalSuccessor) {
+  ParsedAndedConstraints getConstraintsFromBrOn(BrOn* brOn,
+                                                bool physicalSuccessor) {
     // The constraint on that local depends on the op.
     // TODO: Handle BrOnCast* etc using subtyping operations.
     if (brOn->op != BrOnNull && brOn->op != BrOnNonNull) {
@@ -537,10 +542,10 @@ struct ConstraintAnalysis
     // parseCondition can parse more things than a local.get, which is all we
     // handle here, but there is no other valid IR that can appear there, so we
     // can reuse it.
-    auto parsed = LocalConstraint::parseCondition(brOn->ref);
+    auto parsed = ParsedAndedConstraints::parseCondition(brOn->ref);
     // Negate depending on the op and (similar to Break) the successor.
-    if (parsed && ((brOn->op == BrOnNull) ^ physicalSuccessor)) {
-      parsed->constraint = parsed->constraint.negate();
+    if ((brOn->op == BrOnNull) ^ physicalSuccessor) {
+      parsed.negate();
     }
     return parsed;
   }
@@ -664,17 +669,31 @@ struct ConstraintAnalysis
     return true;
   }
 
-  // Apply branch constraints to the current set of constraints.
-  void applyBranchConstraints(const LocalConstraint& branch,
-                              BasicBlockConstraintMap& constraints) {
-    // Extend the range of values in the "jump ahead" manner described in the
-    // top-level comment.
-    if (applyBranchRangeExtensionToConstraints(branch, constraints)) {
-      return;
-    }
+  // Filters out constraints on irrelevant locals.
+  void filterRelevant(ParsedAndedConstraints& parsed) {
+    parsed.erase(std::remove_if(parsed.begin(),
+                                parsed.end(),
+                                [&](const LocalConstraint& pair) {
+                                  return !checkRelevancy(pair);
+                                }),
+                 parsed.end());
+  }
 
-    // Otherwise, apply the constraint normally.
-    constraints.approximateAnd(branch.local, branch.constraint);
+  // Apply branch constraints to the current set of constraints.
+  void applyBranchConstraints(const ParsedAndedConstraints& branch,
+                              BasicBlockConstraintMap& constraints) {
+    for (auto& pair : branch) {
+      // Extend the range of values in the "jump ahead" manner described in the
+      // top-level comment.
+      if (!applyBranchRangeExtensionToConstraints(pair, constraints)) {
+        // Otherwise, apply the constraint normally.
+        constraints.approximateAnd(pair.local, pair.constraint);
+      }
+
+      if (constraints.unreachable) {
+        return;
+      }
+    }
   }
 
   bool
