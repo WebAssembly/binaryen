@@ -2829,6 +2829,65 @@ struct OptimizeInstructions
     trapOnNull(curr, curr->ref);
   }
 
+  void visitPublish(Publish* curr) {
+    if (curr->type == Type::unreachable) {
+      return;
+    }
+
+    // Publish of a reference that cannot be a shared array or struct can be
+    // removed.
+    auto canBeSharedArrayOrStruct = [](Type type) {
+      if (!type.isRef()) {
+        return false;
+      }
+      auto ht = type.getHeapType();
+      if (!ht.isShared() || ht.isBottom()) {
+        return false;
+      }
+      if (ht.isStruct() || ht.isArray()) {
+        return true;
+      }
+      if (ht.isBasic()) {
+        switch (ht.getBasic(Unshared)) {
+          case HeapType::any:
+          case HeapType::eq:
+          case HeapType::struct_:
+          case HeapType::array:
+            return true;
+          default:
+            return false;
+        }
+      }
+      return false;
+    };
+
+    if (!canBeSharedArrayOrStruct(getFallthroughType(curr->ref))) {
+      replaceCurrent(curr->ref);
+      return;
+    }
+
+    auto isAllocation = [](Expression* expr) {
+      return expr->is<StructNew>() || expr->is<ArrayNew>() ||
+             expr->is<ArrayNewData>() || expr->is<ArrayNewElem>() ||
+             expr->is<ArrayNewFixed>();
+    };
+
+    // Publish of publish or of a struct/array allocation can be removed.
+    Expression* fallthrough = curr->ref;
+    while (true) {
+      if (fallthrough->is<Publish>() || isAllocation(fallthrough)) {
+        replaceCurrent(curr->ref);
+        return;
+      }
+      auto* next = Properties::getImmediateFallthrough(
+        fallthrough, getPassOptions(), *getModule());
+      if (next == fallthrough) {
+        break;
+      }
+      fallthrough = next;
+    }
+  }
+
   void visitTupleExtract(TupleExtract* curr) {
     if (curr->type == Type::unreachable) {
       return;
