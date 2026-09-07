@@ -378,6 +378,33 @@ jobs:
         source $EMSDK/emsdk_env.sh
         ./scripts/emcc-tests.sh
 
+  # Build and test the .ts outputs
+  build-ts:
+    name: typescript
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: true
+    - uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+        cache: 'npm'
+        cache-dependency-path: ts/package-lock.json
+    - name: emsdk install
+      uses: emscripten-core/setup-emsdk@v15
+      with:
+        version: tot
+    - name: install npm dependencies
+      working-directory: ts
+      run: npm ci
+    - name: run package.json scripts
+      working-directory: ts
+      run: |
+        source $EMSDK/emsdk_env.sh
+        npm run make
+        npm run test
+
   # Windows + gcc needs work before the tests will run, so just test the compile
   build-mingw:
     name: mingw
