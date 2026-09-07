@@ -213,6 +213,17 @@ export class WaitqueueNotify extends Expression {
 
 
 
+export class Publish extends Expression {
+	constructor(expr: ExpressionRef) {
+		super(ExpressionId.Publish, expr);
+	}
+
+	get ref(): ExpressionRef { return BinaryenObj["_BinaryenPublishGetRef"](this._ptr); }
+	set ref(ref: ExpressionRef) { BinaryenObj["_BinaryenPublishSetRef"](this._ptr, ref); }
+}
+
+
+
 export class ArrayNew extends Expression {
 	constructor(expr: ExpressionRef) {
 		super(ExpressionId.ArrayNew, expr);

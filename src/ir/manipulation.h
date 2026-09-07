@@ -21,7 +21,7 @@
 
 namespace wasm::ExpressionManipulator {
 
-// Re-use a node's memory. This helps avoid allocation when optimizing.
+// Reuse a node's memory. This helps avoid allocation when optimizing.
 template<typename InputType, typename OutputType>
 inline OutputType* convert(InputType* input) {
   static_assert(sizeof(OutputType) <= sizeof(InputType),

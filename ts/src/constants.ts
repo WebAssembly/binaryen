@@ -212,6 +212,7 @@ export enum ExpressionId {
 	StructWait = BinaryenObj["_BinaryenStructWaitId"](),
 	WaitqueueNew = BinaryenObj["_BinaryenWaitqueueNewId"](),
 	WaitqueueNotify = BinaryenObj["_BinaryenWaitqueueNotifyId"](),
+	Publish = BinaryenObj["_BinaryenPublishId"](),
 	ArrayNew = BinaryenObj["_BinaryenArrayNewId"](),
 	ArrayNewFixed = BinaryenObj["_BinaryenArrayNewFixedId"](),
 	ArrayNewData = BinaryenObj["_BinaryenArrayNewDataId"](),
@@ -280,6 +281,7 @@ export enum SideEffect {
 	Throws = BinaryenObj["_BinaryenSideEffectThrows"](),
 	DanglingPop = BinaryenObj["_BinaryenSideEffectDanglingPop"](),
 	TrapsNeverHappen = BinaryenObj["_BinaryenSideEffectTrapsNeverHappen"](),
+	Suspends = BinaryenObj["_BinaryenSideEffectSuspends"](),
 	Any = BinaryenObj["_BinaryenSideEffectAny"](),
 }
 

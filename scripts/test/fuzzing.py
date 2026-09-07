@@ -93,7 +93,7 @@ unfuzzable = [
     'string-lifting-section.wast',
     # TODO: fuzzer support for uninhabitable imported globals
     'exact-references.wast',
-    # We do not have full suppor for these imports in all parts of the fuzzer.
+    # We do not have full support for these imports in all parts of the fuzzer.
     'instrument-branch-hints.wast',
     # Contains a subtype chain that exceeds depth limits.
     'reorder-types-real.wast',
@@ -116,6 +116,8 @@ unfuzzable = [
     'optimize-instructions-global-effects-idempotent.wast',
     # Not fully implemented.
     'waitqueue.wast',
+    'gufa-waitqueue.wast',
+    'publish.wast',
     # TODO: fix handling of the non-utf8 names here
     'name-high-bytes.wast',
     # JS interop testcases have complex js-wasm interactions

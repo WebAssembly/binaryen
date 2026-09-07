@@ -14,6 +14,7 @@ import {
 } from "../../constants.ts";
 import {
 	array,
+	publish,
 	struct,
 	tuple,
 	waitqueue,
@@ -89,6 +90,7 @@ export function expressionBuilder(mod: Module) {
 		tuple: tuple(mod),
 		struct: struct(mod),
 		waitqueue: waitqueue(mod),
+		publish: publish(mod),
 		array: array(mod),
 		string: string(mod),
 		i32: i32(mod),

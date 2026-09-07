@@ -19,7 +19,8 @@
  ;; This is only used in the secondary module, but segments $keep-data2 can trap
  ;; so it is pinned to the primary, so this will be too.
  (memory $keep-memory2 1 1)
- (global $keep-global i32 (i32.const 20))
+ (global $keep-immutable-global i32 (i32.const 20))
+ (global $keep-mutable-global (mut i32) (i32.const 20))
  (table $keep-table 1 1 funcref)
  ;; This is only used in the secondary module, but segments $keep-elem2 and
  ;; $keep-elem3 can trap so they are pinned to the primary, so this will be too.
@@ -35,21 +36,25 @@
  (data $keep-data2 (memory $keep-memory2) (i32.const 65536) "a")
 
  (memory $split-memory 1 1)
- (global $split-global i32 (i32.const 20))
+ (global $split-immutable-global i32 (i32.const 20))
+ (global $split-mutable-global (mut i32) (i32.const 20))
  (table $split-table 1 1 funcref)
  (tag $split-tag (param i32))
  (elem $split-elem (table $split-table) (i32.const 0) funcref (item (ref.null nofunc)))
  (data $split-data (memory $split-memory) (i32.const 0) "a")
 
  (memory $shared-memory 1 1)
- (global $shared-global i32 (i32.const 20))
+ (global $shared-immutable-global i32 (i32.const 20))
+ (global $shared-mutable-global (mut i32) (i32.const 20))
  (table $shared-table 1 1 funcref)
  (tag $shared-tag (param i32))
  (elem $shared-elem (table $shared-table) (i32.const 0) funcref (item (ref.null nofunc)))
  (data $shared-data (memory $shared-memory) (i32.const 0) "a")
 
- ;; PRIMARY:      (global $keep-global i32 (i32.const 20))
- ;; PRIMARY-NEXT: (global $shared-global i32 (i32.const 20))
+ ;; PRIMARY:      (global $keep-immutable-global i32 (i32.const 20))
+ ;; PRIMARY-NEXT: (global $keep-mutable-global (mut i32) (i32.const 20))
+ ;; PRIMARY-NEXT: (global $shared-immutable-global i32 (i32.const 20))
+ ;; PRIMARY-NEXT: (global $shared-mutable-global (mut i32) (i32.const 20))
  ;; PRIMARY-NEXT: (memory $keep-memory 1 1)
  ;; PRIMARY-NEXT: (memory $keep-memory2 1 1)
  ;; PRIMARY-NEXT: (memory $shared-memory 1 1)
@@ -73,21 +78,24 @@
  ;; PRIMARY-NEXT: (export "memory_1" (memory $shared-memory))
  ;; PRIMARY-NEXT: (export "table" (table $keep-table2))
  ;; PRIMARY-NEXT: (export "table_3" (table $shared-table))
- ;; PRIMARY-NEXT: (export "global" (global $shared-global))
+ ;; PRIMARY-NEXT: (export "global" (global $shared-immutable-global))
+ ;; PRIMARY-NEXT: (export "global_5" (global $shared-mutable-global))
  ;; PRIMARY-NEXT: (export "tag" (tag $shared-tag))
  ;; PRIMARY-NEXT: (export "keep" (func $keep))
- ;; PRIMARY-NEXT: (export "table_7" (table $3))
+ ;; PRIMARY-NEXT: (export "table_8" (table $3))
 
  ;; SECONDARY:      (import "primary" "memory" (memory $keep-memory2 1 1))
  ;; SECONDARY-NEXT: (import "primary" "memory_1" (memory $shared-memory 1 1))
  ;; SECONDARY-NEXT: (import "primary" "table" (table $keep-table2 1 1 (ref null $2)))
  ;; SECONDARY-NEXT: (import "primary" "table_3" (table $shared-table 1 1 funcref))
- ;; SECONDARY-NEXT: (import "primary" "table_7" (table $timport$2 1 funcref))
- ;; SECONDARY-NEXT: (import "primary" "global" (global $shared-global i32))
+ ;; SECONDARY-NEXT: (import "primary" "table_8" (table $timport$2 1 funcref))
+ ;; SECONDARY-NEXT: (import "primary" "global" (global $shared-immutable-global i32))
+ ;; SECONDARY-NEXT: (import "primary" "global_5" (global $shared-mutable-global (mut i32)))
  ;; SECONDARY-NEXT: (import "primary" "keep" (func $keep (exact (param i32) (result i32))))
  ;; SECONDARY-NEXT: (import "primary" "tag" (tag $shared-tag (type $1) (param i32)))
 
- ;; SECONDARY:      (global $split-global i32 (i32.const 20))
+ ;; SECONDARY:      (global $split-immutable-global i32 (i32.const 20))
+ ;; SECONDARY-NEXT: (global $split-mutable-global (mut i32) (i32.const 20))
  ;; SECONDARY-NEXT: (memory $split-memory 1 1)
  ;; SECONDARY-NEXT: (data $split-data (memory $split-memory) (i32.const 0) "a")
  ;; SECONDARY-NEXT: (table $split-table 1 1 funcref)
@@ -109,9 +117,12 @@
     (i32.const 0)
    )
   )
-  ;; Uses $keep-global
+  ;; Uses $keep-immutable-global and $keep-mutable-global
   (drop
-   (global.get $keep-global)
+   (global.get $keep-immutable-global)
+  )
+  (drop
+   (global.get $keep-mutable-global)
   )
   ;; Uses $keep-tag
   (try_table (catch $keep-tag 0)
@@ -130,9 +141,12 @@
     (i32.const 0)
    )
   )
-  ;; Uses $shared-global
+  ;; Uses $shared-immutable-global and $shared-mutable-global
   (drop
-   (global.get $shared-global)
+   (global.get $shared-immutable-global)
+  )
+  (drop
+   (global.get $shared-mutable-global)
   )
   ;; Uses $shared-tag
   (try_table (catch $shared-tag 0)
@@ -166,9 +180,12 @@
   (drop
    (table.get $keep-table2 (i32.const 0))
   )
-  ;; Uses $split-global
+  ;; Uses $split-immutable-global and $shared-mutable-global
   (drop
-   (global.get $split-global)
+   (global.get $split-immutable-global)
+  )
+  (drop
+   (global.get $split-mutable-global)
   )
   ;; Uses $split-tag
   (try_table (catch $split-tag 0)
@@ -187,9 +204,12 @@
     (i32.const 0)
    )
   )
-  ;; Uses $shared-global
+  ;; Uses $shared-immutable-global and $shared-mutable-global
   (drop
-   (global.get $shared-global)
+   (global.get $shared-immutable-global)
+  )
+  (drop
+   (global.get $shared-mutable-global)
   )
   ;; Uses $shared-tag
   (try_table (catch $shared-tag 0)

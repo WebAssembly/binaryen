@@ -107,6 +107,17 @@ export function waitqueue(mod: Module) {
 
 
 
+export function publish(mod: Module) {
+	return {
+		/** [description] */
+		publish: (ref: ExpressionRef): ExpressionRef => (
+			BinaryenObj["_BinaryenPublish"](mod[PTR], ref)
+		),
+	} as const;
+}
+
+
+
 /** @see https://webassembly.github.io/spec/core/syntax/instructions.html#aggregate-instructions */
 export function array(mod: Module) {
 	return {

@@ -403,6 +403,8 @@ jobs:
       run: |
         source $EMSDK/emsdk_env.sh
         npm run make
+        npm run compile
+        npm run lint
         npm run test
 
   # Windows + gcc needs work before the tests will run, so just test the compile

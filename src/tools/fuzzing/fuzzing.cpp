@@ -968,12 +968,12 @@ void TranslateToFuzzReader::finalizeTable() {
       }
     }
 
-    // The code above raises table->initial to a size large enough to accomodate
-    // all of its segments, with the intention of avoiding a trap during
-    // startup. However a single segment of (say) size 4GB would have a table of
-    // that size, which will use a lot of memory and execute very slowly, so we
-    // prefer in the fuzzer to trap on such a thing. To achieve that, set a
-    // reasonable limit for the maximum table size.
+    // The code above raises table->initial to a size large enough to
+    // accommodate all of its segments, with the intention of avoiding a trap
+    // during startup. However a single segment of (say) size 4GB would have a
+    // table of that size, which will use a lot of memory and execute very
+    // slowly, so we prefer in the fuzzer to trap on such a thing. To achieve
+    // that, set a reasonable limit for the maximum table size.
     //
     // This also avoids an issue that arises from table->initial being an
     // Address (64 bits) but Table::kMaxSize being an Index (32 bits), as a

@@ -146,7 +146,8 @@ struct ConstraintAnalysis
 
   void maybeMarkRelevant(Expression* curr) {
     // If this parses into a constraint on a local, that local is relevant.
-    if (auto parsed = LocalConstraint::parseCondition(curr)) {
+    if (auto parsed = LocalConstraint::parseCondition(curr);
+        parsed && isRelevantType(getFunction()->getLocalType(parsed->local))) {
       relevantLocals[parsed->local] = true;
       if (auto* other = std::get_if<Index>(&parsed->constraint.term)) {
         relevantLocals[*other] = true;
@@ -154,7 +155,22 @@ struct ConstraintAnalysis
     }
   }
 
+  bool fastMath;
+
+  bool isRelevantType(Type type) {
+    // Floating-point math does not follow the basic rules of logic (for
+    // example, NaN < NaN and NaN >= NaN are both false, despite the law of the
+    // excluded middle). Constraints follow the rules of logic, so we cannot
+    // operate on floats unless we have fast-math enabled (which assures us we
+    // can ignore NaNs).
+    // TODO: when values are constant and non-NaN, we could optimize even
+    //       without fast-math
+    return !type.isFloat() || fastMath;
+  }
+
   void doWalkFunction(Function* func) {
+    fastMath = getPassOptions().fastMath;
+
     relevantLocals.assign(func->getNumLocals(), false);
 
     Super::doWalkFunction(func);
@@ -178,9 +194,28 @@ struct ConstraintAnalysis
 
   void visitLocalSet(LocalSet* curr) {
     addAction();
-    if (auto* get = curr->value->dynCast<LocalGet>()) {
-      // TODO: handle tees once we handle them elsewhere
-      localCopySources[curr->index].push_back(get->index);
+
+    auto* value = curr->value;
+    while (true) {
+      if (auto* get = value->dynCast<LocalGet>()) {
+        localCopySources[curr->index].push_back(get->index);
+        // No children to look into.
+        break;
+      }
+
+      if (auto* tee = value->dynCast<LocalSet>()) {
+        localCopySources[curr->index].push_back(tee->index);
+        value = tee->value;
+        continue;
+      }
+
+      // Look for other possible tees and gets that fall through.
+      auto* next = Properties::getImmediateFallthrough(
+        value, getPassOptions(), *getModule());
+      if (next == value) {
+        break;
+      }
+      value = next;
     }
   }
 
@@ -420,8 +455,7 @@ struct ConstraintAnalysis
       return;
     }
 
-    auto localConstraints = constraints.get(parsed->local);
-    Result result = localConstraints.proves(parsed->constraint);
+    auto result = constraints.proves(*parsed);
     if (result == Unknown) {
       // If we parsed something using two locals, like x != y, we can also look
       // for the flipped condition among y's constraints TODO
@@ -534,14 +568,6 @@ struct ConstraintAnalysis
         return;
       }
 
-      // See above on binary action counting limits.
-      if (auto* binary = set->value->dynCast<Binary>()) {
-        if (binaryActionCounts[binary]++ >= MaxBinaryActions) {
-          constraints.setProvesNothing(set->index);
-          return;
-        }
-      }
-
       // Look at the fallthrough. It is valid to do so, because our constraints
       // only track two things, constants and locals. For a constant, it does
       // not change while falling through. For a local, the only way for the
@@ -566,8 +592,47 @@ struct ConstraintAnalysis
       // opportunity to write any other value while falling through. (And, any
       // local.tee appearing here would have been reached earlier in the
       // traversal, and handled.)
-      auto* value =
-        Properties::getFallthrough(set->value, getPassOptions(), *getModule());
+      auto* value = set->value;
+      while (1) {
+        if (value->is<LocalSet>()) {
+          // We stop at the first tee: we don't need to look any further, and
+          // will just apply that local's values to ourselves, saving repeated
+          // work.
+          break;
+        }
+        auto* next = Properties::getImmediateFallthrough(
+          value, getPassOptions(), *getModule());
+        if (value == next) {
+          break;
+        } else {
+          value = next;
+        }
+      }
+
+      // Now that we know the value, check binary action counting limits (see
+      // above).
+      if (auto* binary = value->dynCast<Binary>()) {
+        // The code below will stop calculating this binary once we pass
+        // MaxBinaryActions operations on it. That is enough to prevent
+        // unbounded work on this binary, however, we may end up reaching this
+        // basic block an even larger number of times for other reasons, i.e.,
+        // just because of a very complex CFG. That should be very rare, but can
+        // happen. In debug builds we check we do not exceed a very high limit
+        // there, intending to throw an assert rather than just hang in the case
+        // of a bug (as assert is easier to diagnose, even if it happens after a
+        // long delay).
+        auto& count = binaryActionCounts[binary];
+#ifndef NDEBUG
+        static const Index MaxBasicBlockActions = 1024 * 1024;
+        assert(count < MaxBasicBlockActions);
+#endif
+        count++;
+        if (count >= MaxBinaryActions) {
+          constraints.setProvesNothing(set->index);
+          return;
+        }
+      }
+
       constraints.set(set->index, value);
     }
   }

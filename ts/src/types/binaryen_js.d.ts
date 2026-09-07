@@ -6,7 +6,7 @@ declare module "#binaryen-raw" {
 	interface BinaryenObjType {
 		// Standard C functions listed in `EXPORTED_FUNCTIONS`.
 		// https://github.com/emscripten-core/emscripten/blob/main/src/preamble.js
-		_malloc(ptr: number): number;
+		_malloc(size: number): number;
 		_free(ptr: number): void;
 
 
@@ -17,7 +17,7 @@ declare module "#binaryen-raw" {
 		readonly HEAP32: Int32Array;
 		readonly HEAPU32: Uint32Array;
 		stackSave(): number;
-		stackRestore(stack: number): number;
+		stackRestore(stack: number): void;
 		stackAlloc(length: number): number;
 
 		// https://github.com/emscripten-core/emscripten/blob/main/src/lib/libstrings.js
