@@ -395,6 +395,7 @@ See generated docs for fields, methods, and descriptions of each.
 	- `expressions.StructWait`
 	- `expressions.WaitqueueNew`
 	- `expressions.WaitqueueNotify`
+	- `expressions.Publish`
 	- `expressions.ArrayNew`
 	- `expressions.ArrayNewFixed`
 	- `expressions.ArrayNewData`
