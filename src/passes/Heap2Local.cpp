@@ -163,6 +163,7 @@
 #include "wasm-builder.h"
 #include "wasm-type.h"
 #include "wasm.h"
+#include <unordered_map>
 
 namespace wasm {
 
@@ -192,6 +193,15 @@ enum class ParentChildInteraction : int8_t {
   None,
 };
 
+// Tracks the scratch local used to hold the result of an RMW operation that
+// returns a reference type, so that we can follow data flow through it.
+struct RMWResultInfo {
+  Expression* originalRMW;  // the RMW being replaced
+  LocalSet* resultSet;      // local.set that writes the result
+  LocalGet* resultGet;      // local.get that reads the result
+};
+using RMWResultInfoMap = std::unordered_map<Expression*, RMWResultInfo>;
+
 // Core analysis that provides an escapes() method to check if an allocation
 // escapes in a way that prevents optimizing it away as described above. It also
 // stashes information about the relevant expressions as it goes, which helps
@@ -215,13 +225,16 @@ struct EscapeAnalyzer {
   const PassOptions& passOptions;
   Module& wasm;
 
+  RMWResultInfoMap& rmwResultInfo;
+
   EscapeAnalyzer(const LazyLocalGraph& localGraph,
                  Parents& parents,
                  const BranchUtils::BranchTargets& branchTargets,
                  const PassOptions& passOptions,
-                 Module& wasm)
+                 Module& wasm,
+                 RMWResultInfoMap& rmwResultInfo)
     : localGraph(localGraph), parents(parents), branchTargets(branchTargets),
-      passOptions(passOptions), wasm(wasm) {}
+      passOptions(passOptions), wasm(wasm), rmwResultInfo(rmwResultInfo) {}
 
   // We must track all the local.sets that write the allocation, to verify
   // exclusivity.
@@ -286,6 +299,13 @@ struct EscapeAnalyzer {
         // value. Note the set, and we will check the gets at the end once we
         // know all of our sets.
         sets.insert(set);
+        // If this set is writing an RMW result, then the flow continues
+        // through the corresponding get.
+        for (auto& [rmw, info] : rmwResultInfo) {
+          if (info.resultSet == set) {
+            flows.push({info.resultGet, parents.getParent(info.resultGet)});
+          }
+        }
         for (auto* get : localGraph.getSetInfluences(set)) {
           flows.push({get, parents.getParent(get)});
         }
@@ -609,12 +629,16 @@ struct Struct2Local : PostWalker<Struct2Local> {
   // is only something to store if it is non-nullable, and we store it that way.
   Type descType;
 
+  RMWResultInfoMap& rmwResultInfo;
+
   Struct2Local(StructNew* allocation,
                EscapeAnalyzer& analyzer,
                Function* func,
-               Module& wasm)
+               Module& wasm,
+               RMWResultInfoMap& rmwResultInfo)
     : allocation(allocation), analyzer(analyzer), func(func), wasm(wasm),
-      builder(wasm), fields(allocation->type.getHeapType().getStruct().fields) {
+      builder(wasm), fields(allocation->type.getHeapType().getStruct().fields),
+      rmwResultInfo(rmwResultInfo) {
 
     // Allocate locals to store the allocation's fields and descriptor in.
     for (auto field : fields) {
@@ -1061,6 +1085,24 @@ struct Struct2Local : PostWalker<Struct2Local> {
     assert(type == field.type);
     assert(!field.isPacked());
 
+    bool replacementIsRMWResult =
+      curr->value->is<LocalGet>() &&
+      std::any_of(rmwResultInfo.begin(), rmwResultInfo.end(),
+                  [&](auto& pair) { return pair.second.resultGet == curr->value; });
+
+    // If the replacement is an RMW result, we cannot replace the whole RMW
+    // with a local.get; we must keep the RMW operation and just localize
+    // the ref operand.
+    if (replacementIsRMWResult) {
+      auto refType = curr->ref->type;
+      auto scratch = builder.addVar(func, refType);
+      auto* set = builder.makeLocalSet(scratch, curr->ref);
+      auto* get = builder.makeLocalGet(scratch, refType);
+      curr->ref = get;
+      replaceCurrent(builder.makeSequence(set, curr));
+      return;
+    }
+
     // We need a scratch local to hold the old, unmodified field value while we
     // update the original local with the modified value. We also need another
     // scratch local to hold the evaluated modification value while we set the
@@ -1073,7 +1115,7 @@ struct Struct2Local : PostWalker<Struct2Local> {
 
     auto* block =
       builder.makeSequence(builder.makeDrop(curr->ref),
-                           builder.makeLocalSet(valScratch, curr->value));
+                          builder.makeLocalSet(valScratch, curr->value));
 
     // Stash the old value to return.
     block->list.push_back(
@@ -1113,12 +1155,47 @@ struct Struct2Local : PostWalker<Struct2Local> {
     // Unstash the old value.
     block->list.push_back(builder.makeLocalGet(oldScratch, type));
     block->type = type;
+
+    // If the RMW result is a reference type, store it in a scratch local
+    // so that downstream uses can see the flow.
+    if (curr->type.isRef() && !curr->type.isNull()) {
+      auto resultType = curr->type;
+      auto scratch = builder.addVar(func, resultType);
+      auto* setScratch = builder.makeLocalSet(scratch, block);
+      auto* getScratch = builder.makeLocalGet(scratch, resultType);
+      rmwResultInfo[curr] = {curr, setScratch, getScratch};
+      replaceCurrent(builder.makeBlock({setScratch, getScratch}));
+      return;
+    }
+
     replaceCurrent(block);
   }
 
   void visitStructCmpxchg(StructCmpxchg* curr) {
     if (curr->type == Type::unreachable) {
       // Leave this for DCE.
+      return;
+    }
+
+    // Check if expected or replacement are RMW results
+    bool expectedIsRMWResult =
+      curr->expected->is<LocalGet>() &&
+      std::any_of(rmwResultInfo.begin(), rmwResultInfo.end(),
+                  [&](auto& pair) { return pair.second.resultGet == curr->expected; });
+    bool replacementIsRMWResult =
+      curr->replacement->is<LocalGet>() &&
+      std::any_of(rmwResultInfo.begin(), rmwResultInfo.end(),
+                  [&](auto& pair) { return pair.second.resultGet == curr->replacement; });
+
+    // If either is an RMW result, we cannot fully optimize away the cmpxchg;
+    // we just localize the ref operand.
+    if (expectedIsRMWResult || replacementIsRMWResult) {
+      auto refType = curr->ref->type;
+      auto scratch = builder.addVar(func, refType);
+      auto* set = builder.makeLocalSet(scratch, curr->ref);
+      auto* get = builder.makeLocalGet(scratch, refType);
+      curr->ref = get;
+      replaceCurrent(builder.makeSequence(set, curr));
       return;
     }
 
@@ -1145,9 +1222,9 @@ struct Struct2Local : PostWalker<Struct2Local> {
 
       auto* block = builder.makeBlock(
         {builder.makeDrop(curr->ref),
-         builder.makeLocalSet(expectedScratch, curr->expected),
-         builder.makeLocalSet(replacementScratch, curr->replacement),
-         builder.makeLocalSet(oldScratch, builder.makeLocalGet(local, type))});
+        builder.makeLocalSet(expectedScratch, curr->expected),
+        builder.makeLocalSet(replacementScratch, curr->replacement),
+        builder.makeLocalSet(oldScratch, builder.makeLocalGet(local, type))});
 
       // Create the check for whether we should do the exchange.
       auto* lhs = builder.makeLocalGet(local, type);
@@ -1164,14 +1241,27 @@ struct Struct2Local : PostWalker<Struct2Local> {
       block->list.push_back(builder.makeIf(
         pred,
         builder.makeLocalSet(local,
-                             builder.makeLocalGet(replacementScratch, type))));
+                            builder.makeLocalGet(replacementScratch, type))));
 
       // Unstash the old value.
       block->list.push_back(builder.makeLocalGet(oldScratch, type));
       block->type = type;
+
+      // If the cmpxchg result is a reference type, store it in a scratch local
+      if (curr->type.isRef() && !curr->type.isNull()) {
+        auto resultType = curr->type;
+        auto scratch = builder.addVar(func, resultType);
+        auto* setScratch = builder.makeLocalSet(scratch, block);
+        auto* getScratch = builder.makeLocalGet(scratch, resultType);
+        rmwResultInfo[curr] = {curr, setScratch, getScratch};
+        replaceCurrent(builder.makeBlock({setScratch, getScratch}));
+        return;
+      }
+
       replaceCurrent(block);
       return;
     }
+
     if (analyzer.getInteraction(curr->expected) !=
         ParentChildInteraction::Flows) {
       // Since the allocation does not flow from `ref`, it must not flow through
@@ -1191,11 +1281,10 @@ struct Struct2Local : PostWalker<Struct2Local> {
     auto* structGet = builder.makeStructGet(
       curr->index, getRefScratch, curr->order, curr->type);
     auto* block = builder.makeBlock({setRefScratch,
-                                     builder.makeDrop(curr->expected),
-                                     builder.makeDrop(curr->replacement),
-                                     structGet});
+                                    builder.makeDrop(curr->expected),
+                                    builder.makeDrop(curr->replacement),
+                                    structGet});
     replaceCurrent(block);
-    return;
   }
 
   void visitArrayCmpxchg(ArrayCmpxchg* curr) {
@@ -1553,6 +1642,8 @@ struct Heap2Local {
   std::unique_ptr<Parents> parents;
   std::unique_ptr<BranchUtils::BranchTargets> branchTargets;
 
+  RMWResultInfoMap rmwResultInfo;
+
   Heap2Local(Function* func, Module& wasm, const PassOptions& passOptions)
     : func(func), wasm(wasm), passOptions(passOptions),
       localGraph(std::make_unique<LazyLocalGraph>(func, &wasm)),
@@ -1623,13 +1714,13 @@ struct Heap2Local {
         continue;
       }
       EscapeAnalyzer analyzer(
-        *localGraph, *parents, *branchTargets, passOptions, wasm);
+        *localGraph, *parents, *branchTargets, passOptions, wasm, rmwResultInfo);
       if (!analyzer.escapes(allocation)) {
         // Convert the allocation and all its uses into a struct. Then convert
         // the struct into locals.
         auto* structNew =
           Array2Struct(allocation, analyzer, func, wasm).structNew;
-        Struct2Local(structNew, analyzer, func, wasm);
+        Struct2Local(structNew, analyzer, func, wasm, rmwResultInfo);
         optimized = true;
         resetAnalysisData();
       }
@@ -1644,9 +1735,9 @@ struct Heap2Local {
       // Check for escaping, noting relevant information as we go. If this does
       // not escape, optimize it into locals.
       EscapeAnalyzer analyzer(
-        *localGraph, *parents, *branchTargets, passOptions, wasm);
+        *localGraph, *parents, *branchTargets, passOptions, wasm, rmwResultInfo);
       if (!analyzer.escapes(allocation)) {
-        Struct2Local(allocation, analyzer, func, wasm);
+        Struct2Local(allocation, analyzer, func, wasm, rmwResultInfo);
         optimized = true;
         resetAnalysisData();
       }

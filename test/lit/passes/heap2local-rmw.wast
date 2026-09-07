@@ -561,24 +561,30 @@
   ;; CHECK-NEXT:  (local $1 (ref null $struct))
   ;; CHECK-NEXT:  (local $2 (ref null $struct))
   ;; CHECK-NEXT:  (local $3 (ref null $struct))
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result nullref)
-  ;; CHECK-NEXT:    (local.set $1
-  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:  (local $4 (ref null $struct))
+  ;; CHECK-NEXT:  (local.set $4
+  ;; CHECK-NEXT:   (block (result (ref null $struct))
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result nullref)
+  ;; CHECK-NEXT:      (local.set $1
+  ;; CHECK-NEXT:       (ref.null none)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (ref.null none)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:    (local.set $3
+  ;; CHECK-NEXT:     (local.get $0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $2
+  ;; CHECK-NEXT:     (local.get $1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $1
+  ;; CHECK-NEXT:     (local.get $3)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $2)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (local.set $3
-  ;; CHECK-NEXT:   (local.get $0)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (local.set $2
-  ;; CHECK-NEXT:   (local.get $1)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (local.set $1
-  ;; CHECK-NEXT:   (local.get $3)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (local.get $2)
+  ;; CHECK-NEXT:  (local.get $4)
   ;; CHECK-NEXT: )
   (func $rmw-xchg-ref (param (ref null $struct)) (result (ref null $struct))
     (struct.atomic.rmw.xchg $struct 0
@@ -592,35 +598,41 @@
   ;; CHECK-NEXT:  (local $3 (ref null $struct))
   ;; CHECK-NEXT:  (local $4 eqref)
   ;; CHECK-NEXT:  (local $5 (ref null $struct))
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result nullref)
-  ;; CHECK-NEXT:    (local.set $2
-  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:  (local $6 (ref null $struct))
+  ;; CHECK-NEXT:  (local.set $6
+  ;; CHECK-NEXT:   (block (result (ref null $struct))
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result nullref)
+  ;; CHECK-NEXT:      (local.set $2
+  ;; CHECK-NEXT:       (ref.null none)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (ref.null none)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (ref.null none)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (local.set $4
-  ;; CHECK-NEXT:   (local.get $0)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (local.set $5
-  ;; CHECK-NEXT:   (local.get $1)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (local.set $3
-  ;; CHECK-NEXT:   (local.get $2)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (if
-  ;; CHECK-NEXT:   (ref.eq
-  ;; CHECK-NEXT:    (local.get $2)
-  ;; CHECK-NEXT:    (local.get $4)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (then
-  ;; CHECK-NEXT:    (local.set $2
-  ;; CHECK-NEXT:     (local.get $5)
+  ;; CHECK-NEXT:    (local.set $4
+  ;; CHECK-NEXT:     (local.get $0)
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $5
+  ;; CHECK-NEXT:     (local.get $1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $3
+  ;; CHECK-NEXT:     (local.get $2)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (ref.eq
+  ;; CHECK-NEXT:      (local.get $2)
+  ;; CHECK-NEXT:      (local.get $4)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (then
+  ;; CHECK-NEXT:      (local.set $2
+  ;; CHECK-NEXT:       (local.get $5)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $3)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (local.get $3)
+  ;; CHECK-NEXT:  (local.get $6)
   ;; CHECK-NEXT: )
   (func $rmw-cmpxchg-ref (param (ref null $struct) (ref null $struct)) (result (ref null $struct))
     (struct.atomic.rmw.cmpxchg $struct 0
@@ -1166,6 +1178,7 @@
   ;; CHECK-NEXT:  (local $2 eqref)
   ;; CHECK-NEXT:  (local $3 eqref)
   ;; CHECK-NEXT:  (local $4 eqref)
+  ;; CHECK-NEXT:  (local $5 eqref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result nullref)
   ;; CHECK-NEXT:    (ref.null none)
@@ -1173,44 +1186,49 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result eqref)
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block (result nullref)
-  ;; CHECK-NEXT:      (local.set $1
-  ;; CHECK-NEXT:       (ref.null none)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (ref.null none)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block (result nullref)
-  ;; CHECK-NEXT:      (ref.null none)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block (result nullref)
-  ;; CHECK-NEXT:      (ref.null none)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.set $2
-  ;; CHECK-NEXT:     (local.get $1)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (if
-  ;; CHECK-NEXT:     (block (result i32)
+  ;; CHECK-NEXT:    (local.set $5
+  ;; CHECK-NEXT:     (block (result eqref)
   ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (block (result nullref)
+  ;; CHECK-NEXT:        (local.set $1
+  ;; CHECK-NEXT:         (ref.null none)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (ref.null none)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (block (result nullref)
+  ;; CHECK-NEXT:        (ref.null none)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (block (result nullref)
+  ;; CHECK-NEXT:        (ref.null none)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.set $2
   ;; CHECK-NEXT:       (local.get $1)
   ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (ref.null none)
+  ;; CHECK-NEXT:      (if
+  ;; CHECK-NEXT:       (block (result i32)
+  ;; CHECK-NEXT:        (drop
+  ;; CHECK-NEXT:         (local.get $1)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (drop
+  ;; CHECK-NEXT:         (ref.null none)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (i32.const 0)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (then
+  ;; CHECK-NEXT:        (drop
+  ;; CHECK-NEXT:         (ref.null none)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (i32.const 0)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (then
-  ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (ref.null none)
-  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.get $2)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.get $2)
+  ;; CHECK-NEXT:    (local.get $5)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (unreachable)
@@ -1258,49 +1276,55 @@
   ;; CHECK-NEXT:  (local $2 (ref $inner))
   ;; CHECK-NEXT:  (local $3 eqref)
   ;; CHECK-NEXT:  (local $4 (ref $inner))
+  ;; CHECK-NEXT:  (local $5 (ref $inner))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result (ref $inner))
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block (result nullref)
-  ;; CHECK-NEXT:      (local.set $1
-  ;; CHECK-NEXT:       (struct.new_default $inner)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (local.set $0
-  ;; CHECK-NEXT:       (local.get $1)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (ref.null none)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block (result nullref)
-  ;; CHECK-NEXT:      (ref.null none)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block (result nullref)
-  ;; CHECK-NEXT:      (ref.null none)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.set $2
-  ;; CHECK-NEXT:     (local.get $0)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (if
-  ;; CHECK-NEXT:     (block (result i32)
+  ;; CHECK-NEXT:    (local.set $5
+  ;; CHECK-NEXT:     (block (result (ref $inner))
   ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (block (result nullref)
+  ;; CHECK-NEXT:        (local.set $1
+  ;; CHECK-NEXT:         (struct.new_default $inner)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (local.set $0
+  ;; CHECK-NEXT:         (local.get $1)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (ref.null none)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (block (result nullref)
+  ;; CHECK-NEXT:        (ref.null none)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (block (result nullref)
+  ;; CHECK-NEXT:        (ref.null none)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.set $2
   ;; CHECK-NEXT:       (local.get $0)
   ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (ref.null none)
+  ;; CHECK-NEXT:      (if
+  ;; CHECK-NEXT:       (block (result i32)
+  ;; CHECK-NEXT:        (drop
+  ;; CHECK-NEXT:         (local.get $0)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (drop
+  ;; CHECK-NEXT:         (ref.null none)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (i32.const 0)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (then
+  ;; CHECK-NEXT:        (drop
+  ;; CHECK-NEXT:         (ref.null none)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (i32.const 0)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (then
-  ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (ref.null none)
-  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.get $2)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.get $2)
+  ;; CHECK-NEXT:    (local.get $5)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -1326,49 +1350,55 @@
   ;; CHECK-NEXT:  (local $2 (ref $shared-inner))
   ;; CHECK-NEXT:  (local $3 (ref null (shared eq)))
   ;; CHECK-NEXT:  (local $4 (ref $shared-inner))
+  ;; CHECK-NEXT:  (local $5 (ref $shared-inner))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result (ref $shared-inner))
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block (result (ref null (shared none)))
-  ;; CHECK-NEXT:      (local.set $1
-  ;; CHECK-NEXT:       (struct.new_default $shared-inner)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (local.set $0
-  ;; CHECK-NEXT:       (local.get $1)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (ref.null (shared none))
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block (result (ref null (shared none)))
-  ;; CHECK-NEXT:      (ref.null (shared none))
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block (result (ref null (shared none)))
-  ;; CHECK-NEXT:      (ref.null (shared none))
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.set $2
-  ;; CHECK-NEXT:     (local.get $0)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (if
-  ;; CHECK-NEXT:     (block (result i32)
+  ;; CHECK-NEXT:    (local.set $5
+  ;; CHECK-NEXT:     (block (result (ref $shared-inner))
   ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (block (result (ref null (shared none)))
+  ;; CHECK-NEXT:        (local.set $1
+  ;; CHECK-NEXT:         (struct.new_default $shared-inner)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (local.set $0
+  ;; CHECK-NEXT:         (local.get $1)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (ref.null (shared none))
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (block (result (ref null (shared none)))
+  ;; CHECK-NEXT:        (ref.null (shared none))
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (block (result (ref null (shared none)))
+  ;; CHECK-NEXT:        (ref.null (shared none))
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.set $2
   ;; CHECK-NEXT:       (local.get $0)
   ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (ref.null (shared none))
+  ;; CHECK-NEXT:      (if
+  ;; CHECK-NEXT:       (block (result i32)
+  ;; CHECK-NEXT:        (drop
+  ;; CHECK-NEXT:         (local.get $0)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (drop
+  ;; CHECK-NEXT:         (ref.null (shared none))
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (i32.const 0)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (then
+  ;; CHECK-NEXT:        (drop
+  ;; CHECK-NEXT:         (ref.null (shared none))
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (i32.const 0)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (then
-  ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (ref.null (shared none))
-  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.get $2)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.get $2)
+  ;; CHECK-NEXT:    (local.get $5)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -1401,37 +1431,43 @@
   ;; CHECK-NEXT:  (local $2 (ref null $struct))
   ;; CHECK-NEXT:  (local $3 eqref)
   ;; CHECK-NEXT:  (local $4 (ref null $struct))
+  ;; CHECK-NEXT:  (local $5 (ref null $struct))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result (ref null $struct))
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block (result nullref)
-  ;; CHECK-NEXT:      (local.set $1
+  ;; CHECK-NEXT:    (local.set $5
+  ;; CHECK-NEXT:     (block (result (ref null $struct))
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (block (result nullref)
+  ;; CHECK-NEXT:        (local.set $1
+  ;; CHECK-NEXT:         (ref.null none)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (ref.null none)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.set $3
   ;; CHECK-NEXT:       (ref.null none)
   ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (ref.null none)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.set $3
-  ;; CHECK-NEXT:     (ref.null none)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.set $4
-  ;; CHECK-NEXT:     (ref.null none)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.set $2
-  ;; CHECK-NEXT:     (local.get $1)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (if
-  ;; CHECK-NEXT:     (ref.eq
-  ;; CHECK-NEXT:      (local.get $1)
-  ;; CHECK-NEXT:      (local.get $3)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (then
-  ;; CHECK-NEXT:      (local.set $1
-  ;; CHECK-NEXT:       (local.get $4)
+  ;; CHECK-NEXT:      (local.set $4
+  ;; CHECK-NEXT:       (ref.null none)
   ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.set $2
+  ;; CHECK-NEXT:       (local.get $1)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (if
+  ;; CHECK-NEXT:       (ref.eq
+  ;; CHECK-NEXT:        (local.get $1)
+  ;; CHECK-NEXT:        (local.get $3)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (then
+  ;; CHECK-NEXT:        (local.set $1
+  ;; CHECK-NEXT:         (local.get $4)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.get $2)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.get $2)
+  ;; CHECK-NEXT:    (local.get $5)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -1655,47 +1691,53 @@
   ;; CHECK-NEXT:  (local $3 (ref null (shared eq)))
   ;; CHECK-NEXT:  (local $4 (ref null $struct))
   ;; CHECK-NEXT:  (local $5 (ref null $struct))
+  ;; CHECK-NEXT:  (local $6 (ref null $struct))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result (ref null $struct))
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block (result (ref null (shared none)))
-  ;; CHECK-NEXT:      (local.set $1
-  ;; CHECK-NEXT:       (ref.null (shared none))
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (ref.null (shared none))
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block (result (ref null (shared none)))
-  ;; CHECK-NEXT:      (local.set $5
-  ;; CHECK-NEXT:       (ref.null (shared none))
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (ref.null (shared none))
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.set $4
-  ;; CHECK-NEXT:     (struct.new_default $struct)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.set $2
-  ;; CHECK-NEXT:     (local.get $1)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (if
-  ;; CHECK-NEXT:     (block (result i32)
+  ;; CHECK-NEXT:    (local.set $5
+  ;; CHECK-NEXT:     (block (result (ref null $struct))
   ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (block (result (ref null (shared none)))
+  ;; CHECK-NEXT:        (local.set $1
+  ;; CHECK-NEXT:         (ref.null (shared none))
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (ref.null (shared none))
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (block (result (ref null (shared none)))
+  ;; CHECK-NEXT:        (local.set $6
+  ;; CHECK-NEXT:         (ref.null (shared none))
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (ref.null (shared none))
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.set $4
+  ;; CHECK-NEXT:       (struct.new_default $struct)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.set $2
   ;; CHECK-NEXT:       (local.get $1)
   ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (ref.null (shared none))
+  ;; CHECK-NEXT:      (if
+  ;; CHECK-NEXT:       (block (result i32)
+  ;; CHECK-NEXT:        (drop
+  ;; CHECK-NEXT:         (local.get $1)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (drop
+  ;; CHECK-NEXT:         (ref.null (shared none))
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (i32.const 0)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (then
+  ;; CHECK-NEXT:        (local.set $1
+  ;; CHECK-NEXT:         (local.get $4)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (i32.const 0)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (then
-  ;; CHECK-NEXT:      (local.set $1
-  ;; CHECK-NEXT:       (local.get $4)
-  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.get $2)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.get $2)
+  ;; CHECK-NEXT:    (local.get $5)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (ref.is_null
