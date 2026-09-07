@@ -155,6 +155,8 @@ makeAtomicFence(Ctx&, Index, const std::vector<Annotation>&, MemoryOrder);
 template<typename Ctx>
 Result<> makePause(Ctx&, Index, const std::vector<Annotation>&);
 template<typename Ctx>
+Result<> makePublish(Ctx&, Index, const std::vector<Annotation>&);
+template<typename Ctx>
 Result<> makeSIMDExtract(
   Ctx&, Index, const std::vector<Annotation>&, SIMDExtractOp op, size_t lanes);
 template<typename Ctx>
@@ -1993,6 +1995,12 @@ template<typename Ctx>
 Result<>
 makePause(Ctx& ctx, Index pos, const std::vector<Annotation>& annotations) {
   return ctx.makePause(pos, annotations);
+}
+
+template<typename Ctx>
+Result<>
+makePublish(Ctx& ctx, Index pos, const std::vector<Annotation>& annotations) {
+  return ctx.makePublish(pos, annotations);
 }
 
 template<typename Ctx>

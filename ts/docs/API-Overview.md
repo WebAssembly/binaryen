@@ -231,6 +231,7 @@ Note: For brevity, glob-like syntax `_{s,u}` is used to mean “`_s` and `_u`”
 	- `.struct.wait()`
 	- `.waitqueue.new()`
 	- `.waitqueue.notify()`
+	- `.publish()`
 	- `.array.new()`, `.array.new_default()`, `.array.new_fixed()`, `.array.new_data()`, `.array.new_elem()`
 	- `.array.get()`, `.array.get_{s,u}()`
 	- `.array.set()`

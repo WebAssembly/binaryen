@@ -2755,6 +2755,11 @@ void BinaryInstWriter::visitWaitqueueNotify(WaitqueueNotify* curr) {
     << U32LEB(BinaryConsts::WaitqueueNotify);
 }
 
+void BinaryInstWriter::visitPublish(Publish* curr) {
+  o << static_cast<int8_t>(BinaryConsts::AtomicPrefix)
+    << U32LEB(BinaryConsts::Publish);
+}
+
 void BinaryInstWriter::visitArrayNew(ArrayNew* curr) {
   o << static_cast<int8_t>(BinaryConsts::GCPrefix);
   if (curr->isWithDefault()) {
