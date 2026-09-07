@@ -14,7 +14,7 @@
   (func $relaxed (result i32)
     ;; CHECK: Relaxed operations require relaxed atomics [--enable-relaxed-atomics]
     (i32.atomic.load relaxed
-      (i32.const 1)
+      (i32.const 0)
     )
   )
 )

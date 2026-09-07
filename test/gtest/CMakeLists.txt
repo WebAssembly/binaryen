@@ -15,9 +15,9 @@ set(unittest_SOURCES
   delta_debugging.cpp
   dfa_minimization.cpp
   disjoint_sets.cpp
+  effects.cpp
   graph.cpp
   int128.cpp
-  iu64.cpp
   leaves.cpp
   glbs.cpp
   inplace_vector.cpp

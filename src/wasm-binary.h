@@ -725,6 +725,7 @@ enum ASTNodes {
   StructWait = 0x05,
   WaitqueueNotify = 0x06,
   WaitqueueNew = 0x07,
+  Publish = 0x0f,
 
   I32AtomicLoad = 0x10,
   I64AtomicLoad = 0x11,

@@ -159,3 +159,41 @@
   )
   "supertype of non-descriptor type cannot be a descriptor"
 )
+
+;; Descriptor and described types must have matching finality.
+(assert_invalid
+  (module
+    (rec
+      (type $a (sub final (descriptor $b) (struct)))
+      (type $b (sub (describes $a) (struct)))
+    )
+  )
+  "descriptor and described types have mismatched finality"
+)
+(assert_invalid
+  (module
+    (rec
+      (type $x (sub (descriptor $y) (struct)))
+      (type $y (sub final (describes $x) (struct)))
+    )
+  )
+  "descriptor and described types have mismatched finality"
+)
+(assert_invalid
+  (module
+    (rec
+      (type $a (descriptor $b) (struct))
+      (type $b (sub (describes $a) (struct)))
+    )
+  )
+  "descriptor and described types have mismatched finality"
+)
+(assert_invalid
+  (module
+    (rec
+      (type $x (sub (descriptor $y) (struct)))
+      (type $y (describes $x) (struct))
+    )
+  )
+  "descriptor and described types have mismatched finality"
+)

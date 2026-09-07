@@ -638,6 +638,7 @@ struct NullInstrParserCtx {
     return Ok{};
   }
   Result<> makePause(Index, const std::vector<Annotation>&) { return Ok{}; }
+  Result<> makePublish(Index, const std::vector<Annotation>&) { return Ok{}; }
   Result<> makeSIMDExtract(Index,
                            const std::vector<Annotation>&,
                            SIMDExtractOp,
@@ -2394,8 +2395,9 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
     auto m = getMemory(pos, mem);
     CHECK_ERR(m);
     if (isAtomic) {
-      return withLoc(
-        pos, irBuilder.makeAtomicLoad(bytes, memarg.offset, type, *m, order));
+      return withLoc(pos,
+                     irBuilder.makeAtomicLoad(
+                       bytes, memarg.offset, memarg.align, type, *m, order));
     }
     return withLoc(pos,
                    irBuilder.makeLoad(
@@ -2413,8 +2415,9 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
     auto m = getMemory(pos, mem);
     CHECK_ERR(m);
     if (isAtomic) {
-      return withLoc(
-        pos, irBuilder.makeAtomicStore(bytes, memarg.offset, type, *m, order));
+      return withLoc(pos,
+                     irBuilder.makeAtomicStore(
+                       bytes, memarg.offset, memarg.align, type, *m, order));
     }
     return withLoc(
       pos, irBuilder.makeStore(bytes, memarg.offset, memarg.align, type, *m));
@@ -2454,8 +2457,9 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
                          MemoryOrder order) {
     auto m = getMemory(pos, mem);
     CHECK_ERR(m);
-    return withLoc(
-      pos, irBuilder.makeAtomicRMW(op, bytes, memarg.offset, type, *m, order));
+    return withLoc(pos,
+                   irBuilder.makeAtomicRMW(
+                     op, bytes, memarg.offset, memarg.align, type, *m, order));
   }
 
   Result<> makeAtomicCmpxchg(Index pos,
@@ -2467,8 +2471,9 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
                              MemoryOrder order) {
     auto m = getMemory(pos, mem);
     CHECK_ERR(m);
-    return withLoc(
-      pos, irBuilder.makeAtomicCmpxchg(bytes, memarg.offset, type, *m, order));
+    return withLoc(pos,
+                   irBuilder.makeAtomicCmpxchg(
+                     bytes, memarg.offset, memarg.align, type, *m, order));
   }
 
   Result<> makeAtomicWait(Index pos,
@@ -2478,7 +2483,8 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
                           Memarg memarg) {
     auto m = getMemory(pos, mem);
     CHECK_ERR(m);
-    return withLoc(pos, irBuilder.makeAtomicWait(type, memarg.offset, *m));
+    return withLoc(
+      pos, irBuilder.makeAtomicWait(type, memarg.offset, memarg.align, *m));
   }
 
   Result<> makeAtomicNotify(Index pos,
@@ -2487,7 +2493,8 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
                             Memarg memarg) {
     auto m = getMemory(pos, mem);
     CHECK_ERR(m);
-    return withLoc(pos, irBuilder.makeAtomicNotify(memarg.offset, *m));
+    return withLoc(pos,
+                   irBuilder.makeAtomicNotify(memarg.offset, memarg.align, *m));
   }
 
   Result<> makeAtomicFence(Index pos,
@@ -2498,6 +2505,10 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
 
   Result<> makePause(Index pos, const std::vector<Annotation>& annotations) {
     return withLoc(pos, irBuilder.makePause());
+  }
+
+  Result<> makePublish(Index pos, const std::vector<Annotation>& annotations) {
+    return withLoc(pos, irBuilder.makePublish());
   }
 
   Result<> makeSIMDExtract(Index pos,

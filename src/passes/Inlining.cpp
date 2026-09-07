@@ -837,9 +837,9 @@ struct FunctionSplitter {
   //
   // Note that to avoid wasteful work, this function may return "Full" inlining
   // mode instead of a split inlining. That is, if it detects that a partial
-  // inlining will trigger a follow up full inline of the splitted function
-  // then it will instead return "InliningMode::Full" directly. In more detail,
-  // imagine we have
+  // inlining will trigger a follow up full inline of the split function then it
+  // will instead return "InliningMode::Full" directly. In more detail, imagine
+  // we have
   //
   //   foo(10);
   //
