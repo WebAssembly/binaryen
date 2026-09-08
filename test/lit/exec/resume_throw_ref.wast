@@ -9,7 +9,10 @@
  (func $empty
  )
 
+ ;; CHECK:      [fuzz-exec] export test
+ ;; CHECK-NEXT: [trap null ref]
  (func $test (export "test")
+  ;; The exnref here is null, which we trap on.
   (resume_throw_ref $cont
    (ref.null noexn)
    (cont.new $cont
