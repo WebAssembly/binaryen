@@ -786,10 +786,10 @@ public:
     PublishId,
     NumExpressionIds
   };
-  Id _id;
-
   // the type of the expression: its *output*, not necessarily its input(s)
   Type type = Type::none;
+
+  Id _id;
 
   Expression(Id id) : _id(id) {}
 
@@ -1016,11 +1016,12 @@ public:
 
   uint8_t bytes;
   bool signed_ = false;
+  MemoryOrder order = MemoryOrder::Unordered;
+
   Address offset;
   Address align;
   Expression* ptr;
   Name memory;
-  MemoryOrder order = MemoryOrder::Unordered;
 
   bool isAtomic() const { return order != MemoryOrder::Unordered; }
 
@@ -1035,13 +1036,14 @@ public:
   Store(MixedArena& allocator) : Store() {}
 
   uint8_t bytes;
+  MemoryOrder order = MemoryOrder::Unordered;
+
   Address offset;
   Address align;
   Expression* ptr;
   Expression* value;
   Type valueType;
   Name memory;
-  MemoryOrder order;
 
   bool isAtomic() const { return order != MemoryOrder::Unordered; }
 
@@ -1127,9 +1129,9 @@ public:
   SIMDExtract() = default;
   SIMDExtract(MixedArena& allocator) : SIMDExtract() {}
 
+  uint8_t index;
   SIMDExtractOp op;
   Expression* vec;
-  uint8_t index;
 
   void finalize();
 };
@@ -1635,8 +1637,8 @@ public:
   TupleExtract() = default;
   TupleExtract(MixedArena& allocator) {}
 
-  Expression* tuple;
   Index index;
+  Expression* tuple;
 
   void finalize();
 };
@@ -1755,11 +1757,11 @@ public:
   StructGet() = default;
   StructGet(MixedArena& allocator) {}
 
-  Index index;
-  Expression* ref;
   // Packed fields have a sign.
   bool signed_ = false;
   MemoryOrder order = MemoryOrder::Unordered;
+  Index index;
+  Expression* ref;
 
   bool isAtomic() const { return order != MemoryOrder::Unordered; }
 
@@ -1771,10 +1773,10 @@ public:
   StructSet() = default;
   StructSet(MixedArena& allocator) {}
 
+  MemoryOrder order = MemoryOrder::Unordered;
   Index index;
   Expression* ref;
   Expression* value;
-  MemoryOrder order = MemoryOrder::Unordered;
 
   bool isAtomic() const { return order != MemoryOrder::Unordered; }
 
@@ -1907,11 +1909,11 @@ public:
   ArrayGet() = default;
   ArrayGet(MixedArena& allocator) {}
 
-  Expression* ref;
-  Expression* index;
   // Packed fields have a sign.
   bool signed_ = false;
   MemoryOrder order = MemoryOrder::Unordered;
+  Expression* ref;
+  Expression* index;
 
   bool isAtomic() const { return order != MemoryOrder::Unordered; }
 
@@ -1923,10 +1925,10 @@ public:
   ArraySet() = default;
   ArraySet(MixedArena& allocator) {}
 
+  MemoryOrder order = MemoryOrder::Unordered;
   Expression* ref;
   Expression* index;
   Expression* value;
-  MemoryOrder order = MemoryOrder::Unordered;
 
   bool isAtomic() const { return order != MemoryOrder::Unordered; }
 
