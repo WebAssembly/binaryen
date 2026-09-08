@@ -673,6 +673,9 @@ enum WideIntMulOp {
 
 class Expression {
 public:
+  // The type of the expression: its *output*, not necessarily its input(s)
+  Type type = Type::none;
+
   enum Id : uint8_t {
     InvalidId = 0,
     BlockId,
@@ -786,9 +789,11 @@ public:
     PublishId,
     NumExpressionIds
   };
-  // the type of the expression: its *output*, not necessarily its input(s)
-  Type type = Type::none;
 
+  // Placing this *after* the Type allows tail-padding reuse on some ABIs: the
+  // ID is only 1 byte, leaving lots of padding on 64-bit systems, which
+  // derived classes can sometimes reuse (if they have a suitable field up
+  // front; the classes below are sorted to optimize that).
   Id _id;
 
   Expression(Id id) : _id(id) {}
