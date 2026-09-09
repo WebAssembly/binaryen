@@ -29,7 +29,7 @@ function i8sToStack(i8s) {
 function initializeConstants() {
 
   // Types
-  [ ['void', 'None'],
+  [ ['none', 'None'],
     ['i32', 'Int32'],
     ['i64', 'Int64'],
     ['f32', 'Float32'],
@@ -61,7 +61,11 @@ function initializeConstants() {
     ['struct', 'Struct'],
     ['array', 'Array'],
     ['string', 'String'],
+    /*
+    TODO: Reconcile with `none` above (line 32).
+    Maybe keep this as 'none' and change the above to 'void'?
     ['none', 'None'],
+    */
     ['noextern', 'Noext'],
     ['nofunc', 'Nofunc'],
   ].forEach(entry => {
@@ -704,7 +708,7 @@ function wrapModule(module, self = {}) {
     return preserveStack(() =>
       Module['_BinaryenBlock'](module, name ? strToStack(name) : 0,
                                i32sToStack(children), children.length,
-                               typeof type !== 'undefined' ? type : Module['void'])
+                               typeof type !== 'undefined' ? type : Module['none'])
     );
   };
   self['if'] = function(condition, ifTrue, ifFalse) {

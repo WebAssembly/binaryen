@@ -19,7 +19,7 @@ var module = new binaryen.Module();
 module.setFeatures(binaryen.Features.ReferenceTypes |
                    binaryen.Features.ExceptionHandling);
 
-module.addTag("e", binaryen.i32, binaryen.void);
+module.addTag("e", binaryen.i32, binaryen.none);
 
 // (try $l0
 //   (do
@@ -42,7 +42,7 @@ var try_catch = module.try(
         module.drop(module.i32.pop()),
         rethrow
       ],
-      binaryen.void
+      binaryen.none
     )
   ],
   ''
@@ -74,7 +74,7 @@ var try_delegate = module.try(
 );
 
 var body = module.block('', [try_catch, try_delegate])
-var func = module.addFunction("test", binaryen.void, binaryen.void, [], body);
+var func = module.addFunction("test", binaryen.none, binaryen.none, [], body);
 
 console.log(module.emitText());
 assert(module.validate());
