@@ -9,11 +9,7 @@ import {
 	ExpressionId,
 	type ExpressionRef,
 	type Operation,
-	i32,
-	i64,
-	f32,
-	f64,
-	v128,
+	Type,
 } from "../../constants.ts";
 import {
 	Expression,
@@ -29,11 +25,11 @@ export class Const extends Expression {
 	get value(): number | bigint | number[] {
 		const this_type = this.type;
 		switch (this_type) {
-			case i32: { return this.#valueI32; }
-			case i64: { return this.#valueI64; }
-			case f32: { return this.#valueF32; }
-			case f64: { return this.#valueF64; }
-			case v128: { return this.#valueV128; }
+			case Type.i32: { return this.#valueI32; }
+			case Type.i64: { return this.#valueI64; }
+			case Type.f32: { return this.#valueF32; }
+			case Type.f64: { return this.#valueF64; }
+			case Type.v128: { return this.#valueV128; }
 		}
 		throw new Error(`Unexpected type: ${ this_type }.`);
 	}

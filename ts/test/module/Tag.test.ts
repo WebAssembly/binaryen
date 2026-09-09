@@ -19,7 +19,7 @@ suite("Tag", () => {
 			binaryen.Feature.ReferenceTypes |
 			binaryen.Feature.Multivalue
 		);
-		tagRef = mod.tags.add("a-tag", binaryen.i32, binaryen.none);
+		tagRef = mod.tags.add("a-tag", binaryen.Type.i32, binaryen.Type.none);
 	});
 
 	test(".constructor", () => {
@@ -27,8 +27,8 @@ suite("Tag", () => {
 			name: "a-tag",
 			module: "",
 			base: "",
-			params: binaryen.i32,
-			results: binaryen.none,
+			params: binaryen.Type.i32,
+			results: binaryen.Type.none,
 		});
 	});
 
@@ -37,10 +37,10 @@ suite("Tag", () => {
 	});
 
 	test("module is valid with imports/exports.", () => {
-		const pairType: binaryen.Type = binaryen.createType([binaryen.i32, binaryen.f32]);
+		const pairType: binaryen.Type = binaryen.createType([binaryen.Type.i32, binaryen.Type.f32]);
 
 		mod.exports.addTag("a-tag", "a-tag-exp");
-		mod.imports.addTag("a-tag-imp", "module", "base", pairType, binaryen.none);
+		mod.imports.addTag("a-tag-imp", "module", "base", pairType, binaryen.Type.none);
 
 		assert.ok(mod.validate());
 		assert.strictEqual(mod.emitText(), `(module

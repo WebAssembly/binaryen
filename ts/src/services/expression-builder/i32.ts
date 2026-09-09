@@ -7,7 +7,7 @@ import type {
 import {
 	type ExpressionRef,
 	Operation,
-	i32 as i32_t,
+	Type,
 } from "../../constants.ts";
 import {
 	atomicLoadFn,
@@ -24,17 +24,17 @@ import {
 
 function atomic(mod: Module) {
 	return {
-		load: atomicLoadFn(mod, i32_t, 4),
-		load8_u: atomicLoadFn(mod, i32_t, 1),
-		load16_u: atomicLoadFn(mod, i32_t, 2),
+		load: atomicLoadFn(mod, Type.i32, 4),
+		load8_u: atomicLoadFn(mod, Type.i32, 1),
+		load16_u: atomicLoadFn(mod, Type.i32, 2),
 
-		store: atomicStoreFn(mod, i32_t, 4),
-		store8: atomicStoreFn(mod, i32_t, 1),
-		store16: atomicStoreFn(mod, i32_t, 2),
+		store: atomicStoreFn(mod, Type.i32, 4),
+		store8: atomicStoreFn(mod, Type.i32, 1),
+		store16: atomicStoreFn(mod, Type.i32, 2),
 
-		rmw: atomicRmwOps(mod, i32_t, 4),
-		rmw8_u: atomicRmwOps(mod, i32_t, 1),
-		rmw16_u: atomicRmwOps(mod, i32_t, 2),
+		rmw: atomicRmwOps(mod, Type.i32, 4),
+		rmw8_u: atomicRmwOps(mod, Type.i32, 1),
+		rmw16_u: atomicRmwOps(mod, Type.i32, 2),
 	} as const;
 }
 
@@ -46,15 +46,15 @@ function atomic(mod: Module) {
  */
 export function i32(mod: Module) {
 	return {
-		load: loadFn(mod, i32_t, 4, true),
-		load8_s: loadFn(mod, i32_t, 1, true),
-		load8_u: loadFn(mod, i32_t, 1, false),
-		load16_s: loadFn(mod, i32_t, 2, true),
-		load16_u: loadFn(mod, i32_t, 2, false),
+		load: loadFn(mod, Type.i32, 4, true),
+		load8_s: loadFn(mod, Type.i32, 1, true),
+		load8_u: loadFn(mod, Type.i32, 1, false),
+		load16_s: loadFn(mod, Type.i32, 2, true),
+		load16_u: loadFn(mod, Type.i32, 2, false),
 
-		store: storeFn(mod, i32_t, 4),
-		store8: storeFn(mod, i32_t, 1),
-		store16: storeFn(mod, i32_t, 2),
+		store: storeFn(mod, Type.i32, 4),
+		store8: storeFn(mod, Type.i32, 1),
+		store16: storeFn(mod, Type.i32, 2),
 
 		/** Return a static constant i32. */
 		const: (value: number): ExpressionRef => (
@@ -147,8 +147,8 @@ export function i32(mod: Module) {
 
 		/** @deprecated Use {@link Module#pop} instead. */
 		pop() {
-			BinaryenObj.printWarn("`.i32.pop()` is deprecated; use `.pop(i32)` instead.");
-			return mod.pop(i32_t);
+			BinaryenObj.printWarn("`.i32.pop()` is deprecated; use `.pop(Type.i32)` instead.");
+			return mod.pop(Type.i32);
 		},
 	} as const;
 }

@@ -29,7 +29,7 @@ suite("Table", () => {
 		assert.strictEqual(tableInfo.name, "a-table");
 		assert.strictEqual(tableInfo.initial, 5);
 		assert.strictEqual(tableInfo.max, 15);
-		assert.strictEqual(tableInfo.type, binaryen.funcref);
+		assert.strictEqual(tableInfo.type, binaryen.Type.funcref);
 	});
 
 	test("`Module#tables.get` returns the ref returned by `Module#tables.add`.", () => {
@@ -78,16 +78,16 @@ suite("Table", () => {
 	});
 
 	test("get/set type.", () => {
-		assert.strictEqual(tableInfo.type, binaryen.funcref);
-		tableInfo.type = binaryen.anyref;
-		assert.strictEqual(tableInfo.type, binaryen.anyref);
+		assert.strictEqual(tableInfo.type, binaryen.Type.funcref);
+		tableInfo.type = binaryen.Type.anyref;
+		assert.strictEqual(tableInfo.type, binaryen.Type.anyref);
 
 		// `new Table().type` setter has the same side-effect
-		new binaryen.Module.Table(tableRef).type = binaryen.eqref;
-		assert.strictEqual(tableInfo.type, binaryen.eqref);
+		new binaryen.Module.Table(tableRef).type = binaryen.Type.eqref;
+		assert.strictEqual(tableInfo.type, binaryen.Type.eqref);
 
 		// reset for next test
-		tableInfo.type = binaryen.funcref;
+		tableInfo.type = binaryen.Type.funcref;
 	});
 
 	test("module is valid.", () => {

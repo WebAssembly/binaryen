@@ -30,54 +30,10 @@ suite("binaryen", () => {
 	test("namespace exists and has all the right top-level exports.", () => {
 		assert.ok(binaryen);
 
-		// constants
-		assert.ok(binaryen.unreachable);
-		assert.ok("none" in binaryen);
-		assert.ok(binaryen.auto);
-		assert.ok(binaryen.i32);
-		assert.ok(binaryen.i64);
-		assert.ok(binaryen.f32);
-		assert.ok(binaryen.f64);
-		assert.ok(binaryen.v128);
-
-		assert.ok(binaryen.any);
-		assert.ok(binaryen.eq);
-		assert.ok(binaryen.i31);
-		assert.ok(binaryen.struct);
-		assert.ok(binaryen.array);
-		assert.ok(!binaryen.none); // TODO: update after changing `none` above
-		assert.ok(binaryen.func);
-		// @ts-expect-error
-		assert.ok(!binaryen.exn);
-		assert.ok(binaryen.extern);
-		assert.ok(binaryen.nofunc);
-		// @ts-expect-error
-		assert.ok(!binaryen.noexn);
-		assert.ok(binaryen.noextern);
-
-		assert.ok(binaryen.anyref);
-		assert.ok(binaryen.eqref);
-		assert.ok(binaryen.i31ref);
-		assert.ok(binaryen.structref);
-		assert.ok(binaryen.arrayref);
-		assert.ok(binaryen.nullref);
-		assert.ok(binaryen.funcref);
-		// @ts-expect-error
-		assert.ok(!binaryen.exnref);
-		assert.ok(binaryen.externref);
-		assert.ok(binaryen.nullfuncref);
-		// @ts-expect-error
-		assert.ok(!binaryen.nullexnref);
-		assert.ok(binaryen.nullexternref);
-
-		assert.ok("notPacked" in binaryen);
-		assert.ok(binaryen.i8);
-		assert.ok(binaryen.i16);
-
-		assert.ok(binaryen.string);
-		assert.ok(binaryen.stringref);
-
 		// enums
+		assert.strictEqual(typeof binaryen.Type, "object");
+		assert.strictEqual(typeof binaryen.HeapType, "object");
+		assert.strictEqual(typeof binaryen.PackedType, "object");
 		assert.strictEqual(typeof binaryen.ExpressionId, "object");
 		assert.strictEqual(typeof binaryen.SideEffect, "object");
 		assert.strictEqual(typeof binaryen.ExternalKind, "object");
@@ -127,59 +83,64 @@ suite("binaryen", () => {
 
 
 	test("types.", () => {
-		assert.strictEqual(binaryen.unreachable, 1);
-		assert.strictEqual(binaryen.none, 0);
-		assert.strictEqual(binaryen.auto, -1);
-		assert.strictEqual(binaryen.i32, 2);
-		assert.strictEqual(binaryen.i64, 3);
-		assert.strictEqual(binaryen.f32, 4);
-		assert.strictEqual(binaryen.f64, 5);
-		assert.strictEqual(binaryen.v128, 6);
+		// NOTE: the length is twice the number of members due to how TypeScript emits enums.
+		assert.strictEqual(Object.entries(binaryen.Type).length, 19 * 2);
+		assert.strictEqual(Object.entries(binaryen.HeapType).length, 11 * 2);
+		assert.strictEqual(Object.entries(binaryen.PackedType).length, 3 * 2);
 
-		assert.strictEqual(binaryen.any, 0x20);
-		assert.strictEqual(binaryen.eq, 0x28);
-		assert.strictEqual(binaryen.i31, 0x30);
-		assert.strictEqual(binaryen.struct, 0x38);
-		assert.strictEqual(binaryen.array, 0x40);
-		assert.strictEqual(binaryen.none, 0x00); // TODO: update after changing `none` above
-		assert.strictEqual(binaryen.func, 0x10);
+		assert.strictEqual(binaryen.Type.unreachable, 1);
+		assert.strictEqual(binaryen.Type.none, 0);
+		assert.strictEqual(binaryen.Type.auto, -1);
+		assert.strictEqual(binaryen.Type.i32, 2);
+		assert.strictEqual(binaryen.Type.i64, 3);
+		assert.strictEqual(binaryen.Type.f32, 4);
+		assert.strictEqual(binaryen.Type.f64, 5);
+		assert.strictEqual(binaryen.Type.v128, 6);
+
+		assert.strictEqual(binaryen.HeapType.any, 0x20);
+		assert.strictEqual(binaryen.HeapType.eq, 0x28);
+		assert.strictEqual(binaryen.HeapType.i31, 0x30);
+		assert.strictEqual(binaryen.HeapType.struct, 0x38);
+		assert.strictEqual(binaryen.HeapType.array, 0x40);
+		assert.strictEqual(binaryen.HeapType.none, 0x58);
+		assert.strictEqual(binaryen.HeapType.func, 0x10);
 		// @ts-expect-error
-		assert.strictEqual(binaryen.exn, undefined);
-		assert.strictEqual(binaryen.extern, 0x08);
-		assert.strictEqual(binaryen.nofunc, 0x68);
+		assert.strictEqual(binaryen.HeapType.exn, undefined);
+		assert.strictEqual(binaryen.HeapType.extern, 0x08);
+		assert.strictEqual(binaryen.HeapType.nofunc, 0x68);
 		// @ts-expect-error
-		assert.strictEqual(binaryen.noexn, undefined);
-		assert.strictEqual(binaryen.noextern, 0x60);
+		assert.strictEqual(binaryen.HeapType.noexn, undefined);
+		assert.strictEqual(binaryen.HeapType.noextern, 0x60);
 
-		assert.strictEqual(binaryen.anyref, 0x22);
-		assert.strictEqual(binaryen.eqref, 0x2a);
-		assert.strictEqual(binaryen.i31ref, 0x32);
-		assert.strictEqual(binaryen.structref, 0x3a);
-		assert.strictEqual(binaryen.arrayref, 0x42);
-		assert.strictEqual(binaryen.nullref, 0x5a);
-		assert.strictEqual(binaryen.funcref, 0x12);
+		assert.strictEqual(binaryen.Type.anyref, 0x22);
+		assert.strictEqual(binaryen.Type.eqref, 0x2a);
+		assert.strictEqual(binaryen.Type.i31ref, 0x32);
+		assert.strictEqual(binaryen.Type.structref, 0x3a);
+		assert.strictEqual(binaryen.Type.arrayref, 0x42);
+		assert.strictEqual(binaryen.Type.nullref, 0x5a);
+		assert.strictEqual(binaryen.Type.funcref, 0x12);
 		// @ts-expect-error
-		assert.strictEqual(binaryen.exnref, undefined);
-		assert.strictEqual(binaryen.externref, 0x0a);
-		assert.strictEqual(binaryen.nullfuncref, 0x6a);
+		assert.strictEqual(binaryen.Type.exnref, undefined);
+		assert.strictEqual(binaryen.Type.externref, 0x0a);
+		assert.strictEqual(binaryen.Type.nullfuncref, 0x6a);
 		// @ts-expect-error
-		assert.strictEqual(binaryen.nullexnref, undefined);
-		assert.strictEqual(binaryen.nullexternref, 0x62);
+		assert.strictEqual(binaryen.Type.nullexnref, undefined);
+		assert.strictEqual(binaryen.Type.nullexternref, 0x62);
 
-		assert.strictEqual(binaryen.notPacked, 0);
-		assert.strictEqual(binaryen.i8, 1);
-		assert.strictEqual(binaryen.i16, 2);
+		assert.strictEqual(binaryen.PackedType.notPacked, 0);
+		assert.strictEqual(binaryen.PackedType.i8, 1);
+		assert.strictEqual(binaryen.PackedType.i16, 2);
 
-		assert.strictEqual(binaryen.string, 0x50);
-		assert.strictEqual(binaryen.stringref, 0x52);
+		assert.strictEqual(binaryen.HeapType.string, 0x50);
+		assert.strictEqual(binaryen.Type.stringref, 0x52);
 
-		const i32_pair = binaryen.createType([binaryen.i32, binaryen.i32]);
-		const duplicate_pair = binaryen.createType([binaryen.i32, binaryen.i32]);
+		const i32_pair = binaryen.createType([binaryen.Type.i32, binaryen.Type.i32]);
+		const duplicate_pair = binaryen.createType([binaryen.Type.i32, binaryen.Type.i32]);
 		assert.strictEqual(binaryen.expandType(i32_pair).toString(), "2,2");
 		assert.strictEqual(binaryen.expandType(duplicate_pair).toString(), "2,2");
 		assert.strictEqual(i32_pair, duplicate_pair);
 
-		assert.strictEqual(binaryen.expandType(binaryen.createType([binaryen.f32, binaryen.f32])).toString(), "4,4");
+		assert.strictEqual(binaryen.expandType(binaryen.createType([binaryen.Type.f32, binaryen.Type.f32])).toString(), "4,4");
 	});
 
 

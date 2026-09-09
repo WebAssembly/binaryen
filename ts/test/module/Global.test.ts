@@ -19,7 +19,7 @@ suite("Global", () => {
 			binaryen.Feature.MVP |
 			binaryen.Feature.MutableGlobals
 		);
-		globalRef = mod.globals.add("a-global", binaryen.i32, false, mod.wasm.i32.const(1));
+		globalRef = mod.globals.add("a-global", binaryen.Type.i32, false, mod.wasm.i32.const(1));
 		assert.strictEqual(mod.globals.count(), 1);
 		globalInfo = new binaryen.Module.Global(globalRef);
 	});
@@ -29,7 +29,7 @@ suite("Global", () => {
 			name: "a-global",
 			module: "",
 			base: "",
-			type: binaryen.i32,
+			type: binaryen.Type.i32,
 			mutable: false,
 		});
 	});
@@ -44,7 +44,7 @@ suite("Global", () => {
 		assert.ok(exprObj instanceof binaryen.expressions.Const);
 		assert.partialDeepStrictEqual(exprObj.toJson(), {
 			id: binaryen.ExpressionId.Const,
-			type: binaryen.i32,
+			type: binaryen.Type.i32,
 			value: 1,
 		});
 		assert.strictEqual(binaryen.emitText(globalInfo.init), "(i32.const 1)\n");
@@ -52,8 +52,8 @@ suite("Global", () => {
 
 	test("module is valid with imports/exports.", () => {
 		mod.exports.addGlobal("a-global", "a-global-exp");
-		mod.imports.addGlobal("a-global-imp", "module", "base", binaryen.i32, false);
-		mod.imports.addGlobal("a-mut-global-imp", "module", "base", binaryen.i32, true);
+		mod.imports.addGlobal("a-global-imp", "module", "base", binaryen.Type.i32, false);
+		mod.imports.addGlobal("a-mut-global-imp", "module", "base", binaryen.Type.i32, true);
 
 		assert.ok(mod.validate());
 		assert.strictEqual(mod.emitText(), `(module

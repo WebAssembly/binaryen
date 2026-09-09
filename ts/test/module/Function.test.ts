@@ -17,13 +17,13 @@ suite("Function", () => {
 		mod = new binaryen.Module();
 		funcRef = mod.functions.add(
 			"a-function",
-			binaryen.createType([binaryen.i32, binaryen.i32]),
-			binaryen.i32,
-			[binaryen.i32, binaryen.f64],
+			binaryen.createType([binaryen.Type.i32, binaryen.Type.i32]),
+			binaryen.Type.i32,
+			[binaryen.Type.i32, binaryen.Type.f64],
 			mod.wasm.local.tee(2, mod.wasm.i32.add(
-				mod.wasm.local.get(0, binaryen.i32),
-				mod.wasm.local.get(1, binaryen.i32),
-			), binaryen.i32),
+				mod.wasm.local.get(0, binaryen.Type.i32),
+				mod.wasm.local.get(1, binaryen.Type.i32),
+			), binaryen.Type.i32),
 		);
 		assert.strictEqual(mod.functions.count(), 1);
 		funcInfo = new binaryen.Module.Function(funcRef);
@@ -34,12 +34,12 @@ suite("Function", () => {
 			module: "",
 			base: "",
 			name: "a-function",
-			params: binaryen.createType([binaryen.i32, binaryen.i32]),
-			results: binaryen.i32,
+			params: binaryen.createType([binaryen.Type.i32, binaryen.Type.i32]),
+			results: binaryen.Type.i32,
 			numVars: 2,
 			numLocals: 4,
 		});
-		assert.deepStrictEqual(funcInfo.vars, [binaryen.i32, binaryen.f64]);
+		assert.deepStrictEqual(funcInfo.vars, [binaryen.Type.i32, binaryen.Type.f64]);
 	});
 
 	test("`Module#functions.get` returns the ref returned by `Module#functions.add`.", () => {
@@ -65,8 +65,8 @@ suite("Function", () => {
 	});
 
 	test("#getVar", () => {
-		assert.strictEqual(funcInfo.getVar(0), binaryen.i32);
-		assert.strictEqual(funcInfo.getVar(1), binaryen.f64);
+		assert.strictEqual(funcInfo.getVar(0), binaryen.Type.i32);
+		assert.strictEqual(funcInfo.getVar(1), binaryen.Type.f64);
 	});
 
 	test("has/get/set local names.", () => {
@@ -93,7 +93,7 @@ suite("Function", () => {
 	});
 
 	test("Module#runPassesOnFunction", () => {
-		funcRef = mod.functions.add("b-function", binaryen.none, binaryen.i32, [], mod.wasm.i32.add(
+		funcRef = mod.functions.add("b-function", binaryen.Type.none, binaryen.Type.i32, [], mod.wasm.i32.add(
 			mod.wasm.i32.const(1),
 			mod.wasm.i32.const(2),
 		));
@@ -106,7 +106,7 @@ suite("Function", () => {
 		assert.ok(bodyExprObj instanceof binaryen.expressions.Binary);
 		assert.partialDeepStrictEqual(bodyExprObj.toJson(), {
 			id: binaryen.ExpressionId.Binary,
-			type: binaryen.i32,
+			type: binaryen.Type.i32,
 		});
 
 		assert.ok(mod.validate());
@@ -122,7 +122,7 @@ suite("Function", () => {
 		assert.ok(bodyExprObj instanceof binaryen.expressions.Const);
 		assert.partialDeepStrictEqual(bodyExprObj.toJson(), {
 			id: binaryen.ExpressionId.Const,
-			type: binaryen.i32,
+			type: binaryen.Type.i32,
 			value: 3,
 		});
 		assert.strictEqual(binaryen.emitText(funcInfo.body), "(i32.const 3)\n");
