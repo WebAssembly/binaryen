@@ -2871,6 +2871,16 @@ private:
         left = br->value;
         continue;
       }
+      if (auto* cast = left->dynCast<RefCast>(); cast && cast->desc) {
+        interferingEffects.walk(cast->desc);
+        left = cast->ref;
+        continue;
+      }
+      if (auto* br = left->dynCast<BrOn>(); br && br->desc) {
+        interferingEffects.walk(br->desc);
+        left = br->ref;
+        continue;
+      }
       // We have found the real fallthrough expression.
       break;
     }
