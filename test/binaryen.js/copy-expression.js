@@ -3,11 +3,11 @@ var module = new binaryen.Module();
 // Create an expression and copy it
 var original = module.block(null, [
   module.if(
-    module.local.get(0, binaryen.i32),
+    module.local.get(0, binaryen.Type.i32),
     module.i32.const(1),
     module.i32.const(2)
   )
-], binaryen.i32);
+], binaryen.Type.i32);
 var copy = module.copyExpression(original);
 
 // Check that the expression incl. sub-expressions are copies
