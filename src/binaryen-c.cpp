@@ -1909,6 +1909,10 @@ BinaryenExpressionRef BinaryenWaitqueueNotify(BinaryenModuleRef module,
   return Builder(*(Module*)module)
     .makeWaitqueueNotify((Expression*)waitqueue, (Expression*)count);
 }
+BinaryenExpressionRef BinaryenPublish(BinaryenModuleRef module,
+                                      BinaryenExpressionRef ref) {
+  return Builder(*(Module*)module).makePublish((Expression*)ref);
+}
 BinaryenExpressionRef BinaryenArrayNew(BinaryenModuleRef module,
                                        BinaryenHeapType type,
                                        BinaryenExpressionRef size,
@@ -4629,6 +4633,20 @@ void BinaryenWaitqueueNotifySetCount(BinaryenExpressionRef expr,
   static_cast<WaitqueueNotify*>(expression)->count = (Expression*)countExpr;
 }
 
+// Publish
+BinaryenExpressionRef BinaryenPublishGetRef(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Publish>());
+  return static_cast<Publish*>(expression)->ref;
+}
+void BinaryenPublishSetRef(BinaryenExpressionRef expr,
+                           BinaryenExpressionRef refExpr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Publish>());
+  assert(refExpr);
+  static_cast<Publish*>(expression)->ref = (Expression*)refExpr;
+}
+
 // ArrayNew
 BinaryenExpressionRef BinaryenArrayNewGetInit(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
@@ -6686,6 +6704,10 @@ BinaryenSideEffects BinaryenSideEffectThrows(void) {
 BinaryenSideEffects BinaryenSideEffectDanglingPop(void) {
   return static_cast<BinaryenSideEffects>(
     EffectAnalyzer::SideEffects::DanglingPop);
+}
+BinaryenSideEffects BinaryenSideEffectSuspends(void) {
+  return static_cast<BinaryenSideEffects>(
+    EffectAnalyzer::SideEffects::Suspends);
 }
 BinaryenSideEffects BinaryenSideEffectAny(void) {
   return static_cast<BinaryenSideEffects>(EffectAnalyzer::SideEffects::Any);

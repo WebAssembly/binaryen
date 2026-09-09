@@ -1487,6 +1487,8 @@ std::ostream& operator<<(std::ostream& os,
       return os << "Heap type describes an invalid unshared type";
     case TypeBuilder::ErrorReasonKind::RequiresCustomDescriptors:
       return os << "custom descriptors required but not enabled";
+    case TypeBuilder::ErrorReasonKind::MismatchedDescriptorFinality:
+      return os << "Descriptor and described types have mismatched finality";
     case TypeBuilder::ErrorReasonKind::RecGroupCollision:
       return os
              << "distinct rec groups would be identical after binary writing";
@@ -2284,6 +2286,11 @@ void TypeBuilder::setOpen(size_t i, bool open) {
   impl->entries[i].info->isOpen = open;
 }
 
+bool TypeBuilder::isOpen(size_t i) const {
+  assert(i < size() && "index out of bounds");
+  return impl->entries[i].info->isOpen;
+}
+
 void TypeBuilder::setShared(size_t i, Shareability share) {
   assert(i < size() && "index out of bounds");
   impl->entries[i].info->share = share;
@@ -2607,6 +2614,10 @@ buildRecGroup(std::unique_ptr<RecGroupInfo>&& groupInfo,
       if (isTemp(*desc) && !seenTypes.contains(*desc)) {
         return {TypeBuilder::Error{
           i, TypeBuilder::ErrorReasonKind::ForwardDescriptorReference}};
+      }
+      if (type.isOpen() != desc->isOpen()) {
+        return {TypeBuilder::Error{
+          i, TypeBuilder::ErrorReasonKind::MismatchedDescriptorFinality}};
       }
     }
     // Describes clauses were already checked as we validated each type in the

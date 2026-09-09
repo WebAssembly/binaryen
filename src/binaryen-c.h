@@ -1110,6 +1110,8 @@ BINARYEN_API BinaryenExpressionRef
 BinaryenWaitqueueNotify(BinaryenModuleRef module,
                         BinaryenExpressionRef waitqueue,
                         BinaryenExpressionRef count);
+BINARYEN_API BinaryenExpressionRef BinaryenPublish(BinaryenModuleRef module,
+                                                   BinaryenExpressionRef ref);
 BINARYEN_API BinaryenExpressionRef BinaryenArrayNew(BinaryenModuleRef module,
                                                     BinaryenHeapType type,
                                                     BinaryenExpressionRef size,
@@ -2618,6 +2620,13 @@ BINARYEN_API void
 BinaryenWaitqueueNotifySetCount(BinaryenExpressionRef expr,
                                 BinaryenExpressionRef countExpr);
 
+// Publish
+
+BINARYEN_API BinaryenExpressionRef
+BinaryenPublishGetRef(BinaryenExpressionRef expr);
+BINARYEN_API void BinaryenPublishSetRef(BinaryenExpressionRef expr,
+                                        BinaryenExpressionRef refExpr);
+
 // ArrayNew
 
 BINARYEN_API BinaryenExpressionRef
@@ -3669,6 +3678,7 @@ BINARYEN_API BinaryenSideEffects BinaryenSideEffectTrapsNeverHappen(void);
 BINARYEN_API BinaryenSideEffects BinaryenSideEffectIsAtomic(void);
 BINARYEN_API BinaryenSideEffects BinaryenSideEffectThrows(void);
 BINARYEN_API BinaryenSideEffects BinaryenSideEffectDanglingPop(void);
+BINARYEN_API BinaryenSideEffects BinaryenSideEffectSuspends(void);
 BINARYEN_API BinaryenSideEffects BinaryenSideEffectAny(void);
 
 BINARYEN_API BinaryenSideEffects BinaryenExpressionGetSideEffects(

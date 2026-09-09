@@ -7,8 +7,8 @@
     ;; CHECK:      (rec
     ;; CHECK-NEXT:  (type $struct (descriptor $desc) (struct))
     (type $struct (descriptor $desc) (struct))
-    ;; CHECK:       (type $desc (sub (describes $struct) (struct (field i32))))
-    (type $desc (sub (describes $struct) (struct (field i32))))
+    ;; CHECK:       (type $desc (describes $struct) (struct (field i32)))
+    (type $desc (describes $struct) (struct (field i32)))
   )
   ;; CHECK:      (type $2 (func (result (ref $desc))))
 
@@ -27,10 +27,10 @@
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $struct (sub (descriptor $desc) (struct (field i32))))
-    (type $struct (sub (descriptor $desc) (struct (field i32))))
+    ;; CHECK-NEXT:  (type $struct (descriptor $desc) (struct (field i32)))
+    (type $struct (descriptor $desc) (struct (field i32)))
     ;; CHECK:       (type $desc (describes $struct) (struct))
-    (type $desc (sub final (describes $struct) (struct)))
+    (type $desc (describes $struct) (struct))
   )
 
   ;; CHECK:      (type $2 (func (result (ref $struct))))
