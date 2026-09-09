@@ -37,7 +37,7 @@ assert(
 );
 assert(
   binaryen.getSideEffects(
-    module.call("test", [], binaryen.i32),
+    module.call("test", [], binaryen.Type.i32),
     module
   )
   ==
@@ -45,7 +45,7 @@ assert(
 );
 assert(
   binaryen.getSideEffects(
-    module.local.get("test", binaryen.i32),
+    module.local.get("test", binaryen.Type.i32),
     module
   )
   ==
@@ -63,11 +63,11 @@ assert(
 );
 
 // Add a global for the test, as computing side effects will look for it.
-module.addGlobal('test', binaryen.i32, true, module.i32.const(42));
+module.addGlobal('test', binaryen.Type.i32, true, module.i32.const(42));
 
 assert(
   binaryen.getSideEffects(
-    module.global.get("test", binaryen.i32),
+    module.global.get("test", binaryen.Type.i32),
     module
   )
   ==
@@ -118,7 +118,7 @@ assert(
 module.setFeatures(binaryen.Features.ExceptionHandling);
 assert(
   binaryen.getSideEffects(
-    module.call("test", [], binaryen.i32),
+    module.call("test", [], binaryen.Type.i32),
     module
   )
   ==
@@ -129,7 +129,7 @@ assert(
 module.setFeatures(binaryen.Features.StackSwitching);
 assert(
   binaryen.getSideEffects(
-    module.call("test", [], binaryen.i32),
+    module.call("test", [], binaryen.Type.i32),
     module
   )
   ==
@@ -140,7 +140,7 @@ assert(
 module.setFeatures(binaryen.Features.All);
 assert(
   binaryen.getSideEffects(
-    module.call("test", [], binaryen.i32),
+    module.call("test", [], binaryen.Type.i32),
     module
   )
   ==
