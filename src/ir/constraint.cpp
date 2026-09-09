@@ -817,6 +817,8 @@ std::optional<LocalConstraint> LocalConstraint::parse(Expression* curr) {
 }
 
 ParsedAndedConstraints ParsedAndedConstraints::parse(Expression* curr) {
+  using namespace Match;
+
   // The final return value.
   ParsedAndedConstraints ret;
 
@@ -834,16 +836,14 @@ ParsedAndedConstraints ParsedAndedConstraints::parse(Expression* curr) {
       continue;
     }
 
-    if (auto* binary = curr->dynCast<Binary>()) {
+    Binary* b;
+    if (matches(curr, binary(&b, Abstract::And, any(), any()))) {
       // An AND can be recursively processed: both sides must be true.
-      if (Abstract::getBinary(binary->left->type, Abstract::And) ==
-          binary->op) {
-        work.push_back(binary->left);
-        work.push_back(binary->right);
-        continue;
-      }
-      // TODO: support OR
+      work.push_back(b->left);
+      work.push_back(b->right);
+      continue;
     }
+    // TODO: support OR
 
     // We failed to parse this.
     ret.hasUnknown = true;
