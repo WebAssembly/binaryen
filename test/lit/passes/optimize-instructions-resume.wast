@@ -679,6 +679,66 @@
     (ref.as_non_null (local.get $c))
   )
 
+  ;; NO-TNH:      (func $test-tee-func (type $13) (result (ref $sig-none))
+  ;; NO-TNH-NEXT:  (local $f (ref null $sig-none))
+  ;; NO-TNH-NEXT:  (local $1 (ref (exact $cont-none)))
+  ;; NO-TNH-NEXT:  (block
+  ;; NO-TNH-NEXT:   (local.set $1
+  ;; NO-TNH-NEXT:    (cont.new $cont-none
+  ;; NO-TNH-NEXT:     (local.tee $f
+  ;; NO-TNH-NEXT:      (ref.func $pure)
+  ;; NO-TNH-NEXT:     )
+  ;; NO-TNH-NEXT:    )
+  ;; NO-TNH-NEXT:   )
+  ;; NO-TNH-NEXT:   (call $pure)
+  ;; NO-TNH-NEXT:  )
+  ;; NO-TNH-NEXT:  (ref.as_non_null
+  ;; NO-TNH-NEXT:   (local.get $f)
+  ;; NO-TNH-NEXT:  )
+  ;; NO-TNH-NEXT: )
+  ;; TNH:      (func $test-tee-func (type $13) (result (ref $sig-none))
+  ;; TNH-NEXT:  (local $f (ref null $sig-none))
+  ;; TNH-NEXT:  (local $1 (ref (exact $cont-none)))
+  ;; TNH-NEXT:  (block
+  ;; TNH-NEXT:   (local.set $1
+  ;; TNH-NEXT:    (cont.new $cont-none
+  ;; TNH-NEXT:     (local.tee $f
+  ;; TNH-NEXT:      (ref.func $pure)
+  ;; TNH-NEXT:     )
+  ;; TNH-NEXT:    )
+  ;; TNH-NEXT:   )
+  ;; TNH-NEXT:   (call $pure)
+  ;; TNH-NEXT:  )
+  ;; TNH-NEXT:  (ref.as_non_null
+  ;; TNH-NEXT:   (local.get $f)
+  ;; TNH-NEXT:  )
+  ;; TNH-NEXT: )
+  ;; VACUUM:      (func $test-tee-func (type $13) (result (ref $sig-none))
+  ;; VACUUM-NEXT:  (local $f (ref null $sig-none))
+  ;; VACUUM-NEXT:  (local $1 (ref (exact $cont-none)))
+  ;; VACUUM-NEXT:  (local.set $1
+  ;; VACUUM-NEXT:   (cont.new $cont-none
+  ;; VACUUM-NEXT:    (local.tee $f
+  ;; VACUUM-NEXT:     (ref.func $pure)
+  ;; VACUUM-NEXT:    )
+  ;; VACUUM-NEXT:   )
+  ;; VACUUM-NEXT:  )
+  ;; VACUUM-NEXT:  (ref.as_non_null
+  ;; VACUUM-NEXT:   (local.get $f)
+  ;; VACUUM-NEXT:  )
+  ;; VACUUM-NEXT: )
+  (func $test-tee-func (result (ref $sig-none))
+    ;; Now the tee is on the ref.func. We can look through it with or without
+    ;; TNH.
+    (local $f (ref null $sig-none))
+    (resume $cont-none
+      (cont.new $cont-none
+        (local.tee $f (ref.func $pure))
+      )
+    )
+    (ref.as_non_null (local.get $f))
+  )
+
   ;; NO-TNH:      (func $test-negative-suspend (type $sig-none)
   ;; NO-TNH-NEXT:  (drop
   ;; NO-TNH-NEXT:   (block $on-suspend (result (ref $cont-none))

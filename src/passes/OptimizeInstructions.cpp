@@ -1476,9 +1476,9 @@ struct OptimizeInstructions
 
     // Continuations are single-shot, so resuming a continuation that has
     // already been consumed will trap. If traps are assumed never to happen, we
-    // can assume this continuation was not consumed on another path and look
-    // through tees and conditional branches. Otherwise, avoid looking through
-    // them to ensure the continuation cannot be consumed elsewhere.
+    // can assume this continuation will not be consumed on another path and
+    // look through tees and conditional branches. Otherwise, avoid looking
+    // through them to ensure the continuation cannot be consumed elsewhere.
     auto behavior = getPassOptions().trapsNeverHappen
                       ? Properties::FallthroughBehavior::AllowTeeBrIf
                       : Properties::FallthroughBehavior::NoTeeBrIf;
@@ -1493,8 +1493,8 @@ struct OptimizeInstructions
       return;
     }
 
-    auto* funcExpr = Properties::getFallthrough(
-      contNew->func, getPassOptions(), *getModule(), behavior);
+    auto* funcExpr =
+      Properties::getFallthrough(contNew->func, getPassOptions(), *getModule());
     auto* refFunc = funcExpr->dynCast<RefFunc>();
     if (!refFunc) {
       return;
