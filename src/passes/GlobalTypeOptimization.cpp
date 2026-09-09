@@ -151,9 +151,11 @@ struct GlobalTypeOptimization : public Pass {
   std::unordered_map<HeapType, std::vector<Index>> indexesAfterRemovals;
 
   struct IndexAnalysis {
+    // The size after removing fields and possibly adding a placeholder.
     Index newSize = 0;
     bool hasPlaceholder = false;
 
+    // `indexes` is the mapping from old to new indices.
     IndexAnalysis(const std::vector<Index>& indexes) {
       Index maxIndex = 0;
       bool hasKept = false;
@@ -168,6 +170,8 @@ struct GlobalTypeOptimization : public Pass {
         }
       }
       newSize = hasKept ? maxIndex + 1 : 0;
+      // We know there is a placeholder if we have fields but none of them are
+      // at index 0.
       hasPlaceholder = hasKept && !hasIndexZero;
     }
   };
@@ -325,9 +329,11 @@ struct GlobalTypeOptimization : public Pass {
       }
 
       // We need to compute the new set of indexes if we are removing fields, or
-      // if our parent removed fields, or if we might need a placeholder. If we
-      // have a parent, it may have reordered fields even if we ourselves are
-      // not removing anything, and we must update to match the parent's order.
+      // if our parent removed fields, or if we might need a placeholder because
+      // this type is exposed outside the module and does not configure a JS
+      // prototype. If we have a parent, it may have reordered fields even if we
+      // ourselves are not removing anything, and we must update to match the
+      // parent's order.
       auto super = type.getDeclaredSuperType();
       auto superHasUpdates = super && indexesAfterRemovals.contains(*super);
       bool isExposedNoProto = exposedNoProtoDescs.contains(type);
@@ -448,7 +454,8 @@ struct GlobalTypeOptimization : public Pass {
             }
             if (JSUtils::isPossibleJSPrototypeField(optimizedField)) {
               // The field exposes a prototype. Increment all field indices to
-              // make room for a placeholder first field.
+              // make room for a placeholder first field (which will be
+              // materialized as an i8 field later).
               for (auto& idx : indexesAfterRemoval) {
                 if (idx != RemovedField) {
                   ++idx;
@@ -702,6 +709,7 @@ struct GlobalTypeOptimization : public Pass {
         }
         operands.resize(analysis.newSize);
         if (analysis.hasPlaceholder) {
+          // The value we put in the i8 placeholder does not matter.
           operands[0] = Builder(*getModule()).makeConst(Literal(int32_t(0)));
         }
         for (Index i = 0; i < old.size(); ++i) {
