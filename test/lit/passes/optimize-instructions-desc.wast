@@ -1865,6 +1865,9 @@
   ;; NTRAP-NEXT:  (i32.const -1)
   ;; NTRAP-NEXT: )
   (func $br_on_cast_desc_eq_fail-side-effects-in-desc (param $x (ref null $struct)) (param $d (ref null $desc)) (result i32)
+    ;; The descriptor operand executes after the fallthrough value
+    ;; (local.get $x) and modifies $x, so areConsecutiveInputsEqual must not
+    ;; fold ref.eq to 1.
     (drop
       (block $l (result (ref null $struct))
         (return
@@ -1921,6 +1924,8 @@
   ;; NTRAP-NEXT:  (i32.const -1)
   ;; NTRAP-NEXT: )
   (func $br_on_cast_desc_eq_fail-no-side-effects-in-desc (param $x (ref null $struct)) (param $d (ref null $desc)) (result i32)
+    ;; Without interfering side effects in the descriptor operand, ref.eq can be
+    ;; folded to 1.
     (drop
       (block $l (result (ref null $struct))
         (return
@@ -1978,6 +1983,8 @@
   ;; NTRAP-NEXT:  (i32.const -1)
   ;; NTRAP-NEXT: )
   (func $br_on_cast_desc_eq_fail-trap-in-desc (param $x (ref null $struct)) (param $d (ref null $desc)) (result i32)
+    ;; We can fold the ref.eq to 1 even when there are side effects in the
+    ;; descriptor, as long as they don't interfere.
     (drop
       (block $l (result (ref null $struct))
         (return
