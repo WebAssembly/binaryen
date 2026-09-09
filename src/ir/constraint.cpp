@@ -734,6 +734,8 @@ bool AndedConstraintSet::approximateOr(const AndedConstraintSet& other) {
 }
 
 std::optional<LocalConstraint> LocalConstraint::parse(Expression* curr) {
+  using namespace Match;
+
   auto parseEqZArgument =
     [&](Expression* value) -> std::optional<LocalConstraint> {
     if (auto* get = value->dynCast<LocalGet>()) {
@@ -745,17 +747,16 @@ std::optional<LocalConstraint> LocalConstraint::parse(Expression* curr) {
     return {};
   };
 
-  if (auto* unary = curr->dynCast<Unary>()) {
-    if (Abstract::getUnary(unary->value->type, Abstract::EqZ) == unary->op) {
+  if (auto* u = curr->dynCast<Unary>()) {
+    if (Abstract::getUnary(u->value->type, Abstract::EqZ) == u->op) {
       // EqZ of EqZ means a check that the value is *not* zero.
       LocalGet* get;
-      if (Match::matches(unary->value,
-                         Match::unary(Abstract::EqZ, Match::local(&get)))) {
+      if (matches(u->value, unary(Abstract::EqZ, Match::local(&get)))) {
         auto value = Literal::makeZero(get->type);
         return LocalConstraint{get->index, Constraint{Abstract::Ne, {value}}};
       }
 
-      return parseEqZArgument(unary->value);
+      return parseEqZArgument(u->value);
     }
 
     return {};
