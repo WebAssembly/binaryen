@@ -2,9 +2,9 @@
 ;; Test that optimize-instructions turns resumptions of continuations that never
 ;; suspend into direct calls.
 
-;; RUN: wasm-opt %s --all-features --generate-global-effects --remove-unused-names --optimize-instructions -S -o - | filecheck %s --check-prefix NO-TNH
-;; RUN: wasm-opt %s --all-features --generate-global-effects --traps-never-happen --remove-unused-names --optimize-instructions -S -o - | filecheck %s --check-prefix TNH
-;; RUN: wasm-opt %s --all-features --generate-global-effects --remove-unused-names --optimize-instructions --vacuum -S -o - | filecheck %s --check-prefix VACUUM
+;; RUN: wasm-opt %s --all-features --generate-global-effects --optimize-instructions -S -o - | filecheck %s --check-prefix NO-TNH
+;; RUN: wasm-opt %s --all-features --generate-global-effects --traps-never-happen --optimize-instructions -S -o - | filecheck %s --check-prefix TNH
+;; RUN: wasm-opt %s --all-features --generate-global-effects --optimize-instructions --vacuum -S -o - | filecheck %s --check-prefix VACUUM
 
 (module
   ;; NO-TNH:      (type $sig-none (func))
@@ -15,11 +15,9 @@
 
   ;; NO-TNH:      (type $cont-binary (cont $sig-binary))
 
-  ;; NO-TNH:      (type $sig-any (func (param (ref any)) (result (ref any))))
-
-  ;; NO-TNH:      (type $cont-any (cont $sig-any))
-
   ;; NO-TNH:      (type $sig-unary (func (param i32) (result i32)))
+
+  ;; NO-TNH:      (type $sig-any (func (param (ref any)) (result (ref any))))
 
   ;; NO-TNH:      (import "env" "imported" (func $imported (type $sig-none)))
   ;; TNH:      (type $sig-none (func))
@@ -30,11 +28,9 @@
 
   ;; TNH:      (type $cont-binary (cont $sig-binary))
 
-  ;; TNH:      (type $sig-any (func (param (ref any)) (result (ref any))))
-
-  ;; TNH:      (type $cont-any (cont $sig-any))
-
   ;; TNH:      (type $sig-unary (func (param i32) (result i32)))
+
+  ;; TNH:      (type $sig-any (func (param (ref any)) (result (ref any))))
 
   ;; TNH:      (import "env" "imported" (func $imported (type $sig-none)))
   ;; VACUUM:      (type $sig-none (func))
@@ -45,11 +41,9 @@
 
   ;; VACUUM:      (type $cont-binary (cont $sig-binary))
 
-  ;; VACUUM:      (type $sig-any (func (param (ref any)) (result (ref any))))
-
-  ;; VACUUM:      (type $cont-any (cont $sig-any))
-
   ;; VACUUM:      (type $sig-unary (func (param i32) (result i32)))
+
+  ;; VACUUM:      (type $sig-any (func (param (ref any)) (result (ref any))))
 
   ;; VACUUM:      (import "env" "imported" (func $imported (type $sig-none)))
   (import "env" "imported" (func $imported (type $sig-none)))
@@ -64,9 +58,9 @@
 
   ;; VACUUM:      (tag $tag (type $sig-none))
   (tag $tag)
-  ;; NO-TNH:      (tag $tag-i32 (type $9) (param i32))
-  ;; TNH:      (tag $tag-i32 (type $9) (param i32))
-  ;; VACUUM:      (tag $tag-i32 (type $9) (param i32))
+  ;; NO-TNH:      (tag $tag-i32 (type $7) (param i32))
+  ;; TNH:      (tag $tag-i32 (type $7) (param i32))
+  ;; VACUUM:      (tag $tag-i32 (type $7) (param i32))
   (tag $tag-i32 (param i32))
 
   (type $sig-none (func))
@@ -348,17 +342,17 @@
     (drop)
   )
 
-  ;; NO-TNH:      (func $test-resume-skip-non-null-cast (type $10) (param $c (ref null $cont-none))
+  ;; NO-TNH:      (func $test-resume-skip-non-null-cast (type $9) (param $c (ref null $cont-none))
   ;; NO-TNH-NEXT:  (resume $cont-none
   ;; NO-TNH-NEXT:   (local.get $c)
   ;; NO-TNH-NEXT:  )
   ;; NO-TNH-NEXT: )
-  ;; TNH:      (func $test-resume-skip-non-null-cast (type $10) (param $c (ref null $cont-none))
+  ;; TNH:      (func $test-resume-skip-non-null-cast (type $9) (param $c (ref null $cont-none))
   ;; TNH-NEXT:  (resume $cont-none
   ;; TNH-NEXT:   (local.get $c)
   ;; TNH-NEXT:  )
   ;; TNH-NEXT: )
-  ;; VACUUM:      (func $test-resume-skip-non-null-cast (type $10) (param $c (ref null $cont-none))
+  ;; VACUUM:      (func $test-resume-skip-non-null-cast (type $9) (param $c (ref null $cont-none))
   ;; VACUUM-NEXT:  (resume $cont-none
   ;; VACUUM-NEXT:   (local.get $c)
   ;; VACUUM-NEXT:  )
@@ -373,7 +367,7 @@
     )
   )
 
-  ;; NO-TNH:      (func $test-resume-null-arm-tnh (type $8) (param $cond i32) (param $c (ref $cont-none))
+  ;; NO-TNH:      (func $test-resume-null-arm-tnh (type $6) (param $cond i32) (param $c (ref $cont-none))
   ;; NO-TNH-NEXT:  (resume $cont-none
   ;; NO-TNH-NEXT:   (if (result (ref null $cont-none))
   ;; NO-TNH-NEXT:    (local.get $cond)
@@ -386,7 +380,7 @@
   ;; NO-TNH-NEXT:   )
   ;; NO-TNH-NEXT:  )
   ;; NO-TNH-NEXT: )
-  ;; TNH:      (func $test-resume-null-arm-tnh (type $8) (param $cond i32) (param $c (ref $cont-none))
+  ;; TNH:      (func $test-resume-null-arm-tnh (type $6) (param $cond i32) (param $c (ref $cont-none))
   ;; TNH-NEXT:  (resume $cont-none
   ;; TNH-NEXT:   (block (result (ref $cont-none))
   ;; TNH-NEXT:    (drop
@@ -396,7 +390,7 @@
   ;; TNH-NEXT:   )
   ;; TNH-NEXT:  )
   ;; TNH-NEXT: )
-  ;; VACUUM:      (func $test-resume-null-arm-tnh (type $8) (param $cond i32) (param $c (ref $cont-none))
+  ;; VACUUM:      (func $test-resume-null-arm-tnh (type $6) (param $cond i32) (param $c (ref $cont-none))
   ;; VACUUM-NEXT:  (resume $cont-none
   ;; VACUUM-NEXT:   (if (result (ref null $cont-none))
   ;; VACUUM-NEXT:    (local.get $cond)
@@ -424,7 +418,7 @@
     )
   )
 
-  ;; NO-TNH:      (func $test-resume-null-select-tnh (type $8) (param $cond i32) (param $c (ref $cont-none))
+  ;; NO-TNH:      (func $test-resume-null-select-tnh (type $6) (param $cond i32) (param $c (ref $cont-none))
   ;; NO-TNH-NEXT:  (resume $cont-none
   ;; NO-TNH-NEXT:   (select (result (ref null $cont-none))
   ;; NO-TNH-NEXT:    (ref.null nocont)
@@ -433,7 +427,7 @@
   ;; NO-TNH-NEXT:   )
   ;; NO-TNH-NEXT:  )
   ;; NO-TNH-NEXT: )
-  ;; TNH:      (func $test-resume-null-select-tnh (type $8) (param $cond i32) (param $c (ref $cont-none))
+  ;; TNH:      (func $test-resume-null-select-tnh (type $6) (param $cond i32) (param $c (ref $cont-none))
   ;; TNH-NEXT:  (resume $cont-none
   ;; TNH-NEXT:   (block (result (ref $cont-none))
   ;; TNH-NEXT:    (drop
@@ -448,7 +442,7 @@
   ;; TNH-NEXT:   )
   ;; TNH-NEXT:  )
   ;; TNH-NEXT: )
-  ;; VACUUM:      (func $test-resume-null-select-tnh (type $8) (param $cond i32) (param $c (ref $cont-none))
+  ;; VACUUM:      (func $test-resume-null-select-tnh (type $6) (param $cond i32) (param $c (ref $cont-none))
   ;; VACUUM-NEXT:  (resume $cont-none
   ;; VACUUM-NEXT:   (select (result (ref null $cont-none))
   ;; VACUUM-NEXT:    (ref.null nocont)
@@ -553,7 +547,7 @@
     )
   )
 
-  ;; NO-TNH:      (func $test-tee (type $11) (result (ref $cont-none))
+  ;; NO-TNH:      (func $test-tee (type $10) (result (ref $cont-none))
   ;; NO-TNH-NEXT:  (local $c (ref null $cont-none))
   ;; NO-TNH-NEXT:  (resume $cont-none
   ;; NO-TNH-NEXT:   (local.tee $c
@@ -566,7 +560,7 @@
   ;; NO-TNH-NEXT:   (local.get $c)
   ;; NO-TNH-NEXT:  )
   ;; NO-TNH-NEXT: )
-  ;; TNH:      (func $test-tee (type $11) (result (ref $cont-none))
+  ;; TNH:      (func $test-tee (type $10) (result (ref $cont-none))
   ;; TNH-NEXT:  (local $c (ref null $cont-none))
   ;; TNH-NEXT:  (local $1 (ref null $cont-none))
   ;; TNH-NEXT:  (block
@@ -583,7 +577,7 @@
   ;; TNH-NEXT:   (local.get $c)
   ;; TNH-NEXT:  )
   ;; TNH-NEXT: )
-  ;; VACUUM:      (func $test-tee (type $11) (result (ref $cont-none))
+  ;; VACUUM:      (func $test-tee (type $10) (result (ref $cont-none))
   ;; VACUUM-NEXT:  (local $c (ref null $cont-none))
   ;; VACUUM-NEXT:  (resume $cont-none
   ;; VACUUM-NEXT:   (local.tee $c
@@ -607,7 +601,7 @@
     (ref.as_non_null (local.get $c))
   )
 
-  ;; NO-TNH:      (func $test-tee-params (type $12) (result (ref $cont-binary))
+  ;; NO-TNH:      (func $test-tee-params (type $11) (result (ref $cont-binary))
   ;; NO-TNH-NEXT:  (local $c (ref null $cont-binary))
   ;; NO-TNH-NEXT:  (drop
   ;; NO-TNH-NEXT:   (resume $cont-binary
@@ -624,7 +618,7 @@
   ;; NO-TNH-NEXT:   (local.get $c)
   ;; NO-TNH-NEXT:  )
   ;; NO-TNH-NEXT: )
-  ;; TNH:      (func $test-tee-params (type $12) (result (ref $cont-binary))
+  ;; TNH:      (func $test-tee-params (type $11) (result (ref $cont-binary))
   ;; TNH-NEXT:  (local $c (ref null $cont-binary))
   ;; TNH-NEXT:  (local $1 (ref null $cont-binary))
   ;; TNH-NEXT:  (drop
@@ -646,7 +640,7 @@
   ;; TNH-NEXT:   (local.get $c)
   ;; TNH-NEXT:  )
   ;; TNH-NEXT: )
-  ;; VACUUM:      (func $test-tee-params (type $12) (result (ref $cont-binary))
+  ;; VACUUM:      (func $test-tee-params (type $11) (result (ref $cont-binary))
   ;; VACUUM-NEXT:  (local $c (ref null $cont-binary))
   ;; VACUUM-NEXT:  (drop
   ;; VACUUM-NEXT:   (resume $cont-binary
@@ -679,7 +673,7 @@
     (ref.as_non_null (local.get $c))
   )
 
-  ;; NO-TNH:      (func $test-tee-func (type $13) (result (ref $sig-none))
+  ;; NO-TNH:      (func $test-tee-func (type $12) (result (ref $sig-none))
   ;; NO-TNH-NEXT:  (local $f (ref null $sig-none))
   ;; NO-TNH-NEXT:  (local $1 (ref (exact $cont-none)))
   ;; NO-TNH-NEXT:  (block
@@ -696,7 +690,7 @@
   ;; NO-TNH-NEXT:   (local.get $f)
   ;; NO-TNH-NEXT:  )
   ;; NO-TNH-NEXT: )
-  ;; TNH:      (func $test-tee-func (type $13) (result (ref $sig-none))
+  ;; TNH:      (func $test-tee-func (type $12) (result (ref $sig-none))
   ;; TNH-NEXT:  (local $f (ref null $sig-none))
   ;; TNH-NEXT:  (local $1 (ref (exact $cont-none)))
   ;; TNH-NEXT:  (block
@@ -713,7 +707,7 @@
   ;; TNH-NEXT:   (local.get $f)
   ;; TNH-NEXT:  )
   ;; TNH-NEXT: )
-  ;; VACUUM:      (func $test-tee-func (type $13) (result (ref $sig-none))
+  ;; VACUUM:      (func $test-tee-func (type $12) (result (ref $sig-none))
   ;; VACUUM-NEXT:  (local $f (ref null $sig-none))
   ;; VACUUM-NEXT:  (local $1 (ref (exact $cont-none)))
   ;; VACUUM-NEXT:  (local.set $1
@@ -1140,58 +1134,4 @@
       )
     )
   )
-
-  ;; NO-TNH:      (func $test-eval-order-non-nullable (type $sig-any) (param $x (ref any)) (result (ref any))
-  ;; NO-TNH-NEXT:  (local $1 (ref $cont-any))
-  ;; NO-TNH-NEXT:  (local.set $1
-  ;; NO-TNH-NEXT:   (block (result (ref $cont-any))
-  ;; NO-TNH-NEXT:    (call $side-effect-3)
-  ;; NO-TNH-NEXT:    (cont.new $cont-any
-  ;; NO-TNH-NEXT:     (ref.func $pure-any)
-  ;; NO-TNH-NEXT:    )
-  ;; NO-TNH-NEXT:   )
-  ;; NO-TNH-NEXT:  )
-  ;; NO-TNH-NEXT:  (call $pure-any
-  ;; NO-TNH-NEXT:   (local.get $x)
-  ;; NO-TNH-NEXT:  )
-  ;; NO-TNH-NEXT: )
-  ;; TNH:      (func $test-eval-order-non-nullable (type $sig-any) (param $x (ref any)) (result (ref any))
-  ;; TNH-NEXT:  (local $1 (ref $cont-any))
-  ;; TNH-NEXT:  (local.set $1
-  ;; TNH-NEXT:   (block (result (ref $cont-any))
-  ;; TNH-NEXT:    (call $side-effect-3)
-  ;; TNH-NEXT:    (cont.new $cont-any
-  ;; TNH-NEXT:     (ref.func $pure-any)
-  ;; TNH-NEXT:    )
-  ;; TNH-NEXT:   )
-  ;; TNH-NEXT:  )
-  ;; TNH-NEXT:  (call $pure-any
-  ;; TNH-NEXT:   (local.get $x)
-  ;; TNH-NEXT:  )
-  ;; TNH-NEXT: )
-  ;; VACUUM:      (func $test-eval-order-non-nullable (type $sig-any) (param $x (ref any)) (result (ref any))
-  ;; VACUUM-NEXT:  (local $1 (ref $cont-any))
-  ;; VACUUM-NEXT:  (local.set $1
-  ;; VACUUM-NEXT:   (block (result (ref (exact $cont-any)))
-  ;; VACUUM-NEXT:    (call $side-effect-3)
-  ;; VACUUM-NEXT:    (cont.new $cont-any
-  ;; VACUUM-NEXT:     (ref.func $pure-any)
-  ;; VACUUM-NEXT:    )
-  ;; VACUUM-NEXT:   )
-  ;; VACUUM-NEXT:  )
-  ;; VACUUM-NEXT:  (call $pure-any
-  ;; VACUUM-NEXT:   (local.get $x)
-  ;; VACUUM-NEXT:  )
-  ;; VACUUM-NEXT: )
-  (func $test-eval-order-non-nullable (param $x (ref any)) (result (ref any))
-    ;; Evaluation order test: non-nullable operands are preserved when spilled.
-    (resume $cont-any
-      (local.get $x)
-      (block (result (ref $cont-any))
-        (call $side-effect-3)
-        (cont.new $cont-any (ref.func $pure-any))
-      )
-    )
-  )
-
 )
