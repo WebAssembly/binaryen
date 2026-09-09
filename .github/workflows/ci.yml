@@ -18,7 +18,8 @@ jobs:
   lint:
     name: lint
     if: ${{ github.event_name == 'pull_request' }}
-    runs-on: ubuntu-latest
+    # Use Ubuntu 26.04 to get clang-21 (not present in 24.04)
+    runs-on: ubuntu-26.04
     env:
       # Keep this in sync with clang-format-diff.sh
       LLVM_VERSION: 21
