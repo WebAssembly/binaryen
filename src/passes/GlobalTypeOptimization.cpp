@@ -559,9 +559,10 @@ struct GlobalTypeOptimization : public Pass {
       }
     }
 
-    // Also propagate exposed descriptors to supertypes so that descriptor
-    // hierarchies have consistent layouts. Do not propagate to supertypes that
-    // actually expose a prototype.
+    // Also propagate lack of exposed descriptors to supertypes so that
+    // descriptor hierarchies have consistent layouts. Do not propagate to
+    // supertypes that actually expose a prototype, which can happen when the
+    // subtype has refined an externref field to a nullexternref.
     for (auto type : subTypes.types) {
       if (exposedNoProtoDescs.contains(type)) {
         auto curr = type.getDeclaredSuperType();
