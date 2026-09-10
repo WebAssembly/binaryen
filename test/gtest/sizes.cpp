@@ -41,7 +41,7 @@ TEST(SizesTest, ExpressionSizes) {
   EXPECT_EQ(sizeof(AtomicFence), 16u);
   EXPECT_EQ(sizeof(Pause), 16u);
   EXPECT_EQ(sizeof(SIMDExtract), 24u);
-  EXPECT_EQ(sizeof(SIMDReplace), 40u);
+  EXPECT_EQ(sizeof(SIMDReplace), 32u);
   EXPECT_EQ(sizeof(SIMDShuffle), 48u);
   EXPECT_EQ(sizeof(SIMDTernary), 40u);
   EXPECT_EQ(sizeof(SIMDShift), 32u);
@@ -96,8 +96,8 @@ TEST(SizesTest, ExpressionSizes) {
   EXPECT_EQ(sizeof(ArrayFill), 48u);
   EXPECT_EQ(sizeof(ArrayInitData), 56u);
   EXPECT_EQ(sizeof(ArrayInitElem), 56u);
-  EXPECT_EQ(sizeof(ArrayRMW), 48u);
-  EXPECT_EQ(sizeof(ArrayCmpxchg), 56u);
+  EXPECT_EQ(sizeof(ArrayRMW), 40u);
+  EXPECT_EQ(sizeof(ArrayCmpxchg), 48u);
   EXPECT_EQ(sizeof(RefAs), 24u);
   EXPECT_EQ(sizeof(StringNew), 40u);
   EXPECT_EQ(sizeof(StringConst), 24u);

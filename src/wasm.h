@@ -1148,8 +1148,8 @@ public:
   SIMDReplace(MixedArena& allocator) : SIMDReplace() {}
 
   SIMDReplaceOp op;
-  Expression* vec;
   uint8_t index;
+  Expression* vec;
   Expression* value;
 
   void finalize();
@@ -2043,10 +2043,10 @@ public:
   ArrayRMW(MixedArena& allocator) {}
 
   AtomicRMWOp op;
+  MemoryOrder order;
   Expression* ref;
   Expression* index;
   Expression* value;
-  MemoryOrder order;
 
   void finalize();
 };
@@ -2057,10 +2057,10 @@ public:
   ArrayCmpxchg(MixedArena& allocator) {}
 
   Expression* ref;
+  MemoryOrder order;
   Expression* index;
   Expression* expected;
   Expression* replacement;
-  MemoryOrder order;
 
   void finalize();
 };
