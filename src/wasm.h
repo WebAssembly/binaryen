@@ -1809,8 +1809,8 @@ public:
   StructCmpxchg() = default;
   StructCmpxchg(MixedArena& allocator) {}
 
-  Index index;
   MemoryOrder order;
+  Index index;
   Expression* ref;
   Expression* expected;
   Expression* replacement;
@@ -2042,8 +2042,8 @@ public:
   ArrayRMW() = default;
   ArrayRMW(MixedArena& allocator) {}
 
-  AtomicRMWOp op;
   MemoryOrder order;
+  AtomicRMWOp op;
   Expression* ref;
   Expression* index;
   Expression* value;
@@ -2056,8 +2056,8 @@ public:
   ArrayCmpxchg() = default;
   ArrayCmpxchg(MixedArena& allocator) {}
 
-  Expression* ref;
   MemoryOrder order;
+  Expression* ref;
   Expression* index;
   Expression* expected;
   Expression* replacement;
