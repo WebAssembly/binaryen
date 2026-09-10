@@ -12,7 +12,9 @@
 ;; RUN:   | filecheck %s --check-prefix=NO_FO
 
 (module
- ;; CHECK:      (func $conditionals (type $1) (param $x i32) (result i32)
+ ;; CHECK:      (type $struct (struct (field (mut i32))))
+
+ ;; CHECK:      (func $conditionals (type $3) (param $x i32) (result i32)
  ;; CHECK-NEXT:  (@metadata.code.branch_hint "\01")
  ;; CHECK-NEXT:  (if (result i32)
  ;; CHECK-NEXT:   (local.get $x)
@@ -24,7 +26,9 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; NO_FO:      (func $conditionals (type $1) (param $x i32) (result i32)
+ ;; NO_FO:      (type $struct (struct (field (mut i32))))
+
+ ;; NO_FO:      (func $conditionals (type $3) (param $x i32) (result i32)
  ;; NO_FO-NEXT:  (@metadata.code.branch_hint "\01")
  ;; NO_FO-NEXT:  (if (result i32)
  ;; NO_FO-NEXT:   (local.get $x)
@@ -52,7 +56,7 @@
   )
  )
 
- ;; CHECK:      (func $still-fold (type $0) (param $x i32) (param $y i32)
+ ;; CHECK:      (func $still-fold (type $1) (param $x i32) (param $y i32)
  ;; CHECK-NEXT:  (@metadata.code.branch_hint "\00")
  ;; CHECK-NEXT:  (if
  ;; CHECK-NEXT:   (local.get $y)
@@ -61,7 +65,7 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; NO_FO:      (func $still-fold (type $0) (param $x i32) (param $y i32)
+ ;; NO_FO:      (func $still-fold (type $1) (param $x i32) (param $y i32)
  ;; NO_FO-NEXT:  (if
  ;; NO_FO-NEXT:   (local.get $x)
  ;; NO_FO-NEXT:   (then
@@ -110,7 +114,7 @@
   )
  )
 
- ;; CHECK:      (func $yes-fold (type $0) (param $x i32) (param $y i32)
+ ;; CHECK:      (func $yes-fold (type $1) (param $x i32) (param $y i32)
  ;; CHECK-NEXT:  (@metadata.code.branch_hint "\01")
  ;; CHECK-NEXT:  (if
  ;; CHECK-NEXT:   (local.get $y)
@@ -119,7 +123,7 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; NO_FO:      (func $yes-fold (type $0) (param $x i32) (param $y i32)
+ ;; NO_FO:      (func $yes-fold (type $1) (param $x i32) (param $y i32)
  ;; NO_FO-NEXT:  (if
  ;; NO_FO-NEXT:   (local.get $x)
  ;; NO_FO-NEXT:   (then
@@ -167,7 +171,7 @@
   )
  )
 
- ;; CHECK:      (func $always-fold-select (type $2) (param $x i32) (param $y i32) (result i32)
+ ;; CHECK:      (func $always-fold-select (type $4) (param $x i32) (param $y i32) (result i32)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (local.get $y)
  ;; CHECK-NEXT:  )
@@ -182,7 +186,7 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; NO_FO:      (func $always-fold-select (type $2) (param $x i32) (param $y i32) (result i32)
+ ;; NO_FO:      (func $always-fold-select (type $4) (param $x i32) (param $y i32) (result i32)
  ;; NO_FO-NEXT:  (local $2 i32)
  ;; NO_FO-NEXT:  (local.set $2
  ;; NO_FO-NEXT:   (@metadata.code.branch_hint "\00")
@@ -230,7 +234,7 @@
   )
  )
 
- ;; CHECK:      (func $ordering (type $3) (param $x i32)
+ ;; CHECK:      (func $ordering (type $5) (param $x i32)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (i32.add
  ;; CHECK-NEXT:    (local.get $x)
@@ -244,7 +248,7 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; NO_FO:      (func $ordering (type $3) (param $x i32)
+ ;; NO_FO:      (func $ordering (type $5) (param $x i32)
  ;; NO_FO-NEXT:  (drop
  ;; NO_FO-NEXT:   (i32.add
  ;; NO_FO-NEXT:    (local.get $x)
@@ -275,4 +279,105 @@
    )
   )
  )
+
+ (type $struct (struct (mut i32)))
+
+ ;; CHECK:      (func $struct-set (type $2) (param $ref (ref null $struct)) (param $val i32)
+ ;; CHECK-NEXT:  (struct.set $struct 0
+ ;; CHECK-NEXT:   (local.get $ref)
+ ;; CHECK-NEXT:   (local.get $val)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; NO_FO:      (func $struct-set (type $2) (param $ref (ref null $struct)) (param $val i32)
+ ;; NO_FO-NEXT:  (struct.set $struct 0
+ ;; NO_FO-NEXT:   (ref.as_non_null
+ ;; NO_FO-NEXT:    (local.get $ref)
+ ;; NO_FO-NEXT:   )
+ ;; NO_FO-NEXT:   (local.get $val)
+ ;; NO_FO-NEXT:  )
+ ;; NO_FO-NEXT: )
+ (func $struct-set (param $ref (ref null $struct)) (param $val i32)
+  ;; Normally we can skip the ref.as_non_null because struct.set will trap on
+  ;; null anyway. But when never-fold-or-reorder is passed, we must not move the
+  ;; trap after subsequent children (which might reorder across branch hints).
+  (struct.set $struct 0
+   (ref.as_non_null
+    (local.get $ref)
+   )
+   (local.get $val)
+  )
+ )
+
+ ;; CHECK:      (func $struct-get (type $6) (param $ref (ref null $struct)) (result i32)
+ ;; CHECK-NEXT:  (struct.get $struct 0
+ ;; CHECK-NEXT:   (local.get $ref)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; NO_FO:      (func $struct-get (type $6) (param $ref (ref null $struct)) (result i32)
+ ;; NO_FO-NEXT:  (struct.get $struct 0
+ ;; NO_FO-NEXT:   (local.get $ref)
+ ;; NO_FO-NEXT:  )
+ ;; NO_FO-NEXT: )
+ (func $struct-get (param $ref (ref null $struct)) (result i32)
+  ;; struct.get has no subsequent children, so skipping ref.as_non_null is safe
+  ;; even with never-fold-or-reorder.
+  (struct.get $struct 0
+   (ref.as_non_null
+    (local.get $ref)
+   )
+  )
+ )
+
+ ;; CHECK:      (func $struct-set-branch-hint (type $2) (param $ref (ref null $struct)) (param $x i32)
+ ;; CHECK-NEXT:  (struct.set $struct 0
+ ;; CHECK-NEXT:   (local.get $ref)
+ ;; CHECK-NEXT:   (@metadata.code.branch_hint "\01")
+ ;; CHECK-NEXT:   (if (result i32)
+ ;; CHECK-NEXT:    (local.get $x)
+ ;; CHECK-NEXT:    (then
+ ;; CHECK-NEXT:     (i32.const 1)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (else
+ ;; CHECK-NEXT:     (i32.const 2)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; NO_FO:      (func $struct-set-branch-hint (type $2) (param $ref (ref null $struct)) (param $x i32)
+ ;; NO_FO-NEXT:  (struct.set $struct 0
+ ;; NO_FO-NEXT:   (ref.as_non_null
+ ;; NO_FO-NEXT:    (local.get $ref)
+ ;; NO_FO-NEXT:   )
+ ;; NO_FO-NEXT:   (@metadata.code.branch_hint "\01")
+ ;; NO_FO-NEXT:   (if (result i32)
+ ;; NO_FO-NEXT:    (local.get $x)
+ ;; NO_FO-NEXT:    (then
+ ;; NO_FO-NEXT:     (i32.const 1)
+ ;; NO_FO-NEXT:    )
+ ;; NO_FO-NEXT:    (else
+ ;; NO_FO-NEXT:     (i32.const 2)
+ ;; NO_FO-NEXT:    )
+ ;; NO_FO-NEXT:   )
+ ;; NO_FO-NEXT:  )
+ ;; NO_FO-NEXT: )
+ (func $struct-set-branch-hint (param $ref (ref null $struct)) (param $x i32)
+  ;; The value child has a branch hint. If ref.as_non_null were removed, the
+  ;; branch hint would start to execute before the null-check trap.
+  (struct.set $struct 0
+   (ref.as_non_null
+    (local.get $ref)
+   )
+   (@metadata.code.branch_hint "\01")
+   (if (result i32)
+    (local.get $x)
+    (then
+     (i32.const 1)
+    )
+    (else
+     (i32.const 2)
+    )
+   )
+  )
+ )
 )
+
