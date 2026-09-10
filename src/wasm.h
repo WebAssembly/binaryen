@@ -963,11 +963,12 @@ public:
 class CallIndirect : public SpecificExpression<Expression::CallIndirectId> {
 public:
   CallIndirect(MixedArena& allocator) : operands(allocator) {}
+
+  bool isReturn = false;
   HeapType heapType;
   ExpressionList operands;
   Expression* target;
   Name table;
-  bool isReturn = false;
 
   void finalize();
 };
@@ -1672,9 +1673,10 @@ public:
 class CallRef : public SpecificExpression<Expression::CallRefId> {
 public:
   CallRef(MixedArena& allocator) : operands(allocator) {}
+
+  bool isReturn = false;
   ExpressionList operands;
   Expression* target;
-  bool isReturn = false;
 
   void finalize();
 };

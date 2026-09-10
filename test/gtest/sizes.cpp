@@ -17,7 +17,7 @@ TEST(SizesTest, ExpressionSizes) {
   EXPECT_EQ(sizeof(Break), 40u);
   EXPECT_EQ(sizeof(Switch), 72u);
   EXPECT_EQ(sizeof(Call), 56u);
-  EXPECT_EQ(sizeof(CallIndirect), 80u);
+  EXPECT_EQ(sizeof(CallIndirect), 72u);
   EXPECT_EQ(sizeof(LocalGet), 16u);
   EXPECT_EQ(sizeof(LocalSet), 24u);
   EXPECT_EQ(sizeof(GlobalGet), 24u);
@@ -73,7 +73,7 @@ TEST(SizesTest, ExpressionSizes) {
   EXPECT_EQ(sizeof(TupleExtract), 24u);
   EXPECT_EQ(sizeof(RefI31), 24u);
   EXPECT_EQ(sizeof(I31Get), 32u);
-  EXPECT_EQ(sizeof(CallRef), 64u);
+  EXPECT_EQ(sizeof(CallRef), 56u);
   EXPECT_EQ(sizeof(RefTest), 32u);
   EXPECT_EQ(sizeof(RefCast), 32u);
   EXPECT_EQ(sizeof(RefGetDesc), 24u);
