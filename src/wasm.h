@@ -953,9 +953,9 @@ class Call : public SpecificExpression<Expression::CallId> {
 public:
   Call(MixedArena& allocator) : operands(allocator) {}
 
+  bool isReturn = false;
   ExpressionList operands;
   Name target;
-  bool isReturn = false;
 
   void finalize();
 };

@@ -16,7 +16,7 @@ TEST(SizesTest, ExpressionSizes) {
   EXPECT_EQ(sizeof(Loop), 32u);
   EXPECT_EQ(sizeof(Break), 40u);
   EXPECT_EQ(sizeof(Switch), 72u);
-  EXPECT_EQ(sizeof(Call), 64u);
+  EXPECT_EQ(sizeof(Call), 56u);
   EXPECT_EQ(sizeof(CallIndirect), 80u);
   EXPECT_EQ(sizeof(LocalGet), 16u);
   EXPECT_EQ(sizeof(LocalSet), 24u);
