@@ -1147,8 +1147,8 @@ public:
   SIMDReplace() = default;
   SIMDReplace(MixedArena& allocator) : SIMDReplace() {}
 
-  SIMDReplaceOp op;
   uint8_t index;
+  SIMDReplaceOp op;
   Expression* vec;
   Expression* value;
 
