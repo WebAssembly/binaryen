@@ -13,6 +13,8 @@
 
 (module
  ;; CHECK:      (type $struct (struct (field (mut i32))))
+ ;; NO_FO:      (type $struct (struct (field (mut i32))))
+ (type $struct (struct (mut i32)))
 
  ;; CHECK:      (func $conditionals (type $3) (param $x i32) (result i32)
  ;; CHECK-NEXT:  (@metadata.code.branch_hint "\01")
@@ -26,8 +28,6 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; NO_FO:      (type $struct (struct (field (mut i32))))
-
  ;; NO_FO:      (func $conditionals (type $3) (param $x i32) (result i32)
  ;; NO_FO-NEXT:  (@metadata.code.branch_hint "\01")
  ;; NO_FO-NEXT:  (if (result i32)
@@ -280,8 +280,6 @@
   )
  )
 
- (type $struct (struct (mut i32)))
-
  ;; CHECK:      (func $struct-set (type $2) (param $ref (ref null $struct)) (param $val i32)
  ;; CHECK-NEXT:  (struct.set $struct 0
  ;; CHECK-NEXT:   (local.get $ref)
@@ -315,7 +313,9 @@
  ;; CHECK-NEXT: )
  ;; NO_FO:      (func $struct-get (type $6) (param $ref (ref null $struct)) (result i32)
  ;; NO_FO-NEXT:  (struct.get $struct 0
- ;; NO_FO-NEXT:   (local.get $ref)
+ ;; NO_FO-NEXT:   (ref.as_non_null
+ ;; NO_FO-NEXT:    (local.get $ref)
+ ;; NO_FO-NEXT:   )
  ;; NO_FO-NEXT:  )
  ;; NO_FO-NEXT: )
  (func $struct-get (param $ref (ref null $struct)) (result i32)
