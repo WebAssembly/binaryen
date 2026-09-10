@@ -1062,12 +1062,12 @@ public:
   AtomicRMW(MixedArena& allocator) : AtomicRMW() {}
 
   AtomicRMWOp op;
+  MemoryOrder order = MemoryOrder::SeqCst;
   uint8_t bytes;
   Address offset;
   Expression* ptr;
   Expression* value;
   Name memory;
-  MemoryOrder order = MemoryOrder::SeqCst;
 
   void finalize();
 };
@@ -1078,12 +1078,12 @@ public:
   AtomicCmpxchg(MixedArena& allocator) : AtomicCmpxchg() {}
 
   uint8_t bytes;
+  MemoryOrder order = MemoryOrder::SeqCst;
   Address offset;
   Expression* ptr;
   Expression* expected;
   Expression* replacement;
   Name memory;
-  MemoryOrder order = MemoryOrder::SeqCst;
 
   void finalize();
 };

@@ -34,8 +34,8 @@ TEST(SizesTest, ExpressionSizes) {
   EXPECT_EQ(sizeof(MemoryGrow), 32u);
   EXPECT_EQ(sizeof(Nop), 16u);
   EXPECT_EQ(sizeof(Unreachable), 16u);
-  EXPECT_EQ(sizeof(AtomicRMW), 64u);
-  EXPECT_EQ(sizeof(AtomicCmpxchg), 64u);
+  EXPECT_EQ(sizeof(AtomicRMW), 56u);
+  EXPECT_EQ(sizeof(AtomicCmpxchg), 56u);
   EXPECT_EQ(sizeof(AtomicWait), 64u);
   EXPECT_EQ(sizeof(AtomicNotify), 48u);
   EXPECT_EQ(sizeof(AtomicFence), 16u);
