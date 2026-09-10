@@ -6,6 +6,11 @@
   (type $shared-struct (shared (struct (field (mut i32)))))
   ;; CHECK:      (type $shared-array (shared (array (mut i32))))
 
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $struct (descriptor $desc) (struct))
+
+  ;; CHECK:       (type $desc (describes $struct) (struct))
+
   ;; CHECK:      (type $unshared-struct (struct (field (mut i32))))
   (type $unshared-struct (struct (field (mut i32))))
 
@@ -58,7 +63,7 @@
     (local.get $x)
   )
 
-  ;; CHECK:      (func $memory.size-shared-unshared (type $5) (param $unshared (ref null $unshared-struct)) (result i32)
+  ;; CHECK:      (func $memory.size-shared-unshared (type $8) (param $unshared (ref null $unshared-struct)) (result i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (struct.atomic.set $unshared-struct 0
@@ -78,7 +83,7 @@
     (local.get $x)
   )
 
-  ;; CHECK:      (func $memory.size-unshared-unshared (type $5) (param $unshared (ref null $unshared-struct)) (result i32)
+  ;; CHECK:      (func $memory.size-unshared-unshared (type $8) (param $unshared (ref null $unshared-struct)) (result i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (struct.atomic.set $unshared-struct 0
@@ -867,7 +872,7 @@
     (local.get $x)
   )
 
-  ;; CHECK:      (func $write-array-fence (type $6) (param $shared (ref null $shared-array)) (result i32)
+  ;; CHECK:      (func $write-array-fence (type $9) (param $shared (ref null $shared-array)) (result i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (local.set $x
   ;; CHECK-NEXT:   (block (result i32)
@@ -2091,5 +2096,212 @@
       )
     )
     (local.get $x)
+  )
+
+  (rec
+    (type $struct (descriptor $desc) (struct))
+    (type $desc (describes $struct) (struct))
+  )
+
+  ;; CHECK:      (func $ref.cast_desc_eq-read-acquire (type $6) (param $x (ref null $struct)) (param $shared (ref null $shared-struct)) (param $d (ref null $desc)) (result (ref null $struct) (ref null $struct))
+  ;; CHECK-NEXT:  (tuple.make 2
+  ;; CHECK-NEXT:   (ref.cast_desc_eq (ref null $struct)
+  ;; CHECK-NEXT:    (block (result (ref null $struct))
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (struct.get $shared-struct 0
+  ;; CHECK-NEXT:       (local.get $shared)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (block (result (ref null $desc))
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (struct.atomic.get acqrel $shared-struct 0
+  ;; CHECK-NEXT:       (local.get $shared)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.get $d)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ref.cast_desc_eq-read-acquire (param $x (ref null $struct)) (param $shared (ref null $shared-struct)) (param $d (ref null $desc)) (result (ref null $struct) (ref null $struct))
+    ;; A normal read in `ref` can be ordered after an acquire load in `desc`, so
+    ;; getImmediateFallthroughPtr can look through ref.cast_desc_eq and the
+    ;; redundant local.tee is eliminated.
+    (tuple.make 2
+      (local.tee $x
+        (ref.cast_desc_eq (ref null $struct)
+          (block (result (ref null $struct))
+            (drop
+              (struct.get $shared-struct 0 (local.get $shared))
+            )
+            (local.get $x)
+          )
+          (block (result (ref null $desc))
+            (drop
+              (struct.atomic.get acqrel $shared-struct 0 (local.get $shared))
+            )
+            (local.get $d)
+          )
+        )
+      )
+      (local.get $x)
+    )
+  )
+
+  ;; CHECK:      (func $ref.cast_desc_eq-acquire-read (type $6) (param $x (ref null $struct)) (param $shared (ref null $shared-struct)) (param $d (ref null $desc)) (result (ref null $struct) (ref null $struct))
+  ;; CHECK-NEXT:  (tuple.make 2
+  ;; CHECK-NEXT:   (local.tee $x
+  ;; CHECK-NEXT:    (ref.cast_desc_eq (ref null $struct)
+  ;; CHECK-NEXT:     (block (result (ref null $struct))
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (struct.atomic.get acqrel $shared-struct 0
+  ;; CHECK-NEXT:        (local.get $shared)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (block (result (ref null $desc))
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (struct.get $shared-struct 0
+  ;; CHECK-NEXT:        (local.get $shared)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.get $d)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ref.cast_desc_eq-acquire-read (param $x (ref null $struct)) (param $shared (ref null $shared-struct)) (param $d (ref null $desc)) (result (ref null $struct) (ref null $struct))
+    ;; An acquire load in `ref` cannot be ordered after a normal read in `desc`,
+    ;; so getImmediateFallthroughPtr cannot look through ref.cast_desc_eq and
+    ;; the local.tee is preserved.
+    ;; TODO: In this case we are not actually reordering anything, so the
+    ;; effects shouldn't matter.
+    (tuple.make 2
+      (local.tee $x
+        (ref.cast_desc_eq (ref null $struct)
+          (block (result (ref null $struct))
+            (drop
+              (struct.atomic.get acqrel $shared-struct 0 (local.get $shared))
+            )
+            (local.get $x)
+          )
+          (block (result (ref null $desc))
+            (drop
+              (struct.get $shared-struct 0 (local.get $shared))
+            )
+            (local.get $d)
+          )
+        )
+      )
+      (local.get $x)
+    )
+  )
+
+  ;; CHECK:      (func $br_on_cast_desc_eq-read-acquire (type $6) (param $x (ref null $struct)) (param $shared (ref null $shared-struct)) (param $d (ref null $desc)) (result (ref null $struct) (ref null $struct))
+  ;; CHECK-NEXT:  (tuple.make 2
+  ;; CHECK-NEXT:   (block $block (result (ref null $struct))
+  ;; CHECK-NEXT:    (br_on_cast_desc_eq $block (ref null $struct) (ref null $struct)
+  ;; CHECK-NEXT:     (block (result (ref null $struct))
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (struct.get $shared-struct 0
+  ;; CHECK-NEXT:        (local.get $shared)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (block (result (ref null $desc))
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (struct.atomic.get acqrel $shared-struct 0
+  ;; CHECK-NEXT:        (local.get $shared)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.get $d)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $br_on_cast_desc_eq-read-acquire (param $x (ref null $struct)) (param $shared (ref null $shared-struct)) (param $d (ref null $desc)) (result (ref null $struct) (ref null $struct))
+    ;; Same as in $ref.cast_desc_eq-read-acquire.
+    (tuple.make 2
+      (block $block (result (ref null $struct))
+        (local.tee $x
+          (br_on_cast_desc_eq $block (ref null $struct) (ref null $struct)
+            (block (result (ref null $struct))
+              (drop
+                (struct.get $shared-struct 0 (local.get $shared))
+              )
+              (local.get $x)
+            )
+            (block (result (ref null $desc))
+              (drop
+                (struct.atomic.get acqrel $shared-struct 0 (local.get $shared))
+              )
+              (local.get $d)
+            )
+          )
+        )
+      )
+      (local.get $x)
+    )
+  )
+
+  ;; CHECK:      (func $br_on_cast_desc_eq-acquire-read (type $6) (param $x (ref null $struct)) (param $shared (ref null $shared-struct)) (param $d (ref null $desc)) (result (ref null $struct) (ref null $struct))
+  ;; CHECK-NEXT:  (tuple.make 2
+  ;; CHECK-NEXT:   (block $block (result (ref null $struct))
+  ;; CHECK-NEXT:    (local.tee $x
+  ;; CHECK-NEXT:     (br_on_cast_desc_eq $block (ref null $struct) (ref null $struct)
+  ;; CHECK-NEXT:      (block (result (ref null $struct))
+  ;; CHECK-NEXT:       (drop
+  ;; CHECK-NEXT:        (struct.atomic.get acqrel $shared-struct 0
+  ;; CHECK-NEXT:         (local.get $shared)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (local.get $x)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (block (result (ref null $desc))
+  ;; CHECK-NEXT:       (drop
+  ;; CHECK-NEXT:        (struct.get $shared-struct 0
+  ;; CHECK-NEXT:         (local.get $shared)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (local.get $d)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $br_on_cast_desc_eq-acquire-read (param $x (ref null $struct)) (param $shared (ref null $shared-struct)) (param $d (ref null $desc)) (result (ref null $struct) (ref null $struct))
+    ;; Same as in $ref.cast_desc_eq-acquire-read.
+    (tuple.make 2
+      (block $block (result (ref null $struct))
+        (local.tee $x
+          (br_on_cast_desc_eq $block (ref null $struct) (ref null $struct)
+            (block (result (ref null $struct))
+              (drop
+                (struct.atomic.get acqrel $shared-struct 0 (local.get $shared))
+              )
+              (local.get $x)
+            )
+            (block (result (ref null $desc))
+              (drop
+                (struct.get $shared-struct 0 (local.get $shared))
+              )
+              (local.get $d)
+            )
+          )
+        )
+      )
+      (local.get $x)
+    )
   )
 )

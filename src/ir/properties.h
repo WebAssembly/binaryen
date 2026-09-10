@@ -316,8 +316,8 @@ inline Expression** getImmediateFallthroughPtr(
     // know the fallthrough in that case.
     if (br->condition && br->value &&
         behavior == FallthroughBehavior::AllowTeeBrIf &&
-        EffectAnalyzer::canReorder(
-          passOptions, module, br->condition, br->value)) {
+        !EffectAnalyzer::orderedBefore(
+          passOptions, module, br->value, br->condition)) {
       return &br->value;
     }
   } else if (auto* tryy = curr->dynCast<Try>()) {
@@ -325,7 +325,10 @@ inline Expression** getImmediateFallthroughPtr(
       return &tryy->body;
     }
   } else if (auto* as = curr->dynCast<RefCast>()) {
-    return &as->ref;
+    if (!as->desc || (!EffectAnalyzer::orderedBefore(
+                       passOptions, module, as->ref, as->desc))) {
+      return &as->ref;
+    }
   } else if (auto* as = curr->dynCast<RefAs>()) {
     // Extern conversions are not casts and actually produce new values.
     // Treating them as fallthroughs would lead to misoptimizations of
@@ -334,7 +337,10 @@ inline Expression** getImmediateFallthroughPtr(
       return &as->value;
     }
   } else if (auto* br = curr->dynCast<BrOn>()) {
-    return &br->ref;
+    if (!br->desc || (!EffectAnalyzer::orderedBefore(
+                       passOptions, module, br->ref, br->desc))) {
+      return &br->ref;
+    }
   }
   return currp;
 }

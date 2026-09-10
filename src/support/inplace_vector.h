@@ -154,7 +154,6 @@ public:
     ConstIterator(const Iterator& other)
       : wasm::ParentIndexIterator<const inplace_vector<T, N>*, ConstIterator>{
           other.parent, other.index} {}
-    ConstIterator(const ConstIterator& other) = default;
 
     const T& operator*() const { return (*this->parent)[this->index]; }
     const T* operator->() const { return &(*this->parent)[this->index]; }

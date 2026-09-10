@@ -685,3 +685,1029 @@
     (local (ref null $sub))
   )
 )
+
+(module
+  ;; Field 0 is mutable externref. It can become immutable, but doing so would
+  ;; expose it as a prototype. An immutable i8 placeholder is prepended.
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $struct (descriptor $desc) (struct))
+    (type $struct (descriptor $desc) (struct))
+    ;; CHECK:       (type $desc (describes $struct) (struct (field i8) (field externref)))
+    (type $desc (describes $struct) (struct (field (mut externref))))
+  )
+
+  ;; CHECK:       (type $2 (func (param (ref $desc))))
+
+  ;; CHECK:      (type $3 (func (result structref)))
+
+  ;; CHECK:      (export "export" (func $test))
+  (export "export" (func $test))
+
+  ;; CHECK:      (func $test (type $3) (result structref)
+  ;; CHECK-NEXT:  (struct.new_default_desc $struct
+  ;; CHECK-NEXT:   (struct.new $desc
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (extern.convert_any
+  ;; CHECK-NEXT:     (struct.new_default $desc)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test (result structref)
+    (struct.new_desc $struct
+      (struct.new $desc
+        (extern.convert_any
+          (struct.new_default $desc)
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $get (type $2) (param $d (ref $desc))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $desc 1
+  ;; CHECK-NEXT:    (local.get $d)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $get (param $d (ref $desc))
+    (drop
+      (struct.get $desc 0
+        (local.get $d)
+      )
+    )
+  )
+)
+
+(module
+  ;; Field 0 is mutable non-nullable externref. It can become immutable, but
+  ;; doing so would expose it as a prototype. An immutable i8 placeholder is
+  ;; prepended.
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $struct (descriptor $desc) (struct))
+    (type $struct (descriptor $desc) (struct))
+    ;; CHECK:       (type $desc (describes $struct) (struct (field i8) (field (ref extern))))
+    (type $desc (describes $struct) (struct (field (mut (ref extern)))))
+  )
+
+  ;; CHECK:       (type $2 (func (param (ref $desc))))
+
+  ;; CHECK:      (type $3 (func (param (ref extern)) (result structref)))
+
+  ;; CHECK:      (export "export" (func $test))
+  (export "export" (func $test))
+  ;; CHECK:      (func $test (type $3) (param $e (ref extern)) (result structref)
+  ;; CHECK-NEXT:  (struct.new_default_desc $struct
+  ;; CHECK-NEXT:   (struct.new $desc
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (local.get $e)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test (param $e (ref extern)) (result structref)
+    (struct.new_desc $struct
+      (struct.new $desc
+        (local.get $e)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $get (type $2) (param $d (ref $desc))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $desc 1
+  ;; CHECK-NEXT:    (local.get $d)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $get (param $d (ref $desc))
+    (drop
+      (struct.get $desc 0
+        (local.get $d)
+      )
+    )
+  )
+)
+
+(module
+  ;; Field 0 is unused and can be removed. Field 1 is immutable externref.
+  ;; Removing field 0 would shift field 1 into index 0 and expose it as a
+  ;; prototype. An immutable i8 placeholder is inserted at index 0.
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $struct (descriptor $desc) (struct))
+    (type $struct (descriptor $desc) (struct))
+    ;; CHECK:       (type $desc (describes $struct) (struct (field i8) (field externref)))
+    (type $desc (describes $struct) (struct (field i32) (field externref)))
+  )
+
+  ;; CHECK:       (type $2 (func (param (ref $desc))))
+
+  ;; CHECK:      (type $3 (func (result structref)))
+
+  ;; CHECK:      (export "export" (func $test))
+  (export "export" (func $test))
+  ;; CHECK:      (func $test (type $3) (result structref)
+  ;; CHECK-NEXT:  (struct.new_default_desc $struct
+  ;; CHECK-NEXT:   (struct.new $desc
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (extern.convert_any
+  ;; CHECK-NEXT:     (struct.new_default $desc)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test (result structref)
+    (struct.new_desc $struct
+      (struct.new $desc
+        (i32.const 42)
+        (extern.convert_any
+          (struct.new_default $desc)
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $get (type $2) (param $d (ref $desc))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $desc 1
+  ;; CHECK-NEXT:    (local.get $d)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $get (param $d (ref $desc))
+    (drop
+      (struct.get $desc 1
+        (local.get $d)
+      )
+    )
+  )
+)
+
+(module
+  ;; Field 0 is unused in $super-desc and removed. Field 1 is an immutable
+  ;; externref. $sub-desc still uses field 0. $super-desc reorders field 1 to
+  ;; index 0 to remove field 0 from the end. Because field 0 is now externref,
+  ;; a placeholder is inserted.
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $super (sub (descriptor $super-desc) (struct)))
+    (type $super (sub (descriptor $super-desc) (struct)))
+    ;; CHECK:       (type $super-desc (sub (describes $super) (struct (field i8) (field externref))))
+    (type $super-desc (sub (describes $super) (struct (field i32) (field externref))))
+  )
+  (rec
+    ;; CHECK:       (type $sub (sub $super (descriptor $sub-desc) (struct)))
+    (type $sub (sub $super (descriptor $sub-desc) (struct)))
+    ;; CHECK:       (type $sub-desc (sub $super-desc (describes $sub) (struct (field i8) (field externref) (field i32))))
+    (type $sub-desc (sub $super-desc (describes $sub) (struct (field i32) (field externref))))
+  )
+
+  ;; CHECK:       (type $4 (func (param (ref $super-desc))))
+
+  ;; CHECK:       (type $5 (func (param (ref $sub-desc))))
+
+  ;; CHECK:      (type $6 (func (result structref)))
+
+  ;; CHECK:      (export "export" (func $test))
+  (export "export" (func $test))
+  ;; CHECK:      (func $test (type $6) (result structref)
+  ;; CHECK-NEXT:  (struct.new_default_desc $super
+  ;; CHECK-NEXT:   (struct.new $super-desc
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (extern.convert_any
+  ;; CHECK-NEXT:     (struct.new_default $super-desc)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test (result structref)
+    (struct.new_desc $super
+      (struct.new $super-desc
+        (i32.const 42)
+        (extern.convert_any
+          (struct.new_default $super-desc)
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $use-super (type $4) (param $d (ref $super-desc))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $super-desc 1
+  ;; CHECK-NEXT:    (local.get $d)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $use-super (param $d (ref $super-desc))
+    (drop
+      (struct.get $super-desc 1
+        (local.get $d)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $use-sub (type $5) (param $d (ref $sub-desc))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $sub-desc 2
+  ;; CHECK-NEXT:    (local.get $d)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $sub-desc 1
+  ;; CHECK-NEXT:    (local.get $d)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $use-sub (param $d (ref $sub-desc))
+    (drop
+      (struct.get $sub-desc 0
+        (local.get $d)
+      )
+    )
+    (drop
+      (struct.get $sub-desc 1
+        (local.get $d)
+      )
+    )
+  )
+)
+
+(module
+  ;; The supertype descriptor is empty. The subtype descriptor has a mutable
+  ;; externref field. The subtype descriptor gets an i8 placeholder while
+  ;; continuing to validly subtype the supertype descriptor.
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $super (sub (descriptor $super-desc) (struct)))
+    (type $super (sub (descriptor $super-desc) (struct)))
+    ;; CHECK:       (type $super-desc (sub (describes $super) (struct)))
+    (type $super-desc (sub (describes $super) (struct)))
+  )
+  (rec
+    ;; CHECK:       (type $sub (sub $super (descriptor $sub-desc) (struct)))
+    (type $sub (sub $super (descriptor $sub-desc) (struct)))
+    ;; CHECK:       (type $sub-desc (sub $super-desc (describes $sub) (struct (field i8) (field externref))))
+    (type $sub-desc (sub $super-desc (describes $sub) (struct (field (mut externref)))))
+  )
+
+
+  ;; CHECK:       (type $4 (func (param (ref $sub-desc))))
+
+  ;; CHECK:      (type $5 (func (result structref)))
+
+  ;; CHECK:      (export "export" (func $test))
+  (export "export" (func $test))
+
+  ;; CHECK:      (func $test (type $5) (result structref)
+  ;; CHECK-NEXT:  (struct.new_default_desc $sub
+  ;; CHECK-NEXT:   (struct.new $sub-desc
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (ref.null noextern)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test (result structref)
+    (struct.new_desc $sub
+      (struct.new $sub-desc
+        (ref.null extern)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $use (type $4) (param $d (ref $sub-desc))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $sub-desc 1
+  ;; CHECK-NEXT:    (local.get $d)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $use (param $d (ref $sub-desc))
+    (drop
+      (struct.get $sub-desc 0
+        (local.get $d)
+      )
+    )
+  )
+)
+
+(module
+  ;; A supertype gets a placeholder, so its non-exposed subtype also gets a
+  ;; placeholder.
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $super (sub (descriptor $super-desc) (struct)))
+    (type $super (sub (descriptor $super-desc) (struct)))
+    ;; CHECK:       (type $super-desc (sub (describes $super) (struct (field i8) (field externref))))
+    (type $super-desc (sub (describes $super) (struct (field (mut externref)))))
+  )
+  (rec
+    ;; CHECK:       (type $sub (sub $super (descriptor $sub-desc) (struct)))
+    (type $sub (sub $super (descriptor $sub-desc) (struct)))
+    ;; CHECK:       (type $sub-desc (sub $super-desc (describes $sub) (struct (field i8) (field externref) (field i32))))
+    (type $sub-desc (sub $super-desc (describes $sub) (struct (field (mut externref)) (field (mut i32)))))
+  )
+
+  ;; CHECK:       (type $4 (func (param (ref $super-desc))))
+
+  ;; CHECK:       (type $5 (func (param (ref $sub-desc))))
+
+  ;; CHECK:      (type $6 (func (result structref)))
+
+  ;; CHECK:      (export "export" (func $test))
+  (export "export" (func $test))
+  ;; CHECK:      (func $test (type $6) (result structref)
+  ;; CHECK-NEXT:  (struct.new_default_desc $super
+  ;; CHECK-NEXT:   (struct.new $super-desc
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (extern.convert_any
+  ;; CHECK-NEXT:     (struct.new_default $super-desc)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test (result structref)
+    (struct.new_desc $super
+      (struct.new $super-desc
+        (extern.convert_any
+          (struct.new_default $super-desc)
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $use-super (type $4) (param $d (ref $super-desc))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $super-desc 1
+  ;; CHECK-NEXT:    (local.get $d)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $use-super (param $d (ref $super-desc))
+    (drop
+      (struct.get $super-desc 0
+        (local.get $d)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $use-sub (type $5) (param $d (ref $sub-desc))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $sub-desc 1
+  ;; CHECK-NEXT:    (local.get $d)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $sub-desc 2
+  ;; CHECK-NEXT:    (local.get $d)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $use-sub (param $d (ref $sub-desc))
+    (drop
+      (struct.get $sub-desc 0
+        (local.get $d)
+      )
+    )
+    (drop
+      (struct.get $sub-desc 1
+        (local.get $d)
+      )
+    )
+  )
+)
+
+(module
+  ;; An exposed subtype gets a placeholder, so its non-empty supertype also gets
+  ;; a placeholder.
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $super (sub (descriptor $super-desc) (struct)))
+    (type $super (sub (descriptor $super-desc) (struct)))
+    ;; CHECK:       (type $super-desc (sub (describes $super) (struct (field i8) (field externref))))
+    (type $super-desc (sub (describes $super) (struct (field (mut externref)))))
+  )
+  (rec
+    ;; CHECK:       (type $sub (sub $super (descriptor $sub-desc) (struct)))
+    (type $sub (sub $super (descriptor $sub-desc) (struct)))
+    ;; CHECK:       (type $sub-desc (sub $super-desc (describes $sub) (struct (field i8) (field externref))))
+    (type $sub-desc (sub $super-desc (describes $sub) (struct (field (mut externref)))))
+  )
+
+  ;; CHECK:       (type $4 (func (param (ref $super-desc))))
+
+  ;; CHECK:      (type $5 (func (result structref)))
+
+  ;; CHECK:      (export "export" (func $test))
+  (export "export" (func $test))
+  ;; CHECK:      (func $test (type $5) (result structref)
+  ;; CHECK-NEXT:  (struct.new_default_desc $sub
+  ;; CHECK-NEXT:   (struct.new $sub-desc
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (extern.convert_any
+  ;; CHECK-NEXT:     (struct.new_default $sub-desc)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test (result structref)
+    (struct.new_desc $sub
+      (struct.new $sub-desc
+        (extern.convert_any
+          (struct.new_default $sub-desc)
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $use-super (type $4) (param $d (ref $super-desc))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $super-desc 1
+  ;; CHECK-NEXT:    (local.get $d)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $use-super (param $d (ref $super-desc))
+    (drop
+      (struct.get $super-desc 0
+        (local.get $d)
+      )
+    )
+  )
+)
+
+(module
+  ;; Multi-level subtyping: an exposed leaf subtype descriptor causes its
+  ;; grandparent descriptor (which defines field 0) to get a placeholder,
+  ;; propagating down the full inheritance chain.
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $grandparent (sub (descriptor $grandparent-desc) (struct)))
+    (type $grandparent (sub (descriptor $grandparent-desc) (struct)))
+    ;; CHECK:       (type $grandparent-desc (sub (describes $grandparent) (struct (field i8) (field externref))))
+    (type $grandparent-desc (sub (describes $grandparent) (struct (field (mut externref)))))
+  )
+  (rec
+    ;; CHECK:       (type $parent (sub $grandparent (descriptor $parent-desc) (struct)))
+    (type $parent (sub $grandparent (descriptor $parent-desc) (struct)))
+    ;; CHECK:       (type $parent-desc (sub $grandparent-desc (describes $parent) (struct (field i8) (field externref) (field i32))))
+    (type $parent-desc (sub $grandparent-desc (describes $parent) (struct (field (mut externref)) (field (mut i32)))))
+  )
+  (rec
+    ;; CHECK:       (type $child (sub $parent (descriptor $child-desc) (struct)))
+    (type $child (sub $parent (descriptor $child-desc) (struct)))
+    ;; CHECK:       (type $child-desc (sub $parent-desc (describes $child) (struct (field i8) (field externref) (field i32) (field i64))))
+    (type $child-desc (sub $parent-desc (describes $child) (struct (field (mut externref)) (field (mut i32)) (field (mut i64)))))
+  )
+
+  ;; CHECK:       (type $6 (func (param (ref $grandparent-desc) (ref $parent-desc) (ref $child-desc))))
+
+  ;; CHECK:      (type $7 (func (result structref)))
+
+  ;; CHECK:      (export "export" (func $test))
+  (export "export" (func $test))
+  ;; CHECK:      (func $test (type $7) (result structref)
+  ;; CHECK-NEXT:  (struct.new_default_desc $child
+  ;; CHECK-NEXT:   (struct.new $child-desc
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (extern.convert_any
+  ;; CHECK-NEXT:     (struct.new_default $child-desc)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:    (i64.const 2)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test (result structref)
+    (struct.new_desc $child
+      (struct.new $child-desc
+        (extern.convert_any
+          (struct.new_default $child-desc)
+        )
+        (i32.const 1)
+        (i64.const 2)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $use (type $6) (param $g (ref $grandparent-desc)) (param $p (ref $parent-desc)) (param $c (ref $child-desc))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $grandparent-desc 1
+  ;; CHECK-NEXT:    (local.get $g)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $parent-desc 2
+  ;; CHECK-NEXT:    (local.get $p)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $child-desc 3
+  ;; CHECK-NEXT:    (local.get $c)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $use (param $g (ref $grandparent-desc)) (param $p (ref $parent-desc)) (param $c (ref $child-desc))
+    (drop (struct.get $grandparent-desc 0 (local.get $g)))
+    (drop (struct.get $parent-desc 1 (local.get $p)))
+    (drop (struct.get $child-desc 2 (local.get $c)))
+  )
+)
+
+(module
+  ;; Branching subtyping: an exposed subtype causes its supertype to get a
+  ;; placeholder, which is inherited by an unexposed sibling subtype.
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $super (sub (descriptor $super-desc) (struct)))
+    (type $super (sub (descriptor $super-desc) (struct)))
+    ;; CHECK:       (type $super-desc (sub (describes $super) (struct (field i8) (field externref))))
+    (type $super-desc (sub (describes $super) (struct (field (mut externref)))))
+  )
+  (rec
+    ;; CHECK:       (type $sub1 (sub $super (descriptor $sub1-desc) (struct)))
+    (type $sub1 (sub $super (descriptor $sub1-desc) (struct)))
+    ;; CHECK:       (type $sub1-desc (sub $super-desc (describes $sub1) (struct (field i8) (field externref) (field i32))))
+    (type $sub1-desc (sub $super-desc (describes $sub1) (struct (field (mut externref)) (field (mut i32)))))
+  )
+  (rec
+    ;; CHECK:       (type $sub2 (sub $super (descriptor $sub2-desc) (struct)))
+    (type $sub2 (sub $super (descriptor $sub2-desc) (struct)))
+    ;; CHECK:       (type $sub2-desc (sub $super-desc (describes $sub2) (struct (field i8) (field externref) (field f64))))
+    (type $sub2-desc (sub $super-desc (describes $sub2) (struct (field (mut externref)) (field (mut f64)))))
+  )
+
+  ;; CHECK:       (type $6 (func (param (ref $super-desc))))
+
+  ;; CHECK:       (type $7 (func (param (ref $sub1-desc))))
+
+  ;; CHECK:       (type $8 (func (param (ref $sub2-desc))))
+
+  ;; CHECK:      (type $9 (func (result structref)))
+
+  ;; CHECK:      (export "export" (func $test))
+  (export "export" (func $test))
+  ;; CHECK:      (func $test (type $9) (result structref)
+  ;; CHECK-NEXT:  (struct.new_default_desc $sub1
+  ;; CHECK-NEXT:   (struct.new $sub1-desc
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (extern.convert_any
+  ;; CHECK-NEXT:     (struct.new_default $sub1-desc)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test (result structref)
+    (struct.new_desc $sub1
+      (struct.new $sub1-desc
+        (extern.convert_any
+          (struct.new_default $sub1-desc)
+        )
+        (i32.const 1)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $use-super (type $6) (param $d (ref $super-desc))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $super-desc 1
+  ;; CHECK-NEXT:    (local.get $d)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $use-super (param $d (ref $super-desc))
+    (drop (struct.get $super-desc 0 (local.get $d)))
+  )
+
+  ;; CHECK:      (func $use-sub1 (type $7) (param $d (ref $sub1-desc))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $sub1-desc 2
+  ;; CHECK-NEXT:    (local.get $d)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $use-sub1 (param $d (ref $sub1-desc))
+    (drop (struct.get $sub1-desc 1 (local.get $d)))
+  )
+
+  ;; CHECK:      (func $use-sub2 (type $8) (param $d (ref $sub2-desc))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $sub2-desc 1
+  ;; CHECK-NEXT:    (local.get $d)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $sub2-desc 2
+  ;; CHECK-NEXT:    (local.get $d)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $use-sub2 (param $d (ref $sub2-desc))
+    (drop (struct.get $sub2-desc 0 (local.get $d)))
+    (drop (struct.get $sub2-desc 1 (local.get $d)))
+  )
+)
+
+(module
+  ;; Field 0 is a mutable non-externref field. It can become immutable without
+  ;; exposing a prototype, so no placeholder is inserted.
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $struct (descriptor $desc) (struct))
+    (type $struct (descriptor $desc) (struct))
+    ;; CHECK:       (type $desc (describes $struct) (struct (field anyref) (field anyref)))
+    (type $desc (describes $struct) (struct (field (mut anyref)) (field (mut anyref))))
+  )
+
+  ;; CHECK:       (type $2 (func (param (ref $desc))))
+
+  ;; CHECK:      (type $3 (func (result structref)))
+
+  ;; CHECK:      (export "export" (func $test))
+  (export "export" (func $test))
+  ;; CHECK:      (func $test (type $3) (result structref)
+  ;; CHECK-NEXT:  (struct.new_default_desc $struct
+  ;; CHECK-NEXT:   (struct.new $desc
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test (result structref)
+    (struct.new_desc $struct
+      (struct.new $desc
+        (ref.null any)
+        (ref.null any)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $use (type $2) (param $d (ref $desc))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $desc 0
+  ;; CHECK-NEXT:    (local.get $d)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $desc 1
+  ;; CHECK-NEXT:    (local.get $d)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $use (param $d (ref $desc))
+    (drop (struct.get $desc 0 (local.get $d)))
+    (drop (struct.get $desc 1 (local.get $d)))
+  )
+)
+
+(module
+  ;; Field 0 is removed, and field 1 is an immutable non-externref field, so
+  ;; shifting it to index 0 does not expose a prototype and no placeholder is
+  ;; inserted.
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $struct (descriptor $desc) (struct))
+    (type $struct (descriptor $desc) (struct))
+    ;; CHECK:       (type $desc (describes $struct) (struct (field anyref)))
+    (type $desc (describes $struct) (struct (field i64) (field anyref)))
+  )
+
+  ;; CHECK:       (type $2 (func (param (ref $desc))))
+
+  ;; CHECK:      (type $3 (func (result structref)))
+
+  ;; CHECK:      (export "export" (func $test))
+  (export "export" (func $test))
+  ;; CHECK:      (func $test (type $3) (result structref)
+  ;; CHECK-NEXT:  (struct.new_default_desc $struct
+  ;; CHECK-NEXT:   (struct.new $desc
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test (result structref)
+    (struct.new_desc $struct
+      (struct.new $desc
+        (i64.const 100)
+        (ref.null any)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $use (type $2) (param $d (ref $desc))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $desc 0
+  ;; CHECK-NEXT:    (local.get $d)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $use (param $d (ref $desc))
+    (drop (struct.get $desc 1 (local.get $d)))
+  )
+)
+
+(module
+  ;; All fields of an exposed descriptor are unused and removed, resulting in an
+  ;; empty descriptor (struct). No placeholder is needed.
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $struct (descriptor $desc) (struct))
+    (type $struct (descriptor $desc) (struct))
+    ;; CHECK:       (type $desc (describes $struct) (struct))
+    (type $desc (describes $struct) (struct (field (mut externref)) (field i32)))
+  )
+
+  ;; CHECK:      (type $2 (func (result structref)))
+
+  ;; CHECK:      (export "export" (func $test))
+  (export "export" (func $test))
+  ;; CHECK:      (func $test (type $2) (result structref)
+  ;; CHECK-NEXT:  (struct.new_default_desc $struct
+  ;; CHECK-NEXT:   (struct.new_default $desc)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test (result structref)
+    (struct.new_desc $struct
+      (struct.new $desc
+        (extern.convert_any
+          (struct.new_default $desc)
+        )
+        (i32.const 42)
+      )
+    )
+  )
+)
+
+(module
+  ;; Exact type on the JS boundary: an exact (ref (exact $super)) does not
+  ;; propagate exposure to $sub-desc, so $sub-desc does not get an unnecessary
+  ;; placeholder when $super-desc is empty.
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $super (sub (descriptor $super-desc) (struct)))
+    (type $super (sub (descriptor $super-desc) (struct)))
+    ;; CHECK:       (type $super-desc (sub (describes $super) (struct)))
+    (type $super-desc (sub (describes $super) (struct)))
+  )
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $sub (sub $super (descriptor $sub-desc) (struct)))
+    (type $sub (sub $super (descriptor $sub-desc) (struct)))
+    ;; CHECK:       (type $sub-desc (sub $super-desc (describes $sub) (struct (field externref))))
+    (type $sub-desc (sub $super-desc (describes $sub) (struct (field (mut externref)))))
+  )
+
+  ;; CHECK:       (type $4 (func (param (ref $sub-desc))))
+
+  ;; CHECK:      (type $5 (func (param (ref null (exact $super)))))
+
+  ;; CHECK:      (import "" "" (func $import (type $5) (param (ref null (exact $super)))))
+  (import "" "" (func $import (param (ref null (exact $super)))))
+
+  ;; CHECK:      (func $use-sub (type $4) (param $d (ref $sub-desc))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $sub-desc 0
+  ;; CHECK-NEXT:    (local.get $d)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $use-sub (param $d (ref $sub-desc))
+    (drop (struct.get $sub-desc 0 (local.get $d)))
+  )
+)
+
+(module
+  ;; Exact type flowing into extern.convert_any: an exact
+  ;; (extern.convert_any (ref (exact $super))) does not propagate exposure to
+  ;; $sub-desc, so $sub-desc does not get an unnecessary placeholder when
+  ;; $super-desc is empty.
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $super (sub (descriptor $super-desc) (struct)))
+    (type $super (sub (descriptor $super-desc) (struct)))
+    ;; CHECK:       (type $super-desc (sub (describes $super) (struct)))
+    (type $super-desc (sub (describes $super) (struct)))
+  )
+  (rec
+    ;; CHECK:       (type $sub (sub $super (descriptor $sub-desc) (struct)))
+    (type $sub (sub $super (descriptor $sub-desc) (struct)))
+    ;; CHECK:       (type $sub-desc (sub $super-desc (describes $sub) (struct (field externref))))
+    (type $sub-desc (sub $super-desc (describes $sub) (struct (field (mut externref)))))
+  )
+
+  ;; CHECK:       (type $4 (func (param (ref null (exact $super)))))
+
+  ;; CHECK:       (type $5 (func (param (ref $sub-desc))))
+
+  ;; CHECK:      (func $test (type $4) (param $s (ref null (exact $super)))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (extern.convert_any
+  ;; CHECK-NEXT:    (local.get $s)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test (param $s (ref null (exact $super)))
+    (drop
+      (extern.convert_any
+        (local.get $s)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $use-sub (type $5) (param $d (ref $sub-desc))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $sub-desc 0
+  ;; CHECK-NEXT:    (local.get $d)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $use-sub (param $d (ref $sub-desc))
+    (drop (struct.get $sub-desc 0 (local.get $d)))
+  )
+)
+
+(module
+  ;; An exposed descriptor that receives a placeholder is also used directly
+  ;; with struct.get / struct.set / struct.new; all instruction operands and
+  ;; field indices are shifted correctly.
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $struct (descriptor $desc) (struct))
+    (type $struct (descriptor $desc) (struct))
+    ;; CHECK:       (type $desc (describes $struct) (struct (field i8) (field externref) (field (mut i32))))
+    (type $desc (describes $struct) (struct (field (mut externref)) (field (mut i32))))
+  )
+
+  ;; CHECK:       (type $2 (func (param (ref $desc)) (result (ref $desc))))
+
+  ;; CHECK:      (type $3 (func (result structref)))
+
+  ;; CHECK:      (export "export" (func $test))
+  (export "export" (func $test))
+  ;; CHECK:      (func $test (type $3) (result structref)
+  ;; CHECK-NEXT:  (struct.new_default_desc $struct
+  ;; CHECK-NEXT:   (struct.new $desc
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (extern.convert_any
+  ;; CHECK-NEXT:     (struct.new_default $desc)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test (result structref)
+    (struct.new_desc $struct
+      (struct.new $desc
+        (extern.convert_any
+          (struct.new_default $desc)
+        )
+        (i32.const 42)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $manipulate (type $2) (param $d (ref $desc)) (result (ref $desc))
+  ;; CHECK-NEXT:  (struct.set $desc 2
+  ;; CHECK-NEXT:   (local.get $d)
+  ;; CHECK-NEXT:   (i32.const 100)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $desc 1
+  ;; CHECK-NEXT:    (local.get $d)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $desc 2
+  ;; CHECK-NEXT:    (local.get $d)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.new $desc
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (ref.null noextern)
+  ;; CHECK-NEXT:   (i32.const 200)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $manipulate (param $d (ref $desc)) (result (ref $desc))
+    (struct.set $desc 1
+      (local.get $d)
+      (i32.const 100)
+    )
+    (drop
+      (struct.get $desc 0
+        (local.get $d)
+      )
+    )
+    (drop
+      (struct.get $desc 1
+        (local.get $d)
+      )
+    )
+    (struct.new $desc
+      (ref.null extern)
+      (i32.const 200)
+    )
+  )
+)
+
+(module
+  ;; A struct descriptor has an initial nullexternref field and a subsequent
+  ;; externref field. The initial nullexternref field does not expose a JS
+  ;; prototype. Removing the unread nullexternref field causes the externref
+  ;; field to shift to index 0. Because the descriptor has no prototype, an i8
+  ;; placeholder is inserted at index 0 to keep the externref field at index 1.
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $struct (sub (descriptor $desc) (struct)))
+    (type $struct (sub (descriptor $desc) (struct)))
+    ;; CHECK:       (type $desc (sub (describes $struct) (struct (field i8) (field externref))))
+    (type $desc (sub (describes $struct) (struct (field nullexternref) (field externref))))
+  )
+
+  ;; CHECK:       (type $2 (func (param (ref $desc)) (result externref)))
+
+  ;; CHECK:      (type $3 (func (result externref)))
+
+  ;; CHECK:      (import "env" "ext" (global $ext externref))
+  (import "env" "ext" (global $ext externref))
+  ;; CHECK:      (export "export" (func $test))
+  (export "export" (func $test))
+
+  ;; CHECK:      (func $test (type $3) (result externref)
+  ;; CHECK-NEXT:  (extern.convert_any
+  ;; CHECK-NEXT:   (struct.new_default_desc $struct
+  ;; CHECK-NEXT:    (struct.new $desc
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:     (global.get $ext)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test (result externref)
+    (extern.convert_any
+      (struct.new_default_desc $struct
+        (struct.new $desc
+          (ref.null noextern)
+          (global.get $ext)
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $use (type $2) (param $d (ref $desc)) (result externref)
+  ;; CHECK-NEXT:  (struct.get $desc 1
+  ;; CHECK-NEXT:   (local.get $d)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $use (param $d (ref $desc)) (result externref)
+    (struct.get $desc 1
+      (local.get $d)
+    )
+  )
+)
+
+(module
+  ;; The supertype descriptor has an externref prototype field. The subtype
+  ;; descriptor narrows the prototype field to nullexternref. The supertype
+  ;; descriptor exposes a prototype and must not have exposedNoProtoDescs
+  ;; propagated to it from the subtype descriptor, so it does not get an i8
+  ;; placeholder inserted.
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $super (sub (descriptor $super-desc) (struct)))
+    (type $super (sub (descriptor $super-desc) (struct)))
+    ;; CHECK:       (type $sub (sub final $super (descriptor $sub-desc) (struct)))
+    (type $sub (sub final $super (descriptor $sub-desc) (struct)))
+    ;; CHECK:       (type $super-desc (sub (describes $super) (struct (field externref))))
+    (type $super-desc (sub (describes $super) (struct (field externref))))
+    ;; CHECK:       (type $sub-desc (sub final $super-desc (describes $sub) (struct (field nullexternref))))
+    (type $sub-desc (sub final $super-desc (describes $sub) (struct (field nullexternref))))
+  )
+
+  ;; CHECK:      (type $4 (func (result externref)))
+
+  ;; CHECK:      (import "env" "ext" (global $ext externref))
+  (import "env" "ext" (global $ext externref))
+  ;; CHECK:      (export "export" (func $test))
+  (export "export" (func $test))
+
+  ;; CHECK:      (func $test (type $4) (result externref)
+  ;; CHECK-NEXT:  (extern.convert_any
+  ;; CHECK-NEXT:   (struct.new_default_desc $super
+  ;; CHECK-NEXT:    (struct.new $super-desc
+  ;; CHECK-NEXT:     (global.get $ext)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test (result externref)
+    (extern.convert_any
+      (struct.new_default_desc $super
+        (struct.new $super-desc
+          (global.get $ext)
+        )
+      )
+    )
+  )
+)

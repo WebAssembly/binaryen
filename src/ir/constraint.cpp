@@ -734,6 +734,8 @@ bool AndedConstraintSet::approximateOr(const AndedConstraintSet& other) {
 }
 
 std::optional<LocalConstraint> LocalConstraint::parse(Expression* curr) {
+  using namespace Match;
+
   auto parseEqZArgument =
     [&](Expression* value) -> std::optional<LocalConstraint> {
     if (auto* get = value->dynCast<LocalGet>()) {
@@ -745,10 +747,18 @@ std::optional<LocalConstraint> LocalConstraint::parse(Expression* curr) {
     return {};
   };
 
-  if (auto* unary = curr->dynCast<Unary>()) {
-    if (Abstract::getUnary(unary->value->type, Abstract::EqZ) == unary->op) {
-      return parseEqZArgument(unary->value);
+  if (auto* u = curr->dynCast<Unary>()) {
+    if (Abstract::getUnary(u->value->type, Abstract::EqZ) == u->op) {
+      // EqZ of EqZ means a check that the value is *not* zero.
+      LocalGet* get;
+      if (matches(u->value, unary(Abstract::EqZ, Match::local(&get)))) {
+        auto value = Literal::makeZero(get->type);
+        return LocalConstraint{get->index, Constraint{Abstract::Ne, {value}}};
+      }
+
+      return parseEqZArgument(u->value);
     }
+
     return {};
   }
 
@@ -807,17 +817,107 @@ std::optional<LocalConstraint> LocalConstraint::parse(Expression* curr) {
   return {};
 }
 
-std::optional<LocalConstraint>
-LocalConstraint::parseCondition(Expression* curr) {
+ParsedAndedConstraints ParsedAndedConstraints::parse(Expression* curr) {
+  using namespace Match;
+
+  // The final return value.
+  ParsedAndedConstraints ret;
+
+  // Starting from |curr|, parse and recurse into sub-trees: when we see an AND,
+  // we push both children as further work.
+  SmallVector<Expression*, 4> work;
+  work.push_back(curr);
+  while (!work.empty()) {
+    auto* curr = work.back();
+    work.pop_back();
+
+    auto parsed = LocalConstraint::parse(curr);
+    if (parsed) {
+      ret.push_back(*parsed);
+      continue;
+    }
+
+    Binary* b;
+    if (matches(curr, binary(&b, Abstract::And, any(), any()))) {
+      // An AND can be recursively processed: both sides must be true.
+      work.push_back(b->left);
+      work.push_back(b->right);
+      continue;
+    }
+    // TODO: support OR
+
+    // We failed to parse this.
+    ret.hasUnknown = true;
+  }
+
+  return ret;
+}
+
+ParsedAndedConstraints
+ParsedAndedConstraints::parseCondition(Expression* curr) {
   // A get by itself is a check for not being null.
   if (auto* get = curr->dynCast<LocalGet>()) {
     auto value = Literal::makeZero(get->type);
-    return LocalConstraint{get->index, Constraint{Abstract::Ne, {value}}};
+    return {LocalConstraint{get->index, Constraint{Abstract::Ne, {value}}}};
   }
 
   // Otherwise, parse normally.
   return parse(curr);
-};
+}
+
+void ParsedAndedConstraints::negate() {
+  if (empty()) {
+    return;
+  }
+
+  if (hasUnknown) {
+    // This includes things we don't know about, and don't know how to negate.
+    clear();
+    return;
+  }
+
+  // The input is a list of constraints all applying at once, A & B & C. The
+  // negation is !A | !B | !C, but we cannot express a general OR like that,
+  // except in the simple case where they all talk about the same local: then
+  // we can at least approximateOr them all into one constraint.
+  auto& self = *this;
+  for (Index i = 1; i < size(); i++) {
+    if (self[i].local != self[0].local) {
+      // They refer to different locals. Give up.
+      clear();
+      return;
+    }
+  }
+
+  // Negate them before the OR.
+  for (auto& pair : self) {
+    pair.constraint = pair.constraint.negate();
+  }
+
+  if (size() == 1) {
+    // The simple case of 1 doesn't need any more work.
+    return;
+  }
+
+  // Do the OR.
+  AndedConstraintSet anded;
+  anded.set(self[0].constraint);
+  for (Index i = 1; i < size(); i++) {
+    anded.approximateOr({self[i].constraint});
+    if (anded.provesNothing()) {
+      // We have nothing useful here.
+      clear();
+      return;
+    }
+  }
+
+  // Return only the OR'ed result.
+  auto local = self[0].local;
+  clear();
+  for (auto& c : anded) {
+    emplace_back(local, c);
+  }
+}
 
 void LocalConstraint::flip() {
   auto other = std::get<Index>(constraint.term);
@@ -1149,6 +1249,11 @@ std::ostream& operator<<(std::ostream& o, const Constraint& c) {
     o << "$" << *i;
   }
   o << '}';
+  return o;
+}
+
+std::ostream& operator<<(std::ostream& o, const LocalConstraint& c) {
+  o << "LocalConstraint{$" << c.local << ", " << c.constraint << '}';
   return o;
 }
 
