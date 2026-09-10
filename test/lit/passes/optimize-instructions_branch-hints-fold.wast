@@ -16,7 +16,7 @@
  ;; NO_FO:      (type $struct (struct (field (mut i32))))
  (type $struct (struct (mut i32)))
 
- ;; CHECK:      (func $conditionals (type $3) (param $x i32) (result i32)
+ ;; CHECK:      (func $conditionals (type $2) (param $x i32) (result i32)
  ;; CHECK-NEXT:  (@metadata.code.branch_hint "\01")
  ;; CHECK-NEXT:  (if (result i32)
  ;; CHECK-NEXT:   (local.get $x)
@@ -28,7 +28,7 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; NO_FO:      (func $conditionals (type $3) (param $x i32) (result i32)
+ ;; NO_FO:      (func $conditionals (type $2) (param $x i32) (result i32)
  ;; NO_FO-NEXT:  (@metadata.code.branch_hint "\01")
  ;; NO_FO-NEXT:  (if (result i32)
  ;; NO_FO-NEXT:   (local.get $x)
@@ -171,7 +171,7 @@
   )
  )
 
- ;; CHECK:      (func $always-fold-select (type $4) (param $x i32) (param $y i32) (result i32)
+ ;; CHECK:      (func $always-fold-select (type $3) (param $x i32) (param $y i32) (result i32)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (local.get $y)
  ;; CHECK-NEXT:  )
@@ -186,7 +186,7 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; NO_FO:      (func $always-fold-select (type $4) (param $x i32) (param $y i32) (result i32)
+ ;; NO_FO:      (func $always-fold-select (type $3) (param $x i32) (param $y i32) (result i32)
  ;; NO_FO-NEXT:  (local $2 i32)
  ;; NO_FO-NEXT:  (local.set $2
  ;; NO_FO-NEXT:   (@metadata.code.branch_hint "\00")
@@ -234,7 +234,7 @@
   )
  )
 
- ;; CHECK:      (func $ordering (type $5) (param $x i32)
+ ;; CHECK:      (func $ordering (type $4) (param $x i32)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (i32.add
  ;; CHECK-NEXT:    (local.get $x)
@@ -248,7 +248,7 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; NO_FO:      (func $ordering (type $5) (param $x i32)
+ ;; NO_FO:      (func $ordering (type $4) (param $x i32)
  ;; NO_FO-NEXT:  (drop
  ;; NO_FO-NEXT:   (i32.add
  ;; NO_FO-NEXT:    (local.get $x)
@@ -280,13 +280,13 @@
   )
  )
 
- ;; CHECK:      (func $struct-set (type $2) (param $ref (ref null $struct)) (param $val i32)
+ ;; CHECK:      (func $struct-set (type $5) (param $ref (ref null $struct)) (param $val i32)
  ;; CHECK-NEXT:  (struct.set $struct 0
  ;; CHECK-NEXT:   (local.get $ref)
  ;; CHECK-NEXT:   (local.get $val)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; NO_FO:      (func $struct-set (type $2) (param $ref (ref null $struct)) (param $val i32)
+ ;; NO_FO:      (func $struct-set (type $5) (param $ref (ref null $struct)) (param $val i32)
  ;; NO_FO-NEXT:  (struct.set $struct 0
  ;; NO_FO-NEXT:   (ref.as_non_null
  ;; NO_FO-NEXT:    (local.get $ref)
