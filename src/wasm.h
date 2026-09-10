@@ -1664,8 +1664,8 @@ public:
   I31Get() = default;
   I31Get(MixedArena& allocator) {}
 
-  Expression* i31;
   bool signed_ = false;
+  Expression* i31;
 
   void finalize();
 };

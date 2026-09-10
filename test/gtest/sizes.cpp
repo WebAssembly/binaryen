@@ -72,7 +72,7 @@ TEST(SizesTest, ExpressionSizes) {
   EXPECT_EQ(sizeof(TupleMake), 48u);
   EXPECT_EQ(sizeof(TupleExtract), 24u);
   EXPECT_EQ(sizeof(RefI31), 24u);
-  EXPECT_EQ(sizeof(I31Get), 32u);
+  EXPECT_EQ(sizeof(I31Get), 24u);
   EXPECT_EQ(sizeof(CallRef), 56u);
   EXPECT_EQ(sizeof(RefTest), 32u);
   EXPECT_EQ(sizeof(RefCast), 32u);
