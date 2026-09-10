@@ -81,8 +81,8 @@ TEST(SizesTest, ExpressionSizes) {
   EXPECT_EQ(sizeof(StructNew), 56u);
   EXPECT_EQ(sizeof(StructGet), 24u);
   EXPECT_EQ(sizeof(StructSet), 32u);
-  EXPECT_EQ(sizeof(StructRMW), 48u);
-  EXPECT_EQ(sizeof(StructCmpxchg), 48u);
+  EXPECT_EQ(sizeof(StructRMW), 40u);
+  EXPECT_EQ(sizeof(StructCmpxchg), 40u);
   EXPECT_EQ(sizeof(ArrayNew), 32u);
   EXPECT_EQ(sizeof(ArrayNewData), 40u);
   EXPECT_EQ(sizeof(ArrayNewElem), 40u);

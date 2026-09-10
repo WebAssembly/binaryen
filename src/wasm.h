@@ -1796,10 +1796,10 @@ public:
   StructRMW(MixedArena& allocator) {}
 
   AtomicRMWOp op;
+  MemoryOrder order;
   Index index;
   Expression* ref;
   Expression* value;
-  MemoryOrder order;
 
   void finalize();
 };
@@ -1810,10 +1810,10 @@ public:
   StructCmpxchg(MixedArena& allocator) {}
 
   Index index;
+  MemoryOrder order;
   Expression* ref;
   Expression* expected;
   Expression* replacement;
-  MemoryOrder order;
 
   void finalize();
 };
