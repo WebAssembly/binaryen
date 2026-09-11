@@ -49,6 +49,7 @@
 
 #include "call-utils.h"
 #include "support/utilities.h"
+#include "wasm-type.h"
 
 // TODO: Use the new sign-extension opcodes where appropriate. This needs to be
 // conditionalized on the availability of atomics.
@@ -2841,24 +2842,10 @@ struct OptimizeInstructions
         return false;
       }
       auto ht = type.getHeapType();
-      if (!ht.isShared() || ht.isBottom()) {
+      if (ht.isBottom() || ht.isMaybeShared(HeapType::i31)) {
         return false;
       }
-      if (ht.isStruct() || ht.isArray()) {
-        return true;
-      }
-      if (ht.isBasic()) {
-        switch (ht.getBasic(Unshared)) {
-          case HeapType::any:
-          case HeapType::eq:
-          case HeapType::struct_:
-          case HeapType::array:
-            return true;
-          default:
-            return false;
-        }
-      }
-      return false;
+      return HeapType::isSubType(ht, HeapTypes::any.getBasic(Shared));
     };
 
     if (!canBeSharedArrayOrStruct(getFallthroughType(curr->ref))) {
