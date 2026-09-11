@@ -70,10 +70,13 @@ After uploading to ClusterFuzz, you can wait a while for it to run, and then:
 """
 
 import glob
+import io
 import os
 import subprocess
 import sys
 import tarfile
+import time
+from multiprocessing.pool import ThreadPool
 
 # Read the filenames first, as importing |shared| changes the directory.
 output_file = os.path.abspath(sys.argv[1])
@@ -115,6 +118,29 @@ features = [
     '--disable-relaxed-atomics',
 ]
 
+
+def process_initial_test(test):
+    results = []
+    if not fuzzing.is_fuzzable(test):
+        return results
+    for wast, _asserts in support.split_wast(test):
+        if not wast:
+            continue
+        input_bytes = wast.encode('utf-8') if isinstance(wast, str) else wast
+        cmd = shared.WASM_OPT + ['-q', '-', '-o', '-'] + features
+        proc = subprocess.run(cmd, input=input_bytes, capture_output=True)
+        if proc.returncode == 0 and proc.stdout:
+            results.append(proc.stdout)
+    return results
+
+
+def add_bytes_to_tar(tar, name, data, mtime):
+    tarinfo = tarfile.TarInfo(name=name)
+    tarinfo.size = len(data)
+    tarinfo.mtime = mtime
+    tar.addfile(tarinfo, io.BytesIO(data))
+
+
 # Use fast compression (level 1) to speed up bundling with only a modest size increase.
 with tarfile.open(output_file, 'w:gz', compresslevel=1) as tar:
     # run.py
@@ -154,35 +180,22 @@ with tarfile.open(output_file, 'w:gz', compresslevel=1) as tar:
     # Add tests we will use as initial content under initial/. We put all the
     # tests from the test suite there.
     print('  .. initial content: ')
-    temp_wasm = 'temp.wasm'
     index = 0
+    mtime = int(time.time())
     all_tests = shared.get_all_tests()
-    for i, test in enumerate(all_tests):
-        if not fuzzing.is_fuzzable(test):
-            continue
-        for wast, _asserts in support.split_wast(test):
-            if not wast:
-                continue
-            support.write_wast(temp_wasm, wast)
-            # If the file is not valid for our features, skip it. In the same
-            # operation, also convert to binary if this was text (binary is more
-            # compact).
-            cmd = shared.WASM_OPT + ['-q', temp_wasm, '-o', temp_wasm] + features
-            if subprocess.run(cmd, stderr=subprocess.PIPE).returncode:
-                continue
-
-            # Looks good.
-            tar.add(temp_wasm, arcname=f'initial/{index}.wasm')
-            index += 1
-        print(f'\r        {100 * i / len(all_tests):.2f}%', end='', flush=True)
+    worker_count = os.cpu_count() or 1
+    with ThreadPool(processes=worker_count) as pool:
+        for i, wasm_list in enumerate(pool.imap(process_initial_test, all_tests)):
+            for wasm_bytes in wasm_list:
+                add_bytes_to_tar(tar, f'initial/{index}.wasm', wasm_bytes, mtime)
+                index += 1
+            if i % 20 == 0 or i == len(all_tests) - 1:
+                print(f'\r        {100 * (i + 1) / len(all_tests):.2f}%', end='', flush=True)
     print(f'        (num: {index})')
 
     # Write initial/num.txt which contains the number of testcases in that
     # directory (saves run.py from needing to listdir each time).
-    num_txt = 'num.txt'
-    with open(num_txt, 'w') as f:
-        f.write(f'{index}')
-    tar.add(num_txt, arcname='initial/num.txt')
+    add_bytes_to_tar(tar, 'initial/num.txt', str(index).encode(), mtime)
 
 
 print('Done.')
