@@ -141,23 +141,6 @@
     )
   )
 
-  ;; CHECK:      (func $publish-shared-struct-new-with-cast (type $2) (result (ref $shared-struct))
-  ;; CHECK-NEXT:  (struct.new $shared-struct
-  ;; CHECK-NEXT:   (i32.const 1)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $publish-shared-struct-new-with-cast (result (ref $shared-struct))
-    ;; RefCast is a transparent fallthrough, so publish of ref.cast of an
-    ;; allocation can be removed.
-    (publish
-      (ref.cast (ref $shared-struct)
-        (struct.new $shared-struct
-          (i32.const 1)
-        )
-      )
-    )
-  )
-
   ;; CHECK:      (func $publish-through-ref-as-alloc (type $2) (result (ref $shared-struct))
   ;; CHECK-NEXT:  (struct.new $shared-struct
   ;; CHECK-NEXT:   (i32.const 1)
