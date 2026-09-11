@@ -733,15 +733,87 @@ bool AndedConstraintSet::approximateOr(const AndedConstraintSet& other) {
   return changed;
 }
 
-std::optional<LocalConstraint> LocalConstraint::parse(Expression* curr) {
+namespace {
+
+// Internal parsing, utilizing a map of tees. We can handle tees in an
+// expression, so long as they do not interfere with each other:
+//
+//  (i32.eq
+//    (local.tee $x ..)
+//    (i32.const 10)
+//  )
+//
+// We can parse this into $x == 10, just as if we saw a local.get $x there. But
+// we cannot handle this:
+//
+//  (i32.eq
+//    (local.get $x)
+//    (local.tee $x ..)
+//  )
+//
+// Parsing this into $x == $x would be wrong: the first $x is the old value.
+// That is, fully handling tees requires a more SSA-like IR. To handle the
+// common cases we want to, we parse the code in the natural order of execution,
+// and maintain a list of local operations. A get before a tee indicates
+// possible interference.
+struct LocalOperations : public SmallVector<Expression*, 3> {
+  // Check if an Expression returns a local's value: it is either a get or a
+  // tee. Returns the index and type if so, and notes it in our vector.
+  struct LocalOperation {
+    Index index;
+    Type type;
+  };
+  std::optional<LocalOperation> parse(Expression* curr) {
+    if (auto* get = value->dynCast<LocalGet>()) {
+      push_back(get);
+      return({get->index, get->type});
+    }
+    if (auto* set = value->dynCast<LocalSet>()) {
+      // Ignore unreachable code, so the callers don't need to handle it.
+      if (set->type != Type::unreachable) {
+        push_back(set);
+        return({set->index, set->type});
+      }
+    }
+    // Unrecognized.
+    return {};
+  }
+
+  // Check for any possible interference between locals, which would tell the
+  // caller that whatever was parsed is not valid.
+  bool hasLocalInterference() const {
+    if (size() <= 1) {
+      return false;
+    }
+
+    // Process the list in detail, as interference - a get before a set of the
+    // same local - is possible. We track the read locals, and if we see a
+    // later write, that shows a problem;
+    std::unordered_set<Index> read;
+    for (auto* curr : *this) {
+      if (auto* get = curr->dynCast<LocalGet>()) {
+        read.insert(get->index);
+      } else if (auto* set = curr->dynCast<LocalSet>()) {
+        if (read.contains(set->index)) {
+          return true;
+        }
+      } else {
+        WASM_UNREACHABLE("invalid local op");
+      }
+    }
+    return false;
+  }
+};
+
+std::optional<LocalConstraint> LocalConstraintParseInternal(Expression* curr, LocalOperations& localOperations) {
   using namespace Match;
 
   auto parseEqZArgument =
     [&](Expression* value) -> std::optional<LocalConstraint> {
-    if (auto* get = value->dynCast<LocalGet>()) {
+    if (auto localOp = localOperations.parse(value)) {
       // Canonicalize EqZ to Eq of 0.
-      auto value = Literal::makeZero(get->type);
-      return LocalConstraint{get->index, Constraint{Abstract::Eq, {value}}};
+      auto value = Literal::makeZero(localOp->type);
+      return LocalConstraint{localOp->index, Constraint{Abstract::Eq, {value}}};
     }
     // TODO: Recursively parse and reverse a constraint
     return {};
@@ -750,10 +822,12 @@ std::optional<LocalConstraint> LocalConstraint::parse(Expression* curr) {
   if (auto* u = curr->dynCast<Unary>()) {
     if (Abstract::getUnary(u->value->type, Abstract::EqZ) == u->op) {
       // EqZ of EqZ means a check that the value is *not* zero.
-      LocalGet* get;
-      if (matches(u->value, unary(Abstract::EqZ, Match::local(&get)))) {
-        auto value = Literal::makeZero(get->type);
-        return LocalConstraint{get->index, Constraint{Abstract::Ne, {value}}};
+      Expression* nested;
+      if (matches(u->value, unary(Abstract::EqZ, &nested))) {
+        if (auto localOp = localOperations.parse(nested)) {
+          auto value = Literal::makeZero(localOp->type);
+          return LocalConstraint{localOp->index, Constraint{Abstract::Ne, {value}}};
+        }
       }
 
       return parseEqZArgument(u->value);
@@ -766,10 +840,10 @@ std::optional<LocalConstraint> LocalConstraint::parse(Expression* curr) {
     return parseEqZArgument(refIsNull->value);
   }
 
-  // Parse a get or a constant.
+  // Parse a get, tee, or a constant.
   auto parseTerm = [&](Expression* expr) -> std::optional<Term> {
-    if (auto* get = expr->dynCast<LocalGet>()) {
-      return Term{get->index};
+    if (auto localOp = localOperations.parse(expr)) {
+      return Term{localOp->index};
     }
     if (Properties::isSingleConstantExpression(expr)) {
       return Term{Properties::getLiteral(expr)};
@@ -781,11 +855,11 @@ std::optional<LocalConstraint> LocalConstraint::parse(Expression* curr) {
     [&](Abstract::Op op,
         Expression* left,
         Expression* right) -> std::optional<LocalConstraint> {
-    // The left must be a get.
-    if (auto* get = left->dynCast<LocalGet>()) {
+    // The left must be a get or a tee.
+    if (auto localOp = localOperations.parse(left)) {
       // The right can be any term.
       if (auto value = parseTerm(right)) {
-        return LocalConstraint{get->index, Constraint{op, *value}};
+        return LocalConstraint{localOp->index, Constraint{op, *value}};
       }
     }
     return {};
@@ -817,11 +891,23 @@ std::optional<LocalConstraint> LocalConstraint::parse(Expression* curr) {
   return {};
 }
 
+std::optional<LocalConstraint> LocalConstraint::parse(Expression* curr) {
+  LocalOperations localOperations;
+  auto ret = LocalConstraintParseInternal(curr, localOperations);
+  if (localOperations.hasLocalInterference()) {
+    return {};
+  }
+  return ret;
+}
+
 ParsedAndedConstraints ParsedAndedConstraints::parse(Expression* curr) {
   using namespace Match;
 
   // The final return value.
   ParsedAndedConstraints ret;
+
+  // We will track local operations over the entire tree we parse.
+  LocalOperations localOperations;
 
   // Starting from |curr|, parse and recurse into sub-trees: when we see an AND,
   // we push both children as further work.
@@ -831,7 +917,7 @@ ParsedAndedConstraints ParsedAndedConstraints::parse(Expression* curr) {
     auto* curr = work.back();
     work.pop_back();
 
-    auto parsed = LocalConstraint::parse(curr);
+    auto parsed = LocalConstraintParseInternal(curr, localOperations);
     if (parsed) {
       ret.push_back(*parsed);
       continue;
@@ -851,6 +937,9 @@ ParsedAndedConstraints ParsedAndedConstraints::parse(Expression* curr) {
     ret.hasUnknown = true;
   }
 
+  if (localOperations.hasLocalInterference()) {
+    return {};
+  }
   return ret;
 }
 
