@@ -555,6 +555,9 @@ void PassRegistry::registerPasses() {
   registerPass("stack-check",
                "enforce limits on llvm's __stack_pointer global",
                createStackCheckPass);
+  registerPass("tail-call",
+               "convert calls in tail position to return calls",
+               createTailCallPass);
   registerPass("strip-debug",
                "strip debug info (including the names section)",
                createStripDebugPass);
@@ -733,7 +736,7 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
   addIfNoDWARFIssues(
     "remove-unused-brs"); // coalesce-locals opens opportunities
   addIfNoDWARFIssues(
-    "remove-unused-names");           // remove-unused-brs opens opportunities
+    "remove-unused-names"); // remove-unused-brs opens opportunities
   if (options.optimizeLevel >= 3 || options.shrinkLevel >= 1) {
     addIfNoDWARFIssues("constraint-analysis");
   }
