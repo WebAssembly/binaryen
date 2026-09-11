@@ -6030,7 +6030,7 @@
         )
       )
       (then
-        ;; $x != 42 && x != 1337, so these are true.
+        ;; $x != 42 && $x != 1337, so these are true.
         (drop
           (i32.ne
             (local.get $x)
@@ -6135,6 +6135,88 @@
         (drop
           (i32.ne
             (local.get $x)
+            (i32.const 1337)
+          )
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $tee-condition-later-tee-different-local (type $2) (param $x i32) (param $y i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.and
+  ;; CHECK-NEXT:    (i32.ne
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i32.const 42)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.ne
+  ;; CHECK-NEXT:     (local.tee $y
+  ;; CHECK-NEXT:      (call $import)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.const 1337)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPTIN:      (func $tee-condition-later-tee-different-local (type $2) (param $x i32) (param $y i32)
+  ;; OPTIN-NEXT:  (if
+  ;; OPTIN-NEXT:   (i32.and
+  ;; OPTIN-NEXT:    (i32.ne
+  ;; OPTIN-NEXT:     (local.get $x)
+  ;; OPTIN-NEXT:     (i32.const 42)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:    (i32.ne
+  ;; OPTIN-NEXT:     (local.tee $y
+  ;; OPTIN-NEXT:      (call $import)
+  ;; OPTIN-NEXT:     )
+  ;; OPTIN-NEXT:     (i32.const 1337)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:   (then
+  ;; OPTIN-NEXT:    (drop
+  ;; OPTIN-NEXT:     (i32.const 1)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:    (drop
+  ;; OPTIN-NEXT:     (i32.const 1)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT: )
+  (func $tee-condition-later-tee-different-local (param $x i32) (param $y i32)
+    ;; As above, a get and a tee that look like they interfere, but now the
+    ;; local indexes are different. This is fine.
+    (if
+      (i32.and
+        (i32.ne
+          (local.get $x)
+          (i32.const 42)
+        )
+        (i32.ne
+          (local.tee $y
+            (call $import)
+          )
+          (i32.const 1337)
+        )
+      )
+      (then
+        ;; $x != 42 && $y != 1337, so these are true.
+        (drop
+          (i32.ne
+            (local.get $x)
+            (i32.const 42)
+          )
+        )
+        (drop
+          (i32.ne
+            (local.get $y)
             (i32.const 1337)
           )
         )
