@@ -1764,7 +1764,7 @@ class Split(TestCaseHandler):
             if '__indirect_function_table' in output:
                 print(f"Skipping wasm-split test for {wasm} due to __indirect_function_table")
                 return False
-        except:
+        except Exception:
             pass
 
         # see D8.can_run
