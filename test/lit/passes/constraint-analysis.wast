@@ -6376,6 +6376,84 @@
       )
     )
   )
+
+  ;; CHECK:      (func $tee-condition-another (type $0) (param $x i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.tee $x
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.tee $x
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPTIN:      (func $tee-condition-another (type $0) (param $x i32)
+  ;; OPTIN-NEXT:  (if
+  ;; OPTIN-NEXT:   (block (result i32)
+  ;; OPTIN-NEXT:    (drop
+  ;; OPTIN-NEXT:     (local.tee $x
+  ;; OPTIN-NEXT:      (i32.const 0)
+  ;; OPTIN-NEXT:     )
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:    (drop
+  ;; OPTIN-NEXT:     (local.tee $x
+  ;; OPTIN-NEXT:      (i32.const 1)
+  ;; OPTIN-NEXT:     )
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:    (i32.const 0)
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:   (then
+  ;; OPTIN-NEXT:    (drop
+  ;; OPTIN-NEXT:     (i32.const 0)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:    (drop
+  ;; OPTIN-NEXT:     (i32.const 1)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT: )
+  (func $tee-condition-another (param $x i32)
+    ;; Two tees of the same local.
+    (if
+      (i32.ne
+        (local.tee $x
+          (i32.const 0)
+        )
+        (local.tee $x
+          (i32.const 1)
+        )
+      )
+      (then
+        ;; We infer nothing here. TODO: we could infer the latter.
+        (drop
+          (i32.eq
+            (local.get $x)
+            (i32.const 0)
+          )
+        )
+        (drop
+          (i32.eq
+            (local.get $x)
+            (i32.const 1)
+          )
+        )
+      )
+    )
+  )
 )
 
-;; TODO: test that one direct call to LC::parse (optimize?)

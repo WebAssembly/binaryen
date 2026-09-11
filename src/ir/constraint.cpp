@@ -772,6 +772,7 @@ struct LocalOperations : public SmallVector<Expression*, 3> {
       // Ignore unreachable code, so the callers don't need to handle it.
       if (set->type != Type::unreachable) {
         push_back(set);
+        // XXX do we need to scan into the value... could be tees in there!1
         return LocalOperation{set->index, set->type};
       }
     }
@@ -797,6 +798,8 @@ struct LocalOperations : public SmallVector<Expression*, 3> {
         if (read.contains(set->index)) {
           return true;
         }
+        // Insert a read, because the tee does both a write and a read.
+        read.insert(set->index);
       } else {
         WASM_UNREACHABLE("invalid local op");
       }
