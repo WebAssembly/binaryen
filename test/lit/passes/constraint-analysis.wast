@@ -5918,7 +5918,7 @@
   ;; CHECK:      (func $tee.condition (type $0) (param $param i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (if
-  ;; CHECK-NEXT:   (i32.lt_s
+  ;; CHECK-NEXT:   (i32.eq
   ;; CHECK-NEXT:    (local.tee $x
   ;; CHECK-NEXT:     (call $import)
   ;; CHECK-NEXT:    )
@@ -5926,9 +5926,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (then
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.eqz
-  ;; CHECK-NEXT:      (local.get $x)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -5936,7 +5934,7 @@
   ;; OPTIN:      (func $tee.condition (type $0) (param $param i32)
   ;; OPTIN-NEXT:  (local $x i32)
   ;; OPTIN-NEXT:  (if
-  ;; OPTIN-NEXT:   (i32.lt_s
+  ;; OPTIN-NEXT:   (i32.eq
   ;; OPTIN-NEXT:    (local.tee $x
   ;; OPTIN-NEXT:     (call $import)
   ;; OPTIN-NEXT:    )
@@ -5944,9 +5942,7 @@
   ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:   (then
   ;; OPTIN-NEXT:    (drop
-  ;; OPTIN-NEXT:     (i32.eqz
-  ;; OPTIN-NEXT:      (local.get $x)
-  ;; OPTIN-NEXT:     )
+  ;; OPTIN-NEXT:     (i32.const 0)
   ;; OPTIN-NEXT:    )
   ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
@@ -5956,7 +5952,7 @@
     ;; We can parse the tee in the condition below. The constraint is saying
     ;; $x == 42.
     (if
-      (i32.lt_s
+      (i32.eq
         (local.tee $x
           (call $import)
         )
