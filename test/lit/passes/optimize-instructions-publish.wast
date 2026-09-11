@@ -458,7 +458,7 @@
   (func $publish-tee (result (ref null $shared-struct))
     ;; An intervening local.tee does not prevent the publish from being removed.
     ;; If the teed local was used to write to the object before publishing it,
-    ;; we would not remove the publish.
+    ;; we would not remove the publish (see next test).
     (local $x (ref null $shared-struct))
     (publish
       (local.tee $x
