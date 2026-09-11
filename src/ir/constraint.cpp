@@ -950,10 +950,11 @@ ParsedAndedConstraints ParsedAndedConstraints::parse(Expression* curr) {
 
 ParsedAndedConstraints
 ParsedAndedConstraints::parseCondition(Expression* curr) {
-  // A get by itself is a check for not being null.
-  if (auto* get = curr->dynCast<LocalGet>()) {
-    auto value = Literal::makeZero(get->type);
-    return {LocalConstraint{get->index, Constraint{Abstract::Ne, {value}}}};
+  // A get or tee by itself is a check for not being null.
+  LocalOperations localOperations;
+  if (auto localOp = localOperations.parse(curr)) {
+    auto value = Literal::makeZero(localOp->type);
+    return {LocalConstraint{localOp->index, Constraint{Abstract::Ne, {value}}}};
   }
 
   // Otherwise, parse normally.

@@ -6270,6 +6270,56 @@
       )
     )
   )
+
+  ;; CHECK:      (func $tee-condition-eqz-eqz (type $0) (param $x i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (i32.eqz
+  ;; CHECK-NEXT:     (local.tee $x
+  ;; CHECK-NEXT:      (call $import)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPTIN:      (func $tee-condition-eqz-eqz (type $0) (param $x i32)
+  ;; OPTIN-NEXT:  (if
+  ;; OPTIN-NEXT:   (local.tee $x
+  ;; OPTIN-NEXT:    (call $import)
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:   (then
+  ;; OPTIN-NEXT:    (drop
+  ;; OPTIN-NEXT:     (i32.const 0)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT: )
+  (func $tee-condition-eqz-eqz (param $x i32)
+    ;; Testing for parsing of tee in an eqz^2. In the OPTIN case, the double
+    ;; eqz is optimized out, and we test a bare local.tee in a condition.
+    (if
+      (i32.eqz
+        (i32.eqz
+          (local.tee $x
+            (call $import)
+          )
+        )
+      )
+      (then
+        ;; This is false.
+        (drop
+          (i32.eqz
+            (local.get $x)
+          )
+        )
+      )
+    )
+  )
 )
 
 ;; TODO: test that one direct call to LC::parse (optimize?)
