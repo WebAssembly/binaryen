@@ -433,13 +433,15 @@
   )
 
   ;; CHECK:      (func $publish-unreachable-block (type $8) (result (ref (shared any)))
+  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $publish-unreachable-block (result (ref (shared any)))
     ;; Publish of a block containing an unreachable instruction is eliminated
-    ;; during dead code removal.
+    ;; because the fallthrough has a non-shared type.
     (publish
       (block (result (ref (shared any)))
+        (nop)
         (unreachable)
       )
     )
