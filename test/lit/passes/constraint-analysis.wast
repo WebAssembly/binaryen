@@ -6423,7 +6423,8 @@
         )
       )
       (then
-        ;; We know that $x == 1 here (the last tee).
+        ;; We know that $x == 1 here (the last tee; first should not confuse
+        ;; us).
         (drop
           (i32.eq
             (local.get $x)
