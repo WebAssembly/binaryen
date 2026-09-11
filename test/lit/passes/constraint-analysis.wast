@@ -13,8 +13,8 @@
   ;; OPTIN:      (type $array (array (mut i32)))
   (type $array (array (mut i32)))
 
-  ;; CHECK:      (import "a" "b" (func $import (type $3) (result i32)))
-  ;; OPTIN:      (import "a" "b" (func $import (type $3) (result i32)))
+  ;; CHECK:      (import "a" "b" (func $import (type $4) (result i32)))
+  ;; OPTIN:      (import "a" "b" (func $import (type $4) (result i32)))
   (import "a" "b" (func $import (result i32)))
 
   ;; CHECK:      (func $simple (type $1)
@@ -2480,7 +2480,7 @@
     )
   )
 
-  ;; CHECK:      (func $local-changes (type $4) (param $x i32) (param $y i32) (param $z i32)
+  ;; CHECK:      (func $local-changes (type $3) (param $x i32) (param $y i32) (param $z i32)
   ;; CHECK-NEXT:  (local.set $x
   ;; CHECK-NEXT:   (local.get $y)
   ;; CHECK-NEXT:  )
@@ -2536,7 +2536,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; OPTIN:      (func $local-changes (type $4) (param $x i32) (param $y i32) (param $z i32)
+  ;; OPTIN:      (func $local-changes (type $3) (param $x i32) (param $y i32) (param $z i32)
   ;; OPTIN-NEXT:  (local.set $x
   ;; OPTIN-NEXT:   (local.get $y)
   ;; OPTIN-NEXT:  )
@@ -2666,7 +2666,7 @@
     )
   )
 
-  ;; CHECK:      (func $local-changes-2 (type $4) (param $x i32) (param $y i32) (param $z i32)
+  ;; CHECK:      (func $local-changes-2 (type $3) (param $x i32) (param $y i32) (param $z i32)
   ;; CHECK-NEXT:  (local.set $x
   ;; CHECK-NEXT:   (local.get $y)
   ;; CHECK-NEXT:  )
@@ -2722,7 +2722,7 @@
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; OPTIN:      (func $local-changes-2 (type $4) (param $x i32) (param $y i32) (param $z i32)
+  ;; OPTIN:      (func $local-changes-2 (type $3) (param $x i32) (param $y i32) (param $z i32)
   ;; OPTIN-NEXT:  (local.set $x
   ;; OPTIN-NEXT:   (local.get $y)
   ;; OPTIN-NEXT:  )
@@ -3056,7 +3056,7 @@
     )
   )
 
-  ;; CHECK:      (func $local-changes-ne (type $4) (param $x i32) (param $y i32) (param $z i32)
+  ;; CHECK:      (func $local-changes-ne (type $3) (param $x i32) (param $y i32) (param $z i32)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.ne
   ;; CHECK-NEXT:    (local.get $x)
@@ -3108,7 +3108,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; OPTIN:      (func $local-changes-ne (type $4) (param $x i32) (param $y i32) (param $z i32)
+  ;; OPTIN:      (func $local-changes-ne (type $3) (param $x i32) (param $y i32) (param $z i32)
   ;; OPTIN-NEXT:  (if
   ;; OPTIN-NEXT:   (i32.ne
   ;; OPTIN-NEXT:    (local.get $x)
@@ -4461,7 +4461,7 @@
     )
   )
 
-  ;; CHECK:      (func $flipped-contradiction (type $3) (result i32)
+  ;; CHECK:      (func $flipped-contradiction (type $4) (result i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (loop $loop
   ;; CHECK-NEXT:   (br_if $loop
@@ -4473,7 +4473,7 @@
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; OPTIN:      (func $flipped-contradiction (type $3) (result i32)
+  ;; OPTIN:      (func $flipped-contradiction (type $4) (result i32)
   ;; OPTIN-NEXT:  (local $x i32)
   ;; OPTIN-NEXT:  (loop $loop
   ;; OPTIN-NEXT:   (br_if $loop
@@ -4507,7 +4507,7 @@
     )
   )
 
-  ;; CHECK:      (func $flipped-contradiction-no (type $3) (result i32)
+  ;; CHECK:      (func $flipped-contradiction-no (type $4) (result i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (loop $loop (result i32)
   ;; CHECK-NEXT:   (br_if $loop
@@ -4521,7 +4521,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; OPTIN:      (func $flipped-contradiction-no (type $3) (result i32)
+  ;; OPTIN:      (func $flipped-contradiction-no (type $4) (result i32)
   ;; OPTIN-NEXT:  (local $x i32)
   ;; OPTIN-NEXT:  (loop $loop (result i32)
   ;; OPTIN-NEXT:   (br_if $loop
@@ -6608,10 +6608,117 @@
       )
     )
   )
+
+  ;; CHECK:      (func $tee-condition-nested-2 (type $3) (param $x i32) (param $y i32) (param $z i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.and
+  ;; CHECK-NEXT:    (i32.eq
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i32.const 10)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.eq
+  ;; CHECK-NEXT:     (local.tee $y
+  ;; CHECK-NEXT:      (block (result i32)
+  ;; CHECK-NEXT:       (local.set $z
+  ;; CHECK-NEXT:        (i32.const 20)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (call $import)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.const 30)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPTIN:      (func $tee-condition-nested-2 (type $3) (param $x i32) (param $y i32) (param $z i32)
+  ;; OPTIN-NEXT:  (if
+  ;; OPTIN-NEXT:   (i32.and
+  ;; OPTIN-NEXT:    (i32.eq
+  ;; OPTIN-NEXT:     (local.get $x)
+  ;; OPTIN-NEXT:     (i32.const 10)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:    (i32.eq
+  ;; OPTIN-NEXT:     (local.tee $y
+  ;; OPTIN-NEXT:      (block (result i32)
+  ;; OPTIN-NEXT:       (local.set $z
+  ;; OPTIN-NEXT:        (i32.const 20)
+  ;; OPTIN-NEXT:       )
+  ;; OPTIN-NEXT:       (call $import)
+  ;; OPTIN-NEXT:      )
+  ;; OPTIN-NEXT:     )
+  ;; OPTIN-NEXT:     (i32.const 30)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:   (then
+  ;; OPTIN-NEXT:    (drop
+  ;; OPTIN-NEXT:     (i32.const 1)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:    (drop
+  ;; OPTIN-NEXT:     (i32.const 1)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:    (drop
+  ;; OPTIN-NEXT:     (i32.const 1)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT: )
+  (func $tee-condition-nested-2 (param $x i32) (param $y i32) (param $z i32)
+    ;; As above, but the second set is of another local. Without any conflict,
+    ;; we can infer more.
+    (if
+      (i32.and
+        (i32.eq
+          (local.get $x)
+          (i32.const 10)
+        )
+        (i32.eq
+          (local.tee $y
+            (block (result i32)
+              (local.set $z      ;; this changed
+                (i32.const 20)
+              )
+              (call $import)
+            )
+          )
+          (i32.const 30)
+        )
+      )
+      (then
+        ;; These are all true.
+        (drop
+          (i32.eq
+            (local.get $x)
+            (i32.const 10)
+          )
+        )
+        (drop
+          (i32.eq
+            (local.get $y)
+            (i32.const 30)
+          )
+        )
+        (drop
+          (i32.eq
+            (local.get $z)
+            (i32.const 20)
+          )
+        )
+      )
+    )
+  )
 )
 
 (;;
-TODO: repeat testcase, but nested set is of another local, so it is cool
-
 TODO: nested *get*, which is fine, not pushed, no problem, even if set after it
 ;;)
