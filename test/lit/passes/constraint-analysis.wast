@@ -6717,8 +6717,102 @@
       )
     )
   )
+
+  ;; CHECK:      (func $tee-condition-nested-get (type $2) (param $x i32) (param $y i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.and
+  ;; CHECK-NEXT:    (i32.eq
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i32.const 10)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.eq
+  ;; CHECK-NEXT:     (local.tee $y
+  ;; CHECK-NEXT:      (block (result i32)
+  ;; CHECK-NEXT:       (drop
+  ;; CHECK-NEXT:        (local.get $x)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (call $import)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.const 30)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPTIN:      (func $tee-condition-nested-get (type $2) (param $x i32) (param $y i32)
+  ;; OPTIN-NEXT:  (if
+  ;; OPTIN-NEXT:   (i32.and
+  ;; OPTIN-NEXT:    (i32.eq
+  ;; OPTIN-NEXT:     (local.get $x)
+  ;; OPTIN-NEXT:     (i32.const 10)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:    (i32.eq
+  ;; OPTIN-NEXT:     (local.tee $y
+  ;; OPTIN-NEXT:      (block (result i32)
+  ;; OPTIN-NEXT:       (drop
+  ;; OPTIN-NEXT:        (local.get $x)
+  ;; OPTIN-NEXT:       )
+  ;; OPTIN-NEXT:       (call $import)
+  ;; OPTIN-NEXT:      )
+  ;; OPTIN-NEXT:     )
+  ;; OPTIN-NEXT:     (i32.const 30)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:   (then
+  ;; OPTIN-NEXT:    (drop
+  ;; OPTIN-NEXT:     (i32.const 1)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:    (drop
+  ;; OPTIN-NEXT:     (i32.const 1)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT: )
+  (func $tee-condition-nested-get (param $x i32) (param $y i32)
+    ;; As $tee-condition-nested, but rather than a nested *set*, a get. A get
+    ;; is not a problem for us.
+    (if
+      (i32.and
+        (i32.eq
+          (local.get $x)
+          (i32.const 10)
+        )
+        (i32.eq
+          (local.tee $y
+            (block (result i32)
+              (drop
+                (local.get $x)   ;; this changed.
+              )
+              (call $import)
+            )
+          )
+          (i32.const 30)
+        )
+      )
+      (then
+        ;; These are all true.
+        (drop
+          (i32.eq
+            (local.get $x)
+            (i32.const 10)
+          )
+        )
+        (drop
+          (i32.eq
+            (local.get $y)
+            (i32.const 30)
+          )
+        )
+      )
+    )
+  )
 )
 
-(;;
-TODO: nested *get*, which is fine, not pushed, no problem, even if set after it
-;;)
