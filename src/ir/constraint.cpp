@@ -764,15 +764,15 @@ struct LocalOperations : public SmallVector<Expression*, 3> {
     Type type;
   };
   std::optional<LocalOperation> parse(Expression* curr) {
-    if (auto* get = value->dynCast<LocalGet>()) {
+    if (auto* get = curr->dynCast<LocalGet>()) {
       push_back(get);
-      return ({get->index, get->type});
+      return LocalOperation{get->index, get->type};
     }
-    if (auto* set = value->dynCast<LocalSet>()) {
+    if (auto* set = curr->dynCast<LocalSet>()) {
       // Ignore unreachable code, so the callers don't need to handle it.
       if (set->type != Type::unreachable) {
         push_back(set);
-        return ({set->index, set->type});
+        return LocalOperation{set->index, set->type};
       }
     }
     // Unrecognized.
@@ -825,7 +825,7 @@ LocalConstraintParseInternal(Expression* curr,
     if (Abstract::getUnary(u->value->type, Abstract::EqZ) == u->op) {
       // EqZ of EqZ means a check that the value is *not* zero.
       Expression* nested;
-      if (matches(u->value, unary(Abstract::EqZ, &nested))) {
+      if (matches(u->value, unary(Abstract::EqZ, any(&nested)))) {
         if (auto localOp = localOperations.parse(nested)) {
           auto value = Literal::makeZero(localOp->type);
           return LocalConstraint{localOp->index,
@@ -893,6 +893,8 @@ LocalConstraintParseInternal(Expression* curr,
 
   return {};
 }
+
+} // anonymous namespace
 
 std::optional<LocalConstraint> LocalConstraint::parse(Expression* curr) {
   LocalOperations localOperations;
