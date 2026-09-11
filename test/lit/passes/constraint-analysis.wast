@@ -6489,32 +6489,129 @@
       )
     )
   )
-)
 
-(;;
-
-  (func $tee-condition-nested (param $x i32)
-    ;; A second set is nested inside.
+  ;; CHECK:      (func $tee-condition-nested (type $2) (param $x i32) (param $y i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.and
+  ;; CHECK-NEXT:    (i32.eq
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i32.const 10)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.eq
+  ;; CHECK-NEXT:     (local.tee $y
+  ;; CHECK-NEXT:      (block (result i32)
+  ;; CHECK-NEXT:       (local.set $x
+  ;; CHECK-NEXT:        (i32.const 20)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (call $import)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.const 30)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.eq
+  ;; CHECK-NEXT:      (local.get $y)
+  ;; CHECK-NEXT:      (i32.const 30)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPTIN:      (func $tee-condition-nested (type $2) (param $x i32) (param $y i32)
+  ;; OPTIN-NEXT:  (if
+  ;; OPTIN-NEXT:   (i32.and
+  ;; OPTIN-NEXT:    (i32.eq
+  ;; OPTIN-NEXT:     (local.get $x)
+  ;; OPTIN-NEXT:     (i32.const 10)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:    (i32.eq
+  ;; OPTIN-NEXT:     (local.tee $y
+  ;; OPTIN-NEXT:      (block (result i32)
+  ;; OPTIN-NEXT:       (local.set $x
+  ;; OPTIN-NEXT:        (i32.const 20)
+  ;; OPTIN-NEXT:       )
+  ;; OPTIN-NEXT:       (call $import)
+  ;; OPTIN-NEXT:      )
+  ;; OPTIN-NEXT:     )
+  ;; OPTIN-NEXT:     (i32.const 30)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:   (then
+  ;; OPTIN-NEXT:    (drop
+  ;; OPTIN-NEXT:     (i32.const 0)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:    (drop
+  ;; OPTIN-NEXT:     (i32.const 1)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:    (drop
+  ;; OPTIN-NEXT:     (i32.eq
+  ;; OPTIN-NEXT:      (local.get $y)
+  ;; OPTIN-NEXT:      (i32.const 30)
+  ;; OPTIN-NEXT:     )
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT: )
+  (func $tee-condition-nested (param $x i32) (param $y i32)
+    ;; A second set is nested inside the tee. $x initially seems like it must be
+    ;; equal to 10 in the If body, but it is set to 20 after.
     (if
-      (i32.eq
-        (local.tee $x
-          (block (result i32)
-            (local.set $
-            (call $import)
-          )
+      (i32.and
+        (i32.eq
+          (local.get $x)
+          (i32.const 10)
         )
-        (i32.const 42)
+        (i32.eq
+          (local.tee $y
+            (block (result i32)
+              (local.set $x
+                (i32.const 20)
+              )
+              (call $import)
+            )
+          )
+          (i32.const 30)
+        )
       )
       (then
-        ;; $x == 42, so this is false.
+        ;; This is false: $x was 10 (if the first ANDed expression was true),
+        ;; but $x was set to 20 after.
         (drop
-          (i32.eqz
+          (i32.eq
             (local.get $x)
+            (i32.const 10)
+          )
+        )
+        ;; This is true.
+        (drop
+          (i32.eq
+            (local.get $x)
+            (i32.const 20)
+          )
+        )
+        ;; We don't infer this, even though we could: the get and later set of
+        ;; $x make us give up. TODO
+        (drop
+          (i32.eq
+            (local.get $y)
+            (i32.const 30)
           )
         )
       )
     )
   )
+)
 
-also nested get, and etc.
+(;;
+TODO: repeat testcase, but nested set is of another local, so it is cool
+
+TODO: nested *get*, which is fine, not pushed, no problem, even if set after it
 ;;)

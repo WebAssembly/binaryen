@@ -17,6 +17,7 @@
 #include <optional>
 
 #include "ir/constraint.h"
+#include "ir/find_all.h"
 #include "ir/properties.h"
 #include "wasm.h"
 
@@ -770,11 +771,18 @@ struct LocalOperations : public SmallVector<Expression*, 3> {
     }
     if (auto* set = curr->dynCast<LocalSet>()) {
       // Ignore unreachable code, so the callers don't need to handle it.
-      if (set->type != Type::unreachable) {
-        push_back(set);
-        // XXX do we need to scan into the value... could be tees in there!1
-        return LocalOperation{set->index, set->type};
+      if (set->type == Type::unreachable) {
+        return {};
       }
+
+      // We know the value of this expression - the local the tee writes to -
+      // but further sets may be nested in the value, affecting other locals.
+      for (auto* nested : FindAll<LocalSet>(set->value).list) {
+        push_back(nested);
+      }
+
+      push_back(set);
+      return LocalOperation{set->index, set->type};
     }
     // Unrecognized.
     return {};
