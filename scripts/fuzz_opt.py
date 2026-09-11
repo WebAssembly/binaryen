@@ -272,12 +272,12 @@ def init_important_initial_contents():
         # commit time of HEAD. The reason we use the commit time of HEAD instead
         # of the current system time is to make the results deterministic given
         # the Binaryen HEAD commit.
-        head_ts_str = run(['git', 'log', '-1', '--format=%cd', '--date=raw'],
+        head_ts_str = run(['git', '-C', shared.options.binaryen_root, 'log', '-1', '--format=%cd', '--date=raw'],
                           silent=True).split()[0]
         head_dt = datetime.utcfromtimestamp(int(head_ts_str))
         start_dt = head_dt - timedelta(days=RECENT_DAYS)
         start_ts = start_dt.replace(tzinfo=timezone.utc).timestamp()
-        log = run(['git', 'log', '--name-status', '--format=', '--date=raw', '--no-renames', f'--since={start_ts}'], silent=True).splitlines()
+        log = run(['git', '-C', shared.options.binaryen_root, 'log', '--name-status', '--format=', '--date=raw', '--no-renames', f'--since={start_ts}'], silent=True).splitlines()
         # Pick up lines in the form of
         # A       test/../something.wast
         # M       test/../something.wast
@@ -290,7 +290,7 @@ def init_important_initial_contents():
 
     def is_git_repo():
         try:
-            ret = run(['git', 'rev-parse', '--is-inside-work-tree'],
+            ret = run(['git', '-C', shared.options.binaryen_root, 'rev-parse', '--is-inside-work-tree'],
                       silent=True, stderr=subprocess.DEVNULL)
             return ret == 'true\n'
         except subprocess.CalledProcessError:
@@ -1882,9 +1882,13 @@ class ClusterFuzz(TestCaseHandler):
             shutil.rmtree(self.clusterfuzz_dir)
         os.mkdir(self.clusterfuzz_dir)
 
-        print('Bundling for ClusterFuzz')
-        bundle = 'fuzz_opt_clusterfuzz_bundle.tgz'
-        run([in_binaryen('scripts', 'bundle_clusterfuzz.py'), bundle])
+        bundle = in_binaryen('out', 'test', 'fuzz_opt_clusterfuzz_bundle.tgz')
+        if not os.path.exists(bundle):
+            print('Bundling for ClusterFuzz')
+            os.makedirs(os.path.dirname(bundle), exist_ok=True)
+            tmp_bundle = abspath('tmp_fuzz_opt_clusterfuzz_bundle.tgz')
+            run([in_binaryen('scripts', 'bundle_clusterfuzz.py'), tmp_bundle])
+            os.replace(tmp_bundle, bundle)
 
         print('Unpacking for ClusterFuzz')
         tar = tarfile.open(bundle, "r:gz")
@@ -3014,6 +3018,7 @@ on valid wasm files.)
                 working_wasm = abspath('w.wasm')
                 wasm_reduce = in_bin('wasm-reduce')
                 reduce_sh = abspath('reduce.sh')
+                fuzz_opt = in_binaryen('scripts', 'fuzz_opt.py')
                 features = ' '.join(FEATURE_OPTS)
                 with open('reduce.sh', 'w') as f:
                     f.write(f'''\
@@ -3026,12 +3031,12 @@ echo "The following value should be >0:"
 
 if [ -z "$BINARYEN_FIRST_WASM" ]; then
   # run the command normally
-  ./scripts/fuzz_opt.py {auto_init} --binaryen-bin {binaryen_bin} {seed} {temp_wasm} > o 2> e
+  {fuzz_opt} {auto_init} --binaryen-bin {binaryen_bin} {seed} {temp_wasm} > o 2> e
 else
   # BINARYEN_FIRST_WASM was provided so we should actually reduce the *second*
   # file. pass the first one in as the main file, and use the env var for the
   # second.
-  BINARYEN_SECOND_WASM={temp_wasm} ./scripts/fuzz_opt.py {auto_init} --binaryen-bin {binaryen_bin} {seed} $BINARYEN_FIRST_WASM > o 2> e
+  BINARYEN_SECOND_WASM={temp_wasm} {fuzz_opt} {auto_init} --binaryen-bin {binaryen_bin} {seed} $BINARYEN_FIRST_WASM > o 2> e
 fi
 
 echo "  " $?
