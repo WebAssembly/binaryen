@@ -37,7 +37,11 @@ namespace wasm {
 
 namespace {
 
-struct FuzzStatsVisitor : public FuzzStats::Visitor<FuzzStatsVisitor> {
+struct FuzzStatsCollector
+  : public FuzzStats::PatternCollectorBase<FuzzStatsCollector> {
+  // Collect the occurrences of various cast instructions. Casts are
+  // particularly important for fuzzing. Meant as a sample for running
+  // experiments collecting other interesting patterns.
   void visitBrOn(BrOn* curr) {
     switch (curr->op) {
       case BrOnNull:
@@ -456,7 +460,7 @@ void TranslateToFuzzReader::build() {
     mutateJSBoundary();
   }
 
-  FuzzStatsVisitor().collect(wasm);
+  FuzzStatsCollector().collect(wasm);
 }
 
 void TranslateToFuzzReader::setupMemory() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 WebAssembly Community Group participants
+ * Copyright 2026 WebAssembly Community Group participants
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,7 +47,8 @@ void save(uint64_t numFunctions,
           const std::map<std::string, uint64_t>& funcMatches);
 
 // CRTP base class for visitors that collect fuzzing pattern statistics.
-template<typename SubType> struct Visitor : public PostWalker<SubType> {
+template<typename SubType>
+struct PatternCollectorBase : public PostWalker<SubType> {
   // Counts within the current function: pattern name -> count
   std::map<std::string, uint64_t> currentFuncCounts;
 
