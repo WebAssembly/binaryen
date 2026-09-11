@@ -766,13 +766,13 @@ struct LocalOperations : public SmallVector<Expression*, 3> {
   std::optional<LocalOperation> parse(Expression* curr) {
     if (auto* get = value->dynCast<LocalGet>()) {
       push_back(get);
-      return({get->index, get->type});
+      return ({get->index, get->type});
     }
     if (auto* set = value->dynCast<LocalSet>()) {
       // Ignore unreachable code, so the callers don't need to handle it.
       if (set->type != Type::unreachable) {
         push_back(set);
-        return({set->index, set->type});
+        return ({set->index, set->type});
       }
     }
     // Unrecognized.
@@ -805,7 +805,9 @@ struct LocalOperations : public SmallVector<Expression*, 3> {
   }
 };
 
-std::optional<LocalConstraint> LocalConstraintParseInternal(Expression* curr, LocalOperations& localOperations) {
+std::optional<LocalConstraint>
+LocalConstraintParseInternal(Expression* curr,
+                             LocalOperations& localOperations) {
   using namespace Match;
 
   auto parseEqZArgument =
@@ -826,7 +828,8 @@ std::optional<LocalConstraint> LocalConstraintParseInternal(Expression* curr, Lo
       if (matches(u->value, unary(Abstract::EqZ, &nested))) {
         if (auto localOp = localOperations.parse(nested)) {
           auto value = Literal::makeZero(localOp->type);
-          return LocalConstraint{localOp->index, Constraint{Abstract::Ne, {value}}};
+          return LocalConstraint{localOp->index,
+                                 Constraint{Abstract::Ne, {value}}};
         }
       }
 
