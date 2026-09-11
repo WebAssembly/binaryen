@@ -6047,6 +6047,61 @@
     )
   )
 
+  ;; CHECK:      (func $tee-condition-later-get-2 (type $0) (param $x i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.tee $x
+  ;; CHECK-NEXT:      (i32.const 42)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPTIN:      (func $tee-condition-later-get-2 (type $0) (param $x i32)
+  ;; OPTIN-NEXT:  (if
+  ;; OPTIN-NEXT:   (block (result i32)
+  ;; OPTIN-NEXT:    (drop
+  ;; OPTIN-NEXT:     (local.tee $x
+  ;; OPTIN-NEXT:      (i32.const 42)
+  ;; OPTIN-NEXT:     )
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:    (i32.const 1)
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:   (then
+  ;; OPTIN-NEXT:    (drop
+  ;; OPTIN-NEXT:     (i32.const 1)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT: )
+  (func $tee-condition-later-get-2 (param $x i32)
+    ;; A later get without two ANDs - in the same comparison. We can infer the
+    ;; comparison is 1.
+    (if
+      (i32.eq
+        (local.tee $x
+          (i32.const 42)
+        )
+        (local.get $x)
+      )
+      (then
+        ;; $x == 42, so this is true.
+        (drop
+          (i32.eq
+            (local.get $x)
+            (i32.const 42)
+          )
+        )
+      )
+    )
+  )
   ;; CHECK:      (func $tee-condition-later-tee (type $0) (param $x i32)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.and
@@ -6436,3 +6491,30 @@
   )
 )
 
+(;;
+
+  (func $tee-condition-nested (param $x i32)
+    ;; A second set is nested inside.
+    (if
+      (i32.eq
+        (local.tee $x
+          (block (result i32)
+            (local.set $
+            (call $import)
+          )
+        )
+        (i32.const 42)
+      )
+      (then
+        ;; $x == 42, so this is false.
+        (drop
+          (i32.eqz
+            (local.get $x)
+          )
+        )
+      )
+    )
+  )
+
+also nested get, and etc.
+;;)
