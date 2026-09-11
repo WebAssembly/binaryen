@@ -5915,8 +5915,7 @@
     )
   )
 
-  ;; CHECK:      (func $tee-condition (type $0) (param $param i32)
-  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK:      (func $tee-condition (type $0) (param $x i32)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.eq
   ;; CHECK-NEXT:    (local.tee $x
@@ -5931,8 +5930,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; OPTIN:      (func $tee-condition (type $0) (param $param i32)
-  ;; OPTIN-NEXT:  (local $x i32)
+  ;; OPTIN:      (func $tee-condition (type $0) (param $x i32)
   ;; OPTIN-NEXT:  (if
   ;; OPTIN-NEXT:   (i32.eq
   ;; OPTIN-NEXT:    (local.tee $x
@@ -5947,8 +5945,7 @@
   ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT: )
-  (func $tee-condition (param $param i32)
-    (local $x i32)
+  (func $tee-condition (param $x i32)
     ;; We can parse the tee in the condition below. The constraint is saying
     ;; $x == 42.
     (if
@@ -5969,8 +5966,7 @@
     )
   )
 
-  ;; CHECK:      (func $tee-condition-later-get (type $0) (param $param i32)
-  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK:      (func $tee-condition-later-get (type $0) (param $x i32)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.and
   ;; CHECK-NEXT:    (i32.ne
@@ -5994,8 +5990,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; OPTIN:      (func $tee-condition-later-get (type $0) (param $param i32)
-  ;; OPTIN-NEXT:  (local $x i32)
+  ;; OPTIN:      (func $tee-condition-later-get (type $0) (param $x i32)
   ;; OPTIN-NEXT:  (if
   ;; OPTIN-NEXT:   (i32.and
   ;; OPTIN-NEXT:    (i32.ne
@@ -6019,8 +6014,7 @@
   ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT: )
-  (func $tee-condition-later-get (param $param i32)
-    (local $x i32)
+  (func $tee-condition-later-get (param $x i32)
     ;; The nested ANDs here include a tee and a later get, which is fine.
     (if
       (i32.and
@@ -6037,6 +6031,101 @@
       )
       (then
         ;; $x != 42 && x != 1337, so these are true.
+        (drop
+          (i32.ne
+            (local.get $x)
+            (i32.const 42)
+          )
+        )
+        (drop
+          (i32.ne
+            (local.get $x)
+            (i32.const 1337)
+          )
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $tee-condition-later-tee (type $0) (param $x i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.and
+  ;; CHECK-NEXT:    (i32.ne
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i32.const 42)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.ne
+  ;; CHECK-NEXT:     (local.tee $x
+  ;; CHECK-NEXT:      (call $import)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.const 1337)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.ne
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:      (i32.const 42)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.ne
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:      (i32.const 1337)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPTIN:      (func $tee-condition-later-tee (type $0) (param $x i32)
+  ;; OPTIN-NEXT:  (if
+  ;; OPTIN-NEXT:   (i32.and
+  ;; OPTIN-NEXT:    (i32.ne
+  ;; OPTIN-NEXT:     (local.get $x)
+  ;; OPTIN-NEXT:     (i32.const 42)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:    (i32.ne
+  ;; OPTIN-NEXT:     (local.tee $x
+  ;; OPTIN-NEXT:      (call $import)
+  ;; OPTIN-NEXT:     )
+  ;; OPTIN-NEXT:     (i32.const 1337)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:   (then
+  ;; OPTIN-NEXT:    (drop
+  ;; OPTIN-NEXT:     (i32.ne
+  ;; OPTIN-NEXT:      (local.get $x)
+  ;; OPTIN-NEXT:      (i32.const 42)
+  ;; OPTIN-NEXT:     )
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:    (drop
+  ;; OPTIN-NEXT:     (i32.ne
+  ;; OPTIN-NEXT:      (local.get $x)
+  ;; OPTIN-NEXT:      (i32.const 1337)
+  ;; OPTIN-NEXT:     )
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT: )
+  (func $tee-condition-later-tee (param $x i32)
+    ;; Reverse the tee and get order. $x appears twice, with two different
+    ;; values, so we give up here.
+    ;; TODO: use SSA
+    (if
+      (i32.and
+        (i32.ne
+          (local.get $x)
+          (i32.const 42)
+        )
+        (i32.ne
+          (local.tee $x
+            (call $import)
+          )
+          (i32.const 1337)
+        )
+      )
+      (then
+        ;; We infer nothing here TODO: we could infer the last
         (drop
           (i32.ne
             (local.get $x)
