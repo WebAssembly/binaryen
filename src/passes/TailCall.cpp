@@ -175,7 +175,9 @@ struct TailCall : public Pass {
   }
 
   void runOnFunction(Module* module, Function* func) override {
-    if (!module->features.hasTailCall() || func->imported() || !func->body) {
+    if (!module->features.hasTailCall() ||
+        module->features.hasExceptionHandling() || func->imported() ||
+        !func->body) {
       return;
     }
 
