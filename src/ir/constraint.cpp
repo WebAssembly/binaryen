@@ -806,7 +806,7 @@ struct LocalOperations : public SmallVector<Expression*, 3> {
 };
 
 std::optional<LocalConstraint>
-LocalConstraintParseInternal(Expression* curr,
+localConstraintParseInternal(Expression* curr,
                              LocalOperations& localOperations) {
   using namespace Match;
 
@@ -898,7 +898,7 @@ LocalConstraintParseInternal(Expression* curr,
 
 std::optional<LocalConstraint> LocalConstraint::parse(Expression* curr) {
   LocalOperations localOperations;
-  auto ret = LocalConstraintParseInternal(curr, localOperations);
+  auto ret = localConstraintParseInternal(curr, localOperations);
   if (localOperations.hasLocalInterference()) {
     return {};
   }
@@ -922,7 +922,7 @@ ParsedAndedConstraints ParsedAndedConstraints::parse(Expression* curr) {
     auto* curr = work.back();
     work.pop_back();
 
-    auto parsed = LocalConstraintParseInternal(curr, localOperations);
+    auto parsed = localConstraintParseInternal(curr, localOperations);
     if (parsed) {
       ret.push_back(*parsed);
       continue;
