@@ -1882,13 +1882,11 @@ class ClusterFuzz(TestCaseHandler):
             shutil.rmtree(self.clusterfuzz_dir)
         os.mkdir(self.clusterfuzz_dir)
 
-        bundle = in_binaryen('out', 'test', 'fuzz_opt_clusterfuzz_bundle.tgz')
-        if not os.path.exists(bundle):
-            print('Bundling for ClusterFuzz')
-            os.makedirs(os.path.dirname(bundle), exist_ok=True)
-            tmp_bundle = abspath('tmp_fuzz_opt_clusterfuzz_bundle.tgz')
-            run([in_binaryen('scripts', 'bundle_clusterfuzz.py'), tmp_bundle])
-            os.replace(tmp_bundle, bundle)
+        print('Bundling for ClusterFuzz')
+        bundle = 'fuzz_opt_clusterfuzz_bundle.tgz'
+        tmp_bundle = 'tmp_' + bundle
+        run([in_binaryen('scripts', 'bundle_clusterfuzz.py'), tmp_bundle])
+        os.replace(tmp_bundle, bundle)
 
         print('Unpacking for ClusterFuzz')
         tar = tarfile.open(bundle, "r:gz")
