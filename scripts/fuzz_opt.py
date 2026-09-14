@@ -1884,9 +1884,7 @@ class ClusterFuzz(TestCaseHandler):
 
         print('Bundling for ClusterFuzz')
         bundle = 'fuzz_opt_clusterfuzz_bundle.tgz'
-        tmp_bundle = 'tmp_' + bundle
-        run([in_binaryen('scripts', 'bundle_clusterfuzz.py'), tmp_bundle])
-        os.replace(tmp_bundle, bundle)
+        run([in_binaryen('scripts', 'bundle_clusterfuzz.py'), bundle])
 
         print('Unpacking for ClusterFuzz')
         tar = tarfile.open(bundle, "r:gz")
