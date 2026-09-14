@@ -36,19 +36,19 @@
 
   ;; CHECK-BIN:      (type $1 (func (param i32 f64) (result i32)))
 
-  ;; CHECK-BIN:      (import "env" "table" (table $timport$0 9 9 funcref))
+  ;; CHECK-BIN:      (import "env" "table" (table $table 9 9 funcref))
 
   ;; CHECK-BIN:      (export "call_indirect" (func $call_indirect))
 
   ;; CHECK-BIN:      (func $call_indirect (type $0)
   ;; CHECK-BIN-NEXT:  (drop
-  ;; CHECK-BIN-NEXT:   (call_indirect $timport$0 (type $1)
+  ;; CHECK-BIN-NEXT:   (call_indirect $table (type $1)
   ;; CHECK-BIN-NEXT:    (i32.const 10)
   ;; CHECK-BIN-NEXT:    (f64.const 20)
   ;; CHECK-BIN-NEXT:    (i32.const 30)
   ;; CHECK-BIN-NEXT:   )
   ;; CHECK-BIN-NEXT:  )
-  ;; CHECK-BIN-NEXT:  (call_indirect $timport$0 (type $0)
+  ;; CHECK-BIN-NEXT:  (call_indirect $table (type $0)
   ;; CHECK-BIN-NEXT:   (i32.const 1)
   ;; CHECK-BIN-NEXT:  )
   ;; CHECK-BIN-NEXT: )
@@ -63,19 +63,19 @@
 
 ;; CHECK-BIN-NODEBUG:      (type $1 (func (param i32 f64) (result i32)))
 
-;; CHECK-BIN-NODEBUG:      (import "env" "table" (table $timport$0 9 9 funcref))
+;; CHECK-BIN-NODEBUG:      (import "env" "table" (table $table 9 9 funcref))
 
-;; CHECK-BIN-NODEBUG:      (export "call_indirect" (func $0))
+;; CHECK-BIN-NODEBUG:      (export "call_indirect" (func $call_indirect))
 
-;; CHECK-BIN-NODEBUG:      (func $0 (type $0)
+;; CHECK-BIN-NODEBUG:      (func $call_indirect (type $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
-;; CHECK-BIN-NODEBUG-NEXT:   (call_indirect $timport$0 (type $1)
+;; CHECK-BIN-NODEBUG-NEXT:   (call_indirect $table (type $1)
 ;; CHECK-BIN-NODEBUG-NEXT:    (i32.const 10)
 ;; CHECK-BIN-NODEBUG-NEXT:    (f64.const 20)
 ;; CHECK-BIN-NODEBUG-NEXT:    (i32.const 30)
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT:  (call_indirect $timport$0 (type $0)
+;; CHECK-BIN-NODEBUG-NEXT:  (call_indirect $table (type $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (i32.const 1)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )

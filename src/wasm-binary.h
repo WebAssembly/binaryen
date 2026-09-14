@@ -1737,6 +1737,14 @@ public:
   std::unordered_map<Index, Name> dataNames;
   std::unordered_map<Index, Name> elemNames;
 
+  // When there is no explicit name section entry, use external names from
+  // exports as more meaningful fallbacks than generated numeric names.
+  std::unordered_map<Index, Name> functionExportNames;
+  std::unordered_map<Index, Name> tableExportNames;
+  std::unordered_map<Index, Name> memoryExportNames;
+  std::unordered_map<Index, Name> globalExportNames;
+  std::unordered_map<Index, Name> tagExportNames;
+
   // The names that are already used (either from the names section, or that we
   // generate as internal names for un-named things).
   std::unordered_set<Name> usedFunctionNames, usedTableNames, usedMemoryNames,
@@ -1756,6 +1764,7 @@ public:
 
   Result<> readInst();
 
+  void readExportNames();
   void readExports();
 
   Result<> readLoad(unsigned bytes, bool signed_, Type type);

@@ -2,9 +2,9 @@
  (type $0 (func))
  (global $global$0 (mut i32) (i32.const 10))
  (memory $0 16 17)
- (export "as-br_table-index" (func $0))
- (export "as-local.set-value" (func $0))
- (func $0
+ (export "as-br_table-index" (func $as-br_table-index))
+ (export "as-local.set-value" (func $as-br_table-index))
+ (func $as-br_table-index
   (if
    (i32.eqz
     (global.get $global$0)
