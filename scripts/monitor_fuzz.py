@@ -158,8 +158,12 @@ class FuzzerWorker:
 
 
 def parse_args():
-    default_log_dir = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)), 'out', 'test')
+    # N.B. We could alternatively `import shared from test`, which has the side
+    # effect of changing the current directory to <binaryen_root>/out/test, but
+    # this is less magical.
+    binaryen_root = os.path.dirname(
+        os.path.dirname(os.path.abspath(__file__)))
+    default_log_dir = os.path.join(binaryen_root, 'out', 'test')
     cores = os.cpu_count() or 1
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -177,7 +181,7 @@ def parse_args():
     parser.add_argument(
         '--log-dir',
         default=os.environ.get('LOG_DIR', default_log_dir),
-        help='Directory to save fuzz logs (default: $LOG_DIR or ./out/test)',
+        help='Directory to save fuzz logs (default: $LOG_DIR or out/test)',
     )
     parser.add_argument(
         '--max-iters',
