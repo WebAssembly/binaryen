@@ -198,11 +198,13 @@ Literal::Literal(const Literal& other) : type(other.type) {
     case HeapType::nofunc:
     case HeapType::noexn:
     case HeapType::nocont:
+    case HeapType::nofiber:
     case HeapType::nowaitqueue:
       WASM_UNREACHABLE("null literals should already have been handled");
     case HeapType::eq:
     case HeapType::func:
     case HeapType::cont:
+    case HeapType::fiber:
     case HeapType::struct_:
     case HeapType::array:
       WASM_UNREACHABLE("invalid type");
@@ -770,6 +772,9 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
         case HeapType::nocont:
           o << "nullcontref";
           break;
+        case HeapType::nofiber:
+          o << "nullfiberref";
+          break;
         case HeapType::nowaitqueue:
           o << "nullwaitqueue";
           break;
@@ -795,6 +800,7 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
         case HeapType::eq:
         case HeapType::func:
         case HeapType::cont:
+        case HeapType::fiber:
         case HeapType::struct_:
         case HeapType::array:
           WASM_UNREACHABLE("invalid type");

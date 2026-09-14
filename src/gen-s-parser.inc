@@ -1732,6 +1732,29 @@ switch (buf[0]) {
           default: goto parse_error;
         }
       }
+      case 'i': {
+        switch (buf[6]) {
+          case 'n':
+            if (op == "fiber.new"sv) {
+              CHECK_ERR(makeFiberNew(ctx, pos, annotations));
+              return Ok{};
+            }
+            goto parse_error;
+          case 'r':
+            if (op == "fiber.resume"sv) {
+              CHECK_ERR(makeFiberResume(ctx, pos, annotations));
+              return Ok{};
+            }
+            goto parse_error;
+          case 's':
+            if (op == "fiber.suspend"sv) {
+              CHECK_ERR(makeFiberSuspend(ctx, pos, annotations));
+              return Ok{};
+            }
+            goto parse_error;
+          default: goto parse_error;
+        }
+      }
       default: goto parse_error;
     }
   }

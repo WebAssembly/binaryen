@@ -3135,6 +3135,9 @@ public:
   Flow visitResume(Resume* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitResumeThrow(ResumeThrow* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitStackSwitch(StackSwitch* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitFiberNew(FiberNew* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitFiberResume(FiberResume* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitFiberSuspend(FiberSuspend* curr) { return Flow(NONCONSTANT_FLOW); }
 
   void trap(std::string_view why) override { throw NonconstantException(); }
 
@@ -5216,6 +5219,9 @@ public:
   Flow visitResume(Resume* curr) { return doResume(curr); }
   Flow visitResumeThrow(ResumeThrow* curr) { return doResume(curr); }
   Flow visitStackSwitch(StackSwitch* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitFiberNew(FiberNew* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitFiberResume(FiberResume* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitFiberSuspend(FiberSuspend* curr) { WASM_UNREACHABLE("unimp"); }
 
   void trap(std::string_view why) override {
     // Traps break all current continuations - they will never be resumable.

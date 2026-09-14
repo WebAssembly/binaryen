@@ -1443,6 +1443,77 @@ public:
     ret->finalize();
     return ret;
   }
+  FiberNew*
+  makeFiberNew(HeapType fiberType, Name func, ExpressionList&& operands) {
+    auto* ret = wasm.allocator.alloc<FiberNew>();
+    ret->type = Type(fiberType, NonNullable, Exact);
+    ret->func = func;
+    ret->operands = std::move(operands);
+    ret->finalize();
+    return ret;
+  }
+  template<typename T>
+  FiberNew* makeFiberNew(HeapType fiberType, Name func, const T& operands) {
+    auto* ret = wasm.allocator.alloc<FiberNew>();
+    ret->type = Type(fiberType, NonNullable, Exact);
+    ret->func = func;
+    ret->operands.set(operands);
+    ret->finalize();
+    return ret;
+  }
+  FiberResume* makeFiberResume(HeapType fiberType,
+                               Name handler,
+                               ExpressionList&& operands,
+                               Expression* fiber) {
+    auto* ret = wasm.allocator.alloc<FiberResume>();
+    if (fiberType.isFiber()) {
+      ret->type = fiberType.getFiber().type.getSignature().results;
+    }
+    ret->handler = handler;
+    ret->operands = std::move(operands);
+    ret->fiber = fiber;
+    ret->finalize();
+    return ret;
+  }
+  template<typename T>
+  FiberResume* makeFiberResume(HeapType fiberType,
+                               Name handler,
+                               const T& operands,
+                               Expression* fiber) {
+    auto* ret = wasm.allocator.alloc<FiberResume>();
+    if (fiberType.isFiber()) {
+      ret->type = fiberType.getFiber().type.getSignature().results;
+    }
+    ret->handler = handler;
+    ret->operands.set(operands);
+    ret->fiber = fiber;
+    ret->finalize();
+    return ret;
+  }
+  FiberSuspend* makeFiberSuspend(HeapType fiberType,
+                                 ExpressionList&& operands,
+                                 Expression* fiber) {
+    auto* ret = wasm.allocator.alloc<FiberSuspend>();
+    if (fiberType.isFiber()) {
+      ret->type = fiberType.getFiber().type.getSignature().params;
+    }
+    ret->operands = std::move(operands);
+    ret->fiber = fiber;
+    ret->finalize();
+    return ret;
+  }
+  template<typename T>
+  FiberSuspend*
+  makeFiberSuspend(HeapType fiberType, const T& operands, Expression* fiber) {
+    auto* ret = wasm.allocator.alloc<FiberSuspend>();
+    if (fiberType.isFiber()) {
+      ret->type = fiberType.getFiber().type.getSignature().params;
+    }
+    ret->operands.set(operands);
+    ret->fiber = fiber;
+    ret->finalize();
+    return ret;
+  }
 
   StructWait* makeStructWait(Index index,
                              Expression* ref,

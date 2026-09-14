@@ -47,6 +47,7 @@ struct GenerativityScanner : public PostWalker<GenerativityScanner> {
   void visitArrayNewElem(ArrayNewElem* curr) { generative = true; }
   void visitArrayNewFixed(ArrayNewFixed* curr) { generative = true; }
   void visitContNew(ContNew* curr) { generative = true; }
+  void visitFiberNew(FiberNew* curr) { generative = true; }
   void visitWaitqueueNew(WaitqueueNew* curr) { generative = true; }
   // TODO: waitqueue.notify, struct.wait, atomic.notify, and atomic.wait should
   // also be generative.
