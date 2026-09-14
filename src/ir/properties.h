@@ -341,6 +341,8 @@ inline Expression** getImmediateFallthroughPtr(
                        passOptions, module, br->ref, br->desc))) {
       return &br->ref;
     }
+  } else if (auto* pub = curr->dynCast<Publish>()) {
+    return &pub->ref;
   }
   return currp;
 }

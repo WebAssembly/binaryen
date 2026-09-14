@@ -192,8 +192,6 @@ Pass* createSSAifyNoMergePass();
 Pass* createTable64LoweringPass();
 Pass* createTailCallPass();
 Pass* createTranslateToExnrefPass();
-Pass* createTrapModeClamp();
-Pass* createTrapModeJS();
 Pass* createTupleOptimizationPass();
 Pass* createTypeGeneralizingPass();
 Pass* createTypeRefiningPass();
