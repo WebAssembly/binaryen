@@ -160,13 +160,19 @@ class FuzzerWorker:
 def parse_args():
     default_log_dir = os.path.join(
         os.path.dirname(os.path.abspath(__file__)), 'out', 'test')
+    cores = os.cpu_count() or 1
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         '-j',
         '--jobs',
         type=int,
+        nargs='?',
+        const=cores,
         default=int(os.environ.get('JOBS', '1')),
-        help='Number of parallel fuzzers to run (default: $JOBS or 1)',
+        help=(
+            f'Number of parallel fuzzers to run (default: $JOBS or 1; '
+            f'defaults to {cores} if passed without an argument)'
+        ),
     )
     parser.add_argument(
         '--log-dir',
