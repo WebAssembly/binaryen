@@ -394,7 +394,8 @@
 ;; CHECK-NEXT:   --propagate-globals-globally                  propagate global values to other
 ;; CHECK-NEXT:                                                 globals (useful for tests)
 ;; CHECK-EMPTY:
-;; CHECK-NEXT:   --remove-empty-function-exports               removes empty function exports
+;; CHECK-NEXT:   --remove-empty-function-exports               removes exports of empty
+;; CHECK-NEXT:                                                 functions
 ;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --remove-exports                              removes exports using a wildcard
 ;; CHECK-EMPTY:
