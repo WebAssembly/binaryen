@@ -693,7 +693,7 @@
  ;; CHECK-NEXT:          (call $_frexp
  ;; CHECK-NEXT:           (f64.mul
  ;; CHECK-NEXT:            (local.get $0)
- ;; CHECK-NEXT:            (f64.const 18446744073709551615)
+ ;; CHECK-NEXT:            (f64.const 18446744073709551616)
  ;; CHECK-NEXT:           )
  ;; CHECK-NEXT:           (local.get $1)
  ;; CHECK-NEXT:          )
@@ -793,7 +793,7 @@
            (call $_frexp
             (f64.mul
              (local.get $0)
-             (f64.const 18446744073709551615)
+             (f64.const 18446744073709551616)
             )
             (local.get $1)
            )
