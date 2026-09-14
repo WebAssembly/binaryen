@@ -30,16 +30,110 @@ namespace wasm {
 
 namespace {
 
-struct TailCall : public WalkerPass<PostWalker<TailCall>> {
+// We are doing a pre-order traversal (i.e. parents before children) rather
+// than the normal post-order traversal because whether an expression is in
+// tail position is propagated down from parents to children. Define our own
+// pre-order traversal task stack, and take the opportunity to pass `isTail`
+// as an extra parameter to each task rather than storing it in a side table.
+template<typename SubType> struct PreWalker {
+  using TaskFunc = void (*)(SubType*, Expression**, bool);
+
+  struct Task {
+    TaskFunc func;
+    Expression** currp;
+    bool isTail;
+    Task() = default;
+    Task(TaskFunc func, Expression** currp, bool isTail)
+      : func(func), currp(currp), isTail(isTail) {}
+  };
+
+  SmallVector<Task, 10> stack;
+
+  void push(Expression** currp, bool isTail) {
+    assert(*currp);
+    stack.emplace_back(doVisit, currp, isTail);
+  }
+
+  void maybePush(Expression** currp, bool isTail) {
+    if (*currp) {
+      stack.emplace_back(doVisit, currp, isTail);
+    }
+  }
+
+  Task popTask() {
+    auto ret = stack.back();
+    stack.pop_back();
+    return ret;
+  }
+
+  static void doVisit(SubType* self, Expression** currp, bool isTail) {
+    self->visit(*currp, isTail);
+  }
+
+  void walk(Expression*& root) {
+    assert(stack.empty());
+    push(&root, true);
+    while (!stack.empty()) {
+      auto task = popTask();
+      task.func(static_cast<SubType*>(this), task.currp, task.isTail);
+    }
+  }
+
+  void visitExpression(Expression* curr, bool isTail) {
+    assert(!Properties::isControlFlowStructure(curr) &&
+           "unexpected control flow structure");
+
+#define DELEGATE_ID curr->_id
+#define DELEGATE_START(id) [[maybe_unused]] auto* cast = curr->cast<id>();
+#define DELEGATE_END(id)
+#define DELEGATE_GET_FIELD(id, field) cast->field
+#define DELEGATE_FIELD_CHILD(id, field) push(&cast->field, false);
+#define DELEGATE_FIELD_OPTIONAL_CHILD(id, field) maybePush(&cast->field, false);
+#define DELEGATE_FIELD_INT(id, field)
+#define DELEGATE_FIELD_LITERAL(id, field)
+#define DELEGATE_FIELD_NAME(id, field)
+#define DELEGATE_FIELD_SCOPE_NAME_DEF(id, field)
+#define DELEGATE_FIELD_SCOPE_NAME_USE(id, field)
+#define DELEGATE_FIELD_TYPE(id, field)
+#define DELEGATE_FIELD_HEAPTYPE(id, field)
+#define DELEGATE_FIELD_ADDRESS(id, field)
+
+#include "wasm-delegations-fields.def"
+  }
+
+#define DELEGATE(CLASS_TO_VISIT)                                               \
+  void visit##CLASS_TO_VISIT(CLASS_TO_VISIT* curr, bool isTail) {              \
+    static_cast<SubType*>(this)->visitExpression(curr, isTail);                \
+  }
+
+#include "wasm-delegations.def"
+
+  void visit(Expression* curr, bool isTail) {
+    assert(curr);
+    switch (curr->_id) {
+#define DELEGATE(CLASS_TO_VISIT)                                               \
+  case Expression::Id::CLASS_TO_VISIT##Id:                                     \
+    return static_cast<SubType*>(this)->visit##CLASS_TO_VISIT(                 \
+      static_cast<CLASS_TO_VISIT*>(curr), isTail);
+
+#include "wasm-delegations.def"
+
+      default:
+        WASM_UNREACHABLE("unexpected expression type");
+    }
+  }
+};
+
+struct TailCall : public Pass, public PreWalker<TailCall> {
   bool isFunctionParallel() override { return true; }
 
   std::unique_ptr<Pass> create() override {
     return std::make_unique<TailCall>();
   }
 
-  // Expressions whose evaluation is immediately followed by exiting the
-  // function.
-  std::unordered_set<Expression*> tailExprs;
+  Module* module = nullptr;
+  Function* func = nullptr;
+
   // Names of blocks whose exit flows directly out of the function.
   std::unordered_set<Name> tailBlocks;
   // Nesting depth of active exception handlers that catch or redirect
@@ -48,8 +142,21 @@ struct TailCall : public WalkerPass<PostWalker<TailCall>> {
   // Whether any call in the current function was converted to a return call.
   bool changed = false;
 
+  void pushEnterTry() { stack.emplace_back(doEnterTryBody, nullptr, false); }
+
+  void pushLeaveTry() { stack.emplace_back(doLeaveTryBody, nullptr, false); }
+
+  static void doEnterTryBody(TailCall* self, Expression**, bool) {
+    ++self->ehDepth;
+  }
+
+  static void doLeaveTryBody(TailCall* self, Expression**, bool) {
+    assert(self->ehDepth > 0);
+    --self->ehDepth;
+  }
+
   bool hasUnremovableSideEffects(Expression* expr) {
-    return EffectAnalyzer(getPassOptions(), *getModule(), expr)
+    return EffectAnalyzer(getPassOptions(), *module, expr)
       .hasUnremovableSideEffects();
   }
 
@@ -65,139 +172,45 @@ struct TailCall : public WalkerPass<PostWalker<TailCall>> {
     return true;
   }
 
-  bool isTailTransfer(Expression* expr) {
-    if (expr->is<Return>()) {
+  bool isTailTransfer(Break* curr, bool isTail) {
+    if (!tailBlocks.contains(curr->name)) {
+      return false;
+    }
+    // Converting a call in a conditional branch or br_table to a return_call
+    // skips evaluating the condition, so the condition must not have side
+    // effects.
+    return !curr->condition ||
+           (isTail && !hasUnremovableSideEffects(curr->condition));
+  }
+
+  bool isTailTransfer(Switch* curr) {
+    return allTargetsInTailBlocks(curr) &&
+           !hasUnremovableSideEffects(curr->condition);
+  }
+
+  bool isTailTransfer(Expression* curr, bool isTail) {
+    if (curr->is<Return>()) {
       return true;
     }
-    if (auto* br = expr->dynCast<Break>()) {
-      if (!tailBlocks.contains(br->name)) {
-        return false;
-      }
-      // Converting a call in a conditional branch or br_table to a return_call
-      // skips evaluating the condition, so the condition must not have side
-      // effects.
-      return !br->condition || (tailExprs.contains(br) &&
-                                !hasUnremovableSideEffects(br->condition));
+    if (auto* br = curr->dynCast<Break>()) {
+      return isTailTransfer(br, isTail);
     }
-    if (auto* curr = expr->dynCast<Switch>()) {
-      return allTargetsInTailBlocks(curr) &&
-             !hasUnremovableSideEffects(curr->condition);
+    if (auto* sw = curr->dynCast<Switch>()) {
+      return isTailTransfer(sw);
     }
     return false;
   }
 
-  static void doEnterTryBody(TailCall* self, Expression** currp) {
-    ++self->ehDepth;
-  }
-
-  static void doLeaveTryBody(TailCall* self, Expression** currp) {
-    assert(self->ehDepth > 0);
-    --self->ehDepth;
-  }
-
-  static void scan(TailCall* self, Expression** currp) {
-    Expression* curr = *currp;
-    bool isTail = self->tailExprs.contains(curr);
-
-    if (auto* ret = curr->dynCast<Return>()) {
-      if (ret->value) {
-        self->tailExprs.insert(ret->value);
-      }
-    } else if (auto* block = curr->dynCast<Block>()) {
-      if (isTail) {
-        if (block->name.is()) {
-          self->tailBlocks.insert(block->name);
-        }
-        if (!block->list.empty()) {
-          self->tailExprs.insert(block->list.back());
-        }
-      }
-      // In none-returning functions, returns and branches to tail blocks never
-      // carry values; mark the preceding statement as a tail expression.
-      if (self->getFunction()->getResults() == Type::none) {
-        for (Index i = 0; i + 1 < block->list.size(); ++i) {
-          if (self->isTailTransfer(block->list[i + 1])) {
-            self->tailExprs.insert(block->list[i]);
-          }
-        }
-      }
-    } else if (auto* iff = curr->dynCast<If>()) {
-      if (isTail) {
-        self->tailExprs.insert(iff->ifTrue);
-        if (iff->ifFalse) {
-          self->tailExprs.insert(iff->ifFalse);
-        }
-      }
-    } else if (auto* loop = curr->dynCast<Loop>()) {
-      // Loops fall through to their body, but their label is a backedge to the
-      // header rather than an exit, so we do not add loop->name to tailBlocks.
-      if (isTail) {
-        self->tailExprs.insert(loop->body);
-      }
-    } else if (auto* br = curr->dynCast<Break>()) {
-      if (br->value && self->isTailTransfer(br)) {
-        self->tailExprs.insert(br->value);
-      }
-    } else if (auto* sw = curr->dynCast<Switch>()) {
-      if (sw->value && self->isTailTransfer(sw)) {
-        self->tailExprs.insert(sw->value);
-      }
-    } else if (auto* tryy = curr->dynCast<Try>()) {
-      if (isTail) {
-        self->tailExprs.insert(tryy->body);
-        for (auto* catchBody : tryy->catchBodies) {
-          self->tailExprs.insert(catchBody);
-        }
-      }
-      for (int i = int(tryy->catchBodies.size()) - 1; i >= 0; --i) {
-        self->pushTask(TailCall::scan, &tryy->catchBodies[i]);
-      }
-      // A try block that delegates directly to the caller does not catch any
-      // exceptions in this function; exceptions thrown in its body already
-      // unwind the frame to the caller just like a return_call would. All other
-      // try blocks (catch/catch_all or delegating to an outer try) establish a
-      // local handler that would be bypassed by return_call.
-      bool hasLocalHandler =
-        !tryy->isDelegate() || tryy->delegateTarget != DELEGATE_CALLER_TARGET;
-      if (hasLocalHandler) {
-        self->pushTask(doLeaveTryBody, currp);
-      }
-      self->pushTask(TailCall::scan, &tryy->body);
-      if (hasLocalHandler) {
-        self->pushTask(doEnterTryBody, currp);
-      }
-      return;
-    } else if (auto* tryTable = curr->dynCast<TryTable>()) {
-      if (isTail) {
-        self->tailExprs.insert(tryTable->body);
-      }
-      bool hasLocalHandler = !tryTable->catchTags.empty();
-      if (hasLocalHandler) {
-        self->pushTask(doLeaveTryBody, currp);
-      }
-      self->pushTask(TailCall::scan, &tryTable->body);
-      if (hasLocalHandler) {
-        self->pushTask(doEnterTryBody, currp);
-      }
-      return;
-    } else {
-      assert(!Properties::isControlFlowStructure(curr) &&
-             "unexpected control flow structure");
-    }
-
-    PostWalker<TailCall>::scan(self, currp);
-  }
-
-  template<typename CallType> void handleCall(CallType* call) {
+  template<typename CallType> void handleCall(CallType* call, bool isTail) {
     // A call in tail position can have a type incompatible with the function's
     // return type if it is dead code at the end of a block following an earlier
     // unreachable instruction.
-    if (call->isReturn || !tailExprs.contains(call) ||
-        !Type::isSubType(call->type, getFunction()->getResults())) {
+    if (call->isReturn || !isTail ||
+        !Type::isSubType(call->type, func->getResults())) {
       return;
     }
     if (ehDepth > 0 &&
-        ShallowEffectAnalyzer(getPassOptions(), *getModule(), call).throws()) {
+        ShallowEffectAnalyzer(getPassOptions(), *module, call).throws()) {
       return;
     }
     call->isReturn = true;
@@ -205,21 +218,113 @@ struct TailCall : public WalkerPass<PostWalker<TailCall>> {
     changed = true;
   }
 
-  void visitCall(Call* curr) { handleCall(curr); }
+  void visitBlock(Block* curr, bool isTail) {
+    if (isTail && curr->name.is()) {
+      tailBlocks.insert(curr->name);
+    }
+    bool nextIsTail = isTail;
+    for (int i = int(curr->list.size()) - 1; i >= 0; --i) {
+      bool itemIsTail = false;
+      if (i == int(curr->list.size()) - 1) {
+        itemIsTail = isTail;
+      } else if (func->getResults() == Type::none &&
+                 isTailTransfer(curr->list[i + 1], nextIsTail)) {
+        itemIsTail = true;
+      }
+      nextIsTail = itemIsTail;
+      push(&curr->list[i], itemIsTail);
+    }
+  }
 
-  void visitCallIndirect(CallIndirect* curr) { handleCall(curr); }
+  void visitIf(If* curr, bool isTail) {
+    maybePush(&curr->ifFalse, isTail);
+    push(&curr->ifTrue, isTail);
+    push(&curr->condition, false);
+  }
 
-  void visitCallRef(CallRef* curr) { handleCall(curr); }
+  void visitLoop(Loop* curr, bool isTail) { push(&curr->body, isTail); }
 
-  void doWalkFunction(Function* func) {
-    if (!getModule()->features.hasTailCall() || func->imported()) {
+  void visitBreak(Break* curr, bool isTail) {
+    bool valueIsTail = curr->value && isTailTransfer(curr, isTail);
+    maybePush(&curr->condition, false);
+    maybePush(&curr->value, valueIsTail);
+  }
+
+  void visitSwitch(Switch* curr, bool isTail) {
+    bool valueIsTail = curr->value && isTailTransfer(curr);
+    push(&curr->condition, false);
+    maybePush(&curr->value, valueIsTail);
+  }
+
+  void visitReturn(Return* curr, bool isTail) { maybePush(&curr->value, true); }
+
+  void visitTry(Try* curr, bool isTail) {
+    for (int i = int(curr->catchBodies.size()) - 1; i >= 0; --i) {
+      push(&curr->catchBodies[i], isTail);
+    }
+    // A try block that delegates directly to the caller does not catch any
+    // exceptions in this function; exceptions thrown in its body already unwind
+    // the frame to the caller just like a return_call would. All other try
+    // blocks (catch/catch_all or delegating to an outer try) establish a local
+    // handler that would be bypassed by return_call.
+    bool hasLocalHandler =
+      !curr->isDelegate() || curr->delegateTarget != DELEGATE_CALLER_TARGET;
+    if (hasLocalHandler) {
+      pushLeaveTry();
+    }
+    push(&curr->body, isTail);
+    if (hasLocalHandler) {
+      pushEnterTry();
+    }
+  }
+
+  void visitTryTable(TryTable* curr, bool isTail) {
+    bool hasLocalHandler = !curr->catchTags.empty();
+    if (hasLocalHandler) {
+      pushLeaveTry();
+    }
+    push(&curr->body, isTail);
+    if (hasLocalHandler) {
+      pushEnterTry();
+    }
+  }
+
+  void visitCall(Call* curr, bool isTail) {
+    handleCall(curr, isTail);
+    visitExpression(curr, false);
+  }
+
+  void visitCallIndirect(CallIndirect* curr, bool isTail) {
+    handleCall(curr, isTail);
+    visitExpression(curr, false);
+  }
+
+  void visitCallRef(CallRef* curr, bool isTail) {
+    handleCall(curr, isTail);
+    visitExpression(curr, false);
+  }
+
+  void run(Module* module) override {
+    assert(getPassRunner());
+    auto options = getPassOptions();
+    options.optimizeLevel = std::min(options.optimizeLevel, 1);
+    options.shrinkLevel = std::min(options.shrinkLevel, 1);
+    PassRunner runner(module, options);
+    runner.setIsNested(true);
+    runner.add(create());
+    runner.run();
+  }
+
+  void runOnFunction(Module* module, Function* func) override {
+    if (!module->features.hasTailCall() || func->imported()) {
       return;
     }
-    tailExprs.insert(func->body);
-    Super::doWalkFunction(func);
+    this->module = module;
+    this->func = func;
+    walk(func->body);
     if (changed) {
-      ReFinalize().walkFunctionInModule(func, getModule());
-      PassRunner runner(getModule(), getPassOptions());
+      ReFinalize().walkFunctionInModule(func, module);
+      PassRunner runner(module, getPassOptions());
       runner.setIsNested(true);
       runner.add("dce");
       runner.runOnFunction(func);
