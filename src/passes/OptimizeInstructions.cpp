@@ -1611,6 +1611,17 @@ struct OptimizeInstructions
   // ref.as_non_null then the struct.set will still trap, of course, but that
   // will only happen *after* the call, which is wrong.
   void skipNonNullCast(Expression*& input, Expression* parent) {
+    // If we must never reorder code, then we cannot remove a non-null cast.
+    // Such removals are valid because we move the trap later (see the
+    // struct.set in the example above: we can remove the ref.as_non_null
+    // because the set will trap anyhow, so we are pushing the trap onward; in
+    // the example above we have a call we can't move past, and in neverReorder
+    // mode we need to care about things like branch hints, which do not have
+    // effects, hence the need for the special neverReorder flag).
+    if (neverReorder) {
+      return;
+    }
+
     // Check the other children for the ordering problem only if we find a
     // possible optimization, to avoid wasted work.
     bool checkedSiblings = false;
