@@ -451,6 +451,31 @@
  (delegate $try_outer)
 )
 
+# TryTable
+(try_table (catch $tag1 $dest1) (catch_all_ref $dest_all)
+ (nop)
+)
+
+(try_table (catch_ref $tag2 $new_dest1) (catch_all_ref $dest_all)
+ (unreachable)
+)
+
+(try_table (catch $tag1 $first_dest) (catch_ref $tag2 $new_dest1) (catch_all_ref $dest_all)
+ (unreachable)
+)
+
+(try_table (catch_ref $tag2 $new_dest1) (catch_all_ref $dest_all) (catch_ref $tag1 $appended_dest)
+ (unreachable)
+)
+
+(try_table (catch $tag1 $only_dest)
+ (unreachable)
+)
+
+(try_table (catch $tag1 $only_dest)
+ (unreachable)
+)
+
 # Throw
 (throw $bar
  (i32.const 6)
@@ -459,6 +484,11 @@
 
 # Rethrow
 (rethrow $l1)
+
+# ThrowRef
+(throw_ref
+ (ref.null noexn)
+)
 
 # TupleMake
 (tuple.make 2
