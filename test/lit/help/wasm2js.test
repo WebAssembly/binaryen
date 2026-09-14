@@ -194,6 +194,9 @@
 ;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --intrinsic-lowering                          lower away binaryen intrinsics
 ;; CHECK-EMPTY:
+;; CHECK-NEXT:   --jspi-hooks                                  wrap the JSPI import/export 
+;; CHECK-NEXT:                                                 boundary with lifecycle hooks
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --legalize-and-prune-js-interface             legalizes the import/export 
 ;; CHECK-NEXT:                                                 boundary and prunes when needed
 ;; CHECK-EMPTY:
