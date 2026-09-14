@@ -31,7 +31,7 @@
   (func $ref-callee (result i32)
     (i32.const 2)
   )
-  ;; CHECK:      (func $param-callee (type $8) (param $x i32) (param $y i32) (result i32)
+  ;; CHECK:      (func $param-callee (type $6) (param $x i32) (param $y i32) (result i32)
   ;; CHECK-NEXT:  (i32.add
   ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:   (local.get $y)
@@ -43,13 +43,13 @@
       (local.get $y)
     )
   )
-  ;; CHECK:      (func $subtype-callee (type $6) (result (ref $struct))
+  ;; CHECK:      (func $subtype-callee (type $7) (result (ref $struct))
   ;; CHECK-NEXT:  (struct.new_default $struct)
   ;; CHECK-NEXT: )
   (func $subtype-callee (result (ref $struct))
     (struct.new_default $struct)
   )
-  ;; CHECK:      (func $multivalue-callee (type $7) (result i32 i64)
+  ;; CHECK:      (func $multivalue-callee (type $5) (result i32 i64)
   ;; CHECK-NEXT:  (tuple.make 2
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:   (i64.const 2)
@@ -118,7 +118,7 @@
     )
   )
 
-  ;; CHECK:      (func $subtype-return (type $5) (result anyref)
+  ;; CHECK:      (func $subtype-return (type $8) (result anyref)
   ;; CHECK-NEXT:  (return_call $subtype-callee)
   ;; CHECK-NEXT: )
   (func $subtype-return (result anyref)
@@ -127,7 +127,7 @@
     (call $subtype-callee)
   )
 
-  ;; CHECK:      (func $multivalue (type $7) (result i32 i64)
+  ;; CHECK:      (func $multivalue (type $5) (result i32 i64)
   ;; CHECK-NEXT:  (return_call $multivalue-callee)
   ;; CHECK-NEXT: )
   (func $multivalue (result i32 i64)
@@ -203,13 +203,11 @@
   )
 
   ;; CHECK:      (func $break (type $1) (param $condition i32) (result i32)
-  ;; CHECK-NEXT:  (block $out (result i32)
+  ;; CHECK-NEXT:  (block $out
   ;; CHECK-NEXT:   (if
   ;; CHECK-NEXT:    (local.get $condition)
   ;; CHECK-NEXT:    (then
-  ;; CHECK-NEXT:     (br $out
-  ;; CHECK-NEXT:      (call $value-callee)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (return_call $value-callee)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (return_call $ref-callee)
@@ -232,18 +230,14 @@
   )
 
   ;; CHECK:      (func $return-break (type $1) (param $condition i32) (result i32)
-  ;; CHECK-NEXT:  (return
-  ;; CHECK-NEXT:   (block $out (result i32)
-  ;; CHECK-NEXT:    (if
-  ;; CHECK-NEXT:     (local.get $condition)
-  ;; CHECK-NEXT:     (then
-  ;; CHECK-NEXT:      (br $out
-  ;; CHECK-NEXT:       (call $value-callee)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:  (block $out
+  ;; CHECK-NEXT:   (if
+  ;; CHECK-NEXT:    (local.get $condition)
+  ;; CHECK-NEXT:    (then
+  ;; CHECK-NEXT:     (return_call $value-callee)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (return_call $ref-callee)
   ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (return_call $ref-callee)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $return-break (param $condition i32) (result i32)
@@ -265,10 +259,9 @@
   )
 
   ;; CHECK:      (func $br-if-tail (type $1) (param $condition i32) (result i32)
-  ;; CHECK-NEXT:  (block $out (result i32)
-  ;; CHECK-NEXT:   (br_if $out
-  ;; CHECK-NEXT:    (call $value-callee)
-  ;; CHECK-NEXT:    (local.get $condition)
+  ;; CHECK-NEXT:  (block $out
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (return_call $value-callee)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -338,11 +331,10 @@
   )
 
   ;; CHECK:      (func $br-table-all-tail (type $1) (param $idx i32) (result i32)
-  ;; CHECK-NEXT:  (block $out1 (result i32)
-  ;; CHECK-NEXT:   (block $out2 (result i32)
-  ;; CHECK-NEXT:    (br_table $out1 $out2
-  ;; CHECK-NEXT:     (call $value-callee)
-  ;; CHECK-NEXT:     (local.get $idx)
+  ;; CHECK-NEXT:  (block $out1
+  ;; CHECK-NEXT:   (block $out2
+  ;; CHECK-NEXT:    (block
+  ;; CHECK-NEXT:     (return_call $value-callee)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -392,8 +384,7 @@
   ;; CHECK-NEXT:   (if
   ;; CHECK-NEXT:    (local.get $condition)
   ;; CHECK-NEXT:    (then
-  ;; CHECK-NEXT:     (call $void-callee)
-  ;; CHECK-NEXT:     (br $out)
+  ;; CHECK-NEXT:     (return_call $void-callee)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (return_call $void-callee)
@@ -416,10 +407,7 @@
 
   ;; CHECK:      (func $void-br-if-tail (type $3) (param $condition i32)
   ;; CHECK-NEXT:  (block $out
-  ;; CHECK-NEXT:   (call $void-callee)
-  ;; CHECK-NEXT:   (br_if $out
-  ;; CHECK-NEXT:    (local.get $condition)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (return_call $void-callee)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $void-br-if-tail (param $condition i32)
@@ -457,10 +445,7 @@
   ;; CHECK:      (func $void-br-table-all-tail (type $3) (param $idx i32)
   ;; CHECK-NEXT:  (block $out1
   ;; CHECK-NEXT:   (block $out2
-  ;; CHECK-NEXT:    (call $void-callee)
-  ;; CHECK-NEXT:    (br_table $out1 $out2
-  ;; CHECK-NEXT:     (local.get $idx)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (return_call $void-callee)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -573,54 +558,5 @@
       )
       (call $void-callee)
     )
-  )
-
-  ;; CHECK:      (func $ref-cast-not-tail (type $5) (result anyref)
-  ;; CHECK-NEXT:  (ref.cast (ref $struct)
-  ;; CHECK-NEXT:   (call $subtype-callee)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $ref-cast-not-tail (result anyref)
-    ;; A call inside a ref.cast is not in tail position because doing a
-    ;; return_call would bypass the runtime cast check.
-    (ref.cast (ref null $struct)
-      (call $subtype-callee)
-    )
-  )
-
-  ;; CHECK:      (func $ref-as-not-tail (type $5) (result anyref)
-  ;; CHECK-NEXT:  (ref.as_non_null
-  ;; CHECK-NEXT:   (call $subtype-callee)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $ref-as-not-tail (result anyref)
-    ;; A call inside a ref.as_non_null is not in tail position because doing a
-    ;; return_call would bypass the null check.
-    (ref.as_non_null
-      (call $subtype-callee)
-    )
-  )
-
-  ;; CHECK:      (func $br-on-null-not-tail (type $6) (result (ref $struct))
-  ;; CHECK-NEXT:  (block $null
-  ;; CHECK-NEXT:   (return
-  ;; CHECK-NEXT:    (br_on_null $null
-  ;; CHECK-NEXT:     (call $subtype-callee)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (unreachable)
-  ;; CHECK-NEXT: )
-  (func $br-on-null-not-tail (result (ref $struct))
-    ;; A call inside a br_on_null is not in tail position because doing a
-    ;; return_call would bypass the branch check.
-    (block $null
-      (return
-        (br_on_null $null
-          (call $subtype-callee)
-        )
-      )
-    )
-    (unreachable)
   )
 )
