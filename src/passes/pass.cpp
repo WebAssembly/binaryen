@@ -423,6 +423,9 @@ void PassRegistry::registerPasses() {
   registerPass("remove-relaxed-simd",
                "replaces relaxed SIMD instructions with unreachable",
                createRemoveRelaxedSIMDPass);
+  registerPass("remove-empty-function-exports",
+               "removes exports of empty functions",
+               createRemoveEmptyFunctionExportsPass);
   registerPass("remove-exports",
                "removes exports using a wildcard",
                createRemoveExportsPass);

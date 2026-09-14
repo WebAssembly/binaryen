@@ -139,6 +139,7 @@ Pass* createPropagateGlobalsGloballyPass();
 Pass* createRandomizeBranchHintsPass();
 Pass* createRemoveNonJSOpsPass();
 Pass* createRemoveRelaxedSIMDPass();
+Pass* createRemoveEmptyFunctionExportsPass();
 Pass* createRemoveExportsPass();
 Pass* createRemoveImportsPass();
 Pass* createRemoveMemoryInitPass();

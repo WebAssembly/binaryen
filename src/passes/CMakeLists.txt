@@ -110,6 +110,7 @@ set(passes_SOURCES
   TraceCalls.cpp
   RandomizeBranchHints.cpp
   RedundantSetElimination.cpp
+  RemoveEmptyFunctionExports.cpp
   RemoveExports.cpp
   RemoveImports.cpp
   RemoveMemoryInit.cpp
