@@ -2336,6 +2336,10 @@ class PreserveImportsExportsJS(TestCaseHandler):
                 #
                 # Ignore it, as details of traces differ based on optimizations.
                 continue
+            elif not line:
+                # V8 may print blank lines before stack traces when the top
+                # frame has no script location (e.g. after a return_call to JS).
+                continue
             cleaned.append(line)
         cleaned = '\n'.join(cleaned)
 
@@ -2765,6 +2769,7 @@ opt_choices = [
     ("--simplify-locals-notee",),
     ("--simplify-locals-notee-nostructure",),
     ("--ssa",),
+    ("--tail-call",),
     ("--tuple-optimization",),
     ("--type-finalizing",),
     ("--type-refining",),

@@ -137,6 +137,7 @@ set(passes_SOURCES
   StackCheck.cpp
   StripEH.cpp
   SSAify.cpp
+  TailCall.cpp
   TupleOptimization.cpp
   TranslateEH.cpp
   TypeFinalizing.cpp

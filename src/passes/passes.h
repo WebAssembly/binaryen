@@ -190,6 +190,7 @@ Pass* createStubUnsupportedJSOpsPass();
 Pass* createSSAifyPass();
 Pass* createSSAifyNoMergePass();
 Pass* createTable64LoweringPass();
+Pass* createTailCallPass();
 Pass* createTranslateToExnrefPass();
 Pass* createTupleOptimizationPass();
 Pass* createTypeGeneralizingPass();
