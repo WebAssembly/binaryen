@@ -137,6 +137,32 @@ def run_wasm_metadce_tests():
         shared.fail_if_not_identical_to_file(stdout, expected + '.stdout')
 
 
+def run_one_wasm_reduce_test(t, stdout=None):
+    base_name = os.path.splitext(os.path.basename(t))[0]
+    print('..', os.path.basename(t), file=stdout)
+    a_wasm = f'reduce_{base_name}_a.wasm'
+    b_wasm = f'reduce_{base_name}_b.wasm'
+    c_wasm = f'reduce_{base_name}_c.wasm'
+    a_wat = f'reduce_{base_name}_a.wat'
+    try:
+        support.run_command(shared.WASM_AS + [t, '-o', a_wasm, '-all'], stdout=stdout)
+        cmd = shared.WASM_OPT[0]
+        support.run_command(
+            shared.WASM_REDUCE + [a_wasm, f'--command={cmd} {b_wasm} --fuzz-exec -all', '-t', b_wasm, '-w', c_wasm, '--timeout=4'],
+            stdout=stdout,
+            stderr=subprocess.PIPE,
+        )
+        expected = t + '.txt'
+        support.run_command(shared.WASM_DIS + [c_wasm, '-o', a_wat], stdout=stdout)
+        with open(a_wat) as seen:
+            shared.fail_if_not_identical_to_file(seen.read(), expected)
+    finally:
+        shared.delete_from_orbit(a_wasm)
+        shared.delete_from_orbit(b_wasm)
+        shared.delete_from_orbit(c_wasm)
+        shared.delete_from_orbit(a_wat)
+
+
 def run_wasm_reduce_tests():
     if not shared.has_shell_timeout():
         print_heading('skipping wasm-reduce testcases')
@@ -145,16 +171,8 @@ def run_wasm_reduce_tests():
     print_heading('checking wasm-reduce testcases')
 
     # fixed testcases
-    for t in shared.get_tests(shared.get_test_dir('reduce'), ['.wast']):
-        print('..', os.path.basename(t))
-        # convert to wasm
-        support.run_command(shared.WASM_AS + [t, '-o', 'a.wasm', '-all'])
-        cmd = shared.WASM_OPT[0]
-        support.run_command(shared.WASM_REDUCE + ['a.wasm', f'--command={cmd} b.wasm --fuzz-exec -all ', '-t', 'b.wasm', '-w', 'c.wasm', '--timeout=4'])
-        expected = t + '.txt'
-        support.run_command(shared.WASM_DIS + ['c.wasm', '-o', 'a.wat'])
-        with open('a.wat') as seen:
-            shared.fail_if_not_identical_to_file(seen.read(), expected)
+    tests = shared.get_tests(shared.get_test_dir('reduce'), ['.wast'])
+    shared.run_parallel_tests(run_one_wasm_reduce_test, tests)
 
     # run on a nontrivial fuzz testcase, for general coverage
     # this is very slow in ThreadSanitizer, so avoid it there
@@ -284,6 +302,44 @@ def run_validator_tests():
     support.run_command(cmd, expected_status=1)
 
 
+def run_one_example_test(t, stdout=None):
+    src = os.path.join(shared.get_test_dir('example'), t)
+    expected = os.path.join(shared.get_test_dir('example'), '.'.join(t.split('.')[:-1]) + '.txt')
+    # build the C file separately
+    libpath = shared.options.binaryen_lib
+    output_file = os.path.basename(os.path.splitext(t)[0])
+    objfile = output_file + '.o'
+    compile = [shared.NATIVECC, src, '-c', '-o', objfile,
+             '-I' + os.path.join(shared.options.binaryen_root, 'src'), '-g', '-L' + libpath, '-pthread']
+    if src.endswith('.cpp'):
+        compile += ['-std=c++' + str(shared.cxx_standard)]
+    if os.environ.get('COMPILER_FLAGS'):
+        for f in os.environ.get('COMPILER_FLAGS').split(' '):
+            compile.append(f)
+    print('build: ', ' '.join(compile), file=stdout)
+    proc = subprocess.run(compile, capture_output=True, text=True)
+    if proc.returncode != 0:
+        raise Exception(f"Failed to compile {src}:\n{proc.stderr or proc.stdout}")
+
+    cmd = ['-I' + os.path.join(shared.options.binaryen_root, 't'), '-g', '-pthread', '-o', output_file]
+    # Link against the binaryen C library DSO, using an executable-relative rpath
+    cmd = [objfile, '-L' + libpath, '-lbinaryen'] + cmd + ['-Wl,-rpath,' + libpath]
+    print('  ', t, src, expected, file=stdout)
+    if os.environ.get('COMPILER_FLAGS'):
+        for f in os.environ.get('COMPILER_FLAGS').split(' '):
+            cmd.append(f)
+    cmd = [shared.NATIVEXX, '-std=c++' + str(shared.cxx_standard)] + cmd
+    print('link: ', ' '.join(cmd), file=stdout)
+    proc = subprocess.run(cmd, capture_output=True, text=True)
+    if proc.returncode != 0:
+        raise Exception(f"Failed to link {output_file}:\n{proc.stderr or proc.stdout}")
+    print('run...', output_file, file=stdout)
+    proc = subprocess.run([os.path.abspath(output_file)], capture_output=True, text=True)
+    if proc.returncode != 0:
+        raise Exception(f"Failed to run {output_file}:\n{proc.stderr or proc.stdout}")
+    shared.fail_if_not_identical_to_file(proc.stdout, expected)
+
+
 def run_example_tests():
     print_heading('checking native example testcases...')
     if not shared.NATIVECC or not shared.NATIVEXX:
@@ -293,38 +349,8 @@ def run_example_tests():
     if shared.skip_if_on_windows('example'):
         return
 
-    for t in shared.get_tests(shared.get_test_dir('example')):
-        if not t.endswith(('.c', '.cpp')):
-            continue
-        src = os.path.join(shared.get_test_dir('example'), t)
-        expected = os.path.join(shared.get_test_dir('example'), '.'.join(t.split('.')[:-1]) + '.txt')
-        # build the C file separately
-        libpath = shared.options.binaryen_lib
-        output_file = os.path.basename(os.path.splitext(t)[0])
-        objfile = output_file + '.o'
-        compile = [shared.NATIVECC, src, '-c', '-o', objfile,
-                 '-I' + os.path.join(shared.options.binaryen_root, 'src'), '-g', '-L' + libpath, '-pthread']
-        if src.endswith('.cpp'):
-            compile += ['-std=c++' + str(shared.cxx_standard)]
-        if os.environ.get('COMPILER_FLAGS'):
-            for f in os.environ.get('COMPILER_FLAGS').split(' '):
-                compile.append(f)
-        print('build: ', ' '.join(compile))
-        subprocess.check_call(compile)
-
-        cmd = ['-I' + os.path.join(shared.options.binaryen_root, 't'), '-g', '-pthread', '-o', output_file]
-        # Link against the binaryen C library DSO, using an executable-relative rpath
-        cmd = [objfile, '-L' + libpath, '-lbinaryen'] + cmd + ['-Wl,-rpath,' + libpath]
-        print('  ', t, src, expected)
-        if os.environ.get('COMPILER_FLAGS'):
-            for f in os.environ.get('COMPILER_FLAGS').split(' '):
-                cmd.append(f)
-        cmd = [shared.NATIVEXX, '-std=c++' + str(shared.cxx_standard)] + cmd
-        print('link: ', ' '.join(cmd))
-        subprocess.check_call(cmd)
-        print('run...', output_file)
-        actual = subprocess.check_output([os.path.abspath(output_file)], text=True)
-        shared.fail_if_not_identical_to_file(actual, expected)
+    tests = shared.get_tests(shared.get_test_dir('example'), ['.c', '.cpp'])
+    shared.run_parallel_tests(run_one_example_test, tests)
 
 
 def run_unittest():

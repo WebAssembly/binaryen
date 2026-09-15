@@ -216,7 +216,8 @@ if not any(os.path.isfile(os.path.join(options.binaryen_bin, f))
 options.binaryen_test = os.path.join(options.binaryen_root, 'test')
 
 if not options.out_dir:
-    options.out_dir = os.path.join(options.binaryen_root, 'out', 'test')
+    default_out_dir = os.path.join(options.binaryen_root, 'out', 'test')
+    options.out_dir = os.environ.get('BINARYEN_OUT_DIR', default_out_dir)
 
 if not os.path.exists(options.out_dir):
     os.makedirs(options.out_dir)

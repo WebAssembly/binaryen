@@ -484,3 +484,59 @@
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT:  (call $import)
 ;; CHECK-NEXT: )
+(module
+  ;; Return call with a non-serializable parameter (continuation) stops
+  ;; evaluating without crashing when partially evaluating the caller.
+  ;; CHECK:      (type $func (func))
+  (type $func (func))
+  ;; CHECK:      (type $cont (cont $func))
+  (type $cont (cont $func))
+
+  ;; CHECK:      (type $2 (func (param (ref $cont))))
+
+  ;; CHECK:      (global $g (mut i32) (i32.const 2))
+  (global $g (export "g") (mut i32) (i32.const 0))
+
+  ;; CHECK:      (elem declare func $callee)
+  (elem declare func $callee)
+
+  ;; CHECK:      (export "g" (global $g))
+
+  ;; CHECK:      (export "test" (func $test_3))
+
+  ;; CHECK:      (func $callee (type $func)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $callee (type $func)
+    (nop)
+  )
+
+  ;; CHECK:      (func $target (type $2) (param $0 (ref $cont))
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $target (param (ref $cont))
+    (nop)
+  )
+
+  (func $test (export "test")
+    (global.set $g
+      (i32.const 1)
+    )
+    (global.set $g
+      (i32.const 2)
+    )
+    (return_call $target
+      (cont.new $cont
+        (ref.func $callee)
+      )
+    )
+  )
+)
+
+;; CHECK:      (func $test_3 (type $func)
+;; CHECK-NEXT:  (return_call $target
+;; CHECK-NEXT:   (cont.new $cont
+;; CHECK-NEXT:    (ref.func $callee)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )

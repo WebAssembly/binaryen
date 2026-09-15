@@ -839,9 +839,10 @@ ParsedAndedConstraints ParsedAndedConstraints::parse(Expression* curr) {
 
     Binary* b;
     if (matches(curr, binary(&b, Abstract::And, any(), any()))) {
-      // An AND can be recursively processed: both sides must be true.
-      work.push_back(b->left);
+      // An AND can be recursively processed: both sides must be true. Push them
+      // in reverse order, so we process them in the natural order of execution.
       work.push_back(b->right);
+      work.push_back(b->left);
       continue;
     }
     // TODO: support OR
