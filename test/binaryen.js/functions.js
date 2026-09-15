@@ -10,7 +10,7 @@ function cleanInfo(info) {
 
 var module = new binaryen.Module();
 
-var func = module.addFunction("a-function", binaryen.none, binaryen.i32, [],
+var func = module.addFunction("a-function", binaryen.void, binaryen.i32, [],
   module.i32.add(
     module.i32.const(1),
     module.i32.const(2)

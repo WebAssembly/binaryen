@@ -1,5 +1,5 @@
 var builder = new binaryen.TypeBuilder(4);
-builder.setSignatureType(0, binaryen.createType([binaryen.i32]), binaryen.none);
+builder.setSignatureType(0, binaryen.createType([binaryen.i32]), binaryen.void);
 builder.setStructType(1, [
   { type: binaryen.i32, packedType: binaryen.i16, mutable: true },
   { type: binaryen.f64, packedType: binaryen.notPacked, mutable: true }
@@ -162,17 +162,17 @@ var valueList = [
   // string
   module.string.const("hello 🌎"),
 ];
-module.addFunction("main", binaryen.none, binaryen.none, [],
+module.addFunction("main", binaryen.void, binaryen.void, [],
   module.block(
     null,
     valueList.map(value => {
       var type = binaryen.getExpressionType(value);
-      if (type === binaryen.none || type === binaryen.unreachable)
+      if (type === binaryen.void || type === binaryen.unreachable)
         return value;
       else
         return module.drop(value);
     }),
-    binaryen.none
+    binaryen.void
   )
 );
 

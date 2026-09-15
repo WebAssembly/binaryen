@@ -13,7 +13,7 @@ module.setMemory(1, -1, null, [
 
 // table with offset
 
-var func = module.addFunction("func", binaryen.none, binaryen.none, [], module.nop());
+var func = module.addFunction("func", binaryen.void, binaryen.void, [], module.nop());
 
 module.addGlobalImport("table_base", "env", "table_base", binaryen.i32, false);
 module.addTable("0", 1, -1, binaryen.funcref);

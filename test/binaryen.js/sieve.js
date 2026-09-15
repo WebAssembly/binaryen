@@ -51,7 +51,7 @@ var body = module.block(
     // calculate how many primes there are
     module.return(module.local.get(0, binaryen.i32))
   ],
-  binaryen.none
+  binaryen.void
 );
 
 // Create the add function

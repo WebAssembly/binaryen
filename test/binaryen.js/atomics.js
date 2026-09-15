@@ -7,7 +7,7 @@ var wast = `
 var module = binaryen.parseText(wast);
 
 // i32/i64.atomic.load/store
-module.addFunction("main", binaryen.none, binaryen.none, [], module.block("", [
+module.addFunction("main", binaryen.void, binaryen.void, [], module.block("", [
   // i32
   module.i32.atomic.store(0,
     module.i32.const(0),

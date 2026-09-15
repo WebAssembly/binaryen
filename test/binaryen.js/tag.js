@@ -13,7 +13,7 @@ module.setFeatures(binaryen.Features.ReferenceTypes |
 
 var pairType = binaryen.createType([binaryen.i32, binaryen.f32]);
 
-var tag = module.addTag("a-tag", binaryen.i32, binaryen.none);
+var tag = module.addTag("a-tag", binaryen.i32, binaryen.void);
 
 console.log("GetTag is equal: " + (tag === module.getTag("a-tag")));
 
@@ -21,7 +21,7 @@ var tagInfo = binaryen.getTagInfo(tag);
 console.log("getTagInfo=" + JSON.stringify(cleanInfo(tagInfo)));
 
 module.addTagExport("a-tag", "a-tag-exp");
-module.addTagImport("a-tag-imp", "module", "base", pairType, binaryen.none);
+module.addTagImport("a-tag-imp", "module", "base", pairType, binaryen.void);
 
 assert(module.validate());
 console.log(module.emitText());
