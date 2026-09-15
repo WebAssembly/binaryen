@@ -1721,13 +1721,16 @@ public:
   Signature getSignatureByTypeIndex(Index index);
   Signature getSignatureByFunctionIndex(Index index);
 
-  Name getNextLabel();
-
   // We read the names section first so we know in advance what names various
   // elements should have. Store the information for use when building
   // expressions.
   std::unordered_map<Index, Name> functionNames;
   std::unordered_map<Index, std::unordered_map<Index, Name>> localNames;
+  // Label names, indexed by function index and then by the index of the label
+  // in the function. Labels are indexed in the order the instructions that
+  // introduce them appear in the function body, including the ones that have
+  // no name in the name section.
+  std::unordered_map<Index, std::unordered_map<Index, Name>> labelNames;
   std::unordered_map<Index, Name> typeNames;
   std::unordered_map<Index, std::unordered_map<Index, Name>> fieldNames;
   std::unordered_map<Index, Name> tableNames;
@@ -1743,6 +1746,14 @@ public:
     usedGlobalNames, usedTagNames;
 
   Function* currFunction = nullptr;
+  // The label names of the function we are currently reading, if it has any,
+  // and the index of the next label in it.
+  const std::unordered_map<Index, Name>* currLabelNames = nullptr;
+  Index nextLabelIndex = 0;
+
+  // Returns the name the name section gives to the next label of the current
+  // function, or a null name if it has none, and advances the label index.
+  Name getNextLabelName();
   // before we see a function (like global init expressions), there is no end of
   // function to check
   Index endOfFunction = -1;
@@ -1753,6 +1764,7 @@ public:
   void readFunctions();
   void readVars();
   void setLocalNames(Function& func, Index i);
+  void setLabelNames(Index i);
 
   Result<> readInst();
 

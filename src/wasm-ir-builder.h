@@ -105,6 +105,13 @@ public:
                               Type inputType = Type::none);
   Result<> visitEnd();
 
+  // Set the name to use for the label of the scope we are currently building,
+  // if that scope ends up needing a label. This is used for names that come
+  // from the binary name section, which are optional: unlike names parsed from
+  // the text format, they should not cause us to introduce blocks that would
+  // not otherwise exist just to have something to hold the name.
+  void setScopeNameHint(Name name);
+
   // Used to visit break nodes when traversing a single block without its
   // context. The type indicates how many values the break carries to its
   // destination.
@@ -413,6 +420,11 @@ private:
     // For Try/Catch/CatchAll scopes, we need to separately track a label used
     // for branches, since the normal label is only used for delegates.
     Name branchLabel;
+
+    // The name to use if we end up needing a label for this scope. Unlike
+    // `label`, this does not itself cause the scope to be labeled. See
+    // `setScopeNameHint`.
+    Name nameHint;
 
     bool labelUsed = false;
 

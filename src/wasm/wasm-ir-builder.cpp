@@ -1445,8 +1445,11 @@ Result<Name> IRBuilder::getLabelName(Index label, bool forDelegate) {
     useTryBranchLabel ? (*scope)->branchLabel : (*scope)->label;
 
   if (!scopeLabel) {
-    // The scope does not already have a name, so we need to create one.
-    if ((*scope)->getBlock()) {
+    // The scope does not already have a name, so we need to create one. Use the
+    // name from the name section, if we have one.
+    if (auto hint = (*scope)->nameHint) {
+      scopeLabel = makeFresh(hint);
+    } else if ((*scope)->getBlock()) {
       scopeLabel = makeFresh("block", blockHint++);
     } else {
       scopeLabel = makeFresh("label", labelHint++);
@@ -1456,6 +1459,12 @@ Result<Name> IRBuilder::getLabelName(Index label, bool forDelegate) {
     (*scope)->labelUsed = true;
   }
   return scopeLabel;
+}
+
+void IRBuilder::setScopeNameHint(Name name) {
+  if (!scopeStack.empty()) {
+    scopeStack.back().nameHint = name;
+  }
 }
 
 Result<> IRBuilder::makeNop() {

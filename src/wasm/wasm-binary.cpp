@@ -3358,6 +3358,25 @@ void WasmBinaryReader::setLocalNames(Function& func, Index i) {
   }
 }
 
+void WasmBinaryReader::setLabelNames(Index i) {
+  if (auto it = labelNames.find(i); it != labelNames.end()) {
+    currLabelNames = &it->second;
+  } else {
+    currLabelNames = nullptr;
+  }
+  nextLabelIndex = 0;
+}
+
+Name WasmBinaryReader::getNextLabelName() {
+  auto index = nextLabelIndex++;
+  if (currLabelNames) {
+    if (auto it = currLabelNames->find(index); it != currLabelNames->end()) {
+      return it->second;
+    }
+  }
+  return Name();
+}
+
 void WasmBinaryReader::readFunctionSignatures() {
   size_t num = getU32LEB();
   auto numImports = wasm.functions.size();
@@ -3373,6 +3392,14 @@ void WasmBinaryReader::readFunctionSignatures() {
     if (index >= num + numImports) {
       std::cerr << "warning: function index out of bounds in name section: "
                    "locals at index "
+                << index << '\n';
+    }
+  }
+  // Likewise for the label names subsection.
+  for (auto& [index, labels] : labelNames) {
+    if (index >= num + numImports) {
+      std::cerr << "warning: function index out of bounds in name section: "
+                   "labels at index "
                 << index << '\n';
     }
   }
@@ -3452,6 +3479,7 @@ void WasmBinaryReader::readFunctions() {
 
     readVars();
     setLocalNames(*func, numFuncImports + i);
+    setLabelNames(numFuncImports + i);
     {
       // Process the function body. Even if we are skipping function bodies we
       // need to not skip the start function. That contains important code for
@@ -3485,12 +3513,25 @@ void WasmBinaryReader::readFunctions() {
         if (!builder.empty()) {
           throwError("expected function end");
         }
+        if (currLabelNames) {
+          // Check that the labels named in the name section actually exist.
+          Index maxIndex = 0;
+          for (auto& [index, name] : *currLabelNames) {
+            maxIndex = std::max(maxIndex, index);
+          }
+          if (maxIndex >= nextLabelIndex) {
+            std::cerr << "warning: label index out of bounds in name section: "
+                      << maxIndex << " in function " << (numFuncImports + i)
+                      << '\n';
+          }
+        }
       }
     }
 
     sourceMapReader.finishFunction();
     TypeUpdating::handleNonDefaultableLocals(func.get(), wasm);
     currFunction = nullptr;
+    currLabelNames = nullptr;
   }
 }
 
@@ -3543,12 +3584,22 @@ Result<> WasmBinaryReader::readInst() {
   }
   uint8_t code = getInt8();
   switch (code) {
-    case BinaryConsts::Block:
-      return builder.makeBlock(Name(), getBlockType());
-    case BinaryConsts::If:
-      return builder.makeIf(Name(), getBlockType());
-    case BinaryConsts::Loop:
-      return builder.makeLoop(Name(), getBlockType());
+    case BinaryConsts::Block: {
+      auto name = getNextLabelName();
+      return builder.makeBlock(name, getBlockType());
+    }
+    case BinaryConsts::If: {
+      // An `if` cannot hold a name in Binaryen IR, so only use the name if we
+      // end up needing a label anyhow.
+      auto name = getNextLabelName();
+      auto result = builder.makeIf(Name(), getBlockType());
+      builder.setScopeNameHint(name);
+      return result;
+    }
+    case BinaryConsts::Loop: {
+      auto name = getNextLabelName();
+      return builder.makeLoop(name, getBlockType());
+    }
     case BinaryConsts::Br:
       return builder.makeBreak(getU32LEB(), false);
     case BinaryConsts::BrIf:
@@ -3636,9 +3687,16 @@ Result<> WasmBinaryReader::readInst() {
       return builder.makeTableGet(getTableName(getU32LEB()));
     case BinaryConsts::TableSet:
       return builder.makeTableSet(getTableName(getU32LEB()));
-    case BinaryConsts::Try:
-      return builder.makeTry(Name(), getBlockType());
+    case BinaryConsts::Try: {
+      // As with `if`, only use the name if we end up needing a label.
+      auto name = getNextLabelName();
+      auto result = builder.makeTry(Name(), getBlockType());
+      builder.setScopeNameHint(name);
+      return result;
+    }
     case BinaryConsts::TryTable: {
+      // As with `if`, only use the name if we end up needing a label.
+      auto name = getNextLabelName();
       auto type = getBlockType();
       std::vector<Name> tags;
       std::vector<Index> labels;
@@ -3655,7 +3713,9 @@ Result<> WasmBinaryReader::readInst() {
         isRefs.push_back(code == BinaryConsts::CatchRef ||
                          code == BinaryConsts::CatchAllRef);
       }
-      return builder.makeTryTable(Name(), type, tags, labels, isRefs);
+      auto result = builder.makeTryTable(Name(), type, tags, labels, isRefs);
+      builder.setScopeNameHint(name);
+      return result;
     }
     case BinaryConsts::Throw:
       return builder.makeThrow(getTagName(getU32LEB()));
@@ -5474,6 +5534,19 @@ void WasmBinaryReader::readNames(size_t sectionPos, size_t payloadLen) {
           auto rawName = getInlineString();
           auto name = processor.process(rawName);
           localNames[funcIndex][localIndex] = name;
+        }
+      }
+    } else if (nameType == Subsection::NameLabel) {
+      auto numFuncs = getU32LEB();
+      for (size_t i = 0; i < numFuncs; i++) {
+        auto funcIndex = getU32LEB();
+        auto numLabels = getU32LEB();
+        NameProcessor processor;
+        for (size_t j = 0; j < numLabels; j++) {
+          auto labelIndex = getU32LEB();
+          auto rawName = getInlineString();
+          auto name = processor.process(rawName);
+          labelNames[funcIndex][labelIndex] = name;
         }
       }
     } else if (nameType == Subsection::NameType) {
