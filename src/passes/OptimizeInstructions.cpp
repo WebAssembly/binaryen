@@ -49,6 +49,7 @@
 
 #include "call-utils.h"
 #include "support/utilities.h"
+#include "wasm-type.h"
 
 // TODO: Use the new sign-extension opcodes where appropriate. This needs to be
 // conditionalized on the availability of atomics.
@@ -1610,6 +1611,17 @@ struct OptimizeInstructions
   // ref.as_non_null then the struct.set will still trap, of course, but that
   // will only happen *after* the call, which is wrong.
   void skipNonNullCast(Expression*& input, Expression* parent) {
+    // If we must never reorder code, then we cannot remove a non-null cast.
+    // Such removals are valid because we move the trap later (see the
+    // struct.set in the example above: we can remove the ref.as_non_null
+    // because the set will trap anyhow, so we are pushing the trap onward; in
+    // the example above we have a call we can't move past, and in neverReorder
+    // mode we need to care about things like branch hints, which do not have
+    // effects, hence the need for the special neverReorder flag).
+    if (neverReorder) {
+      return;
+    }
+
     // Check the other children for the ordering problem only if we find a
     // possible optimization, to avoid wasted work.
     bool checkedSiblings = false;
@@ -2827,6 +2839,51 @@ struct OptimizeInstructions
   void visitRefGetDesc(RefGetDesc* curr) {
     skipNonNullCast(curr->ref, curr);
     trapOnNull(curr, curr->ref);
+  }
+
+  void visitPublish(Publish* curr) {
+    if (curr->type == Type::unreachable) {
+      return;
+    }
+
+    // Publish of a reference that cannot be a shared array or struct can be
+    // removed.
+    auto canBeSharedArrayOrStruct = [](Type type) {
+      if (!type.isRef()) {
+        return false;
+      }
+      auto ht = type.getHeapType();
+      if (ht.isBottom() || ht.isMaybeShared(HeapType::i31)) {
+        return false;
+      }
+      return HeapType::isSubType(ht, HeapTypes::any.getBasic(Shared));
+    };
+
+    if (!canBeSharedArrayOrStruct(getFallthroughType(curr->ref))) {
+      replaceCurrent(curr->ref);
+      return;
+    }
+
+    auto isAllocation = [](Expression* expr) {
+      return expr->is<StructNew>() || expr->is<ArrayNew>() ||
+             expr->is<ArrayNewData>() || expr->is<ArrayNewElem>() ||
+             expr->is<ArrayNewFixed>();
+    };
+
+    // Publish of publish or of a struct/array allocation can be removed.
+    Expression* fallthrough = curr->ref;
+    while (true) {
+      if (fallthrough->is<Publish>() || isAllocation(fallthrough)) {
+        replaceCurrent(curr->ref);
+        return;
+      }
+      auto* next = Properties::getImmediateFallthrough(
+        fallthrough, getPassOptions(), *getModule());
+      if (next == fallthrough) {
+        break;
+      }
+      fallthrough = next;
+    }
   }
 
   void visitTupleExtract(TupleExtract* curr) {

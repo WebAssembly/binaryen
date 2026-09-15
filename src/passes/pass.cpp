@@ -575,12 +575,6 @@ void PassRegistry::registerPasses() {
   registerPass("translate-to-exnref",
                "translate old Phase 3 EH instructions to new ones with exnref",
                createTranslateToExnrefPass);
-  registerPass("trap-mode-clamp",
-               "replace trapping operations with clamping semantics",
-               createTrapModeClamp);
-  registerPass("trap-mode-js",
-               "replace trapping operations with js semantics",
-               createTrapModeJS);
   registerPass("tuple-optimization",
                "optimize trivial tuples away",
                createTupleOptimizationPass);

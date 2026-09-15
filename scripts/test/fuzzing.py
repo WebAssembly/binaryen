@@ -118,6 +118,7 @@ unfuzzable = [
     'waitqueue.wast',
     'gufa-waitqueue.wast',
     'publish.wast',
+    'optimize-instructions-publish.wast',
     # TODO: fix handling of the non-utf8 names here
     'name-high-bytes.wast',
     # JS interop testcases have complex js-wasm interactions

@@ -559,12 +559,6 @@
 ;; CHECK-NEXT:   --translate-to-new-eh                         deprecated; same as 
 ;; CHECK-NEXT:                                                 translate-to-exnref
 ;; CHECK-EMPTY:
-;; CHECK-NEXT:   --trap-mode-clamp                             replace trapping operations with
-;; CHECK-NEXT:                                                 clamping semantics
-;; CHECK-EMPTY:
-;; CHECK-NEXT:   --trap-mode-js                                replace trapping operations with
-;; CHECK-NEXT:                                                 js semantics
-;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --tuple-optimization                          optimize trivial tuples away
 ;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --type-finalizing                             mark all leaf types as final

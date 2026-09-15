@@ -1927,11 +1927,11 @@ TEST(ConstraintTest, ParseAnd) {
     auto parsed = ParsedAndedConstraints::parse(expr);
     EXPECT_FALSE(parsed.hasUnknown);
     ASSERT_EQ(parsed.size(), 2);
-    // Work stack processes right then left.
+    // Work stack processes left then right.
     EXPECT_EQ(parsed[0],
-              (LocalConstraint{1, Constraint{Eq, {Literal(int32_t(2))}}}));
-    EXPECT_EQ(parsed[1],
               (LocalConstraint{0, Constraint{Eq, {Literal(int32_t(1))}}}));
+    EXPECT_EQ(parsed[1],
+              (LocalConstraint{1, Constraint{Eq, {Literal(int32_t(2))}}}));
   }
 
   // 2. AND with known constraint and unknown expression (call): Parses the

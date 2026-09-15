@@ -1217,26 +1217,29 @@ start_eval:
 
       if (flow.breakTo == RETURN_CALL_FLOW) {
         // The return-called function is stored in the last value.
-        func = wasm.getFunction(flow.values.back().getFunc());
+        auto* nextFunc = wasm.getFunction(flow.values.back().getFunc());
         flow.values.pop_back();
-        params = std::move(flow.values);
+        auto nextParams = std::move(flow.values);
 
         // Serialize the arguments for the new function and save the module
         // state in case we fail to eval the new function.
-        localExprs.clear();
-        for (auto& param : params) {
+        std::vector<Expression*> nextLocalExprs;
+        for (auto& param : nextParams) {
           auto* serialized = interface.getSerialization(param);
           if (!serialized) {
             break;
           }
-          localExprs.push_back(serialized);
+          nextLocalExprs.push_back(serialized);
         }
-        if (localExprs.size() < params.size()) {
+        if (nextLocalExprs.size() < nextParams.size()) {
           if (!quiet) {
             std::cout << "  ...stopping due to non-serializable param\n";
           }
           break;
         }
+        func = nextFunc;
+        params = std::move(nextParams);
+        localExprs = std::move(nextLocalExprs);
         interface.applyToModule();
         goto start_eval;
       }
