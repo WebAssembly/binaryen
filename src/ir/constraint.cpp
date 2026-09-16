@@ -764,7 +764,6 @@ struct LocalOperations {
   // tee. Returns the index and type if so, and notes it in our vector.
   struct LocalOperation {
     Index index;
-    Type type;
   };
   std::optional<LocalOperation> parse(Expression* curr) {
     auto handleNestedSets = [&](Expression* from) {
@@ -775,7 +774,7 @@ struct LocalOperations {
 
     if (auto* get = curr->dynCast<LocalGet>()) {
       vec.push_back(get);
-      return LocalOperation{get->index, get->type};
+      return LocalOperation{get->index};
     }
     if (auto* set = curr->dynCast<LocalSet>()) {
       // We are parsing expressions in a tree, not none-typed items in a block.
@@ -791,7 +790,7 @@ struct LocalOperations {
       }
 
       vec.push_back(set);
-      return LocalOperation{set->index, set->type};
+      return LocalOperation{set->index};
     }
     // Unrecognized. As above, we must scan for nested sets.
     handleNestedSets(curr);
@@ -837,8 +836,8 @@ localConstraintParseInternal(Expression* curr,
     [&](Expression* value) -> std::optional<LocalConstraint> {
     if (auto localOp = localOperations.parse(value)) {
       // Canonicalize EqZ to Eq of 0.
-      auto value = Literal::makeZero(localOp->type);
-      return LocalConstraint{localOp->index, Constraint{Abstract::Eq, {value}}};
+      auto zero = Literal::makeZero(value->type);
+      return LocalConstraint{localOp->index, Constraint{Abstract::Eq, {zero}}};
     }
     // TODO: Recursively parse and reverse a constraint
     return {};
@@ -850,7 +849,7 @@ localConstraintParseInternal(Expression* curr,
       Expression* nested;
       if (matches(u->value, unary(Abstract::EqZ, any(&nested)))) {
         if (auto localOp = localOperations.parse(nested)) {
-          auto value = Literal::makeZero(localOp->type);
+          auto value = Literal::makeZero(nested->type);
           return LocalConstraint{localOp->index,
                                  Constraint{Abstract::Ne, {value}}};
         }
@@ -979,7 +978,7 @@ ParsedAndedConstraints::parseCondition(Expression* curr) {
   // A get or tee by itself is a check for not being null.
   LocalOperations localOperations;
   if (auto localOp = localOperations.parse(curr)) {
-    auto value = Literal::makeZero(localOp->type);
+    auto value = Literal::makeZero(curr->type);
     return {LocalConstraint{localOp->index, Constraint{Abstract::Ne, {value}}}};
   }
 
