@@ -757,7 +757,9 @@ namespace {
 // common cases we want to, we parse the code in the natural order of execution,
 // and maintain a list of local operations. A get before a tee indicates
 // possible interference.
-struct LocalOperations : public SmallVector<Expression*, 10> {
+struct LocalOperations {
+  SmallVector<Expression*, 10> vec;
+
   // Check if an Expression returns a local's value: it is either a get or a
   // tee. Returns the index and type if so, and notes it in our vector.
   struct LocalOperation {
@@ -767,12 +769,12 @@ struct LocalOperations : public SmallVector<Expression*, 10> {
   std::optional<LocalOperation> parse(Expression* curr) {
     auto handleNestedSets = [&](Expression* from) {
       for (auto* nested : FindAll<LocalSet>(from).list) {
-        push_back(nested);
+        vec.push_back(nested);
       }
     };
 
     if (auto* get = curr->dynCast<LocalGet>()) {
-      push_back(get);
+      vec.push_back(get);
       return LocalOperation{get->index, get->type};
     }
     if (auto* set = curr->dynCast<LocalSet>()) {
@@ -788,7 +790,7 @@ struct LocalOperations : public SmallVector<Expression*, 10> {
         return {};
       }
 
-      push_back(set);
+      vec.push_back(set);
       return LocalOperation{set->index, set->type};
     }
     // Unrecognized. As above, we must scan for nested sets.
@@ -799,7 +801,7 @@ struct LocalOperations : public SmallVector<Expression*, 10> {
   // Check for any possible interference between locals, which would tell the
   // caller that whatever was parsed is not valid.
   bool hasLocalInterference() const {
-    if (size() <= 1) {
+    if (vec.size() <= 1) {
       return false;
     }
 
@@ -807,7 +809,7 @@ struct LocalOperations : public SmallVector<Expression*, 10> {
     // same local - is possible. We track the read locals, and if we see a
     // later write, that shows a problem.
     std::unordered_set<Index> read;
-    for (auto* curr : *this) {
+    for (auto* curr : vec) {
       if (auto* get = curr->dynCast<LocalGet>()) {
         read.insert(get->index);
       } else if (auto* set = curr->dynCast<LocalSet>()) {
