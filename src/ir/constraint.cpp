@@ -765,29 +765,31 @@ struct LocalOperations : public SmallVector<Expression*, 10> {
     Type type;
   };
   std::optional<LocalOperation> parse(Expression* curr) {
+    auto handleNestedSets = [&](Expression* from) {
+      for (auto* nested : FindAll<LocalSet>(from).list) {
+        push_back(nested);
+      }
+    };
+
     if (auto* get = curr->dynCast<LocalGet>()) {
       push_back(get);
       return LocalOperation{get->index, get->type};
     }
     if (auto* set = curr->dynCast<LocalSet>()) {
+      // We know the value of this expression - the local the tee writes to -
+      // but further sets may be nested in the value, affecting other locals.
+      handleNestedSets(set->value);
+
       // Ignore unreachable code, so the callers don't need to handle it.
       if (set->type == Type::unreachable) {
         return {};
       }
 
-      // We know the value of this expression - the local the tee writes to -
-      // but further sets may be nested in the value, affecting other locals.
-      for (auto* nested : FindAll<LocalSet>(set->value).list) {
-        push_back(nested);
-      }
-
       push_back(set);
       return LocalOperation{set->index, set->type};
     }
-    // Unrecognized. As above, we must scan for nested tees.
-    for (auto* nested : FindAll<LocalSet>(curr).list) {
-      push_back(nested);
-    }
+    // Unrecognized. As above, we must scan for nested sets.
+    handleNestedSets(curr);
     return {};
   }
 
