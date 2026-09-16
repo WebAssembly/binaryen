@@ -815,7 +815,9 @@ struct LocalOperations : public SmallVector<Expression*, 10> {
           return true;
         }
         // Insert a read, because the tee does both a write and a read.
-        read.insert(set->index);
+        if (set->isTee()) {
+          read.insert(set->index);
+        }
       } else {
         WASM_UNREACHABLE("invalid local op");
       }
