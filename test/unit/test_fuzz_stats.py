@@ -48,7 +48,7 @@ class FuzzStatsTest(utils.BinaryenTestCase):
 
             shared.run_process(
                 shared.WASM_OPT + [
-                    '-ttf', random_data, '-q', '-o', os.devnull
+                    '-ttf', random_data, '-q', '-o', os.devnull,
                 ],
                 env=env,
             )
@@ -74,7 +74,7 @@ class FuzzStatsTest(utils.BinaryenTestCase):
     (drop (ref.cast (ref null any) (local.get $x)))
     (local.get $x)
   )
-)"""
+)""",
                 )
 
             random_data = self.input_path('random_data.txt')
@@ -144,7 +144,7 @@ class FuzzStatsTest(utils.BinaryenTestCase):
 
             shared.run_process(
                 shared.WASM_OPT + [
-                    '-ttf', random_data, '-q', '-o', os.devnull
+                    '-ttf', random_data, '-q', '-o', os.devnull,
                 ],
                 env=env,
                 cwd=temp_dir,
@@ -161,7 +161,7 @@ class FuzzStatsTest(utils.BinaryenTestCase):
 
             shared.run_process(
                 shared.WASM_OPT + [
-                    '-ttf', random_data, '-q', '-o', os.devnull
+                    '-ttf', random_data, '-q', '-o', os.devnull,
                 ],
                 env=env,
                 cwd=temp_dir,
