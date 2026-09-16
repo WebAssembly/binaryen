@@ -141,7 +141,7 @@
   )
 
   ;; CHECK:      (func $conditional (type $1) (param $condition i32) (result i32)
-  ;; CHECK-NEXT:  (if (result i32)
+  ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (local.get $condition)
   ;; CHECK-NEXT:   (then
   ;; CHECK-NEXT:    (return_call $value-callee)
@@ -208,13 +208,11 @@
   )
 
   ;; CHECK:      (func $break (type $1) (param $condition i32) (result i32)
-  ;; CHECK-NEXT:  (block $out (result i32)
+  ;; CHECK-NEXT:  (block $out
   ;; CHECK-NEXT:   (if
   ;; CHECK-NEXT:    (local.get $condition)
   ;; CHECK-NEXT:    (then
-  ;; CHECK-NEXT:     (br $out
-  ;; CHECK-NEXT:      (return_call $value-callee)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (return_call $value-callee)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (return_call $ref-callee)
@@ -238,13 +236,11 @@
 
   ;; CHECK:      (func $return-break (type $1) (param $condition i32) (result i32)
   ;; CHECK-NEXT:  (return
-  ;; CHECK-NEXT:   (block $out (result i32)
+  ;; CHECK-NEXT:   (block $out
   ;; CHECK-NEXT:    (if
   ;; CHECK-NEXT:     (local.get $condition)
   ;; CHECK-NEXT:     (then
-  ;; CHECK-NEXT:      (br $out
-  ;; CHECK-NEXT:       (return_call $value-callee)
-  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (return_call $value-callee)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (return_call $ref-callee)
@@ -270,10 +266,12 @@
   )
 
   ;; CHECK:      (func $br-if-tail (type $1) (param $condition i32) (result i32)
-  ;; CHECK-NEXT:  (block $out (result i32)
-  ;; CHECK-NEXT:   (br_if $out
+  ;; CHECK-NEXT:  (block $out
+  ;; CHECK-NEXT:   (block
   ;; CHECK-NEXT:    (return_call $value-callee)
-  ;; CHECK-NEXT:    (local.get $condition)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $condition)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -343,11 +341,13 @@
   )
 
   ;; CHECK:      (func $br-table-all-tail (type $1) (param $idx i32) (result i32)
-  ;; CHECK-NEXT:  (block $out1 (result i32)
-  ;; CHECK-NEXT:   (block $out2 (result i32)
-  ;; CHECK-NEXT:    (br_table $out1 $out2
+  ;; CHECK-NEXT:  (block $out1
+  ;; CHECK-NEXT:   (block $out2
+  ;; CHECK-NEXT:    (block
   ;; CHECK-NEXT:     (return_call $value-callee)
-  ;; CHECK-NEXT:     (local.get $idx)
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (local.get $idx)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -508,7 +508,7 @@
   )
 
   ;; CHECK:      (func $loop-tail (type $1) (param $condition i32) (result i32)
-  ;; CHECK-NEXT:  (loop $l (result i32)
+  ;; CHECK-NEXT:  (loop $l
   ;; CHECK-NEXT:   (br_if $l
   ;; CHECK-NEXT:    (local.get $condition)
   ;; CHECK-NEXT:   )

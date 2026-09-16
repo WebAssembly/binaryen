@@ -22,6 +22,7 @@
 
 #include "ir/effects.h"
 #include "ir/properties.h"
+#include "ir/utils.h"
 #include "pass.h"
 #include "wasm-traversal.h"
 #include "wasm.h"
@@ -310,6 +311,9 @@ struct TailCall : public WalkerPass<PreWalker<TailCall>> {
     }
     tailBlocks.clear();
     walk(func->body);
+    if (changed) {
+      ReFinalize().walkFunctionInModule(func, getModule());
+    }
   }
 };
 
