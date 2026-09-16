@@ -15,6 +15,7 @@
  */
 
 #include "tools/fuzzing/fuzz-stats.h"
+#include "support/file_lock.h"
 
 #include <algorithm>
 #include <fstream>
@@ -24,35 +25,9 @@
 #include <mutex>
 #include <sstream>
 
-#ifndef _WIN32
-#include <fcntl.h>
-#include <sys/file.h>
-#include <unistd.h>
-#endif
-
 namespace wasm {
 
 namespace {
-
-struct FileLock {
-#ifndef _WIN32
-  int fd = -1;
-  FileLock(const std::string& path) {
-    fd = open(path.c_str(), O_RDWR | O_CREAT, 0666);
-    if (fd >= 0) {
-      flock(fd, LOCK_EX);
-    }
-  }
-  ~FileLock() {
-    if (fd >= 0) {
-      flock(fd, LOCK_UN);
-      close(fd);
-    }
-  }
-#else
-  FileLock(const std::string&) {}
-#endif
-};
 
 std::string getStatsFilename() {
   if (const char* env = getenv("BINARYEN_FUZZ_STATS")) {
