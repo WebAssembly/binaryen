@@ -22,8 +22,8 @@
 
 #include "ir/effects.h"
 #include "ir/properties.h"
-#include "ir/utils.h"
 #include "pass.h"
+#include "wasm-traversal.h"
 #include "wasm.h"
 
 namespace wasm {
@@ -35,7 +35,8 @@ namespace {
 // tail position is propagated down from parents to children. Define our own
 // pre-order traversal task stack, and take the opportunity to pass `isTail`
 // as an extra parameter to each task rather than storing it in a side table.
-template<typename SubType> struct PreWalker {
+template<typename SubType>
+struct PreWalker : public Walker<SubType, Visitor<SubType>> {
   using TaskFunc = void (*)(SubType*, Expression**, bool);
 
   struct Task {
@@ -78,6 +79,8 @@ template<typename SubType> struct PreWalker {
       task.func(static_cast<SubType*>(this), task.currp, task.isTail);
     }
   }
+
+  void doWalkFunction(Function* func) { walk(func->body); }
 
   void visitExpression(Expression* curr, bool isTail) {
     assert(!Properties::isControlFlowStructure(curr) &&
@@ -124,15 +127,12 @@ template<typename SubType> struct PreWalker {
   }
 };
 
-struct TailCall : public Pass, public PreWalker<TailCall> {
+struct TailCall : public WalkerPass<PreWalker<TailCall>> {
   bool isFunctionParallel() override { return true; }
 
   std::unique_ptr<Pass> create() override {
     return std::make_unique<TailCall>();
   }
-
-  Module* module = nullptr;
-  Function* func = nullptr;
 
   // Names of blocks whose exit flows directly out of the function.
   std::unordered_set<Name> tailBlocks;
@@ -156,7 +156,7 @@ struct TailCall : public Pass, public PreWalker<TailCall> {
   }
 
   bool hasUnremovableSideEffects(Expression* expr) {
-    return EffectAnalyzer(getPassOptions(), *module, expr)
+    return EffectAnalyzer(getPassOptions(), *getModule(), expr)
       .hasUnremovableSideEffects();
   }
 
@@ -206,11 +206,11 @@ struct TailCall : public Pass, public PreWalker<TailCall> {
     // return type if it is dead code at the end of a block following an earlier
     // unreachable instruction.
     if (call->isReturn || !isTail ||
-        !Type::isSubType(call->type, func->getResults())) {
+        !Type::isSubType(call->type, getFunction()->getResults())) {
       return;
     }
     if (ehDepth > 0 &&
-        ShallowEffectAnalyzer(getPassOptions(), *module, call).throws()) {
+        ShallowEffectAnalyzer(getPassOptions(), *getModule(), call).throws()) {
       return;
     }
     call->isReturn = true;
@@ -227,7 +227,7 @@ struct TailCall : public Pass, public PreWalker<TailCall> {
       bool itemIsTail = false;
       if (i == int(curr->list.size()) - 1) {
         itemIsTail = isTail;
-      } else if (func->getResults() == Type::none &&
+      } else if (getFunction()->getResults() == Type::none &&
                  isTailTransfer(curr->list[i + 1], nextIsTail)) {
         itemIsTail = true;
       }
@@ -304,23 +304,11 @@ struct TailCall : public Pass, public PreWalker<TailCall> {
     visitExpression(curr, false);
   }
 
-  void run(Module* module) override {
-    assert(getPassRunner());
-    auto options = getPassOptions();
-    options.optimizeLevel = std::min(options.optimizeLevel, 1);
-    options.shrinkLevel = std::min(options.shrinkLevel, 1);
-    PassRunner runner(module, options);
-    runner.setIsNested(true);
-    runner.add(create());
-    runner.run();
-  }
-
-  void runOnFunction(Module* module, Function* func) override {
-    if (!module->features.hasTailCall() || func->imported()) {
+  void doWalkFunction(Function* func) {
+    if (!getModule()->features.hasTailCall() || func->imported()) {
       return;
     }
-    this->module = module;
-    this->func = func;
+    tailBlocks.clear();
     walk(func->body);
   }
 };
