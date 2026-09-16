@@ -31,9 +31,12 @@
   ;; DEFAULT-NEXT:  )
   ;; DEFAULT-NEXT: )
   ;; TNH:      (func $br-if-trapping-condition (param $x i32) (result i32)
-  ;; TNH-NEXT:  (block $out
-  ;; TNH-NEXT:   (block
+  ;; TNH-NEXT:  (block $out (result i32)
+  ;; TNH-NEXT:   (br_if $out
   ;; TNH-NEXT:    (return_call $value-callee)
+  ;; TNH-NEXT:    (i32.load
+  ;; TNH-NEXT:     (local.get $x)
+  ;; TNH-NEXT:    )
   ;; TNH-NEXT:   )
   ;; TNH-NEXT:  )
   ;; TNH-NEXT: )
@@ -65,10 +68,14 @@
   ;; DEFAULT-NEXT:  )
   ;; DEFAULT-NEXT: )
   ;; TNH:      (func $br-table-trapping-condition (param $x i32) (result i32)
-  ;; TNH-NEXT:  (block $out1
-  ;; TNH-NEXT:   (block $out2
-  ;; TNH-NEXT:    (block
+  ;; TNH-NEXT:  (block $out1 (result i32)
+  ;; TNH-NEXT:   (block $out2 (result i32)
+  ;; TNH-NEXT:    (br_table $out1 $out2
   ;; TNH-NEXT:     (return_call $value-callee)
+  ;; TNH-NEXT:     (i32.div_s
+  ;; TNH-NEXT:      (i32.const 10)
+  ;; TNH-NEXT:      (local.get $x)
+  ;; TNH-NEXT:     )
   ;; TNH-NEXT:    )
   ;; TNH-NEXT:   )
   ;; TNH-NEXT:  )

@@ -87,8 +87,10 @@
   ;; NO-EFFECTS-NEXT: )
   ;; WITH-EFFECTS:      (func $caller-non-throwing-in-try (result i32)
   ;; WITH-EFFECTS-NEXT:  (block $catch
-  ;; WITH-EFFECTS-NEXT:   (try_table (catch_all $catch)
-  ;; WITH-EFFECTS-NEXT:    (return_call $non-throwing-callee)
+  ;; WITH-EFFECTS-NEXT:   (return
+  ;; WITH-EFFECTS-NEXT:    (try_table (result i32) (catch_all $catch)
+  ;; WITH-EFFECTS-NEXT:     (return_call $non-throwing-callee)
+  ;; WITH-EFFECTS-NEXT:    )
   ;; WITH-EFFECTS-NEXT:   )
   ;; WITH-EFFECTS-NEXT:  )
   ;; WITH-EFFECTS-NEXT:  (i32.const 0)
@@ -120,9 +122,11 @@
   ;; NO-EFFECTS-NEXT: )
   ;; WITH-EFFECTS:      (func $caller-throwing-arg-in-try (result i32)
   ;; WITH-EFFECTS-NEXT:  (block $catch
-  ;; WITH-EFFECTS-NEXT:   (try_table (catch_all $catch)
-  ;; WITH-EFFECTS-NEXT:    (return_call $non-throwing-param-callee
-  ;; WITH-EFFECTS-NEXT:     (call $throwing-i32-callee)
+  ;; WITH-EFFECTS-NEXT:   (return
+  ;; WITH-EFFECTS-NEXT:    (try_table (result i32) (catch_all $catch)
+  ;; WITH-EFFECTS-NEXT:     (return_call $non-throwing-param-callee
+  ;; WITH-EFFECTS-NEXT:      (call $throwing-i32-callee)
+  ;; WITH-EFFECTS-NEXT:     )
   ;; WITH-EFFECTS-NEXT:    )
   ;; WITH-EFFECTS-NEXT:   )
   ;; WITH-EFFECTS-NEXT:  )

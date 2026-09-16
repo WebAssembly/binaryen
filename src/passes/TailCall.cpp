@@ -322,13 +322,6 @@ struct TailCall : public Pass, public PreWalker<TailCall> {
     this->module = module;
     this->func = func;
     walk(func->body);
-    if (changed) {
-      ReFinalize().walkFunctionInModule(func, module);
-      PassRunner runner(module, getPassOptions());
-      runner.setIsNested(true);
-      runner.add("dce");
-      runner.runOnFunction(func);
-    }
   }
 };
 
