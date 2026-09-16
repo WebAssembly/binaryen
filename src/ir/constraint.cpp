@@ -776,6 +776,9 @@ struct LocalOperations : public SmallVector<Expression*, 10> {
       return LocalOperation{get->index, get->type};
     }
     if (auto* set = curr->dynCast<LocalSet>()) {
+      // We are parsing expressions in a tree, not none-typed items in a block.
+      assert(set->isTee());
+
       // We know the value of this expression - the local the tee writes to -
       // but further sets may be nested in the value, affecting other locals.
       handleNestedSets(set->value);
