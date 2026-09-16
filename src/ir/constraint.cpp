@@ -802,7 +802,7 @@ struct LocalOperations : public SmallVector<Expression*, 10> {
 
     // Process the list in detail, as interference - a get before a set of the
     // same local - is possible. We track the read locals, and if we see a
-    // later write, that shows a problem;
+    // later write, that shows a problem.
     std::unordered_set<Index> read;
     for (auto* curr : *this) {
       if (auto* get = curr->dynCast<LocalGet>()) {
