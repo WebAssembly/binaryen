@@ -757,7 +757,7 @@ namespace {
 // common cases we want to, we parse the code in the natural order of execution,
 // and maintain a list of local operations. A get before a tee indicates
 // possible interference.
-struct LocalOperations : public SmallVector<Expression*, 3> {
+struct LocalOperations : public SmallVector<Expression*, 10> {
   // Check if an Expression returns a local's value: it is either a get or a
   // tee. Returns the index and type if so, and notes it in our vector.
   struct LocalOperation {
