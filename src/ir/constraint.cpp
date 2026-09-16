@@ -784,7 +784,10 @@ struct LocalOperations : public SmallVector<Expression*, 3> {
       push_back(set);
       return LocalOperation{set->index, set->type};
     }
-    // Unrecognized.
+    // Unrecognized. As above, we must scan for nested tees.
+    for (auto* nested : FindAll<LocalSet>(curr).list) {
+      push_back(nested);
+    }
     return {};
   }
 
@@ -949,7 +952,10 @@ ParsedAndedConstraints ParsedAndedConstraints::parse(Expression* curr) {
     }
     // TODO: support OR
 
-    // We failed to parse this.
+    // We failed to parse this as constraints. We do still need to check for
+    // local operations that might interfere with the things we did parse,
+    // otherwise.
+    localOperations.parse(curr);
     ret.hasUnknown = true;
   }
 

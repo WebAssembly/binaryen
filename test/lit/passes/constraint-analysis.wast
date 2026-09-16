@@ -6814,5 +6814,66 @@
       )
     )
   )
+
+  ;; CHECK:      (func $tee-trample-simple (type $0) (param $x i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.and
+  ;; CHECK-NEXT:    (i32.eqz
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.tee $x
+  ;; CHECK-NEXT:     (call $import)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.eqz
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPTIN:      (func $tee-trample-simple (type $0) (param $x i32)
+  ;; OPTIN-NEXT:  (if
+  ;; OPTIN-NEXT:   (i32.and
+  ;; OPTIN-NEXT:    (i32.eqz
+  ;; OPTIN-NEXT:     (local.get $x)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:    (local.tee $x
+  ;; OPTIN-NEXT:     (call $import)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:   (then
+  ;; OPTIN-NEXT:    (drop
+  ;; OPTIN-NEXT:     (i32.eqz
+  ;; OPTIN-NEXT:      (local.get $x)
+  ;; OPTIN-NEXT:     )
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT: )
+  (func $tee-trample-simple (param $x i32)
+    (if
+      (i32.and
+        ;; $x == 0
+        (i32.eqz
+          (local.get $x)
+        )
+        ;; But then trample $x with an unknown value.
+        (local.tee $x
+          (call $import)
+        )
+      )
+      (then
+        ;; $x may not be 0 here, as it was trampled, so we infer nothing.
+        (drop
+          (i32.eqz
+            (local.get $x)
+          )
+        )
+      )
+    )
+  )
 )
 
