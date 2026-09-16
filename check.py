@@ -137,6 +137,32 @@ def run_wasm_metadce_tests():
         shared.fail_if_not_identical_to_file(stdout, expected + '.stdout')
 
 
+def run_one_wasm_reduce_test(t, stdout=None):
+    base_name = os.path.splitext(os.path.basename(t))[0]
+    print('..', os.path.basename(t), file=stdout)
+    a_wasm = f'reduce_{base_name}_a.wasm'
+    b_wasm = f'reduce_{base_name}_b.wasm'
+    c_wasm = f'reduce_{base_name}_c.wasm'
+    a_wat = f'reduce_{base_name}_a.wat'
+    try:
+        support.run_command(shared.WASM_AS + [t, '-o', a_wasm, '-all'], stdout=stdout)
+        cmd = shared.WASM_OPT[0]
+        support.run_command(
+            shared.WASM_REDUCE + [a_wasm, f'--command={cmd} {b_wasm} --fuzz-exec -all', '-t', b_wasm, '-w', c_wasm, '--timeout=4'],
+            stdout=stdout,
+            stderr=subprocess.PIPE,
+        )
+        expected = t + '.txt'
+        support.run_command(shared.WASM_DIS + [c_wasm, '-o', a_wat], stdout=stdout)
+        with open(a_wat) as seen:
+            shared.fail_if_not_identical_to_file(seen.read(), expected)
+    finally:
+        shared.delete_from_orbit(a_wasm)
+        shared.delete_from_orbit(b_wasm)
+        shared.delete_from_orbit(c_wasm)
+        shared.delete_from_orbit(a_wat)
+
+
 def run_wasm_reduce_tests():
     if not shared.has_shell_timeout():
         print_heading('skipping wasm-reduce testcases')
@@ -145,16 +171,8 @@ def run_wasm_reduce_tests():
     print_heading('checking wasm-reduce testcases')
 
     # fixed testcases
-    for t in shared.get_tests(shared.get_test_dir('reduce'), ['.wast']):
-        print('..', os.path.basename(t))
-        # convert to wasm
-        support.run_command(shared.WASM_AS + [t, '-o', 'a.wasm', '-all'])
-        cmd = shared.WASM_OPT[0]
-        support.run_command(shared.WASM_REDUCE + ['a.wasm', f'--command={cmd} b.wasm --fuzz-exec -all ', '-t', 'b.wasm', '-w', 'c.wasm', '--timeout=4'])
-        expected = t + '.txt'
-        support.run_command(shared.WASM_DIS + ['c.wasm', '-o', 'a.wat'])
-        with open('a.wat') as seen:
-            shared.fail_if_not_identical_to_file(seen.read(), expected)
+    tests = shared.get_tests(shared.get_test_dir('reduce'), ['.wast'])
+    shared.run_parallel_tests(run_one_wasm_reduce_test, tests)
 
     # run on a nontrivial fuzz testcase, for general coverage
     # this is very slow in ThreadSanitizer, so avoid it there
