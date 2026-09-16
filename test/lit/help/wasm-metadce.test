@@ -551,6 +551,9 @@
 ;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --table64-lowering                            alias for memory64-lowering
 ;; CHECK-EMPTY:
+;; CHECK-NEXT:   --tail-call                                   convert calls in tail position 
+;; CHECK-NEXT:                                                 to return calls
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --trace-calls                                 instrument the build with code 
 ;; CHECK-NEXT:                                                 to intercept specific function 
 ;; CHECK-NEXT:                                                 calls

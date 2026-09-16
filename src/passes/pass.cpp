@@ -558,6 +558,9 @@ void PassRegistry::registerPasses() {
   registerPass("stack-check",
                "enforce limits on llvm's __stack_pointer global",
                createStackCheckPass);
+  registerPass("tail-call",
+               "convert calls in tail position to return calls",
+               createTailCallPass);
   registerPass("strip-debug",
                "strip debug info (including the names section)",
                createStripDebugPass);
