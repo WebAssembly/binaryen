@@ -1,5 +1,7 @@
 import os
+import platform
 import tempfile
+import unittest
 
 from scripts.test import shared
 
@@ -62,6 +64,8 @@ class FuzzStatsTest(utils.BinaryenTestCase):
             self.assertEqual(stats['modules'], 1)
             self.assertIsNotNone(stats['functions'])
 
+    @unittest.skipIf(platform.system() == 'Windows',
+                     'Windows line endings affect random data PRNG seed')
     def test_stats_file_updated_across_invocations(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             stats_path = os.path.join(temp_dir, 'stats.txt')
