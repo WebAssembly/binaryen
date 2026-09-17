@@ -227,8 +227,8 @@
  (func $select-atomic-load (result i32)
   ;; For comparison with above, when the instruction is not generative, we can
   ;; optimize: the two atomic loads must return the same thing, so we drop the
-  ;; first and return the second (even though the first is what is actually
-  ;; returned.
+  ;; first and return the second (even though the first is what the select
+  ;; returns).
   (select
    (i32.atomic.load
     (i32.const 0)
