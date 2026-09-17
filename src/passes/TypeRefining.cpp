@@ -523,14 +523,8 @@ struct TypeRefining : public Pass {
       }
 
       void visitStructSet(StructSet* curr) {
-        if (curr->ref->type == Type::unreachable) {
-          // Ignore unreachable code. Note that we check curr->ref, not curr,
-          // as curr may be unreachable because of another operand than the ref,
-          // and in that case we must still validate, i.e., we must call fixType
-          // to fix things up. No actual problem can happen here, as the only
-          // other operand is the value (and it needs no fixing if it is
-          // unreachable), but we do this for consistency with the cases below
-          // that do have other operands.
+        if (curr->type == Type::unreachable) {
+          // Ignore unreachable code.
           return;
         }
         auto type = curr->ref->type.getHeapType();
@@ -544,7 +538,7 @@ struct TypeRefining : public Pass {
       }
 
       void visitStructRMW(StructRMW* curr) {
-        if (curr->ref->type == Type::unreachable) {
+        if (curr->type == Type::unreachable) {
           return;
         }
         auto type = curr->ref->type.getHeapType();
@@ -558,6 +552,10 @@ struct TypeRefining : public Pass {
 
       void visitStructCmpxchg(StructCmpxchg* curr) {
         if (curr->ref->type == Type::unreachable) {
+          // Ignore unreachable code. Note that we check curr->ref, not curr,
+          // as curr may be unreachable because of another operand than the ref
+          // and the replacement value (the expected value). In that case, the
+          // replacement must still validate as if it were written.
           return;
         }
         auto type = curr->ref->type.getHeapType();
@@ -571,6 +569,7 @@ struct TypeRefining : public Pass {
 
       void visitStructWait(StructWait* curr) {
         if (curr->ref->type == Type::unreachable) {
+          // See visitStructCmpxchg for why we check curr->ref.
           return;
         }
         auto type = curr->ref->type.getHeapType();
