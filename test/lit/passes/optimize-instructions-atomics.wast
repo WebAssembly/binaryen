@@ -91,4 +91,34 @@
   ;; skips
   (drop (i64.extend_i32_s (i32.atomic.load (local.get $x))))
  )
+
+ ;; CHECK:      (func $select-atomic-rmw (result i32)
+ ;; CHECK-NEXT:  (select
+ ;; CHECK-NEXT:   (i32.atomic.rmw16.xchg_u
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:    (i32.const 1)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (i32.atomic.rmw16.xchg_u
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:    (i32.const 1)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (i32.const 1)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $select-atomic-rmw (result i32)
+  ;; The first rmw here influences the second, and we need to return the result
+  ;; of the first, which means we need a temp local. We avoid adding one and do
+  ;; not optimize here.
+  (select
+   (i32.atomic.rmw16.xchg_u
+    (i32.const 0)
+    (i32.const 1)
+   )
+   (i32.atomic.rmw16.xchg_u
+    (i32.const 0)
+    (i32.const 1)
+   )
+   (i32.const 1)
+  )
+ )
 )
