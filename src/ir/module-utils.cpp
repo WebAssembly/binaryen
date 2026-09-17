@@ -473,6 +473,15 @@ struct CodeScanner : PostWalker<CodeScanner> {
     info.note(curr->cont->type);
     info.note(curr->type);
   }
+  void visitFiberNew(FiberNew* curr) { info.note(curr->type); }
+  void visitFiberResume(FiberResume* curr) {
+    info.note(curr->fiber->type);
+    info.note(curr->type);
+  }
+  void visitFiberSuspend(FiberSuspend* curr) {
+    info.note(curr->fiber->type);
+    info.note(curr->type);
+  }
   void visitBlock(Block* curr) {
     info.noteControlFlow(Signature(Type::none, curr->type));
   }

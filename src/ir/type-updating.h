@@ -399,6 +399,7 @@ public:
   virtual void modifyStruct(HeapType oldType, Struct& struct_) {}
   virtual void modifyArray(HeapType oldType, Array& array) {}
   virtual void modifyContinuation(HeapType oldType, Continuation& sig) {}
+  virtual void modifyFiber(HeapType oldType, Fiber& fiber) {}
   virtual void modifySignature(HeapType oldType, Signature& sig) {}
 
   // This additional hook is called after modify* and other operations, and
@@ -532,6 +533,9 @@ public:
   void modifyContinuation(HeapType oldType,
                           Continuation& continuation) override {
     continuation.type = getNewHeapType(oldType.getContinuation().type);
+  }
+  void modifyFiber(HeapType oldType, Fiber& fiber) override {
+    fiber.type = getNewHeapType(oldType.getFiber().type);
   }
   void modifySignature(HeapType oldSignatureType, Signature& sig) override {
     auto getUpdatedTypeList = [&](Type type) {

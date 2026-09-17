@@ -55,6 +55,7 @@ class HeapType;
 class RecGroup;
 struct Signature;
 struct Continuation;
+struct Fiber;
 struct Field;
 struct Struct;
 struct Array;
@@ -94,6 +95,7 @@ enum class HeapTypeKind {
   Struct,
   Array,
   Cont,
+  Fiber,
 };
 
 class HeapType {
@@ -129,9 +131,11 @@ public:
     noexn = 15 << UsedBits,
     waitqueue = 16 << UsedBits,
     nowaitqueue = 17 << UsedBits,
+    fiber = 18 << UsedBits,
+    nofiber = 19 << UsedBits,
   };
   static constexpr BasicHeapType _last_basic_type =
-    BasicHeapType(nowaitqueue | SharedMask);
+    BasicHeapType(nofiber | SharedMask);
 
   // BasicHeapType can be implicitly upgraded to HeapType
   constexpr HeapType(BasicHeapType id) : id(id) {}
@@ -149,6 +153,7 @@ public:
   HeapType(Struct&& struct_);
   HeapType(Array array);
   HeapType(Continuation cont);
+  HeapType(Fiber fiber);
 
   HeapTypeKind getKind() const;
 
@@ -157,6 +162,7 @@ public:
   bool isData() const;
   bool isSignature() const;
   bool isContinuation() const;
+  bool isFiber() const;
   bool isStruct() const;
   bool isArray() const;
   bool isExn() const { return isMaybeShared(HeapType::exn); }
@@ -177,6 +183,7 @@ public:
 
   Signature getSignature() const;
   Continuation getContinuation() const;
+  Fiber getFiber() const;
 
   const Struct& getStruct() const;
   Array getArray() const;
@@ -422,6 +429,7 @@ public:
   bool isContinuation() const {
     return isRef() && getHeapType().isContinuation();
   }
+  bool isFiber() const { return isRef() && getHeapType().isFiber(); }
   bool isDefaultable() const;
   bool isCastable() const;
 
@@ -637,6 +645,8 @@ constexpr HeapType noext = HeapType::noext;
 constexpr HeapType nofunc = HeapType::nofunc;
 constexpr HeapType nocont = HeapType::nocont;
 constexpr HeapType noexn = HeapType::noexn;
+constexpr HeapType fiber = HeapType::fiber;
+constexpr HeapType nofiber = HeapType::nofiber;
 constexpr HeapType sharedNowaitqueue =
   HeapType(HeapType::nowaitqueue).getBasic(Shared);
 
@@ -700,6 +710,14 @@ struct Continuation {
     return type == other.type;
   }
   bool operator!=(const Continuation& other) const { return !(*this == other); }
+  std::string toString() const;
+};
+
+struct Fiber {
+  HeapType type;
+  Fiber(HeapType type) : type(type) {}
+  bool operator==(const Fiber& other) const { return type == other.type; }
+  bool operator!=(const Fiber& other) const { return !(*this == other); }
   std::string toString() const;
 };
 
@@ -799,6 +817,7 @@ struct TypeBuilder {
   // Sets the heap type at index `i`. May only be called before `build`.
   void setHeapType(size_t i, Signature signature);
   void setHeapType(size_t i, Continuation continuation);
+  void setHeapType(size_t i, Fiber fiber);
   void setHeapType(size_t i, const Struct& struct_);
   void setHeapType(size_t i, Struct&& struct_);
   void setHeapType(size_t i, Array array);
@@ -878,6 +897,12 @@ struct TypeBuilder {
         auto cont = type.getContinuation();
         cont.type = map(cont.type);
         setHeapType(i, cont);
+        return;
+      }
+      case HeapTypeKind::Fiber: {
+        auto fiber = type.getFiber();
+        fiber.type = map(fiber.type);
+        setHeapType(i, fiber);
         return;
       }
       case HeapTypeKind::Basic:
@@ -1011,6 +1036,10 @@ struct TypeBuilder {
       builder.setHeapType(index, continuation);
       return *this;
     }
+    Entry& operator=(Fiber fiber) {
+      builder.setHeapType(index, fiber);
+      return *this;
+    }
     Entry& operator=(const Struct& struct_) {
       builder.setHeapType(index, struct_);
       return *this;
@@ -1122,6 +1151,7 @@ std::ostream& operator<<(std::ostream&, HeapType::Printed);
 std::ostream& operator<<(std::ostream&, Tuple);
 std::ostream& operator<<(std::ostream&, Signature);
 std::ostream& operator<<(std::ostream&, Continuation);
+std::ostream& operator<<(std::ostream&, Fiber);
 std::ostream& operator<<(std::ostream&, Field);
 std::ostream& operator<<(std::ostream&, Struct);
 std::ostream& operator<<(std::ostream&, Array);
@@ -1152,6 +1182,7 @@ struct HeapTypeInfo {
   union {
     Signature signature;
     Continuation continuation;
+    Fiber fiber;
     Struct struct_;
     Array array;
   };
@@ -1159,6 +1190,7 @@ struct HeapTypeInfo {
   HeapTypeInfo(Signature sig) : kind(HeapTypeKind::Func), signature(sig) {}
   HeapTypeInfo(Continuation continuation)
     : kind(HeapTypeKind::Cont), continuation(continuation) {}
+  HeapTypeInfo(Fiber fiber) : kind(HeapTypeKind::Fiber), fiber(fiber) {}
   HeapTypeInfo(const Struct& struct_)
     : kind(HeapTypeKind::Struct), struct_(struct_) {}
   HeapTypeInfo(Struct&& struct_)
@@ -1168,6 +1200,7 @@ struct HeapTypeInfo {
 
   constexpr bool isSignature() const { return kind == HeapTypeKind::Func; }
   constexpr bool isContinuation() const { return kind == HeapTypeKind::Cont; }
+  constexpr bool isFiber() const { return kind == HeapTypeKind::Fiber; }
   constexpr bool isStruct() const { return kind == HeapTypeKind::Struct; }
   constexpr bool isArray() const { return kind == HeapTypeKind::Array; }
   constexpr bool isData() const { return isStruct() || isArray(); }
@@ -1203,6 +1236,10 @@ inline bool HeapType::isContinuation() const {
   return getKind() == HeapTypeKind::Cont;
 }
 
+inline bool HeapType::isFiber() const {
+  return getKind() == HeapTypeKind::Fiber;
+}
+
 inline bool HeapType::isStruct() const {
   return getKind() == HeapTypeKind::Struct;
 }
@@ -1233,6 +1270,7 @@ inline bool HeapType::isBottom() const {
       case ext:
       case func:
       case cont:
+      case fiber:
       case any:
       case eq:
       case i31:
@@ -1246,6 +1284,7 @@ inline bool HeapType::isBottom() const {
       case noext:
       case nofunc:
       case nocont:
+      case nofiber:
       case noexn:
       case nowaitqueue:
         return true;
@@ -1269,6 +1308,10 @@ public:
 template<> class hash<wasm::Continuation> {
 public:
   size_t operator()(const wasm::Continuation&) const;
+};
+template<> class hash<wasm::Fiber> {
+public:
+  size_t operator()(const wasm::Fiber&) const;
 };
 template<> class hash<wasm::Field> {
 public:

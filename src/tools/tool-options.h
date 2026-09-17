@@ -124,6 +124,7 @@ struct ToolOptions : public Options {
       .addFeature(FeatureSet::CompactImports, "compact import section")
       .addFeature(FeatureSet::RelaxedAtomics,
                   "relaxed atomic memory operations")
+      .addFeature(FeatureSet::ReifiedFibers, "reified fibers")
       .add("--enable-typed-function-references",
            "",
            "Deprecated compatibility flag",
