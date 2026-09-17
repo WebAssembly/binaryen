@@ -7594,4 +7594,39 @@
       (local.get $x)
     )
   )
+
+  ;; CHECK:      (func $local.get.unreachable (type $1)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPTIN:      (func $local.get.unreachable (type $1)
+  ;; OPTIN-NEXT:  (local $x i32)
+  ;; OPTIN-NEXT:  (if
+  ;; OPTIN-NEXT:   (i32.const 0)
+  ;; OPTIN-NEXT:   (then
+  ;; OPTIN-NEXT:    (drop
+  ;; OPTIN-NEXT:     (unreachable)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT: )
+  (func $local.get.unreachable
+    (local $x i32)
+    (if
+      (local.get $x)
+      (then
+        ;; $x is 0, so we never get here, and this is unreachable.
+        (drop
+          (local.get $x)
+        )
+      )
+    )
+  )
 )
