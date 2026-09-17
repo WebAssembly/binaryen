@@ -567,19 +567,7 @@ struct TypeRefining : public Pass {
         curr->replacement = fixType(curr->replacement, fieldType);
       }
 
-      void visitStructWait(StructWait* curr) {
-        if (curr->ref->type == Type::unreachable) {
-          // See visitStructCmpxchg for why we check curr->ref.
-          return;
-        }
-        auto type = curr->ref->type.getHeapType();
-        if (type.isBottom()) {
-          return;
-        }
-
-        auto fieldType = type.getStruct().fields[curr->index].type;
-        curr->expected = fixType(curr->expected, fieldType);
-      }
+      // TODO: visitStructWait
 
       bool refinalize = false;
 
