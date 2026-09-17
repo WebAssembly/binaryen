@@ -460,7 +460,12 @@ struct ConstraintAnalysis
         if (old.isNonNullable() && lit->isNull()) {
           // This is a non-nullable local, into which we wrote an uninhabitable
           // type (ref.as_non_null of a null). There is nothing to emit, and we
-          // would not validate if we did
+          // would not validate if we did.
+          return false;
+        }
+        if (old == Type::v128) {
+          // We also avoid writing v128 constants, which are large, the same as
+          // Precompute.
           return false;
         }
         *currp = Builder(*getModule()).makeConstantExpression(*lit);

@@ -7574,5 +7574,24 @@
     )
     (local.get $x)
   )
-)
 
+  ;; CHECK:      (func $local.get.no.v128 (type $1)
+  ;; CHECK-NEXT:  (local $x v128)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPTIN:      (func $local.get.no.v128 (type $1)
+  ;; OPTIN-NEXT:  (local $x v128)
+  ;; OPTIN-NEXT:  (drop
+  ;; OPTIN-NEXT:   (local.get $x)
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT: )
+  (func $local.get.no.v128
+    (local $x v128)
+    ;; We know the value here, but do not copy v128 constants, which are large.
+    (drop
+      (local.get $x)
+    )
+  )
+)
