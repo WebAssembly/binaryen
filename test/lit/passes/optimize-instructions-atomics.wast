@@ -121,4 +121,93 @@
    (i32.const 1)
   )
  )
+
+ ;; CHECK:      (func $select-atomic-cmpxchg (result i32)
+ ;; CHECK-NEXT:  (select
+ ;; CHECK-NEXT:   (i32.atomic.rmw.cmpxchg
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:    (i32.const 1)
+ ;; CHECK-NEXT:    (i32.const 2)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (i32.atomic.rmw.cmpxchg
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:    (i32.const 1)
+ ;; CHECK-NEXT:    (i32.const 2)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (i32.const 1)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $select-atomic-cmpxchg (result i32)
+  (select
+   (i32.atomic.rmw.cmpxchg
+    (i32.const 0)
+    (i32.const 1)
+    (i32.const 2)
+   )
+   (i32.atomic.rmw.cmpxchg
+    (i32.const 0)
+    (i32.const 1)
+    (i32.const 2)
+   )
+   (i32.const 1)
+  )
+ )
+
+ ;; CHECK:      (func $select-atomic-wait (result i32)
+ ;; CHECK-NEXT:  (select
+ ;; CHECK-NEXT:   (memory.atomic.wait32
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:    (i32.const 1)
+ ;; CHECK-NEXT:    (i64.const 2)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (memory.atomic.wait32
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:    (i32.const 1)
+ ;; CHECK-NEXT:    (i64.const 2)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (i32.const 1)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $select-atomic-wait (result i32)
+  (select
+   (memory.atomic.wait32
+    (i32.const 0)
+    (i32.const 1)
+    (i64.const 2)
+   )
+   (memory.atomic.wait32
+    (i32.const 0)
+    (i32.const 1)
+    (i64.const 2)
+   )
+   (i32.const 1)
+  )
+ )
+
+ ;; CHECK:      (func $select-atomic-notify (result i32)
+ ;; CHECK-NEXT:  (select
+ ;; CHECK-NEXT:   (memory.atomic.notify
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:    (i32.const 1)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (memory.atomic.notify
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:    (i32.const 1)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (i32.const 1)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $select-atomic-notify (result i32)
+  (select
+   (memory.atomic.notify
+    (i32.const 0)
+    (i32.const 1)
+   )
+   (memory.atomic.notify
+    (i32.const 0)
+    (i32.const 1)
+   )
+   (i32.const 1)
+  )
+ )
 )
