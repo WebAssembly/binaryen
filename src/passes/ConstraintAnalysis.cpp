@@ -426,7 +426,9 @@ struct ConstraintAnalysis
 #endif
         if (!constraints.unreachable) {
           applyToConstraints(*currp, constraints);
-          optimizeExpression(currp, constraints);
+          if (optimizeExpression(currp, constraints)) {
+            refinalize = true;
+          }
         } else {
           // This is unreachable code: just mark it so.
           *currp = getDroppedChildrenAndAppend(
@@ -445,17 +447,21 @@ struct ConstraintAnalysis
     }
   }
 
-  // Given an expression and the constraints on it, optimize it.
-  void optimizeExpression(Expression** currp,
+  // Given an expression and the constraints on it, optimize it. Returns whether
+  // we changed types (which requires refinalization).
+  bool optimizeExpression(Expression** currp,
                           const BasicBlockConstraintMap& constraints) {
     auto* curr = *currp;
 
     if (auto* get = curr->dynCast<LocalGet>()) {
       // A bare local.get can be optimized, if we know that local is a constant.
       if (auto lit = constraints.get(get->index).getLiteral()) {
+        auto old = curr->type;
         *currp = Builder(*getModule()).makeConstantExpression(*lit);
+        auto changed = (*currp)->type != old;
+        return changed;
       }
-      return;
+      return false;
     }
 
     // Note that we don't need to try to parse a series of constraints with
@@ -463,7 +469,7 @@ struct ConstraintAnalysis
     // simply optimize it as we walk it, each time handling one.
     auto parsed = LocalConstraint::parse(curr);
     if (!parsed) {
-      return;
+      return false;
     }
     if (!checkRelevancy(*parsed)) {
 #ifndef NDEBUG
@@ -472,14 +478,14 @@ struct ConstraintAnalysis
       // below on checkRelevancy.
       assert(originalActions.contains(curr));
 #endif
-      return;
+      return false;
     }
 
     auto result = constraints.proves(*parsed);
     if (result == Unknown) {
       // If we parsed something using two locals, like x != y, we can also look
       // for the flipped condition among y's constraints TODO
-      return;
+      return false;
     }
 
     // We know the result!
@@ -488,6 +494,7 @@ struct ConstraintAnalysis
       LiteralUtils::makeFromInt32(result == True ? 1 : 0, curr->type, wasm);
     *currp = getDroppedChildrenAndAppend(
       curr, wasm, getPassOptions(), value, DropMode::IgnoreParentEffects);
+    return false;
   }
 
   // Given a predecessor and one of its successors, find new constraints that

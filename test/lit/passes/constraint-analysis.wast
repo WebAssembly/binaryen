@@ -7518,5 +7518,32 @@
       )
     )
   )
+
+  ;; CHECK:      (func $local.get.refinalize (type $1)
+  ;; CHECK-NEXT:  (local $x anyref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result nullref)
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPTIN:      (func $local.get.refinalize (type $1)
+  ;; OPTIN-NEXT:  (local $x anyref)
+  ;; OPTIN-NEXT:  (drop
+  ;; OPTIN-NEXT:   (block (result nullref)
+  ;; OPTIN-NEXT:    (ref.null none)
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT: )
+  (func $local.get.refinalize
+    (local $x anyref)
+    ;; The local.get below is null. After we apply a null there, we refinalize
+    ;; the block's type to nullref.
+    (drop
+      (block (result anyref)
+        (local.get $x)
+      )
+    )
+  )
 )
 
