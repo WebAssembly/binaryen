@@ -554,8 +554,9 @@ struct TypeRefining : public Pass {
         if (curr->ref->type == Type::unreachable) {
           // Ignore unreachable code. Note that we check curr->ref, not curr,
           // as curr may be unreachable because of another operand than the ref
-          // and the replacement value (the expected value). In that case, the
-          // replacement must still validate as if it were written.
+          // and the replacement value (the expected value may be the
+          // unreachable one). In that case, the replacement must still validate
+          // as if it were written, so we must fix it up below.
           return;
         }
         auto type = curr->ref->type.getHeapType();
