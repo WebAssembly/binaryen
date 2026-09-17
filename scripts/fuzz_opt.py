@@ -1757,6 +1757,16 @@ class Split(TestCaseHandler):
         if not LEGALIZE:
             return False
 
+        # Skip modules with Emscripten table ABI
+        try:
+            output = run([in_bin('wasm-opt'), wasm, '--print', '--enable-reference-types'],
+                        capture_output=True, text=True)
+            if '__indirect_function_table' in output:
+                print(f"Skipping wasm-split test for {wasm} due to __indirect_function_table")
+                return False
+        except Exception:
+            pass
+
         # see D8.can_run
         return all_disallowed(DISALLOWED_FEATURES_IN_V8)
 
