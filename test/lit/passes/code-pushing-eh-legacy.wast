@@ -209,7 +209,7 @@
   ;; CHECK-NEXT:   (local.set $x
   ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (try $l
+  ;; CHECK-NEXT:   (try
   ;; CHECK-NEXT:    (do
   ;; CHECK-NEXT:     (try
   ;; CHECK-NEXT:      (do

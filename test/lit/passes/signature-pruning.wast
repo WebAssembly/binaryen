@@ -984,7 +984,7 @@
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 i32)
   ;; CHECK-NEXT:  (block $block (result i32)
-  ;; CHECK-NEXT:   (try $try
+  ;; CHECK-NEXT:   (try
   ;; CHECK-NEXT:    (do
   ;; CHECK-NEXT:     (nop)
   ;; CHECK-NEXT:    )
@@ -1071,7 +1071,7 @@
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 i32)
   ;; CHECK-NEXT:  (block $block (result i32)
-  ;; CHECK-NEXT:   (try $try
+  ;; CHECK-NEXT:   (try
   ;; CHECK-NEXT:    (do
   ;; CHECK-NEXT:     (nop)
   ;; CHECK-NEXT:    )

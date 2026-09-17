@@ -23,7 +23,7 @@
   ;; CHECK:      (func $caller-with-label (type $1) (param $x i32)
   ;; CHECK-NEXT:  (loop $label
   ;; CHECK-NEXT:   (block $__inlined_func$callee-with-label
-  ;; CHECK-NEXT:    (try $label0
+  ;; CHECK-NEXT:    (try
   ;; CHECK-NEXT:     (do
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (catch $tag$0
@@ -49,7 +49,7 @@
 
   ;; ---------------------------------------------------------------------------
   ;; CHECK:      (func $callee-with-try-delegate (type $0)
-  ;; CHECK-NEXT:  (try $label$3
+  ;; CHECK-NEXT:  (try
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (delegate 0)
@@ -79,7 +79,7 @@
   ;; Properly support inlining into a function with a try-delegate
 
   ;; CHECK:      (func $caller-with-try-delegate (type $2) (result i32)
-  ;; CHECK-NEXT:  (try $label$3
+  ;; CHECK-NEXT:  (try
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (delegate 0)

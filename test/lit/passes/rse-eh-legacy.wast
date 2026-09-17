@@ -586,7 +586,7 @@
 
   ;; CHECK:      (func $try-delegate2 (type $0)
   ;; CHECK-NEXT:  (local $x i32)
-  ;; CHECK-NEXT:  (try $l0
+  ;; CHECK-NEXT:  (try
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (try
   ;; CHECK-NEXT:     (do

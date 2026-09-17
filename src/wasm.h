@@ -33,6 +33,7 @@
 #include <ostream>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 #include "ir/import-names.h"
@@ -2447,6 +2448,15 @@ public:
   // local names. these are optional.
   std::unordered_map<Index, Name> localNames;
   std::unordered_map<Name, Index> localIndices;
+
+  // The label names in this function that were given explicitly - in the text
+  // format, in the binary name section, or through the C API - as opposed to
+  // the ones we generated ourselves. Only these are worth writing out to the
+  // name section. Label names are unique inside a function, so this keeps
+  // identifying the right labels even as optimizations replace the expressions
+  // that carry them. A name in here may no longer exist in the body, which is
+  // harmless.
+  std::unordered_set<Name> explicitLabelNames;
 
   // Source maps debugging info: map expression nodes to their file, line, col,
   // symbol name.

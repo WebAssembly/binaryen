@@ -55,6 +55,7 @@
 //   (`handleBlockNestedPops`).
 
 #include <cassert>
+#include <utility>
 
 #include "ir/child-typer.h"
 #include "ir/eh-utils.h"
@@ -1159,6 +1160,9 @@ Result<> IRBuilder::visitEnd() {
     if (!label) {
       return curr;
     }
+    if (scope.labelExplicit) {
+      noteExplicitLabel(label);
+    }
     auto* fixed = fixExtraOutput(scope, label, curr);
     // We can reuse unnamed blocks instead of wrapping them.
     if (auto* block = fixed->dynCast<Block>(); block && !block->name) {
@@ -1197,12 +1201,18 @@ Result<> IRBuilder::visitEnd() {
     block->name = Name();
     block = fixExtraOutput(scope, label, block)->cast<Block>();
     block->name = label;
+    if (scope.labelExplicit) {
+      noteExplicitLabel(label);
+    }
     block->finalize(block->type,
                     scope.labelUsed ? Block::HasBreak : Block::NoBreak);
     push(block);
   } else if (auto* loop = scope.getLoop()) {
     loop->body = fixExtraOutput(scope, label, *expr);
     loop->name = scope.label;
+    if (scope.labelExplicit) {
+      noteExplicitLabel(scope.label);
+    }
     if (scope.inputType != Type::none && scope.labelUsed) {
       // Branches to this loop carry values, but Binaryen IR does not support
       // that. Fix this by trampolining the branches through new code that sets
@@ -1230,6 +1240,9 @@ Result<> IRBuilder::visitEnd() {
   } else if (auto* tryy = scope.getTry()) {
     tryy->body = *expr;
     tryy->name = scope.label;
+    if (scope.labelExplicit) {
+      noteExplicitLabel(scope.label);
+    }
     tryy->finalize(tryy->type);
     push(maybeWrapForLabel(tryy));
   } else if (Try* tryy;
@@ -1237,6 +1250,9 @@ Result<> IRBuilder::visitEnd() {
     auto index = scope.getIndex();
     setCatchBody(tryy, *expr, index);
     tryy->name = scope.label;
+    if (scope.labelExplicit) {
+      noteExplicitLabel(scope.label);
+    }
     tryy->finalize(tryy->type);
     push(maybeWrapForLabel(tryy));
   } else if (auto* trytable = scope.getTryTable()) {
@@ -1446,9 +1462,12 @@ Result<Name> IRBuilder::getLabelName(Index label, bool forDelegate) {
 
   if (!scopeLabel) {
     // The scope does not already have a name, so we need to create one. Use the
-    // name from the name section, if we have one.
-    if (auto hint = (*scope)->nameHint) {
+    // reserved name or the name from the name section, if we have one.
+    if (auto reserved = std::exchange((*scope)->reservedLabel, Name())) {
+      scopeLabel = reserved;
+    } else if (auto hint = (*scope)->nameHint) {
       scopeLabel = makeFresh(hint);
+      (*scope)->labelExplicit = true;
     } else if ((*scope)->getBlock()) {
       scopeLabel = makeFresh("block", blockHint++);
     } else {

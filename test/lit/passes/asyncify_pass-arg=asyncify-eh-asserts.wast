@@ -93,8 +93,8 @@
   ;; CHECK-NEXT:        (i32.const 0)
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:       (then
-  ;; CHECK-NEXT:        (block $label
-  ;; CHECK-NEXT:         (try $try1
+  ;; CHECK-NEXT:        (block $try1
+  ;; CHECK-NEXT:         (try
   ;; CHECK-NEXT:          (do
   ;; CHECK-NEXT:           (local.set $1
   ;; CHECK-NEXT:            (local.get $0)
@@ -104,7 +104,7 @@
   ;; CHECK-NEXT:             (local.get $1)
   ;; CHECK-NEXT:            )
   ;; CHECK-NEXT:           )
-  ;; CHECK-NEXT:           (br_if $label
+  ;; CHECK-NEXT:           (br_if $try1
   ;; CHECK-NEXT:            (local.get $2)
   ;; CHECK-NEXT:           )
   ;; CHECK-NEXT:           (block
@@ -196,7 +196,7 @@
   ;; CHECK-NEXT:             (local.get $10)
   ;; CHECK-NEXT:            )
   ;; CHECK-NEXT:           )
-  ;; CHECK-NEXT:           (br_if $label
+  ;; CHECK-NEXT:           (br_if $try1
   ;; CHECK-NEXT:            (local.get $11)
   ;; CHECK-NEXT:           )
   ;; CHECK-NEXT:           (block
@@ -372,8 +372,8 @@
   ;; CHECK-NEXT:        (i32.const 0)
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:       (then
-  ;; CHECK-NEXT:        (block $label
-  ;; CHECK-NEXT:         (try $try1
+  ;; CHECK-NEXT:        (block $try1
+  ;; CHECK-NEXT:         (try
   ;; CHECK-NEXT:          (do
   ;; CHECK-NEXT:           (try
   ;; CHECK-NEXT:            (do
@@ -385,7 +385,7 @@
   ;; CHECK-NEXT:               (local.get $1)
   ;; CHECK-NEXT:              )
   ;; CHECK-NEXT:             )
-  ;; CHECK-NEXT:             (br_if $label
+  ;; CHECK-NEXT:             (br_if $try1
   ;; CHECK-NEXT:              (local.get $2)
   ;; CHECK-NEXT:             )
   ;; CHECK-NEXT:             (block
@@ -561,7 +561,7 @@
   ;; CHECK-NEXT:                (local.get $14)
   ;; CHECK-NEXT:               )
   ;; CHECK-NEXT:              )
-  ;; CHECK-NEXT:              (br_if $label
+  ;; CHECK-NEXT:              (br_if $try1
   ;; CHECK-NEXT:               (local.get $15)
   ;; CHECK-NEXT:              )
   ;; CHECK-NEXT:              (block
@@ -587,7 +587,7 @@
   ;; CHECK-NEXT:             (local.get $16)
   ;; CHECK-NEXT:            )
   ;; CHECK-NEXT:           )
-  ;; CHECK-NEXT:           (br_if $label
+  ;; CHECK-NEXT:           (br_if $try1
   ;; CHECK-NEXT:            (local.get $17)
   ;; CHECK-NEXT:           )
   ;; CHECK-NEXT:           (block

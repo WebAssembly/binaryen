@@ -1438,6 +1438,8 @@ public:
   void writeFunctionSignatures();
   void writeExpression(Expression* curr);
   void writeFunctions();
+  void noteLabelNames(Function* func,
+                      std::vector<std::pair<Index, Name>>& labelNames);
   void writeStrings();
   void writeGlobals();
   void writeExports();
@@ -1506,6 +1508,7 @@ public:
   };
 
   Module* getModule() { return wasm; }
+  bool getDebugInfo() const { return debugInfo; }
 
   void writeType(Type type);
 
@@ -1568,6 +1571,11 @@ private:
   // local names section: we map the locals when writing the function, save that
   // info here, and then use it when writing the names.
   std::unordered_map<Name, MappedLocals> funcMappedLocals;
+
+  // The explicitly named labels of each function, as (label index, name),
+  // gathered while writing the code section and used to write the name
+  // section afterwards.
+  std::unordered_map<Name, std::vector<std::pair<Index, Name>>> funcLabelNames;
 
   // Indexes in the string literal section of each StringConst in the wasm.
   std::unordered_map<Name, Index> stringIndexes;

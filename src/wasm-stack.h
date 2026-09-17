@@ -127,9 +127,21 @@ public:
   void emitUnreachableLocalSet(Index index);
   void mapLocalsAndEmitHeader();
 
+  // Note the start of a scope: every block, loop, if, try and try_table takes
+  // an index in the function's label index space, in the order they appear in
+  // the function body, whether or not they have a name. Records the explicitly
+  // named ones for the name section.
+  void noteScopeStart(Name name = Name());
+
   MappedLocals mappedLocals;
 
+  // The explicitly named labels of this function, as (label index, name).
+  std::vector<std::pair<Index, Name>> labelNames;
+
 private:
+  // The index the next scope in this function will take.
+  Index nextLabelIndex = 0;
+
   void emitMemoryAccess(size_t alignment,
                         size_t bytes,
                         uint64_t offset,
@@ -565,6 +577,9 @@ public:
   }
 
   MappedLocals& getMappedLocals() { return writer.mappedLocals; }
+  std::vector<std::pair<Index, Name>>& getLabelNames() {
+    return writer.labelNames;
+  }
 
 private:
   WasmBinaryWriter& parent;
@@ -607,6 +622,9 @@ public:
   void write();
 
   MappedLocals& getMappedLocals() { return writer.mappedLocals; }
+  std::vector<std::pair<Index, Name>>& getLabelNames() {
+    return writer.labelNames;
+  }
 
 private:
   WasmBinaryWriter& parent;

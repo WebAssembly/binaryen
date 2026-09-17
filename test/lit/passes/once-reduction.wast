@@ -1213,7 +1213,7 @@
   )
 
   ;; CHECK:      (func $try-catch (type $0)
-  ;; CHECK-NEXT:  (try $label$5
+  ;; CHECK-NEXT:  (try
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (if
   ;; CHECK-NEXT:     (i32.const 1)

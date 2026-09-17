@@ -512,6 +512,13 @@ void WasmBinaryWriter::writeExpression(Expression* curr) {
   BinaryenIRToBinaryWriter(*this, o).visit(curr);
 }
 
+void WasmBinaryWriter::noteLabelNames(
+  Function* func, std::vector<std::pair<Index, Name>>& labelNames) {
+  if (!labelNames.empty()) {
+    funcLabelNames[func->name] = std::move(labelNames);
+  }
+}
+
 void WasmBinaryWriter::writeFunctions() {
   if (importInfo->getNumDefinedFunctions() == 0) {
     return;
@@ -542,12 +549,14 @@ void WasmBinaryWriter::writeFunctions() {
       writer.write();
       if (debugInfo) {
         funcMappedLocals[func->name] = std::move(writer.getMappedLocals());
+        noteLabelNames(func, writer.getLabelNames());
       }
     } else {
       BinaryenIRToBinaryWriter writer(*this, o, func, sourceMap, DWARF);
       writer.write();
       if (debugInfo) {
         funcMappedLocals[func->name] = std::move(writer.getMappedLocals());
+        noteLabelNames(func, writer.getLabelNames());
       }
     }
     size_t size = o.size() - start;
@@ -1122,6 +1131,38 @@ void WasmBinaryWriter::writeNames() {
         emitted++;
       }
       assert(emitted == functionsWithLocalNames.size());
+      finishSubsection(substart);
+    }
+  }
+
+  // label names
+  {
+    std::vector<std::pair<Index, Function*>> functionsWithLabelNames;
+    Index checked = 0;
+    auto check = [&](Function* curr) {
+      if (funcLabelNames.count(curr->name)) {
+        functionsWithLabelNames.push_back({checked, curr});
+      }
+      checked++;
+    };
+    ModuleUtils::iterImportedFunctions(*wasm, check);
+    ModuleUtils::iterDefinedFunctions(*wasm, check);
+    assert(checked == indexes.functionIndexes.size());
+    if (functionsWithLabelNames.size() > 0) {
+      auto substart =
+        startSubsection(BinaryConsts::CustomSections::Subsection::NameLabel);
+      o << U32LEB(functionsWithLabelNames.size());
+      for (auto& [index, func] : functionsWithLabelNames) {
+        // The labels were gathered in the order they were emitted, which is the
+        // order of the label index space.
+        auto& labels = funcLabelNames[func->name];
+        o << U32LEB(index);
+        o << U32LEB(labels.size());
+        for (auto& [labelIndex, name] : labels) {
+          o << U32LEB(labelIndex);
+          writeInlineString(name.view());
+        }
+      }
       finishSubsection(substart);
     }
   }
