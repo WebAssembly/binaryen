@@ -463,7 +463,7 @@ struct ConstraintAnalysis
           // would not validate if we did.
           return false;
         }
-        if (old == Type::v128) {
+        if (old == Type::v128) { // XXX remove old relevant locals - now all are relevant. just filter out types we can do nothing for, like v128 and remove thiss
           // We also avoid writing v128 constants, which are large, the same as
           // Precompute.
           return false;
