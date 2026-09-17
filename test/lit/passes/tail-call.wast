@@ -666,6 +666,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $tail-cwe (result i32)
+    ;; call.without.effects is optimized when reachable.
     (call $cwe
       (i32.const 42)
       (ref.func $i32-to-i32-callee)
