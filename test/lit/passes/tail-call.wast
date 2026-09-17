@@ -6,11 +6,16 @@
 (module
   ;; CHECK:      (type $none-to-i32 (func (result i32)))
 
+  ;; CHECK:      (type $i32-to-none (func (param i32)))
+
   ;; CHECK:      (type $none-to-none (func))
   (type $none-to-none (func))
   (type $none-to-i32 (func (result i32)))
+  (type $i32-to-none (func (param i32)))
   ;; CHECK:      (type $struct (sub (struct)))
   (type $struct (sub (struct)))
+  ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $cwe (type $6) (param i32 funcref) (result i32)))
+  (import "binaryen-intrinsics" "call.without.effects" (func $cwe (param i32) (param funcref) (result i32)))
   ;; CHECK:      (global $g (mut i32) (i32.const 0))
   (global $g (mut i32) (i32.const 0))
   ;; CHECK:      (table $table 1 funcref)
@@ -19,6 +24,15 @@
   ;; CHECK:      (func $void-callee (type $none-to-none)
   ;; CHECK-NEXT: )
   (func $void-callee)
+  ;; CHECK:      (func $void-arg-callee (type $i32-to-none) (param $x i32)
+  ;; CHECK-NEXT: )
+  (func $void-arg-callee (param $x i32))
+  ;; CHECK:      (func $i32-to-i32-callee (type $2) (param $x i32) (result i32)
+  ;; CHECK-NEXT:  (local.get $x)
+  ;; CHECK-NEXT: )
+  (func $i32-to-i32-callee (param $x i32) (result i32)
+    (local.get $x)
+  )
   ;; CHECK:      (func $value-callee (type $none-to-i32) (result i32)
   ;; CHECK-NEXT:  (i32.const 1)
   ;; CHECK-NEXT: )
@@ -31,7 +45,7 @@
   (func $ref-callee (result i32)
     (i32.const 2)
   )
-  ;; CHECK:      (func $param-callee (type $6) (param $x i32) (param $y i32) (result i32)
+  ;; CHECK:      (func $param-callee (type $7) (param $x i32) (param $y i32) (result i32)
   ;; CHECK-NEXT:  (i32.add
   ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:   (local.get $y)
@@ -43,7 +57,7 @@
       (local.get $y)
     )
   )
-  ;; CHECK:      (func $subtype-callee (type $7) (result (ref $struct))
+  ;; CHECK:      (func $subtype-callee (type $8) (result (ref $struct))
   ;; CHECK-NEXT:  (struct.new_default $struct)
   ;; CHECK-NEXT: )
   (func $subtype-callee (result (ref $struct))
@@ -93,7 +107,7 @@
     )
   )
 
-  ;; CHECK:      (func $call-with-params (type $1) (param $x i32) (result i32)
+  ;; CHECK:      (func $call-with-params (type $2) (param $x i32) (result i32)
   ;; CHECK-NEXT:  (return
   ;; CHECK-NEXT:   (return_call $param-callee
   ;; CHECK-NEXT:    (local.get $x)
@@ -123,7 +137,7 @@
     )
   )
 
-  ;; CHECK:      (func $subtype-return (type $8) (result anyref)
+  ;; CHECK:      (func $subtype-return (type $9) (result anyref)
   ;; CHECK-NEXT:  (return_call $subtype-callee)
   ;; CHECK-NEXT: )
   (func $subtype-return (result anyref)
@@ -140,7 +154,7 @@
     (call $multivalue-callee)
   )
 
-  ;; CHECK:      (func $conditional (type $1) (param $condition i32) (result i32)
+  ;; CHECK:      (func $conditional (type $2) (param $condition i32) (result i32)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (local.get $condition)
   ;; CHECK-NEXT:   (then
@@ -164,7 +178,7 @@
     )
   )
 
-  ;; CHECK:      (func $one-armed-if (type $3) (param $condition i32)
+  ;; CHECK:      (func $one-armed-if (type $i32-to-none) (param $condition i32)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (local.get $condition)
   ;; CHECK-NEXT:   (then
@@ -207,7 +221,7 @@
     )
   )
 
-  ;; CHECK:      (func $break (type $1) (param $condition i32) (result i32)
+  ;; CHECK:      (func $break (type $2) (param $condition i32) (result i32)
   ;; CHECK-NEXT:  (block $out
   ;; CHECK-NEXT:   (if
   ;; CHECK-NEXT:    (local.get $condition)
@@ -234,7 +248,7 @@
     )
   )
 
-  ;; CHECK:      (func $return-break (type $1) (param $condition i32) (result i32)
+  ;; CHECK:      (func $return-break (type $2) (param $condition i32) (result i32)
   ;; CHECK-NEXT:  (return
   ;; CHECK-NEXT:   (block $out
   ;; CHECK-NEXT:    (if
@@ -265,7 +279,7 @@
     )
   )
 
-  ;; CHECK:      (func $br-if-tail (type $1) (param $condition i32) (result i32)
+  ;; CHECK:      (func $br-if-tail (type $2) (param $condition i32) (result i32)
   ;; CHECK-NEXT:  (block $out
   ;; CHECK-NEXT:   (block
   ;; CHECK-NEXT:    (return_call $value-callee)
@@ -287,7 +301,7 @@
     )
   )
 
-  ;; CHECK:      (func $br-if-not-tail (type $1) (param $condition i32) (result i32)
+  ;; CHECK:      (func $br-if-not-tail (type $2) (param $condition i32) (result i32)
   ;; CHECK-NEXT:  (block $out (result i32)
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (br_if $out
@@ -340,7 +354,7 @@
     )
   )
 
-  ;; CHECK:      (func $br-table-all-tail (type $1) (param $idx i32) (result i32)
+  ;; CHECK:      (func $br-table-all-tail (type $2) (param $idx i32) (result i32)
   ;; CHECK-NEXT:  (block $out1
   ;; CHECK-NEXT:   (block $out2
   ;; CHECK-NEXT:    (block
@@ -364,7 +378,7 @@
     )
   )
 
-  ;; CHECK:      (func $br-table-not-all-tail (type $1) (param $idx i32) (result i32)
+  ;; CHECK:      (func $br-table-not-all-tail (type $2) (param $idx i32) (result i32)
   ;; CHECK-NEXT:  (block $exit (result i32)
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (block $not-exit (result i32)
@@ -392,7 +406,7 @@
     )
   )
 
-  ;; CHECK:      (func $void-break (type $3) (param $condition i32)
+  ;; CHECK:      (func $void-break (type $i32-to-none) (param $condition i32)
   ;; CHECK-NEXT:  (block $out
   ;; CHECK-NEXT:   (if
   ;; CHECK-NEXT:    (local.get $condition)
@@ -419,7 +433,7 @@
     )
   )
 
-  ;; CHECK:      (func $void-br-if-tail (type $3) (param $condition i32)
+  ;; CHECK:      (func $void-br-if-tail (type $i32-to-none) (param $condition i32)
   ;; CHECK-NEXT:  (block $out
   ;; CHECK-NEXT:   (return_call $void-callee)
   ;; CHECK-NEXT:   (br_if $out
@@ -438,7 +452,7 @@
     )
   )
 
-  ;; CHECK:      (func $void-br-if-not-tail (type $3) (param $condition i32)
+  ;; CHECK:      (func $void-br-if-not-tail (type $i32-to-none) (param $condition i32)
   ;; CHECK-NEXT:  (block $out
   ;; CHECK-NEXT:   (call $void-callee)
   ;; CHECK-NEXT:   (br_if $out
@@ -459,7 +473,7 @@
     )
   )
 
-  ;; CHECK:      (func $void-br-table-all-tail (type $3) (param $idx i32)
+  ;; CHECK:      (func $void-br-table-all-tail (type $i32-to-none) (param $idx i32)
   ;; CHECK-NEXT:  (block $out1
   ;; CHECK-NEXT:   (block $out2
   ;; CHECK-NEXT:    (return_call $void-callee)
@@ -482,7 +496,7 @@
     )
   )
 
-  ;; CHECK:      (func $void-br-table-not-all-tail (type $3) (param $idx i32)
+  ;; CHECK:      (func $void-br-table-not-all-tail (type $i32-to-none) (param $idx i32)
   ;; CHECK-NEXT:  (block $exit
   ;; CHECK-NEXT:   (block $not-exit
   ;; CHECK-NEXT:    (call $void-callee)
@@ -507,7 +521,7 @@
     )
   )
 
-  ;; CHECK:      (func $loop-tail (type $1) (param $condition i32) (result i32)
+  ;; CHECK:      (func $loop-tail (type $2) (param $condition i32) (result i32)
   ;; CHECK-NEXT:  (loop $l
   ;; CHECK-NEXT:   (br_if $l
   ;; CHECK-NEXT:    (local.get $condition)
@@ -577,6 +591,85 @@
         (i32.const 1)
       )
       (call $void-callee)
+    )
+  )
+
+  ;; CHECK:      (func $unreachable-arg-mismatched-call (type $none-to-i32) (result i32)
+  ;; CHECK-NEXT:  (call $void-arg-callee
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $unreachable-arg-mismatched-call (result i32)
+    ;; Unreachable calls (e.g. due to an unreachable operand) are not converted
+    ;; to return calls, avoiding return type mismatches and optimizing dead code.
+    (call $void-arg-callee
+      (unreachable)
+    )
+  )
+
+  ;; CHECK:      (func $unreachable-arg-matching-call (type $none-to-i32) (result i32)
+  ;; CHECK-NEXT:  (call $param-callee
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $unreachable-arg-matching-call (result i32)
+    (call $param-callee
+      (unreachable)
+      (i32.const 1)
+    )
+  )
+
+  ;; CHECK:      (func $unreachable-arg-mismatched-call-indirect (type $none-to-i32) (result i32)
+  ;; CHECK-NEXT:  (call_indirect $table (type $i32-to-none)
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $unreachable-arg-mismatched-call-indirect (result i32)
+    (call_indirect $table (type $i32-to-none)
+      (unreachable)
+      (i32.const 0)
+    )
+  )
+
+  ;; CHECK:      (func $unreachable-arg-mismatched-call-ref (type $10) (param $f (ref $i32-to-none)) (result i32)
+  ;; CHECK-NEXT:  (call_ref $i32-to-none
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:   (local.get $f)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $unreachable-arg-mismatched-call-ref (param $f (ref $i32-to-none)) (result i32)
+    (call_ref $i32-to-none
+      (unreachable)
+      (local.get $f)
+    )
+  )
+
+  ;; CHECK:      (func $unreachable-arg-mismatched-cwe (type $none-to-i32) (result i32)
+  ;; CHECK-NEXT:  (call $cwe
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:   (ref.func $void-arg-callee)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $unreachable-arg-mismatched-cwe (result i32)
+    (call $cwe
+      (unreachable)
+      (ref.func $void-arg-callee)
+    )
+  )
+
+  ;; CHECK:      (func $tail-cwe (type $none-to-i32) (result i32)
+  ;; CHECK-NEXT:  (return_call $cwe
+  ;; CHECK-NEXT:   (i32.const 42)
+  ;; CHECK-NEXT:   (ref.func $i32-to-i32-callee)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $tail-cwe (result i32)
+    ;; call.without.effects is optimized when reachable.
+    (call $cwe
+      (i32.const 42)
+      (ref.func $i32-to-i32-callee)
     )
   )
 )

@@ -205,8 +205,10 @@ struct TailCall : public WalkerPass<PreWalker<TailCall>> {
   template<typename CallType> void handleCall(CallType* call, bool isTail) {
     // A call in tail position can have a type incompatible with the function's
     // return type if it is dead code at the end of a block following an earlier
-    // unreachable instruction.
-    if (call->isReturn || !isTail ||
+    // unreachable instruction. Also avoid optimizing unreachable calls (e.g.
+    // calls with unreachable operands), since their callee return type may not
+    // match the caller return type.
+    if (call->isReturn || !isTail || call->type == Type::unreachable ||
         !Type::isSubType(call->type, getFunction()->getResults())) {
       return;
     }
