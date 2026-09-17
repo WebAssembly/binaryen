@@ -170,6 +170,9 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $select-struct-rmw (param $x (ref $shared)) (result i32)
+    ;; The first rmw here influences the second, and we need to return the result
+    ;; of the first, which means we need a temp local. We avoid adding one and do
+    ;; not optimize here. Other instructions are tested in the functions below.
     (select
       (struct.atomic.rmw.add $shared 0
         (local.get $x)

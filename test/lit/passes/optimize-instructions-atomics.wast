@@ -108,7 +108,7 @@
  (func $select-atomic-rmw (result i32)
   ;; The first rmw here influences the second, and we need to return the result
   ;; of the first, which means we need a temp local. We avoid adding one and do
-  ;; not optimize here.
+  ;; not optimize here. Other instructions are tested in the functions below.
   (select
    (i32.atomic.rmw16.xchg_u
     (i32.const 0)
@@ -206,6 +206,20 @@
    (memory.atomic.notify
     (i32.const 0)
     (i32.const 1)
+   )
+   (i32.const 1)
+  )
+ )
+
+ (func $select-atomic-notify (result i32)
+  ;; For comparison with above, when the instruction is not generative, we can
+  ;; optimize.
+  (select
+   (i32.load
+    (i32.const 0)
+   )
+   (i32.load
+    (i32.const 0)
    )
    (i32.const 1)
   )
