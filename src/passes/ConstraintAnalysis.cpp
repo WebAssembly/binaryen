@@ -457,6 +457,12 @@ struct ConstraintAnalysis
       // A bare local.get can be optimized, if we know that local is a constant.
       if (auto lit = constraints.get(get->index).getLiteral()) {
         auto old = curr->type;
+        if (old.isNonNullable() && lit->isNull()) {
+          // This is a non-nullable local, into which we wrote an uninhabitable
+          // type (ref.as_non_null of a null). There is nothing to emit, and we
+          // would not validate if we did
+          return false;
+        }
         *currp = Builder(*getModule()).makeConstantExpression(*lit);
         auto changed = (*currp)->type != old;
         return changed;

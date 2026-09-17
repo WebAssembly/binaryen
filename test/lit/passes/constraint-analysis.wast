@@ -7545,5 +7545,34 @@
       )
     )
   )
+
+  ;; CHECK:      (func $local.get.no (type $12) (result (ref any))
+  ;; CHECK-NEXT:  (local $x (ref any))
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.get $x)
+  ;; CHECK-NEXT: )
+  ;; OPTIN:      (func $local.get.no (type $12) (result (ref any))
+  ;; OPTIN-NEXT:  (local $x (ref any))
+  ;; OPTIN-NEXT:  (local.set $x
+  ;; OPTIN-NEXT:   (unreachable)
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (local.get $x)
+  ;; OPTIN-NEXT: )
+  (func $local.get.no (result (ref any))
+    (local $x (ref any))
+    ;; An uninhabitable value is written into a non-nullable local, then we do
+    ;; a local.get of it. There is no value we can write for the local, so we do
+    ;; not emit one.
+    (local.set $x
+      (ref.as_non_null
+        (ref.null none)
+      )
+    )
+    (local.get $x)
+  )
 )
 
