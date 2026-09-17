@@ -195,6 +195,11 @@ struct ConstraintAnalysis
     }
   }
 
+  void visitLocalGet(LocalGet* curr) {
+    addAction();
+    relevantLocals[curr->index] = true;
+  }
+
   void visitLocalSet(LocalSet* curr) {
     addAction();
 
@@ -444,6 +449,15 @@ struct ConstraintAnalysis
   void optimizeExpression(Expression** currp,
                           const BasicBlockConstraintMap& constraints) {
     auto* curr = *currp;
+
+    if (auto* get = curr->dynCast<LocalGet>()) {
+      // A bare local.get can be optimized, if we know that local is a constant.
+      if (auto lit = constraints.get(get->index).getLiteral()) {
+        *currp = Builder(*getModule()).makeConstantExpression(*lit);
+      }
+      return;
+    }
+
     // Note that we don't need to try to parse a series of constraints with
     // ParsedAndedConstraints: if there is a tree of ANDed things, we will
     // simply optimize it as we walk it, each time handling one.

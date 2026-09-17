@@ -11,8 +11,8 @@
   ;; CHECK-NEXT:  (local $f f64)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (f64.eq
-  ;; CHECK-NEXT:    (local.get $f)
-  ;; CHECK-NEXT:    (local.get $f)
+  ;; CHECK-NEXT:    (f64.const 0)
+  ;; CHECK-NEXT:    (f64.const 0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (then
   ;; CHECK-NEXT:    (nop)
@@ -22,7 +22,10 @@
   ;; FASTM:      (func $float-zero (type $0)
   ;; FASTM-NEXT:  (local $f f64)
   ;; FASTM-NEXT:  (if
-  ;; FASTM-NEXT:   (i32.const 1)
+  ;; FASTM-NEXT:   (f64.eq
+  ;; FASTM-NEXT:    (f64.const 0)
+  ;; FASTM-NEXT:    (f64.const 0)
+  ;; FASTM-NEXT:   )
   ;; FASTM-NEXT:   (then
   ;; FASTM-NEXT:    (nop)
   ;; FASTM-NEXT:   )
@@ -47,7 +50,7 @@
   ;; CHECK-NEXT:  (local $f f64)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (f64.eq
-  ;; CHECK-NEXT:    (local.get $f)
+  ;; CHECK-NEXT:    (f64.const 0)
   ;; CHECK-NEXT:    (f64.const -0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (then
@@ -56,7 +59,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (f64.eq
-  ;; CHECK-NEXT:    (local.get $f)
+  ;; CHECK-NEXT:    (f64.const 0)
   ;; CHECK-NEXT:    (f64.const 0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (then
@@ -67,13 +70,19 @@
   ;; FASTM:      (func $float-negative-zero (type $0)
   ;; FASTM-NEXT:  (local $f f64)
   ;; FASTM-NEXT:  (if
-  ;; FASTM-NEXT:   (i32.const 1)
+  ;; FASTM-NEXT:   (f64.eq
+  ;; FASTM-NEXT:    (f64.const 0)
+  ;; FASTM-NEXT:    (f64.const -0)
+  ;; FASTM-NEXT:   )
   ;; FASTM-NEXT:   (then
   ;; FASTM-NEXT:    (nop)
   ;; FASTM-NEXT:   )
   ;; FASTM-NEXT:  )
   ;; FASTM-NEXT:  (if
-  ;; FASTM-NEXT:   (i32.const 1)
+  ;; FASTM-NEXT:   (f64.eq
+  ;; FASTM-NEXT:    (f64.const 0)
+  ;; FASTM-NEXT:    (f64.const 0)
+  ;; FASTM-NEXT:   )
   ;; FASTM-NEXT:   (then
   ;; FASTM-NEXT:    (nop)
   ;; FASTM-NEXT:   )
@@ -110,8 +119,8 @@
   ;; CHECK-NEXT:   (f64.const nan:0x8000000000000)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (f64.ne
-  ;; CHECK-NEXT:   (local.get $nan)
-  ;; CHECK-NEXT:   (local.get $nan)
+  ;; CHECK-NEXT:   (f64.const nan:0x8000000000000)
+  ;; CHECK-NEXT:   (f64.const nan:0x8000000000000)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; FASTM:      (func $float-ne-nan (type $1) (result i32)
@@ -119,7 +128,10 @@
   ;; FASTM-NEXT:  (local.set $nan
   ;; FASTM-NEXT:   (f64.const nan:0x8000000000000)
   ;; FASTM-NEXT:  )
-  ;; FASTM-NEXT:  (i32.const 0)
+  ;; FASTM-NEXT:  (f64.ne
+  ;; FASTM-NEXT:   (f64.const nan:0x8000000000000)
+  ;; FASTM-NEXT:   (f64.const nan:0x8000000000000)
+  ;; FASTM-NEXT:  )
   ;; FASTM-NEXT: )
   (func $float-ne-nan (result i32)
     (local $nan f64)

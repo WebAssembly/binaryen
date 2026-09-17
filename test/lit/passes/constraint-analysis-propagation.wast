@@ -22,7 +22,7 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (block
  ;; CHECK-NEXT:    (local.set $0
- ;; CHECK-NEXT:     (local.get $2)
+ ;; CHECK-NEXT:     (unreachable)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (unreachable)
  ;; CHECK-NEXT:   )
@@ -83,12 +83,10 @@
  ;; CHECK-NEXT:   (local.set $2
  ;; CHECK-NEXT:    (local.get $1)
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (br_if $label
- ;; CHECK-NEXT:    (local.get $0)
- ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:   (block
  ;; CHECK-NEXT:    (local.set $0
- ;; CHECK-NEXT:     (local.get $2)
+ ;; CHECK-NEXT:     (unreachable)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (unreachable)
  ;; CHECK-NEXT:   )

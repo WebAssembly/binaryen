@@ -967,7 +967,7 @@
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.lt_s
-  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (local.get $len)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (then
@@ -1039,7 +1039,7 @@
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.lt_u
-  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (local.get $len)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (then
@@ -1526,7 +1526,10 @@
   ;; CHECK-NEXT:  (local $y i32)
   ;; CHECK-NEXT:  (loop $loop
   ;; CHECK-NEXT:   (br_if $loop
-  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (i32.lt_s
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -1551,7 +1554,10 @@
   ;; CHECK-NEXT:  (local $y i32)
   ;; CHECK-NEXT:  (loop $loop
   ;; CHECK-NEXT:   (br_if $loop
-  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (i32.lt_u
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )

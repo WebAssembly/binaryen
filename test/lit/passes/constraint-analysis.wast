@@ -23,16 +23,28 @@
   ;; CHECK-NEXT:   (i32.const 10)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (i32.eq
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (i32.eq
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:    (i32.const 20)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (i32.ne
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (i32.ne
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:    (i32.const 20)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; OPTIN:      (func $simple (type $1)
@@ -41,13 +53,19 @@
   ;; OPTIN-NEXT:   (i32.const 10)
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (drop
-  ;; OPTIN-NEXT:   (i32.const 1)
+  ;; OPTIN-NEXT:   (i32.eq
+  ;; OPTIN-NEXT:    (i32.const 10)
+  ;; OPTIN-NEXT:    (i32.const 10)
+  ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (drop
   ;; OPTIN-NEXT:   (i32.const 0)
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (drop
-  ;; OPTIN-NEXT:   (i32.const 0)
+  ;; OPTIN-NEXT:   (i32.ne
+  ;; OPTIN-NEXT:    (i32.const 10)
+  ;; OPTIN-NEXT:    (i32.const 10)
+  ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (drop
   ;; OPTIN-NEXT:   (i32.const 1)
@@ -119,7 +137,10 @@
   ;; OPTIN-NEXT:   (i32.const 30)
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (drop
-  ;; OPTIN-NEXT:   (i32.const 1)
+  ;; OPTIN-NEXT:   (i32.eq
+  ;; OPTIN-NEXT:    (i32.const 30)
+  ;; OPTIN-NEXT:    (i32.const 30)
+  ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (local.set $x
   ;; OPTIN-NEXT:   (i32.div_u
@@ -175,22 +196,37 @@
   ;; CHECK-NEXT:   (i32.const 20)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (i32.eq
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (i32.eq
+  ;; CHECK-NEXT:    (i32.const 20)
+  ;; CHECK-NEXT:    (i32.const 20)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.set $x
   ;; CHECK-NEXT:   (i32.const 15)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (i32.eq
+  ;; CHECK-NEXT:    (i32.const 15)
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (i32.eq
+  ;; CHECK-NEXT:    (i32.const 15)
+  ;; CHECK-NEXT:    (i32.const 15)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (i32.eq
+  ;; CHECK-NEXT:    (i32.const 20)
+  ;; CHECK-NEXT:    (i32.const 20)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; OPTIN:      (func $multi-local (type $1)
@@ -203,22 +239,37 @@
   ;; OPTIN-NEXT:   (i32.const 20)
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (drop
-  ;; OPTIN-NEXT:   (i32.const 1)
+  ;; OPTIN-NEXT:   (i32.eq
+  ;; OPTIN-NEXT:    (i32.const 10)
+  ;; OPTIN-NEXT:    (i32.const 10)
+  ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (drop
-  ;; OPTIN-NEXT:   (i32.const 1)
+  ;; OPTIN-NEXT:   (i32.eq
+  ;; OPTIN-NEXT:    (i32.const 20)
+  ;; OPTIN-NEXT:    (i32.const 20)
+  ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (local.set $x
   ;; OPTIN-NEXT:   (i32.const 15)
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (drop
-  ;; OPTIN-NEXT:   (i32.const 0)
+  ;; OPTIN-NEXT:   (i32.eq
+  ;; OPTIN-NEXT:    (i32.const 15)
+  ;; OPTIN-NEXT:    (i32.const 10)
+  ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (drop
-  ;; OPTIN-NEXT:   (i32.const 1)
+  ;; OPTIN-NEXT:   (i32.eq
+  ;; OPTIN-NEXT:    (i32.const 15)
+  ;; OPTIN-NEXT:    (i32.const 15)
+  ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (drop
-  ;; OPTIN-NEXT:   (i32.const 1)
+  ;; OPTIN-NEXT:   (i32.eq
+  ;; OPTIN-NEXT:    (i32.const 20)
+  ;; OPTIN-NEXT:    (i32.const 20)
+  ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT: )
   (func $multi-local
@@ -278,17 +329,26 @@
   ;; CHECK-NEXT:   (local.get $param)
   ;; CHECK-NEXT:   (then
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:     (i32.eq
+  ;; CHECK-NEXT:      (i32.const 10)
+  ;; CHECK-NEXT:      (i32.const 10)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (else
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:     (i32.ne
+  ;; CHECK-NEXT:      (i32.const 10)
+  ;; CHECK-NEXT:      (i32.const 10)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (i32.eq
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; OPTIN:      (func $multi-block (type $0) (param $param i32)
@@ -300,15 +360,24 @@
   ;; OPTIN-NEXT:   (if (result i32)
   ;; OPTIN-NEXT:    (local.get $param)
   ;; OPTIN-NEXT:    (then
-  ;; OPTIN-NEXT:     (i32.const 1)
+  ;; OPTIN-NEXT:     (i32.eq
+  ;; OPTIN-NEXT:      (i32.const 10)
+  ;; OPTIN-NEXT:      (i32.const 10)
+  ;; OPTIN-NEXT:     )
   ;; OPTIN-NEXT:    )
   ;; OPTIN-NEXT:    (else
-  ;; OPTIN-NEXT:     (i32.const 0)
+  ;; OPTIN-NEXT:     (i32.ne
+  ;; OPTIN-NEXT:      (i32.const 10)
+  ;; OPTIN-NEXT:      (i32.const 10)
+  ;; OPTIN-NEXT:     )
   ;; OPTIN-NEXT:    )
   ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (drop
-  ;; OPTIN-NEXT:   (i32.const 1)
+  ;; OPTIN-NEXT:   (i32.eq
+  ;; OPTIN-NEXT:    (i32.const 10)
+  ;; OPTIN-NEXT:    (i32.const 10)
+  ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT: )
   (func $multi-block (param $param i32)
@@ -525,10 +594,16 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (i32.eq
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (i32.eq
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:    (i32.const 20)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; OPTIN:      (func $multi-block-split-yes (type $0) (param $param i32)
@@ -545,7 +620,10 @@
   ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (drop
-  ;; OPTIN-NEXT:   (i32.const 1)
+  ;; OPTIN-NEXT:   (i32.eq
+  ;; OPTIN-NEXT:    (i32.const 10)
+  ;; OPTIN-NEXT:    (i32.const 10)
+  ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (drop
   ;; OPTIN-NEXT:   (i32.const 0)
@@ -587,10 +665,16 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (loop $loop
   ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:    (i32.eq
+  ;; CHECK-NEXT:     (i32.const 10)
+  ;; CHECK-NEXT:     (i32.const 10)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:    (i32.ne
+  ;; CHECK-NEXT:     (i32.const 10)
+  ;; CHECK-NEXT:     (i32.const 20)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (br_if $loop
   ;; CHECK-NEXT:    (local.get $param)
@@ -604,7 +688,10 @@
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (loop $loop
   ;; OPTIN-NEXT:   (drop
-  ;; OPTIN-NEXT:    (i32.const 1)
+  ;; OPTIN-NEXT:    (i32.eq
+  ;; OPTIN-NEXT:     (i32.const 10)
+  ;; OPTIN-NEXT:     (i32.const 10)
+  ;; OPTIN-NEXT:    )
   ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:   (drop
   ;; OPTIN-NEXT:    (i32.const 1)
@@ -725,10 +812,15 @@
   ;; CHECK-NEXT:  (local $eq eqref)
   ;; CHECK-NEXT:  (local $nn-eq (ref eq))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (i32.eq
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.eq
@@ -737,10 +829,15 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (ref.is_null
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; OPTIN:      (func $default-var (type $0) (param $param i32)
@@ -748,10 +845,14 @@
   ;; OPTIN-NEXT:  (local $eq eqref)
   ;; OPTIN-NEXT:  (local $nn-eq (ref eq))
   ;; OPTIN-NEXT:  (drop
-  ;; OPTIN-NEXT:   (i32.const 1)
+  ;; OPTIN-NEXT:   (i32.eqz
+  ;; OPTIN-NEXT:    (i32.const 0)
+  ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (drop
-  ;; OPTIN-NEXT:   (i32.const 1)
+  ;; OPTIN-NEXT:   (i32.eqz
+  ;; OPTIN-NEXT:    (i32.const 0)
+  ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (drop
   ;; OPTIN-NEXT:   (i32.eqz
@@ -759,10 +860,14 @@
   ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (drop
-  ;; OPTIN-NEXT:   (i32.const 1)
+  ;; OPTIN-NEXT:   (ref.is_null
+  ;; OPTIN-NEXT:    (ref.null none)
+  ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (drop
-  ;; OPTIN-NEXT:   (i32.const 1)
+  ;; OPTIN-NEXT:   (ref.is_null
+  ;; OPTIN-NEXT:    (ref.null none)
+  ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT: )
   (func $default-var (param $param i32)
@@ -817,10 +922,15 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (else
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:     (i32.eqz
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:     (i32.ne
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -910,10 +1020,16 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (then
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:     (i32.eq
+  ;; CHECK-NEXT:      (i32.const 10)
+  ;; CHECK-NEXT:      (i32.const 10)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:     (i32.ne
+  ;; CHECK-NEXT:      (i32.const 10)
+  ;; CHECK-NEXT:      (i32.const 10)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (else
@@ -1030,16 +1146,28 @@
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (then
   ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (i32.const 1)
+  ;; CHECK-NEXT:       (i32.eq
+  ;; CHECK-NEXT:        (i32.const 10)
+  ;; CHECK-NEXT:        (i32.const 10)
+  ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (i32.const 0)
+  ;; CHECK-NEXT:       (i32.eq
+  ;; CHECK-NEXT:        (i32.const 10)
+  ;; CHECK-NEXT:        (i32.const 20)
+  ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (i32.const 0)
+  ;; CHECK-NEXT:       (i32.eq
+  ;; CHECK-NEXT:        (i32.const 20)
+  ;; CHECK-NEXT:        (i32.const 10)
+  ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (i32.const 1)
+  ;; CHECK-NEXT:       (i32.eq
+  ;; CHECK-NEXT:        (i32.const 20)
+  ;; CHECK-NEXT:        (i32.const 20)
+  ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
@@ -1060,16 +1188,28 @@
   ;; OPTIN-NEXT:     )
   ;; OPTIN-NEXT:     (then
   ;; OPTIN-NEXT:      (drop
-  ;; OPTIN-NEXT:       (i32.const 1)
+  ;; OPTIN-NEXT:       (i32.eq
+  ;; OPTIN-NEXT:        (i32.const 10)
+  ;; OPTIN-NEXT:        (i32.const 10)
+  ;; OPTIN-NEXT:       )
   ;; OPTIN-NEXT:      )
   ;; OPTIN-NEXT:      (drop
-  ;; OPTIN-NEXT:       (i32.const 0)
+  ;; OPTIN-NEXT:       (i32.eq
+  ;; OPTIN-NEXT:        (i32.const 10)
+  ;; OPTIN-NEXT:        (i32.const 20)
+  ;; OPTIN-NEXT:       )
   ;; OPTIN-NEXT:      )
   ;; OPTIN-NEXT:      (drop
-  ;; OPTIN-NEXT:       (i32.const 0)
+  ;; OPTIN-NEXT:       (i32.eq
+  ;; OPTIN-NEXT:        (i32.const 20)
+  ;; OPTIN-NEXT:        (i32.const 10)
+  ;; OPTIN-NEXT:       )
   ;; OPTIN-NEXT:      )
   ;; OPTIN-NEXT:      (drop
-  ;; OPTIN-NEXT:       (i32.const 1)
+  ;; OPTIN-NEXT:       (i32.eq
+  ;; OPTIN-NEXT:        (i32.const 20)
+  ;; OPTIN-NEXT:        (i32.const 20)
+  ;; OPTIN-NEXT:       )
   ;; OPTIN-NEXT:      )
   ;; OPTIN-NEXT:     )
   ;; OPTIN-NEXT:    )
@@ -1128,21 +1268,36 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (then
   ;; CHECK-NEXT:    (if
-  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:     (i32.eq
+  ;; CHECK-NEXT:      (i32.const 10)
+  ;; CHECK-NEXT:      (i32.const 20)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (then
   ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (unreachable)
+  ;; CHECK-NEXT:       (block
+  ;; CHECK-NEXT:        (unreachable)
+  ;; CHECK-NEXT:        (unreachable)
+  ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (unreachable)
+  ;; CHECK-NEXT:       (block
+  ;; CHECK-NEXT:        (unreachable)
+  ;; CHECK-NEXT:        (unreachable)
+  ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:     (i32.eq
+  ;; CHECK-NEXT:      (i32.const 10)
+  ;; CHECK-NEXT:      (i32.const 10)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:     (i32.eq
+  ;; CHECK-NEXT:      (i32.const 10)
+  ;; CHECK-NEXT:      (i32.const 20)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -1155,21 +1310,36 @@
   ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:   (then
   ;; OPTIN-NEXT:    (if
-  ;; OPTIN-NEXT:     (i32.const 0)
+  ;; OPTIN-NEXT:     (i32.eq
+  ;; OPTIN-NEXT:      (i32.const 10)
+  ;; OPTIN-NEXT:      (i32.const 20)
+  ;; OPTIN-NEXT:     )
   ;; OPTIN-NEXT:     (then
   ;; OPTIN-NEXT:      (drop
-  ;; OPTIN-NEXT:       (unreachable)
+  ;; OPTIN-NEXT:       (block
+  ;; OPTIN-NEXT:        (unreachable)
+  ;; OPTIN-NEXT:        (unreachable)
+  ;; OPTIN-NEXT:       )
   ;; OPTIN-NEXT:      )
   ;; OPTIN-NEXT:      (drop
-  ;; OPTIN-NEXT:       (unreachable)
+  ;; OPTIN-NEXT:       (block
+  ;; OPTIN-NEXT:        (unreachable)
+  ;; OPTIN-NEXT:        (unreachable)
+  ;; OPTIN-NEXT:       )
   ;; OPTIN-NEXT:      )
   ;; OPTIN-NEXT:     )
   ;; OPTIN-NEXT:    )
   ;; OPTIN-NEXT:    (drop
-  ;; OPTIN-NEXT:     (i32.const 1)
+  ;; OPTIN-NEXT:     (i32.eq
+  ;; OPTIN-NEXT:      (i32.const 10)
+  ;; OPTIN-NEXT:      (i32.const 10)
+  ;; OPTIN-NEXT:     )
   ;; OPTIN-NEXT:    )
   ;; OPTIN-NEXT:    (drop
-  ;; OPTIN-NEXT:     (i32.const 0)
+  ;; OPTIN-NEXT:     (i32.eq
+  ;; OPTIN-NEXT:      (i32.const 10)
+  ;; OPTIN-NEXT:      (i32.const 20)
+  ;; OPTIN-NEXT:     )
   ;; OPTIN-NEXT:    )
   ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
@@ -1231,23 +1401,38 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (then
   ;; CHECK-NEXT:    (if
-  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:     (i32.eq
+  ;; CHECK-NEXT:      (i32.const 10)
+  ;; CHECK-NEXT:      (i32.const 10)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (then
   ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (i32.const 1)
+  ;; CHECK-NEXT:       (i32.eq
+  ;; CHECK-NEXT:        (i32.const 10)
+  ;; CHECK-NEXT:        (i32.const 10)
+  ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (else
   ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (unreachable)
+  ;; CHECK-NEXT:       (block
+  ;; CHECK-NEXT:        (unreachable)
+  ;; CHECK-NEXT:        (unreachable)
+  ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:     (i32.eq
+  ;; CHECK-NEXT:      (i32.const 10)
+  ;; CHECK-NEXT:      (i32.const 10)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:     (i32.eq
+  ;; CHECK-NEXT:      (i32.const 10)
+  ;; CHECK-NEXT:      (i32.const 20)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -1260,13 +1445,22 @@
   ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:   (then
   ;; OPTIN-NEXT:    (drop
-  ;; OPTIN-NEXT:     (i32.const 1)
+  ;; OPTIN-NEXT:     (i32.eq
+  ;; OPTIN-NEXT:      (i32.const 10)
+  ;; OPTIN-NEXT:      (i32.const 10)
+  ;; OPTIN-NEXT:     )
   ;; OPTIN-NEXT:    )
   ;; OPTIN-NEXT:    (drop
-  ;; OPTIN-NEXT:     (i32.const 1)
+  ;; OPTIN-NEXT:     (i32.eq
+  ;; OPTIN-NEXT:      (i32.const 10)
+  ;; OPTIN-NEXT:      (i32.const 10)
+  ;; OPTIN-NEXT:     )
   ;; OPTIN-NEXT:    )
   ;; OPTIN-NEXT:    (drop
-  ;; OPTIN-NEXT:     (i32.const 0)
+  ;; OPTIN-NEXT:     (i32.eq
+  ;; OPTIN-NEXT:      (i32.const 10)
+  ;; OPTIN-NEXT:      (i32.const 20)
+  ;; OPTIN-NEXT:     )
   ;; OPTIN-NEXT:    )
   ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
@@ -1329,7 +1523,10 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (then
   ;; CHECK-NEXT:    (if
-  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:     (i32.eq
+  ;; CHECK-NEXT:      (i32.const 10)
+  ;; CHECK-NEXT:      (i32.const 20)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (then
   ;; CHECK-NEXT:      (drop
   ;; CHECK-NEXT:       (unreachable)
@@ -1347,7 +1544,10 @@
   ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:   (then
   ;; OPTIN-NEXT:    (if
-  ;; OPTIN-NEXT:     (i32.const 0)
+  ;; OPTIN-NEXT:     (i32.eq
+  ;; OPTIN-NEXT:      (i32.const 10)
+  ;; OPTIN-NEXT:      (i32.const 20)
+  ;; OPTIN-NEXT:     )
   ;; OPTIN-NEXT:     (then
   ;; OPTIN-NEXT:      (drop
   ;; OPTIN-NEXT:       (i32.const 30)
@@ -1391,7 +1591,7 @@
   ;; CHECK:      (func $conditional-binary-contradiction-other-default (type $1)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (if
-  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (then
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (unreachable)
@@ -1402,7 +1602,7 @@
   ;; OPTIN:      (func $conditional-binary-contradiction-other-default (type $1)
   ;; OPTIN-NEXT:  (local $x i32)
   ;; OPTIN-NEXT:  (if
-  ;; OPTIN-NEXT:   (local.get $x)
+  ;; OPTIN-NEXT:   (i32.const 0)
   ;; OPTIN-NEXT:   (then
   ;; OPTIN-NEXT:    (drop
   ;; OPTIN-NEXT:     (i32.const 30)
@@ -1434,7 +1634,10 @@
   ;; CHECK-NEXT:   (i32.const 10)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (if
-  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (i32.eq
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:    (i32.const 20)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (then
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (unreachable)
@@ -1487,10 +1690,17 @@
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (if
-  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (i32.eq
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (then
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:     (block
+  ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -1502,10 +1712,17 @@
   ;; OPTIN-NEXT:   (i32.const 1)
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (if
-  ;; OPTIN-NEXT:   (i32.const 0)
+  ;; OPTIN-NEXT:   (i32.eq
+  ;; OPTIN-NEXT:    (i32.const 0)
+  ;; OPTIN-NEXT:    (i32.const 1)
+  ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:   (then
   ;; OPTIN-NEXT:    (drop
-  ;; OPTIN-NEXT:     (unreachable)
+  ;; OPTIN-NEXT:     (block
+  ;; OPTIN-NEXT:      (unreachable)
+  ;; OPTIN-NEXT:      (unreachable)
+  ;; OPTIN-NEXT:      (unreachable)
+  ;; OPTIN-NEXT:     )
   ;; OPTIN-NEXT:    )
   ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
@@ -1640,7 +1857,10 @@
   ;; CHECK-NEXT:   (return)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (i32.eq
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; OPTIN:      (func $conditional-br_if_2 (type $0) (param $param i32)
@@ -1663,7 +1883,10 @@
   ;; OPTIN-NEXT:   (return)
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (drop
-  ;; OPTIN-NEXT:   (i32.const 1)
+  ;; OPTIN-NEXT:   (i32.eq
+  ;; OPTIN-NEXT:    (i32.const 10)
+  ;; OPTIN-NEXT:    (i32.const 10)
+  ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT: )
   (func $conditional-br_if_2 (param $param i32)
@@ -1753,7 +1976,9 @@
   ;; CHECK-NEXT:   (return)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (ref.is_null
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; OPTIN:      (func $br_on_null (type $6) (param $param anyref)
@@ -1774,7 +1999,9 @@
   ;; OPTIN-NEXT:   (return)
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (drop
-  ;; OPTIN-NEXT:   (i32.const 1)
+  ;; OPTIN-NEXT:   (ref.is_null
+  ;; OPTIN-NEXT:    (ref.null none)
+  ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT: )
   (func $br_on_null (param $param anyref)
@@ -1818,7 +2045,9 @@
   ;; CHECK-NEXT:     (local.get $param)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:     (ref.is_null
+  ;; CHECK-NEXT:      (ref.null none)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (return)
   ;; CHECK-NEXT:   )
@@ -1839,7 +2068,9 @@
   ;; OPTIN-NEXT:     (local.get $param)
   ;; OPTIN-NEXT:    )
   ;; OPTIN-NEXT:    (drop
-  ;; OPTIN-NEXT:     (i32.const 1)
+  ;; OPTIN-NEXT:     (ref.is_null
+  ;; OPTIN-NEXT:      (ref.null none)
+  ;; OPTIN-NEXT:     )
   ;; OPTIN-NEXT:    )
   ;; OPTIN-NEXT:    (return)
   ;; OPTIN-NEXT:   )
@@ -3236,13 +3467,19 @@
   ;; CHECK-NEXT:   (i32.const 10)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.set $y
-  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (i32.const 10)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (i32.eq
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (i32.eq
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; OPTIN:      (func $multi-local-copy (type $1)
@@ -3252,13 +3489,19 @@
   ;; OPTIN-NEXT:   (i32.const 10)
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (local.set $y
-  ;; OPTIN-NEXT:   (local.get $x)
+  ;; OPTIN-NEXT:   (i32.const 10)
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (drop
-  ;; OPTIN-NEXT:   (i32.const 1)
+  ;; OPTIN-NEXT:   (i32.eq
+  ;; OPTIN-NEXT:    (i32.const 10)
+  ;; OPTIN-NEXT:    (i32.const 10)
+  ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (drop
-  ;; OPTIN-NEXT:   (i32.const 1)
+  ;; OPTIN-NEXT:   (i32.eq
+  ;; OPTIN-NEXT:    (i32.const 10)
+  ;; OPTIN-NEXT:    (i32.const 10)
+  ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT: )
   (func $multi-local-copy
@@ -3300,13 +3543,19 @@
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.set $y
-  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i32.const 42)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:     (i32.eq
+  ;; CHECK-NEXT:      (i32.const 42)
+  ;; CHECK-NEXT:      (i32.const 42)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:     (i32.eq
+  ;; CHECK-NEXT:      (i32.const 42)
+  ;; CHECK-NEXT:      (i32.const 42)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (else
@@ -3418,15 +3667,21 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.eq
-  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 42)
   ;; CHECK-NEXT:    (local.get $y)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (then
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:     (i32.eq
+  ;; CHECK-NEXT:      (i32.const 42)
+  ;; CHECK-NEXT:      (i32.const 42)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:     (i32.eq
+  ;; CHECK-NEXT:      (i32.const 42)
+  ;; CHECK-NEXT:      (i32.const 42)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -3437,15 +3692,21 @@
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (if
   ;; OPTIN-NEXT:   (i32.eq
-  ;; OPTIN-NEXT:    (local.get $x)
+  ;; OPTIN-NEXT:    (i32.const 42)
   ;; OPTIN-NEXT:    (local.get $y)
   ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:   (then
   ;; OPTIN-NEXT:    (drop
-  ;; OPTIN-NEXT:     (i32.const 1)
+  ;; OPTIN-NEXT:     (i32.eq
+  ;; OPTIN-NEXT:      (i32.const 42)
+  ;; OPTIN-NEXT:      (i32.const 42)
+  ;; OPTIN-NEXT:     )
   ;; OPTIN-NEXT:    )
   ;; OPTIN-NEXT:    (drop
-  ;; OPTIN-NEXT:     (i32.const 1)
+  ;; OPTIN-NEXT:     (i32.eq
+  ;; OPTIN-NEXT:      (i32.const 42)
+  ;; OPTIN-NEXT:      (i32.const 42)
+  ;; OPTIN-NEXT:     )
   ;; OPTIN-NEXT:    )
   ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
@@ -3487,14 +3748,20 @@
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.eq
   ;; CHECK-NEXT:    (local.get $y)
-  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 42)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (then
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:     (i32.eq
+  ;; CHECK-NEXT:      (i32.const 42)
+  ;; CHECK-NEXT:      (i32.const 42)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:     (i32.eq
+  ;; CHECK-NEXT:      (i32.const 42)
+  ;; CHECK-NEXT:      (i32.const 42)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -3505,15 +3772,21 @@
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (if
   ;; OPTIN-NEXT:   (i32.eq
-  ;; OPTIN-NEXT:    (local.get $x)
+  ;; OPTIN-NEXT:    (i32.const 42)
   ;; OPTIN-NEXT:    (local.get $y)
   ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:   (then
   ;; OPTIN-NEXT:    (drop
-  ;; OPTIN-NEXT:     (i32.const 1)
+  ;; OPTIN-NEXT:     (i32.eq
+  ;; OPTIN-NEXT:      (i32.const 42)
+  ;; OPTIN-NEXT:      (i32.const 42)
+  ;; OPTIN-NEXT:     )
   ;; OPTIN-NEXT:    )
   ;; OPTIN-NEXT:    (drop
-  ;; OPTIN-NEXT:     (i32.const 1)
+  ;; OPTIN-NEXT:     (i32.eq
+  ;; OPTIN-NEXT:      (i32.const 42)
+  ;; OPTIN-NEXT:      (i32.const 42)
+  ;; OPTIN-NEXT:     )
   ;; OPTIN-NEXT:    )
   ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
@@ -3769,14 +4042,14 @@
   ;; CHECK:      (func $iloop (type $9) (param $0 f32)
   ;; CHECK-NEXT:  (local $1 f32)
   ;; CHECK-NEXT:  (local.set $0
-  ;; CHECK-NEXT:   (local.get $1)
+  ;; CHECK-NEXT:   (f32.const 0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (then
   ;; CHECK-NEXT:    (loop
   ;; CHECK-NEXT:     (local.set $1
-  ;; CHECK-NEXT:      (local.get $0)
+  ;; CHECK-NEXT:      (f32.const 0)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
@@ -3794,14 +4067,14 @@
   ;; OPTIN:      (func $iloop (type $9) (param $0 f32)
   ;; OPTIN-NEXT:  (local $1 f32)
   ;; OPTIN-NEXT:  (local.set $0
-  ;; OPTIN-NEXT:   (local.get $1)
+  ;; OPTIN-NEXT:   (f32.const 0)
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (if
   ;; OPTIN-NEXT:   (i32.const 0)
   ;; OPTIN-NEXT:   (then
   ;; OPTIN-NEXT:    (loop
   ;; OPTIN-NEXT:     (local.set $1
-  ;; OPTIN-NEXT:      (local.get $0)
+  ;; OPTIN-NEXT:      (f32.const 0)
   ;; OPTIN-NEXT:     )
   ;; OPTIN-NEXT:    )
   ;; OPTIN-NEXT:   )
@@ -3855,8 +4128,11 @@
   ;; CHECK-NEXT:  (local $e eqref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.lt_u
-  ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (ref.eq
+  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -3865,8 +4141,10 @@
   ;; OPTIN-NEXT:  (local $e eqref)
   ;; OPTIN-NEXT:  (drop
   ;; OPTIN-NEXT:   (i32.gt_u
-  ;; OPTIN-NEXT:    (i32.const 1)
-  ;; OPTIN-NEXT:    (local.get $x)
+  ;; OPTIN-NEXT:    (ref.is_null
+  ;; OPTIN-NEXT:     (ref.null none)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:    (i32.const 0)
   ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT: )
@@ -3892,20 +4170,25 @@
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (local $y i32)
   ;; CHECK-NEXT:  (local.set $y
-  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (i32.eq
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; OPTIN:      (func $relevant-copy (type $1)
   ;; OPTIN-NEXT:  (local $x i32)
   ;; OPTIN-NEXT:  (local $y i32)
   ;; OPTIN-NEXT:  (local.set $y
-  ;; OPTIN-NEXT:   (local.get $x)
+  ;; OPTIN-NEXT:   (i32.const 0)
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (drop
-  ;; OPTIN-NEXT:   (i32.const 1)
+  ;; OPTIN-NEXT:   (i32.eqz
+  ;; OPTIN-NEXT:    (i32.const 0)
+  ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT: )
   (func $relevant-copy
@@ -3930,16 +4213,28 @@
   ;; CHECK-NEXT:   (i32.const 42)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (i32.lt_s
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:    (i32.const 41)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (i32.lt_s
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (i32.lt_s
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:    (i32.const 43)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (i32.lt_s
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:    (i32.const -1)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; OPTIN:      (func $constant-inequalities-lt_s (type $1)
@@ -3948,13 +4243,22 @@
   ;; OPTIN-NEXT:   (i32.const 42)
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (drop
-  ;; OPTIN-NEXT:   (i32.const 0)
+  ;; OPTIN-NEXT:   (i32.lt_u
+  ;; OPTIN-NEXT:    (i32.const 42)
+  ;; OPTIN-NEXT:    (i32.const 41)
+  ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (drop
-  ;; OPTIN-NEXT:   (i32.const 0)
+  ;; OPTIN-NEXT:   (i32.lt_u
+  ;; OPTIN-NEXT:    (i32.const 42)
+  ;; OPTIN-NEXT:    (i32.const 42)
+  ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (drop
-  ;; OPTIN-NEXT:   (i32.const 1)
+  ;; OPTIN-NEXT:   (i32.lt_u
+  ;; OPTIN-NEXT:    (i32.const 42)
+  ;; OPTIN-NEXT:    (i32.const 43)
+  ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (drop
   ;; OPTIN-NEXT:   (i32.const 0)
@@ -3998,16 +4302,28 @@
   ;; CHECK-NEXT:   (i32.const 42)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (i32.le_s
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:    (i32.const 41)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (i32.le_s
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (i32.le_s
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:    (i32.const 43)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (i32.le_s
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:    (i32.const -1)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; OPTIN:      (func $constant-inequalities-le_s (type $1)
@@ -4016,16 +4332,28 @@
   ;; OPTIN-NEXT:   (i32.const 42)
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (drop
-  ;; OPTIN-NEXT:   (i32.const 0)
+  ;; OPTIN-NEXT:   (i32.le_u
+  ;; OPTIN-NEXT:    (i32.const 42)
+  ;; OPTIN-NEXT:    (i32.const 41)
+  ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (drop
-  ;; OPTIN-NEXT:   (i32.const 1)
+  ;; OPTIN-NEXT:   (i32.le_u
+  ;; OPTIN-NEXT:    (i32.const 42)
+  ;; OPTIN-NEXT:    (i32.const 42)
+  ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (drop
-  ;; OPTIN-NEXT:   (i32.const 1)
+  ;; OPTIN-NEXT:   (i32.le_u
+  ;; OPTIN-NEXT:    (i32.const 42)
+  ;; OPTIN-NEXT:    (i32.const 43)
+  ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (drop
-  ;; OPTIN-NEXT:   (i32.const 0)
+  ;; OPTIN-NEXT:   (i32.lt_u
+  ;; OPTIN-NEXT:    (i32.const 42)
+  ;; OPTIN-NEXT:    (i32.const 0)
+  ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT: )
   (func $constant-inequalities-le_s
@@ -4065,16 +4393,28 @@
   ;; CHECK-NEXT:   (i32.const 42)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (i32.gt_s
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:    (i32.const 41)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (i32.gt_s
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (i32.gt_s
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:    (i32.const 43)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (i32.gt_s
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:    (i32.const -1)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; OPTIN:      (func $constant-inequalities-gt_s (type $1)
@@ -4083,16 +4423,28 @@
   ;; OPTIN-NEXT:   (i32.const 42)
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (drop
-  ;; OPTIN-NEXT:   (i32.const 1)
+  ;; OPTIN-NEXT:   (i32.gt_u
+  ;; OPTIN-NEXT:    (i32.const 42)
+  ;; OPTIN-NEXT:    (i32.const 41)
+  ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (drop
-  ;; OPTIN-NEXT:   (i32.const 0)
+  ;; OPTIN-NEXT:   (i32.gt_u
+  ;; OPTIN-NEXT:    (i32.const 42)
+  ;; OPTIN-NEXT:    (i32.const 42)
+  ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (drop
-  ;; OPTIN-NEXT:   (i32.const 0)
+  ;; OPTIN-NEXT:   (i32.gt_u
+  ;; OPTIN-NEXT:    (i32.const 42)
+  ;; OPTIN-NEXT:    (i32.const 43)
+  ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (drop
-  ;; OPTIN-NEXT:   (i32.const 1)
+  ;; OPTIN-NEXT:   (i32.ge_u
+  ;; OPTIN-NEXT:    (i32.const 42)
+  ;; OPTIN-NEXT:    (i32.const 0)
+  ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT: )
   (func $constant-inequalities-gt_s
@@ -4132,16 +4484,28 @@
   ;; CHECK-NEXT:   (i32.const 42)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (i32.ge_s
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:    (i32.const 41)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (i32.ge_s
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (i32.ge_s
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:    (i32.const 43)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (i32.ge_s
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:    (i32.const -1)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; OPTIN:      (func $constant-inequalities-ge_s (type $1)
@@ -4150,13 +4514,22 @@
   ;; OPTIN-NEXT:   (i32.const 42)
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (drop
-  ;; OPTIN-NEXT:   (i32.const 1)
+  ;; OPTIN-NEXT:   (i32.ge_u
+  ;; OPTIN-NEXT:    (i32.const 42)
+  ;; OPTIN-NEXT:    (i32.const 41)
+  ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (drop
-  ;; OPTIN-NEXT:   (i32.const 1)
+  ;; OPTIN-NEXT:   (i32.ge_u
+  ;; OPTIN-NEXT:    (i32.const 42)
+  ;; OPTIN-NEXT:    (i32.const 42)
+  ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (drop
-  ;; OPTIN-NEXT:   (i32.const 0)
+  ;; OPTIN-NEXT:   (i32.ge_u
+  ;; OPTIN-NEXT:    (i32.const 42)
+  ;; OPTIN-NEXT:    (i32.const 43)
+  ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (drop
   ;; OPTIN-NEXT:   (i32.const 1)
@@ -4199,16 +4572,28 @@
   ;; CHECK-NEXT:   (i32.const 42)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (i32.lt_u
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:    (i32.const 41)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (i32.lt_u
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (i32.lt_u
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:    (i32.const 43)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (i32.lt_u
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:    (i32.const -1)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; OPTIN:      (func $constant-inequalities-lt_u (type $1)
@@ -4217,13 +4602,22 @@
   ;; OPTIN-NEXT:   (i32.const 42)
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (drop
-  ;; OPTIN-NEXT:   (i32.const 0)
+  ;; OPTIN-NEXT:   (i32.lt_u
+  ;; OPTIN-NEXT:    (i32.const 42)
+  ;; OPTIN-NEXT:    (i32.const 41)
+  ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (drop
-  ;; OPTIN-NEXT:   (i32.const 0)
+  ;; OPTIN-NEXT:   (i32.lt_u
+  ;; OPTIN-NEXT:    (i32.const 42)
+  ;; OPTIN-NEXT:    (i32.const 42)
+  ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (drop
-  ;; OPTIN-NEXT:   (i32.const 1)
+  ;; OPTIN-NEXT:   (i32.lt_u
+  ;; OPTIN-NEXT:    (i32.const 42)
+  ;; OPTIN-NEXT:    (i32.const 43)
+  ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (drop
   ;; OPTIN-NEXT:   (i32.const 1)
@@ -4266,16 +4660,28 @@
   ;; CHECK-NEXT:   (i32.const 42)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (i32.le_u
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:    (i32.const 41)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (i32.le_u
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (i32.le_u
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:    (i32.const 43)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (i32.le_u
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:    (i32.const -1)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; OPTIN:      (func $constant-inequalities-le_u (type $1)
@@ -4284,13 +4690,22 @@
   ;; OPTIN-NEXT:   (i32.const 42)
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (drop
-  ;; OPTIN-NEXT:   (i32.const 0)
+  ;; OPTIN-NEXT:   (i32.le_u
+  ;; OPTIN-NEXT:    (i32.const 42)
+  ;; OPTIN-NEXT:    (i32.const 41)
+  ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (drop
-  ;; OPTIN-NEXT:   (i32.const 1)
+  ;; OPTIN-NEXT:   (i32.le_u
+  ;; OPTIN-NEXT:    (i32.const 42)
+  ;; OPTIN-NEXT:    (i32.const 42)
+  ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (drop
-  ;; OPTIN-NEXT:   (i32.const 1)
+  ;; OPTIN-NEXT:   (i32.le_u
+  ;; OPTIN-NEXT:    (i32.const 42)
+  ;; OPTIN-NEXT:    (i32.const 43)
+  ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (drop
   ;; OPTIN-NEXT:   (i32.const 1)
@@ -4333,16 +4748,28 @@
   ;; CHECK-NEXT:   (i32.const 42)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (i32.gt_u
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:    (i32.const 41)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (i32.gt_u
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (i32.gt_u
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:    (i32.const 43)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (i32.gt_u
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:    (i32.const -1)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; OPTIN:      (func $constant-inequalities-gt_u (type $1)
@@ -4351,13 +4778,22 @@
   ;; OPTIN-NEXT:   (i32.const 42)
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (drop
-  ;; OPTIN-NEXT:   (i32.const 1)
+  ;; OPTIN-NEXT:   (i32.gt_u
+  ;; OPTIN-NEXT:    (i32.const 42)
+  ;; OPTIN-NEXT:    (i32.const 41)
+  ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (drop
-  ;; OPTIN-NEXT:   (i32.const 0)
+  ;; OPTIN-NEXT:   (i32.gt_u
+  ;; OPTIN-NEXT:    (i32.const 42)
+  ;; OPTIN-NEXT:    (i32.const 42)
+  ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (drop
-  ;; OPTIN-NEXT:   (i32.const 0)
+  ;; OPTIN-NEXT:   (i32.gt_u
+  ;; OPTIN-NEXT:    (i32.const 42)
+  ;; OPTIN-NEXT:    (i32.const 43)
+  ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (drop
   ;; OPTIN-NEXT:   (i32.const 0)
@@ -4400,16 +4836,28 @@
   ;; CHECK-NEXT:   (i32.const 42)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (i32.ge_u
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:    (i32.const 41)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (i32.ge_u
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (i32.ge_u
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:    (i32.const 43)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (i32.ge_u
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:    (i32.const -1)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; OPTIN:      (func $constant-inequalities-ge_u (type $1)
@@ -4418,13 +4866,22 @@
   ;; OPTIN-NEXT:   (i32.const 42)
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (drop
-  ;; OPTIN-NEXT:   (i32.const 1)
+  ;; OPTIN-NEXT:   (i32.ge_u
+  ;; OPTIN-NEXT:    (i32.const 42)
+  ;; OPTIN-NEXT:    (i32.const 41)
+  ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (drop
-  ;; OPTIN-NEXT:   (i32.const 1)
+  ;; OPTIN-NEXT:   (i32.ge_u
+  ;; OPTIN-NEXT:    (i32.const 42)
+  ;; OPTIN-NEXT:    (i32.const 42)
+  ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (drop
-  ;; OPTIN-NEXT:   (i32.const 0)
+  ;; OPTIN-NEXT:   (i32.ge_u
+  ;; OPTIN-NEXT:    (i32.const 42)
+  ;; OPTIN-NEXT:    (i32.const 43)
+  ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (drop
   ;; OPTIN-NEXT:   (i32.const 0)
@@ -4465,11 +4922,12 @@
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (loop $loop
   ;; CHECK-NEXT:   (br_if $loop
-  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:    (i32.lt_u
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (br_if $loop
-  ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -4477,11 +4935,11 @@
   ;; OPTIN-NEXT:  (local $x i32)
   ;; OPTIN-NEXT:  (loop $loop
   ;; OPTIN-NEXT:   (br_if $loop
-  ;; OPTIN-NEXT:    (i32.const 1)
+  ;; OPTIN-NEXT:    (i32.eqz
+  ;; OPTIN-NEXT:     (i32.const 0)
+  ;; OPTIN-NEXT:    )
   ;; OPTIN-NEXT:   )
-  ;; OPTIN-NEXT:   (br_if $loop
-  ;; OPTIN-NEXT:    (local.get $x)
-  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:   (unreachable)
   ;; OPTIN-NEXT:   (unreachable)
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT: )
@@ -4528,7 +4986,7 @@
   ;; OPTIN-NEXT:    (i32.const 0)
   ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:   (br_if $loop
-  ;; OPTIN-NEXT:    (local.get $x)
+  ;; OPTIN-NEXT:    (i32.const 0)
   ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:   (i32.eqz
   ;; OPTIN-NEXT:    (i32.const 0)
@@ -4564,10 +5022,16 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (i32.eq
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (i32.eq
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; OPTIN:      (func $tee (type $1)
@@ -4579,10 +5043,16 @@
   ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (drop
-  ;; OPTIN-NEXT:   (i32.const 1)
+  ;; OPTIN-NEXT:   (i32.eq
+  ;; OPTIN-NEXT:    (i32.const 10)
+  ;; OPTIN-NEXT:    (i32.const 10)
+  ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (drop
-  ;; OPTIN-NEXT:   (i32.const 1)
+  ;; OPTIN-NEXT:   (i32.eq
+  ;; OPTIN-NEXT:    (i32.const 10)
+  ;; OPTIN-NEXT:    (i32.const 10)
+  ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT: )
   (func $tee
@@ -4617,7 +5087,10 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (i32.eq
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; OPTIN:      (func $fallthrough (type $1)
@@ -4629,7 +5102,10 @@
   ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (drop
-  ;; OPTIN-NEXT:   (i32.const 1)
+  ;; OPTIN-NEXT:   (i32.eq
+  ;; OPTIN-NEXT:    (i32.const 10)
+  ;; OPTIN-NEXT:    (i32.const 10)
+  ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT: )
   (func $fallthrough
@@ -4655,7 +5131,7 @@
   ;; CHECK-NEXT:  (local $w i32)
   ;; CHECK-NEXT:  (local.set $x
   ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (local.get $z)
+  ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.set $z
@@ -4663,11 +5139,14 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.set $w
   ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (local.get $z)
+  ;; CHECK-NEXT:    (i32.const 42)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (i32.eq
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; OPTIN:      (func $fallthrough-get (type $1)
@@ -4676,7 +5155,7 @@
   ;; OPTIN-NEXT:  (local $w i32)
   ;; OPTIN-NEXT:  (local.set $x
   ;; OPTIN-NEXT:   (block (result i32)
-  ;; OPTIN-NEXT:    (local.get $z)
+  ;; OPTIN-NEXT:    (i32.const 0)
   ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (local.set $z
@@ -4684,11 +5163,14 @@
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (local.set $w
   ;; OPTIN-NEXT:   (block (result i32)
-  ;; OPTIN-NEXT:    (local.get $z)
+  ;; OPTIN-NEXT:    (i32.const 42)
   ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (drop
-  ;; OPTIN-NEXT:   (i32.const 0)
+  ;; OPTIN-NEXT:   (i32.eq
+  ;; OPTIN-NEXT:    (i32.const 0)
+  ;; OPTIN-NEXT:    (i32.const 42)
+  ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT: )
   (func $fallthrough-get
@@ -4731,7 +5213,7 @@
   ;; CHECK-NEXT:  (local $w i32)
   ;; CHECK-NEXT:  (local.set $x
   ;; CHECK-NEXT:   (local.tee $param
-  ;; CHECK-NEXT:    (local.get $z)
+  ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.set $z
@@ -4739,11 +5221,14 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.set $w
   ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (local.get $z)
+  ;; CHECK-NEXT:    (i32.const 42)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (i32.eq
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; OPTIN:      (func $fallthrough-tee (type $0) (param $param i32)
@@ -4752,7 +5237,7 @@
   ;; OPTIN-NEXT:  (local $w i32)
   ;; OPTIN-NEXT:  (local.set $x
   ;; OPTIN-NEXT:   (local.tee $param
-  ;; OPTIN-NEXT:    (local.get $z)
+  ;; OPTIN-NEXT:    (i32.const 0)
   ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (local.set $z
@@ -4760,11 +5245,14 @@
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (local.set $w
   ;; OPTIN-NEXT:   (block (result i32)
-  ;; OPTIN-NEXT:    (local.get $z)
+  ;; OPTIN-NEXT:    (i32.const 42)
   ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (drop
-  ;; OPTIN-NEXT:   (i32.const 0)
+  ;; OPTIN-NEXT:   (i32.eq
+  ;; OPTIN-NEXT:    (i32.const 0)
+  ;; OPTIN-NEXT:    (i32.const 42)
+  ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT: )
   (func $fallthrough-tee (param $param i32)
@@ -4802,7 +5290,10 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (then
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:     (i32.eq
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -4814,7 +5305,9 @@
   ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:   (then
   ;; OPTIN-NEXT:    (drop
-  ;; OPTIN-NEXT:     (i32.const 1)
+  ;; OPTIN-NEXT:     (i32.eqz
+  ;; OPTIN-NEXT:      (i32.const 0)
+  ;; OPTIN-NEXT:     )
   ;; OPTIN-NEXT:    )
   ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
@@ -4845,7 +5338,10 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (then
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:     (i64.eq
+  ;; CHECK-NEXT:      (i64.const 0)
+  ;; CHECK-NEXT:      (i64.const 0)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -4857,7 +5353,9 @@
   ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:   (then
   ;; OPTIN-NEXT:    (drop
-  ;; OPTIN-NEXT:     (i32.const 1)
+  ;; OPTIN-NEXT:     (i64.eqz
+  ;; OPTIN-NEXT:      (i64.const 0)
+  ;; OPTIN-NEXT:     )
   ;; OPTIN-NEXT:    )
   ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
@@ -5087,13 +5585,22 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (then
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:     (i32.eq
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:     (i32.eq
+  ;; CHECK-NEXT:      (i32.const 42)
+  ;; CHECK-NEXT:      (i32.const 42)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:     (i32.eq
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:      (i32.const 42)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (else
@@ -5134,13 +5641,21 @@
   ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:   (then
   ;; OPTIN-NEXT:    (drop
-  ;; OPTIN-NEXT:     (i32.const 1)
+  ;; OPTIN-NEXT:     (i32.eqz
+  ;; OPTIN-NEXT:      (i32.const 0)
+  ;; OPTIN-NEXT:     )
   ;; OPTIN-NEXT:    )
   ;; OPTIN-NEXT:    (drop
-  ;; OPTIN-NEXT:     (i32.const 1)
+  ;; OPTIN-NEXT:     (i32.eq
+  ;; OPTIN-NEXT:      (i32.const 42)
+  ;; OPTIN-NEXT:      (i32.const 42)
+  ;; OPTIN-NEXT:     )
   ;; OPTIN-NEXT:    )
   ;; OPTIN-NEXT:    (drop
-  ;; OPTIN-NEXT:     (i32.const 0)
+  ;; OPTIN-NEXT:     (i32.eq
+  ;; OPTIN-NEXT:      (i32.const 0)
+  ;; OPTIN-NEXT:      (i32.const 42)
+  ;; OPTIN-NEXT:     )
   ;; OPTIN-NEXT:    )
   ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:   (else
@@ -5485,7 +6000,10 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (then
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:     (i32.eq
+  ;; CHECK-NEXT:      (i32.const 42)
+  ;; CHECK-NEXT:      (i32.const 42)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (else
@@ -5512,7 +6030,10 @@
   ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:   (then
   ;; OPTIN-NEXT:    (drop
-  ;; OPTIN-NEXT:     (i32.const 1)
+  ;; OPTIN-NEXT:     (i32.eq
+  ;; OPTIN-NEXT:      (i32.const 42)
+  ;; OPTIN-NEXT:      (i32.const 42)
+  ;; OPTIN-NEXT:     )
   ;; OPTIN-NEXT:    )
   ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:   (else
@@ -5596,13 +6117,22 @@
   ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:     (i32.eq
+  ;; CHECK-NEXT:      (i32.const 10)
+  ;; CHECK-NEXT:      (i32.const 10)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:     (i32.eq
+  ;; CHECK-NEXT:      (i32.const 20)
+  ;; CHECK-NEXT:      (i32.const 20)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:     (i32.eq
+  ;; CHECK-NEXT:      (i32.const 30)
+  ;; CHECK-NEXT:      (i32.const 30)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (i32.const 0)
@@ -5645,13 +6175,22 @@
   ;; OPTIN-NEXT:     (i32.const 1)
   ;; OPTIN-NEXT:    )
   ;; OPTIN-NEXT:    (drop
-  ;; OPTIN-NEXT:     (i32.const 1)
+  ;; OPTIN-NEXT:     (i32.eq
+  ;; OPTIN-NEXT:      (i32.const 10)
+  ;; OPTIN-NEXT:      (i32.const 10)
+  ;; OPTIN-NEXT:     )
   ;; OPTIN-NEXT:    )
   ;; OPTIN-NEXT:    (drop
-  ;; OPTIN-NEXT:     (i32.const 1)
+  ;; OPTIN-NEXT:     (i32.eq
+  ;; OPTIN-NEXT:      (i32.const 20)
+  ;; OPTIN-NEXT:      (i32.const 20)
+  ;; OPTIN-NEXT:     )
   ;; OPTIN-NEXT:    )
   ;; OPTIN-NEXT:    (drop
-  ;; OPTIN-NEXT:     (i32.const 1)
+  ;; OPTIN-NEXT:     (i32.eq
+  ;; OPTIN-NEXT:      (i32.const 30)
+  ;; OPTIN-NEXT:      (i32.const 30)
+  ;; OPTIN-NEXT:     )
   ;; OPTIN-NEXT:    )
   ;; OPTIN-NEXT:    (drop
   ;; OPTIN-NEXT:     (i32.const 0)
@@ -5758,7 +6297,10 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (then
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:     (block
+  ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -5782,7 +6324,10 @@
   ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:   (then
   ;; OPTIN-NEXT:    (drop
-  ;; OPTIN-NEXT:     (unreachable)
+  ;; OPTIN-NEXT:     (block
+  ;; OPTIN-NEXT:      (unreachable)
+  ;; OPTIN-NEXT:      (unreachable)
+  ;; OPTIN-NEXT:     )
   ;; OPTIN-NEXT:    )
   ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
@@ -5925,7 +6470,9 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (then
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:     (i32.eqz
+  ;; CHECK-NEXT:      (i32.const 42)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -5940,7 +6487,9 @@
   ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:   (then
   ;; OPTIN-NEXT:    (drop
-  ;; OPTIN-NEXT:     (i32.const 0)
+  ;; OPTIN-NEXT:     (i32.eqz
+  ;; OPTIN-NEXT:      (i32.const 42)
+  ;; OPTIN-NEXT:     )
   ;; OPTIN-NEXT:    )
   ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
@@ -6059,7 +6608,10 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (then
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:     (i32.eq
+  ;; CHECK-NEXT:      (i32.const 42)
+  ;; CHECK-NEXT:      (i32.const 42)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -6076,7 +6628,10 @@
   ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:   (then
   ;; OPTIN-NEXT:    (drop
-  ;; OPTIN-NEXT:     (i32.const 1)
+  ;; OPTIN-NEXT:     (i32.eq
+  ;; OPTIN-NEXT:      (i32.const 42)
+  ;; OPTIN-NEXT:      (i32.const 42)
+  ;; OPTIN-NEXT:     )
   ;; OPTIN-NEXT:    )
   ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
@@ -6288,7 +6843,9 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (then
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:     (i32.eqz
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -6302,7 +6859,9 @@
   ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:   (then
   ;; OPTIN-NEXT:    (drop
-  ;; OPTIN-NEXT:     (i32.const 1)
+  ;; OPTIN-NEXT:     (i32.eqz
+  ;; OPTIN-NEXT:      (i32.const 0)
+  ;; OPTIN-NEXT:     )
   ;; OPTIN-NEXT:    )
   ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
@@ -6444,7 +7003,10 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (then
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:     (i32.eq
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -6461,7 +7023,10 @@
   ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:   (then
   ;; OPTIN-NEXT:    (drop
-  ;; OPTIN-NEXT:     (i32.const 1)
+  ;; OPTIN-NEXT:     (i32.eq
+  ;; OPTIN-NEXT:      (i32.const 1)
+  ;; OPTIN-NEXT:      (i32.const 1)
+  ;; OPTIN-NEXT:     )
   ;; OPTIN-NEXT:    )
   ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
@@ -6511,10 +7076,16 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (then
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:     (i32.eq
+  ;; CHECK-NEXT:      (i32.const 20)
+  ;; CHECK-NEXT:      (i32.const 10)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:     (i32.eq
+  ;; CHECK-NEXT:      (i32.const 20)
+  ;; CHECK-NEXT:      (i32.const 20)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (i32.eq
@@ -6546,10 +7117,16 @@
   ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:   (then
   ;; OPTIN-NEXT:    (drop
-  ;; OPTIN-NEXT:     (i32.const 0)
+  ;; OPTIN-NEXT:     (i32.eq
+  ;; OPTIN-NEXT:      (i32.const 20)
+  ;; OPTIN-NEXT:      (i32.const 10)
+  ;; OPTIN-NEXT:     )
   ;; OPTIN-NEXT:    )
   ;; OPTIN-NEXT:    (drop
-  ;; OPTIN-NEXT:     (i32.const 1)
+  ;; OPTIN-NEXT:     (i32.eq
+  ;; OPTIN-NEXT:      (i32.const 20)
+  ;; OPTIN-NEXT:      (i32.const 20)
+  ;; OPTIN-NEXT:     )
   ;; OPTIN-NEXT:    )
   ;; OPTIN-NEXT:    (drop
   ;; OPTIN-NEXT:     (i32.eq
@@ -6630,13 +7207,22 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (then
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:     (i32.eq
+  ;; CHECK-NEXT:      (i32.const 10)
+  ;; CHECK-NEXT:      (i32.const 10)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:     (i32.eq
+  ;; CHECK-NEXT:      (i32.const 30)
+  ;; CHECK-NEXT:      (i32.const 30)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:     (i32.eq
+  ;; CHECK-NEXT:      (i32.const 20)
+  ;; CHECK-NEXT:      (i32.const 20)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -6662,13 +7248,22 @@
   ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:   (then
   ;; OPTIN-NEXT:    (drop
-  ;; OPTIN-NEXT:     (i32.const 1)
+  ;; OPTIN-NEXT:     (i32.eq
+  ;; OPTIN-NEXT:      (i32.const 10)
+  ;; OPTIN-NEXT:      (i32.const 10)
+  ;; OPTIN-NEXT:     )
   ;; OPTIN-NEXT:    )
   ;; OPTIN-NEXT:    (drop
-  ;; OPTIN-NEXT:     (i32.const 1)
+  ;; OPTIN-NEXT:     (i32.eq
+  ;; OPTIN-NEXT:      (i32.const 30)
+  ;; OPTIN-NEXT:      (i32.const 30)
+  ;; OPTIN-NEXT:     )
   ;; OPTIN-NEXT:    )
   ;; OPTIN-NEXT:    (drop
-  ;; OPTIN-NEXT:     (i32.const 1)
+  ;; OPTIN-NEXT:     (i32.eq
+  ;; OPTIN-NEXT:      (i32.const 20)
+  ;; OPTIN-NEXT:      (i32.const 20)
+  ;; OPTIN-NEXT:     )
   ;; OPTIN-NEXT:    )
   ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
@@ -6739,10 +7334,16 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (then
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:     (i32.eq
+  ;; CHECK-NEXT:      (i32.const 10)
+  ;; CHECK-NEXT:      (i32.const 10)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:     (i32.eq
+  ;; CHECK-NEXT:      (i32.const 30)
+  ;; CHECK-NEXT:      (i32.const 30)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -6768,10 +7369,16 @@
   ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:   (then
   ;; OPTIN-NEXT:    (drop
-  ;; OPTIN-NEXT:     (i32.const 1)
+  ;; OPTIN-NEXT:     (i32.eq
+  ;; OPTIN-NEXT:      (i32.const 10)
+  ;; OPTIN-NEXT:      (i32.const 10)
+  ;; OPTIN-NEXT:     )
   ;; OPTIN-NEXT:    )
   ;; OPTIN-NEXT:    (drop
-  ;; OPTIN-NEXT:     (i32.const 1)
+  ;; OPTIN-NEXT:     (i32.eq
+  ;; OPTIN-NEXT:      (i32.const 30)
+  ;; OPTIN-NEXT:      (i32.const 30)
+  ;; OPTIN-NEXT:     )
   ;; OPTIN-NEXT:    )
   ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
@@ -6871,6 +7478,42 @@
           (i32.eqz
             (local.get $x)
           )
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $local.get (type $0) (param $x i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (else
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPTIN:      (func $local.get (type $0) (param $x i32)
+  ;; OPTIN-NEXT:  (drop
+  ;; OPTIN-NEXT:   (local.get $x)
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT: )
+  (func $local.get (param $x i32)
+    (if
+      (local.get $x)
+      (then
+        (drop
+          (local.get $x)
+        )
+      )
+      (else
+        (drop
+          (local.get $x)
         )
       )
     )
