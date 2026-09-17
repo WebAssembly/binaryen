@@ -6,7 +6,7 @@
   ;; CHECK:      (type $shared (shared (struct (field (mut i32)))))
   (type $shared (shared (struct (field (mut i32)))))
 
-  ;; CHECK:      (func $select-struct-wait (type $7) (param $x (ref $shared)) (param $wq (ref (shared waitqueue))) (result i32)
+  ;; CHECK:      (func $select-struct-wait (type $1) (param $x (ref $shared)) (param $wq (ref (shared waitqueue))) (result i32)
   ;; CHECK-NEXT:  (select
   ;; CHECK-NEXT:   (struct.wait $shared 0
   ;; CHECK-NEXT:    (local.get $x)
@@ -41,7 +41,7 @@
     )
   )
 
-  ;; CHECK:      (func $select-waitqueue-notify (type $8) (param $wq (ref (shared waitqueue))) (result i32)
+  ;; CHECK:      (func $select-waitqueue-notify (type $2) (param $wq (ref (shared waitqueue))) (result i32)
   ;; CHECK-NEXT:  (select
   ;; CHECK-NEXT:   (waitqueue.notify
   ;; CHECK-NEXT:    (local.get $wq)
