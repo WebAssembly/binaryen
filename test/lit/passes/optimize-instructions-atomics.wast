@@ -211,14 +211,29 @@
   )
  )
 
- (func $select-atomic-notify (result i32)
+ ;; CHECK:      (func $select-atomic-load (result i32)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i32.atomic.load
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i32.const 1)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (i32.atomic.load
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $select-atomic-load (result i32)
   ;; For comparison with above, when the instruction is not generative, we can
-  ;; optimize.
+  ;; optimize: the two atomic loads must return the same thing, so we drop the
+  ;; first and return the second (even though the first is what is actually
+  ;; returned.
   (select
-   (i32.load
+   (i32.atomic.load
     (i32.const 0)
    )
-   (i32.load
+   (i32.atomic.load
     (i32.const 0)
    )
    (i32.const 1)
