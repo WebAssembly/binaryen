@@ -203,11 +203,8 @@ struct ConstraintAnalysis
   }
 
   void visitUnary(Unary* curr) { addAction(); }
-
   void visitBinary(Binary* curr) { addAction(); }
-
   void visitRefEq(RefEq* curr) { addAction(); }
-
   void visitRefIsNull(RefIsNull* curr) { addAction(); }
 
   static void doStartIfTrue(ConstraintAnalysis* self, Expression** currp) {
