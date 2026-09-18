@@ -415,7 +415,7 @@ struct ConstraintAnalysis
   // Given an expression and the constraints on it, see if it is a local.get
   // that we can optimize, and return the value to optimize to, if so.
   Expression* optimizeLocalGet(Expression** currp,
-                          const BasicBlockConstraintMap& constraints) {
+                               const BasicBlockConstraintMap& constraints) {
     // A bare local.get can be optimized, if we know that local is a constant.
     if (auto* get = (*currp)->dynCast<LocalGet>()) {
       if (auto lit = constraints.get(get->index).getLiteral()) {
