@@ -136,27 +136,8 @@ struct ConstraintAnalysis
   // state in the function.
   bool ignoreBranchesOutsideOfFunc = true;
 
-  // A relevant local is one that is used as part of an expression that we can
-  // optimize (often, many locals are irrelevant).
+  // A relevant local is one that we care about optimizing.
   std::vector<bool> relevantLocals;
-  // Track local copies too, as if one local is relevant, it can make another
-  // relevant. We store pairs here of key=target, value=sources, which is the
-  // direction we will flow in the analysis: if we check x == 10, making it
-  // relevant, and x = y earlier, then we must track that source, y, so that we
-  // know what it writes to x.
-  std::unordered_map<Index, std::vector<Index>> localCopySources;
-
-  void maybeMarkRelevant(Expression* curr) {
-    // If this parses into a constraint on a local, that local is relevant.
-    for (auto& pair : ParsedAndedConstraints::parseCondition(curr)) {
-      if (isRelevantType(getFunction()->getLocalType(pair.local))) {
-        relevantLocals[pair.local] = true;
-        if (auto* other = std::get_if<Index>(&pair.constraint.term)) {
-          relevantLocals[*other] = true;
-        }
-      }
-    }
-  }
 
   bool fastMath;
 
@@ -203,6 +184,10 @@ struct ConstraintAnalysis
 
   void visitLocalGet(LocalGet* curr) {
     addAction();
+
+    // To be relevant for optimization, there must be a local.get (otherwise,
+    // nothing can be optimized as this is not used), and the type must be
+    // relevant.
     if (isRelevantType(curr->type)) {
       relevantLocals[curr->index] = true;
     }
@@ -211,48 +196,26 @@ struct ConstraintAnalysis
   void visitLocalSet(LocalSet* curr) {
     addAction();
 
-    auto* value = curr->value;
-    while (true) {
-      if (auto* get = value->dynCast<LocalGet>()) {
-        localCopySources[curr->index].push_back(get->index);
-        // No children to look into.
-        break;
-      }
-
-      if (auto* tee = value->dynCast<LocalSet>()) {
-        localCopySources[curr->index].push_back(tee->index);
-        value = tee->value;
-        continue;
-      }
-
-      // Look for other possible tees and gets that fall through.
-      auto* next = Properties::getImmediateFallthrough(
-        value, getPassOptions(), *getModule());
-      if (next == value) {
-        break;
-      }
-      value = next;
+    // A tee is also a get, so it can mark a local as relevant, like LocalGet.
+    if (isRelevantType(curr->type)) {
+      relevantLocals[curr->index] = true;
     }
   }
 
   void visitUnary(Unary* curr) {
     addAction();
-    maybeMarkRelevant(curr);
   }
 
   void visitBinary(Binary* curr) {
     addAction();
-    maybeMarkRelevant(curr);
   }
 
   void visitRefEq(RefEq* curr) {
     addAction();
-    maybeMarkRelevant(curr);
   }
 
   void visitRefIsNull(RefIsNull* curr) {
     addAction();
-    maybeMarkRelevant(curr);
   }
 
   static void doStartIfTrue(ConstraintAnalysis* self, Expression** currp) {
@@ -261,22 +224,12 @@ struct ConstraintAnalysis
     if (self->currBasicBlock) {
       self->currBasicBlock->contents.brancher = *currp;
     }
-    if (auto* iff = (*currp)->dynCast<If>()) {
-      self->maybeMarkRelevant(iff->condition);
-    }
     Super::doStartIfTrue(self, currp);
   }
 
   static void doEndBranch(ConstraintAnalysis* self, Expression** currp) {
     if (self->currBasicBlock) {
       self->currBasicBlock->contents.brancher = *currp;
-    }
-    if (auto* br = (*currp)->dynCast<Break>()) {
-      if (br->condition) {
-        self->maybeMarkRelevant(br->condition);
-      }
-    } else if (auto* brOn = (*currp)->dynCast<BrOn>()) {
-      self->maybeMarkRelevant(brOn->ref);
     }
     Super::doEndBranch(self, currp);
   }
@@ -287,35 +240,8 @@ struct ConstraintAnalysis
       return;
     }
 
-    computeRelevantLocals();
     flow();
     optimize();
-  }
-
-  // Every relevant local makes the things it is copied to relevant as well.
-  void computeRelevantLocals() {
-    // We'll start from all relevant locals, and flow from there.
-    UniqueDeferredQueue<Index> work;
-    for (Index i = 0; i < relevantLocals.size(); i++) {
-      if (relevantLocals[i]) {
-        work.push(i);
-      }
-    }
-
-    // Flow.
-    while (!work.empty()) {
-      auto curr = work.pop();
-      assert(relevantLocals[curr]);
-      if (auto iter = localCopySources.find(curr);
-          iter != localCopySources.end()) {
-        for (auto source : iter->second) {
-          if (!relevantLocals[source]) {
-            relevantLocals[source] = true;
-            work.push(source);
-          }
-        }
-      }
-    }
   }
 
   // Flow infos around until we have inferred all we can about the constraints
