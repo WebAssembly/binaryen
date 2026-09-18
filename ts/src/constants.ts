@@ -36,62 +36,68 @@ export type ExportRef = number;
 
 
 
-// ## Expression Types ## //
-// see https://webassembly.github.io/spec/core/syntax/types.html
+// ## Enumerated Values ## //
+/**
+ * An enumeration of built-in WASM types.
+ * @see https://webassembly.github.io/spec/core/syntax/types.html
+ */
 export enum Type {
 	// ### Binaryen-Only Types ### //
-	/** Type with stack effect `[t*] -> [t*]`. */
+	/** Type with stack effect `[t*] -> [t*]`. @category Binaryen-Only Types */
 	unreachable = BinaryenObj["_BinaryenTypeUnreachable"](),
-	/** Type with stack effect `[t*] -> []`. Not to be confused with the WASM heap type `none`. */
+	/** Type with stack effect `[t*] -> []`. Not to be confused with the WASM heap type `none`. @category Binaryen-Only Types */
 	none = BinaryenObj["_BinaryenTypeNone"](),
-	/** Used only for auto-detecting block types. */
+	/** Used only for auto-detecting block types. @category Binaryen-Only Types */
 	auto = BinaryenObj["_BinaryenTypeAuto"](),
 
 	// ### Number & Vector Types ### //
-	/** 32-bit integer. */
+	/** 32-bit integer. @category Number & Vector Types */
 	i32 = BinaryenObj["_BinaryenTypeInt32"](),
-	/** 64-bit integer. */
+	/** 64-bit integer. @category Number & Vector Types */
 	i64 = BinaryenObj["_BinaryenTypeInt64"](),
-	/** 32-bit float. */
+	/** 32-bit float. @category Number & Vector Types */
 	f32 = BinaryenObj["_BinaryenTypeFloat32"](),
-	/** 64-bit float. */
+	/** 64-bit float. @category Number & Vector Types */
 	f64 = BinaryenObj["_BinaryenTypeFloat64"](),
-	/** 128-bit vector (SIMD). */
+	/** 128-bit vector (SIMD). @category Number & Vector Types */
 	v128 = BinaryenObj["_BinaryenTypeVec128"](),
 
 	// ### Reference Types ### //
-	/** `(ref null any)` */
+	/** `(ref null any)` @category Reference Types */
 	anyref = BinaryenObj["_BinaryenTypeAnyref"](),
-	/** `(ref null eq)` */
+	/** `(ref null eq)` @category Reference Types */
 	eqref = BinaryenObj["_BinaryenTypeEqref"](),
-	/** `(ref null i31)` */
+	/** `(ref null i31)` @category Reference Types */
 	i31ref = BinaryenObj["_BinaryenTypeI31ref"](),
-	/** `(ref null struct)` */
+	/** `(ref null struct)` @category Reference Types */
 	structref = BinaryenObj["_BinaryenTypeStructref"](),
-	/** `(ref null array)` */
+	/** `(ref null array)` @category Reference Types */
 	arrayref = BinaryenObj["_BinaryenTypeArrayref"](),
-	/** `(ref null string)` */
+	/** `(ref null string)` @category Reference Types */
 	stringref = BinaryenObj["_BinaryenTypeStringref"](),
-	/** `(ref null none)` */
+	/** `(ref null none)` @category Reference Types */
 	nullref = BinaryenObj["_BinaryenTypeNullref"](),
-	/** `(ref null func)` */
+	/** `(ref null func)` @category Reference Types */
 	funcref = BinaryenObj["_BinaryenTypeFuncref"](),
-	/** `(ref null nofunc)` */
+	/** `(ref null nofunc)` @category Reference Types */
 	nullfuncref = BinaryenObj["_BinaryenTypeNullFuncref"](),
-	/** `(ref null exn)` */
+	/** `(ref null exn)` @category Reference Types */
 	// exnref = BinaryenObj["_BinaryenTypeExnref"](), // TODO: uncomment once supported in Binaryen
-	/** `(ref null noexn)` */
+	/** `(ref null noexn)` @category Reference Types */
 	// nullexnref = BinaryenObj["_BinaryenTypeNullExnref"](), // TODO: uncomment once supported in Binaryen
-	/** `(ref null extern)` */
+	/** `(ref null extern)` @category Reference Types */
 	externref = BinaryenObj["_BinaryenTypeExternref"](),
-	/** `(ref null noextern)` */
+	/** `(ref null noextern)` @category Reference Types */
 	nullexternref = BinaryenObj["_BinaryenTypeNullExternref"](),
 }
 
 
 
+/**
+ * An enumeration of built-in WASM heap types.
+ * @see https://webassembly.github.io/spec/core/syntax/types.html#heap-types
+ */
 export enum HeapType {
-	// ### Heap Types ### //
 	/** Heap type `any`. */
 	any = BinaryenObj["_BinaryenHeapTypeAny"](),
 	/** Heap type `eq`. */
@@ -122,8 +128,10 @@ export enum HeapType {
 
 
 
+/**
+ * An allowed type of a struct or array field.
+ */
 export enum PackedType {
-	// ### Packed Types ### //
 	notPacked = BinaryenObj["_BinaryenPackedTypeNotPacked"](),
 	i8 = BinaryenObj["_BinaryenPackedTypeInt8"](),
 	i16 = BinaryenObj["_BinaryenPackedTypeInt16"](),
@@ -131,7 +139,6 @@ export enum PackedType {
 
 
 
-// ## Enumerated Values ## //
 /**
  * An enumeration of all the “kinds” of expressions.
  * @see https://webassembly.github.io/spec/core/syntax/instructions.html
