@@ -75,7 +75,34 @@
   )
 )
 
-;; When a field is removed, indexes in RMW and Cmpxchg should be updated.
+;; Same with struct.wait, except it is only a read so the field becomes
+;; immutable.
+(module
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $A (shared (struct (field i32))))
+  (type $A (shared (struct (mut i32))))
+
+  ;; CHECK:       (type $1 (func (param (ref $A) (ref null (shared waitqueue))) (result i32)))
+
+  ;; CHECK:      (func $wait (type $1) (param $0 (ref $A)) (param $1 (ref null (shared waitqueue))) (result i32)
+  ;; CHECK-NEXT:  (struct.wait $A 0
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:   (local.get $1)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (i64.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $wait (param (ref $A) (ref null (shared waitqueue))) (result i32)
+    (struct.wait $A 0
+      (local.get 0)
+      (local.get 1)
+      (i32.const 0)
+      (i64.const 0)
+    )
+  )
+)
+
+;; When a field is removed, indexes in RMW, Cmpxchg, and Wait should be updated.
 (module
   ;; GTO should remove the first field because it is never read. The second
   ;; field will then be shifted from index 1 to 0.
@@ -83,9 +110,9 @@
   ;; CHECK-NEXT:  (type $struct (shared (struct (field (mut i32)))))
   (type $struct (shared (struct (field (mut i64)) (field (mut i32)))))
 
-  ;; CHECK:       (type $1 (func (param (ref $struct))))
+  ;; CHECK:       (type $1 (func (param (ref $struct) (ref null (shared waitqueue)))))
 
-  ;; CHECK:      (func $use-field (type $1) (param $ref (ref $struct))
+  ;; CHECK:      (func $use-field (type $1) (param $ref (ref $struct)) (param $wq (ref null (shared waitqueue)))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.atomic.rmw.and $struct 0
   ;; CHECK-NEXT:    (local.get $ref)
@@ -99,8 +126,16 @@
   ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.wait $struct 0
+  ;; CHECK-NEXT:    (local.get $ref)
+  ;; CHECK-NEXT:    (local.get $wq)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (i64.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $use-field (param $ref (ref $struct))
+  (func $use-field (param $ref (ref $struct)) (param $wq (ref null (shared waitqueue)))
     ;; Use field 1 with an atomic RMW.
     (drop
       (struct.atomic.rmw.and $struct 1
@@ -116,5 +151,15 @@
         (i32.const 1)
       )
     )
+    ;; Use field 1 with a struct.wait.
+    (drop
+      (struct.wait $struct 1
+        (local.get $ref)
+        (local.get $wq)
+        (i32.const 0)
+        (i64.const 0)
+      )
+    )
   )
 )
+

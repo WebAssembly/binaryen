@@ -145,6 +145,123 @@
   )
 )
 
+;; Wait works as well. Because the "expected" operand of struct.wait must be a
+;; subtype of the field type, it must be fixed up when the field is refined.
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $null (shared (struct (field (mut (ref null (shared none)))))))
+    (type $null (shared (struct (field (mut (ref null (shared eq)))))))
+    ;; CHECK:       (type $i31 (shared (struct (field (mut (ref (shared i31)))))))
+    (type $i31 (shared (struct (field (mut (ref null (shared eq)))))))
+    ;; CHECK:       (type $super (sub (shared (struct (field (mut (ref $sub)))))))
+    (type $super (sub (shared (struct (field (mut (ref null $super)))))))
+    ;; CHECK:       (type $sub (sub $super (shared (struct (field (mut (ref $sub)))))))
+    (type $sub (sub $super (shared (struct (field (mut (ref null $super)))))))
+  )
+
+  ;; CHECK:       (type $4 (func (param (ref $null) (ref $i31) (ref $sub))))
+
+  ;; CHECK:       (type $5 (func (param (ref $null) (ref null (shared waitqueue)) (ref (shared eq))) (result i32)))
+
+  ;; CHECK:       (type $6 (func (param (ref $i31) (ref null (shared waitqueue)) (ref (shared eq))) (result i32)))
+
+  ;; CHECK:       (type $7 (func (param (ref $sub) (ref null (shared waitqueue)) (ref null $super)) (result i32)))
+
+  ;; CHECK:      (func $init (type $4) (param $null (ref $null)) (param $i31 (ref $i31)) (param $sub (ref $sub))
+  ;; CHECK-NEXT:  (struct.set $null 0
+  ;; CHECK-NEXT:   (local.get $null)
+  ;; CHECK-NEXT:   (ref.null (shared none))
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.set $i31 0
+  ;; CHECK-NEXT:   (local.get $i31)
+  ;; CHECK-NEXT:   (ref.i31_shared
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.set $sub 0
+  ;; CHECK-NEXT:   (local.get $sub)
+  ;; CHECK-NEXT:   (local.get $sub)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $init (param $null (ref $null)) (param $i31 (ref $i31)) (param $sub (ref $sub))
+    (struct.set $null 0
+      (local.get $null)
+      (ref.null (shared none))
+    )
+    (struct.set $i31 0
+      (local.get $i31)
+      (ref.i31_shared
+        (i32.const 1)
+      )
+    )
+    (struct.set $sub 0
+      (local.get $sub)
+      (local.get $sub)
+    )
+  )
+
+  ;; CHECK:      (func $wait-null (type $5) (param $0 (ref $null)) (param $1 (ref null (shared waitqueue))) (param $2 (ref (shared eq))) (result i32)
+  ;; CHECK-NEXT:  (struct.wait $null 0
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:   (local.get $1)
+  ;; CHECK-NEXT:   (block (result (ref null (shared none)))
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $2)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.null (shared none))
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i64.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $wait-null (param (ref $null) (ref null (shared waitqueue)) (ref (shared eq))) (result i32)
+    (struct.wait $null 0
+      (local.get 0)
+      (local.get 1)
+      (local.get 2)
+      (i64.const 0)
+    )
+  )
+
+  ;; CHECK:      (func $wait-i31 (type $6) (param $0 (ref $i31)) (param $1 (ref null (shared waitqueue))) (param $2 (ref (shared eq))) (result i32)
+  ;; CHECK-NEXT:  (struct.wait $i31 0
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:   (local.get $1)
+  ;; CHECK-NEXT:   (ref.cast (ref (shared i31))
+  ;; CHECK-NEXT:    (local.get $2)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i64.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $wait-i31 (param (ref $i31) (ref null (shared waitqueue)) (ref (shared eq))) (result i32)
+    (struct.wait $i31 0
+      (local.get 0)
+      (local.get 1)
+      (local.get 2)
+      (i64.const 0)
+    )
+  )
+
+  ;; CHECK:      (func $wait-self (type $7) (param $0 (ref $sub)) (param $1 (ref null (shared waitqueue))) (param $2 (ref null $super)) (result i32)
+  ;; CHECK-NEXT:  (struct.wait $sub 0
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:   (local.get $1)
+  ;; CHECK-NEXT:   (ref.cast (ref $sub)
+  ;; CHECK-NEXT:    (local.get $2)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i64.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $wait-self (param (ref $sub) (ref null (shared waitqueue)) (ref null $super)) (result i32)
+    (struct.wait $sub 0
+      (local.get 0)
+      (local.get 1)
+      (local.get 2)
+      (i64.const 0)
+    )
+  )
+)
+
 ;; Non-reference fields should not cause problems.
 (module
   ;; CHECK:      (type $A (shared (struct (field (mut i32)))))
@@ -153,6 +270,8 @@
   ;; CHECK:      (type $1 (func (param (ref $A)) (result i32)))
 
   ;; CHECK:      (type $2 (func (param (ref $A) i32) (result i32)))
+
+  ;; CHECK:      (type $3 (func (param (ref $A) (ref null (shared waitqueue))) (result i32)))
 
   ;; CHECK:      (func $rmw (type $1) (param $0 (ref $A)) (result i32)
   ;; CHECK-NEXT:  (struct.atomic.rmw.add $A 0
@@ -181,4 +300,22 @@
       (i32.const 1)
     )
   )
+
+  ;; CHECK:      (func $wait (type $3) (param $0 (ref $A)) (param $1 (ref null (shared waitqueue))) (result i32)
+  ;; CHECK-NEXT:  (struct.wait $A 0
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:   (local.get $1)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (i64.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $wait (param (ref $A) (ref null (shared waitqueue))) (result i32)
+    (struct.wait $A 0
+      (local.get 0)
+      (local.get 1)
+      (i32.const 0)
+      (i64.const 0)
+    )
+  )
 )
+
