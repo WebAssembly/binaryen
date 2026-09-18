@@ -202,21 +202,13 @@ struct ConstraintAnalysis
     }
   }
 
-  void visitUnary(Unary* curr) {
-    addAction();
-  }
+  void visitUnary(Unary* curr) { addAction(); }
 
-  void visitBinary(Binary* curr) {
-    addAction();
-  }
+  void visitBinary(Binary* curr) { addAction(); }
 
-  void visitRefEq(RefEq* curr) {
-    addAction();
-  }
+  void visitRefEq(RefEq* curr) { addAction(); }
 
-  void visitRefIsNull(RefIsNull* curr) {
-    addAction();
-  }
+  void visitRefIsNull(RefIsNull* curr) { addAction(); }
 
   static void doStartIfTrue(ConstraintAnalysis* self, Expression** currp) {
     // We are right after the condition, so we are in the block before the If's
