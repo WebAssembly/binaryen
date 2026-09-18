@@ -2141,10 +2141,7 @@ void FunctionValidator::visitRefIsNull(RefIsNull* curr) {
     getModule()->features.hasReferenceTypes(),
     curr,
     "ref.is_null requires reference-types [--enable-reference-types]");
-  shouldBeTrue(curr->value->type == Type::unreachable ||
-                 curr->value->type.isRef(),
-               curr->value,
-               "ref.is_null's argument should be a reference type");
+  ValidatorTypeChecker{*getModule(), getFunction(), info}.visitRefIsNull(curr);
 }
 
 void FunctionValidator::visitRefAs(RefAs* curr) {
@@ -2223,19 +2220,12 @@ void FunctionValidator::visitRefFunc(RefFunc* curr) {
 }
 
 void FunctionValidator::visitRefEq(RefEq* curr) {
-  Type eqref = Type(HeapType::eq, Nullable);
   shouldBeTrue(
     getModule()->features.hasGC(), curr, "ref.eq requires gc [--enable-gc]");
-  shouldBeSubTypeIgnoringShared(
-    curr->left->type,
-    eqref,
-    curr->left,
-    "ref.eq's left argument should be a subtype of eqref");
-  shouldBeSubTypeIgnoringShared(
-    curr->right->type,
-    eqref,
-    curr->right,
-    "ref.eq's right argument should be a subtype of eqref");
+  ValidatorTypeChecker{*getModule(), getFunction(), info}.visitRefEq(curr);
+  // ChildTyper constrains each child to the eqref family, but each note()
+  // call runs with a fresh VarAssignments, so the sharedness variable does
+  // not unify across left and right. Keep the cross-child check here.
   if (curr->left->type.isRef() && curr->right->type.isRef()) {
     shouldBeEqual(curr->left->type.getHeapType().getShared(),
                   curr->right->type.getHeapType().getShared(),
