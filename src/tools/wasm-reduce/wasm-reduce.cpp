@@ -232,12 +232,6 @@ static std::unordered_set<Name> functionsWeTriedToRemove;
 // overlap.
 static size_t workingFileIndex = 0;
 
-static void write_file(const std::string& filename,
-                       const std::vector<char>& bytes) {
-  Output out(filename, Flags::Binary);
-  out.write(bytes.data(), bytes.size());
-}
-
 /// Runs the external `wasm-opt` binary with `args` on `inBytes` by writing to
 // `testPath` and reading the result back into `outBytes`.
 static bool runWasmOpt(const std::string& testPath,
