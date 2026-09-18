@@ -38,7 +38,7 @@ export type ExportRef = number;
 
 // ## Enumerated Values ## //
 /**
- * An enumeration of built-in WASM types.
+ * A WASM type (the type of an expression).
  * @see https://webassembly.github.io/spec/core/syntax/types.html
  */
 export enum Type {
@@ -94,7 +94,7 @@ export enum Type {
 
 
 /**
- * An enumeration of built-in WASM heap types.
+ * A WASM heap type.
  * @see https://webassembly.github.io/spec/core/syntax/types.html#heap-types
  */
 export enum HeapType {
