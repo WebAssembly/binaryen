@@ -210,9 +210,9 @@ export class Module {
 			Type.i31ref,
 			Type.structref,
 			Type.arrayref,
+			Type.stringref,
 			Type.funcref,
 			Type.externref,
-			Type.stringref,
 		].includes(typ)) {
 			return BinaryenObj["_BinaryenPop"](this[PTR], typ);
 		} else {

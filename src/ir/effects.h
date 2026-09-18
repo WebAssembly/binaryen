@@ -1408,6 +1408,16 @@ public:
   // Helpers
 
   // See comment on orderedBefore() for the assumptions on the inputs here.
+  static bool orderedBefore(const PassOptions& passOptions,
+                            Module& module,
+                            Expression* a,
+                            Expression* b) {
+    EffectAnalyzer aEffects(passOptions, module, a);
+    EffectAnalyzer bEffects(passOptions, module, b);
+    return aEffects.orderedBefore(bEffects);
+  }
+
+  // See comment on orderedBefore() for the assumptions on the inputs here.
   // TODO: Update users so we can check just one direction here.
   static bool canReorder(const PassOptions& passOptions,
                          Module& module,

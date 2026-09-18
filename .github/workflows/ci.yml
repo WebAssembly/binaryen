@@ -18,7 +18,8 @@ jobs:
   lint:
     name: lint
     if: ${{ github.event_name == 'pull_request' }}
-    runs-on: ubuntu-latest
+    # Use Ubuntu 26.04 to get clang-21 (not present in 24.04)
+    runs-on: ubuntu-26.04
     env:
       # Keep this in sync with clang-format-diff.sh
       LLVM_VERSION: 21
@@ -34,10 +35,7 @@ jobs:
       run: |
         pip3 install -r requirements-dev.txt
         sudo apt install lsb-release wget software-properties-common gnupg
-        wget https://apt.llvm.org/llvm.sh
-        sudo chmod +x llvm.sh
-        sudo ./llvm.sh ${LLVM_VERSION}
-        sudo apt-get install clang-format clang-format-${LLVM_VERSION} clang-tidy-${LLVM_VERSION}
+        sudo apt-get install clang-${LLVM_VERSION} clang-format-${LLVM_VERSION} clang-tidy-${LLVM_VERSION}
     - run: ruff check
     - run: ./scripts/clang-format-diff.sh
     - name: clang-tidy
@@ -199,11 +197,6 @@ jobs:
     - uses: actions/checkout@v4
       with:
         submodules: true
-    - name: install clang 18
-      run: |
-        wget https://apt.llvm.org/llvm.sh
-        chmod +x llvm.sh
-        sudo ./llvm.sh 18
     - name: install ninja
       run: sudo apt-get install ninja-build
     - name: install v8
@@ -322,11 +315,6 @@ jobs:
     - uses: actions/checkout@v4
       with:
         submodules: true
-    - name: install clang 18
-      run: |
-        wget https://apt.llvm.org/llvm.sh
-        chmod +x llvm.sh
-        sudo ./llvm.sh 18
     - name: install ninja
       run: sudo apt-get install ninja-build
     - name: install v8

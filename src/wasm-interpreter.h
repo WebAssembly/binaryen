@@ -5142,6 +5142,9 @@ public:
         } else {
           // resume_throw_ref
           contData->exception = arguments[0];
+          if (contData->exception.isNull()) {
+            trap("null ref");
+          }
         }
       }
 

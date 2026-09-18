@@ -358,6 +358,9 @@
 ;; CHECK-NEXT:   --propagate-globals-globally                  propagate global values to other
 ;; CHECK-NEXT:                                                 globals (useful for tests)
 ;; CHECK-EMPTY:
+;; CHECK-NEXT:   --remove-empty-function-exports               removes exports of empty
+;; CHECK-NEXT:                                                 functions
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --remove-exports                              removes exports using a wildcard
 ;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --remove-imports                              removes imports and replaces 
@@ -512,6 +515,9 @@
 ;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --table64-lowering                            alias for memory64-lowering
 ;; CHECK-EMPTY:
+;; CHECK-NEXT:   --tail-call                                   convert calls in tail position 
+;; CHECK-NEXT:                                                 to return calls
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --trace-calls                                 instrument the build with code 
 ;; CHECK-NEXT:                                                 to intercept specific function 
 ;; CHECK-NEXT:                                                 calls
@@ -522,12 +528,6 @@
 ;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --translate-to-new-eh                         deprecated; same as 
 ;; CHECK-NEXT:                                                 translate-to-exnref
-;; CHECK-EMPTY:
-;; CHECK-NEXT:   --trap-mode-clamp                             replace trapping operations with
-;; CHECK-NEXT:                                                 clamping semantics
-;; CHECK-EMPTY:
-;; CHECK-NEXT:   --trap-mode-js                                replace trapping operations with
-;; CHECK-NEXT:                                                 js semantics
 ;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --tuple-optimization                          optimize trivial tuples away
 ;; CHECK-EMPTY:

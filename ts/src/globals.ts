@@ -95,6 +95,7 @@ const EXPRESSION_TYPE_REGISTRY: ReadonlyMap<ExpressionId, new (expr: ExpressionR
 	[ExpressionId.StructWait, expressions.StructWait],
 	[ExpressionId.WaitqueueNew, expressions.WaitqueueNew],
 	[ExpressionId.WaitqueueNotify, expressions.WaitqueueNotify],
+	[ExpressionId.Publish, expressions.Publish],
 	[ExpressionId.ArrayNew, expressions.ArrayNew],
 	[ExpressionId.ArrayNewFixed, expressions.ArrayNewFixed],
 	[ExpressionId.ArrayNewData, expressions.ArrayNewData],
