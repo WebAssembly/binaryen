@@ -163,8 +163,7 @@ struct ConstraintAnalysis
   bool isRelevantType(Type type) {
     if (type == Type::v128) {
       // TODO optimize SIMD where it makes sense, but for now we don't want to
-      // do things like propagate v128 constants, which are large (the same as
-      // Precompute).
+      // do things like propagate v128 constants, which are large.
       return false;
     }
 
@@ -465,16 +464,16 @@ struct ConstraintAnalysis
     if (auto* get = curr->dynCast<LocalGet>()) {
       // A bare local.get can be optimized, if we know that local is a constant.
       if (auto lit = constraints.get(get->index).getLiteral()) {
-        auto old = curr->type;
-        if (old.isNonNullable() && lit->isNull()) {
-          // This is a non-nullable local, into which we wrote an uninhabitable
-          // type (ref.as_non_null of a null). There is nothing to emit, and we
-          // would not validate if we did.
-          return false;
+        auto oldType = curr->type;
+        Builder builder(*getModule());
+        auto* rep = builder.makeConstantExpression(*lit);
+        if (!Type::isSubType(rep->type, oldType)) {
+          // The value we know must exist here is impossible, which means it was
+          // cast in a way that traps at runtime. This code is unreachable.
+          rep = builder.makeUnreachable();
         }
-waka
-        *currp = Builder(*getModule()).makeConstantExpression(*lit);
-        auto changed = (*currp)->type != old;
+        auto changed = rep->type != oldType;
+        *currp = rep;
         return changed;
       }
       return false;

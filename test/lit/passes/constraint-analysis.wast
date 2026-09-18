@@ -7546,30 +7546,30 @@
     )
   )
 
-  ;; CHECK:      (func $local.get.no (type $12) (result (ref any))
-  ;; CHECK-NEXT:  (local $x (ref any))
+  ;; CHECK:      (func $local.get.impossible.cast (type $12) (result (ref func))
+  ;; CHECK-NEXT:  (local $x (ref func))
   ;; CHECK-NEXT:  (local.set $x
-  ;; CHECK-NEXT:   (ref.as_non_null
-  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   (ref.cast (ref nofunc)
+  ;; CHECK-NEXT:    (ref.null nofunc)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (local.get $x)
+  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
-  ;; OPTIN:      (func $local.get.no (type $12) (result (ref any))
-  ;; OPTIN-NEXT:  (local $x (ref any))
+  ;; OPTIN:      (func $local.get.impossible.cast (type $12) (result (ref func))
+  ;; OPTIN-NEXT:  (local $x (ref func))
   ;; OPTIN-NEXT:  (local.set $x
   ;; OPTIN-NEXT:   (unreachable)
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (local.get $x)
   ;; OPTIN-NEXT: )
-  (func $local.get.no (result (ref any))
-    (local $x (ref any))
-    ;; An uninhabitable value is written into a non-nullable local, then we do
-    ;; a local.get of it. There is no value we can write for the local, so we do
-    ;; not emit one.
+  (func $local.get.impossible.cast (result (ref func))
+    (local $x (ref func))
+    ;; The cast here traps at runtime. We do not have a valid value to put in
+    ;; place of the local.get (it is not refined enough), but we know it is
+    ;; unreachable.
     (local.set $x
-      (ref.as_non_null
-        (ref.null none)
+      (ref.cast (ref func)
+        (ref.null func)
       )
     )
     (local.get $x)
