@@ -115,12 +115,12 @@ Abbrev table for offset: 0x00000000
               DW_AT_comp_dir [DW_FORM_strp]	( .debug_str[0x0000006f] = "/home/azakai/Dev/emscripten")
               DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000000)
               DW_AT_ranges [DW_FORM_sec_offset]	(0x00000000
-                 [0x00000000, 0x00000007)
+                 [0x00000001, 0x00000001)
                  [0x00000005, 0x00000012)
                  [0x00000013, 0x0000001b))
 
 0x00000026:   DW_TAG_subprogram [2] *
-                DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000000)
+                DW_AT_low_pc [DW_FORM_addr]	(0x00000000ffffffff)
                 DW_AT_high_pc [DW_FORM_data4]	(0x00000000)
                 DW_AT_frame_base [DW_FORM_exprloc]	(DW_OP_WASM_location 0x3 +0, <decoding error> 00 00 9f)
                 DW_AT_GNU_all_call_sites [DW_FORM_flag_present]	(true)
@@ -260,7 +260,7 @@ Abbrev table for offset: 0x00000000
                   DW_AT_type [DW_FORM_ref4]	(cu + 0x0071 => {0x00000071} "int")
 
 0x00000129:     DW_TAG_GNU_call_site [13]  
-                  DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000000)
+                  DW_AT_low_pc [DW_FORM_addr]	(0x00000000ffffffff)
 
 0x0000012e:     NULL
 
@@ -404,7 +404,7 @@ file_names[  1]:
 0x000000d4: "char"
 
 .debug_ranges contents:
-00000000 00000000 00000007
+00000000 00000001 00000001
 00000000 00000005 00000012
 00000000 00000013 0000001b
 00000000 <End of list>

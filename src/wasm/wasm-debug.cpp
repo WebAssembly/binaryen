@@ -15,6 +15,7 @@
  */
 
 #include "wasm-debug.h"
+#include "dwarf-ranges.h"
 #include "wasm.h"
 
 #ifdef BUILD_LLVM_DWARF
@@ -61,6 +62,16 @@ bool hasDWARFSections(const Module& wasm) {
 
 // In wasm32 the address size is 32 bits.
 static const size_t AddressSize = 4;
+static constexpr size_t RangeEntrySize = 2 * AddressSize;
+
+// DWARF v6 reserves the all-ones address for a non-existent entity. LLVM also
+// recognizes max-minus-one in legacy range and location data, where all-ones
+// is already the base-address-selection marker. Zero is a historical linker
+// tombstone, but is context-dependent because it can also be a valid address.
+static constexpr BinaryLocation AllOnesAddress = BinaryLocation(-1);
+static constexpr BinaryLocation LegacyTombstoneAddress = BinaryLocation(-2);
+static constexpr BinaryLocation EmptyRangeAddress = 1;
+static constexpr size_t NoParent = size_t(-1);
 
 struct BinaryenDWARFInfo {
   llvm::StringMap<std::unique_ptr<llvm::MemoryBuffer>> sections;
@@ -670,16 +681,13 @@ struct LocationUpdater {
   }
 };
 
-// A tombstone value is a value that is placed where something used to exist,
-// but no longer does, like a reference to a function that was DCE'd out during
-// linking. In theory the value can be any invalid location, and tools will
-// basically ignore it.
-// Earlier LLVM used to use 0 there, and newer versions use -1 or -2 depending
-// on the DWARF section. For now, support them all, but TODO stop supporting 0,
-// as there are apparently some possible corner cases where 0 is a valid value.
-static bool isTombstone(uint32_t x) {
-  return x == 0 || x == uint32_t(-1) || x == uint32_t(-2);
+static bool isNonzeroTombstone(BinaryLocation location) {
+  return location == AllOnesAddress || location == LegacyTombstoneAddress;
 }
+
+// Keep accepting the historical zero tombstone. Callers whose encoding permits
+// a real address zero must use isNonzeroTombstone instead.
+static bool isTombstone(uint32_t x) { return x == 0 || isNonzeroTombstone(x); }
 
 // Update debug lines, and update the locationUpdater with debug line offset
 // changes so we can update offsets into the debug line section.
@@ -823,6 +831,8 @@ static void updateDIE(const llvm::DWARFDebugInfoEntry& DIE,
   // may be an offset relative to the low. First, process everything but
   // the high pcs, so we see the low pcs first.
   BinaryLocation oldLowPC = 0, newLowPC = 0;
+  llvm::DWARFYAML::FormValue* lowPCValue = nullptr;
+  bool unresolvedZeroLowPC = false;
   iterContextAndYAML(
     abbrevDecl->attributes(),
     yamlEntry.Values,
@@ -832,10 +842,15 @@ static void updateDIE(const llvm::DWARFDebugInfoEntry& DIE,
       if (attr == llvm::dwarf::DW_AT_low_pc) {
         // This is an address.
         BinaryLocation oldValue = yamlValue.Value, newValue = 0;
-        if (tag == llvm::dwarf::DW_TAG_GNU_call_site ||
-            tag == llvm::dwarf::DW_TAG_inlined_subroutine ||
-            tag == llvm::dwarf::DW_TAG_lexical_block ||
-            tag == llvm::dwarf::DW_TAG_label) {
+        lowPCValue = &yamlValue;
+        // Preserve reserved dead-address sentinels. Mapping them as instruction
+        // offsets would turn dead DIEs into live ranges at address zero.
+        if (isNonzeroTombstone(oldValue)) {
+          newValue = oldValue;
+        } else if (tag == llvm::dwarf::DW_TAG_GNU_call_site ||
+                   tag == llvm::dwarf::DW_TAG_inlined_subroutine ||
+                   tag == llvm::dwarf::DW_TAG_lexical_block ||
+                   tag == llvm::dwarf::DW_TAG_label) {
           newValue = locationUpdater.getNewStart(oldValue);
         } else if (tag == llvm::dwarf::DW_TAG_compile_unit) {
           newValue = locationUpdater.getNewFuncStart(oldValue);
@@ -849,6 +864,8 @@ static void updateDIE(const llvm::DWARFDebugInfoEntry& DIE,
           Fatal() << "unknown tag with low_pc "
                   << llvm::dwarf::TagString(tag).str();
         }
+        unresolvedZeroLowPC = tag != llvm::dwarf::DW_TAG_compile_unit &&
+                              newValue == 0 && !isNonzeroTombstone(oldValue);
         oldLowPC = oldValue;
         newLowPC = newValue;
         yamlValue.Value = newValue;
@@ -879,10 +896,12 @@ static void updateDIE(const llvm::DWARFDebugInfoEntry& DIE,
       if (isRelative) {
         oldValue += oldLowPC;
       }
-      if (tag == llvm::dwarf::DW_TAG_GNU_call_site ||
-          tag == llvm::dwarf::DW_TAG_inlined_subroutine ||
-          tag == llvm::dwarf::DW_TAG_lexical_block ||
-          tag == llvm::dwarf::DW_TAG_label) {
+      if (isNonzeroTombstone(newLowPC)) {
+        newValue = newLowPC;
+      } else if (tag == llvm::dwarf::DW_TAG_GNU_call_site ||
+                 tag == llvm::dwarf::DW_TAG_inlined_subroutine ||
+                 tag == llvm::dwarf::DW_TAG_lexical_block ||
+                 tag == llvm::dwarf::DW_TAG_label) {
         newValue = locationUpdater.getNewExprEnd(oldValue);
       } else if (tag == llvm::dwarf::DW_TAG_compile_unit ||
                  tag == llvm::dwarf::DW_TAG_subprogram) {
@@ -891,11 +910,30 @@ static void updateDIE(const llvm::DWARFDebugInfoEntry& DIE,
         Fatal() << "unknown tag with low_pc "
                 << llvm::dwarf::TagString(tag).str();
       }
+      // If one endpoint disappeared or moved before the other, the exact
+      // scope can no longer be represented by this low/high pair. Tombstone
+      // the DIE instead of emitting a wrapping or unrelated address range.
+      if (!isNonzeroTombstone(newLowPC) &&
+          tag != llvm::dwarf::DW_TAG_compile_unit &&
+          (newValue == 0 || newValue < newLowPC)) {
+        newLowPC = AllOnesAddress;
+        newValue = isRelative ? newLowPC : AllOnesAddress;
+        assert(lowPCValue);
+        lowPCValue->Value = newLowPC;
+      } else if (newValue > newLowPC) {
+        // A valid high_pc disambiguates address zero as a real start rather
+        // than an old-style tombstone.
+        unresolvedZeroLowPC = false;
+      }
       if (isRelative) {
         newValue -= newLowPC;
       }
       yamlValue.Value = newValue;
     });
+  if (unresolvedZeroLowPC) {
+    assert(lowPCValue);
+    lowPCValue->Value = AllOnesAddress;
+  }
 }
 
 static void updateCompileUnits(const BinaryenDWARFInfo& info,
@@ -938,39 +976,319 @@ static void updateCompileUnits(const BinaryenDWARFInfo& info,
 
 static void updateRanges(llvm::DWARFYAML::Data& yaml,
                          const LocationUpdater& locationUpdater) {
-  // In each range section, try to update the start and end. If we no longer
-  // have something to map them to, we must skip that part.
-  size_t skip = 0;
-  for (size_t i = 0; i < yaml.Ranges.size(); i++) {
-    auto& range = yaml.Ranges[i];
+  // In each range section, update the start and end. If either endpoint no
+  // longer has a mapping, emit an empty range that a debugger can safely
+  // ignore. Do not use (0, 0), since that is the list terminator.
+  for (auto& range : yaml.Ranges) {
     BinaryLocation oldStart = range.Start, oldEnd = range.End, newStart = 0,
                    newEnd = 0;
-    // If this is an end marker (0, 0), or an invalid range (0, x) or (x, 0)
-    // then just emit it as it is - either to mark the end, or to mark an
-    // invalid entry.
-    if (isTombstone(oldStart) || isTombstone(oldEnd)) {
+    if ((oldStart == 0 && oldEnd == 0) || oldStart == AllOnesAddress) {
       newStart = oldStart;
       newEnd = oldEnd;
+    } else if (oldStart == LegacyTombstoneAddress || isTombstone(oldEnd)) {
+      newStart = EmptyRangeAddress;
+      newEnd = EmptyRangeAddress;
     } else {
-      // This was a valid entry; update it.
-      newStart = locationUpdater.getNewStart(oldStart);
+      // Zero is a valid offset from the current range-list base. It is only a
+      // tombstone when paired with a zero end as handled above.
+      newStart = oldStart == 0 ? 0 : locationUpdater.getNewStart(oldStart);
       newEnd = locationUpdater.getNewEnd(oldEnd);
-      if (isTombstone(newStart) || isTombstone(newEnd)) {
-        // This part of the range no longer has a mapping, so we must skip it.
-        // Don't use (0, 0) as that would be an end marker; emit something
-        // invalid for the debugger to ignore.
-        newStart = 0;
-        newEnd = 1;
+      if ((oldStart != 0 && isTombstone(newStart)) || isTombstone(newEnd) ||
+          newEnd <= newStart) {
+        newStart = EmptyRangeAddress;
+        newEnd = EmptyRangeAddress;
       }
       // TODO even if range start and end markers have been preserved,
       // instructions in the middle may have moved around, making the range no
       // longer contiguous. We should check that, and possibly split/merge
       // the range. Or, we may need to have tracking in the IR for this.
     }
-    auto& writtenRange = yaml.Ranges[i - skip];
-    writtenRange.Start = newStart;
-    writtenRange.End = newEnd;
+    range.Start = newStart;
+    range.End = newEnd;
   }
+}
+
+// A pass may reorder instructions such that independently mapped range
+// endpoints no longer describe a valid DWARF scope tree. In that case it is
+// safer to make the affected scope unavailable than to assign variables to
+// code that did not originally belong to the scope.
+struct DIEAddressInfo {
+  llvm::DWARFYAML::Entry* yamlEntry = nullptr;
+  llvm::DWARFYAML::FormValue* rangesValue = nullptr;
+  const llvm::DWARFAbbreviationDeclaration* abbrevDecl = nullptr;
+  llvm::dwarf::Tag tag = llvm::dwarf::DW_TAG_null;
+  uint32_t depth = 0;
+  size_t parent = NoParent;
+  DwarfRanges ranges;
+  bool hasRangeDescription = false;
+  bool rangeListDirty = false;
+  bool malformed = false;
+  bool unavailable = false;
+};
+
+static void readDIEAddressRanges(DIEAddressInfo& info,
+                                 llvm::DWARFYAML::Data& yaml,
+                                 BinaryLocation compileUnitBase) {
+  std::optional<BinaryLocation> lowPC;
+  std::optional<BinaryLocation> highPC;
+  std::optional<BinaryLocation> rangesOffset;
+  bool highPCIsRelative = false;
+
+  iterContextAndYAML(
+    info.abbrevDecl->attributes(),
+    info.yamlEntry->Values,
+    [&](const llvm::DWARFAbbreviationDeclaration::AttributeSpec& attrSpec,
+        llvm::DWARFYAML::FormValue& yamlValue) {
+      if (attrSpec.Attr == llvm::dwarf::DW_AT_low_pc) {
+        lowPC = BinaryLocation(yamlValue.Value);
+      } else if (attrSpec.Attr == llvm::dwarf::DW_AT_high_pc) {
+        highPC = BinaryLocation(yamlValue.Value);
+        highPCIsRelative = attrSpec.Form == llvm::dwarf::DW_FORM_data4;
+      } else if (attrSpec.Attr == llvm::dwarf::DW_AT_ranges) {
+        rangesOffset = BinaryLocation(yamlValue.Value);
+        info.rangesValue = &yamlValue;
+      }
+    });
+
+  if (rangesOffset) {
+    info.hasRangeDescription = true;
+    if (*rangesOffset % RangeEntrySize != 0 ||
+        *rangesOffset / RangeEntrySize >= yaml.Ranges.size()) {
+      info.malformed = true;
+      return;
+    }
+    auto base = uint64_t(compileUnitBase);
+    bool terminated = false;
+    for (size_t i = *rangesOffset / RangeEntrySize; i < yaml.Ranges.size();
+         ++i) {
+      auto start = BinaryLocation(yaml.Ranges[i].Start);
+      auto end = BinaryLocation(yaml.Ranges[i].End);
+      if (start == 0 && end == 0) {
+        terminated = true;
+        break;
+      }
+      if (start == AllOnesAddress) {
+        base = end;
+        continue;
+      }
+      // A zero start is a valid offset from the current base. Only (0, 0),
+      // handled above, terminates the list.
+      if (start == LegacyTombstoneAddress || isTombstone(end)) {
+        continue;
+      }
+      auto absoluteStart = base + start;
+      auto absoluteEnd = base + end;
+      if (absoluteStart > absoluteEnd) {
+        info.malformed = true;
+      } else if (absoluteStart < absoluteEnd) {
+        info.ranges.add(absoluteStart, absoluteEnd);
+      }
+    }
+    if (!terminated) {
+      info.malformed = true;
+    }
+  } else if (lowPC && highPC) {
+    info.hasRangeDescription = true;
+    // Unlike a range-list terminator, zero is a valid low_pc when paired with
+    // a nonzero high_pc. Only the reserved nonzero sentinels are unambiguously
+    // unavailable in this encoding.
+    if (!isNonzeroTombstone(*lowPC)) {
+      uint64_t start = *lowPC;
+      uint64_t end = highPCIsRelative ? start + *highPC : *highPC;
+      if (start > end) {
+        info.malformed = true;
+      } else if (start < end) {
+        info.ranges.add(start, end);
+      }
+    }
+  }
+
+  info.rangeListDirty |= info.rangesValue && info.ranges.normalize();
+}
+
+static void writeRangeList(DIEAddressInfo& info, llvm::DWARFYAML::Data& yaml) {
+  assert(info.rangesValue);
+  info.rangesValue->Value = yaml.Ranges.size() * RangeEntrySize;
+  // Use an explicit zero base so the new entries remain absolute and can be
+  // updated again without recovering an implicit compile-unit base.
+  yaml.Ranges.push_back(llvm::DWARFYAML::Range{AllOnesAddress, 0, 0});
+  for (auto [start, end] : info.ranges.get()) {
+    yaml.Ranges.push_back(llvm::DWARFYAML::Range{start, end, 0});
+  }
+  yaml.Ranges.push_back(llvm::DWARFYAML::Range{0, 0, 0});
+}
+
+static void markUnavailable(std::vector<DIEAddressInfo>& infos,
+                            const std::vector<std::vector<size_t>>& children,
+                            size_t root) {
+  std::vector<size_t> pending{root};
+  // Follow the explicit tree rather than scanning by depth. Null DIE
+  // terminators do not have abbreviation data and would stop a depth scan
+  // before all descendants were reached.
+  while (!pending.empty()) {
+    auto index = pending.back();
+    pending.pop_back();
+    infos[index].unavailable = true;
+    pending.insert(
+      pending.end(), children[index].begin(), children[index].end());
+  }
+}
+
+static void
+writeUnavailableDIE(DIEAddressInfo& info,
+                    llvm::DWARFYAML::Data& yaml,
+                    std::optional<BinaryLocation>& emptyRangeListOffset) {
+  iterContextAndYAML(
+    info.abbrevDecl->attributes(),
+    info.yamlEntry->Values,
+    [&](const llvm::DWARFAbbreviationDeclaration::AttributeSpec& attrSpec,
+        llvm::DWARFYAML::FormValue& yamlValue) {
+      if (attrSpec.Attr == llvm::dwarf::DW_AT_low_pc) {
+        yamlValue.Value = AllOnesAddress;
+      } else if (attrSpec.Attr == llvm::dwarf::DW_AT_high_pc) {
+        yamlValue.Value =
+          attrSpec.Form == llvm::dwarf::DW_FORM_data4 ? 0 : AllOnesAddress;
+      } else if (attrSpec.Attr == llvm::dwarf::DW_AT_ranges) {
+        if (!emptyRangeListOffset) {
+          emptyRangeListOffset = yaml.Ranges.size() * RangeEntrySize;
+          yaml.Ranges.push_back(llvm::DWARFYAML::Range{0, 0, 0});
+        }
+        yamlValue.Value = *emptyRangeListOffset;
+      }
+    });
+}
+
+static void repairDIEAddressRanges(const BinaryenDWARFInfo& dwarfInfo,
+                                   llvm::DWARFYAML::Data& yaml,
+                                   const LocationUpdater& locationUpdater) {
+  size_t compileUnitIndex = 0;
+  std::optional<BinaryLocation> emptyRangeListOffset;
+  iterContextAndYAML(
+    dwarfInfo.context->compile_units(),
+    yaml.CompileUnits,
+    [&](const std::unique_ptr<llvm::DWARFUnit>& CU,
+        llvm::DWARFYAML::Unit& yamlUnit) {
+      std::vector<DIEAddressInfo> infos(yamlUnit.Entries.size());
+      std::vector<size_t> ancestors;
+      auto yamlEntry = yamlUnit.Entries.begin();
+      size_t index = 0;
+      BinaryLocation compileUnitBase = 0;
+      if (auto iter = locationUpdater.compileUnitBases.find(compileUnitIndex);
+          iter != locationUpdater.compileUnitBases.end()) {
+        compileUnitBase = iter->second.second;
+      }
+      for (const auto& DIE : CU->dies()) {
+        assert(yamlEntry != yamlUnit.Entries.end());
+        auto abbrevDecl = DIE.getAbbreviationDeclarationPtr();
+        if (abbrevDecl) {
+          auto& info = infos[index];
+          info.yamlEntry = &*yamlEntry;
+          info.abbrevDecl = abbrevDecl;
+          info.tag = DIE.getTag();
+          info.depth = DIE.getDepth();
+          while (ancestors.size() > info.depth) {
+            ancestors.pop_back();
+          }
+          if (info.depth > 0 && ancestors.size() == info.depth) {
+            info.parent = ancestors.back();
+          }
+          if (ancestors.size() == info.depth) {
+            ancestors.push_back(index);
+          } else {
+            assert(ancestors.size() > info.depth);
+            ancestors[info.depth] = index;
+            ancestors.resize(info.depth + 1);
+          }
+          readDIEAddressRanges(info, yaml, compileUnitBase);
+        }
+        ++yamlEntry;
+        ++index;
+      }
+      assert(yamlEntry == yamlUnit.Entries.end());
+
+      std::vector<std::vector<size_t>> children(infos.size());
+      for (size_t i = 0; i < infos.size(); ++i) {
+        if (infos[i].abbrevDecl && infos[i].parent != NoParent) {
+          children[infos[i].parent].push_back(i);
+        }
+      }
+
+      // Compute this once bottom-up instead of rescanning every subtree.
+      std::vector<bool> hasRangedDescendant(infos.size());
+      for (size_t i = infos.size(); i-- > 0;) {
+        if (infos[i].parent != NoParent &&
+            (!infos[i].ranges.empty() || hasRangedDescendant[i])) {
+          hasRangedDescendant[infos[i].parent] = true;
+        }
+      }
+      for (size_t i = 0; i < infos.size(); ++i) {
+        if (!infos[i].abbrevDecl) {
+          continue;
+        }
+        if (infos[i].malformed ||
+            (!infos[i].rangesValue && infos[i].hasRangeDescription &&
+             infos[i].ranges.empty() && hasRangedDescendant[i])) {
+          markUnavailable(infos, children, i);
+        }
+      }
+
+      // Process each sibling group after its children have reached their final
+      // ranges. This ensures that extending a range-list child cannot create an
+      // overlap that was checked only against its old endpoints.
+      for (size_t parentIndex = infos.size(); parentIndex-- > 0;) {
+        auto& parent = infos[parentIndex];
+        if (!parent.abbrevDecl || parent.unavailable) {
+          continue;
+        }
+        auto& siblings = children[parentIndex];
+        for (size_t i = 0; i < siblings.size(); ++i) {
+          for (size_t j = i + 1; j < siblings.size(); ++j) {
+            if (!infos[siblings[i]].unavailable &&
+                !infos[siblings[j]].unavailable &&
+                !infos[siblings[i]].ranges.empty() &&
+                !infos[siblings[j]].ranges.empty() &&
+                infos[siblings[i]].ranges.overlaps(infos[siblings[j]].ranges)) {
+              markUnavailable(infos, children, siblings[i]);
+              markUnavailable(infos, children, siblings[j]);
+            }
+          }
+        }
+
+        // A range-list parent can represent the union of its existing ranges
+        // and its surviving children. Extend it before it is checked as a
+        // child at the next level of the tree.
+        if (parent.rangesValue) {
+          for (auto childIndex : siblings) {
+            auto& child = infos[childIndex];
+            if (!child.unavailable) {
+              parent.rangeListDirty |= parent.ranges.add(child.ranges);
+            }
+          }
+        }
+
+        for (auto childIndex : siblings) {
+          auto& child = infos[childIndex];
+          if (child.unavailable) {
+            continue;
+          }
+          bool subprogramPair = child.tag == llvm::dwarf::DW_TAG_subprogram &&
+                                parent.tag == llvm::dwarf::DW_TAG_subprogram;
+          if (!subprogramPair && !child.ranges.empty() &&
+              !parent.ranges.empty() && !parent.ranges.contains(child.ranges)) {
+            markUnavailable(infos, children, childIndex);
+          }
+        }
+      }
+
+      for (auto& info : infos) {
+        if (info.abbrevDecl && info.unavailable) {
+          writeUnavailableDIE(info, yaml, emptyRangeListOffset);
+        } else if (info.abbrevDecl && info.rangeListDirty) {
+          writeRangeList(info, yaml);
+        }
+      }
+      ++compileUnitIndex;
+    });
 }
 
 // A location that is ignoreable, i.e., not a special value like 0 or -1 (which
@@ -1098,6 +1416,8 @@ void writeDWARFSections(Module& wasm, const BinaryLocations& newLocations) {
   updateCompileUnits(info, data, locationUpdater, is64);
 
   updateRanges(data, locationUpdater);
+
+  repairDIEAddressRanges(info, data, locationUpdater);
 
   updateLoc(data, locationUpdater);
 

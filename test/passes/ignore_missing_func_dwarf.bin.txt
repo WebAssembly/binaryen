@@ -549,7 +549,7 @@ DWARF debug info
 ================
 
 Contains section .debug_info (175 bytes)
-Contains section .debug_ranges (32 bytes)
+Contains section .debug_ranges (64 bytes)
 Contains section .debug_abbrev (117 bytes)
 Contains section .debug_line (169 bytes)
 Contains section .debug_str (235 bytes)
@@ -621,8 +621,9 @@ Abbrev table for offset: 0x00000000
               DW_AT_stmt_list [DW_FORM_sec_offset]	(0x00000000)
               DW_AT_comp_dir [DW_FORM_strp]	( .debug_str[0x0000009b] = "/home/alon/Dev/emscripten")
               DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000000)
-              DW_AT_ranges [DW_FORM_sec_offset]	(0x00000000
-                 [0x00000005, 0x0000006d))
+              DW_AT_ranges [DW_FORM_sec_offset]	(0x00000020
+                 [0x00000005, 0x0000006d)
+                 [0x0000006e, 0x000000d3))
 
 0x00000026:   DW_TAG_variable [2]  
                 DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000b5] = "quine")
@@ -668,7 +669,7 @@ Abbrev table for offset: 0x00000000
 0x00000074:     NULL
 
 0x00000075:   DW_TAG_subprogram [6] *
-                DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000000)
+                DW_AT_low_pc [DW_FORM_addr]	(0x00000000ffffffff)
                 DW_AT_high_pc [DW_FORM_data4]	(0x00000000)
                 DW_AT_linkage_name [DW_FORM_strp]	( .debug_str[0x000000d2] = "_Z6unusedi")
                 DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000dd] = "unused")
@@ -821,6 +822,10 @@ file_names[  1]:
 00000000 <End of list>
 00000010 0000006e 000000d3
 00000010 <End of list>
+00000020 ffffffff 00000000
+00000020 00000005 0000006d
+00000020 0000006e 000000d3
+00000020 <End of list>
 (module
  (type $0 (func))
  (type $1 (func (param i32) (result i32)))
@@ -1074,7 +1079,7 @@ file_names[  1]:
   )
  )
  ;; custom section ".debug_info", size 175
- ;; custom section ".debug_ranges", size 32
+ ;; custom section ".debug_ranges", size 64
  ;; custom section ".debug_abbrev", size 117
  ;; custom section ".debug_line", size 169
  ;; custom section ".debug_str", size 235
