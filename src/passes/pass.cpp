@@ -423,6 +423,9 @@ void PassRegistry::registerPasses() {
   registerPass("remove-relaxed-simd",
                "replaces relaxed SIMD instructions with unreachable",
                createRemoveRelaxedSIMDPass);
+  registerPass("remove-empty-function-exports",
+               "removes exports of empty functions",
+               createRemoveEmptyFunctionExportsPass);
   registerPass("remove-exports",
                "removes exports using a wildcard",
                createRemoveExportsPass);
@@ -555,6 +558,9 @@ void PassRegistry::registerPasses() {
   registerPass("stack-check",
                "enforce limits on llvm's __stack_pointer global",
                createStackCheckPass);
+  registerPass("tail-call",
+               "convert calls in tail position to return calls",
+               createTailCallPass);
   registerPass("strip-debug",
                "strip debug info (including the names section)",
                createStripDebugPass);
@@ -575,12 +581,6 @@ void PassRegistry::registerPasses() {
   registerPass("translate-to-exnref",
                "translate old Phase 3 EH instructions to new ones with exnref",
                createTranslateToExnrefPass);
-  registerPass("trap-mode-clamp",
-               "replace trapping operations with clamping semantics",
-               createTrapModeClamp);
-  registerPass("trap-mode-js",
-               "replace trapping operations with js semantics",
-               createTrapModeJS);
   registerPass("tuple-optimization",
                "optimize trivial tuples away",
                createTupleOptimizationPass);

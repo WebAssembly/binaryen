@@ -11,9 +11,7 @@ import type {
 } from "../../classes/module/Module.ts";
 import {
 	type ExpressionRef,
-	type Type,
-	i32,
-	i64,
+	Type,
 } from "../../constants.ts";
 
 
@@ -31,12 +29,12 @@ function atomic(mod: Module) {
 
 		/** @experimental */
 		wait32: (ptr: ExpressionRef, expected: ExpressionRef, timeout: ExpressionRef, name: string): ExpressionRef => (
-			wait(i32, ptr, expected, timeout, name)
+			wait(Type.i32, ptr, expected, timeout, name)
 		),
 
 		/** @experimental */
 		wait64: (ptr: ExpressionRef, expected: ExpressionRef, timeout: ExpressionRef, name: string): ExpressionRef => (
-			wait(i64, ptr, expected, timeout, name)
+			wait(Type.i64, ptr, expected, timeout, name)
 		),
 	} as const;
 }

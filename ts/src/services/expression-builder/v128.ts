@@ -11,7 +11,7 @@ import type {
 import {
 	type ExpressionRef,
 	Operation,
-	v128 as v128_t,
+	Type,
 } from "../../constants.ts";
 import {
 	binaryFn,
@@ -31,7 +31,7 @@ import {
  */
 export function v128(mod: Module) {
 	return {
-		load: loadFn(mod, v128_t, 16, false),
+		load: loadFn(mod, Type.v128, 16, false),
 		load8x8_s: simdLoadFn(mod, Operation.Load8x8SVec128),
 		load8x8_u: simdLoadFn(mod, Operation.Load8x8UVec128),
 		load16x4_s: simdLoadFn(mod, Operation.Load16x4SVec128),
@@ -49,7 +49,7 @@ export function v128(mod: Module) {
 		load32_lane: simdLoadStoreLaneFn(mod, Operation.Load32LaneVec128),
 		load64_lane: simdLoadStoreLaneFn(mod, Operation.Load64LaneVec128),
 
-		store: storeFn(mod, v128_t, 16),
+		store: storeFn(mod, Type.v128, 16),
 		store8_lane: simdLoadStoreLaneFn(mod, Operation.Store8LaneVec128),
 		store16_lane: simdLoadStoreLaneFn(mod, Operation.Store16LaneVec128),
 		store32_lane: simdLoadStoreLaneFn(mod, Operation.Store32LaneVec128),
@@ -75,8 +75,8 @@ export function v128(mod: Module) {
 
 		/** @deprecated Use {@link Module#pop} instead. */
 		pop() {
-			BinaryenObj.printWarn("`.v128.pop()` is deprecated; use `.pop(v128)` instead.");
-			return mod.pop(v128_t);
+			BinaryenObj.printWarn("`.v128.pop()` is deprecated; use `.pop(Type.v128)` instead.");
+			return mod.pop(Type.v128);
 		},
 	} as const;
 }

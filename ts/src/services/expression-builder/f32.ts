@@ -7,7 +7,7 @@ import type {
 import {
 	type ExpressionRef,
 	Operation,
-	f32 as f32_t,
+	Type,
 } from "../../constants.ts";
 import {
 	binaryFn,
@@ -25,8 +25,8 @@ import {
  */
 export function f32(mod: Module) {
 	return {
-		load: loadFn(mod, f32_t, 4, true),
-		store: storeFn(mod, f32_t, 4),
+		load: loadFn(mod, Type.f32, 4, true),
+		store: storeFn(mod, Type.f32, 4),
 
 		/** Return a static constant f32. */
 		const: (value: number): ExpressionRef => (
@@ -89,8 +89,8 @@ export function f32(mod: Module) {
 
 		/** @deprecated Use {@link Module#pop} instead. */
 		pop() {
-			BinaryenObj.printWarn("`.f32.pop()` is deprecated; use `.pop(f32)` instead.");
-			return mod.pop(f32_t);
+			BinaryenObj.printWarn("`.f32.pop()` is deprecated; use `.pop(Type.f32)` instead.");
+			return mod.pop(Type.f32);
 		},
 	} as const;
 }

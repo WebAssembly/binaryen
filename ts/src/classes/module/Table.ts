@@ -11,8 +11,7 @@ import {
 	type ElementSegmentRef,
 	type ExpressionRef,
 	type TableRef,
-	type Type,
-	funcref,
+	Type,
 } from "../../constants.ts";
 import type {
 	Module,
@@ -76,7 +75,7 @@ export class ModuleTables {
 	constructor(private readonly mod: Module) {}
 
 	/** Adds a table. */
-	add(name: string, initial: number, maximum: number, type: Type = funcref, init?: ExpressionRef): TableRef {
+	add(name: string, initial: number, maximum: number, type: Type = Type.funcref, init?: ExpressionRef): TableRef {
 		return preserveStack(() => BinaryenObj["_BinaryenAddTable"](this.mod[PTR], strToStack(name), initial, maximum, type, init ?? 0));
 	}
 

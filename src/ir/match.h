@@ -896,6 +896,9 @@ inline decltype(auto) local() {
 inline decltype(auto) local(Index* binder) {
   return Internal::LocalGetMatcher(nullptr, Internal::Any(binder));
 }
+inline decltype(auto) local(LocalGet** binder) {
+  return Internal::LocalGetMatcher(binder, Internal::Any<Index>(nullptr));
+}
 
 } // namespace wasm::Match
 

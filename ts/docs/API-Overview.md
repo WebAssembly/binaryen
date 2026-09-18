@@ -31,9 +31,8 @@ import {type Type, type ExpressionRef, i32} from "binaryen.ts";
 
 
 ### TypeScript Types
-- `Type`: a WASM type; the type of the constants named `i32`, `i64`, etc.
-- `HeapType`: a WASM heap type created in a `TypeBuilder`
-- `PackedType`: an allowed type of a struct or array field; one of three constants: `notPacked`, `i8`, `i16`
+- `Type`: any WASM type, either built-in or custom (e.g., `(ref $YourHeapType)`)
+- `HeapType`: a WASM built-in heap type, or one created in a `TypeBuilder`
 - `ExpressionRef`: an expression, e.g. the type of `i32.const()`
 - module component ref types:
 	- `TagRef`
@@ -47,51 +46,10 @@ import {type Type, type ExpressionRef, i32} from "binaryen.ts";
 	- `ExportRef`
 
 
-### Constants
-- `unreachable`: type of an unreachable instruction (stack effect *[t\*] -> [t\*]*)
-- `none`: void type (stack effect *[t\*] -> []*); not to be confused with WASM’s heap type called *none*
-- `auto`: special type used in [`ExpressionBuilder#block()`](#expression-building) exclusively; automatically detects a block’s result type based on its contents
->
-- `i32`: 32-bit integer
-- `i64`: 64-bit integer
-- `f32`: 32-bit float
-- `f64`: 64-bit float
-- `v128`: 128-bit vector (SIMD)
->
-- `any`:         heap type *any*
-- `eq`:          heap type *eq*
-- `i31`:         heap type *i31*
-- `struct`:      heap type *struct*
-- `array`:       heap type *array*
-- ~~`none`~~:    ⛔️ reserved for heap type *none* (would like to rename `none` above)
-- `func`:        heap type *func*
-- ~~`exn`~~:     ⛔️ reserved for heap type *exn*
-- `extern`:      heap type *extern*
-- `nullfunc`:    heap type *nofunc*
-- ~~`nullexn`~~: ⛔️ reserved for heap type *noexn*
-- `nullextern`:  heap type *noextern*
-- `string`:      🌱 planned for heap type *string*
->
-- `anyref`:         *(ref null any)*
-- `eqref`:          *(ref null eq)*
-- `i31ref`:         *(ref null i31)*
-- `structref`:      *(ref null struct)*
-- `arrayref`:       *(ref null array)*
-- `nullref`:        *(ref null none)*
-- `funcref`:        *(ref null func)*
-- ~~`exnref`~~:     ⛔️ reserved for *(ref null exn)*
-- `externref`:      *(ref null extern)*
-- `nullfuncref`:    *(ref null nofunc)*
-- ~~`nullexnref`~~: ⛔️ reserved for *(ref null noexn)*
-- `nullexternref`:  *(ref null noextern)*
-- `stringref`:      🌱 planned for *(ref null string)*
->
-- `notPacked` (`PackedType`): unaltered type in the struct/array field
-- `i8` (`PackedType`): 8-bit integer
-- `i16` (`PackedType`): 16-bit integer
-
-
 ### Enums
+- `Type`: an enumeration of built-in WASM types (`i32`, `v128`, etc.)
+- `HeapType`: an enumeration of built-in WASM heap types (`array`, `func`, etc.)
+- `PackedType`: an allowed type of a struct or array field; one of three constants: `notPacked`, `i8`, `i16`
 - `ExpressionId`: an enumeration of values returned by `getExpressionId()`
 	- a slight misnomer, as these are not unique IDs per expression, but different IDs for the “kinds” of expression
 - `SideEffect`: an enumeration of values returend by `getSideEffects()`
@@ -397,6 +355,7 @@ See generated docs for fields, methods, and descriptions of each.
 	- `expressions.StructWait`
 	- `expressions.WaitqueueNew`
 	- `expressions.WaitqueueNotify`
+	- `expressions.Publish`
 	- `expressions.ArrayNew`
 	- `expressions.ArrayNewFixed`
 	- `expressions.ArrayNewData`

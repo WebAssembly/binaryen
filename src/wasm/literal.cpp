@@ -314,7 +314,7 @@ Literal Literal::makeNegOne(Type type) {
   return makeFromInt32(-1, type);
 }
 
-Literal Literal::makeFromMemory(void* p, Type type) {
+Literal Literal::makeFromMemory(const void* p, Type type) {
   assert(type.isNumber());
   switch (type.getBasic()) {
     case Type::i32: {
@@ -499,7 +499,7 @@ bool Literal::operator==(const Literal& other) const {
       return *funcData == *other.funcData;
     }
     if (type.isString()) {
-      return gcData->values == other.gcData->values;
+      return gcData->getLiterals() == other.gcData->getLiterals();
     }
     if (type.isData()) {
       return gcData == other.gcData;
@@ -775,8 +775,8 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
           break;
         case HeapType::any: {
           auto data = literal.getGCData();
-          assert(data->values.size() == 1);
-          o << "internalized " << literal.getGCData()->values[0];
+          assert(data->getLiterals().size() == 1);
+          o << "internalized " << data->getLiterals()[0];
           break;
         }
         case HeapType::ext: {
@@ -806,7 +806,7 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
             o << "string(";
             // Convert WTF-16 literals to WTF-16 string.
             std::stringstream wtf16;
-            for (auto c : data->values) {
+            for (auto c : data->getLiterals()) {
               auto u = c.getInteger();
               assert(u < 0x10000);
               wtf16 << uint8_t(u & 0xFF);
@@ -844,9 +844,15 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
       assert(literal.isData());
       auto data = literal.getGCData();
       assert(data);
-      o << "[ref " << literal.type.getHeapType() << ' ' << data->values;
+      o << "[ref " << literal.type.getHeapType() << ' ';
+      for (size_t i = 0; i < literal.getNumElements(); i++) {
+        if (i > 0) {
+          o << ' ';
+        }
+        o << literal.getElement(i);
+      }
       if (!data->desc.isNull()) {
-        if (!data->values.empty()) {
+        if (literal.getNumElements() > 0) {
           o << ", ";
         }
         o << "desc=" << data->desc;
@@ -3102,8 +3108,8 @@ Literal Literal::externalize() const {
   }
   if (heapType.isMaybeShared(HeapType::any)) {
     // This is an internalized externref or string; just unwrap it.
-    assert(gcData->values.size() == 1);
-    return gcData->values[0];
+    assert(gcData->getLiterals().size() == 1);
+    return gcData->getLiterals()[0];
   }
   // This is an internal reference. Wrap it.
   auto ext = HeapTypes::ext.getBasic(heapType.getShared());
@@ -3124,8 +3130,8 @@ Literal Literal::internalize() const {
     return Literal(std::make_shared<GCData>(Literals{*this}), any);
   }
   // This is an externalized internal reference; just unwrap it.
-  assert(gcData->values.size() == 1);
-  return gcData->values[0];
+  assert(gcData->getLiterals().size() == 1);
+  return gcData->getLiterals()[0];
 }
 
 Literal Literal::unwrap() const {
@@ -3148,7 +3154,7 @@ Literal Literal::getJSPrototype() const {
   assert(type.isRef());
   if (auto desc = type.getHeapType().getDescriptorType();
       desc && JSUtils::hasPossibleJSPrototypeField(*desc)) {
-    auto proto = gcData->desc.getGCData()->values[0].unwrap();
+    auto proto = gcData->desc.getGCData()->getLiterals()[0].unwrap();
     // Strings and numbers are not valid prototypes, so they appear as null.
     // Externref nulls are also converted to nullref.
     auto protoType = proto.type.getHeapType();
@@ -3159,6 +3165,81 @@ Literal Literal::getJSPrototype() const {
     return proto;
   }
   return Literal::makeNull(HeapType::none);
+}
+
+size_t Literal::getNumElements() const {
+  assert(isData());
+  if (gcData->isRawBytes()) {
+    auto field = type.getHeapType().getArray().element;
+    return gcData->getRawBytes().size() / field.getByteSize();
+  }
+  return gcData->getLiterals().size();
+}
+
+namespace {
+
+void writeField(void* dest, const Field& field, Literal value) {
+  if (field.isPacked()) {
+    assert(field.type == Type::i32);
+    int32_t c = value.geti32();
+    if (field.packedType == Field::i8) {
+      Bits::writeLE<int8_t>(static_cast<int8_t>(c), dest);
+    } else if (field.packedType == Field::i16) {
+      Bits::writeLE<int16_t>(static_cast<int16_t>(c), dest);
+    } else {
+      WASM_UNREACHABLE("invalid packed type");
+    }
+    return;
+  }
+
+  uint8_t buf[16];
+  assert(field.getByteSize() <= sizeof(buf));
+  value.getBits(buf);
+  memcpy(dest, buf, field.getByteSize());
+}
+
+Literal readField(const void* src, const Field& field, bool signed_) {
+  if (field.isPacked()) {
+    assert(field.type == Type::i32);
+    if (field.packedType == Field::i8) {
+      int8_t val = Bits::readLE<int8_t>(src);
+      return Literal(signed_ ? int32_t(val)
+                             : int32_t(static_cast<uint8_t>(val)));
+    } else if (field.packedType == Field::i16) {
+      int16_t val = Bits::readLE<int16_t>(src);
+      return Literal(signed_ ? int32_t(val)
+                             : int32_t(static_cast<uint16_t>(val)));
+    } else {
+      WASM_UNREACHABLE("invalid packed type");
+    }
+  }
+
+  return Literal::makeFromMemory(src, field.type);
+}
+
+} // anonymous namespace
+
+Literal Literal::getElement(size_t index, bool signed_) const {
+  assert(isData());
+  if (gcData->isRawBytes()) {
+    auto field = type.getHeapType().getArray().element;
+    size_t elemSize = field.getByteSize();
+    assert((index + 1) * elemSize <= gcData->getRawBytes().size());
+    return readField(&gcData->getRawBytes()[index * elemSize], field, signed_);
+  }
+  return gcData->getLiterals()[index];
+}
+
+void Literal::setElement(size_t index, Literal value) {
+  assert(isData());
+  if (gcData->isRawBytes()) {
+    auto field = type.getHeapType().getArray().element;
+    size_t elemSize = field.getByteSize();
+    assert((index + 1) * elemSize <= gcData->getRawBytes().size());
+    writeField(&gcData->getRawBytes()[index * elemSize], field, value);
+    return;
+  }
+  gcData->getLiterals()[index] = value;
 }
 
 } // namespace wasm
