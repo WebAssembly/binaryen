@@ -161,6 +161,13 @@ struct ConstraintAnalysis
   bool fastMath;
 
   bool isRelevantType(Type type) {
+    if (type == Type::v128) {
+      // TODO optimize SIMD where it makes sense, but for now we don't want to
+      // do things like propagate v128 constants, which are large (the same as
+      // Precompute).
+      return false;
+    }
+
     // Floating-point math does not follow the basic rules of logic (for
     // example, NaN < NaN and NaN >= NaN are both false, despite the law of the
     // excluded middle). Constraints follow the rules of logic, so we cannot
@@ -465,11 +472,7 @@ struct ConstraintAnalysis
           // would not validate if we did.
           return false;
         }
-        if (old == Type::v128) { // XXX remove old relevant locals - now all are relevant. just filter out types we can do nothing for, like v128 and remove thiss
-          // We also avoid writing v128 constants, which are large, the same as
-          // Precompute.
-          return false;
-        }
+waka
         *currp = Builder(*getModule()).makeConstantExpression(*lit);
         auto changed = (*currp)->type != old;
         return changed;
