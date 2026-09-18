@@ -197,7 +197,9 @@ struct ConstraintAnalysis
 
   void visitLocalGet(LocalGet* curr) {
     addAction();
-    relevantLocals[curr->index] = true;
+    if (isRelevantType(curr->type)) {
+      relevantLocals[curr->index] = true;
+    }
   }
 
   void visitLocalSet(LocalSet* curr) {

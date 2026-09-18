@@ -4042,14 +4042,14 @@
   ;; CHECK:      (func $iloop (type $9) (param $0 f32)
   ;; CHECK-NEXT:  (local $1 f32)
   ;; CHECK-NEXT:  (local.set $0
-  ;; CHECK-NEXT:   (f32.const 0)
+  ;; CHECK-NEXT:   (local.get $1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (then
   ;; CHECK-NEXT:    (loop
   ;; CHECK-NEXT:     (local.set $1
-  ;; CHECK-NEXT:      (f32.const 0)
+  ;; CHECK-NEXT:      (local.get $0)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
@@ -4067,14 +4067,14 @@
   ;; OPTIN:      (func $iloop (type $9) (param $0 f32)
   ;; OPTIN-NEXT:  (local $1 f32)
   ;; OPTIN-NEXT:  (local.set $0
-  ;; OPTIN-NEXT:   (f32.const 0)
+  ;; OPTIN-NEXT:   (local.get $1)
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (if
   ;; OPTIN-NEXT:   (i32.const 0)
   ;; OPTIN-NEXT:   (then
   ;; OPTIN-NEXT:    (loop
   ;; OPTIN-NEXT:     (local.set $1
-  ;; OPTIN-NEXT:      (f32.const 0)
+  ;; OPTIN-NEXT:      (local.get $0)
   ;; OPTIN-NEXT:     )
   ;; OPTIN-NEXT:    )
   ;; OPTIN-NEXT:   )
@@ -7626,6 +7626,51 @@
         (drop
           (local.get $x)
         )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $local.get.float (type $1)
+  ;; CHECK-NEXT:  (local $x f64)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (f64.eq
+  ;; CHECK-NEXT:    (local.tee $x
+  ;; CHECK-NEXT:     (f64.const nan:0x8000000000000)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (nop)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPTIN:      (func $local.get.float (type $1)
+  ;; OPTIN-NEXT:  (local $x f64)
+  ;; OPTIN-NEXT:  (if
+  ;; OPTIN-NEXT:   (f64.eq
+  ;; OPTIN-NEXT:    (local.tee $x
+  ;; OPTIN-NEXT:     (f64.const nan:0x8000000000000)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:    (local.get $x)
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:   (then
+  ;; OPTIN-NEXT:    (nop)
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT: )
+  (func $local.get.float
+    (local $x f64)
+    ;; The condition here ends up comparing $x to itself. That is normally 1,
+    ;; but not with a nan. We do not optimize floats for this reason.
+    (if
+      (f64.eq
+        (local.tee $x
+          (f64.const nan)
+        )
+        (local.get $x)
+      )
+      (then
+        (nop)
       )
     )
   )
