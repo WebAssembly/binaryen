@@ -39,6 +39,7 @@
 #include "support/delta_debugging.h"
 #include "support/file.h"
 #include "support/hash.h"
+#include "support/js-embedded-module.h"
 #include "support/path.h"
 #include "support/timing.h"
 #include "tools/tool-options.h"
@@ -222,21 +223,10 @@ inline std::ostream& operator<<(std::ostream& o, ProgramResult& result) {
 
 ProgramResult expected;
 
-// Removing functions is extremely beneficial and efficient. We aggressively
-// try to remove functions, unless we've seen they can't be removed, in which
-// case we may try again but much later.
-static std::unordered_set<Name> functionsWeTriedToRemove;
-
 // The index of the working file we save, when saveAllWorkingFiles. We must
 // store this globally so that the difference instances of Reducer do not
 // overlap.
 static size_t workingFileIndex = 0;
-
-static void write_file(const std::string& filename,
-                       const std::vector<char>& bytes) {
-  Output out(filename, Flags::Binary);
-  out.write(bytes.data(), bytes.size());
-}
 
 /// Runs the external `wasm-opt` binary with `args` on `inBytes` by writing to
 // `testPath` and reading the result back into `outBytes`.
@@ -319,6 +309,47 @@ struct WasmTestCaseHandler : public TestCaseHandler {
   void writeTest(const std::vector<char>& bytes,
                  const std::string& test) override {
     write_file(test, bytes);
+  }
+};
+
+// Handles JavaScript test cases containing embedded WebAssembly byte arrays.
+struct JsTestCaseHandler : public TestCaseHandler {
+  std::string workingJs;
+  size_t moduleStart = 0;
+  size_t moduleEnd = 0;
+  std::vector<char> moduleBytes;
+
+  explicit JsTestCaseHandler(std::string workingJs)
+    : workingJs(std::move(workingJs)) {}
+
+  void setActiveModule(const EmbeddedModule& mod) {
+    moduleStart = mod.start;
+    moduleEnd = mod.end;
+    moduleBytes = mod.bytes;
+  }
+
+  std::vector<char> readWorking(const std::string& working) override {
+    // Return the cached working bytes instead of reading them back from the
+    // file because we wouldn't know which of potentially many modules embedded
+    // in the file is the current one.
+    return moduleBytes;
+  }
+
+  void writeWorking(const std::vector<char>& bytes,
+                    const std::string& working) override {
+    std::string formatted = formatByteArray(bytes);
+    workingJs.replace(moduleStart, moduleEnd - moduleStart, formatted);
+    moduleEnd = moduleStart + formatted.size();
+    moduleBytes = bytes;
+    write_file(working, workingJs);
+  }
+
+  void writeTest(const std::vector<char>& bytes,
+                 const std::string& test) override {
+    std::string formatted = formatByteArray(bytes);
+    std::string candidateJs = workingJs.substr(0, moduleStart) + formatted +
+                              workingJs.substr(moduleEnd);
+    write_file(test, candidateJs);
   }
 };
 
@@ -1641,7 +1672,7 @@ int main(int argc, const char* argv[]) {
   // By default, look for binaries alongside our own binary.
   std::string binDir = Path::getDirName(argv[0]);
   bool binary = true, deNan = false, verbose = false, debugInfo = false,
-       force = false;
+       force = false, js = false;
 
   const std::string WasmReduceOption = "wasm-reduce options";
 
@@ -1741,6 +1772,12 @@ More documentation can be found at
          WasmReduceOption,
          Options::Arguments::Zero,
          [&](Options* o, const std::string& argument) { binary = false; })
+    .add("--js",
+         "",
+         "Reduce embedded WebAssembly modules inside a JavaScript file",
+         WasmReduceOption,
+         Options::Arguments::Zero,
+         [&](Options* o, const std::string& argument) { js = true; })
     .add("--denan",
          "",
          "Avoid nans when reducing",
@@ -1801,6 +1838,10 @@ More documentation can be found at
       [&](Options* o, const std::string& argument) { input = argument; });
   options.parse(argc, argv);
 
+  if (js && !binary) {
+    Fatal() << "--js and --text cannot be used together\n";
+  }
+
   if (debugInfo) {
     extraFlags += " -g ";
   }
@@ -1839,15 +1880,40 @@ More documentation can be found at
 
   copy_file(input, working);
 
-  WasmTestCaseHandler handler;
-  reduceModule(handler,
-               command,
-               test,
-               working,
-               binary,
-               deNan,
-               verbose,
-               debugInfo,
-               force,
-               options);
+  if (js) {
+    auto workingJs = read_file<std::string>(working, Flags::Binary);
+    auto modules = findEmbeddedModules(workingJs);
+    if (modules.empty()) {
+      Fatal() << "no embedded wasm modules found in " << input << "\n";
+    }
+    JsTestCaseHandler handler(std::move(workingJs));
+    for (size_t i = modules.size(); i > 0; --i) {
+      size_t idx = i - 1;
+      std::cerr << "|reducing embedded module " << idx << " of "
+                << modules.size() << "\n";
+      handler.setActiveModule(modules[idx]);
+      reduceModule(handler,
+                   command,
+                   test,
+                   working,
+                   binary,
+                   deNan,
+                   verbose,
+                   debugInfo,
+                   force,
+                   options);
+    }
+  } else {
+    WasmTestCaseHandler handler;
+    reduceModule(handler,
+                 command,
+                 test,
+                 working,
+                 binary,
+                 deNan,
+                 verbose,
+                 debugInfo,
+                 force,
+                 options);
+  }
 }
