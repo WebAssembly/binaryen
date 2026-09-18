@@ -1,6 +1,8 @@
 # TypeScript API Changelog
 
 ## Current Trunk
+
+## v0.2.0
 - Add library API for `waitqueue` instructions (#9039, #9044)
 - Add library API for `publish` instructions (#9072)
 - Expose WASM heap types (`binaryen.HeapType.struct`, `binaryen.HeapType.array`, `binaryen.HeapType.func`, etc.). (#8981)
