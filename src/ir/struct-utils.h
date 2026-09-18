@@ -287,6 +287,8 @@ struct StructScanner : public WalkerPass<PostWalker<SubType>> {
     noteExpressionOrCopy(curr->replacement, type, index, info);
   }
 
+  // TODO: visitStructWait
+
   void visitRefCast(RefCast* curr) {
     if (curr->desc) {
       // We may try to read a descriptor from anything arriving in |curr->ref|,

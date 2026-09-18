@@ -1776,6 +1776,7 @@ void TNHOracle::scan(Function* func,
     void visitStructCmpxchg(StructCmpxchg* curr) {
       notePossibleTrap(curr->ref);
     }
+    // TODO: visitStructWait
     void visitArrayGet(ArrayGet* curr) { notePossibleTrap(curr->ref); }
     void visitArraySet(ArraySet* curr) { notePossibleTrap(curr->ref); }
     void visitArrayLoad(ArrayLoad* curr) { notePossibleTrap(curr->ref); }

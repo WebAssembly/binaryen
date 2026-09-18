@@ -838,6 +838,8 @@ struct GlobalTypeOptimization : public Pass {
         assert(newIndex != RemovedField);
         curr->index = newIndex;
       }
+
+      // TODO: visitStructWait
     };
 
     PassRunner runner(getPassRunner());
