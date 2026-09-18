@@ -714,3 +714,6 @@ struct ConstraintAnalysis
 Pass* createConstraintAnalysisPass() { return new ConstraintAnalysis(); }
 
 } // namespace wasm
+
+// TODO: test option to not do the local.get opts in optimizeExpr() here
+// TODO why is fast-math brokenn
