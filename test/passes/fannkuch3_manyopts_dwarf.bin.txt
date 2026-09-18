@@ -2303,7 +2303,7 @@ Contains section .debug_info (851 bytes)
 Contains section .debug_loc (1073 bytes)
 Contains section .debug_ranges (88 bytes)
 Contains section .debug_abbrev (333 bytes)
-Contains section .debug_line (2322 bytes)
+Contains section .debug_line (2300 bytes)
 Contains section .debug_str (434 bytes)
 
 .debug_abbrev contents:
@@ -2470,7 +2470,7 @@ Abbrev table for offset: 0x00000000
               DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000000)
               DW_AT_ranges [DW_FORM_sec_offset]	(0x00000040
                  [0x00000006, 0x00000377)
-                 [0x00000379, 0x000005a8))
+                 [0x00000379, 0x00000588))
 
 0x00000026:   DW_TAG_pointer_type [2]  
                 DW_AT_type [DW_FORM_ref4]	(cu + 0x002b => {0x0000002b} "worker_args")
@@ -2818,7 +2818,7 @@ Abbrev table for offset: 0x00000000
 
 0x0000023b:   DW_TAG_subprogram [23] *
                 DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000379)
-                DW_AT_high_pc [DW_FORM_data4]	(0x0000022f)
+                DW_AT_high_pc [DW_FORM_data4]	(0x0000020f)
                 DW_AT_frame_base [DW_FORM_exprloc]	(DW_OP_WASM_location 0x0 +2, DW_OP_stack_value)
                 DW_AT_GNU_all_call_sites [DW_FORM_flag_present]	(true)
                 DW_AT_name [DW_FORM_strp]	( .debug_str[0x0000018c] = "main")
@@ -2867,7 +2867,7 @@ Abbrev table for offset: 0x00000000
 
 0x00000296:       DW_TAG_variable [26]  
                     DW_AT_location [DW_FORM_sec_offset]	(0x000002a2: 
-                       [0xffffffff,  0x0000056d): 
+                       [0xffffffff,  0x0000054d): 
                        [0x00000001,  0x00000001): DW_OP_lit0, DW_OP_stack_value
                        [0x00000000,  0x00000018): DW_OP_WASM_location 0x0 +6, DW_OP_stack_value)
                     DW_AT_abstract_origin [DW_FORM_ref4]	(cu + 0x01ce => {0x000001ce} "args")
@@ -2878,9 +2878,9 @@ Abbrev table for offset: 0x00000000
                        [0x00000001,  0x00000001): DW_OP_consts +0, DW_OP_stack_value
                        [0x00000000,  0x00000005): DW_OP_WASM_location 0x0 +0, DW_OP_stack_value
                        [0x00000001,  0x00000001): DW_OP_consts +0, DW_OP_stack_value
-                       [0x0000003f,  0x00000044): DW_OP_WASM_location 0x0 +0, DW_OP_stack_value
-                       [0x0000005d,  0x00000061): DW_OP_consts +0, DW_OP_stack_value
-                       [0x00000088,  0x0000008d): DW_OP_WASM_location 0x0 +0, DW_OP_stack_value
+                       [0x00000036,  0x0000003b): DW_OP_WASM_location 0x0 +0, DW_OP_stack_value
+                       [0x00000049,  0x0000004d): DW_OP_consts +0, DW_OP_stack_value
+                       [0x00000074,  0x00000079): DW_OP_WASM_location 0x0 +0, DW_OP_stack_value
                        [0x00000001,  0x00000001): DW_OP_consts +0, DW_OP_stack_value
                        [0x00000001,  0x00000001): DW_OP_consts +0, DW_OP_stack_value
                        [0x00000001,  0x00000001): DW_OP_consts +0, DW_OP_stack_value)
@@ -2903,31 +2903,31 @@ Abbrev table for offset: 0x00000000
 
 0x000002bf:       DW_TAG_variable [26]  
                     DW_AT_location [DW_FORM_sec_offset]	(0x00000390: 
-                       [0xffffffff,  0x0000052d): 
+                       [0xffffffff,  0x00000519): 
                        [0x00000000,  0x00000007): DW_OP_WASM_location 0x0 +6, DW_OP_stack_value
                        [0x00000001,  0x00000001): DW_OP_WASM_location 0x0 +6, DW_OP_stack_value)
                     DW_AT_abstract_origin [DW_FORM_ref4]	(cu + 0x0205 => {0x00000205} "r")
 
 0x000002c8:       DW_TAG_variable [26]  
                     DW_AT_location [DW_FORM_sec_offset]	(0x000003e8: 
-                       [0xffffffff,  0x00000556): 
+                       [0xffffffff,  0x00000536): 
                        [0x00000001,  0x00000001): DW_OP_consts +0, DW_OP_stack_value
                        [0x00000027,  0x0000002f): DW_OP_WASM_location 0x0 +0, DW_OP_stack_value)
                     DW_AT_abstract_origin [DW_FORM_ref4]	(cu + 0x0210 => {0x00000210} "maxflips")
 
 0x000002d1:       DW_TAG_variable [26]  
                     DW_AT_location [DW_FORM_sec_offset]	(0x00000413: 
-                       [0xffffffff,  0x00000566): 
+                       [0xffffffff,  0x00000546): 
                        [0x00000000,  0x0000001f): DW_OP_WASM_location 0x0 +1, DW_OP_stack_value)
                     DW_AT_abstract_origin [DW_FORM_ref4]	(cu + 0x021b => {0x0000021b} "flips")
 
 0x000002da:       DW_TAG_label [28]  
                     DW_AT_abstract_origin [DW_FORM_ref4]	(cu + 0x0226 => {0x00000226} "cleanup")
-                    DW_AT_low_pc [DW_FORM_addr]	(0x000000000000054a)
+                    DW_AT_low_pc [DW_FORM_addr]	(0x000000000000052a)
 
 0x000002e3:       DW_TAG_lexical_block [14] *
                     DW_AT_ranges [DW_FORM_sec_offset]	(0x00000028
-                       [0x000004c3, 0x00000508)
+                       [0x000004af, 0x000004f4)
                        [0x00000000, 0x00000001))
 
 0x000002e8:         DW_TAG_variable [26]  
@@ -2957,31 +2957,31 @@ Abbrev table for offset: 0x00000000
                   DW_AT_low_pc [DW_FORM_addr]	(0x000000000000040e)
 
 0x0000030c:     DW_TAG_GNU_call_site [15]  
-                  DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000474)
+                  DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000460)
 
 0x00000311:     DW_TAG_GNU_call_site [15]  
-                  DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000486)
+                  DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000472)
 
 0x00000316:     DW_TAG_GNU_call_site [15]  
-                  DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000544)
+                  DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000000)
 
 0x0000031b:     DW_TAG_GNU_call_site [16]  
                   DW_AT_abstract_origin [DW_FORM_ref4]	(cu + 0x019a => {0x0000019a} "free")
-                  DW_AT_low_pc [DW_FORM_addr]	(0x000000000000054e)
+                  DW_AT_low_pc [DW_FORM_addr]	(0x000000000000052e)
 
 0x00000324:     DW_TAG_GNU_call_site [16]  
                   DW_AT_abstract_origin [DW_FORM_ref4]	(cu + 0x019a => {0x0000019a} "free")
-                  DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000552)
+                  DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000532)
 
 0x0000032d:     DW_TAG_GNU_call_site [15]  
-                  DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000564)
+                  DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000544)
 
 0x00000332:     DW_TAG_GNU_call_site [16]  
                   DW_AT_abstract_origin [DW_FORM_ref4]	(cu + 0x019a => {0x0000019a} "free")
-                  DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000571)
+                  DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000551)
 
 0x0000033b:     DW_TAG_GNU_call_site [15]  
-                  DW_AT_low_pc [DW_FORM_addr]	(0x000000000000059c)
+                  DW_AT_low_pc [DW_FORM_addr]	(0x000000000000057c)
 
 0x00000340:     NULL
 
@@ -3073,7 +3073,7 @@ Abbrev table for offset: 0x00000000
             [0x00000001,  0x00000001): DW_OP_consts +30, DW_OP_stack_value
 
 0x000002a2: 
-            [0xffffffff,  0x0000056d): 
+            [0xffffffff,  0x0000054d): 
             [0x00000001,  0x00000001): DW_OP_lit0, DW_OP_stack_value
             [0x00000000,  0x00000018): DW_OP_WASM_location 0x0 +6, DW_OP_stack_value
 
@@ -3082,9 +3082,9 @@ Abbrev table for offset: 0x00000000
             [0x00000001,  0x00000001): DW_OP_consts +0, DW_OP_stack_value
             [0x00000000,  0x00000005): DW_OP_WASM_location 0x0 +0, DW_OP_stack_value
             [0x00000001,  0x00000001): DW_OP_consts +0, DW_OP_stack_value
-            [0x0000003f,  0x00000044): DW_OP_WASM_location 0x0 +0, DW_OP_stack_value
-            [0x0000005d,  0x00000061): DW_OP_consts +0, DW_OP_stack_value
-            [0x00000088,  0x0000008d): DW_OP_WASM_location 0x0 +0, DW_OP_stack_value
+            [0x00000036,  0x0000003b): DW_OP_WASM_location 0x0 +0, DW_OP_stack_value
+            [0x00000049,  0x0000004d): DW_OP_consts +0, DW_OP_stack_value
+            [0x00000074,  0x00000079): DW_OP_WASM_location 0x0 +0, DW_OP_stack_value
             [0x00000001,  0x00000001): DW_OP_consts +0, DW_OP_stack_value
             [0x00000001,  0x00000001): DW_OP_consts +0, DW_OP_stack_value
             [0x00000001,  0x00000001): DW_OP_consts +0, DW_OP_stack_value
@@ -3098,7 +3098,7 @@ Abbrev table for offset: 0x00000000
             [0x00000001,  0x00000001): DW_OP_WASM_location 0x0 +5, DW_OP_stack_value
 
 0x00000390: 
-            [0xffffffff,  0x0000052d): 
+            [0xffffffff,  0x00000519): 
             [0x00000000,  0x00000007): DW_OP_WASM_location 0x0 +6, DW_OP_stack_value
             [0x00000001,  0x00000001): DW_OP_WASM_location 0x0 +6, DW_OP_stack_value
 
@@ -3108,18 +3108,18 @@ Abbrev table for offset: 0x00000000
             [0x00000001,  0x00000001): DW_OP_WASM_location 0x0 +8, DW_OP_stack_value
 
 0x000003e8: 
-            [0xffffffff,  0x00000556): 
+            [0xffffffff,  0x00000536): 
             [0x00000001,  0x00000001): DW_OP_consts +0, DW_OP_stack_value
             [0x00000027,  0x0000002f): DW_OP_WASM_location 0x0 +0, DW_OP_stack_value
 
 0x00000413: 
-            [0xffffffff,  0x00000566): 
+            [0xffffffff,  0x00000546): 
             [0x00000000,  0x0000001f): DW_OP_WASM_location 0x0 +1, DW_OP_stack_value
 
 .debug_line contents:
 debug_line[0x00000000]
 Line table prologue:
-    total_length: 0x0000090e
+    total_length: 0x000008f8
          version: 4
  prologue_length: 0x000000dd
  min_inst_length: 1
@@ -4079,352 +4079,339 @@ file_names[  4]:
 
 
 0x000006d2: 00 DW_LNE_set_address (0x0000000000000416)
-0x000006d9: 03 DW_LNS_advance_line (105)
-0x000006db: 01 DW_LNS_copy
-            0x0000000000000416    105     18      1   0             0  is_stmt
+0x000006d9: 03 DW_LNS_advance_line (106)
+0x000006db: 05 DW_LNS_set_column (7)
+0x000006dd: 01 DW_LNS_copy
+            0x0000000000000416    106      7      1   0             0  is_stmt
 
 
-0x000006dc: 00 DW_LNE_set_address (0x000000000000041f)
-0x000006e3: 03 DW_LNS_advance_line (106)
-0x000006e5: 05 DW_LNS_set_column (7)
-0x000006e7: 01 DW_LNS_copy
-            0x000000000000041f    106      7      1   0             0  is_stmt
+0x000006de: 00 DW_LNE_set_address (0x000000000000041e)
+0x000006e5: 05 DW_LNS_set_column (16)
+0x000006e7: 06 DW_LNS_negate_stmt
+0x000006e8: 01 DW_LNS_copy
+            0x000000000000041e    106     16      1   0             0 
 
 
-0x000006e8: 00 DW_LNE_set_address (0x0000000000000427)
-0x000006ef: 05 DW_LNS_set_column (16)
-0x000006f1: 06 DW_LNS_negate_stmt
-0x000006f2: 01 DW_LNS_copy
-            0x0000000000000427    106     16      1   0             0 
+0x000006e9: 00 DW_LNE_set_address (0x0000000000000423)
+0x000006f0: 03 DW_LNS_advance_line (105)
+0x000006f2: 05 DW_LNS_set_column (24)
+0x000006f4: 06 DW_LNS_negate_stmt
+0x000006f5: 01 DW_LNS_copy
+            0x0000000000000423    105     24      1   0             0  is_stmt
 
 
-0x000006f3: 00 DW_LNE_set_address (0x000000000000042c)
-0x000006fa: 03 DW_LNS_advance_line (105)
-0x000006fc: 05 DW_LNS_set_column (24)
-0x000006fe: 06 DW_LNS_negate_stmt
-0x000006ff: 01 DW_LNS_copy
-            0x000000000000042c    105     24      1   0             0  is_stmt
+0x000006f6: 00 DW_LNE_set_address (0x0000000000000428)
+0x000006fd: 05 DW_LNS_set_column (18)
+0x000006ff: 06 DW_LNS_negate_stmt
+0x00000700: 01 DW_LNS_copy
+            0x0000000000000428    105     18      1   0             0 
 
 
-0x00000700: 00 DW_LNE_set_address (0x0000000000000431)
-0x00000707: 05 DW_LNS_set_column (18)
-0x00000709: 06 DW_LNS_negate_stmt
-0x0000070a: 01 DW_LNS_copy
-            0x0000000000000431    105     18      1   0             0 
+0x00000701: 00 DW_LNE_set_address (0x0000000000000443)
+0x00000708: 03 DW_LNS_advance_line (112)
+0x0000070a: 05 DW_LNS_set_column (13)
+0x0000070c: 06 DW_LNS_negate_stmt
+0x0000070d: 01 DW_LNS_copy
+            0x0000000000000443    112     13      1   0             0  is_stmt
 
 
-0x0000070b: 00 DW_LNE_set_address (0x0000000000000457)
-0x00000712: 03 DW_LNS_advance_line (112)
-0x00000714: 05 DW_LNS_set_column (13)
-0x00000716: 06 DW_LNS_negate_stmt
-0x00000717: 01 DW_LNS_copy
-            0x0000000000000457    112     13      1   0             0  is_stmt
+0x0000070e: 00 DW_LNE_set_address (0x0000000000000445)
+0x00000715: 05 DW_LNS_set_column (26)
+0x00000717: 06 DW_LNS_negate_stmt
+0x00000718: 01 DW_LNS_copy
+            0x0000000000000445    112     26      1   0             0 
 
 
-0x00000718: 00 DW_LNE_set_address (0x0000000000000459)
-0x0000071f: 05 DW_LNS_set_column (26)
-0x00000721: 06 DW_LNS_negate_stmt
+0x00000719: 00 DW_LNE_set_address (0x0000000000000452)
+0x00000720: 05 DW_LNS_set_column (35)
 0x00000722: 01 DW_LNS_copy
-            0x0000000000000459    112     26      1   0             0 
+            0x0000000000000452    112     35      1   0             0 
 
 
-0x00000723: 00 DW_LNE_set_address (0x0000000000000466)
-0x0000072a: 05 DW_LNS_set_column (35)
+0x00000723: 00 DW_LNE_set_address (0x0000000000000453)
+0x0000072a: 05 DW_LNS_set_column (13)
 0x0000072c: 01 DW_LNS_copy
-            0x0000000000000466    112     35      1   0             0 
+            0x0000000000000453    112     13      1   0             0 
 
 
-0x0000072d: 00 DW_LNE_set_address (0x0000000000000467)
-0x00000734: 05 DW_LNS_set_column (13)
-0x00000736: 01 DW_LNS_copy
-            0x0000000000000467    112     13      1   0             0 
+0x0000072d: 00 DW_LNE_set_address (0x0000000000000461)
+0x00000734: 03 DW_LNS_advance_line (111)
+0x00000736: 05 DW_LNS_set_column (30)
+0x00000738: 06 DW_LNS_negate_stmt
+0x00000739: 01 DW_LNS_copy
+            0x0000000000000461    111     30      1   0             0  is_stmt
 
 
-0x00000737: 00 DW_LNE_set_address (0x0000000000000475)
-0x0000073e: 03 DW_LNS_advance_line (111)
-0x00000740: 05 DW_LNS_set_column (30)
-0x00000742: 06 DW_LNS_negate_stmt
-0x00000743: 01 DW_LNS_copy
-            0x0000000000000475    111     30      1   0             0  is_stmt
+0x0000073a: 00 DW_LNE_set_address (0x0000000000000466)
+0x00000741: 05 DW_LNS_set_column (24)
+0x00000743: 06 DW_LNS_negate_stmt
+0x00000744: 01 DW_LNS_copy
+            0x0000000000000466    111     24      1   0             0 
 
 
-0x00000744: 00 DW_LNE_set_address (0x000000000000047a)
-0x0000074b: 05 DW_LNS_set_column (24)
-0x0000074d: 06 DW_LNS_negate_stmt
+0x00000745: 00 DW_LNE_set_address (0x000000000000046b)
+0x0000074c: 05 DW_LNS_set_column (10)
 0x0000074e: 01 DW_LNS_copy
-            0x000000000000047a    111     24      1   0             0 
+            0x000000000000046b    111     10      1   0             0 
 
 
-0x0000074f: 00 DW_LNE_set_address (0x000000000000047f)
-0x00000756: 05 DW_LNS_set_column (10)
-0x00000758: 01 DW_LNS_copy
-            0x000000000000047f    111     10      1   0             0 
+0x0000074f: 00 DW_LNE_set_address (0x0000000000000470)
+0x00000756: 03 DW_LNS_advance_line (113)
+0x00000758: 06 DW_LNS_negate_stmt
+0x00000759: 01 DW_LNS_copy
+            0x0000000000000470    113     10      1   0             0  is_stmt
 
 
-0x00000759: 00 DW_LNE_set_address (0x0000000000000484)
-0x00000760: 03 DW_LNS_advance_line (113)
-0x00000762: 06 DW_LNS_negate_stmt
-0x00000763: 01 DW_LNS_copy
-            0x0000000000000484    113     10      1   0             0  is_stmt
+0x0000075a: 00 DW_LNE_set_address (0x0000000000000473)
+0x00000761: 03 DW_LNS_advance_line (118)
+0x00000763: 05 DW_LNS_set_column (16)
+0x00000765: 01 DW_LNS_copy
+            0x0000000000000473    118     16      1   0             0  is_stmt
 
 
-0x00000764: 00 DW_LNE_set_address (0x0000000000000487)
-0x0000076b: 03 DW_LNS_advance_line (118)
-0x0000076d: 05 DW_LNS_set_column (16)
-0x0000076f: 01 DW_LNS_copy
-            0x0000000000000487    118     16      1   0             0  is_stmt
+0x00000766: 00 DW_LNE_set_address (0x000000000000047c)
+0x0000076d: 03 DW_LNS_advance_line (119)
+0x0000076f: 05 DW_LNS_set_column (10)
+0x00000771: 01 DW_LNS_copy
+            0x000000000000047c    119     10      1   0             0  is_stmt
 
 
-0x00000770: 00 DW_LNE_set_address (0x0000000000000490)
-0x00000777: 03 DW_LNS_advance_line (119)
-0x00000779: 05 DW_LNS_set_column (10)
-0x0000077b: 01 DW_LNS_copy
-            0x0000000000000490    119     10      1   0             0  is_stmt
+0x00000772: 00 DW_LNE_set_address (0x000000000000047e)
+0x00000779: 05 DW_LNS_set_column (18)
+0x0000077b: 06 DW_LNS_negate_stmt
+0x0000077c: 01 DW_LNS_copy
+            0x000000000000047e    119     18      1   0             0 
 
 
-0x0000077c: 00 DW_LNE_set_address (0x0000000000000492)
-0x00000783: 05 DW_LNS_set_column (18)
-0x00000785: 06 DW_LNS_negate_stmt
+0x0000077d: 00 DW_LNE_set_address (0x0000000000000487)
+0x00000784: 05 DW_LNS_set_column (10)
 0x00000786: 01 DW_LNS_copy
-            0x0000000000000492    119     18      1   0             0 
+            0x0000000000000487    119     10      1   0             0 
 
 
-0x00000787: 00 DW_LNE_set_address (0x000000000000049b)
-0x0000078e: 05 DW_LNS_set_column (10)
+0x00000787: 00 DW_LNE_set_address (0x0000000000000489)
+0x0000078e: 05 DW_LNS_set_column (23)
 0x00000790: 01 DW_LNS_copy
-            0x000000000000049b    119     10      1   0             0 
+            0x0000000000000489    119     23      1   0             0 
 
 
-0x00000791: 00 DW_LNE_set_address (0x000000000000049d)
-0x00000798: 05 DW_LNS_set_column (23)
-0x0000079a: 01 DW_LNS_copy
-            0x000000000000049d    119     23      1   0             0 
+0x00000791: 00 DW_LNE_set_address (0x000000000000048e)
+0x00000798: 03 DW_LNS_advance_line (118)
+0x0000079a: 05 DW_LNS_set_column (16)
+0x0000079c: 06 DW_LNS_negate_stmt
+0x0000079d: 01 DW_LNS_copy
+            0x000000000000048e    118     16      1   0             0  is_stmt
 
 
-0x0000079b: 00 DW_LNE_set_address (0x00000000000004a2)
-0x000007a2: 03 DW_LNS_advance_line (118)
-0x000007a4: 05 DW_LNS_set_column (16)
-0x000007a6: 06 DW_LNS_negate_stmt
+0x0000079e: 00 DW_LNE_set_address (0x000000000000049b)
+0x000007a5: 03 DW_LNS_advance_line (122)
 0x000007a7: 01 DW_LNS_copy
-            0x00000000000004a2    118     16      1   0             0  is_stmt
+            0x000000000000049b    122     16      1   0             0  is_stmt
 
 
 0x000007a8: 00 DW_LNE_set_address (0x00000000000004af)
-0x000007af: 03 DW_LNS_advance_line (122)
-0x000007b1: 01 DW_LNS_copy
-            0x00000000000004af    122     16      1   0             0  is_stmt
+0x000007af: 03 DW_LNS_advance_line (125)
+0x000007b1: 05 DW_LNS_set_column (22)
+0x000007b3: 01 DW_LNS_copy
+            0x00000000000004af    125     22      1   0             0  is_stmt
 
 
-0x000007b2: 00 DW_LNE_set_address (0x00000000000004c3)
-0x000007b9: 03 DW_LNS_advance_line (125)
-0x000007bb: 05 DW_LNS_set_column (22)
-0x000007bd: 01 DW_LNS_copy
-            0x00000000000004c3    125     22      1   0             0  is_stmt
+0x000007b4: 00 DW_LNE_set_address (0x00000000000004b6)
+0x000007bb: 03 DW_LNS_advance_line (126)
+0x000007bd: 05 DW_LNS_set_column (27)
+0x000007bf: 01 DW_LNS_copy
+            0x00000000000004b6    126     27      1   0             0  is_stmt
 
 
-0x000007be: 00 DW_LNE_set_address (0x00000000000004ca)
-0x000007c5: 03 DW_LNS_advance_line (126)
-0x000007c7: 05 DW_LNS_set_column (27)
-0x000007c9: 01 DW_LNS_copy
-            0x00000000000004ca    126     27      1   0             0  is_stmt
+0x000007c0: 00 DW_LNE_set_address (0x00000000000004bf)
+0x000007c7: 03 DW_LNS_advance_line (127)
+0x000007c9: 05 DW_LNS_set_column (16)
+0x000007cb: 01 DW_LNS_copy
+            0x00000000000004bf    127     16      1   0             0  is_stmt
 
 
-0x000007ca: 00 DW_LNE_set_address (0x00000000000004d3)
-0x000007d1: 03 DW_LNS_advance_line (127)
-0x000007d3: 05 DW_LNS_set_column (16)
-0x000007d5: 01 DW_LNS_copy
-            0x00000000000004d3    127     16      1   0             0  is_stmt
+0x000007cc: 00 DW_LNE_set_address (0x00000000000004c7)
+0x000007d3: 05 DW_LNS_set_column (27)
+0x000007d5: 06 DW_LNS_negate_stmt
+0x000007d6: 01 DW_LNS_copy
+            0x00000000000004c7    127     27      1   0             0 
 
 
-0x000007d6: 00 DW_LNE_set_address (0x00000000000004db)
-0x000007dd: 05 DW_LNS_set_column (27)
-0x000007df: 06 DW_LNS_negate_stmt
+0x000007d7: 00 DW_LNE_set_address (0x00000000000004c9)
+0x000007de: 05 DW_LNS_set_column (35)
 0x000007e0: 01 DW_LNS_copy
-            0x00000000000004db    127     27      1   0             0 
+            0x00000000000004c9    127     35      1   0             0 
 
 
-0x000007e1: 00 DW_LNE_set_address (0x00000000000004dd)
-0x000007e8: 05 DW_LNS_set_column (35)
+0x000007e1: 00 DW_LNE_set_address (0x00000000000004d2)
+0x000007e8: 05 DW_LNS_set_column (27)
 0x000007ea: 01 DW_LNS_copy
-            0x00000000000004dd    127     35      1   0             0 
+            0x00000000000004d2    127     27      1   0             0 
 
 
-0x000007eb: 00 DW_LNE_set_address (0x00000000000004e6)
-0x000007f2: 05 DW_LNS_set_column (27)
+0x000007eb: 00 DW_LNE_set_address (0x00000000000004d7)
+0x000007f2: 05 DW_LNS_set_column (25)
 0x000007f4: 01 DW_LNS_copy
-            0x00000000000004e6    127     27      1   0             0 
+            0x00000000000004d7    127     25      1   0             0 
 
 
-0x000007f5: 00 DW_LNE_set_address (0x00000000000004eb)
-0x000007fc: 05 DW_LNS_set_column (25)
-0x000007fe: 01 DW_LNS_copy
-            0x00000000000004eb    127     25      1   0             0 
+0x000007f5: 00 DW_LNE_set_address (0x00000000000004da)
+0x000007fc: 03 DW_LNS_advance_line (126)
+0x000007fe: 05 DW_LNS_set_column (27)
+0x00000800: 06 DW_LNS_negate_stmt
+0x00000801: 01 DW_LNS_copy
+            0x00000000000004da    126     27      1   0             0  is_stmt
 
 
-0x000007ff: 00 DW_LNE_set_address (0x00000000000004ee)
-0x00000806: 03 DW_LNS_advance_line (126)
-0x00000808: 05 DW_LNS_set_column (27)
-0x0000080a: 06 DW_LNS_negate_stmt
-0x0000080b: 01 DW_LNS_copy
-            0x00000000000004ee    126     27      1   0             0  is_stmt
+0x00000802: 00 DW_LNE_set_address (0x00000000000004df)
+0x00000809: 05 DW_LNS_set_column (13)
+0x0000080b: 06 DW_LNS_negate_stmt
+0x0000080c: 01 DW_LNS_copy
+            0x00000000000004df    126     13      1   0             0 
 
 
-0x0000080c: 00 DW_LNE_set_address (0x00000000000004f3)
-0x00000813: 05 DW_LNS_set_column (13)
-0x00000815: 06 DW_LNS_negate_stmt
-0x00000816: 01 DW_LNS_copy
-            0x00000000000004f3    126     13      1   0             0 
+0x0000080d: 00 DW_LNE_set_address (0x00000000000004e7)
+0x00000814: 03 DW_LNS_advance_line (128)
+0x00000816: 06 DW_LNS_negate_stmt
+0x00000817: 01 DW_LNS_copy
+            0x00000000000004e7    128     13      1   0             0  is_stmt
 
 
-0x00000817: 00 DW_LNE_set_address (0x00000000000004fb)
-0x0000081e: 03 DW_LNS_advance_line (128)
-0x00000820: 06 DW_LNS_negate_stmt
-0x00000821: 01 DW_LNS_copy
-            0x00000000000004fb    128     13      1   0             0  is_stmt
+0x00000818: 00 DW_LNE_set_address (0x00000000000004ef)
+0x0000081f: 05 DW_LNS_set_column (22)
+0x00000821: 06 DW_LNS_negate_stmt
+0x00000822: 01 DW_LNS_copy
+            0x00000000000004ef    128     22      1   0             0 
 
 
-0x00000822: 00 DW_LNE_set_address (0x0000000000000503)
-0x00000829: 05 DW_LNS_set_column (22)
-0x0000082b: 06 DW_LNS_negate_stmt
-0x0000082c: 01 DW_LNS_copy
-            0x0000000000000503    128     22      1   0             0 
+0x00000823: 00 DW_LNE_set_address (0x00000000000004f4)
+0x0000082a: 03 DW_LNS_advance_line (130)
+0x0000082c: 05 DW_LNS_set_column (16)
+0x0000082e: 06 DW_LNS_negate_stmt
+0x0000082f: 01 DW_LNS_copy
+            0x00000000000004f4    130     16      1   0             0  is_stmt
 
 
-0x0000082d: 00 DW_LNE_set_address (0x0000000000000508)
-0x00000834: 03 DW_LNS_advance_line (130)
-0x00000836: 05 DW_LNS_set_column (16)
-0x00000838: 06 DW_LNS_negate_stmt
-0x00000839: 01 DW_LNS_copy
-            0x0000000000000508    130     16      1   0             0  is_stmt
+0x00000830: 00 DW_LNE_set_address (0x00000000000004fc)
+0x00000837: 05 DW_LNS_set_column (14)
+0x00000839: 06 DW_LNS_negate_stmt
+0x0000083a: 01 DW_LNS_copy
+            0x00000000000004fc    130     14      1   0             0 
 
 
-0x0000083a: 00 DW_LNE_set_address (0x0000000000000510)
-0x00000841: 05 DW_LNS_set_column (14)
-0x00000843: 06 DW_LNS_negate_stmt
+0x0000083b: 00 DW_LNE_set_address (0x000000000000050b)
+0x00000842: 05 DW_LNS_set_column (25)
 0x00000844: 01 DW_LNS_copy
-            0x0000000000000510    130     14      1   0             0 
+            0x000000000000050b    130     25      1   0             0 
 
 
-0x00000845: 00 DW_LNE_set_address (0x000000000000051f)
-0x0000084c: 05 DW_LNS_set_column (25)
-0x0000084e: 01 DW_LNS_copy
-            0x000000000000051f    130     25      1   0             0 
+0x00000845: 00 DW_LNE_set_address (0x0000000000000512)
+0x0000084c: 03 DW_LNS_advance_line (133)
+0x0000084e: 05 DW_LNS_set_column (11)
+0x00000850: 06 DW_LNS_negate_stmt
+0x00000851: 01 DW_LNS_copy
+            0x0000000000000512    133     11      1   0             0  is_stmt
 
 
-0x0000084f: 00 DW_LNE_set_address (0x0000000000000526)
-0x00000856: 03 DW_LNS_advance_line (133)
-0x00000858: 05 DW_LNS_set_column (11)
-0x0000085a: 06 DW_LNS_negate_stmt
-0x0000085b: 01 DW_LNS_copy
-            0x0000000000000526    133     11      1   0             0  is_stmt
+0x00000852: 00 DW_LNE_set_address (0x0000000000000517)
+0x00000859: 03 DW_LNS_advance_line (122)
+0x0000085b: 05 DW_LNS_set_column (16)
+0x0000085d: 01 DW_LNS_copy
+            0x0000000000000517    122     16      1   0             0  is_stmt
 
 
-0x0000085c: 00 DW_LNE_set_address (0x000000000000052b)
-0x00000863: 03 DW_LNS_advance_line (122)
-0x00000865: 05 DW_LNS_set_column (16)
-0x00000867: 01 DW_LNS_copy
-            0x000000000000052b    122     16      1   0             0  is_stmt
+0x0000085e: 00 DW_LNE_set_address (0x000000000000051c)
+0x00000865: 05 DW_LNS_set_column (14)
+0x00000867: 06 DW_LNS_negate_stmt
+0x00000868: 01 DW_LNS_copy
+            0x000000000000051c    122     14      1   0             0 
 
 
-0x00000868: 00 DW_LNE_set_address (0x0000000000000530)
-0x0000086f: 05 DW_LNS_set_column (14)
-0x00000871: 06 DW_LNS_negate_stmt
-0x00000872: 01 DW_LNS_copy
-            0x0000000000000530    122     14      1   0             0 
+0x00000869: 00 DW_LNE_set_address (0x0000000000000522)
+0x00000870: 03 DW_LNS_advance_line (110)
+0x00000872: 05 DW_LNS_set_column (11)
+0x00000874: 06 DW_LNS_negate_stmt
+0x00000875: 01 DW_LNS_copy
+            0x0000000000000522    110     11      1   0             0  is_stmt
 
 
-0x00000873: 00 DW_LNE_set_address (0x0000000000000536)
-0x0000087a: 03 DW_LNS_advance_line (110)
-0x0000087c: 05 DW_LNS_set_column (11)
-0x0000087e: 06 DW_LNS_negate_stmt
-0x0000087f: 01 DW_LNS_copy
-            0x0000000000000536    110     11      1   0             0  is_stmt
+0x00000876: 00 DW_LNE_set_address (0x000000000000052a)
+0x0000087d: 03 DW_LNS_advance_line (138)
+0x0000087f: 05 DW_LNS_set_column (4)
+0x00000881: 01 DW_LNS_copy
+            0x000000000000052a    138      4      1   0             0  is_stmt
 
 
-0x00000880: 00 DW_LNE_set_address (0x0000000000000542)
-0x00000887: 03 DW_LNS_advance_line (113)
-0x00000889: 05 DW_LNS_set_column (10)
+0x00000882: 00 DW_LNE_set_address (0x000000000000052e)
+0x00000889: 03 DW_LNS_advance_line (139)
 0x0000088b: 01 DW_LNS_copy
-            0x0000000000000542    113     10      1   0             0  is_stmt
+            0x000000000000052e    139      4      1   0             0  is_stmt
 
 
-0x0000088c: 00 DW_LNE_set_address (0x000000000000054a)
-0x00000893: 03 DW_LNS_advance_line (138)
-0x00000895: 05 DW_LNS_set_column (4)
+0x0000088c: 00 DW_LNE_set_address (0x000000000000053e)
+0x00000893: 03 DW_LNS_advance_line (142)
+0x00000895: 05 DW_LNS_set_column (20)
 0x00000897: 01 DW_LNS_copy
-            0x000000000000054a    138      4      1   0             0  is_stmt
+            0x000000000000053e    142     20      1   0             0  is_stmt
 
 
-0x00000898: 00 DW_LNE_set_address (0x000000000000054e)
-0x0000089f: 03 DW_LNS_advance_line (139)
+0x00000898: 00 DW_LNE_set_address (0x0000000000000546)
+0x0000089f: 03 DW_LNS_advance_line (146)
 0x000008a1: 01 DW_LNS_copy
-            0x000000000000054e    139      4      1   0             0  is_stmt
+            0x0000000000000546    146     20      1   0             0  is_stmt
 
 
-0x000008a2: 00 DW_LNE_set_address (0x000000000000055e)
-0x000008a9: 03 DW_LNS_advance_line (142)
-0x000008ab: 05 DW_LNS_set_column (20)
+0x000008a2: 00 DW_LNE_set_address (0x000000000000054d)
+0x000008a9: 03 DW_LNS_advance_line (147)
+0x000008ab: 05 DW_LNS_set_column (7)
 0x000008ad: 01 DW_LNS_copy
-            0x000000000000055e    142     20      1   0             0  is_stmt
+            0x000000000000054d    147      7      1   0             0  is_stmt
 
 
-0x000008ae: 00 DW_LNE_set_address (0x0000000000000566)
-0x000008b5: 03 DW_LNS_advance_line (146)
-0x000008b7: 01 DW_LNS_copy
-            0x0000000000000566    146     20      1   0             0  is_stmt
+0x000008ae: 00 DW_LNE_set_address (0x0000000000000551)
+0x000008b5: 03 DW_LNS_advance_line (143)
+0x000008b7: 05 DW_LNS_set_column (11)
+0x000008b9: 01 DW_LNS_copy
+            0x0000000000000551    143     11      1   0             0  is_stmt
 
 
-0x000008b8: 00 DW_LNE_set_address (0x000000000000056d)
-0x000008bf: 03 DW_LNS_advance_line (147)
-0x000008c1: 05 DW_LNS_set_column (7)
-0x000008c3: 01 DW_LNS_copy
-            0x000000000000056d    147      7      1   0             0  is_stmt
+0x000008ba: 00 DW_LNE_set_address (0x0000000000000555)
+0x000008c1: 05 DW_LNS_set_column (20)
+0x000008c3: 06 DW_LNS_negate_stmt
+0x000008c4: 01 DW_LNS_copy
+            0x0000000000000555    143     20      1   0             0 
 
 
-0x000008c4: 00 DW_LNE_set_address (0x0000000000000571)
-0x000008cb: 03 DW_LNS_advance_line (143)
-0x000008cd: 05 DW_LNS_set_column (11)
-0x000008cf: 01 DW_LNS_copy
-            0x0000000000000571    143     11      1   0             0  is_stmt
+0x000008c5: 00 DW_LNE_set_address (0x000000000000055a)
+0x000008cc: 05 DW_LNS_set_column (11)
+0x000008ce: 01 DW_LNS_copy
+            0x000000000000055a    143     11      1   0             0 
 
 
-0x000008d0: 00 DW_LNE_set_address (0x0000000000000575)
-0x000008d7: 05 DW_LNS_set_column (20)
-0x000008d9: 06 DW_LNS_negate_stmt
-0x000008da: 01 DW_LNS_copy
-            0x0000000000000575    143     20      1   0             0 
+0x000008cf: 00 DW_LNE_set_address (0x0000000000000561)
+0x000008d6: 03 DW_LNS_advance_line (141)
+0x000008d8: 05 DW_LNS_set_column (4)
+0x000008da: 06 DW_LNS_negate_stmt
+0x000008db: 01 DW_LNS_copy
+            0x0000000000000561    141      4      1   0             0  is_stmt
 
 
-0x000008db: 00 DW_LNE_set_address (0x000000000000057a)
-0x000008e2: 05 DW_LNS_set_column (11)
-0x000008e4: 01 DW_LNS_copy
-            0x000000000000057a    143     11      1   0             0 
+0x000008dc: 00 DW_LNE_set_address (0x0000000000000567)
+0x000008e3: 03 DW_LNS_advance_line (159)
+0x000008e5: 01 DW_LNS_copy
+            0x0000000000000567    159      4      1   0             0  is_stmt
 
 
-0x000008e5: 00 DW_LNE_set_address (0x0000000000000581)
-0x000008ec: 03 DW_LNS_advance_line (141)
-0x000008ee: 05 DW_LNS_set_column (4)
-0x000008f0: 06 DW_LNS_negate_stmt
+0x000008e6: 00 DW_LNE_set_address (0x000000000000057e)
+0x000008ed: 03 DW_LNS_advance_line (161)
+0x000008ef: 05 DW_LNS_set_column (1)
 0x000008f1: 01 DW_LNS_copy
-            0x0000000000000581    141      4      1   0             0  is_stmt
+            0x000000000000057e    161      1      1   0             0  is_stmt
 
 
-0x000008f2: 00 DW_LNE_set_address (0x0000000000000587)
-0x000008f9: 03 DW_LNS_advance_line (159)
-0x000008fb: 01 DW_LNS_copy
-            0x0000000000000587    159      4      1   0             0  is_stmt
-
-
-0x000008fc: 00 DW_LNE_set_address (0x000000000000059e)
-0x00000903: 03 DW_LNS_advance_line (161)
-0x00000905: 05 DW_LNS_set_column (1)
-0x00000907: 01 DW_LNS_copy
-            0x000000000000059e    161      1      1   0             0  is_stmt
-
-
-0x00000908: 00 DW_LNE_set_address (0x00000000000005a8)
-0x0000090f: 00 DW_LNE_end_sequence
-            0x00000000000005a8    161      1      1   0             0  is_stmt end_sequence
+0x000008f2: 00 DW_LNE_set_address (0x0000000000000588)
+0x000008f9: 00 DW_LNE_end_sequence
+            0x0000000000000588    161      1      1   0             0  is_stmt end_sequence
 
 
 .debug_str contents:
@@ -4470,11 +4457,11 @@ file_names[  4]:
 00000000 000002f2 00000330
 00000000 0000035a 00000363
 00000000 <End of list>
-00000028 000004c3 00000508
+00000028 000004af 000004f4
 00000028 00000000 00000001
 00000028 <End of list>
 00000040 00000006 00000377
-00000040 00000379 000005a8
+00000040 00000379 00000588
 00000040 <End of list>
 (module
  (type $0 (func (param i32) (result i32)))
@@ -5684,7 +5671,7 @@ file_names[  4]:
     )
    )
   )
-  ;; code offset: 0x391 - 0x59e
+  ;; code offset: 0x391 - 0x57e
   (block $block1
    ;; code offset: 0x393 - 0x3b8
    (block $block
@@ -5849,553 +5836,511 @@ file_names[  4]:
      (local.get $2)
     )
    )
-   ;; code offset: 0x410 - 0x54a
-   (block $block4
-    ;; code offset: 0x412 - 0x53e
-    (block $block3
-     ;; code offset: 0x414 - 0x44f
-     (block $block2
-      ;; code offset: 0x41b - 0x444
-      (if
-       ;; code offset: 0x41a - 0x41b
-       (i32.gt_s
+   ;; code offset: 0x410 - 0x52a
+   (block $block3
+    ;; code offset: 0x412 - 0x43b
+    (block $block2
+     ;; code offset: 0x414 - 0x430
+     (loop $label1
+      ;; code offset: 0x420 - 0x423
+      (i32.store
+       ;; code offset: 0x41d - 0x41e
+       (i32.add
         ;; code offset: 0x416 - 0x418
-        (local.get $3)
-        ;; code offset: 0x418 - 0x41a
-        (i32.const 0)
+        (local.get $1)
+        ;; code offset: 0x41c - 0x41d
+        (i32.shl
+         ;; code offset: 0x418 - 0x41a
+         (local.get $0)
+         ;; code offset: 0x41a - 0x41c
+         (i32.const 2)
+        )
        )
-       (then
-        ;; code offset: 0x41d - 0x439
-        (loop $label1
-         ;; code offset: 0x429 - 0x42c
-         (i32.store
-          ;; code offset: 0x426 - 0x427
-          (i32.add
-           ;; code offset: 0x41f - 0x421
-           (local.get $1)
-           ;; code offset: 0x425 - 0x426
-           (i32.shl
-            ;; code offset: 0x421 - 0x423
-            (local.get $0)
-            ;; code offset: 0x423 - 0x425
-            (i32.const 2)
-           )
-          )
-          ;; code offset: 0x427 - 0x429
-          (local.get $0)
-         )
-         ;; code offset: 0x436 - 0x438
-         (br_if $label1
-          ;; code offset: 0x435 - 0x436
-          (i32.ne
-           ;; code offset: 0x431 - 0x433
-           (local.tee $0
-            ;; code offset: 0x430 - 0x431
-            (i32.add
-             ;; code offset: 0x42c - 0x42e
-             (local.get $0)
-             ;; code offset: 0x42e - 0x430
-             (i32.const 1)
-            )
-           )
-           ;; code offset: 0x433 - 0x435
-           (local.get $3)
-          )
-         )
-        )
-        ;; code offset: 0x43b - 0x43d
-        (local.set $6
-         ;; code offset: 0x439 - 0x43b
-         (i32.const 30)
-        )
-        ;; code offset: 0x43f - 0x441
-        (local.set $2
-         ;; code offset: 0x43d - 0x43f
-         (local.get $3)
-        )
-        ;; code offset: 0x441 - 0x443
-        (br $block2)
-       )
+       ;; code offset: 0x41e - 0x420
+       (local.get $0)
       )
-      ;; code offset: 0x446 - 0x448
-      (local.set $6
-       ;; code offset: 0x444 - 0x446
-       (i32.const 30)
-      )
-      ;; code offset: 0x44a - 0x44c
-      (local.set $2
-       ;; code offset: 0x448 - 0x44a
-       (local.get $3)
-      )
-      ;; code offset: 0x44c - 0x44e
-      (br $block3)
-     )
-     ;; code offset: 0x44f - 0x53b
-     (loop $label6
-      ;; code offset: 0x453 - 0x455
-      (local.set $0
-       ;; code offset: 0x451 - 0x453
-       (i32.const 0)
-      )
-      ;; code offset: 0x455 - 0x482
-      (loop $label2
-       ;; code offset: 0x467 - 0x46a
-       (i32.store offset=16
-        ;; code offset: 0x457 - 0x459
-        (local.get $8)
-        ;; code offset: 0x466 - 0x467
-        (i32.add
-         ;; code offset: 0x461 - 0x464
-         (i32.load
-          ;; code offset: 0x460 - 0x461
-          (i32.add
-           ;; code offset: 0x459 - 0x45b
-           (local.get $1)
-           ;; code offset: 0x45f - 0x460
-           (i32.shl
-            ;; code offset: 0x45b - 0x45d
-            (local.get $0)
-            ;; code offset: 0x45d - 0x45f
-            (i32.const 2)
-           )
-          )
-         )
-         ;; code offset: 0x464 - 0x466
-         (i32.const 1)
-        )
-       )
-       ;; code offset: 0x474 - 0x475
-       (drop
-        ;; code offset: 0x472 - 0x474
-        (call $iprintf
-         ;; code offset: 0x46a - 0x46d
-         (i32.const 1047)
-         ;; code offset: 0x471 - 0x472
-         (i32.add
-          ;; code offset: 0x46d - 0x46f
-          (local.get $8)
-          ;; code offset: 0x46f - 0x471
-          (i32.const 16)
-         )
-        )
-       )
-       ;; code offset: 0x47f - 0x481
-       (br_if $label2
-        ;; code offset: 0x47e - 0x47f
-        (i32.ne
-         ;; code offset: 0x47a - 0x47c
-         (local.tee $0
-          ;; code offset: 0x479 - 0x47a
-          (i32.add
-           ;; code offset: 0x475 - 0x477
-           (local.get $0)
-           ;; code offset: 0x477 - 0x479
-           (i32.const 1)
-          )
-         )
-         ;; code offset: 0x47c - 0x47e
-         (local.get $3)
-        )
-       )
-      )
-      ;; code offset: 0x486 - 0x487
-      (drop
-       ;; code offset: 0x484 - 0x486
-       (call $putchar
-        ;; code offset: 0x482 - 0x484
-        (i32.const 10)
-       )
-      )
-      ;; code offset: 0x48c - 0x4af
-      (if
-       ;; code offset: 0x48b - 0x48c
-       (i32.gt_s
-        ;; code offset: 0x487 - 0x489
-        (local.get $2)
-        ;; code offset: 0x489 - 0x48b
-        (i32.const 1)
-       )
-       (then
-        ;; code offset: 0x48e - 0x4ae
-        (loop $label3
-         ;; code offset: 0x49f - 0x4a2
-         (i32.store
-          ;; code offset: 0x49c - 0x49d
-          (i32.add
-           ;; code offset: 0x490 - 0x492
-           (local.get $5)
-           ;; code offset: 0x49b - 0x49c
-           (i32.shl
-            ;; code offset: 0x497 - 0x499
-            (local.tee $0
-             ;; code offset: 0x496 - 0x497
-             (i32.sub
-              ;; code offset: 0x492 - 0x494
-              (local.get $2)
-              ;; code offset: 0x494 - 0x496
-              (i32.const 1)
-             )
-            )
-            ;; code offset: 0x499 - 0x49b
-            (i32.const 2)
-           )
-          )
-          ;; code offset: 0x49d - 0x49f
-          (local.get $2)
-         )
-         ;; code offset: 0x4ab - 0x4ad
-         (br_if $label3
-          (block (result i32)
-           (local.set $scratch
-            ;; code offset: 0x4a6 - 0x4a7
-            (i32.gt_s
-             ;; code offset: 0x4a2 - 0x4a4
-             (local.get $2)
-             ;; code offset: 0x4a4 - 0x4a6
-             (i32.const 2)
-            )
-           )
-           ;; code offset: 0x4a9 - 0x4ab
-           (local.set $2
-            ;; code offset: 0x4a7 - 0x4a9
-            (local.get $0)
-           )
-           (local.get $scratch)
-          )
-         )
-        )
-       )
-      )
-      ;; code offset: 0x4b4 - 0x4b6
-      (br_if $block4
-       ;; code offset: 0x4b3 - 0x4b4
-       (i32.eq
-        ;; code offset: 0x4af - 0x4b1
-        (local.get $2)
-        ;; code offset: 0x4b1 - 0x4b3
-        (local.get $3)
-       )
-      )
-      ;; code offset: 0x4bb - 0x4bd
-      (local.set $6
-       ;; code offset: 0x4ba - 0x4bb
-       (i32.sub
-        ;; code offset: 0x4b6 - 0x4b8
-        (local.get $6)
-        ;; code offset: 0x4b8 - 0x4ba
-        (i32.const 1)
-       )
-      )
-      ;; code offset: 0x4bd - 0x536
-      (loop $label5
-       ;; code offset: 0x4c1 - 0x4c3
-       (local.set $0
-        ;; code offset: 0x4bf - 0x4c1
-        (i32.const 0)
-       )
-       ;; code offset: 0x4c8 - 0x4ca
-       (local.set $7
-        ;; code offset: 0x4c5 - 0x4c8
-        (i32.load
-         ;; code offset: 0x4c3 - 0x4c5
-         (local.get $1)
-        )
-       )
-       ;; code offset: 0x4cf - 0x4fb
-       (if
-        ;; code offset: 0x4ce - 0x4cf
-        (i32.gt_s
-         ;; code offset: 0x4ca - 0x4cc
-         (local.get $2)
-         ;; code offset: 0x4cc - 0x4ce
-         (i32.const 0)
-        )
-        (then
-         ;; code offset: 0x4d1 - 0x4f6
-         (loop $label4
-          ;; code offset: 0x4eb - 0x4ee
-          (i32.store
-           ;; code offset: 0x4da - 0x4db
-           (i32.add
-            ;; code offset: 0x4d3 - 0x4d5
-            (local.get $1)
-            ;; code offset: 0x4d9 - 0x4da
-            (i32.shl
-             ;; code offset: 0x4d5 - 0x4d7
-             (local.get $0)
-             ;; code offset: 0x4d7 - 0x4d9
-             (i32.const 2)
-            )
-           )
-           ;; code offset: 0x4e8 - 0x4eb
-           (i32.load
-            ;; code offset: 0x4e7 - 0x4e8
-            (i32.add
-             ;; code offset: 0x4db - 0x4dd
-             (local.get $1)
-             ;; code offset: 0x4e6 - 0x4e7
-             (i32.shl
-              ;; code offset: 0x4e2 - 0x4e4
-              (local.tee $0
-               ;; code offset: 0x4e1 - 0x4e2
-               (i32.add
-                ;; code offset: 0x4dd - 0x4df
-                (local.get $0)
-                ;; code offset: 0x4df - 0x4e1
-                (i32.const 1)
-               )
-              )
-              ;; code offset: 0x4e4 - 0x4e6
-              (i32.const 2)
-             )
-            )
-           )
-          )
-          ;; code offset: 0x4f3 - 0x4f5
-          (br_if $label4
-           ;; code offset: 0x4f2 - 0x4f3
-           (i32.ne
-            ;; code offset: 0x4ee - 0x4f0
-            (local.get $0)
-            ;; code offset: 0x4f0 - 0x4f2
-            (local.get $2)
-           )
-          )
-         )
-         ;; code offset: 0x4f8 - 0x4fa
-         (local.set $0
-          ;; code offset: 0x4f6 - 0x4f8
-          (local.get $2)
-         )
-        )
-       )
-       ;; code offset: 0x505 - 0x508
-       (i32.store
-        ;; code offset: 0x502 - 0x503
-        (i32.add
-         ;; code offset: 0x4fb - 0x4fd
-         (local.get $1)
-         ;; code offset: 0x501 - 0x502
-         (i32.shl
-          ;; code offset: 0x4fd - 0x4ff
-          (local.get $0)
-          ;; code offset: 0x4ff - 0x501
-          (i32.const 2)
-         )
-        )
-        ;; code offset: 0x503 - 0x505
-        (local.get $7)
-       )
-       ;; code offset: 0x51c - 0x51f
-       (i32.store
-        ;; code offset: 0x510 - 0x512
+      ;; code offset: 0x42d - 0x42f
+      (br_if $label1
+       ;; code offset: 0x42c - 0x42d
+       (i32.ne
+        ;; code offset: 0x428 - 0x42a
         (local.tee $0
-         ;; code offset: 0x50f - 0x510
+         ;; code offset: 0x427 - 0x428
          (i32.add
-          ;; code offset: 0x508 - 0x50a
-          (local.get $5)
-          ;; code offset: 0x50e - 0x50f
+          ;; code offset: 0x423 - 0x425
+          (local.get $0)
+          ;; code offset: 0x425 - 0x427
+          (i32.const 1)
+         )
+        )
+        ;; code offset: 0x42a - 0x42c
+        (local.get $3)
+       )
+      )
+     )
+     ;; code offset: 0x432 - 0x434
+     (local.set $6
+      ;; code offset: 0x430 - 0x432
+      (i32.const 30)
+     )
+     ;; code offset: 0x436 - 0x438
+     (local.set $2
+      ;; code offset: 0x434 - 0x436
+      (local.get $3)
+     )
+     ;; code offset: 0x438 - 0x43a
+     (br $block2)
+    )
+    ;; code offset: 0x43b - 0x527
+    (loop $label6
+     ;; code offset: 0x43f - 0x441
+     (local.set $0
+      ;; code offset: 0x43d - 0x43f
+      (i32.const 0)
+     )
+     ;; code offset: 0x441 - 0x46e
+     (loop $label2
+      ;; code offset: 0x453 - 0x456
+      (i32.store offset=16
+       ;; code offset: 0x443 - 0x445
+       (local.get $8)
+       ;; code offset: 0x452 - 0x453
+       (i32.add
+        ;; code offset: 0x44d - 0x450
+        (i32.load
+         ;; code offset: 0x44c - 0x44d
+         (i32.add
+          ;; code offset: 0x445 - 0x447
+          (local.get $1)
+          ;; code offset: 0x44b - 0x44c
           (i32.shl
-           ;; code offset: 0x50a - 0x50c
-           (local.get $2)
-           ;; code offset: 0x50c - 0x50e
+           ;; code offset: 0x447 - 0x449
+           (local.get $0)
+           ;; code offset: 0x449 - 0x44b
            (i32.const 2)
           )
          )
         )
-        ;; code offset: 0x51b - 0x51c
-        (i32.sub
-         ;; code offset: 0x517 - 0x519
-         (local.tee $0
-          ;; code offset: 0x514 - 0x517
-          (i32.load
-           ;; code offset: 0x512 - 0x514
-           (local.get $0)
-          )
-         )
-         ;; code offset: 0x519 - 0x51b
-         (i32.const 1)
-        )
+        ;; code offset: 0x450 - 0x452
+        (i32.const 1)
        )
-       ;; code offset: 0x524 - 0x535
-       (if
-        ;; code offset: 0x523 - 0x524
-        (i32.le_s
-         ;; code offset: 0x51f - 0x521
-         (local.get $0)
-         ;; code offset: 0x521 - 0x523
-         (i32.const 1)
-        )
-        (then
-         ;; code offset: 0x530 - 0x532
-         (br_if $label5
-          ;; code offset: 0x52f - 0x530
-          (i32.ne
-           ;; code offset: 0x52b - 0x52d
-           (local.tee $2
-            ;; code offset: 0x52a - 0x52b
-            (i32.add
-             ;; code offset: 0x526 - 0x528
-             (local.get $2)
-             ;; code offset: 0x528 - 0x52a
-             (i32.const 1)
-            )
-           )
-           ;; code offset: 0x52d - 0x52f
-           (local.get $3)
-          )
-         )
-         ;; code offset: 0x532 - 0x534
-         (br $block4)
+      )
+      ;; code offset: 0x460 - 0x461
+      (drop
+       ;; code offset: 0x45e - 0x460
+       (call $iprintf
+        ;; code offset: 0x456 - 0x459
+        (i32.const 1047)
+        ;; code offset: 0x45d - 0x45e
+        (i32.add
+         ;; code offset: 0x459 - 0x45b
+         (local.get $8)
+         ;; code offset: 0x45b - 0x45d
+         (i32.const 16)
         )
        )
       )
-      ;; code offset: 0x538 - 0x53a
-      (br_if $label6
-       ;; code offset: 0x536 - 0x538
-       (local.get $6)
+      ;; code offset: 0x46b - 0x46d
+      (br_if $label2
+       ;; code offset: 0x46a - 0x46b
+       (i32.ne
+        ;; code offset: 0x466 - 0x468
+        (local.tee $0
+         ;; code offset: 0x465 - 0x466
+         (i32.add
+          ;; code offset: 0x461 - 0x463
+          (local.get $0)
+          ;; code offset: 0x463 - 0x465
+          (i32.const 1)
+         )
+        )
+        ;; code offset: 0x468 - 0x46a
+        (local.get $3)
+       )
       )
      )
-     ;; code offset: 0x53b - 0x53d
-     (br $block4)
-    )
-    ;; code offset: 0x53e - 0x548
-    (loop
-     ;; code offset: 0x544 - 0x545
+     ;; code offset: 0x472 - 0x473
      (drop
-      ;; code offset: 0x542 - 0x544
+      ;; code offset: 0x470 - 0x472
       (call $putchar
-       ;; code offset: 0x540 - 0x542
+       ;; code offset: 0x46e - 0x470
        (i32.const 10)
       )
      )
-     ;; code offset: 0x545 - 0x547
-     (br $block4)
+     ;; code offset: 0x478 - 0x49b
+     (if
+      ;; code offset: 0x477 - 0x478
+      (i32.gt_s
+       ;; code offset: 0x473 - 0x475
+       (local.get $2)
+       ;; code offset: 0x475 - 0x477
+       (i32.const 1)
+      )
+      (then
+       ;; code offset: 0x47a - 0x49a
+       (loop $label3
+        ;; code offset: 0x48b - 0x48e
+        (i32.store
+         ;; code offset: 0x488 - 0x489
+         (i32.add
+          ;; code offset: 0x47c - 0x47e
+          (local.get $5)
+          ;; code offset: 0x487 - 0x488
+          (i32.shl
+           ;; code offset: 0x483 - 0x485
+           (local.tee $0
+            ;; code offset: 0x482 - 0x483
+            (i32.sub
+             ;; code offset: 0x47e - 0x480
+             (local.get $2)
+             ;; code offset: 0x480 - 0x482
+             (i32.const 1)
+            )
+           )
+           ;; code offset: 0x485 - 0x487
+           (i32.const 2)
+          )
+         )
+         ;; code offset: 0x489 - 0x48b
+         (local.get $2)
+        )
+        ;; code offset: 0x497 - 0x499
+        (br_if $label3
+         (block (result i32)
+          (local.set $scratch
+           ;; code offset: 0x492 - 0x493
+           (i32.gt_s
+            ;; code offset: 0x48e - 0x490
+            (local.get $2)
+            ;; code offset: 0x490 - 0x492
+            (i32.const 2)
+           )
+          )
+          ;; code offset: 0x495 - 0x497
+          (local.set $2
+           ;; code offset: 0x493 - 0x495
+           (local.get $0)
+          )
+          (local.get $scratch)
+         )
+        )
+       )
+      )
+     )
+     ;; code offset: 0x4a0 - 0x4a2
+     (br_if $block3
+      ;; code offset: 0x49f - 0x4a0
+      (i32.eq
+       ;; code offset: 0x49b - 0x49d
+       (local.get $2)
+       ;; code offset: 0x49d - 0x49f
+       (local.get $3)
+      )
+     )
+     ;; code offset: 0x4a7 - 0x4a9
+     (local.set $6
+      ;; code offset: 0x4a6 - 0x4a7
+      (i32.sub
+       ;; code offset: 0x4a2 - 0x4a4
+       (local.get $6)
+       ;; code offset: 0x4a4 - 0x4a6
+       (i32.const 1)
+      )
+     )
+     ;; code offset: 0x4a9 - 0x522
+     (loop $label5
+      ;; code offset: 0x4ad - 0x4af
+      (local.set $0
+       ;; code offset: 0x4ab - 0x4ad
+       (i32.const 0)
+      )
+      ;; code offset: 0x4b4 - 0x4b6
+      (local.set $7
+       ;; code offset: 0x4b1 - 0x4b4
+       (i32.load
+        ;; code offset: 0x4af - 0x4b1
+        (local.get $1)
+       )
+      )
+      ;; code offset: 0x4bb - 0x4e7
+      (if
+       ;; code offset: 0x4ba - 0x4bb
+       (i32.gt_s
+        ;; code offset: 0x4b6 - 0x4b8
+        (local.get $2)
+        ;; code offset: 0x4b8 - 0x4ba
+        (i32.const 0)
+       )
+       (then
+        ;; code offset: 0x4bd - 0x4e2
+        (loop $label4
+         ;; code offset: 0x4d7 - 0x4da
+         (i32.store
+          ;; code offset: 0x4c6 - 0x4c7
+          (i32.add
+           ;; code offset: 0x4bf - 0x4c1
+           (local.get $1)
+           ;; code offset: 0x4c5 - 0x4c6
+           (i32.shl
+            ;; code offset: 0x4c1 - 0x4c3
+            (local.get $0)
+            ;; code offset: 0x4c3 - 0x4c5
+            (i32.const 2)
+           )
+          )
+          ;; code offset: 0x4d4 - 0x4d7
+          (i32.load
+           ;; code offset: 0x4d3 - 0x4d4
+           (i32.add
+            ;; code offset: 0x4c7 - 0x4c9
+            (local.get $1)
+            ;; code offset: 0x4d2 - 0x4d3
+            (i32.shl
+             ;; code offset: 0x4ce - 0x4d0
+             (local.tee $0
+              ;; code offset: 0x4cd - 0x4ce
+              (i32.add
+               ;; code offset: 0x4c9 - 0x4cb
+               (local.get $0)
+               ;; code offset: 0x4cb - 0x4cd
+               (i32.const 1)
+              )
+             )
+             ;; code offset: 0x4d0 - 0x4d2
+             (i32.const 2)
+            )
+           )
+          )
+         )
+         ;; code offset: 0x4df - 0x4e1
+         (br_if $label4
+          ;; code offset: 0x4de - 0x4df
+          (i32.ne
+           ;; code offset: 0x4da - 0x4dc
+           (local.get $0)
+           ;; code offset: 0x4dc - 0x4de
+           (local.get $2)
+          )
+         )
+        )
+        ;; code offset: 0x4e4 - 0x4e6
+        (local.set $0
+         ;; code offset: 0x4e2 - 0x4e4
+         (local.get $2)
+        )
+       )
+      )
+      ;; code offset: 0x4f1 - 0x4f4
+      (i32.store
+       ;; code offset: 0x4ee - 0x4ef
+       (i32.add
+        ;; code offset: 0x4e7 - 0x4e9
+        (local.get $1)
+        ;; code offset: 0x4ed - 0x4ee
+        (i32.shl
+         ;; code offset: 0x4e9 - 0x4eb
+         (local.get $0)
+         ;; code offset: 0x4eb - 0x4ed
+         (i32.const 2)
+        )
+       )
+       ;; code offset: 0x4ef - 0x4f1
+       (local.get $7)
+      )
+      ;; code offset: 0x508 - 0x50b
+      (i32.store
+       ;; code offset: 0x4fc - 0x4fe
+       (local.tee $0
+        ;; code offset: 0x4fb - 0x4fc
+        (i32.add
+         ;; code offset: 0x4f4 - 0x4f6
+         (local.get $5)
+         ;; code offset: 0x4fa - 0x4fb
+         (i32.shl
+          ;; code offset: 0x4f6 - 0x4f8
+          (local.get $2)
+          ;; code offset: 0x4f8 - 0x4fa
+          (i32.const 2)
+         )
+        )
+       )
+       ;; code offset: 0x507 - 0x508
+       (i32.sub
+        ;; code offset: 0x503 - 0x505
+        (local.tee $0
+         ;; code offset: 0x500 - 0x503
+         (i32.load
+          ;; code offset: 0x4fe - 0x500
+          (local.get $0)
+         )
+        )
+        ;; code offset: 0x505 - 0x507
+        (i32.const 1)
+       )
+      )
+      ;; code offset: 0x510 - 0x521
+      (if
+       ;; code offset: 0x50f - 0x510
+       (i32.le_s
+        ;; code offset: 0x50b - 0x50d
+        (local.get $0)
+        ;; code offset: 0x50d - 0x50f
+        (i32.const 1)
+       )
+       (then
+        ;; code offset: 0x51c - 0x51e
+        (br_if $label5
+         ;; code offset: 0x51b - 0x51c
+         (i32.ne
+          ;; code offset: 0x517 - 0x519
+          (local.tee $2
+           ;; code offset: 0x516 - 0x517
+           (i32.add
+            ;; code offset: 0x512 - 0x514
+            (local.get $2)
+            ;; code offset: 0x514 - 0x516
+            (i32.const 1)
+           )
+          )
+          ;; code offset: 0x519 - 0x51b
+          (local.get $3)
+         )
+        )
+        ;; code offset: 0x51e - 0x520
+        (br $block3)
+       )
+      )
+     )
+     ;; code offset: 0x524 - 0x526
+     (br_if $label6
+      ;; code offset: 0x522 - 0x524
+      (local.get $6)
+     )
     )
-    ;; code offset: 0x548 - 0x549
-    (unreachable)
+    ;; code offset: 0x527 - 0x529
+    (br $block3)
    )
-   ;; code offset: 0x54c - 0x54e
+   ;; code offset: 0x52c - 0x52e
    (call $free
-    ;; code offset: 0x54a - 0x54c
+    ;; code offset: 0x52a - 0x52c
     (local.get $1)
    )
-   ;; code offset: 0x550 - 0x552
+   ;; code offset: 0x530 - 0x532
    (call $free
-    ;; code offset: 0x54e - 0x550
+    ;; code offset: 0x52e - 0x530
     (local.get $5)
    )
-   ;; code offset: 0x554 - 0x556
+   ;; code offset: 0x534 - 0x536
    (local.set $5
-    ;; code offset: 0x552 - 0x554
+    ;; code offset: 0x532 - 0x534
     (i32.const 0)
    )
-   ;; code offset: 0x558 - 0x55a
+   ;; code offset: 0x538 - 0x53a
    (local.set $0
-    ;; code offset: 0x556 - 0x558
+    ;; code offset: 0x536 - 0x538
     (i32.const 0)
    )
-   ;; code offset: 0x55c - 0x587
+   ;; code offset: 0x53c - 0x567
    (if
-    ;; code offset: 0x55a - 0x55c
+    ;; code offset: 0x53a - 0x53c
     (local.get $4)
     (then
-     ;; code offset: 0x55e - 0x586
+     ;; code offset: 0x53e - 0x566
      (loop $label7
-      ;; code offset: 0x564 - 0x566
+      ;; code offset: 0x544 - 0x546
       (local.set $1
-       ;; code offset: 0x562 - 0x564
+       ;; code offset: 0x542 - 0x544
        (call $"fannkuch_worker(void*)"
-        ;; code offset: 0x560 - 0x562
+        ;; code offset: 0x540 - 0x542
         (local.get $4)
        )
       )
-      ;; code offset: 0x56b - 0x56d
+      ;; code offset: 0x54b - 0x54d
       (local.set $2
-       ;; code offset: 0x568 - 0x56b
+       ;; code offset: 0x548 - 0x54b
        (i32.load offset=8
-        ;; code offset: 0x566 - 0x568
+        ;; code offset: 0x546 - 0x548
         (local.get $4)
        )
       )
-      ;; code offset: 0x56f - 0x571
+      ;; code offset: 0x54f - 0x551
       (call $free
-       ;; code offset: 0x56d - 0x56f
+       ;; code offset: 0x54d - 0x54f
        (local.get $4)
       )
-      ;; code offset: 0x57b - 0x57d
+      ;; code offset: 0x55b - 0x55d
       (local.set $0
-       ;; code offset: 0x57a - 0x57b
+       ;; code offset: 0x55a - 0x55b
        (select
-        ;; code offset: 0x571 - 0x573
+        ;; code offset: 0x551 - 0x553
         (local.get $1)
-        ;; code offset: 0x573 - 0x575
+        ;; code offset: 0x553 - 0x555
         (local.get $0)
-        ;; code offset: 0x579 - 0x57a
+        ;; code offset: 0x559 - 0x55a
         (i32.lt_s
-         ;; code offset: 0x575 - 0x577
+         ;; code offset: 0x555 - 0x557
          (local.get $0)
-         ;; code offset: 0x577 - 0x579
+         ;; code offset: 0x557 - 0x559
          (local.get $1)
         )
        )
       )
-      ;; code offset: 0x57f - 0x581
+      ;; code offset: 0x55f - 0x561
       (local.set $4
-       ;; code offset: 0x57d - 0x57f
+       ;; code offset: 0x55d - 0x55f
        (local.get $2)
       )
-      ;; code offset: 0x583 - 0x585
+      ;; code offset: 0x563 - 0x565
       (br_if $label7
-       ;; code offset: 0x581 - 0x583
+       ;; code offset: 0x561 - 0x563
        (local.get $2)
       )
      )
     )
    )
-   ;; code offset: 0x58b - 0x58e
+   ;; code offset: 0x56b - 0x56e
    (i32.store offset=4
-    ;; code offset: 0x587 - 0x589
+    ;; code offset: 0x567 - 0x569
     (local.get $8)
-    ;; code offset: 0x589 - 0x58b
+    ;; code offset: 0x569 - 0x56b
     (local.get $0)
    )
-   ;; code offset: 0x592 - 0x595
+   ;; code offset: 0x572 - 0x575
    (i32.store
-    ;; code offset: 0x58e - 0x590
+    ;; code offset: 0x56e - 0x570
     (local.get $8)
-    ;; code offset: 0x590 - 0x592
+    ;; code offset: 0x570 - 0x572
     (local.get $3)
    )
-   ;; code offset: 0x59c - 0x59d
+   ;; code offset: 0x57c - 0x57d
    (drop
-    ;; code offset: 0x59a - 0x59c
+    ;; code offset: 0x57a - 0x57c
     (call $iprintf
-     ;; code offset: 0x595 - 0x598
+     ;; code offset: 0x575 - 0x578
      (i32.const 1024)
-     ;; code offset: 0x598 - 0x59a
+     ;; code offset: 0x578 - 0x57a
      (local.get $8)
     )
    )
   )
-  ;; code offset: 0x5a3 - 0x5a5
+  ;; code offset: 0x583 - 0x585
   (global.set $global$0
-   ;; code offset: 0x5a2 - 0x5a3
+   ;; code offset: 0x582 - 0x583
    (i32.add
-    ;; code offset: 0x59e - 0x5a0
+    ;; code offset: 0x57e - 0x580
     (local.get $8)
-    ;; code offset: 0x5a0 - 0x5a2
+    ;; code offset: 0x580 - 0x582
     (i32.const 32)
    )
   )
-  ;; code offset: 0x5a5 - 0x5a7
+  ;; code offset: 0x585 - 0x587
   (local.get $5)
  )
  ;; custom section ".debug_info", size 851
  ;; custom section ".debug_loc", size 1073
  ;; custom section ".debug_ranges", size 88
  ;; custom section ".debug_abbrev", size 333
- ;; custom section ".debug_line", size 2322
+ ;; custom section ".debug_line", size 2300
  ;; custom section ".debug_str", size 434
  ;; custom section "producers", size 135
 )

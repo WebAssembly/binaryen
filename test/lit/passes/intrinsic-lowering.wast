@@ -6,18 +6,18 @@
   (type $none (func))
 
   ;; call.without.effects with no params.
-  ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $cwe-v (type $1) (param funcref) (result i32)))
+  ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $cwe-v (type $3) (param funcref) (result i32)))
   (import "binaryen-intrinsics" "call.without.effects" (func $cwe-v (param funcref) (result i32)))
 
   ;; call.without.effects with some params.
-  ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $cwe-dif (type $2) (param f64 i32 funcref) (result f32)))
+  ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $cwe-dif (type $4) (param f64 i32 funcref) (result f32)))
   (import "binaryen-intrinsics" "call.without.effects" (func $cwe-dif (param f64) (param i32) (param funcref) (result f32)))
 
   ;; call.without.effects with no result.
-  ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $cwe-n (type $3) (param funcref)))
+  ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $cwe-n (type $5) (param funcref)))
   (import "binaryen-intrinsics" "call.without.effects" (func $cwe-n (param funcref)))
 
-  ;; CHECK:      (func $test (type $4) (param $none (ref null $none))
+  ;; CHECK:      (func $test (type $1) (param $none (ref null $none))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (call $make-i32)
   ;; CHECK-NEXT:  )
@@ -39,7 +39,7 @@
     (call $cwe-n (local.get $none))
   )
 
-  ;; CHECK:      (func $make-i32 (type $5) (result i32)
+  ;; CHECK:      (func $make-i32 (type $2) (result i32)
   ;; CHECK-NEXT:  (i32.const 1)
   ;; CHECK-NEXT: )
   (func $make-i32 (result i32)
@@ -52,5 +52,21 @@
   (func $dif (param f64) (param i32) (result f32)
     ;; Helper function for the above.
     (unreachable)
+  )
+
+  ;; CHECK:      (func $test-return-call (type $2) (result i32)
+  ;; CHECK-NEXT:  (return_call $make-i32)
+  ;; CHECK-NEXT: )
+  (func $test-return-call (result i32)
+    (return_call $cwe-v (ref.func $make-i32))
+  )
+
+  ;; CHECK:      (func $test-return-call-ref (type $1) (param $none (ref null $none))
+  ;; CHECK-NEXT:  (return_call_ref $none
+  ;; CHECK-NEXT:   (local.get $none)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test-return-call-ref (param $none (ref null $none))
+    (return_call $cwe-n (local.get $none))
   )
 )

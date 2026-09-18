@@ -1711,3 +1711,45 @@
     )
   )
 )
+
+(module
+  ;; A struct.get on a descriptor that receives an i8 placeholder is nested
+  ;; inside a struct.new whose field is removed. FieldRemover runs
+  ;; ChildLocalizer (which uses EffectAnalyzer) on the struct.new before
+  ;; IndexUpdater increments the struct.get index, avoiding an out-of-bounds
+  ;; access into the old struct type's fields.
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $struct (descriptor $desc) (struct))
+    (type $struct (descriptor $desc) (struct (field externref)))
+    ;; CHECK:       (type $desc (describes $struct) (struct (field i8) (field externref)))
+    (type $desc (describes $struct) (struct (field (mut externref))))
+  )
+
+  ;; CHECK:      (type $2 (func (result structref)))
+
+  ;; CHECK:      (export "export" (func $test))
+  (export "export" (func $test))
+
+  ;; CHECK:      (func $test (type $2) (result structref)
+  ;; CHECK-NEXT:  (local $d (ref null $desc))
+  ;; CHECK-NEXT:  (local $1 externref)
+  ;; CHECK-NEXT:  (local.set $1
+  ;; CHECK-NEXT:   (struct.get $desc 1
+  ;; CHECK-NEXT:    (local.get $d)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.new_default_desc $struct
+  ;; CHECK-NEXT:   (struct.new_default $desc)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test (result structref)
+    (local $d (ref null $desc))
+    (struct.new_desc $struct
+      (struct.get $desc 0
+        (local.get $d)
+      )
+      (struct.new_default $desc)
+    )
+  )
+)
