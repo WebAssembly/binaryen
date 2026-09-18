@@ -415,3 +415,62 @@
   )
  )
 )
+
+(module
+ ;; NRML:      (type $struct (sub (struct (field (mut (ref null $struct))))))
+ ;; GUFA:      (rec
+ ;; GUFA-NEXT:  (type $struct (sub (struct (field (mut nullref)))))
+ (type $struct (sub (struct (field (mut (ref null $struct))))))
+
+ ;; NRML:      (type $1 (func (param (ref null $struct))))
+
+ ;; NRML:      (func $test (type $1) (param $struct (ref null $struct))
+ ;; NRML-NEXT:  (drop
+ ;; NRML-NEXT:   (struct.new_default $struct)
+ ;; NRML-NEXT:  )
+ ;; NRML-NEXT:  (drop
+ ;; NRML-NEXT:   (struct.atomic.rmw.cmpxchg acqrel acqrel $struct 0
+ ;; NRML-NEXT:    (local.get $struct)
+ ;; NRML-NEXT:    (unreachable)
+ ;; NRML-NEXT:    (local.get $struct)
+ ;; NRML-NEXT:   )
+ ;; NRML-NEXT:  )
+ ;; NRML-NEXT: )
+ ;; GUFA:       (type $1 (func (param (ref null $struct))))
+
+ ;; GUFA:      (func $test (type $1) (param $struct (ref null $struct))
+ ;; GUFA-NEXT:  (drop
+ ;; GUFA-NEXT:   (struct.new_default $struct)
+ ;; GUFA-NEXT:  )
+ ;; GUFA-NEXT:  (drop
+ ;; GUFA-NEXT:   (struct.atomic.rmw.cmpxchg acqrel acqrel $struct 0
+ ;; GUFA-NEXT:    (local.get $struct)
+ ;; GUFA-NEXT:    (unreachable)
+ ;; GUFA-NEXT:    (block (result nullref)
+ ;; GUFA-NEXT:     (drop
+ ;; GUFA-NEXT:      (local.get $struct)
+ ;; GUFA-NEXT:     )
+ ;; GUFA-NEXT:     (ref.null none)
+ ;; GUFA-NEXT:    )
+ ;; GUFA-NEXT:   )
+ ;; GUFA-NEXT:  )
+ ;; GUFA-NEXT: )
+ (func $test (param $struct (ref null $struct))
+  ;; Use the type, writing only nulls.
+  (drop
+   (struct.new_default $struct)
+  )
+  ;; An unreachable cmpxchg, but where the ref and value are not unreachable.
+  ;; The value must still validate as if it were written, so we will fix it up
+  ;; with a null, as the field is refined to a null (in GUFA mode, which
+  ;; does that refining).
+  (drop
+   (struct.atomic.rmw.cmpxchg acqrel acqrel $struct 0
+    (local.get $struct)
+    (unreachable)
+    (local.get $struct)
+   )
+  )
+ )
+)
+

@@ -17,20 +17,7 @@ import {
 	type HeapType,
 	type ModuleRef,
 	type SideEffect,
-	type Type,
-	i32,
-	i64,
-	f32,
-	f64,
-	v128,
-	anyref,
-	eqref,
-	i31ref,
-	structref,
-	arrayref,
-	funcref,
-	externref,
-	stringref,
+	Type,
 } from "../../constants.ts";
 
 
@@ -136,19 +123,19 @@ export class Module {
 	 */
 	pop(typ: Type): ExpressionRef {
 		if ([
-			i32,
-			i64,
-			f32,
-			f64,
-			v128,
-			anyref,
-			eqref,
-			i31ref,
-			structref,
-			arrayref,
-			funcref,
-			externref,
-			stringref,
+			Type.i32,
+			Type.i64,
+			Type.f32,
+			Type.f64,
+			Type.v128,
+			Type.anyref,
+			Type.eqref,
+			Type.i31ref,
+			Type.structref,
+			Type.arrayref,
+			Type.stringref,
+			Type.funcref,
+			Type.externref,
 		].includes(typ)) {
 			return BinaryenObj["_BinaryenPop"](this[PTR], typ);
 		} else {
