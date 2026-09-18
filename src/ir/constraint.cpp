@@ -201,11 +201,6 @@ Result provesConstantPair(Abstract::Op aOp,
                           bool recursing = false) {
   using namespace Abstract;
 
-  // SIMD types cannot be operated on (wasm does not have v128.eq etc.).
-  if (aConstant.type == Type::v128) {
-    return Unknown;
-  }
-
   // a == A =?=> a op B. Simply apply A to the operation against B.
   if (aOp == Eq) {
     switch (bOp) {
