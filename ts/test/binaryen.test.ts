@@ -108,14 +108,15 @@ suite("binaryen", () => {
 		assert.strictEqual(binaryen.HeapType.i31, 0x30);
 		assert.strictEqual(binaryen.HeapType.struct, 0x38);
 		assert.strictEqual(binaryen.HeapType.array, 0x40);
+		assert.strictEqual(binaryen.HeapType.string, 0x50);
 		assert.strictEqual(binaryen.HeapType.none, 0x58);
 		assert.strictEqual(binaryen.HeapType.func, 0x10);
-		// @ts-expect-error
-		assert.strictEqual(binaryen.HeapType.exn, undefined);
-		assert.strictEqual(binaryen.HeapType.extern, 0x08);
 		assert.strictEqual(binaryen.HeapType.nofunc, 0x68);
 		// @ts-expect-error
+		assert.strictEqual(binaryen.HeapType.exn, undefined);
+		// @ts-expect-error
 		assert.strictEqual(binaryen.HeapType.noexn, undefined);
+		assert.strictEqual(binaryen.HeapType.extern, 0x08);
 		assert.strictEqual(binaryen.HeapType.noextern, 0x60);
 
 		assert.strictEqual(binaryen.Type.anyref, 0x22);
@@ -123,22 +124,20 @@ suite("binaryen", () => {
 		assert.strictEqual(binaryen.Type.i31ref, 0x32);
 		assert.strictEqual(binaryen.Type.structref, 0x3a);
 		assert.strictEqual(binaryen.Type.arrayref, 0x42);
+		assert.strictEqual(binaryen.Type.stringref, 0x52);
 		assert.strictEqual(binaryen.Type.nullref, 0x5a);
 		assert.strictEqual(binaryen.Type.funcref, 0x12);
-		// @ts-expect-error
-		assert.strictEqual(binaryen.Type.exnref, undefined);
-		assert.strictEqual(binaryen.Type.externref, 0x0a);
 		assert.strictEqual(binaryen.Type.nullfuncref, 0x6a);
 		// @ts-expect-error
+		assert.strictEqual(binaryen.Type.exnref, undefined);
+		// @ts-expect-error
 		assert.strictEqual(binaryen.Type.nullexnref, undefined);
+		assert.strictEqual(binaryen.Type.externref, 0x0a);
 		assert.strictEqual(binaryen.Type.nullexternref, 0x62);
 
 		assert.strictEqual(binaryen.PackedType.notPacked, 0);
 		assert.strictEqual(binaryen.PackedType.i8, 1);
 		assert.strictEqual(binaryen.PackedType.i16, 2);
-
-		assert.strictEqual(binaryen.HeapType.string, 0x50);
-		assert.strictEqual(binaryen.Type.stringref, 0x52);
 
 		/*
 		const i32_pair = binaryen.createType([binaryen.Type.i32, binaryen.Type.i32]);

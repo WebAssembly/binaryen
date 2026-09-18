@@ -70,22 +70,22 @@ export enum Type {
 	structref = BinaryenObj["_BinaryenTypeStructref"](),
 	/** `(ref null array)` */
 	arrayref = BinaryenObj["_BinaryenTypeArrayref"](),
+	/** `(ref null string)` */
+	stringref = BinaryenObj["_BinaryenTypeStringref"](),
 	/** `(ref null none)` */
 	nullref = BinaryenObj["_BinaryenTypeNullref"](),
 	/** `(ref null func)` */
 	funcref = BinaryenObj["_BinaryenTypeFuncref"](),
-	/** `(ref null exn)` */
-	// exnref = BinaryenObj["_BinaryenTypeExnref"](), // TODO: uncomment once supported in Binaryen
-	/** `(ref null extern)` */
-	externref = BinaryenObj["_BinaryenTypeExternref"](),
 	/** `(ref null nofunc)` */
 	nullfuncref = BinaryenObj["_BinaryenTypeNullFuncref"](),
+	/** `(ref null exn)` */
+	// exnref = BinaryenObj["_BinaryenTypeExnref"](), // TODO: uncomment once supported in Binaryen
 	/** `(ref null noexn)` */
 	// nullexnref = BinaryenObj["_BinaryenTypeNullExnref"](), // TODO: uncomment once supported in Binaryen
+	/** `(ref null extern)` */
+	externref = BinaryenObj["_BinaryenTypeExternref"](),
 	/** `(ref null noextern)` */
 	nullexternref = BinaryenObj["_BinaryenTypeNullExternref"](),
-	/** `(ref null string)` */
-	stringref = BinaryenObj["_BinaryenTypeStringref"](),
 }
 
 
@@ -102,22 +102,22 @@ export enum HeapType {
 	struct = BinaryenObj["_BinaryenHeapTypeStruct"](),
 	/** Heap type `array`. */
 	array = BinaryenObj["_BinaryenHeapTypeArray"](),
+	/** Heap type `string`. */
+	string = BinaryenObj["_BinaryenHeapTypeString"](),
 	/** Heap type `none`. */
 	none = BinaryenObj["_BinaryenHeapTypeNone"](),
 	/** Heap type `func`. */
 	func = BinaryenObj["_BinaryenHeapTypeFunc"](),
-	/** Heap type `exn`. */
-	// exn = BinaryenObj["_BinaryenHeapTypeExn"](), // TODO: uncomment once supported in Binaryen
-	/** Heap type `extern`. */
-	extern = BinaryenObj["_BinaryenHeapTypeExt"](),
 	/** Heap type `nofunc`. */
 	nofunc = BinaryenObj["_BinaryenHeapTypeNofunc"](),
+	/** Heap type `exn`. */
+	// exn = BinaryenObj["_BinaryenHeapTypeExn"](), // TODO: uncomment once supported in Binaryen
 	/** Heap type `noexn`. */
 	// noexn = BinaryenObj["_BinaryenHeapTypeNoexn"](), // TODO: uncomment once supported in Binaryen
+	/** Heap type `extern`. */
+	extern = BinaryenObj["_BinaryenHeapTypeExt"](),
 	/** Heap type `noextern`. */
 	noextern = BinaryenObj["_BinaryenHeapTypeNoext"](),
-	/** Heap type `string`. */
-	string = BinaryenObj["_BinaryenHeapTypeString"](),
 }
 
 
