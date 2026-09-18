@@ -119,8 +119,8 @@
   ;; CHECK-NEXT:   (f64.const nan:0x8000000000000)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (f64.ne
-  ;; CHECK-NEXT:   (f64.const nan:0x8000000000000)
-  ;; CHECK-NEXT:   (f64.const nan:0x8000000000000)
+  ;; CHECK-NEXT:   (local.get $nan)
+  ;; CHECK-NEXT:   (local.get $nan)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; FASTM:      (func $float-ne-nan (type $1) (result i32)

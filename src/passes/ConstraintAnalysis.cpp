@@ -183,22 +183,23 @@ struct ConstraintAnalysis
   }
 
   void visitLocalGet(LocalGet* curr) {
-    addAction();
-
     // To be relevant for optimization, there must be a local.get (otherwise,
     // nothing can be optimized as this is not used), and the type must be
     // relevant.
     if (isRelevantType(curr->type)) {
+      addAction();
       relevantLocals[curr->index] = true;
     }
   }
 
   void visitLocalSet(LocalSet* curr) {
-    addAction();
+    if (isRelevantType(getFunction()->getLocalType(curr->index))) {
+      addAction();
 
-    // A tee is also a get, so it can mark a local as relevant, like LocalGet.
-    if (isRelevantType(curr->type)) {
-      relevantLocals[curr->index] = true;
+      // A tee is also a get, so it can mark a local as relevant, like LocalGet.
+      if (curr->isTee()) {
+        relevantLocals[curr->index] = true;
+      }
     }
   }
 
