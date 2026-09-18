@@ -264,13 +264,73 @@ static bool runWasmOpt(const std::string& testPath,
   return true;
 }
 
+// Abstracts reading/writing the active WebAssembly module and testing candidate
+// reductions. This allows the core reduction logic to operate identically on
+// standalone .wasm/.wat files and embedded Wasm modules inside .js files.
+struct TestCaseHandler {
+  virtual ~TestCaseHandler() = default;
+
+  // Returns the raw Wasm module bytes (binary or WAT text) of the active module
+  // from the working state (extracting it from the working JS file in --js
+  // mode).
+  virtual std::vector<char> readWorking(const std::string& working) = 0;
+
+  // Writes candidate raw Wasm module bytes to the working file (splicing them
+  // as a JS byte array into the working .js file in --js mode).
+  virtual void writeWorking(const std::vector<char>& bytes,
+                            const std::string& working) = 0;
+
+  // Writes candidate raw Wasm module bytes to the test file (splicing them as a
+  // JS byte array into the test .js file in --js mode).
+  virtual void writeTest(const std::vector<char>& bytes,
+                         const std::string& test) = 0;
+
+  // Writes candidate Wasm bytes to `test`, executes `command`, and returns true
+  // if the output matches `expected`.
+  bool testCandidate(const std::vector<char>& bytes,
+                     const std::string& test,
+                     const std::string& command,
+                     ProgramResult& out) {
+    writeTest(bytes, test);
+    out.getFromExecution(command);
+    return out == expected;
+  }
+
+  bool testCandidate(const std::vector<char>& bytes,
+                     const std::string& test,
+                     const std::string& command) {
+    ProgramResult out;
+    return testCandidate(bytes, test, command, out);
+  }
+};
+
+// Handles standalone Wasm/WAT test cases where the working and test files are
+// raw module files on disk.
+struct WasmTestCaseHandler : public TestCaseHandler {
+  std::vector<char> readWorking(const std::string& working) override {
+    return read_file<std::vector<char>>(working, Flags::Binary);
+  }
+
+  void writeWorking(const std::vector<char>& bytes,
+                    const std::string& working) override {
+    write_file(working, bytes);
+  }
+
+  void writeTest(const std::vector<char>& bytes,
+                 const std::string& test) override {
+    write_file(test, bytes);
+  }
+};
+
 struct Reducer
   : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<Reducer>>> {
+  TestCaseHandler& handler;
   std::string command, test, working;
   bool binary, deNan, verbose, debugInfo;
   ToolOptions& toolOptions;
 
-  Reducer(std::string command,
+  Reducer(TestCaseHandler& handler,
+          std::string command,
           std::string test,
           std::string working,
           bool binary,
@@ -278,8 +338,8 @@ struct Reducer
           bool verbose,
           bool debugInfo,
           ToolOptions& toolOptions)
-    : command(command), test(test), working(working), binary(binary),
-      deNan(deNan), verbose(verbose), debugInfo(debugInfo),
+    : handler(handler), command(command), test(test), working(working),
+      binary(binary), deNan(deNan), verbose(verbose), debugInfo(debugInfo),
       toolOptions(toolOptions) {}
 
   // Runs passes in order to reduce as long as binary size continues to shrink.
@@ -329,7 +389,7 @@ struct Reducer
       "--strip",
       "--remove-unused-types --closed-world",
       "--vacuum"};
-    auto workingBytes = read_file<std::vector<char>>(working, Flags::Binary);
+    auto workingBytes = handler.readWorking(working);
     auto initialSize = workingBytes.size();
     auto oldSize = initialSize;
     bool more = true;
@@ -357,9 +417,7 @@ struct Reducer
           if (newSize < oldSize) {
             // the pass didn't fail, and the size looks smaller, so promising
             // see if it is still has the property we are preserving
-            write_file(test, candidateBytes);
-            ProgramResult out(command);
-            if (out == expected) {
+            if (handler.testCandidate(candidateBytes, test, command)) {
               std::cerr << "|    command \"" << currCommand
                         << "\" succeeded, reduced size to " << newSize << '\n';
               saveWorking(candidateBytes);
@@ -413,8 +471,7 @@ struct Reducer
 
     ModuleReader reader;
     try {
-      reader.readData(read_file<std::vector<char>>(working, Flags::Binary),
-                      *module);
+      reader.readData(handler.readWorking(working), *module);
     } catch (ParseException& p) {
       p.dump(std::cerr);
       std::cerr << '\n';
@@ -450,14 +507,12 @@ struct Reducer
     writer.setDebugInfo(debugInfo);
     lastTestBytes.clear();
     toolOptions.write(writer, *getModule(), lastTestBytes);
-    write_file(test, lastTestBytes);
     // note that it is ok for the destructively-reduced module to be bigger
     // than the previous - each destructive reduction removes logical code,
     // and so is strictly better, even if the wasm binary format happens to
     // encode things slightly less efficiently.
     // test it
-    out.getFromExecution(command);
-    return out == expected;
+    return handler.testCandidate(lastTestBytes, test, command, out);
   }
 
   size_t decisionCounter = 0;
@@ -513,7 +568,7 @@ struct Reducer
   }
 
   void saveWorking(const std::vector<char>& bytes) {
-    write_file(working, bytes);
+    handler.writeWorking(bytes, working);
     if (saveAllWorkingFiles) {
       copy_file(working, working + '.' + std::to_string(workingFileIndex++));
     }
@@ -1389,7 +1444,8 @@ static void checkTimeout(ProgramResult& result, bool force) {
   }
 }
 
-static void checkDifferentBehaviorOnDifferentInputs(const std::string& test,
+static void checkDifferentBehaviorOnDifferentInputs(TestCaseHandler& handler,
+                                                    const std::string& test,
                                                     const std::string& command,
                                                     bool force,
                                                     ToolOptions& options) {
@@ -1402,18 +1458,16 @@ static void checkDifferentBehaviorOnDifferentInputs(const std::string& test,
   // Try it on an invalid input.
   std::string nonsenseStr = "waka waka\n";
   std::vector<char> nonsense(nonsenseStr.begin(), nonsenseStr.end());
-  write_file(test, nonsense);
-  ProgramResult resultOnInvalid(command);
-  if (resultOnInvalid == expected) {
+  ProgramResult resultOnInvalid;
+  if (handler.testCandidate(nonsense, test, command, resultOnInvalid)) {
     // Try it on a valid input.
     Module emptyModule;
     ModuleWriter writer(options.passOptions);
     writer.setBinary(true);
     std::vector<char> emptyBytes;
     options.write(writer, emptyModule, emptyBytes);
-    write_file(test, emptyBytes);
-    ProgramResult resultOnValid(command);
-    if (resultOnValid == expected) {
+    ProgramResult resultOnValid;
+    if (handler.testCandidate(emptyBytes, test, command, resultOnValid)) {
       Fatal()
         << "running the command on the given input gives the same result as "
            "when running it on either a trivial valid wasm or a file with "
@@ -1423,7 +1477,8 @@ static void checkDifferentBehaviorOnDifferentInputs(const std::string& test,
   }
 }
 
-static void checkCanonicalizedBinary(const std::string& working,
+static void checkCanonicalizedBinary(TestCaseHandler& handler,
+                                     const std::string& working,
                                      const std::string& test,
                                      const std::string& command,
                                      bool binary,
@@ -1436,16 +1491,12 @@ static void checkCanonicalizedBinary(const std::string& working,
   }
   ProgramResult readWrite;
   std::vector<char> canonicalBytes;
-  if (!runWasmOpt(test,
-                  read_file<std::vector<char>>(working, Flags::Binary),
-                  args,
-                  canonicalBytes,
-                  readWrite)) {
+  if (!runWasmOpt(
+        test, handler.readWorking(working), args, canonicalBytes, readWrite)) {
     stopIfNotForced("failed to read and write the binary", readWrite, force);
   } else {
-    write_file(test, canonicalBytes);
-    ProgramResult result(command);
-    if (result != expected) {
+    ProgramResult result;
+    if (!handler.testCandidate(canonicalBytes, test, command, result)) {
       stopIfNotForced("running command on the canonicalized module should "
                       "give the same results",
                       result,
@@ -1454,7 +1505,8 @@ static void checkCanonicalizedBinary(const std::string& working,
   }
 }
 
-static void reduceModule(const std::string& command,
+static void reduceModule(TestCaseHandler& handler,
+                         const std::string& command,
                          const std::string& test,
                          const std::string& working,
                          bool binary,
@@ -1463,11 +1515,11 @@ static void reduceModule(const std::string& command,
                          bool debugInfo,
                          bool force,
                          ToolOptions& options) {
-  checkDifferentBehaviorOnDifferentInputs(test, command, force, options);
-  checkCanonicalizedBinary(working, test, command, binary, force);
+  checkDifferentBehaviorOnDifferentInputs(
+    handler, test, command, force, options);
+  checkCanonicalizedBinary(handler, working, test, command, binary, force);
 
-  auto workingSize =
-    read_file<std::vector<char>>(working, Flags::Binary).size();
+  auto workingSize = handler.readWorking(working).size();
   std::cerr << "|input size: " << workingSize << "\n";
 
   std::cerr << "|starting reduction!\n";
@@ -1481,8 +1533,15 @@ static void reduceModule(const std::string& command,
 
   bool first = true;
   while (1) {
-    Reducer reducer(
-      command, test, working, binary, deNan, verbose, debugInfo, options);
+    Reducer reducer(handler,
+                    command,
+                    test,
+                    working,
+                    binary,
+                    deNan,
+                    verbose,
+                    debugInfo,
+                    options);
 
     // For extremely large modules with slow reproduction commands, reducing
     // function bodies first can be more effective than running passes. TODO:
@@ -1566,12 +1625,11 @@ static void reduceModule(const std::string& command,
     }
 
     std::cerr << "|  destructive reduction led to size: "
-              << read_file<std::vector<char>>(working, Flags::Binary).size()
-              << '\n';
+              << handler.readWorking(working).size() << '\n';
   }
-  auto finalBytes = read_file<std::vector<char>>(working, Flags::Binary);
+  auto finalBytes = handler.readWorking(working);
   std::cerr << "|finished, final size: " << finalBytes.size() << "\n";
-  write_file(test, finalBytes); // just to avoid confusion
+  handler.writeTest(finalBytes, test); // just to avoid confusion
 }
 
 //
@@ -1781,6 +1839,15 @@ More documentation can be found at
 
   copy_file(input, working);
 
-  reduceModule(
-    command, test, working, binary, deNan, verbose, debugInfo, force, options);
+  WasmTestCaseHandler handler;
+  reduceModule(handler,
+               command,
+               test,
+               working,
+               binary,
+               deNan,
+               verbose,
+               debugInfo,
+               force,
+               options);
 }
