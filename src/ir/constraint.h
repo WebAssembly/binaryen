@@ -32,6 +32,7 @@
 
 #include "ir/abstract.h"
 #include "support/inplace_vector.h"
+#include "support/small_vector.h"
 #include "support/span.h"
 #include "support/utilities.h"
 #include "wasm.h"
@@ -235,6 +236,12 @@ struct LocalConstraint {
   Index local;
   Constraint constraint;
 
+  LocalConstraint() = default;
+  LocalConstraint(Index local, Constraint constraint)
+    : local(local), constraint(std::move(constraint)) {}
+
+  bool operator==(const LocalConstraint&) const = default;
+
   // Try to parse BinaryenIR into a local to which a constraint is applied. For
   // example
   //
@@ -246,13 +253,41 @@ struct LocalConstraint {
   //
   static std::optional<LocalConstraint> parse(Expression* curr);
 
-  // Parse in a condition context, i.e., where (local.get $x) is the same as
-  // $x != 0 (e.g., in an if condition, or a br_on ref).
-  static std::optional<LocalConstraint> parseCondition(Expression* curr);
-
   // Reverse the constraint. The constraint's term must, of course, be another
   // local.
   void flip();
+};
+
+// A utility to parse BinaryenIR into locals and constraints on them. This is
+// similar to LocalConstraint::parse, but that parses a single constraint, while
+// this can handle a list of ANDed ones:
+//
+//   (i32.and (..A..) (..B..))
+//
+// parses into [ A, B ].
+//
+// We also set a field |hasUnknown| if we saw things we could not parse. E.g.
+//
+//   (i32.and (call $unknown) (i32.eqz (local.get $x)))
+//
+// This parses into [ $x == 0 ] and sets hasUnknown=true. Even if there are
+// unknown things, we do know that definitely $x == 0 at least, which is useful
+// in some cases.
+struct ParsedAndedConstraints : public SmallVector<LocalConstraint, 1> {
+  using SmallVector<LocalConstraint, 1>::SmallVector;
+
+  bool hasUnknown = false;
+
+  static ParsedAndedConstraints parse(Expression* curr);
+
+  // Parse in a condition context, i.e., where (local.get $x) is the same as
+  // $x != 0 (e.g., in an if condition, or a br_on ref).
+  static ParsedAndedConstraints parseCondition(Expression* curr);
+
+  // Negate the entire list of constraints. If we fail to generate something
+  // that can be represented as a list of ANDed constraints, the list will be
+  // empty (i.e., we can prove nothing).
+  void negate();
 };
 
 // A map of locals and their constraints, representing the state at a basic
@@ -366,6 +401,7 @@ private:
 };
 
 std::ostream& operator<<(std::ostream& o, const Constraint& c);
+std::ostream& operator<<(std::ostream& o, const LocalConstraint& c);
 std::ostream& operator<<(std::ostream& o, const AndedConstraintSet& set);
 
 } // namespace wasm::constraint

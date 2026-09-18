@@ -32,6 +32,7 @@ set(unittest_SOURCES
   printing.cpp
   public-type-validator.cpp
   scc.cpp
+  sizes.cpp
   span.cpp
   stringify.cpp
   subtype-exprs.cpp

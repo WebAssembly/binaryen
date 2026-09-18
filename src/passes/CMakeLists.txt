@@ -110,6 +110,7 @@ set(passes_SOURCES
   TraceCalls.cpp
   RandomizeBranchHints.cpp
   RedundantSetElimination.cpp
+  RemoveEmptyFunctionExports.cpp
   RemoveExports.cpp
   RemoveImports.cpp
   RemoveMemoryInit.cpp
@@ -124,7 +125,6 @@ set(passes_SOURCES
   ReorderLocals.cpp
   ReorderTypes.cpp
   ReReloop.cpp
-  TrapMode.cpp
   TypeGeneralizing.cpp
   TypeRefining.cpp
   TypeMerging.cpp
@@ -138,6 +138,7 @@ set(passes_SOURCES
   StackCheck.cpp
   StripEH.cpp
   SSAify.cpp
+  TailCall.cpp
   TupleOptimization.cpp
   TranslateEH.cpp
   TypeFinalizing.cpp

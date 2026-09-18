@@ -626,8 +626,6 @@
 
   ;; CHECK:      (table $funcs 0 0 funcref)
 
-  ;; CHECK:      (elem $funcs (i32.const 0))
-
   ;; CHECK:      (func $ref-test-func (type $1) (param $0 (ref null (shared i31))) (result i32)
   ;; CHECK-NEXT:  (ref.test (ref (shared i31))
   ;; CHECK-NEXT:   (local.get $0)
@@ -1466,3 +1464,1029 @@
     )
   )
 )
+
+(module
+  ;; Extern references entering and exiting via imports and exports are wrapped.
+  (import "env" "import_extern" (func $im (param externref i32) (result externref)))
+
+  ;; CHECK:      (type $0 (func (param (ref null (shared i31)) i32) (result (ref null (shared i31)))))
+
+  ;; CHECK:      (type $1 (func (param (ref null (shared i31))) (result (ref null (shared i31)))))
+
+  ;; CHECK:      (type $2 (func (param externref i32) (result externref)))
+
+  ;; CHECK:      (type $3 (func (param externref) (result externref)))
+
+  ;; CHECK:      (type $4 (func (param externref) (result (ref null (shared i31)))))
+
+  ;; CHECK:      (type $5 (func (param (ref null (shared i31))) (result externref)))
+
+  ;; CHECK:      (import "env" "import_extern" (func $im$import (type $2) (param externref i32) (result externref)))
+
+  ;; CHECK:      (table $externs 0 externref)
+
+  ;; CHECK:      (export "export_extern" (func $test$export))
+
+  ;; CHECK:      (func $im (type $0) (param $0 (ref null (shared i31))) (param $1 i32) (result (ref null (shared i31)))
+  ;; CHECK-NEXT:  (call $extern_to_index
+  ;; CHECK-NEXT:   (call $im$import
+  ;; CHECK-NEXT:    (call $index_to_extern
+  ;; CHECK-NEXT:     (local.get $0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+
+  ;; CHECK:      (func $test (type $1) (param $e (ref null (shared i31))) (result (ref null (shared i31)))
+  ;; CHECK-NEXT:  (call $im
+  ;; CHECK-NEXT:   (local.get $e)
+  ;; CHECK-NEXT:   (i32.const 42)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test (export "export_extern") (param $e externref) (result externref)
+    (call $im (local.get $e) (i32.const 42))
+  )
+)
+
+;; CHECK:      (func $test$export (type $3) (param $0 externref) (result externref)
+;; CHECK-NEXT:  (call $index_to_extern
+;; CHECK-NEXT:   (call $test
+;; CHECK-NEXT:    (call $extern_to_index
+;; CHECK-NEXT:     (local.get $0)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $extern_to_index (type $4) (param $0 externref) (result (ref null (shared i31)))
+;; CHECK-NEXT:  (local $1 i32)
+;; CHECK-NEXT:  (if (result (ref null (shared i31)))
+;; CHECK-NEXT:   (ref.is_null
+;; CHECK-NEXT:    (local.get $0)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (ref.null (shared none))
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (else
+;; CHECK-NEXT:    (if (result (ref (shared i31)))
+;; CHECK-NEXT:     (i32.ge_s
+;; CHECK-NEXT:      (local.tee $1
+;; CHECK-NEXT:       (table.grow $externs
+;; CHECK-NEXT:        (local.get $0)
+;; CHECK-NEXT:        (i32.const 1)
+;; CHECK-NEXT:       )
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:      (i32.const 0)
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:     (then
+;; CHECK-NEXT:      (ref.i31_shared
+;; CHECK-NEXT:       (local.get $1)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:     (else
+;; CHECK-NEXT:      (unreachable)
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $index_to_extern (type $5) (param $0 (ref null (shared i31))) (result externref)
+;; CHECK-NEXT:  (if (result externref)
+;; CHECK-NEXT:   (ref.is_null
+;; CHECK-NEXT:    (local.get $0)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (ref.null noextern)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (else
+;; CHECK-NEXT:    (table.get $externs
+;; CHECK-NEXT:     (i31.get_u
+;; CHECK-NEXT:      (local.get $0)
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+(module
+  ;; Non-nullable extern references entering and exiting via imports and exports.
+  (import "env" "import_nonnull_extern" (func $im (param (ref extern)) (result (ref extern))))
+
+  ;; CHECK:      (type $0 (func (param (ref (shared i31))) (result (ref (shared i31)))))
+
+  ;; CHECK:      (type $1 (func (param (ref extern)) (result (ref extern))))
+
+  ;; CHECK:      (type $2 (func (param externref) (result (ref null (shared i31)))))
+
+  ;; CHECK:      (type $3 (func (param (ref null (shared i31))) (result externref)))
+
+  ;; CHECK:      (import "env" "import_nonnull_extern" (func $im$import (type $1) (param (ref extern)) (result (ref extern))))
+
+  ;; CHECK:      (table $externs 0 externref)
+
+  ;; CHECK:      (export "export_nonnull_extern" (func $test$export))
+
+  ;; CHECK:      (func $im (type $0) (param $0 (ref (shared i31))) (result (ref (shared i31)))
+  ;; CHECK-NEXT:  (ref.as_non_null
+  ;; CHECK-NEXT:   (call $extern_to_index
+  ;; CHECK-NEXT:    (call $im$import
+  ;; CHECK-NEXT:     (ref.cast (ref extern)
+  ;; CHECK-NEXT:      (call $index_to_extern
+  ;; CHECK-NEXT:       (local.get $0)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+
+  ;; CHECK:      (func $test (type $0) (param $e (ref (shared i31))) (result (ref (shared i31)))
+  ;; CHECK-NEXT:  (call $im
+  ;; CHECK-NEXT:   (local.get $e)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test (export "export_nonnull_extern") (param $e (ref extern)) (result (ref extern))
+    (call $im (local.get $e))
+  )
+)
+
+;; CHECK:      (func $test$export (type $1) (param $0 (ref extern)) (result (ref extern))
+;; CHECK-NEXT:  (ref.cast (ref extern)
+;; CHECK-NEXT:   (call $index_to_extern
+;; CHECK-NEXT:    (call $test
+;; CHECK-NEXT:     (ref.as_non_null
+;; CHECK-NEXT:      (call $extern_to_index
+;; CHECK-NEXT:       (local.get $0)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $extern_to_index (type $2) (param $0 externref) (result (ref null (shared i31)))
+;; CHECK-NEXT:  (local $1 i32)
+;; CHECK-NEXT:  (if (result (ref null (shared i31)))
+;; CHECK-NEXT:   (ref.is_null
+;; CHECK-NEXT:    (local.get $0)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (ref.null (shared none))
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (else
+;; CHECK-NEXT:    (if (result (ref (shared i31)))
+;; CHECK-NEXT:     (i32.ge_s
+;; CHECK-NEXT:      (local.tee $1
+;; CHECK-NEXT:       (table.grow $externs
+;; CHECK-NEXT:        (local.get $0)
+;; CHECK-NEXT:        (i32.const 1)
+;; CHECK-NEXT:       )
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:      (i32.const 0)
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:     (then
+;; CHECK-NEXT:      (ref.i31_shared
+;; CHECK-NEXT:       (local.get $1)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:     (else
+;; CHECK-NEXT:      (unreachable)
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $index_to_extern (type $3) (param $0 (ref null (shared i31))) (result externref)
+;; CHECK-NEXT:  (if (result externref)
+;; CHECK-NEXT:   (ref.is_null
+;; CHECK-NEXT:    (local.get $0)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (ref.null noextern)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (else
+;; CHECK-NEXT:    (table.get $externs
+;; CHECK-NEXT:     (i31.get_u
+;; CHECK-NEXT:      (local.get $0)
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+(module
+  ;; Function references (closed world) and shared extern references are NOT wrapped.
+  ;; CHECK:      (type $0 (func (param (ref null (shared i31))) (result (ref null (shared i31)))))
+
+  ;; CHECK:      (type $1 (func (param (ref null (shared extern))) (result (ref null (shared extern)))))
+
+  ;; CHECK:      (import "env" "import_func" (func $im_fn (type $0) (param (ref null (shared i31))) (result (ref null (shared i31)))))
+  (import "env" "import_func" (func $im_fn (param funcref) (result funcref)))
+  ;; CHECK:      (import "env" "import_shared_extern" (func $im_sh_ext (type $1) (param (ref null (shared extern))) (result (ref null (shared extern)))))
+  (import "env" "import_shared_extern" (func $im_sh_ext (param (ref null (shared extern))) (result (ref null (shared extern)))))
+
+  ;; CHECK:      (export "export_func" (func $test_func))
+
+  ;; CHECK:      (export "export_shared_extern" (func $test_shared_extern))
+
+  ;; CHECK:      (func $test_func (type $0) (param $f (ref null (shared i31))) (result (ref null (shared i31)))
+  ;; CHECK-NEXT:  (call $im_fn
+  ;; CHECK-NEXT:   (local.get $f)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test_func (export "export_func") (param $f funcref) (result funcref)
+    (call $im_fn (local.get $f))
+  )
+
+  ;; CHECK:      (func $test_shared_extern (type $1) (param $e (ref null (shared extern))) (result (ref null (shared extern)))
+  ;; CHECK-NEXT:  (call $im_sh_ext
+  ;; CHECK-NEXT:   (local.get $e)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test_shared_extern (export "export_shared_extern") (param $e (ref null (shared extern))) (result (ref null (shared extern)))
+    (call $im_sh_ext (local.get $e))
+  )
+)
+
+(module
+  ;; String references entering and exiting via imports and exports are wrapped with the extern table.
+  (import "env" "import_string" (func $im (param stringref (ref string)) (result stringref)))
+  ;; CHECK:      (type $0 (func (param (ref null (shared i31)) (ref (shared i31))) (result (ref null (shared i31)))))
+
+  ;; CHECK:      (type $1 (func (param (ref null (shared i31)) (ref (shared i31))) (result (ref (shared i31)))))
+
+  ;; CHECK:      (type $2 (func (param stringref (ref string)) (result stringref)))
+
+  ;; CHECK:      (type $3 (func (param stringref (ref string)) (result (ref string))))
+
+  ;; CHECK:      (type $4 (func (param externref) (result (ref null (shared i31)))))
+
+  ;; CHECK:      (type $5 (func (param (ref null (shared i31))) (result externref)))
+
+  ;; CHECK:      (import "env" "import_string" (func $im$import (type $2) (param stringref (ref string)) (result stringref)))
+
+  ;; CHECK:      (table $externs 0 externref)
+
+  ;; CHECK:      (export "export_string" (func $test$export))
+
+  ;; CHECK:      (func $im (type $0) (param $0 (ref null (shared i31))) (param $1 (ref (shared i31))) (result (ref null (shared i31)))
+  ;; CHECK-NEXT:  (call $extern_to_index
+  ;; CHECK-NEXT:   (call $im$import
+  ;; CHECK-NEXT:    (ref.cast stringref
+  ;; CHECK-NEXT:     (call $index_to_extern
+  ;; CHECK-NEXT:      (local.get $0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.cast (ref string)
+  ;; CHECK-NEXT:     (call $index_to_extern
+  ;; CHECK-NEXT:      (local.get $1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+
+  ;; CHECK:      (func $test (type $1) (param $s (ref null (shared i31))) (param $s_nn (ref (shared i31))) (result (ref (shared i31)))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (call $im
+  ;; CHECK-NEXT:    (local.get $s)
+  ;; CHECK-NEXT:    (local.get $s_nn)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.get $s_nn)
+  ;; CHECK-NEXT: )
+  (func $test (export "export_string") (param $s stringref) (param $s_nn (ref string)) (result (ref string))
+    (drop (call $im (local.get $s) (local.get $s_nn)))
+    (local.get $s_nn)
+  )
+)
+
+
+;; CHECK:      (func $test$export (type $3) (param $0 stringref) (param $1 (ref string)) (result (ref string))
+;; CHECK-NEXT:  (ref.cast (ref string)
+;; CHECK-NEXT:   (call $index_to_extern
+;; CHECK-NEXT:    (call $test
+;; CHECK-NEXT:     (call $extern_to_index
+;; CHECK-NEXT:      (local.get $0)
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:     (ref.as_non_null
+;; CHECK-NEXT:      (call $extern_to_index
+;; CHECK-NEXT:       (local.get $1)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $extern_to_index (type $4) (param $0 externref) (result (ref null (shared i31)))
+;; CHECK-NEXT:  (local $1 i32)
+;; CHECK-NEXT:  (if (result (ref null (shared i31)))
+;; CHECK-NEXT:   (ref.is_null
+;; CHECK-NEXT:    (local.get $0)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (ref.null (shared none))
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (else
+;; CHECK-NEXT:    (if (result (ref (shared i31)))
+;; CHECK-NEXT:     (i32.ge_s
+;; CHECK-NEXT:      (local.tee $1
+;; CHECK-NEXT:       (table.grow $externs
+;; CHECK-NEXT:        (local.get $0)
+;; CHECK-NEXT:        (i32.const 1)
+;; CHECK-NEXT:       )
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:      (i32.const 0)
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:     (then
+;; CHECK-NEXT:      (ref.i31_shared
+;; CHECK-NEXT:       (local.get $1)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:     (else
+;; CHECK-NEXT:      (unreachable)
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $index_to_extern (type $5) (param $0 (ref null (shared i31))) (result externref)
+;; CHECK-NEXT:  (if (result externref)
+;; CHECK-NEXT:   (ref.is_null
+;; CHECK-NEXT:    (local.get $0)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (ref.null noextern)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (else
+;; CHECK-NEXT:    (table.get $externs
+;; CHECK-NEXT:     (i31.get_u
+;; CHECK-NEXT:      (local.get $0)
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+(module
+  ;; Tuple results in import and export.
+  (import "env" "import_tuple" (func $im (param externref i32) (result externref (ref extern) i32)))
+
+  ;; CHECK:      (type $0 (func (param (ref null (shared i31)) i32) (result (ref null (shared i31)) (ref (shared i31)) i32)))
+
+  ;; CHECK:      (type $1 (func (param externref i32) (result externref (ref extern) i32)))
+
+  ;; CHECK:      (type $2 (func (param externref) (result (ref null (shared i31)))))
+
+  ;; CHECK:      (type $3 (func (param (ref null (shared i31))) (result externref)))
+
+  ;; CHECK:      (type $4 (func (result (ref null (shared i31)) (ref (shared i31)) i32)))
+
+  ;; CHECK:      (type $5 (func (result externref (ref extern) i32)))
+
+  ;; CHECK:      (import "env" "import_tuple" (func $im$import (type $1) (param externref i32) (result externref (ref extern) i32)))
+
+  ;; CHECK:      (table $externs 0 externref)
+
+  ;; CHECK:      (export "export_tuple" (func $test$export))
+
+  ;; CHECK:      (func $im (type $0) (param $0 (ref null (shared i31))) (param $1 i32) (result (ref null (shared i31)) (ref (shared i31)) i32)
+  ;; CHECK-NEXT:  (local $2 (tuple externref (ref extern) i32))
+  ;; CHECK-NEXT:  (local.set $2
+  ;; CHECK-NEXT:   (call $im$import
+  ;; CHECK-NEXT:    (call $index_to_extern
+  ;; CHECK-NEXT:     (local.get $0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (tuple.make 3
+  ;; CHECK-NEXT:   (call $extern_to_index
+  ;; CHECK-NEXT:    (tuple.extract 3 0
+  ;; CHECK-NEXT:     (local.get $2)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (call $extern_to_index
+  ;; CHECK-NEXT:     (tuple.extract 3 1
+  ;; CHECK-NEXT:      (local.get $2)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (tuple.extract 3 2
+  ;; CHECK-NEXT:    (local.get $2)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+
+  ;; CHECK:      (func $test (type $0) (param $e (ref null (shared i31))) (param $i i32) (result (ref null (shared i31)) (ref (shared i31)) i32)
+  ;; CHECK-NEXT:  (call $im
+  ;; CHECK-NEXT:   (local.get $e)
+  ;; CHECK-NEXT:   (local.get $i)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test (export "export_tuple") (param $e externref) (param $i i32) (result externref (ref extern) i32)
+    (call $im (local.get $e) (local.get $i))
+  )
+)
+
+;; CHECK:      (func $test$export (type $1) (param $0 externref) (param $1 i32) (result externref (ref extern) i32)
+;; CHECK-NEXT:  (local $2 (tuple (ref null (shared i31)) (ref (shared i31)) i32))
+;; CHECK-NEXT:  (local.set $2
+;; CHECK-NEXT:   (call $test
+;; CHECK-NEXT:    (call $extern_to_index
+;; CHECK-NEXT:     (local.get $0)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:    (local.get $1)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (tuple.make 3
+;; CHECK-NEXT:   (call $index_to_extern
+;; CHECK-NEXT:    (tuple.extract 3 0
+;; CHECK-NEXT:     (local.get $2)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (ref.cast (ref extern)
+;; CHECK-NEXT:    (call $index_to_extern
+;; CHECK-NEXT:     (tuple.extract 3 1
+;; CHECK-NEXT:      (local.get $2)
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (tuple.extract 3 2
+;; CHECK-NEXT:    (local.get $2)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $extern_to_index (type $2) (param $0 externref) (result (ref null (shared i31)))
+;; CHECK-NEXT:  (local $1 i32)
+;; CHECK-NEXT:  (if (result (ref null (shared i31)))
+;; CHECK-NEXT:   (ref.is_null
+;; CHECK-NEXT:    (local.get $0)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (ref.null (shared none))
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (else
+;; CHECK-NEXT:    (if (result (ref (shared i31)))
+;; CHECK-NEXT:     (i32.ge_s
+;; CHECK-NEXT:      (local.tee $1
+;; CHECK-NEXT:       (table.grow $externs
+;; CHECK-NEXT:        (local.get $0)
+;; CHECK-NEXT:        (i32.const 1)
+;; CHECK-NEXT:       )
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:      (i32.const 0)
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:     (then
+;; CHECK-NEXT:      (ref.i31_shared
+;; CHECK-NEXT:       (local.get $1)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:     (else
+;; CHECK-NEXT:      (unreachable)
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $index_to_extern (type $3) (param $0 (ref null (shared i31))) (result externref)
+;; CHECK-NEXT:  (if (result externref)
+;; CHECK-NEXT:   (ref.is_null
+;; CHECK-NEXT:    (local.get $0)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (ref.null noextern)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (else
+;; CHECK-NEXT:    (table.get $externs
+;; CHECK-NEXT:     (i31.get_u
+;; CHECK-NEXT:      (local.get $0)
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+(module
+  ;; Convert between extern and any (nullable and non-nullable)
+  ;; CHECK:      (type $0 (func (param (ref null (shared i31))) (result (ref null (shared any)))))
+
+  ;; CHECK:      (type $1 (func (param (ref (shared i31))) (result (ref (shared any)))))
+
+  ;; CHECK:      (type $2 (func (param (ref null (shared any))) (result (ref null (shared i31)))))
+
+  ;; CHECK:      (type $3 (func (param (ref (shared any))) (result (ref (shared i31)))))
+
+  ;; CHECK:      (type $4 (func (param externref) (result (ref null (shared i31)))))
+
+  ;; CHECK:      (type $5 (func (param (ref null (shared i31))) (result externref)))
+
+  ;; CHECK:      (type $6 (func (param (ref null (shared any))) (result externref)))
+
+  ;; CHECK:      (type $7 (func (param externref) (result (ref null (shared any)))))
+
+  ;; CHECK:      (import "env" "any_to_extern" (func $any_to_extern (exact (type $6) (param (ref null (shared any))) (result externref))))
+
+  ;; CHECK:      (import "env" "extern_to_any" (func $extern_to_any (exact (type $7) (param externref) (result (ref null (shared any))))))
+
+  ;; CHECK:      (table $externs 0 externref)
+
+  ;; CHECK:      (func $any_convert_extern_nullable (type $0) (param $e (ref null (shared i31))) (result (ref null (shared any)))
+  ;; CHECK-NEXT:  (call $extern_to_any
+  ;; CHECK-NEXT:   (call $index_to_extern
+  ;; CHECK-NEXT:    (local.get $e)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $any_convert_extern_nullable (param $e externref) (result anyref)
+    (any.convert_extern (local.get $e))
+  )
+
+  ;; CHECK:      (func $any_convert_extern_non_nullable (type $1) (param $e (ref (shared i31))) (result (ref (shared any)))
+  ;; CHECK-NEXT:  (ref.as_non_null
+  ;; CHECK-NEXT:   (call $extern_to_any
+  ;; CHECK-NEXT:    (ref.cast (ref extern)
+  ;; CHECK-NEXT:     (call $index_to_extern
+  ;; CHECK-NEXT:      (local.get $e)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $any_convert_extern_non_nullable (param $e (ref extern)) (result (ref any))
+    (any.convert_extern (local.get $e))
+  )
+
+  ;; CHECK:      (func $extern_convert_any_nullable (type $2) (param $a (ref null (shared any))) (result (ref null (shared i31)))
+  ;; CHECK-NEXT:  (call $extern_to_index
+  ;; CHECK-NEXT:   (call $any_to_extern
+  ;; CHECK-NEXT:    (local.get $a)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $extern_convert_any_nullable (param $a anyref) (result externref)
+    (extern.convert_any (local.get $a))
+  )
+
+  ;; CHECK:      (func $extern_convert_any_non_nullable (type $3) (param $a (ref (shared any))) (result (ref (shared i31)))
+  ;; CHECK-NEXT:  (ref.as_non_null
+  ;; CHECK-NEXT:   (call $extern_to_index
+  ;; CHECK-NEXT:    (call $any_to_extern
+  ;; CHECK-NEXT:     (local.get $a)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $extern_convert_any_non_nullable (param $a (ref any)) (result (ref extern))
+    (extern.convert_any (local.get $a))
+  )
+)
+
+;; CHECK:      (func $extern_to_index (type $4) (param $0 externref) (result (ref null (shared i31)))
+;; CHECK-NEXT:  (local $1 i32)
+;; CHECK-NEXT:  (if (result (ref null (shared i31)))
+;; CHECK-NEXT:   (ref.is_null
+;; CHECK-NEXT:    (local.get $0)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (ref.null (shared none))
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (else
+;; CHECK-NEXT:    (if (result (ref (shared i31)))
+;; CHECK-NEXT:     (i32.ge_s
+;; CHECK-NEXT:      (local.tee $1
+;; CHECK-NEXT:       (table.grow $externs
+;; CHECK-NEXT:        (local.get $0)
+;; CHECK-NEXT:        (i32.const 1)
+;; CHECK-NEXT:       )
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:      (i32.const 0)
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:     (then
+;; CHECK-NEXT:      (ref.i31_shared
+;; CHECK-NEXT:       (local.get $1)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:     (else
+;; CHECK-NEXT:      (unreachable)
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $index_to_extern (type $5) (param $0 (ref null (shared i31))) (result externref)
+;; CHECK-NEXT:  (if (result externref)
+;; CHECK-NEXT:   (ref.is_null
+;; CHECK-NEXT:    (local.get $0)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (ref.null noextern)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (else
+;; CHECK-NEXT:    (table.get $externs
+;; CHECK-NEXT:     (i31.get_u
+;; CHECK-NEXT:      (local.get $0)
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+(module
+  ;; Re-export an imported function with externrefs.
+  (import "env" "import_and_export" (func $im (param externref) (result externref)))
+  (export "export_import" (func $im))
+)
+
+;; CHECK:      (type $0 (func (param externref) (result externref)))
+
+;; CHECK:      (type $1 (func (param (ref null (shared i31))) (result (ref null (shared i31)))))
+
+;; CHECK:      (type $2 (func (param externref) (result (ref null (shared i31)))))
+
+;; CHECK:      (type $3 (func (param (ref null (shared i31))) (result externref)))
+
+;; CHECK:      (import "env" "import_and_export" (func $im$import (type $0) (param externref) (result externref)))
+
+;; CHECK:      (table $externs 0 externref)
+
+;; CHECK:      (export "export_import" (func $im$export))
+
+;; CHECK:      (func $im (type $1) (param $0 (ref null (shared i31))) (result (ref null (shared i31)))
+;; CHECK-NEXT:  (call $extern_to_index
+;; CHECK-NEXT:   (call $im$import
+;; CHECK-NEXT:    (call $index_to_extern
+;; CHECK-NEXT:     (local.get $0)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $im$export (type $0) (param $0 externref) (result externref)
+;; CHECK-NEXT:  (call $index_to_extern
+;; CHECK-NEXT:   (call $im
+;; CHECK-NEXT:    (call $extern_to_index
+;; CHECK-NEXT:     (local.get $0)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $extern_to_index (type $2) (param $0 externref) (result (ref null (shared i31)))
+;; CHECK-NEXT:  (local $1 i32)
+;; CHECK-NEXT:  (if (result (ref null (shared i31)))
+;; CHECK-NEXT:   (ref.is_null
+;; CHECK-NEXT:    (local.get $0)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (ref.null (shared none))
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (else
+;; CHECK-NEXT:    (if (result (ref (shared i31)))
+;; CHECK-NEXT:     (i32.ge_s
+;; CHECK-NEXT:      (local.tee $1
+;; CHECK-NEXT:       (table.grow $externs
+;; CHECK-NEXT:        (local.get $0)
+;; CHECK-NEXT:        (i32.const 1)
+;; CHECK-NEXT:       )
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:      (i32.const 0)
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:     (then
+;; CHECK-NEXT:      (ref.i31_shared
+;; CHECK-NEXT:       (local.get $1)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:     (else
+;; CHECK-NEXT:      (unreachable)
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $index_to_extern (type $3) (param $0 (ref null (shared i31))) (result externref)
+;; CHECK-NEXT:  (if (result externref)
+;; CHECK-NEXT:   (ref.is_null
+;; CHECK-NEXT:    (local.get $0)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (ref.null noextern)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (else
+;; CHECK-NEXT:    (table.get $externs
+;; CHECK-NEXT:     (i31.get_u
+;; CHECK-NEXT:      (local.get $0)
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+(module
+  ;; Multiple exports of the same function are deduplicated.
+  ;; CHECK:      (type $0 (func (param (ref null (shared i31))) (result (ref null (shared i31)))))
+
+  ;; CHECK:      (type $1 (func (param externref) (result externref)))
+
+  ;; CHECK:      (type $2 (func (param externref) (result (ref null (shared i31)))))
+
+  ;; CHECK:      (type $3 (func (param (ref null (shared i31))) (result externref)))
+
+  ;; CHECK:      (table $externs 0 externref)
+
+  ;; CHECK:      (export "exp1" (func $multi$export))
+
+  ;; CHECK:      (export "exp2" (func $multi$export))
+
+  ;; CHECK:      (func $multi (type $0) (param $0 (ref null (shared i31))) (result (ref null (shared i31)))
+  ;; CHECK-NEXT:  (local.get $0)
+  ;; CHECK-NEXT: )
+  (func $multi (export "exp1") (export "exp2") (param externref) (result externref)
+    (local.get 0)
+  )
+)
+
+;; CHECK:      (func $multi$export (type $1) (param $0 externref) (result externref)
+;; CHECK-NEXT:  (call $index_to_extern
+;; CHECK-NEXT:   (call $multi
+;; CHECK-NEXT:    (call $extern_to_index
+;; CHECK-NEXT:     (local.get $0)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $extern_to_index (type $2) (param $0 externref) (result (ref null (shared i31)))
+;; CHECK-NEXT:  (local $1 i32)
+;; CHECK-NEXT:  (if (result (ref null (shared i31)))
+;; CHECK-NEXT:   (ref.is_null
+;; CHECK-NEXT:    (local.get $0)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (ref.null (shared none))
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (else
+;; CHECK-NEXT:    (if (result (ref (shared i31)))
+;; CHECK-NEXT:     (i32.ge_s
+;; CHECK-NEXT:      (local.tee $1
+;; CHECK-NEXT:       (table.grow $externs
+;; CHECK-NEXT:        (local.get $0)
+;; CHECK-NEXT:        (i32.const 1)
+;; CHECK-NEXT:       )
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:      (i32.const 0)
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:     (then
+;; CHECK-NEXT:      (ref.i31_shared
+;; CHECK-NEXT:       (local.get $1)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:     (else
+;; CHECK-NEXT:      (unreachable)
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $index_to_extern (type $3) (param $0 (ref null (shared i31))) (result externref)
+;; CHECK-NEXT:  (if (result externref)
+;; CHECK-NEXT:   (ref.is_null
+;; CHECK-NEXT:    (local.get $0)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (ref.null noextern)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (else
+;; CHECK-NEXT:    (table.get $externs
+;; CHECK-NEXT:     (i31.get_u
+;; CHECK-NEXT:      (local.get $0)
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+(module
+  ;; Tuple result without externrefs should not unpack and repack.
+  (import "env" "import_no_ext_tuple" (func $im_tuple (param externref) (result i32 i64)))
+  ;; CHECK:      (type $0 (func (param (ref null (shared i31))) (result i32 i64)))
+
+  ;; CHECK:      (type $1 (func (param externref) (result i32 i64)))
+
+  ;; CHECK:      (type $2 (func (param externref) (result (ref null (shared i31)))))
+
+  ;; CHECK:      (type $3 (func (param (ref null (shared i31))) (result externref)))
+
+  ;; CHECK:      (import "env" "import_no_ext_tuple" (func $im_tuple$import (type $1) (param externref) (result i32 i64)))
+
+  ;; CHECK:      (table $externs 0 externref)
+
+  ;; CHECK:      (export "export_no_ext_tuple" (func $test_no_ext_tuple$export))
+
+  ;; CHECK:      (func $im_tuple (type $0) (param $0 (ref null (shared i31))) (result i32 i64)
+  ;; CHECK-NEXT:  (call $im_tuple$import
+  ;; CHECK-NEXT:   (call $index_to_extern
+  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+
+  ;; CHECK:      (func $test_no_ext_tuple (type $0) (param $0 (ref null (shared i31))) (result i32 i64)
+  ;; CHECK-NEXT:  (call $im_tuple
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test_no_ext_tuple (export "export_no_ext_tuple") (param externref) (result i32 i64)
+    (call $im_tuple (local.get 0))
+  )
+)
+
+;; CHECK:      (func $test_no_ext_tuple$export (type $1) (param $0 externref) (result i32 i64)
+;; CHECK-NEXT:  (call $test_no_ext_tuple
+;; CHECK-NEXT:   (call $extern_to_index
+;; CHECK-NEXT:    (local.get $0)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $extern_to_index (type $2) (param $0 externref) (result (ref null (shared i31)))
+;; CHECK-NEXT:  (local $1 i32)
+;; CHECK-NEXT:  (if (result (ref null (shared i31)))
+;; CHECK-NEXT:   (ref.is_null
+;; CHECK-NEXT:    (local.get $0)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (ref.null (shared none))
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (else
+;; CHECK-NEXT:    (if (result (ref (shared i31)))
+;; CHECK-NEXT:     (i32.ge_s
+;; CHECK-NEXT:      (local.tee $1
+;; CHECK-NEXT:       (table.grow $externs
+;; CHECK-NEXT:        (local.get $0)
+;; CHECK-NEXT:        (i32.const 1)
+;; CHECK-NEXT:       )
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:      (i32.const 0)
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:     (then
+;; CHECK-NEXT:      (ref.i31_shared
+;; CHECK-NEXT:       (local.get $1)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:     (else
+;; CHECK-NEXT:      (unreachable)
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $index_to_extern (type $3) (param $0 (ref null (shared i31))) (result externref)
+;; CHECK-NEXT:  (if (result externref)
+;; CHECK-NEXT:   (ref.is_null
+;; CHECK-NEXT:    (local.get $0)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (ref.null noextern)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (else
+;; CHECK-NEXT:    (table.get $externs
+;; CHECK-NEXT:     (i31.get_u
+;; CHECK-NEXT:      (local.get $0)
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+(module
+  ;; Mixed struct and externref at boundary.
+  ;; CHECK:      (type $struct (shared (struct (field (mut i32)))))
+  (type $struct (struct (field (mut i32))))
+  (import "env" "import_mixed" (func $im_mixed (param (ref $struct) externref) (result (ref $struct) externref)))
+  ;; CHECK:      (type $1 (func (param (ref $struct) (ref null (shared i31))) (result (ref $struct) (ref null (shared i31)))))
+
+  ;; CHECK:      (type $2 (func (param (ref $struct) externref) (result (ref $struct) externref)))
+
+  ;; CHECK:      (type $3 (func (param externref) (result (ref null (shared i31)))))
+
+  ;; CHECK:      (type $4 (func (param (ref null (shared i31))) (result externref)))
+
+  ;; CHECK:      (type $5 (func (result (ref $struct) (ref null (shared i31)))))
+
+  ;; CHECK:      (type $6 (func (result (ref $struct) externref)))
+
+  ;; CHECK:      (import "env" "import_mixed" (func $im_mixed$import (type $2) (param (ref $struct) externref) (result (ref $struct) externref)))
+
+  ;; CHECK:      (table $externs 0 externref)
+
+  ;; CHECK:      (export "export_mixed" (func $test_mixed$export))
+
+  ;; CHECK:      (func $im_mixed (type $1) (param $0 (ref $struct)) (param $1 (ref null (shared i31))) (result (ref $struct) (ref null (shared i31)))
+  ;; CHECK-NEXT:  (local $2 (tuple (ref $struct) externref))
+  ;; CHECK-NEXT:  (local.set $2
+  ;; CHECK-NEXT:   (call $im_mixed$import
+  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:    (call $index_to_extern
+  ;; CHECK-NEXT:     (local.get $1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (tuple.make 2
+  ;; CHECK-NEXT:   (tuple.extract 2 0
+  ;; CHECK-NEXT:    (local.get $2)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (call $extern_to_index
+  ;; CHECK-NEXT:    (tuple.extract 2 1
+  ;; CHECK-NEXT:     (local.get $2)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+
+  ;; CHECK:      (func $test_mixed (type $1) (param $0 (ref $struct)) (param $1 (ref null (shared i31))) (result (ref $struct) (ref null (shared i31)))
+  ;; CHECK-NEXT:  (call $im_mixed
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:   (local.get $1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test_mixed (export "export_mixed") (param (ref $struct) externref) (result (ref $struct) externref)
+    (call $im_mixed (local.get 0) (local.get 1))
+  )
+)
+;; CHECK:      (func $test_mixed$export (type $2) (param $0 (ref $struct)) (param $1 externref) (result (ref $struct) externref)
+;; CHECK-NEXT:  (local $2 (tuple (ref $struct) (ref null (shared i31))))
+;; CHECK-NEXT:  (local.set $2
+;; CHECK-NEXT:   (call $test_mixed
+;; CHECK-NEXT:    (local.get $0)
+;; CHECK-NEXT:    (call $extern_to_index
+;; CHECK-NEXT:     (local.get $1)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (tuple.make 2
+;; CHECK-NEXT:   (tuple.extract 2 0
+;; CHECK-NEXT:    (local.get $2)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (call $index_to_extern
+;; CHECK-NEXT:    (tuple.extract 2 1
+;; CHECK-NEXT:     (local.get $2)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $extern_to_index (type $3) (param $0 externref) (result (ref null (shared i31)))
+;; CHECK-NEXT:  (local $1 i32)
+;; CHECK-NEXT:  (if (result (ref null (shared i31)))
+;; CHECK-NEXT:   (ref.is_null
+;; CHECK-NEXT:    (local.get $0)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (ref.null (shared none))
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (else
+;; CHECK-NEXT:    (if (result (ref (shared i31)))
+;; CHECK-NEXT:     (i32.ge_s
+;; CHECK-NEXT:      (local.tee $1
+;; CHECK-NEXT:       (table.grow $externs
+;; CHECK-NEXT:        (local.get $0)
+;; CHECK-NEXT:        (i32.const 1)
+;; CHECK-NEXT:       )
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:      (i32.const 0)
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:     (then
+;; CHECK-NEXT:      (ref.i31_shared
+;; CHECK-NEXT:       (local.get $1)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:     (else
+;; CHECK-NEXT:      (unreachable)
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $index_to_extern (type $4) (param $0 (ref null (shared i31))) (result externref)
+;; CHECK-NEXT:  (if (result externref)
+;; CHECK-NEXT:   (ref.is_null
+;; CHECK-NEXT:    (local.get $0)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (ref.null noextern)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (else
+;; CHECK-NEXT:    (table.get $externs
+;; CHECK-NEXT:     (i31.get_u
+;; CHECK-NEXT:      (local.get $0)
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
