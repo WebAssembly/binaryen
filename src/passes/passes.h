@@ -76,6 +76,7 @@ Pass* createInliningOptimizingPass();
 Pass* createJ2CLItableMergingPass();
 Pass* createJ2CLOptsPass();
 Pass* createLegalizeAndPruneJSInterfacePass();
+Pass* createJSPIHooksPass();
 Pass* createLegalizeJSInterfacePass();
 Pass* createLimitSegmentsPass();
 Pass* createLocalCSEPass();
