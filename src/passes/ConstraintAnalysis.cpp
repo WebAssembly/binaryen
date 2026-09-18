@@ -339,6 +339,30 @@ struct ConstraintAnalysis
     // If we make things unreachable, we must refinalize.
     bool refinalize = false;
 
+    // If we find local.gets that we can optimize, we queue those changes here
+    // (each item being currp, the pointer to the LocalGet, and then the value
+    // to replace it with). This order is useful for the following reason:
+    // consider a simple expression, like this,
+    //
+    //   (i32.eqz
+    //     (local.get $x)
+    //   )
+    //
+    // If we can infer that x is 42, and we do that first, then we end up with
+    // eqz of 42. That is something Precompute can handle, but not us - this
+    // pass only looks at constraints on locals. We do not lose any optimization
+    // power by leaving this to Precompute, but it is less efficient and may
+    // require more cycles; it is also less convenient for testing, as we must
+    // avoid inferring local.gets in order to fully test constraint
+    // optimization.
+    //
+    // Instead, we queue local.get changes here. If, say, we optimize that eqz,
+    // then the local.get change ends up unnoticable (it changes the Unary
+    // which was removed from the tree anyhow, which is not harmful aside from a
+    // tiny bit of wasted work, but that waste is less than waiting for
+    // Precompute).
+    std::vector<std::pair<Expression**, Expression*>> getOptimizations;
+
     for (auto& block : basicBlocks) {
       // Follow the general shape of flow(): we need to see what the state is
       // at each intermediate point inside the block. (Flowing between blocks is
@@ -350,8 +374,10 @@ struct ConstraintAnalysis
 #endif
         if (!constraints.unreachable) {
           applyToConstraints(*currp, constraints);
-          if (optimizeExpression(currp, constraints)) {
-            refinalize = true;
+          if (auto* rep = optimizeLocalGet(currp, constraints)) {
+            getOptimizations.emplace_back(currp, rep);
+          } else {
+            optimizeConstraint(currp, constraints);
           }
         } else {
           // This is unreachable code: just mark it so.
@@ -365,42 +391,53 @@ struct ConstraintAnalysis
       }
     }
 
+    // Apply local.get optimizations after all that.
+    for (auto& [currp, rep] : getOptimizations) {
+      auto oldType = (*currp)->type;
+      if (!Type::isSubType(rep->type, oldType)) {
+        // The value we know must exist here is impossible, which means it was
+        // cast in a way that traps at runtime. This code is unreachable.
+        rep = Builder(*getModule()).makeUnreachable();
+        refinalize = true;
+      } else if (rep->type != oldType) {
+        // We are refining.
+        refinalize = true;
+      }
+      *currp = rep;
+    }
+
     if (refinalize) {
       ReFinalize().walkFunctionInModule(getFunction(), getModule());
       EHUtils::handleBlockNestedPops(getFunction(), *getModule());
     }
   }
 
-  // Given an expression and the constraints on it, optimize it. Returns whether
-  // we changed types (which requires refinalization).
-  bool optimizeExpression(Expression** currp,
+  // Given an expression and the constraints on it, see if it is a local.get
+  // that we can optimize, and return the value to optimize to, if so.
+  Expression* optimizeLocalGet(Expression** currp,
+                          const BasicBlockConstraintMap& constraints) {
+    // A bare local.get can be optimized, if we know that local is a constant.
+    if (auto* get = (*currp)->dynCast<LocalGet>()) {
+      if (auto lit = constraints.get(get->index).getLiteral()) {
+        return Builder(*getModule()).makeConstantExpression(*lit);
+      }
+    }
+
+    return nullptr;
+  }
+
+  // Given an expression and the constraints on it, parse it into a constraint
+  // if we can, and optimize it.
+  void optimizeConstraint(Expression** currp,
                           const BasicBlockConstraintMap& constraints) {
     auto* curr = *currp;
-
-    if (auto* get = curr->dynCast<LocalGet>()) {
-      // A bare local.get can be optimized, if we know that local is a constant.
-      if (auto lit = constraints.get(get->index).getLiteral()) {
-        auto oldType = curr->type;
-        Builder builder(*getModule());
-        auto* rep = builder.makeConstantExpression(*lit);
-        if (!Type::isSubType(rep->type, oldType)) {
-          // The value we know must exist here is impossible, which means it was
-          // cast in a way that traps at runtime. This code is unreachable.
-          rep = builder.makeUnreachable();
-        }
-        auto changed = rep->type != oldType;
-        *currp = rep;
-        return changed;
-      }
-      return false;
-    }
 
     // Note that we don't need to try to parse a series of constraints with
     // ParsedAndedConstraints: if there is a tree of ANDed things, we will
     // simply optimize it as we walk it, each time handling one.
     auto parsed = LocalConstraint::parse(curr);
     if (!parsed) {
-      return false;
+      return;
     }
     if (!checkRelevancy(*parsed)) {
 #ifndef NDEBUG
@@ -409,14 +446,14 @@ struct ConstraintAnalysis
       // below on checkRelevancy.
       assert(originalActions.contains(curr));
 #endif
-      return false;
+      return;
     }
 
     auto result = constraints.proves(*parsed);
     if (result == Unknown) {
       // If we parsed something using two locals, like x != y, we can also look
       // for the flipped condition among y's constraints TODO
-      return false;
+      return;
     }
 
     // We know the result!
@@ -425,7 +462,7 @@ struct ConstraintAnalysis
       LiteralUtils::makeFromInt32(result == True ? 1 : 0, curr->type, wasm);
     *currp = getDroppedChildrenAndAppend(
       curr, wasm, getPassOptions(), value, DropMode::IgnoreParentEffects);
-    return false;
+    return;
   }
 
   // Given a predecessor and one of its successors, find new constraints that
