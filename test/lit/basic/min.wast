@@ -182,9 +182,9 @@
     )
   )
 )
-;; CHECK-BIN-NODEBUG:      (export "floats" (func $0))
+;; CHECK-BIN-NODEBUG:      (export "floats" (func $floats))
 
-;; CHECK-BIN-NODEBUG:      (func $0 (type $0) (param $0 f32) (result f32)
+;; CHECK-BIN-NODEBUG:      (func $floats (type $0) (param $0 f32) (result f32)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $1 f32)
 ;; CHECK-BIN-NODEBUG-NEXT:  (f32.add
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)

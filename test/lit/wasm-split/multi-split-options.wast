@@ -45,7 +45,7 @@
 
  ;; MOD1-OPTIONS:      (type $2 (func (result i32)))
 
- ;; MOD1-OPTIONS:      (import "custom_env" "%table" (table $timport$0 3 funcref))
+ ;; MOD1-OPTIONS:      (import "custom_env" "%table" (table $%table 3 funcref))
 
  ;; MOD1-OPTIONS:      (import "custom_env" "%trampoline_B" (func $trampoline_B (exact (result i64))))
 
@@ -77,7 +77,7 @@
 
  ;; MOD1-EMPTY:      (type $2 (func (result i32)))
 
- ;; MOD1-EMPTY:      (import "" "table" (table $timport$0 3 funcref))
+ ;; MOD1-EMPTY:      (import "" "table" (table $table 3 funcref))
 
  ;; MOD1-EMPTY:      (import "" "trampoline_B" (func $trampoline_B (exact (result i64))))
 
@@ -128,7 +128,7 @@
 
  ;; MOD2-OPTIONS:      (type $2 (func (result i64)))
 
- ;; MOD2-OPTIONS:      (import "custom_env" "%table" (table $timport$0 3 funcref))
+ ;; MOD2-OPTIONS:      (import "custom_env" "%table" (table $%table 3 funcref))
 
  ;; MOD2-OPTIONS:      (import "custom_env" "%trampoline_A" (func $trampoline_A (exact (result i32))))
 
@@ -160,7 +160,7 @@
 
  ;; MOD2-EMPTY:      (type $2 (func (result i64)))
 
- ;; MOD2-EMPTY:      (import "" "table" (table $timport$0 3 funcref))
+ ;; MOD2-EMPTY:      (import "" "table" (table $table 3 funcref))
 
  ;; MOD2-EMPTY:      (import "" "trampoline_A" (func $trampoline_A (exact (result i32))))
 
@@ -211,7 +211,7 @@
 
  ;; MOD3-OPTIONS:      (type $2 (func (result f32)))
 
- ;; MOD3-OPTIONS:      (import "custom_env" "%table" (table $timport$0 3 funcref))
+ ;; MOD3-OPTIONS:      (import "custom_env" "%table" (table $%table 3 funcref))
 
  ;; MOD3-OPTIONS:      (import "custom_env" "%trampoline_A" (func $trampoline_A (exact (result i32))))
 
@@ -243,7 +243,7 @@
 
  ;; MOD3-EMPTY:      (type $2 (func (result f32)))
 
- ;; MOD3-EMPTY:      (import "" "table" (table $timport$0 3 funcref))
+ ;; MOD3-EMPTY:      (import "" "table" (table $table 3 funcref))
 
  ;; MOD3-EMPTY:      (import "" "trampoline_A" (func $trampoline_A (exact (result i32))))
 
@@ -288,9 +288,9 @@
   (f32.const 0)
  )
 )
-;; PRIMARY-OPTIONS:      (table $0 3 funcref)
+;; PRIMARY-OPTIONS:      (table $%table 3 funcref)
 
-;; PRIMARY-OPTIONS:      (elem $0 (table $0) (i32.const 0) funcref (item (ref.null nofunc)) (item (ref.null nofunc)) (item (ref.null nofunc)))
+;; PRIMARY-OPTIONS:      (elem $0 (table $%table) (i32.const 0) funcref (item (ref.null nofunc)) (item (ref.null nofunc)) (item (ref.null nofunc)))
 
 ;; PRIMARY-OPTIONS:      (export "%trampoline_B" (func $trampoline_B))
 
@@ -298,7 +298,7 @@
 
 ;; PRIMARY-OPTIONS:      (export "%trampoline_A" (func $trampoline_A))
 
-;; PRIMARY-OPTIONS:      (export "%table" (table $0))
+;; PRIMARY-OPTIONS:      (export "%table" (table $%table))
 
 ;; PRIMARY-OPTIONS:      (func $trampoline_B (result i64)
 ;; PRIMARY-OPTIONS-NEXT:  (call_indirect (type $ret-i64)
@@ -324,7 +324,7 @@
 
 ;; PRIMARY-PLACEHOLDER-NAMESPACE:      (import "placeholder_env.1" "2" (func $placeholder_2 (result i32)))
 
-;; PRIMARY-PLACEHOLDER-NAMESPACE:      (table $0 3 funcref)
+;; PRIMARY-PLACEHOLDER-NAMESPACE:      (table $table 3 funcref)
 
 ;; PRIMARY-PLACEHOLDER-NAMESPACE:      (elem $0 (i32.const 0) $placeholder_0 $placeholder_1 $placeholder_2)
 
@@ -334,7 +334,7 @@
 
 ;; PRIMARY-PLACEHOLDER-NAMESPACE:      (export "trampoline_A" (func $trampoline_A))
 
-;; PRIMARY-PLACEHOLDER-NAMESPACE:      (export "table" (table $0))
+;; PRIMARY-PLACEHOLDER-NAMESPACE:      (export "table" (table $table))
 
 ;; PRIMARY-PLACEHOLDER-NAMESPACE:      (func $trampoline_B (result i64)
 ;; PRIMARY-PLACEHOLDER-NAMESPACE-NEXT:  (call_indirect (type $ret-i64)
@@ -360,7 +360,7 @@
 
 ;; PRIMARY-EMPTY:      (import ".1" "2" (func $placeholder_2 (result i32)))
 
-;; PRIMARY-EMPTY:      (table $0 3 funcref)
+;; PRIMARY-EMPTY:      (table $table 3 funcref)
 
 ;; PRIMARY-EMPTY:      (elem $0 (i32.const 0) $placeholder_0 $placeholder_1 $placeholder_2)
 
@@ -370,7 +370,7 @@
 
 ;; PRIMARY-EMPTY:      (export "trampoline_A" (func $trampoline_A))
 
-;; PRIMARY-EMPTY:      (export "table" (table $0))
+;; PRIMARY-EMPTY:      (export "table" (table $table))
 
 ;; PRIMARY-EMPTY:      (func $trampoline_B (result i64)
 ;; PRIMARY-EMPTY-NEXT:  (call_indirect (type $ret-i64)

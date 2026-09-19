@@ -2200,7 +2200,9 @@ void WasmBinaryReader::preScan() {
       throwError("Section extends beyond end of input");
     }
     auto oldPos = pos;
-    if (sectionCode == BinaryConsts::Section::Custom) {
+    if (sectionCode == BinaryConsts::Section::Export) {
+      readExportNames();
+    } else if (sectionCode == BinaryConsts::Section::Custom) {
       auto sectionName = getInlineString();
 
       if (sectionName == Annotations::BranchHint ||
@@ -2765,6 +2767,20 @@ getOrMakeName(const std::unordered_map<Index, Name>& nameMap,
   }
 }
 
+// For defined items, prefer non-empty export names over generated names.
+static std::pair<Name, bool>
+getOrMakeName(const std::unordered_map<Index, Name>& nameMap,
+              const std::unordered_map<Index, Name>& exportNames,
+              Index i,
+              Name name,
+              std::unordered_set<Name>& usedNames) {
+  if (auto it = exportNames.find(i);
+      it != exportNames.end() && !it->second.view().empty()) {
+    name = it->second;
+  }
+  return getOrMakeName(nameMap, i, name, usedNames);
+}
+
 void WasmBinaryReader::readMemories() {
   auto num = getU32LEB();
   auto numImports = wasm.memories.size();
@@ -2775,8 +2791,11 @@ void WasmBinaryReader::readMemories() {
     }
   }
   for (size_t i = 0; i < num; i++) {
-    auto [name, isExplicit] = getOrMakeName(
-      memoryNames, numImports + i, makeName("", i), usedMemoryNames);
+    auto [name, isExplicit] = getOrMakeName(memoryNames,
+                                            memoryExportNames,
+                                            numImports + i,
+                                            makeName("", i),
+                                            usedMemoryNames);
     auto memory = Builder::makeMemory(name);
     memory->hasExplicitName = isExplicit;
     getResizableLimits(memory->initial,
@@ -3117,11 +3136,11 @@ void WasmBinaryReader::getResizableLimits(Address& initial,
 }
 
 void WasmBinaryReader::addImport(std::unique_ptr<Function> func) {
-  auto [name, isExplicit] =
-    getOrMakeName(functionNames,
-                  wasm.functions.size(),
-                  makeName("fimport$", wasm.functions.size()),
-                  usedFunctionNames);
+  auto [name, isExplicit] = getOrMakeName(
+    functionNames,
+    wasm.functions.size(),
+    func->base ? func->base : makeName("fimport$", wasm.functions.size()),
+    usedFunctionNames);
   func->name = name;
   func->hasExplicitName = isExplicit;
   functionTypes.push_back(func->type.getHeapType());
@@ -3130,44 +3149,44 @@ void WasmBinaryReader::addImport(std::unique_ptr<Function> func) {
 }
 
 void WasmBinaryReader::addImport(std::unique_ptr<Table> table) {
-  auto [name, isExplicit] =
-    getOrMakeName(tableNames,
-                  wasm.tables.size(),
-                  makeName("timport$", wasm.tables.size()),
-                  usedTableNames);
+  auto [name, isExplicit] = getOrMakeName(
+    tableNames,
+    wasm.tables.size(),
+    table->base ? table->base : makeName("timport$", wasm.tables.size()),
+    usedTableNames);
   table->name = name;
   table->hasExplicitName = isExplicit;
   wasm.addTable(std::move(table));
 }
 
 void WasmBinaryReader::addImport(std::unique_ptr<Memory> memory) {
-  auto [name, isExplicit] =
-    getOrMakeName(memoryNames,
-                  wasm.memories.size(),
-                  makeName("mimport$", wasm.memories.size()),
-                  usedMemoryNames);
+  auto [name, isExplicit] = getOrMakeName(
+    memoryNames,
+    wasm.memories.size(),
+    memory->base ? memory->base : makeName("mimport$", wasm.memories.size()),
+    usedMemoryNames);
   memory->name = name;
   memory->hasExplicitName = isExplicit;
   wasm.addMemory(std::move(memory));
 }
 
 void WasmBinaryReader::addImport(std::unique_ptr<Global> global) {
-  auto [name, isExplicit] =
-    getOrMakeName(globalNames,
-                  wasm.globals.size(),
-                  makeName("gimport$", wasm.globals.size()),
-                  usedGlobalNames);
+  auto [name, isExplicit] = getOrMakeName(
+    globalNames,
+    wasm.globals.size(),
+    global->base ? global->base : makeName("gimport$", wasm.globals.size()),
+    usedGlobalNames);
   global->name = name;
   global->hasExplicitName = isExplicit;
   wasm.addGlobal(std::move(global));
 }
 
 void WasmBinaryReader::addImport(std::unique_ptr<Tag> tag) {
-  auto [name, isExplicit] =
-    getOrMakeName(tagNames,
-                  wasm.tags.size(),
-                  makeName("eimport$", wasm.tags.size()),
-                  usedTagNames);
+  auto [name, isExplicit] = getOrMakeName(
+    tagNames,
+    wasm.tags.size(),
+    tag->base ? tag->base : makeName("eimport$", wasm.tags.size()),
+    usedTagNames);
   tag->name = name;
   tag->hasExplicitName = isExplicit;
   wasm.addTag(std::move(tag));
@@ -3377,8 +3396,11 @@ void WasmBinaryReader::readFunctionSignatures() {
     }
   }
   for (size_t i = 0; i < num; i++) {
-    auto [name, isExplicit] = getOrMakeName(
-      functionNames, numImports + i, makeName("", i), usedFunctionNames);
+    auto [name, isExplicit] = getOrMakeName(functionNames,
+                                            functionExportNames,
+                                            numImports + i,
+                                            makeName("", i),
+                                            usedFunctionNames);
     auto index = getU32LEB();
     HeapType type = getTypeByIndex(index);
     functionTypes.push_back(type);
@@ -5079,6 +5101,34 @@ Result<> WasmBinaryReader::readInst() {
   return Err{"unknown operation " + std::to_string(code)};
 }
 
+void WasmBinaryReader::readExportNames() {
+  auto num = getU32LEB();
+  for (size_t i = 0; i < num; i++) {
+    auto name = getInlineString();
+    auto kind = getU32LEB();
+    auto index = getU32LEB();
+    switch (kind) {
+      case ExternalKind::Function:
+        functionExportNames.try_emplace(index, name);
+        break;
+      case ExternalKind::Table:
+        tableExportNames.try_emplace(index, name);
+        break;
+      case ExternalKind::Memory:
+        memoryExportNames.try_emplace(index, name);
+        break;
+      case ExternalKind::Global:
+        globalExportNames.try_emplace(index, name);
+        break;
+      case ExternalKind::Tag:
+        tagExportNames.try_emplace(index, name);
+        break;
+      default:
+        break;
+    }
+  }
+}
+
 void WasmBinaryReader::readExports() {
   size_t num = getU32LEB();
   std::unordered_set<Name> names;
@@ -5171,8 +5221,11 @@ void WasmBinaryReader::readGlobals() {
     }
   }
   for (size_t i = 0; i < num; i++) {
-    auto [name, isExplicit] = getOrMakeName(
-      globalNames, numImports + i, makeName("global$", i), usedGlobalNames);
+    auto [name, isExplicit] = getOrMakeName(globalNames,
+                                            globalExportNames,
+                                            numImports + i,
+                                            makeName("global$", i),
+                                            usedGlobalNames);
     auto type = getConcreteType();
     auto mutable_ = getU32LEB();
     if (mutable_ & ~1) {
@@ -5267,8 +5320,11 @@ void WasmBinaryReader::readTableDeclarations() {
     }
   }
   for (size_t i = 0; i < num; i++) {
-    auto [name, isExplicit] = getOrMakeName(
-      tableNames, numImports + i, makeName("", i), usedTableNames);
+    auto [name, isExplicit] = getOrMakeName(tableNames,
+                                            tableExportNames,
+                                            numImports + i,
+                                            makeName("", i),
+                                            usedTableNames);
     bool hasInit = false;
     if (peekInt8() == BinaryConsts::HasTableInitializer) {
       // Skip past the peeked byte.
@@ -5409,8 +5465,11 @@ void WasmBinaryReader::readTags() {
   }
   for (size_t i = 0; i < num; i++) {
     getInt8(); // Reserved 'attribute' field
-    auto [name, isExplicit] = getOrMakeName(
-      tagNames, numImports + i, makeName("tag$", i), usedTagNames);
+    auto [name, isExplicit] = getOrMakeName(tagNames,
+                                            tagExportNames,
+                                            numImports + i,
+                                            makeName("tag$", i),
+                                            usedTagNames);
     auto typeIndex = getU32LEB();
     auto tag = Builder::makeTag(name, getSignatureByTypeIndex(typeIndex));
     tag->hasExplicitName = isExplicit;
