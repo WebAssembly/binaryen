@@ -96,7 +96,7 @@ export class TypeBuilder {
 	 * @param elementPackedType packed type of elements
 	 * @param elementMutable are array entries mutable?
 	 */
-	setArrayType(index: number, elementType: Type, elementPackedType: Type, elementMutable: boolean): void {
+	setArrayType(index: number, elementType: Type, elementPackedType: PackedType, elementMutable: boolean): void {
 		BinaryenObj["_TypeBuilderSetArrayType"](this.#ptr, index, elementType, elementPackedType, elementMutable);
 	}
 
@@ -133,7 +133,7 @@ export class TypeBuilder {
 	 * @param index the index of the type to set
 	 * @param superType the supertype
 	 */
-	setSubType(index: number, superType: Type): void {
+	setSubType(index: number, superType: HeapType): void {
 		BinaryenObj["_TypeBuilderSetSubType"](this.#ptr, index, superType);
 	}
 
