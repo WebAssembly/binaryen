@@ -17,12 +17,14 @@ import argparse
 import difflib
 import fnmatch
 import glob
+import io
 import os
 import shutil
 import stat
 import subprocess
 import sys
 from contextlib import contextmanager
+from multiprocessing.pool import ThreadPool
 from pathlib import Path
 
 # The C++ standard whose features are required to build Binaryen.
@@ -126,6 +128,63 @@ def verbose_log(*args, **kwargs):
         print(*args, **kwargs)
 
 
+@contextmanager
+def red_output(file=sys.stderr):
+    print("\033[31m", end="", file=file)
+    try:
+        yield
+    finally:
+        print("\033[0m", end="", file=file)
+
+
+def red_stderr():
+    return red_output(file=sys.stderr)
+
+
+def run_parallel_tests(run_one_test_func, tests, show_worker_count=True):
+    global num_failures
+    tests = list(tests)
+    if not tests:
+        return
+    worker_count = min(os.cpu_count() or 1, len(tests))
+    if show_worker_count:
+        print(f"Running with {worker_count} workers")
+
+    def run_test_with_wrapped_stdout(test):
+        out = io.StringIO()
+        try:
+            run_one_test_func(test, stdout=out)
+        except Exception as e:
+            print(e, file=out)
+            return False, out.getvalue()
+        return True, out.getvalue()
+
+    failed_stdouts = []
+    with ThreadPool(processes=worker_count) as pool:
+        try:
+            for success, stdout in pool.imap_unordered(run_test_with_wrapped_stdout, tests):
+                if success:
+                    print(stdout, end="")
+                    continue
+
+                num_failures += 1
+                failed_stdouts.append(stdout)
+                if options.abort_on_first_failure:
+                    with red_stderr():
+                        print("Aborted test execution after first failure. Set --no-fail-fast to disable this.", file=sys.stderr)
+                    break
+        except KeyboardInterrupt:
+            # Hard exit to avoid threads continuing to run after Ctrl-C.
+            # There's no concern of deadlocking during shutdown here.
+            os._exit(1)
+
+    if failed_stdouts:
+        with red_stderr():
+            print("Failed tests:", file=sys.stderr)
+            for failed in failed_stdouts:
+                print(failed, end="", file=sys.stderr)
+
+
 # setup
 
 # Locate Binaryen source directory if not specified.
@@ -157,7 +216,8 @@ if not any(os.path.isfile(os.path.join(options.binaryen_bin, f))
 options.binaryen_test = os.path.join(options.binaryen_root, 'test')
 
 if not options.out_dir:
-    options.out_dir = os.path.join(options.binaryen_root, 'out', 'test')
+    default_out_dir = os.path.join(options.binaryen_root, 'out', 'test')
+    options.out_dir = os.environ.get('BINARYEN_OUT_DIR', default_out_dir)
 
 if not os.path.exists(options.out_dir):
     os.makedirs(options.out_dir)
@@ -498,6 +558,12 @@ def binary_format_check(wast, verify_final_result=True, base_name=None, stdout=N
         fail_if_not_identical_to_file(actual, wast + '.fromBinary')
 
     return disassembled_file
+
+
+def pass_debug_env():
+    env = os.environ.copy()
+    env['BINARYEN_PASS_DEBUG'] = '1'
+    return env
 
 
 @contextmanager

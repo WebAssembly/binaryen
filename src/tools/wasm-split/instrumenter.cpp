@@ -178,7 +178,7 @@ void Instrumenter::instrumentFuncs() {
 // instrumented and the module that is being split are different. The timestamps
 // are non-zero for functions that were called during the instrumented run and 0
 // otherwise. Functions with smaller non-zero timestamps were called earlier in
-// the instrumented run than funtions with larger timestamps.
+// the instrumented run than functions with larger timestamps.
 
 void Instrumenter::addProfileExport(size_t numFuncs) {
   // Calculate the size of the profile:

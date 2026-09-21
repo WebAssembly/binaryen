@@ -236,7 +236,7 @@ static bool hasDeadCode(Block* block) {
 }
 
 // Given a dropped block, see if we can simplify it by optimizing the drop into
-// the block, removing the return value while doin so. Returns whether we
+// the block, removing the return value while doing so. Returns whether we
 // succeeded.
 static bool optimizeDroppedBlock(Drop* drop,
                                  Block* block,

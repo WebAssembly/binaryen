@@ -794,7 +794,7 @@
         (local.set $x (i32.const 1))
       )
     )
-    ;; The innermost try delegates to $l1, which in turn delgates to $l0, whose
+    ;; The innermost try delegates to $l1, which in turn delegates to $l0, whose
     ;; catch_all runs the same local.set. So this can be dropped.
     (local.set $x (i32.const 1))
   )

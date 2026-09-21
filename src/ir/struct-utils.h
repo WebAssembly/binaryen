@@ -248,6 +248,19 @@ struct StructScanner : public WalkerPass<PostWalker<SubType>> {
                     functionSetGetInfos[this->getFunction()][ht][index]);
   }
 
+  void visitStructWait(StructWait* curr) {
+    auto type = curr->ref->type;
+    if (type == Type::unreachable || type.isNull()) {
+      return;
+    }
+
+    auto ht = std::make_pair(type.getHeapType(), type.getExactness());
+    auto index = curr->index;
+    self().noteRead(type.getHeapType(),
+                    index,
+                    functionSetGetInfos[this->getFunction()][ht][index]);
+  }
+
   void visitStructRMW(StructRMW* curr) {
     auto type = curr->ref->type;
     if (type == Type::unreachable || type.isNull()) {
@@ -286,6 +299,8 @@ struct StructScanner : public WalkerPass<PostWalker<SubType>> {
     self().noteRead(heapType, index, info);
     noteExpressionOrCopy(curr->replacement, type, index, info);
   }
+
+  // TODO: visitStructWait
 
   void visitRefCast(RefCast* curr) {
     if (curr->desc) {

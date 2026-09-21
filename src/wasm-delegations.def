@@ -122,5 +122,6 @@ DELEGATE(WideIntAddSub);
 DELEGATE(WideIntMul);
 DELEGATE(WaitqueueNew);
 DELEGATE(WaitqueueNotify);
+DELEGATE(Publish);
 
 #undef DELEGATE

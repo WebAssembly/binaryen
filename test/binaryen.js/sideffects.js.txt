@@ -14,4 +14,5 @@ SideEffects.IsAtomic=2048
 SideEffects.Throws=4096
 SideEffects.DanglingPop=8192
 SideEffects.TrapsNeverHappen=16384
-SideEffects.Any=32767
+SideEffects.Suspends=32768
+SideEffects.Any=65535

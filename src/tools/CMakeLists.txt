@@ -1,6 +1,7 @@
 include_directories(fuzzing)
 FILE(GLOB fuzzing_HEADERS fuzzing/*h)
 set(fuzzing_SOURCES
+  fuzzing/fuzz-stats.cpp
   fuzzing/fuzzing.cpp
   fuzzing/heap-types.cpp
   fuzzing/parameters.cpp

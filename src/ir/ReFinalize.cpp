@@ -170,6 +170,7 @@ void ReFinalize::visitWaitqueueNew(WaitqueueNew* curr) { curr->finalize(); }
 void ReFinalize::visitWaitqueueNotify(WaitqueueNotify* curr) {
   curr->finalize();
 }
+void ReFinalize::visitPublish(Publish* curr) { curr->finalize(); }
 void ReFinalize::visitArrayNew(ArrayNew* curr) { curr->finalize(); }
 void ReFinalize::visitArrayNewData(ArrayNewData* curr) { curr->finalize(); }
 void ReFinalize::visitArrayNewElem(ArrayNewElem* curr) { curr->finalize(); }

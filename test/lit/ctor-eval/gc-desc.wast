@@ -6,8 +6,8 @@
     ;; CHECK:      (rec
     ;; CHECK-NEXT:  (type $struct (sub (descriptor $desc) (struct)))
     (type $struct (sub (descriptor $desc) (struct)))
-    ;; CHECK:       (type $desc (describes $struct) (struct))
-    (type $desc (describes $struct) (struct))
+    ;; CHECK:       (type $desc (sub (describes $struct) (struct)))
+    (type $desc (sub (describes $struct) (struct)))
   )
   ;; CHECK:      (type $2 (func))
 

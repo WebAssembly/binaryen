@@ -260,6 +260,7 @@ public:
   Result<> makeStructWait(HeapType type, Index index);
   Result<> makeWaitqueueNew();
   Result<> makeWaitqueueNotify();
+  Result<> makePublish();
   Result<> makeArrayNew(HeapType type);
   Result<> makeArrayNewDefault(HeapType type);
   Result<> makeArrayNewData(HeapType type, Name data);

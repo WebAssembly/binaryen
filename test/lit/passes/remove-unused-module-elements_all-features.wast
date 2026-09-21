@@ -572,7 +572,7 @@
   )
  )
 )
-(module ;; the function uses the table, but all are removeable
+(module ;; the function uses the table, but all are removable
  (type $0 (func (param f64) (result f64)))
  (table 6 6 funcref)
  (func $0 (; 0 ;) (type $0) (param $var$0 f64) (result f64)

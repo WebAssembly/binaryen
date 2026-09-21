@@ -112,6 +112,8 @@ BINARYEN_API BinaryenType BinaryenTypeStringref(void);
 BINARYEN_API BinaryenType BinaryenTypeNullref(void);
 BINARYEN_API BinaryenType BinaryenTypeNullExternref(void);
 BINARYEN_API BinaryenType BinaryenTypeNullFuncref(void);
+BINARYEN_API BinaryenType BinaryenTypeExnref(void);
+BINARYEN_API BinaryenType BinaryenTypeNullExnref(void);
 BINARYEN_API BinaryenType BinaryenTypeUnreachable(void);
 // Not a real type. Used as the last parameter to BinaryenBlock to let
 // the API figure out the type instead of providing one.
@@ -151,6 +153,8 @@ BINARYEN_API BinaryenHeapType BinaryenHeapTypeString(void);
 BINARYEN_API BinaryenHeapType BinaryenHeapTypeNone(void);
 BINARYEN_API BinaryenHeapType BinaryenHeapTypeNoext(void);
 BINARYEN_API BinaryenHeapType BinaryenHeapTypeNofunc(void);
+BINARYEN_API BinaryenHeapType BinaryenHeapTypeExn(void);
+BINARYEN_API BinaryenHeapType BinaryenHeapTypeNoexn(void);
 
 BINARYEN_API bool BinaryenHeapTypeIsBasic(BinaryenHeapType heapType);
 BINARYEN_API bool BinaryenHeapTypeIsSignature(BinaryenHeapType heapType);
@@ -1037,6 +1041,14 @@ BinaryenTry(BinaryenModuleRef module,
             BinaryenExpressionRef* catchBodies,
             BinaryenIndex numCatchBodies,
             const char* delegateTarget);
+// TryTable: catch tag names may be NULL to denote catch_all or catch_all_ref.
+// catchRefs[i] is true if the i-th catch is catch_ref or catch_all_ref.
+BINARYEN_API BinaryenExpressionRef BinaryenTryTable(BinaryenModuleRef module,
+                                                    BinaryenExpressionRef body,
+                                                    const char** catchTags,
+                                                    const char** catchDests,
+                                                    const bool* catchRefs,
+                                                    BinaryenIndex numCatches);
 BINARYEN_API BinaryenExpressionRef
 BinaryenThrow(BinaryenModuleRef module,
               const char* tag,
@@ -1044,6 +1056,8 @@ BinaryenThrow(BinaryenModuleRef module,
               BinaryenIndex numOperands);
 BINARYEN_API BinaryenExpressionRef BinaryenRethrow(BinaryenModuleRef module,
                                                    const char* target);
+BINARYEN_API BinaryenExpressionRef
+BinaryenThrowRef(BinaryenModuleRef module, BinaryenExpressionRef exnref);
 BINARYEN_API BinaryenExpressionRef
 BinaryenTupleMake(BinaryenModuleRef module,
                   BinaryenExpressionRef* operands,
@@ -1110,6 +1124,8 @@ BINARYEN_API BinaryenExpressionRef
 BinaryenWaitqueueNotify(BinaryenModuleRef module,
                         BinaryenExpressionRef waitqueue,
                         BinaryenExpressionRef count);
+BINARYEN_API BinaryenExpressionRef BinaryenPublish(BinaryenModuleRef module,
+                                                   BinaryenExpressionRef ref);
 BINARYEN_API BinaryenExpressionRef BinaryenArrayNew(BinaryenModuleRef module,
                                                     BinaryenHeapType type,
                                                     BinaryenExpressionRef size,
@@ -2362,6 +2378,79 @@ BINARYEN_API void BinaryenTrySetDelegateTarget(BinaryenExpressionRef expr,
 // Gets whether a `try` expression is a try-delegate.
 BINARYEN_API bool BinaryenTryIsDelegate(BinaryenExpressionRef expr);
 
+// TryTable
+
+// Gets the body expression of a `try_table` expression.
+BINARYEN_API BinaryenExpressionRef
+BinaryenTryTableGetBody(BinaryenExpressionRef expr);
+// Sets the body expression of a `try_table` expression.
+BINARYEN_API void BinaryenTryTableSetBody(BinaryenExpressionRef expr,
+                                          BinaryenExpressionRef bodyExpr);
+// Gets the number of catch clauses of a `try_table` expression.
+BINARYEN_API BinaryenIndex
+BinaryenTryTableGetNumCatches(BinaryenExpressionRef expr);
+// Gets the catch tag at the specified index of a `try_table` expression. Empty
+// (NULL) for catch_all and catch_all_ref clauses.
+BINARYEN_API const char*
+BinaryenTryTableGetCatchTagAt(BinaryenExpressionRef expr, BinaryenIndex index);
+// Sets the catch tag at the specified index of a `try_table` expression, along
+// with the clause's new sent type. Pass NULL for catch_all/catch_all_ref
+// clauses.
+BINARYEN_API void BinaryenTryTableSetCatchTagAt(BinaryenExpressionRef expr,
+                                                BinaryenIndex index,
+                                                const char* catchTag,
+                                                BinaryenType sentType);
+// Gets the catch destination label at the specified index of a `try_table`
+// expression.
+BINARYEN_API const char*
+BinaryenTryTableGetCatchDestAt(BinaryenExpressionRef expr, BinaryenIndex index);
+// Sets the catch destination label at the specified index of a `try_table`
+// expression.
+BINARYEN_API void BinaryenTryTableSetCatchDestAt(BinaryenExpressionRef expr,
+                                                 BinaryenIndex index,
+                                                 const char* catchDest);
+// Gets whether the catch clause at the specified index of a `try_table`
+// expression is a `catch_ref` or `catch_all_ref` clause (passes the exnref).
+BINARYEN_API bool BinaryenTryTableIsCatchRefAt(BinaryenExpressionRef expr,
+                                               BinaryenIndex index);
+// Sets whether the catch clause at the specified index of a `try_table`
+// expression is a `catch_ref`/`catch_all_ref` clause, along with the clause's
+// new sent type.
+BINARYEN_API void BinaryenTryTableSetCatchRefAt(BinaryenExpressionRef expr,
+                                                BinaryenIndex index,
+                                                bool catchRef,
+                                                BinaryenType sentType);
+// Gets the type of the values the catch clause at the specified index of a
+// `try_table` expression sends to its destination: the catch tag's params,
+// followed by a non-nullable exnref for `catch_ref`/`catch_all_ref` clauses, or
+// none if the clause sends nothing.
+BINARYEN_API BinaryenType
+BinaryenTryTableGetSentTypeAt(BinaryenExpressionRef expr, BinaryenIndex index);
+// Appends a catch clause to a `try_table` expression, returning its insertion
+// index. Pass NULL for `catchTag` for catch_all/catch_all_ref.
+BINARYEN_API BinaryenIndex
+BinaryenTryTableAppendCatch(BinaryenExpressionRef expr,
+                            const char* catchTag,
+                            const char* catchDest,
+                            bool catchRef,
+                            BinaryenType sentType);
+// Inserts a catch clause at the specified index of a `try_table` expression,
+// moving existing clauses including the one previously at that index one
+// index up.
+BINARYEN_API void BinaryenTryTableInsertCatchAt(BinaryenExpressionRef expr,
+                                                BinaryenIndex index,
+                                                const char* catchTag,
+                                                const char* catchDest,
+                                                bool catchRef,
+                                                BinaryenType sentType);
+// Removes the catch clause at the specified index of a `try_table` expression,
+// moving all subsequent clauses one index down. Returns the removed clause's
+// destination label.
+BINARYEN_API const char*
+BinaryenTryTableRemoveCatchAt(BinaryenExpressionRef expr, BinaryenIndex index);
+// Gets whether a `try_table` expression has a catch_all/catch_all_ref clause.
+BINARYEN_API bool BinaryenTryTableHasCatchAll(BinaryenExpressionRef expr);
+
 // Throw
 
 // Gets the name of the tag being thrown by a `throw` expression.
@@ -2403,6 +2492,15 @@ BINARYEN_API const char* BinaryenRethrowGetTarget(BinaryenExpressionRef expr);
 // Sets the target catch's corresponding try label of a `rethrow` expression.
 BINARYEN_API void BinaryenRethrowSetTarget(BinaryenExpressionRef expr,
                                            const char* target);
+
+// ThrowRef
+
+// Gets the exnref operand of a `throw_ref` expression.
+BINARYEN_API BinaryenExpressionRef
+BinaryenThrowRefGetExnref(BinaryenExpressionRef expr);
+// Sets the exnref operand of a `throw_ref` expression.
+BINARYEN_API void BinaryenThrowRefSetExnref(BinaryenExpressionRef expr,
+                                            BinaryenExpressionRef exnrefExpr);
 
 // TupleMake
 
@@ -2617,6 +2715,13 @@ BinaryenWaitqueueNotifyGetCount(BinaryenExpressionRef expr);
 BINARYEN_API void
 BinaryenWaitqueueNotifySetCount(BinaryenExpressionRef expr,
                                 BinaryenExpressionRef countExpr);
+
+// Publish
+
+BINARYEN_API BinaryenExpressionRef
+BinaryenPublishGetRef(BinaryenExpressionRef expr);
+BINARYEN_API void BinaryenPublishSetRef(BinaryenExpressionRef expr,
+                                        BinaryenExpressionRef refExpr);
 
 // ArrayNew
 
@@ -3669,6 +3774,7 @@ BINARYEN_API BinaryenSideEffects BinaryenSideEffectTrapsNeverHappen(void);
 BINARYEN_API BinaryenSideEffects BinaryenSideEffectIsAtomic(void);
 BINARYEN_API BinaryenSideEffects BinaryenSideEffectThrows(void);
 BINARYEN_API BinaryenSideEffects BinaryenSideEffectDanglingPop(void);
+BINARYEN_API BinaryenSideEffects BinaryenSideEffectSuspends(void);
 BINARYEN_API BinaryenSideEffects BinaryenSideEffectAny(void);
 
 BINARYEN_API BinaryenSideEffects BinaryenExpressionGetSideEffects(
@@ -3724,10 +3830,10 @@ BINARYEN_API void RelooperAddBranchForSwitch(RelooperBlockRef from,
                                              BinaryenIndex numIndexes,
                                              BinaryenExpressionRef code);
 
-// Generate structed wasm control flow from the CFG of blocks and branches that
-// were created on this relooper instance. This returns the rendered output, and
-// also disposes of the relooper and its blocks and branches, as they are no
-// longer needed.
+// Generate structured wasm control flow from the CFG of blocks and branches
+// that were created on this relooper instance. This returns the rendered
+// output, and also disposes of the relooper and its blocks and branches, as
+// they are no longer needed.
 // @param labelHelper To render irreducible control flow, we may need a helper
 //        variable to guide us to the right target label. This value should be
 //        an index of an i32 local variable that is free for us to use.

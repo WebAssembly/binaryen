@@ -570,6 +570,7 @@ public:
   void visitStructWait(StructWait* curr);
   void visitWaitqueueNew(WaitqueueNew* curr);
   void visitWaitqueueNotify(WaitqueueNotify* curr);
+  void visitPublish(Publish* curr);
   void visitStringNew(StringNew* curr);
   void visitStringConst(StringConst* curr);
   void visitStringMeasure(StringMeasure* curr);
@@ -2627,7 +2628,7 @@ void FunctionValidator::visitRefAs(RefAs* curr) {
     case AnyConvertExtern: {
       shouldBeTrue(getModule()->features.hasGC(),
                    curr,
-                   "any.convert_extern requries GC [--enable-gc]");
+                   "any.convert_extern requires GC [--enable-gc]");
       if (curr->type == Type::unreachable) {
         return;
       }
@@ -2641,7 +2642,7 @@ void FunctionValidator::visitRefAs(RefAs* curr) {
     case ExternConvertAny: {
       shouldBeTrue(getModule()->features.hasGC(),
                    curr,
-                   "extern.convert_any requries GC [--enable-gc]");
+                   "extern.convert_any requires GC [--enable-gc]");
       if (curr->type == Type::unreachable) {
         return;
       }
@@ -3762,6 +3763,26 @@ void FunctionValidator::visitWaitqueueNotify(WaitqueueNotify* curr) {
                                     Type(Type::BasicType::i32),
                                     curr,
                                     "waitqueue.notify count must be an i32");
+}
+
+void FunctionValidator::visitPublish(Publish* curr) {
+  shouldBeTrue(
+    !getModule() || getModule()->features.hasSharedEverything(),
+    curr,
+    "publish requires shared-everything [--enable-shared-everything]");
+
+  shouldBeTrue(curr->ref->type == Type::unreachable || curr->ref->type.isRef(),
+               curr->ref,
+               "publish's argument should be a reference type");
+
+  if (curr->ref->type == Type::unreachable) {
+    shouldBeEqual(curr->type,
+                  Type(Type::unreachable),
+                  curr,
+                  "unreachable publish value must have unreachable type");
+  } else {
+    shouldBeEqual(curr->ref->type, curr->type, curr, "bad publish type");
+  }
 }
 
 void FunctionValidator::visitArrayNew(ArrayNew* curr) {
@@ -5170,7 +5191,7 @@ void validateGlobals(Module& module, ValidationInfo& info) {
     }
     FunctionValidator(module, &info).validate(curr->init);
     // If GC is enabled (which means globals can refer to other non-imported
-    // globals), check that globals only refer to preceeding globals.
+    // globals), check that globals only refer to preceding globals.
     if (module.features.hasGC() && curr->init) {
       for (auto* get : FindAll<GlobalGet>(curr->init).list) {
         auto* global = module.getGlobalOrNull(get->name);

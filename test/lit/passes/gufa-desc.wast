@@ -87,7 +87,7 @@
   ;; CHECK-NEXT: )
   (func $struct (export "struct")
     ;; Show we don't disrupt normal struct field inference. Field 1 is
-    ;; particuarly interesting as we represent descriptors as field -1
+    ;; particularly interesting as we represent descriptors as field -1
     ;; internally.
     (drop
       (struct.get $struct 0

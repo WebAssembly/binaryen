@@ -31,9 +31,50 @@
 #include "wasm-io.h"
 #include "wasm-type.h"
 
+#include "tools/fuzzing/fuzz-stats.h"
+
 namespace wasm {
 
 namespace {
+
+struct FuzzStatsCollector
+  : public FuzzStats::PatternCollectorBase<FuzzStatsCollector> {
+  // Collect the occurrences of various cast instructions. Casts are
+  // particularly important for fuzzing. Meant as a sample for running
+  // experiments collecting other interesting patterns.
+  void visitBrOn(BrOn* curr) {
+    switch (curr->op) {
+      case BrOnNull:
+        record("br_on_null");
+        break;
+      case BrOnNonNull:
+        record("br_on_non_null");
+        break;
+      case BrOnCast:
+        record("br_on_cast");
+        break;
+      case BrOnCastFail:
+        record("br_on_cast_fail");
+        break;
+      case BrOnCastDescEq:
+        record("br_on_cast_desc_eq");
+        break;
+      case BrOnCastDescEqFail:
+        record("br_on_cast_desc_eq_fail");
+        break;
+    }
+  }
+
+  void visitRefCast(RefCast* curr) {
+    if (curr->desc) {
+      record("ref_cast_desc_eq");
+    } else {
+      record("ref_cast");
+    }
+  }
+
+  void visitRefTest(RefTest* curr) { record("ref_test"); }
+};
 
 std::vector<Type> getLoggableTypes(const FeatureSet& features) {
   std::vector<Type> loggableTypes = {
@@ -418,6 +459,8 @@ void TranslateToFuzzReader::build() {
   if (againstJS) {
     mutateJSBoundary();
   }
+
+  FuzzStatsCollector().collect(wasm);
 }
 
 void TranslateToFuzzReader::setupMemory() {
@@ -968,12 +1011,12 @@ void TranslateToFuzzReader::finalizeTable() {
       }
     }
 
-    // The code above raises table->initial to a size large enough to accomodate
-    // all of its segments, with the intention of avoiding a trap during
-    // startup. However a single segment of (say) size 4GB would have a table of
-    // that size, which will use a lot of memory and execute very slowly, so we
-    // prefer in the fuzzer to trap on such a thing. To achieve that, set a
-    // reasonable limit for the maximum table size.
+    // The code above raises table->initial to a size large enough to
+    // accommodate all of its segments, with the intention of avoiding a trap
+    // during startup. However a single segment of (say) size 4GB would have a
+    // table of that size, which will use a lot of memory and execute very
+    // slowly, so we prefer in the fuzzer to trap on such a thing. To achieve
+    // that, set a reasonable limit for the maximum table size.
     //
     // This also avoids an issue that arises from table->initial being an
     // Address (64 bits) but Table::kMaxSize being an Index (32 bits), as a

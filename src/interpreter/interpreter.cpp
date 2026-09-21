@@ -259,6 +259,7 @@ struct ExpressionInterpreter : OverriddenVisitor<ExpressionInterpreter, Flow> {
   Flow visitStructWait(StructWait* curr) { WASM_UNREACHABLE("TODO"); }
   Flow visitWaitqueueNew(WaitqueueNew* curr) { WASM_UNREACHABLE("TODO"); }
   Flow visitWaitqueueNotify(WaitqueueNotify* curr) { WASM_UNREACHABLE("TODO"); }
+  Flow visitPublish(Publish* curr) { WASM_UNREACHABLE("TODO"); }
   Flow visitArrayNew(ArrayNew* curr) { WASM_UNREACHABLE("TODO"); }
   Flow visitArrayNewData(ArrayNewData* curr) { WASM_UNREACHABLE("TODO"); }
   Flow visitArrayNewElem(ArrayNewElem* curr) { WASM_UNREACHABLE("TODO"); }
@@ -311,7 +312,7 @@ Result<> Interpreter::instantiate(Instance& instance) {
   return Ok{};
 }
 
-// This is a temporary convenience while stil using gTests to validate this
+// This is a temporary convenience while still using gTests to validate this
 // interpreter. Once spec tests can run, this shall be deleted.
 std::vector<Literal> Interpreter::runTest(Expression* root) {
   static std::shared_ptr<wasm::Module> dummyModule = std::make_shared<Module>();

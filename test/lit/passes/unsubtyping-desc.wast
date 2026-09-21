@@ -1240,3 +1240,55 @@
     )
   )
 )
+
+;; Removing a descriptor from a struct.new_desc uses ChildLocalizer, which wraps
+;; the allocation in a block. Ensure any nested `pop` inside a catch block is
+;; hoisted out of the new block so the IR remains valid.
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $A (struct))
+    (type $A (descriptor $A.desc) (struct))
+    ;; CHECK:       (type $A.desc (struct))
+    (type $A.desc (describes $A) (struct))
+  )
+  ;; CHECK:       (type $2 (func (param (ref (exact $A.desc)))))
+
+  ;; CHECK:       (type $3 (func))
+
+  ;; CHECK:      (tag $e (type $2) (param (ref (exact $A.desc))))
+  (tag $e (param (ref (exact $A.desc))))
+  ;; CHECK:      (func $pop-in-struct-new-desc (type $3)
+  ;; CHECK-NEXT:  (local $0 (ref (exact $A.desc)))
+  ;; CHECK-NEXT:  (local $1 (ref (exact $A.desc)))
+  ;; CHECK-NEXT:  (try
+  ;; CHECK-NEXT:   (do
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (catch $e
+  ;; CHECK-NEXT:    (local.set $1
+  ;; CHECK-NEXT:     (pop (ref (exact $A.desc)))
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result (ref (exact $A)))
+  ;; CHECK-NEXT:      (local.set $0
+  ;; CHECK-NEXT:       (local.get $1)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (struct.new_default $A)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $pop-in-struct-new-desc
+    (try
+      (do)
+      (catch $e
+        (drop
+          (struct.new_desc $A
+            (pop (ref (exact $A.desc)))
+          )
+        )
+      )
+    )
+  )
+)

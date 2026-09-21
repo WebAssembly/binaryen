@@ -1,10 +1,11 @@
 ;; Interleaving stores
-(module $Mem
+(module $Mem1
   (memory (export "shared") 1 1 shared)
 )
-(register "mem" $Mem)
+(register "mem" $Mem1)
 
-(thread $T1 (shared (module $Mem))
+(thread $T1 (shared (module $Mem1))
+  (register "mem" $Mem1)
   (module
     (memory (import "mem" "shared") 1 1 shared)
     (func (export "run")
@@ -17,7 +18,8 @@
   (invoke "run")
 )
 
-(thread $T2 (shared (module $Mem))
+(thread $T2 (shared (module $Mem1))
+  (register "mem" $Mem1)
   (module
     (memory (import "mem" "shared") 1 1 shared)
     (func (export "run")
@@ -51,12 +53,14 @@
 )
 
 ;; Critical section guarding an unordered memory access
-(module $Mem
+(module $Mem2
   (memory (export "shared") 1 1 shared)
 )
-(register "mem" $Mem)
+(register "mem" $Mem2)
 
-(thread $writer (shared (module $Mem))
+(thread $write (shared (module $Mem2))
+  (register "mem" $Mem2)
+
   (module
     (memory (import "mem" "shared") 1 1 shared)
     (func (export "run")
@@ -69,7 +73,9 @@
   (invoke "run")
 )
 
-(thread $reader (shared (module $Mem))
+(thread $read (shared (module $Mem2))
+  (register "mem" $Mem2)
+
   (module
     (memory (import "mem" "shared") 1 1 shared)
     (func (export "run")
@@ -83,8 +89,8 @@
   (invoke "run")
 )
 
-(wait $writer)
-(wait $reader)
+(wait $write)
+(wait $read)
 
 (module
   (memory (import "mem" "shared") 1 1 shared)
@@ -104,12 +110,14 @@
 )
 
 ;; Similar to above, critical section guarding a flag
-(module $Mem
+(module $Mem3
   (memory (export "shared") 1 1 shared)
 )
-(register "mem" $Mem)
+(register "mem" $Mem3)
 
-(thread $writer (shared (module $Mem))
+(thread $write_flag (shared (module $Mem3))
+  (register "mem" $Mem3)
+
   (module
     (memory (import "mem" "shared") 1 1 shared)
     (func (export "run")
@@ -130,7 +138,9 @@
   (invoke "run")
 )
 
-(thread $reader (shared (module $Mem))
+(thread $read_flag (shared (module $Mem3))
+  (register "mem" $Mem3)
+
   (module
     (memory (import "mem" "shared") 1 1 shared)
     (func (export "run")
@@ -149,8 +159,8 @@
   (invoke "run")
 )
 
-(wait $writer)
-(wait $reader)
+(wait $write_flag)
+(wait $read_flag)
 
 (module
   (memory (import "mem" "shared") 1 1 shared)
@@ -170,15 +180,17 @@
 )
 
 ;; Spinlock
-(module $Mem
+(module $Mem4
   ;; Address 0 - lock
   ;; Address 4 - payload
   (memory (export "shared") 1 1 shared)
 )
-(register "mem" $Mem)
+(register "mem" $Mem4)
 
 ;; Add 1 to the counter atomically
-(thread $addOne (shared (module $Mem))
+(thread $addOne (shared (module $Mem4))
+  (register "mem" $Mem4)
+
   (module
     (memory (import "mem" "shared") 1 1 shared)
     
@@ -213,7 +225,9 @@
 )
 
 ;; Add 10 to the counter atomically
-(thread $addTen (shared (module $Mem))
+(thread $addTen (shared (module $Mem4))
+  (register "mem" $Mem4)
+
   (module
     (memory (import "mem" "shared") 1 1 shared)
     
@@ -267,12 +281,14 @@
 )
 
 ;; independent reads of independent writes
-(module $Mem
+(module $Mem5
   (memory (export "shared") 1 1 shared)
 )
-(register "mem" $Mem)
+(register "mem" $Mem5)
 
-(thread $writerX (shared (module $Mem))
+(thread $writeX (shared (module $Mem5))
+  (register "mem" $Mem5)
+
   (module
     (memory (import "mem" "shared") 1 1 shared)
     (func (export "run")
@@ -283,7 +299,9 @@
   (invoke "run")
 )
 
-(thread $writerY (shared (module $Mem))
+(thread $writeY (shared (module $Mem5))
+  (register "mem" $Mem5)
+
   (module
     (memory (import "mem" "shared") 1 1 shared)
     (func (export "run")
@@ -294,7 +312,9 @@
   (invoke "run")
 )
 
-(thread $reader1 (shared (module $Mem))
+(thread $read1 (shared (module $Mem5))
+  (register "mem" $Mem5)
+
   (module
     (memory (import "mem" "shared") 1 1 shared)
     (func (export "run")
@@ -307,7 +327,9 @@
   (invoke "run")
 )
 
-(thread $reader2 (shared (module $Mem))
+(thread $read2 (shared (module $Mem5))
+  (register "mem" $Mem5)
+
   (module
     (memory (import "mem" "shared") 1 1 shared)
     (func (export "run")
@@ -320,10 +342,10 @@
   (invoke "run")
 )
 
-(wait $writerX)
-(wait $writerY)
-(wait $reader1)
-(wait $reader2)
+(wait $writeX)
+(wait $writeY)
+(wait $read1)
+(wait $read2)
 
 (module
   (memory (import "mem" "shared") 1 1 shared)

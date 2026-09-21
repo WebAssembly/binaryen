@@ -52,7 +52,7 @@
     )
     ;; The 'try' above is guaranteed not to throw, so we can be sure the $x
     ;; contains 1 at this point, which is smaller than 7 (0b111), so we know the
-    ;; masking with 0b111 is not ncessary and we can only leave (local.set $x).
+    ;; masking with 0b111 is not necessary and we can only leave (local.set $x).
     (drop (i32.and (local.get $x) (i32.const 7)))
   )
 

@@ -49,6 +49,7 @@
 
 #include "call-utils.h"
 #include "support/utilities.h"
+#include "wasm-type.h"
 
 // TODO: Use the new sign-extension opcodes where appropriate. This needs to be
 // conditionalized on the availability of atomics.
@@ -1461,6 +1462,65 @@ struct OptimizeInstructions
     }
   }
 
+  void visitResume(Resume* curr) {
+    skipNonNullCast(curr->cont, curr);
+    if (trapOnNull(curr, curr->cont)) {
+      return;
+    }
+    if (curr->type == Type::unreachable) {
+      return;
+    }
+
+    // If this resume operates on a freshly-created continuation of an exact
+    // function that is known never to suspend, we can turn the resumption into
+    // a direct call, avoiding the continuation allocation and handler overhead.
+
+    // Continuations are single-shot, so resuming a continuation that has
+    // already been consumed will trap. If traps are assumed never to happen, we
+    // can assume this continuation will not be consumed on another path and
+    // look through tees and conditional branches. Otherwise, avoid looking
+    // through them to ensure the continuation cannot be consumed elsewhere.
+    auto behavior = getPassOptions().trapsNeverHappen
+                      ? Properties::FallthroughBehavior::AllowTeeBrIf
+                      : Properties::FallthroughBehavior::NoTeeBrIf;
+
+    auto* contExpr = Properties::getFallthrough(
+      curr->cont, getPassOptions(), *getModule(), behavior);
+    auto* contNew = contExpr->dynCast<ContNew>();
+    if (!contNew) {
+      return;
+    }
+    if (contNew->func->type == Type::unreachable) {
+      return;
+    }
+
+    auto* funcExpr =
+      Properties::getFallthrough(contNew->func, getPassOptions(), *getModule());
+    auto* refFunc = funcExpr->dynCast<RefFunc>();
+    if (!refFunc) {
+      return;
+    }
+
+    auto* target = getModule()->getFunctionOrNull(refFunc->func);
+    if (!target || target->imported()) {
+      return;
+    }
+
+    if (!target->effects || target->effects->suspends) {
+      return;
+    }
+
+    auto* block =
+      ChildLocalizer(curr, getFunction(), *getModule(), getPassOptions())
+        .getChildrenReplacement();
+    Builder builder(*getModule());
+    Type results = target->getResults();
+    block->list.push_back(
+      builder.makeCall(target->name, curr->operands, results));
+    block->type = results;
+    replaceCurrent(block);
+  }
+
   // Note on removing casts (which the following utilities, skipNonNullCast and
   // skipCast do): removing a cast is potentially dangerous, as it removes
   // information from the IR. For example:
@@ -1551,6 +1611,17 @@ struct OptimizeInstructions
   // ref.as_non_null then the struct.set will still trap, of course, but that
   // will only happen *after* the call, which is wrong.
   void skipNonNullCast(Expression*& input, Expression* parent) {
+    // If we must never reorder code, then we cannot remove a non-null cast.
+    // Such removals are valid because we move the trap later (see the
+    // struct.set in the example above: we can remove the ref.as_non_null
+    // because the set will trap anyhow, so we are pushing the trap onward; in
+    // the example above we have a call we can't move past, and in neverReorder
+    // mode we need to care about things like branch hints, which do not have
+    // effects, hence the need for the special neverReorder flag).
+    if (neverReorder) {
+      return;
+    }
+
     // Check the other children for the ordering problem only if we find a
     // possible optimization, to avoid wasted work.
     bool checkedSiblings = false;
@@ -1717,7 +1788,7 @@ struct OptimizeInstructions
 
       if (auto* select = ref->dynCast<Select>()) {
         // We must check for unreachability explicitly here because a full
-        // refinalize only happens at the end. That is, the select may stil be
+        // refinalize only happens at the end. That is, the select may still be
         // reachable after we turned one child into an unreachable, and we are
         // calling getResultOfFirst which will error on unreachability.
         if (flowsOutNull(select->ifTrue) &&
@@ -2550,13 +2621,41 @@ struct OptimizeInstructions
       // traps are allowed, then we cannot remove the potentially-trapping
       // child, though.
       bool notWeaker = Type::isSubType(curr->type, child->type);
-      bool safe = !child->desc || getPassOptions().trapsNeverHappen;
-      if (notWeaker && safe) {
+      auto& options = getPassOptions();
+      auto canTrap = !options.trapsNeverHappen;
+      bool safe = !child->desc || !canTrap;
+      bool canOptimize = notWeaker && safe;
+      if (canOptimize && curr->desc && canTrap) {
+        // There is another child here, which might trap, and we need to
+        // consider that in this situation:
+        //
+        //  (outer.cast
+        //    (inner.cast (inner.ref))
+        //    (descriptor with effects)
+        //  )
+        //
+        //  =>
+        //
+        //  (outer.cast
+        //    (inner.ref)                ;; inner cast was removed
+        //    (descriptor with effects)
+        //  )
+        //
+        // It is safe to remove the inner cast, as if it trapped, the outer one
+        // would still trap. But if there is a descriptor, then we are moving
+        // the trap across the descriptor, and shouldn't cross effects there.
+        EffectAnalyzer descEffects(options, *getModule(), curr->desc);
+        ShallowEffectAnalyzer movingEffects(options, *getModule(), curr->ref);
+        if (movingEffects.orderedBefore(descEffects)) {
+          canOptimize = false;
+        }
+      }
+      if (canOptimize) {
         if (child->desc) {
           // Reorder the child's reference past its dropped descriptor if
           // necessary.
           auto* block =
-            ChildLocalizer(child, getFunction(), *getModule(), getPassOptions())
+            ChildLocalizer(child, getFunction(), *getModule(), options)
               .getChildrenReplacement();
           block->list.push_back(child->ref);
           block->type = child->ref->type;
@@ -2742,6 +2841,51 @@ struct OptimizeInstructions
     trapOnNull(curr, curr->ref);
   }
 
+  void visitPublish(Publish* curr) {
+    if (curr->type == Type::unreachable) {
+      return;
+    }
+
+    // Publish of a reference that cannot be a shared array or struct can be
+    // removed.
+    auto canBeSharedArrayOrStruct = [](Type type) {
+      if (!type.isRef()) {
+        return false;
+      }
+      auto ht = type.getHeapType();
+      if (ht.isBottom() || ht.isMaybeShared(HeapType::i31)) {
+        return false;
+      }
+      return HeapType::isSubType(ht, HeapTypes::any.getBasic(Shared));
+    };
+
+    if (!canBeSharedArrayOrStruct(getFallthroughType(curr->ref))) {
+      replaceCurrent(curr->ref);
+      return;
+    }
+
+    auto isAllocation = [](Expression* expr) {
+      return expr->is<StructNew>() || expr->is<ArrayNew>() ||
+             expr->is<ArrayNewData>() || expr->is<ArrayNewElem>() ||
+             expr->is<ArrayNewFixed>();
+    };
+
+    // Publish of publish or of a struct/array allocation can be removed.
+    Expression* fallthrough = curr->ref;
+    while (true) {
+      if (fallthrough->is<Publish>() || isAllocation(fallthrough)) {
+        replaceCurrent(curr->ref);
+        return;
+      }
+      auto* next = Properties::getImmediateFallthrough(
+        fallthrough, getPassOptions(), *getModule());
+      if (next == fallthrough) {
+        break;
+      }
+      fallthrough = next;
+    }
+  }
+
   void visitTupleExtract(TupleExtract* curr) {
     if (curr->type == Type::unreachable) {
       return;
@@ -2841,6 +2985,16 @@ private:
         // matter how that parent expression gets optimized.
         interferingEffects.walk(br->condition);
         left = br->value;
+        continue;
+      }
+      if (auto* cast = left->dynCast<RefCast>(); cast && cast->desc) {
+        interferingEffects.walk(cast->desc);
+        left = cast->ref;
+        continue;
+      }
+      if (auto* br = left->dynCast<BrOn>(); br && br->desc) {
+        interferingEffects.walk(br->desc);
+        left = br->ref;
         continue;
       }
       // We have found the real fallthrough expression.
@@ -4704,7 +4858,7 @@ private:
       }
     }
     {
-      // TODO: Add cancelation for some large constants when shrinkLevel > 0
+      // TODO: Add cancellation for some large constants when shrinkLevel > 0
       // in FinalOptimizer.
 
       // (x >> C)  << C   =>   x & -(1 << C)
@@ -4729,7 +4883,7 @@ private:
       }
     }
     {
-      // TODO: Add cancelation for some large constants when shrinkLevel > 0
+      // TODO: Add cancellation for some large constants when shrinkLevel > 0
       // in FinalOptimizer.
 
       // (x << C) >>> C   =>   x & (-1 >>> C)

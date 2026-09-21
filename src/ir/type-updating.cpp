@@ -78,7 +78,7 @@ updateIndirectCallEffects(
       // oldType has no entry, which means its effects are explicitly unknown.
       // Why? It's a source type in `typeMap`, so it must have appeared in
       // the module at some point, but GlobalEffects were never computed for it,
-      // or GlobalEffects intentionally ommitted its entry because it couldn't
+      // or GlobalEffects intentionally omitted its entry because it couldn't
       // determine its effects (e.g. if an import has that type).
       newTypes.insert(destType);
       newTypeEffects.erase(destType);

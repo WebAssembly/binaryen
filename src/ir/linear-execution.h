@@ -251,6 +251,7 @@ struct LinearExecutionWalker : public PostWalker<SubType, VisitorType> {
         if (!self->connectAdjacentBlocks) {
           self->pushTask(SubType::doNoteNonLinear, currp);
         }
+        self->maybePushTask(SubType::scan, &curr->cast<BrOn>()->desc);
         self->pushTask(SubType::scan, &curr->cast<BrOn>()->ref);
         break;
       }
