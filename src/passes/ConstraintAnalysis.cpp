@@ -334,10 +334,8 @@ struct ConstraintAnalysis
     // If we make things unreachable, we must refinalize.
     bool refinalize = false;
 
-    // If we find local.gets that we can optimize, we queue those changes here
-    // (each item being currp, the pointer to the LocalGet, and then the value
-    // to replace it with). This order is useful for the following reason:
-    // consider a simple expression, like this,
+    // If we find local.gets that we can optimize, we queue those changes here.
+    // This order is useful for the following reason:
     //
     //   (i32.eqz
     //     (local.get $x)
@@ -348,14 +346,17 @@ struct ConstraintAnalysis
     // pass only looks at constraints on locals. We do not lose any optimization
     // power by leaving this to Precompute, but it is less efficient and may
     // require more cycles; it is also less convenient for testing, as we must
-    // avoid inferring local.gets in order to fully test constraint
+    // avoid inferrable local.gets in order to fully test constraint
     // optimization.
     //
-    // Instead, we queue local.get changes here. If, say, we optimize that eqz,
-    // then the local.get change ends up unnoticable (it changes the Unary
-    // which was removed from the tree anyhow, which is not harmful aside from a
-    // tiny bit of wasted work, but that waste is less than waiting for
+    // Instead, we queue local.get changes to happen later, after the eqz in the
+    // example above. That is, the eqz gets a chance to get optimized, and if it
+    // does, the queued local.get change ends up unnoticable (it changes a thing
+    // not in the IR; a slight waste of work, but less wasteful than waiting for
     // Precompute).
+    //
+    // This queue of changes contains tuples of currp (the pointer to the
+    // local.get) and the value to replace it with.
     std::vector<std::pair<Expression**, Expression*>> getOptimizations;
 
     for (auto& block : basicBlocks) {
