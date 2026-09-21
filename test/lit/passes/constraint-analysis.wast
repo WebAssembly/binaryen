@@ -3893,10 +3893,9 @@
   (func $nested-binaries
     (local $x i32)
     (local $e eqref)
-    ;; Nested binaries. The outer one is initially not relevant - we cannot
-    ;; parse the right hand side - but after optimization it simplifies. We
-    ;; should not assert here, and only optimize the inner one, leaving the
-    ;; outer for later.
+    ;; Nested binaries of different types. We can apply the local.gets and then
+    ;; optimize the ref.eq to 1 and the lt_u to 1 as well. (This does not fully
+    ;; work out in OPTIN due to reordering, but Precompute would handle it.)
     (drop
       (i32.lt_u
         (local.get $x)
