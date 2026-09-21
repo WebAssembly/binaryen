@@ -219,6 +219,7 @@ instructions = [
     ("memory.atomic.wait64",    "makeAtomicWait(Type::i64)"),
     ("atomic.fence",            "makeAtomicFence()"),
     ("pause",                   "makePause()"),
+    ("publish",                 "makePublish()"),
     ("i32.atomic.load8_u",      "makeLoad(Type::i32, /*signed=*/false, 1, /*isAtomic=*/true)"),
     ("i32.atomic.load16_u",     "makeLoad(Type::i32, /*signed=*/false, 2, /*isAtomic=*/true)"),
     ("i32.atomic.load",         "makeLoad(Type::i32, /*signed=*/false, 4, /*isAtomic=*/true)"),

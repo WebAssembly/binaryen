@@ -551,7 +551,12 @@ struct TypeRefining : public Pass {
       }
 
       void visitStructCmpxchg(StructCmpxchg* curr) {
-        if (curr->type == Type::unreachable) {
+        if (curr->ref->type == Type::unreachable) {
+          // Ignore unreachable code. Note that we check curr->ref, not curr,
+          // as curr may be unreachable because of another operand than the ref
+          // and the replacement value (the expected value may be the
+          // unreachable one). In that case, the replacement must still validate
+          // as if it were written, so we must fix it up below.
           return;
         }
         auto type = curr->ref->type.getHeapType();
@@ -562,6 +567,8 @@ struct TypeRefining : public Pass {
         auto fieldType = type.getStruct().fields[curr->index].type;
         curr->replacement = fixType(curr->replacement, fieldType);
       }
+
+      // TODO: visitStructWait
 
       bool refinalize = false;
 

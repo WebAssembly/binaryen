@@ -1905,4 +1905,59 @@
       )
     )
   )
+
+  ;; CHECK:      (func $increment-tee (type $0)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (local $y i32)
+  ;; CHECK-NEXT:  (loop $label1
+  ;; CHECK-NEXT:   (if
+  ;; CHECK-NEXT:    (i32.gt_s
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (then
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.set $y
+  ;; CHECK-NEXT:    (local.tee $x
+  ;; CHECK-NEXT:     (i32.add
+  ;; CHECK-NEXT:      (local.get $y)
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (br $label1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $increment-tee
+    (local $x i32)
+    (local $y i32)
+    ;; A loop, where $y is incremented but there is a tee in the middle. The loop
+    ;; is unbounded (the exit condition is never hit), so we must be careful to
+    ;; not keep calculating 1,2,3, without limit. The tee in the middle should not
+    ;; confuse us: we apply the +=1 operation to x directly, but y reads it
+    ;; through the tee. We should stop calculating anything about both rather than
+    ;; hang for a long time.
+    (loop $label1
+      (if
+        (i32.gt_s
+          (local.get $y)
+          (local.get $x)
+        )
+        (then
+          (unreachable)
+        )
+      )
+      (local.set $y
+        (local.tee $x
+          (i32.add
+            (local.get $y)
+            (i32.const 1)
+          )
+        )
+      )
+      (br $label1)
+    )
+  )
 )

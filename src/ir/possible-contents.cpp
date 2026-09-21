@@ -1098,6 +1098,7 @@ struct InfoCollector
   void visitStructWait(StructWait* curr) { addRoot(curr); }
   void visitWaitqueueNew(WaitqueueNew* curr) { addRoot(curr); }
   void visitWaitqueueNotify(WaitqueueNotify* curr) { addRoot(curr); }
+  void visitPublish(Publish* curr) { receiveChildValue(curr->ref, curr); }
   // Array operations access the array's location, parallel to how structs work.
   void visitArrayGet(ArrayGet* curr) {
     if (!isRelevant(curr->ref)) {
@@ -1410,8 +1411,12 @@ struct InfoCollector
     // continuation values.
     auto numTags = curr->handlerTags.size();
     for (Index tagIndex = 0; tagIndex < numTags; tagIndex++) {
-      auto tag = curr->handlerTags[tagIndex];
       auto target = curr->handlerBlocks[tagIndex];
+      if (!target) {
+        // A switch handler does not branch to a target block.
+        continue;
+      }
+      auto tag = curr->handlerTags[tagIndex];
       auto params = getModule()->getTag(tag)->params();
 
       // Add the values from the tag.
@@ -1771,6 +1776,7 @@ void TNHOracle::scan(Function* func,
     void visitStructCmpxchg(StructCmpxchg* curr) {
       notePossibleTrap(curr->ref);
     }
+    // TODO: visitStructWait
     void visitArrayGet(ArrayGet* curr) { notePossibleTrap(curr->ref); }
     void visitArraySet(ArraySet* curr) { notePossibleTrap(curr->ref); }
     void visitArrayLoad(ArrayLoad* curr) { notePossibleTrap(curr->ref); }

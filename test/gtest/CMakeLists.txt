@@ -15,6 +15,7 @@ set(unittest_SOURCES
   delta_debugging.cpp
   dfa_minimization.cpp
   disjoint_sets.cpp
+  effects.cpp
   graph.cpp
   int128.cpp
   leaves.cpp
@@ -31,6 +32,7 @@ set(unittest_SOURCES
   printing.cpp
   public-type-validator.cpp
   scc.cpp
+  sizes.cpp
   span.cpp
   stringify.cpp
   subtype-exprs.cpp

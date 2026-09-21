@@ -1,0 +1,124 @@
+#include "wasm.h"
+#include "gtest/gtest.h"
+
+using namespace wasm;
+
+// Verify that Expression and its derived classes maintain their expected sizes
+// on linux64 (specifically avoiding regressions in tail-padding reuse and field
+// ordering).
+TEST(SizesTest, ExpressionSizes) {
+#if !defined(__linux__) || !defined(__x86_64__)
+  GTEST_SKIP() << "This test's numbers are for linux64";
+#else
+  EXPECT_EQ(sizeof(Expression), 16u);
+  EXPECT_EQ(sizeof(Block), 56u);
+  EXPECT_EQ(sizeof(If), 40u);
+  EXPECT_EQ(sizeof(Loop), 32u);
+  EXPECT_EQ(sizeof(Break), 40u);
+  EXPECT_EQ(sizeof(Switch), 72u);
+  EXPECT_EQ(sizeof(Call), 56u);
+  EXPECT_EQ(sizeof(CallIndirect), 72u);
+  EXPECT_EQ(sizeof(LocalGet), 16u);
+  EXPECT_EQ(sizeof(LocalSet), 24u);
+  EXPECT_EQ(sizeof(GlobalGet), 24u);
+  EXPECT_EQ(sizeof(GlobalSet), 32u);
+  EXPECT_EQ(sizeof(Load), 48u);
+  EXPECT_EQ(sizeof(Store), 64u);
+  EXPECT_EQ(sizeof(Const), 40u);
+  EXPECT_EQ(sizeof(Unary), 24u);
+  EXPECT_EQ(sizeof(Binary), 32u);
+  EXPECT_EQ(sizeof(Select), 40u);
+  EXPECT_EQ(sizeof(Drop), 24u);
+  EXPECT_EQ(sizeof(Return), 24u);
+  EXPECT_EQ(sizeof(MemorySize), 24u);
+  EXPECT_EQ(sizeof(MemoryGrow), 32u);
+  EXPECT_EQ(sizeof(Nop), 16u);
+  EXPECT_EQ(sizeof(Unreachable), 16u);
+  EXPECT_EQ(sizeof(AtomicRMW), 56u);
+  EXPECT_EQ(sizeof(AtomicCmpxchg), 56u);
+  EXPECT_EQ(sizeof(AtomicWait), 64u);
+  EXPECT_EQ(sizeof(AtomicNotify), 48u);
+  EXPECT_EQ(sizeof(AtomicFence), 16u);
+  EXPECT_EQ(sizeof(Pause), 16u);
+  EXPECT_EQ(sizeof(SIMDExtract), 24u);
+  EXPECT_EQ(sizeof(SIMDReplace), 32u);
+  EXPECT_EQ(sizeof(SIMDShuffle), 48u);
+  EXPECT_EQ(sizeof(SIMDTernary), 40u);
+  EXPECT_EQ(sizeof(SIMDShift), 32u);
+  EXPECT_EQ(sizeof(SIMDLoad), 48u);
+  EXPECT_EQ(sizeof(SIMDLoadStoreLane), 64u);
+  EXPECT_EQ(sizeof(MemoryInit), 56u);
+  EXPECT_EQ(sizeof(DataDrop), 24u);
+  EXPECT_EQ(sizeof(MemoryCopy), 56u);
+  EXPECT_EQ(sizeof(MemoryFill), 48u);
+  EXPECT_EQ(sizeof(Pop), 16u);
+  EXPECT_EQ(sizeof(RefNull), 16u);
+  EXPECT_EQ(sizeof(RefIsNull), 24u);
+  EXPECT_EQ(sizeof(RefFunc), 24u);
+  EXPECT_EQ(sizeof(RefEq), 32u);
+  EXPECT_EQ(sizeof(TableGet), 32u);
+  EXPECT_EQ(sizeof(TableSet), 40u);
+  EXPECT_EQ(sizeof(TableSize), 24u);
+  EXPECT_EQ(sizeof(TableGrow), 40u);
+  EXPECT_EQ(sizeof(TableFill), 48u);
+  EXPECT_EQ(sizeof(TableCopy), 56u);
+  EXPECT_EQ(sizeof(TableInit), 56u);
+  EXPECT_EQ(sizeof(ElemDrop), 24u);
+  EXPECT_EQ(sizeof(Try), 104u);
+  EXPECT_EQ(sizeof(TryTable), 152u);
+  EXPECT_EQ(sizeof(Throw), 56u);
+  EXPECT_EQ(sizeof(Rethrow), 24u);
+  EXPECT_EQ(sizeof(ThrowRef), 24u);
+  EXPECT_EQ(sizeof(TupleMake), 48u);
+  EXPECT_EQ(sizeof(TupleExtract), 24u);
+  EXPECT_EQ(sizeof(RefI31), 24u);
+  EXPECT_EQ(sizeof(I31Get), 24u);
+  EXPECT_EQ(sizeof(CallRef), 56u);
+  EXPECT_EQ(sizeof(RefTest), 32u);
+  EXPECT_EQ(sizeof(RefCast), 32u);
+  EXPECT_EQ(sizeof(RefGetDesc), 24u);
+  EXPECT_EQ(sizeof(BrOn), 48u);
+  EXPECT_EQ(sizeof(StructNew), 56u);
+  EXPECT_EQ(sizeof(StructGet), 24u);
+  EXPECT_EQ(sizeof(StructSet), 32u);
+  EXPECT_EQ(sizeof(StructRMW), 40u);
+  EXPECT_EQ(sizeof(StructCmpxchg), 40u);
+  EXPECT_EQ(sizeof(ArrayNew), 32u);
+  EXPECT_EQ(sizeof(ArrayNewData), 40u);
+  EXPECT_EQ(sizeof(ArrayNewElem), 40u);
+  EXPECT_EQ(sizeof(ArrayNewFixed), 48u);
+  EXPECT_EQ(sizeof(ArrayGet), 32u);
+  EXPECT_EQ(sizeof(ArraySet), 40u);
+  EXPECT_EQ(sizeof(ArrayLoad), 48u);
+  EXPECT_EQ(sizeof(ArrayStore), 56u);
+  EXPECT_EQ(sizeof(ArrayLen), 24u);
+  EXPECT_EQ(sizeof(ArrayCopy), 56u);
+  EXPECT_EQ(sizeof(ArrayFill), 48u);
+  EXPECT_EQ(sizeof(ArrayInitData), 56u);
+  EXPECT_EQ(sizeof(ArrayInitElem), 56u);
+  EXPECT_EQ(sizeof(ArrayRMW), 40u);
+  EXPECT_EQ(sizeof(ArrayCmpxchg), 48u);
+  EXPECT_EQ(sizeof(RefAs), 24u);
+  EXPECT_EQ(sizeof(StringNew), 40u);
+  EXPECT_EQ(sizeof(StringConst), 24u);
+  EXPECT_EQ(sizeof(StringMeasure), 24u);
+  EXPECT_EQ(sizeof(StringEncode), 40u);
+  EXPECT_EQ(sizeof(StringConcat), 32u);
+  EXPECT_EQ(sizeof(StringEq), 32u);
+  EXPECT_EQ(sizeof(StringTest), 24u);
+  EXPECT_EQ(sizeof(StringWTF16Get), 32u);
+  EXPECT_EQ(sizeof(StringSliceWTF), 40u);
+  EXPECT_EQ(sizeof(ContNew), 24u);
+  EXPECT_EQ(sizeof(ContBind), 56u);
+  EXPECT_EQ(sizeof(Suspend), 56u);
+  EXPECT_EQ(sizeof(Resume), 152u);
+  EXPECT_EQ(sizeof(ResumeThrow), 160u);
+  EXPECT_EQ(sizeof(StackSwitch), 64u);
+  EXPECT_EQ(sizeof(StructWait), 56u);
+  EXPECT_EQ(sizeof(WideIntAddSub), 48u);
+  EXPECT_EQ(sizeof(WideIntMul), 32u);
+  EXPECT_EQ(sizeof(WaitqueueNew), 16u);
+  EXPECT_EQ(sizeof(WaitqueueNotify), 32u);
+  EXPECT_EQ(sizeof(Publish), 24u);
+#endif
+}

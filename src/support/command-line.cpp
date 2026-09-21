@@ -48,14 +48,18 @@ void printWrap(std::ostream& os, int leftPad, const std::string& content) {
         space = SCREEN_WIDTH - leftPad;
       }
       os << nextWord;
-      space -= nextWord.size() + 1;
-      if (space > 0) {
-        os << ' ';
-      }
+      space -= nextWord.size();
       nextWord.clear();
-      if (content[i] == '\n') {
-        os << '\n';
-        space = SCREEN_WIDTH - leftPad;
+      if (i < len) {
+        if (content[i] == ' ') {
+          if (space > 0) {
+            os << ' ';
+            space -= 1;
+          }
+        } else if (content[i] == '\n') {
+          os << '\n';
+          space = SCREEN_WIDTH - leftPad;
+        }
       }
     }
   }

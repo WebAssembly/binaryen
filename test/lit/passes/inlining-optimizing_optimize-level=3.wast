@@ -9443,47 +9443,36 @@
  ;; CHECK-NEXT:          )
  ;; CHECK-NEXT:         )
  ;; CHECK-NEXT:        )
- ;; CHECK-NEXT:        (if (result i32)
- ;; CHECK-NEXT:         (i32.lt_s
- ;; CHECK-NEXT:          (local.get $0)
- ;; CHECK-NEXT:          (i32.const 10)
- ;; CHECK-NEXT:         )
- ;; CHECK-NEXT:         (then
- ;; CHECK-NEXT:          (loop $while-in132 (result i32)
- ;; CHECK-NEXT:           (if
- ;; CHECK-NEXT:            (i32.load
- ;; CHECK-NEXT:             (i32.add
- ;; CHECK-NEXT:              (local.get $4)
- ;; CHECK-NEXT:              (i32.shl
- ;; CHECK-NEXT:               (local.get $0)
- ;; CHECK-NEXT:               (i32.const 2)
- ;; CHECK-NEXT:              )
- ;; CHECK-NEXT:             )
- ;; CHECK-NEXT:            )
- ;; CHECK-NEXT:            (then
- ;; CHECK-NEXT:             (local.set $17
- ;; CHECK-NEXT:              (i32.const -1)
- ;; CHECK-NEXT:             )
- ;; CHECK-NEXT:             (br $label$break$L343)
+ ;; CHECK-NEXT:        (loop $while-in132 (result i32)
+ ;; CHECK-NEXT:         (if
+ ;; CHECK-NEXT:          (i32.load
+ ;; CHECK-NEXT:           (i32.add
+ ;; CHECK-NEXT:            (local.get $4)
+ ;; CHECK-NEXT:            (i32.shl
+ ;; CHECK-NEXT:             (local.get $0)
+ ;; CHECK-NEXT:             (i32.const 2)
  ;; CHECK-NEXT:            )
  ;; CHECK-NEXT:           )
- ;; CHECK-NEXT:           (br_if $while-in132
- ;; CHECK-NEXT:            (i32.lt_s
- ;; CHECK-NEXT:             (local.tee $0
- ;; CHECK-NEXT:              (i32.add
- ;; CHECK-NEXT:               (local.get $0)
- ;; CHECK-NEXT:               (i32.const 1)
- ;; CHECK-NEXT:              )
- ;; CHECK-NEXT:             )
- ;; CHECK-NEXT:             (i32.const 10)
- ;; CHECK-NEXT:            )
+ ;; CHECK-NEXT:          )
+ ;; CHECK-NEXT:          (then
+ ;; CHECK-NEXT:           (local.set $17
+ ;; CHECK-NEXT:            (i32.const -1)
  ;; CHECK-NEXT:           )
- ;; CHECK-NEXT:           (i32.const 1)
+ ;; CHECK-NEXT:           (br $label$break$L343)
  ;; CHECK-NEXT:          )
  ;; CHECK-NEXT:         )
- ;; CHECK-NEXT:         (else
- ;; CHECK-NEXT:          (i32.const 1)
+ ;; CHECK-NEXT:         (br_if $while-in132
+ ;; CHECK-NEXT:          (i32.lt_s
+ ;; CHECK-NEXT:           (local.tee $0
+ ;; CHECK-NEXT:            (i32.add
+ ;; CHECK-NEXT:             (local.get $0)
+ ;; CHECK-NEXT:             (i32.const 1)
+ ;; CHECK-NEXT:            )
+ ;; CHECK-NEXT:           )
+ ;; CHECK-NEXT:           (i32.const 10)
+ ;; CHECK-NEXT:          )
  ;; CHECK-NEXT:         )
+ ;; CHECK-NEXT:         (i32.const 1)
  ;; CHECK-NEXT:        )
  ;; CHECK-NEXT:       )
  ;; CHECK-NEXT:       (else

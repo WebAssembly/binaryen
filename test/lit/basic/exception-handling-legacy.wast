@@ -697,7 +697,7 @@
   ;; CHECK-BIN-NEXT: )
   (func $branch-and-delegate-target-same-try-label
     ;; When there are both a branch and a delegate that target the same try
-    ;; label. Because binaryen only allows blocks and loops to be targetted by
+    ;; label. Because binaryen only allows blocks and loops to be targeted by
     ;; branches, we wrap the try with a block and make branches that block
     ;; instead, resulting in the br and delegate target different labels in the
     ;; output.
@@ -872,7 +872,7 @@
   ;; CHECK-BIN-NEXT: )
   (func $branch-and-rethrow-target-same-try-label
     ;; When there are both a branch and a rethrow that target the same try
-    ;; label. Because binaryen only allows blocks and loops to be targetted by
+    ;; label. Because binaryen only allows blocks and loops to be targeted by
     ;; branches, we wrap the try with a block and make branches that block
     ;; instead, resulting in the br and rethrow target different labels in the
     ;; output.

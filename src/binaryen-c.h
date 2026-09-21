@@ -1124,6 +1124,8 @@ BINARYEN_API BinaryenExpressionRef
 BinaryenWaitqueueNotify(BinaryenModuleRef module,
                         BinaryenExpressionRef waitqueue,
                         BinaryenExpressionRef count);
+BINARYEN_API BinaryenExpressionRef BinaryenPublish(BinaryenModuleRef module,
+                                                   BinaryenExpressionRef ref);
 BINARYEN_API BinaryenExpressionRef BinaryenArrayNew(BinaryenModuleRef module,
                                                     BinaryenHeapType type,
                                                     BinaryenExpressionRef size,
@@ -2702,6 +2704,13 @@ BINARYEN_API void
 BinaryenWaitqueueNotifySetCount(BinaryenExpressionRef expr,
                                 BinaryenExpressionRef countExpr);
 
+// Publish
+
+BINARYEN_API BinaryenExpressionRef
+BinaryenPublishGetRef(BinaryenExpressionRef expr);
+BINARYEN_API void BinaryenPublishSetRef(BinaryenExpressionRef expr,
+                                        BinaryenExpressionRef refExpr);
+
 // ArrayNew
 
 BINARYEN_API BinaryenExpressionRef
@@ -3753,6 +3762,7 @@ BINARYEN_API BinaryenSideEffects BinaryenSideEffectTrapsNeverHappen(void);
 BINARYEN_API BinaryenSideEffects BinaryenSideEffectIsAtomic(void);
 BINARYEN_API BinaryenSideEffects BinaryenSideEffectThrows(void);
 BINARYEN_API BinaryenSideEffects BinaryenSideEffectDanglingPop(void);
+BINARYEN_API BinaryenSideEffects BinaryenSideEffectSuspends(void);
 BINARYEN_API BinaryenSideEffects BinaryenSideEffectAny(void);
 
 BINARYEN_API BinaryenSideEffects BinaryenExpressionGetSideEffects(
@@ -3808,10 +3818,10 @@ BINARYEN_API void RelooperAddBranchForSwitch(RelooperBlockRef from,
                                              BinaryenIndex numIndexes,
                                              BinaryenExpressionRef code);
 
-// Generate structed wasm control flow from the CFG of blocks and branches that
-// were created on this relooper instance. This returns the rendered output, and
-// also disposes of the relooper and its blocks and branches, as they are no
-// longer needed.
+// Generate structured wasm control flow from the CFG of blocks and branches
+// that were created on this relooper instance. This returns the rendered
+// output, and also disposes of the relooper and its blocks and branches, as
+// they are no longer needed.
 // @param labelHelper To render irreducible control flow, we may need a helper
 //        variable to guide us to the right target label. This value should be
 //        an index of an i32 local variable that is free for us to use.
