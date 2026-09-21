@@ -83,7 +83,7 @@ var try_table = module.try_table(
   module.throw("e", [module.i32.const(0)]),
   [{ tag: null, dest: "catch_all_dest", ref: false }]
 );
-var try_table_block = module.block("catch_all_dest", [try_table], binaryen.none);
+var try_table_block = module.block("catch_all_dest", [try_table], binaryen.Type.none);
 
 // (throw_ref (ref.null noexn))
 var throw_ref = module.throw_ref(module.ref.null(binaryen.HeapType.noexn));

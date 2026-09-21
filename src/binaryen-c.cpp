@@ -4158,12 +4158,14 @@ const char* BinaryenTryTableGetCatchTagAt(BinaryenExpressionRef expr,
 }
 void BinaryenTryTableSetCatchTagAt(BinaryenExpressionRef expr,
                                    BinaryenIndex index,
-                                   const char* catchTag) {
+                                   const char* catchTag,
+                                   BinaryenType sentType) {
   auto* expression = (Expression*)expr;
   assert(expression->is<TryTable>());
-  assert(index < static_cast<TryTable*>(expression)->catchTags.size());
-  static_cast<TryTable*>(expression)->catchTags[index] =
-    catchTag ? Name(catchTag) : Name();
+  auto* tryTable = static_cast<TryTable*>(expression);
+  assert(index < tryTable->catchTags.size());
+  tryTable->catchTags[index] = catchTag ? Name(catchTag) : Name();
+  tryTable->sentTypes[index] = Type(sentType);
 }
 const char* BinaryenTryTableGetCatchDestAt(BinaryenExpressionRef expr,
                                            BinaryenIndex index) {
@@ -4189,16 +4191,27 @@ bool BinaryenTryTableIsCatchRefAt(BinaryenExpressionRef expr,
 }
 void BinaryenTryTableSetCatchRefAt(BinaryenExpressionRef expr,
                                    BinaryenIndex index,
-                                   bool catchRef) {
+                                   bool catchRef,
+                                   BinaryenType sentType) {
   auto* expression = (Expression*)expr;
   assert(expression->is<TryTable>());
-  assert(index < static_cast<TryTable*>(expression)->catchRefs.size());
-  static_cast<TryTable*>(expression)->catchRefs[index] = catchRef;
+  auto* tryTable = static_cast<TryTable*>(expression);
+  assert(index < tryTable->catchRefs.size());
+  tryTable->catchRefs[index] = catchRef;
+  tryTable->sentTypes[index] = Type(sentType);
+}
+BinaryenType BinaryenTryTableGetSentTypeAt(BinaryenExpressionRef expr,
+                                           BinaryenIndex index) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<TryTable>());
+  assert(index < static_cast<TryTable*>(expression)->sentTypes.size());
+  return static_cast<TryTable*>(expression)->sentTypes[index].getID();
 }
 BinaryenIndex BinaryenTryTableAppendCatch(BinaryenExpressionRef expr,
                                           const char* catchTag,
                                           const char* catchDest,
-                                          bool catchRef) {
+                                          bool catchRef,
+                                          BinaryenType sentType) {
   auto* expression = (Expression*)expr;
   assert(expression->is<TryTable>());
   assert(catchDest);
@@ -4207,13 +4220,15 @@ BinaryenIndex BinaryenTryTableAppendCatch(BinaryenExpressionRef expr,
   tryTable->catchTags.push_back(catchTag ? Name(catchTag) : Name());
   tryTable->catchDests.push_back(Name(catchDest));
   tryTable->catchRefs.push_back(catchRef);
+  tryTable->sentTypes.push_back(Type(sentType));
   return index;
 }
 void BinaryenTryTableInsertCatchAt(BinaryenExpressionRef expr,
                                    BinaryenIndex index,
                                    const char* catchTag,
                                    const char* catchDest,
-                                   bool catchRef) {
+                                   bool catchRef,
+                                   BinaryenType sentType) {
   auto* expression = (Expression*)expr;
   assert(expression->is<TryTable>());
   assert(catchDest);
@@ -4221,6 +4236,7 @@ void BinaryenTryTableInsertCatchAt(BinaryenExpressionRef expr,
   tryTable->catchTags.insertAt(index, catchTag ? Name(catchTag) : Name());
   tryTable->catchDests.insertAt(index, Name(catchDest));
   tryTable->catchRefs.insertAt(index, catchRef);
+  tryTable->sentTypes.insertAt(index, Type(sentType));
 }
 const char* BinaryenTryTableRemoveCatchAt(BinaryenExpressionRef expr,
                                           BinaryenIndex index) {
@@ -4229,6 +4245,7 @@ const char* BinaryenTryTableRemoveCatchAt(BinaryenExpressionRef expr,
   auto* tryTable = static_cast<TryTable*>(expression);
   tryTable->catchTags.removeAt(index);
   tryTable->catchRefs.removeAt(index);
+  tryTable->sentTypes.removeAt(index);
   return tryTable->catchDests.removeAt(index).str.data();
 }
 bool BinaryenTryTableHasCatchAll(BinaryenExpressionRef expr) {
