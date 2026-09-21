@@ -32,14 +32,17 @@ import time
 
 
 # Duplicated from test.shared (importing test.shared has unwanted side effects).
-def cpu_count():
-    # TODO: Use os.process_cpu_count for Python >= 3.13
-    try:
-        # Available cores based on configured affinity (linux only)
-        return len(os.sched_getaffinity(0))
-    except AttributeError:
-        # Fallback to number of logical cores on Mac/Windows.
-        return os.cpu_count()
+def get_num_cores():
+    # Prefer `os.process_cpu_count` when available (3.13 and above) since it
+    # takes into account thread affinity. Fall back to `os.sched_getaffinity`
+    # where available and finally `os.cpu_count`, which should work everywhere.
+    if hasattr(os, 'process_cpu_count'):
+        cpu_count = os.process_cpu_count()
+    elif hasattr(os, 'sched_getaffinity'):
+        cpu_count = len(os.sched_getaffinity(0))
+    else:
+        cpu_count = os.cpu_count()
+    return int(os.getenv('BINARYEN_CORES', cpu_count))
 
 
 class FuzzMonitor:
@@ -175,7 +178,7 @@ def parse_args():
     binaryen_root = os.path.dirname(
         os.path.dirname(os.path.abspath(__file__)))
     default_log_dir = os.path.join(binaryen_root, 'out', 'test')
-    cores = cpu_count() or 1
+    cores = get_num_cores() or 1
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         '-j',

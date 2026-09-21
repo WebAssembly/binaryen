@@ -141,14 +141,18 @@ def red_stderr():
     return red_output(file=sys.stderr)
 
 
-def cpu_count():
-    # TODO: Use os.process_cpu_count for Python >= 3.13
-    try:
-        # Available cores based on configured affinity (linux only)
-        return len(os.sched_getaffinity(0))
-    except AttributeError:
-        # Fallback to number of logical cores on Mac/Windows.
-        return os.cpu_count()
+# Adapted from Emscripten's tools/utils.py
+def get_num_cores():
+    # Prefer `os.process_cpu_count` when available (3.13 and above) since it
+    # takes into account thread affinity. Fall back to `os.sched_getaffinity`
+    # where available and finally `os.cpu_count`, which should work everywhere.
+    if hasattr(os, 'process_cpu_count'):
+        cpu_count = os.process_cpu_count()
+    elif hasattr(os, 'sched_getaffinity'):
+        cpu_count = len(os.sched_getaffinity(0))
+    else:
+        cpu_count = os.cpu_count()
+    return int(os.getenv('BINARYEN_CORES', cpu_count))
 
 
 def run_parallel_tests(run_one_test_func, tests, show_worker_count=True):
@@ -156,7 +160,7 @@ def run_parallel_tests(run_one_test_func, tests, show_worker_count=True):
     tests = list(tests)
     if not tests:
         return
-    worker_count = min(cpu_count() or 1, len(tests))
+    worker_count = min(get_num_cores() or 1, len(tests))
     if show_worker_count:
         print(f"Running with {worker_count} workers")
 
