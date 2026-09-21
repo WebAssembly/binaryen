@@ -1430,7 +1430,7 @@
     ;; As above, but now with a single if. The contradiction tested is
     ;; between the default value and the if condition.
     (if
-      (local.get $x)
+      (local.get $x) ;; this is 0, hence the if is not taken
       (then
         (drop
           ;; This is unreachable.
@@ -3388,7 +3388,7 @@
             (i32.const 42)
           )
         )
-        ;; Copy x into y, and see that it is now equal to 42.
+        ;; Copy x (which is 42) into y, and see that it is now equal to 42.
         (local.set $y
           (local.get $x)
         )
@@ -3481,7 +3481,7 @@
     )
     (if
       (i32.eq
-        (local.get $x)
+        (local.get $x) ;; this is 42
         (local.get $y)
       )
       (then
