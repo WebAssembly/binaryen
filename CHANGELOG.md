@@ -15,14 +15,21 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
+v133
+----
+
 - Add a new `--constraint-analysis` pass which propagates logical facts along
-  branches. (#9010)
+  branches. The pass runs automatically in `-O3` and `-Os` and above. (#9010)
+- Add an optional TailCall optimization pass (`--tail-call`). (#9103)
+- Add an optional pass to remove empty function exports. (#9078)
 - Replace the `BINARYEN_ROOT` environment variable (used by developers who are
   doing out-of-tree builds of binaryen) with `BINARYEN_BIN` (#9023)
 - Reject non-natural alignment for atomic memory operations at parse time (#8962)
 - Note that fast-math mode can ignore the difference between negative zero and
   zero (like clang and gcc). (#9056)
-- [JS API] **(breaking)** Organize types into enums (#9098)
+- [JS API] Organize types into enums (breaking change in JS API). (#9098)
+- [JS API] Expose heap types `exn` & `noexn` (#9057)
+- [JS API] Expose instructions `try_table` & `throw_ref` (#9057)
 
 v132
 ----
