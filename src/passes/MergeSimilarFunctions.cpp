@@ -255,7 +255,7 @@ bool MergeSimilarFunctions::areInEquvalentClass(Function* lhs,
       // instance, if `funcref` is publicly exposed). Do not parameterize the
       // call if the callee's signature is not a valid public type (e.g., if it
       // contains an exact reference when custom descriptors are disabled).
-      if (lhsCast->target != rhsCast->target &&
+      if (lhsCallee != rhsCallee &&
           getPassOptions().worldMode == WorldMode::Open &&
           !PublicTypeValidator(module->features)
              .isValidPublicType(lhsCallee->type.getHeapType())) {
