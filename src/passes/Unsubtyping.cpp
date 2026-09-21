@@ -19,6 +19,7 @@
 #include <memory>
 
 #include "ir/effects.h"
+#include "ir/eh-utils.h"
 #include "ir/js-utils.h"
 #include "ir/localize.h"
 #include "ir/module-utils.h"
@@ -1073,6 +1074,7 @@ struct Unsubtyping : Pass, Noter<Unsubtyping> {
     // collecting and iterating over all the types, though.
     struct Rewriter : WalkerPass<PostWalker<Rewriter>> {
       const TypeTree& types;
+      bool needEHFixups = false;
 
       // Allocations that might trap that have been removed from module-level
       // initializers. These need to be placed in new globals to preserve any
@@ -1114,6 +1116,7 @@ struct Unsubtyping : Pass, Noter<Unsubtyping> {
           block->list.push_back(curr);
           block->type = curr->type;
           replaceCurrent(block);
+          needEHFixups = true;
         } else {
           // We are dropping this descriptor, but it might have a potential trap
           // nested inside it. In that case we need to preserve the trap by
@@ -1124,6 +1127,12 @@ struct Unsubtyping : Pass, Noter<Unsubtyping> {
           }
         }
         curr->desc = nullptr;
+      }
+
+      void visitFunction(Function* curr) {
+        if (needEHFixups) {
+          EHUtils::handleBlockNestedPops(curr, *getModule());
+        }
       }
     };
 
