@@ -96,7 +96,7 @@ suite("binaryen", () => {
 		const NULLISH = 2;
 
 		// NOTE: the length is twice the number of members due to how TypeScript emits enums.
-		assert.strictEqual(Object.entries(binaryen.Type).length, 19 * 2);
+		assert.strictEqual(Object.entries(binaryen.Type).length, 21 * 2);
 
 		assert.strictEqual(binaryen.Type.unreachable, 1);
 		assert.strictEqual(binaryen.Type.none, 0);
@@ -114,14 +114,12 @@ suite("binaryen", () => {
 		assert.strictEqual(binaryen.Type.i31ref, binaryen.HeapType.i31 + NULLISH);
 		assert.strictEqual(binaryen.Type.structref, binaryen.HeapType.struct + NULLISH);
 		assert.strictEqual(binaryen.Type.arrayref, binaryen.HeapType.array + NULLISH);
-		// @ts-expect-error
-		assert.strictEqual(binaryen.Type.exnref, undefined); assert.notStrictEqual(binaryen.Type.exnref, binaryen.HeapType.exn + NULLISH);
+		assert.strictEqual(binaryen.Type.exnref, binaryen.HeapType.exn + NULLISH);
 		assert.strictEqual(binaryen.Type.stringref, binaryen.HeapType.string + NULLISH);
 		assert.strictEqual(binaryen.Type.nullref, binaryen.HeapType.none + NULLISH);
 		assert.strictEqual(binaryen.Type.nullexternref, binaryen.HeapType.noextern + NULLISH);
 		assert.strictEqual(binaryen.Type.nullfuncref, binaryen.HeapType.nofunc + NULLISH);
-		// @ts-expect-error
-		assert.strictEqual(binaryen.Type.nullexnref, undefined); assert.notStrictEqual(binaryen.Type.nullexnref, binaryen.HeapType.noexn + NULLISH);
+		assert.strictEqual(binaryen.Type.nullexnref, binaryen.HeapType.noexn + NULLISH);
 
 		const i32_pair = binaryen.createType([binaryen.Type.i32, binaryen.Type.i32]);
 		const duplicate_pair = binaryen.createType([binaryen.Type.i32, binaryen.Type.i32]);
@@ -137,7 +135,7 @@ suite("binaryen", () => {
 		const USED_BITS = 3;
 
 		// NOTE: the length is twice the number of members due to how TypeScript emits enums.
-		assert.strictEqual(Object.entries(binaryen.HeapType).length, 11 * 2);
+		assert.strictEqual(Object.entries(binaryen.HeapType).length, 13 * 2);
 
 		assert.strictEqual(binaryen.HeapType.extern, 1 << USED_BITS);
 		assert.strictEqual(binaryen.HeapType.func, 2 << USED_BITS);
@@ -146,14 +144,12 @@ suite("binaryen", () => {
 		assert.strictEqual(binaryen.HeapType.i31, 6 << USED_BITS);
 		assert.strictEqual(binaryen.HeapType.struct, 7 << USED_BITS);
 		assert.strictEqual(binaryen.HeapType.array, 8 << USED_BITS);
-		// @ts-expect-error
-		assert.strictEqual(binaryen.HeapType.exn, undefined); assert.notStrictEqual(binaryen.HeapType.exn, 9 << USED_BITS);
+		assert.strictEqual(binaryen.HeapType.exn, 9 << USED_BITS);
 		assert.strictEqual(binaryen.HeapType.string, 10 << USED_BITS);
 		assert.strictEqual(binaryen.HeapType.none, 11 << USED_BITS);
 		assert.strictEqual(binaryen.HeapType.noextern, 12 << USED_BITS);
 		assert.strictEqual(binaryen.HeapType.nofunc, 13 << USED_BITS);
-		// @ts-expect-error
-		assert.strictEqual(binaryen.HeapType.noexn, undefined); assert.notStrictEqual(binaryen.HeapType.noexn, 15 << USED_BITS);
+		assert.strictEqual(binaryen.HeapType.noexn, 15 << USED_BITS);
 	});
 
 
@@ -169,7 +165,7 @@ suite("binaryen", () => {
 
 	test(".ExpressionId", () => {
 		// NOTE: the length is twice the number of members due to how TypeScript emits enums.
-		assert.strictEqual(Object.entries(binaryen.ExpressionId).length, 89 * 2);
+		assert.strictEqual(Object.entries(binaryen.ExpressionId).length, 91 * 2);
 
 		assert.strictEqual(binaryen.ExpressionId.Invalid, 0);
 		assert.strictEqual(binaryen.ExpressionId.Block, 1);
@@ -231,12 +227,10 @@ suite("binaryen", () => {
 		// @ts-expect-error
 		assert.strictEqual(binaryen.ExpressionId.ElemDrop, undefined); assert.notStrictEqual(binaryen.ExpressionId.ElemDrop, 53);
 		assert.strictEqual(binaryen.ExpressionId.Try, 54);
-		// @ts-expect-error
-		assert.strictEqual(binaryen.ExpressionId.TryTable, undefined); assert.notStrictEqual(binaryen.ExpressionId.TryTable, 55);
+		assert.strictEqual(binaryen.ExpressionId.TryTable, 55);
 		assert.strictEqual(binaryen.ExpressionId.Throw, 56);
 		assert.strictEqual(binaryen.ExpressionId.Rethrow, 57);
-		// @ts-expect-error
-		assert.strictEqual(binaryen.ExpressionId.ThrowRef, undefined); assert.notStrictEqual(binaryen.ExpressionId.ThrowRef, 58);
+		assert.strictEqual(binaryen.ExpressionId.ThrowRef, 58);
 		assert.strictEqual(binaryen.ExpressionId.TupleMake, 59);
 		assert.strictEqual(binaryen.ExpressionId.TupleExtract, 60);
 		assert.strictEqual(binaryen.ExpressionId.RefI31, 61);

@@ -99,8 +99,8 @@
   ;; A read *does* keep a field from being removed.
 
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $struct (sub (struct (field funcref))))
-  (type $struct (sub (struct (field (mut funcref)))))
+  ;; CHECK-NEXT:  (type $struct (sub (struct (field funcref) (field i32))))
+  (type $struct (sub (struct (field (mut funcref)) (field (mut i32)))))
 
   ;; CHECK:       (type $1 (func (param (ref $struct))))
 
@@ -110,11 +110,27 @@
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.wait $struct 1
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (waitqueue.new)
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:    (i64.const -1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $func (param $x (ref $struct))
     (drop
       (struct.get $struct 0
         (local.get $x)
+      )
+    )
+    (drop
+      (struct.wait $struct 1
+        (local.get $x)
+        (waitqueue.new)
+        (i32.const 1)
+        (i64.const -1)
       )
     )
   )

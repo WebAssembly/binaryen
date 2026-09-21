@@ -88,8 +88,10 @@ TableSetId: 47
 TableSizeId: 48
 TableGrowId: 49
 TryId: 54
+TryTableId: 55
 ThrowId: 56
 RethrowId: 57
+ThrowRefId: 58
 TupleMakeId: 59
 TupleExtractId: 60
 RefI31Id: 61

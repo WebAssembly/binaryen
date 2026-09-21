@@ -52,7 +52,9 @@ const EXPRESSION_TYPE_REGISTRY: ReadonlyMap<ExpressionId, new (expr: ExpressionR
 	[ExpressionId.Return, expressions.Return],
 	[ExpressionId.Throw, expressions.Throw],
 	[ExpressionId.Rethrow, expressions.Rethrow],
+	[ExpressionId.ThrowRef, expressions.ThrowRef],
 	[ExpressionId.Try, expressions.Try],
+	[ExpressionId.TryTable, expressions.TryTable],
 
 	// Variable Instructions
 	[ExpressionId.LocalGet, expressions.LocalGet],
