@@ -161,7 +161,11 @@ struct ConstraintAnalysis
   void doWalkFunction(Function* func) {
     fastMath = getPassOptions().fastMath;
 
+    // Mark the relevant locals.
     relevantLocals.assign(func->getNumLocals(), false);
+    for (Index i = 0; i < func->getNumLocals(); ++i) {
+      relevantLocals[i] = isRelevantType(func->getLocalType(i));
+    }
 
     Super::doWalkFunction(func);
   }
@@ -183,23 +187,14 @@ struct ConstraintAnalysis
   }
 
   void visitLocalGet(LocalGet* curr) {
-    // To be relevant for optimization, there must be a local.get (otherwise,
-    // nothing can be optimized as this is not used), and the type must be
-    // relevant.
     if (isRelevantType(curr->type)) {
       addAction();
-      relevantLocals[curr->index] = true;
     }
   }
 
   void visitLocalSet(LocalSet* curr) {
     if (isRelevantType(getFunction()->getLocalType(curr->index))) {
       addAction();
-
-      // A tee is also a get, so it can mark a local as relevant, like LocalGet.
-      if (curr->isTee()) {
-        relevantLocals[curr->index] = true;
-      }
     }
   }
 
