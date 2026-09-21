@@ -7091,4 +7091,51 @@
       )
     )
   )
+
+  ;; CHECK:      (func $local.get.internalized-string (type $1)
+  ;; CHECK-NEXT:  (local $x anyref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.null none)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (any.convert_extern
+  ;; CHECK-NEXT:    (string.const "foo")
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPTIN:      (func $local.get.internalized-string (type $1)
+  ;; OPTIN-NEXT:  (local $x anyref)
+  ;; OPTIN-NEXT:  (drop
+  ;; OPTIN-NEXT:   (ref.null none)
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (local.set $x
+  ;; OPTIN-NEXT:   (any.convert_extern
+  ;; OPTIN-NEXT:    (string.const "foo")
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (drop
+  ;; OPTIN-NEXT:   (local.get $x)
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT: )
+  (func $local.get.internalized-string
+    (local $x anyref)
+    ;; A null can be propagated.
+    (drop
+      (local.get $x)
+    )
+    ;; A non-null value, like an internalized string, is not optimized (we could
+    ;; emit an any.convert_extern of a strong.const, but it increases size, so
+    ;; we leave this for passes like Precompute and GUFA).
+    (local.set $x
+      (any.convert_extern
+        (string.const "foo")
+      )
+    )
+    (drop
+      (local.get $x)
+    )
+  )
 )

@@ -419,6 +419,12 @@ struct ConstraintAnalysis
     // A bare local.get can be optimized, if we know that local is a constant.
     if (auto* get = (*currp)->dynCast<LocalGet>()) {
       if (auto lit = constraints.get(get->index).getLiteral()) {
+        // Among references, only propagate nulls. Other things, like strings,
+        // may increase size, so we leave them for passes like Precompute and
+        // GUFA.
+        if (lit->type.isRef() && !lit->isNull()) {
+          return nullptr;
+        }
         return Builder(*getModule()).makeConstantExpression(*lit);
       }
     }
