@@ -839,7 +839,17 @@ struct GlobalTypeOptimization : public Pass {
         curr->index = newIndex;
       }
 
-      // TODO: visitStructWait
+      void visitStructWait(StructWait* curr) {
+        if (curr->ref->type == Type::unreachable) {
+          return;
+        }
+
+        auto newIndex =
+          parent.getNewIndex(curr->ref->type.getHeapType(), curr->index);
+        // We must not remove a field that is read from.
+        assert(newIndex != RemovedField);
+        curr->index = newIndex;
+      }
     };
 
     PassRunner runner(getPassRunner());
