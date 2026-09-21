@@ -13,8 +13,8 @@
   ;; OPTIN:      (type $array (array (mut i32)))
   (type $array (array (mut i32)))
 
-  ;; CHECK:      (import "a" "b" (func $import (type $4) (result i32)))
-  ;; OPTIN:      (import "a" "b" (func $import (type $4) (result i32)))
+  ;; CHECK:      (import "a" "b" (func $import (type $5) (result i32)))
+  ;; OPTIN:      (import "a" "b" (func $import (type $5) (result i32)))
   (import "a" "b" (func $import (result i32)))
 
   ;; CHECK:      (func $simple (type $1)
@@ -3930,8 +3930,7 @@
   (func $relevant-copy
     (local $x i32)
     (local $y i32)
-    ;; x is not relevant, but it is copied to y, which is, so we must track x as
-    ;; relevant too.
+    ;; x has no sets or uses but for a copy to $y, but we still optimize here.
     (local.set $y
       (local.get $x)
     )
@@ -4480,28 +4479,34 @@
     )
   )
 
-  ;; CHECK:      (func $flipped-contradiction (type $4) (result i32)
-  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK:      (func $flipped-contradiction (type $10) (param $x i32) (result i32)
   ;; CHECK-NEXT:  (loop $loop
   ;; CHECK-NEXT:   (br_if $loop
-  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:    (i32.lt_u
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:   (br_if $loop
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; OPTIN:      (func $flipped-contradiction (type $4) (result i32)
-  ;; OPTIN-NEXT:  (local $x i32)
+  ;; OPTIN:      (func $flipped-contradiction (type $10) (param $x i32) (result i32)
   ;; OPTIN-NEXT:  (loop $loop
   ;; OPTIN-NEXT:   (br_if $loop
-  ;; OPTIN-NEXT:    (i32.const 1)
+  ;; OPTIN-NEXT:    (i32.eqz
+  ;; OPTIN-NEXT:     (local.get $x)
+  ;; OPTIN-NEXT:    )
   ;; OPTIN-NEXT:   )
-  ;; OPTIN-NEXT:   (unreachable)
+  ;; OPTIN-NEXT:   (br_if $loop
+  ;; OPTIN-NEXT:    (local.get $x)
+  ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:   (unreachable)
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT: )
-  (func $flipped-contradiction (result i32)
-    (local $x i32)
+  (func $flipped-contradiction (param $x i32) (result i32)
     (loop $loop (result i32)
       ;; If we do not branch, we add the constraint x >= 1.
       (br_if $loop
@@ -4522,7 +4527,7 @@
     )
   )
 
-  ;; CHECK:      (func $flipped-contradiction-no (type $4) (result i32)
+  ;; CHECK:      (func $flipped-contradiction-no (type $5) (result i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (loop $loop (result i32)
   ;; CHECK-NEXT:   (br_if $loop
@@ -4536,7 +4541,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; OPTIN:      (func $flipped-contradiction-no (type $4) (result i32)
+  ;; OPTIN:      (func $flipped-contradiction-no (type $5) (result i32)
   ;; OPTIN-NEXT:  (local $x i32)
   ;; OPTIN-NEXT:  (loop $loop (result i32)
   ;; OPTIN-NEXT:   (br_if $loop
@@ -4853,7 +4858,7 @@
     )
   )
 
-  ;; CHECK:      (func $eqz-condition-64 (type $10) (param $x i64)
+  ;; CHECK:      (func $eqz-condition-64 (type $11) (param $x i64)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i64.eqz
   ;; CHECK-NEXT:    (local.get $x)
@@ -4865,7 +4870,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; OPTIN:      (func $eqz-condition-64 (type $10) (param $x i64)
+  ;; OPTIN:      (func $eqz-condition-64 (type $11) (param $x i64)
   ;; OPTIN-NEXT:  (if
   ;; OPTIN-NEXT:   (i64.eqz
   ;; OPTIN-NEXT:    (local.get $x)
@@ -5581,7 +5586,7 @@
     )
   )
 
-  ;; CHECK:      (func $several (type $11) (param $a i32) (param $b i32) (param $c i32) (param $d i32) (param $e i32)
+  ;; CHECK:      (func $several (type $12) (param $a i32) (param $b i32) (param $c i32) (param $d i32) (param $e i32)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.and
   ;; CHECK-NEXT:    (i32.and
@@ -5631,7 +5636,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; OPTIN:      (func $several (type $11) (param $a i32) (param $b i32) (param $c i32) (param $d i32) (param $e i32)
+  ;; OPTIN:      (func $several (type $12) (param $a i32) (param $b i32) (param $c i32) (param $d i32) (param $e i32)
   ;; OPTIN-NEXT:  (if
   ;; OPTIN-NEXT:   (i32.and
   ;; OPTIN-NEXT:    (i32.and
@@ -6962,7 +6967,7 @@
     )
   )
 
-  ;; CHECK:      (func $local.get.impossible.cast (type $12) (result (ref func))
+  ;; CHECK:      (func $local.get.impossible.cast (type $13) (result (ref func))
   ;; CHECK-NEXT:  (local $x (ref func))
   ;; CHECK-NEXT:  (local.set $x
   ;; CHECK-NEXT:   (ref.cast (ref nofunc)
@@ -6971,7 +6976,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
-  ;; OPTIN:      (func $local.get.impossible.cast (type $12) (result (ref func))
+  ;; OPTIN:      (func $local.get.impossible.cast (type $13) (result (ref func))
   ;; OPTIN-NEXT:  (local $x (ref func))
   ;; OPTIN-NEXT:  (local.set $x
   ;; OPTIN-NEXT:   (unreachable)
