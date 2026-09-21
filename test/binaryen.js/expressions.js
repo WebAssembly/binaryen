@@ -3289,22 +3289,23 @@ console.log("# TryTable");
 (function testTryTable() {
   const module = new binaryen.Module();
   module.addTag("tag1", 0, binaryen.Type.none, binaryen.Type.none);
-  module.addTag("tag2", 0, binaryen.Type.none, binaryen.Type.none);
+  module.addTag("tag2", 0, binaryen.Type.i32, binaryen.Type.none);
+  var exnref = binaryen.getTypeFromHeapType(binaryen.HeapType.exn, false);
 
   var body = module.nop();
   var catches = [
-    { tag: "tag1", dest: "dest1", ref: false },
-    { tag: null,   dest: "dest_all", ref: true }
+    { tag: "tag1", dest: "dest1", ref: false, sentType: binaryen.Type.none },
+    { tag: null,   dest: "dest_all", ref: true, sentType: exnref }
   ];
   const theTryTable = binaryen.TryTable(module.try_table(body, catches));
   assert(theTryTable instanceof binaryen.TryTable);
   assert(theTryTable instanceof binaryen.Expression);
   assert(theTryTable.body === body);
-  assert(theTryTable.getNumCatches() == 2);
+  assert(theTryTable.getNumCatches() === 2);
   assertDeepEqual(theTryTable.catches, catches);
   assertDeepEqual(theTryTable.getCatches(), catches);
   assertDeepEqual(theTryTable.getCatchAt(0), catches[0]);
-  assert(theTryTable.hasCatchAll() == true);
+  assert(theTryTable.hasCatchAll() === true);
   console.log(theTryTable.toText());
 
   var info = binaryen.getExpressionInfo(theTryTable);
@@ -3314,34 +3315,34 @@ console.log("# TryTable");
   assertDeepEqual(info.catches, theTryTable.catches);
   assert(info.hasCatchAll === theTryTable.hasCatchAll());
 
-  theTryTable.body = body = module.unreachable();
-  assert(theTryTable.body === body);
+  theTryTable.body = module.unreachable();
 
-  theTryTable.setCatchAt(0, { tag: "tag2", dest: "new_dest1", ref: true });
-  assertDeepEqual(theTryTable.getCatchAt(0), { tag: "tag2", dest: "new_dest1", ref: true });
+  var i32AndExnref = binaryen.createType([binaryen.Type.i32, exnref]);
+  theTryTable.setCatchAt(0, { tag: "tag2", dest: "new_dest1", ref: true, sentType: i32AndExnref });
+  assertDeepEqual(theTryTable.getCatchAt(0), { tag: "tag2", dest: "new_dest1", ref: true, sentType: i32AndExnref });
   console.log(theTryTable.toText());
 
-  theTryTable.insertCatchAt(0, { tag: "tag1", dest: "first_dest", ref: false });
-  assert(theTryTable.getNumCatches() == 3);
-  assertDeepEqual(theTryTable.getCatchAt(0), { tag: "tag1", dest: "first_dest", ref: false });
+  theTryTable.insertCatchAt(0, { tag: "tag1", dest: "first_dest", ref: false, sentType: binaryen.Type.none });
+  assert(theTryTable.getNumCatches() === 3);
+  assertDeepEqual(theTryTable.getCatchAt(0), { tag: "tag1", dest: "first_dest", ref: false, sentType: binaryen.Type.none });
   console.log(theTryTable.toText());
 
-  assert(theTryTable.removeCatchAt(0) == "first_dest");
-  assert(theTryTable.getNumCatches() == 2);
-  assertDeepEqual(theTryTable.getCatchAt(0), { tag: "tag2", dest: "new_dest1", ref: true });
+  assert(theTryTable.removeCatchAt(0) === "first_dest");
+  assert(theTryTable.getNumCatches() === 2);
+  assertDeepEqual(theTryTable.getCatchAt(0), { tag: "tag2", dest: "new_dest1", ref: true, sentType: i32AndExnref });
 
-  theTryTable.appendCatch({ tag: "tag1", dest: "appended_dest", ref: true });
-  assert(theTryTable.getNumCatches() == 3);
-  assertDeepEqual(theTryTable.getCatchAt(2), { tag: "tag1", dest: "appended_dest", ref: true });
+  theTryTable.appendCatch({ tag: "tag1", dest: "appended_dest", ref: true, sentType: exnref });
+  assert(theTryTable.getNumCatches() === 3);
+  assertDeepEqual(theTryTable.getCatchAt(2), { tag: "tag1", dest: "appended_dest", ref: true, sentType: exnref });
   console.log(theTryTable.toText());
 
   var newCatches = [
-    { tag: "tag1", dest: "only_dest", ref: false } // set
+    { tag: "tag2", dest: "only_dest", ref: false, sentType: binaryen.Type.i32 } // set
     // remove
     // remove
   ];
   theTryTable.catches = newCatches;
-  assert(theTryTable.getNumCatches() == 1);
+  assert(theTryTable.getNumCatches() === 1);
   assertDeepEqual(theTryTable.catches, newCatches);
   console.log(theTryTable.toText());
 
@@ -3461,9 +3462,7 @@ console.log("# ThrowRef");
   assert(info.type === theThrowRef.type);
   assert(info.exnref === theThrowRef.exnref);
 
-  var newExnref = module.ref.null(binaryen.HeapType.noexn);
-  theThrowRef.exnref = newExnref;
-  assert(theThrowRef.exnref === newExnref);
+  theThrowRef.exnref = module.ref.null(binaryen.HeapType.noexn);
 
   theThrowRef.type = binaryen.Type.f64;
   theThrowRef.finalize();

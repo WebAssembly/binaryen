@@ -2393,11 +2393,13 @@ BinaryenTryTableGetNumCatches(BinaryenExpressionRef expr);
 // (NULL) for catch_all and catch_all_ref clauses.
 BINARYEN_API const char*
 BinaryenTryTableGetCatchTagAt(BinaryenExpressionRef expr, BinaryenIndex index);
-// Sets the catch tag at the specified index of a `try_table` expression. Pass
-// NULL for catch_all/catch_all_ref clauses.
+// Sets the catch tag at the specified index of a `try_table` expression, along
+// with the clause's new sent type. Pass NULL for catch_all/catch_all_ref
+// clauses.
 BINARYEN_API void BinaryenTryTableSetCatchTagAt(BinaryenExpressionRef expr,
                                                 BinaryenIndex index,
-                                                const char* catchTag);
+                                                const char* catchTag,
+                                                BinaryenType sentType);
 // Gets the catch destination label at the specified index of a `try_table`
 // expression.
 BINARYEN_API const char*
@@ -2412,17 +2414,26 @@ BINARYEN_API void BinaryenTryTableSetCatchDestAt(BinaryenExpressionRef expr,
 BINARYEN_API bool BinaryenTryTableIsCatchRefAt(BinaryenExpressionRef expr,
                                                BinaryenIndex index);
 // Sets whether the catch clause at the specified index of a `try_table`
-// expression is a `catch_ref`/`catch_all_ref` clause.
+// expression is a `catch_ref`/`catch_all_ref` clause, along with the clause's
+// new sent type.
 BINARYEN_API void BinaryenTryTableSetCatchRefAt(BinaryenExpressionRef expr,
                                                 BinaryenIndex index,
-                                                bool catchRef);
+                                                bool catchRef,
+                                                BinaryenType sentType);
+// Gets the type of the values the catch clause at the specified index of a
+// `try_table` expression sends to its destination: the catch tag's params,
+// followed by a non-nullable exnref for `catch_ref`/`catch_all_ref` clauses, or
+// none if the clause sends nothing.
+BINARYEN_API BinaryenType
+BinaryenTryTableGetSentTypeAt(BinaryenExpressionRef expr, BinaryenIndex index);
 // Appends a catch clause to a `try_table` expression, returning its insertion
 // index. Pass NULL for `catchTag` for catch_all/catch_all_ref.
 BINARYEN_API BinaryenIndex
 BinaryenTryTableAppendCatch(BinaryenExpressionRef expr,
                             const char* catchTag,
                             const char* catchDest,
-                            bool catchRef);
+                            bool catchRef,
+                            BinaryenType sentType);
 // Inserts a catch clause at the specified index of a `try_table` expression,
 // moving existing clauses including the one previously at that index one
 // index up.
@@ -2430,7 +2441,8 @@ BINARYEN_API void BinaryenTryTableInsertCatchAt(BinaryenExpressionRef expr,
                                                 BinaryenIndex index,
                                                 const char* catchTag,
                                                 const char* catchDest,
-                                                bool catchRef);
+                                                bool catchRef,
+                                                BinaryenType sentType);
 // Removes the catch clause at the specified index of a `try_table` expression,
 // moving all subsequent clauses one index down. Returns the removed clause's
 // destination label.

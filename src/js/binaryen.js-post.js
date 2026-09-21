@@ -5384,7 +5384,8 @@ function getTryTableCatchAt(expr, index) {
   return {
     'tag': tagPtr ? UTF8ToString(tagPtr) : null,
     'dest': UTF8ToString(Module['_BinaryenTryTableGetCatchDestAt'](expr, index)),
-    'ref': Boolean(Module['_BinaryenTryTableIsCatchRefAt'](expr, index))
+    'ref': Boolean(Module['_BinaryenTryTableIsCatchRefAt'](expr, index)),
+    'sentType': Module['_BinaryenTryTableGetSentTypeAt'](expr, index)
   };
 }
 
@@ -5413,12 +5414,13 @@ Module['TryTable'] = makeExpressionWrapper(Module['_BinaryenTryTableId'](), {
         const tag = c['tag'] ? strToStack(c['tag']) : 0;
         const dest = strToStack(c['dest']);
         const ref = c['ref'] ? 1 : 0;
+        const sentType = c['sentType'];
         if (i < prevNum) {
-          Module['_BinaryenTryTableSetCatchTagAt'](expr, i, tag);
+          Module['_BinaryenTryTableSetCatchTagAt'](expr, i, tag, sentType);
           Module['_BinaryenTryTableSetCatchDestAt'](expr, i, dest);
-          Module['_BinaryenTryTableSetCatchRefAt'](expr, i, ref);
+          Module['_BinaryenTryTableSetCatchRefAt'](expr, i, ref, sentType);
         } else {
-          Module['_BinaryenTryTableAppendCatch'](expr, tag, dest, ref);
+          Module['_BinaryenTryTableAppendCatch'](expr, tag, dest, ref, sentType);
         }
       }
     });
@@ -5427,18 +5429,18 @@ Module['TryTable'] = makeExpressionWrapper(Module['_BinaryenTryTableId'](), {
   'getCatchAt': getTryTableCatchAt,
   'setCatchAt'(expr, index, c) {
     preserveStack(() => {
-      Module['_BinaryenTryTableSetCatchTagAt'](expr, index, c['tag'] ? strToStack(c['tag']) : 0);
+      Module['_BinaryenTryTableSetCatchTagAt'](expr, index, c['tag'] ? strToStack(c['tag']) : 0, c['sentType']);
       Module['_BinaryenTryTableSetCatchDestAt'](expr, index, strToStack(c['dest']));
-      Module['_BinaryenTryTableSetCatchRefAt'](expr, index, c['ref'] ? 1 : 0);
+      Module['_BinaryenTryTableSetCatchRefAt'](expr, index, c['ref'] ? 1 : 0, c['sentType']);
     });
   },
   'appendCatch'(expr, c) {
     return preserveStack(() =>
-      Module['_BinaryenTryTableAppendCatch'](expr, c['tag'] ? strToStack(c['tag']) : 0, strToStack(c['dest']), c['ref'] ? 1 : 0));
+      Module['_BinaryenTryTableAppendCatch'](expr, c['tag'] ? strToStack(c['tag']) : 0, strToStack(c['dest']), c['ref'] ? 1 : 0, c['sentType']));
   },
   'insertCatchAt'(expr, index, c) {
     preserveStack(() => {
-      Module['_BinaryenTryTableInsertCatchAt'](expr, index, c['tag'] ? strToStack(c['tag']) : 0, strToStack(c['dest']), c['ref'] ? 1 : 0);
+      Module['_BinaryenTryTableInsertCatchAt'](expr, index, c['tag'] ? strToStack(c['tag']) : 0, strToStack(c['dest']), c['ref'] ? 1 : 0, c['sentType']);
     });
   },
   'removeCatchAt'(expr, index) {

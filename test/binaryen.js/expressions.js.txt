@@ -468,11 +468,11 @@
  (unreachable)
 )
 
-(try_table (catch $tag1 $only_dest)
+(try_table (catch $tag2 $only_dest)
  (unreachable)
 )
 
-(try_table (catch $tag1 $only_dest)
+(try_table (catch $tag2 $only_dest)
  (unreachable)
 )
 
