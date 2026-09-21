@@ -34,16 +34,16 @@ assert(binaryen.Table.getMax(tablePtr) === 20);
 binaryen.Table.setMax(tablePtr, tableMax);
 
 // get/set type
-assert(binaryen.Table.getType(tablePtr) === binaryen.funcref);
-binaryen.Table.setType(tablePtr, binaryen.anyref);
-assert(binaryen.Table.getType(tablePtr) === binaryen.anyref);
-binaryen.Table.setType(tablePtr, binaryen.funcref);
+assert(binaryen.Table.getType(tablePtr) === binaryen.Type.funcref);
+binaryen.Table.setType(tablePtr, binaryen.Type.anyref);
+assert(binaryen.Table.getType(tablePtr) === binaryen.Type.anyref);
+binaryen.Table.setType(tablePtr, binaryen.Type.funcref);
 
 const tableRef = binaryen.Table(tablePtr);
 assert(tableRef.name === tableName);
 assert(tableRef.initial === tableMin);
 assert(tableRef.max === tableMax);
-assert(tableRef.type === binaryen.funcref);
+assert(tableRef.type === binaryen.Type.funcref);
 
 // Cleanup
 assert(module.validate());
