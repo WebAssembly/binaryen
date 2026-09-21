@@ -31,6 +31,17 @@ import threading
 import time
 
 
+# Duplicated from test.shared (importing test.shared has unwanted side effects).
+def cpu_count():
+    # TODO: Use os.process_cpu_count for Python >= 3.13
+    try:
+        # Available cores based on configured affinity (linux only)
+        return len(os.sched_getaffinity(0))
+    except AttributeError:
+        # Fallback to number of logical cores on Mac/Windows.
+        return os.cpu_count()
+
+
 class FuzzMonitor:
     """Monitors fuzzer output stream, manages log files, and tracks state."""
 
@@ -164,7 +175,7 @@ def parse_args():
     binaryen_root = os.path.dirname(
         os.path.dirname(os.path.abspath(__file__)))
     default_log_dir = os.path.join(binaryen_root, 'out', 'test')
-    cores = os.cpu_count() or 1
+    cores = cpu_count() or 1
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         '-j',
