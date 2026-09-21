@@ -28,6 +28,8 @@ v133
 - Note that fast-math mode can ignore the difference between negative zero and
   zero (like clang and gcc). (#9056)
 - [JS API] Organize types into enums (breaking change in JS API). (#9098)
+- [JS API] Expose heap types `exn` & `noexn` (#9057)
+- [JS API] Expose instructions `try_table` & `throw_ref` (#9057)
 
 v132
 ----
