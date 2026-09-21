@@ -364,7 +364,7 @@ def main():
             print(f'Iteration: {iteration}')
             print(f'Seed: {seed}')
             print(f'Exit code: {w.proc.returncode}')
-            return 0
+            return 1
 
     if limit_reached:
         print(
@@ -385,7 +385,7 @@ def main():
         print('Last 20 lines of log:')
         for line in recent_lines:
             print(line.rstrip('\r\n'))
-    return 1
+    return 2
 
 
 if __name__ == '__main__':

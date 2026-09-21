@@ -22,6 +22,7 @@ Current Trunk
 - Reject non-natural alignment for atomic memory operations at parse time (#8962)
 - Note that fast-math mode can ignore the difference between negative zero and
   zero (like clang and gcc). (#9056)
+- [JS API] **(breaking)** Organize types into enums (#9098)
 
 v132
 ----

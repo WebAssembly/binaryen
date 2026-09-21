@@ -1,9 +1,9 @@
 (function() {
   var mod = new binaryen.Module();
-  var func = mod.addFunction("test", binaryen.none, binaryen.none, [],
+  var func = mod.addFunction("test", binaryen.Type.none, binaryen.Type.none, [],
     mod.block("", [
       mod.drop(
-        mod.global.get("missing", binaryen.i32)
+        mod.global.get("missing", binaryen.Type.i32)
       )
     ])
   );
@@ -13,10 +13,10 @@
 
 (function() {
   var mod = new binaryen.Module();
-  var func = mod.addFunction("test", binaryen.none, binaryen.none, [],
+  var func = mod.addFunction("test", binaryen.Type.none, binaryen.Type.none, [],
     mod.block("", [
       mod.drop(
-        mod.local.get(0, binaryen.i32)
+        mod.local.get(0, binaryen.Type.i32)
       )
     ])
   );
