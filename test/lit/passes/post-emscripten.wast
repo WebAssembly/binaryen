@@ -8,7 +8,7 @@
 ;; to dirive.  One segment is passive and its offset is derived from the
 ;; memory.init instruction.
 
-;; Explictly use a data address that is larger then INT_MAX to verify
+;; Explicitly use a data address that is larger then INT_MAX to verify
 ;; that these offset are correctly interpreted as unsigned.
 
 (module

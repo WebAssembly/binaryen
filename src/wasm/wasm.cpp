@@ -1357,6 +1357,8 @@ void WaitqueueNotify::finalize() {
   }
 }
 
+void Publish::finalize() { type = ref->type; }
+
 void ArrayNew::finalize() {
   if (size->type == Type::unreachable ||
       (init && init->type == Type::unreachable)) {

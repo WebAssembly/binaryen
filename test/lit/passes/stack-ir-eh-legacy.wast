@@ -11,7 +11,6 @@
   ;; CHECK-NEXT:   i32.const 0
   ;; CHECK-NEXT:   throw $e0
   ;; CHECK-NEXT:  catch $e0
-  ;; CHECK-NEXT:   
   ;; CHECK-NEXT:   drop
   ;; CHECK-NEXT:  catch_all
   ;; CHECK-NEXT:   rethrow $l0

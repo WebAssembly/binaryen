@@ -3,11 +3,12 @@
 ;; RUN: wasm-opt %s -all --optimize-instructions -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (type $unshared (struct (field (mut i32))))
-
   ;; CHECK:      (type $shared (shared (struct (field (mut i32)))))
   (type $shared (shared (struct (field (mut i32)))))
+  ;; CHECK:      (type $unshared (struct (field (mut i32))))
   (type $unshared (struct (field (mut i32))))
+  ;; CHECK:      (type $array (shared (array (mut i32))))
+  (type $array (shared (array (mut i32))))
 
   ;; CHECK:      (func $get-unordered-unshared (type $2) (result i32)
   ;; CHECK-NEXT:  (struct.get $unshared 0
@@ -152,6 +153,133 @@
     (struct.atomic.set acqrel $shared 0
       (struct.new_default $shared)
       (i32.const 0)
+    )
+  )
+
+  ;; CHECK:      (func $select-struct-rmw (type $4) (param $x (ref $shared)) (result i32)
+  ;; CHECK-NEXT:  (select
+  ;; CHECK-NEXT:   (struct.atomic.rmw.add $shared 0
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (struct.atomic.rmw.add $shared 0
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $select-struct-rmw (param $x (ref $shared)) (result i32)
+    ;; The first rmw here influences the second, and we need to return the result
+    ;; of the first, which means we need a temp local. We avoid adding one and do
+    ;; not optimize here. Other instructions are tested in the functions below.
+    (select
+      (struct.atomic.rmw.add $shared 0
+        (local.get $x)
+        (i32.const 1)
+      )
+      (struct.atomic.rmw.add $shared 0
+        (local.get $x)
+        (i32.const 1)
+      )
+      (i32.const 1)
+    )
+  )
+
+  ;; CHECK:      (func $select-struct-cmpxchg (type $4) (param $x (ref $shared)) (result i32)
+  ;; CHECK-NEXT:  (select
+  ;; CHECK-NEXT:   (struct.atomic.rmw.cmpxchg $shared 0
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:    (i32.const 2)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (struct.atomic.rmw.cmpxchg $shared 0
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:    (i32.const 2)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $select-struct-cmpxchg (param $x (ref $shared)) (result i32)
+    (select
+      (struct.atomic.rmw.cmpxchg $shared 0
+        (local.get $x)
+        (i32.const 1)
+        (i32.const 2)
+      )
+      (struct.atomic.rmw.cmpxchg $shared 0
+        (local.get $x)
+        (i32.const 1)
+        (i32.const 2)
+      )
+      (i32.const 1)
+    )
+  )
+
+  ;; CHECK:      (func $select-array-rmw (type $6) (param $x (ref $array)) (result i32)
+  ;; CHECK-NEXT:  (select
+  ;; CHECK-NEXT:   (array.atomic.rmw.add $array
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (array.atomic.rmw.add $array
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $select-array-rmw (param $x (ref $array)) (result i32)
+    (select
+      (array.atomic.rmw.add $array
+        (local.get $x)
+        (i32.const 0)
+        (i32.const 1)
+      )
+      (array.atomic.rmw.add $array
+        (local.get $x)
+        (i32.const 0)
+        (i32.const 1)
+      )
+      (i32.const 1)
+    )
+  )
+
+  ;; CHECK:      (func $select-array-cmpxchg (type $6) (param $x (ref $array)) (result i32)
+  ;; CHECK-NEXT:  (select
+  ;; CHECK-NEXT:   (array.atomic.rmw.cmpxchg $array
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:    (i32.const 2)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (array.atomic.rmw.cmpxchg $array
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:    (i32.const 2)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $select-array-cmpxchg (param $x (ref $array)) (result i32)
+    (select
+      (array.atomic.rmw.cmpxchg $array
+        (local.get $x)
+        (i32.const 0)
+        (i32.const 1)
+        (i32.const 2)
+      )
+      (array.atomic.rmw.cmpxchg $array
+        (local.get $x)
+        (i32.const 0)
+        (i32.const 1)
+        (i32.const 2)
+      )
+      (i32.const 1)
     )
   )
 )
