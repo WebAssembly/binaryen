@@ -1110,6 +1110,26 @@ void test_core() {
                 nopCatchBody,
                 1,
                 NULL),
+    // (block $catch_all_dest
+    //   (try_table (catch_all $catch_all_dest)
+    //     (throw $a-tag (i32.const 0))
+    //   )
+    // )
+    BinaryenBlock(
+      module,
+      "catch_all_dest",
+      (BinaryenExpressionRef[]){BinaryenTryTable(
+        module,
+        BinaryenThrow(
+          module, "a-tag", (BinaryenExpressionRef[]){makeInt32(module, 0)}, 1),
+        (const char*[]){NULL},
+        (const char*[]){"catch_all_dest"},
+        (bool[]){false},
+        1)},
+      1,
+      BinaryenTypeNone()),
+    // (throw_ref (ref.null noexn))
+    BinaryenThrowRef(module, BinaryenRefNull(module, BinaryenHeapTypeNoexn())),
     // Atomics
     BinaryenAtomicStore(
       module,

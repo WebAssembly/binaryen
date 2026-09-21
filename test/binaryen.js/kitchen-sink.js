@@ -158,8 +158,10 @@ function test_ids() {
   console.log("TableSizeId: " + binaryen.TableSizeId);
   console.log("TableGrowId: " + binaryen.TableGrowId);
   console.log("TryId: " + binaryen.TryId);
+  console.log("TryTableId: " + binaryen.TryTableId);
   console.log("ThrowId: " + binaryen.ThrowId);
   console.log("RethrowId: " + binaryen.RethrowId);
+  console.log("ThrowRefId: " + binaryen.ThrowRefId);
   console.log("TupleMakeId: " + binaryen.TupleMakeId);
   console.log("TupleExtractId: " + binaryen.TupleExtractId);
   console.log("RefI31Id: " + binaryen.RefI31Id);
