@@ -464,7 +464,6 @@ struct ConstraintAnalysis
       LiteralUtils::makeFromInt32(result == True ? 1 : 0, curr->type, wasm);
     *currp = getDroppedChildrenAndAppend(
       curr, wasm, getPassOptions(), value, DropMode::IgnoreParentEffects);
-    return;
   }
 
   // Given a predecessor and one of its successors, find new constraints that
