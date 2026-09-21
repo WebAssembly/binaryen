@@ -6990,7 +6990,8 @@
     (local $x (ref func))
     ;; The cast here traps at runtime. We do not have a valid value to put in
     ;; place of the local.get (it is not refined enough), but we know it is
-    ;; unreachable.
+    ;; unreachable. (In OPTIN, we figure out the set's value is unreachable even
+    ;; earlier.)
     (local.set $x
       (ref.cast (ref func)
         (ref.null func)
@@ -7014,6 +7015,7 @@
   (func $local.get.no.v128
     (local $x v128)
     ;; We know the value here, but do not copy v128 constants, which are large.
+    ;; TODO: should we optimize this?
     (drop
       (local.get $x)
     )
@@ -7085,7 +7087,8 @@
   (func $local.get.float
     (local $x f64)
     ;; The condition here ends up comparing $x to itself. That is normally 1,
-    ;; but not with a nan. We do not optimize floats for this reason.
+    ;; but not with a nan. We do not optimize floats for this reason (without
+    ;; --fast-math, see constraint-analysis-float.wast).
     (if
       (f64.eq
         (local.tee $x
@@ -7136,6 +7139,7 @@
     ;; A non-null value, like an internalized string, is not optimized (we could
     ;; emit an any.convert_extern of a strong.const, but it increases size, so
     ;; we leave this for passes like Precompute and GUFA).
+    ;; TODO: should we optimize this?
     (local.set $x
       (any.convert_extern
         (string.const "foo")
