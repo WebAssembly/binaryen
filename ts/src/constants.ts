@@ -11,9 +11,6 @@ import {
 
 // ## Static Types ## //
 // ### Expressions ### //
-export type Type = number;
-export type HeapType = number;
-export type PackedType = number;
 export type ExpressionRef = number;
 
 // ### Module Components ### //
@@ -39,96 +36,109 @@ export type ExportRef = number;
 
 
 
-// ## Expression Types ## //
-// see https://webassembly.github.io/spec/core/syntax/types.html
-
-// ### Binaryen-Only Types ### //
-/** Type with stack effect `[t*] -> [t*]`. */
-export const unreachable: Type = BinaryenObj["_BinaryenTypeUnreachable"]();
-/** Type with stack effect `[t*] -> []`. Not to be confused with the WASM heap type `none`. */
-export const none: Type = BinaryenObj["_BinaryenTypeNone"]();
-/** Used only for auto-detecting block types. */
-export const auto: Type = BinaryenObj["_BinaryenTypeAuto"]();
-
-// ### Number & Vector Types ### //
-/** 32-bit integer. */
-export const i32: Type = BinaryenObj["_BinaryenTypeInt32"]();
-/** 64-bit integer. */
-export const i64: Type = BinaryenObj["_BinaryenTypeInt64"]();
-/** 32-bit float. */
-export const f32: Type = BinaryenObj["_BinaryenTypeFloat32"]();
-/** 64-bit float. */
-export const f64: Type = BinaryenObj["_BinaryenTypeFloat64"]();
-/** 128-bit vector (SIMD). */
-export const v128: Type = BinaryenObj["_BinaryenTypeVec128"]();
-
-// ### Heap Types ### //
-/** Heap type `any`. */
-export const any: Type = BinaryenObj["_BinaryenHeapTypeAny"]();
-/** Heap type `eq`. */
-export const eq: Type = BinaryenObj["_BinaryenHeapTypeEq"]();
-/** Heap type `i31`. */
-export const i31: Type = BinaryenObj["_BinaryenHeapTypeI31"]();
-/** Heap type `struct`. */
-export const struct: Type = BinaryenObj["_BinaryenHeapTypeStruct"]();
-/** Heap type `array`. */
-export const array: Type = BinaryenObj["_BinaryenHeapTypeArray"]();
-/** Heap type `none`. */
-// export const none: Type = BinaryenObj["_BinaryenHeapTypeNone"](); // TODO: reconcile with the `none` type above, defined as `BinaryenObj["_BinaryenTypeNone"]()`
-/** Heap type `func`. */
-export const func: Type = BinaryenObj["_BinaryenHeapTypeFunc"]();
-/** Heap type `nofunc`. */
-export const nofunc: Type = BinaryenObj["_BinaryenHeapTypeNofunc"]();
-/** Heap type `exn`. */
-export const exn: Type = BinaryenObj["_BinaryenHeapTypeExn"]();
-/** Heap type `noexn`. */
-export const noexn: Type = BinaryenObj["_BinaryenHeapTypeNoexn"]();
-/** Heap type `extern`. */
-export const extern: Type = BinaryenObj["_BinaryenHeapTypeExt"]();
-/** Heap type `noextern`. */
-export const noextern: Type = BinaryenObj["_BinaryenHeapTypeNoext"]();
-
-// ### Reference Types ### //
-/** `(ref null any)` */
-export const anyref: Type = BinaryenObj["_BinaryenTypeAnyref"]();
-/** `(ref null eq)` */
-export const eqref: Type = BinaryenObj["_BinaryenTypeEqref"]();
-/** `(ref null i31)` */
-export const i31ref: Type = BinaryenObj["_BinaryenTypeI31ref"]();
-/** `(ref null struct)` */
-export const structref: Type = BinaryenObj["_BinaryenTypeStructref"]();
-/** `(ref null array)` */
-export const arrayref: Type = BinaryenObj["_BinaryenTypeArrayref"]();
-/** `(ref null none)` */
-export const nullref: Type = BinaryenObj["_BinaryenTypeNullref"]();
-/** `(ref null func)` */
-export const funcref: Type = BinaryenObj["_BinaryenTypeFuncref"]();
-/** `(ref null nofunc)` */
-export const nullfuncref: Type = BinaryenObj["_BinaryenTypeNullFuncref"]();
-/** `(ref null exn)` */
-export const exnref: Type = BinaryenObj["_BinaryenTypeExnref"]();
-/** `(ref null noexn)` */
-export const nullexnref: Type = BinaryenObj["_BinaryenTypeNullExnref"]();
-/** `(ref null extern)` */
-export const externref: Type = BinaryenObj["_BinaryenTypeExternref"]();
-/** `(ref null noextern)` */
-export const nullexternref: Type = BinaryenObj["_BinaryenTypeNullExternref"]();
-
-// ### Packed Types ### //
-export const notPacked: PackedType = BinaryenObj["_BinaryenPackedTypeNotPacked"]();
-export const i8: PackedType = BinaryenObj["_BinaryenPackedTypeInt8"]();
-export const i16: PackedType = BinaryenObj["_BinaryenPackedTypeInt16"]();
-
-// ### Proposed Types ### //
-// These types are not yet in the WASM spec. Move them to their respective sections once finalized.
-/** Heap type `string`. */
-export const string: Type = BinaryenObj["_BinaryenHeapTypeString"]();
-/** `(ref null string)` */
-export const stringref: Type = BinaryenObj["_BinaryenTypeStringref"]();
-
-
-
 // ## Enumerated Values ## //
+/**
+ * A WASM type (the type of an expression).
+ * @see https://webassembly.github.io/spec/core/syntax/types.html
+ */
+export enum Type {
+	// ### Binaryen-Only Types ### //
+	/** Type with stack effect `[t*] -> [t*]`. @category Binaryen-Only Types */
+	unreachable = BinaryenObj["_BinaryenTypeUnreachable"](),
+	/** Type with stack effect `[t*] -> []`. Not to be confused with the WASM heap type `none`. @category Binaryen-Only Types */
+	none = BinaryenObj["_BinaryenTypeNone"](),
+	/** Used only for auto-detecting block types. @category Binaryen-Only Types */
+	auto = BinaryenObj["_BinaryenTypeAuto"](),
+
+	// ### Number & Vector Types ### //
+	/** 32-bit integer. @category Number & Vector Types */
+	i32 = BinaryenObj["_BinaryenTypeInt32"](),
+	/** 64-bit integer. @category Number & Vector Types */
+	i64 = BinaryenObj["_BinaryenTypeInt64"](),
+	/** 32-bit float. @category Number & Vector Types */
+	f32 = BinaryenObj["_BinaryenTypeFloat32"](),
+	/** 64-bit float. @category Number & Vector Types */
+	f64 = BinaryenObj["_BinaryenTypeFloat64"](),
+	/** 128-bit vector (SIMD). @category Number & Vector Types */
+	v128 = BinaryenObj["_BinaryenTypeVec128"](),
+
+	// ### Reference Types ### //
+	/** `(ref null any)` @category Reference Types */
+	anyref = BinaryenObj["_BinaryenTypeAnyref"](),
+	/** `(ref null eq)` @category Reference Types */
+	eqref = BinaryenObj["_BinaryenTypeEqref"](),
+	/** `(ref null i31)` @category Reference Types */
+	i31ref = BinaryenObj["_BinaryenTypeI31ref"](),
+	/** `(ref null struct)` @category Reference Types */
+	structref = BinaryenObj["_BinaryenTypeStructref"](),
+	/** `(ref null array)` @category Reference Types */
+	arrayref = BinaryenObj["_BinaryenTypeArrayref"](),
+	/** `(ref null string)` @category Reference Types */
+	stringref = BinaryenObj["_BinaryenTypeStringref"](),
+	/** `(ref null none)` @category Reference Types */
+	nullref = BinaryenObj["_BinaryenTypeNullref"](),
+	/** `(ref null func)` @category Reference Types */
+	funcref = BinaryenObj["_BinaryenTypeFuncref"](),
+	/** `(ref null nofunc)` @category Reference Types */
+	nullfuncref = BinaryenObj["_BinaryenTypeNullFuncref"](),
+	/** `(ref null exn)` @category Reference Types */
+	exnref = BinaryenObj["_BinaryenTypeExnref"](),
+	/** `(ref null noexn)` @category Reference Types */
+	nullexnref = BinaryenObj["_BinaryenTypeNullExnref"](),
+	/** `(ref null extern)` @category Reference Types */
+	externref = BinaryenObj["_BinaryenTypeExternref"](),
+	/** `(ref null noextern)` @category Reference Types */
+	nullexternref = BinaryenObj["_BinaryenTypeNullExternref"](),
+}
+
+
+
+/**
+ * A WASM heap type.
+ * @see https://webassembly.github.io/spec/core/syntax/types.html#heap-types
+ */
+export enum HeapType {
+	/** Heap type `any`. */
+	any = BinaryenObj["_BinaryenHeapTypeAny"](),
+	/** Heap type `eq`. */
+	eq = BinaryenObj["_BinaryenHeapTypeEq"](),
+	/** Heap type `i31`. */
+	i31 = BinaryenObj["_BinaryenHeapTypeI31"](),
+	/** Heap type `struct`. */
+	struct = BinaryenObj["_BinaryenHeapTypeStruct"](),
+	/** Heap type `array`. */
+	array = BinaryenObj["_BinaryenHeapTypeArray"](),
+	/** Heap type `string`. */
+	string = BinaryenObj["_BinaryenHeapTypeString"](),
+	/** Heap type `none`. */
+	none = BinaryenObj["_BinaryenHeapTypeNone"](),
+	/** Heap type `func`. */
+	func = BinaryenObj["_BinaryenHeapTypeFunc"](),
+	/** Heap type `nofunc`. */
+	nofunc = BinaryenObj["_BinaryenHeapTypeNofunc"](),
+	/** Heap type `exn`. */
+	exn = BinaryenObj["_BinaryenHeapTypeExn"](),
+	/** Heap type `noexn`. */
+	noexn = BinaryenObj["_BinaryenHeapTypeNoexn"](),
+	/** Heap type `extern`. */
+	extern = BinaryenObj["_BinaryenHeapTypeExt"](),
+	/** Heap type `noextern`. */
+	noextern = BinaryenObj["_BinaryenHeapTypeNoext"](),
+}
+
+
+
+/**
+ * An allowed type of a struct or array field.
+ */
+export enum PackedType {
+	notPacked = BinaryenObj["_BinaryenPackedTypeNotPacked"](),
+	i8 = BinaryenObj["_BinaryenPackedTypeInt8"](),
+	i16 = BinaryenObj["_BinaryenPackedTypeInt16"](),
+}
+
+
+
 /**
  * An enumeration of all the “kinds” of expressions.
  * @see https://webassembly.github.io/spec/core/syntax/instructions.html
@@ -212,6 +222,7 @@ export enum ExpressionId {
 	StructWait = BinaryenObj["_BinaryenStructWaitId"](),
 	WaitqueueNew = BinaryenObj["_BinaryenWaitqueueNewId"](),
 	WaitqueueNotify = BinaryenObj["_BinaryenWaitqueueNotifyId"](),
+	Publish = BinaryenObj["_BinaryenPublishId"](),
 	ArrayNew = BinaryenObj["_BinaryenArrayNewId"](),
 	ArrayNewFixed = BinaryenObj["_BinaryenArrayNewFixedId"](),
 	ArrayNewData = BinaryenObj["_BinaryenArrayNewDataId"](),
@@ -280,6 +291,7 @@ export enum SideEffect {
 	Throws = BinaryenObj["_BinaryenSideEffectThrows"](),
 	DanglingPop = BinaryenObj["_BinaryenSideEffectDanglingPop"](),
 	TrapsNeverHappen = BinaryenObj["_BinaryenSideEffectTrapsNeverHappen"](),
+	Suspends = BinaryenObj["_BinaryenSideEffectSuspends"](),
 	Any = BinaryenObj["_BinaryenSideEffectAny"](),
 }
 

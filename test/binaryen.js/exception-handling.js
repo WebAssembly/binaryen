@@ -20,7 +20,7 @@ var module = new binaryen.Module();
 module.setFeatures(binaryen.Features.ReferenceTypes |
                    binaryen.Features.ExceptionHandling);
 
-module.addTag("e", binaryen.i32, binaryen.none);
+module.addTag("e", binaryen.Type.i32, binaryen.Type.none);
 
 // (try $l0
 //   (do
@@ -43,7 +43,7 @@ var try_catch = module.try(
         module.drop(module.i32.pop()),
         rethrow
       ],
-      binaryen.none
+      binaryen.Type.none
     )
   ],
   ''
@@ -86,10 +86,10 @@ var try_table = module.try_table(
 var try_table_block = module.block("catch_all_dest", [try_table], binaryen.none);
 
 // (throw_ref (ref.null noexn))
-var throw_ref = module.throw_ref(module.ref.null(binaryen.noexn));
+var throw_ref = module.throw_ref(module.ref.null(binaryen.HeapType.noexn));
 
 var body = module.block('', [try_catch, try_delegate, try_table_block, throw_ref])
-var func = module.addFunction("test", binaryen.none, binaryen.none, [], body);
+var func = module.addFunction("test", binaryen.Type.none, binaryen.Type.none, [], body);
 
 console.log(module.emitText());
 assert(module.validate());

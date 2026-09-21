@@ -4182,6 +4182,9 @@ Result<> WasmBinaryReader::readInst() {
         case BinaryConsts::WaitqueueNew: {
           return builder.makeWaitqueueNew();
         }
+        case BinaryConsts::Publish: {
+          return builder.makePublish();
+        }
       }
       return Err{"unknown atomic operation " + std::to_string(op)};
     }
@@ -5330,8 +5333,15 @@ void WasmBinaryReader::readElementSegments() {
 
     if (isDeclarative) {
       // Declared segments are needed in wasm text and binary, but not in
-      // Binaryen IR; skip over the segment
-      [[maybe_unused]] auto type = getU32LEB();
+      // Binaryen IR; skip over the segment.
+      if (usesExpressions) {
+        [[maybe_unused]] auto type = getType();
+      } else {
+        auto elemKind = getU32LEB();
+        if (elemKind != 0x0) {
+          throwError("unexpected passive segment elemkind, expected 0, got " + std::to_string(elemKind));
+        }
+      }
       auto num = getU32LEB();
       for (Index i = 0; i < num; i++) {
         if (usesExpressions) {
@@ -5366,7 +5376,7 @@ void WasmBinaryReader::readElementSegments() {
       } else {
         auto elemKind = getU32LEB();
         if (elemKind != 0x0) {
-          throwError("Invalid kind (!= funcref(0)) since !usesExpressions.");
+          throwError("unexpected passive segment elemkind, expected 0, got " + std::to_string(elemKind));
         }
       }
     }

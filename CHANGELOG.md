@@ -20,6 +20,9 @@ Current Trunk
 - Replace the `BINARYEN_ROOT` environment variable (used by developers who are
   doing out-of-tree builds of binaryen) with `BINARYEN_BIN` (#9023)
 - Reject non-natural alignment for atomic memory operations at parse time (#8962)
+- Note that fast-math mode can ignore the difference between negative zero and
+  zero (like clang and gcc). (#9056)
+- [JS API] **(breaking)** Organize types into enums (#9098)
 
 v132
 ----

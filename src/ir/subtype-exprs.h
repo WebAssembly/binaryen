@@ -50,7 +50,7 @@ namespace wasm {
 //                                    must be a subtype of the signature's
 //                                    param.
 //  * noteSubtype(Expression, Expression) - An expression's type must be a
-//                                          subtype of anothers, for example,
+//                                          subtype of another's, for example,
 //                                          a block and its last child.
 //
 //  * noteCast(HeapType, Type) - A fixed type is cast to another, for example,
@@ -397,6 +397,7 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
     self()->noteSubtype(curr->waitqueue,
                         Type(HeapTypes::sharedWaitqueue, Nullable));
   }
+  void visitPublish(Publish* curr) {}
   void visitArrayNew(ArrayNew* curr) {
     if (!curr->type.isArray() || curr->isWithDefault()) {
       return;

@@ -64,7 +64,7 @@
 
    ;; The rest of the code is needed to prevent the testcase from getting
    ;; optimized trivially away. This br should not be optimized away or
-   ;; simplfied - it executes in the first loop iteration but not the second.
+   ;; simplified - it executes in the first loop iteration but not the second.
    (br_if $loop
     (i32.eqz
      (block $block1 (result i32)
