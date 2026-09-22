@@ -640,6 +640,10 @@
 
   ;; v128 accesses, including on an array of v128 elements.
 
+  (func (export "i32_arr_v128") (param $i i32) (param $v v128) (result v128)
+    (v128.store (type $i32_arr) (global.get $i32) (local.get $i) (local.get $v))
+    (v128.load (type $i32_arr) (global.get $i32) (local.get $i))
+  )
   (func (export "i8_arr_v128_lane0") (param $i i32) (param $v i64) (result i64)
     (v128.store (type $i8_arr) (global.get $i8) (local.get $i)
       (i64x2.splat (local.get $v))
@@ -652,16 +656,47 @@
     )
     (i64.load (type $v128_arr) (global.get $v128) (i32.add (local.get $i) (i32.const 8)))
   )
+  (func (export "v128_arr_unaligned") (result v128)
+    (local $a (ref $v128_arr))
+    (local.set $a (array.new_default $v128_arr (i32.const 2)))
+    (v128.store (type $v128_arr) (local.get $a) (i32.const 0) (v128.const i64x2 1 2))
+    (v128.store (type $v128_arr) (local.get $a) (i32.const 16) (v128.const i64x2 3 4))
+    (v128.load (type $v128_arr) align=1 (local.get $a) (i32.const 8))
+  )
 
-  ;; Sign extension when loading from an array of wider elements.
+  ;; Sign and zero extension when loading from an array of wider elements.
 
   (func (export "i64_arr_load8_s") (param $i i32) (param $v i32) (result i32)
     (i32.store8 (type $i64_arr) (global.get $i64) (local.get $i) (local.get $v))
     (i32.load8_s (type $i64_arr) (global.get $i64) (local.get $i))
   )
+  (func (export "i64_arr_load8_u") (param $i i32) (param $v i32) (result i32)
+    (i32.store8 (type $i64_arr) (global.get $i64) (local.get $i) (local.get $v))
+    (i32.load8_u (type $i64_arr) (global.get $i64) (local.get $i))
+  )
   (func (export "i64_arr_load16_s") (param $i i32) (param $v i32) (result i32)
     (i32.store16 (type $i64_arr) (global.get $i64) (local.get $i) (local.get $v))
     (i32.load16_s (type $i64_arr) (global.get $i64) (local.get $i))
+  )
+  (func (export "i64_arr_load16_u") (param $i i32) (param $v i32) (result i32)
+    (i32.store16 (type $i64_arr) (global.get $i64) (local.get $i) (local.get $v))
+    (i32.load16_u (type $i64_arr) (global.get $i64) (local.get $i))
+  )
+  (func (export "f64_arr_load8_s") (param $i i32) (param $v i64) (result i64)
+    (i64.store8 (type $f64_arr) (global.get $f64) (local.get $i) (local.get $v))
+    (i64.load8_s (type $f64_arr) (global.get $f64) (local.get $i))
+  )
+  (func (export "f64_arr_load8_u") (param $i i32) (param $v i64) (result i64)
+    (i64.store8 (type $f64_arr) (global.get $f64) (local.get $i) (local.get $v))
+    (i64.load8_u (type $f64_arr) (global.get $f64) (local.get $i))
+  )
+  (func (export "f64_arr_load16_s") (param $i i32) (param $v i64) (result i64)
+    (i64.store16 (type $f64_arr) (global.get $f64) (local.get $i) (local.get $v))
+    (i64.load16_s (type $f64_arr) (global.get $f64) (local.get $i))
+  )
+  (func (export "f64_arr_load16_u") (param $i i32) (param $v i64) (result i64)
+    (i64.store16 (type $f64_arr) (global.get $f64) (local.get $i) (local.get $v))
+    (i64.load16_u (type $f64_arr) (global.get $f64) (local.get $i))
   )
   (func (export "f64_arr_load32_s") (param $i i32) (param $v i64) (result i64)
     (i64.store32 (type $f64_arr) (global.get $f64) (local.get $i) (local.get $v))
@@ -670,6 +705,23 @@
   (func (export "f64_arr_load32_u") (param $i i32) (param $v i64) (result i64)
     (i64.store32 (type $f64_arr) (global.get $f64) (local.get $i) (local.get $v))
     (i64.load32_u (type $f64_arr) (global.get $f64) (local.get $i))
+  )
+
+  ;; Narrow stores wrap the value and leave surrounding bytes of wider elements
+  ;; untouched.
+
+  (func (export "i32_arr_store_widths") (result i32)
+    (i32.store (type $i32_arr) (global.get $i32) (i32.const 0) (i32.const -1))
+    (i32.store8 (type $i32_arr) (global.get $i32) (i32.const 0) (i32.const 0x1234))
+    (i32.store16 (type $i32_arr) (global.get $i32) (i32.const 2) (i32.const 0x123456))
+    (i32.load (type $i32_arr) (global.get $i32) (i32.const 0))
+  )
+  (func (export "i64_arr_store_widths") (result i64)
+    (i64.store (type $i64_arr) (global.get $i64) (i32.const 0) (i64.const -1))
+    (i64.store8 (type $i64_arr) (global.get $i64) (i32.const 0) (i64.const 0x1234))
+    (i64.store16 (type $i64_arr) (global.get $i64) (i32.const 2) (i64.const 0x123456))
+    (i64.store32 (type $i64_arr) (global.get $i64) (i32.const 4) (i64.const 0x1234567890))
+    (i64.load (type $i64_arr) (global.get $i64) (i32.const 0))
   )
 
   ;; Multibyte accesses and element accesses see the same payload bytes.
@@ -682,17 +734,26 @@
     (array.set $i32_arr (global.get $i32) (i32.const 2) (local.get $v))
     (i32.load (type $i32_arr) (global.get $i32) (i32.const 8))
   )
-  (func (export "i16_arr_store_then_get_u") (param $v i32) (result i32)
+  (func (export "i16_arr_store_then_get_u") (param $v i32) (param $elem i32) (result i32)
     (i32.store (type $i16_arr) (global.get $i16) (i32.const 4) (local.get $v))
-    (array.get_u $i16_arr (global.get $i16) (i32.const 3))
+    (array.get_u $i16_arr (global.get $i16) (local.get $elem))
   )
-  (func (export "i16_arr_store_then_get_s") (param $v i32) (result i32)
+  (func (export "i16_arr_store_then_get_s") (param $v i32) (param $elem i32) (result i32)
     (i32.store (type $i16_arr) (global.get $i16) (i32.const 4) (local.get $v))
-    (array.get_s $i16_arr (global.get $i16) (i32.const 3))
+    (array.get_s $i16_arr (global.get $i16) (local.get $elem))
+  )
+  (func (export "i16_arr_set_then_load") (param $v0 i32) (param $v1 i32) (result i32)
+    (array.set $i16_arr (global.get $i16) (i32.const 2) (local.get $v0))
+    (array.set $i16_arr (global.get $i16) (i32.const 3) (local.get $v1))
+    (i32.load (type $i16_arr) (global.get $i16) (i32.const 4))
   )
   (func (export "f64_arr_store_then_get") (param $v i64) (result f64)
     (i64.store (type $f64_arr) (global.get $f64) (i32.const 8) (local.get $v))
     (array.get $f64_arr (global.get $f64) (i32.const 1))
+  )
+  (func (export "i32_arr_v128_store_then_get") (param $v v128) (param $elem i32) (result i32)
+    (v128.store (type $i32_arr) (global.get $i32) (i32.const 0) (local.get $v))
+    (array.get $i32_arr (global.get $i32) (local.get $elem))
   )
 
   ;; Loads from an immutable array are allowed.
@@ -710,13 +771,13 @@
     (drop (i32.load8_u (type $i32_arr) (global.get $empty) (i32.const 0)))
   )
 
-  ;; Null references trap.
+  ;; Null references trap, before the bounds check.
 
   (func (export "null_load") (result i32)
-    (i32.load (type $v128_arr) (ref.null $v128_arr) (i32.const 0))
+    (i32.load (type $v128_arr) (ref.null $v128_arr) (i32.const 999))
   )
   (func (export "null_store")
-    (f64.store (type $f64_arr) (ref.null $f64_arr) (i32.const 0) (f64.const 0))
+    (f64.store (type $f64_arr) (ref.null $f64_arr) (i32.const 999) (f64.const 0))
   )
 )
 
@@ -787,26 +848,44 @@
 
 ;; v128 accesses read and write 16 bytes.
 (invoke "clear")
+(assert_return (invoke "i32_arr_v128" (i32.const 0) (v128.const i32x4 1 2 3 4)) (v128.const i32x4 1 2 3 4))
 (assert_return (invoke "i8_arr_v128_lane0" (i32.const 0) (i64.const 0x0102030405060708)) (i64.const 0x0102030405060708))
 (assert_return (invoke "v128_arr_v128_lane1" (i32.const 0) (i64.const 0x0102030405060708)) (i64.const 0x0102030405060708))
+(assert_return (invoke "v128_arr_unaligned") (v128.const i64x2 2 3))
 (assert_trap (invoke "i8_arr_v128_lane0" (i32.const 1) (i64.const 0)) "out of bounds")
 
 ;; Sign and zero extension.
 (invoke "clear")
 (assert_return (invoke "i64_arr_load8_s" (i32.const 1) (i32.const 0xff)) (i32.const -1))
-(assert_return (invoke "i64_arr_load8_s" (i32.const 1) (i32.const 0x7f)) (i32.const 127))
+(assert_return (invoke "i64_arr_load8_u" (i32.const 1) (i32.const 0xff)) (i32.const 0xff))
+(assert_return (invoke "i64_arr_load8_s" (i32.const 1) (i32.const 0x7f)) (i32.const 0x7f))
 (assert_return (invoke "i64_arr_load16_s" (i32.const 2) (i32.const 0xffff)) (i32.const -1))
-(assert_return (invoke "i64_arr_load16_s" (i32.const 2) (i32.const 0x8000)) (i32.const -32768))
+(assert_return (invoke "i64_arr_load16_u" (i32.const 2) (i32.const 0xffff)) (i32.const 0xffff))
+(assert_return (invoke "i64_arr_load16_s" (i32.const 2) (i32.const 0x8000)) (i32.const -0x8000))
+(assert_return (invoke "i64_arr_load16_u" (i32.const 2) (i32.const 0x8000)) (i32.const 0x8000))
+(assert_return (invoke "f64_arr_load8_s" (i32.const 1) (i64.const 0xff)) (i64.const -1))
+(assert_return (invoke "f64_arr_load8_u" (i32.const 1) (i64.const 0xff)) (i64.const 0xff))
+(assert_return (invoke "f64_arr_load16_s" (i32.const 2) (i64.const 0xffff)) (i64.const -1))
+(assert_return (invoke "f64_arr_load16_u" (i32.const 2) (i64.const 0xffff)) (i64.const 0xffff))
 (assert_return (invoke "f64_arr_load32_s" (i32.const 4) (i64.const 0xffffffff)) (i64.const -1))
-(assert_return (invoke "f64_arr_load32_u" (i32.const 4) (i64.const 0xffffffff)) (i64.const 4294967295))
+(assert_return (invoke "f64_arr_load32_u" (i32.const 4) (i64.const 0xffffffff)) (i64.const 0xffffffff))
+
+;; Narrow stores wrap the value and preserve surrounding bytes.
+(invoke "clear")
+(assert_return (invoke "i32_arr_store_widths") (i32.const 0x3456ff34))
+(assert_return (invoke "i64_arr_store_widths") (i64.const 0x345678903456ff34))
 
 ;; Multibyte accesses and element accesses agree.
 (invoke "clear")
 (assert_return (invoke "i32_arr_store_then_get" (i32.const 1337)) (i32.const 1337))
 (assert_return (invoke "i32_arr_set_then_load" (i32.const 1337)) (i32.const 1337))
-(assert_return (invoke "i16_arr_store_then_get_u" (i32.const 0xffff1234)) (i32.const 0xffff))
-(assert_return (invoke "i16_arr_store_then_get_s" (i32.const 0xffff1234)) (i32.const -1))
-(assert_return (invoke "f64_arr_store_then_get" (i64.const 4611686018427387904)) (f64.const 2))
+(assert_return (invoke "i16_arr_store_then_get_u" (i32.const 0xffff1234) (i32.const 2)) (i32.const 0x1234))
+(assert_return (invoke "i16_arr_store_then_get_u" (i32.const 0xffff1234) (i32.const 3)) (i32.const 0xffff))
+(assert_return (invoke "i16_arr_store_then_get_s" (i32.const 0xffff1234) (i32.const 3)) (i32.const -1))
+(assert_return (invoke "i16_arr_set_then_load" (i32.const 0x1234) (i32.const 0xffff)) (i32.const 0xffff1234))
+(assert_return (invoke "f64_arr_store_then_get" (i64.const 0x4000000000000000)) (f64.const 0x1p+1))
+(assert_return (invoke "i32_arr_v128_store_then_get" (v128.const i32x4 10 20 30 40) (i32.const 1)) (i32.const 20))
+(assert_return (invoke "i32_arr_v128_store_then_get" (v128.const i32x4 10 20 30 40) (i32.const 3)) (i32.const 40))
 
 ;; Loads from immutable arrays.
 (assert_return (invoke "immutable_load" (i32.const 0)) (i32.const 0x11223344))

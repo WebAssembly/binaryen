@@ -15,15 +15,15 @@
 
  ;; CHECK:      (global $ctor-eval$global_12 (ref (exact $i32_array)) (array.new_fixed $i32_array 4
  ;; CHECK-NEXT:  (i32.const 0)
- ;; CHECK-NEXT:  (i32.const 1432778632)
- ;; CHECK-NEXT:  (i32.const 287454020)
+ ;; CHECK-NEXT:  (i32.const 1)
+ ;; CHECK-NEXT:  (i32.const 2)
  ;; CHECK-NEXT:  (i32.const 0)
  ;; CHECK-NEXT: ))
 
  ;; CHECK:      (global $ctor-eval$global_13 (ref (exact $i16_array)) (array.new_fixed $i16_array 4
- ;; CHECK-NEXT:  (i32.const 56576)
- ;; CHECK-NEXT:  (i32.const 48076)
- ;; CHECK-NEXT:  (i32.const 170)
+ ;; CHECK-NEXT:  (i32.const 256)
+ ;; CHECK-NEXT:  (i32.const 2)
+ ;; CHECK-NEXT:  (i32.const 3)
  ;; CHECK-NEXT:  (i32.const 0)
  ;; CHECK-NEXT: ))
 
@@ -42,12 +42,12 @@
   ;; An i64 store covers two i32 elements.
   (global.set $i32 (array.new_default $i32_array (i32.const 4)))
   (i64.store (type $i32_array) (global.get $i32) (i32.const 4)
-   (i64.const 0x1122334455667788)
+   (i64.const 0x0000000200000001)
   )
-  ;; An unaligned i32 store covers parts of two i16 elements.
+  ;; An unaligned i32 store covers parts of three i16 elements.
   (global.set $i16 (array.new_default $i16_array (i32.const 4)))
   (i32.store (type $i16_array) offset=1 (global.get $i16) (i32.const 0)
-   (i32.const 0xaabbccdd)
+   (i32.const 0x03000201)
   )
   ;; A v128 store covers an entire v128 element.
   (global.set $v128 (array.new_default $v128_array (i32.const 1)))
