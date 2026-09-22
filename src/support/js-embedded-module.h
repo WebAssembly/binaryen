@@ -15,7 +15,10 @@
  */
 
 // Utilities for dealing with Wasm modules embedded as literal byte arrays in JS
-// files.
+// files, e.g '[0x00, 0x61, 0x73, 0x6d, ...]'. Handles different number formats
+// and comments as long as each value fits in byte range. Looks for the Wasm
+// magic bytes at the beginning of the array, but otherwise does not check that
+// the bytes encode a valid Wasm module.
 
 #ifndef wasm_support_js_embedded_module_h
 #define wasm_support_js_embedded_module_h
