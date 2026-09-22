@@ -21,6 +21,7 @@
 
 #include "ir/eh-utils.h"
 #include "ir/features.h"
+#include "ir/child-typer.h"
 #include "ir/find_all.h"
 #include "ir/gc-type-utils.h"
 #include "ir/global-utils.h"
@@ -715,6 +716,76 @@ private:
     validateCallParamsAndResult(curr, sigType, curr);
   }
 };
+
+struct ValidatorTypeChecker : ChildTyper<ValidatorTypeChecker> {
+  ValidationInfo& info;
+  Function* func;
+
+  ValidatorTypeChecker(Module& wasm, Function* func, ValidationInfo& info)
+    : ChildTyper(wasm, func), info(info), func(func) {}
+
+  void note(Expression** childp, Constraints constraints) {
+    Expression* child = *childp;
+    if (child->type == Type::unreachable) {
+      return;
+    }
+    if (constraints.size() == 1) {
+      if (!PrincipalType::matches(child->type, constraints[0])) {
+        info.shouldBeTrue(
+          false, child, "child type does not match its constraint", func);
+      }
+      return;
+    }
+    if (!child->type.isTuple() || child->type.size() != constraints.size()) {
+      info.shouldBeTrue(
+        false, child, "child tuple arity does not match its constraint", func);
+      return;
+    }
+    for (size_t i = 0; i < constraints.size(); ++i) {
+      if (!PrincipalType::matches(child->type[i], constraints[i])) {
+        info.shouldBeTrue(
+          false, child, "tuple element does not match its constraint", func);
+      }
+    }
+  }
+
+  Type getLabelType(Name label) {
+    WASM_UNREACHABLE("labels should be explicitly provided");
+  }
+};
+
+static bool requiresFP16(UnaryOp op) {
+  switch (op) {
+    case SplatVecF16x8:
+    case NearestVecF16x8:
+    case PromoteLowVecF16x8ToVecF32x4:
+    case DemoteZeroVecF32x4ToVecF16x8:
+    case DemoteZeroVecF64x2ToVecF16x8:
+    case TruncSatSVecF16x8ToVecI16x8:
+    case TruncSatUVecF16x8ToVecI16x8:
+    case ConvertSVecI16x8ToVecF16x8:
+    case ConvertUVecI16x8ToVecF16x8:
+      return true;
+    default:
+      return false;
+  }
+}
+
+static bool requiresFP16(BinaryOp op) {
+  switch (op) {
+    case AddVecF16x8:
+    case SubVecF16x8:
+    case MulVecF16x8:
+    case DivVecF16x8:
+    case MinVecF16x8:
+    case MaxVecF16x8:
+    case PMinVecF16x8:
+    case PMaxVecF16x8:
+      return true;
+    default:
+      return false;
+  }
+}
 
 void FunctionValidator::noteLabelName(Name name) {
   if (!name.is()) {
@@ -1914,573 +1985,38 @@ void FunctionValidator::validateMemBytes(uint8_t bytes,
 }
 
 void FunctionValidator::visitBinary(Binary* curr) {
+  if (!shouldBeTrue(
+        !curr->left->type.isTuple() && !curr->right->type.isTuple(), curr,
+        "Binary inputs must not be tuples")) {
+    return;
+  }
   if (curr->left->type != Type::unreachable &&
       curr->right->type != Type::unreachable) {
-    shouldBeEqual(curr->left->type,
-                  curr->right->type,
-                  curr,
+    shouldBeEqual(curr->left->type, curr->right->type, curr,
                   "binary child types must be equal");
   }
-  switch (curr->op) {
-    case AddInt32:
-    case SubInt32:
-    case MulInt32:
-    case DivSInt32:
-    case DivUInt32:
-    case RemSInt32:
-    case RemUInt32:
-    case AndInt32:
-    case OrInt32:
-    case XorInt32:
-    case ShlInt32:
-    case ShrUInt32:
-    case ShrSInt32:
-    case RotLInt32:
-    case RotRInt32:
-    case EqInt32:
-    case NeInt32:
-    case LtSInt32:
-    case LtUInt32:
-    case LeSInt32:
-    case LeUInt32:
-    case GtSInt32:
-    case GtUInt32:
-    case GeSInt32:
-    case GeUInt32: {
-      shouldBeEqualOrFirstIsUnreachable(
-        curr->left->type, Type(Type::i32), curr, "i32 op");
-      break;
-    }
-    case AddInt64:
-    case SubInt64:
-    case MulInt64:
-    case DivSInt64:
-    case DivUInt64:
-    case RemSInt64:
-    case RemUInt64:
-    case AndInt64:
-    case OrInt64:
-    case XorInt64:
-    case ShlInt64:
-    case ShrUInt64:
-    case ShrSInt64:
-    case RotLInt64:
-    case RotRInt64:
-    case EqInt64:
-    case NeInt64:
-    case LtSInt64:
-    case LtUInt64:
-    case LeSInt64:
-    case LeUInt64:
-    case GtSInt64:
-    case GtUInt64:
-    case GeSInt64:
-    case GeUInt64: {
-      shouldBeEqualOrFirstIsUnreachable(
-        curr->left->type, Type(Type::i64), curr, "i64 op");
-      break;
-    }
-    case AddFloat32:
-    case SubFloat32:
-    case MulFloat32:
-    case DivFloat32:
-    case CopySignFloat32:
-    case MinFloat32:
-    case MaxFloat32:
-    case EqFloat32:
-    case NeFloat32:
-    case LtFloat32:
-    case LeFloat32:
-    case GtFloat32:
-    case GeFloat32: {
-      shouldBeEqualOrFirstIsUnreachable(
-        curr->left->type, Type(Type::f32), curr, "f32 op");
-      break;
-    }
-    case AddFloat64:
-    case SubFloat64:
-    case MulFloat64:
-    case DivFloat64:
-    case CopySignFloat64:
-    case MinFloat64:
-    case MaxFloat64:
-    case EqFloat64:
-    case NeFloat64:
-    case LtFloat64:
-    case LeFloat64:
-    case GtFloat64:
-    case GeFloat64: {
-      shouldBeEqualOrFirstIsUnreachable(
-        curr->left->type, Type(Type::f64), curr, "f64 op");
-      break;
-    }
-    case EqVecF16x8:
-    case NeVecF16x8:
-    case LtVecF16x8:
-    case LeVecF16x8:
-    case GtVecF16x8:
-    case GeVecF16x8:
-    case AddVecF16x8:
-    case SubVecF16x8:
-    case MulVecF16x8:
-    case DivVecF16x8:
-    case MinVecF16x8:
-    case MaxVecF16x8:
-    case PMinVecF16x8:
-    case PMaxVecF16x8:
-      shouldBeTrue(getModule()->features.hasFP16(),
-                   curr,
-                   "FP16 operations require FP16 [--enable-fp16]");
-      [[fallthrough]];
-    case EqVecI8x16:
-    case NeVecI8x16:
-    case LtSVecI8x16:
-    case LtUVecI8x16:
-    case LeSVecI8x16:
-    case LeUVecI8x16:
-    case GtSVecI8x16:
-    case GtUVecI8x16:
-    case GeSVecI8x16:
-    case GeUVecI8x16:
-    case EqVecI16x8:
-    case NeVecI16x8:
-    case LtSVecI16x8:
-    case LtUVecI16x8:
-    case LeSVecI16x8:
-    case LeUVecI16x8:
-    case GtSVecI16x8:
-    case GtUVecI16x8:
-    case GeSVecI16x8:
-    case GeUVecI16x8:
-    case EqVecI32x4:
-    case NeVecI32x4:
-    case LtSVecI32x4:
-    case LtUVecI32x4:
-    case LeSVecI32x4:
-    case LeUVecI32x4:
-    case GtSVecI32x4:
-    case GtUVecI32x4:
-    case GeSVecI32x4:
-    case GeUVecI32x4:
-    case EqVecI64x2:
-    case NeVecI64x2:
-    case LtSVecI64x2:
-    case LeSVecI64x2:
-    case GtSVecI64x2:
-    case GeSVecI64x2:
-    case EqVecF32x4:
-    case NeVecF32x4:
-    case LtVecF32x4:
-    case LeVecF32x4:
-    case GtVecF32x4:
-    case GeVecF32x4:
-    case EqVecF64x2:
-    case NeVecF64x2:
-    case LtVecF64x2:
-    case LeVecF64x2:
-    case GtVecF64x2:
-    case GeVecF64x2:
-    case AndVec128:
-    case OrVec128:
-    case XorVec128:
-    case AndNotVec128:
-    case AddVecI8x16:
-    case AddSatSVecI8x16:
-    case AddSatUVecI8x16:
-    case SubVecI8x16:
-    case SubSatSVecI8x16:
-    case SubSatUVecI8x16:
-    case MinSVecI8x16:
-    case MinUVecI8x16:
-    case MaxSVecI8x16:
-    case MaxUVecI8x16:
-    case AvgrUVecI8x16:
-    case Q15MulrSatSVecI16x8:
-    case ExtMulLowSVecI16x8:
-    case ExtMulHighSVecI16x8:
-    case ExtMulLowUVecI16x8:
-    case ExtMulHighUVecI16x8:
-    case AddVecI16x8:
-    case AddSatSVecI16x8:
-    case AddSatUVecI16x8:
-    case SubVecI16x8:
-    case SubSatSVecI16x8:
-    case SubSatUVecI16x8:
-    case MulVecI16x8:
-    case MinSVecI16x8:
-    case MinUVecI16x8:
-    case MaxSVecI16x8:
-    case MaxUVecI16x8:
-    case AvgrUVecI16x8:
-    case AddVecI32x4:
-    case SubVecI32x4:
-    case MulVecI32x4:
-    case MinSVecI32x4:
-    case MinUVecI32x4:
-    case MaxSVecI32x4:
-    case MaxUVecI32x4:
-    case DotSVecI16x8ToVecI32x4:
-    case ExtMulLowSVecI32x4:
-    case ExtMulHighSVecI32x4:
-    case ExtMulLowUVecI32x4:
-    case ExtMulHighUVecI32x4:
-    case AddVecI64x2:
-    case SubVecI64x2:
-    case MulVecI64x2:
-    case ExtMulLowSVecI64x2:
-    case ExtMulHighSVecI64x2:
-    case ExtMulLowUVecI64x2:
-    case ExtMulHighUVecI64x2:
-    case AddVecF32x4:
-    case SubVecF32x4:
-    case MulVecF32x4:
-    case DivVecF32x4:
-    case MinVecF32x4:
-    case MaxVecF32x4:
-    case PMinVecF32x4:
-    case PMaxVecF32x4:
-    case RelaxedMinVecF32x4:
-    case RelaxedMaxVecF32x4:
-    case AddVecF64x2:
-    case SubVecF64x2:
-    case MulVecF64x2:
-    case DivVecF64x2:
-    case MinVecF64x2:
-    case MaxVecF64x2:
-    case PMinVecF64x2:
-    case PMaxVecF64x2:
-    case RelaxedMinVecF64x2:
-    case RelaxedMaxVecF64x2:
-    case NarrowSVecI16x8ToVecI8x16:
-    case NarrowUVecI16x8ToVecI8x16:
-    case NarrowSVecI32x4ToVecI16x8:
-    case NarrowUVecI32x4ToVecI16x8:
-    case SwizzleVecI8x16:
-    case RelaxedSwizzleVecI8x16:
-    case RelaxedQ15MulrSVecI16x8:
-    case RelaxedDotI8x16I7x16SToVecI16x8: {
-      shouldBeEqualOrFirstIsUnreachable(
-        curr->left->type, Type(Type::v128), curr, "v128 op");
-      shouldBeEqualOrFirstIsUnreachable(
-        curr->right->type, Type(Type::v128), curr, "v128 op");
-      break;
-    }
-    case InvalidBinary:
-      WASM_UNREACHABLE("invliad binary op");
+  if (requiresFP16(curr->op)) {
+    shouldBeTrue(getModule()->features.hasFP16(), curr,
+               "FP16 operations require FP16 [--enable-fp16]");
   }
+  ValidatorTypeChecker{*getModule(), getFunction(), info}.visitBinary(curr);
   shouldBeTrue(Features::get(curr->op).isSubsetOf(getModule()->features),
-               curr,
-               "all used features should be allowed");
+               curr, "all used features should be allowed");
 }
 
 void FunctionValidator::visitUnary(Unary* curr) {
-  shouldBeUnequal(curr->value->type,
-                  Type(Type::none),
-                  curr,
+  shouldBeUnequal(curr->value->type, Type(Type::none), curr,
                   "unaries must not receive a none as their input");
   if (curr->value->type == Type::unreachable) {
-    return; // nothing to check
+    return;
   }
-  switch (curr->op) {
-    case ClzInt32:
-    case CtzInt32:
-    case PopcntInt32: {
-      shouldBeEqual(curr->value->type,
-                    Type(Type::i32),
-                    curr,
-                    "i32 unary value type must be correct");
-      break;
-    }
-    case ClzInt64:
-    case CtzInt64:
-    case PopcntInt64: {
-      shouldBeEqual(curr->value->type,
-                    Type(Type::i64),
-                    curr,
-                    "i64 unary value type must be correct");
-      break;
-    }
-    case NegFloat32:
-    case AbsFloat32:
-    case CeilFloat32:
-    case FloorFloat32:
-    case TruncFloat32:
-    case NearestFloat32:
-    case SqrtFloat32: {
-      shouldBeEqual(curr->value->type,
-                    Type(Type::f32),
-                    curr,
-                    "f32 unary value type must be correct");
-      break;
-    }
-    case NegFloat64:
-    case AbsFloat64:
-    case CeilFloat64:
-    case FloorFloat64:
-    case TruncFloat64:
-    case NearestFloat64:
-    case SqrtFloat64: {
-      shouldBeEqual(curr->value->type,
-                    Type(Type::f64),
-                    curr,
-                    "f64 unary value type must be correct");
-      break;
-    }
-    case EqZInt32: {
-      shouldBeTrue(
-        curr->value->type == Type::i32, curr, "i32.eqz input must be i32");
-      break;
-    }
-    case EqZInt64: {
-      shouldBeTrue(curr->value->type == Type(Type::i64),
-                   curr,
-                   "i64.eqz input must be i64");
-      break;
-    }
-    case ExtendSInt32:
-    case ExtendUInt32:
-    case ExtendS8Int32:
-    case ExtendS16Int32: {
-      shouldBeEqual(curr->value->type,
-                    Type(Type::i32),
-                    curr,
-                    "extend type must be correct");
-      break;
-    }
-    case ExtendS8Int64:
-    case ExtendS16Int64:
-    case ExtendS32Int64: {
-      shouldBeEqual(curr->value->type,
-                    Type(Type::i64),
-                    curr,
-                    "extend type must be correct");
-      break;
-    }
-    case WrapInt64: {
-      shouldBeEqual(
-        curr->value->type, Type(Type::i64), curr, "wrap type must be correct");
-      break;
-    }
-    case TruncSFloat32ToInt32:
-    case TruncSFloat32ToInt64:
-    case TruncUFloat32ToInt32:
-    case TruncUFloat32ToInt64: {
-      shouldBeEqual(
-        curr->value->type, Type(Type::f32), curr, "trunc type must be correct");
-      break;
-    }
-    case TruncSatSFloat32ToInt32:
-    case TruncSatSFloat32ToInt64:
-    case TruncSatUFloat32ToInt32:
-    case TruncSatUFloat32ToInt64: {
-      shouldBeEqual(
-        curr->value->type, Type(Type::f32), curr, "trunc type must be correct");
-      break;
-    }
-    case TruncSFloat64ToInt32:
-    case TruncSFloat64ToInt64:
-    case TruncUFloat64ToInt32:
-    case TruncUFloat64ToInt64: {
-      shouldBeEqual(
-        curr->value->type, Type(Type::f64), curr, "trunc type must be correct");
-      break;
-    }
-    case TruncSatSFloat64ToInt32:
-    case TruncSatSFloat64ToInt64:
-    case TruncSatUFloat64ToInt32:
-    case TruncSatUFloat64ToInt64: {
-      shouldBeEqual(
-        curr->value->type, Type(Type::f64), curr, "trunc type must be correct");
-      break;
-    }
-    case ReinterpretFloat32: {
-      shouldBeEqual(curr->value->type,
-                    Type(Type::f32),
-                    curr,
-                    "reinterpret/f32 type must be correct");
-      break;
-    }
-    case ReinterpretFloat64: {
-      shouldBeEqual(curr->value->type,
-                    Type(Type::f64),
-                    curr,
-                    "reinterpret/f64 type must be correct");
-      break;
-    }
-    case ConvertUInt32ToFloat32:
-    case ConvertUInt32ToFloat64:
-    case ConvertSInt32ToFloat32:
-    case ConvertSInt32ToFloat64: {
-      shouldBeEqual(curr->value->type,
-                    Type(Type::i32),
-                    curr,
-                    "convert type must be correct");
-      break;
-    }
-    case ConvertUInt64ToFloat32:
-    case ConvertUInt64ToFloat64:
-    case ConvertSInt64ToFloat32:
-    case ConvertSInt64ToFloat64: {
-      shouldBeEqual(curr->value->type,
-                    Type(Type::i64),
-                    curr,
-                    "convert type must be correct");
-      break;
-    }
-    case PromoteFloat32: {
-      shouldBeEqual(curr->value->type,
-                    Type(Type::f32),
-                    curr,
-                    "promote type must be correct");
-      break;
-    }
-    case DemoteFloat64: {
-      shouldBeEqual(curr->value->type,
-                    Type(Type::f64),
-                    curr,
-                    "demote type must be correct");
-      break;
-    }
-    case ReinterpretInt32: {
-      shouldBeEqual(curr->value->type,
-                    Type(Type::i32),
-                    curr,
-                    "reinterpret/i32 type must be correct");
-      break;
-    }
-    case ReinterpretInt64: {
-      shouldBeEqual(curr->value->type,
-                    Type(Type::i64),
-                    curr,
-                    "reinterpret/i64 type must be correct");
-      break;
-    }
-    case SplatVecI8x16:
-    case SplatVecI16x8:
-    case SplatVecI32x4:
-      shouldBeEqual(
-        curr->type, Type(Type::v128), curr, "expected splat to have v128 type");
-      shouldBeEqual(
-        curr->value->type, Type(Type::i32), curr, "expected i32 splat value");
-      break;
-    case SplatVecI64x2:
-      shouldBeEqual(
-        curr->type, Type(Type::v128), curr, "expected splat to have v128 type");
-      shouldBeEqual(
-        curr->value->type, Type(Type::i64), curr, "expected i64 splat value");
-      break;
-    case SplatVecF16x8:
-      shouldBeTrue(getModule()->features.hasFP16(),
-                   curr,
-                   "FP16 operations require FP16 [--enable-fp16]");
-      [[fallthrough]];
-    case SplatVecF32x4:
-      shouldBeEqual(
-        curr->type, Type(Type::v128), curr, "expected splat to have v128 type");
-      shouldBeEqual(
-        curr->value->type, Type(Type::f32), curr, "expected f32 splat value");
-      break;
-    case SplatVecF64x2:
-      shouldBeEqual(
-        curr->type, Type(Type::v128), curr, "expected splat to have v128 type");
-      shouldBeEqual(
-        curr->value->type, Type(Type::f64), curr, "expected f64 splat value");
-      break;
-    case AbsVecF16x8:
-    case NegVecF16x8:
-    case SqrtVecF16x8:
-    case CeilVecF16x8:
-    case FloorVecF16x8:
-    case TruncVecF16x8:
-    case NearestVecF16x8:
-    case PromoteLowVecF16x8ToVecF32x4:
-    case DemoteZeroVecF32x4ToVecF16x8:
-    case DemoteZeroVecF64x2ToVecF16x8:
-    case TruncSatSVecF16x8ToVecI16x8:
-    case TruncSatUVecF16x8ToVecI16x8:
-    case ConvertSVecI16x8ToVecF16x8:
-    case ConvertUVecI16x8ToVecF16x8:
-      shouldBeTrue(getModule()->features.hasFP16(),
-                   curr,
-                   "FP16 operations require FP16 [--enable-fp16]");
-      [[fallthrough]];
-    case NotVec128:
-    case PopcntVecI8x16:
-    case AbsVecI8x16:
-    case AbsVecI16x8:
-    case AbsVecI32x4:
-    case AbsVecI64x2:
-    case NegVecI8x16:
-    case NegVecI16x8:
-    case NegVecI32x4:
-    case NegVecI64x2:
-    case AbsVecF32x4:
-    case NegVecF32x4:
-    case SqrtVecF32x4:
-    case CeilVecF32x4:
-    case FloorVecF32x4:
-    case TruncVecF32x4:
-    case NearestVecF32x4:
-    case AbsVecF64x2:
-    case NegVecF64x2:
-    case SqrtVecF64x2:
-    case CeilVecF64x2:
-    case FloorVecF64x2:
-    case TruncVecF64x2:
-    case NearestVecF64x2:
-    case ExtAddPairwiseSVecI8x16ToI16x8:
-    case ExtAddPairwiseUVecI8x16ToI16x8:
-    case ExtAddPairwiseSVecI16x8ToI32x4:
-    case ExtAddPairwiseUVecI16x8ToI32x4:
-    case TruncSatSVecF32x4ToVecI32x4:
-    case TruncSatUVecF32x4ToVecI32x4:
-    case ConvertSVecI32x4ToVecF32x4:
-    case ConvertUVecI32x4ToVecF32x4:
-    case ExtendLowSVecI8x16ToVecI16x8:
-    case ExtendHighSVecI8x16ToVecI16x8:
-    case ExtendLowUVecI8x16ToVecI16x8:
-    case ExtendHighUVecI8x16ToVecI16x8:
-    case ExtendLowSVecI16x8ToVecI32x4:
-    case ExtendHighSVecI16x8ToVecI32x4:
-    case ExtendLowUVecI16x8ToVecI32x4:
-    case ExtendHighUVecI16x8ToVecI32x4:
-    case ExtendLowSVecI32x4ToVecI64x2:
-    case ExtendHighSVecI32x4ToVecI64x2:
-    case ExtendLowUVecI32x4ToVecI64x2:
-    case ExtendHighUVecI32x4ToVecI64x2:
-    case ConvertLowSVecI32x4ToVecF64x2:
-    case ConvertLowUVecI32x4ToVecF64x2:
-    case TruncSatZeroSVecF64x2ToVecI32x4:
-    case TruncSatZeroUVecF64x2ToVecI32x4:
-    case DemoteZeroVecF64x2ToVecF32x4:
-    case PromoteLowVecF32x4ToVecF64x2:
-    case RelaxedTruncSVecF32x4ToVecI32x4:
-    case RelaxedTruncUVecF32x4ToVecI32x4:
-    case RelaxedTruncZeroSVecF64x2ToVecI32x4:
-    case RelaxedTruncZeroUVecF64x2ToVecI32x4:
-      shouldBeEqual(curr->type, Type(Type::v128), curr, "expected v128 type");
-      shouldBeEqual(
-        curr->value->type, Type(Type::v128), curr, "expected v128 operand");
-      break;
-    case AnyTrueVec128:
-    case AllTrueVecI8x16:
-    case AllTrueVecI16x8:
-    case AllTrueVecI32x4:
-    case AllTrueVecI64x2:
-    case BitmaskVecI8x16:
-    case BitmaskVecI16x8:
-    case BitmaskVecI32x4:
-    case BitmaskVecI64x2:
-      shouldBeEqual(curr->type, Type(Type::i32), curr, "expected i32 type");
-      shouldBeEqual(
-        curr->value->type, Type(Type::v128), curr, "expected v128 operand");
-      break;
-    case InvalidUnary:
-      WASM_UNREACHABLE("invalid unary op");
+  if (requiresFP16(curr->op)) {
+    shouldBeTrue(getModule()->features.hasFP16(), curr,
+               "FP16 operations require FP16 [--enable-fp16]");
   }
+  ValidatorTypeChecker{*getModule(), getFunction(), info}.visitUnary(curr);
   shouldBeTrue(Features::get(curr->op).isSubsetOf(getModule()->features),
-               curr,
-               "all used features should be allowed");
+               curr, "all used features should be allowed");
 }
 
 void FunctionValidator::visitSelect(Select* curr) {
@@ -2609,10 +2145,7 @@ void FunctionValidator::visitRefIsNull(RefIsNull* curr) {
     getModule()->features.hasReferenceTypes(),
     curr,
     "ref.is_null requires reference-types [--enable-reference-types]");
-  shouldBeTrue(curr->value->type == Type::unreachable ||
-                 curr->value->type.isRef(),
-               curr->value,
-               "ref.is_null's argument should be a reference type");
+  ValidatorTypeChecker{*getModule(), getFunction(), info}.visitRefIsNull(curr);
 }
 
 void FunctionValidator::visitRefAs(RefAs* curr) {
@@ -2691,19 +2224,12 @@ void FunctionValidator::visitRefFunc(RefFunc* curr) {
 }
 
 void FunctionValidator::visitRefEq(RefEq* curr) {
-  Type eqref = Type(HeapType::eq, Nullable);
   shouldBeTrue(
     getModule()->features.hasGC(), curr, "ref.eq requires gc [--enable-gc]");
-  shouldBeSubTypeIgnoringShared(
-    curr->left->type,
-    eqref,
-    curr->left,
-    "ref.eq's left argument should be a subtype of eqref");
-  shouldBeSubTypeIgnoringShared(
-    curr->right->type,
-    eqref,
-    curr->right,
-    "ref.eq's right argument should be a subtype of eqref");
+  ValidatorTypeChecker{*getModule(), getFunction(), info}.visitRefEq(curr);
+  // ChildTyper constrains each child to the eqref family, but each note()
+  // call runs with a fresh VarAssignments, so the sharedness variable does
+  // not unify across left and right. Keep the cross-child check here.
   if (curr->left->type.isRef() && curr->right->type.isRef()) {
     shouldBeEqual(curr->left->type.getHeapType().getShared(),
                   curr->right->type.getHeapType().getShared(),
