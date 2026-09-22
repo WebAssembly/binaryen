@@ -466,12 +466,7 @@
  ;; GUFA-NEXT:   (struct.wait $struct 0
  ;; GUFA-NEXT:    (local.get $struct)
  ;; GUFA-NEXT:    (unreachable)
- ;; GUFA-NEXT:    (block (result (ref null (shared none)))
- ;; GUFA-NEXT:     (drop
- ;; GUFA-NEXT:      (local.get $struct)
- ;; GUFA-NEXT:     )
- ;; GUFA-NEXT:     (ref.null (shared none))
- ;; GUFA-NEXT:    )
+ ;; GUFA-NEXT:    (local.get $struct)
  ;; GUFA-NEXT:    (i64.const -1)
  ;; GUFA-NEXT:   )
  ;; GUFA-NEXT:  )
