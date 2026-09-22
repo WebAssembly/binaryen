@@ -69,6 +69,7 @@
 #include <algorithm>
 
 #include "cfg/cfg-traversal.h"
+#include "cfg/rpo.h"
 #include "ir/constraint.h"
 #include "ir/drop.h"
 #include "ir/eh-utils.h"
@@ -96,6 +97,10 @@ namespace {
 
 // Information in a basic block.
 struct Info {
+  // For RPOQueue
+  bool inQueue;
+  Index index;
+
   // All relevant operations: local gets and sets and uses of them.
   std::vector<Expression**> actions;
 
@@ -337,7 +342,7 @@ struct ConstraintAnalysis
     }
 
     // Starting from the entry, keep going while we find something new.
-    UniqueDeferredQueue<BasicBlock*> work;
+    RPOQueue<ConstraintAnalysis> work(*this);
     work.push(entry);
 
     while (!work.empty()) {

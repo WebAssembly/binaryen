@@ -43,8 +43,7 @@ namespace wasm {
 //   Index index;  // basic block index
 //
 template<typename CFG>
-struct RPOQueue
-  : public std::priority_queue<Index, std::vector<Index>, std::greater<Index>> {
+struct RPOQueue {
   CFG& cfg;
 
   RPOQueue(CFG& cfg) : cfg(cfg) {
@@ -57,20 +56,26 @@ struct RPOQueue
     }
   }
 
+  std::priority_queue<Index, std::vector<Index>, std::greater<Index>> queue;
+
   void push(CFG::BasicBlock* block) {
     // Push if ont already in the queue.
     if (!block->contents.inQueue) {
       block->contents.inQueue = true;
-      work.push(block->contents.index);
+      queue.push(block->contents.index);
     }
   }
 
   CFG::BasicBlock* pop() {
     // Pop the smallest element (next in RPO), which is at the top.
-    auto* block = cfg.basicBlocks[work.top()].get();
-    work.pop();
+    auto* block = cfg.basicBlocks[queue.top()].get();
+    queue.pop();
     block->contents.inQueue = false;
     return block;
+  }
+
+  bool empty() const {
+    return queue.empty();
   }
 };
 
