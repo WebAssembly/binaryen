@@ -67,8 +67,3 @@ def which(program):
 V8 = os.environ.get('V8') or which('v8') or which('d8')
 if V8:
     config.substitutions.append(('v8', V8))
-
-NODE = os.environ.get('NODE') or which('node')
-if NODE:
-    config.available_features.add('node')
-    config.substitutions.append(('node', NODE))
