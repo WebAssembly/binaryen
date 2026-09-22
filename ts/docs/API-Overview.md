@@ -315,7 +315,9 @@ See generated docs for fields, methods, and descriptions of each.
 	- `expressions.Return`
 	- `expressions.Throw`
 	- `expressions.Rethrow`
+	- `expressions.ThrowRef`
 	- `expressions.Try`
+	- `expressions.TryTable`
 - Variable Expressions
 	- `expressions.LocalGet`
 	- `expressions.LocalSet`

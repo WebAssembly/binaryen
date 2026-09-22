@@ -4,8 +4,10 @@ import {
 import {
 	PTR,
 	i32sToStack,
+	i8sToStack,
 	preserveStack,
 	strToStack,
+	type TryTableCatch,
 } from "../../-utils.ts";
 import type {
 	Module,
@@ -192,36 +194,52 @@ export function throws(mod: Module) {
 		),
 
 		/** Reraise an exception. */
-		throw_ref: (target: string): ExpressionRef => (
-			preserveStack(() => BinaryenObj["_BinaryenRethrow"](mod[PTR], strToStack(target)))
+		throw_ref: (exnref: ExpressionRef): ExpressionRef => (
+			BinaryenObj["_BinaryenThrowRef"](mod[PTR], exnref)
 		),
 
 		/** Installs an exception handler that handles exceptions as specified by its catch clauses. */
-		try_table: (
-			name: string,
-			body: ExpressionRef,
-			catchTags: readonly string[],
-			catchBodies: readonly ExpressionRef[],
-			delegateTarget: string,
-		): ExpressionRef => preserveStack(() => BinaryenObj["_BinaryenTry"](
-			mod[PTR],
-			strToStack(name),
-			body,
-			i32sToStack(catchTags.map(strToStack)),
-			catchTags.length,
-			i32sToStack(catchBodies),
-			catchBodies.length,
-			strToStack(delegateTarget),
-		)),
+		try_table: (body: ExpressionRef, catches: readonly TryTableCatch[]): ExpressionRef => (
+			preserveStack(() => BinaryenObj["_BinaryenTryTable"](
+				mod[PTR],
+				body,
+				i32sToStack(catches.map((c) => strToStack(c.tag))),
+				i32sToStack(catches.map((c) => strToStack(c.dest))),
+				i8sToStack(catches.map((c) => Number(c.ref))),
+				catches.length,
+			))
+		),
 
 		// TODO: catch
 		// TODO: catch_ref
 		// TODO: catch_all
 		// TODO: catch_all_ref
 
-		// @ts-expect-error
-		/** @deprecated Use {@link ExpressionBuilder#throw_ref} instead. */ rethrow(...args) { BinaryenObj.printWarn("`.rethrow()` is deprecated; use `.throw_ref()` instead."); return this.throw_ref(...args); },
-		// @ts-expect-error
-		/** @deprecated Use {@link ExpressionBuilder#try_table} instead. */ try(...args) { BinaryenObj.printWarn("`.try()` is deprecated; use `.try_table()` instead."); return this.try_table(...args); },
+		/** @deprecated Use {@link ExpressionBuilder#throw_ref} instead. */
+		rethrow(target: string): ExpressionRef {
+			BinaryenObj.printWarn("`.rethrow()` is deprecated; use `.throw_ref()` instead.");
+			return preserveStack(() => BinaryenObj["_BinaryenRethrow"](mod[PTR], strToStack(target)));
+		},
+
+		/** @deprecated Use {@link ExpressionBuilder#try_table} instead. */
+		try(
+			name: string,
+			body: ExpressionRef,
+			catchTags: readonly string[],
+			catchBodies: readonly ExpressionRef[],
+			delegateTarget: string,
+		): ExpressionRef {
+			BinaryenObj.printWarn("`.try()` is deprecated; use `.try_table()` instead.");
+			return BinaryenObj["_BinaryenTry"](
+				mod[PTR],
+				strToStack(name),
+				body,
+				i32sToStack(catchTags.map(strToStack)),
+				catchTags.length,
+				i32sToStack(catchBodies),
+				catchBodies.length,
+				strToStack(delegateTarget),
+			);
+		},
 	} as const;
 }

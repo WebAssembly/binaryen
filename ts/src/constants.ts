@@ -82,9 +82,9 @@ export enum Type {
 	/** `(ref null nofunc)` @category Reference Types */
 	nullfuncref = BinaryenObj["_BinaryenTypeNullFuncref"](),
 	/** `(ref null exn)` @category Reference Types */
-	// exnref = BinaryenObj["_BinaryenTypeExnref"](), // TODO: uncomment once supported in Binaryen
+	exnref = BinaryenObj["_BinaryenTypeExnref"](),
 	/** `(ref null noexn)` @category Reference Types */
-	// nullexnref = BinaryenObj["_BinaryenTypeNullExnref"](), // TODO: uncomment once supported in Binaryen
+	nullexnref = BinaryenObj["_BinaryenTypeNullExnref"](),
 	/** `(ref null extern)` @category Reference Types */
 	externref = BinaryenObj["_BinaryenTypeExternref"](),
 	/** `(ref null noextern)` @category Reference Types */
@@ -117,9 +117,9 @@ export enum HeapType {
 	/** Heap type `nofunc`. */
 	nofunc = BinaryenObj["_BinaryenHeapTypeNofunc"](),
 	/** Heap type `exn`. */
-	// exn = BinaryenObj["_BinaryenHeapTypeExn"](), // TODO: uncomment once supported in Binaryen
+	exn = BinaryenObj["_BinaryenHeapTypeExn"](),
 	/** Heap type `noexn`. */
-	// noexn = BinaryenObj["_BinaryenHeapTypeNoexn"](), // TODO: uncomment once supported in Binaryen
+	noexn = BinaryenObj["_BinaryenHeapTypeNoexn"](),
 	/** Heap type `extern`. */
 	extern = BinaryenObj["_BinaryenHeapTypeExt"](),
 	/** Heap type `noextern`. */
@@ -167,9 +167,9 @@ export enum ExpressionId {
 	Return = BinaryenObj["_BinaryenReturnId"](),
 	Throw = BinaryenObj["_BinaryenThrowId"](),
 	Rethrow = BinaryenObj["_BinaryenRethrowId"](),
-	// TODO: ThrowRef
+	ThrowRef = BinaryenObj["_BinaryenThrowRefId"](),
 	Try = BinaryenObj["_BinaryenTryId"](),
-	// TODO: TryTable
+	TryTable = BinaryenObj["_BinaryenTryTableId"](),
 
 	// ### Variable Instruction Ids ### //
 	LocalGet = BinaryenObj["_BinaryenLocalGetId"](),

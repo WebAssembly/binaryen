@@ -10,6 +10,22 @@ import {
 	stackSave,
 	stringToUTF8OnStack,
 } from "./-pre.ts";
+import type {
+	Type,
+} from "./constants.ts";
+
+
+
+/**
+ * An object containing catch info in a try_table.
+ * @inline
+ */
+export type TryTableCatch = {
+	readonly tag: string | undefined,
+	readonly dest: string,
+	readonly ref: boolean,
+	readonly sentType: Type,
+};
 
 
 

@@ -7,10 +7,12 @@ import {
 	preserveStack,
 	setAllNested,
 	strToStack,
+	type TryTableCatch,
 } from "../../-utils.ts";
 import {
 	ExpressionId,
 	type ExpressionRef,
+	type Type,
 } from "../../constants.ts";
 import {
 	Expression,
@@ -84,6 +86,17 @@ export class Rethrow extends Expression {
 	set target(target: string) {
 		preserveStack(() => BinaryenObj["_BinaryenRethrowSetTarget"](this._ptr, strToStack(target)));
 	}
+}
+
+
+
+export class ThrowRef extends Expression {
+	constructor(expr: ExpressionRef) {
+		super(ExpressionId.ThrowRef, expr);
+	}
+
+	get exnref(): ExpressionRef { return BinaryenObj["_BinaryenThrowRefGetExnref"](this._ptr); }
+	set exnref(exnref: ExpressionRef) { BinaryenObj["_BinaryenThrowRefSetExnref"](this._ptr, exnref); }
 }
 
 
@@ -200,5 +213,102 @@ export class Try extends Expression {
 
 	removeCatchBodyAt(index: number): ExpressionRef {
 		return BinaryenObj["_BinaryenTryRemoveCatchBodyAt"](this._ptr, index);
+	}
+}
+
+
+
+export class TryTable extends Expression {
+	/** Construct a new object containing catch info. */
+	static #constructTryTableCatchAt(expr: ExpressionRef, index: number): TryTableCatch {
+		const tagPtr: number = BinaryenObj["_BinaryenTryTableGetCatchTagAt"](expr, index);
+		return {
+			tag: tagPtr ? UTF8ToString(tagPtr) : undefined,
+			dest: UTF8ToString(BinaryenObj["_BinaryenTryTableGetCatchDestAt"](expr, index)),
+			ref: Boolean(BinaryenObj["_BinaryenTryTableIsCatchRefAt"](expr, index)),
+			sentType: BinaryenObj["_BinaryenTryTableGetSentTypeAt"](expr, index),
+		};
+	}
+
+	/** Retrieve catch info for use in C API. */
+	static #deconstructTryTableCatch(catch_: TryTableCatch): {
+		tag: number,
+		dest: number,
+		ref: number,
+		sentType: Type,
+	} {
+		return {
+			tag: strToStack(catch_.tag),
+			dest: strToStack(catch_.dest),
+			ref: Number(catch_.ref),
+			sentType: catch_.sentType,
+		};
+	}
+
+	/** Internal impl for setting a catch object in a try table. */
+	static #setCatchAt(ptr: ExpressionRef, index: number, catch_: TryTableCatch): void {
+		const {tag, dest, ref, sentType} = TryTable.#deconstructTryTableCatch(catch_);
+		BinaryenObj["_BinaryenTryTableSetCatchTagAt"](ptr, index, tag, sentType);
+		BinaryenObj["_BinaryenTryTableSetCatchDestAt"](ptr, index, dest);
+		BinaryenObj["_BinaryenTryTableSetCatchRefAt"](ptr, index, ref, sentType);
+	}
+
+	/** Internal impl for appending a catch object to a try table. */
+	static #appendCatch(ptr: ExpressionRef, catch_: TryTableCatch): number {
+		const {tag, dest, ref, sentType} = TryTable.#deconstructTryTableCatch(catch_);
+		return BinaryenObj["_BinaryenTryTableAppendCatch"](ptr, tag, dest, ref, sentType);
+	}
+
+	constructor(expr: ExpressionRef) {
+		super(ExpressionId.TryTable, expr);
+	}
+
+	get body(): ExpressionRef { return BinaryenObj["_BinaryenTryTableGetBody"](this._ptr); }
+	set body(bodyExpr: ExpressionRef) { BinaryenObj["_BinaryenTryTableSetBody"](this._ptr, bodyExpr); }
+
+	get getNumCatches(): number { return BinaryenObj["_BinaryenTryTableGetNumCatches"](this._ptr); }
+
+	get catches(): TryTableCatch[] {
+		return getAllNested(
+			this._ptr,
+			BinaryenObj["_BinaryenTryTableGetNumCatches"],
+			TryTable.#constructTryTableCatchAt,
+		);
+	}
+
+	set catches(catches: readonly TryTableCatch[]) {
+		preserveStack(() => setAllNested(
+			this._ptr,
+			catches,
+			BinaryenObj["_BinaryenTryTableGetNumCatches"],
+			TryTable.#setCatchAt,
+			TryTable.#appendCatch,
+			BinaryenObj["_BinaryenTryTableRemoveCatchAt"],
+		));
+	}
+
+	get hasCatchAll(): boolean {
+		return Boolean(BinaryenObj["_BinaryenTryTableHasCatchAll"](this._ptr));
+	}
+
+	getCatchAt(index: number): TryTableCatch {
+		return TryTable.#constructTryTableCatchAt(this._ptr, index);
+	}
+
+	setCatchAt(index: number, catch_: TryTableCatch): void {
+		preserveStack(() => TryTable.#setCatchAt(this._ptr, index, catch_));
+	}
+
+	appendCatch(catch_: TryTableCatch): number {
+		return preserveStack(() => TryTable.#appendCatch(this._ptr, catch_));
+	}
+
+	insertCatchAt(index: number, catch_: TryTableCatch): void {
+		const {tag, dest, ref, sentType} = TryTable.#deconstructTryTableCatch(catch_);
+		preserveStack(() => BinaryenObj["_BinaryenTryTableInsertCatchAt"](this._ptr, index, tag, dest, ref, sentType));
+	}
+
+	removeCatchAt(index: number): string {
+		return UTF8ToString(BinaryenObj["_BinaryenTryTableRemoveCatchAt"](this._ptr, index));
 	}
 }

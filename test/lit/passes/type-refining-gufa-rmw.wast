@@ -417,10 +417,10 @@
 )
 
 (module
- ;; NRML:      (type $struct (sub (struct (field (mut (ref null $struct))))))
+ ;; NRML:      (type $struct (sub (shared (struct (field (mut (ref null $struct)))))))
  ;; GUFA:      (rec
- ;; GUFA-NEXT:  (type $struct (sub (struct (field (mut nullref)))))
- (type $struct (sub (struct (field (mut (ref null $struct))))))
+ ;; GUFA-NEXT:  (type $struct (sub (shared (struct (field (mut (ref null (shared none))))))))
+ (type $struct (sub (shared (struct (field (mut (ref null $struct)))))))
 
  ;; NRML:      (type $1 (func (param (ref null $struct))))
 
@@ -435,6 +435,14 @@
  ;; NRML-NEXT:    (local.get $struct)
  ;; NRML-NEXT:   )
  ;; NRML-NEXT:  )
+ ;; NRML-NEXT:  (drop
+ ;; NRML-NEXT:   (struct.wait $struct 0
+ ;; NRML-NEXT:    (local.get $struct)
+ ;; NRML-NEXT:    (unreachable)
+ ;; NRML-NEXT:    (local.get $struct)
+ ;; NRML-NEXT:    (i64.const -1)
+ ;; NRML-NEXT:   )
+ ;; NRML-NEXT:  )
  ;; NRML-NEXT: )
  ;; GUFA:       (type $1 (func (param (ref null $struct))))
 
@@ -446,12 +454,25 @@
  ;; GUFA-NEXT:   (struct.atomic.rmw.cmpxchg acqrel acqrel $struct 0
  ;; GUFA-NEXT:    (local.get $struct)
  ;; GUFA-NEXT:    (unreachable)
- ;; GUFA-NEXT:    (block (result nullref)
+ ;; GUFA-NEXT:    (block (result (ref null (shared none)))
  ;; GUFA-NEXT:     (drop
  ;; GUFA-NEXT:      (local.get $struct)
  ;; GUFA-NEXT:     )
- ;; GUFA-NEXT:     (ref.null none)
+ ;; GUFA-NEXT:     (ref.null (shared none))
  ;; GUFA-NEXT:    )
+ ;; GUFA-NEXT:   )
+ ;; GUFA-NEXT:  )
+ ;; GUFA-NEXT:  (drop
+ ;; GUFA-NEXT:   (struct.wait $struct 0
+ ;; GUFA-NEXT:    (local.get $struct)
+ ;; GUFA-NEXT:    (unreachable)
+ ;; GUFA-NEXT:    (block (result (ref null (shared none)))
+ ;; GUFA-NEXT:     (drop
+ ;; GUFA-NEXT:      (local.get $struct)
+ ;; GUFA-NEXT:     )
+ ;; GUFA-NEXT:     (ref.null (shared none))
+ ;; GUFA-NEXT:    )
+ ;; GUFA-NEXT:    (i64.const -1)
  ;; GUFA-NEXT:   )
  ;; GUFA-NEXT:  )
  ;; GUFA-NEXT: )
@@ -469,6 +490,15 @@
     (local.get $struct)
     (unreachable)
     (local.get $struct)
+   )
+  )
+  ;; Likewise with struct.wait.
+  (drop
+   (struct.wait $struct 0
+    (local.get $struct)
+    (unreachable)
+    (local.get $struct)
+    (i64.const -1)
    )
   )
  )

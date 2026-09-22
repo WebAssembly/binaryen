@@ -88,8 +88,12 @@ export type ReturnInfo = expressions.Return;
 export type ThrowInfo = expressions.Throw;
 /** @deprecated The `RethrowInfo` object type is now called {@link expressions.Rethrow}. */
 export type RethrowInfo = expressions.Rethrow;
+/** @deprecated The `ThrowRefInfo` object type is now called {@link expressions.ThrowRef}. */
+export type ThrowRefInfo = expressions.ThrowRef;
 /** @deprecated The `TryInfo` object type is now called {@link expressions.Try}. */
 export type TryInfo = expressions.Try;
+/** @deprecated The `TryTableInfo` object type is now called {@link expressions.TryTable}. */
+export type TryTableInfo = expressions.TryTable;
 /** @deprecated The `LocalGetInfo` object type is now called {@link expressions.LocalGet}. */
 export type LocalGetInfo = expressions.LocalGet;
 /** @deprecated The `LocalSetInfo` object type is now called {@link expressions.LocalSet}. */
@@ -152,6 +156,14 @@ export type StructNewInfo = expressions.StructNew;
 export type StructGetInfo = expressions.StructGet;
 /** @deprecated The `StructSetInfo` object type is now called {@link expressions.StructSet}. */
 export type StructSetInfo = expressions.StructSet;
+/** @deprecated The `StructWaitInfo` object type is now called {@link expressions.StructWait}. */
+export type StructWaitInfo = expressions.StructWait;
+/** @deprecated The `WaitqueueNewInfo` object type is now called {@link expressions.WaitqueueNew}. */
+export type WaitqueueNewInfo = expressions.WaitqueueNew;
+/** @deprecated The `WaitqueueNotifyInfo` object type is now called {@link expressions.WaitqueueNotify}. */
+export type WaitqueueNotifyInfo = expressions.WaitqueueNotify;
+/** @deprecated The `PublishInfo` object type is now called {@link expressions.Publish}. */
+export type PublishInfo = expressions.Publish;
 /** @deprecated The `ArrayNewInfo` object type is now called {@link expressions.ArrayNew}. */
 export type ArrayNewInfo = expressions.ArrayNew;
 /** @deprecated The `ArrayNewFixedInfo` object type is now called {@link expressions.ArrayNewFixed}. */
