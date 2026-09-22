@@ -28,14 +28,14 @@
 namespace wasm {
 
 //
-// Given a CFG in reverse postorder (e.g. from cfg-traversal), implement a priority queue
-// working in reverse postorder. BasicBlock indexes indicate the block's position
-// in RPO, and by processing the ones with lower indexes first, we can ensure
-// that we fully process loops and diamonds before proceeding onward to flow
-// data elsewhere in the CFG. This avoids the wasted work problem where we have,
-// say, an If, and process one arm, then look at the rest of a massive function,
-// then process the other If arm, and the entire massive function must be
-// recomputed.
+// Given a CFG in reverse postorder (e.g. from cfg-traversal), implement a
+// priority queue working in reverse postorder. BasicBlock indexes indicate the
+// block's position in RPO, and by processing the ones with lower indexes first,
+// we can ensure that we fully process loops and diamonds before proceeding
+// onward to flow data elsewhere in the CFG. This avoids the wasted work problem
+// where we have, say, an If, and process one arm, then look at the rest of a
+// massive function, then process the other If arm, and the entire massive
+// function must be recomputed.
 //
 // The BasicBlock of the CFG must contain two fields:
 //
@@ -43,9 +43,10 @@ namespace wasm {
 //   Index index;  // basic block index
 //
 template<typename CFG>
-struct RPOQueue : public std::priority_queue<Index, std::vector<Index>, std::greater<Index>> {
+struct RPOQueue
+  : public std::priority_queue<Index, std::vector<Index>, std::greater<Index>> {
   CFG& cfg;
-  
+
   RPOQueue(CFG& cfg) : cfg(cfg) {
     // Initialize the block indexes and queue booleans.
     auto& basicBlocks = cfg.basicBlocks;
