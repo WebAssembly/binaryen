@@ -42,8 +42,7 @@ namespace wasm {
 //   bool inQueue; // whether already in the queue
 //   Index index;  // basic block index
 //
-template<typename CFG>
-struct RPOQueue {
+template<typename CFG> struct RPOQueue {
   CFG& cfg;
 
   RPOQueue(CFG& cfg) : cfg(cfg) {
@@ -74,9 +73,7 @@ struct RPOQueue {
     return block;
   }
 
-  bool empty() const {
-    return queue.empty();
-  }
+  bool empty() const { return queue.empty(); }
 };
 
 } // namespace wasm
