@@ -15,6 +15,9 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
+ - Add a new wasm-embed tool for extracting Wasm modules embedded as byte arrays
+   in JS source files or replacing such modules in the JS source.
+
 v133
 ----
 
