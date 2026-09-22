@@ -2,8 +2,7 @@
 # https://launchpad.net/ubuntu/focal/+source/cmake
 cmake_minimum_required(VERSION 3.16.3)
 
-# Needed for C++17 (std::path)
-set(CMAKE_OSX_DEPLOYMENT_TARGET "10.15" CACHE STRING "Minimum OS X deployment version")
+set(CMAKE_OSX_DEPLOYMENT_TARGET "11.0" CACHE STRING "Minimum OS X deployment version")
 
 project(binaryen LANGUAGES C CXX VERSION 133)
 include(GNUInstallDirs)
