@@ -1735,7 +1735,7 @@
     )
   )
 
-  ;; CHECK:      (func $br_on_null (type $6) (param $param anyref)
+  ;; CHECK:      (func $br_on_null (type $5) (param $param anyref)
   ;; CHECK-NEXT:  (block $block
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (ref.is_null
@@ -1756,7 +1756,7 @@
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; OPTIN:      (func $br_on_null (type $6) (param $param anyref)
+  ;; OPTIN:      (func $br_on_null (type $5) (param $param anyref)
   ;; OPTIN-NEXT:  (block $block
   ;; OPTIN-NEXT:   (drop
   ;; OPTIN-NEXT:    (ref.is_null
@@ -1806,7 +1806,7 @@
     )
   )
 
-  ;; CHECK:      (func $br_on_non_null (type $6) (param $param anyref)
+  ;; CHECK:      (func $br_on_non_null (type $5) (param $param anyref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block $block (result (ref any))
   ;; CHECK-NEXT:    (drop
@@ -1827,7 +1827,7 @@
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; OPTIN:      (func $br_on_non_null (type $6) (param $param anyref)
+  ;; OPTIN:      (func $br_on_non_null (type $5) (param $param anyref)
   ;; OPTIN-NEXT:  (drop
   ;; OPTIN-NEXT:   (block $block (result (ref any))
   ;; OPTIN-NEXT:    (drop
@@ -6869,6 +6869,58 @@
         ;; $x may not be 0 here, as it was trampled, so we infer nothing.
         (drop
           (i32.eqz
+            (local.get $x)
+          )
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $eqz-ref-is-null (type $5) (param $x anyref)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (ref.is_null
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (else
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPTIN:      (func $eqz-ref-is-null (type $5) (param $x anyref)
+  ;; OPTIN-NEXT:  (drop
+  ;; OPTIN-NEXT:   (ref.is_null
+  ;; OPTIN-NEXT:    (local.get $x)
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT: )
+  (func $eqz-ref-is-null (param $x anyref)
+    (if
+      (i32.eqz
+        (ref.is_null
+          (local.get $x)
+        )
+      )
+      (then
+        ;; $x is not null here, so ref.is_null($x) is false (0).
+        (drop
+          (ref.is_null
+            (local.get $x)
+          )
+        )
+      )
+      (else
+        ;; $x is null here, so ref.is_null($x) is true (1).
+        (drop
+          (ref.is_null
             (local.get $x)
           )
         )
