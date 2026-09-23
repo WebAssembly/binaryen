@@ -1758,7 +1758,7 @@
     )
   )
 
-  ;; CHECK:      (func $br_on_null (type $5) (param $param anyref)
+  ;; CHECK:      (func $br_on_null (type $4) (param $param anyref)
   ;; CHECK-NEXT:  (block $block
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (ref.is_null
@@ -1779,7 +1779,7 @@
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; OPTIN:      (func $br_on_null (type $5) (param $param anyref)
+  ;; OPTIN:      (func $br_on_null (type $4) (param $param anyref)
   ;; OPTIN-NEXT:  (block $block
   ;; OPTIN-NEXT:   (drop
   ;; OPTIN-NEXT:    (ref.is_null
@@ -1829,7 +1829,7 @@
     )
   )
 
-  ;; CHECK:      (func $br_on_non_null (type $5) (param $param anyref)
+  ;; CHECK:      (func $br_on_non_null (type $4) (param $param anyref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block $block (result (ref any))
   ;; CHECK-NEXT:    (drop
@@ -1850,7 +1850,7 @@
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; OPTIN:      (func $br_on_non_null (type $5) (param $param anyref)
+  ;; OPTIN:      (func $br_on_non_null (type $4) (param $param anyref)
   ;; OPTIN-NEXT:  (drop
   ;; OPTIN-NEXT:   (block $block (result (ref any))
   ;; OPTIN-NEXT:    (drop
@@ -6905,7 +6905,7 @@
     )
   )
 
-  ;; CHECK:      (func $eqz-ref-is-null (type $5) (param $x anyref)
+  ;; CHECK:      (func $eqz-ref-is-null (type $4) (param $x anyref)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.eqz
   ;; CHECK-NEXT:    (ref.is_null
@@ -6924,7 +6924,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; OPTIN:      (func $eqz-ref-is-null (type $5) (param $x anyref)
+  ;; OPTIN:      (func $eqz-ref-is-null (type $4) (param $x anyref)
   ;; OPTIN-NEXT:  (drop
   ;; OPTIN-NEXT:   (ref.is_null
   ;; OPTIN-NEXT:    (local.get $x)
@@ -6956,7 +6956,6 @@
       )
     )
   )
-)
 
   ;; CHECK:      (func $local.get (type $0) (param $x i32)
   ;; CHECK-NEXT:  (if
