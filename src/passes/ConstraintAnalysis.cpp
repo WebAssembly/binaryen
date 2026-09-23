@@ -370,7 +370,7 @@ struct ConstraintAnalysis
 #endif
         if (!constraints.unreachable) {
           applyToConstraints(*currp, constraints);
-          if (auto* rep = optimizeLocalGet(currp, constraints)) {
+          if (auto* rep = optimizeLocalGet(currp, constraints, refinalize)) {
             getOptimizations.emplace_back(currp, rep);
           } else {
             optimizeConstraint(currp, constraints);
@@ -389,16 +389,6 @@ struct ConstraintAnalysis
 
     // Apply local.get optimizations after all that.
     for (auto& [currp, rep] : getOptimizations) {
-      auto oldType = (*currp)->type;
-      if (!Type::isSubType(rep->type, oldType)) {
-        // The value we know must exist here is impossible, which means it was
-        // cast in a way that traps at runtime. This code is unreachable.
-        rep = Builder(*getModule()).makeUnreachable();
-        refinalize = true;
-      } else if (rep->type != oldType) {
-        // We are refining.
-        refinalize = true;
-      }
       *currp = rep;
     }
 
@@ -411,7 +401,8 @@ struct ConstraintAnalysis
   // Given an expression and the constraints on it, see if it is a local.get
   // that we can optimize, and return the value to optimize to, if so.
   Expression* optimizeLocalGet(Expression** currp,
-                               const BasicBlockConstraintMap& constraints) {
+                               const BasicBlockConstraintMap& constraints,
+                               bool& refinalize) {
     // A bare local.get can be optimized, if we know that local is a constant.
     if (auto* get = (*currp)->dynCast<LocalGet>()) {
       if (auto lit = constraints.get(get->index).getLiteral()) {
@@ -421,7 +412,23 @@ struct ConstraintAnalysis
         if (lit->type.isRef() && !lit->isNull()) {
           return nullptr;
         }
-        return Builder(*getModule()).makeConstantExpression(*lit);
+
+        Builder builder(*getModule());
+        auto* rep = builder.makeConstantExpression(*lit);
+
+        // See if the type changes.
+        auto oldType = get->type;
+        if (!Type::isSubType(rep->type, oldType)) {
+          // The value we know must exist here is impossible, which means it was
+          // cast in a way that traps at runtime. This code is unreachable.
+          rep = builder.makeUnreachable();
+          refinalize = true;
+        } else if (rep->type != oldType) {
+          // We are refining.
+          refinalize = true;
+        }
+
+        return rep;
       }
     }
 
