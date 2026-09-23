@@ -126,8 +126,7 @@ wasm::Output::Output(const std::string& filename, Flags::BinaryOption binary)
       return buffer;
     }()) {}
 
-void wasm::write_file(const std::string& filename,
-                      const std::vector<char>& bytes) {
+void wasm::write_file(const std::string& filename, std::string_view bytes) {
   wasm::Output out(filename, Flags::Binary);
   out.write(bytes.data(), bytes.size());
 }
