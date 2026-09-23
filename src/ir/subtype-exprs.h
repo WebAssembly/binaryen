@@ -390,7 +390,11 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
       return;
     }
     const auto& fields = curr->ref->type.getHeapType().getStruct().fields;
-    self()->noteSubtype(curr->expected, fields[curr->index].type);
+    auto expectedType = fields[curr->index].type;
+    if (expectedType.isRef()) {
+      expectedType = Type(HeapTypes::eq.getBasic(Shared), Nullable);
+    }
+    self()->noteSubtype(curr->expected, expectedType);
   }
   void visitWaitqueueNew(WaitqueueNew* curr) {}
   void visitWaitqueueNotify(WaitqueueNotify* curr) {
