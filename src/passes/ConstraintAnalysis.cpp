@@ -170,19 +170,11 @@ struct ConstraintAnalysis
     Super::doWalkFunction(func);
   }
 
-#ifndef NDEBUG
-  // We use these in asserts, see below.
-  std::unordered_set<Expression*> originalActions;
-#endif
-
   // Store the actions we care about.
   void addAction() {
     if (currBasicBlock) {
       auto* currp = getCurrentPointer();
       currBasicBlock->contents.actions.push_back(currp);
-#ifndef NDEBUG
-      originalActions.insert(*currp);
-#endif
     }
   }
 
@@ -448,13 +440,7 @@ struct ConstraintAnalysis
     if (!parsed) {
       return;
     }
-    if (!checkRelevancy(*parsed)) {
-#ifndef NDEBUG
-      // If this is not relevant, then it must be one of the original actions we
-      // care about, i.e., not the result of optimizations. See the comment
-      // below on checkRelevancy.
-      assert(originalActions.contains(curr));
-#endif
+    if (!relevantLocals[parsed->local]) {
       return;
     }
 
@@ -639,39 +625,12 @@ struct ConstraintAnalysis
     }
   }
 
-  // When we are about to use or apply a constraint to a local, it must be on a
-  // relevant one - otherwise we misidentified which are relevant, which could
-  // lead to missed opportunities or misoptimizations. This returns true if we
-  // are operating on proper, relevant data. Normally this is all that can
-  // happen, but intermediate optimizations can make things become relevant,
-  // consider this:
-  //
-  //  x == (y < 10)
-  //
-  // The outer == is initially not relevant: we are comparing x to something we
-  // can't parse into a constraint's term. However, if we get lucky and optimize
-  // y < 10 into a constant, then it does become parseable, but because we did
-  // not consider x as relevant (and so we do not have all the relevant
-  // information about it), we must return false here and not operate on it
-  // (later optimization cycles can get to it).
-  bool checkRelevancy(const LocalConstraint& parsed) {
-    if (!relevantLocals[parsed.local]) {
-      return false;
-    }
-    if (auto* other = std::get_if<Index>(&parsed.constraint.term)) {
-      if (!relevantLocals[*other]) {
-        return false;
-      }
-    }
-    return true;
-  }
-
   // Filters out constraints on irrelevant locals.
   void filterRelevant(ParsedAndedConstraints& parsed) {
     parsed.erase(std::remove_if(parsed.begin(),
                                 parsed.end(),
                                 [&](const LocalConstraint& pair) {
-                                  return !checkRelevancy(pair);
+                                  return !relevantLocals[pair.local];
                                 }),
                  parsed.end());
   }
