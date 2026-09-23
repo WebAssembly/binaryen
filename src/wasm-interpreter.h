@@ -5026,6 +5026,9 @@ public:
     // Create a new continuation, copying the old but with the new type +
     // arguments.
     auto old = contValue.getContData();
+    if (old->executed) {
+      trap("continuation already executed");
+    }
     auto newData = *old;
     newData.type = curr->type.getHeapType();
     for (auto arg : arguments) {
@@ -5127,24 +5130,23 @@ public:
       }
       contData->executed = true;
 
-      if (contData->resumeArguments.empty()) {
-        // The continuation has no bound arguments. For now, we just handle the
-        // simple case of binding all of them, so that means we can just use all
-        // the immediate ones here. TODO
-        contData->resumeArguments = arguments;
-      }
       // Fill in the continuation data. How we do this depends on whether we
       // are resume or resume_throw*.
       if (auto* resumeThrow = curr->template dynCast<ResumeThrow>()) {
         if (resumeThrow->tag) {
           // resume_throw
           contData->exceptionTag = allTags[resumeThrow->tag];
+          contData->resumeArguments = arguments;
         } else {
           // resume_throw_ref
           contData->exception = arguments[0];
           if (contData->exception.isNull()) {
             trap("null ref");
           }
+        }
+      } else {
+        for (auto arg : arguments) {
+          contData->resumeArguments.push_back(arg);
         }
       }
 
