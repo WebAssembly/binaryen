@@ -58,7 +58,7 @@ template<typename CFG> struct RPOQueue {
   std::priority_queue<Index, std::vector<Index>, std::greater<Index>> queue;
 
   void push(CFG::BasicBlock* block) {
-    // Push if ont already in the queue.
+    // Push if not already in the queue.
     if (!block->contents.inQueue) {
       block->contents.inQueue = true;
       queue.push(block->contents.index);
