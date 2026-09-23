@@ -11,6 +11,7 @@
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 ;; CHECK-NEXT: (i32.const 0)
+;; NOT: i32.gt_s
 (module
   (memory 1)
   (func $f (result i32) (local $0 i32)
