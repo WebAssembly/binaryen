@@ -1,0 +1,48 @@
+;; Test embedding wasm and wat files into JS by replacing existing embedded modules.
+
+;; Existing embedded modules will be replaced:
+;; RUN: echo "good1(new Uint8Array([0x00, 0x61, 0x73, 0x6d, 0x01, 0x00, 0x00, 0x00, 0x00, 0x01, 0x2a]));" > %t.js
+
+;; Non-wasm arrays are ignored:
+;; RUN: echo "bad(new Uint8Array([0x00, 0xff, 0x73, 0x6d, 0x01]));" >> %t.js
+
+;; Add a second valid embedded module without new Uint8Array:
+;; RUN: echo "good2([0x00, 0x61, 0x73, 0x6d, 0x01, 0x00, 0x00, 0x00]);" >> %t.js
+
+;; Assemble %t.wat with -g so %t.wasm contains a name custom section that would
+;; be stripped if the module were reserialized. Pass %t.wasm as the first input
+;; (verifying original binary bytes are preserved) and %t.wat as the second
+;; input (verifying WAT is converted to binary before embedding).
+;; RUN: echo "(module (func $foo))" > %t.wat
+;; RUN: wasm-as %t.wat -g -o %t.wasm
+
+;; RUN: wasm-embed %t.js %t.wasm %t.wat %t.out.js
+;; RUN: cat %t.out.js | filecheck %s
+;;
+;; CHECK:      good1(new Uint8Array([
+;; CHECK-NEXT:   0x00, 0x61, 0x73, 0x6d, 0x01, 0x00, 0x00, 0x00, 0x01, 0x04, 0x01, 0x60, 0x00, 0x00, 0x03, 0x02,
+;; CHECK-NEXT:   0x01, 0x00, 0x0a, 0x04, 0x01, 0x02, 0x00, 0x0b, 0x00, 0x0d, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x01,
+;; CHECK-NEXT:   0x06, 0x01, 0x00, 0x03, 0x66, 0x6f, 0x6f
+;; CHECK-NEXT: ]));
+;; CHECK-NEXT: bad(new Uint8Array([0x00, 0xff, 0x73, 0x6d, 0x01]));
+;; CHECK-NEXT: good2([
+;; CHECK-NEXT:   0x00, 0x61, 0x73, 0x6d, 0x01, 0x00, 0x00, 0x00, 0x01, 0x04, 0x01, 0x60, 0x00, 0x00, 0x03, 0x02,
+;; CHECK-NEXT:   0x01, 0x00, 0x0a, 0x04, 0x01, 0x02, 0x00, 0x0b
+;; CHECK-NEXT: ]);
+
+;; Verify that invalid WAT text errors out:
+;; RUN: echo "not a module" > %t.bad.wat
+;; RUN: not wasm-embed %t.js %t.bad.wat %t.wat %t.out.js 2>&1 | filecheck %s --check-prefix=BAD-WAT
+;; BAD-WAT: Fatal: 1:0: error: unrecognized module field
+
+;; Verify that malformed binary Wasm errors out:
+;; RUN: echo -e '\x00asm\x01' > %t.bad.wasm
+;; RUN: not wasm-embed %t.js %t.bad.wasm %t.wat %t.out.js 2>&1 | filecheck %s --check-prefix=BAD-WASM
+;; BAD-WASM: Fatal: error parsing wasm
+
+;; Verify that WAT and binary Wasm modules failing WebAssembly validation error out:
+;; RUN: echo "(module (func (result i32) (f32.const 0)))" > %t.invalid.wat
+;; RUN: wasm-as %t.invalid.wat -v none -o %t.invalid.wasm
+;; RUN: not wasm-embed %t.js %t.invalid.wat %t.wat %t.out.js 2>&1 | filecheck %s --check-prefix=INVALID-MOD
+;; RUN: not wasm-embed %t.js %t.invalid.wasm %t.wat %t.out.js 2>&1 | filecheck %s --check-prefix=INVALID-MOD
+;; INVALID-MOD: Fatal: error validating module

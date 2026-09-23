@@ -284,6 +284,7 @@ WASM2JS = [os.path.join(options.binaryen_bin, 'wasm2js')]
 WASM_CTOR_EVAL = [os.path.join(options.binaryen_bin, 'wasm-ctor-eval')]
 WASM_SHELL = [os.path.join(options.binaryen_bin, 'wasm-shell')]
 WASM_REDUCE = [os.path.join(options.binaryen_bin, 'wasm-reduce')]
+WASM_EMBED = [os.path.join(options.binaryen_bin, 'wasm-embed')]
 WASM_METADCE = [os.path.join(options.binaryen_bin, 'wasm-metadce')]
 WASM_EMSCRIPTEN_FINALIZE = [os.path.join(options.binaryen_bin,
                                          'wasm-emscripten-finalize')]
@@ -329,13 +330,13 @@ def has_shell_timeout():
 # See https://github.com/v8/v8/blob/master/src/wasm/wasm-feature-flags.h
 V8_OPTS = [
     '--wasm-staging',
-    '--experimental-wasm-compilation-hints',
-    '--experimental-wasm-stringref',
-    '--experimental-wasm-fp16',
-    '--experimental-wasm-custom-descriptors',
-    '--experimental-wasm-js-interop',
-    '--experimental-wasm-acquire-release',
-    '--experimental-wasm-wide-arithmetic',
+    '--wasm-compilation-hints',
+    '--wasm-stringref',
+    '--wasm-fp16',
+    '--wasm-custom-descriptors',
+    '--wasm-js-interop',
+    '--wasm-acquire-release',
+    '--wasm-wide-arithmetic',
     '--wasm-compact-imports',
 ]
 
