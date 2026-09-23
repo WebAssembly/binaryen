@@ -36,7 +36,7 @@
 ;; BAD-WAT: Fatal: 1:0: error: unrecognized module field
 
 ;; Verify that malformed binary Wasm errors out:
-;; RUN: printf '\x00asm\x01' > %t.bad.wasm
+;; RUN: echo -e '\x00asm\x01' > %t.bad.wasm
 ;; RUN: not wasm-embed %t.js %t.bad.wasm %t.wat %t.out.js 2>&1 | filecheck %s --check-prefix=BAD-WASM
 ;; BAD-WASM: Fatal: error parsing wasm
 
