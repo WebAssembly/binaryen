@@ -44,6 +44,7 @@
 // references.
 
 #include "ir/drop.h"
+#include "ir/eh-utils.h"
 #include "ir/module-utils.h"
 #include "ir/names.h"
 #include "ir/type-updating.h"
@@ -510,8 +511,16 @@ struct MakeSharedObjects
   }
 
   std::unordered_map<CallRef*, HeapType> callRefTypes;
+  bool hasBlockNestedPop = false;
 
   void walkFunction(Function* curr) {
+    hasBlockNestedPop = false;
+    // Update local types before walking the body so that any scratch locals
+    // added during the walk with original boundary types (e.g. externref) are
+    // not overwritten afterward.
+    for (auto& type : curr->vars) {
+      updateType(type);
+    }
     // When we replace call_ref target operands with i31s, we will lose
     // information we need about the intended call target type. Collect those
     // types up front before we update anything.
@@ -528,6 +537,9 @@ struct MakeSharedObjects
     CallRefCollector collector(callRefTypes);
     collector.walk(curr->body);
     WalkerPass::walkFunction(curr);
+    if (hasBlockNestedPop) {
+      EHUtils::handleBlockNestedPops(curr, *getModule());
+    }
   }
 
   void visitCallRef(CallRef* curr) {
@@ -725,10 +737,56 @@ struct MakeSharedObjects
 #include "wasm-delegations-fields.def"
   }
 
-  void visitFunction(Function* curr) {
-    for (auto& type : curr->vars) {
-      updateType(type);
+  // Compute the boundary parameter types for a tag, keeping externref
+  // parameters unchanged while lowering other parameter types.
+  Type getTagBoundaryParams(Type origParams) {
+    std::vector<Type> params;
+    for (Type t : origParams) {
+      params.push_back(externTable.isTableType(t) ? t : updatedType(t));
     }
+    return Type(params);
+  }
+
+  // Convert lowered i31ref operands back to externrefs when throwing a tag
+  // that expects externref parameters.
+  void visitThrow(Throw* curr) {
+    visitExpression(curr);
+    Type origParams = getModule()->getTag(curr->tag)->params();
+    for (Index i = 0; i < curr->operands.size(); ++i) {
+      curr->operands[i] =
+        externTable.convertToRef(curr->operands[i], origParams[i]);
+    }
+  }
+
+  // Wrap pops with externref types in conversions from the caught externrefs
+  // to i31ref table indices.
+  void visitPop(Pop* curr) {
+    if (!externTable.hasTableType(curr->type)) {
+      visitExpression(curr);
+      return;
+    }
+    Type origParams = curr->type;
+    Type internalParams = updatedType(origParams);
+    Type boundaryParams = getTagBoundaryParams(origParams);
+    curr->type = boundaryParams;
+    if (origParams.isSingle()) {
+      replaceCurrent(
+        externTable.convertToIndex(curr, origParams, internalParams));
+      return;
+    }
+    Builder builder(*getModule());
+    Index scratch = Builder::addVar(getFunction(), boundaryParams);
+    auto* set = builder.makeLocalSet(scratch, curr);
+    std::vector<Expression*> elems;
+    elems.reserve(origParams.size());
+    for (Index i = 0; i < origParams.size(); ++i) {
+      auto* extract = builder.makeTupleExtract(
+        builder.makeLocalGet(scratch, boundaryParams), i);
+      elems.push_back(
+        externTable.convertToIndex(extract, origParams[i], internalParams[i]));
+    }
+    replaceCurrent(builder.makeSequence(set, builder.makeTupleMake(elems)));
+    hasBlockNestedPop = true;
   }
 
   void visitTable(Table* curr) { updateType(curr->type); }
@@ -794,6 +852,11 @@ struct MakeSharedObjects
     Type origType;
   };
 
+  struct TagToUpdate {
+    Tag* tag;
+    HeapType origType;
+  };
+
   void visitModule(Module* wasm) {
     std::vector<ImportToWrap> importsToWrap;
     for (auto& func : wasm->functions) {
@@ -814,7 +877,20 @@ struct MakeSharedObjects
       }
     }
 
+    std::vector<TagToUpdate> tagsToUpdate;
+    for (auto& tag : wasm->tags) {
+      if (externTable.hasTableType(tag->params())) {
+        tagsToUpdate.push_back({tag.get(), tag->type});
+      }
+    }
+
     rewriteTypes();
+
+    for (auto& [tag, origType] : tagsToUpdate) {
+      tag->type = getBoundaryType(Type(origType, NonNullable),
+                                  Type(tag->type, NonNullable))
+                    .getHeapType();
+    }
 
     for (auto& info : globalImportsToWrap) {
       wrapGlobalImport(info.global, info.origType);
