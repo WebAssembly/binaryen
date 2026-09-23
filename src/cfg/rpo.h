@@ -42,7 +42,7 @@ namespace wasm {
 //   bool inQueue; // whether already in the queue
 //   Index index;  // basic block index
 //
-template<typename CFG> struct RPOQueue {
+template<typename CFG, typename Compare = std::greater<Index>> struct RPOQueue {
   CFG& cfg;
 
   RPOQueue(CFG& cfg) : cfg(cfg) {
@@ -55,9 +55,9 @@ template<typename CFG> struct RPOQueue {
     }
   }
 
-  std::priority_queue<Index, std::vector<Index>, std::greater<Index>> queue;
+  std::priority_queue<Index, std::vector<Index>, Compare> queue;
 
-  void push(CFG::BasicBlock* block) {
+  void push(typename CFG::BasicBlock* block) {
     // Push if not already in the queue.
     if (!block->contents.inQueue) {
       block->contents.inQueue = true;
@@ -65,8 +65,8 @@ template<typename CFG> struct RPOQueue {
     }
   }
 
-  CFG::BasicBlock* pop() {
-    // Pop the smallest element (next in RPO), which is at the top.
+  typename CFG::BasicBlock* pop() {
+    // Pop the top element.
     auto* block = cfg.basicBlocks[queue.top()].get();
     queue.pop();
     block->contents.inQueue = false;
@@ -75,6 +75,13 @@ template<typename CFG> struct RPOQueue {
 
   bool empty() const { return queue.empty(); }
 };
+
+// A queue that works in postorder (the reverse of RPO), which is useful when
+// flowing information backwards through the CFG (such as in liveness analysis).
+// By processing blocks with higher RPO indexes first, we process successors
+// before predecessors, and fully process loops and diamonds before flowing data
+// backwards to earlier blocks in the CFG.
+template<typename CFG> using POQueue = RPOQueue<CFG, std::less<Index>>;
 
 } // namespace wasm
 
