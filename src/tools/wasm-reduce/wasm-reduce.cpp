@@ -232,16 +232,18 @@ static std::unordered_set<Name> functionsWeTriedToRemove;
 // overlap.
 static size_t workingFileIndex = 0;
 
-// Runs the external `wasm-opt` binary with `args` on `inPath` and writes the
-// result to `outPath`.
-static bool runWasmOpt(const std::string& inPath,
-                       const std::string& outPath,
+/// Runs the external `wasm-opt` binary with `args` on `inBytes` by writing to
+// `testPath` and reading the result back into `outBytes`.
+static bool runWasmOpt(const std::string& testPath,
+                       const std::vector<char>& inBytes,
                        const std::string& args,
+                       std::vector<char>& outBytes,
                        ProgramResult& result,
                        bool verbose = false,
                        std::string* outCmd = nullptr) {
-  std::string cmd = Path::getBinaryenBinaryTool("wasm-opt") + " " + inPath +
-                    " -o " + outPath + " " + args;
+  write_file(testPath, inBytes);
+  std::string cmd = Path::getBinaryenBinaryTool("wasm-opt") + " " + testPath +
+                    " -o " + testPath + " " + args;
   if (outCmd) {
     *outCmd = cmd;
   }
@@ -249,7 +251,11 @@ static bool runWasmOpt(const std::string& inPath,
     std::cerr << "|    trying pass command: " << cmd << "\n";
   }
   result.getFromExecution(cmd);
-  return !result.failed();
+  if (result.failed()) {
+    return false;
+  }
+  outBytes = read_file<std::vector<char>>(testPath, Flags::Binary);
+  return true;
 }
 
 struct Reducer
@@ -258,8 +264,6 @@ struct Reducer
   bool binary, deNan, verbose, debugInfo;
   ToolOptions& toolOptions;
 
-  // test is the file we write to that the command will operate on
-  // working is the current temporary state, the reduction so far
   Reducer(std::string command,
           std::string test,
           std::string working,
@@ -319,7 +323,8 @@ struct Reducer
       "--strip",
       "--remove-unused-types --closed-world",
       "--vacuum"};
-    auto initialSize = file_size(working);
+    auto workingBytes = read_file<std::vector<char>>(working, Flags::Binary);
+    auto initialSize = workingBytes.size();
     auto oldSize = initialSize;
     bool more = true;
     while (more) {
@@ -333,16 +338,26 @@ struct Reducer
           args += " -S ";
         }
         ProgramResult result;
+        std::vector<char> candidateBytes;
         std::string currCommand;
-        if (runWasmOpt(working, test, args, result, verbose, &currCommand)) {
-          auto newSize = file_size(test);
+        if (runWasmOpt(test,
+                       workingBytes,
+                       args,
+                       candidateBytes,
+                       result,
+                       verbose,
+                       &currCommand)) {
+          auto newSize = candidateBytes.size();
           if (newSize < oldSize) {
             // the pass didn't fail, and the size looks smaller, so promising
             // see if it is still has the property we are preserving
-            if (ProgramResult(command) == expected) {
+            write_file(test, candidateBytes);
+            ProgramResult out(command);
+            if (out == expected) {
               std::cerr << "|    command \"" << currCommand
                         << "\" succeeded, reduced size to " << newSize << '\n';
-              saveWorking();
+              saveWorking(candidateBytes);
+              workingBytes = candidateBytes;
               more = true;
               oldSize = newSize;
             }
@@ -354,16 +369,6 @@ struct Reducer
       std::cerr << "|    done with passes for now\n";
     }
     return {initialSize, oldSize};
-  }
-
-  // Apply the test file to the working file, after we saw that it successfully
-  // reduced the testcase.
-  void saveWorking() {
-    copy_file(test, working);
-
-    if (saveAllWorkingFiles) {
-      copy_file(working, working + '.' + std::to_string(workingFileIndex++));
-    }
   }
 
   // does one pass of slow and destructive reduction. returns whether it
@@ -402,7 +407,8 @@ struct Reducer
 
     ModuleReader reader;
     try {
-      reader.read(working, *module);
+      reader.readData(read_file<std::vector<char>>(working, Flags::Binary),
+                      *module);
     } catch (ParseException& p) {
       p.dump(std::cerr);
       std::cerr << '\n';
@@ -423,6 +429,7 @@ struct Reducer
   std::unique_ptr<Builder> builder;
   Index funcsSeen;
   uint64_t factor;
+  std::vector<char> lastTestBytes;
 
   // write the module and see if the command still fails on it as expected
   bool writeAndTestReduction() {
@@ -435,7 +442,9 @@ struct Reducer
     ModuleWriter writer(toolOptions.passOptions);
     writer.setBinary(binary);
     writer.setDebugInfo(debugInfo);
-    toolOptions.write(writer, *getModule(), test);
+    lastTestBytes.clear();
+    toolOptions.write(writer, *getModule(), lastTestBytes);
+    write_file(test, lastTestBytes);
     // note that it is ok for the destructively-reduced module to be bigger
     // than the previous - each destructive reduction removes logical code,
     // and so is strictly better, even if the wasm binary format happens to
@@ -497,9 +506,16 @@ struct Reducer
     return true;
   }
 
+  void saveWorking(const std::vector<char>& bytes) {
+    write_file(working, bytes);
+    if (saveAllWorkingFiles) {
+      copy_file(working, working + '.' + std::to_string(workingFileIndex++));
+    }
+  }
+
   void noteReduction(size_t amount = 1) {
     reduced += amount;
-    saveWorking();
+    saveWorking(lastTestBytes);
   }
 
   // tests a reduction on an arbitrary child
@@ -1378,17 +1394,18 @@ static void checkDifferentBehaviorOnDifferentInputs(const std::string& test,
                "inputs (this "
                "verifies that the test file is used by the command)\n";
   // Try it on an invalid input.
-  {
-    std::ofstream dst(test, std::ios::binary);
-    dst << "waka waka\n";
-  }
+  std::string nonsenseStr = "waka waka\n";
+  std::vector<char> nonsense(nonsenseStr.begin(), nonsenseStr.end());
+  write_file(test, nonsense);
   ProgramResult resultOnInvalid(command);
   if (resultOnInvalid == expected) {
     // Try it on a valid input.
     Module emptyModule;
     ModuleWriter writer(options.passOptions);
     writer.setBinary(true);
-    options.write(writer, emptyModule, test);
+    std::vector<char> emptyBytes;
+    options.write(writer, emptyModule, emptyBytes);
+    write_file(test, emptyBytes);
     ProgramResult resultOnValid(command);
     if (resultOnValid == expected) {
       Fatal()
@@ -1412,9 +1429,15 @@ static void checkCanonicalizedBinary(const std::string& working,
     args += " -S ";
   }
   ProgramResult readWrite;
-  if (!runWasmOpt(working, test, args, readWrite)) {
+  std::vector<char> canonicalBytes;
+  if (!runWasmOpt(test,
+                  read_file<std::vector<char>>(working, Flags::Binary),
+                  args,
+                  canonicalBytes,
+                  readWrite)) {
     stopIfNotForced("failed to read and write the binary", readWrite, force);
   } else {
+    write_file(test, canonicalBytes);
     ProgramResult result(command);
     if (result != expected) {
       stopIfNotForced("running command on the canonicalized module should "
@@ -1437,7 +1460,8 @@ static void reduceModule(const std::string& command,
   checkDifferentBehaviorOnDifferentInputs(test, command, force, options);
   checkCanonicalizedBinary(working, test, command, binary, force);
 
-  auto workingSize = file_size(working);
+  auto workingSize =
+    read_file<std::vector<char>>(working, Flags::Binary).size();
   std::cerr << "|input size: " << workingSize << "\n";
 
   std::cerr << "|starting reduction!\n";
@@ -1535,11 +1559,13 @@ static void reduceModule(const std::string& command,
       factor = std::max(uint64_t(1), factor / 4);
     }
 
-    std::cerr << "|  destructive reduction led to size: " << file_size(working)
+    std::cerr << "|  destructive reduction led to size: "
+              << read_file<std::vector<char>>(working, Flags::Binary).size()
               << '\n';
   }
-  std::cerr << "|finished, final size: " << file_size(working) << "\n";
-  copy_file(working, test); // just to avoid confusion
+  auto finalBytes = read_file<std::vector<char>>(working, Flags::Binary);
+  std::cerr << "|finished, final size: " << finalBytes.size() << "\n";
+  write_file(test, finalBytes); // just to avoid confusion
 }
 
 //
