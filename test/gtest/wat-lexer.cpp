@@ -82,6 +82,12 @@ TEST(LexerTest, LexBlockComment) {
   EXPECT_EQ(lexer.takeI32(), 6);
 
   EXPECT_TRUE(lexer.empty());
+
+  // Unterminated block comments should not be consumed.
+  Lexer unterm("(@A)(;   "sv);
+  ASSERT_FALSE(unterm.empty());
+  EXPECT_EQ(unterm.position(), (TextPos{1, 4}));
+  EXPECT_EQ(unterm.getAnnotations().size(), 1u);
 }
 
 TEST(LexerTest, LexParens) {
