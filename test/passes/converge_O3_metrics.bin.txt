@@ -1,7 +1,7 @@
 Metrics
 total
  [exports]      : 2       
- [funcs]        : 6       
+ [funcs]        : 7       
  [globals]      : 1       
  [imports]      : 3       
  [memories]     : 0       
@@ -11,17 +11,17 @@ total
  [tags]         : 0       
  [total]        : 551     
  [vars]         : 2       
- Binary         : 12      
+ Binary         : 11      
  Block          : 6       
  Break          : 3       
- Call           : 1       
- CallIndirect   : 4       
- Const          : 46      
+ Call           : 3       
+ CallIndirect   : 3       
+ Const          : 44      
  Drop           : 3       
  GlobalSet      : 1       
  If             : 2       
- Load           : 16      
- LocalGet       : 16      
+ Load           : 15      
+ LocalGet       : 19      
  LocalSet       : 6       
  Loop           : 1       
  RefFunc        : 429     
@@ -51,6 +51,22 @@ total
   (i32.const 0)
  )
  (func $_malloc (param $0 i32) (result i32)
+  (i32.const 0)
+ )
+ (func $_fwrite (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
+  (drop
+   (call_indirect (type $0)
+    (i32.const 0)
+    (local.get $0)
+    (local.get $1)
+    (i32.add
+     (i32.load offset=36
+      (local.get $2)
+     )
+     (i32.const 8)
+    )
+   )
+  )
   (i32.const 0)
  )
  (func $_main (result i32)
@@ -194,48 +210,33 @@ total
    (local.get $1)
   )
   (drop
-   (call_indirect (type $0)
-    (i32.const 0)
+   (call $_fwrite
     (i32.const 0)
     (i32.const 1)
-    (i32.add
-     (i32.load offset=36
-      (i32.load
-       (i32.add
-        (local.get $0)
-        (i32.const 32)
-       )
-      )
+    (i32.load
+     (i32.add
+      (local.get $0)
+      (i32.const 32)
      )
-     (i32.const 8)
     )
    )
   )
   (i32.const 0)
  )
  (func $__ZNSt3__211__stdoutbufIcE6xsputnEPKci (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
-  (drop
-   (call_indirect (type $0)
-    (i32.const 0)
-    (local.get $1)
-    (local.get $2)
-    (i32.add
-     (i32.load offset=36
-      (i32.load offset=32
-       (local.get $0)
-      )
-     )
-     (i32.const 8)
-    )
+  (call $_fwrite
+   (local.get $1)
+   (local.get $2)
+   (i32.load offset=32
+    (local.get $0)
    )
   )
-  (i32.const 0)
  )
 )
 Metrics
 total
  [exports]      : 2       
- [funcs]        : 6       
+ [funcs]        : 7       
  [globals]      : 0             -1
  [imports]      : 3       
  [memories]     : 0       
@@ -245,16 +246,16 @@ total
  [tags]         : 0       
  [total]        : 547           -4
  [vars]         : 2       
- Binary         : 12      
+ Binary         : 11      
  Block          : 6       
  Break          : 3       
- Call           : 1       
- CallIndirect   : 4       
- Const          : 46      
+ Call           : 3       
+ CallIndirect   : 3       
+ Const          : 44      
  Drop           : 3       
  If             : 2       
- Load           : 16      
- LocalGet       : 14            -2
+ Load           : 15      
+ LocalGet       : 17            -2
  LocalSet       : 5             -1
  Loop           : 1       
  RefFunc        : 429     
@@ -285,6 +286,22 @@ total
  (func $_malloc (param $0 i32) (result i32)
   (i32.const 0)
  )
+ (func $_fwrite (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
+  (drop
+   (call_indirect (type $0)
+    (i32.const 0)
+    (local.get $0)
+    (local.get $1)
+    (i32.add
+     (i32.load offset=36
+      (local.get $2)
+     )
+     (i32.const 8)
+    )
+   )
+  )
+  (i32.const 0)
+ )
  (func $_main (result i32)
   (local $0 i32)
   (local $1 i32)
@@ -421,48 +438,33 @@ total
    (local.get $1)
   )
   (drop
-   (call_indirect (type $0)
-    (i32.const 0)
+   (call $_fwrite
     (i32.const 0)
     (i32.const 1)
-    (i32.add
-     (i32.load offset=36
-      (i32.load
-       (i32.add
-        (local.get $0)
-        (i32.const 32)
-       )
-      )
+    (i32.load
+     (i32.add
+      (local.get $0)
+      (i32.const 32)
      )
-     (i32.const 8)
     )
    )
   )
   (i32.const 0)
  )
  (func $__ZNSt3__211__stdoutbufIcE6xsputnEPKci (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
-  (drop
-   (call_indirect (type $0)
-    (i32.const 0)
-    (local.get $1)
-    (local.get $2)
-    (i32.add
-     (i32.load offset=36
-      (i32.load offset=32
-       (local.get $0)
-      )
-     )
-     (i32.const 8)
-    )
+  (call $_fwrite
+   (local.get $1)
+   (local.get $2)
+   (i32.load offset=32
+    (local.get $0)
    )
   )
-  (i32.const 0)
  )
 )
 Metrics
 total
  [exports]      : 2       
- [funcs]        : 6       
+ [funcs]        : 7       
  [globals]      : 0       
  [imports]      : 3       
  [memories]     : 0       
@@ -472,16 +474,16 @@ total
  [tags]         : 0       
  [total]        : 547     
  [vars]         : 2       
- Binary         : 12      
+ Binary         : 11      
  Block          : 6       
  Break          : 3       
- Call           : 1       
- CallIndirect   : 4       
- Const          : 46      
+ Call           : 3       
+ CallIndirect   : 3       
+ Const          : 44      
  Drop           : 3       
  If             : 2       
- Load           : 16      
- LocalGet       : 14      
+ Load           : 15      
+ LocalGet       : 17      
  LocalSet       : 5       
  Loop           : 1       
  RefFunc        : 429     
@@ -512,6 +514,22 @@ total
  (func $_malloc (param $0 i32) (result i32)
   (i32.const 0)
  )
+ (func $_fwrite (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
+  (drop
+   (call_indirect (type $0)
+    (i32.const 0)
+    (local.get $0)
+    (local.get $1)
+    (i32.add
+     (i32.load offset=36
+      (local.get $2)
+     )
+     (i32.const 8)
+    )
+   )
+  )
+  (i32.const 0)
+ )
  (func $_main (result i32)
   (local $0 i32)
   (local $1 i32)
@@ -648,41 +666,26 @@ total
    (local.get $1)
   )
   (drop
-   (call_indirect (type $0)
-    (i32.const 0)
+   (call $_fwrite
     (i32.const 0)
     (i32.const 1)
-    (i32.add
-     (i32.load offset=36
-      (i32.load
-       (i32.add
-        (local.get $0)
-        (i32.const 32)
-       )
-      )
+    (i32.load
+     (i32.add
+      (local.get $0)
+      (i32.const 32)
      )
-     (i32.const 8)
     )
    )
   )
   (i32.const 0)
  )
  (func $__ZNSt3__211__stdoutbufIcE6xsputnEPKci (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
-  (drop
-   (call_indirect (type $0)
-    (i32.const 0)
-    (local.get $1)
-    (local.get $2)
-    (i32.add
-     (i32.load offset=36
-      (i32.load offset=32
-       (local.get $0)
-      )
-     )
-     (i32.const 8)
-    )
+  (call $_fwrite
+   (local.get $1)
+   (local.get $2)
+   (i32.load offset=32
+    (local.get $0)
    )
   )
-  (i32.const 0)
  )
 )

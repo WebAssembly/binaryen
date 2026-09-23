@@ -223,13 +223,13 @@ struct FunctionInfoScanner
     infos[getFunction()->name].hasCalls = true;
   }
 
-  // N.B.: CallIndirect and CallRef are intentionally omitted here, as we only
-  //       note direct calls. Direct calls can lead to infinite recursion
-  //       which we need to avoid, while indirect ones may in theory be
-  //       optimized to direct calls later, but we take that risk - which is
-  //       worthwhile as if we do manage to turn an indirect call into something
-  //       else then it can be a big speedup, so we do want to inline code that
-  //       has such indirect calls.
+  void visitCallIndirect(CallIndirect* curr) {
+    infos[getFunction()->name].hasCalls = true;
+  }
+
+  void visitCallRef(CallRef* curr) {
+    infos[getFunction()->name].hasCalls = true;
+  }
 
   void visitTry(Try* curr) {
     if (curr->isDelegate()) {
