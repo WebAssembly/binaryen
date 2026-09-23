@@ -329,10 +329,11 @@ struct ConstraintAnalysis
     }
   }
 
+  // If we change types, we must refinalize.
+  bool refinalize = false;
+
   // After inferring all we can, apply it to optimize the code.
   void optimize() {
-    // If we make things unreachable, we must refinalize.
-    bool refinalize = false;
 
     // If we find local.gets that we can optimize, we queue those changes here.
     // This order is useful for the following reason:
@@ -370,7 +371,7 @@ struct ConstraintAnalysis
 #endif
         if (!constraints.unreachable) {
           applyToConstraints(*currp, constraints);
-          if (auto* rep = optimizeLocalGet(currp, constraints, refinalize)) {
+          if (auto* rep = optimizeLocalGet(currp, constraints)) {
             getOptimizations.emplace_back(currp, rep);
           } else {
             optimizeConstraint(currp, constraints);
@@ -401,8 +402,7 @@ struct ConstraintAnalysis
   // Given an expression and the constraints on it, see if it is a local.get
   // that we can optimize, and return the value to optimize to, if so.
   Expression* optimizeLocalGet(Expression** currp,
-                               const BasicBlockConstraintMap& constraints,
-                               bool& refinalize) {
+                               const BasicBlockConstraintMap& constraints) {
     // A bare local.get can be optimized, if we know that local is a constant.
     if (auto* get = (*currp)->dynCast<LocalGet>()) {
       if (auto lit = constraints.get(get->index).getLiteral()) {
