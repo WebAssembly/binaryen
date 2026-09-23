@@ -24,6 +24,7 @@ set(unittest_SOURCES
   interpreter.cpp
   intervals.cpp
   istring.cpp
+  js-embedded-module.cpp
   json.cpp
   lattices.cpp
   local-graph.cpp
