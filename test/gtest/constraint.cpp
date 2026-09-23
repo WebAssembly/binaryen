@@ -1723,6 +1723,54 @@ TEST(ConstraintTest, ParseUnaryEqZ) {
     EXPECT_TRUE(parsed.empty());
     EXPECT_TRUE(parsed.hasUnknown);
   }
+
+  // 8. eqz of ref.is_null of local.get: parsed as x != null.
+  {
+    auto anyref = Type(HeapType::any, Nullable);
+    auto* inner = builder.makeRefIsNull(builder.makeLocalGet(0, anyref));
+    auto* expr = builder.makeUnary(EqZInt32, inner);
+    auto parsed = ParsedAndedConstraints::parse(expr);
+    EXPECT_FALSE(parsed.hasUnknown);
+    ASSERT_EQ(parsed.size(), 1);
+    EXPECT_EQ(
+      parsed[0],
+      (LocalConstraint{0, Constraint{Ne, {Literal::makeNull(HeapType::any)}}}));
+  }
+
+  // 9. eqz of binary comparison: parsed as negated comparison.
+  {
+    auto* inner = builder.makeBinary(
+      EqInt32, builder.makeLocalGet(0, Type::i32), builder.makeConst(10));
+    auto* expr = builder.makeUnary(EqZInt32, inner);
+    auto parsed = ParsedAndedConstraints::parse(expr);
+    EXPECT_FALSE(parsed.hasUnknown);
+    ASSERT_EQ(parsed.size(), 1);
+    EXPECT_EQ(parsed[0],
+              (LocalConstraint{0, Constraint{Ne, {Literal(int32_t(10))}}}));
+  }
+  {
+    auto* inner = builder.makeBinary(
+      LtSInt32, builder.makeLocalGet(0, Type::i32), builder.makeConst(10));
+    auto* expr = builder.makeUnary(EqZInt32, inner);
+    auto parsed = ParsedAndedConstraints::parse(expr);
+    EXPECT_FALSE(parsed.hasUnknown);
+    ASSERT_EQ(parsed.size(), 1);
+    EXPECT_EQ(parsed[0],
+              (LocalConstraint{0, Constraint{GeS, {Literal(int32_t(10))}}}));
+  }
+
+  // 10. Triple eqz: parsed as x == 0.
+  {
+    auto* inner1 =
+      builder.makeUnary(EqZInt32, builder.makeLocalGet(0, Type::i32));
+    auto* inner2 = builder.makeUnary(EqZInt32, inner1);
+    auto* expr = builder.makeUnary(EqZInt32, inner2);
+    auto parsed = ParsedAndedConstraints::parse(expr);
+    EXPECT_FALSE(parsed.hasUnknown);
+    ASSERT_EQ(parsed.size(), 1);
+    EXPECT_EQ(parsed[0],
+              (LocalConstraint{0, Constraint{Eq, {Literal(int32_t(0))}}}));
+  }
 }
 
 TEST(ConstraintTest, ParseRefIsNull) {

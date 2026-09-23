@@ -69,6 +69,13 @@ private:
   std::ostream out;
 };
 
+// Write the bytes to the given file.
+void write_file(const std::string& filename, std::string_view bytes);
+inline void write_file(const std::string& filename,
+                       const std::vector<char>& bytes) {
+  write_file(filename, std::string_view(bytes.data(), bytes.size()));
+}
+
 // Copies a file to another file
 void copy_file(std::string input, std::string output);
 

@@ -6905,6 +6905,59 @@
     )
   )
 
+  ;; CHECK:      (func $eqz-ref-is-null (type $5) (param $x anyref)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (ref.is_null
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (else
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPTIN:      (func $eqz-ref-is-null (type $5) (param $x anyref)
+  ;; OPTIN-NEXT:  (drop
+  ;; OPTIN-NEXT:   (ref.is_null
+  ;; OPTIN-NEXT:    (local.get $x)
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT: )
+  (func $eqz-ref-is-null (param $x anyref)
+    (if
+      (i32.eqz
+        (ref.is_null
+          (local.get $x)
+        )
+      )
+      (then
+        ;; $x is not null here, so ref.is_null($x) is false (0).
+        (drop
+          (ref.is_null
+            (local.get $x)
+          )
+        )
+      )
+      (else
+        ;; $x is null here, so ref.is_null($x) is true (1).
+        (drop
+          (ref.is_null
+            (local.get $x)
+          )
+        )
+      )
+    )
+  )
+)
+
   ;; CHECK:      (func $local.get (type $0) (param $x i32)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (local.get $x)
