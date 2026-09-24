@@ -136,7 +136,8 @@ template<typename T> struct SortedVector : public std::vector<T> {
   // present in both are only kept when |keep(selfElem, otherElem)| returns
   // true (this can be useful when the items contain more than they key being
   // sorted on).
-  template<typename F> void intersectAndFilter(const SortedVector& other, F keep) {
+  template<typename F>
+  void intersectAndFilter(const SortedVector& other, F keep) {
     size_t write = 0;
     size_t i = 0, j = 0;
     while (i < size() && j < other.size()) {
