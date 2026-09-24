@@ -253,6 +253,10 @@ struct LocalConstraint {
   //
   static std::optional<LocalConstraint> parse(Expression* curr);
 
+  LocalConstraint negate() const {
+    return LocalConstraint{local, constraint.negate()};
+  }
+
   // Reverse the constraint. The constraint's term must, of course, be another
   // local.
   void flip();

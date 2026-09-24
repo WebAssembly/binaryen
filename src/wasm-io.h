@@ -27,6 +27,8 @@
 
 namespace wasm {
 
+class BufferWithRandomAccess;
+
 class ModuleIOBase {
 protected:
   bool debugInfo;
@@ -63,6 +65,10 @@ public:
   // empty, read from stdin.
   void
   read(std::string filename, Module& wasm, std::string sourceMapFilename = "");
+  // read text or binary from an in-memory buffer
+  void readData(const std::vector<char>& input,
+                Module& wasm,
+                std::string sourceMapFilename = "");
   // check whether a file is a wasm binary
   bool isBinaryFile(std::string filename);
 
@@ -79,7 +85,7 @@ private:
 
   void readStdin(Module& wasm, std::string sourceMapFilename);
 
-  void readBinaryData(std::vector<char>& input,
+  void readBinaryData(const std::vector<char>& input,
                       Module& wasm,
                       std::string sourceMapFilename);
 };
@@ -117,6 +123,7 @@ public:
   void writeText(Module& wasm, Output& output);
   void writeText(Module& wasm, std::string filename);
   // write binary
+  void writeBinary(Module& wasm, BufferWithRandomAccess& buffer);
   void writeBinary(Module& wasm, Output& output);
   void writeBinary(Module& wasm, std::string filename);
   // write text or binary, defaulting to binary unless setBinary(false),
@@ -124,6 +131,7 @@ public:
   // to stdout).
   void write(Module& wasm, Output& output);
   void write(Module& wasm, std::string filename);
+  void write(Module& wasm, std::vector<char>& output);
 };
 
 } // namespace wasm

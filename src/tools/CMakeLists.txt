@@ -21,6 +21,7 @@ if(NOT BUILD_EMSCRIPTEN_TOOLS_ONLY)
   binaryen_add_executable(wasm-merge wasm-merge.cpp)
   binaryen_add_executable(wasm-fuzz-types "${fuzzing_SOURCES};wasm-fuzz-types.cpp")
   binaryen_add_executable(wasm-fuzz-lattices "${fuzzing_SOURCES};wasm-fuzz-lattices.cpp")
+  binaryen_add_executable(wasm-embed wasm-embed.cpp)
   add_subdirectory(wasm-reduce)
 endif()
 

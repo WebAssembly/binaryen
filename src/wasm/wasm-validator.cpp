@@ -3739,8 +3739,11 @@ void FunctionValidator::visitStructWait(StructWait* curr) {
     return;
   }
 
+  auto expectedType = field.type.isRef()
+                        ? Type(HeapTypes::eq.getBasic(Shared), Nullable)
+                        : field.type;
   shouldBeSubType(curr->expected->type,
-                  field.type,
+                  expectedType,
                   curr,
                   "struct.wait expected value must match the field immediate");
 }
