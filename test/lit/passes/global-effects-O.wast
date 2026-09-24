@@ -362,7 +362,7 @@
   ;; CHECK_3-NEXT:    )
   ;; CHECK_3-NEXT:   )
   ;; CHECK_3-NEXT:  )
-  ;; CHECK_3-NEXT:  (local.get $0)
+  ;; CHECK_3-NEXT:  (i32.const 0)
   ;; CHECK_3-NEXT: )
   ;; CHECK_s:      (func $infinite-work (type $1) (param $0 i32) (result i32)
   ;; CHECK_s-NEXT:  (loop $loop
@@ -375,7 +375,7 @@
   ;; CHECK_s-NEXT:    )
   ;; CHECK_s-NEXT:   )
   ;; CHECK_s-NEXT:  )
-  ;; CHECK_s-NEXT:  (local.get $0)
+  ;; CHECK_s-NEXT:  (i32.const 0)
   ;; CHECK_s-NEXT: )
   ;; CHECK_O:      (func $infinite-work (type $1) (param $0 i32) (result i32)
   ;; CHECK_O-NEXT:  (loop $loop
@@ -388,7 +388,7 @@
   ;; CHECK_O-NEXT:    )
   ;; CHECK_O-NEXT:   )
   ;; CHECK_O-NEXT:  )
-  ;; CHECK_O-NEXT:  (local.get $0)
+  ;; CHECK_O-NEXT:  (i32.const 0)
   ;; CHECK_O-NEXT: )
   (func $infinite-work (param $x i32) (result i32)
     ;; Some work with no side effects aside from that it appears to potentially
