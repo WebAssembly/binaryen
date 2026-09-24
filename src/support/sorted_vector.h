@@ -132,9 +132,11 @@ template<typename T = Index> struct SortedVector : public std::vector<T> {
     return *this;
   }
 
-  // Intersect this vector in place with |other|, keeping only elements present
-  // in both for which |keep(selfElem, otherElem)| returns true.
-  template<typename F> void intersect(const SortedVector& other, F keep) {
+  // Intersect this vector in place with |other|, and filtering so elements
+  // present in both are only kept when |keep(selfElem, otherElem)| returns
+  // true (this can be useful when the items contain more than they key being
+  // sorted on).
+  template<typename F> void intersectAndFilter(const SortedVector& other, F keep) {
     size_t write = 0;
     size_t i = 0, j = 0;
     while (i < size() && j < other.size()) {

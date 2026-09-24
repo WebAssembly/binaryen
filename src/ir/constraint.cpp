@@ -1202,7 +1202,7 @@ bool BasicBlockConstraintMap::approximateOr(
   // dropped.
   bool changed = false;
   auto oldSize = map.size();
-  map.intersect(other.map, [&](auto& self, const auto& other) {
+  map.intersectAndFilter(other.map, [&](auto& self, const auto& other) {
     changed |= self.value.approximateOr(other.value);
     assert(!self.value.provesEverything());
     return !self.value.provesNothing();

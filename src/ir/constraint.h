@@ -376,6 +376,7 @@ struct BasicBlockConstraintMap {
                                   const BasicBlockConstraintMap& map);
 
 private:
+  // Wrap a combination of an index and a value, and sort using only the index.
   template<typename T> struct Indexed {
     Index index;
     T value;
