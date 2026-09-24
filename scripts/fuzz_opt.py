@@ -1863,10 +1863,7 @@ class ClusterFuzz(TestCaseHandler):
         if output != IGNORE and INSTANTIATE_ERROR not in output:
             # Do the work to find if there were function exports: extract the
             # wasm from the JS, and process it.
-            run([sys.executable,
-                 in_binaryen('scripts', 'clusterfuzz', 'extract_wasms.py'),
-                 fuzz_file,
-                 'extracted'])
+            run([in_bin('wasm-embed'), '--extract', fuzz_file, 'extracted'])
             if get_exports('extracted.0.wasm', ['func']):
                 assert FUZZ_EXEC_EXPORT_PREFIX in output
 

@@ -69,6 +69,7 @@
 #include <algorithm>
 
 #include "cfg/cfg-traversal.h"
+#include "cfg/rpo.h"
 #include "ir/constraint.h"
 #include "ir/drop.h"
 #include "ir/eh-utils.h"
@@ -96,6 +97,10 @@ namespace {
 
 // Information in a basic block.
 struct Info {
+  // For RPOQueue
+  bool inQueue;
+  Index index;
+
   // All relevant operations: local gets and sets and uses of them.
   std::vector<Expression**> actions;
 
@@ -136,31 +141,18 @@ struct ConstraintAnalysis
   // state in the function.
   bool ignoreBranchesOutsideOfFunc = true;
 
-  // A relevant local is one that is used as part of an expression that we can
-  // optimize (often, many locals are irrelevant).
+  // A relevant local is one that we care about optimizing.
   std::vector<bool> relevantLocals;
-  // Track local copies too, as if one local is relevant, it can make another
-  // relevant. We store pairs here of key=target, value=sources, which is the
-  // direction we will flow in the analysis: if we check x == 10, making it
-  // relevant, and x = y earlier, then we must track that source, y, so that we
-  // know what it writes to x.
-  std::unordered_map<Index, std::vector<Index>> localCopySources;
-
-  void maybeMarkRelevant(Expression* curr) {
-    // If this parses into a constraint on a local, that local is relevant.
-    for (auto& pair : ParsedAndedConstraints::parseCondition(curr)) {
-      if (isRelevantType(getFunction()->getLocalType(pair.local))) {
-        relevantLocals[pair.local] = true;
-        if (auto* other = std::get_if<Index>(&pair.constraint.term)) {
-          relevantLocals[*other] = true;
-        }
-      }
-    }
-  }
 
   bool fastMath;
 
   bool isRelevantType(Type type) {
+    if (type == Type::v128) {
+      // TODO optimize SIMD where it makes sense, but for now we don't want to
+      // do things like propagate v128 constants, which are large.
+      return false;
+    }
+
     // Floating-point math does not follow the basic rules of logic (for
     // example, NaN < NaN and NaN >= NaN are both false, despite the law of the
     // excluded middle). Constraints follow the rules of logic, so we cannot
@@ -174,73 +166,39 @@ struct ConstraintAnalysis
   void doWalkFunction(Function* func) {
     fastMath = getPassOptions().fastMath;
 
+    // Mark the relevant locals.
     relevantLocals.assign(func->getNumLocals(), false);
+    for (Index i = 0; i < func->getNumLocals(); ++i) {
+      relevantLocals[i] = isRelevantType(func->getLocalType(i));
+    }
 
     Super::doWalkFunction(func);
   }
-
-#ifndef NDEBUG
-  // We use these in asserts, see below.
-  std::unordered_set<Expression*> originalActions;
-#endif
 
   // Store the actions we care about.
   void addAction() {
     if (currBasicBlock) {
       auto* currp = getCurrentPointer();
       currBasicBlock->contents.actions.push_back(currp);
-#ifndef NDEBUG
-      originalActions.insert(*currp);
-#endif
+    }
+  }
+
+  void visitLocalGet(LocalGet* curr) {
+    if (isRelevantType(curr->type)) {
+      addAction();
     }
   }
 
   void visitLocalSet(LocalSet* curr) {
-    addAction();
-
-    auto* value = curr->value;
-    while (true) {
-      if (auto* get = value->dynCast<LocalGet>()) {
-        localCopySources[curr->index].push_back(get->index);
-        // No children to look into.
-        break;
-      }
-
-      if (auto* tee = value->dynCast<LocalSet>()) {
-        localCopySources[curr->index].push_back(tee->index);
-        value = tee->value;
-        continue;
-      }
-
-      // Look for other possible tees and gets that fall through.
-      auto* next = Properties::getImmediateFallthrough(
-        value, getPassOptions(), *getModule());
-      if (next == value) {
-        break;
-      }
-      value = next;
+    if (isRelevantType(getFunction()->getLocalType(curr->index))) {
+      addAction();
     }
   }
 
-  void visitUnary(Unary* curr) {
-    addAction();
-    maybeMarkRelevant(curr);
-  }
-
-  void visitBinary(Binary* curr) {
-    addAction();
-    maybeMarkRelevant(curr);
-  }
-
-  void visitRefEq(RefEq* curr) {
-    addAction();
-    maybeMarkRelevant(curr);
-  }
-
-  void visitRefIsNull(RefIsNull* curr) {
-    addAction();
-    maybeMarkRelevant(curr);
-  }
+  void visitUnary(Unary* curr) { addAction(); }
+  void visitBinary(Binary* curr) { addAction(); }
+  void visitRefEq(RefEq* curr) { addAction(); }
+  void visitRefIsNull(RefIsNull* curr) { addAction(); }
 
   static void doStartIfTrue(ConstraintAnalysis* self, Expression** currp) {
     // We are right after the condition, so we are in the block before the If's
@@ -248,22 +206,12 @@ struct ConstraintAnalysis
     if (self->currBasicBlock) {
       self->currBasicBlock->contents.brancher = *currp;
     }
-    if (auto* iff = (*currp)->dynCast<If>()) {
-      self->maybeMarkRelevant(iff->condition);
-    }
     Super::doStartIfTrue(self, currp);
   }
 
   static void doEndBranch(ConstraintAnalysis* self, Expression** currp) {
     if (self->currBasicBlock) {
       self->currBasicBlock->contents.brancher = *currp;
-    }
-    if (auto* br = (*currp)->dynCast<Break>()) {
-      if (br->condition) {
-        self->maybeMarkRelevant(br->condition);
-      }
-    } else if (auto* brOn = (*currp)->dynCast<BrOn>()) {
-      self->maybeMarkRelevant(brOn->ref);
     }
     Super::doEndBranch(self, currp);
   }
@@ -274,35 +222,8 @@ struct ConstraintAnalysis
       return;
     }
 
-    computeRelevantLocals();
     flow();
     optimize();
-  }
-
-  // Every relevant local makes the things it is copied to relevant as well.
-  void computeRelevantLocals() {
-    // We'll start from all relevant locals, and flow from there.
-    UniqueDeferredQueue<Index> work;
-    for (Index i = 0; i < relevantLocals.size(); i++) {
-      if (relevantLocals[i]) {
-        work.push(i);
-      }
-    }
-
-    // Flow.
-    while (!work.empty()) {
-      auto curr = work.pop();
-      assert(relevantLocals[curr]);
-      if (auto iter = localCopySources.find(curr);
-          iter != localCopySources.end()) {
-        for (auto source : iter->second) {
-          if (!relevantLocals[source]) {
-            relevantLocals[source] = true;
-            work.push(source);
-          }
-        }
-      }
-    }
   }
 
   // Flow infos around until we have inferred all we can about the constraints
@@ -337,7 +258,7 @@ struct ConstraintAnalysis
     }
 
     // Starting from the entry, keep going while we find something new.
-    UniqueDeferredQueue<BasicBlock*> work;
+    RPOQueue<ConstraintAnalysis> work(*this);
     work.push(entry);
 
     while (!work.empty()) {
@@ -405,10 +326,36 @@ struct ConstraintAnalysis
     }
   }
 
+  // If we change types, we must refinalize.
+  bool refinalize = false;
+
   // After inferring all we can, apply it to optimize the code.
   void optimize() {
-    // If we make things unreachable, we must refinalize.
-    bool refinalize = false;
+
+    // If we find local.gets that we can optimize, we queue those changes here.
+    // This order is useful for the following reason:
+    //
+    //   (i32.eqz
+    //     (local.get $x)
+    //   )
+    //
+    // If we can infer that x is 42, and we do that first, then we end up with
+    // eqz of 42. That is something Precompute can handle, but not us - this
+    // pass only looks at constraints on locals. We do not lose any optimization
+    // power by leaving this to Precompute, but it is less efficient and may
+    // require more cycles; it is also less convenient for testing, as we must
+    // avoid inferrable local.gets in order to fully test constraint
+    // optimization.
+    //
+    // Instead, we queue local.get changes to happen later, after the eqz in the
+    // example above. That is, the eqz gets a chance to get optimized, and if it
+    // does, the queued local.get change ends up unnoticable (it changes a thing
+    // not in the IR; a slight waste of work, but less wasteful than waiting for
+    // Precompute).
+    //
+    // This queue of changes contains tuples of currp (the pointer to the
+    // local.get) and the value to replace it with.
+    std::vector<std::pair<Expression**, Expression*>> getOptimizations;
 
     for (auto& block : basicBlocks) {
       // Follow the general shape of flow(): we need to see what the state is
@@ -421,7 +368,11 @@ struct ConstraintAnalysis
 #endif
         if (!constraints.unreachable) {
           applyToConstraints(*currp, constraints);
-          optimizeExpression(currp, constraints);
+          if (auto* rep = optimizeLocalGet(currp, constraints)) {
+            getOptimizations.emplace_back(currp, rep);
+          } else {
+            optimizeConstraint(currp, constraints);
+          }
         } else {
           // This is unreachable code: just mark it so.
           *currp = getDroppedChildrenAndAppend(
@@ -434,16 +385,59 @@ struct ConstraintAnalysis
       }
     }
 
+    // Apply local.get optimizations after all that.
+    for (auto& [currp, rep] : getOptimizations) {
+      *currp = rep;
+    }
+
     if (refinalize) {
       ReFinalize().walkFunctionInModule(getFunction(), getModule());
       EHUtils::handleBlockNestedPops(getFunction(), *getModule());
     }
   }
 
-  // Given an expression and the constraints on it, optimize it.
-  void optimizeExpression(Expression** currp,
+  // Given an expression and the constraints on it, see if it is a local.get
+  // that we can optimize, and return the value to optimize to, if so.
+  Expression* optimizeLocalGet(Expression** currp,
+                               const BasicBlockConstraintMap& constraints) {
+    // A bare local.get can be optimized, if we know that local is a constant.
+    if (auto* get = (*currp)->dynCast<LocalGet>()) {
+      if (auto lit = constraints.get(get->index).getLiteral()) {
+        // Among references, only propagate nulls. Other things, like strings,
+        // may increase size, so we leave them for passes like Precompute and
+        // GUFA.
+        if (lit->type.isRef() && !lit->isNull()) {
+          return nullptr;
+        }
+
+        Builder builder(*getModule());
+        auto* rep = builder.makeConstantExpression(*lit);
+
+        // See if the type changes.
+        auto oldType = get->type;
+        if (!Type::isSubType(rep->type, oldType)) {
+          // The value we know must exist here is impossible, which means it was
+          // cast in a way that traps at runtime. This code is unreachable.
+          rep = builder.makeUnreachable();
+          refinalize = true;
+        } else if (rep->type != oldType) {
+          // We are refining.
+          refinalize = true;
+        }
+
+        return rep;
+      }
+    }
+
+    return nullptr;
+  }
+
+  // Given an expression and the constraints on it, parse it into a constraint
+  // if we can, and optimize it.
+  void optimizeConstraint(Expression** currp,
                           const BasicBlockConstraintMap& constraints) {
     auto* curr = *currp;
+
     // Note that we don't need to try to parse a series of constraints with
     // ParsedAndedConstraints: if there is a tree of ANDed things, we will
     // simply optimize it as we walk it, each time handling one.
@@ -451,13 +445,7 @@ struct ConstraintAnalysis
     if (!parsed) {
       return;
     }
-    if (!checkRelevancy(*parsed)) {
-#ifndef NDEBUG
-      // If this is not relevant, then it must be one of the original actions we
-      // care about, i.e., not the result of optimizations. See the comment
-      // below on checkRelevancy.
-      assert(originalActions.contains(curr));
-#endif
+    if (!relevantLocals[parsed->local]) {
       return;
     }
 
@@ -642,39 +630,12 @@ struct ConstraintAnalysis
     }
   }
 
-  // When we are about to use or apply a constraint to a local, it must be on a
-  // relevant one - otherwise we misidentified which are relevant, which could
-  // lead to missed opportunities or misoptimizations. This returns true if we
-  // are operating on proper, relevant data. Normally this is all that can
-  // happen, but intermediate optimizations can make things become relevant,
-  // consider this:
-  //
-  //  x == (y < 10)
-  //
-  // The outer == is initially not relevant: we are comparing x to something we
-  // can't parse into a constraint's term. However, if we get lucky and optimize
-  // y < 10 into a constant, then it does become parseable, but because we did
-  // not consider x as relevant (and so we do not have all the relevant
-  // information about it), we must return false here and not operate on it
-  // (later optimization cycles can get to it).
-  bool checkRelevancy(const LocalConstraint& parsed) {
-    if (!relevantLocals[parsed.local]) {
-      return false;
-    }
-    if (auto* other = std::get_if<Index>(&parsed.constraint.term)) {
-      if (!relevantLocals[*other]) {
-        return false;
-      }
-    }
-    return true;
-  }
-
   // Filters out constraints on irrelevant locals.
   void filterRelevant(ParsedAndedConstraints& parsed) {
     parsed.erase(std::remove_if(parsed.begin(),
                                 parsed.end(),
                                 [&](const LocalConstraint& pair) {
-                                  return !checkRelevancy(pair);
+                                  return !relevantLocals[pair.local];
                                 }),
                  parsed.end());
   }

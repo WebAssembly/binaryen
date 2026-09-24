@@ -13,8 +13,8 @@
   ;; OPTIN:      (type $array (array (mut i32)))
   (type $array (array (mut i32)))
 
-  ;; CHECK:      (import "a" "b" (func $import (type $4) (result i32)))
-  ;; OPTIN:      (import "a" "b" (func $import (type $4) (result i32)))
+  ;; CHECK:      (import "a" "b" (func $import (type $7) (result i32)))
+  ;; OPTIN:      (import "a" "b" (func $import (type $7) (result i32)))
   (import "a" "b" (func $import (result i32)))
 
   ;; CHECK:      (func $simple (type $1)
@@ -1131,10 +1131,16 @@
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:     (then
   ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (unreachable)
+  ;; CHECK-NEXT:       (block
+  ;; CHECK-NEXT:        (unreachable)
+  ;; CHECK-NEXT:        (unreachable)
+  ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (unreachable)
+  ;; CHECK-NEXT:       (block
+  ;; CHECK-NEXT:        (unreachable)
+  ;; CHECK-NEXT:        (unreachable)
+  ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
@@ -1158,10 +1164,16 @@
   ;; OPTIN-NEXT:     (i32.const 0)
   ;; OPTIN-NEXT:     (then
   ;; OPTIN-NEXT:      (drop
-  ;; OPTIN-NEXT:       (unreachable)
+  ;; OPTIN-NEXT:       (block
+  ;; OPTIN-NEXT:        (unreachable)
+  ;; OPTIN-NEXT:        (unreachable)
+  ;; OPTIN-NEXT:       )
   ;; OPTIN-NEXT:      )
   ;; OPTIN-NEXT:      (drop
-  ;; OPTIN-NEXT:       (unreachable)
+  ;; OPTIN-NEXT:       (block
+  ;; OPTIN-NEXT:        (unreachable)
+  ;; OPTIN-NEXT:        (unreachable)
+  ;; OPTIN-NEXT:       )
   ;; OPTIN-NEXT:      )
   ;; OPTIN-NEXT:     )
   ;; OPTIN-NEXT:    )
@@ -1239,7 +1251,10 @@
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (else
   ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (unreachable)
+  ;; CHECK-NEXT:       (block
+  ;; CHECK-NEXT:        (unreachable)
+  ;; CHECK-NEXT:        (unreachable)
+  ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
@@ -1391,7 +1406,7 @@
   ;; CHECK:      (func $conditional-binary-contradiction-other-default (type $1)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (if
-  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (then
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (unreachable)
@@ -1402,7 +1417,7 @@
   ;; OPTIN:      (func $conditional-binary-contradiction-other-default (type $1)
   ;; OPTIN-NEXT:  (local $x i32)
   ;; OPTIN-NEXT:  (if
-  ;; OPTIN-NEXT:   (local.get $x)
+  ;; OPTIN-NEXT:   (i32.const 0)
   ;; OPTIN-NEXT:   (then
   ;; OPTIN-NEXT:    (drop
   ;; OPTIN-NEXT:     (i32.const 30)
@@ -1415,7 +1430,7 @@
     ;; As above, but now with a single if. The contradiction tested is
     ;; between the default value and the if condition.
     (if
-      (local.get $x)
+      (local.get $x) ;; this is 0, hence the if is not taken
       (then
         (drop
           ;; This is unreachable.
@@ -1490,7 +1505,11 @@
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (then
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:     (block
+  ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -1505,7 +1524,11 @@
   ;; OPTIN-NEXT:   (i32.const 0)
   ;; OPTIN-NEXT:   (then
   ;; OPTIN-NEXT:    (drop
-  ;; OPTIN-NEXT:     (unreachable)
+  ;; OPTIN-NEXT:     (block
+  ;; OPTIN-NEXT:      (unreachable)
+  ;; OPTIN-NEXT:      (unreachable)
+  ;; OPTIN-NEXT:      (unreachable)
+  ;; OPTIN-NEXT:     )
   ;; OPTIN-NEXT:    )
   ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
@@ -1735,7 +1758,7 @@
     )
   )
 
-  ;; CHECK:      (func $br_on_null (type $6) (param $param anyref)
+  ;; CHECK:      (func $br_on_null (type $4) (param $param anyref)
   ;; CHECK-NEXT:  (block $block
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (ref.is_null
@@ -1756,7 +1779,7 @@
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; OPTIN:      (func $br_on_null (type $6) (param $param anyref)
+  ;; OPTIN:      (func $br_on_null (type $4) (param $param anyref)
   ;; OPTIN-NEXT:  (block $block
   ;; OPTIN-NEXT:   (drop
   ;; OPTIN-NEXT:    (ref.is_null
@@ -1806,7 +1829,7 @@
     )
   )
 
-  ;; CHECK:      (func $br_on_non_null (type $6) (param $param anyref)
+  ;; CHECK:      (func $br_on_non_null (type $4) (param $param anyref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block $block (result (ref any))
   ;; CHECK-NEXT:    (drop
@@ -1827,7 +1850,7 @@
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; OPTIN:      (func $br_on_non_null (type $6) (param $param anyref)
+  ;; OPTIN:      (func $br_on_non_null (type $4) (param $param anyref)
   ;; OPTIN-NEXT:  (drop
   ;; OPTIN-NEXT:   (block $block (result (ref any))
   ;; OPTIN-NEXT:    (drop
@@ -2853,7 +2876,7 @@
     )
   )
 
-  ;; CHECK:      (func $local-changes-if (type $7) (param $x i32) (param $y i32) (param $z i32) (param $w i32)
+  ;; CHECK:      (func $local-changes-if (type $8) (param $x i32) (param $y i32) (param $z i32) (param $w i32)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.eq
   ;; CHECK-NEXT:    (local.get $x)
@@ -2910,7 +2933,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; OPTIN:      (func $local-changes-if (type $7) (param $x i32) (param $y i32) (param $z i32) (param $w i32)
+  ;; OPTIN:      (func $local-changes-if (type $8) (param $x i32) (param $y i32) (param $z i32) (param $w i32)
   ;; OPTIN-NEXT:  (if
   ;; OPTIN-NEXT:   (i32.eq
   ;; OPTIN-NEXT:    (local.get $x)
@@ -3236,7 +3259,7 @@
   ;; CHECK-NEXT:   (i32.const 10)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.set $y
-  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (i32.const 10)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.const 1)
@@ -3252,7 +3275,7 @@
   ;; OPTIN-NEXT:   (i32.const 10)
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (local.set $y
-  ;; OPTIN-NEXT:   (local.get $x)
+  ;; OPTIN-NEXT:   (i32.const 10)
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (drop
   ;; OPTIN-NEXT:   (i32.const 1)
@@ -3300,7 +3323,7 @@
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.set $y
-  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i32.const 42)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (i32.const 1)
@@ -3365,7 +3388,7 @@
             (i32.const 42)
           )
         )
-        ;; Copy x into y, and see that it is now equal to 42.
+        ;; Copy x (which is 42) into y, and see that it is now equal to 42.
         (local.set $y
           (local.get $x)
         )
@@ -3418,7 +3441,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.eq
-  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 42)
   ;; CHECK-NEXT:    (local.get $y)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (then
@@ -3437,7 +3460,7 @@
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (if
   ;; OPTIN-NEXT:   (i32.eq
-  ;; OPTIN-NEXT:    (local.get $x)
+  ;; OPTIN-NEXT:    (i32.const 42)
   ;; OPTIN-NEXT:    (local.get $y)
   ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:   (then
@@ -3458,7 +3481,7 @@
     )
     (if
       (i32.eq
-        (local.get $x)
+        (local.get $x) ;; this is 42
         (local.get $y)
       )
       (then
@@ -3487,7 +3510,7 @@
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.eq
   ;; CHECK-NEXT:    (local.get $y)
-  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 42)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (then
   ;; CHECK-NEXT:    (drop
@@ -3505,7 +3528,7 @@
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (if
   ;; OPTIN-NEXT:   (i32.eq
-  ;; OPTIN-NEXT:    (local.get $x)
+  ;; OPTIN-NEXT:    (i32.const 42)
   ;; OPTIN-NEXT:    (local.get $y)
   ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:   (then
@@ -3546,7 +3569,7 @@
     )
   )
 
-  ;; CHECK:      (func $simple-array-sum (type $8) (param $param (ref $array)) (result i32)
+  ;; CHECK:      (func $simple-array-sum (type $9) (param $param (ref $array)) (result i32)
   ;; CHECK-NEXT:  (local $index i32)
   ;; CHECK-NEXT:  (local $sum i32)
   ;; CHECK-NEXT:  (local $len i32)
@@ -3591,7 +3614,7 @@
   ;; CHECK-NEXT:   (br $loop)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; OPTIN:      (func $simple-array-sum (type $8) (param $param (ref $array)) (result i32)
+  ;; OPTIN:      (func $simple-array-sum (type $9) (param $param (ref $array)) (result i32)
   ;; OPTIN-NEXT:  (local $index i32)
   ;; OPTIN-NEXT:  (local $sum i32)
   ;; OPTIN-NEXT:  (local $len i32)
@@ -3766,7 +3789,7 @@
     )
   )
 
-  ;; CHECK:      (func $iloop (type $9) (param $0 f32)
+  ;; CHECK:      (func $iloop (type $10) (param $0 f32)
   ;; CHECK-NEXT:  (local $1 f32)
   ;; CHECK-NEXT:  (local.set $0
   ;; CHECK-NEXT:   (local.get $1)
@@ -3791,7 +3814,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; OPTIN:      (func $iloop (type $9) (param $0 f32)
+  ;; OPTIN:      (func $iloop (type $10) (param $0 f32)
   ;; OPTIN-NEXT:  (local $1 f32)
   ;; OPTIN-NEXT:  (local.set $0
   ;; OPTIN-NEXT:   (local.get $1)
@@ -3854,10 +3877,7 @@
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (local $e eqref)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.lt_u
-  ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:    (i32.const 1)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; OPTIN:      (func $nested-binaries (type $1)
@@ -3866,17 +3886,16 @@
   ;; OPTIN-NEXT:  (drop
   ;; OPTIN-NEXT:   (i32.gt_u
   ;; OPTIN-NEXT:    (i32.const 1)
-  ;; OPTIN-NEXT:    (local.get $x)
+  ;; OPTIN-NEXT:    (i32.const 0)
   ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT: )
   (func $nested-binaries
     (local $x i32)
     (local $e eqref)
-    ;; Nested binaries. The outer one is initially not relevant - we cannot
-    ;; parse the right hand side - but after optimization it simplifies. We
-    ;; should not assert here, and only optimize the inner one, leaving the
-    ;; outer for later.
+    ;; Nested binaries of different types. We can apply the local.gets and then
+    ;; optimize the ref.eq to 1 and the lt_u to 1 as well. (This does not fully
+    ;; work out in OPTIN due to reordering, but Precompute would handle it.)
     (drop
       (i32.lt_u
         (local.get $x)
@@ -3892,7 +3911,7 @@
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (local $y i32)
   ;; CHECK-NEXT:  (local.set $y
-  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.const 1)
@@ -3902,7 +3921,7 @@
   ;; OPTIN-NEXT:  (local $x i32)
   ;; OPTIN-NEXT:  (local $y i32)
   ;; OPTIN-NEXT:  (local.set $y
-  ;; OPTIN-NEXT:   (local.get $x)
+  ;; OPTIN-NEXT:   (i32.const 0)
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (drop
   ;; OPTIN-NEXT:   (i32.const 1)
@@ -3911,8 +3930,7 @@
   (func $relevant-copy
     (local $x i32)
     (local $y i32)
-    ;; x is not relevant, but it is copied to y, which is, so we must track x as
-    ;; relevant too.
+    ;; x has no sets or uses but for a copy to $y, but we still optimize here.
     (local.set $y
       (local.get $x)
     )
@@ -4461,11 +4479,13 @@
     )
   )
 
-  ;; CHECK:      (func $flipped-contradiction (type $4) (result i32)
-  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK:      (func $flipped-contradiction (type $6) (param $x i32) (result i32)
   ;; CHECK-NEXT:  (loop $loop
   ;; CHECK-NEXT:   (br_if $loop
-  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:    (i32.lt_u
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (br_if $loop
   ;; CHECK-NEXT:    (local.get $x)
@@ -4473,11 +4493,12 @@
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; OPTIN:      (func $flipped-contradiction (type $4) (result i32)
-  ;; OPTIN-NEXT:  (local $x i32)
+  ;; OPTIN:      (func $flipped-contradiction (type $6) (param $x i32) (result i32)
   ;; OPTIN-NEXT:  (loop $loop
   ;; OPTIN-NEXT:   (br_if $loop
-  ;; OPTIN-NEXT:    (i32.const 1)
+  ;; OPTIN-NEXT:    (i32.eqz
+  ;; OPTIN-NEXT:     (local.get $x)
+  ;; OPTIN-NEXT:    )
   ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:   (br_if $loop
   ;; OPTIN-NEXT:    (local.get $x)
@@ -4485,8 +4506,7 @@
   ;; OPTIN-NEXT:   (unreachable)
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT: )
-  (func $flipped-contradiction (result i32)
-    (local $x i32)
+  (func $flipped-contradiction (param $x i32) (result i32)
     (loop $loop (result i32)
       ;; If we do not branch, we add the constraint x >= 1.
       (br_if $loop
@@ -4507,11 +4527,13 @@
     )
   )
 
-  ;; CHECK:      (func $flipped-contradiction-no (type $4) (result i32)
-  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK:      (func $flipped-contradiction-no (type $6) (param $x i32) (result i32)
   ;; CHECK-NEXT:  (loop $loop (result i32)
   ;; CHECK-NEXT:   (br_if $loop
-  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (i32.gt_u
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (br_if $loop
   ;; CHECK-NEXT:    (local.get $x)
@@ -4521,11 +4543,13 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; OPTIN:      (func $flipped-contradiction-no (type $4) (result i32)
-  ;; OPTIN-NEXT:  (local $x i32)
+  ;; OPTIN:      (func $flipped-contradiction-no (type $6) (param $x i32) (result i32)
   ;; OPTIN-NEXT:  (loop $loop (result i32)
   ;; OPTIN-NEXT:   (br_if $loop
-  ;; OPTIN-NEXT:    (i32.const 0)
+  ;; OPTIN-NEXT:    (i32.gt_u
+  ;; OPTIN-NEXT:     (local.get $x)
+  ;; OPTIN-NEXT:     (i32.const 1)
+  ;; OPTIN-NEXT:    )
   ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:   (br_if $loop
   ;; OPTIN-NEXT:    (local.get $x)
@@ -4535,10 +4559,9 @@
   ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT: )
-  (func $flipped-contradiction-no (result i32)
+  (func $flipped-contradiction-no (param $x i32) (result i32)
     ;; As above, but with lt replaced by gt. Now the constraints are x <= 1 and
     ;; x == 0, which do not contradict, and nothing becomes unreachable.
-    (local $x i32)
     (loop $loop (result i32)
       (br_if $loop
         (i32.gt_u
@@ -4655,7 +4678,7 @@
   ;; CHECK-NEXT:  (local $w i32)
   ;; CHECK-NEXT:  (local.set $x
   ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (local.get $z)
+  ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.set $z
@@ -4663,7 +4686,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.set $w
   ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (local.get $z)
+  ;; CHECK-NEXT:    (i32.const 42)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -4676,7 +4699,7 @@
   ;; OPTIN-NEXT:  (local $w i32)
   ;; OPTIN-NEXT:  (local.set $x
   ;; OPTIN-NEXT:   (block (result i32)
-  ;; OPTIN-NEXT:    (local.get $z)
+  ;; OPTIN-NEXT:    (i32.const 0)
   ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (local.set $z
@@ -4684,7 +4707,7 @@
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (local.set $w
   ;; OPTIN-NEXT:   (block (result i32)
-  ;; OPTIN-NEXT:    (local.get $z)
+  ;; OPTIN-NEXT:    (i32.const 42)
   ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (drop
@@ -4731,7 +4754,7 @@
   ;; CHECK-NEXT:  (local $w i32)
   ;; CHECK-NEXT:  (local.set $x
   ;; CHECK-NEXT:   (local.tee $param
-  ;; CHECK-NEXT:    (local.get $z)
+  ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.set $z
@@ -4739,7 +4762,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.set $w
   ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (local.get $z)
+  ;; CHECK-NEXT:    (i32.const 42)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -4752,7 +4775,7 @@
   ;; OPTIN-NEXT:  (local $w i32)
   ;; OPTIN-NEXT:  (local.set $x
   ;; OPTIN-NEXT:   (local.tee $param
-  ;; OPTIN-NEXT:    (local.get $z)
+  ;; OPTIN-NEXT:    (i32.const 0)
   ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (local.set $z
@@ -4760,7 +4783,7 @@
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (local.set $w
   ;; OPTIN-NEXT:   (block (result i32)
-  ;; OPTIN-NEXT:    (local.get $z)
+  ;; OPTIN-NEXT:    (i32.const 42)
   ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
   ;; OPTIN-NEXT:  (drop
@@ -4838,7 +4861,7 @@
     )
   )
 
-  ;; CHECK:      (func $eqz-condition-64 (type $10) (param $x i64)
+  ;; CHECK:      (func $eqz-condition-64 (type $11) (param $x i64)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i64.eqz
   ;; CHECK-NEXT:    (local.get $x)
@@ -4850,7 +4873,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; OPTIN:      (func $eqz-condition-64 (type $10) (param $x i64)
+  ;; OPTIN:      (func $eqz-condition-64 (type $11) (param $x i64)
   ;; OPTIN-NEXT:  (if
   ;; OPTIN-NEXT:   (i64.eqz
   ;; OPTIN-NEXT:    (local.get $x)
@@ -5566,7 +5589,7 @@
     )
   )
 
-  ;; CHECK:      (func $several (type $11) (param $a i32) (param $b i32) (param $c i32) (param $d i32) (param $e i32)
+  ;; CHECK:      (func $several (type $12) (param $a i32) (param $b i32) (param $c i32) (param $d i32) (param $e i32)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.and
   ;; CHECK-NEXT:    (i32.and
@@ -5616,7 +5639,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; OPTIN:      (func $several (type $11) (param $a i32) (param $b i32) (param $c i32) (param $d i32) (param $e i32)
+  ;; OPTIN:      (func $several (type $12) (param $a i32) (param $b i32) (param $c i32) (param $d i32) (param $e i32)
   ;; OPTIN-NEXT:  (if
   ;; OPTIN-NEXT:   (i32.and
   ;; OPTIN-NEXT:    (i32.and
@@ -5758,7 +5781,10 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (then
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:     (block
+  ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -5782,7 +5808,10 @@
   ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:   (then
   ;; OPTIN-NEXT:    (drop
-  ;; OPTIN-NEXT:     (unreachable)
+  ;; OPTIN-NEXT:     (block
+  ;; OPTIN-NEXT:      (unreachable)
+  ;; OPTIN-NEXT:      (unreachable)
+  ;; OPTIN-NEXT:     )
   ;; OPTIN-NEXT:    )
   ;; OPTIN-NEXT:   )
   ;; OPTIN-NEXT:  )
@@ -6875,5 +6904,301 @@
       )
     )
   )
-)
 
+  ;; CHECK:      (func $eqz-ref-is-null (type $4) (param $x anyref)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (ref.is_null
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (else
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPTIN:      (func $eqz-ref-is-null (type $4) (param $x anyref)
+  ;; OPTIN-NEXT:  (drop
+  ;; OPTIN-NEXT:   (ref.is_null
+  ;; OPTIN-NEXT:    (local.get $x)
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT: )
+  (func $eqz-ref-is-null (param $x anyref)
+    (if
+      (i32.eqz
+        (ref.is_null
+          (local.get $x)
+        )
+      )
+      (then
+        ;; $x is not null here, so ref.is_null($x) is false (0).
+        (drop
+          (ref.is_null
+            (local.get $x)
+          )
+        )
+      )
+      (else
+        ;; $x is null here, so ref.is_null($x) is true (1).
+        (drop
+          (ref.is_null
+            (local.get $x)
+          )
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $local.get (type $0) (param $x i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (else
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPTIN:      (func $local.get (type $0) (param $x i32)
+  ;; OPTIN-NEXT:  (drop
+  ;; OPTIN-NEXT:   (local.get $x)
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT: )
+  (func $local.get (param $x i32)
+    (if
+      (local.get $x)
+      (then
+        (drop
+          ;; This is non-zero, but we can't optimze.
+          (local.get $x)
+        )
+      )
+      (else
+        (drop
+          ;; This is zero.
+          (local.get $x)
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $local.get.refinalize (type $1)
+  ;; CHECK-NEXT:  (local $x anyref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result nullref)
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPTIN:      (func $local.get.refinalize (type $1)
+  ;; OPTIN-NEXT:  (local $x anyref)
+  ;; OPTIN-NEXT:  (drop
+  ;; OPTIN-NEXT:   (block (result nullref)
+  ;; OPTIN-NEXT:    (ref.null none)
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT: )
+  (func $local.get.refinalize
+    (local $x anyref)
+    ;; The local.get below is null. After we apply a null there, we refinalize
+    ;; the block's type to nullref.
+    (drop
+      (block (result anyref)
+        (local.get $x)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $local.get.impossible.cast (type $13) (result (ref func))
+  ;; CHECK-NEXT:  (local $x (ref func))
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (ref.cast (ref nofunc)
+  ;; CHECK-NEXT:    (ref.null nofunc)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  ;; OPTIN:      (func $local.get.impossible.cast (type $13) (result (ref func))
+  ;; OPTIN-NEXT:  (local $x (ref func))
+  ;; OPTIN-NEXT:  (local.set $x
+  ;; OPTIN-NEXT:   (unreachable)
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (local.get $x)
+  ;; OPTIN-NEXT: )
+  (func $local.get.impossible.cast (result (ref func))
+    (local $x (ref func))
+    ;; The cast here traps at runtime. We do not have a valid value to put in
+    ;; place of the local.get (it is not refined enough), but we know it is
+    ;; unreachable. (In OPTIN, we figure out the set's value is unreachable even
+    ;; earlier.)
+    (local.set $x
+      (ref.cast (ref func)
+        (ref.null func)
+      )
+    )
+    (local.get $x)
+  )
+
+  ;; CHECK:      (func $local.get.no.v128 (type $1)
+  ;; CHECK-NEXT:  (local $x v128)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPTIN:      (func $local.get.no.v128 (type $1)
+  ;; OPTIN-NEXT:  (local $x v128)
+  ;; OPTIN-NEXT:  (drop
+  ;; OPTIN-NEXT:   (local.get $x)
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT: )
+  (func $local.get.no.v128
+    (local $x v128)
+    ;; We know the value here, but do not copy v128 constants, which are large.
+    ;; TODO: should we optimize this?
+    (drop
+      (local.get $x)
+    )
+  )
+
+  ;; CHECK:      (func $local.get.unreachable (type $1)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPTIN:      (func $local.get.unreachable (type $1)
+  ;; OPTIN-NEXT:  (local $x i32)
+  ;; OPTIN-NEXT:  (if
+  ;; OPTIN-NEXT:   (i32.const 0)
+  ;; OPTIN-NEXT:   (then
+  ;; OPTIN-NEXT:    (drop
+  ;; OPTIN-NEXT:     (unreachable)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT: )
+  (func $local.get.unreachable
+    (local $x i32)
+    (if
+      (local.get $x)
+      (then
+        ;; $x is 0, so we never get here, and this is unreachable.
+        (drop
+          (local.get $x)
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $local.get.float (type $1)
+  ;; CHECK-NEXT:  (local $x f64)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (f64.eq
+  ;; CHECK-NEXT:    (local.tee $x
+  ;; CHECK-NEXT:     (f64.const nan:0x8000000000000)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (nop)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPTIN:      (func $local.get.float (type $1)
+  ;; OPTIN-NEXT:  (local $x f64)
+  ;; OPTIN-NEXT:  (if
+  ;; OPTIN-NEXT:   (f64.eq
+  ;; OPTIN-NEXT:    (local.tee $x
+  ;; OPTIN-NEXT:     (f64.const nan:0x8000000000000)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:    (local.get $x)
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:   (then
+  ;; OPTIN-NEXT:    (nop)
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT: )
+  (func $local.get.float
+    (local $x f64)
+    ;; The condition here ends up comparing $x to itself. That is normally 1,
+    ;; but not with a nan. We do not optimize floats for this reason (without
+    ;; --fast-math, see constraint-analysis-float.wast).
+    (if
+      (f64.eq
+        (local.tee $x
+          (f64.const nan)
+        )
+        (local.get $x)
+      )
+      (then
+        (nop)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $local.get.internalized-string (type $1)
+  ;; CHECK-NEXT:  (local $x anyref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.null none)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (any.convert_extern
+  ;; CHECK-NEXT:    (string.const "foo")
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPTIN:      (func $local.get.internalized-string (type $1)
+  ;; OPTIN-NEXT:  (local $x anyref)
+  ;; OPTIN-NEXT:  (drop
+  ;; OPTIN-NEXT:   (ref.null none)
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (local.set $x
+  ;; OPTIN-NEXT:   (any.convert_extern
+  ;; OPTIN-NEXT:    (string.const "foo")
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (drop
+  ;; OPTIN-NEXT:   (local.get $x)
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT: )
+  (func $local.get.internalized-string
+    (local $x anyref)
+    ;; A null can be propagated.
+    (drop
+      (local.get $x)
+    )
+    ;; A non-null value, like an internalized string, is not optimized (we could
+    ;; emit an any.convert_extern of a strong.const, but it increases size, so
+    ;; we leave this for passes like Precompute and GUFA).
+    ;; TODO: should we optimize this?
+    (local.set $x
+      (any.convert_extern
+        (string.const "foo")
+      )
+    )
+    (drop
+      (local.get $x)
+    )
+  )
+)

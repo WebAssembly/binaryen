@@ -126,6 +126,11 @@ wasm::Output::Output(const std::string& filename, Flags::BinaryOption binary)
       return buffer;
     }()) {}
 
+void wasm::write_file(const std::string& filename, std::string_view bytes) {
+  wasm::Output out(filename, Flags::Binary);
+  out.write(bytes.data(), bytes.size());
+}
+
 void wasm::copy_file(std::string input, std::string output) {
   std::ifstream src(wasm::Path::to_path(input), std::ios::binary);
   std::ofstream dst(wasm::Path::to_path(output), std::ios::binary);

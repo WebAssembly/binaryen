@@ -23,6 +23,7 @@
 
 #include "cfg-traversal.h"
 #include "ir/utils.h"
+#include "rpo.h"
 #include "support/sorted_vector.h"
 #include "support/sparse_square_matrix.h"
 #include "wasm-builder.h"
@@ -82,6 +83,10 @@ struct LivenessAction {
 
 // information about liveness in a basic block
 struct Liveness {
+  // For POQueue
+  bool inQueue;
+  Index index;
+
   SetOfLocals start, end;              // live locals at the start and end
   std::vector<LivenessAction> actions; // actions occurring in this block
 
@@ -220,12 +225,12 @@ struct LivenessWalker : public CFGWalker<SubType, VisitorType, Liveness> {
 
   void flowLiveness() {
     // keep working while stuff is flowing
-    std::unordered_set<BasicBlock*> queue;
+    POQueue<LivenessWalker<SubType, VisitorType>> queue(*this);
     for (auto& curr : CFGWalker<SubType, VisitorType, Liveness>::basicBlocks) {
       if (!liveBlocks.contains(curr.get())) {
         continue; // ignore dead blocks
       }
-      queue.insert(curr.get());
+      queue.push(curr.get());
       // do the first scan through the block, starting with nothing live at the
       // end, and updating the liveness at the start
       scanLivenessThroughActions(curr->contents.actions, curr->contents.start);
@@ -233,10 +238,8 @@ struct LivenessWalker : public CFGWalker<SubType, VisitorType, Liveness> {
     // at every point in time, we assume we already noted interferences between
     // things already known alive at the end, and scanned back through the block
     // using that
-    while (queue.size() > 0) {
-      auto iter = queue.begin();
-      auto* curr = *iter;
-      queue.erase(iter);
+    while (!queue.empty()) {
+      auto* curr = queue.pop();
       SetOfLocals live;
       if (!mergeStartsAndCheckChange(curr->out, curr->contents.end, live)) {
         continue;
@@ -252,7 +255,7 @@ struct LivenessWalker : public CFGWalker<SubType, VisitorType, Liveness> {
       assert(curr->contents.start.size() < live.size());
       curr->contents.start = live;
       for (auto* in : curr->in) {
-        queue.insert(in);
+        queue.push(in);
       }
     }
   }
