@@ -87,9 +87,19 @@ template<typename T = Index> struct SortedVector : public std::vector<T> {
     return *it;
   }
 
+  template<typename K = T> bool erase(const K& x) {
+    auto it = std::lower_bound(begin(), end(), x);
+    if (it != end() && *it == x) {
+      std::move(it + 1, end(), it);
+      resize(size() - 1);
+      return true;
+    }
+    return false;
+  }
+
   template<typename K = T> T* find(const K& x) {
     auto it = std::lower_bound(begin(), end(), x);
-    if (it != end() && !(x < *it)) {
+    if (it != end() && *it == x) {
       return &*it;
     }
     return nullptr;
@@ -97,20 +107,10 @@ template<typename T = Index> struct SortedVector : public std::vector<T> {
 
   template<typename K = T> const T* find(const K& x) const {
     auto it = std::lower_bound(begin(), end(), x);
-    if (it != end() && !(x < *it)) {
+    if (it != end() && *it == x) {
       return &*it;
     }
     return nullptr;
-  }
-
-  template<typename K = T> bool erase(const K& x) {
-    auto it = std::lower_bound(begin(), end(), x);
-    if (it != end() && !(x < *it)) {
-      std::move(it + 1, end(), it);
-      resize(size() - 1);
-      return true;
-    }
-    return false;
   }
 
   template<typename K = T> bool has(const K& x) const {
