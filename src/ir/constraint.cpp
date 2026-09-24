@@ -1197,9 +1197,9 @@ bool BasicBlockConstraintMap::approximateOr(
     return true;
   }
 
-  // Both maps are sorted by local Index. Intersect/merge in place: any local
-  // missing in |other| (or whose merged constraint set proves nothing) is
-  // dropped.
+  // Both maps are sorted by local Index. Intersect in place: for us to be able
+  // to prove something (for us to have an entry in the ORed map), there must
+  // have been an entry in both original maps.
   bool changed = false;
   auto oldSize = map.size();
   map.intersectAndFilter(other.map, [&](auto& self, const auto& other) {
@@ -1210,6 +1210,10 @@ bool BasicBlockConstraintMap::approximateOr(
   if (map.size() != oldSize) {
     changed = true;
   }
+
+  // We could more precisely find which locals were removed from the map, but
+  // stale refs has low overhead and no correctness cost, so just handle the
+  // common, simple case of nothing remaining, so no refs are needed.
   if (map.empty()) {
     refs.clear();
   }
