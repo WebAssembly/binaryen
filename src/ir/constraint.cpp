@@ -830,31 +830,21 @@ struct LocalOperations {
 std::optional<LocalConstraint>
 localConstraintParseInternal(Expression* curr,
                              LocalOperations& localOperations) {
-  using namespace Match;
-
   auto parseEqZArgument =
     [&](Expression* value) -> std::optional<LocalConstraint> {
+    if (auto parsed = localConstraintParseInternal(value, localOperations)) {
+      return parsed->negate();
+    }
     if (auto localOp = localOperations.parse(value)) {
       // Canonicalize EqZ to Eq of 0.
       auto zero = Literal::makeZero(value->type);
       return LocalConstraint{localOp->index, Constraint{Abstract::Eq, {zero}}};
     }
-    // TODO: Recursively parse and reverse a constraint
     return {};
   };
 
   if (auto* u = curr->dynCast<Unary>()) {
     if (Abstract::getUnary(u->value->type, Abstract::EqZ) == u->op) {
-      // EqZ of EqZ means a check that the value is *not* zero.
-      Expression* nested;
-      if (matches(u->value, unary(Abstract::EqZ, any(&nested)))) {
-        if (auto localOp = localOperations.parse(nested)) {
-          auto value = Literal::makeZero(nested->type);
-          return LocalConstraint{localOp->index,
-                                 Constraint{Abstract::Ne, {value}}};
-        }
-      }
-
       return parseEqZArgument(u->value);
     }
 
