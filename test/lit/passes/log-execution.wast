@@ -15,7 +15,7 @@
 
   ;; CHECK:      (func $nopp
   ;; CHECK-NEXT:  (call $log_execution
-  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (i32.const 2)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
@@ -24,7 +24,7 @@
   )
   ;; CHECK:      (func $intt (result i32)
   ;; CHECK-NEXT:  (call $log_execution
-  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (i32.const 3)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (i32.const 10)
   ;; CHECK-NEXT: )
@@ -33,7 +33,7 @@
   )
   ;; CHECK:      (func $workk
   ;; CHECK-NEXT:  (call $log_execution
-  ;; CHECK-NEXT:   (i32.const 3)
+  ;; CHECK-NEXT:   (i32.const 4)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (block
   ;; CHECK-NEXT:   (if
@@ -44,7 +44,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (block
   ;; CHECK-NEXT:    (call $log_execution
-  ;; CHECK-NEXT:     (i32.const 2)
+  ;; CHECK-NEXT:     (i32.const 7)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (i32.const 1)
@@ -58,12 +58,12 @@
   )
   ;; CHECK:      (func $loops
   ;; CHECK-NEXT:  (call $log_execution
-  ;; CHECK-NEXT:   (i32.const 8)
+  ;; CHECK-NEXT:   (i32.const 5)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (block
   ;; CHECK-NEXT:   (loop $x
   ;; CHECK-NEXT:    (call $log_execution
-  ;; CHECK-NEXT:     (i32.const 4)
+  ;; CHECK-NEXT:     (i32.const 8)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (block
   ;; CHECK-NEXT:     (call $loops)
@@ -75,7 +75,7 @@
   ;; CHECK-NEXT:    (then
   ;; CHECK-NEXT:     (loop $y
   ;; CHECK-NEXT:      (call $log_execution
-  ;; CHECK-NEXT:       (i32.const 5)
+  ;; CHECK-NEXT:       (i32.const 9)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (call $loops)
   ;; CHECK-NEXT:     )
@@ -83,11 +83,11 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (block
   ;; CHECK-NEXT:    (call $log_execution
-  ;; CHECK-NEXT:     (i32.const 7)
+  ;; CHECK-NEXT:     (i32.const 11)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (loop
   ;; CHECK-NEXT:     (call $log_execution
-  ;; CHECK-NEXT:      (i32.const 6)
+  ;; CHECK-NEXT:      (i32.const 10)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (block
   ;; CHECK-NEXT:      (drop
@@ -124,11 +124,11 @@
   )
   ;; CHECK:      (func $loops-similar
   ;; CHECK-NEXT:  (call $log_execution
-  ;; CHECK-NEXT:   (i32.const 10)
+  ;; CHECK-NEXT:   (i32.const 6)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (loop $x
   ;; CHECK-NEXT:   (call $log_execution
-  ;; CHECK-NEXT:    (i32.const 9)
+  ;; CHECK-NEXT:    (i32.const 12)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (block
   ;; CHECK-NEXT:    (call $loops)
