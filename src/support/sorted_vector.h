@@ -26,7 +26,7 @@
 
 namespace wasm {
 
-template<typename T = Index> struct SortedVector : public std::vector<T> {
+template<typename T> struct SortedVector : public std::vector<T> {
   using Base = std::vector<T>;
   using Base::back;
   using Base::begin;
@@ -50,7 +50,7 @@ template<typename T = Index> struct SortedVector : public std::vector<T> {
       if (left < right) {
         ret[t++] = left;
         i++;
-      } else if (right < left) {
+      } else if (left > right) {
         ret[t++] = right;
         j++;
       } else {
