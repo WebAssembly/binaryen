@@ -113,6 +113,13 @@ struct LazyTable {
     return indexToRefName;
   }
 
+  // In normal operation, we are making types in the any hierarchy shared, but
+  // with pass arg 'make-shared-objects-unshared', we overwrite this to make
+  // them unshared instead. That helps separate the performance difference from
+  // using the shared heap from the performance difference due to other
+  // transformations we do in this pass.
+  Shareability shared = Shared;
+
   void addRefToIndexFunction() {
     // (func $<t>_to_index (param $ref <t>) (result (ref null (shared i31)))
     //   (local $idx i32)
@@ -141,10 +148,10 @@ struct LazyTable {
     // )
     Builder builder(*wasm);
 
-    Type sharedI31Nullable = Type(HeapTypes::i31.getBasic(Shared), Nullable);
-    Type sharedI31NonNull = Type(HeapTypes::i31.getBasic(Shared), NonNullable);
+    Type sharedI31Nullable = Type(HeapTypes::i31.getBasic(shared), Nullable);
+    Type sharedI31NonNull = Type(HeapTypes::i31.getBasic(shared), NonNullable);
     auto* isNull = builder.makeRefIsNull(builder.makeLocalGet(0, type));
-    auto* retNull = builder.makeRefNull(HeapTypes::none.getBasic(Shared));
+    auto* retNull = builder.makeRefNull(HeapTypes::none.getBasic(shared));
     auto* grow = builder.makeTableGrow(getName(),
                                        builder.makeLocalGet(0, type),
                                        builder.makeConst(Literal(int32_t(1))));
@@ -152,7 +159,7 @@ struct LazyTable {
     auto* geZero =
       builder.makeBinary(GeSInt32, tee, builder.makeConst(Literal(int32_t(0))));
     auto* retIndex =
-      builder.makeRefI31(builder.makeLocalGet(1, Type::i32), Shared);
+      builder.makeRefI31(builder.makeLocalGet(1, Type::i32), shared);
     auto* checkGrow = builder.makeIf(
       geZero, retIndex, builder.makeUnreachable(), sharedI31NonNull);
 
@@ -177,7 +184,7 @@ struct LazyTable {
     // )
     Builder builder(*wasm);
 
-    Type sharedI31Nullable = Type(HeapTypes::i31.getBasic(Shared), Nullable);
+    Type sharedI31Nullable = Type(HeapTypes::i31.getBasic(shared), Nullable);
     auto* isNull =
       builder.makeRefIsNull(builder.makeLocalGet(0, sharedI31Nullable));
     auto* retNull = builder.makeRefNull(type.getHeapType().getBottom());
@@ -259,7 +266,7 @@ struct LazyTable {
       return arg;
     }
     Builder builder(*wasm);
-    Type sharedI31Nullable = Type(HeapTypes::i31.getBasic(Shared), Nullable);
+    Type sharedI31Nullable = Type(HeapTypes::i31.getBasic(shared), Nullable);
     Expression* res =
       builder.makeCall(getRefToIndexName(), {arg}, sharedI31Nullable);
     if (targetType.isNonNullable()) {
@@ -272,6 +279,7 @@ struct LazyTable {
 struct MakeSharedObjects
   : WalkerPass<PostWalker<MakeSharedObjects,
                           UnifiedExpressionVisitor<MakeSharedObjects>>> {
+  Shareability shared = Shared;
   Type funcref = Type(HeapTypes::func, Nullable);
   Type externref = Type(HeapTypes::ext, Nullable);
 
@@ -315,19 +323,19 @@ struct MakeSharedObjects
 
   HeapType updatedHeapType(HeapType type) {
     if (type.isMaybeShared(HeapType::func) || type.isSignature()) {
-      return HeapTypes::i31.getBasic(Shared);
+      return HeapTypes::i31.getBasic(shared);
     }
     if (type.isMaybeShared(HeapType::nofunc)) {
-      return HeapTypes::none.getBasic(Shared);
+      return HeapTypes::none.getBasic(shared);
     }
     if (type == HeapType::ext || type == HeapType::string) {
-      return HeapTypes::i31.getBasic(Shared);
+      return HeapTypes::i31.getBasic(shared);
     }
     if (type == HeapType::noext) {
-      return HeapTypes::none.getBasic(Shared);
+      return HeapTypes::none.getBasic(shared);
     }
     if (type.isBasic()) {
-      return type.getBasic(Shared);
+      return type.getBasic(shared);
     }
     return type;
   }
@@ -507,7 +515,7 @@ struct MakeSharedObjects
   void visitRefFunc(RefFunc* curr) {
     Builder builder(*getModule());
     replaceCurrent(
-      builder.makeRefI31(builder.makeConst(Literal(getIndex(curr))), Shared));
+      builder.makeRefI31(builder.makeConst(Literal(getIndex(curr))), shared));
   }
 
   std::unordered_map<CallRef*, HeapType> callRefTypes;
@@ -702,7 +710,7 @@ struct MakeSharedObjects
       Type extType = Type(HeapTypes::ext, curr->type.getNullability());
       Expression* ext = externTable.convertToRef(curr->value, extType);
       Builder builder(*getModule());
-      Type sharedAnyNullable = Type(HeapTypes::any.getBasic(Shared), Nullable);
+      Type sharedAnyNullable = Type(HeapTypes::any.getBasic(shared), Nullable);
       Expression* call =
         builder.makeCall(getExternToAnyName(), {ext}, sharedAnyNullable);
       if (curr->type.isNonNullable()) {
@@ -824,7 +832,7 @@ struct MakeSharedObjects
     global->module = Name();
     global->base = Name();
     global->init =
-      builder.makeRefI31(builder.makeConst(Literal(int32_t(index))), Shared);
+      builder.makeRefI31(builder.makeConst(Literal(int32_t(index))), shared);
 
     getModule()->addGlobal(std::move(importGlobal));
   }
@@ -843,9 +851,16 @@ struct MakeSharedObjects
   }
 
   void doWalkModule(Module* wasm) {
+    if (hasArgument("make-shared-objects-unshared")) {
+      shared = Unshared;
+    }
     funcTable.wasm = wasm;
+    funcTable.shared = shared;
     externTable.wasm = wasm;
-    wasm->features.setSharedEverything();
+    externTable.shared = shared;
+    if (shared == Shared) {
+      wasm->features.setSharedEverything();
+    }
     WalkerPass::doWalkModule(wasm);
   }
 
@@ -946,7 +961,7 @@ struct MakeSharedObjects
           builder[i].subTypeOf(builder[info.indices.at(*super)]);
         }
       } else {
-        builder[i].setShared(Shared);
+        builder[i].setShared(shared);
       }
     }
 
@@ -967,7 +982,7 @@ struct MakeSharedObjects
   }
 
   void addAnyToExternFunction() {
-    Type sharedAnyNullable = Type(HeapTypes::any.getBasic(Shared), Nullable);
+    Type sharedAnyNullable = Type(HeapTypes::any.getBasic(shared), Nullable);
     Type externrefNullable = Type(HeapTypes::ext, Nullable);
     auto importFunc = Builder::makeFunction(
       anyToExternName, Signature(sharedAnyNullable, externrefNullable), {});
@@ -979,7 +994,7 @@ struct MakeSharedObjects
 
   void addExternToAnyFunction() {
     Type externrefNullable = Type(HeapTypes::ext, Nullable);
-    Type sharedAnyNullable = Type(HeapTypes::any.getBasic(Shared), Nullable);
+    Type sharedAnyNullable = Type(HeapTypes::any.getBasic(shared), Nullable);
     auto importFunc = Builder::makeFunction(
       externToAnyName, Signature(externrefNullable, sharedAnyNullable), {});
     importFunc->module = "env";
