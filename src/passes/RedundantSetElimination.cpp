@@ -34,13 +34,13 @@
 //
 
 #include <cfg/cfg-traversal.h>
+#include <cfg/rpo.h>
 #include <ir/literal-utils.h>
 #include <ir/numbering.h>
 #include <ir/properties.h>
 #include <ir/utils.h>
 #include <pass.h>
 #include <support/small_set.h>
-#include <support/unique_deferring_queue.h>
 #include <wasm-builder.h>
 #include <wasm.h>
 
@@ -58,6 +58,10 @@ namespace {
 
 // information in a basic block
 struct Info {
+  // For RPOQueue
+  bool inQueue;
+  Index index;
+
   LocalValues start, end; // the local values at the start and end of the block
   std::vector<Expression**> items;
 };
@@ -221,11 +225,9 @@ struct RedundantSetElimination
         end[i] = unseenValue;
       }
     }
-    // keep working while stuff is flowing. we use a unique deferred queue
-    // which ensures both FIFO and that we don't do needless work - if
-    // A and B reach C, and both queue C, we only want to do C at the latest
-    // time, when we have information from all those reaching it.
-    UniqueDeferredQueue<BasicBlock*> work;
+    // Keep working while stuff is flowing, in reverse-postorder so that we
+    // reach code after its predecessors, avoiding wasted recomputation.
+    RPOQueue<RedundantSetElimination> work(*this);
     work.push(entry);
     while (!work.empty()) {
       auto* curr = work.pop();
