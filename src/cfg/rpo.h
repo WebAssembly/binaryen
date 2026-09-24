@@ -18,8 +18,8 @@
 // Utilities for reverse-postorder queue management.
 //
 
-#ifndef rpo_h
-#define rpo_h
+#ifndef cfg_rpo_h
+#define cfg_rpo_h
 
 #include <queue>
 
@@ -78,6 +78,5 @@ template<typename CFG> struct RPOQueue {
 
 } // namespace wasm
 
-#endif // rpo_h
+#endif // cfg_rpo_h
 
-// TODO: use in moar passes
