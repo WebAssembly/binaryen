@@ -389,6 +389,9 @@ private:
     bool operator==(const Indexed& other) const {
       return index == other.index && value == other.value;
     }
+    bool operator==(const Index& otherIndex) const {
+      return index == otherIndex;
+    }
   };
 
   // Sorted by local Index for fast contiguous copying and linear-time merge in
