@@ -791,7 +791,7 @@ struct MakeSharedObjects
     WalkerPass::doWalkModule(wasm);
   }
 
-  struct ImportToWrap {
+  struct FuncImportToWrap {
     Function* func;
     Type origType;
   };
@@ -802,7 +802,7 @@ struct MakeSharedObjects
   };
 
   void visitModule(Module* wasm) {
-    std::vector<ImportToWrap> importsToWrap;
+    std::vector<FuncImportToWrap> importsToWrap;
     for (auto& func : wasm->functions) {
       if (func->imported() && externTable.funcHasTableType(func.get())) {
         importsToWrap.push_back({func.get(), func->type});
