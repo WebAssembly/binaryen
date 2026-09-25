@@ -1205,6 +1205,7 @@ bool BasicBlockConstraintMap::approximateOr(
   map.intersectAndFilter(other.map, [&](auto& self, const auto& other) {
     changed |= self.value.approximateOr(other.value);
     assert(!self.value.provesEverything());
+    // Keep only entries that prove things, as others should not be in the map.
     return !self.value.provesNothing();
   });
   if (map.size() != oldSize) {
@@ -1212,7 +1213,7 @@ bool BasicBlockConstraintMap::approximateOr(
   }
 
   // We could more precisely find which locals were removed from the map, but
-  // stale refs has low overhead and no correctness cost, so just handle the
+  // stale refs have low overhead and no correctness cost, so just handle the
   // common, simple case of nothing remaining, so no refs are needed.
   if (map.empty()) {
     refs.clear();
