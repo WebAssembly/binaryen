@@ -974,13 +974,30 @@ static void updateCompileUnits(const BinaryenDWARFInfo& info,
 }
 
 static void updateRanges(llvm::DWARFYAML::Data& yaml,
-                         const LocationUpdater& locationUpdater) {
+                         const LocationUpdater& locationUpdater,
+                         bool canRepairRanges) {
   // In each range section, update the start and end. If either endpoint no
   // longer has a mapping, emit an empty range that a debugger can safely
   // ignore. Do not use (0, 0), since that is the list terminator.
   for (auto& range : yaml.Ranges) {
     BinaryLocation oldStart = range.Start, oldEnd = range.End, newStart = 0,
                    newEnd = 0;
+    if (!canRepairRanges) {
+      // Preserve the previous updater's behavior for non-wasm32 CUs. The
+      // vendored emitter cannot write address-sized range entries for them.
+      if (isTombstone(oldStart) || isTombstone(oldEnd)) {
+        continue;
+      }
+      newStart = locationUpdater.getNewStart(oldStart);
+      newEnd = locationUpdater.getNewEnd(oldEnd);
+      if (isTombstone(newStart) || isTombstone(newEnd)) {
+        newStart = 0;
+        newEnd = 1;
+      }
+      range.Start = newStart;
+      range.End = newEnd;
+      continue;
+    }
     if ((oldStart == 0 && oldEnd == 0) || oldStart == AllOnesAddress) {
       newStart = oldStart;
       newEnd = oldEnd;
@@ -1424,9 +1441,21 @@ void writeDWARFSections(Module& wasm, const BinaryLocations& newLocations) {
   bool is64 = wasm.memories.size() > 0 ? wasm.memories[0]->is64() : false;
   updateCompileUnits(info, data, locationUpdater, is64);
 
-  updateRanges(data, locationUpdater);
-
-  repairDIEAddressRanges(info, data, locationUpdater);
+  // The vendored DWARFYAML emitter still writes .debug_ranges entries as
+  // pairs of 4-byte addresses. Rebuilding lists for 8-byte or mixed-width
+  // CUs would write invalid DW_AT_ranges offsets. Keep the earlier updater
+  // behavior until that emitter supports address-sized entries.
+  bool canRepairRanges = true;
+  for (const auto& CU : data.CompileUnits) {
+    if (CU.AddrSize != AddressSize) {
+      canRepairRanges = false;
+      break;
+    }
+  }
+  updateRanges(data, locationUpdater, canRepairRanges);
+  if (canRepairRanges) {
+    repairDIEAddressRanges(info, data, locationUpdater);
+  }
 
   updateLoc(data, locationUpdater);
 

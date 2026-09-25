@@ -1,3 +1,5 @@
+import base64
+import gzip
 import os
 import subprocess
 import tempfile
@@ -68,12 +70,36 @@ class DWARFTest(utils.BinaryenTestCase):
             self.assertIn('DW_AT_low_pc [DW_FORM_addr]\t'
                           '(0x00000000ffffffff)', unused)
 
+    def test_memory64_range_list_fallback(self):
+        # This fixture is a two-function wasm64 module with a DWARF v4 CU and
+        # .debug_ranges, compiled using clang --target=wasm64-unknown-unknown
+        # -O1 -g. The vendored emitter still writes 4-byte range entries, so
+        # range-list repair must not append an invalid 8-byte-CU offset.
+        path = self.input_path('dwarf/memory64_ranges.wasm.gz.b64')
+        with open(path, 'rb') as f:
+            wasm = gzip.decompress(base64.b64decode(f.read()))
+        with tempfile.TemporaryDirectory() as temp_dir:
+            input_file = os.path.join(temp_dir, 'input.wasm')
+            output_file = os.path.join(temp_dir, 'output.wasm')
+            with open(input_file, 'wb') as f:
+                f.write(wasm)
+            shared.run_process(shared.WASM_OPT +
+                               [input_file, '--roundtrip', '-g',
+                                '-o', output_file])
+            dump = shared.run_process(shared.WASM_OPT +
+                                      [output_file, '--dwarfdump'],
+                                      capture_output=True).stdout
+            self.assertIn('DW_AT_ranges [DW_FORM_sec_offset]\t(0x00000000',
+                          dump)
+
     def test_no_crash(self):
         # run dwarf processing on some interesting large files, too big to be
         # worth putting in passes where the text output would be massive. We
         # just check that no assertion are hit.
         path = self.input_path('dwarf')
         for name in os.listdir(path):
+            if not name.endswith('.wasm'):
+                continue
             args = [os.path.join(path, name)] + \
                    ['-g', '--dwarfdump', '--roundtrip', '--dwarfdump']
             shared.run_process(shared.WASM_OPT + args, capture_output=True)
