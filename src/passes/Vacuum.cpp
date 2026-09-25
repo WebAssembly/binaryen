@@ -331,17 +331,6 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
         curr->condition =
           Builder(*getModule()).makeUnary(EqZInt32, curr->condition);
         BranchHints::flip(curr, getFunction());
-      } else if (curr->ifTrue->is<Drop>() && curr->ifFalse->is<Drop>()) {
-        // instead of dropping both sides, drop the if, if they are the same
-        // type
-        auto* left = curr->ifTrue->cast<Drop>()->value;
-        auto* right = curr->ifFalse->cast<Drop>()->value;
-        if (left->type == right->type) {
-          curr->ifTrue = left;
-          curr->ifFalse = right;
-          curr->finalize();
-          replaceCurrent(Builder(*getModule()).makeDrop(curr));
-        }
       }
     } else {
       // This is an if without an else. If the body is empty, we do not need it.
@@ -427,9 +416,11 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
         }
       }
     }
-    // sink a drop into an arm of an if-else if the other arm ends in an
-    // unreachable, as it if is a branch, this can make that branch optimizable
-    // and more vacuuming possible
+    // Sink a drop into an arm of an if-else if the other arm ends in an
+    // unreachable, or sink drops into both arms if both arms are concrete.
+    // This allows the if expression to become void, eliminates block type
+    // overhead, and enables further vacuuming/dead-code elimination in each
+    // arm.
     auto* iff = curr->value->dynCast<If>();
     if (iff && iff->ifFalse && iff->type.isConcrete()) {
       // reuse the drop in both cases
@@ -443,6 +434,13 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
                  iff->ifTrue->type.isConcrete()) {
         curr->value = iff->ifTrue;
         iff->ifTrue = curr;
+        iff->type = Type::none;
+        replaceCurrent(iff);
+      } else if (iff->ifTrue->type.isConcrete() &&
+                 iff->ifFalse->type.isConcrete()) {
+        Builder builder(*getModule());
+        iff->ifTrue = builder.dropIfConcretelyTyped(iff->ifTrue);
+        iff->ifFalse = builder.dropIfConcretelyTyped(iff->ifFalse);
         iff->type = Type::none;
         replaceCurrent(iff);
       }
