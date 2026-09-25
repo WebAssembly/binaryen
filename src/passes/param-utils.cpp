@@ -188,9 +188,9 @@ RemovalOutcome removeParameter(const std::vector<Function*>& funcs,
   return Success;
 }
 
-std::pair<SortedVector, RemovalOutcome>
+std::pair<SortedVector<Index>, RemovalOutcome>
 removeParameters(const std::vector<Function*>& funcs,
-                 SortedVector indexes,
+                 SortedVector<Index> indexes,
                  const std::vector<Call*>& calls,
                  const std::vector<CallRef*>& callRefs,
                  Module* module,
@@ -210,7 +210,7 @@ removeParameters(const std::vector<Function*>& funcs,
   // Iterate downwards, as we may remove more than one, and going forwards would
   // alter the indexes after us.
   Index i = first->getNumParams() - 1;
-  SortedVector removed;
+  SortedVector<Index> removed;
   while (1) {
     if (indexes.has(i)) {
       auto outcome = removeParameter(funcs, i, calls, callRefs, module, runner);
@@ -230,10 +230,10 @@ removeParameters(const std::vector<Function*>& funcs,
   return {removed, finalOutcome};
 }
 
-SortedVector applyConstantValues(const std::vector<Function*>& funcs,
-                                 const std::vector<Call*>& calls,
-                                 const std::vector<CallRef*>& callRefs,
-                                 Module* module) {
+SortedVector<Index> applyConstantValues(const std::vector<Function*>& funcs,
+                                        const std::vector<Call*>& calls,
+                                        const std::vector<CallRef*>& callRefs,
+                                        Module* module) {
   assert(funcs.size() > 0);
   auto* first = funcs[0];
 #ifndef NDEBUG
@@ -242,7 +242,7 @@ SortedVector applyConstantValues(const std::vector<Function*>& funcs,
   }
 #endif
 
-  SortedVector optimized;
+  SortedVector<Index> optimized;
   auto numParams = first->getNumParams();
   for (Index i = 0; i < numParams; i++) {
     PossibleConstantValues value;

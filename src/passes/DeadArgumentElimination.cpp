@@ -71,7 +71,7 @@ struct DAEFunctionInfo {
   // computation, and we reset it every time we touch the function.
   bool stale = true;
   // The unused parameters, if any.
-  SortedVector unusedParams;
+  SortedVector<Index> unusedParams;
   // Maps a function name to the calls going to it.
   std::unordered_map<Name, std::vector<Call*>> calls;
   // Map of all calls that are dropped, to their drops' locations (so that

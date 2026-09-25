@@ -26,7 +26,20 @@
 
 namespace wasm {
 
-struct SortedVector : public std::vector<Index> {
+template<typename T> struct SortedVector : public std::vector<T> {
+  using Base = std::vector<T>;
+  using Base::back;
+  using Base::begin;
+  using Base::clear;
+  using Base::empty;
+  using Base::end;
+  using Base::erase;
+  using Base::push_back;
+  using Base::resize;
+  using Base::size;
+  using typename Base::const_iterator;
+  using typename Base::iterator;
+
   SortedVector() = default;
 
   SortedVector merge(const SortedVector& other) const {
@@ -34,8 +47,8 @@ struct SortedVector : public std::vector<Index> {
     ret.resize(size() + other.size());
     Index i = 0, j = 0, t = 0;
     while (i < size() && j < other.size()) {
-      auto left = (*this)[i];
-      auto right = other[j];
+      const auto& left = (*this)[i];
+      const auto& right = other[j];
       if (left < right) {
         ret[t++] = left;
         i++;
@@ -60,44 +73,93 @@ struct SortedVector : public std::vector<Index> {
     return ret;
   }
 
-  void insert(Index x) {
+  T& insert(T x) {
+    if (empty() || back() < x) {
+      push_back(std::move(x));
+      return back();
+    }
     auto it = std::lower_bound(begin(), end(), x);
-    if (it == end()) {
-      push_back(x);
-    } else if (*it > x) {
+    if (x < *it) {
       Index i = it - begin();
       resize(size() + 1);
       std::move_backward(begin() + i, begin() + size() - 1, end());
-      (*this)[i] = x;
+      (*this)[i] = std::move(x);
+      return (*this)[i];
     }
+    return *it;
   }
 
-  bool erase(Index x) {
-    auto it = std::lower_bound(begin(), end(), x);
-    if (it != end() && *it == x) {
-      std::move(it + 1, end(), it);
-      resize(size() - 1);
+  iterator erase(iterator it) { return Base::erase(it); }
+
+  template<typename K = T> bool erase(const K& x) {
+    auto it = find(x);
+    if (it != end()) {
+      erase(it);
       return true;
     }
     return false;
   }
 
-  bool has(Index x) const {
+  template<typename K = T> iterator find(const K& x) {
     auto it = std::lower_bound(begin(), end(), x);
-    return it != end() && *it == x;
+    if (it != end() && *it == x) {
+      return it;
+    }
+    return end();
   }
 
-  template<typename T> SortedVector& filter(T keep) {
+  template<typename K = T> const_iterator find(const K& x) const {
+    auto it = std::lower_bound(begin(), end(), x);
+    if (it != end() && *it == x) {
+      return it;
+    }
+    return end();
+  }
+
+  template<typename K = T> bool has(const K& x) const {
+    return find(x) != end();
+  }
+
+  template<typename F> SortedVector& filter(F keep) {
     size_t skip = 0;
     for (size_t i = 0; i < size(); i++) {
       if (keep((*this)[i])) {
-        (*this)[i - skip] = (*this)[i];
+        if (skip > 0) {
+          (*this)[i - skip] = std::move((*this)[i]);
+        }
       } else {
         skip++;
       }
     }
     resize(size() - skip);
     return *this;
+  }
+
+  // Intersect this vector in place with |other|, and filtering so elements
+  // present in both are only kept when |keep(selfElem, otherElem)| returns
+  // true (this can be useful when the items contain more than they key being
+  // sorted on).
+  template<typename F>
+  void intersectAndFilter(const SortedVector& other, F keep) {
+    size_t write = 0;
+    size_t i = 0, j = 0;
+    while (i < size() && j < other.size()) {
+      if ((*this)[i] < other[j]) {
+        i++;
+      } else if (other[j] < (*this)[i]) {
+        j++;
+      } else {
+        if (keep((*this)[i], other[j])) {
+          if (write != i) {
+            (*this)[write] = std::move((*this)[i]);
+          }
+          write++;
+        }
+        i++;
+        j++;
+      }
+    }
+    resize(write);
   }
 
   void verify() const {
@@ -108,7 +170,7 @@ struct SortedVector : public std::vector<Index> {
 
   void dump(const char* str = nullptr) const {
     std::cout << "SortedVector " << (str ? str : "") << ": ";
-    for (auto x : *this) {
+    for (const auto& x : *this) {
       std::cout << x << " ";
     }
     std::cout << '\n';
