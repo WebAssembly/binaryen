@@ -280,6 +280,7 @@ struct MakeSharedObjects
   : WalkerPass<PostWalker<MakeSharedObjects,
                           UnifiedExpressionVisitor<MakeSharedObjects>>> {
   Shareability shared = Shared;
+  bool lowerExterns = true;
   Type funcref = Type(HeapTypes::func, Nullable);
   Type externref = Type(HeapTypes::ext, Nullable);
 
@@ -328,11 +329,13 @@ struct MakeSharedObjects
     if (type.isMaybeShared(HeapType::nofunc)) {
       return HeapTypes::none.getBasic(shared);
     }
-    if (type == HeapType::ext || type == HeapType::string) {
-      return HeapTypes::i31.getBasic(shared);
-    }
-    if (type == HeapType::noext) {
-      return HeapTypes::none.getBasic(shared);
+    if (lowerExterns) {
+      if (type == HeapType::ext || type == HeapType::string) {
+        return HeapTypes::i31.getBasic(shared);
+      }
+      if (type == HeapType::noext) {
+        return HeapTypes::none.getBasic(shared);
+      }
     }
     if (type.isBasic()) {
       return type.getBasic(shared);
@@ -703,7 +706,7 @@ struct MakeSharedObjects
   }
 
   void visitRefAs(RefAs* curr) {
-    if (curr->type == Type::unreachable) {
+    if (!lowerExterns || curr->type == Type::unreachable) {
       return;
     }
     if (curr->op == AnyConvertExtern) {
@@ -853,6 +856,10 @@ struct MakeSharedObjects
   void doWalkModule(Module* wasm) {
     if (hasArgument("make-shared-objects-unshared")) {
       shared = Unshared;
+    }
+    if (hasArgument("make-shared-objects-keep-externs")) {
+      lowerExterns = false;
+      externTable.type = Type::none;
     }
     funcTable.wasm = wasm;
     funcTable.shared = shared;
