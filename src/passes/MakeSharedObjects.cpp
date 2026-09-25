@@ -220,29 +220,29 @@ struct LazyTable {
     }
   }
 
-  bool isTableType(Type t) const {
+  bool canHold(Type t) const {
     return t.isRef() && !t.isNull() && Type::isSubType(t, type);
   }
 
-  bool hasTableType(Type t) const {
+  bool hasHoldable(Type t) const {
     if (t.isTuple()) {
       for (Type elem : t) {
-        if (hasTableType(elem)) {
+        if (hasHoldable(elem)) {
           return true;
         }
       }
       return false;
     }
-    return isTableType(t);
+    return canHold(t);
   }
 
   bool funcHasTableType(Function* func) const {
     Signature sig = func->type.getHeapType().getSignature();
-    return hasTableType(sig.params) || hasTableType(sig.results);
+    return hasHoldable(sig.params) || hasHoldable(sig.results);
   }
 
   Expression* convertToRef(Expression* arg, Type origType) {
-    if (!isTableType(origType)) {
+    if (!canHold(origType)) {
       return arg;
     }
     Builder builder(*wasm);
@@ -254,7 +254,7 @@ struct LazyTable {
   }
 
   Expression* convertToIndex(Expression* arg, Type origType, Type targetType) {
-    if (!isTableType(origType)) {
+    if (!canHold(origType)) {
       return arg;
     }
     Builder builder(*wasm);
@@ -359,7 +359,7 @@ struct MakeSharedObjects
     std::vector<Type> params;
     Index i = 0;
     for (Type param : origSig.params) {
-      if (externTable.isTableType(param)) {
+      if (externTable.canHold(param)) {
         params.push_back(param);
       } else {
         params.push_back(rewrittenSig.params[i]);
@@ -370,7 +370,7 @@ struct MakeSharedObjects
     std::vector<Type> results;
     Index j = 0;
     for (Type result : origSig.results) {
-      if (externTable.isTableType(result)) {
+      if (externTable.canHold(result)) {
         results.push_back(result);
       } else {
         results.push_back(rewrittenSig.results[j]);
@@ -421,7 +421,7 @@ struct MakeSharedObjects
     auto* call = builder.makeCall(importName, callArgs, extResults);
 
     // Convert externrefs received as results to indices.
-    if (!externTable.hasTableType(extResults)) {
+    if (!externTable.hasHoldable(extResults)) {
       func->body = call;
     } else if (extResults.isSingle()) {
       Type targetType = func->getResults();
@@ -479,7 +479,7 @@ struct MakeSharedObjects
 
     // Forward results, converting indices to externrefs.
     Type extResults = boundarySig.results;
-    if (!externTable.hasTableType(extResults)) {
+    if (!externTable.hasHoldable(extResults)) {
       exportWrapper->body = call;
     } else if (extResults.isSingle()) {
       exportWrapper->body = externTable.convertToRef(call, extResults);
@@ -778,7 +778,7 @@ struct MakeSharedObjects
   std::vector<GlobalImportToWrap> globalImportsToWrap;
 
   void visitGlobal(Global* curr) {
-    if (curr->imported() && externTable.isTableType(curr->type)) {
+    if (curr->imported() && externTable.canHold(curr->type)) {
       globalImportsToWrap.push_back({curr, curr->type});
     }
     updateType(curr->type);
