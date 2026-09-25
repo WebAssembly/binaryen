@@ -1339,7 +1339,7 @@ void BasicBlockConstraintMap::eraseStaleRefs(Index index) {
   }
 
   auto refIndexes = std::move(iter->value);
-  refs.erase(index);
+  refs.erase(iter);
 
   for (auto refIndex : refIndexes) {
     if (auto iter = map.find(refIndex); iter != map.end()) {
@@ -1354,7 +1354,7 @@ void BasicBlockConstraintMap::eraseStaleRefs(Index index) {
       });
       if (refConstraints.empty()) {
         // This became trivial.
-        map.erase(refIndex);
+        map.erase(iter);
       }
     }
   }

@@ -89,11 +89,12 @@ template<typename T> struct SortedVector : public std::vector<T> {
     return *it;
   }
 
+  iterator erase(iterator it) { return Base::erase(it); }
+
   template<typename K = T> bool erase(const K& x) {
     auto it = find(x);
     if (it != end()) {
-      std::move(it + 1, end(), it);
-      resize(size() - 1);
+      erase(it);
       return true;
     }
     return false;
