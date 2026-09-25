@@ -1113,8 +1113,14 @@ inline std::optional<Annotation> Lexer::takeAnnotation() {
         pos = startPos;
         return std::nullopt;
       }
-      if (takeSpace() || takeKeyword() || takeInteger() || takeFloat() ||
-          takeStr() || takeIdent()) {
+      // Use peekKeyword + take rather than takeKeyword to avoid calling
+      // advance(), which would clear previously collected annotations.
+      if (auto keyword = peekKeyword()) {
+        take(keyword->size());
+        continue;
+      }
+      if (takeSpace() || takeInteger() || takeFloat() || takeStr() ||
+          takeIdent()) {
         continue;
       }
       if (takePrefix("(@"sv)) {
@@ -1130,7 +1136,8 @@ inline std::optional<Annotation> Lexer::takeAnnotation() {
         ++depth;
         continue;
       }
-      if (takeLParen()) {
+      // Use takePrefix rather than takeLParen to avoid calling advance().
+      if (takePrefix("("sv)) {
         ++depth;
         continue;
       }

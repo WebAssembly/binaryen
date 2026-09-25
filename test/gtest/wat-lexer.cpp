@@ -947,14 +947,17 @@ TEST(LexerTest, LexString) {
 }
 
 TEST(LexerTest, Annotations) {
-  Lexer lexer(
-    "      (@metadata.code.branch_hint \"\\01\")\n      (@metadata.code.branch_hint \"\\00\")\n      (br_if $out"sv);
+  Lexer lexer("(@metadata.code.branch_hint \"\\01\")\n"
+              "(@metadata.code.branch_hint \"\\00\")\n"
+              "(@custom (nested kw))\n"
+              "(br_if $out"sv);
   // Trigger advance/skipSpace which parses annotations.
   lexer.takeID();
   auto annotations = lexer.takeAnnotations();
-  ASSERT_EQ(annotations.size(), 2u);
+  ASSERT_EQ(annotations.size(), 3u);
   EXPECT_EQ(annotations[0].contents, " \"\\01\""sv);
   EXPECT_EQ(annotations[1].contents, " \"\\00\""sv);
+  EXPECT_EQ(annotations[2].contents, " (nested kw)"sv);
 }
 
 TEST(LexerTest, LexKeywords) {
