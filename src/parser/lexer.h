@@ -1048,6 +1048,7 @@ inline bool Lexer::takeComment() {
   }
 
   // Block comment (possibly nested!)
+  auto startPos = pos;
   if (takePrefix("(;"sv)) {
     size_t depth = 1;
     while (depth > 0 && remaining() >= 2) {
@@ -1061,6 +1062,7 @@ inline bool Lexer::takeComment() {
     }
     if (depth > 0) {
       // TODO: Add error production for non-terminated block comment.
+      pos = startPos;
       return false;
     }
     return true;
@@ -1111,8 +1113,14 @@ inline std::optional<Annotation> Lexer::takeAnnotation() {
         pos = startPos;
         return std::nullopt;
       }
-      if (takeSpace() || takeKeyword() || takeInteger() || takeFloat() ||
-          takeStr() || takeIdent()) {
+      // Use peekKeyword + take rather than takeKeyword to avoid calling
+      // advance(), which would clear previously collected annotations.
+      if (auto keyword = peekKeyword()) {
+        take(keyword->size());
+        continue;
+      }
+      if (takeSpace() || takeInteger() || takeFloat() || takeStr() ||
+          takeIdent()) {
         continue;
       }
       if (takePrefix("(@"sv)) {
@@ -1128,7 +1136,8 @@ inline std::optional<Annotation> Lexer::takeAnnotation() {
         ++depth;
         continue;
       }
-      if (takeLParen()) {
+      // Use takePrefix rather than takeLParen to avoid calling advance().
+      if (takePrefix("("sv)) {
         ++depth;
         continue;
       }
