@@ -383,9 +383,6 @@ private:
 
     bool operator<(const Indexed& other) const { return index < other.index; }
     bool operator<(Index otherIndex) const { return index < otherIndex; }
-    friend bool operator<(Index otherIndex, const Indexed& self) {
-      return otherIndex < self.index;
-    }
     bool operator==(const Indexed& other) const {
       return index == other.index && value == other.value;
     }
