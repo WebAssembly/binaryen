@@ -742,7 +742,7 @@ struct MakeSharedObjects
   Type getTagBoundaryParams(Type origParams) {
     std::vector<Type> params;
     for (Type t : origParams) {
-      params.push_back(externTable.isTableType(t) ? t : updatedType(t));
+      params.push_back(externTable.canHold(t) ? t : updatedType(t));
     }
     return Type(params);
   }
@@ -761,7 +761,7 @@ struct MakeSharedObjects
   // Wrap pops with externref types in conversions from the caught externrefs
   // to i31ref table indices.
   void visitPop(Pop* curr) {
-    if (!externTable.hasTableType(curr->type)) {
+    if (!externTable.hasHoldable(curr->type)) {
       visitExpression(curr);
       return;
     }
@@ -886,7 +886,7 @@ struct MakeSharedObjects
 
     std::vector<TagToUpdate> tagsToUpdate;
     for (auto& tag : wasm->tags) {
-      if (externTable.hasTableType(tag->params())) {
+      if (externTable.hasHoldable(tag->params())) {
         tagsToUpdate.push_back({tag.get(), tag->type});
       }
     }
