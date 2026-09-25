@@ -29,9 +29,10 @@ namespace wasm::Debug {
 
 using DwarfRange = std::pair<uint64_t, uint64_t>;
 
-// A set of nonempty, half-open DWARF address ranges. Call normalize before
-// querying containment or overlap; adding one set to another normalizes the
-// result automatically.
+// A set of nonempty, half-open DWARF address ranges. Normalization sorts the
+// ranges and merges overlapping or adjacent intervals, leaving disjoint ranges
+// in address order. Call normalize before querying containment or overlap;
+// adding one set to another normalizes the result automatically.
 class DwarfRanges {
   std::vector<DwarfRange> ranges;
 

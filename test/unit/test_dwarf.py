@@ -40,6 +40,34 @@ class DWARFTest(utils.BinaryenTestCase):
                                       capture_output=True).stdout
             self.assertEqual(dump.count('0x00000000ffffffff'), 2)
 
+    def test_missing_start_with_mapped_end(self):
+        # The unused subprogram starts at zero (no location mapping). Point its
+        # relative high_pc at the end of the preceding live subprogram. The
+        # surviving end must not make the missing start look like a live scope.
+        path = os.path.join(shared.options.binaryen_test, 'passes',
+                            'ignore_missing_func_dwarf.wasm')
+        with open(path, 'rb') as f:
+            wasm = f.read()
+        old_pair = bytes.fromhex('000000005a000000')
+        self.assertEqual(wasm.count(old_pair), 1)
+        wasm = wasm.replace(old_pair, bytes.fromhex('000000005f000000'))
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            input_file = os.path.join(temp_dir, 'input.wasm')
+            output_file = os.path.join(temp_dir, 'output.wasm')
+            with open(input_file, 'wb') as f:
+                f.write(wasm)
+            shared.run_process(shared.WASM_OPT +
+                               [input_file, '--roundtrip', '-g',
+                                '-o', output_file])
+            dump = shared.run_process(shared.WASM_OPT +
+                                      [output_file, '--dwarfdump'],
+                                      capture_output=True).stdout
+            unused = next(part for part in dump.split('DW_TAG_subprogram')
+                          if '"unused"' in part)
+            self.assertIn('DW_AT_low_pc [DW_FORM_addr]\t'
+                          '(0x00000000ffffffff)', unused)
+
     def test_no_crash(self):
         # run dwarf processing on some interesting large files, too big to be
         # worth putting in passes where the text output would be massive. We

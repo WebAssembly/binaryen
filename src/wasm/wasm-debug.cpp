@@ -60,7 +60,8 @@ bool hasDWARFSections(const Module& wasm) {
 
 #ifdef BUILD_LLVM_DWARF
 
-// In wasm32 the address size is 32 bits.
+// DWARF address fields in the wasm32 input are 4 bytes wide. A legacy
+// .debug_ranges entry stores a start and an end address of that width.
 static const size_t AddressSize = 4;
 static constexpr size_t RangeEntrySize = 2 * AddressSize;
 
@@ -69,8 +70,11 @@ static constexpr size_t RangeEntrySize = 2 * AddressSize;
 // is already the base-address-selection marker. Zero is a historical linker
 // tombstone, but is context-dependent because it can also be a valid address.
 static constexpr BinaryLocation AllOnesAddress = BinaryLocation(-1);
+// LLVM's legacy dead-address encoding where all-ones selects a range base.
 static constexpr BinaryLocation LegacyTombstoneAddress = BinaryLocation(-2);
+// A nonzero empty range avoids the (0, 0) range-list terminator.
 static constexpr BinaryLocation EmptyRangeAddress = 1;
+// Root DIEs have no parent in the per-compilation-unit index.
 static constexpr size_t NoParent = size_t(-1);
 
 struct BinaryenDWARFInfo {
@@ -832,7 +836,6 @@ static void updateDIE(const llvm::DWARFDebugInfoEntry& DIE,
   // the high pcs, so we see the low pcs first.
   BinaryLocation oldLowPC = 0, newLowPC = 0;
   llvm::DWARFYAML::FormValue* lowPCValue = nullptr;
-  bool unresolvedZeroLowPC = false;
   iterContextAndYAML(
     abbrevDecl->attributes(),
     yamlEntry.Values,
@@ -864,8 +867,12 @@ static void updateDIE(const llvm::DWARFDebugInfoEntry& DIE,
           Fatal() << "unknown tag with low_pc "
                   << llvm::dwarf::TagString(tag).str();
         }
-        unresolvedZeroLowPC = tag != llvm::dwarf::DW_TAG_compile_unit &&
-                              newValue == 0 && !isNonzeroTombstone(oldValue);
+        // The location mapper returns zero when a function or expression no
+        // longer has a mapped start. Unlike a CU base, that is not a usable
+        // start for a non-CU DIE even if its end still has a mapping.
+        if (tag != llvm::dwarf::DW_TAG_compile_unit && newValue == 0) {
+          newValue = AllOnesAddress;
+        }
         oldLowPC = oldValue;
         newLowPC = newValue;
         yamlValue.Value = newValue;
@@ -920,20 +927,12 @@ static void updateDIE(const llvm::DWARFDebugInfoEntry& DIE,
         newValue = isRelative ? newLowPC : AllOnesAddress;
         assert(lowPCValue);
         lowPCValue->Value = newLowPC;
-      } else if (newValue > newLowPC) {
-        // A valid high_pc disambiguates address zero as a real start rather
-        // than an old-style tombstone.
-        unresolvedZeroLowPC = false;
       }
       if (isRelative) {
         newValue -= newLowPC;
       }
       yamlValue.Value = newValue;
     });
-  if (unresolvedZeroLowPC) {
-    assert(lowPCValue);
-    lowPCValue->Value = AllOnesAddress;
-  }
 }
 
 static void updateCompileUnits(const BinaryenDWARFInfo& info,
@@ -1078,7 +1077,11 @@ static void readDIEAddressRanges(DIEAddressInfo& info,
       }
       auto absoluteStart = base + start;
       auto absoluteEnd = base + end;
-      if (absoluteStart > absoluteEnd) {
+      // Keep the addition wide so an offset that escapes wasm32's address
+      // space cannot wrap back into an apparently valid range.
+      if (absoluteStart > std::numeric_limits<BinaryLocation>::max() ||
+          absoluteEnd > std::numeric_limits<BinaryLocation>::max() ||
+          absoluteStart > absoluteEnd) {
         info.malformed = true;
       } else if (absoluteStart < absoluteEnd) {
         info.ranges.add(absoluteStart, absoluteEnd);
@@ -1095,7 +1098,10 @@ static void readDIEAddressRanges(DIEAddressInfo& info,
     if (!isNonzeroTombstone(*lowPC)) {
       uint64_t start = *lowPC;
       uint64_t end = highPCIsRelative ? start + *highPC : *highPC;
-      if (start > end) {
+      // A relative high_pc can overflow the 32-bit wasm32 address space;
+      // doing the addition in uint64_t makes that detectable rather than
+      // wrapping to a plausible lower address.
+      if (end > std::numeric_limits<BinaryLocation>::max() || start > end) {
         info.malformed = true;
       } else if (start < end) {
         info.ranges.add(start, end);
@@ -1192,13 +1198,13 @@ static void repairDIEAddressRanges(const BinaryenDWARFInfo& dwarfInfo,
           if (info.depth > 0 && ancestors.size() == info.depth) {
             info.parent = ancestors.back();
           }
-          if (ancestors.size() == info.depth) {
-            ancestors.push_back(index);
-          } else {
-            assert(ancestors.size() > info.depth);
-            ancestors[info.depth] = index;
-            ancestors.resize(info.depth + 1);
+          // In preorder, a valid DIE cannot descend more than one level at
+          // once. Keep malformed depths unavailable rather than indexing past
+          // the ancestor stack in non-asserting builds.
+          if (ancestors.size() < info.depth) {
+            info.malformed = true;
           }
+          ancestors.push_back(index);
           readDIEAddressRanges(info, yaml, compileUnitBase);
         }
         ++yamlEntry;
@@ -1248,6 +1254,9 @@ static void repairDIEAddressRanges(const BinaryenDWARFInfo& dwarfInfo,
                 !infos[siblings[i]].ranges.empty() &&
                 !infos[siblings[j]].ranges.empty() &&
                 infos[siblings[i]].ranges.overlaps(infos[siblings[j]].ranges)) {
+              // Remove conflicting scopes immediately. Later pairs need only
+              // compare surviving siblings; a third scope may remain usable
+              // if it overlapped only one that has already been removed.
               markUnavailable(infos, children, siblings[i]);
               markUnavailable(infos, children, siblings[j]);
             }
