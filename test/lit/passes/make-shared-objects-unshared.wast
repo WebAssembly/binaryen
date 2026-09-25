@@ -2,6 +2,7 @@
 
 ;; RUN: wasm-opt %s -all --make-shared-objects -S -o - | filecheck %s --check-prefix=SHARED
 ;; RUN: wasm-opt %s -all --make-shared-objects --pass-arg=make-shared-objects-unshared -S -o - | filecheck %s --check-prefix=UNSHARED
+;; RUN: wasm-opt %s -all --make-shared-objects --pass-arg=make-shared-objects-unshared --pass-arg=make-shared-objects-keep-externs -S -o - | filecheck %s --check-prefix=KEEP-EXTERNS
 
 (module
   ;; SHARED:      (type $struct (shared (struct (field (mut (ref null (shared i31)))) (field (mut (ref null (shared i31)))) (field (mut (ref null (shared any)))))))
@@ -10,12 +11,33 @@
   ;; UNSHARED:      (type $struct (struct (field (mut i31ref)) (field (mut i31ref)) (field (mut anyref))))
 
   ;; UNSHARED:      (type $sig (func (param i31ref i31ref) (result anyref)))
+  ;; KEEP-EXTERNS:      (type $struct (struct (field (mut i31ref)) (field (mut externref)) (field (mut anyref))))
+
+  ;; KEEP-EXTERNS:      (type $sig (func (param i31ref externref) (result anyref)))
   (type $sig (func (param funcref externref) (result anyref)))
   (type $struct (struct (field (mut funcref)) (field (mut externref)) (field (mut anyref))))
   ;; SHARED:      (type $array (shared (array (mut (ref null $struct)))))
   ;; UNSHARED:      (type $array (array (mut (ref null $struct))))
+  ;; KEEP-EXTERNS:      (type $array (array (mut (ref null $struct))))
   (type $array (array (mut (ref null $struct))))
 
+  ;; KEEP-EXTERNS:      (type $3 (func (param externref)))
+
+  ;; KEEP-EXTERNS:      (type $4 (func (param i31ref externref) (result i31ref externref)))
+
+  ;; KEEP-EXTERNS:      (type $5 (func (param (ref null $array))))
+
+  ;; KEEP-EXTERNS:      (type $6 (func (param (ref $struct))))
+
+  ;; KEEP-EXTERNS:      (type $7 (func (param (ref $struct) (ref i31))))
+
+  ;; KEEP-EXTERNS:      (type $8 (func (param (ref $struct)) (result externref)))
+
+  ;; KEEP-EXTERNS:      (type $9 (func (param externref) (result externref)))
+
+  ;; KEEP-EXTERNS:      (import "env" "imported_global" (global $imported_global externref))
+
+  ;; KEEP-EXTERNS:      (import "env" "imported_func" (func $imported_func (type $4) (param i31ref externref) (result i31ref externref)))
   (import "env" "imported_func" (func $imported_func (param funcref externref) (result funcref externref)))
   (import "env" "imported_global" (global $imported_global externref))
   ;; SHARED:      (type $3 (func (param externref)))
@@ -92,8 +114,14 @@
   ;; UNSHARED:      (import "env" "extern_to_any" (func $extern_to_any (exact (type $15) (param externref) (result anyref))))
 
   ;; UNSHARED:      (import "env" "tag" (tag $tag (type $3) (param externref)))
+  ;; KEEP-EXTERNS:      (import "env" "tag" (tag $tag (type $3) (param externref)))
   (import "env" "tag" (tag $tag (param externref)))
 
+  ;; KEEP-EXTERNS:      (table $funcs 1 1 funcref)
+
+  ;; KEEP-EXTERNS:      (elem $funcs (i32.const 0) $exported_func)
+
+  ;; KEEP-EXTERNS:      (export "exported_func" (func $exported_func))
   (export "exported_func" (func $exported_func))
 
   ;; SHARED:      (global $imported_global (ref null (shared i31)) (ref.i31_shared
@@ -182,6 +210,11 @@
   ;; UNSHARED-NEXT:   )
   ;; UNSHARED-NEXT:  )
   ;; UNSHARED-NEXT: )
+  ;; KEEP-EXTERNS:      (func $exported_func (type $sig) (param $f i31ref) (param $e externref) (result anyref)
+  ;; KEEP-EXTERNS-NEXT:  (any.convert_extern
+  ;; KEEP-EXTERNS-NEXT:   (local.get $e)
+  ;; KEEP-EXTERNS-NEXT:  )
+  ;; KEEP-EXTERNS-NEXT: )
   (func $exported_func (param $f funcref) (param $e externref) (result anyref)
     ;; Exported function taking funcref and externref and returning anyref.
     (any.convert_extern
@@ -203,6 +236,13 @@
   ;; UNSHARED-NEXT:  (local $eq eqref)
   ;; UNSHARED-NEXT:  (nop)
   ;; UNSHARED-NEXT: )
+  ;; KEEP-EXTERNS:      (func $basic-types (type $5) (param $a (ref null $array))
+  ;; KEEP-EXTERNS-NEXT:  (local $nf nullref)
+  ;; KEEP-EXTERNS-NEXT:  (local $ne nullexternref)
+  ;; KEEP-EXTERNS-NEXT:  (local $str stringref)
+  ;; KEEP-EXTERNS-NEXT:  (local $eq eqref)
+  ;; KEEP-EXTERNS-NEXT:  (nop)
+  ;; KEEP-EXTERNS-NEXT: )
   (func $basic-types (param $a (ref null $array))
     ;; Test lowering of array and basic heap types in parameters and locals.
     (local $nf nullfuncref)
@@ -236,6 +276,18 @@
   ;; UNSHARED-NEXT:   (global.get $imported_global)
   ;; UNSHARED-NEXT:  )
   ;; UNSHARED-NEXT: )
+  ;; KEEP-EXTERNS:      (func $ref-func-and-global (type $6) (param $s (ref $struct))
+  ;; KEEP-EXTERNS-NEXT:  (struct.set $struct 0
+  ;; KEEP-EXTERNS-NEXT:   (local.get $s)
+  ;; KEEP-EXTERNS-NEXT:   (ref.i31
+  ;; KEEP-EXTERNS-NEXT:    (i32.const 0)
+  ;; KEEP-EXTERNS-NEXT:   )
+  ;; KEEP-EXTERNS-NEXT:  )
+  ;; KEEP-EXTERNS-NEXT:  (struct.set $struct 1
+  ;; KEEP-EXTERNS-NEXT:   (local.get $s)
+  ;; KEEP-EXTERNS-NEXT:   (global.get $imported_global)
+  ;; KEEP-EXTERNS-NEXT:  )
+  ;; KEEP-EXTERNS-NEXT: )
   (func $ref-func-and-global (param $s (ref $struct))
     ;; Store ref.func and an imported externref global into struct fields.
     (struct.set $struct 0
@@ -280,6 +332,22 @@
   ;; UNSHARED-NEXT:   )
   ;; UNSHARED-NEXT:  )
   ;; UNSHARED-NEXT: )
+  ;; KEEP-EXTERNS:      (func $call-ref (type $7) (param $s (ref $struct)) (param $f (ref i31))
+  ;; KEEP-EXTERNS-NEXT:  (struct.set $struct 2
+  ;; KEEP-EXTERNS-NEXT:   (local.get $s)
+  ;; KEEP-EXTERNS-NEXT:   (call_indirect $funcs (type $sig)
+  ;; KEEP-EXTERNS-NEXT:    (struct.get $struct 0
+  ;; KEEP-EXTERNS-NEXT:     (local.get $s)
+  ;; KEEP-EXTERNS-NEXT:    )
+  ;; KEEP-EXTERNS-NEXT:    (struct.get $struct 1
+  ;; KEEP-EXTERNS-NEXT:     (local.get $s)
+  ;; KEEP-EXTERNS-NEXT:    )
+  ;; KEEP-EXTERNS-NEXT:    (i31.get_u
+  ;; KEEP-EXTERNS-NEXT:     (local.get $f)
+  ;; KEEP-EXTERNS-NEXT:    )
+  ;; KEEP-EXTERNS-NEXT:   )
+  ;; KEEP-EXTERNS-NEXT:  )
+  ;; KEEP-EXTERNS-NEXT: )
   (func $call-ref (param $s (ref $struct)) (param $f (ref $sig))
     ;; Lower call_ref to call_indirect over the $funcs table.
     (struct.set $struct 2
@@ -342,6 +410,25 @@
   ;; UNSHARED-NEXT:   )
   ;; UNSHARED-NEXT:  )
   ;; UNSHARED-NEXT: )
+  ;; KEEP-EXTERNS:      (func $call-imported-func-and-convert (type $8) (param $s (ref $struct)) (result externref)
+  ;; KEEP-EXTERNS-NEXT:  (tuple.drop 2
+  ;; KEEP-EXTERNS-NEXT:   (call $imported_func
+  ;; KEEP-EXTERNS-NEXT:    (struct.get $struct 0
+  ;; KEEP-EXTERNS-NEXT:     (local.get $s)
+  ;; KEEP-EXTERNS-NEXT:    )
+  ;; KEEP-EXTERNS-NEXT:    (extern.convert_any
+  ;; KEEP-EXTERNS-NEXT:     (struct.get $struct 2
+  ;; KEEP-EXTERNS-NEXT:      (local.get $s)
+  ;; KEEP-EXTERNS-NEXT:     )
+  ;; KEEP-EXTERNS-NEXT:    )
+  ;; KEEP-EXTERNS-NEXT:   )
+  ;; KEEP-EXTERNS-NEXT:  )
+  ;; KEEP-EXTERNS-NEXT:  (extern.convert_any
+  ;; KEEP-EXTERNS-NEXT:   (struct.get $struct 2
+  ;; KEEP-EXTERNS-NEXT:    (local.get $s)
+  ;; KEEP-EXTERNS-NEXT:   )
+  ;; KEEP-EXTERNS-NEXT:  )
+  ;; KEEP-EXTERNS-NEXT: )
   (func $call-imported-func-and-convert (param $s (ref $struct)) (result externref)
     ;; Convert anyref to externref and call an imported function.
     (tuple.drop 2
@@ -395,6 +482,18 @@
   ;; UNSHARED-NEXT:   )
   ;; UNSHARED-NEXT:  )
   ;; UNSHARED-NEXT: )
+  ;; KEEP-EXTERNS:      (func $test-tag (type $9) (param $e externref) (result externref)
+  ;; KEEP-EXTERNS-NEXT:  (try (result externref)
+  ;; KEEP-EXTERNS-NEXT:   (do
+  ;; KEEP-EXTERNS-NEXT:    (throw $tag
+  ;; KEEP-EXTERNS-NEXT:     (local.get $e)
+  ;; KEEP-EXTERNS-NEXT:    )
+  ;; KEEP-EXTERNS-NEXT:   )
+  ;; KEEP-EXTERNS-NEXT:   (catch $tag
+  ;; KEEP-EXTERNS-NEXT:    (pop externref)
+  ;; KEEP-EXTERNS-NEXT:   )
+  ;; KEEP-EXTERNS-NEXT:  )
+  ;; KEEP-EXTERNS-NEXT: )
   (func $test-tag (param $e externref) (result externref)
     ;; Throw and catch an externref tag with i31ref table conversions.
     (try (result externref)
