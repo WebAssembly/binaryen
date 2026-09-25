@@ -604,13 +604,15 @@
     )
   )
   ;; CHECK:      (func $if2drops (type $3) (result i32)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (if (result i32)
-  ;; CHECK-NEXT:    (call $if2drops)
-  ;; CHECK-NEXT:    (then
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (call $if2drops)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (call $if2drops)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (else
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (else
+  ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (call $if2drops)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
@@ -1218,43 +1220,49 @@
  ;; CHECK-NEXT:    (return)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (if (result i32)
- ;; CHECK-NEXT:    (i32.eq
- ;; CHECK-NEXT:     (local.tee $0
- ;; CHECK-NEXT:      (call $_deflate
- ;; CHECK-NEXT:       (local.get $3)
- ;; CHECK-NEXT:      )
- ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (i32.const 1)
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (then
- ;; CHECK-NEXT:     (i32.store
- ;; CHECK-NEXT:      (local.get $1)
- ;; CHECK-NEXT:      (i32.load offset=20
- ;; CHECK-NEXT:       (local.get $3)
- ;; CHECK-NEXT:      )
- ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (local.set $0
- ;; CHECK-NEXT:      (call $_deflateEnd
- ;; CHECK-NEXT:       (local.get $3)
- ;; CHECK-NEXT:      )
- ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (global.set $global$1
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (i32.eq
+ ;; CHECK-NEXT:    (local.tee $0
+ ;; CHECK-NEXT:     (call $_deflate
  ;; CHECK-NEXT:      (local.get $3)
  ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (i32.const 0)
  ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (else
- ;; CHECK-NEXT:     (drop
- ;; CHECK-NEXT:      (call $_deflateEnd
+ ;; CHECK-NEXT:    (i32.const 1)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (block (result i32)
+ ;; CHECK-NEXT:      (i32.store
+ ;; CHECK-NEXT:       (local.get $1)
+ ;; CHECK-NEXT:       (i32.load offset=20
+ ;; CHECK-NEXT:        (local.get $3)
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (local.set $0
+ ;; CHECK-NEXT:       (call $_deflateEnd
+ ;; CHECK-NEXT:        (local.get $3)
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (global.set $global$1
  ;; CHECK-NEXT:       (local.get $3)
  ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (i32.const 0)
  ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (global.set $global$1
- ;; CHECK-NEXT:      (local.get $3)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (else
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (block (result i32)
+ ;; CHECK-NEXT:      (drop
+ ;; CHECK-NEXT:       (call $_deflateEnd
+ ;; CHECK-NEXT:        (local.get $3)
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (global.set $global$1
+ ;; CHECK-NEXT:       (local.get $3)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (i32.const 0)
  ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (i32.const 0)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
@@ -1416,4 +1424,108 @@
    )
   )
  )
+)
+
+(module
+  ;; Sinking drop into arms of concrete if
+  ;; CHECK:      (type $struct (struct (field (mut i32))))
+  (type $struct (struct (field (mut i32))))
+
+  ;; CHECK:      (type $1 (func (result i32)))
+
+  ;; CHECK:      (type $2 (func (param i32 i32 i32)))
+
+  ;; CHECK:      (type $3 (func (param i32)))
+
+  ;; CHECK:      (type $4 (func (param (ref null $struct) i32) (result (ref null $struct))))
+
+  ;; CHECK:      (type $5 (func (param i32 (ref null $struct))))
+
+  ;; CHECK:      (func $bar (type $1) (result i32)
+  ;; CHECK-NEXT:  (i32.const 1)
+  ;; CHECK-NEXT: )
+  (func $bar (result i32)
+    (i32.const 1)
+  )
+
+  ;; CHECK:      (func $pure-arms (type $2) (param $c i32) (param $x i32) (param $y i32)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $pure-arms (param $c i32) (param $x i32) (param $y i32)
+    (drop
+      (if (result i32)
+        (local.get $c)
+        (then (local.get $x))
+        (else (local.get $y))
+      )
+    )
+  )
+
+  ;; CHECK:      (func $effectful-arms (type $3) (param $c i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (local.get $c)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (call $bar)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (else
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (call $bar)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $effectful-arms (param $c i32)
+    (drop
+      (if (result i32)
+        (local.get $c)
+        (then (call $bar))
+        (else (call $bar))
+      )
+    )
+  )
+
+  ;; CHECK:      (func $put (type $4) (param $this (ref null $struct)) (param $v i32) (result (ref null $struct))
+  ;; CHECK-NEXT:  (struct.set $struct 0
+  ;; CHECK-NEXT:   (local.get $this)
+  ;; CHECK-NEXT:   (local.get $v)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.get $this)
+  ;; CHECK-NEXT: )
+  (func $put (param $this (ref null $struct)) (param $v i32) (result (ref null $struct))
+    (struct.set $struct 0 (local.get $this) (local.get $v))
+    (local.get $this)
+  )
+
+  ;; CHECK:      (func $gc-effectful-arms (type $5) (param $c i32) (param $b (ref null $struct))
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (local.get $c)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (call $put
+  ;; CHECK-NEXT:      (local.get $b)
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (else
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (call $put
+  ;; CHECK-NEXT:      (local.get $b)
+  ;; CHECK-NEXT:      (i32.const 2)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $gc-effectful-arms (param $c i32) (param $b (ref null $struct))
+    (drop
+      (if (result (ref null $struct))
+        (local.get $c)
+        (then (call $put (local.get $b) (i32.const 1)))
+        (else (call $put (local.get $b) (i32.const 2)))
+      )
+    )
+  )
 )
