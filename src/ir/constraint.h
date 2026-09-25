@@ -408,7 +408,9 @@ private:
   // Given a constraint on a local, note refs.
   void noteRefs(Index index, const Constraint& c);
 
-  // Given an index, erase constraints referring to it.
+  // Given an index, erase constraints referring to it. This is called when the
+  // information for this index is wiped out, so we clear the refs and the
+  // constraints referred to.
   void eraseStaleRefs(Index index);
 
   // Internal version, with a flag to flip the constraint. Whenever we apply
