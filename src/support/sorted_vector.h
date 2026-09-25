@@ -37,6 +37,8 @@ template<typename T> struct SortedVector : public std::vector<T> {
   using Base::push_back;
   using Base::resize;
   using Base::size;
+  using typename Base::const_iterator;
+  using typename Base::iterator;
 
   SortedVector() = default;
 
@@ -88,8 +90,8 @@ template<typename T> struct SortedVector : public std::vector<T> {
   }
 
   template<typename K = T> bool erase(const K& x) {
-    auto it = std::lower_bound(begin(), end(), x);
-    if (it != end() && *it == x) {
+    auto it = find(x);
+    if (it != end()) {
       std::move(it + 1, end(), it);
       resize(size() - 1);
       return true;
@@ -97,24 +99,24 @@ template<typename T> struct SortedVector : public std::vector<T> {
     return false;
   }
 
-  template<typename K = T> T* find(const K& x) {
+  template<typename K = T> iterator find(const K& x) {
     auto it = std::lower_bound(begin(), end(), x);
     if (it != end() && *it == x) {
-      return &*it;
+      return it;
     }
-    return nullptr;
+    return end();
   }
 
-  template<typename K = T> const T* find(const K& x) const {
+  template<typename K = T> const_iterator find(const K& x) const {
     auto it = std::lower_bound(begin(), end(), x);
     if (it != end() && *it == x) {
-      return &*it;
+      return it;
     }
-    return nullptr;
+    return end();
   }
 
   template<typename K = T> bool has(const K& x) const {
-    return find(x) != nullptr;
+    return find(x) != end();
   }
 
   template<typename F> SortedVector& filter(F keep) {

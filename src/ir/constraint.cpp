@@ -1247,8 +1247,8 @@ void BasicBlockConstraintMap::approximateAndInternal(Index index,
     // If we are applying a constraint to another local, and we know that
     // local's value, propagate it. That is, if x == 42, then if we try to apply
     // y < x we instead apply y < 42, which is better.
-    if (auto* otherConstraints = map.find(*other)) {
-      if (auto lit = otherConstraints->value.getLiteral()) {
+    if (auto iter = map.find(*other); iter != map.end()) {
+      if (auto lit = iter->value.getLiteral()) {
         actual.term = Term{*lit};
       }
     }
@@ -1313,15 +1313,15 @@ Result BasicBlockConstraintMap::proves(LocalConstraint condition) const {
   // about, propagate it. TODO: even without equality, we can add more
   // constraints here (e.g. x < y and y < 10 can lead to proving x < 10)
   if (auto* other = std::get_if<Index>(&condition.constraint.term)) {
-    if (auto* otherConstraints = map.find(*other)) {
-      if (auto lit = otherConstraints->value.getLiteral()) {
+    if (auto iter = map.find(*other); iter != map.end()) {
+      if (auto lit = iter->value.getLiteral()) {
         condition.constraint.term = Term{*lit};
       }
     }
   }
 
-  if (auto* constraints = map.find(condition.local)) {
-    return constraints->value.proves(condition.constraint);
+  if (auto iter = map.find(condition.local); iter != map.end()) {
+    return iter->value.proves(condition.constraint);
   }
   return Unknown;
 }
@@ -1333,17 +1333,17 @@ void BasicBlockConstraintMap::noteRefs(Index index, const Constraint& c) {
 }
 
 void BasicBlockConstraintMap::eraseStaleRefs(Index index) {
-  auto* entry = refs.find(index);
-  if (!entry) {
+  auto iter = refs.find(index);
+  if (iter == refs.end()) {
     return;
   }
 
-  auto refIndexes = std::move(entry->value);
+  auto refIndexes = std::move(iter->value);
   refs.erase(index);
 
   for (auto refIndex : refIndexes) {
-    if (auto* target = map.find(refIndex)) {
-      auto& refConstraints = target->value;
+    if (auto iter = map.find(refIndex); iter != map.end()) {
+      auto& refConstraints = iter->value;
       std::erase_if(refConstraints, [&](const auto& c) {
         if (auto* i = std::get_if<Index>(&c.term)) {
           if (*i == index) {

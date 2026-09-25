@@ -342,8 +342,8 @@ struct BasicBlockConstraintMap {
     // We should not be called in unreachable code.
     assert(!unreachable);
 
-    if (auto* entry = map.find(index)) {
-      auto& constraints = entry->value;
+    if (auto iter = map.find(index); iter != map.end()) {
+      auto& constraints = iter->value;
       // If we can prove nothing, we should have removed it from the map.
       assert(!constraints.provesNothing());
       // If we can prove everything, we should be entirely unreachable.
