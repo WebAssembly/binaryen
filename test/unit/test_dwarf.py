@@ -1,5 +1,8 @@
+import base64
+import gzip
 import os
 import subprocess
+import tempfile
 
 from scripts.test import shared
 
@@ -7,12 +10,96 @@ from . import utils
 
 
 class DWARFTest(utils.BinaryenTestCase):
+    def test_tombstone_roundtrip(self):
+        def custom_section(name, contents):
+            name = name.encode()
+            payload = bytes([len(name)]) + name + contents
+            self.assertLess(len(payload), 128)
+            return bytes([0, len(payload)]) + payload
+
+        # A minimal DWARF v4 unit whose compile unit and subprogram both use
+        # the all-ones dead-address sentinel for DW_AT_low_pc.
+        sections = {
+            '.debug_abbrev': '011101030e110112060000022e0011011206030e000000',
+            '.debug_info': ('22000000040000000000040100000000ffffffff'
+                            '0300000002ffffffff030000000f00000000'),
+            '.debug_str': '746573742d636c616e672e63707000666f6f00',
+        }
+        wasm = bytes.fromhex('0061736d01000000')
+        for name, contents in sections.items():
+            wasm += custom_section(name, bytes.fromhex(contents))
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            input_file = os.path.join(temp_dir, 'input.wasm')
+            output_file = os.path.join(temp_dir, 'output.wasm')
+            with open(input_file, 'wb') as f:
+                f.write(wasm)
+            shared.run_process(shared.WASM_OPT +
+                               [input_file, '--roundtrip', '-g',
+                                '-o', output_file])
+            dump = shared.run_process(shared.WASM_OPT +
+                                      [output_file, '--dwarfdump'],
+                                      capture_output=True).stdout
+            self.assertEqual(dump.count('0x00000000ffffffff'), 2)
+
+    def test_missing_start_with_mapped_end(self):
+        # The unused subprogram starts at zero (no location mapping). Point its
+        # relative high_pc at the end of the preceding live subprogram. The
+        # surviving end must not make the missing start look like a live scope.
+        path = os.path.join(shared.options.binaryen_test, 'passes',
+                            'ignore_missing_func_dwarf.wasm')
+        with open(path, 'rb') as f:
+            wasm = f.read()
+        old_pair = bytes.fromhex('000000005a000000')
+        self.assertEqual(wasm.count(old_pair), 1)
+        wasm = wasm.replace(old_pair, bytes.fromhex('000000005f000000'))
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            input_file = os.path.join(temp_dir, 'input.wasm')
+            output_file = os.path.join(temp_dir, 'output.wasm')
+            with open(input_file, 'wb') as f:
+                f.write(wasm)
+            shared.run_process(shared.WASM_OPT +
+                               [input_file, '--roundtrip', '-g',
+                                '-o', output_file])
+            dump = shared.run_process(shared.WASM_OPT +
+                                      [output_file, '--dwarfdump'],
+                                      capture_output=True).stdout
+            unused = next(part for part in dump.split('DW_TAG_subprogram')
+                          if '"unused"' in part)
+            self.assertIn('DW_AT_low_pc [DW_FORM_addr]\t'
+                          '(0x00000000ffffffff)', unused)
+
+    def test_memory64_range_list_fallback(self):
+        # This fixture is a two-function wasm64 module with a DWARF v4 CU and
+        # .debug_ranges, compiled using clang --target=wasm64-unknown-unknown
+        # -O1 -g. The vendored emitter still writes 4-byte range entries, so
+        # range-list repair must not append an invalid 8-byte-CU offset.
+        path = self.input_path('dwarf/memory64_ranges.wasm.gz.b64')
+        with open(path, 'rb') as f:
+            wasm = gzip.decompress(base64.b64decode(f.read()))
+        with tempfile.TemporaryDirectory() as temp_dir:
+            input_file = os.path.join(temp_dir, 'input.wasm')
+            output_file = os.path.join(temp_dir, 'output.wasm')
+            with open(input_file, 'wb') as f:
+                f.write(wasm)
+            shared.run_process(shared.WASM_OPT +
+                               [input_file, '--roundtrip', '-g',
+                                '-o', output_file])
+            dump = shared.run_process(shared.WASM_OPT +
+                                      [output_file, '--dwarfdump'],
+                                      capture_output=True).stdout
+            self.assertIn('DW_AT_ranges [DW_FORM_sec_offset]\t(0x00000000',
+                          dump)
+
     def test_no_crash(self):
         # run dwarf processing on some interesting large files, too big to be
         # worth putting in passes where the text output would be massive. We
         # just check that no assertion are hit.
         path = self.input_path('dwarf')
         for name in os.listdir(path):
+            if not name.endswith('.wasm'):
+                continue
             args = [os.path.join(path, name)] + \
                    ['-g', '--dwarfdump', '--roundtrip', '--dwarfdump']
             shared.run_process(shared.WASM_OPT + args, capture_output=True)
