@@ -321,6 +321,9 @@ bool ParseDeclsCtx::skipFunctionBody() {
       --depth;
       continue;
     }
+    if (in.takeID()) {
+      continue;
+    }
     if (auto kw = in.takeKeyword()) {
       if (*kw == "block"sv || *kw == "loop"sv || *kw == "if"sv ||
           *kw == "try"sv || *kw == "try_table"sv) {
