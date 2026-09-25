@@ -22,4 +22,4 @@
  ;; CHECK:      (import "fuzzing-support" "log-f32" (func $fimport$3 (type $1) (param f32)))
  (import "fuzzing-support" "log-f32" (func $fimport$3 (param f32)))
 )
-;; CHECK:      (import "fuzzing-support" "log-branch" (func $fimport$2_2 (type $2) (param i32 i32 i32) (result i32)))
+;; CHECK:      (import "fuzzing-support" "log-branch" (func $log-branch (type $2) (param i32 i32 i32) (result i32)))

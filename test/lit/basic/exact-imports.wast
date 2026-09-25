@@ -72,26 +72,26 @@
 
 ;; CHECK-BIN-NODEBUG:      (type $0 (func (param i32) (result i64)))
 
-;; CHECK-BIN-NODEBUG:      (import "" "" (func $fimport$0 (exact (type $0) (param i32) (result i64))))
+;; CHECK-BIN-NODEBUG:      (import "" "" (func $"" (exact (type $0) (param i32) (result i64))))
 
-;; CHECK-BIN-NODEBUG:      (import "" "" (func $fimport$1 (exact (type $0) (param i32) (result i64))))
+;; CHECK-BIN-NODEBUG:      (import "" "" (func $_1 (exact (type $0) (param i32) (result i64))))
 
-;; CHECK-BIN-NODEBUG:      (import "" "" (func $fimport$2 (exact (type $0) (param i32) (result i64))))
+;; CHECK-BIN-NODEBUG:      (import "" "" (func $_2 (exact (type $0) (param i32) (result i64))))
 
-;; CHECK-BIN-NODEBUG:      (import "" "" (func $fimport$3 (exact (type $0) (param i32) (result i64))))
+;; CHECK-BIN-NODEBUG:      (import "" "" (func $_3 (exact (type $0) (param i32) (result i64))))
 
-;; CHECK-BIN-NODEBUG:      (import "" "" (func $fimport$4 (exact (type $0) (param i32) (result i64))))
+;; CHECK-BIN-NODEBUG:      (import "" "" (func $_4 (exact (type $0) (param i32) (result i64))))
 
-;; CHECK-BIN-NODEBUG:      (import "" "" (func $fimport$5 (exact (type $0) (param i32) (result i64))))
+;; CHECK-BIN-NODEBUG:      (import "" "" (func $_5 (exact (type $0) (param i32) (result i64))))
 
-;; CHECK-BIN-NODEBUG:      (global $global$0 (ref (exact $0)) (ref.func $fimport$0))
+;; CHECK-BIN-NODEBUG:      (global $global$0 (ref (exact $0)) (ref.func $""))
 
-;; CHECK-BIN-NODEBUG:      (global $global$1 (ref (exact $0)) (ref.func $fimport$1))
+;; CHECK-BIN-NODEBUG:      (global $global$1 (ref (exact $0)) (ref.func $_1))
 
-;; CHECK-BIN-NODEBUG:      (global $global$2 (ref (exact $0)) (ref.func $fimport$2))
+;; CHECK-BIN-NODEBUG:      (global $global$2 (ref (exact $0)) (ref.func $_2))
 
-;; CHECK-BIN-NODEBUG:      (global $global$3 (ref (exact $0)) (ref.func $fimport$3))
+;; CHECK-BIN-NODEBUG:      (global $global$3 (ref (exact $0)) (ref.func $_3))
 
-;; CHECK-BIN-NODEBUG:      (global $global$4 (ref (exact $0)) (ref.func $fimport$4))
+;; CHECK-BIN-NODEBUG:      (global $global$4 (ref (exact $0)) (ref.func $_4))
 
-;; CHECK-BIN-NODEBUG:      (global $global$5 (ref (exact $0)) (ref.func $fimport$5))
+;; CHECK-BIN-NODEBUG:      (global $global$5 (ref (exact $0)) (ref.func $_5))

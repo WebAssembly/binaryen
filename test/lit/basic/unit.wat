@@ -75,11 +75,11 @@
   (elem (i32.const 0) $z $big_negative $z $z $w $w $importedDoubles $w $z $cneg)
   ;; CHECK-TEXT:      (memory $0 4096 4096)
   ;; CHECK-BIN:      (memory $0 4096 4096)
-  ;; CHECK-BIN-NODEBUG:      (import "env" "_emscripten_asm_const_vi" (func $fimport$0 (type $1)))
+  ;; CHECK-BIN-NODEBUG:      (import "env" "_emscripten_asm_const_vi" (func $_emscripten_asm_const_vi (type $1)))
 
-  ;; CHECK-BIN-NODEBUG:      (import "asm2wasm" "f64-to-int" (func $fimport$1 (type $5) (param f64) (result i32)))
+  ;; CHECK-BIN-NODEBUG:      (import "asm2wasm" "f64-to-int" (func $f64-to-int (type $5) (param f64) (result i32)))
 
-  ;; CHECK-BIN-NODEBUG:      (import "asm2wasm" "f64-rem" (func $fimport$2 (type $4) (param f64 f64) (result f64)))
+  ;; CHECK-BIN-NODEBUG:      (import "asm2wasm" "f64-rem" (func $f64-rem (type $4) (param f64 f64) (result f64)))
 
   ;; CHECK-BIN-NODEBUG:      (memory $0 4096 4096)
   (memory $0 4096 4096)
@@ -1854,11 +1854,11 @@
 
 ;; CHECK-BIN-NODEBUG:      (table $0 10 funcref)
 
-;; CHECK-BIN-NODEBUG:      (elem $0 (i32.const 0) $17 $0 $17 $17 $18 $18 $1 $18 $17 $15)
+;; CHECK-BIN-NODEBUG:      (elem $0 (i32.const 0) $17 $big_negative $17 $17 $18 $18 $1 $18 $17 $15)
 
-;; CHECK-BIN-NODEBUG:      (export "big_negative" (func $0))
+;; CHECK-BIN-NODEBUG:      (export "big_negative" (func $big_negative))
 
-;; CHECK-BIN-NODEBUG:      (func $0 (type $1)
+;; CHECK-BIN-NODEBUG:      (func $big_negative (type $1)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $0 f64)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local.set $0
 ;; CHECK-BIN-NODEBUG-NEXT:   (f64.const -2147483648)
@@ -2011,7 +2011,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $0 i32)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $1 f64)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local.set $0
-;; CHECK-BIN-NODEBUG-NEXT:   (call $fimport$1
+;; CHECK-BIN-NODEBUG-NEXT:   (call $f64-to-int
 ;; CHECK-BIN-NODEBUG-NEXT:    (local.get $1)
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
@@ -2139,7 +2139,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
 ;; CHECK-BIN-NODEBUG:      (func $9 (type $3) (result f64)
-;; CHECK-BIN-NODEBUG-NEXT:  (call $fimport$2
+;; CHECK-BIN-NODEBUG-NEXT:  (call $f64-rem
 ;; CHECK-BIN-NODEBUG-NEXT:   (f64.const 5.5)
 ;; CHECK-BIN-NODEBUG-NEXT:   (f64.const 1.2)
 ;; CHECK-BIN-NODEBUG-NEXT:  )

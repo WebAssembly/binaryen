@@ -22,7 +22,7 @@
 
  ;; MOD1:      (type $2 (func (result i32)))
 
- ;; MOD1:      (import "primary" "table" (table $timport$0 3 funcref))
+ ;; MOD1:      (import "primary" "table" (table $table 3 funcref))
 
  ;; MOD1:      (import "primary" "trampoline_std::operator<<(std::__2::basic_ostream<char, std::__2::char_traits<char>>&, wasm::Module&)" (func $"trampoline_std::operator<<(std::__2::basic_ostream<char, std::__2::char_traits<char>>&, wasm::Module&)" (exact (result f32))))
 
@@ -73,7 +73,7 @@
 
  ;; MOD2:      (type $2 (func (result i64)))
 
- ;; MOD2:      (import "primary" "table" (table $timport$0 3 funcref))
+ ;; MOD2:      (import "primary" "table" (table $table 3 funcref))
 
  ;; MOD2:      (import "primary" "trampoline_std::operator<<(std::__2::basic_ostream<char, std::__2::char_traits<char>>&, wasm::Module&)" (func $"trampoline_std::operator<<(std::__2::basic_ostream<char, std::__2::char_traits<char>>&, wasm::Module&)" (exact (result f32))))
 
@@ -124,7 +124,7 @@
 
  ;; MOD3:      (type $2 (func (result f32)))
 
- ;; MOD3:      (import "primary" "table" (table $timport$0 3 funcref))
+ ;; MOD3:      (import "primary" "table" (table $table 3 funcref))
 
  ;; MOD3:      (import "primary" "trampoline_wasm::Literal::Literal(std::__2::array<wasm::Literal, 4ul> const&)" (func $"trampoline_wasm::Literal::Literal(std::__2::array<wasm::Literal, 4ul> const&)" (exact (result i64))))
 
@@ -175,7 +175,7 @@
 
 ;; PRIMARY:      (import "placeholder.1" "2" (func $placeholder_2 (result i32)))
 
-;; PRIMARY:      (table $0 3 funcref)
+;; PRIMARY:      (table $table 3 funcref)
 
 ;; PRIMARY:      (elem $0 (i32.const 0) $placeholder_0 $placeholder_1 $placeholder_2)
 
@@ -185,7 +185,7 @@
 
 ;; PRIMARY:      (export "trampoline_wasm::Type::getFeatures() const" (func $"trampoline_wasm::Type::getFeatures() const"))
 
-;; PRIMARY:      (export "table" (table $0))
+;; PRIMARY:      (export "table" (table $table))
 
 ;; PRIMARY:      (func $"trampoline_wasm::Literal::Literal(std::__2::array<wasm::Literal, 4ul> const&)" (result i64)
 ;; PRIMARY-NEXT:  (call_indirect (type $ret-i64)
