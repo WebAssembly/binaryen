@@ -2683,3 +2683,269 @@
 ;; CHECK-NEXT:   )
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
+(module
+  ;; All tags keep externref parameters unchanged while other reference
+  ;; parameters are lowered to shared types.
+  (tag $js-tag (import "WebAssembly" "JSTag") (param externref))
+  ;; CHECK:      (type $0 (func (result i32 (ref (shared i31)))))
+
+  ;; CHECK:      (type $1 (func (param externref)))
+
+  ;; CHECK:      (type $2 (func (param i32 (ref extern))))
+
+  ;; CHECK:      (type $3 (func (param (ref null (shared any)))))
+
+  ;; CHECK:      (type $4 (func (param (ref null (shared i31)) (ref (shared i31)) (ref null (shared any)))))
+
+  ;; CHECK:      (type $5 (func (result (ref null (shared i31)))))
+
+  ;; CHECK:      (type $6 (func))
+
+  ;; CHECK:      (type $7 (func (param externref) (result (ref null (shared i31)))))
+
+  ;; CHECK:      (type $8 (func (param (ref null (shared i31))) (result externref)))
+
+  ;; CHECK:      (import "WebAssembly" "JSTag" (tag $js-tag (type $1) (param externref)))
+
+  ;; CHECK:      (table $externs 0 externref)
+
+  ;; CHECK:      (tag $export-tag (type $2) (param i32 (ref extern)))
+  (tag $export-tag (export "export_tag") (param i32 (ref extern)))
+  ;; CHECK:      (tag $internal-tag (type $1) (param externref))
+  (tag $internal-tag (param externref))
+  ;; CHECK:      (tag $anyref-tag (type $3) (param (ref null (shared any))))
+  (tag $anyref-tag (param anyref))
+
+  ;; CHECK:      (export "export_tag" (tag $export-tag))
+
+  ;; CHECK:      (func $throw-tags (type $4) (param $x (ref null (shared i31))) (param $y (ref (shared i31))) (param $z (ref null (shared any)))
+  ;; CHECK-NEXT:  (throw $js-tag
+  ;; CHECK-NEXT:   (call $index_to_extern
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (throw $export-tag
+  ;; CHECK-NEXT:   (i32.const 42)
+  ;; CHECK-NEXT:   (ref.cast (ref extern)
+  ;; CHECK-NEXT:    (call $index_to_extern
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (throw $internal-tag
+  ;; CHECK-NEXT:   (call $index_to_extern
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (throw $anyref-tag
+  ;; CHECK-NEXT:   (local.get $z)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $throw-tags (param $x externref) (param $y (ref extern)) (param $z anyref)
+    ;; Throwing any tag with externref parameters converts externref operands
+    ;; from i31ref to externref, while other reference parameters are lowered.
+    (throw $js-tag
+      (local.get $x)
+    )
+    (throw $export-tag
+      (i32.const 42)
+      (local.get $y)
+    )
+    (throw $internal-tag
+      (local.get $x)
+    )
+    (throw $anyref-tag
+      (local.get $z)
+    )
+  )
+
+  ;; CHECK:      (func $try-legacy (type $5) (result (ref null (shared i31)))
+  ;; CHECK-NEXT:  (try (result (ref null (shared i31)))
+  ;; CHECK-NEXT:   (do
+  ;; CHECK-NEXT:    (ref.null (shared none))
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (catch $js-tag
+  ;; CHECK-NEXT:    (call $extern_to_index
+  ;; CHECK-NEXT:     (pop externref)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (catch $internal-tag
+  ;; CHECK-NEXT:    (call $extern_to_index
+  ;; CHECK-NEXT:     (pop externref)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (catch $anyref-tag
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (pop (ref null (shared any)))
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.null (shared none))
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $try-legacy (result externref)
+    ;; Legacy try/catch wraps the pop of any tag with externref parameters in a
+    ;; conversion from externref to i31ref.
+    (try (result externref)
+      (do
+        (ref.null noextern)
+      )
+      (catch $js-tag
+        (pop externref)
+      )
+      (catch $internal-tag
+        (pop externref)
+      )
+      (catch $anyref-tag
+        (drop
+          (pop anyref)
+        )
+        (ref.null noextern)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $try-legacy-tuple (type $0) (result i32 (ref (shared i31)))
+  ;; CHECK-NEXT:  (local $0 (tuple i32 (ref extern)))
+  ;; CHECK-NEXT:  (try (type $0) (result i32 (ref (shared i31)))
+  ;; CHECK-NEXT:   (do
+  ;; CHECK-NEXT:    (tuple.make 2
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (catch $export-tag
+  ;; CHECK-NEXT:    (local.set $0
+  ;; CHECK-NEXT:     (pop (tuple i32 (ref extern)))
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (tuple.make 2
+  ;; CHECK-NEXT:     (tuple.extract 2 0
+  ;; CHECK-NEXT:      (local.get $0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (call $extern_to_index
+  ;; CHECK-NEXT:       (tuple.extract 2 1
+  ;; CHECK-NEXT:        (local.get $0)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $try-legacy-tuple (result i32 (ref extern))
+    ;; Legacy try/catch on a multi-value exported tag converts the externref
+    ;; tuple element from externref to i31ref.
+    (try (result i32 (ref extern))
+      (do
+        (tuple.make 2
+          (i32.const 0)
+          (unreachable)
+        )
+      )
+      (catch $export-tag
+        (pop (tuple i32 (ref extern)))
+      )
+    )
+  )
+
+  ;; CHECK:      (func $try-legacy-tuple-nested (type $6)
+  ;; CHECK-NEXT:  (local $t (tuple i32 (ref (shared i31))))
+  ;; CHECK-NEXT:  (local $1 (tuple i32 (ref extern)))
+  ;; CHECK-NEXT:  (local $2 (tuple i32 (ref extern)))
+  ;; CHECK-NEXT:  (try
+  ;; CHECK-NEXT:   (do
+  ;; CHECK-NEXT:    (nop)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (catch $export-tag
+  ;; CHECK-NEXT:    (local.set $2
+  ;; CHECK-NEXT:     (pop (tuple i32 (ref extern)))
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $t
+  ;; CHECK-NEXT:     (block (type $0) (result i32 (ref (shared i31)))
+  ;; CHECK-NEXT:      (local.set $1
+  ;; CHECK-NEXT:       (local.get $2)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (tuple.make 2
+  ;; CHECK-NEXT:       (tuple.extract 2 0
+  ;; CHECK-NEXT:        (local.get $1)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (ref.as_non_null
+  ;; CHECK-NEXT:        (call $extern_to_index
+  ;; CHECK-NEXT:         (tuple.extract 2 1
+  ;; CHECK-NEXT:          (local.get $1)
+  ;; CHECK-NEXT:         )
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $try-legacy-tuple-nested
+    (local $t (tuple i32 (ref extern)))
+    ;; A multi-value pop inside an expression is wrapped in a block by visitPop
+    ;; and then hoisted to the start of the catch body by handleBlockNestedPop.
+    (try
+      (do
+        (nop)
+      )
+      (catch $export-tag
+        (local.set $t
+          (pop (tuple i32 (ref extern)))
+        )
+      )
+    )
+  )
+)
+
+;; CHECK:      (func $extern_to_index (type $7) (param $0 externref) (result (ref null (shared i31)))
+;; CHECK-NEXT:  (local $1 i32)
+;; CHECK-NEXT:  (if (result (ref null (shared i31)))
+;; CHECK-NEXT:   (ref.is_null
+;; CHECK-NEXT:    (local.get $0)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (ref.null (shared none))
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (else
+;; CHECK-NEXT:    (if (result (ref (shared i31)))
+;; CHECK-NEXT:     (i32.ge_s
+;; CHECK-NEXT:      (local.tee $1
+;; CHECK-NEXT:       (table.grow $externs
+;; CHECK-NEXT:        (local.get $0)
+;; CHECK-NEXT:        (i32.const 1)
+;; CHECK-NEXT:       )
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:      (i32.const 0)
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:     (then
+;; CHECK-NEXT:      (ref.i31_shared
+;; CHECK-NEXT:       (local.get $1)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:     (else
+;; CHECK-NEXT:      (unreachable)
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $index_to_extern (type $8) (param $0 (ref null (shared i31))) (result externref)
+;; CHECK-NEXT:  (if (result externref)
+;; CHECK-NEXT:   (ref.is_null
+;; CHECK-NEXT:    (local.get $0)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (ref.null noextern)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (else
+;; CHECK-NEXT:    (table.get $externs
+;; CHECK-NEXT:     (i31.get_u
+;; CHECK-NEXT:      (local.get $0)
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
