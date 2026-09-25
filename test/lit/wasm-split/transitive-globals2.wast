@@ -3,8 +3,9 @@
 ;; RUN: wasm-dis -all %t.2.wasm | filecheck %s --check-prefix SECONDARY
 
 ;; The dependence chain is $g4->$g3->$g2->$g1, and because $g4 is used in the
-;; primary module, all four globals should end up in the primary module. Only
-;; $g2 needs to be exported to the secondary module, not $g1.
+;; primary module, all four globals should end up in the primary module. The
+;; secondary module uses $g2, so it will have $g2 and $g1 it depends on.
+;; (Immmutable globals are copied to whichever modules they are used.)
 
 (module
   (global $g1 i32 (i32.const 42))
@@ -27,7 +28,6 @@
 ;; PRIMARY-NEXT:  (global $g2 i32 (global.get $g1))
 ;; PRIMARY-NEXT:  (global $g3 i32 (global.get $g2))
 ;; PRIMARY-NEXT:  (global $g4 i32 (global.get $g3))
-;; PRIMARY-NEXT:  (export "global" (global $g2))
 ;; PRIMARY-NEXT:  (func $keep (type $0)
 ;; PRIMARY-NEXT:   (drop
 ;; PRIMARY-NEXT:    (global.get $g4)
@@ -37,7 +37,8 @@
 
 ;; SECONDARY:      (module
 ;; SECONDARY-NEXT:  (type $0 (func))
-;; SECONDARY-NEXT:  (import "primary" "global" (global $g2 i32))
+;; SECONDARY-NEXT:  (global $g1 i32 (i32.const 42))
+;; SECONDARY-NEXT:  (global $g2 i32 (global.get $g1))
 ;; SECONDARY-NEXT:  (func $split (type $0)
 ;; SECONDARY-NEXT:   (drop
 ;; SECONDARY-NEXT:    (global.get $g2)

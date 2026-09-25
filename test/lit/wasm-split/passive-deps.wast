@@ -22,7 +22,6 @@
 ;; PRIMARY-NEXT:  (type $0 (func))
 ;; PRIMARY-NEXT:  (global $g funcref (ref.null nofunc))
 ;; PRIMARY-NEXT:  (elem $passive-elem funcref (item (global.get $g)))
-;; PRIMARY-NEXT:  (export "global" (global $g))
 ;; PRIMARY-NEXT:  (func $keep (type $0)
 ;; PRIMARY-NEXT:   (elem.drop $passive-elem)
 ;; PRIMARY-NEXT:  )
@@ -30,7 +29,7 @@
 
 ;; SECONDARY:      (module
 ;; SECONDARY-NEXT:  (type $0 (func))
-;; SECONDARY-NEXT:  (import "primary" "global" (global $g funcref))
+;; SECONDARY-NEXT:  (global $g funcref (ref.null nofunc))
 ;; SECONDARY-NEXT:  (func $split (type $0)
 ;; SECONDARY-NEXT:   (drop
 ;; SECONDARY-NEXT:    (global.get $g)

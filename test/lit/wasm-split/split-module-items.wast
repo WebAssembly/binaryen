@@ -5,8 +5,10 @@
 ;; Check that
 ;; 1. Items only used in the primary module stay in the primary module
 ;; 2. Items only used in the secondary module are moved to the secondary module
-;; 3. Items used in both modules are exported from the primary and imported from
-;;    the secondary module
+;; 3. Items (that are not immutable globals) used in both modules are exported
+;;    from the primary and imported from the secondary module
+;; 3-1. Immutable globals used in both modules stay in the primary module and
+;;      also are copied to the secondary module
 
 (module
  (rec
@@ -78,24 +80,23 @@
  ;; PRIMARY-NEXT: (export "memory_1" (memory $shared-memory))
  ;; PRIMARY-NEXT: (export "table" (table $keep-table2))
  ;; PRIMARY-NEXT: (export "table_3" (table $shared-table))
- ;; PRIMARY-NEXT: (export "global" (global $shared-immutable-global))
- ;; PRIMARY-NEXT: (export "global_5" (global $shared-mutable-global))
+ ;; PRIMARY-NEXT: (export "global" (global $shared-mutable-global))
  ;; PRIMARY-NEXT: (export "tag" (tag $shared-tag))
  ;; PRIMARY-NEXT: (export "keep" (func $keep))
- ;; PRIMARY-NEXT: (export "table_8" (table $3))
+ ;; PRIMARY-NEXT: (export "table_7" (table $3))
 
  ;; SECONDARY:      (import "primary" "memory" (memory $keep-memory2 1 1))
  ;; SECONDARY-NEXT: (import "primary" "memory_1" (memory $shared-memory 1 1))
  ;; SECONDARY-NEXT: (import "primary" "table" (table $keep-table2 1 1 (ref null $2)))
  ;; SECONDARY-NEXT: (import "primary" "table_3" (table $shared-table 1 1 funcref))
- ;; SECONDARY-NEXT: (import "primary" "table_8" (table $timport$2 1 funcref))
- ;; SECONDARY-NEXT: (import "primary" "global" (global $shared-immutable-global i32))
- ;; SECONDARY-NEXT: (import "primary" "global_5" (global $shared-mutable-global (mut i32)))
+ ;; SECONDARY-NEXT: (import "primary" "table_7" (table $timport$2 1 funcref))
+ ;; SECONDARY-NEXT: (import "primary" "global" (global $shared-mutable-global (mut i32)))
  ;; SECONDARY-NEXT: (import "primary" "keep" (func $keep (exact (param i32) (result i32))))
  ;; SECONDARY-NEXT: (import "primary" "tag" (tag $shared-tag (type $1) (param i32)))
 
  ;; SECONDARY:      (global $split-immutable-global i32 (i32.const 20))
  ;; SECONDARY-NEXT: (global $split-mutable-global (mut i32) (i32.const 20))
+ ;; SECONDARY-NEXT: (global $shared-immutable-global i32 (i32.const 20))
  ;; SECONDARY-NEXT: (memory $split-memory 1 1)
  ;; SECONDARY-NEXT: (data $split-data (memory $split-memory) (i32.const 0) "a")
  ;; SECONDARY-NEXT: (table $split-table 1 1 funcref)
