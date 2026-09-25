@@ -1048,6 +1048,7 @@ inline bool Lexer::takeComment() {
   }
 
   // Block comment (possibly nested!)
+  auto startPos = pos;
   if (takePrefix("(;"sv)) {
     size_t depth = 1;
     while (depth > 0 && remaining() >= 2) {
@@ -1061,6 +1062,7 @@ inline bool Lexer::takeComment() {
     }
     if (depth > 0) {
       // TODO: Add error production for non-terminated block comment.
+      pos = startPos;
       return false;
     }
     return true;
