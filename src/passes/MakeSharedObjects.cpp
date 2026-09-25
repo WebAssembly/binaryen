@@ -740,6 +740,13 @@ struct MakeSharedObjects
   // be an import and is initialized to the shared i31 table index so internal
   // uses of the global receive the table index.
   void wrapGlobalImport(Global* global, Type origType) {
+    // Mutable imported/exported externref globals are not supported because all
+    // accesses to them would have to be rewritten to be function calls that
+    // accessed the externref table. We cannot update such accesses outside this
+    // module.
+    if (global->mutable_ == Mutable) {
+      Fatal() << "Cannot wrap mutable global " << global->name;
+    }
     Builder builder(*getModule());
     Name origName = global->name;
     Name importName =
