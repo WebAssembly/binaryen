@@ -498,7 +498,9 @@ Type GlobalTypeRewriter::getTempTupleType(Tuple tuple) {
 
 namespace TypeUpdating {
 
-void handleNonDefaultableLocals(Function* func, Module& wasm) {
+void handleNonDefaultableLocals(Function* func,
+                                Module& wasm,
+                                Index firstLocal) {
   if (!wasm.features.hasReferenceTypes()) {
     // No references, so no non-nullable ones at all.
     return;
@@ -524,6 +526,9 @@ void handleNonDefaultableLocals(Function* func, Module& wasm) {
     func, wasm, LocalStructuralDominance::NonNullableOnly);
   std::unordered_set<Index> badIndexes;
   for (auto index : info.nonDominatingIndices) {
+    if (index < firstLocal) {
+      continue;
+    }
     badIndexes.insert(index);
 
     // LocalStructuralDominance should have only looked at non-nullable indexes

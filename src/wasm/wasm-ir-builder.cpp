@@ -2329,7 +2329,7 @@ Result<> IRBuilder::makeBrOn(Index label,
     case BrOnCast:
     case BrOnCastDescEq:
       if (out->isNullable()) {
-        resultType = Type(in->getHeapType(), NonNullable);
+        resultType = in->with(NonNullable);
       } else {
         resultType = *in;
       }
