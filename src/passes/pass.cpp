@@ -123,6 +123,9 @@ void PassRegistry::registerPasses() {
   registerPass("const-hoisting",
                "hoist repeated constants to a local",
                createConstHoistingPass);
+  registerPass("constant-pooling",
+               "pool repeated constants in globals",
+               createConstantPoolingPass);
   registerPass("cfp",
                "propagate constant struct field values",
                createConstantFieldPropagationPass);

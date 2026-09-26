@@ -17,6 +17,8 @@ Current Trunk
 
  - Add a new wasm-embed tool for extracting Wasm modules embedded as byte arrays
    in JS source files or replacing such modules in the JS source (#9127)
+- Add a new `--constant-pooling` pass, which pools repeated numeric constants
+  into immutable globals. (#9163)
 
 v133
 ----
