@@ -30,6 +30,7 @@
 #include <memory>
 
 #include <ir/element-utils.h>
+#include <ir/find_all.h>
 #include <pass.h>
 #include <wasm.h>
 
@@ -52,6 +53,12 @@ struct CallCountScanner : public WalkerPass<PostWalker<CallCountScanner>> {
     // can't add a new element in parallel
     assert(counts->count(curr->target) > 0);
     (*counts)[curr->target]++;
+  }
+
+  void visitRefFunc(RefFunc* curr) {
+    // can't add a new element in parallel
+    assert(counts->count(curr->func) > 0);
+    (*counts)[curr->func]++;
   }
 
 private:
@@ -82,7 +89,16 @@ struct ReorderFunctions : public Pass {
     }
     ElementUtils::iterAllElementFunctionNames(
       module, [&](Name name) { counts[name]++; });
-    // TODO: count all RefFunc as well
+    // find counts on ref.funcs in globals (those in element segments are
+    // counted above, and those in functions by the scanner)
+    for (auto& global : module->globals) {
+      if (!global->init) {
+        continue;
+      }
+      for (auto* refFunc : FindAll<RefFunc>(global->init).list) {
+        counts[refFunc->func]++;
+      }
+    }
     // TODO: count the declaration section as well, which adds another mention
     // sort
     std::sort(module->functions.begin(),
