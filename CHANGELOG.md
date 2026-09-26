@@ -17,6 +17,8 @@ Current Trunk
 
  - Add a new wasm-embed tool for extracting Wasm modules embedded as byte arrays
    in JS source files or replacing such modules in the JS source (#9127)
+- reorder-functions now counts ref.func uses in function bodies and global
+  initializers. (#9160)
 
 v133
 ----
