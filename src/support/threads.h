@@ -32,6 +32,15 @@
 
 #include "compiler-support.h"
 
+// On POSIX we create worker threads with pthreads directly so that we can set
+// their stack size to match the main thread. std::thread uses the platform
+// default, which on macOS is only 512KB for secondary threads (Linux uses
+// RLIMIT_STACK, and Windows uses the linker's /STACK for all threads).
+#if !defined(_WIN32) && !defined(__EMSCRIPTEN__)
+#define BINARYEN_PTHREAD_WORKERS 1
+#include <pthread.h>
+#endif
+
 namespace wasm {
 
 // The work state of a helper thread - is there more to do,
@@ -48,7 +57,11 @@ class ThreadPool;
 
 class Thread {
   ThreadPool* parent;
+#ifdef BINARYEN_PTHREAD_WORKERS
+  pthread_t thread;
+#else
   std::unique_ptr<std::thread> thread;
+#endif
   std::mutex mutex;
   std::condition_variable condition;
   bool done = false;
@@ -62,9 +75,13 @@ public:
   // it returns false.
   void work(std::function<ThreadWorkState()> doWork);
 
-private:
   static void mainLoop(void* self);
 };
+
+// The stack size requested for worker threads, or 0 if the platform default is
+// used. On POSIX this is the RLIMIT_STACK soft limit, so that workers can
+// recurse as deeply as the main thread and `ulimit -s` applies to them too.
+size_t getWorkerThreadStackSize();
 
 //
 // A pool of helper threads.
