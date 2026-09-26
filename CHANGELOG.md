@@ -17,6 +17,7 @@ Current Trunk
 
  - Add a new wasm-embed tool for extracting Wasm modules embedded as byte arrays
    in JS source files or replacing such modules in the JS source (#9127)
+- LocalCSE now considers size-2 expressions at -Os and -Oz. (#9161)
 
 v133
 ----
