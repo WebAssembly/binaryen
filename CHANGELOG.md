@@ -17,6 +17,9 @@ Current Trunk
 
  - Add a new wasm-embed tool for extracting Wasm modules embedded as byte arrays
    in JS source files or replacing such modules in the JS source (#9127)
+- StackIR can now remove a local.set/local.get pair when one value is between
+  them and both it and the get are consumed by the same commutative integer
+  binary operation. (#9162)
 
 v133
 ----
