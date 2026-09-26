@@ -352,6 +352,14 @@ struct DAE : public Pass {
     // at the end.
     bool refinedReturnTypes = false;
 
+    // The callers of functions whose return types we refined. The more refined
+    // types may enable optimizations there (e.g., a cast may become statically
+    // known to succeed), so we optimize them at the end, together with
+    // |worthOptimizing|. We keep them apart from |worthOptimizing| as that set
+    // also affects which transformations we do in this iteration, and whether
+    // we iterate again.
+    std::unordered_set<Function*> refinedCallers;
+
     // If we find that localizing call arguments can help (by moving their
     // effects outside, so ParamUtils::removeParameters can handle them), then
     // we do that at the end and perform another cycle. It is simpler to just do
@@ -407,6 +415,11 @@ struct DAE : public Pass {
         refinedReturnTypes = true;
         markStale(name);
         markCallersStale(index);
+        if (optimize) {
+          for (auto caller : callers[index]) {
+            refinedCallers.insert(module->getFunction(caller));
+          }
+        }
       }
       auto optimizedIndexes =
         ParamUtils::applyConstantValues({func}, calls, {}, module);
@@ -533,8 +546,12 @@ struct DAE : public Pass {
           markStale(func->name);
         });
     }
-    if (optimize && !worthOptimizing.empty()) {
-      OptUtils::optimizeAfterInlining(worthOptimizing, module, getPassRunner());
+    if (optimize && (!worthOptimizing.empty() || !refinedCallers.empty())) {
+      // This happens after the ReFinalize above, so the callers of functions
+      // with refined results see the new types.
+      auto toOptimize = std::move(refinedCallers);
+      toOptimize.insert(worthOptimizing.begin(), worthOptimizing.end());
+      OptUtils::optimizeAfterInlining(toOptimize, module, getPassRunner());
     }
 
     return !worthOptimizing.empty() || refinedReturnTypes ||
