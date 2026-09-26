@@ -124,6 +124,37 @@ void StackIROptimizer::vacuum() {
   }
 }
 
+// Whether a stack instruction is a binary operation on integers that gives the
+// same result whichever operand order it is computed in.
+static bool isCommutativeIntBinary(StackInst* inst) {
+  if (inst->op != StackInst::Basic || !inst->origin->is<Binary>()) {
+    return false;
+  }
+  auto* binary = inst->origin->cast<Binary>();
+  if (!binary->type.isInteger()) {
+    return false;
+  }
+  switch (binary->op) {
+    case AddInt32:
+    case AddInt64:
+    case MulInt32:
+    case MulInt64:
+    case AndInt32:
+    case AndInt64:
+    case OrInt32:
+    case OrInt64:
+    case XorInt32:
+    case XorInt64:
+    case EqInt32:
+    case EqInt64:
+    case NeInt32:
+    case NeInt64:
+      return true;
+    default:
+      return false;
+  }
+}
+
 // If ordered properly, we can avoid a local.set/local.get pair,
 // and use the value directly from the stack, for example
 //    [..produce a value on the stack..]
@@ -219,11 +250,36 @@ void StackIROptimizer::local2Stack() {
         // can reach the set.
         if (values.size() > 0) {
           Index j = values.size() - 1;
+          // If an actual value is in the way then the set's value is not on
+          // top of the stack at the get. That is fine in one case: a single
+          // intervening value that is consumed together with the get by a
+          // commutative binary operation, as then the operand order does not
+          // matter.
+          bool intervening = false;
           while (1) {
-            // If there's an actual value in the way, we've failed.
             auto setIndex = values[j];
             if (setIndex == null) {
-              break;
+              if (intervening) {
+                // More than one value in the way: give up.
+                break;
+              }
+              // Check if the get is consumed by a commutative binary together
+              // with the intervening value, in which case removing the pair
+              // will compute it in the other, equivalent order.
+              Index k = getIndex + 1;
+              while (k < insts.size() && !insts[k]) {
+                ++k;
+              }
+              if (k >= insts.size() || !isCommutativeIntBinary(insts[k]) ||
+                  getNumConsumedValues(insts[k]) != 2) {
+                break;
+              }
+              intervening = true;
+              if (j == 0) {
+                break;
+              }
+              j--;
+              continue;
             }
             auto* set = insts[setIndex]->origin->cast<LocalSet>();
             if (set->index == get->index) {

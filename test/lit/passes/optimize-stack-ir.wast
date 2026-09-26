@@ -1097,7 +1097,27 @@
     )
   )
 
-  ;; CHECK:      (func $local-to-stack-1c-no (type $6) (param $x i32) (result i32)
+  ;; CHECK:      (func $local-to-stack-1c (type $6) (param $x i32) (result i32)
+  ;; CHECK-NEXT:  (local $temp i32)
+  ;; CHECK-NEXT:  i32.const 1
+  ;; CHECK-NEXT:  call $local-to-stack
+  ;; CHECK-NEXT:  i32.const 2
+  ;; CHECK-NEXT:  call $local-to-stack
+  ;; CHECK-NEXT:  drop
+  ;; CHECK-NEXT:  i32.const 3
+  ;; CHECK-NEXT:  i32.add
+  ;; CHECK-NEXT: )
+  (func $local-to-stack-1c (param $x i32) (result i32)
+    (local $temp i32)
+    (local.set $temp (call $local-to-stack (i32.const 1)))
+    (drop (call $local-to-stack (i32.const 2)))
+    (i32.add
+      (i32.const 3) ;; in the way, but the add is commutative so we can
+      (local.get $temp) ;; still use the value on the stack
+    )
+  )
+
+  ;; CHECK:      (func $local-to-stack-1d-sub-no (type $6) (param $x i32) (result i32)
   ;; CHECK-NEXT:  (local $temp i32)
   ;; CHECK-NEXT:  i32.const 1
   ;; CHECK-NEXT:  call $local-to-stack
@@ -1107,14 +1127,14 @@
   ;; CHECK-NEXT:  drop
   ;; CHECK-NEXT:  i32.const 3
   ;; CHECK-NEXT:  local.get $temp
-  ;; CHECK-NEXT:  i32.add
+  ;; CHECK-NEXT:  i32.sub
   ;; CHECK-NEXT: )
-  (func $local-to-stack-1c-no (param $x i32) (result i32)
+  (func $local-to-stack-1d-sub-no (param $x i32) (result i32)
     (local $temp i32)
     (local.set $temp (call $local-to-stack (i32.const 1)))
     (drop (call $local-to-stack (i32.const 2)))
-    (i32.add
-      (i32.const 3) ;; this is in the way
+    (i32.sub
+      (i32.const 3) ;; not commutative: the set/get pair must stay
       (local.get $temp)
     )
   )
@@ -1292,29 +1312,27 @@
     (local.get $temp2)
   )
 
-  ;; CHECK:      (func $local-to-stack-overlapping-multi-8-no (type $6) (param $x i32) (result i32)
+  ;; CHECK:      (func $local-to-stack-overlapping-multi-8 (type $6) (param $x i32) (result i32)
   ;; CHECK-NEXT:  (local $temp1 i32)
   ;; CHECK-NEXT:  (local $temp2 i32)
   ;; CHECK-NEXT:  i32.const 1
   ;; CHECK-NEXT:  call $local-to-stack-multi-4
-  ;; CHECK-NEXT:  local.set $temp1
   ;; CHECK-NEXT:  i32.const 1
   ;; CHECK-NEXT:  call $local-to-stack-multi-4
   ;; CHECK-NEXT:  i32.const 3
   ;; CHECK-NEXT:  call $local-to-stack-multi-4
   ;; CHECK-NEXT:  drop
-  ;; CHECK-NEXT:  local.get $temp1
   ;; CHECK-NEXT:  i32.add
   ;; CHECK-NEXT: )
-  (func $local-to-stack-overlapping-multi-8-no (param $x i32) (result i32)
+  (func $local-to-stack-overlapping-multi-8 (param $x i32) (result i32)
     (local $temp1 i32)
     (local $temp2 i32)
     (local.set $temp1 (call $local-to-stack-multi-4 (i32.const 1)))
     (local.set $temp2 (call $local-to-stack-multi-4 (i32.const 1)))
     (drop (call $local-to-stack-multi-4 (i32.const 3)))
-    (i32.add
-      (local.get $temp2) ;; the timing
-      (local.get $temp1) ;; it sucks
+    (i32.add ;; the operands are flipped, but the add is commutative
+      (local.get $temp2)
+      (local.get $temp1)
     )
   )
 
