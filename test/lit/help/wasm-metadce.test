@@ -109,6 +109,9 @@
 ;; CHECK-NEXT:   --const-hoisting                              hoist repeated constants to a 
 ;; CHECK-NEXT:                                                 local
 ;; CHECK-EMPTY:
+;; CHECK-NEXT:   --constant-pooling                            pool repeated constants in 
+;; CHECK-NEXT:                                                 globals
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --constraint-analysis                         finds and uses mathematical 
 ;; CHECK-NEXT:                                                 constraints on locals
 ;; CHECK-EMPTY:
