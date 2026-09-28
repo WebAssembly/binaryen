@@ -609,13 +609,8 @@ void TranslateToFuzzReader::setupHeapTypes() {
           if (fields[i].mutable_) {
             mutableStructFields.emplace_back(type, i);
           }
-          if (!fields[i].isPacked()) {
-            auto fieldType = fields[i].type;
-            if (fieldType == Type::i32 || fieldType == Type::i64 ||
-                Type::isSubType(
-                  fieldType, Type(HeapTypes::eq.getBasic(Shared), Nullable))) {
-              structWaitFields.emplace_back(type, i);
-            }
+          if (fields[i].isValidControlWord()) {
+            structWaitFields.emplace_back(type, i);
           }
         }
         break;
@@ -4428,6 +4423,12 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
       }
       WASM_UNREACHABLE("bad switch");
     }
+    case HeapType::waitqueue: {
+      if (type.isNullable() && oneIn(2)) {
+        return builder.makeRefNull(HeapTypes::sharedWaitqueue.getBasic(share));
+      }
+      return builder.makeWaitqueueNew();
+    }
     case HeapType::none:
     case HeapType::noext:
     case HeapType::nofunc:
@@ -4439,13 +4440,6 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
         return builder.makeRefAs(RefAsNonNull, null);
       }
       return null;
-    }
-
-    case HeapType::waitqueue: {
-      if (type.isNullable() && oneIn(2)) {
-        return builder.makeRefNull(HeapTypes::sharedWaitqueue.getBasic(share));
-      }
-      return builder.makeWaitqueueNew();
     }
   }
   WASM_UNREACHABLE("invalid basic ref type");
@@ -6088,8 +6082,8 @@ Expression* TranslateToFuzzReader::makeStructSet(Type type) {
     return makeTrivial(type);
   }
   auto [structType, fieldIndex] = pick(mutableStructFields);
-  auto* ref = makeTrappingRefUse(structType);
   auto fieldType = structType.getStruct().fields[fieldIndex].type;
+  auto* ref = makeTrappingRefUse(structType);
   auto* value = make(fieldType);
   auto order = MemoryOrder::Unordered;
   if (wasm.features.hasAtomics() && wasm.features.hasSharedEverything() &&

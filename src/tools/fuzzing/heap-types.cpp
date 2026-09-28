@@ -689,6 +689,11 @@ struct HeapTypeGeneratorImpl {
           return pickSubStruct(share);
         case HeapType::array:
           return pickSubArray(share);
+        case HeapType::waitqueue:
+          if (rand.oneIn(2)) {
+            return HeapTypes::sharedNowaitqueue.getBasic(share);
+          }
+          return type;
         case HeapType::ext:
         case HeapType::exn:
         case HeapType::string:
@@ -698,11 +703,6 @@ struct HeapTypeGeneratorImpl {
         case HeapType::nocont:
         case HeapType::noexn:
         case HeapType::nowaitqueue:
-          return type;
-        case HeapType::waitqueue:
-          if (rand.oneIn(2)) {
-            return HeapTypes::sharedNowaitqueue.getBasic(share);
-          }
           return type;
       }
       WASM_UNREACHABLE("unexpected type");

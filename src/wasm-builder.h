@@ -1524,9 +1524,6 @@ public:
       return makeRefAs(ExternConvertAny,
                        makeConstantExpression(value.internalize()));
     }
-    if (type.isRef() && type.getHeapType() == HeapTypes::sharedWaitqueue) {
-      return makeWaitqueueNew();
-    }
     TODO_SINGLE_COMPOUND(type);
     WASM_UNREACHABLE("unsupported constant expression");
   }
