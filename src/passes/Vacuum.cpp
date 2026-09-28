@@ -439,8 +439,8 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
       } else if (iff->ifTrue->type.isConcrete() &&
                  iff->ifFalse->type.isConcrete()) {
         Builder builder(*getModule());
-        iff->ifTrue = builder.dropIfConcretelyTyped(iff->ifTrue);
-        iff->ifFalse = builder.dropIfConcretelyTyped(iff->ifFalse);
+        iff->ifTrue = builder.makeDrop(iff->ifTrue);
+        iff->ifFalse = builder.makeDrop(iff->ifFalse);
         iff->type = Type::none;
         replaceCurrent(iff);
       }

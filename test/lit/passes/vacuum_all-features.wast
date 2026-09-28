@@ -1132,7 +1132,7 @@
   (unreachable)
  )
 )
-(module ;; vacuum away a drop on an if where both arms can be vacuumed
+(module ;; push a drop on an if into the arms
  (memory 1 1)
  ;; CHECK:      (type $0 (func (param i32) (result i32)))
 
