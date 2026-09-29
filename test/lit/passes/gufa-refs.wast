@@ -1988,7 +1988,7 @@
   )
 
   ;; CHECK:      (func $empty-tag (type $0)
-  ;; CHECK-NEXT:  (try
+  ;; CHECK-NEXT:  (try $label$3
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (nop)
   ;; CHECK-NEXT:   )

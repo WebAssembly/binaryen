@@ -1132,6 +1132,11 @@ Result<> IRBuilder::visitEnd() {
   CHECK_ERR(expr);
 
   bool isTry = scope.getTry() || scope.getCatch() || scope.getCatchAll();
+  // If the reserved label of a try was not taken by a branch or a delegate,
+  // give it to the try itself so the name is not lost.
+  if (isTry && !scope.label) {
+    scope.label = std::exchange(scope.reservedLabel, Name());
+  }
   auto& label = isTry ? scope.branchLabel : scope.label;
   auto blockType = scope.getResultType();
 
