@@ -1133,9 +1133,19 @@ Result<> IRBuilder::visitEnd() {
 
   bool isTry = scope.getTry() || scope.getCatch() || scope.getCatchAll();
   // If the reserved label of a try was not taken by a branch or a delegate,
-  // give it to the try itself so the name is not lost.
+  // give it to the try itself so the name is not lost. When we are reading a
+  // binary the name comes from the name section as a hint instead, and nothing
+  // has used it either.
   if (isTry && !scope.label) {
     scope.label = std::exchange(scope.reservedLabel, Name());
+    // Only if nothing has used the name: if a branch took it, it is already on
+    // the wrapper block, and naming the try as well would just duplicate it.
+    if (!scope.label && !scope.branchLabel) {
+      if (auto hint = std::exchange(scope.nameHint, Name())) {
+        scope.label = makeFresh(hint);
+        scope.labelExplicit = true;
+      }
+    }
   }
   auto& label = isTry ? scope.branchLabel : scope.label;
   auto blockType = scope.getResultType();
