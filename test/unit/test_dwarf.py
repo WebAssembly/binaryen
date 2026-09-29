@@ -1,5 +1,3 @@
-import base64
-import gzip
 import os
 import subprocess
 import tempfile
@@ -75,14 +73,9 @@ class DWARFTest(utils.BinaryenTestCase):
         # .debug_ranges, compiled using clang --target=wasm64-unknown-unknown
         # -O1 -g. The vendored emitter still writes 4-byte range entries, so
         # range-list repair must not append an invalid 8-byte-CU offset.
-        path = self.input_path('dwarf/memory64_ranges.wasm.gz.b64')
-        with open(path, 'rb') as f:
-            wasm = gzip.decompress(base64.b64decode(f.read()))
+        input_file = self.input_path('dwarf/memory64_ranges.wasm')
         with tempfile.TemporaryDirectory() as temp_dir:
-            input_file = os.path.join(temp_dir, 'input.wasm')
             output_file = os.path.join(temp_dir, 'output.wasm')
-            with open(input_file, 'wb') as f:
-                f.write(wasm)
             shared.run_process(shared.WASM_OPT +
                                [input_file, '--roundtrip', '-g',
                                 '-o', output_file])
