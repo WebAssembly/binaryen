@@ -2205,16 +2205,16 @@
  )
 
  ;; CHECK:      (func $try-br-name (type $0)
- ;; CHECK-NEXT:  (block $l
- ;; CHECK-NEXT:   (try
+ ;; CHECK-NEXT:  (block $label
+ ;; CHECK-NEXT:   (try $l
  ;; CHECK-NEXT:    (do
- ;; CHECK-NEXT:     (br $l)
+ ;; CHECK-NEXT:     (br $label)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (catch $empty
- ;; CHECK-NEXT:     (br $l)
+ ;; CHECK-NEXT:     (br $label)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (catch_all
- ;; CHECK-NEXT:     (br $l)
+ ;; CHECK-NEXT:     (br $label)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )

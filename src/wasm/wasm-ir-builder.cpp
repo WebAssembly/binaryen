@@ -55,7 +55,6 @@
 //   (`handleBlockNestedPops`).
 
 #include <cassert>
-#include <utility>
 
 #include "ir/child-typer.h"
 #include "ir/eh-utils.h"
@@ -1132,22 +1131,13 @@ Result<> IRBuilder::visitEnd() {
   CHECK_ERR(expr);
 
   bool isTry = scope.getTry() || scope.getCatch() || scope.getCatchAll();
-  // If the reserved label of a try was not taken by a branch or a delegate,
-  // give it to the try itself so the name is not lost. When we are reading a
-  // binary the name comes from the name section as a hint instead, and nothing
-  // has used it either.
-  if (isTry && !scope.label) {
-    scope.label = std::exchange(scope.reservedLabel, Name());
-    // Only if nothing has used the name: if a branch took it, it is already on
-    // the wrapper block, and naming the try as well would just duplicate it.
-    if (!scope.label && !scope.branchLabel) {
-      if (auto hint = std::exchange(scope.nameHint, Name())) {
-        scope.label = makeFresh(hint);
-        scope.labelExplicit = true;
-      }
-    }
-  }
   auto& label = isTry ? scope.branchLabel : scope.label;
+  // Whichever expression ends up carrying the scope's label, it is
+  // `scope.label` that it carries: the branch label of a try is always one we
+  // generated. Remember it if it was given to us, so that we write it out.
+  if (scope.labelExplicit) {
+    noteExplicitLabel(scope.label);
+  }
   auto blockType = scope.getResultType();
 
   // When we wrap an expression then push the wrapper, we would end up with the
@@ -1174,9 +1164,6 @@ Result<> IRBuilder::visitEnd() {
   auto maybeWrapForLabel = [&](Expression* curr) -> Expression* {
     if (!label) {
       return curr;
-    }
-    if (scope.labelExplicit) {
-      noteExplicitLabel(label);
     }
     auto* fixed = fixExtraOutput(scope, label, curr);
     // We can reuse unnamed blocks instead of wrapping them.
@@ -1216,18 +1203,12 @@ Result<> IRBuilder::visitEnd() {
     block->name = Name();
     block = fixExtraOutput(scope, label, block)->cast<Block>();
     block->name = label;
-    if (scope.labelExplicit) {
-      noteExplicitLabel(label);
-    }
     block->finalize(block->type,
                     scope.labelUsed ? Block::HasBreak : Block::NoBreak);
     push(block);
   } else if (auto* loop = scope.getLoop()) {
     loop->body = fixExtraOutput(scope, label, *expr);
     loop->name = scope.label;
-    if (scope.labelExplicit) {
-      noteExplicitLabel(scope.label);
-    }
     if (scope.inputType != Type::none && scope.labelUsed) {
       // Branches to this loop carry values, but Binaryen IR does not support
       // that. Fix this by trampolining the branches through new code that sets
@@ -1255,9 +1236,6 @@ Result<> IRBuilder::visitEnd() {
   } else if (auto* tryy = scope.getTry()) {
     tryy->body = *expr;
     tryy->name = scope.label;
-    if (scope.labelExplicit) {
-      noteExplicitLabel(scope.label);
-    }
     tryy->finalize(tryy->type);
     push(maybeWrapForLabel(tryy));
   } else if (Try* tryy;
@@ -1265,9 +1243,6 @@ Result<> IRBuilder::visitEnd() {
     auto index = scope.getIndex();
     setCatchBody(tryy, *expr, index);
     tryy->name = scope.label;
-    if (scope.labelExplicit) {
-      noteExplicitLabel(scope.label);
-    }
     tryy->finalize(tryy->type);
     push(maybeWrapForLabel(tryy));
   } else if (auto* trytable = scope.getTryTable()) {
@@ -1477,10 +1452,8 @@ Result<Name> IRBuilder::getLabelName(Index label, bool forDelegate) {
 
   if (!scopeLabel) {
     // The scope does not already have a name, so we need to create one. Use the
-    // reserved name or the name from the name section, if we have one.
-    if (auto reserved = std::exchange((*scope)->reservedLabel, Name())) {
-      scopeLabel = reserved;
-    } else if (auto hint = (*scope)->nameHint) {
+    // name from the name section, if we have one.
+    if (auto hint = (*scope)->nameHint) {
       scopeLabel = makeFresh(hint);
       (*scope)->labelExplicit = true;
     } else if ((*scope)->getBlock()) {

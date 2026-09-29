@@ -94,11 +94,11 @@
  ;; one gets a name derived from it.
  ;; DEBUG:      (func $try (type $0) (param $p i32) (result i32)
  ;; DEBUG-NEXT:  (drop
- ;; DEBUG-NEXT:   (block $branch-only (result i32)
- ;; DEBUG-NEXT:    (try (result i32)
+ ;; DEBUG-NEXT:   (block $block (result i32)
+ ;; DEBUG-NEXT:    (try $branch-only (result i32)
  ;; DEBUG-NEXT:     (do
  ;; DEBUG-NEXT:      (drop
- ;; DEBUG-NEXT:       (br_if $branch-only
+ ;; DEBUG-NEXT:       (br_if $block
  ;; DEBUG-NEXT:        (i32.const 0)
  ;; DEBUG-NEXT:        (local.get $p)
  ;; DEBUG-NEXT:       )
@@ -111,11 +111,11 @@
  ;; DEBUG-NEXT:    )
  ;; DEBUG-NEXT:   )
  ;; DEBUG-NEXT:  )
- ;; DEBUG-NEXT:  (block $both (result i32)
- ;; DEBUG-NEXT:   (try $both0 (result i32)
+ ;; DEBUG-NEXT:  (block $block1 (result i32)
+ ;; DEBUG-NEXT:   (try $both (result i32)
  ;; DEBUG-NEXT:    (do
  ;; DEBUG-NEXT:     (drop
- ;; DEBUG-NEXT:      (br_if $both
+ ;; DEBUG-NEXT:      (br_if $block1
  ;; DEBUG-NEXT:       (i32.const 0)
  ;; DEBUG-NEXT:       (local.get $p)
  ;; DEBUG-NEXT:      )
@@ -124,7 +124,7 @@
  ;; DEBUG-NEXT:      (do
  ;; DEBUG-NEXT:       (nop)
  ;; DEBUG-NEXT:      )
- ;; DEBUG-NEXT:      (delegate $both0)
+ ;; DEBUG-NEXT:      (delegate $both)
  ;; DEBUG-NEXT:     )
  ;; DEBUG-NEXT:     (i32.const 1)
  ;; DEBUG-NEXT:    )
@@ -136,11 +136,11 @@
  ;; DEBUG-NEXT: )
  ;; INLINE:      (func $try (type $0) (param $p i32) (result i32)
  ;; INLINE-NEXT:  (drop
- ;; INLINE-NEXT:   (block $branch-only (result i32)
- ;; INLINE-NEXT:    (try (result i32)
+ ;; INLINE-NEXT:   (block $block (result i32)
+ ;; INLINE-NEXT:    (try $branch-only (result i32)
  ;; INLINE-NEXT:     (do
  ;; INLINE-NEXT:      (drop
- ;; INLINE-NEXT:       (br_if $branch-only
+ ;; INLINE-NEXT:       (br_if $block
  ;; INLINE-NEXT:        (i32.const 0)
  ;; INLINE-NEXT:        (local.get $p)
  ;; INLINE-NEXT:       )
@@ -153,11 +153,11 @@
  ;; INLINE-NEXT:    )
  ;; INLINE-NEXT:   )
  ;; INLINE-NEXT:  )
- ;; INLINE-NEXT:  (block $both (result i32)
- ;; INLINE-NEXT:   (try $both0 (result i32)
+ ;; INLINE-NEXT:  (block $block1 (result i32)
+ ;; INLINE-NEXT:   (try $both (result i32)
  ;; INLINE-NEXT:    (do
  ;; INLINE-NEXT:     (drop
- ;; INLINE-NEXT:      (br_if $both
+ ;; INLINE-NEXT:      (br_if $block1
  ;; INLINE-NEXT:       (i32.const 0)
  ;; INLINE-NEXT:       (local.get $p)
  ;; INLINE-NEXT:      )
@@ -166,7 +166,7 @@
  ;; INLINE-NEXT:      (do
  ;; INLINE-NEXT:       (nop)
  ;; INLINE-NEXT:      )
- ;; INLINE-NEXT:      (delegate $both0)
+ ;; INLINE-NEXT:      (delegate $both)
  ;; INLINE-NEXT:     )
  ;; INLINE-NEXT:     (i32.const 1)
  ;; INLINE-NEXT:    )

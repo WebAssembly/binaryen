@@ -3729,11 +3729,9 @@ Result<> WasmBinaryReader::readInst() {
     case BinaryConsts::TableSet:
       return builder.makeTableSet(getTableName(getU32LEB()));
     case BinaryConsts::Try: {
-      // As with `if`, only use the name if we end up needing a label.
+      // A `try` can hold a name in the IR, like a block or a loop.
       auto name = getNextLabelName();
-      auto result = builder.makeTry(Name(), getBlockType());
-      builder.setScopeNameHint(name);
-      return result;
+      return builder.makeTry(name, getBlockType());
     }
     case BinaryConsts::TryTable: {
       // As with `if`, only use the name if we end up needing a label.

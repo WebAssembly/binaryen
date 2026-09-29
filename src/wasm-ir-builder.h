@@ -106,10 +106,10 @@ public:
   Result<> visitEnd();
 
   // Set the name to use for the label of the scope we are currently building,
-  // if that scope ends up needing a label. This is used for names that come
-  // from the binary name section, which are optional: unlike names parsed from
-  // the text format, they should not cause us to introduce blocks that would
-  // not otherwise exist just to have something to hold the name.
+  // if that scope ends up needing a label. This is for `if` and `try_table`,
+  // which cannot hold a name in the IR: a name from the binary name section
+  // should not cause us to introduce a wrapper block that would not otherwise
+  // exist just to hold it.
   void setScopeNameHint(Name name);
 
   // Used to visit break nodes when traversing a single block without its
@@ -426,13 +426,6 @@ private:
     // `setScopeNameHint`.
     Name nameHint;
 
-    // For Try scopes with a label in the text format, the fresh version of that
-    // label, reserved for whichever of `label` and `branchLabel` is needed
-    // first, or for `label` if neither is used by the end of the try. Most
-    // tries are only targeted by branches, and giving the name to the delegate
-    // label up front would leave the branch label with a generated name.
-    Name reservedLabel;
-
     bool labelUsed = false;
 
     // Whether this scope's label was given explicitly (in the text format or in
@@ -710,13 +703,8 @@ private:
 
   Result<> pushScope(ScopeCtx&& scope) {
     if (auto label = scope.getOriginalLabel()) {
-      // Assign a fresh label to the scope, if necessary. The labels of a try
-      // are only assigned when they are used (or when the try ends), and
-      // catches keep the labels of their try.
-      if (scope.getTry()) {
-        scope.reservedLabel = makeFresh(label);
-        scope.nameHint = label;
-      } else if (!scope.label && !scope.getCatch() && !scope.getCatchAll()) {
+      // Assign a fresh label to the scope, if necessary.
+      if (!scope.label) {
         scope.label = makeFresh(label);
       }
       scope.labelExplicit = true;

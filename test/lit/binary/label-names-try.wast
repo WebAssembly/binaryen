@@ -22,10 +22,10 @@
  ;; DEBUG-NEXT:    (nop)
  ;; DEBUG-NEXT:   )
  ;; DEBUG-NEXT:  )
- ;; DEBUG-NEXT:  (block $branched-try
- ;; DEBUG-NEXT:   (try
+ ;; DEBUG-NEXT:  (block $block
+ ;; DEBUG-NEXT:   (try $branched-try
  ;; DEBUG-NEXT:    (do
- ;; DEBUG-NEXT:     (br $branched-try)
+ ;; DEBUG-NEXT:     (br $block)
  ;; DEBUG-NEXT:    )
  ;; DEBUG-NEXT:    (catch_all
  ;; DEBUG-NEXT:     (nop)
