@@ -71,7 +71,7 @@ struct DAEFunctionInfo {
   // computation, and we reset it every time we touch the function.
   bool stale = true;
   // The unused parameters, if any.
-  SortedVector unusedParams;
+  SortedVector<Index> unusedParams;
   // Maps a function name to the calls going to it.
   std::unordered_map<Name, std::vector<Call*>> calls;
   // Map of all calls that are dropped, to their drops' locations (so that
@@ -681,10 +681,22 @@ private:
                          const std::vector<Call*>& calls,
                          Module* module) {
     auto lub = LUB::getResultsLUB(func, *module);
-    if (!lub.noted()) {
-      return false;
+    Type newType;
+    if (lub.noted()) {
+      newType = lub.getLUB();
+    } else {
+      // No value can ever be returned: the function never returns normally
+      // (it throws, traps, or loops forever), and neither do the functions it
+      // tail-calls. If the result is a single reference, refine it to the
+      // uninhabitable bottom type of its hierarchy, so the callers can see that
+      // the call never returns. (Callers that tail-call this function will in
+      // turn note this type as their possible result.)
+      auto results = func->getResults();
+      if (!module->features.hasGC() || !results.isRef()) {
+        return false;
+      }
+      newType = Type(results.getHeapType().getBottom(), NonNullable);
     }
-    auto newType = lub.getLUB();
     if (newType != func->getResults()) {
       func->setResults(newType);
       for (auto* call : calls) {

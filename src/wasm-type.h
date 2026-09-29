@@ -736,6 +736,9 @@ struct Field {
   std::string toString() const;
 
   unsigned getByteSize() const;
+
+  // true iff this field can be the target of a `struct.wait`.
+  bool isValidControlWord() const;
 };
 
 using FieldList = std::vector<Field>;

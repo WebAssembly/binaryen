@@ -220,6 +220,9 @@ private:
   // All struct fields that are mutable.
   std::vector<StructField> mutableStructFields;
 
+  // All struct fields that can be waited on.
+  std::vector<StructField> structWaitFields;
+
   // All arrays that are mutable.
   std::vector<HeapType> mutableArrays;
 
@@ -560,6 +563,8 @@ private:
   Expression* makeStructRMW(Type type);
   Expression* makeStructCmpxchg(Type type);
   Expression* makeStructSet(Type type);
+  Expression* makeStructWait(Type type);
+  Expression* makeWaitqueueNotify(Type type);
   Expression* makeArrayGet(Type type);
   Expression* makeArraySet(Type type);
   Expression* makeArrayRMW(Type type);
