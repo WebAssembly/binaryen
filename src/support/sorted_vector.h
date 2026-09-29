@@ -26,7 +26,7 @@
 
 namespace wasm {
 
-template<typename T> struct SortedVector : public std::vector<T> {
+template<typename T> struct SortedVector : private std::vector<T> {
   using Base = std::vector<T>;
   using Base::back;
   using Base::begin;
@@ -41,6 +41,8 @@ template<typename T> struct SortedVector : public std::vector<T> {
   using typename Base::iterator;
 
   SortedVector() = default;
+
+  bool operator==(const SortedVector&) const = default;
 
   SortedVector merge(const SortedVector& other) const {
     SortedVector ret;
