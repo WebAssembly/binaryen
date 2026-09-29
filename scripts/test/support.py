@@ -46,7 +46,7 @@ def split_wast(wastFile):
         depth = 1
         while depth > 0 and j < len(wast):
             if wast[j] == '"':
-                while 1:
+                while True:
                     j = wast.find('"', j + 1)
                     if wast[j - 1] == '\\':
                         continue
