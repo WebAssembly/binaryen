@@ -26,7 +26,7 @@
 
 namespace wasm {
 
-template<typename T> struct SortedVector : public std::vector<T> {
+template<typename T> struct SortedVector : private std::vector<T> {
   using Base = std::vector<T>;
   using Base::back;
   using Base::begin;
@@ -34,13 +34,19 @@ template<typename T> struct SortedVector : public std::vector<T> {
   using Base::empty;
   using Base::end;
   using Base::erase;
-  using Base::push_back;
-  using Base::resize;
   using Base::size;
   using typename Base::const_iterator;
   using typename Base::iterator;
 
+private:
+  // Resize is dangerous, as adding new items may break the order. We only use
+  // this internally (and carefully).
+  using Base::resize;
+
+public:
   SortedVector() = default;
+
+  bool operator==(const SortedVector&) const = default;
 
   SortedVector merge(const SortedVector& other) const {
     SortedVector ret;
@@ -75,7 +81,7 @@ template<typename T> struct SortedVector : public std::vector<T> {
 
   T& insert(T x) {
     if (empty() || back() < x) {
-      push_back(std::move(x));
+      Base::push_back(std::move(x));
       return back();
     }
     auto it = std::lower_bound(begin(), end(), x);
@@ -160,12 +166,6 @@ template<typename T> struct SortedVector : public std::vector<T> {
       }
     }
     resize(write);
-  }
-
-  void verify() const {
-    for (Index i = 1; i < size(); i++) {
-      assert((*this)[i - 1] < (*this)[i]);
-    }
   }
 
   void dump(const char* str = nullptr) const {
