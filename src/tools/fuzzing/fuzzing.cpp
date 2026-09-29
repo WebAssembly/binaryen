@@ -1905,14 +1905,44 @@ void TranslateToFuzzReader::addHangLimitChecks(Function* func) {
     }
   }
   if (!ATOMIC_WAITS) {
-    for (auto* wait : FindAll<StructWait>(func->body).list) {
-      if (auto* c = wait->timeout->dynCast<Const>()) {
-        c->value = Literal(int64_t(0));
-      } else if (wait->timeout->type == Type::i64) {
-        wait->timeout = builder.makeSequence(builder.makeDrop(wait->timeout),
-                                             builder.makeConst(int64_t(0)));
+    struct Visitor : PostWalker<Visitor, UnifiedExpressionVisitor<Visitor>> {
+      Builder& builder;
+      Visitor(Builder& builder) : builder(builder) {}
+
+      void visitExpression(Expression* curr) {
+        if (auto* atomicWait = curr->dynCast<AtomicWait>()) {
+          zeroTimeout(&atomicWait->timeout);
+        } else if (auto* structWait = curr->dynCast<StructWait>()) {
+          zeroTimeout(&structWait->timeout);
+        }
       }
-    }
+
+    private:
+      void zeroTimeout(Expression** timeout) {
+        if ((*timeout)->dynCast<Const>()) {
+          *timeout = builder.makeConst(int64_t(0));
+        } else if ((*timeout)->type == Type::i64) {
+          *timeout = builder.makeSequence(builder.makeDrop(*timeout),
+                                          builder.makeConst(int64_t{0}));
+        }
+      }
+    } v(builder);
+    v.walk(func->body);
+
+    // auto zeroTimeout = [&](auto* wait) {
+    //   if (auto* c = wait->timeout->template dynCast<Const>()) {
+    //     c->value = Literal(int64_t(0));
+    //   } else if (wait->timeout->type == Type::i64) {
+    //     wait->timeout = builder.makeSequence(builder.makeDrop(wait->timeout),
+    //                                          builder.makeConst(int64_t(0)));
+    //   }
+    // };
+    // for (auto* wait : FindAll<AtomicWait>(func->body).list) {
+    //   zeroTimeout(wait);
+    // }
+    // for (auto* wait : FindAll<StructWait>(func->body).list) {
+    //   zeroTimeout(wait);
+    // }
   }
 }
 
@@ -5292,11 +5322,16 @@ Expression* TranslateToFuzzReader::makeAtomic(Type type) {
     return builder.makeAtomicFence(pick(atomicMemoryOrders));
   }
   if (type == Type::i32 && oneIn(2)) {
-    if (ATOMIC_WAITS && oneIn(2)) {
+    if (oneIn(2)) {
       auto* ptr = makePointer();
       auto expectedType = pick(Type::i32, Type::i64);
       auto* expected = make(expectedType);
-      auto* timeout = make(Type::i64);
+      Expression* timeout = nullptr;
+      if (ATOMIC_WAITS && oneIn(2)) {
+        timeout = make(Type::i64);
+      } else {
+        timeout = builder.makeConst(int64_t{0});
+      }
       return builder.makeAtomicWait(ptr,
                                     expected,
                                     timeout,
