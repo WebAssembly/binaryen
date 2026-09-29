@@ -44,7 +44,7 @@ template<typename T> struct SortedVector : private std::vector<T> {
 
   SortedVector merge(const SortedVector& other) const {
     SortedVector ret;
-    ret.resize(size() + other.size());
+    static_cast<Base&>(ret).resize(size() + other.size());
     Index i = 0, j = 0, t = 0;
     while (i < size() && j < other.size()) {
       const auto& left = (*this)[i];
@@ -69,7 +69,7 @@ template<typename T> struct SortedVector : private std::vector<T> {
       ret[t++] = other[j];
       j++;
     }
-    ret.resize(t);
+    static_cast<Base&>(ret).resize(t);
     return ret;
   }
 
@@ -81,7 +81,7 @@ template<typename T> struct SortedVector : private std::vector<T> {
     auto it = std::lower_bound(begin(), end(), x);
     if (x < *it) {
       Index i = it - begin();
-      resize(size() + 1);
+      Base::resize(size() + 1);
       std::move_backward(begin() + i, begin() + size() - 1, end());
       (*this)[i] = std::move(x);
       return (*this)[i];
@@ -131,7 +131,7 @@ template<typename T> struct SortedVector : private std::vector<T> {
         skip++;
       }
     }
-    resize(size() - skip);
+    Base::resize(size() - skip);
     return *this;
   }
 
@@ -159,7 +159,7 @@ template<typename T> struct SortedVector : private std::vector<T> {
         j++;
       }
     }
-    resize(write);
+    Base::resize(write);
   }
 
   // Only support decreasing the size (increasing adds default-value items who
