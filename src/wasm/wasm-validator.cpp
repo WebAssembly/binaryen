@@ -3696,10 +3696,13 @@ void FunctionValidator::visitStructCmpxchg(StructCmpxchg* curr) {
 }
 
 void FunctionValidator::visitStructWait(StructWait* curr) {
-  shouldBeTrue(
-    !getModule() || getModule()->features.hasSharedEverything(),
-    curr,
-    "struct.wait requires shared-everything [--enable-shared-everything]");
+  FeatureSet expected =
+    FeatureSet::GC | FeatureSet::SharedEverything | FeatureSet::ReferenceTypes;
+  if (!shouldBeTrue(expected.isSubsetOf(getModule()->features),
+                    curr,
+                    "struct.wait requires additional features")) {
+    getStream() << getMissingFeaturesList(*getModule(), expected) << '\n';
+  }
 
   shouldBeSubType(curr->waitqueue->type,
                   Type(HeapTypes::sharedWaitqueue, Nullable),
@@ -3747,17 +3750,23 @@ void FunctionValidator::visitStructWait(StructWait* curr) {
 }
 
 void FunctionValidator::visitWaitqueueNew(WaitqueueNew* curr) {
-  shouldBeTrue(
-    !getModule() || getModule()->features.hasSharedEverything(),
-    curr,
-    "waitqueue.new requires shared-everything [--enable-shared-everything]");
+  FeatureSet expected =
+    FeatureSet::GC | FeatureSet::SharedEverything | FeatureSet::ReferenceTypes;
+  if (!shouldBeTrue(expected.isSubsetOf(getModule()->features),
+                    curr,
+                    "waitqueue.new requires additional features")) {
+    getStream() << getMissingFeaturesList(*getModule(), expected) << '\n';
+  }
 }
 
 void FunctionValidator::visitWaitqueueNotify(WaitqueueNotify* curr) {
-  shouldBeTrue(
-    !getModule() || getModule()->features.hasSharedEverything(),
-    curr,
-    "waitqueue.notify requires shared-everything [--enable-shared-everything]");
+  FeatureSet expected =
+    FeatureSet::GC | FeatureSet::SharedEverything | FeatureSet::ReferenceTypes;
+  if (!shouldBeTrue(expected.isSubsetOf(getModule()->features),
+                    curr,
+                    "waitqueue.notify requires additional features")) {
+    getStream() << getMissingFeaturesList(*getModule(), expected) << '\n';
+  }
 
   shouldBeSubType(
     curr->waitqueue->type,
