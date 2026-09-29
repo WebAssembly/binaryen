@@ -1438,8 +1438,6 @@ public:
   void writeFunctionSignatures();
   void writeExpression(Expression* curr);
   void writeFunctions();
-  void noteLabelNames(Function* func,
-                      std::vector<std::pair<Index, Name>>& labelNames);
   void writeStrings();
   void writeGlobals();
   void writeExports();
@@ -1581,6 +1579,14 @@ private:
   std::unordered_map<Name, Index> stringIndexes;
 
   void prepare();
+
+  // Internal helper for recording the label names of a function once its code
+  // has been written, so that they can be emitted in the name section later.
+  // `labelNames` holds (label index, name) pairs for the function's explicitly
+  // named labels, as gathered by the function writer; its contents are moved
+  // into `funcLabelNames`, and nothing is recorded if it is empty.
+  void noteLabelNames(Function* func,
+                      std::vector<std::pair<Index, Name>>& labelNames);
 
   // Internal helper for emitting a code annotation section for a hint that is
   // expression offset based. Receives the name of the section and two
@@ -1759,9 +1765,6 @@ public:
   const std::unordered_map<Index, Name>* currLabelNames = nullptr;
   Index nextLabelIndex = 0;
 
-  // Returns the name the name section gives to the next label of the current
-  // function, or a null name if it has none, and advances the label index.
-  Name getNextLabelName();
   // before we see a function (like global init expressions), there is no end of
   // function to check
   Index endOfFunction = -1;
@@ -1773,6 +1776,9 @@ public:
   void readVars();
   void setLocalNames(Function& func, Index i);
   void setLabelNames(Index i);
+  // Returns the name the name section gives to the next label of the current
+  // function, or a null name if it has none, and advances the label index.
+  Name getNextLabelName();
 
   Result<> readInst();
 

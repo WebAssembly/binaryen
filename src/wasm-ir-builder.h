@@ -428,9 +428,9 @@ private:
 
     // For Try scopes with a label in the text format, the fresh version of that
     // label, reserved for whichever of `label` and `branchLabel` is needed
-    // first. Most tries are only targeted by branches, and giving the name to
-    // the delegate label up front would leave the branch label with a
-    // generated name.
+    // first, or for `label` if neither is used by the end of the try. Most
+    // tries are only targeted by branches, and giving the name to the delegate
+    // label up front would leave the branch label with a generated name.
     Name reservedLabel;
 
     bool labelUsed = false;
@@ -711,8 +711,8 @@ private:
   Result<> pushScope(ScopeCtx&& scope) {
     if (auto label = scope.getOriginalLabel()) {
       // Assign a fresh label to the scope, if necessary. The labels of a try
-      // are only assigned when they are used, and catches keep the labels of
-      // their try.
+      // are only assigned when they are used (or when the try ends), and
+      // catches keep the labels of their try.
       if (scope.getTry()) {
         scope.reservedLabel = makeFresh(label);
         scope.nameHint = label;

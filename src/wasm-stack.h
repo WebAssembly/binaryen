@@ -127,12 +127,6 @@ public:
   void emitUnreachableLocalSet(Index index);
   void mapLocalsAndEmitHeader();
 
-  // Note the start of a scope: every block, loop, if, try and try_table takes
-  // an index in the function's label index space, in the order they appear in
-  // the function body, whether or not they have a name. Records the explicitly
-  // named ones for the name section.
-  void noteScopeStart(Name name = Name());
-
   MappedLocals mappedLocals;
 
   // The explicitly named labels of this function, as (label index, name).
@@ -141,6 +135,12 @@ public:
 private:
   // The index the next scope in this function will take.
   Index nextLabelIndex = 0;
+
+  // Note the start of a scope: every block, loop, if, try and try_table takes
+  // an index in the function's label index space, in the order they appear in
+  // the function body, whether or not they have a name. Records the explicitly
+  // named ones for the name section.
+  void noteScopeStart(Name name = Name());
 
   void emitMemoryAccess(size_t alignment,
                         size_t bytes,
