@@ -168,12 +168,6 @@ public:
     resize(write);
   }
 
-  void verify() const {
-    for (Index i = 1; i < size(); i++) {
-      assert((*this)[i - 1] < (*this)[i]);
-    }
-  }
-
   void dump(const char* str = nullptr) const {
     std::cout << "SortedVector " << (str ? str : "") << ": ";
     for (const auto& x : *this) {
