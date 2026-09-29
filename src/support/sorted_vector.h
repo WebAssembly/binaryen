@@ -38,13 +38,19 @@ template<typename T> struct SortedVector : private std::vector<T> {
   using typename Base::const_iterator;
   using typename Base::iterator;
 
+private:
+  // Resize is dangerous, as adding new items may break the order. We only use
+  // this internally (and carefully).
+  using Base::resize;
+
+public:
   SortedVector() = default;
 
   bool operator==(const SortedVector&) const = default;
 
   SortedVector merge(const SortedVector& other) const {
     SortedVector ret;
-    static_cast<Base&>(ret).resize(size() + other.size());
+    ret.resize(size() + other.size());
     Index i = 0, j = 0, t = 0;
     while (i < size() && j < other.size()) {
       const auto& left = (*this)[i];
@@ -69,7 +75,7 @@ template<typename T> struct SortedVector : private std::vector<T> {
       ret[t++] = other[j];
       j++;
     }
-    static_cast<Base&>(ret).resize(t);
+    ret.resize(t);
     return ret;
   }
 
@@ -81,7 +87,7 @@ template<typename T> struct SortedVector : private std::vector<T> {
     auto it = std::lower_bound(begin(), end(), x);
     if (x < *it) {
       Index i = it - begin();
-      Base::resize(size() + 1);
+      resize(size() + 1);
       std::move_backward(begin() + i, begin() + size() - 1, end());
       (*this)[i] = std::move(x);
       return (*this)[i];
@@ -131,7 +137,7 @@ template<typename T> struct SortedVector : private std::vector<T> {
         skip++;
       }
     }
-    Base::resize(size() - skip);
+    resize(size() - skip);
     return *this;
   }
 
@@ -159,14 +165,7 @@ template<typename T> struct SortedVector : private std::vector<T> {
         j++;
       }
     }
-    Base::resize(write);
-  }
-
-  // Only support decreasing the size (increasing adds default-value items who
-  // may break the sorting order).
-  void resize(size_t newSize) {
-    assert(newSize <= size());
-    Base::resize(newSize);
+    resize(write);
   }
 
   void verify() const {
