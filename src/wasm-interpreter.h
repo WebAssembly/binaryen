@@ -2462,6 +2462,23 @@ public:
     refVal.setElement(i, value.getSingleValue());
     return Flow();
   }
+  // Computes the effective byte address (index + offset) of a multibyte array
+  // access and traps if the access is out of bounds. Both index and offset are
+  // unsigned 32-bit values, so we compute in 64 bits to avoid overflow.
+  uint64_t getEffectiveArrayAddress(const Literal& refVal,
+                                    const Literal& index,
+                                    Address offset,
+                                    uint8_t bytes) {
+    uint64_t addr = index.getUnsigned() + uint64_t(offset);
+    uint64_t size = refVal.getRawBytes().size();
+    // |addr| is at most 2^33 - 2 and |bytes| at most 16, so this cannot
+    // overflow.
+    if (addr + uint64_t(bytes) > size) {
+      trap("array oob");
+    }
+    return addr;
+  }
+
   Flow visitArrayLoad(ArrayLoad* curr) {
     VISIT(ref, curr->ref)
     VISIT(index, curr->index)
@@ -2469,12 +2486,9 @@ public:
     if (refVal.isNull()) {
       trap("null ref");
     }
-    Index i = index.getSingleValue().geti32();
-    size_t size = refVal.getRawBytes().size();
-    if (i >= size || curr->bytes > (size - i)) {
-      trap("array oob");
-    }
-    const uint8_t* p = &refVal.getRawBytes()[i];
+    auto addr = getEffectiveArrayAddress(
+      refVal, index.getSingleValue(), curr->offset, curr->bytes);
+    const uint8_t* p = &refVal.getRawBytes()[addr];
     switch (curr->type.getBasic()) {
       case Type::i32: {
         switch (curr->bytes) {
@@ -2540,14 +2554,9 @@ public:
     if (refVal.isNull()) {
       trap("null ref");
     }
-
-    Index i = index.getSingleValue().geti32();
-    size_t size = refVal.getRawBytes().size();
-    // Use subtraction to avoid overflow.
-    if (i >= size || curr->bytes > (size - i)) {
-      trap("array oob");
-    }
-    uint8_t* p = &refVal.getRawBytes()[i];
+    auto addr = getEffectiveArrayAddress(
+      refVal, index.getSingleValue(), curr->offset, curr->bytes);
+    uint8_t* p = &refVal.getRawBytes()[addr];
     auto val = value.getSingleValue();
     if (curr->value->type == Type::f32 && curr->bytes == 2) {
       float f32 = bit_cast<float>(val.reinterpreti32());

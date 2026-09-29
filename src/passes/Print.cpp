@@ -2468,7 +2468,9 @@ struct PrintExpressionContents
     printHeapTypeName(curr->ref->type.getHeapType());
   }
   void visitArrayLoad(ArrayLoad* curr) {
-    prepareColor(o) << forceConcrete(curr->type);
+    // Whatever type we print must be valid for the alignment, which matters
+    // when the type is unreachable and we must pick one.
+    prepareColor(o) << forceConcrete(curr->type, curr->align);
     o << ".load";
     if (curr->type != Type::unreachable &&
         curr->bytes < curr->type.getByteSize()) {
@@ -2491,7 +2493,9 @@ struct PrintExpressionContents
   }
 
   void visitArrayStore(ArrayStore* curr) {
-    prepareColor(o) << forceConcrete(curr->value->type);
+    // Whatever type we print must be valid for the alignment, which matters
+    // when the value is unreachable and we must pick one.
+    prepareColor(o) << forceConcrete(curr->value->type, curr->align);
     o << ".store";
     printStorePostfix(curr->bytes, curr->value->type);
     o << " ";
