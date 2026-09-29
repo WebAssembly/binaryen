@@ -34,8 +34,6 @@ template<typename T> struct SortedVector : private std::vector<T> {
   using Base::empty;
   using Base::end;
   using Base::erase;
-  using Base::push_back;
-  using Base::resize;
   using Base::size;
   using typename Base::const_iterator;
   using typename Base::iterator;
@@ -77,7 +75,7 @@ template<typename T> struct SortedVector : private std::vector<T> {
 
   T& insert(T x) {
     if (empty() || back() < x) {
-      push_back(std::move(x));
+      Base::push_back(std::move(x));
       return back();
     }
     auto it = std::lower_bound(begin(), end(), x);
@@ -162,6 +160,13 @@ template<typename T> struct SortedVector : private std::vector<T> {
       }
     }
     resize(write);
+  }
+
+  // Only support decreasing the size (increasing adds default-value items who
+  // may break the sorting order).
+  void resize(size_t newSize) {
+    assert(newSize <= size());
+    Base::resize(newSize);
   }
 
   void verify() const {
