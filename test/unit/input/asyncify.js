@@ -35,17 +35,17 @@ function sleepTests() {
           // Unwinding.
           // Fill in the data structure. The first value has the stack location,
           // which for simplicity we can start right after the data structure itself.
-          view[DATA_ADDR >> 2] = DATA_ADDR + 8;
+          view.setInt32(DATA_ADDR, DATA_ADDR + 8, true);
           // The end of the stack will not be reached here anyhow.
-          view[DATA_ADDR + 4 >> 2] = 1024;
+          view.setInt32(DATA_ADDR + 4, 1024, true);
           exports.asyncify_start_unwind(DATA_ADDR);
         } else {
           // We are called as part of a resume/rewind. Stop sleeping.
           console.log('resume...');
           exports.asyncify_stop_rewind();
           // The stack should have been all used up, and so returned to the original state.
-          assert(view[DATA_ADDR >> 2] == DATA_ADDR + 8);
-          assert(view[DATA_ADDR + 4 >> 2] == 1024);
+          assert(view.getInt32(DATA_ADDR, true) == DATA_ADDR + 8);
+          assert(view.getInt32(DATA_ADDR + 4, true) == 1024);
           sleeping = false;
         }
         logMemory();
@@ -58,11 +58,11 @@ function sleepTests() {
   });
 
   var exports = instance.exports;
-  var view = new Int32Array(exports.memory.buffer);
+  var view = new DataView(exports.memory.buffer);
 
   function logMemory() {
     // Log the relevant memory locations for debugging purposes.
-    console.log('memory: ', view[0 >> 2], view[4 >> 2], view[8 >> 2], view[12 >> 2], view[16 >> 2], view[20 >> 2], view[24 >> 2]);
+    console.log('memory: ', view.getInt32(0, true), view.getInt32(4, true), view.getInt32(8, true), view.getInt32(12, true), view.getInt32(16, true), view.getInt32(20, true), view.getInt32(24, true));
   }
 
   function runTest(name, expectedSleeps, expectedResult, params) {
@@ -176,8 +176,8 @@ function coroutineTests() {
     };
     this.startUnwind = function() {
       // Initialize the data.
-      view[dataStart >> 2] = dataStart + 8;
-      view[dataStart + 4 >> 2] = dataEnd;
+      view.setInt32(dataStart, dataStart + 8, true);
+      view.setInt32(dataStart + 4, dataEnd, true);
       exports.asyncify_start_unwind(dataStart);
       // (With C etc. coroutines we would also have
       // a C stack to pause and resume here.)
@@ -242,7 +242,7 @@ function coroutineTests() {
   });
 
   var exports = instance.exports;
-  var view = new Int32Array(exports.memory.buffer);
+  var view = new DataView(exports.memory.buffer);
 
   Runtime.run(4);
   console.log(Runtime.values);
@@ -271,17 +271,17 @@ function stackOverflowAssertTests() {
       sleep: function() {
         console.log('sleep...');
         exports.asyncify_start_unwind(DATA_ADDR);
-        view[DATA_ADDR >> 2] = DATA_ADDR + 8;
+        view.setInt32(DATA_ADDR, DATA_ADDR + 8, true);
         // The end of the stack will be reached as the stack is tiny.
-        view[DATA_ADDR + 4 >> 2] = view[DATA_ADDR >> 2] + 1;
+        view.setInt32(DATA_ADDR + 4, view.getInt32(DATA_ADDR, true) + 1, true);
       }
     }
   });
 
   var exports = instance.exports;
-  var view = new Int32Array(exports.memory.buffer);
+  var view = new DataView(exports.memory.buffer);
   exports.many_locals();
-  assert(view[DATA_ADDR >> 2] > view[DATA_ADDR + 4 >> 2], 'should have wrote past the end of the stack');
+  assert(view.getInt32(DATA_ADDR, true) > view.getInt32(DATA_ADDR + 4, true), 'should have wrote past the end of the stack');
   // All API calls should now fail, since we wrote past the end of the
   // stack
   var fails = 0;
