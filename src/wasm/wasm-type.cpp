@@ -2793,6 +2793,13 @@ std::unordered_set<HeapType> getIgnorablePublicTypes() {
   return set;
 }
 
+bool Field::isValidControlWord() const {
+  return !isPacked() &&
+         (type == Type::i32 || type == Type::i64 ||
+          Type::isSubType(type,
+                          Type(HeapTypes::eq.getBasic(Shared), Nullable)));
+}
+
 namespace HeapTypes {
 
 HeapType getMutI8Array() { return Array(Field(Field::i8, Mutable)); }

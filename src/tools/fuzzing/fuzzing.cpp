@@ -603,11 +603,14 @@ void TranslateToFuzzReader::setupHeapTypes() {
         interestingHeapSubTypes[struct_].push_back(type);
         interestingHeapSubTypes[eq].push_back(type);
         interestingHeapSubTypes[any].push_back(type);
-        // Note the mutable fields.
-        auto& fields = type.getStruct().fields;
+        // Note the mutable fields and fields that can be waited on.
+        const auto& fields = type.getStruct().fields;
         for (Index i = 0; i < fields.size(); i++) {
           if (fields[i].mutable_) {
-            mutableStructFields.push_back(StructField{type, i});
+            mutableStructFields.emplace_back(type, i);
+          }
+          if (fields[i].isValidControlWord()) {
+            structWaitFields.emplace_back(type, i);
           }
         }
         break;
@@ -1901,6 +1904,16 @@ void TranslateToFuzzReader::addHangLimitChecks(Function* func) {
         AndInt32, arrayNew->size, builder.makeConst(int32_t(1024 - 1)));
     }
   }
+  if (!ATOMIC_WAITS) {
+    for (auto* wait : FindAll<StructWait>(func->body).list) {
+      if (auto* c = wait->timeout->dynCast<Const>()) {
+        c->value = Literal(int64_t(0));
+      } else if (wait->timeout->type == Type::i64) {
+        wait->timeout = builder.makeSequence(builder.makeDrop(wait->timeout),
+                                             builder.makeConst(int64_t(0)));
+      }
+    }
+  }
 }
 
 void TranslateToFuzzReader::recombine(Function* func) {
@@ -2881,6 +2894,13 @@ Expression* TranslateToFuzzReader::_makeConcrete(Type type) {
                 &Self::makeStringEq,
                 &Self::makeStringMeasure,
                 &Self::makeStringGet);
+    options.add(FeatureSet::ReferenceTypes | FeatureSet::SharedEverything,
+                &Self::makeWaitqueueNotify);
+    if (!structWaitFields.empty()) {
+      options.add(FeatureSet::ReferenceTypes | FeatureSet::GC |
+                    FeatureSet::SharedEverything,
+                  &Self::makeStructWait);
+    }
   }
   if (type == Type::i64) {
     options.add(FeatureSet::WideArithmetic | FeatureSet::Multivalue,
@@ -4403,21 +4423,23 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
       }
       WASM_UNREACHABLE("bad switch");
     }
+    case HeapType::waitqueue: {
+      if (type.isNullable() && oneIn(2)) {
+        return builder.makeRefNull(HeapTypes::sharedWaitqueue.getBasic(share));
+      }
+      return builder.makeWaitqueueNew();
+    }
     case HeapType::none:
     case HeapType::noext:
     case HeapType::nofunc:
     case HeapType::nocont:
-    case HeapType::noexn: {
+    case HeapType::noexn:
+    case HeapType::nowaitqueue: {
       auto null = builder.makeRefNull(heapType.getBasic(share));
       if (!type.isNullable()) {
         return builder.makeRefAs(RefAsNonNull, null);
       }
       return null;
-    }
-
-    case HeapType::waitqueue:
-    case HeapType::nowaitqueue: {
-      WASM_UNREACHABLE("waitqueue is unimplemented in the fuzzer");
     }
   }
   WASM_UNREACHABLE("invalid basic ref type");
@@ -6071,6 +6093,35 @@ Expression* TranslateToFuzzReader::makeStructSet(Type type) {
   return builder.makeStructSet(fieldIndex, ref, value, order);
 }
 
+Expression* TranslateToFuzzReader::makeStructWait(Type type) {
+  assert(type == Type::i32);
+  assert(!structWaitFields.empty());
+  auto [structType, fieldIndex] = pick(structWaitFields);
+  auto* ref = makeTrappingRefUse(structType);
+  auto* waitqueue =
+    makeTrappingRefUse(Type(HeapTypes::sharedWaitqueue, Nullable));
+  auto expectedType = structType.getStruct().fields[fieldIndex].type;
+  if (expectedType.isRef()) {
+    expectedType = Type(HeapTypes::eq.getBasic(Shared), Nullable);
+  }
+  auto* expected = make(expectedType);
+  Expression* timeout = nullptr;
+  if (ATOMIC_WAITS && oneIn(2)) {
+    timeout = make(Type::i64);
+  } else {
+    timeout = builder.makeConst(int64_t{0});
+  }
+  return builder.makeStructWait(fieldIndex, ref, waitqueue, expected, timeout);
+}
+
+Expression* TranslateToFuzzReader::makeWaitqueueNotify(Type type) {
+  assert(type == Type::i32);
+  auto* waitqueue =
+    makeTrappingRefUse(Type(HeapTypes::sharedWaitqueue, Nullable));
+  auto* count = make(Type::i32);
+  return builder.makeWaitqueueNotify(waitqueue, count);
+}
+
 // Make a bounds check for an array operation, given a ref + index. An optional
 // additional length parameter can be provided, which is added to the index if
 // so (that is useful for something like array.fill, which operations on not a
@@ -6705,11 +6756,11 @@ HeapType TranslateToFuzzReader::getSubType(HeapType type) {
       case HeapType::nofunc:
       case HeapType::nocont:
       case HeapType::noexn:
+      case HeapType::nowaitqueue:
         break;
       case HeapType::waitqueue:
-      case HeapType::nowaitqueue: {
-        WASM_UNREACHABLE("waitqueue is unimplemented in the fuzzer");
-      }
+        return pick(HeapTypes::sharedWaitqueue, HeapTypes::sharedNowaitqueue)
+          .getBasic(share);
     }
   }
   // Look for an interesting subtype.
