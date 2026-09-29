@@ -1917,6 +1917,29 @@ void TranslateToFuzzReader::addHangLimitChecks(Function* func) {
         AndInt32, arrayNew->size, builder.makeConst(int32_t(1024 - 1)));
     }
   }
+  struct Visitor : PostWalker<Visitor, UnifiedExpressionVisitor<Visitor>> {
+    Builder& builder;
+    Visitor(Builder& builder) : builder(builder) {}
+
+    void visitExpression(Expression* curr) {
+      if (auto* atomicWait = curr->dynCast<AtomicWait>()) {
+        zeroTimeout(&atomicWait->timeout);
+      } else if (auto* structWait = curr->dynCast<StructWait>()) {
+        zeroTimeout(&structWait->timeout);
+      }
+    }
+
+  private:
+    void zeroTimeout(Expression** timeout) {
+      if ((*timeout)->dynCast<Const>()) {
+        *timeout = builder.makeConst(int64_t(0));
+      } else if ((*timeout)->type == Type::i64) {
+        *timeout = builder.makeSequence(builder.makeDrop(*timeout),
+                                        builder.makeConst(int64_t{0}));
+      }
+    }
+  } v(builder);
+  v.walk(func->body);
 }
 
 void TranslateToFuzzReader::recombine(Function* func) {
@@ -5289,11 +5312,15 @@ Expression* TranslateToFuzzReader::makeAtomic(Type type) {
     return builder.makeAtomicFence(pick(atomicMemoryOrders));
   }
   if (type == Type::i32 && oneIn(2)) {
-    if (ATOMIC_WAITS && oneIn(2)) {
+    if (oneIn(2)) {
       auto* ptr = makePointer();
       auto expectedType = pick(Type::i32, Type::i64);
       auto* expected = make(expectedType);
-      auto* timeout = make(Type::i64);
+
+      // Set the timeout to 0 to avoid hangs since no-one will wake us up.
+      // In addHangLimitChecks we set this to 0 a second time in case a mutation
+      // or an existing test case has this set to non-0.
+      Expression* timeout = builder.makeConst(int64_t{0});
       return builder.makeAtomicWait(ptr,
                                     expected,
                                     timeout,
