@@ -1452,7 +1452,7 @@ def main():
     if not file_diffs:
         print(
             f'No modified C/C++ source files found in {diff_desc}.\n'
-            '(Tip: pass a base ref such as `{SCRIPT_PATH} origin/main` or `HEAD~1` to compare committed changes.)',
+            f'(Tip: pass a base ref such as `{SCRIPT_PATH} origin/main` or `HEAD~1` to compare committed changes.)',
         )
         sys.exit(0)
 
