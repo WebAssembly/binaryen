@@ -6,15 +6,17 @@
   ;; CHECK:      (type $FUNCSIG$v (func))
   (type $FUNCSIG$v (func))
 
-  ;; CHECK:      (type $5 (func (result i32)))
-
   ;; CHECK:      (type $6 (func (param i32) (result i32)))
+
+  ;; CHECK:      (type $5 (func (result i32)))
 
   ;; CHECK:      (type $FUNCSIG$vf (func (param f32)))
   (type $FUNCSIG$vf (func (param f32)))
   ;; CHECK:      (type $4 (func (result f64)))
 
   ;; CHECK:      (type $FUNCSIG$ddd (func (param f64 f64) (result f64)))
+
+  ;; CHECK:      (type $10 (func (param f32) (result f32)))
 
   ;; CHECK:      (type $FUNCSIG$id (func (param f64) (result i32)))
   (type $FUNCSIG$id (func (param f64) (result i32)))
@@ -28,6 +30,10 @@
   (type $8 (func (result i64)))
   ;; CHECK:      (type $9 (func (param i32 i64)))
   (type $9 (func (param i32 i64)))
+
+  ;; CHECK:      (type $15 (func (param eqref) (result i32)))
+
+  ;; CHECK:      (type $16 (func (param eqref) (result eqref)))
 
   ;; CHECK:      (import "env" "_emscripten_asm_const_vi" (func $_emscripten_asm_const_vi (type $FUNCSIG$v)))
   (import "env" "_emscripten_asm_const_vi" (func $_emscripten_asm_const_vi))
@@ -1097,7 +1103,27 @@
     )
   )
 
-  ;; CHECK:      (func $local-to-stack-1c-no (type $6) (param $x i32) (result i32)
+  ;; CHECK:      (func $local-to-stack-1c (type $6) (param $x i32) (result i32)
+  ;; CHECK-NEXT:  (local $temp i32)
+  ;; CHECK-NEXT:  i32.const 1
+  ;; CHECK-NEXT:  call $local-to-stack
+  ;; CHECK-NEXT:  i32.const 2
+  ;; CHECK-NEXT:  call $local-to-stack
+  ;; CHECK-NEXT:  drop
+  ;; CHECK-NEXT:  i32.const 3
+  ;; CHECK-NEXT:  i32.add
+  ;; CHECK-NEXT: )
+  (func $local-to-stack-1c (param $x i32) (result i32)
+    (local $temp i32)
+    (local.set $temp (call $local-to-stack (i32.const 1)))
+    (drop (call $local-to-stack (i32.const 2)))
+    (i32.add
+      (i32.const 3) ;; in the way, but the add is commutative so we can
+      (local.get $temp) ;; still use the value on the stack
+    )
+  )
+
+  ;; CHECK:      (func $local-to-stack-1d-sub-no (type $6) (param $x i32) (result i32)
   ;; CHECK-NEXT:  (local $temp i32)
   ;; CHECK-NEXT:  i32.const 1
   ;; CHECK-NEXT:  call $local-to-stack
@@ -1107,14 +1133,14 @@
   ;; CHECK-NEXT:  drop
   ;; CHECK-NEXT:  i32.const 3
   ;; CHECK-NEXT:  local.get $temp
-  ;; CHECK-NEXT:  i32.add
+  ;; CHECK-NEXT:  i32.sub
   ;; CHECK-NEXT: )
-  (func $local-to-stack-1c-no (param $x i32) (result i32)
+  (func $local-to-stack-1d-sub-no (param $x i32) (result i32)
     (local $temp i32)
     (local.set $temp (call $local-to-stack (i32.const 1)))
     (drop (call $local-to-stack (i32.const 2)))
-    (i32.add
-      (i32.const 3) ;; this is in the way
+    (i32.sub
+      (i32.const 3) ;; not commutative: the set/get pair must stay
       (local.get $temp)
     )
   )
@@ -1292,29 +1318,27 @@
     (local.get $temp2)
   )
 
-  ;; CHECK:      (func $local-to-stack-overlapping-multi-8-no (type $6) (param $x i32) (result i32)
+  ;; CHECK:      (func $local-to-stack-overlapping-multi-8 (type $6) (param $x i32) (result i32)
   ;; CHECK-NEXT:  (local $temp1 i32)
   ;; CHECK-NEXT:  (local $temp2 i32)
   ;; CHECK-NEXT:  i32.const 1
   ;; CHECK-NEXT:  call $local-to-stack-multi-4
-  ;; CHECK-NEXT:  local.set $temp1
   ;; CHECK-NEXT:  i32.const 1
   ;; CHECK-NEXT:  call $local-to-stack-multi-4
   ;; CHECK-NEXT:  i32.const 3
   ;; CHECK-NEXT:  call $local-to-stack-multi-4
   ;; CHECK-NEXT:  drop
-  ;; CHECK-NEXT:  local.get $temp1
   ;; CHECK-NEXT:  i32.add
   ;; CHECK-NEXT: )
-  (func $local-to-stack-overlapping-multi-8-no (param $x i32) (result i32)
+  (func $local-to-stack-overlapping-multi-8 (param $x i32) (result i32)
     (local $temp1 i32)
     (local $temp2 i32)
     (local.set $temp1 (call $local-to-stack-multi-4 (i32.const 1)))
     (local.set $temp2 (call $local-to-stack-multi-4 (i32.const 1)))
     (drop (call $local-to-stack-multi-4 (i32.const 3)))
-    (i32.add
-      (local.get $temp2) ;; the timing
-      (local.get $temp1) ;; it sucks
+    (i32.add ;; the operands are flipped, but the add is commutative
+      (local.get $temp2)
+      (local.get $temp1)
     )
   )
 
@@ -1456,6 +1480,94 @@
     (local.set $f32
       (tuple.extract 2 0
         (local.get $pair)
+      )
+    )
+  )
+
+  ;; A ref.eq with an intervening value: its operands can be swapped.
+  ;; CHECK:      (func $local-to-stack-ref-eq (type $15) (param $x eqref) (result i32)
+  ;; CHECK-NEXT:  (local $temp eqref)
+  ;; CHECK-NEXT:  local.get $x
+  ;; CHECK-NEXT:  call $eqref-value
+  ;; CHECK-NEXT:  local.get $x
+  ;; CHECK-NEXT:  call $eqref-value
+  ;; CHECK-NEXT:  drop
+  ;; CHECK-NEXT:  local.get $x
+  ;; CHECK-NEXT:  ref.eq
+  ;; CHECK-NEXT: )
+  (func $local-to-stack-ref-eq (param $x eqref) (result i32)
+    (local $temp eqref)
+    (local.set $temp (call $eqref-value (local.get $x)))
+    (drop (call $eqref-value (local.get $x)))
+    (ref.eq
+      (local.get $x)
+      (local.get $temp)
+    )
+  )
+
+  ;; CHECK:      (func $eqref-value (type $16) (param $x eqref) (result eqref)
+  ;; CHECK-NEXT:  local.get $x
+  ;; CHECK-NEXT:  call $eqref-value
+  ;; CHECK-NEXT: )
+  (func $eqref-value (param $x eqref) (result eqref)
+    (call $eqref-value (local.get $x))
+  )
+
+  ;; f32.min has swappable operands, so the set/get pair can be removed.
+  ;; CHECK:      (func $local-to-stack-f32-min (type $10) (param $x f32) (result f32)
+  ;; CHECK-NEXT:  (local $temp f32)
+  ;; CHECK-NEXT:  local.get $x
+  ;; CHECK-NEXT:  call $float-value
+  ;; CHECK-NEXT:  local.get $x
+  ;; CHECK-NEXT:  call $float-value
+  ;; CHECK-NEXT:  drop
+  ;; CHECK-NEXT:  local.get $x
+  ;; CHECK-NEXT:  f32.min
+  ;; CHECK-NEXT: )
+  (func $local-to-stack-f32-min (param $x f32) (result f32)
+    (local $temp f32)
+    (local.set $temp (call $float-value (local.get $x)))
+    (drop (call $float-value (local.get $x)))
+    (f32.min
+      (local.get $x)
+      (local.get $temp)
+    )
+  )
+
+  ;; CHECK:      (func $float-value (type $10) (param $x f32) (result f32)
+  ;; CHECK-NEXT:  local.get $x
+  ;; CHECK-NEXT:  call $float-value
+  ;; CHECK-NEXT: )
+  (func $float-value (param $x f32) (result f32)
+    (call $float-value (local.get $x))
+  )
+
+  ;; Two values are in the way, so the set/get pair must stay.
+  ;; CHECK:      (func $local-to-stack-two-in-the-way (type $6) (param $x i32) (result i32)
+  ;; CHECK-NEXT:  (local $temp i32)
+  ;; CHECK-NEXT:  i32.const 1
+  ;; CHECK-NEXT:  call $local-to-stack
+  ;; CHECK-NEXT:  local.set $temp
+  ;; CHECK-NEXT:  i32.const 2
+  ;; CHECK-NEXT:  call $local-to-stack
+  ;; CHECK-NEXT:  drop
+  ;; CHECK-NEXT:  i32.const 3
+  ;; CHECK-NEXT:  call $local-to-stack
+  ;; CHECK-NEXT:  i32.const 4
+  ;; CHECK-NEXT:  call $local-to-stack
+  ;; CHECK-NEXT:  local.get $temp
+  ;; CHECK-NEXT:  i32.add
+  ;; CHECK-NEXT:  i32.add
+  ;; CHECK-NEXT: )
+  (func $local-to-stack-two-in-the-way (param $x i32) (result i32)
+    (local $temp i32)
+    (local.set $temp (call $local-to-stack (i32.const 1)))
+    (drop (call $local-to-stack (i32.const 2)))
+    (i32.add
+      (call $local-to-stack (i32.const 3))
+      (i32.add
+        (call $local-to-stack (i32.const 4))
+        (local.get $temp)
       )
     )
   )

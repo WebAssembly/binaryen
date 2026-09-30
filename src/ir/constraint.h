@@ -33,6 +33,7 @@
 #include "ir/abstract.h"
 #include "support/inplace_vector.h"
 #include "support/small_vector.h"
+#include "support/sorted_vector.h"
 #include "support/span.h"
 #include "support/utilities.h"
 #include "wasm.h"
@@ -342,7 +343,7 @@ struct BasicBlockConstraintMap {
     assert(!unreachable);
 
     if (auto iter = map.find(index); iter != map.end()) {
-      auto& constraints = iter->second;
+      auto& constraints = iter->value;
       // If we can prove nothing, we should have removed it from the map.
       assert(!constraints.provesNothing());
       // If we can prove everything, we should be entirely unreachable.
@@ -367,7 +368,7 @@ struct BasicBlockConstraintMap {
   // Check a condition on a local, given all we know about all other locals.
   Result proves(LocalConstraint condition) const;
 
-  bool operator!=(const BasicBlockConstraintMap& other) {
+  bool operator!=(const BasicBlockConstraintMap& other) const {
     return unreachable != other.unreachable || map != other.map;
   }
 
@@ -375,22 +376,41 @@ struct BasicBlockConstraintMap {
                                   const BasicBlockConstraintMap& map);
 
 private:
-  std::unordered_map<Index, AndedConstraintSet> map;
+  // Wrap a combination of an index and a value, and sort using only the index.
+  template<typename T> struct Indexed {
+    Index index;
+    T value;
 
-  // Maps an index to the locals that have constraints referring to it. When a
-  // local is modified, we need to wipe all those constraints, which become
-  // stale.
+    bool operator<(const Indexed& other) const { return index < other.index; }
+    bool operator<(Index otherIndex) const { return index < otherIndex; }
+    bool operator==(const Indexed& other) const {
+      return index == other.index && value == other.value;
+    }
+    bool operator==(const Index& otherIndex) const {
+      return index == otherIndex;
+    }
+  };
+
+  // Sorted by local Index for fast contiguous copying and linear-time merge in
+  // approximateOr.
+  SortedVector<Indexed<AndedConstraintSet>> map;
+
+  // Maps an index to the locals that have constraints referring to it, sorted
+  // by index. When a local is modified, we need to wipe all those constraints,
+  // which become stale.
   //
   // It is ok (but unoptimal in efficiency) if we have stale refs here, e.g. due
   // to approximation removing a constraint. Whenever there is a reference,
   // however, it must be noted here, so that when things get stale we can remove
   // them.
-  std::unordered_map<Index, std::unordered_set<Index>> refs;
+  SortedVector<Indexed<SortedVector<Index>>> refs;
 
   // Given a constraint on a local, note refs.
   void noteRefs(Index index, const Constraint& c);
 
-  // Given an index, erase constraints referring to it.
+  // Given an index, erase constraints referring to it. This is called when the
+  // information for this index is wiped out, so we clear the refs and the
+  // constraints referred to.
   void eraseStaleRefs(Index index);
 
   // Internal version, with a flag to flip the constraint. Whenever we apply

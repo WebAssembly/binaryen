@@ -643,6 +643,7 @@ private:
   void removeAt(Index i);
   Index getNumConsumedValues(StackInst* inst);
   bool canRemoveSetGetPair(Index setIndex, Index getIndex);
+  bool isConsumedBySymmetricOp(Index getIndex);
   std::unordered_set<LocalGet*> findStringViewDeferredGets();
 };
 

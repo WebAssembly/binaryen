@@ -2808,7 +2808,7 @@ def get_random_opts():
                               if choice not in requires_closed_world]
 
     # core opts
-    while 1:
+    while True:
         choice = random.choice(usable_opt_choices)
         if '--flatten' in choice or '-O4' in choice:
             if has_flatten:

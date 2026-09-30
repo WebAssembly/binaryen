@@ -1051,14 +1051,12 @@ void BasicBlockConstraintMap::set(Index index,
   // We should not set values in unreachable code.
   assert(!unreachable);
 
-  // Clear the old state.
+  // Clear the old state, making us prove nothing.
   eraseStaleRefs(index);
   map.erase(index);
 
   // Apply the constraints, if there are any.
-  if (constraints.provesNothing()) {
-    setProvesNothing(index);
-  } else {
+  if (!constraints.provesNothing()) {
     for (auto& c : constraints) {
       approximateAnd(index, c);
     }
@@ -1199,24 +1197,27 @@ bool BasicBlockConstraintMap::approximateOr(
     return true;
   }
 
-  // We only need to loop on our locals, as any local that is missing in us is
-  // one that would end up proving nothing (and get removed).
+  // Both maps are sorted by local Index. Intersect in place: for us to be able
+  // to prove something (for us to have an entry in the ORed map), there must
+  // have been an entry in both original maps.
   bool changed = false;
-  for (auto& [local, constraints] : map) {
-    changed |= constraints.approximateOr(other.get(local));
+  auto oldSize = map.size();
+  map.intersectAndFilter(other.map, [&](auto& self, const auto& other) {
+    changed |= self.value.approximateOr(other.value);
+    assert(!self.value.provesEverything());
+    // Keep only entries that prove things, as others should not be in the map.
+    return !self.value.provesNothing();
+  });
+  if (map.size() != oldSize) {
+    changed = true;
   }
 
-  // Anything that became trivial after the OR must be removed.
-  std::erase_if(map, [&](const auto& item) {
-    const auto& [local, constraints] = item;
-    // We do not store contradictions.
-    assert(!constraints.provesEverything());
-    if (constraints.provesNothing()) {
-      changed = true;
-      return true;
-    }
-    return false;
-  });
+  // We could more precisely find which locals were removed from the map, but
+  // stale refs have low overhead and no correctness cost, so just handle the
+  // common, simple case of nothing remaining, so no refs are needed.
+  if (map.empty()) {
+    refs.clear();
+  }
 
   return changed;
 }
@@ -1246,18 +1247,19 @@ void BasicBlockConstraintMap::approximateAndInternal(Index index,
     // If we are applying a constraint to another local, and we know that
     // local's value, propagate it. That is, if x == 42, then if we try to apply
     // y < x we instead apply y < 42, which is better.
-    auto otherConstraints = get(*other);
-    if (auto lit = otherConstraints.getLiteral()) {
-      actual.term = Term{*lit};
+    if (auto iter = map.find(*other); iter != map.end()) {
+      if (auto lit = iter->value.getLiteral()) {
+        actual.term = Term{*lit};
+      }
     }
   }
 
   // Refer to the constraints for this index. If this is the first access of
   // the local, then we insert a new item into the map, which has a default of
-  // proxesEverything, which we need to flip (provesEverything cannot otherwise
+  // provesNothing, which we need to populate (provesNothing cannot otherwise
   // be found in the map, as we never store it).
-  auto [iter, _] = map.insert({index, AndedConstraintSet::makeProvesNothing()});
-  auto& indexConstraints = iter->second;
+  auto& indexConstraints =
+    map.insert({index, AndedConstraintSet::makeProvesNothing()}).value;
   // As in ::set(), this makes the map temporarily invalid until the
   // approximateAnd, as we don't store proves-nothing in the map, normally.
 
@@ -1267,6 +1269,7 @@ void BasicBlockConstraintMap::approximateAndInternal(Index index,
     // We just proved we are in unreachable code.
     unreachable = true;
     map.clear();
+    refs.clear();
     return;
   }
 
@@ -1310,18 +1313,22 @@ Result BasicBlockConstraintMap::proves(LocalConstraint condition) const {
   // about, propagate it. TODO: even without equality, we can add more
   // constraints here (e.g. x < y and y < 10 can lead to proving x < 10)
   if (auto* other = std::get_if<Index>(&condition.constraint.term)) {
-    auto otherConstraints = get(*other);
-    if (auto lit = otherConstraints.getLiteral()) {
-      condition.constraint.term = Term{*lit};
+    if (auto iter = map.find(*other); iter != map.end()) {
+      if (auto lit = iter->value.getLiteral()) {
+        condition.constraint.term = Term{*lit};
+      }
     }
   }
 
-  return get(condition.local).proves(condition.constraint);
+  if (auto iter = map.find(condition.local); iter != map.end()) {
+    return iter->value.proves(condition.constraint);
+  }
+  return Unknown;
 }
 
 void BasicBlockConstraintMap::noteRefs(Index index, const Constraint& c) {
   if (auto* i = std::get_if<Index>(&c.term)) {
-    refs[*i].insert(index);
+    refs.insert({*i, {}}).value.insert(index);
   }
 }
 
@@ -1331,11 +1338,12 @@ void BasicBlockConstraintMap::eraseStaleRefs(Index index) {
     return;
   }
 
-  auto& refIndexes = iter->second;
+  auto refIndexes = std::move(iter->value);
+  refs.erase(iter);
 
   for (auto refIndex : refIndexes) {
     if (auto iter = map.find(refIndex); iter != map.end()) {
-      auto& refConstraints = iter->second;
+      auto& refConstraints = iter->value;
       std::erase_if(refConstraints, [&](const auto& c) {
         if (auto* i = std::get_if<Index>(&c.term)) {
           if (*i == index) {
