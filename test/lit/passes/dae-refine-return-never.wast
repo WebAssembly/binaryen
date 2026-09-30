@@ -28,19 +28,13 @@
  ;; NOOPT:      (tag $exn (type $2) (param i32))
  ;; CHECK:      (type $0 (func (result i32)))
 
- ;; CHECK:      (type $1 (func (result (ref none))))
+ ;; CHECK:      (type $1 (func))
 
  ;; CHECK:      (type $2 (func (param i32)))
 
- ;; CHECK:      (type $3 (func (param i32) (result (ref none))))
+ ;; CHECK:      (type $3 (func (result anyref anyref)))
 
- ;; CHECK:      (type $4 (func (result (ref nofunc))))
-
- ;; CHECK:      (type $5 (func (result (ref noextern))))
-
- ;; CHECK:      (type $6 (func (result anyref anyref)))
-
- ;; CHECK:      (type $7 (func (param i32) (result i32)))
+ ;; CHECK:      (type $4 (func (param i32) (result i32)))
 
  ;; CHECK:      (tag $exn (type $2) (param i32))
  (tag $exn (param i32))
@@ -75,9 +69,9 @@
 
  ;; CHECK:      (export "call-tuple" (func $call-tuple))
 
- ;; CHECK:      (func $throws (type $3) (param $x i32) (result (ref none))
+ ;; CHECK:      (func $throws (type $2) (param $0 i32)
  ;; CHECK-NEXT:  (throw $exn
- ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $throws (param $x i32) (result (ref eq))
@@ -86,20 +80,24 @@
   )
  )
 
- ;; This function ends in an unreachable.
+ ;; This function ends in an unreachable. With --dae-optimizing, it ends up
+ ;; with no result at all: its result type is refined to (ref none), which lets
+ ;; us optimize the caller $call-traps so that the call is dropped (see there),
+ ;; and then the next iteration of DAE removes the result, as all calls to this
+ ;; function are dropped. The same happens to $throws above and to $loops, $func
+ ;; and $extern below.
  ;; NOOPT:      (func $traps (type $1) (result (ref none))
  ;; NOOPT-NEXT:  (drop
  ;; NOOPT-NEXT:   (i32.const 42)
  ;; NOOPT-NEXT:  )
  ;; NOOPT-NEXT:  (unreachable)
  ;; NOOPT-NEXT: )
- ;; CHECK:      (func $traps (type $1) (result (ref none))
- ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (i32.const 42)
- ;; CHECK-NEXT:  )
+ ;; CHECK:      (func $traps (type $1)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  (func $traps (result (ref null any))
+  ;; With --dae-optimizing, this function is optimized again after its result
+  ;; is removed, which removes this drop.
   (drop
    (i32.const 42)
   )
@@ -112,7 +110,7 @@
  ;; NOOPT-NEXT:   (br $l)
  ;; NOOPT-NEXT:  )
  ;; NOOPT-NEXT: )
- ;; CHECK:      (func $loops (type $1) (result (ref none))
+ ;; CHECK:      (func $loops (type $1)
  ;; CHECK-NEXT:  (loop $l
  ;; CHECK-NEXT:   (br $l)
  ;; CHECK-NEXT:  )
@@ -127,7 +125,7 @@
  ;; NOOPT:      (func $func (type $4) (result (ref nofunc))
  ;; NOOPT-NEXT:  (unreachable)
  ;; NOOPT-NEXT: )
- ;; CHECK:      (func $func (type $4) (result (ref nofunc))
+ ;; CHECK:      (func $func (type $1)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  (func $func (result (ref null func))
@@ -137,7 +135,7 @@
  ;; NOOPT:      (func $extern (type $5) (result (ref noextern))
  ;; NOOPT-NEXT:  (unreachable)
  ;; NOOPT-NEXT: )
- ;; CHECK:      (func $extern (type $5) (result (ref noextern))
+ ;; CHECK:      (func $extern (type $1)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  (func $extern (result externref)
@@ -148,15 +146,13 @@
  ;; NOOPT:      (func $tuple (type $6) (result anyref anyref)
  ;; NOOPT-NEXT:  (unreachable)
  ;; NOOPT-NEXT: )
- ;; CHECK:      (func $tuple (type $6) (result anyref anyref)
+ ;; CHECK:      (func $tuple (type $3) (result anyref anyref)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  (func $tuple (result anyref anyref)
   (unreachable)
  )
 
- ;; The code after the call to a never-returning function becomes unreachable
- ;; with --dae-optimizing.
  ;; NOOPT:      (func $caller (type $7) (param $x i32) (result i32)
  ;; NOOPT-NEXT:  (local $y (ref eq))
  ;; NOOPT-NEXT:  (if
@@ -178,26 +174,19 @@
  ;; NOOPT-NEXT:   )
  ;; NOOPT-NEXT:  )
  ;; NOOPT-NEXT: )
- ;; CHECK:      (func $caller (type $7) (param $x i32) (result i32)
- ;; CHECK-NEXT:  (local $y (ref eq))
+ ;; CHECK:      (func $caller (type $4) (param $0 i32) (result i32)
  ;; CHECK-NEXT:  (if
- ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:   (then
  ;; CHECK-NEXT:    (return
  ;; CHECK-NEXT:     (i32.const 1)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (local.set $y
- ;; CHECK-NEXT:   (call $throws
- ;; CHECK-NEXT:    (local.get $x)
- ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  (call $throws
+ ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (i31.get_s
- ;; CHECK-NEXT:   (ref.cast (ref i31)
- ;; CHECK-NEXT:    (local.get $y)
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  (func $caller (export "caller") (param $x i32) (result i32)
   (local $y (ref eq))
@@ -209,6 +198,9 @@
     )
    )
   )
+  ;; With --dae-optimizing, as this call never returns, the code after it
+  ;; becomes unreachable and is removed, together with the local. The call
+  ;; itself is dropped, which then lets DAE remove the result of $throws.
   (local.set $y
    (call $throws
     (local.get $x)
@@ -228,11 +220,13 @@
  ;; NOOPT-NEXT:  )
  ;; NOOPT-NEXT: )
  ;; CHECK:      (func $call-traps (type $0) (result i32)
- ;; CHECK-NEXT:  (ref.is_null
- ;; CHECK-NEXT:   (call $traps)
- ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (call $traps)
+ ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  (func $call-traps (export "call-traps") (result i32)
+  ;; With --dae-optimizing, as the call never returns, the ref.is_null is
+  ;; replaced with an unreachable, and the call is dropped. The same happens in
+  ;; the functions below, except $call-tuple.
   (ref.is_null
    (call $traps)
   )
@@ -244,9 +238,8 @@
  ;; NOOPT-NEXT:  )
  ;; NOOPT-NEXT: )
  ;; CHECK:      (func $call-loops (type $0) (result i32)
- ;; CHECK-NEXT:  (ref.is_null
- ;; CHECK-NEXT:   (call $loops)
- ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (call $loops)
+ ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  (func $call-loops (export "call-loops") (result i32)
   (ref.is_null
@@ -260,9 +253,8 @@
  ;; NOOPT-NEXT:  )
  ;; NOOPT-NEXT: )
  ;; CHECK:      (func $call-func (type $0) (result i32)
- ;; CHECK-NEXT:  (ref.is_null
- ;; CHECK-NEXT:   (call $func)
- ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (call $func)
+ ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  (func $call-func (export "call-func") (result i32)
   (ref.is_null
@@ -276,9 +268,8 @@
  ;; NOOPT-NEXT:  )
  ;; NOOPT-NEXT: )
  ;; CHECK:      (func $call-extern (type $0) (result i32)
- ;; CHECK-NEXT:  (ref.is_null
- ;; CHECK-NEXT:   (call $extern)
- ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (call $extern)
+ ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  (func $call-extern (export "call-extern") (result i32)
   (ref.is_null
@@ -474,6 +465,8 @@
   )
  )
 
+ ;; With --dae-optimizing, this function is optimized once the results of the
+ ;; functions it calls are refined.
  ;; NOOPT:      (func $user (type $3) (param $0 i32) (result i32)
  ;; NOOPT-NEXT:  (i32.add
  ;; NOOPT-NEXT:   (i31.get_s
@@ -493,15 +486,16 @@
  ;; CHECK:      (func $user (type $3) (param $0 i32) (result i32)
  ;; CHECK-NEXT:  (i32.add
  ;; CHECK-NEXT:   (i31.get_s
- ;; CHECK-NEXT:    (ref.cast (ref i31)
- ;; CHECK-NEXT:     (call $kG
- ;; CHECK-NEXT:      (local.get $0)
- ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    (call $kG
+ ;; CHECK-NEXT:     (local.get $0)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (i31.get_s
- ;; CHECK-NEXT:    (ref.cast (ref none)
+ ;; CHECK-NEXT:   (block
+ ;; CHECK-NEXT:    (drop
  ;; CHECK-NEXT:     (call $only-tail)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (i31.get_s
+ ;; CHECK-NEXT:     (unreachable)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
@@ -509,6 +503,7 @@
  (func $user (export "user") (param $0 i32) (result i32)
   (i32.add
    (i31.get_s
+    ;; This cast is removed, as $kG is now known to return a (ref i31).
     (ref.cast (ref i31)
      (call $kG
       (local.get $0)
@@ -516,6 +511,14 @@
     )
    )
    (i31.get_s
+    ;; As $only-tail now returns a (ref none), this cast is refinalized to a
+    ;; cast to (ref none), as we see with --dae. Such a cast can never succeed,
+    ;; so optimize-instructions replaces it with a block that drops the call
+    ;; and then traps. merge-blocks then moves that block out of the
+    ;; i31.get_s, which leaves (i31.get_s (unreachable)). No dce runs after
+    ;; merge-blocks in the pipeline, so this is not cleaned up further. (Unlike
+    ;; for the functions in the previous module, the result of $only-tail
+    ;; cannot be removed, as that function contains a tail call.)
     (ref.cast (ref i31)
      (call $only-tail)
     )

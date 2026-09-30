@@ -45,6 +45,7 @@
 #include "param-utils.h"
 #include "pass.h"
 #include "passes/opt-utils.h"
+#include "passes/pass-utils.h"
 #include "support/sorted_vector.h"
 #include "wasm-builder.h"
 #include "wasm.h"
@@ -348,9 +349,15 @@ struct DAE : public Pass {
     // Track which functions we changed that are worth re-optimizing at the end.
     std::unordered_set<Function*> worthOptimizing;
 
-    // If we refine return types then we will need to do more type updating
-    // at the end.
-    bool refinedReturnTypes = false;
+    // The callers of functions whose return types we refined. The types of the
+    // calls changed, so these functions must be refinalized. The more refined
+    // types may also enable optimizations there (e.g., a cast may become
+    // statically known to succeed), so we optimize them at the end, together
+    // with |worthOptimizing|. We keep them apart from |worthOptimizing| as that
+    // set also affects which transformations we do in this iteration. If this
+    // is not empty, we iterate again, as the refined types may allow further
+    // refinements.
+    std::unordered_set<Function*> refinedCallers;
 
     // If we find that localizing call arguments can help (by moving their
     // effects outside, so ParamUtils::removeParameters can handle them), then
@@ -404,9 +411,11 @@ struct DAE : public Pass {
       }
       // Refine return types as well.
       if (refineReturnTypes(func, calls, module)) {
-        refinedReturnTypes = true;
         markStale(name);
         markCallersStale(index);
+        for (auto caller : callers[index]) {
+          refinedCallers.insert(module->getFunction(caller));
+        }
       }
       auto optimizedIndexes =
         ParamUtils::applyConstantValues({func}, calls, {}, module);
@@ -419,11 +428,14 @@ struct DAE : public Pass {
         markStale(func->name);
       }
     }
-    if (refinedReturnTypes) {
+    if (!refinedCallers.empty()) {
       // Changing a call expression's return type can propagate out to its
-      // parents, and so we must refinalize.
-      // TODO: We could track in which functions we actually make changes.
-      ReFinalize().run(getPassRunner(), module);
+      // parents, and so we must refinalize the callers.
+      PassUtils::FilteredPassRunner runner(
+        module, refinedCallers, getPassRunner()->options);
+      runner.setIsNested(true);
+      runner.add(std::make_unique<ReFinalize>());
+      runner.run();
     }
     // We now know which parameters are unused, and can potentially remove them.
     // Only do so if we didn't run into unprofitable removals - if so, leave
@@ -533,11 +545,17 @@ struct DAE : public Pass {
           markStale(func->name);
         });
     }
-    if (optimize && !worthOptimizing.empty()) {
-      OptUtils::optimizeAfterInlining(worthOptimizing, module, getPassRunner());
+    if (optimize) {
+      // This happens after the ReFinalize above, so the callers of functions
+      // with refined results see the new types.
+      worthOptimizing.insert(refinedCallers.begin(), refinedCallers.end());
+      if (!worthOptimizing.empty()) {
+        OptUtils::optimizeAfterInlining(
+          worthOptimizing, module, getPassRunner());
+      }
     }
 
-    return !worthOptimizing.empty() || refinedReturnTypes ||
+    return !worthOptimizing.empty() || !refinedCallers.empty() ||
            !callTargetsToLocalize.empty();
   }
 
