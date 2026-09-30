@@ -16,8 +16,12 @@
 """Multi-metric differential test coverage reporter for Binaryen.
 
 Intersects `git diff` hunks with Clang/LLVM source-based code coverage
-(`llvm-cov export`) to report Line, Region, Branch, MC/DC, and Function
-coverage specifically for the code modified in a change.
+(`llvm-cov export`) to report Line, Region, Branch, MC/DC, and Function coverage
+specifically for the code modified in a change. With -a / --annotate, also
+prints the diff annotated with coverage information.
+
+Prints instructions for configuring a coverage reporting build and collecting
+coverage information if a coverage build cannot be found automatically.
 """
 
 import argparse
