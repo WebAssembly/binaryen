@@ -8,6 +8,73 @@ from . import utils
 
 
 class DWARFTest(utils.BinaryenTestCase):
+    def test_overlapping_inline_siblings(self):
+        # Make the outer lexical block valid and move one inlined call onto
+        # its sibling's range. Both siblings must become unavailable: keeping
+        # either one would assign its variables to the other's instructions.
+        path = os.path.join(shared.options.binaryen_test, 'passes',
+                            'class_with_dwarf_noprint.wasm')
+        with open(path, 'rb') as f:
+            wasm = f.read()
+        replacements = (
+            ('26000000fcffffff', '260000005f000000'),
+            ('4000000019000000', '6100000009000000'),
+        )
+        for old, new in replacements:
+            old_bytes = bytes.fromhex(old)
+            self.assertEqual(wasm.count(old_bytes), 1)
+            wasm = wasm.replace(old_bytes, bytes.fromhex(new))
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            input_file = os.path.join(temp_dir, 'input.wasm')
+            output_file = os.path.join(temp_dir, 'output.wasm')
+            with open(input_file, 'wb') as f:
+                f.write(wasm)
+            shared.run_process(shared.WASM_OPT +
+                               [input_file, '--roundtrip', '-g',
+                                '-o', output_file])
+            dump = shared.run_process(shared.WASM_OPT +
+                                      [output_file, '--dwarfdump'],
+                                      capture_output=True).stdout
+            first = dump.split('0x0000015e:', 1)[1].split('0x00000179:', 1)[0]
+            second = dump.split('0x00000179:', 1)[1].split('0x00000189:', 1)[0]
+            ranges_line = next(line for line in first.splitlines()
+                               if 'DW_AT_ranges' in line)
+            self.assertTrue(ranges_line.endswith(')'))
+            empty_offset = ranges_line.rsplit('(0x', 1)[1].split(')', 1)[0]
+            ranges = dump.split('.debug_ranges contents:\n', 1)[1]
+            self.assertIn(f'{empty_offset} <End of list>', ranges)
+            self.assertIn('DW_AT_low_pc [DW_FORM_addr]\t'
+                          '(0x00000000ffffffff)', second)
+
+    def test_zero_start_range_offset(self):
+        # A zero start with a nonzero end is a valid offset from the current
+        # .debug_ranges base, not a tombstone or end-of-list marker. Replace
+        # the fixture's unmapped (0, 1) entry with a contiguous mapped range.
+        path = os.path.join(shared.options.binaryen_test, 'passes',
+                            'class_with_dwarf_noprint.wasm')
+        with open(path, 'rb') as f:
+            wasm = f.read()
+        old_ranges = bytes.fromhex('00000000010000005b00000064000000')
+        new_ranges = bytes.fromhex('000000005b0000005b00000064000000')
+        self.assertEqual(wasm.count(old_ranges), 1)
+        wasm = wasm.replace(old_ranges, new_ranges)
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            input_file = os.path.join(temp_dir, 'input.wasm')
+            output_file = os.path.join(temp_dir, 'output.wasm')
+            with open(input_file, 'wb') as f:
+                f.write(wasm)
+            shared.run_process(shared.WASM_OPT +
+                               [input_file, '--roundtrip', '-g',
+                                '-o', output_file])
+            dump = shared.run_process(shared.WASM_OPT +
+                                      [output_file, '--dwarfdump'],
+                                      capture_output=True).stdout
+            ranges = dump.split('.debug_ranges contents:\n', 1)[1]
+            self.assertRegex(
+                ranges, r'(?m)^00000000 00000000 (?!00000000)[0-9a-f]{8}$')
+
     def test_tombstone_roundtrip(self):
         def custom_section(name, contents):
             name = name.encode()
