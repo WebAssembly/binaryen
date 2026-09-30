@@ -250,6 +250,10 @@ void validateExactReferences(Module& module, ValidationInfo& info) {
     return;
   }
 
+  // TODO: This only checks directly exposed root types. To catch all invalid
+  // public exact references (such as types reachable from exposed types or
+  // subtypes of exposed `funcref` in open-world mode), we should check all
+  // public heap types if we can do so without making validation too expensive.
   for (auto& [type, _] : ModuleUtils::getExposedPublicHeapTypes(module)) {
     for (auto child : type.getTypeChildren()) {
       if (child.isExact()) {
