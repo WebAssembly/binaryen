@@ -35,6 +35,8 @@ import subprocess
 import sys
 from dataclasses import dataclass, field
 
+SCRIPT_PATH = os.path.relpath(os.path.abspath(__file__))
+
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 CPP_EXTENSIONS = {'.c', '.cc', '.cpp', '.cxx', '.c++', '.h', '.hpp', '.inc'}
@@ -296,9 +298,9 @@ def print_setup_instructions(reason: str, suggested_build_dir: str = 'out/cov'):
      ninja -C {rel_build} wasm-opt binaryen-lit binaryen-unittests
 
   3. Run this tool with your test(s) to collect profiles and report diff coverage in one step:
-     ./scripts/coverage-diff.py -B {rel_build} --lit test/lit/passes/<your-test>.wast
-     ./scripts/coverage-diff.py -B {rel_build} --gtest "*YourTest*"
-     ./scripts/coverage-diff.py -B {rel_build} --run "{rel_build}/bin/wasm-opt ..."
+     {SCRIPT_PATH} -B {rel_build} --lit test/lit/passes/<your-test>.wast
+     {SCRIPT_PATH} -B {rel_build} --gtest "*YourTest*"
+     {SCRIPT_PATH} -B {rel_build} --run "{rel_build}/bin/wasm-opt ..."
 """,
         file=sys.stderr,
     )
@@ -316,17 +318,17 @@ def print_missing_profile_instructions(build_dir: str):
         f"""Run tests through coverage-diff.py to automatically generate and merge profiles:
 
   # Run specific lit test(s):
-  ./scripts/coverage-diff.py {b_flag}--lit test/lit/passes/<your-test>.wast
+  {SCRIPT_PATH} {b_flag}--lit test/lit/passes/<your-test>.wast
 
   # Run GTest unit tests (all or filtered):
-  ./scripts/coverage-diff.py {b_flag}--gtest "*YourFilter*"
+  {SCRIPT_PATH} {b_flag}--gtest "*YourFilter*"
 
   # Run an arbitrary command:
-  ./scripts/coverage-diff.py {b_flag}--run "{bin_prefix}/wasm-opt ..."
+  {SCRIPT_PATH} {b_flag}--run "{bin_prefix}/wasm-opt ..."
 
 Or run tests manually with LLVM_PROFILE_FILE set, then re-run coverage-diff.py:
   LLVM_PROFILE_FILE="$(pwd)/{rel_build}/coverage/profraw/%p_%m.profraw" {bin_prefix}/binaryen-lit test/lit/...
-  ./scripts/coverage-diff.py {b_flag.rstrip()}
+  {SCRIPT_PATH} {b_flag.rstrip()}
 """,
         file=sys.stderr,
     )
@@ -1450,7 +1452,7 @@ def main():
     if not file_diffs:
         print(
             f'No modified C/C++ source files found in {diff_desc}.\n'
-            '(Tip: pass a base ref such as `./scripts/coverage-diff.py origin/main` or `HEAD~1` to compare committed changes.)',
+            '(Tip: pass a base ref such as `{SCRIPT_PATH} origin/main` or `HEAD~1` to compare committed changes.)',
         )
         sys.exit(0)
 
