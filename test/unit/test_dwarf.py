@@ -42,7 +42,7 @@ class DWARFTest(utils.BinaryenTestCase):
                                if 'DW_AT_ranges' in line)
             self.assertTrue(ranges_line.endswith(')'))
             empty_offset = ranges_line.rsplit('(0x', 1)[1].split(')', 1)[0]
-            ranges = dump.split('.debug_ranges contents:\n', 1)[1]
+            ranges = dump.split('.debug_ranges contents:', 1)[1]
             self.assertIn(f'{empty_offset} <End of list>', ranges)
             self.assertIn('DW_AT_low_pc [DW_FORM_addr]\t'
                           '(0x00000000ffffffff)', second)
@@ -71,9 +71,10 @@ class DWARFTest(utils.BinaryenTestCase):
             dump = shared.run_process(shared.WASM_OPT +
                                       [output_file, '--dwarfdump'],
                                       capture_output=True).stdout
-            ranges = dump.split('.debug_ranges contents:\n', 1)[1]
+            ranges = dump.split('.debug_ranges contents:', 1)[1]
             self.assertRegex(
-                ranges, r'(?m)^00000000 00000000 (?!00000000)[0-9a-f]{8}$')
+                '\n'.join(ranges.splitlines()),
+                r'(?m)^00000000 00000000 (?!00000000)[0-9a-f]{8}$')
 
     def test_tombstone_roundtrip(self):
         def custom_section(name, contents):

@@ -924,7 +924,7 @@ static void updateDIE(const llvm::DWARFDebugInfoEntry& DIE,
           tag != llvm::dwarf::DW_TAG_compile_unit &&
           (newValue == 0 || newValue < newLowPC)) {
         newLowPC = AllOnesAddress;
-        newValue = isRelative ? newLowPC : AllOnesAddress;
+        newValue = AllOnesAddress;
         assert(lowPCValue);
         lowPCValue->Value = newLowPC;
       }
@@ -1024,10 +1024,9 @@ static void updateRanges(llvm::DWARFYAML::Data& yaml,
   }
 }
 
-// A pass may reorder instructions such that independently mapped range
-// endpoints no longer describe a valid DWARF scope tree. In that case it is
-// safer to make the affected scope unavailable than to assign variables to
-// code that did not originally belong to the scope.
+// Per-DIE state for repairDIEAddressRanges: remapped ranges and scope-tree
+// relationships, plus references to the YAML fields that need updating when
+// repairing a range list or making a scope unavailable.
 struct DIEAddressInfo {
   llvm::DWARFYAML::Entry* yamlEntry = nullptr;
   llvm::DWARFYAML::FormValue* rangesValue = nullptr;
@@ -1181,6 +1180,10 @@ writeUnavailableDIE(DIEAddressInfo& info,
     });
 }
 
+// A pass may reorder instructions such that independently mapped range
+// endpoints no longer describe a valid DWARF scope tree. In that case it is
+// safer to make the affected scope unavailable than to assign variables to
+// code that did not originally belong to the scope.
 static void repairDIEAddressRanges(const BinaryenDWARFInfo& dwarfInfo,
                                    llvm::DWARFYAML::Data& yaml,
                                    const LocationUpdater& locationUpdater) {
