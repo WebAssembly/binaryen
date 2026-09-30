@@ -31,6 +31,7 @@ Pass* createCoalesceLocalsWithLearningPass();
 Pass* createCodeFoldingPass();
 Pass* createCodePushingPass();
 Pass* createConstHoistingPass();
+Pass* createConstantPoolingPass();
 Pass* createConstantFieldPropagationPass();
 Pass* createConstantFieldPropagationRefTestPass();
 Pass* createConstraintAnalysisPass();
