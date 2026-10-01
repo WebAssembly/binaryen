@@ -47,11 +47,11 @@ struct OptimizeNoReturn
   Expression** dropp = nullptr;
 
   void visitExpression(Expression* curr) {
-    if (curr->dynCast<Call>()) {
+    if (auto* call = curr->dynCast<Call>()) {
       // No need to add an unreachable after an already-unreachable call (like a
       // return call, or one with an unreachable operand).
-      if (curr->type != Type::unreachable &&
-          Intrinsics::getAnnotations(wasm.getFunction(call->target)).noReturn) {
+      if (call->type != Type::unreachable &&
+          Intrinsics::getAnnotations(getModule()->getFunction(call->target)).noReturn) {
         callp = getCurrentPointer();
       }
       return;
@@ -77,10 +77,12 @@ struct OptimizeNoReturn
       // Put the unreachable after the drop (so the call stays dropped); other
       // passes can remove the return value entirely.
       *dropp = builder.makeSequence(*dropp, builder.makeUnreachable());
+      dropp = nullptr;
     } else {
       // Put the unreachable after the call.
       *callp = builder.makeSequence(*callp, builder.makeUnreachable());
     }
+    callp = nullptr;
   }
 };
 
