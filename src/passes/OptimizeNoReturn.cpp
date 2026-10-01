@@ -24,7 +24,6 @@
 //
 
 #include "ir/intrinsics.h"
-#include "ir/properties.h"
 #include "pass.h"
 #include "wasm-builder.h"
 #include "wasm.h"
