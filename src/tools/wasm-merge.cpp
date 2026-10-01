@@ -590,8 +590,8 @@ void fixTableInitializers() {
   struct Inliner : public PostWalker<Inliner> {
     bool inlined = false;
     void visitGlobalGet(GlobalGet* curr) {
-      auto* global = getModule()->getGlobalOrNull(curr->name);
-      if (global && !global->imported()) {
+      auto* global = getModule()->getGlobal(curr->name);
+      if (!global->imported()) {
         assert(global->init && !global->mutable_);
         replaceCurrent(ExpressionManipulator::copy(global->init, *getModule()));
         inlined = true;
