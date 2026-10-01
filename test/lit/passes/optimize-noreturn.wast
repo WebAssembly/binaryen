@@ -195,4 +195,26 @@
       (unreachable)
     )
   )
+
+  ;; CHECK:      (func $refinalize (type $0)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result nullref)
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (call $defined)
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $refinalize
+    ;; After adding an unreachable, we refinalize, which is noticeable in the
+    ;; block type here.
+    (drop
+      (block (result anyref)
+        (ref.null any)
+      )
+    )
+    (call $defined)
+  )
 )

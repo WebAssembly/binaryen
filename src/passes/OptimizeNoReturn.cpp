@@ -24,6 +24,7 @@
 //
 
 #include "ir/intrinsics.h"
+#include "ir/utils.h"
 #include "pass.h"
 #include "wasm-builder.h"
 #include "wasm.h"
@@ -96,11 +97,17 @@ struct OptimizeNoReturn
     addUnreachable();
   }
 
+  bool refinalize = false;
+
   void visitFunction(Function* curr) {
     // The walk ended, but perhaps it ended on something that needs an
     // unreachable.
     if (callp) {
       addUnreachable();
+    }
+
+    if (refinalize) {
+      ReFinalize().walkFunctionInModule(curr, getModule());
     }
   }
 
@@ -116,6 +123,8 @@ struct OptimizeNoReturn
       *callp = builder.makeSequence(*callp, builder.makeUnreachable());
     }
     callp = nullptr;
+
+    refinalize = true;
   }
 };
 
