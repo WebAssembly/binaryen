@@ -51,7 +51,8 @@ struct OptimizeNoReturn
       // No need to add an unreachable after an already-unreachable call (like a
       // return call, or one with an unreachable operand).
       if (call->type != Type::unreachable &&
-          Intrinsics::getAnnotations(getModule()->getFunction(call->target)).noReturn) {
+          Intrinsics::getAnnotations(getModule()->getFunction(call->target))
+            .noReturn) {
         callp = getCurrentPointer();
       }
       return;
