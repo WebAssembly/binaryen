@@ -2002,4 +2002,123 @@
     )
     (i32.const -1)
   )
+
+  ;; CHECK:      (func $ref.is_null-ref.cast_desc_eq (type $24) (param $x anyref) (param $d (ref null $desc)) (result i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.is_null
+  ;; CHECK-NEXT:    (ref.cast_desc_eq (ref null $struct)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (block (result (ref null $desc))
+  ;; CHECK-NEXT:      (call $effect)
+  ;; CHECK-NEXT:      (local.get $d)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (ref.is_null
+  ;; CHECK-NEXT:   (ref.cast (ref null $struct)
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; NTRAP:      (func $ref.is_null-ref.cast_desc_eq (type $24) (param $x anyref) (param $d (ref null $desc)) (result i32)
+  ;; NTRAP-NEXT:  (drop
+  ;; NTRAP-NEXT:   (ref.is_null
+  ;; NTRAP-NEXT:    (ref.cast_desc_eq (ref null $struct)
+  ;; NTRAP-NEXT:     (local.get $x)
+  ;; NTRAP-NEXT:     (block (result (ref null $desc))
+  ;; NTRAP-NEXT:      (call $effect)
+  ;; NTRAP-NEXT:      (local.get $d)
+  ;; NTRAP-NEXT:     )
+  ;; NTRAP-NEXT:    )
+  ;; NTRAP-NEXT:   )
+  ;; NTRAP-NEXT:  )
+  ;; NTRAP-NEXT:  (ref.is_null
+  ;; NTRAP-NEXT:   (local.get $x)
+  ;; NTRAP-NEXT:  )
+  ;; NTRAP-NEXT: )
+  (func $ref.is_null-ref.cast_desc_eq (param $x anyref) (param $d (ref null $desc)) (result i32)
+    ;; Do not remove a descriptor cast under ref.is_null in TNH mode, as that
+    ;; would also drop the descriptor operand and its side effects.
+    (drop
+      (ref.is_null
+        (ref.cast_desc_eq (ref null $struct)
+          (local.get $x)
+          (block (result (ref null $desc))
+            (call $effect)
+            (local.get $d)
+          )
+        )
+      )
+    )
+    ;; A cast without a descriptor is still removed in TNH mode.
+    (ref.is_null
+      (ref.cast (ref null $struct)
+        (local.get $x)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $ref.eq-ref.cast_desc_eq (type $25) (param $x eqref) (param $y eqref) (param $d (ref null $desc)) (result i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (ref.cast_desc_eq (ref null $struct)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (block (result (ref null $desc))
+  ;; CHECK-NEXT:      (call $effect)
+  ;; CHECK-NEXT:      (local.get $d)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (ref.eq
+  ;; CHECK-NEXT:   (ref.cast (ref null $struct)
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.get $y)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; NTRAP:      (func $ref.eq-ref.cast_desc_eq (type $25) (param $x eqref) (param $y eqref) (param $d (ref null $desc)) (result i32)
+  ;; NTRAP-NEXT:  (drop
+  ;; NTRAP-NEXT:   (ref.eq
+  ;; NTRAP-NEXT:    (ref.cast_desc_eq (ref null $struct)
+  ;; NTRAP-NEXT:     (local.get $x)
+  ;; NTRAP-NEXT:     (block (result (ref null $desc))
+  ;; NTRAP-NEXT:      (call $effect)
+  ;; NTRAP-NEXT:      (local.get $d)
+  ;; NTRAP-NEXT:     )
+  ;; NTRAP-NEXT:    )
+  ;; NTRAP-NEXT:    (local.get $y)
+  ;; NTRAP-NEXT:   )
+  ;; NTRAP-NEXT:  )
+  ;; NTRAP-NEXT:  (ref.eq
+  ;; NTRAP-NEXT:   (local.get $x)
+  ;; NTRAP-NEXT:   (local.get $y)
+  ;; NTRAP-NEXT:  )
+  ;; NTRAP-NEXT: )
+  (func $ref.eq-ref.cast_desc_eq (param $x eqref) (param $y eqref) (param $d (ref null $desc)) (result i32)
+    ;; Do not remove a descriptor cast under ref.eq in TNH mode, as that would
+    ;; also drop the descriptor operand and its side effects.
+    (drop
+      (ref.eq
+        (ref.cast_desc_eq (ref null $struct)
+          (local.get $x)
+          (block (result (ref null $desc))
+            (call $effect)
+            (local.get $d)
+          )
+        )
+        (local.get $y)
+      )
+    )
+    ;; A cast without a descriptor is still removed in TNH mode.
+    (ref.eq
+      (ref.cast (ref null $struct)
+        (local.get $x)
+      )
+      (local.get $y)
+    )
+  )
 )
+
