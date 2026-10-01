@@ -2894,7 +2894,8 @@ Expression* TranslateToFuzzReader::_makeConcrete(Type type) {
                 &Self::makeStringEq,
                 &Self::makeStringMeasure,
                 &Self::makeStringGet);
-    options.add(FeatureSet::ReferenceTypes | FeatureSet::SharedEverything,
+    options.add(FeatureSet::ReferenceTypes | FeatureSet::GC |
+                  FeatureSet::SharedEverything,
                 &Self::makeWaitqueueNotify);
     if (!structWaitFields.empty()) {
       options.add(FeatureSet::ReferenceTypes | FeatureSet::GC |
