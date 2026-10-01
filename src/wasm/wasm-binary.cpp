@@ -1778,6 +1778,7 @@ std::optional<BufferWithRandomAccess> WasmBinaryWriter::writeCodeAnnotations() {
   append(getJSCalledHintsBuffer());
   append(getIdempotentHintsBuffer());
   append(getToolchainInlineHintsBuffer());
+  append(getNoreturnHintsBuffer());
   return ret;
 }
 
@@ -1947,6 +1948,11 @@ WasmBinaryWriter::getIdempotentHintsBuffer() {
 std::optional<BufferWithRandomAccess>
 WasmBinaryWriter::getToolchainInlineHintsBuffer() {
   WRITE_I7_HINT(Annotations::ToolchainInlineHint, toolchainInline);
+}
+
+std::optional<BufferWithRandomAccess>
+WasmBinaryWriter::getNoreturnHintsBuffer() {
+  WRITE_BOOLEAN_HINT(Annotations::NoreturnHint, noreturn);
 }
 
 void WasmBinaryWriter::writeData(const char* data, size_t size) {
@@ -2208,7 +2214,8 @@ void WasmBinaryReader::preScan() {
           sectionName == Annotations::RemovableIfUnusedHint ||
           sectionName == Annotations::JSCalledHint ||
           sectionName == Annotations::IdempotentHint ||
-          sectionName == Annotations::ToolchainInlineHint) {
+          sectionName == Annotations::ToolchainInlineHint ||
+          sectionName == Annotations::NoreturnHint) {
         // Code annotations require code locations.
         // TODO: We could note which functions require code locations, as an
         //       optimization.
@@ -2381,6 +2388,9 @@ void WasmBinaryReader::readCustomSection(size_t payloadLen) {
       AnnotationSectionInfo{pos, [this, payloadLen]() {
                               this->readToolchainInlineHints(payloadLen);
                             }});
+  } else if (sectionName == Annotations::NoreturnHint) {
+    deferredAnnotationSections.push_back(AnnotationSectionInfo{
+      pos, [this, payloadLen]() { this->readNoreturnHints(payloadLen); }});
   } else {
     // an unfamiliar custom section
     if (sectionName.equals(BinaryConsts::CustomSections::Linking)) {
@@ -5848,6 +5858,10 @@ void WasmBinaryReader::readIdempotentHints(size_t payloadLen) {
 
 void WasmBinaryReader::readToolchainInlineHints(size_t payloadLen) {
   READ_I7_HINT(Annotations::ToolchainInlineHint, toolchainInline);
+}
+
+void WasmBinaryReader::readNoreturnHints(size_t payloadLen) {
+  READ_BOOLEAN_HINT(Annotations::NoreturnHint, noreturn);
 }
 
 std::tuple<Address, Address, Index, MemoryOrder, BackingType>

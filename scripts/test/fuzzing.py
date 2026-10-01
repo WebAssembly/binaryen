@@ -114,6 +114,7 @@ unfuzzable = [
     'once-reduction_idempotent.wast',
     'local-cse_idempotent.wast',
     'optimize-instructions-global-effects-idempotent.wast',
+    'noreturn.wast',
     # Not fully implemented.
     'waitqueue.wast',
     'gufa-waitqueue.wast',

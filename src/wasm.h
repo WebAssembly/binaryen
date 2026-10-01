@@ -2414,6 +2414,10 @@ struct CodeAnnotation {
   // to keep size small, and tell VMs to inline at runtime.)
   std::optional<uint8_t> toolchainInline;
 
+  // A function or call that does not return: it may trap, throw an exception,
+  // or loop infinitely, etc., so execution does not continue after the call.
+  bool noreturn = false;
+
   bool operator==(const CodeAnnotation& other) const {
     return equalOnSemanticsPreserving(other) && equalOnSemanticsAltering(other);
   }
@@ -2427,7 +2431,8 @@ struct CodeAnnotation {
   // Compares annotations that *do* alter semantics.
   bool equalOnSemanticsAltering(const CodeAnnotation& other) const {
     return removableIfUnused == other.removableIfUnused &&
-           jsCalled == other.jsCalled && idempotent == other.idempotent;
+           jsCalled == other.jsCalled && idempotent == other.idempotent &&
+           noreturn == other.noreturn;
   }
 
   // Checks if no annotation is actually set.
