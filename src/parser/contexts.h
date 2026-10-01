@@ -1399,8 +1399,8 @@ struct AnnotationParserCtx {
         ret.idempotent = true;
       } else if (a.kind == Annotations::ToolchainInlineHint) {
         toolchainInlineHint = &a;
-      } else if (a.kind == Annotations::NoreturnHint) {
-        ret.noreturn = true;
+      } else if (a.kind == Annotations::NoReturnHint) {
+        ret.noReturn = true;
       }
     }
 

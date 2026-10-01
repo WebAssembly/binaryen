@@ -1491,7 +1491,7 @@ public:
   std::optional<BufferWithRandomAccess> getJSCalledHintsBuffer();
   std::optional<BufferWithRandomAccess> getIdempotentHintsBuffer();
   std::optional<BufferWithRandomAccess> getToolchainInlineHintsBuffer();
-  std::optional<BufferWithRandomAccess> getNoreturnHintsBuffer();
+  std::optional<BufferWithRandomAccess> getNoReturnHintsBuffer();
 
   // helpers
   void writeInlineString(std::string_view name);
@@ -1808,7 +1808,7 @@ public:
   void readJSCalledHints(size_t payloadLen);
   void readIdempotentHints(size_t payloadLen);
   void readToolchainInlineHints(size_t payloadLen);
-  void readNoreturnHints(size_t payloadLen);
+  void readNoReturnHints(size_t payloadLen);
 
   std::tuple<Address, Address, Index, MemoryOrder, BackingType>
   readMemoryAccess(bool isAtomic, bool isRMW);

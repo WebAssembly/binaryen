@@ -2416,7 +2416,7 @@ struct CodeAnnotation {
 
   // A function or call that does not return: it may trap, throw an exception,
   // or loop infinitely, etc., so execution does not continue after the call.
-  bool noreturn = false;
+  bool noReturn = false;
 
   bool operator==(const CodeAnnotation& other) const {
     return equalOnSemanticsPreserving(other) && equalOnSemanticsAltering(other);
@@ -2432,7 +2432,7 @@ struct CodeAnnotation {
   bool equalOnSemanticsAltering(const CodeAnnotation& other) const {
     return removableIfUnused == other.removableIfUnused &&
            jsCalled == other.jsCalled && idempotent == other.idempotent &&
-           noreturn == other.noreturn;
+           noReturn == other.noReturn;
   }
 
   // Checks if no annotation is actually set.

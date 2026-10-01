@@ -2971,9 +2971,9 @@ void IRBuilder::applyAnnotations(Expression* expr,
     func->codeAnnotations[expr].toolchainInline = annotation.toolchainInline;
   }
 
-  if (annotation.noreturn) {
+  if (annotation.noReturn) {
     assert(func);
-    func->codeAnnotations[expr].noreturn = true;
+    func->codeAnnotations[expr].noReturn = true;
   }
 }
 

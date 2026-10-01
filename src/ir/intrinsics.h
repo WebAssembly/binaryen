@@ -171,8 +171,8 @@ public:
       if (!ret.toolchainInline) {
         ret.toolchainInline = funcAnnotations.toolchainInline;
       }
-      if (!ret.noreturn) {
-        ret.noreturn = funcAnnotations.noreturn;
+      if (!ret.noReturn) {
+        ret.noReturn = funcAnnotations.noReturn;
       }
     }
 

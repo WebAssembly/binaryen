@@ -31,7 +31,7 @@ extern const Name RemovableIfUnusedHint;
 extern const Name JSCalledHint;
 extern const Name IdempotentHint;
 extern const Name ToolchainInlineHint;
-extern const Name NoreturnHint;
+extern const Name NoReturnHint;
 
 } // namespace wasm::Annotations
 
