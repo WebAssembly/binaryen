@@ -56,15 +56,26 @@ struct OptimizeNoReturn
         // There was a call before us, handle it first.
         addUnreachable();
       }
+
       // No need to add an unreachable after an already-unreachable call (like a
       // return call, or one with an unreachable operand).
-      if (call->type != Type::unreachable &&
-          Intrinsics::getAnnotations(getModule()->getFunction(call->target))
-            .noReturn) {
+      if (call->type == Type::unreachable) {
+        return;
+      }
+
+      auto* func = getModule()->getFunctionOrNull(call->target);
+      if (!func) {
+        // No target: this can happen during Asyncify or if a code generator is
+        // optimizing something before the entire module is ready.
+        return;
+      }
+
+      if (Intrinsics::getAnnotations(func).noReturn) {
         callp = getCurrentPointer();
       }
       return;
     }
+
     if (!callp) {
       // We are not right after a relevant call, so there is nothing to do.
       return;
