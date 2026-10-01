@@ -97,17 +97,6 @@ struct OptimizeNoReturn
     addUnreachable();
   }
 
-  static void scan(OptimizeNoReturn* self, Expression** currp) {
-    // Whenever we scan a control flow structure, we are entering it, which
-    // means there is something in the wasm, and we can clear our state.
-    if (Properties::isControlFlowStructure(*currp)) {
-      self->callp = nullptr;
-      self->dropp = nullptr;
-    }
-
-    Super::scan(self, currp);
-  }
-
   void visitFunction(Function* curr) {
     // The walk ended, but perhaps it ended on something that needs an
     // unreachable.

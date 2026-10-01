@@ -142,4 +142,57 @@
       (unreachable)
     )
   )
+
+  ;; CHECK:      (func $call-control-flow (type $0)
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (call $defined)
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (loop
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (call $defined)
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (loop
+  ;; CHECK-NEXT:   (nop)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $call-control-flow
+    ;; We add an unreachable after this, not confused by the loop afterwards.
+    (call $defined)
+    (loop
+    )
+
+    ;; Ditto with a block and nop
+    (call $defined)
+    (loop
+      (nop)
+    )
+  )
+
+  ;; CHECK:      (func $call-control-flow-unreachable (type $0)
+  ;; CHECK-NEXT:  (call $defined)
+  ;; CHECK-NEXT:  (loop
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $defined)
+  ;; CHECK-NEXT:  (loop
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $call-control-flow-unreachable
+    ;; As above, but now the control flow structures contain unreachables. We
+    ;; fail to emit unreachables here, as the existing ones confuse us. However,
+    ;; given this is unreachable code, we do not make an effort to handle this.
+    (call $defined)
+    (loop
+      (unreachable)
+    )
+
+    (call $defined)
+    (loop
+      (unreachable)
+    )
+  )
 )
