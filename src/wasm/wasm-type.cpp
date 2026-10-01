@@ -1338,7 +1338,8 @@ FeatureSet HeapType::getFeatures() const {
             return;
           case HeapType::waitqueue:
           case HeapType::nowaitqueue:
-            feats |= FeatureSet::ReferenceTypes | FeatureSet::SharedEverything;
+            feats |= FeatureSet::ReferenceTypes | FeatureSet::GC |
+                     FeatureSet::SharedEverything;
             return;
           case HeapType::noext:
           case HeapType::nofunc:
