@@ -105,6 +105,7 @@ set(passes_SOURCES
   StringLifting.cpp
   StringLowering.cpp
   Strip.cpp
+  StripRefiningCasts.cpp
   StripTargetFeatures.cpp
   StripToolchainAnnotations.cpp
   TraceCalls.cpp

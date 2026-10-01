@@ -185,6 +185,7 @@ Pass* createStripDebugPass();
 Pass* createStripDWARFPass();
 Pass* createStripEHPass();
 Pass* createStripProducersPass();
+Pass* createStripRefiningCastsPass();
 Pass* createStripTargetFeaturesPass();
 Pass* createStripToolchainAnnotationsPass();
 Pass* createStubUnsupportedJSOpsPass();
