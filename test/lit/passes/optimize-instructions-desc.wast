@@ -2015,6 +2015,14 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.is_null
+  ;; CHECK-NEXT:    (ref.cast_desc_eq (ref null $struct)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (local.get $d)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (ref.is_null
   ;; CHECK-NEXT:   (ref.cast (ref null $struct)
   ;; CHECK-NEXT:    (local.get $x)
@@ -2033,13 +2041,18 @@
   ;; NTRAP-NEXT:    )
   ;; NTRAP-NEXT:   )
   ;; NTRAP-NEXT:  )
+  ;; NTRAP-NEXT:  (drop
+  ;; NTRAP-NEXT:   (ref.is_null
+  ;; NTRAP-NEXT:    (local.get $x)
+  ;; NTRAP-NEXT:   )
+  ;; NTRAP-NEXT:  )
   ;; NTRAP-NEXT:  (ref.is_null
   ;; NTRAP-NEXT:   (local.get $x)
   ;; NTRAP-NEXT:  )
   ;; NTRAP-NEXT: )
   (func $ref.is_null-ref.cast_desc_eq (param $x anyref) (param $d (ref null $desc)) (result i32)
-    ;; Do not remove a descriptor cast under ref.is_null in TNH mode, as that
-    ;; would also drop the descriptor operand and its side effects.
+    ;; Do not remove a descriptor cast under ref.is_null in TNH mode if the
+    ;; descriptor has side effects.
     (drop
       (ref.is_null
         (ref.cast_desc_eq (ref null $struct)
@@ -2051,7 +2064,17 @@
         )
       )
     )
-    ;; A cast without a descriptor is still removed in TNH mode.
+    ;; A descriptor cast whose descriptor has no side effects can be removed in
+    ;; TNH mode.
+    (drop
+      (ref.is_null
+        (ref.cast_desc_eq (ref null $struct)
+          (local.get $x)
+          (local.get $d)
+        )
+      )
+    )
+    ;; A cast without a descriptor is also removed in TNH mode.
     (ref.is_null
       (ref.cast (ref null $struct)
         (local.get $x)
@@ -2068,6 +2091,15 @@
   ;; CHECK-NEXT:      (call $effect)
   ;; CHECK-NEXT:      (local.get $d)
   ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (ref.cast_desc_eq (ref null $struct)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (local.get $d)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.get $y)
   ;; CHECK-NEXT:   )
@@ -2092,14 +2124,20 @@
   ;; NTRAP-NEXT:    (local.get $y)
   ;; NTRAP-NEXT:   )
   ;; NTRAP-NEXT:  )
+  ;; NTRAP-NEXT:  (drop
+  ;; NTRAP-NEXT:   (ref.eq
+  ;; NTRAP-NEXT:    (local.get $x)
+  ;; NTRAP-NEXT:    (local.get $y)
+  ;; NTRAP-NEXT:   )
+  ;; NTRAP-NEXT:  )
   ;; NTRAP-NEXT:  (ref.eq
   ;; NTRAP-NEXT:   (local.get $x)
   ;; NTRAP-NEXT:   (local.get $y)
   ;; NTRAP-NEXT:  )
   ;; NTRAP-NEXT: )
   (func $ref.eq-ref.cast_desc_eq (param $x eqref) (param $y eqref) (param $d (ref null $desc)) (result i32)
-    ;; Do not remove a descriptor cast under ref.eq in TNH mode, as that would
-    ;; also drop the descriptor operand and its side effects.
+    ;; Do not remove a descriptor cast under ref.eq in TNH mode if the
+    ;; descriptor has side effects.
     (drop
       (ref.eq
         (ref.cast_desc_eq (ref null $struct)
@@ -2112,7 +2150,18 @@
         (local.get $y)
       )
     )
-    ;; A cast without a descriptor is still removed in TNH mode.
+    ;; A descriptor cast whose descriptor has no side effects can be removed in
+    ;; TNH mode.
+    (drop
+      (ref.eq
+        (ref.cast_desc_eq (ref null $struct)
+          (local.get $x)
+          (local.get $d)
+        )
+        (local.get $y)
+      )
+    )
+    ;; A cast without a descriptor is also removed in TNH mode.
     (ref.eq
       (ref.cast (ref null $struct)
         (local.get $x)
