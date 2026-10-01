@@ -999,17 +999,21 @@
  )
 
  ;; CHECK:      (func $costly-br-value-no-if (type $16) (param $x i32) (result anyref)
- ;; CHECK-NEXT:  (block $out (result (ref null (exact $struct)))
- ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (br_if $out
- ;; CHECK-NEXT:     (struct.new_default $struct)
- ;; CHECK-NEXT:     (local.get $x)
+ ;; CHECK-NEXT:  (block $out (result anyref)
+ ;; CHECK-NEXT:   (if
+ ;; CHECK-NEXT:    (local.get $x)
+ ;; CHECK-NEXT:    (then
+ ;; CHECK-NEXT:     (br $out
+ ;; CHECK-NEXT:      (struct.new_default $struct)
+ ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (br_if $out
- ;; CHECK-NEXT:     (struct.new_default $struct)
- ;; CHECK-NEXT:     (local.get $x)
+ ;; CHECK-NEXT:   (if
+ ;; CHECK-NEXT:    (local.get $x)
+ ;; CHECK-NEXT:    (then
+ ;; CHECK-NEXT:     (br $out
+ ;; CHECK-NEXT:      (struct.new_default $struct)
+ ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (ref.null none)

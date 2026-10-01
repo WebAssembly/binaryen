@@ -85,9 +85,9 @@ static bool canTurnIfIntoBrIf(Expression* ifCondition,
   if (!brValue) {
     return true;
   }
-//  if (tooCostlyToRunUnconditionally(options, brValue)) {
-//    return false;
-//  }
+  if (tooCostlyToRunUnconditionally(options, brValue)) {
+    return false;
+  }
   EffectAnalyzer value(options, wasm, brValue);
   if (value.hasSideEffects()) {
     return false;
@@ -403,18 +403,13 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
   }
 
   void visitIf(If* curr) {
-std::cerr << "a1\n";
     if (!curr->ifFalse) {
-std::cerr << "a2\n";
       // if without an else. try to reduce
       //    if (condition) br  =>  br_if (condition)
       if (Break* br = curr->ifTrue->dynCast<Break>()) {
-std::cerr << "a3\n";
         if (canTurnIfIntoBrIf(
               curr->condition, br->value, getPassOptions(), *getModule())) {
-std::cerr << "a4\n";
           if (!br->condition) {
-std::cerr << "a5\n";
             br->condition = curr->condition;
             BranchHints::copyTo(curr, br, getFunction());
           } else {
