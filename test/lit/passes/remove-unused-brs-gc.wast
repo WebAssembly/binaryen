@@ -997,4 +997,48 @@
    (i32.const 0)
   )
  )
+
+ ;; CHECK:      (func $costly-br-value-no-if (type $16) (param $x i32) (result anyref)
+ ;; CHECK-NEXT:  (block $out (result (ref null (exact $struct)))
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (br_if $out
+ ;; CHECK-NEXT:     (struct.new_default $struct)
+ ;; CHECK-NEXT:     (local.get $x)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (br_if $out
+ ;; CHECK-NEXT:     (struct.new_default $struct)
+ ;; CHECK-NEXT:     (local.get $x)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (ref.null none)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $costly-br-value-no-if (param $x i32) (result anyref)
+  ;; We do not turn an if into a br_if if that makes a costly value execute
+  ;; unconditionally.
+  (block $out (result anyref)
+   (if
+    (local.get $x)
+    (then
+     (br $out
+      ;; An allocation is too expensive to unconditionalize.
+      (struct.new_default $struct)
+     )
+    )
+   )
+   ;; Another if, so the entire block is not trivially optimized in another way.
+   (if
+    (local.get $x)
+    (then
+     (br $out
+      ;; An allocation is too expensive to unconditionalize.
+      (struct.new_default $struct)
+     )
+    )
+   )
+   (ref.null any)
+  )
+ )
 )

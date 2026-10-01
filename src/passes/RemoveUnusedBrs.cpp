@@ -65,9 +65,15 @@ stealSlice(Builder& builder, Block* input, Index from, Index to) {
   return ret;
 }
 
-// to turn an if into a br-if, we must be able to reorder the
-// condition and possible value, and the possible value must
-// not have side effects (as they would run unconditionally)
+// Check if a single expression is too costly to move from a conditional to an
+// unconditional place.
+static bool tooCostlyToRunUnconditionally(const PassOptions& passOptions,
+                                          Expression* curr);
+
+// To turn an if into a br-if, we must be able to reorder the condition and
+// possible value, and the possible value must not have side effects (as they
+// would run unconditionally). Also, if there is a value, it must not be too
+// expensive to run unconditionally.
 static bool canTurnIfIntoBrIf(Expression* ifCondition,
                               Expression* brValue,
                               PassOptions& options,
@@ -79,6 +85,9 @@ static bool canTurnIfIntoBrIf(Expression* ifCondition,
   if (!brValue) {
     return true;
   }
+//  if (tooCostlyToRunUnconditionally(options, brValue)) {
+//    return false;
+//  }
   EffectAnalyzer value(options, wasm, brValue);
   if (value.hasSideEffects()) {
     return false;
@@ -120,8 +129,6 @@ static bool tooCostlyToRunUnconditionally(const PassOptions& passOptions,
   }
 }
 
-// As above, but a single expression that we are considering moving to a place
-// where it executes unconditionally.
 static bool tooCostlyToRunUnconditionally(const PassOptions& passOptions,
                                           Expression* curr) {
   // If we care entirely about code size, just do it for that reason (early
@@ -396,13 +403,18 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
   }
 
   void visitIf(If* curr) {
+std::cerr << "a1\n";
     if (!curr->ifFalse) {
+std::cerr << "a2\n";
       // if without an else. try to reduce
       //    if (condition) br  =>  br_if (condition)
       if (Break* br = curr->ifTrue->dynCast<Break>()) {
+std::cerr << "a3\n";
         if (canTurnIfIntoBrIf(
               curr->condition, br->value, getPassOptions(), *getModule())) {
+std::cerr << "a4\n";
           if (!br->condition) {
+std::cerr << "a5\n";
             br->condition = curr->condition;
             BranchHints::copyTo(curr, br, getFunction());
           } else {
