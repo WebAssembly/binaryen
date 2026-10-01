@@ -4,48 +4,49 @@
 ;; can hold a name in Binaryen IR, so keeping it costs nothing.
 
 ;; RUN: wasm-as %s -all -g -o %t.wasm
-;; RUN: wasm-dis %t.wasm -all -o - | filecheck %s --check-prefix=DEBUG
+;; RUN: wasm-dis %t.wasm -all -o - | filecheck %s --check-prefix=CHECK-BIN
 ;; RUN: wasm-as %s -all -o %t.nodebug.wasm
-;; RUN: wasm-dis %t.nodebug.wasm -all -o - | filecheck %s --check-prefix=NODEBUG
+;; RUN: wasm-dis %t.nodebug.wasm -all -o - | filecheck %s --check-prefix=CHECK-BIN-NODEBUG
 
 (module
- ;; DEBUG:      (type $0 (func))
 
- ;; DEBUG:      (tag $e (type $0))
+ ;; CHECK-BIN:      (type $0 (func))
+
+ ;; CHECK-BIN:      (tag $e (type $0))
  (tag $e)
- ;; DEBUG:      (func $f (type $0)
- ;; DEBUG-NEXT:  (try $plain-try
- ;; DEBUG-NEXT:   (do
- ;; DEBUG-NEXT:    (nop)
- ;; DEBUG-NEXT:   )
- ;; DEBUG-NEXT:   (catch_all
- ;; DEBUG-NEXT:    (nop)
- ;; DEBUG-NEXT:   )
- ;; DEBUG-NEXT:  )
- ;; DEBUG-NEXT:  (block $block
- ;; DEBUG-NEXT:   (try $branched-try
- ;; DEBUG-NEXT:    (do
- ;; DEBUG-NEXT:     (br $block)
- ;; DEBUG-NEXT:    )
- ;; DEBUG-NEXT:    (catch_all
- ;; DEBUG-NEXT:     (nop)
- ;; DEBUG-NEXT:    )
- ;; DEBUG-NEXT:   )
- ;; DEBUG-NEXT:  )
- ;; DEBUG-NEXT:  (try $delegating
- ;; DEBUG-NEXT:   (do
- ;; DEBUG-NEXT:    (try
- ;; DEBUG-NEXT:     (do
- ;; DEBUG-NEXT:      (nop)
- ;; DEBUG-NEXT:     )
- ;; DEBUG-NEXT:     (delegate $delegating)
- ;; DEBUG-NEXT:    )
- ;; DEBUG-NEXT:   )
- ;; DEBUG-NEXT:   (catch_all
- ;; DEBUG-NEXT:    (nop)
- ;; DEBUG-NEXT:   )
- ;; DEBUG-NEXT:  )
- ;; DEBUG-NEXT: )
+ ;; CHECK-BIN:      (func $f (type $0)
+ ;; CHECK-BIN-NEXT:  (try $plain-try
+ ;; CHECK-BIN-NEXT:   (do
+ ;; CHECK-BIN-NEXT:    (nop)
+ ;; CHECK-BIN-NEXT:   )
+ ;; CHECK-BIN-NEXT:   (catch_all
+ ;; CHECK-BIN-NEXT:    (nop)
+ ;; CHECK-BIN-NEXT:   )
+ ;; CHECK-BIN-NEXT:  )
+ ;; CHECK-BIN-NEXT:  (block $block
+ ;; CHECK-BIN-NEXT:   (try $branched-try
+ ;; CHECK-BIN-NEXT:    (do
+ ;; CHECK-BIN-NEXT:     (br $block)
+ ;; CHECK-BIN-NEXT:    )
+ ;; CHECK-BIN-NEXT:    (catch_all
+ ;; CHECK-BIN-NEXT:     (nop)
+ ;; CHECK-BIN-NEXT:    )
+ ;; CHECK-BIN-NEXT:   )
+ ;; CHECK-BIN-NEXT:  )
+ ;; CHECK-BIN-NEXT:  (try $delegating
+ ;; CHECK-BIN-NEXT:   (do
+ ;; CHECK-BIN-NEXT:    (try
+ ;; CHECK-BIN-NEXT:     (do
+ ;; CHECK-BIN-NEXT:      (nop)
+ ;; CHECK-BIN-NEXT:     )
+ ;; CHECK-BIN-NEXT:     (delegate $delegating)
+ ;; CHECK-BIN-NEXT:    )
+ ;; CHECK-BIN-NEXT:   )
+ ;; CHECK-BIN-NEXT:   (catch_all
+ ;; CHECK-BIN-NEXT:    (nop)
+ ;; CHECK-BIN-NEXT:   )
+ ;; CHECK-BIN-NEXT:  )
+ ;; CHECK-BIN-NEXT: )
  (func $f
   ;; Nothing targets this one.
   (try $plain-try
@@ -65,40 +66,41 @@
   )
  )
 )
-;; NODEBUG:      (type $0 (func))
 
-;; NODEBUG:      (tag $tag$0 (type $0))
+;; CHECK-BIN-NODEBUG:      (type $0 (func))
 
-;; NODEBUG:      (func $0 (type $0)
-;; NODEBUG-NEXT:  (try
-;; NODEBUG-NEXT:   (do
-;; NODEBUG-NEXT:    (nop)
-;; NODEBUG-NEXT:   )
-;; NODEBUG-NEXT:   (catch_all
-;; NODEBUG-NEXT:    (nop)
-;; NODEBUG-NEXT:   )
-;; NODEBUG-NEXT:  )
-;; NODEBUG-NEXT:  (block $block
-;; NODEBUG-NEXT:   (try
-;; NODEBUG-NEXT:    (do
-;; NODEBUG-NEXT:     (br $block)
-;; NODEBUG-NEXT:    )
-;; NODEBUG-NEXT:    (catch_all
-;; NODEBUG-NEXT:     (nop)
-;; NODEBUG-NEXT:    )
-;; NODEBUG-NEXT:   )
-;; NODEBUG-NEXT:  )
-;; NODEBUG-NEXT:  (try $label
-;; NODEBUG-NEXT:   (do
-;; NODEBUG-NEXT:    (try
-;; NODEBUG-NEXT:     (do
-;; NODEBUG-NEXT:      (nop)
-;; NODEBUG-NEXT:     )
-;; NODEBUG-NEXT:     (delegate $label)
-;; NODEBUG-NEXT:    )
-;; NODEBUG-NEXT:   )
-;; NODEBUG-NEXT:   (catch_all
-;; NODEBUG-NEXT:    (nop)
-;; NODEBUG-NEXT:   )
-;; NODEBUG-NEXT:  )
-;; NODEBUG-NEXT: )
+;; CHECK-BIN-NODEBUG:      (tag $tag$0 (type $0))
+
+;; CHECK-BIN-NODEBUG:      (func $0 (type $0)
+;; CHECK-BIN-NODEBUG-NEXT:  (try
+;; CHECK-BIN-NODEBUG-NEXT:   (do
+;; CHECK-BIN-NODEBUG-NEXT:    (nop)
+;; CHECK-BIN-NODEBUG-NEXT:   )
+;; CHECK-BIN-NODEBUG-NEXT:   (catch_all
+;; CHECK-BIN-NODEBUG-NEXT:    (nop)
+;; CHECK-BIN-NODEBUG-NEXT:   )
+;; CHECK-BIN-NODEBUG-NEXT:  )
+;; CHECK-BIN-NODEBUG-NEXT:  (block $block
+;; CHECK-BIN-NODEBUG-NEXT:   (try
+;; CHECK-BIN-NODEBUG-NEXT:    (do
+;; CHECK-BIN-NODEBUG-NEXT:     (br $block)
+;; CHECK-BIN-NODEBUG-NEXT:    )
+;; CHECK-BIN-NODEBUG-NEXT:    (catch_all
+;; CHECK-BIN-NODEBUG-NEXT:     (nop)
+;; CHECK-BIN-NODEBUG-NEXT:    )
+;; CHECK-BIN-NODEBUG-NEXT:   )
+;; CHECK-BIN-NODEBUG-NEXT:  )
+;; CHECK-BIN-NODEBUG-NEXT:  (try $label
+;; CHECK-BIN-NODEBUG-NEXT:   (do
+;; CHECK-BIN-NODEBUG-NEXT:    (try
+;; CHECK-BIN-NODEBUG-NEXT:     (do
+;; CHECK-BIN-NODEBUG-NEXT:      (nop)
+;; CHECK-BIN-NODEBUG-NEXT:     )
+;; CHECK-BIN-NODEBUG-NEXT:     (delegate $label)
+;; CHECK-BIN-NODEBUG-NEXT:    )
+;; CHECK-BIN-NODEBUG-NEXT:   )
+;; CHECK-BIN-NODEBUG-NEXT:   (catch_all
+;; CHECK-BIN-NODEBUG-NEXT:    (nop)
+;; CHECK-BIN-NODEBUG-NEXT:   )
+;; CHECK-BIN-NODEBUG-NEXT:  )
+;; CHECK-BIN-NODEBUG-NEXT: )
