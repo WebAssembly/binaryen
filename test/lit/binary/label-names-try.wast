@@ -52,7 +52,8 @@
    (do (nop))
    (catch_all (nop))
   )
-  ;; A branch to a try needs a wrapper block, which takes the name.
+  ;; A branch to a try needs a wrapper block. The name stays on the try and the
+  ;; block gets a generated one.
   (try $branched-try
    (do (br $branched-try))
    (catch_all (nop))

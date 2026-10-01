@@ -90,8 +90,8 @@
  )
 
  ;; Branches to a try target a block wrapping it, and delegates target the try
- ;; itself. The explicit name goes to whichever is used first, and the other
- ;; one gets a name derived from it.
+ ;; itself. Either way the name stays on the try, and the wrapping block, when
+ ;; one is needed, gets a generated name.
  ;; DEBUG:      (func $try (type $0) (param $p i32) (result i32)
  ;; DEBUG-NEXT:  (drop
  ;; DEBUG-NEXT:   (block $block (result i32)
