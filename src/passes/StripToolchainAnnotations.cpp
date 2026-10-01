@@ -60,7 +60,7 @@ struct StripToolchainAnnotations
     annotation.jsCalled = false;
     annotation.idempotent = false;
     annotation.toolchainInline = std::nullopt;
-    annotation.noreturn = false;
+    annotation.noReturn = false;
   }
 };
 
