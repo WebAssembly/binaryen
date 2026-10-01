@@ -1483,7 +1483,7 @@ Result<> IRBuilder::makeBlock(Name label, Signature sig) {
   auto* block = wasm.allocator.alloc<Block>();
   block->name = label;
   block->type = sig.results;
-  return visitBlockStart(block, sig.params);
+  return markLabelExplicit(label, visitBlockStart(block, sig.params));
 }
 
 Result<> IRBuilder::makeIf(Name label,
@@ -1492,14 +1492,14 @@ Result<> IRBuilder::makeIf(Name label,
   auto* iff = wasm.allocator.alloc<If>();
   iff->type = sig.results;
   applyAnnotations(iff, annotations);
-  return visitIfStart(iff, label, sig.params);
+  return markLabelExplicit(label, visitIfStart(iff, label, sig.params));
 }
 
 Result<> IRBuilder::makeLoop(Name label, Signature sig) {
   auto* loop = wasm.allocator.alloc<Loop>();
   loop->name = label;
   loop->type = sig.results;
-  return visitLoopStart(loop, sig.params);
+  return markLabelExplicit(label, visitLoopStart(loop, sig.params));
 }
 
 Result<> IRBuilder::makeBreak(Index label,
@@ -2037,7 +2037,7 @@ Result<> IRBuilder::makeElemDrop(Name segment) {
 Result<> IRBuilder::makeTry(Name label, Signature sig) {
   auto* tryy = wasm.allocator.alloc<Try>();
   tryy->type = sig.results;
-  return visitTryStart(tryy, label, sig.params);
+  return markLabelExplicit(label, visitTryStart(tryy, label, sig.params));
 }
 
 Result<> IRBuilder::makeTryTable(Name label,
@@ -2055,7 +2055,8 @@ Result<> IRBuilder::makeTryTable(Name label,
     CHECK_ERR(name);
     trytable->catchDests.push_back(*name);
   }
-  return visitTryTableStart(trytable, label, sig.params);
+  return markLabelExplicit(label,
+                           visitTryTableStart(trytable, label, sig.params));
 }
 
 Result<> IRBuilder::makeThrow(Name tag) {
