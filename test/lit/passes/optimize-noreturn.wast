@@ -22,15 +22,19 @@
       (call $defined)
     )
 
-    ;; But not this
+    ;; But not this.
     (call $calls)
   )
 
   (func $calls-already-handled
+    ;; We already have unreachables here, and do not need to add more.
     (call $imported)
+    (unreachable)
     (call $defined)
+    (unreachable)
     (drop
       (call $defined)
     )
+    (unreachable)
   )
 )
