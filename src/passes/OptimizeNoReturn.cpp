@@ -23,6 +23,7 @@
 // (DeadArgumentElimination) is a convenient place to do that.
 //
 
+#include "ir/intrinsics.h"
 #include "pass.h"
 #include "wasm-builder.h"
 #include "wasm.h"
