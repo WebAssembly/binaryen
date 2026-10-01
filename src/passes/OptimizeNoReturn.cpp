@@ -77,6 +77,8 @@ struct OptimizeNoReturn
     } else if (curr->dynCast<Unreachable>()) {
       // We are an unreachable after the call (or maybe the call + drop). We
       // don't need to add anything.
+      callp = nullptr;
+      dropp = nullptr;
       return;
     }
 

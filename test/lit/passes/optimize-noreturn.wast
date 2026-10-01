@@ -83,16 +83,10 @@
   )
 
   ;; CHECK:      (func $calls-already-handled (type $0)
-  ;; CHECK-NEXT:  (block
-  ;; CHECK-NEXT:   (call $defined)
-  ;; CHECK-NEXT:   (unreachable)
-  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $defined)
   ;; CHECK-NEXT:  (unreachable)
-  ;; CHECK-NEXT:  (block
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (call $defined-result)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (call $defined-result)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
