@@ -997,4 +997,91 @@
    (i32.const 0)
   )
  )
-)
+
+ ;; CHECK:      (func $costly-br-value-no-if (type $16) (param $x i32) (result anyref)
+ ;; CHECK-NEXT:  (block $out (result anyref)
+ ;; CHECK-NEXT:   (if
+ ;; CHECK-NEXT:    (local.get $x)
+ ;; CHECK-NEXT:    (then
+ ;; CHECK-NEXT:     (br $out
+ ;; CHECK-NEXT:      (struct.new_default $struct)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (if
+ ;; CHECK-NEXT:    (local.get $x)
+ ;; CHECK-NEXT:    (then
+ ;; CHECK-NEXT:     (br $out
+ ;; CHECK-NEXT:      (struct.new_default $struct)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (ref.null none)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $costly-br-value-no-if (param $x i32) (result anyref)
+  ;; We do not turn an if into a br_if if that makes a costly value execute
+  ;; unconditionally.
+  (block $out (result anyref)
+   (if
+    (local.get $x)
+    (then
+     (br $out
+      ;; An allocation is too expensive to unconditionalize.
+      (struct.new_default $struct)
+     )
+    )
+   )
+   ;; Another if, so the entire block is not trivially optimized in another way.
+   (if
+    (local.get $x)
+    (then
+     (br $out
+      (struct.new_default $struct)
+     )
+    )
+   )
+   (ref.null any)
+  )
+ )
+
+ ;; CHECK:      (func $cheap-br-value-yes-if (type $17) (param $x i32) (result i32)
+ ;; CHECK-NEXT:  (block $out (result i32)
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (br_if $out
+ ;; CHECK-NEXT:     (i32.const 10)
+ ;; CHECK-NEXT:     (local.get $x)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (br_if $out
+ ;; CHECK-NEXT:     (i32.const 20)
+ ;; CHECK-NEXT:     (local.get $x)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (i32.const 42)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $cheap-br-value-yes-if (param $x i32) (result i32)
+  ;; For comparison to above, if the br value is cheap, we do emit br_ifs here.
+  (block $out (result i32)
+   (if
+    (local.get $x)
+    (then
+     (br $out
+      (i32.const 10)
+     )
+    )
+   )
+   ;; Another if, so the entire block is not trivially optimized in another way.
+   (if
+    (local.get $x)
+    (then
+     (br $out
+      (i32.const 20)
+     )
+    )
+   )
+   (i32.const 42)
+  )
+ ))
