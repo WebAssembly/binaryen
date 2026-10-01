@@ -24,6 +24,7 @@
 //
 
 #include "ir/intrinsics.h"
+#include "ir/properties.h"
 #include "pass.h"
 #include "wasm-builder.h"
 #include "wasm.h"
@@ -31,8 +32,11 @@
 namespace wasm {
 
 struct OptimizeNoReturn
-  : public WalkerPass<PostWalker<OptimizeNoReturn,
-                                 UnifiedExpressionVisitor<OptimizeNoReturn>>> {
+  : public WalkerPass<
+      PostWalker<OptimizeNoReturn, UnifiedExpressionVisitor<OptimizeNoReturn>>> {
+
+  using Super = WalkerPass<
+      PostWalker<OptimizeNoReturn, UnifiedExpressionVisitor<OptimizeNoReturn>>>;
   bool isFunctionParallel() override { return true; }
 
   std::unique_ptr<Pass> create() override {
@@ -47,6 +51,7 @@ struct OptimizeNoReturn
   Expression** dropp = nullptr;
 
   void visitExpression(Expression* curr) {
+std::cout << "vE " << *curr << '\n';
     if (auto* call = curr->dynCast<Call>()) {
       // No need to add an unreachable after an already-unreachable call (like a
       // return call, or one with an unreachable operand).
@@ -54,6 +59,7 @@ struct OptimizeNoReturn
           Intrinsics::getAnnotations(getModule()->getFunction(call->target))
             .noReturn) {
         callp = getCurrentPointer();
+std::cout << "  a1\n";
       }
       return;
     }
@@ -73,6 +79,31 @@ struct OptimizeNoReturn
     }
 
     // Something else, so we need to add an unreachable here.
+    addUnreachable();
+  }
+
+  static void scan(OptimizeNoReturn* self, Expression** currp) {
+    // Whenever we scan a control flow structure, we are entering it, which
+    // means there is something in the wasm, and we can clear our state.
+    if (Properties::isControlFlowStructure(*currp)) {
+      self->callp = nullptr;
+      self->dropp = nullptr;
+    }
+
+    Super::scan(self, currp);
+  }
+
+  void visitFunction(Function* curr) {
+std::cout << "b1\n";
+
+    // The walk ended, but perhaps it ended on something that needs an
+    // unreachable.
+    if (callp) {
+      addUnreachable();
+    }
+  }
+
+  void addUnreachable() {
     Builder builder(*getModule());
     if (dropp) {
       // Put the unreachable after the drop (so the call stays dropped); other

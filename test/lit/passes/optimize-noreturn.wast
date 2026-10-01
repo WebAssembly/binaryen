@@ -2,39 +2,71 @@
 ;; RUN: wasm-opt %s --optimize-noreturn -all -S -o - | filecheck %s
 
 (module
-  (@binaryen.noreturn)
-  (import "a" "b" (func $imported))
-
+  ;; CHECK:      (@binaryen.noreturn)
+  ;; CHECK-NEXT: (func $defined (type $0)
+  ;; CHECK-NEXT: )
   (@binaryen.noreturn)
   (func $defined
   )
 
+  ;; CHECK:      (@binaryen.noreturn)
+  ;; CHECK-NEXT: (func $defined-result (type $1) (result i32)
+  ;; CHECK-NEXT:  (i32.const 42)
+  ;; CHECK-NEXT: )
   (@binaryen.noreturn)
   (func $defined-result (result i32)
     (i32.const 42)
   )
 
+  ;; CHECK:      (func $calls (type $0)
+  ;; CHECK-NEXT:  (call $defined)
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (call $defined-result)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $calls)
+  ;; CHECK-NEXT: )
   (func $calls
     ;; We add an unreachable after each of these.
-    (call $imported)
     (call $defined)
     (drop
-      (call $defined)
+      (call $defined-result)
     )
 
     ;; But not this.
     (call $calls)
   )
 
+  ;; CHECK:      (func $calls-already-handled (type $0)
+  ;; CHECK-NEXT:  (call $defined)
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (call $defined-result)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
   (func $calls-already-handled
     ;; We already have unreachables here, and do not need to add more.
-    (call $imported)
-    (unreachable)
     (call $defined)
     (unreachable)
     (drop
-      (call $defined)
+      (call $defined-result)
     )
     (unreachable)
+  )
+
+  ;; CHECK:      (func $call-toplevel (type $0)
+  ;; CHECK-NEXT:  (call $defined)
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $call-toplevel
+    ;; We add an unreachable after this, even though it has no siblings after
+    ;; it.
+    (call $defined)
   )
 )
