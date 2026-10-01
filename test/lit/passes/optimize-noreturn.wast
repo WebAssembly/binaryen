@@ -13,4 +13,24 @@
   (func $defined-result (result i32)
     (i32.const 42)
   )
+
+  (func $calls
+    ;; We add an unreachable after each of these.
+    (call $imported)
+    (call $defined)
+    (drop
+      (call $defined)
+    )
+
+    ;; But not this
+    (call $calls)
+  )
+
+  (func $calls-already-handled
+    (call $imported)
+    (call $defined)
+    (drop
+      (call $defined)
+    )
+  )
 )

@@ -2873,7 +2873,7 @@ void PrintSExpression::printCodeAnnotations(const CodeAnnotation& annotation) {
   }
   if (annotation.noReturn) {
     Colors::grey(o);
-    o << "(@" << Annotations::NoreturnHint << ")\n";
+    o << "(@" << Annotations::NoReturnHint << ")\n";
     restoreNormalColor(o);
     doIndent(o, indent);
   }
