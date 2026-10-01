@@ -923,6 +923,14 @@ public:
                       makeConst(Literal::makeFromInt64(offset, pointerType)));
   }
 
+  // A spill slot is a GC root, so once a reference has been restored into its
+  // local the slot must be cleared to stop the table retaining the object.
+  Expression* makeClearRefSlot(HeapType heapType, Index offset) {
+    return makeTableSet(getRefTable(heapType),
+                        makeRefIndex(heapType, offset),
+                        LiteralUtils::makeZero(Type(heapType, Nullable), wasm));
+  }
+
   Expression* makeIncRefPos(HeapType heapType, int32_t by) {
     if (by == 0) {
       return makeNop();
@@ -1806,6 +1814,13 @@ private:
         WASM_UNREACHABLE("Unexpected empty type");
       }
       block->list.push_back(builder->makeLocalSet(i, load));
+    }
+    // Release the slots just restored, so the table does not keep the
+    // references alive for the life of the instance.
+    for (const auto& [heapType, count] : layout.refTotals) {
+      for (Index offset = 0; offset < count; offset++) {
+        block->list.push_back(builder->makeClearRefSlot(heapType, offset));
+      }
     }
     block->finalize();
     return block;

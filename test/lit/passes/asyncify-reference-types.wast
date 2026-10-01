@@ -24,6 +24,12 @@
 ;; CHECK:          (i32.add
 ;; CHECK:            (global.get $__asyncify_ref_pos_extern)
 
+;; The restored slot is then cleared: a table is a GC root, so leaving the
+;; reference there would retain the object for the life of the instance.
+;; CHECK:      (table.set $__asyncify_ref_table_extern
+;; CHECK:        (global.get $__asyncify_ref_pos_extern)
+;; CHECK:        (ref.null noextern)
+
 ;; On unwind, the table is grown if the cursor has reached the current size, and
 ;; the local is spilled to the table. Growth is what makes recursion safe.
 ;; CHECK:        (table.size $__asyncify_ref_table_extern)
