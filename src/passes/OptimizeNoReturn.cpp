@@ -51,15 +51,17 @@ struct OptimizeNoReturn
   Expression** dropp = nullptr;
 
   void visitExpression(Expression* curr) {
-std::cout << "vE " << *curr << '\n';
     if (auto* call = curr->dynCast<Call>()) {
+      if (callp) {
+        // There was a call before us, handle it first.
+        addUnreachable();
+      }
       // No need to add an unreachable after an already-unreachable call (like a
       // return call, or one with an unreachable operand).
       if (call->type != Type::unreachable &&
           Intrinsics::getAnnotations(getModule()->getFunction(call->target))
             .noReturn) {
         callp = getCurrentPointer();
-std::cout << "  a1\n";
       }
       return;
     }
@@ -94,8 +96,6 @@ std::cout << "  a1\n";
   }
 
   void visitFunction(Function* curr) {
-std::cout << "b1\n";
-
     // The walk ended, but perhaps it ended on something that needs an
     // unreachable.
     if (callp) {

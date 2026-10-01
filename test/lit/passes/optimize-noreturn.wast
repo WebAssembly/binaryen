@@ -19,28 +19,74 @@
   )
 
   ;; CHECK:      (func $calls (type $0)
-  ;; CHECK-NEXT:  (call $defined)
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (call $defined)
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (call $defined)
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (call $defined)
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (block
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (call $defined-result)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (call $defined-result)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (call $defined-result)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (call $defined)
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $calls)
   ;; CHECK-NEXT:  (call $calls)
   ;; CHECK-NEXT: )
   (func $calls
-    ;; We add an unreachable after each of these.
+    ;; We add an unreachable after each of these. We test nops in the middle,
+    ;; and without
+    (call $defined)
+    (nop)
+    (call $defined)
     (call $defined)
     (drop
       (call $defined-result)
     )
+    (nop)
+    (drop
+      (call $defined-result)
+    )
+    (drop
+      (call $defined-result)
+    )
+    (call $defined)
 
     ;; But not this.
+    (call $calls)
     (call $calls)
   )
 
   ;; CHECK:      (func $calls-already-handled (type $0)
-  ;; CHECK-NEXT:  (call $defined)
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (call $defined)
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT:  (block
   ;; CHECK-NEXT:   (drop
@@ -65,8 +111,8 @@
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $call-toplevel
-    ;; We add an unreachable after this, even though it has no siblings after
-    ;; it.
+    ;; We add an unreachable after this, not confused by the fact that it is
+    ;; the last expression.
     (call $defined)
   )
 )
