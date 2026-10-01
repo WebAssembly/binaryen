@@ -29,7 +29,9 @@
 
 namespace wasm {
 
-struct OptimizeNoReturn : public WalkerPass<PostWalker<OptimizeNoReturn, UnifiedExpressionVisitor<OptimizeNoReturn>>> {
+struct OptimizeNoReturn
+  : public WalkerPass<PostWalker<OptimizeNoReturn,
+                                 UnifiedExpressionVisitor<OptimizeNoReturn>>> {
   bool isFunctionParallel() override { return true; }
 
   std::unique_ptr<Pass> create() override {
