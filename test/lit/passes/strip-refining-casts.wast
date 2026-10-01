@@ -310,9 +310,7 @@
   ;; TNH-NEXT:  )
   ;; TNH-NEXT:  (drop
   ;; TNH-NEXT:   (local.tee $l
-  ;; TNH-NEXT:    (ref.cast (ref $Sub)
-  ;; TNH-NEXT:     (local.get $x)
-  ;; TNH-NEXT:    )
+  ;; TNH-NEXT:    (local.get $x)
   ;; TNH-NEXT:   )
   ;; TNH-NEXT:  )
   ;; TNH-NEXT:  (local.set $l
@@ -384,8 +382,7 @@
         (local.get $ns)
       )
     )
-    ;; A local.tee's type is the type of its value, so its cast must not be
-    ;; removed.
+    ;; A local.tee's type is the type of the local, so its cast is also removed.
     (drop
       (local.tee $l
         (ref.cast (ref $Sub)
@@ -755,9 +752,17 @@
   ;; TNH:      (func $keep-descriptor-and-unreachable (type $19) (param $c i32) (param $x anyref) (param $d (ref $Desc))
   ;; TNH-NEXT:  (local $l anyref)
   ;; TNH-NEXT:  (local.set $l
+  ;; TNH-NEXT:   (local.get $x)
+  ;; TNH-NEXT:  )
+  ;; TNH-NEXT:  (local.set $l
   ;; TNH-NEXT:   (ref.cast_desc_eq (ref $Described)
   ;; TNH-NEXT:    (local.get $x)
-  ;; TNH-NEXT:    (local.get $d)
+  ;; TNH-NEXT:    (block (result (ref $Desc))
+  ;; TNH-NEXT:     (call $callee
+  ;; TNH-NEXT:      (struct.new_default $Super)
+  ;; TNH-NEXT:     )
+  ;; TNH-NEXT:     (local.get $d)
+  ;; TNH-NEXT:    )
   ;; TNH-NEXT:   )
   ;; TNH-NEXT:  )
   ;; TNH-NEXT:  (drop
@@ -815,6 +820,17 @@
   ;; NO_TNH-NEXT:    (local.get $d)
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT:  (local.set $l
+  ;; NO_TNH-NEXT:   (ref.cast_desc_eq (ref $Described)
+  ;; NO_TNH-NEXT:    (local.get $x)
+  ;; NO_TNH-NEXT:    (block (result (ref $Desc))
+  ;; NO_TNH-NEXT:     (call $callee
+  ;; NO_TNH-NEXT:      (struct.new_default $Super)
+  ;; NO_TNH-NEXT:     )
+  ;; NO_TNH-NEXT:     (local.get $d)
+  ;; NO_TNH-NEXT:    )
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT:  (drop
   ;; NO_TNH-NEXT:   (block ;; (replaces unreachable StructNew we can't emit)
   ;; NO_TNH-NEXT:    (drop
@@ -864,11 +880,23 @@
   ;; NO_TNH-NEXT: )
   (func $keep-descriptor-and-unreachable (param $c i32) (param $x anyref) (param $d (ref $Desc))
     (local $l anyref)
-    ;; Descriptor casts must not be removed.
+    ;; Descriptor casts can be removed if the descriptor has no side effects.
     (local.set $l
       (ref.cast_desc_eq (ref $Described)
         (local.get $x)
         (local.get $d)
+      )
+    )
+    ;; Descriptor casts must not be removed if the descriptor has side effects.
+    (local.set $l
+      (ref.cast_desc_eq (ref $Described)
+        (local.get $x)
+        (block (result (ref $Desc))
+          (call $callee
+            (struct.new_default $Super)
+          )
+          (local.get $d)
+        )
       )
     )
     ;; Unreachable expressions must be handled safely.
@@ -903,6 +931,172 @@
           (unreachable)
         )
       )
+    )
+  )
+
+  ;; TNH:      (func $control-flow (type $20) (param $c i32) (param $x (ref $Super)) (param $sub (ref $Sub)) (result (ref $Super))
+  ;; TNH-NEXT:  (drop
+  ;; TNH-NEXT:   (if (result (ref $Super))
+  ;; TNH-NEXT:    (local.get $c)
+  ;; TNH-NEXT:    (then
+  ;; TNH-NEXT:     (local.get $x)
+  ;; TNH-NEXT:    )
+  ;; TNH-NEXT:    (else
+  ;; TNH-NEXT:     (local.get $x)
+  ;; TNH-NEXT:    )
+  ;; TNH-NEXT:   )
+  ;; TNH-NEXT:  )
+  ;; TNH-NEXT:  (drop
+  ;; TNH-NEXT:   (block $b (result (ref $Super))
+  ;; TNH-NEXT:    (if
+  ;; TNH-NEXT:     (local.get $c)
+  ;; TNH-NEXT:     (then
+  ;; TNH-NEXT:      (br $b
+  ;; TNH-NEXT:       (local.get $x)
+  ;; TNH-NEXT:      )
+  ;; TNH-NEXT:     )
+  ;; TNH-NEXT:    )
+  ;; TNH-NEXT:    (drop
+  ;; TNH-NEXT:     (br_if $b
+  ;; TNH-NEXT:      (ref.cast (ref $Sub)
+  ;; TNH-NEXT:       (local.get $x)
+  ;; TNH-NEXT:      )
+  ;; TNH-NEXT:      (local.get $c)
+  ;; TNH-NEXT:     )
+  ;; TNH-NEXT:    )
+  ;; TNH-NEXT:    (local.get $x)
+  ;; TNH-NEXT:   )
+  ;; TNH-NEXT:  )
+  ;; TNH-NEXT:  (drop
+  ;; TNH-NEXT:   (block $b-super (result (ref $Super))
+  ;; TNH-NEXT:    (block $b-sub (result (ref $Sub))
+  ;; TNH-NEXT:     (br_table $b-super $b-sub
+  ;; TNH-NEXT:      (ref.cast (ref $Sub)
+  ;; TNH-NEXT:       (local.get $x)
+  ;; TNH-NEXT:      )
+  ;; TNH-NEXT:      (local.get $c)
+  ;; TNH-NEXT:     )
+  ;; TNH-NEXT:    )
+  ;; TNH-NEXT:   )
+  ;; TNH-NEXT:  )
+  ;; TNH-NEXT:  (local.get $x)
+  ;; TNH-NEXT: )
+  ;; NO_TNH:      (func $control-flow (type $21) (param $c i32) (param $x (ref $Super)) (param $sub (ref $Sub)) (result (ref $Super))
+  ;; NO_TNH-NEXT:  (drop
+  ;; NO_TNH-NEXT:   (if (result (ref $Super))
+  ;; NO_TNH-NEXT:    (local.get $c)
+  ;; NO_TNH-NEXT:    (then
+  ;; NO_TNH-NEXT:     (ref.cast (ref $Sub)
+  ;; NO_TNH-NEXT:      (local.get $x)
+  ;; NO_TNH-NEXT:     )
+  ;; NO_TNH-NEXT:    )
+  ;; NO_TNH-NEXT:    (else
+  ;; NO_TNH-NEXT:     (local.get $x)
+  ;; NO_TNH-NEXT:    )
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT:  (drop
+  ;; NO_TNH-NEXT:   (block $b (result (ref $Super))
+  ;; NO_TNH-NEXT:    (if
+  ;; NO_TNH-NEXT:     (local.get $c)
+  ;; NO_TNH-NEXT:     (then
+  ;; NO_TNH-NEXT:      (br $b
+  ;; NO_TNH-NEXT:       (ref.cast (ref $Sub)
+  ;; NO_TNH-NEXT:        (local.get $x)
+  ;; NO_TNH-NEXT:       )
+  ;; NO_TNH-NEXT:      )
+  ;; NO_TNH-NEXT:     )
+  ;; NO_TNH-NEXT:    )
+  ;; NO_TNH-NEXT:    (drop
+  ;; NO_TNH-NEXT:     (br_if $b
+  ;; NO_TNH-NEXT:      (ref.cast (ref $Sub)
+  ;; NO_TNH-NEXT:       (local.get $x)
+  ;; NO_TNH-NEXT:      )
+  ;; NO_TNH-NEXT:      (local.get $c)
+  ;; NO_TNH-NEXT:     )
+  ;; NO_TNH-NEXT:    )
+  ;; NO_TNH-NEXT:    (local.get $x)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT:  (drop
+  ;; NO_TNH-NEXT:   (block $b-super (result (ref $Super))
+  ;; NO_TNH-NEXT:    (block $b-sub (result (ref $Sub))
+  ;; NO_TNH-NEXT:     (br_table $b-super $b-sub
+  ;; NO_TNH-NEXT:      (ref.cast (ref $SubSub)
+  ;; NO_TNH-NEXT:       (ref.cast (ref $Sub)
+  ;; NO_TNH-NEXT:        (local.get $x)
+  ;; NO_TNH-NEXT:       )
+  ;; NO_TNH-NEXT:      )
+  ;; NO_TNH-NEXT:      (local.get $c)
+  ;; NO_TNH-NEXT:     )
+  ;; NO_TNH-NEXT:    )
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT:  (ref.cast (ref $Sub)
+  ;; NO_TNH-NEXT:   (local.get $x)
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT: )
+  (func $control-flow (param $c i32) (param $x (ref $Super)) (param $sub (ref $Sub)) (result (ref $Super))
+    ;; If arms flowing into a supertype result can have their casts stripped.
+    (drop
+      (if (result (ref $Super))
+        (local.get $c)
+        (then
+          (ref.cast (ref $Sub)
+            (local.get $x)
+          )
+        )
+        (else
+          (local.get $x)
+        )
+      )
+    )
+    ;; Unconditional br to a block with a supertype result strips its cast,
+    ;; while br_if keeps its cast because the br_if's own result type is the
+    ;; cast type.
+    (drop
+      (block $b (result (ref $Super))
+        (if
+          (local.get $c)
+          (then
+            (br $b
+              (ref.cast (ref $Sub)
+                (local.get $x)
+              )
+            )
+          )
+        )
+        (drop
+          (br_if $b
+            (ref.cast (ref $Sub)
+              (local.get $x)
+            )
+            (local.get $c)
+          )
+        )
+        (local.get $x)
+      )
+    )
+    ;; br_table strips casts down to the greatest lower bound of all target
+    ;; block types (here (ref $Sub)), keeping the cast to $Sub while stripping
+    ;; the cast to $SubSub.
+    (drop
+      (block $b-super (result (ref $Super))
+        (block $b-sub (result (ref $Sub))
+          (br_table $b-super $b-sub
+            (ref.cast (ref $SubSub)
+              (ref.cast (ref $Sub)
+                (local.get $x)
+              )
+            )
+            (local.get $c)
+          )
+        )
+      )
+    )
+    ;; Function body result slot strips its cast.
+    (ref.cast (ref $Sub)
+      (local.get $x)
     )
   )
 )

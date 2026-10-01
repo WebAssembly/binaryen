@@ -31,10 +31,11 @@
 //    (local.get $x)
 //  )
 //
-// The slots handled are locals, globals, call / call_ref / call_indirect
-// parameters, function results, struct fields, array elements and select arms.
-// Casts on the input of a ref.test whose outcome is not determined by the
-// input's type are removed as well, as they do not affect the result.
+// All value-flowing slots discovered by SubtypingDiscoverer (locals, globals,
+// call parameters, function results, struct fields, array elements, control
+// flow branches and fallthroughs, etc.) are handled. Casts on the input of a
+// ref.test whose outcome is not determined by the input's type are removed as
+// well, as they do not affect the result.
 //
 // Unlike the cast removals done in OptimizeInstructions, which never lose type
 // information, the casts removed here may narrow the value beyond the slot
@@ -48,32 +49,67 @@
 // Requires traps-never-happen mode, as removing a cast removes a possible trap.
 //
 
+#include <unordered_map>
+
+#include "ir/effects.h"
 #include "ir/gc-type-utils.h"
 #include "ir/intrinsics.h"
+#include "ir/subtype-exprs.h"
 #include "pass.h"
 #include "passes/passes.h"
+#include "wasm-traversal.h"
 #include "wasm.h"
 
 namespace wasm {
 
 namespace {
 
-struct StripRefiningCasts : public WalkerPass<PostWalker<StripRefiningCasts>> {
+struct StripRefiningCasts
+  : public WalkerPass<
+      ControlFlowWalker<StripRefiningCasts,
+                        SubtypingDiscoverer<StripRefiningCasts>>> {
+  using Super =
+    WalkerPass<ControlFlowWalker<StripRefiningCasts,
+                                 SubtypingDiscoverer<StripRefiningCasts>>>;
+
   bool isFunctionParallel() override { return true; }
 
   std::unique_ptr<Pass> create() override {
     return std::make_unique<StripRefiningCasts>();
   }
 
-  void doWalkFunction(Function* func) {
-    if (!getPassOptions().trapsNeverHappen) {
-      return;
+  void runOnFunction(Module* module, Function* func) override {
+    if (getPassOptions().trapsNeverHappen) {
+      Super::runOnFunction(module, func);
     }
-    walk(func->body);
   }
+
+  // Map from expression slot to the greatest lower bound of all types it must
+  // be a subtype of (e.g. a switch value must be a subtype of all its targets).
+  std::unordered_map<Expression**, Type> requiredTypes;
+
+  void noteSubtype(Type, Type) {}
+  void noteSubtype(HeapType, HeapType) {}
+  void noteSubtype(Type, Expression*) {}
+  void noteSubtype(Expression*& sub, Type super) {
+    auto [it, inserted] = requiredTypes.insert({&sub, super});
+    if (!inserted) {
+      it->second = Type::getGreatestLowerBound(it->second, super);
+    }
+  }
+  void noteSubtype(Expression*& sub, Expression* super) {
+    noteSubtype(sub, super->type);
+  }
+  void noteNonFlowSubtype(Expression*, Type) {}
+  void noteCast(HeapType, Type) {}
+  void noteCast(Expression*, Type) {}
+  void noteCast(Expression*, Expression*) {}
 
   // Skips casts on |input| while the uncast value is a subtype of |slotType|.
   void skipCasts(Expression*& input, Type slotType) {
+    if (!slotType.isRef() || input->type == Type::unreachable) {
+      return;
+    }
     while (1) {
       if (auto* as = input->dynCast<RefAs>()) {
         if (as->op == RefAsNonNull &&
@@ -82,9 +118,12 @@ struct StripRefiningCasts : public WalkerPass<PostWalker<StripRefiningCasts>> {
           continue;
         }
       } else if (auto* cast = input->dynCast<RefCast>()) {
-        // Removing a descriptor cast would also remove the descriptor operand,
-        // along with its side effects.
-        if (!cast->desc && Type::isSubType(cast->ref->type, slotType)) {
+        // Removing a descriptor cast also removes the descriptor operand, which
+        // we can only do if it has no side effects.
+        if ((!cast->desc ||
+             !EffectAnalyzer(getPassOptions(), *getModule(), cast->desc)
+                .hasSideEffects()) &&
+            Type::isSubType(cast->ref->type, slotType)) {
           input = cast->ref;
           continue;
         }
@@ -93,97 +132,13 @@ struct StripRefiningCasts : public WalkerPass<PostWalker<StripRefiningCasts>> {
     }
   }
 
-  void skipCastsOnOperands(ExpressionList& operands, Type params) {
-    if (params.size() != operands.size()) {
-      return;
-    }
-    for (Index i = 0; i < operands.size(); ++i) {
-      skipCasts(operands[i], params[i]);
-    }
-  }
-
-  void visitLocalSet(LocalSet* curr) {
-    // A tee's own type is the type of its value, so removing a cast from it
-    // would change the tee's type.
-    if (!curr->isTee()) {
-      skipCasts(curr->value, getFunction()->getLocalType(curr->index));
-    }
-  }
-
-  void visitGlobalSet(GlobalSet* curr) {
-    skipCasts(curr->value, getModule()->getGlobal(curr->name)->type);
-  }
-
   void visitCall(Call* curr) {
+    // call.without.effects operands must also satisfy the signature of the
+    // target function operand, not just the import's declared signature.
     if (Intrinsics(*getModule()).isCallWithoutEffects(curr)) {
       return;
     }
-    skipCastsOnOperands(curr->operands,
-                        getModule()->getFunction(curr->target)->getParams());
-  }
-
-  void visitCallRef(CallRef* curr) {
-    if (curr->target->type.isSignature()) {
-      skipCastsOnOperands(
-        curr->operands, curr->target->type.getHeapType().getSignature().params);
-    }
-  }
-
-  void visitCallIndirect(CallIndirect* curr) {
-    if (curr->heapType.isSignature()) {
-      skipCastsOnOperands(curr->operands, curr->heapType.getSignature().params);
-    }
-  }
-
-  void visitReturn(Return* curr) {
-    auto results = getFunction()->getResults();
-    if (curr->value && results != Type::none && !results.isTuple()) {
-      skipCasts(curr->value, results);
-    }
-  }
-
-  void visitStructNew(StructNew* curr) {
-    if (curr->type == Type::unreachable || curr->isWithDefault()) {
-      return;
-    }
-    const auto& fields = curr->type.getHeapType().getStruct().fields;
-    for (Index i = 0; i < fields.size(); i++) {
-      skipCasts(curr->operands[i], fields[i].type);
-    }
-  }
-
-  void visitStructSet(StructSet* curr) {
-    if (auto field = GCTypeUtils::getField(curr->ref->type, curr->index)) {
-      skipCasts(curr->value, field->type);
-    }
-  }
-
-  void visitArrayNew(ArrayNew* curr) {
-    if (curr->type == Type::unreachable || curr->isWithDefault()) {
-      return;
-    }
-    skipCasts(curr->init, curr->type.getHeapType().getArray().element.type);
-  }
-
-  void visitArrayNewFixed(ArrayNewFixed* curr) {
-    if (curr->type == Type::unreachable) {
-      return;
-    }
-    auto elemType = curr->type.getHeapType().getArray().element.type;
-    for (auto*& value : curr->values) {
-      skipCasts(value, elemType);
-    }
-  }
-
-  void visitArraySet(ArraySet* curr) {
-    if (auto field = GCTypeUtils::getField(curr->ref->type)) {
-      skipCasts(curr->value, field->type);
-    }
-  }
-
-  void visitSelect(Select* curr) {
-    skipCasts(curr->ifTrue, curr->type);
-    skipCasts(curr->ifFalse, curr->type);
+    Super::visitCall(curr);
   }
 
   void visitRefTest(RefTest* curr) {
@@ -199,7 +154,16 @@ struct StripRefiningCasts : public WalkerPass<PostWalker<StripRefiningCasts>> {
     // Any input in the hierarchy of the cast type is valid. Nullability does
     // not matter either: a removed cast is assumed to succeed, so it only ever
     // passes its input through unchanged.
-    skipCasts(curr->ref, Type(curr->castType.getHeapType().getTop(), Nullable));
+    noteSubtype(curr->ref,
+                Type(curr->castType.getHeapType().getTop(), Nullable));
+  }
+
+  void visitFunction(Function* func) {
+    Super::visitFunction(func);
+    for (auto& [slot, type] : requiredTypes) {
+      skipCasts(*slot, type);
+    }
+    requiredTypes.clear();
   }
 };
 
