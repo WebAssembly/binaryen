@@ -941,13 +941,15 @@ public:
       return makeNop();
     }
     auto table = getRefTable(heapType);
-    auto need = makeRefIndex(heapType, count);
+    // Each operand gets its own copy: the IR is a tree, so an Expression*
+    // cannot be shared between the condition and the grow.
     auto deficit = makeBinary(Abstract::getBinary(pointerType, Abstract::Sub),
-                              need,
+                              makeRefIndex(heapType, count),
                               makeTableSize(table));
-    return makeIf(makeBinary(Abstract::getBinary(pointerType, Abstract::GtU),
-                             need,
-                             makeTableSize(table)),
+    auto full = makeBinary(Abstract::getBinary(pointerType, Abstract::GtU),
+                           makeRefIndex(heapType, count),
+                           makeTableSize(table));
+    return makeIf(full,
                   makeDrop(makeTableGrow(
                     table,
                     LiteralUtils::makeZero(Type(heapType, Nullable), wasm),
@@ -1674,6 +1676,78 @@ private:
     relevantLiveLocals = computeRelevantLiveLocals(func, getModule());
   }
 
+  // Next slot for a local: a table slot for reference components, a byte
+  // range in linear memory for everything else
+  struct SpillCursors {
+    AsyncifyBuilder& builder;
+    RefCountMap refOffsets;
+    Index memOffset = 0;
+
+    SpillCursors(AsyncifyBuilder& builder) : builder(builder) {}
+
+    // Table slot for the next reference
+    Expression* nextRef(HeapType heapType) {
+      return builder.makeRefIndex(heapType, refOffsets[heapType]++);
+    }
+
+    // Byte offset of the next non-reference component
+    Index takeMem(Index size) {
+      auto offset = memOffset;
+      memOffset += size;
+      return offset;
+    }
+  };
+
+  // Reads one component back from its spill slot
+  Expression*
+  makeComponentLoading(Type type, Index tempIndex, SpillCursors& cursors) {
+    if (type.isRef()) {
+      auto heapType = type.getHeapType();
+      // The table is nullable, so a non-nullable local needs a cast back.
+      Expression* load = builder->makeTableGet(builder->getRefTable(heapType),
+                                               cursors.nextRef(heapType),
+                                               Type(heapType, Nullable));
+      if (!type.isNullable()) {
+        load = builder->makeRefAs(RefAsNonNull, load);
+      }
+      return load;
+    }
+    auto size = getByteSize(type);
+    assert(size % STACK_ALIGN == 0);
+    // TODO: higher alignment?
+    return builder->makeLoad(
+      size,
+      true,
+      cursors.takeMem(size),
+      STACK_ALIGN,
+      builder->makeLocalGet(tempIndex, builder->pointerType),
+      type,
+      asyncifyMemory);
+  }
+
+  // Writes one component to its spill slot
+  Expression* makeComponentSaving(Type type,
+                                  Expression* value,
+                                  Index tempIndex,
+                                  SpillCursors& cursors) {
+    if (type.isRef()) {
+      return builder->makeTableSet(builder->getRefTable(type.getHeapType()),
+                                   cursors.nextRef(type.getHeapType()),
+                                   value);
+    }
+    auto size = getByteSize(type);
+    assert(size % STACK_ALIGN == 0);
+    // TODO: higher alignment?
+    return builder->makeStore(
+      size,
+      cursors.takeMem(size),
+      STACK_ALIGN,
+      builder->makeLocalGet(tempIndex, builder->pointerType),
+      value,
+      type,
+      asyncifyMemory);
+  }
+
   struct SpillLayout {
     Index memTotal = 0;
     RefCountMap refTotals;
@@ -1713,8 +1787,7 @@ private:
     auto tempIndex = builder->addVar(func, builder->pointerType);
     block->list.push_back(
       builder->makeLocalSet(tempIndex, builder->makeGetStackPos()));
-    Index offset = 0;
-    RefCountMap refOffsets;
+    SpillCursors cursors(*builder);
     for (Index i = 0; i < numLocals; i++) {
       if (!relevantLiveLocals.contains(i)) {
         continue;
@@ -1722,33 +1795,7 @@ private:
       auto localType = func->getLocalType(i);
       SmallVector<Expression*, 1> loads;
       for (const auto& type : localType) {
-        if (type.isRef()) {
-          auto heapType = type.getHeapType();
-          auto& refOffset = refOffsets[heapType];
-          // The table is nullable, so a non-nullable local needs a cast back.
-          Expression* load =
-            builder->makeTableGet(builder->getRefTable(heapType),
-                                  builder->makeRefIndex(heapType, refOffset),
-                                  Type(heapType, Nullable));
-          if (!type.isNullable()) {
-            load = builder->makeRefAs(RefAsNonNull, load);
-          }
-          loads.push_back(load);
-          refOffset += 1;
-        } else {
-          auto size = getByteSize(type);
-          assert(size % STACK_ALIGN == 0);
-          // TODO: higher alignment?
-          loads.push_back(builder->makeLoad(
-            size,
-            true,
-            offset,
-            STACK_ALIGN,
-            builder->makeLocalGet(tempIndex, builder->pointerType),
-            type,
-            asyncifyMemory));
-          offset += size;
-        }
+        loads.push_back(makeComponentLoading(type, tempIndex, cursors));
       }
       Expression* load;
       if (loads.size() == 1) {
@@ -1779,8 +1826,7 @@ private:
     for (const auto& [heapType, total] : layout.refTotals) {
       block->list.push_back(builder->makeEnsureRefCapacity(heapType, total));
     }
-    Index offset = 0;
-    RefCountMap refOffsets;
+    SpillCursors cursors(*builder);
     for (Index i = 0; i < numLocals; i++) {
       if (!relevantLiveLocals.contains(i)) {
         continue;
@@ -1792,33 +1838,13 @@ private:
         if (localType.size() > 1) {
           localGet = builder->makeTupleExtract(localGet, j);
         }
-        if (type.isRef()) {
-          auto heapType = type.getHeapType();
-          auto& refOffset = refOffsets[heapType];
-          block->list.push_back(
-            builder->makeTableSet(builder->getRefTable(heapType),
-                                  builder->makeRefIndex(heapType, refOffset),
-                                  localGet));
-          refOffset += 1;
-        } else {
-          auto size = getByteSize(type);
-          assert(size % STACK_ALIGN == 0);
-          // TODO: higher alignment?
-          block->list.push_back(builder->makeStore(
-            size,
-            offset,
-            STACK_ALIGN,
-            builder->makeLocalGet(tempIndex, builder->pointerType),
-            localGet,
-            type,
-            asyncifyMemory));
-          offset += size;
-        }
+        block->list.push_back(
+          makeComponentSaving(type, localGet, tempIndex, cursors));
         ++j;
       }
     }
-    block->list.push_back(builder->makeIncStackPos(offset));
-    for (const auto& [heapType, total] : refOffsets) {
+    block->list.push_back(builder->makeIncStackPos(cursors.memOffset));
+    for (const auto& [heapType, total] : cursors.refOffsets) {
       block->list.push_back(builder->makeIncRefPos(heapType, int32_t(total)));
     }
     block->finalize();
