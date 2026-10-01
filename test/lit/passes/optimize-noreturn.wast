@@ -109,4 +109,37 @@
     ;; the last expression.
     (call $defined)
   )
+
+  ;; CHECK:      (@binaryen.noreturn)
+  ;; CHECK-NEXT: (func $defined-param (type $2) (param $0 i32)
+  ;; CHECK-NEXT: )
+  (@binaryen.noreturn)
+  (func $defined-param (param i32)
+  )
+
+  ;; CHECK:      (func $calls-param (type $0)
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (call $defined-param
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (call $defined-param
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $calls-param
+    ;; We add an unreachable after this.
+    (call $defined-param
+      (i32.const 42)
+    )
+    (nop)
+
+    ;; Do not error on an unreachable call. Also do not add an unreachable after
+    ;; it.
+    (call $defined-param
+      (unreachable)
+    )
+  )
 )
