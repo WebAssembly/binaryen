@@ -289,9 +289,9 @@ struct LineState {
   }
 
   bool needToEmit() {
-    // Zero values imply we can ignore this line.
+    // A zero line means no source attribution, not a dead address.
     // https://github.com/WebAssembly/debugging/issues/9#issuecomment-567720872
-    return line != 0 && addr != 0;
+    return addr != 0;
   }
 
   // Given an old state, emit the diff from it to this state into a new line
