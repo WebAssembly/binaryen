@@ -358,12 +358,12 @@ struct Scanner
       return false;
     }
 
-    // If the size is at least 3, then if we have two of them we have 6,
-    // and so adding one set+one get and removing one of the items itself
-    // is not detrimental, and may be beneficial.
-    // TODO: investigate size 2
+    // A size of 2 is the smallest where reuse can pay off: with two
+    // appearances we remove one of them while adding a local.set and a
+    // local.get. The Applier also skips the cases that are clearly not
+    // profitable, where the number of requests is known (see worthApplying).
     auto size = Measurer::measure(curr);
-    if (options.shrinkLevel > 0 && size >= 3) {
+    if (options.shrinkLevel > 0 && size >= 2) {
       return true;
     }
 
@@ -586,12 +586,35 @@ struct Checker
 struct Applier
   : public LinearExecutionWalker<Applier, UnifiedExpressionVisitor<Applier>> {
   RequestInfoMap requestInfos;
+  PassOptions& options;
 
-  Applier(RequestInfoMap& requestInfos) : requestInfos(requestInfos) {}
+  // Originals that we decided are not worth applying (in size-focused modes,
+  // where a small expression replaced a single time can end up larger, as we
+  // add a local set and get pair as well as a new local).
+  std::unordered_set<Expression*> skipped;
+
+  Applier(RequestInfoMap& requestInfos, PassOptions& options)
+    : requestInfos(requestInfos), options(options) {}
 
   // Maps the original expressions that we save to locals to the local indexes
   // for them.
   std::unordered_map<Expression*, Index> originalLocalMap;
+
+  bool worthApplying(Expression* curr, Index requests) {
+    if (options.shrinkLevel == 0) {
+      return true;
+    }
+    // A tiny expression (two IR nodes, e.g. a load of a local) replaced a
+    // single time is not worth it: we remove one small expression but add a
+    // local.set, a local.get, and a new local. If the function already has
+    // locals then coalesce-locals will usually merge the new local into one of
+    // them, so only restrict this when there are no locals at all.
+    if (Measurer::measure(curr) <= 2 && requests < 2 &&
+        getFunction()->vars.empty()) {
+      return false;
+    }
+    return true;
+  }
 
   void visitExpression(Expression* curr) {
     auto iter = requestInfos.find(curr);
@@ -603,6 +626,10 @@ struct Applier
     info.validate();
 
     if (info.requests) {
+      if (!worthApplying(curr, info.requests)) {
+        skipped.insert(curr);
+        return;
+      }
       // We have requests for this value. Add a local and tee the value to
       // there.
       Index local = originalLocalMap[curr] =
@@ -611,7 +638,7 @@ struct Applier
         Builder(*getModule()).makeLocalTee(local, curr, curr->type));
     } else if (info.original) {
       auto& originalInfo = requestInfos.at(info.original);
-      if (originalInfo.requests) {
+      if (originalInfo.requests && !skipped.contains(info.original)) {
         // This is a valid request of an original value. Get the value from the
         // local.
         assert(originalLocalMap.contains(info.original));
@@ -663,7 +690,7 @@ struct LocalCSE : public WalkerPass<PostWalker<LocalCSE>> {
       return;
     }
 
-    Applier applier(requestInfos);
+    Applier applier(requestInfos, options);
     applier.walkFunctionInModule(func, getModule());
   }
 };
