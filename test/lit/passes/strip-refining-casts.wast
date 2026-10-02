@@ -764,7 +764,7 @@
     )
   )
 
-  ;; TNH:      (func $descriptor-cast (type $19) (param $x anyref) (param $d (ref $Desc))
+  ;; TNH:      (func $keep-descriptor-and-unreachable (type $19) (param $c i32) (param $x anyref) (param $d (ref $Desc))
   ;; TNH-NEXT:  (local $l anyref)
   ;; TNH-NEXT:  (local.set $l
   ;; TNH-NEXT:   (local.get $x)
@@ -780,8 +780,54 @@
   ;; TNH-NEXT:    )
   ;; TNH-NEXT:   )
   ;; TNH-NEXT:  )
+  ;; TNH-NEXT:  (drop
+  ;; TNH-NEXT:   (block ;; (replaces unreachable StructNew we can't emit)
+  ;; TNH-NEXT:    (drop
+  ;; TNH-NEXT:     (unreachable)
+  ;; TNH-NEXT:    )
+  ;; TNH-NEXT:    (unreachable)
+  ;; TNH-NEXT:   )
+  ;; TNH-NEXT:  )
+  ;; TNH-NEXT:  (drop
+  ;; TNH-NEXT:   (block ;; (replaces unreachable ArrayNew we can't emit)
+  ;; TNH-NEXT:    (drop
+  ;; TNH-NEXT:     (unreachable)
+  ;; TNH-NEXT:    )
+  ;; TNH-NEXT:    (drop
+  ;; TNH-NEXT:     (i32.const 1)
+  ;; TNH-NEXT:    )
+  ;; TNH-NEXT:    (unreachable)
+  ;; TNH-NEXT:   )
+  ;; TNH-NEXT:  )
+  ;; TNH-NEXT:  (drop
+  ;; TNH-NEXT:   (block ;; (replaces unreachable ArrayNewFixed we can't emit)
+  ;; TNH-NEXT:    (drop
+  ;; TNH-NEXT:     (unreachable)
+  ;; TNH-NEXT:    )
+  ;; TNH-NEXT:    (unreachable)
+  ;; TNH-NEXT:   )
+  ;; TNH-NEXT:  )
+  ;; TNH-NEXT:  (drop
+  ;; TNH-NEXT:   (select
+  ;; TNH-NEXT:    (ref.as_non_null
+  ;; TNH-NEXT:     (local.get $x)
+  ;; TNH-NEXT:    )
+  ;; TNH-NEXT:    (unreachable)
+  ;; TNH-NEXT:    (local.get $c)
+  ;; TNH-NEXT:   )
+  ;; TNH-NEXT:  )
+  ;; TNH-NEXT:  (drop
+  ;; TNH-NEXT:   (ref.test (ref $Super)
+  ;; TNH-NEXT:    (block ;; (replaces unreachable RefCast we can't emit)
+  ;; TNH-NEXT:     (drop
+  ;; TNH-NEXT:      (unreachable)
+  ;; TNH-NEXT:     )
+  ;; TNH-NEXT:     (unreachable)
+  ;; TNH-NEXT:    )
+  ;; TNH-NEXT:   )
+  ;; TNH-NEXT:  )
   ;; TNH-NEXT: )
-  ;; NO_TNH:      (func $descriptor-cast (type $20) (param $x anyref) (param $d (ref $Desc))
+  ;; NO_TNH:      (func $keep-descriptor-and-unreachable (type $20) (param $c i32) (param $x anyref) (param $d (ref $Desc))
   ;; NO_TNH-NEXT:  (local $l anyref)
   ;; NO_TNH-NEXT:  (local.set $l
   ;; NO_TNH-NEXT:   (ref.cast_desc_eq (ref $Described)
@@ -800,8 +846,54 @@
   ;; NO_TNH-NEXT:    )
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT:  (drop
+  ;; NO_TNH-NEXT:   (block ;; (replaces unreachable StructNew we can't emit)
+  ;; NO_TNH-NEXT:    (drop
+  ;; NO_TNH-NEXT:     (unreachable)
+  ;; NO_TNH-NEXT:    )
+  ;; NO_TNH-NEXT:    (unreachable)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT:  (drop
+  ;; NO_TNH-NEXT:   (block ;; (replaces unreachable ArrayNew we can't emit)
+  ;; NO_TNH-NEXT:    (drop
+  ;; NO_TNH-NEXT:     (unreachable)
+  ;; NO_TNH-NEXT:    )
+  ;; NO_TNH-NEXT:    (drop
+  ;; NO_TNH-NEXT:     (i32.const 1)
+  ;; NO_TNH-NEXT:    )
+  ;; NO_TNH-NEXT:    (unreachable)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT:  (drop
+  ;; NO_TNH-NEXT:   (block ;; (replaces unreachable ArrayNewFixed we can't emit)
+  ;; NO_TNH-NEXT:    (drop
+  ;; NO_TNH-NEXT:     (unreachable)
+  ;; NO_TNH-NEXT:    )
+  ;; NO_TNH-NEXT:    (unreachable)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT:  (drop
+  ;; NO_TNH-NEXT:   (select
+  ;; NO_TNH-NEXT:    (ref.as_non_null
+  ;; NO_TNH-NEXT:     (local.get $x)
+  ;; NO_TNH-NEXT:    )
+  ;; NO_TNH-NEXT:    (unreachable)
+  ;; NO_TNH-NEXT:    (local.get $c)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT:  (drop
+  ;; NO_TNH-NEXT:   (ref.test (ref $Super)
+  ;; NO_TNH-NEXT:    (block ;; (replaces unreachable RefCast we can't emit)
+  ;; NO_TNH-NEXT:     (drop
+  ;; NO_TNH-NEXT:      (unreachable)
+  ;; NO_TNH-NEXT:     )
+  ;; NO_TNH-NEXT:     (unreachable)
+  ;; NO_TNH-NEXT:    )
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT: )
-  (func $descriptor-cast (param $x anyref) (param $d (ref $Desc))
+  (func $keep-descriptor-and-unreachable (param $c i32) (param $x anyref) (param $d (ref $Desc))
     (local $l anyref)
     ;; Descriptor casts can be removed if the descriptor has no side effects.
     (local.set $l
@@ -819,6 +911,39 @@
             (struct.new_default $Super)
           )
           (local.get $d)
+        )
+      )
+    )
+    ;; Unreachable expressions must be handled safely.
+    (drop
+      (struct.new $Container
+        (unreachable)
+      )
+    )
+    (drop
+      (array.new $Arr
+        (unreachable)
+        (i32.const 1)
+      )
+    )
+    (drop
+      (array.new_fixed $Arr 1
+        (unreachable)
+      )
+    )
+    (drop
+      (select (result anyref)
+        (ref.as_non_null
+          (local.get $x)
+        )
+        (unreachable)
+        (local.get $c)
+      )
+    )
+    (drop
+      (ref.test (ref $Super)
+        (ref.cast (ref any)
+          (unreachable)
         )
       )
     )
