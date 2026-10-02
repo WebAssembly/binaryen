@@ -98,6 +98,9 @@ struct StripRefiningCasts
     }
   }
   void noteSubtype(Expression*& sub, Expression* super) {
+    // TODO: Propagate the required type of |super| itself through fallthrough
+    // expressions (e.g. blocks, loops, ifs, selects, br_ifs) and re-finalize
+    // them, rather than constraining |sub| by |super|'s current refined type.
     noteSubtype(sub, super->type);
   }
   void noteNonFlowSubtype(Expression*, Type) {}
@@ -107,10 +110,7 @@ struct StripRefiningCasts
 
   // Skips casts on |input| while the uncast value is a subtype of |slotType|.
   void skipCasts(Expression*& input, Type slotType) {
-    if (!slotType.isRef() || input->type == Type::unreachable) {
-      return;
-    }
-    while (1) {
+    while (true) {
       if (auto* as = input->dynCast<RefAs>()) {
         if (as->op == RefAsNonNull &&
             Type::isSubType(as->value->type, slotType)) {
@@ -120,6 +120,8 @@ struct StripRefiningCasts
       } else if (auto* cast = input->dynCast<RefCast>()) {
         // Removing a descriptor cast also removes the descriptor operand, which
         // we can only do if it has no side effects.
+        // TODO: Use ChildLocalizer to preserve side-effecting descriptors in a
+        // block and still remove the cast.
         if ((!cast->desc ||
              !EffectAnalyzer(getPassOptions(), *getModule(), cast->desc)
                 .hasSideEffects()) &&
@@ -163,7 +165,6 @@ struct StripRefiningCasts
     for (auto& [slot, type] : requiredTypes) {
       skipCasts(*slot, type);
     }
-    requiredTypes.clear();
   }
 };
 

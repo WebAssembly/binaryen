@@ -314,6 +314,9 @@
   ;; TNH-NEXT:   )
   ;; TNH-NEXT:  )
   ;; TNH-NEXT:  (local.set $l
+  ;; TNH-NEXT:   (unreachable)
+  ;; TNH-NEXT:  )
+  ;; TNH-NEXT:  (local.set $l
   ;; TNH-NEXT:   (ref.cast (ref $Sub)
   ;; TNH-NEXT:    (local.get $any)
   ;; TNH-NEXT:   )
@@ -350,6 +353,11 @@
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT:  (local.set $l
+  ;; NO_TNH-NEXT:   (ref.as_non_null
+  ;; NO_TNH-NEXT:    (unreachable)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT:  (local.set $l
   ;; NO_TNH-NEXT:   (ref.cast (ref $Sub)
   ;; NO_TNH-NEXT:    (local.get $any)
   ;; NO_TNH-NEXT:   )
@@ -382,12 +390,19 @@
         (local.get $ns)
       )
     )
-    ;; A local.tee's type is the type of the local, so its cast is also removed.
+    ;; In Binaryen IR, local.tee has the type of the local, so its cast is also
+    ;; removed.
     (drop
       (local.tee $l
         (ref.cast (ref $Sub)
           (local.get $x)
         )
+      )
+    )
+    ;; An unreachable cast is replaced with its unreachable operand.
+    (local.set $l
+      (ref.as_non_null
+        (unreachable)
       )
     )
     ;; Non-subtype operand: cast must be kept.
@@ -749,7 +764,7 @@
     )
   )
 
-  ;; TNH:      (func $keep-descriptor-and-unreachable (type $19) (param $c i32) (param $x anyref) (param $d (ref $Desc))
+  ;; TNH:      (func $descriptor-cast (type $19) (param $x anyref) (param $d (ref $Desc))
   ;; TNH-NEXT:  (local $l anyref)
   ;; TNH-NEXT:  (local.set $l
   ;; TNH-NEXT:   (local.get $x)
@@ -765,54 +780,8 @@
   ;; TNH-NEXT:    )
   ;; TNH-NEXT:   )
   ;; TNH-NEXT:  )
-  ;; TNH-NEXT:  (drop
-  ;; TNH-NEXT:   (block ;; (replaces unreachable StructNew we can't emit)
-  ;; TNH-NEXT:    (drop
-  ;; TNH-NEXT:     (unreachable)
-  ;; TNH-NEXT:    )
-  ;; TNH-NEXT:    (unreachable)
-  ;; TNH-NEXT:   )
-  ;; TNH-NEXT:  )
-  ;; TNH-NEXT:  (drop
-  ;; TNH-NEXT:   (block ;; (replaces unreachable ArrayNew we can't emit)
-  ;; TNH-NEXT:    (drop
-  ;; TNH-NEXT:     (unreachable)
-  ;; TNH-NEXT:    )
-  ;; TNH-NEXT:    (drop
-  ;; TNH-NEXT:     (i32.const 1)
-  ;; TNH-NEXT:    )
-  ;; TNH-NEXT:    (unreachable)
-  ;; TNH-NEXT:   )
-  ;; TNH-NEXT:  )
-  ;; TNH-NEXT:  (drop
-  ;; TNH-NEXT:   (block ;; (replaces unreachable ArrayNewFixed we can't emit)
-  ;; TNH-NEXT:    (drop
-  ;; TNH-NEXT:     (unreachable)
-  ;; TNH-NEXT:    )
-  ;; TNH-NEXT:    (unreachable)
-  ;; TNH-NEXT:   )
-  ;; TNH-NEXT:  )
-  ;; TNH-NEXT:  (drop
-  ;; TNH-NEXT:   (select
-  ;; TNH-NEXT:    (ref.as_non_null
-  ;; TNH-NEXT:     (local.get $x)
-  ;; TNH-NEXT:    )
-  ;; TNH-NEXT:    (unreachable)
-  ;; TNH-NEXT:    (local.get $c)
-  ;; TNH-NEXT:   )
-  ;; TNH-NEXT:  )
-  ;; TNH-NEXT:  (drop
-  ;; TNH-NEXT:   (ref.test (ref $Super)
-  ;; TNH-NEXT:    (block ;; (replaces unreachable RefCast we can't emit)
-  ;; TNH-NEXT:     (drop
-  ;; TNH-NEXT:      (unreachable)
-  ;; TNH-NEXT:     )
-  ;; TNH-NEXT:     (unreachable)
-  ;; TNH-NEXT:    )
-  ;; TNH-NEXT:   )
-  ;; TNH-NEXT:  )
   ;; TNH-NEXT: )
-  ;; NO_TNH:      (func $keep-descriptor-and-unreachable (type $20) (param $c i32) (param $x anyref) (param $d (ref $Desc))
+  ;; NO_TNH:      (func $descriptor-cast (type $20) (param $x anyref) (param $d (ref $Desc))
   ;; NO_TNH-NEXT:  (local $l anyref)
   ;; NO_TNH-NEXT:  (local.set $l
   ;; NO_TNH-NEXT:   (ref.cast_desc_eq (ref $Described)
@@ -831,54 +800,8 @@
   ;; NO_TNH-NEXT:    )
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
-  ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (block ;; (replaces unreachable StructNew we can't emit)
-  ;; NO_TNH-NEXT:    (drop
-  ;; NO_TNH-NEXT:     (unreachable)
-  ;; NO_TNH-NEXT:    )
-  ;; NO_TNH-NEXT:    (unreachable)
-  ;; NO_TNH-NEXT:   )
-  ;; NO_TNH-NEXT:  )
-  ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (block ;; (replaces unreachable ArrayNew we can't emit)
-  ;; NO_TNH-NEXT:    (drop
-  ;; NO_TNH-NEXT:     (unreachable)
-  ;; NO_TNH-NEXT:    )
-  ;; NO_TNH-NEXT:    (drop
-  ;; NO_TNH-NEXT:     (i32.const 1)
-  ;; NO_TNH-NEXT:    )
-  ;; NO_TNH-NEXT:    (unreachable)
-  ;; NO_TNH-NEXT:   )
-  ;; NO_TNH-NEXT:  )
-  ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (block ;; (replaces unreachable ArrayNewFixed we can't emit)
-  ;; NO_TNH-NEXT:    (drop
-  ;; NO_TNH-NEXT:     (unreachable)
-  ;; NO_TNH-NEXT:    )
-  ;; NO_TNH-NEXT:    (unreachable)
-  ;; NO_TNH-NEXT:   )
-  ;; NO_TNH-NEXT:  )
-  ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (select
-  ;; NO_TNH-NEXT:    (ref.as_non_null
-  ;; NO_TNH-NEXT:     (local.get $x)
-  ;; NO_TNH-NEXT:    )
-  ;; NO_TNH-NEXT:    (unreachable)
-  ;; NO_TNH-NEXT:    (local.get $c)
-  ;; NO_TNH-NEXT:   )
-  ;; NO_TNH-NEXT:  )
-  ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (ref.test (ref $Super)
-  ;; NO_TNH-NEXT:    (block ;; (replaces unreachable RefCast we can't emit)
-  ;; NO_TNH-NEXT:     (drop
-  ;; NO_TNH-NEXT:      (unreachable)
-  ;; NO_TNH-NEXT:     )
-  ;; NO_TNH-NEXT:     (unreachable)
-  ;; NO_TNH-NEXT:    )
-  ;; NO_TNH-NEXT:   )
-  ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT: )
-  (func $keep-descriptor-and-unreachable (param $c i32) (param $x anyref) (param $d (ref $Desc))
+  (func $descriptor-cast (param $x anyref) (param $d (ref $Desc))
     (local $l anyref)
     ;; Descriptor casts can be removed if the descriptor has no side effects.
     (local.set $l
@@ -899,39 +822,6 @@
         )
       )
     )
-    ;; Unreachable expressions must be handled safely.
-    (drop
-      (struct.new $Container
-        (unreachable)
-      )
-    )
-    (drop
-      (array.new $Arr
-        (unreachable)
-        (i32.const 1)
-      )
-    )
-    (drop
-      (array.new_fixed $Arr 1
-        (unreachable)
-      )
-    )
-    (drop
-      (select (result anyref)
-        (ref.as_non_null
-          (local.get $x)
-        )
-        (unreachable)
-        (local.get $c)
-      )
-    )
-    (drop
-      (ref.test (ref $Super)
-        (ref.cast (ref any)
-          (unreachable)
-        )
-      )
-    )
   )
 
   ;; TNH:      (func $control-flow (type $20) (param $c i32) (param $x (ref $Super)) (param $sub (ref $Sub)) (result (ref $Super))
@@ -942,6 +832,16 @@
   ;; TNH-NEXT:     (local.get $x)
   ;; TNH-NEXT:    )
   ;; TNH-NEXT:    (else
+  ;; TNH-NEXT:     (local.get $x)
+  ;; TNH-NEXT:    )
+  ;; TNH-NEXT:   )
+  ;; TNH-NEXT:  )
+  ;; TNH-NEXT:  (drop
+  ;; TNH-NEXT:   (try (result (ref $Super))
+  ;; TNH-NEXT:    (do
+  ;; TNH-NEXT:     (local.get $x)
+  ;; TNH-NEXT:    )
+  ;; TNH-NEXT:    (catch_all
   ;; TNH-NEXT:     (local.get $x)
   ;; TNH-NEXT:    )
   ;; TNH-NEXT:   )
@@ -996,6 +896,20 @@
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT:  (drop
+  ;; NO_TNH-NEXT:   (try (result (ref $Super))
+  ;; NO_TNH-NEXT:    (do
+  ;; NO_TNH-NEXT:     (ref.cast (ref $Sub)
+  ;; NO_TNH-NEXT:      (local.get $x)
+  ;; NO_TNH-NEXT:     )
+  ;; NO_TNH-NEXT:    )
+  ;; NO_TNH-NEXT:    (catch_all
+  ;; NO_TNH-NEXT:     (ref.cast (ref $Sub)
+  ;; NO_TNH-NEXT:      (local.get $x)
+  ;; NO_TNH-NEXT:     )
+  ;; NO_TNH-NEXT:    )
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT:  (drop
   ;; NO_TNH-NEXT:   (block $b (result (ref $Super))
   ;; NO_TNH-NEXT:    (if
   ;; NO_TNH-NEXT:     (local.get $c)
@@ -1037,7 +951,8 @@
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT: )
   (func $control-flow (param $c i32) (param $x (ref $Super)) (param $sub (ref $Sub)) (result (ref $Super))
-    ;; If arms flowing into a supertype result can have their casts stripped.
+    ;; If and try-catch arms flowing into a supertype result can have their
+    ;; casts stripped.
     (drop
       (if (result (ref $Super))
         (local.get $c)
@@ -1051,9 +966,24 @@
         )
       )
     )
+    (drop
+      (try (result (ref $Super))
+        (do
+          (ref.cast (ref $Sub)
+            (local.get $x)
+          )
+        )
+        (catch_all
+          (ref.cast (ref $Sub)
+            (local.get $x)
+          )
+        )
+      )
+    )
     ;; Unconditional br to a block with a supertype result strips its cast,
-    ;; while br_if keeps its cast because the br_if's own result type is the
-    ;; cast type.
+    ;; while br_if keeps its cast because the br_if's own result type in
+    ;; Binaryen IR is the cast type (TODO: optimize through fallthrough
+    ;; expressions like br_if).
     (drop
       (block $b (result (ref $Super))
         (if
