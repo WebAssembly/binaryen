@@ -4990,6 +4990,47 @@ private:
     using namespace Match;
 
     auto type = curr->right->type;
+
+    // (rel (local.tee $n X) (local.get $n)) compares X against itself, so
+    // the result is a constant. Evaluate X once for its side effects,
+    // discard the tee's value, and return the constant. Do not duplicate X:
+    // it may trap or write (the reproduction is a chain of loads).
+    if (areMatchingTeeAndGet(curr->left, curr->right)) {
+      bool isTrue;
+      switch (curr->op) {
+        case GtSInt32:
+        case GtUInt32:
+        case LtSInt32:
+        case LtUInt32:
+        case GtSInt64:
+        case GtUInt64:
+        case LtSInt64:
+        case LtUInt64:
+        case NeInt32:
+        case NeInt64:
+          isTrue = false;
+          break;
+        case GeSInt32:
+        case GeUInt32:
+        case LeSInt32:
+        case LeUInt32:
+        case GeSInt64:
+        case GeUInt64:
+        case LeSInt64:
+        case LeUInt64:
+        case EqInt32:
+        case EqInt64:
+          isTrue = true;
+          break;
+        default:
+          WASM_UNREACHABLE("unexpected relational op");
+      }
+      Builder builder(*getModule());
+      return builder.makeSequence(
+        builder.makeDrop(curr->left),
+        builder.makeConst(Literal::makeFromInt32(isTrue, Type::i32)));
+    }
+
     if (curr->left->type.isInteger()) {
       if (curr->op == Abstract::getBinary(type, Abstract::Eq) ||
           curr->op == Abstract::getBinary(type, Abstract::Ne)) {
