@@ -1479,6 +1479,13 @@ public:
   void trackExpressionEnd(Expression* curr, Function* func);
   void trackExpressionDelimiter(Expression* curr, Function* func, size_t id);
 
+  // Track a written instruction (not an empty expression). A null expression
+  // denotes generated code, or the function's final end when isEnd is true.
+  void trackInstruction(Expression* curr,
+                        Function* func,
+                        BinaryLocation start,
+                        bool isEnd = false);
+
   // Writes code annotations into a buffer and returns it. We cannot write them
   // directly into the output since we write function code first (to get the
   // offsets for the annotations), and only then can write annotations, which we

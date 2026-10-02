@@ -711,17 +711,43 @@ static bool isNonzeroTombstone(BinaryLocation location) {
 // a real address zero must use isNonzeroTombstone instead.
 static bool isTombstone(uint32_t x) { return x == 0 || isNonzeroTombstone(x); }
 
+// A line row describes an address interval, not just the instruction at its
+// start. Keep those intervals so that a surviving instruction retains its line
+// even if the instruction that originally started the row was removed.
+struct LineRange {
+  LineState state;
+  BinaryLocation end;
+};
+
+static bool sameSource(const LineState& a, const LineState& b) {
+  return a.line == b.line && a.col == b.col && a.file == b.file &&
+         a.isa == b.isa && a.discriminator == b.discriminator &&
+         a.isStmt == b.isStmt && a.basicBlock == b.basicBlock &&
+         !a.prologueEnd && !a.epilogueBegin;
+}
+
 // Update debug lines, and update the locationUpdater with debug line offset
 // changes so we can update offsets into the debug line section.
 static void updateDebugLines(llvm::DWARFYAML::Data& data,
                              LocationUpdater& locationUpdater) {
+  if (data.DebugLines.empty()) {
+    return;
+  }
+  const auto& locations = locationUpdater.newLocations;
+  std::vector<std::pair<Function*, BinaryLocations::FunctionLocations>>
+    functions(locations.functions.begin(), locations.functions.end());
+  std::sort(functions.begin(), functions.end(), [](auto& a, auto& b) {
+    return a.second.start < b.second.start;
+  });
   for (auto& table : data.DebugLines) {
     uint32_t sequenceId = 0;
     // Parse the original opcodes and emit new ones.
     LineState state(table, sequenceId);
-    // All the addresses we need to write out.
-    std::vector<BinaryLocation> newAddrs;
-    std::unordered_map<BinaryLocation, LineState> newAddrInfo;
+    // Function headers and end_sequence have no instruction origin. Preserve
+    // their explicit rows separately; all code rows come from the writer.
+    std::unordered_map<BinaryLocation, LineState> boundaries;
+    std::vector<LineRange> oldRanges;
+    std::optional<LineState> previous;
     // If the address was zeroed out, we must omit the entire range (we could
     // also leave it unchanged, so that the debugger ignores it based on the
     // initial zero; but it's easier and better to just not emit it at all).
@@ -737,38 +763,19 @@ static void updateDebugLines(llvm::DWARFYAML::Data& data,
         }
         if (omittingRange) {
           state = LineState(table, sequenceId);
+          previous.reset();
           continue;
         }
-        // An expression may not exist for this line table item, if we optimized
-        // it away.
-        BinaryLocation oldAddr = state.addr;
-        BinaryLocation newAddr = 0;
-        if (locationUpdater.hasOldExprStart(oldAddr)) {
-          newAddr = locationUpdater.getNewExprStart(oldAddr);
+        if (previous && previous->addr < state.addr &&
+            previous->sequenceId == state.sequenceId) {
+          oldRanges.push_back({*previous, state.addr});
         }
-        // Test for a function's end address first, as LLVM output appears to
-        // use 1-past-the-end-of-the-function as a location in that function,
-        // and not the next (but the first byte of the next function, which is
-        // ambiguously identical to that value, is used at least in low_pc).
-        else if (locationUpdater.hasOldFuncEnd(oldAddr)) {
-          newAddr = locationUpdater.getNewFuncEnd(oldAddr);
-        } else if (locationUpdater.hasOldFuncStart(oldAddr)) {
-          newAddr = locationUpdater.getNewFuncStart(oldAddr);
-        } else if (locationUpdater.hasOldDelimiter(oldAddr)) {
-          newAddr = locationUpdater.getNewDelimiter(oldAddr);
-        } else if (locationUpdater.hasOldExprEnd(oldAddr)) {
-          newAddr = locationUpdater.getNewExprEnd(oldAddr);
+        previous = state;
+        if (locationUpdater.hasOldFuncStart(state.addr) ||
+            (locationUpdater.hasOldFuncEnd(state.addr) &&
+             !locationUpdater.hasOldFuncEndOpcode(state.addr))) {
+          boundaries.emplace(state.addr, state);
         }
-        if (newAddr && state.needToEmit()) {
-          // LLVM sometimes emits the same address more than once. We should
-          // probably investigate that.
-          if (!newAddrInfo.contains(newAddr)) {
-            newAddrs.push_back(newAddr);
-            newAddrInfo.emplace(newAddr, state);
-            newAddrInfo.at(newAddr).addr = newAddr;
-          }
-        }
-        // Reset even when a row is unmapped or duplicates another address.
         state.resetAfterLine();
         if (opcode.Opcode == 0 &&
             opcode.SubOpcode == llvm::dwarf::DW_LNE_end_sequence) {
@@ -777,37 +784,102 @@ static void updateDebugLines(llvm::DWARFYAML::Data& data,
           // an invalid value.
           assert(sequenceId != uint32_t(-1));
           state = LineState(table, sequenceId);
+          previous.reset();
         }
       }
     }
-    // Sort the new addresses (which may be substantially different from the
-    // original layout after optimization).
-    std::sort(newAddrs.begin(), newAddrs.end());
-    // Emit a new line table.
-    {
-      std::vector<llvm::DWARFYAML::LineTableOpcode> newOpcodes;
-      for (size_t i = 0; i < newAddrs.size(); i++) {
-        LineState state = newAddrInfo.at(newAddrs[i]);
-        assert(state.needToEmit());
-        LineState lastState(table, -1);
-        if (i != 0) {
-          lastState = newAddrInfo.at(newAddrs[i - 1]);
-          // If the last line is in another sequence, clear the old state, as
-          // there is nothing to diff to.
-          if (lastState.sequenceId != state.sequenceId) {
-            lastState = LineState(table, -1);
-          }
+    std::sort(oldRanges.begin(), oldRanges.end(), [](auto& a, auto& b) {
+      return a.state.addr < b.state.addr;
+    });
+    auto findSource = [&](BinaryLocation addr) -> const LineState* {
+      auto iter = std::upper_bound(
+        oldRanges.begin(), oldRanges.end(), addr, [](auto addr, auto& range) {
+          return addr < range.state.addr;
+        });
+      if (iter != oldRanges.begin()) {
+        --iter;
+        if (addr < iter->end) {
+          return &iter->state;
         }
-        lastState.resetAfterLine();
-        // This line ends a sequence if there is no next line after it, or if
-        // the next line is in a different sequence.
-        bool endSequence =
-          i + 1 == newAddrs.size() ||
-          newAddrInfo.at(newAddrs[i + 1]).sequenceId != state.sequenceId;
-        state.emitDiff(lastState, newOpcodes, table, endSequence);
       }
-      table.Opcodes.swap(newOpcodes);
+      return nullptr;
+    };
+    // Rebuild each covered function as a contiguous sequence. This makes gaps
+    // between original sequences explicitly unattributed and avoids extending
+    // a source line across Asyncify's rewind/unwind code. New helper functions
+    // have no original DWARF and are deliberately not assigned to a user's CU.
+    std::vector<llvm::DWARFYAML::LineTableOpcode> newOpcodes;
+    for (auto& [func, funcLocations] : functions) {
+      auto range = std::lower_bound(
+        oldRanges.begin(),
+        oldRanges.end(),
+        func->funcLocation.start,
+        [](auto& range, auto addr) { return range.state.addr < addr; });
+      if (range != oldRanges.begin() &&
+          (range - 1)->end > func->funcLocation.start) {
+        --range;
+      }
+      if (range == oldRanges.end() ||
+          range->state.addr >= func->funcLocation.end) {
+        continue;
+      }
+      // A function's old start is unique and can serve as its sequence ID.
+      auto sequence = func->funcLocation.start;
+      LineState unknown(table, sequence);
+      unknown.file = range->state.file;
+      unknown.line = 0;
+      unknown.isStmt = false;
+      LineState lastSource(table, -1);
+      auto emit = [&](LineState row, bool explicitInput, bool endSequence) {
+        row.sequenceId = sequence;
+        if (!explicitInput && !endSequence &&
+            lastSource.sequenceId == sequence && sameSource(row, lastSource)) {
+          return;
+        }
+        row.emitDiff(lastSource, newOpcodes, table, endSequence);
+        lastSource = row;
+        lastSource.clearRowMarkers();
+      };
+      for (auto [oldAddr, newAddr] :
+           {std::pair{func->funcLocation.start, funcLocations.start},
+            std::pair{func->funcLocation.declarations,
+                      funcLocations.declarations}}) {
+        auto row = boundaries.find(oldAddr);
+        // At adjacent function boundaries, the input row belongs to the
+        // preceding function's end, not the following function's size LEB.
+        if (row != boundaries.end() &&
+            !locationUpdater.hasOldFuncEnd(oldAddr)) {
+          auto updated = row->second;
+          updated.addr = newAddr;
+          emit(updated, true, false);
+        }
+      }
+      // The writer records origins in output order, including instructions
+      // which do not have an IR node. No extra IR walk or sorting is needed.
+      auto instruction = std::lower_bound(
+        locations.instructions.begin(),
+        locations.instructions.end(),
+        funcLocations.start,
+        [](auto& location, auto addr) { return location.newAddr < addr; });
+      for (; instruction != locations.instructions.end() &&
+             instruction->newAddr < funcLocations.end;
+           ++instruction) {
+        auto [oldAddr, newAddr] = *instruction;
+        auto* source = oldAddr ? findSource(oldAddr) : nullptr;
+        auto updated = source ? *source : unknown;
+        updated.addr = newAddr;
+        bool explicitInput = source && oldAddr == source->addr;
+        if (!explicitInput) {
+          updated.clearRowMarkers();
+        }
+        emit(updated, explicitInput, false);
+      }
+      auto end = boundaries.find(func->funcLocation.end);
+      auto row = end != boundaries.end() ? end->second : unknown;
+      row.addr = funcLocations.end;
+      emit(row, true, true);
     }
+    table.Opcodes.swap(newOpcodes);
   }
   // After updating the contents, run the emitter in order to update the
   // lengths of each section. We will use that to update offsets into the
