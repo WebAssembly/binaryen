@@ -1194,8 +1194,8 @@ inline bool HeapType::isFunction() const {
 
 inline bool HeapType::isData() const {
   auto kind = getKind();
-  return isMaybeShared(string) || kind == HeapTypeKind::Struct ||
-         kind == HeapTypeKind::Array;
+  return isMaybeShared(string) || isMaybeShared(waitqueue) ||
+         kind == HeapTypeKind::Struct || kind == HeapTypeKind::Array;
 }
 
 inline bool HeapType::isSignature() const {
