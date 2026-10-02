@@ -43,7 +43,8 @@ namespace wasm {
 //  etc.
 //
 // The BasicBlock type is assumed to have a ".in" property which declares a
-// vector of pointers to the incoming blocks, that is, the predecessors.
+// vector of pointers to the incoming blocks, that is, the predecessors, and a
+// ".contents.index" property holding each block's index in `blocks`.
 template<typename BasicBlock> struct DomTree {
   std::vector<Index> iDoms;
 
@@ -82,12 +83,6 @@ DomTree<BasicBlock>::DomTree(std::vector<std::unique_ptr<BasicBlock>>& blocks) {
     return;
   }
 
-  // Map basic blocks to their indices.
-  std::unordered_map<BasicBlock*, Index> blockIndices;
-  for (Index i = 0; i < numBlocks; i++) {
-    blockIndices[blocks[i].get()] = i;
-  }
-
   // Initialize the iDoms array. The entry starts with its own index, which is
   // used as a guard value in effect (we will never process it, and we will fix
   // up this value at the very end). All other nodes start with a nonsense value
@@ -107,14 +102,14 @@ DomTree<BasicBlock>::DomTree(std::vector<std::unique_ptr<BasicBlock>>& blocks) {
       auto& preds = blocks[index]->in;
       Index newParent = nonsense;
       for (auto* pred : preds) {
-        auto predIndex = blockIndices[pred];
+        Index predIndex = pred->contents.index;
 
         // In a reducible graph, we only need to care about the predecessors
-        // that appear before us in the reverse postorder numbering. The only
-        // predecessor that can appear *after* us is a loop backedge, but that
+        // that appear before us in the reverse postorder numbering. Any
+        // predecessor that appears at or after us is a loop backedge, which
         // will never dominate the loop - the loop is dominated by its single
         // entry (since it is reducible, it has just one entry).
-        if (predIndex > index) {
+        if (predIndex >= index) {
           continue;
         }
 

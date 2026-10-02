@@ -7,6 +7,9 @@
 using namespace wasm;
 
 struct BasicBlock {
+  struct {
+    Index index;
+  } contents;
   std::vector<BasicBlock*> in;
 
   void addPred(BasicBlock* pred) { in.push_back(pred); }
@@ -14,7 +17,9 @@ struct BasicBlock {
 
 struct CFG : public std::vector<std::unique_ptr<BasicBlock>> {
   BasicBlock* add() {
-    emplace_back(std::make_unique<BasicBlock>());
+    auto block = std::make_unique<BasicBlock>();
+    block->contents.index = size();
+    emplace_back(std::move(block));
     return back().get();
   }
 

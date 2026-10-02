@@ -217,6 +217,8 @@ private:
 
 // Information in a basic block.
 struct BlockInfo {
+  Index index;
+
   // We track relevant expressions, which are call to "once" functions, and
   // writes to "once" globals.
   std::vector<Expression*> exprs;
@@ -266,6 +268,11 @@ struct Optimizer
       return;
     }
 
+    auto numBlocks = basicBlocks.size();
+    for (Index i = 0; i < numBlocks; i++) {
+      basicBlocks[i]->contents.index = i;
+    }
+
     // Build a dominator tree, which then tells us what to remove: if a call
     // appears in block A, then we do not need to make any calls in any blocks
     // dominated by A.
@@ -277,7 +284,6 @@ struct Optimizer
     // Each index in this vector is the set of "once" globals written to in the
     // basic block with the same index.
     std::vector<std::unordered_set<Name>> onceGlobalsWrittenVec;
-    auto numBlocks = basicBlocks.size();
     onceGlobalsWrittenVec.resize(numBlocks);
 
     for (Index i = 0; i < numBlocks; i++) {

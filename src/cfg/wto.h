@@ -112,12 +112,6 @@ WeakTopologicalOrdering<BasicBlock>::WeakTopologicalOrdering(
     return;
   }
 
-  for (Index i = 0; i < numBlocks; ++i) {
-    blocks[i]->contents.index = i;
-  }
-
-  // TODO: Avoid building an unordered_map of block indices in DomTree when
-  // BasicBlock already stores its RPO index on `contents`.
   DomTree<BasicBlock> domTree(blocks);
 
   auto isReachable = [&](Index i) {
