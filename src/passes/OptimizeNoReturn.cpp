@@ -119,8 +119,10 @@ struct OptimizeNoReturn
       *dropp = builder.makeSequence(*dropp, builder.makeUnreachable());
       dropp = nullptr;
     } else {
-      // Put the unreachable after the call.
-      *callp = builder.makeSequence(*callp, builder.makeUnreachable());
+      // Put the unreachable after the call, dropping it if needed (if its
+      // result was used before, not dropped, then we need to add a drop here).
+      auto* call = builder.dropIfConcretelyTyped(*callp);
+      *callp = builder.makeSequence(call, builder.makeUnreachable());
     }
     callp = nullptr;
 

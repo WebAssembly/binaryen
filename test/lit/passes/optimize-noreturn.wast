@@ -202,19 +202,29 @@
   ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (block
-  ;; CHECK-NEXT:   (call $defined)
-  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (block
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (call $defined-result)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $refinalize
     ;; After adding an unreachable, we refinalize, which is noticeable in the
-    ;; block type here.
+    ;; block types here.
     (drop
-      (block (result anyref)
+      (block (result anyref) ;; this will turn into nullref
         (ref.null any)
       )
     )
-    (call $defined)
+    (drop
+      (block (result i32) ;; this will vanish after the code becomes unreachable
+        (call $defined-result)
+      )
+    )
   )
 )
