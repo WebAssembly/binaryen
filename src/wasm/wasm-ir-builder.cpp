@@ -2970,6 +2970,11 @@ void IRBuilder::applyAnnotations(Expression* expr,
     assert(func);
     func->codeAnnotations[expr].toolchainInline = annotation.toolchainInline;
   }
+
+  if (annotation.noReturn) {
+    assert(func);
+    func->codeAnnotations[expr].noReturn = true;
+  }
 }
 
 } // namespace wasm

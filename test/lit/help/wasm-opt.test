@@ -387,6 +387,9 @@
 ;; CHECK-NEXT:   --optimize-j2cl                               optimizes J2CL specific 
 ;; CHECK-NEXT:                                                 constructs.
 ;; CHECK-EMPTY:
+;; CHECK-NEXT:   --optimize-noreturn                           optimizes calls to 
+;; CHECK-NEXT:                                                 @binaryen.noreturn functions
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --outlining                                   outline instructions
 ;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --pick-load-signs                             pick load signs based on their 

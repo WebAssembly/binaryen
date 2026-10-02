@@ -2871,6 +2871,12 @@ void PrintSExpression::printCodeAnnotations(const CodeAnnotation& annotation) {
     restoreNormalColor(o);
     doIndent(o, indent);
   }
+  if (annotation.noReturn) {
+    Colors::grey(o);
+    o << "(@" << Annotations::NoReturnHint << ")\n";
+    restoreNormalColor(o);
+    doIndent(o, indent);
+  }
 }
 
 void PrintSExpression::printExpressionContents(Expression* curr) {
