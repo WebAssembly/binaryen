@@ -2766,6 +2766,7 @@ opt_choices = [
     ("--simplify-locals-notee",),
     ("--simplify-locals-notee-nostructure",),
     ("--ssa",),
+    ("--strip-refining-casts",),
     ("--tail-call",),
     ("--tuple-optimization",),
     ("--type-finalizing",),

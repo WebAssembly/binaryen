@@ -538,6 +538,11 @@
 ;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --strip-producers                             strip the wasm producers section
 ;; CHECK-EMPTY:
+;; CHECK-NEXT:   --strip-refining-casts                        remove casts on values flowing 
+;; CHECK-NEXT:                                                 into slots whose declared type 
+;; CHECK-NEXT:                                                 the uncast value already 
+;; CHECK-NEXT:                                                 satisfies
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --strip-target-features                       strip the wasm target features 
 ;; CHECK-NEXT:                                                 section
 ;; CHECK-EMPTY:
