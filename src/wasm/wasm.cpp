@@ -1760,7 +1760,10 @@ Type Function::getLocalType(Index index) {
   }
 }
 
-void Function::clearNames() { localNames.clear(); }
+void Function::clearNames() {
+  localNames.clear();
+  explicitLabelNames.clear();
+}
 
 void Function::clearDebugInfo() {
   localIndices.clear();

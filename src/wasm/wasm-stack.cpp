@@ -32,13 +32,24 @@ void BinaryInstWriter::emitResultType(Type type) {
   }
 }
 
+void BinaryInstWriter::noteScopeStart(Name name) {
+  auto index = nextLabelIndex++;
+  if (name && func && parent.getDebugInfo() &&
+      func->explicitLabelNames.count(name)) {
+    labelNames.push_back({index, name});
+  }
+}
+
 void BinaryInstWriter::visitBlock(Block* curr) {
+  noteScopeStart(curr->name);
   breakStack.push_back(curr->name);
   o << static_cast<int8_t>(BinaryConsts::Block);
   emitResultType(curr->type);
 }
 
 void BinaryInstWriter::visitIf(If* curr) {
+  // An `if` never has a name in Binaryen IR, but it still takes a label index.
+  noteScopeStart();
   // the binary format requires this; we have a block if we need one
   // TODO: optimize this in Stack IR (if child is a block, we may break to this
   // instead)
@@ -187,6 +198,7 @@ void BinaryInstWriter::emitLoadOpcode(unsigned bytes, bool signed_, Type type) {
 }
 
 void BinaryInstWriter::visitLoop(Loop* curr) {
+  noteScopeStart(curr->name);
   breakStack.push_back(curr->name);
   o << static_cast<int8_t>(BinaryConsts::Loop);
   emitResultType(curr->type);
@@ -2409,12 +2421,16 @@ void BinaryInstWriter::visitElemDrop(ElemDrop* curr) {
 }
 
 void BinaryInstWriter::visitTry(Try* curr) {
+  noteScopeStart(curr->name);
   breakStack.push_back(curr->name);
   o << static_cast<int8_t>(BinaryConsts::Try);
   emitResultType(curr->type);
 }
 
 void BinaryInstWriter::visitTryTable(TryTable* curr) {
+  // A `try_table` never has a name in Binaryen IR, but it still takes a label
+  // index.
+  noteScopeStart();
   o << static_cast<int8_t>(BinaryConsts::TryTable);
   emitResultType(curr->type);
   o << U32LEB(curr->catchTags.size());

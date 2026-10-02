@@ -65,10 +65,10 @@
 
   ;; CHECK:      (func $nested-blocks
   ;; CHECK-NEXT:  ;;@ src.cpp:2:1
-  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:  (block $label$1
   ;; CHECK-NEXT:   ;;@ src.cpp:2:2
-  ;; CHECK-NEXT:   (block $block
-  ;; CHECK-NEXT:    (br $block)
+  ;; CHECK-NEXT:   (block $label$2
+  ;; CHECK-NEXT:    (br $label$2)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  ;;@ src.cpp:3:1

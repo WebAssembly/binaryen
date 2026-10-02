@@ -1506,6 +1506,7 @@ public:
   };
 
   Module* getModule() { return wasm; }
+  bool getDebugInfo() const { return debugInfo; }
 
   void writeType(Type type);
 
@@ -1569,10 +1570,23 @@ private:
   // info here, and then use it when writing the names.
   std::unordered_map<Name, MappedLocals> funcMappedLocals;
 
+  // The explicitly named labels of each function, as (label index, name),
+  // gathered while writing the code section and used to write the name
+  // section afterwards.
+  std::unordered_map<Name, std::vector<std::pair<Index, Name>>> funcLabelNames;
+
   // Indexes in the string literal section of each StringConst in the wasm.
   std::unordered_map<Name, Index> stringIndexes;
 
   void prepare();
+
+  // Internal helper for recording the label names of a function once its code
+  // has been written, so that they can be emitted in the name section later.
+  // `labelNames` holds (label index, name) pairs for the function's explicitly
+  // named labels, as gathered by the function writer; its contents are moved
+  // into `funcLabelNames`, and nothing is recorded if it is empty.
+  void noteLabelNames(Function* func,
+                      std::vector<std::pair<Index, Name>>& labelNames);
 
   // Internal helper for emitting a code annotation section for a hint that is
   // expression offset based. Receives the name of the section and two
@@ -1721,13 +1735,16 @@ public:
   Signature getSignatureByTypeIndex(Index index);
   Signature getSignatureByFunctionIndex(Index index);
 
-  Name getNextLabel();
-
   // We read the names section first so we know in advance what names various
   // elements should have. Store the information for use when building
   // expressions.
   std::unordered_map<Index, Name> functionNames;
   std::unordered_map<Index, std::unordered_map<Index, Name>> localNames;
+  // Label names, indexed by function index and then by the index of the label
+  // in the function. Labels are indexed in the order the instructions that
+  // introduce them appear in the function body, including the ones that have
+  // no name in the name section.
+  std::unordered_map<Index, std::unordered_map<Index, Name>> labelNames;
   std::unordered_map<Index, Name> typeNames;
   std::unordered_map<Index, std::unordered_map<Index, Name>> fieldNames;
   std::unordered_map<Index, Name> tableNames;
@@ -1743,6 +1760,11 @@ public:
     usedGlobalNames, usedTagNames;
 
   Function* currFunction = nullptr;
+  // The label names of the function we are currently reading, if it has any,
+  // and the index of the next label in it.
+  const std::unordered_map<Index, Name>* currLabelNames = nullptr;
+  Index nextLabelIndex = 0;
+
   // before we see a function (like global init expressions), there is no end of
   // function to check
   Index endOfFunction = -1;
@@ -1753,6 +1775,10 @@ public:
   void readFunctions();
   void readVars();
   void setLocalNames(Function& func, Index i);
+  void setLabelNames(Index i);
+  // Returns the name the name section gives to the next label of the current
+  // function, or a null name if it has none, and advances the label index.
+  Name getNextLabelName();
 
   Result<> readInst();
 
