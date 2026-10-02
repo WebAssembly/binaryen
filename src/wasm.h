@@ -2366,6 +2366,13 @@ struct BinaryLocations {
   };
 
   std::unordered_map<Function*, FunctionLocations> functions;
+
+  // Instruction origins in output order, including instructions added by the
+  // binary/stack IR writer. An old address of zero means no source origin.
+  struct InstructionLocation {
+    BinaryLocation oldAddr, newAddr;
+  };
+  std::vector<InstructionLocation> instructions;
 };
 
 // Forward declaration for FuncEffectsMap.
