@@ -2,6 +2,9 @@
 ;; RUN: wasm-opt %s --optimize-noreturn -all -S -o - | filecheck %s
 
 (module
+  ;; CHECK:      (tag $e (type $1) (param i32))
+  (tag $e (param i32))
+
   ;; CHECK:      (@binaryen.noreturn)
   ;; CHECK-NEXT: (func $defined (type $0)
   ;; CHECK-NEXT: )
@@ -10,7 +13,7 @@
   )
 
   ;; CHECK:      (@binaryen.noreturn)
-  ;; CHECK-NEXT: (func $defined-result (type $1) (result i32)
+  ;; CHECK-NEXT: (func $defined-result (type $2) (result i32)
   ;; CHECK-NEXT:  (i32.const 42)
   ;; CHECK-NEXT: )
   (@binaryen.noreturn)
@@ -111,7 +114,7 @@
   )
 
   ;; CHECK:      (@binaryen.noreturn)
-  ;; CHECK-NEXT: (func $defined-param (type $2) (param $0 i32)
+  ;; CHECK-NEXT: (func $defined-param (type $1) (param $0 i32)
   ;; CHECK-NEXT: )
   (@binaryen.noreturn)
   (func $defined-param (param i32)
@@ -227,4 +230,44 @@
       )
     )
   )
+
+  ;; CHECK:      (func $pop (type $0)
+  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK-NEXT:  (try
+  ;; CHECK-NEXT:   (do
+  ;; CHECK-NEXT:    (throw $e
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (catch $e
+  ;; CHECK-NEXT:    (local.set $0
+  ;; CHECK-NEXT:     (pop i32)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (block
+  ;; CHECK-NEXT:     (block
+  ;; CHECK-NEXT:      (call $defined-param
+  ;; CHECK-NEXT:       (local.get $0)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (nop)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $pop
+    ;; After adding a block with an unreachable, the pop will need handling.
+    (try
+      (do
+        (throw $e (i32.const 1))
+      )
+      (catch $e
+        (call $defined-param
+          (pop i32)
+        )
+        (nop)
+      )
+    )
+  )
+
 )

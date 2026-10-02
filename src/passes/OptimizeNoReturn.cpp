@@ -23,6 +23,7 @@
 // (DeadArgumentElimination) is a convenient place to do that.
 //
 
+#include "ir/eh-utils.h"
 #include "ir/intrinsics.h"
 #include "ir/utils.h"
 #include "pass.h"
@@ -50,7 +51,14 @@ struct OptimizeNoReturn
   Expression** callp = nullptr;
   Expression** dropp = nullptr;
 
+  // If we optimize in the presence of Trys, we may need to run fixups later.
+  bool hasTry = false;
+
   void visitExpression(Expression* curr) {
+    if (curr->is<Try>()) {
+      hasTry = true;
+    }
+
     if (auto* call = curr->dynCast<Call>()) {
       if (callp) {
         // There was a call before us, handle it first.
@@ -108,6 +116,9 @@ struct OptimizeNoReturn
 
     if (refinalize) {
       ReFinalize().walkFunctionInModule(curr, getModule());
+      if (hasTry) {
+        EHUtils::handleBlockNestedPops(curr, *getModule());
+      }
     }
   }
 
