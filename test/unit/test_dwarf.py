@@ -8,7 +8,74 @@ from scripts.test import shared
 from . import utils
 
 
+def uleb(value):
+    result = bytearray()
+    while value >= 128:
+        result.append((value & 127) | 128)
+        value >>= 7
+    result.append(value)
+    return bytes(result)
+
+
+def with_line_table(wasm, program):
+    prologue = bytes.fromhex('010101fb0e0d000101010100000001000001')
+    prologue += b'\0test.c\0\0\0\0\0'
+    table = b'\x04\0' + len(prologue).to_bytes(4, 'little') + prologue + program
+    for name, contents in {
+        '.debug_abbrev': bytes.fromhex('0111001017000000'),
+        '.debug_info': bytes.fromhex('0c000000040000000000040100000000'),
+        '.debug_line': len(table).to_bytes(4, 'little') + table,
+    }.items():
+        name = name.encode()
+        payload = uleb(len(name)) + name + contents
+        wasm += b'\0' + uleb(len(payload)) + payload
+    return wasm
+
+
+def line_rows(path):
+    dump = shared.run_process(shared.WASM_OPT + [path, '--dwarfdump'],
+                              capture_output=True).stdout
+    return [(int(addr, 16), int(line), int(col), int(file), int(isa),
+             int(discriminator), flags.split())
+            for addr, line, col, file, isa, discriminator, flags in re.findall(
+                r'^\s*0x([0-9a-f]+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)([^\n]*)',
+                dump.split('.debug_line contents:', 1)[1], re.MULTILINE)]
+
+
 class DWARFTest(utils.BinaryenTestCase):
+    def test_line_program_encoding(self):
+        # Padded i32.const shifts later addresses back one byte on writing.
+        wasm = bytes.fromhex('0061736d010000000105016000017f03020100'
+                             '070501016600000a0a01080041810041026a0b')
+        program = bytes.fromhex('000502030000000309')
+        # Repeat discriminator 300 explicitly on the first two rows, then
+        # leave it unset. Row markers must not carry over to later rows.
+        program += b'\0\x03\x04' + uleb(300) + b'\x07\x0a\x01\x02\x03'
+        program += b'\0\x03\x04' + uleb(300) + b'\x01\x02\x02\x01'
+        program += bytes.fromhex('0201030a0b010201000101')
+        with tempfile.TemporaryDirectory() as temp_dir:
+            input_file = os.path.join(temp_dir, 'input.wasm')
+            output_file = os.path.join(temp_dir, 'output.wasm')
+            with open(input_file, 'wb') as f:
+                f.write(with_line_table(wasm, program))
+            for source in (input_file, output_file):
+                shared.run_process(shared.WASM_OPT +
+                                   [source, '-g', '-o', output_file])
+                rows = line_rows(output_file)
+                self.assertEqual([row[:2] for row in rows],
+                                 [(3, 10), (5, 10), (7, 10), (8, 20), (9, 20)])
+                self.assertEqual([row[5] for row in rows], [300, 300, 0, 0, 0])
+                self.assertEqual([row[6] for row in rows], [
+                    ['is_stmt', 'basic_block', 'prologue_end'], ['is_stmt'],
+                    ['is_stmt'], ['is_stmt', 'epilogue_begin'],
+                    ['is_stmt', 'end_sequence'],
+                ])
+            dump = shared.run_process(shared.WASM_OPT + [output_file, '--dwarfdump'],
+                                      capture_output=True).stdout
+            self.assertEqual(dump.count('DW_LNE_set_address'), 1)
+            advances = re.findall(r'^0x[0-9a-f]+: 02 DW_LNS_advance_pc', dump, re.MULTILINE)
+            self.assertEqual(len(advances), 4)
+
     def test_line_zero_roundtrip(self):
         def custom_section(name, contents):
             name = name.encode()
