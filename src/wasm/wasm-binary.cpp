@@ -1785,7 +1785,7 @@ void WasmBinaryWriter::trackInstruction(Expression* curr,
     if (old != func->expressionLocations.end()) {
       oldAddr = isEnd ? old->second.end - 1 : old->second.start;
     }
-  } else if (isEnd) {
+  } else if (isEnd && !func->hasSyntheticEnd) {
     oldAddr = func->funcLocation.end - 1;
   }
   binaryLocations.instructions.push_back({oldAddr, start});

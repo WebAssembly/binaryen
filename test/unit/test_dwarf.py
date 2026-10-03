@@ -42,6 +42,31 @@ def line_rows(path):
                 dump.split('.debug_line contents:', 1)[1], re.MULTILINE)]
 
 
+def first_body(wasm):
+    def read_uleb(pos):
+        value, shift = 0, 0
+        while True:
+            byte = wasm[pos]
+            pos += 1
+            value |= (byte & 127) << shift
+            if byte < 128:
+                return value, pos
+            shift += 7
+
+    pos = 8
+    while pos < len(wasm):
+        kind = wasm[pos]
+        size, pos = read_uleb(pos + 1)
+        if kind == 10:
+            section = pos
+            count, pos = read_uleb(pos)
+            assert count > 0
+            size, pos = read_uleb(pos)
+            return pos - section, wasm[pos:pos + size]
+        pos += size
+    raise AssertionError('missing code section')
+
+
 class DWARFTest(utils.BinaryenTestCase):
     def test_line_program_encoding(self):
         # Padded i32.const shifts later addresses back one byte on writing.
@@ -107,31 +132,7 @@ class DWARFTest(utils.BinaryenTestCase):
                                                 (loop_end + 3, 20)])
 
     def test_asyncify_instruction_origins(self):
-        def first_body(wasm):
-            def read_uleb(pos):
-                value, shift = 0, 0
-                while True:
-                    byte = wasm[pos]
-                    pos += 1
-                    value |= (byte & 127) << shift
-                    if byte < 128:
-                        return value, pos
-                    shift += 7
-
-            pos = 8
-            while pos < len(wasm):
-                kind = wasm[pos]
-                size, pos = read_uleb(pos + 1)
-                if kind == 10:
-                    section = pos
-                    count, pos = read_uleb(pos)
-                    self.assertGreater(count, 0)
-                    size, pos = read_uleb(pos)
-                    return pos - section, wasm[pos:pos + size]
-                pos += size
-            self.fail('missing code section')
-
-        # With a leading nop, DCE removes the instruction starting line 10.
+        # With a leading nop, -O1 removes the instruction starting line 10.
         # The surviving call must still get line 10 from the original range.
         for nop in ('', '(nop)'):
             for options in ([], ['-O1'], ['--generate-stack-ir'],
@@ -192,6 +193,7 @@ class DWARFTest(utils.BinaryenTestCase):
                     self.assertGreater(len(generated), 5)
                     for match in generated:
                         self.assertEqual(source_line(match.start()), 0)
+                    self.assertEqual(source_line(len(body) - 1), 0)
                     # Do not fabricate source locations for the five helpers
                     # or the unrelated function without a source line table.
                     self.assertEqual(sum('end_sequence' in row[6] for row in rows), 1)
@@ -201,6 +203,51 @@ class DWARFTest(utils.BinaryenTestCase):
                                        [output_file, '--roundtrip', '-g',
                                         '-o', roundtrip])
                     self.assertEqual(line_rows(roundtrip), rows)
+
+    def test_asyncify_function_end(self):
+        # An ordinary terminal end retains its source row. Asyncify's new end
+        # instead returns from unwinding, even for void or early-return bodies.
+        bodies = [
+            '(drop (call $g))',
+            '(result i32) (i32.add (call $g) (i32.const 42))',
+            '(param i32) (result i32) '
+            '(if (local.get 0) (then (return (i32.const 7)))) '
+            '(i32.add (call $g) (i32.const 42))',
+        ]
+        for body in bodies:
+            for options in ([], ['-O1'], ['--generate-stack-ir'],
+                            ['-O1', '--generate-stack-ir']):
+                with self.subTest(body=body, options=options), \
+                        tempfile.TemporaryDirectory() as temp_dir:
+                    input_file = os.path.join(temp_dir, 'input.wasm')
+                    output_file = os.path.join(temp_dir, 'output.wasm')
+                    module = '(module (import "env" "g" (func $g (result i32))) '
+                    module += f'(memory 1) (func (export "f") {body}))'
+                    shared.run_process(shared.WASM_OPT + ['-o', input_file], input=module)
+                    with open(input_file, 'rb') as f:
+                        wasm = f.read()
+                    start, code = first_body(wasm)
+                    program = b'\0\x05\x02' + start.to_bytes(4, 'little')
+                    program += b'\x03\x09\x01\x02' + uleb(len(code) - 1)
+                    program += bytes.fromhex('030a010201000101')
+                    with open(input_file, 'wb') as f:
+                        f.write(with_line_table(wasm, program))
+                    for passes, expected_line in (([], 20), (['--asyncify'], 0)):
+                        shared.run_process(shared.WASM_OPT +
+                                           [input_file, '-g', '-o', output_file] +
+                                           passes + options)
+                        with open(output_file, 'rb') as f:
+                            start, code = first_body(f.read())
+                        rows = line_rows(output_file)
+                        end_row = [row for row in rows if row[0] < start + len(code)][-1]
+                        self.assertEqual(end_row[1], expected_line)
+                        if passes:
+                            self.assertEqual(end_row[2], 0)
+                            self.assertNotIn('is_stmt', end_row[6])
+                        self.assertEqual(rows[-1][0], start + len(code))
+                        shared.run_process(shared.WASM_OPT +
+                                           [output_file, '--roundtrip', '-g', '-o', output_file])
+                        self.assertEqual(line_rows(output_file), rows)
 
     def test_line_zero_roundtrip(self):
         def custom_section(name, contents):
