@@ -3,8 +3,8 @@ debugInfo=false
 (module
  (type $0 (func))
  (memory $0 0)
- (export "test" (func $0))
- (func $0
+ (export "test" (func $test))
+ (func $test
  )
 )
 
@@ -23,8 +23,8 @@ debugInfo=false
 (module
  (type $0 (func))
  (memory $0 0)
- (export "test" (func $0))
- (func $0
+ (export "test" (func $test))
+ (func $test
  )
 )
 

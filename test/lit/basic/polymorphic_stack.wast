@@ -44,7 +44,7 @@
 
   ;; CHECK-BIN:      (type $3 (func (param i32)))
 
-  ;; CHECK-BIN:      (import "env" "table" (table $timport$0 9 9 funcref))
+  ;; CHECK-BIN:      (import "env" "table" (table $table 9 9 funcref))
 
   ;; CHECK-BIN:      (func $break-and-binary (type $0) (result i32)
   ;; CHECK-BIN-NEXT:  (unreachable)
@@ -386,7 +386,7 @@
 
 ;; CHECK-BIN-NODEBUG:      (type $3 (func (param i32)))
 
-;; CHECK-BIN-NODEBUG:      (import "env" "table" (table $timport$0 9 9 funcref))
+;; CHECK-BIN-NODEBUG:      (import "env" "table" (table $table 9 9 funcref))
 
 ;; CHECK-BIN-NODEBUG:      (func $0 (type $0) (result i32)
 ;; CHECK-BIN-NODEBUG-NEXT:  (unreachable)

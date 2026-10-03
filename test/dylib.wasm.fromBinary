@@ -3,36 +3,36 @@
  (type $1 (func))
  (type $2 (func (param i32) (result i32)))
  (type $3 (func (param i32 i32) (result i32)))
- (import "env" "memory" (memory $mimport$0 0))
- (import "env" "__memory_base" (global $gimport$0 i32))
- (import "env" "g$waka_mine" (func $fimport$0 (result i32)))
- (import "env" "g$waka_others" (func $fimport$1 (result i32)))
- (import "env" "fp$_Z16waka_func_theirsi$ii" (func $fimport$2 (result i32)))
- (import "env" "fp$_Z14waka_func_minei$ii" (func $fimport$3 (result i32)))
+ (import "env" "memory" (memory $memory 0))
+ (import "env" "__memory_base" (global $__memory_base i32))
+ (import "env" "g$waka_mine" (func $g$waka_mine (result i32)))
+ (import "env" "g$waka_others" (func $g$waka_others (result i32)))
+ (import "env" "fp$_Z16waka_func_theirsi$ii" (func $fp$_Z16waka_func_theirsi$ii (result i32)))
+ (import "env" "fp$_Z14waka_func_minei$ii" (func $fp$_Z14waka_func_minei$ii (result i32)))
  (global $global$0 (mut i32) (i32.const 0))
  (global $global$1 (mut i32) (i32.const 0))
  (global $global$2 (mut i32) (i32.const 0))
  (global $global$3 (mut i32) (i32.const 0))
- (global $global$4 i32 (i32.const 0))
- (global $global$5 i32 (i32.const 0))
- (data $0 (global.get $gimport$0) "*\00\00\00")
- (export "__wasm_apply_relocs" (func $0))
- (export "_Z14waka_func_minei" (func $1))
- (export "__original_main" (func $2))
- (export "waka_mine" (global $global$4))
- (export "main" (func $3))
- (export "__dso_handle" (global $global$5))
- (export "__post_instantiate" (func $4))
- (func $0
+ (global $waka_mine i32 (i32.const 0))
+ (global $__dso_handle i32 (i32.const 0))
+ (data $0 (global.get $__memory_base) "*\00\00\00")
+ (export "__wasm_apply_relocs" (func $__wasm_apply_relocs))
+ (export "_Z14waka_func_minei" (func $_Z14waka_func_minei))
+ (export "__original_main" (func $__original_main))
+ (export "waka_mine" (global $waka_mine))
+ (export "main" (func $main))
+ (export "__dso_handle" (global $__dso_handle))
+ (export "__post_instantiate" (func $__post_instantiate))
+ (func $__wasm_apply_relocs
   (nop)
  )
- (func $1 (param $0 i32) (result i32)
+ (func $_Z14waka_func_minei (param $0 i32) (result i32)
   (i32.add
    (local.get $0)
    (i32.const 1)
   )
  )
- (func $2 (result i32)
+ (func $__original_main (result i32)
   (i32.add
    (i32.load
     (global.get $global$3)
@@ -48,7 +48,7 @@
    )
   )
  )
- (func $3 (param $0 i32) (param $1 i32) (result i32)
+ (func $main (param $0 i32) (param $1 i32) (result i32)
   (i32.add
    (i32.load
     (global.get $global$3)
@@ -64,18 +64,18 @@
    )
   )
  )
- (func $4
+ (func $__post_instantiate
   (global.set $global$2
-   (call $fimport$0)
+   (call $g$waka_mine)
   )
   (global.set $global$3
-   (call $fimport$1)
+   (call $g$waka_others)
   )
   (global.set $global$0
-   (call $fimport$2)
+   (call $fp$_Z16waka_func_theirsi$ii)
   )
   (global.set $global$1
-   (call $fimport$3)
+   (call $fp$_Z14waka_func_minei$ii)
   )
  )
  ;; dylink section

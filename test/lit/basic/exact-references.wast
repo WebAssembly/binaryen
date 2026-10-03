@@ -388,9 +388,9 @@
 
 ;; CHECK-BIN-NODEBUG:      (type $8 (func (param (ref null (exact $0))) (result (ref null (exact $0)))))
 
-;; CHECK-BIN-NODEBUG:      (import "" "g1" (global $gimport$0 (ref null (exact $0))))
+;; CHECK-BIN-NODEBUG:      (import "" "g1" (global $g1 (ref null (exact $0))))
 
-;; CHECK-BIN-NODEBUG:      (import "" "g2" (global $gimport$1 (ref (exact $0))))
+;; CHECK-BIN-NODEBUG:      (import "" "g2" (global $g2 (ref (exact $0))))
 
 ;; CHECK-BIN-NODEBUG:      (func $0 (type $5) (param $0 (ref null (exact $0)))
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
