@@ -36,6 +36,7 @@
 #include "support/learning.h"
 #include "support/permutations.h"
 #include "support/sparse_square_matrix.h"
+#include "wasm-debug.h"
 #include "wasm.h"
 
 #ifndef CFG_PROFILE
@@ -56,8 +57,8 @@ struct CoalesceLocals
   : public WalkerPass<LivenessWalker<CoalesceLocals, Visitor<CoalesceLocals>>> {
   bool isFunctionParallel() override { return true; }
 
-  // This pass merges locals, mapping the originals to new ones.
-  // FIXME DWARF updating does not handle local changes yet.
+  // Index remapping alone does not repair the live ranges changed by merging
+  // locals and removing stores, so this pass is still not fully DWARF-safe.
   bool invalidatesDWARF() override { return true; }
 
   std::unique_ptr<Pass> create() override {
@@ -521,6 +522,9 @@ void CoalesceLocals::pickIndices(std::vector<Index>& indices) {
 void CoalesceLocals::applyIndices(std::vector<Index>& indices,
                                   Expression* root) {
   assert(indices.size() == numLocals);
+  // Asyncify explicitly runs this pass even with DWARF. Keep the mapping
+  // coherent for subsequent ReorderLocals passes and the binary writer.
+  Debug::updateLocalIndices(getFunction(), indices);
   for (auto& curr : basicBlocks) {
     auto& actions = curr->contents.actions;
     for (auto& action : actions) {

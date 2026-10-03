@@ -225,6 +225,20 @@ class DWARFLocalsTest(utils.BinaryenTestCase):
             shared.run_process(shared.WASM_OPT + [path, '-g', '-O1', '-o', out])
             self.check_variables(out, expected)
 
+    def test_reorder_across_coalescing(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = os.path.join(directory, 'input.wasm')
+            out = os.path.join(directory, 'output.wasm')
+            expected = self.fixture(path, 130)
+            expected = {name: value if name.startswith(('p_', 'dead_')) else local(1)
+                        for name, value in expected.items()}
+            # Asyncify runs coalescing internally even when DWARF is present.
+            # A later permutation must compose with that smaller local space.
+            shared.run_process(shared.WASM_OPT +
+                               [path, '-g', '--reorder-locals', '--coalesce-locals',
+                                '--reorder-locals', '-o', out])
+            self.check_variables(out, expected)
+
     def test_multiple_units_and_public_types(self):
         with tempfile.TemporaryDirectory() as directory:
             path = os.path.join(directory, 'input.wasm')
@@ -256,3 +270,66 @@ class DWARFLocalsTest(utils.BinaryenTestCase):
             self.assertEqual(int.from_bytes(pub[10:14], 'little'), len(info) - second)
             target = int.from_bytes(pub[14:18], 'little') + second
             self.assertEqual(info[target:target + 5], b'\x05int\0')
+
+    def test_short_forms_grow(self):
+        for block_length, ref_width in ((42, 4), (8, 1)):
+            with self.subTest(block_length=block_length, ref_width=ref_width), \
+                    tempfile.TemporaryDirectory() as directory:
+                path = os.path.join(directory, 'input.wasm')
+                out = os.path.join(directory, 'output.wasm')
+                self.fixture(path, 130)
+                with open(path, 'rb') as f:
+                    wasm = f.read()
+                parts = sections(wasm)
+                old = (local(127) + b'\x93\x04') * block_length
+                new = (local(128) + b'\x93\x04') * block_length
+                # Preserve the CU/subprogram headers, then use one variable.
+                prefix = parts['.debug_info'][11:25]
+                name = 'v'
+                if ref_width == 1:
+                    # Position the type at 255, so growing the location also
+                    # forces its one-byte DIE reference to widen.
+                    name *= 255 - (11 + len(prefix) + 1 + 1 + 1 + len(old) + 1 + 1)
+                info = bytearray(prefix + b'\x03' + name.encode() + b'\0')
+                info += bytes([len(old)]) + old
+                ref = len(info)
+                info += bytes(ref_width) + b'\0'
+                target = 11 + len(info)
+                info += b'\x05int\0\x05\x04\0'
+                info[ref:ref + ref_width] = target.to_bytes(ref_width, 'little')
+                if ref_width == 1:
+                    self.assertEqual(target, 255)
+                unit = b'\x04\0' + word(0) + b'\x04' + info
+                abbrev = parts['.debug_abbrev'].replace(
+                    b'\x02\x18\x49\x13', b'\x02\x0a\x49' + bytes([0x11 if ref_width == 1 else 0x13]))
+                for section, contents in (
+                        ('.debug_info', word(len(unit)) + unit),
+                        ('.debug_abbrev', abbrev), ('.debug_loc', b'')):
+                    wasm = wasm.replace(custom(section, parts[section]), custom(section, contents))
+                with open(path, 'wb') as f:
+                    f.write(wasm)
+                shared.run_process(shared.WASM_OPT +
+                                   [path, '-g', '--reorder-locals', '-o', out])
+                self.check_variables(out, {name: new})
+
+    def test_legacy_location_forms(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = os.path.join(directory, 'input.wasm')
+            out = os.path.join(directory, 'output.wasm')
+            expected = self.fixture(path, 130)
+            with open(path, 'rb') as f:
+                wasm = f.read()
+            parts = sections(wasm)
+            info = parts['.debug_info']
+            info = info[:4] + b'\x03\0' + info[6:]
+            # Before DWARF 4, location lists use data4 instead of sec_offset,
+            # and inline expressions use block rather than exprloc.
+            abbrev = parts['.debug_abbrev'].replace(b'\x02\x18', b'\x02\x09')
+            abbrev = abbrev.replace(b'\x02\x17', b'\x02\x06')
+            for section, contents in (('.debug_info', info), ('.debug_abbrev', abbrev)):
+                wasm = wasm.replace(custom(section, parts[section]), custom(section, contents))
+            with open(path, 'wb') as f:
+                f.write(wasm)
+            shared.run_process(shared.WASM_OPT +
+                               [path, '-g', '--reorder-locals', '-o', out])
+            self.check_variables(out, expected)

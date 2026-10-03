@@ -18,8 +18,11 @@
 #define wasm_dwarf_locals_h
 
 #include "../../third_party/llvm-project/DWARFVisitor.h"
+#include "wasm.h"
 #include "llvm/DebugInfo/DWARF/DWARFExpression.h"
+#include "llvm/ObjectYAML/DWARFYAML.h"
 #include "llvm/Support/LEB128.h"
+#include "llvm/include/llvm/DebugInfo/DWARFContext.h"
 
 namespace wasm::Debug {
 
@@ -40,6 +43,16 @@ static bool isLocationAttribute(llvm::dwarf::Attribute attr) {
   }
 }
 
+static bool isLocationList(llvm::dwarf::Attribute attr,
+                           llvm::dwarf::Form form,
+                           unsigned version) {
+  using namespace llvm::dwarf;
+  return isLocationAttribute(attr) &&
+         (form == DW_FORM_sec_offset ||
+          (version < 4 && attr != DW_AT_data_member_location &&
+           (form == DW_FORM_data4 || form == DW_FORM_data8)));
+}
+
 // ReorderLocals leaves DWARF in input coordinates, just like code addresses.
 // Rewrite it once, after the writer has also mapped IR locals to binary locals.
 // An index crossing a LEB boundary changes expression sizes, so both location
@@ -56,12 +69,14 @@ class DwarfLocalRewriter {
   struct Expression {
     Bytes input;
     Value* inlineValue;
+    llvm::DWARFYAML::AttributeAbbrev* form;
     size_t locIndex;
     llvm::DWARFUnit* unit;
     const std::vector<Index>* indices;
   };
   struct Reference {
     Value* value;
+    llvm::DWARFYAML::AttributeAbbrev* form;
     uint64_t target;
     uint64_t base;
     unsigned bits;
@@ -244,6 +259,10 @@ public:
       const std::vector<Index>* indices;
     };
     std::unordered_map<uint64_t, std::vector<ListUse>> listUses;
+    std::map<std::pair<uint64_t, uint64_t>, llvm::DWARFYAML::Abbrev*> abbrevs;
+    for (auto& abbrev : data.AbbrevDecls) {
+      abbrevs[{abbrev.ListOffset, abbrev.Code}] = &abbrev;
+    }
     std::vector<Function*> functions;
     for (auto& [func, indices] : locations.localIndices) {
       functions.push_back(func);
@@ -289,6 +308,8 @@ public:
         scopes.push_back(indices);
         size_t attrIndex = 0;
         for (auto& attr : abbrev->attributes()) {
+          auto* yamlForm = &abbrevs.at({yaml.AbbrOffset, entry.AbbrCode})
+                              ->Attributes[attrIndex];
           auto& value = entry.Values[attrIndex++];
           auto form = attr.Form;
           bool location = isLocationAttribute(attr.Attr);
@@ -299,12 +320,11 @@ public:
             expressions.push_back(
               {Bytes(value.BlockData.begin(), value.BlockData.end()),
                &value,
+               yamlForm,
                0,
                cu.get(),
                indices});
-          } else if (location &&
-                     (form == DW_FORM_sec_offset ||
-                      (cu->getVersion() < 4 && form == DW_FORM_data4))) {
+          } else if (isLocationList(attr.Attr, form, cu->getVersion())) {
             listUses[value.Value].push_back({&value, cu.get(), indices});
           } else {
             unsigned bits = 0;
@@ -331,7 +351,8 @@ public:
             }
             if (bits) {
               auto base = form == DW_FORM_ref_addr ? 0 : cu->getOffset();
-              references.push_back({&value, base + value.Value, base, bits});
+              references.push_back(
+                {&value, yamlForm, base + value.Value, base, bits});
             }
           }
         }
@@ -339,7 +360,8 @@ public:
     }
 
     // A compiler may share a location list between variables in different
-    // functions. Clone only if their local mappings differ.
+    // functions or CUs. Their local mappings and CU-relative references need
+    // not agree. Keep groups in DIE order, not pointer order, for determinism.
     auto oldLocs = std::move(data.Locs);
     for (size_t begin = 0; begin < oldLocs.size();) {
       size_t end = begin + 1;
@@ -352,11 +374,20 @@ public:
         uses.push_back(
           {nullptr, context.compile_units().begin()->get(), nullptr});
       }
-      std::map<const std::vector<Index>*, std::vector<ListUse>> groups;
+      std::vector<std::vector<ListUse>> groups;
       for (auto use : uses) {
-        groups[use.indices].push_back(use);
+        auto iter =
+          std::find_if(groups.begin(), groups.end(), [&](auto& group) {
+            return group.front().indices == use.indices &&
+                   group.front().unit == use.unit;
+          });
+        if (iter == groups.end()) {
+          groups.push_back({use});
+        } else {
+          iter->push_back(use);
+        }
       }
-      for (auto& [indices, group] : groups) {
+      for (auto& group : groups) {
         List list{data.Locs.size(), data.Locs.size() + end - begin, {}};
         for (auto use : group) {
           if (use.value) {
@@ -367,8 +398,12 @@ public:
           data.Locs.end(), oldLocs.begin() + begin, oldLocs.begin() + end);
         for (size_t i = list.begin; i < list.end; ++i) {
           if (!data.Locs[i].Location.empty()) {
-            expressions.push_back(
-              {data.Locs[i].Location, nullptr, i, group.front().unit, indices});
+            expressions.push_back({data.Locs[i].Location,
+                                   nullptr,
+                                   nullptr,
+                                   i,
+                                   group.front().unit,
+                                   group.front().indices});
           }
         }
         lists.push_back(std::move(list));
@@ -377,9 +412,27 @@ public:
     }
 
     for (;;) {
+      bool infoResized = false;
       for (auto& expr : expressions) {
+        if (offsets.empty() &&
+            (!expr.indices ||
+             std::find(expr.input.begin(),
+                       expr.input.end(),
+                       DW_OP_WASM_location) == expr.input.end())) {
+          continue;
+        }
         auto bytes = rewrite(expr.input, expr.unit, expr.indices);
         if (expr.inlineValue) {
+          // A wider local operand can overflow a block1/block2 length. Change
+          // the shared abbreviation to the equivalent variable-length form;
+          // Layout measures all DIEs using that abbreviation again.
+          auto form = expr.form->Form;
+          if ((form == DW_FORM_block1 && bytes.size() > UINT8_MAX) ||
+              (form == DW_FORM_block2 && bytes.size() > UINT16_MAX)) {
+            expr.form->Form = DW_FORM_block;
+          }
+          infoResized |= bytes.size() != expr.inlineValue->BlockData.size() ||
+                         form != expr.form->Form;
           expr.inlineValue->BlockData.assign(bytes.begin(), bytes.end());
         } else {
           data.Locs[expr.locIndex].Location = std::move(bytes);
@@ -400,10 +453,25 @@ public:
           }
         }
       }
+      // Most permutations preserve inline expression widths. Location-list
+      // offsets are fixed-width attributes, so changing those alone does not
+      // require laying out .debug_info or relocating any DIE references.
+      if (offsets.empty() && !infoResized) {
+        return;
+      }
       for (auto& ref : references) {
         auto value = relocate(ref.target) - relocate(ref.base);
-        if (ref.bits < 64 && value >= (uint64_t(1) << ref.bits)) {
-          Fatal() << "relocated DWARF DIE reference does not fit";
+        auto form = ref.form->Form;
+        auto bits = form == DW_FORM_ref8   ? 64
+                    : form == DW_FORM_ref4 ? 32
+                                           : ref.bits;
+        if (bits < 64 && value >= (uint64_t(1) << bits)) {
+          if (form == DW_FORM_ref1 || form == DW_FORM_ref2 ||
+              form == DW_FORM_ref4) {
+            ref.form->Form = value <= UINT32_MAX ? DW_FORM_ref4 : DW_FORM_ref8;
+          } else {
+            Fatal() << "relocated DWARF DIE reference does not fit";
+          }
         }
         ref.value->Value = value;
       }
@@ -442,6 +510,9 @@ public:
       };
       uint64_t pos = 0;
       while (pos < contents.size()) {
+        if (!bytes.isValidOffsetForDataOfSize(pos, 4)) {
+          Fatal() << "truncated DWARF public-name table";
+        }
         auto length = uint64_t(bytes.getU32(&pos));
         unsigned width = 4;
         if (length == uint32_t(-1)) {
@@ -449,6 +520,9 @@ public:
           width = 8;
         }
         auto end = pos + length;
+        if (end > contents.size() || length < 2 + 3 * width) {
+          Fatal() << "invalid DWARF public-name table length";
+        }
         bytes.getU16(&pos);
         auto unitField = pos;
         auto base = bytes.getUnsigned(&pos, width);
@@ -460,6 +534,9 @@ public:
         }
         while (pos < end) {
           auto field = pos;
+          if (end - pos < width) {
+            Fatal() << "truncated DWARF public-name entry";
+          }
           auto offset = bytes.getUnsigned(&pos, width);
           if (!offset) {
             break;
@@ -468,7 +545,11 @@ public:
           if (gnu) {
             bytes.getU8(&pos);
           }
+          auto string = pos;
           bytes.getCStr(&pos);
+          if (pos <= string || pos > end) {
+            Fatal() << "invalid DWARF public-name entry";
+          }
         }
         pos = end;
       }
