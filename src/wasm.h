@@ -2366,6 +2366,13 @@ struct BinaryLocations {
   };
 
   std::unordered_map<Function*, FunctionLocations> functions;
+
+  // Instruction origins in output order, including instructions added by the
+  // binary/stack IR writer. An old address of zero means no source origin.
+  struct InstructionLocation {
+    BinaryLocation oldAddr, newAddr;
+  };
+  std::vector<InstructionLocation> instructions;
 };
 
 // Forward declaration for FuncEffectsMap.
@@ -2490,6 +2497,10 @@ public:
   std::unordered_map<Expression*, BinaryLocations::DelimiterLocations>
     delimiterLocations;
   BinaryLocations::FunctionLocations funcLocation;
+  // A rewritten function may end in synthetic control flow rather than its
+  // original return. Keep its range for DWARF, but do not attribute the new
+  // terminal end instruction to the original end's source location.
+  bool hasSyntheticEnd = false;
 
   // Annotations on expressions. As with debug info, we do not store these on
   // Expressions as we assume most instances are unannotated, and do not want to

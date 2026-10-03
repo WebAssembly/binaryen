@@ -194,6 +194,9 @@ void WasmBinaryWriter::finishSection(int32_t start) {
         item -= totalAdjustment;
       }
     }
+    for (auto& location : binaryLocations.instructions) {
+      location.newAddr -= totalAdjustment;
+    }
   }
 }
 
@@ -530,6 +533,7 @@ void WasmBinaryWriter::writeFunctions() {
     // Do not smear any debug location from the previous function.
     writeNoDebugLocation();
     size_t sourceMapLocationsSizeAtFunctionStart = sourceMapLocations.size();
+    auto instructionLocationsStart = binaryLocations.instructions.size();
     size_t sizePos = writeU32LEBPlaceholder();
     size_t start = o.size();
     // Emit Stack IR if present.
@@ -581,6 +585,11 @@ void WasmBinaryWriter::writeFunctions() {
             item -= adjustmentForLEBShrinking;
           }
         }
+      }
+      for (auto i = instructionLocationsStart;
+           i < binaryLocations.instructions.size();
+           ++i) {
+        binaryLocations.instructions[i].newAddr -= adjustmentForLEBShrinking;
       }
     }
     // We need to track the function location if we are tracking the locations
@@ -1754,7 +1763,32 @@ void WasmBinaryWriter::trackExpressionDelimiter(Expression* curr,
   //       need to enable that here.
   if (func && !func->expressionLocations.empty()) {
     binaryLocations.delimiters[curr][id] = o.size();
+    auto old = func->delimiterLocations.find(curr);
+    auto oldAddr =
+      old != func->delimiterLocations.end() && id < old->second.size()
+        ? old->second[id]
+        : 0;
+    binaryLocations.instructions.push_back({oldAddr, BinaryLocation(o.size())});
   }
+}
+
+void WasmBinaryWriter::trackInstruction(Expression* curr,
+                                        Function* func,
+                                        BinaryLocation start,
+                                        bool isEnd) {
+  if (!func || func->expressionLocations.empty() || start == o.size()) {
+    return;
+  }
+  BinaryLocation oldAddr = 0;
+  if (curr) {
+    auto old = func->expressionLocations.find(curr);
+    if (old != func->expressionLocations.end()) {
+      oldAddr = isEnd ? old->second.end - 1 : old->second.start;
+    }
+  } else if (isEnd && !func->hasSyntheticEnd) {
+    oldAddr = func->funcLocation.end - 1;
+  }
+  binaryLocations.instructions.push_back({oldAddr, start});
 }
 
 std::optional<BufferWithRandomAccess> WasmBinaryWriter::writeCodeAnnotations() {

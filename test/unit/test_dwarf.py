@@ -1,4 +1,5 @@
 import os
+import re
 import subprocess
 import tempfile
 
@@ -7,7 +8,307 @@ from scripts.test import shared
 from . import utils
 
 
+def uleb(value):
+    result = bytearray()
+    while value >= 128:
+        result.append((value & 127) | 128)
+        value >>= 7
+    result.append(value)
+    return bytes(result)
+
+
+def with_line_table(wasm, program):
+    prologue = bytes.fromhex('010101fb0e0d000101010100000001000001')
+    prologue += b'\0test.c\0\0\0\0\0'
+    table = b'\x04\0' + len(prologue).to_bytes(4, 'little') + prologue + program
+    for name, contents in {
+        '.debug_abbrev': bytes.fromhex('0111001017000000'),
+        '.debug_info': bytes.fromhex('0c000000040000000000040100000000'),
+        '.debug_line': len(table).to_bytes(4, 'little') + table,
+    }.items():
+        name = name.encode()
+        payload = uleb(len(name)) + name + contents
+        wasm += b'\0' + uleb(len(payload)) + payload
+    return wasm
+
+
+def line_rows(path):
+    dump = shared.run_process(shared.WASM_OPT + [path, '--dwarfdump'],
+                              capture_output=True).stdout
+    return [(int(addr, 16), int(line), int(col), int(file), int(isa),
+             int(discriminator), flags.split())
+            for addr, line, col, file, isa, discriminator, flags in re.findall(
+                r'^\s*0x([0-9a-f]+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)([^\n]*)',
+                dump.split('.debug_line contents:', 1)[1], re.MULTILINE)]
+
+
+def first_body(wasm):
+    def read_uleb(pos):
+        value, shift = 0, 0
+        while True:
+            byte = wasm[pos]
+            pos += 1
+            value |= (byte & 127) << shift
+            if byte < 128:
+                return value, pos
+            shift += 7
+
+    pos = 8
+    while pos < len(wasm):
+        kind = wasm[pos]
+        size, pos = read_uleb(pos + 1)
+        if kind == 10:
+            section = pos
+            count, pos = read_uleb(pos)
+            assert count > 0
+            size, pos = read_uleb(pos)
+            return pos - section, wasm[pos:pos + size]
+        pos += size
+    raise AssertionError('missing code section')
+
+
 class DWARFTest(utils.BinaryenTestCase):
+    def test_line_program_encoding(self):
+        # Padded i32.const shifts later addresses back one byte on writing.
+        wasm = bytes.fromhex('0061736d010000000105016000017f03020100'
+                             '070501016600000a0a01080041810041026a0b')
+        program = bytes.fromhex('000502030000000309')
+        # Repeat discriminator 300 explicitly on the first two rows, then
+        # leave it unset. Row markers must not carry over to later rows.
+        program += b'\0\x03\x04' + uleb(300) + b'\x07\x0a\x01\x02\x03'
+        program += b'\0\x03\x04' + uleb(300) + b'\x01\x02\x02\x01'
+        program += bytes.fromhex('0201030a0b010201000101')
+        with tempfile.TemporaryDirectory() as temp_dir:
+            input_file = os.path.join(temp_dir, 'input.wasm')
+            output_file = os.path.join(temp_dir, 'output.wasm')
+            with open(input_file, 'wb') as f:
+                f.write(with_line_table(wasm, program))
+            for source in (input_file, output_file):
+                shared.run_process(shared.WASM_OPT +
+                                   [source, '-g', '-o', output_file])
+                rows = line_rows(output_file)
+                self.assertEqual([row[:2] for row in rows],
+                                 [(3, 10), (5, 10), (7, 10), (8, 20), (9, 20)])
+                self.assertEqual([row[5] for row in rows], [300, 300, 0, 0, 0])
+                self.assertEqual([row[6] for row in rows], [
+                    ['is_stmt', 'basic_block', 'prologue_end'], ['is_stmt'],
+                    ['is_stmt'], ['is_stmt', 'epilogue_begin'],
+                    ['is_stmt', 'end_sequence'],
+                ])
+            dump = shared.run_process(shared.WASM_OPT + [output_file, '--dwarfdump'],
+                                      capture_output=True).stdout
+            self.assertEqual(dump.count('DW_LNE_set_address'), 1)
+            advances = re.findall(r'^0x[0-9a-f]+: 02 DW_LNS_advance_pc', dump, re.MULTILINE)
+            self.assertEqual(len(advances), 4)
+
+    def test_writer_generated_unreachable(self):
+        # An unreachable loop needs an extra unreachable after its end to
+        # satisfy wasm's type system. Unlike an explicit trap in the loop,
+        # that writer-generated instruction must not inherit a source line.
+        for body in (b'\x0c\0', b'\0'):
+            for options in ([], ['--generate-stack-ir']):
+                with self.subTest(body=body, options=options), \
+                        tempfile.TemporaryDirectory() as temp_dir:
+                    function = b'\0\x03\x40' + body + b'\x0b\x0b'
+                    code = bytes([1, len(function)]) + function
+                    wasm = bytes.fromhex('0061736d0100000001040160000003020100'
+                                         '07050101660000')
+                    wasm += bytes([10, len(code)]) + code
+                    loop_end = 5 + len(body)
+                    program = bytes.fromhex('0005020300000003090102')
+                    program += bytes([loop_end - 3])
+                    program += bytes.fromhex('030a010202000101')
+                    input_file = os.path.join(temp_dir, 'input.wasm')
+                    output_file = os.path.join(temp_dir, 'output.wasm')
+                    with open(input_file, 'wb') as f:
+                        f.write(with_line_table(wasm, program))
+                    for source in (input_file, output_file):
+                        shared.run_process(shared.WASM_OPT +
+                                           [source, '-g', '-o', output_file] + options)
+                        rows = [row[:2] for row in line_rows(output_file)]
+                        self.assertEqual(rows, [(3, 10), (loop_end, 20),
+                                                (loop_end + 1, 0),
+                                                (loop_end + 2, 20),
+                                                (loop_end + 3, 20)])
+
+    def test_asyncify_instruction_origins(self):
+        # With a leading nop, -O1 removes the instruction starting line 10.
+        # The surviving call must still get line 10 from the original range.
+        for nop in ('', '(nop)'):
+            for options in ([], ['-O1'], ['--generate-stack-ir'],
+                            ['-O1', '--generate-stack-ir']):
+                with self.subTest(nop=nop, options=options), \
+                        tempfile.TemporaryDirectory() as temp_dir:
+                    input_file = os.path.join(temp_dir, 'input.wasm')
+                    output_file = os.path.join(temp_dir, 'output.wasm')
+                    module = '(module (import "env" "g" (func $g (result i32))) '
+                    module += '(memory 1) (func (export "f") (result i32) '
+                    module += f'{nop} (i32.add (call $g) (i32.const 42))) '
+                    module += '(func (export "h") (result i32) (i32.const 17)))'
+                    shared.run_process(shared.WASM_OPT + ['-o', input_file], input=module)
+                    with open(input_file, 'rb') as f:
+                        wasm = f.read()
+                    start, body = first_body(wasm)
+                    call = start + body.index(b'\x10\0')
+                    constant = start + body.index(b'\x41\x2a')
+                    program = b'\0\x05\x02'
+                    program += (call - bool(nop)).to_bytes(4, 'little')
+                    program += b'\x03\x09\x01\x02'
+                    program += uleb(constant - call + bool(nop))
+                    # Row flags apply once; discriminator 300 is a multi-byte
+                    # ULEB, independent of the CU's address size.
+                    program += b'\x03\x0a\0\x03\x04' + uleb(300)
+                    program += b'\x07\x0a\x01\x02'
+                    program += uleb(start + len(body) - constant)
+                    program += b'\0\x01\x01'
+                    with open(input_file, 'wb') as f:
+                        f.write(with_line_table(wasm, program))
+                    shared.run_process(shared.WASM_OPT +
+                                       [input_file, '--dce', '--asyncify', '-g',
+                                        '-o', output_file] + options)
+                    with open(output_file, 'rb') as f:
+                        start, body = first_body(f.read())
+
+                    rows = line_rows(output_file)
+
+                    def source_line(offset):
+                        address = start + offset
+                        prior = [row for row in rows if row[0] <= address]
+                        self.assertTrue(prior)
+                        self.assertNotIn('end_sequence', prior[-1][6])
+                        return prior[-1][1]
+
+                    self.assertEqual(body.count(b'\x10\0'), 1)
+                    self.assertEqual(source_line(body.index(b'\x10\0')), 10)
+                    self.assertEqual(source_line(body.index(b'\x41\x2a')), 20)
+                    self.assertEqual(source_line(body.index(b'\x41\x2a') + 2), 20)
+                    constant_row = next(row for row in rows
+                                        if row[0] == start + body.index(b'\x41\x2a'))
+                    self.assertEqual(constant_row[2:6], (0, 1, 0, 300))
+                    self.assertIn('basic_block', constant_row[6])
+                    self.assertIn('prologue_end', constant_row[6])
+                    # All global.get instructions belong to Asyncify, including
+                    # the rewind prologue, call guards, and unwind epilogue.
+                    generated = list(re.finditer(rb'\x23[\x00\x01]', body))
+                    self.assertGreater(len(generated), 5)
+                    for match in generated:
+                        self.assertEqual(source_line(match.start()), 0)
+                    self.assertEqual(source_line(len(body) - 1), 0)
+                    # Do not fabricate source locations for the five helpers
+                    # or the unrelated function without a source line table.
+                    self.assertEqual(sum('end_sequence' in row[6] for row in rows), 1)
+                    self.assertEqual(rows[-1][0], start + len(body))
+                    roundtrip = os.path.join(temp_dir, 'roundtrip.wasm')
+                    shared.run_process(shared.WASM_OPT +
+                                       [output_file, '--roundtrip', '-g',
+                                        '-o', roundtrip])
+                    self.assertEqual(line_rows(roundtrip), rows)
+
+    def test_asyncify_function_end(self):
+        # An ordinary terminal end retains its source row. Asyncify's new end
+        # instead returns from unwinding, even for void or early-return bodies.
+        bodies = [
+            '(drop (call $g))',
+            '(result i32) (i32.add (call $g) (i32.const 42))',
+            '(param i32) (result i32) '
+            '(if (local.get 0) (then (return (i32.const 7)))) '
+            '(i32.add (call $g) (i32.const 42))',
+        ]
+        for body in bodies:
+            for options in ([], ['-O1'], ['--generate-stack-ir'],
+                            ['-O1', '--generate-stack-ir']):
+                with self.subTest(body=body, options=options), \
+                        tempfile.TemporaryDirectory() as temp_dir:
+                    input_file = os.path.join(temp_dir, 'input.wasm')
+                    output_file = os.path.join(temp_dir, 'output.wasm')
+                    module = '(module (import "env" "g" (func $g (result i32))) '
+                    module += f'(memory 1) (func (export "f") {body}))'
+                    shared.run_process(shared.WASM_OPT + ['-o', input_file], input=module)
+                    with open(input_file, 'rb') as f:
+                        wasm = f.read()
+                    start, code = first_body(wasm)
+                    program = b'\0\x05\x02' + start.to_bytes(4, 'little')
+                    program += b'\x03\x09\x01\x02' + uleb(len(code) - 1)
+                    program += bytes.fromhex('030a010201000101')
+                    with open(input_file, 'wb') as f:
+                        f.write(with_line_table(wasm, program))
+                    for passes, expected_line in (([], 20), (['--asyncify'], 0)):
+                        shared.run_process(shared.WASM_OPT +
+                                           [input_file, '-g', '-o', output_file] +
+                                           passes + options)
+                        with open(output_file, 'rb') as f:
+                            start, code = first_body(f.read())
+                        rows = line_rows(output_file)
+                        end_row = [row for row in rows if row[0] < start + len(code)][-1]
+                        self.assertEqual(end_row[1], expected_line)
+                        if passes:
+                            self.assertEqual(end_row[2], 0)
+                            self.assertNotIn('is_stmt', end_row[6])
+                        self.assertEqual(rows[-1][0], start + len(code))
+                        shared.run_process(shared.WASM_OPT +
+                                           [output_file, '--roundtrip', '-g', '-o', output_file])
+                        self.assertEqual(line_rows(output_file), rows)
+
+    def test_line_zero_roundtrip(self):
+        def custom_section(name, contents):
+            name = name.encode()
+            payload = bytes([len(name)]) + name + contents
+            self.assertLess(len(payload), 128)
+            return bytes([0, len(payload)]) + payload
+
+        # Padded i32.const encoding moves the second constant from offset 6
+        # to 5. Its line-zero row must move with it, not inherit line 5.
+        wasm = bytes.fromhex('0061736d010000000105016000017f03020100'
+                             '070501016600000a0a01080041810041026a0b')
+        abbrev = bytes.fromhex('0111001017000000')
+        info = bytes.fromhex('0c000000040000000000040100000000')
+        prologue = bytes.fromhex('010101fb0e0d000101010100000001000001')
+        prologue += b'\0test.c\0\0\0\0\0'
+
+        for dead_address in (0, 0xffffffff, 0xfffffffe):
+            for lines in ((5, 0, 9, 0), (0, 0, 0, 0)):
+                with self.subTest(dead_address=dead_address, lines=lines):
+                    # Later offsets in a dead sequence must not be remapped
+                    # onto live code, even when its first row has line zero.
+                    program = bytes.fromhex('000502')
+                    program += dead_address.to_bytes(4, 'little')
+                    program += bytes.fromhex('037f010203030501000101')
+                    program += bytes.fromhex('00050203000000')
+                    previous_address, previous_line = 3, 1
+                    for i, (address, line) in enumerate(zip((3, 6, 8, 10), lines, strict=True)):
+                        if i:
+                            program += bytes([2, address - previous_address])
+                        # These line deltas fit in one signed LEB128 byte.
+                        program += bytes([3, (line - previous_line) & 0x7f])
+                        program += bytes.fromhex('000101') if i == 3 else b'\x01'
+                        previous_address, previous_line = address, line
+                    table = b'\x04\0' + len(prologue).to_bytes(4, 'little')
+                    table += prologue + program
+                    sections = {'.debug_abbrev': abbrev, '.debug_info': info,
+                                '.debug_line': len(table).to_bytes(4, 'little') + table}
+                    input_wasm = wasm
+                    for name, contents in sections.items():
+                        input_wasm += custom_section(name, contents)
+
+                    with tempfile.TemporaryDirectory() as temp_dir:
+                        input_file = os.path.join(temp_dir, 'input.wasm')
+                        output_file = os.path.join(temp_dir, 'output.wasm')
+                        with open(input_file, 'wb') as f:
+                            f.write(input_wasm)
+                        for source in (input_file, output_file):
+                            shared.run_process(shared.WASM_OPT +
+                                               [source, '-g', '-o', output_file])
+                            dump = shared.run_process(shared.WASM_OPT +
+                                                      [output_file, '--dwarfdump'],
+                                                      capture_output=True).stdout
+                            rows = re.findall(r'^\s*0x([0-9a-f]+)\s+(\d+)\s+',
+                                              dump.split('.debug_line contents:', 1)[1],
+                                              re.MULTILINE)
+                            self.assertEqual([(int(addr, 16), int(line))
+                                              for addr, line in rows],
+                                             list(zip((3, 5, 7, 9), lines, strict=True)))
+                            self.assertEqual(dump.count('DW_LNE_end_sequence'), 1)
+
     def test_overlapping_inline_siblings(self):
         # Make the outer lexical block valid and move one inlined call onto
         # its sibling's range. Both siblings must become unavailable: keeping
