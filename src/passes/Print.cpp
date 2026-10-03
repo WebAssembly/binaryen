@@ -2999,11 +2999,11 @@ void PrintSExpression::visitBlock(Block* curr) {
 }
 
 void PrintSExpression::visitIf(If* curr) {
-  controlFlowDepth++;
   o << '(';
   printExpressionContents(curr);
   incIndent();
   printFullLine(curr->condition);
+  controlFlowDepth++;
   doIndent(o, indent);
   o << "(then";
   incIndent();
@@ -3955,6 +3955,7 @@ static std::ostream& printStackIR(StackIR* ir, PrintSExpression& printer) {
         } else {
           curr->delegateTarget.print(o);
         }
+        catchIndexStack.pop_back();
         break;
       }
       default:

@@ -2358,7 +2358,7 @@ void TranslateToFuzzReader::fixAfterChanges(Function* func) {
         }
       });
       BranchUtils::operateOnScopeNameUses(curr, [&](Name& name) {
-        if (name.is()) {
+        if (name.is() && name != DELEGATE_CALLER_TARGET) {
           replaceIfInvalid(name);
         }
       });
@@ -2418,6 +2418,9 @@ void TranslateToFuzzReader::fixAfterChanges(Function* func) {
 
     // Check if a reference to a try is valid.
     bool isValidTryRef(Name target, Expression* curr) {
+      if (curr->is<Try>() && target == DELEGATE_CALLER_TARGET) {
+        return true;
+      }
       // The rethrow or try must be on top.
       assert(!expressionStack.empty());
       assert(expressionStack.back() == curr);
@@ -3204,7 +3207,17 @@ Expression* TranslateToFuzzReader::makeIf(Type type) {
 }
 
 Expression* TranslateToFuzzReader::makeTry(Type type) {
+  auto name = makeLabel();
+  funcContext->tryStack.push_back(name);
   auto* body = make(type);
+  funcContext->tryStack.pop_back();
+  if (oneIn(3)) {
+    Name delegateTarget = DELEGATE_CALLER_TARGET;
+    if (!funcContext->tryStack.empty() && !oneIn(4)) {
+      delegateTarget = pick(funcContext->tryStack);
+    }
+    return builder.makeTry(name, body, delegateTarget);
+  }
   std::vector<Name> catchTags;
   std::vector<Expression*> catchBodies;
   auto numTags = upTo(fuzzParams->MAX_TRY_CATCHES);
@@ -3247,8 +3260,7 @@ Expression* TranslateToFuzzReader::makeTry(Type type) {
     }
     catchBodies.push_back(catchBody);
   }
-  // TODO: delegate stuff
-  return builder.makeTry(body, catchTags, catchBodies);
+  return builder.makeTry(name, body, catchTags, catchBodies);
 }
 
 Expression* TranslateToFuzzReader::makeTryTable(Type type) {
