@@ -37,6 +37,7 @@
 
 #include "llvm/ObjectYAML/DWARFYAML.h"
 #include "llvm/include/llvm/DebugInfo/DWARFContext.h"
+#include "dwarf-locals.h"
 
 std::error_code dwarf2yaml(llvm::DWARFContext& DCtx, llvm::DWARFYAML::Data& Y);
 #endif
@@ -880,7 +881,7 @@ static void updateDIE(const llvm::DWARFDebugInfoEntry& DIE,
         // This is an offset into the debug line section.
         yamlValue.Value =
           locationUpdater.getNewDebugLineLocation(yamlValue.Value);
-      } else if (attr == llvm::dwarf::DW_AT_location &&
+      } else if (isLocationAttribute(attr) &&
                  attrSpec.Form == llvm::dwarf::DW_FORM_sec_offset) {
         BinaryLocation locOffset = yamlValue.Value;
         locationUpdater.locToUnitMap[locOffset] = compileUnitIndex;
@@ -1438,6 +1439,8 @@ void writeDWARFSections(Module& wasm, const BinaryLocations& newLocations) {
   }
 
   LocationUpdater locationUpdater(wasm, newLocations);
+
+  DwarfLocalRewriter(wasm, data, *info.context, newLocations).run();
 
   updateDebugLines(data, locationUpdater);
 

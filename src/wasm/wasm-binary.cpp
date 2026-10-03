@@ -550,6 +550,16 @@ void WasmBinaryWriter::writeFunctions() {
         funcMappedLocals[func->name] = std::move(writer.getMappedLocals());
       }
     }
+    if (debugInfo && DWARF && !func->dwarfLocalIndices.empty()) {
+      auto& indices = binaryLocations.localIndices[func];
+      indices = func->dwarfLocalIndices;
+      const auto& mapped = funcMappedLocals.at(func->name);
+      for (auto& index : indices) {
+        if (index != Index(-1)) {
+          index = mapped.at({index, 0});
+        }
+      }
+    }
     size_t size = o.size() - start;
     assert(size <= std::numeric_limits<uint32_t>::max());
     auto sizeFieldSize = o.writeAt(sizePos, U32LEB(size));
