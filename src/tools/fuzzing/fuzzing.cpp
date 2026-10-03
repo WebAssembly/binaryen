@@ -5613,12 +5613,9 @@ Expression* TranslateToFuzzReader::makeSIMDLoad() {
 }
 
 Expression* TranslateToFuzzReader::makeBulkMemory(Type type) {
-  if (!allowMemory) {
-    return makeTrivial(type);
-  }
   assert(wasm.features.hasBulkMemory());
   assert(type == Type::none);
-  switch (upTo(4)) {
+  switch (upTo(5)) {
     case 0:
       return makeMemoryInit();
     case 1:
@@ -5627,6 +5624,8 @@ Expression* TranslateToFuzzReader::makeBulkMemory(Type type) {
       return makeMemoryCopy();
     case 3:
       return makeMemoryFill();
+    case 4:
+      return makeElemDrop();
   }
   WASM_UNREACHABLE("invalid value");
 }
@@ -6576,6 +6575,15 @@ Expression* TranslateToFuzzReader::makeMemoryFill() {
   Expression* value = make(Type::i32);
   Expression* size = make(wasm.memories[0]->addressType);
   return builder.makeMemoryFill(dest, value, size, wasm.memories[0]->name);
+}
+
+Expression* TranslateToFuzzReader::makeElemDrop() {
+  if (wasm.elementSegments.empty()) {
+    return makeTrivial(Type::none);
+  }
+  Index segIdx = upTo(wasm.elementSegments.size());
+  Name segment = wasm.elementSegments[segIdx]->name;
+  return builder.makeElemDrop(segment);
 }
 
 Type TranslateToFuzzReader::getSingleConcreteType() {
