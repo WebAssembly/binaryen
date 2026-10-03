@@ -35,9 +35,9 @@
 #pragma clang diagnostic pop
 #endif
 
+#include "dwarf-locals.h"
 #include "llvm/ObjectYAML/DWARFYAML.h"
 #include "llvm/include/llvm/DebugInfo/DWARFContext.h"
-#include "dwarf-locals.h"
 
 std::error_code dwarf2yaml(llvm::DWARFContext& DCtx, llvm::DWARFYAML::Data& Y);
 #endif
@@ -57,6 +57,27 @@ bool hasDWARFSections(const Module& wasm) {
     }
   }
   return false;
+}
+
+void updateLocalIndices(Function* func, const std::vector<Index>& oldToNew) {
+  if (!func->funcLocation.end) {
+    return;
+  }
+  if (func->dwarfLocalIndices.empty()) {
+    for (Index i = 0; i < oldToNew.size(); ++i) {
+      if (oldToNew[i] != i) {
+        func->dwarfLocalIndices = oldToNew;
+        break;
+      }
+    }
+  } else {
+    for (auto& index : func->dwarfLocalIndices) {
+      if (index != Index(-1)) {
+        assert(index < oldToNew.size());
+        index = oldToNew[index];
+      }
+    }
+  }
 }
 
 #ifdef BUILD_LLVM_DWARF
@@ -830,7 +851,8 @@ static void updateDIE(const llvm::DWARFDebugInfoEntry& DIE,
                       llvm::DWARFYAML::Entry& yamlEntry,
                       const llvm::DWARFAbbreviationDeclaration* abbrevDecl,
                       LocationUpdater& locationUpdater,
-                      size_t compileUnitIndex) {
+                      size_t compileUnitIndex,
+                      unsigned version) {
   auto tag = DIE.getTag();
   // Pairs of low/high_pc require some special handling, as the high
   // may be an offset relative to the low. First, process everything but
@@ -881,8 +903,7 @@ static void updateDIE(const llvm::DWARFDebugInfoEntry& DIE,
         // This is an offset into the debug line section.
         yamlValue.Value =
           locationUpdater.getNewDebugLineLocation(yamlValue.Value);
-      } else if (isLocationAttribute(attr) &&
-                 attrSpec.Form == llvm::dwarf::DW_FORM_sec_offset) {
+      } else if (isLocationList(attr, attrSpec.Form, version)) {
         BinaryLocation locOffset = yamlValue.Value;
         locationUpdater.locToUnitMap[locOffset] = compileUnitIndex;
       }
@@ -966,8 +987,12 @@ static void updateCompileUnits(const BinaryenDWARFInfo& info,
           auto abbrevDecl = DIE.getAbbreviationDeclarationPtr();
           if (abbrevDecl) {
             // This is relevant; look for things to update.
-            updateDIE(
-              DIE, yamlEntry, abbrevDecl, locationUpdater, compileUnitIndex);
+            updateDIE(DIE,
+                      yamlEntry,
+                      abbrevDecl,
+                      locationUpdater,
+                      compileUnitIndex,
+                      CU->getVersion());
           }
         });
       compileUnitIndex++;
