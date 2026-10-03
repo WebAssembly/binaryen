@@ -4265,6 +4265,13 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
         // Shared strings not yet supported.
         return makeConst(Type(HeapType::string, NonNullable));
       }
+      if (wasm.features.hasGC() && oneIn(2)) {
+        AutoNester nester(*this);
+        auto anyType =
+          Type(HeapTypes::any.getBasic(share), type.getNullability());
+        auto* child = funcContext ? make(anyType) : makeConst(anyType);
+        return builder.makeRefAs(ExternConvertAny, child);
+      }
       // If we can, prefer using an imported global over a null.
       bool canImport =
         !preserveImportsAndExports && isImportableGlobalType(type);
