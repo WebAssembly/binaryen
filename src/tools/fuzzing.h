@@ -586,6 +586,7 @@ private:
   Expression* makeDataDrop();
   Expression* makeMemoryCopy();
   Expression* makeMemoryFill();
+  Expression* makeElemDrop();
 
   // Getters for Types
   Type getSingleConcreteType();
