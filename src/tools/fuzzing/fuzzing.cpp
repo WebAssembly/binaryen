@@ -2880,6 +2880,11 @@ Expression* TranslateToFuzzReader::_makeConcrete(Type type) {
   }
   if (type.isInteger()) {
     options.add(FeatureSet::Atomics, &Self::makeAtomic);
+    // TODO: Support multiple memories.
+    if (allowMemory && type == wasm.memories[0]->addressType) {
+      options.add(
+        FeatureSet::MVP, &Self::makeMemorySize, &Self::makeMemoryGrow);
+    }
   }
   if (type == Type::i32) {
     if (callExportCatchImportName || callRefCatchImportName) {
@@ -6582,6 +6587,22 @@ Expression* TranslateToFuzzReader::makeMemoryFill() {
   Expression* value = make(Type::i32);
   Expression* size = make(wasm.memories[0]->addressType);
   return builder.makeMemoryFill(dest, value, size, wasm.memories[0]->name);
+}
+
+Expression* TranslateToFuzzReader::makeMemorySize(Type type) {
+  if (!allowMemory) {
+    return makeTrivial(type);
+  }
+  assert(type == wasm.memories[0]->addressType);
+  return builder.makeMemorySize(wasm.memories[0]->name);
+}
+
+Expression* TranslateToFuzzReader::makeMemoryGrow(Type type) {
+  if (!allowMemory) {
+    return makeTrivial(type);
+  }
+  assert(type == wasm.memories[0]->addressType);
+  return builder.makeMemoryGrow(make(type), wasm.memories[0]->name);
 }
 
 Expression* TranslateToFuzzReader::makeElemDrop() {
