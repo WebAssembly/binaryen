@@ -2915,10 +2915,10 @@ Expression* TranslateToFuzzReader::_makeConcrete(Type type) {
                 &Self::makeWideIntExtract);
   }
   if (type.isTuple()) {
-    if (type == Types::getI64Pair() && oneIn(2)) {
-      options.add(FeatureSet::WideArithmetic, &Self::makeWideIntExpression);
-    } else {
-      options.add(FeatureSet::Multivalue, &Self::makeTupleMake);
+    options.add(FeatureSet::Multivalue, &Self::makeTupleMake);
+    if (type == Types::getI64Pair()) {
+      options.add(FeatureSet::WideArithmetic | FeatureSet::Multivalue,
+                  WeightedOption{&Self::makeWideIntExpression, VeryImportant});
     }
   }
   if (type.isRef()) {
