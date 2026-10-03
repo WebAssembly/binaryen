@@ -106,12 +106,31 @@ struct ReorderLocals : public WalkerPass<PostWalker<ReorderLocals>> {
     }
     counts.clear();
     std::vector<Index> oldToNew;
-    oldToNew.resize(num);
+    oldToNew.resize(num, Index(-1));
     for (size_t i = 0; i < newToOld.size(); i++) {
       if (curr->isParam(i)) {
         oldToNew[i] = i;
       } else {
         oldToNew[newToOld[i]] = i;
+      }
+    }
+    bool reordered = false;
+    if (curr->funcLocation.end) {
+      for (Index i = 0; i < num; ++i) {
+        reordered |= oldToNew[i] != i;
+      }
+    }
+    if (curr->funcLocation.end && reordered) {
+      // DWARF still refers to the input locals until the binary is written.
+      // Keep the mapping per function so this pass remains function-parallel.
+      if (curr->dwarfLocalIndices.empty()) {
+        curr->dwarfLocalIndices = oldToNew;
+      } else {
+        for (auto& index : curr->dwarfLocalIndices) {
+          if (index != Index(-1)) {
+            index = oldToNew[index];
+          }
+        }
       }
     }
     // apply the renaming to AST nodes
