@@ -3018,6 +3018,7 @@ Expression* TranslateToFuzzReader::_makenone() {
          &Self::makeNop,
          &Self::makeGlobalSet)
     .add(FeatureSet::BulkMemory, &Self::makeBulkMemory)
+    .add(FeatureSet::SIMD, &Self::makeSIMDLoadStoreLane)
     .add(FeatureSet::Atomics, &Self::makeAtomic)
     .add(FeatureSet::ReferenceTypes, &Self::makeTableSet)
     .add(FeatureSet::ExceptionHandling, &Self::makeTry)
@@ -3713,6 +3714,12 @@ Expression* TranslateToFuzzReader::makePointer() {
 }
 
 Expression* TranslateToFuzzReader::makeNonAtomicLoad(Type type) {
+  if (type == Type::v128) {
+    assert(wasm.features.hasSIMD());
+    if (oneIn(2)) {
+      return makeSIMDLoadStoreLane(type);
+    }
+  }
   auto offset = logify(get());
   auto ptr = makePointer();
   switch (type.getBasic()) {
@@ -3773,9 +3780,6 @@ Expression* TranslateToFuzzReader::makeNonAtomicLoad(Type type) {
         8, false, offset, pick(1, 2, 4, 8), ptr, type, wasm.memories[0]->name);
     }
     case Type::v128: {
-      if (!wasm.features.hasSIMD()) {
-        return makeTrivial(type);
-      }
       return builder.makeLoad(16,
                               false,
                               offset,
@@ -3841,6 +3845,12 @@ Expression* TranslateToFuzzReader::makeNonAtomicStore(Type type) {
   if (type == Type::none) {
     type = getStorableType();
   }
+  if (type == Type::v128) {
+    assert(wasm.features.hasSIMD());
+    if (oneIn(2)) {
+      return makeSIMDLoadStoreLane(Type::none);
+    }
+  }
   auto offset = logify(get());
   auto ptr = makePointer();
   auto value = make(type);
@@ -3890,9 +3900,6 @@ Expression* TranslateToFuzzReader::makeNonAtomicStore(Type type) {
         8, offset, pick(1, 2, 4, 8), ptr, value, type, wasm.memories[0]->name);
     }
     case Type::v128: {
-      if (!wasm.features.hasSIMD()) {
-        return makeTrivial(type);
-      }
       return builder.makeStore(16,
                                offset,
                                pick(1, 2, 4, 8, 16),
@@ -5416,8 +5423,7 @@ Expression* TranslateToFuzzReader::makeSIMD(Type type) {
   if (type != Type::v128) {
     return makeSIMDExtract(type);
   }
-  // TODO: Add SIMDLoadStoreLane once it is generally available
-  switch (upTo(7)) {
+  switch (upTo(8)) {
     case 0:
       return makeUnary(Type::v128);
     case 1:
@@ -5432,6 +5438,8 @@ Expression* TranslateToFuzzReader::makeSIMD(Type type) {
       return makeSIMDShift();
     case 6:
       return makeSIMDLoad();
+    case 7:
+      return makeSIMDLoadStoreLane(Type::v128);
   }
   WASM_UNREACHABLE("invalid value");
 }
@@ -5586,6 +5594,9 @@ Expression* TranslateToFuzzReader::makeSIMDShift() {
 }
 
 Expression* TranslateToFuzzReader::makeSIMDLoad() {
+  if (!allowMemory) {
+    return makeTrivial(Type::v128);
+  }
   SIMDLoadOp op = pick(Load8SplatVec128,
                        Load16SplatVec128,
                        Load32SplatVec128,
@@ -5628,6 +5639,54 @@ Expression* TranslateToFuzzReader::makeSIMDLoad() {
   }
   Expression* ptr = makePointer();
   return builder.makeSIMDLoad(op, offset, align, ptr, wasm.memories[0]->name);
+}
+
+Expression* TranslateToFuzzReader::makeSIMDLoadStoreLane(Type type) {
+  if (!allowMemory) {
+    return makeTrivial(type);
+  }
+  SIMDLoadStoreLaneOp op;
+  if (type == Type::v128) {
+    op = pick(
+      Load8LaneVec128, Load16LaneVec128, Load32LaneVec128, Load64LaneVec128);
+  } else if (type == Type::none) {
+    op = pick(Store8LaneVec128,
+              Store16LaneVec128,
+              Store32LaneVec128,
+              Store64LaneVec128);
+  } else {
+    WASM_UNREACHABLE("unexpected type");
+  }
+  Address offset = logify(get());
+  Address align;
+  uint8_t lanes;
+  switch (op) {
+    case Load8LaneVec128:
+    case Store8LaneVec128:
+      align = 1;
+      lanes = 16;
+      break;
+    case Load16LaneVec128:
+    case Store16LaneVec128:
+      align = pick(1, 2);
+      lanes = 8;
+      break;
+    case Load32LaneVec128:
+    case Store32LaneVec128:
+      align = pick(1, 2, 4);
+      lanes = 4;
+      break;
+    case Load64LaneVec128:
+    case Store64LaneVec128:
+      align = pick(1, 2, 4, 8);
+      lanes = 2;
+      break;
+  }
+  uint8_t index = upTo(lanes);
+  Expression* ptr = makePointer();
+  Expression* vec = make(Type::v128);
+  return builder.makeSIMDLoadStoreLane(
+    op, offset, align, index, ptr, vec, wasm.memories[0]->name);
 }
 
 Expression* TranslateToFuzzReader::makeBulkMemory(Type type) {
