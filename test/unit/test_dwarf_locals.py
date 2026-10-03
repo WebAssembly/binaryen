@@ -1,4 +1,5 @@
 import os
+import shutil
 import tempfile
 
 from scripts.test import shared
@@ -57,6 +58,13 @@ def local(index):
 
 
 class DWARFLocalsTest(utils.BinaryenTestCase):
+    def verify_dwarf(self, path):
+        # Keep the structural assertions runnable without an LLVM installation,
+        # and also check the complete output when the independent verifier exists.
+        verifier = shutil.which('llvm-dwarfdump')
+        if verifier:
+            shared.run_process([verifier, '--verify', path])
+
     def fixture(self, path, count, extra=()):
         # All locals survive; the last local is the most frequent. A final
         # unused local must become unavailable, not silently become local 0.
@@ -123,7 +131,7 @@ class DWARFLocalsTest(utils.BinaryenTestCase):
     def check_variables(self, path, expected):
         with open(path, 'rb') as f:
             parts = sections(f.read())
-        info, locs = parts['.debug_info'], parts['.debug_loc']
+        info, locs = parts['.debug_info'], parts.get('.debug_loc', b'')
         start = 0
         while start < len(info):
             end = start + int.from_bytes(info[start:start + 4], 'little') + 4
@@ -132,7 +140,7 @@ class DWARFLocalsTest(utils.BinaryenTestCase):
         self.assertEqual(start, len(info))
 
     def check_unit(self, info, locs, expected):
-        pos = 11
+        pos = 12 if info[4:6] == b'\x05\0' else 11
         found = {}
         references = []
         type_offset = None
@@ -161,9 +169,12 @@ class DWARFLocalsTest(utils.BinaryenTestCase):
                 loc = int.from_bytes(info[pos:pos + 4], 'little')
                 pos += 4
                 self.assertEqual(locs[loc:loc + 4], word(0xffffffff))
-                loc += 8
+                while locs[loc:loc + 4] == word(0xffffffff):
+                    loc += 8
+                self.assertLessEqual(loc + 10, len(locs))
                 size = int.from_bytes(locs[loc + 8:loc + 10], 'little')
                 expression = locs[loc + 10:loc + 10 + size]
+                self.assertEqual(len(expression), size)
                 self.assertEqual(locs[loc + 10 + size:loc + 18 + size], bytes(8))
             found[name] = expression
             references.append(int.from_bytes(info[pos:pos + 4], 'little'))
@@ -333,3 +344,94 @@ class DWARFLocalsTest(utils.BinaryenTestCase):
             shared.run_process(shared.WASM_OPT +
                                [path, '-g', '--reorder-locals', '-o', out])
             self.check_variables(out, expected)
+
+    def test_location_list_suffix(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = os.path.join(directory, 'input.wasm')
+            out = os.path.join(directory, 'output.wasm')
+            expected = self.fixture(path, 130, [('head', local(130), local(1)),
+                                                ('suffix', local(130), local(1))])
+            with open(path, 'rb') as f:
+                wasm = f.read()
+            parts = sections(wasm)
+            info = bytearray(parts['.debug_info'])
+            field = info.index(b'suffix_4\0') + len(b'suffix_4\0')
+            offset = int.from_bytes(info[field:field + 4], 'little')
+            # A list reference can start at an interior entry. Prepend a base
+            # entry and refer past it, keeping an explicit base at that suffix.
+            # Earlier lists change size, so preserving the old offset is wrong.
+            info[field:field + 4] = word(offset + 8)
+            head = info.index(b'head_4\0') + len(b'head_4\0')
+            info[head:head + 4] = word(offset)
+            locs = parts['.debug_loc']
+            locs = locs[:offset] + word(0xffffffff) + word(0) + locs[offset:]
+            for section, contents in (('.debug_info', info), ('.debug_loc', locs)):
+                wasm = wasm.replace(custom(section, parts[section]), custom(section, contents))
+            with open(path, 'wb') as f:
+                f.write(wasm)
+            self.verify_dwarf(path)
+            shared.run_process(shared.WASM_OPT + [path, '-g', '--reorder-locals', '-o', out])
+            self.check_variables(out, expected)
+            self.verify_dwarf(out)
+
+    def test_expression_references(self):
+        expressions = {
+            'implicit_pointer': lambda _t, v: b'\xa0' + word(v) + b'\0',
+            'convert': lambda t, _v: b'\x10\x2a\xa8' + uleb(t) + b'\x9f',
+            'reinterpret': lambda t, _v: b'\x10\x2a\xa8' + uleb(t) + b'\xa9' + uleb(t) + b'\x9f',
+            'const_type': lambda t, _v: b'\xa4' + uleb(t) + b'\x04\x2a\0\0\0\x9f',
+            'regval_type': lambda t, _v: b'\xa5\0' + uleb(t) + b'\x9f',
+            'deref_type': lambda t, _v: b'\x30\xa6\x04' + uleb(t) + b'\x9f',
+            'xderef_type': lambda t, _v: b'\x30\x30\xa7\x04' + uleb(t) + b'\x9f',
+            'call2': lambda _t, v: b'\x98' + v.to_bytes(2, 'little'),
+            'call4': lambda _t, v: b'\x99' + word(v),
+            'call_ref': lambda _t, v: b'\x9a' + word(v),
+            # Zero is the generic type, not a DIE reference.
+            'generic_type': lambda _t, _v: b'\x30\xa8\0\x9f',
+        }
+        for name, expression in expressions.items():
+            with self.subTest(expression=name), tempfile.TemporaryDirectory() as directory:
+                path = os.path.join(directory, 'input.wasm')
+                out = os.path.join(directory, 'output.wasm')
+                self.fixture(path, 130)
+                with open(path, 'rb') as f:
+                    wasm = f.read()
+                parts = sections(wasm)
+                info = bytearray(parts['.debug_info'][11:25])
+                refs = []
+
+                def variable(name, value):
+                    info.extend(b'\x03' + name.encode() + b'\0' + uleb(len(value)) + value)
+                    refs.append(len(info))
+                    info.extend(bytes(4))
+
+                variable('grow', local(127))
+                target = 12 + len(info)
+                variable('target', local(0))
+                prefix = len(info)
+                variable('other', expression(1, target))
+                info += b'\0'
+                type_offset = 12 + len(info)
+                self.assertLess(type_offset + 1, 128)
+                # Replace the one-byte type placeholder without changing layout.
+                info[prefix:] = (b'\x03other\0' + uleb(len(expression(type_offset, target))) +
+                                 expression(type_offset, target) + word(type_offset) + b'\0')
+                info += b'\x05int\0\x05\x04\0'
+                for ref in refs:
+                    info[ref:ref + 4] = word(type_offset)
+                unit = b'\x05\0\x01\x04' + word(0) + info
+                wasm = wasm.replace(custom('.debug_info', parts['.debug_info']),
+                                    custom('.debug_info', word(len(unit)) + unit))
+                wasm = wasm.replace(custom('.debug_loc', parts['.debug_loc']), b'')
+                with open(path, 'wb') as f:
+                    f.write(wasm)
+                # LLVM's external decoder does not yet support all typed ops;
+                # the structural/operand assertions below still cover them.
+                verify = name not in {'const_type', 'deref_type', 'xderef_type', 'reinterpret'}
+                if verify:
+                    self.verify_dwarf(path)
+                shared.run_process(shared.WASM_OPT + [path, '-g', '--reorder-locals', '-o', out])
+                self.check_variables(out, {'grow': local(128), 'target': local(0),
+                                           'other': expression(type_offset + 1, target + 1)})
+                if verify:
+                    self.verify_dwarf(out)
