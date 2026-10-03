@@ -18,6 +18,7 @@
 #define wasm_dwarf_locals_h
 
 #include "../../third_party/llvm-project/DWARFVisitor.h"
+#include "support/small_vector.h"
 #include "wasm.h"
 #include "llvm/DebugInfo/DWARF/DWARFExpression.h"
 #include "llvm/ObjectYAML/DWARFYAML.h"
@@ -73,6 +74,8 @@ class DwarfLocalRewriter {
     size_t locIndex;
     llvm::DWARFUnit* unit;
     const std::vector<Index>* indices;
+    // Unknown until decoded; only DIE references need later layout iterations.
+    bool hasReferences = true;
   };
   struct Reference {
     Value* value;
@@ -85,6 +88,12 @@ class DwarfLocalRewriter {
     size_t begin, end;
     std::vector<Value*> references;
   };
+  struct ListUse {
+    Value* value;
+    llvm::DWARFUnit* unit;
+    const std::vector<Index>* indices;
+  };
+  using ListUses = std::unordered_map<uint64_t, std::vector<ListUse>>;
   std::vector<Expression> expressions;
   std::vector<Reference> references;
   std::vector<List> lists;
@@ -97,12 +106,15 @@ class DwarfLocalRewriter {
 
   Bytes rewrite(const Bytes& input,
                 llvm::DWARFUnit* unit,
-                const std::vector<Index>* indices) {
+                const std::vector<Index>* indices,
+                bool& hasReferences) {
     using namespace llvm::dwarf;
     llvm::DataExtractor bytes(
       llvm::ArrayRef<uint8_t>(input), true, unit->getAddressByteSize());
     Bytes output;
-    std::unordered_map<uint64_t, size_t> positions;
+    // Instruction boundaries are already ordered. A small vector avoids a
+    // hash allocation per instruction in the common few-op expression.
+    SmallVector<std::pair<uint64_t, size_t>, 8> positions;
     struct Branch {
       size_t operand;
       uint64_t target;
@@ -113,9 +125,24 @@ class DwarfLocalRewriter {
       auto size = llvm::encodeULEB128(value, buf);
       output.insert(output.end(), buf, buf + size);
     };
+    auto fixed = [&](uint64_t value, unsigned width) {
+      if (width < 8 && value >= (uint64_t(1) << (8 * width))) {
+        Fatal() << "relocated DWARF expression reference does not fit";
+      }
+      for (unsigned i = 0; i < width; ++i) {
+        output.push_back(value >> (8 * i));
+      }
+    };
+    auto typeRef = [&](uint64_t& pos) {
+      auto target = bytes.getULEB128(&pos);
+      hasReferences |= target != 0;
+      auto base = unit->getOffset();
+      // Convert/reinterpret use zero for the generic type, not a DIE.
+      uleb(target ? relocate(base + target) - relocate(base) : 0);
+    };
     for (uint64_t pos = 0; pos < input.size();) {
       auto start = pos;
-      positions[start] = output.size();
+      positions.push_back({start, output.size()});
       auto opcode = input[pos++];
       if (opcode == DW_OP_WASM_location) {
         // The Wasm convention uses an unsigned local/global/stack index;
@@ -147,7 +174,8 @@ class DwarfLocalRewriter {
         auto nested =
           rewrite(Bytes(input.begin() + pos, input.begin() + pos + size),
                   unit,
-                  indices);
+                  indices,
+                  hasReferences);
         if (nested.empty()) {
           return {};
         }
@@ -155,6 +183,34 @@ class DwarfLocalRewriter {
         uleb(nested.size());
         output.insert(output.end(), nested.begin(), nested.end());
         pos += size;
+      } else if (opcode >= DW_OP_const_type && opcode <= DW_OP_reinterpret) {
+        // The vendored decoder predates these typed operations. Their type
+        // operands are CU-relative DIE references, not opaque bytes.
+        output.push_back(opcode);
+        if (opcode == DW_OP_regval_type) {
+          uleb(bytes.getULEB128(&pos));
+        } else if (opcode == DW_OP_deref_type || opcode == DW_OP_xderef_type) {
+          output.push_back(bytes.getU8(&pos));
+        }
+        typeRef(pos);
+        if (opcode == DW_OP_const_type) {
+          auto size = bytes.getU8(&pos);
+          if (size > input.size() - pos) {
+            Fatal() << "invalid DWARF typed constant";
+          }
+          output.push_back(size);
+          output.insert(
+            output.end(), input.begin() + pos, input.begin() + pos + size);
+          pos += size;
+        }
+      } else if (opcode == DW_OP_implicit_pointer) {
+        hasReferences = true;
+        output.push_back(opcode);
+        auto width = unit->getFormParams().getDwarfOffsetByteSize();
+        fixed(relocate(bytes.getUnsigned(&pos, width)), width);
+        auto start = pos;
+        bytes.getSLEB128(&pos);
+        output.insert(output.end(), input.begin() + start, input.begin() + pos);
       } else {
         llvm::DWARFExpression::Operation op;
         if (!op.extract(
@@ -170,30 +226,30 @@ class DwarfLocalRewriter {
             {outStart + 1, pos + int16_t(op.getRawOperand(0))});
         } else if (opcode == DW_OP_call2 || opcode == DW_OP_call4 ||
                    opcode == DW_OP_call_ref) {
+          hasReferences = true;
           auto base = opcode == DW_OP_call_ref ? 0 : unit->getOffset();
           auto target = relocate(base + op.getRawOperand(0)) - relocate(base);
           auto width = pos - start - 1;
+          output.resize(outStart + 1);
           if (opcode == DW_OP_call2 && target > UINT16_MAX) {
             output[outStart] = DW_OP_call4;
             width = 4;
-            output.resize(outStart + 1 + width);
           }
-          if (width < 8 && target >= (uint64_t(1) << (8 * width))) {
-            Fatal() << "relocated DWARF expression reference does not fit";
-          }
-          for (size_t i = 0; i < width; ++i) {
-            output[outStart + 1 + i] = target >> (8 * i);
-          }
+          fixed(target, width);
         }
       }
     }
-    positions[input.size()] = output.size();
+    positions.push_back({input.size(), output.size()});
     for (auto [operand, target] : branches) {
-      auto iter = positions.find(target);
-      if (iter == positions.end()) {
+      auto iter = std::lower_bound(
+        positions.begin(),
+        positions.end(),
+        target,
+        [](auto position, auto target) { return position.first < target; });
+      if (iter == positions.end() || (*iter).first != target) {
         Fatal() << "invalid DWARF expression branch target";
       }
-      auto delta = int64_t(iter->second) - int64_t(operand + 2);
+      auto delta = int64_t((*iter).second) - int64_t(operand + 2);
       if (delta < INT16_MIN || delta > INT16_MAX) {
         Fatal() << "relocated DWARF expression branch does not fit";
       }
@@ -247,24 +303,9 @@ class DwarfLocalRewriter {
     }
   };
 
-public:
-  DwarfLocalRewriter(Module& wasm,
-                     llvm::DWARFYAML::Data& data,
-                     llvm::DWARFContext& context,
-                     const BinaryLocations& locations)
-    : wasm(wasm), data(data), context(context), locations(locations) {}
-
-  void run() {
-    if (locations.localIndices.empty()) {
-      return;
-    }
+  ListUses collectReferences() {
     using namespace llvm::dwarf;
-    struct ListUse {
-      Value* value;
-      llvm::DWARFUnit* unit;
-      const std::vector<Index>* indices;
-    };
-    std::unordered_map<uint64_t, std::vector<ListUse>> listUses;
+    ListUses listUses;
     std::map<std::pair<uint64_t, uint64_t>, llvm::DWARFYAML::Abbrev*> abbrevs;
     for (auto& abbrev : data.AbbrevDecls) {
       abbrevs[{abbrev.ListOffset, abbrev.Code}] = &abbrev;
@@ -364,10 +405,63 @@ public:
         }
       }
     }
+    return listUses;
+  }
 
-    // A compiler may share a location list between variables in different
-    // functions or CUs. Their local mappings and CU-relative references need
-    // not agree. Keep groups in DIE order, not pointer order, for determinism.
+  uint64_t locSize(const llvm::DWARFYAML::Loc& loc) const {
+    // Match EmitDebugLoc, including base-address entries and terminators.
+    auto size = 2 * data.CompileUnits[0].AddrSize;
+    if ((loc.Start || loc.End) && loc.Start != uint32_t(-1)) {
+      if (loc.Location.size() > UINT16_MAX) {
+        Fatal() << "relocated DWARF location exceeds the list entry size limit";
+      }
+      size += 2 + loc.Location.size();
+    }
+    return size;
+  }
+
+  void appendList(const std::vector<llvm::DWARFYAML::Loc>& oldLocs,
+                  size_t begin,
+                  size_t end,
+                  const std::vector<ListUse>& uses) {
+    // Different functions or CUs can share a list but require different
+    // rewrites. Keep groups in DIE order, not pointer order, for determinism.
+    std::vector<std::vector<ListUse>> groups;
+    for (auto use : uses) {
+      auto iter = std::find_if(groups.begin(), groups.end(), [&](auto& group) {
+        return group.front().indices == use.indices &&
+               group.front().unit == use.unit;
+      });
+      if (iter == groups.end()) {
+        groups.push_back({use});
+      } else {
+        iter->push_back(use);
+      }
+    }
+    for (auto& group : groups) {
+      List list{data.Locs.size(), data.Locs.size() + end - begin, {}};
+      for (auto use : group) {
+        if (use.value) {
+          list.references.push_back(use.value);
+        }
+      }
+      data.Locs.insert(
+        data.Locs.end(), oldLocs.begin() + begin, oldLocs.begin() + end);
+      for (size_t i = list.begin; i < list.end; ++i) {
+        if (!data.Locs[i].Location.empty()) {
+          expressions.push_back({data.Locs[i].Location,
+                                 nullptr,
+                                 nullptr,
+                                 i,
+                                 group.front().unit,
+                                 group.front().indices});
+        }
+      }
+      lists.push_back(std::move(list));
+    }
+  }
+
+  void collectLists(ListUses listUses) {
     auto oldLocs = std::move(data.Locs);
     for (size_t begin = 0; begin < oldLocs.size();) {
       size_t end = begin + 1;
@@ -375,48 +469,33 @@ public:
       while (end < oldLocs.size() && oldLocs[end].CompileUnitOffset == offset) {
         ++end;
       }
-      auto& uses = listUses[offset];
-      if (uses.empty()) {
-        uses.push_back(
-          {nullptr, context.compile_units().begin()->get(), nullptr});
-      }
-      std::vector<std::vector<ListUse>> groups;
-      for (auto use : uses) {
-        auto iter =
-          std::find_if(groups.begin(), groups.end(), [&](auto& group) {
-            return group.front().indices == use.indices &&
-                   group.front().unit == use.unit;
-          });
-        if (iter == groups.end()) {
-          groups.push_back({use});
-        } else {
-          iter->push_back(use);
+      for (size_t i = begin; i < end; ++i) {
+        auto use = listUses.find(offset);
+        if (use != listUses.end()) {
+          // References may start at any entry, not just a parsed list's head.
+          // Emit each referenced suffix as a list so its CU supplies the
+          // initial base independently of entries preceding that suffix.
+          appendList(oldLocs, i, end, use->second);
+          listUses.erase(use);
+        } else if (i == begin) {
+          // Preserve unreferenced data as well; it needs no local remapping.
+          appendList(
+            oldLocs,
+            begin,
+            end,
+            {{nullptr, context.compile_units().begin()->get(), nullptr}});
         }
-      }
-      for (auto& group : groups) {
-        List list{data.Locs.size(), data.Locs.size() + end - begin, {}};
-        for (auto use : group) {
-          if (use.value) {
-            list.references.push_back(use.value);
-          }
-        }
-        data.Locs.insert(
-          data.Locs.end(), oldLocs.begin() + begin, oldLocs.begin() + end);
-        for (size_t i = list.begin; i < list.end; ++i) {
-          if (!data.Locs[i].Location.empty()) {
-            expressions.push_back({data.Locs[i].Location,
-                                   nullptr,
-                                   nullptr,
-                                   i,
-                                   group.front().unit,
-                                   group.front().indices});
-          }
-        }
-        lists.push_back(std::move(list));
+        offset += locSize(oldLocs[i]);
       }
       begin = end;
     }
+    if (!listUses.empty()) {
+      Fatal() << "DWARF location list does not start at an entry boundary";
+    }
+  }
 
+  bool relocateInfo() {
+    using namespace llvm::dwarf;
     for (;;) {
       bool infoResized = false;
       for (auto& expr : expressions) {
@@ -427,7 +506,12 @@ public:
                        DW_OP_WASM_location) == expr.input.end())) {
           continue;
         }
-        auto bytes = rewrite(expr.input, expr.unit, expr.indices);
+        if (!expr.hasReferences) {
+          continue;
+        }
+        expr.hasReferences = false;
+        auto bytes =
+          rewrite(expr.input, expr.unit, expr.indices, expr.hasReferences);
         if (expr.inlineValue) {
           // A wider local operand can overflow a block1/block2 length. Change
           // the shared abbreviation to the equivalent variable-length form;
@@ -453,17 +537,14 @@ public:
         for (size_t i = list.begin; i < list.end; ++i) {
           auto& loc = data.Locs[i];
           loc.CompileUnitOffset = start;
-          locOffset += 2 * data.CompileUnits[0].AddrSize;
-          if ((loc.Start || loc.End) && loc.Start != uint32_t(-1)) {
-            locOffset += 2 + loc.Location.size();
-          }
+          locOffset += locSize(loc);
         }
       }
       // Most permutations preserve inline expression widths. Location-list
       // offsets are fixed-width attributes, so changing those alone does not
       // require laying out .debug_info or relocating any DIE references.
       if (offsets.empty() && !infoResized) {
-        return;
+        return false;
       }
       for (auto& ref : references) {
         auto value = relocate(ref.target) - relocate(ref.base);
@@ -491,6 +572,10 @@ public:
     for (auto& arange : data.ARanges) {
       arange.CuOffset = relocate(arange.CuOffset);
     }
+    return true;
+  }
+
+  void updatePublicNames() {
     // DWARFYAML only retains one public-name table, and Binaryen leaves these
     // sections un-emitted. Patch their fixed-width references in place instead,
     // preserving every CU's table (and GNU one-byte descriptors).
@@ -559,6 +644,23 @@ public:
         }
         pos = end;
       }
+    }
+  }
+
+public:
+  DwarfLocalRewriter(Module& wasm,
+                     llvm::DWARFYAML::Data& data,
+                     llvm::DWARFContext& context,
+                     const BinaryLocations& locations)
+    : wasm(wasm), data(data), context(context), locations(locations) {}
+
+  void run() {
+    if (locations.localIndices.empty()) {
+      return;
+    }
+    collectLists(collectReferences());
+    if (relocateInfo()) {
+      updatePublicNames();
     }
   }
 };
