@@ -292,11 +292,12 @@ struct CFGWalker : public PostWalker<SubType, VisitorType> {
           // and the target try.
           [[maybe_unused]] bool found = false;
           for (int j = i - 1; j >= 0; j--) {
-            if (self->tryStack[j]->template cast<Try>()->name ==
-                tryy->delegateTarget) {
-              i = j;
-              found = true;
-              break;
+            if (auto* outerTry = self->tryStack[j]->template dynCast<Try>()) {
+              if (outerTry->name == tryy->delegateTarget) {
+                i = j;
+                found = true;
+                break;
+              }
             }
           }
           assert(found);
