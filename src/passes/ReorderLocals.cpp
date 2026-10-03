@@ -24,6 +24,7 @@
 
 #include <memory>
 
+#include "wasm-debug.h"
 #include <pass.h>
 #include <wasm.h>
 
@@ -114,25 +115,7 @@ struct ReorderLocals : public WalkerPass<PostWalker<ReorderLocals>> {
         oldToNew[newToOld[i]] = i;
       }
     }
-    bool reordered = false;
-    if (curr->funcLocation.end) {
-      for (Index i = 0; i < num; ++i) {
-        reordered |= oldToNew[i] != i;
-      }
-    }
-    if (curr->funcLocation.end && reordered) {
-      // DWARF still refers to the input locals until the binary is written.
-      // Keep the mapping per function so this pass remains function-parallel.
-      if (curr->dwarfLocalIndices.empty()) {
-        curr->dwarfLocalIndices = oldToNew;
-      } else {
-        for (auto& index : curr->dwarfLocalIndices) {
-          if (index != Index(-1)) {
-            index = oldToNew[index];
-          }
-        }
-      }
-    }
+    Debug::updateLocalIndices(curr, oldToNew);
     // apply the renaming to AST nodes
     struct ReIndexer : public PostWalker<ReIndexer> {
       std::vector<Index>& oldToNew;
