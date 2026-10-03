@@ -173,6 +173,11 @@ class DwarfLocalRewriter {
           auto base = opcode == DW_OP_call_ref ? 0 : unit->getOffset();
           auto target = relocate(base + op.getRawOperand(0)) - relocate(base);
           auto width = pos - start - 1;
+          if (opcode == DW_OP_call2 && target > UINT16_MAX) {
+            output[outStart] = DW_OP_call4;
+            width = 4;
+            output.resize(outStart + 1 + width);
+          }
           if (width < 8 && target >= (uint64_t(1) << (8 * width))) {
             Fatal() << "relocated DWARF expression reference does not fit";
           }
@@ -202,7 +207,7 @@ class DwarfLocalRewriter {
   // variable-length references. Iterate only if relocation changes a width.
   struct Layout : llvm::DWARFYAML::Visitor {
     DwarfLocalRewriter& owner;
-    size_t cuIndex = 0, dieIndex = 0;
+    size_t dieIndex = 0;
     uint64_t position = 0, start = 0;
     llvm::DWARFUnit* unit = nullptr;
     std::unordered_map<uint64_t, uint64_t> offsets;
@@ -211,7 +216,8 @@ class DwarfLocalRewriter {
       : llvm::DWARFYAML::Visitor(owner.data), owner(owner) {}
 
     void onStartCompileUnit(llvm::DWARFYAML::Unit& cu) override {
-      unit = (owner.context.compile_units().begin() + cuIndex++)->get();
+      auto index = &cu - owner.data.CompileUnits.data();
+      unit = (owner.context.compile_units().begin() + index)->get();
       offsets[unit->getOffset()] = start = position;
       position += (cu.Length.isDWARF64() ? 12 : 4) + (cu.Version >= 5 ? 8 : 7);
       dieIndex = 0;
