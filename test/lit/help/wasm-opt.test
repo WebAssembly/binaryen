@@ -79,6 +79,12 @@
 ;; CHECK-NEXT:   --fuzz-no-invokes                             do not emit invoker functions in
 ;; CHECK-NEXT:                                                 the fuzzer
 ;; CHECK-EMPTY:
+;; CHECK-NEXT:   --fuzz-hang-limit                             the number of runtime iterations
+;; CHECK-NEXT:                                                 (function calls, loop 
+;; CHECK-NEXT:                                                 backbranches) we allow before we
+;; CHECK-NEXT:                                                 trap to prevent a hangs (0 means
+;; CHECK-NEXT:                                                 no hang protection)
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --fuzz-import                                 a module to use as an import in 
 ;; CHECK-NEXT:                                                 -ttf mode
 ;; CHECK-EMPTY:

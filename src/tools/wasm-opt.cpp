@@ -232,7 +232,7 @@ For more on how to optimize effectively, see
       "--fuzz-hang-limit",
       "",
       "the number of runtime iterations (function calls, loop backbranches) we "
-      "allow before we trap to prevent a hangs. 0 means no hang protection.",
+      "allow before we trap to prevent a hangs (0 means no hang protection)",
       WasmOptOption,
       Options::Arguments::One,
       [&](Options* o, const std::string& arguments) {
