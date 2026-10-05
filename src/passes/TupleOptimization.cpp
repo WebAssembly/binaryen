@@ -294,11 +294,22 @@ struct TupleOptimization : public WalkerPass<PostWalker<TupleOptimization>> {
 
         auto* value = curr->value;
         if (auto* make = value->dynCast<TupleMake>()) {
-          // Write each of the tuple.make fields into the proper local.
+          // Write each of the tuple.make fields into a temporary first, then
+          // copy to the target locals, so that if a later operand reads an
+          // earlier field of this tuple, it sees the old value.
+          std::vector<Index> tempIndexes;
+          tempIndexes.reserve(type.size());
+          for (Index i = 0; i < type.size(); i++) {
+            tempIndexes.push_back(Builder::addVar(getFunction(), type[i]));
+          }
           std::vector<Expression*> sets;
           for (Index i = 0; i < type.size(); i++) {
-            auto* value = make->operands[i];
-            sets.push_back(builder.makeLocalSet(targetBase + i, value));
+            sets.push_back(
+              builder.makeLocalSet(tempIndexes[i], make->operands[i]));
+          }
+          for (Index i = 0; i < type.size(); i++) {
+            sets.push_back(builder.makeLocalSet(
+              targetBase + i, builder.makeLocalGet(tempIndexes[i], type[i])));
           }
           replace(builder.makeBlock(sets));
           return;
