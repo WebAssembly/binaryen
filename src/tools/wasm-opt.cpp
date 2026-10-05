@@ -235,7 +235,7 @@ For more on how to optimize effectively, see
       "allow before we trap to prevent a hangs. 0 means no hang protection.",
       WasmOptOption,
       Options::Arguments::One,
-      [&](Options* o, const std::string& arguments) { fuzzParams.HANG_LIMIT = atoi(arguments); })
+      [&](Options* o, const std::string& arguments) { fuzzParams.HANG_LIMIT = std::stoi(arguments); })
     .add(
       "--fuzz-import",
       "",
