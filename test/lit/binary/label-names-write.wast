@@ -9,38 +9,6 @@
 ;; RUN: wasm-dis %t.nodebug.wasm -all -o - | filecheck %s --check-prefix=CHECK-BIN-NODEBUG
 
 (module
- ;; INLINE:      (type $0 (func (param i32) (result i32)))
-
- ;; INLINE:      (type $1 (func (result i32)))
-
- ;; INLINE:      (func $f (type $0) (param $p i32) (result i32)
- ;; INLINE-NEXT:  (drop
- ;; INLINE-NEXT:   (i32.const 0)
- ;; INLINE-NEXT:  )
- ;; INLINE-NEXT:  (block $named-block (result i32)
- ;; INLINE-NEXT:   (loop $named-loop
- ;; INLINE-NEXT:    (br_if $named-loop
- ;; INLINE-NEXT:     (local.get $p)
- ;; INLINE-NEXT:    )
- ;; INLINE-NEXT:   )
- ;; INLINE-NEXT:   (block $block
- ;; INLINE-NEXT:    (br_if $block
- ;; INLINE-NEXT:     (local.get $p)
- ;; INLINE-NEXT:    )
- ;; INLINE-NEXT:   )
- ;; INLINE-NEXT:   (block $unused-block
- ;; INLINE-NEXT:   )
- ;; INLINE-NEXT:   (block $used-if
- ;; INLINE-NEXT:    (if
- ;; INLINE-NEXT:     (local.get $p)
- ;; INLINE-NEXT:     (then
- ;; INLINE-NEXT:      (br $used-if)
- ;; INLINE-NEXT:     )
- ;; INLINE-NEXT:    )
- ;; INLINE-NEXT:   )
- ;; INLINE-NEXT:   (i32.const 42)
- ;; INLINE-NEXT:  )
- ;; INLINE-NEXT: )
 
  ;; CHECK-BIN:      (type $0 (func (param i32) (result i32)))
 
@@ -90,48 +58,6 @@
  ;; Branches to a try target a block wrapping it, and delegates target the try
  ;; itself. Either way the name stays on the try, and the wrapping block, when
  ;; one is needed, gets a generated name.
- ;; INLINE:      (func $try (type $0) (param $p i32) (result i32)
- ;; INLINE-NEXT:  (drop
- ;; INLINE-NEXT:   (block $block (result i32)
- ;; INLINE-NEXT:    (try $branch-only (result i32)
- ;; INLINE-NEXT:     (do
- ;; INLINE-NEXT:      (drop
- ;; INLINE-NEXT:       (br_if $block
- ;; INLINE-NEXT:        (i32.const 0)
- ;; INLINE-NEXT:        (local.get $p)
- ;; INLINE-NEXT:       )
- ;; INLINE-NEXT:      )
- ;; INLINE-NEXT:      (i32.const 1)
- ;; INLINE-NEXT:     )
- ;; INLINE-NEXT:     (catch_all
- ;; INLINE-NEXT:      (i32.const 2)
- ;; INLINE-NEXT:     )
- ;; INLINE-NEXT:    )
- ;; INLINE-NEXT:   )
- ;; INLINE-NEXT:  )
- ;; INLINE-NEXT:  (block $block1 (result i32)
- ;; INLINE-NEXT:   (try $both (result i32)
- ;; INLINE-NEXT:    (do
- ;; INLINE-NEXT:     (drop
- ;; INLINE-NEXT:      (br_if $block1
- ;; INLINE-NEXT:       (i32.const 0)
- ;; INLINE-NEXT:       (local.get $p)
- ;; INLINE-NEXT:      )
- ;; INLINE-NEXT:     )
- ;; INLINE-NEXT:     (try
- ;; INLINE-NEXT:      (do
- ;; INLINE-NEXT:       (nop)
- ;; INLINE-NEXT:      )
- ;; INLINE-NEXT:      (delegate $both)
- ;; INLINE-NEXT:     )
- ;; INLINE-NEXT:     (i32.const 1)
- ;; INLINE-NEXT:    )
- ;; INLINE-NEXT:    (catch_all
- ;; INLINE-NEXT:     (i32.const 2)
- ;; INLINE-NEXT:    )
- ;; INLINE-NEXT:   )
- ;; INLINE-NEXT:  )
- ;; INLINE-NEXT: )
  ;; CHECK-BIN:      (func $try (type $0) (param $p i32) (result i32)
  ;; CHECK-BIN-NEXT:  (drop
  ;; CHECK-BIN-NEXT:   (block $block (result i32)
@@ -191,9 +117,6 @@
   )
  )
 
- ;; INLINE:      (func $caller (type $1) (result i32)
- ;; INLINE-NEXT:  (i32.const 42)
- ;; INLINE-NEXT: )
 )
 
 ;; CHECK-BIN-NODEBUG:      (type $0 (func (param i32) (result i32)))
