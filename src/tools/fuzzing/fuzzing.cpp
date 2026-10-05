@@ -2917,6 +2917,9 @@ Expression* TranslateToFuzzReader::_makeConcrete(Type type) {
   if (type.isTuple()) {
     options.add(FeatureSet::Multivalue, &Self::makeTupleMake);
     if (type == Types::getI64Pair()) {
+      // It is relatively rare to generate an i64 pair, so make sure we take
+      // advantage of the VeryImportant opportunity to emit a wide arithmetic
+      // instruction.
       options.add(FeatureSet::WideArithmetic | FeatureSet::Multivalue,
                   WeightedOption{&Self::makeWideIntExpression, VeryImportant});
     }
