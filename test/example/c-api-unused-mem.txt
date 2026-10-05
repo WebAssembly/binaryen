@@ -36,7 +36,7 @@
   (call $main)
  )
 )
-153
+133
 (module
  (type $0 (func))
  (memory $0 1024 1024)
@@ -47,13 +47,13 @@
   (local $0 i32)
   (local $1 i32)
   (local $2 i64)
-  (block $block$2$break
+  (block $block
    (local.set $0
     (i32.load
      (i32.const 0)
     )
    )
-   (br $block$2$break)
+   (br $block)
   )
   (i32.store
    (i32.const 0)
