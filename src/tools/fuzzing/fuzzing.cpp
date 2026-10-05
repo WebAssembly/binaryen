@@ -3018,7 +3018,7 @@ Expression* TranslateToFuzzReader::_makenone() {
          &Self::makeNop,
          &Self::makeGlobalSet)
     .add(FeatureSet::BulkMemory, &Self::makeBulkMemory)
-    .add(FeatureSet::SIMD, &Self::makeSIMDLoadStoreLane)
+    .add(FeatureSet::SIMD, &Self::makeSIMD)
     .add(FeatureSet::Atomics, &Self::makeAtomic)
     .add(FeatureSet::ReferenceTypes, &Self::makeTableSet)
     .add(FeatureSet::ExceptionHandling, &Self::makeTry)
@@ -3714,12 +3714,6 @@ Expression* TranslateToFuzzReader::makePointer() {
 }
 
 Expression* TranslateToFuzzReader::makeNonAtomicLoad(Type type) {
-  if (type == Type::v128) {
-    assert(wasm.features.hasSIMD());
-    if (oneIn(2)) {
-      return makeSIMDLoadStoreLane(type);
-    }
-  }
   auto offset = logify(get());
   auto ptr = makePointer();
   switch (type.getBasic()) {
@@ -3844,12 +3838,6 @@ Expression* TranslateToFuzzReader::makeNonAtomicStore(Type type) {
   // type.
   if (type == Type::none) {
     type = getStorableType();
-  }
-  if (type == Type::v128) {
-    assert(wasm.features.hasSIMD());
-    if (oneIn(2)) {
-      return makeSIMDLoadStoreLane(Type::none);
-    }
   }
   auto offset = logify(get());
   auto ptr = makePointer();
@@ -5419,6 +5407,9 @@ Expression* TranslateToFuzzReader::makeSIMD(Type type) {
   assert(wasm.features.hasSIMD());
   if (type.isRef()) {
     return makeTrivial(type);
+  }
+  if (type == Type::none) {
+    return makeSIMDLoadStoreLane(Type::none);
   }
   if (type != Type::v128) {
     return makeSIMDExtract(type);
