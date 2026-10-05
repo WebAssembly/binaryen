@@ -5537,27 +5537,6 @@ void BinaryenStringSliceWTFSetEnd(BinaryenExpressionRef expr,
 
 // Functions
 
-// Every label name in a body built through the C API was given to us by the
-// caller, so all of them are explicit.
-static void noteExplicitLabelNames(Function* func) {
-  if (!func->body) {
-    return;
-  }
-  struct Scanner : public PostWalker<Scanner> {
-    std::unordered_set<Name>& names;
-    Scanner(std::unordered_set<Name>& names) : names(names) {}
-    void note(Name name) {
-      if (name) {
-        names.insert(name);
-      }
-    }
-    void visitBlock(Block* curr) { note(curr->name); }
-    void visitLoop(Loop* curr) { note(curr->name); }
-    void visitTry(Try* curr) { note(curr->name); }
-  } scanner(func->explicitLabelNames);
-  scanner.walk(func->body);
-}
-
 static BinaryenFunctionRef addFunctionInternal(BinaryenModuleRef module,
                                                const char* name,
                                                HeapType type,
@@ -5571,7 +5550,6 @@ static BinaryenFunctionRef addFunctionInternal(BinaryenModuleRef module,
     ret->vars.push_back(Type(varTypes[i]));
   }
   ret->body = (Expression*)body;
-  noteExplicitLabelNames(ret);
 
   // Lock. This can be called from multiple threads at once, and is a
   // point where they all access and modify the module.
@@ -6616,7 +6594,6 @@ void BinaryenFunctionSetBody(BinaryenFunctionRef func,
                              BinaryenExpressionRef body) {
   assert(body);
   ((Function*)func)->body = (Expression*)body;
-  noteExplicitLabelNames((Function*)func);
 }
 BinaryenHeapType BinaryenFunctionGetType(BinaryenFunctionRef func) {
   return ((Function*)func)->type.getHeapType().getID();
