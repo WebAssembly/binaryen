@@ -2758,6 +2758,10 @@ void TranslateToFuzzReader::dropToLog(Function* func) {
 }
 
 void TranslateToFuzzReader::addInvocations(Function* func) {
+  if (noInvokes) {
+    return;
+  }
+
   Name name = func->name.toString() + std::string("_invoker");
   if (wasm.getFunctionOrNull(name) || wasm.getExportOrNull(name)) {
     return;

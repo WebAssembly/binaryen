@@ -76,6 +76,9 @@
 ;; CHECK-NEXT:                                                 that assume it is used only from
 ;; CHECK-NEXT:                                                 JS
 ;; CHECK-EMPTY:
+;; CHECK-NEXT:   --fuzz-no-invokes                             do not emit invoker functions in
+;; CHECK-NEXT:                                                 the fuzzer
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --fuzz-import                                 a module to use as an import in 
 ;; CHECK-NEXT:                                                 -ttf mode
 ;; CHECK-EMPTY:
