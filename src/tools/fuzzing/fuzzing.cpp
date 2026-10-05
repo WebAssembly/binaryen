@@ -1481,10 +1481,10 @@ Expression* TranslateToFuzzReader::makeHangLimitCheck() {
     builder.makeIf(
       builder.makeUnary(UnaryOp::EqZInt32,
                         builder.makeGlobalGet(HANG_LIMIT_GLOBAL, Type::i32)),
-      builder.makeSequence(builder.makeGlobalSet(HANG_LIMIT_GLOBAL,
-                                                 builder.makeConst(int32_t(
-                                                   fuzzParams.HANG_LIMIT))),
-                           builder.makeUnreachable())),
+      builder.makeSequence(
+        builder.makeGlobalSet(
+          HANG_LIMIT_GLOBAL, builder.makeConst(int32_t(fuzzParams.HANG_LIMIT))),
+        builder.makeUnreachable())),
     builder.makeGlobalSet(
       HANG_LIMIT_GLOBAL,
       builder.makeBinary(BinaryOp::SubInt32,
@@ -4549,8 +4549,7 @@ Expression* TranslateToFuzzReader::makeCompoundRef(Type type) {
       if (!element.type.isDefaultable() || oneIn(2)) {
         init = makeChild(element.type);
       }
-      auto* count =
-        builder.makeConst(int32_t(upTo(fuzzParams.MAX_ARRAY_SIZE)));
+      auto* count = builder.makeConst(int32_t(upTo(fuzzParams.MAX_ARRAY_SIZE)));
       return builder.makeArrayNew(type.getHeapType(), count, init);
     }
     case HeapTypeKind::Cont: {
