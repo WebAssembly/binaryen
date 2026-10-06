@@ -82,7 +82,8 @@ enum Mode {
   AllResults
 };
 
-LUBFinder getResultsLUB(Function* func, Module& wasm, Mode mode=RefinableTypesOnly);
+LUBFinder
+getResultsLUB(Function* func, Module& wasm, Mode mode = RefinableTypesOnly);
 
 } // namespace LUB
 
