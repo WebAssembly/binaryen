@@ -1890,6 +1890,17 @@ void TranslateToFuzzReader::modFunction(Function* func) {
 
 void TranslateToFuzzReader::addHangLimitChecks(Function* func) {
   // loop limit
+  // TODO: To detect bugs where optimizations erroneously reorder or eliminate
+  //       infinite loops relative to traps or global effects (e.g. #9182), we
+  //       could selectively omit hang limit instrumentation on pure,
+  //       state-invariant loops. If an innermost loop has mayNotReturn but no
+  //       traps, control flow transfers, global writes, allocations, or updates
+  //       to locals read within the loop, its termination behavior is invariant
+  //       across iterations (it either exits on iteration 1 or loops forever).
+  //       Omitting instrumentation on such loops and relying on an interpreter-
+  //       level iteration limit (with a distinct HangLimit result that skips
+  //       native JS VM comparison) allows detecting mayNotReturn reordering
+  //       bugs without false positives from altered iteration counts.
   for (auto* loop : FindAll<Loop>(func->body).list) {
     loop->body =
       builder.makeSequence(makeHangLimitCheck(), loop->body, loop->type);
@@ -2750,6 +2761,10 @@ void TranslateToFuzzReader::dropToLog(Function* func) {
 }
 
 void TranslateToFuzzReader::addInvocations(Function* func) {
+  if (noInvokes) {
+    return;
+  }
+
   Name name = func->name.toString() + std::string("_invoker");
   if (wasm.getFunctionOrNull(name) || wasm.getExportOrNull(name)) {
     return;
