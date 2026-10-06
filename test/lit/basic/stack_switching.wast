@@ -297,8 +297,8 @@
   ;; CHECK-TEXT-NEXT: )
   ;; CHECK-BIN:      (func $unhandled-3 (type $f1)
   ;; CHECK-BIN-NEXT:  (drop
-  ;; CHECK-BIN-NEXT:   (block $block (result (ref $k1))
-  ;; CHECK-BIN-NEXT:    (resume $k1 (on $e2 $block)
+  ;; CHECK-BIN-NEXT:   (block $h (result (ref $k1))
+  ;; CHECK-BIN-NEXT:    (resume $k1 (on $e2 $h)
   ;; CHECK-BIN-NEXT:     (cont.new $k1
   ;; CHECK-BIN-NEXT:      (ref.func $f1)
   ;; CHECK-BIN-NEXT:     )
@@ -329,8 +329,8 @@
   ;; CHECK-TEXT-NEXT: )
   ;; CHECK-BIN:      (func $handled (type $f1)
   ;; CHECK-BIN-NEXT:  (drop
-  ;; CHECK-BIN-NEXT:   (block $block (result (ref $k1))
-  ;; CHECK-BIN-NEXT:    (resume $k1 (on $e1 $block)
+  ;; CHECK-BIN-NEXT:   (block $h (result (ref $k1))
+  ;; CHECK-BIN-NEXT:    (resume $k1 (on $e1 $h)
   ;; CHECK-BIN-NEXT:     (cont.new $k1
   ;; CHECK-BIN-NEXT:      (ref.func $f1)
   ;; CHECK-BIN-NEXT:     )
@@ -372,8 +372,8 @@
   ;; CHECK-TEXT-NEXT: )
   ;; CHECK-BIN:      (func $uncaught-1 (type $f1)
   ;; CHECK-BIN-NEXT:  (drop
-  ;; CHECK-BIN-NEXT:   (block $block (result (ref $k1))
-  ;; CHECK-BIN-NEXT:    (resume $k1 (on $e1 $block)
+  ;; CHECK-BIN-NEXT:   (block $h (result (ref $k1))
+  ;; CHECK-BIN-NEXT:    (resume $k1 (on $e1 $h)
   ;; CHECK-BIN-NEXT:     (cont.new $k1
   ;; CHECK-BIN-NEXT:      (ref.func $f2)
   ;; CHECK-BIN-NEXT:     )
@@ -404,8 +404,8 @@
   ;; CHECK-TEXT-NEXT: )
   ;; CHECK-BIN:      (func $uncaught-2 (type $f1)
   ;; CHECK-BIN-NEXT:  (resume_throw $k1 $exn
-  ;; CHECK-BIN-NEXT:   (block $block (result (ref $k1))
-  ;; CHECK-BIN-NEXT:    (resume $k1 (on $e1 $block)
+  ;; CHECK-BIN-NEXT:   (block $h (result (ref $k1))
+  ;; CHECK-BIN-NEXT:    (resume $k1 (on $e1 $h)
   ;; CHECK-BIN-NEXT:     (cont.new $k1
   ;; CHECK-BIN-NEXT:      (ref.func $f1)
   ;; CHECK-BIN-NEXT:     )
@@ -456,8 +456,8 @@
   ;; CHECK-TEXT-NEXT: )
   ;; CHECK-BIN:      (func $uncaught-3 (type $f1)
   ;; CHECK-BIN-NEXT:  (resume_throw $k1 $exn
-  ;; CHECK-BIN-NEXT:   (block $block (result (ref $k1))
-  ;; CHECK-BIN-NEXT:    (resume $k1 (on $e1 $block)
+  ;; CHECK-BIN-NEXT:   (block $h (result (ref $k1))
+  ;; CHECK-BIN-NEXT:    (resume $k1 (on $e1 $h)
   ;; CHECK-BIN-NEXT:     (cont.new $k1
   ;; CHECK-BIN-NEXT:      (ref.func $f3)
   ;; CHECK-BIN-NEXT:     )
@@ -527,8 +527,8 @@
   ;; CHECK-TEXT-NEXT: )
   ;; CHECK-BIN:      (func $nl2 (type $2) (param $k (ref $k1))
   ;; CHECK-BIN-NEXT:  (drop
-  ;; CHECK-BIN-NEXT:   (block $block (result (ref $k1))
-  ;; CHECK-BIN-NEXT:    (resume $k1 (on $e1 $block)
+  ;; CHECK-BIN-NEXT:   (block $h (result (ref $k1))
+  ;; CHECK-BIN-NEXT:    (resume $k1 (on $e1 $h)
   ;; CHECK-BIN-NEXT:     (local.get $k)
   ;; CHECK-BIN-NEXT:    )
   ;; CHECK-BIN-NEXT:    (unreachable)
@@ -573,16 +573,16 @@
   ;; CHECK-BIN:      (func $nl3 (type $2) (param $k (ref $k1))
   ;; CHECK-BIN-NEXT:  (local $k' (ref null $k1))
   ;; CHECK-BIN-NEXT:  (local.set $k'
-  ;; CHECK-BIN-NEXT:   (block $block (result (ref $k1))
-  ;; CHECK-BIN-NEXT:    (resume $k1 (on $e1 $block)
+  ;; CHECK-BIN-NEXT:   (block $h1 (result (ref $k1))
+  ;; CHECK-BIN-NEXT:    (resume $k1 (on $e1 $h1)
   ;; CHECK-BIN-NEXT:     (local.get $k)
   ;; CHECK-BIN-NEXT:    )
   ;; CHECK-BIN-NEXT:    (unreachable)
   ;; CHECK-BIN-NEXT:   )
   ;; CHECK-BIN-NEXT:  )
   ;; CHECK-BIN-NEXT:  (drop
-  ;; CHECK-BIN-NEXT:   (block $block1 (result (ref $k1))
-  ;; CHECK-BIN-NEXT:    (resume $k1 (on $e1 $block1)
+  ;; CHECK-BIN-NEXT:   (block $h2 (result (ref $k1))
+  ;; CHECK-BIN-NEXT:    (resume $k1 (on $e1 $h2)
   ;; CHECK-BIN-NEXT:     (local.get $k')
   ;; CHECK-BIN-NEXT:    )
   ;; CHECK-BIN-NEXT:    (unreachable)
