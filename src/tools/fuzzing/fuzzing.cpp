@@ -102,11 +102,11 @@ std::vector<MemoryOrder> getMemoryOrders(const FeatureSet& features) {
 
 } // namespace
 
-TranslateToFuzzReader::TranslateToFuzzReader(FuzzParams fuzzParams,
+TranslateToFuzzReader::TranslateToFuzzReader(FuzzParams fuzzParams_,
                                              Module& wasm,
                                              std::vector<char>&& input,
                                              WorldMode worldMode)
-  : fuzzParams(fuzzParams), wasm(wasm), worldMode(worldMode), builder(wasm),
+  : fuzzParams(fuzzParams_), wasm(wasm), worldMode(worldMode), builder(wasm),
     random(std::move(input), wasm.features), intrinsics(wasm),
     loggableTypes(getLoggableTypes(wasm.features)),
     atomicMemoryOrders(getMemoryOrders(wasm.features)),
@@ -160,12 +160,14 @@ TranslateToFuzzReader::TranslateToFuzzReader(FuzzParams fuzzParams,
   allowAddingUnreachableCode = oneIn(2);
 }
 
-TranslateToFuzzReader::TranslateToFuzzReader(FuzzParams fuzzParams,
+TranslateToFuzzReader::TranslateToFuzzReader(FuzzParams fuzzParams_,
                                              Module& wasm,
                                              std::string& filename,
                                              WorldMode worldMode)
-  : TranslateToFuzzReader(fuzzParams,
-      wasm, read_file<std::vector<char>>(filename, Flags::Binary), worldMode) {}
+  : TranslateToFuzzReader(fuzzParams_,
+                          wasm,
+                          read_file<std::vector<char>>(filename, Flags::Binary),
+                          worldMode) {}
 
 void TranslateToFuzzReader::pickPasses(OptimizationOptions& options) {
   // Pick random passes to further shape the wasm. This is similar to how we

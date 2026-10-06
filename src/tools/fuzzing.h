@@ -119,11 +119,11 @@ class TranslateToFuzzReader {
   static constexpr size_t Important = 2;
 
 public:
-  TranslateToFuzzReader(FuzzParams fuzzParams,
+  TranslateToFuzzReader(FuzzParams fuzzParams_,
                         Module& wasm,
                         std::vector<char>&& input,
                         WorldMode worldMode = WorldMode::Open);
-  TranslateToFuzzReader(FuzzParams fuzzParams,
+  TranslateToFuzzReader(FuzzParams fuzzParams_,
                         Module& wasm,
                         std::string& filename,
                         WorldMode worldMode = WorldMode::Open);
