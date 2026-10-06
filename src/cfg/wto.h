@@ -22,12 +22,13 @@
 // strategies with widenings", 1993) is a hierarchical ordering of the reachable
 // blocks of a directed graph in which strongly connected components (loops) are
 // parenthesized into nested cycles. The first element of each cycle is its
-// "head" (loop header), and the ordering satisfies two properties:
+// "head" (loop header). Formally, the WTO of a directed graph is a hierarchical
+// ordering of its vertices such that for every edge u -> v, either:
 //
-//   1. Every non-cycle edge u -> v goes forward in the flattened ordering
-//      (u appears before v).
-//   2. Every backedge u -> v targets the head v of a cycle that encloses both
-//      u and v.
+//   1. u < v (i.e. this is a forward edge) and v is not the head of a cycle
+//      containing u.
+//   2. u >= v (i.e. this is a backedge) and v is the head of a cycle containing
+//      u.
 //
 // Examples (writing `(h ...)` for a cycle with head `h`):
 //
