@@ -272,11 +272,30 @@ template<typename CFG> struct WTOWorklist {
 
   void push(BasicBlock* block) { block->contents.inQueue = true; }
 
+  bool hasBackEdge() const {
+    for (auto* loopTop : cfg.loopTops) {
+      Index h = loopTop->contents.index;
+      for (auto* pred : loopTop->in) {
+        if (pred->contents.index >= h) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   template<typename VisitFn> void run(VisitFn&& visit) {
-    // TODO: Track the number of queued blocks to stop early once the worklist
-    // is empty.
-    // TODO: Fast-path initial entry singletons and CFGs without backedges
-    // without building DomTree or WTO, using CFGWalker::loopTops.
+    // If the CFG has no backedges, a single reverse-postorder pass visits every
+    // reachable block in topological order without constructing DomTree or WTO.
+    if (!hasBackEdge()) {
+      for (auto& block : cfg.basicBlocks) {
+        if (block->contents.inQueue) {
+          block->contents.inQueue = false;
+          visit(block.get());
+        }
+      }
+      return;
+    }
     WeakTopologicalOrdering<BasicBlock> wto(cfg.basicBlocks);
     auto evalList =
       [&](auto& self,
