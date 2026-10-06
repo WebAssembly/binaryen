@@ -3611,20 +3611,18 @@ void WasmBinaryReader::readVars() {
 }
 
 Result<> WasmBinaryReader::readLoad(unsigned bytes, bool signed_, Type type) {
-  auto [mem, align, offset, backing] = getMemarg();
-  if (backing == BackingType::Array) {
-    HeapType arrayType = getIndexedHeapType();
+  auto [mem, align, offset, arrayType] = getMemarg();
+  if (arrayType) {
     return builder.makeArrayLoad(
-      arrayType, bytes, signed_, offset, align, type);
+      *arrayType, bytes, signed_, offset, align, type);
   }
   return builder.makeLoad(bytes, signed_, offset, align, type, mem);
 }
 
 Result<> WasmBinaryReader::readStore(unsigned bytes, Type type) {
-  auto [mem, align, offset, backing] = getMemarg();
-  if (backing == BackingType::Array) {
-    HeapType arrayType = getIndexedHeapType();
-    return builder.makeArrayStore(arrayType, bytes, offset, align, type);
+  auto [mem, align, offset, arrayType] = getMemarg();
+  if (arrayType) {
+    return builder.makeArrayStore(*arrayType, bytes, offset, align, type);
   }
   return builder.makeStore(bytes, offset, align, type, mem);
 }
@@ -5976,12 +5974,12 @@ void WasmBinaryReader::readNoReturnHints(size_t payloadLen) {
   READ_BOOLEAN_HINT(Annotations::NoReturnHint, noReturn);
 }
 
-std::tuple<Address, Address, Index, MemoryOrder, BackingType>
+std::tuple<Address, Address, Index, MemoryOrder, std::optional<HeapType>>
 WasmBinaryReader::readMemoryAccess(bool isAtomic, bool isRMW) {
   auto rawAlignment = getU32LEB();
-  BackingType backing = BackingType::Memory;
   Index memIdx = 0;
   Address offset = 0;
+  std::optional<HeapType> arrayType;
 
   bool hasMemoryOrder = rawAlignment & BinaryConsts::HasMemoryOrderMask;
   if (hasMemoryOrder && !isAtomic) {
@@ -5999,8 +5997,8 @@ WasmBinaryReader::readMemoryAccess(bool isAtomic, bool isRMW) {
     rawAlignment = rawAlignment & ~BinaryConsts::HasMemoryIndexMask;
   }
 
-  if (rawAlignment & BinaryConsts::HasBackingArrayMask) {
-    backing = BackingType::Array;
+  bool hasBackingArray = rawAlignment & BinaryConsts::HasBackingArrayMask;
+  if (hasBackingArray) {
     // Clear the bit before we parse alignment
     rawAlignment = rawAlignment & ~BinaryConsts::HasBackingArrayMask;
   }
@@ -6013,7 +6011,7 @@ WasmBinaryReader::readMemoryAccess(bool isAtomic, bool isRMW) {
   MemoryOrder memoryOrder =
     isAtomic ? MemoryOrder::SeqCst : MemoryOrder::Unordered;
 
-  if (backing == BackingType::Memory) {
+  if (!hasBackingArray) {
     if (hasMemIdx) {
       memIdx = getU32LEB();
     }
@@ -6025,40 +6023,40 @@ WasmBinaryReader::readMemoryAccess(bool isAtomic, bool isRMW) {
     }
     auto* memory = wasm.memories[memIdx].get();
     offset = memory->addressType == Type::i32 ? getU32LEB() : getU64LEB();
-  } else if (backing == BackingType::Array) {
+  } else {
     if (hasMemIdx || hasMemoryOrder) {
       throwError(
         "Memory index and memory order are not allowed for array backing.");
     }
+    arrayType = getIndexedHeapType();
     offset = getU32LEB();
-  } else {
-    WASM_UNREACHABLE("Invalid backing type");
   }
 
-  return {alignment, offset, memIdx, memoryOrder, backing};
+  return {alignment, offset, memIdx, memoryOrder, arrayType};
 }
 
 std::tuple<Name, Address, Address, MemoryOrder>
 WasmBinaryReader::getAtomicMemarg() {
-  auto [alignment, offset, memIdx, memoryOrder, backing] =
+  auto [alignment, offset, memIdx, memoryOrder, arrayType] =
     readMemoryAccess(/*isAtomic=*/true, /*isRMW=*/false);
   return {getMemoryName(memIdx), alignment, offset, memoryOrder};
 }
 
 std::tuple<Name, Address, Address, MemoryOrder>
 WasmBinaryReader::getRMWMemarg() {
-  auto [alignment, offset, memIdx, memoryOrder, backing] =
+  auto [alignment, offset, memIdx, memoryOrder, arrayType] =
     readMemoryAccess(/*isAtomic=*/true, /*isRMW=*/true);
   return {getMemoryName(memIdx), alignment, offset, memoryOrder};
 }
 
-std::tuple<Name, Address, Address, BackingType> WasmBinaryReader::getMemarg() {
-  auto [alignment, offset, memIdx, memoryOrder, backing] =
+std::tuple<Name, Address, Address, std::optional<HeapType>>
+WasmBinaryReader::getMemarg() {
+  auto [alignment, offset, memIdx, memoryOrder, arrayType] =
     readMemoryAccess(/*isAtomic=*/false, /*isRMW=*/false);
-  if (backing == BackingType::Array) {
-    return {Name(), alignment, offset, backing};
+  if (arrayType) {
+    return {Name(), alignment, offset, arrayType};
   }
-  return {getMemoryName(memIdx), alignment, offset, backing};
+  return {getMemoryName(memIdx), alignment, offset, std::nullopt};
 }
 
 MemoryOrder WasmBinaryReader::getMemoryOrder(bool isRMW) {
