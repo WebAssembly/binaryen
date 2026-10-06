@@ -23,17 +23,19 @@ namespace wasm {
 
 namespace LUB {
 
-LUBFinder getResultsLUB(Function* func, Module& wasm) {
+LUBFinder getResultsLUB(Function* func, Module& wasm, Mode mode) {
   LUBFinder lub;
 
-  if (!wasm.features.hasGC()) {
-    return lub;
-  }
+  if (mode == RefinableTypesOnly) {
+    if (!wasm.features.hasGC()) {
+      return lub;
+    }
 
-  Type originalType = func->getResults();
-  if (!originalType.hasRef()) {
-    // Nothing to refine.
-    return lub;
+    Type originalType = func->getResults();
+    if (!originalType.hasRef()) {
+      // Nothing to refine.
+      return lub;
+    }
   }
 
   // Before we do anything, we must refinalize the function, because otherwise
@@ -57,7 +59,9 @@ LUBFinder getResultsLUB(Function* func, Module& wasm) {
 
     Finder(Module& wasm, LUBFinder& lub) : wasm(wasm), lub(lub) {}
 
-    void visitReturn(Return* curr) { lub.note(curr->value->type); }
+    void visitReturn(Return* curr) {
+      lub.note(curr->value ? curr->value->type : Type::none);
+    }
     void visitCall(Call* curr) {
       if (curr->isReturn) {
         lub.note(wasm.getFunction(curr->target)->getResults());

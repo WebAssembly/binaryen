@@ -61,11 +61,28 @@ namespace LUB {
 // Given a function, computes a LUB for its results. The caller can then decide
 // to apply a refined type if we found one.
 //
+// This checks whether the function returns at all, that is, a none-returning
+// function may never return, in which case the LUBFinder will say !noted()
+// (such a function can be made noreturn, as if its return type were refined to
+// unreachable).
+//
 // This modifies the called function even if it fails to find a refined type as
 // it does a refinalize in order to be able to compute the new types. We could
 // roll back that change, but it's not harmful and can help, so we keep it
 // regardless.
-LUBFinder getResultsLUB(Function* func, Module& wasm);
+enum Mode {
+  // In the default mode, we only look for types we can refine: GC types. This
+  // is used in passes that refine function results.
+  RefinableTypesOnly,
+
+  // We can also look for all results, including MVP types and none (no result).
+  // These cannot be normally refined, but we may find that that there is no
+  // return at all, in which case their effective return type is unreachable,
+  // and callers know that calls to them do not return.
+  AllResults
+};
+
+LUBFinder getResultsLUB(Function* func, Module& wasm, Mode mode=RefinableTypesOnly);
 
 } // namespace LUB
 
