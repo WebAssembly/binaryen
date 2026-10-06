@@ -39,7 +39,7 @@ struct MarkNoReturn : public WalkerPass<PostWalker<MarkNoReturn>> {
   void doWalkFunction(Function* func) {
     auto* module = getModule();
     if (!LUB::getResultsLUB(func, *module).noted()) {
-      module->getFunction(name)->funcAnnotations.noReturn = true;
+      func->funcAnnotations.noReturn = true;
     }
   }
 };
