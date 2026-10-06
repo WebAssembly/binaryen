@@ -286,6 +286,9 @@ void PassRegistry::registerPasses() {
   registerPass("mark-js-called",
                "mark js called functions (using configureAll) as doing so",
                createMarkJSCalledPass);
+  registerPass("mark-no-return",
+               "mark functions that do not return, enabling later opts",
+               createMarkNoReturnPass);
   registerPass("memory64-lowering",
                "lower loads and stores to a 64-bit memory to instead use a "
                "32-bit one",
