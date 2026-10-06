@@ -94,7 +94,9 @@ struct WTOElem : std::variant<Index, WTOCycle> {
 WTOCycle::WTOCycle(std::initializer_list<WTOElem> list) : elems(list) {}
 WTOCycle::WTOCycle(WTOList elems) : elems(std::move(elems)) {}
 Index WTOCycle::head() const { return std::get<Index>(elems.front()); }
-bool WTOCycle::operator==(const WTOCycle& other) const = default;
+bool WTOCycle::operator==(const WTOCycle& other) const {
+  return elems == other.elems;
+}
 
 WTOCycle C(std::initializer_list<WTOElem> list) { return WTOCycle(list); }
 
