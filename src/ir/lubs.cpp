@@ -26,12 +26,13 @@ namespace LUB {
 LUBFinder getResultsLUB(Function* func, Module& wasm, Mode mode) {
   LUBFinder lub;
 
+  Type originalType = func->getResults();
+
   if (mode == RefinableTypesOnly) {
     if (!wasm.features.hasGC()) {
       return lub;
     }
 
-    Type originalType = func->getResults();
     if (!originalType.hasRef()) {
       // Nothing to refine.
       return lub;
