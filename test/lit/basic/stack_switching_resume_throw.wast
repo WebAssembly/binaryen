@@ -58,9 +58,9 @@
  ;; CHECK-BIN-NEXT:  (local.set $scratch_2
  ;; CHECK-BIN-NEXT:   (tuple.extract 2 0
  ;; CHECK-BIN-NEXT:    (local.tee $scratch
- ;; CHECK-BIN-NEXT:     (block $block (type $5) (result i32 (ref $ct))
+ ;; CHECK-BIN-NEXT:     (block $handler (type $5) (result i32 (ref $ct))
  ;; CHECK-BIN-NEXT:      (return
- ;; CHECK-BIN-NEXT:       (resume_throw $ct $e (on $t $block)
+ ;; CHECK-BIN-NEXT:       (resume_throw $ct $e (on $t $handler)
  ;; CHECK-BIN-NEXT:        (i64.const 123)
  ;; CHECK-BIN-NEXT:        (local.get $x)
  ;; CHECK-BIN-NEXT:       )

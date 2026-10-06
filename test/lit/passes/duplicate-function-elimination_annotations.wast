@@ -362,3 +362,49 @@
  )
 )
 
+;; One function has the noreturn hint, so we do not merge.
+(module
+ ;; CHECK:      (type $0 (func (param i32)))
+
+ ;; CHECK:      (export "a" (func $a))
+
+ ;; CHECK:      (export "b" (func $b))
+
+ ;; CHECK:      (@binaryen.noreturn)
+ ;; CHECK-NEXT: (func $a (type $0) (param $x i32)
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (@binaryen.noreturn)
+ (func $a (export "a") (param $x i32)
+  (if
+   (local.get $x)
+   (then
+    (unreachable)
+   )
+  )
+ )
+
+ ;; CHECK:      (func $b (type $0) (param $x i32)
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $b (export "b") (param $x i32)
+  (if
+   (local.get $x)
+   (then
+    (unreachable)
+   )
+  )
+ )
+)
+
+

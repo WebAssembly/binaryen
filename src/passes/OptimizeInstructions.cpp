@@ -1690,8 +1690,11 @@ struct OptimizeInstructions
           continue;
         }
       } else if (auto* cast = input->dynCast<RefCast>()) {
-        if (requiredType == Type::none ||
-            Type::isSubType(cast->ref->type, requiredType)) {
+        // Removing a descriptor cast also removes the descriptor operand, which
+        // we can only do if it has no side effects.
+        if ((!cast->desc || !effects(cast->desc).hasSideEffects()) &&
+            (requiredType == Type::none ||
+             Type::isSubType(cast->ref->type, requiredType))) {
           input = cast->ref;
           continue;
         }
