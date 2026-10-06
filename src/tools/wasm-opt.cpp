@@ -372,13 +372,12 @@ For more on how to optimize effectively, see
   }
   if (translateToFuzz) {
     TranslateToFuzzReader reader(
-      wasm, options.extra["infile"], options.passOptions.worldMode);
+      fuzzParams, wasm, options.extra["infile"], options.passOptions.worldMode);
     reader.setAllowMemory(fuzzMemory);
     reader.setAllowOOB(fuzzOOB);
     reader.setPreserveImportsAndExports(fuzzPreserveImportsAndExports);
     reader.setAgainstJS(fuzzAgainstJS);
     reader.setNoInvokes(fuzzNoInvokes);
-    reader.setFuzzParams(fuzzParams);
     if (!fuzzImport.empty()) {
       reader.setImportedModule(fuzzImport);
     }

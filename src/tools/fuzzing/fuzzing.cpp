@@ -102,14 +102,14 @@ std::vector<MemoryOrder> getMemoryOrders(const FeatureSet& features) {
 
 } // namespace
 
-TranslateToFuzzReader::TranslateToFuzzReader(Module& wasm,
+TranslateToFuzzReader::TranslateToFuzzReader(FuzzParams fuzzParams,
+                                             Module& wasm,
                                              std::vector<char>&& input,
                                              WorldMode worldMode)
-  : wasm(wasm), worldMode(worldMode), builder(wasm),
+  : fuzzParams(fuzzParams), wasm(wasm), worldMode(worldMode), builder(wasm),
     random(std::move(input), wasm.features), intrinsics(wasm),
     loggableTypes(getLoggableTypes(wasm.features)),
     atomicMemoryOrders(getMemoryOrders(wasm.features)),
-
     publicTypeValidator(wasm.features) {
 
   haveInitialFunctions = !wasm.functions.empty();
@@ -160,10 +160,11 @@ TranslateToFuzzReader::TranslateToFuzzReader(Module& wasm,
   allowAddingUnreachableCode = oneIn(2);
 }
 
-TranslateToFuzzReader::TranslateToFuzzReader(Module& wasm,
+TranslateToFuzzReader::TranslateToFuzzReader(FuzzParams fuzzParams,
+                                             Module& wasm,
                                              std::string& filename,
                                              WorldMode worldMode)
-  : TranslateToFuzzReader(
+  : TranslateToFuzzReader(fuzzParams,
       wasm, read_file<std::vector<char>>(filename, Flags::Binary), worldMode) {}
 
 void TranslateToFuzzReader::pickPasses(OptimizationOptions& options) {

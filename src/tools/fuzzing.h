@@ -119,10 +119,12 @@ class TranslateToFuzzReader {
   static constexpr size_t Important = 2;
 
 public:
-  TranslateToFuzzReader(Module& wasm,
+  TranslateToFuzzReader(FuzzParams fuzzParams,
+                        Module& wasm,
                         std::vector<char>&& input,
                         WorldMode worldMode = WorldMode::Open);
-  TranslateToFuzzReader(Module& wasm,
+  TranslateToFuzzReader(FuzzParams fuzzParams,
+                        Module& wasm,
                         std::string& filename,
                         WorldMode worldMode = WorldMode::Open);
 
@@ -134,10 +136,11 @@ public:
   }
   void setAgainstJS(bool againstJS_) { againstJS = againstJS_; }
   void setNoInvokes(bool noInvokes_) { noInvokes = noInvokes_; }
-  void setFuzzParams(FuzzParams fuzzParams_) { fuzzParams = fuzzParams_; }
   void setImportedModule(std::string importedModuleName);
 
   void build();
+
+  FuzzParams fuzzParams;
 
   Module& wasm;
 
@@ -276,8 +279,6 @@ private:
   };
 
   FunctionCreationContext* funcContext = nullptr;
-
-  FuzzParams fuzzParams;
 
   const std::vector<MemoryOrder> atomicMemoryOrders;
 
