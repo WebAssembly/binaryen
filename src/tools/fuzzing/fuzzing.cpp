@@ -1683,40 +1683,45 @@ void TranslateToFuzzReader::processFunctions() {
     }
   }
 
-  // Interpose on initial exports. When initial content contains exports, it can
-  // be useful to add new code that executes in them, rather than just adding
-  // new exports later. To some extent modifying the initially-exported function
-  // gives us that, but typically these are small changes, not calls to entirely
-  // new code (and this is especially important when preserveImportsAndExports,
-  // as in that mode we do not add new exports, so this interposing is our main
-  // chance to run new code using the existing exports).
-  //
-  // Interpose with a call before the old code. We do a call here so that we end
-  // up running a useful amount of new code (rather than just make(none) which
-  // would only emit something local in the current function, and which depends
-  // on its contents).
-  // TODO: We could also interpose after, either in functions without results,
-  //       or by saving the results to a temp local as we call.
-  //
-  // Specifically, we will call functions, for simplicity, with no params or
-  // results. Such functions exist in abundance in general, because the
-  // invocations we add look exactly that way. First, find all such functions,
-  // and then find places to interpose calls to them.
-  std::vector<Name> noParamsOrResultFuncs;
-  for (auto& func : wasm.functions) {
-    if (func->getParams() == Type::none && func->getResults() == Type::none) {
-      noParamsOrResultFuncs.push_back(func->name);
+  if (!noInvokes) {
+    // Interpose on initial exports. When initial content contains exports, it
+    // can be useful to add new code that executes in them, rather than just
+    // adding new exports later. To some extent modifying the initially-exported
+    // function gives us that, but typically these are small changes, not calls
+    // to entirely new code. This is especially important when
+    // preserveImportsAndExports, as in that mode we do not add new exports, so
+    // this interposing is our main chance to run new code using the existing
+    // exports. That is, if we cannot add new exports, we cannot add new
+    // invokes, so interposing on existing exports is the best we can do. (When
+    // noInvokes is set, we do not do this, as then the user doesn't want such
+    // extra calls.)
+    //
+    // Interpose with a call before the old code. We do a call here so that we
+    // end up running a useful amount of new code (rather than just make(none)
+    // which would only emit something local in the current function, and which
+    // depends on its contents).
+    // TODO: We could also interpose after, either in functions without results,
+    //       or by saving the results to a temp local as we call.
+    //
+    // Like invokes, we only call functions with no params or results (which is
+    // the form that invokes normally have). First, find all such functions,
+    // then find places to interpose calls to them.
+    std::vector<Name> noParamsOrResultFuncs;
+    for (auto& func : wasm.functions) {
+      if (func->getParams() == Type::none && func->getResults() == Type::none) {
+        noParamsOrResultFuncs.push_back(func->name);
+      }
     }
-  }
-  if (!noParamsOrResultFuncs.empty()) {
-    for (Index i = 0; i < numInitialExports; i++) {
-      auto& exp = wasm.exports[i];
-      if (exp->kind == ExternalKind::Function && upTo(RESOLUTION) < chance) {
-        auto* func = wasm.getFunction(*exp->getInternalName());
-        if (!func->imported()) {
-          auto* call =
-            builder.makeCall(pick(noParamsOrResultFuncs), {}, Type::none);
-          func->body = builder.makeSequence(call, func->body);
+    if (!noParamsOrResultFuncs.empty()) {
+      for (Index i = 0; i < numInitialExports; i++) {
+        auto& exp = wasm.exports[i];
+        if (exp->kind == ExternalKind::Function && upTo(RESOLUTION) < chance) {
+          auto* func = wasm.getFunction(*exp->getInternalName());
+          if (!func->imported()) {
+            auto* call =
+              builder.makeCall(pick(noParamsOrResultFuncs), {}, Type::none);
+            func->body = builder.makeSequence(call, func->body);
+          }
         }
       }
     }
