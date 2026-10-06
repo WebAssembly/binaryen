@@ -443,6 +443,12 @@ public:
         return true;
       }
     }
+    // Cannot reorder code that may not return with traps or global state
+    // changes.
+    if ((mayNotReturn && (other.trap || other.writesGlobalState())) ||
+        (other.mayNotReturn && (trap || writesGlobalState()))) {
+      return true;
+    }
     return false;
   }
 
@@ -833,6 +839,8 @@ private:
       parent.readOrder = parent.writeOrder = MemoryOrder::SeqCst;
       // Traps on unaligned accesses.
       parent.implicitTrap = true;
+      // If the timeout is negative and no-one wakes us.
+      parent.mayNotReturn = true;
     }
     void visitAtomicNotify(AtomicNotify* curr) {
       // Notifies on unshared memories just return 0 or trap on unaligned

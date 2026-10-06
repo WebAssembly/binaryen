@@ -25,6 +25,9 @@
   ;; CHECK-NEXT:  (call $test
   ;; CHECK-NEXT:   (i32.const 5)
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $test
+  ;; CHECK-NEXT:   (i32.const 6)
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $test (param i32)
     ;; Inlining hints are not removed, as they are for the VM too.
@@ -51,5 +54,9 @@
     ;; And this.
     (@binaryen.inline "\00")
     (call $test (i32.const 5))
+
+    ;; And this.
+    (@binaryen.noreturn)
+    (call $test (i32.const 6))
   )
 )

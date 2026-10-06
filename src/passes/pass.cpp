@@ -367,6 +367,9 @@ void PassRegistry::registerPasses() {
   registerPass("optimize-instructions",
                "optimizes instruction combinations",
                createOptimizeInstructionsPass);
+  registerPass("optimize-noreturn",
+               "optimizes calls to @binaryen.noreturn functions",
+               createOptimizeNoReturnPass);
 // Outlining currently relies on LLVM's SuffixTree, which we can't rely upon
 // when building Binaryen for Emscripten.
 #ifndef SKIP_OUTLINING
@@ -668,6 +671,8 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
     addIfNoDWARFIssues("local-cse");
     // TODO: add rereloop etc. here
   }
+  // Add unreachables on noreturn calls before DCE, so DCE cleans them up.
+  addIfNoDWARFIssues("optimize-noreturn");
   addIfNoDWARFIssues("dce");
   addIfNoDWARFIssues("remove-unused-names");
   addIfNoDWARFIssues("remove-unused-brs");

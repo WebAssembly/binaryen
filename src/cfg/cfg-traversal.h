@@ -579,6 +579,7 @@ struct CFGWalker : public PostWalker<SubType, VisitorType> {
 
   void doWalkFunction(Function* func) {
     basicBlocks.clear();
+    loopTops.clear();
     debugIds.clear();
     exit = nullptr;
     hasSyntheticExit = false;

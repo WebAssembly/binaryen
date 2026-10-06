@@ -22,10 +22,10 @@
  )
 
  ;; CHECK:      (func $br_if_gc (type $3) (param $ref (ref any)) (result anyref)
- ;; CHECK-NEXT:  (block $block (result anyref)
+ ;; CHECK-NEXT:  (block $label (result anyref)
  ;; CHECK-NEXT:   (call $receive_any
  ;; CHECK-NEXT:    (ref.cast (ref any)
- ;; CHECK-NEXT:     (br_if $block
+ ;; CHECK-NEXT:     (br_if $label
  ;; CHECK-NEXT:      (local.get $ref)
  ;; CHECK-NEXT:      (i32.const 0)
  ;; CHECK-NEXT:     )
@@ -51,7 +51,7 @@
  ;; CHECK-NEXT:  (local $0 (ref (exact $cont)))
  ;; CHECK-NEXT:  (local $1 i32)
  ;; CHECK-NEXT:  (local $scratch (ref (exact $cont)))
- ;; CHECK-NEXT:  (block $block (result contref)
+ ;; CHECK-NEXT:  (block $label (result contref)
  ;; CHECK-NEXT:   (local.set $0
  ;; CHECK-NEXT:    (block (result (ref (exact $cont)))
  ;; CHECK-NEXT:     (local.set $scratch
@@ -66,7 +66,7 @@
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (br_if $block
+ ;; CHECK-NEXT:    (br_if $label
  ;; CHECK-NEXT:     (local.get $0)
  ;; CHECK-NEXT:     (local.get $1)
  ;; CHECK-NEXT:    )
@@ -113,7 +113,7 @@
  ;; CHECK-NEXT:  (local $scratch_5 (ref any))
  ;; CHECK-NEXT:  (local $scratch_6 (tuple (ref any) i32))
  ;; CHECK-NEXT:  (local $scratch_7 (ref any))
- ;; CHECK-NEXT:  (block $block (type $8) (result anyref i32)
+ ;; CHECK-NEXT:  (block $label (type $8) (result anyref i32)
  ;; CHECK-NEXT:   (local.set $1
  ;; CHECK-NEXT:    (block (result (ref any))
  ;; CHECK-NEXT:     (local.set $scratch_5
@@ -138,7 +138,7 @@
  ;; CHECK-NEXT:     (local.set $scratch_7
  ;; CHECK-NEXT:      (tuple.extract 2 0
  ;; CHECK-NEXT:       (local.tee $scratch_6
- ;; CHECK-NEXT:        (br_if $block
+ ;; CHECK-NEXT:        (br_if $label
  ;; CHECK-NEXT:         (tuple.make 2
  ;; CHECK-NEXT:          (local.get $1)
  ;; CHECK-NEXT:          (local.get $3)
@@ -184,7 +184,7 @@
  ;; CHECK-NEXT:  (local $scratch_4 (ref (exact $cont)))
  ;; CHECK-NEXT:  (local $scratch_5 (tuple (ref (exact $cont)) i32))
  ;; CHECK-NEXT:  (local $scratch_6 (ref (exact $cont)))
- ;; CHECK-NEXT:  (block $block (type $2) (result contref i32)
+ ;; CHECK-NEXT:  (block $label (type $2) (result contref i32)
  ;; CHECK-NEXT:   (local.set $0
  ;; CHECK-NEXT:    (block (result (ref (exact $cont)))
  ;; CHECK-NEXT:     (local.set $scratch_4
@@ -211,7 +211,7 @@
  ;; CHECK-NEXT:     (local.set $scratch_6
  ;; CHECK-NEXT:      (tuple.extract 2 0
  ;; CHECK-NEXT:       (local.tee $scratch_5
- ;; CHECK-NEXT:        (br_if $block
+ ;; CHECK-NEXT:        (br_if $label
  ;; CHECK-NEXT:         (tuple.make 2
  ;; CHECK-NEXT:          (local.get $0)
  ;; CHECK-NEXT:          (local.get $2)

@@ -35,8 +35,8 @@
   ;; CHECK-BIN-NEXT:  (if
   ;; CHECK-BIN-NEXT:   (i32.const 0)
   ;; CHECK-BIN-NEXT:   (then
-  ;; CHECK-BIN-NEXT:    (block $block
-  ;; CHECK-BIN-NEXT:     (br_table $block
+  ;; CHECK-BIN-NEXT:    (block $A
+  ;; CHECK-BIN-NEXT:     (br_table $A
   ;; CHECK-BIN-NEXT:      (i32.const 0)
   ;; CHECK-BIN-NEXT:     )
   ;; CHECK-BIN-NEXT:    )

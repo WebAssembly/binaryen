@@ -73,6 +73,13 @@ struct LoopInvariantCodeMotion
     EffectAnalyzer loopEffects(getPassOptions(), *getModule(), loop);
     loopEffects.localsRead.clear();
     loopEffects.localsWritten.clear();
+    // We can ignore the loop's mayNotReturn effect because any hoisted
+    // instruction already executes on the first iteration before the loop can
+    // branch back (or before any inner loop after it; inner loops before it are
+    // tracked in effectsSoFar), and since the hoisted instruction is
+    // loop-invariant, it cannot trap on later iterations without trapping on
+    // the first.
+    loopEffects.mayNotReturn = false;
     // Note all the sets in each loop, and how many per index. Currently
     // EffectAnalyzer can't do that, and we need it to know if we
     // can move a set out of the loop (if there is another set

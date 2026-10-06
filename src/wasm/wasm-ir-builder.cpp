@@ -1146,6 +1146,12 @@ Result<> IRBuilder::visitEnd() {
 
   bool isTry = scope.getTry() || scope.getCatch() || scope.getCatchAll();
   auto& label = isTry ? scope.branchLabel : scope.label;
+  // Whichever expression ends up carrying the scope's label, it is
+  // `scope.label` that it carries: the branch label of a try is always one we
+  // generated. Remember it if it was given to us, so that we write it out.
+  if (scope.labelExplicit) {
+    noteExplicitLabel(scope.label);
+  }
   auto blockType = scope.getResultType();
 
   // When we wrap an expression then push the wrapper, we would end up with the
@@ -1459,8 +1465,12 @@ Result<Name> IRBuilder::getLabelName(Index label, bool forDelegate) {
     useTryBranchLabel ? (*scope)->branchLabel : (*scope)->label;
 
   if (!scopeLabel) {
-    // The scope does not already have a name, so we need to create one.
-    if ((*scope)->getBlock()) {
+    // The scope does not already have a name, so we need to create one. Use the
+    // name from the name section, if we have one.
+    if (auto hint = (*scope)->nameHint) {
+      scopeLabel = makeFresh(hint);
+      (*scope)->labelExplicit = true;
+    } else if ((*scope)->getBlock()) {
       scopeLabel = makeFresh("block", blockHint++);
     } else {
       scopeLabel = makeFresh("label", labelHint++);
@@ -1472,6 +1482,12 @@ Result<Name> IRBuilder::getLabelName(Index label, bool forDelegate) {
   return scopeLabel;
 }
 
+void IRBuilder::setScopeNameHint(Name name) {
+  if (!scopeStack.empty()) {
+    scopeStack.back().nameHint = name;
+  }
+}
+
 Result<> IRBuilder::makeNop() {
   push(builder.makeNop());
   return Ok{};
@@ -1481,7 +1497,7 @@ Result<> IRBuilder::makeBlock(Name label, Signature sig) {
   auto* block = wasm.allocator.alloc<Block>();
   block->name = label;
   block->type = sig.results;
-  return visitBlockStart(block, sig.params);
+  return markLabelExplicit(label, visitBlockStart(block, sig.params));
 }
 
 Result<> IRBuilder::makeIf(Name label,
@@ -1490,14 +1506,14 @@ Result<> IRBuilder::makeIf(Name label,
   auto* iff = wasm.allocator.alloc<If>();
   iff->type = sig.results;
   applyAnnotations(iff, annotations);
-  return visitIfStart(iff, label, sig.params);
+  return markLabelExplicit(label, visitIfStart(iff, label, sig.params));
 }
 
 Result<> IRBuilder::makeLoop(Name label, Signature sig) {
   auto* loop = wasm.allocator.alloc<Loop>();
   loop->name = label;
   loop->type = sig.results;
-  return visitLoopStart(loop, sig.params);
+  return markLabelExplicit(label, visitLoopStart(loop, sig.params));
 }
 
 Result<> IRBuilder::makeBreak(Index label,
@@ -2035,7 +2051,7 @@ Result<> IRBuilder::makeElemDrop(Name segment) {
 Result<> IRBuilder::makeTry(Name label, Signature sig) {
   auto* tryy = wasm.allocator.alloc<Try>();
   tryy->type = sig.results;
-  return visitTryStart(tryy, label, sig.params);
+  return markLabelExplicit(label, visitTryStart(tryy, label, sig.params));
 }
 
 Result<> IRBuilder::makeTryTable(Name label,
@@ -2053,7 +2069,8 @@ Result<> IRBuilder::makeTryTable(Name label,
     CHECK_ERR(name);
     trytable->catchDests.push_back(*name);
   }
-  return visitTryTableStart(trytable, label, sig.params);
+  return markLabelExplicit(label,
+                           visitTryTableStart(trytable, label, sig.params));
 }
 
 Result<> IRBuilder::makeThrow(Name tag) {
@@ -3040,6 +3057,11 @@ void IRBuilder::applyAnnotations(Expression* expr,
   if (annotation.toolchainInline) {
     assert(func);
     func->codeAnnotations[expr].toolchainInline = annotation.toolchainInline;
+  }
+
+  if (annotation.noReturn) {
+    assert(func);
+    func->codeAnnotations[expr].noReturn = true;
   }
 }
 
