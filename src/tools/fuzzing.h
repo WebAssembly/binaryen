@@ -133,6 +133,7 @@ public:
     preserveImportsAndExports = preserveImportsAndExports_;
   }
   void setAgainstJS(bool againstJS_) { againstJS = againstJS_; }
+  void setNoInvokes(bool noInvokes_) { noInvokes = noInvokes_; }
   void setImportedModule(std::string importedModuleName);
 
   void build();
@@ -164,6 +165,9 @@ private:
   // modify the wasm in ways that keep it valid from JS's point of view, but
   // which might cause issues when linked against wasm or used otherwise.
   bool againstJS = false;
+
+  // Whether to avoid emitting invoker functions.
+  bool noInvokes = false;
 
   // An optional module to import from.
   std::optional<Module> importedModule;
