@@ -2736,6 +2736,7 @@ opt_choices = [
     ('--once-reduction',),
     ("--optimize-casts",),
     ("--optimize-instructions",),
+    ("--optimize-noreturn",),
     ("--optimize-stack-ir",),
     ("--generate-stack-ir", "--optimize-stack-ir",),
     # the full lifecycle of stack IR: generate, optimize, and write (and read)

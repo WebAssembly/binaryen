@@ -118,14 +118,14 @@
   ;; CHECK-TEXT-NEXT: )
   ;; CHECK-BIN:      (func $ref-get-desc (type $16) (param $described (ref null $described)) (param $middle-exact (ref null (exact $middle)))
   ;; CHECK-BIN-NEXT:  (drop
-  ;; CHECK-BIN-NEXT:   (block (result (ref $middle))
+  ;; CHECK-BIN-NEXT:   (block $l1 (result (ref $middle))
   ;; CHECK-BIN-NEXT:    (ref.get_desc $described
   ;; CHECK-BIN-NEXT:     (local.get $described)
   ;; CHECK-BIN-NEXT:    )
   ;; CHECK-BIN-NEXT:   )
   ;; CHECK-BIN-NEXT:  )
   ;; CHECK-BIN-NEXT:  (drop
-  ;; CHECK-BIN-NEXT:   (block (result (ref (exact $describing)))
+  ;; CHECK-BIN-NEXT:   (block $l2 (result (ref (exact $describing)))
   ;; CHECK-BIN-NEXT:    (ref.get_desc $middle
   ;; CHECK-BIN-NEXT:     (local.get $middle-exact)
   ;; CHECK-BIN-NEXT:    )
@@ -190,9 +190,9 @@
   ;; CHECK-TEXT-NEXT: )
   ;; CHECK-BIN:      (func $br-on-cast-desc-eq (type $7) (param $any anyref) (param $descriptor (ref null $describing))
   ;; CHECK-BIN-NEXT:  (drop
-  ;; CHECK-BIN-NEXT:   (block $block (result (ref null $middle))
+  ;; CHECK-BIN-NEXT:   (block $l (result (ref null $middle))
   ;; CHECK-BIN-NEXT:    (drop
-  ;; CHECK-BIN-NEXT:     (br_on_cast_desc_eq $block anyref (ref null $middle)
+  ;; CHECK-BIN-NEXT:     (br_on_cast_desc_eq $l anyref (ref null $middle)
   ;; CHECK-BIN-NEXT:      (local.get $any)
   ;; CHECK-BIN-NEXT:      (local.get $descriptor)
   ;; CHECK-BIN-NEXT:     )
@@ -225,8 +225,8 @@
   ;; CHECK-TEXT-NEXT: )
   ;; CHECK-BIN:      (func $br-on-cast-desc-eq-fail (type $7) (param $any anyref) (param $descriptor (ref null $describing))
   ;; CHECK-BIN-NEXT:  (drop
-  ;; CHECK-BIN-NEXT:   (block $block (result anyref)
-  ;; CHECK-BIN-NEXT:    (br_on_cast_desc_eq_fail $block anyref (ref null $middle)
+  ;; CHECK-BIN-NEXT:   (block $l (result anyref)
+  ;; CHECK-BIN-NEXT:    (br_on_cast_desc_eq_fail $l anyref (ref null $middle)
   ;; CHECK-BIN-NEXT:     (local.get $any)
   ;; CHECK-BIN-NEXT:     (local.get $descriptor)
   ;; CHECK-BIN-NEXT:    )
@@ -262,7 +262,7 @@
   ;; CHECK-TEXT-NEXT: )
   ;; CHECK-BIN:      (func $br-on-cast-desc-eq-unreachable (type $6)
   ;; CHECK-BIN-NEXT:  (drop
-  ;; CHECK-BIN-NEXT:   (block (result (ref null $middle))
+  ;; CHECK-BIN-NEXT:   (block $l (result (ref null $middle))
   ;; CHECK-BIN-NEXT:    (unreachable)
   ;; CHECK-BIN-NEXT:   )
   ;; CHECK-BIN-NEXT:  )
@@ -296,7 +296,7 @@
     ;; CHECK-TEXT-NEXT: )
     ;; CHECK-BIN:      (func $br-on-cast-desc-eq-fail-unreachable (type $6)
     ;; CHECK-BIN-NEXT:  (drop
-    ;; CHECK-BIN-NEXT:   (block (result (ref null $middle))
+    ;; CHECK-BIN-NEXT:   (block $l (result (ref null $middle))
     ;; CHECK-BIN-NEXT:    (unreachable)
     ;; CHECK-BIN-NEXT:   )
     ;; CHECK-BIN-NEXT:  )
@@ -325,7 +325,7 @@
   ;; CHECK-TEXT-NEXT: )
   ;; CHECK-BIN:      (func $br-on-cast-desc-eq-unreachable-desc (type $8) (param $descriptor (ref null $describing))
   ;; CHECK-BIN-NEXT:  (drop
-  ;; CHECK-BIN-NEXT:   (block (result (ref null $middle))
+  ;; CHECK-BIN-NEXT:   (block $l (result (ref null $middle))
   ;; CHECK-BIN-NEXT:    (unreachable)
   ;; CHECK-BIN-NEXT:   )
   ;; CHECK-BIN-NEXT:  )
@@ -355,7 +355,7 @@
   ;; CHECK-TEXT-NEXT: )
   ;; CHECK-BIN:      (func $br-on-cast-desc-eq-fail-unreachable-desc (type $8) (param $descriptor (ref null $describing))
   ;; CHECK-BIN-NEXT:  (drop
-  ;; CHECK-BIN-NEXT:   (block (result (ref null $middle))
+  ;; CHECK-BIN-NEXT:   (block $l (result (ref null $middle))
   ;; CHECK-BIN-NEXT:    (unreachable)
   ;; CHECK-BIN-NEXT:   )
   ;; CHECK-BIN-NEXT:  )
