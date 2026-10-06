@@ -139,9 +139,15 @@ WeakTopologicalOrdering<BasicBlock>::WeakTopologicalOrdering(
 
   static constexpr Index NoIndex = Index(-1);
   struct Node {
+    // The innermost loop header for the cycle containing this block.
     Index loopParent = NoIndex;
+    // For loop headers, the index of their first child (i.e. the head of a
+    // linked list of children).
     Index firstChild = NoIndex;
+    // A linked list edge to the next child with the same loop header.
     Index nextSibling = NoIndex;
+    // The index of the loop header we last traversed this node for, used
+    // instead of a `visited` set during the DFS.
     Index lastVisitedBy = NoIndex;
     bool isLoopHeader = false;
   };
@@ -159,17 +165,27 @@ WeakTopologicalOrdering<BasicBlock>::WeakTopologicalOrdering(
     if (!isReachable(h)) {
       continue;
     }
+    // Check if h is the head of a loop. It is a loop header if and only if it
+    // dominates one of its predecessors. (We assume the CFG is reducible, so
+    // loop headers dominate all blocks in the loop bodies, including those that
+    // branch back to the header.)
     nodes[h].lastVisitedBy = h;
     for (auto* pred : blocks[h]->in) {
       Index p = pred->contents.index;
       if (dominates(h, p)) {
         nodes[h].isLoopHeader = true;
+        // Avoid repeat traversals by setting lastVisitedBy = h on visited
+        // blocks.
         if (nodes[p].lastVisitedBy != h) {
           nodes[p].lastVisitedBy = h;
           worklist.push_back(p);
         }
       }
     }
+    // We've initialized the worklist with all the loop tails that branch
+    // directly back to the loop header. DFS from those loop tails back to the
+    // loop header (but no further). All the blocks we find during the DFS are
+    // part of the loop body.
     while (!worklist.empty()) {
       Index curr = worklist.back();
       worklist.pop_back();
@@ -178,6 +194,8 @@ WeakTopologicalOrdering<BasicBlock>::WeakTopologicalOrdering(
       }
       for (auto* pred : blocks[curr]->in) {
         Index p = pred->contents.index;
+        // The loop header has lastVisitedBy == h, so the search will stop
+        // there.
         if (isReachable(p) && nodes[p].lastVisitedBy != h) {
           assert(dominates(h, p) && "Expected reducible CFG");
           nodes[p].lastVisitedBy = h;
@@ -197,14 +215,17 @@ WeakTopologicalOrdering<BasicBlock>::WeakTopologicalOrdering(
     }
     Index parent = nodes[idx].loopParent;
     if (parent == NoIndex) {
+      // Prepend to top-level list.
       nodes[idx].nextSibling = topFirstChild;
       topFirstChild = idx;
     } else {
+      // Prepend to loop header's list.
       nodes[idx].nextSibling = nodes[parent].firstChild;
       nodes[parent].firstChild = idx;
     }
   }
 
+  // Traverse the linked lists of children, materializing them as WTO elements.
   // TODO: Flatten the WTO into a single contiguous vector of entries with cycle
   // jump targets to avoid per-cycle vector allocations and recursion.
   auto buildList = [&](auto& self, Index firstChild, List& out) -> void {
