@@ -93,6 +93,7 @@ const Name RemovableIfUnusedHint = "binaryen.removable.if.unused";
 const Name JSCalledHint = "binaryen.js.called";
 const Name IdempotentHint = "binaryen.idempotent";
 const Name ToolchainInlineHint = "binaryen.inline";
+const Name NoReturnHint = "binaryen.noreturn";
 
 } // namespace Annotations
 
@@ -1760,7 +1761,10 @@ Type Function::getLocalType(Index index) {
   }
 }
 
-void Function::clearNames() { localNames.clear(); }
+void Function::clearNames() {
+  localNames.clear();
+  explicitLabelNames.clear();
+}
 
 void Function::clearDebugInfo() {
   localIndices.clear();
