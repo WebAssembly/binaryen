@@ -9,8 +9,7 @@
 
  ;; CHECK:      (type $2 (func (result anyref)))
 
- ;; CHECK:      (@binaryen.noreturn)
- ;; CHECK-NEXT: (func $none (type $0)
+ ;; CHECK:      (func $none (type $0)
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  (func $none
@@ -27,8 +26,7 @@
   (unreachable)
  )
 
- ;; CHECK:      (@binaryen.noreturn)
- ;; CHECK-NEXT: (func $i32 (type $1) (result i32)
+ ;; CHECK:      (func $i32 (type $1) (result i32)
  ;; CHECK-NEXT:  (i32.const 42)
  ;; CHECK-NEXT: )
  (func $i32 (result i32)
