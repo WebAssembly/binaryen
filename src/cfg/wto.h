@@ -80,7 +80,6 @@
 
 #include <cassert>
 #include <memory>
-#include <variant>
 #include <vector>
 
 #include "cfg/domtree.h"
@@ -91,18 +90,17 @@ namespace wasm {
 // The BasicBlock type is assumed to have an `in` vector of predecessor block
 // pointers and a `contents.index` field of type `Index`.
 template<typename BasicBlock> struct WeakTopologicalOrdering {
-  struct Cycle;
-  using Element = std::variant<BasicBlock*, Cycle>;
-  using List = std::vector<Element>;
+  static constexpr Index NoTarget = Index(-1);
 
-  struct Cycle {
-    List elems;
-
-    BasicBlock* head() const { return std::get<BasicBlock*>(elems.front()); }
-    bool operator==(const Cycle&) const = default;
+  // Each entry either visits `block` (`cycleTarget == NoTarget`) or marks the
+  // end of the cycle headed by `block` (`cycleTarget` is the entry index of the
+  // cycle header).
+  struct Entry {
+    BasicBlock* block = nullptr;
+    Index cycleTarget = NoTarget;
   };
 
-  List elems;
+  std::vector<Entry> entries;
 
   WeakTopologicalOrdering(std::vector<std::unique_ptr<BasicBlock>>& blocks);
 };
@@ -219,24 +217,23 @@ WeakTopologicalOrdering<BasicBlock>::WeakTopologicalOrdering(
     }
   }
 
-  // TODO: Flatten the WTO into a single contiguous vector of entries with cycle
-  // jump targets to avoid per-cycle vector allocations and recursion.
-  auto buildList = [&](auto& self, Index firstChild, List& out) -> void {
+  entries.reserve(numBlocks * 2);
+  auto emitList = [&](auto& self, Index firstChild) -> void {
     for (Index curr = firstChild; curr != NoIndex;
          curr = nodes[curr].nextSibling) {
       auto* block = blocks[curr].get();
       if (nodes[curr].isLoopHeader) {
-        Cycle cycle;
-        cycle.elems.emplace_back(block);
-        self(self, nodes[curr].firstChild, cycle.elems);
-        out.emplace_back(std::move(cycle));
+        Index startPc = entries.size();
+        entries.push_back({block, NoTarget});
+        self(self, nodes[curr].firstChild);
+        entries.push_back({block, startPc});
       } else {
-        out.emplace_back(block);
+        entries.push_back({block, NoTarget});
       }
     }
   };
 
-  buildList(buildList, topFirstChild, elems);
+  emitList(emitList, topFirstChild);
 }
 
 // Given a CFG in reverse postorder (e.g. from cfg-traversal), run a forward
@@ -297,27 +294,23 @@ template<typename CFG> struct WTOWorklist {
       return;
     }
     WeakTopologicalOrdering<BasicBlock> wto(cfg.basicBlocks);
-    auto evalList =
-      [&](auto& self,
-          const typename WeakTopologicalOrdering<BasicBlock>::List& list)
-      -> void {
-      for (const auto& elem : list) {
-        if (auto* block = std::get_if<BasicBlock*>(&elem)) {
-          if ((*block)->contents.inQueue) {
-            (*block)->contents.inQueue = false;
-            visit(*block);
-          }
-        } else {
-          const auto& cycle =
-            std::get<typename WeakTopologicalOrdering<BasicBlock>::Cycle>(elem);
-          BasicBlock* head = cycle.head();
-          do {
-            self(self, cycle.elems);
-          } while (head->contents.inQueue);
+    const auto& entries = wto.entries;
+    Index pc = 0;
+    Index end = entries.size();
+    while (pc < end) {
+      const auto& entry = entries[pc];
+      if (entry.cycleTarget == WeakTopologicalOrdering<BasicBlock>::NoTarget) {
+        if (entry.block->contents.inQueue) {
+          entry.block->contents.inQueue = false;
+          visit(entry.block);
         }
+        ++pc;
+      } else if (entry.block->contents.inQueue) {
+        pc = entry.cycleTarget;
+      } else {
+        ++pc;
       }
-    };
-    evalList(evalList, wto.elems);
+    }
   }
 };
 
