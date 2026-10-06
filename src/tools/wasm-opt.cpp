@@ -87,6 +87,7 @@ int main(int argc, const char* argv[]) {
   bool fuzzOOB = true;
   bool fuzzPreserveImportsAndExports = false;
   bool fuzzAgainstJS = false;
+  bool fuzzNoInvokes = false;
   std::string fuzzImport;
   std::string emitSpecWrapper;
   std::string emitWasm2CWrapper;
@@ -219,6 +220,13 @@ For more on how to optimize effectively, see
       WasmOptOption,
       Options::Arguments::Zero,
       [&](Options* o, const std::string& arguments) { fuzzAgainstJS = true; })
+    .add(
+      "--fuzz-no-invokes",
+      "",
+      "do not emit invoker functions in the fuzzer",
+      WasmOptOption,
+      Options::Arguments::Zero,
+      [&](Options* o, const std::string& arguments) { fuzzNoInvokes = true; })
     .add(
       "--fuzz-import",
       "",
@@ -358,6 +366,7 @@ For more on how to optimize effectively, see
     reader.setAllowOOB(fuzzOOB);
     reader.setPreserveImportsAndExports(fuzzPreserveImportsAndExports);
     reader.setAgainstJS(fuzzAgainstJS);
+    reader.setNoInvokes(fuzzNoInvokes);
     if (!fuzzImport.empty()) {
       reader.setImportedModule(fuzzImport);
     }
