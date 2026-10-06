@@ -17,6 +17,7 @@ Current Trunk
 
  - Add a new wasm-embed tool for extracting Wasm modules embedded as byte arrays
    in JS source files or replacing such modules in the JS source (#9127)
+ - Support reading and writing label names in the name section (#9166)
 
 v133
 ----

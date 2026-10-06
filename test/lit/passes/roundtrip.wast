@@ -12,7 +12,7 @@
  ;; CHECK-NEXT:    (local.set $scratch_1
  ;; CHECK-NEXT:     (tuple.extract 2 0
  ;; CHECK-NEXT:      (local.tee $scratch
- ;; CHECK-NEXT:       (block (type $1) (result funcref (ref $none))
+ ;; CHECK-NEXT:       (block $block (type $1) (result funcref (ref $none))
  ;; CHECK-NEXT:        (tuple.make 2
  ;; CHECK-NEXT:         (ref.null nofunc)
  ;; CHECK-NEXT:         (ref.func $foo)
