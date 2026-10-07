@@ -192,10 +192,7 @@ struct GlobalStructInference : public Pass {
     // object that is not a global, so its type cannot be optimized either.
     auto markUnoptimizable = [&](Expression* init) {
       for (auto* structNew : FindAll<StructNew>(init).list) {
-        auto type = structNew->type;
-        if (type.isRef()) {
-          unoptimizable.insert(type.getHeapType());
-        }
+        unoptimizable.insert(structNew->type.getHeapType());
       }
     };
     for (auto& table : module->tables) {
