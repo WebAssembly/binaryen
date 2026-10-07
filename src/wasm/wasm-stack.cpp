@@ -2859,8 +2859,8 @@ void BinaryInstWriter::visitArrayLoad(ArrayLoad* curr) {
   uint32_t alignmentBits =
     Bits::log2(curr->align) | BinaryConsts::HasBackingArrayMask;
   o << U32LEB(alignmentBits);
-  o << U32LEB(curr->offset);
   parent.writeIndexedHeapType(curr->ref->type.getHeapType());
+  o << U32LEB(curr->offset);
 }
 
 void BinaryInstWriter::visitArrayStore(ArrayStore* curr) {
@@ -2875,8 +2875,8 @@ void BinaryInstWriter::visitArrayStore(ArrayStore* curr) {
   uint32_t alignmentBits =
     Bits::log2(curr->align) | BinaryConsts::HasBackingArrayMask;
   o << U32LEB(alignmentBits);
-  o << U32LEB(curr->offset);
   parent.writeIndexedHeapType(curr->ref->type.getHeapType());
+  o << U32LEB(curr->offset);
 }
 
 void BinaryInstWriter::visitArrayLen(ArrayLen* curr) {
@@ -3545,14 +3545,8 @@ void BinaryInstWriter::emitMemoryAccess(size_t alignment,
                                         uint64_t offset,
                                         Name memory,
                                         MemoryOrder order,
-                                        bool isRMW,
-                                        BackingType backing) {
+                                        bool isRMW) {
   uint32_t alignmentBits = Bits::log2(alignment ? alignment : bytes);
-  if (backing == BackingType::Array) {
-    alignmentBits |= BinaryConsts::HasBackingArrayMask;
-    o << U32LEB(alignmentBits);
-    return;
-  }
   uint32_t memoryIdx = parent.getMemoryIndex(memory);
 
   bool shouldWriteMemoryOrder = false;
