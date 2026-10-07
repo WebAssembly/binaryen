@@ -22,12 +22,13 @@
 // strategies with widenings", 1993) is a hierarchical ordering of the reachable
 // blocks of a directed graph in which strongly connected components (loops) are
 // parenthesized into nested cycles. The first element of each cycle is its
-// "head" (loop header), and the ordering satisfies two properties:
+// "head" (loop header). Formally, the WTO of a directed graph is a hierarchical
+// ordering of its vertices such that for every edge u -> v, either:
 //
-//   1. Every non-cycle edge u -> v goes forward in the flattened ordering
-//      (u appears before v).
-//   2. Every backedge u -> v targets the head v of a cycle that encloses both
-//      u and v.
+//   1. u < v (i.e. this is a forward edge) and v is not the head of a cycle
+//      containing u.
+//   2. u >= v (i.e. this is a backedge) and v is the head of a cycle containing
+//      u.
 //
 // Examples (writing `(h ...)` for a cycle with head `h`):
 //
@@ -88,6 +89,8 @@ namespace wasm {
 // The BasicBlock type is assumed to have an `in` vector of predecessor block
 // pointers and a `contents.index` field of type `Index`.
 template<typename BasicBlock> struct WeakTopologicalOrdering {
+  static constexpr Index NoIndex = Index(-1);
+
   struct Cycle;
   using Element = std::variant<BasicBlock*, Cycle>;
   using List = std::vector<Element>;
@@ -96,7 +99,7 @@ template<typename BasicBlock> struct WeakTopologicalOrdering {
     List elems;
 
     BasicBlock* head() const { return std::get<BasicBlock*>(elems.front()); }
-    bool operator==(const Cycle&) const = default;
+    bool operator==(const Cycle& other) const { return elems == other.elems; }
   };
 
   List elems;
@@ -130,11 +133,16 @@ WeakTopologicalOrdering<BasicBlock>::WeakTopologicalOrdering(
     return curr == dom;
   };
 
-  static constexpr Index NoIndex = Index(-1);
   struct Node {
+    // The innermost loop header for the cycle containing this block.
     Index loopParent = NoIndex;
+    // For loop headers, the index of their first child (i.e. the head of a
+    // linked list of children).
     Index firstChild = NoIndex;
+    // A linked list edge to the next child with the same loop header.
     Index nextSibling = NoIndex;
+    // The index of the loop header we last traversed this node for, used
+    // instead of a `visited` set during the DFS.
     Index lastVisitedBy = NoIndex;
     bool isLoopHeader = false;
   };
@@ -152,17 +160,27 @@ WeakTopologicalOrdering<BasicBlock>::WeakTopologicalOrdering(
     if (!isReachable(h)) {
       continue;
     }
+    // Check if h is the head of a loop. It is a loop header if and only if it
+    // dominates one of its predecessors. (We assume the CFG is reducible, so
+    // loop headers dominate all blocks in the loop bodies, including those that
+    // branch back to the header.)
     nodes[h].lastVisitedBy = h;
     for (auto* pred : blocks[h]->in) {
       Index p = pred->contents.index;
       if (dominates(h, p)) {
         nodes[h].isLoopHeader = true;
+        // Avoid repeat traversals by setting lastVisitedBy = h on visited
+        // blocks.
         if (nodes[p].lastVisitedBy != h) {
           nodes[p].lastVisitedBy = h;
           worklist.push_back(p);
         }
       }
     }
+    // We've initialized the worklist with all the loop tails that branch
+    // directly back to the loop header. DFS from those loop tails back to the
+    // loop header (but no further). All the blocks we find during the DFS are
+    // part of the loop body.
     while (!worklist.empty()) {
       Index curr = worklist.back();
       worklist.pop_back();
@@ -171,6 +189,8 @@ WeakTopologicalOrdering<BasicBlock>::WeakTopologicalOrdering(
       }
       for (auto* pred : blocks[curr]->in) {
         Index p = pred->contents.index;
+        // The loop header has lastVisitedBy == h, so the search will stop
+        // there.
         if (isReachable(p) && nodes[p].lastVisitedBy != h) {
           assert(dominates(h, p) && "Expected reducible CFG");
           nodes[p].lastVisitedBy = h;
@@ -190,14 +210,19 @@ WeakTopologicalOrdering<BasicBlock>::WeakTopologicalOrdering(
     }
     Index parent = nodes[idx].loopParent;
     if (parent == NoIndex) {
+      // Prepend to top-level list.
       nodes[idx].nextSibling = topFirstChild;
       topFirstChild = idx;
     } else {
+      // Prepend to loop header's list.
       nodes[idx].nextSibling = nodes[parent].firstChild;
       nodes[parent].firstChild = idx;
     }
   }
 
+  // Traverse the linked lists of children, materializing them as WTO elements.
+  // Loop depth should be limited, so doing this recursively should be fine. If
+  // it ever causes an issue, we can un-recurse this.
   // TODO: Flatten the WTO into a single contiguous vector of entries with cycle
   // jump targets to avoid per-cycle vector allocations and recursion.
   auto buildList = [&](auto& self, Index firstChild, List& out) -> void {
@@ -252,8 +277,12 @@ template<typename CFG> struct WTOWorklist {
   void push(BasicBlock* block) { block->contents.inQueue = true; }
 
   template<typename VisitFn> void run(VisitFn&& visit) {
-    // TODO: Track the number of queued blocks to stop early once the worklist
-    // is empty.
+    // Iterate through each element in the current cycle's list (or the
+    // top-level list), which will be in reverse postorder. Visit those that are
+    // in the queue, which may push later elements to the queue. When there is a
+    // nested cycle, repeatedly visit it recursively until it stabilizes before
+    // continuing on. We could un-recurse this, but the loop depth is expected
+    // to be acceptably small.
     // TODO: Fast-path initial entry singletons and CFGs without backedges
     // without building DomTree or WTO, using CFGWalker::loopTops.
     WeakTopologicalOrdering<BasicBlock> wto(cfg.basicBlocks);
