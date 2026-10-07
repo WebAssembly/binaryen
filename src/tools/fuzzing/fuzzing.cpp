@@ -102,20 +102,17 @@ std::vector<MemoryOrder> getMemoryOrders(const FeatureSet& features) {
 
 } // namespace
 
-TranslateToFuzzReader::TranslateToFuzzReader(Module& wasm,
+TranslateToFuzzReader::TranslateToFuzzReader(FuzzParams fuzzParams_,
+                                             Module& wasm,
                                              std::vector<char>&& input,
                                              WorldMode worldMode)
-  : wasm(wasm), worldMode(worldMode), builder(wasm),
+  : fuzzParams(fuzzParams_), wasm(wasm), worldMode(worldMode), builder(wasm),
     random(std::move(input), wasm.features), intrinsics(wasm),
     loggableTypes(getLoggableTypes(wasm.features)),
     atomicMemoryOrders(getMemoryOrders(wasm.features)),
-
     publicTypeValidator(wasm.features) {
 
   haveInitialFunctions = !wasm.functions.empty();
-
-  // Setup params. Start with the defaults.
-  globalParams = std::make_unique<FuzzParamsContext>(*this);
 
   // Some of the time, adjust parameters based on the size, e.g. allowing more
   // heap types in larger inputs, etc.
@@ -133,28 +130,28 @@ TranslateToFuzzReader::TranslateToFuzzReader(Module& wasm,
 
     auto bits = random.get();
     if (bits & 1) {
-      fuzzParams->MAX_NEW_GC_TYPES *= ratio;
+      fuzzParams.MAX_NEW_GC_TYPES *= ratio;
     }
     if (bits & 2) {
-      fuzzParams->MAX_GLOBALS *= ratio;
+      fuzzParams.MAX_GLOBALS *= ratio;
     }
     if (bits & 4) {
       // Only adjust the limit if there is one.
-      if (fuzzParams->HANG_LIMIT) {
-        fuzzParams->HANG_LIMIT *= ratio;
+      if (fuzzParams.HANG_LIMIT) {
+        fuzzParams.HANG_LIMIT *= ratio;
         // There is a limit, so keep it non-zero to actually prevent hangs.
-        fuzzParams->HANG_LIMIT = std::max(fuzzParams->HANG_LIMIT, 1);
+        fuzzParams.HANG_LIMIT = std::max(fuzzParams.HANG_LIMIT, 1);
       }
     }
     if (bits & 8) {
       // Only increase the number of tries. Trying fewer times does not help
       // find more interesting patterns.
       if (ratio > 1) {
-        fuzzParams->TRIES *= ratio;
+        fuzzParams.TRIES *= ratio;
       }
     }
     if (bits & 16) {
-      fuzzParams->MAX_ARRAY_SIZE *= ratio;
+      fuzzParams.MAX_ARRAY_SIZE *= ratio;
     }
   }
 
@@ -163,11 +160,14 @@ TranslateToFuzzReader::TranslateToFuzzReader(Module& wasm,
   allowAddingUnreachableCode = oneIn(2);
 }
 
-TranslateToFuzzReader::TranslateToFuzzReader(Module& wasm,
+TranslateToFuzzReader::TranslateToFuzzReader(FuzzParams fuzzParams_,
+                                             Module& wasm,
                                              std::string& filename,
                                              WorldMode worldMode)
-  : TranslateToFuzzReader(
-      wasm, read_file<std::vector<char>>(filename, Flags::Binary), worldMode) {}
+  : TranslateToFuzzReader(fuzzParams_,
+                          wasm,
+                          read_file<std::vector<char>>(filename, Flags::Binary),
+                          worldMode) {}
 
 void TranslateToFuzzReader::pickPasses(OptimizationOptions& options) {
   // Pick random passes to further shape the wasm. This is similar to how we
@@ -413,7 +413,7 @@ void TranslateToFuzzReader::pickPasses(OptimizationOptions& options) {
 }
 
 void TranslateToFuzzReader::build() {
-  if (fuzzParams->HANG_LIMIT > 0) {
+  if (fuzzParams.HANG_LIMIT > 0) {
     prepareHangLimitSupport();
   }
   if (allowMemory) {
@@ -440,7 +440,7 @@ void TranslateToFuzzReader::build() {
   useImportedFunctions();
 
   processFunctions();
-  if (fuzzParams->HANG_LIMIT > 0) {
+  if (fuzzParams.HANG_LIMIT > 0) {
     addHangLimitSupport();
   }
   if (allowMemory) {
@@ -495,7 +495,7 @@ void TranslateToFuzzReader::setupMemory() {
       segment->setName(Names::getValidDataSegmentName(wasm, Name::fromInt(i)),
                        false);
       bool isPassive = bool(upTo(2));
-      size_t segSize = upTo(fuzzParams->USABLE_MEMORY * 2);
+      size_t segSize = upTo(fuzzParams.USABLE_MEMORY * 2);
       segment->data.resize(segSize);
       for (size_t j = 0; j < segSize; j++) {
         segment->data[j] = upTo(512);
@@ -517,7 +517,7 @@ void TranslateToFuzzReader::setupMemory() {
         builder.makeConst(Literal::makeFromInt32(0, memory->addressType));
       segment->setName(Names::getValidDataSegmentName(wasm, Name::fromInt(0)),
                        false);
-      auto num = upTo(fuzzParams->USABLE_MEMORY * 2);
+      auto num = upTo(fuzzParams.USABLE_MEMORY * 2);
       for (size_t i = 0; i < num; i++) {
         auto value = upTo(512);
         segment->data.push_back(value >= 256 ? 0 : (value & 0xff));
@@ -550,7 +550,7 @@ void TranslateToFuzzReader::setupHeapTypes() {
   // For GC, also generate random types.
   if (wasm.features.hasGC()) {
     auto generator = HeapTypeGenerator::create(
-      random, wasm.features, upTo(fuzzParams->MAX_NEW_GC_TYPES));
+      random, wasm.features, upTo(fuzzParams.MAX_NEW_GC_TYPES));
     auto result = generator.builder.build();
     if (auto* err = result.getError()) {
       Fatal() << "Failed to build heap types: " << err->reason << " at index "
@@ -806,7 +806,7 @@ void TranslateToFuzzReader::setupGlobals() {
   }
 
   // Create new random globals.
-  for (size_t index = upTo(fuzzParams->MAX_GLOBALS); index > 0; --index) {
+  for (size_t index = upTo(fuzzParams.MAX_GLOBALS); index > 0; --index) {
     // Prefer immutable globals as they can be used in global.gets in other
     // globals for more interesting patterns.
     auto mutability = oneIn(3) ? Builder::Mutable : Builder::Immutable;
@@ -953,7 +953,7 @@ void TranslateToFuzzReader::finalizeMemory() {
                          (1 << memory->pageSizeLog2)));
     }
   }
-  memory->initial = std::max(memory->initial, fuzzParams->USABLE_MEMORY);
+  memory->initial = std::max(memory->initial, fuzzParams.USABLE_MEMORY);
   // Avoid an unlimited memory size, which would make fuzzing very difficult
   // as different VMs will run out of system memory in different ways. Also use
   // the initial memory size as the maximum, if the initial is now larger
@@ -1086,7 +1086,7 @@ void TranslateToFuzzReader::addHangLimitSupport() {
   auto glob =
     builder.makeGlobal(HANG_LIMIT_GLOBAL,
                        Type::i32,
-                       builder.makeConst(int32_t(fuzzParams->HANG_LIMIT)),
+                       builder.makeConst(int32_t(fuzzParams.HANG_LIMIT)),
                        Builder::Mutable);
   wasm.addGlobal(std::move(glob));
 }
@@ -1305,7 +1305,7 @@ void TranslateToFuzzReader::addHashMemorySupport() {
   contents.push_back(
     builder.makeLocalSet(0, builder.makeConst(uint32_t(5381))));
   auto zero = Literal::makeFromInt32(0, wasm.memories[0]->addressType);
-  for (Index i = 0; i < fuzzParams->USABLE_MEMORY; i++) {
+  for (Index i = 0; i < fuzzParams.USABLE_MEMORY; i++) {
     contents.push_back(builder.makeLocalSet(
       0,
       builder.makeBinary(
@@ -1487,10 +1487,10 @@ Expression* TranslateToFuzzReader::makeHangLimitCheck() {
     builder.makeIf(
       builder.makeUnary(UnaryOp::EqZInt32,
                         builder.makeGlobalGet(HANG_LIMIT_GLOBAL, Type::i32)),
-      builder.makeSequence(builder.makeGlobalSet(HANG_LIMIT_GLOBAL,
-                                                 builder.makeConst(int32_t(
-                                                   fuzzParams->HANG_LIMIT))),
-                           builder.makeUnreachable())),
+      builder.makeSequence(
+        builder.makeGlobalSet(
+          HANG_LIMIT_GLOBAL, builder.makeConst(int32_t(fuzzParams.HANG_LIMIT))),
+        builder.makeUnreachable())),
     builder.makeGlobalSet(
       HANG_LIMIT_GLOBAL,
       builder.makeBinary(BinaryOp::SubInt32,
@@ -1686,40 +1686,45 @@ void TranslateToFuzzReader::processFunctions() {
     }
   }
 
-  // Interpose on initial exports. When initial content contains exports, it can
-  // be useful to add new code that executes in them, rather than just adding
-  // new exports later. To some extent modifying the initially-exported function
-  // gives us that, but typically these are small changes, not calls to entirely
-  // new code (and this is especially important when preserveImportsAndExports,
-  // as in that mode we do not add new exports, so this interposing is our main
-  // chance to run new code using the existing exports).
-  //
-  // Interpose with a call before the old code. We do a call here so that we end
-  // up running a useful amount of new code (rather than just make(none) which
-  // would only emit something local in the current function, and which depends
-  // on its contents).
-  // TODO: We could also interpose after, either in functions without results,
-  //       or by saving the results to a temp local as we call.
-  //
-  // Specifically, we will call functions, for simplicity, with no params or
-  // results. Such functions exist in abundance in general, because the
-  // invocations we add look exactly that way. First, find all such functions,
-  // and then find places to interpose calls to them.
-  std::vector<Name> noParamsOrResultFuncs;
-  for (auto& func : wasm.functions) {
-    if (func->getParams() == Type::none && func->getResults() == Type::none) {
-      noParamsOrResultFuncs.push_back(func->name);
+  if (!noInvokes) {
+    // Interpose on initial exports. When initial content contains exports, it
+    // can be useful to add new code that executes in them, rather than just
+    // adding new exports later. To some extent modifying the initially-exported
+    // function gives us that, but typically these are small changes, not calls
+    // to entirely new code. This is especially important when
+    // preserveImportsAndExports, as in that mode we do not add new exports, so
+    // this interposing is our main chance to run new code using the existing
+    // exports. That is, if we cannot add new exports, we cannot add new
+    // invokes, so interposing on existing exports is the best we can do. (When
+    // noInvokes is set, we do not do this, as then the user doesn't want such
+    // extra calls.)
+    //
+    // Interpose with a call before the old code. We do a call here so that we
+    // end up running a useful amount of new code (rather than just make(none)
+    // which would only emit something local in the current function, and which
+    // depends on its contents).
+    // TODO: We could also interpose after, either in functions without results,
+    //       or by saving the results to a temp local as we call.
+    //
+    // Like invokes, we only call functions with no params or results (which is
+    // the form that invokes normally have). First, find all such functions,
+    // then find places to interpose calls to them.
+    std::vector<Name> noParamsOrResultFuncs;
+    for (auto& func : wasm.functions) {
+      if (func->getParams() == Type::none && func->getResults() == Type::none) {
+        noParamsOrResultFuncs.push_back(func->name);
+      }
     }
-  }
-  if (!noParamsOrResultFuncs.empty()) {
-    for (Index i = 0; i < numInitialExports; i++) {
-      auto& exp = wasm.exports[i];
-      if (exp->kind == ExternalKind::Function && upTo(RESOLUTION) < chance) {
-        auto* func = wasm.getFunction(*exp->getInternalName());
-        if (!func->imported()) {
-          auto* call =
-            builder.makeCall(pick(noParamsOrResultFuncs), {}, Type::none);
-          func->body = builder.makeSequence(call, func->body);
+    if (!noParamsOrResultFuncs.empty()) {
+      for (Index i = 0; i < numInitialExports; i++) {
+        auto& exp = wasm.exports[i];
+        if (exp->kind == ExternalKind::Function && upTo(RESOLUTION) < chance) {
+          auto* func = wasm.getFunction(*exp->getInternalName());
+          if (!func->imported()) {
+            auto* call =
+              builder.makeCall(pick(noParamsOrResultFuncs), {}, Type::none);
+            func->body = builder.makeSequence(call, func->body);
+          }
         }
       }
     }
@@ -1750,7 +1755,7 @@ void TranslateToFuzzReader::processFunctions() {
   }
 
   // At the very end, add hang limit checks (so no modding can override them).
-  if (fuzzParams->HANG_LIMIT > 0) {
+  if (fuzzParams.HANG_LIMIT > 0) {
     for (auto& func : wasm.functions) {
       if (!func->imported()) {
         addHangLimitChecks(func.get());
@@ -1781,14 +1786,14 @@ Function* TranslateToFuzzReader::addFunction() {
   auto& funcTypes = interestingHeapSubTypes[HeapTypes::func];
   if (!funcTypes.empty() && oneIn(2)) {
     auto type = pick(funcTypes);
-    if (type.getSignature().params.size() < (size_t)fuzzParams->MAX_PARAMS) {
+    if (type.getSignature().params.size() < (size_t)fuzzParams.MAX_PARAMS) {
       // This is suitable for us.
       funcType = type;
     }
   }
   if (!funcType) {
     // Generate a new type on the fly.
-    Index numParams = upToSquared(fuzzParams->MAX_PARAMS);
+    Index numParams = upToSquared(fuzzParams.MAX_PARAMS);
     std::vector<Type> params;
     params.reserve(numParams);
     for (Index i = 0; i < numParams; i++) {
@@ -1801,7 +1806,7 @@ Function* TranslateToFuzzReader::addFunction() {
   }
   func->type = Type(*funcType, NonNullable, Exact);
 
-  Index numVars = upToSquared(fuzzParams->MAX_VARS);
+  Index numVars = upToSquared(fuzzParams.MAX_VARS);
   for (Index i = 0; i < numVars; i++) {
     func->vars.push_back(getConcreteType());
   }
@@ -2814,8 +2819,8 @@ Expression* TranslateToFuzzReader::make(Type type) {
   }
   // When we should stop, emit something small (but not necessarily trivial).
   if (random.finished() ||
-      nesting >= 5 * fuzzParams->NESTING_LIMIT || // hard limit
-      (nesting >= fuzzParams->NESTING_LIMIT && !oneIn(3))) {
+      nesting >= 5 * fuzzParams.NESTING_LIMIT || // hard limit
+      (nesting >= fuzzParams.NESTING_LIMIT && !oneIn(3))) {
     if (type.isConcrete()) {
       if (!funcContext || oneIn(2)) {
         return makeConst(type);
@@ -3103,11 +3108,11 @@ Expression* TranslateToFuzzReader::makeBlock(Type type) {
   ret->type = type; // so we have it during child creation
   ret->name = makeLabel();
   funcContext->breakableStack.push_back(ret);
-  Index num = upToSquared(fuzzParams->BLOCK_FACTOR - 1); // we add another later
-  if (nesting >= fuzzParams->NESTING_LIMIT / 2) {
+  Index num = upToSquared(fuzzParams.BLOCK_FACTOR - 1); // we add another later
+  if (nesting >= fuzzParams.NESTING_LIMIT / 2) {
     // smaller blocks past the limit
     num /= 2;
-    if (nesting >= fuzzParams->NESTING_LIMIT && oneIn(2)) {
+    if (nesting >= fuzzParams.NESTING_LIMIT && oneIn(2)) {
       // smaller blocks past the limit
       num /= 2;
     }
@@ -3178,7 +3183,7 @@ Expression* TranslateToFuzzReader::makeCondition() {
 
 Expression* TranslateToFuzzReader::makeMaybeBlock(Type type) {
   // if past the limit, prefer not to emit blocks
-  if (nesting >= fuzzParams->NESTING_LIMIT || oneIn(3)) {
+  if (nesting >= fuzzParams.NESTING_LIMIT || oneIn(3)) {
     return make(type);
   } else {
     return makeBlock(type);
@@ -3235,7 +3240,7 @@ Expression* TranslateToFuzzReader::makeTry(Type type) {
   }
   std::vector<Name> catchTags;
   std::vector<Expression*> catchBodies;
-  auto numTags = upTo(fuzzParams->MAX_TRY_CATCHES);
+  auto numTags = upTo(fuzzParams.MAX_TRY_CATCHES);
   std::unordered_set<Tag*> usedTags;
   for (Index i = 0; i < numTags; i++) {
     if (exceptionTags.empty()) {
@@ -3296,7 +3301,7 @@ Expression* TranslateToFuzzReader::makeTryTable(Type type) {
   std::vector<Name> catchTags;
   std::vector<Name> catchDests;
   std::vector<bool> catchRefs;
-  auto numCatches = upTo(fuzzParams->MAX_TRY_CATCHES);
+  auto numCatches = upTo(fuzzParams.MAX_TRY_CATCHES);
   for (Index i = 0; i <= numCatches; i++) {
     Name tagName;
     Type tagType;
@@ -3321,7 +3326,7 @@ Expression* TranslateToFuzzReader::makeTryTable(Type type) {
     // also accept a target that is nullable.
     vec.push_back(Type(HeapType::exn, NonNullable));
     auto tagTypeWithExn = Type(vec);
-    int tries = fuzzParams->TRIES;
+    int tries = fuzzParams.TRIES;
     while (tries-- > 0) {
       auto* target = pick(funcContext->breakableStack);
       auto dest = getTargetName(target);
@@ -3353,7 +3358,7 @@ Expression* TranslateToFuzzReader::makeBreak(Type type) {
     condition = makeCondition();
   }
   // we need to find a proper target to break to; try a few times
-  int tries = fuzzParams->TRIES;
+  int tries = fuzzParams.TRIES;
   while (tries-- > 0) {
     auto* target = pick(funcContext->breakableStack);
     auto name = getTargetName(target);
@@ -3427,7 +3432,7 @@ Expression* TranslateToFuzzReader::makeBreak(Type type) {
 }
 
 Expression* TranslateToFuzzReader::makeCall(Type type) {
-  int tries = fuzzParams->TRIES;
+  int tries = fuzzParams.TRIES;
   bool isReturn;
   while (tries-- > 0) {
     Function* target = funcContext->func;
@@ -3501,9 +3506,9 @@ Expression* TranslateToFuzzReader::makeCallRef(Type type) {
   // look for a call target with the right type
   Function* target;
   bool isReturn;
-  decltype(fuzzParams->TRIES) i = 0;
+  decltype(fuzzParams.TRIES) i = 0;
   while (1) {
-    if (i == fuzzParams->TRIES || wasm.functions.empty()) {
+    if (i == fuzzParams.TRIES || wasm.functions.empty()) {
       // We can't find a proper target, give up.
       return makeTrivial(type);
     }
@@ -3705,12 +3710,12 @@ Expression* TranslateToFuzzReader::makePointer() {
       ret = builder.makeBinary(
         AndInt64,
         ret,
-        builder.makeConst(int64_t(fuzzParams->USABLE_MEMORY - 1)));
+        builder.makeConst(int64_t(fuzzParams.USABLE_MEMORY - 1)));
     } else {
       ret = builder.makeBinary(
         AndInt32,
         ret,
-        builder.makeConst(int32_t(fuzzParams->USABLE_MEMORY - 1)));
+        builder.makeConst(int32_t(fuzzParams.USABLE_MEMORY - 1)));
     }
   }
   return ret;
@@ -4497,7 +4502,7 @@ Expression* TranslateToFuzzReader::makeCompoundRef(Type type) {
   // will only stop here when we exceed the nesting and reach a nullable one.
   // (This assumes there is a nullable one, that is, that the types are
   // inhabitable.)
-  const auto LIMIT = fuzzParams->NESTING_LIMIT + 1;
+  const auto LIMIT = fuzzParams.NESTING_LIMIT + 1;
   AutoNester nester(*this);
   if (type.isNullable() &&
       (random.finished() || nesting >= LIMIT || oneIn(LIMIT - nesting + 1))) {
@@ -4569,8 +4574,7 @@ Expression* TranslateToFuzzReader::makeCompoundRef(Type type) {
       if (!element.type.isDefaultable() || oneIn(2)) {
         init = makeChild(element.type);
       }
-      auto* count =
-        builder.makeConst(int32_t(upTo(fuzzParams->MAX_ARRAY_SIZE)));
+      auto* count = builder.makeConst(int32_t(upTo(fuzzParams.MAX_ARRAY_SIZE)));
       return builder.makeArrayNew(type.getHeapType(), count, init);
     }
     case HeapTypeKind::Cont: {
@@ -5268,7 +5272,7 @@ Expression* TranslateToFuzzReader::makeSwitch(Type type) {
     return make(type);
   }
   // we need to find proper targets to break to; try a bunch
-  int tries = fuzzParams->TRIES;
+  int tries = fuzzParams.TRIES;
   std::vector<Name> names;
   Type valueType = Type::unreachable;
   while (tries-- > 0) {
@@ -5820,7 +5824,7 @@ Expression* TranslateToFuzzReader::makeBrOn(Type type) {
   // to, we can then either drop ourselves or wrap ourselves in a block +
   // another value, so that we return the proper thing here (which is done below
   // in fixFlowingType).
-  int tries = funcContext->breakableStack.empty() ? 0 : fuzzParams->TRIES;
+  int tries = funcContext->breakableStack.empty() ? 0 : fuzzParams.TRIES;
   Name targetName;
   Type targetType;
   while (--tries >= 0) {
@@ -6661,7 +6665,7 @@ Type TranslateToFuzzReader::getReferenceType() {
 }
 
 Type TranslateToFuzzReader::getCastableReferenceType() {
-  int tries = fuzzParams->TRIES;
+  int tries = fuzzParams.TRIES;
   while (tries-- > 0) {
     auto type = getReferenceType();
     if (type.isCastable()) {
@@ -6713,7 +6717,7 @@ Type TranslateToFuzzReader::getTupleType() {
   }
 
   std::vector<Type> elements;
-  size_t numElements = 2 + upTo(fuzzParams->MAX_TUPLE_SIZE - 2);
+  size_t numElements = 2 + upTo(fuzzParams.MAX_TUPLE_SIZE - 2);
   for (size_t i = 0; i < numElements; ++i) {
     auto type = getSingleConcreteType();
     // Don't add a non-defaultable type into a tuple, as currently we can't

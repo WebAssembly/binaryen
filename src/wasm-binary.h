@@ -44,11 +44,6 @@ enum {
   MaxLEB32Bytes = 5,
 };
 
-enum class BackingType {
-  Memory,
-  Array,
-};
-
 template<typename T, typename MiniT> struct LEB {
   static_assert(sizeof(MiniT) == 1, "MiniT must be a byte");
 
@@ -1836,11 +1831,11 @@ public:
   void readToolchainInlineHints(size_t payloadLen);
   void readNoReturnHints(size_t payloadLen);
 
-  std::tuple<Address, Address, Index, MemoryOrder, BackingType>
+  std::tuple<Address, Address, Index, MemoryOrder, std::optional<HeapType>>
   readMemoryAccess(bool isAtomic, bool isRMW);
   std::tuple<Name, Address, Address, MemoryOrder> getAtomicMemarg();
   std::tuple<Name, Address, Address, MemoryOrder> getRMWMemarg();
-  std::tuple<Name, Address, Address, BackingType> getMemarg();
+  std::tuple<Name, Address, Address, std::optional<HeapType>> getMemarg();
   MemoryOrder getMemoryOrder(bool isRMW = false);
 
   [[noreturn]] void throwError(std::string text) {

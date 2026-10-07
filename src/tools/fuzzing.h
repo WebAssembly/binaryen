@@ -119,10 +119,12 @@ class TranslateToFuzzReader {
   static constexpr size_t Important = 2;
 
 public:
-  TranslateToFuzzReader(Module& wasm,
+  TranslateToFuzzReader(FuzzParams fuzzParams_,
+                        Module& wasm,
                         std::vector<char>&& input,
                         WorldMode worldMode = WorldMode::Open);
-  TranslateToFuzzReader(Module& wasm,
+  TranslateToFuzzReader(FuzzParams fuzzParams_,
+                        Module& wasm,
                         std::string& filename,
                         WorldMode worldMode = WorldMode::Open);
 
@@ -137,6 +139,8 @@ public:
   void setImportedModule(std::string importedModuleName);
 
   void build();
+
+  FuzzParams fuzzParams;
 
   Module& wasm;
 
@@ -280,27 +284,6 @@ private:
   };
 
   FunctionCreationContext* funcContext = nullptr;
-
-  // The fuzzing parameters we use. This may change from function to function or
-  // even in a more refined manner, so we use an RAII context to manage it.
-  struct FuzzParamsContext : public FuzzParams {
-    TranslateToFuzzReader& parent;
-
-    FuzzParamsContext* old;
-
-    FuzzParamsContext(TranslateToFuzzReader& parent)
-      : parent(parent), old(parent.fuzzParams) {
-      parent.fuzzParams = this;
-    }
-
-    ~FuzzParamsContext() { parent.fuzzParams = old; }
-  };
-
-  FuzzParamsContext* fuzzParams = nullptr;
-
-  // The default global context we use throughout the process (unless it is
-  // overridden using another context in an RAII manner).
-  std::unique_ptr<FuzzParamsContext> globalParams;
 
   const std::vector<MemoryOrder> atomicMemoryOrders;
 

@@ -1036,7 +1036,7 @@ struct Fuzzer {
     }
 
     Module testModule;
-    TranslateToFuzzReader reader(testModule, std::move(bytes));
+    TranslateToFuzzReader reader(FuzzParams(), testModule, std::move(bytes));
     reader.build();
 
     if (verbose) {
