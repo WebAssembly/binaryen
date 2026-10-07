@@ -188,6 +188,24 @@ struct GlobalStructInference : public Pass {
       }
     }
 
+    // A struct.new in a table initializer or in an element segment creates an
+    // object that is not a global, so its type cannot be optimized either.
+    auto markUnoptimizable = [&](Expression* init) {
+      for (auto* structNew : FindAll<StructNew>(init).list) {
+        unoptimizable.insert(structNew->type.getHeapType());
+      }
+    };
+    for (auto& table : module->tables) {
+      if (table->init) {
+        markUnoptimizable(table->init);
+      }
+    }
+    for (auto& segment : module->elementSegments) {
+      for (auto* item : segment->data) {
+        markUnoptimizable(item);
+      }
+    }
+
     // A struct.get might also read from any of the subtypes. As a result, an
     // unoptimizable type makes all its supertypes unoptimizable as well.
     // TODO: this could be specific per field (and not all supers have all
