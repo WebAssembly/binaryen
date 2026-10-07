@@ -633,7 +633,7 @@
   ;; CHECK:      (func $func2 (type $sig2) (param $x (ref (exact $struct)))
   ;; CHECK-NEXT: )
   (func $func2 (type $sig2) (param $x anyref)
-    ;; This param *will* be refined, as $sig2 is not in a call_indirect.
+    ;; This param will also be refined ($sig2 is not in a call_indirect).
   )
 
   ;; CHECK:      (func $caller2 (type $3)
