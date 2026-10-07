@@ -73,6 +73,9 @@ Literal::Literal(Type type) : type(type) {
 
   if (type.isRef() && type.getHeapType().isMaybeShared(HeapType::waitqueue)) {
     assert(type.isNonNullable());
+    // See ~Literal and isData(). isData() is true for waitqueues so we expect
+    // gcData to be present even if null.
+    new (&gcData) std::shared_ptr<GCData>();
     return;
   }
 
@@ -113,7 +116,6 @@ Literal::Literal(std::shared_ptr<GCData> gcData, HeapType type)
   assert((isData() && gcData) ||
          (type.isMaybeShared(HeapType::ext) && gcData) ||
          (type.isMaybeShared(HeapType::string) && gcData) ||
-         (type.isMaybeShared(HeapType::waitqueue) && gcData) ||
          (type.isMaybeShared(HeapType::any) && gcData) ||
          (type.isBottom() && !gcData));
 }
@@ -189,7 +191,6 @@ Literal::Literal(const Literal& other) : type(other.type) {
       return;
     case HeapType::ext:
     case HeapType::any:
-    case HeapType::waitqueue:
       // Externalized or internalized reference/payload.
       new (&gcData) std::shared_ptr<GCData>(other.gcData);
       return;
@@ -205,6 +206,7 @@ Literal::Literal(const Literal& other) : type(other.type) {
     case HeapType::cont:
     case HeapType::struct_:
     case HeapType::array:
+    case HeapType::waitqueue:
       WASM_UNREACHABLE("invalid type");
     case HeapType::string:
       WASM_UNREACHABLE("TODO: string literals");
@@ -371,10 +373,8 @@ std::shared_ptr<FuncData> Literal::getFuncData() const {
 }
 
 std::shared_ptr<GCData> Literal::getGCData() const {
-  assert(
-    isNull() || isData() ||
-    (type.isRef() && (type.getHeapType().isMaybeShared(HeapType::ext) ||
-                      type.getHeapType().isMaybeShared(HeapType::waitqueue))));
+  assert(isNull() || isData() ||
+         (type.isRef() && (type.getHeapType().isMaybeShared(HeapType::ext))));
   return gcData;
 }
 
