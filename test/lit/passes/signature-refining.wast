@@ -649,6 +649,59 @@
 )
 
 (module
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $parent (sub (struct)))
+
+  ;; CHECK:       (type $child-B (sub $parent (struct)))
+
+  ;; CHECK:       (type $sig (sub (func (param (ref $parent)))))
+  (type $sig (sub (func (param anyref))))
+
+  (rec
+    (type $parent (sub (struct)))
+
+    ;; CHECK:       (type $child-A (sub $parent (struct)))
+    (type $child-A (sub $parent (struct)))
+
+    (type $child-B (sub $parent (struct)))
+  )
+
+  ;; CHECK:       (type $4 (func))
+
+  ;; CHECK:      (table $table 1 1 funcref)
+  (table $table 1 1 funcref)
+
+  ;; CHECK:      (func $call_indirect (type $4)
+  ;; CHECK-NEXT:  (call_indirect $table (type $sig)
+  ;; CHECK-NEXT:   (struct.new_default $child-A)
+  ;; CHECK-NEXT:   (i32.const 42)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call_indirect $table (type $sig)
+  ;; CHECK-NEXT:   (struct.new_default $child-B)
+  ;; CHECK-NEXT:   (i32.const 42)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $call_indirect
+    ;; We can refine $sig based on the types in these call_indirect: we see
+    ;; the two children, so we can only refine to the parent.
+    (call_indirect $table (type $sig)
+      (struct.new $child-A)
+      (i32.const 42)
+    )
+    (call_indirect $table (type $sig)
+      (struct.new $child-B)
+      (i32.const 42)
+    )
+  )
+
+  ;; CHECK:      (func $func (type $sig) (param $x (ref $parent))
+  ;; CHECK-NEXT: )
+  (func $func (type $sig) (param $x anyref)
+    ;; This param will be refined.
+  )
+)
+
+(module
   ;; Pass a null in one call to the function. The null can be updated which
   ;; allows us to refine (but the new type must be nullable).
 
