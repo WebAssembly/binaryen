@@ -89,6 +89,8 @@ namespace wasm {
 // The BasicBlock type is assumed to have an `in` vector of predecessor block
 // pointers and a `contents.index` field of type `Index`.
 template<typename BasicBlock> struct WeakTopologicalOrdering {
+  static constexpr Index NoIndex = Index(-1);
+
   struct Cycle;
   using Element = std::variant<BasicBlock*, Cycle>;
   using List = std::vector<Element>;
@@ -97,7 +99,7 @@ template<typename BasicBlock> struct WeakTopologicalOrdering {
     List elems;
 
     BasicBlock* head() const { return std::get<BasicBlock*>(elems.front()); }
-    bool operator==(const Cycle&) const = default;
+    bool operator==(const Cycle& other) const { return elems == other.elems; }
   };
 
   List elems;
@@ -137,7 +139,6 @@ WeakTopologicalOrdering<BasicBlock>::WeakTopologicalOrdering(
     return curr == dom;
   };
 
-  static constexpr Index NoIndex = Index(-1);
   struct Node {
     // The innermost loop header for the cycle containing this block.
     Index loopParent = NoIndex;
