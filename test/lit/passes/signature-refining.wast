@@ -682,8 +682,8 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $call_indirect
-    ;; We can refine $sig based on the types in these call_indirect: we see
-    ;; the two children, so we can only refine to the parent.
+    ;; We can refine $sig based on the types in these call_indirects: we see
+    ;; the two child types, so we can only refine to the parent.
     (call_indirect $table (type $sig)
       (struct.new $child-A)
       (i32.const 42)
