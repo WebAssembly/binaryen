@@ -88,9 +88,7 @@ public:
                           const Module& wasm)
     : interfering(operands.size(), false) {
     Index numOperands = operands.size();
-    if (numOperands <= 1) {
-      return;
-    }
+    assert(numOperands > 1);
 
     std::unordered_set<Index> subsequentReads;
     std::unordered_set<Index> subsequentWrites;
@@ -111,8 +109,7 @@ public:
                              effects.localsRead.end());
       subsequentWrites.insert(effects.localsWritten.begin(),
                               effects.localsWritten.end());
-      if (operands[opIndex]->type == Type::unreachable ||
-          effects.transfersControlFlow()) {
+      if (effects.transfersControlFlow()) {
         subsequentTransfersControlFlow = true;
       }
     }

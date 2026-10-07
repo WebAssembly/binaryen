@@ -1065,7 +1065,7 @@
     )
   )
 
-  ;; CHECK:      (func $unreachable.tuple.extract (type $3) (result i32)
+  ;; CHECK:      (func $unreachable.tuple.extract (type $4) (result i32)
   ;; CHECK-NEXT:  (local $tuple (tuple i32 i64))
   ;; CHECK-NEXT:  (local $non-tuple i32)
   ;; CHECK-NEXT:  (tuple.extract 2 0
@@ -1084,7 +1084,7 @@
     )
   )
 
-  ;; CHECK:      (func $swap (type $4) (param $x i32) (param $y i32) (result i32)
+  ;; CHECK:      (func $swap (type $3) (param $x i32) (param $y i32) (result i32)
   ;; CHECK-NEXT:  (local $t (tuple i32 i32))
   ;; CHECK-NEXT:  (local $3 i32)
   ;; CHECK-NEXT:  (local $4 i32)
@@ -1132,6 +1132,57 @@
     )
     (tuple.extract 2 1
       (local.get $t)
+    )
+  )
+
+  ;; CHECK:      (func $no-swap (type $3) (param $x i32) (param $y i32) (result i32)
+  ;; CHECK-NEXT:  (local $t (tuple i32 i32))
+  ;; CHECK-NEXT:  (local $t' (tuple i32 i32))
+  ;; CHECK-NEXT:  (local $4 i32)
+  ;; CHECK-NEXT:  (local $5 i32)
+  ;; CHECK-NEXT:  (local $6 i32)
+  ;; CHECK-NEXT:  (local $7 i32)
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (local.set $4
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.set $5
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (local.set $6
+  ;; CHECK-NEXT:    (local.get $5)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.set $7
+  ;; CHECK-NEXT:    (local.get $4)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.get $7)
+  ;; CHECK-NEXT: )
+  (func $no-swap (param $x i32) (param $y i32) (result i32)
+    ;; Like $swap, but this time we are copying the elements to a different
+    ;; tuple local, so we don't need temp locals.
+    (local $t (tuple i32 i32))
+    (local $t' (tuple i32 i32))
+    (local.set $t
+      (tuple.make 2
+        (local.get $x)
+        (local.get $y)
+      )
+    )
+    (local.set $t'
+      (tuple.make 2
+        (tuple.extract 2 1
+          (local.get $t)
+        )
+        (tuple.extract 2 0
+          (local.get $t)
+        )
+      )
+    )
+    (tuple.extract 2 1
+      (local.get $t')
     )
   )
 
