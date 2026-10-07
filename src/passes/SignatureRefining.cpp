@@ -142,12 +142,10 @@ struct SignatureRefining : public Pass {
         }
       }
 
-      // For now, do not handle indirect calls. TODO
+      // For indirect calls, add each to the proper list of the relevent type.
       for (auto* callIndirect : info.callIndirects) {
-        allInfo[callIndirect->heapType].canModify = false;
+        allInfo[callIndirect->heapType].callIndirects.push_back(callIndirect);
       }
-
-      // For indirect calls, add each call_ref to the type the call_ref uses.
       for (auto* callRef : info.callRefs) {
         auto calledType = callRef->target->type;
         if (calledType != Type::unreachable) {
@@ -260,6 +258,9 @@ struct SignatureRefining : public Pass {
 
         for (auto* call : info.calls) {
           updateLUBs(call->operands);
+        }
+        for (auto* callIndirect : info.callIndirects) {
+          updateLUBs(callIndirect->operands);
         }
         for (auto* callRef : info.callRefs) {
           updateLUBs(callRef->operands);
