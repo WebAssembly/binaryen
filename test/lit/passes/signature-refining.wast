@@ -580,7 +580,7 @@
 )
 
 (module
-  ;; The table is funcref, but there is a call_indirect with a signature type.
+  ;; The table is funcref, and there is a call_indirect with a signature type.
 
   (rec
     ;; CHECK:      (rec
@@ -588,7 +588,7 @@
 
     ;; CHECK:       (type $struct (struct))
 
-    ;; CHECK:       (type $sig (sub (func (param anyref))))
+    ;; CHECK:       (type $sig (sub (func (param (ref null (exact $struct))))))
     (type $sig (sub (func (param anyref))))
     (type $sig2 (sub (func (param anyref))))
   )
@@ -608,15 +608,15 @@
   ;; CHECK-NEXT: )
   (func $call_indirect
     (call_indirect $table (type $sig)
-      (ref.null any)  ;; send the current type - if we refined $sig, we'd error
+      (ref.null any)
       (i32.const 42)
     )
   )
 
-  ;; CHECK:      (func $func (type $sig) (param $x anyref)
+  ;; CHECK:      (func $func (type $sig) (param $x (ref null (exact $struct)))
   ;; CHECK-NEXT: )
   (func $func (type $sig) (param $x anyref)
-    ;; This param will *not* be refined, as $sig is used in a call_indirect.
+    ;; This param will be refined, even though there is a call_indirect.
   )
 
   ;; CHECK:      (func $caller (type $3)

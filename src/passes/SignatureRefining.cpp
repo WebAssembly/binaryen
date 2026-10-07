@@ -314,6 +314,11 @@ struct SignatureRefining : public Pass {
             call->type = newResults;
           }
         }
+        for (auto* callIndirect : info.callIndirects) {
+          if (callIndirect->type != Type::unreachable) {
+            callIndirect->type = newResults;
+          }
+        }
         for (auto* callRef : info.callRefs) {
           if (callRef->type != Type::unreachable) {
             callRef->type = newResults;
