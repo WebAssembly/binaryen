@@ -27,6 +27,7 @@
 #include "ir/effects.h"
 #include "ir/find_all.h"
 #include "ir/local-graph.h"
+#include "ir/properties.h"
 #include "pass.h"
 #include "wasm-builder.h"
 #include "wasm.h"
@@ -132,9 +133,12 @@ struct LoopInvariantCodeMotion
         // The rest of the loop's effects matter too, we must also
         // take into account global state like interacting loads and
         // stores.
-        bool unsafeToMove = effects.writesGlobalState() ||
-                            effectsSoFar.orderedBefore(effects) ||
-                            loopEffects.orderedBefore(effects);
+        // Generative code (like an allocation) produces a new value each time
+        // it executes, so executing it once outside the loop is different.
+        bool unsafeToMove =
+          effects.writesGlobalState() || effectsSoFar.orderedBefore(effects) ||
+          loopEffects.orderedBefore(effects) ||
+          Properties::isGenerative(curr, getFunction(), *getModule());
         // TODO: look into optimizing this with exceptions. for now, disallow
         if (effects.throws() || loopEffects.throws()) {
           unsafeToMove = true;
