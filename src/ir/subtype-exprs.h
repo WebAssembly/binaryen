@@ -266,7 +266,7 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
   void visitElemDrop(ElemDrop* curr) {}
   void visitTry(Try* curr) {
     self()->noteSubtype(curr->body, curr);
-    for (auto* body : curr->catchBodies) {
+    for (auto*& body : curr->catchBodies) {
       self()->noteSubtype(body, curr);
     }
   }
@@ -423,7 +423,7 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
       return;
     }
     auto array = curr->type.getHeapType().getArray();
-    for (auto* value : curr->values) {
+    for (auto*& value : curr->values) {
       self()->noteSubtype(value, array.element.type);
     }
   }
