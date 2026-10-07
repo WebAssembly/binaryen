@@ -226,6 +226,8 @@ WeakTopologicalOrdering<BasicBlock>::WeakTopologicalOrdering(
   }
 
   // Traverse the linked lists of children, materializing them as WTO elements.
+  // Loop depth should be limited, so doing this recursively should be fine. If
+  // it ever causes an issue, we can un-recurse this.
   // TODO: Flatten the WTO into a single contiguous vector of entries with cycle
   // jump targets to avoid per-cycle vector allocations and recursion.
   auto buildList = [&](auto& self, Index firstChild, List& out) -> void {
@@ -280,8 +282,12 @@ template<typename CFG> struct WTOWorklist {
   void push(BasicBlock* block) { block->contents.inQueue = true; }
 
   template<typename VisitFn> void run(VisitFn&& visit) {
-    // TODO: Track the number of queued blocks to stop early once the worklist
-    // is empty.
+    // Iterate through each element in the current cycle's list (or the
+    // top-level list), which will be in reverse postorder. Visit those that are
+    // in the queue, which may push later elements to the queue. When there is a
+    // nested cycle, repeatedly visit it recursively until it stabilizes before
+    // continuing on. We could un-recurse this, but the loop depth is expected
+    // to be acceptably small.
     // TODO: Fast-path initial entry singletons and CFGs without backedges
     // without building DomTree or WTO, using CFGWalker::loopTops.
     WeakTopologicalOrdering<BasicBlock> wto(cfg.basicBlocks);
