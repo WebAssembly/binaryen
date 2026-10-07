@@ -24,6 +24,7 @@
 
 #include <memory>
 
+#include "wasm-debug.h"
 #include <pass.h>
 #include <wasm.h>
 
@@ -106,7 +107,7 @@ struct ReorderLocals : public WalkerPass<PostWalker<ReorderLocals>> {
     }
     counts.clear();
     std::vector<Index> oldToNew;
-    oldToNew.resize(num);
+    oldToNew.resize(num, Index(-1));
     for (size_t i = 0; i < newToOld.size(); i++) {
       if (curr->isParam(i)) {
         oldToNew[i] = i;
@@ -114,6 +115,7 @@ struct ReorderLocals : public WalkerPass<PostWalker<ReorderLocals>> {
         oldToNew[newToOld[i]] = i;
       }
     }
+    Debug::updateLocalIndices(curr, oldToNew);
     // apply the renaming to AST nodes
     struct ReIndexer : public PostWalker<ReIndexer> {
       std::vector<Index>& oldToNew;
