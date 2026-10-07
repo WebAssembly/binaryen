@@ -19,7 +19,8 @@
 // can then use that information.
 //
 // This pass is not run by default, as then the annotations would persist if the
-// user forgets to strip them.
+// user forgets to strip them. TODO: perhaps run this by default but also clean
+// up the annotations at the end of the pipeline?
 //
 
 #include "ir/lubs.h"

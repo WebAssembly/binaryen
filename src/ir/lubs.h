@@ -61,11 +61,6 @@ namespace LUB {
 // Given a function, computes a LUB for its results. The caller can then decide
 // to apply a refined type if we found one.
 //
-// This checks whether the function returns at all, that is, a none-returning
-// function may never return, in which case the LUBFinder will say !noted()
-// (such a function can be made noreturn, as if its return type were refined to
-// unreachable).
-//
 // This modifies the called function even if it fails to find a refined type as
 // it does a refinalize in order to be able to compute the new types. We could
 // roll back that change, but it's not harmful and can help, so we keep it
