@@ -568,6 +568,10 @@ void PassRegistry::registerPasses() {
                "strip debug info (including the names section)",
                createStripDebugPass);
   registerPass("strip-dwarf", "strip dwarf debug info", createStripDWARFPass);
+  registerPass("strip-refining-casts",
+               "remove casts on values flowing into slots whose declared type "
+               "the uncast value already satisfies",
+               createStripRefiningCastsPass);
   registerPass("strip-producers",
                "strip the wasm producers section",
                createStripProducersPass);
