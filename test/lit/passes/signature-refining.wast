@@ -464,7 +464,7 @@
 
 (module
   ;; However, a signature in a table does prevent that signature from being
-  ;; optimized
+  ;; optimized.
 
   (rec
     ;; CHECK:      (rec
@@ -508,6 +508,63 @@
   ;; CHECK-NEXT: )
   (func $func2 (type $sig2) (param $x anyref)
     ;; This param *will* be refined, as $sig2 is not in a table.
+  )
+
+  ;; CHECK:      (func $caller2 (type $2)
+  ;; CHECK-NEXT:  (call $func2
+  ;; CHECK-NEXT:   (struct.new_default $struct)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $caller2
+    (call $func2
+      (struct.new $struct)
+    )
+  )
+)
+
+(module
+  ;; As above, but with an element segment. A signature there also prevents
+  ;; optimization.
+
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $sig2 (sub (func (param (ref (exact $struct))))))
+
+    ;; CHECK:       (type $struct (struct))
+
+    ;; CHECK:       (type $2 (func))
+
+    ;; CHECK:       (type $sig (sub (func (param anyref))))
+    (type $sig (sub (func (param anyref))))
+    (type $sig2 (sub (func (param anyref))))
+  )
+
+  (type $struct (struct))
+
+  ;; CHECK:      (elem $sig (ref null $sig) (item (ref.null nofunc)))
+  (elem $sig (ref null $sig) (item (ref.null $sig)))
+
+  ;; CHECK:      (func $func (type $sig) (param $x anyref)
+  ;; CHECK-NEXT: )
+  (func $func (type $sig) (param $x anyref)
+    ;; This param will *not* be refined, as $sig is in an element segment.
+  )
+
+  ;; CHECK:      (func $caller (type $2)
+  ;; CHECK-NEXT:  (call $func
+  ;; CHECK-NEXT:   (struct.new_default $struct)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $caller
+    (call $func
+      (struct.new $struct)
+    )
+  )
+
+  ;; CHECK:      (func $func2 (type $sig2) (param $x (ref (exact $struct)))
+  ;; CHECK-NEXT: )
+  (func $func2 (type $sig2) (param $x anyref)
+    ;; This param *will* be refined, as $sig2 is not in an element segment.
   )
 
   ;; CHECK:      (func $caller2 (type $2)
