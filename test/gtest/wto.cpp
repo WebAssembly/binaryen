@@ -151,14 +151,7 @@ WTOList toIndexWTO(const WeakTopologicalOrdering<BasicBlock>::List& src) {
 }
 
 // Check the formal properties of a Weak Topological Ordering (Bourdoncle 1993,
-// Definition 1) over the reachable subgraph of `cfg`:
-// 1. Every vertex appears at most once in the flattened ordering.
-// 2. Every cycle is non-empty and its head (first element) is a single vertex,
-//    not a nested cycle.
-// 3. For every edge u -> v between reachable vertices:
-//    - Either u appears strictly before v in the flattened order, OR
-//    - v appears at or before u AND v is the head of a cycle containing both v
-//      and u.
+// Definition 1) over the reachable subgraph of `cfg`.
 void verifyWTOInvariants(const TestCFG& cfg, const WTOList& wto) {
   std::vector<Index> flatOrder;
   std::unordered_map<Index, size_t> pos;
@@ -169,6 +162,7 @@ void verifyWTOInvariants(const TestCFG& cfg, const WTOList& wto) {
                   std::vector<Index>& activeHeads) -> void {
     for (const auto& elem : list) {
       if (auto* v = std::get_if<Index>(&elem)) {
+        // Every vertex appears at most once in the flattened ordering.
         EXPECT_FALSE(pos.contains(*v)) << "Duplicate vertex " << *v;
         pos[*v] = flatOrder.size();
         flatOrder.push_back(*v);
@@ -176,6 +170,8 @@ void verifyWTOInvariants(const TestCFG& cfg, const WTOList& wto) {
           cycleMembers[head].insert(*v);
         }
       } else {
+        // Every cycle is non-empty and its head (first element) is a single
+        // vertex, not a nested cycle.
         const auto& cycle = std::get<WTOCycle>(elem);
         ASSERT_FALSE(cycle.elems.empty()) << "Empty cycle in WTO";
         ASSERT_TRUE(std::holds_alternative<Index>(cycle.elems.front()))
@@ -191,12 +187,15 @@ void verifyWTOInvariants(const TestCFG& cfg, const WTOList& wto) {
   std::vector<Index> activeHeads;
   walk(walk, wto, activeHeads);
 
+  // Check invariants for edges u -> v.
   for (Index u : flatOrder) {
     for (auto* succ : cfg.basicBlocks[u]->out) {
       Index v = succ->contents.index;
+      // Every reachable vertex appears at least once in the ordering.
       ASSERT_TRUE(pos.contains(v))
         << "Reachable vertex " << v << " missing from WTO";
       if (pos[u] >= pos[v]) {
+        // Backedges must be to the head of a cycle containing both v and u.
         ASSERT_TRUE(cycleMembers.contains(v))
           << "Back-edge " << u << " -> " << v << " targets non-head vertex "
           << v;

@@ -88,6 +88,7 @@ int main(int argc, const char* argv[]) {
   bool fuzzPreserveImportsAndExports = false;
   bool fuzzAgainstJS = false;
   bool fuzzNoInvokes = false;
+  FuzzParams fuzzParams;
   std::string fuzzImport;
   std::string emitSpecWrapper;
   std::string emitWasm2CWrapper;
@@ -228,6 +229,16 @@ For more on how to optimize effectively, see
       Options::Arguments::Zero,
       [&](Options* o, const std::string& arguments) { fuzzNoInvokes = true; })
     .add(
+      "--fuzz-hang-limit",
+      "",
+      "the number of runtime iterations (function calls, loop backbranches) we "
+      "allow before we trap to prevent a hangs (0 means no hang protection)",
+      WasmOptOption,
+      Options::Arguments::One,
+      [&](Options* o, const std::string& arguments) {
+        fuzzParams.HANG_LIMIT = std::stoi(arguments);
+      })
+    .add(
       "--fuzz-import",
       "",
       "a module to use as an import in -ttf mode",
@@ -361,7 +372,7 @@ For more on how to optimize effectively, see
   }
   if (translateToFuzz) {
     TranslateToFuzzReader reader(
-      wasm, options.extra["infile"], options.passOptions.worldMode);
+      fuzzParams, wasm, options.extra["infile"], options.passOptions.worldMode);
     reader.setAllowMemory(fuzzMemory);
     reader.setAllowOOB(fuzzOOB);
     reader.setPreserveImportsAndExports(fuzzPreserveImportsAndExports);
