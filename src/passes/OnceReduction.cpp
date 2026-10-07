@@ -269,10 +269,8 @@ struct Optimizer
       return;
     }
 
-    auto numBlocks = basicBlocks.size();
-    for (Index i = 0; i < numBlocks; i++) {
-      basicBlocks[i]->contents.index = i;
-    }
+    // For DomTree.
+    setBlockIndices();
 
     // Build a dominator tree, which then tells us what to remove: if a call
     // appears in block A, then we do not need to make any calls in any blocks
@@ -285,6 +283,7 @@ struct Optimizer
     // Each index in this vector is the set of "once" globals written to in the
     // basic block with the same index.
     std::vector<std::unordered_set<Name>> onceGlobalsWrittenVec;
+    auto numBlocks = basicBlocks.size();
     onceGlobalsWrittenVec.resize(numBlocks);
 
     for (Index i = 0; i < numBlocks; i++) {
@@ -367,6 +366,12 @@ struct Optimizer
 
 private:
   OptInfo& optInfo;
+
+  void setBlockIndices() {
+    for (Index i = 0; i < basicBlocks.size(); i++) {
+      basicBlocks[i]->contents.index = i;
+    }
+  }
 };
 
 } // anonymous namespace
