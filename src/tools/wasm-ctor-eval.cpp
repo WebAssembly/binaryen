@@ -1305,7 +1305,7 @@ start_eval:
          (localExprs.size() && func->getParams() != Type::none))) {
       auto originalFuncType = wasm.getFunction(funcName)->type;
       auto copyName = Names::getValidFunctionName(wasm, funcName);
-      *wasm.getExport(exportName)->getInternalName() = copyName;
+      wasm.getExport(exportName)->setInternalName(copyName);
 
       if (func->imported()) {
         // We must have return-called this imported function. Generate a new
@@ -1493,7 +1493,7 @@ void evalCtors(Module& wasm,
           assert(copyFunc->body);
         }
         wasm.addFunction(std::move(copyFunc));
-        *wasm.getExport(exp->name)->getInternalName() = copyName;
+        wasm.getExport(exp->name)->setInternalName(copyName);
       }
     }
   } catch (FailToEvalException& fail) {
