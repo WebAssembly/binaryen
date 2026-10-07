@@ -56,14 +56,6 @@ struct SignatureRefining : public Pass {
       return;
     }
 
-    if (!module->tables.empty()) {
-      // When there are tables we must also take their types into account, which
-      // would require us to take call_indirect, element segments, etc. into
-      // account. For now, do nothing if there are tables.
-      // TODO
-      return;
-    }
-
     // First, find all the information we need. Start by collecting inside each
     // function in parallel.
 
@@ -189,6 +181,8 @@ struct SignatureRefining : public Pass {
     // For now, do not optimize types that have subtypes. When we modify such a
     // type we need to modify subtypes as well, similar to the analysis in
     // TypeRefining, and perhaps we can unify this pass with that. TODO
+    // TODO: if we extend this, we must extend the table handling below, which
+    //       atm depends on it
     SubTypes subTypes(*module);
     for (auto& [type, info] : allInfo) {
       if (!subTypes.getImmediateSubTypes(type).empty()) {
@@ -200,6 +194,22 @@ struct SignatureRefining : public Pass {
         // param type for the parent (or equal) TODO
         info.canModify = false;
       }
+    }
+
+    // If a signature type appears in a table/elem, do not optimize it for now.
+    // TODO: We could refine the table/elem and the call_indirects etc.
+    auto handleTableType = [&](Type type) {
+      if (type.isFunction() && !type.isBasic()) {
+        // Note that we do not need to handle subtyping, because subtypes are
+        // disallowed, see above.
+        allInfo[type.getHeapType()].canModify = false;
+      }
+    };
+    for (auto& table : module->tables) {
+      handleTableType(table->type);
+    }
+    for (auto& segment : module->elementSegments) {
+      handleTableType(segment->type);
     }
 
     // Compute optimal LUBs.

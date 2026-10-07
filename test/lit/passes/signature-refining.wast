@@ -428,23 +428,26 @@
 )
 
 (module
-  ;; The presence of a table prevents us from doing any optimizations.
+  ;; The presence of a table does not prevent us optimizing other things.
 
-  ;; CHECK:      (type $sig (sub (func (param anyref))))
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $struct (struct))
+
+  ;; CHECK:       (type $1 (func))
+
+  ;; CHECK:       (type $sig (sub (func (param (ref (exact $struct))))))
   (type $sig (sub (func (param anyref))))
 
-  ;; CHECK:      (type $1 (func))
-
-  ;; CHECK:      (type $struct (struct))
   (type $struct (struct))
 
   (table 1 1 anyref)
 
   ;; CHECK:      (table $0 1 1 anyref)
 
-  ;; CHECK:      (func $func (type $sig) (param $x anyref)
+  ;; CHECK:      (func $func (type $sig) (param $x (ref (exact $struct)))
   ;; CHECK-NEXT: )
   (func $func (type $sig) (param $x anyref)
+    ;; This param will be refined.
   )
 
   ;; CHECK:      (func $caller (type $1)
