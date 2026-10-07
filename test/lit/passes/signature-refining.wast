@@ -702,6 +702,51 @@
 )
 
 (module
+  ;; Refining a result leads to an update to the call_indirect result.
+
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $struct (struct))
+
+  ;; CHECK:       (type $sig (sub (func (result (ref (exact $struct))))))
+  (type $sig (sub (func (result anyref))))
+
+  (type $struct (struct))
+
+  ;; CHECK:       (type $2 (func))
+
+  ;; CHECK:      (table $table 1 1 funcref)
+  (table $table 1 1 funcref)
+
+  ;; CHECK:      (func $call_indirect (type $2)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result (ref (exact $struct)))
+  ;; CHECK-NEXT:    (call_indirect $table (type $sig)
+  ;; CHECK-NEXT:     (i32.const 42)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $call_indirect
+    ;; After refining the result, the block type will refine.
+    (drop
+      (block (result anyref)
+        (call_indirect $table (type $sig)
+          (i32.const 42)
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $func (type $sig) (result (ref (exact $struct)))
+  ;; CHECK-NEXT:  (struct.new_default $struct)
+  ;; CHECK-NEXT: )
+  (func $func (type $sig) (result anyref)
+    ;; This result will refine $sig's result.
+    (struct.new $struct)
+  )
+)
+
+(module
   ;; Pass a null in one call to the function. The null can be updated which
   ;; allows us to refine (but the new type must be nullable).
 
