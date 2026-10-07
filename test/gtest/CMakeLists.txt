@@ -17,17 +17,17 @@ set(unittest_SOURCES
   disjoint_sets.cpp
   dwarf-ranges.cpp
   effects.cpp
-  graph.cpp
-  int128.cpp
-  leaves.cpp
   glbs.cpp
+  graph.cpp
   inplace_vector.cpp
+  int128.cpp
   interpreter.cpp
   intervals.cpp
   istring.cpp
   js-embedded-module.cpp
   json.cpp
   lattices.cpp
+  leaves.cpp
   local-graph.cpp
   possible-contents.cpp
   principal-type.cpp
@@ -35,6 +35,7 @@ set(unittest_SOURCES
   public-type-validator.cpp
   scc.cpp
   sizes.cpp
+  source-map.cpp
   span.cpp
   stringify.cpp
   subtype-exprs.cpp
@@ -42,9 +43,9 @@ set(unittest_SOURCES
   topological-sort.cpp
   type-builder.cpp
   type-updating.cpp
-  wat-lexer.cpp
   validator.cpp
-  source-map.cpp
+  wat-lexer.cpp
+  wto.cpp
 )
 
 if(BUILD_FUZZTEST)

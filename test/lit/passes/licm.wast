@@ -5,15 +5,18 @@
 (module
  (memory 10 20)
 
- ;; CHECK:      (type $0 (func (param i32) (result i32)))
+ ;; CHECK:      (type $0 (func (param i32)))
 
- ;; CHECK:      (type $1 (func (param i32)))
+ ;; CHECK:      (type $1 (func (param i32) (result i32)))
 
- ;; CHECK:      (type $2 (func))
+ ;; CHECK:      (type $struct (struct (field (mut i32))))
+ (type $struct (struct (field (mut i32))))
+
+ ;; CHECK:      (type $3 (func))
 
  ;; CHECK:      (memory $0 10 20)
 
- ;; CHECK:      (func $unreachable-get (type $2)
+ ;; CHECK:      (func $unreachable-get (type $3)
  ;; CHECK-NEXT:  (local $x i32)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (local.get $x)
@@ -37,7 +40,7 @@
   )
  )
 
- ;; CHECK:      (func $unreachable-get-call (type $1) (param $p i32)
+ ;; CHECK:      (func $unreachable-get-call (type $0) (param $p i32)
  ;; CHECK-NEXT:  (local $x i32)
  ;; CHECK-NEXT:  (loop $loop
  ;; CHECK-NEXT:   (unreachable)
@@ -58,7 +61,7 @@
   )
  )
 
- ;; CHECK:      (func $unreachable-get-store (type $1) (param $p i32)
+ ;; CHECK:      (func $unreachable-get-store (type $0) (param $p i32)
  ;; CHECK-NEXT:  (local $x i32)
  ;; CHECK-NEXT:  (loop $loop
  ;; CHECK-NEXT:   (unreachable)
@@ -81,7 +84,7 @@
   )
  )
 
- ;; CHECK:      (func $pause (type $1) (param $p i32)
+ ;; CHECK:      (func $pause (type $0) (param $p i32)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:  )
@@ -107,7 +110,7 @@
   )
  )
 
-  ;; CHECK:      (func $bug-inversion (type $0) (param $z i32) (result i32)
+  ;; CHECK:      (func $bug-inversion (type $1) (param $z i32) (result i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (local $y i32)
   ;; CHECK-NEXT:  (local.set $y
@@ -145,7 +148,7 @@
     (local.get $x)
   )
 
-  ;; CHECK:      (func $bug-cross-statement-dependency (type $0) (param $z i32) (result i32)
+  ;; CHECK:      (func $bug-cross-statement-dependency (type $1) (param $z i32) (result i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (local $y i32)
   ;; CHECK-NEXT:  (local.set $x
@@ -183,7 +186,7 @@
     (local.get $y)
   )
 
-  ;; CHECK:      (func $hoist-trap-before-backedge (type $0) (param $x i32) (result i32)
+  ;; CHECK:      (func $hoist-trap-before-backedge (type $1) (param $x i32) (result i32)
   ;; CHECK-NEXT:  (local $y i32)
   ;; CHECK-NEXT:  (block
   ;; CHECK-NEXT:   (local.set $y
@@ -217,7 +220,7 @@
     (local.get $y)
   )
 
-  ;; CHECK:      (func $no-hoist-trap-past-inner-loop (type $0) (param $x i32) (result i32)
+  ;; CHECK:      (func $no-hoist-trap-past-inner-loop (type $1) (param $x i32) (result i32)
   ;; CHECK-NEXT:  (local $y i32)
   ;; CHECK-NEXT:  (loop $outer
   ;; CHECK-NEXT:   (loop $inner
@@ -256,5 +259,81 @@
       )
     )
     (local.get $y)
+  )
+
+  ;; CHECK:      (func $no-hoist-struct-new (type $0) (param $x i32)
+  ;; CHECK-NEXT:  (local $ref (ref null $struct))
+  ;; CHECK-NEXT:  (loop $loop
+  ;; CHECK-NEXT:   (local.set $ref
+  ;; CHECK-NEXT:    (struct.new $struct
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (struct.set $struct 0
+  ;; CHECK-NEXT:    (local.get $ref)
+  ;; CHECK-NEXT:    (i32.add
+  ;; CHECK-NEXT:     (struct.get $struct 0
+  ;; CHECK-NEXT:      (local.get $ref)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (br_if $loop
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $no-hoist-struct-new (param $x i32)
+    (local $ref (ref null $struct))
+    ;; Each iteration allocates a new struct, so we cannot hoist the allocation
+    ;; out of the loop: that would make all iterations use the same struct.
+    (loop $loop
+      (local.set $ref
+        (struct.new $struct
+          (i32.const 0)
+        )
+      )
+      (struct.set $struct 0
+        (local.get $ref)
+        (i32.add
+          (struct.get $struct 0
+            (local.get $ref)
+          )
+          (i32.const 1)
+        )
+      )
+      (br_if $loop
+        (local.get $x)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $hoist-ref-i31 (type $0) (param $x i32)
+  ;; CHECK-NEXT:  (local $ref i31ref)
+  ;; CHECK-NEXT:  (local.set $ref
+  ;; CHECK-NEXT:   (ref.i31
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (loop $loop
+  ;; CHECK-NEXT:   (nop)
+  ;; CHECK-NEXT:   (br_if $loop
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $hoist-ref-i31 (param $x i32)
+    (local $ref i31ref)
+    ;; In comparison, ref.i31 is not an allocation, so we can hoist it.
+    (loop $loop
+      (local.set $ref
+        (ref.i31
+          (i32.const 0)
+        )
+      )
+      (br_if $loop
+        (local.get $x)
+      )
+    )
   )
 )

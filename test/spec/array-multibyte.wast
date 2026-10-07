@@ -981,3 +981,37 @@
 (assert_return (invoke "unaligned_load" (i32.const 2)) (i32.const 0x12345678))
 (assert_return (invoke "aligned_load" (i32.const 0)) (i32.const 0x56780000))
 (assert_return (invoke "aligned_load" (i32.const 4)) (i32.const 0x00001234))
+
+;; ============================================================================
+;; Binary format: memarg ::= flags:u32 typeidx:u32 offset:u32
+;; ============================================================================
+
+(module binary
+  "\00asm\01\00\00\00"
+
+  "\01\0a\03"         ;; Type section: 3 types
+    "\5f\00"          ;; Type 0: (struct)
+    "\5e\78\01"       ;; Type 1: (array (mut i8))
+    "\60\00\01\7f"    ;; Type 2: (func (result i32))
+
+  "\03\02\01\02"      ;; Function section: 1 function of type 2
+
+  "\07\08\01"         ;; Export section: 1 export
+    "\04test\00\00"   ;; (export "test" (func 0))
+
+  "\0a\1e\01"         ;; Code section: 1 function
+    "\1c\01"          ;; Body size 28, 1 local entry
+      "\01\63\01"     ;; (local (ref null 1))
+      "\41\08"        ;; i32.const 8
+      "\fb\07\01"     ;; array.new_default 1
+      "\22\00"        ;; local.tee 0
+      "\41\00"        ;; i32.const 0
+      "\41\2a"        ;; i32.const 42
+      "\36\22\01\04"  ;; i32.store flags=0x22 (array, align=4) typeidx=1 offset=4
+      "\20\00"        ;; local.get 0
+      "\41\00"        ;; i32.const 0
+      "\28\22\01\04"  ;; i32.load flags=0x22 (array, align=4) typeidx=1 offset=4
+      "\0b"           ;; end
+)
+
+(assert_return (invoke "test") (i32.const 42))
