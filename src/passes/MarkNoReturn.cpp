@@ -23,24 +23,31 @@
 //
 
 #include "ir/lubs.h"
-#include "ir/module-utils.h"
 #include "pass.h"
 #include "wasm.h"
 
 namespace wasm {
 
-struct MarkNoReturn : public WalkerPass<PostWalker<MarkNoReturn>> {
-  bool isFunctionParallel() override { return true; }
+struct MarkNoReturn : public Pass {
+  void run(Module* module) override {
+    // MarkNoReturn itself cannot be function-parallel, as it adds
+    // annotations, which could race with passes that read them. We are
+    // therefore a module-level pass, internally parallel.
+    struct Inner : public WalkerPass<PostWalker<Inner>> {
+      bool isFunctionParallel() override { return true; }
 
-  std::unique_ptr<Pass> create() override {
-    return std::make_unique<MarkNoReturn>();
-  }
+      std::unique_ptr<Pass> create() override {
+        return std::make_unique<Inner>();
+      }
 
-  void doWalkFunction(Function* func) {
-    auto* module = getModule();
-    if (!LUB::getResultsLUB(func, *module, LUB::AllResults).noted()) {
-      func->funcAnnotations.noReturn = true;
-    }
+      void doWalkFunction(Function* func) {
+        if (!LUB::getResultsLUB(func, *getModule(), LUB::AllResults).noted()) {
+          func->funcAnnotations.noReturn = true;
+        }
+      }
+    };
+
+    Inner().run(getPassRunner(), module);
   }
 };
 
