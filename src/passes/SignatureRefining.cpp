@@ -62,6 +62,7 @@ struct SignatureRefining : public Pass {
     struct Info {
       // The calls and call_refs.
       std::vector<Call*> calls;
+      std::vector<CallIndirect*> callIndirects;
       std::vector<CallRef*> callRefs;
 
       // Additional calls to take into account. We store intrinsic calls here,
@@ -100,8 +101,24 @@ struct SignatureRefining : public Pass {
           info.canModify = false;
           return;
         }
-        info.calls = std::move(FindAll<Call>(func->body).list);
-        info.callRefs = std::move(FindAll<CallRef>(func->body).list);
+
+        struct CallFinder : public PostWalker<CallFinder> {
+          Info& info;
+
+          CallFinder(Info& info) : info(info) {}
+
+          void visitCall(Call* curr) {
+            info.calls.push_back(curr);
+          }
+          void visitCallIndirect(CallIndirect* curr) {
+            info.callIndirects.push_back(curr);
+          }
+          void visitCallRef(CallRef* curr) {
+            info.callRefs.push_back(curr);
+          }
+        } callFinder(info);
+        callFinder.walk(func->body);
+
         info.resultsLUB = LUB::getResultsLUB(func, *module);
       });
 
@@ -127,6 +144,11 @@ struct SignatureRefining : public Pass {
           }
           allInfo[targetType.getHeapType()].extraCalls.push_back(call);
         }
+      }
+
+      // For now, do not handle indirect calls. TODO
+      for (auto* callIndirect : info.callIndirects) {
+        allInfo[callIndirect->heapType].canModify = false;
       }
 
       // For indirect calls, add each call_ref to the type the call_ref uses.
