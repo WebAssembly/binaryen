@@ -28,6 +28,11 @@ using namespace wasm;
 
 namespace {
 
+// The WTO utility is parameterized on the BasicBlock type associated with a
+// CFG. Since BasicBlock itself contains a user-provided Contents type, there is
+// no canonical BasicBlock type ready to use. Since we don't need a full
+// CFGWalker, just create a mini version of CFGWalker for testing that has all
+// the expected associated types and fields.
 struct TestCFG {
   struct Contents {
     bool inQueue = false;

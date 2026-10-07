@@ -22,12 +22,13 @@
 // strategies with widenings", 1993) is a hierarchical ordering of the reachable
 // blocks of a directed graph in which strongly connected components (loops) are
 // parenthesized into nested cycles. The first element of each cycle is its
-// "head" (loop header), and the ordering satisfies two properties:
+// "head" (loop header). Formally, the WTO of a directed graph is a hierarchical
+// ordering of its vertices such that for every edge u -> v, either:
 //
-//   1. Every non-cycle edge u -> v goes forward in the flattened ordering
-//      (u appears before v).
-//   2. Every backedge u -> v targets the head v of a cycle that encloses both
-//      u and v.
+//   1. u < v (i.e. this is a forward edge) and v is not the head of a cycle
+//      containing u.
+//   2. u >= v (i.e. this is a backedge) and v is the head of a cycle containing
+//      u.
 //
 // Examples (writing `(h ...)` for a cycle with head `h`):
 //
@@ -90,6 +91,7 @@ namespace wasm {
 // The BasicBlock type is assumed to have an `in` vector of predecessor block
 // pointers and a `contents.index` field of type `Index`.
 template<typename BasicBlock> struct WeakTopologicalOrdering {
+  static constexpr Index NoIndex = Index(-1);
   static constexpr Index NoTarget = Index(-1);
 
   // Each entry either visits `block` (`cycleTarget == NoTarget`) or marks the
@@ -119,11 +121,16 @@ WeakTopologicalOrdering<BasicBlock>::WeakTopologicalOrdering(
     return i == 0 || domTree.iDoms[i] != domTree.nonsense;
   };
 
-  static constexpr Index NoIndex = Index(-1);
   struct Node {
+    // The innermost loop header for the cycle containing this block.
     Index loopParent = NoIndex;
+    // For loop headers, the index of their first child (i.e. the head of a
+    // linked list of children).
     Index firstChild = NoIndex;
+    // A linked list edge to the next child with the same loop header.
     Index nextSibling = NoIndex;
+    // The parent in the union-find forest used to collapse inner loops into
+    // their headers as they are discovered.
     Index ufParent = NoIndex;
     bool isLoopHeader = false;
   };
@@ -169,6 +176,10 @@ WeakTopologicalOrdering<BasicBlock>::WeakTopologicalOrdering(
     if (!isReachable(h)) {
       continue;
     }
+    // Check if h is the head of a loop. It is a loop header if and only if it
+    // dominates one of its predecessors. (We assume the CFG is reducible, so
+    // loop headers dominate all blocks in the loop bodies, including those that
+    // branch back to the header.)
     for (auto* pred : blocks[h]->in) {
       Index p = pred->contents.index;
       if (dominates(h, p)) {
@@ -181,6 +192,10 @@ WeakTopologicalOrdering<BasicBlock>::WeakTopologicalOrdering(
         }
       }
     }
+    // We've initialized the worklist with all the loop tails that branch
+    // directly back to the loop header. DFS from those loop tails back to the
+    // loop header (but no further). All the blocks we find during the DFS are
+    // part of the loop body.
     while (!worklist.empty()) {
       Index curr = worklist.back();
       worklist.pop_back();
@@ -209,14 +224,19 @@ WeakTopologicalOrdering<BasicBlock>::WeakTopologicalOrdering(
     }
     Index parent = nodes[idx].loopParent;
     if (parent == NoIndex) {
+      // Prepend to top-level list.
       nodes[idx].nextSibling = topFirstChild;
       topFirstChild = idx;
     } else {
+      // Prepend to loop header's list.
       nodes[idx].nextSibling = nodes[parent].firstChild;
       nodes[parent].firstChild = idx;
     }
   }
 
+  // Traverse the linked lists of children, materializing them as WTO entries.
+  // Loop depth should be limited, so doing this recursively should be fine. If
+  // it ever causes an issue, we can un-recurse this.
   entries.reserve(numBlocks * 2);
   auto emitList = [&](auto& self, Index firstChild) -> void {
     for (Index curr = firstChild; curr != NoIndex;
@@ -293,6 +313,10 @@ template<typename CFG> struct WTOWorklist {
       }
       return;
     }
+    // Iterate through the flattened WTO entries in reverse postorder. Visit
+    // blocks that are in the queue, which may push later blocks or loop headers
+    // to the queue. At the end of a cycle, jump back to the cycle header entry
+    // if the header was re-queued so the cycle repeats until it stabilizes.
     WeakTopologicalOrdering<BasicBlock> wto(cfg.basicBlocks);
     const auto& entries = wto.entries;
     Index pc = 0;
