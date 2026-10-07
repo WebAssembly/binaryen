@@ -3734,7 +3734,9 @@ void FunctionValidator::visitStructWait(StructWait* curr) {
 
   if (
     !shouldBeTrue(
-      field.isValidControlWord(),
+      field.type == Type::i32 || field.type == Type::i64 ||
+        Type::isSubType(field.type,
+                        Type(HeapTypes::eq.getBasic(Shared), Nullable)),
       curr,
       R"(struct.wait control word field must be i32, i64 or a subtype of (ref null (shared eq)))")) {
     return;
