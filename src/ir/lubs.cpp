@@ -64,6 +64,9 @@ LUBFinder getResultsLUB(Function* func, Module& wasm, Mode mode) {
       lub.note(curr->value ? curr->value->type : Type::none);
     }
     void visitCall(Call* curr) {
+      // TODO: propagation through calls (if the called function does not
+      //       return, we do not; also the tail-called function's results can
+      //       be taken into account)
       if (curr->isReturn) {
         lub.note(wasm.getFunction(curr->target)->getResults());
       }
