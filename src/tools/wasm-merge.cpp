@@ -233,8 +233,10 @@ void updateNames(Module& wasm, KindNameUpdates& kindNameUpdates) {
     void mapModuleFields(Module& wasm) {
       for (auto& curr : wasm.exports) {
         // skip type exports
-        if (auto* name = curr->getInternalName()) {
-          mapName(ModuleItemKind(curr->kind), *name);
+        if (auto* internalName = curr->getInternalName()) {
+          Name name = *internalName;
+          mapName(ModuleItemKind(curr->kind), name);
+          curr->setInternalName(name);
         }
       }
       for (auto& curr : wasm.elementSegments) {
