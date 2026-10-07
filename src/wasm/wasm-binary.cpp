@@ -6011,7 +6011,14 @@ WasmBinaryReader::readMemoryAccess(bool isAtomic, bool isRMW) {
   MemoryOrder memoryOrder =
     isAtomic ? MemoryOrder::SeqCst : MemoryOrder::Unordered;
 
-  if (!hasBackingArray) {
+  if (hasBackingArray) {
+    if (hasMemIdx || hasMemoryOrder) {
+      throwError(
+        "Memory index and memory order are not allowed for array backing.");
+    }
+    arrayType = getIndexedHeapType();
+    offset = getU32LEB();
+  } else {
     if (hasMemIdx) {
       memIdx = getU32LEB();
     }
@@ -6023,13 +6030,6 @@ WasmBinaryReader::readMemoryAccess(bool isAtomic, bool isRMW) {
     }
     auto* memory = wasm.memories[memIdx].get();
     offset = memory->addressType == Type::i32 ? getU32LEB() : getU64LEB();
-  } else {
-    if (hasMemIdx || hasMemoryOrder) {
-      throwError(
-        "Memory index and memory order are not allowed for array backing.");
-    }
-    arrayType = getIndexedHeapType();
-    offset = getU32LEB();
   }
 
   return {alignment, offset, memIdx, memoryOrder, arrayType};
