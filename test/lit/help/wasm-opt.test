@@ -79,6 +79,12 @@
 ;; CHECK-NEXT:   --fuzz-no-invokes                             do not emit invoker functions in
 ;; CHECK-NEXT:                                                 the fuzzer
 ;; CHECK-EMPTY:
+;; CHECK-NEXT:   --fuzz-hang-limit                             the number of runtime iterations
+;; CHECK-NEXT:                                                 (function calls, loop 
+;; CHECK-NEXT:                                                 backbranches) we allow before we
+;; CHECK-NEXT:                                                 trap to prevent a hangs (0 means
+;; CHECK-NEXT:                                                 no hang protection)
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --fuzz-import                                 a module to use as an import in 
 ;; CHECK-NEXT:                                                 -ttf mode
 ;; CHECK-EMPTY:
@@ -579,6 +585,11 @@
 ;; CHECK-NEXT:   --strip-eh                                    strip EH instructions
 ;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --strip-producers                             strip the wasm producers section
+;; CHECK-EMPTY:
+;; CHECK-NEXT:   --strip-refining-casts                        remove casts on values flowing 
+;; CHECK-NEXT:                                                 into slots whose declared type 
+;; CHECK-NEXT:                                                 the uncast value already 
+;; CHECK-NEXT:                                                 satisfies
 ;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --strip-target-features                       strip the wasm target features 
 ;; CHECK-NEXT:                                                 section
