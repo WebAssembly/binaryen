@@ -107,15 +107,11 @@ struct SignatureRefining : public Pass {
 
           CallFinder(Info& info) : info(info) {}
 
-          void visitCall(Call* curr) {
-            info.calls.push_back(curr);
-          }
+          void visitCall(Call* curr) { info.calls.push_back(curr); }
           void visitCallIndirect(CallIndirect* curr) {
             info.callIndirects.push_back(curr);
           }
-          void visitCallRef(CallRef* curr) {
-            info.callRefs.push_back(curr);
-          }
+          void visitCallRef(CallRef* curr) { info.callRefs.push_back(curr); }
         } callFinder(info);
         callFinder.walk(func->body);
 
