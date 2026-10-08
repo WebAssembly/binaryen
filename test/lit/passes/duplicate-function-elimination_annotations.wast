@@ -4,9 +4,6 @@
 ;; RUN: foreach %s %t wasm-opt --duplicate-function-elimination --all-features                               -S -o - | filecheck %s
 ;; RUN: foreach %s %t wasm-opt --duplicate-function-elimination --all-features --expect-later-toolchain-opts -S -o - | filecheck %s --check-prefix=LATER
 
-;; We should not merge functions differing in semantics-altering annotations
-;; like removable.if.unused, or js.called when expecting later toolchain opts.
-
 ;; One function has the js.called hint, so we merge only if we do not expect
 ;; later toolchain opts (and keep the hint on the merged function).
 (module
@@ -129,7 +126,7 @@
  )
 )
 
-;; Both have it, so we do merge.
+;; Both have it, so we always merge.
 (module
  ;; CHECK:      (type $0 (func (param i32)))
 
@@ -182,7 +179,10 @@
  )
 )
 
-;; Just one function has removable.if.unused, so we do not merge.
+;; Just one function has removable.if.unused, so we do not merge. Unlike
+;; js.called, we cannot merge and apply the annotation, as the annotation alters
+;; semantics (whereas js.called just warns about something we should not break,
+;; so applying it to more places can inhibit opts, but not break things).
 (module
  ;; CHECK:      (type $0 (func (param i32)))
 
