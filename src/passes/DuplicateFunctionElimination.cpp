@@ -42,7 +42,6 @@ struct DuplicateFunctionElimination : public Pass {
     // we see the functions C1 and C2 that they call are in fact identical.
     // Rarely, such "chains" can be very long, so we limit how many we do.
     auto& options = getPassOptions();
-std::cout << "last? " << options.lastOpts << '\n';
     Index limit;
     if (options.optimizeLevel >= 3 || options.shrinkLevel >= 1) {
       limit = module->functions.size(); // no limit
