@@ -229,6 +229,9 @@
 ;; CHECK-NEXT:   --mark-js-called                              mark js called functions (using 
 ;; CHECK-NEXT:                                                 configureAll) as doing so
 ;; CHECK-EMPTY:
+;; CHECK-NEXT:   --mark-noreturn                               mark functions that do not 
+;; CHECK-NEXT:                                                 return, enabling later opts
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --memory-packing                              packs memory into separate 
 ;; CHECK-NEXT:                                                 segments, skipping zeros
 ;; CHECK-EMPTY:
