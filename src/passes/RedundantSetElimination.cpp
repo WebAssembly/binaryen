@@ -34,7 +34,7 @@
 //
 
 #include <cfg/cfg-traversal.h>
-#include <cfg/rpo.h>
+#include <cfg/wto.h>
 #include <ir/literal-utils.h>
 #include <ir/numbering.h>
 #include <ir/properties.h>
@@ -58,7 +58,7 @@ namespace {
 
 // information in a basic block
 struct Info {
-  // For RPOQueue
+  // For WTOWorklist
   bool inQueue;
   Index index;
 
@@ -225,12 +225,12 @@ struct RedundantSetElimination
         end[i] = unseenValue;
       }
     }
-    // Keep working while stuff is flowing, in reverse-postorder so that we
-    // reach code after its predecessors, avoiding wasted recomputation.
-    RPOQueue<RedundantSetElimination> work(*this);
+    // Keep working while stuff is flowing, in weak topological order so that we
+    // reach code after its predecessors and stabilize inner loops before outer
+    // loops, avoiding wasted recomputation.
+    WTOWorklist<RedundantSetElimination> work(*this);
     work.push(entry);
-    while (!work.empty()) {
-      auto* curr = work.pop();
+    work.run([&](BasicBlock* curr) {
 #if RSE_DEBUG
       std::cout << "flow block " << curr << '\n';
 #endif
@@ -325,7 +325,7 @@ struct RedundantSetElimination
         // note that the first iteration this is always not the case,
         // since end contains unseen (and then the comparison ends on
         // the first element)
-        continue;
+        return;
       }
       // update the end state and update children
 #ifndef NDEBUG
@@ -342,7 +342,7 @@ struct RedundantSetElimination
       for (auto* next : curr->out) {
         work.push(next);
       }
-    }
+    });
   }
 
   // optimizing
