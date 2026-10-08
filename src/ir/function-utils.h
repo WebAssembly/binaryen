@@ -26,7 +26,7 @@ namespace wasm::FunctionUtils {
 // Checks if two functions are equal in all functional aspects,
 // everything but their name (which can't be the same, in the same
 // module!) - same params, vars, body, result, etc.
-inline bool equal(Function* left, Function* right, const PassOptions& option) {
+inline bool equal(Function* left, Function* right, const PassOptions& options) {
   if (left->type != right->type) {
     return false;
   }
