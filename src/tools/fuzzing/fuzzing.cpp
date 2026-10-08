@@ -1924,12 +1924,23 @@ void TranslateToFuzzReader::addHangLimitChecks(Function* func) {
 
     void visitExpression(Expression* curr) {
       if (auto* atomicWait = curr->dynCast<AtomicWait>()) {
-        atomicWait->timeout = builder.makeSequence(
-          builder.makeDrop(atomicWait->timeout), builder.makeConst(int64_t{0}));
+        zeroTimeout(atomicWait->timeout);
       } else if (auto* structWait = curr->dynCast<StructWait>()) {
-        structWait->timeout = builder.makeSequence(
-          builder.makeDrop(structWait->timeout), builder.makeConst(int64_t{0}));
+        zeroTimeout(structWait->timeout);
       }
+    }
+
+  private:
+    void zeroTimeout(Expression*& timeout) {
+      // If the timeout is unreachable, leave it alone: wrapping it in a block
+      // ending in an i64 constant would make it (and the wait, and its
+      // ancestors) concrete, invalidating already-finalized parent types.
+      if (timeout->type != Type::i64) {
+        assert(timeout->type == Type::unreachable);
+        return;
+      }
+      timeout = builder.makeSequence(builder.makeDrop(timeout),
+                                     builder.makeConst(int64_t{0}));
     }
   } timeoutAvoider(builder);
   timeoutAvoider.walk(func->body);
