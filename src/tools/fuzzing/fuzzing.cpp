@@ -1917,9 +1917,10 @@ void TranslateToFuzzReader::addHangLimitChecks(Function* func) {
         AndInt32, arrayNew->size, builder.makeConst(int32_t(1024 - 1)));
     }
   }
-  struct Visitor : PostWalker<Visitor, UnifiedExpressionVisitor<Visitor>> {
+  struct TimeoutAvoider
+    : PostWalker<TimeoutAvoider, UnifiedExpressionVisitor<TimeoutAvoider>> {
     Builder& builder;
-    Visitor(Builder& builder) : builder(builder) {}
+    TimeoutAvoider(Builder& builder) : builder(builder) {}
 
     void visitExpression(Expression* curr) {
       if (auto* atomicWait = curr->dynCast<AtomicWait>()) {
@@ -1932,14 +1933,14 @@ void TranslateToFuzzReader::addHangLimitChecks(Function* func) {
   private:
     void zeroTimeout(Expression** timeout) {
       if ((*timeout)->dynCast<Const>()) {
-        *timeout = builder.makeConst(int64_t(0));
+        *timeout = builder.makeConst(int64_t{0});
       } else if ((*timeout)->type == Type::i64) {
         *timeout = builder.makeSequence(builder.makeDrop(*timeout),
                                         builder.makeConst(int64_t{0}));
       }
     }
-  } v(builder);
-  v.walk(func->body);
+  } timeoutAvoider(builder);
+  timeoutAvoider.walk(func->body);
 }
 
 void TranslateToFuzzReader::recombine(Function* func) {
