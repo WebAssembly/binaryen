@@ -127,17 +127,21 @@ bool isMemoryExported(Module& wasm) {
   return false;
 }
 
-bool needsMemoryGrow(Module& wasm) {
+bool canMemoryGrowExternally(Module& wasm) {
   if (wasm.memories.empty()) {
     return false;
-  }
-  if (hasMemoryGrow(wasm)) {
-    return true;
   }
   if (wasm.memories[0]->max <= wasm.memories[0]->initial) {
     return false;
   }
   return wasm.memories[0]->imported() || isMemoryExported(wasm);
+}
+
+bool needsMemoryGrow(Module& wasm) {
+  if (wasm.memories.empty()) {
+    return false;
+  }
+  return hasMemoryGrow(wasm) || canMemoryGrowExternally(wasm);
 }
 
 bool needsBufferView(Module& wasm) {
@@ -497,7 +501,7 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
 
       // If memory is growable, override the imported memory's grow method to
       // ensure so that when grow is called from the output it works as expected
-      if (wasm->memories[0]->max > wasm->memories[0]->initial) {
+      if (canMemoryGrowExternally(*wasm)) {
         asmFunc[3]->push_back(
           ValueBuilder::makeStatement(ValueBuilder::makeBinary(
             ValueBuilder::makeDot(ValueBuilder::makeName("memory"),
