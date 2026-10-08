@@ -142,7 +142,7 @@ struct SignatureRefining : public Pass {
         }
       }
 
-      // For indirect calls, add each to the proper list of the relevent type.
+      // For non-direct calls, add each to the proper list of the relevant type.
       for (auto* callIndirect : info.callIndirects) {
         allInfo[callIndirect->heapType].callIndirects.push_back(callIndirect);
       }
