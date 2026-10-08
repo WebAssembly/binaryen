@@ -428,6 +428,19 @@ struct OptimizationOptions : public ToolOptions {
     // wasm-opt is the last one, and the last invocation of the default opts is
     // the last one. Find that invocation and mark lastOpts=true there, which
     // will then remain true until the end.
+    //
+    // That is, imagine we are called with this:
+    //
+    //    wasm-opt --dce -O3 --rse -Oz --licm
+    //                              ^^
+    // Then lastOpts is set here  --^^
+    // And it applies from then on: [.......]
+    // That is, we mark lastOpts on the -Oz (after --dce -O3 --rse) and it
+    // applies to the -Oz and the --licm.
+    //
+    // The idea is that the last -O3/-Oz/etc. is the last big cycle of opts, and
+    // we can assume it is the last (and other specific passes are assumed to be
+    // "last" if they are after it).
     Index lastDefaultOptsIndex = Index(-1);
     if (!expectLaterToolchainOpts) {
       for (Index i = 0; i < passes.size(); ++i) {
