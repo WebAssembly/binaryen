@@ -9,7 +9,7 @@ total
  [table-data]   : 33      
  [tables]       : 2       
  [tags]         : 2       
- [total]        : 56409   
+ [total]        : 56427   
  [vars]         : 3949    
  ArrayCmpxchg   : 14      
  ArrayCopy      : 23      
@@ -26,17 +26,17 @@ total
  AtomicRMW      : 21      
  AtomicWait     : 6       
  Binary         : 2100    
- Block          : 3414    
+ Block          : 3420    
  BrOn           : 123     
  Break          : 458     
  Call           : 514     
  CallIndirect   : 114     
  CallRef        : 127     
- Const          : 7985    
+ Const          : 7991    
  ContBind       : 1       
  ContNew        : 51      
  DataDrop       : 10      
- Drop           : 313     
+ Drop           : 319     
  GlobalGet      : 3030    
  GlobalSet      : 1073    
  I31Get         : 35      
