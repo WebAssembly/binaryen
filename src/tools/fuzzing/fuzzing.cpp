@@ -1924,19 +1924,11 @@ void TranslateToFuzzReader::addHangLimitChecks(Function* func) {
 
     void visitExpression(Expression* curr) {
       if (auto* atomicWait = curr->dynCast<AtomicWait>()) {
-        zeroTimeout(&atomicWait->timeout);
+        atomicWait->timeout = builder.makeSequence(
+          builder.makeDrop(atomicWait->timeout), builder.makeConst(int64_t{0}));
       } else if (auto* structWait = curr->dynCast<StructWait>()) {
-        zeroTimeout(&structWait->timeout);
-      }
-    }
-
-  private:
-    void zeroTimeout(Expression** timeout) {
-      if ((*timeout)->dynCast<Const>()) {
-        *timeout = builder.makeConst(int64_t{0});
-      } else if ((*timeout)->type == Type::i64) {
-        *timeout = builder.makeSequence(builder.makeDrop(*timeout),
-                                        builder.makeConst(int64_t{0}));
+        structWait->timeout = builder.makeSequence(
+          builder.makeDrop(structWait->timeout), builder.makeConst(int64_t{0}));
       }
     }
   } timeoutAvoider(builder);
