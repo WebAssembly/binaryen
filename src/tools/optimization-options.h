@@ -67,6 +67,11 @@ struct OptimizationOptions : public ToolOptions {
 
   std::vector<PassInfo> passes;
 
+  // Normally we assume no wasm-opt or other toolchain opts happen after us,
+  // but the user can tell us otherwise, which inhibits some opts (ones that
+  // limit subsequent opts).
+  bool expectLaterToolchainOpts = false;
+
   // Add a request to run all the default opt passes. They are run with the
   // current opt and shrink levels specified, which are read from passOptions.
   //
@@ -319,6 +324,15 @@ struct OptimizationOptions : public ToolOptions {
            [this](Options*, const std::string&) {
              passOptions.zeroFilledMemory = true;
            })
+      .add("--expect-later-toolchain-opts",
+           "",
+           "Expect further invocations of wasm-opt later, avoiding "
+           "optimizations that might inhibit them",
+           OptimizationOptionsCategory,
+           Options::Arguments::Zero,
+           [this](Options*, const std::string&) {
+             expectLaterToolchainOpts = true;
+           })
       .add("--skip-pass",
            "-sp",
            "Skip a pass (do not run it)",
@@ -410,7 +424,28 @@ struct OptimizationOptions : public ToolOptions {
       passRunner.clear();
     };
 
-    for (auto& pass : passes) {
+    // If we do not expect later toolchain opts, then this invocation of
+    // wasm-opt is the last one, and the last invocation of the default opts is
+    // the last one. Find that invocation and mark lastOpts=true there, which
+    // will then remain true until the end.
+    Index lastDefaultOptsIndex = Index(-1);
+    if (!expectLaterToolchainOpts) {
+      for (Index i = 0; i < passes.size(); ++i) {
+        if (passes[i].name == DEFAULT_OPT_PASSES) {
+          lastDefaultOptsIndex = i;
+        }
+      }
+
+      if (lastDefaultOptsIndex == Index(-1)) {
+        // No default opts run at all. Just mark lastOpts now, so it applies to
+        // the non-default opts (same as it would apply to all non-default opts
+        // after the last default ones).
+        passRunner.options.lastOpts = true;
+      }
+    }
+
+    for (Index i = 0; i < passes.size(); ++i) {
+      auto& pass = passes[i];
       if (pass.name == DEFAULT_OPT_PASSES) {
         // This is something like -O3 or -Oz. We must run this now, in order to
         // set the proper opt and shrink levels. To do that, first reset the
@@ -427,6 +462,11 @@ struct OptimizationOptions : public ToolOptions {
         assert(passRunner.options.shrinkLevel == passOptions.shrinkLevel);
         passRunner.options.optimizeLevel = *pass.optimizeLevel;
         passRunner.options.shrinkLevel = *pass.shrinkLevel;
+
+        // If these are the last default opts, mark that.
+        if (i == lastDefaultOptsIndex) {
+          passRunner.options.lastOpts = true;
+        }
 
         // Run our optimizations now with the custom levels.
         passRunner.addDefaultOptimizationPasses();

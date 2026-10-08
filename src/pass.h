@@ -239,6 +239,10 @@ struct PassOptions {
   // that needs lowering, then we lower it, then we can optimize it again to the
   // original form).
   bool targetJS = false;
+  // Whether we are in the last sequence of optimizations being run. If we are,
+  // then we can perform optimizations that only make sense to do at the very
+  // end (because they might inhibit further ones after).
+  bool lastOpts = true;
   // Arbitrary string arguments from the commandline, which we forward to
   // passes.
   std::unordered_map<std::string, std::string> arguments;
