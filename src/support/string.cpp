@@ -403,7 +403,8 @@ bool convertUTF16ToUTF8(std::ostream& os, std::string_view str) {
   return doConvertWTF16ToWTF8(os, str, false);
 }
 
-std::ostream& printEscapedJSON(std::ostream& os, std::string_view str) {
+std::ostream&
+printEscapedJSON(std::ostream& os, std::string_view str, bool rawUTF8) {
   os << '"';
   while (str.size()) {
     auto u = *takeWTF16CodePoint(str);
@@ -435,14 +436,19 @@ std::ostream& printEscapedJSON(std::ostream& os, std::string_view str) {
         break;
     }
 
-    // TODO: To minimize size, consider additionally escaping only other control
-    // characters (u <= 0x1F) and surrogates, emitting everything else directly
-    // assuming a UTF-8 encoding of the JSON text. We don't do this now because
-    // Print.cpp would consider the contents unprintable, messing up our test.
     bool isNaivelyPrintable = 32 <= u && u < 127;
     if (isNaivelyPrintable) {
       assert(u < 0x80 && "need additional logic to emit valid UTF-8");
       os << uint8_t(u);
+      continue;
+    }
+
+    // In raw UTF-8 mode, emit non-ASCII code points directly. Lone surrogates
+    // have no UTF-8 encoding and must still be escaped. (Paired surrogates have
+    // already been combined into a single code point >= 0x10000 above.)
+    bool isLoneSurrogate = 0xD800 <= u && u < 0xE000;
+    if (rawUTF8 && u >= 0x80 && !isLoneSurrogate) {
+      writeWTF8CodePoint(os, u);
       continue;
     }
 
@@ -479,12 +485,18 @@ bool isUTF8(std::string_view str) {
 }
 
 std::ostream& unescapeUTF8JSONtoWTF16(std::ostream& os, const char* str) {
+  std::string_view view(str);
   size_t i = 0;
   while (str[i]) {
     if (str[i] != '\\') {
-      // Normal character.
-      writeWTF16CodePoint(os, str[i]);
-      i++;
+      // Normal character, possibly a multi-byte UTF-8 sequence.
+      auto rest = view.substr(i);
+      auto u = takeWTF8CodePoint(rest);
+      if (!u) {
+        Fatal() << "Invalid UTF-8 in JSON string";
+      }
+      writeWTF16CodePoint(os, *u);
+      i = view.size() - rest.size();
       continue;
     }
 

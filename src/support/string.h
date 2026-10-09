@@ -94,8 +94,12 @@ inline bool isNumber(const std::string& str) {
 
 std::ostream& printEscaped(std::ostream& os, std::string_view str);
 
-// `str` must be a valid WTF-16 string.
-std::ostream& printEscapedJSON(std::ostream& os, std::string_view str);
+// `str` must be a valid WTF-16 string. If `rawUTF8` is true, non-ASCII code
+// points (other than lone surrogates, which have no UTF-8 encoding) are written
+// directly as UTF-8 rather than as \uXXXX escapes, which is smaller but assumes
+// the consumer decodes the JSON text as UTF-8.
+std::ostream&
+printEscapedJSON(std::ostream& os, std::string_view str, bool rawUTF8 = false);
 
 std::ostream& writeWTF8CodePoint(std::ostream& os, uint32_t u);
 

@@ -263,7 +263,10 @@ struct StringLowering : public StringGathering {
             } else {
               json << ',';
             }
-            String::printEscapedJSON(json, c->string.view());
+            // Emit non-ASCII characters as raw UTF-8 rather than \uXXXX
+            // escapes to minimize the section size. The section is decoded as
+            // UTF-8 text before being parsed as JSON.
+            String::printEscapedJSON(json, c->string.view(), /*rawUTF8=*/true);
             jsonImportIndex++;
           }
           global->init = nullptr;

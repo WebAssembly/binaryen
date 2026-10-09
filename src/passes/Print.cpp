@@ -3709,9 +3709,14 @@ void PrintSExpression::visitModule(Module* curr) {
     doIndent(o, indent);
     o << ";; custom section \"" << section.name << "\", size "
       << section.data.size();
-    bool isPrintable = true;
+    // The contents are printable if they are valid UTF-8 and all the ASCII
+    // characters are printable (non-ASCII bytes are part of multi-byte UTF-8
+    // sequences, which we emit as-is).
+    bool isPrintable = String::isUTF8(
+      std::string_view(section.data.data(), section.data.size()));
     for (auto c : section.data) {
-      if (!isprint(static_cast<unsigned char>(c))) {
+      auto u = static_cast<unsigned char>(c);
+      if (u < 0x80 && !isprint(u)) {
         isPrintable = false;
         break;
       }
