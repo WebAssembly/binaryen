@@ -1301,6 +1301,48 @@
     )
     (nop)
   )
+
+  ;; CHECK-TEXT:      (func $delegate-within-if-condition (type $0)
+  ;; CHECK-TEXT-NEXT:  (if
+  ;; CHECK-TEXT-NEXT:   (try (result i32)
+  ;; CHECK-TEXT-NEXT:    (do
+  ;; CHECK-TEXT-NEXT:     (i32.const 1)
+  ;; CHECK-TEXT-NEXT:    )
+  ;; CHECK-TEXT-NEXT:    (delegate 0)
+  ;; CHECK-TEXT-NEXT:   )
+  ;; CHECK-TEXT-NEXT:   (then
+  ;; CHECK-TEXT-NEXT:    (nop)
+  ;; CHECK-TEXT-NEXT:   )
+  ;; CHECK-TEXT-NEXT:  )
+  ;; CHECK-TEXT-NEXT: )
+  ;; CHECK-BIN:      (func $delegate-within-if-condition (type $0)
+  ;; CHECK-BIN-NEXT:  (if
+  ;; CHECK-BIN-NEXT:   (try (result i32)
+  ;; CHECK-BIN-NEXT:    (do
+  ;; CHECK-BIN-NEXT:     (i32.const 1)
+  ;; CHECK-BIN-NEXT:    )
+  ;; CHECK-BIN-NEXT:    (delegate 0)
+  ;; CHECK-BIN-NEXT:   )
+  ;; CHECK-BIN-NEXT:   (then
+  ;; CHECK-BIN-NEXT:    (nop)
+  ;; CHECK-BIN-NEXT:   )
+  ;; CHECK-BIN-NEXT:  )
+  ;; CHECK-BIN-NEXT: )
+  (func $delegate-within-if-condition
+    ;; An 'if' condition is outside the 'if' control flow scope, so a delegate
+    ;; to the caller inside the condition should have depth 0.
+    (if
+      (try (result i32)
+        (do
+          (i32.const 1)
+        )
+        (delegate 0)
+      )
+      (then
+        (nop)
+      )
+    )
+  )
 )
 ;; CHECK-BIN-NODEBUG:      (type $0 (func))
 
@@ -1789,4 +1831,18 @@
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT:  (nop)
+;; CHECK-BIN-NODEBUG-NEXT: )
+
+;; CHECK-BIN-NODEBUG:      (func $25 (type $0)
+;; CHECK-BIN-NODEBUG-NEXT:  (if
+;; CHECK-BIN-NODEBUG-NEXT:   (try (result i32)
+;; CHECK-BIN-NODEBUG-NEXT:    (do
+;; CHECK-BIN-NODEBUG-NEXT:     (i32.const 1)
+;; CHECK-BIN-NODEBUG-NEXT:    )
+;; CHECK-BIN-NODEBUG-NEXT:    (delegate 0)
+;; CHECK-BIN-NODEBUG-NEXT:   )
+;; CHECK-BIN-NODEBUG-NEXT:   (then
+;; CHECK-BIN-NODEBUG-NEXT:    (nop)
+;; CHECK-BIN-NODEBUG-NEXT:   )
+;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )

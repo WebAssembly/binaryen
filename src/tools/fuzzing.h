@@ -254,6 +254,7 @@ private:
     TranslateToFuzzReader& parent;
     Function* func;
     std::vector<Expression*> breakableStack; // things we can break to
+    std::vector<Name> tryStack;              // tries we can delegate to
     Index labelIndex = 0;
 
     // a list of things relevant to computing the odds of an infinite loop,
