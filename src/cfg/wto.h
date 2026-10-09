@@ -92,14 +92,22 @@ namespace wasm {
 // pointers and a `contents.index` field of type `Index`.
 template<typename BasicBlock> struct WeakTopologicalOrdering {
   static constexpr Index NoIndex = Index(-1);
-  static constexpr Index NoTarget = Index(-1);
 
-  // Each entry either visits `block` (`cycleTarget == NoTarget`) or marks the
-  // end of the cycle headed by `block` (`cycleTarget` is the entry index of the
-  // cycle header).
+  // Each entry either represents a normal block or marks the end of a cycle.
+  //
+  // For normal block entries:
+  //  - cycleTarget == NoIndex
+  //  - block is the corresponding basic block
+  //
+  // For end of cycle entries:
+  //  - cycleTarget is the index of the head of the cycle, i.e. where we will go
+  //    next if we need to process the cycle again.
+  //  - block is the basic block at the head of the cycle, used to check whether
+  //    we need to process the cycle again (by checking contents.inQueue).
+  //
   struct Entry {
-    BasicBlock* block = nullptr;
-    Index cycleTarget = NoTarget;
+    BasicBlock* block;
+    Index cycleTarget;
   };
 
   std::vector<Entry> entries;
@@ -246,11 +254,11 @@ WeakTopologicalOrdering<BasicBlock>::WeakTopologicalOrdering(
       auto* block = blocks[curr].get();
       if (nodes[curr].isLoopHeader) {
         Index startPc = entries.size();
-        entries.push_back({block, NoTarget});
+        entries.push_back({block, NoIndex});
         self(self, nodes[curr].firstChild);
         entries.push_back({block, startPc});
       } else {
-        entries.push_back({block, NoTarget});
+        entries.push_back({block, NoIndex});
       }
     }
   };
