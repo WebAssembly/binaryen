@@ -306,9 +306,11 @@ static void EmitDebugLineInternal(raw_ostream &RealOS,
         writeInteger((uint8_t)Op.SubOpcode, OS, DI.IsLittleEndian);
         switch (Op.SubOpcode) {
         case dwarf::DW_LNE_set_address:
-        case dwarf::DW_LNE_set_discriminator:
           writeVariableSizedInteger(Op.Data, DI.CompileUnits[0].AddrSize, OS,
                                     DI.IsLittleEndian);
+          break;
+        case dwarf::DW_LNE_set_discriminator:
+          encodeULEB128(Op.Data, OS);
           break;
         case dwarf::DW_LNE_define_file:
           EmitFileEntry(OS, Op.FileEntry);
