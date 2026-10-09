@@ -1126,10 +1126,13 @@ struct OptimizeInstructions
           return replaceCurrent(curr);
         }
       }
-      // abs(x * x)   ==>   x * x
-      // abs(x / x)   ==>   x / x
       if (auto* binary = curr->value->dynCast<Binary>()) {
-        if ((binary->op == Abstract::getBinary(binary->type, Abstract::Mul) ||
+        // abs(x * x)   ==>   x * x
+        // abs(x / x)   ==>   x / x
+        // only for fast math, as the result may be a NaN with the sign bit set,
+        // which abs would clear.
+        if (fastMath &&
+            (binary->op == Abstract::getBinary(binary->type, Abstract::Mul) ||
              binary->op == Abstract::getBinary(binary->type, Abstract::DivS)) &&
             areConsecutiveInputsEqual(binary->left, binary->right)) {
           return replaceCurrent(binary);
