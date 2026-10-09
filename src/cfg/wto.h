@@ -67,7 +67,10 @@
 //      visit every block in `h`'s natural loop. Because inner loop headers have
 //      larger RPO indices than outer loop headers and are processed first, the
 //      first loop that visits a block `b != h` is its immediately enclosing
-//      loop (`loopParent[b] = h`).
+//      loop (`loopParent[b] = h`). As each loop body is discovered, we collapse
+//      its blocks into `h` using union-find so that outer loops skip over
+//      already-collapsed inner loop bodies instead of re-traversing them (both
+//      during the backward DFS and when walking the dominator tree).
 //   3. Link each reachable block into the child list of its `loopParent` in
 //      increasing RPO order, then walk the resulting loop nesting forest to
 //      emit each loop header `h` and its children as a nested `Cycle`.
@@ -121,18 +124,6 @@ WeakTopologicalOrdering<BasicBlock>::WeakTopologicalOrdering(
     return i == 0 || domTree.iDoms[i] != domTree.nonsense;
   };
 
-  auto dominates = [&](Index dom, Index node) {
-    assert(isReachable(dom));
-    if (!isReachable(node)) {
-      return false;
-    }
-    Index curr = node;
-    while (curr > dom) {
-      curr = domTree.iDoms[curr];
-    }
-    return curr == dom;
-  };
-
   struct Node {
     // The innermost loop header for the cycle containing this block.
     Index loopParent = NoIndex;
@@ -141,19 +132,49 @@ WeakTopologicalOrdering<BasicBlock>::WeakTopologicalOrdering(
     Index firstChild = NoIndex;
     // A linked list edge to the next child with the same loop header.
     Index nextSibling = NoIndex;
-    // The index of the loop header we last traversed this node for, used
-    // instead of a `visited` set during the DFS.
-    Index lastVisitedBy = NoIndex;
+    // The parent in the union-find forest used to collapse inner loops into
+    // their headers as they are discovered. This is either `NoIndex` if this
+    // node is the representative element of its set, or otherwise there is a
+    // path of parent pointers leading to the representative element of the set.
+    Index ufParent = NoIndex;
     bool isLoopHeader = false;
   };
   std::vector<Node> nodes(numBlocks);
 
+  auto find = [&](Index x) {
+    Index root = x;
+    while (nodes[root].ufParent != NoIndex) {
+      root = nodes[root].ufParent;
+    }
+    // Path compression.
+    while (x != root) {
+      Index next = nodes[x].ufParent;
+      nodes[x].ufParent = root;
+      x = next;
+    }
+    return root;
+  };
+
+  auto dominates = [&](Index dom, Index node) {
+    assert(isReachable(dom));
+    // Since blocks are indexed in RPO, dominators always precede the blocks
+    // they dominate.
+    if (node < dom || !isReachable(node)) {
+      return false;
+    }
+    // Walk up the dominator tree, using `find` to skip over already-collapsed
+    // inner loops.
+    Index curr = node;
+    while (curr > dom) {
+      curr = find(domTree.iDoms[curr]);
+    }
+    return curr == dom;
+  };
+
   // Discover natural loops from innermost to outermost (reverse RPO order).
-  // Because inner loops are processed before outer loops, the first loop whose
-  // natural loop body contains a block is its immediately enclosing loop.
-  //
-  // TODO: Collapse inner loops with union-find during natural loop discovery so
-  // outer loops do not re-traverse inner loop bodies.
+  // Because inner loops are processed before outer loops, collapsing each loop
+  // body into its header with union-find records each block's immediately
+  // enclosing loop while avoiding re-traversing inner loop bodies.
   std::vector<Index> worklist;
   for (Index i = numBlocks; i > 0; --i) {
     Index h = i - 1;
@@ -164,16 +185,15 @@ WeakTopologicalOrdering<BasicBlock>::WeakTopologicalOrdering(
     // dominates one of its predecessors. (We assume the CFG is reducible, so
     // loop headers dominate all blocks in the loop bodies, including those that
     // branch back to the header.)
-    nodes[h].lastVisitedBy = h;
     for (auto* pred : blocks[h]->in) {
       Index p = pred->contents.index;
       if (dominates(h, p)) {
         nodes[h].isLoopHeader = true;
-        // Avoid repeat traversals by setting lastVisitedBy = h on visited
-        // blocks.
-        if (nodes[p].lastVisitedBy != h) {
-          nodes[p].lastVisitedBy = h;
-          worklist.push_back(p);
+        Index rep = find(p);
+        if (rep != h) {
+          nodes[rep].loopParent = h;
+          nodes[rep].ufParent = h;
+          worklist.push_back(rep);
         }
       }
     }
@@ -184,17 +204,16 @@ WeakTopologicalOrdering<BasicBlock>::WeakTopologicalOrdering(
     while (!worklist.empty()) {
       Index curr = worklist.back();
       worklist.pop_back();
-      if (nodes[curr].loopParent == NoIndex) {
-        nodes[curr].loopParent = h;
-      }
       for (auto* pred : blocks[curr]->in) {
         Index p = pred->contents.index;
-        // The loop header has lastVisitedBy == h, so the search will stop
-        // there.
-        if (isReachable(p) && nodes[p].lastVisitedBy != h) {
-          assert(dominates(h, p) && "Expected reducible CFG");
-          nodes[p].lastVisitedBy = h;
-          worklist.push_back(p);
+        if (isReachable(p)) {
+          Index rep = find(p);
+          if (rep != h) {
+            assert(dominates(h, rep) && "Expected reducible CFG");
+            nodes[rep].loopParent = h;
+            nodes[rep].ufParent = h;
+            worklist.push_back(rep);
+          }
         }
       }
     }
