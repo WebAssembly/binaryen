@@ -290,22 +290,10 @@ template<typename CFG> struct WTOWorklist {
 
   void push(BasicBlock* block) { block->contents.inQueue = true; }
 
-  bool hasBackEdge() const {
-    for (auto* loopTop : cfg.loopTops) {
-      Index h = loopTop->contents.index;
-      for (auto* pred : loopTop->in) {
-        if (pred->contents.index >= h) {
-          return true;
-        }
-      }
-    }
-    return false;
-  }
-
   template<typename VisitFn> void run(VisitFn&& visit) {
-    // If the CFG has no backedges, a single reverse-postorder pass visits every
+    // If the CFG has no loops, a single reverse-postorder pass visits every
     // reachable block in topological order without constructing DomTree or WTO.
-    if (!hasBackEdge()) {
+    if (cfg.loopTops.empty()) {
       for (auto& block : cfg.basicBlocks) {
         if (block->contents.inQueue) {
           block->contents.inQueue = false;
