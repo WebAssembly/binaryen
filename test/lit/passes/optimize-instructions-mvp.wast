@@ -18729,4 +18729,33 @@
       (unreachable)
     )
   )
+
+  ;; CHECK:      (func $select-memory-grow
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (select
+  ;; CHECK-NEXT:    (memory.grow
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (memory.grow
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $select-memory-grow
+    ;; The first memory.grow changes the result of the second, so the arms are
+    ;; not equal and we cannot optimize.
+    (drop
+      (select
+        (memory.grow
+          (i32.const 1)
+        )
+        (memory.grow
+          (i32.const 1)
+        )
+        (i32.const 1)
+      )
+    )
+  )
 )
