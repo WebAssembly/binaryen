@@ -93,15 +93,16 @@ namespace wasm {
 template<typename BasicBlock> struct WeakTopologicalOrdering {
   static constexpr Index NoIndex = Index(-1);
 
-  // Each entry either represents a normal block or marks the end of a cycle.
+  // `entries` is the flattened sequence of blocks in weak topological order,
+  // plus markers for the end of cycles.
   //
   // For normal block entries:
   //  - cycleTarget == NoIndex
   //  - block is the corresponding basic block
   //
   // For end of cycle entries:
-  //  - cycleTarget is the index of the head of the cycle, i.e. where we will go
-  //    next if we need to process the cycle again.
+  //  - cycleTarget is the index in `entries` of the head of the cycle, i.e.
+  //    where we will go next if we need to process the cycle again.
   //  - block is the basic block at the head of the cycle, used to check whether
   //    we need to process the cycle again (by checking contents.inQueue).
   //
