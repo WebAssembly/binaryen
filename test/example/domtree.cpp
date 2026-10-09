@@ -7,6 +7,9 @@
 using namespace wasm;
 
 struct BasicBlock {
+  struct {
+    Index index;
+  } contents;
   std::vector<BasicBlock*> in;
 
   void addPred(BasicBlock* pred) { in.push_back(pred); }
