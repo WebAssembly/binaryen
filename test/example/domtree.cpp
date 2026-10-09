@@ -17,9 +17,7 @@ struct BasicBlock {
 
 struct CFG : public std::vector<std::unique_ptr<BasicBlock>> {
   BasicBlock* add() {
-    auto block = std::make_unique<BasicBlock>();
-    block->contents.index = size();
-    emplace_back(std::move(block));
+    emplace_back(std::make_unique<BasicBlock>());
     return back().get();
   }
 
