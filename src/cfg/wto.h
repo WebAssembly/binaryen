@@ -293,14 +293,23 @@ template<typename CFG> struct WTOWorklist {
   void push(BasicBlock* block) { block->contents.inQueue = true; }
 
   template<typename VisitFn> void run(VisitFn&& visit) {
+    // If the CFG has no loops, a single reverse-postorder pass visits every
+    // reachable block in topological order without constructing DomTree or WTO.
+    if (cfg.loopTops.empty()) {
+      for (auto& block : cfg.basicBlocks) {
+        if (block->contents.inQueue) {
+          block->contents.inQueue = false;
+          visit(block.get());
+        }
+      }
+      return;
+    }
     // Iterate through each element in the current cycle's list (or the
     // top-level list), which will be in reverse postorder. Visit those that are
     // in the queue, which may push later elements to the queue. When there is a
     // nested cycle, repeatedly visit it recursively until it stabilizes before
     // continuing on. We could un-recurse this, but the loop depth is expected
     // to be acceptably small.
-    // TODO: Fast-path initial entry singletons and CFGs without backedges
-    // without building DomTree or WTO, using CFGWalker::loopTops.
     WeakTopologicalOrdering<BasicBlock> wto(cfg.basicBlocks);
     auto evalList =
       [&](auto& self,
