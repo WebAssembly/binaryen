@@ -441,6 +441,9 @@ struct OptimizationOptions : public ToolOptions {
     // The idea is that the last -O3/-Oz/etc. is the last big cycle of opts, and
     // we can assume it is the last (and other specific passes are assumed to be
     // "last" if they are after it).
+    //
+    // TODO: We could maybe add a --begin-last-opts flag (whose position on the
+    //       commandline matters) if we needed more fine-grained control here.
     passRunner.options.lastOpts = false;
     Index lastDefaultOptsIndex = Index(-1);
     if (!expectLaterToolchainOpts) {
