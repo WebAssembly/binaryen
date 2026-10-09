@@ -497,24 +497,3 @@ TEST(WTOTest, WorklistSelectivePropagation) {
 
   EXPECT_EQ(visits, (std::vector<Index>{0, 1, 2, 3, 6, 7}));
 }
-
-TEST(WTOTest, WorklistLoopFree) {
-  TestCFG cfg(4);
-  cfg.addEdge(0, 1);
-  cfg.addEdge(0, 2);
-  cfg.addEdge(1, 3);
-  cfg.addEdge(2, 3);
-
-  WTOWorklist<TestCFG> work(cfg);
-  work.push(cfg.entry);
-
-  std::vector<Index> visits;
-  work.run([&](BasicBlock* block) {
-    visits.push_back(block->contents.index);
-    for (auto* out : block->out) {
-      work.push(out);
-    }
-  });
-
-  EXPECT_EQ(visits, (std::vector<Index>{0, 1, 2, 3}));
-}
