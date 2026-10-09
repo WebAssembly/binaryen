@@ -260,8 +260,8 @@ WeakTopologicalOrdering<BasicBlock>::WeakTopologicalOrdering(
 // fixed-point analysis over its basic blocks using a Weak Topological Ordering.
 //
 // Usage:
-//   1. Construct `WTOWorklist work(cfg);` (which initializes `inQueue` and
-//      `index` on each block's `contents`).
+//   1. Construct `WTOWorklist work(cfg);` (which initializes `inQueue` on each
+//      block's `contents`).
 //   2. Seed the initial block(s) to evaluate via `work.push(cfg.entry);`.
 //   3. Call `work.run([&](BasicBlock* block) { ... });`. Inside the visitor
 //      callback, evaluate the transfer function for `block` and call
@@ -279,32 +279,17 @@ template<typename CFG> struct WTOWorklist {
   CFG& cfg;
 
   WTOWorklist(CFG& cfg) : cfg(cfg) {
-    auto& basicBlocks = cfg.basicBlocks;
-    for (Index i = 0; i < basicBlocks.size(); ++i) {
-      auto& contents = basicBlocks[i]->contents;
-      contents.inQueue = false;
-      contents.index = i;
+    for (auto& block : cfg.basicBlocks) {
+      block->contents.inQueue = false;
     }
   }
 
   void push(BasicBlock* block) { block->contents.inQueue = true; }
 
-  bool hasBackEdge() const {
-    for (auto* loopTop : cfg.loopTops) {
-      Index h = loopTop->contents.index;
-      for (auto* pred : loopTop->in) {
-        if (pred->contents.index >= h) {
-          return true;
-        }
-      }
-    }
-    return false;
-  }
-
   template<typename VisitFn> void run(VisitFn&& visit) {
-    // If the CFG has no backedges, a single reverse-postorder pass visits every
+    // If the CFG has no loops, a single reverse-postorder pass visits every
     // reachable block in topological order without constructing DomTree or WTO.
-    if (!hasBackEdge()) {
+    if (cfg.loopTops.empty()) {
       for (auto& block : cfg.basicBlocks) {
         if (block->contents.inQueue) {
           block->contents.inQueue = false;

@@ -574,7 +574,7 @@ TEST(WTOTest, WorklistFastPaths) {
     });
     EXPECT_EQ(visits, (std::vector<Index>{0, 1, 2}));
 
-    // Now add a backedge 2 -> 1 so hasBackEdge() returns true via loopTops.
+    // Now add a backedge 2 -> 1.
     cfg.addEdge(2, 1);
     visits.clear();
     work.push(cfg.entry);
