@@ -216,6 +216,10 @@ private:
   // subtypes of it.
   std::unordered_map<HeapType, std::vector<HeapType>> interestingHeapSubTypes;
 
+  // The subset of interestingHeapTypes that have a descriptor, indexed by
+  // Shareability.
+  std::array<std::vector<HeapType>, 2> describedTypes;
+
   // Type => list of struct fields that have that type.
   std::unordered_map<Type, std::vector<StructField>> typeStructFields;
 
@@ -579,6 +583,8 @@ private:
   Exactness getSubType(Exactness exactness);
   HeapType getSubType(HeapType type);
   Type getSubType(Type type);
+  bool hasDescribedSubType(Type type);
+  Type getDescribedSubType(Type type);
   Nullability getSuperType(Nullability nullability);
   HeapType getSuperType(HeapType type);
   Type getSuperType(Type type);
