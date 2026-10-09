@@ -2865,6 +2865,9 @@ def get_random_opts():
     # value (the same used in j2wasm atm)
     if random.random() < 0.5:
         ret += ['-pii=4']
+    # fuzz both with and without expecting later toolchain opts
+    if random.random() < 0.5:
+        ret += ['--expect-later-toolchain-opts']
     # test both closed and open world
     if CLOSED_WORLD:
         ret += [CLOSED_WORLD_FLAG]
