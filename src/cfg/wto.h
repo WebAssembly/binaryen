@@ -133,7 +133,9 @@ WeakTopologicalOrdering<BasicBlock>::WeakTopologicalOrdering(
     // A linked list edge to the next child with the same loop header.
     Index nextSibling = NoIndex;
     // The parent in the union-find forest used to collapse inner loops into
-    // their headers as they are discovered.
+    // their headers as they are discovered. This is either `NoIndex` if this
+    // node is the representative element of its set, or otherwise there is a
+    // path of parent pointers leading to the representative element of the set.
     Index ufParent = NoIndex;
     bool isLoopHeader = false;
   };
