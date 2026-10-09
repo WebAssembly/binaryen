@@ -318,7 +318,7 @@ template<typename CFG> struct WTOWorklist {
     Index end = entries.size();
     while (pc < end) {
       const auto& entry = entries[pc];
-      if (entry.cycleTarget == WeakTopologicalOrdering<BasicBlock>::NoTarget) {
+      if (entry.cycleTarget == WeakTopologicalOrdering<BasicBlock>::NoIndex) {
         if (entry.block->contents.inQueue) {
           entry.block->contents.inQueue = false;
           visit(entry.block);
