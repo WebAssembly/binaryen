@@ -182,7 +182,8 @@
 ;; Just one function has removable.if.unused, so we do not merge. Unlike
 ;; js.called, we cannot merge and apply the annotation, as the annotation alters
 ;; semantics (whereas js.called just warns about something we should not break,
-;; so applying it to more places can inhibit opts, but not break things).
+;; so applying it to more places can inhibit opts, but not break things). We
+;; could *remove* it after merging, however TODO
 (module
  ;; CHECK:      (type $0 (func (param i32)))
 
