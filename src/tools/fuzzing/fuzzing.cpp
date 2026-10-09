@@ -603,6 +603,9 @@ void TranslateToFuzzReader::setupHeapTypes() {
         interestingHeapSubTypes[struct_].push_back(type);
         interestingHeapSubTypes[eq].push_back(type);
         interestingHeapSubTypes[any].push_back(type);
+        if (type.getDescriptorType()) {
+          describedTypes[share].push_back(type);
+        }
         // Note the mutable fields.
         auto& fields = type.getStruct().fields;
         for (Index i = 0; i < fields.size(); i++) {
@@ -2385,7 +2388,7 @@ void TranslateToFuzzReader::fixAfterChanges(Function* func) {
         }
       });
       BranchUtils::operateOnScopeNameUses(curr, [&](Name& name) {
-        if (name.is()) {
+        if (name.is() && name != DELEGATE_CALLER_TARGET) {
           replaceIfInvalid(name);
         }
       });
@@ -2445,6 +2448,9 @@ void TranslateToFuzzReader::fixAfterChanges(Function* func) {
 
     // Check if a reference to a try is valid.
     bool isValidTryRef(Name target, Expression* curr) {
+      if (curr->is<Try>() && target == DELEGATE_CALLER_TARGET) {
+        return true;
+      }
       // The rethrow or try must be on top.
       assert(!expressionStack.empty());
       assert(expressionStack.back() == curr);
@@ -2891,7 +2897,8 @@ Expression* TranslateToFuzzReader::_makeConcrete(Type type) {
       .add(FeatureSet::ExceptionHandling, &Self::makeTry)
       .add(FeatureSet::ExceptionHandling, &Self::makeTryTable)
       .add(FeatureSet::ReferenceTypes | FeatureSet::GC, &Self::makeCallRef)
-      .add(FeatureSet::ReferenceTypes | FeatureSet::GC, &Self::makeBrOn);
+      .add(FeatureSet::ReferenceTypes | FeatureSet::GC,
+           WeightedOption{&Self::makeBrOn, Important});
   }
   if (type.isSingle()) {
     options
@@ -3034,7 +3041,8 @@ Expression* TranslateToFuzzReader::_makenone() {
     .add(FeatureSet::ReferenceTypes | FeatureSet::GC, &Self::makeCallRef)
     .add(FeatureSet::ReferenceTypes | FeatureSet::GC, &Self::makeStructSet)
     .add(FeatureSet::ReferenceTypes | FeatureSet::GC, &Self::makeArraySet)
-    .add(FeatureSet::ReferenceTypes | FeatureSet::GC, &Self::makeBrOn)
+    .add(FeatureSet::ReferenceTypes | FeatureSet::GC,
+         WeightedOption{&Self::makeBrOn, Important})
     .add(FeatureSet::ReferenceTypes | FeatureSet::GC,
          &Self::makeArrayBulkMemoryOp);
   if (tableSetImportName) {
@@ -3225,7 +3233,17 @@ Expression* TranslateToFuzzReader::makeIf(Type type) {
 }
 
 Expression* TranslateToFuzzReader::makeTry(Type type) {
+  auto name = makeLabel();
+  funcContext->tryStack.push_back(name);
   auto* body = make(type);
+  funcContext->tryStack.pop_back();
+  if (oneIn(3)) {
+    Name delegateTarget = DELEGATE_CALLER_TARGET;
+    if (!funcContext->tryStack.empty() && !oneIn(4)) {
+      delegateTarget = pick(funcContext->tryStack);
+    }
+    return builder.makeTry(name, body, delegateTarget);
+  }
   std::vector<Name> catchTags;
   std::vector<Expression*> catchBodies;
   auto numTags = upTo(fuzzParams.MAX_TRY_CATCHES);
@@ -3268,8 +3286,7 @@ Expression* TranslateToFuzzReader::makeTry(Type type) {
     }
     catchBodies.push_back(catchBody);
   }
-  // TODO: delegate stuff
-  return builder.makeTry(body, catchTags, catchBodies);
+  return builder.makeTry(name, body, catchTags, catchBodies);
 }
 
 Expression* TranslateToFuzzReader::makeTryTable(Type type) {
@@ -5809,32 +5826,70 @@ Expression* TranslateToFuzzReader::makeRefGetDesc(Type type) {
 }
 
 Expression* TranslateToFuzzReader::makeBrOn(Type type) {
-  if (funcContext->breakableStack.empty()) {
-    return makeTrivial(type);
-  }
   // We need to find a proper target to break to; try a few times. Finding the
   // target is harder than flowing out the proper type, so focus on the target,
   // and fix up the flowing type later. That is, once we find a target to break
   // to, we can then either drop ourselves or wrap ourselves in a block +
   // another value, so that we return the proper thing here (which is done below
   // in fixFlowingType).
-  int tries = fuzzParams.TRIES;
+  int tries = funcContext->breakableStack.empty() ? 0 : fuzzParams.TRIES;
   Name targetName;
   Type targetType;
   while (--tries >= 0) {
     auto* target = pick(funcContext->breakableStack);
-    targetName = getTargetName(target);
-    targetType = getTargetType(target);
+    auto name = getTargetName(target);
+    auto currTargetType = getTargetType(target);
     // We can send any reference type, or no value at all, but nothing else.
-    if (targetType.isRef() || targetType == Type::none) {
-      break;
+    // Since Type::none targets are very common on breakableStack and only allow
+    // BrOnNull, prefer reference targets (and especially ones that have
+    // subtypes with descriptors) when available, with some randomness so we
+    // still emit enough BrOnNull and non-descriptor casts.
+    if (currTargetType.isRef()) {
+      targetName = name;
+      targetType = currTargetType;
+      if (hasDescribedSubType(currTargetType) || oneIn(2)) {
+        break;
+      }
+    } else if (currTargetType == Type::none && !targetName) {
+      targetName = name;
+      targetType = currTargetType;
+      if (oneIn(2)) {
+        break;
+      }
     }
   }
-  if (tries < 0) {
+  // If we are asked to produce a reference type `type` and the br_on itself
+  // does not flow out a subtype of `type`, fixFlowingType will have to wrap the
+  // br_on in a block of type `type` anyway. When we found no target at all on
+  // breakableStack (`missingTarget`), or (with high probability) when the
+  // target we found either is Type::none (`missingRefTarget`, which only
+  // permits BrOnNull) or lacks described subtypes that `type` has
+  // (`missingDescribedTarget`), create that wrapping block with a label and use
+  // it as our branch target (with targetType = type).
+  bool makeTargetBlock = false;
+  if (type.isRef()) {
+    bool missingTarget = !targetName;
+    bool missingRefTarget = !targetType.isRef();
+    bool missingDescribedTarget =
+      hasDescribedSubType(type) && !hasDescribedSubType(targetType);
+    if (missingTarget ||
+        ((missingRefTarget || missingDescribedTarget) && !oneIn(3))) {
+      makeTargetBlock = true;
+      targetName = makeLabel();
+      targetType = type;
+    }
+  }
+  if (!targetName) {
     return makeTrivial(type);
   }
 
   auto fixFlowingType = [&](Expression* brOn) -> Expression* {
+    if (makeTargetBlock) {
+      if (brOn->type != Type::none) {
+        brOn = builder.makeDrop(brOn);
+      }
+      return builder.makeBlock(targetName, {brOn, make(type)}, type);
+    }
     if (Type::isSubType(brOn->type, type)) {
       // Already of the proper type.
       return brOn;
@@ -5865,7 +5920,17 @@ Expression* TranslateToFuzzReader::makeBrOn(Type type) {
   // BrOnNonNull can handle sending any reference. The casts are more limited.
   auto op = BrOnNonNull;
   if (targetType.isCastable()) {
-    op = pick(BrOnNonNull, BrOnCast, BrOnCastFail);
+    FeatureOptions<BrOnOp> options;
+    using WeightedOption = FeatureOptions<BrOnOp>::WeightedOption;
+    options.add(FeatureSet::MVP, BrOnNonNull, BrOnCast, BrOnCastFail);
+    if (hasDescribedSubType(targetType)) {
+      // Only a subset of targets have described subtypes, so weight descriptor
+      // casts more heavily when such a target is available.
+      options.add(FeatureSet::MVP,
+                  WeightedOption{BrOnCastDescEq, VeryImportant},
+                  WeightedOption{BrOnCastDescEqFail, VeryImportant});
+    }
+    op = pick(options);
   }
   Type castType = Type::none;
   Type refType;
@@ -5921,21 +5986,47 @@ Expression* TranslateToFuzzReader::makeBrOn(Type type) {
       if (castType.isNonNullable() && oneIn(2)) {
         castType = Type(castType.getHeapType(), Nullable);
       }
-    } break;
+      break;
+    }
+    case BrOnCastDescEq:
+    case BrOnCastDescEqFail: {
+      bool isFail = op == BrOnCastDescEqFail;
+      castType = getDescribedSubType(targetType);
+      if (oneIn(5)) {
+        refType = getSubType(castType);
+      } else {
+        std::vector<HeapType> supers;
+        for (std::optional<HeapType> super = castType.getHeapType(); super;
+             super = super->getSuperType()) {
+          supers.push_back(*super);
+          if (isFail && *super == targetType.getHeapType()) {
+            break;
+          }
+        }
+        auto refHeapType = pick(supers);
+        auto refNullability = isFail ? getSubType(targetType.getNullability())
+                                     : getSuperType(castType.getNullability());
+        // Inexact is a supertype of both Exact and Inexact, so `refType` only
+        // needs to be Exact when it is sent to the target (`isFail`) and
+        // `targetType` itself is Exact (in which case the loop above stopped
+        // immediately at `refHeapType == targetType.getHeapType()`).
+        auto refExactness = isFail ? targetType.getExactness() : Inexact;
+        refType = Type(refHeapType, refNullability, refExactness);
+      }
+      break;
+    }
     default: {
       WASM_UNREACHABLE("bad br_on op");
     }
   }
   auto* ref = make(refType);
-  if (op == BrOnCast || op == BrOnCastFail) {
+  if (op == BrOnCastDescEq || op == BrOnCastDescEqFail) {
     auto desc = castType.getHeapType().getDescriptorType();
-    if (desc && !oneIn(2)) {
-      auto descOp = op == BrOnCast ? BrOnCastDescEq : BrOnCastDescEqFail;
-      auto descType = Type(*desc, Nullable, castType.getExactness());
-      auto* descRef = makeTrappingRefUse(descType);
-      auto* brOn = builder.makeBrOn(descOp, targetName, ref, castType, descRef);
-      return fixFlowingType(brOn);
-    }
+    assert(desc);
+    auto descType = Type(*desc, Nullable, castType.getExactness());
+    auto* descRef = makeTrappingRefUse(descType);
+    auto* brOn = builder.makeBrOn(op, targetName, ref, castType, descRef);
+    return fixFlowingType(brOn);
   }
   return fixFlowingType(builder.makeBrOn(op, targetName, ref, castType));
 }
@@ -6816,6 +6907,32 @@ Type TranslateToFuzzReader::getSubType(Type type) {
     assert(type.isBasic());
     return type;
   }
+}
+
+bool TranslateToFuzzReader::hasDescribedSubType(Type type) {
+  if (!wasm.features.hasCustomDescriptors() || !type.isRef()) {
+    return false;
+  }
+  auto heapType = type.getHeapType();
+  if (!heapType.isBasic()) {
+    return bool(heapType.getDescriptorType());
+  }
+  auto share = heapType.getShared();
+  return HeapType::isSubType(HeapTypes::struct_.getBasic(share), heapType) &&
+         !describedTypes[share].empty();
+}
+
+Type TranslateToFuzzReader::getDescribedSubType(Type type) {
+  assert(hasDescribedSubType(type));
+  auto heapType = type.getHeapType();
+  if (heapType.isBasic()) {
+    heapType = pick(describedTypes[heapType.getShared()]);
+  } else if (!type.isExact()) {
+    heapType = getSubType(heapType);
+  }
+  auto nullability = getSubType(type.getNullability());
+  auto exactness = getSubType(type.getExactness());
+  return Type(heapType, nullability, exactness);
 }
 
 Nullability TranslateToFuzzReader::getSuperType(Nullability nullability) {
