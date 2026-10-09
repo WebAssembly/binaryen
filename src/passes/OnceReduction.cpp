@@ -269,9 +269,6 @@ struct Optimizer
       return;
     }
 
-    // For DomTree.
-    setBlockIndices();
-
     // Build a dominator tree, which then tells us what to remove: if a call
     // appears in block A, then we do not need to make any calls in any blocks
     // dominated by A.
@@ -366,12 +363,6 @@ struct Optimizer
 
 private:
   OptInfo& optInfo;
-
-  void setBlockIndices() {
-    for (Index i = 0; i < basicBlocks.size(); i++) {
-      basicBlocks[i]->contents.index = i;
-    }
-  }
 };
 
 } // anonymous namespace

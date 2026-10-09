@@ -44,7 +44,7 @@ namespace wasm {
 //
 // The BasicBlock type is assumed to have a ".in" property which declares a
 // vector of pointers to the incoming blocks, that is, the predecessors, and a
-// ".contents.index" property holding each block's index in `blocks`.
+// ".contents.index" property to hold each block's index in `blocks`.
 template<typename BasicBlock> struct DomTree {
   std::vector<Index> iDoms;
 
@@ -81,6 +81,11 @@ DomTree<BasicBlock>::DomTree(std::vector<std::unique_ptr<BasicBlock>>& blocks) {
   Index numBlocks = blocks.size();
   if (numBlocks == 0) {
     return;
+  }
+
+  // Map basic blocks to their indices.
+  for (Index i = 0; i < numBlocks; i++) {
+    blocks[i]->contents.index = i;
   }
 
   // Initialize the iDoms array. The entry starts with its own index, which is
