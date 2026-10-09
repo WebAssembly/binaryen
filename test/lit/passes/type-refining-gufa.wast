@@ -662,3 +662,266 @@
  )
 )
 
+
+;; Test that GUFA does not try to refine continuation types (which are not castable).
+(module
+  ;; NRML:      (type $f1 (func))
+  ;; GUFA:      (type $f1 (func))
+  ;; O3O3:      (type $f1 (func))
+  (type $f1 (func))
+  ;; NRML:      (type $f2 (func (param i32)))
+  ;; GUFA:      (type $f2 (func (param i32)))
+  (type $f2 (func (param i32)))
+  ;; NRML:      (type $c1 (cont $f1))
+  ;; GUFA:      (type $c1 (cont $f1))
+  (type $c1 (cont $f1))
+  ;; NRML:      (type $c2 (cont $f2))
+  ;; GUFA:      (type $c2 (cont $f2))
+  (type $c2 (cont $f2))
+  ;; NRML:      (type $struct (struct (field (mut contref))))
+  ;; GUFA:      (type $struct (struct (field (mut contref))))
+  (type $struct (struct (field (mut contref))))
+
+  ;; NRML:      (elem declare func $f1 $f2)
+
+  ;; NRML:      (export "test" (func $test))
+
+  ;; NRML:      (func $f1 (type $f1)
+  ;; NRML-NEXT: )
+  ;; GUFA:      (elem declare func $f1 $f2)
+
+  ;; GUFA:      (export "test" (func $test))
+
+  ;; GUFA:      (func $f1 (type $f1)
+  ;; GUFA-NEXT: )
+  (func $f1 (type $f1))
+  ;; NRML:      (func $f2 (type $f2) (param $0 i32)
+  ;; NRML-NEXT: )
+  ;; GUFA:      (func $f2 (type $f2) (param $0 i32)
+  ;; GUFA-NEXT: )
+  (func $f2 (type $f2) (param i32))
+
+  ;; NRML:      (func $test (type $f1)
+  ;; NRML-NEXT:  (local $c contref)
+  ;; NRML-NEXT:  (drop
+  ;; NRML-NEXT:   (struct.new $struct
+  ;; NRML-NEXT:    (cont.new $c1
+  ;; NRML-NEXT:     (ref.func $f1)
+  ;; NRML-NEXT:    )
+  ;; NRML-NEXT:   )
+  ;; NRML-NEXT:  )
+  ;; NRML-NEXT:  (drop
+  ;; NRML-NEXT:   (struct.new $struct
+  ;; NRML-NEXT:    (local.tee $c
+  ;; NRML-NEXT:     (cont.new $c2
+  ;; NRML-NEXT:      (ref.func $f2)
+  ;; NRML-NEXT:     )
+  ;; NRML-NEXT:    )
+  ;; NRML-NEXT:   )
+  ;; NRML-NEXT:  )
+  ;; NRML-NEXT: )
+  ;; GUFA:      (func $test (type $f1)
+  ;; GUFA-NEXT:  (local $c contref)
+  ;; GUFA-NEXT:  (drop
+  ;; GUFA-NEXT:   (struct.new $struct
+  ;; GUFA-NEXT:    (cont.new $c1
+  ;; GUFA-NEXT:     (ref.func $f1)
+  ;; GUFA-NEXT:    )
+  ;; GUFA-NEXT:   )
+  ;; GUFA-NEXT:  )
+  ;; GUFA-NEXT:  (drop
+  ;; GUFA-NEXT:   (struct.new $struct
+  ;; GUFA-NEXT:    (local.tee $c
+  ;; GUFA-NEXT:     (cont.new $c2
+  ;; GUFA-NEXT:      (ref.func $f2)
+  ;; GUFA-NEXT:     )
+  ;; GUFA-NEXT:    )
+  ;; GUFA-NEXT:   )
+  ;; GUFA-NEXT:  )
+  ;; GUFA-NEXT: )
+  ;; O3O3:      (export "test" (func $test))
+
+  ;; O3O3:      (func $test (type $f1)
+  ;; O3O3-NEXT:  (nop)
+  ;; O3O3-NEXT: )
+  (func $test (export "test")
+    ;; This test contains multiple continuation types being written to a contref
+    ;; field. GUFA computes their LUB as the non-nullable top continuation type
+    ;; `(ref cont)`. Routing the second continuation through `(local.tee $c ...)`
+    ;; gives the operand static type `contref` (nullable) while GUFA still sees
+    ;; that the underlying value is non-nullable. Since continuations are not
+    ;; castable, TypeRefining must not refine the field to `(ref cont)`,
+    ;; otherwise it would try to bridge that static type gap by inserting an
+    ;; invalid `(ref.cast (ref cont) ...)`.
+    (local $c contref)
+    (drop
+      (struct.new $struct
+        (cont.new $c1
+          (ref.func $f1)
+        )
+      )
+    )
+    (drop
+      (struct.new $struct
+        (local.tee $c
+          (cont.new $c2
+            (ref.func $f2)
+          )
+        )
+      )
+    )
+  )
+)
+
+;; A null continuation type on a supertype that is widened to a non-null
+;; continuation type by propagation from a subtype must not refine the
+;; supertype's field.
+(module
+  ;; NRML:      (type $func (func))
+  ;; GUFA:      (type $func (func))
+  ;; O3O3:      (type $func (func))
+  (type $func (func))
+  ;; NRML:      (rec
+  ;; NRML-NEXT:  (type $cont (cont $func))
+  ;; GUFA:      (type $cont (cont $func))
+  (type $cont (cont $func))
+  ;; NRML:       (type $super (sub (struct (field contref))))
+  ;; GUFA:      (type $super (sub (struct (field contref))))
+  (type $super (sub (struct (field contref))))
+  ;; NRML:       (type $sub (sub $super (struct (field (ref (exact $cont))))))
+  ;; GUFA:      (type $sub (sub $super (struct (field (ref null $cont)))))
+  (type $sub (sub $super (struct (field (ref null $cont)))))
+
+  ;; NRML:      (elem declare func $f)
+  ;; GUFA:      (elem declare func $f)
+  (elem declare func $f)
+  ;; NRML:      (export "test" (func $test))
+
+  ;; NRML:      (func $f (type $func)
+  ;; NRML-NEXT: )
+  ;; GUFA:      (export "test" (func $test))
+
+  ;; GUFA:      (func $f (type $func)
+  ;; GUFA-NEXT: )
+  (func $f (type $func))
+
+  ;; NRML:      (func $test (type $func)
+  ;; NRML-NEXT:  (local $c contref)
+  ;; NRML-NEXT:  (drop
+  ;; NRML-NEXT:   (struct.new $super
+  ;; NRML-NEXT:    (local.get $c)
+  ;; NRML-NEXT:   )
+  ;; NRML-NEXT:  )
+  ;; NRML-NEXT:  (drop
+  ;; NRML-NEXT:   (struct.new $sub
+  ;; NRML-NEXT:    (cont.new $cont
+  ;; NRML-NEXT:     (ref.func $f)
+  ;; NRML-NEXT:    )
+  ;; NRML-NEXT:   )
+  ;; NRML-NEXT:  )
+  ;; NRML-NEXT: )
+  ;; GUFA:      (func $test (type $func)
+  ;; GUFA-NEXT:  (local $c contref)
+  ;; GUFA-NEXT:  (drop
+  ;; GUFA-NEXT:   (struct.new $super
+  ;; GUFA-NEXT:    (local.get $c)
+  ;; GUFA-NEXT:   )
+  ;; GUFA-NEXT:  )
+  ;; GUFA-NEXT:  (drop
+  ;; GUFA-NEXT:   (struct.new $sub
+  ;; GUFA-NEXT:    (cont.new $cont
+  ;; GUFA-NEXT:     (ref.func $f)
+  ;; GUFA-NEXT:    )
+  ;; GUFA-NEXT:   )
+  ;; GUFA-NEXT:  )
+  ;; GUFA-NEXT: )
+  ;; O3O3:      (export "test" (func $test))
+
+  ;; O3O3:      (func $test (type $func)
+  ;; O3O3-NEXT:  (nop)
+  ;; O3O3-NEXT: )
+  (func $test (export "test")
+    ;; $super only ever receives null (via $c of static type contref), while
+    ;; $sub receives a non-null $cont. Propagating $sub's field type to $super
+    ;; widens $super's LUB from nullcontref to (ref null $cont), which is not
+    ;; castable, so $super's field must remain contref.
+    (local $c contref)
+    (drop
+      (struct.new $super
+        (local.get $c)
+      )
+    )
+    (drop
+      (struct.new $sub
+        (cont.new $cont
+          (ref.func $f)
+        )
+      )
+    )
+  )
+)
+
+;; A null continuation type on a struct that is widened to a non-null
+;; continuation type by a global initializer must not refine the struct's field.
+(module
+  ;; NRML:      (type $func (func))
+  ;; GUFA:      (type $func (func))
+  ;; O3O3:      (type $func (func))
+  (type $func (func))
+  ;; NRML:      (type $cont (cont $func))
+  ;; GUFA:      (type $cont (cont $func))
+  (type $cont (cont $func))
+  ;; NRML:      (type $struct (struct (field contref)))
+  ;; GUFA:      (type $struct (struct (field contref)))
+  (type $struct (struct (field contref)))
+
+  ;; NRML:      (global $null (ref null $cont) (ref.null nocont))
+  ;; GUFA:      (global $null (ref null $cont) (ref.null nocont))
+  (global $null (ref null $cont) (ref.null nocont))
+  ;; NRML:      (global $s (ref $struct) (struct.new $struct
+  ;; NRML-NEXT:  (global.get $null)
+  ;; NRML-NEXT: ))
+  ;; GUFA:      (global $s (ref $struct) (struct.new $struct
+  ;; GUFA-NEXT:  (global.get $null)
+  ;; GUFA-NEXT: ))
+  (global $s (ref $struct) (struct.new $struct (global.get $null)))
+
+  ;; NRML:      (export "test" (func $test))
+
+  ;; NRML:      (func $test (type $func)
+  ;; NRML-NEXT:  (local $c contref)
+  ;; NRML-NEXT:  (drop
+  ;; NRML-NEXT:   (struct.new $struct
+  ;; NRML-NEXT:    (local.get $c)
+  ;; NRML-NEXT:   )
+  ;; NRML-NEXT:  )
+  ;; NRML-NEXT: )
+  ;; GUFA:      (export "test" (func $test))
+
+  ;; GUFA:      (func $test (type $func)
+  ;; GUFA-NEXT:  (local $c contref)
+  ;; GUFA-NEXT:  (drop
+  ;; GUFA-NEXT:   (struct.new $struct
+  ;; GUFA-NEXT:    (local.get $c)
+  ;; GUFA-NEXT:   )
+  ;; GUFA-NEXT:  )
+  ;; GUFA-NEXT: )
+  ;; O3O3:      (export "test" (func $test))
+
+  ;; O3O3:      (func $test (type $func)
+  ;; O3O3-NEXT:  (nop)
+  ;; O3O3-NEXT: )
+  (func $test (export "test")
+    ;; All runtime values written to $struct are null, so GUFA infers
+    ;; nullcontref, but the global struct.new widens the LUB to (ref null $cont)
+    ;; (the static type of $null). Since (ref null $cont) is not castable, the
+    ;; field must remain contref so the write of $c below does not need a cast.
+    (local $c contref)
+    (drop
+      (struct.new $struct
+        (local.get $c)
+      )
+    )
+  )
+)
+

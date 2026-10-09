@@ -26,7 +26,7 @@ namespace wasm::FunctionUtils {
 // Checks if two functions are equal in all functional aspects,
 // everything but their name (which can't be the same, in the same
 // module!) - same params, vars, body, result, etc.
-inline bool equal(Function* left, Function* right) {
+inline bool equal(Function* left, Function* right, const PassOptions& options) {
   if (left->type != right->type) {
     return false;
   }
@@ -44,10 +44,16 @@ inline bool equal(Function* left, Function* right) {
   // only in metadata (following LLVM's example). If we have a non-optimization
   // reason for comparing metadata here then we could add a flag for it. We do,
   // however, compare metadata that changes semantics (not debug info, but
-  // things like jsCalled). We do that check conservatively, erasing the non-
-  // semantic-altering ones and then comparing (so that new annotations
+  // things like removableIfUnused).
   auto leftAnnotations = Intrinsics::getAnnotations(left);
   auto rightAnnotations = Intrinsics::getAnnotations(right);
+  if (options.lastOpts) {
+    // If these are the last toolchain opts, we do not need to worry about
+    // inhibiting others by merging a jsCalled function with a non-jsCalled one
+    // (after the merge, both will be annotated, preventing optimizations that
+    // would be a problem in the presence of JS calls).
+    leftAnnotations.jsCalled = rightAnnotations.jsCalled = false;
+  }
   if (!leftAnnotations.equalOnSemanticsAltering(rightAnnotations)) {
     return false;
   }
