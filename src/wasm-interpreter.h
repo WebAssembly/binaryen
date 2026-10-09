@@ -4963,6 +4963,12 @@ public:
     try {
       return self()->visit(curr->body);
     } catch (const WasmException& e) {
+      // If delegation is in progress, try_table cannot be the target of a
+      // legacy try-delegate, so don't handle it and just rethrow.
+      if (scope->currDelegateTarget.is()) {
+        throw;
+      }
+
       auto exnData = e.exn.getExnData();
       for (size_t i = 0; i < curr->catchTags.size(); i++) {
         auto catchTag = curr->catchTags[i];
