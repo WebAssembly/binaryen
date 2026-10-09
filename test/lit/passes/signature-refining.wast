@@ -428,23 +428,26 @@
 )
 
 (module
-  ;; The presence of a table prevents us from doing any optimizations.
+  ;; The presence of a table does not prevent us optimizing other things.
 
-  ;; CHECK:      (type $sig (sub (func (param anyref))))
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $struct (struct))
+
+  ;; CHECK:       (type $1 (func))
+
+  ;; CHECK:       (type $sig (sub (func (param (ref (exact $struct))))))
   (type $sig (sub (func (param anyref))))
 
-  ;; CHECK:      (type $1 (func))
-
-  ;; CHECK:      (type $struct (struct))
   (type $struct (struct))
 
   (table 1 1 anyref)
 
   ;; CHECK:      (table $0 1 1 anyref)
 
-  ;; CHECK:      (func $func (type $sig) (param $x anyref)
+  ;; CHECK:      (func $func (type $sig) (param $x (ref (exact $struct)))
   ;; CHECK-NEXT: )
   (func $func (type $sig) (param $x anyref)
+    ;; This param will be refined.
   )
 
   ;; CHECK:      (func $caller (type $1)
@@ -454,6 +457,192 @@
   ;; CHECK-NEXT: )
   (func $caller
     (call $func
+      (struct.new $struct)
+    )
+  )
+)
+
+(module
+  ;; However, a signature in a table does prevent that signature from being
+  ;; optimized.
+
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $sig2 (sub (func (param (ref (exact $struct))))))
+
+    ;; CHECK:       (type $struct (struct))
+
+    ;; CHECK:       (type $2 (func))
+
+    ;; CHECK:       (type $sig (sub (func (param anyref))))
+    (type $sig (sub (func (param anyref))))
+    (type $sig2 (sub (func (param anyref))))
+  )
+
+  (type $struct (struct))
+
+  ;; CHECK:      (table $other 1 1 anyref)
+  (table $other 1 1 anyref)
+
+  ;; CHECK:      (table $sig 1 1 (ref null $sig))
+  (table $sig 1 1 (ref null $sig))
+
+  ;; CHECK:      (func $func (type $sig) (param $x anyref)
+  ;; CHECK-NEXT: )
+  (func $func (type $sig) (param $x anyref)
+    ;; This param will *not* be refined, as $sig is in a table.
+  )
+
+  ;; CHECK:      (func $caller (type $2)
+  ;; CHECK-NEXT:  (call $func
+  ;; CHECK-NEXT:   (struct.new_default $struct)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $caller
+    (call $func
+      (struct.new $struct)
+    )
+  )
+
+  ;; CHECK:      (func $func2 (type $sig2) (param $x (ref (exact $struct)))
+  ;; CHECK-NEXT: )
+  (func $func2 (type $sig2) (param $x anyref)
+    ;; This param *will* be refined, as $sig2 is not in a table.
+  )
+
+  ;; CHECK:      (func $caller2 (type $2)
+  ;; CHECK-NEXT:  (call $func2
+  ;; CHECK-NEXT:   (struct.new_default $struct)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $caller2
+    (call $func2
+      (struct.new $struct)
+    )
+  )
+)
+
+(module
+  ;; As above, but with an element segment. A signature there also prevents
+  ;; optimization.
+
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $sig2 (sub (func (param (ref (exact $struct))))))
+
+    ;; CHECK:       (type $struct (struct))
+
+    ;; CHECK:       (type $2 (func))
+
+    ;; CHECK:       (type $sig (sub (func (param anyref))))
+    (type $sig (sub (func (param anyref))))
+    (type $sig2 (sub (func (param anyref))))
+  )
+
+  (type $struct (struct))
+
+  ;; CHECK:      (elem $sig (ref null $sig) (item (ref.null nofunc)))
+  (elem $sig (ref null $sig) (item (ref.null $sig)))
+
+  ;; CHECK:      (func $func (type $sig) (param $x anyref)
+  ;; CHECK-NEXT: )
+  (func $func (type $sig) (param $x anyref)
+    ;; This param will *not* be refined, as $sig is in an element segment.
+  )
+
+  ;; CHECK:      (func $caller (type $2)
+  ;; CHECK-NEXT:  (call $func
+  ;; CHECK-NEXT:   (struct.new_default $struct)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $caller
+    (call $func
+      (struct.new $struct)
+    )
+  )
+
+  ;; CHECK:      (func $func2 (type $sig2) (param $x (ref (exact $struct)))
+  ;; CHECK-NEXT: )
+  (func $func2 (type $sig2) (param $x anyref)
+    ;; This param *will* be refined, as $sig2 is not in an element segment.
+  )
+
+  ;; CHECK:      (func $caller2 (type $2)
+  ;; CHECK-NEXT:  (call $func2
+  ;; CHECK-NEXT:   (struct.new_default $struct)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $caller2
+    (call $func2
+      (struct.new $struct)
+    )
+  )
+)
+
+(module
+  ;; The table is funcref, but there is a call_indirect with a signature type.
+
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $sig2 (sub (func (param (ref (exact $struct))))))
+
+    ;; CHECK:       (type $struct (struct))
+
+    ;; CHECK:       (type $sig (sub (func (param anyref))))
+    (type $sig (sub (func (param anyref))))
+    (type $sig2 (sub (func (param anyref))))
+  )
+
+  (type $struct (struct))
+
+  ;; CHECK:       (type $3 (func))
+
+  ;; CHECK:      (table $table 1 1 funcref)
+  (table $table 1 1 funcref)
+
+  ;; CHECK:      (func $call_indirect (type $3)
+  ;; CHECK-NEXT:  (call_indirect $table (type $sig)
+  ;; CHECK-NEXT:   (ref.null none)
+  ;; CHECK-NEXT:   (i32.const 42)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $call_indirect
+    (call_indirect $table (type $sig)
+      (ref.null any)  ;; send the current type - if we refined $sig, we'd error
+      (i32.const 42)
+    )
+  )
+
+  ;; CHECK:      (func $func (type $sig) (param $x anyref)
+  ;; CHECK-NEXT: )
+  (func $func (type $sig) (param $x anyref)
+    ;; This param will *not* be refined, as $sig is used in a call_indirect.
+  )
+
+  ;; CHECK:      (func $caller (type $3)
+  ;; CHECK-NEXT:  (call $func
+  ;; CHECK-NEXT:   (struct.new_default $struct)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $caller
+    (call $func
+      (struct.new $struct)
+    )
+  )
+
+  ;; CHECK:      (func $func2 (type $sig2) (param $x (ref (exact $struct)))
+  ;; CHECK-NEXT: )
+  (func $func2 (type $sig2) (param $x anyref)
+    ;; This param *will* be refined, as $sig2 is not in a call_indirect.
+  )
+
+  ;; CHECK:      (func $caller2 (type $3)
+  ;; CHECK-NEXT:  (call $func2
+  ;; CHECK-NEXT:   (struct.new_default $struct)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $caller2
+    (call $func2
       (struct.new $struct)
     )
   )

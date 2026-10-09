@@ -2261,8 +2261,10 @@ Ref Wasm2JSBuilder::processExpression(Expression* curr,
       WASM_UNREACHABLE("unimp");
     }
     Ref visitElemDrop(ElemDrop* curr) {
-      unimplemented(curr);
-      WASM_UNREACHABLE("unimp");
+      // Element segments are statically initialized into FUNCTION_TABLE at
+      // module startup, and table.init is not supported in wasm2js, so
+      // elem.drop is a no-op.
+      return ValueBuilder::makeToplevel();
     }
     Ref visitTry(Try* curr) {
       unimplemented(curr);

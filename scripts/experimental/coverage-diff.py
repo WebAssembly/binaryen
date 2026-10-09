@@ -37,7 +37,7 @@ from dataclasses import dataclass, field
 
 SCRIPT_PATH = os.path.relpath(os.path.abspath(__file__))
 
-REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 CPP_EXTENSIONS = {'.c', '.cc', '.cpp', '.cxx', '.c++', '.h', '.hpp', '.inc'}
 
@@ -284,7 +284,10 @@ def print_setup_instructions(reason: str, suggested_build_dir: str = 'out/cov'):
         rel_build = 'out/cov'
     print(f'Error: Build is not configured for coverage reporting.\n  Reason: {reason}\n', file=sys.stderr)
     print(
-        f"""To collect multi-metric diff coverage, configure a Clang coverage build:
+        f"""If you already have a coverage build directory, specify it with:
+  -B <dir> / --build-dir <dir>  (or set BINARYEN_BUILD_DIR=<dir>)
+
+To configure a new Clang coverage build:
 
   1. Configure CMake with Clang source-based coverage flags (e.g. in '{rel_build}'):
      cmake -S . -B {rel_build} -G Ninja \\
@@ -294,8 +297,8 @@ def print_setup_instructions(reason: str, suggested_build_dir: str = 'out/cov'):
        -DCMAKE_C_FLAGS="-fprofile-instr-generate -fcoverage-mapping -fcoverage-mcdc" \\
        -DCMAKE_CXX_FLAGS="-fprofile-instr-generate -fcoverage-mapping -fcoverage-mcdc"
 
-  2. Build the targets exercised by your tests (e.g. wasm-opt, binaryen-lit, binaryen-unittests):
-     ninja -C {rel_build} wasm-opt binaryen-lit binaryen-unittests
+  2. Build the targets exercised by your tests (e.g. wasm-opt, binaryen-unittests):
+     ninja -C {rel_build} wasm-opt binaryen-unittests
 
   3. Run this tool with your test(s) to collect profiles and report diff coverage in one step:
      {SCRIPT_PATH} -B {rel_build} --lit test/lit/passes/<your-test>.wast
@@ -1478,7 +1481,7 @@ def main():
         rel_build = os.path.relpath(build_dir, REPO_ROOT)
         print(
             f"Error: No built libraries or executables found in '{rel_build}'.\n"
-            f'Build your targets first, e.g.:\n  ninja -C {rel_build} wasm-opt binaryen-lit binaryen-unittests',
+            f'Build your targets first, e.g.:\n  ninja -C {rel_build} wasm-opt binaryen-unittests',
             file=sys.stderr,
         )
         sys.exit(2)

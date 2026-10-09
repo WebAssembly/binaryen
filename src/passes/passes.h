@@ -90,6 +90,7 @@ Pass* createLLVMMemoryCopyFillLoweringPass();
 Pass* createLoopInvariantCodeMotionPass();
 Pass* createMakeSharedObjectsPass();
 Pass* createMarkJSCalledPass();
+Pass* createMarkNoReturnPass();
 Pass* createMemory64LoweringPass();
 Pass* createMemoryPackingPass();
 Pass* createMergeBlocksPass();

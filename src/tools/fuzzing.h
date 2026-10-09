@@ -181,9 +181,6 @@ private:
   // like the above options eventually if we find that useful.
   bool allowAddingUnreachableCode;
 
-  // Whether to emit atomic waits (which in single-threaded mode, may hang...)
-  static const bool ATOMIC_WAITS = false;
-
   // The chance to emit a logging operation for a none expression. We
   // randomize this in each function.
   unsigned LOGGING_PERCENT = 0;

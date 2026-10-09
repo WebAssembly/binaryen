@@ -69,7 +69,7 @@
 #include <algorithm>
 
 #include "cfg/cfg-traversal.h"
-#include "cfg/rpo.h"
+#include "cfg/wto.h"
 #include "ir/constraint.h"
 #include "ir/drop.h"
 #include "ir/eh-utils.h"
@@ -97,7 +97,7 @@ namespace {
 
 // Information in a basic block.
 struct Info {
-  // For RPOQueue
+  // For WTOWorklist
   bool inQueue;
   Index index;
 
@@ -258,12 +258,10 @@ struct ConstraintAnalysis
     }
 
     // Starting from the entry, keep going while we find something new.
-    RPOQueue<ConstraintAnalysis> work(*this);
+    WTOWorklist<ConstraintAnalysis> work(*this);
     work.push(entry);
 
-    while (!work.empty()) {
-      auto* block = work.pop();
-
+    work.run([&](BasicBlock* block) {
       // Start at the top of the block, then go through, applying things.
       BasicBlockConstraintMap constraints = block->contents.startConstraints;
 
@@ -280,7 +278,7 @@ struct ConstraintAnalysis
 
       if (constraints.unreachable) {
         // Nothing to send.
-        continue;
+        return;
       }
 
 #if CONSTRAINT_DEBUG
@@ -323,7 +321,7 @@ struct ConstraintAnalysis
           }
         }
       }
-    }
+    });
   }
 
   // If we change types, we must refinalize.

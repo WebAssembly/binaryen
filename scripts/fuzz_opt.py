@@ -2723,6 +2723,7 @@ opt_choices = [
     ("--generate-stack-ir",),
     ("--licm",),
     ("--local-subtyping",),
+    ("--mark-noreturn",),
     ("--memory-packing",),
     ("--merge-blocks",),
     ('--merge-locals',),

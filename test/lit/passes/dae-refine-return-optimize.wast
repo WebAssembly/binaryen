@@ -282,3 +282,100 @@
   )
  )
 )
+
+;; The call_ref in $caller is turned into a direct call to $callee when $caller
+;; is optimized (after removing its unused parameter). In the next iteration,
+;; the result of $callee is refined, and $caller must be refinalized even though
+;; it was not a direct caller of $callee when DAE started.
+(module
+ ;; NOOPT:      (type $0 (func))
+
+ ;; NOOPT:      (type $f (func (result funcref)))
+ (type $f (func (result funcref)))
+
+ ;; NOOPT:      (type $2 (func (param funcref)))
+
+ ;; NOOPT:      (import "a" "b" (func $import (type $2) (param funcref)))
+ ;; CHECK:      (type $0 (func))
+
+ ;; CHECK:      (type $1 (func (param funcref)))
+
+ ;; CHECK:      (type $2 (func (result (ref nofunc))))
+
+ ;; CHECK:      (import "a" "b" (func $import (type $1) (param funcref)))
+ (import "a" "b" (func $import (param funcref)))
+
+ ;; NOOPT:      (global $g (mut i32) (i32.const 0))
+ ;; CHECK:      (global $g (mut i32) (i32.const 0))
+ (global $g (mut i32) (i32.const 0))
+
+ ;; NOOPT:      (elem declare func $callee $other)
+ ;; CHECK:      (elem declare func $other)
+ (elem declare func $callee $other)
+
+ ;; NOOPT:      (export "main" (func $main))
+
+ ;; NOOPT:      (func $other (type $0)
+ ;; NOOPT-NEXT: )
+ ;; CHECK:      (export "main" (func $main))
+
+ ;; CHECK:      (func $other (type $0)
+ ;; CHECK-NEXT: )
+ (func $other
+ )
+
+ ;; NOOPT:      (func $callee (type $f) (result funcref)
+ ;; NOOPT-NEXT:  (unreachable)
+ ;; NOOPT-NEXT: )
+ ;; CHECK:      (func $callee (type $2) (result (ref nofunc))
+ ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT: )
+ (func $callee (type $f) (result funcref)
+  (unreachable)
+ )
+
+ ;; NOOPT:      (func $caller (type $0)
+ ;; NOOPT-NEXT:  (local $0 i32)
+ ;; NOOPT-NEXT:  (call $import
+ ;; NOOPT-NEXT:   (select (result funcref)
+ ;; NOOPT-NEXT:    (call_ref $f
+ ;; NOOPT-NEXT:     (ref.func $callee)
+ ;; NOOPT-NEXT:    )
+ ;; NOOPT-NEXT:    (ref.func $other)
+ ;; NOOPT-NEXT:    (global.get $g)
+ ;; NOOPT-NEXT:   )
+ ;; NOOPT-NEXT:  )
+ ;; NOOPT-NEXT: )
+ ;; CHECK:      (func $caller (type $0)
+ ;; CHECK-NEXT:  (call $import
+ ;; CHECK-NEXT:   (select (result (ref (exact $0)))
+ ;; CHECK-NEXT:    (call $callee)
+ ;; CHECK-NEXT:    (ref.func $other)
+ ;; CHECK-NEXT:    (global.get $g)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $caller (param $unused i32)
+  (call $import
+   (select (result funcref)
+    (call_ref $f
+     (ref.func $callee)
+    )
+    (ref.func $other)
+    (global.get $g)
+   )
+  )
+ )
+
+ ;; NOOPT:      (func $main (type $0)
+ ;; NOOPT-NEXT:  (call $caller)
+ ;; NOOPT-NEXT: )
+ ;; CHECK:      (func $main (type $0)
+ ;; CHECK-NEXT:  (call $caller)
+ ;; CHECK-NEXT: )
+ (func $main (export "main")
+  (call $caller
+   (global.get $g)
+  )
+ )
+)
