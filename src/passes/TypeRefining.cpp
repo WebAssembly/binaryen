@@ -209,11 +209,6 @@ struct TypeRefining : public Pass {
           if (!fields[i].type.isExact()) {
             gufaType = gufaType.withInexactIfNoCustomDescs(module->features);
           }
-          // Do not use the GUFA type if it is a continuation, as we cannot add
-          // casts to fix up issues later. Instead, use the original type.
-          if (gufaType.isContinuation()) {
-            gufaType = fields[i].type;
-          }
           infos[i] = LUBFinder(gufaType);
         }
       }
@@ -254,6 +249,24 @@ struct TypeRefining : public Pass {
 
     // Propagate to supertypes, so no field is less refined than its super.
     propagator.propagateToSuperTypes(finalInfos);
+
+    // Do not refine to an uncastable type, as we cannot add casts to fix up
+    // issues later. Instead, use the original type. The exception is null
+    // types, which we will materialize directly. Do this after noting globals
+    // and propagating to supertypes so we also catch fields whose initial
+    // null/empty GUFA type was widened to a non-null uncastable type.
+    for (auto type : allTypes) {
+      if (type.isStruct()) {
+        auto& fields = type.getStruct().fields;
+        auto& infos = finalInfos[{type, Inexact}];
+        for (Index i = 0; i < fields.size(); i++) {
+          auto lub = infos[i].getLUB();
+          if (lub.isRef() && !lub.isCastable() && !lub.isNull()) {
+            infos[i] = LUBFinder(fields[i].type);
+          }
+        }
+      }
+    }
   }
 
   void useFinalInfos(Module* module, Propagator& propagator) {
