@@ -338,14 +338,7 @@ private:
 };
 
 Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
-  // Scan the wasm for important things.
-  for (auto& exp : wasm->exports) {
-    if (exp->kind == ExternalKind::Function) {
-      functionsCallableFromOutside.insert(*exp->getInternalName());
-    }
-  }
-  ElementUtils::iterAllElementFunctionNames(
-    wasm, [&](Name name) { functionsCallableFromOutside.insert(name); });
+
 
   // Collect passive data segment indices.
   for (Index i = 0; i < wasm->dataSegments.size(); ++i) {
@@ -418,6 +411,15 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
     runner.setDebug(flags.debug);
     runner.run();
   }
+
+  // Scan the wasm for functions callable from outside.
+  for (auto& exp : wasm->exports) {
+    if (exp->kind == ExternalKind::Function) {
+      functionsCallableFromOutside.insert(*exp->getInternalName());
+    }
+  }
+  ElementUtils::iterAllElementFunctionNames(
+    wasm, [&](Name name) { functionsCallableFromOutside.insert(name); });
 
   if (flags.symbolsFile.size() > 0) {
     Output out(flags.symbolsFile, wasm::Flags::Text);
