@@ -81,7 +81,6 @@
 
 #include <cassert>
 #include <memory>
-#include <variant>
 #include <vector>
 
 #include "cfg/domtree.h"
@@ -94,18 +93,25 @@ namespace wasm {
 template<typename BasicBlock> struct WeakTopologicalOrdering {
   static constexpr Index NoIndex = Index(-1);
 
-  struct Cycle;
-  using Element = std::variant<BasicBlock*, Cycle>;
-  using List = std::vector<Element>;
-
-  struct Cycle {
-    List elems;
-
-    BasicBlock* head() const { return std::get<BasicBlock*>(elems.front()); }
-    bool operator==(const Cycle& other) const { return elems == other.elems; }
+  // `entries` is the flattened sequence of blocks in weak topological order,
+  // plus markers for the end of cycles.
+  //
+  // For normal block entries:
+  //  - cycleTarget == NoIndex
+  //  - block is the corresponding basic block
+  //
+  // For end of cycle entries:
+  //  - cycleTarget is the index in `entries` of the head of the cycle, i.e.
+  //    where we will go next if we need to process the cycle again.
+  //  - block is the basic block at the head of the cycle, used to check whether
+  //    we need to process the cycle again (by checking contents.inQueue).
+  //
+  struct Entry {
+    BasicBlock* block;
+    Index cycleTarget;
   };
 
-  List elems;
+  std::vector<Entry> entries;
 
   WeakTopologicalOrdering(std::vector<std::unique_ptr<BasicBlock>>& blocks);
 };
@@ -239,27 +245,26 @@ WeakTopologicalOrdering<BasicBlock>::WeakTopologicalOrdering(
     }
   }
 
-  // Traverse the linked lists of children, materializing them as WTO elements.
+  // Traverse the linked lists of children, materializing them as WTO entries.
   // Loop depth should be limited, so doing this recursively should be fine. If
   // it ever causes an issue, we can un-recurse this.
-  // TODO: Flatten the WTO into a single contiguous vector of entries with cycle
-  // jump targets to avoid per-cycle vector allocations and recursion.
-  auto buildList = [&](auto& self, Index firstChild, List& out) -> void {
+  entries.reserve(numBlocks * 2);
+  auto emitList = [&](auto& self, Index firstChild) -> void {
     for (Index curr = firstChild; curr != NoIndex;
          curr = nodes[curr].nextSibling) {
       auto* block = blocks[curr].get();
       if (nodes[curr].isLoopHeader) {
-        Cycle cycle;
-        cycle.elems.emplace_back(block);
-        self(self, nodes[curr].firstChild, cycle.elems);
-        out.emplace_back(std::move(cycle));
+        Index startPc = entries.size();
+        entries.push_back({block, NoIndex});
+        self(self, nodes[curr].firstChild);
+        entries.push_back({block, startPc});
       } else {
-        out.emplace_back(block);
+        entries.push_back({block, NoIndex});
       }
     }
   };
 
-  buildList(buildList, topFirstChild, elems);
+  emitList(emitList, topFirstChild);
 }
 
 // Given a CFG in reverse postorder (e.g. from cfg-traversal), run a forward
@@ -304,34 +309,28 @@ template<typename CFG> struct WTOWorklist {
       }
       return;
     }
-    // Iterate through each element in the current cycle's list (or the
-    // top-level list), which will be in reverse postorder. Visit those that are
-    // in the queue, which may push later elements to the queue. When there is a
-    // nested cycle, repeatedly visit it recursively until it stabilizes before
-    // continuing on. We could un-recurse this, but the loop depth is expected
-    // to be acceptably small.
+    // Iterate through the flattened WTO entries in reverse postorder. Visit
+    // blocks that are in the queue, which may push later blocks or loop headers
+    // to the queue. At the end of a cycle, jump back to the cycle header entry
+    // if the header was re-queued so the cycle repeats until it stabilizes.
     WeakTopologicalOrdering<BasicBlock> wto(cfg.basicBlocks);
-    auto evalList =
-      [&](auto& self,
-          const typename WeakTopologicalOrdering<BasicBlock>::List& list)
-      -> void {
-      for (const auto& elem : list) {
-        if (auto* block = std::get_if<BasicBlock*>(&elem)) {
-          if ((*block)->contents.inQueue) {
-            (*block)->contents.inQueue = false;
-            visit(*block);
-          }
-        } else {
-          const auto& cycle =
-            std::get<typename WeakTopologicalOrdering<BasicBlock>::Cycle>(elem);
-          BasicBlock* head = cycle.head();
-          do {
-            self(self, cycle.elems);
-          } while (head->contents.inQueue);
+    const auto& entries = wto.entries;
+    Index pc = 0;
+    Index end = entries.size();
+    while (pc < end) {
+      const auto& entry = entries[pc];
+      if (entry.cycleTarget == WeakTopologicalOrdering<BasicBlock>::NoIndex) {
+        if (entry.block->contents.inQueue) {
+          entry.block->contents.inQueue = false;
+          visit(entry.block);
         }
+        ++pc;
+      } else if (entry.block->contents.inQueue) {
+        pc = entry.cycleTarget;
+      } else {
+        ++pc;
       }
-    };
-    evalList(evalList, wto.elems);
+    }
   }
 };
 
