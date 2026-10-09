@@ -2553,7 +2553,7 @@ class BranchHintPreservation(TestCaseHandler):
 
         # No bad hints should pop up after optimizations.
         for group in line_groups:
-            if not group or group[-1] == '[trap unreachable]':
+            if not group or group[-1].startswith(TRAP_PREFIX):
                 continue
             for line in group:
                 if line.startswith(LOG_BRANCH_PREFIX):
