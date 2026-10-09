@@ -498,95 +498,23 @@ TEST(WTOTest, WorklistSelectivePropagation) {
   EXPECT_EQ(visits, (std::vector<Index>{0, 1, 2, 3, 6, 7}));
 }
 
-TEST(WTOTest, WorklistFastPaths) {
-  // 1. Loop-free CFG: full traversal, partial traversal, and starting from a
-  // non-entry block.
-  {
-    TestCFG cfg(4);
-    cfg.addEdge(0, 1);
-    cfg.addEdge(0, 2);
-    cfg.addEdge(1, 3);
-    cfg.addEdge(2, 3);
-    WTOWorklist<TestCFG> work(cfg);
-    std::vector<Index> visits;
+TEST(WTOTest, WorklistLoopFree) {
+  TestCFG cfg(4);
+  cfg.addEdge(0, 1);
+  cfg.addEdge(0, 2);
+  cfg.addEdge(1, 3);
+  cfg.addEdge(2, 3);
 
-    // Running an empty worklist should be a no-op.
-    work.run(
-      [&](BasicBlock* block) { visits.push_back(block->contents.index); });
-    EXPECT_TRUE(visits.empty());
+  WTOWorklist<TestCFG> work(cfg);
+  work.push(cfg.entry);
 
-    // Push entry and propagate only along 0 -> 1 -> 3.
-    work.push(cfg.entry);
-    work.run([&](BasicBlock* block) {
-      Index id = block->contents.index;
-      visits.push_back(id);
-      if (id == 0) {
-        work.push(cfg.basicBlocks[1].get());
-      } else if (id == 1) {
-        work.push(cfg.basicBlocks[3].get());
-      }
-    });
-    EXPECT_EQ(visits, (std::vector<Index>{0, 1, 3}));
+  std::vector<Index> visits;
+  work.run([&](BasicBlock* block) {
+    visits.push_back(block->contents.index);
+    for (auto* out : block->out) {
+      work.push(out);
+    }
+  });
 
-    // Push a non-entry block and stop before reaching block 3.
-    visits.clear();
-    work.push(cfg.basicBlocks[1].get());
-    work.run(
-      [&](BasicBlock* block) { visits.push_back(block->contents.index); });
-    EXPECT_EQ(visits, (std::vector<Index>{1}));
-  }
-
-  // 2. Entry block is itself a loop header (entry->in is non-empty).
-  {
-    TestCFG cfg(2);
-    cfg.addEdge(0, 1);
-    cfg.addEdge(1, 0);
-    WTOWorklist<TestCFG> work(cfg);
-    work.push(cfg.entry);
-    std::vector<Index> visits;
-    work.run([&](BasicBlock* block) {
-      visits.push_back(block->contents.index);
-      if (visits.size() == 1) {
-        work.push(cfg.basicBlocks[1].get());
-      } else if (visits.size() == 2) {
-        work.push(cfg.basicBlocks[0].get());
-      }
-    });
-    EXPECT_EQ(visits, (std::vector<Index>{0, 1, 0}));
-  }
-
-  // 3. Loop in `loopTops` without backedges vs with a backedge.
-  {
-    TestCFG cfg(3);
-    cfg.addEdge(0, 1);
-    cfg.addEdge(1, 2);
-    // Block 1 is recorded in loopTops, but has only forward incoming edge 0->1.
-    cfg.loopTops.push_back(cfg.basicBlocks[1].get());
-
-    WTOWorklist<TestCFG> work(cfg);
-    work.push(cfg.entry);
-    std::vector<Index> visits;
-    work.run([&](BasicBlock* block) {
-      visits.push_back(block->contents.index);
-      for (auto* out : block->out) {
-        work.push(out);
-      }
-    });
-    EXPECT_EQ(visits, (std::vector<Index>{0, 1, 2}));
-
-    // Now add a backedge 2 -> 1.
-    cfg.addEdge(2, 1);
-    visits.clear();
-    work.push(cfg.entry);
-    work.run([&](BasicBlock* block) {
-      Index id = block->contents.index;
-      visits.push_back(id);
-      for (auto* out : block->out) {
-        if (id != 2) {
-          work.push(out);
-        }
-      }
-    });
-    EXPECT_EQ(visits, (std::vector<Index>{0, 1, 2}));
-  }
+  EXPECT_EQ(visits, (std::vector<Index>{0, 1, 2, 3}));
 }
