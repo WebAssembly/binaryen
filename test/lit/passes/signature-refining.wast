@@ -580,7 +580,7 @@
 )
 
 (module
-  ;; The table is funcref, but there is a call_indirect with a signature type.
+  ;; The table is funcref, and there is a call_indirect with a signature type.
 
   (rec
     ;; CHECK:      (rec
@@ -588,7 +588,7 @@
 
     ;; CHECK:       (type $struct (struct))
 
-    ;; CHECK:       (type $sig (sub (func (param anyref))))
+    ;; CHECK:       (type $sig (sub (func (param (ref null (exact $struct))))))
     (type $sig (sub (func (param anyref))))
     (type $sig2 (sub (func (param anyref))))
   )
@@ -608,15 +608,15 @@
   ;; CHECK-NEXT: )
   (func $call_indirect
     (call_indirect $table (type $sig)
-      (ref.null any)  ;; send the current type - if we refined $sig, we'd error
+      (ref.null any)
       (i32.const 42)
     )
   )
 
-  ;; CHECK:      (func $func (type $sig) (param $x anyref)
+  ;; CHECK:      (func $func (type $sig) (param $x (ref null (exact $struct)))
   ;; CHECK-NEXT: )
   (func $func (type $sig) (param $x anyref)
-    ;; This param will *not* be refined, as $sig is used in a call_indirect.
+    ;; This param will be refined, even though there is a call_indirect.
   )
 
   ;; CHECK:      (func $caller (type $3)
@@ -633,7 +633,7 @@
   ;; CHECK:      (func $func2 (type $sig2) (param $x (ref (exact $struct)))
   ;; CHECK-NEXT: )
   (func $func2 (type $sig2) (param $x anyref)
-    ;; This param *will* be refined, as $sig2 is not in a call_indirect.
+    ;; This param will also be refined ($sig2 is not in a call_indirect).
   )
 
   ;; CHECK:      (func $caller2 (type $3)
@@ -645,6 +645,164 @@
     (call $func2
       (struct.new $struct)
     )
+  )
+)
+
+(module
+  ;; Two call_indirects to the same signature.
+
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $parent (sub (struct)))
+
+  ;; CHECK:       (type $child-B (sub $parent (struct)))
+
+  ;; CHECK:       (type $sig (sub (func (param (ref $parent)))))
+  (type $sig (sub (func (param anyref))))
+
+  (rec
+    (type $parent (sub (struct)))
+
+    ;; CHECK:       (type $child-A (sub $parent (struct)))
+    (type $child-A (sub $parent (struct)))
+
+    (type $child-B (sub $parent (struct)))
+  )
+
+  ;; CHECK:       (type $4 (func))
+
+  ;; CHECK:      (table $table 1 1 funcref)
+  (table $table 1 1 funcref)
+
+  ;; CHECK:      (func $call_indirect (type $4)
+  ;; CHECK-NEXT:  (call_indirect $table (type $sig)
+  ;; CHECK-NEXT:   (struct.new_default $child-A)
+  ;; CHECK-NEXT:   (i32.const 42)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call_indirect $table (type $sig)
+  ;; CHECK-NEXT:   (struct.new_default $child-B)
+  ;; CHECK-NEXT:   (i32.const 42)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $call_indirect
+    ;; We can refine $sig based on the types in these call_indirects: we see
+    ;; the two child types, so we can only refine to the parent.
+    (call_indirect $table (type $sig)
+      (struct.new $child-A)
+      (i32.const 42)
+    )
+    (call_indirect $table (type $sig)
+      (struct.new $child-B)
+      (i32.const 42)
+    )
+  )
+
+  ;; CHECK:      (func $func (type $sig) (param $x (ref $parent))
+  ;; CHECK-NEXT: )
+  (func $func (type $sig) (param $x anyref)
+    ;; This param will be refined.
+  )
+)
+
+(module
+  ;; As above, but now a mixture: one call_indirect and one call_ref, to the
+  ;; same signature.
+
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $parent (sub (struct)))
+
+  ;; CHECK:       (type $child-B (sub $parent (struct)))
+
+  ;; CHECK:       (type $sig (sub (func (param (ref $parent)))))
+  (type $sig (sub (func (param anyref))))
+
+  (rec
+    (type $parent (sub (struct)))
+
+    ;; CHECK:       (type $child-A (sub $parent (struct)))
+    (type $child-A (sub $parent (struct)))
+
+    (type $child-B (sub $parent (struct)))
+  )
+
+  ;; CHECK:       (type $4 (func))
+
+  ;; CHECK:      (table $table 1 1 funcref)
+  (table $table 1 1 funcref)
+
+  ;; CHECK:      (elem declare func $func)
+
+  ;; CHECK:      (func $call_indirect (type $4)
+  ;; CHECK-NEXT:  (call_indirect $table (type $sig)
+  ;; CHECK-NEXT:   (struct.new_default $child-A)
+  ;; CHECK-NEXT:   (i32.const 42)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call_ref $sig
+  ;; CHECK-NEXT:   (struct.new_default $child-B)
+  ;; CHECK-NEXT:   (ref.func $func)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $call_indirect
+    ;; We can refine $sig based on the types in these call*s: we see
+    ;; the two child types, so we can only refine to the parent.
+    (call_indirect $table (type $sig)
+      (struct.new $child-A)
+      (i32.const 42)
+    )
+    (call_ref $sig
+      (struct.new $child-B)
+      (ref.func $func)
+    )
+  )
+
+  ;; CHECK:      (func $func (type $sig) (param $x (ref $parent))
+  ;; CHECK-NEXT: )
+  (func $func (type $sig) (param $x anyref)
+    ;; This param will be refined.
+  )
+)
+
+(module
+  ;; Refining a result leads to an update to the call_indirect result.
+
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $struct (struct))
+
+  ;; CHECK:       (type $sig (sub (func (result (ref (exact $struct))))))
+  (type $sig (sub (func (result anyref))))
+
+  (type $struct (struct))
+
+  ;; CHECK:       (type $2 (func))
+
+  ;; CHECK:      (table $table 1 1 funcref)
+  (table $table 1 1 funcref)
+
+  ;; CHECK:      (func $call_indirect (type $2)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result (ref (exact $struct)))
+  ;; CHECK-NEXT:    (call_indirect $table (type $sig)
+  ;; CHECK-NEXT:     (i32.const 42)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $call_indirect
+    ;; After refining the result, the block type will refine.
+    (drop
+      (block (result anyref)
+        (call_indirect $table (type $sig)
+          (i32.const 42)
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $func (type $sig) (result (ref (exact $struct)))
+  ;; CHECK-NEXT:  (struct.new_default $struct)
+  ;; CHECK-NEXT: )
+  (func $func (type $sig) (result anyref)
+    ;; This result will refine $sig's result.
+    (struct.new $struct)
   )
 )
 

@@ -2553,7 +2553,7 @@ class BranchHintPreservation(TestCaseHandler):
 
         # No bad hints should pop up after optimizations.
         for group in line_groups:
-            if not group or group[-1] == '[trap unreachable]':
+            if not group or group[-1].startswith(TRAP_PREFIX):
                 continue
             for line in group:
                 if line.startswith(LOG_BRANCH_PREFIX):
@@ -2865,6 +2865,9 @@ def get_random_opts():
     # value (the same used in j2wasm atm)
     if random.random() < 0.5:
         ret += ['-pii=4']
+    # fuzz both with and without expecting later toolchain opts
+    if random.random() < 0.5:
+        ret += ['--expect-later-toolchain-opts']
     # test both closed and open world
     if CLOSED_WORLD:
         ret += [CLOSED_WORLD_FLAG]

@@ -46,6 +46,7 @@ struct TestCFG {
   };
 
   std::vector<std::unique_ptr<BasicBlock>> basicBlocks;
+  std::vector<BasicBlock*> loopTops;
   BasicBlock* entry = nullptr;
 
   explicit TestCFG(Index numBlocks) {
@@ -65,6 +66,9 @@ struct TestCFG {
     assert(v < basicBlocks.size());
     basicBlocks[u]->out.push_back(basicBlocks[v].get());
     basicBlocks[v]->in.push_back(basicBlocks[u].get());
+    if (u >= v) {
+      loopTops.push_back(basicBlocks[v].get());
+    }
   }
 };
 

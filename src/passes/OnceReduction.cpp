@@ -217,6 +217,9 @@ private:
 
 // Information in a basic block.
 struct BlockInfo {
+  // For DomTree.
+  Index index;
+
   // We track relevant expressions, which are call to "once" functions, and
   // writes to "once" globals.
   std::vector<Expression*> exprs;
