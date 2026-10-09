@@ -68,6 +68,7 @@ set(passes_SOURCES
   LoopInvariantCodeMotion.cpp
   MakeSharedObjects.cpp
   MarkJSCalled.cpp
+  MarkNoReturn.cpp
   Memory64Lowering.cpp
   MemoryPacking.cpp
   MergeBlocks.cpp
