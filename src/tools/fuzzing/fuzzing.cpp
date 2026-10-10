@@ -1030,7 +1030,7 @@ void TranslateToFuzzReader::finalizeTable() {
     table->initial = std::min(table->initial, ReasonableMaxTableSize);
     assert(ReasonableMaxTableSize <= Table::kMaxSize);
 
-    table->max = oneIn(2) ? Address(Table::kUnlimitedSize) : table->initial;
+    table->max = oneIn(2) ? ReasonableMaxTableSize : table->initial;
 
     if (!preserveImportsAndExports) {
       // Avoid an imported table (which the fuzz harness would need to handle).
@@ -2918,6 +2918,12 @@ Expression* TranslateToFuzzReader::_makeConcrete(Type type) {
     if (allowMemory && type == wasm.memories[0]->addressType) {
       options.add(
         FeatureSet::MVP, &Self::makeMemorySize, &Self::makeMemoryGrow);
+    }
+    if (std::any_of(wasm.tables.begin(), wasm.tables.end(), [&](auto& table) {
+          return table->addressType == type;
+        })) {
+      options.add(
+        FeatureSet::ReferenceTypes, &Self::makeTableSize, &Self::makeTableGrow);
     }
   }
   if (type == Type::i32) {
@@ -5722,6 +5728,36 @@ Expression* TranslateToFuzzReader::makeTableSet(Type type) {
     assert(funcrefTableName);
     return makeTableSet(funcrefTableName);
   }
+}
+
+Expression* TranslateToFuzzReader::makeTableSize(Type type) {
+  std::vector<Table*> tables;
+  for (auto& table : wasm.tables) {
+    if (table->addressType == type) {
+      tables.push_back(table.get());
+    }
+  }
+  if (tables.empty()) {
+    return makeTrivial(type);
+  }
+  auto* table = pick(tables);
+  return builder.makeTableSize(table->name);
+}
+
+Expression* TranslateToFuzzReader::makeTableGrow(Type type) {
+  std::vector<Table*> tables;
+  for (auto& table : wasm.tables) {
+    if (table->addressType == type) {
+      tables.push_back(table.get());
+    }
+  }
+  if (tables.empty()) {
+    return makeTrivial(type);
+  }
+  auto* table = pick(tables);
+  auto* value = make(table->type);
+  auto* delta = make(type);
+  return builder.makeTableGrow(table->name, value, delta);
 }
 
 Expression* TranslateToFuzzReader::makeRefIsNull(Type type) {
