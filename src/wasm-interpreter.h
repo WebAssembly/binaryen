@@ -4747,11 +4747,9 @@ public:
     const auto& seg = *wasm.getDataSegment(curr->segment);
     auto elemBytes = element.getByteSize();
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
-
-    uint64_t end;
-    if (std::ckd_add(&end, offset, size * elemBytes) || end > seg.data.size()) {
+    // offset and size are u32 and elemBytes <= 16, so this can't overflow.
+    uint64_t end = offset + size * elemBytes;
+    if (end > seg.data.size()) {
       trap("out of bounds segment access in array.new_data");
     }
     if (droppedDataSegments.contains(curr->segment) && end > 0) {
@@ -4761,8 +4759,6 @@ public:
     if (size > 0) {
       memcpy(contents.data(), &seg.data[offset], size * elemBytes);
     }
-
-#pragma GCC diagnostic pop
 
     return self()->makeGCData(std::move(contents), curr->type);
   }
