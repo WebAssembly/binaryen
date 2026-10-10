@@ -135,17 +135,30 @@ std::ostream& operator<<(std::ostream& os, const WTOList& list) {
 
 using BasicBlock = TestCFG::BasicBlock;
 
-WTOList toIndexWTO(const WeakTopologicalOrdering<BasicBlock>::List& src) {
-  WTOList dst;
-  for (const auto& elem : src) {
-    if (auto* b = std::get_if<BasicBlock*>(&elem)) {
-      dst.emplace_back((*b)->contents.index);
+WTOList toIndexWTO(const WeakTopologicalOrdering<BasicBlock>& wto) {
+  constexpr Index NoIndex = WeakTopologicalOrdering<BasicBlock>::NoIndex;
+  std::vector<std::pair<Index, WTOElem>> stack;
+  for (Index pc = 0; pc < wto.entries.size(); ++pc) {
+    const auto& entry = wto.entries[pc];
+    if (entry.cycleTarget == NoIndex) {
+      stack.emplace_back(pc, WTOElem(entry.block->contents.index));
     } else {
-      const auto& cycle =
-        std::get<WeakTopologicalOrdering<BasicBlock>::Cycle>(elem);
-      EXPECT_EQ(cycle.head(), std::get<BasicBlock*>(cycle.elems.front()));
-      dst.emplace_back(WTOCycle(toIndexWTO(cycle.elems)));
+      EXPECT_EQ(entry.block, wto.entries[entry.cycleTarget].block);
+      size_t start = stack.size();
+      while (stack[start - 1].first != entry.cycleTarget) {
+        --start;
+      }
+      WTOList cycleElems;
+      for (size_t i = start - 1; i < stack.size(); ++i) {
+        cycleElems.push_back(std::move(stack[i].second));
+      }
+      stack.erase(stack.begin() + start, stack.end());
+      stack.back() = {NoIndex, WTOElem(WTOCycle(std::move(cycleElems)))};
     }
+  }
+  WTOList dst;
+  for (auto& [_, elem] : stack) {
+    dst.push_back(std::move(elem));
   }
   return dst;
 }
@@ -209,8 +222,8 @@ void verifyWTOInvariants(const TestCFG& cfg, const WTOList& wto) {
 
 WTOList getWTO(TestCFG& cfg) {
   WeakTopologicalOrdering<BasicBlock> wto(cfg.basicBlocks);
-  EXPECT_EQ(wto.elems, wto.elems);
-  auto list = toIndexWTO(wto.elems);
+  auto list = toIndexWTO(wto);
+  EXPECT_EQ(list, list);
   verifyWTOInvariants(cfg, list);
   return list;
 }
