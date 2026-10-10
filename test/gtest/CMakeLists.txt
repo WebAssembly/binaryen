@@ -33,6 +33,7 @@ set(unittest_SOURCES
   principal-type.cpp
   printing.cpp
   public-type-validator.cpp
+  safe-integer.cpp
   scc.cpp
   sizes.cpp
   source-map.cpp
