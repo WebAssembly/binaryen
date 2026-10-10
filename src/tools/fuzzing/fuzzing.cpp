@@ -6590,7 +6590,6 @@ Expression* TranslateToFuzzReader::makeMemoryFill() {
   return builder.makeMemoryFill(dest, value, size, wasm.memories[0]->name);
 }
 
-<<<<<<< HEAD
 Expression* TranslateToFuzzReader::makeMemorySize(Type type) {
   if (!allowMemory) {
     return makeTrivial(type);
@@ -6607,9 +6606,6 @@ Expression* TranslateToFuzzReader::makeMemoryGrow(Type type) {
   return builder.makeMemoryGrow(make(type), wasm.memories[0]->name);
 }
 
-||||||| 611832f33
-=======
->>>>>>> origin/main
 Expression* TranslateToFuzzReader::makeElemDrop() {
   if (wasm.elementSegments.empty()) {
     return makeTrivial(Type::none);

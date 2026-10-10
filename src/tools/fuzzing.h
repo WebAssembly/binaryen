@@ -565,12 +565,8 @@ private:
   Expression* makeDataDrop();
   Expression* makeMemoryCopy();
   Expression* makeMemoryFill();
-<<<<<<< HEAD
   Expression* makeMemorySize(Type type);
   Expression* makeMemoryGrow(Type type);
-||||||| 611832f33
-=======
->>>>>>> origin/main
   Expression* makeElemDrop();
 
   // Getters for Types
