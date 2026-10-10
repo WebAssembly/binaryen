@@ -110,7 +110,7 @@
 )
 ;; CHECK-BIN-NODEBUG:      (type $0 (func))
 
-;; CHECK-BIN-NODEBUG:      (import "a" "b" (table $timport$0 1 10 funcref))
+;; CHECK-BIN-NODEBUG:      (import "a" "b" (table $b 1 10 funcref))
 
 ;; CHECK-BIN-NODEBUG:      (global $global$0 (ref null $0) (ref.func $0))
 
@@ -124,7 +124,7 @@
 
 ;; CHECK-BIN-NODEBUG:      (table $3 5 5 (ref null $0))
 
-;; CHECK-BIN-NODEBUG:      (elem $0 (table $timport$0) (i32.const 0) func $0)
+;; CHECK-BIN-NODEBUG:      (elem $0 (table $b) (i32.const 0) func $0)
 
 ;; CHECK-BIN-NODEBUG:      (elem $1 (table $0) (i32.const 0) func $0)
 

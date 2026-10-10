@@ -4,19 +4,19 @@
 
 ;; PRIMARY:      (module
 ;; PRIMARY-NEXT:   (type $0 (func))
-;; PRIMARY-NEXT:   (table $0 1 funcref)
+;; PRIMARY-NEXT:   (table $%c 1 funcref)
 ;; PRIMARY-NEXT:   (elem $0 (i32.const 0) $3)
-;; PRIMARY-NEXT:   (export "baz" (func $2))
-;; PRIMARY-NEXT:   (export "%a" (func $1))
-;; PRIMARY-NEXT:   (export "%b" (func $0))
-;; PRIMARY-NEXT:   (export "%c" (table $0))
-;; PRIMARY-NEXT:   (func $0
+;; PRIMARY-NEXT:   (export "baz" (func $baz))
+;; PRIMARY-NEXT:   (export "%a" (func $%a))
+;; PRIMARY-NEXT:   (export "%b" (func $%b))
+;; PRIMARY-NEXT:   (export "%c" (table $%c))
+;; PRIMARY-NEXT:   (func $%b
 ;; PRIMARY-NEXT:     (nop)
 ;; PRIMARY-NEXT:   )
-;; PRIMARY-NEXT:   (func $1
+;; PRIMARY-NEXT:   (func $%a
 ;; PRIMARY-NEXT:     (nop)
 ;; PRIMARY-NEXT:   )
-;; PRIMARY-NEXT:   (func $2
+;; PRIMARY-NEXT:   (func $baz
 ;; PRIMARY-NEXT:     (call_indirect (type $0)
 ;; PRIMARY-NEXT:       (i32.const 0)
 ;; PRIMARY-NEXT:     )
@@ -28,13 +28,13 @@
 
 ;; SECONDARY:      (module
 ;; SECONDARY-NEXT:   (type $0 (func))
-;; SECONDARY-NEXT:   (import "primary" "%c" (table $timport$0 1 funcref))
-;; SECONDARY-NEXT:   (import "primary" "%a" (func $fimport$0))
-;; SECONDARY-NEXT:   (import "primary" "%b" (func $fimport$1))
+;; SECONDARY-NEXT:   (import "primary" "%c" (table $%c 1 funcref))
+;; SECONDARY-NEXT:   (import "primary" "%a" (func $%a))
+;; SECONDARY-NEXT:   (import "primary" "%b" (func $%b))
 ;; SECONDARY-NEXT:   (elem $0 (i32.const 0) $0)
 ;; SECONDARY-NEXT:   (func $0
-;; SECONDARY-NEXT:     (call $fimport$1)
-;; SECONDARY-NEXT:     (call $fimport$0)
+;; SECONDARY-NEXT:     (call $%b)
+;; SECONDARY-NEXT:     (call $%a)
 ;; SECONDARY-NEXT:   )
 ;; SECONDARY-NEXT: )
 

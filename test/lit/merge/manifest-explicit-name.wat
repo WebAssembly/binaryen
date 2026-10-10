@@ -12,9 +12,9 @@
 
 ;; MERGED:      (module
 ;; MERGED-NEXT:  (type $0 (func))
-;; MERGED-NEXT:  (export "foo" (func $0))
+;; MERGED-NEXT:  (export "foo" (func $foo))
 ;; MERGED-NEXT:  (export "foo_1" (func $0_1))
-;; MERGED-NEXT:  (func $0
+;; MERGED-NEXT:  (func $foo
 ;; MERGED-NEXT:   (nop)
 ;; MERGED-NEXT:  )
 ;; MERGED-NEXT:  (func $0_1

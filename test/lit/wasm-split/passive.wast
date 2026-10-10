@@ -14,14 +14,14 @@
  ;; PRIMARY:      (table $table 3 funcref)
  (table $table 3 funcref)
 
- ;; PRIMARY:      (table $1 1 funcref)
+ ;; PRIMARY:      (table $table_1 1 funcref)
 
  ;; PRIMARY:      (elem $passive func $in-table $trampoline_second-in-table)
  (elem $passive func $in-table $second-in-table)
 
- ;; PRIMARY:      (elem $1 (table $1) (i32.const 0) func $placeholder_0)
+ ;; PRIMARY:      (elem $1 (table $table_1) (i32.const 0) func $placeholder_0)
 
- ;; PRIMARY:      (export "table" (table $1))
+ ;; PRIMARY:      (export "table" (table $table_1))
 
  ;; PRIMARY:      (func $use_table (type $0)
  ;; PRIMARY-NEXT:  (call_indirect $table (type $0)
@@ -46,7 +46,7 @@
 
  ;; SECONDARY:      (type $0 (func))
 
- ;; SECONDARY:      (import "primary" "table" (table $timport$0 1 funcref))
+ ;; SECONDARY:      (import "primary" "table" (table $table 1 funcref))
 
  ;; SECONDARY:      (elem $0 (i32.const 0) $second-in-table)
 
@@ -59,7 +59,7 @@
  )
 )
 ;; PRIMARY:      (func $trampoline_second-in-table (type $0)
-;; PRIMARY-NEXT:  (call_indirect $1 (type $0)
+;; PRIMARY-NEXT:  (call_indirect $table_1 (type $0)
 ;; PRIMARY-NEXT:   (i32.const 0)
 ;; PRIMARY-NEXT:  )
 ;; PRIMARY-NEXT: )

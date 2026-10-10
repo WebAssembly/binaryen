@@ -24,12 +24,12 @@
 
  (global $glob2 (ref func) (ref.func $second))
 
- ;; PRIMARY:      (table $1 2 funcref)
+ ;; PRIMARY:      (table $table_1 2 funcref)
 
  ;; PRIMARY:      (elem $elem (table $table) (i32.const 0) func $in-table $trampoline_second-in-table)
  (elem $elem (i32.const 0) $in-table $second-in-table)
 
- ;; PRIMARY:      (elem $1 (table $1) (i32.const 0) func $placeholder_0 $placeholder_1)
+ ;; PRIMARY:      (elem $1 (table $table_1) (i32.const 0) func $placeholder_0 $placeholder_1)
 
  ;; PRIMARY:      (elem declare func $prime $trampoline_second)
 
@@ -37,7 +37,7 @@
 
  ;; PRIMARY:      (export "prime" (func $prime))
 
- ;; PRIMARY:      (export "table" (table $1))
+ ;; PRIMARY:      (export "table" (table $table_1))
 
  ;; PRIMARY:      (func $prime (type $0)
  ;; PRIMARY-NEXT:  (drop
@@ -70,7 +70,7 @@
 
  ;; SECONDARY:      (type $0 (func))
 
- ;; SECONDARY:      (import "primary" "table" (table $timport$0 2 funcref))
+ ;; SECONDARY:      (import "primary" "table" (table $table 2 funcref))
 
  ;; SECONDARY:      (import "primary" "prime" (func $prime (exact (type $0))))
 
@@ -111,13 +111,13 @@
  )
 )
 ;; PRIMARY:      (func $trampoline_second (type $0)
-;; PRIMARY-NEXT:  (call_indirect $1 (type $0)
+;; PRIMARY-NEXT:  (call_indirect $table_1 (type $0)
 ;; PRIMARY-NEXT:   (i32.const 0)
 ;; PRIMARY-NEXT:  )
 ;; PRIMARY-NEXT: )
 
 ;; PRIMARY:      (func $trampoline_second-in-table (type $0)
-;; PRIMARY-NEXT:  (call_indirect $1 (type $0)
+;; PRIMARY-NEXT:  (call_indirect $table_1 (type $0)
 ;; PRIMARY-NEXT:   (i32.const 1)
 ;; PRIMARY-NEXT:  )
 ;; PRIMARY-NEXT: )
