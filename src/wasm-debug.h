@@ -22,6 +22,7 @@
 #define wasm_wasm_debug_h
 
 #include <string>
+#include <vector>
 
 #include "pass.h"
 #include "wasm.h"
@@ -39,8 +40,17 @@ void dumpDWARF(const Module& wasm);
 // will disable optimizations that currently cause issues with debug info.)
 bool shouldPreserveDWARF(PassOptions& options, Module& wasm);
 
+// Instruction origins collected while emitting the binary, including opcodes
+// without a corresponding IR node. Zero denotes an absent source origin.
+struct InstructionLocation {
+  BinaryLocation oldAddr, newAddr;
+};
+
 // Update the DWARF sections.
-void writeDWARFSections(Module& wasm, const BinaryLocations& newLocations);
+void writeDWARFSections(
+  Module& wasm,
+  const BinaryLocations& newLocations,
+  const std::vector<InstructionLocation>& instructionLocations);
 
 } // namespace wasm::Debug
 

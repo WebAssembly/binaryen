@@ -1555,7 +1555,7 @@ struct AsyncifyLocals : public WalkerPass<PostWalker<AsyncifyLocals>> {
     func->body = newBody;
     // The terminal end now returns from unwinding, not from the original source
     // body. In particular, its dummy return value is not a source-level return.
-    func->hasSyntheticEnd = true;
+    func->expressionLocations.erase(nullptr);
     // Making things like returns conditional may alter types.
     ReFinalize().walkFunctionInModule(func, getModule());
   }

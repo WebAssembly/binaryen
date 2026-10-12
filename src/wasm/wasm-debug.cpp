@@ -433,7 +433,9 @@ struct AddrExprMap {
   AddrExprMap(const Module& wasm) {
     for (auto& func : wasm.functions) {
       for (auto& [expr, span] : func->expressionLocations) {
-        add(expr, span);
+        if (expr) {
+          add(expr, span);
+        }
       }
       for (auto& [expr, delim] : func->delimiterLocations) {
         add(expr, delim);
@@ -728,8 +730,10 @@ static bool sameSource(const LineState& a, const LineState& b) {
 
 // Update debug lines, and update the locationUpdater with debug line offset
 // changes so we can update offsets into the debug line section.
-static void updateDebugLines(llvm::DWARFYAML::Data& data,
-                             LocationUpdater& locationUpdater) {
+static void
+updateDebugLines(llvm::DWARFYAML::Data& data,
+                 LocationUpdater& locationUpdater,
+                 const std::vector<InstructionLocation>& instructions) {
   if (data.DebugLines.empty()) {
     return;
   }
@@ -857,11 +861,11 @@ static void updateDebugLines(llvm::DWARFYAML::Data& data,
       // The writer records origins in output order, including instructions
       // which do not have an IR node. No extra IR walk or sorting is needed.
       auto instruction = std::lower_bound(
-        locations.instructions.begin(),
-        locations.instructions.end(),
+        instructions.begin(),
+        instructions.end(),
         funcLocations.start,
         [](auto& location, auto addr) { return location.newAddr < addr; });
-      for (; instruction != locations.instructions.end() &&
+      for (; instruction != instructions.end() &&
              instruction->newAddr < funcLocations.end;
            ++instruction) {
         auto [oldAddr, newAddr] = *instruction;
@@ -1516,7 +1520,10 @@ static void updateLoc(llvm::DWARFYAML::Data& yaml,
   }
 }
 
-void writeDWARFSections(Module& wasm, const BinaryLocations& newLocations) {
+void writeDWARFSections(
+  Module& wasm,
+  const BinaryLocations& newLocations,
+  const std::vector<InstructionLocation>& instructionLocations) {
   BinaryenDWARFInfo info(wasm);
 
   // Convert to Data representation, which YAML can use to write.
@@ -1527,7 +1534,7 @@ void writeDWARFSections(Module& wasm, const BinaryLocations& newLocations) {
 
   LocationUpdater locationUpdater(wasm, newLocations);
 
-  updateDebugLines(data, locationUpdater);
+  updateDebugLines(data, locationUpdater, instructionLocations);
 
   bool is64 = wasm.memories.size() > 0 ? wasm.memories[0]->is64() : false;
   updateCompileUnits(info, data, locationUpdater, is64);
@@ -1574,7 +1581,10 @@ void dumpDWARF(const Module& wasm) {
   std::cerr << "warning: no DWARF dumping support present\n";
 }
 
-void writeDWARFSections(Module& wasm, const BinaryLocations& newLocations) {
+void writeDWARFSections(
+  Module& wasm,
+  const BinaryLocations& newLocations,
+  const std::vector<InstructionLocation>& instructionLocations) {
   std::cerr << "warning: no DWARF updating support present\n";
 }
 

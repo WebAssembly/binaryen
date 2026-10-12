@@ -107,7 +107,7 @@ void WasmBinaryWriter::write() {
   // Update DWARF user sections after writing the data they refer to
   // (function bodies), and before writing the user sections themselves.
   if (Debug::hasDWARFSections(*wasm)) {
-    Debug::writeDWARFSections(*wasm, binaryLocations);
+    Debug::writeDWARFSections(*wasm, binaryLocations, instructionLocations);
   }
 #endif
 
@@ -207,7 +207,7 @@ void WasmBinaryWriter::finishSection(int32_t start) {
         item -= totalAdjustment;
       }
     }
-    for (auto& location : binaryLocations.instructions) {
+    for (auto& location : instructionLocations) {
       location.newAddr -= totalAdjustment;
     }
   }
@@ -548,7 +548,7 @@ void WasmBinaryWriter::writeFunctions() {
     // Do not smear any debug location from the previous function.
     writeNoDebugLocation();
     size_t sourceMapLocationsSizeAtFunctionStart = sourceMapLocations.size();
-    auto instructionLocationsStart = binaryLocations.instructions.size();
+    auto instructionLocationsStart = instructionLocations.size();
     size_t sizePos = writeU32LEBPlaceholder();
     size_t start = o.size();
     // Emit Stack IR if present.
@@ -603,10 +603,9 @@ void WasmBinaryWriter::writeFunctions() {
           }
         }
       }
-      for (auto i = instructionLocationsStart;
-           i < binaryLocations.instructions.size();
+      for (auto i = instructionLocationsStart; i < instructionLocations.size();
            ++i) {
-        binaryLocations.instructions[i].newAddr -= adjustmentForLEBShrinking;
+        instructionLocations[i].newAddr -= adjustmentForLEBShrinking;
       }
     }
     if (sourceMap) {
@@ -2124,7 +2123,7 @@ void WasmBinaryWriter::trackExpressionDelimiter(Expression* curr,
       old != func->delimiterLocations.end() && id < old->second.size()
         ? old->second[id]
         : 0;
-    binaryLocations.instructions.push_back({oldAddr, BinaryLocation(o.size())});
+    instructionLocations.push_back({oldAddr, BinaryLocation(o.size())});
   }
 }
 
@@ -2141,10 +2140,13 @@ void WasmBinaryWriter::trackInstruction(Expression* curr,
     if (old != func->expressionLocations.end()) {
       oldAddr = isEnd ? old->second.end - 1 : old->second.start;
     }
-  } else if (isEnd && !func->hasSyntheticEnd) {
-    oldAddr = func->funcLocation.end - 1;
+  } else if (isEnd) {
+    auto old = func->expressionLocations.find(nullptr);
+    if (old != func->expressionLocations.end()) {
+      oldAddr = old->second.start;
+    }
   }
-  binaryLocations.instructions.push_back({oldAddr, start});
+  instructionLocations.push_back({oldAddr, start});
 }
 
 std::optional<BufferWithRandomAccess> WasmBinaryWriter::writeCodeAnnotations() {
@@ -3926,6 +3928,12 @@ void WasmBinaryReader::readFunctions() {
       }
     }
 
+    if (needCodeLocations) {
+      // The terminal end has no expression. Keep its origin in the existing
+      // position map, separately from the function's range for DWARF DIEs.
+      auto end = func->funcLocation.end;
+      func->expressionLocations[nullptr] = {end - 1, end};
+    }
     sourceMapReader.finishFunction();
     TypeUpdating::handleNonDefaultableLocals(func.get(), wasm);
     currFunction = nullptr;
@@ -6224,7 +6232,9 @@ void WasmBinaryReader::readExpressionHints(Name sectionName,
     std::unordered_map<BinaryLocation, Expression*> locationsMap;
 
     for (auto& [expr, span] : func->expressionLocations) {
-      locationsMap[span.start] = expr;
+      if (expr) {
+        locationsMap[span.start] = expr;
+      }
     }
 
     auto numHints = getU32LEB();
