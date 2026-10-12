@@ -1313,6 +1313,12 @@ Result BasicBlockConstraintMap::proves(LocalConstraint condition) const {
   // about, propagate it. TODO: even without equality, we can add more
   // constraints here (e.g. x < y and y < 10 can lead to proving x < 10)
   if (auto* other = std::get_if<Index>(&condition.constraint.term)) {
+    if (*other == condition.local) {
+      // We are comparing a local to itself. The things we can prove in this
+      // case (e.g. x > x is false) do not even require the map.
+      return provesPair(Constraint{Abstract::Eq, {condition.local}},
+                        condition.constraint);
+    }
     if (auto iter = map.find(*other); iter != map.end()) {
       if (auto lit = iter->value.getLiteral()) {
         condition.constraint.term = Term{*lit};
