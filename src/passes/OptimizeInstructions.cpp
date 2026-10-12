@@ -5624,8 +5624,10 @@ private:
                                        builder.makeConst<uint8_t[16]>(values),
                                        Type::v128,
                                        memFill->memory);
-            } else {
+            } else if (getPassOptions().trapsNeverHappen) {
               // { i64.store(d, C', 0), i64.store(d, C', 8) }
+              // We only do this when trapsNeverHappen, as if we trap during the
+              // second store, it leaves data written from the first.
               auto destType = memFill->dest->type;
               Index tempLocal = builder.addVar(getFunction(), destType);
               return builder.makeBlock({
