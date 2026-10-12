@@ -1154,4 +1154,74 @@
       (local.get $x)
     )
   )
+
+  ;; TNH:      (func $any.convert_extern (type $21) (param $ext externref) (result (ref any))
+  ;; TNH-NEXT:  (any.convert_extern
+  ;; TNH-NEXT:   (ref.as_non_null
+  ;; TNH-NEXT:    (local.get $ext)
+  ;; TNH-NEXT:   )
+  ;; TNH-NEXT:  )
+  ;; TNH-NEXT: )
+  ;; NO_TNH:      (func $any.convert_extern (type $22) (param $ext externref) (result (ref any))
+  ;; NO_TNH-NEXT:  (any.convert_extern
+  ;; NO_TNH-NEXT:   (ref.as_non_null
+  ;; NO_TNH-NEXT:    (local.get $ext)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT: )
+  (func $any.convert_extern (param $ext externref) (result (ref any))
+    ;; The function result is non-nullable, so the ref.as_non_null cast must be preserved.
+    (any.convert_extern
+      (ref.as_non_null
+        (local.get $ext)
+      )
+    )
+  )
+
+  ;; TNH:      (func $extern.convert_any (type $22) (param $any anyref) (result (ref extern))
+  ;; TNH-NEXT:  (extern.convert_any
+  ;; TNH-NEXT:   (ref.as_non_null
+  ;; TNH-NEXT:    (local.get $any)
+  ;; TNH-NEXT:   )
+  ;; TNH-NEXT:  )
+  ;; TNH-NEXT: )
+  ;; NO_TNH:      (func $extern.convert_any (type $23) (param $any anyref) (result (ref extern))
+  ;; NO_TNH-NEXT:  (extern.convert_any
+  ;; NO_TNH-NEXT:   (ref.as_non_null
+  ;; NO_TNH-NEXT:    (local.get $any)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT: )
+  (func $extern.convert_any (param $any anyref) (result (ref extern))
+    ;; The function result is non-nullable, so the ref.as_non_null cast must be preserved.
+    (extern.convert_any
+      (ref.as_non_null
+        (local.get $any)
+      )
+    )
+  )
+
+  ;; TNH:      (func $extern.convert_any-unnecessary (type $23) (param $any anyref) (result externref)
+  ;; TNH-NEXT:  (extern.convert_any
+  ;; TNH-NEXT:   (ref.as_non_null
+  ;; TNH-NEXT:    (local.get $any)
+  ;; TNH-NEXT:   )
+  ;; TNH-NEXT:  )
+  ;; TNH-NEXT: )
+  ;; NO_TNH:      (func $extern.convert_any-unnecessary (type $24) (param $any anyref) (result externref)
+  ;; NO_TNH-NEXT:  (extern.convert_any
+  ;; NO_TNH-NEXT:   (ref.as_non_null
+  ;; NO_TNH-NEXT:    (local.get $any)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT: )
+  (func $extern.convert_any-unnecessary (param $any anyref) (result (ref null extern))
+    ;; The function result is now nullable, so we don't need the ref.as_non_null anymore,
+    ;; but SubtypingDiscoverer is not powerful enough to realize that. TODO.
+    (extern.convert_any
+      (ref.as_non_null
+        (local.get $any)
+      )
+    )
+  )
 )

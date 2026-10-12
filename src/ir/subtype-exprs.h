@@ -489,12 +489,23 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
         self()->noteCast(curr->value, curr);
         return;
       case AnyConvertExtern:
+        // any.convert_extern and extern.convert_any return nullable types iff
+        // their inputs are nullable. To preserve the existing non-nullable
+        // output type, the input must remain non-nullable, but if the existing
+        // output type is nullable, the input can be, too.
+        if (curr->type != Type::unreachable) {
+          auto ext =
+            HeapTypes::ext.getBasic(curr->type.getHeapType().getShared());
+          auto nullability = curr->type.getNullability();
+          self()->noteSubtype(curr->value, Type(ext, nullability));
+        }
         return;
       case ExternConvertAny:
         if (curr->type != Type::unreachable) {
           auto any =
             HeapTypes::any.getBasic(curr->type.getHeapType().getShared());
-          self()->noteSubtype(curr->value, Type(any, Nullable));
+          auto nullability = curr->type.getNullability();
+          self()->noteSubtype(curr->value, Type(any, nullability));
         }
         return;
     }
