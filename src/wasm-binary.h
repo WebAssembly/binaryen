@@ -31,6 +31,7 @@
 #include "parsing.h"
 #include "source-map.h"
 #include "wasm-builder.h"
+#include "wasm-debug.h"
 #include "wasm-features.h"
 #include "wasm-ir-builder.h"
 #include "wasm-traversal.h"
@@ -1565,6 +1566,8 @@ private:
 
   // General debugging info: track locations as we write.
   BinaryLocations binaryLocations;
+  // Output-only DWARF origins belong to the writer, not the main IR.
+  std::vector<Debug::InstructionLocation> instructionLocations;
   size_t binaryLocationsSizeAtSectionStart;
   // Track the expressions that we added for the current function being
   // written, so that we can update those specific binary locations when
