@@ -38,6 +38,8 @@ function asmFunc(imports) {
  }
  
  function legalstub$1($0_1, $1) {
+  $0_1 = $0_1 | 0;
+  $1 = $1 | 0;
   var $2 = 0;
   wasm2js_scratch_store_i32(0, $0_1 | 0);
   wasm2js_scratch_store_i32(1, $1 | 0);
