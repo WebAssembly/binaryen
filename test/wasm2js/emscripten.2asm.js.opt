@@ -170,7 +170,8 @@ function asmFunc(imports) {
  }
  
  function internal($0) {
-  return $0;
+  $0 = $0 | 0;
+  return $0 | 0;
  }
  
  function sub_zero($0) {

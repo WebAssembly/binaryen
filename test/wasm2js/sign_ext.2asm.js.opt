@@ -25,23 +25,29 @@ function asmFunc(imports) {
  }
  
  function legalstub$test8_i64($0, $1) {
+  $0 = $0 | 0;
+  $1 = $1 | 0;
   $0 = $0 << 24 >> 24;
   i64toi32_i32$HIGH_BITS = $0 >> 31;
   setTempRet0(i64toi32_i32$HIGH_BITS | 0);
-  return $0;
+  return $0 | 0;
  }
  
  function legalstub$test16_i64($0, $1) {
+  $0 = $0 | 0;
+  $1 = $1 | 0;
   $0 = $0 << 16 >> 16;
   i64toi32_i32$HIGH_BITS = $0 >> 31;
   setTempRet0(i64toi32_i32$HIGH_BITS | 0);
-  return $0;
+  return $0 | 0;
  }
  
  function legalstub$test32_i64($0, $1) {
+  $0 = $0 | 0;
+  $1 = $1 | 0;
   i64toi32_i32$HIGH_BITS = $0 >> 31;
   setTempRet0(i64toi32_i32$HIGH_BITS | 0);
-  return $0;
+  return $0 | 0;
  }
  
  return {
