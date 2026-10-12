@@ -3,8 +3,8 @@
 ;; RUN: wasm-opt %s --optimize-instructions --enable-bulk-memory -S -o - | filecheck %s --check-prefix NOSIMD
 ;; RUN: wasm-opt %s --optimize-instructions --enable-bulk-memory -tnh -S -o - | filecheck %s --check-prefix NOSIMD_TNH
 
-;; Check normally, without simd, and without SIMD but with trapsNeverHappen. In
-;; the latter case we can lower a fill if 16 bytes into two 8-byte writes, not
+;; Check normally, without SIMD, and without SIMD but with trapsNeverHappen. In
+;; the latter case we can lower a fill of 16 bytes into two 8-byte writes, not
 ;; worrying about a trap that leaves partial data written.
 
 (module
