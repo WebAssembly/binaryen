@@ -5,6 +5,7 @@
 - Expose heap types `exn` & `noexn`, and ref types `exnref` & `nullexnref` (#9057)
 - Update `throw_ref` & `try_table` (#9057)
 - Add `ThrowRef` & `TryTable` expression classes (#9057)
+- fix `ExpressionBuilder#ref.func` heap type argument
 
 ## v0.2.0
 - Add library API for `waitqueue` instructions (#9039, #9044)
