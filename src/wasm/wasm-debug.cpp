@@ -289,12 +289,6 @@ struct LineState {
            opcode.SubOpcode == llvm::dwarf::DW_LNE_set_address;
   }
 
-  bool needToEmit() {
-    // A zero line means no source attribution, not a dead address.
-    // https://github.com/WebAssembly/debugging/issues/9#issuecomment-567720872
-    return addr != 0;
-  }
-
   // Given an old state, emit the diff from it to this state into a new line
   // table entry (that will be emitted in the updated DWARF debug line section).
   void emitDiff(const LineState& old,
