@@ -345,8 +345,8 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
   }
   void visitRefGetDesc(RefGetDesc* curr) {
     if (curr->ref->type.isRef()) {
-      self()->noteNonFlowSubtype(
-        curr->ref, Type(curr->ref->type.getHeapType(), Nullable));
+      self()->noteNonFlowSubtype(curr->ref,
+                                 Type(curr->ref->type.getHeapType(), Nullable));
     }
   }
   void visitBrOn(BrOn* curr) {
@@ -390,14 +390,14 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
   }
   void visitStructGet(StructGet* curr) {
     if (curr->ref->type.isRef()) {
-      self()->noteNonFlowSubtype(
-        curr->ref, Type(curr->ref->type.getHeapType(), Nullable));
+      self()->noteNonFlowSubtype(curr->ref,
+                                 Type(curr->ref->type.getHeapType(), Nullable));
     }
   }
   void visitStructSet(StructSet* curr) {
     if (curr->ref->type.isRef()) {
-      self()->noteNonFlowSubtype(
-        curr->ref, Type(curr->ref->type.getHeapType(), Nullable));
+      self()->noteNonFlowSubtype(curr->ref,
+                                 Type(curr->ref->type.getHeapType(), Nullable));
     }
     if (!curr->ref->type.isStruct()) {
       return;
@@ -407,8 +407,8 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
   }
   void visitStructRMW(StructRMW* curr) {
     if (curr->ref->type.isRef()) {
-      self()->noteNonFlowSubtype(
-        curr->ref, Type(curr->ref->type.getHeapType(), Nullable));
+      self()->noteNonFlowSubtype(curr->ref,
+                                 Type(curr->ref->type.getHeapType(), Nullable));
     }
     if (!curr->ref->type.isStruct()) {
       return;
@@ -418,8 +418,8 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
   }
   void visitStructCmpxchg(StructCmpxchg* curr) {
     if (curr->ref->type.isRef()) {
-      self()->noteNonFlowSubtype(
-        curr->ref, Type(curr->ref->type.getHeapType(), Nullable));
+      self()->noteNonFlowSubtype(curr->ref,
+                                 Type(curr->ref->type.getHeapType(), Nullable));
     }
     if (!curr->ref->type.isStruct()) {
       return;
@@ -438,8 +438,8 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
     self()->noteSubtype(curr->waitqueue,
                         Type(HeapTypes::sharedWaitqueue, Nullable));
     if (curr->ref->type.isRef()) {
-      self()->noteNonFlowSubtype(
-        curr->ref, Type(curr->ref->type.getHeapType(), Nullable));
+      self()->noteNonFlowSubtype(curr->ref,
+                                 Type(curr->ref->type.getHeapType(), Nullable));
     }
     if (!curr->ref->type.isStruct()) {
       return;
@@ -485,14 +485,14 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
 
   void visitArrayGet(ArrayGet* curr) {
     if (curr->ref->type.isRef()) {
-      self()->noteNonFlowSubtype(
-        curr->ref, Type(curr->ref->type.getHeapType(), Nullable));
+      self()->noteNonFlowSubtype(curr->ref,
+                                 Type(curr->ref->type.getHeapType(), Nullable));
     }
   }
   void visitArraySet(ArraySet* curr) {
     if (curr->ref->type.isRef()) {
-      self()->noteNonFlowSubtype(
-        curr->ref, Type(curr->ref->type.getHeapType(), Nullable));
+      self()->noteNonFlowSubtype(curr->ref,
+                                 Type(curr->ref->type.getHeapType(), Nullable));
     }
     if (!curr->ref->type.isArray()) {
       return;
@@ -502,14 +502,14 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
   }
   void visitArrayLoad(ArrayLoad* curr) {
     if (curr->ref->type.isRef()) {
-      self()->noteNonFlowSubtype(
-        curr->ref, Type(curr->ref->type.getHeapType(), Nullable));
+      self()->noteNonFlowSubtype(curr->ref,
+                                 Type(curr->ref->type.getHeapType(), Nullable));
     }
   }
   void visitArrayStore(ArrayStore* curr) {
     if (curr->ref->type.isRef()) {
-      self()->noteNonFlowSubtype(
-        curr->ref, Type(curr->ref->type.getHeapType(), Nullable));
+      self()->noteNonFlowSubtype(curr->ref,
+                                 Type(curr->ref->type.getHeapType(), Nullable));
     }
   }
   void visitArrayLen(ArrayLen* curr) {
@@ -543,8 +543,8 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
   }
   void visitArrayFill(ArrayFill* curr) {
     if (curr->ref->type.isRef()) {
-      self()->noteNonFlowSubtype(
-        curr->ref, Type(curr->ref->type.getHeapType(), Nullable));
+      self()->noteNonFlowSubtype(curr->ref,
+                                 Type(curr->ref->type.getHeapType(), Nullable));
     }
     if (!curr->ref->type.isArray()) {
       return;
@@ -554,14 +554,14 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
   }
   void visitArrayInitData(ArrayInitData* curr) {
     if (curr->ref->type.isRef()) {
-      self()->noteNonFlowSubtype(
-        curr->ref, Type(curr->ref->type.getHeapType(), Nullable));
+      self()->noteNonFlowSubtype(curr->ref,
+                                 Type(curr->ref->type.getHeapType(), Nullable));
     }
   }
   void visitArrayInitElem(ArrayInitElem* curr) {
     if (curr->ref->type.isRef()) {
-      self()->noteNonFlowSubtype(
-        curr->ref, Type(curr->ref->type.getHeapType(), Nullable));
+      self()->noteNonFlowSubtype(curr->ref,
+                                 Type(curr->ref->type.getHeapType(), Nullable));
     }
     if (!curr->ref->type.isArray()) {
       return;
@@ -572,8 +572,8 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
   }
   void visitArrayRMW(ArrayRMW* curr) {
     if (curr->ref->type.isRef()) {
-      self()->noteNonFlowSubtype(
-        curr->ref, Type(curr->ref->type.getHeapType(), Nullable));
+      self()->noteNonFlowSubtype(curr->ref,
+                                 Type(curr->ref->type.getHeapType(), Nullable));
     }
     if (!curr->ref->type.isArray()) {
       return;
@@ -583,8 +583,8 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
   }
   void visitArrayCmpxchg(ArrayCmpxchg* curr) {
     if (curr->ref->type.isRef()) {
-      self()->noteNonFlowSubtype(
-        curr->ref, Type(curr->ref->type.getHeapType(), Nullable));
+      self()->noteNonFlowSubtype(curr->ref,
+                                 Type(curr->ref->type.getHeapType(), Nullable));
     }
     if (!curr->ref->type.isArray()) {
       return;

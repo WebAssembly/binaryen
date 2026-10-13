@@ -45,9 +45,8 @@ namespace {
 // Find the most general supertype of a signature type that does not change
 // parameter types (which are contravariant and would restrict argument
 // generalization) and whose result type satisfies `resultReq`, if any.
-HeapType
-generalizeCallRefTarget(HeapType sigType,
-                        std::optional<Type> resultReq = std::nullopt) {
+HeapType generalizeCallRefTarget(HeapType sigType,
+                                 std::optional<Type> resultReq = std::nullopt) {
   auto sig = sigType.getSignature();
   auto numParams = sig.params.size();
   auto targetReq = sigType;
@@ -246,7 +245,8 @@ struct Generalizer
     auto generalized =
       generalizeStructType(curr->ref->type.getHeapType(), curr->index);
     addConstraint(curr->ref, Type(generalized, Nullable));
-    addConstraint(curr->value, generalized.getStruct().fields[curr->index].type);
+    addConstraint(curr->value,
+                  generalized.getStruct().fields[curr->index].type);
   }
 
   void visitArrayGet(ArrayGet* curr) {
@@ -356,10 +356,12 @@ struct Generalizer
               type = type.with(Nullable);
               break;
             case AnyConvertExtern:
-              type = Type(HeapTypes::ext.getBasic(share), type.getNullability());
+              type =
+                Type(HeapTypes::ext.getBasic(share), type.getNullability());
               break;
             case ExternConvertAny:
-              type = Type(HeapTypes::any.getBasic(share), type.getNullability());
+              type =
+                Type(HeapTypes::any.getBasic(share), type.getNullability());
               break;
           }
         } else if (auto* get = expr->dynCast<StructGet>()) {
