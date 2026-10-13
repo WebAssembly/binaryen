@@ -21,10 +21,12 @@
 // they will be able to be removed by OptimizeInstructions.
 //
 // Uses SubtypingDiscoverer to find all subtyping constraints on expressions and
-// locals, and computes the greatest lower bound (GLB) of the required supertypes
-// for each local so that each local is given the least-refined valid type.
+// locals, and computes the greatest lower bound (GLB) of the required
+// supertypes for each local so that each local is given the least-refined valid
+// type.
 //
 
+#include <optional>
 #include <unordered_map>
 #include <variant>
 #include <vector>
@@ -39,6 +41,87 @@
 namespace wasm {
 
 namespace {
+
+// Find the most general supertype of a signature type that does not change
+// parameter types (which are contravariant and would restrict argument
+// generalization) and whose result type satisfies `resultReq`, if any.
+HeapType
+generalizeCallRefTarget(HeapType sigType,
+                        std::optional<Type> resultReq = std::nullopt) {
+  auto sig = sigType.getSignature();
+  auto numParams = sig.params.size();
+  auto targetReq = sigType;
+  while (true) {
+    auto candidateReq = targetReq.getDeclaredSuperType();
+    if (!candidateReq) {
+      break;
+    }
+    auto candidateSig = candidateReq->getSignature();
+    if (resultReq && *resultReq != candidateSig.results &&
+        Type::isSubType(*resultReq, candidateSig.results)) {
+      break;
+    }
+    bool paramsMatch = true;
+    for (size_t i = 0; i < numParams; ++i) {
+      if (candidateSig.params[i] != sig.params[i]) {
+        paramsMatch = false;
+        break;
+      }
+    }
+    if (!paramsMatch) {
+      break;
+    }
+    targetReq = *candidateReq;
+  }
+  return targetReq;
+}
+
+// Find the most general supertype of a struct type that still has a field at
+// `index` whose type satisfies `reqFieldType`, if any.
+HeapType generalizeStructType(HeapType type,
+                              Index index,
+                              std::optional<Type> reqFieldType = std::nullopt) {
+  while (true) {
+    auto candidateType = type.getDeclaredSuperType();
+    if (!candidateType) {
+      break;
+    }
+    const auto& candidateFields = candidateType->getStruct().fields;
+    if (candidateFields.size() <= index) {
+      break;
+    }
+    if (reqFieldType) {
+      auto candidateFieldType = candidateFields[index].type;
+      if (candidateFieldType != *reqFieldType &&
+          Type::isSubType(*reqFieldType, candidateFieldType)) {
+        break;
+      }
+    }
+    type = *candidateType;
+  }
+  return type;
+}
+
+// Find the most general supertype of an array type whose element type satisfies
+// `reqElemType`, if any.
+HeapType generalizeArrayType(HeapType type,
+                             std::optional<Type> reqElemType = std::nullopt) {
+  while (true) {
+    auto candidateType = type.getDeclaredSuperType();
+    if (!candidateType) {
+      break;
+    }
+    if (reqElemType) {
+      auto candidateElemType = candidateType->getArray().element.type;
+      if (candidateElemType != *reqElemType &&
+          Type::isSubType(*reqElemType, candidateElemType)) {
+        break;
+      }
+    }
+    type = *candidateType;
+  }
+  return type;
+}
 
 struct Generalizer
   : public ControlFlowWalker<Generalizer, SubtypingDiscoverer<Generalizer>> {
@@ -105,7 +188,6 @@ struct Generalizer
   void visitLocalGet(LocalGet* curr) {}
 
   void visitLocalSet(LocalSet* curr) {
-    auto* func = getFunction();
     auto localType = func->getLocalType(curr->index);
     if (func->isParam(curr->index)) {
       // Parameters have fixed types.
@@ -120,6 +202,138 @@ struct Generalizer
     // will refinalize them if their input types generalize. Propagate any
     // requirement on the output back to the input.
     exprSubs[curr].push_back(curr->value);
+  }
+
+  void visitCallRef(CallRef* curr) {
+    if (curr->target->type.isNull()) {
+      addConstraint(curr->target, curr->target->type);
+      return;
+    }
+    if (!curr->target->type.isSignature()) {
+      return;
+    }
+    auto sigType = curr->target->type.getHeapType();
+    handleCall(curr, sigType.getSignature());
+    std::optional<Type> resultReq;
+    if (curr->isReturn) {
+      resultReq = func->getResults();
+    }
+    auto generalized = generalizeCallRefTarget(sigType, resultReq);
+    addConstraint(curr->target, Type(generalized, Nullable));
+  }
+
+  void visitStructGet(StructGet* curr) {
+    if (curr->ref->type.isNull()) {
+      addConstraint(curr->ref, curr->ref->type);
+      return;
+    }
+    if (!curr->ref->type.isStruct()) {
+      return;
+    }
+    auto generalized =
+      generalizeStructType(curr->ref->type.getHeapType(), curr->index);
+    addConstraint(curr->ref, Type(generalized, Nullable));
+  }
+
+  void visitStructSet(StructSet* curr) {
+    if (curr->ref->type.isNull()) {
+      addConstraint(curr->ref, curr->ref->type);
+      return;
+    }
+    if (!curr->ref->type.isStruct()) {
+      return;
+    }
+    auto generalized =
+      generalizeStructType(curr->ref->type.getHeapType(), curr->index);
+    addConstraint(curr->ref, Type(generalized, Nullable));
+    addConstraint(curr->value, generalized.getStruct().fields[curr->index].type);
+  }
+
+  void visitArrayGet(ArrayGet* curr) {
+    if (curr->ref->type.isNull()) {
+      addConstraint(curr->ref, curr->ref->type);
+      return;
+    }
+    if (!curr->ref->type.isArray()) {
+      return;
+    }
+    auto generalized = generalizeArrayType(curr->ref->type.getHeapType());
+    addConstraint(curr->ref, Type(generalized, Nullable));
+  }
+
+  void visitArraySet(ArraySet* curr) {
+    if (curr->ref->type.isNull()) {
+      addConstraint(curr->ref, curr->ref->type);
+      return;
+    }
+    if (!curr->ref->type.isArray()) {
+      return;
+    }
+    auto generalized = generalizeArrayType(curr->ref->type.getHeapType());
+    addConstraint(curr->ref, Type(generalized, Nullable));
+    addConstraint(curr->value, generalized.getArray().element.type);
+  }
+
+  void visitArrayCopy(ArrayCopy* curr) {
+    if (curr->destRef->type.isNull() || curr->srcRef->type.isNull()) {
+      if (curr->destRef->type.isNull()) {
+        addConstraint(curr->destRef, curr->destRef->type);
+      }
+      if (curr->srcRef->type.isNull()) {
+        addConstraint(curr->srcRef, curr->srcRef->type);
+      }
+      return;
+    }
+    if (!curr->destRef->type.isArray() || !curr->srcRef->type.isArray()) {
+      return;
+    }
+    auto destGen = generalizeArrayType(curr->destRef->type.getHeapType());
+    addConstraint(curr->destRef, Type(destGen, Nullable));
+    auto elemType = destGen.getArray().element.type;
+    std::optional<Type> reqElemType;
+    if (elemType.isRef()) {
+      reqElemType = elemType;
+    }
+    auto srcGen =
+      generalizeArrayType(curr->srcRef->type.getHeapType(), reqElemType);
+    addConstraint(curr->srcRef, Type(srcGen, Nullable));
+  }
+
+  void visitArrayFill(ArrayFill* curr) {
+    if (curr->ref->type.isNull()) {
+      addConstraint(curr->ref, curr->ref->type);
+      return;
+    }
+    if (!curr->ref->type.isArray()) {
+      return;
+    }
+    auto generalized = generalizeArrayType(curr->ref->type.getHeapType());
+    addConstraint(curr->ref, Type(generalized, Nullable));
+    addConstraint(curr->value, generalized.getArray().element.type);
+  }
+
+  void visitArrayInitData(ArrayInitData* curr) {
+    if (curr->ref->type.isNull()) {
+      addConstraint(curr->ref, curr->ref->type);
+      return;
+    }
+    if (!curr->ref->type.isArray()) {
+      return;
+    }
+    auto generalized = generalizeArrayType(curr->ref->type.getHeapType());
+    addConstraint(curr->ref, Type(generalized, Nullable));
+  }
+
+  void visitArrayInitElem(ArrayInitElem* curr) {
+    if (curr->ref->type.isNull()) {
+      addConstraint(curr->ref, curr->ref->type);
+      return;
+    }
+    if (!curr->ref->type.isArray()) {
+      return;
+    }
+    auto generalized = generalizeArrayType(curr->ref->type.getHeapType());
+    addConstraint(curr->ref, Type(generalized, Nullable));
   }
 
   void propagate() {
@@ -147,6 +361,24 @@ struct Generalizer
             case ExternConvertAny:
               type = Type(HeapTypes::any.getBasic(share), type.getNullability());
               break;
+          }
+        } else if (auto* get = expr->dynCast<StructGet>()) {
+          if (get->ref->type.isStruct()) {
+            auto generalized = generalizeStructType(
+              get->ref->type.getHeapType(), get->index, type);
+            addConstraint(get->ref, Type(generalized, Nullable));
+          }
+        } else if (auto* get = expr->dynCast<ArrayGet>()) {
+          if (get->ref->type.isArray()) {
+            auto generalized =
+              generalizeArrayType(get->ref->type.getHeapType(), type);
+            addConstraint(get->ref, Type(generalized, Nullable));
+          }
+        } else if (auto* call = expr->dynCast<CallRef>()) {
+          if (call->target->type.isSignature()) {
+            auto generalized =
+              generalizeCallRefTarget(call->target->type.getHeapType(), type);
+            addConstraint(call->target, Type(generalized, Nullable));
           }
         }
         if (auto it = exprSubs.find(expr); it != exprSubs.end()) {
