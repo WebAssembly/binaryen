@@ -156,16 +156,14 @@ struct StringGathering : public Pass {
         String::convertWTF16ToWTF8(wtf8, string.view());
       assert(valid);
       // Then escape it because identifiers must be valid UTF-8.
-      // TODO: Use wtf8.view() and escaped.view() once we have C++20.
       std::stringstream escaped;
-      String::printEscaped(escaped, wtf8.str());
-      auto name = Names::getValidGlobalName(
-        *module, std::string("string.const_") + std::string(escaped.str()));
-      globalName = name;
-      definingNames.insert(name);
+      String::printEscaped(escaped, wtf8.view());
+      globalName = Names::getValidGlobalName(
+        *module, std::string("string.const_") + std::string(escaped.view()));
+      definingNames.insert(globalName);
       auto* stringConst = builder.makeStringConst(string);
-      auto global =
-        builder.makeGlobal(name, nnstringref, stringConst, Builder::Immutable);
+      auto global = builder.makeGlobal(
+        globalName, nnstringref, stringConst, Builder::Immutable);
       module->addGlobal(std::move(global));
     }
 
