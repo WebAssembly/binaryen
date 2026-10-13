@@ -2365,6 +2365,7 @@ struct OptimizeInstructions
 
     auto* seg = getModule()->getDataSegment(curr->segment);
     if (!seg->isPassive()) {
+      // Active segments are implicitly dropped upon module instantiation.
       return;
     }
 
@@ -2374,11 +2375,11 @@ struct OptimizeInstructions
       return;
     }
 
-    uint64_t offset = offsetConst->value.getUnsigned();
-    uint64_t size = sizeConst->value.getUnsigned();
-    uint64_t elemBytes = element.getByteSize();
+    Address offset = offsetConst->value.getUnsigned();
+    Address size = sizeConst->value.getUnsigned();
+    Address elemBytes = element.getByteSize();
     // offset and size are u32 and elemBytes <= 16, so this can't overflow.
-    uint64_t end = offset + size * elemBytes;
+    Address end = offset + size * elemBytes;
     if (end > seg->data.size()) {
       // This will trap.
       return;
