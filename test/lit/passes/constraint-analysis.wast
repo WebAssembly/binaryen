@@ -7201,4 +7201,155 @@
       (local.get $x)
     )
   )
+  
+  ;; CHECK:      (func $asymmetric-contradiction (type $2) (param $0 i32) (param $1 i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.and
+  ;; CHECK-NEXT:    (i32.ge_u
+  ;; CHECK-NEXT:     (local.get $0)
+  ;; CHECK-NEXT:     (i32.const -1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.lt_u
+  ;; CHECK-NEXT:     (local.get $0)
+  ;; CHECK-NEXT:     (local.get $1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:     (then
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPTIN:      (func $asymmetric-contradiction (type $2) (param $0 i32) (param $1 i32)
+  ;; OPTIN-NEXT:  (if
+  ;; OPTIN-NEXT:   (i32.and
+  ;; OPTIN-NEXT:    (i32.eq
+  ;; OPTIN-NEXT:     (local.get $0)
+  ;; OPTIN-NEXT:     (i32.const -1)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:    (i32.lt_u
+  ;; OPTIN-NEXT:     (local.get $0)
+  ;; OPTIN-NEXT:     (local.get $1)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:   (then
+  ;; OPTIN-NEXT:    (if
+  ;; OPTIN-NEXT:     (i32.const 0)
+  ;; OPTIN-NEXT:     (then
+  ;; OPTIN-NEXT:     )
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT: )
+  (func $asymmetric-contradiction (param $0 i32) (param $1 i32)
+    ;; Previously, provesPair checked overlap using b's exact spans (getSpans)
+    ;; rather than its proven spans (getProvenSpans). Because a relational
+    ;; constraint against a local such as ($0 <_u $1) has no exact span, this
+    ;; made disjointness in provesPair asymmetric:
+    ;;
+    ;;   * provesPair($0 >=_u -1, $0 <_u $1) returned Unknown (since $0 <_u $1
+    ;;     has no exact span).
+    ;;   * provesPair($0 <_u $1, $0 >=_u -1) returned False (since $0 <_u $1
+    ;;     has proven span [0, 0xfffffffe], which does not overlap the exact
+    ;;     span [0xffffffff, 0xffffffff] of $0 >=_u -1).
+    ;;
+    ;; In the outer `if` below, the `then` branch first adds ($0 >=_u -1) and
+    ;; then ($0 <_u $1). Because provesPair($0 >=_u -1, $0 <_u $1) returned
+    ;; Unknown, approximateAnd failed to detect the contradiction and stored
+    ;; both constraints in $0's sorted AndedConstraintSet as
+    ;; { $0 <_u $1, $0 >=_u -1 } (since LtU < GeU in canonical order).
+    ;;
+    ;; Then, after the inner `if` split and re-merged control flow,
+    ;; detailedApproximateOr re-added the constraints in canonical order: first
+    ;; ($0 <_u $1) and then ($0 >=_u -1). That called provesPair($0 <_u $1,
+    ;; $0 >=_u -1), which returned False and turned the merged set into a
+    ;; contradiction, tripping `assert(!self.value.provesEverything())` in
+    ;; BasicBlockConstraintMap::approximateOr.
+    (if
+      (i32.and
+        (i32.ge_u
+          (local.get $0)
+          (i32.const -1)
+        )
+        (i32.lt_u
+          (local.get $0)
+          (local.get $1)
+        )
+      )
+      (then
+        (if
+          (i32.const 0)
+          (then)
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $empty-proven-spans (type $0) (param $0 i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.gt_s
+  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPTIN:      (func $empty-proven-spans (type $0) (param $0 i32)
+  ;; OPTIN-NEXT:  (if
+  ;; OPTIN-NEXT:   (i32.gt_s
+  ;; OPTIN-NEXT:    (local.get $0)
+  ;; OPTIN-NEXT:    (i32.const 0)
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:   (then
+  ;; OPTIN-NEXT:    (drop
+  ;; OPTIN-NEXT:     (i32.const 0)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:    (drop
+  ;; OPTIN-NEXT:     (i32.const 0)
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT: )
+  (func $empty-proven-spans (param $0 i32)
+    ;; Test that provesPair proves an immediate contradiction (which has an
+    ;; empty span) to be false via !bProvenSpans->hasOverlap(*aSpans) without
+    ;; needing a special empty() check.
+    (if
+      ;; Establish a non-equality constraint ($0 >_s 0, span [1, 2147483647]) so
+      ;; that provesConstantPair does not early-return and provesPair falls
+      ;; through to the span comparison logic.
+      (i32.gt_s
+        (local.get $0)
+        (i32.const 0)
+      )
+      (then
+        ;; $0 >_s MAX_INT has an empty proven span, which has no overlap with
+        ;; [1, 2147483647] and is therefore optimized to 0.
+        (drop
+          (i32.gt_s
+            (local.get $0)
+            (i32.const 2147483647)
+          )
+        )
+        ;; Similarly, $0 <_s MIN_INT has an empty proven span and is optimized
+        ;; to 0.
+        (drop
+          (i32.lt_s
+            (local.get $0)
+            (i32.const -2147483648)
+          )
+        )
+      )
+    )
+  )
 )
