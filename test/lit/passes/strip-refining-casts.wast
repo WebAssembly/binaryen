@@ -1216,8 +1216,9 @@
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT: )
   (func $extern.convert_any-unnecessary (param $any anyref) (result (ref null extern))
-    ;; The function result is now nullable, so we don't need the ref.as_non_null anymore,
-    ;; but SubtypingDiscoverer is not powerful enough to realize that. TODO.
+    ;; The function result is now nullable, so we don't need the ref.as_non_null
+    ;; anymore with TNH, but SubtypingDiscoverer is not powerful enough to
+    ;; realize that. TODO.
     (extern.convert_any
       (ref.as_non_null
         (local.get $any)
