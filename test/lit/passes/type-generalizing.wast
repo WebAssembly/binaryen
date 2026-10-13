@@ -873,9 +873,9 @@
  ;; CHECK:      (type $4 (func (result anyref)))
 
  ;; CHECK:      (func $call-ref-params-limited (type $4) (result anyref)
- ;; CHECK-NEXT:  (local $f (ref null $mid))
+ ;; CHECK-NEXT:  (local $f (ref null $bot))
  ;; CHECK-NEXT:  (local $arg eqref)
- ;; CHECK-NEXT:  (call_ref $mid
+ ;; CHECK-NEXT:  (call_ref $bot
  ;; CHECK-NEXT:   (local.get $arg)
  ;; CHECK-NEXT:   (local.get $f)
  ;; CHECK-NEXT:  )
@@ -939,14 +939,16 @@
 (module
  ;; CHECK:      (type $top (sub (func (result anyref))))
  (type $top (sub (func (result anyref))))
+ ;; CHECK:      (type $mid (sub $top (func (result eqref))))
  (type $mid (sub $top (func (result eqref))))
+ ;; CHECK:      (type $bot (sub $mid (func (result i31ref))))
  (type $bot (sub $mid (func (result i31ref))))
 
- ;; CHECK:      (type $1 (func (result anyref)))
+ ;; CHECK:      (type $3 (func (result anyref)))
 
- ;; CHECK:      (func $call-ref-no-limit (type $1) (result anyref)
- ;; CHECK-NEXT:  (local $f (ref null $top))
- ;; CHECK-NEXT:  (call_ref $top
+ ;; CHECK:      (func $call-ref-no-limit (type $3) (result anyref)
+ ;; CHECK-NEXT:  (local $f (ref null $bot))
+ ;; CHECK-NEXT:  (call_ref $bot
  ;; CHECK-NEXT:   (local.get $f)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -962,14 +964,14 @@
 
 (module
 
+ ;; CHECK:      (type $0 (func (result anyref)))
+
+ ;; CHECK:      (type $1 (func))
+
  ;; CHECK:      (type $top (sub (struct (field (mut eqref)) (field eqref))))
  (type $top (sub      (struct (field (mut eqref)) (field eqref))))
  ;; CHECK:      (type $mid (sub $top (struct (field (mut eqref)) (field eqref) (field (mut eqref)))))
  (type $mid (sub $top (struct (field (mut eqref)) (field eqref)  (field (mut eqref)))))
- ;; CHECK:      (type $2 (func (result anyref)))
-
- ;; CHECK:      (type $3 (func))
-
  ;; CHECK:      (type $bot (sub $mid (struct (field (mut eqref)) (field i31ref) (field (mut eqref)))))
  (type $bot (sub $mid (struct (field (mut eqref)) (field i31ref) (field (mut eqref)))))
 
@@ -978,7 +980,7 @@
 
  ;; CHECK:      (type $6 (func (result i31ref)))
 
- ;; CHECK:      (func $struct-new (type $2) (result anyref)
+ ;; CHECK:      (func $struct-new (type $0) (result anyref)
  ;; CHECK-NEXT:  (local $var1 eqref)
  ;; CHECK-NEXT:  (local $var2 anyref)
  ;; CHECK-NEXT:  (struct.new $struct
@@ -996,9 +998,9 @@
   )
  )
 
- ;; CHECK:      (func $struct-get (type $2) (result anyref)
- ;; CHECK-NEXT:  (local $var (ref null $top))
- ;; CHECK-NEXT:  (struct.get $top 1
+ ;; CHECK:      (func $struct-get (type $0) (result anyref)
+ ;; CHECK-NEXT:  (local $var (ref null $bot))
+ ;; CHECK-NEXT:  (struct.get $bot 1
  ;; CHECK-NEXT:   (local.get $var)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -1026,9 +1028,9 @@
   )
  )
 
- ;; CHECK:      (func $struct-get-index (type $2) (result anyref)
- ;; CHECK-NEXT:  (local $var (ref null $mid))
- ;; CHECK-NEXT:  (struct.get $mid 2
+ ;; CHECK:      (func $struct-get-index (type $0) (result anyref)
+ ;; CHECK-NEXT:  (local $var (ref null $bot))
+ ;; CHECK-NEXT:  (struct.get $bot 2
  ;; CHECK-NEXT:   (local.get $var)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -1041,7 +1043,7 @@
   )
  )
 
- ;; CHECK:      (func $struct-get-impossible (type $2) (result anyref)
+ ;; CHECK:      (func $struct-get-impossible (type $0) (result anyref)
  ;; CHECK-NEXT:  (local $var nullref)
  ;; CHECK-NEXT:  (block ;; (replaces unreachable StructGet we can't emit)
  ;; CHECK-NEXT:   (drop
@@ -1057,10 +1059,10 @@
   )
  )
 
- ;; CHECK:      (func $struct-set (type $3)
- ;; CHECK-NEXT:  (local $ref (ref null $top))
+ ;; CHECK:      (func $struct-set (type $1)
+ ;; CHECK-NEXT:  (local $ref (ref null $bot))
  ;; CHECK-NEXT:  (local $val eqref)
- ;; CHECK-NEXT:  (struct.set $top 0
+ ;; CHECK-NEXT:  (struct.set $bot 0
  ;; CHECK-NEXT:   (local.get $ref)
  ;; CHECK-NEXT:   (local.get $val)
  ;; CHECK-NEXT:  )
@@ -1077,10 +1079,10 @@
   )
  )
 
- ;; CHECK:      (func $struct-set-index (type $3)
- ;; CHECK-NEXT:  (local $ref (ref null $mid))
+ ;; CHECK:      (func $struct-set-index (type $1)
+ ;; CHECK-NEXT:  (local $ref (ref null $bot))
  ;; CHECK-NEXT:  (local $val eqref)
- ;; CHECK-NEXT:  (struct.set $mid 2
+ ;; CHECK-NEXT:  (struct.set $bot 2
  ;; CHECK-NEXT:   (local.get $ref)
  ;; CHECK-NEXT:   (local.get $val)
  ;; CHECK-NEXT:  )
@@ -1097,7 +1099,7 @@
   )
  )
 
- ;; CHECK:      (func $struct-set-impossible (type $3)
+ ;; CHECK:      (func $struct-set-impossible (type $1)
  ;; CHECK-NEXT:  (local $ref nullref)
  ;; CHECK-NEXT:  (local $val anyref)
  ;; CHECK-NEXT:  (block ;; (replaces unreachable StructSet we can't emit)
@@ -1124,26 +1126,26 @@
 (module
  ;; CHECK:      (type $0 (func))
 
- ;; CHECK:      (type $super-mut (sub (array (mut eqref))))
-
  ;; CHECK:      (type $super (sub (array eqref)))
  (type $super (sub (array (field eqref))))
- ;; CHECK:      (type $3 (func (result anyref)))
-
- ;; CHECK:      (type $mut-bytes (sub (array (mut i8))))
-
- ;; CHECK:      (type $bytes (sub (array i8)))
-
  ;; CHECK:      (type $sub (sub $super (array i31ref)))
  (type $sub (sub $super (array (field i31ref))))
 
+ ;; CHECK:      (type $3 (func (result anyref)))
+
+ ;; CHECK:      (type $super-mut (sub (array (mut eqref))))
  (type $super-mut (sub (array (field (mut eqref)))))
+ ;; CHECK:      (type $sub-mut (sub $super-mut (array (mut eqref))))
  (type $sub-mut (sub $super-mut (array (field (mut eqref)))))
 
+ ;; CHECK:      (type $bytes (sub (array i8)))
  (type $bytes (sub (array i8)))
+ ;; CHECK:      (type $sub-bytes (sub $bytes (array i8)))
  (type $sub-bytes (sub $bytes (array i8)))
 
+ ;; CHECK:      (type $mut-bytes (sub (array (mut i8))))
  (type $mut-bytes (sub (array (mut i8))))
+ ;; CHECK:      (type $sub-mut-bytes (sub $mut-bytes (array (mut i8))))
  (type $sub-mut-bytes (sub $mut-bytes (array (mut i8))))
 
  ;; CHECK:      (data $data "")
@@ -1228,8 +1230,8 @@
  )
 
  ;; CHECK:      (func $array-get (type $3) (result anyref)
- ;; CHECK-NEXT:  (local $val (ref null $super))
- ;; CHECK-NEXT:  (array.get $super
+ ;; CHECK-NEXT:  (local $val (ref null $sub))
+ ;; CHECK-NEXT:  (array.get $sub
  ;; CHECK-NEXT:   (local.get $val)
  ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:  )
@@ -1265,9 +1267,9 @@
  )
 
  ;; CHECK:      (func $array-set (type $0)
- ;; CHECK-NEXT:  (local $ref (ref null $super-mut))
+ ;; CHECK-NEXT:  (local $ref (ref null $sub-mut))
  ;; CHECK-NEXT:  (local $val eqref)
- ;; CHECK-NEXT:  (array.set $super-mut
+ ;; CHECK-NEXT:  (array.set $sub-mut
  ;; CHECK-NEXT:   (local.get $ref)
  ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:   (local.get $val)
@@ -1331,9 +1333,9 @@
  )
 
  ;; CHECK:      (func $array-copy-ref (type $0)
- ;; CHECK-NEXT:  (local $dest (ref null $super-mut))
- ;; CHECK-NEXT:  (local $src (ref null $super))
- ;; CHECK-NEXT:  (array.copy $super-mut $super
+ ;; CHECK-NEXT:  (local $dest (ref null $sub-mut))
+ ;; CHECK-NEXT:  (local $src (ref null $sub))
+ ;; CHECK-NEXT:  (array.copy $sub-mut $sub
  ;; CHECK-NEXT:   (local.get $dest)
  ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:   (local.get $src)
@@ -1355,9 +1357,9 @@
  )
 
  ;; CHECK:      (func $array-copy-i8 (type $0)
- ;; CHECK-NEXT:  (local $dest (ref null $mut-bytes))
- ;; CHECK-NEXT:  (local $src (ref null $bytes))
- ;; CHECK-NEXT:  (array.copy $mut-bytes $bytes
+ ;; CHECK-NEXT:  (local $dest (ref null $sub-mut-bytes))
+ ;; CHECK-NEXT:  (local $src (ref null $sub-bytes))
+ ;; CHECK-NEXT:  (array.copy $sub-mut-bytes $sub-bytes
  ;; CHECK-NEXT:   (local.get $dest)
  ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:   (local.get $src)
@@ -1488,9 +1490,9 @@
  )
 
  ;; CHECK:      (func $array-fill (type $0)
- ;; CHECK-NEXT:  (local $ref (ref null $super-mut))
+ ;; CHECK-NEXT:  (local $ref (ref null $sub-mut))
  ;; CHECK-NEXT:  (local $val eqref)
- ;; CHECK-NEXT:  (array.fill $super-mut
+ ;; CHECK-NEXT:  (array.fill $sub-mut
  ;; CHECK-NEXT:   (local.get $ref)
  ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:   (local.get $val)
@@ -1542,8 +1544,8 @@
  )
 
  ;; CHECK:      (func $array-init-data (type $0)
- ;; CHECK-NEXT:  (local $ref (ref null $mut-bytes))
- ;; CHECK-NEXT:  (array.init_data $mut-bytes $data
+ ;; CHECK-NEXT:  (local $ref (ref null $sub-mut-bytes))
+ ;; CHECK-NEXT:  (array.init_data $sub-mut-bytes $data
  ;; CHECK-NEXT:   (local.get $ref)
  ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:   (i32.const 0)
@@ -1591,8 +1593,8 @@
  )
 
  ;; CHECK:      (func $array-init-elem (type $0)
- ;; CHECK-NEXT:  (local $ref (ref null $super-mut))
- ;; CHECK-NEXT:  (array.init_elem $super-mut $elem
+ ;; CHECK-NEXT:  (local $ref (ref null $sub-mut))
+ ;; CHECK-NEXT:  (array.init_elem $sub-mut $elem
  ;; CHECK-NEXT:   (local.get $ref)
  ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:   (i32.const 0)
