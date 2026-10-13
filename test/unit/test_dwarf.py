@@ -131,6 +131,34 @@ class DWARFTest(utils.BinaryenTestCase):
                                                 (loop_end + 2, 20),
                                                 (loop_end + 3, 20)])
 
+    def test_delegate_origin(self):
+        # Delegate has no expression of its own and its label can use more
+        # than one byte. Preserve its source row when that label is compacted.
+        for label in (b'\0', b'\x80\0'):
+            for options in ([], ['--generate-stack-ir']):
+                with self.subTest(label=label, options=options), \
+                        tempfile.TemporaryDirectory() as temp_dir:
+                    function = b'\0\x06\x40\x01\x18' + label + b'\x0b'
+                    code = b'\x01' + uleb(len(function)) + function
+                    wasm = bytes.fromhex('0061736d0100000001040160000003020100'
+                                         '07050101660000')
+                    wasm += b'\x0a' + uleb(len(code)) + code
+                    program = bytes.fromhex('000502020000000309010204030a0102')
+                    program += uleb(len(function) - 4) + b'\0\x01\x01'
+                    input_file = os.path.join(temp_dir, 'input.wasm')
+                    output_file = os.path.join(temp_dir, 'output.wasm')
+                    with open(input_file, 'wb') as f:
+                        f.write(with_line_table(wasm, program))
+                    shared.run_process(shared.WASM_OPT +
+                                       [input_file, '-g', '--enable-exception-handling',
+                                        '--emit-target-features', '-o', output_file] + options)
+                    rows = line_rows(output_file)
+                    self.assertEqual([row[:2] for row in rows],
+                                     [(2, 10), (6, 20), (9, 20)])
+                    shared.run_process(shared.WASM_OPT +
+                                       [output_file, '--roundtrip', '-g', '-o', output_file])
+                    self.assertEqual(line_rows(output_file), rows)
+
     def test_asyncify_instruction_origins(self):
         # With a leading nop, -O1 removes the instruction starting line 10.
         # The surviving call must still get line 10 from the original range.
