@@ -369,19 +369,19 @@ Result provesPair(const Constraint& a, const Constraint& b) {
     // x >_s MAX_INT) do not need special-casing: an empty proven(a) is
     // vacuously contained in any exact(b) (returning True), and an empty
     // proven(b) has no overlap with any proven(a) (returning False).
-    if (auto aSpans = a.getProvenSpans(type)) {
+    if (auto aProvenSpans = a.getProvenSpans(type)) {
       auto bSpans = b.getSpans(type);
       auto bProvenSpans = b.getProvenSpans(type);
 
       if (bSpans) {
-        if (bSpans->contains(*aSpans)) {
+        if (bSpans->contains(*aProvenSpans)) {
           // b's values contains a's, e.g., b = { 0 < x < 10 } and
           // a = { 3 < x < 7 }, so a => b.
           return True;
         }
       }
       if (bProvenSpans) {
-        if (!bProvenSpans->hasOverlap(*aSpans)) {
+        if (!bProvenSpans->hasOverlap(*aProvenSpans)) {
           // There is no overlap at all, e.g., { 0 < x < 10 } vs { 20 < x < 30
           // }, both cannot be true and each proves the other false.
           return False;
