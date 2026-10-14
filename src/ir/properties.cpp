@@ -64,6 +64,11 @@ struct GenerativityScanner : public PostWalker<GenerativityScanner> {
   void visitStructCmpxchg(StructCmpxchg* curr) { generative = true; }
   void visitArrayRMW(ArrayRMW* curr) { generative = true; }
   void visitArrayCmpxchg(ArrayCmpxchg* curr) { generative = true; }
+
+  // Growing returns the old size and increases it, so each grow can return a
+  // different value.
+  void visitMemoryGrow(MemoryGrow* curr) { generative = true; }
+  void visitTableGrow(TableGrow* curr) { generative = true; }
 };
 
 } // anonymous namespace

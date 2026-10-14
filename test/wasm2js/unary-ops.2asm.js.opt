@@ -41,6 +41,10 @@ function asmFunc(imports) {
  }
  
  function legalstub$1($0_1, $1, $2, $3) {
+  $0_1 = $0_1 | 0;
+  $1 = $1 | 0;
+  $2 = $2 | 0;
+  $3 = $3 | 0;
   var $4 = 0, $5_1 = 0, $6_1 = 0;
   $4 = $0_1;
   while (1) {
@@ -59,18 +63,30 @@ function asmFunc(imports) {
  }
  
  function legalstub$2($0_1, $1, $2) {
+  $0_1 = $0_1 | 0;
+  $1 = $1 | 0;
+  $2 = $2 | 0;
   return !$2 & ($0_1 | 0) == ($1 | 0);
  }
  
  function legalstub$3($0_1, $1, $2) {
+  $0_1 = $0_1 | 0;
+  $1 = $1 | 0;
+  $2 = $2 | 0;
   return ($0_1 | 0) == ($1 | 0) & ($2 | 0) == $0_1 >> 31;
  }
  
  function legalstub$4($0_1, $1) {
-  return !($0_1 | $1);
+  $0_1 = $0_1 | 0;
+  $1 = $1 | 0;
+  return !($0_1 | $1) | 0;
  }
  
  function legalstub$7($0_1, $1, $2, $3) {
+  $0_1 = $0_1 | 0;
+  $1 = $1 | 0;
+  $2 = $2 | 0;
+  $3 = $3 | 0;
   var $4 = 0;
   $4 = Math_clz32($0_1) + 32 | 0;
   $0_1 = Math_clz32($1);
@@ -78,6 +94,10 @@ function asmFunc(imports) {
  }
  
  function legalstub$8($0_1, $1, $2, $3) {
+  $0_1 = $0_1 | 0;
+  $1 = $1 | 0;
+  $2 = $2 | 0;
+  $3 = $3 | 0;
   var $4 = 0, $5_1 = 0, $6_1 = 0, $7 = 0;
   __inlined_func$__wasm_ctz_i64$3 : {
    if ($1 | $0_1) {
