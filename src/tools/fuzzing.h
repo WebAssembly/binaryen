@@ -531,6 +531,8 @@ private:
   Expression* makeBulkMemory(Type type);
   Expression* makeTableGet(Type type);
   Expression* makeTableSet(Type type);
+  Expression* makeTableSize(Type type);
+  Expression* makeTableGrow(Type type);
   // TODO: support other RefIs variants, and rename this
   Expression* makeRefIsNull(Type type);
   Expression* makeRefEq(Type type);
