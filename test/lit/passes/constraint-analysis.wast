@@ -6131,6 +6131,72 @@
       )
     )
   )
+
+  ;; CHECK:      (func $tee-condition-later-get-unknown (type $0) (param $x i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.tee $x
+  ;; CHECK-NEXT:      (call $import)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.tee $x
+  ;; CHECK-NEXT:      (call $import)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPTIN:      (func $tee-condition-later-get-unknown (type $0) (param $x i32)
+  ;; OPTIN-NEXT:  (drop
+  ;; OPTIN-NEXT:   (block (result i32)
+  ;; OPTIN-NEXT:    (drop
+  ;; OPTIN-NEXT:     (local.tee $x
+  ;; OPTIN-NEXT:      (call $import)
+  ;; OPTIN-NEXT:     )
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:    (i32.const 1)
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT:  (drop
+  ;; OPTIN-NEXT:   (block (result i32)
+  ;; OPTIN-NEXT:    (drop
+  ;; OPTIN-NEXT:     (local.tee $x
+  ;; OPTIN-NEXT:      (call $import)
+  ;; OPTIN-NEXT:     )
+  ;; OPTIN-NEXT:    )
+  ;; OPTIN-NEXT:    (i32.const 0)
+  ;; OPTIN-NEXT:   )
+  ;; OPTIN-NEXT:  )
+  ;; OPTIN-NEXT: )
+  (func $tee-condition-later-get-unknown (param $x i32)
+    ;; As above, but the tee value is unknown (not a constant).
+    (drop
+      ;; This is always true.
+      (i32.eq
+        (local.tee $x
+          (call $import)
+        )
+        (local.get $x)
+      )
+    )
+    (drop
+      ;; This is always false.
+      (i32.gt_s
+        (local.tee $x
+          (call $import)
+        )
+        (local.get $x)
+      )
+    )
+  )
   ;; CHECK:      (func $tee-condition-later-tee (type $0) (param $x i32)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.and
