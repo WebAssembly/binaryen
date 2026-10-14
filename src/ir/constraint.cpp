@@ -342,26 +342,46 @@ Result provesPair(const Constraint& a, const Constraint& b) {
   // must be a constant in this case, so that we know the type.
   if (aConstant || bConstant) {
     auto type = aConstant ? aConstant->type : bConstant->type;
-    // Use proven spans for a, and exact for b. This allows us to do
-    // a => proven spans for a => exact spans for b => b.
-    if (auto aSpans = a.getProvenSpans(type)) {
-      if (auto bSpans = b.getSpans(type)) {
-        if (aSpans->empty()) {
-          // An empty span implies a contradiction (e.g. x > MAX_INT), as it
-          // means no possible number can apply. And contradictions prove
-          // anything.
-          return True;
-        }
-        if (bSpans->empty()) {
-          // Anything that is not a contradiction can prove a contradiction.
-          return False;
-        }
-        if (bSpans->contains(*aSpans)) {
+    // A constraint's "proven spans" are an over-approximation (superset) of the
+    // values for which the constraint holds (c => proven(c)), whereas its
+    // "exact spans" are the exact set of values (c <=> exact(c)), which may not
+    // exist when comparing against another local.
+    //
+    // To prove that a => b (return True), we check that b's exact spans contain
+    // a's proven spans:
+    //
+    //   a => proven(a) => exact(b) => b
+    //
+    // Using proven(b) here would be unsound because exact(b) => proven(b) goes
+    // the wrong way.
+    //
+    // To prove that a => !b (return False), however, it suffices to check that
+    // a's proven spans and b's proven spans do not overlap:
+    //
+    //   a => proven(a) => !proven(b) => !b
+    //
+    // Using proven(b) instead of exact(b) here is both more powerful (it works
+    // when b compares against a local, such as x <_u $y having proven span
+    // [0, MAX_UINT - 1]) and ensures that disjointness is symmetric between
+    // provesPair(a, b) and provesPair(b, a).
+    //
+    // Note that empty spans (from immediate contradictions such as
+    // x >_s MAX_INT) do not need special-casing: an empty proven(a) is
+    // vacuously contained in any exact(b) (returning True), and an empty
+    // proven(b) has no overlap with any proven(a) (returning False).
+    if (auto aProvenSpans = a.getProvenSpans(type)) {
+      auto bSpans = b.getSpans(type);
+      auto bProvenSpans = b.getProvenSpans(type);
+
+      if (bSpans) {
+        if (bSpans->contains(*aProvenSpans)) {
           // b's values contains a's, e.g., b = { 0 < x < 10 } and
           // a = { 3 < x < 7 }, so a => b.
           return True;
         }
-        if (!bSpans->hasOverlap(*aSpans)) {
+      }
+      if (bProvenSpans) {
+        if (!bProvenSpans->hasOverlap(*aProvenSpans)) {
           // There is no overlap at all, e.g., { 0 < x < 10 } vs { 20 < x < 30
           // }, both cannot be true and each proves the other false.
           return False;
@@ -1313,6 +1333,12 @@ Result BasicBlockConstraintMap::proves(LocalConstraint condition) const {
   // about, propagate it. TODO: even without equality, we can add more
   // constraints here (e.g. x < y and y < 10 can lead to proving x < 10)
   if (auto* other = std::get_if<Index>(&condition.constraint.term)) {
+    if (*other == condition.local) {
+      // We are comparing a local to itself. The things we can prove in this
+      // case (e.g. x > x is false) do not even require the map.
+      return provesPair(Constraint{Abstract::Eq, {condition.local}},
+                        condition.constraint);
+    }
     if (auto iter = map.find(*other); iter != map.end()) {
       if (auto lit = iter->value.getLiteral()) {
         condition.constraint.term = Term{*lit};

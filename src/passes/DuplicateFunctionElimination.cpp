@@ -83,10 +83,13 @@ struct DuplicateFunctionElimination : public Pass {
             if (duplicates.contains(second->name)) {
               continue;
             }
-            if (FunctionUtils::equal(first, second)) {
-              // great, we can replace the second with the first!
+            if (FunctionUtils::equal(first, second, options)) {
+              // Great, we can replace the second with the first!
               replacements[second->name] = first->name;
               duplicates.insert(second->name);
+              if (second->funcAnnotations.jsCalled) {
+                first->funcAnnotations.jsCalled = true;
+              }
             }
           }
         }

@@ -696,6 +696,11 @@
 ;; CHECK-NEXT:   --zero-filled-memory,-uim                     Assume that an imported memory 
 ;; CHECK-NEXT:                                                 will be zero-initialized
 ;; CHECK-EMPTY:
+;; CHECK-NEXT:   --expect-later-toolchain-opts                 Expect further invocations of 
+;; CHECK-NEXT:                                                 wasm-opt later, avoiding 
+;; CHECK-NEXT:                                                 optimizations that might inhibit
+;; CHECK-NEXT:                                                 them
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --skip-pass,-sp                               Skip a pass (do not run it)
 ;; CHECK-EMPTY:
 ;; CHECK-EMPTY:
