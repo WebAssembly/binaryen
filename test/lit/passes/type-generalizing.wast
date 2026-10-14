@@ -1639,3 +1639,36 @@
   )
  )
 )
+
+(module
+ ;; CHECK:      (type $inner-super (sub (struct)))
+ (type $inner-super (sub (struct)))
+ ;; CHECK:      (type $inner-sub (sub $inner-super (struct (field i32))))
+ (type $inner-sub (sub $inner-super (struct (field i32))))
+ ;; CHECK:      (type $outer-super (sub (struct (field (ref $inner-super)))))
+ (type $outer-super (sub (struct (field (ref $inner-super)))))
+ ;; CHECK:      (type $outer-sub (sub $outer-super (struct (field (ref $inner-sub)))))
+ (type $outer-sub (sub $outer-super (struct (field (ref $inner-sub)))))
+
+ ;; CHECK:      (type $4 (func (result i32)))
+
+ ;; CHECK:      (func $struct-get-non-null-field (type $4) (result i32)
+ ;; CHECK-NEXT:  (local $var (ref null $outer-sub))
+ ;; CHECK-NEXT:  (struct.get $inner-sub 0
+ ;; CHECK-NEXT:   (struct.get $outer-sub 0
+ ;; CHECK-NEXT:    (local.get $var)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $struct-get-non-null-field (result i32)
+  (local $var (ref null $outer-sub))
+  ;; The outer struct.get requires (ref null $inner-sub), which is nullable.
+  ;; $outer-super's field 0 has non-nullable type (ref $inner-super), which is
+  ;; incomparable with (ref null $inner-sub); we must still stop at $outer-sub.
+  (struct.get $inner-sub 0
+   (struct.get $outer-sub 0
+    (local.get $var)
+   )
+  )
+ )
+)

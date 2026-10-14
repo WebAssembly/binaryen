@@ -56,8 +56,7 @@ HeapType generalizeCallRefTarget(HeapType sigType,
       break;
     }
     auto candidateSig = candidateReq->getSignature();
-    if (resultReq && *resultReq != candidateSig.results &&
-        Type::isSubType(*resultReq, candidateSig.results)) {
+    if (resultReq && !Type::isSubType(candidateSig.results, *resultReq)) {
       break;
     }
     bool paramsMatch = true;
@@ -91,8 +90,7 @@ HeapType generalizeStructType(HeapType type,
     }
     if (reqFieldType) {
       auto candidateFieldType = candidateFields[index].type;
-      if (candidateFieldType != *reqFieldType &&
-          Type::isSubType(*reqFieldType, candidateFieldType)) {
+      if (!Type::isSubType(candidateFieldType, *reqFieldType)) {
         break;
       }
     }
@@ -112,8 +110,7 @@ HeapType generalizeArrayType(HeapType type,
     }
     if (reqElemType) {
       auto candidateElemType = candidateType->getArray().element.type;
-      if (candidateElemType != *reqElemType &&
-          Type::isSubType(*reqElemType, candidateElemType)) {
+      if (!Type::isSubType(candidateElemType, *reqElemType)) {
         break;
       }
     }
