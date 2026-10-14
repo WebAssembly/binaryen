@@ -116,33 +116,63 @@
   ;; TNH-NEXT:   )
   ;; TNH-NEXT:  )
   ;; TNH-NEXT:  (drop
-  ;; TNH-NEXT:   (array.new_default $arr-i8
-  ;; TNH-NEXT:    (i32.const 5)
+  ;; TNH-NEXT:   (block (result (ref (exact $arr-i8)))
+  ;; TNH-NEXT:    (drop
+  ;; TNH-NEXT:     (i32.const 0)
+  ;; TNH-NEXT:    )
+  ;; TNH-NEXT:    (array.new_default $arr-i8
+  ;; TNH-NEXT:     (i32.const 5)
+  ;; TNH-NEXT:    )
   ;; TNH-NEXT:   )
   ;; TNH-NEXT:  )
   ;; TNH-NEXT:  (drop
-  ;; TNH-NEXT:   (array.new_default $arr-i16
-  ;; TNH-NEXT:    (i32.const 4)
+  ;; TNH-NEXT:   (block (result (ref (exact $arr-i16)))
+  ;; TNH-NEXT:    (drop
+  ;; TNH-NEXT:     (i32.const 0)
+  ;; TNH-NEXT:    )
+  ;; TNH-NEXT:    (array.new_default $arr-i16
+  ;; TNH-NEXT:     (i32.const 4)
+  ;; TNH-NEXT:    )
   ;; TNH-NEXT:   )
   ;; TNH-NEXT:  )
   ;; TNH-NEXT:  (drop
-  ;; TNH-NEXT:   (array.new_default $arr-i32
-  ;; TNH-NEXT:    (i32.const 3)
+  ;; TNH-NEXT:   (block (result (ref (exact $arr-i32)))
+  ;; TNH-NEXT:    (drop
+  ;; TNH-NEXT:     (i32.const 0)
+  ;; TNH-NEXT:    )
+  ;; TNH-NEXT:    (array.new_default $arr-i32
+  ;; TNH-NEXT:     (i32.const 3)
+  ;; TNH-NEXT:    )
   ;; TNH-NEXT:   )
   ;; TNH-NEXT:  )
   ;; TNH-NEXT:  (drop
-  ;; TNH-NEXT:   (array.new_default $arr-i64
-  ;; TNH-NEXT:    (i32.const 2)
+  ;; TNH-NEXT:   (block (result (ref (exact $arr-i64)))
+  ;; TNH-NEXT:    (drop
+  ;; TNH-NEXT:     (i64.const 0)
+  ;; TNH-NEXT:    )
+  ;; TNH-NEXT:    (array.new_default $arr-i64
+  ;; TNH-NEXT:     (i32.const 2)
+  ;; TNH-NEXT:    )
   ;; TNH-NEXT:   )
   ;; TNH-NEXT:  )
   ;; TNH-NEXT:  (drop
-  ;; TNH-NEXT:   (array.new_default $arr-f32
-  ;; TNH-NEXT:    (i32.const 2)
+  ;; TNH-NEXT:   (block (result (ref (exact $arr-f32)))
+  ;; TNH-NEXT:    (drop
+  ;; TNH-NEXT:     (f32.const 0)
+  ;; TNH-NEXT:    )
+  ;; TNH-NEXT:    (array.new_default $arr-f32
+  ;; TNH-NEXT:     (i32.const 2)
+  ;; TNH-NEXT:    )
   ;; TNH-NEXT:   )
   ;; TNH-NEXT:  )
   ;; TNH-NEXT:  (drop
-  ;; TNH-NEXT:   (array.new_default $arr-f64
-  ;; TNH-NEXT:    (i32.const 2)
+  ;; TNH-NEXT:   (block (result (ref (exact $arr-f64)))
+  ;; TNH-NEXT:    (drop
+  ;; TNH-NEXT:     (f64.const 0)
+  ;; TNH-NEXT:    )
+  ;; TNH-NEXT:    (array.new_default $arr-f64
+  ;; TNH-NEXT:     (i32.const 2)
+  ;; TNH-NEXT:    )
   ;; TNH-NEXT:   )
   ;; TNH-NEXT:  )
   ;; TNH-NEXT:  (drop
@@ -606,8 +636,13 @@
 
   ;; TNH:      (func $array-new-data-large-uniform (type $1)
   ;; TNH-NEXT:  (drop
-  ;; TNH-NEXT:   (array.new_default $arr-i8
-  ;; TNH-NEXT:    (i32.const 72)
+  ;; TNH-NEXT:   (block (result (ref (exact $arr-i8)))
+  ;; TNH-NEXT:    (drop
+  ;; TNH-NEXT:     (i32.const 0)
+  ;; TNH-NEXT:    )
+  ;; TNH-NEXT:    (array.new_default $arr-i8
+  ;; TNH-NEXT:     (i32.const 72)
+  ;; TNH-NEXT:    )
   ;; TNH-NEXT:   )
   ;; TNH-NEXT:  )
   ;; TNH-NEXT:  (drop

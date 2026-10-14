@@ -316,26 +316,34 @@ Literal Literal::makeNegOne(Type type) {
 
 Literal Literal::makeFromMemory(const void* p, Type type) {
   assert(type.isNumber());
+  auto ret = makeFromMemory(p, uint8_t(type.getByteSize()));
   switch (type.getBasic()) {
-    case Type::i32: {
+    case Type::f32:
+      return ret.castToF32();
+    case Type::f64:
+      return ret.castToF64();
+    default:
+      return ret;
+  }
+}
+
+Literal Literal::makeFromMemory(const void* p, uint8_t bytes) {
+  switch (bytes) {
+    case 1:
+      return Literal(int32_t(Bits::readLE<int8_t>(p)));
+    case 2:
+      return Literal(int32_t(Bits::readLE<int16_t>(p)));
+    case 4:
       return Literal(Bits::readLE<int32_t>(p));
-    }
-    case Type::i64: {
+    case 8:
       return Literal(Bits::readLE<int64_t>(p));
-    }
-    case Type::f32: {
-      return Literal(bit_cast<float>(Bits::readLE<int32_t>(p)));
-    }
-    case Type::f64: {
-      return Literal(bit_cast<double>(Bits::readLE<int64_t>(p)));
-    }
-    case Type::v128: {
-      uint8_t bytes[16];
-      memcpy(bytes, p, sizeof(bytes));
-      return Literal(bytes);
+    case 16: {
+      uint8_t buf[16];
+      memcpy(buf, p, sizeof(buf));
+      return Literal(buf);
     }
     default:
-      WASM_UNREACHABLE("unexpected type");
+      WASM_UNREACHABLE("unexpected size");
   }
 }
 

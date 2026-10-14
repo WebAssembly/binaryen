@@ -2371,16 +2371,13 @@ struct OptimizeInstructions
 
     auto heapType = curr->type.getHeapType();
     const auto& element = heapType.getArray().element;
-    if (!element.type.isNumber()) {
-      return;
-    }
 
     Address offset = offsetConst->value.getUnsigned();
     Address size = sizeConst->value.getUnsigned();
     Address elemBytes = element.getByteSize();
-    // offset and size are u32 and elemBytes <= 16, so this can't overflow.
-    Address end = offset + size * elemBytes;
-    if (end > seg->data.size()) {
+    Address end;
+    if (std::ckd_add<uint64_t>(&end.addr, offset, size * elemBytes) ||
+        end > seg->data.size()) {
       // This will trap.
       return;
     }
@@ -2401,20 +2398,15 @@ struct OptimizeInstructions
 
     auto readElement = [&](Index i) -> Literal {
       const auto* src = &seg->data[offset + i * elemBytes];
-      switch (element.packedType) {
-        case Field::NotPacked:
-          return Literal::makeFromMemory(src, element.type);
+      if (element.isPacked()) {
         // Packed values are truncated when stored, so the extension doesn't
         // matter; sign-extending gives the shorter encoding (-1 vs 255).
-        case Field::i8:
-          return Literal(int32_t(int8_t(*src)));
-        case Field::i16:
-          return Literal(int32_t(Bits::readLE<int16_t>(src)));
+        return Literal::makeFromMemory(src, uint8_t(elemBytes));
       }
-      WASM_UNREACHABLE("unexpected packed type");
+      return Literal::makeFromMemory(src, element.type);
     };
 
-    // If all elements are equal, array.new(_default) is compact at any size.
+    // If all elements are equal, array.new is compact at any size.
     auto first = readElement(0);
     bool allEqual = true;
     for (Index i = 1; i < size; i++) {
@@ -2424,15 +2416,11 @@ struct OptimizeInstructions
       }
     }
     if (allEqual) {
+      // visitArrayNew optimizes this further when the value is the default
+      // (to array.new_default) or the size is 1 (to array.new_fixed).
       auto* sizeExpr = builder.makeConst(int32_t(size));
-      // Literal comparison is bitwise, so e.g. -0.0 is not considered zero.
-      if (first == Literal::makeZero(element.type)) {
-        replaceCurrent(builder.makeArrayNew(heapType, sizeExpr));
-      } else {
-        // visitArrayNew turns the size == 1 case into array.new_fixed.
-        replaceCurrent(
-          builder.makeArrayNew(heapType, sizeExpr, builder.makeConst(first)));
-      }
+      replaceCurrent(
+        builder.makeArrayNew(heapType, sizeExpr, builder.makeConst(first)));
       return;
     }
 
