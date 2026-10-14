@@ -177,8 +177,6 @@ struct Generalizer
   void noteCast(Expression* src, Type dst) {}
   void noteCast(Expression* src, Expression* dst) {}
 
-  void visitLocalGet(LocalGet* curr) {}
-
   void visitLocalSet(LocalSet* curr) {
     auto localType = func->getLocalType(curr->index);
     if (func->isParam(curr->index)) {
