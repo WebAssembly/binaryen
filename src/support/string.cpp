@@ -484,6 +484,21 @@ bool isUTF8(std::string_view str) {
   return true;
 }
 
+bool isPrintableUTF8(std::string_view str) {
+  while (!str.empty()) {
+    auto u = takeWTF8CodePoint(str);
+    if (!u) {
+      return false; // Invalid encoding
+    }
+    // Reject ASCII control chars (0x00-0x1F), DEL (0x7F), and surrogates
+    // (0xD800-0xDFFF)
+    if (*u < 0x20 || *u == 0x7F || (0xD800 <= *u && *u < 0xE000)) {
+      return false;
+    }
+  }
+  return true;
+}
+
 std::ostream& unescapeUTF8JSONtoWTF16(std::ostream& os, const char* str) {
   std::string_view view(str);
   size_t i = 0;

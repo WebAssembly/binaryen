@@ -123,6 +123,10 @@ bool convertUTF16ToUTF8(std::ostream& os, std::string_view str);
 // Whether the string is valid UTF-8.
 bool isUTF8(std::string_view str);
 
+// Whether the string is both valid UTF-8 and doesn't contain unprintable
+// characters e.g. ASCII control characters.
+bool isPrintableUTF8(std::string_view str);
+
 // Given a string of properly-escaped JSON in UTF8, unescape it into WTF16.
 std::ostream& unescapeUTF8JSONtoWTF16(std::ostream& os, const char* str);
 
