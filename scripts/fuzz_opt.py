@@ -2772,6 +2772,7 @@ opt_choices = [
     ("--tail-call",),
     ("--tuple-optimization",),
     ("--type-finalizing",),
+    ("--experimental-type-generalizing",),
     ("--type-refining",),
     ("--type-refining-gufa",),
     ("--type-merging",),
