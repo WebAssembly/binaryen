@@ -2398,12 +2398,9 @@ struct OptimizeInstructions
 
     auto readElement = [&](Index i) -> Literal {
       const auto* src = &seg->data[offset + i * elemBytes];
-      if (element.isPacked()) {
-        // Packed values are truncated when stored, so the extension doesn't
-        // matter; sign-extending gives the shorter encoding (-1 vs 255).
-        return Literal::makeFromMemory(src, uint8_t(elemBytes));
-      }
-      return Literal::makeFromMemory(src, element.type);
+      // Packed values are truncated when stored, so the extension doesn't
+      // matter; sign-extending gives the shorter encoding (-1 vs 255).
+      return Literal::makeFromMemory(src, element.type, element.getByteSize());
     };
 
     // If all elements are equal, array.new is compact at any size.

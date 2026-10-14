@@ -213,11 +213,11 @@ public:
     }
   }
 
-  static Literal makeFromMemory(const void* p, Type type);
-  // Reads an integer of the given byte size (1, 2, 4, 8 or 16) from memory.
-  // Sizes 1 and 2 are sign-extended to an i32, so this can also be used for
-  // packed fields.
-  static Literal makeFromMemory(const void* p, uint8_t bytes);
+  // Reads a value of the given type from memory. For i32, a smaller byteSize
+  // (1 or 2) can be given to read a sign-extended packed value. A byteSize of
+  // 0 means the full size of the type.
+  static Literal
+  makeFromMemory(const void* p, Type type, unsigned byteSize = 0);
 
   static Literal makeSignedMin(Type type) {
     switch (type.getBasic()) {

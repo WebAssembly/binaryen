@@ -52,6 +52,9 @@
   ;; TNH:      (data $zeros "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00")
   ;; NO_TNH:      (data $zeros "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00")
   (data $zeros "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00")
+  ;; Uniform means all elements are equal when read at the element width. The
+  ;; first 4 bytes are identical i8s; the rest is not uniform as i8, but is as
+  ;; i16 (0x0201) and as i32 (0x02010201).
   ;; TNH:      (data $uniform "****\01\02\01\02\01\02\01\02")
   ;; NO_TNH:      (data $uniform "****\01\02\01\02\01\02\01\02")
   (data $uniform "\2a\2a\2a\2a\01\02\01\02\01\02\01\02")
