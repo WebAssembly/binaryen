@@ -370,12 +370,7 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
       self()->noteSubtype(curr->operands[i], fields[i].type);
     }
   }
-  void visitStructGet(StructGet* curr) {
-    if (curr->ref->type.isRef()) {
-      self()->noteNonFlowSubtype(curr->ref,
-                                 Type(curr->ref->type.getHeapType(), Nullable));
-    }
-  }
+  void visitStructGet(StructGet* curr) {}
   void visitStructSet(StructSet* curr) {
     if (curr->ref->type.isRef()) {
       self()->noteNonFlowSubtype(curr->ref,
