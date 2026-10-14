@@ -444,35 +444,16 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
     }
   }
 
-  void visitArrayGet(ArrayGet* curr) {
-    if (curr->ref->type.isRef()) {
-      self()->noteNonFlowSubtype(curr->ref,
-                                 Type(curr->ref->type.getHeapType(), Nullable));
-    }
-  }
+  void visitArrayGet(ArrayGet* curr) {}
   void visitArraySet(ArraySet* curr) {
-    if (curr->ref->type.isRef()) {
-      self()->noteNonFlowSubtype(curr->ref,
-                                 Type(curr->ref->type.getHeapType(), Nullable));
-    }
     if (!curr->ref->type.isArray()) {
       return;
     }
     auto array = curr->ref->type.getHeapType().getArray();
     self()->noteSubtype(curr->value, array.element.type);
   }
-  void visitArrayLoad(ArrayLoad* curr) {
-    if (curr->ref->type.isRef()) {
-      self()->noteNonFlowSubtype(curr->ref,
-                                 Type(curr->ref->type.getHeapType(), Nullable));
-    }
-  }
-  void visitArrayStore(ArrayStore* curr) {
-    if (curr->ref->type.isRef()) {
-      self()->noteNonFlowSubtype(curr->ref,
-                                 Type(curr->ref->type.getHeapType(), Nullable));
-    }
-  }
+  void visitArrayLoad(ArrayLoad* curr) {}
+  void visitArrayStore(ArrayStore* curr) {}
   void visitArrayLen(ArrayLen* curr) {
     auto share = Unshared;
     if (curr->ref->type.isRef() && curr->ref->type.getHeapType().isShared()) {
