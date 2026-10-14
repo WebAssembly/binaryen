@@ -54,15 +54,10 @@ HeapType generalizeCallRefTarget(HeapType sigType,
     if (resultReq && !Type::isSubType(candidateSig.results, *resultReq)) {
       break;
     }
-    bool paramsMatch = true;
     for (size_t i = 0; i < numParams; ++i) {
       if (candidateSig.params[i] != sig.params[i]) {
-        paramsMatch = false;
-        break;
+        return targetReq;
       }
-    }
-    if (!paramsMatch) {
-      break;
     }
     targetReq = *candidateReq;
   }
