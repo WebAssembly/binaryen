@@ -528,6 +528,7 @@ private:
   Expression* makeSIMDTernary();
   Expression* makeSIMDShift();
   Expression* makeSIMDLoad();
+  Expression* makeSIMDLoadStoreLane(Type type);
   Expression* makeBulkMemory(Type type);
   Expression* makeTableGet(Type type);
   Expression* makeTableSet(Type type);
