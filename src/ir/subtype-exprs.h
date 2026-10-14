@@ -334,15 +334,8 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
   }
   void visitRefCast(RefCast* curr) {
     self()->noteCast(curr->ref, curr);
-    if (curr->desc && curr->desc->type.isRef()) {
-      self()->noteNonFlowSubtype(curr->desc, curr->desc->type.with(Nullable));
-    }
   }
   void visitRefGetDesc(RefGetDesc* curr) {
-    if (curr->ref->type.isRef()) {
-      self()->noteNonFlowSubtype(curr->ref,
-                                 Type(curr->ref->type.getHeapType(), Nullable));
-    }
   }
   void visitBrOn(BrOn* curr) {
     if (curr->ref->type.isRef()) {
