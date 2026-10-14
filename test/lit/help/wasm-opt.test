@@ -445,6 +445,11 @@
 ;; CHECK-NEXT:   --propagate-globals-globally                  propagate global values to other
 ;; CHECK-NEXT:                                                 globals (useful for tests)
 ;; CHECK-EMPTY:
+;; CHECK-NEXT:   --relax-nullability                           make private function params and
+;; CHECK-NEXT:                                                 locals nullable, keeping 
+;; CHECK-NEXT:                                                 ref.as_non_null only where 
+;; CHECK-NEXT:                                                 demanded (traps-never-happen)
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --remove-empty-function-exports               removes exports of empty 
 ;; CHECK-NEXT:                                                 functions
 ;; CHECK-EMPTY:
