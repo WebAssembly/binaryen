@@ -379,7 +379,6 @@ private:
 
 Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
 
-
   // Collect passive data segment indices.
   for (Index i = 0; i < wasm->dataSegments.size(); ++i) {
     dataIndices[wasm->dataSegments[i]->name] = i;

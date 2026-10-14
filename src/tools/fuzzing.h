@@ -528,9 +528,12 @@ private:
   Expression* makeSIMDTernary();
   Expression* makeSIMDShift();
   Expression* makeSIMDLoad();
+  Expression* makeSIMDLoadStoreLane(Type type);
   Expression* makeBulkMemory(Type type);
   Expression* makeTableGet(Type type);
   Expression* makeTableSet(Type type);
+  Expression* makeTableSize(Type type);
+  Expression* makeTableGrow(Type type);
   // TODO: support other RefIs variants, and rename this
   Expression* makeRefIsNull(Type type);
   Expression* makeRefEq(Type type);
@@ -565,6 +568,8 @@ private:
   Expression* makeDataDrop();
   Expression* makeMemoryCopy();
   Expression* makeMemoryFill();
+  Expression* makeMemorySize(Type type);
+  Expression* makeMemoryGrow(Type type);
   Expression* makeElemDrop();
 
   // Getters for Types
