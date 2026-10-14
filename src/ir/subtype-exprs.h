@@ -332,11 +332,8 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
   void visitRefTest(RefTest* curr) {
     self()->noteCast(curr->ref, curr->castType);
   }
-  void visitRefCast(RefCast* curr) {
-    self()->noteCast(curr->ref, curr);
-  }
-  void visitRefGetDesc(RefGetDesc* curr) {
-  }
+  void visitRefCast(RefCast* curr) { self()->noteCast(curr->ref, curr); }
+  void visitRefGetDesc(RefGetDesc* curr) {}
   void visitBrOn(BrOn* curr) {
     switch (curr->op) {
       case BrOnNull:
