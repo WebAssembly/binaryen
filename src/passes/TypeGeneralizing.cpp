@@ -20,11 +20,6 @@
 // that cast to unnecessarily refined types. If the casts are weakened enough,
 // they will be able to be removed by OptimizeInstructions.
 //
-// Uses SubtypingDiscoverer to find all subtyping constraints on expressions and
-// locals, and computes the greatest lower bound (GLB) of the required
-// supertypes for each local so that each local is given the least-refined valid
-// type.
-//
 
 #include <optional>
 #include <unordered_map>
@@ -119,6 +114,12 @@ HeapType generalizeArrayType(HeapType type,
   return type;
 }
 
+//
+// Uses SubtypingDiscoverer to find all subtyping constraints on expressions and
+// locals, and computes the greatest lower bound (GLB) of the required
+// supertypes for each local so that each local is given the least-refined valid
+// type.
+//
 struct Generalizer
   : public ControlFlowWalker<Generalizer, SubtypingDiscoverer<Generalizer>> {
   Function* func;
