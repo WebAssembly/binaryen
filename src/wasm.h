@@ -784,6 +784,7 @@ public:
     StackSwitchId,
     FiberNewId,
     FiberResumeId,
+    FiberResumeThrowId,
     FiberSuspendId,
     StructWaitId,
     WideIntAddSubId,
@@ -2311,6 +2312,19 @@ class FiberResume : public SpecificExpression<Expression::FiberResumeId> {
 public:
   FiberResume(MixedArena& allocator) : operands(allocator) {}
 
+  Name handler;
+  ExpressionList operands;
+  Expression* fiber = nullptr;
+
+  void finalize();
+};
+
+class FiberResumeThrow
+  : public SpecificExpression<Expression::FiberResumeThrowId> {
+public:
+  FiberResumeThrow(MixedArena& allocator) : operands(allocator) {}
+
+  Name tag;
   Name handler;
   ExpressionList operands;
   Expression* fiber = nullptr;

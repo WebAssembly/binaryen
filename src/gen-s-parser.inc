@@ -1740,12 +1740,23 @@ switch (buf[0]) {
               return Ok{};
             }
             goto parse_error;
-          case 'r':
-            if (op == "fiber.resume"sv) {
-              CHECK_ERR(makeFiberResume(ctx, pos, annotations));
-              return Ok{};
+          case 'r': {
+            switch (buf[12]) {
+              case '\0':
+                if (op == "fiber.resume"sv) {
+                  CHECK_ERR(makeFiberResume(ctx, pos, annotations));
+                  return Ok{};
+                }
+                goto parse_error;
+              case '_':
+                if (op == "fiber.resume_throw"sv) {
+                  CHECK_ERR(makeFiberResumeThrow(ctx, pos, annotations));
+                  return Ok{};
+                }
+                goto parse_error;
+              default: goto parse_error;
             }
-            goto parse_error;
+          }
           case 's':
             if (op == "fiber.suspend"sv) {
               CHECK_ERR(makeFiberSuspend(ctx, pos, annotations));

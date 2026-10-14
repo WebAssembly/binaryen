@@ -1294,6 +1294,7 @@ enum ASTNodes {
   FiberNew = 0xe7,
   FiberResume = 0xe8,
   FiberSuspend = 0xe9,
+  FiberResumeThrow = 0xea,
   OnLabel = 0x00, // (on $tag $label)
   OnSwitch = 0x01 // (on $tag switch)
 };

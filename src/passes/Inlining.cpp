@@ -242,6 +242,11 @@ struct FunctionInfoScanner
     infos[curr->func].refs++;
   }
 
+  void visitFiberNew(FiberNew* curr) {
+    assert(infos.contains(curr->func));
+    infos[curr->func].refs++;
+  }
+
   void visitFunction(Function* curr) {
     auto& info = infos[curr->name];
 

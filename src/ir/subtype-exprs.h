@@ -644,9 +644,65 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
                     .type.getSignature();
     self()->noteSubtype(currResult, retSig.results);
   }
-  void visitFiberNew(FiberNew* curr) { WASM_UNREACHABLE("unimp"); }
-  void visitFiberResume(FiberResume* curr) { WASM_UNREACHABLE("unimp"); }
-  void visitFiberSuspend(FiberSuspend* curr) { WASM_UNREACHABLE("unimp"); }
+  void visitFiberNew(FiberNew* curr) {
+    if (!curr->type.isFiber()) {
+      return;
+    }
+    auto fiberType = curr->type.getHeapType();
+    auto fiberSig = fiberType.getFiber().type.getSignature();
+    auto* func = self()->getModule()->getFunction(curr->func);
+    auto funcSig = func->type.getHeapType().getSignature();
+    assert(funcSig.params.size() ==
+           1 + curr->operands.size() + fiberSig.params.size());
+    self()->noteSubtype(Type(fiberType, NonNullable, Exact), funcSig.params[0]);
+    for (Index i = 0; i < curr->operands.size(); ++i) {
+      self()->noteSubtype(curr->operands[i], funcSig.params[1 + i]);
+    }
+    for (Index i = 0; i < fiberSig.params.size(); ++i) {
+      self()->noteSubtype(fiberSig.params[i],
+                          funcSig.params[1 + curr->operands.size() + i]);
+    }
+    self()->noteSubtype(funcSig.results, fiberSig.results);
+  }
+  void visitFiberResume(FiberResume* curr) {
+    if (!curr->fiber->type.isFiber()) {
+      return;
+    }
+    auto fiberSig =
+      curr->fiber->type.getHeapType().getFiber().type.getSignature();
+    assert(curr->operands.size() == fiberSig.params.size());
+    for (Index i = 0; i < curr->operands.size(); ++i) {
+      self()->noteSubtype(curr->operands[i], fiberSig.params[i]);
+    }
+    auto expected = self()->findBreakTarget(curr->handler)->type;
+    self()->noteSubtype(fiberSig.results, expected);
+  }
+  void visitFiberResumeThrow(FiberResumeThrow* curr) {
+    if (!curr->fiber->type.isFiber()) {
+      return;
+    }
+    auto fiberSig =
+      curr->fiber->type.getHeapType().getFiber().type.getSignature();
+    auto tagParams =
+      self()->getModule()->getTag(curr->tag)->type.getSignature().params;
+    assert(curr->operands.size() == tagParams.size());
+    for (Index i = 0; i < curr->operands.size(); ++i) {
+      self()->noteSubtype(curr->operands[i], tagParams[i]);
+    }
+    auto expected = self()->findBreakTarget(curr->handler)->type;
+    self()->noteSubtype(fiberSig.results, expected);
+  }
+  void visitFiberSuspend(FiberSuspend* curr) {
+    if (!curr->fiber->type.isFiber()) {
+      return;
+    }
+    auto fiberSig =
+      curr->fiber->type.getHeapType().getFiber().type.getSignature();
+    assert(curr->operands.size() == fiberSig.results.size());
+    for (Index i = 0; i < curr->operands.size(); ++i) {
+      self()->noteSubtype(curr->operands[i], fiberSig.results[i]);
+    }
+  }
 };
 
 } // namespace wasm

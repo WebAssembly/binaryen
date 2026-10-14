@@ -336,6 +336,8 @@ template<typename T> void renameFunctions(Module& wasm, T& map) {
     void visitCall(Call* curr) { maybeUpdate(curr->target); }
 
     void visitRefFunc(RefFunc* curr) { maybeUpdate(curr->func); }
+
+    void visitFiberNew(FiberNew* curr) { maybeUpdate(curr->func); }
   };
 
   Updater updater(map);
@@ -474,8 +476,15 @@ struct CodeScanner : PostWalker<CodeScanner> {
     info.note(curr->cont->type);
     info.note(curr->type);
   }
-  void visitFiberNew(FiberNew* curr) { info.note(curr->type); }
+  void visitFiberNew(FiberNew* curr) {
+    info.note(curr->type);
+    referencedFuncs.at(curr->func) = true;
+  }
   void visitFiberResume(FiberResume* curr) {
+    info.note(curr->fiber->type);
+    info.note(curr->type);
+  }
+  void visitFiberResumeThrow(FiberResumeThrow* curr) {
     info.note(curr->fiber->type);
     info.note(curr->type);
   }

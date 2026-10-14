@@ -18,31 +18,38 @@
   (type $fiber (sub (fiber $sig)))
   (type $sub_fiber (sub $fiber (fiber $sig)))
 
-  ;; CHECK-TEXT:      (type $2 (func (param (ref $fiber) i32 i32) (result f32)))
+  ;; CHECK-TEXT:      (type $2 (func (param (ref $fiber)) (result f64)))
 
-  ;; CHECK-TEXT:      (type $3 (func (result (ref $fiber))))
+  ;; CHECK-TEXT:      (type $3 (func (param i64)))
 
-  ;; CHECK-TEXT:      (type $4 (func (param (ref $fiber)) (result f64)))
+  ;; CHECK-TEXT:      (type $4 (func (param (ref $fiber) i32 i32) (result f32)))
 
-  ;; CHECK-TEXT:      (type $5 (func (param (ref $fiber)) (result i32)))
+  ;; CHECK-TEXT:      (type $5 (func (result (ref $fiber))))
 
-  ;; CHECK-TEXT:      (type $6 (func (param fiberref nullfiberref (ref fiber) (ref nofiber)) (result fiberref)))
+  ;; CHECK-TEXT:      (type $6 (func (param (ref $fiber)) (result i32)))
+
+  ;; CHECK-TEXT:      (type $7 (func (param fiberref nullfiberref (ref fiber) (ref nofiber)) (result fiberref)))
 
   ;; CHECK-TEXT:      (global $g (mut (ref null $fiber)) (ref.null nofiber))
-  ;; CHECK-BIN:      (type $2 (func (param (ref $fiber) i32 i32) (result f32)))
+  ;; CHECK-BIN:      (type $2 (func (param (ref $fiber)) (result f64)))
 
-  ;; CHECK-BIN:      (type $3 (func (result (ref $fiber))))
+  ;; CHECK-BIN:      (type $3 (func (param i64)))
 
-  ;; CHECK-BIN:      (type $4 (func (param (ref $fiber)) (result f64)))
+  ;; CHECK-BIN:      (type $4 (func (param (ref $fiber) i32 i32) (result f32)))
 
-  ;; CHECK-BIN:      (type $5 (func (param (ref $fiber)) (result i32)))
+  ;; CHECK-BIN:      (type $5 (func (result (ref $fiber))))
 
-  ;; CHECK-BIN:      (type $6 (func (param fiberref nullfiberref (ref fiber) (ref nofiber)) (result fiberref)))
+  ;; CHECK-BIN:      (type $6 (func (param (ref $fiber)) (result i32)))
+
+  ;; CHECK-BIN:      (type $7 (func (param fiberref nullfiberref (ref fiber) (ref nofiber)) (result fiberref)))
 
   ;; CHECK-BIN:      (global $g (mut (ref null $fiber)) (ref.null nofiber))
   (global $g (mut (ref null $fiber)) (ref.null nofiber))
+  ;; CHECK-TEXT:      (tag $err (type $3) (param i64))
+  ;; CHECK-BIN:      (tag $err (type $3) (param i64))
+  (tag $err (param i64))
 
-  ;; CHECK-TEXT:      (func $body (type $2) (param $self (ref $fiber)) (param $init i32) (param $x i32) (result f32)
+  ;; CHECK-TEXT:      (func $body (type $4) (param $self (ref $fiber)) (param $init i32) (param $x i32) (result f32)
   ;; CHECK-TEXT-NEXT:  (drop
   ;; CHECK-TEXT-NEXT:   (local.get $self)
   ;; CHECK-TEXT-NEXT:  )
@@ -54,7 +61,7 @@
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT:  (f32.const 0)
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $body (type $2) (param $self (ref $fiber)) (param $init i32) (param $x i32) (result f32)
+  ;; CHECK-BIN:      (func $body (type $4) (param $self (ref $fiber)) (param $init i32) (param $x i32) (result f32)
   ;; CHECK-BIN-NEXT:  (drop
   ;; CHECK-BIN-NEXT:   (local.get $self)
   ;; CHECK-BIN-NEXT:  )
@@ -73,12 +80,12 @@
     (f32.const 0)
   )
 
-  ;; CHECK-TEXT:      (func $test-new (type $3) (result (ref $fiber))
+  ;; CHECK-TEXT:      (func $test-new (type $5) (result (ref $fiber))
   ;; CHECK-TEXT-NEXT:  (fiber.new $fiber $body
   ;; CHECK-TEXT-NEXT:   (i32.const 42)
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $test-new (type $3) (result (ref $fiber))
+  ;; CHECK-BIN:      (func $test-new (type $5) (result (ref $fiber))
   ;; CHECK-BIN-NEXT:  (fiber.new $fiber $body
   ;; CHECK-BIN-NEXT:   (i32.const 42)
   ;; CHECK-BIN-NEXT:  )
@@ -89,7 +96,7 @@
     )
   )
 
-  ;; CHECK-TEXT:      (func $test-resume (type $4) (param $f (ref $fiber)) (result f64)
+  ;; CHECK-TEXT:      (func $test-resume (type $2) (param $f (ref $fiber)) (result f64)
   ;; CHECK-TEXT-NEXT:  (drop
   ;; CHECK-TEXT-NEXT:   (block $handler (result f32)
   ;; CHECK-TEXT-NEXT:    (drop
@@ -105,11 +112,11 @@
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT:  (f64.const 3.14)
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $test-resume (type $4) (param $f (ref $fiber)) (result f64)
+  ;; CHECK-BIN:      (func $test-resume (type $2) (param $f (ref $fiber)) (result f64)
   ;; CHECK-BIN-NEXT:  (drop
-  ;; CHECK-BIN-NEXT:   (block $block (result f32)
+  ;; CHECK-BIN-NEXT:   (block $handler (result f32)
   ;; CHECK-BIN-NEXT:    (drop
-  ;; CHECK-BIN-NEXT:     (fiber.resume $fiber $block
+  ;; CHECK-BIN-NEXT:     (fiber.resume $fiber $handler
   ;; CHECK-BIN-NEXT:      (local.get $f)
   ;; CHECK-BIN-NEXT:      (i32.const 10)
   ;; CHECK-BIN-NEXT:     )
@@ -135,13 +142,59 @@
     (f64.const 3.14)
   )
 
-  ;; CHECK-TEXT:      (func $test-suspend (type $5) (param $f (ref $fiber)) (result i32)
+  ;; CHECK-TEXT:      (func $test-resume-throw (type $2) (param $f (ref $fiber)) (result f64)
+  ;; CHECK-TEXT-NEXT:  (drop
+  ;; CHECK-TEXT-NEXT:   (block $handler (result f32)
+  ;; CHECK-TEXT-NEXT:    (drop
+  ;; CHECK-TEXT-NEXT:     (fiber.resume_throw $fiber $err $handler
+  ;; CHECK-TEXT-NEXT:      (local.get $f)
+  ;; CHECK-TEXT-NEXT:      (i64.const 99)
+  ;; CHECK-TEXT-NEXT:     )
+  ;; CHECK-TEXT-NEXT:    )
+  ;; CHECK-TEXT-NEXT:    (return
+  ;; CHECK-TEXT-NEXT:     (f64.const 0)
+  ;; CHECK-TEXT-NEXT:    )
+  ;; CHECK-TEXT-NEXT:   )
+  ;; CHECK-TEXT-NEXT:  )
+  ;; CHECK-TEXT-NEXT:  (f64.const 2.71)
+  ;; CHECK-TEXT-NEXT: )
+  ;; CHECK-BIN:      (func $test-resume-throw (type $2) (param $f (ref $fiber)) (result f64)
+  ;; CHECK-BIN-NEXT:  (drop
+  ;; CHECK-BIN-NEXT:   (block $handler (result f32)
+  ;; CHECK-BIN-NEXT:    (drop
+  ;; CHECK-BIN-NEXT:     (fiber.resume_throw $fiber $err $handler
+  ;; CHECK-BIN-NEXT:      (local.get $f)
+  ;; CHECK-BIN-NEXT:      (i64.const 99)
+  ;; CHECK-BIN-NEXT:     )
+  ;; CHECK-BIN-NEXT:    )
+  ;; CHECK-BIN-NEXT:    (return
+  ;; CHECK-BIN-NEXT:     (f64.const 0)
+  ;; CHECK-BIN-NEXT:    )
+  ;; CHECK-BIN-NEXT:   )
+  ;; CHECK-BIN-NEXT:  )
+  ;; CHECK-BIN-NEXT:  (f64.const 2.71)
+  ;; CHECK-BIN-NEXT: )
+  (func $test-resume-throw (param $f (ref $fiber)) (result f64)
+    (block $handler (result f32)
+      (drop
+        (fiber.resume_throw $fiber $err $handler
+          (local.get $f)
+          (i64.const 99)
+        )
+      )
+      (return (f64.const 0))
+    )
+    (drop)
+    (f64.const 2.71)
+  )
+
+  ;; CHECK-TEXT:      (func $test-suspend (type $6) (param $f (ref $fiber)) (result i32)
   ;; CHECK-TEXT-NEXT:  (fiber.suspend $fiber
   ;; CHECK-TEXT-NEXT:   (f32.const 1.5)
   ;; CHECK-TEXT-NEXT:   (local.get $f)
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $test-suspend (type $5) (param $f (ref $fiber)) (result i32)
+  ;; CHECK-BIN:      (func $test-suspend (type $6) (param $f (ref $fiber)) (result i32)
   ;; CHECK-BIN-NEXT:  (fiber.suspend $fiber
   ;; CHECK-BIN-NEXT:   (f32.const 1.5)
   ;; CHECK-BIN-NEXT:   (local.get $f)
@@ -154,10 +207,10 @@
     )
   )
 
-  ;; CHECK-TEXT:      (func $test-abstract-types (type $6) (param $a fiberref) (param $b nullfiberref) (param $c (ref fiber)) (param $d (ref nofiber)) (result fiberref)
+  ;; CHECK-TEXT:      (func $test-abstract-types (type $7) (param $a fiberref) (param $b nullfiberref) (param $c (ref fiber)) (param $d (ref nofiber)) (result fiberref)
   ;; CHECK-TEXT-NEXT:  (local.get $a)
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $test-abstract-types (type $6) (param $a fiberref) (param $b nullfiberref) (param $c (ref fiber)) (param $d (ref nofiber)) (result fiberref)
+  ;; CHECK-BIN:      (func $test-abstract-types (type $7) (param $a fiberref) (param $b nullfiberref) (param $c (ref fiber)) (param $d (ref nofiber)) (result fiberref)
   ;; CHECK-BIN-NEXT:  (local.get $a)
   ;; CHECK-BIN-NEXT: )
   (func $test-abstract-types (param $a fiberref) (param $b nullfiberref) (param $c (ref fiber)) (param $d (ref nofiber)) (result fiberref)
@@ -168,19 +221,23 @@
 
 ;; CHECK-BIN-NODEBUG:      (type $1 (sub (fiber $0)))
 
-;; CHECK-BIN-NODEBUG:      (type $2 (func (param (ref $1) i32 i32) (result f32)))
+;; CHECK-BIN-NODEBUG:      (type $2 (func (param (ref $1)) (result f64)))
 
-;; CHECK-BIN-NODEBUG:      (type $3 (func (result (ref $1))))
+;; CHECK-BIN-NODEBUG:      (type $3 (func (param i64)))
 
-;; CHECK-BIN-NODEBUG:      (type $4 (func (param (ref $1)) (result f64)))
+;; CHECK-BIN-NODEBUG:      (type $4 (func (param (ref $1) i32 i32) (result f32)))
 
-;; CHECK-BIN-NODEBUG:      (type $5 (func (param (ref $1)) (result i32)))
+;; CHECK-BIN-NODEBUG:      (type $5 (func (result (ref $1))))
 
-;; CHECK-BIN-NODEBUG:      (type $6 (func (param fiberref nullfiberref (ref fiber) (ref nofiber)) (result fiberref)))
+;; CHECK-BIN-NODEBUG:      (type $6 (func (param (ref $1)) (result i32)))
+
+;; CHECK-BIN-NODEBUG:      (type $7 (func (param fiberref nullfiberref (ref fiber) (ref nofiber)) (result fiberref)))
 
 ;; CHECK-BIN-NODEBUG:      (global $global$0 (mut (ref null $1)) (ref.null nofiber))
 
-;; CHECK-BIN-NODEBUG:      (func $0 (type $2) (param $0 (ref $1)) (param $1 i32) (param $2 i32) (result f32)
+;; CHECK-BIN-NODEBUG:      (tag $tag$0 (type $3) (param i64))
+
+;; CHECK-BIN-NODEBUG:      (func $0 (type $4) (param $0 (ref $1)) (param $1 i32) (param $2 i32) (result f32)
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
@@ -193,13 +250,13 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  (f32.const 0)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $1 (type $3) (result (ref $1))
+;; CHECK-BIN-NODEBUG:      (func $1 (type $5) (result (ref $1))
 ;; CHECK-BIN-NODEBUG-NEXT:  (fiber.new $1 $0
 ;; CHECK-BIN-NODEBUG-NEXT:   (i32.const 42)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $2 (type $4) (param $0 (ref $1)) (result f64)
+;; CHECK-BIN-NODEBUG:      (func $2 (type $2) (param $0 (ref $1)) (result f64)
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
 ;; CHECK-BIN-NODEBUG-NEXT:   (block $block (result f32)
 ;; CHECK-BIN-NODEBUG-NEXT:    (drop
@@ -216,13 +273,30 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  (f64.const 3.14)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $3 (type $5) (param $0 (ref $1)) (result i32)
+;; CHECK-BIN-NODEBUG:      (func $3 (type $2) (param $0 (ref $1)) (result f64)
+;; CHECK-BIN-NODEBUG-NEXT:  (drop
+;; CHECK-BIN-NODEBUG-NEXT:   (block $block (result f32)
+;; CHECK-BIN-NODEBUG-NEXT:    (drop
+;; CHECK-BIN-NODEBUG-NEXT:     (fiber.resume_throw $1 $tag$0 $block
+;; CHECK-BIN-NODEBUG-NEXT:      (local.get $0)
+;; CHECK-BIN-NODEBUG-NEXT:      (i64.const 99)
+;; CHECK-BIN-NODEBUG-NEXT:     )
+;; CHECK-BIN-NODEBUG-NEXT:    )
+;; CHECK-BIN-NODEBUG-NEXT:    (return
+;; CHECK-BIN-NODEBUG-NEXT:     (f64.const 0)
+;; CHECK-BIN-NODEBUG-NEXT:    )
+;; CHECK-BIN-NODEBUG-NEXT:   )
+;; CHECK-BIN-NODEBUG-NEXT:  )
+;; CHECK-BIN-NODEBUG-NEXT:  (f64.const 2.71)
+;; CHECK-BIN-NODEBUG-NEXT: )
+
+;; CHECK-BIN-NODEBUG:      (func $4 (type $6) (param $0 (ref $1)) (result i32)
 ;; CHECK-BIN-NODEBUG-NEXT:  (fiber.suspend $1
 ;; CHECK-BIN-NODEBUG-NEXT:   (f32.const 1.5)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $4 (type $6) (param $0 fiberref) (param $1 nullfiberref) (param $2 (ref fiber)) (param $3 (ref nofiber)) (result fiberref)
+;; CHECK-BIN-NODEBUG:      (func $5 (type $7) (param $0 fiberref) (param $1 nullfiberref) (param $2 (ref fiber)) (param $3 (ref nofiber)) (result fiberref)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT: )

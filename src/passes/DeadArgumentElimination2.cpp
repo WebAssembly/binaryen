@@ -413,8 +413,27 @@ struct GraphBuilder : public WalkerPass<ExpressionStackWalker<GraphBuilder>> {
     funcInfos[funcIndices.at(curr->func)].referenced = true;
   }
 
+  void visitFiberNew(FiberNew* curr) {
+    auto funcIdx = funcIndices.at(curr->func);
+    funcInfos[funcIdx].referenced = true;
+    funcInfos[funcIdx].usedInIntrinsic = true;
+    noteContinuation(curr->type);
+  }
+
+  void visitFiberResume(FiberResume* curr) {
+    noteContinuation(curr->fiber->type);
+  }
+
+  void visitFiberResumeThrow(FiberResumeThrow* curr) {
+    noteContinuation(curr->fiber->type);
+  }
+
+  void visitFiberSuspend(FiberSuspend* curr) {
+    noteContinuation(curr->fiber->type);
+  }
+
   void noteContinuation(Type type) {
-    if (type.isContinuation()) {
+    if (type.isContinuation() || type.isFiber()) {
       funcInfos[index].contTypes.insert(type.getHeapType());
     }
   }
@@ -765,8 +784,16 @@ void DAE2::analyzeModule() {
     unrewritableRoots.insert(getRootType(tag->type));
   }
   for (Index i = 0; i < wasm->functions.size(); ++i) {
+    if (funcInfos[i].usedInIntrinsic) {
+      unrewritableRoots.insert(
+        getRootType(wasm->functions[i]->type.getHeapType()));
+    }
     for (auto type : funcInfos[i].contTypes) {
-      unrewritableRoots.insert(getRootType(type.getContinuation().type));
+      if (type.isContinuation()) {
+        unrewritableRoots.insert(getRootType(type.getContinuation().type));
+      } else if (type.isFiber()) {
+        unrewritableRoots.insert(getRootType(type.getFiber().type));
+      }
     }
   }
 

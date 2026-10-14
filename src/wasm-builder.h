@@ -1490,6 +1490,39 @@ public:
     ret->finalize();
     return ret;
   }
+  FiberResumeThrow* makeFiberResumeThrow(HeapType fiberType,
+                                         Name tag,
+                                         Name handler,
+                                         ExpressionList&& operands,
+                                         Expression* fiber) {
+    auto* ret = wasm.allocator.alloc<FiberResumeThrow>();
+    if (fiberType.isFiber()) {
+      ret->type = fiberType.getFiber().type.getSignature().results;
+    }
+    ret->tag = tag;
+    ret->handler = handler;
+    ret->operands = std::move(operands);
+    ret->fiber = fiber;
+    ret->finalize();
+    return ret;
+  }
+  template<typename T>
+  FiberResumeThrow* makeFiberResumeThrow(HeapType fiberType,
+                                         Name tag,
+                                         Name handler,
+                                         const T& operands,
+                                         Expression* fiber) {
+    auto* ret = wasm.allocator.alloc<FiberResumeThrow>();
+    if (fiberType.isFiber()) {
+      ret->type = fiberType.getFiber().type.getSignature().results;
+    }
+    ret->tag = tag;
+    ret->handler = handler;
+    ret->operands.set(operands);
+    ret->fiber = fiber;
+    ret->finalize();
+    return ret;
+  }
   FiberSuspend* makeFiberSuspend(HeapType fiberType,
                                  ExpressionList&& operands,
                                  Expression* fiber) {

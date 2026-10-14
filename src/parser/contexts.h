@@ -1025,6 +1025,11 @@ struct NullInstrParserCtx {
     return Ok{};
   }
   template<typename HeapTypeT>
+  Result<> makeFiberResumeThrow(
+    Index, const std::vector<Annotation>&, HeapTypeT, TagIdxT, LabelIdxT) {
+    return Ok{};
+  }
+  template<typename HeapTypeT>
   Result<> makeFiberSuspend(Index, const std::vector<Annotation>&, HeapTypeT) {
     return Ok{};
   }
@@ -3161,6 +3166,14 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
                            HeapType type,
                            Index label) {
     return withLoc(pos, irBuilder.makeFiberResume(type, label));
+  }
+
+  Result<> makeFiberResumeThrow(Index pos,
+                                const std::vector<Annotation>& annotations,
+                                HeapType type,
+                                Name tag,
+                                Index label) {
+    return withLoc(pos, irBuilder.makeFiberResumeThrow(type, tag, label));
   }
 
   Result<> makeFiberSuspend(Index pos,

@@ -1355,6 +1355,17 @@ private:
       if (trapOnNull(curr->fiber)) {
         return;
       }
+      parent.breakTargets.insert(curr->handler);
+      parent.calls = true;
+      if (parent.features.hasExceptionHandling() && parent.tryDepth == 0) {
+        parent.throws_ = true;
+      }
+    }
+    void visitFiberResumeThrow(FiberResumeThrow* curr) {
+      if (trapOnNull(curr->fiber)) {
+        return;
+      }
+      parent.breakTargets.insert(curr->handler);
       parent.calls = true;
       if (parent.features.hasExceptionHandling() && parent.tryDepth == 0) {
         parent.throws_ = true;
@@ -1364,6 +1375,7 @@ private:
       if (trapOnNull(curr->fiber)) {
         return;
       }
+      parent.suspends = true;
       parent.calls = true;
       if (parent.features.hasExceptionHandling() && parent.tryDepth == 0) {
         parent.throws_ = true;
@@ -1426,7 +1438,8 @@ private:
       }
       // If stack switching is enabled and we don't have global effects
       // information, assume that the call target may suspend.
-      if (parent.features.hasStackSwitching()) {
+      if (parent.features.hasStackSwitching() ||
+          parent.features.hasReifiedFibers()) {
         parent.suspends = true;
       }
     }

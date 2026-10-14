@@ -211,7 +211,7 @@ struct TypeRefining : public Pass {
           }
           // Do not use the GUFA type if it is a continuation, as we cannot add
           // casts to fix up issues later. Instead, use the original type.
-          if (gufaType.isContinuation()) {
+          if (gufaType.isContinuation() || gufaType.isFiber()) {
             gufaType = fields[i].type;
           }
           infos[i] = LUBFinder(gufaType);

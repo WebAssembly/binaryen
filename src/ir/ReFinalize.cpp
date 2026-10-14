@@ -221,6 +221,14 @@ void ReFinalize::visitFiberResume(FiberResume* curr) {
       curr->fiber->type.getHeapType().getFiber().type.getSignature().results);
   }
 }
+void ReFinalize::visitFiberResumeThrow(FiberResumeThrow* curr) {
+  curr->finalize();
+  if (curr->fiber->type.isFiber()) {
+    updateBreakValueType(
+      curr->handler,
+      curr->fiber->type.getHeapType().getFiber().type.getSignature().results);
+  }
+}
 void ReFinalize::visitFiberSuspend(FiberSuspend* curr) { curr->finalize(); }
 
 void ReFinalize::visitExport(Export* curr) { WASM_UNREACHABLE("unimp"); }

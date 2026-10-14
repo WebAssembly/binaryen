@@ -357,6 +357,8 @@ Result<> makeFiberNew(Ctx&, Index, const std::vector<Annotation>&);
 template<typename Ctx>
 Result<> makeFiberResume(Ctx&, Index, const std::vector<Annotation>&);
 template<typename Ctx>
+Result<> makeFiberResumeThrow(Ctx&, Index, const std::vector<Annotation>&);
+template<typename Ctx>
 Result<> makeFiberSuspend(Ctx&, Index, const std::vector<Annotation>&);
 
 template<typename Ctx>
@@ -3034,6 +3036,23 @@ Result<> makeFiberResume(Ctx& ctx,
   CHECK_ERR(label);
 
   return ctx.makeFiberResume(pos, annotations, *type, *label);
+}
+
+// fiberresumethrow ::= 'fiber.resume_throw' typeidx tagidx labelidx
+template<typename Ctx>
+Result<> makeFiberResumeThrow(Ctx& ctx,
+                              Index pos,
+                              const std::vector<Annotation>& annotations) {
+  auto type = typeidx(ctx);
+  CHECK_ERR(type);
+
+  auto tag = tagidx(ctx);
+  CHECK_ERR(tag);
+
+  auto label = labelidx(ctx);
+  CHECK_ERR(label);
+
+  return ctx.makeFiberResumeThrow(pos, annotations, *type, *tag, *label);
 }
 
 // fibersuspend ::= 'fiber.suspend' typeidx

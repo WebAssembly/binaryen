@@ -163,6 +163,11 @@ struct DAEScanner
     currInfo->hasUnseenCalls.insert(curr->func);
   }
 
+  void visitFiberNew(FiberNew* curr) {
+    auto* currInfo = info ? info : &(*infoMap)[Name()];
+    currInfo->hasUnseenCalls.insert(curr->func);
+  }
+
   // main entry point
 
   void doWalkFunction(Function* func) {

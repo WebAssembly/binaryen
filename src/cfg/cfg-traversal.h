@@ -539,12 +539,15 @@ struct CFGWalker : public PostWalker<SubType, VisitorType> {
         break;
       }
       case Expression::Id::ResumeId:
-      case Expression::Id::ResumeThrowId: {
+      case Expression::Id::ResumeThrowId:
+      case Expression::Id::FiberResumeId:
+      case Expression::Id::FiberResumeThrowId: {
         self->pushTask(SubType::doEndResume, currp);
         break;
       }
       case Expression::Id::SuspendId:
-      case Expression::Id::StackSwitchId: {
+      case Expression::Id::StackSwitchId:
+      case Expression::Id::FiberSuspendId: {
         auto* module = self->getModule();
         if (!module || module->features.hasExceptionHandling()) {
           // This might throw, so run the code to handle that.

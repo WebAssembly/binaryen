@@ -64,6 +64,7 @@ struct SignatureRefining : public Pass {
       std::vector<Call*> calls;
       std::vector<CallIndirect*> callIndirects;
       std::vector<CallRef*> callRefs;
+      std::vector<FiberNew*> fiberNews;
 
       // Additional calls to take into account. We store intrinsic calls here,
       // as they must appear twice: call.without.effects is both a normal call
@@ -101,7 +102,6 @@ struct SignatureRefining : public Pass {
           info.canModify = false;
           return;
         }
-
         struct CallFinder : public PostWalker<CallFinder> {
           Info& info;
 
@@ -112,6 +112,7 @@ struct SignatureRefining : public Pass {
             info.callIndirects.push_back(curr);
           }
           void visitCallRef(CallRef* curr) { info.callRefs.push_back(curr); }
+          void visitFiberNew(FiberNew* curr) { info.fiberNews.push_back(curr); }
         } callFinder(info);
         callFinder.walk(func->body);
 
@@ -155,6 +156,11 @@ struct SignatureRefining : public Pass {
         }
       }
 
+      for (auto* fiberNew : info.fiberNews) {
+        allInfo[module->getFunction(fiberNew->func)->type.getHeapType()]
+          .canModify = false;
+      }
+
       // Add the function's return LUB to the one for the heap type of that
       // function.
       allInfo[func->type.getHeapType()].resultsLUB.combine(info.resultsLUB);
@@ -181,10 +187,14 @@ struct SignatureRefining : public Pass {
 
     // Continuations must not have params or results refined, because we do not
     // update their users (e.g. cont.bind, resume) with new types.
-    if (module->features.hasStackSwitching()) {
+    if (module->features.hasStackSwitching() ||
+        module->features.hasReifiedFibers()) {
       for (auto type : ModuleUtils::collectHeapTypes(*module)) {
         if (type.isContinuation()) {
           allInfo[type.getContinuation().type].canModify = false;
+        }
+        if (type.isFiber()) {
+          allInfo[type.getFiber().type].canModify = false;
         }
       }
     }

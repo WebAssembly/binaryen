@@ -79,6 +79,8 @@ struct FunctionRefReplacer
 
   void visitRefFunc(RefFunc* curr) { maybeReplace(curr->func); }
 
+  void visitFiberNew(FiberNew* curr) { maybeReplace(curr->func); }
+
 private:
   MaybeReplace maybeReplace;
 };

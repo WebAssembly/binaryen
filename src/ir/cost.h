@@ -895,6 +895,13 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
     }
     return ret;
   }
+  CostType visitFiberResumeThrow(FiberResumeThrow* curr) {
+    CostType ret = 12 + visit(curr->fiber);
+    for (auto* arg : curr->operands) {
+      ret += visit(arg);
+    }
+    return ret;
+  }
   CostType visitFiberSuspend(FiberSuspend* curr) {
     CostType ret = 12 + visit(curr->fiber);
     for (auto* arg : curr->operands) {

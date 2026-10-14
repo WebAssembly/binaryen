@@ -624,6 +624,7 @@ instructions = [
     # Reified fibers instructions
     ("fiber.new",            "makeFiberNew()"),
     ("fiber.resume",         "makeFiberResume()"),
+    ("fiber.resume_throw",   "makeFiberResumeThrow()"),
     ("fiber.suspend",        "makeFiberSuspend()"),
     # GC
     ("ref.i31",              "makeRefI31(Unshared)"),

@@ -1713,6 +1713,27 @@ void FiberResume::finalize() {
   type = Type::none;
 }
 
+void FiberResumeThrow::finalize() {
+  if (fiber->type == Type::unreachable) {
+    type = Type::unreachable;
+    return;
+  }
+  if (handleUnreachableOperands(this)) {
+    return;
+  }
+  if (fiber->type.isNull()) {
+    type = getMaximallyUninhabitable(type);
+    return;
+  }
+  if (fiber->type.isFiber()) {
+    const Signature& sig =
+      fiber->type.getHeapType().getFiber().type.getSignature();
+    type = sig.results;
+    return;
+  }
+  type = Type::none;
+}
+
 void FiberSuspend::finalize() {
   if (fiber->type == Type::unreachable) {
     type = Type::unreachable;

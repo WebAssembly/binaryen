@@ -86,6 +86,10 @@ std::unordered_set<Function*> getReferencedFuncs(Module& module,
     void visitRefFunc(RefFunc* refFunc) {
       referencedFuncs->insert(getModule()->getFunction(refFunc->func));
     }
+
+    void visitFiberNew(FiberNew* fiberNew) {
+      referencedFuncs->insert(getModule()->getFunction(fiberNew->func));
+    }
   };
 
   std::unordered_map<Function*, std::unordered_set<Function*>>

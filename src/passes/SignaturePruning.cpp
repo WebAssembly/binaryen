@@ -101,6 +101,7 @@ struct SignaturePruning : public Pass {
     struct Info {
       std::vector<Call*> calls;
       std::vector<CallRef*> callRefs;
+      std::vector<FiberNew*> fiberNews;
 
       std::unordered_set<Index> usedParams;
 
@@ -119,6 +120,7 @@ struct SignaturePruning : public Pass {
 
         info.calls = std::move(FindAll<Call>(func->body).list);
         info.callRefs = std::move(FindAll<CallRef>(func->body).list);
+        info.fiberNews = std::move(FindAll<FiberNew>(func->body).list);
         info.usedParams = ParamUtils::getUsedParams(func, module);
       });
 
@@ -172,6 +174,11 @@ struct SignaturePruning : public Pass {
         }
       }
 
+      for (auto* fiberNew : info.fiberNews) {
+        allInfo[module->getFunction(fiberNew->func)->type.getHeapType()]
+          .optimizable = false;
+      }
+
       // A parameter used in this function is used in the heap type - just one
       // function is enough to prevent the parameter from being removed.
       auto& allUsedParams = allInfo[func->type.getHeapType()].usedParams;
@@ -203,10 +210,14 @@ struct SignaturePruning : public Pass {
     // Continuations must not have params refined, because we do not update
     // their users (e.g. cont.bind, resume) with new types.
     // TODO: support refining continuations
-    if (module->features.hasStackSwitching()) {
+    if (module->features.hasStackSwitching() ||
+        module->features.hasReifiedFibers()) {
       for (auto type : ModuleUtils::collectHeapTypes(*module)) {
         if (type.isContinuation()) {
           allInfo[type.getContinuation().type].optimizable = false;
+        }
+        if (type.isFiber()) {
+          allInfo[type.getFiber().type].optimizable = false;
         }
       }
     }

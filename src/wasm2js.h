@@ -2502,6 +2502,10 @@ Ref Wasm2JSBuilder::processExpression(Expression* curr,
       unimplemented(curr);
       WASM_UNREACHABLE("unimp");
     }
+    Ref visitFiberResumeThrow(FiberResumeThrow* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE("unimp");
+    }
     Ref visitFiberSuspend(FiberSuspend* curr) {
       unimplemented(curr);
       WASM_UNREACHABLE("unimp");

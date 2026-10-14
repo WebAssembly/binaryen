@@ -596,6 +596,7 @@ public:
   void visitStackSwitch(StackSwitch* curr);
   void visitFiberNew(FiberNew* curr);
   void visitFiberResume(FiberResume* curr);
+  void visitFiberResumeThrow(FiberResumeThrow* curr);
   void visitFiberSuspend(FiberSuspend* curr);
 
   void visitFunction(Function* curr);
@@ -5035,6 +5036,68 @@ void FunctionValidator::visitFiberResume(FiberResume* curr) {
 
   shouldBeEqualOrFirstIsUnreachable(
     curr->type, resumeResults, curr, "fiber.resume result type mismatch");
+
+  noteBreak(curr->handler, resumeResults, curr);
+}
+
+void FunctionValidator::visitFiberResumeThrow(FiberResumeThrow* curr) {
+  if (!shouldBeTrue(!getModule() || getModule()->features.hasReifiedFibers(),
+                    curr,
+                    "fiber.resume_throw requires reified-fibers "
+                    "[--enable-reified-fibers]")) {
+    return;
+  }
+
+  auto* tag = getModule()->getTagOrNull(curr->tag);
+  if (!shouldBeTrue(!!tag, curr, "fiber.resume_throw tag must exist")) {
+    return;
+  }
+
+  if (curr->fiber->type == Type::unreachable) {
+    return;
+  }
+
+  if (!shouldBeTrue(curr->fiber->type.isRef(),
+                    curr,
+                    "fiber.resume_throw fiber must be a reference")) {
+    return;
+  }
+
+  auto type = curr->fiber->type.getHeapType();
+  if (type.isMaybeShared(HeapType::nofiber)) {
+    return;
+  }
+
+  if (!shouldBeTrue(
+        type.isFiber(),
+        curr,
+        "fiber.resume_throw fiber must have a defined fiber type")) {
+    return;
+  }
+
+  auto fiber = type.getFiber();
+  auto resumeResults = fiber.type.getSignature().results;
+  auto tagParams = tag->type.getSignature().params;
+
+  if (!shouldBeTrue(curr->operands.size() == tagParams.size(),
+                    curr,
+                    "fiber.resume_throw argument count mismatch")) {
+    return;
+  }
+
+  for (Index i = 0; i < tagParams.size(); ++i) {
+    if (!shouldBeSubType(curr->operands[i]->type,
+                         tagParams[i],
+                         curr,
+                         "fiber.resume_throw argument type mismatch")) {
+      if (!info.quiet) {
+        getStream() << "(at index " << i << ")\n";
+      }
+    }
+  }
+
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->type, resumeResults, curr, "fiber.resume_throw result type mismatch");
 
   noteBreak(curr->handler, resumeResults, curr);
 }

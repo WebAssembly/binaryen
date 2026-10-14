@@ -119,6 +119,7 @@ DELEGATE(ResumeThrow);
 DELEGATE(StackSwitch);
 DELEGATE(FiberNew);
 DELEGATE(FiberResume);
+DELEGATE(FiberResumeThrow);
 DELEGATE(FiberSuspend);
 DELEGATE(StructWait);
 DELEGATE(WideIntAddSub);

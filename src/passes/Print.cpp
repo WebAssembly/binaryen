@@ -2725,6 +2725,18 @@ struct PrintExpressionContents
     o << ' ';
     curr->handler.print(o);
   }
+  void visitFiberResumeThrow(FiberResumeThrow* curr) {
+    printMedium(o, "fiber.resume_throw ");
+    if (curr->fiber->type.isFiber()) {
+      printHeapTypeName(curr->fiber->type.getHeapType());
+    } else {
+      o << "<invalid-fiber-type>";
+    }
+    o << ' ';
+    curr->tag.print(o);
+    o << ' ';
+    curr->handler.print(o);
+  }
   void visitFiberSuspend(FiberSuspend* curr) {
     printMedium(o, "fiber.suspend ");
     if (curr->fiber->type.isFiber()) {

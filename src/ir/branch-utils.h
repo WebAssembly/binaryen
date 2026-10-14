@@ -112,6 +112,18 @@ void operateOnScopeNameUsesAndSentTypes(Expression* expr, T func) {
         }
         func(name, sent);
       }
+    } else if (auto* frt = expr->dynCast<FiberResumeThrow>()) {
+      if (frt->handler == name) {
+        Type sent = Type::none;
+        if (frt->fiber->type.isRef() &&
+            frt->fiber->type.getHeapType().isFiber()) {
+          sent = frt->fiber->type.getHeapType()
+                   .getFiber()
+                   .type.getSignature()
+                   .results;
+        }
+        func(name, sent);
+      }
     } else {
       assert(expr->is<Try>() || expr->is<Rethrow>()); // delegate or rethrow
     }
@@ -144,6 +156,8 @@ void operateOnScopeNameUsesAndSentValues(Expression* expr, T func) {
     } else if (expr->is<ResumeThrow>()) {
       func(name, nullptr);
     } else if (expr->is<FiberResume>()) {
+      func(name, nullptr);
+    } else if (expr->is<FiberResumeThrow>()) {
       func(name, nullptr);
     } else {
       assert(expr->is<Try>() || expr->is<Rethrow>()); // delegate or rethrow

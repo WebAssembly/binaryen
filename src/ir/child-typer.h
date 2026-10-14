@@ -1479,6 +1479,32 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
     }
   }
 
+  void visitFiberResumeThrow(FiberResumeThrow* curr,
+                             std::optional<HeapType> ft = std::nullopt) {
+    if (!ft) {
+      if (!curr->fiber->type.isRef()) {
+        self().noteUnknown();
+        return;
+      }
+      ft = curr->fiber->type.getHeapType();
+    }
+    if (!ft->isFiber()) {
+      self().noteUnknown();
+      return;
+    }
+    note(&curr->fiber, Type(*ft, Nullable));
+    auto* tag = wasm.getTagOrNull(curr->tag);
+    if (!tag) {
+      self().noteUnknown();
+      return;
+    }
+    auto params = tag->type.getSignature().params;
+    assert(params.size() == curr->operands.size());
+    for (size_t i = 0; i < params.size(); ++i) {
+      note(&curr->operands[i], params[i]);
+    }
+  }
+
   void visitFiberSuspend(FiberSuspend* curr,
                          std::optional<HeapType> ft = std::nullopt) {
     if (!ft) {

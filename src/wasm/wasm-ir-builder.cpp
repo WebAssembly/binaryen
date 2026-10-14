@@ -786,6 +786,13 @@ public:
     return popConstrainedChildren(children);
   }
 
+  Result<> visitFiberResumeThrow(FiberResumeThrow* curr,
+                                 std::optional<HeapType> ft = std::nullopt) {
+    std::vector<Child> children;
+    ConstraintCollector{builder, children}.visitFiberResumeThrow(curr, ft);
+    return popConstrainedChildren(children);
+  }
+
   Result<> visitFiberSuspend(FiberSuspend* curr,
                              std::optional<HeapType> ft = std::nullopt) {
     std::vector<Child> children;
@@ -3010,6 +3017,30 @@ Result<> IRBuilder::makeFiberResume(HeapType type, Index label) {
 
   push(builder.makeFiberResume(
     type, *labelName, std::move(curr.operands), curr.fiber));
+  return Ok{};
+}
+
+Result<> IRBuilder::makeFiberResumeThrow(HeapType type, Name tag, Index label) {
+  if (!type.isFiber()) {
+    return Err{"expected fiber type"};
+  }
+  if (!wasm.getTagOrNull(tag)) {
+    return Err{"invalid tag"};
+  }
+  Result<Name> labelName = getLabelName(label);
+  CHECK_ERR(labelName);
+  Result<Type> labelType = getLabelType(label);
+  CHECK_ERR(labelType);
+
+  FiberResumeThrow curr(wasm.allocator);
+  curr.tag = tag;
+  curr.handler = *labelName;
+  auto tagParams = wasm.getTag(tag)->type.getSignature().params;
+  curr.operands.resize(tagParams.size());
+  CHECK_ERR(ChildPopper{*this}.visitFiberResumeThrow(&curr, type));
+
+  push(builder.makeFiberResumeThrow(
+    type, tag, *labelName, std::move(curr.operands), curr.fiber));
   return Ok{};
 }
 

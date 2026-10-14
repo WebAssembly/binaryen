@@ -3892,6 +3892,12 @@ Result<> WasmBinaryReader::readInst() {
       auto label = getU32LEB();
       return builder.makeFiberResume(type, label);
     }
+    case BinaryConsts::FiberResumeThrow: {
+      auto type = getIndexedHeapType();
+      auto tag = getTagName(getU32LEB());
+      auto label = getU32LEB();
+      return builder.makeFiberResumeThrow(type, tag, label);
+    }
     case BinaryConsts::FiberSuspend: {
       auto type = getIndexedHeapType();
       return builder.makeFiberSuspend(type);

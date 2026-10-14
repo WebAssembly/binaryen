@@ -1447,9 +1447,33 @@ struct InfoCollector
     // TODO: optimize when possible
     addRoot(curr);
   }
-  void visitFiberNew(FiberNew* curr) { WASM_UNREACHABLE("unimp"); }
-  void visitFiberResume(FiberResume* curr) { WASM_UNREACHABLE("unimp"); }
-  void visitFiberSuspend(FiberSuspend* curr) { WASM_UNREACHABLE("unimp"); }
+  void visitFiberNew(FiberNew* curr) {
+    addRoot(curr);
+    auto* target = getModule()->getFunction(curr->func);
+    auto params = target->getParams();
+    for (Index i = 0; i < params.size(); i++) {
+      if (isRelevant(params[i])) {
+        info.links.push_back(
+          {getTypeLocation(params[i]), ParamLocation{target, i}});
+      }
+    }
+  }
+  template<typename T> void handleFiberResume(T* curr) {
+    addRoot(curr);
+    auto targetType = findBreakTarget(curr->handler)->type;
+    for (Index i = 0; i < targetType.size(); i++) {
+      if (isRelevant(targetType[i])) {
+        info.links.push_back({getTypeLocation(targetType[i]),
+                              getBreakTargetLocation(curr->handler, i)});
+      }
+    }
+  }
+  void visitFiberResume(FiberResume* curr) { handleFiberResume(curr); }
+  void visitFiberResumeThrow(FiberResumeThrow* curr) {
+    handleFiberResume(curr);
+    handleThrow(curr);
+  }
+  void visitFiberSuspend(FiberSuspend* curr) { addRoot(curr); }
 
   void visitFunction(Function* func) {
     // Functions with a result can flow a value out from their body.

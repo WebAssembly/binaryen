@@ -3229,6 +3229,17 @@ void BinaryInstWriter::visitFiberResume(FiberResume* curr) {
   o << U32LEB(getBreakIndex(curr->handler));
 }
 
+void BinaryInstWriter::visitFiberResumeThrow(FiberResumeThrow* curr) {
+  if (curr->fiber->type.isNull()) {
+    emitUnreachable();
+    return;
+  }
+  o << static_cast<int8_t>(BinaryConsts::FiberResumeThrow);
+  parent.writeIndexedHeapType(curr->fiber->type.getHeapType());
+  o << U32LEB(parent.getTagIndex(curr->tag));
+  o << U32LEB(getBreakIndex(curr->handler));
+}
+
 void BinaryInstWriter::visitFiberSuspend(FiberSuspend* curr) {
   if (curr->fiber->type.isNull()) {
     emitUnreachable();

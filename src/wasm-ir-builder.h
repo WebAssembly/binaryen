@@ -324,6 +324,7 @@ public:
   Result<> makeStackSwitch(HeapType ct, Name tag);
   Result<> makeFiberNew(HeapType fiberType, Name func);
   Result<> makeFiberResume(HeapType fiberType, Index label);
+  Result<> makeFiberResumeThrow(HeapType fiberType, Name tag, Index label);
   Result<> makeFiberSuspend(HeapType fiberType);
 
   // Private functions that must be public for technical reasons.

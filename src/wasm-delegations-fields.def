@@ -934,6 +934,13 @@ DELEGATE_FIELD_CHILD(FiberResume, fiber)
 DELEGATE_FIELD_SCOPE_NAME_USE(FiberResume, handler)
 DELEGATE_FIELD_CASE_END(FiberResume)
 
+DELEGATE_FIELD_CASE_START(FiberResumeThrow)
+DELEGATE_FIELD_CHILD_VECTOR(FiberResumeThrow, operands)
+DELEGATE_FIELD_CHILD(FiberResumeThrow, fiber)
+DELEGATE_FIELD_SCOPE_NAME_USE(FiberResumeThrow, handler)
+DELEGATE_FIELD_NAME_KIND(FiberResumeThrow, tag, ModuleItemKind::Tag)
+DELEGATE_FIELD_CASE_END(FiberResumeThrow)
+
 DELEGATE_FIELD_CASE_START(FiberSuspend)
 DELEGATE_FIELD_CHILD(FiberSuspend, fiber)
 DELEGATE_FIELD_CHILD_VECTOR(FiberSuspend, operands)

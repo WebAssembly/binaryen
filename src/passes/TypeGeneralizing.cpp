@@ -915,6 +915,9 @@ struct TransferFn : OverriddenVisitor<TransferFn> {
   void visitStackSwitch(StackSwitch* curr) { WASM_UNREACHABLE("TODO"); }
   void visitFiberNew(FiberNew* curr) { WASM_UNREACHABLE("TODO"); }
   void visitFiberResume(FiberResume* curr) { WASM_UNREACHABLE("TODO"); }
+  void visitFiberResumeThrow(FiberResumeThrow* curr) {
+    WASM_UNREACHABLE("TODO");
+  }
   void visitFiberSuspend(FiberSuspend* curr) { WASM_UNREACHABLE("TODO"); }
 };
 
