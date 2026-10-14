@@ -372,10 +372,6 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
   }
   void visitStructGet(StructGet* curr) {}
   void visitStructSet(StructSet* curr) {
-    if (curr->ref->type.isRef()) {
-      self()->noteNonFlowSubtype(curr->ref,
-                                 Type(curr->ref->type.getHeapType(), Nullable));
-    }
     if (!curr->ref->type.isStruct()) {
       return;
     }
@@ -383,10 +379,6 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
     self()->noteSubtype(curr->value, fields[curr->index].type);
   }
   void visitStructRMW(StructRMW* curr) {
-    if (curr->ref->type.isRef()) {
-      self()->noteNonFlowSubtype(curr->ref,
-                                 Type(curr->ref->type.getHeapType(), Nullable));
-    }
     if (!curr->ref->type.isStruct()) {
       return;
     }
@@ -394,10 +386,6 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
     self()->noteSubtype(curr->value, fields[curr->index].type);
   }
   void visitStructCmpxchg(StructCmpxchg* curr) {
-    if (curr->ref->type.isRef()) {
-      self()->noteNonFlowSubtype(curr->ref,
-                                 Type(curr->ref->type.getHeapType(), Nullable));
-    }
     if (!curr->ref->type.isStruct()) {
       return;
     }
@@ -414,10 +402,6 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
   void visitStructWait(StructWait* curr) {
     self()->noteSubtype(curr->waitqueue,
                         Type(HeapTypes::sharedWaitqueue, Nullable));
-    if (curr->ref->type.isRef()) {
-      self()->noteNonFlowSubtype(curr->ref,
-                                 Type(curr->ref->type.getHeapType(), Nullable));
-    }
     if (!curr->ref->type.isStruct()) {
       return;
     }
