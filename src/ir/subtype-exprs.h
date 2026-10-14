@@ -291,11 +291,7 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
   void visitThrowRef(ThrowRef* curr) {
     self()->noteNonFlowSubtype(curr->exnref, Type(HeapType::exn, Nullable));
   }
-  void visitTupleMake(TupleMake* curr) {
-    for (auto* op : curr->operands) {
-      self()->noteNonFlowSubtype(op, op->type);
-    }
-  }
+  void visitTupleMake(TupleMake* curr) {}
   void visitTupleExtract(TupleExtract* curr) {}
   void visitRefI31(RefI31* curr) {}
   void visitI31Get(I31Get* curr) {
@@ -325,10 +321,9 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
     // more? etc.), so we do the simple thing here for now of requiring the
     // target type not generalize.
     //
-    if (curr->target->type.isRef()) {
-      self()->noteNonFlowSubtype(
-        curr->target, Type(curr->target->type.getHeapType(), Nullable));
-    }
+    // Note that this could be |noteNonFlowSubtype| but since we are comparing
+    // a type to itself here, that does not matter.
+    self()->noteSubtype(curr->target, curr->target->type);
 
     if (curr->target->type.isSignature()) {
       handleCall(curr, curr->target->type.getHeapType().getSignature());
