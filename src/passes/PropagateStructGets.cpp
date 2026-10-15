@@ -197,7 +197,7 @@ struct PropagateStructGets
 
       auto getIt = getParents.find(localIndex);
       if (getIt == getParents.end()) {
-        // No struct.get parents for this local.
+        // No struct.get parents for this local's gets.
         continue;
       }
 
@@ -205,25 +205,25 @@ struct PropagateStructGets
       // gets for the local. If so, then we understand all the gets, and this
       // situation is the pattern we optimize: each local.get is consumed
       // by a struct.get.
-      const auto& sgets = getIt->second;
-      assert(!sgets.empty()); // if we added the local, the vec is nonempty
-      if (sgets.size() != numGets[localIndex]) {
+      const auto& getStructGets = getIt->second;
+      assert(!getStructGets.empty()); // if we added the local, the vec is nonempty
+      if (getStructGets.size() != numGets[localIndex]) {
         continue;
       }
 
       // Veirfy all the struct.gets operate on the same field in the struct, and
       // in the same way.
       // TODO: handle multiple field indexes, and mixtures of signed/unsigned
-      Index fieldIndex = sgets[0]->index;
-      bool isSigned = sgets[0]->signed_;
-      Type fieldType = sgets[0]->type;
+      Index fieldIndex = getStructGets[0]->index;
+      bool isSigned = getStructGets[0]->signed_;
+      Type fieldType = getStructGets[0]->type;
       Type localType = fieldType.isRef() ? fieldType.with(Nullable) : fieldType;
       if (!localType.isDefaultable()) {
         continue;
       }
 
       bool ok = true;
-      for (auto* sget : sgets) {
+      for (auto* sget : getStructGets) {
         if (sget->index != fieldIndex || sget->signed_ != isSigned ||
             sget->type != fieldType) {
           ok = false;
@@ -317,7 +317,7 @@ struct PropagateStructGets
       // Finally, if the local is nullable, see if the null default value can
       // actually be read.
       if (func->getLocalType(localIndex).isNullable()) {
-        for (auto* sget : sgets) {
+        for (auto* sget : getStructGets) {
           if (localGraph.getSets(sget->ref->cast<LocalGet>())
                 .contains(nullptr)) {
             ok = false;
