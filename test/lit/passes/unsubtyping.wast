@@ -2059,3 +2059,34 @@
     )
   )
 )
+
+(module
+ ;; CHECK:      (rec
+ ;; CHECK-NEXT:  (type $super (sub (struct)))
+ (type $super (sub (struct)))
+ ;; CHECK:       (type $sub (sub $super (struct)))
+ (type $sub (sub $super (struct)))
+
+ ;; CHECK:       (type $2 (func))
+
+ ;; CHECK:      (table $t 1 1 (ref null $super))
+ (table $t 1 1 (ref null $super))
+
+ ;; CHECK:      (func $table-grow (type $2)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (table.grow $t
+ ;; CHECK-NEXT:    (struct.new_default $sub)
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $table-grow
+  ;; This requires $sub <: $super.
+  (drop
+   (table.grow $t
+    (struct.new $sub)
+    (i32.const 0)
+   )
+  )
+ )
+)
