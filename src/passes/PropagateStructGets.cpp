@@ -164,19 +164,19 @@ struct PropagateStructGets
     auto* module = getModule();
     const auto& passOptions = getPassOptions();
     Builder builder(*module);
-    std::unique_ptr<LazyLocalGraph> localGraph;
+    LazyLocalGraph localGraph(func, module);
     std::unordered_map<Index, Index> projectedLocals;
 
-    for (auto& [x, localSets] : sets) {
+    for (auto& [localIndex, localSets] : sets) {
       if (localSets.size() < 2) {
         continue;
       }
-      auto getIt = getParents.find(x);
+      auto getIt = getParents.find(localIndex);
       if (getIt == getParents.end()) {
         continue;
       }
       const auto& sgets = getIt->second;
-      if (sgets.empty() || sgets.size() != numGets[x]) {
+      if (sgets.empty() || sgets.size() != numGets[localIndex]) {
         continue;
       }
 
@@ -238,7 +238,7 @@ struct PropagateStructGets
       // either the field is immutable, or every set writes a fresh struct.new
       // that only ever flows into this local's struct.gets.
       auto& field =
-        func->getLocalType(x).getHeapType().getStruct().fields[fieldIndex];
+        func->getLocalType(localIndex).getHeapType().getStruct().fields[fieldIndex];
       if (field.mutable_ != Immutable && !allSetsAreFreshAllocs) {
         continue;
       }
@@ -246,13 +246,10 @@ struct PropagateStructGets
       // If the original local is nullable and the replacement local.get will
       // not trap on null via ref.as_non_null, ensure no get can observe the
       // uninitialized default null value.
-      if (func->getLocalType(x).isNullable() && !fieldType.isNonNullable() &&
+      if (func->getLocalType(localIndex).isNullable() && !fieldType.isNonNullable() &&
           !passOptions.trapsNeverHappen) {
-        if (!localGraph) {
-          localGraph = std::make_unique<LazyLocalGraph>(func, module);
-        }
         for (auto* sget : sgets) {
-          if (localGraph->getSets(sget->ref->cast<LocalGet>())
+          if (localGraph.getSets(sget->ref->cast<LocalGet>())
                 .contains(nullptr)) {
             ok = false;
             break;
@@ -263,7 +260,7 @@ struct PropagateStructGets
         }
       }
 
-      projectedLocals[x] = builder.addVar(func, localType);
+      projectedLocals[localIndex] = builder.addVar(func, localType);
     }
 
     // Rewrite recorded struct.gets in post-order.
