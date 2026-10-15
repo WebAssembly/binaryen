@@ -41,7 +41,8 @@ namespace wasm {
 
 namespace {
 
-struct PropagateStructGets : public WalkerPass<PostWalker<PropagateStructGets>> {
+struct PropagateStructGets
+  : public WalkerPass<PostWalker<PropagateStructGets>> {
   bool isFunctionParallel() override { return true; }
 
   // New locals created here are always defaultable (nullable when references).
