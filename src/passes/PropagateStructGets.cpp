@@ -335,22 +335,32 @@ struct PropagateStructGets
         if (it == projectedLocals.end()) {
           continue;
         }
+
+        // Replace (struct.get (local.get)) with a local.get of the field, which
+        // is now in a local directly.
         Index newLocal = it->second;
         *currp =
           builder.makeLocalGet(newLocal, func->getLocalType(newLocal));
-      } else if (auto* set = sget->ref->dynCast<LocalSet>()) {
-        auto it = projectedLocals.find(set->index);
+      } else if (auto* tee = sget->ref->dynCast<LocalSet>()) {
+        auto it = projectedLocals.find(tee->index);
         if (it == projectedLocals.end()) {
           continue;
         }
+
+        // Replace (struct.get (local.tee (REF))) with
+        // (local.tee (struct.get (REF))). Before we stashed the ref in a local,
+        // and now we stash the field.
         Index newLocal = it->second;
-        sget->ref = set->value;
+        sget->ref = tee->value;
         sget->finalize();
-        set->index = newLocal;
-        set->value = sget;
-        set->makeTee(func->getLocalType(newLocal));
-        *currp = set;
+        tee->index = newLocal;
+        tee->value = sget;
+        tee->makeTee(func->getLocalType(newLocal));
+        *currp = tee;
       } else if (auto* iff = sget->ref->dynCast<If>()) {
+        // Replace (struct.get (if .. (A) (B))) with
+        // (if .. (struct.get (A)) (struct.get (B))). This avoids an overlapping
+        // live range for the allocations in the If arms.
         iff->ifTrue = builder.makeStructGet(
           sget->index, iff->ifTrue, sget->order, sget->type, sget->signed_);
         iff->ifFalse = builder.makeStructGet(
