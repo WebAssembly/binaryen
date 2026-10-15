@@ -701,4 +701,64 @@
       )
     )
   )
+
+  ;; CHECK:      (func $project-single-set (type $9) (result i32)
+  ;; CHECK-NEXT:  (local $ref (ref null $struct))
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (local.set $1
+  ;; CHECK-NEXT:   (struct.get $struct 0
+  ;; CHECK-NEXT:    (struct.new $struct
+  ;; CHECK-NEXT:     (i32.const 42)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (i32.add
+  ;; CHECK-NEXT:   (local.get $1)
+  ;; CHECK-NEXT:   (local.get $1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; H2L:      (func $project-single-set (type $9) (result i32)
+  ;; H2L-NEXT:  (local $ref (ref null $struct))
+  ;; H2L-NEXT:  (local $1 i32)
+  ;; H2L-NEXT:  (local $2 i32)
+  ;; H2L-NEXT:  (local $3 i32)
+  ;; H2L-NEXT:  (local.set $1
+  ;; H2L-NEXT:   (block (result i32)
+  ;; H2L-NEXT:    (drop
+  ;; H2L-NEXT:     (block (result nullref)
+  ;; H2L-NEXT:      (local.set $3
+  ;; H2L-NEXT:       (i32.const 42)
+  ;; H2L-NEXT:      )
+  ;; H2L-NEXT:      (local.set $2
+  ;; H2L-NEXT:       (local.get $3)
+  ;; H2L-NEXT:      )
+  ;; H2L-NEXT:      (ref.null none)
+  ;; H2L-NEXT:     )
+  ;; H2L-NEXT:    )
+  ;; H2L-NEXT:    (local.get $2)
+  ;; H2L-NEXT:   )
+  ;; H2L-NEXT:  )
+  ;; H2L-NEXT:  (i32.add
+  ;; H2L-NEXT:   (local.get $1)
+  ;; H2L-NEXT:   (local.get $1)
+  ;; H2L-NEXT:  )
+  ;; H2L-NEXT: )
+  (func $project-single-set (result i32)
+    ;; Even with a single local.set, propagating the struct.get to the set
+    ;; deduplicates multiple gets of the same field.
+    (local $ref (ref null $struct))
+    (local.set $ref
+      (struct.new $struct
+        (i32.const 42)
+      )
+    )
+    (i32.add
+      (struct.get $struct 0
+        (local.get $ref)
+      )
+      (struct.get $struct 0
+        (local.get $ref)
+      )
+    )
+  )
 )

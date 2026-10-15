@@ -15,10 +15,10 @@
  */
 
 //
-// Propagate struct.get operations backwards into local sets/tees and into if
+// Propagate struct.get operations backwards into local sets/tees and into If
 // arms that allocate structs:
 //
-//   1. When a struct-typed local is written multiple times and every read of it
+//   1. When a struct-typed local is written and every read of it
 //      (including via local.tee) is immediately consumed by an identical
 //      struct.get of the same field, replace the struct local with a local of
 //      the field's type and perform the struct.get at each local.set/local.tee.
@@ -35,7 +35,27 @@
 //
 //      We do this when we detect a simple situation where all the uses are just
 //      gets like that. In this case, we know Heap2Local can later optimize
-//      the allocation away.
+//      the allocation away. That is, we are detecting a simple case where
+//      nothing escapes and things are easy to optimize, and we handle it
+//      directly. This is simpler than making Heap2Local able to reason about
+//      groups of allocations and their possibly overlapping livenesses, in
+//      situations like this:
+//
+//        x = new Foo(42);
+//        if (condition) x = new Foo(1337);
+//        bar(x.value, x.value);
+//
+//      The allocations here have overlapping live ranges, and Heap2Local
+//      cannot handle them (it sees the x.value operations are not exclusive to
+//      any single allocation). After we simplify things in this pass, the
+//      situation becomes trivial for Heap2Local, as the allocations do not
+//      overlap:
+//
+//        x_value = (new Foo(42)).value;
+//        if (condition) x_value = (new Foo(1337)).value;
+//        bar(x_value, x_value);
+//
+//      TODO verify in tests
 //
 //   2. When a struct.get consumes an if whose arm(s) allocate a struct via
 //      struct.new, sink the struct.get into the if arms. For example:
@@ -168,9 +188,6 @@ struct PropagateStructGets
     std::unordered_map<Index, Index> projectedLocals;
 
     for (auto& [localIndex, localSets] : sets) {
-      if (localSets.size() < 2) {
-        continue;
-      }
       auto getIt = getParents.find(localIndex);
       if (getIt == getParents.end()) {
         continue;
