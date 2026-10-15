@@ -1664,7 +1664,7 @@
   (local $var (ref null $outer-sub))
   ;; The outer struct.get requires (ref null $inner-sub), which is nullable.
   ;; $outer-super's field 0 has non-nullable type (ref $inner-super), which is
-  ;; incomparable with (ref null $inner-sub); we must still stop at $outer-sub.
+  ;; incomparable with the i32 field of $inner-sub; we must still stop at $outer-sub.
   (struct.get $inner-sub 0
    (struct.get $outer-sub 0
     (local.get $var)
