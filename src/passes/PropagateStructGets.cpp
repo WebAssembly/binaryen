@@ -169,7 +169,7 @@ struct PropagateStructGets
 
     for (auto& [localIndex, localSets] : sets) {
       if (localSets.size() < 2) {
-//        continue;
+        continue;
       }
       auto getIt = getParents.find(localIndex);
       if (getIt == getParents.end()) {
