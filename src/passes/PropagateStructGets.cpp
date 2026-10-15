@@ -212,6 +212,9 @@ struct PropagateStructGets
         continue;
       }
 
+      // Veirfy all the struct.gets operate on the same field in the struct, and
+      // in the same way.
+      // TODO: handle multiple field indexes, and mixtures of signed/unsigned
       Index fieldIndex = sgets[0]->index;
       bool isSigned = sgets[0]->signed_;
       Type fieldType = sgets[0]->type;
@@ -232,19 +235,26 @@ struct PropagateStructGets
         continue;
       }
 
+      // Analyze the sets to the local. Things are especially simple if they all
+      // store a fresh allocation, that is, a struct.new.
       bool allSetsAreFreshAllocs = true;
       for (auto* set : localSets) {
         if (set->value->type == Type::unreachable) {
+          // Stop on dead code.
           ok = false;
           break;
         }
         if (set->isTee()) {
-          allSetsAreFreshAllocs = false;
+          allSetsAreFreshAllocs = false; // XXX
           auto teeIt = teeParents.find(set);
           if (teeIt == teeParents.end()) {
+            // This tee does not feed into a struct.get, so the allocation(s)
+            // might escape.
             ok = false;
             break;
           }
+          // Check if the parent struct.get is compatible with all the ones
+          // before, that we checked for the parents of local.gets.
           auto* pget = teeIt->second;
           if (pget->index != fieldIndex || pget->signed_ != isSigned ||
               pget->type != fieldType) {
@@ -252,9 +262,14 @@ struct PropagateStructGets
             break;
           }
         } else {
+          // Not a tee: a normal local.set.
+
           if (!set->value->is<StructNew>()) {
             allSetsAreFreshAllocs = false;
           }
+
+          // If we might trap (setting a nullable value, and traps are possible)
+          // then we cannot optimize, as we would be removing a possible trap.
           if (!set->value->type.isNonNullable() &&
               !passOptions.trapsNeverHappen) {
             ok = false;
