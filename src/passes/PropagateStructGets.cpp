@@ -370,8 +370,11 @@ struct PropagateStructGets
       }
     }
 
-    // Rewrite non-tee local.sets of projected locals.
+    // Rewrite non-tee local.sets of projected locals: all local.sets now store
+    // the field.
     for (auto [x, newLocal] : projectedLocals) {
+      // All the struct.gets are the same, so it is enough to look at the first
+      // and copy it.
       auto* sget = getParents[x][0];
       for (auto* set : sets[x]) {
         if (!set->isTee()) {
