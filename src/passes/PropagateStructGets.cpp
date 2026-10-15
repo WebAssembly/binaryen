@@ -217,10 +217,6 @@ struct PropagateStructGets
       Index fieldIndex = getStructGets[0]->index;
       bool isSigned = getStructGets[0]->signed_;
       Type fieldType = getStructGets[0]->type;
-      Type localType = fieldType.isRef() ? fieldType.with(Nullable) : fieldType;
-      if (!localType.isDefaultable()) {
-        continue;
-      }
 
       bool ok = true;
       for (auto* sget : getStructGets) {
@@ -329,8 +325,14 @@ struct PropagateStructGets
         }
       }
 
-      // Success! The pattern fits, prepare to optimize this local.
-      projectedLocals[localIndex] = builder.addVar(func, localType);
+      // Success! The pattern fits, prepare to optimize this local by adding a
+      // local to store the value in its field. The local is normally of the
+      // type of the field, but nullable since the .
+      Type newLocalType = fieldType.isRef() ? fieldType.with(Nullable) : fieldType;
+      if (!newLocalType.isDefaultable()) {
+        continue;
+      }
+      projectedLocals[localIndex] = builder.addVar(func, newLocalType);
     }
 
     // Rewrite recorded struct.gets in post-order.
