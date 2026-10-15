@@ -98,7 +98,8 @@ struct PropagateStructGets
   // The parent struct.get for each tee.
   std::unordered_map<LocalSet*, StructGet*> teeParents;
 
-  // All struct.gets XXX
+  // All relevant struct.gets in the function, which means the struct.gets that
+  // operate on references that fit the patterns we can optimize.
   std::vector<Expression**> structGets;
 
   // Check if a local index is a reference to a struct. Those are the locals we
@@ -121,10 +122,13 @@ struct PropagateStructGets
   }
 
   void visitStructGet(StructGet* curr) {
+    // Avoid unreachable code, and leave atomic operations for now TODO
     if (curr->type == Type::unreachable ||
         curr->order != MemoryOrder::Unordered) {
       return;
     }
+
+    // See if the reference is one of the patterns we recognize.
     if (auto* get = curr->ref->dynCast<LocalGet>()) {
       if (isStructVar(get->index)) {
         getParents[get->index].push_back(curr);
@@ -151,12 +155,9 @@ struct PropagateStructGets
     }
   }
 
-  void doWalkFunction(Function* func) {
-    if (!getModule()->features.hasGC()) {
-      return;
-    }
-    Super::doWalkFunction(func);
+  void visitFunction(Function* func) {
     if (structGets.empty()) {
+      // Nothing was found to be optimizable in the walk.
       return;
     }
 
