@@ -4619,8 +4619,9 @@ public:
     // Only grow if we are actually changing the size (otherwise it is wasted
     // work, and may OOM unnecessarily).
     if (delta != 0) {
-      if (!info.interface()->growMemory(
-            info.name, (memorySize << pageSizeLog2), (newSize << pageSizeLog2))) {
+      if (!info.interface()->growMemory(info.name,
+                                        (memorySize << pageSizeLog2),
+                                        (newSize << pageSizeLog2))) {
         // We failed to grow the memory in practice, even though it was valid
         // to try to do so.
         return fail;
