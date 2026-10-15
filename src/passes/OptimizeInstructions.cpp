@@ -2349,6 +2349,94 @@ struct OptimizeInstructions
     replaceCurrent(block);
   }
 
+  void visitArrayNewData(ArrayNewData* curr) {
+    // Lower array.new_data with constant operands to array.new_default,
+    // array.new or array.new_fixed. Unlike array.new_data, those are constant
+    // expressions, and more optimizations understand them.
+    if (curr->type == Type::unreachable) {
+      return;
+    }
+
+    auto* offsetConst = curr->offset->dynCast<Const>();
+    auto* sizeConst = curr->size->dynCast<Const>();
+    if (!offsetConst || !sizeConst) {
+      return;
+    }
+
+    auto* seg = getModule()->getDataSegment(curr->segment);
+    if (!seg->isPassive()) {
+      // Active segments are implicitly dropped upon module instantiation.
+      return;
+    }
+
+    auto heapType = curr->type.getHeapType();
+    const auto& element = heapType.getArray().element;
+
+    Address offset = offsetConst->value.getUnsigned();
+    Address size = sizeConst->value.getUnsigned();
+    Address elemBytes = element.getByteSize();
+    Address end;
+    if (std::ckd_add<uint64_t>(&end.addr, offset, size * elemBytes) ||
+        end > seg->data.size()) {
+      // This will trap.
+      return;
+    }
+
+    // A dropped segment acts as if it had length 0, so unless end == 0 this
+    // traps if the segment was dropped at runtime, which we can't rule out.
+    // TODO: Optimize without TNH if the segment is never dropped.
+    if (end > 0 && !getPassOptions().trapsNeverHappen) {
+      return;
+    }
+
+    Builder builder(*getModule());
+
+    if (size == 0) {
+      replaceCurrent(builder.makeArrayNewFixed(heapType, {}));
+      return;
+    }
+
+    auto readElement = [&](Index i) -> Literal {
+      const auto* src = &seg->data[offset + i * elemBytes];
+      // Packed values are truncated when stored, so the extension doesn't
+      // matter; sign-extending gives the shorter encoding (-1 vs 255).
+      return Literal::makeFromMemory(src, element.type, element.getByteSize());
+    };
+
+    // If all elements are equal, array.new is compact at any size.
+    auto first = readElement(0);
+    bool allEqual = true;
+    for (Index i = 1; i < size; i++) {
+      if (readElement(i) != first) {
+        allEqual = false;
+        break;
+      }
+    }
+    if (allEqual) {
+      // visitArrayNew optimizes this further when the value is the default
+      // (to array.new_default) or the size is 1 (to array.new_fixed).
+      auto* sizeExpr = builder.makeConst(int32_t(size));
+      replaceCurrent(
+        builder.makeArrayNew(heapType, sizeExpr, builder.makeConst(first)));
+      return;
+    }
+
+    // array.new_fixed needs a full *.const per element while the segment
+    // stores raw bytes, so only do this for small arrays. Empirically, 64 sits
+    // in a natural gap between small/medium array literals (2D array rows,
+    // enum/switch tables, etc.) and large bulk lookup tables (100+ elements).
+    constexpr uint64_t MaxArrayNewFixedSize = 64;
+    if (size > MaxArrayNewFixedSize) {
+      return;
+    }
+    std::vector<Expression*> values;
+    values.reserve(size);
+    for (Index i = 0; i < size; i++) {
+      values.push_back(builder.makeConst(readElement(i)));
+    }
+    replaceCurrent(builder.makeArrayNewFixed(heapType, values));
+  }
+
   void visitArrayGet(ArrayGet* curr) {
     skipNonNullCast(curr->ref, curr);
     trapOnNull(curr, curr->ref);

@@ -19,6 +19,7 @@
 
 #include <array>
 #include <iostream>
+#include <optional>
 #include <variant>
 
 #include "support/bits.h"
@@ -213,7 +214,11 @@ public:
     }
   }
 
-  static Literal makeFromMemory(const void* p, Type type);
+  // Reads a value of the given type from memory. For i32, a smaller byteSize
+  // (1 or 2) can be given to read a sign-extended packed value. By default the
+  // full size of the type is read.
+  static Literal makeFromMemory(
+    const void* p, Type type, std::optional<unsigned> byteSize = std::nullopt);
 
   static Literal makeSignedMin(Type type) {
     switch (type.getBasic()) {
