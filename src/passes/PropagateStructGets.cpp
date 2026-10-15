@@ -22,9 +22,42 @@
 //      (including via local.tee) is immediately consumed by an identical
 //      struct.get of the same field, replace the struct local with a local of
 //      the field's type and perform the struct.get at each local.set/local.tee.
+//      For example:
+//
+//        x = new Foo(42);
+//        bar(x.value, x.value);
+//
+//      =>
+//
+//        // Store the value directly.
+//        x_value = (new Foo(42)).value;
+//        bar(x_value, x_value);
+//
+//      We do this when we detect a simple situation where all the uses are just
+//      gets like that. In this case, we know Heap2Local can later optimize
+//      the allocation away.
 //
 //   2. When a struct.get consumes an if whose arm(s) allocate a struct via
-//      struct.new, sink the struct.get into the if arms.
+//      struct.new, sink the struct.get into the if arms. For example:
+//
+//        (struct.get $x 3
+//          (if
+//            (..condition..)
+//            (struct.new ..)
+//            (struct.new ..)))
+//
+//      =>
+//
+//        (struct.get $x 3
+//          (if
+//            (..condition..)
+//            (struct.new ..)
+//            (struct.new ..)))
+//
+//      This could be done as a peephole optimization in OptimizeInstructions,
+//      but it generally *increases* code size. Here we only do it when we
+//      detect the proper situation as in point 1, where Heap2Local's followup
+//      optimizations make it worthwhile.
 //
 // This disentangles shared struct locals and control-flow merges so that
 // Heap2Local can optimize the underlying allocations independently.
@@ -52,12 +85,24 @@ struct PropagateStructGets
     return std::make_unique<PropagateStructGets>();
   }
 
+  // Track the number of gets for each local, so that we can see if all gets are
+  // accounted for and understood.
   std::unordered_map<Index, Index> numGets;
+
+  // The sets for each get.
   std::unordered_map<Index, std::vector<LocalSet*>> sets;
+
+  // The parent struct.get for each local.
   std::unordered_map<Index, std::vector<StructGet*>> getParents;
+
+  // The parent struct.get for each tee.
   std::unordered_map<LocalSet*, StructGet*> teeParents;
+
+  // All struct.gets XXX
   std::vector<Expression**> structGets;
 
+  // Check if a local index is a reference to a struct. Those are the locals we
+  // try to optimize.
   bool isStructVar(Index index) {
     auto* func = getFunction();
     return func->isVar(index) && func->getLocalType(index).isStruct();
