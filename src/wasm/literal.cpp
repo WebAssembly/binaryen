@@ -314,11 +314,23 @@ Literal Literal::makeNegOne(Type type) {
   return makeFromInt32(-1, type);
 }
 
-Literal Literal::makeFromMemory(const void* p, Type type) {
+Literal Literal::makeFromMemory(const void* p,
+                                Type type,
+                                std::optional<unsigned> byteSize) {
   assert(type.isNumber());
+  auto size = byteSize.value_or(type.getByteSize());
+  assert(size == type.getByteSize() ||
+         (type == Type::i32 && (size == 1 || size == 2)));
   switch (type.getBasic()) {
     case Type::i32: {
-      return Literal(Bits::readLE<int32_t>(p));
+      switch (size) {
+        case 1:
+          return Literal(int32_t(Bits::readLE<int8_t>(p)));
+        case 2:
+          return Literal(int32_t(Bits::readLE<int16_t>(p)));
+        default:
+          return Literal(Bits::readLE<int32_t>(p));
+      }
     }
     case Type::i64: {
       return Literal(Bits::readLE<int64_t>(p));
