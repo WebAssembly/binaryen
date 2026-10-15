@@ -149,6 +149,7 @@ struct PropagateStructGets
     }
 
     // See if the reference is one of the patterns we recognize.
+    // TODO fallthrough
     if (auto* get = curr->ref->dynCast<LocalGet>()) {
       if (isStructVar(get->index)) {
         getParents[get->index].push_back(curr);
@@ -197,10 +198,17 @@ struct PropagateStructGets
 
       auto getIt = getParents.find(localIndex);
       if (getIt == getParents.end()) {
+        // No struct.get parents for this local.
         continue;
       }
+
+      // Check if the number of struct.gets is equal to the total number of
+      // gets for the local. If so, then we understand all the gets, and this
+      // situation is the pattern we optimize: each local.get is consumed
+      // by a struct.get.
       const auto& sgets = getIt->second;
-      if (sgets.empty() || sgets.size() != numGets[localIndex]) {
+      assert(!sgets.empty()); // if we added the local, the vec is nonempty
+      if (sgets.size() != numGets[localIndex]) {
         continue;
       }
 
