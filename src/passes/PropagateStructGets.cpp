@@ -236,8 +236,9 @@ struct PropagateStructGets
       }
 
       // Analyze the sets to the local. Things are especially simple if they all
-      // store a fresh allocation, that is, a struct.new.
-      bool allSetsAreFreshAllocs = true;
+      // store a fresh unescaping allocation, that is, a struct.new which does
+      // not flow out through a tee.
+      bool allSetsAreUnescapingAllocs = true;
       for (auto* set : localSets) {
         if (set->value->type == Type::unreachable) {
           // Stop on dead code.
@@ -245,7 +246,7 @@ struct PropagateStructGets
           break;
         }
         if (set->isTee()) {
-          allSetsAreFreshAllocs = false; // XXX
+          allSetsAreUnescapingAllocs = false;
           auto teeIt = teeParents.find(set);
           if (teeIt == teeParents.end()) {
             // This tee does not feed into a struct.get, so the allocation(s)
@@ -265,7 +266,7 @@ struct PropagateStructGets
           // Not a tee: a normal local.set.
 
           if (!set->value->is<StructNew>()) {
-            allSetsAreFreshAllocs = false;
+            allSetsAreUnescapingAllocs = false;
           }
 
           // If we might trap (setting a nullable value, and traps are possible)
@@ -286,7 +287,7 @@ struct PropagateStructGets
       // that only ever flows into this local's struct.gets.
       auto& field =
         func->getLocalType(localIndex).getHeapType().getStruct().fields[fieldIndex];
-      if (field.mutable_ != Immutable && !allSetsAreFreshAllocs) {
+      if (field.mutable_ != Immutable && !allSetsAreUnescapingAllocs) {
         continue;
       }
 
