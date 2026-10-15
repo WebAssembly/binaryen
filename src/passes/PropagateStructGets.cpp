@@ -89,7 +89,7 @@ struct PropagateStructGets
   // accounted for and understood.
   std::unordered_map<Index, Index> numGets;
 
-  // The sets for each get.
+  // The sets for each local index.
   std::unordered_map<Index, std::vector<LocalSet*>> sets;
 
   // The parent struct.get for each local.
@@ -169,7 +169,7 @@ struct PropagateStructGets
 
     for (auto& [localIndex, localSets] : sets) {
       if (localSets.size() < 2) {
-        continue;
+//        continue;
       }
       auto getIt = getParents.find(localIndex);
       if (getIt == getParents.end()) {
