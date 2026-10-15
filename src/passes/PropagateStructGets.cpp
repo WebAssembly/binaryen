@@ -188,6 +188,13 @@ struct PropagateStructGets
     std::unordered_map<Index, Index> projectedLocals;
 
     for (auto& [localIndex, localSets] : sets) {
+      if (localSets.size() < 2) {
+        // We only care about the case of 2 or more sets for a local: otherwise,
+        // Heap2Local can handle things perfectly for a single set (and zero is
+        // trivially trapping).
+        continue;
+      }
+
       auto getIt = getParents.find(localIndex);
       if (getIt == getParents.end()) {
         continue;
