@@ -98,9 +98,6 @@ struct PropagateStructGets
   : public WalkerPass<PostWalker<PropagateStructGets>> {
   bool isFunctionParallel() override { return true; }
 
-  // New locals created here are always defaultable (nullable when references).
-  bool requiresNonNullableLocalFixups() override { return false; }
-
   std::unique_ptr<Pass> create() override {
     return std::make_unique<PropagateStructGets>();
   }
@@ -326,13 +323,8 @@ struct PropagateStructGets
       }
 
       // Success! The pattern fits, prepare to optimize this local by adding a
-      // local to store the value in its field. The local is normally of the
-      // type of the field, but nullable since the .
-      Type newLocalType = fieldType.isRef() ? fieldType.with(Nullable) : fieldType;
-      if (!newLocalType.isDefaultable()) {
-        continue;
-      }
-      projectedLocals[localIndex] = builder.addVar(func, newLocalType);
+      // local to store the value in its field.
+      projectedLocals[localIndex] = builder.addVar(func, fieldType);
     }
 
     // Rewrite recorded struct.gets in post-order.
@@ -346,9 +338,6 @@ struct PropagateStructGets
         Index newLocal = it->second;
         Expression* rep =
           builder.makeLocalGet(newLocal, func->getLocalType(newLocal));
-        if (sget->type.isNonNullable()) {
-          rep = builder.makeRefAs(RefAsNonNull, rep);
-        }
         *currp = rep;
       } else if (auto* set = sget->ref->dynCast<LocalSet>()) {
         auto it = projectedLocals.find(set->index);
@@ -362,9 +351,6 @@ struct PropagateStructGets
         set->value = sget;
         set->makeTee(func->getLocalType(newLocal));
         Expression* rep = set;
-        if (sget->type.isNonNullable()) {
-          rep = builder.makeRefAs(RefAsNonNull, rep);
-        }
         *currp = rep;
       } else if (auto* iff = sget->ref->dynCast<If>()) {
         iff->ifTrue = builder.makeStructGet(
