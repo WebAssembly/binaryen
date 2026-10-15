@@ -1641,32 +1641,32 @@
 )
 
 (module
- ;; CHECK:      (type $inner-super (sub (struct)))
- (type $inner-super (sub (struct)))
- ;; CHECK:      (type $inner-sub (sub $inner-super (struct (field i32))))
- (type $inner-sub (sub $inner-super (struct (field i32))))
- ;; CHECK:      (type $outer-super (sub (struct (field (ref $inner-super)))))
- (type $outer-super (sub (struct (field (ref $inner-super)))))
- ;; CHECK:      (type $outer-sub (sub $outer-super (struct (field (ref $inner-sub)))))
- (type $outer-sub (sub $outer-super (struct (field (ref $inner-sub)))))
+ ;; CHECK:      (type $outer-super (sub (struct)))
+ (type $outer-super (sub (struct)))
+ ;; CHECK:      (type $outer-sub (sub $outer-super (struct (field i32))))
+ (type $outer-sub (sub $outer-super (struct (field i32))))
+ ;; CHECK:      (type $inner-super (sub (struct (field (ref $outer-super)))))
+ (type $inner-super (sub (struct (field (ref $outer-super)))))
+ ;; CHECK:      (type $inner-sub (sub $inner-super (struct (field (ref $outer-sub)))))
+ (type $inner-sub (sub $inner-super (struct (field (ref $outer-sub)))))
 
  ;; CHECK:      (type $4 (func (result i32)))
 
  ;; CHECK:      (func $struct-get-non-null-field (type $4) (result i32)
- ;; CHECK-NEXT:  (local $var (ref null $outer-sub))
- ;; CHECK-NEXT:  (struct.get $inner-sub 0
- ;; CHECK-NEXT:   (struct.get $outer-sub 0
+ ;; CHECK-NEXT:  (local $var (ref null $inner-sub))
+ ;; CHECK-NEXT:  (struct.get $outer-sub 0
+ ;; CHECK-NEXT:   (struct.get $inner-sub 0
  ;; CHECK-NEXT:    (local.get $var)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $struct-get-non-null-field (result i32)
-  (local $var (ref null $outer-sub))
-  ;; The outer struct.get requires (ref null $inner-sub), which is nullable.
-  ;; $outer-super's field 0 has non-nullable type (ref $inner-super), which is
-  ;; incomparable with the i32 field of $inner-sub; we must still stop at $outer-sub.
-  (struct.get $inner-sub 0
-   (struct.get $outer-sub 0
+  (local $var (ref null $inner-sub))
+  ;; The outer struct.get must return an i32, so it cannot be generalized from
+  ;; $outer-sub to $outer-super. That means we cannot generalize the inner
+  ;; struct.get from $inner-sub to $inner-super (which would emit $outer-super).
+  (struct.get $outer-sub 0
+   (struct.get $inner-sub 0
     (local.get $var)
    )
   )
