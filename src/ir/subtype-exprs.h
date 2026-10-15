@@ -353,18 +353,17 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
     if (!curr->type.isStruct()) {
       return;
     }
+    if (!curr->isWithDefault()) {
+      const auto& fields = curr->type.getHeapType().getStruct().fields;
+      assert(fields.size() == curr->operands.size());
+      for (size_t i = 0, size = fields.size(); i < size; ++i) {
+        self()->noteSubtype(curr->operands[i], fields[i].type);
+      }
+    }
     if (curr->desc) {
       auto descType = curr->type.getHeapType().getDescriptorType();
       assert(descType);
       self()->noteSubtype(curr->desc, Type(*descType, Nullable, Exact));
-    }
-    if (curr->isWithDefault()) {
-      return;
-    }
-    const auto& fields = curr->type.getHeapType().getStruct().fields;
-    assert(fields.size() == curr->operands.size());
-    for (size_t i = 0, size = fields.size(); i < size; ++i) {
-      self()->noteSubtype(curr->operands[i], fields[i].type);
     }
   }
   void visitStructGet(StructGet* curr) {}
