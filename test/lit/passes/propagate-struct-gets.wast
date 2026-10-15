@@ -750,7 +750,7 @@
   ;; H2L-NEXT: )
   (func $project-single-set (result i32)
     ;; We leave a single local.set for Heap2Local (that situation has no
-    ;; overlapping live ranges etc.).
+    ;; overlapping live ranges etc.), and do not optimize.
     (local $ref (ref null $struct))
     (local.set $ref
       (struct.new $struct

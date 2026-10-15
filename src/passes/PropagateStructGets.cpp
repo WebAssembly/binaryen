@@ -336,9 +336,8 @@ struct PropagateStructGets
           continue;
         }
         Index newLocal = it->second;
-        Expression* rep =
+        *currp =
           builder.makeLocalGet(newLocal, func->getLocalType(newLocal));
-        *currp = rep;
       } else if (auto* set = sget->ref->dynCast<LocalSet>()) {
         auto it = projectedLocals.find(set->index);
         if (it == projectedLocals.end()) {
@@ -350,8 +349,7 @@ struct PropagateStructGets
         set->index = newLocal;
         set->value = sget;
         set->makeTee(func->getLocalType(newLocal));
-        Expression* rep = set;
-        *currp = rep;
+        *currp = set;
       } else if (auto* iff = sget->ref->dynCast<If>()) {
         iff->ifTrue = builder.makeStructGet(
           sget->index, iff->ifTrue, sget->order, sget->type, sget->signed_);
