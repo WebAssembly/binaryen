@@ -184,7 +184,6 @@ struct PropagateStructGets
     }
 
     auto* module = getModule();
-    const auto& passOptions = getPassOptions();
     Builder builder(*module);
     LazyLocalGraph localGraph(func, module);
     std::unordered_map<Index, Index> projectedLocals;
@@ -269,14 +268,6 @@ struct PropagateStructGets
           if (!set->value->is<StructNew>()) {
             allSetsAreUnescapingAllocs = false;
           }
-
-          // If we might trap (setting a nullable value, and traps are possible)
-          // then we cannot optimize, as we would be removing a possible trap.
-          if (!set->value->type.isNonNullable() &&
-              !passOptions.trapsNeverHappen) {
-            ok = false;
-            break;
-          }
         }
       }
       if (!ok) {
@@ -294,11 +285,39 @@ struct PropagateStructGets
         continue;
       }
 
-      // If the original local is nullable and the replacement local.get will
-      // not trap on null via ref.as_non_null, ensure no get can observe the
-      // uninitialized default null value.
-      if (func->getLocalType(localIndex).isNullable() &&
-          !fieldType.isNonNullable() && !passOptions.trapsNeverHappen) {
+      // If the original local is nullable, then the struct.gets that we add may
+      // end up reading it and trapping:
+      //
+      //   x = getRef();
+      //   foo();
+      //   bar(x.value, x.value);
+      //
+      // =>
+      //
+      //   x_value = getRef().value;
+      //   foo();
+      //   bar(x_value, x_value);
+      //
+      // Note how the `.value` (the struct.get) happens before `foo()`,
+      // after the optimization, so we may have moved a trap around here. It is
+      // not enough to check trapsNeverHappen here, since we are moving the
+      // trap earlier, after `foo()` which might have prevented us from reaching
+      // the trap. We can rule this problem out by seeing that only non-nullable
+      // values are written to the local (it is fine for the local itself to be
+      // nullable, see below).
+      for (auto* set : localSets) {
+        if (set->value->type.isNullable()) {
+          ok = false;
+          break;
+        }
+      }
+      if (!ok) {
+        continue;
+      }
+
+      // Finally, if the local is nullable, see if the null default value can
+      // actually be read.
+      if (func->getLocalType(localIndex).isNullable()) {
         for (auto* sget : sgets) {
           if (localGraph.getSets(sget->ref->cast<LocalGet>())
                 .contains(nullptr)) {
@@ -311,6 +330,7 @@ struct PropagateStructGets
         }
       }
 
+      // Success! The pattern fits, prepare to optimize this local.
       projectedLocals[localIndex] = builder.addVar(func, localType);
     }
 
