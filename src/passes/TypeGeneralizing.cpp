@@ -109,12 +109,13 @@ HeapType generalizeArrayType(HeapType type,
   return type;
 }
 
-//
-// Uses SubtypingDiscoverer to find all subtyping constraints on expressions and
+// Use SubtypingDiscoverer to find all subtyping constraints on expressions and
 // locals, and computes the greatest lower bound (GLB) of the required
 // supertypes for each local so that each local is given the least-refined valid
 // type.
 //
+// TODO: handle ref.as_non_null, br_on_null, publish, br_if, etc. better: we do
+//       not need to consider their results fixed.
 struct Generalizer
   : public ControlFlowWalker<Generalizer, SubtypingDiscoverer<Generalizer>> {
   Function* func;
