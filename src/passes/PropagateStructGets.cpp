@@ -82,6 +82,7 @@
 // This disentangles shared struct locals and control-flow merges so that
 // Heap2Local can optimize the underlying allocations independently.
 //
+// TODO: test file for tnh/non-tnh
 
 #include "ir/local-graph.h"
 #include "ir/properties.h"
