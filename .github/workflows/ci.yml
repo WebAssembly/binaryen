@@ -382,7 +382,7 @@ jobs:
         mkdir -p out
         cmake -S . -B out -G "MSYS Makefiles"
     - name: build
-      run: cmake --build out
+      run: cmake --build out --parallel
 
   # Ensures we can build in no-asserts mode (just building).
   build-noasserts:
