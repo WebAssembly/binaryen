@@ -285,8 +285,10 @@ struct PropagateStructGets
       // The field value must not change between the local.set and local.get:
       // either the field is immutable, or every set writes a fresh struct.new
       // that only ever flows into this local's struct.gets.
-      auto& field =
-        func->getLocalType(localIndex).getHeapType().getStruct().fields[fieldIndex];
+      auto& field = func->getLocalType(localIndex)
+                      .getHeapType()
+                      .getStruct()
+                      .fields[fieldIndex];
       if (field.mutable_ != Immutable && !allSetsAreUnescapingAllocs) {
         continue;
       }
@@ -294,8 +296,8 @@ struct PropagateStructGets
       // If the original local is nullable and the replacement local.get will
       // not trap on null via ref.as_non_null, ensure no get can observe the
       // uninitialized default null value.
-      if (func->getLocalType(localIndex).isNullable() && !fieldType.isNonNullable() &&
-          !passOptions.trapsNeverHappen) {
+      if (func->getLocalType(localIndex).isNullable() &&
+          !fieldType.isNonNullable() && !passOptions.trapsNeverHappen) {
         for (auto* sget : sgets) {
           if (localGraph.getSets(sget->ref->cast<LocalGet>())
                 .contains(nullptr)) {
