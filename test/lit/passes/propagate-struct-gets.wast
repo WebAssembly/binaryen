@@ -21,7 +21,7 @@
   ;; H2L:      (type $struct-immutable (struct (field i32)))
   (type $struct-immutable (struct (field i32)))
 
-  ;; CHECK:      (func $optimize-struct-get-if (type $4) (param $x i32) (result i32)
+  ;; CHECK:      (func $optimize-struct-get-if (type $5) (param $x i32) (result i32)
   ;; CHECK-NEXT:  (local $ref (ref null $struct))
   ;; CHECK-NEXT:  (local $2 i32)
   ;; CHECK-NEXT:  (if
@@ -45,7 +45,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.get $2)
   ;; CHECK-NEXT: )
-  ;; H2L:      (func $optimize-struct-get-if (type $3) (param $x i32) (result i32)
+  ;; H2L:      (func $optimize-struct-get-if (type $4) (param $x i32) (result i32)
   ;; H2L-NEXT:  (local $ref (ref null $struct))
   ;; H2L-NEXT:  (local $2 i32)
   ;; H2L-NEXT:  (local $3 i32)
@@ -114,7 +114,7 @@
     )
   )
 
-  ;; CHECK:      (func $no-optimize-struct-get-uninitialized (type $5) (param $x i32) (param $y i32) (result i32)
+  ;; CHECK:      (func $no-optimize-struct-get-uninitialized (type $4) (param $x i32) (param $y i32) (result i32)
   ;; CHECK-NEXT:  (local $ref (ref null $struct))
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (local.get $x)
@@ -140,7 +140,7 @@
   ;; CHECK-NEXT:   (local.get $ref)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; H2L:      (func $no-optimize-struct-get-uninitialized (type $4) (param $x i32) (param $y i32) (result i32)
+  ;; H2L:      (func $no-optimize-struct-get-uninitialized (type $3) (param $x i32) (param $y i32) (result i32)
   ;; H2L-NEXT:  (local $ref (ref null $struct))
   ;; H2L-NEXT:  (if
   ;; H2L-NEXT:   (local.get $x)
@@ -196,7 +196,149 @@
     )
   )
 
-  ;; CHECK:      (func $optimize-struct-get-tee-immutable (type $5) (param $x i32) (param $y i32) (result i32)
+  ;; CHECK:      (func $mixture (type $4) (param $x i32) (param $y i32) (result i32)
+  ;; CHECK-NEXT:  (local $yes (ref null $struct))
+  ;; CHECK-NEXT:  (local $no (ref null $struct))
+  ;; CHECK-NEXT:  (local $4 i32)
+  ;; CHECK-NEXT:  (local.set $4
+  ;; CHECK-NEXT:   (struct.get $struct 0
+  ;; CHECK-NEXT:    (struct.new_default $struct)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (local.set $4
+  ;; CHECK-NEXT:     (struct.get $struct 0
+  ;; CHECK-NEXT:      (struct.new $struct
+  ;; CHECK-NEXT:       (i32.const 42)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $no
+  ;; CHECK-NEXT:     (struct.new_default $struct)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:     (then
+  ;; CHECK-NEXT:      (local.set $no
+  ;; CHECK-NEXT:       (struct.new $struct
+  ;; CHECK-NEXT:        (i32.const 1337)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (i32.add
+  ;; CHECK-NEXT:   (local.get $4)
+  ;; CHECK-NEXT:   (struct.get $struct 0
+  ;; CHECK-NEXT:    (local.get $no)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; H2L:      (func $mixture (type $3) (param $x i32) (param $y i32) (result i32)
+  ;; H2L-NEXT:  (local $yes (ref null $struct))
+  ;; H2L-NEXT:  (local $no (ref null $struct))
+  ;; H2L-NEXT:  (local $4 i32)
+  ;; H2L-NEXT:  (local $5 i32)
+  ;; H2L-NEXT:  (local $6 i32)
+  ;; H2L-NEXT:  (local $7 i32)
+  ;; H2L-NEXT:  (local.set $4
+  ;; H2L-NEXT:   (block (result i32)
+  ;; H2L-NEXT:    (drop
+  ;; H2L-NEXT:     (block (result nullref)
+  ;; H2L-NEXT:      (local.set $5
+  ;; H2L-NEXT:       (i32.const 0)
+  ;; H2L-NEXT:      )
+  ;; H2L-NEXT:      (ref.null none)
+  ;; H2L-NEXT:     )
+  ;; H2L-NEXT:    )
+  ;; H2L-NEXT:    (local.get $5)
+  ;; H2L-NEXT:   )
+  ;; H2L-NEXT:  )
+  ;; H2L-NEXT:  (if
+  ;; H2L-NEXT:   (local.get $x)
+  ;; H2L-NEXT:   (then
+  ;; H2L-NEXT:    (local.set $4
+  ;; H2L-NEXT:     (block (result i32)
+  ;; H2L-NEXT:      (drop
+  ;; H2L-NEXT:       (block (result nullref)
+  ;; H2L-NEXT:        (local.set $7
+  ;; H2L-NEXT:         (i32.const 42)
+  ;; H2L-NEXT:        )
+  ;; H2L-NEXT:        (local.set $6
+  ;; H2L-NEXT:         (local.get $7)
+  ;; H2L-NEXT:        )
+  ;; H2L-NEXT:        (ref.null none)
+  ;; H2L-NEXT:       )
+  ;; H2L-NEXT:      )
+  ;; H2L-NEXT:      (local.get $6)
+  ;; H2L-NEXT:     )
+  ;; H2L-NEXT:    )
+  ;; H2L-NEXT:    (local.set $no
+  ;; H2L-NEXT:     (struct.new_default $struct)
+  ;; H2L-NEXT:    )
+  ;; H2L-NEXT:    (if
+  ;; H2L-NEXT:     (local.get $y)
+  ;; H2L-NEXT:     (then
+  ;; H2L-NEXT:      (local.set $no
+  ;; H2L-NEXT:       (struct.new $struct
+  ;; H2L-NEXT:        (i32.const 1337)
+  ;; H2L-NEXT:       )
+  ;; H2L-NEXT:      )
+  ;; H2L-NEXT:     )
+  ;; H2L-NEXT:    )
+  ;; H2L-NEXT:   )
+  ;; H2L-NEXT:  )
+  ;; H2L-NEXT:  (i32.add
+  ;; H2L-NEXT:   (local.get $4)
+  ;; H2L-NEXT:   (struct.get $struct 0
+  ;; H2L-NEXT:    (local.get $no)
+  ;; H2L-NEXT:   )
+  ;; H2L-NEXT:  )
+  ;; H2L-NEXT: )
+  (func $mixture (param $x i32) (param $y i32) (result i32)
+    ;; $yes can be optimized, but not $no (which can read the default null).
+    (local $yes (ref null $struct))
+    (local $no (ref null $struct))
+    (local.set $yes
+      (struct.new_default $struct)
+    )
+    (if
+      (local.get $x)
+      (then
+        (local.set $yes
+          (struct.new $struct
+            (i32.const 42)
+          )
+        )
+        (local.set $no
+          (struct.new_default $struct)
+        )
+        (if
+          (local.get $y)
+          (then
+            (local.set $no
+              (struct.new $struct
+                (i32.const 1337)
+              )
+            )
+          )
+        )
+      )
+    )
+    (i32.add
+      (struct.get $struct 0
+        (local.get $yes)
+      )
+      (struct.get $struct 0
+        (local.get $no)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $optimize-struct-get-tee-immutable (type $4) (param $x i32) (param $y i32) (result i32)
   ;; CHECK-NEXT:  (local $cur (ref $struct-immutable))
   ;; CHECK-NEXT:  (local $ref (ref null $struct-immutable))
   ;; CHECK-NEXT:  (local $4 i32)
@@ -231,7 +373,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.get $4)
   ;; CHECK-NEXT: )
-  ;; H2L:      (func $optimize-struct-get-tee-immutable (type $4) (param $x i32) (param $y i32) (result i32)
+  ;; H2L:      (func $optimize-struct-get-tee-immutable (type $3) (param $x i32) (param $y i32) (result i32)
   ;; H2L-NEXT:  (local $cur (ref $struct-immutable))
   ;; H2L-NEXT:  (local $ref (ref null $struct-immutable))
   ;; H2L-NEXT:  (local $4 i32)
@@ -508,7 +650,7 @@
     )
   )
 
-  ;; CHECK:      (func $no-optimize-struct-get-different-fields (type $4) (param $x i32) (result i32)
+  ;; CHECK:      (func $no-optimize-struct-get-different-fields (type $5) (param $x i32) (result i32)
   ;; CHECK-NEXT:  (local $ref (ref null $struct-2fields))
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (local.get $x)
@@ -535,7 +677,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; H2L:      (func $no-optimize-struct-get-different-fields (type $3) (param $x i32) (result i32)
+  ;; H2L:      (func $no-optimize-struct-get-different-fields (type $4) (param $x i32) (result i32)
   ;; H2L-NEXT:  (local $ref (ref null $struct-2fields))
   ;; H2L-NEXT:  (if
   ;; H2L-NEXT:   (local.get $x)
