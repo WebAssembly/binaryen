@@ -249,7 +249,10 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
                         self()->getModule()->getTable(curr->table)->type);
   }
   void visitTableSize(TableSize* curr) {}
-  void visitTableGrow(TableGrow* curr) {}
+  void visitTableGrow(TableGrow* curr) {
+    self()->noteSubtype(curr->value,
+                        self()->getModule()->getTable(curr->table)->type);
+  }
   void visitTableFill(TableFill* curr) {
     self()->noteSubtype(curr->value,
                         self()->getModule()->getTable(curr->table)->type);
@@ -285,7 +288,9 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
     }
   }
   void visitRethrow(Rethrow* curr) {}
-  void visitThrowRef(ThrowRef* curr) {}
+  void visitThrowRef(ThrowRef* curr) {
+    self()->noteNonFlowSubtype(curr->exnref, Type(HeapType::exn, Nullable));
+  }
   void visitTupleMake(TupleMake* curr) {}
   void visitTupleExtract(TupleExtract* curr) {}
   void visitRefI31(RefI31* curr) {}
@@ -345,13 +350,20 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
                         self()->findBreakTarget(curr->name));
   }
   void visitStructNew(StructNew* curr) {
-    if (!curr->type.isStruct() || curr->isWithDefault()) {
+    if (!curr->type.isStruct()) {
       return;
     }
-    const auto& fields = curr->type.getHeapType().getStruct().fields;
-    assert(fields.size() == curr->operands.size());
-    for (size_t i = 0, size = fields.size(); i < size; ++i) {
-      self()->noteSubtype(curr->operands[i], fields[i].type);
+    if (!curr->isWithDefault()) {
+      const auto& fields = curr->type.getHeapType().getStruct().fields;
+      assert(fields.size() == curr->operands.size());
+      for (size_t i = 0, size = fields.size(); i < size; ++i) {
+        self()->noteSubtype(curr->operands[i], fields[i].type);
+      }
+    }
+    if (curr->desc) {
+      auto descType = curr->type.getHeapType().getDescriptorType();
+      assert(descType);
+      self()->noteSubtype(curr->desc, Type(*descType, Nullable, Exact));
     }
   }
   void visitStructGet(StructGet* curr) {}
@@ -401,7 +413,7 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
     self()->noteSubtype(curr->waitqueue,
                         Type(HeapTypes::sharedWaitqueue, Nullable));
   }
-  void visitPublish(Publish* curr) {}
+  void visitPublish(Publish* curr) { self()->noteSubtype(curr->ref, curr); }
   void visitArrayNew(ArrayNew* curr) {
     if (!curr->type.isArray() || curr->isWithDefault()) {
       return;
@@ -438,7 +450,14 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
   }
   void visitArrayLoad(ArrayLoad* curr) {}
   void visitArrayStore(ArrayStore* curr) {}
-  void visitArrayLen(ArrayLen* curr) {}
+  void visitArrayLen(ArrayLen* curr) {
+    auto share = Unshared;
+    if (curr->ref->type.isRef() && curr->ref->type.getHeapType().isShared()) {
+      share = Shared;
+    }
+    self()->noteNonFlowSubtype(
+      curr->ref, Type(HeapTypes::array.getBasic(share), Nullable));
+  }
   void visitArrayCopy(ArrayCopy* curr) {
     if (!curr->srcRef->type.isArray() || !curr->destRef->type.isArray()) {
       return;
@@ -510,15 +529,54 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
         return;
     }
   }
-  void visitStringNew(StringNew* curr) {}
+  void visitStringNew(StringNew* curr) {
+    switch (curr->op) {
+      case StringNewLossyUTF8Array:
+        self()->noteNonFlowSubtype(curr->ref,
+                                   Type(HeapTypes::getMutI8Array(), Nullable));
+        break;
+      case StringNewWTF16Array:
+        self()->noteNonFlowSubtype(curr->ref,
+                                   Type(HeapTypes::getMutI16Array(), Nullable));
+        break;
+      case StringNewFromCodePoint:
+        break;
+    }
+  }
   void visitStringConst(StringConst* curr) {}
-  void visitStringMeasure(StringMeasure* curr) {}
-  void visitStringEncode(StringEncode* curr) {}
-  void visitStringConcat(StringConcat* curr) {}
-  void visitStringEq(StringEq* curr) {}
-  void visitStringTest(StringTest* curr) {}
-  void visitStringWTF16Get(StringWTF16Get* curr) {}
-  void visitStringSliceWTF(StringSliceWTF* curr) {}
+  void visitStringMeasure(StringMeasure* curr) {
+    self()->noteNonFlowSubtype(curr->ref, Type(HeapType::string, Nullable));
+  }
+  void visitStringEncode(StringEncode* curr) {
+    self()->noteNonFlowSubtype(curr->str, Type(HeapType::string, Nullable));
+    switch (curr->op) {
+      case StringEncodeLossyUTF8Array:
+        self()->noteNonFlowSubtype(curr->array,
+                                   Type(HeapTypes::getMutI8Array(), Nullable));
+        break;
+      case StringEncodeWTF16Array:
+        self()->noteNonFlowSubtype(curr->array,
+                                   Type(HeapTypes::getMutI16Array(), Nullable));
+        break;
+    }
+  }
+  void visitStringConcat(StringConcat* curr) {
+    self()->noteNonFlowSubtype(curr->left, Type(HeapType::string, Nullable));
+    self()->noteNonFlowSubtype(curr->right, Type(HeapType::string, Nullable));
+  }
+  void visitStringEq(StringEq* curr) {
+    self()->noteNonFlowSubtype(curr->left, Type(HeapType::string, Nullable));
+    self()->noteNonFlowSubtype(curr->right, Type(HeapType::string, Nullable));
+  }
+  void visitStringTest(StringTest* curr) {
+    self()->noteNonFlowSubtype(curr->ref, Type(HeapType::ext, Nullable));
+  }
+  void visitStringWTF16Get(StringWTF16Get* curr) {
+    self()->noteNonFlowSubtype(curr->ref, Type(HeapType::string, Nullable));
+  }
+  void visitStringSliceWTF(StringSliceWTF* curr) {
+    self()->noteNonFlowSubtype(curr->ref, Type(HeapType::string, Nullable));
+  }
 
   void visitContNew(ContNew* curr) {
     if (!curr->type.isContinuation()) {
@@ -526,8 +584,9 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
     }
     // The type of the function reference must remain a subtype of the function
     // type expected by the continuation.
-    self()->noteSubtype(curr->func->type.getHeapType(),
-                        curr->type.getHeapType().getContinuation().type);
+    self()->noteSubtype(
+      curr->func,
+      Type(curr->type.getHeapType().getContinuation().type, Nullable));
   }
   void visitContBind(ContBind* curr) {
     if (!curr->cont->type.isContinuation() || !curr->type.isContinuation()) {
@@ -628,6 +687,10 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
       for (Index i = 0; i < curr->operands.size(); ++i) {
         self()->noteSubtype(curr->operands[i], params[i]);
       }
+    } else {
+      assert(curr->operands.size() == 1);
+      self()->noteNonFlowSubtype(curr->operands[0],
+                                 Type(HeapType::exn, Nullable));
     }
   }
   void visitStackSwitch(StackSwitch* curr) {
