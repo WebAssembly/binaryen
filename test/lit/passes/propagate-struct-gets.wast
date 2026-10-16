@@ -385,11 +385,11 @@
   )
 
   ;; CHECK:      (func $optimize-struct-get-tee-immutable (type $7) (param $x i32) (param $y i32) (result i32)
-  ;; CHECK-NEXT:  (local $cur (ref $struct-immutable))
+  ;; CHECK-NEXT:  (local $curr (ref $struct-immutable))
   ;; CHECK-NEXT:  (local $ref (ref null $struct-immutable))
   ;; CHECK-NEXT:  (local $4 i32)
   ;; CHECK-NEXT:  (block $err
-  ;; CHECK-NEXT:   (local.set $cur
+  ;; CHECK-NEXT:   (local.set $curr
   ;; CHECK-NEXT:    (struct.new $struct-immutable
   ;; CHECK-NEXT:     (local.get $x)
   ;; CHECK-NEXT:    )
@@ -397,7 +397,7 @@
   ;; CHECK-NEXT:   (br_if $err
   ;; CHECK-NEXT:    (block (result i32)
   ;; CHECK-NEXT:     (local.set $ref
-  ;; CHECK-NEXT:      (local.get $cur)
+  ;; CHECK-NEXT:      (local.get $curr)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (local.set $4
   ;; CHECK-NEXT:      (struct.get $struct-immutable 0
@@ -407,7 +407,7 @@
   ;; CHECK-NEXT:     (local.get $4)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (local.set $cur
+  ;; CHECK-NEXT:   (local.set $curr
   ;; CHECK-NEXT:    (struct.new $struct-immutable
   ;; CHECK-NEXT:     (local.get $y)
   ;; CHECK-NEXT:    )
@@ -415,7 +415,7 @@
   ;; CHECK-NEXT:   (br_if $err
   ;; CHECK-NEXT:    (block (result i32)
   ;; CHECK-NEXT:     (local.set $ref
-  ;; CHECK-NEXT:      (local.get $cur)
+  ;; CHECK-NEXT:      (local.get $curr)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (local.set $4
   ;; CHECK-NEXT:      (struct.get $struct-immutable 0
@@ -432,7 +432,7 @@
   ;; CHECK-NEXT:  (local.get $4)
   ;; CHECK-NEXT: )
   ;; H2L:      (func $optimize-struct-get-tee-immutable (type $4) (param $x i32) (param $y i32) (result i32)
-  ;; H2L-NEXT:  (local $cur (ref $struct-immutable))
+  ;; H2L-NEXT:  (local $curr (ref $struct-immutable))
   ;; H2L-NEXT:  (local $ref (ref null $struct-immutable))
   ;; H2L-NEXT:  (local $4 i32)
   ;; H2L-NEXT:  (local $5 i32)
@@ -501,14 +501,14 @@
   ;; H2L-NEXT:  (local.get $4)
   ;; H2L-NEXT: )
   (func $optimize-struct-get-tee-immutable (param $x i32) (param $y i32) (result i32)
-    ;; Two independent allocations in $cur are tee'd into a shared local $ref
+    ;; Two independent allocations in $curr are tee'd into a shared local $ref
     ;; inside struct.get of an immutable field before branching to a shared
     ;; block that reads the same field from $ref. Projecting $ref to an i32
     ;; local disentangles the two allocations so Heap2Local can optimize both.
-    (local $cur (ref $struct-immutable))
+    (local $curr (ref $struct-immutable))
     (local $ref (ref null $struct-immutable))
     (block $err
-      (local.set $cur
+      (local.set $curr
         (struct.new $struct-immutable
           (local.get $x)
         )
@@ -516,11 +516,11 @@
       (br_if $err
         (struct.get $struct-immutable 0
           (local.tee $ref
-            (local.get $cur)
+            (local.get $curr)
           )
         )
       )
-      (local.set $cur
+      (local.set $curr
         (struct.new $struct-immutable
           (local.get $y)
         )
@@ -528,7 +528,7 @@
       (br_if $err
         (struct.get $struct-immutable 0
           (local.tee $ref
-            (local.get $cur)
+            (local.get $curr)
           )
         )
       )
@@ -901,12 +901,12 @@
   )
 
   ;; CHECK:      (func $optimize-multiple-fields-tee-partial (type $10) (param $x i32) (param $y i32) (result i64)
-  ;; CHECK-NEXT:  (local $cur (ref $struct-3fields-mixed))
+  ;; CHECK-NEXT:  (local $curr (ref $struct-3fields-mixed))
   ;; CHECK-NEXT:  (local $ref (ref null $struct-3fields-mixed))
   ;; CHECK-NEXT:  (local $4 i32)
   ;; CHECK-NEXT:  (local $5 i64)
   ;; CHECK-NEXT:  (block $err
-  ;; CHECK-NEXT:   (local.set $cur
+  ;; CHECK-NEXT:   (local.set $curr
   ;; CHECK-NEXT:    (struct.new $struct-3fields-mixed
   ;; CHECK-NEXT:     (local.get $x)
   ;; CHECK-NEXT:     (i32.const 100)
@@ -916,7 +916,7 @@
   ;; CHECK-NEXT:   (br_if $err
   ;; CHECK-NEXT:    (block (result i32)
   ;; CHECK-NEXT:     (local.set $ref
-  ;; CHECK-NEXT:      (local.get $cur)
+  ;; CHECK-NEXT:      (local.get $curr)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (local.set $4
   ;; CHECK-NEXT:      (struct.get $struct-3fields-mixed 0
@@ -931,7 +931,7 @@
   ;; CHECK-NEXT:     (local.get $4)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (local.set $cur
+  ;; CHECK-NEXT:   (local.set $curr
   ;; CHECK-NEXT:    (struct.new $struct-3fields-mixed
   ;; CHECK-NEXT:     (local.get $y)
   ;; CHECK-NEXT:     (i32.const 200)
@@ -941,7 +941,7 @@
   ;; CHECK-NEXT:   (br_if $err
   ;; CHECK-NEXT:    (block (result i32)
   ;; CHECK-NEXT:     (local.set $ref
-  ;; CHECK-NEXT:      (local.get $cur)
+  ;; CHECK-NEXT:      (local.get $curr)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (local.set $4
   ;; CHECK-NEXT:      (struct.get $struct-3fields-mixed 0
@@ -968,7 +968,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; H2L:      (func $optimize-multiple-fields-tee-partial (type $9) (param $x i32) (param $y i32) (result i64)
-  ;; H2L-NEXT:  (local $cur (ref $struct-3fields-mixed))
+  ;; H2L-NEXT:  (local $curr (ref $struct-3fields-mixed))
   ;; H2L-NEXT:  (local $ref (ref null $struct-3fields-mixed))
   ;; H2L-NEXT:  (local $4 i32)
   ;; H2L-NEXT:  (local $5 i64)
@@ -1096,10 +1096,10 @@
     ;; here (field 0 at the tees and a get, field 2 at a get), so field 1's
     ;; mutability does not prevent optimization, and no local is created for
     ;; field 1.
-    (local $cur (ref $struct-3fields-mixed))
+    (local $curr (ref $struct-3fields-mixed))
     (local $ref (ref null $struct-3fields-mixed))
     (block $err
-      (local.set $cur
+      (local.set $curr
         (struct.new $struct-3fields-mixed
           (local.get $x)
           (i32.const 100)
@@ -1109,11 +1109,11 @@
       (br_if $err
         (struct.get $struct-3fields-mixed 0
           (local.tee $ref
-            (local.get $cur)
+            (local.get $curr)
           )
         )
       )
-      (local.set $cur
+      (local.set $curr
         (struct.new $struct-3fields-mixed
           (local.get $y)
           (i32.const 200)
@@ -1123,7 +1123,7 @@
       (br_if $err
         (struct.get $struct-3fields-mixed 0
           (local.tee $ref
-            (local.get $cur)
+            (local.get $curr)
           )
         )
       )
