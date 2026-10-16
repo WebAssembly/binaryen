@@ -1832,25 +1832,20 @@ struct OptimizeInstructions
         //      (call ..
         //
         // The call here must execute before the trap in the struct.set. To
-        // avoid that problem, inspect all children after us. If there are no
-        // such children, then there is no problem; if there are, see below.
+        // avoid that problem, inspect all children after us: making the cast
+        // non-nullable moves the trap on null from the parent to before them,
+        // which is only valid if none of them must remain ordered before a
+        // trap.
+        EffectAnalyzer trapEffects(getPassOptions(), *getModule());
+        trapEffects.trap = true;
         auto canOptimize = true;
         auto seenRef = false;
         for (auto* child : ChildIterator(curr)) {
           if (child == ref) {
             seenRef = true;
-          } else if (seenRef) {
-            // This is a child after the reference. Check it for effects. For
-            // simplicity, focus on the case of traps-never-happens: if we can
-            // assume no trap occurs in the parent, then there must not be a
-            // trap in the child either, unless control flow transfers and we
-            // might not reach the parent.
-            // TODO: handle more cases.
-            if (!getPassOptions().trapsNeverHappen ||
-                effects(child).transfersControlFlow()) {
-              canOptimize = false;
-              break;
-            }
+          } else if (seenRef && effects(child).orderedBefore(trapEffects)) {
+            canOptimize = false;
+            break;
           }
         }
         if (canOptimize) {
