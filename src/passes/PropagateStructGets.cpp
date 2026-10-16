@@ -40,6 +40,8 @@
 //    (local.tee $ref_field (struct.get (..))  # store data in local, get it
 //    (local.get $ref_field))                  # get data from local
 //
+// In effect we "propagate" struct.gets to earlier positions.
+//
 // This is basically a simple form of escape analysis, like Heap2Local, but
 // which handles a far more restricted case (where the reference is immediately
 // struct.get-ed). The benefit of this pass is that our restricted case can
