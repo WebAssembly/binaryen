@@ -286,6 +286,7 @@ struct PropagateStructGets
                       .getHeapType()
                       .getStruct()
                       .fields[fieldIndex];
+      // Read from the appropriate new local, handling sign extension as needed.
       auto newLocal = optimizedLocals[localIndex][fieldIndex];
       Expression* ret =
         builder.makeLocalGet(newLocal, func->getLocalType(newLocal));
@@ -297,10 +298,15 @@ struct PropagateStructGets
       auto localIndex = set->index;
       auto localType = func->getLocalType(localIndex);
       auto& fields = localType.getHeapType().getStruct().fields;
+
+      // Store the reference, then store struct.gets of all used fields in the
+      // new locals.
       std::vector<Expression*> list = {
         builder.makeLocalSet(localIndex, set->value)};
       for (auto [fieldIndex, newLocal] : optimizedLocals[localIndex]) {
         auto& field = fields[fieldIndex];
+        // Note that the sign does not matter here: we just store the bits, and
+        // will handle the sign when reading back out (like in Heap2Local).
         auto* sget =
           builder.makeStructGet(fieldIndex,
                                 builder.makeLocalGet(localIndex, localType),
@@ -309,6 +315,9 @@ struct PropagateStructGets
                                 false);
         list.push_back(builder.makeLocalSet(newLocal, sget));
       }
+
+      // Finally, if this is a tee, then it was consumed by a struct.get, and we
+      // can read that field and return it.
       if (teeParent) {
         list.push_back(
           getFieldFromLocal(localIndex, teeParent->index, teeParent->signed_));
@@ -316,25 +325,20 @@ struct PropagateStructGets
       return builder.makeBlock(list);
     };
 
-    // Rewrite recorded struct.gets in post-order.
+    // Rewrite recorded struct.gets in post-order:
     for (auto** currp : structGets) {
       auto* sget = (*currp)->cast<StructGet>();
       if (auto* get = sget->ref->dynCast<LocalGet>()) {
         if (!optimizedLocals.contains(get->index)) {
           continue;
         }
-
-        // Replace (struct.get (local.get)) with a local.get of the field, which
-        // is now in a local directly.
+        // struct.get of a local.get reads the field from a new local.
         *currp = getFieldFromLocal(get->index, sget->index, sget->signed_);
       } else if (auto* tee = sget->ref->dynCast<LocalSet>()) {
         if (!optimizedLocals.contains(tee->index)) {
           continue;
         }
-
-        // Replace (struct.get (local.tee (REF))) with a block that sets the
-        // local, copies all used fields into their locals, and returns the
-        // tee'd field.
+        // struct.get of a local.tee first writes the fields, then reads.
         *currp = makeFieldSets(tee, sget);
       }
     }
