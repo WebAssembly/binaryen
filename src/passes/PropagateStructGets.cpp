@@ -21,65 +21,38 @@
 // the GC allocation is basically used as data, and we can store that data
 // directly, simplifying things. More concretely:
 //
-//   1. When a struct-typed local is written and every read of it
-//      (including via local.tee) is immediately consumed by a struct.get,
-//      replace the struct local with a local of the field's type and perform
-//      the struct.get at each local.set/local.tee. For example:
+//    x = new Foo(42);
+//    bar(x.value, x.value);
 //
-//        x = new Foo(42);
-//        bar(x.value, x.value);
+//  =>
 //
-//      =>
+//    // Store the value directly.
+//    x_value = (new Foo(42)).value; // do the struct.get earlier, here
+//    bar(x_value, x_value);
 //
-//        // Store the value directly.
-//        x_value = (new Foo(42)).value; // do the struct.get earlier, here
-//        bar(x_value, x_value);
+//  We do this when we detect a simple situation where all the uses are just
+//  gets like that. In this case, we know Heap2Local can later optimize
+//  the allocation away. That is, we are detecting a simple case where
+//  nothing escapes and things are easy to optimize, and we handle it
+//  directly. This is simpler than making Heap2Local able to reason about
+//  groups of allocations and their possibly overlapping livenesses, in
+//  situations like this:
 //
-//      We do this when we detect a simple situation where all the uses are just
-//      gets like that. In this case, we know Heap2Local can later optimize
-//      the allocation away. That is, we are detecting a simple case where
-//      nothing escapes and things are easy to optimize, and we handle it
-//      directly. This is simpler than making Heap2Local able to reason about
-//      groups of allocations and their possibly overlapping livenesses, in
-//      situations like this:
+//    x = new Foo(42);
+//    if (condition) x = new Foo(1337);
+//    bar(x.value, x.value);
 //
-//        x = new Foo(42);
-//        if (condition) x = new Foo(1337);
-//        bar(x.value, x.value);
+//  The allocations here have overlapping live ranges, and Heap2Local
+//  cannot handle them (it sees the x.value operations are not exclusive to
+//  any single allocation). After we simplify things in this pass, the
+//  situation becomes trivial for Heap2Local, as the allocations do not
+//  overlap:
 //
-//      The allocations here have overlapping live ranges, and Heap2Local
-//      cannot handle them (it sees the x.value operations are not exclusive to
-//      any single allocation). After we simplify things in this pass, the
-//      situation becomes trivial for Heap2Local, as the allocations do not
-//      overlap:
+//    x_value = (new Foo(42)).value;
+//    if (condition) x_value = (new Foo(1337)).value;
+//    bar(x_value, x_value);
 //
-//        x_value = (new Foo(42)).value;
-//        if (condition) x_value = (new Foo(1337)).value;
-//        bar(x_value, x_value);
-//
-//      TODO verify this exact thing in a test
-//
-//   2. When a struct.get consumes an if whose arm(s) allocate a struct via
-//      struct.new, sink the struct.get into the if arms. For example:
-//
-//        (struct.get $x 3
-//          (if
-//            (..condition..)
-//            (struct.new ..)
-//            (struct.new ..)))
-//
-//      =>
-//
-//        (struct.get $x 3
-//          (if
-//            (..condition..)
-//            (struct.new ..)
-//            (struct.new ..)))
-//
-//      This could be done as a peephole optimization in OptimizeInstructions,
-//      but it generally *increases* code size. Here we only do it when we
-//      detect the proper situation as in point 1, where Heap2Local's followup
-//      optimizations make it worthwhile.
+//  TODO verify this exact thing in a test
 //
 // This disentangles shared struct locals and control-flow merges so that
 // Heap2Local can optimize the underlying allocations independently. Another way
@@ -150,7 +123,7 @@ struct PropagateStructGets
     }
 
     // See if the reference is one of the patterns we recognize.
-    // TODO fallthrough
+    // TODO fallthrough, but careful of br_if which can escape the value
     if (auto* get = curr->ref->dynCast<LocalGet>()) {
       if (isStructVar(get->index)) {
         getParents[get->index].push_back(curr);
@@ -162,6 +135,7 @@ struct PropagateStructGets
         structGets.push_back(getCurrentPointer());
       }
     }
+    // TODO: handle more things flowing into struct.get, like an If
   }
 
   void visitFunction(Function* func) {
