@@ -1194,6 +1194,9 @@ struct Struct2Local : PostWalker<Struct2Local> {
                                      builder.makeDrop(curr->expected),
                                      builder.makeDrop(curr->replacement),
                                      structGet});
+    if (block->type != curr->type) {
+      refinalize = true;
+    }
     replaceCurrent(block);
     return;
   }
@@ -1226,6 +1229,9 @@ struct Struct2Local : PostWalker<Struct2Local> {
                                        builder.makeDrop(curr->expected),
                                        builder.makeDrop(curr->replacement),
                                        arrayGet});
+      if (block->type != curr->type) {
+        refinalize = true;
+      }
       replaceCurrent(block);
       // Since `ref` must be an array and arrays are processed before structs,
       // it is not possible that `ref` will be processed later. We therefore do
