@@ -1853,7 +1853,121 @@
       )
     )
     (drop
-      (local.get $ref)
+      (local.get $ref)  ;; this stops us
+    )
+    (i32.add
+      (struct.get $struct 0
+        (local.get $ref)
+      )
+      (struct.get $struct 0
+        (local.get $ref)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $extra-local.tee (type $6) (result i32)
+  ;; CHECK-NEXT:  (local $ref (ref null $struct))
+  ;; CHECK-NEXT:  (local.set $ref
+  ;; CHECK-NEXT:   (struct.new $struct
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $ref
+  ;; CHECK-NEXT:   (struct.new $struct
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.tee $ref
+  ;; CHECK-NEXT:    (struct.new $struct
+  ;; CHECK-NEXT:     (i32.const 42)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (i32.add
+  ;; CHECK-NEXT:   (struct.get $struct 0
+  ;; CHECK-NEXT:    (local.get $ref)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (struct.get $struct 0
+  ;; CHECK-NEXT:    (local.get $ref)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; H2L:      (func $extra-local.tee (type $3) (result i32)
+  ;; H2L-NEXT:  (local $ref (ref null $struct))
+  ;; H2L-NEXT:  (local $1 i32)
+  ;; H2L-NEXT:  (local $2 i32)
+  ;; H2L-NEXT:  (local $3 i32)
+  ;; H2L-NEXT:  (local $4 i32)
+  ;; H2L-NEXT:  (local $5 i32)
+  ;; H2L-NEXT:  (local $6 i32)
+  ;; H2L-NEXT:  (drop
+  ;; H2L-NEXT:   (block (result nullref)
+  ;; H2L-NEXT:    (local.set $2
+  ;; H2L-NEXT:     (i32.const 42)
+  ;; H2L-NEXT:    )
+  ;; H2L-NEXT:    (local.set $1
+  ;; H2L-NEXT:     (local.get $2)
+  ;; H2L-NEXT:    )
+  ;; H2L-NEXT:    (ref.null none)
+  ;; H2L-NEXT:   )
+  ;; H2L-NEXT:  )
+  ;; H2L-NEXT:  (drop
+  ;; H2L-NEXT:   (block (result nullref)
+  ;; H2L-NEXT:    (local.set $4
+  ;; H2L-NEXT:     (i32.const 42)
+  ;; H2L-NEXT:    )
+  ;; H2L-NEXT:    (local.set $3
+  ;; H2L-NEXT:     (local.get $4)
+  ;; H2L-NEXT:    )
+  ;; H2L-NEXT:    (ref.null none)
+  ;; H2L-NEXT:   )
+  ;; H2L-NEXT:  )
+  ;; H2L-NEXT:  (drop
+  ;; H2L-NEXT:   (block (result nullref)
+  ;; H2L-NEXT:    (local.set $6
+  ;; H2L-NEXT:     (i32.const 42)
+  ;; H2L-NEXT:    )
+  ;; H2L-NEXT:    (local.set $5
+  ;; H2L-NEXT:     (local.get $6)
+  ;; H2L-NEXT:    )
+  ;; H2L-NEXT:    (ref.null none)
+  ;; H2L-NEXT:   )
+  ;; H2L-NEXT:  )
+  ;; H2L-NEXT:  (i32.add
+  ;; H2L-NEXT:   (block (result i32)
+  ;; H2L-NEXT:    (drop
+  ;; H2L-NEXT:     (ref.null none)
+  ;; H2L-NEXT:    )
+  ;; H2L-NEXT:    (local.get $5)
+  ;; H2L-NEXT:   )
+  ;; H2L-NEXT:   (block (result i32)
+  ;; H2L-NEXT:    (drop
+  ;; H2L-NEXT:     (ref.null none)
+  ;; H2L-NEXT:    )
+  ;; H2L-NEXT:    (local.get $5)
+  ;; H2L-NEXT:   )
+  ;; H2L-NEXT:  )
+  ;; H2L-NEXT: )
+  (func $extra-local.tee (result i32)
+    (local $ref (ref null $struct))
+    ;; An extra local.tee - which is not consumed by a struct.get - stops us.
+    (local.set $ref
+      (struct.new $struct
+        (i32.const 42)
+      )
+    )
+    (local.set $ref
+      (struct.new $struct
+        (i32.const 42)
+      )
+    )
+    (drop
+      (local.tee $ref        ;; this stops us
+        (struct.new $struct
+          (i32.const 42)
+        )
+      )
     )
     (i32.add
       (struct.get $struct 0
