@@ -80,7 +80,11 @@
 //      optimizations make it worthwhile.
 //
 // This disentangles shared struct locals and control-flow merges so that
-// Heap2Local can optimize the underlying allocations independently.
+// Heap2Local can optimize the underlying allocations independently. Another way
+// to look at it is that it handles a simple case of escape analysis, the easy
+// situation where the heap allocation is just used as data - we immediately
+// struct.get data from it, and never use it otherwise, not in ref.eq or
+// anything else.
 //
 
 #include "ir/local-graph.h"
@@ -158,6 +162,7 @@ struct PropagateStructGets
         structGets.push_back(getCurrentPointer());
       }
     } else if (auto* iff = curr->ref->dynCast<If>()) {
+      // TODO Handle arbitrary nesting here, including leading to gets/tees.
       if (iff->ifFalse && iff->type != Type::unreachable &&
           iff->ifTrue->type != Type::unreachable &&
           iff->ifFalse->type != Type::unreachable) {
@@ -198,12 +203,13 @@ struct PropagateStructGets
         continue;
       }
 
-      // Check if the number of struct.gets is equal to the total number of
-      // gets for the local. If so, then we understand all the gets, and this
+      // Check if each local.get is consumed by a struct.get, which is the case
+      // if the counts match. If so, then we understand all the gets, and this
       // situation is the pattern we optimize: each local.get is consumed
       // by a struct.get.
       const auto& getStructGets = getIt->second;
-      assert(!getStructGets.empty()); // if we added the local, the vec is nonempty
+      // There must be a struct.get, if we added one for this local.
+      assert(!getStructGets.empty());
       if (getStructGets.size() != numGets[localIndex]) {
         continue;
       }
