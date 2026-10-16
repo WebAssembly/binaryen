@@ -243,8 +243,8 @@ struct PropagateStructGets
       // not enough to check trapsNeverHappen, since we are moving the trap to
       // an earlier place, and `foo()` might have prevented us from reaching
       // there. We can rule most of this problem out by seeing that only non-
-      // nullable values are written to the local (it is fine for the local
-      // itself to be nullable, see below).
+      // nullable values are written to the local. That leaves only the initial
+      // value of the local at the function entry, handled later.
       for (auto** setp : localSets) {
         auto* set = (*setp)->cast<LocalSet>();
         if (set->value->type.isNullable()) {
@@ -256,20 +256,20 @@ struct PropagateStructGets
         continue;
       }
 
-      // Finally, if the local is nullable, see if the null default value can
-      // actually be read (which would mean we trap; we could handle this but
-      // realistically it should be rare TODO).
-      if (func->getLocalType(localIndex).isNullable()) {
-        for (auto* sget : getStructGets) {
-          if (localGraph.getSets(sget->ref->cast<LocalGet>())
-                .contains(nullptr)) {
-            ok = false;
-            break;
-          }
+      // Finally, if the initial value of the local from the function entry is
+      // used, do not optimize. For a var, that means the default of zero, which
+      // will trap, but there is another issue for a param: the value is not
+      // known, so Heap2Local will not be able to optimize anything after us
+      // anyhow.
+      for (auto* sget : getStructGets) {
+        if (localGraph.getSets(sget->ref->cast<LocalGet>())
+              .contains(nullptr)) {
+          ok = false;
+          break;
         }
-        if (!ok) {
-          continue;
-        }
+      }
+      if (!ok) {
+        continue;
       }
 
       // Success! The pattern fits, prepare to optimize this local by adding a
