@@ -102,6 +102,7 @@ struct PropagateStructGets
   // Check if a local index is a reference to a struct. Those are the locals we
   // try to optimize.
   bool isStructVar(Index index) {
+  return true;
     auto* func = getFunction();
     return func->isVar(index) && func->getLocalType(index).isStruct();
   }
