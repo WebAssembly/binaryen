@@ -161,20 +161,6 @@ struct PropagateStructGets
         teeParents[set] = curr;
         structGets.push_back(getCurrentPointer());
       }
-    } else if (auto* iff = curr->ref->dynCast<If>()) {
-      // TODO Handle arbitrary nesting here, including leading to gets/tees.
-      if (iff->ifFalse && iff->type != Type::unreachable &&
-          iff->ifTrue->type != Type::unreachable &&
-          iff->ifFalse->type != Type::unreachable) {
-        auto* module = getModule();
-        const auto& passOptions = getPassOptions();
-        if (Properties::getFallthrough(iff->ifTrue, passOptions, *module)
-              ->is<StructNew>() ||
-            Properties::getFallthrough(iff->ifFalse, passOptions, *module)
-              ->is<StructNew>()) {
-          structGets.push_back(getCurrentPointer());
-        }
-      }
     }
   }
 

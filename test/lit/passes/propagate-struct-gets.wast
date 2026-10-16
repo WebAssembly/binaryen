@@ -114,116 +114,6 @@
     )
   )
 
-  ;; CHECK:      (func $sink-struct-get-if (type $4) (param $x i32) (result i32)
-  ;; CHECK-NEXT:  (if (result i32)
-  ;; CHECK-NEXT:   (local.get $x)
-  ;; CHECK-NEXT:   (then
-  ;; CHECK-NEXT:    (struct.get $struct 0
-  ;; CHECK-NEXT:     (struct.new_default $struct)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (else
-  ;; CHECK-NEXT:    (struct.get $struct 0
-  ;; CHECK-NEXT:     (struct.new $struct
-  ;; CHECK-NEXT:      (i32.const 42)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  ;; H2L:      (func $sink-struct-get-if (type $3) (param $x i32) (result i32)
-  ;; H2L-NEXT:  (local $1 i32)
-  ;; H2L-NEXT:  (local $2 i32)
-  ;; H2L-NEXT:  (local $3 i32)
-  ;; H2L-NEXT:  (if (result i32)
-  ;; H2L-NEXT:   (local.get $x)
-  ;; H2L-NEXT:   (then
-  ;; H2L-NEXT:    (drop
-  ;; H2L-NEXT:     (block (result nullref)
-  ;; H2L-NEXT:      (local.set $1
-  ;; H2L-NEXT:       (i32.const 0)
-  ;; H2L-NEXT:      )
-  ;; H2L-NEXT:      (ref.null none)
-  ;; H2L-NEXT:     )
-  ;; H2L-NEXT:    )
-  ;; H2L-NEXT:    (local.get $1)
-  ;; H2L-NEXT:   )
-  ;; H2L-NEXT:   (else
-  ;; H2L-NEXT:    (drop
-  ;; H2L-NEXT:     (block (result nullref)
-  ;; H2L-NEXT:      (local.set $3
-  ;; H2L-NEXT:       (i32.const 42)
-  ;; H2L-NEXT:      )
-  ;; H2L-NEXT:      (local.set $2
-  ;; H2L-NEXT:       (local.get $3)
-  ;; H2L-NEXT:      )
-  ;; H2L-NEXT:      (ref.null none)
-  ;; H2L-NEXT:     )
-  ;; H2L-NEXT:    )
-  ;; H2L-NEXT:    (local.get $2)
-  ;; H2L-NEXT:   )
-  ;; H2L-NEXT:  )
-  ;; H2L-NEXT: )
-  (func $sink-struct-get-if (param $x i32) (result i32)
-    ;; A struct.get directly consuming an if that allocates structs in its arms
-    ;; should be sunk into the arms so Heap2Local can eliminate both
-    ;; allocations.
-    (struct.get $struct 0
-      (if (result (ref $struct))
-        (local.get $x)
-        (then
-          (struct.new_default $struct)
-        )
-        (else
-          (struct.new $struct
-            (i32.const 42)
-          )
-        )
-      )
-    )
-  )
-
-  ;; CHECK:      (func $no-sink-struct-get-if-no-alloc (type $6) (param $x i32) (param $s1 (ref $struct)) (param $s2 (ref $struct)) (result i32)
-  ;; CHECK-NEXT:  (struct.get $struct 0
-  ;; CHECK-NEXT:   (if (result (ref $struct))
-  ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:    (then
-  ;; CHECK-NEXT:     (local.get $s1)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (else
-  ;; CHECK-NEXT:     (local.get $s2)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  ;; H2L:      (func $no-sink-struct-get-if-no-alloc (type $6) (param $x i32) (param $s1 (ref $struct)) (param $s2 (ref $struct)) (result i32)
-  ;; H2L-NEXT:  (struct.get $struct 0
-  ;; H2L-NEXT:   (if (result (ref $struct))
-  ;; H2L-NEXT:    (local.get $x)
-  ;; H2L-NEXT:    (then
-  ;; H2L-NEXT:     (local.get $s1)
-  ;; H2L-NEXT:    )
-  ;; H2L-NEXT:    (else
-  ;; H2L-NEXT:     (local.get $s2)
-  ;; H2L-NEXT:    )
-  ;; H2L-NEXT:   )
-  ;; H2L-NEXT:  )
-  ;; H2L-NEXT: )
-  (func $no-sink-struct-get-if-no-alloc (param $x i32) (param $s1 (ref $struct)) (param $s2 (ref $struct)) (result i32)
-    ;; Do not sink struct.get into an if when neither arm allocates a struct.new.
-    (struct.get $struct 0
-      (if (result (ref $struct))
-        (local.get $x)
-        (then
-          (local.get $s1)
-        )
-        (else
-          (local.get $s2)
-        )
-      )
-    )
-  )
-
   ;; CHECK:      (func $no-project-struct-get-uninitialized (type $5) (param $x i32) (param $y i32) (result i32)
   ;; CHECK-NEXT:  (local $ref (ref null $struct))
   ;; CHECK-NEXT:  (if
@@ -439,7 +329,7 @@
     )
   )
 
-  ;; CHECK:      (func $project-struct-get-tee-immutable-nn-ref (type $7) (param $x i32) (param $b1 (ref $struct-nn-ref)) (param $b2 (ref $struct-nn-ref)) (result (ref struct))
+  ;; CHECK:      (func $project-struct-get-tee-immutable-nn-ref (type $6) (param $x i32) (param $b1 (ref $struct-nn-ref)) (param $b2 (ref $struct-nn-ref)) (result (ref struct))
   ;; CHECK-NEXT:  (local $ref (ref null $struct-nn-ref))
   ;; CHECK-NEXT:  (local $4 structref)
   ;; CHECK-NEXT:  (block $err
@@ -473,7 +363,7 @@
   ;; CHECK-NEXT:   (local.get $4)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; H2L:      (func $project-struct-get-tee-immutable-nn-ref (type $7) (param $x i32) (param $b1 (ref $struct-nn-ref)) (param $b2 (ref $struct-nn-ref)) (result (ref struct))
+  ;; H2L:      (func $project-struct-get-tee-immutable-nn-ref (type $6) (param $x i32) (param $b1 (ref $struct-nn-ref)) (param $b2 (ref $struct-nn-ref)) (result (ref struct))
   ;; H2L-NEXT:  (local $ref (ref null $struct-nn-ref))
   ;; H2L-NEXT:  (local $4 structref)
   ;; H2L-NEXT:  (block $err
@@ -540,7 +430,7 @@
     )
   )
 
-  ;; CHECK:      (func $no-project-struct-get-tee-mutable (type $8) (param $s1 (ref $struct)) (param $s2 (ref $struct)) (result i32)
+  ;; CHECK:      (func $no-project-struct-get-tee-mutable (type $7) (param $s1 (ref $struct)) (param $s2 (ref $struct)) (result i32)
   ;; CHECK-NEXT:  (local $ref (ref null $struct))
   ;; CHECK-NEXT:  (block $err
   ;; CHECK-NEXT:   (br_if $err
@@ -565,7 +455,7 @@
   ;; CHECK-NEXT:   (local.get $ref)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; H2L:      (func $no-project-struct-get-tee-mutable (type $8) (param $s1 (ref $struct)) (param $s2 (ref $struct)) (result i32)
+  ;; H2L:      (func $no-project-struct-get-tee-mutable (type $7) (param $s1 (ref $struct)) (param $s2 (ref $struct)) (result i32)
   ;; H2L-NEXT:  (local $ref (ref null $struct))
   ;; H2L-NEXT:  (block $err
   ;; H2L-NEXT:   (br_if $err
@@ -702,7 +592,7 @@
     )
   )
 
-  ;; CHECK:      (func $project-single-set (type $9) (result i32)
+  ;; CHECK:      (func $project-single-set (type $8) (result i32)
   ;; CHECK-NEXT:  (local $ref (ref null $struct))
   ;; CHECK-NEXT:  (local.set $ref
   ;; CHECK-NEXT:   (struct.new $struct
@@ -718,7 +608,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; H2L:      (func $project-single-set (type $9) (result i32)
+  ;; H2L:      (func $project-single-set (type $8) (result i32)
   ;; H2L-NEXT:  (local $ref (ref null $struct))
   ;; H2L-NEXT:  (local $1 i32)
   ;; H2L-NEXT:  (local $2 i32)
