@@ -503,7 +503,7 @@
   (func $optimize-struct-get-tee-immutable (param $x i32) (param $y i32) (result i32)
     ;; Two independent allocations in $curr are tee'd into a shared local $ref
     ;; inside struct.get of an immutable field before branching to a shared
-    ;; block that reads the same field from $ref. Projecting $ref to an i32
+    ;; block that reads the same field from $ref. Optimizing $ref to an i32
     ;; local disentangles the two allocations so Heap2Local can optimize both.
     (local $curr (ref $struct-immutable))
     (local $ref (ref null $struct-immutable))
@@ -635,8 +635,9 @@
   ;; H2L-NEXT: )
   (func $optimize-struct-get-tee-immutable-nn-ref (param $x i32) (param $b1 (ref $struct-nn-ref)) (param $b2 (ref $struct-nn-ref)) (result (ref struct))
     ;; As above, but the immutable field has a non-nullable reference type
-    ;; ((ref struct)). The optimizeed local uses a nullable type with
-    ;; ref.as_non_null on the tees and get so validation succeeds across blocks.
+    ;; ((ref struct)). The optimizeed local uses a nullable type (since it is
+    ;; not dominated in the spec's sense by sets), and we add ref.as_non_null
+    ;; on the tees and get so validation succeeds across blocks.
     (local $ref (ref null $struct-nn-ref))
     (block $err
       (drop
