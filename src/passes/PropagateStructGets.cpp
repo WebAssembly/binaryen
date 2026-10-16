@@ -147,7 +147,7 @@ struct PropagateStructGets
     auto* module = getModule();
     Builder builder(*module);
     LazyLocalGraph localGraph(func, module);
-    std::unordered_map<Index, Index> projectedLocals;
+    std::unordered_map<Index, Index> optimizedLocals;
 
     for (auto& [localIndex, localSets] : sets) {
       if (localSets.size() < 2) {
@@ -290,15 +290,15 @@ struct PropagateStructGets
 
       // Success! The pattern fits, prepare to optimize this local by adding a
       // local to store the value in its field.
-      projectedLocals[localIndex] = builder.addVar(func, fieldType);
+      optimizedLocals[localIndex] = builder.addVar(func, fieldType);
     }
 
     // Rewrite recorded struct.gets in post-order.
     for (auto** currp : structGets) {
       auto* sget = (*currp)->cast<StructGet>();
       if (auto* get = sget->ref->dynCast<LocalGet>()) {
-        auto it = projectedLocals.find(get->index);
-        if (it == projectedLocals.end()) {
+        auto it = optimizedLocals.find(get->index);
+        if (it == optimizedLocals.end()) {
           continue;
         }
 
@@ -308,8 +308,8 @@ struct PropagateStructGets
         *currp =
           builder.makeLocalGet(newLocal, func->getLocalType(newLocal));
       } else if (auto* tee = sget->ref->dynCast<LocalSet>()) {
-        auto it = projectedLocals.find(tee->index);
-        if (it == projectedLocals.end()) {
+        auto it = optimizedLocals.find(tee->index);
+        if (it == optimizedLocals.end()) {
           continue;
         }
 
@@ -336,9 +336,9 @@ struct PropagateStructGets
       }
     }
 
-    // Rewrite non-tee local.sets of projected locals: all local.sets now store
+    // Rewrite non-tee local.sets of optimized locals: all local.sets now store
     // the field.
-    for (auto [x, newLocal] : projectedLocals) {
+    for (auto [x, newLocal] : optimizedLocals) {
       // All the struct.gets are the same, so it is enough to look at the first
       // and copy it.
       auto* sget = getParents[x][0];
