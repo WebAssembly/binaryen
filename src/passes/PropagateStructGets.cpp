@@ -137,14 +137,15 @@ struct PropagateStructGets
     LazyLocalGraph localGraph(func, module);
 
     // For each optimized local, maps each used field index to the new local
-    // index that stores that field.
+    // index that stores that field. Note that the inner map is sorted, both for
+    // deterministic ordering when we create new locals, and also because the
+    // number of used fields tends to be small (so hashing is overkill).
     std::unordered_map<Index, std::map<Index, Index>> optimizedLocals;
 
     for (auto& [localIndex, localSets] : sets) {
       if (localSets.size() < 2) {
         // We only care about the case of 2 or more sets for a local: otherwise,
-        // Heap2Local can handle things perfectly for a single set (and zero is
-        // trivially trapping).
+        // Heap2Local can handle things perfectly for a single set.
         continue;
       }
 
@@ -165,7 +166,8 @@ struct PropagateStructGets
         continue;
       }
 
-      // Gather all the field indexes read from this local.
+      // Gather all the field indexes read from this local, first from the
+      // local.gets, and later from the tees.
       std::set<Index> usedFields;
       for (auto* sget : getStructGets) {
         usedFields.insert(sget->index);
@@ -207,8 +209,8 @@ struct PropagateStructGets
       // Each used field's value must not change between the local.set and
       // local.get: either the field is immutable, or every set writes a fresh
       // struct.new that only ever flows into this local's struct.gets. (Note
-      // that struct.sets are ruled out by the fact that we analyzed all
-      // local.get/tee operations, and all flowed into struct.get.)
+      // that struct.*sets* - writes - are ruled out by the fact that we
+      // analyzed all local.get/tee operations, and all flowed into struct.get.)
       auto& fields =
         func->getLocalType(localIndex).getHeapType().getStruct().fields;
       if (!allSetsAreUnescapingAllocs) {
@@ -230,19 +232,19 @@ struct PropagateStructGets
       //   foo();
       //   bar(x.value, x.value);
       //
-      // =>
+      // This pass optimizes that to:
       //
       //   x_value = getRef().value;
       //   foo();
       //   bar(x_value, x_value);
       //
-      // Note how the `.value` (the struct.get) happens before `foo()`,
+      // Note how the `.value` (the struct.get) happens *before* `foo()`,
       // after the optimization, so we may have moved a trap around here. It is
-      // not enough to check trapsNeverHappen here, since we are moving the
-      // trap earlier, after `foo()` which might have prevented us from reaching
-      // the trap. We can rule this problem out by seeing that only non-nullable
-      // values are written to the local (it is fine for the local itself to be
-      // nullable, see below).
+      // not enough to check trapsNeverHappen, since we are moving the trap to
+      // an earlier place, and `foo()` might have prevented us from reaching
+      // there. We can rule most of this problem out by seeing that only non-
+      // nullable values are written to the local (it is fine for the local
+      // itself to be nullable, see below).
       for (auto** setp : localSets) {
         auto* set = (*setp)->cast<LocalSet>();
         if (set->value->type.isNullable()) {
@@ -255,7 +257,8 @@ struct PropagateStructGets
       }
 
       // Finally, if the local is nullable, see if the null default value can
-      // actually be read.
+      // actually be read (which would mean we trap; we could handle this but
+      // realistically it should be rare TODO).
       if (func->getLocalType(localIndex).isNullable()) {
         for (auto* sget : getStructGets) {
           if (localGraph.getSets(sget->ref->cast<LocalGet>())
