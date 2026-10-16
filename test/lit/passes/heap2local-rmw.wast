@@ -1739,3 +1739,127 @@
     )
   )
 )
+
+(module
+  (type $s0 (shared (struct (field (mut (ref null (shared eq)))))))
+  ;; CHECK:      (type $0 (func))
+
+  ;; CHECK:      (type $s1 (shared (struct)))
+
+  ;; CHECK:      (type $a0 (shared (array (mut (ref null (shared eq))))))
+  (type $a0 (shared (array (mut (ref null (shared eq))))))
+  (type $s1 (shared (struct)))
+
+  ;; CHECK:      (type $3 (func (param (ref $a0))))
+
+  ;; CHECK:      (func $cmpxchg-became-unreachable-ref (type $0)
+  ;; CHECK-NEXT:  (local $x (ref null $s1))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block ;; (replaces unreachable StructCmpxchg we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (block (result (ref null (shared none)))
+  ;; CHECK-NEXT:        (ref.null (shared none))
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null (shared none))
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null (shared none))
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $cmpxchg-became-unreachable-ref
+    ;; The allocation flows into both a failing cast in `ref` and into
+    ;; `expected`. During the post-order walk, `ref` is replaced with an
+    ;; unreachable block before the cmpxchg is visited (and before ReFinalize
+    ;; runs), so `visitStructCmpxchg` must check for an unreachable `ref`.
+    (local $x (ref null $s1))
+    (drop
+      (struct.atomic.rmw.cmpxchg $s0 0
+        (ref.cast (ref $s0)
+          (local.tee $x
+            (struct.new_default $s1)
+          )
+        )
+        (local.get $x)
+        (ref.null (shared none))
+      )
+    )
+  )
+
+  ;; CHECK:      (func $array-cmpxchg-became-unreachable-ref (type $0)
+  ;; CHECK-NEXT:  (local $x (ref null $s1))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block ;; (replaces unreachable ArrayCmpxchg we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (block (result (ref null (shared none)))
+  ;; CHECK-NEXT:        (ref.null (shared none))
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null (shared none))
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null (shared none))
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $array-cmpxchg-became-unreachable-ref
+    ;; Same as above, for array.atomic.rmw.cmpxchg.
+    (local $x (ref null $s1))
+    (drop
+      (array.atomic.rmw.cmpxchg $a0
+        (ref.cast (ref $a0)
+          (local.tee $x
+            (struct.new_default $s1)
+          )
+        )
+        (i32.const 0)
+        (local.get $x)
+        (ref.null (shared none))
+      )
+    )
+  )
+
+  ;; CHECK:      (func $array-cmpxchg-unreachable (type $3) (param $a (ref $a0))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (array.atomic.rmw.cmpxchg $a0
+  ;; CHECK-NEXT:    (local.get $a)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (block (result (ref null (shared none)))
+  ;; CHECK-NEXT:     (ref.null (shared none))
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $array-cmpxchg-unreachable (param $a (ref $a0))
+    ;; An unreachable array.atomic.rmw.cmpxchg is left for DCE.
+    (drop
+      (array.atomic.rmw.cmpxchg $a0
+        (local.get $a)
+        (i32.const 0)
+        (struct.new_default $s1)
+        (unreachable)
+      )
+    )
+  )
+)
