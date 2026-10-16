@@ -325,7 +325,7 @@ struct PropagateStructGets
       return builder.makeBlock(list);
     };
 
-    // Rewrite recorded struct.gets in post-order:
+    // Rewrite recorded struct.gets in post-order.
     for (auto** currp : structGets) {
       auto* sget = (*currp)->cast<StructGet>();
       if (auto* get = sget->ref->dynCast<LocalGet>()) {
@@ -343,11 +343,12 @@ struct PropagateStructGets
       }
     }
 
-    // Rewrite non-tee local.sets of optimized locals: all local.sets now also
-    // store the used fields.
+    // Rewrite non-tee local.sets of optimized locals: local.sets now store the
+    // used fields.
     for (auto& [x, _] : optimizedLocals) {
       for (auto** setp : sets[x]) {
         auto* set = (*setp)->cast<LocalSet>();
+        // Tees were already handled.
         if (!set->isTee()) {
           *setp = makeFieldSets(set);
         }
