@@ -56,6 +56,7 @@
 // situation where the heap allocation is just used as data.
 //
 
+#include "ir/bits.h"
 #include "ir/local-graph.h"
 #include "ir/properties.h"
 #include "pass.h"
@@ -80,7 +81,7 @@ struct PropagateStructGets
   std::unordered_map<Index, Index> numGets;
 
   // The sets for each local index.
-  std::unordered_map<Index, std::vector<LocalSet*>> sets;
+  std::unordered_map<Index, std::vector<Expression**>> sets;
 
   // The parent struct.gets for each local index.
   std::unordered_map<Index, std::vector<StructGet*>> getParents;
@@ -108,7 +109,7 @@ struct PropagateStructGets
 
   void visitLocalSet(LocalSet* curr) {
     if (isStructVar(curr->index)) {
-      sets[curr->index].push_back(curr);
+      sets[curr->index].push_back(getCurrentPointer());
     }
   }
 
@@ -144,7 +145,10 @@ struct PropagateStructGets
     auto* module = getModule();
     Builder builder(*module);
     LazyLocalGraph localGraph(func, module);
-    std::unordered_map<Index, Index> optimizedLocals;
+
+    // For each optimized local, maps each used field index to the new local
+    // index that stores that field.
+    std::unordered_map<Index, std::map<Index, Index>> optimizedLocals;
 
     for (auto& [localIndex, localSets] : sets) {
       if (localSets.size() < 2) {
@@ -171,30 +175,19 @@ struct PropagateStructGets
         continue;
       }
 
-      // Veirfy all the struct.gets operate on the same field in the struct, and
-      // in the same way.
-      // TODO: handle multiple field indexes, and mixtures of signed/unsigned
-      Index fieldIndex = getStructGets[0]->index;
-      bool isSigned = getStructGets[0]->signed_;
-      Type fieldType = getStructGets[0]->type;
-
-      bool ok = true;
+      // Gather all the field indexes read from this local.
+      std::set<Index> usedFields;
       for (auto* sget : getStructGets) {
-        if (sget->index != fieldIndex || sget->signed_ != isSigned ||
-            sget->type != fieldType) {
-          ok = false;
-          break;
-        }
-      }
-      if (!ok) {
-        continue;
+        usedFields.insert(sget->index);
       }
 
       // Analyze the sets to the local. Things are especially simple if they all
       // store a fresh unescaping allocation, that is, a struct.new which does
       // not flow out through a tee.
+      bool ok = true;
       bool allSetsAreUnescapingAllocs = true;
-      for (auto* set : localSets) {
+      for (auto** setp : localSets) {
+        auto* set = (*setp)->cast<LocalSet>();
         if (set->value->type == Type::unreachable) {
           // Stop on dead code.
           ok = false;
@@ -209,17 +202,9 @@ struct PropagateStructGets
             ok = false;
             break;
           }
-          // Check if the parent struct.get is compatible with all the ones
-          // before, that we checked for the parents of local.gets.
-          auto* pget = teeIt->second;
-          if (pget->index != fieldIndex || pget->signed_ != isSigned ||
-              pget->type != fieldType) {
-            ok = false;
-            break;
-          }
+          usedFields.insert(teeIt->second->index);
         } else {
           // Not a tee: a normal local.set.
-
           if (!set->value->is<StructNew>()) {
             allSetsAreUnescapingAllocs = false;
           }
@@ -229,15 +214,23 @@ struct PropagateStructGets
         continue;
       }
 
-      // The field value must not change between the local.set and local.get:
-      // either the field is immutable, or every set writes a fresh struct.new
-      // that only ever flows into this local's struct.gets.
-      auto& field = func->getLocalType(localIndex)
-                      .getHeapType()
-                      .getStruct()
-                      .fields[fieldIndex];
-      if (field.mutable_ != Immutable && !allSetsAreUnescapingAllocs) {
-        continue;
+      // Each used field's value must not change between the local.set and
+      // local.get: either the field is immutable, or every set writes a fresh
+      // struct.new that only ever flows into this local's struct.gets. (Note
+      // that struct.sets are ruled out by the fact that we analyzed all
+      // local.get/tee operations, and all flowed into struct.get.)
+      auto& fields =
+        func->getLocalType(localIndex).getHeapType().getStruct().fields;
+      if (!allSetsAreUnescapingAllocs) {
+        for (auto fieldIndex : usedFields) {
+          if (fields[fieldIndex].mutable_ != Immutable) {
+            ok = false;
+            break;
+          }
+        }
+        if (!ok) {
+          continue;
+        }
       }
 
       // If the original local is nullable, then the struct.gets that we add may
@@ -260,7 +253,8 @@ struct PropagateStructGets
       // the trap. We can rule this problem out by seeing that only non-nullable
       // values are written to the local (it is fine for the local itself to be
       // nullable, see below).
-      for (auto* set : localSets) {
+      for (auto** setp : localSets) {
+        auto* set = (*setp)->cast<LocalSet>();
         if (set->value->type.isNullable()) {
           ok = false;
           break;
@@ -286,68 +280,79 @@ struct PropagateStructGets
       }
 
       // Success! The pattern fits, prepare to optimize this local by adding a
-      // local to store the value in its field.
-      optimizedLocals[localIndex] = builder.addVar(func, fieldType);
+      // local to store the value of each used field.
+      for (auto fieldIndex : usedFields) {
+        optimizedLocals[localIndex][fieldIndex] =
+          builder.addVar(func, fields[fieldIndex].type);
+      }
     }
+
+    auto getFieldFromLocal =
+      [&](Index localIndex, Index fieldIndex, bool signed_) -> Expression* {
+      auto& field = func->getLocalType(localIndex)
+                      .getHeapType()
+                      .getStruct()
+                      .fields[fieldIndex];
+      auto newLocal = optimizedLocals[localIndex][fieldIndex];
+      Expression* ret =
+        builder.makeLocalGet(newLocal, func->getLocalType(newLocal));
+      return Bits::makePackedFieldGet(ret, field, signed_, *module);
+    };
+
+    auto makeFieldSets = [&](LocalSet* set,
+                             StructGet* teeParent = nullptr) -> Expression* {
+      auto localIndex = set->index;
+      auto localType = func->getLocalType(localIndex);
+      auto& fields = localType.getHeapType().getStruct().fields;
+      std::vector<Expression*> list = {
+        builder.makeLocalSet(localIndex, set->value)};
+      for (auto [fieldIndex, newLocal] : optimizedLocals[localIndex]) {
+        auto& field = fields[fieldIndex];
+        auto* sget =
+          builder.makeStructGet(fieldIndex,
+                                builder.makeLocalGet(localIndex, localType),
+                                MemoryOrder::Unordered,
+                                field.type,
+                                false);
+        list.push_back(builder.makeLocalSet(newLocal, sget));
+      }
+      if (teeParent) {
+        list.push_back(
+          getFieldFromLocal(localIndex, teeParent->index, teeParent->signed_));
+      }
+      return builder.makeBlock(list);
+    };
 
     // Rewrite recorded struct.gets in post-order.
     for (auto** currp : structGets) {
       auto* sget = (*currp)->cast<StructGet>();
       if (auto* get = sget->ref->dynCast<LocalGet>()) {
-        auto it = optimizedLocals.find(get->index);
-        if (it == optimizedLocals.end()) {
+        if (!optimizedLocals.contains(get->index)) {
           continue;
         }
 
         // Replace (struct.get (local.get)) with a local.get of the field, which
         // is now in a local directly.
-        Index newLocal = it->second;
-        *currp =
-          builder.makeLocalGet(newLocal, func->getLocalType(newLocal));
+        *currp = getFieldFromLocal(get->index, sget->index, sget->signed_);
       } else if (auto* tee = sget->ref->dynCast<LocalSet>()) {
-        auto it = optimizedLocals.find(tee->index);
-        if (it == optimizedLocals.end()) {
+        if (!optimizedLocals.contains(tee->index)) {
           continue;
         }
 
-        // Replace (struct.get (local.tee (REF))) with
-        // (local.tee (struct.get (REF))). Before we stashed the ref in a local,
-        // and now we stash the field.
-        Index newLocal = it->second;
-        sget->ref = tee->value;
-        sget->finalize();
-        tee->index = newLocal;
-        tee->value = sget;
-        tee->makeTee(func->getLocalType(newLocal));
-        *currp = tee;
-      } else if (auto* iff = sget->ref->dynCast<If>()) {
-        // Replace (struct.get (if .. (A) (B))) with
-        // (if .. (struct.get (A)) (struct.get (B))). This avoids an overlapping
-        // live range for the allocations in the If arms.
-        iff->ifTrue = builder.makeStructGet(
-          sget->index, iff->ifTrue, sget->order, sget->type, sget->signed_);
-        iff->ifFalse = builder.makeStructGet(
-          sget->index, iff->ifFalse, sget->order, sget->type, sget->signed_);
-        iff->finalize();
-        *currp = iff;
+        // Replace (struct.get (local.tee (REF))) with a block that sets the
+        // local, copies all used fields into their locals, and returns the
+        // tee'd field.
+        *currp = makeFieldSets(tee, sget);
       }
     }
 
-    // Rewrite non-tee local.sets of optimized locals: all local.sets now store
-    // the field.
-    for (auto [x, newLocal] : optimizedLocals) {
-      // All the struct.gets are the same, so it is enough to look at the first
-      // and copy it.
-      auto* sget = getParents[x][0];
-      for (auto* set : sets[x]) {
+    // Rewrite non-tee local.sets of optimized locals: all local.sets now also
+    // store the used fields.
+    for (auto& [x, _] : optimizedLocals) {
+      for (auto** setp : sets[x]) {
+        auto* set = (*setp)->cast<LocalSet>();
         if (!set->isTee()) {
-          set->value = builder.makeStructGet(sget->index,
-                                             set->value,
-                                             MemoryOrder::Unordered,
-                                             sget->type,
-                                             sget->signed_);
-          set->index = newLocal;
-          set->finalize();
+          *setp = makeFieldSets(set);
         }
       }
     }
