@@ -21,7 +21,7 @@
   ;; H2L:      (type $struct-immutable (struct (field i32)))
   (type $struct-immutable (struct (field i32)))
 
-  ;; CHECK:      (func $project-struct-get-if (type $4) (param $x i32) (result i32)
+  ;; CHECK:      (func $optimize-struct-get-if (type $4) (param $x i32) (result i32)
   ;; CHECK-NEXT:  (local $ref (ref null $struct))
   ;; CHECK-NEXT:  (local $2 i32)
   ;; CHECK-NEXT:  (if
@@ -45,7 +45,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.get $2)
   ;; CHECK-NEXT: )
-  ;; H2L:      (func $project-struct-get-if (type $3) (param $x i32) (result i32)
+  ;; H2L:      (func $optimize-struct-get-if (type $3) (param $x i32) (result i32)
   ;; H2L-NEXT:  (local $ref (ref null $struct))
   ;; H2L-NEXT:  (local $2 i32)
   ;; H2L-NEXT:  (local $3 i32)
@@ -89,8 +89,8 @@
   ;; H2L-NEXT:  )
   ;; H2L-NEXT:  (local.get $2)
   ;; H2L-NEXT: )
-  (func $project-struct-get-if (param $x i32) (result i32)
-    ;; Even when the field is mutable, we can project $ref to an i32 local
+  (func $optimize-struct-get-if (param $x i32) (result i32)
+    ;; Even when the field is mutable, we can optimize $ref to an i32 local
     ;; holding field 0 because every set is a fresh struct.new and every get
     ;; reads field 0. Heap2Local can then eliminate both allocations.
     (local $ref (ref null $struct))
@@ -114,7 +114,7 @@
     )
   )
 
-  ;; CHECK:      (func $no-project-struct-get-uninitialized (type $5) (param $x i32) (param $y i32) (result i32)
+  ;; CHECK:      (func $no-optimize-struct-get-uninitialized (type $5) (param $x i32) (param $y i32) (result i32)
   ;; CHECK-NEXT:  (local $ref (ref null $struct))
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (local.get $x)
@@ -140,7 +140,7 @@
   ;; CHECK-NEXT:   (local.get $ref)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; H2L:      (func $no-project-struct-get-uninitialized (type $4) (param $x i32) (param $y i32) (result i32)
+  ;; H2L:      (func $no-optimize-struct-get-uninitialized (type $4) (param $x i32) (param $y i32) (result i32)
   ;; H2L-NEXT:  (local $ref (ref null $struct))
   ;; H2L-NEXT:  (if
   ;; H2L-NEXT:   (local.get $x)
@@ -166,9 +166,9 @@
   ;; H2L-NEXT:   (local.get $ref)
   ;; H2L-NEXT:  )
   ;; H2L-NEXT: )
-  (func $no-project-struct-get-uninitialized (param $x i32) (param $y i32) (result i32)
-    ;; Similar to $project-struct-get-if, but $ref is not initialized on all
-    ;; paths reaching the struct.get, so it can be null and trap. Do not project
+  (func $no-optimize-struct-get-uninitialized (param $x i32) (param $y i32) (result i32)
+    ;; Similar to $optimize-struct-get-if, but $ref is not initialized on all
+    ;; paths reaching the struct.get, so it can be null and trap. Do not optimize
     ;; to an i32 local, which would not trap.
     (local $ref (ref null $struct))
     (if
@@ -196,7 +196,7 @@
     )
   )
 
-  ;; CHECK:      (func $project-struct-get-tee-immutable (type $5) (param $x i32) (param $y i32) (result i32)
+  ;; CHECK:      (func $optimize-struct-get-tee-immutable (type $5) (param $x i32) (param $y i32) (result i32)
   ;; CHECK-NEXT:  (local $cur (ref $struct-immutable))
   ;; CHECK-NEXT:  (local $ref (ref null $struct-immutable))
   ;; CHECK-NEXT:  (local $4 i32)
@@ -231,7 +231,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.get $4)
   ;; CHECK-NEXT: )
-  ;; H2L:      (func $project-struct-get-tee-immutable (type $4) (param $x i32) (param $y i32) (result i32)
+  ;; H2L:      (func $optimize-struct-get-tee-immutable (type $4) (param $x i32) (param $y i32) (result i32)
   ;; H2L-NEXT:  (local $cur (ref $struct-immutable))
   ;; H2L-NEXT:  (local $ref (ref null $struct-immutable))
   ;; H2L-NEXT:  (local $4 i32)
@@ -288,7 +288,7 @@
   ;; H2L-NEXT:  )
   ;; H2L-NEXT:  (local.get $4)
   ;; H2L-NEXT: )
-  (func $project-struct-get-tee-immutable (param $x i32) (param $y i32) (result i32)
+  (func $optimize-struct-get-tee-immutable (param $x i32) (param $y i32) (result i32)
     ;; Two independent allocations in $cur are tee'd into a shared local $ref
     ;; inside struct.get of an immutable field before branching to a shared
     ;; block that reads the same field from $ref. Projecting $ref to an i32
@@ -329,7 +329,7 @@
     )
   )
 
-  ;; CHECK:      (func $project-struct-get-tee-immutable-nn-ref (type $6) (param $x i32) (param $b1 (ref $struct-nn-ref)) (param $b2 (ref $struct-nn-ref)) (result (ref struct))
+  ;; CHECK:      (func $optimize-struct-get-tee-immutable-nn-ref (type $6) (param $x i32) (param $b1 (ref $struct-nn-ref)) (param $b2 (ref $struct-nn-ref)) (result (ref struct))
   ;; CHECK-NEXT:  (local $ref (ref null $struct-nn-ref))
   ;; CHECK-NEXT:  (local $4 structref)
   ;; CHECK-NEXT:  (block $err
@@ -363,7 +363,7 @@
   ;; CHECK-NEXT:   (local.get $4)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; H2L:      (func $project-struct-get-tee-immutable-nn-ref (type $6) (param $x i32) (param $b1 (ref $struct-nn-ref)) (param $b2 (ref $struct-nn-ref)) (result (ref struct))
+  ;; H2L:      (func $optimize-struct-get-tee-immutable-nn-ref (type $6) (param $x i32) (param $b1 (ref $struct-nn-ref)) (param $b2 (ref $struct-nn-ref)) (result (ref struct))
   ;; H2L-NEXT:  (local $ref (ref null $struct-nn-ref))
   ;; H2L-NEXT:  (local $4 structref)
   ;; H2L-NEXT:  (block $err
@@ -397,9 +397,9 @@
   ;; H2L-NEXT:   (local.get $4)
   ;; H2L-NEXT:  )
   ;; H2L-NEXT: )
-  (func $project-struct-get-tee-immutable-nn-ref (param $x i32) (param $b1 (ref $struct-nn-ref)) (param $b2 (ref $struct-nn-ref)) (result (ref struct))
+  (func $optimize-struct-get-tee-immutable-nn-ref (param $x i32) (param $b1 (ref $struct-nn-ref)) (param $b2 (ref $struct-nn-ref)) (result (ref struct))
     ;; As above, but the immutable field has a non-nullable reference type
-    ;; ((ref struct)). The projected local uses a nullable type with
+    ;; ((ref struct)). The optimizeed local uses a nullable type with
     ;; ref.as_non_null on the tees and get so validation succeeds across blocks.
     (local $ref (ref null $struct-nn-ref))
     (block $err
@@ -430,7 +430,7 @@
     )
   )
 
-  ;; CHECK:      (func $no-project-struct-get-tee-mutable (type $7) (param $s1 (ref $struct)) (param $s2 (ref $struct)) (result i32)
+  ;; CHECK:      (func $no-optimize-struct-get-tee-mutable (type $7) (param $s1 (ref $struct)) (param $s2 (ref $struct)) (result i32)
   ;; CHECK-NEXT:  (local $ref (ref null $struct))
   ;; CHECK-NEXT:  (block $err
   ;; CHECK-NEXT:   (br_if $err
@@ -455,7 +455,7 @@
   ;; CHECK-NEXT:   (local.get $ref)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; H2L:      (func $no-project-struct-get-tee-mutable (type $7) (param $s1 (ref $struct)) (param $s2 (ref $struct)) (result i32)
+  ;; H2L:      (func $no-optimize-struct-get-tee-mutable (type $7) (param $s1 (ref $struct)) (param $s2 (ref $struct)) (result i32)
   ;; H2L-NEXT:  (local $ref (ref null $struct))
   ;; H2L-NEXT:  (block $err
   ;; H2L-NEXT:   (br_if $err
@@ -480,8 +480,8 @@
   ;; H2L-NEXT:   (local.get $ref)
   ;; H2L-NEXT:  )
   ;; H2L-NEXT: )
-  (func $no-project-struct-get-tee-mutable (param $s1 (ref $struct)) (param $s2 (ref $struct)) (result i32)
-    ;; Do not project when tees write arbitrary struct references and the field
+  (func $no-optimize-struct-get-tee-mutable (param $s1 (ref $struct)) (param $s2 (ref $struct)) (result i32)
+    ;; Do not optimize when tees write arbitrary struct references and the field
     ;; is mutable.
     (local $ref (ref null $struct))
     (block $err
@@ -508,7 +508,7 @@
     )
   )
 
-  ;; CHECK:      (func $no-project-struct-get-different-fields (type $4) (param $x i32) (result i32)
+  ;; CHECK:      (func $no-optimize-struct-get-different-fields (type $4) (param $x i32) (result i32)
   ;; CHECK-NEXT:  (local $ref (ref null $struct-2fields))
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (local.get $x)
@@ -535,7 +535,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; H2L:      (func $no-project-struct-get-different-fields (type $3) (param $x i32) (result i32)
+  ;; H2L:      (func $no-optimize-struct-get-different-fields (type $3) (param $x i32) (result i32)
   ;; H2L-NEXT:  (local $ref (ref null $struct-2fields))
   ;; H2L-NEXT:  (if
   ;; H2L-NEXT:   (local.get $x)
@@ -562,8 +562,8 @@
   ;; H2L-NEXT:   )
   ;; H2L-NEXT:  )
   ;; H2L-NEXT: )
-  (func $no-project-struct-get-different-fields (param $x i32) (result i32)
-    ;; Do not project when gets of $ref read different fields (field 0 vs
+  (func $no-optimize-struct-get-different-fields (param $x i32) (result i32)
+    ;; Do not optimize when gets of $ref read different fields (field 0 vs
     ;; field 1).
     (local $ref (ref null $struct-2fields))
     (if
@@ -592,7 +592,7 @@
     )
   )
 
-  ;; CHECK:      (func $project-single-set (type $8) (result i32)
+  ;; CHECK:      (func $optimize-single-set (type $8) (result i32)
   ;; CHECK-NEXT:  (local $ref (ref null $struct))
   ;; CHECK-NEXT:  (local.set $ref
   ;; CHECK-NEXT:   (struct.new $struct
@@ -608,7 +608,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; H2L:      (func $project-single-set (type $8) (result i32)
+  ;; H2L:      (func $optimize-single-set (type $8) (result i32)
   ;; H2L-NEXT:  (local $ref (ref null $struct))
   ;; H2L-NEXT:  (local $1 i32)
   ;; H2L-NEXT:  (local $2 i32)
@@ -638,7 +638,7 @@
   ;; H2L-NEXT:   )
   ;; H2L-NEXT:  )
   ;; H2L-NEXT: )
-  (func $project-single-set (result i32)
+  (func $optimize-single-set (result i32)
     ;; We leave a single local.set for Heap2Local (that situation has no
     ;; overlapping live ranges etc.), and do not optimize.
     (local $ref (ref null $struct))
