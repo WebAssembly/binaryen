@@ -1609,7 +1609,7 @@
   ;; H2L-NEXT:   )
   ;; H2L-NEXT:  )
   ;; H2L-NEXT: )
-  (func $no-unreachable (result i32)
+  (func $unreachable (result i32)
     ;; We ignore unreachable struct.gets code, but still optimize the rest.
     (local $ref (ref null $struct))
     (local.set $ref
@@ -1628,6 +1628,29 @@
       )
       (struct.get $struct 0
         (unreachable)
+      )
+    )
+  )
+
+  (func $unreachable-2 (result i32)
+    ;; Now a struct.new and local.set are unreachable.
+    (local $ref (ref null $struct))
+    (local.set $ref
+      (struct.new $struct
+        (unreachable
+      )
+    )
+    (local.set $ref
+      (struct.new $struct
+        (i32.const 42)
+      )
+    )
+    (i32.add
+      (struct.get $struct 0
+        (local.get $ref)
+      )
+      (struct.get $struct 0
+        (local.get $ref)
       )
     )
   )
