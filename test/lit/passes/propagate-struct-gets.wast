@@ -17,15 +17,16 @@
 
   ;; CHECK:      (type $struct-2fields (struct (field i32) (field i32)))
 
-  ;; CHECK:      (type $struct-packed (struct (field i8) (field i16)))
-
   ;; CHECK:      (type $struct-immutable (struct (field i32)))
 
+  ;; CHECK:      (type $struct-packed (struct (field i8) (field i16)))
+
   ;; CHECK:      (type $struct-nn-ref (struct (field (ref struct))))
+  ;; H2L:      (type $struct-immutable (struct (field i32)))
+
   ;; H2L:      (type $struct-nn-ref (struct (field (ref struct))))
   (type $struct-nn-ref (struct (field (ref struct))))
 
-  ;; H2L:      (type $struct-immutable (struct (field i32)))
   (type $struct-immutable (struct (field i32)))
 
   ;; H2L:      (type $struct-2fields (struct (field i32) (field i32)))
@@ -65,7 +66,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.get $2)
   ;; CHECK-NEXT: )
-  ;; H2L:      (func $optimize-struct-get-if (type $4) (param $x i32) (result i32)
+  ;; H2L:      (func $optimize-struct-get-if (type $5) (param $x i32) (result i32)
   ;; H2L-NEXT:  (local $ref (ref null $struct))
   ;; H2L-NEXT:  (local $2 i32)
   ;; H2L-NEXT:  (local $3 i32)
@@ -166,7 +167,7 @@
   ;; CHECK-NEXT:   (local.get $ref)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; H2L:      (func $no-optimize-struct-get-uninitialized (type $5) (param $x i32) (param $y i32) (result i32)
+  ;; H2L:      (func $no-optimize-struct-get-uninitialized (type $6) (param $x i32) (param $y i32) (result i32)
   ;; H2L-NEXT:  (local $ref (ref null $struct))
   ;; H2L-NEXT:  (if
   ;; H2L-NEXT:   (local.get $x)
@@ -273,7 +274,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; H2L:      (func $mixture (type $5) (param $x i32) (param $y i32) (result i32)
+  ;; H2L:      (func $mixture (type $6) (param $x i32) (param $y i32) (result i32)
   ;; H2L-NEXT:  (local $yes (ref null $struct))
   ;; H2L-NEXT:  (local $no (ref null $struct))
   ;; H2L-NEXT:  (local $4 i32)
@@ -431,7 +432,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.get $4)
   ;; CHECK-NEXT: )
-  ;; H2L:      (func $optimize-struct-get-tee-immutable (type $5) (param $x i32) (param $y i32) (result i32)
+  ;; H2L:      (func $optimize-struct-get-tee-immutable (type $6) (param $x i32) (param $y i32) (result i32)
   ;; H2L-NEXT:  (local $curr (ref $struct-immutable))
   ;; H2L-NEXT:  (local $ref (ref null $struct-immutable))
   ;; H2L-NEXT:  (local $4 i32)
@@ -791,7 +792,7 @@
   ;; CHECK-NEXT:   (local.get $3)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; H2L:      (func $optimize-struct-get-different-fields (type $4) (param $x i32) (result i32)
+  ;; H2L:      (func $optimize-struct-get-different-fields (type $5) (param $x i32) (result i32)
   ;; H2L-NEXT:  (local $ref (ref null $struct-2fields))
   ;; H2L-NEXT:  (local $2 i32)
   ;; H2L-NEXT:  (local $3 i32)
@@ -1289,7 +1290,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; H2L:      (func $optimize-packed-signed-and-unsigned (type $4) (param $x i32) (result i32)
+  ;; H2L:      (func $optimize-packed-signed-and-unsigned (type $5) (param $x i32) (result i32)
   ;; H2L-NEXT:  (local $ref (ref null $struct-packed))
   ;; H2L-NEXT:  (local $2 i32)
   ;; H2L-NEXT:  (local $3 i32)
@@ -2204,6 +2205,98 @@
         (local.get $ref)
       )
       (struct.get $struct 0
+        (local.get $ref)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $set-unknown-immutable (type $15) (param $param (ref $struct-immutable)) (result i32)
+  ;; CHECK-NEXT:  (local $ref (ref null $struct-immutable))
+  ;; CHECK-NEXT:  (local $2 i32)
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (local.set $ref
+  ;; CHECK-NEXT:    (local.get $param)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.set $2
+  ;; CHECK-NEXT:    (struct.get $struct-immutable 0
+  ;; CHECK-NEXT:     (local.get $ref)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (local.set $ref
+  ;; CHECK-NEXT:    (struct.new $struct-immutable
+  ;; CHECK-NEXT:     (i32.const 42)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.set $2
+  ;; CHECK-NEXT:    (struct.get $struct-immutable 0
+  ;; CHECK-NEXT:     (local.get $ref)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (i32.add
+  ;; CHECK-NEXT:   (local.get $2)
+  ;; CHECK-NEXT:   (local.get $2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; H2L:      (func $set-unknown-immutable (type $15) (param $param (ref $struct-immutable)) (result i32)
+  ;; H2L-NEXT:  (local $ref (ref null $struct-immutable))
+  ;; H2L-NEXT:  (local $2 i32)
+  ;; H2L-NEXT:  (local $3 i32)
+  ;; H2L-NEXT:  (local $4 i32)
+  ;; H2L-NEXT:  (block
+  ;; H2L-NEXT:   (local.set $ref
+  ;; H2L-NEXT:    (local.get $param)
+  ;; H2L-NEXT:   )
+  ;; H2L-NEXT:   (local.set $2
+  ;; H2L-NEXT:    (struct.get $struct-immutable 0
+  ;; H2L-NEXT:     (local.get $ref)
+  ;; H2L-NEXT:    )
+  ;; H2L-NEXT:   )
+  ;; H2L-NEXT:  )
+  ;; H2L-NEXT:  (block
+  ;; H2L-NEXT:   (drop
+  ;; H2L-NEXT:    (block (result nullref)
+  ;; H2L-NEXT:     (local.set $4
+  ;; H2L-NEXT:      (i32.const 42)
+  ;; H2L-NEXT:     )
+  ;; H2L-NEXT:     (local.set $3
+  ;; H2L-NEXT:      (local.get $4)
+  ;; H2L-NEXT:     )
+  ;; H2L-NEXT:     (ref.null none)
+  ;; H2L-NEXT:    )
+  ;; H2L-NEXT:   )
+  ;; H2L-NEXT:   (local.set $2
+  ;; H2L-NEXT:    (block (result i32)
+  ;; H2L-NEXT:     (drop
+  ;; H2L-NEXT:      (ref.null none)
+  ;; H2L-NEXT:     )
+  ;; H2L-NEXT:     (local.get $3)
+  ;; H2L-NEXT:    )
+  ;; H2L-NEXT:   )
+  ;; H2L-NEXT:  )
+  ;; H2L-NEXT:  (i32.add
+  ;; H2L-NEXT:   (local.get $2)
+  ;; H2L-NEXT:   (local.get $2)
+  ;; H2L-NEXT:  )
+  ;; H2L-NEXT: )
+  (func $set-unknown-immutable (param $param (ref $struct-immutable)) (result i32)
+    (local $ref (ref null $struct-immutable))
+    ;; As above, but now the field is immutable, so we optimize.
+    (local.set $ref
+      (local.get $param)
+    )
+    (local.set $ref
+      (struct.new $struct-immutable
+        (i32.const 42)
+      )
+    )
+    (i32.add
+      (struct.get $struct-immutable 0
+        (local.get $ref)
+      )
+      (struct.get $struct-immutable 0
         (local.get $ref)
       )
     )
