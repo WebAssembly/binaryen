@@ -240,6 +240,14 @@ struct ShellExternalInterface : ModuleRunner::ExternalInterface {
   bool
   growMemory(Name memoryName, Address /*oldSize*/, Address newSize) override {
     if (newSize > MaxMemorySize) {
+      // According to the spec, this should return -1. However, that kind of
+      // non-deterministic graceful failure causes false positives when doing
+      // differential fuzzing between implementations that vary in their ability
+      // to do the grow. To avoid those false positives in the fuzzer, we fail
+      // with an exceeded host limit here. This will cause fuzzer executions
+      // with large memory growths to be ignored. This limit is implemented here
+      // instead of in the main interpreter so other users (e.g. Precompute) get
+      // the standard behavior.
       hostLimit("memory too large");
     }
     auto it = memories.find(memoryName);
