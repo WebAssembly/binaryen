@@ -1,0 +1,17 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    // Modules
+    "module": "nodenext",
+    "rootDir": "../",
+    "types": [
+      "node"
+    ],
+
+    // Emit
+    "noEmit": true,
+  },
+  "include": [
+    "./"
+  ],
+}
