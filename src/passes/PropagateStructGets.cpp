@@ -101,9 +101,7 @@ struct PropagateStructGets
   // stored in optimizedLocals, for each local, below).
   std::vector<Expression**> structGets;
 
-  void visitLocalGet(LocalGet* curr) {
-    numGets[curr->index]++;
-  }
+  void visitLocalGet(LocalGet* curr) { numGets[curr->index]++; }
 
   void visitLocalSet(LocalSet* curr) {
     sets[curr->index].push_back(getCurrentPointer());
