@@ -541,7 +541,7 @@
     )
   )
 
-  ;; CHECK:      (func $optimize-struct-get-tee-immutable-nn-ref (type $8) (param $x i32) (param $b1 (ref $struct-nn-ref)) (param $b2 (ref $struct-nn-ref)) (result (ref struct))
+  ;; CHECK:      (func $optimize-struct-get-tee-immutable-nn-ref (type $9) (param $x i32) (param $b1 (ref $struct-nn-ref)) (param $b2 (ref $struct-nn-ref)) (result (ref struct))
   ;; CHECK-NEXT:  (local $ref (ref null $struct-nn-ref))
   ;; CHECK-NEXT:  (local $4 structref)
   ;; CHECK-NEXT:  (block $err
@@ -587,7 +587,7 @@
   ;; CHECK-NEXT:   (local.get $4)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; H2L:      (func $optimize-struct-get-tee-immutable-nn-ref (type $6) (param $x i32) (param $b1 (ref $struct-nn-ref)) (param $b2 (ref $struct-nn-ref)) (result (ref struct))
+  ;; H2L:      (func $optimize-struct-get-tee-immutable-nn-ref (type $7) (param $x i32) (param $b1 (ref $struct-nn-ref)) (param $b2 (ref $struct-nn-ref)) (result (ref struct))
   ;; H2L-NEXT:  (local $ref (ref null $struct-nn-ref))
   ;; H2L-NEXT:  (local $4 structref)
   ;; H2L-NEXT:  (block $err
@@ -667,7 +667,7 @@
     )
   )
 
-  ;; CHECK:      (func $no-optimize-struct-get-tee-mutable (type $9) (param $s1 (ref $struct)) (param $s2 (ref $struct)) (result i32)
+  ;; CHECK:      (func $no-optimize-struct-get-tee-mutable (type $10) (param $s1 (ref $struct)) (param $s2 (ref $struct)) (result i32)
   ;; CHECK-NEXT:  (local $ref (ref null $struct))
   ;; CHECK-NEXT:  (block $err
   ;; CHECK-NEXT:   (br_if $err
@@ -692,7 +692,7 @@
   ;; CHECK-NEXT:   (local.get $ref)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; H2L:      (func $no-optimize-struct-get-tee-mutable (type $7) (param $s1 (ref $struct)) (param $s2 (ref $struct)) (result i32)
+  ;; H2L:      (func $no-optimize-struct-get-tee-mutable (type $8) (param $s1 (ref $struct)) (param $s2 (ref $struct)) (result i32)
   ;; H2L-NEXT:  (local $ref (ref null $struct))
   ;; H2L-NEXT:  (block $err
   ;; H2L-NEXT:   (br_if $err
@@ -902,7 +902,7 @@
     )
   )
 
-  ;; CHECK:      (func $optimize-multiple-fields-tee-partial (type $10) (param $x i32) (param $y i32) (result i64)
+  ;; CHECK:      (func $optimize-multiple-fields-tee-partial (type $11) (param $x i32) (param $y i32) (result i64)
   ;; CHECK-NEXT:  (local $curr (ref $struct-3fields-mixed))
   ;; CHECK-NEXT:  (local $ref (ref null $struct-3fields-mixed))
   ;; CHECK-NEXT:  (local $4 i32)
@@ -969,7 +969,7 @@
   ;; CHECK-NEXT:   (local.get $5)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; H2L:      (func $optimize-multiple-fields-tee-partial (type $9) (param $x i32) (param $y i32) (result i64)
+  ;; H2L:      (func $optimize-multiple-fields-tee-partial (type $10) (param $x i32) (param $y i32) (result i64)
   ;; H2L-NEXT:  (local $curr (ref $struct-3fields-mixed))
   ;; H2L-NEXT:  (local $ref (ref null $struct-3fields-mixed))
   ;; H2L-NEXT:  (local $4 i32)
@@ -1145,7 +1145,7 @@
     )
   )
 
-  ;; CHECK:      (func $no-optimize-multiple-fields-tee-one-mutable (type $11) (param $s1 (ref $struct-3fields-mixed)) (param $s2 (ref $struct-3fields-mixed)) (result i32)
+  ;; CHECK:      (func $no-optimize-multiple-fields-tee-one-mutable (type $12) (param $s1 (ref $struct-3fields-mixed)) (param $s2 (ref $struct-3fields-mixed)) (result i32)
   ;; CHECK-NEXT:  (local $ref (ref null $struct-3fields-mixed))
   ;; CHECK-NEXT:  (block $err
   ;; CHECK-NEXT:   (br_if $err
@@ -1170,7 +1170,7 @@
   ;; CHECK-NEXT:   (local.get $ref)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; H2L:      (func $no-optimize-multiple-fields-tee-one-mutable (type $10) (param $s1 (ref $struct-3fields-mixed)) (param $s2 (ref $struct-3fields-mixed)) (result i32)
+  ;; H2L:      (func $no-optimize-multiple-fields-tee-one-mutable (type $11) (param $s1 (ref $struct-3fields-mixed)) (param $s2 (ref $struct-3fields-mixed)) (result i32)
   ;; H2L-NEXT:  (local $ref (ref null $struct-3fields-mixed))
   ;; H2L-NEXT:  (block $err
   ;; H2L-NEXT:   (br_if $err
@@ -1448,7 +1448,7 @@
     )
   )
 
-  ;; CHECK:      (func $optimize-single-set (type $12) (result i32)
+  ;; CHECK:      (func $no-single-set (type $8) (result i32)
   ;; CHECK-NEXT:  (local $ref (ref null $struct))
   ;; CHECK-NEXT:  (local.set $ref
   ;; CHECK-NEXT:   (struct.new $struct
@@ -1464,7 +1464,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; H2L:      (func $optimize-single-set (type $12) (result i32)
+  ;; H2L:      (func $no-single-set (type $6) (result i32)
   ;; H2L-NEXT:  (local $ref (ref null $struct))
   ;; H2L-NEXT:  (local $1 i32)
   ;; H2L-NEXT:  (local $2 i32)
@@ -1494,7 +1494,7 @@
   ;; H2L-NEXT:   )
   ;; H2L-NEXT:  )
   ;; H2L-NEXT: )
-  (func $optimize-single-set (result i32)
+  (func $no-single-set (result i32)
     ;; We leave a single local.set for Heap2Local (that situation has no
     ;; overlapping live ranges etc.), and do not optimize.
     (local $ref (ref null $struct))
@@ -1509,6 +1509,125 @@
       )
       (struct.get $struct 0
         (local.get $ref)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $no-unreachable (type $8) (result i32)
+  ;; CHECK-NEXT:  (local $ref (ref null $struct))
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (local.set $ref
+  ;; CHECK-NEXT:    (struct.new $struct
+  ;; CHECK-NEXT:     (i32.const 42)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.set $1
+  ;; CHECK-NEXT:    (struct.get $struct 0
+  ;; CHECK-NEXT:     (local.get $ref)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (local.set $ref
+  ;; CHECK-NEXT:    (struct.new $struct
+  ;; CHECK-NEXT:     (i32.const 42)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.set $1
+  ;; CHECK-NEXT:    (struct.get $struct 0
+  ;; CHECK-NEXT:     (local.get $ref)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (i32.add
+  ;; CHECK-NEXT:   (local.get $1)
+  ;; CHECK-NEXT:   (block ;; (replaces unreachable StructGet we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; H2L:      (func $no-unreachable (type $6) (result i32)
+  ;; H2L-NEXT:  (local $ref (ref null $struct))
+  ;; H2L-NEXT:  (local $1 i32)
+  ;; H2L-NEXT:  (local $2 i32)
+  ;; H2L-NEXT:  (local $3 i32)
+  ;; H2L-NEXT:  (local $4 i32)
+  ;; H2L-NEXT:  (local $5 i32)
+  ;; H2L-NEXT:  (block
+  ;; H2L-NEXT:   (drop
+  ;; H2L-NEXT:    (block (result nullref)
+  ;; H2L-NEXT:     (local.set $3
+  ;; H2L-NEXT:      (i32.const 42)
+  ;; H2L-NEXT:     )
+  ;; H2L-NEXT:     (local.set $2
+  ;; H2L-NEXT:      (local.get $3)
+  ;; H2L-NEXT:     )
+  ;; H2L-NEXT:     (ref.null none)
+  ;; H2L-NEXT:    )
+  ;; H2L-NEXT:   )
+  ;; H2L-NEXT:   (local.set $1
+  ;; H2L-NEXT:    (block (result i32)
+  ;; H2L-NEXT:     (drop
+  ;; H2L-NEXT:      (ref.null none)
+  ;; H2L-NEXT:     )
+  ;; H2L-NEXT:     (local.get $2)
+  ;; H2L-NEXT:    )
+  ;; H2L-NEXT:   )
+  ;; H2L-NEXT:  )
+  ;; H2L-NEXT:  (block
+  ;; H2L-NEXT:   (drop
+  ;; H2L-NEXT:    (block (result nullref)
+  ;; H2L-NEXT:     (local.set $5
+  ;; H2L-NEXT:      (i32.const 42)
+  ;; H2L-NEXT:     )
+  ;; H2L-NEXT:     (local.set $4
+  ;; H2L-NEXT:      (local.get $5)
+  ;; H2L-NEXT:     )
+  ;; H2L-NEXT:     (ref.null none)
+  ;; H2L-NEXT:    )
+  ;; H2L-NEXT:   )
+  ;; H2L-NEXT:   (local.set $1
+  ;; H2L-NEXT:    (block (result i32)
+  ;; H2L-NEXT:     (drop
+  ;; H2L-NEXT:      (ref.null none)
+  ;; H2L-NEXT:     )
+  ;; H2L-NEXT:     (local.get $4)
+  ;; H2L-NEXT:    )
+  ;; H2L-NEXT:   )
+  ;; H2L-NEXT:  )
+  ;; H2L-NEXT:  (i32.add
+  ;; H2L-NEXT:   (local.get $1)
+  ;; H2L-NEXT:   (block ;; (replaces unreachable StructGet we can't emit)
+  ;; H2L-NEXT:    (drop
+  ;; H2L-NEXT:     (unreachable)
+  ;; H2L-NEXT:    )
+  ;; H2L-NEXT:    (unreachable)
+  ;; H2L-NEXT:   )
+  ;; H2L-NEXT:  )
+  ;; H2L-NEXT: )
+  (func $no-unreachable (result i32)
+    ;; We ignore unreachable struct.gets code, but still optimize the rest.
+    (local $ref (ref null $struct))
+    (local.set $ref
+      (struct.new $struct
+        (i32.const 42)
+      )
+    )
+    (local.set $ref
+      (struct.new $struct
+        (i32.const 42)
+      )
+    )
+    (i32.add
+      (struct.get $struct 0
+        (local.get $ref)
+      )
+      (struct.get $struct 0
+        (unreachable)
       )
     )
   )
