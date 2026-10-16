@@ -15,8 +15,11 @@
  */
 
 //
-// Propagate struct.get operations backwards into local sets/tees and into If
-// arms that allocate structs:
+// Identify when a GC reference local is always read from using struct.get, as
+// opposed to operations on the reference itself (like passing it out, or doing
+// ref.eq). When all local.gets are immediately consumed by struct.gets, then
+// the GC allocation is basically used as data, and we can store that data
+// directly, simplifying things. More concretely:
 //
 //   1. When a struct-typed local is written and every read of it
 //      (including via local.tee) is immediately consumed by an identical
