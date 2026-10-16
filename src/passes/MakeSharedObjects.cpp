@@ -79,6 +79,8 @@ struct LazyTable {
   // The names of conversion functions, if ever used.
   Name refToIndexName;
   Name indexToRefName;
+  // Initial elements used to populate the table via an active element segment.
+  std::vector<Expression*> init;
 
   LazyTable(Name base, Type type) : base(base), type(type) {}
 
@@ -190,16 +192,16 @@ struct LazyTable {
     wasm->addFunction(std::move(func));
   }
 
-  // Returns true if the table was added. (If it is never used, it will not be
-  // added.)
-  bool maybeAdd(Address initial, Address max) {
+  // Add the table, conversion functions, and active element segment if the
+  // table was ever used.
+  void maybeAdd(Address max) {
     assert(wasm);
     if (!name) {
-      return false;
+      return;
     }
     Table* table = wasm->addTable(Builder::makeTable(name));
     table->type = type;
-    table->initial = initial;
+    table->initial = init.size();
     table->max = max;
     if (refToIndexName) {
       addRefToIndexFunction();
@@ -207,32 +209,40 @@ struct LazyTable {
     if (indexToRefName) {
       addIndexToRefFunction();
     }
-    return true;
+    if (!init.empty()) {
+      Builder builder(*wasm);
+      Name segName = Names::getValidElementSegmentName(*wasm, base);
+      auto* offset = builder.makeConst(Literal(int32_t(0)));
+      auto* segment = wasm->addElementSegment(
+        Builder::makeElementSegment(segName, name, offset));
+      segment->type = type;
+      segment->data = std::move(init);
+    }
   }
 
-  bool isTableType(Type t) const {
-    return t.isRef() && Type::isSubType(t, type);
+  bool canHold(Type t) const {
+    return t.isRef() && !t.isNull() && Type::isSubType(t, type);
   }
 
-  bool hasTableType(Type t) const {
+  bool hasHoldable(Type t) const {
     if (t.isTuple()) {
       for (Type elem : t) {
-        if (hasTableType(elem)) {
+        if (hasHoldable(elem)) {
           return true;
         }
       }
       return false;
     }
-    return isTableType(t);
+    return canHold(t);
   }
 
   bool funcHasTableType(Function* func) const {
     Signature sig = func->type.getHeapType().getSignature();
-    return hasTableType(sig.params) || hasTableType(sig.results);
+    return hasHoldable(sig.params) || hasHoldable(sig.results);
   }
 
   Expression* convertToRef(Expression* arg, Type origType) {
-    if (!isTableType(origType)) {
+    if (!canHold(origType)) {
       return arg;
     }
     Builder builder(*wasm);
@@ -244,7 +254,7 @@ struct LazyTable {
   }
 
   Expression* convertToIndex(Expression* arg, Type origType, Type targetType) {
-    if (!isTableType(origType)) {
+    if (!canHold(origType)) {
       return arg;
     }
     Builder builder(*wasm);
@@ -264,10 +274,16 @@ struct MakeSharedObjects
   Type funcref = Type(HeapTypes::func, Nullable);
   Type externref = Type(HeapTypes::ext, Nullable);
 
+  // Tables storing unshared funcrefs and externrefs that are lowered to shared
+  // i31ref indices inside the module.
   LazyTable funcTable{"funcs", funcref};
   LazyTable externTable{"externs", externref};
-  std::vector<Name> funcs;
+
+  // Map from function name to index in `funcTable`.
   std::unordered_map<Name, Index> funcIndices;
+
+  // Imported helper functions used to lower `extern.convert_any` and
+  // `any.convert_extern`, if needed.
   Name anyToExternName;
   Name externToAnyName;
 
@@ -287,10 +303,11 @@ struct MakeSharedObjects
     return externToAnyName;
   }
 
-  Index getIndex(Name func) {
-    auto [it, inserted] = funcIndices.insert({func, funcs.size()});
+  Index getIndex(RefFunc* curr) {
+    auto [it, inserted] =
+      funcIndices.insert({curr->func, funcTable.init.size()});
     if (inserted) {
-      funcs.push_back(func);
+      funcTable.init.push_back(curr);
     }
     return it->second;
   }
@@ -342,7 +359,7 @@ struct MakeSharedObjects
     std::vector<Type> params;
     Index i = 0;
     for (Type param : origSig.params) {
-      if (externTable.isTableType(param)) {
+      if (externTable.canHold(param)) {
         params.push_back(param);
       } else {
         params.push_back(rewrittenSig.params[i]);
@@ -353,7 +370,7 @@ struct MakeSharedObjects
     std::vector<Type> results;
     Index j = 0;
     for (Type result : origSig.results) {
-      if (externTable.isTableType(result)) {
+      if (externTable.canHold(result)) {
         results.push_back(result);
       } else {
         results.push_back(rewrittenSig.results[j]);
@@ -404,7 +421,7 @@ struct MakeSharedObjects
     auto* call = builder.makeCall(importName, callArgs, extResults);
 
     // Convert externrefs received as results to indices.
-    if (!externTable.hasTableType(extResults)) {
+    if (!externTable.hasHoldable(extResults)) {
       func->body = call;
     } else if (extResults.isSingle()) {
       Type targetType = func->getResults();
@@ -462,7 +479,7 @@ struct MakeSharedObjects
 
     // Forward results, converting indices to externrefs.
     Type extResults = boundarySig.results;
-    if (!externTable.hasTableType(extResults)) {
+    if (!externTable.hasHoldable(extResults)) {
       exportWrapper->body = call;
     } else if (extResults.isSingle()) {
       exportWrapper->body = externTable.convertToRef(call, extResults);
@@ -488,8 +505,8 @@ struct MakeSharedObjects
 
   void visitRefFunc(RefFunc* curr) {
     Builder builder(*getModule());
-    replaceCurrent(builder.makeRefI31(
-      builder.makeConst(Literal(getIndex(curr->func))), Shared));
+    replaceCurrent(
+      builder.makeRefI31(builder.makeConst(Literal(getIndex(curr))), Shared));
   }
 
   std::unordered_map<CallRef*, HeapType> callRefTypes;
@@ -718,7 +735,54 @@ struct MakeSharedObjects
 
   void visitElementSegment(ElementSegment* curr) { updateType(curr->type); }
 
-  void visitGlobal(Global* curr) { updateType(curr->type); }
+  // Create a new imported global with the original externref type and add it
+  // to the externref table at instantiation time. The original global ceases to
+  // be an import and is initialized to the shared i31 table index so internal
+  // uses of the global receive the table index.
+  void wrapGlobalImport(Global* global, Type origType) {
+    // Mutable imported/exported externref globals are not supported because all
+    // accesses to them would have to be rewritten to be function calls that
+    // accessed the externref table. We cannot update such accesses outside this
+    // module.
+    if (global->mutable_ == Mutable) {
+      Fatal() << "Cannot wrap mutable global " << global->name;
+    }
+    Builder builder(*getModule());
+    Name origName = global->name;
+    Name importName =
+      Names::getValidGlobalName(*getModule(), origName.toString() + "$import");
+
+    auto importGlobal = std::make_unique<Global>();
+    importGlobal->name = importName;
+    importGlobal->module = global->module;
+    importGlobal->base = global->base;
+    importGlobal->type = origType;
+    importGlobal->mutable_ = false;
+    importGlobal->hasExplicitName = true;
+
+    Index index = externTable.init.size();
+    externTable.init.push_back(builder.makeGlobalGet(importName, origType));
+
+    global->module = Name();
+    global->base = Name();
+    global->init =
+      builder.makeRefI31(builder.makeConst(Literal(int32_t(index))), Shared);
+
+    getModule()->addGlobal(std::move(importGlobal));
+  }
+
+  struct GlobalImportToWrap {
+    Global* global;
+    Type origType;
+  };
+  std::vector<GlobalImportToWrap> globalImportsToWrap;
+
+  void visitGlobal(Global* curr) {
+    if (curr->imported() && externTable.canHold(curr->type)) {
+      globalImportsToWrap.push_back({curr, curr->type});
+    }
+    updateType(curr->type);
+  }
 
   void doWalkModule(Module* wasm) {
     funcTable.wasm = wasm;
@@ -727,7 +791,7 @@ struct MakeSharedObjects
     WalkerPass::doWalkModule(wasm);
   }
 
-  struct ImportToWrap {
+  struct FuncImportToWrap {
     Function* func;
     Type origType;
   };
@@ -738,7 +802,7 @@ struct MakeSharedObjects
   };
 
   void visitModule(Module* wasm) {
-    std::vector<ImportToWrap> importsToWrap;
+    std::vector<FuncImportToWrap> importsToWrap;
     for (auto& func : wasm->functions) {
       if (func->imported() && externTable.funcHasTableType(func.get())) {
         importsToWrap.push_back({func.get(), func->type});
@@ -759,6 +823,9 @@ struct MakeSharedObjects
 
     rewriteTypes();
 
+    for (auto& info : globalImportsToWrap) {
+      wrapGlobalImport(info.global, info.origType);
+    }
     for (auto& info : importsToWrap) {
       wrapImport(info.func, info.origType);
     }
@@ -773,9 +840,10 @@ struct MakeSharedObjects
       }
     }
 
-    addFunctionTable();
+    funcTable.maybeAdd(funcTable.init.size());
     addExternTable();
     ReFinalize().run(getPassRunner(), wasm);
+    ReFinalize().walkModuleCode(wasm);
   }
 
   void rewriteTypes() {
@@ -822,27 +890,6 @@ struct MakeSharedObjects
     rewriter.mapTypeNamesAndIndices(oldToNew);
   }
 
-  void addFunctionTable() {
-    if (!funcTable.maybeAdd(funcs.size(), funcs.size())) {
-      return;
-    }
-    if (funcs.empty()) {
-      return;
-    }
-    Builder builder(*getModule());
-    Name segName = Names::getValidElementSegmentName(*getModule(), "funcs");
-    auto* offset = builder.makeConst(Literal(int32_t(0)));
-    auto* segment = getModule()->addElementSegment(
-      Builder::makeElementSegment(segName, funcTable.getName(), offset));
-    segment->type = funcTable.type;
-
-    segment->data.reserve(funcs.size());
-    for (auto func : funcs) {
-      segment->data.push_back(
-        builder.makeRefFunc(func, getModule()->getFunction(func)->type));
-    }
-  }
-
   void addAnyToExternFunction() {
     Type sharedAnyNullable = Type(HeapTypes::any.getBasic(Shared), Nullable);
     Type externrefNullable = Type(HeapTypes::ext, Nullable);
@@ -866,7 +913,7 @@ struct MakeSharedObjects
   }
 
   void addExternTable() {
-    externTable.maybeAdd(0, Table::kUnlimitedSize);
+    externTable.maybeAdd(Table::kUnlimitedSize);
     if (anyToExternName) {
       addAnyToExternFunction();
     }

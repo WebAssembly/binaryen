@@ -361,18 +361,20 @@
   ;; CHECK:      (type $shared-sig (func (param i32) (result i32)))
   (type $shared-sig (shared (func (param i32) (result i32))))
 
-  ;; CHECK:      (type $2 (func))
-
   ;; CHECK:      (type $struct (shared (struct (field (ref null (shared i31))))))
   (type $struct (struct (field (ref null func))))
 
   (func $effect (import "" "") (result i32))
 
+  ;; CHECK:      (type $3 (func))
+
   ;; CHECK:      (type $4 (func (param (ref (shared i31)) i32) (result i32)))
 
-  ;; CHECK:      (type $5 (func (param (ref (shared i31))) (result i32)))
+  ;; CHECK:      (type $5 (func (param (ref $struct))))
 
-  ;; CHECK:      (type $6 (func (param i32 i32) (result i32)))
+  ;; CHECK:      (type $6 (func (param (ref (shared i31))) (result i32)))
+
+  ;; CHECK:      (type $7 (func (param i32 i32) (result i32)))
 
   ;; CHECK:      (import "" "" (func $effect (type $0) (result i32)))
 
@@ -407,16 +409,16 @@
 
   ;; CHECK:      (elem $funcs (table $funcs) (i32.const 0) func $a $b $d $c)
 
-  ;; CHECK:      (func $a (type $2)
+  ;; CHECK:      (func $a (type $5) (param $0 (ref $struct))
   ;; CHECK-NEXT: )
-  (func $a)
-  ;; CHECK:      (func $b (type $2)
+  (func $a (param (ref $struct)))
+  ;; CHECK:      (func $b (type $3)
   ;; CHECK-NEXT: )
   (func $b)
-  ;; CHECK:      (func $c (type $2)
+  ;; CHECK:      (func $c (type $3)
   ;; CHECK-NEXT: )
   (func $c)
-  ;; CHECK:      (func $d (type $2)
+  ;; CHECK:      (func $d (type $3)
   ;; CHECK-NEXT: )
   (func $d)
 
@@ -468,7 +470,7 @@
     (call_ref $sig (call $effect) (ref.null nofunc))
   )
 
-  ;; CHECK:      (func $shared-call-ref (type $5) (param $0 (ref (shared i31))) (result i32)
+  ;; CHECK:      (func $shared-call-ref (type $6) (param $0 (ref (shared i31))) (result i32)
   ;; CHECK-NEXT:  (call_indirect $funcs (type $shared-sig)
   ;; CHECK-NEXT:   (i32.const 42)
   ;; CHECK-NEXT:   (i31.get_u
@@ -529,7 +531,7 @@
   )
 
   ;; call_indirect lowering
-  ;; CHECK:      (func $call-indirect (type $6) (param $0 i32) (param $1 i32) (result i32)
+  ;; CHECK:      (func $call-indirect (type $7) (param $0 i32) (param $1 i32) (result i32)
   ;; CHECK-NEXT:  (call_indirect $funcs (type $shared-sig)
   ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:   (i31.get_u
@@ -2418,6 +2420,7 @@
     (call $im_mixed (local.get 0) (local.get 1))
   )
 )
+
 ;; CHECK:      (func $test_mixed$export (type $2) (param $0 (ref $struct)) (param $1 externref) (result (ref $struct) externref)
 ;; CHECK-NEXT:  (local $2 (tuple (ref $struct) (ref null (shared i31))))
 ;; CHECK-NEXT:  (local.set $2
@@ -2474,6 +2477,196 @@
 ;; CHECK-NEXT: )
 
 ;; CHECK:      (func $index_to_extern (type $4) (param $0 (ref null (shared i31))) (result externref)
+;; CHECK-NEXT:  (if (result externref)
+;; CHECK-NEXT:   (ref.is_null
+;; CHECK-NEXT:    (local.get $0)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (ref.null noextern)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (else
+;; CHECK-NEXT:    (table.get $externs
+;; CHECK-NEXT:     (i31.get_u
+;; CHECK-NEXT:      (local.get $0)
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+(module
+  ;; Imported externref globals should remain externref imports, be inserted
+  ;; into the externs table at instantiation, and have internal uses replaced
+  ;; with i31 globals referring to their table indices.
+  ;; CHECK:      (type $struct (shared (struct (field (ref null (shared i31))) (field (ref (shared i31))))))
+  (type $struct (struct (field externref) (field (ref extern))))
+  (import "env" "g_nullable" (global $g_nullable externref))
+  (import "env" "g_non_null" (global $g_non_null (ref extern)))
+
+  ;; CHECK:      (type $1 (func (result externref (ref extern))))
+
+  ;; CHECK:      (type $2 (func (result (ref null (shared i31)) (ref (shared i31)))))
+
+  ;; CHECK:      (type $3 (func (param (ref null (shared i31))) (result externref)))
+
+  ;; CHECK:      (import "env" "g_nullable" (global $g_nullable$import externref))
+
+  ;; CHECK:      (import "env" "g_non_null" (global $g_non_null$import (ref extern)))
+
+  ;; CHECK:      (global $g_nullable (ref null (shared i31)) (ref.i31_shared
+  ;; CHECK-NEXT:  (i32.const 0)
+  ;; CHECK-NEXT: ))
+
+  ;; CHECK:      (global $g_non_null (ref (shared i31)) (ref.i31_shared
+  ;; CHECK-NEXT:  (i32.const 1)
+  ;; CHECK-NEXT: ))
+
+  ;; CHECK:      (global $user (ref $struct) (struct.new $struct
+  ;; CHECK-NEXT:  (global.get $g_nullable)
+  ;; CHECK-NEXT:  (global.get $g_non_null)
+  ;; CHECK-NEXT: ))
+  (global $user (ref $struct) (struct.new $struct
+    (global.get $g_nullable)
+    (global.get $g_non_null)
+  ))
+
+  ;; CHECK:      (table $externs 2 externref)
+
+  ;; CHECK:      (elem $externs (table $externs) (i32.const 0) externref (item (global.get $g_nullable$import)) (item (global.get $g_non_null$import)))
+
+  ;; CHECK:      (export "get-globals" (func $get-globals$export))
+
+  ;; CHECK:      (func $get-globals (type $2) (result (ref null (shared i31)) (ref (shared i31)))
+  ;; CHECK-NEXT:  (tuple.make 2
+  ;; CHECK-NEXT:   (global.get $g_nullable)
+  ;; CHECK-NEXT:   (global.get $g_non_null)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $get-globals (export "get-globals") (result externref (ref extern))
+    ;; Read both imported externref globals inside an exported function.
+    (tuple.make 2
+      (global.get $g_nullable)
+      (global.get $g_non_null)
+    )
+  )
+)
+
+;; CHECK:      (func $get-globals$export (type $1) (result externref (ref extern))
+;; CHECK-NEXT:  (local $0 (tuple (ref null (shared i31)) (ref (shared i31))))
+;; CHECK-NEXT:  (local.set $0
+;; CHECK-NEXT:   (call $get-globals)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (tuple.make 2
+;; CHECK-NEXT:   (call $index_to_extern
+;; CHECK-NEXT:    (tuple.extract 2 0
+;; CHECK-NEXT:     (local.get $0)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (ref.cast (ref extern)
+;; CHECK-NEXT:    (call $index_to_extern
+;; CHECK-NEXT:     (tuple.extract 2 1
+;; CHECK-NEXT:      (local.get $0)
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $index_to_extern (type $3) (param $0 (ref null (shared i31))) (result externref)
+;; CHECK-NEXT:  (if (result externref)
+;; CHECK-NEXT:   (ref.is_null
+;; CHECK-NEXT:    (local.get $0)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (ref.null noextern)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (else
+;; CHECK-NEXT:    (table.get $externs
+;; CHECK-NEXT:     (i31.get_u
+;; CHECK-NEXT:      (local.get $0)
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+(module
+  ;; If imported externref globals are never used in a way that requires the
+  ;; externs table, they still get table indices, but no table is emitted.
+  (import "env" "g_nullable" (global $g_nullable externref))
+  (import "env" "g_non_null" (global $g_non_null (ref extern)))
+)
+
+;; CHECK:      (import "env" "g_nullable" (global $g_nullable$import externref))
+
+;; CHECK:      (import "env" "g_non_null" (global $g_non_null$import (ref extern)))
+
+;; CHECK:      (global $g_nullable (ref null (shared i31)) (ref.i31_shared
+;; CHECK-NEXT:  (i32.const 0)
+;; CHECK-NEXT: ))
+
+;; CHECK:      (global $g_non_null (ref (shared i31)) (ref.i31_shared
+;; CHECK-NEXT:  (i32.const 1)
+;; CHECK-NEXT: ))
+(module
+  ;; Imported string constants should remain externref/stringref imports, be
+  ;; inserted into the externs table, and be converted back when passed to
+  ;; string builtins.
+  (import "'" "hello" (global $hello (ref extern)))
+  (import "'" "world" (global $world (ref string)))
+  (import "wasm:js-string" "equals" (func $equals (param externref externref) (result i32)))
+
+  ;; CHECK:      (type $0 (func (param (ref null (shared i31)) (ref null (shared i31))) (result i32)))
+
+  ;; CHECK:      (type $1 (func (result i32)))
+
+  ;; CHECK:      (type $2 (func (param externref externref) (result i32)))
+
+  ;; CHECK:      (type $3 (func (param (ref null (shared i31))) (result externref)))
+
+  ;; CHECK:      (import "\'" "hello" (global $hello$import (ref extern)))
+
+  ;; CHECK:      (import "\'" "world" (global $world$import (ref string)))
+
+  ;; CHECK:      (import "wasm:js-string" "equals" (func $equals$import (type $2) (param externref externref) (result i32)))
+
+  ;; CHECK:      (global $hello (ref (shared i31)) (ref.i31_shared
+  ;; CHECK-NEXT:  (i32.const 0)
+  ;; CHECK-NEXT: ))
+
+  ;; CHECK:      (global $world (ref (shared i31)) (ref.i31_shared
+  ;; CHECK-NEXT:  (i32.const 1)
+  ;; CHECK-NEXT: ))
+
+  ;; CHECK:      (table $externs 2 externref)
+
+  ;; CHECK:      (elem $externs (table $externs) (i32.const 0) externref (item (global.get $hello$import)) (item (global.get $world$import)))
+
+  ;; CHECK:      (func $equals (type $0) (param $0 (ref null (shared i31))) (param $1 (ref null (shared i31))) (result i32)
+  ;; CHECK-NEXT:  (call $equals$import
+  ;; CHECK-NEXT:   (call $index_to_extern
+  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (call $index_to_extern
+  ;; CHECK-NEXT:    (local.get $1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+
+  ;; CHECK:      (func $compare-strings (type $1) (result i32)
+  ;; CHECK-NEXT:  (call $equals
+  ;; CHECK-NEXT:   (global.get $hello)
+  ;; CHECK-NEXT:   (global.get $world)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $compare-strings (result i32)
+    ;; Compare two imported string constants using wasm:js-string equals.
+    (call $equals
+      (global.get $hello)
+      (global.get $world)
+    )
+  )
+)
+
+;; CHECK:      (func $index_to_extern (type $3) (param $0 (ref null (shared i31))) (result externref)
 ;; CHECK-NEXT:  (if (result externref)
 ;; CHECK-NEXT:   (ref.is_null
 ;; CHECK-NEXT:    (local.get $0)
