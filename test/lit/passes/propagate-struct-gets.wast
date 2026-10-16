@@ -1464,7 +1464,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; H2L:      (func $no-single-set (type $6) (result i32)
+  ;; H2L:      (func $no-single-set (type $5) (result i32)
   ;; H2L-NEXT:  (local $ref (ref null $struct))
   ;; H2L-NEXT:  (local $1 i32)
   ;; H2L-NEXT:  (local $2 i32)
@@ -1513,7 +1513,7 @@
     )
   )
 
-  ;; CHECK:      (func $no-unreachable (type $8) (result i32)
+  ;; CHECK:      (func $unreachable (type $8) (result i32)
   ;; CHECK-NEXT:  (local $ref (ref null $struct))
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (block
@@ -1550,7 +1550,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; H2L:      (func $no-unreachable (type $6) (result i32)
+  ;; H2L:      (func $unreachable (type $5) (result i32)
   ;; H2L-NEXT:  (local $ref (ref null $struct))
   ;; H2L-NEXT:  (local $1 i32)
   ;; H2L-NEXT:  (local $2 i32)
@@ -1632,12 +1632,68 @@
     )
   )
 
+  ;; CHECK:      (func $unreachable-2 (type $8) (result i32)
+  ;; CHECK-NEXT:  (local $ref (ref null $struct))
+  ;; CHECK-NEXT:  (local.set $ref
+  ;; CHECK-NEXT:   (block ;; (replaces unreachable StructNew we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $ref
+  ;; CHECK-NEXT:   (struct.new $struct
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (i32.add
+  ;; CHECK-NEXT:   (struct.get $struct 0
+  ;; CHECK-NEXT:    (local.get $ref)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (struct.get $struct 0
+  ;; CHECK-NEXT:    (local.get $ref)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; H2L:      (func $unreachable-2 (type $5) (result i32)
+  ;; H2L-NEXT:  (local $ref (ref null $struct))
+  ;; H2L-NEXT:  (local $1 i32)
+  ;; H2L-NEXT:  (local $2 i32)
+  ;; H2L-NEXT:  (local.set $ref
+  ;; H2L-NEXT:   (block ;; (replaces unreachable StructNew we can't emit)
+  ;; H2L-NEXT:    (drop
+  ;; H2L-NEXT:     (unreachable)
+  ;; H2L-NEXT:    )
+  ;; H2L-NEXT:    (unreachable)
+  ;; H2L-NEXT:   )
+  ;; H2L-NEXT:  )
+  ;; H2L-NEXT:  (drop
+  ;; H2L-NEXT:   (block (result nullref)
+  ;; H2L-NEXT:    (local.set $2
+  ;; H2L-NEXT:     (i32.const 42)
+  ;; H2L-NEXT:    )
+  ;; H2L-NEXT:    (local.set $1
+  ;; H2L-NEXT:     (local.get $2)
+  ;; H2L-NEXT:    )
+  ;; H2L-NEXT:    (ref.null none)
+  ;; H2L-NEXT:   )
+  ;; H2L-NEXT:  )
+  ;; H2L-NEXT:  (i32.add
+  ;; H2L-NEXT:   (struct.get $struct 0
+  ;; H2L-NEXT:    (local.get $ref)
+  ;; H2L-NEXT:   )
+  ;; H2L-NEXT:   (struct.get $struct 0
+  ;; H2L-NEXT:    (local.get $ref)
+  ;; H2L-NEXT:   )
+  ;; H2L-NEXT:  )
+  ;; H2L-NEXT: )
   (func $unreachable-2 (result i32)
-    ;; Now a struct.new and local.set are unreachable.
+    ;; Now a struct.new and local.set are unreachable. We do not optimize here.
     (local $ref (ref null $struct))
     (local.set $ref
       (struct.new $struct
-        (unreachable
+        (unreachable)
       )
     )
     (local.set $ref
