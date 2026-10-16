@@ -104,7 +104,13 @@ struct ShellExternalInterface : ModuleRunner::ExternalInterface {
         hostLimit("memory too large");
       }
       auto shellMemory = Memory();
-      shellMemory.resize(bytes);
+      try {
+        shellMemory.resize(bytes);
+      } catch (const std::exception&) {
+        // bad_alloc or length_error from the underlying vector: the memory
+        // is representable but too large to actually allocate.
+        hostLimit("memory too large");
+      }
       memories[memory->name] = shellMemory;
     });
   }
