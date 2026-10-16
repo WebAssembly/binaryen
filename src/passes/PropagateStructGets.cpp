@@ -17,8 +17,8 @@
 //
 // Identify when a GC reference local is always read from using struct.get, as
 // opposed to operations on the reference itself (like passing it out, or doing
-// ref.eq). When all local.gets are immediately consumed by struct.gets, then
-// the GC allocation is basically used as data, and we can store that data
+// ref.eq). When all local.gets/tees are immediately consumed by struct.gets
+// then the GC allocation is basically used as data, and we can store that data
 // directly, simplifying things. More concretely:
 //
 //    x = new Foo(42);
@@ -30,29 +30,25 @@
 //    x_value = (new Foo(42)).value; // do the struct.get earlier, here
 //    bar(x_value, x_value);
 //
-//  We do this when we detect a simple situation where all the uses are just
-//  gets like that. In this case, we know Heap2Local can later optimize
-//  the allocation away. That is, we are detecting a simple case where
-//  nothing escapes and things are easy to optimize, and we handle it
-//  directly. This is simpler than making Heap2Local able to reason about
-//  groups of allocations and their possibly overlapping livenesses, in
-//  situations like this:
+// We do this when we detect a simple situation where all the uses are just
+// gets like that. In this case, we know Heap2Local can later optimize the
+// allocation away. That is, we are detecting a simple case where nothing
+// escapes and things are easy to optimize, and we handle it directly. This is
+// simpler than making Heap2Local able to reason about groups of allocations and
+// their possibly overlapping livenesses, in situations like this:
 //
 //    x = new Foo(42);
 //    if (condition) x = new Foo(1337);
 //    bar(x.value, x.value);
 //
-//  The allocations here have overlapping live ranges, and Heap2Local
-//  cannot handle them (it sees the x.value operations are not exclusive to
-//  any single allocation). After we simplify things in this pass, the
-//  situation becomes trivial for Heap2Local, as the allocations do not
-//  overlap:
+// The allocations here have overlapping live ranges, and Heap2Local cannot
+// handle them (it sees the x.value operations are not exclusive to any single
+// allocation). After we simplify things in this pass, the situation becomes
+// trivial for Heap2Local, as the allocations do not overlap:
 //
 //    x_value = (new Foo(42)).value;
 //    if (condition) x_value = (new Foo(1337)).value;
 //    bar(x_value, x_value);
-//
-//  TODO verify this exact thing in a test
 //
 // This disentangles shared struct locals and control-flow merges so that
 // Heap2Local can optimize the underlying allocations independently. Another way
@@ -92,8 +88,9 @@ struct PropagateStructGets
   // The parent struct.get for each tee.
   std::unordered_map<LocalSet*, StructGet*> teeParents;
 
-  // All relevant struct.gets in the function, which means the struct.gets that
-  // operate on references that fit the patterns we can optimize.
+  // All relevant struct.gets in the function. We gather these during the walk,
+  // and then determine which can actually be optimized (the final decision is
+  // stored in optimizedLocals, for each local, below).
   std::vector<Expression**> structGets;
 
   // Check if a local index is a reference to a struct. Those are the locals we
