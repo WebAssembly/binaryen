@@ -39,6 +39,11 @@ void dumpDWARF(const Module& wasm);
 // will disable optimizations that currently cause issues with debug info.)
 bool shouldPreserveDWARF(PassOptions& options, Module& wasm);
 
+// Compose an old-to-new local mapping without modifying the input DWARF yet.
+// Index(-1) denotes a removed local. Safe to call from function-parallel
+// passes.
+void updateLocalIndices(Function* func, const std::vector<Index>& oldToNew);
+
 // Update the DWARF sections.
 void writeDWARFSections(Module& wasm, const BinaryLocations& newLocations);
 
