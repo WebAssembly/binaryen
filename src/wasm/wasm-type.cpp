@@ -1468,6 +1468,8 @@ std::ostream& operator<<(std::ostream& os,
       return os << "Shared types require shared-everything";
     case TypeBuilder::ErrorReasonKind::InvalidStringType:
       return os << "String types require strings feature";
+    case TypeBuilder::ErrorReasonKind::InvalidSIMDType:
+      return os << "SIMD types require SIMD feature";
     case TypeBuilder::ErrorReasonKind::InvalidUnsharedField:
       return os << "Heap type has an invalid unshared field";
     case TypeBuilder::ErrorReasonKind::NonStructDescribes:
@@ -2387,6 +2389,9 @@ bool isValidSupertype(const HeapTypeInfo& sub, const HeapTypeInfo& super) {
 
 std::optional<TypeBuilder::ErrorReason>
 validateType(Type type, FeatureSet feats, bool isShared) {
+  if (type == Type::v128 && !feats.hasSIMD()) {
+    return TypeBuilder::ErrorReasonKind::InvalidSIMDType;
+  }
   if (type.isRef()) {
     auto heapType = type.getHeapType();
     if (isShared && !heapType.isShared()) {

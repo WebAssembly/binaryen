@@ -928,6 +928,8 @@ struct TypeBuilder {
     InvalidSharedType,
     // A string type with strings disabled.
     InvalidStringType,
+    // A SIMD type with SIMD disabled.
+    InvalidSIMDType,
     // A non-shared field of a shared heap type.
     InvalidUnsharedField,
     // A describes clause on a non-struct type.
