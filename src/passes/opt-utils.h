@@ -104,7 +104,10 @@ inline void replaceFunctions(PassRunner* runner,
   // replace in exports
   for (auto& exp : module.exports) {
     if (exp->kind == ExternalKind::Function) {
-      maybeReplace(*exp->getInternalName());
+      auto iter = replacements.find(*exp->getInternalName());
+      if (iter != replacements.end()) {
+        exp->setInternalName(iter->second);
+      }
     }
   }
 }
