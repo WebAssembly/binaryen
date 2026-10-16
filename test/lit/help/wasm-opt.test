@@ -445,6 +445,10 @@
 ;; CHECK-NEXT:   --propagate-globals-globally                  propagate global values to other
 ;; CHECK-NEXT:                                                 globals (useful for tests)
 ;; CHECK-EMPTY:
+;; CHECK-NEXT:   --propagate-struct-gets                       propagate struct.get operations 
+;; CHECK-NEXT:                                                 to simplify locals and control 
+;; CHECK-NEXT:                                                 flow
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --remove-empty-function-exports               removes exports of empty 
 ;; CHECK-NEXT:                                                 functions
 ;; CHECK-EMPTY:
