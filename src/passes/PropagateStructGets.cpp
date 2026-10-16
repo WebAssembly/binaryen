@@ -15,11 +15,9 @@
  */
 
 //
-// Identify when a GC reference local is always read from using struct.get, as
-// opposed to operations on the reference itself (like passing it out, or doing
-// ref.eq). When all local.gets/tees are immediately consumed by struct.gets
-// then the GC allocation is basically used as data, and we can store that data
-// directly, simplifying things. More concretely:
+// Identify when a GC reference local is always used as "data". If all the
+// local.gets and local.tees of a reference local are immediately consumed by
+// a struct.get, to read data from the reference, then we can optimize:
 //
 //    x = new Foo(42);
 //    bar(x.value, x.value);
@@ -30,30 +28,37 @@
 //    x_value = (new Foo(42)).value; // do the struct.get earlier, here
 //    bar(x_value, x_value);
 //
-// We do this when we detect a simple situation where all the uses are just
-// gets like that. In this case, we know Heap2Local can later optimize the
-// allocation away. That is, we are detecting a simple case where nothing
-// escapes and things are easy to optimize, and we handle it directly. This is
-// simpler than making Heap2Local able to reason about groups of allocations and
-// their possibly overlapping livenesses, in situations like this:
+// More concretely, when we see all local operations look like this:
+//
+//    (local.set $ref ..)               # no constraint on local.set
+//    (struct.get (local.tee $ref ..))  # consumed by struct.get
+//    (struct.get (local.get $ref))     # consumed by struct.get
+//
+// Then we can reshape the code to look like this:
+//
+//    (local.set $ref_field (struct.get (..))  # store data in local
+//    (local.tee $ref_field (struct.get (..))  # store data in local, get it
+//    (local.get $ref_field))                  # get data from local
+//
+// This is basically a simple form of escape analysis, like Heap2Local, but
+// which handles a far more restricted case (where the reference is immediately
+// struct.get-ed). The benefit of this pass is that our restricted case can
+// handle overlapping allocations, like this:
 //
 //    x = new Foo(42);
 //    if (condition) x = new Foo(1337);
 //    bar(x.value, x.value);
 //
-// The allocations here have overlapping live ranges, and Heap2Local cannot
-// handle them (it sees the x.value operations are not exclusive to any single
-// allocation). After we simplify things in this pass, the situation becomes
-// trivial for Heap2Local, as the allocations do not overlap:
+// Heap2Local cannot optimize this due to the overlapping live ranges (it sees
+// the x.value operations are not exclusive to any single allocation). But this
+// pass can optimize into this:
 //
 //    x_value = (new Foo(42)).value;
 //    if (condition) x_value = (new Foo(1337)).value;
 //    bar(x_value, x_value);
 //
-// This disentangles shared struct locals and control-flow merges so that
-// Heap2Local can optimize the underlying allocations independently. Another way
-// to look at it is that it handles a simple case of escape analysis, the easy
-// situation where the heap allocation is just used as data.
+// The live ranges of the reference local no longer overlap (only of the data-
+// storing local), so Heap2Local can handle both those allocations.
 //
 
 #include "ir/bits.h"
@@ -77,13 +82,13 @@ struct PropagateStructGets
   }
 
   // Track the number of gets for each local, so that we can see if all gets are
-  // accounted for and understood.
+  // consumed by struct.gets.
   std::unordered_map<Index, Index> numGets;
 
   // The sets for each local index.
   std::unordered_map<Index, std::vector<Expression**>> sets;
 
-  // The parent struct.gets for each local index.
+  // The parent struct.gets for each local index's gets.
   std::unordered_map<Index, std::vector<StructGet*>> getParents;
 
   // The parent struct.get for each tee.
