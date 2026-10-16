@@ -138,6 +138,7 @@ Pass* createPrintCallGraphPass();
 Pass* createPrintFeaturesPass();
 Pass* createPrintFunctionMapPass();
 Pass* createPropagateGlobalsGloballyPass();
+Pass* createPropagateStructGetsPass();
 Pass* createRandomizeBranchHintsPass();
 Pass* createRemoveNonJSOpsPass();
 Pass* createRemoveRelaxedSIMDPass();
