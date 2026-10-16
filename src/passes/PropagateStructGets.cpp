@@ -99,24 +99,12 @@ struct PropagateStructGets
   // stored in optimizedLocals, for each local, below).
   std::vector<Expression**> structGets;
 
-  // Check if a local index is a reference to a struct. Those are the locals we
-  // try to optimize.
-  bool isStructVar(Index index) {
-  return true;
-    auto* func = getFunction();
-    return func->isVar(index) && func->getLocalType(index).isStruct();
-  }
-
   void visitLocalGet(LocalGet* curr) {
-    if (isStructVar(curr->index)) {
-      numGets[curr->index]++;
-    }
+    numGets[curr->index]++;
   }
 
   void visitLocalSet(LocalSet* curr) {
-    if (isStructVar(curr->index)) {
-      sets[curr->index].push_back(getCurrentPointer());
-    }
+    sets[curr->index].push_back(getCurrentPointer());
   }
 
   void visitStructGet(StructGet* curr) {
@@ -129,15 +117,11 @@ struct PropagateStructGets
     // See if the reference is one of the patterns we recognize.
     // TODO fallthrough, but careful of br_if which can escape the value
     if (auto* get = curr->ref->dynCast<LocalGet>()) {
-      if (isStructVar(get->index)) {
-        getParents[get->index].push_back(curr);
-        structGets.push_back(getCurrentPointer());
-      }
+      getParents[get->index].push_back(curr);
+      structGets.push_back(getCurrentPointer());
     } else if (auto* set = curr->ref->dynCast<LocalSet>()) {
-      if (isStructVar(set->index)) {
-        teeParents[set] = curr;
-        structGets.push_back(getCurrentPointer());
-      }
+      teeParents[set] = curr;
+      structGets.push_back(getCurrentPointer());
     }
     // TODO: handle more things flowing into struct.get, like an If
   }
