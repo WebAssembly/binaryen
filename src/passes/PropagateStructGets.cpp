@@ -22,10 +22,9 @@
 // directly, simplifying things. More concretely:
 //
 //   1. When a struct-typed local is written and every read of it
-//      (including via local.tee) is immediately consumed by an identical
-//      struct.get of the same field, replace the struct local with a local of
-//      the field's type and perform the struct.get at each local.set/local.tee.
-//      For example:
+//      (including via local.tee) is immediately consumed by a struct.get,
+//      replace the struct local with a local of the field's type and perform
+//      the struct.get at each local.set/local.tee. For example:
 //
 //        x = new Foo(42);
 //        bar(x.value, x.value);
@@ -33,7 +32,7 @@
 //      =>
 //
 //        // Store the value directly.
-//        x_value = (new Foo(42)).value;
+//        x_value = (new Foo(42)).value; // do the struct.get earlier, here
 //        bar(x_value, x_value);
 //
 //      We do this when we detect a simple situation where all the uses are just
@@ -58,7 +57,7 @@
 //        if (condition) x_value = (new Foo(1337)).value;
 //        bar(x_value, x_value);
 //
-//      TODO verify in tests
+//      TODO verify this exact thing in a test
 //
 //   2. When a struct.get consumes an if whose arm(s) allocate a struct via
 //      struct.new, sink the struct.get into the if arms. For example:
@@ -85,9 +84,7 @@
 // This disentangles shared struct locals and control-flow merges so that
 // Heap2Local can optimize the underlying allocations independently. Another way
 // to look at it is that it handles a simple case of escape analysis, the easy
-// situation where the heap allocation is just used as data - we immediately
-// struct.get data from it, and never use it otherwise, not in ref.eq or
-// anything else.
+// situation where the heap allocation is just used as data.
 //
 
 #include "ir/local-graph.h"
