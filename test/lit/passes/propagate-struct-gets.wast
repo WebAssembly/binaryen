@@ -719,7 +719,8 @@
   ;; H2L-NEXT: )
   (func $no-optimize-struct-get-tee-mutable (param $s1 (ref $struct)) (param $s2 (ref $struct)) (result i32)
     ;; Do not optimize when tees write arbitrary struct references and the field
-    ;; is mutable.
+    ;; is mutable: the references may be modified by something else with a
+    ;; reference.
     (local $ref (ref null $struct))
     (block $err
       (br_if $err
@@ -1431,6 +1432,7 @@
         )
       )
     )
+    ;; The proper sign-extension (or not) will be used for each get.
     (i32.add
       (i32.add
         (struct.get_s $struct-packed 0
