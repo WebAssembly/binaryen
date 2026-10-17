@@ -129,6 +129,10 @@ void PassRegistry::registerPasses() {
   registerPass("cfp-reftest",
                "propagate constant struct field values, using ref.test",
                createConstantFieldPropagationRefTestPass);
+  registerPass("constant-arrays-to-data",
+               "convert constant array.new_fixed to array.new_data when it is "
+               "smaller",
+               createConstantArraysToDataPass);
   registerPass("constraint-analysis",
                "finds and uses mathematical constraints on locals",
                createConstraintAnalysisPass);
@@ -853,6 +857,13 @@ void PassRunner::addDefaultGlobalOptimizationPostPasses() {
     addIfNoDWARFIssues("simplify-globals");
   }
   addIfNoDWARFIssues("remove-unused-module-elements");
+  if (options.lastOpts && wasm->features.hasGC() &&
+      (options.optimizeLevel >= 2 || options.shrinkLevel >= 1)) {
+    // Converting array.new_fixed to array.new_data inhibits optimizations that
+    // need constant expressions or know the contents of the array (and
+    // OptimizeInstructions may undo it), so only do it at the very end.
+    addIfNoDWARFIssues("constant-arrays-to-data");
+  }
   if (options.optimizeLevel >= 2 && wasm->features.hasStrings()) {
     // Gather strings to globals right before reorder-globals, which will then
     // sort them properly.
