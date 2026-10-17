@@ -18,7 +18,7 @@
 ;; succeeding and then failing subsequent memory.grow(0) calls.
 (module
  ;; CHECK:      [host limit memory too large]
- (memory $0 i64 32769 32769)
+ (memory $0 i64 16385 16385)
  (func $test (export "test") (result i64)
   (memory.grow
    (i64.const 0)
@@ -27,9 +27,11 @@
 )
 
 ;; Growing a memory past the interpreter's 1 GiB cap while remaining within the
-;; declared maximum size must also signal a host limit rather than returning -1.
+;; declared maximum size must also signal a host limit rather than returning -1
+;; so differential fuzzing ignores runs that hit the cap instead of reporting a
+;; false positive when other VMs succeed.
 (module
- (memory $0 i64 1 32769)
+ (memory $0 i64 1 16385)
  ;; CHECK:      [fuzz-exec] export grow-0
  ;; CHECK-NEXT: [fuzz-exec] note result: grow-0 => 1
  (func $grow-0 (export "grow-0") (result i64)
@@ -41,7 +43,7 @@
  ;; CHECK-NEXT: [host limit memory too large]
  (func $grow-past-host-limit (export "grow-past-host-limit") (result i64)
   (memory.grow
-   (i64.const 32768)
+   (i64.const 16384)
   )
  )
 )
