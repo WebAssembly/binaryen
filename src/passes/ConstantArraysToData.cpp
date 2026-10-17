@@ -30,82 +30,73 @@
 // Global initializers are not modified, as array.new_data is not a constant
 // expression.
 //
-// All the new payloads are stored in a single new passive segment. A payload
-// that appears more than once is stored once, and payloads that are already
-// present in the new segment or in an existing passive segment that is never
-// dropped reuse those bytes.
+// The new payloads are stored in a single new passive segment. Identical
+// payloads are stored once, and a payload that is identical to an existing
+// passive segment that is never dropped reuses that segment.
 //
-// The decision is made for each group of identical payloads using an estimate
-// of the binary size:
+// Each group of identical payloads is converted if that reduces the estimated
+// binary size:
 //
 //   array.new_fixed $T N (c0) ... (cN-1)
 //     = prefix typeidx u32(N) size(c0) ... size(cN-1)
 //   array.new_data $T $seg (i32.const off) (i32.const N)
 //     = prefix typeidx u32(seg) 0x41 s32(off) 0x41 s32(N)
 //
-// plus the payload bytes (N * elemBytes) if they are not already present. A
-// group is converted if the estimate is smaller.
+// plus the payload bytes (N * elemBytes) if they are not already present.
+//
+// TODO: Also reuse payloads that appear inside other data. That needs an
+//       efficient substring search, to avoid quadratic behavior.
+// TODO: Convert arrays of constant references to array.new_elem.
 //
 
-#include <algorithm>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
 
+#include "ir/debuginfo.h"
 #include "ir/find_all.h"
 #include "ir/module-utils.h"
 #include "ir/names.h"
 #include "pass.h"
+#include "wasm-binary.h"
 #include "wasm-builder.h"
-#include "wasm-traversal.h"
 #include "wasm.h"
 
 namespace wasm {
 
 namespace {
 
-size_t getU32LEBSize(uint64_t value) {
-  size_t size = 1;
-  while (value >= 0x80) {
-    value >>= 7;
-    size++;
-  }
-  return size;
-}
-
-size_t getSLEBSize(int64_t value) {
-  size_t size = 0;
-  while (true) {
-    uint8_t byte = value & 0x7f;
-    value >>= 7;
-    size++;
-    if ((value == 0 && !(byte & 0x40)) || (value == -1 && (byte & 0x40))) {
-      return size;
-    }
-  }
+template<typename T> size_t getWrittenSize(const T& thing) {
+  BufferWithRandomAccess buffer;
+  buffer << thing;
+  return buffer.size();
 }
 
 // The size of a *.const instruction in the binary format.
 size_t getConstSize(const Literal& value) {
   switch (value.type.getBasic()) {
     case Type::i32:
-      return 1 + getSLEBSize(value.geti32());
+      return 1 + getWrittenSize(S32LEB(value.geti32()));
     case Type::i64:
-      return 1 + getSLEBSize(value.geti64());
+      return 1 + getWrittenSize(S64LEB(value.geti64()));
     case Type::f32:
-      return 1 + 4;
     case Type::f64:
-      return 1 + 8;
+      return 1 + value.type.getByteSize();
     case Type::v128:
+      // The SIMD prefix and opcode, and the value.
       return 2 + 16;
-    default:
-      WASM_UNREACHABLE("unexpected const type");
+    case Type::none:
+    case Type::unreachable:
+      break;
   }
+  WASM_UNREACHABLE("unexpected const type");
 }
 
 struct Candidate {
+  Function* func;
   // Where the array.new_fixed is.
   Expression** location;
   // The bytes the array would have in a data segment.
@@ -115,40 +106,38 @@ struct Candidate {
   size_t fixedSize;
 };
 
-using Candidates = std::vector<Candidate>;
-
-struct Finder : public PostWalker<Finder> {
-  Candidates& candidates;
-
-  Finder(Candidates& candidates) : candidates(candidates) {}
-
-  void visitArrayNewFixed(ArrayNewFixed* curr) {
-    if (curr->type == Type::unreachable || curr->values.empty()) {
-      return;
-    }
-    const auto& element = curr->type.getHeapType().getArray().element;
-    if (!element.type.isNumber()) {
-      return;
-    }
-    auto elemBytes = element.getByteSize();
-
-    std::string payload;
-    payload.reserve(curr->values.size() * elemBytes);
-    size_t fixedSize = getU32LEBSize(curr->values.size());
-    for (auto* value : curr->values) {
-      auto* c = value->dynCast<Const>();
-      if (!c) {
-        return;
-      }
-      fixedSize += getConstSize(c->value);
-      // getBits writes little-endian, so the first bytes are what a packed
-      // field stores, which matches the truncation array.new_fixed does.
-      uint8_t bits[16];
-      c->value.getBits(bits);
-      payload.append(reinterpret_cast<const char*>(bits), elemBytes);
-    }
-    candidates.push_back({getCurrentPointer(), std::move(payload), fixedSize});
+std::optional<Candidate> getCandidate(Function* func, Expression** location) {
+  auto* curr = (*location)->cast<ArrayNewFixed>();
+  if (curr->type == Type::unreachable || curr->values.empty()) {
+    return std::nullopt;
   }
+  const auto& element = curr->type.getHeapType().getArray().element;
+  if (!element.type.isNumber()) {
+    return std::nullopt;
+  }
+  auto elemBytes = element.getByteSize();
+
+  Candidate candidate{
+    func, location, {}, getWrittenSize(U32LEB(curr->values.size()))};
+  candidate.payload.reserve(curr->values.size() * elemBytes);
+  for (auto* value : curr->values) {
+    auto* c = value->dynCast<Const>();
+    if (!c) {
+      return std::nullopt;
+    }
+    candidate.fixedSize += getConstSize(c->value);
+    // getBits writes little-endian, so the first bytes are what a packed field
+    // stores, which matches the truncation array.new_fixed does.
+    uint8_t bits[16];
+    c->value.getBits(bits);
+    candidate.payload.append(reinterpret_cast<const char*>(bits), elemBytes);
+  }
+  return candidate;
+}
+
+struct FunctionInfo {
+  std::vector<Candidate> candidates;
+  std::unordered_set<Name> droppedSegments;
 };
 
 struct ConstantArraysToData : public Pass {
@@ -160,10 +149,19 @@ struct ConstantArraysToData : public Pass {
       return;
     }
 
-    ModuleUtils::ParallelFunctionAnalysis<Candidates> analysis(
-      *module, [&](Function* func, Candidates& candidates) {
-        if (!func->imported()) {
-          Finder(candidates).walk(func->body);
+    ModuleUtils::ParallelFunctionAnalysis<FunctionInfo> analysis(
+      *module, [](Function* func, FunctionInfo& info) {
+        if (func->imported()) {
+          return;
+        }
+        for (auto** location :
+             FindAllPointers<ArrayNewFixed>(func->body).list) {
+          if (auto candidate = getCandidate(func, location)) {
+            info.candidates.push_back(std::move(*candidate));
+          }
+        }
+        for (auto* drop : FindAll<DataDrop>(func->body).list) {
+          info.droppedSegments.insert(drop->segment);
         }
       });
 
@@ -174,8 +172,10 @@ struct ConstantArraysToData : public Pass {
     };
     std::vector<Group> groups;
     std::unordered_map<std::string_view, Index> groupIndexes;
+    std::unordered_set<Name> droppedSegments;
     for (auto& func : module->functions) {
-      for (auto& candidate : analysis.map[func.get()]) {
+      auto& info = analysis.map[func.get()];
+      for (auto& candidate : info.candidates) {
         auto [it, inserted] =
           groupIndexes.insert({candidate.payload, groups.size()});
         if (inserted) {
@@ -183,121 +183,90 @@ struct ConstantArraysToData : public Pass {
         }
         groups[it->second].candidates.push_back(&candidate);
       }
+      droppedSegments.insert(info.droppedSegments.begin(),
+                             info.droppedSegments.end());
     }
     if (groups.empty()) {
       return;
     }
 
-    // Find the existing passive segments whose bytes we can reuse. A segment
-    // that is dropped cannot be read afterwards, so ignore those.
-    std::unordered_set<Name> droppedSegments;
-    for (auto& func : module->functions) {
-      if (!func->imported()) {
-        for (auto* drop : FindAll<DataDrop>(func->body).list) {
-          droppedSegments.insert(drop->segment);
-        }
-      }
-    }
-    struct ExistingSegment {
-      Name name;
-      Index index;
-      std::string_view data;
-    };
-    std::vector<ExistingSegment> existingSegments;
+    // Passive segments that are never dropped can be reused by identical
+    // payloads.
+    std::unordered_map<std::string_view, Index> existingSegments;
     for (Index i = 0; i < module->dataSegments.size(); i++) {
       auto& segment = module->dataSegments[i];
-      if (segment->isPassive() && !droppedSegments.contains(segment->name) &&
-          !segment->data.empty()) {
-        existingSegments.push_back(
-          {segment->name,
-           i,
-           std::string_view(segment->data.data(), segment->data.size())});
+      if (segment->isPassive() && !droppedSegments.contains(segment->name)) {
+        existingSegments.insert(
+          {std::string_view(segment->data.data(), segment->data.size()), i});
       }
     }
 
-    // Handle larger payloads first, so that smaller ones have a better chance
-    // to be found inside them.
-    std::stable_sort(groups.begin(), groups.end(), [](auto& a, auto& b) {
-      return a.payload.size() > b.payload.size();
-    });
-
-    // The contents of the new segment.
-    std::string newData;
-    Index newSegmentIndex = module->dataSegments.size();
-
+    // Decide which groups to convert. Payloads that are not in an existing
+    // segment are appended to the contents of a new segment.
     struct Decision {
       Group* group;
-      // The segment to read from, or a null name for the new segment.
-      Name segment;
+      Index segment;
       Index offset;
     };
     std::vector<Decision> decisions;
-    int64_t totalSavings = 0;
-
+    Index newSegment = module->dataSegments.size();
+    std::string newData;
+    int64_t newSegmentSavings = 0;
     for (auto& group : groups) {
-      auto payload = group.payload;
-      Name segment;
-      Index segmentIndex = newSegmentIndex;
-      size_t offset = newData.find(payload);
+      Index segment = newSegment;
+      Index offset = 0;
       size_t dataCost = 0;
-      if (offset == std::string::npos) {
-        for (auto& existing : existingSegments) {
-          offset = existing.data.find(payload);
-          if (offset != std::string_view::npos) {
-            segment = existing.name;
-            segmentIndex = existing.index;
-            break;
-          }
-        }
-      }
-      if (offset == std::string::npos) {
+      if (auto it = existingSegments.find(group.payload);
+          it != existingSegments.end()) {
+        segment = it->second;
+      } else {
         offset = newData.size();
-        dataCost = payload.size();
+        dataCost = group.payload.size();
       }
 
       int64_t savings = -int64_t(dataCost);
       for (auto* candidate : group.candidates) {
         auto* fixed = (*candidate->location)->cast<ArrayNewFixed>();
-        size_t dataSize = getU32LEBSize(segmentIndex) + 1 +
-                          getSLEBSize(int64_t(offset)) + 1 +
-                          getSLEBSize(int64_t(fixed->values.size()));
+        size_t dataSize = getWrittenSize(U32LEB(segment)) + 1 +
+                          getWrittenSize(S32LEB(int32_t(offset))) + 1 +
+                          getWrittenSize(S32LEB(int32_t(fixed->values.size())));
         savings += int64_t(candidate->fixedSize) - int64_t(dataSize);
       }
       if (savings <= 0) {
         continue;
       }
-      if (dataCost) {
-        newData.append(payload);
+      if (segment == newSegment) {
+        newData.append(group.payload);
+        newSegmentSavings += savings;
       }
-      totalSavings += savings;
-      decisions.push_back({&group, segment, Index(offset)});
-    }
-    if (decisions.empty()) {
-      return;
+      decisions.push_back({&group, segment, offset});
     }
 
-    Name newSegmentName;
     if (!newData.empty()) {
-      // Account for the new segment's flags and size, and for the data count
-      // and data section headers if this is the first segment.
-      int64_t overhead = 1 + getU32LEBSize(newData.size());
+      // The new segment needs its flags and size, and if it is the first
+      // segment, also the headers of the data count and data sections (id, size
+      // and count, which are 3 bytes each).
+      int64_t overhead = 1 + getWrittenSize(U32LEB(newData.size()));
       if (module->dataSegments.empty()) {
-        overhead += 6;
+        overhead += 2 * 3;
       }
-      if (totalSavings <= overhead) {
-        return;
+      if (newSegmentSavings > overhead) {
+        auto name =
+          Names::getValidDataSegmentName(*module, "constant-array-data");
+        module->addDataSegment(Builder::makeDataSegment(
+          name, Name(), nullptr, newData.data(), newData.size()));
+      } else {
+        // The new segment is not worth it, but we can still reuse existing
+        // ones.
+        std::erase_if(decisions, [&](const Decision& decision) {
+          return decision.segment == newSegment;
+        });
       }
-      newSegmentName =
-        Names::getValidDataSegmentName(*module, "constant-array-data");
-      auto segment = std::make_unique<DataSegment>();
-      segment->setName(newSegmentName, false);
-      segment->data.assign(newData.begin(), newData.end());
-      module->addDataSegment(std::move(segment));
     }
 
     Builder builder(*module);
     for (auto& decision : decisions) {
-      auto segment = decision.segment ? decision.segment : newSegmentName;
+      auto segment = module->dataSegments[decision.segment]->name;
       for (auto* candidate : decision.group->candidates) {
         auto* fixed = (*candidate->location)->cast<ArrayNewFixed>();
         auto* data = builder.makeArrayNewData(
@@ -306,6 +275,7 @@ struct ConstantArraysToData : public Pass {
           builder.makeConst(int32_t(decision.offset)),
           builder.makeConst(int32_t(fixed->values.size())));
         assert(data->type == fixed->type);
+        debuginfo::copyOriginalToReplacement(fixed, data, candidate->func);
         *candidate->location = data;
       }
     }
