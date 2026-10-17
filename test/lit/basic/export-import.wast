@@ -30,10 +30,10 @@
 )
 ;; CHECK-BIN-NODEBUG:      (type $0 (func))
 
-;; CHECK-BIN-NODEBUG:      (import "env" "test2" (global $gimport$0 i32))
+;; CHECK-BIN-NODEBUG:      (import "env" "test2" (global $test2 i32))
 
-;; CHECK-BIN-NODEBUG:      (import "env" "test1" (func $fimport$0 (type $0)))
+;; CHECK-BIN-NODEBUG:      (import "env" "test1" (func $test1 (type $0)))
 
-;; CHECK-BIN-NODEBUG:      (export "test1" (func $fimport$0))
+;; CHECK-BIN-NODEBUG:      (export "test1" (func $test1))
 
-;; CHECK-BIN-NODEBUG:      (export "test2" (global $gimport$0))
+;; CHECK-BIN-NODEBUG:      (export "test2" (global $test2))

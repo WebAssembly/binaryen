@@ -13,7 +13,7 @@
 (module
  ;; MOD1:      (type $0 (func))
 
- ;; MOD1:      (import "primary" "table" (table $timport$0 2 funcref))
+ ;; MOD1:      (import "primary" "table" (table $table 2 funcref))
 
  ;; MOD1:      (func $A
  ;; MOD1-NEXT:  (call_indirect (type $0)
@@ -30,7 +30,7 @@
 
  ;; MOD2:      (type $0 (func))
 
- ;; MOD2:      (import "primary" "table" (table $timport$0 2 funcref))
+ ;; MOD2:      (import "primary" "table" (table $table 2 funcref))
 
  ;; MOD2:      (elem $0 (i32.const 0) $B)
 
@@ -45,7 +45,7 @@
 
  ;; MOD3:      (type $0 (func))
 
- ;; MOD3:      (import "primary" "table" (table $timport$0 2 funcref))
+ ;; MOD3:      (import "primary" "table" (table $table 2 funcref))
 
  ;; MOD3:      (elem $0 (i32.const 1) $C)
 
@@ -60,8 +60,8 @@
 
 ;; PRIMARY:      (import "placeholder.3" "1" (func $placeholder_1))
 
-;; PRIMARY:      (table $0 2 funcref)
+;; PRIMARY:      (table $table 2 funcref)
 
 ;; PRIMARY:      (elem $0 (i32.const 0) $placeholder_0 $placeholder_1)
 
-;; PRIMARY:      (export "table" (table $0))
+;; PRIMARY:      (export "table" (table $table))

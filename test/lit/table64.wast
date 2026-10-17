@@ -8,4 +8,4 @@
 (module
  (import "env" "table" (table i64 1 funcref))
 )
-;; CHECK:      (import "env" "table" (table $timport$0 i64 1 funcref))
+;; CHECK:      (import "env" "table" (table $table i64 1 funcref))
