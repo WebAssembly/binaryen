@@ -61,8 +61,9 @@ namespace wasm {
 
 namespace {
 
-// Size estimates for the binary format.
+// Binary size estimates.
 
+// The number of bytes |thing| (e.g. a LEB) takes in the binary.
 template<typename T> size_t getWrittenSize(const T& thing) {
   BufferWithRandomAccess buffer;
   buffer << thing;
@@ -120,13 +121,18 @@ size_t getNewSegmentOverhead(const Module& module, size_t dataSize) {
   return size;
 }
 
+// Candidates for conversion.
+
 // Returns the bytes the array would have in a data segment, if its values are
 // numeric constants.
 std::optional<std::vector<char>> getPayload(ArrayNewFixed* curr) {
+  // An unreachable array has no array type (and its values are not all
+  // constants anyway), and an empty one is smaller as it is.
   if (curr->type == Type::unreachable || curr->values.empty()) {
     return std::nullopt;
   }
   const auto& element = curr->type.getHeapType().getArray().element;
+  // array.new_data only supports numeric elements.
   if (!element.type.isNumber()) {
     return std::nullopt;
   }
@@ -149,21 +155,22 @@ std::optional<std::vector<char>> getPayload(ArrayNewFixed* curr) {
 // An array.new_fixed of numeric constants.
 struct Candidate {
   Function* func;
+  ArrayNewFixed* array;
+  // Where |array| is, so that we can replace it.
   Expression** location;
   std::vector<char> payload;
-
-  ArrayNewFixed* get() const { return (*location)->cast<ArrayNewFixed>(); }
 };
 
-// Candidates with identical payloads, which can share their bytes.
-struct Group {
+// Candidates with identical payloads, which can share one copy of the bytes.
+// Their arrays may have different types, as only the bytes matter.
+struct PayloadGroup {
   std::string_view payload;
   std::vector<Candidate*> candidates;
 };
 
-// A group to convert, and where its arrays read their payload from.
-struct Decision {
-  Group* group;
+// A payload group to convert, and where its arrays will read the payload from.
+struct Conversion {
+  PayloadGroup* group;
   Index segment;
   Index offset;
 };
@@ -174,14 +181,20 @@ struct ConstantArraysToData : public Pass {
 
   Module* module = nullptr;
 
-  // All the candidates, in a deterministic order.
+  // All the candidates, in a deterministic order. Payload groups point into
+  // them, so they must not change after grouping.
   std::vector<Candidate> candidates;
 
-  // Segments that are dropped somewhere, which we cannot reuse.
+  // Segments that are dropped somewhere. We cannot reuse them, as
+  // array.new_data traps once its segment is dropped (unless it reads nothing).
   std::unordered_set<Name> droppedSegments;
+
+  // The contents of the new segment, if we add one.
+  std::vector<char> newSegmentData;
 
   void run(Module* module_) override {
     module = module_;
+    // array.new_data requires bulk memory.
     if (!module->features.hasGC() || !module->features.hasBulkMemory()) {
       return;
     }
@@ -190,7 +203,11 @@ struct ConstantArraysToData : public Pass {
       return;
     }
     auto groups = groupByPayload();
-    replace(decide(groups));
+    auto conversions = planConversions(groups);
+    if (!newSegmentData.empty()) {
+      addNewSegment();
+    }
+    applyConversions(conversions);
   }
 
   void findCandidates() {
@@ -205,8 +222,10 @@ struct ConstantArraysToData : public Pass {
         }
         for (auto** location :
              FindAllPointers<ArrayNewFixed>(func->body).list) {
-          if (auto payload = getPayload((*location)->cast<ArrayNewFixed>())) {
-            info.candidates.push_back({func, location, std::move(*payload)});
+          auto* array = (*location)->cast<ArrayNewFixed>();
+          if (auto payload = getPayload(array)) {
+            info.candidates.push_back(
+              {func, array, location, std::move(*payload)});
           }
         }
         for (auto* drop : FindAll<DataDrop>(func->body).list) {
@@ -214,6 +233,8 @@ struct ConstantArraysToData : public Pass {
         }
       });
 
+    // Gather the results in function order, so that the output is
+    // deterministic.
     for (auto& func : module->functions) {
       auto& info = analysis.map[func.get()];
       for (auto& candidate : info.candidates) {
@@ -224,8 +245,8 @@ struct ConstantArraysToData : public Pass {
     }
   }
 
-  std::vector<Group> groupByPayload() {
-    std::vector<Group> groups;
+  std::vector<PayloadGroup> groupByPayload() {
+    std::vector<PayloadGroup> groups;
     std::unordered_map<std::string_view, Index> groupIndexes;
     for (auto& candidate : candidates) {
       std::string_view payload(candidate.payload.data(),
@@ -239,93 +260,101 @@ struct ConstantArraysToData : public Pass {
     return groups;
   }
 
-  // Returns the segments that identical payloads can reuse, by their contents.
+  // Decides which payload groups to convert, and where their arrays read the
+  // payload from: an existing segment with identical contents, or a new segment
+  // whose contents we gather in |newSegmentData|.
+  std::vector<Conversion> planConversions(std::vector<PayloadGroup>& groups) {
+    auto reusableSegments = getReusableSegments();
+    // If we add a new segment, it goes at the end.
+    Index newSegmentIndex = module->dataSegments.size();
+    int64_t newSegmentSavings = 0;
+    std::vector<Conversion> conversions;
+    for (auto& group : groups) {
+      if (auto it = reusableSegments.find(group.payload);
+          it != reusableSegments.end()) {
+        // The segment is identical to the payload, so we read all of it.
+        if (getCodeSavings(group, it->second, 0) > 0) {
+          conversions.push_back({&group, it->second, 0});
+        }
+        continue;
+      }
+      Index offset = newSegmentData.size();
+      auto savings = getCodeSavings(group, newSegmentIndex, offset) -
+                     int64_t(group.payload.size());
+      if (savings > 0) {
+        newSegmentData.insert(
+          newSegmentData.end(), group.payload.begin(), group.payload.end());
+        newSegmentSavings += savings;
+        conversions.push_back({&group, newSegmentIndex, offset});
+      }
+    }
+
+    // The overhead of the new segment is shared by all the payloads in it, so
+    // only now can we check if it pays for itself. If it does not, we still
+    // convert the groups that reuse existing segments.
+    if (!newSegmentData.empty() &&
+        newSegmentSavings <=
+          int64_t(getNewSegmentOverhead(*module, newSegmentData.size()))) {
+      newSegmentData.clear();
+      std::erase_if(conversions, [&](const Conversion& conversion) {
+        return conversion.segment == newSegmentIndex;
+      });
+    }
+    return conversions;
+  }
+
+  // Returns the passive segments that are never dropped, by their contents (the
+  // first one, if several are identical).
   std::unordered_map<std::string_view, Index> getReusableSegments() {
-    std::unordered_map<std::string_view, Index> reusable;
+    std::unordered_map<std::string_view, Index> reusableSegments;
     for (Index i = 0; i < module->dataSegments.size(); i++) {
       auto& segment = module->dataSegments[i];
       if (segment->isPassive() && !droppedSegments.contains(segment->name)) {
-        reusable.insert(
+        reusableSegments.insert(
           {std::string_view(segment->data.data(), segment->data.size()), i});
       }
     }
-    return reusable;
+    return reusableSegments;
   }
 
   // The bytes saved in the code if the group's arrays read their payload from
-  // the given segment and offset.
-  int64_t getCodeSavings(const Group& group, Index segment, Index offset) {
+  // the given segment and offset. The arrays may have different types, so we
+  // measure each one.
+  int64_t
+  getCodeSavings(const PayloadGroup& group, Index segment, Index offset) {
     int64_t savings = 0;
     for (auto* candidate : group.candidates) {
-      auto* curr = candidate->get();
+      auto* array = candidate->array;
       savings +=
-        int64_t(getArrayNewFixedSize(curr)) -
-        int64_t(getArrayNewDataSize(segment, offset, curr->values.size()));
+        int64_t(getArrayNewFixedSize(array)) -
+        int64_t(getArrayNewDataSize(segment, offset, array->values.size()));
     }
     return savings;
   }
 
-  // Decides which groups to convert and where they read their payloads from,
-  // and adds a new segment for the payloads that are not present yet, if that
-  // is worth it.
-  std::vector<Decision> decide(std::vector<Group>& groups) {
-    auto reusable = getReusableSegments();
-    Index newSegment = module->dataSegments.size();
-    std::vector<char> newData;
-    int64_t newSegmentSavings = 0;
-    std::vector<Decision> decisions;
-    for (auto& group : groups) {
-      if (auto it = reusable.find(group.payload); it != reusable.end()) {
-        if (getCodeSavings(group, it->second, 0) > 0) {
-          decisions.push_back({&group, it->second, 0});
-        }
-        continue;
-      }
-      Index offset = newData.size();
-      auto savings = getCodeSavings(group, newSegment, offset) -
-                     int64_t(group.payload.size());
-      if (savings > 0) {
-        newData.insert(
-          newData.end(), group.payload.begin(), group.payload.end());
-        newSegmentSavings += savings;
-        decisions.push_back({&group, newSegment, offset});
-      }
-    }
-
-    if (newData.empty()) {
-      return decisions;
-    }
-    if (newSegmentSavings >
-        int64_t(getNewSegmentOverhead(*module, newData.size()))) {
-      addSegment(newData);
-    } else {
-      std::erase_if(decisions, [&](const Decision& decision) {
-        return decision.segment == newSegment;
-      });
-    }
-    return decisions;
-  }
-
-  void addSegment(const std::vector<char>& data) {
+  void addNewSegment() {
     auto name = Names::getValidDataSegmentName(*module, "constant-array-data");
+    // Without a memory and an offset, the segment is passive.
     module->addDataSegment(Builder::makeDataSegment(
-      name, Name(), nullptr, data.data(), data.size()));
+      name, Name(), nullptr, newSegmentData.data(), newSegmentData.size()));
   }
 
-  void replace(const std::vector<Decision>& decisions) {
+  // Replaces the arrays with array.new_data. That cannot trap, as it reads in
+  // bounds from a segment that is never dropped.
+  void applyConversions(const std::vector<Conversion>& conversions) {
     Builder builder(*module);
-    for (auto& decision : decisions) {
-      auto segment = module->dataSegments[decision.segment]->name;
-      for (auto* candidate : decision.group->candidates) {
-        auto* curr = candidate->get();
+    for (auto& conversion : conversions) {
+      auto segment = module->dataSegments[conversion.segment]->name;
+      for (auto* candidate : conversion.group->candidates) {
+        auto* array = candidate->array;
         auto* replacement = builder.makeArrayNewData(
-          curr->type.getHeapType(),
+          array->type.getHeapType(),
           segment,
-          builder.makeConst(int32_t(decision.offset)),
-          builder.makeConst(int32_t(curr->values.size())));
-        assert(replacement->type == curr->type);
+          builder.makeConst(int32_t(conversion.offset)),
+          builder.makeConst(int32_t(array->values.size())));
+        assert(replacement->type == array->type);
         debuginfo::copyOriginalToReplacement(
-          curr, replacement, candidate->func);
+          array, replacement, candidate->func);
         *candidate->location = replacement;
       }
     }
