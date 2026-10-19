@@ -311,8 +311,7 @@ private:
     legalIm->type =
       Type(Signature(Type(params), call->type), NonNullable, Inexact);
 
-    auto* stubPtr = stub.get();
-    module->addFunction(std::move(stub));
+    auto* stubPtr = module->addFunction(std::move(stub));
     module->addFunction(std::move(legalIm));
     return stubPtr;
   }
