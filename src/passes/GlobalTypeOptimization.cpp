@@ -372,6 +372,7 @@ struct GlobalTypeOptimization : public Pass {
         // That is, we can only append fields: we cannot reorder or remove any
         // field that is in the super.
         Index numSuperFields = 0;
+        bool superHasKeptFields = false;
         if (super) {
           // We have visited the super before. Get the information about its
           // fields.
@@ -408,6 +409,7 @@ struct GlobalTypeOptimization : public Pass {
               // The super kept this field, so we must keep it as well. This can
               // happen when we need the field in both, but also in the corner
               // case where we don't need the field but the super is public.
+              superHasKeptFields = true;
 
               // We need to keep it at the same index so we remain compatible.
               indexesAfterRemoval[i] = superIndex;
@@ -433,10 +435,10 @@ struct GlobalTypeOptimization : public Pass {
           }
         }
 
-        // If the type has no supertype (or its supertype has no fields), check
-        // if its first field becomes prototype-exposing. If so, add a
+        // If the type has no supertype (or its supertype has no kept fields),
+        // check if its first field becomes prototype-exposing. If so, add a
         // placeholder at index 0 and shift all computed indices.
-        if (isExposedNoProto && (!super || super->getStruct().fields.empty())) {
+        if (isExposedNoProto && !superHasKeptFields) {
           // Find the field that will become field 0.
           Index i = 0;
           for (; i < fields.size(); ++i) {
