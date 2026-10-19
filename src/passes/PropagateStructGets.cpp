@@ -64,6 +64,7 @@
 //
 
 #include "ir/bits.h"
+#include "ir/eh-utils.h"
 #include "ir/local-graph.h"
 #include "ir/properties.h"
 #include "pass.h"
@@ -125,6 +126,10 @@ struct PropagateStructGets
     }
     // TODO: handle more things flowing into struct.get, like an If
   }
+
+  bool hasTry = false;
+
+  void visitTry(Try* curr) { hasTry = true; }
 
   void visitFunction(Function* func) {
     if (structGets.empty()) {
@@ -280,6 +285,11 @@ struct PropagateStructGets
       }
     }
 
+    if (optimizedLocals.empty()) {
+      // Nothing to optimize.
+      return;
+    }
+
     auto getFieldFromLocal =
       [&](Index localIndex, Index fieldIndex, bool signed_) -> Expression* {
       auto& field = func->getLocalType(localIndex)
@@ -353,6 +363,10 @@ struct PropagateStructGets
           *setp = makeFieldSets(set);
         }
       }
+    }
+
+    if (hasTry) {
+      EHUtils::handleBlockNestedPops(func, *getModule());
     }
   }
 };
