@@ -102,10 +102,22 @@ struct PropagateStructGets
   // stored in optimizedLocals, for each local, below).
   std::vector<Expression**> structGets;
 
-  void visitLocalGet(LocalGet* curr) { numGets[curr->index]++; }
+  // Checks if a local index is relevant for us: if it refers to a struct.
+  bool isStructLocal(Index index) {
+    auto type = getFunction()->getLocalType(index);
+    return type.isRef() && type.getHeapType().isStruct();
+  }
+
+  void visitLocalGet(LocalGet* curr) {
+    if (isStructLocal(curr->index)) {
+      numGets[curr->index]++;
+    }
+  }
 
   void visitLocalSet(LocalSet* curr) {
-    sets[curr->index].push_back(getCurrentPointer());
+    if (isStructLocal(curr->index)) {
+      sets[curr->index].push_back(getCurrentPointer());
+    }
   }
 
   void visitStructGet(StructGet* curr) {
