@@ -22,7 +22,7 @@
 namespace wasm::String {
 
 Split::Split(const std::string& input, const NewLineOr& newLineOrDelim) {
-  auto first = input.find('\n', 0);
+  auto first = input.find('\n');
   if (first != std::string::npos && first != input.length() - 1) {
     split(input, "\n");
   } else {
