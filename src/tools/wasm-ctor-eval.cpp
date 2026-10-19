@@ -1334,12 +1334,16 @@ start_eval:
         copyBody->list[i] = builder.makeNop();
       }
 
-      // Put the local sets at the front of the function body.
-      auto* setsBlock = builder.makeBlock();
+      // Put the local sets at the front of the function body. Skip
+      // uninitialized non-nullable locals, whose default null value in the
+      // interpreter is not a valid subtype of the local's type.
+      Index insertIndex = 0;
       for (Index i = 0; i < localExprs.size(); ++i) {
-        setsBlock->list.push_back(builder.makeLocalSet(i, localExprs[i]));
+        if (Type::isSubType(localExprs[i]->type, func->getLocalType(i))) {
+          copyBody->list.insertAt(insertIndex++,
+                                  builder.makeLocalSet(i, localExprs[i]));
+        }
       }
-      copyBody = builder.makeSequence(setsBlock, copyBody, copyBody->type);
 
       // We may have return-called into a function with different parameter
       // types, but we ultimately need to export a function with the original
