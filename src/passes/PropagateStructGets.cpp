@@ -267,8 +267,7 @@ struct PropagateStructGets
       // known, so Heap2Local will not be able to optimize anything after us
       // anyhow.
       for (auto* sget : getStructGets) {
-        if (localGraph.getSets(sget->ref->cast<LocalGet>())
-              .contains(nullptr)) {
+        if (localGraph.getSets(sget->ref->cast<LocalGet>()).contains(nullptr)) {
           ok = false;
           break;
         }
