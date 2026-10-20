@@ -1260,18 +1260,14 @@
   (tag $e (param (ref (exact $A.desc))))
   ;; CHECK:      (func $pop-in-struct-new-desc (type $3)
   ;; CHECK-NEXT:  (local $0 (ref (exact $A.desc)))
-  ;; CHECK-NEXT:  (local $1 (ref (exact $A.desc)))
   ;; CHECK-NEXT:  (try
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (catch $e
-  ;; CHECK-NEXT:    (local.set $1
-  ;; CHECK-NEXT:     (pop (ref (exact $A.desc)))
-  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (block (result (ref (exact $A)))
   ;; CHECK-NEXT:      (local.set $0
-  ;; CHECK-NEXT:       (local.get $1)
+  ;; CHECK-NEXT:       (pop (ref (exact $A.desc)))
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (struct.new_default $A)
   ;; CHECK-NEXT:     )

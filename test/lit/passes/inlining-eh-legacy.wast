@@ -138,19 +138,15 @@
   ;; CHECK:      (func $caller-with-pop-twice (type $0)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (local $1 i32)
-  ;; CHECK-NEXT:  (local $2 i32)
   ;; CHECK-NEXT:  (try
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (catch $tag$0
-  ;; CHECK-NEXT:    (local.set $2
-  ;; CHECK-NEXT:     (pop i32)
-  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (block $__inlined_func$callee-b$4
   ;; CHECK-NEXT:     (local.set $1
   ;; CHECK-NEXT:      (block $__inlined_func$callee-c$3 (result i32)
   ;; CHECK-NEXT:       (local.set $0
-  ;; CHECK-NEXT:        (local.get $2)
+  ;; CHECK-NEXT:        (pop i32)
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:       (local.get $0)
   ;; CHECK-NEXT:      )

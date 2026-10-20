@@ -978,7 +978,6 @@
   ;; GUFA:      (export "read" (func $read))
 
   ;; GUFA:      (func $write (type $3)
-  ;; GUFA-NEXT:  (local $0 eqref)
   ;; GUFA-NEXT:  (drop
   ;; GUFA-NEXT:   (struct.new_default $struct)
   ;; GUFA-NEXT:  )
@@ -986,14 +985,11 @@
   ;; GUFA-NEXT:   (do
   ;; GUFA-NEXT:   )
   ;; GUFA-NEXT:   (catch $ref
-  ;; GUFA-NEXT:    (local.set $0
-  ;; GUFA-NEXT:     (pop eqref)
-  ;; GUFA-NEXT:    )
   ;; GUFA-NEXT:    (drop
   ;; GUFA-NEXT:     (struct.new $struct
   ;; GUFA-NEXT:      (block (result nullref)
   ;; GUFA-NEXT:       (drop
-  ;; GUFA-NEXT:        (local.get $0)
+  ;; GUFA-NEXT:        (pop eqref)
   ;; GUFA-NEXT:       )
   ;; GUFA-NEXT:       (ref.null none)
   ;; GUFA-NEXT:      )
@@ -1033,18 +1029,14 @@
   )
 
   ;; NRML:      (func $read (type $3)
-  ;; NRML-NEXT:  (local $0 nullref)
   ;; NRML-NEXT:  (try
   ;; NRML-NEXT:   (do
   ;; NRML-NEXT:   )
   ;; NRML-NEXT:   (catch $null
-  ;; NRML-NEXT:    (local.set $0
-  ;; NRML-NEXT:     (pop nullref)
-  ;; NRML-NEXT:    )
   ;; NRML-NEXT:    (drop
   ;; NRML-NEXT:     (block
   ;; NRML-NEXT:      (drop
-  ;; NRML-NEXT:       (local.get $0)
+  ;; NRML-NEXT:       (pop nullref)
   ;; NRML-NEXT:      )
   ;; NRML-NEXT:      (unreachable)
   ;; NRML-NEXT:     )
@@ -1053,18 +1045,14 @@
   ;; NRML-NEXT:  )
   ;; NRML-NEXT: )
   ;; GUFA:      (func $read (type $3)
-  ;; GUFA-NEXT:  (local $0 nullref)
   ;; GUFA-NEXT:  (try
   ;; GUFA-NEXT:   (do
   ;; GUFA-NEXT:   )
   ;; GUFA-NEXT:   (catch $null
-  ;; GUFA-NEXT:    (local.set $0
-  ;; GUFA-NEXT:     (pop nullref)
-  ;; GUFA-NEXT:    )
   ;; GUFA-NEXT:    (drop
   ;; GUFA-NEXT:     (block
   ;; GUFA-NEXT:      (drop
-  ;; GUFA-NEXT:       (local.get $0)
+  ;; GUFA-NEXT:       (pop nullref)
   ;; GUFA-NEXT:      )
   ;; GUFA-NEXT:      (unreachable)
   ;; GUFA-NEXT:     )

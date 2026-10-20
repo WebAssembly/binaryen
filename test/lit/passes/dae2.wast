@@ -3402,24 +3402,18 @@
   (tag $e (param i32))
 
   ;; CHECK:      (func $test (type $0)
-  ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (try
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (nop)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (catch $e
-  ;; CHECK-NEXT:    (local.set $0
-  ;; CHECK-NEXT:     (pop i32)
-  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (block
-  ;; CHECK-NEXT:     (block
-  ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (local.get $0)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (call $callee)
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (pop i32)
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (nop)
+  ;; CHECK-NEXT:     (call $callee)
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (nop)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )

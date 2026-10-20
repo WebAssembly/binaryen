@@ -390,7 +390,7 @@ struct ConstraintAnalysis
 
     if (refinalize) {
       ReFinalize().walkFunctionInModule(getFunction(), getModule());
-      EHUtils::handleBlockNestedPops(getFunction(), *getModule());
+//      EHUtils::handleBlockNestedPops(getFunction(), *getModule());
     }
   }
 

@@ -982,33 +982,27 @@
   ;; CHECK:      (func $catch-pop (type $1) (result i32)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (local $1 i32)
-  ;; CHECK-NEXT:  (local $2 i32)
   ;; CHECK-NEXT:  (block $block (result i32)
   ;; CHECK-NEXT:   (try $try
   ;; CHECK-NEXT:    (do
   ;; CHECK-NEXT:     (nop)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (catch $tag
-  ;; CHECK-NEXT:     (local.set $2
-  ;; CHECK-NEXT:      (pop i32)
-  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (block
-  ;; CHECK-NEXT:      (block
-  ;; CHECK-NEXT:       (local.set $0
-  ;; CHECK-NEXT:        (local.get $2)
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:       (local.set $1
-  ;; CHECK-NEXT:        (br_if $block
-  ;; CHECK-NEXT:         (i32.const 1)
-  ;; CHECK-NEXT:         (i32.const 2)
-  ;; CHECK-NEXT:        )
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:       (call $target
-  ;; CHECK-NEXT:        (local.get $0)
+  ;; CHECK-NEXT:      (local.set $0
+  ;; CHECK-NEXT:       (pop i32)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.set $1
+  ;; CHECK-NEXT:       (br_if $block
+  ;; CHECK-NEXT:        (i32.const 1)
+  ;; CHECK-NEXT:        (i32.const 2)
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (nop)
+  ;; CHECK-NEXT:      (call $target
+  ;; CHECK-NEXT:       (local.get $0)
+  ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (nop)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (i32.const 3)
@@ -1069,33 +1063,27 @@
   ;; CHECK:      (func $catch-pop (type $1) (result i32)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (local $1 i32)
-  ;; CHECK-NEXT:  (local $2 i32)
   ;; CHECK-NEXT:  (block $block (result i32)
   ;; CHECK-NEXT:   (try $try
   ;; CHECK-NEXT:    (do
   ;; CHECK-NEXT:     (nop)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (catch $tag
-  ;; CHECK-NEXT:     (local.set $2
-  ;; CHECK-NEXT:      (pop i32)
-  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (block
-  ;; CHECK-NEXT:      (block
-  ;; CHECK-NEXT:       (local.set $0
-  ;; CHECK-NEXT:        (local.get $2)
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:       (local.set $1
-  ;; CHECK-NEXT:        (br_if $block
-  ;; CHECK-NEXT:         (i32.const 1)
-  ;; CHECK-NEXT:         (i32.const 2)
-  ;; CHECK-NEXT:        )
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:       (call $target
-  ;; CHECK-NEXT:        (local.get $1)
+  ;; CHECK-NEXT:      (local.set $0
+  ;; CHECK-NEXT:       (pop i32)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.set $1
+  ;; CHECK-NEXT:       (br_if $block
+  ;; CHECK-NEXT:        (i32.const 1)
+  ;; CHECK-NEXT:        (i32.const 2)
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (nop)
+  ;; CHECK-NEXT:      (call $target
+  ;; CHECK-NEXT:       (local.get $1)
+  ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (nop)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (i32.const 3)

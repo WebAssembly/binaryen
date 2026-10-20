@@ -57,28 +57,22 @@
 
   ;; CHECK:      (func $try_catch_pop_fixup (type $1)
   ;; CHECK-NEXT:  (local $0 i32)
-  ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (block $l0
   ;; CHECK-NEXT:   (try
   ;; CHECK-NEXT:    (do
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (catch $e-i32
-  ;; CHECK-NEXT:     (local.set $1
-  ;; CHECK-NEXT:      (pop i32)
-  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (block
-  ;; CHECK-NEXT:      (block
-  ;; CHECK-NEXT:       (local.set $0
-  ;; CHECK-NEXT:        (local.get $1)
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:       (drop
-  ;; CHECK-NEXT:        (local.get $0)
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:       (br $l0)
-  ;; CHECK-NEXT:       (unreachable)
+  ;; CHECK-NEXT:      (local.set $0
+  ;; CHECK-NEXT:       (pop i32)
   ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (local.get $0)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (br $l0)
   ;; CHECK-NEXT:      (unreachable)
   ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (unreachable)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -179,7 +173,6 @@
   ;; CHECK-NEXT:  (local $2 i32)
   ;; CHECK-NEXT:  (local $3 i32)
   ;; CHECK-NEXT:  (local $4 i32)
-  ;; CHECK-NEXT:  (local $5 i32)
   ;; CHECK-NEXT:  (try
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (local.set $3
@@ -187,26 +180,21 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (catch $e-i32
-  ;; CHECK-NEXT:    (local.set $5
-  ;; CHECK-NEXT:     (pop i32)
-  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (block
-  ;; CHECK-NEXT:     (block
-  ;; CHECK-NEXT:      (local.set $0
-  ;; CHECK-NEXT:       (local.get $5)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (local.get $0)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (unreachable)
-  ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:     (local.set $0
+  ;; CHECK-NEXT:      (pop i32)
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (local.set $2
-  ;; CHECK-NEXT:      (local.get $1)
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (local.get $0)
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (local.set $3
-  ;; CHECK-NEXT:      (local.get $2)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $2
+  ;; CHECK-NEXT:     (local.get $1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $3
+  ;; CHECK-NEXT:     (local.get $2)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )

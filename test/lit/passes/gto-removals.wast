@@ -1658,18 +1658,14 @@
 
   ;; CHECK:      (func $func (type $1)
   ;; CHECK-NEXT:  (local $0 i32)
-  ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (try
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (catch $tag
-  ;; CHECK-NEXT:    (local.set $1
-  ;; CHECK-NEXT:     (pop i32)
-  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (block (result (ref (exact $struct)))
   ;; CHECK-NEXT:      (local.set $0
-  ;; CHECK-NEXT:       (local.get $1)
+  ;; CHECK-NEXT:       (pop i32)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (struct.new_default $struct)
   ;; CHECK-NEXT:     )

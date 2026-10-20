@@ -12,7 +12,6 @@
  (tag $tag (type $func) (param i32))
 
  ;; CHECK:      (func $test (type $1) (result i32)
- ;; CHECK-NEXT:  (local $0 i32)
  ;; CHECK-NEXT:  (block $block (result i32)
  ;; CHECK-NEXT:   (try
  ;; CHECK-NEXT:    (do
@@ -21,13 +20,10 @@
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (catch $tag
- ;; CHECK-NEXT:     (local.set $0
- ;; CHECK-NEXT:      (pop i32)
- ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:     (drop
  ;; CHECK-NEXT:      (block
  ;; CHECK-NEXT:       (drop
- ;; CHECK-NEXT:        (local.get $0)
+ ;; CHECK-NEXT:        (pop i32)
  ;; CHECK-NEXT:       )
  ;; CHECK-NEXT:       (unreachable)
  ;; CHECK-NEXT:      )

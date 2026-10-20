@@ -37,9 +37,6 @@ getFirstPop(Expression* catchBody, bool& isPopNested, Expression**& popPtr) {
   Expression* firstChild = catchBody;
   isPopNested = false;
   popPtr = nullptr;
-  // When there are multiple expressions within a catch body, an implicit
-  // block is created within it for convenience purposes.
-  auto* implicitBlock = catchBody->dynCast<Block>();
 
   // Go down the line for the first child until we reach a leaf. A pop should be
   // in that first-descendant line.
@@ -64,8 +61,8 @@ getFirstPop(Expression* catchBody, bool& isPopNested, Expression**& popPtr) {
         // run more than once
         return nullptr;
       }
-      if (firstChild->is<Block>()) {
-        // If there are no branches that targets the implicit block, it will be
+      if (auto* block = firstChild->dynCast<Block>()) {
+        // If there are no branches that targets a block, it will be
         // removed when written back. But if there are branches that target the
         // implicit block,
         // (catch $e
@@ -76,12 +73,8 @@ getFirstPop(Expression* catchBody, bool& isPopNested, Expression**& popPtr) {
         //   )
         // This cannot be removed, so this is considered a nested pop (which we
         // should fix).
-        if (firstChild == implicitBlock) {
-          if (BranchUtils::BranchSeeker::has(implicitBlock,
-                                             implicitBlock->name)) {
-            isPopNested = true;
-          }
-        } else {
+        if (BranchUtils::BranchSeeker::has(block,
+                                           block->name)) {
           isPopNested = true;
         }
       } else if (firstChild->is<Try>() || firstChild->is<TryTable>()) {

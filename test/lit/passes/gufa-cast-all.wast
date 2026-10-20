@@ -408,7 +408,6 @@
   (tag $tag (type $tag-sig) (param (ref null $array)))
 
   ;; CHECK:      (func $test (type $2)
-  ;; CHECK-NEXT:  (local $0 (ref null $array))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (try (result (ref i31))
   ;; CHECK-NEXT:    (do
@@ -417,14 +416,11 @@
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (catch $tag
-  ;; CHECK-NEXT:     (local.set $0
-  ;; CHECK-NEXT:      (pop (ref null $array))
-  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (ref.i31
   ;; CHECK-NEXT:      (block (result i32)
   ;; CHECK-NEXT:       (block
   ;; CHECK-NEXT:        (drop
-  ;; CHECK-NEXT:         (local.get $0)
+  ;; CHECK-NEXT:         (pop (ref null $array))
   ;; CHECK-NEXT:        )
   ;; CHECK-NEXT:        (unreachable)
   ;; CHECK-NEXT:       )
