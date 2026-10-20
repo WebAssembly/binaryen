@@ -1027,8 +1027,7 @@ void Inhabitator::markBottomRefsNullable() {
     auto children = type.getTypeChildren();
     for (size_t i = 0; i < children.size(); ++i) {
       auto child = children[i];
-      if (child.isRef() && child.getHeapType().isBottom() &&
-          child.isNonNullable()) {
+      if (child.isNonNullableRef() && child.getHeapType().isBottom()) {
         markNullable({type, i});
       }
     }
@@ -1049,8 +1048,8 @@ void Inhabitator::markExternRefsNullable() {
     auto children = type.getTypeChildren();
     for (size_t i = 0; i < children.size(); ++i) {
       auto child = children[i];
-      if (child.isRef() && child.getHeapType().isMaybeShared(HeapType::ext) &&
-          child.isNonNullable()) {
+      if (child.isNonNullableRef() &&
+          child.getHeapType().isMaybeShared(HeapType::ext)) {
         markNullable({type, i});
       }
     }
@@ -1131,7 +1130,7 @@ void Inhabitator::breakNonNullableCycles() {
         }
         // Skip nullable references because they don't cause uninhabitable
         // cycles.
-        if (children[index].isNullable()) {
+        if (children[index].isNullableRef()) {
           ++index;
           continue;
         }
@@ -1180,7 +1179,7 @@ void Inhabitator::breakNonNullableCycles() {
       }
 
       // Otherwise we have a non-nullable reference we need to search.
-      assert(children[index].isRef() && children[index].isNonNullable());
+      assert(children[index].isNonNullableRef());
       auto next = children[index++].getHeapType();
       visitType(next);
     }
@@ -1401,7 +1400,7 @@ bool isUninhabitable(HeapType type,
 bool isUninhabitable(Type type,
                      std::unordered_set<HeapType>& visited,
                      std::unordered_set<HeapType>& visiting) {
-  if (type.isRef() && type.isNonNullable()) {
+  if (type.isNonNullableRef()) {
     if (type.getHeapType().isBottom() ||
         type.getHeapType().isMaybeShared(HeapType::ext)) {
       return true;

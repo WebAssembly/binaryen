@@ -400,7 +400,7 @@ public:
         if (wasm && wasm->typeNames.contains(h)) {
           o << " $" << wasm->typeNames[h].name;
         }
-        if (t.isNullable()) {
+        if (t.isNullableRef()) {
           o << " null";
         }
       }

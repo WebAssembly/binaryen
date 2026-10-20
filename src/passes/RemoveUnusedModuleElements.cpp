@@ -1129,7 +1129,7 @@ struct RemoveUnusedModuleElements : public Pass {
     struct NullDescFinder : PostWalker<NullDescFinder> {
       bool mayTrap = false;
       void visitStructNew(StructNew* curr) {
-        if (curr->desc && curr->desc->type.isNullable()) {
+        if (curr->desc && curr->desc->type.isNullableRef()) {
           mayTrap = true;
         }
       }

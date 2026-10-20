@@ -701,7 +701,7 @@ private:
         parent.trap = true;
         return true;
       }
-      if (type.isNullable()) {
+      if (type.isNullableRef()) {
         parent.implicitTrap = true;
       }
 

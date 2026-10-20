@@ -2597,7 +2597,7 @@ void FunctionValidator::visitRefNull(RefNull* curr) {
     getStream() << getMissingFeaturesList(*getModule(), feats) << '\n';
   }
   if (!shouldBeTrue(
-        curr->type.isNullable(), curr, "ref.null types must be nullable")) {
+        curr->type.isNullableRef(), curr, "ref.null types must be nullable")) {
     return;
   }
   shouldBeTrue(
@@ -2667,7 +2667,7 @@ void FunctionValidator::visitRefFunc(RefFunc* curr) {
   shouldBeTrue(!getFunction() || getModule()->features.hasReferenceTypes(),
                curr,
                "ref.func requires reference-types [--enable-reference-types]");
-  if (!shouldBeTrue(curr->type.isNonNullable(),
+  if (!shouldBeTrue(curr->type.isNonNullableRef(),
                     curr,
                     "ref.func should have a non-nullable reference type")) {
     return;
@@ -3175,7 +3175,7 @@ void FunctionValidator::visitRefI31(RefI31* curr) {
     return;
   }
 
-  if (!shouldBeTrue(curr->type.isNonNullable(),
+  if (!shouldBeTrue(curr->type.isNonNullableRef(),
                     curr,
                     "ref.i31 should have a non-nullable reference type")) {
     return;
@@ -3279,7 +3279,7 @@ void FunctionValidator::visitRefCast(RefCast* curr) {
     "ref.cast target type and ref type must have a common supertype");
   // We should never have a nullable cast of a non-nullable reference, since
   // that unnecessarily loses type information.
-  shouldBeTrue(curr->ref->type.isNullable() || curr->type.isNonNullable(),
+  shouldBeTrue(curr->ref->type.isNullableRef() || curr->type.isNonNullableRef(),
                curr,
                "ref.cast null of non-nullable references are not allowed");
 
@@ -3403,8 +3403,8 @@ void FunctionValidator::visitBrOn(BrOn* curr) {
                       curr,
                       "br_on_cast_desc_eq* cast exactness should match "
                       "descriptor exactness");
-        shouldBeTrue(curr->ref->type.isNullable() ||
-                       curr->castType.isNonNullable(),
+        shouldBeTrue(curr->ref->type.isNullableRef() ||
+                       curr->castType.isNonNullableRef(),
                      curr,
                      "br_on_cast_desc_eq* with non-nullable ref should have "
                      "non-nullable cast type");
@@ -3442,7 +3442,7 @@ void FunctionValidator::visitStructNew(StructNew* curr) {
   if (curr->type == Type::unreachable) {
     return;
   }
-  if (!shouldBeTrue(curr->type.isNonNullable(),
+  if (!shouldBeTrue(curr->type.isNonNullableRef(),
                     curr,
                     "struct.new should have a non-nullable reference type")) {
     return;
@@ -3809,7 +3809,7 @@ void FunctionValidator::visitArrayNew(ArrayNew* curr) {
   if (curr->type == Type::unreachable) {
     return;
   }
-  if (!shouldBeTrue(curr->type.isNonNullable(),
+  if (!shouldBeTrue(curr->type.isNonNullableRef(),
                     curr,
                     "array.new should have a non-nullable reference type")) {
     return;
@@ -4466,15 +4466,14 @@ void FunctionValidator::visitContNew(ContNew* curr) {
     return;
   }
 
-  if (!shouldBeTrue(curr->type.isNonNullable(),
+  if (!shouldBeTrue(curr->type.isNonNullableRef(),
                     curr,
                     "cont.new should have a non-nullable reference type")) {
     return;
   }
   shouldBeTrue(curr->type.isExact(), curr, "cont.new should be exact");
 
-  if (!shouldBeTrue(curr->type.isRef() &&
-                      curr->type.getHeapType().isContinuation(),
+  if (!shouldBeTrue(curr->type.getHeapType().isContinuation(),
                     curr,
                     "cont.new must be annotated with a continuation type")) {
     return;
@@ -4516,8 +4515,7 @@ void FunctionValidator::visitContBind(ContBind* curr) {
   }
 
   if (!shouldBeTrue(
-        curr->type.isRef() && curr->type.isNonNullable() &&
-          curr->type.isExact(),
+        curr->type.isNonNullableRef() && curr->type.isExact(),
         curr,
         "the output type must be a non-nullable, exact reference")) {
     return;
@@ -4954,7 +4952,7 @@ void FunctionValidator::visitFunction(Function* curr) {
       for (auto index : info.nonDominatingIndices) {
         auto localType = curr->getLocalType(index);
         for (auto type : localType) {
-          shouldBeTrue(!type.isNonNullable(),
+          shouldBeTrue(!type.isNonNullableRef(),
                        index,
                        "non-nullable local's sets must dominate gets");
         }
@@ -5354,13 +5352,13 @@ void validateTables(Module& module, ValidationInfo& info) {
     info.shouldBeTrue(table->initial <= table->max,
                       "table",
                       "size minimum must not be greater than maximum");
-    if (table->type.isNonNullable()) {
+    if (table->type.isNonNullableRef()) {
       info.shouldBeTrue(module.features.hasGC(),
                         "table",
                         "tables must have a nullable type in MVP "
                         "(requires --enable-gc).");
     }
-    if (!table->imported() && table->type.isNonNullable()) {
+    if (!table->imported() && table->type.isNonNullableRef()) {
       info.shouldBeTrue(table->init,
                         "table",
                         "module-defined tables with non-nullable types require "

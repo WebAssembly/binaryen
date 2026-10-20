@@ -2561,7 +2561,7 @@ void BinaryInstWriter::visitCallRef(CallRef* curr) {
 
 void BinaryInstWriter::visitRefTest(RefTest* curr) {
   o << static_cast<int8_t>(BinaryConsts::GCPrefix);
-  if (curr->castType.isNullable()) {
+  if (curr->castType.isNullableRef()) {
     o << U32LEB(BinaryConsts::RefTestNull);
   } else {
     o << U32LEB(BinaryConsts::RefTest);
@@ -2576,7 +2576,7 @@ void BinaryInstWriter::visitRefCast(RefCast* curr) {
     return;
   }
   o << static_cast<int8_t>(BinaryConsts::GCPrefix);
-  if (curr->type.isNullable()) {
+  if (curr->type.isNullableRef()) {
     if (curr->desc) {
       o << U32LEB(BinaryConsts::RefCastDescEqNull);
     } else {
@@ -2636,8 +2636,8 @@ void BinaryInstWriter::visitBrOn(BrOn* curr) {
   }
   assert(curr->ref->type.isRef());
   assert(hasDesc || Type::isSubType(curr->castType, curr->ref->type));
-  uint8_t flags = (curr->ref->type.isNullable() ? 1 : 0) |
-                  (curr->castType.isNullable() ? 2 : 0);
+  uint8_t flags = (curr->ref->type.isNullableRef() ? 1 : 0) |
+                  (curr->castType.isNullableRef() ? 2 : 0);
   o << flags;
   o << U32LEB(getBreakIndex(curr->name));
   parent.writeHeapType(curr->ref->type.getHeapType(),

@@ -892,7 +892,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           if (Type::isSubType(expr->type, type)) {
             return expr;
           }
-          if (type.isNonNullable() && expr->type.isNullable() &&
+          if (type.isNonNullableRef() && expr->type.isNullableRef() &&
               Type::isSubType(expr->type.with(NonNullable), type)) {
             return builder.makeRefAs(RefAsNonNull, expr);
           }
@@ -907,7 +907,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         auto getRefValue = [&]() -> Expression* {
           if (curr->desc) {
             // Preserve the trap on a null descriptor.
-            if (curr->desc->type.isNullable()) {
+            if (curr->desc->type.isNullableRef()) {
               curr->desc = builder.makeRefAs(RefAsNonNull, curr->desc);
             }
             Block* ref =
@@ -929,7 +929,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
               worked = true;
               return;
             }
-            if (refType.isNonNullable()) {
+            if (refType.isNonNullableRef()) {
               // The branch will definitely not be taken.
               replaceCurrent(maybeCast(curr->ref, curr->type));
               worked = true;
@@ -943,7 +943,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
               worked = true;
               return;
             }
-            if (refType.isNonNullable()) {
+            if (refType.isNonNullableRef()) {
               // Definitely taken.
               replaceCurrent(builder.makeBreak(
                 curr->name, maybeCast(curr->ref, curr->getSentType())));
@@ -971,7 +971,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             } else {
               // For descriptor casts, the target heap type is controlled by the
               // descriptor operand, but we can still improve nullability.
-              if (improvedType.isNullable() && refType.isNonNullable()) {
+              if (improvedType.isNullableRef() && refType.isNonNullableRef()) {
                 improvedType = improvedType.with(NonNullable);
               }
             }
@@ -992,7 +992,8 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
               // that would *un*refine the send type.
               // TODO: Consider allowing this change if the branch target
               // expects a nullable type anyway.
-              if (curr->castType.isNullable() && improvedType.isNonNullable()) {
+              if (curr->castType.isNullableRef() &&
+                  improvedType.isNonNullableRef()) {
                 improvedType = improvedType.with(Nullable);
               }
             }

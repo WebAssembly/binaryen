@@ -53,26 +53,26 @@ Literal::Literal(Type type) : type(type) {
   }
 
   if (type.isNull()) {
-    assert(type.isNullable() && !type.isExact());
+    assert(type.isNullableRef() && !type.isExact());
     new (&gcData) std::shared_ptr<GCData>();
     return;
   }
 
   if (type.isRef() && type.getHeapType().isMaybeShared(HeapType::i31)) {
-    assert(type.isNonNullable());
+    assert(type.isNonNullableRef());
     i32 = 0;
     return;
   }
 
   if (type.isRef() && type.getHeapType().isMaybeShared(HeapType::ext)) {
-    assert(type.isNonNullable());
+    assert(type.isNonNullableRef());
     new (&gcData) std::shared_ptr<GCData>(
       std::make_shared<GCData>(Literals{Literal(int32_t{0})}));
     return;
   }
 
   if (type.isRef() && type.getHeapType().isMaybeShared(HeapType::waitqueue)) {
-    assert(type.isNonNullable());
+    assert(type.isNonNullableRef());
     return;
   }
 
@@ -165,7 +165,7 @@ Literal::Literal(const Literal& other) : type(other.type) {
     return;
   }
   // After handling nulls, only non-nullable Literals remain.
-  assert(!type.isNullable());
+  assert(!type.isNullableRef());
 
   auto heapType = type.getHeapType();
   if (other.isData()) {
