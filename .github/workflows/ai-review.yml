@@ -9,7 +9,6 @@ on:
 permissions:
   contents: read
   pull-requests: write
-  issues: write
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.event.issue.number || github.ref }}
@@ -31,10 +30,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event_name == 'issue_comment' && format('refs/pull/{0}/merge', github.event.issue.number) || github.ref }}
+          ref: ${{ github.event_name == 'issue_comment' && format('refs/pull/{0}/head', github.event.issue.number) || github.event.pull_request.head.sha }}
 
       - name: Run Antigravity Review Agent
-        uses: anguillanneuf/run-antigravity-cli@master
+        uses: anguillanneuf/run-antigravity-cli@126f1bc7865cbcf3784cf764c96d3eb7f4d0b5d9 # master
         with:
           api-key: ${{ secrets.GEMINI_API_KEY }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
