@@ -82,15 +82,17 @@ struct GlobalStructInference : public Pass {
   GlobalStructInference(bool optimizeToDescCasts)
     : optimizeToDescCasts(optimizeToDescCasts) {}
 
-  // Maps optimizable struct types to the globals whose init is a struct.new of
-  // them.
-  //
-  // We will remove unoptimizable types from here, so in practice, if a type is
-  // optimizable it will have an entry here, and not if not.
+  // Maps struct types that have at least one top-level immutable eqref
+  // struct.new global (in themselves or a subtype) to those globals and any
+  // other struct.news of the type (or a subtype) in the module.
   //
   // This is filled in when in closed world. In open world, we cannot do such
   // type-based inference, and this remains empty.
-  std::unordered_map<HeapType, std::vector<Name>> typeGlobals;
+  struct TypeInfo {
+    std::vector<Name> globals;
+    std::vector<StructNew*> otherStructNews;
+  };
+  std::unordered_map<HeapType, TypeInfo> typeInfos;
 
   // Whether to optimize ref.cast to ref.cast_desc_eq. This increases code size,
   // so it may not always be beneficial (perhaps running it late in the
@@ -117,144 +119,110 @@ struct GlobalStructInference : public Pass {
   }
 
   void analyzeClosedWorld(Module* module) {
-    // First, find all the information we need. We need to know which struct
-    // types are created in functions, because we will not be able to optimize
-    // those.
-
-    using HeapTypes = std::unordered_set<HeapType>;
-
-    ModuleUtils::ParallelFunctionAnalysis<HeapTypes> analysis(
-      *module, [&](Function* func, HeapTypes& types) {
-        if (func->imported()) {
-          return;
-        }
-
-        for (auto* structNew : FindAll<StructNew>(func->body).list) {
-          auto type = structNew->type;
-          if (type.isRef()) {
-            types.insert(type.getHeapType());
-          }
-        }
-      });
-
-    // We cannot optimize types that appear in a struct.new in a function, which
-    // we just collected and merge now.
-    HeapTypes unoptimizable;
-
-    for (auto& [func, types] : analysis.map) {
-      for (auto type : types) {
-        unoptimizable.insert(type);
-      }
-    }
-
-    // Process the globals.
+    // First, find all immutable, equality-comparable globals initialized to a
+    // top-level struct.new, and propagate them to supertypes.
+    std::unordered_set<StructNew*> globalStructNews;
     for (auto& global : module->globals) {
-      if (global->imported()) {
+      if (global->imported() || global->mutable_) {
         continue;
       }
-
-      // We cannot optimize a type that appears in a non-toplevel location in a
-      // global init.
-      for (auto* structNew : FindAll<StructNew>(global->init).list) {
-        auto type = structNew->type;
-        if (type.isRef() && structNew != global->init) {
-          unoptimizable.insert(type.getHeapType());
-        }
-      }
-
-      if (!global->init->type.isRef()) {
+      auto* structNew = global->init->dynCast<StructNew>();
+      if (!structNew || !structNew->type.isRef()) {
         continue;
       }
-
-      auto type = global->init->type.getHeapType();
-
+      auto type = structNew->type.getHeapType();
       // The global's declared type must be equality comparable.
       if (auto eq = wasm::HeapTypes::eq.getBasic(type.getShared());
           !Type::isSubType(global->type, Type(eq, Nullable))) {
-        unoptimizable.insert(type);
         continue;
       }
 
-      // We cannot optimize mutable globals.
-      if (global->mutable_) {
-        unoptimizable.insert(type);
-        continue;
-      }
-
-      // Finally, if this is a struct.new then it is one we can optimize; note
-      // it.
-      if (global->init->is<StructNew>()) {
-        typeGlobals[type].push_back(global->name);
-      }
-    }
-
-    // A struct.new in a table initializer or in an element segment creates an
-    // object that is not a global, so its type cannot be optimized either.
-    auto markUnoptimizable = [&](Expression* init) {
-      for (auto* structNew : FindAll<StructNew>(init).list) {
-        unoptimizable.insert(structNew->type.getHeapType());
-      }
-    };
-    for (auto& table : module->tables) {
-      if (table->init) {
-        markUnoptimizable(table->init);
-      }
-    }
-    for (auto& segment : module->elementSegments) {
-      for (auto* item : segment->data) {
-        markUnoptimizable(item);
-      }
-    }
-
-    // A struct.get might also read from any of the subtypes. As a result, an
-    // unoptimizable type makes all its supertypes unoptimizable as well.
-    // TODO: this could be specific per field (and not all supers have all
-    //       fields)
-    // Iterate on a copy to avoid invalidation as we insert.
-    auto unoptimizableCopy = unoptimizable;
-    for (auto type : unoptimizableCopy) {
-      while (1) {
-        unoptimizable.insert(type);
-
-        // Also erase the globals, as we will never read them anyhow. This can
-        // allow us to skip unneeded work, when we check if typeGlobals is
-        // empty, below.
-        typeGlobals.erase(type);
-
-        auto super = type.getDeclaredSuperType();
-        if (!super) {
-          break;
-        }
-        type = *super;
-      }
-    }
-
-    // Similarly, propagate global names: if one type has [global1], then a get
-    // of any supertype might access that, so propagate to them.
-    auto typeGlobalsCopy = typeGlobals;
-    for (auto& [type, globals] : typeGlobalsCopy) {
+      globalStructNews.insert(structNew);
       auto curr = type;
       while (1) {
+        typeInfos[curr].globals.push_back(global->name);
         auto super = curr.getDeclaredSuperType();
         if (!super) {
           break;
         }
         curr = *super;
+      }
+    }
 
-        // As above, avoid adding pointless data for anything unoptimizable.
-        if (!unoptimizable.contains(curr)) {
-          for (auto global : globals) {
-            typeGlobals[curr].push_back(global);
+    if (typeInfos.empty()) {
+      return;
+    }
+
+    // Record any other struct.new of a tracked type (or subtype): in functions,
+    // nested in global initializers, in mutable or non-eqref globals, or in
+    // table/element initializers. We cannot refer to these instances via
+    // global.get, nor un-nest their fields, so they will only allow optimizing
+    // fields where they have a constant value that does not need to be
+    // selected via ref.eq on that instance.
+    auto noteOtherStructNew = [&](StructNew* structNew) {
+      if (!structNew->type.isRef()) {
+        return;
+      }
+      auto curr = structNew->type.getHeapType();
+      while (1) {
+        if (auto iter = typeInfos.find(curr); iter != typeInfos.end()) {
+          iter->second.otherStructNews.push_back(structNew);
+        }
+        auto super = curr.getDeclaredSuperType();
+        if (!super) {
+          break;
+        }
+        curr = *super;
+      }
+    };
+
+    using StructNews = std::vector<StructNew*>;
+    ModuleUtils::ParallelFunctionAnalysis<StructNews> analysis(
+      *module, [&](Function* func, StructNews& structNews) {
+        if (func->imported()) {
+          return;
+        }
+        for (auto* structNew : FindAll<StructNew>(func->body).list) {
+          if (structNew->type.isRef()) {
+            structNews.push_back(structNew);
           }
+        }
+      });
+
+    for (auto& func : module->functions) {
+      for (auto* structNew : analysis.map[func.get()]) {
+        noteOtherStructNew(structNew);
+      }
+    }
+
+    for (auto& global : module->globals) {
+      if (global->imported()) {
+        continue;
+      }
+      for (auto* structNew : FindAll<StructNew>(global->init).list) {
+        if (!globalStructNews.contains(structNew)) {
+          noteOtherStructNew(structNew);
         }
       }
     }
 
-    // The above loop on typeGlobalsCopy is on an unsorted data structure, and
-    // that can lead to nondeterminism in typeGlobals. Sort the vectors there to
-    // ensure determinism.
-    for (auto& [type, globals] : typeGlobals) {
-      std::sort(globals.begin(), globals.end());
+    for (auto& table : module->tables) {
+      if (table->init) {
+        for (auto* structNew : FindAll<StructNew>(table->init).list) {
+          noteOtherStructNew(structNew);
+        }
+      }
+    }
+    for (auto& segment : module->elementSegments) {
+      for (auto* item : segment->data) {
+        for (auto* structNew : FindAll<StructNew>(item).list) {
+          noteOtherStructNew(structNew);
+        }
+      }
+    }
+
+    for (auto& [type, info] : typeInfos) {
+      std::sort(info.globals.begin(), info.globals.end());
     }
   }
 
@@ -289,6 +257,14 @@ struct GlobalStructInference : public Pass {
       // the Value for 42 would list globals = [$global0, $global1].
       // TODO: SmallVector?
       std::vector<Name> globals;
+      // Whether any non-global struct.new (or mutable/non-eqref global) has
+      // this Value. Such instances cannot be compared via ref.eq against a
+      // global.
+      bool hasOtherInstances = false;
+
+      bool hasSingleGlobal() const {
+        return globals.size() == 1 && !hasOtherInstances;
+      }
 
       bool isConstant() const {
         return std::get_if<PossibleConstantValues>(&content);
@@ -414,19 +390,19 @@ struct GlobalStructInference : public Pass {
           }
         }
 
-        auto iter = parent.typeGlobals.find(heapType);
-        if (iter == parent.typeGlobals.end()) {
+        auto iter = parent.typeInfos.find(heapType);
+        if (iter == parent.typeInfos.end()) {
           return;
         }
 
-        const auto& globals = iter->second;
+        const auto& [globals, otherStructNews] = iter->second;
         if (globals.size() == 0) {
           return;
         }
 
         Builder builder(wasm);
 
-        if (globals.size() == 1) {
+        if (globals.size() == 1 && otherStructNews.empty()) {
           // Leave it to other passes to infer the constant value of the field,
           // if there is one: just change the reference to the global, which
           // will unlock those other optimizations. Note we must trap if the ref
@@ -471,41 +447,58 @@ struct GlobalStructInference : public Pass {
         // TODO: SmallVector?
         std::vector<Value> values;
 
+        auto addValue = [&](Value& value, std::optional<Name> global) {
+          // If the value is constant, it may be grouped as mentioned before.
+          // See if it matches anything we've seen before.
+          if (value.isConstant()) {
+            for (auto& oldValue : values) {
+              if (oldValue.isConstant() &&
+                  oldValue.getConstant() == value.getConstant()) {
+                // Add us to this group.
+                if (global) {
+                  oldValue.globals.push_back(*global);
+                } else {
+                  oldValue.hasOtherInstances = true;
+                }
+                return true;
+              }
+            }
+          }
+          // This is a new value, so create a new group, unless we've seen too
+          // many unique values. In that case, give up.
+          if (values.size() == 2) {
+            return false;
+          }
+          if (global) {
+            value.globals.push_back(*global);
+          } else {
+            value.hasOtherInstances = true;
+          }
+          values.push_back(value);
+          return true;
+        };
+
         // Scan the relevant struct.new operands.
         for (Index i = 0; i < globals.size(); i++) {
           Name global = globals[i];
           auto* structNew = wasm.getGlobal(global)->init->cast<StructNew>();
           // Find the value read from the struct.new.
           auto value = readFromStructNew(structNew, fieldIndex, field);
-
-          // If the value is constant, it may be grouped as mentioned before.
-          // See if it matches anything we've seen before.
-          bool grouped = false;
-          if (value.isConstant()) {
-            for (auto& oldValue : values) {
-              if (oldValue.isConstant() &&
-                  oldValue.getConstant() == value.getConstant()) {
-                // Add us to this group.
-                oldValue.globals.push_back(global);
-                grouped = true;
-                break;
-              }
-            }
-          }
-          if (!grouped) {
-            // This is a new value, so create a new group, unless we've seen too
-            // many unique values. In that case, give up.
-            if (values.size() == 2) {
-              return;
-            }
-            value.globals.push_back(global);
-            values.push_back(value);
+          if (!addValue(value, global)) {
+            return;
           }
         }
 
-        // We have some globals (at least 2), and so must have at least one
-        // value. And we have already exited if we have more than 2 values (see
-        // the early return above) so that only leaves 1 and 2.
+        for (auto* structNew : otherStructNews) {
+          auto value = readFromStructNew(structNew, fieldIndex, field);
+          if (!value.isConstant() || !addValue(value, std::nullopt)) {
+            return;
+          }
+        }
+
+        // We have at least one global, and so must have at least one value. And
+        // we have already exited if we have more than 2 values (see the early
+        // return above) so that only leaves 1 and 2.
         if (values.size() == 1) {
           // The case of 1 value is simple: trap if the ref is null, and
           // otherwise return the value. Since the field is immutable, there
@@ -520,10 +513,11 @@ struct GlobalStructInference : public Pass {
 
         // We have two values. Check that we can pick between them using a
         // single comparison. While doing so, ensure that the index we can check
-        // on is 0, that is, the first value has a single global.
-        if (values[0].globals.size() == 1) {
+        // on is 0, that is, the first value has a single global (and no other
+        // instances).
+        if (values[0].hasSingleGlobal()) {
           // The checked global is already in index 0.
-        } else if (values[1].globals.size() == 1) {
+        } else if (values[1].hasSingleGlobal()) {
           // Flip so the value to check is in index 0.
           std::swap(values[0], values[1]);
         } else {
@@ -580,12 +574,12 @@ struct GlobalStructInference : public Pass {
         }
 
         // Check if we have a single global for the descriptor.
-        auto iter = parent.typeGlobals.find(*desc);
-        if (iter == parent.typeGlobals.end()) {
+        auto iter = parent.typeInfos.find(*desc);
+        if (iter == parent.typeInfos.end()) {
           return;
         }
-        const auto& globals = iter->second;
-        if (globals.size() != 1) {
+        const auto& [globals, otherStructNews] = iter->second;
+        if (globals.size() != 1 || !otherStructNews.empty()) {
           return;
         }
 

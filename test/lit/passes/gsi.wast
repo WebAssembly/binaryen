@@ -628,7 +628,8 @@
   )
 )
 
-;; When one of the globals is mutable, we cannot optimize.
+;; When one of two globals is mutable, we can still optimize by comparing
+;; against the immutable global.
 (module
   ;; CHECK:      (type $struct (struct (field i32)))
   (type $struct (struct i32))
@@ -639,6 +640,58 @@
   ;; CHECK-NEXT:  (i32.const 42)
   ;; CHECK-NEXT: ))
   (global $global1 (ref $struct) (struct.new $struct
+    (i32.const 42)
+  ))
+
+  ;; CHECK:      (global $global2 (mut (ref $struct)) (struct.new $struct
+  ;; CHECK-NEXT:  (i32.const 1337)
+  ;; CHECK-NEXT: ))
+  (global $global2 (mut (ref $struct)) (struct.new $struct
+    (i32.const 1337)
+  ))
+
+  ;; CHECK:      (func $test (type $1) (param $struct (ref null $struct))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (select
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:    (i32.const 1337)
+  ;; CHECK-NEXT:    (ref.eq
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $struct)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (global.get $global1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test (param $struct (ref null $struct))
+    (drop
+      (struct.get $struct 0
+        (local.get $struct)
+      )
+    )
+  )
+)
+
+;; When the unique value is in a mutable global (and two immutable globals share
+;; the other value), we cannot optimize with a single comparison.
+(module
+  ;; CHECK:      (type $struct (struct (field i32)))
+  (type $struct (struct i32))
+
+  ;; CHECK:      (type $1 (func (param (ref null $struct))))
+
+  ;; CHECK:      (global $global1 (ref $struct) (struct.new $struct
+  ;; CHECK-NEXT:  (i32.const 42)
+  ;; CHECK-NEXT: ))
+  (global $global1 (ref $struct) (struct.new $struct
+    (i32.const 42)
+  ))
+
+  ;; CHECK:      (global $global1b (ref $struct) (struct.new $struct
+  ;; CHECK-NEXT:  (i32.const 42)
+  ;; CHECK-NEXT: ))
+  (global $global1b (ref $struct) (struct.new $struct
     (i32.const 42)
   ))
 
@@ -1537,8 +1590,9 @@
   )
 )
 
-;; One global is declared as heap type |any|, which we cannot do a ref.eq on, so
-;; we do not optimize.
+;; One global is declared as heap type |any|, which we cannot do a ref.eq on,
+;; but we can still optimize by comparing against the other global ($A1) which
+;; is an eqref.
 (module
   ;; CHECK:      (type $A (struct (field i32)))
   (type $A (struct (field i32)))
@@ -1556,6 +1610,54 @@
   ;; CHECK-NEXT:  (i32.const 9999)
   ;; CHECK-NEXT: ))
   (global $A1 (ref $A) (struct.new $A
+    (i32.const 9999)
+  ))
+
+  ;; CHECK:      (func $func (type $1) (param $ref (ref null $A)) (result i32)
+  ;; CHECK-NEXT:  (select
+  ;; CHECK-NEXT:   (i32.const 9999)
+  ;; CHECK-NEXT:   (i32.const 1337)
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (ref.as_non_null
+  ;; CHECK-NEXT:     (local.get $ref)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (global.get $A1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $func (param $ref (ref null $A)) (result i32)
+    (struct.get $A 0
+      (local.get $ref)
+    )
+  )
+)
+
+;; When the unique value is in the |any| global (and two eqref globals share
+;; the other value), we cannot optimize with a single comparison.
+(module
+  ;; CHECK:      (type $A (struct (field i32)))
+  (type $A (struct (field i32)))
+
+  ;; CHECK:      (type $1 (func (param (ref null $A)) (result i32)))
+
+  ;; CHECK:      (global $A0 (ref any) (struct.new $A
+  ;; CHECK-NEXT:  (i32.const 1337)
+  ;; CHECK-NEXT: ))
+  (global $A0 (ref any) (struct.new $A
+    (i32.const 1337)
+  ))
+
+  ;; CHECK:      (global $A1 (ref $A) (struct.new $A
+  ;; CHECK-NEXT:  (i32.const 9999)
+  ;; CHECK-NEXT: ))
+  (global $A1 (ref $A) (struct.new $A
+    (i32.const 9999)
+  ))
+
+  ;; CHECK:      (global $A2 (ref $A) (struct.new $A
+  ;; CHECK-NEXT:  (i32.const 9999)
+  ;; CHECK-NEXT: ))
+  (global $A2 (ref $A) (struct.new $A
     (i32.const 9999)
   ))
 
@@ -2412,6 +2514,111 @@
     ;; cast the global.get to $other.
     (struct.get $other 0
       (local.get $x)
+    )
+  )
+)
+
+;; A subtype has a non-toplevel struct.new inside a wrapper global (e.g. an
+;; inlined singleton vtable). That nested struct.new has the same constant
+;; value (null) for field 0 as $vt_b, so field 0 on $Object.vtable can still be
+;; optimized by comparing against $vt_a and un-nesting $vt_a's field 0. Field 1
+;; has three distinct values across $vt_a, $vt_b, and the nested struct.new, so
+;; field 1 cannot be optimized.
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $Object.vtable (sub (struct (field (ref null $Iface.vtable)) (field i32))))
+    (type $Object.vtable (sub (struct
+      (field (ref null $Iface.vtable))
+      (field i32)
+    )))
+    ;; CHECK:       (type $SubA.vtable (sub $Object.vtable (struct (field (ref null $Iface.vtable)) (field i32))))
+    (type $SubA.vtable (sub $Object.vtable (struct
+      (field (ref null $Iface.vtable))
+      (field i32)
+    )))
+    ;; CHECK:       (type $SubB.vtable (sub $Object.vtable (struct (field (ref null $Iface.vtable)) (field i32))))
+    (type $SubB.vtable (sub $Object.vtable (struct
+      (field (ref null $Iface.vtable))
+      (field i32)
+    )))
+    ;; CHECK:       (type $Iface.vtable (struct (field i32)))
+    (type $Iface.vtable (struct (field i32)))
+    ;; CHECK:       (type $Wrapper (struct (field (ref $SubB.vtable))))
+    (type $Wrapper (struct (field (ref $SubB.vtable))))
+  )
+
+  ;; CHECK:      (type $5 (func (param (ref null $Object.vtable)) (result (ref null $Iface.vtable))))
+
+  ;; CHECK:      (type $6 (func (param (ref null $Object.vtable)) (result i32)))
+
+  ;; CHECK:      (global $vt_a.unnested.0 (ref (exact $Iface.vtable)) (struct.new $Iface.vtable
+  ;; CHECK-NEXT:  (i32.const 100)
+  ;; CHECK-NEXT: ))
+
+  ;; CHECK:      (global $vt_a (ref $SubA.vtable) (struct.new $SubA.vtable
+  ;; CHECK-NEXT:  (global.get $vt_a.unnested.0)
+  ;; CHECK-NEXT:  (i32.const 10)
+  ;; CHECK-NEXT: ))
+  (global $vt_a (ref $SubA.vtable)
+    (struct.new $SubA.vtable
+      (struct.new $Iface.vtable (i32.const 100))
+      (i32.const 10)
+    )
+  )
+
+  ;; CHECK:      (global $vt_b (ref $SubB.vtable) (struct.new $SubB.vtable
+  ;; CHECK-NEXT:  (ref.null none)
+  ;; CHECK-NEXT:  (i32.const 20)
+  ;; CHECK-NEXT: ))
+  (global $vt_b (ref $SubB.vtable)
+    (struct.new $SubB.vtable
+      (ref.null none)
+      (i32.const 20)
+    )
+  )
+
+  ;; CHECK:      (global $singleton (ref $Wrapper) (struct.new $Wrapper
+  ;; CHECK-NEXT:  (struct.new $SubB.vtable
+  ;; CHECK-NEXT:   (ref.null none)
+  ;; CHECK-NEXT:   (i32.const 30)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: ))
+  (global $singleton (ref $Wrapper)
+    (struct.new $Wrapper
+      (struct.new $SubB.vtable
+        (ref.null none)
+        (i32.const 30)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $get-field-0 (type $5) (param $vt (ref null $Object.vtable)) (result (ref null $Iface.vtable))
+  ;; CHECK-NEXT:  (select (result (ref null (exact $Iface.vtable)))
+  ;; CHECK-NEXT:   (global.get $vt_a.unnested.0)
+  ;; CHECK-NEXT:   (ref.null none)
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (ref.as_non_null
+  ;; CHECK-NEXT:     (local.get $vt)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (global.get $vt_a)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $get-field-0 (param $vt (ref null $Object.vtable)) (result (ref null $Iface.vtable))
+    (struct.get $Object.vtable 0
+      (local.get $vt)
+    )
+  )
+
+  ;; CHECK:      (func $get-field-1 (type $6) (param $vt (ref null $Object.vtable)) (result i32)
+  ;; CHECK-NEXT:  (struct.get $Object.vtable 1
+  ;; CHECK-NEXT:   (local.get $vt)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $get-field-1 (param $vt (ref null $Object.vtable)) (result i32)
+    (struct.get $Object.vtable 1
+      (local.get $vt)
     )
   )
 )
