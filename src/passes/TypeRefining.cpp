@@ -261,7 +261,7 @@ struct TypeRefining : public Pass {
         auto& infos = finalInfos[{type, Inexact}];
         for (Index i = 0; i < fields.size(); i++) {
           auto lub = infos[i].getLUB();
-          if (lub.isRef() && !lub.isCastable() && !lub.isNull()) {
+          if (lub.isRef() && !lub.isCastable() && !lub.isBottomRef()) {
             infos[i] = LUBFinder(fields[i].type);
           }
         }
@@ -411,13 +411,14 @@ struct TypeRefining : public Pass {
         }
 
         Type newFieldType;
-        if (!curr->ref->type.isNull()) {
+        if (!curr->ref->type.isBottomRef()) {
           auto oldType = curr->ref->type.getHeapType();
           newFieldType =
             parent.finalInfos[{oldType, Inexact}][curr->index].getLUB();
         }
 
-        if (curr->ref->type.isNull() || newFieldType == Type::unreachable ||
+        if (curr->ref->type.isBottomRef() ||
+            newFieldType == Type::unreachable ||
             !Type::isSubType(newFieldType, curr->type)) {
           // This get will trap, or cannot be reached: either the ref is null,
           // or the field is never written any contents, or the contents we see

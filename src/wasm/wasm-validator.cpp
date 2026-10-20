@@ -2601,7 +2601,7 @@ void FunctionValidator::visitRefNull(RefNull* curr) {
     return;
   }
   shouldBeTrue(
-    curr->type.isNull(), curr, "ref.null must have a bottom heap type");
+    curr->type.isBottomRef(), curr, "ref.null must have a bottom heap type");
 }
 
 void FunctionValidator::visitRefIsNull(RefIsNull* curr) {
@@ -3253,10 +3253,10 @@ void FunctionValidator::visitRefCast(RefCast* curr) {
   // Require descriptors to be valid even if the ref is unreachable.
   if (curr->desc && curr->desc->type != Type::unreachable) {
     auto descType = curr->desc->type;
-    bool isNull = descType.isNull();
+    bool isBottom = descType.isBottomRef();
     bool isDescriptor =
       descType.isRef() && descType.getHeapType().getDescribedType();
-    shouldBeTrue(isNull || isDescriptor,
+    shouldBeTrue(isBottom || isDescriptor,
                  curr,
                  "ref.cast_desc_eq descriptor must be a descriptor reference");
   }
@@ -3513,7 +3513,7 @@ void FunctionValidator::visitStructGet(StructGet* curr) {
                  curr,
                  "struct.atomic.get requires threads [--enable-threads]");
   }
-  if (curr->type == Type::unreachable || curr->ref->type.isNull()) {
+  if (curr->type == Type::unreachable || curr->ref->type.isBottomRef()) {
     return;
   }
   if (!shouldBeTrue(curr->ref->type.isStruct(),
@@ -3713,7 +3713,7 @@ void FunctionValidator::visitStructWait(StructWait* curr) {
                                     curr,
                                     "struct.wait timeout must be an i64");
 
-  if (curr->ref->type == Type::unreachable || curr->ref->type.isNull()) {
+  if (curr->ref->type == Type::unreachable || curr->ref->type.isBottomRef()) {
     return;
   }
   if (!shouldBeTrue(curr->ref->type.isStruct(),
@@ -3946,9 +3946,7 @@ void FunctionValidator::visitArrayGet(ArrayGet* curr) {
     curr->index->type, Type(Type::i32), curr, "array.get index must be an i32");
   const char* mustBeArray =
     "array.get target should be a specific array reference";
-  if (curr->type == Type::unreachable ||
-      !shouldBeTrue(curr->ref->type.isRef(), curr, mustBeArray) ||
-      curr->ref->type.getHeapType().isBottom() ||
+  if (curr->type == Type::unreachable || curr->ref->type.isBottomRef() ||
       !shouldBeTrue(curr->ref->type.isArray(), curr, mustBeArray)) {
     return;
   }
@@ -3972,9 +3970,7 @@ void FunctionValidator::visitArraySet(ArraySet* curr) {
     return;
   }
   const char* mustBeArray = "array.set target should be an array reference";
-  if (curr->type == Type::unreachable ||
-      !shouldBeTrue(curr->ref->type.isRef(), curr, mustBeArray) ||
-      curr->ref->type.getHeapType().isBottom() ||
+  if (curr->type == Type::unreachable || curr->ref->type.isBottomRef() ||
       !shouldBeTrue(curr->ref->type.isArray(), curr, mustBeArray)) {
     return;
   }
@@ -4007,9 +4003,7 @@ void FunctionValidator::visitArrayLoad(ArrayLoad* curr) {
     return;
   }
   const char* mustBeArray = "array load target should be an array reference";
-  if (curr->type == Type::unreachable ||
-      !shouldBeTrue(curr->ref->type.isRef(), curr, mustBeArray) ||
-      curr->ref->type.getHeapType().isBottom() ||
+  if (curr->type == Type::unreachable || curr->ref->type.isBottomRef() ||
       !shouldBeTrue(curr->ref->type.isArray(), curr, mustBeArray)) {
     return;
   }
@@ -4037,9 +4031,7 @@ void FunctionValidator::visitArrayStore(ArrayStore* curr) {
     return;
   }
   const char* mustBeArray = "array store target should be an array reference";
-  if (curr->type == Type::unreachable ||
-      !shouldBeTrue(curr->ref->type.isRef(), curr, mustBeArray) ||
-      curr->ref->type.getHeapType().isBottom() ||
+  if (curr->type == Type::unreachable || curr->ref->type.isBottomRef() ||
       !shouldBeTrue(curr->ref->type.isArray(), curr, mustBeArray)) {
     return;
   }
@@ -4133,9 +4125,7 @@ void FunctionValidator::visitArrayFill(ArrayFill* curr) {
     curr->size->type, Type(Type::i32), curr, "array.fill size must be an i32");
   const char* mustBeArray =
     "array.fill destination should be an array reference";
-  if (curr->type == Type::unreachable ||
-      !shouldBeTrue(curr->ref->type.isRef(), curr, mustBeArray) ||
-      curr->ref->type.getHeapType().isBottom() ||
+  if (curr->type == Type::unreachable || curr->ref->type.isBottomRef() ||
       !shouldBeTrue(curr->ref->type.isArray(), curr, mustBeArray)) {
     return;
   }
@@ -4168,9 +4158,7 @@ void FunctionValidator::visitArrayInit(ArrayInit* curr) {
                                     "array.init_* size must be an i32");
   const char* mustBeArray =
     "array.init_* destination must be an array reference";
-  if (curr->type == Type::unreachable ||
-      !shouldBeTrue(curr->ref->type.isRef(), curr, mustBeArray) ||
-      curr->ref->type.getHeapType().isBottom() ||
+  if (curr->type == Type::unreachable || curr->ref->type.isBottomRef() ||
       !shouldBeTrue(curr->ref->type.isArray(), curr, mustBeArray)) {
     return;
   }

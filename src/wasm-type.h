@@ -412,9 +412,7 @@ public:
   bool isFunction() const { return isRef() && getHeapType().isFunction(); }
   bool isSignature() const { return isRef() && getHeapType().isSignature(); }
   bool isData() const { return isRef() && getHeapType().isData(); }
-
-  // Whether this type is only inhabited by null values.
-  bool isNull() const { return isRef() && getHeapType().isBottom(); }
+  bool isBottomRef() const { return isRef() && getHeapType().isBottom(); }
   bool isStruct() const { return isRef() && getHeapType().isStruct(); }
   bool isArray() const { return isRef() && getHeapType().isArray(); }
   bool isExn() const { return isRef() && getHeapType().isExn(); }

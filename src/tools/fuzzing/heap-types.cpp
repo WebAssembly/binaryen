@@ -1027,7 +1027,7 @@ void Inhabitator::markBottomRefsNullable() {
     auto children = type.getTypeChildren();
     for (size_t i = 0; i < children.size(); ++i) {
       auto child = children[i];
-      if (child.isNonNullableRef() && child.getHeapType().isBottom()) {
+      if (child.isNonNullableRef() && child.isBottomRef()) {
         markNullable({type, i});
       }
     }

@@ -204,7 +204,7 @@ void PossibleContents::intersect(const PossibleContents& other) {
     }
   };
 
-  if (newType == Type::unreachable || newType.isNull()) {
+  if (newType == Type::unreachable || newType.isBottomRef()) {
     setNoneOrNull();
     return;
   }
@@ -3182,7 +3182,7 @@ void Flower::filterPackedDataReads(PossibleContents& contents,
   }
 
   // If there is no struct or array to read, no value will ever be returned.
-  if (ref->type.isNull()) {
+  if (ref->type.isBottomRef()) {
     contents = PossibleContents::none();
     return;
   }
