@@ -2937,4 +2937,131 @@
     )
     (local.get $ref)
   )
+
+  ;; CHECK:      (func $struct.get-unknown-child (type $8) (param $x i32) (result i32)
+  ;; CHECK-NEXT:  (local $ref (ref null $struct))
+  ;; CHECK-NEXT:  (local $2 i32)
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (local.set $ref
+  ;; CHECK-NEXT:    (struct.new_default $struct)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.set $2
+  ;; CHECK-NEXT:    (struct.get $struct 0
+  ;; CHECK-NEXT:     (local.get $ref)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (local.set $ref
+  ;; CHECK-NEXT:     (struct.new $struct
+  ;; CHECK-NEXT:      (i32.const 42)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $2
+  ;; CHECK-NEXT:     (struct.get $struct 0
+  ;; CHECK-NEXT:      (local.get $ref)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $struct 0
+  ;; CHECK-NEXT:    (call $get-struct)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.get $2)
+  ;; CHECK-NEXT: )
+  ;; H2L:      (func $struct.get-unknown-child (type $5) (param $x i32) (result i32)
+  ;; H2L-NEXT:  (local $ref (ref null $struct))
+  ;; H2L-NEXT:  (local $2 i32)
+  ;; H2L-NEXT:  (local $3 i32)
+  ;; H2L-NEXT:  (local $4 i32)
+  ;; H2L-NEXT:  (local $5 i32)
+  ;; H2L-NEXT:  (block
+  ;; H2L-NEXT:   (drop
+  ;; H2L-NEXT:    (block (result nullref)
+  ;; H2L-NEXT:     (local.set $3
+  ;; H2L-NEXT:      (i32.const 0)
+  ;; H2L-NEXT:     )
+  ;; H2L-NEXT:     (ref.null none)
+  ;; H2L-NEXT:    )
+  ;; H2L-NEXT:   )
+  ;; H2L-NEXT:   (local.set $2
+  ;; H2L-NEXT:    (block (result i32)
+  ;; H2L-NEXT:     (drop
+  ;; H2L-NEXT:      (ref.null none)
+  ;; H2L-NEXT:     )
+  ;; H2L-NEXT:     (local.get $3)
+  ;; H2L-NEXT:    )
+  ;; H2L-NEXT:   )
+  ;; H2L-NEXT:  )
+  ;; H2L-NEXT:  (if
+  ;; H2L-NEXT:   (local.get $x)
+  ;; H2L-NEXT:   (then
+  ;; H2L-NEXT:    (drop
+  ;; H2L-NEXT:     (block (result nullref)
+  ;; H2L-NEXT:      (local.set $5
+  ;; H2L-NEXT:       (i32.const 42)
+  ;; H2L-NEXT:      )
+  ;; H2L-NEXT:      (local.set $4
+  ;; H2L-NEXT:       (local.get $5)
+  ;; H2L-NEXT:      )
+  ;; H2L-NEXT:      (ref.null none)
+  ;; H2L-NEXT:     )
+  ;; H2L-NEXT:    )
+  ;; H2L-NEXT:    (local.set $2
+  ;; H2L-NEXT:     (block (result i32)
+  ;; H2L-NEXT:      (drop
+  ;; H2L-NEXT:       (ref.null none)
+  ;; H2L-NEXT:      )
+  ;; H2L-NEXT:      (local.get $4)
+  ;; H2L-NEXT:     )
+  ;; H2L-NEXT:    )
+  ;; H2L-NEXT:   )
+  ;; H2L-NEXT:  )
+  ;; H2L-NEXT:  (drop
+  ;; H2L-NEXT:   (struct.get $struct 0
+  ;; H2L-NEXT:    (call $get-struct)
+  ;; H2L-NEXT:   )
+  ;; H2L-NEXT:  )
+  ;; H2L-NEXT:  (local.get $2)
+  ;; H2L-NEXT: )
+  (func $struct.get-unknown-child (param $x i32) (result i32)
+    (local $ref (ref null $struct))
+    ;; We can optimize here, and do not error on an extra struct.get with no
+    ;; relevant child.
+    (local.set $ref
+      (struct.new_default $struct)
+    )
+    (if
+      (local.get $x)
+      (then
+        (local.set $ref
+          (struct.new $struct
+            (i32.const 42)
+          )
+        )
+      )
+    )
+    (drop
+      (struct.get $struct 0
+        (call $get-struct)   ;; this child is not a local.tee or a local.get
+      )
+    )
+    (struct.get $struct 0
+      (local.get $ref)
+    )
+  )
+
+  ;; CHECK:      (func $get-struct (type $22) (result (ref $struct))
+  ;; CHECK-NEXT:  (struct.new_default $struct)
+  ;; CHECK-NEXT: )
+  ;; H2L:      (func $get-struct (type $21) (result (ref $struct))
+  ;; H2L-NEXT:  (struct.new_default $struct)
+  ;; H2L-NEXT: )
+  (func $get-struct (result (ref $struct))
+    (struct.new_default $struct)
+  )
 )
