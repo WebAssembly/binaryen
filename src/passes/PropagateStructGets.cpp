@@ -165,15 +165,23 @@ struct PropagateStructGets
       return;
     }
 
+    pickLocalsToOptimize(func);
+
+    if (!optimizedLocals.empty()) {
+      optimize(func);
+    }
+  }
+
+  // For each optimized local, maps each used field index to the new local
+  // index that stores that field. Note that the inner map is sorted, both for
+  // deterministic ordering when we create new locals, and also because the
+  // number of used fields tends to be small (so hashing is overkill).
+  std::unordered_map<Index, std::map<Index, Index>> optimizedLocals;
+
+  void pickLocalsToOptimize(Function* func) {
     auto* module = getModule();
     Builder builder(*module);
     LazyLocalGraph localGraph(func, module);
-
-    // For each optimized local, maps each used field index to the new local
-    // index that stores that field. Note that the inner map is sorted, both for
-    // deterministic ordering when we create new locals, and also because the
-    // number of used fields tends to be small (so hashing is overkill).
-    std::unordered_map<Index, std::map<Index, Index>> optimizedLocals;
 
     for (auto& [localIndex, localSets] : sets) {
       if (localSets.size() < 2) {
@@ -326,11 +334,11 @@ struct PropagateStructGets
           builder.addVar(func, fields[fieldIndex].type);
       }
     }
+  }
 
-    if (optimizedLocals.empty()) {
-      // Nothing to optimize.
-      return;
-    }
+  void optimize(Function* func) {
+    auto* module = getModule();
+    Builder builder(*module);
 
     auto getFieldFromLocal =
       [&](Index localIndex, Index fieldIndex, bool signed_) -> Expression* {
