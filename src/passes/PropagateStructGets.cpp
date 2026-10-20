@@ -137,9 +137,8 @@ struct PropagateStructGets
   }
 
   void visitStructGet(StructGet* curr) {
-    // Avoid unreachable code, and leave atomic operations for now TODO
-    if (curr->type == Type::unreachable ||
-        curr->order != MemoryOrder::Unordered) {
+    // Avoid unreachable code.
+    if (curr->type == Type::unreachable) {
       return;
     }
 
