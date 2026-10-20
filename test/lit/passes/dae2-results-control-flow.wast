@@ -279,3 +279,163 @@
     (global.set $g (call $test))
   )
 )
+
+(module
+  ;; CHECK:      (func $callee (type $0)
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $callee (result f32)
+    (unreachable)
+  )
+  ;; CHECK:      (func $caller (type $2) (param $x i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (then
+  ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:      (call $callee)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (else
+  ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $caller (param $x i32)
+    ;; Removing the unused result of the inner block makes it unreachable, which
+    ;; in turn makes the enclosing if unreachable. Ensure we refinalize the
+    ;; function so enclosing expressions have updated types.
+    (drop
+      (block (result i32)
+        (if
+          (local.get $x)
+          (then
+            (drop
+              (block (result f32)
+                (unreachable)
+                (call $callee)
+              )
+            )
+          )
+          (else
+            (unreachable)
+          )
+        )
+        (unreachable)
+      )
+    )
+  )
+)
+
+(module
+  ;; CHECK:       (type $sig (func))
+  (type $sig (func (result f32)))
+  ;; CHECK:      (func $callee (type $0)
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $callee (result f32)
+    (unreachable)
+  )
+  ;; CHECK:      (func $caller (type $2) (param $x i32) (param $ref (ref $sig))
+  ;; CHECK-NEXT:  (call_ref $sig
+  ;; CHECK-NEXT:   (local.get $ref)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (then
+  ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:      (call $callee)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (else
+  ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $caller (param $x i32) (param $ref (ref $sig))
+    ;; Refinalizing must happen after global type rewriting so that the call_ref
+    ;; whose result was removed does not have its type reset to the old concrete
+    ;; result type.
+    (drop
+      (call_ref $sig
+        (local.get $ref)
+      )
+    )
+    (drop
+      (block (result i32)
+        (if
+          (local.get $x)
+          (then
+            (drop
+              (block (result f32)
+                (unreachable)
+                (call $callee)
+              )
+            )
+          )
+          (else
+            (unreachable)
+          )
+        )
+        (unreachable)
+      )
+    )
+  )
+)
+
+(module
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $super (sub (func)))
+  (type $super (sub (func (result f32))))
+  ;; CHECK:       (type $sub (sub $super (func)))
+  (type $sub (sub $super (func (result f32))))
+  ;; CHECK:      (func $f (type $sub)
+  ;; CHECK-NEXT:  (local $x (ref null $super))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (local.set $x
+  ;; CHECK-NEXT:     (ref.func $f)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:     (then
+  ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:      (call $f)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (else
+  ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $f (type $sub) (result f32)
+    ;; Refinalizing must happen after global type rewriting so that the ref.func
+    ;; gets the final rewritten subtype rather than a temporary scratch type.
+    (local $x (ref null $super))
+    (local.set $x (ref.func $f))
+    (if
+      (i32.const 0)
+      (then
+        (drop
+          (block (result f32)
+            (unreachable)
+            (call $f)
+          )
+        )
+      )
+      (else
+        (unreachable)
+      )
+    )
+    (unreachable)
+  )
+)
