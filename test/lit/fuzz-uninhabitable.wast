@@ -1,7 +1,8 @@
-;; Test that translate-to-fuzz handles uninhabitable types in initial module
-;; contents without infinitely recursing in makeCompoundRef.
+;; Test that translate-to-fuzz handles uninhabitable types in initial and
+;; imported modules without infinitely recursing in makeCompoundRef.
 
 ;; RUN: wasm-opt %s -all -ttf --initial-fuzz=%s -S -o - | filecheck %s
+;; RUN: wasm-opt %s -all -ttf --fuzz-import=%s -S -o - | filecheck %s --check-prefix=IMPORT
 
 (module
  (rec
@@ -23,3 +24,6 @@
 ;; CHECK:      (func $f1 (type ${{.*}}) (result (ref $0))
 ;; CHECK:      (func $f2 (type ${{.*}}) (param $0 (ref $0)) (result (ref $0))
 ;; CHECK:      (func $f3 (type ${{.*}}) (result (ref $0))
+
+;; IMPORT:      (type $[[TYPE:.*]] (struct (field (ref struct)) (field (ref null (exact ${{.*}})))))
+;; IMPORT:      (struct.new $[[TYPE]]

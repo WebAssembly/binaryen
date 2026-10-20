@@ -528,29 +528,34 @@ void TranslateToFuzzReader::setupMemory() {
 }
 
 void TranslateToFuzzReader::setupHeapTypes() {
+  // Filter away uninhabitable heap types, that is, heap types that we cannot
+  // construct, like a type with a non-nullable reference to itself, and record
+  // them in uninhabitableHeapTypes.
+  auto filterInhabitable = [&](const std::vector<HeapType>& types) {
+    auto inhabitable = HeapTypeGenerator::getInhabitable(types);
+    std::unordered_set<HeapType> inhabitableSet(inhabitable.begin(),
+                                                inhabitable.end());
+    for (auto type : types) {
+      if (!inhabitableSet.contains(type)) {
+        uninhabitableHeapTypes.insert(type);
+      }
+    }
+    return inhabitable;
+  };
+
   // Start with any existing heap types in the module, which may exist in any
   // initial content we began with.
-  auto possibleHeapTypes = ModuleUtils::collectHeapTypes(wasm);
+  interestingHeapTypes = filterInhabitable(ModuleUtils::collectHeapTypes(wasm));
 
   // Use heap types from an imported module, if present.
   if (importedModule) {
-    auto importedHeapTypes = ModuleUtils::collectHeapTypes(*importedModule);
+    auto importedHeapTypes =
+      filterInhabitable(ModuleUtils::collectHeapTypes(*importedModule));
     auto rate = upTo(11);
     for (auto type : importedHeapTypes) {
       if (upTo(10) < rate) {
-        possibleHeapTypes.push_back(type);
+        interestingHeapTypes.push_back(type);
       }
-    }
-  }
-
-  // Filter away uninhabitable heap types, that is, heap types that we cannot
-  // construct, like a type with a non-nullable reference to itself.
-  interestingHeapTypes = HeapTypeGenerator::getInhabitable(possibleHeapTypes);
-  std::unordered_set<HeapType> inhabitable(interestingHeapTypes.begin(),
-                                           interestingHeapTypes.end());
-  for (auto type : possibleHeapTypes) {
-    if (!inhabitable.contains(type)) {
-      uninhabitableHeapTypes.insert(type);
     }
   }
 
