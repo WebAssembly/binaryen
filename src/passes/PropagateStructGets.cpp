@@ -84,7 +84,7 @@ struct PropagateStructGets
     return std::make_unique<PropagateStructGets>();
   }
 
-  // Track the number of gets for each local, so that we can see if all gets are
+  // Track the number of gets for each local, so that we can see if all the local.gets are
   // consumed by struct.gets.
   std::unordered_map<Index, Index> numGets;
 
