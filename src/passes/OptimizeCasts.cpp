@@ -270,7 +270,7 @@ struct EarlyCastFinder
     // As we only move RefAsNonNull RefAs casts right now, we should
     // ignore a LocalGet if the type is already non-nullable, as
     // adding an extra ref.as_non_null has no effect.
-    if (!currRefAsMove[curr->index].target && curr->type.isNullable()) {
+    if (!currRefAsMove[curr->index].target && curr->type.isNullableRef()) {
       currRefAsMove[curr->index].target = curr;
     }
   }

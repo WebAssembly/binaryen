@@ -59,7 +59,7 @@ bool isNullableAndMutable(Expression* ref, Index fieldIndex) {
   // Find the field for the given reference, and check its properties.
   auto field = GCTypeUtils::getField(ref->type, fieldIndex);
   assert(field);
-  return field->type.isNullable() && field->mutable_ == Mutable;
+  return field->type.isNullableRef() && field->mutable_ == Mutable;
 }
 
 // The prefix for a recommendation, so it is aligned properly with the rest of

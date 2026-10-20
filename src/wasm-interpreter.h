@@ -2156,7 +2156,7 @@ public:
     auto data = val.getGCData();
     if (!data) {
       // Check whether null is allowed.
-      if (curr->getCastType().isNullable()) {
+      if (curr->getCastType().isNullableRef()) {
         return typename Cast::Success{val};
       } else {
         return typename Cast::Failure{val};
@@ -3794,7 +3794,7 @@ private:
           initVal =
             ExpressionRunner<SubType>::visit(table->init).getSingleValue();
         } else {
-          assert(table->type.isNullable() &&
+          assert(table->type.isNullableRef() &&
                  "Non-nullable table must have an init expressions");
           initVal = Literal::makeNull(table->type.getHeapType());
         }

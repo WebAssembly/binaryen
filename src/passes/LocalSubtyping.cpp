@@ -150,7 +150,7 @@ struct LocalSubtyping : public WalkerPass<PostWalker<LocalSubtyping>> {
         assert(newType != Type::none); // in valid wasm there must be a LUB
 
         // Remove non-nullability if we disallow that in locals.
-        if (newType.isNonNullable()) {
+        if (newType.isNonNullableRef()) {
           if (cannotBeNonNullable.contains(i)) {
             newType = newType.with(Nullable);
           }

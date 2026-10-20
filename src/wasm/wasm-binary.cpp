@@ -2015,7 +2015,7 @@ void WasmBinaryWriter::writeType(Type type) {
   type = type.asWrittenGivenFeatures(wasm->features);
   if (type.isRef()) {
     auto heapType = type.getHeapType();
-    if (type.isNullable() && heapType.isBasic() && !heapType.isShared()) {
+    if (type.isNullableRef() && heapType.isBasic() && !heapType.isShared()) {
       switch (heapType.getBasic(Unshared)) {
         case HeapType::ext:
           o << S32LEB(BinaryConsts::EncodedType::externref);
@@ -2070,7 +2070,7 @@ void WasmBinaryWriter::writeType(Type type) {
           return;
       }
     }
-    if (type.isNullable()) {
+    if (type.isNullableRef()) {
       o << S32LEB(BinaryConsts::EncodedType::nullable);
     } else {
       o << S32LEB(BinaryConsts::EncodedType::nonnullable);
