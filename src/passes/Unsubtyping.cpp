@@ -456,6 +456,7 @@ template<typename Self> struct Noter {
   Self& self() { return *static_cast<Self*>(this); }
 
   void noteSubtype(HeapType sub, HeapType super) {
+    assert(HeapType::isSubType(sub, super));
     // Bottom types are uninteresting, but other basic heap types can be
     // interesting because of their interactions with casts.
     if (sub == super || sub.isBottom()) {
@@ -701,6 +702,7 @@ struct Unsubtyping : Pass, Noter<Unsubtyping> {
       }
 
       void noteNonFlowSubtype(Expression* sub, Type super) {
+        assert(Type::isSubType(sub->type, super));
         // This expression's type must be a subtype of |super|, but the value
         // does not flow anywhere - this is a static constraint. As the value
         // does not flow, it cannot reach anywhere else, which means we need
