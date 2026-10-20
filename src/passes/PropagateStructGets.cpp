@@ -91,10 +91,12 @@ struct PropagateStructGets
   // The sets for each local index.
   std::unordered_map<Index, std::vector<Expression**>> sets;
 
-  // The parent struct.gets for each local index's local.gets.
+  // The parent struct.gets for each local index's local.gets (for us to
+  // optimize, each local.get must have such a parent).
   std::unordered_map<Index, std::vector<StructGet*>> getParents;
 
-  // The parent struct.get for each tee.
+  // The parent struct.get for each tee (for us to optimize, each tee must have
+  // such a parent).
   std::unordered_map<LocalSet*, StructGet*> teeParents;
 
   // All relevant struct.gets in the function. We gather these during the walk,
