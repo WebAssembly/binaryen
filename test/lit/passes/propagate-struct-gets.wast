@@ -3068,12 +3068,14 @@
 
 ;; Shared data is optimizable too.
 (module
+  ;; CHECK:      (type $struct-mut (shared (struct (field (mut i32)))))
+
   ;; CHECK:      (type $struct (shared (struct (field i32))))
+  ;; H2L:      (type $struct-mut (shared (struct (field (mut i32)))))
+
   ;; H2L:      (type $struct (shared (struct (field i32))))
   (type $struct (shared (struct (field i32))))
 
-  ;; CHECK:      (type $struct-mut (shared (struct (field (mut i32)))))
-  ;; H2L:      (type $struct-mut (shared (struct (field (mut i32)))))
   (type $struct-mut (shared (struct (field (mut i32)))))
 
   ;; CHECK:      (func $struct.get-atomic (type $2) (param $x i32) (result i32)
@@ -3106,7 +3108,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.get $2)
   ;; CHECK-NEXT: )
-  ;; H2L:      (func $struct.get-atomic (type $1) (param $x i32) (result i32)
+  ;; H2L:      (func $struct.get-atomic (type $2) (param $x i32) (result i32)
   ;; H2L-NEXT:  (local $ref (ref null $struct-mut))
   ;; H2L-NEXT:  (local $2 i32)
   ;; H2L-NEXT:  (local $3 i32)
@@ -3267,6 +3269,66 @@
       )
     )
     (struct.atomic.get acqrel $struct 0
+      (local.get $ref)
+    )
+  )
+
+  ;; CHECK:      (func $struct.get-atomic-param-mut (type $4) (param $x i32) (param $p (ref $struct-mut)) (result i32)
+  ;; CHECK-NEXT:  (local $ref (ref null $struct-mut))
+  ;; CHECK-NEXT:  (local.set $ref
+  ;; CHECK-NEXT:   (local.get $p)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (local.set $ref
+  ;; CHECK-NEXT:     (struct.new $struct-mut
+  ;; CHECK-NEXT:      (i32.const 42)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.atomic.get acqrel $struct-mut 0
+  ;; CHECK-NEXT:   (local.get $ref)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; H2L:      (func $struct.get-atomic-param-mut (type $4) (param $x i32) (param $p (ref $struct-mut)) (result i32)
+  ;; H2L-NEXT:  (local $ref (ref null $struct-mut))
+  ;; H2L-NEXT:  (local.set $ref
+  ;; H2L-NEXT:   (local.get $p)
+  ;; H2L-NEXT:  )
+  ;; H2L-NEXT:  (if
+  ;; H2L-NEXT:   (local.get $x)
+  ;; H2L-NEXT:   (then
+  ;; H2L-NEXT:    (local.set $ref
+  ;; H2L-NEXT:     (struct.new $struct-mut
+  ;; H2L-NEXT:      (i32.const 42)
+  ;; H2L-NEXT:     )
+  ;; H2L-NEXT:    )
+  ;; H2L-NEXT:   )
+  ;; H2L-NEXT:  )
+  ;; H2L-NEXT:  (struct.atomic.get acqrel $struct-mut 0
+  ;; H2L-NEXT:   (local.get $ref)
+  ;; H2L-NEXT:  )
+  ;; H2L-NEXT: )
+  (func $struct.get-atomic-param-mut (param $x i32) (param $p (ref $struct-mut)) (result i32)
+    (local $ref (ref null $struct-mut))
+    ;; Now we do not see one set, and also the field is mutable. We do not
+    ;; optimize.
+    (local.set $ref
+      (local.get $p)
+    )
+    (if
+      (local.get $x)
+      (then
+        (local.set $ref
+          (struct.new $struct-mut
+            (i32.const 42)
+          )
+        )
+      )
+    )
+    (struct.atomic.get acqrel $struct-mut 0
       (local.get $ref)
     )
   )
