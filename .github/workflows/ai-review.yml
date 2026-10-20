@@ -18,16 +18,20 @@ concurrency:
 jobs:
   review:
     name: 'Antigravity AI Code Review'
-    # Run only on pull request updates, or on comments containing '/review'
+    # 1. Run automatically for internal PRs where secrets exist
+    # 2. For external fork PRs, run when an authorized member comments '/review'
     if: |
-      github.event_name == 'pull_request' ||
+      (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository) ||
       (github.event_name == 'issue_comment' &&
        github.event.issue.pull_request &&
+       contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association) &&
        contains(github.event.comment.body, '/review'))
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'issue_comment' && format('refs/pull/{0}/merge', github.event.issue.number) || github.ref }}
 
       - name: Run Antigravity Review Agent
         uses: anguillanneuf/run-antigravity-cli@master
