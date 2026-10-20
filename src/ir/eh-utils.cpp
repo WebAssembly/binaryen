@@ -106,6 +106,28 @@ bool containsValidDanglingPop(Expression* catchBody) {
   return pop != nullptr && !isPopNested;
 }
 
+static Expression** findPopPtr(Expression*& expr) {
+  SmallVector<Expression**, 8> work;
+  work.push_back(&expr);
+  while (!work.empty()) {
+    auto* currPtr = work.back();
+    work.pop_back();
+    auto* curr = *currPtr;
+    if (curr->is<Pop>()) {
+      return currPtr;
+    } else if (auto* try_ = curr->dynCast<Try>()) {
+      // We don't go into inner catch bodies; pops in inner catch bodies
+      // belong to the inner catches
+      work.push_back(&try_->body);
+    } else {
+      for (auto& child : ChildIterator(curr)) {
+        work.push_back(&child);
+      }
+    }
+  }
+  return nullptr;
+}
+
 void handleBlockNestedPop(Try* try_, Function* func, Module& wasm) {
   Builder builder(wasm);
   for (Index i = 0; i < try_->catchTags.size(); i++) {
@@ -119,6 +141,16 @@ void handleBlockNestedPop(Try* try_, Function* func, Module& wasm) {
     bool isPopNested = false;
     Expression** popPtr = nullptr;
     Expression* pop = getFirstPop(catchBody, isPopNested, popPtr);
+    if (!pop) {
+      // The pop may have been moved out of the first-descendant line, e.g.
+      // into the condition of a select. Find it and fix it up just like a
+      // block-nested pop.
+      popPtr = findPopPtr(catchBody);
+      if (popPtr) {
+        pop = *popPtr;
+        isPopNested = true;
+      }
+    }
     assert(pop && "Pop has not been found in this catch");
 
     // Change code like

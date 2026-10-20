@@ -54,6 +54,7 @@
 #include <unordered_set>
 
 #include "ir/bits.h"
+#include "ir/eh-utils.h"
 #include "ir/gc-type-utils.h"
 #include "ir/possible-constant.h"
 #include "ir/struct-utils.h"
@@ -453,9 +454,10 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
     WalkerPass<PostWalker<FunctionOptimizer>>::doWalkFunction(func);
 
     // If we changed anything, we need to update parent types as types may have
-    // changed.
+    // changed, and fix up any pops that we enclosed in a block.
     if (changed) {
       ReFinalize().walkFunctionInModule(func, getModule());
+      EHUtils::handleBlockNestedPops(func, *getModule());
     }
   }
 
