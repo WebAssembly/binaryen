@@ -22,8 +22,7 @@
   ;; CHECK:      (type $ref (array (mut anyref)))
   (type $ref (array (mut anyref)))
 
-  ;; An existing passive segment, which can be reused. It contains the i32s
-  ;; 10000, 20000, 30000 and 40000.
+  ;; Global initializers must remain constant expressions.
   ;; CHECK:      (type $9 (func (param i32) (result (ref $i32))))
 
   ;; CHECK:      (type $10 (func (result (ref $i8))))
@@ -46,7 +45,15 @@
   ;; CHECK-NEXT:  (i32.const 300000)
   ;; CHECK-NEXT:  (i32.const 400000)
   ;; CHECK-NEXT: ))
+  (global $global (ref $i32) (array.new_fixed $i32 4
+    (i32.const 100000)
+    (i32.const 200000)
+    (i32.const 300000)
+    (i32.const 400000)
+  ))
 
+  ;; An existing passive segment, which can be reused. It contains the i32s
+  ;; 10000, 20000, 30000 and 40000.
   ;; CHECK:      (data $existing "\10\'\00\00 N\00\000u\00\00@\9c\00\00")
   (data $existing "\10\27\00\00\20\4e\00\00\30\75\00\00\40\9c\00\00")
 
@@ -55,15 +62,19 @@
   ;; CHECK:      (data $dropped "P\c3\00\00`\ea\00\00p\11\01\00\808\01\00")
   (data $dropped "\50\c3\00\00\60\ea\00\00\70\11\01\00\80\38\01\00")
 
-  ;; Global initializers must remain constant expressions.
-  (global $global (ref $i32) (array.new_fixed $i32 4
-    (i32.const 100000)
-    (i32.const 200000)
-    (i32.const 300000)
-    (i32.const 400000)
-  ))
+  ;; CHECK:      (data $constant-array-data "@B\0f\00\80{\e1\ff\c0\c6-\00\00\t=\00@KL\00\80\8d[\00\c0\cfj\00\00\12z\00")
 
-  ;; CHECK:      (data $constant-array-data "@B\0f\00\80{\e1\ff\c0\c6-\00\00\t=\00@KL\00\80\8d[\00\c0\cfj\00\00\12z\00\c8\c9\ca\cb\cc\cd\ff4@\9cA\9cB\9cC\9c\ff\ff\ff\ff\ff\ff\ff\7f\fe\ff\ff\ff\ff\ff\ff\7f\fd\ff\ff\ff\ff\ff\ff\7f\fc\ff\ff\ff\ff\ff\ff\7f\00\00\00?\00\00\c0?\00\00 @\00\00`@\00\00\90@\00\00\b0@\00\00\d0@\00\00\f0@\9a\99\99\99\99\99\b9?\9a\99\99\99\99\99\c9?333333\d3?\9a\99\99\99\99\99\d9?\00\00\00\00\00\00\e0?333333\e3?ffffff\e6?\04\00\00\00\00\00\f0\7f\01\00\00\00\02\00\00\00\03\00\00\00\04\00\00\00\05\00\00\00\06\00\00\00\07\00\00\00\08\00\00\00\t\00\00\00\n\00\00\00\0b\00\00\00\0c\00\00\00\r\00\00\00\0e\00\00\00\0f\00\00\00\10\00\00\00")
+  ;; CHECK:      (data $constant-array-data_3 "\c8\c9\ca\cb\cc\cd\ff4")
+
+  ;; CHECK:      (data $constant-array-data_4 "@\9cA\9cB\9cC\9c")
+
+  ;; CHECK:      (data $constant-array-data_5 "\ff\ff\ff\ff\ff\ff\ff\7f\fe\ff\ff\ff\ff\ff\ff\7f\fd\ff\ff\ff\ff\ff\ff\7f\fc\ff\ff\ff\ff\ff\ff\7f")
+
+  ;; CHECK:      (data $constant-array-data_6 "\00\00\00?\00\00\c0?\00\00 @\00\00`@\00\00\90@\00\00\b0@\00\00\d0@\00\00\f0@")
+
+  ;; CHECK:      (data $constant-array-data_7 "\9a\99\99\99\99\99\b9?\9a\99\99\99\99\99\c9?333333\d3?\9a\99\99\99\99\99\d9?\00\00\00\00\00\00\e0?333333\e3?ffffff\e6?\04\00\00\00\00\00\f0\7f")
+
+  ;; CHECK:      (data $constant-array-data_8 "\01\00\00\00\02\00\00\00\03\00\00\00\04\00\00\00\05\00\00\00\06\00\00\00\07\00\00\00\08\00\00\00\t\00\00\00\n\00\00\00\0b\00\00\00\0c\00\00\00\r\00\00\00\0e\00\00\00\0f\00\00\00\10\00\00\00")
 
   ;; CHECK:      (export "i32" (func $i32))
 
@@ -94,8 +105,6 @@
   ;; CHECK:      (export "ref" (func $ref))
 
   ;; CHECK:      (export "empty" (func $empty))
-
-  ;; CHECK:      (export "global" (func $global))
 
   ;; CHECK:      (func $i32 (type $1) (result (ref $i32))
   ;; CHECK-NEXT:  ;;@ src.cpp:10:5
@@ -128,7 +137,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $i32-same (export "i32-same") (result (ref $i32))
-    ;; The same payload as before, which reuses the same bytes.
+    ;; The same payload as before, which reuses the same segment.
     (array.new_fixed $i32 8
       (i32.const 1000000)
       (i32.const -2000000)
@@ -183,8 +192,8 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $i32-dropped (export "i32-dropped") (result (ref $i32))
-    ;; The dropped segment cannot be reused, and it is not worth adding new
-    ;; bytes.
+    ;; The dropped segment cannot be reused, and it is not worth adding a new
+    ;; one.
     (data.drop $dropped)
     (array.new_fixed $i32 4
       (i32.const 50000)
@@ -231,43 +240,45 @@
   )
 
   ;; CHECK:      (func $i8 (type $10) (result (ref $i8))
-  ;; CHECK-NEXT:  (array.new_data $i8 $constant-array-data
-  ;; CHECK-NEXT:   (i32.const 32)
+  ;; CHECK-NEXT:  (array.new_data $i8 $constant-array-data_3
+  ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (i32.const 8)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $i8 (export "i8") (result (ref $i8))
-    ;; Packed fields store the low bits of each value.
+    ;; Packed fields store the low byte of each value, so the new segment has
+    ;; the bytes c8 c9 ca cb cc cd ff 34.
     (array.new_fixed $i8 8
-      (i32.const 200)
-      (i32.const 201)
-      (i32.const 202)
-      (i32.const 203)
-      (i32.const 204)
-      (i32.const 205)
-      (i32.const -1)
+      (i32.const 0xc8)
+      (i32.const 0xc9)
+      (i32.const 0xca)
+      (i32.const 0xcb)
+      (i32.const 0xcc)
+      (i32.const 0xcd)
+      (i32.const 0xffffffff)
       (i32.const 0x1234)
     )
   )
 
   ;; CHECK:      (func $i16 (type $11) (result (ref $i16))
-  ;; CHECK-NEXT:  (array.new_data $i16 $constant-array-data
-  ;; CHECK-NEXT:   (i32.const 40)
+  ;; CHECK-NEXT:  (array.new_data $i16 $constant-array-data_4
+  ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (i32.const 4)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $i16 (export "i16") (result (ref $i16))
+    ;; The new segment has the bytes 40 9c 41 9c 42 9c 43 9c.
     (array.new_fixed $i16 4
-      (i32.const 40000)
-      (i32.const 40001)
-      (i32.const 40002)
-      (i32.const 40003)
+      (i32.const 0x9c40)
+      (i32.const 0x9c41)
+      (i32.const 0x9c42)
+      (i32.const 0x9c43)
     )
   )
 
   ;; CHECK:      (func $i64 (type $12) (result (ref $i64))
-  ;; CHECK-NEXT:  (array.new_data $i64 $constant-array-data
-  ;; CHECK-NEXT:   (i32.const 48)
+  ;; CHECK-NEXT:  (array.new_data $i64 $constant-array-data_5
+  ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (i32.const 4)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -281,8 +292,8 @@
   )
 
   ;; CHECK:      (func $f32 (type $13) (result (ref $f32))
-  ;; CHECK-NEXT:  (array.new_data $f32 $constant-array-data
-  ;; CHECK-NEXT:   (i32.const 80)
+  ;; CHECK-NEXT:  (array.new_data $f32 $constant-array-data_6
+  ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (i32.const 8)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -300,8 +311,8 @@
   )
 
   ;; CHECK:      (func $f64 (type $14) (result (ref $f64))
-  ;; CHECK-NEXT:  (array.new_data $f64 $constant-array-data
-  ;; CHECK-NEXT:   (i32.const 112)
+  ;; CHECK-NEXT:  (array.new_data $f64 $constant-array-data_7
+  ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (i32.const 8)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -319,8 +330,8 @@
   )
 
   ;; CHECK:      (func $v128 (type $15) (result (ref $v128))
-  ;; CHECK-NEXT:  (array.new_data $v128 $constant-array-data
-  ;; CHECK-NEXT:   (i32.const 176)
+  ;; CHECK-NEXT:  (array.new_data $v128 $constant-array-data_8
+  ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (i32.const 4)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -354,44 +365,20 @@
     ;; Empty arrays are not optimized.
     (array.new_fixed $i32 0)
   )
-
-  ;; CHECK:      (func $global (type $1) (result (ref $i32))
-  ;; CHECK-NEXT:  (global.get $global)
-  ;; CHECK-NEXT: )
-  (func $global (export "global") (result (ref $i32))
-    (global.get $global)
-  )
 )
 
-;; When the savings do not pay for a new segment, it is not added, but existing
-;; segments are still reused.
+;; A new segment must pay for its flags and size. (There is already a segment,
+;; so it does not also need to pay for the data count and data sections.)
 (module
   ;; CHECK:      (type $i32 (array (mut i32)))
   (type $i32 (array (mut i32)))
 
   ;; CHECK:      (type $1 (func (result (ref $i32))))
 
-  ;; CHECK:      (data $existing "\10\'\00\00 N\00\000u\00\00@\9c\00\00")
-  (data $existing "\10\27\00\00\20\4e\00\00\30\75\00\00\40\9c\00\00")
-
-  ;; CHECK:      (export "existing" (func $existing))
+  ;; CHECK:      (data $unrelated "\00")
+  (data $unrelated "\00")
 
   ;; CHECK:      (export "new" (func $new))
-
-  ;; CHECK:      (func $existing (type $1) (result (ref $i32))
-  ;; CHECK-NEXT:  (array.new_data $i32 $existing
-  ;; CHECK-NEXT:   (i32.const 0)
-  ;; CHECK-NEXT:   (i32.const 4)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $existing (export "existing") (result (ref $i32))
-    (array.new_fixed $i32 4
-      (i32.const 10000)
-      (i32.const 20000)
-      (i32.const 30000)
-      (i32.const 40000)
-    )
-  )
 
   ;; CHECK:      (func $new (type $1) (result (ref $i32))
   ;; CHECK-NEXT:  (array.new_fixed $i32 8
