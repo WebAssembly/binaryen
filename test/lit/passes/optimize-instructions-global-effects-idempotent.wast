@@ -97,24 +97,22 @@
   ;; CHECK:      (global $g (mut i32) (i32.const 0))
   (global $g (mut i32) (i32.const 0))
 
-  ;; CHECK:      (func $potent (type $0) (result eqref)
+  ;; CHECK:      (func $potent (type $0) (result i32)
   ;; CHECK-NEXT:  (global.set $g
   ;; CHECK-NEXT:   (i32.add
   ;; CHECK-NEXT:    (global.get $g)
   ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (ref.i31
-  ;; CHECK-NEXT:   (global.get $g)
-  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (global.get $g)
   ;; CHECK-NEXT: )
-  (func $potent (result eqref)
+  (func $potent (result i32)
     (global.set $g (i32.add (global.get $g) (i32.const 1)))
-    (ref.i31 (global.get $g))
+    (global.get $g)
   )
 
-  ;; CHECK:      (func $function-effects-interfere (type $1) (result i32)
-  ;; CHECK-NEXT:  (ref.eq
+  ;; CHECK:      (func $function-effects-interfere (type $0) (result i32)
+  ;; CHECK-NEXT:  (i32.eq
   ;; CHECK-NEXT:   (call $potent)
   ;; CHECK-NEXT:   (call $potent)
   ;; CHECK-NEXT:  )
@@ -122,7 +120,7 @@
   (func $function-effects-interfere (result i32)
     ;; Even knowing the effects of the call, we should not be able to optimize
     ;; here because the calls will return different values.
-    (ref.eq
+    (i32.eq
       (call $potent)
       (call $potent)
     )
