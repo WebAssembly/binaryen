@@ -1,0 +1,48 @@
+name: 'Google Antigravity Code Review'
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.event.issue.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  review:
+    name: 'Antigravity AI Code Review'
+    # Run only on pull request updates, or on comments containing '/review'
+    if: |
+      github.event_name == 'pull_request' ||
+      (github.event_name == 'issue_comment' &&
+       github.event.issue.pull_request &&
+       contains(github.event.comment.body, '/review'))
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run Antigravity Review Agent
+        uses: anguillanneuf/run-antigravity-cli@master
+        with:
+          api-key: ${{ secrets.GEMINI_API_KEY }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          model: 'gemini-flash-latest'
+          fail-on-error: true
+          min-severity: 'MEDIUM'
+          min-confidence: '3'
+          custom-prompt: |
+            You are reviewing a Pull Request for Binaryen, a WebAssembly compiler and toolchain infrastructure library written in C++.
+            Focus on:
+            1. WebAssembly specification compliance, validation rules, and proper typing.
+            2. Soundness of compiler optimization passes, AST/IR transformations, and Module invariants.
+            3. Memory safety, bounds checks, null pointer dereferences, integer overflow, and clean error handling.
+            4. Performance traps and edge cases in parser, binary reader/writer, and interpreter.
+            5. Adherence to Binaryen C++ conventions while avoiding superficial style nitpicks.
