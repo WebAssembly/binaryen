@@ -1937,11 +1937,6 @@ Result<> IRBuilder::makePop(Type type) {
   // needs one. Just verify that the Pop we are being asked to make is the same
   // type as the Pop we have already made.
   auto& scope = getScope();
-  if (!scope.getCatch() || scope.exprStack.size() != 1 ||
-      !scope.exprStack[0]->is<Pop>()) {
-    return Err{
-      "pop instructions may only appear at the beginning of catch blocks"};
-  }
   auto expectedType = scope.exprStack[0]->type;
   if (!Type::isSubType(expectedType, type)) {
     return Err{std::string("Expected pop of type ") + expectedType.toString()};
