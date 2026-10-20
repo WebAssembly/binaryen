@@ -393,8 +393,8 @@ public:
   }
 
   bool isRef() const { return !isBasic() && !(id & TupleMask); }
-  bool isNullable() const { return isRef() && (id & NullMask); }
-  bool isNonNullable() const { return isRef() && !(id & NullMask); }
+  bool isNullableRef() const { return isRef() && (id & NullMask); }
+  bool isNonNullableRef() const { return isRef() && !(id & NullMask); }
   bool isExact() const {
     return isRef() && !getHeapType().isBasic() && (id & ExactMask);
   }
@@ -427,7 +427,7 @@ public:
 
   // TODO: Allow this only for reference types.
   Nullability getNullability() const {
-    return isNullable() ? Nullable : NonNullable;
+    return isNullableRef() ? Nullable : NonNullable;
   }
   Exactness getExactness() const {
     assert(isRef());

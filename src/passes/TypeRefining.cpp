@@ -597,7 +597,7 @@ struct TypeRefining : public Pass {
         auto heapType = type.getHeapType();
         if (heapType.isBottom()) {
           auto* drop = builder.makeDrop(value);
-          if (type.isNonNullable()) {
+          if (type.isNonNullableRef()) {
             // This will just trap. Make it trap, and update parents' types.
             refinalize = true;
             return builder.makeSequence(drop, builder.makeUnreachable());

@@ -1124,7 +1124,7 @@ void RefCast::finalize() {
     assert(heapType);
     auto exactness = desc->type.getExactness();
     type = type.with(*heapType).with(exactness);
-    if (ref->type.isNonNullable()) {
+    if (ref->type.isNonNullableRef()) {
       type = type.with(NonNullable);
     }
     return;
@@ -1194,7 +1194,7 @@ void BrOn::finalize() {
       assert(heapType);
       auto exactness = desc->type.getExactness();
       castType = castType.with(*heapType).with(exactness);
-      if (ref->type.isNonNullable()) {
+      if (ref->type.isNonNullableRef()) {
         castType = castType.with(NonNullable);
       }
     }
@@ -1211,7 +1211,7 @@ void BrOn::finalize() {
       return;
     case BrOnCast:
     case BrOnCastDescEq:
-      if (castType.isNullable()) {
+      if (castType.isNullableRef()) {
         // Nulls take the branch, so the result is non-nullable.
         type = ref->type.with(NonNullable);
       } else if (desc && desc->type.isNull()) {
@@ -1226,7 +1226,7 @@ void BrOn::finalize() {
       return;
     case BrOnCastFail:
     case BrOnCastDescEqFail:
-      if (castType.isNullable()) {
+      if (castType.isNullableRef()) {
         // Nulls do not take the branch, so the result is non-nullable only if
         // the input is.
         type = castType.with(ref->type.getNullability());
@@ -1255,7 +1255,7 @@ Type BrOn::getSentType() {
     case BrOnCast:
     case BrOnCastDescEq:
       // The same as the result type of br_on_cast_fail.
-      if (castType.isNullable()) {
+      if (castType.isNullableRef()) {
         return castType.with(ref->type.getNullability());
       } else {
         return castType;
@@ -1271,7 +1271,7 @@ Type BrOn::getSentType() {
         // Model this with an uninhabitable sent type.
         return desc->type.with(NonNullable);
       }
-      if (castType.isNullable()) {
+      if (castType.isNullableRef()) {
         return ref->type.with(NonNullable);
       } else {
         return ref->type;

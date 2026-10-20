@@ -506,7 +506,7 @@ void handleNonDefaultableLocals(Function* func, Module& wasm) {
   bool hasNonNullable = false;
   for (auto varType : func->vars) {
     for (auto type : varType) {
-      if (type.isNonNullable()) {
+      if (type.isNonNullableRef()) {
         hasNonNullable = true;
         break;
       }
@@ -529,7 +529,7 @@ void handleNonDefaultableLocals(Function* func, Module& wasm) {
     // LocalStructuralDominance should have only looked at non-nullable indexes
     // since we told it to ignore nullable ones. Also, params always dominate
     // and should not appear here.
-    assert(func->getLocalType(index).isNonNullable() ||
+    assert(func->getLocalType(index).isNonNullableRef() ||
            func->getLocalType(index).isTuple());
     assert(!func->isParam(index));
   }
@@ -572,7 +572,7 @@ void handleNonDefaultableLocals(Function* func, Module& wasm) {
         for (size_t i = 0, size = type.size(); i < size; ++i) {
           elems[i] = builder.makeTupleExtract(
             builder.makeLocalGet(set->index, validType), i);
-          if (type[i].isNonNullable()) {
+          if (type[i].isNonNullableRef()) {
             elems[i] = builder.makeRefAs(RefAsNonNull, elems[i]);
           }
         }
@@ -592,7 +592,7 @@ void handleNonDefaultableLocals(Function* func, Module& wasm) {
 
 Type getValidLocalType(Type type, FeatureSet features) {
   assert(type.isConcrete());
-  if (type.isNonNullable()) {
+  if (type.isNonNullableRef()) {
     return type.with(Nullable);
   }
   if (type.isTuple()) {
@@ -606,7 +606,7 @@ Type getValidLocalType(Type type, FeatureSet features) {
 }
 
 Expression* fixLocalGet(LocalGet* get, Module& wasm) {
-  if (get->type.isNonNullable()) {
+  if (get->type.isNonNullableRef()) {
     // The get should now return a nullable value, and a ref.as_non_null
     // fixes that up.
     get->type = getValidLocalType(get->type, wasm.features);
@@ -621,7 +621,7 @@ Expression* fixLocalGet(LocalGet* get, Module& wasm) {
       auto* elemGet =
         i == 0 ? get : builder.makeLocalGet(get->index, get->type);
       elems[i] = builder.makeTupleExtract(elemGet, i);
-      if (type[i].isNonNullable()) {
+      if (type[i].isNonNullableRef()) {
         elems[i] = builder.makeRefAs(RefAsNonNull, elems[i]);
       }
     }

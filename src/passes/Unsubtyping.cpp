@@ -768,7 +768,7 @@ struct Unsubtyping : Pass, Noter<Unsubtyping> {
         // a trap, then we have no way to preserve that trap without keeping the
         // descriptor around.
         if (trapsNeverHappen || getFunction() ||
-            curr->desc->type.isNonNullable()) {
+            curr->desc->type.isNonNullableRef()) {
           return;
         }
         // We must preserve the potential trap. When we update the instructions
@@ -1106,7 +1106,7 @@ struct Unsubtyping : Pass, Noter<Unsubtyping> {
         if (auto* func = getFunction()) {
           // Preserve a trap from a null descriptor if necessary.
           if (!getPassOptions().trapsNeverHappen &&
-              curr->desc->type.isNullable()) {
+              curr->desc->type.isNullableRef()) {
             curr->desc =
               Builder(*getModule()).makeRefAs(RefAsNonNull, curr->desc);
           }
