@@ -6881,7 +6881,7 @@ bool TranslateToFuzzReader::isLoggableType(Type type) {
 }
 
 bool TranslateToFuzzReader::isUninhabitable(Type type) {
-  return GCTypeUtils::isUninhabitable(type) ||
+  return GCTypeUtils::isTriviallyUninhabitable(type) ||
          (type.isRef() && type.isNonNullable() &&
           uninhabitableHeapTypes.contains(type.getHeapType()));
 }
