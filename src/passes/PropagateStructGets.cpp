@@ -42,7 +42,21 @@
 //
 // In effect we "propagate" struct.gets to earlier positions.
 //
-// This is basically a simple form of escape analysis, like Heap2Local, but
+// Note that this pattern can handle any input to local.set/local.tee. The only
+// requirement is that the local.tees and local.gets are properly consumed (by
+// struct.get). For example, we can handle this:
+//
+//    (struct.get (local.tee $ref (local.get $param)))
+//
+// The tee is of a param, some unknown value, but that is fine: we can still
+// optimize this to
+//
+//    (local.tee $ref_field (struct.get (local.get $param)))
+//
+// When the uses of the local are of its data (immediate struct.get), then we
+// can optimize, no matter what the reference is.
+//
+// This pass is basically a simple form of escape analysis, like Heap2Local, but
 // which handles a far more restricted case (where the reference is immediately
 // struct.get-ed). The benefit of this pass is that our restricted case can
 // handle overlapping allocations, like this:

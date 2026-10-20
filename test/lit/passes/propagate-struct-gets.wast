@@ -646,7 +646,7 @@
   ;; H2L-NEXT: )
   (func $optimize-struct-get-tee-immutable-nn-ref (param $x i32) (param $b1 (ref $struct-nn-ref)) (param $b2 (ref $struct-nn-ref)) (result (ref struct))
     ;; As above, but the immutable field has a non-nullable reference type
-    ;; ((ref struct)). The optimizeed local uses a nullable type (since it is
+    ;; ((ref struct)). The optimized local uses a nullable type (since it is
     ;; not dominated in the spec's sense by sets), and we add ref.as_non_null
     ;; on the tees and get so validation succeeds across blocks.
     (local $ref (ref null $struct-nn-ref))
