@@ -1329,21 +1329,21 @@ start_eval:
       auto* copyBody =
         builder.blockify(ExpressionManipulator::copy(func->body, wasm));
 
-      // Remove the items we've evalled.
-      for (Index i = 0; i < successes; i++) {
-        copyBody->list[i] = builder.makeNop();
-      }
-
-      // Put the local sets at the front of the function body. Skip
-      // uninitialized non-nullable locals, whose default null value in the
-      // interpreter is not a valid subtype of the local's type.
-      Index insertIndex = 0;
+      // Replace the items we've evalled with the local sets at the front of the
+      // function body. Skip uninitialized non-nullable locals, whose default
+      // null value in the interpreter is not a valid subtype of the local's
+      // type.
+      std::vector<Expression*> newList;
+      newList.reserve(localExprs.size() + copyBody->list.size() - successes);
       for (Index i = 0; i < localExprs.size(); ++i) {
         if (Type::isSubType(localExprs[i]->type, func->getLocalType(i))) {
-          copyBody->list.insertAt(insertIndex++,
-                                  builder.makeLocalSet(i, localExprs[i]));
+          newList.push_back(builder.makeLocalSet(i, localExprs[i]));
         }
       }
+      newList.insert(newList.end(),
+                     copyBody->list.begin() + successes,
+                     copyBody->list.end());
+      copyBody->list.set(newList);
 
       // We may have return-called into a function with different parameter
       // types, but we ultimately need to export a function with the original
