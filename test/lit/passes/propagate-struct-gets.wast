@@ -14,6 +14,8 @@
   ;; CHECK:      (type $struct-immutable (struct (field i32)))
 
   ;; CHECK:      (type $struct-3fields-mixed (struct (field i32) (field (mut i32)) (field i64)))
+  ;; H2L:      (type $struct-immutable (struct (field i32)))
+
   ;; H2L:      (type $struct-3fields-mixed (struct (field i32) (field (mut i32)) (field i64)))
   (type $struct-3fields-mixed (struct (field i32) (field (mut i32)) (field i64)))
 
@@ -22,8 +24,6 @@
   ;; CHECK:      (type $struct-packed (struct (field i8) (field i16)))
 
   ;; CHECK:      (type $struct-nn-ref (struct (field (ref struct))))
-  ;; H2L:      (type $struct-immutable (struct (field i32)))
-
   ;; H2L:      (type $struct-nn-ref (struct (field (ref struct))))
   (type $struct-nn-ref (struct (field (ref struct))))
 
@@ -1475,7 +1475,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; H2L:      (func $no-single-set (type $2) (result i32)
+  ;; H2L:      (func $no-single-set (type $3) (result i32)
   ;; H2L-NEXT:  (local $ref (ref null $struct))
   ;; H2L-NEXT:  (local $1 i32)
   ;; H2L-NEXT:  (local $2 i32)
@@ -1561,7 +1561,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; H2L:      (func $unreachable (type $2) (result i32)
+  ;; H2L:      (func $unreachable (type $3) (result i32)
   ;; H2L-NEXT:  (local $ref (ref null $struct))
   ;; H2L-NEXT:  (local $1 i32)
   ;; H2L-NEXT:  (local $2 i32)
@@ -1667,7 +1667,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; H2L:      (func $unreachable-2 (type $2) (result i32)
+  ;; H2L:      (func $unreachable-2 (type $3) (result i32)
   ;; H2L-NEXT:  (local $ref (ref null $struct))
   ;; H2L-NEXT:  (local $1 i32)
   ;; H2L-NEXT:  (local $2 i32)
@@ -1804,7 +1804,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; H2L:      (func $extra-local.get (type $2) (result i32)
+  ;; H2L:      (func $extra-local.get (type $3) (result i32)
   ;; H2L-NEXT:  (local $ref (ref null $struct))
   ;; H2L-NEXT:  (local $1 i32)
   ;; H2L-NEXT:  (local $2 i32)
@@ -1904,7 +1904,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; H2L:      (func $extra-local.tee (type $2) (result i32)
+  ;; H2L:      (func $extra-local.tee (type $3) (result i32)
   ;; H2L-NEXT:  (local $ref (ref null $struct))
   ;; H2L-NEXT:  (local $1 i32)
   ;; H2L-NEXT:  (local $2 i32)
@@ -2035,7 +2035,7 @@
   ;; CHECK-NEXT:   (local.get $2)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; H2L:      (func $only-local.tee (type $2) (result i32)
+  ;; H2L:      (func $only-local.tee (type $3) (result i32)
   ;; H2L-NEXT:  (local $ref (ref null $struct-2fields))
   ;; H2L-NEXT:  (local $1 i32)
   ;; H2L-NEXT:  (local $2 i32)
@@ -2589,7 +2589,7 @@
   ;; CHECK-NEXT:   (local.get $1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; H2L:      (func $subtyping (type $2) (result i32)
+  ;; H2L:      (func $subtyping (type $3) (result i32)
   ;; H2L-NEXT:  (local $ref (ref null $super))
   ;; H2L-NEXT:  (local $1 i32)
   ;; H2L-NEXT:  (local $2 i32)
@@ -2842,7 +2842,7 @@
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; H2L:      (func $nullref (type $2) (result i32)
+  ;; H2L:      (func $nullref (type $3) (result i32)
   ;; H2L-NEXT:  (local $ref nullref)
   ;; H2L-NEXT:  (local.set $ref
   ;; H2L-NEXT:   (ref.null none)
@@ -2870,5 +2870,71 @@
     (struct.get $struct 0
       (local.get $ref)
     )
+  )
+
+  ;; CHECK:      (func $unoptimized-tee (type $21) (param $x i32) (result anyref)
+  ;; CHECK-NEXT:  (local $ref (ref null $struct-immutable))
+  ;; CHECK-NEXT:  (local.set $ref
+  ;; CHECK-NEXT:   (struct.new_default $struct-immutable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (struct.get $struct-immutable 0
+  ;; CHECK-NEXT:      (local.tee $ref
+  ;; CHECK-NEXT:       (struct.new $struct-immutable
+  ;; CHECK-NEXT:        (i32.const 42)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.get $ref)
+  ;; CHECK-NEXT: )
+  ;; H2L:      (func $unoptimized-tee (type $20) (param $x i32) (result anyref)
+  ;; H2L-NEXT:  (local $ref (ref null $struct-immutable))
+  ;; H2L-NEXT:  (local.set $ref
+  ;; H2L-NEXT:   (struct.new_default $struct-immutable)
+  ;; H2L-NEXT:  )
+  ;; H2L-NEXT:  (if
+  ;; H2L-NEXT:   (local.get $x)
+  ;; H2L-NEXT:   (then
+  ;; H2L-NEXT:    (drop
+  ;; H2L-NEXT:     (struct.get $struct-immutable 0
+  ;; H2L-NEXT:      (local.tee $ref
+  ;; H2L-NEXT:       (struct.new $struct-immutable
+  ;; H2L-NEXT:        (i32.const 42)
+  ;; H2L-NEXT:       )
+  ;; H2L-NEXT:      )
+  ;; H2L-NEXT:     )
+  ;; H2L-NEXT:    )
+  ;; H2L-NEXT:   )
+  ;; H2L-NEXT:  )
+  ;; H2L-NEXT:  (local.get $ref)
+  ;; H2L-NEXT: )
+  (func $unoptimized-tee (param $x i32) (result anyref)
+    (local $ref (ref null $struct-immutable))
+    ;; The local.get at the end escapes, so we cannot optimize here. We should
+    ;; do nothing with the local.set or local.tee.
+    (local.set $ref
+      (struct.new_default $struct-immutable)
+    )
+    (if
+      (local.get $x)
+      (then
+        (drop
+          (struct.get $struct-immutable 0
+            (local.tee $ref
+              (struct.new $struct-immutable
+                (i32.const 42)
+              )
+            )
+          )
+        )
+      )
+    )
+    (local.get $ref)
   )
 )
