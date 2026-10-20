@@ -230,6 +230,21 @@ struct PropagateStructGets
       // struct.new that only ever flows into this local's struct.gets. (Note
       // that struct.*sets* - writes - are ruled out by the fact that we
       // analyzed all local.get/tee operations, and all flowed into struct.get.)
+      // For example:
+      //
+      //  fun foo(x) {
+      //    var l = x;  // local.set
+      //    bar();      // x may be modified here, if foo's caller stashed it
+      //    return l.value;
+      //  }
+      //
+      // If we replace `l = x` with `l_value = x.value` on the first line, then
+      // we need it to remain the same until the return at the end. If x can be
+      // written to, that is a danger. Note how this cannot happen if each set
+      // writes a fresh struct.new: no reference arrived from outside, and we do
+      // not send it out (no local.get exists that is not consumed by a
+      // struct.get), so no outside writes can occur. If the sets are *not* all
+      // fresh, then only immutability can help us here.
       auto& fields =
         func->getLocalType(localIndex).getHeapType().getStruct().fields;
       if (!allSetsAreUnescapingAllocs) {
