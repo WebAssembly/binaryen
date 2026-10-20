@@ -3068,13 +3068,15 @@
 
 ;; Shared data is optimizable too.
 (module
+  ;; CHECK:      (type $struct (shared (struct (field i32))))
+  ;; H2L:      (type $struct (shared (struct (field i32))))
   (type $struct (shared (struct (field i32))))
 
   ;; CHECK:      (type $struct-mut (shared (struct (field (mut i32)))))
   ;; H2L:      (type $struct-mut (shared (struct (field (mut i32)))))
   (type $struct-mut (shared (struct (field (mut i32)))))
 
-  ;; CHECK:      (func $struct.get-unknown-child (type $1) (param $x i32) (result i32)
+  ;; CHECK:      (func $struct.get-atomic (type $2) (param $x i32) (result i32)
   ;; CHECK-NEXT:  (local $ref (ref null $struct-mut))
   ;; CHECK-NEXT:  (local $2 i32)
   ;; CHECK-NEXT:  (block
@@ -3104,7 +3106,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.get $2)
   ;; CHECK-NEXT: )
-  ;; H2L:      (func $struct.get-unknown-child (type $0) (param $x i32) (result i32)
+  ;; H2L:      (func $struct.get-atomic (type $1) (param $x i32) (result i32)
   ;; H2L-NEXT:  (local $ref (ref null $struct-mut))
   ;; H2L-NEXT:  (local $2 i32)
   ;; H2L-NEXT:  (local $3 i32)
@@ -3154,7 +3156,7 @@
   ;; H2L-NEXT:  )
   ;; H2L-NEXT:  (local.get $2)
   ;; H2L-NEXT: )
-  (func $struct.get-unknown-child (param $x i32) (result i32)
+  (func $struct.get-atomic (param $x i32) (result i32)
     (local $ref (ref null $struct-mut))
     ;; That the data is shared and accessed atomically is not a problem: while
     ;; the field is mutable, we see all the allocations.
@@ -3172,6 +3174,99 @@
       )
     )
     (struct.atomic.get acqrel $struct-mut 0
+      (local.get $ref)
+    )
+  )
+
+  ;; CHECK:      (func $struct.get-atomic-param (type $3) (param $x i32) (param $p (ref $struct)) (result i32)
+  ;; CHECK-NEXT:  (local $ref (ref null $struct))
+  ;; CHECK-NEXT:  (local $3 i32)
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (local.set $ref
+  ;; CHECK-NEXT:    (local.get $p)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.set $3
+  ;; CHECK-NEXT:    (struct.get $struct 0
+  ;; CHECK-NEXT:     (local.get $ref)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (local.set $ref
+  ;; CHECK-NEXT:     (struct.new $struct
+  ;; CHECK-NEXT:      (i32.const 42)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $3
+  ;; CHECK-NEXT:     (struct.get $struct 0
+  ;; CHECK-NEXT:      (local.get $ref)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.get $3)
+  ;; CHECK-NEXT: )
+  ;; H2L:      (func $struct.get-atomic-param (type $3) (param $x i32) (param $p (ref $struct)) (result i32)
+  ;; H2L-NEXT:  (local $ref (ref null $struct))
+  ;; H2L-NEXT:  (local $3 i32)
+  ;; H2L-NEXT:  (local $4 i32)
+  ;; H2L-NEXT:  (local $5 i32)
+  ;; H2L-NEXT:  (block
+  ;; H2L-NEXT:   (local.set $ref
+  ;; H2L-NEXT:    (local.get $p)
+  ;; H2L-NEXT:   )
+  ;; H2L-NEXT:   (local.set $3
+  ;; H2L-NEXT:    (struct.get $struct 0
+  ;; H2L-NEXT:     (local.get $ref)
+  ;; H2L-NEXT:    )
+  ;; H2L-NEXT:   )
+  ;; H2L-NEXT:  )
+  ;; H2L-NEXT:  (if
+  ;; H2L-NEXT:   (local.get $x)
+  ;; H2L-NEXT:   (then
+  ;; H2L-NEXT:    (drop
+  ;; H2L-NEXT:     (block (result (ref null (shared none)))
+  ;; H2L-NEXT:      (local.set $5
+  ;; H2L-NEXT:       (i32.const 42)
+  ;; H2L-NEXT:      )
+  ;; H2L-NEXT:      (local.set $4
+  ;; H2L-NEXT:       (local.get $5)
+  ;; H2L-NEXT:      )
+  ;; H2L-NEXT:      (ref.null (shared none))
+  ;; H2L-NEXT:     )
+  ;; H2L-NEXT:    )
+  ;; H2L-NEXT:    (local.set $3
+  ;; H2L-NEXT:     (block (result i32)
+  ;; H2L-NEXT:      (drop
+  ;; H2L-NEXT:       (ref.null (shared none))
+  ;; H2L-NEXT:      )
+  ;; H2L-NEXT:      (local.get $4)
+  ;; H2L-NEXT:     )
+  ;; H2L-NEXT:    )
+  ;; H2L-NEXT:   )
+  ;; H2L-NEXT:  )
+  ;; H2L-NEXT:  (local.get $3)
+  ;; H2L-NEXT: )
+  (func $struct.get-atomic-param (param $x i32) (param $p (ref $struct)) (result i32)
+    (local $ref (ref null $struct))
+    ;; Now we do not see one set, which writes a param. But the field is
+    ;; immutable, so we still optimize.
+    (local.set $ref
+      (local.get $p)
+    )
+    (if
+      (local.get $x)
+      (then
+        (local.set $ref
+          (struct.new $struct
+            (i32.const 42)
+          )
+        )
+      )
+    )
+    (struct.atomic.get acqrel $struct 0
       (local.get $ref)
     )
   )
