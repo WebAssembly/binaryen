@@ -125,8 +125,8 @@ size_t getNewSegmentSize(const Module& wasm, size_t dataSize) {
 
 // Candidates for conversion.
 
-// Returns a view of the bytes, to use them as a key in a map (std::hash
-// supports views of strings, but not vectors).
+// Returns a view of the bytes, to use them as a key in an unordered map
+// (std::hash supports views of strings, but not vectors).
 std::string_view getView(const std::vector<char>& bytes) {
   return std::string_view(bytes.data(), bytes.size());
 }
