@@ -302,7 +302,7 @@ struct PropagateStructGets
       // value of the local at the function entry, handled later.
       for (auto** setp : localSets) {
         auto* set = (*setp)->cast<LocalSet>();
-        if (set->value->type.isNullable()) {
+        if (set->value->type.isNullableRef()) {
           ok = false;
           break;
         }
