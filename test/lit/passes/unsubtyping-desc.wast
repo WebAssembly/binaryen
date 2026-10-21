@@ -1242,8 +1242,7 @@
 )
 
 ;; Removing a descriptor from a struct.new_desc uses ChildLocalizer, which wraps
-;; the allocation in a block. Ensure any nested `pop` inside a catch block is
-;; hoisted out of the new block so the IR remains valid.
+;; the allocation in an unnamed block, which validates properly even with a pop.
 (module
   (rec
     ;; CHECK:      (rec

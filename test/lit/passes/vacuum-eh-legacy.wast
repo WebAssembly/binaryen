@@ -324,8 +324,8 @@
       )
       (catch $e
         (drop
-          ;; This select will be removed, and a block appear, which must be handled
-          ;; for the pop.
+          ;; This select will be removed, and an unnamed block will appear,
+          ;; which validates properly even with a pop.
           (select
             (pop i32)
             (local.tee $temp

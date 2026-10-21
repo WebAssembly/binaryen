@@ -1640,8 +1640,8 @@
   )
 )
 
-;; A struct with a pop, which requires EH fixups to avoid popping in a nested
-;; block.
+;; A struct with a pop. The block we emit is unnamed, and validates properly
+;; even with a pop.
 (module
   ;; CHECK:      (rec
   ;; CHECK-NEXT:  (type $struct (struct))

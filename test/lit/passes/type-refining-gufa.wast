@@ -925,8 +925,8 @@
   )
 )
 
-;; Handle block-nested pops created when updating writes to and reads from
-;; refined fields.
+;; Verify that blocks created around pops when updating writes to and reads from
+;; refined fields are unnamed and validate properly.
 (module
   ;; NRML:      (rec
   ;; NRML-NEXT:  (type $struct (struct (field eqref) (field nullref)))
@@ -1010,8 +1010,8 @@
   ;; O3O3-NEXT: )
   (func $write (export "write")
     ;; In GUFA, the first field is refined to nullref, so the write operand in
-    ;; the catch block is replaced with a block that drops the pop and produces
-    ;; a null. The newly nested pop must be fixed up.
+    ;; the catch block is replaced with an unnamed block that drops the pop and
+    ;; produces a null, which validates properly even with a pop.
     (drop
       (struct.new_default $struct)
     )
@@ -1061,8 +1061,8 @@
   ;; GUFA-NEXT:  )
   ;; GUFA-NEXT: )
   (func $read (export "read")
-    ;; Reading from a null reference is replaced with a block that drops the pop
-    ;; and traps. The newly nested pop must be fixed up.
+    ;; Reading from a null reference is replaced with an unnamed block that
+    ;; drops the pop and traps, which validates properly even with a pop.
     (try
       (do)
       (catch $null

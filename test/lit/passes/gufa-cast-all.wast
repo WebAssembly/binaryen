@@ -393,10 +393,9 @@
 )
 
 
-;; Regression test for bug where optimizing expressions containing a Pop could
-;; result in the Pop becoming invalidly nested inside a Block (created to
-;; preserve side effects), and the optimizer failed to run the nested pop fixup
-;; because it didn't mark the function as optimized.
+;; Optimizing expressions containing a Pop results in the Pop being nested
+;; inside unnamed Blocks (created to preserve side effects), which validate
+;; properly even with a pop.
 (module
   ;; CHECK:      (type $array (sub (array anyref)))
   (type $array (sub (array (ref null any))))

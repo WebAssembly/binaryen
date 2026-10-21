@@ -141,8 +141,8 @@
          (nop)
        )
        (catch $e-i32
-         ;; This call is unreachable and can be removed. The pop, however, must
-         ;; be carefully handled while we do so, to not break validation.
+         ;; This call is unreachable and can be removed, leaving the pop in an
+         ;; unnamed block, which validates properly.
          (call $helper-i32-i32
            (pop i32)
            (br $label)
@@ -184,16 +184,8 @@
       )
       (catch $e-eqref
         (drop
-          ;; Optimization moves the 'pop' inside a block, which needs to be
-          ;; extracted out of the block at the end.
-          ;; (block
-          ;;   (drop
-          ;;     (struct.new $struct.0
-          ;;       (pop eqref)
-          ;;     )
-          ;;   )
-          ;;   (unreachable)
-          ;; )
+          ;; Optimization moves the 'pop' inside an unnamed block, which
+          ;; validates properly even with a pop.
           (ref.eq
             (struct.new $struct
               (pop (ref null eq))

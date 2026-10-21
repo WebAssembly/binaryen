@@ -29,7 +29,6 @@
 #include <ir/cost.h>
 #include <ir/drop.h>
 #include <ir/effects.h>
-#include <ir/eh-utils.h>
 #include <ir/find_all.h>
 #include <ir/gc-type-utils.h>
 #include <ir/iteration.h>
@@ -268,10 +267,6 @@ struct OptimizeInstructions
       FinalOptimizer optimizer(getPassOptions());
       optimizer.walkFunction(func);
     }
-
-    // Some patterns create blocks that can interfere 'catch' and 'pop', nesting
-    // the 'pop' into a block making it invalid.
-    EHUtils::handleBlockNestedPops(func, *getModule());
   }
 
   // Set to true when one of the visitors makes a change (either replacing the

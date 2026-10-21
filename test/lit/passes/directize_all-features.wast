@@ -2038,7 +2038,7 @@
    (do)
    (catch $e
     ;; This is out of bounds (100 is far too large), so this will trap. We emit
-    ;; a block with the pop, and must handle that properly.
+    ;; an unnamed block with the pop, which validates properly.
     (drop
      (call_indirect (type $ii)
       (pop i32)

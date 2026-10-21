@@ -54,8 +54,8 @@
  ;; CHECK-NEXT: )
  (func $pop-unreachable-result (result i32)
   (local $x i32)
-  ;; As above, but now with a result. This adds a block we need to fix up EH
-  ;; for.
+  ;; As above, but now with a result. This adds an unnamed block, which
+  ;; validates properly even with a pop.
   (try (result i32)
    (do
     (i32.const 10)

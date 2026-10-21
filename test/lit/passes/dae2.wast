@@ -3424,7 +3424,7 @@
       )
       (catch $e
         ;; When we optimize out the parameter, the dropped pop will be inside a
-        ;; new block. This is invalid, so we must fix it up.
+        ;; new unnamed block, which validates properly even with a pop.
         (call $callee
           (pop i32)
         )

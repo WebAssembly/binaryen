@@ -4485,7 +4485,7 @@
   )
 )
 
-;; Pops require fixups.
+;; Pops in unnamed blocks.
 (module
   (type $struct (struct (field (mut i32))))
 
@@ -4529,8 +4529,8 @@
       )
       (catch $tag
         (drop
-          ;; We create a block when we replace the struct with locals, which the
-          ;; pop must be moved out of.
+          ;; We create an unnamed block when we replace the struct with locals,
+          ;; which validates properly even with a pop.
           (struct.new $struct
             (pop i32)
           )

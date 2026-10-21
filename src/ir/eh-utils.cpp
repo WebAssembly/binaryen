@@ -15,8 +15,10 @@
  */
 
 #include "ir/eh-utils.h"
-#include "ir/branch-utils.h"
 #include "ir/find_all.h"
+#include "ir/iteration.h"
+#include "ir/properties.h"
+#include "wasm-builder.h"
 
 namespace wasm {
 
@@ -62,19 +64,18 @@ getFirstPop(Expression* catchBody, bool& isPopNested, Expression**& popPtr) {
         return nullptr;
       }
       if (auto* block = firstChild->dynCast<Block>()) {
-        // If there are no branches that targets a block, it will be
-        // removed when written back. But if there are branches that target the
-        // implicit block,
+        // An unnamed block will be removed when written back. But if the block
+        // has a name,
         // (catch $e
         //   (block $l0
         //     (pop i32) ;; within a block!
         //     (br $l0)
         //     ...
         //   )
-        // This cannot be removed, so this is considered a nested pop (which we
-        // should fix).
-        if (BranchUtils::BranchSeeker::has(block,
-                                           block->name)) {
+        // )
+        // It may be emitted in the binary format, so this is considered a
+        // nested pop (which we should fix).
+        if (block->name.is()) {
           isPopNested = true;
         }
       } else if (firstChild->is<Try>() || firstChild->is<TryTable>()) {

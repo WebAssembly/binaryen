@@ -78,9 +78,8 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $try_catch_pop_fixup
-    ;; After --flatten, a block is created within the 'catch', which makes the
-    ;; pop's location invalid. This tests whether it is fixed up correctly after
-    ;; --flatten.
+    ;; After --flatten, an unnamed block is created within the 'catch', which
+    ;; validates properly even with a pop.
     (block $l0
       (try
         (do)

@@ -250,7 +250,8 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $pop
-    ;; After adding a block with an unreachable, the pop will need handling.
+    ;; After adding an unnamed block with an unreachable, this still validates
+    ;; properly even with a pop.
     (try
       (do
         (throw $e (i32.const 1))

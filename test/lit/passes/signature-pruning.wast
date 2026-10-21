@@ -1018,15 +1018,14 @@
           (call $target
             (pop i32)
             ;; We can remove this parameter by moving it to a local first, which
-            ;; also moves the pop, which then needs to be fixed up.
+            ;; also moves the pop into an unnamed block.
             (br_if $block
               (i32.const 1)
               (i32.const 2)
             )
           )
-          ;; This nop causes the call to be in a block. When we add another
-          ;; block to hold the code that we move, we'd get an error if we don't
-          ;; apply fixups.
+          ;; This nop causes the call to be in a block. The block we add to hold
+          ;; the moved code is unnamed, and validates properly even with a pop.
           (nop)
         )
       )

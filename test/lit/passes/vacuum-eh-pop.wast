@@ -36,9 +36,9 @@
  (func $test (result i32)
   (block $block (result i32)
    ;; Vacuum cannot simplify the body here, but it will make a change to the
-   ;; unreachable br_if, replacing it with its dropped children (as the branch
-   ;; is untaken, and we want to remove that reference to $block). While doing
-   ;; so we must update the IR to handle the pop.
+   ;; unreachable br_if, replacing it with an unnamed block containing its
+   ;; dropped children (as the branch is untaken, and we want to remove that
+   ;; reference to $block), which validates properly even with a pop.
    (try
     (do
      (call $import

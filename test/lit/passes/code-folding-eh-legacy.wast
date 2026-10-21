@@ -367,8 +367,8 @@
         (unreachable)
       )
       (catch $e-i32
-        ;; These if arms can be folded, after which the if is replaced by a
-        ;; block, so we need a fixup for the pop.
+        ;; These if arms can be folded, after which the if is replaced by an
+        ;; unnamed block, which validates properly even with a pop.
         (if
           (pop i32)
           (then
