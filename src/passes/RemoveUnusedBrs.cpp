@@ -922,7 +922,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
 
         switch (curr->op) {
           case BrOnNull:
-            if (refType.isNull()) {
+            if (refType.isBottomRef()) {
               // The branch will definitely be taken.
               replaceCurrent(builder.makeSequence(
                 builder.makeDrop(curr->ref), builder.makeBreak(curr->name)));
@@ -937,7 +937,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             }
             return;
           case BrOnNonNull:
-            if (refType.isNull()) {
+            if (refType.isBottomRef()) {
               // Definitely not taken.
               replaceCurrent(builder.makeDrop(curr->ref));
               worked = true;
@@ -1266,6 +1266,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
                       // only jumping here, so this the last place that will
                       // read it.
                       ExpressionManipulator::unreachable(br);
+                      worked = true;
                     }
                   }
                 }

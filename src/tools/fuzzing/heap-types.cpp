@@ -1027,7 +1027,7 @@ void Inhabitator::markBottomRefsNullable() {
     auto children = type.getTypeChildren();
     for (size_t i = 0; i < children.size(); ++i) {
       auto child = children[i];
-      if (child.isNonNullableRef() && child.getHeapType().isBottom()) {
+      if (child.isNonNullableRef() && child.isBottomRef()) {
         markNullable({type, i});
       }
     }
@@ -1400,9 +1400,11 @@ bool isUninhabitable(HeapType type,
 bool isUninhabitable(Type type,
                      std::unordered_set<HeapType>& visited,
                      std::unordered_set<HeapType>& visiting) {
+  if (GCTypeUtils::isUninhabitable(type)) {
+    return true;
+  }
   if (type.isNonNullableRef()) {
-    if (type.getHeapType().isBottom() ||
-        type.getHeapType().isMaybeShared(HeapType::ext)) {
+    if (type.getHeapType().isMaybeShared(HeapType::ext)) {
       return true;
     }
     return isUninhabitable(type.getHeapType(), visited, visiting);

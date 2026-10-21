@@ -697,7 +697,7 @@ private:
         return true;
       }
       assert(type.isRef());
-      if (type.isNull()) {
+      if (type.isBottomRef()) {
         parent.trap = true;
         return true;
       }
@@ -1175,7 +1175,7 @@ private:
     }
 
     void visitArrayStore(ArrayStore* curr) {
-      if (curr->ref->type.isNull()) {
+      if (curr->ref->type.isBottomRef()) {
         parent.trap = true;
         return;
       }

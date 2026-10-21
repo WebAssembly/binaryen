@@ -22,7 +22,7 @@
 namespace wasm::GCTypeUtils {
 
 inline bool isUninhabitable(Type type) {
-  return type.isNonNullableRef() && type.getHeapType().isBottom();
+  return type.isNonNullableRef() && type.isBottomRef();
 }
 
 // Helper code to evaluate a reference at compile time and check if it is of a
@@ -82,9 +82,7 @@ inline EvaluationResult evaluateCastCheck(Type refType, Type castType) {
     return Unreachable;
   }
 
-  auto refHeapType = refType.getHeapType();
-
-  if (castType.isNonNullableRef() && refHeapType.isBottom()) {
+  if (castType.isNonNullableRef() && refType.isBottomRef()) {
     // Non-null references to bottom types do not exist, so there's no value
     // that could make the cast succeed.
     //
@@ -102,8 +100,6 @@ inline EvaluationResult evaluateCastCheck(Type refType, Type castType) {
     // Unreachable.
     return Failure;
   }
-
-  auto castHeapType = castType.getHeapType();
 
   // Check whether a value of type `a` is known to also have type `b`, assuming
   // it is non-null.
@@ -138,7 +134,7 @@ inline EvaluationResult evaluateCastCheck(Type refType, Type castType) {
   auto castIsHeapSubType = isHeapSubtype(castType, refType);
   bool heapTypesCompatible = refIsHeapSubType || castIsHeapSubType;
 
-  if (!heapTypesCompatible || castHeapType.isBottom()) {
+  if (!heapTypesCompatible || castType.isBottomRef()) {
     // If the heap types are incompatible or if it is impossible to have a
     // non-null reference to the target heap type, then the only way the cast
     // can succeed is if it allows nulls and the input is null.

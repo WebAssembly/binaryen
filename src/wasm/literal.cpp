@@ -52,7 +52,7 @@ Literal::Literal(Type type) : type(type) {
     }
   }
 
-  if (type.isNull()) {
+  if (type.isBottomRef()) {
     assert(type.isNullableRef() && !type.isExact());
     new (&gcData) std::shared_ptr<GCData>();
     return;
@@ -503,8 +503,7 @@ bool Literal::operator==(const Literal& other) const {
         break;
     }
   } else if (type.isRef()) {
-    assert(type.isRef());
-    if (type.isNull()) {
+    if (type.isBottomRef()) {
       return true;
     }
     if (type.isFunction()) {
@@ -567,7 +566,7 @@ bool Literal::operator<(const Literal& other) const {
   }
 
   assert(type.isRef());
-  if (type.isNull()) {
+  if (type.isBottomRef()) {
     // All nulls are equal, and hence not <
     return false;
   }
