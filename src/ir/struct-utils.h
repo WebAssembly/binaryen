@@ -222,7 +222,7 @@ struct StructScanner : public WalkerPass<PostWalker<SubType>> {
 
   void visitStructSet(StructSet* curr) {
     auto type = curr->ref->type;
-    if (type == Type::unreachable || type.isNull()) {
+    if (type == Type::unreachable || type.isBottomRef()) {
       return;
     }
 
@@ -237,7 +237,7 @@ struct StructScanner : public WalkerPass<PostWalker<SubType>> {
 
   void visitStructGet(StructGet* curr) {
     auto type = curr->ref->type;
-    if (type == Type::unreachable || type.isNull()) {
+    if (type == Type::unreachable || type.isBottomRef()) {
       return;
     }
 
@@ -250,7 +250,7 @@ struct StructScanner : public WalkerPass<PostWalker<SubType>> {
 
   void visitStructWait(StructWait* curr) {
     auto type = curr->ref->type;
-    if (type == Type::unreachable || type.isNull()) {
+    if (type == Type::unreachable || type.isBottomRef()) {
       return;
     }
 
@@ -263,7 +263,7 @@ struct StructScanner : public WalkerPass<PostWalker<SubType>> {
 
   void visitStructRMW(StructRMW* curr) {
     auto type = curr->ref->type;
-    if (type == Type::unreachable || type.isNull()) {
+    if (type == Type::unreachable || type.isBottomRef()) {
       return;
     }
 
@@ -286,7 +286,7 @@ struct StructScanner : public WalkerPass<PostWalker<SubType>> {
 
   void visitStructCmpxchg(StructCmpxchg* curr) {
     auto type = curr->ref->type;
-    if (type == Type::unreachable || type.isNull()) {
+    if (type == Type::unreachable || type.isBottomRef()) {
       return;
     }
 

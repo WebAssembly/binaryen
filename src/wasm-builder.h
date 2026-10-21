@@ -47,7 +47,7 @@ public:
                                                 Type type,
                                                 std::vector<Type>&& vars,
                                                 Expression* body = nullptr) {
-    assert(type.isSignature() && type.isNonNullable());
+    assert(type.isSignature() && type.isNonNullableRef());
     auto func = std::make_unique<Function>();
     func->name = name;
     func->type = type;
@@ -1657,7 +1657,7 @@ public:
     if (curr->type.isTuple() && curr->type.isDefaultable()) {
       return maybeWrap(makeConstantExpression(Literal::makeZeros(curr->type)));
     }
-    if (curr->type.isNullable()) {
+    if (curr->type.isNullableRef()) {
       return maybeWrap(
         ExpressionManipulator::refNull(curr, curr->type.getHeapType()));
     }

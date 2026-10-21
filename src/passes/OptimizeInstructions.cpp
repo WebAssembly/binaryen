@@ -1126,10 +1126,13 @@ struct OptimizeInstructions
           return replaceCurrent(curr);
         }
       }
-      // abs(x * x)   ==>   x * x
-      // abs(x / x)   ==>   x / x
       if (auto* binary = curr->value->dynCast<Binary>()) {
-        if ((binary->op == Abstract::getBinary(binary->type, Abstract::Mul) ||
+        // abs(x * x)   ==>   x * x
+        // abs(x / x)   ==>   x / x
+        // only for fast math, as the result may be a NaN with the sign bit set,
+        // which abs would clear.
+        if (fastMath &&
+            (binary->op == Abstract::getBinary(binary->type, Abstract::Mul) ||
              binary->op == Abstract::getBinary(binary->type, Abstract::DivS)) &&
             areConsecutiveInputsEqual(binary->left, binary->right)) {
           return replaceCurrent(binary);
@@ -1232,7 +1235,7 @@ struct OptimizeInstructions
     // in some cases, by removing or moving the ref.as_non_null operation.
     if (auto* as = curr->value->dynCast<RefAs>()) {
       if (as->op == RefAsNonNull &&
-          getFunction()->getLocalType(curr->index).isNullable()) {
+          getFunction()->getLocalType(curr->index).isNullableRef()) {
         //   (local.tee (ref.as_non_null ..))
         // =>
         //   (ref.as_non_null (local.tee ..))
@@ -1765,7 +1768,8 @@ struct OptimizeInstructions
       // function and the null does not actually flow out. We can only optimize
       // here if a null definitely flows out (as only that would cause a trap).
       auto flowsOutNull = [&](Expression* child) {
-        return child->type.isNull() && !effects(child).transfersControlFlow();
+        return child->type.isBottomRef() &&
+               !effects(child).transfersControlFlow();
       };
 
       if (auto* iff = ref->dynCast<If>()) {
@@ -1822,7 +1826,7 @@ struct OptimizeInstructions
     //      (ref.cast      ;; now non-nullable
     //
     // Either way we trap here, but refining the type may have benefits later.
-    if (ref->type.isNullable()) {
+    if (ref->type.isNullableRef()) {
       if (auto* cast = ref->dynCast<RefCast>()) {
         // Note that we must be the last child of the parent, otherwise effects
         // in the middle may need to remain:
@@ -1856,7 +1860,7 @@ struct OptimizeInstructions
 
     auto fallthrough = getFallthrough(ref);
 
-    if (fallthrough->type.isNull()) {
+    if (fallthrough->type.isBottomRef()) {
       replaceCurrent(
         getDroppedChildrenAndAppend(curr, builder.makeUnreachable()));
       return true;
@@ -1884,7 +1888,7 @@ struct OptimizeInstructions
     auto leftIsHeapSubtype = HeapType::isSubType(leftHeapType, rightHeapType);
     auto rightIsHeapSubtype = HeapType::isSubType(rightHeapType, leftHeapType);
     if (!leftIsHeapSubtype && !rightIsHeapSubtype &&
-        (leftType.isNonNullable() || rightType.isNonNullable())) {
+        (leftType.isNonNullableRef() || rightType.isNonNullableRef())) {
       // The heap types have no intersection, so the only thing that can
       // possibly appear on both sides is null, but one of the two is non-
       // nullable, which rules that out. So there is no way that the same
@@ -2494,9 +2498,9 @@ struct OptimizeInstructions
           // null, because then we never get around to comparing the
           // descriptors. We still need to preserve the trap on null
           // descriptors, though.
-          if (refType.isNull()) {
-            assert(curr->type.isNullable());
-            if (curr->desc->type.isNullable()) {
+          if (refType.isBottomRef()) {
+            assert(curr->type.isNullableRef());
+            if (curr->desc->type.isNullableRef()) {
               curr->desc = builder.makeRefAs(RefAsNonNull, curr->desc);
             }
             replaceCurrent(getDroppedChildrenAndAppend(
@@ -2551,7 +2555,7 @@ struct OptimizeInstructions
           // because the intermediate expressions might have had side effects or
           // we need to check exactness. We can replace the cast with a drop
           // followed by a direct return of the value, though.
-          if (ref->type.isNull()) {
+          if (ref->type.isBottomRef()) {
             // We can materialize the resulting null value directly.
             //
             // The type must be nullable for us to do that, which it normally
@@ -2568,7 +2572,7 @@ struct OptimizeInstructions
             // to be successful, but since the input is uninhabitable we won't
             // even reach the cast. Such casts will be evaluated as
             // Unreachable, so we'll not hit this assertion.
-            assert(curr->type.isNullable());
+            assert(curr->type.isNullableRef());
             auto nullType = curr->type.getHeapType().getBottom();
             replaceCurrent(
               getDroppedChildrenAndAppend(curr,
@@ -2612,7 +2616,7 @@ struct OptimizeInstructions
         // In this case, the cast succeeds because the value must be null, so we
         // can fall through to handle that case.
         assert(Type::isSubType(refType, ref->type));
-        assert(refType.getHeapType().isBottom());
+        assert(refType.isBottomRef());
       }
         [[fallthrough]];
       case GCTypeUtils::SuccessOnlyIfNull: {
@@ -2650,7 +2654,7 @@ struct OptimizeInstructions
       return;
     }
 
-    if (curr->type.isNonNullable() && trapOnNull(curr, curr->ref)) {
+    if (curr->type.isNonNullableRef() && trapOnNull(curr, curr->ref)) {
       return;
     }
 
@@ -2674,7 +2678,7 @@ struct OptimizeInstructions
     // we can improve nullability.
     Type improvedType = curr->type;
     if (curr->desc) {
-      if (curr->type.isNullable() && refType.isNonNullable()) {
+      if (curr->type.isNullableRef() && refType.isNonNullableRef()) {
         improvedType = curr->type.with(NonNullable);
       }
     } else {
@@ -2847,7 +2851,7 @@ struct OptimizeInstructions
     // constant, but this warrants more investigation. TODO
 
     Builder builder(*getModule());
-    if (curr->value->type.isNonNullable()) {
+    if (curr->value->type.isNonNullableRef()) {
       replaceCurrent(
         builder.makeSequence(builder.makeDrop(curr->value),
                              builder.makeConst(Literal::makeZero(Type::i32))));
@@ -2901,7 +2905,7 @@ struct OptimizeInstructions
       return;
     }
     skipNonNullCast(curr->value, curr);
-    if (!curr->value->type.isNullable()) {
+    if (!curr->value->type.isNullableRef()) {
       replaceCurrent(curr->value);
       return;
     }
@@ -2916,7 +2920,7 @@ struct OptimizeInstructions
     if (auto* cast = curr->value->dynCast<RefCast>()) {
       // The cast cannot be non-nullable, or we would have handled this right
       // above by just removing the ref.as, since it would not be needed.
-      assert(!cast->type.isNonNullable());
+      assert(!cast->type.isNonNullableRef());
       cast->type = cast->type.with(NonNullable);
       replaceCurrent(cast);
     }

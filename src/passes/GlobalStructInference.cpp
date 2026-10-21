@@ -680,7 +680,7 @@ struct GlobalStructInference : public Pass {
         // We must add a cast to non-null in some cases: A read of a null
         // descriptor returns a non-null value, so if there was a null in the
         // global, that would not validate by itself.
-        if (ret->type.isNullable() && curr->type.isNonNullable()) {
+        if (ret->type.isNullableRef() && curr->type.isNonNullableRef()) {
           ret = builder.makeRefAs(RefAsNonNull, ret);
         }
 
