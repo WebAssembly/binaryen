@@ -132,6 +132,7 @@ struct Generalizer
   // For each local, the values assigned to it via local.set / local.tee.
   std::vector<std::vector<Expression*>> localSetValues;
 
+  // We use a worklist of things to process: expressions and local indexes.
   using WorkItem = std::variant<Expression*, Index>;
   std::vector<WorkItem> worklist;
 
