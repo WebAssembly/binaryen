@@ -197,7 +197,7 @@ struct Generalizer
   }
 
   void visitCallRef(CallRef* curr) {
-    if (curr->target->type.isNull()) {
+    if (curr->target->type.isBottomRef()) {
       addConstraint(curr->target, curr->target->type);
       return;
     }
@@ -215,7 +215,7 @@ struct Generalizer
   }
 
   void visitStructGet(StructGet* curr) {
-    if (curr->ref->type.isNull()) {
+    if (curr->ref->type.isBottomRef()) {
       addConstraint(curr->ref, curr->ref->type);
       return;
     }
@@ -228,7 +228,7 @@ struct Generalizer
   }
 
   void visitStructSet(StructSet* curr) {
-    if (curr->ref->type.isNull()) {
+    if (curr->ref->type.isBottomRef()) {
       addConstraint(curr->ref, curr->ref->type);
       return;
     }
@@ -243,7 +243,7 @@ struct Generalizer
   }
 
   void visitArrayGet(ArrayGet* curr) {
-    if (curr->ref->type.isNull()) {
+    if (curr->ref->type.isBottomRef()) {
       addConstraint(curr->ref, curr->ref->type);
       return;
     }
@@ -255,7 +255,7 @@ struct Generalizer
   }
 
   void visitArraySet(ArraySet* curr) {
-    if (curr->ref->type.isNull()) {
+    if (curr->ref->type.isBottomRef()) {
       addConstraint(curr->ref, curr->ref->type);
       return;
     }
@@ -268,11 +268,11 @@ struct Generalizer
   }
 
   void visitArrayCopy(ArrayCopy* curr) {
-    if (curr->destRef->type.isNull() || curr->srcRef->type.isNull()) {
-      if (curr->destRef->type.isNull()) {
+    if (curr->destRef->type.isBottomRef() || curr->srcRef->type.isBottomRef()) {
+      if (curr->destRef->type.isBottomRef()) {
         addConstraint(curr->destRef, curr->destRef->type);
       }
-      if (curr->srcRef->type.isNull()) {
+      if (curr->srcRef->type.isBottomRef()) {
         addConstraint(curr->srcRef, curr->srcRef->type);
       }
       return;
@@ -293,7 +293,7 @@ struct Generalizer
   }
 
   void visitArrayFill(ArrayFill* curr) {
-    if (curr->ref->type.isNull()) {
+    if (curr->ref->type.isBottomRef()) {
       addConstraint(curr->ref, curr->ref->type);
       return;
     }
@@ -306,7 +306,7 @@ struct Generalizer
   }
 
   void visitArrayInitData(ArrayInitData* curr) {
-    if (curr->ref->type.isNull()) {
+    if (curr->ref->type.isBottomRef()) {
       addConstraint(curr->ref, curr->ref->type);
       return;
     }
@@ -318,7 +318,7 @@ struct Generalizer
   }
 
   void visitArrayInitElem(ArrayInitElem* curr) {
-    if (curr->ref->type.isNull()) {
+    if (curr->ref->type.isBottomRef()) {
       addConstraint(curr->ref, curr->ref->type);
       return;
     }
