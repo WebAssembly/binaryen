@@ -16,6 +16,8 @@
 
   ;; CHECK:      (type $FUNCSIG$ddd (func (param f64 f64) (result f64)))
 
+  ;; CHECK:      (type $8 (func (result i64)))
+
   ;; CHECK:      (type $10 (func (param f32) (result f32)))
 
   ;; CHECK:      (type $FUNCSIG$id (func (param f64) (result i32)))
@@ -26,14 +28,15 @@
   (type $6 (func (param i32) (result i32)))
   ;; CHECK:      (type $7 (func (param f64) (result f64)))
   (type $7 (func (param f64) (result f64)))
-  ;; CHECK:      (type $8 (func (result i64)))
   (type $8 (func (result i64)))
   ;; CHECK:      (type $9 (func (param i32 i64)))
   (type $9 (func (param i32 i64)))
 
-  ;; CHECK:      (type $15 (func (param eqref) (result i32)))
+  ;; CHECK:      (type $14 (func (param eqref) (result i32)))
 
-  ;; CHECK:      (type $16 (func (param eqref) (result eqref)))
+  ;; CHECK:      (type $15 (func (param eqref) (result eqref)))
+
+  ;; CHECK:      (type $16 (func (param stringref) (result i64)))
 
   ;; CHECK:      (import "env" "_emscripten_asm_const_vi" (func $_emscripten_asm_const_vi (type $FUNCSIG$v)))
   (import "env" "_emscripten_asm_const_vi" (func $_emscripten_asm_const_vi))
@@ -1485,7 +1488,7 @@
   )
 
   ;; A ref.eq with an intervening value: its operands can be swapped.
-  ;; CHECK:      (func $local-to-stack-ref-eq (type $15) (param $x eqref) (result i32)
+  ;; CHECK:      (func $local-to-stack-ref-eq (type $14) (param $x eqref) (result i32)
   ;; CHECK-NEXT:  (local $temp eqref)
   ;; CHECK-NEXT:  local.get $x
   ;; CHECK-NEXT:  call $eqref-value
@@ -1505,7 +1508,7 @@
     )
   )
 
-  ;; CHECK:      (func $eqref-value (type $16) (param $x eqref) (result eqref)
+  ;; CHECK:      (func $eqref-value (type $15) (param $x eqref) (result eqref)
   ;; CHECK-NEXT:  local.get $x
   ;; CHECK-NEXT:  call $eqref-value
   ;; CHECK-NEXT: )
@@ -1570,5 +1573,67 @@
         (local.get $temp)
       )
     )
+  )
+
+  ;; CHECK:      (func $null-string-new (type $8) (result i64)
+  ;; CHECK-NEXT:  (local $y i64)
+  ;; CHECK-NEXT:  i64.const 1
+  ;; CHECK-NEXT:  local.set $y
+  ;; CHECK-NEXT:  ref.null none
+  ;; CHECK-NEXT:  ref.as_non_null
+  ;; CHECK-NEXT:  i32.const 0
+  ;; CHECK-NEXT:  i32.const 0
+  ;; CHECK-NEXT:  unreachable
+  ;; CHECK-NEXT: )
+  (func $null-string-new (result i64)
+    (local $y i64)
+    ;; Previously, local2Stack thought the un-DCE'd drop and
+    ;; string.new_wtf16_array below consumed all three operands and returned the
+    ;; stack to this height, so it wrongly eliminated this local.set and the
+    ;; final local.get $y.
+    (local.set $y
+      (i64.const 1)
+    )
+    (drop
+      ;; Has a null-typed array ref, so the binary writer emits unreachable
+      ;; instead of consuming its three operands. StackIRGenerator must also
+      ;; emit unreachable so dce removes the drop and local.get $y below.
+      (string.new_wtf16_array
+        (ref.as_non_null
+          (ref.null none)
+        )
+        (i32.const 0)
+        (i32.const 0)
+      )
+    )
+    (local.get $y)
+  )
+
+  ;; CHECK:      (func $null-string-encode (type $16) (param $str stringref) (result i64)
+  ;; CHECK-NEXT:  (local $y i64)
+  ;; CHECK-NEXT:  i64.const 1
+  ;; CHECK-NEXT:  local.set $y
+  ;; CHECK-NEXT:  local.get $str
+  ;; CHECK-NEXT:  ref.null none
+  ;; CHECK-NEXT:  ref.as_non_null
+  ;; CHECK-NEXT:  i32.const 0
+  ;; CHECK-NEXT:  unreachable
+  ;; CHECK-NEXT: )
+  (func $null-string-encode (param $str stringref) (result i64)
+    (local $y i64)
+    (local.set $y
+      (i64.const 1)
+    )
+    (drop
+      ;; Same as above, for string.encode_wtf16_array with a null-typed array.
+      (string.encode_wtf16_array
+        (local.get $str)
+        (ref.as_non_null
+          (ref.null none)
+        )
+        (i32.const 0)
+      )
+    )
+    (local.get $y)
   )
 )

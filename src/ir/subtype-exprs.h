@@ -235,11 +235,14 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
   void visitRefEq(RefEq* curr) {
     // Match the shareability of the current content (if it exists).
     // TODO: This could also allow both sides to flip.
-    HeapType eq = HeapType::eq;
-    if (curr->type != Type::unreachable) {
-      eq = eq.getBasic(curr->left->type.getHeapType().getShared());
+    auto share = Unshared;
+    if ((curr->left->type.isRef() &&
+         curr->left->type.getHeapType().isShared()) ||
+        (curr->right->type.isRef() &&
+         curr->right->type.getHeapType().isShared())) {
+      share = Shared;
     }
-    auto type = Type(eq, Nullable);
+    auto type = Type(HeapTypes::eq.getBasic(share), Nullable);
     self()->noteNonFlowSubtype(curr->left, type);
     self()->noteNonFlowSubtype(curr->right, type);
   }
@@ -489,12 +492,23 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
         self()->noteCast(curr->value, curr);
         return;
       case AnyConvertExtern:
+        // any.convert_extern and extern.convert_any return nullable types iff
+        // their inputs are nullable. To preserve the existing non-nullable
+        // output type, the input must remain non-nullable, but if the existing
+        // output type is nullable, the input can be, too.
+        if (curr->type != Type::unreachable) {
+          auto ext =
+            HeapTypes::ext.getBasic(curr->type.getHeapType().getShared());
+          auto nullability = curr->type.getNullability();
+          self()->noteSubtype(curr->value, Type(ext, nullability));
+        }
         return;
       case ExternConvertAny:
         if (curr->type != Type::unreachable) {
           auto any =
             HeapTypes::any.getBasic(curr->type.getHeapType().getShared());
-          self()->noteSubtype(curr->value, Type(any, Nullable));
+          auto nullability = curr->type.getNullability();
+          self()->noteSubtype(curr->value, Type(any, nullability));
         }
         return;
     }

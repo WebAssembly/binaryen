@@ -59,7 +59,7 @@ bool isNullableAndMutable(Expression* ref, Index fieldIndex) {
   // Find the field for the given reference, and check its properties.
   auto field = GCTypeUtils::getField(ref->type, fieldIndex);
   assert(field);
-  return field->type.isNullable() && field->mutable_ == Mutable;
+  return field->type.isNullableRef() && field->mutable_ == Mutable;
 }
 
 // The prefix for a recommendation, so it is aligned properly with the rest of
@@ -1329,17 +1329,21 @@ start_eval:
       auto* copyBody =
         builder.blockify(ExpressionManipulator::copy(func->body, wasm));
 
-      // Remove the items we've evalled.
-      for (Index i = 0; i < successes; i++) {
-        copyBody->list[i] = builder.makeNop();
-      }
-
-      // Put the local sets at the front of the function body.
-      auto* setsBlock = builder.makeBlock();
+      // Replace the items we've evalled with the local sets at the front of the
+      // function body. Skip uninitialized non-nullable locals, whose default
+      // null value in the interpreter is not a valid subtype of the local's
+      // type.
+      std::vector<Expression*> newList;
+      newList.reserve(localExprs.size() + copyBody->list.size() - successes);
       for (Index i = 0; i < localExprs.size(); ++i) {
-        setsBlock->list.push_back(builder.makeLocalSet(i, localExprs[i]));
+        if (Type::isSubType(localExprs[i]->type, func->getLocalType(i))) {
+          newList.push_back(builder.makeLocalSet(i, localExprs[i]));
+        }
       }
-      copyBody = builder.makeSequence(setsBlock, copyBody, copyBody->type);
+      newList.insert(newList.end(),
+                     copyBody->list.begin() + successes,
+                     copyBody->list.end());
+      copyBody->list.set(newList);
 
       // We may have return-called into a function with different parameter
       // types, but we ultimately need to export a function with the original

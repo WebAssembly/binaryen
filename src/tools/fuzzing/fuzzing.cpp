@@ -1030,12 +1030,12 @@ void TranslateToFuzzReader::finalizeTable() {
     table->initial = std::min(table->initial, ReasonableMaxTableSize);
     assert(ReasonableMaxTableSize <= Table::kMaxSize);
 
-    table->max = oneIn(2) ? Address(Table::kUnlimitedSize) : table->initial;
+    table->max = oneIn(2) ? ReasonableMaxTableSize : table->initial;
 
     if (!preserveImportsAndExports) {
       // Avoid an imported table (which the fuzz harness would need to handle).
       table->module = table->base = Name();
-      if (table->type.isNonNullable()) {
+      if (table->type.isNonNullableRef()) {
         table->init = makeConst(table->type);
       }
     }
@@ -1981,7 +1981,7 @@ void TranslateToFuzzReader::recombine(Function* func) {
       std::vector<Type> ret;
       ret.push_back(type);
 
-      if (type.isNonNullable()) {
+      if (type.isNonNullableRef()) {
         auto nullable = getRelevantTypes(type.with(Nullable));
         ret.insert(ret.end(), nullable.begin(), nullable.end());
       }
@@ -2914,6 +2914,17 @@ Expression* TranslateToFuzzReader::_makeConcrete(Type type) {
   }
   if (type.isInteger()) {
     options.add(FeatureSet::Atomics, &Self::makeAtomic);
+    // TODO: Support multiple memories.
+    if (allowMemory && type == wasm.memories[0]->addressType) {
+      options.add(
+        FeatureSet::MVP, &Self::makeMemorySize, &Self::makeMemoryGrow);
+    }
+    if (std::any_of(wasm.tables.begin(), wasm.tables.end(), [&](auto& table) {
+          return table->addressType == type;
+        })) {
+      options.add(
+        FeatureSet::ReferenceTypes, &Self::makeTableSize, &Self::makeTableGrow);
+    }
   }
   if (type == Type::i32) {
     if (callExportCatchImportName || callRefCatchImportName) {
@@ -2955,7 +2966,7 @@ Expression* TranslateToFuzzReader::_makeConcrete(Type type) {
     if (heapType.isBasic()) {
       options.add(FeatureSet::ReferenceTypes | FeatureSet::GC,
                   &Self::makeBasicRef);
-      if (type.isNullable() && funcContext) {
+      if (type.isNullableRef() && funcContext) {
         if (heapType == HeapType::func) {
           options.add(FeatureSet::ReferenceTypes, &Self::makeTableGet);
         }
@@ -3036,6 +3047,7 @@ Expression* TranslateToFuzzReader::_makenone() {
          &Self::makeNop,
          &Self::makeGlobalSet)
     .add(FeatureSet::BulkMemory, &Self::makeBulkMemory)
+    .add(FeatureSet::SIMD, &Self::makeSIMD)
     .add(FeatureSet::Atomics, &Self::makeAtomic)
     .add(FeatureSet::ReferenceTypes, &Self::makeTableSet)
     .add(FeatureSet::ExceptionHandling, &Self::makeTry)
@@ -3093,7 +3105,7 @@ Expression* TranslateToFuzzReader::makeTrivial(Type type) {
     // If we have a function context, use a local half the time. Use a local
     // less often if the local is non-nullable, however, as then we might be
     // using it before it was set, which would trap.
-    if (funcContext && oneIn(type.isNonNullable() ? 10 : 2)) {
+    if (funcContext && oneIn(type.isNonNullableRef() ? 10 : 2)) {
       return makeLocalGet(type);
     }
 
@@ -3567,7 +3579,7 @@ Expression* TranslateToFuzzReader::makeLocalGet(Type type) {
   // nullable local we prefer a tee later down.).
   auto index = builder.addVar(funcContext->func, type);
   LocalSet* tee = nullptr;
-  if (choice == 1 || type.isNonNullable()) {
+  if (choice == 1 || type.isNonNullableRef()) {
     // Create the tee here before adding the local to typeLocals (or else we
     // might end up using it prematurely inside the make() call).
     tee = builder.makeLocalTee(index, make(type), type);
@@ -3791,9 +3803,6 @@ Expression* TranslateToFuzzReader::makeNonAtomicLoad(Type type) {
         8, false, offset, pick(1, 2, 4, 8), ptr, type, wasm.memories[0]->name);
     }
     case Type::v128: {
-      if (!wasm.features.hasSIMD()) {
-        return makeTrivial(type);
-      }
       return builder.makeLoad(16,
                               false,
                               offset,
@@ -3908,9 +3917,6 @@ Expression* TranslateToFuzzReader::makeNonAtomicStore(Type type) {
         8, offset, pick(1, 2, 4, 8), ptr, value, type, wasm.memories[0]->name);
     }
     case Type::v128: {
-      if (!wasm.features.hasSIMD()) {
-        return makeTrivial(type);
-      }
       return builder.makeStore(16,
                                offset,
                                pick(1, 2, 4, 8, 16),
@@ -4221,10 +4227,10 @@ Expression* TranslateToFuzzReader::makeRefFuncConst(Type type) {
   // but only rarely if the type is non-nullable (because in that case we'd need
   // to add a ref.as_non_null to validate, and the code will trap when we get
   // here).
-  if ((type.isNullable() && oneIn(2)) ||
-      (type.isNonNullable() && oneIn(16) && funcContext)) {
+  if ((type.isNullableRef() && oneIn(2)) ||
+      (type.isNonNullableRef() && oneIn(16) && funcContext)) {
     Expression* ret = builder.makeRefNull(HeapTypes::nofunc.getBasic(share));
-    if (!type.isNullable()) {
+    if (!type.isNullableRef()) {
       assert(funcContext);
       ret = builder.makeRefAs(RefAsNonNull, ret);
     }
@@ -4259,7 +4265,7 @@ Expression* TranslateToFuzzReader::makeConst(Type type) {
   if (type.isRef()) {
     assert(wasm.features.hasReferenceTypes());
     // With a low chance, just emit a null if that is valid.
-    if (type.isNullable() && oneIn(8)) {
+    if (type.isNullableRef() && oneIn(8)) {
       return builder.makeRefNull(type.getHeapType());
     }
     if (type.getHeapType().isString()) {
@@ -4306,7 +4312,7 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
         !preserveImportsAndExports && isImportableGlobalType(type);
       if (canImport) {
         bool shouldImport;
-        if (type.isNonNullable()) {
+        if (type.isNonNullableRef()) {
           // If we are not in a function context, casting a null is not an
           // option, so always use a global. Otherwise very rarely cast a null.
           shouldImport = !funcContext || !oneIn(16);
@@ -4333,7 +4339,7 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
       }
       // Use a null value, making it non-null if necessary.
       auto null = builder.makeRefNull(HeapTypes::ext.getBasic(share));
-      if (!type.isNullable()) {
+      if (!type.isNullableRef()) {
         return builder.makeRefAs(RefAsNonNull, null);
       }
       return null;
@@ -4341,7 +4347,7 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
     case HeapType::func: {
       // Rarely, emit a call to imported table.get (when nullable, unshared, and
       // where we can emit a call).
-      if (!trivialNesting && type.isNullable() && share == Unshared &&
+      if (!trivialNesting && type.isNullableRef() && share == Unshared &&
           funcContext && tableGetImportName && !oneIn(3)) {
         return makeImportTableGet();
       }
@@ -4349,7 +4355,7 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
     }
     case HeapType::cont: {
       // Most of the time, avoid null continuations, as they will trap.
-      if (type.isNullable() && oneIn(4)) {
+      if (type.isNullableRef() && oneIn(4)) {
         return builder.makeRefNull(HeapTypes::cont.getBasic(share));
       }
       // Emit the simplest possible continuation.
@@ -4371,7 +4377,7 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
         // Without wasm GC all we have is an "abstract" eqref type, which is
         // a subtype of anyref, but we cannot create constants of it, except
         // for null.
-        assert(type.isNullable());
+        assert(type.isNullableRef());
         return builder.makeRefNull(HeapTypes::none.getBasic(share));
       }
       auto nullability = getSubType(type.getNullability());
@@ -4392,7 +4398,7 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
     }
     case HeapType::i31: {
       assert(wasm.features.hasGC());
-      if (type.isNullable() && oneIn(4)) {
+      if (type.isNullableRef() && oneIn(4)) {
         return builder.makeRefNull(HeapTypes::none.getBasic(share));
       }
       return builder.makeRefI31(makeConst(Type::i32), share);
@@ -4428,9 +4434,9 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
     case HeapType::exn: {
       // If nullable, sometimes emit a null. If not in a function context, see
       // below, we need a null as well regardless of the type.
-      if ((type.isNullable() && oneIn(2)) || !funcContext) {
+      if ((type.isNullableRef() && oneIn(2)) || !funcContext) {
         auto* null = builder.makeRefNull(HeapTypes::exn.getBasic(share));
-        if (type.isNullable()) {
+        if (type.isNullableRef()) {
           return null;
         }
         // The type is non-nullable, so we are here because we are in a non-
@@ -4483,7 +4489,7 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
     case HeapType::nocont:
     case HeapType::noexn: {
       auto null = builder.makeRefNull(heapType.getBasic(share));
-      if (!type.isNullable()) {
+      if (!type.isNullableRef()) {
         return builder.makeRefAs(RefAsNonNull, null);
       }
       return null;
@@ -4518,7 +4524,7 @@ Expression* TranslateToFuzzReader::makeCompoundRef(Type type) {
   // inhabitable.)
   const auto LIMIT = fuzzParams.NESTING_LIMIT + 1;
   AutoNester nester(*this);
-  if (type.isNullable() &&
+  if (type.isNullableRef() &&
       (random.finished() || nesting >= LIMIT || oneIn(LIMIT - nesting + 1))) {
     return builder.makeRefNull(heapType);
   }
@@ -4527,7 +4533,7 @@ Expression* TranslateToFuzzReader::makeCompoundRef(Type type) {
   // something here to avoid infinite recursion. In the worse case we'll emit a
   // cast to non-null of a null, which validates, but it will trap at runtime
   // which is not ideal.
-  if (type.isNonNullable() && (random.finished() || nesting >= LIMIT)) {
+  if (type.isNonNullableRef() && (random.finished() || nesting >= LIMIT)) {
     // If we have a function context then we can at least emit a local.get,
     // sometimes, which is less bad. Note that we need to check typeLocals
     // manually here to avoid infinite recursion (as makeLocalGet will fall back
@@ -5432,11 +5438,13 @@ Expression* TranslateToFuzzReader::makeSIMD(Type type) {
   if (type.isRef()) {
     return makeTrivial(type);
   }
+  if (type == Type::none) {
+    return makeSIMDLoadStoreLane(Type::none);
+  }
   if (type != Type::v128) {
     return makeSIMDExtract(type);
   }
-  // TODO: Add SIMDLoadStoreLane once it is generally available
-  switch (upTo(7)) {
+  switch (upTo(8)) {
     case 0:
       return makeUnary(Type::v128);
     case 1:
@@ -5451,6 +5459,8 @@ Expression* TranslateToFuzzReader::makeSIMD(Type type) {
       return makeSIMDShift();
     case 6:
       return makeSIMDLoad();
+    case 7:
+      return makeSIMDLoadStoreLane(Type::v128);
   }
   WASM_UNREACHABLE("invalid value");
 }
@@ -5605,6 +5615,9 @@ Expression* TranslateToFuzzReader::makeSIMDShift() {
 }
 
 Expression* TranslateToFuzzReader::makeSIMDLoad() {
+  if (!allowMemory) {
+    return makeTrivial(Type::v128);
+  }
   SIMDLoadOp op = pick(Load8SplatVec128,
                        Load16SplatVec128,
                        Load32SplatVec128,
@@ -5647,6 +5660,54 @@ Expression* TranslateToFuzzReader::makeSIMDLoad() {
   }
   Expression* ptr = makePointer();
   return builder.makeSIMDLoad(op, offset, align, ptr, wasm.memories[0]->name);
+}
+
+Expression* TranslateToFuzzReader::makeSIMDLoadStoreLane(Type type) {
+  if (!allowMemory) {
+    return makeTrivial(type);
+  }
+  SIMDLoadStoreLaneOp op;
+  if (type == Type::v128) {
+    op = pick(
+      Load8LaneVec128, Load16LaneVec128, Load32LaneVec128, Load64LaneVec128);
+  } else if (type == Type::none) {
+    op = pick(Store8LaneVec128,
+              Store16LaneVec128,
+              Store32LaneVec128,
+              Store64LaneVec128);
+  } else {
+    WASM_UNREACHABLE("unexpected type");
+  }
+  Address offset = logify(get());
+  Address align;
+  uint8_t lanes;
+  switch (op) {
+    case Load8LaneVec128:
+    case Store8LaneVec128:
+      align = 1;
+      lanes = 16;
+      break;
+    case Load16LaneVec128:
+    case Store16LaneVec128:
+      align = pick(1, 2);
+      lanes = 8;
+      break;
+    case Load32LaneVec128:
+    case Store32LaneVec128:
+      align = pick(1, 2, 4);
+      lanes = 4;
+      break;
+    case Load64LaneVec128:
+    case Store64LaneVec128:
+      align = pick(1, 2, 4, 8);
+      lanes = 2;
+      break;
+  }
+  uint8_t index = upTo(lanes);
+  Expression* ptr = makePointer();
+  Expression* vec = make(Type::v128);
+  return builder.makeSIMDLoadStoreLane(
+    op, offset, align, index, ptr, vec, wasm.memories[0]->name);
 }
 
 Expression* TranslateToFuzzReader::makeBulkMemory(Type type) {
@@ -5717,6 +5778,36 @@ Expression* TranslateToFuzzReader::makeTableSet(Type type) {
     assert(funcrefTableName);
     return makeTableSet(funcrefTableName);
   }
+}
+
+Expression* TranslateToFuzzReader::makeTableSize(Type type) {
+  std::vector<Table*> tables;
+  for (auto& table : wasm.tables) {
+    if (table->addressType == type) {
+      tables.push_back(table.get());
+    }
+  }
+  if (tables.empty()) {
+    return makeTrivial(type);
+  }
+  auto* table = pick(tables);
+  return builder.makeTableSize(table->name);
+}
+
+Expression* TranslateToFuzzReader::makeTableGrow(Type type) {
+  std::vector<Table*> tables;
+  for (auto& table : wasm.tables) {
+    if (table->addressType == type) {
+      tables.push_back(table.get());
+    }
+  }
+  if (tables.empty()) {
+    return makeTrivial(type);
+  }
+  auto* table = pick(tables);
+  auto* value = make(table->type);
+  auto* delta = make(type);
+  return builder.makeTableGrow(table->name, value, delta);
 }
 
 Expression* TranslateToFuzzReader::makeRefIsNull(Type type) {
@@ -5966,11 +6057,11 @@ Expression* TranslateToFuzzReader::makeBrOn(Type type) {
         // trivial.
         refType = oneIn(5) ? getSubType(castType) : getSuperType(castType);
       }
-      if (targetType.isNonNullable()) {
+      if (targetType.isNonNullableRef()) {
         // And it must have the right nullability for the target, as mentioned
         // above: if the target type is non-nullable then either the ref or the
         // cast types must be.
-        if (!refType.isNonNullable() && !castType.isNonNullable()) {
+        if (!refType.isNonNullableRef() && !castType.isNonNullableRef()) {
           // Pick one to make non-nullable.
           if (oneIn(2)) {
             refType = Type(refType.getHeapType(), NonNullable);
@@ -5992,7 +6083,7 @@ Expression* TranslateToFuzzReader::makeBrOn(Type type) {
       // There is no nullability to adjust: if targetType is non-nullable then
       // both refType and castType are as well, as subtypes of it. But we can
       // also allow castType to be nullable (it is not sent to the target).
-      if (castType.isNonNullable() && oneIn(2)) {
+      if (castType.isNonNullableRef() && oneIn(2)) {
         castType = Type(castType.getHeapType(), Nullable);
       }
       break;
@@ -6583,6 +6674,22 @@ Expression* TranslateToFuzzReader::makeMemoryFill() {
   Expression* value = make(Type::i32);
   Expression* size = make(wasm.memories[0]->addressType);
   return builder.makeMemoryFill(dest, value, size, wasm.memories[0]->name);
+}
+
+Expression* TranslateToFuzzReader::makeMemorySize(Type type) {
+  if (!allowMemory) {
+    return makeTrivial(type);
+  }
+  assert(type == wasm.memories[0]->addressType);
+  return builder.makeMemorySize(wasm.memories[0]->name);
+}
+
+Expression* TranslateToFuzzReader::makeMemoryGrow(Type type) {
+  if (!allowMemory) {
+    return makeTrivial(type);
+  }
+  assert(type == wasm.memories[0]->addressType);
+  return builder.makeMemoryGrow(make(type), wasm.memories[0]->name);
 }
 
 Expression* TranslateToFuzzReader::makeElemDrop() {
