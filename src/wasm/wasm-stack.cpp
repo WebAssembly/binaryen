@@ -3032,7 +3032,7 @@ void BinaryInstWriter::visitStringMeasure(StringMeasure* curr) {
 }
 
 void BinaryInstWriter::visitStringEncode(StringEncode* curr) {
-  if (curr->str->type.isBottomRef()) {
+  if (curr->array->type.isBottomRef()) {
     // See visitStringNew.
     emitUnreachable();
     return;
@@ -3642,6 +3642,15 @@ private:
 };
 
 void StackIRGenerator::emit(Expression* curr) {
+  // Match BinaryInstWriter (and PrintSExpression::visitExpression), which emits
+  // unreachable instead of instructions whose type immediate cannot be written
+  // (see BinaryInstWriter::visitCallRef, visitRefCast, visitStructGet, etc.) or
+  // string array operations with null-typed array operands (see
+  // BinaryInstWriter::visitStringNew and visitStringEncode).
+  if (Properties::hasUnwritableTypeImmediate(curr)) {
+    emitUnreachable();
+    return;
+  }
   StackInst* stackInst = nullptr;
   if (curr->is<Block>()) {
     stackInst = makeStackInst(StackInst::BlockBegin, curr);
