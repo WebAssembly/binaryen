@@ -38,6 +38,7 @@
 #include <unordered_map>
 #include <unordered_set>
 
+#include "ir/gc-type-utils.h"
 #include "ir/lubs.h"
 #include "ir/return-utils.h"
 #include "ir/type-updating.h"
@@ -551,7 +552,7 @@ private:
     // Do this for more complicated uninhabitable types such as non-nullable
     // references to structs with non-nullable reference cycles.
     bool wasReturnUninhabitable =
-      func->getResults().isNull() && func->getResults().isNonNullableRef();
+      GCTypeUtils::isUninhabitable(func->getResults());
     func->setResults(Type::none);
     // Remove the drops on the calls. Note that we must do this before updating
     // returns in ReturnUpdater, as there may be recursive calls of this

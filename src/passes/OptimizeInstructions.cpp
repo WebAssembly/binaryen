@@ -1768,7 +1768,8 @@ struct OptimizeInstructions
       // function and the null does not actually flow out. We can only optimize
       // here if a null definitely flows out (as only that would cause a trap).
       auto flowsOutNull = [&](Expression* child) {
-        return child->type.isNull() && !effects(child).transfersControlFlow();
+        return child->type.isBottomRef() &&
+               !effects(child).transfersControlFlow();
       };
 
       if (auto* iff = ref->dynCast<If>()) {
@@ -1859,7 +1860,7 @@ struct OptimizeInstructions
 
     auto fallthrough = getFallthrough(ref);
 
-    if (fallthrough->type.isNull()) {
+    if (fallthrough->type.isBottomRef()) {
       replaceCurrent(
         getDroppedChildrenAndAppend(curr, builder.makeUnreachable()));
       return true;
@@ -2497,7 +2498,7 @@ struct OptimizeInstructions
           // null, because then we never get around to comparing the
           // descriptors. We still need to preserve the trap on null
           // descriptors, though.
-          if (refType.isNull()) {
+          if (refType.isBottomRef()) {
             assert(curr->type.isNullableRef());
             if (curr->desc->type.isNullableRef()) {
               curr->desc = builder.makeRefAs(RefAsNonNull, curr->desc);
@@ -2554,7 +2555,7 @@ struct OptimizeInstructions
           // because the intermediate expressions might have had side effects or
           // we need to check exactness. We can replace the cast with a drop
           // followed by a direct return of the value, though.
-          if (ref->type.isNull()) {
+          if (ref->type.isBottomRef()) {
             // We can materialize the resulting null value directly.
             //
             // The type must be nullable for us to do that, which it normally
@@ -2615,7 +2616,7 @@ struct OptimizeInstructions
         // In this case, the cast succeeds because the value must be null, so we
         // can fall through to handle that case.
         assert(Type::isSubType(refType, ref->type));
-        assert(refType.getHeapType().isBottom());
+        assert(refType.isBottomRef());
       }
         [[fallthrough]];
       case GCTypeUtils::SuccessOnlyIfNull: {
