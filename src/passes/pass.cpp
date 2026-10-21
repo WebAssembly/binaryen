@@ -858,6 +858,7 @@ void PassRunner::addDefaultGlobalOptimizationPostPasses() {
   }
   addIfNoDWARFIssues("remove-unused-module-elements");
   if (options.lastOpts && wasm->features.hasGC() &&
+      wasm->features.hasBulkMemory() &&
       (options.optimizeLevel >= 2 || options.shrinkLevel >= 1)) {
     // Converting array.new_fixed to array.new_data inhibits optimizations that
     // need constant expressions or know the contents of the array (and
