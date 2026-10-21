@@ -557,7 +557,7 @@ bool Type::isDefaultable() const {
     }
     return true;
   }
-  return isConcrete() && !isNonNullable();
+  return isConcrete() && !isNonNullableRef();
 }
 
 bool Type::isCastable() const { return isRef() && getHeapType().isCastable(); }
@@ -681,7 +681,7 @@ bool Type::isSubType(Type a, Type b) {
   if (!a.isRef() || !b.isRef()) {
     return false;
   }
-  if (a.isNullable() && !b.isNullable()) {
+  if (a.isNullableRef() && !b.isNullableRef()) {
     return false;
   }
   auto heapTypeA = a.getHeapType();
@@ -738,7 +738,7 @@ Type Type::getLeastUpperBound(Type a, Type b) {
     auto heapTypeB = b.getHeapType();
     if (auto heapType = HeapType::getLeastUpperBound(heapTypeA, heapTypeB)) {
       auto nullability =
-        (a.isNullable() || b.isNullable()) ? Nullable : NonNullable;
+        (a.isNullableRef() || b.isNullableRef()) ? Nullable : NonNullable;
       // If one heap type is bottom, then the exactness comes from the other
       // heap type. Otherwise, the LUB can only be exact if both of the inputs
       // are the same exact heap type.
@@ -780,7 +780,7 @@ Type Type::getGreatestLowerBound(Type a, Type b) {
     return Type::unreachable;
   }
   auto nullability =
-    (a.isNonNullable() || b.isNonNullable()) ? NonNullable : Nullable;
+    (a.isNonNullableRef() || b.isNonNullableRef()) ? NonNullable : Nullable;
   auto exactness = (a.isExact() || b.isExact()) ? Exact : Inexact;
   HeapType heapType;
   if (HeapType::isSubType(heapA, heapB)) {
@@ -1468,6 +1468,8 @@ std::ostream& operator<<(std::ostream& os,
       return os << "Shared types require shared-everything";
     case TypeBuilder::ErrorReasonKind::InvalidStringType:
       return os << "String types require strings feature";
+    case TypeBuilder::ErrorReasonKind::InvalidSIMDType:
+      return os << "SIMD types require SIMD feature";
     case TypeBuilder::ErrorReasonKind::InvalidUnsharedField:
       return os << "Heap type has an invalid unshared field";
     case TypeBuilder::ErrorReasonKind::NonStructDescribes:
@@ -1566,7 +1568,7 @@ std::ostream& TypePrinter::print(Type type) {
     print(type.getTuple());
   } else if (type.isRef()) {
     auto heapType = type.getHeapType();
-    if (type.isNullable() && heapType.isBasic() && !heapType.isShared()) {
+    if (type.isNullableRef() && heapType.isBasic() && !heapType.isShared()) {
       if (type.isExact()) {
         os << "(exact ";
       }
@@ -1630,7 +1632,7 @@ std::ostream& TypePrinter::print(Type type) {
       return os;
     }
     os << "(ref ";
-    if (type.isNullable()) {
+    if (type.isNullableRef()) {
       os << "null ";
     }
     if (type.isExact()) {
@@ -2387,6 +2389,9 @@ bool isValidSupertype(const HeapTypeInfo& sub, const HeapTypeInfo& super) {
 
 std::optional<TypeBuilder::ErrorReason>
 validateType(Type type, FeatureSet feats, bool isShared) {
+  if (type == Type::v128 && !feats.hasSIMD()) {
+    return TypeBuilder::ErrorReasonKind::InvalidSIMDType;
+  }
   if (type.isRef()) {
     auto heapType = type.getHeapType();
     if (isShared && !heapType.isShared()) {

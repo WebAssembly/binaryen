@@ -925,3 +925,165 @@
   )
 )
 
+;; Handle block-nested pops created when updating writes to and reads from
+;; refined fields.
+(module
+  ;; NRML:      (rec
+  ;; NRML-NEXT:  (type $struct (struct (field eqref) (field nullref)))
+  ;; GUFA:      (rec
+  ;; GUFA-NEXT:  (type $struct (struct (field nullref) (field nullref)))
+  (type $struct (struct (field eqref) (field anyref)))
+  ;; NRML:       (type $1 (func (param eqref)))
+
+  ;; NRML:       (type $2 (func (param nullref)))
+
+  ;; NRML:      (type $3 (func))
+
+  ;; NRML:      (tag $ref (type $1) (param eqref))
+  ;; GUFA:       (type $1 (func (param eqref)))
+
+  ;; GUFA:       (type $2 (func (param nullref)))
+
+  ;; GUFA:      (type $3 (func))
+
+  ;; GUFA:      (tag $ref (type $1) (param eqref))
+  (tag $ref (param eqref))
+  ;; NRML:      (tag $null (type $2) (param nullref))
+  ;; GUFA:      (tag $null (type $2) (param nullref))
+  (tag $null (param nullref))
+
+  ;; NRML:      (export "write" (func $write))
+
+  ;; NRML:      (export "read" (func $read))
+
+  ;; NRML:      (func $write (type $3)
+  ;; NRML-NEXT:  (drop
+  ;; NRML-NEXT:   (struct.new_default $struct)
+  ;; NRML-NEXT:  )
+  ;; NRML-NEXT:  (try
+  ;; NRML-NEXT:   (do
+  ;; NRML-NEXT:   )
+  ;; NRML-NEXT:   (catch $ref
+  ;; NRML-NEXT:    (drop
+  ;; NRML-NEXT:     (struct.new $struct
+  ;; NRML-NEXT:      (pop eqref)
+  ;; NRML-NEXT:      (ref.null none)
+  ;; NRML-NEXT:     )
+  ;; NRML-NEXT:    )
+  ;; NRML-NEXT:   )
+  ;; NRML-NEXT:  )
+  ;; NRML-NEXT: )
+  ;; GUFA:      (export "write" (func $write))
+
+  ;; GUFA:      (export "read" (func $read))
+
+  ;; GUFA:      (func $write (type $3)
+  ;; GUFA-NEXT:  (local $0 eqref)
+  ;; GUFA-NEXT:  (drop
+  ;; GUFA-NEXT:   (struct.new_default $struct)
+  ;; GUFA-NEXT:  )
+  ;; GUFA-NEXT:  (try
+  ;; GUFA-NEXT:   (do
+  ;; GUFA-NEXT:   )
+  ;; GUFA-NEXT:   (catch $ref
+  ;; GUFA-NEXT:    (local.set $0
+  ;; GUFA-NEXT:     (pop eqref)
+  ;; GUFA-NEXT:    )
+  ;; GUFA-NEXT:    (drop
+  ;; GUFA-NEXT:     (struct.new $struct
+  ;; GUFA-NEXT:      (block (result nullref)
+  ;; GUFA-NEXT:       (drop
+  ;; GUFA-NEXT:        (local.get $0)
+  ;; GUFA-NEXT:       )
+  ;; GUFA-NEXT:       (ref.null none)
+  ;; GUFA-NEXT:      )
+  ;; GUFA-NEXT:      (ref.null none)
+  ;; GUFA-NEXT:     )
+  ;; GUFA-NEXT:    )
+  ;; GUFA-NEXT:   )
+  ;; GUFA-NEXT:  )
+  ;; GUFA-NEXT: )
+  ;; O3O3:      (type $0 (func))
+
+  ;; O3O3:      (export "write" (func $write))
+
+  ;; O3O3:      (export "read" (func $write))
+
+  ;; O3O3:      (func $write (type $0)
+  ;; O3O3-NEXT:  (nop)
+  ;; O3O3-NEXT: )
+  (func $write (export "write")
+    ;; In GUFA, the first field is refined to nullref, so the write operand in
+    ;; the catch block is replaced with a block that drops the pop and produces
+    ;; a null. The newly nested pop must be fixed up.
+    (drop
+      (struct.new_default $struct)
+    )
+    (try
+      (do)
+      (catch $ref
+        (drop
+          (struct.new $struct
+            (pop eqref)
+            (ref.null none)
+          )
+        )
+      )
+    )
+  )
+
+  ;; NRML:      (func $read (type $3)
+  ;; NRML-NEXT:  (local $0 nullref)
+  ;; NRML-NEXT:  (try
+  ;; NRML-NEXT:   (do
+  ;; NRML-NEXT:   )
+  ;; NRML-NEXT:   (catch $null
+  ;; NRML-NEXT:    (local.set $0
+  ;; NRML-NEXT:     (pop nullref)
+  ;; NRML-NEXT:    )
+  ;; NRML-NEXT:    (drop
+  ;; NRML-NEXT:     (block
+  ;; NRML-NEXT:      (drop
+  ;; NRML-NEXT:       (local.get $0)
+  ;; NRML-NEXT:      )
+  ;; NRML-NEXT:      (unreachable)
+  ;; NRML-NEXT:     )
+  ;; NRML-NEXT:    )
+  ;; NRML-NEXT:   )
+  ;; NRML-NEXT:  )
+  ;; NRML-NEXT: )
+  ;; GUFA:      (func $read (type $3)
+  ;; GUFA-NEXT:  (local $0 nullref)
+  ;; GUFA-NEXT:  (try
+  ;; GUFA-NEXT:   (do
+  ;; GUFA-NEXT:   )
+  ;; GUFA-NEXT:   (catch $null
+  ;; GUFA-NEXT:    (local.set $0
+  ;; GUFA-NEXT:     (pop nullref)
+  ;; GUFA-NEXT:    )
+  ;; GUFA-NEXT:    (drop
+  ;; GUFA-NEXT:     (block
+  ;; GUFA-NEXT:      (drop
+  ;; GUFA-NEXT:       (local.get $0)
+  ;; GUFA-NEXT:      )
+  ;; GUFA-NEXT:      (unreachable)
+  ;; GUFA-NEXT:     )
+  ;; GUFA-NEXT:    )
+  ;; GUFA-NEXT:   )
+  ;; GUFA-NEXT:  )
+  ;; GUFA-NEXT: )
+  (func $read (export "read")
+    ;; Reading from a null reference is replaced with a block that drops the pop
+    ;; and traps. The newly nested pop must be fixed up.
+    (try
+      (do)
+      (catch $null
+        (drop
+          (struct.get $struct 0
+            (pop nullref)
+          )
+        )
+      )
+    )
+  )
+)

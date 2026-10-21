@@ -76,9 +76,9 @@ struct InstrumentLocals : public WalkerPass<PostWalker<InstrumentLocals>> {
     Name import;
     if (curr->type.isRef()) {
       auto heapType = curr->type.getHeapType();
-      if (heapType == HeapType::func && curr->type.isNullable()) {
+      if (heapType == HeapType::func && curr->type.isNullableRef()) {
         import = get_funcref;
-      } else if (heapType == HeapType::ext && curr->type.isNullable()) {
+      } else if (heapType == HeapType::ext && curr->type.isNullableRef()) {
         import = get_externref;
       } else {
         WASM_UNREACHABLE("TODO: general reference types");
@@ -129,9 +129,9 @@ struct InstrumentLocals : public WalkerPass<PostWalker<InstrumentLocals>> {
     }
     if (type.isRef()) {
       auto heapType = type.getHeapType();
-      if (heapType == HeapType::func && type.isNullable()) {
+      if (heapType == HeapType::func && type.isNullableRef()) {
         import = set_funcref;
-      } else if (heapType == HeapType::ext && type.isNullable()) {
+      } else if (heapType == HeapType::ext && type.isNullableRef()) {
         import = set_externref;
       } else {
         WASM_UNREACHABLE("TODO: general reference types");

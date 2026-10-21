@@ -534,7 +534,7 @@ bool StackIROptimizer::canRemoveSetGetPair(Index setIndex, Index getIndex) {
   // anyhow (hence we can check non-nullability instead of non-
   // defaultability).
   assert(localType.isSingle());
-  if (func->isParam(set->index) || !localType.isNonNullable()) {
+  if (func->isParam(set->index) || !localType.isNonNullableRef()) {
     // This local cannot pose a problem for validation (params are always
     // initialized, and it is ok if nullable locals are uninitialized).
     return true;

@@ -2060,33 +2060,68 @@
   )
 )
 
+;; Regression test for unreachable ref.eq with shared reference operands.
 (module
- ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $super (sub (struct)))
- (type $super (sub (struct)))
- ;; CHECK:       (type $sub (sub $super (struct)))
- (type $sub (sub $super (struct)))
+  ;; CHECK:      (type $0 (func (param (ref null (shared eq)))))
 
- ;; CHECK:       (type $2 (func))
-
- ;; CHECK:      (table $t 1 1 (ref null $super))
- (table $t 1 1 (ref null $super))
-
- ;; CHECK:      (func $table-grow (type $2)
- ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (table.grow $t
- ;; CHECK-NEXT:    (struct.new_default $sub)
- ;; CHECK-NEXT:    (i32.const 0)
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT: )
- (func $table-grow
-  ;; This requires $sub <: $super.
-  (drop
-   (table.grow $t
-    (struct.new $sub)
-    (i32.const 0)
-   )
+  ;; CHECK:      (func $ref-eq-shared-unreachable (type $0) (param $eq (ref null (shared eq)))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (local.get $eq)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (local.get $eq)
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ref-eq-shared-unreachable (param $eq (ref null (shared eq)))
+    (drop
+      (ref.eq
+        (unreachable)
+        (local.get $eq)
+      )
+    )
+    (drop
+      (ref.eq
+        (local.get $eq)
+        (unreachable)
+      )
+    )
   )
- )
+)
+
+(module
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $super (sub (struct)))
+  (type $super (sub (struct)))
+  ;; CHECK:       (type $sub (sub $super (struct)))
+  (type $sub (sub $super (struct)))
+
+  ;; CHECK:       (type $2 (func))
+
+  ;; CHECK:      (table $t 1 1 (ref null $super))
+  (table $t 1 1 (ref null $super))
+
+  ;; CHECK:      (func $table-grow (type $2)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (table.grow $t
+  ;; CHECK-NEXT:    (struct.new_default $sub)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $table-grow
+  ;; This requires $sub <: $super.
+    (drop
+      (table.grow $t
+        (struct.new $sub)
+          (i32.const 0)
+        )
+      )
+    )
+  )
 )
