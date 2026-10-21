@@ -44,6 +44,7 @@
 
 #include <cstring>
 #include <optional>
+#include <string>
 #include <string_view>
 #include <unordered_map>
 #include <unordered_set>
@@ -105,16 +106,16 @@ size_t getArrayNewFixedSize(ArrayNewFixed* curr) {
 // The size of an array.new_data that reads all of a segment, apart from the
 // prefix, opcode and type index.
 size_t getArrayNewDataSize(Index segment, Index size) {
-  // The segment index, an i32.const 0 for the offset, and an i32.const for the
-  // size.
-  return getWrittenSize(U32LEB(segment)) + 2 + 1 +
-         getWrittenSize(S32LEB(int32_t(size)));
+  // The segment index, an i32.const 0 for the offset (2 bytes), and an
+  // i32.const for the size.
+  return getWrittenSize(U32LEB(segment)) + 2 +
+         getConstSize(Literal(int32_t(size)));
 }
 
-// The size of a new passive data segment, apart from its data.
-size_t getNewSegmentOverhead(const Module& wasm, size_t dataSize) {
-  // The flags and the size of the data.
-  size_t size = 1 + getWrittenSize(U32LEB(dataSize));
+// The size of a new passive data segment with the given amount of data.
+size_t getNewSegmentSize(const Module& wasm, size_t dataSize) {
+  // The flags, the size of the data, and the data itself.
+  size_t size = 1 + getWrittenSize(U32LEB(dataSize)) + dataSize;
   if (wasm.dataSegments.empty()) {
     // The first segment also adds the data count and data sections, each with
     // an id, a size and a count.
@@ -127,7 +128,7 @@ size_t getNewSegmentOverhead(const Module& wasm, size_t dataSize) {
 
 // Returns the bytes the array would have in a data segment, if its values are
 // numeric constants.
-std::optional<std::vector<char>> getPayload(ArrayNewFixed* curr) {
+std::optional<std::string> getPayload(ArrayNewFixed* curr) {
   // An unreachable array has no array type (and its values are not all
   // constants anyway), and an empty one is smaller as it is.
   if (curr->type == Type::unreachable || curr->values.empty()) {
@@ -139,7 +140,7 @@ std::optional<std::vector<char>> getPayload(ArrayNewFixed* curr) {
     return std::nullopt;
   }
   auto elemBytes = element.getByteSize();
-  std::vector<char> payload(curr->values.size() * elemBytes);
+  std::string payload(curr->values.size() * elemBytes, '\0');
   for (Index i = 0; i < curr->values.size(); i++) {
     auto* c = curr->values[i]->dynCast<Const>();
     if (!c) {
@@ -159,13 +160,14 @@ struct Candidate {
   Function* func;
   // Where the array.new_fixed is.
   Expression** location;
-  std::vector<char> payload;
+  std::string payload;
 };
 
 // Candidates with identical payloads, which can share one copy of the bytes.
 struct PayloadGroup {
-  std::string_view payload;
   std::vector<Candidate*> candidates;
+
+  const std::string& getPayload() const { return candidates[0]->payload; }
 };
 
 struct ConstantArraysToData : public Pass {
@@ -226,7 +228,8 @@ struct ConstantArraysToData : public Pass {
         }
       });
 
-    // The map is in function order, so this order is deterministic.
+    // The map is in function order (see ParallelFunctionAnalysis), so this
+    // order is deterministic.
     for (auto& [func, info] : analysis.map) {
       for (auto& candidate : info.candidates) {
         candidates.push_back(std::move(candidate));
@@ -238,13 +241,13 @@ struct ConstantArraysToData : public Pass {
 
   std::vector<PayloadGroup> groupByPayload() {
     std::vector<PayloadGroup> groups;
+    // The keys are views of the candidates' payloads.
     std::unordered_map<std::string_view, Index> groupIndexes;
     for (auto& candidate : candidates) {
-      std::string_view payload(candidate.payload.data(),
-                               candidate.payload.size());
-      auto [it, inserted] = groupIndexes.insert({payload, groups.size()});
+      auto [it, inserted] =
+        groupIndexes.insert({candidate.payload, groups.size()});
       if (inserted) {
-        groups.push_back({payload, {}});
+        groups.emplace_back();
       }
       groups[it->second].candidates.push_back(&candidate);
     }
@@ -256,27 +259,28 @@ struct ConstantArraysToData : public Pass {
   void convert(std::vector<PayloadGroup>& groups) {
     auto reusableSegments = getReusableSegments();
     for (auto& group : groups) {
-      if (auto it = reusableSegments.find(group.payload);
+      const auto& payload = group.getPayload();
+      if (auto it = reusableSegments.find(payload);
           it != reusableSegments.end()) {
         if (getCodeSavings(group, it->second) > 0) {
           replaceArrays(group, it->second);
         }
         continue;
       }
-      // A new segment goes at the end.
+      // A new segment goes at the end. It is worth adding if the code shrinks
+      // by more than the size of the segment.
       Index segment = wasm->dataSegments.size();
-      auto savings =
-        getCodeSavings(group, segment) - int64_t(group.payload.size()) -
-        int64_t(getNewSegmentOverhead(*wasm, group.payload.size()));
-      if (savings > 0) {
-        addSegment(group.payload);
+      if (getCodeSavings(group, segment) >
+          int64_t(getNewSegmentSize(*wasm, payload.size()))) {
+        addSegment(payload);
         replaceArrays(group, segment);
       }
     }
   }
 
   // Returns the passive segments that are never dropped, by their contents (the
-  // first one, if several are identical).
+  // first one, if several are identical). The keys are views of the segments'
+  // data, which stays in place as we add more segments.
   std::unordered_map<std::string_view, Index> getReusableSegments() {
     std::unordered_map<std::string_view, Index> reusableSegments;
     for (Index i = 0; i < wasm->dataSegments.size(); i++) {
@@ -304,7 +308,7 @@ struct ConstantArraysToData : public Pass {
     return savings;
   }
 
-  void addSegment(std::string_view payload) {
+  void addSegment(const std::string& payload) {
     auto name = Names::getValidDataSegmentName(*wasm, "constant-array-data");
     // Without a memory and an offset, the segment is passive.
     wasm->addDataSegment(Builder::makeDataSegment(
