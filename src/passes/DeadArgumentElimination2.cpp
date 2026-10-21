@@ -1097,7 +1097,7 @@ struct Optimizer
       // Add new vars to replace the removed params.
       for (Index i = removedParams.size(); i > 0; --i) {
         auto& [type, name] = removedParams[i - 1];
-        if (type.isNonNullable()) {
+        if (type.isNonNullableRef()) {
           hasNewNonNullableLocal = true;
         }
         Builder::addVar(func, name, type);

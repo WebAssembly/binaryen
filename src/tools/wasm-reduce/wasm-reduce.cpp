@@ -1402,7 +1402,7 @@ struct Reducer
     auto* curr = getCurrent();
 
     // References.
-    if (curr->type.isNullable() && !curr->is<RefNull>()) {
+    if (curr->type.isNullableRef() && !curr->is<RefNull>()) {
       RefNull* n = builder->makeRefNull(curr->type.getHeapType());
       return tryToReplaceCurrent(n);
     }

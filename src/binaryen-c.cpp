@@ -158,7 +158,7 @@ Literal fromBinaryenLiteral(BinaryenLiteral x) {
       case HeapType::nocont:
       case HeapType::noexn:
       case HeapType::nowaitqueue:
-        assert(type.isNullable());
+        assert(type.isNullableRef());
         return Literal::makeNull(heapType);
     }
   }
@@ -397,7 +397,7 @@ BinaryenHeapType BinaryenTypeGetHeapType(BinaryenType type) {
   return Type(type).getHeapType().getID();
 }
 bool BinaryenTypeIsNullable(BinaryenType type) {
-  return Type(type).isNullable();
+  return Type(type).isNullableRef();
 }
 BinaryenType BinaryenTypeFromHeapType(BinaryenHeapType heapType,
                                       bool nullable) {

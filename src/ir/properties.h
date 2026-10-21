@@ -535,11 +535,11 @@ inline MemoryOrder getMemoryOrder(Expression* curr) {
 inline bool hasUnwritableTypeImmediate(Expression* curr) {
   if (auto* sn = curr->dynCast<StringNew>()) {
     // See BinaryInstWriter::visitStringNew.
-    return sn->ref->type.isNull();
+    return sn->ref->type.isBottomRef();
   }
   if (auto* se = curr->dynCast<StringEncode>()) {
     // See BinaryInstWriter::visitStringEncode.
-    return se->array->type.isNull();
+    return se->array->type.isBottomRef();
   }
 
 #define DELEGATE_ID curr->_id
@@ -547,7 +547,7 @@ inline bool hasUnwritableTypeImmediate(Expression* curr) {
 #define DELEGATE_FIELD_IMMEDIATE_TYPED_CHILD(id, field)                        \
   if (curr->cast<id>()->field) {                                               \
     auto type = curr->cast<id>()->field->type;                                 \
-    if (type == Type::unreachable || type.isNull()) {                          \
+    if (type == Type::unreachable || type.isBottomRef()) {                     \
       return true;                                                             \
     }                                                                          \
   }
