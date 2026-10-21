@@ -13,9 +13,11 @@
 
   ;; CHECK:      (type $3 (func (param (ref null $struct)) (result (ref null $struct))))
 
-  ;; CHECK:      (type $4 (func (param (ref null $struct) (ref null $struct)) (result (ref null $struct))))
+  ;; CHECK:      (type $4 (func (param (ref $struct))))
 
-  ;; CHECK:      (type $5 (func (param i32) (result i32)))
+  ;; CHECK:      (type $5 (func (param (ref null $struct) (ref null $struct)) (result (ref null $struct))))
+
+  ;; CHECK:      (type $6 (func (param i32) (result i32)))
 
   ;; CHECK:      (type $arr (array (mut i32)))
   (type $arr (array (mut i32)))
@@ -78,6 +80,55 @@
       (local.get 0)
       (struct.new_default $struct)
       (local.get 0)
+    )
+  )
+
+  ;; CHECK:      (func $no-escape-cmpxchg-expected-null-ref (type $4) (param $x (ref $struct))
+  ;; CHECK-NEXT:  (local $1 (ref null $struct))
+  ;; CHECK-NEXT:  (local $2 nullref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block $block (result (ref none))
+  ;; CHECK-NEXT:    (br_on_cast_fail $block (ref none) (ref none)
+  ;; CHECK-NEXT:     (block (result (ref none))
+  ;; CHECK-NEXT:      (local.set $2
+  ;; CHECK-NEXT:       (ref.null none)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (block (result nullref)
+  ;; CHECK-NEXT:        (local.set $1
+  ;; CHECK-NEXT:         (ref.null none)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (ref.null none)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (local.get $x)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (block ;; (replaces unreachable StructGet we can't emit)
+  ;; CHECK-NEXT:       (drop
+  ;; CHECK-NEXT:        (local.get $2)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (unreachable)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $no-escape-cmpxchg-expected-null-ref (param $x (ref $struct))
+    ;; When `ref` is null, replacing the cmpxchg with a struct.get refines the
+    ;; result type from the replacement type `(ref $struct)` to `(ref none)`,
+    ;; which requires refinalization.
+    (drop
+      (block $block (result (ref $struct))
+        (br_on_cast_fail $block (ref $struct) (ref $struct)
+          (struct.atomic.rmw.cmpxchg $struct 0
+            (ref.null none)
+            (struct.new_default $struct)
+            (local.get $x)
+          )
+        )
+      )
     )
   )
 
@@ -587,7 +638,7 @@
     )
   )
 
-  ;; CHECK:      (func $rmw-cmpxchg-ref (type $4) (param $0 (ref null $struct)) (param $1 (ref null $struct)) (result (ref null $struct))
+  ;; CHECK:      (func $rmw-cmpxchg-ref (type $5) (param $0 (ref null $struct)) (param $1 (ref null $struct)) (result (ref null $struct))
   ;; CHECK-NEXT:  (local $2 (ref null $struct))
   ;; CHECK-NEXT:  (local $3 (ref null $struct))
   ;; CHECK-NEXT:  (local $4 eqref)
@@ -875,7 +926,7 @@
     )
   )
 
-  ;; CHECK:      (func $array-rmw-nonconstant-index (type $5) (param $idx i32) (result i32)
+  ;; CHECK:      (func $array-rmw-nonconstant-index (type $6) (param $idx i32) (result i32)
   ;; CHECK-NEXT:  (array.atomic.rmw.add $arr
   ;; CHECK-NEXT:   (array.new_fixed $arr 2
   ;; CHECK-NEXT:    (i32.const 0)
@@ -961,12 +1012,14 @@
   ;; CHECK:      (func $cmpxchg-expected-first (type $2)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (local $1 (ref null (exact $struct)))
-  ;; CHECK-NEXT:  (local $2 (ref null $array))
+  ;; CHECK-NEXT:  (local $2 i32)
+  ;; CHECK-NEXT:  (local $3 i32)
+  ;; CHECK-NEXT:  (local $4 (ref null $array))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result (ref null $array))
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (block (result nullref)
-  ;; CHECK-NEXT:      (local.set $2
+  ;; CHECK-NEXT:      (local.set $4
   ;; CHECK-NEXT:       (ref.null none)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (ref.null none)
@@ -981,15 +1034,21 @@
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (array.new_default $array
-  ;; CHECK-NEXT:      (i32.const 2)
+  ;; CHECK-NEXT:     (block (result nullref)
+  ;; CHECK-NEXT:      (local.set $2
+  ;; CHECK-NEXT:       (i32.const 0)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.set $3
+  ;; CHECK-NEXT:       (i32.const 0)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (ref.null none)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (block (result (ref null $array))
   ;; CHECK-NEXT:     (drop
   ;; CHECK-NEXT:      (ref.null none)
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (local.get $2)
+  ;; CHECK-NEXT:     (local.get $4)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -1117,7 +1176,9 @@
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (array.new_fixed $inner 0)
+  ;; CHECK-NEXT:     (block (result nullref)
+  ;; CHECK-NEXT:      (ref.null none)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (block (result eqref)
   ;; CHECK-NEXT:     (drop
@@ -1138,7 +1199,9 @@
     (drop
       ;; Then `expected` gets optimized, creating a new scratch local. Since the
       ;; flower is already created, the index of the scratch local would be out
-      ;; of bounds if we tried to look it up in the LocalGraph.
+      ;; of bounds if we tried to look it up in the original LocalGraph. This
+      ;; still works fine because we reset the LocalGraph after each
+      ;; optimization.
       (struct.atomic.rmw.cmpxchg $struct 0
         (struct.new_default $struct)
         (array.new_fixed $inner 0)
@@ -1169,25 +1232,32 @@
   ;; CHECK-NEXT:      (ref.null none)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.set $3
+  ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (block (result nullref)
   ;; CHECK-NEXT:      (ref.null none)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.set $4
-  ;; CHECK-NEXT:     (array.new_fixed $inner 0)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result nullref)
+  ;; CHECK-NEXT:      (ref.null none)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.set $2
   ;; CHECK-NEXT:     (local.get $1)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (if
-  ;; CHECK-NEXT:     (ref.eq
-  ;; CHECK-NEXT:      (local.get $1)
-  ;; CHECK-NEXT:      (local.get $3)
+  ;; CHECK-NEXT:     (block (result i32)
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (local.get $1)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (ref.null none)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (i32.const 0)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (then
-  ;; CHECK-NEXT:      (local.set $1
-  ;; CHECK-NEXT:       (local.get $4)
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (ref.null none)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
@@ -1252,25 +1322,32 @@
   ;; CHECK-NEXT:      (ref.null none)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.set $3
+  ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (block (result nullref)
   ;; CHECK-NEXT:      (ref.null none)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.set $4
-  ;; CHECK-NEXT:     (struct.new_default $inner)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result nullref)
+  ;; CHECK-NEXT:      (ref.null none)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.set $2
   ;; CHECK-NEXT:     (local.get $0)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (if
-  ;; CHECK-NEXT:     (ref.eq
-  ;; CHECK-NEXT:      (local.get $0)
-  ;; CHECK-NEXT:      (local.get $3)
+  ;; CHECK-NEXT:     (block (result i32)
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (local.get $0)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (ref.null none)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (i32.const 0)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (then
-  ;; CHECK-NEXT:      (local.set $0
-  ;; CHECK-NEXT:       (local.get $4)
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (ref.null none)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
@@ -1313,25 +1390,32 @@
   ;; CHECK-NEXT:      (ref.null (shared none))
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.set $3
+  ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (block (result (ref null (shared none)))
   ;; CHECK-NEXT:      (ref.null (shared none))
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.set $4
-  ;; CHECK-NEXT:     (struct.new_default $shared-inner)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result (ref null (shared none)))
+  ;; CHECK-NEXT:      (ref.null (shared none))
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.set $2
   ;; CHECK-NEXT:     (local.get $0)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (if
-  ;; CHECK-NEXT:     (ref.eq
-  ;; CHECK-NEXT:      (local.get $0)
-  ;; CHECK-NEXT:      (local.get $3)
+  ;; CHECK-NEXT:     (block (result i32)
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (local.get $0)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (ref.null (shared none))
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (i32.const 0)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (then
-  ;; CHECK-NEXT:      (local.set $0
-  ;; CHECK-NEXT:       (local.get $4)
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (ref.null (shared none))
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
@@ -1462,6 +1546,8 @@
 
   ;; CHECK:      (type $1 (func (param (ref $array))))
 
+  ;; CHECK:      (type $2 (func (param (ref eq))))
+
   ;; CHECK:      (func $array-cmpxchg-expected (type $1) (param $array (ref $array))
   ;; CHECK-NEXT:  (local $1 eqref)
   ;; CHECK-NEXT:  (local $2 (ref null $array))
@@ -1504,6 +1590,64 @@
           (i32.const 1)
         )
         (ref.null none)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $array-cmpxchg-expected-null-ref (type $2) (param $x (ref eq))
+  ;; CHECK-NEXT:  (local $1 eqref)
+  ;; CHECK-NEXT:  (local $2 nullref)
+  ;; CHECK-NEXT:  (local $3 i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block $block (result (ref none))
+  ;; CHECK-NEXT:    (br_on_cast_fail $block (ref none) (ref none)
+  ;; CHECK-NEXT:     (block (result (ref none))
+  ;; CHECK-NEXT:      (local.set $2
+  ;; CHECK-NEXT:       (ref.null none)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.set $3
+  ;; CHECK-NEXT:       (i32.const 0)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (block (result nullref)
+  ;; CHECK-NEXT:        (local.set $1
+  ;; CHECK-NEXT:         (ref.null none)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (ref.null none)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (local.get $x)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (block ;; (replaces unreachable ArrayGet we can't emit)
+  ;; CHECK-NEXT:       (drop
+  ;; CHECK-NEXT:        (local.get $2)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (drop
+  ;; CHECK-NEXT:        (local.get $3)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (unreachable)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $array-cmpxchg-expected-null-ref (param $x (ref eq))
+    ;; When `ref` is null, replacing the cmpxchg with an array.get refines the
+    ;; result type from `(ref eq)` to `(ref none)`, requiring refinalization.
+    (drop
+      (block $block (result (ref eq))
+        (br_on_cast_fail $block (ref eq) (ref eq)
+          (array.atomic.rmw.cmpxchg $array
+            (ref.null none)
+            (i32.const 0)
+            (array.new_default $array
+              (i32.const 1)
+            )
+            (local.get $x)
+          )
+        )
       )
     )
   )
@@ -1606,6 +1750,103 @@
         (array.new_default $array (i32.const 1))
         (call $effect-eq)
       )
+    )
+  )
+)
+
+(module
+  ;; CHECK:      (type $struct (shared (struct (field (mut (ref null $struct))))))
+  (type $struct (shared (struct (field (mut (ref null $struct))))))
+  ;; CHECK:      (type $1 (func (result i32)))
+
+  ;; CHECK:      (func $must-optimize-ref-eq (type $1) (result i32)
+  ;; CHECK-NEXT:  (local $local (ref null $struct))
+  ;; CHECK-NEXT:  (local $1 (ref null $struct))
+  ;; CHECK-NEXT:  (local $2 (ref null $struct))
+  ;; CHECK-NEXT:  (local $3 (ref null (shared eq)))
+  ;; CHECK-NEXT:  (local $4 (ref null $struct))
+  ;; CHECK-NEXT:  (local $5 (ref null $struct))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result (ref null $struct))
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result (ref null (shared none)))
+  ;; CHECK-NEXT:      (local.set $1
+  ;; CHECK-NEXT:       (ref.null (shared none))
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (ref.null (shared none))
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result (ref null (shared none)))
+  ;; CHECK-NEXT:      (local.set $5
+  ;; CHECK-NEXT:       (ref.null (shared none))
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (ref.null (shared none))
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $4
+  ;; CHECK-NEXT:     (struct.new_default $struct)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $2
+  ;; CHECK-NEXT:     (local.get $1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (block (result i32)
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (local.get $1)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (ref.null (shared none))
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (then
+  ;; CHECK-NEXT:      (local.set $1
+  ;; CHECK-NEXT:       (local.get $4)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $2)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (ref.is_null
+  ;; CHECK-NEXT:   (block (result (ref null $struct))
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null (shared none))
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $must-optimize-ref-eq (result i32)
+    (local $local (ref null $struct))
+    (drop
+      ;; 2. Next this will be optimized. The local from (1) representing field 0
+      ;; will be compared with a local holding the expected value below. This
+      ;; ref.eq comparison should fail if we optimize correctly, leaving the
+      ;; local from (1) with its default null value.
+      (struct.atomic.rmw.cmpxchg acqrel acqrel $struct 0
+        (local.tee $local
+          ;; 1. This will be optimized. The local representing field 0 will be
+          ;; set to null.
+          (struct.new_default $struct)
+        )
+        ;; 3. This is the next allocation to be optimized. When it is replaced
+        ;; with a ref.null, it would cause the ref.eq comparison created in (2)
+        ;; to start succeeding incorrectly, except that we optimize the ref.eq
+        ;; when we see that this allocation flows only into one side of it.
+        (struct.new_default $struct) ;; Expected
+        ;; 4. This allocation is not optimized, so we would end up incorrectly
+        ;; writing this non-null value into the local from (1) if we had not
+        ;; optimized the ref.eq.
+        (struct.new_default $struct) ;; Replacement
+      )
+    )
+    (ref.is_null
+      ;; This is replaced with a get of the local from (1), which would
+      ;; incorrectly contain the non-null replacement value if we had not
+      ;; optimized the ref.eq.
+      (struct.get $struct 0 (local.get $local))
     )
   )
 )

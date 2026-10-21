@@ -21,6 +21,7 @@
 
 #include "ir/effects.h"
 #include "ir/module-utils.h"
+#include "ir/subtypes.h"
 #include "pass.h"
 #include "support/graph_traversal.h"
 #include "support/strongly_connected_components.h"
@@ -44,14 +45,87 @@ struct FuncInfo {
   std::unordered_set<HeapType> indirectCalledTypes;
 };
 
+// Only funcs that are referenced may be the target of an indirect call. A
+// function is referenced if:
+// - It appears in a ref.func expression (this includes `elem` statements
+// because of how our IR is represented).
+// - It's exported, because it may flow back to us as a reference.
+//
+// If a function doesn't meet any of these criteria, it can't be the target of
+// an indirect call and we don't need to include its effects in indirect calls.
+std::unordered_set<Function*> getReferencedFuncs(Module& module,
+                                                 PassRunner& passRunner) {
+  struct AddressedFuncsWalker : WalkerPass<PostWalker<AddressedFuncsWalker>> {
+    // For each function, which functions are referenced in its body.
+    // The key for `nullptr` contains references that are not in a function
+    // (e.g. `elem` segments).
+    std::unordered_map<Function*, std::unordered_set<Function*>>&
+      allReferencedFuncs;
+    // Points to `allReferencedFuncs`.
+    std::unordered_set<Function*>* referencedFuncs = nullptr;
+
+    AddressedFuncsWalker(
+      std::unordered_map<Function*, std::unordered_set<Function*>>&
+        allReferencedFuncs)
+      : allReferencedFuncs(allReferencedFuncs),
+        referencedFuncs(&allReferencedFuncs[nullptr]) {}
+
+    std::unique_ptr<Pass> create() override {
+      return std::make_unique<AddressedFuncsWalker>(allReferencedFuncs);
+    }
+
+    bool isFunctionParallel() override { return true; }
+
+    bool modifiesBinaryenIR() override { return false; }
+
+    void doWalkFunction(Function* func) {
+      referencedFuncs = &allReferencedFuncs.at(func);
+      walk(func->body);
+    }
+
+    void visitRefFunc(RefFunc* refFunc) {
+      referencedFuncs->insert(getModule()->getFunction(refFunc->func));
+    }
+  };
+
+  std::unordered_map<Function*, std::unordered_set<Function*>>
+    allReferencedFuncs;
+  for (auto& func : module.functions) {
+    allReferencedFuncs[func.get()];
+  }
+
+  AddressedFuncsWalker walker(allReferencedFuncs);
+  walker.run(&passRunner, &module);
+  walker.runOnModuleCode(&passRunner, &module);
+
+  std::unordered_set<Function*> mergedReferencedFuncs;
+  for (auto& [_, referencedFuncs] : allReferencedFuncs) {
+    mergedReferencedFuncs.merge(referencedFuncs);
+  }
+
+  for (const auto& export_ : module.exports) {
+    if (export_->kind != ExternalKind::Function) {
+      continue;
+    }
+
+    mergedReferencedFuncs.insert(
+      module.getFunction(*export_->getInternalName()));
+  }
+
+  return mergedReferencedFuncs;
+}
+
 std::map<Function*, FuncInfo> analyzeFuncs(Module& module,
                                            const PassOptions& passOptions) {
   ModuleUtils::ParallelFunctionAnalysis<FuncInfo> analysis(
     module, [&](Function* func, FuncInfo& funcInfo) {
       if (func->imported()) {
-        // Imports can do anything, so we need to assume the worst anyhow,
-        // which is the same as not specifying any effects for them in the
-        // map (which we do by not setting funcInfo.effects).
+        // Imports can do almost anything, so we need to assume the worst
+        // anyhow, which is the same as not specifying any effects for them in
+        // the map (which we do by not setting funcInfo.effects).
+        //
+        // TODO: We can be more precise here since imports can't mutate
+        // globals/tables/memories that aren't imported or exported.
         return;
       }
 
@@ -64,10 +138,12 @@ std::map<Function*, FuncInfo> analyzeFuncs(Module& module,
         // below.
         funcInfo.effects->calls = false;
 
-        // Clear throws as well, as we are "forgetting" calls right now, and
-        // want to forget their throwing effect as well. If we see something
-        // else that throws, below, then we'll note that there.
+        // Clear throws and suspends as well, as we are "forgetting" calls right
+        // now, and want to forget their throwing and suspending effects as
+        // well. If we see something else that throws or suspends, below, then
+        // we'll note that there.
         funcInfo.effects->throws_ = false;
+        funcInfo.effects->suspends = false;
 
         struct CallScanner
           : public PostWalker<CallScanner,
@@ -105,11 +181,15 @@ std::map<Function*, FuncInfo> analyzeFuncs(Module& module,
               assert(options.worldMode == WorldMode::Open);
               funcInfo.effects = std::nullopt;
             } else {
-              // No call here, but update throwing if we see it. (Only do so,
-              // however, if we have effects; if we cleared it - see before -
-              // then we assume the worst anyhow, and have nothing to update.)
+              // No call here, but update throwing and suspending if we see it.
+              // (Only do so, however, if we have effects; if we cleared it -
+              // see before - then we assume the worst anyhow, and have nothing
+              // to update.)
               if (effects.throws_ && funcInfo.effects) {
                 funcInfo.effects->throws_ = true;
+              }
+              if (effects.suspends && funcInfo.effects) {
+                funcInfo.effects->suspends = true;
               }
             }
           }
@@ -144,6 +224,7 @@ using CallGraph =
 
 CallGraph buildCallGraph(const Module& module,
                          const std::map<Function*, FuncInfo>& funcInfos,
+                         const std::unordered_set<Function*>& referencedFuncs,
                          WorldMode worldMode) {
   CallGraph callGraph;
   if (worldMode == WorldMode::Open) {
@@ -179,16 +260,18 @@ CallGraph buildCallGraph(const Module& module,
     }
 
     // Type -> Function
-    callGraph[caller->type.getHeapType()].insert(caller);
+    if (referencedFuncs.contains(caller)) {
+      callGraph[caller->type.getHeapType()].insert(caller);
+    }
   }
 
   // Type -> Type
-  // Do a DFS up the type heirarchy for all function implementations.
+  // Do a DFS up the type hierarchy for all function implementations.
   // We are essentially walking up each supertype chain and adding edges from
   // super -> subtype, but doing it via DFS to avoid repeated work.
   Graph superTypeGraph(allFunctionTypes.begin(),
                        allFunctionTypes.end(),
-                       [&callGraph](auto&& push, HeapType t) {
+                       [&callGraph](const auto& push, HeapType t) {
                          // Not needed except that during lookup we expect the
                          // key to exist.
                          callGraph[t];
@@ -199,6 +282,29 @@ CallGraph buildCallGraph(const Module& module,
                          }
                        });
   (void)superTypeGraph.traverseDepthFirst();
+
+  // Add Type -> Function edges to account for inexact imports. For (ref.func)
+  // on a *defined* function, we know its exact type and can add a single
+  // Type -> Function edge in the graph (done above). We know that indirect
+  // calls to strict subtypes of the function can't reach the function.
+  //
+  // OTOH for inexactly imported functions, they may be downcasted to a subtype.
+  // To account for this, add Type -> Function edges to all subtypes for
+  // inexactly imported functions.
+  SubTypes subtypes(module);
+  ModuleUtils::iterImportedFunctions(module, [&](Function* func) {
+    if (func->type.isExact()) {
+      return;
+    }
+    if (!referencedFuncs.contains(func)) {
+      return;
+    }
+
+    subtypes.iterSubTypes(func->type.getHeapType(), [&](auto subtype, int _) {
+      callGraph[subtype].insert(func);
+      return true;
+    });
+  });
 
   return callGraph;
 }
@@ -221,9 +327,9 @@ void mergeMaybeEffects(std::shared_ptr<EffectAnalyzer>& dest,
   dest->mergeIn(*src);
 }
 
-// Propagate effects from callees to callers transitively
-// e.g. if A -> B -> C (A calls B which calls C)
-// Then B inherits effects from C and A inherits effects from both B and C.
+// Propagate effects from callees to callers transitively and populate direct
+// and indirect call effects. e.g. if A -> B -> C (A calls B which calls C),
+// then B inherits effects from C and A inherits effects from both B and C.
 //
 // Generate SCC for the call graph, then traverse it in reverse topological
 // order processing each callee before its callers. When traversing:
@@ -235,7 +341,7 @@ void propagateEffects(
   const PassOptions& passOptions,
   std::map<Function*, FuncInfo>& funcInfos,
   std::unordered_map<HeapType, std::shared_ptr<const EffectAnalyzer>>&
-    typeEffects,
+    indirectCallEffects,
   const CallGraph& callGraph) {
   // We only care about Functions that are roots, not types.
   // A type would be a root if a function exists with that type, but no-one
@@ -335,8 +441,8 @@ void propagateEffects(
     // Assign each function's effects to its CC effects.
     for (auto node : cc) {
       std::visit(overloaded{[&](HeapType type) {
-                              if (ccEffects != UnknownEffects) {
-                                typeEffects[type] = ccEffects;
+                              if (ccEffects) {
+                                indirectCallEffects[type] = ccEffects;
                               }
                             },
                             [&](Function* f) { f->effects = ccEffects; }},
@@ -350,9 +456,12 @@ struct GenerateGlobalEffects : public Pass {
     std::map<Function*, FuncInfo> funcInfos =
       analyzeFuncs(*module, getPassOptions());
 
-    auto callGraph =
-      buildCallGraph(*module, funcInfos, getPassOptions().worldMode);
+    auto referencedFuncs = getReferencedFuncs(*module, *getPassRunner());
 
+    auto callGraph = buildCallGraph(
+      *module, funcInfos, referencedFuncs, getPassOptions().worldMode);
+
+    module->indirectCallEffects.clear();
     propagateEffects(*module,
                      getPassOptions(),
                      funcInfos,
@@ -366,6 +475,7 @@ struct DiscardGlobalEffects : public Pass {
     for (auto& func : module->functions) {
       func->effects.reset();
     }
+    module->indirectCallEffects.clear();
   }
 };
 

@@ -76,10 +76,12 @@ const char* FP16Feature = "fp16";
 const char* BulkMemoryOptFeature = "bulk-memory-opt";
 const char* CallIndirectOverlongFeature = "call-indirect-overlong";
 const char* CustomDescriptorsFeature = "custom-descriptors";
-const char* RelaxedAtomicsFeature = "relaxed-atomics";
+const char* AcquireReleaseAtomicsFeature = "acquire-release-atomics";
 const char* MultibyteFeature = "multibyte";
 const char* CustomPageSizesFeature = "custom-page-sizes";
 const char* WideArithmeticFeature = "wide-arithmetic";
+const char* CompactImportsFeature = "compact-imports";
+const char* RelaxedAtomicsFeature = "relaxed-atomics";
 
 } // namespace BinaryConsts::CustomSections
 
@@ -90,10 +92,11 @@ const Name InlineHint = "metadata.code.inline";
 const Name RemovableIfUnusedHint = "binaryen.removable.if.unused";
 const Name JSCalledHint = "binaryen.js.called";
 const Name IdempotentHint = "binaryen.idempotent";
+const Name ToolchainInlineHint = "binaryen.inline";
+const Name NoReturnHint = "binaryen.noreturn";
 
 } // namespace Annotations
 
-Name STACK_POINTER("__stack_pointer");
 Name MODULE("module");
 Name START("start");
 Name GLOBAL("global");
@@ -118,17 +121,11 @@ Name NULL_("null");
 Name CALL("call");
 Name CALL_INDIRECT("call_indirect");
 Name BLOCK("block");
-Name BR_IF("br_if");
 Name THEN("then");
 Name ELSE("else");
-Name _NAN("NaN");
-Name _INFINITY("Infinity");
-Name NEG_INFINITY("-infinity");
-Name NEG_NAN("-nan");
 Name CASE("case");
 Name BR("br");
 Name FUNCREF("funcref");
-Name FAKE_RETURN("__binaryen_fake_return");
 Name DELEGATE_CALLER_TARGET("__binaryen_delegate_caller_target");
 Name MUT("mut");
 Name SPECTEST("spectest");
@@ -810,8 +807,7 @@ void WideIntAddSub::finalize() {
       rightHigh->type == Type::unreachable) {
     type = Type::unreachable;
   } else {
-    static Type i64Pair = Types::getI64Pair();
-    type = i64Pair;
+    type = Types::getI64Pair();
   }
 }
 
@@ -819,8 +815,7 @@ void WideIntMul::finalize() {
   if (left->type == Type::unreachable || right->type == Type::unreachable) {
     type = Type::unreachable;
   } else {
-    static Type i64Pair = Types::getI64Pair();
-    type = i64Pair;
+    type = Types::getI64Pair();
   }
 }
 
@@ -1086,7 +1081,7 @@ void CallRef::finalize() {
     return;
   }
   assert(target->type.isRef());
-  if (target->type.isNull()) {
+  if (target->type.isBottomRef()) {
     type = getMaximallyUninhabitable(type);
     return;
   }
@@ -1117,7 +1112,7 @@ void RefCast::finalize() {
   }
 
   if (desc) {
-    if (desc->type.isNull()) {
+    if (desc->type.isBottomRef()) {
       // Cast will never be executed and the instruction will not be emitted.
       // Model this with an uninhabitable cast type.
       type = desc->type.with(NonNullable);
@@ -1129,7 +1124,7 @@ void RefCast::finalize() {
     assert(heapType);
     auto exactness = desc->type.getExactness();
     type = type.with(*heapType).with(exactness);
-    if (ref->type.isNonNullable()) {
+    if (ref->type.isNonNullableRef()) {
       type = type.with(NonNullable);
     }
     return;
@@ -1156,7 +1151,7 @@ void RefGetDesc::finalize() {
     return;
   }
 
-  if (ref->type.isNull()) {
+  if (ref->type.isBottomRef()) {
     // The operation will trap. Model it as returning an uninhabitable type.
     type = ref->type.with(NonNullable);
   } else {
@@ -1187,7 +1182,7 @@ void BrOn::finalize() {
     castType = newCastType;
     assert(castType.isRef());
   } else if (op == BrOnCastDescEq || op == BrOnCastDescEqFail) {
-    if (desc->type.isNull()) {
+    if (desc->type.isBottomRef()) {
       // Cast will never be executed and the instruction will not be emitted.
       // Model this with an uninhabitable cast type.
       castType = desc->type.with(NonNullable);
@@ -1199,7 +1194,7 @@ void BrOn::finalize() {
       assert(heapType);
       auto exactness = desc->type.getExactness();
       castType = castType.with(*heapType).with(exactness);
-      if (ref->type.isNonNullable()) {
+      if (ref->type.isNonNullableRef()) {
         castType = castType.with(NonNullable);
       }
     }
@@ -1216,9 +1211,13 @@ void BrOn::finalize() {
       return;
     case BrOnCast:
     case BrOnCastDescEq:
-      if (castType.isNullable()) {
+      if (castType.isNullableRef()) {
         // Nulls take the branch, so the result is non-nullable.
         type = ref->type.with(NonNullable);
+      } else if (desc && desc->type.isBottomRef()) {
+        // Cast will never be executed and the instruction will not be emitted.
+        // Model this with an uninhabitable result type.
+        type = desc->type.with(NonNullable);
       } else {
         // Nulls do not take the branch, so the result is non-nullable only if
         // the input is.
@@ -1227,7 +1226,7 @@ void BrOn::finalize() {
       return;
     case BrOnCastFail:
     case BrOnCastDescEqFail:
-      if (castType.isNullable()) {
+      if (castType.isNullableRef()) {
         // Nulls do not take the branch, so the result is non-nullable only if
         // the input is.
         type = castType.with(ref->type.getNullability());
@@ -1256,7 +1255,7 @@ Type BrOn::getSentType() {
     case BrOnCast:
     case BrOnCastDescEq:
       // The same as the result type of br_on_cast_fail.
-      if (castType.isNullable()) {
+      if (castType.isNullableRef()) {
         return castType.with(ref->type.getNullability());
       } else {
         return castType;
@@ -1267,7 +1266,12 @@ Type BrOn::getSentType() {
       if (ref->type == Type::unreachable) {
         return Type::unreachable;
       }
-      if (castType.isNullable()) {
+      if (desc && desc->type.isBottomRef()) {
+        // Cast will never be executed and the branch will not be taken.
+        // Model this with an uninhabitable sent type.
+        return desc->type.with(NonNullable);
+      }
+      if (castType.isNullableRef()) {
         return ref->type.with(NonNullable);
       } else {
         return ref->type;
@@ -1288,7 +1292,7 @@ void StructNew::finalize() {
 void StructGet::finalize() {
   if (ref->type == Type::unreachable) {
     type = Type::unreachable;
-  } else if (ref->type.isNull()) {
+  } else if (ref->type.isBottomRef()) {
     // See comment on CallRef for explanation.
     if (type.isRef()) {
       // TODO: Make this exact.
@@ -1310,7 +1314,7 @@ void StructSet::finalize() {
 void StructRMW::finalize() {
   if (ref->type == Type::unreachable || value->type == Type::unreachable) {
     type = Type::unreachable;
-  } else if (ref->type.isNull()) {
+  } else if (ref->type.isBottomRef()) {
     // We have no struct type to read the field off of, but the most precise
     // possible option is the type of the value we are using to make the
     // modification.
@@ -1324,16 +1328,37 @@ void StructCmpxchg::finalize() {
   if (ref->type == Type::unreachable || expected->type == Type::unreachable ||
       replacement->type == Type::unreachable) {
     type = Type::unreachable;
-  } else if (ref->type.isNull()) {
+  } else if (ref->type.isBottomRef()) {
     type = replacement->type;
   } else {
     type = ref->type.getHeapType().getStruct().fields[index].type;
   }
 }
 
-void StructWait::finalize() { type = Type::i32; }
+void StructWait::finalize() {
+  if (ref->type == Type::unreachable || waitqueue->type == Type::unreachable ||
+      expected->type == Type::unreachable ||
+      timeout->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else {
+    type = Type::i32;
+  }
+}
 
-void StructNotify::finalize() { type = Type::i32; }
+void WaitqueueNew::finalize() {
+  type = Type(HeapTypes::sharedWaitqueue, NonNullable);
+}
+
+void WaitqueueNotify::finalize() {
+  if (waitqueue->type == Type::unreachable ||
+      count->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else {
+    type = Type::i32;
+  }
+}
+
+void Publish::finalize() { type = ref->type; }
 
 void ArrayNew::finalize() {
   if (size->type == Type::unreachable ||
@@ -1366,7 +1391,7 @@ void ArrayNewFixed::finalize() {
 void ArrayGet::finalize() {
   if (ref->type == Type::unreachable || index->type == Type::unreachable) {
     type = Type::unreachable;
-  } else if (ref->type.isNull()) {
+  } else if (ref->type.isBottomRef()) {
     // See comment on CallRef for explanation.
     if (type.isRef()) {
       // TODO: Make this exact.
@@ -1452,7 +1477,7 @@ void ArrayRMW::finalize() {
   if (ref->type == Type::unreachable || index->type == Type::unreachable ||
       value->type == Type::unreachable) {
     type = Type::unreachable;
-  } else if (ref->type.isNull()) {
+  } else if (ref->type.isBottomRef()) {
     // We have no array type to read the field off of, but the most precise
     // possible option is the type of the value we are using to make the
     // modification.
@@ -1467,7 +1492,7 @@ void ArrayCmpxchg::finalize() {
       expected->type == Type::unreachable ||
       replacement->type == Type::unreachable) {
     type = Type::unreachable;
-  } else if (ref->type.isNull()) {
+  } else if (ref->type.isBottomRef()) {
     type = replacement->type;
   } else {
     type = ref->type.getHeapType().getArray().element.type;
@@ -1612,7 +1637,7 @@ void Resume::finalize() {
   if (handleUnreachableOperands(this)) {
     return;
   }
-  if (cont->type.isNull()) {
+  if (cont->type.isBottomRef()) {
     type = getMaximallyUninhabitable(type);
     return;
   }
@@ -1631,7 +1656,7 @@ void ResumeThrow::finalize() {
   if (handleUnreachableOperands(this)) {
     return;
   }
-  if (cont->type.isNull()) {
+  if (cont->type.isBottomRef()) {
     type = getMaximallyUninhabitable(type);
     return;
   }
@@ -1650,7 +1675,7 @@ void StackSwitch::finalize() {
   if (handleUnreachableOperands(this)) {
     return;
   }
-  if (cont->type.isNull()) {
+  if (cont->type.isBottomRef()) {
     type = getMaximallyUninhabitable(type);
     return;
   }
@@ -1736,7 +1761,10 @@ Type Function::getLocalType(Index index) {
   }
 }
 
-void Function::clearNames() { localNames.clear(); }
+void Function::clearNames() {
+  localNames.clear();
+  explicitLabelNames.clear();
+}
 
 void Function::clearDebugInfo() {
   localIndices.clear();

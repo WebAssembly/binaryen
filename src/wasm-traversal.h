@@ -175,7 +175,7 @@ struct Walker : public VisitorType {
     if (segment->isActive()) {
       walk(segment->offset);
     }
-    for (auto* expr : segment->data) {
+    for (auto*& expr : segment->data) {
       walk(expr);
     }
     static_cast<SubType*>(this)->visitElementSegment(segment);
@@ -363,6 +363,7 @@ template<> struct IsLeaf<Nop> : std::true_type {};
 template<> struct IsLeaf<Unreachable> : std::true_type {};
 template<> struct IsLeaf<Pop> : std::true_type {};
 template<> struct IsLeaf<StringConst> : std::true_type {};
+template<> struct IsLeaf<WaitqueueNew> : std::true_type {};
 
 // Walks in post-order, i.e., children first. When there isn't an obvious
 // order to operands, we follow them in order of execution.

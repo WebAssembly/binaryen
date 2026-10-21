@@ -45,15 +45,11 @@ struct WasmSplitOptions : ToolOptions {
   StorageKind storageKind = StorageKind::InGlobals;
 
   bool usePlaceholders = true;
-  bool unescape = false;
   bool verbose = false;
   bool emitBinary = true;
   bool symbolMap = false;
   bool placeholderMap = false;
   bool stripDebug = false;
-
-  // TODO: Remove this. See the comment in wasm-binary.h.
-  bool emitModuleNames = false;
 
   std::string profileFile;
   std::string profileExport = DEFAULT_PROFILE_EXPORT;

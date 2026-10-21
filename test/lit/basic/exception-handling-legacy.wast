@@ -196,7 +196,7 @@
   ;; CHECK-TEXT-NEXT: )
   ;; CHECK-BIN:      (func $try-with-block-label (type $0)
   ;; CHECK-BIN-NEXT:  (block $block
-  ;; CHECK-BIN-NEXT:   (try
+  ;; CHECK-BIN-NEXT:   (try $l1
   ;; CHECK-BIN-NEXT:    (do
   ;; CHECK-BIN-NEXT:     (br $block)
   ;; CHECK-BIN-NEXT:    )
@@ -604,19 +604,19 @@
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
   ;; CHECK-BIN:      (func $inner-delegate-target-outer-catch (type $0)
-  ;; CHECK-BIN-NEXT:  (try $label
+  ;; CHECK-BIN-NEXT:  (try $l0
   ;; CHECK-BIN-NEXT:   (do
   ;; CHECK-BIN-NEXT:    (try
   ;; CHECK-BIN-NEXT:     (do
   ;; CHECK-BIN-NEXT:      (call $foo)
   ;; CHECK-BIN-NEXT:     )
-  ;; CHECK-BIN-NEXT:     (delegate $label)
+  ;; CHECK-BIN-NEXT:     (delegate $l0)
   ;; CHECK-BIN-NEXT:    )
   ;; CHECK-BIN-NEXT:    (try
   ;; CHECK-BIN-NEXT:     (do
   ;; CHECK-BIN-NEXT:      (call $foo)
   ;; CHECK-BIN-NEXT:     )
-  ;; CHECK-BIN-NEXT:     (delegate $label)
+  ;; CHECK-BIN-NEXT:     (delegate $l0)
   ;; CHECK-BIN-NEXT:    )
   ;; CHECK-BIN-NEXT:   )
   ;; CHECK-BIN-NEXT:   (catch_all
@@ -671,7 +671,7 @@
   ;; CHECK-TEXT-NEXT: )
   ;; CHECK-BIN:      (func $branch-and-delegate-target-same-try-label (type $0)
   ;; CHECK-BIN-NEXT:  (block $block
-  ;; CHECK-BIN-NEXT:   (try $label
+  ;; CHECK-BIN-NEXT:   (try $l0
   ;; CHECK-BIN-NEXT:    (do
   ;; CHECK-BIN-NEXT:     (try
   ;; CHECK-BIN-NEXT:      (do
@@ -679,7 +679,7 @@
   ;; CHECK-BIN-NEXT:        (i32.const 1)
   ;; CHECK-BIN-NEXT:       )
   ;; CHECK-BIN-NEXT:      )
-  ;; CHECK-BIN-NEXT:      (delegate $label)
+  ;; CHECK-BIN-NEXT:      (delegate $l0)
   ;; CHECK-BIN-NEXT:     )
   ;; CHECK-BIN-NEXT:     (try
   ;; CHECK-BIN-NEXT:      (do
@@ -687,7 +687,7 @@
   ;; CHECK-BIN-NEXT:        (i32.const 1)
   ;; CHECK-BIN-NEXT:       )
   ;; CHECK-BIN-NEXT:      )
-  ;; CHECK-BIN-NEXT:      (delegate $label)
+  ;; CHECK-BIN-NEXT:      (delegate $l0)
   ;; CHECK-BIN-NEXT:     )
   ;; CHECK-BIN-NEXT:    )
   ;; CHECK-BIN-NEXT:    (catch_all
@@ -697,7 +697,7 @@
   ;; CHECK-BIN-NEXT: )
   (func $branch-and-delegate-target-same-try-label
     ;; When there are both a branch and a delegate that target the same try
-    ;; label. Because binaryen only allows blocks and loops to be targetted by
+    ;; label. Because binaryen only allows blocks and loops to be targeted by
     ;; branches, we wrap the try with a block and make branches that block
     ;; instead, resulting in the br and delegate target different labels in the
     ;; output.
@@ -734,13 +734,13 @@
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
   ;; CHECK-BIN:      (func $inner-delegate-target-outer-delegate (type $0)
-  ;; CHECK-BIN-NEXT:  (try $label
+  ;; CHECK-BIN-NEXT:  (try $l0
   ;; CHECK-BIN-NEXT:   (do
   ;; CHECK-BIN-NEXT:    (try
   ;; CHECK-BIN-NEXT:     (do
   ;; CHECK-BIN-NEXT:      (call $foo)
   ;; CHECK-BIN-NEXT:     )
-  ;; CHECK-BIN-NEXT:     (delegate $label)
+  ;; CHECK-BIN-NEXT:     (delegate $l0)
   ;; CHECK-BIN-NEXT:    )
   ;; CHECK-BIN-NEXT:   )
   ;; CHECK-BIN-NEXT:   (delegate 0)
@@ -803,7 +803,7 @@
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
   ;; CHECK-BIN:      (func $try-catch-rethrow (type $0)
-  ;; CHECK-BIN-NEXT:  (try $label
+  ;; CHECK-BIN-NEXT:  (try $l0
   ;; CHECK-BIN-NEXT:   (do
   ;; CHECK-BIN-NEXT:    (call $foo)
   ;; CHECK-BIN-NEXT:   )
@@ -811,10 +811,10 @@
   ;; CHECK-BIN-NEXT:    (drop
   ;; CHECK-BIN-NEXT:     (pop i32)
   ;; CHECK-BIN-NEXT:    )
-  ;; CHECK-BIN-NEXT:    (rethrow $label)
+  ;; CHECK-BIN-NEXT:    (rethrow $l0)
   ;; CHECK-BIN-NEXT:   )
   ;; CHECK-BIN-NEXT:   (catch_all
-  ;; CHECK-BIN-NEXT:    (rethrow $label)
+  ;; CHECK-BIN-NEXT:    (rethrow $l0)
   ;; CHECK-BIN-NEXT:   )
   ;; CHECK-BIN-NEXT:  )
   ;; CHECK-BIN-NEXT: )
@@ -854,7 +854,7 @@
   ;; CHECK-TEXT-NEXT: )
   ;; CHECK-BIN:      (func $branch-and-rethrow-target-same-try-label (type $0)
   ;; CHECK-BIN-NEXT:  (block $block
-  ;; CHECK-BIN-NEXT:   (try $label
+  ;; CHECK-BIN-NEXT:   (try $l0
   ;; CHECK-BIN-NEXT:    (do
   ;; CHECK-BIN-NEXT:     (call $foo)
   ;; CHECK-BIN-NEXT:    )
@@ -862,7 +862,7 @@
   ;; CHECK-BIN-NEXT:     (drop
   ;; CHECK-BIN-NEXT:      (pop i32)
   ;; CHECK-BIN-NEXT:     )
-  ;; CHECK-BIN-NEXT:     (rethrow $label)
+  ;; CHECK-BIN-NEXT:     (rethrow $l0)
   ;; CHECK-BIN-NEXT:    )
   ;; CHECK-BIN-NEXT:    (catch_all
   ;; CHECK-BIN-NEXT:     (br $block)
@@ -872,7 +872,7 @@
   ;; CHECK-BIN-NEXT: )
   (func $branch-and-rethrow-target-same-try-label
     ;; When there are both a branch and a rethrow that target the same try
-    ;; label. Because binaryen only allows blocks and loops to be targetted by
+    ;; label. Because binaryen only allows blocks and loops to be targeted by
     ;; branches, we wrap the try with a block and make branches that block
     ;; instead, resulting in the br and rethrow target different labels in the
     ;; output.
@@ -914,7 +914,7 @@
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
   ;; CHECK-BIN:      (func $nested-rethrow (type $0)
-  ;; CHECK-BIN-NEXT:  (try $label
+  ;; CHECK-BIN-NEXT:  (try $l0
   ;; CHECK-BIN-NEXT:   (do
   ;; CHECK-BIN-NEXT:    (call $foo)
   ;; CHECK-BIN-NEXT:   )
@@ -927,10 +927,10 @@
   ;; CHECK-BIN-NEXT:      (drop
   ;; CHECK-BIN-NEXT:       (pop i32)
   ;; CHECK-BIN-NEXT:      )
-  ;; CHECK-BIN-NEXT:      (rethrow $label)
+  ;; CHECK-BIN-NEXT:      (rethrow $l0)
   ;; CHECK-BIN-NEXT:     )
   ;; CHECK-BIN-NEXT:     (catch_all
-  ;; CHECK-BIN-NEXT:      (rethrow $label)
+  ;; CHECK-BIN-NEXT:      (rethrow $l0)
   ;; CHECK-BIN-NEXT:     )
   ;; CHECK-BIN-NEXT:    )
   ;; CHECK-BIN-NEXT:   )
@@ -987,7 +987,7 @@
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
   ;; CHECK-BIN:      (func $rnested-rethrow-with-interleaving-block (type $0)
-  ;; CHECK-BIN-NEXT:  (try $label
+  ;; CHECK-BIN-NEXT:  (try $l0
   ;; CHECK-BIN-NEXT:   (do
   ;; CHECK-BIN-NEXT:    (call $foo)
   ;; CHECK-BIN-NEXT:   )
@@ -1000,13 +1000,13 @@
   ;; CHECK-BIN-NEXT:      (drop
   ;; CHECK-BIN-NEXT:       (pop i32)
   ;; CHECK-BIN-NEXT:      )
-  ;; CHECK-BIN-NEXT:      (block
-  ;; CHECK-BIN-NEXT:       (rethrow $label)
+  ;; CHECK-BIN-NEXT:      (block $b0
+  ;; CHECK-BIN-NEXT:       (rethrow $l0)
   ;; CHECK-BIN-NEXT:      )
   ;; CHECK-BIN-NEXT:      (unreachable)
   ;; CHECK-BIN-NEXT:     )
   ;; CHECK-BIN-NEXT:     (catch_all
-  ;; CHECK-BIN-NEXT:      (rethrow $label)
+  ;; CHECK-BIN-NEXT:      (rethrow $l0)
   ;; CHECK-BIN-NEXT:     )
   ;; CHECK-BIN-NEXT:    )
   ;; CHECK-BIN-NEXT:   )
@@ -1070,28 +1070,28 @@
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
   ;; CHECK-BIN:      (func $rethrow-within-nested-try-part (type $0)
-  ;; CHECK-BIN-NEXT:  (try $label
+  ;; CHECK-BIN-NEXT:  (try $l0
   ;; CHECK-BIN-NEXT:   (do
   ;; CHECK-BIN-NEXT:    (call $foo)
   ;; CHECK-BIN-NEXT:   )
   ;; CHECK-BIN-NEXT:   (catch_all
   ;; CHECK-BIN-NEXT:    (try
   ;; CHECK-BIN-NEXT:     (do
-  ;; CHECK-BIN-NEXT:      (rethrow $label)
+  ;; CHECK-BIN-NEXT:      (rethrow $l0)
   ;; CHECK-BIN-NEXT:     )
   ;; CHECK-BIN-NEXT:     (catch_all
   ;; CHECK-BIN-NEXT:     )
   ;; CHECK-BIN-NEXT:    )
   ;; CHECK-BIN-NEXT:   )
   ;; CHECK-BIN-NEXT:  )
-  ;; CHECK-BIN-NEXT:  (try $label1
+  ;; CHECK-BIN-NEXT:  (try $l00
   ;; CHECK-BIN-NEXT:   (do
   ;; CHECK-BIN-NEXT:    (call $foo)
   ;; CHECK-BIN-NEXT:   )
   ;; CHECK-BIN-NEXT:   (catch_all
   ;; CHECK-BIN-NEXT:    (try
   ;; CHECK-BIN-NEXT:     (do
-  ;; CHECK-BIN-NEXT:      (rethrow $label1)
+  ;; CHECK-BIN-NEXT:      (rethrow $l00)
   ;; CHECK-BIN-NEXT:     )
   ;; CHECK-BIN-NEXT:     (catch_all
   ;; CHECK-BIN-NEXT:     )
@@ -1235,7 +1235,7 @@
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
   ;; CHECK-BIN:      (func $catchless-try-with-inner-delegate (type $0)
-  ;; CHECK-BIN-NEXT:  (try $label
+  ;; CHECK-BIN-NEXT:  (try $label$0
   ;; CHECK-BIN-NEXT:   (do
   ;; CHECK-BIN-NEXT:    (try
   ;; CHECK-BIN-NEXT:     (do
@@ -1243,7 +1243,7 @@
   ;; CHECK-BIN-NEXT:       (i32.const 0)
   ;; CHECK-BIN-NEXT:      )
   ;; CHECK-BIN-NEXT:     )
-  ;; CHECK-BIN-NEXT:     (delegate $label)
+  ;; CHECK-BIN-NEXT:     (delegate $label$0)
   ;; CHECK-BIN-NEXT:    )
   ;; CHECK-BIN-NEXT:    (unreachable)
   ;; CHECK-BIN-NEXT:   )
@@ -1278,8 +1278,8 @@
   ;; CHECK-TEXT-NEXT:  (nop)
   ;; CHECK-TEXT-NEXT: )
   ;; CHECK-BIN:      (func $nested-delegate-within-block (type $0)
-  ;; CHECK-BIN-NEXT:  (block
-  ;; CHECK-BIN-NEXT:   (block
+  ;; CHECK-BIN-NEXT:  (block $l0
+  ;; CHECK-BIN-NEXT:   (block $l1
   ;; CHECK-BIN-NEXT:   )
   ;; CHECK-BIN-NEXT:   (try
   ;; CHECK-BIN-NEXT:    (do
@@ -1300,6 +1300,48 @@
       )
     )
     (nop)
+  )
+
+  ;; CHECK-TEXT:      (func $delegate-within-if-condition (type $0)
+  ;; CHECK-TEXT-NEXT:  (if
+  ;; CHECK-TEXT-NEXT:   (try (result i32)
+  ;; CHECK-TEXT-NEXT:    (do
+  ;; CHECK-TEXT-NEXT:     (i32.const 1)
+  ;; CHECK-TEXT-NEXT:    )
+  ;; CHECK-TEXT-NEXT:    (delegate 0)
+  ;; CHECK-TEXT-NEXT:   )
+  ;; CHECK-TEXT-NEXT:   (then
+  ;; CHECK-TEXT-NEXT:    (nop)
+  ;; CHECK-TEXT-NEXT:   )
+  ;; CHECK-TEXT-NEXT:  )
+  ;; CHECK-TEXT-NEXT: )
+  ;; CHECK-BIN:      (func $delegate-within-if-condition (type $0)
+  ;; CHECK-BIN-NEXT:  (if
+  ;; CHECK-BIN-NEXT:   (try (result i32)
+  ;; CHECK-BIN-NEXT:    (do
+  ;; CHECK-BIN-NEXT:     (i32.const 1)
+  ;; CHECK-BIN-NEXT:    )
+  ;; CHECK-BIN-NEXT:    (delegate 0)
+  ;; CHECK-BIN-NEXT:   )
+  ;; CHECK-BIN-NEXT:   (then
+  ;; CHECK-BIN-NEXT:    (nop)
+  ;; CHECK-BIN-NEXT:   )
+  ;; CHECK-BIN-NEXT:  )
+  ;; CHECK-BIN-NEXT: )
+  (func $delegate-within-if-condition
+    ;; An 'if' condition is outside the 'if' control flow scope, so a delegate
+    ;; to the caller inside the condition should have depth 0.
+    (if
+      (try (result i32)
+        (do
+          (i32.const 1)
+        )
+        (delegate 0)
+      )
+      (then
+        (nop)
+      )
+    )
   )
 )
 ;; CHECK-BIN-NODEBUG:      (type $0 (func))
@@ -1789,4 +1831,18 @@
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT:  (nop)
+;; CHECK-BIN-NODEBUG-NEXT: )
+
+;; CHECK-BIN-NODEBUG:      (func $25 (type $0)
+;; CHECK-BIN-NODEBUG-NEXT:  (if
+;; CHECK-BIN-NODEBUG-NEXT:   (try (result i32)
+;; CHECK-BIN-NODEBUG-NEXT:    (do
+;; CHECK-BIN-NODEBUG-NEXT:     (i32.const 1)
+;; CHECK-BIN-NODEBUG-NEXT:    )
+;; CHECK-BIN-NODEBUG-NEXT:    (delegate 0)
+;; CHECK-BIN-NODEBUG-NEXT:   )
+;; CHECK-BIN-NODEBUG-NEXT:   (then
+;; CHECK-BIN-NODEBUG-NEXT:    (nop)
+;; CHECK-BIN-NODEBUG-NEXT:   )
+;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )

@@ -317,7 +317,7 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $local-get-set-join (param $dest1 anyref) (param $dest2 eqref)
-  ;; This wll be optimized to eqref.
+  ;; This will be optimized to eqref.
   (local $var i31ref)
   ;; Require that typeof($var) <: typeof($dest1).
   (local.set $dest1

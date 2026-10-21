@@ -14,6 +14,7 @@ console.log("SideEffects.IsAtomic=" + binaryen.SideEffects.IsAtomic);
 console.log("SideEffects.Throws=" + binaryen.SideEffects.Throws);
 console.log("SideEffects.DanglingPop=" + binaryen.SideEffects.DanglingPop);
 console.log("SideEffects.TrapsNeverHappen=" + binaryen.SideEffects.TrapsNeverHappen);
+console.log("SideEffects.Suspends=" + binaryen.SideEffects.Suspends);
 console.log("SideEffects.Any=" + binaryen.SideEffects.Any);
 
 var module = new binaryen.Module();
@@ -36,7 +37,7 @@ assert(
 );
 assert(
   binaryen.getSideEffects(
-    module.call("test", [], binaryen.i32),
+    module.call("test", [], binaryen.Type.i32),
     module
   )
   ==
@@ -44,7 +45,7 @@ assert(
 );
 assert(
   binaryen.getSideEffects(
-    module.local.get("test", binaryen.i32),
+    module.local.get("test", binaryen.Type.i32),
     module
   )
   ==
@@ -62,11 +63,11 @@ assert(
 );
 
 // Add a global for the test, as computing side effects will look for it.
-module.addGlobal('test', binaryen.i32, true, module.i32.const(42));
+module.addGlobal('test', binaryen.Type.i32, true, module.i32.const(42));
 
 assert(
   binaryen.getSideEffects(
-    module.global.get("test", binaryen.i32),
+    module.global.get("test", binaryen.Type.i32),
     module
   )
   ==
@@ -114,14 +115,36 @@ assert(
 );
 
 // If exception handling feature is enabled, calls can throw
-module.setFeatures(binaryen.Features.All);
+module.setFeatures(binaryen.Features.ExceptionHandling);
 assert(
   binaryen.getSideEffects(
-    module.call("test", [], binaryen.i32),
+    module.call("test", [], binaryen.Type.i32),
     module
   )
   ==
   (binaryen.SideEffects.Calls | binaryen.SideEffects.Throws)
+);
+
+// If stack switching feature is enabled, calls can suspend
+module.setFeatures(binaryen.Features.StackSwitching);
+assert(
+  binaryen.getSideEffects(
+    module.call("test", [], binaryen.Type.i32),
+    module
+  )
+  ==
+  (binaryen.SideEffects.Calls | binaryen.SideEffects.Suspends)
+);
+
+// If all features are enabled, calls can throw and suspend
+module.setFeatures(binaryen.Features.All);
+assert(
+  binaryen.getSideEffects(
+    module.call("test", [], binaryen.Type.i32),
+    module
+  )
+  ==
+  (binaryen.SideEffects.Calls | binaryen.SideEffects.Throws | binaryen.SideEffects.Suspends)
 );
 
 assert(

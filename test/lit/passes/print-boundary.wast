@@ -1,6 +1,8 @@
 (module
   (type $struct (struct))
 
+  (type $recurse (func (param $x (ref $recurse))))
+
   (import "module" "base" (func $foo (param i32) (param f64) (result anyref)))
 
   (import "module2" "other" (func $bar (result i32 f32)))
@@ -25,6 +27,10 @@
 
   (func $one (param $x (ref $struct)) (result i32 i32 i32)
     (unreachable)
+  )
+
+  (func $recurse (export "recurse") (param $x (ref $recurse))
+    ;; We should not error on printing a recursive type.
   )
 )
 
@@ -61,6 +67,17 @@
 ;; CHECK-NEXT:   }
 ;; CHECK-NEXT:  ],
 ;; CHECK-NEXT:  "exports": [
+;; CHECK-NEXT:   {
+;; CHECK-NEXT:    "name": "recurse",
+;; CHECK-NEXT:    "kind": "func",
+;; CHECK-NEXT:    "type": {
+;; CHECK-NEXT:     "params": [
+;; CHECK-NEXT:      "(ref $func.0)"
+;; CHECK-NEXT:     ],
+;; CHECK-NEXT:     "results": [
+;; CHECK-NEXT:     ]
+;; CHECK-NEXT:    }
+;; CHECK-NEXT:   },
 ;; CHECK-NEXT:   {
 ;; CHECK-NEXT:    "name": "one",
 ;; CHECK-NEXT:    "kind": "func",

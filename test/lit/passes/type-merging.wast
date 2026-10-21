@@ -795,7 +795,7 @@
   )
 )
 
-;; Regresssion test for a bug in which we merged A into A', but
+;; Regression test for a bug in which we merged A into A', but
 ;; type-updating.cpp ordered B before A', so the supertype ordering was
 ;; incorrect.
 (module
@@ -1137,5 +1137,35 @@
     (call_indirect (type $B)
       (i32.const 0)
     )
+  )
+)
+
+;; Regression test.
+(module
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $A (sub (func)))
+  (type $A (sub (func)))
+  (type $B (sub $A (func)))
+  ;; CHECK:       (type $C (sub final $A (func)))
+  (type $C (sub final $B (func)))
+  (rec
+    ;; Type $D is not used anywhere, so it will be picked up when using the
+    ;; AllTypes but not UsedIRTypes strategies. If TypeMerging chose how to
+    ;; optimize using AllTypes, but then the type rewriter used UsedIRTypes, the
+    ;; mismatch would cause validation failures.
+    (type $D (sub final $A (func)))
+    ;; CHECK:       (type $E (sub (func (result (ref $A)))))
+    (type $E (sub (func (result (ref $B)))))
+  )
+  ;; CHECK:      (elem declare func $helper)
+
+  ;; CHECK:      (func $helper (type $C)
+  ;; CHECK-NEXT: )
+  (func $helper (type $C))
+  ;; CHECK:      (func $main (type $E) (result (ref $A))
+  ;; CHECK-NEXT:  (ref.func $helper)
+  ;; CHECK-NEXT: )
+  (func $main (type $E) (result (ref $B))
+    (ref.func $helper)
   )
 )

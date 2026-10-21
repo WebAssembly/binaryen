@@ -12,7 +12,7 @@ function assertDeepEqual(x, y) {
 }
 
 var module = new binaryen.Module();
-module.addGlobal("aGlobal", binaryen.i32, true, module.i32.const(0));
+module.addGlobal("aGlobal", binaryen.Type.i32, true, module.i32.const(0));
 
 // Should evaluate down to a constant
 var runner = new binaryen.ExpressionRunner(module);
@@ -26,7 +26,7 @@ assertDeepEqual(
   binaryen.getExpressionInfo(expr),
   {
     id: binaryen.ExpressionIds.Const,
-    type: binaryen.i32,
+    type: binaryen.Type.i32,
     value: 3
   }
 );
@@ -47,7 +47,7 @@ assertDeepEqual(
   binaryen.getExpressionInfo(expr),
   {
     id: binaryen.ExpressionIds.Const,
-    type: binaryen.i32,
+    type: binaryen.Type.i32,
     value: 4
   }
 );
@@ -56,7 +56,7 @@ assertDeepEqual(
 runner = new binaryen.ExpressionRunner(module);
 expr = runner.runAndDispose(
   module.i32.add(
-    module.local.get(0, binaryen.i32),
+    module.local.get(0, binaryen.Type.i32),
     module.i32.const(1)
   )
 );
@@ -73,7 +73,7 @@ assert(expr === 0);
 runner = new binaryen.ExpressionRunner(module);
 expr = runner.runAndDispose(
   module.i32.add(
-    module.local.tee(0, module.i32.const(4), binaryen.i32),
+    module.local.tee(0, module.i32.const(4), binaryen.Type.i32),
     module.i32.const(1)
   )
 );
@@ -81,7 +81,7 @@ assertDeepEqual(
   binaryen.getExpressionInfo(expr),
   {
     id: binaryen.ExpressionIds.Const,
-    type: binaryen.i32,
+    type: binaryen.Type.i32,
     value: 5
   }
 );
@@ -90,7 +90,7 @@ assertDeepEqual(
 runner = new binaryen.ExpressionRunner(module, Flags.PreserveSideeffects);
 expr = runner.runAndDispose(
   module.i32.add(
-    module.local.tee(0, module.i32.const(4), binaryen.i32),
+    module.local.tee(0, module.i32.const(4), binaryen.Type.i32),
     module.i32.const(1)
   )
 );
@@ -102,19 +102,19 @@ expr = runner.runAndDispose(
   module.i32.add(
     module.block(null, [
       module.local.set(0, module.i32.const(2)),
-      module.local.get(0, binaryen.i32)
-    ], binaryen.i32),
+      module.local.get(0, binaryen.Type.i32)
+    ], binaryen.Type.i32),
     module.block(null, [
       module.global.set("aGlobal", module.i32.const(4)),
-      module.global.get("aGlobal", binaryen.i32)
-    ], binaryen.i32)
+      module.global.get("aGlobal", binaryen.Type.i32)
+    ], binaryen.Type.i32)
   )
 );
 assertDeepEqual(
   binaryen.getExpressionInfo(expr),
   {
     id: binaryen.ExpressionIds.Const,
-    type: binaryen.i32,
+    type: binaryen.Type.i32,
     value: 6
   }
 );
@@ -125,15 +125,15 @@ assert(runner.setLocalValue(0, module.i32.const(3)));
 assert(runner.setGlobalValue("aGlobal", module.i32.const(4)));
 expr = runner.runAndDispose(
   module.i32.add(
-    module.local.get(0, binaryen.i32),
-    module.global.get("aGlobal", binaryen.i32)
+    module.local.get(0, binaryen.Type.i32),
+    module.global.get("aGlobal", binaryen.Type.i32)
   )
 );
 assertDeepEqual(
   binaryen.getExpressionInfo(expr),
   {
     id: binaryen.ExpressionIds.Const,
-    type: binaryen.i32,
+    type: binaryen.Type.i32,
     value: 7
   }
 );
@@ -146,7 +146,7 @@ expr = runner.runAndDispose(
     module.call("add", [
       module.i32.const(3),
       module.i32.const(4)
-    ], binaryen.i32)
+    ], binaryen.Type.i32)
   )
 );
 assert(expr === 0);
@@ -156,7 +156,7 @@ runner = new binaryen.ExpressionRunner(module, Flags.Default, 1);
 expr = runner.runAndDispose(
   module.block(null, [
     module.i32.const(1),
-  ], binaryen.i32)
+  ], binaryen.Type.i32)
 );
 assert(expr === 0);
 

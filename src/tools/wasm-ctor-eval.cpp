@@ -59,7 +59,7 @@ bool isNullableAndMutable(Expression* ref, Index fieldIndex) {
   // Find the field for the given reference, and check its properties.
   auto field = GCTypeUtils::getField(ref->type, fieldIndex);
   assert(field);
-  return field->type.isNullable() && field->mutable_ == Mutable;
+  return field->type.isNullableRef() && field->mutable_ == Mutable;
 }
 
 // The prefix for a recommendation, so it is aligned properly with the rest of
@@ -224,6 +224,16 @@ public:
     // We support tableLoad, below, so that call_indirect works (it calls it
     // internally), but we want to disable table.get for now.
     throw FailToEvalException("TODO: table.get");
+  }
+
+  Flow visitTableSet(TableSet* curr) {
+    // When changes occur to the table, give up.
+    throw FailToEvalException("TODO: table.set");
+  }
+
+  Flow visitTableGrow(TableGrow* curr) {
+    // When changes occur to the table, give up.
+    throw FailToEvalException("TODO: table.grow");
   }
 
   bool allowContNew = true;
@@ -902,7 +912,6 @@ public:
     } else {
       // This is the first usage of this data. Generate a struct.new /
       // array.new for it.
-      auto& values = data->values;
       std::vector<Expression*> args;
 
       // The initial values for this allocation may themselves be GC
@@ -924,8 +933,8 @@ public:
         definingGlobals[data] = DefiningGlobalInfo{definingGlobalName, type};
       }
 
-      for (auto& value : values) {
-        auto* serialized = getSerialization(value);
+      for (size_t i = 0; i < value.getNumElements(); i++) {
+        auto* serialized = getSerialization(value.getElement(i));
         if (!serialized) {
           return nullptr;
         }
@@ -1208,26 +1217,29 @@ start_eval:
 
       if (flow.breakTo == RETURN_CALL_FLOW) {
         // The return-called function is stored in the last value.
-        func = wasm.getFunction(flow.values.back().getFunc());
+        auto* nextFunc = wasm.getFunction(flow.values.back().getFunc());
         flow.values.pop_back();
-        params = std::move(flow.values);
+        auto nextParams = std::move(flow.values);
 
         // Serialize the arguments for the new function and save the module
         // state in case we fail to eval the new function.
-        localExprs.clear();
-        for (auto& param : params) {
+        std::vector<Expression*> nextLocalExprs;
+        for (auto& param : nextParams) {
           auto* serialized = interface.getSerialization(param);
           if (!serialized) {
             break;
           }
-          localExprs.push_back(serialized);
+          nextLocalExprs.push_back(serialized);
         }
-        if (localExprs.size() < params.size()) {
+        if (nextLocalExprs.size() < nextParams.size()) {
           if (!quiet) {
             std::cout << "  ...stopping due to non-serializable param\n";
           }
           break;
         }
+        func = nextFunc;
+        params = std::move(nextParams);
+        localExprs = std::move(nextLocalExprs);
         interface.applyToModule();
         goto start_eval;
       }
@@ -1317,17 +1329,21 @@ start_eval:
       auto* copyBody =
         builder.blockify(ExpressionManipulator::copy(func->body, wasm));
 
-      // Remove the items we've evalled.
-      for (Index i = 0; i < successes; i++) {
-        copyBody->list[i] = builder.makeNop();
-      }
-
-      // Put the local sets at the front of the function body.
-      auto* setsBlock = builder.makeBlock();
+      // Replace the items we've evalled with the local sets at the front of the
+      // function body. Skip uninitialized non-nullable locals, whose default
+      // null value in the interpreter is not a valid subtype of the local's
+      // type.
+      std::vector<Expression*> newList;
+      newList.reserve(localExprs.size() + copyBody->list.size() - successes);
       for (Index i = 0; i < localExprs.size(); ++i) {
-        setsBlock->list.push_back(builder.makeLocalSet(i, localExprs[i]));
+        if (Type::isSubType(localExprs[i]->type, func->getLocalType(i))) {
+          newList.push_back(builder.makeLocalSet(i, localExprs[i]));
+        }
       }
-      copyBody = builder.makeSequence(setsBlock, copyBody, copyBody->type);
+      newList.insert(newList.end(),
+                     copyBody->list.begin() + successes,
+                     copyBody->list.end());
+      copyBody->list.set(newList);
 
       // We may have return-called into a function with different parameter
       // types, but we ultimately need to export a function with the original
@@ -1530,8 +1546,6 @@ static bool canEval(Module& wasm) {
 //
 
 int main(int argc, const char* argv[]) {
-  Name entry;
-  std::vector<std::string> passes;
   bool emitBinary = true;
   bool debugInfo = false;
   String::Split ctors;
@@ -1664,7 +1678,7 @@ int main(int argc, const char* argv[]) {
     ModuleWriter writer(options.passOptions);
     writer.setBinary(emitBinary);
     writer.setDebugInfo(debugInfo);
-    writer.write(wasm, options.extra["output"]);
+    options.write(writer, wasm, options.extra["output"]);
   }
 
   flush_and_quick_exit(0);

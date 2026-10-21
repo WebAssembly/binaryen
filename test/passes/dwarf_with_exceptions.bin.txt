@@ -2,116 +2,116 @@
  (type $0 (func))
  (type $1 (func (param i32)))
  (type $2 (func (param i32) (result i32)))
- (import "env" "_Z3foov" (func $foo\28\29))
+ (import "env" "_Z3foov" (func $"foo()"))
  (import "env" "__cxa_begin_catch" (func $__cxa_begin_catch (param i32) (result i32)))
  (import "env" "__cxa_end_catch" (func $__cxa_end_catch))
- (import "env" "_ZSt9terminatev" (func $std::terminate\28\29))
+ (import "env" "_ZSt9terminatev" (func $"std::terminate()"))
  (global $__stack_pointer (mut i32) (i32.const 66560))
  (memory $0 2)
  (tag $tag$0 (type $1) (param i32))
  (export "memory" (memory $0))
  (func $__wasm_call_ctors
  )
- (func $dwarf_with_exceptions\28\29
+ (func $"dwarf_with_exceptions()"
   (local $0 i32)
   (local $1 i32)
-  ;; code offset: 0xe
+  ;; code offset: 0xe - 0x10
   (local.set $0
-   ;; code offset: 0x8
+   ;; code offset: 0x8 - 0xe
    (global.get $__stack_pointer)
   )
-  ;; code offset: 0x18
+  ;; code offset: 0x10 - 0x76
   (try
    (do
-    ;; code offset: 0x12
-    (call $foo\28\29)
+    ;; code offset: 0x12 - 0x18
+    (call $"foo()")
    )
    ;; code offset: 0x18
    (catch $tag$0
-    ;; code offset: 0x1e
+    ;; code offset: 0x1e - 0x20
     (local.set $1
      (pop i32)
     )
-    ;; code offset: 0x22
+    ;; code offset: 0x22 - 0x28
     (global.set $__stack_pointer
-     ;; code offset: 0x20
+     ;; code offset: 0x20 - 0x22
      (local.get $0)
     )
-    ;; code offset: 0x30
+    ;; code offset: 0x30 - 0x31
     (drop
-     ;; code offset: 0x2a
+     ;; code offset: 0x2a - 0x30
      (call $__cxa_begin_catch
-      ;; code offset: 0x28
+      ;; code offset: 0x28 - 0x2a
       (local.get $1)
      )
     )
-    ;; code offset: 0x41
+    ;; code offset: 0x31 - 0x6f
     (try $label
      (do
-      ;; code offset: 0x33
-      (call $foo\28\29)
-      ;; code offset: 0x3b
+      ;; code offset: 0x33 - 0x39
+      (call $"foo()")
+      ;; code offset: 0x3b - 0x41
       (global.set $__stack_pointer
-       ;; code offset: 0x39
+       ;; code offset: 0x39 - 0x3b
        (local.get $0)
       )
      )
      ;; code offset: 0x41
      (catch_all
-      ;; code offset: 0x63
+      ;; code offset: 0x42 - 0x6c
       (try
        (do
-        ;; code offset: 0x44
+        ;; code offset: 0x44 - 0x4a
         (call $__cxa_end_catch)
        )
        ;; code offset: 0x4a
        (catch $tag$0
-        ;; code offset: 0x50
+        ;; code offset: 0x50 - 0x52
         (local.set $1
          (pop i32)
         )
-        ;; code offset: 0x54
+        ;; code offset: 0x54 - 0x5a
         (global.set $__stack_pointer
-         ;; code offset: 0x52
+         ;; code offset: 0x52 - 0x54
          (local.get $0)
         )
-        ;; code offset: 0x5c
+        ;; code offset: 0x5c - 0x62
         (call $__clang_call_terminate
-         ;; code offset: 0x5a
+         ;; code offset: 0x5a - 0x5c
          (local.get $1)
         )
-        ;; code offset: 0x62
+        ;; code offset: 0x62 - 0x63
         (unreachable)
        )
        ;; code offset: 0x63
        (catch_all
-        ;; code offset: 0x64
-        (call $std::terminate\28\29)
-        ;; code offset: 0x6a
+        ;; code offset: 0x64 - 0x6a
+        (call $"std::terminate()")
+        ;; code offset: 0x6a - 0x6b
         (unreachable)
        )
       )
-      ;; code offset: 0x6c
+      ;; code offset: 0x6c - 0x6e
       (rethrow $label)
      )
     )
-    ;; code offset: 0x6f
+    ;; code offset: 0x6f - 0x75
     (call $__cxa_end_catch)
    )
   )
  )
  (func $__clang_call_terminate (param $0 i32)
-  ;; code offset: 0x81
+  ;; code offset: 0x81 - 0x82
   (drop
-   ;; code offset: 0x7b
+   ;; code offset: 0x7b - 0x81
    (call $__cxa_begin_catch
-    ;; code offset: 0x79
+    ;; code offset: 0x79 - 0x7b
     (local.get $0)
    )
   )
-  ;; code offset: 0x82
-  (call $std::terminate\28\29)
-  ;; code offset: 0x88
+  ;; code offset: 0x82 - 0x88
+  (call $"std::terminate()")
+  ;; code offset: 0x88 - 0x89
   (unreachable)
  )
  ;; custom section ".debug_info", size 63
@@ -274,7 +274,7 @@ DWARF debug info
 
 Contains section .debug_info (63 bytes)
 Contains section .debug_abbrev (41 bytes)
-Contains section .debug_line (136 bytes)
+Contains section .debug_line (162 bytes)
 Contains section .debug_str (178 bytes)
 
 .debug_abbrev contents:
@@ -326,7 +326,7 @@ Abbrev table for offset: 0x00000000
 .debug_line contents:
 debug_line[0x00000000]
 Line table prologue:
-    total_length: 0x00000084
+    total_length: 0x0000009e
          version: 4
  prologue_length: 0x00000031
  min_inst_length: 1
@@ -366,36 +366,51 @@ file_names[  1]:
             0x000000000000000e      4      5      1   0             0  is_stmt prologue_end
 
 
-0x00000052: 00 DW_LNE_set_address (0x000000000000001f)
-0x00000059: 03 DW_LNS_advance_line (6)
-0x0000005b: 01 DW_LNS_copy
+0x00000052: 00 DW_LNE_set_address (0x0000000000000012)
+0x00000059: 03 DW_LNS_advance_line (5)
+0x0000005b: 05 DW_LNS_set_column (3)
+0x0000005d: 01 DW_LNS_copy
+            0x0000000000000012      5      3      1   0             0  is_stmt
+
+
+0x0000005e: 00 DW_LNE_set_address (0x000000000000001f)
+0x00000065: 03 DW_LNS_advance_line (6)
+0x00000067: 05 DW_LNS_set_column (5)
+0x00000069: 01 DW_LNS_copy
             0x000000000000001f      6      5      1   0             0  is_stmt
 
 
-0x0000005c: 00 DW_LNE_set_address (0x000000000000003e)
-0x00000063: 03 DW_LNS_advance_line (7)
-0x00000065: 05 DW_LNS_set_column (3)
-0x00000067: 06 DW_LNS_negate_stmt
-0x00000068: 01 DW_LNS_copy
+0x0000006a: 00 DW_LNE_set_address (0x000000000000003e)
+0x00000071: 03 DW_LNS_advance_line (7)
+0x00000073: 05 DW_LNS_set_column (3)
+0x00000075: 06 DW_LNS_negate_stmt
+0x00000076: 01 DW_LNS_copy
             0x000000000000003e      7      3      1   0             0 
 
 
-0x00000069: 00 DW_LNE_set_address (0x0000000000000041)
-0x00000070: 01 DW_LNS_copy
+0x00000077: 00 DW_LNE_set_address (0x0000000000000041)
+0x0000007e: 01 DW_LNS_copy
             0x0000000000000041      7      3      1   0             0 
 
 
-0x00000071: 00 DW_LNE_set_address (0x0000000000000044)
-0x00000078: 03 DW_LNS_advance_line (8)
-0x0000007a: 05 DW_LNS_set_column (1)
-0x0000007c: 06 DW_LNS_negate_stmt
-0x0000007d: 01 DW_LNS_copy
+0x0000007f: 00 DW_LNE_set_address (0x0000000000000044)
+0x00000086: 03 DW_LNS_advance_line (8)
+0x00000088: 05 DW_LNS_set_column (1)
+0x0000008a: 06 DW_LNS_negate_stmt
+0x0000008b: 01 DW_LNS_copy
             0x0000000000000044      8      1      1   0             0  is_stmt
 
 
-0x0000007e: 00 DW_LNE_set_address (0x0000000000000045)
-0x00000085: 00 DW_LNE_end_sequence
-            0x0000000000000045      8      1      1   0             0  is_stmt end_sequence
+0x0000008c: 00 DW_LNE_set_address (0x0000000000000045)
+0x00000093: 01 DW_LNS_copy
+            0x0000000000000045      8      1      1   0             0  is_stmt
+
+
+0x00000094: 00 DW_LNE_set_address (0x00000000ffffff64)
+0x0000009b: 03 DW_LNS_advance_line (7)
+0x0000009d: 05 DW_LNS_set_column (3)
+0x0000009f: 00 DW_LNE_end_sequence
+            0x00000000ffffff64      7      3      1   0             0  is_stmt end_sequence
 
 
 .debug_str contents:
@@ -408,121 +423,121 @@ file_names[  1]:
  (type $0 (func))
  (type $1 (func (param i32)))
  (type $2 (func (param i32) (result i32)))
- (import "env" "_Z3foov" (func $foo\28\29))
+ (import "env" "_Z3foov" (func $"foo()"))
  (import "env" "__cxa_begin_catch" (func $__cxa_begin_catch (param i32) (result i32)))
  (import "env" "__cxa_end_catch" (func $__cxa_end_catch))
- (import "env" "_ZSt9terminatev" (func $std::terminate\28\29))
+ (import "env" "_ZSt9terminatev" (func $"std::terminate()"))
  (global $__stack_pointer (mut i32) (i32.const 66560))
  (memory $0 2)
  (tag $tag$0 (type $1) (param i32))
  (export "memory" (memory $0))
  (func $__wasm_call_ctors
  )
- (func $dwarf_with_exceptions\28\29
+ (func $"dwarf_with_exceptions()"
   (local $0 i32)
   (local $1 i32)
-  ;; code offset: 0xc
+  ;; code offset: 0xc - 0xe
   (local.set $0
-   ;; code offset: 0xa
+   ;; code offset: 0xa - 0xc
    (global.get $__stack_pointer)
   )
-  ;; code offset: 0x12
+  ;; code offset: 0xe - 0x44
   (try
    (do
-    ;; code offset: 0x10
-    (call $foo\28\29)
+    ;; code offset: 0x10 - 0x12
+    (call $"foo()")
    )
    ;; code offset: 0x12
    (catch $tag$0
-    ;; code offset: 0x14
+    ;; code offset: 0x14 - 0x16
     (local.set $1
      (pop i32)
     )
-    ;; code offset: 0x18
+    ;; code offset: 0x18 - 0x1a
     (global.set $__stack_pointer
-     ;; code offset: 0x16
+     ;; code offset: 0x16 - 0x18
      (local.get $0)
     )
-    ;; code offset: 0x1e
+    ;; code offset: 0x1e - 0x1f
     (drop
-     ;; code offset: 0x1c
+     ;; code offset: 0x1c - 0x1e
      (call $__cxa_begin_catch
-      ;; code offset: 0x1a
+      ;; code offset: 0x1a - 0x1c
       (local.get $1)
      )
     )
-    ;; code offset: 0x27
+    ;; code offset: 0x1f - 0x41
     (try $label
      (do
-      ;; code offset: 0x21
-      (call $foo\28\29)
-      ;; code offset: 0x25
+      ;; code offset: 0x21 - 0x23
+      (call $"foo()")
+      ;; code offset: 0x25 - 0x27
       (global.set $__stack_pointer
-       ;; code offset: 0x23
+       ;; code offset: 0x23 - 0x25
        (local.get $0)
       )
      )
      ;; code offset: 0x27
      (catch_all
-      ;; code offset: 0x39
+      ;; code offset: 0x28 - 0x3e
       (try
        (do
-        ;; code offset: 0x2a
+        ;; code offset: 0x2a - 0x2c
         (call $__cxa_end_catch)
        )
        ;; code offset: 0x2c
        (catch $tag$0
-        ;; code offset: 0x2e
+        ;; code offset: 0x2e - 0x30
         (local.set $1
          (pop i32)
         )
-        ;; code offset: 0x32
+        ;; code offset: 0x32 - 0x34
         (global.set $__stack_pointer
-         ;; code offset: 0x30
+         ;; code offset: 0x30 - 0x32
          (local.get $0)
         )
-        ;; code offset: 0x36
+        ;; code offset: 0x36 - 0x38
         (call $__clang_call_terminate
-         ;; code offset: 0x34
+         ;; code offset: 0x34 - 0x36
          (local.get $1)
         )
-        ;; code offset: 0x38
+        ;; code offset: 0x38 - 0x39
         (unreachable)
        )
        ;; code offset: 0x39
        (catch_all
-        ;; code offset: 0x3a
-        (call $std::terminate\28\29)
-        ;; code offset: 0x3c
+        ;; code offset: 0x3a - 0x3c
+        (call $"std::terminate()")
+        ;; code offset: 0x3c - 0x3d
         (unreachable)
        )
       )
-      ;; code offset: 0x3e
+      ;; code offset: 0x3e - 0x40
       (rethrow $label)
      )
     )
-    ;; code offset: 0x41
+    ;; code offset: 0x41 - 0x43
     (call $__cxa_end_catch)
    )
   )
  )
  (func $__clang_call_terminate (param $0 i32)
-  ;; code offset: 0x4b
+  ;; code offset: 0x4b - 0x4c
   (drop
-   ;; code offset: 0x49
+   ;; code offset: 0x49 - 0x4b
    (call $__cxa_begin_catch
-    ;; code offset: 0x47
+    ;; code offset: 0x47 - 0x49
     (local.get $0)
    )
   )
-  ;; code offset: 0x4c
-  (call $std::terminate\28\29)
-  ;; code offset: 0x4e
+  ;; code offset: 0x4c - 0x4e
+  (call $"std::terminate()")
+  ;; code offset: 0x4e - 0x4f
   (unreachable)
  )
  ;; custom section ".debug_info", size 63
  ;; custom section ".debug_abbrev", size 41
- ;; custom section ".debug_line", size 136
+ ;; custom section ".debug_line", size 162
  ;; custom section ".debug_str", size 178
  ;; custom section "producers", size 134
  ;; features section: mutable-globals, sign-ext, exception-handling

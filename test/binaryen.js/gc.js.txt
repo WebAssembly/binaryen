@@ -111,6 +111,9 @@
    (i32.const 1)
    (i32.const 2)
   )
+  (drop
+   (string.const "hello \f0\9f\8c\8e")
+  )
  )
 )
 

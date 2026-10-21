@@ -74,7 +74,6 @@ willRemoveDebugInfo(const std::vector<OptimizationOptions::PassInfo>& passes) {
 //
 
 int main(int argc, const char* argv[]) {
-  Name entry;
   bool emitBinary = true;
   bool converge = false;
   bool fuzzExecBefore = false;
@@ -88,6 +87,8 @@ int main(int argc, const char* argv[]) {
   bool fuzzOOB = true;
   bool fuzzPreserveImportsAndExports = false;
   bool fuzzAgainstJS = false;
+  bool fuzzNoInvokes = false;
+  FuzzParams fuzzParams;
   std::string fuzzImport;
   std::string emitSpecWrapper;
   std::string emitWasm2CWrapper;
@@ -111,7 +112,7 @@ For more on how to optimize effectively, see
 
   https://github.com/WebAssembly/binaryen/wiki/Optimizer-Cookbook
   https://github.com/WebAssembly/binaryen/wiki/GC-Optimization-Guidebook
-                            )");
+)");
 
   options
     .add("--output",
@@ -221,6 +222,23 @@ For more on how to optimize effectively, see
       Options::Arguments::Zero,
       [&](Options* o, const std::string& arguments) { fuzzAgainstJS = true; })
     .add(
+      "--fuzz-no-invokes",
+      "",
+      "do not emit invoker functions in the fuzzer",
+      WasmOptOption,
+      Options::Arguments::Zero,
+      [&](Options* o, const std::string& arguments) { fuzzNoInvokes = true; })
+    .add(
+      "--fuzz-hang-limit",
+      "",
+      "the number of runtime iterations (function calls, loop backbranches) we "
+      "allow before we trap to prevent a hangs (0 means no hang protection)",
+      WasmOptOption,
+      Options::Arguments::One,
+      [&](Options* o, const std::string& arguments) {
+        fuzzParams.HANG_LIMIT = std::stoi(arguments);
+      })
+    .add(
       "--fuzz-import",
       "",
       "a module to use as an import in -ttf mode",
@@ -269,6 +287,7 @@ For more on how to optimize effectively, see
          [&outputSourceMapUrl](Options* o, const std::string& argument) {
            outputSourceMapUrl = argument;
          })
+
     .add_positional("INFILE",
                     Options::Arguments::One,
                     [](Options* o, const std::string& argument) {
@@ -353,11 +372,12 @@ For more on how to optimize effectively, see
   }
   if (translateToFuzz) {
     TranslateToFuzzReader reader(
-      wasm, options.extra["infile"], options.passOptions.worldMode);
+      fuzzParams, wasm, options.extra["infile"], options.passOptions.worldMode);
     reader.setAllowMemory(fuzzMemory);
     reader.setAllowOOB(fuzzOOB);
     reader.setPreserveImportsAndExports(fuzzPreserveImportsAndExports);
     reader.setAgainstJS(fuzzAgainstJS);
+    reader.setNoInvokes(fuzzNoInvokes);
     if (!fuzzImport.empty()) {
       reader.setImportedModule(fuzzImport);
     }
@@ -407,7 +427,7 @@ For more on how to optimize effectively, see
     ModuleWriter writer(options.passOptions);
     writer.setBinary(emitBinary);
     writer.setDebugInfo(options.passOptions.debugInfo);
-    writer.write(wasm, options.extra["output"]);
+    options.write(writer, wasm, options.extra["output"]);
     firstOutput = runCommand(extraFuzzCommand);
     std::cout << "[extra-fuzz-command first output:]\n" << firstOutput << '\n';
   }
@@ -500,7 +520,7 @@ For more on how to optimize effectively, see
       writer.setSourceMapFilename(outputSourceMapFilename);
       writer.setSourceMapUrl(outputSourceMapUrl);
     }
-    writer.write(wasm, options.extra["output"]);
+    options.write(writer, wasm, options.extra["output"]);
   }
 
   if (extraFuzzCommand.size() > 0) {

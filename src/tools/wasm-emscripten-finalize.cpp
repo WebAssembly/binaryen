@@ -22,7 +22,6 @@
 #include <exception>
 
 #include "abi/js.h"
-#include "ir/trapping.h"
 #include "support/colors.h"
 #include "support/debug.h"
 #include "support/file.h"
@@ -46,7 +45,6 @@ int main(int argc, const char* argv[]) {
   bool debugInfo = false;
   bool DWARF = false;
   bool sideModule = false;
-  bool legalizeJavaScriptFFI = true;
   bool bigInt = false;
   bool checkStackOverflow = false;
   bool standaloneWasm = false;
@@ -104,15 +102,6 @@ int main(int argc, const char* argv[]) {
          Options::Arguments::One,
          [&inputSourceMapFilename](Options* o, const std::string& argument) {
            inputSourceMapFilename = argument;
-         })
-    .add("--no-legalize-javascript-ffi",
-         "-nj",
-         "Do not fully legalize (i64->i32, "
-         "f32->f64) the imports and exports for interfacing with JS",
-         WasmEmscriptenFinalizeOption,
-         Options::Arguments::Zero,
-         [&legalizeJavaScriptFFI](Options* o, const std::string&) {
-           legalizeJavaScriptFFI = false;
          })
     .add("--bigint",
          "-bi",
@@ -261,8 +250,9 @@ int main(int argc, const char* argv[]) {
     }
   }
 
-  // Legalize the wasm, if BigInts don't make that moot.
-  if (!bigInt && legalizeJavaScriptFFI) {
+  // Legalize the Wasm imports/exports, by lowing away usages of i64,
+  // if BigInt integration is not available.
+  if (!bigInt) {
     passRunner.add("legalize-js-interface");
   }
 
@@ -287,7 +277,7 @@ int main(int argc, const char* argv[]) {
       writer.setSourceMapFilename(outputSourceMapFilename);
       writer.setSourceMapUrl(outputSourceMapUrl);
     }
-    writer.write(wasm, output);
+    options.write(writer, wasm, output);
   }
 
   flush_and_quick_exit(0);

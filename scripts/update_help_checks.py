@@ -26,7 +26,8 @@ test_dir = os.path.join(root_dir, 'test', 'lit', 'help')
 
 TOOLS = ['wasm-opt', 'wasm-as', 'wasm-dis', 'wasm2js', 'wasm-ctor-eval',
          'wasm-shell', 'wasm-reduce', 'wasm-metadce', 'wasm-split',
-         'wasm-fuzz-types', 'wasm-emscripten-finalize', 'wasm-merge']
+         'wasm-fuzz-types', 'wasm-emscripten-finalize', 'wasm-merge',
+         'wasm-embed']
 
 
 def main():
@@ -39,11 +40,13 @@ def main():
             out.write(f';; RUN: {tool} --help | filecheck %s' + os.linesep)
             first = True
             for line in output.splitlines():
-                if first:
-                    out.write(f';; CHECK: {line}'.strip() + os.linesep)
+                if not line:
+                    out.write(';; CHECK-EMPTY:' + os.linesep)
+                elif first:
+                    out.write(f';; CHECK: {line}' + os.linesep)
                     first = False
                 else:
-                    out.write(f';; CHECK-NEXT: {line}'.strip() + os.linesep)
+                    out.write(f';; CHECK-NEXT: {line}' + os.linesep)
 
 
 if __name__ == '__main__':

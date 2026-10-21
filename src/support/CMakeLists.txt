@@ -10,6 +10,7 @@ set(support_SOURCES
   int128.cpp
   intervals.cpp
   istring.cpp
+  js-embedded-module.cpp
   json.cpp
   name.cpp
   path.cpp

@@ -28,6 +28,7 @@
 #include <memory>
 
 #include "ir/branch-utils.h"
+#include "ir/eh-utils.h"
 #include "ir/iteration.h"
 #include "ir/localize.h"
 #include "ir/properties.h"
@@ -38,6 +39,7 @@
 #include "support/delta_debugging.h"
 #include "support/file.h"
 #include "support/hash.h"
+#include "support/js-embedded-module.h"
 #include "support/path.h"
 #include "support/timing.h"
 #include "tools/tool-options.h"
@@ -221,25 +223,145 @@ inline std::ostream& operator<<(std::ostream& o, ProgramResult& result) {
 
 ProgramResult expected;
 
-// Removing functions is extremely beneficial and efficient. We aggressively
-// try to remove functions, unless we've seen they can't be removed, in which
-// case we may try again but much later.
-static std::unordered_set<Name> functionsWeTriedToRemove;
-
 // The index of the working file we save, when saveAllWorkingFiles. We must
 // store this globally so that the difference instances of Reducer do not
 // overlap.
 static size_t workingFileIndex = 0;
 
+/// Runs the external `wasm-opt` binary with `args` on `inBytes` by writing to
+// `testPath` and reading the result back into `outBytes`.
+static bool runWasmOpt(const std::string& testPath,
+                       const std::vector<char>& inBytes,
+                       const std::string& args,
+                       std::vector<char>& outBytes,
+                       ProgramResult& result,
+                       bool verbose = false,
+                       std::string* outCmd = nullptr) {
+  write_file(testPath, inBytes);
+  std::string cmd = Path::getBinaryenBinaryTool("wasm-opt") + " " + testPath +
+                    " -o " + testPath + " " + args;
+  if (outCmd) {
+    *outCmd = cmd;
+  }
+  if (verbose) {
+    std::cerr << "|    trying pass command: " << cmd << "\n";
+  }
+  result.getFromExecution(cmd);
+  if (result.failed()) {
+    return false;
+  }
+  outBytes = read_file<std::vector<char>>(testPath, Flags::Binary);
+  return true;
+}
+
+// Abstracts reading/writing the active WebAssembly module and testing candidate
+// reductions. This allows the core reduction logic to operate identically on
+// standalone .wasm/.wat files and embedded Wasm modules inside .js files.
+struct TestCaseHandler {
+  virtual ~TestCaseHandler() = default;
+
+  // Returns the raw Wasm module bytes (binary or WAT text) of the active module
+  // from the working state (extracting it from the working JS file in --js
+  // mode).
+  virtual std::vector<char> readWorking(const std::string& working) = 0;
+
+  // Writes candidate raw Wasm module bytes to the working file (splicing them
+  // as a JS byte array into the working .js file in --js mode).
+  virtual void writeWorking(const std::vector<char>& bytes,
+                            const std::string& working) = 0;
+
+  // Writes candidate raw Wasm module bytes to the test file (splicing them as a
+  // JS byte array into the test .js file in --js mode).
+  virtual void writeTest(const std::vector<char>& bytes,
+                         const std::string& test) = 0;
+
+  // Writes candidate Wasm bytes to `test`, executes `command`, and returns true
+  // if the output matches `expected`.
+  bool testCandidate(const std::vector<char>& bytes,
+                     const std::string& test,
+                     const std::string& command,
+                     ProgramResult& out) {
+    writeTest(bytes, test);
+    out.getFromExecution(command);
+    return out == expected;
+  }
+
+  bool testCandidate(const std::vector<char>& bytes,
+                     const std::string& test,
+                     const std::string& command) {
+    ProgramResult out;
+    return testCandidate(bytes, test, command, out);
+  }
+};
+
+// Handles standalone Wasm/WAT test cases where the working and test files are
+// raw module files on disk.
+struct WasmTestCaseHandler : public TestCaseHandler {
+  std::vector<char> readWorking(const std::string& working) override {
+    return read_file<std::vector<char>>(working, Flags::Binary);
+  }
+
+  void writeWorking(const std::vector<char>& bytes,
+                    const std::string& working) override {
+    write_file(working, bytes);
+  }
+
+  void writeTest(const std::vector<char>& bytes,
+                 const std::string& test) override {
+    write_file(test, bytes);
+  }
+};
+
+// Handles JavaScript test cases containing embedded WebAssembly byte arrays.
+struct JsTestCaseHandler : public TestCaseHandler {
+  std::string workingJs;
+  size_t moduleStart = 0;
+  size_t moduleEnd = 0;
+  std::vector<char> moduleBytes;
+
+  explicit JsTestCaseHandler(std::string workingJs)
+    : workingJs(std::move(workingJs)) {}
+
+  void setActiveModule(const EmbeddedModule& mod) {
+    moduleStart = mod.start;
+    moduleEnd = mod.end;
+    moduleBytes = mod.bytes;
+  }
+
+  std::vector<char> readWorking(const std::string& working) override {
+    // Return the cached working bytes instead of reading them back from the
+    // file because we wouldn't know which of potentially many modules embedded
+    // in the file is the current one.
+    return moduleBytes;
+  }
+
+  void writeWorking(const std::vector<char>& bytes,
+                    const std::string& working) override {
+    std::string formatted = formatByteArray(bytes);
+    workingJs.replace(moduleStart, moduleEnd - moduleStart, formatted);
+    moduleEnd = moduleStart + formatted.size();
+    moduleBytes = bytes;
+    write_file(working, workingJs);
+  }
+
+  void writeTest(const std::vector<char>& bytes,
+                 const std::string& test) override {
+    std::string formatted = formatByteArray(bytes);
+    std::string candidateJs = workingJs.substr(0, moduleStart) + formatted +
+                              workingJs.substr(moduleEnd);
+    write_file(test, candidateJs);
+  }
+};
+
 struct Reducer
   : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<Reducer>>> {
+  TestCaseHandler& handler;
   std::string command, test, working;
   bool binary, deNan, verbose, debugInfo;
   ToolOptions& toolOptions;
 
-  // test is the file we write to that the command will operate on
-  // working is the current temporary state, the reduction so far
-  Reducer(std::string command,
+  Reducer(TestCaseHandler& handler,
+          std::string command,
           std::string test,
           std::string working,
           bool binary,
@@ -247,13 +369,13 @@ struct Reducer
           bool verbose,
           bool debugInfo,
           ToolOptions& toolOptions)
-    : command(command), test(test), working(working), binary(binary),
-      deNan(deNan), verbose(verbose), debugInfo(debugInfo),
+    : handler(handler), command(command), test(test), working(working),
+      binary(binary), deNan(deNan), verbose(verbose), debugInfo(debugInfo),
       toolOptions(toolOptions) {}
 
-  // runs passes in order to reduce, until we can't reduce any more
-  // the criterion here is wasm binary size
-  void reduceUsingPasses() {
+  // Runs passes in order to reduce as long as binary size continues to shrink.
+  // Returns the pair of (original size, reduced size).
+  std::pair<size_t, size_t> reduceUsingPasses() {
     // run optimization passes until we can't shrink it any more
     std::vector<std::string> passes = {
       // Optimization modes.
@@ -298,7 +420,9 @@ struct Reducer
       "--strip",
       "--remove-unused-types --closed-world",
       "--vacuum"};
-    auto oldSize = file_size(working);
+    auto workingBytes = handler.readWorking(working);
+    auto initialSize = workingBytes.size();
+    auto oldSize = initialSize;
     bool more = true;
     while (more) {
       // std::cerr << "|    starting passes loop iteration\n";
@@ -306,23 +430,29 @@ struct Reducer
       // try both combining with a generic shrink (so minor pass overhead is
       // compensated for), and without
       for (auto pass : passes) {
-        std::string currCommand = Path::getBinaryenBinaryTool("wasm-opt") + " ";
-        currCommand += working + " -o " + test + " " + pass + " " + extraFlags;
+        std::string args = pass + " " + extraFlags;
         if (!binary) {
-          currCommand += " -S ";
+          args += " -S ";
         }
-        if (verbose) {
-          std::cerr << "|    trying pass command: " << currCommand << "\n";
-        }
-        if (!ProgramResult(currCommand).failed()) {
-          auto newSize = file_size(test);
+        ProgramResult result;
+        std::vector<char> candidateBytes;
+        std::string currCommand;
+        if (runWasmOpt(test,
+                       workingBytes,
+                       args,
+                       candidateBytes,
+                       result,
+                       verbose,
+                       &currCommand)) {
+          auto newSize = candidateBytes.size();
           if (newSize < oldSize) {
             // the pass didn't fail, and the size looks smaller, so promising
             // see if it is still has the property we are preserving
-            if (ProgramResult(command) == expected) {
+            if (handler.testCandidate(candidateBytes, test, command)) {
               std::cerr << "|    command \"" << currCommand
                         << "\" succeeded, reduced size to " << newSize << '\n';
-              applyTestToWorking();
+              saveWorking(candidateBytes);
+              workingBytes = candidateBytes;
               more = true;
               oldSize = newSize;
             }
@@ -333,16 +463,7 @@ struct Reducer
     if (verbose) {
       std::cerr << "|    done with passes for now\n";
     }
-  }
-
-  // Apply the test file to the working file, after we saw that it successfully
-  // reduced the testcase.
-  void applyTestToWorking() {
-    copy_file(test, working);
-
-    if (saveAllWorkingFiles) {
-      copy_file(working, working + '.' + std::to_string(workingFileIndex++));
-    }
+    return {initialSize, oldSize};
   }
 
   // does one pass of slow and destructive reduction. returns whether it
@@ -381,7 +502,7 @@ struct Reducer
 
     ModuleReader reader;
     try {
-      reader.read(working, *module);
+      reader.readData(handler.readWorking(working), *module);
     } catch (ParseException& p) {
       p.dump(std::cerr);
       std::cerr << '\n';
@@ -402,6 +523,7 @@ struct Reducer
   std::unique_ptr<Builder> builder;
   Index funcsSeen;
   uint64_t factor;
+  std::vector<char> lastTestBytes;
 
   // write the module and see if the command still fails on it as expected
   bool writeAndTestReduction() {
@@ -414,14 +536,14 @@ struct Reducer
     ModuleWriter writer(toolOptions.passOptions);
     writer.setBinary(binary);
     writer.setDebugInfo(debugInfo);
-    writer.write(*getModule(), test);
+    lastTestBytes.clear();
+    toolOptions.write(writer, *getModule(), lastTestBytes);
     // note that it is ok for the destructively-reduced module to be bigger
     // than the previous - each destructive reduction removes logical code,
     // and so is strictly better, even if the wasm binary format happens to
     // encode things slightly less efficiently.
     // test it
-    out.getFromExecution(command);
-    return out == expected;
+    return handler.testCandidate(lastTestBytes, test, command, out);
   }
 
   size_t decisionCounter = 0;
@@ -476,9 +598,16 @@ struct Reducer
     return true;
   }
 
+  void saveWorking(const std::vector<char>& bytes) {
+    handler.writeWorking(bytes, working);
+    if (saveAllWorkingFiles) {
+      copy_file(working, working + '.' + std::to_string(workingFileIndex++));
+    }
+  }
+
   void noteReduction(size_t amount = 1) {
     reduced += amount;
-    applyTestToWorking();
+    saveWorking(lastTestBytes);
   }
 
   // tests a reduction on an arbitrary child
@@ -1089,9 +1218,13 @@ struct Reducer
       struct FunctionReplacer
         : public WalkerPass<PostWalker<FunctionReplacer>> {
         bool isFunctionParallel() override { return true; }
+
         std::unique_ptr<Pass> create() override {
           return std::make_unique<FunctionReplacer>();
         };
+
+        bool needEHFixups = false;
+
         void visitCall(Call* curr) {
           // Replace calls to functions we have removed.
           if (getModule()->getFunctionOrNull(curr->target)) {
@@ -1112,6 +1245,9 @@ struct Reducer
           block->list.push_back(replacement);
           block->type = originalType;
           replaceCurrent(block);
+          // We added a block around content here, possibly causing us to need
+          // EH fixups later.
+          needEHFixups = true;
         }
         void visitRefFunc(RefFunc* curr) {
           // Replace references to functions we have removed.
@@ -1121,6 +1257,11 @@ struct Reducer
           Builder builder(*getModule());
           replaceCurrent(
             builder.makeBlock({builder.makeUnreachable()}, curr->type));
+        }
+        void visitFunction(Function* curr) {
+          if (needEHFixups) {
+            EHUtils::handleBlockNestedPops(curr, *getModule());
+          }
         }
       };
       PassRunner runner(module.get());
@@ -1261,7 +1402,7 @@ struct Reducer
     auto* curr = getCurrent();
 
     // References.
-    if (curr->type.isNullable() && !curr->is<RefNull>()) {
+    if (curr->type.isNullableRef() && !curr->is<RefNull>()) {
       RefNull* n = builder->makeRefNull(curr->type.getHeapType());
       return tryToReplaceCurrent(n);
     }
@@ -1316,271 +1457,100 @@ struct Reducer
   }
 };
 
-//
-// main
-//
-
-int main(int argc, const char* argv[]) {
-  std::string input, test, working, command;
-  // By default, look for binaries alongside our own binary.
-  std::string binDir = Path::getDirName(argv[0]);
-  bool binary = true, deNan = false, verbose = false, debugInfo = false,
-       force = false;
-
-  const std::string WasmReduceOption = "wasm-reduce options";
-
-  ToolOptions options(
-    "wasm-reduce",
-    R"(Reduce a wasm file to a smaller one with the same behavior on a given command.
-
-Typical usage:
-
-  wasm-reduce orig.wasm '--command=bash a.sh' --test t.wasm --working w.wasm
-
-The original file orig.wasm is where we begin. We then repeatedly test a small
-reduction of it by writing that modification to the 'test file' (specified by
-'--test'), and we run the command, in this example 'bash a.sh'. That command
-should use the test file (and not the original file or any other one). Whenever
-the reduction works, we write that new smaller file to the 'working file'
-(specified by '--working'). The reduction 'works' if it correctly preserves the
-behavior of the command on the original input, specifically, that it has the
-same stdout and the result return code. Each time reduction works we continue to
-reduce from that point (and each time it fails, we go back and try something
-else).
-
-As mentioned above, the command should run on the test file. That is, the first
-thing that wasm-reduce does on the example above is, effectively,
-
-  cp orig.wasm t.wasm
-  bash a.sh
-
-In other words, it copies the original to the test file, and runs the command.
-Whatever the command does, we will preserve as we copy progressively smaller
-files to t.wasm. As we make progress, the smallest file will be written to
-the working file, w.wasm, and when reduction is done you will find the final
-result there.
-
-Comparison to creduce:
-
-1. creduce requires the command to return 0. wasm-reduce is often used to reduce
-   crashes, which have non-zero return codes, so it is natural to allow any
-   return code. As mentioned above, we preserve the return code as we reduce.
-2. creduce ignores stdout. wasm-reduce preserves stdout as it reduces, as part
-   of the principle of preserving the original behavior of the command (if your
-   stdout varies in uninteresting ways, your command can be a script that runs
-   the real command and captures stdout to /dev/null, or filters it).
-3. creduce tramples the original input file as it reduces. wasm-reduce never
-   modifies the input (to avoid mistakes that cause data loss). Instead,
-   when reductions work we write to the 'working file' as mentioned above, and
-   the final reduction will be there.
-4. creduce runs the command in a temp directory. That is safer in general, but
-   it is not how the original command ran, and in particular forces additional
-   work if you have multiple files (which, for wasm-reduce, is common, e.g. if
-   the testcase is a combination of JavaScript and wasm). wasm-reduce runs the
-   command in the current directory (of course, your command can be a script
-   that changes directory to anywhere else).
-
-More documentation can be found at
-
-  https://github.com/WebAssembly/binaryen/wiki/Fuzzing#reducing
-                      )");
-  options
-    .add("--command",
-         "-cmd",
-         "The command to run on the test, that we want to reduce while keeping "
-         "the command's output identical. "
-         "We look at the command's return code and stdout here (TODO: stderr), "
-         "and we reduce while keeping those unchanged.",
-         WasmReduceOption,
-         Options::Arguments::One,
-         [&](Options* o, const std::string& argument) { command = argument; })
-    .add("--test",
-         "-t",
-         "Test file (this will be written to test, the given command should "
-         "read it when we call it)",
-         WasmReduceOption,
-         Options::Arguments::One,
-         [&](Options* o, const std::string& argument) { test = argument; })
-    .add("--working",
-         "-w",
-         "Working file (this will contain the current good state while doing "
-         "temporary computations, "
-         "and will contain the final best result at the end)",
-         WasmReduceOption,
-         Options::Arguments::One,
-         [&](Options* o, const std::string& argument) { working = argument; })
-    .add("--binaries",
-         "-b",
-         "binaryen binaries location (bin/ directory)",
-         WasmReduceOption,
-         Options::Arguments::One,
-         [&](Options* o, const std::string& argument) {
-           // Add separator just in case
-           binDir = argument + Path::getPathSeparator();
-         })
-    .add("--text",
-         "-S",
-         "Emit intermediate files as text, instead of binary (also make sure "
-         "the test and working files have a .wat or .wast suffix)",
-         WasmReduceOption,
-         Options::Arguments::Zero,
-         [&](Options* o, const std::string& argument) { binary = false; })
-    .add("--denan",
-         "",
-         "Avoid nans when reducing",
-         WasmReduceOption,
-         Options::Arguments::Zero,
-         [&](Options* o, const std::string& argument) { deNan = true; })
-    .add("--verbose",
-         "-v",
-         "Verbose output mode",
-         WasmReduceOption,
-         Options::Arguments::Zero,
-         [&](Options* o, const std::string& argument) { verbose = true; })
-    .add("--debugInfo",
-         "-g",
-         "Keep debug info in binaries",
-         WasmReduceOption,
-         Options::Arguments::Zero,
-         [&](Options* o, const std::string& argument) { debugInfo = true; })
-    .add("--force",
-         "-f",
-         "Force the reduction attempt, ignoring problems that imply it is "
-         "unlikely to succeed",
-         WasmReduceOption,
-         Options::Arguments::Zero,
-         [&](Options* o, const std::string& argument) { force = true; })
-    .add("--timeout",
-         "-to",
-         "A timeout to apply to each execution of the command, in seconds "
-         "(default: 2)",
-         WasmReduceOption,
-         Options::Arguments::One,
-         [&](Options* o, const std::string& argument) {
-           timeout = atoi(argument.c_str());
-           std::cout << "|applying timeout: " << timeout << "\n";
-         })
-    .add("--extra-flags",
-         "-ef",
-         "Extra commandline flags to pass to wasm-opt while reducing. "
-         "(default: --enable-all)",
-         WasmReduceOption,
-         Options::Arguments::One,
-         [&](Options* o, const std::string& argument) {
-           extraFlags = argument;
-           std::cout << "|applying extraFlags: " << extraFlags << "\n";
-         })
-    .add("--save-all-working",
-         "-saw",
-         "Save all intermediate working files, as $WORKING.0, .1, .2 etc",
-         WasmReduceOption,
-         Options::Arguments::Zero,
-         [&](Options* o, const std::string& argument) {
-           saveAllWorkingFiles = true;
-           std::cout << "|saving all intermediate working files\n";
-         })
-    .add_positional(
-      "INFILE",
-      Options::Arguments::One,
-      [&](Options* o, const std::string& argument) { input = argument; });
-  options.parse(argc, argv);
-
-  if (debugInfo) {
-    extraFlags += " -g ";
+static void
+stopIfNotForced(std::string message, ProgramResult& result, bool force) {
+  std::cerr << "|! " << message << '\n' << result << '\n';
+  if (!force) {
+    Fatal() << "|! stopping, as it is very unlikely reduction can succeed "
+               "(use -f to ignore this check)";
   }
+}
 
-  if (test.size() == 0) {
-    Fatal() << "test file not provided\n";
-  }
-  if (working.size() == 0) {
-    Fatal() << "working file not provided\n";
-  }
-
-  if (!binary) {
-    Colors::setEnabled(false);
-  }
-
-  Path::setBinaryenBinDir(binDir);
-
-  std::cerr << "|wasm-reduce\n";
-  std::cerr << "|input: " << input << '\n';
-  std::cerr << "|test: " << test << '\n';
-  std::cerr << "|working: " << working << '\n';
-  std::cerr << "|bin dir: " << binDir << '\n';
-  std::cerr << "|extra flags: " << extraFlags << '\n';
-
-  // get the expected output
-  copy_file(input, test);
-  expected.getFromExecution(command);
-
-  std::cerr << "|expected result:\n" << expected << '\n';
-  std::cerr << "|!! Make sure the above is what you expect! !!\n\n";
-
-  auto stopIfNotForced = [&](std::string message, ProgramResult& result) {
-    std::cerr << "|! " << message << '\n' << result << '\n';
-    if (!force) {
-      Fatal() << "|! stopping, as it is very unlikely reduction can succeed "
-                 "(use -f to ignore this check)";
-    }
-  };
-
-  if (expected.time + 1 >= timeout) {
+static void checkTimeout(ProgramResult& result, bool force) {
+  if (result.time + 1 >= timeout) {
     stopIfNotForced("execution time is dangerously close to the timeout - you "
                     "should probably increase the timeout",
-                    expected);
+                    result,
+                    force);
   }
+}
 
-  if (!force) {
-    std::cerr << "|checking that command has different behavior on different "
-                 "inputs (this "
-                 "verifies that the test file is used by the command)\n";
-    // Try it on an invalid input.
-    {
-      std::ofstream dst(test, std::ios::binary);
-      dst << "waka waka\n";
-    }
-    ProgramResult resultOnInvalid(command);
-    if (resultOnInvalid == expected) {
-      // Try it on a valid input.
-      Module emptyModule;
-      ModuleWriter writer(options.passOptions);
-      writer.setBinary(true);
-      writer.write(emptyModule, test);
-      ProgramResult resultOnValid(command);
-      if (resultOnValid == expected) {
-        Fatal()
-          << "running the command on the given input gives the same result as "
-             "when running it on either a trivial valid wasm or a file with "
-             "nonsense in it. does the script not look at the test file (" +
-               test + ")? (use -f to ignore this check)";
-      }
+static void checkDifferentBehaviorOnDifferentInputs(TestCaseHandler& handler,
+                                                    const std::string& test,
+                                                    const std::string& command,
+                                                    bool force,
+                                                    ToolOptions& options) {
+  if (force) {
+    return;
+  }
+  std::cerr << "|checking that command has different behavior on different "
+               "inputs (this "
+               "verifies that the test file is used by the command)\n";
+  // Try it on an invalid input.
+  std::string nonsenseStr = "waka waka\n";
+  std::vector<char> nonsense(nonsenseStr.begin(), nonsenseStr.end());
+  ProgramResult resultOnInvalid;
+  if (handler.testCandidate(nonsense, test, command, resultOnInvalid)) {
+    // Try it on a valid input.
+    Module emptyModule;
+    ModuleWriter writer(options.passOptions);
+    writer.setBinary(true);
+    std::vector<char> emptyBytes;
+    options.write(writer, emptyModule, emptyBytes);
+    ProgramResult resultOnValid;
+    if (handler.testCandidate(emptyBytes, test, command, resultOnValid)) {
+      Fatal()
+        << "running the command on the given input gives the same result as "
+           "when running it on either a trivial valid wasm or a file with "
+           "nonsense in it. does the script not look at the test file (" +
+             test + ")? (use -f to ignore this check)";
     }
   }
+}
 
+static void checkCanonicalizedBinary(TestCaseHandler& handler,
+                                     const std::string& working,
+                                     const std::string& test,
+                                     const std::string& command,
+                                     bool binary,
+                                     bool force) {
   std::cerr << "|checking that command has expected behavior on canonicalized "
                "(read-written) binary\n";
-  {
-    // read and write it
-    auto cmd = Path::getBinaryenBinaryTool("wasm-opt") + " " + input + " -o " +
-               test + " " + extraFlags;
-    if (!binary) {
-      cmd += " -S ";
-    }
-    ProgramResult readWrite(cmd);
-    if (readWrite.failed()) {
-      stopIfNotForced("failed to read and write the binary", readWrite);
-    } else {
-      ProgramResult result(command);
-      if (result != expected) {
-        stopIfNotForced("running command on the canonicalized module should "
-                        "give the same results",
-                        result);
-      }
+  std::string args = extraFlags;
+  if (!binary) {
+    args += " -S ";
+  }
+  ProgramResult readWrite;
+  std::vector<char> canonicalBytes;
+  if (!runWasmOpt(
+        test, handler.readWorking(working), args, canonicalBytes, readWrite)) {
+    stopIfNotForced("failed to read and write the binary", readWrite, force);
+  } else {
+    ProgramResult result;
+    if (!handler.testCandidate(canonicalBytes, test, command, result)) {
+      stopIfNotForced("running command on the canonicalized module should "
+                      "give the same results",
+                      result,
+                      force);
     }
   }
+}
 
-  copy_file(input, working);
-  auto workingSize = file_size(working);
+static void reduceModule(TestCaseHandler& handler,
+                         const std::string& command,
+                         const std::string& test,
+                         const std::string& working,
+                         bool binary,
+                         bool deNan,
+                         bool verbose,
+                         bool debugInfo,
+                         bool force,
+                         ToolOptions& options) {
+  checkDifferentBehaviorOnDifferentInputs(
+    handler, test, command, force, options);
+  checkCanonicalizedBinary(handler, working, test, command, binary, force);
+
+  auto workingSize = handler.readWorking(working).size();
   std::cerr << "|input size: " << workingSize << "\n";
 
   std::cerr << "|starting reduction!\n";
@@ -1594,8 +1564,15 @@ More documentation can be found at
 
   bool first = true;
   while (1) {
-    Reducer reducer(
-      command, test, working, binary, deNan, verbose, debugInfo, options);
+    Reducer reducer(handler,
+                    command,
+                    test,
+                    working,
+                    binary,
+                    deNan,
+                    verbose,
+                    debugInfo,
+                    options);
 
     // For extremely large modules with slow reproduction commands, reducing
     // function bodies first can be more effective than running passes. TODO:
@@ -1609,12 +1586,10 @@ More documentation can be found at
 
     // run binaryen optimization passes to reduce. passes are fast to run
     // and can often reduce large amounts of code efficiently, as opposed
-    // to detructive reduction (i.e., that doesn't preserve correctness as
-    // passes do) since destrucive must operate one change at a time
+    // to destructive reduction (i.e., that doesn't preserve correctness as
+    // passes do) since destructive must operate one change at a time
     std::cerr << "|  reduce using passes...\n";
-    auto oldSize = file_size(working);
-    reducer.reduceUsingPasses();
-    auto newSize = file_size(working);
+    auto [oldSize, newSize] = reducer.reduceUsingPasses();
     auto passProgress = oldSize - newSize;
     std::cerr << "|  after pass reduction: " << newSize << "\n";
 
@@ -1680,9 +1655,265 @@ More documentation can be found at
       factor = std::max(uint64_t(1), factor / 4);
     }
 
-    std::cerr << "|  destructive reduction led to size: " << file_size(working)
-              << '\n';
+    std::cerr << "|  destructive reduction led to size: "
+              << handler.readWorking(working).size() << '\n';
   }
-  std::cerr << "|finished, final size: " << file_size(working) << "\n";
-  copy_file(working, test); // just to avoid confusion
+  auto finalBytes = handler.readWorking(working);
+  std::cerr << "|finished, final size: " << finalBytes.size() << "\n";
+  handler.writeTest(finalBytes, test); // just to avoid confusion
+}
+
+//
+// main
+//
+
+int main(int argc, const char* argv[]) {
+  std::string input, test, working, command;
+  // By default, look for binaries alongside our own binary.
+  std::string binDir = Path::getDirName(argv[0]);
+  bool binary = true, deNan = false, verbose = false, debugInfo = false,
+       force = false, js = false;
+
+  const std::string WasmReduceOption = "wasm-reduce options";
+
+  ToolOptions options(
+    "wasm-reduce",
+    R"(Reduce a wasm file to a smaller one with the same behavior on a given command.
+
+Typical usage:
+
+  wasm-reduce orig.wasm '--command=bash a.sh' --test t.wasm --working w.wasm
+
+The original file orig.wasm is where we begin. We then repeatedly test a small
+reduction of it by writing that modification to the 'test file' (specified by
+'--test'), and we run the command, in this example 'bash a.sh'. That command
+should use the test file (and not the original file or any other one). Whenever
+the reduction works, we write that new smaller file to the 'working file'
+(specified by '--working'). The reduction 'works' if it correctly preserves the
+behavior of the command on the original input, specifically, that it has the
+same stdout and the result return code. Each time reduction works we continue to
+reduce from that point (and each time it fails, we go back and try something
+else).
+
+As mentioned above, the command should run on the test file. That is, the first
+thing that wasm-reduce does on the example above is, effectively,
+
+  cp orig.wasm t.wasm
+  bash a.sh
+
+In other words, it copies the original to the test file, and runs the command.
+Whatever the command does, we will preserve as we copy progressively smaller
+files to t.wasm. As we make progress, the smallest file will be written to
+the working file, w.wasm, and when reduction is done you will find the final
+result there.
+
+Comparison to creduce:
+
+1. creduce requires the command to return 0. wasm-reduce is often used to reduce
+   crashes, which have non-zero return codes, so it is natural to allow any
+   return code. As mentioned above, we preserve the return code as we reduce.
+2. creduce ignores stdout. wasm-reduce preserves stdout as it reduces, as part
+   of the principle of preserving the original behavior of the command (if your
+   stdout varies in uninteresting ways, your command can be a script that runs
+   the real command and captures stdout to /dev/null, or filters it).
+3. creduce tramples the original input file as it reduces. wasm-reduce never
+   modifies the input (to avoid mistakes that cause data loss). Instead,
+   when reductions work we write to the 'working file' as mentioned above, and
+   the final reduction will be there.
+4. creduce runs the command in a temp directory. That is safer in general, but
+   it is not how the original command ran, and in particular forces additional
+   work if you have multiple files (which, for wasm-reduce, is common, e.g. if
+   the testcase is a combination of JavaScript and wasm). wasm-reduce runs the
+   command in the current directory (of course, your command can be a script
+   that changes directory to anywhere else).
+
+More documentation can be found at
+
+  https://github.com/WebAssembly/binaryen/wiki/Fuzzing#reducing
+)");
+  options
+    .add("--command",
+         "-cmd",
+         "The command to run on the test, that we want to reduce while keeping "
+         "the command's output identical. "
+         "We look at the command's return code and stdout here (TODO: stderr), "
+         "and we reduce while keeping those unchanged.",
+         WasmReduceOption,
+         Options::Arguments::One,
+         [&](Options* o, const std::string& argument) { command = argument; })
+    .add("--test",
+         "-t",
+         "Test file (this will be written to test, the given command should "
+         "read it when we call it)",
+         WasmReduceOption,
+         Options::Arguments::One,
+         [&](Options* o, const std::string& argument) { test = argument; })
+    .add("--working",
+         "-w",
+         "Working file (this will contain the current good state while doing "
+         "temporary computations, "
+         "and will contain the final best result at the end)",
+         WasmReduceOption,
+         Options::Arguments::One,
+         [&](Options* o, const std::string& argument) { working = argument; })
+    .add("--binaries",
+         "-b",
+         "binaryen binaries location (bin/ directory)",
+         WasmReduceOption,
+         Options::Arguments::One,
+         [&](Options* o, const std::string& argument) {
+           // Add separator just in case
+           binDir = argument + Path::getPathSeparator();
+         })
+    .add("--text",
+         "-S",
+         "Emit intermediate files as text, instead of binary (also make sure "
+         "the test and working files have a .wat or .wast suffix)",
+         WasmReduceOption,
+         Options::Arguments::Zero,
+         [&](Options* o, const std::string& argument) { binary = false; })
+    .add("--js",
+         "",
+         "Reduce embedded WebAssembly modules inside a JavaScript file",
+         WasmReduceOption,
+         Options::Arguments::Zero,
+         [&](Options* o, const std::string& argument) { js = true; })
+    .add("--denan",
+         "",
+         "Avoid nans when reducing",
+         WasmReduceOption,
+         Options::Arguments::Zero,
+         [&](Options* o, const std::string& argument) { deNan = true; })
+    .add("--verbose",
+         "-v",
+         "Verbose output mode",
+         WasmReduceOption,
+         Options::Arguments::Zero,
+         [&](Options* o, const std::string& argument) { verbose = true; })
+    .add("--debugInfo",
+         "-g",
+         "Keep debug info in binaries",
+         WasmReduceOption,
+         Options::Arguments::Zero,
+         [&](Options* o, const std::string& argument) { debugInfo = true; })
+    .add("--force",
+         "-f",
+         "Force the reduction attempt, ignoring problems that imply it is "
+         "unlikely to succeed",
+         WasmReduceOption,
+         Options::Arguments::Zero,
+         [&](Options* o, const std::string& argument) { force = true; })
+    .add("--timeout",
+         "-to",
+         "A timeout to apply to each execution of the command, in seconds "
+         "(default: 2)",
+         WasmReduceOption,
+         Options::Arguments::One,
+         [&](Options* o, const std::string& argument) {
+           timeout = atoi(argument.c_str());
+           std::cout << "|applying timeout: " << timeout << "\n";
+         })
+    .add("--extra-flags",
+         "-ef",
+         "Extra commandline flags to pass to wasm-opt while reducing. "
+         "(default: --enable-all)",
+         WasmReduceOption,
+         Options::Arguments::One,
+         [&](Options* o, const std::string& argument) {
+           extraFlags = argument;
+           std::cout << "|applying extraFlags: " << extraFlags << "\n";
+         })
+    .add("--save-all-working",
+         "-saw",
+         "Save all intermediate working files, as $WORKING.0, .1, .2 etc",
+         WasmReduceOption,
+         Options::Arguments::Zero,
+         [&](Options* o, const std::string& argument) {
+           saveAllWorkingFiles = true;
+           std::cout << "|saving all intermediate working files\n";
+         })
+    .add_positional(
+      "INFILE",
+      Options::Arguments::One,
+      [&](Options* o, const std::string& argument) { input = argument; });
+  options.parse(argc, argv);
+
+  if (js && !binary) {
+    Fatal() << "--js and --text cannot be used together\n";
+  }
+
+  if (debugInfo) {
+    extraFlags += " -g ";
+  }
+  if (options.emitModuleNames) {
+    extraFlags += " --emit-module-names ";
+  }
+
+  if (test.size() == 0) {
+    Fatal() << "test file not provided\n";
+  }
+  if (working.size() == 0) {
+    Fatal() << "working file not provided\n";
+  }
+
+  if (!binary) {
+    Colors::setEnabled(false);
+  }
+
+  Path::setBinaryenBinDir(binDir);
+
+  std::cerr << "|wasm-reduce\n";
+  std::cerr << "|input: " << input << '\n';
+  std::cerr << "|test: " << test << '\n';
+  std::cerr << "|working: " << working << '\n';
+  std::cerr << "|bin dir: " << binDir << '\n';
+  std::cerr << "|extra flags: " << extraFlags << '\n';
+
+  // get the expected output
+  copy_file(input, test);
+  expected.getFromExecution(command);
+
+  std::cerr << "|expected result:\n" << expected << '\n';
+  std::cerr << "|!! Make sure the above is what you expect! !!\n\n";
+
+  checkTimeout(expected, force);
+
+  copy_file(input, working);
+
+  if (js) {
+    auto workingJs = read_file<std::string>(working, Flags::Binary);
+    auto modules = findEmbeddedModules(workingJs);
+    if (modules.empty()) {
+      Fatal() << "no embedded wasm modules found in " << input << "\n";
+    }
+    JsTestCaseHandler handler(std::move(workingJs));
+    for (size_t i = modules.size(); i > 0; --i) {
+      size_t idx = i - 1;
+      std::cerr << "|reducing embedded module " << idx << " of "
+                << modules.size() << "\n";
+      handler.setActiveModule(modules[idx]);
+      reduceModule(handler,
+                   command,
+                   test,
+                   working,
+                   binary,
+                   deNan,
+                   verbose,
+                   debugInfo,
+                   force,
+                   options);
+    }
+  } else {
+    WasmTestCaseHandler handler;
+    reduceModule(handler,
+                 command,
+                 test,
+                 working,
+                 binary,
+                 deNan,
+                 verbose,
+                 debugInfo,
+                 force,
+                 options);
+  }
 }

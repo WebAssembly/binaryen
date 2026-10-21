@@ -26,6 +26,78 @@
 
 namespace wasm {
 
+namespace {
+
+// Copy over `indirectCallEffects` when types are rewritten. When rewriting a
+// type A to type B, A will lose its effects and B will gain A's effects. If the
+// destination type already existed in the program but had no effects recorded,
+// we must assume the worst (e.g. there may have been an import of type B) and
+// clear its entry in the effects map. OTOH if the destination type is a brand
+// new type, then it can only have effects from the source type. If the source
+// type didn't exist, it must have been created by a pass sometime after
+// GlobalEffects last ran. We again assume that effects are unknown.
+std::unordered_map<HeapType, std::shared_ptr<const EffectAnalyzer>>
+updateIndirectCallEffects(
+  const Module& wasm,
+  const InsertOrderedMap<HeapType, ModuleUtils::HeapTypeInfo>& typeInfo,
+  const GlobalTypeRewriter::TypeMap& typeMap) {
+
+  std::unordered_map<HeapType, std::shared_ptr<const EffectAnalyzer>>
+    newTypeEffects;
+
+  // Types that don't already appear in the module.
+  std::unordered_set<HeapType> newTypes;
+
+  std::unordered_set<HeapType> allOldTypes;
+  for (auto [oldType, _] : typeInfo) {
+    allOldTypes.insert(oldType);
+  }
+  for (auto& [oldType, _] : wasm.indirectCallEffects) {
+    allOldTypes.insert(oldType);
+  }
+
+  for (auto oldType : allOldTypes) {
+    HeapType destType;
+    {
+      auto it = typeMap.find(oldType);
+      if (it == typeMap.end()) {
+        destType = oldType;
+      } else {
+        destType = it->second;
+      }
+    }
+
+    if (newTypes.contains(destType)) {
+      continue;
+    }
+
+    const std::shared_ptr<const EffectAnalyzer>* oldEffects =
+      find_or_null(wasm.indirectCallEffects, oldType);
+
+    if (!oldEffects) {
+      // oldType has no entry, which means its effects are explicitly unknown.
+      // Why? It's a source type in `typeMap`, so it must have appeared in
+      // the module at some point, but GlobalEffects were never computed for it,
+      // or GlobalEffects intentionally omitted its entry because it couldn't
+      // determine its effects (e.g. if an import has that type).
+      newTypes.insert(destType);
+      newTypeEffects.erase(destType);
+      continue;
+    }
+
+    auto [it, inserted] = newTypeEffects.emplace(destType, *oldEffects);
+    if (!inserted) {
+      auto merged = std::make_shared<EffectAnalyzer>(*it->second);
+      merged->mergeIn(**oldEffects);
+      it->second = std::move(merged);
+    }
+  }
+
+  return newTypeEffects;
+}
+
+} // anonymous namespace
+
 GlobalTypeRewriter::GlobalTypeRewriter(Module& wasm, WorldMode worldMode)
   : wasm(wasm), publicGroups(wasm.features) {
   // Find the heap types that are not publicly observable. Even in a closed
@@ -212,6 +284,11 @@ GlobalTypeRewriter::rebuildTypes(std::vector<HeapType> types) {
 }
 
 void GlobalTypeRewriter::mapTypes(const TypeMap& oldToNewTypes) {
+  if (!wasm.indirectCallEffects.empty()) {
+    wasm.indirectCallEffects =
+      updateIndirectCallEffects(wasm, typeInfo, oldToNewTypes);
+  }
+
   // Replace all the old types in the module with the new ones.
   struct CodeUpdater
     : public WalkerPass<
@@ -325,43 +402,19 @@ void GlobalTypeRewriter::mapTypes(const TypeMap& oldToNewTypes) {
   for (auto& tag : wasm.tags) {
     tag->type = updater.getNew(tag->type);
   }
-
-  // Update indirect call effects per type.
-  // When A is rewritten to B, B inherits the effects of A and A loses its
-  // effects.
-  std::unordered_map<HeapType, std::shared_ptr<const EffectAnalyzer>>
-    newTypeEffects;
-  for (auto& [oldType, oldEffects] : wasm.indirectCallEffects) {
-    if (!oldEffects) {
-      continue;
-    }
-
-    auto newType = updater.getNew(oldType);
-    std::shared_ptr<const EffectAnalyzer>& targetEffects =
-      newTypeEffects[newType];
-    if (!targetEffects) {
-      targetEffects = oldEffects;
-    } else {
-      auto merged = std::make_shared<EffectAnalyzer>(*targetEffects);
-      merged->mergeIn(*oldEffects);
-      targetEffects = merged;
-    }
-  }
-  wasm.indirectCallEffects = std::move(newTypeEffects);
 }
 
 void GlobalTypeRewriter::mapTypeNamesAndIndices(const TypeMap& oldToNewTypes) {
-  // Track all the existing names to avoid creating duplicates.
-  std::unordered_set<Name> seenTypeNames;
-  for (auto& [type, info] : wasm.typeNames) {
-    seenTypeNames.insert(info.name);
-  }
   // Collect new and updated type names and indices. Do not mutate the module's
   // names and indices until the end to avoid iteration order affecting the
   // results in the case where oldToNewTypes maps old types to different old
   // types.
   std::unordered_map<HeapType, TypeNames> newTypeNames;
   std::unordered_map<HeapType, Index> newTypeIndices;
+
+  // Assign names and indices to new types. To avoid any dependencies on the
+  // iteration order, deterministically keep the lesser names or indices in the
+  // case of merges and do not mutate typeNames as we iterate over it.
   for (auto& [old, new_] : oldToNewTypes) {
     if (old == new_) {
       // The type is being mapped to itself; no need to rename anything.
@@ -369,25 +422,38 @@ void GlobalTypeRewriter::mapTypeNamesAndIndices(const TypeMap& oldToNewTypes) {
     }
     if (auto it = wasm.typeNames.find(old); it != wasm.typeNames.end()) {
       auto& names = it->second;
-      newTypeNames[new_] = names;
-      // Use the existing name in the new type, as usually it completely
-      // replaces the old. Rename the old name in a unique way to avoid
-      // confusion in the case that it remains used.
-      auto deduped = Names::getValidName(
-        names.name, [&](Name test) { return !seenTypeNames.contains(test); });
-      names.name = deduped;
-      // Use `insert` to avoid overwriting the entry for the old type if it has
-      // already appeared as a new type.
-      if (newTypeNames.insert({old, names}).second) {
-        seenTypeNames.insert(names.name);
+      auto [newIt, inserted] = newTypeNames.insert({new_, names});
+      if (!inserted) {
+        if (names.name.view() < newIt->second.name.view()) {
+          newIt->second = names;
+        }
       }
     }
     if (auto it = wasm.typeIndices.find(old); it != wasm.typeIndices.end()) {
-      // It's ok if we end up with duplicate indices. Ties will be resolved in
-      // some arbitrary manner.
-      newTypeIndices[new_] = it->second;
+      auto [newIt, inserted] = newTypeIndices.insert({new_, it->second});
+      if (!inserted) {
+        newIt->second = std::min(newIt->second, it->second);
+      }
     }
   }
+
+  // Assign old types that have been mapped to other types unique deduplicated
+  // names in case they remain used despite the mapping. In cases where the old
+  // types are also mapped _to_, the mapping will take precedence when we do the
+  // merge below.
+  std::unordered_set<Name> seenTypeNames;
+  for (auto& [_, names] : wasm.typeNames) {
+    seenTypeNames.insert(names.name);
+  }
+  for (auto& [type, names] : wasm.typeNames) {
+    if (auto it = oldToNewTypes.find(type);
+        it != oldToNewTypes.end() && it->second != type) {
+      names.name = Names::getValidName(names.name, [&](Name name) {
+        return seenTypeNames.insert(name).second;
+      });
+    }
+  }
+
   newTypeNames.merge(wasm.typeNames);
   wasm.typeNames = std::move(newTypeNames);
   newTypeIndices.merge(wasm.typeIndices);
@@ -440,7 +506,7 @@ void handleNonDefaultableLocals(Function* func, Module& wasm) {
   bool hasNonNullable = false;
   for (auto varType : func->vars) {
     for (auto type : varType) {
-      if (type.isNonNullable()) {
+      if (type.isNonNullableRef()) {
         hasNonNullable = true;
         break;
       }
@@ -463,7 +529,7 @@ void handleNonDefaultableLocals(Function* func, Module& wasm) {
     // LocalStructuralDominance should have only looked at non-nullable indexes
     // since we told it to ignore nullable ones. Also, params always dominate
     // and should not appear here.
-    assert(func->getLocalType(index).isNonNullable() ||
+    assert(func->getLocalType(index).isNonNullableRef() ||
            func->getLocalType(index).isTuple());
     assert(!func->isParam(index));
   }
@@ -506,7 +572,7 @@ void handleNonDefaultableLocals(Function* func, Module& wasm) {
         for (size_t i = 0, size = type.size(); i < size; ++i) {
           elems[i] = builder.makeTupleExtract(
             builder.makeLocalGet(set->index, validType), i);
-          if (type[i].isNonNullable()) {
+          if (type[i].isNonNullableRef()) {
             elems[i] = builder.makeRefAs(RefAsNonNull, elems[i]);
           }
         }
@@ -526,7 +592,7 @@ void handleNonDefaultableLocals(Function* func, Module& wasm) {
 
 Type getValidLocalType(Type type, FeatureSet features) {
   assert(type.isConcrete());
-  if (type.isNonNullable()) {
+  if (type.isNonNullableRef()) {
     return type.with(Nullable);
   }
   if (type.isTuple()) {
@@ -540,7 +606,7 @@ Type getValidLocalType(Type type, FeatureSet features) {
 }
 
 Expression* fixLocalGet(LocalGet* get, Module& wasm) {
-  if (get->type.isNonNullable()) {
+  if (get->type.isNonNullableRef()) {
     // The get should now return a nullable value, and a ref.as_non_null
     // fixes that up.
     get->type = getValidLocalType(get->type, wasm.features);
@@ -555,7 +621,7 @@ Expression* fixLocalGet(LocalGet* get, Module& wasm) {
       auto* elemGet =
         i == 0 ? get : builder.makeLocalGet(get->index, get->type);
       elems[i] = builder.makeTupleExtract(elemGet, i);
-      if (type[i].isNonNullable()) {
+      if (type[i].isNonNullableRef()) {
         elems[i] = builder.makeRefAs(RefAsNonNull, elems[i]);
       }
     }

@@ -1,17 +1,17 @@
 ;; RUN: wasm-shell --help | filecheck %s
 ;; CHECK: ================================================================================
 ;; CHECK-NEXT: wasm-shell INFILE
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT: Execute .wast files
 ;; CHECK-NEXT: ================================================================================
-;; CHECK-NEXT:
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT: General options:
 ;; CHECK-NEXT: ----------------
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --version  Output version information and exit
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --help,-h  Show this help message and exit
-;; CHECK-NEXT:
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --debug,-d Print debug information to stderr
-;; CHECK-NEXT:
+;; CHECK-EMPTY:

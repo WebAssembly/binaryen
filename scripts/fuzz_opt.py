@@ -25,7 +25,7 @@ BINARYEN_CORES=1 BINARYEN_PASS_DEBUG=1 afl-fuzz -i afl-testcases/ -o afl-finding
 script covers different options being passed)
 """
 
-# ruff: noqa: COM819, ARG002
+# ruff: file-ignore[prohibited-trailing-comma, unused-method-argument]
 
 import contextlib
 import difflib
@@ -52,8 +52,8 @@ assert sys.version_info >= (3, 10), 'requires Python 3.10'
 # parameters
 
 # feature options that are always passed to the tools.
-# XXX fp16 is not yet stable, remove from here when it is
-CONSTANT_FEATURE_OPTS = ['--all-features', '--disable-fp16']
+# XXX fp16 and multibyte are not yet stable, remove from here when they are.
+CONSTANT_FEATURE_OPTS = ['--all-features', '--disable-fp16', '--disable-multibyte']
 
 INPUT_SIZE_MIN = 1024
 INPUT_SIZE_MEAN = 40 * 1024
@@ -76,6 +76,7 @@ DISALLOWED_FEATURES_IN_V8 = [
     'strings',
     'stack-switching',
     'multibyte',
+    'relaxed-atomics',
 ]
 
 
@@ -229,18 +230,6 @@ def randomize_fuzz_settings():
     else:
         LEGALIZE = False
 
-    # if GC is enabled then run --dce at the very end, to ensure that our
-    # binaries validate in other VMs, due to how non-nullable local validation
-    # and unreachable code interact. see
-    #   https://github.com/WebAssembly/binaryen/pull/5665
-    #   https://github.com/WebAssembly/binaryen/issues/5599
-    if '--disable-gc' not in FEATURE_OPTS:
-        GEN_ARGS += ['--dce']
-
-        # Add --dce not only when generating the original wasm but to the
-        # optimizations we use to create any other wasm file.
-        FUZZ_OPTS += ['--dce']
-
     if CLOSED_WORLD:
         GEN_ARGS += [CLOSED_WORLD_FLAG]
         # Enclose the world much of the time when fuzzing closed-world, so that
@@ -248,9 +237,19 @@ def randomize_fuzz_settings():
         if random.random() < 0.5:
             GEN_ARGS += ['--enclose-world']
 
-    # Test JSPI somewhat rarely, as it may be slower.
+    # Test JSPI somewhat rarely, as it may be slower, and disables some other
+    # fuzzing.
     global JSPI
-    JSPI = random.random() < 0.25
+    JSPI = random.random() < 0.1
+    if JSPI:
+        # Fuzzing the start function with JSPI is tricky: if the start function
+        # calls an import that is marked as suspending, then it traps on
+        # "SuspendError: trying to suspend without WebAssembly.promising" - the
+        # start function in fact *cannot* be wrapped as promising, as it is not
+        # even an export. To make the binaryen interpreter behave the same way,
+        # we'd need to know JSPI is enabled and act like it, which would add a
+        # bunch of complexity. Instead, fuzz JSPI without start functions.
+        GEN_ARGS += ['--remove-start']
 
     print('randomized settings (NaNs, OOB, legalize, JSPI):', NANS, OOB, LEGALIZE, JSPI)
 
@@ -273,12 +272,12 @@ def init_important_initial_contents():
         # commit time of HEAD. The reason we use the commit time of HEAD instead
         # of the current system time is to make the results deterministic given
         # the Binaryen HEAD commit.
-        head_ts_str = run(['git', 'log', '-1', '--format=%cd', '--date=raw'],
+        head_ts_str = run(['git', '-C', shared.options.binaryen_root, 'log', '-1', '--format=%cd', '--date=raw'],
                           silent=True).split()[0]
         head_dt = datetime.utcfromtimestamp(int(head_ts_str))
         start_dt = head_dt - timedelta(days=RECENT_DAYS)
         start_ts = start_dt.replace(tzinfo=timezone.utc).timestamp()
-        log = run(['git', 'log', '--name-status', '--format=', '--date=raw', '--no-renames', f'--since={start_ts}'], silent=True).splitlines()
+        log = run(['git', '-C', shared.options.binaryen_root, 'log', '--name-status', '--format=', '--date=raw', '--no-renames', f'--since={start_ts}'], silent=True).splitlines()
         # Pick up lines in the form of
         # A       test/../something.wast
         # M       test/../something.wast
@@ -291,7 +290,7 @@ def init_important_initial_contents():
 
     def is_git_repo():
         try:
-            ret = run(['git', 'rev-parse', '--is-inside-work-tree'],
+            ret = run(['git', '-C', shared.options.binaryen_root, 'rev-parse', '--is-inside-work-tree'],
                       silent=True, stderr=subprocess.DEVNULL)
             return ret == 'true\n'
         except subprocess.CalledProcessError:
@@ -440,13 +439,6 @@ FUZZ_EXEC_EXPORT_PREFIX = '[fuzz-exec] export'
 # --fuzz-exec reports a stack limit using this notation
 STACK_LIMIT = '[trap stack limit]'
 
-# V8 reports this error in rare cases due to limitations in our handling of non-
-# nullable locals in unreachable code, see
-#   https://github.com/WebAssembly/binaryen/pull/5665
-#   https://github.com/WebAssembly/binaryen/issues/5599
-# and also see the --dce workaround below that also links to those issues.
-V8_UNINITIALIZED_NONDEF_LOCAL = 'uninitialized non-defaultable local'
-
 # JS exceptions are logged as exception thrown: REASON
 EXCEPTION_PREFIX = 'exception thrown: '
 
@@ -567,6 +559,14 @@ def fix_output(out):
     # Tag names may change due to opts, so canonicalize them.
     out = re.sub(r' tag\$\d+', ' tag', out)
 
+    # If we failed to instantiate, remove everything after it. VMs may print
+    # additional error info that cannot be compared between VMs, like a JS
+    # stack trace for where we tried to instantiate.
+    if INSTANTIATE_ERROR in out:
+        after = out.find(INSTANTIATE_ERROR)
+        after = out.find('\n', after)
+        out = out[:after + 1]
+
     lines = out.splitlines()
     for i in range(len(lines)):
         line = lines[i]
@@ -575,6 +575,9 @@ def fix_output(out):
             # removed a flag that is no longer needed. but print the line so the
             # developer can see it.
             print(line)
+            lines[i] = None
+        elif 'V8 is running with experimental features enabled. Stability and security will suffer.' in line:
+            # Ignore some boilerplate from VMs
             lines[i] = None
         elif EXCEPTION_PREFIX in line:
             # exceptions may differ when optimizing, but an exception should
@@ -634,8 +637,6 @@ def run_vm(cmd, checked=True):
             # strings in this list for known issues (to which more need to be
             # added as necessary).
             HOST_LIMIT_PREFIX,
-            # see comment above on this constant
-            V8_UNINITIALIZED_NONDEF_LOCAL,
             # V8 does not accept nullable stringviews
             # (https://github.com/WebAssembly/binaryen/pull/6574)
             'expected (ref stringview_wtf16), got nullref',
@@ -657,10 +658,14 @@ def run_vm(cmd, checked=True):
             ret = run_unchecked(cmd)
         return filter_known_issues(ret)
     except subprocess.CalledProcessError:
-        # other known issues do make it fail, so re-run without checking for
+        # Other known issues do make it fail, so re-run without checking for
         # success and see if we should ignore it
-        if filter_known_issues(run_unchecked(cmd)) == IGNORE:
+        raw = run_unchecked(cmd)
+        filtered = filter_known_issues(raw)
+        if filtered == IGNORE:
             return IGNORE
+
+        # Otherwise, raise an error.
         raise
 
 
@@ -860,9 +865,11 @@ class D8:
 
     @override
     def can_compare_to_self(self):
-        # With nans, VM differences can confuse us, so only very simple VMs
-        # can compare to themselves after opts in that case.
-        return not NANS
+        # With nans or relaxed SIMD, VM differences can confuse us, including
+        # differences between binaryen and V8 (binaryen's behavior can get
+        # "baked" into the wasm when it precomputes code, so we cannot compare
+        # V8's output before binaryen opts and after binaryen opts).
+        return not NANS and all_disallowed(['relaxed-simd'])
 
     @override
     def can_compare_to_other(self, other):
@@ -915,7 +922,7 @@ class Wasm2C:
         if random.random() < 0.5:
             return False
         # wasm2c doesn't support most features
-        return all_disallowed(['exception-handling', 'simd', 'threads', 'bulk-memory', 'nontrapping-float-to-int', 'tail-call', 'sign-ext', 'reference-types', 'multivalue', 'gc', 'custom-descriptors', 'relaxed-atomics', 'wide-arithmetic'])
+        return all_disallowed(['exception-handling', 'simd', 'threads', 'bulk-memory', 'nontrapping-float-to-int', 'tail-call', 'sign-ext', 'reference-types', 'multivalue', 'gc', 'custom-descriptors', 'acquire-release-atomics', 'relaxed-atomics', 'wide-arithmetic'])
 
     @override
     def run(self, wasm):
@@ -1001,7 +1008,7 @@ class CompareVMs(TestCaseHandler):
                     D8(),
                     D8Liftoff(),
                     D8Turboshaft(),
-                    # FIXME: Temprorary disable. See issue #4741 for more details
+                    # FIXME: Temporary disable. See issue #4741 for more details
                     # Wasm2C(),
                     # Wasm2C2Wasm()
                     ]
@@ -1091,7 +1098,15 @@ class Wasm2JS(TestCaseHandler):
         # later make sense (if we don't do this, the wasm may have i64 exports).
         # after applying other necessary fixes, we'll recreate the after wasm
         # from scratch.
-        run([in_bin('wasm-opt'), before_wasm, '--legalize-and-prune-js-interface', '-o', before_wasm_temp] + FEATURE_OPTS)
+        run([
+            in_bin('wasm-opt'),
+            before_wasm,
+            '--legalize-and-prune-js-interface',
+            '-o', before_wasm_temp,
+            # Remove the start function for now, as this can lead to traps
+            # during start which this fuzzer doesn't handle yet. TODO
+            '--remove-start',
+        ] + FEATURE_OPTS)
         compare_before_to_after = random.random() < 0.5
         compare_to_interpreter = compare_before_to_after and random.random() < 0.5
         if compare_before_to_after:
@@ -1110,9 +1125,11 @@ class Wasm2JS(TestCaseHandler):
             run([in_bin('wasm-opt'), before_wasm_temp, '-o', before_wasm_temp] + simplification_passes + FEATURE_OPTS)
         # now that the before wasm is fixed up, generate a proper after wasm
         run([in_bin('wasm-opt'), before_wasm_temp, '-o', after_wasm_temp] + opts + FEATURE_OPTS)
-        # always check for compiler crashes
+
+        # run before and after
         before = self.run(before_wasm_temp)
         after = self.run(after_wasm_temp)
+
         if NANS:
             # with NaNs we can't compare the output, as a reinterpret through
             # memory might end up different in JS than wasm
@@ -1135,7 +1152,7 @@ class Wasm2JS(TestCaseHandler):
             # of the wrong type - which would be cast on use, but if we remove
             # the casts, we end up returning null here and not 0, which the
             # fuzzer can notice.
-            x = re.sub(r' null', ' 0', x)
+            x = x.replace(r' null', ' 0')
 
             # wasm2js converts exports to valid JS forms, which affects some of
             # the names in the test suite. Fix those up.
@@ -1236,7 +1253,7 @@ class Wasm2JS(TestCaseHandler):
         # implement wasm suspending using JS async/await.
         if JSPI:
             return False
-        return all_disallowed(['exception-handling', 'simd', 'threads', 'bulk-memory', 'nontrapping-float-to-int', 'tail-call', 'sign-ext', 'reference-types', 'multivalue', 'gc', 'multimemory', 'memory64', 'custom-descriptors', 'relaxed-atomics', 'wide-arithmetic'])
+        return all_disallowed(['exception-handling', 'simd', 'threads', 'tail-call', 'reference-types', 'multivalue', 'gc', 'multimemory', 'memory64', 'custom-descriptors', 'acquire-release-atomics', 'relaxed-atomics', 'wide-arithmetic'])
 
 
 # Returns the wat for a wasm file. If it is already wat, it just returns that
@@ -1355,7 +1372,7 @@ class TrapsNeverHappen(TestCaseHandler):
             # "[fuzz-exec] export bar".
             call_start = before.rfind(FUZZ_EXEC_EXPORT_PREFIX, 0, trap_index)
             if call_start < 0:
-                # the trap happened before we called an export, so it occured
+                # the trap happened before we called an export, so it occurred
                 # during startup (the start function, or memory segment
                 # operations, etc.). in that case there is nothing for us to
                 # compare here; just leave.
@@ -1484,18 +1501,27 @@ def wasm_has_duplicate_tags(wasm):
     return binary.count(b'jstag') >= 2 or binary.count(b'wasmtag') >= 2
 
 
-# Detect whether there is a trap reported before an export call in the output.
+# Detect whether there is a trap or exception reported before an export call in
+# the output (i.e. during instantiation).
 def traps_in_instantiation(output):
-    trap_index = output.find(TRAP_PREFIX)
-    if trap_index == -1:
+    # First look for a trap.
+    error_index = output.find(TRAP_PREFIX)
+    if error_index == -1:
         # In "fixed" output, traps are replaced with *exception*.
-        trap_index = output.find('*exception*')
-        if trap_index == -1:
-            return False
+        error_index = output.find('*exception*')
+
+    # Next look for an exception.
+    exception_index = output.find(EXCEPTION_PREFIX)
+    # Look at the first of a trap or an exception.
+    if exception_index >= 0 and (error_index == -1 or exception_index < error_index):
+        error_index = exception_index
+
+    if error_index == -1:
+        return False
     export_index = output.find(FUZZ_EXEC_EXPORT_PREFIX)
     if export_index == -1:
         return True
-    return trap_index < export_index
+    return error_index < export_index
 
 
 # Tests wasm-merge
@@ -1514,7 +1540,28 @@ class Merge(TestCaseHandler):
         second_input = abspath('second_input.dat')
         make_random_input(second_size, second_input)
         second_wasm = abspath('second.wasm')
-        run([in_bin('wasm-opt'), second_input, '-ttf', '-o', second_wasm] + GEN_ARGS + FEATURE_OPTS)
+
+        # Always remove the second module's start function. Before merge, we
+        # have this:
+        #
+        #  * call first's start
+        #  * call first's exports
+        #  * call second's start
+        #  * call second's exports
+        #
+        # After merge, the middle two lines are swapped, since the starts are
+        # merged, changing the behavior.
+        #
+        # TODO: This can also happen if the second module appends segments in a
+        #       way that the first module notices.
+        second_args = [
+            in_bin('wasm-opt'),
+            second_input,
+            '-ttf',
+            '-o', second_wasm,
+            '--remove-start',
+        ]
+        run(second_args + GEN_ARGS + FEATURE_OPTS)
 
         # the second wasm file must not have an export that can influence our
         # execution. the JS exports have that behavior, as when "table-set" is
@@ -1533,12 +1580,12 @@ class Merge(TestCaseHandler):
             # second.wasm, but that is ok.
             filter_exports(second_wasm, second_wasm, filtered, keep_defaults=False)
 
-        # sometimes also optimize the second module
+        # Sometimes also optimize the second module
         if random.random() < 0.5:
             opts = get_random_opts()
             run([in_bin('wasm-opt'), second_wasm, '-o', second_wasm, '-all'] + FEATURE_OPTS + opts)
 
-        # merge the wasm files. note that we must pass -all, as even if the two
+        # Merge the wasm files. note that we must pass -all, as even if the two
         # inputs are MVP, the output may have multiple tables and multiple
         # memories (and we must also do that in the commands later down).
         #
@@ -1574,20 +1621,10 @@ class Merge(TestCaseHandler):
         if merged_output == IGNORE:
             return
 
-        # If the second module traps in instantiation, then the merged module
-        # must do so as well, regardless of what the first module does. (In
-        # contrast, if the first module traps in instantiation, then the normal
-        # checks below will ensure the merged module does as well.)
-        if traps_in_instantiation(second_output) and \
-                not traps_in_instantiation(output):
-            # The merged module should also trap in instantiation, but the
-            # exports will not be called, so there's nothing else to compare.
-            if not traps_in_instantiation(merged_output):
-                raise Exception('expected merged module to trap during ' +
-                                'instantiation because second module traps ' +
-                                'during instantiation')
-            compare(merged_output, second_output, 'Merge: second module traps' +
-                    ' in instantiation')
+        # If either original module traps in instantiation, the merged module
+        # must do so as well.
+        if traps_in_instantiation(second_output) or traps_in_instantiation(output):
+            assert traps_in_instantiation(merged_output)
             return
 
         # a complication is that the second module's exports are appended, so we
@@ -1823,13 +1860,10 @@ class ClusterFuzz(TestCaseHandler):
         # (rarely, none might exist), unless we've decided to ignore the entire
         # run, or if the wasm errored during instantiation, which can happen due
         # to a testcase with a segment out of bounds, say.
-        if output != IGNORE and not output.startswith(INSTANTIATE_ERROR):
+        if output != IGNORE and INSTANTIATE_ERROR not in output:
             # Do the work to find if there were function exports: extract the
             # wasm from the JS, and process it.
-            run([sys.executable,
-                 in_binaryen('scripts', 'clusterfuzz', 'extract_wasms.py'),
-                 fuzz_file,
-                 'extracted'])
+            run([in_bin('wasm-embed'), '--extract', fuzz_file, 'extracted'])
             if get_exports('extracted.0.wasm', ['func']):
                 assert FUZZ_EXEC_EXPORT_PREFIX in output
 
@@ -1910,6 +1944,9 @@ class Two(TestCaseHandler):
         # Most of the time, use the first wasm as an import to the second.
         if random.random() < 0.8:
             args += ['--fuzz-import=' + wasm]
+        # Always remove the second module's start function, see comment before
+        # in Merge.
+        args += ['--remove-start']
 
         given = os.environ.get('BINARYEN_SECOND_WASM')
         if not given:
@@ -2011,10 +2048,11 @@ class Two(TestCaseHandler):
         compare(output, optimized_output, 'Two-Opt')
 
         # If we can, also test in V8. We also cannot compare if there are NaNs
-        # (as optimizations can lead to different outputs), and we must
-        # disallow some features.
+        # or relaxed SIMD (as binaryen optimizations can lead to different
+        # outputs from V8), and we must disallow features that don't even work
+        # in V8.
         # TODO: relax some of these
-        if NANS or not all_disallowed(DISALLOWED_FEATURES_IN_V8):
+        if NANS or not all_disallowed(['relaxed-simd']) or not all_disallowed(DISALLOWED_FEATURES_IN_V8):
             return
 
         output = run_d8_wasm(wasm, args=[second_wasm])
@@ -2022,10 +2060,13 @@ class Two(TestCaseHandler):
         if output == IGNORE:
             return
 
-        # We ruled out things we must ignore, like host limitations, and also
-        # exited earlier on a deterministic instantiation error, so there should
-        # be no such error in V8.
-        assert not output.startswith(INSTANTIATE_ERROR)
+        if INSTANTIATE_ERROR in output:
+            # We ruled out a bynterpreter instantiation error, but v8 might have
+            # one for a different reason (e.g. JS conversion error on the
+            # boundary, if the start function calls an import). Verify we have
+            # the same error without the second module, and skip.
+            assert INSTANTIATE_ERROR in run_d8_wasm(wasm)
+            return
 
         output = fix_output(output)
 
@@ -2077,8 +2118,8 @@ class Two(TestCaseHandler):
                 assert b.startswith(FUZZ_EXEC_NOTE_RESULT)
                 assert a.count(' => ') == 1
                 assert b.count(' => ') == 1
-                a_prefix, a_result = a.split(' => ')
-                b_prefix, b_result = b.split(' => ')
+                a_prefix, _a_result = a.split(' => ')
+                _b_prefix, b_result = b.split(' => ')
                 # Copy a's prefix with b's result.
                 merged_output_lines[i] = a_prefix + ' => ' + b_result
 
@@ -2291,6 +2332,10 @@ class PreserveImportsExportsJS(TestCaseHandler):
                 #     at file.js
                 #
                 # Ignore it, as details of traces differ based on optimizations.
+                continue
+            elif not line:
+                # V8 may print blank lines before stack traces when the top
+                # frame has no script location (e.g. after a return_call to JS).
                 continue
             cleaned.append(line)
         cleaned = '\n'.join(cleaned)
@@ -2508,7 +2553,7 @@ class BranchHintPreservation(TestCaseHandler):
 
         # No bad hints should pop up after optimizations.
         for group in line_groups:
-            if not group or group[-1] == '[trap unreachable]':
+            if not group or group[-1].startswith(TRAP_PREFIX):
                 continue
             for line in group:
                 if line.startswith(LOG_BRANCH_PREFIX):
@@ -2531,7 +2576,7 @@ testcase_handlers = [
     TrapsNeverHappen(),
     CtorEval(),
     Merge(),
-#    Split(), # Will reenable after stabilized
+#    Split(), # Will re-enable after stabilized
     RoundtripText(),
     ClusterFuzz(),
     Two(),
@@ -2647,6 +2692,7 @@ opt_choices = [
     ("--code-pushing",),
     ("--code-folding",),
     ("--const-hoisting",),
+    ("--constraint-analysis",),
     ("--dae",),
     ("--dae-optimizing",),
     ("--dae2",),
@@ -2677,6 +2723,7 @@ opt_choices = [
     ("--generate-stack-ir",),
     ("--licm",),
     ("--local-subtyping",),
+    ("--mark-noreturn",),
     ("--memory-packing",),
     ("--merge-blocks",),
     ('--merge-locals',),
@@ -2690,6 +2737,7 @@ opt_choices = [
     ('--once-reduction',),
     ("--optimize-casts",),
     ("--optimize-instructions",),
+    ("--optimize-noreturn",),
     ("--optimize-stack-ir",),
     ("--generate-stack-ir", "--optimize-stack-ir",),
     # the full lifecycle of stack IR: generate, optimize, and write (and read)
@@ -2698,6 +2746,7 @@ opt_choices = [
     ("--precompute",),
     ("--precompute-propagate",),
     ("--print",),
+    ("--print-boundary",),
     ("--remove-unused-brs",),
     ("--remove-unused-nonfunction-module-elements",),
     ("--remove-unused-module-elements",),
@@ -2719,6 +2768,8 @@ opt_choices = [
     ("--simplify-locals-notee",),
     ("--simplify-locals-notee-nostructure",),
     ("--ssa",),
+    ("--strip-refining-casts",),
+    ("--tail-call",),
     ("--tuple-optimization",),
     ("--type-finalizing",),
     ("--type-refining",),
@@ -2760,7 +2811,7 @@ def get_random_opts():
                               if choice not in requires_closed_world]
 
     # core opts
-    while 1:
+    while True:
         choice = random.choice(usable_opt_choices)
         if '--flatten' in choice or '-O4' in choice:
             if has_flatten:
@@ -2814,6 +2865,9 @@ def get_random_opts():
     # value (the same used in j2wasm atm)
     if random.random() < 0.5:
         ret += ['-pii=4']
+    # fuzz both with and without expecting later toolchain opts
+    if random.random() < 0.5:
+        ret += ['--expect-later-toolchain-opts']
     # test both closed and open world
     if CLOSED_WORLD:
         ret += [CLOSED_WORLD_FLAG]
@@ -2968,6 +3022,7 @@ on valid wasm files.)
                 working_wasm = abspath('w.wasm')
                 wasm_reduce = in_bin('wasm-reduce')
                 reduce_sh = abspath('reduce.sh')
+                fuzz_opt = in_binaryen('scripts', 'fuzz_opt.py')
                 features = ' '.join(FEATURE_OPTS)
                 with open('reduce.sh', 'w') as f:
                     f.write(f'''\
@@ -2980,12 +3035,12 @@ echo "The following value should be >0:"
 
 if [ -z "$BINARYEN_FIRST_WASM" ]; then
   # run the command normally
-  ./scripts/fuzz_opt.py {auto_init} --binaryen-bin {binaryen_bin} {seed} {temp_wasm} > o 2> e
+  {fuzz_opt} {auto_init} --binaryen-bin {binaryen_bin} {seed} {temp_wasm} > o 2> e
 else
   # BINARYEN_FIRST_WASM was provided so we should actually reduce the *second*
   # file. pass the first one in as the main file, and use the env var for the
   # second.
-  BINARYEN_SECOND_WASM={temp_wasm} ./scripts/fuzz_opt.py {auto_init} --binaryen-bin {binaryen_bin} {seed} $BINARYEN_FIRST_WASM > o 2> e
+  BINARYEN_SECOND_WASM={temp_wasm} {fuzz_opt} {auto_init} --binaryen-bin {binaryen_bin} {seed} $BINARYEN_FIRST_WASM > o 2> e
 fi
 
 echo "  " $?

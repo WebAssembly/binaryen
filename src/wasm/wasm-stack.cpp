@@ -32,13 +32,24 @@ void BinaryInstWriter::emitResultType(Type type) {
   }
 }
 
+void BinaryInstWriter::noteScopeStart(Name name) {
+  auto index = nextLabelIndex++;
+  if (name && func && parent.getDebugInfo() &&
+      func->explicitLabelNames.count(name)) {
+    labelNames.push_back({index, name});
+  }
+}
+
 void BinaryInstWriter::visitBlock(Block* curr) {
+  noteScopeStart(curr->name);
   breakStack.push_back(curr->name);
   o << static_cast<int8_t>(BinaryConsts::Block);
   emitResultType(curr->type);
 }
 
 void BinaryInstWriter::visitIf(If* curr) {
+  // An `if` never has a name in Binaryen IR, but it still takes a label index.
+  noteScopeStart();
   // the binary format requires this; we have a block if we need one
   // TODO: optimize this in Stack IR (if child is a block, we may break to this
   // instead)
@@ -187,6 +198,7 @@ void BinaryInstWriter::emitLoadOpcode(unsigned bytes, bool signed_, Type type) {
 }
 
 void BinaryInstWriter::visitLoop(Loop* curr) {
+  noteScopeStart(curr->name);
   breakStack.push_back(curr->name);
   o << static_cast<int8_t>(BinaryConsts::Loop);
   emitResultType(curr->type);
@@ -329,8 +341,11 @@ void BinaryInstWriter::visitLocalSet(LocalSet* curr) {
     o << static_cast<int8_t>(BinaryConsts::LocalSet)
       << U32LEB(mappedLocals[std::make_pair(curr->index, i)]);
   }
-  if (!curr->isTee()) {
-    // This is not a tee, so just finish setting the values.
+  if (!curr->isTee() || curr->type == Type::unreachable) {
+    // This is not a tee or it is unreachable, so just finish setting the
+    // values. We emit unreachable sets as sets rather than tees to avoid
+    // pushing concrete types (which may not be correct for the next
+    // instruction) onto polymorphic stacks.
     o << static_cast<int8_t>(BinaryConsts::LocalSet)
       << U32LEB(mappedLocals[std::make_pair(curr->index, 0)]);
   } else if (auto it = extractedGets.find(curr); it != extractedGets.end()) {
@@ -629,8 +644,9 @@ void BinaryInstWriter::visitAtomicNotify(AtomicNotify* curr) {
 
 void BinaryInstWriter::visitAtomicFence(AtomicFence* curr) {
   o << static_cast<int8_t>(BinaryConsts::AtomicPrefix)
-    << static_cast<int8_t>(BinaryConsts::AtomicFence)
-    << static_cast<int8_t>(curr->order);
+    << static_cast<int8_t>(BinaryConsts::AtomicFence);
+
+  parent.writeMemoryOrder(curr->order);
 }
 
 void BinaryInstWriter::visitPause(Pause* curr) {
@@ -2405,12 +2421,16 @@ void BinaryInstWriter::visitElemDrop(ElemDrop* curr) {
 }
 
 void BinaryInstWriter::visitTry(Try* curr) {
+  noteScopeStart(curr->name);
   breakStack.push_back(curr->name);
   o << static_cast<int8_t>(BinaryConsts::Try);
   emitResultType(curr->type);
 }
 
 void BinaryInstWriter::visitTryTable(TryTable* curr) {
+  // A `try_table` never has a name in Binaryen IR, but it still takes a label
+  // index.
+  noteScopeStart();
   o << static_cast<int8_t>(BinaryConsts::TryTable);
   emitResultType(curr->type);
   o << U32LEB(curr->catchTags.size());
@@ -2530,7 +2550,7 @@ void BinaryInstWriter::visitI31Get(I31Get* curr) {
 
 void BinaryInstWriter::visitCallRef(CallRef* curr) {
   assert(curr->target->type != Type::unreachable);
-  if (curr->target->type.isNull()) {
+  if (curr->target->type.isBottomRef()) {
     emitUnreachable();
     return;
   }
@@ -2541,7 +2561,7 @@ void BinaryInstWriter::visitCallRef(CallRef* curr) {
 
 void BinaryInstWriter::visitRefTest(RefTest* curr) {
   o << static_cast<int8_t>(BinaryConsts::GCPrefix);
-  if (curr->castType.isNullable()) {
+  if (curr->castType.isNullableRef()) {
     o << U32LEB(BinaryConsts::RefTestNull);
   } else {
     o << U32LEB(BinaryConsts::RefTest);
@@ -2551,12 +2571,12 @@ void BinaryInstWriter::visitRefTest(RefTest* curr) {
 }
 
 void BinaryInstWriter::visitRefCast(RefCast* curr) {
-  if (curr->desc && curr->desc->type.isNull()) {
+  if (curr->desc && curr->desc->type.isBottomRef()) {
     emitUnreachable();
     return;
   }
   o << static_cast<int8_t>(BinaryConsts::GCPrefix);
-  if (curr->type.isNullable()) {
+  if (curr->type.isNullableRef()) {
     if (curr->desc) {
       o << U32LEB(BinaryConsts::RefCastDescEqNull);
     } else {
@@ -2573,7 +2593,7 @@ void BinaryInstWriter::visitRefCast(RefCast* curr) {
 }
 
 void BinaryInstWriter::visitRefGetDesc(RefGetDesc* curr) {
-  if (curr->ref->type.isNull()) {
+  if (curr->ref->type.isBottomRef()) {
     emitUnreachable();
     return;
   }
@@ -2584,7 +2604,7 @@ void BinaryInstWriter::visitRefGetDesc(RefGetDesc* curr) {
 
 void BinaryInstWriter::visitBrOn(BrOn* curr) {
   bool hasDesc = curr->op == BrOnCastDescEq || curr->op == BrOnCastDescEqFail;
-  if (hasDesc && curr->desc->type.isNull()) {
+  if (hasDesc && curr->desc->type.isBottomRef()) {
     emitUnreachable();
     return;
   }
@@ -2616,8 +2636,8 @@ void BinaryInstWriter::visitBrOn(BrOn* curr) {
   }
   assert(curr->ref->type.isRef());
   assert(hasDesc || Type::isSubType(curr->castType, curr->ref->type));
-  uint8_t flags = (curr->ref->type.isNullable() ? 1 : 0) |
-                  (curr->castType.isNullable() ? 2 : 0);
+  uint8_t flags = (curr->ref->type.isNullableRef() ? 1 : 0) |
+                  (curr->castType.isNullableRef() ? 2 : 0);
   o << flags;
   o << U32LEB(getBreakIndex(curr->name));
   parent.writeHeapType(curr->ref->type.getHeapType(),
@@ -2646,7 +2666,7 @@ void BinaryInstWriter::visitStructNew(StructNew* curr) {
 }
 
 void BinaryInstWriter::visitStructGet(StructGet* curr) {
-  if (curr->ref->type.isNull()) {
+  if (curr->ref->type.isBottomRef()) {
     emitUnreachable();
     return;
   }
@@ -2671,7 +2691,7 @@ void BinaryInstWriter::visitStructGet(StructGet* curr) {
 }
 
 void BinaryInstWriter::visitStructSet(StructSet* curr) {
-  if (curr->ref->type.isNull()) {
+  if (curr->ref->type.isBottomRef()) {
     emitUnreachable();
     return;
   }
@@ -2688,7 +2708,7 @@ void BinaryInstWriter::visitStructSet(StructSet* curr) {
 }
 
 void BinaryInstWriter::visitStructRMW(StructRMW* curr) {
-  if (curr->ref->type.isNull()) {
+  if (curr->ref->type.isBottomRef()) {
     emitUnreachable();
     return;
   }
@@ -2719,7 +2739,7 @@ void BinaryInstWriter::visitStructRMW(StructRMW* curr) {
 }
 
 void BinaryInstWriter::visitStructCmpxchg(StructCmpxchg* curr) {
-  if (curr->ref->type.isNull()) {
+  if (curr->ref->type.isBottomRef()) {
     emitUnreachable();
     return;
   }
@@ -2731,7 +2751,7 @@ void BinaryInstWriter::visitStructCmpxchg(StructCmpxchg* curr) {
 }
 
 void BinaryInstWriter::visitStructWait(StructWait* curr) {
-  if (curr->ref->type.isNull()) {
+  if (curr->ref->type.isBottomRef()) {
     emitUnreachable();
     return;
   }
@@ -2741,15 +2761,19 @@ void BinaryInstWriter::visitStructWait(StructWait* curr) {
   o << U32LEB(curr->index);
 }
 
-void BinaryInstWriter::visitStructNotify(StructNotify* curr) {
-  if (curr->ref->type.isNull()) {
-    emitUnreachable();
-    return;
-  }
+void BinaryInstWriter::visitWaitqueueNew(WaitqueueNew* curr) {
   o << static_cast<int8_t>(BinaryConsts::AtomicPrefix)
-    << U32LEB(BinaryConsts::StructNotify);
-  parent.writeIndexedHeapType(curr->ref->type.getHeapType());
-  o << U32LEB(curr->index);
+    << U32LEB(BinaryConsts::WaitqueueNew);
+}
+
+void BinaryInstWriter::visitWaitqueueNotify(WaitqueueNotify* curr) {
+  o << static_cast<int8_t>(BinaryConsts::AtomicPrefix)
+    << U32LEB(BinaryConsts::WaitqueueNotify);
+}
+
+void BinaryInstWriter::visitPublish(Publish* curr) {
+  o << static_cast<int8_t>(BinaryConsts::AtomicPrefix)
+    << U32LEB(BinaryConsts::Publish);
 }
 
 void BinaryInstWriter::visitArrayNew(ArrayNew* curr) {
@@ -2784,7 +2808,7 @@ void BinaryInstWriter::visitArrayNewFixed(ArrayNewFixed* curr) {
 }
 
 void BinaryInstWriter::visitArrayGet(ArrayGet* curr) {
-  if (curr->ref->type.isNull()) {
+  if (curr->ref->type.isBottomRef()) {
     emitUnreachable();
     return;
   }
@@ -2808,7 +2832,7 @@ void BinaryInstWriter::visitArrayGet(ArrayGet* curr) {
 }
 
 void BinaryInstWriter::visitArraySet(ArraySet* curr) {
-  if (curr->ref->type.isNull()) {
+  if (curr->ref->type.isBottomRef()) {
     emitUnreachable();
     return;
   }
@@ -2824,25 +2848,35 @@ void BinaryInstWriter::visitArraySet(ArraySet* curr) {
 }
 
 void BinaryInstWriter::visitArrayLoad(ArrayLoad* curr) {
-  if (curr->ref->type.isNull()) {
+  if (curr->type == Type::unreachable) {
+    return;
+  }
+  if (curr->ref->type.isBottomRef()) {
     emitUnreachable();
     return;
   }
   emitLoadOpcode(curr->bytes, curr->signed_, curr->type);
-  uint32_t alignmentBits = BinaryConsts::HasBackingArrayMask;
+  uint32_t alignmentBits =
+    Bits::log2(curr->align) | BinaryConsts::HasBackingArrayMask;
   o << U32LEB(alignmentBits);
   parent.writeIndexedHeapType(curr->ref->type.getHeapType());
+  o << U32LEB(curr->offset);
 }
 
 void BinaryInstWriter::visitArrayStore(ArrayStore* curr) {
-  if (curr->ref->type.isNull()) {
+  if (curr->type == Type::unreachable) {
+    return;
+  }
+  if (curr->ref->type.isBottomRef()) {
     emitUnreachable();
     return;
   }
   emitStoreOpcode(curr->bytes, curr->value->type);
-  uint32_t alignmentBits = BinaryConsts::HasBackingArrayMask;
+  uint32_t alignmentBits =
+    Bits::log2(curr->align) | BinaryConsts::HasBackingArrayMask;
   o << U32LEB(alignmentBits);
   parent.writeIndexedHeapType(curr->ref->type.getHeapType());
+  o << U32LEB(curr->offset);
 }
 
 void BinaryInstWriter::visitArrayLen(ArrayLen* curr) {
@@ -2851,7 +2885,7 @@ void BinaryInstWriter::visitArrayLen(ArrayLen* curr) {
 }
 
 void BinaryInstWriter::visitArrayCopy(ArrayCopy* curr) {
-  if (curr->srcRef->type.isNull() || curr->destRef->type.isNull()) {
+  if (curr->srcRef->type.isBottomRef() || curr->destRef->type.isBottomRef()) {
     emitUnreachable();
     return;
   }
@@ -2862,7 +2896,7 @@ void BinaryInstWriter::visitArrayCopy(ArrayCopy* curr) {
 }
 
 void BinaryInstWriter::visitArrayFill(ArrayFill* curr) {
-  if (curr->ref->type.isNull()) {
+  if (curr->ref->type.isBottomRef()) {
     emitUnreachable();
     return;
   }
@@ -2872,7 +2906,7 @@ void BinaryInstWriter::visitArrayFill(ArrayFill* curr) {
 }
 
 void BinaryInstWriter::visitArrayInitData(ArrayInitData* curr) {
-  if (curr->ref->type.isNull()) {
+  if (curr->ref->type.isBottomRef()) {
     emitUnreachable();
     return;
   }
@@ -2883,7 +2917,7 @@ void BinaryInstWriter::visitArrayInitData(ArrayInitData* curr) {
 }
 
 void BinaryInstWriter::visitArrayInitElem(ArrayInitElem* curr) {
-  if (curr->ref->type.isNull()) {
+  if (curr->ref->type.isBottomRef()) {
     emitUnreachable();
     return;
   }
@@ -2894,7 +2928,7 @@ void BinaryInstWriter::visitArrayInitElem(ArrayInitElem* curr) {
 }
 
 void BinaryInstWriter::visitArrayRMW(ArrayRMW* curr) {
-  if (curr->ref->type.isNull()) {
+  if (curr->ref->type.isBottomRef()) {
     emitUnreachable();
     return;
   }
@@ -2924,7 +2958,7 @@ void BinaryInstWriter::visitArrayRMW(ArrayRMW* curr) {
 }
 
 void BinaryInstWriter::visitArrayCmpxchg(ArrayCmpxchg* curr) {
-  if (curr->ref->type.isNull()) {
+  if (curr->ref->type.isBottomRef()) {
     emitUnreachable();
     return;
   }
@@ -2953,7 +2987,7 @@ void BinaryInstWriter::visitRefAs(RefAs* curr) {
 }
 
 void BinaryInstWriter::visitStringNew(StringNew* curr) {
-  if (curr->ref->type.isNull()) {
+  if (curr->ref->type.isBottomRef()) {
     // This is a bottom type, so this is an array-receiving operation that does
     // not receive an array. The spec allows this, but V8 does not, see
     // https://github.com/WebAssembly/stringref/issues/66
@@ -2998,7 +3032,7 @@ void BinaryInstWriter::visitStringMeasure(StringMeasure* curr) {
 }
 
 void BinaryInstWriter::visitStringEncode(StringEncode* curr) {
-  if (curr->str->type.isNull()) {
+  if (curr->array->type.isBottomRef()) {
     // See visitStringNew.
     emitUnreachable();
     return;
@@ -3108,7 +3142,7 @@ void BinaryInstWriter::visitSuspend(Suspend* curr) {
 }
 
 void BinaryInstWriter::visitContBind(ContBind* curr) {
-  if (curr->cont->type.isNull()) {
+  if (curr->cont->type.isBottomRef()) {
     emitUnreachable();
     return;
   }
@@ -3118,7 +3152,7 @@ void BinaryInstWriter::visitContBind(ContBind* curr) {
 }
 
 void BinaryInstWriter::visitResume(Resume* curr) {
-  if (curr->cont->type.isNull()) {
+  if (curr->cont->type.isBottomRef()) {
     emitUnreachable();
     return;
   }
@@ -3142,7 +3176,7 @@ void BinaryInstWriter::visitResume(Resume* curr) {
 }
 
 void BinaryInstWriter::visitResumeThrow(ResumeThrow* curr) {
-  if (curr->cont->type.isNull()) {
+  if (curr->cont->type.isBottomRef()) {
     emitUnreachable();
     return;
   }
@@ -3170,7 +3204,7 @@ void BinaryInstWriter::visitResumeThrow(ResumeThrow* curr) {
 }
 
 void BinaryInstWriter::visitStackSwitch(StackSwitch* curr) {
-  if (curr->cont->type.isNull()) {
+  if (curr->cont->type.isBottomRef()) {
     emitUnreachable();
     return;
   }
@@ -3194,6 +3228,14 @@ void BinaryInstWriter::emitFunctionEnd() {
 
 void BinaryInstWriter::emitUnreachable() {
   o << static_cast<int8_t>(BinaryConsts::Unreachable);
+}
+
+void BinaryInstWriter::emitUnreachableLocalSet(Index index) {
+  LocalSet set;
+  set.index = index;
+  set.type = Type::none;
+  set.value = nullptr;
+  visitLocalSet(&set);
 }
 
 void BinaryInstWriter::mapLocalsAndEmitHeader() {
@@ -3503,14 +3545,8 @@ void BinaryInstWriter::emitMemoryAccess(size_t alignment,
                                         uint64_t offset,
                                         Name memory,
                                         MemoryOrder order,
-                                        bool isRMW,
-                                        BackingType backing) {
+                                        bool isRMW) {
   uint32_t alignmentBits = Bits::log2(alignment ? alignment : bytes);
-  if (backing == BackingType::Array) {
-    alignmentBits |= BinaryConsts::HasBackingArrayMask;
-    o << U32LEB(alignmentBits);
-    return;
-  }
   uint32_t memoryIdx = parent.getMemoryIndex(memory);
 
   bool shouldWriteMemoryOrder = false;
@@ -3520,7 +3556,8 @@ void BinaryInstWriter::emitMemoryAccess(size_t alignment,
     case MemoryOrder::Unordered:
     case MemoryOrder::SeqCst:
       break;
-    case MemoryOrder::AcqRel: {
+    case MemoryOrder::AcqRel:
+    case MemoryOrder::Relaxed: {
       shouldWriteMemoryOrder = true;
       alignmentBits |= BinaryConsts::HasMemoryOrderMask;
       break;
@@ -3583,6 +3620,13 @@ public:
   void emitUnreachable() {
     stackIR.push_back(makeStackInst(Builder(module).makeUnreachable()));
   }
+  void emitUnreachableLocalSet(Index i) {
+    Builder builder(module);
+    auto unreachable = builder.makeUnreachable();
+    auto set = builder.makeLocalSet(i, unreachable);
+    emit(unreachable);
+    emit(set);
+  }
   void emitDebugLocation(Expression* curr) {}
 
   StackIR& getStackIR() { return stackIR; }
@@ -3598,6 +3642,15 @@ private:
 };
 
 void StackIRGenerator::emit(Expression* curr) {
+  // Match BinaryInstWriter (and PrintSExpression::visitExpression), which emits
+  // unreachable instead of instructions whose type immediate cannot be written
+  // (see BinaryInstWriter::visitCallRef, visitRefCast, visitStructGet, etc.) or
+  // string array operations with null-typed array operands (see
+  // BinaryInstWriter::visitStringNew and visitStringEncode).
+  if (Properties::hasUnwritableTypeImmediate(curr)) {
+    emitUnreachable();
+    return;
+  }
   StackInst* stackInst = nullptr;
   if (curr->is<Block>()) {
     stackInst = makeStackInst(StackInst::BlockBegin, curr);
@@ -3647,7 +3700,7 @@ StackInst* StackIRGenerator::makeStackInst(StackInst::Op op,
       stackType = Type::none;
     } else if (op != StackInst::BlockEnd && op != StackInst::IfEnd &&
                op != StackInst::LoopEnd && op != StackInst::TryEnd &&
-               op != StackInst::TryTableEnd) {
+               op != StackInst::Delegate && op != StackInst::TryTableEnd) {
       // If a concrete type is returned, we mark the end of the construct has
       // having that type (as it is pushed to the value stack at that point),
       // other parts are marked as none).

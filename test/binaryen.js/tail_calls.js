@@ -6,23 +6,23 @@ module.addTableImport("0", "env", "table");
 
 var foo = module.addFunction(
   "foo",
-  binaryen.none,
-  binaryen.none,
+  binaryen.Type.none,
+  binaryen.Type.none,
   [],
-  module.return_call("foo", [], binaryen.none, binaryen.none)
+  module.return_call("foo", [], binaryen.Type.none, binaryen.Type.none)
 );
 
 var bar = module.addFunction(
   "bar",
-  binaryen.none,
-  binaryen.none,
+  binaryen.Type.none,
+  binaryen.Type.none,
   [],
   module.return_call_indirect(
     "0",
     module.i32.const(0),
     [],
-    binaryen.none,
-    binaryen.none
+    binaryen.Type.none,
+    binaryen.Type.none
   )
 );
 

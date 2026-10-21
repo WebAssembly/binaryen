@@ -132,7 +132,6 @@ struct ReorderLocals : public WalkerPass<PostWalker<ReorderLocals>> {
     reIndexer.walk(curr->body);
     // apply to the names
     auto oldLocalNames = curr->localNames;
-    auto oldLocalIndices = curr->localIndices;
     curr->localNames.clear();
     curr->localIndices.clear();
     for (size_t i = 0; i < newToOld.size(); i++) {

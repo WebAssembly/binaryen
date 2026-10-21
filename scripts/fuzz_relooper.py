@@ -16,7 +16,7 @@
 
 """Script that fuzzes the relooper using the C API."""
 
-# ruff: noqa: UP031
+# ruff: file-ignore[printf-string-formatting]
 
 import difflib
 import os

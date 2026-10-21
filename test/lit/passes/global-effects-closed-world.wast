@@ -197,16 +197,12 @@
   )
 
   ;; CHECK:      (func $calls-type-with-effects-but-not-addressable (type $1) (param $ref (ref $only-has-effects-in-not-addressable-function))
-  ;; CHECK-NEXT:  (call_ref $only-has-effects-in-not-addressable-function
-  ;; CHECK-NEXT:   (i32.const 1)
-  ;; CHECK-NEXT:   (local.get $ref)
-  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $calls-type-with-effects-but-not-addressable (param $ref (ref $only-has-effects-in-not-addressable-function))
-    ;; The type $has-effects-but-not-exported doesn't have an address because
-    ;; it's not exported and it's never the target of a ref.func.
-    ;; We should be able to determine that $ref can only point to $nop.
-    ;; TODO: Only aggregate effects from functions that are addressed.
+     ;; The type $has-effects-but-not-exported doesn't have an address because
+     ;; it's not exported and it's never the target of a ref.func.
+     ;; So the call_ref's only potential target is $nop which has no effects.
      (call_ref $only-has-effects-in-not-addressable-function (i32.const 1) (local.get $ref))
    )
 )

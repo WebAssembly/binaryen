@@ -37,7 +37,7 @@
 
 ;; A throwing start prevents any export from running.
 (module
-  ;; CHECK:      [exception thrown: start]
+  ;; CHECK:      [exception thrown: failed to instantiate module]
   (tag $tag)
 
   (start $throw)

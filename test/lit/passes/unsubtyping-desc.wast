@@ -231,18 +231,17 @@
 )
 
 ;; Now we require B <: A, and that B.desc remain B's descriptor (this was A and
-;; A.desc before). This imposes no further requirements, so we can optimize away
-;; A's descriptor and B.desc's supertype.
+;; A.desc before). This again prevents us from optimizing.
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $A (sub (struct)))
+    ;; CHECK-NEXT:  (type $A (sub (descriptor $A.desc) (struct)))
     (type $A (sub (descriptor $A.desc) (struct)))
-    ;; CHECK:       (type $A.desc (sub (struct)))
+    ;; CHECK:       (type $A.desc (sub (describes $A) (struct)))
     (type $A.desc (sub (describes $A) (struct)))
     ;; CHECK:       (type $B (sub $A (descriptor $B.desc) (struct)))
     (type $B (sub $A (descriptor $B.desc) (struct)))
-    ;; CHECK:       (type $B.desc (sub (describes $B) (struct)))
+    ;; CHECK:       (type $B.desc (sub $A.desc (describes $B) (struct)))
     (type $B.desc (sub $A.desc (describes $B) (struct)))
   )
 
@@ -743,8 +742,7 @@
 )
 
 ;; Same as above, but now we initially require bot.desc to remain a descriptor
-;; rather than top.desc. This means we can now optimize out top's descriptor and
-;; mid.desc's supertype.
+;; rather than top.desc. We still need to keep all the descriptors.
 ;;
 ;; top       top.desc
 ;; ^
@@ -755,15 +753,15 @@
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $top (sub (struct)))
+    ;; CHECK-NEXT:  (type $top (sub (descriptor $top.desc) (struct)))
     (type $top (sub (descriptor $top.desc) (struct)))
     ;; CHECK:       (type $mid (sub $top (descriptor $mid.desc) (struct)))
     (type $mid (sub $top (descriptor $mid.desc) (struct)))
     ;; CHECK:       (type $bot (sub $mid (descriptor $bot.desc) (struct)))
     (type $bot (sub $mid (descriptor $bot.desc) (struct)))
-    ;; CHECK:       (type $top.desc (sub (struct)))
+    ;; CHECK:       (type $top.desc (sub (describes $top) (struct)))
     (type $top.desc (sub (describes $top) (struct)))
-    ;; CHECK:       (type $mid.desc (sub (describes $mid) (struct)))
+    ;; CHECK:       (type $mid.desc (sub $top.desc (describes $mid) (struct)))
     (type $mid.desc (sub $top.desc (describes $mid) (struct)))
     ;; CHECK:       (type $bot.desc (sub $mid.desc (describes $bot) (struct)))
     (type $bot.desc (sub $mid.desc (describes $bot) (struct)))
@@ -1238,6 +1236,58 @@
       (ref.cast_desc_eq (ref $struct)
         (unreachable)
         (struct.new $desc)
+      )
+    )
+  )
+)
+
+;; Removing a descriptor from a struct.new_desc uses ChildLocalizer, which wraps
+;; the allocation in a block. Ensure any nested `pop` inside a catch block is
+;; hoisted out of the new block so the IR remains valid.
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $A (struct))
+    (type $A (descriptor $A.desc) (struct))
+    ;; CHECK:       (type $A.desc (struct))
+    (type $A.desc (describes $A) (struct))
+  )
+  ;; CHECK:       (type $2 (func (param (ref (exact $A.desc)))))
+
+  ;; CHECK:       (type $3 (func))
+
+  ;; CHECK:      (tag $e (type $2) (param (ref (exact $A.desc))))
+  (tag $e (param (ref (exact $A.desc))))
+  ;; CHECK:      (func $pop-in-struct-new-desc (type $3)
+  ;; CHECK-NEXT:  (local $0 (ref (exact $A.desc)))
+  ;; CHECK-NEXT:  (local $1 (ref (exact $A.desc)))
+  ;; CHECK-NEXT:  (try
+  ;; CHECK-NEXT:   (do
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (catch $e
+  ;; CHECK-NEXT:    (local.set $1
+  ;; CHECK-NEXT:     (pop (ref (exact $A.desc)))
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result (ref (exact $A)))
+  ;; CHECK-NEXT:      (local.set $0
+  ;; CHECK-NEXT:       (local.get $1)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (struct.new_default $A)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $pop-in-struct-new-desc
+    (try
+      (do)
+      (catch $e
+        (drop
+          (struct.new_desc $A
+            (pop (ref (exact $A.desc)))
+          )
+        )
       )
     )
   )

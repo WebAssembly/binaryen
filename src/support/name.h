@@ -31,7 +31,7 @@ namespace wasm {
 // TODO: as an optimization, IString values < some threshold could be considered
 //       numerical indices directly.
 
-struct Name : public IString {
+struct BYN_WARN_UNUSED Name : public IString {
   Name() : IString() {}
   Name(std::string_view str) : IString(str) {}
   Name(const char* str) : IString(str) {}

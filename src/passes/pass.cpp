@@ -129,6 +129,9 @@ void PassRegistry::registerPasses() {
   registerPass("cfp-reftest",
                "propagate constant struct field values, using ref.test",
                createConstantFieldPropagationRefTestPass);
+  registerPass("constraint-analysis",
+               "finds and uses mathematical constraints on locals",
+               createConstraintAnalysisPass);
   registerPass(
     "dce", "removes unreachable code", createDeadCodeEliminationPass);
   registerPass("dealign",
@@ -277,9 +280,15 @@ void PassRegistry::registerPasses() {
   registerPass("limit-segments",
                "attempt to merge segments to fit within web limits",
                createLimitSegmentsPass);
+  registerPass("make-shared-objects",
+               "Make structs and arrays shared and functions unshared",
+               createMakeSharedObjectsPass);
   registerPass("mark-js-called",
                "mark js called functions (using configureAll) as doing so",
                createMarkJSCalledPass);
+  registerPass("mark-noreturn",
+               "mark functions that do not return, enabling later opts",
+               createMarkNoReturnPass);
   registerPass("memory64-lowering",
                "lower loads and stores to a 64-bit memory to instead use a "
                "32-bit one",
@@ -297,7 +306,7 @@ void PassRegistry::registerPasses() {
   registerPass(
     "merge-blocks", "merges blocks to their parents", createMergeBlocksPass);
   registerPass("merge-similar-functions",
-               "merges similar functions when benefical",
+               "merges similar functions when beneficial",
                createMergeSimilarFunctionsPass);
   registerPass(
     "merge-locals", "merges locals when beneficial", createMergeLocalsPass);
@@ -361,6 +370,9 @@ void PassRegistry::registerPasses() {
   registerPass("optimize-instructions",
                "optimizes instruction combinations",
                createOptimizeInstructionsPass);
+  registerPass("optimize-noreturn",
+               "optimizes calls to @binaryen.noreturn functions",
+               createOptimizeNoReturnPass);
 // Outlining currently relies on LLVM's SuffixTree, which we can't rely upon
 // when building Binaryen for Emscripten.
 #ifndef SKIP_OUTLINING
@@ -417,6 +429,9 @@ void PassRegistry::registerPasses() {
   registerPass("remove-relaxed-simd",
                "replaces relaxed SIMD instructions with unreachable",
                createRemoveRelaxedSIMDPass);
+  registerPass("remove-empty-function-exports",
+               "removes exports of empty functions",
+               createRemoveEmptyFunctionExportsPass);
   registerPass("remove-exports",
                "removes exports using a wildcard",
                createRemoveExportsPass);
@@ -549,10 +564,17 @@ void PassRegistry::registerPasses() {
   registerPass("stack-check",
                "enforce limits on llvm's __stack_pointer global",
                createStackCheckPass);
+  registerPass("tail-call",
+               "convert calls in tail position to return calls",
+               createTailCallPass);
   registerPass("strip-debug",
                "strip debug info (including the names section)",
                createStripDebugPass);
   registerPass("strip-dwarf", "strip dwarf debug info", createStripDWARFPass);
+  registerPass("strip-refining-casts",
+               "remove casts on values flowing into slots whose declared type "
+               "the uncast value already satisfies",
+               createStripRefiningCastsPass);
   registerPass("strip-producers",
                "strip the wasm producers section",
                createStripProducersPass);
@@ -569,12 +591,6 @@ void PassRegistry::registerPasses() {
   registerPass("translate-to-exnref",
                "translate old Phase 3 EH instructions to new ones with exnref",
                createTranslateToExnrefPass);
-  registerPass("trap-mode-clamp",
-               "replace trapping operations with clamping semantics",
-               createTrapModeClamp);
-  registerPass("trap-mode-js",
-               "replace trapping operations with js semantics",
-               createTrapModeJS);
   registerPass("tuple-optimization",
                "optimize trivial tuples away",
                createTupleOptimizationPass);
@@ -616,6 +632,8 @@ void PassRegistry::registerPasses() {
   registerTestPass("randomize-branch-hints",
                    "randomize branch hints (for fuzzing)",
                    createRandomizeBranchHintsPass);
+  registerTestPass(
+    "remove-start", "remove the start function", createRemoveStartPass);
   registerTestPass("reorder-globals-always",
                    "sorts globals by access frequency (even if there are few)",
                    createReorderGlobalsAlwaysPass);
@@ -660,6 +678,8 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
     addIfNoDWARFIssues("local-cse");
     // TODO: add rereloop etc. here
   }
+  // Add unreachables on noreturn calls before DCE, so DCE cleans them up.
+  addIfNoDWARFIssues("optimize-noreturn");
   addIfNoDWARFIssues("dce");
   addIfNoDWARFIssues("remove-unused-names");
   addIfNoDWARFIssues("remove-unused-brs");
@@ -732,7 +752,10 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
     "remove-unused-brs"); // coalesce-locals opens opportunities
   addIfNoDWARFIssues(
     "remove-unused-names");           // remove-unused-brs opens opportunities
-  addIfNoDWARFIssues("merge-blocks"); // clean up remove-unused-brs new blocks
+  if (options.optimizeLevel >= 3 || options.shrinkLevel >= 1) {
+    addIfNoDWARFIssues("constraint-analysis");
+  }
+  addIfNoDWARFIssues("merge-blocks"); // clean up new blocks from last passes
   // late propagation
   if (options.optimizeLevel >= 3 || options.shrinkLevel >= 2) {
     addIfNoDWARFIssues("precompute-propagate");
@@ -1077,6 +1100,11 @@ void PassRunner::handleAfterEffects(Pass* pass, Function* func) {
   // Binaryen IR is modified, so we may have work here.
 
   if (!func) {
+    if (pass->addsEffects()) {
+      // Indirect call effects are now under-approximating. Clear them to avoid
+      // incorrect optimizations.
+      wasm->indirectCallEffects.clear();
+    }
     // If no function is provided, then this is not a function-parallel pass,
     // and it may have operated on any of the functions in theory, so run on
     // them all.

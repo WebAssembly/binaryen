@@ -352,11 +352,16 @@
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (if (result nullref)
-  ;; CHECK-NEXT:     (ref.eq
-  ;; CHECK-NEXT:      (block (result nullref)
-  ;; CHECK-NEXT:       (ref.null none)
+  ;; CHECK-NEXT:     (block (result i32)
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (block (result nullref)
+  ;; CHECK-NEXT:        (ref.null none)
+  ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (local.get $1)
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (local.get $1)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (i32.const 0)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (then
   ;; CHECK-NEXT:      (ref.null none)
@@ -369,7 +374,10 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $cast-desc-eq-fail-reverse (param $desc (ref null (exact $super.desc)))
-    ;; Same as above, but change where the parameter is used.
+    ;; Same as above, but change where the parameter is used. We can optimize
+    ;; more because we do not have one non-escaping allocation flowing into
+    ;; another non-escaping allocation (which would currently require multiple
+    ;; runs to fully optimize).
     (drop
       (ref.cast_desc_eq (ref (exact $super))
         (struct.new_desc $super
@@ -862,8 +870,8 @@
     ;; CHECK:      (rec
     ;; CHECK-NEXT:  (type $struct (sub (descriptor $desc) (struct)))
     (type $struct (sub (descriptor $desc) (struct)))
-    ;; CHECK:       (type $desc (describes $struct) (struct))
-    (type $desc (describes $struct) (struct))
+    ;; CHECK:       (type $desc (sub (describes $struct) (struct)))
+    (type $desc (sub (describes $struct) (struct)))
   )
 
   ;; CHECK:      (type $2 (func (result (ref (exact $desc)))))
@@ -1008,7 +1016,7 @@
 (module
   (rec
     (type $A (descriptor $B) (struct))
-    (type $B (sub (describes $A) (struct)))
+    (type $B (describes $A) (struct))
   )
   ;; CHECK:      (type $0 (func))
 
@@ -1079,7 +1087,7 @@
   ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (local.tee $v
+  ;; CHECK-NEXT:  (local.set $v
   ;; CHECK-NEXT:   (block ;; (replaces unreachable StructGet we can't emit)
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (block
@@ -1148,8 +1156,8 @@
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $A (shared (descriptor $B) (struct)))
-    (type $A (shared (descriptor $B) (struct)))
+    ;; CHECK-NEXT:  (type $A (sub (shared (descriptor $B) (struct))))
+    (type $A (sub (shared (descriptor $B) (struct))))
     ;; CHECK:       (type $B (sub (shared (describes $A) (descriptor $C) (struct))))
     (type $B (sub (shared (describes $A) (descriptor $C) (struct))))
     ;; CHECK:       (type $C (sub (shared (describes $B) (struct))))
@@ -1221,10 +1229,10 @@
 (module
   (rec
    ;; CHECK:      (rec
-   ;; CHECK-NEXT:  (type $struct (sub (descriptor $desc) (struct)))
-   (type $struct (sub (descriptor $desc) (struct)))
+   ;; CHECK-NEXT:  (type $struct (descriptor $desc) (struct))
+   (type $struct (descriptor $desc) (struct))
    ;; CHECK:       (type $desc (describes $struct) (struct))
-   (type $desc (sub final (describes $struct) (struct)))
+   (type $desc (describes $struct) (struct))
   )
 
   ;; CHECK:      (type $2 (func (result i32)))
@@ -1285,8 +1293,8 @@
     ;; CHECK:      (rec
     ;; CHECK-NEXT:  (type $struct (descriptor $desc) (struct))
     (type $struct (descriptor $desc) (struct))
-    ;; CHECK:       (type $desc (sub (describes $struct) (struct (field funcref))))
-    (type $desc (sub (describes $struct) (struct (field funcref))))
+    ;; CHECK:       (type $desc (describes $struct) (struct (field funcref)))
+    (type $desc (describes $struct) (struct (field funcref)))
   )
 
   ;; CHECK:      (type $2 (func))
@@ -1305,7 +1313,7 @@
   ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (local.tee $func
+  ;; CHECK-NEXT:  (local.set $func
   ;; CHECK-NEXT:   (block ;; (replaces unreachable StructGet we can't emit)
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (block ;; (replaces unreachable RefGetDesc we can't emit)
@@ -1366,8 +1374,8 @@
     ;; CHECK:      (rec
     ;; CHECK-NEXT:  (type $struct (descriptor $desc) (struct))
     (type $struct (descriptor $desc) (struct))
-    ;; CHECK:       (type $desc (sub (describes $struct) (struct)))
-    (type $desc (sub (describes $struct) (struct)))
+    ;; CHECK:       (type $desc (describes $struct) (struct))
+    (type $desc (describes $struct) (struct))
   )
 
   ;; CHECK:      (type $2 (func))

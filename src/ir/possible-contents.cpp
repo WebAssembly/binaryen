@@ -197,14 +197,14 @@ void PossibleContents::intersect(const PossibleContents& other) {
   auto newType = Type::getGreatestLowerBound(type, otherType);
 
   auto setNoneOrNull = [&]() {
-    if (newType.isNullable()) {
+    if (newType.isNullableRef()) {
       value = Literal::makeNull(heapType);
     } else {
       value = None();
     }
   };
 
-  if (newType == Type::unreachable || newType.isNull()) {
+  if (newType == Type::unreachable || newType.isBottomRef()) {
     setNoneOrNull();
     return;
   }
@@ -278,7 +278,7 @@ bool PossibleContents::haveIntersection(const PossibleContents& a,
   auto aHeapType = aType.getHeapType();
   auto bHeapType = bType.getHeapType();
 
-  if (aType.isNullable() && bType.isNullable() &&
+  if (aType.isNullableRef() && bType.isNullableRef() &&
       aHeapType.getBottom() == bHeapType.getBottom()) {
     // A compatible null is possible on both sides.
     return true;
@@ -356,7 +356,7 @@ bool PossibleContents::isSubContents(const PossibleContents& a,
 
   if (b.isFullConeType()) {
     if (a.isNull()) {
-      return b.getType().isNullable();
+      return b.getType().isNullableRef();
     }
     return Type::isSubType(a.getType(), b.getType());
   }
@@ -898,7 +898,6 @@ struct InfoCollector
   }
 
   void visitCall(Call* curr) {
-    Name targetName;
     if (!Intrinsics(*getModule()).isCallWithoutEffects(curr)) {
       // This is just a normal call.
       handleDirectCall(curr, curr->target);
@@ -1097,7 +1096,9 @@ struct InfoCollector
     addRoot(curr);
   }
   void visitStructWait(StructWait* curr) { addRoot(curr); }
-  void visitStructNotify(StructNotify* curr) { addRoot(curr); }
+  void visitWaitqueueNew(WaitqueueNew* curr) { addRoot(curr); }
+  void visitWaitqueueNotify(WaitqueueNotify* curr) { addRoot(curr); }
+  void visitPublish(Publish* curr) { receiveChildValue(curr->ref, curr); }
   // Array operations access the array's location, parallel to how structs work.
   void visitArrayGet(ArrayGet* curr) {
     if (!isRelevant(curr->ref)) {
@@ -1161,11 +1162,12 @@ struct InfoCollector
       curr->ref, curr->index, curr->value, MemoryOrder::Unordered);
     visitArraySet(set);
   }
-  template<typename ArrayInit> void visitArrayInit(ArrayInit* curr) {
+
+  void handleArrayWrite(Expression* ref) {
     // Check for both unreachability and a bottom type. In either case we have
     // no work to do, and would error on an assertion below in finding the array
     // type.
-    auto field = GCTypeUtils::getField(curr->ref->type);
+    auto field = GCTypeUtils::getField(ref->type);
     if (!field) {
       return;
     }
@@ -1179,12 +1181,14 @@ struct InfoCollector
     Builder builder(*getModule());
     auto* get = builder.makeLocalGet(-1, valueType);
     addRoot(get);
-    auto* set =
-      builder.makeArraySet(curr->ref, curr->index, get, MemoryOrder::Unordered);
+    // The index does not matter, as we do not track array indexes yet TODO
+    Expression* index = builder.makeNop();
+    auto* set = builder.makeArraySet(ref, index, get, MemoryOrder::Unordered);
     visitArraySet(set);
   }
-  void visitArrayInitData(ArrayInitData* curr) { visitArrayInit(curr); }
-  void visitArrayInitElem(ArrayInitElem* curr) { visitArrayInit(curr); }
+
+  void visitArrayInitData(ArrayInitData* curr) { handleArrayWrite(curr->ref); }
+  void visitArrayInitElem(ArrayInitElem* curr) { handleArrayWrite(curr->ref); }
   void visitArrayRMW(ArrayRMW* curr) {
     if (curr->ref->type == Type::unreachable) {
       return;
@@ -1219,6 +1223,7 @@ struct InfoCollector
   }
   void visitStringEncode(StringEncode* curr) {
     // TODO: optimize when possible
+    handleArrayWrite(curr->array);
     addRoot(curr);
   }
   void visitStringConcat(StringConcat* curr) {
@@ -1406,8 +1411,12 @@ struct InfoCollector
     // continuation values.
     auto numTags = curr->handlerTags.size();
     for (Index tagIndex = 0; tagIndex < numTags; tagIndex++) {
-      auto tag = curr->handlerTags[tagIndex];
       auto target = curr->handlerBlocks[tagIndex];
+      if (!target) {
+        // A switch handler does not branch to a target block.
+        continue;
+      }
+      auto tag = curr->handlerTags[tagIndex];
       auto params = getModule()->getTag(tag)->params();
 
       // Add the values from the tag.
@@ -1755,7 +1764,7 @@ void TNHOracle::scan(Function* func,
     // This function is called with the reference that will be trapped on,
     // if it is null.
     void notePossibleTrap(Expression* expr) {
-      if (!expr->type.isRef() || expr->type.isNonNullable()) {
+      if (!expr->type.isNullableRef()) {
         return;
       }
       noteCast(expr, Type(expr->type.getHeapType(), NonNullable));
@@ -1767,6 +1776,7 @@ void TNHOracle::scan(Function* func,
     void visitStructCmpxchg(StructCmpxchg* curr) {
       notePossibleTrap(curr->ref);
     }
+    // TODO: visitStructWait
     void visitArrayGet(ArrayGet* curr) { notePossibleTrap(curr->ref); }
     void visitArraySet(ArraySet* curr) { notePossibleTrap(curr->ref); }
     void visitArrayLoad(ArrayLoad* curr) { notePossibleTrap(curr->ref); }
@@ -1861,7 +1871,7 @@ void TNHOracle::infer() {
 
     auto ensureCFG = [&]() {
       if (!blockIndexes) {
-        auto cfg = analysis::CFG::fromFunction(func);
+        auto cfg = analysis::CFG::fromFunction(func, &wasm);
         blockIndexes = analysis::CFGBlockIndexes(cfg);
       }
     };
@@ -2551,6 +2561,12 @@ Flower::Flower(Module& wasm, const PassOptions& options)
       } else if (type.isArray()) {
         roots[getIndex(DataLocation{type, 0})] =
           PossibleContents::fromType(type.getArray().element.type);
+      } else if (type.isSignature()) {
+        auto sig = type.getSignature();
+        for (Index i = 0; i < sig.results.size(); i++) {
+          roots[getIndex(SignatureResultLocation{type, i})] =
+            PossibleContents::fromType(sig.results[i]);
+        }
       }
     }
   }
@@ -3166,7 +3182,7 @@ void Flower::filterPackedDataReads(PossibleContents& contents,
   }
 
   // If there is no struct or array to read, no value will ever be returned.
-  if (ref->type.isNull()) {
+  if (ref->type.isBottomRef()) {
     contents = PossibleContents::none();
     return;
   }

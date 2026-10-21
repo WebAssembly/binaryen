@@ -44,9 +44,6 @@ char getPathSeparator();
 std::string getDirName(const std::string& path);
 std::string getBaseName(const std::string& path);
 
-// Get the binaryen root dir.
-std::string getBinaryenRoot();
-
 // Get the binaryen bin dir.
 std::string getBinaryenBinDir();
 

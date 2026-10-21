@@ -49,6 +49,7 @@
 
 #include "call-utils.h"
 #include "support/utilities.h"
+#include "wasm-type.h"
 
 // TODO: Use the new sign-extension opcodes where appropriate. This needs to be
 // conditionalized on the availability of atomics.
@@ -1125,10 +1126,13 @@ struct OptimizeInstructions
           return replaceCurrent(curr);
         }
       }
-      // abs(x * x)   ==>   x * x
-      // abs(x / x)   ==>   x / x
       if (auto* binary = curr->value->dynCast<Binary>()) {
-        if ((binary->op == Abstract::getBinary(binary->type, Abstract::Mul) ||
+        // abs(x * x)   ==>   x * x
+        // abs(x / x)   ==>   x / x
+        // only for fast math, as the result may be a NaN with the sign bit set,
+        // which abs would clear.
+        if (fastMath &&
+            (binary->op == Abstract::getBinary(binary->type, Abstract::Mul) ||
              binary->op == Abstract::getBinary(binary->type, Abstract::DivS)) &&
             areConsecutiveInputsEqual(binary->left, binary->right)) {
           return replaceCurrent(binary);
@@ -1231,7 +1235,7 @@ struct OptimizeInstructions
     // in some cases, by removing or moving the ref.as_non_null operation.
     if (auto* as = curr->value->dynCast<RefAs>()) {
       if (as->op == RefAsNonNull &&
-          getFunction()->getLocalType(curr->index).isNullable()) {
+          getFunction()->getLocalType(curr->index).isNullableRef()) {
         //   (local.tee (ref.as_non_null ..))
         // =>
         //   (ref.as_non_null (local.tee ..))
@@ -1461,6 +1465,65 @@ struct OptimizeInstructions
     }
   }
 
+  void visitResume(Resume* curr) {
+    skipNonNullCast(curr->cont, curr);
+    if (trapOnNull(curr, curr->cont)) {
+      return;
+    }
+    if (curr->type == Type::unreachable) {
+      return;
+    }
+
+    // If this resume operates on a freshly-created continuation of an exact
+    // function that is known never to suspend, we can turn the resumption into
+    // a direct call, avoiding the continuation allocation and handler overhead.
+
+    // Continuations are single-shot, so resuming a continuation that has
+    // already been consumed will trap. If traps are assumed never to happen, we
+    // can assume this continuation will not be consumed on another path and
+    // look through tees and conditional branches. Otherwise, avoid looking
+    // through them to ensure the continuation cannot be consumed elsewhere.
+    auto behavior = getPassOptions().trapsNeverHappen
+                      ? Properties::FallthroughBehavior::AllowTeeBrIf
+                      : Properties::FallthroughBehavior::NoTeeBrIf;
+
+    auto* contExpr = Properties::getFallthrough(
+      curr->cont, getPassOptions(), *getModule(), behavior);
+    auto* contNew = contExpr->dynCast<ContNew>();
+    if (!contNew) {
+      return;
+    }
+    if (contNew->func->type == Type::unreachable) {
+      return;
+    }
+
+    auto* funcExpr =
+      Properties::getFallthrough(contNew->func, getPassOptions(), *getModule());
+    auto* refFunc = funcExpr->dynCast<RefFunc>();
+    if (!refFunc) {
+      return;
+    }
+
+    auto* target = getModule()->getFunctionOrNull(refFunc->func);
+    if (!target || target->imported()) {
+      return;
+    }
+
+    if (!target->effects || target->effects->suspends) {
+      return;
+    }
+
+    auto* block =
+      ChildLocalizer(curr, getFunction(), *getModule(), getPassOptions())
+        .getChildrenReplacement();
+    Builder builder(*getModule());
+    Type results = target->getResults();
+    block->list.push_back(
+      builder.makeCall(target->name, curr->operands, results));
+    block->type = results;
+    replaceCurrent(block);
+  }
+
   // Note on removing casts (which the following utilities, skipNonNullCast and
   // skipCast do): removing a cast is potentially dangerous, as it removes
   // information from the IR. For example:
@@ -1551,6 +1614,17 @@ struct OptimizeInstructions
   // ref.as_non_null then the struct.set will still trap, of course, but that
   // will only happen *after* the call, which is wrong.
   void skipNonNullCast(Expression*& input, Expression* parent) {
+    // If we must never reorder code, then we cannot remove a non-null cast.
+    // Such removals are valid because we move the trap later (see the
+    // struct.set in the example above: we can remove the ref.as_non_null
+    // because the set will trap anyhow, so we are pushing the trap onward; in
+    // the example above we have a call we can't move past, and in neverReorder
+    // mode we need to care about things like branch hints, which do not have
+    // effects, hence the need for the special neverReorder flag).
+    if (neverReorder) {
+      return;
+    }
+
     // Check the other children for the ordering problem only if we find a
     // possible optimization, to avoid wasted work.
     bool checkedSiblings = false;
@@ -1581,7 +1655,7 @@ struct OptimizeInstructions
             // trap we want to move. (We use a shallow effect analyzer since we
             // will only move the ref.as_non_null itself.)
             ShallowEffectAnalyzer movingEffects(options, *getModule(), input);
-            if (crossedEffects.invalidates(movingEffects)) {
+            if (movingEffects.orderedBefore(crossedEffects)) {
               return;
             }
 
@@ -1619,8 +1693,11 @@ struct OptimizeInstructions
           continue;
         }
       } else if (auto* cast = input->dynCast<RefCast>()) {
-        if (requiredType == Type::none ||
-            Type::isSubType(cast->ref->type, requiredType)) {
+        // Removing a descriptor cast also removes the descriptor operand, which
+        // we can only do if it has no side effects.
+        if ((!cast->desc || !effects(cast->desc).hasSideEffects()) &&
+            (requiredType == Type::none ||
+             Type::isSubType(cast->ref->type, requiredType))) {
           input = cast->ref;
           continue;
         }
@@ -1691,7 +1768,8 @@ struct OptimizeInstructions
       // function and the null does not actually flow out. We can only optimize
       // here if a null definitely flows out (as only that would cause a trap).
       auto flowsOutNull = [&](Expression* child) {
-        return child->type.isNull() && !effects(child).transfersControlFlow();
+        return child->type.isBottomRef() &&
+               !effects(child).transfersControlFlow();
       };
 
       if (auto* iff = ref->dynCast<If>()) {
@@ -1717,7 +1795,7 @@ struct OptimizeInstructions
 
       if (auto* select = ref->dynCast<Select>()) {
         // We must check for unreachability explicitly here because a full
-        // refinalize only happens at the end. That is, the select may stil be
+        // refinalize only happens at the end. That is, the select may still be
         // reachable after we turned one child into an unreachable, and we are
         // calling getResultOfFirst which will error on unreachability.
         if (flowsOutNull(select->ifTrue) &&
@@ -1748,7 +1826,7 @@ struct OptimizeInstructions
     //      (ref.cast      ;; now non-nullable
     //
     // Either way we trap here, but refining the type may have benefits later.
-    if (ref->type.isNullable()) {
+    if (ref->type.isNullableRef()) {
       if (auto* cast = ref->dynCast<RefCast>()) {
         // Note that we must be the last child of the parent, otherwise effects
         // in the middle may need to remain:
@@ -1758,25 +1836,20 @@ struct OptimizeInstructions
         //      (call ..
         //
         // The call here must execute before the trap in the struct.set. To
-        // avoid that problem, inspect all children after us. If there are no
-        // such children, then there is no problem; if there are, see below.
+        // avoid that problem, inspect all children after us: making the cast
+        // non-nullable moves the trap on null from the parent to before them,
+        // which is only valid if none of them must remain ordered before a
+        // trap.
+        EffectAnalyzer trapEffects(getPassOptions(), *getModule());
+        trapEffects.trap = true;
         auto canOptimize = true;
         auto seenRef = false;
         for (auto* child : ChildIterator(curr)) {
           if (child == ref) {
             seenRef = true;
-          } else if (seenRef) {
-            // This is a child after the reference. Check it for effects. For
-            // simplicity, focus on the case of traps-never-happens: if we can
-            // assume no trap occurs in the parent, then there must not be a
-            // trap in the child either, unless control flow transfers and we
-            // might not reach the parent.
-            // TODO: handle more cases.
-            if (!getPassOptions().trapsNeverHappen ||
-                effects(child).transfersControlFlow()) {
-              canOptimize = false;
-              break;
-            }
+          } else if (seenRef && effects(child).orderedBefore(trapEffects)) {
+            canOptimize = false;
+            break;
           }
         }
         if (canOptimize) {
@@ -1787,7 +1860,7 @@ struct OptimizeInstructions
 
     auto fallthrough = getFallthrough(ref);
 
-    if (fallthrough->type.isNull()) {
+    if (fallthrough->type.isBottomRef()) {
       replaceCurrent(
         getDroppedChildrenAndAppend(curr, builder.makeUnreachable()));
       return true;
@@ -1796,6 +1869,8 @@ struct OptimizeInstructions
   }
 
   void visitRefEq(RefEq* curr) {
+    Builder builder(*getModule());
+
     // Check for unreachability. Note we must check both the children and the
     // ref.eq itself, as in e.g. optimizeTernary, as we only refinalize at the
     // end, so unreachable children may not update the parent yet.
@@ -1813,7 +1888,7 @@ struct OptimizeInstructions
     auto leftIsHeapSubtype = HeapType::isSubType(leftHeapType, rightHeapType);
     auto rightIsHeapSubtype = HeapType::isSubType(rightHeapType, leftHeapType);
     if (!leftIsHeapSubtype && !rightIsHeapSubtype &&
-        (leftType.isNonNullable() || rightType.isNonNullable())) {
+        (leftType.isNonNullableRef() || rightType.isNonNullableRef())) {
       // The heap types have no intersection, so the only thing that can
       // possibly appear on both sides is null, but one of the two is non-
       // nullable, which rules that out. So there is no way that the same
@@ -1832,12 +1907,16 @@ struct OptimizeInstructions
     skipCast(curr->left, nullableEq);
     skipCast(curr->right, nullableEq);
 
-    // Identical references compare equal.
-    // (Technically we do not need to check if the inputs are also foldable into
-    // a single one, but we do not have utility code to handle non-foldable
-    // cases yet; the foldable case we do handle is the common one of the first
-    // child being a tee and the second a get of that tee. TODO)
+    // Identical references compare equal. If the inputs are foldable, we need
+    // only keep one of them.
     if (areConsecutiveInputsEqualAndFoldable(curr->left, curr->right)) {
+      replaceCurrent(
+        builder.makeSequence(builder.makeDrop(curr->left),
+                             builder.makeConst(Literal::makeOne(Type::i32))));
+      return;
+    }
+
+    if (areConsecutiveInputsEqual(curr->left, curr->right)) {
       replaceCurrent(
         getDroppedChildrenAndAppend(curr, Literal::makeOne(Type::i32)));
       return;
@@ -1907,6 +1986,7 @@ struct OptimizeInstructions
     trapOnNull(curr, curr->ref);
     // Relax acquire loads of unshared fields to unordered because they cannot
     // synchronize with other threads.
+    // TODO: Relax all other memory orderings as well.
     if (curr->order == MemoryOrder::AcqRel && curr->ref->type.isRef() &&
         !curr->ref->type.getHeapType().isShared()) {
       curr->order = MemoryOrder::Unordered;
@@ -1930,6 +2010,7 @@ struct OptimizeInstructions
 
     // Relax release stores of unshared fields to unordered because they cannot
     // synchronize with other threads.
+    // TODO: Relax all other memory orderings as well.
     if (curr->order == MemoryOrder::AcqRel && curr->ref->type.isRef() &&
         !curr->ref->type.getHeapType().isShared()) {
       curr->order = MemoryOrder::Unordered;
@@ -2267,6 +2348,94 @@ struct OptimizeInstructions
     replaceCurrent(block);
   }
 
+  void visitArrayNewData(ArrayNewData* curr) {
+    // Lower array.new_data with constant operands to array.new_default,
+    // array.new or array.new_fixed. Unlike array.new_data, those are constant
+    // expressions, and more optimizations understand them.
+    if (curr->type == Type::unreachable) {
+      return;
+    }
+
+    auto* offsetConst = curr->offset->dynCast<Const>();
+    auto* sizeConst = curr->size->dynCast<Const>();
+    if (!offsetConst || !sizeConst) {
+      return;
+    }
+
+    auto* seg = getModule()->getDataSegment(curr->segment);
+    if (!seg->isPassive()) {
+      // Active segments are implicitly dropped upon module instantiation.
+      return;
+    }
+
+    auto heapType = curr->type.getHeapType();
+    const auto& element = heapType.getArray().element;
+
+    Address offset = offsetConst->value.getUnsigned();
+    Address size = sizeConst->value.getUnsigned();
+    Address elemBytes = element.getByteSize();
+    Address end;
+    if (std::ckd_add<uint64_t>(&end.addr, offset, size * elemBytes) ||
+        end > seg->data.size()) {
+      // This will trap.
+      return;
+    }
+
+    // A dropped segment acts as if it had length 0, so unless end == 0 this
+    // traps if the segment was dropped at runtime, which we can't rule out.
+    // TODO: Optimize without TNH if the segment is never dropped.
+    if (end > 0 && !getPassOptions().trapsNeverHappen) {
+      return;
+    }
+
+    Builder builder(*getModule());
+
+    if (size == 0) {
+      replaceCurrent(builder.makeArrayNewFixed(heapType, {}));
+      return;
+    }
+
+    auto readElement = [&](Index i) -> Literal {
+      const auto* src = &seg->data[offset + i * elemBytes];
+      // Packed values are truncated when stored, so the extension doesn't
+      // matter; sign-extending gives the shorter encoding (-1 vs 255).
+      return Literal::makeFromMemory(src, element.type, element.getByteSize());
+    };
+
+    // If all elements are equal, array.new is compact at any size.
+    auto first = readElement(0);
+    bool allEqual = true;
+    for (Index i = 1; i < size; i++) {
+      if (readElement(i) != first) {
+        allEqual = false;
+        break;
+      }
+    }
+    if (allEqual) {
+      // visitArrayNew optimizes this further when the value is the default
+      // (to array.new_default) or the size is 1 (to array.new_fixed).
+      auto* sizeExpr = builder.makeConst(int32_t(size));
+      replaceCurrent(
+        builder.makeArrayNew(heapType, sizeExpr, builder.makeConst(first)));
+      return;
+    }
+
+    // array.new_fixed needs a full *.const per element while the segment
+    // stores raw bytes, so only do this for small arrays. Empirically, 64 sits
+    // in a natural gap between small/medium array literals (2D array rows,
+    // enum/switch tables, etc.) and large bulk lookup tables (100+ elements).
+    constexpr uint64_t MaxArrayNewFixedSize = 64;
+    if (size > MaxArrayNewFixedSize) {
+      return;
+    }
+    std::vector<Expression*> values;
+    values.reserve(size);
+    for (Index i = 0; i < size; i++) {
+      values.push_back(builder.makeConst(readElement(i)));
+    }
+    replaceCurrent(builder.makeArrayNewFixed(heapType, values));
+  }
+
   void visitArrayGet(ArrayGet* curr) {
     skipNonNullCast(curr->ref, curr);
     trapOnNull(curr, curr->ref);
@@ -2329,9 +2498,9 @@ struct OptimizeInstructions
           // null, because then we never get around to comparing the
           // descriptors. We still need to preserve the trap on null
           // descriptors, though.
-          if (refType.isNull()) {
-            assert(curr->type.isNullable());
-            if (curr->desc->type.isNullable()) {
+          if (refType.isBottomRef()) {
+            assert(curr->type.isNullableRef());
+            if (curr->desc->type.isNullableRef()) {
               curr->desc = builder.makeRefAs(RefAsNonNull, curr->desc);
             }
             replaceCurrent(getDroppedChildrenAndAppend(
@@ -2386,7 +2555,7 @@ struct OptimizeInstructions
           // because the intermediate expressions might have had side effects or
           // we need to check exactness. We can replace the cast with a drop
           // followed by a direct return of the value, though.
-          if (ref->type.isNull()) {
+          if (ref->type.isBottomRef()) {
             // We can materialize the resulting null value directly.
             //
             // The type must be nullable for us to do that, which it normally
@@ -2403,7 +2572,7 @@ struct OptimizeInstructions
             // to be successful, but since the input is uninhabitable we won't
             // even reach the cast. Such casts will be evaluated as
             // Unreachable, so we'll not hit this assertion.
-            assert(curr->type.isNullable());
+            assert(curr->type.isNullableRef());
             auto nullType = curr->type.getHeapType().getBottom();
             replaceCurrent(
               getDroppedChildrenAndAppend(curr,
@@ -2447,7 +2616,7 @@ struct OptimizeInstructions
         // In this case, the cast succeeds because the value must be null, so we
         // can fall through to handle that case.
         assert(Type::isSubType(refType, ref->type));
-        assert(refType.getHeapType().isBottom());
+        assert(refType.isBottomRef());
       }
         [[fallthrough]];
       case GCTypeUtils::SuccessOnlyIfNull: {
@@ -2485,7 +2654,7 @@ struct OptimizeInstructions
       return;
     }
 
-    if (curr->type.isNonNullable() && trapOnNull(curr, curr->ref)) {
+    if (curr->type.isNonNullableRef() && trapOnNull(curr, curr->ref)) {
       return;
     }
 
@@ -2509,7 +2678,7 @@ struct OptimizeInstructions
     // we can improve nullability.
     Type improvedType = curr->type;
     if (curr->desc) {
-      if (curr->type.isNullable() && refType.isNonNullable()) {
+      if (curr->type.isNullableRef() && refType.isNonNullableRef()) {
         improvedType = curr->type.with(NonNullable);
       }
     } else {
@@ -2542,13 +2711,41 @@ struct OptimizeInstructions
       // traps are allowed, then we cannot remove the potentially-trapping
       // child, though.
       bool notWeaker = Type::isSubType(curr->type, child->type);
-      bool safe = !child->desc || getPassOptions().trapsNeverHappen;
-      if (notWeaker && safe) {
+      auto& options = getPassOptions();
+      auto canTrap = !options.trapsNeverHappen;
+      bool safe = !child->desc || !canTrap;
+      bool canOptimize = notWeaker && safe;
+      if (canOptimize && curr->desc && canTrap) {
+        // There is another child here, which might trap, and we need to
+        // consider that in this situation:
+        //
+        //  (outer.cast
+        //    (inner.cast (inner.ref))
+        //    (descriptor with effects)
+        //  )
+        //
+        //  =>
+        //
+        //  (outer.cast
+        //    (inner.ref)                ;; inner cast was removed
+        //    (descriptor with effects)
+        //  )
+        //
+        // It is safe to remove the inner cast, as if it trapped, the outer one
+        // would still trap. But if there is a descriptor, then we are moving
+        // the trap across the descriptor, and shouldn't cross effects there.
+        EffectAnalyzer descEffects(options, *getModule(), curr->desc);
+        ShallowEffectAnalyzer movingEffects(options, *getModule(), curr->ref);
+        if (movingEffects.orderedBefore(descEffects)) {
+          canOptimize = false;
+        }
+      }
+      if (canOptimize) {
         if (child->desc) {
           // Reorder the child's reference past its dropped descriptor if
           // necessary.
           auto* block =
-            ChildLocalizer(child, getFunction(), *getModule(), getPassOptions())
+            ChildLocalizer(child, getFunction(), *getModule(), options)
               .getChildrenReplacement();
           block->list.push_back(child->ref);
           block->type = child->ref->type;
@@ -2574,7 +2771,7 @@ struct OptimizeInstructions
         auto& options = getPassRunner()->options;
         EffectAnalyzer descEffects(options, *getModule(), curr->desc);
         ShallowEffectAnalyzer movingEffects(options, *getModule(), curr->ref);
-        if (descEffects.invalidates(movingEffects)) {
+        if (movingEffects.orderedBefore(descEffects)) {
           return;
         }
       }
@@ -2654,7 +2851,7 @@ struct OptimizeInstructions
     // constant, but this warrants more investigation. TODO
 
     Builder builder(*getModule());
-    if (curr->value->type.isNonNullable()) {
+    if (curr->value->type.isNonNullableRef()) {
       replaceCurrent(
         builder.makeSequence(builder.makeDrop(curr->value),
                              builder.makeConst(Literal::makeZero(Type::i32))));
@@ -2708,7 +2905,7 @@ struct OptimizeInstructions
       return;
     }
     skipNonNullCast(curr->value, curr);
-    if (!curr->value->type.isNullable()) {
+    if (!curr->value->type.isNullableRef()) {
       replaceCurrent(curr->value);
       return;
     }
@@ -2723,7 +2920,7 @@ struct OptimizeInstructions
     if (auto* cast = curr->value->dynCast<RefCast>()) {
       // The cast cannot be non-nullable, or we would have handled this right
       // above by just removing the ref.as, since it would not be needed.
-      assert(!cast->type.isNonNullable());
+      assert(!cast->type.isNonNullableRef());
       cast->type = cast->type.with(NonNullable);
       replaceCurrent(cast);
     }
@@ -2732,6 +2929,51 @@ struct OptimizeInstructions
   void visitRefGetDesc(RefGetDesc* curr) {
     skipNonNullCast(curr->ref, curr);
     trapOnNull(curr, curr->ref);
+  }
+
+  void visitPublish(Publish* curr) {
+    if (curr->type == Type::unreachable) {
+      return;
+    }
+
+    // Publish of a reference that cannot be a shared array or struct can be
+    // removed.
+    auto canBeSharedArrayOrStruct = [](Type type) {
+      if (!type.isRef()) {
+        return false;
+      }
+      auto ht = type.getHeapType();
+      if (ht.isBottom() || ht.isMaybeShared(HeapType::i31)) {
+        return false;
+      }
+      return HeapType::isSubType(ht, HeapTypes::any.getBasic(Shared));
+    };
+
+    if (!canBeSharedArrayOrStruct(getFallthroughType(curr->ref))) {
+      replaceCurrent(curr->ref);
+      return;
+    }
+
+    auto isAllocation = [](Expression* expr) {
+      return expr->is<StructNew>() || expr->is<ArrayNew>() ||
+             expr->is<ArrayNewData>() || expr->is<ArrayNewElem>() ||
+             expr->is<ArrayNewFixed>();
+    };
+
+    // Publish of publish or of a struct/array allocation can be removed.
+    Expression* fallthrough = curr->ref;
+    while (true) {
+      if (fallthrough->is<Publish>() || isAllocation(fallthrough)) {
+        replaceCurrent(curr->ref);
+        return;
+      }
+      auto* next = Properties::getImmediateFallthrough(
+        fallthrough, getPassOptions(), *getModule());
+      if (next == fallthrough) {
+        break;
+      }
+      fallthrough = next;
+    }
   }
 
   void visitTupleExtract(TupleExtract* curr) {
@@ -2835,6 +3077,16 @@ private:
         left = br->value;
         continue;
       }
+      if (auto* cast = left->dynCast<RefCast>(); cast && cast->desc) {
+        interferingEffects.walk(cast->desc);
+        left = cast->ref;
+        continue;
+      }
+      if (auto* br = left->dynCast<BrOn>(); br && br->desc) {
+        interferingEffects.walk(br->desc);
+        left = br->ref;
+        continue;
+      }
       // We have found the real fallthrough expression.
       break;
     }
@@ -2867,9 +3119,30 @@ private:
       return false;
     }
 
-    // They do look the same! Make sure nothing executed in between them can
-    // affect the value of `right` and make it different from `left`.
-    if (interferingEffects.orderedBefore(effects(right))) {
+    // They do look the same! Determine whether there are side effects that
+    // could make the values different. Note that we use the same
+    // EffectAnalyzers for effects from the left and right sides because they
+    // are the same.
+    EffectAnalyzer fallthroughChildEffects(getPassOptions(), *getModule());
+    for (auto* child : ChildIterator(right)) {
+      fallthroughChildEffects.walk(child);
+    }
+    EffectAnalyzer fallthroughEffects = fallthroughChildEffects;
+    fallthroughEffects.visit(right);
+
+    // Does the left-hand parent expression or side effects in the right-hand
+    // children affect the values flowing into the right-hand parent expression?
+    // Do not consider the right-hand parent expression because it could be an
+    // idempotent call and we don't want to mistakenly conclude that the
+    // left-hand side could interfere with it. (Non-idempotent functions will
+    // be rejected by the `isGenerative` check below.)
+    if (fallthroughEffects.orderedBefore(fallthroughChildEffects)) {
+      return false;
+    }
+
+    // Do any effects executed between the expressions affect the right-hand
+    // expression?
+    if (interferingEffects.orderedBefore(fallthroughEffects)) {
       return false;
     }
 
@@ -2896,7 +3169,8 @@ private:
       return true;
     }
 
-    // To fold the right side into the left, it must have no effects.
+    // To fold the right side into the left, it must have no unremovable
+    // effects.
     auto rightMightHaveEffects = true;
     if (auto* call = right->dynCast<Call>()) {
       // If these are a pair of idempotent calls, then the second has no
@@ -2929,7 +3203,9 @@ private:
         }
         ShallowEffectAnalyzer parentEffects(
           getPassOptions(), *getModule(), call);
-        if (parentEffects.invalidates(childEffects)) {
+        // Check if the first parent is ordered before the second child (in the
+        // example above, the first call vs the second global.get).
+        if (parentEffects.orderedBefore(childEffects)) {
           return false;
         }
         // No effects are possible.
@@ -3375,28 +3651,35 @@ private:
       // execute anyhow, and things like branch hints were already being run.
       // After optimization, we will only run fewer things, and run no risk of
       // running new bad things.
-      if (matches(curr, select(any(&ifTrue), any(&ifFalse), any(&c))) &&
-          ExpressionAnalyzer::equal(ifTrue, ifFalse)) {
-        auto value = effects(ifTrue);
-        if (value.hasSideEffects()) {
-          // At best we don't need the condition, but need to execute the
-          // value twice. a block is larger than a select by 2 bytes, and we
-          // must drop one value, so 3, while we save the condition, so it's
-          // not clear this is worth it, TODO
-        } else {
-          // The value has no side effects, so we can replace ourselves with one
-          // of the two identical values in the arms.
-          auto condition = effects(c);
-          if (!condition.hasSideEffects()) {
-            return ifTrue;
-          } else {
-            // The condition is last, so we need a new local, and it may be a
-            // bad idea to use a block like we do for an if. Do it only if we
-            // can reorder
-            if (!condition.invalidates(value)) {
-              return builder.makeSequence(builder.makeDrop(c), ifTrue);
-            }
+      if (matches(curr, select(any(&ifTrue), any(&ifFalse), any(&c)))) {
+        // Check if the values are identical and we can keep just the first one.
+        if (areConsecutiveInputsEqualAndFoldable(ifTrue, ifFalse)) {
+          // We can keep just the ifTrue branch, but we need to move its value
+          // past the condition. If there are side effects that force us to use
+          // a scratch local, then it is probably worth the extra local to
+          // execute the value expression once instead of twice.
+          if (canReorder(ifTrue, c)) {
+            return builder.makeSequence(builder.makeDrop(c), ifTrue);
           }
+          // We generally skip optimizing unreachable selects, but an
+          // optimization on the children might have made them newly
+          // unreachable. We cannot create a scratch local in that case.
+          if (!ifTrue->type.isConcrete()) {
+            return nullptr;
+          }
+          auto scratch = builder.addVar(getFunction(), ifTrue->type);
+          return builder.makeBlock(
+            {builder.makeLocalSet(scratch, ifTrue),
+             builder.makeDrop(c),
+             builder.makeLocalGet(scratch, ifTrue->type)});
+        }
+        // Otherwise, check if the values are identical, but we would have to
+        // keep both. In this case the benefit is less, so we only optimize if
+        // we can avoid the scratch local.
+        if (areConsecutiveInputsEqual(ifTrue, ifFalse) &&
+            canReorder(ifFalse, c)) {
+          return builder.makeBlock(
+            {builder.makeDrop(ifTrue), builder.makeDrop(c), ifFalse});
         }
       }
     }
@@ -4665,7 +4948,7 @@ private:
       }
     }
     {
-      // TODO: Add cancelation for some large constants when shrinkLevel > 0
+      // TODO: Add cancellation for some large constants when shrinkLevel > 0
       // in FinalOptimizer.
 
       // (x >> C)  << C   =>   x & -(1 << C)
@@ -4690,7 +4973,7 @@ private:
       }
     }
     {
-      // TODO: Add cancelation for some large constants when shrinkLevel > 0
+      // TODO: Add cancellation for some large constants when shrinkLevel > 0
       // in FinalOptimizer.
 
       // (x << C) >>> C   =>   x & (-1 >>> C)
@@ -5428,8 +5711,10 @@ private:
                                        builder.makeConst<uint8_t[16]>(values),
                                        Type::v128,
                                        memFill->memory);
-            } else {
+            } else if (getPassOptions().trapsNeverHappen) {
               // { i64.store(d, C', 0), i64.store(d, C', 8) }
+              // We only do this when trapsNeverHappen, as if we trap during the
+              // second store, it leaves data written from the first.
               auto destType = memFill->dest->type;
               Index tempLocal = builder.addVar(getFunction(), destType);
               return builder.makeBlock({

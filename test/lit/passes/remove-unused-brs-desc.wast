@@ -783,4 +783,36 @@
       )
     )
   )
+
+  ;; CHECK:      (func $unreachable-desc (type $17) (param $any anyref) (param $d (ref (exact $super.desc))) (result anyref)
+  ;; CHECK-NEXT:  (block $block (result (ref (exact $super.desc)))
+  ;; CHECK-NEXT:   (block (result (ref (exact $super.desc)))
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.tee $any
+  ;; CHECK-NEXT:      (ref.i31
+  ;; CHECK-NEXT:       (i32.const 0)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $d)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $unreachable-desc (param $any anyref) (param $d (ref (exact $super.desc))) (result anyref)
+    ;; The inner br_on_cast is optimized into an unconditional br, making the
+    ;; descriptor operand of the outer br_on_cast_desc_eq unreachable before
+    ;; ReFinalize runs.
+    (block $block (result anyref)
+      (br_on_cast_desc_eq $block anyref (ref null (exact $super))
+        (local.tee $any
+          (ref.i31
+            (i32.const 0)
+          )
+        )
+        (br_on_cast $block (ref (exact $super.desc)) (ref (exact $super.desc))
+          (local.get $d)
+        )
+      )
+    )
+  )
 )

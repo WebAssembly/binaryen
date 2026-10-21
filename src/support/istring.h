@@ -31,7 +31,7 @@
 
 namespace wasm {
 
-struct IString {
+struct BYN_WARN_UNUSED IString {
 private:
   static const char* interned(std::string_view s);
 

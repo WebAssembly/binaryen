@@ -97,6 +97,7 @@
 // time, so we do not do it by default.
 //
 
+#include "ir/manipulation.h"
 #include "ir/module-utils.h"
 #include "ir/names.h"
 #include "ir/utils.h"
@@ -304,32 +305,62 @@ void renameInputItems(Module& input) {
     }
   };
 
+  // Given a name in the input module, and lamdbdas that query for that name in
+  // both the merged and input module, return a valid name. We want a new name
+  // that is not in the merged module - we cannot collide with anything already
+  // there - but we must also be careful to not fix such collisions with names
+  // in the input module. That is, if we have $a and $a already exists in the
+  // merged module, $a_1 might be valid - but it is not valid if $a_1 is in the
+  // input module, as that means it is a valid name there, with things referring
+  // to it, which we would need to map. For simplicity, when fixing a collision,
+  // pick a totally novel name.
+  auto getValidName = [&](Name name, auto method, Index hint) {
+    return Names::getValidName(
+      name,
+      [&](Name test) {
+        // As explained above, a name is valid if it is not in the merged
+        // module, and also it is either the original name in the input module
+        // (no collision) or it does not appear there.
+        return !(merged.*method)(test) &&
+               (test == name || !(input.*method)(test));
+      },
+      hint);
+  };
+
   for (auto& curr : input.functions) {
-    auto name = Names::getValidFunctionName(merged, curr->name);
+    auto name = getValidName(
+      curr->name, &Module::getFunctionOrNull, merged.functions.size());
     maybeAdd(ModuleItemKind::Function, curr->name, name);
   }
   for (auto& curr : input.globals) {
-    auto name = Names::getValidGlobalName(merged, curr->name);
+    auto name =
+      getValidName(curr->name, &Module::getGlobalOrNull, merged.globals.size());
     maybeAdd(ModuleItemKind::Global, curr->name, name);
   }
   for (auto& curr : input.tags) {
-    auto name = Names::getValidTagName(merged, curr->name);
+    auto name =
+      getValidName(curr->name, &Module::getTagOrNull, merged.tags.size());
     maybeAdd(ModuleItemKind::Tag, curr->name, name);
   }
   for (auto& curr : input.elementSegments) {
-    auto name = Names::getValidElementSegmentName(merged, curr->name);
+    auto name = getValidName(curr->name,
+                             &Module::getElementSegmentOrNull,
+                             merged.elementSegments.size());
     maybeAdd(ModuleItemKind::ElementSegment, curr->name, name);
   }
   for (auto& curr : input.memories) {
-    auto name = Names::getValidMemoryName(merged, curr->name);
+    auto name = getValidName(
+      curr->name, &Module::getMemoryOrNull, merged.memories.size());
     maybeAdd(ModuleItemKind::Memory, curr->name, name);
   }
   for (auto& curr : input.dataSegments) {
-    auto name = Names::getValidDataSegmentName(merged, curr->name);
+    auto name = getValidName(
+      curr->name, &Module::getDataSegmentOrNull, merged.dataSegments.size());
     maybeAdd(ModuleItemKind::DataSegment, curr->name, name);
   }
   for (auto& curr : input.tables) {
-    auto name = Names::getValidTableName(merged, curr->name);
+    auto name =
+      getValidName(curr->name, &Module::getTableOrNull, merged.tables.size());
     maybeAdd(ModuleItemKind::Table, curr->name, name);
   }
 
@@ -544,6 +575,47 @@ void fuseImportsAndExports(const PassOptions& options) {
 
   // Update the things we found.
   updateNames(merged, kindNameUpdates);
+}
+
+// Unlike global initializers and element segments (which under GC may refer to
+// preceding module-defined globals), a table initializer expression may only
+// refer to imported globals. Fusing can turn an imported global that a table
+// initializer refers to into a module-defined one, which would make the
+// initializer invalid. When that happens, inline the referenced global's
+// (immutable, constant) value so the initializer remains valid. The fused
+// global is necessarily immutable, since fusing requires the import and export
+// mutabilities to match and a table initializer could only refer to an
+// immutable global in the first place.
+void fixTableInitializers() {
+  struct Inliner : public PostWalker<Inliner> {
+    bool inlined = false;
+    void visitGlobalGet(GlobalGet* curr) {
+      auto* global = getModule()->getGlobal(curr->name);
+      if (!global->imported()) {
+        assert(global->init && !global->mutable_);
+        replaceCurrent(ExpressionManipulator::copy(global->init, *getModule()));
+        inlined = true;
+      }
+    }
+  };
+
+  for (auto& table : merged.tables) {
+    if (!table->init) {
+      continue;
+    }
+    // Inlining a global may expose further module-defined globals (if that
+    // global's initializer refers to another one), so iterate to a fixed point.
+    // Globals cannot form cycles, so this terminates. Any global.gets that
+    // remain refer to imported globals, which are valid in table initializers.
+    while (true) {
+      Inliner inliner;
+      inliner.setModule(&merged);
+      inliner.walk(table->init);
+      if (!inliner.inlined) {
+        break;
+      }
+    }
+  }
 }
 
 // Things may have been imported using supertypes, which means they can get
@@ -822,10 +894,15 @@ Input source maps can be specified by adding an -ism option right after the modu
       // The functions in the module have been renamed and copied rather than
       // moved, so we can get their final names directly. (We don't need this
       // for the first module because it does not appear in the manifest.)
-      auto& funcs = moduleFuncs[inputFileName];
-      for (auto& func : currModule->functions) {
-        if (!func->imported()) {
-          funcs.push_back(func->name);
+      if (!manifestFile.empty()) {
+        auto& funcs = moduleFuncs[inputFileName];
+        for (auto& func : currModule->functions) {
+          if (!func->imported()) {
+            funcs.push_back(func->name);
+            // Even if the function name is empty, if we were to put it in the
+            // output manifest, it has to be emitted in the name section.
+            merged.getFunction(func->name)->hasExplicitName = true;
+          }
         }
       }
 
@@ -844,6 +921,10 @@ Input source maps can be specified by adding an -ism option right after the modu
   // Fuse imports and exports now that everything is all together in the merged
   // module.
   fuseImportsAndExports(options.passOptions);
+
+  // Fusing may have made table initializers refer to module-defined globals,
+  // which is not allowed; fix that up.
+  fixTableInitializers();
 
   // Update types after combing and linking everything.
   updateTypes(merged);
@@ -901,7 +982,7 @@ Input source maps can be specified by adding an -ism option right after the modu
       writer.setSourceMapFilename(outputSourceMapFilename);
       writer.setSourceMapUrl(outputSourceMapUrl);
     }
-    writer.write(merged, options.extra["output"]);
+    options.write(writer, merged, options.extra["output"]);
   }
 
   flush_and_quick_exit(0);

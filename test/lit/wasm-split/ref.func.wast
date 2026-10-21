@@ -19,8 +19,7 @@
  ;; PRIMARY:      (global $glob2 (ref func) (ref.func $trampoline_second))
 
  ;; PRIMARY:      (table $table 1 1 funcref)
- (table $table 1 1 funcref)
-
+ (table $table (export "table_export") 1 1 funcref)
  (global $glob1 (ref func) (ref.func $prime))
 
  (global $glob2 (ref func) (ref.func $second))
@@ -33,6 +32,8 @@
  ;; PRIMARY:      (elem $1 (table $1) (i32.const 0) func $placeholder_0 $placeholder_1)
 
  ;; PRIMARY:      (elem declare func $prime $trampoline_second)
+
+ ;; PRIMARY:      (export "table_export" (table $table))
 
  ;; PRIMARY:      (export "prime" (func $prime))
 

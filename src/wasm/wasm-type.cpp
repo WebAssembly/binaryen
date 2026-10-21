@@ -357,15 +357,17 @@ std::optional<HeapType> getBasicHeapTypeLUB(HeapType::BasicHeapType a,
       break;
     case HeapType::array:
     case HeapType::string:
+    case HeapType::waitqueue:
       // As the last non-bottom types in their hierarchies, it should not be
-      // possible for `a` to be array or string. We know that `b` != `a` and
-      // that `b` is not bottom, but that `b` and `a` are in the same hierarchy,
-      // so there are no possible value for `b`.
+      // possible for `a` to be array, string, or waitqueue. We know that `b` !=
+      // `a` and that `b` is not bottom, but that `b` and `a` are in the same
+      // hierarchy, so there are no possible value for `b`.
     case HeapType::none:
     case HeapType::noext:
     case HeapType::nofunc:
     case HeapType::nocont:
     case HeapType::noexn:
+    case HeapType::nowaitqueue:
       // Bottom types already handled.
       WASM_UNREACHABLE("unexpected basic type");
   }
@@ -555,7 +557,7 @@ bool Type::isDefaultable() const {
     }
     return true;
   }
-  return isConcrete() && !isNonNullable();
+  return isConcrete() && !isNonNullableRef();
 }
 
 bool Type::isCastable() const { return isRef() && getHeapType().isCastable(); }
@@ -679,7 +681,7 @@ bool Type::isSubType(Type a, Type b) {
   if (!a.isRef() || !b.isRef()) {
     return false;
   }
-  if (a.isNullable() && !b.isNullable()) {
+  if (a.isNullableRef() && !b.isNullableRef()) {
     return false;
   }
   auto heapTypeA = a.getHeapType();
@@ -736,7 +738,7 @@ Type Type::getLeastUpperBound(Type a, Type b) {
     auto heapTypeB = b.getHeapType();
     if (auto heapType = HeapType::getLeastUpperBound(heapTypeA, heapTypeB)) {
       auto nullability =
-        (a.isNullable() || b.isNullable()) ? Nullable : NonNullable;
+        (a.isNullableRef() || b.isNullableRef()) ? Nullable : NonNullable;
       // If one heap type is bottom, then the exactness comes from the other
       // heap type. Otherwise, the LUB can only be exact if both of the inputs
       // are the same exact heap type.
@@ -778,7 +780,7 @@ Type Type::getGreatestLowerBound(Type a, Type b) {
     return Type::unreachable;
   }
   auto nullability =
-    (a.isNonNullable() || b.isNonNullable()) ? NonNullable : Nullable;
+    (a.isNonNullableRef() || b.isNonNullableRef()) ? NonNullable : Nullable;
   auto exactness = (a.isExact() || b.isExact()) ? Exact : Inexact;
   HeapType heapType;
   if (HeapType::isSubType(heapA, heapB)) {
@@ -889,6 +891,8 @@ std::optional<HeapType> HeapType::getSuperType() const {
       case none:
       case exn:
       case noexn:
+      case waitqueue:
+      case nowaitqueue:
         return {};
       case string:
         return HeapType(ext).getBasic(share);
@@ -956,6 +960,7 @@ size_t HeapType::getDepth() const {
         case HeapType::cont:
         case HeapType::any:
         case HeapType::exn:
+        case HeapType::waitqueue:
           break;
         case HeapType::eq:
         case HeapType::string:
@@ -971,6 +976,7 @@ size_t HeapType::getDepth() const {
         case HeapType::nocont:
         case HeapType::noext:
         case HeapType::noexn:
+        case HeapType::nowaitqueue:
           // Bottom types are infinitely deep.
           depth = size_t(-1l);
       }
@@ -1012,6 +1018,9 @@ HeapType::BasicHeapType HeapType::getUnsharedBottom() const {
       case string:
       case noext:
         return noext;
+      case waitqueue:
+      case nowaitqueue:
+        return nowaitqueue;
       case nofunc:
         return nofunc;
       case nocont:
@@ -1047,6 +1056,8 @@ HeapType::BasicHeapType HeapType::getUnsharedTop() const {
       return ext;
     case noexn:
       return exn;
+    case nowaitqueue:
+      return waitqueue;
     case ext:
     case func:
     case cont:
@@ -1057,6 +1068,7 @@ HeapType::BasicHeapType HeapType::getUnsharedTop() const {
     case array:
     case exn:
     case string:
+    case waitqueue:
       break;
   }
   WASM_UNREACHABLE("unexpected type");
@@ -1091,6 +1103,8 @@ bool HeapType::isSubType(HeapType a, HeapType b) {
         return aUnshared == HeapType::none;
       case HeapType::string:
         return aUnshared == HeapType::noext;
+      case HeapType::waitqueue:
+        return aUnshared == HeapType::nowaitqueue;
       case HeapType::struct_:
         return aUnshared == HeapType::none || a.isStruct();
       case HeapType::array:
@@ -1100,6 +1114,7 @@ bool HeapType::isSubType(HeapType a, HeapType b) {
       case HeapType::nofunc:
       case HeapType::nocont:
       case HeapType::noexn:
+      case HeapType::nowaitqueue:
         return false;
     }
   }
@@ -1277,6 +1292,11 @@ FeatureSet HeapType::getFeatures() const {
           case HeapType::string:
             feats |= FeatureSet::ReferenceTypes | FeatureSet::Strings;
             return;
+          case HeapType::waitqueue:
+          case HeapType::nowaitqueue:
+            feats |= FeatureSet::ReferenceTypes | FeatureSet::GC |
+                     FeatureSet::SharedEverything;
+            return;
           case HeapType::noext:
           case HeapType::nofunc:
             // Technically introduced in GC, but used internally as part of
@@ -1446,10 +1466,10 @@ std::ostream& operator<<(std::ostream& os,
       return os << "Continuation has invalid function type";
     case TypeBuilder::ErrorReasonKind::InvalidSharedType:
       return os << "Shared types require shared-everything";
-    case TypeBuilder::ErrorReasonKind::InvalidWaitQueue:
-      return os << "Waitqueues require shared-everything";
     case TypeBuilder::ErrorReasonKind::InvalidStringType:
       return os << "String types require strings feature";
+    case TypeBuilder::ErrorReasonKind::InvalidSIMDType:
+      return os << "SIMD types require SIMD feature";
     case TypeBuilder::ErrorReasonKind::InvalidUnsharedField:
       return os << "Heap type has an invalid unshared field";
     case TypeBuilder::ErrorReasonKind::NonStructDescribes:
@@ -1470,6 +1490,8 @@ std::ostream& operator<<(std::ostream& os,
       return os << "Heap type describes an invalid unshared type";
     case TypeBuilder::ErrorReasonKind::RequiresCustomDescriptors:
       return os << "custom descriptors required but not enabled";
+    case TypeBuilder::ErrorReasonKind::MismatchedDescriptorFinality:
+      return os << "Descriptor and described types have mismatched finality";
     case TypeBuilder::ErrorReasonKind::RecGroupCollision:
       return os
              << "distinct rec groups would be identical after binary writing";
@@ -1501,8 +1523,6 @@ unsigned Field::getByteSize() const {
     case Field::PackedType::i16:
       return 2;
     case Field::PackedType::NotPacked:
-      return 4;
-    case Field::PackedType::WaitQueue:
       return 4;
   }
   WASM_UNREACHABLE("impossible packed type");
@@ -1548,7 +1568,7 @@ std::ostream& TypePrinter::print(Type type) {
     print(type.getTuple());
   } else if (type.isRef()) {
     auto heapType = type.getHeapType();
-    if (type.isNullable() && heapType.isBasic() && !heapType.isShared()) {
+    if (type.isNullableRef() && heapType.isBasic() && !heapType.isShared()) {
       if (type.isExact()) {
         os << "(exact ";
       }
@@ -1584,6 +1604,9 @@ std::ostream& TypePrinter::print(Type type) {
         case HeapType::string:
           os << "stringref";
           break;
+        case HeapType::waitqueue:
+          os << "waitqueueref";
+          break;
         case HeapType::none:
           os << "nullref";
           break;
@@ -1599,6 +1622,9 @@ std::ostream& TypePrinter::print(Type type) {
         case HeapType::noexn:
           os << "nullexnref";
           break;
+        case HeapType::nowaitqueue:
+          os << "nullwaitqueueref";
+          break;
       }
       if (type.isExact()) {
         os << ')';
@@ -1606,7 +1632,7 @@ std::ostream& TypePrinter::print(Type type) {
       return os;
     }
     os << "(ref ";
-    if (type.isNullable()) {
+    if (type.isNullableRef()) {
       os << "null ";
     }
     if (type.isExact()) {
@@ -1659,6 +1685,9 @@ std::ostream& TypePrinter::print(HeapType type) {
       case HeapType::string:
         os << "string";
         break;
+      case HeapType::waitqueue:
+        os << "waitqueue";
+        break;
       case HeapType::none:
         os << "none";
         break;
@@ -1673,6 +1702,9 @@ std::ostream& TypePrinter::print(HeapType type) {
         break;
       case HeapType::noexn:
         os << "noexn";
+        break;
+      case HeapType::nowaitqueue:
+        os << "nowaitqueue";
         break;
     }
     if (type.isShared()) {
@@ -1760,8 +1792,6 @@ std::ostream& TypePrinter::print(const Field& field) {
       os << "i8";
     } else if (packedType == Field::PackedType::i16) {
       os << "i16";
-    } else if (packedType == Field::PackedType::WaitQueue) {
-      os << "waitqueue";
     } else {
       WASM_UNREACHABLE("unexpected packed type");
     }
@@ -2259,6 +2289,11 @@ void TypeBuilder::setOpen(size_t i, bool open) {
   impl->entries[i].info->isOpen = open;
 }
 
+bool TypeBuilder::isOpen(size_t i) const {
+  assert(i < size() && "index out of bounds");
+  return impl->entries[i].info->isOpen;
+}
+
 void TypeBuilder::setShared(size_t i, Shareability share) {
   assert(i < size() && "index out of bounds");
   impl->entries[i].info->share = share;
@@ -2312,10 +2347,9 @@ bool isValidSupertype(const HeapTypeInfo& sub, const HeapTypeInfo& super) {
     return false;
   }
   if (sub.descriptor) {
-    // A supertype of a type with a (descriptor $x) must either not have a
-    // descriptor or have a (descriptor $y) where $y is the declared supertype
-    // of $x.
-    if (super.descriptor && sub.descriptor->supertype != super.descriptor) {
+    // A supertype of a type with a (descriptor $x) must have a (descriptor $y)
+    // where $y is the declared supertype of $x.
+    if (!super.descriptor || sub.descriptor->supertype != super.descriptor) {
       return false;
     }
   } else {
@@ -2355,6 +2389,9 @@ bool isValidSupertype(const HeapTypeInfo& sub, const HeapTypeInfo& super) {
 
 std::optional<TypeBuilder::ErrorReason>
 validateType(Type type, FeatureSet feats, bool isShared) {
+  if (type == Type::v128 && !feats.hasSIMD()) {
+    return TypeBuilder::ErrorReasonKind::InvalidSIMDType;
+  }
   if (type.isRef()) {
     auto heapType = type.getHeapType();
     if (isShared && !heapType.isShared()) {
@@ -2375,10 +2412,6 @@ validateStruct(const Struct& struct_, FeatureSet feats, bool isShared) {
   for (auto& field : struct_.fields) {
     if (auto err = validateType(field.type, feats, isShared)) {
       return err;
-    }
-    if (field.packedType == Field::PackedType::WaitQueue &&
-        !feats.hasSharedEverything()) {
-      return TypeBuilder::ErrorReasonKind::InvalidWaitQueue;
     }
   }
   return std::nullopt;
@@ -2588,6 +2621,10 @@ buildRecGroup(std::unique_ptr<RecGroupInfo>&& groupInfo,
         return {TypeBuilder::Error{
           i, TypeBuilder::ErrorReasonKind::ForwardDescriptorReference}};
       }
+      if (type.isOpen() != desc->isOpen()) {
+        return {TypeBuilder::Error{
+          i, TypeBuilder::ErrorReasonKind::MismatchedDescriptorFinality}};
+      }
     }
     // Describes clauses were already checked as we validated each type in the
     // group.
@@ -2764,24 +2801,15 @@ std::unordered_set<HeapType> getIgnorablePublicTypes() {
 
 namespace HeapTypes {
 
-HeapType getMutI8Array() {
-  static HeapType i8Array = Array(Field(Field::i8, Mutable));
-  return i8Array;
-}
+HeapType getMutI8Array() { return Array(Field(Field::i8, Mutable)); }
 
-HeapType getMutI16Array() {
-  static HeapType i16Array = Array(Field(Field::i16, Mutable));
-  return i16Array;
-}
+HeapType getMutI16Array() { return Array(Field(Field::i16, Mutable)); }
 
 } // namespace HeapTypes
 
 namespace Types {
 
-Type getI64Pair() {
-  static Type i64Pair({Type::i64, Type::i64});
-  return i64Pair;
-}
+Type getI64Pair() { return Type({Type::i64, Type::i64}); }
 
 } // namespace Types
 

@@ -136,3 +136,77 @@
     (unreachable)
   )
 )
+
+;; Check that we update tag types. The tag here has a string, and we must lower
+;; it out, even though in this module the tag type appears public (there is an
+;; exported table, which in open world makes all function types public).
+(module
+  (type $str (func (param (ref string))))
+
+  ;; CHECK:      (type $0 (array (mut i16)))
+
+  ;; CHECK:      (type $1 (func (param externref externref) (result i32)))
+
+  ;; CHECK:      (type $2 (func (param externref) (result i32)))
+
+  ;; CHECK:      (type $3 (func (param (ref extern))))
+
+  ;; CHECK:      (type $4 (func))
+
+  ;; CHECK:      (type $5 (func (param (ref null $0) i32 i32) (result (ref extern))))
+
+  ;; CHECK:      (type $6 (func (param i32) (result (ref extern))))
+
+  ;; CHECK:      (type $7 (func (param externref externref) (result (ref extern))))
+
+  ;; CHECK:      (type $8 (func (param externref (ref null $0) i32) (result i32)))
+
+  ;; CHECK:      (type $9 (func (param externref i32) (result i32)))
+
+  ;; CHECK:      (type $10 (func (param externref i32 i32) (result (ref extern))))
+
+  ;; CHECK:      (import "string.const" "0" (global $"string.const_\"whoops\"" (ref extern)))
+
+  ;; CHECK:      (import "wasm:js-string" "fromCharCodeArray" (func $fromCharCodeArray (type $5) (param (ref null $0) i32 i32) (result (ref extern))))
+
+  ;; CHECK:      (import "wasm:js-string" "fromCodePoint" (func $fromCodePoint (type $6) (param i32) (result (ref extern))))
+
+  ;; CHECK:      (import "wasm:js-string" "concat" (func $concat (type $7) (param externref externref) (result (ref extern))))
+
+  ;; CHECK:      (import "wasm:js-string" "intoCharCodeArray" (func $intoCharCodeArray (type $8) (param externref (ref null $0) i32) (result i32)))
+
+  ;; CHECK:      (import "wasm:js-string" "equals" (func $equals (type $1) (param externref externref) (result i32)))
+
+  ;; CHECK:      (import "wasm:js-string" "test" (func $test (type $2) (param externref) (result i32)))
+
+  ;; CHECK:      (import "wasm:js-string" "compare" (func $compare (type $1) (param externref externref) (result i32)))
+
+  ;; CHECK:      (import "wasm:js-string" "length" (func $length (type $2) (param externref) (result i32)))
+
+  ;; CHECK:      (import "wasm:js-string" "charCodeAt" (func $charCodeAt (type $9) (param externref i32) (result i32)))
+
+  ;; CHECK:      (import "wasm:js-string" "substring" (func $substring (type $10) (param externref i32 i32) (result (ref extern))))
+
+  ;; CHECK:      (table $table 1 1 funcref)
+
+  ;; CHECK:      (tag $tag (type $3) (param (ref extern)))
+  (tag $tag (type $str) (param (ref string)))
+
+  (table $table 1 1 funcref)
+
+  ;; CHECK:      (export "throw" (func $throw))
+
+  ;; CHECK:      (export "table" (table $table))
+  (export "table" (table $table))
+
+  ;; CHECK:      (func $throw (type $4)
+  ;; CHECK-NEXT:  (throw $tag
+  ;; CHECK-NEXT:   (global.get $"string.const_\"whoops\"")
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $throw (export "throw")
+    (throw $tag
+      (string.const "whoops")
+    )
+  )
+)

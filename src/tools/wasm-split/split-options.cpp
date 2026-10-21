@@ -312,17 +312,7 @@ WasmSplitOptions::WasmSplitOptions()
          [&](Options* o, const std::string& argument) {
            secondaryMemoryName = argument;
          })
-    .add(
-      "--emit-module-names",
-      "",
-      "Emit module names, even if not emitting the rest of the names section. "
-      "Can help differentiate the modules in stack traces. This option will be "
-      "removed once simpler ways of naming modules are widely available. See "
-      "https://bugs.chromium.org/p/v8/issues/detail?id=11808.",
-      WasmSplitOption,
-      {Mode::Split, Mode::MultiSplit, Mode::Instrument},
-      Options::Arguments::Zero,
-      [&](Options* o, const std::string& arguments) { emitModuleNames = true; })
+
     .add("--initial-table",
          "",
          "A hack to ensure the split and instrumented modules have the same "
@@ -375,12 +365,6 @@ WasmSplitOptions::WasmSplitOptions()
          {Mode::Instrument, Mode::MergeProfiles, Mode::MultiSplit},
          Options::Arguments::One,
          [&](Options* o, const std::string& argument) { output = argument; })
-    .add("--unescape",
-         "-u",
-         "Un-escape function names (in print-profile output)",
-         WasmSplitOption,
-         Options::Arguments::Zero,
-         [&](Options* o, const std::string& argument) { unescape = true; })
     .add("--verbose",
          "-v",
          "Verbose output mode. Prints the functions that will be kept "

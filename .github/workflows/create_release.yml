@@ -66,7 +66,8 @@ jobs:
     - name: archive
       id: archive
       run: |
-        OSNAME=$(echo ${{ matrix.os }} | sed 's/-latest//')
+        # Ignore all but the first component of the os name
+        OSNAME=$(echo ${{ matrix.os }} | sed 's/-.*//')
         VERSION=$GITHUB_REF_NAME
         PKGNAME="binaryen-$VERSION-x86_64-$OSNAME"
         TARBALL=$PKGNAME.tar.gz
@@ -83,7 +84,8 @@ jobs:
     - name: archive-arm64
       id: archive-arm64
       run: |
-        OSNAME=$(echo ${{ matrix.os }} | sed 's/-11-arm//' | sed 's/-14//')
+        # Ignore all but the first component of the os name
+        OSNAME=$(echo ${{ matrix.os }} | sed 's/-.*//')
         VERSION=$GITHUB_REF_NAME
         PKGNAME="binaryen-$VERSION-arm64-$OSNAME"
         TARBALL=$PKGNAME.tar.gz

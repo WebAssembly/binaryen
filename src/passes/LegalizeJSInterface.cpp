@@ -33,6 +33,7 @@
 #include "ir/element-utils.h"
 #include "ir/import-utils.h"
 #include "ir/literal-utils.h"
+#include "ir/names.h"
 #include "ir/utils.h"
 #include "pass.h"
 #include "shared-constants.h"
@@ -46,13 +47,13 @@ namespace {
 
 // These are aliases for getTempRet0/setTempRet0 which emscripten defines in
 // compiler-rt and exports under these names.
-static Name GET_TEMP_RET_EXPORT("__get_temp_ret");
-static Name SET_TEMP_RET_EXPORT("__set_temp_ret");
+static const Name GET_TEMP_RET_EXPORT("__get_temp_ret");
+static const Name SET_TEMP_RET_EXPORT("__set_temp_ret");
 
 // For non-emscripten module we expect the host to define these functions so
 // and we import them under these names.
-static Name GET_TEMP_RET_IMPORT("getTempRet0");
-static Name SET_TEMP_RET_IMPORT("setTempRet0");
+static const Name GET_TEMP_RET_IMPORT("getTempRet0");
+static const Name SET_TEMP_RET_IMPORT("setTempRet0");
 
 struct LegalizeJSInterface : public Pass {
   // Adds calls to new imports.
@@ -269,12 +270,14 @@ private:
   Function* makeLegalStubForCalledImport(Function* im, Module* module) {
     Builder builder(*module);
     auto legalIm = std::make_unique<Function>();
-    legalIm->name = Name(std::string("legalimport$") + im->name.toString());
+    legalIm->name = Names::getValidFunctionName(
+      *module, Name(std::string("legalimport$") + im->name.toString()));
     legalIm->module = im->module;
     legalIm->base = im->base;
     legalIm->hasExplicitName = true;
     auto stub = std::make_unique<Function>();
-    stub->name = Name(std::string("legalfunc$") + im->name.toString());
+    stub->name = Names::getValidFunctionName(
+      *module, Name(std::string("legalfunc$") + im->name.toString()));
     stub->type = im->type.with(Exact);
     stub->hasExplicitName = true;
 
@@ -308,13 +311,8 @@ private:
     legalIm->type =
       Type(Signature(Type(params), call->type), NonNullable, Inexact);
 
-    auto* stubPtr = stub.get();
-    if (!module->getFunctionOrNull(stub->name)) {
-      module->addFunction(std::move(stub));
-    }
-    if (!module->getFunctionOrNull(legalIm->name)) {
-      module->addFunction(std::move(legalIm));
-    }
+    auto* stubPtr = module->addFunction(std::move(stub));
+    module->addFunction(std::move(legalIm));
     return stubPtr;
   }
 

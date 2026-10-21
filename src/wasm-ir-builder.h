@@ -105,6 +105,13 @@ public:
                               Type inputType = Type::none);
   Result<> visitEnd();
 
+  // Set the name to use for the label of the scope we are currently building,
+  // if that scope ends up needing a label. This is for `if` and `try_table`,
+  // which cannot hold a name in the IR: a name from the binary name section
+  // should not cause us to introduce a wrapper block that would not otherwise
+  // exist just to hold it.
+  void setScopeNameHint(Name name);
+
   // Used to visit break nodes when traversing a single block without its
   // context. The type indicates how many values the break carries to its
   // destination.
@@ -155,21 +162,34 @@ public:
                     Name mem);
   Result<> makeStore(
     unsigned bytes, Address offset, unsigned align, Type type, Name mem);
-  Result<> makeAtomicLoad(
-    unsigned bytes, Address offset, Type type, Name mem, MemoryOrder order);
-  Result<> makeAtomicStore(
-    unsigned bytes, Address offset, Type type, Name mem, MemoryOrder order);
+  Result<> makeAtomicLoad(unsigned bytes,
+                          Address offset,
+                          Address align,
+                          Type type,
+                          Name mem,
+                          MemoryOrder order);
+  Result<> makeAtomicStore(unsigned bytes,
+                           Address offset,
+                           Address align,
+                           Type type,
+                           Name mem,
+                           MemoryOrder order);
   Result<> makeAtomicRMW(AtomicRMWOp op,
                          unsigned bytes,
                          Address offset,
+                         Address align,
                          Type type,
                          Name mem,
                          MemoryOrder order);
-  Result<> makeAtomicCmpxchg(
-    unsigned bytes, Address offset, Type type, Name mem, MemoryOrder order);
-  Result<> makeAtomicWait(Type type, Address offset, Name mem);
-  Result<> makeAtomicNotify(Address offset, Name mem);
-  Result<> makeAtomicFence();
+  Result<> makeAtomicCmpxchg(unsigned bytes,
+                             Address offset,
+                             Address align,
+                             Type type,
+                             Name mem,
+                             MemoryOrder order);
+  Result<> makeAtomicWait(Type type, Address offset, Address align, Name mem);
+  Result<> makeAtomicNotify(Address offset, Address align, Name mem);
+  Result<> makeAtomicFence(MemoryOrder order);
   Result<> makePause();
   Result<> makeSIMDExtract(SIMDExtractOp op, uint8_t lane);
   Result<> makeSIMDReplace(SIMDReplaceOp op, uint8_t lane);
@@ -233,8 +253,8 @@ public:
   Result<> makeRefGetDesc(HeapType type);
   Result<> makeBrOn(Index label,
                     BrOnOp op,
-                    Type in = Type::none,
-                    Type out = Type::none,
+                    std::optional<Type> in = std::nullopt,
+                    std::optional<Type> out = std::nullopt,
                     const CodeAnnotation& annotations = {});
   Result<> makeStructNew(HeapType type, bool isDesc);
   Result<> makeStructNewDefault(HeapType type, bool isDesc);
@@ -245,7 +265,9 @@ public:
   makeStructRMW(AtomicRMWOp op, HeapType type, Index field, MemoryOrder order);
   Result<> makeStructCmpxchg(HeapType type, Index field, MemoryOrder order);
   Result<> makeStructWait(HeapType type, Index index);
-  Result<> makeStructNotify(HeapType type, Index index);
+  Result<> makeWaitqueueNew();
+  Result<> makeWaitqueueNotify();
+  Result<> makePublish();
   Result<> makeArrayNew(HeapType type);
   Result<> makeArrayNewDefault(HeapType type);
   Result<> makeArrayNewData(HeapType type, Name data);
@@ -253,9 +275,17 @@ public:
   Result<> makeArrayNewFixed(HeapType type, uint32_t arity);
   Result<> makeArrayGet(HeapType type, bool signed_, MemoryOrder order);
   Result<> makeArraySet(HeapType type, MemoryOrder order);
-  Result<>
-  makeArrayLoad(HeapType arrayType, unsigned bytes, bool signed_, Type type);
-  Result<> makeArrayStore(HeapType arrayType, unsigned bytes, Type type);
+  Result<> makeArrayLoad(HeapType arrayType,
+                         unsigned bytes,
+                         bool signed_,
+                         Address offset,
+                         Address align,
+                         Type type);
+  Result<> makeArrayStore(HeapType arrayType,
+                          unsigned bytes,
+                          Address offset,
+                          Address align,
+                          Type type);
   Result<> makeArrayLen();
   Result<> makeArrayCopy(HeapType destType, HeapType srcType);
   Result<> makeArrayFill(HeapType type);
@@ -391,7 +421,17 @@ private:
     // for branches, since the normal label is only used for delegates.
     Name branchLabel;
 
+    // The name to use if we end up needing a label for this scope. Unlike
+    // `label`, this does not itself cause the scope to be labeled. See
+    // `setScopeNameHint`.
+    Name nameHint;
+
     bool labelUsed = false;
+
+    // Whether this scope's label was given explicitly (in the text format or in
+    // the binary name section) rather than generated by us. Recorded in the
+    // function's `explicitLabelNames`.
+    bool labelExplicit = false;
 
     // If the control flow scope has an input type, we need to lower it using a
     // scratch local because we cannot represent control flow input in the IR.
@@ -639,6 +679,28 @@ private:
   // relative index of a label name is the current depth minus the top depth on
   // its stack.
   std::unordered_map<Name, std::vector<Index>> labelDepths;
+
+  // Wrap the `visitXYZStart` call of a `makeXYZ` function, noting that the
+  // label, if any, was given to us rather than generated by us: only `makeXYZ`
+  // receives labels from outside, that is, from the text format or from the
+  // name section. `visitXYZStart` can also be called directly on an expression
+  // that already exists, as Outlining does when it rebuilds a function, and
+  // the name such an expression carries may be one we generated ourselves.
+  Result<> markLabelExplicit(Name label, Result<> started) {
+    CHECK_ERR(started);
+    if (label && !scopeStack.empty()) {
+      scopeStack.back().labelExplicit = true;
+    }
+    return Ok{};
+  }
+
+  // Note that a label was given to us rather than generated by us, so that we
+  // know it is worth writing out to the name section.
+  void noteExplicitLabel(Name label) {
+    if (func && label) {
+      func->explicitLabelNames.insert(label);
+    }
+  }
 
   Name makeFresh(Name label, Index hint = 0) {
     return Names::getValidName(

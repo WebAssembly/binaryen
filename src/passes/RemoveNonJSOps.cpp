@@ -49,6 +49,22 @@
 
 namespace wasm {
 
+static const Name WASM_CTZ32("__wasm_ctz_i32");
+static const Name WASM_CTZ64("__wasm_ctz_i64");
+static const Name WASM_POPCNT32("__wasm_popcnt_i32");
+static const Name WASM_POPCNT64("__wasm_popcnt_i64");
+static const Name WASM_ROTL32("__wasm_rotl_i32");
+static const Name WASM_ROTL64("__wasm_rotl_i64");
+static const Name WASM_ROTR32("__wasm_rotr_i32");
+static const Name WASM_ROTR64("__wasm_rotr_i64");
+static const Name WASM_NEAREST_F32("__wasm_nearest_f32");
+static const Name WASM_NEAREST_F64("__wasm_nearest_f64");
+static const Name WASM_I64_MUL("__wasm_i64_mul");
+static const Name WASM_I64_SDIV("__wasm_i64_sdiv");
+static const Name WASM_I64_UDIV("__wasm_i64_udiv");
+static const Name WASM_I64_SREM("__wasm_i64_srem");
+static const Name WASM_I64_UREM("__wasm_i64_urem");
+
 struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
   std::unique_ptr<Builder> builder;
   std::unordered_set<Name> neededIntrinsics;

@@ -85,19 +85,15 @@ std::string getBaseName(const std::string& path) {
   return path;
 }
 
-std::string getBinaryenRoot() {
-  auto* envVar = getenv("BINARYEN_ROOT");
-  if (envVar) {
-    return envVar;
-  }
-  return ".";
-}
-
 static std::string binDir;
 
 std::string getBinaryenBinDir() {
   if (binDir.empty()) {
-    return getBinaryenRoot() + getPathSeparator() + "bin" + getPathSeparator();
+    auto* envVar = getenv("BINARYEN_BIN");
+    if (envVar) {
+      return envVar;
+    }
+    return ".";
   } else {
     return binDir;
   }

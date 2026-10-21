@@ -55,7 +55,7 @@ struct Node {
           // in wasm)
     Expr, // a value represented by a Binaryen Expression
     Phi,  // a phi from converging control flow
-    Cond, // a blockpc, representing one of the branchs for a Block
+    Cond, // a blockpc, representing one of the branches for a Block
     Block, // a source of phis
     Zext, // zero-extend an i1 (from an op where Souper returns i1 but wasm does
           // not, and so we need a special way to get back to an i32/i64 if we

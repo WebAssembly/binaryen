@@ -270,7 +270,7 @@ struct EarlyCastFinder
     // As we only move RefAsNonNull RefAs casts right now, we should
     // ignore a LocalGet if the type is already non-nullable, as
     // adding an extra ref.as_non_null has no effect.
-    if (!currRefAsMove[curr->index].target && curr->type.isNullable()) {
+    if (!currRefAsMove[curr->index].target && curr->type.isNullableRef()) {
       currRefAsMove[curr->index].target = curr;
     }
   }
@@ -315,7 +315,7 @@ struct EarlyCastFinder
     // (ref.cast $B (ref.cast $B (local.get $x)))
     //
     // We initially choose to move the inner ref.cast $B. When we consider the
-    // outer ref.cast $B, we can see that it has the same type as tge existing
+    // outer ref.cast $B, we can see that it has the same type as the existing
     // ref.cast $B, so we ignore it.
     //
     // Case 4:

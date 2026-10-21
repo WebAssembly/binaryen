@@ -52,22 +52,27 @@ Literal::Literal(Type type) : type(type) {
     }
   }
 
-  if (type.isNull()) {
-    assert(type.isNullable() && !type.isExact());
+  if (type.isBottomRef()) {
+    assert(type.isNullableRef() && !type.isExact());
     new (&gcData) std::shared_ptr<GCData>();
     return;
   }
 
   if (type.isRef() && type.getHeapType().isMaybeShared(HeapType::i31)) {
-    assert(type.isNonNullable());
+    assert(type.isNonNullableRef());
     i32 = 0;
     return;
   }
 
   if (type.isRef() && type.getHeapType().isMaybeShared(HeapType::ext)) {
-    assert(type.isNonNullable());
+    assert(type.isNonNullableRef());
     new (&gcData) std::shared_ptr<GCData>(
-      std::make_shared<GCData>(Literals{Literal(int32_t(0))}));
+      std::make_shared<GCData>(Literals{Literal(int32_t{0})}));
+    return;
+  }
+
+  if (type.isRef() && type.getHeapType().isMaybeShared(HeapType::waitqueue)) {
+    assert(type.isNonNullableRef());
     return;
   }
 
@@ -108,6 +113,7 @@ Literal::Literal(std::shared_ptr<GCData> gcData, HeapType type)
   assert((isData() && gcData) ||
          (type.isMaybeShared(HeapType::ext) && gcData) ||
          (type.isMaybeShared(HeapType::string) && gcData) ||
+         (type.isMaybeShared(HeapType::waitqueue) && gcData) ||
          (type.isMaybeShared(HeapType::any) && gcData) ||
          (type.isBottom() && !gcData));
 }
@@ -159,7 +165,7 @@ Literal::Literal(const Literal& other) : type(other.type) {
     return;
   }
   // After handling nulls, only non-nullable Literals remain.
-  assert(!type.isNullable());
+  assert(!type.isNullableRef());
 
   auto heapType = type.getHeapType();
   if (other.isData()) {
@@ -183,6 +189,7 @@ Literal::Literal(const Literal& other) : type(other.type) {
       return;
     case HeapType::ext:
     case HeapType::any:
+    case HeapType::waitqueue:
       // Externalized or internalized reference/payload.
       new (&gcData) std::shared_ptr<GCData>(other.gcData);
       return;
@@ -191,6 +198,7 @@ Literal::Literal(const Literal& other) : type(other.type) {
     case HeapType::nofunc:
     case HeapType::noexn:
     case HeapType::nocont:
+    case HeapType::nowaitqueue:
       WASM_UNREACHABLE("null literals should already have been handled");
     case HeapType::eq:
     case HeapType::func:
@@ -306,11 +314,23 @@ Literal Literal::makeNegOne(Type type) {
   return makeFromInt32(-1, type);
 }
 
-Literal Literal::makeFromMemory(void* p, Type type) {
+Literal Literal::makeFromMemory(const void* p,
+                                Type type,
+                                std::optional<unsigned> byteSize) {
   assert(type.isNumber());
+  auto size = byteSize.value_or(type.getByteSize());
+  assert(size == type.getByteSize() ||
+         (type == Type::i32 && (size == 1 || size == 2)));
   switch (type.getBasic()) {
     case Type::i32: {
-      return Literal(Bits::readLE<int32_t>(p));
+      switch (size) {
+        case 1:
+          return Literal(int32_t(Bits::readLE<int8_t>(p)));
+        case 2:
+          return Literal(int32_t(Bits::readLE<int16_t>(p)));
+        default:
+          return Literal(Bits::readLE<int32_t>(p));
+      }
     }
     case Type::i64: {
       return Literal(Bits::readLE<int64_t>(p));
@@ -363,8 +383,10 @@ std::shared_ptr<FuncData> Literal::getFuncData() const {
 }
 
 std::shared_ptr<GCData> Literal::getGCData() const {
-  assert(isNull() || isData() ||
-         (type.isRef() && type.getHeapType().isMaybeShared(HeapType::ext)));
+  assert(
+    isNull() || isData() ||
+    (type.isRef() && (type.getHeapType().isMaybeShared(HeapType::ext) ||
+                      type.getHeapType().isMaybeShared(HeapType::waitqueue))));
   return gcData;
 }
 
@@ -481,15 +503,14 @@ bool Literal::operator==(const Literal& other) const {
         break;
     }
   } else if (type.isRef()) {
-    assert(type.isRef());
-    if (type.isNull()) {
+    if (type.isBottomRef()) {
       return true;
     }
     if (type.isFunction()) {
       return *funcData == *other.funcData;
     }
     if (type.isString()) {
-      return gcData->values == other.gcData->values;
+      return gcData->getLiterals() == other.gcData->getLiterals();
     }
     if (type.isData()) {
       return gcData == other.gcData;
@@ -520,7 +541,60 @@ bool Literal::operator!=(const Literal& other) const {
   return !(*this == other);
 }
 
-bool Literal::isNaN() {
+bool Literal::operator<(const Literal& other) const {
+  if (type != other.type) {
+    // This is not deterministic between runs, and also FuncData, below. If this
+    // matters some day, we would need to find a stable way to compute it.
+    return type.getID() < other.type.getID();
+  }
+
+  if (type.isBasic()) {
+    switch (type.getBasic()) {
+      case Type::none:
+        return false;
+      case Type::i32:
+      case Type::f32:
+        return i32 < other.i32;
+      case Type::i64:
+      case Type::f64:
+        return i64 < other.i64;
+      case Type::v128:
+        return memcmp(v128, other.v128, 16) < 0;
+      case Type::unreachable:
+        WASM_UNREACHABLE("invalid literal type");
+    }
+  }
+
+  assert(type.isRef());
+  if (type.isBottomRef()) {
+    // All nulls are equal, and hence not <
+    return false;
+  }
+  if (type.isFunction()) {
+    return *funcData < *other.funcData;
+  }
+  if (type.isData() || type.isString()) {
+    return gcData < other.gcData;
+  }
+  auto heapType = type.getHeapType();
+  assert(heapType.isBasic());
+  if (heapType.isMaybeShared(HeapType::i31)) {
+    return i32 < other.i32;
+  }
+  if (heapType.isMaybeShared(HeapType::ext)) {
+    if (hasExternPayload() != other.hasExternPayload()) {
+      return hasExternPayload() < other.hasExternPayload();
+    }
+    if (hasExternPayload()) {
+      return getExternPayload() < other.getExternPayload();
+    }
+    return internalize() < other.internalize();
+  }
+  assert(heapType.isMaybeShared(HeapType::any));
+  return externalize() < other.externalize();
+}
+
+bool Literal::isNaN() const {
   if (type == Type::f32 && std::isnan(getf32())) {
     return true;
   }
@@ -531,7 +605,7 @@ bool Literal::isNaN() {
   return false;
 }
 
-bool Literal::isCanonicalNaN() {
+bool Literal::isCanonicalNaN() const {
   if (!isNaN()) {
     return false;
   }
@@ -539,7 +613,7 @@ bool Literal::isCanonicalNaN() {
          (type == Type::f64 && NaNPayload(getf64()) == (1ull << 51));
 }
 
-bool Literal::isArithmeticNaN() {
+bool Literal::isArithmeticNaN() const {
   if (!isNaN()) {
     return false;
   }
@@ -707,10 +781,13 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
         case HeapType::nocont:
           o << "nullcontref";
           break;
+        case HeapType::nowaitqueue:
+          o << "nullwaitqueue";
+          break;
         case HeapType::any: {
           auto data = literal.getGCData();
-          assert(data->values.size() == 1);
-          o << "internalized " << literal.getGCData()->values[0];
+          assert(data->getLiterals().size() == 1);
+          o << "internalized " << data->getLiterals()[0];
           break;
         }
         case HeapType::ext: {
@@ -740,7 +817,7 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
             o << "string(";
             // Convert WTF-16 literals to WTF-16 string.
             std::stringstream wtf16;
-            for (auto c : data->values) {
+            for (auto c : data->getLiterals()) {
               auto u = c.getInteger();
               assert(u < 0x10000);
               wtf16 << uint8_t(u & 0xFF);
@@ -752,6 +829,10 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
             String::printEscapedJSON(o, wtf16.str());
             o << ")";
           }
+          break;
+        }
+        case HeapType::waitqueue: {
+          o << "waitqueue";
           break;
         }
       }
@@ -774,9 +855,15 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
       assert(literal.isData());
       auto data = literal.getGCData();
       assert(data);
-      o << "[ref " << literal.type.getHeapType() << ' ' << data->values;
+      o << "[ref " << literal.type.getHeapType() << ' ';
+      for (size_t i = 0; i < literal.getNumElements(); i++) {
+        if (i > 0) {
+          o << ' ';
+        }
+        o << literal.getElement(i);
+      }
       if (!data->desc.isNull()) {
-        if (!data->values.empty()) {
+        if (literal.getNumElements() > 0) {
           o << ", ";
         }
         o << "desc=" << data->desc;
@@ -1532,37 +1619,53 @@ Literal Literal::rotR(const Literal& other) const {
 }
 
 Literal Literal::eq(const Literal& other) const {
-  switch (type.getBasic()) {
-    case Type::i32:
-      return Literal(i32 == other.i32);
-    case Type::i64:
-      return Literal(i64 == other.i64);
-    case Type::f32:
-      return Literal(getf32() == other.getf32());
-    case Type::f64:
-      return Literal(getf64() == other.getf64());
-    case Type::v128:
-    case Type::none:
-    case Type::unreachable:
-      WASM_UNREACHABLE("unexpected type");
+  if (type != other.type) {
+    return Literal(int32_t(0));
+  }
+  if (type.isBasic()) {
+    switch (type.getBasic()) {
+      case Type::i32:
+        return Literal(i32 == other.i32);
+      case Type::i64:
+        return Literal(i64 == other.i64);
+      case Type::f32:
+        return Literal(getf32() == other.getf32());
+      case Type::f64:
+        return Literal(getf64() == other.getf64());
+      case Type::v128:
+      case Type::none:
+      case Type::unreachable:
+        WASM_UNREACHABLE("unexpected type");
+    }
+  }
+  if (type.isRef()) {
+    return Literal(int32_t(*this == other));
   }
   WASM_UNREACHABLE("unexpected type");
 }
 
 Literal Literal::ne(const Literal& other) const {
-  switch (type.getBasic()) {
-    case Type::i32:
-      return Literal(i32 != other.i32);
-    case Type::i64:
-      return Literal(i64 != other.i64);
-    case Type::f32:
-      return Literal(getf32() != other.getf32());
-    case Type::f64:
-      return Literal(getf64() != other.getf64());
-    case Type::v128:
-    case Type::none:
-    case Type::unreachable:
-      WASM_UNREACHABLE("unexpected type");
+  if (type != other.type) {
+    return Literal(int32_t(1));
+  }
+  if (type.isBasic()) {
+    switch (type.getBasic()) {
+      case Type::i32:
+        return Literal(i32 != other.i32);
+      case Type::i64:
+        return Literal(i64 != other.i64);
+      case Type::f32:
+        return Literal(getf32() != other.getf32());
+      case Type::f64:
+        return Literal(getf64() != other.getf64());
+      case Type::v128:
+      case Type::none:
+      case Type::unreachable:
+        WASM_UNREACHABLE("unexpected type");
+    }
+  }
+  if (type.isRef()) {
+    return Literal(int32_t(*this != other));
   }
   WASM_UNREACHABLE("unexpected type");
 }
@@ -3016,8 +3119,8 @@ Literal Literal::externalize() const {
   }
   if (heapType.isMaybeShared(HeapType::any)) {
     // This is an internalized externref or string; just unwrap it.
-    assert(gcData->values.size() == 1);
-    return gcData->values[0];
+    assert(gcData->getLiterals().size() == 1);
+    return gcData->getLiterals()[0];
   }
   // This is an internal reference. Wrap it.
   auto ext = HeapTypes::ext.getBasic(heapType.getShared());
@@ -3038,8 +3141,8 @@ Literal Literal::internalize() const {
     return Literal(std::make_shared<GCData>(Literals{*this}), any);
   }
   // This is an externalized internal reference; just unwrap it.
-  assert(gcData->values.size() == 1);
-  return gcData->values[0];
+  assert(gcData->getLiterals().size() == 1);
+  return gcData->getLiterals()[0];
 }
 
 Literal Literal::unwrap() const {
@@ -3062,7 +3165,7 @@ Literal Literal::getJSPrototype() const {
   assert(type.isRef());
   if (auto desc = type.getHeapType().getDescriptorType();
       desc && JSUtils::hasPossibleJSPrototypeField(*desc)) {
-    auto proto = gcData->desc.getGCData()->values[0].unwrap();
+    auto proto = gcData->desc.getGCData()->getLiterals()[0].unwrap();
     // Strings and numbers are not valid prototypes, so they appear as null.
     // Externref nulls are also converted to nullref.
     auto protoType = proto.type.getHeapType();
@@ -3073,6 +3176,81 @@ Literal Literal::getJSPrototype() const {
     return proto;
   }
   return Literal::makeNull(HeapType::none);
+}
+
+size_t Literal::getNumElements() const {
+  assert(isData());
+  if (gcData->isRawBytes()) {
+    auto field = type.getHeapType().getArray().element;
+    return gcData->getRawBytes().size() / field.getByteSize();
+  }
+  return gcData->getLiterals().size();
+}
+
+namespace {
+
+void writeField(void* dest, const Field& field, Literal value) {
+  if (field.isPacked()) {
+    assert(field.type == Type::i32);
+    int32_t c = value.geti32();
+    if (field.packedType == Field::i8) {
+      Bits::writeLE<int8_t>(static_cast<int8_t>(c), dest);
+    } else if (field.packedType == Field::i16) {
+      Bits::writeLE<int16_t>(static_cast<int16_t>(c), dest);
+    } else {
+      WASM_UNREACHABLE("invalid packed type");
+    }
+    return;
+  }
+
+  uint8_t buf[16];
+  assert(field.getByteSize() <= sizeof(buf));
+  value.getBits(buf);
+  memcpy(dest, buf, field.getByteSize());
+}
+
+Literal readField(const void* src, const Field& field, bool signed_) {
+  if (field.isPacked()) {
+    assert(field.type == Type::i32);
+    if (field.packedType == Field::i8) {
+      int8_t val = Bits::readLE<int8_t>(src);
+      return Literal(signed_ ? int32_t(val)
+                             : int32_t(static_cast<uint8_t>(val)));
+    } else if (field.packedType == Field::i16) {
+      int16_t val = Bits::readLE<int16_t>(src);
+      return Literal(signed_ ? int32_t(val)
+                             : int32_t(static_cast<uint16_t>(val)));
+    } else {
+      WASM_UNREACHABLE("invalid packed type");
+    }
+  }
+
+  return Literal::makeFromMemory(src, field.type);
+}
+
+} // anonymous namespace
+
+Literal Literal::getElement(size_t index, bool signed_) const {
+  assert(isData());
+  if (gcData->isRawBytes()) {
+    auto field = type.getHeapType().getArray().element;
+    size_t elemSize = field.getByteSize();
+    assert((index + 1) * elemSize <= gcData->getRawBytes().size());
+    return readField(&gcData->getRawBytes()[index * elemSize], field, signed_);
+  }
+  return gcData->getLiterals()[index];
+}
+
+void Literal::setElement(size_t index, Literal value) {
+  assert(isData());
+  if (gcData->isRawBytes()) {
+    auto field = type.getHeapType().getArray().element;
+    size_t elemSize = field.getByteSize();
+    assert((index + 1) * elemSize <= gcData->getRawBytes().size());
+    writeField(&gcData->getRawBytes()[index * elemSize], field, value);
+    return;
+  }
+  gcData->getLiterals()[index] = value;
 }
 
 } // namespace wasm

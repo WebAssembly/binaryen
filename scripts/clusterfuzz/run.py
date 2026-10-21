@@ -33,11 +33,11 @@ import sys
 
 # The V8 flags we put in the "fuzzer flags" files, which tell ClusterFuzz how to
 # run V8. By default we apply all staging flags.
-FUZZER_FLAGS = '--wasm-staging --experimental-wasm-custom-descriptors --experimental-wasm-js-interop --experimental-wasm-acquire-release --experimental-wasm-wide-arithmetic'
+FUZZER_FLAGS = '--wasm-staging --wasm-custom-descriptors --wasm-js-interop --wasm-acquire-release --wasm-wide-arithmetic --wasm-compact-imports'
 
 # Optional V8 flags to add to FUZZER_FLAGS, some of the time.
 OPTIONAL_FUZZER_FLAGS = [
-    '--experimental-wasm-revectorize',
+    '--wasm-revectorize',
 ]
 
 # Maximum size of the random data that we feed into wasm-opt -ttf. This is
@@ -94,6 +94,8 @@ FUZZER_ARGS = [
     '--disable-fp16',
     '--disable-strings',
     '--disable-stack-switching',
+    '--disable-multibyte',
+    '--disable-relaxed-atomics',
 ]
 
 
@@ -218,7 +220,7 @@ def get_js_file_contents(i, output_dir):
         args = []
         if system_random.random() < 0.8:
             args = [f'--fuzz-import={wasm_file}']
-        second_wasm_contents, second_wasm_file = \
+        second_wasm_contents, _second_wasm_file = \
             get_wasm_contents(f'{i}_second', output_dir, args)
         pre += f'var secondBinary = {second_wasm_contents};\n'
         bytes += second_wasm_contents.count(',')

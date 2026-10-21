@@ -18,8 +18,8 @@
 // Support for code annotations.
 //
 
-#ifndef wasm_annotations_h
-#define wasm_annotations_h
+#ifndef wasm_wasm_annotations_h
+#define wasm_wasm_annotations_h
 
 #include "support/name.h"
 
@@ -30,7 +30,9 @@ extern const Name InlineHint;
 extern const Name RemovableIfUnusedHint;
 extern const Name JSCalledHint;
 extern const Name IdempotentHint;
+extern const Name ToolchainInlineHint;
+extern const Name NoReturnHint;
 
 } // namespace wasm::Annotations
 
-#endif // wasm_annotations_h
+#endif // wasm_wasm_annotations_h

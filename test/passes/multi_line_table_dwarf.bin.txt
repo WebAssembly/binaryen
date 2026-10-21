@@ -435,34 +435,34 @@ file_names[  1]:
  (export "sidef" (func $sidef))
  (export "__dso_handle" (global $global$0))
  (func $__wasm_call_ctors (type $0)
-  ;; code offset: 0x3
+  ;; code offset: 0x3 - 0x5
   (call $__wasm_apply_relocs)
  )
  (func $__wasm_apply_relocs (type $0)
  )
  (func $sideg (type $1) (result i32)
   (local $0 i32)
-  ;; code offset: 0xf
+  ;; code offset: 0xf - 0x11
   (local.set $0
-   ;; code offset: 0xd
+   ;; code offset: 0xd - 0xf
    (i32.const 17)
   )
-  ;; code offset: 0x13
+  ;; code offset: 0x13 - 0x14
   (return
-   ;; code offset: 0x11
+   ;; code offset: 0x11 - 0x13
    (local.get $0)
   )
  )
  (func $sidef (type $1) (result i32)
   (local $0 i32)
-  ;; code offset: 0x1b
+  ;; code offset: 0x1b - 0x1d
   (local.set $0
-   ;; code offset: 0x19
+   ;; code offset: 0x19 - 0x1b
    (i32.const 36)
   )
-  ;; code offset: 0x1f
+  ;; code offset: 0x1f - 0x20
   (return
-   ;; code offset: 0x1d
+   ;; code offset: 0x1d - 0x1f
    (local.get $0)
   )
  )

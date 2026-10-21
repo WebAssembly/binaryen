@@ -173,7 +173,8 @@ inline FeatureSet get(BinaryOp op) {
     case RelaxedMinVecF64x2:
     case RelaxedMaxVecF64x2:
     case RelaxedSwizzleVecI8x16:
-    case RelaxedQ15MulrSVecI16x8: {
+    case RelaxedQ15MulrSVecI16x8:
+    case RelaxedDotI8x16I7x16SToVecI16x8: {
       ret.setSIMD();
       ret.setRelaxedSIMD();
       break;

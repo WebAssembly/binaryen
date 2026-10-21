@@ -1237,11 +1237,11 @@
   ;; CHECK-BIN-NEXT:   )
   ;; CHECK-BIN-NEXT:  )
   ;; CHECK-BIN-NEXT:  (drop
-  ;; CHECK-BIN-NEXT:   (block $block13 (result eqref)
+  ;; CHECK-BIN-NEXT:   (block $tryend (result eqref)
   ;; CHECK-BIN-NEXT:    (drop
-  ;; CHECK-BIN-NEXT:     (block $block12 (result i32)
-  ;; CHECK-BIN-NEXT:      (br $block13
-  ;; CHECK-BIN-NEXT:       (try_table (result eqref) (catch $e-i32 $block12)
+  ;; CHECK-BIN-NEXT:     (block $catch (result i32)
+  ;; CHECK-BIN-NEXT:      (br $tryend
+  ;; CHECK-BIN-NEXT:       (try_table (result eqref) (catch $e-i32 $catch)
   ;; CHECK-BIN-NEXT:        (local.get $local_eqref)
   ;; CHECK-BIN-NEXT:       )
   ;; CHECK-BIN-NEXT:      )
@@ -1251,11 +1251,11 @@
   ;; CHECK-BIN-NEXT:   )
   ;; CHECK-BIN-NEXT:  )
   ;; CHECK-BIN-NEXT:  (drop
-  ;; CHECK-BIN-NEXT:   (block $block15 (result funcref)
+  ;; CHECK-BIN-NEXT:   (block $tryend0 (result funcref)
   ;; CHECK-BIN-NEXT:    (drop
-  ;; CHECK-BIN-NEXT:     (block $block14 (result i32)
-  ;; CHECK-BIN-NEXT:      (br $block15
-  ;; CHECK-BIN-NEXT:       (try_table (result funcref) (catch $e-i32 $block14)
+  ;; CHECK-BIN-NEXT:     (block $catch0 (result i32)
+  ;; CHECK-BIN-NEXT:      (br $tryend0
+  ;; CHECK-BIN-NEXT:       (try_table (result funcref) (catch $e-i32 $catch0)
   ;; CHECK-BIN-NEXT:        (ref.func $foo)
   ;; CHECK-BIN-NEXT:       )
   ;; CHECK-BIN-NEXT:      )
@@ -1265,11 +1265,11 @@
   ;; CHECK-BIN-NEXT:   )
   ;; CHECK-BIN-NEXT:  )
   ;; CHECK-BIN-NEXT:  (drop
-  ;; CHECK-BIN-NEXT:   (block $block17 (result anyref)
+  ;; CHECK-BIN-NEXT:   (block $tryend1 (result anyref)
   ;; CHECK-BIN-NEXT:    (drop
-  ;; CHECK-BIN-NEXT:     (block $block16 (result i32)
-  ;; CHECK-BIN-NEXT:      (br $block17
-  ;; CHECK-BIN-NEXT:       (try_table (result anyref) (catch $e-i32 $block16)
+  ;; CHECK-BIN-NEXT:     (block $catch1 (result i32)
+  ;; CHECK-BIN-NEXT:      (br $tryend1
+  ;; CHECK-BIN-NEXT:       (try_table (result anyref) (catch $e-i32 $catch1)
   ;; CHECK-BIN-NEXT:        (local.get $local_eqref)
   ;; CHECK-BIN-NEXT:       )
   ;; CHECK-BIN-NEXT:      )
@@ -1279,11 +1279,11 @@
   ;; CHECK-BIN-NEXT:   )
   ;; CHECK-BIN-NEXT:  )
   ;; CHECK-BIN-NEXT:  (drop
-  ;; CHECK-BIN-NEXT:   (block $block19 (result anyref)
+  ;; CHECK-BIN-NEXT:   (block $tryend2 (result anyref)
   ;; CHECK-BIN-NEXT:    (drop
-  ;; CHECK-BIN-NEXT:     (block $block18 (result i32)
-  ;; CHECK-BIN-NEXT:      (br $block19
-  ;; CHECK-BIN-NEXT:       (try_table (result anyref) (catch $e-i32 $block18)
+  ;; CHECK-BIN-NEXT:     (block $catch2 (result i32)
+  ;; CHECK-BIN-NEXT:      (br $tryend2
+  ;; CHECK-BIN-NEXT:       (try_table (result anyref) (catch $e-i32 $catch2)
   ;; CHECK-BIN-NEXT:        (ref.null none)
   ;; CHECK-BIN-NEXT:       )
   ;; CHECK-BIN-NEXT:      )

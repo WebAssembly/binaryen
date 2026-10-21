@@ -15,6 +15,46 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
+ - Add a new wasm-embed tool for extracting Wasm modules embedded as byte arrays
+   in JS source files or replacing such modules in the JS source (#9127)
+ - Support reading and writing label names in the name section (#9166)
+
+v133
+----
+
+- Add a new `--constraint-analysis` pass which propagates logical facts along
+  branches. The pass runs automatically in `-O3` and `-Os` and above. (#9010)
+- Add an optional TailCall optimization pass (`--tail-call`). (#9103)
+- Add an optional pass to remove empty function exports. (#9078)
+- Replace the `BINARYEN_ROOT` environment variable (used by developers who are
+  doing out-of-tree builds of binaryen) with `BINARYEN_BIN` (#9023)
+- Reject non-natural alignment for atomic memory operations at parse time (#8962)
+- Note that fast-math mode can ignore the difference between negative zero and
+  zero (like clang and gcc). (#9056)
+- [JS API] Organize types into enums (breaking change in JS API). (#9098)
+- [JS API] Expose heap types `exn` & `noexn` (#9057)
+- [JS API] Expose instructions `try_table` & `throw_ref` (#9057)
+
+v132
+----
+
+- Add relaxed-atomics feature flag (#8983)
+- Opportunisticly emit compact imports (#8926)
+- [JS API] support `BinaryenStringConst` (#8951)
+- [JS API] Replace `Module['readBinaryWithFeatures']` with an
+  optional `features` parameter to `Module['readBinary']` (#8954)
+
+v131
+----
+
+- [Intrinsics] Add @binaryen.inline, parallel to @metadata.code.inline (#8820)
+- Add acqrel ordering support for atomic fences (#8845). Breaks the C API;
+  `BinaryenAtomicFence` now takes a memory order param. Use
+  `BinaryenMemoryOrderSeqCst()` to preserve the original behavior.
+- [JS API] Replace `Module['parseTextWithFeatures']` with an
+  optional `features` parameter to `Module['parseText']` (#8901)
+- Add a ConstraintAnalysis pass (#8853)
+
 v130
 ----
 

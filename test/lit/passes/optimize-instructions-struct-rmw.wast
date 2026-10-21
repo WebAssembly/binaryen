@@ -1798,24 +1798,32 @@
 
   ;; CHECK:      (func $acquire-load-after (type $2) (param $struct (ref $struct)) (param $array (ref $array)) (result i32)
   ;; CHECK-NEXT:  (block $l (result i32)
-  ;; CHECK-NEXT:   (struct.atomic.rmw.cmpxchg acqrel acqrel $struct 0
-  ;; CHECK-NEXT:    (local.get $struct)
-  ;; CHECK-NEXT:    (struct.get $struct 0
-  ;; CHECK-NEXT:     (local.get $struct)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (br_if $l
-  ;; CHECK-NEXT:     (struct.get $struct 0
-  ;; CHECK-NEXT:      (local.get $struct)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (block (result i32)
+  ;; CHECK-NEXT:   (struct.atomic.get acqrel $struct 0
+  ;; CHECK-NEXT:    (block (result (ref $struct))
+  ;; CHECK-NEXT:     (block
   ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (array.atomic.get acqrel $array
-  ;; CHECK-NEXT:        (local.get $array)
-  ;; CHECK-NEXT:        (i32.const 0)
+  ;; CHECK-NEXT:       (struct.get $struct 0
+  ;; CHECK-NEXT:        (local.get $struct)
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (br_if $l
+  ;; CHECK-NEXT:        (struct.get $struct 0
+  ;; CHECK-NEXT:         (local.get $struct)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (block (result i32)
+  ;; CHECK-NEXT:         (drop
+  ;; CHECK-NEXT:          (array.atomic.get acqrel $array
+  ;; CHECK-NEXT:           (local.get $array)
+  ;; CHECK-NEXT:           (i32.const 0)
+  ;; CHECK-NEXT:          )
+  ;; CHECK-NEXT:         )
+  ;; CHECK-NEXT:         (i32.const 0)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.get $struct)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -1831,11 +1839,6 @@
           ;; The condition is executed after the RHS value is computed, so its
           ;; effects cannot affect the values seen by the cmpxchg and can never
           ;; block optimization.
-          ;; TODO: getImmediateFallthroughPtr "helpfully" only allows
-          ;; fallthrough via br_if when the value and condition can be
-          ;; reordered. In this case the value and condition _can_ be reordered,
-          ;; but the reordering check is currently symmetric, so the
-          ;; optimization is still blocked.
           (block (result i32)
             (drop (array.atomic.get acqrel $array (local.get $array) (i32.const 0)))
             (i32.const 0)

@@ -4,11 +4,17 @@ elseif(BUILD_TESTS)
   # fuzztest includes gtest, but if we're not building fuzztest, build gtest ourselves.
   add_library(gtest STATIC googletest/googletest/src/gtest-all.cc)
   add_library(gtest_main STATIC googletest/googletest/src/gtest_main.cc)
+  add_library(gmock STATIC googletest/googlemock/src/gmock-all.cc)
+  add_library(gmock_main STATIC googletest/googlemock/src/gmock_main.cc)
   target_compile_options(gtest PRIVATE "-fno-rtti")
   target_compile_options(gtest_main PRIVATE "-fno-rtti")
+  target_compile_options(gmock PRIVATE "-fno-rtti")
+  target_compile_options(gmock_main PRIVATE "-fno-rtti")
   include_directories(
     googletest/googletest
     googletest/googletest/include
+    googletest/googlemock
+    googletest/googlemock/include
   )
 endif()
 

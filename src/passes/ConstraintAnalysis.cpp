@@ -1,0 +1,723 @@
+/*
+ * Copyright 2026 WebAssembly Community Group participants
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+//
+// Use mathematical constraint solving to optimize. For example:
+//
+//  if (x == 10) {
+//    assert(x != 0); // redundant and can be removed.
+//  }
+//
+// For loops, we must avoid the following problem:
+//
+//  x = 0
+//  do {
+//    print(x >= 0 & x < 100)
+//    x++
+//  } while (x < 100)
+//
+// Say that we flow information around precisely. Then initially x is 0 at the
+// top of the loop, and x++ turns it into 1. 1 < 100 so we return to the top of
+// the loop, and now x can be 0 or 1. We will then interpret this loop for 100
+// iterations at compile time, going from [0] to [0, 1] to [0, 2] and so forth,
+// which is obviously not a good idea.
+//
+// Instead, we do something similar to "widening" in abstract interpretation
+// (which at a loop header, where a merge occurs, widens the range of values
+// based on the bounds check that it sees elsewhere). We do something even
+// simpler here, which can be accomplished in an eager way as follows:
+//
+//   * x++ turns x from 0 to 1 in the example above, in the first iteration of
+//     the loop.
+//   * When we then see x == 1 that branches with x < 100, we turn that into
+//     x >= 1 && x < 100. This is "imprecise", because perhaps the local will
+//     not actually get incremented all the way to 100, but it is an upper
+//     bound that ends up getting us to the result we want in common loop
+//     shapes. (And it is safe to do because we allow more values for x, meaning
+//     we can prove fewer things, so we won't prove anything false.)
+//   * After doing that, we return to the top of the loop, where now we can see
+//     x >= 0 && x < 100. After running that through the loop a second time, no
+//     more happen: we successfully "jumped ahead" to the end state of the
+//     loop variable.
+//
+// Doing this eagerly when we see a branch, rather than identifying specific
+// loop headers and analyzing their bounds more precisely, is good enough for
+// us: the only imprecision we add is "x == C, branch with x < D  =>  x >= C &&
+// x < D". While imprecise, if we see "x == C, branch with x < D", then this is
+// a situation inside a loop: if it were not, then x would get constant-
+// propagatated to the branch anyhow by other passes. And, if this is in a loop,
+// then this widening is exactly what we want. This eager approach avoids us
+// needing to analyze loops shapes specifically and/or to consider branch
+// conditions "from afar" (seeing a branch on "x < D", but *not* applying it
+// eagerly, and instead using it later at the loop header or in some whole-
+// function analysis).
+//
+
+#include <algorithm>
+
+#include "cfg/cfg-traversal.h"
+#include "cfg/wto.h"
+#include "ir/constraint.h"
+#include "ir/drop.h"
+#include "ir/eh-utils.h"
+#include "ir/literal-utils.h"
+#include "ir/local-graph.h"
+#include "ir/properties.h"
+#include "ir/utils.h"
+#include "pass.h"
+#include "support/unique_deferring_queue.h"
+#include "support/utilities.h"
+#include "wasm-builder.h"
+#include "wasm.h"
+
+#define CONSTRAINT_DEBUG 0
+
+#ifndef CONSTRAINT_DEBUG
+#define CONSTRAINT_DEBUG 0
+#endif
+
+namespace wasm {
+
+using namespace wasm::constraint;
+
+namespace {
+
+// Information in a basic block.
+struct Info {
+  // For WTOWorklist
+  bool inQueue;
+  Index index;
+
+  // All relevant operations: local gets and sets and uses of them.
+  std::vector<Expression**> actions;
+
+  // The branching instruction at the end of the block (or nullptr if there is
+  // something like a return or an unreachable, which are terminators that don't
+  // interest us in this pass - we just look at ifs and brs).
+  Expression* brancher = nullptr;
+
+  // For each local index, we track the constraints we know about it. We only do
+  // so at the start of each block, which is enough for the analysis below.
+  BasicBlockConstraintMap startConstraints;
+
+  void dump(Function* func) {
+    std::cout << "Info{" << actions.size();
+    if (brancher) {
+      std::cout << ", " << *brancher;
+    }
+    std::cout << ", " << startConstraints << "}\n";
+  }
+};
+
+struct ConstraintAnalysis
+  : public WalkerPass<
+      CFGWalker<ConstraintAnalysis, Visitor<ConstraintAnalysis>, Info>> {
+  bool isFunctionParallel() override { return true; }
+
+  // Locals are not modified here.
+  bool requiresNonNullableLocalFixups() override { return false; }
+
+  std::unique_ptr<Pass> create() override {
+    return std::make_unique<ConstraintAnalysis>();
+  }
+
+  using Super = WalkerPass<
+    CFGWalker<ConstraintAnalysis, Visitor<ConstraintAnalysis>, Info>>;
+
+  // Branches outside of the function can be ignored, as we only look at local
+  // state in the function.
+  bool ignoreBranchesOutsideOfFunc = true;
+
+  // A relevant local is one that we care about optimizing.
+  std::vector<bool> relevantLocals;
+
+  bool fastMath;
+
+  bool isRelevantType(Type type) {
+    if (type == Type::v128) {
+      // TODO optimize SIMD where it makes sense, but for now we don't want to
+      // do things like propagate v128 constants, which are large.
+      return false;
+    }
+
+    // Floating-point math does not follow the basic rules of logic (for
+    // example, NaN < NaN and NaN >= NaN are both false, despite the law of the
+    // excluded middle). Constraints follow the rules of logic, so we cannot
+    // operate on floats unless we have fast-math enabled (which assures us we
+    // can ignore NaNs).
+    // TODO: when values are constant and non-NaN, we could optimize even
+    //       without fast-math
+    return !type.isFloat() || fastMath;
+  }
+
+  void doWalkFunction(Function* func) {
+    fastMath = getPassOptions().fastMath;
+
+    // Mark the relevant locals.
+    relevantLocals.assign(func->getNumLocals(), false);
+    for (Index i = 0; i < func->getNumLocals(); ++i) {
+      relevantLocals[i] = isRelevantType(func->getLocalType(i));
+    }
+
+    Super::doWalkFunction(func);
+  }
+
+  // Store the actions we care about.
+  void addAction() {
+    if (currBasicBlock) {
+      auto* currp = getCurrentPointer();
+      currBasicBlock->contents.actions.push_back(currp);
+    }
+  }
+
+  void visitLocalGet(LocalGet* curr) {
+    if (isRelevantType(curr->type)) {
+      addAction();
+    }
+  }
+
+  void visitLocalSet(LocalSet* curr) {
+    if (isRelevantType(getFunction()->getLocalType(curr->index))) {
+      addAction();
+    }
+  }
+
+  void visitUnary(Unary* curr) { addAction(); }
+  void visitBinary(Binary* curr) { addAction(); }
+  void visitRefEq(RefEq* curr) { addAction(); }
+  void visitRefIsNull(RefIsNull* curr) { addAction(); }
+
+  static void doStartIfTrue(ConstraintAnalysis* self, Expression** currp) {
+    // We are right after the condition, so we are in the block before the If's
+    // branching. Mark the If as the brancher (unless in unreachable code).
+    if (self->currBasicBlock) {
+      self->currBasicBlock->contents.brancher = *currp;
+    }
+    Super::doStartIfTrue(self, currp);
+  }
+
+  static void doEndBranch(ConstraintAnalysis* self, Expression** currp) {
+    if (self->currBasicBlock) {
+      self->currBasicBlock->contents.brancher = *currp;
+    }
+    Super::doEndBranch(self, currp);
+  }
+
+  void visitFunction(Function* curr) {
+    if (!entry) {
+      // Body is unreachable, no entry block.
+      return;
+    }
+
+    flow();
+    optimize();
+  }
+
+  // Flow infos around until we have inferred all we can about the constraints
+  // in each location.
+  void flow() {
+#if CONSTRAINT_DEBUG
+    dumpCFG("flow");
+#endif
+
+    // Start from the entry as the only reachable block. That block has incoming
+    // values - defaults - for each var.
+    entry->contents.startConstraints.setReachable();
+    auto& entryConstraints = entry->contents.startConstraints;
+    auto* func = getFunction();
+    for (Index i = func->getVarIndexBase(); i < func->getNumLocals(); i++) {
+      if (!relevantLocals[i]) {
+        // No point to apply a constraint to an irrelevant local.
+        continue;
+      }
+      auto type = func->getLocalType(i);
+      // TODO: support tuples
+      if (type.size() == 1 && LiteralUtils::canMakeZero(type)) {
+        // We have a default value, so we can prove something.
+        auto value = Literal::makeZero(type);
+        entryConstraints.set(i, Constraint{Abstract::Eq, {value}});
+      }
+      // Note that we need no special handling for non-nullable locals. They
+      // cannot be used before being set, so it doesn't matter what we have in
+      // the map for them. We leave them as proving nothing (as if they were
+      // parameters in effect) as that is more efficient in the way the
+      // information is encoded (see constraint.h).
+    }
+
+    // Starting from the entry, keep going while we find something new.
+    WTOWorklist<ConstraintAnalysis> work(*this);
+    work.push(entry);
+
+    work.run([&](BasicBlock* block) {
+      // Start at the top of the block, then go through, applying things.
+      BasicBlockConstraintMap constraints = block->contents.startConstraints;
+
+#if CONSTRAINT_DEBUG
+      std::cout << block << " start constraints: " << constraints << '\n';
+#endif
+
+      for (auto** currp : block->contents.actions) {
+        if (constraints.unreachable) {
+          break;
+        }
+        applyToConstraints(*currp, constraints);
+      }
+
+      if (constraints.unreachable) {
+        // Nothing to send.
+        return;
+      }
+
+#if CONSTRAINT_DEBUG
+      std::cout << block << " end   constraints: " << constraints << '\n';
+#endif
+
+      // We now know the values at the end of the block. Flow it onward, and
+      // where it causes changes, queue more work.
+      for (auto* out : block->out) {
+        auto& outStartConstraints = out->contents.startConstraints;
+
+        // Find the constraints sent to this specific successor, if there is a
+        // branch, and use them.
+        if (auto branch = getBranchConstraints(block, out);
+            filterRelevant(branch), !branch.empty()) {
+          auto sentConstraints = constraints;
+          applyBranchConstraints(branch, sentConstraints);
+#if CONSTRAINT_DEBUG
+          std::cout << block << " sending branch to " << out
+                    << " with sent constraints: " << sentConstraints << '\n';
+#endif
+          // If anything changed at the start of the target block, flow onwards.
+          if (outStartConstraints.approximateOr(sentConstraints)) {
+#if CONSTRAINT_DEBUG
+            std::cout << "out's start after  " << outStartConstraints << '\n';
+            std::cout << block << " branch-modified " << out
+                      << " to start with: " << outStartConstraints << '\n';
+#endif
+            work.push(out);
+          }
+        } else {
+          // There are no specific branch constraints, so send the unmodified
+          // |constraints|, avoiding a copy.
+          if (outStartConstraints.approximateOr(constraints)) {
+#if CONSTRAINT_DEBUG
+            std::cout << block << " modified " << out
+                      << " to start with: " << outStartConstraints << '\n';
+#endif
+            work.push(out);
+          }
+        }
+      }
+    });
+  }
+
+  // If we change types, we must refinalize.
+  bool refinalize = false;
+
+  // After inferring all we can, apply it to optimize the code.
+  void optimize() {
+
+    // If we find local.gets that we can optimize, we queue those changes here.
+    // This order is useful for the following reason:
+    //
+    //   (i32.eqz
+    //     (local.get $x)
+    //   )
+    //
+    // If we can infer that x is 42, and we do that first, then we end up with
+    // eqz of 42. That is something Precompute can handle, but not us - this
+    // pass only looks at constraints on locals. We do not lose any optimization
+    // power by leaving this to Precompute, but it is less efficient and may
+    // require more cycles; it is also less convenient for testing, as we must
+    // avoid inferrable local.gets in order to fully test constraint
+    // optimization.
+    //
+    // Instead, we queue local.get changes to happen later, after the eqz in the
+    // example above. That is, the eqz gets a chance to get optimized, and if it
+    // does, the queued local.get change ends up unnoticable (it changes a thing
+    // not in the IR; a slight waste of work, but less wasteful than waiting for
+    // Precompute).
+    //
+    // This queue of changes contains tuples of currp (the pointer to the
+    // local.get) and the value to replace it with.
+    std::vector<std::pair<Expression**, Expression*>> getOptimizations;
+
+    for (auto& block : basicBlocks) {
+      // Follow the general shape of flow(): we need to see what the state is
+      // at each intermediate point inside the block. (Flowing between blocks is
+      // of course not needed at this stage.)
+      auto& constraints = block->contents.startConstraints;
+      for (auto** currp : block->contents.actions) {
+#if CONSTRAINT_DEBUG
+        std::cout << block << " trying to optimize " << **currp << '\n';
+#endif
+        if (!constraints.unreachable) {
+          applyToConstraints(*currp, constraints);
+          if (auto* rep = optimizeLocalGet(currp, constraints)) {
+            getOptimizations.emplace_back(currp, rep);
+          } else {
+            optimizeConstraint(currp, constraints);
+          }
+        } else {
+          // This is unreachable code: just mark it so.
+          *currp = getDroppedChildrenAndAppend(
+            *currp,
+            *getModule(),
+            getPassOptions(),
+            Builder(*getModule()).makeUnreachable());
+          refinalize = true;
+        }
+      }
+    }
+
+    // Apply local.get optimizations after all that.
+    for (auto& [currp, rep] : getOptimizations) {
+      *currp = rep;
+    }
+
+    if (refinalize) {
+      ReFinalize().walkFunctionInModule(getFunction(), getModule());
+      EHUtils::handleBlockNestedPops(getFunction(), *getModule());
+    }
+  }
+
+  // Given an expression and the constraints on it, see if it is a local.get
+  // that we can optimize, and return the value to optimize to, if so.
+  Expression* optimizeLocalGet(Expression** currp,
+                               const BasicBlockConstraintMap& constraints) {
+    // A bare local.get can be optimized, if we know that local is a constant.
+    if (auto* get = (*currp)->dynCast<LocalGet>()) {
+      if (auto lit = constraints.get(get->index).getLiteral()) {
+        // Among references, only propagate nulls. Other things, like strings,
+        // may increase size, so we leave them for passes like Precompute and
+        // GUFA.
+        if (lit->type.isRef() && !lit->isNull()) {
+          return nullptr;
+        }
+
+        Builder builder(*getModule());
+        auto* rep = builder.makeConstantExpression(*lit);
+
+        // See if the type changes.
+        auto oldType = get->type;
+        if (!Type::isSubType(rep->type, oldType)) {
+          // The value we know must exist here is impossible, which means it was
+          // cast in a way that traps at runtime. This code is unreachable.
+          rep = builder.makeUnreachable();
+          refinalize = true;
+        } else if (rep->type != oldType) {
+          // We are refining.
+          refinalize = true;
+        }
+
+        return rep;
+      }
+    }
+
+    return nullptr;
+  }
+
+  // Given an expression and the constraints on it, parse it into a constraint
+  // if we can, and optimize it.
+  void optimizeConstraint(Expression** currp,
+                          const BasicBlockConstraintMap& constraints) {
+    auto* curr = *currp;
+
+    // Note that we don't need to try to parse a series of constraints with
+    // ParsedAndedConstraints: if there is a tree of ANDed things, we will
+    // simply optimize it as we walk it, each time handling one.
+    auto parsed = LocalConstraint::parse(curr);
+    if (!parsed) {
+      return;
+    }
+    if (!relevantLocals[parsed->local]) {
+      return;
+    }
+
+    auto result = constraints.proves(*parsed);
+    if (result == Unknown) {
+      // If we parsed something using two locals, like x != y, we can also look
+      // for the flipped condition among y's constraints TODO
+      return;
+    }
+
+    // We know the result!
+    auto& wasm = *getModule();
+    auto value =
+      LiteralUtils::makeFromInt32(result == True ? 1 : 0, curr->type, wasm);
+    *currp = getDroppedChildrenAndAppend(
+      curr, wasm, getPassOptions(), value, DropMode::IgnoreParentEffects);
+  }
+
+  // Given a predecessor and one of its successors, find new constraints that
+  // can be added due to the flow to that specific successor.
+  ParsedAndedConstraints getBranchConstraints(BasicBlock* pred,
+                                              BasicBlock* succ) {
+    auto* brancher = pred->contents.brancher;
+    if (!brancher) {
+      return {};
+    }
+    // We handle the case of two successors for now. When there are less, other
+    // opts can handle things. TODO: Switch is the case of more than 2.
+    if (pred->out.size() != 2) {
+      return {};
+    }
+
+    // CFGWalker builds the IR by putting the physical successor as the first
+    // successor (that is, the first is the one we reach without branching).
+    // We pass that along to the specific branch type handlers, so they can
+    // figure out if we are in the true or false path.
+    assert(succ == pred->out[0] || succ == pred->out[1]);
+    auto physicalSuccessor = (succ == pred->out[0]);
+
+    if (auto* iff = brancher->dynCast<If>()) {
+      return getConstraintsFromIf(iff, physicalSuccessor);
+    } else if (auto* br = brancher->dynCast<Break>()) {
+      return getConstraintsFromBreak(br, physicalSuccessor);
+    } else if (auto* br = brancher->dynCast<BrOn>()) {
+      return getConstraintsFromBrOn(br, physicalSuccessor);
+    }
+    // TODO: Switch
+    return {};
+  }
+
+  ParsedAndedConstraints getConstraintsFromIf(If* iff, bool physicalSuccessor) {
+    auto parsed = ParsedAndedConstraints::parseCondition(iff->condition);
+    if (!physicalSuccessor) {
+      // We are in the ifFalse, so negate the condition.
+      parsed.negate();
+    }
+    return parsed;
+  }
+
+  ParsedAndedConstraints getConstraintsFromBreak(Break* br,
+                                                 bool physicalSuccessor) {
+    // We get here when there is more than one successor, so there must be a
+    // condition.
+    assert(br->condition);
+
+    auto parsed = ParsedAndedConstraints::parseCondition(br->condition);
+    if (physicalSuccessor) {
+      // The branch was not taken, so negate the condition.
+      parsed.negate();
+    }
+    return parsed;
+  }
+
+  ParsedAndedConstraints getConstraintsFromBrOn(BrOn* brOn,
+                                                bool physicalSuccessor) {
+    // The constraint on that local depends on the op.
+    // TODO: Handle BrOnCast* etc using subtyping operations.
+    if (brOn->op != BrOnNull && brOn->op != BrOnNonNull) {
+      return {};
+    }
+
+    // parseCondition can parse more things than a local.get, which is all we
+    // handle here, but there is no other valid IR that can appear there, so we
+    // can reuse it.
+    auto parsed = ParsedAndedConstraints::parseCondition(brOn->ref);
+    // Negate depending on the op and (similar to Break) the successor.
+    if ((brOn->op == BrOnNull) ^ physicalSuccessor) {
+      parsed.negate();
+    }
+    return parsed;
+  }
+
+  // When applying constraints for a binary operation like x = y + 1, we may
+  // end up with lots of nonlinear work, in a loop: x may go from 0 to 1, then
+  // branch back to the top and merge, making it in the range [0, 1], then get
+  // incremented and loop again, leading to [0, 2] and so forth, only stopping
+  // when it reaches the loop bound, which may be very high. We don't want to
+  // spend significant time on such constant operations, as other passes will
+  // propagate them anyhow, so we stop before applying such x = y + 1
+  // operations a ridiculous number of times, by widening to a worst case.
+  static const Index MaxBinaryActions = 20;
+
+  // How many times we processed each Binary action.
+  std::unordered_map<Binary*, Index> binaryActionCounts;
+
+  // Given an expression, apply it to the constraints. For example, a local.set
+  // sets the value for that local.
+  void applyToConstraints(Expression* curr,
+                          BasicBlockConstraintMap& constraints) {
+    if (auto* set = curr->dynCast<LocalSet>()) {
+      if (!relevantLocals[set->index]) {
+        // No point to apply a constraint to an irrelevant local.
+        return;
+      }
+
+      // Look at the fallthrough. It is valid to do so, because our constraints
+      // only track two things, constants and locals. For a constant, it does
+      // not change while falling through. For a local, the only way for the
+      // local to change while falling through is to go through a tee of that
+      // local - but that would keep the same value there anyhow. That is:
+      //
+      //  (local.set $other
+      //    (block
+      //      ..
+      //      (local.tee $source
+      //        (block
+      //          ..
+      //          (local.get $source)
+      //        )
+      //      )
+      //    )
+      //  )
+      //
+      // The fallthrough here is the local.get of $source. We can set $other to
+      // the value in $source, because while $source did have a write while
+      // falling through, it did not alter the value, and there is no
+      // opportunity to write any other value while falling through. (And, any
+      // local.tee appearing here would have been reached earlier in the
+      // traversal, and handled.)
+      auto* value = set->value;
+      while (1) {
+        if (value->is<LocalSet>()) {
+          // We stop at the first tee: we don't need to look any further, and
+          // will just apply that local's values to ourselves, saving repeated
+          // work.
+          break;
+        }
+        auto* next = Properties::getImmediateFallthrough(
+          value, getPassOptions(), *getModule());
+        if (value == next) {
+          break;
+        } else {
+          value = next;
+        }
+      }
+
+      // Now that we know the value, check binary action counting limits (see
+      // above).
+      if (auto* binary = value->dynCast<Binary>()) {
+        // The code below will stop calculating this binary once we pass
+        // MaxBinaryActions operations on it. That is enough to prevent
+        // unbounded work on this binary, however, we may end up reaching this
+        // basic block an even larger number of times for other reasons, i.e.,
+        // just because of a very complex CFG. That should be very rare, but can
+        // happen. In debug builds we check we do not exceed a very high limit
+        // there, intending to throw an assert rather than just hang in the case
+        // of a bug (as assert is easier to diagnose, even if it happens after a
+        // long delay).
+        auto& count = binaryActionCounts[binary];
+#ifndef NDEBUG
+        static const Index MaxBasicBlockActions = 1024 * 1024;
+        assert(count < MaxBasicBlockActions);
+#endif
+        count++;
+        if (count >= MaxBinaryActions) {
+          constraints.setProvesNothing(set->index);
+          return;
+        }
+      }
+
+      constraints.set(set->index, value);
+    }
+  }
+
+  // Filters out constraints on irrelevant locals.
+  void filterRelevant(ParsedAndedConstraints& parsed) {
+    parsed.erase(std::remove_if(parsed.begin(),
+                                parsed.end(),
+                                [&](const LocalConstraint& pair) {
+                                  return !relevantLocals[pair.local];
+                                }),
+                 parsed.end());
+  }
+
+  // Apply branch constraints to the current set of constraints.
+  void applyBranchConstraints(const ParsedAndedConstraints& branch,
+                              BasicBlockConstraintMap& constraints) {
+    for (auto& pair : branch) {
+      // Extend the range of values in the "jump ahead" manner described in the
+      // top-level comment.
+      if (!applyBranchRangeExtensionToConstraints(pair, constraints)) {
+        // Otherwise, apply the constraint normally.
+        constraints.approximateAnd(pair.local, pair.constraint);
+      }
+
+      if (constraints.unreachable) {
+        return;
+      }
+    }
+  }
+
+  bool
+  applyBranchRangeExtensionToConstraints(const LocalConstraint& branch,
+                                         BasicBlockConstraintMap& constraints) {
+    using namespace Abstract;
+
+    // "Jump ahead" and extend ranges. If the branch is x < M, and we were
+    // x == N, then extend to x >= N && x < M (see top-level comment). Note that
+    // we don't need to worry about a contradiction here: this code is only
+    // reached if x == N && x < M. If it is reached, that is not a
+    // contradiction, and extending x == N to x >= N is also not.
+    auto M = branch.constraint.term;
+
+    // We only handle the case of N being a constant, for two reasons:
+    //
+    //  * As mentioned above, if a constant reaches a conditional branch, then
+    //    other passes would have propagated it into the branch check itself,
+    //    if that were possible. The only case where it isn't possible is when
+    //    it is a loop variable (so it looks like a constant at first, but gets
+    //    written another value by the branch back to the loop top). By only
+    //    handling constants here, we only extend ranges for loop variables (and
+    //    extending ranges can have downsides, so it is good we do it in a
+    //    targeted way).
+    //  * The case of a constant for the initial value N is exactly what we want
+    //    to optimize here: most typical loop patterns iterate from 0 or 1 or
+    //    such.
+    //
+    // So things work out perfectly here: constants are safe to optimize (no
+    // risk of extension causing  downsides) and are exactly what we want to
+    // optimize.
+    //
+    // (Note that there is no limitation on *M*, the upper bound of the loop: we
+    // can iterate up to a constant or to a local. I.e. loops from 0 to 100 and
+    // 5 to x work, but not loops from x to 100 or x to y.)
+    auto N = constraints.get(branch.local).getLiteral();
+    if (!N) {
+      return false;
+    }
+
+    // We can handle both x < M as the branch, as described above, or
+    // x <= M (if N <= M).
+    if (branch.constraint.op == Abstract::LtS ||
+        branch.constraint.op == Abstract::LeS) {
+      constraints.set(branch.local, branch.constraint);
+      if (!constraints.unreachable) {
+        constraints.approximateAnd(branch.local, {GeS, {*N}});
+      }
+      return true;
+    }
+    if (branch.constraint.op == Abstract::LtU ||
+        branch.constraint.op == Abstract::LeU) {
+      constraints.set(branch.local, branch.constraint);
+      if (!constraints.unreachable) {
+        constraints.approximateAnd(branch.local, {GeU, {*N}});
+      }
+      return true;
+    }
+
+    return false;
+  }
+};
+
+} // anonymous namespace
+
+Pass* createConstraintAnalysisPass() { return new ConstraintAnalysis(); }
+
+} // namespace wasm

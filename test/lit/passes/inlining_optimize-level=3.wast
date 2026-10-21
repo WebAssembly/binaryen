@@ -455,7 +455,7 @@
  ;; CHECK-NEXT:  (block $__inlined_func$A$3
  ;; CHECK-NEXT:   (local.set $1
  ;; CHECK-NEXT:    (block $__inlined_func$C$2 (result f32)
- ;; CHECK-NEXT:     (local.tee $0
+ ;; CHECK-NEXT:     (local.set $0
  ;; CHECK-NEXT:      (block $__inlined_func$D$1
  ;; CHECK-NEXT:       (unreachable)
  ;; CHECK-NEXT:      )
@@ -567,7 +567,7 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $middle3 (param $x i32) (param $y i32) (param $z i32)
-  ;; Not trivial, becaues of the eqz.
+  ;; Not trivial, because of the eqz.
   (call $top
    (local.get $z)
    (i32.eqz

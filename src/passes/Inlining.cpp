@@ -114,6 +114,7 @@ struct FunctionInfo {
   bool usedGlobally;
   TrivialInstruction trivialInstruction;
   InliningMode inliningMode;
+  std::optional<uint8_t> toolchainInlineHint;
 
   FunctionInfo() { clear(); }
 
@@ -126,6 +127,7 @@ struct FunctionInfo {
     usedGlobally = false;
     trivialInstruction = TrivialInstruction::NotTrivial;
     inliningMode = InliningMode::Unknown;
+    toolchainInlineHint = std::nullopt;
   }
 
   // Provide an explicit = operator as the |refs| field lacks one by default.
@@ -138,6 +140,7 @@ struct FunctionInfo {
     usedGlobally = other.usedGlobally;
     trivialInstruction = other.trivialInstruction;
     inliningMode = other.inliningMode;
+    toolchainInlineHint = other.toolchainInlineHint;
     return *this;
   }
 
@@ -147,6 +150,13 @@ struct FunctionInfo {
     // FIXME https://github.com/WebAssembly/binaryen/issues/3634
     if (hasTryDelegate) {
       return false;
+    }
+    // Follow the toolchain hint, if present.
+    if (toolchainInlineHint == CodeAnnotation::NeverInline) {
+      return false;
+    }
+    if (toolchainInlineHint == CodeAnnotation::AlwaysInline) {
+      return true;
     }
     // If it's small enough that we always want to inline such things, do so.
     if (size <= options.inlining.alwaysInlineMaxSize) {
@@ -213,13 +223,13 @@ struct FunctionInfoScanner
     infos[getFunction()->name].hasCalls = true;
   }
 
-  // N.B.: CallIndirect and CallRef are intentionally omitted here, as we only
-  //       note direct calls. Direct calls can lead to infinite recursion
-  //       which we need to avoid, while indirect ones may in theory be
-  //       optimized to direct calls later, but we take that risk - which is
-  //       worthwhile as if we do manage to turn an indirect call into something
-  //       else then it can be a big speedup, so we do want to inline code that
-  //       has such indirect calls.
+  void visitCallIndirect(CallIndirect* curr) {
+    infos[getFunction()->name].hasCalls = true;
+  }
+
+  void visitCallRef(CallRef* curr) {
+    infos[getFunction()->name].hasCalls = true;
+  }
 
   void visitTry(Try* curr) {
     if (curr->isDelegate()) {
@@ -236,6 +246,7 @@ struct FunctionInfoScanner
     auto& info = infos[curr->name];
 
     info.size = Measurer::measure(curr->body);
+    info.toolchainInlineHint = curr->funcAnnotations.toolchainInline;
 
     // If the body is a simple instruction with roughly the same encoded size as
     // a `call` instruction, and arguments are function locals read in order,
@@ -826,9 +837,9 @@ struct FunctionSplitter {
   //
   // Note that to avoid wasteful work, this function may return "Full" inlining
   // mode instead of a split inlining. That is, if it detects that a partial
-  // inlining will trigger a follow up full inline of the splitted function
-  // then it will instead return "InliningMode::Full" directly. In more detail,
-  // imagine we have
+  // inlining will trigger a follow up full inline of the split function then it
+  // will instead return "InliningMode::Full" directly. In more detail, imagine
+  // we have
   //
   //   foo(10);
   //

@@ -66,36 +66,36 @@
 
 namespace wasm {
 
-static Name load_ptr("load_ptr");
-static Name load_val_i32("load_val_i32");
-static Name load_val_i64("load_val_i64");
-static Name load_val_f32("load_val_f32");
-static Name load_val_f64("load_val_f64");
-static Name store_ptr("store_ptr");
-static Name store_val_i32("store_val_i32");
-static Name store_val_i64("store_val_i64");
-static Name store_val_f32("store_val_f32");
-static Name store_val_f64("store_val_f64");
-static Name struct_get_val_i32("struct_get_val_i32");
-static Name struct_get_val_i64("struct_get_val_i64");
-static Name struct_get_val_f32("struct_get_val_f32");
-static Name struct_get_val_f64("struct_get_val_f64");
-static Name struct_set_val_i32("struct_set_val_i32");
-static Name struct_set_val_i64("struct_set_val_i64");
-static Name struct_set_val_f32("struct_set_val_f32");
-static Name struct_set_val_f64("struct_set_val_f64");
-static Name array_get_val_i32("array_get_val_i32");
-static Name array_get_val_i64("array_get_val_i64");
-static Name array_get_val_f32("array_get_val_f32");
-static Name array_get_val_f64("array_get_val_f64");
-static Name array_set_val_i32("array_set_val_i32");
-static Name array_set_val_i64("array_set_val_i64");
-static Name array_set_val_f32("array_set_val_f32");
-static Name array_set_val_f64("array_set_val_f64");
-static Name array_get_index("array_get_index");
-static Name array_set_index("array_set_index");
-static Name memory_grow_pre("memory_grow_pre");
-static Name memory_grow_post("memory_grow_post");
+static const Name load_ptr("load_ptr");
+static const Name load_val_i32("load_val_i32");
+static const Name load_val_i64("load_val_i64");
+static const Name load_val_f32("load_val_f32");
+static const Name load_val_f64("load_val_f64");
+static const Name store_ptr("store_ptr");
+static const Name store_val_i32("store_val_i32");
+static const Name store_val_i64("store_val_i64");
+static const Name store_val_f32("store_val_f32");
+static const Name store_val_f64("store_val_f64");
+static const Name struct_get_val_i32("struct_get_val_i32");
+static const Name struct_get_val_i64("struct_get_val_i64");
+static const Name struct_get_val_f32("struct_get_val_f32");
+static const Name struct_get_val_f64("struct_get_val_f64");
+static const Name struct_set_val_i32("struct_set_val_i32");
+static const Name struct_set_val_i64("struct_set_val_i64");
+static const Name struct_set_val_f32("struct_set_val_f32");
+static const Name struct_set_val_f64("struct_set_val_f64");
+static const Name array_get_val_i32("array_get_val_i32");
+static const Name array_get_val_i64("array_get_val_i64");
+static const Name array_get_val_f32("array_get_val_f32");
+static const Name array_get_val_f64("array_get_val_f64");
+static const Name array_set_val_i32("array_set_val_i32");
+static const Name array_set_val_i64("array_set_val_i64");
+static const Name array_set_val_f32("array_set_val_f32");
+static const Name array_set_val_f64("array_set_val_f64");
+static const Name array_get_index("array_get_index");
+static const Name array_set_index("array_set_index");
+static const Name memory_grow_pre("memory_grow_pre");
+static const Name memory_grow_post("memory_grow_post");
 
 // TODO: Add support for atomicRMW/cmpxchg
 

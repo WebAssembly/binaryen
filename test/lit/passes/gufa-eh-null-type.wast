@@ -34,7 +34,7 @@
  ;; CHECK-NEXT:     (block
  ;; CHECK-NEXT:      (drop
  ;; CHECK-NEXT:       (block $block0 (result (ref noexn))
- ;; CHECK-NEXT:        (local.tee $1
+ ;; CHECK-NEXT:        (local.set $1
  ;; CHECK-NEXT:         (unreachable)
  ;; CHECK-NEXT:        )
  ;; CHECK-NEXT:        (br_on_non_null $block0

@@ -115,12 +115,12 @@ Abbrev table for offset: 0x00000000
               DW_AT_comp_dir [DW_FORM_strp]	( .debug_str[0x0000006f] = "/home/azakai/Dev/emscripten")
               DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000000)
               DW_AT_ranges [DW_FORM_sec_offset]	(0x00000000
-                 [0x00000000, 0x00000007)
+                 [0x00000001, 0x00000001)
                  [0x00000005, 0x00000012)
                  [0x00000013, 0x0000001b))
 
 0x00000026:   DW_TAG_subprogram [2] *
-                DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000000)
+                DW_AT_low_pc [DW_FORM_addr]	(0x00000000ffffffff)
                 DW_AT_high_pc [DW_FORM_data4]	(0x00000000)
                 DW_AT_frame_base [DW_FORM_exprloc]	(DW_OP_WASM_location 0x3 +0, <decoding error> 00 00 9f)
                 DW_AT_GNU_all_call_sites [DW_FORM_flag_present]	(true)
@@ -260,7 +260,7 @@ Abbrev table for offset: 0x00000000
                   DW_AT_type [DW_FORM_ref4]	(cu + 0x0071 => {0x00000071} "int")
 
 0x00000129:     DW_TAG_GNU_call_site [13]  
-                  DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000000)
+                  DW_AT_low_pc [DW_FORM_addr]	(0x00000000ffffffff)
 
 0x0000012e:     NULL
 
@@ -404,7 +404,7 @@ file_names[  1]:
 0x000000d4: "char"
 
 .debug_ranges contents:
-00000000 00000000 00000007
+00000000 00000001 00000001
 00000000 00000005 00000012
 00000000 00000013 0000001b
 00000000 <End of list>
@@ -429,71 +429,71 @@ file_names[  1]:
  (export "__data_end" (global $global$1))
  (func $__wasm_call_ctors
  )
- (func $dsquare\28int\2c\20int\29 (param $0 i32) (param $1 i32) (result i32)
-  ;; code offset: 0x10
+ (func $"dsquare(int, int)" (param $0 i32) (param $1 i32) (result i32)
+  ;; code offset: 0x10 - 0x11
   (i32.add
-   ;; code offset: 0xa
+   ;; code offset: 0xa - 0xb
    (i32.mul
-    ;; code offset: 0x6
+    ;; code offset: 0x6 - 0x8
     (local.get $1)
-    ;; code offset: 0x8
+    ;; code offset: 0x8 - 0xa
     (local.get $1)
    )
-   ;; code offset: 0xf
+   ;; code offset: 0xf - 0x10
    (i32.mul
-    ;; code offset: 0xb
+    ;; code offset: 0xb - 0xd
     (local.get $0)
-    ;; code offset: 0xd
+    ;; code offset: 0xd - 0xf
     (local.get $0)
    )
   )
  )
  (func $main (param $0 i32) (param $1 i32) (result i32)
-  ;; code offset: 0x18
-  (call $dsquare\28int\2c\20int\29
-   ;; code offset: 0x14
+  ;; code offset: 0x18 - 0x1a
+  (call $"dsquare(int, int)"
+   ;; code offset: 0x14 - 0x16
    (i32.const 6)
-   ;; code offset: 0x16
+   ;; code offset: 0x16 - 0x18
    (i32.const 8)
   )
  )
  (func $stackSave (result i32)
-  ;; code offset: 0x1d
+  ;; code offset: 0x1d - 0x1f
   (global.get $global$0)
  )
  (func $stackRestore (param $0 i32)
-  ;; code offset: 0x24
+  ;; code offset: 0x24 - 0x26
   (global.set $global$0
-   ;; code offset: 0x22
+   ;; code offset: 0x22 - 0x24
    (local.get $0)
   )
  )
  (func $stackAlloc (param $0 i32) (result i32)
   (local $1 i32)
   (local $2 i32)
-  ;; code offset: 0x37
+  ;; code offset: 0x37 - 0x39
   (global.set $global$0
-   ;; code offset: 0x35
+   ;; code offset: 0x35 - 0x37
    (local.tee $1
-    ;; code offset: 0x34
+    ;; code offset: 0x34 - 0x35
     (i32.and
-     ;; code offset: 0x31
+     ;; code offset: 0x31 - 0x32
      (i32.sub
-      ;; code offset: 0x2d
+      ;; code offset: 0x2d - 0x2f
       (global.get $global$0)
-      ;; code offset: 0x2f
+      ;; code offset: 0x2f - 0x31
       (local.get $0)
      )
-     ;; code offset: 0x32
+     ;; code offset: 0x32 - 0x34
      (i32.const -16)
     )
    )
   )
-  ;; code offset: 0x39
+  ;; code offset: 0x39 - 0x3b
   (local.get $1)
  )
  (func $__errno_location (result i32)
-  ;; code offset: 0x3e
+  ;; code offset: 0x3e - 0x41
   (i32.const 1024)
  )
  ;; custom section ".debug_info", size 321

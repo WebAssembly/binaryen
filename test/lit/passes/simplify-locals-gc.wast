@@ -73,7 +73,7 @@
 
   ;; CHECK:      (func $unreachable-struct.get (type $6) (param $x (ref $struct)) (param $y (ref $struct-immutable)) (result i32)
   ;; CHECK-NEXT:  (local $temp i32)
-  ;; CHECK-NEXT:  (local.tee $temp
+  ;; CHECK-NEXT:  (local.set $temp
   ;; CHECK-NEXT:   (block ;; (replaces unreachable StructGet we can't emit)
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (unreachable)
@@ -409,7 +409,7 @@
   ;; CHECK-NEXT: )
   (func $pick-fallthrough (param $x i32)
     (local $t i32)
-    ;; Similar to the above test wth looking through a cast, but using a non-gc
+    ;; Similar to the above test with looking through a cast, but using a non-gc
     ;; type of fallthrough value.
     (local.set $t
       (block (result i32)

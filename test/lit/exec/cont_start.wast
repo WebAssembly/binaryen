@@ -14,12 +14,10 @@
 
  (tag $susp_tag (type $void))
 
- (export "suspend" (func $suspend))
-
  (start $start)
 
- ;; CHECK:      [fuzz-exec] export suspend
- (func $suspend (type $void)
+ ;; CHECK:      [fuzz-exec] export nop
+ (func $nop (export "nop") (type $void)
   (nop)
  )
 
@@ -28,7 +26,7 @@
    (block $handler (result (ref $void_cont))
     (resume $void_cont (on $susp_tag $handler)
      (cont.new $void_cont
-      (ref.func $run)
+      (ref.func $nop)
      )
     )
     (return)
@@ -36,11 +34,11 @@
   )
  )
 
- (func $run (type $void)
-  (call $call_export
-   (i32.const 0)
-   (i32.const 0)
-  )
+ ;; CHECK:      [fuzz-exec] export export
+ ;; CHECK-NEXT: [fuzz-exec] note result: export => 42
+ (func $export (export "export") (result i32)
+  ;; An export to be called later, proving we did not trap during start.
+  (i32.const 42)
  )
 )
 

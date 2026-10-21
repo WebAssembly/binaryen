@@ -15,6 +15,8 @@ function asmFunc(imports) {
  var setTempRet0 = env.setTempRet0;
  var i64toi32_i32$HIGH_BITS = 0;
  function legalstub$0($0, $1) {
+  $0 = $0 | 0;
+  $1 = $1 | 0;
   var $2 = 0, $3 = 0;
   $2 = 1;
   while (1) {
@@ -29,7 +31,7 @@ function asmFunc(imports) {
   };
   i64toi32_i32$HIGH_BITS = $3;
   setTempRet0(i64toi32_i32$HIGH_BITS | 0);
-  return $2;
+  return $2 | 0;
  }
  
  function __wasm_i64_mul($0, $1, $2, $3) {

@@ -19,6 +19,8 @@
 
 #include <array>
 #include <iostream>
+#include <optional>
+#include <variant>
 
 #include "support/bits.h"
 #include "support/hash.h"
@@ -106,7 +108,7 @@ public:
   bool isContinuation() const { return type.isContinuation(); }
   bool isString() const { return type.isString(); }
 
-  bool isNull() const { return type.isNull(); }
+  bool isNull() const { return type.isBottomRef(); }
 
   bool isZero() const {
     switch (type.getBasic()) {
@@ -212,7 +214,11 @@ public:
     }
   }
 
-  static Literal makeFromMemory(void* p, Type type);
+  // Reads a value of the given type from memory. For i32, a smaller byteSize
+  // (1 or 2) can be given to read a sign-extended packed value. By default the
+  // full size of the type is read.
+  static Literal makeFromMemory(
+    const void* p, Type type, std::optional<unsigned> byteSize = std::nullopt);
 
   static Literal makeSignedMin(Type type) {
     switch (type.getBasic()) {
@@ -312,6 +318,12 @@ public:
   Name getFunc() const;
   std::shared_ptr<FuncData> getFuncData() const;
   std::shared_ptr<GCData> getGCData() const;
+  size_t getNumElements() const;
+  Literal getElement(size_t index, bool signed_ = false) const;
+  void setElement(size_t index, Literal value);
+  bool isRawBytes() const;
+  const std::vector<uint8_t>& getRawBytes() const;
+  std::vector<uint8_t>& getRawBytes();
   std::shared_ptr<ExnData> getExnData() const;
   std::shared_ptr<ContData> getContData() const;
 
@@ -356,10 +368,11 @@ public:
   // would be equal to itself, if the bits are equal).
   bool operator==(const Literal& other) const;
   bool operator!=(const Literal& other) const;
+  bool operator<(const Literal& other) const;
 
-  bool isNaN();
-  bool isCanonicalNaN();
-  bool isArithmeticNaN();
+  bool isNaN() const;
+  bool isCanonicalNaN() const;
+  bool isArithmeticNaN() const;
 
   static uint32_t NaNPayload(float f);
   static uint64_t NaNPayload(double f);
@@ -424,9 +437,10 @@ public:
   Literal rotL(const Literal& other) const;
   Literal rotR(const Literal& other) const;
 
-  // Note that these functions perform equality checks based
-  // on the type of the literal, so that (unlike the == operator)
-  // a float nan would not be identical to itself.
+  // Note that these functions perform equality checks based on the type of the
+  // literal, and using the wasm semantics. That is, eq() works like i32.eq or
+  // ref.eq. For example, f32.eq of 0 and -0 returns 1 (they are equal), while
+  // the == operator would return false (because they are different Literals).
   Literal eq(const Literal& other) const;
   Literal ne(const Literal& other) const;
   Literal ltS(const Literal& other) const;
@@ -782,28 +796,65 @@ std::ostream& operator<<(std::ostream& o, wasm::Literals literals);
 // A GC Struct, Array, or String is a set of values with a type saying how it
 // should be interpreted.
 struct GCData {
-  // The element or field values.
-  Literals values;
+  // The element or field values. Primitive numeric arrays use raw byte buffers
+  // (std::vector<uint8_t>), while reference arrays, structs, strings, and other
+  // reference allocations use Literals.
+  std::variant<std::vector<uint8_t>, Literals> storage;
 
   // The descriptor, if it exists, or null.
   Literal desc;
 
   GCData(Literals&& values,
          const Literal& desc = Literal::makeNull(HeapType::none))
-    : values(std::move(values)), desc(desc) {}
+    : storage(std::move(values)), desc(desc) {}
+
+  GCData(std::vector<uint8_t>&& data,
+         const Literal& desc = Literal::makeNull(HeapType::none))
+    : storage(std::move(data)), desc(desc) {}
+
+  bool isRawBytes() const {
+    return std::holds_alternative<std::vector<uint8_t>>(storage);
+  }
+
+  const std::vector<uint8_t>& getRawBytes() const {
+    return std::get<std::vector<uint8_t>>(storage);
+  }
+
+  std::vector<uint8_t>& getRawBytes() {
+    return std::get<std::vector<uint8_t>>(storage);
+  }
+
+  const Literals& getLiterals() const { return std::get<Literals>(storage); }
+
+  Literals& getLiterals() { return std::get<Literals>(storage); }
 };
+
+inline bool Literal::isRawBytes() const {
+  assert(isData());
+  return gcData->isRawBytes();
+}
+
+inline const std::vector<uint8_t>& Literal::getRawBytes() const {
+  assert(isData());
+  return gcData->getRawBytes();
+}
+
+inline std::vector<uint8_t>& Literal::getRawBytes() {
+  assert(isData());
+  return gcData->getRawBytes();
+}
 
 inline bool Literal::hasExternPayload() const {
   if (isNull()) {
     return false;
   }
   assert(type.getHeapType().isMaybeShared(HeapType::ext));
-  return gcData->values[0].type == Type::i32;
+  return gcData->getLiterals()[0].type == Type::i32;
 }
 
 inline int32_t Literal::getExternPayload() const {
   assert(hasExternPayload());
-  return gcData->values[0].geti32();
+  return gcData->getLiterals()[0].geti32();
 }
 
 } // namespace wasm
@@ -867,7 +918,7 @@ template<> struct hash<wasm::Literal> {
         return digest;
       }
       if (a.type.isString()) {
-        auto& values = a.getGCData()->values;
+        auto& values = a.getGCData()->getLiterals();
         wasm::rehash(digest, values.size());
         for (auto c : values) {
           wasm::rehash(digest, c.getInteger());

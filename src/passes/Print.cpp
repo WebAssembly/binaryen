@@ -498,7 +498,10 @@ struct PrintExpressionContents
     printLocal(curr->index, currFunction, o);
   }
   void visitLocalSet(LocalSet* curr) {
-    if (curr->isTee()) {
+    // Print unreachable tees as sets. This makes the output valid WebAssembly
+    // in more cases because it avoids pushing a concrete type (which may not
+    // be the type required by the next instruction) onto a polymorphic stack.
+    if (curr->isTee() && curr->type != Type::unreachable) {
       printMedium(o, "local.tee ");
     } else {
       printMedium(o, "local.set ");
@@ -644,7 +647,10 @@ struct PrintExpressionContents
       o << " offset=" << curr->offset;
     }
   }
-  void visitAtomicFence(AtomicFence* curr) { printMedium(o, "atomic.fence"); }
+  void visitAtomicFence(AtomicFence* curr) {
+    printMedium(o, "atomic.fence");
+    printMemoryOrder(curr->order);
+  }
   void visitPause(Pause* curr) { printMedium(o, "pause"); }
   void visitSIMDExtract(SIMDExtract* curr) {
     prepareColor(o);
@@ -1354,7 +1360,7 @@ struct PrintExpressionContents
         o << "f16x8.demote_f64x2_zero";
         break;
       case InvalidUnary:
-        WASM_UNREACHABLE("unvalid unary operator");
+        WASM_UNREACHABLE("invalid unary operator");
     }
     restoreNormalColor(o);
   }
@@ -2027,7 +2033,7 @@ struct PrintExpressionContents
         break;
 
       case InvalidBinary:
-        WASM_UNREACHABLE("unvalid binary operator");
+        WASM_UNREACHABLE("invalid binary operator");
     }
     restoreNormalColor(o);
   }
@@ -2323,6 +2329,9 @@ struct PrintExpressionContents
       case MemoryOrder::AcqRel:
         o << " acqrel";
         break;
+      case MemoryOrder::Relaxed:
+        o << " relaxed";
+        break;
     }
   }
 
@@ -2393,13 +2402,13 @@ struct PrintExpressionContents
     o << ' ';
     o << curr->index;
   }
-  void visitStructNotify(StructNotify* curr) {
-    printMedium(o, "struct.notify");
-    o << ' ';
-    printHeapTypeName(curr->ref->type.getHeapType());
-    o << ' ';
-    o << curr->index;
+  void visitWaitqueueNew(WaitqueueNew* curr) {
+    printMedium(o, "waitqueue.new");
   }
+  void visitWaitqueueNotify(WaitqueueNotify* curr) {
+    printMedium(o, "waitqueue.notify");
+  }
+  void visitPublish(Publish* curr) { printMedium(o, "publish"); }
   void visitArrayNew(ArrayNew* curr) {
     printMedium(o, "array.new");
     if (curr->isWithDefault()) {
@@ -2459,7 +2468,9 @@ struct PrintExpressionContents
     printHeapTypeName(curr->ref->type.getHeapType());
   }
   void visitArrayLoad(ArrayLoad* curr) {
-    prepareColor(o) << forceConcrete(curr->type);
+    // Whatever type we print must be valid for the alignment, which matters
+    // when the type is unreachable and we must pick one.
+    prepareColor(o) << forceConcrete(curr->type, curr->align);
     o << ".load";
     if (curr->type != Type::unreachable &&
         curr->bytes < curr->type.getByteSize()) {
@@ -2473,10 +2484,18 @@ struct PrintExpressionContents
     printMinor(o, "type ");
     printHeapTypeName(curr->ref->type.getHeapType());
     o << ')';
+    if (curr->offset) {
+      o << " offset=" << curr->offset;
+    }
+    if (curr->align != curr->bytes) {
+      o << " align=" << curr->align;
+    }
   }
 
   void visitArrayStore(ArrayStore* curr) {
-    prepareColor(o) << forceConcrete(curr->value->type);
+    // Whatever type we print must be valid for the alignment, which matters
+    // when the value is unreachable and we must pick one.
+    prepareColor(o) << forceConcrete(curr->value->type, curr->align);
     o << ".store";
     printStorePostfix(curr->bytes, curr->value->type);
     o << " ";
@@ -2486,6 +2505,12 @@ struct PrintExpressionContents
     printMinor(o, "type ");
     printHeapTypeName(curr->ref->type.getHeapType());
     o << ')';
+    if (curr->offset) {
+      o << " offset=" << curr->offset;
+    }
+    if (curr->align != curr->bytes) {
+      o << " align=" << curr->align;
+    }
   }
   void visitArrayLen(ArrayLen* curr) { printMedium(o, "array.len"); }
   void visitArrayCopy(ArrayCopy* curr) {
@@ -2769,8 +2794,9 @@ void PrintSExpression::printMetadata(Expression* curr) {
       if (auto iter = currFunction->expressionLocations.find(curr);
           iter != currFunction->expressionLocations.end()) {
         Colors::grey(o);
-        o << ";; code offset: 0x" << std::hex << iter->second.start << std::dec
-          << '\n';
+        const auto& span = iter->second;
+        o << ";; code offset: 0x" << std::hex << span.start << " - 0x"
+          << span.end << std::dec << '\n';
         restoreNormalColor(o);
         doIndent(o, indent);
       }
@@ -2835,6 +2861,23 @@ void PrintSExpression::printCodeAnnotations(const CodeAnnotation& annotation) {
   if (annotation.idempotent) {
     Colors::grey(o);
     o << "(@" << Annotations::IdempotentHint << ")\n";
+    restoreNormalColor(o);
+    doIndent(o, indent);
+  }
+  if (annotation.toolchainInline) {
+    Colors::grey(o);
+    std::ofstream saved;
+    saved.copyfmt(o);
+    o << "(@" << Annotations::ToolchainInlineHint << " \"\\" << std::hex
+      << std::setfill('0') << std::setw(2) << int(*annotation.toolchainInline)
+      << "\")\n";
+    o.copyfmt(saved);
+    restoreNormalColor(o);
+    doIndent(o, indent);
+  }
+  if (annotation.noReturn) {
+    Colors::grey(o);
+    o << "(@" << Annotations::NoReturnHint << ")\n";
     restoreNormalColor(o);
     doIndent(o, indent);
   }
@@ -2966,11 +3009,11 @@ void PrintSExpression::visitBlock(Block* curr) {
 }
 
 void PrintSExpression::visitIf(If* curr) {
-  controlFlowDepth++;
   o << '(';
   printExpressionContents(curr);
   incIndent();
   printFullLine(curr->condition);
+  controlFlowDepth++;
   doIndent(o, indent);
   o << "(then";
   incIndent();
@@ -3852,13 +3895,13 @@ static std::ostream& printStackIR(StackIR* ir, PrintSExpression& printer) {
     }
     switch (inst->op) {
       case StackInst::Basic: {
-        doIndent();
         // Pop is a pseudo instruction and should not be printed in the stack IR
         // format to make it valid wat form.
         if (inst->origin->is<Pop>()) {
-          break;
+          continue;
         }
 
+        doIndent();
         PrintExpressionContents(printer).visit(inst->origin);
         break;
       }
@@ -3922,6 +3965,7 @@ static std::ostream& printStackIR(StackIR* ir, PrintSExpression& printer) {
         } else {
           curr->delegateTarget.print(o);
         }
+        catchIndexStack.pop_back();
         break;
       }
       default:
@@ -4012,6 +4056,9 @@ std::ostream& operator<<(std::ostream& os, wasm::MemoryOrder mo) {
   switch (mo) {
     case wasm::MemoryOrder::Unordered:
       os << "Unordered";
+      break;
+    case wasm::MemoryOrder::Relaxed:
+      os << "Relaxed";
       break;
     case wasm::MemoryOrder::SeqCst:
       os << "SeqCst";

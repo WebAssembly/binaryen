@@ -1,0 +1,1443 @@
+/*
+ * Copyright 2026 WebAssembly Community Group participants
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#include <optional>
+
+#include "ir/constraint.h"
+#include "ir/find_all.h"
+#include "ir/properties.h"
+#include "wasm.h"
+
+namespace wasm::constraint {
+
+namespace {
+
+std::optional<SpansU2>
+getSpansInternal(const Constraint& c, std::optional<Type> type, bool exact) {
+  using namespace Abstract;
+
+  auto* cc = std::get_if<Literal>(&c.term);
+  if (cc) {
+    // If passed in, the type must be right.
+    assert(!type || *type == cc->type);
+
+    type = cc->type;
+  }
+
+  if (type && !type->isInteger()) {
+    // References etc. do not convert to spans.
+    return {};
+  }
+
+  // Maximum values, as represented as uint64_t's. We generate spans on unsigned
+  // values, converting signed ones to their unsigned representations.
+  uint64_t maxUnsigned = type && *type == Type::i32
+                           ? std::numeric_limits<uint32_t>::max()
+                           : std::numeric_limits<uint64_t>::max();
+  uint64_t maxSigned = type && *type == Type::i32
+                         ? std::numeric_limits<int32_t>::max()
+                         : std::numeric_limits<int64_t>::max();
+  uint64_t minSigned = maxSigned + 1;
+
+  if (!cc) {
+    // Not comparing to a constant, so we can't infer anything exact, but might
+    // if we just need something we can prove, and if we know the type.
+    if (exact || !type) {
+      return {};
+    }
+
+    switch (c.op) {
+      // x < y, i.e., x is less than *something*, proves x != MAX_INT.
+      case LtS:
+        // In the signed case, this is a pair of spans: all to the left and all
+        // to the right of MAX_INT.
+        return SpansU2{{0, maxSigned - 1}, {maxSigned + 1, maxUnsigned}};
+      case LtU:
+        return SpansU2{{0, maxUnsigned - 1}};
+
+      // Similarly, x > y proves x != MIN_INT.
+      case GtS:
+        return SpansU2{{0, minSigned - 1}, {minSigned + 1, maxUnsigned}};
+      case GtU:
+        return SpansU2{{1, maxUnsigned}};
+
+      default: {
+      }
+    }
+
+    return {};
+  }
+
+  auto x = cc->getUnsigned();
+
+  switch (c.op) {
+    case Eq:
+      return SpansU2{{x, x}};
+    case Ne:
+      if (x == 0) {
+        return SpansU2{{1, maxUnsigned}};
+      }
+      if (x == maxUnsigned) {
+        return SpansU2{{0, maxUnsigned - 1}};
+      }
+      return SpansU2{{0, x - 1}, {x + 1, maxUnsigned}};
+
+    case LtS:
+      if (x == minSigned) {
+        // Less than the lowest possible number is an empty span.
+        return SpansU2{};
+      }
+      if (x > maxSigned) {
+        // A negative number, so just a single span.
+        return SpansU2{{maxSigned + 1, x - 1}};
+      }
+      if (x == 0) {
+        // All negative numbers are possible.
+        return SpansU2{{maxSigned + 1, maxUnsigned}};
+      }
+      // A positive number, so all negative ones are possible, and some
+      // positive.
+      return SpansU2{{0, x - 1}, {maxSigned + 1, maxUnsigned}};
+    case LtU:
+      if (x == 0) {
+        // Less than the lowest possible number is an empty span.
+        return SpansU2{};
+      }
+      return SpansU2{{0, x - 1}};
+    case LeS:
+      if (x > maxSigned) {
+        // A negative number, so just a single span.
+        return SpansU2{{maxSigned + 1, x}};
+      }
+      if (x == maxSigned) {
+        // All numbers are possible.
+        return SpansU2{{0, maxUnsigned}};
+      }
+      // A non-negative number, so all negative ones are possible, and some
+      // positive.
+      return SpansU2{{0, x}, {maxSigned + 1, maxUnsigned}};
+    case LeU:
+      return SpansU2{{0, x}};
+
+    case GtS:
+      if (x == maxSigned) {
+        // Greater than the highest possible number is an empty span.
+        return SpansU2{};
+      }
+      if (x <= maxSigned) {
+        // A non-negative number, so just a single span.
+        return SpansU2{{x + 1, maxSigned}};
+      }
+      if (x == maxUnsigned) {
+        // GtS negative one, so 0 and above.
+        return SpansU2{{0, maxSigned}};
+      }
+      // A negative number, so all positive ones are possible, and some
+      // negative.
+      return SpansU2{{0, maxSigned}, {x + 1, maxUnsigned}};
+    case GtU:
+      if (x == maxUnsigned) {
+        // Greater than the highest possible number is an empty span.
+        return SpansU2{};
+      }
+      return SpansU2{{x + 1, maxUnsigned}};
+    case GeS:
+      if (x == minSigned) {
+        // All numbers are possible.
+        return SpansU2{{0, maxUnsigned}};
+      }
+      if (x <= maxSigned) {
+        // A non-negative number, so just a single span.
+        return SpansU2{{x, maxSigned}};
+      }
+      // A negative number, so all positive ones are possible, and some
+      // negative.
+      return SpansU2{{0, maxSigned}, {x, maxUnsigned}};
+    case GeU:
+      return SpansU2{{x, maxUnsigned}};
+
+    default: {
+    }
+  }
+
+  return {};
+}
+
+} // anonymous namespace
+
+std::optional<SpansU2> Constraint::getSpans(std::optional<Type> type) const {
+  return getSpansInternal(*this, type, true);
+}
+
+std::optional<SpansU2>
+Constraint::getProvenSpans(std::optional<Type> type) const {
+  return getSpansInternal(*this, type, false);
+}
+
+namespace {
+
+Result TrueFalse(bool x) { return x ? True : False; }
+
+Result TrueFalse(Literal x) { return TrueFalse(x.getUnsigned()); }
+
+// Evaluate whether a => b, where a and b are operations on constants.
+Result provesConstantPair(Abstract::Op aOp,
+                          const Literal& aConstant,
+                          Abstract::Op bOp,
+                          const Literal& bConstant,
+                          bool recursing = false) {
+  using namespace Abstract;
+
+  // a == A =?=> a op B. Simply apply A to the operation against B.
+  if (aOp == Eq) {
+    switch (bOp) {
+      case Eq:
+        return TrueFalse(aConstant.eq(bConstant));
+      case Ne:
+        return TrueFalse(aConstant.ne(bConstant));
+      case LtS:
+        return TrueFalse(aConstant.ltS(bConstant));
+      case LeS:
+        return TrueFalse(aConstant.leS(bConstant));
+      case GtS:
+        return TrueFalse(aConstant.gtS(bConstant));
+      case GeS:
+        return TrueFalse(aConstant.geS(bConstant));
+      case LtU:
+        return TrueFalse(aConstant.ltU(bConstant));
+      case LeU:
+        return TrueFalse(aConstant.leU(bConstant));
+      case GtU:
+        return TrueFalse(aConstant.gtU(bConstant));
+      case GeU:
+        return TrueFalse(aConstant.geU(bConstant));
+      default: {
+      }
+    }
+  }
+
+  // a != A =?=> a == B. False if A = B, else unknown.
+  if (aOp == Ne && bOp == Eq) {
+    if (aConstant.eq(bConstant).getInteger()) {
+      return False;
+    }
+  }
+
+  // a != A =?=> a != B. True if A = B, else unknown.
+  if (aOp == Ne && bOp == Ne) {
+    if (aConstant.eq(bConstant).getInteger()) {
+      return True;
+    }
+  }
+
+  if (!recursing) {
+    // The flipped operation may tell us something:  y ==> !x  implies
+    // x ==> y  is false (because if not, then x would prove y, and y would
+    // prove !x, a contradiction).
+    if (provesConstantPair(bOp, bConstant, aOp, aConstant, true) == False) {
+      return False;
+    }
+  }
+
+  // TODO: handle all the rest of >, >=, <, and <=
+  return Unknown;
+}
+
+// Evaluate whether a => b, where a and b are operations on identical terms.
+Result provesTermEqualPair(Abstract::Op aOp, Abstract::Op bOp) {
+  using namespace Abstract;
+
+  // Trivial cases where aOp == bOp or aOp == !bOp are taken care of elsewhere.
+  assert(aOp != bOp && aOp != Abstract::negateRelational(bOp));
+
+  switch (aOp) {
+    case Eq:
+      // == proves >= etc. true, and > (without =) false
+      if (bOp == LeU || bOp == LeS || bOp == GeU || bOp == GeS) {
+        return True;
+      }
+      if (bOp == LtU || bOp == LtS || bOp == GtU || bOp == GtS) {
+        return False;
+      }
+      break;
+    case LtS:
+      // < proves <=, != true and ==, > false
+      if (bOp == LeS || bOp == Ne) {
+        return True;
+      }
+      if (bOp == Eq || bOp == GtS) {
+        return False;
+      }
+      break;
+    case GtS:
+      // Ditto, with G instead of L.
+      if (bOp == GeS || bOp == Ne) {
+        return True;
+      }
+      if (bOp == Eq || bOp == LtS) {
+        return False;
+      }
+      break;
+    case LtU:
+      // Ditto, with unsigned.
+      if (bOp == LeU || bOp == Ne) {
+        return True;
+      }
+      if (bOp == Eq || bOp == GtU) {
+        return False;
+      }
+      break;
+    case GtU:
+      // Ditto, with G instead of L.
+      if (bOp == GeU || bOp == Ne) {
+        return True;
+      }
+      if (bOp == Eq || bOp == LtU) {
+        return False;
+      }
+      break;
+    default: {
+    }
+  }
+
+  return Unknown;
+}
+
+// Core comparison of two constraints: whether a => b
+Result provesPair(const Constraint& a, const Constraint& b) {
+  // A thing always implies itself.
+  if (a == b) {
+    return True;
+  }
+
+  // A thing always implies its negation is false.
+  if (a == b.negate()) {
+    return False;
+  }
+
+  // Comparisons of two constants.
+  auto* aConstant = std::get_if<Literal>(&a.term);
+  auto* bConstant = std::get_if<Literal>(&b.term);
+  if (aConstant && bConstant) {
+    auto result = provesConstantPair(a.op, *aConstant, b.op, *bConstant);
+    if (result != Unknown) {
+      return result;
+    }
+  }
+
+  // If we can represent both as spans, we can calculate that way. At least one
+  // must be a constant in this case, so that we know the type.
+  if (aConstant || bConstant) {
+    auto type = aConstant ? aConstant->type : bConstant->type;
+    // A constraint's "proven spans" are an over-approximation (superset) of the
+    // values for which the constraint holds (c => proven(c)), whereas its
+    // "exact spans" are the exact set of values (c <=> exact(c)), which may not
+    // exist when comparing against another local.
+    //
+    // To prove that a => b (return True), we check that b's exact spans contain
+    // a's proven spans:
+    //
+    //   a => proven(a) => exact(b) => b
+    //
+    // Using proven(b) here would be unsound because exact(b) => proven(b) goes
+    // the wrong way.
+    //
+    // To prove that a => !b (return False), however, it suffices to check that
+    // a's proven spans and b's proven spans do not overlap:
+    //
+    //   a => proven(a) => !proven(b) => !b
+    //
+    // Using proven(b) instead of exact(b) here is both more powerful (it works
+    // when b compares against a local, such as x <_u $y having proven span
+    // [0, MAX_UINT - 1]) and ensures that disjointness is symmetric between
+    // provesPair(a, b) and provesPair(b, a).
+    //
+    // Note that empty spans (from immediate contradictions such as
+    // x >_s MAX_INT) do not need special-casing: an empty proven(a) is
+    // vacuously contained in any exact(b) (returning True), and an empty
+    // proven(b) has no overlap with any proven(a) (returning False).
+    if (auto aProvenSpans = a.getProvenSpans(type)) {
+      auto bSpans = b.getSpans(type);
+      auto bProvenSpans = b.getProvenSpans(type);
+
+      if (bSpans) {
+        if (bSpans->contains(*aProvenSpans)) {
+          // b's values contains a's, e.g., b = { 0 < x < 10 } and
+          // a = { 3 < x < 7 }, so a => b.
+          return True;
+        }
+      }
+      if (bProvenSpans) {
+        if (!bProvenSpans->hasOverlap(*aProvenSpans)) {
+          // There is no overlap at all, e.g., { 0 < x < 10 } vs { 20 < x < 30
+          // }, both cannot be true and each proves the other false.
+          return False;
+        }
+      }
+    }
+  }
+
+  if (a.term == b.term) {
+    return provesTermEqualPair(a.op, b.op);
+  }
+
+  return Unknown;
+}
+
+} // anonymous namespace
+
+Result AndedConstraintSet::proves(const Constraint& condition) const {
+  if (provesEverything()) {
+    return True;
+  }
+  // Note we do not need to handle the provesNothing case in a special way: the
+  // loop below finds nothing.
+
+  // Sometimes a single constraint is enough to determine the condition.
+  for (auto& c : *this) {
+    auto result = provesPair(c, condition);
+    if (result != Unknown) {
+      return result;
+    }
+  }
+
+  // TODO smarts for multiple constraints
+
+  // Otherwise, who knows.
+  return Unknown;
+}
+
+Result AndedConstraintSet::proves(const AndedConstraintSet& other) const {
+  if (provesEverything()) {
+    return True;
+  }
+
+  if (other.provesEverything()) {
+    // We are not a contradiction, but other is, so we prove it false.
+    return False;
+  }
+
+  bool hasUnknown = false;
+
+  for (auto& c : other) {
+    auto result = proves(c);
+    if (result == False) {
+      // The entire conjunction is proven false.
+      return False;
+    }
+    if (result == Unknown) {
+      hasUnknown = true;
+    }
+  }
+
+  return hasUnknown ? Unknown : True;
+}
+
+namespace {
+
+// Do an AND on a pair of constraints, looking for a way to fuse them together
+// into a single constraint that represents them both, while assuming the
+// constraints have an equal term. If we fail, return nullopt.
+std::optional<Constraint> fusedApproximateAndTermEqualPair(
+  const Abstract::Op aOp, const Abstract::Op bOp, const Term& term) {
+  using namespace Abstract;
+
+  // x < C && x <= C  ===  x < C
+  if (aOp == LtS && bOp == LeS) {
+    return Constraint{LtS, term};
+  }
+  if (aOp == LtU && bOp == LeU) {
+    return Constraint{LtU, term};
+  }
+
+  // TODO: all the rest
+
+  return {};
+}
+
+// Do an AND on a pair of constraints, looking for a way to fuse them together
+// into a single constraint that represents them both. If we fail, return
+// nullopt.
+std::optional<Constraint> fusedApproximateAndPair(const Constraint& a,
+                                                  const Constraint& b,
+                                                  bool recursing = false) {
+  // If a proves b is true, all we need is a (e.g. { x == 5 && x > 0 } => x == 5
+  if (provesPair(a, b) == True) {
+    return a;
+  }
+
+  if (a.term == b.term) {
+    if (auto result = fusedApproximateAndTermEqualPair(a.op, b.op, a.term)) {
+      return result;
+    }
+  }
+
+  if (!recursing) {
+    // The flipped form may be recognized.
+    return fusedApproximateAndPair(b, a, true);
+  }
+
+  return {};
+}
+
+bool isImmediateContradiction(const Constraint& c) {
+  using namespace Abstract;
+
+  auto* cc = std::get_if<Literal>(&c.term);
+  if (!cc) {
+    // Only operations on constants can be immediate contradictions.
+    return false;
+  }
+
+  if (!cc->type.isInteger()) {
+    return false;
+  }
+
+  auto minSigned = cc->type == Type::i32 ? std::numeric_limits<int32_t>::min()
+                                         : std::numeric_limits<int64_t>::min();
+  auto maxSigned = cc->type == Type::i32 ? std::numeric_limits<int32_t>::max()
+                                         : std::numeric_limits<int64_t>::max();
+  auto maxUnsigned = cc->type == Type::i32
+                       ? std::numeric_limits<uint32_t>::max()
+                       : std::numeric_limits<uint64_t>::max();
+
+  switch (c.op) {
+    case LtS:
+      if (cc->getInteger() == minSigned) {
+        // Less than the lowest possible number.
+        return true;
+      }
+      break;
+    case LtU:
+      if (cc->getInteger() == 0) {
+        // Less than the lowest possible number.
+        return true;
+      }
+      break;
+    case GtS:
+      if (cc->getInteger() == maxSigned) {
+        // Greater than the highest possible number.
+        return true;
+      }
+      break;
+    case GtU:
+      if (cc->getUnsigned() == maxUnsigned) {
+        // Greater than the highest possible number.
+        return true;
+      }
+      break;
+    default: {
+    }
+  }
+
+  return false;
+}
+
+} // anonymous namespace
+
+void AndedConstraintSet::approximateAnd(const Constraint& c) {
+  if (provesEverything()) {
+    // Nothing to add.
+    return;
+  }
+
+  // We don't store contradictions: identify them and mark us as such.
+  if (isImmediateContradiction(c)) {
+    setProvesEverything();
+    return;
+  }
+
+  auto result = proves(c);
+  if (result == True) {
+    // We already prove c to be true, so it adds nothing.
+    return;
+  } else if (result == False) {
+    // We are now a contradiction.
+    setProvesEverything();
+    return;
+  }
+
+  for (auto& existing : *this) {
+    // Some ANDed constraints fuse together into a new constraint.
+    if (auto fused = fusedApproximateAndPair(existing, c)) {
+      existing = *fused;
+
+      // Sort to ensure we are in the right place.
+      std::sort(begin(), end());
+
+      return;
+    }
+  }
+
+  // TODO: use Spans here when possible
+
+  if (size() < MaxConstraints) {
+    // Insert into the right place, keeping us sorted.
+    insert(std::upper_bound(begin(), end(), c), c);
+    return;
+  }
+
+  // Otherwise, just do not add this one.
+  // TODO: We could try to be clever and see if one of the existing ones makes
+  //       more sense to drop. In particular, we should prefer "better" ones
+  //       like > over >= and so forth (sorting more precise ones earlier may be
+  //       useful to implement that).
+}
+
+namespace {
+
+// Do an OR of a pair of constraints where the terms are known to be equal. If
+// we can't find a good way to express their ORing, return nullopt.
+std::optional<Constraint> approximateOrTermEqualPair(const Abstract::Op aOp,
+                                                     const Abstract::Op bOp,
+                                                     const Term& term) {
+  using namespace Abstract;
+
+  // x == C || x > C  ===  x >= C
+  if (aOp == Eq && bOp == GtS) {
+    return Constraint{GeS, term};
+  }
+  if (aOp == Eq && bOp == GtU) {
+    return Constraint{GeU, term};
+  }
+
+  // x > C || x >= C  ===  x >= C
+  if (aOp == GtS && bOp == GeS) {
+    return Constraint{GeS, term};
+  }
+  if (aOp == GtU && bOp == GeU) {
+    return Constraint{GeU, term};
+  }
+
+  // TODO: all the rest
+
+  return {};
+}
+
+// Do an OR of a pair of constraints where the terms are adjacent constants: a
+// operates on C, and b on C+1.
+std::optional<Constraint> approximateOrAdjacentConstantPair(
+  const Abstract::Op aOp, const Literal& aConstant, const Abstract::Op bOp) {
+  using namespace Abstract;
+
+  // x == C || x >= C+1  ===  x >= C, if C+1 does not overflow.
+  if (aOp == Eq && bOp == GeS && !aConstant.isSignedMax()) {
+    return Constraint{GeS, {aConstant}};
+  }
+  if (aOp == Eq && bOp == GeU && !aConstant.isUnsignedMax()) {
+    return Constraint{GeU, {aConstant}};
+  }
+
+  // x > C || x >= C+1  ===  x > C, if C+1 does not overflow.
+  if (aOp == GtS && bOp == GeS && !aConstant.isSignedMax()) {
+    return Constraint{GtS, {aConstant}};
+  }
+  if (aOp == GtU && bOp == GeU && !aConstant.isUnsignedMax()) {
+    return Constraint{GtU, {aConstant}};
+  }
+
+  // TODO: all the rest
+
+  return {};
+}
+
+// Do an OR of a pair of constraints. If we can't find a good way to express
+// their ORing, return nullopt.
+std::optional<Constraint> approximateOrPair(const Constraint& a,
+                                            const Constraint& b,
+                                            bool recursing = false) {
+  if (a.term == b.term) {
+    if (auto result = approximateOrTermEqualPair(a.op, b.op, a.term)) {
+      return result;
+    }
+  }
+
+  // See if we operate on constants N, N+1.
+  if (auto* ac = std::get_if<Literal>(&a.term)) {
+    if (auto* bc = std::get_if<Literal>(&b.term)) {
+      if (ac->type == bc->type && ac->type.isInteger() &&
+          ac->add(Literal::makeFromInt32(1, ac->type)) == *bc) {
+        if (auto result = approximateOrAdjacentConstantPair(a.op, *ac, b.op)) {
+          return result;
+        }
+      }
+    }
+  }
+
+  // If a proves b, e.g. x = 5 proves x >= 0 is true, then the OR is b.
+  if (provesPair(a, b) == True) {
+    return b;
+  }
+
+  // TODO: more smarts
+
+  if (!recursing) {
+    // The flipped form may be recognized.
+    return approximateOrPair(b, a, true);
+  }
+
+  return {};
+}
+
+// Do an OR in full detail, looking at every constraint in each of the given
+// sets.
+AndedConstraintSet detailedApproximateOr(const AndedConstraintSet& a,
+                                         const AndedConstraintSet& b) {
+  // We can process this in full detail by looking at all the combinations of
+  // individual constraints, because of the distributive property:
+  //
+  // (A & B) | (C & D) == ((A & B) | C) & ((A & B) | D)
+  //                   == (A | C) & (B | C) & (A | D) & (B | D)
+  //
+  // This is quadratic, but constraint sets are limited to a very small size,
+  // making this reasonable.
+  //
+  // Also, note that we don't need to worry about new contradictions here: ORing
+  // things never leads to a contradiction, and we can assume the inputs are
+  // not contradictions.
+  assert(!a.provesEverything() && !b.provesEverything());
+
+  auto result = AndedConstraintSet::makeProvesNothing();
+  for (auto& ac : a) {
+    for (auto& bc : b) {
+      if (auto combined = approximateOrPair(ac, bc)) {
+        // We found something useful by ORing them, keep it.
+        result.approximateAnd(*combined);
+      }
+    }
+  }
+  return result;
+}
+
+} // anonymous namespace
+
+bool AndedConstraintSet::approximateOr(const AndedConstraintSet& other) {
+  // If one proves everything, the only thing that matters is the other.
+  if (other.provesEverything()) {
+    return false;
+  }
+  if (provesEverything()) {
+    *this = other;
+    return true;
+  }
+
+  // If this is already implied by current constraints, then it is redundant.
+  // E.g. if we are { x = 10 } and other is { x >= 0 } then all we need is
+  // { x >= 0 } as the result of the OR.
+  if (other.proves(*this) == True) {
+    return false;
+  }
+  if (proves(other) == True) {
+    *this = other;
+    return true;
+  }
+
+  // TODO: use Spans here when possible
+
+  // For more complex cases, do a detailed analysis.
+  auto result = detailedApproximateOr(*this, other);
+  auto changed = (result != *this);
+  *this = result;
+  return changed;
+}
+
+namespace {
+
+// Internal parsing, utilizing a map of tees. We can handle tees in an
+// expression, so long as they do not interfere with each other:
+//
+//  (i32.eq
+//    (local.tee $x ..)
+//    (i32.const 10)
+//  )
+//
+// We can parse this into $x == 10, just as if we saw a local.get $x there. But
+// we cannot handle this:
+//
+//  (i32.eq
+//    (local.get $x)
+//    (local.tee $x ..)
+//  )
+//
+// Parsing this into $x == $x would be wrong: the first $x is the old value.
+// That is, fully handling tees requires a more SSA-like IR. To handle the
+// common cases we want to, we parse the code in the natural order of execution,
+// and maintain a list of local operations. A get before a tee indicates
+// possible interference.
+struct LocalOperations {
+  SmallVector<Expression*, 10> vec;
+
+  // Check if an Expression returns a local's value: it is either a get or a
+  // tee. Returns the index and type if so, and notes it in our vector.
+  struct LocalOperation {
+    Index index;
+  };
+  std::optional<LocalOperation> parse(Expression* curr) {
+    auto handleNestedSets = [&](Expression* from) {
+      for (auto* nested : FindAll<LocalSet>(from).list) {
+        vec.push_back(nested);
+      }
+    };
+
+    if (auto* get = curr->dynCast<LocalGet>()) {
+      vec.push_back(get);
+      return LocalOperation{get->index};
+    }
+    if (auto* set = curr->dynCast<LocalSet>()) {
+      // We are parsing expressions in a tree, not none-typed items in a block.
+      assert(set->isTee());
+
+      // We know the value of this expression - the local the tee writes to -
+      // but further sets may be nested in the value, affecting other locals.
+      handleNestedSets(set->value);
+
+      // Ignore unreachable code, so the callers don't need to handle it.
+      if (set->type == Type::unreachable) {
+        return {};
+      }
+
+      vec.push_back(set);
+      return LocalOperation{set->index};
+    }
+    // Unrecognized. As above, we must scan for nested sets.
+    handleNestedSets(curr);
+    return {};
+  }
+
+  // Check for any possible interference between locals, which would tell the
+  // caller that whatever was parsed is not valid.
+  bool hasLocalInterference() const {
+    if (vec.size() <= 1) {
+      return false;
+    }
+
+    // Process the list in detail, as interference - a get before a set of the
+    // same local - is possible. We track the read locals, and if we see a
+    // later write, that shows a problem.
+    std::unordered_set<Index> read;
+    for (auto* curr : vec) {
+      if (auto* get = curr->dynCast<LocalGet>()) {
+        read.insert(get->index);
+      } else if (auto* set = curr->dynCast<LocalSet>()) {
+        if (read.contains(set->index)) {
+          return true;
+        }
+        // Insert a read, because the tee does both a write and a read.
+        if (set->isTee()) {
+          read.insert(set->index);
+        }
+      } else {
+        WASM_UNREACHABLE("invalid local op");
+      }
+    }
+    return false;
+  }
+};
+
+std::optional<LocalConstraint>
+localConstraintParseInternal(Expression* curr,
+                             LocalOperations& localOperations) {
+  auto parseEqZArgument =
+    [&](Expression* value) -> std::optional<LocalConstraint> {
+    if (auto parsed = localConstraintParseInternal(value, localOperations)) {
+      return parsed->negate();
+    }
+    if (auto localOp = localOperations.parse(value)) {
+      // Canonicalize EqZ to Eq of 0.
+      auto zero = Literal::makeZero(value->type);
+      return LocalConstraint{localOp->index, Constraint{Abstract::Eq, {zero}}};
+    }
+    return {};
+  };
+
+  if (auto* u = curr->dynCast<Unary>()) {
+    if (Abstract::getUnary(u->value->type, Abstract::EqZ) == u->op) {
+      return parseEqZArgument(u->value);
+    }
+
+    return {};
+  }
+
+  if (auto* refIsNull = curr->dynCast<RefIsNull>()) {
+    return parseEqZArgument(refIsNull->value);
+  }
+
+  // Parse a get, tee, or a constant.
+  auto parseTerm = [&](Expression* expr) -> std::optional<Term> {
+    if (auto localOp = localOperations.parse(expr)) {
+      return Term{localOp->index};
+    }
+    if (Properties::isSingleConstantExpression(expr)) {
+      return Term{Properties::getLiteral(expr)};
+    }
+    return {};
+  };
+
+  auto parseBinaryArguments =
+    [&](Abstract::Op op,
+        Expression* left,
+        Expression* right) -> std::optional<LocalConstraint> {
+    // The left must be a get or a tee.
+    if (auto localOp = localOperations.parse(left)) {
+      // The right can be any term.
+      if (auto value = parseTerm(right)) {
+        return LocalConstraint{localOp->index, Constraint{op, *value}};
+      }
+    }
+    return {};
+  };
+
+  if (auto* binary = curr->dynCast<Binary>()) {
+    // The operation must be one we recognize.
+    for (auto op : {Abstract::Eq,
+                    Abstract::Ne,
+                    Abstract::LtS,
+                    Abstract::LtU,
+                    Abstract::LeS,
+                    Abstract::LeU,
+                    Abstract::GtS,
+                    Abstract::GtU,
+                    Abstract::GeS,
+                    Abstract::GeU}) {
+      if (Abstract::getBinary(binary->left->type, op) == binary->op) {
+        return parseBinaryArguments(op, binary->left, binary->right);
+      }
+    }
+    return {};
+  }
+
+  if (auto* refEq = curr->dynCast<RefEq>()) {
+    return parseBinaryArguments(Abstract::Eq, refEq->left, refEq->right);
+  }
+
+  return {};
+}
+
+} // anonymous namespace
+
+std::optional<LocalConstraint> LocalConstraint::parse(Expression* curr) {
+  LocalOperations localOperations;
+  auto ret = localConstraintParseInternal(curr, localOperations);
+  if (localOperations.hasLocalInterference()) {
+    return {};
+  }
+  return ret;
+}
+
+ParsedAndedConstraints ParsedAndedConstraints::parse(Expression* curr) {
+  using namespace Match;
+
+  // The final return value.
+  ParsedAndedConstraints ret;
+
+  // We will track local operations over the entire tree we parse.
+  LocalOperations localOperations;
+
+  // Starting from |curr|, parse and recurse into sub-trees: when we see an AND,
+  // we push both children as further work.
+  SmallVector<Expression*, 4> work;
+  work.push_back(curr);
+  while (!work.empty()) {
+    auto* curr = work.back();
+    work.pop_back();
+
+    auto parsed = localConstraintParseInternal(curr, localOperations);
+    if (parsed) {
+      ret.push_back(*parsed);
+      continue;
+    }
+
+    Binary* b;
+    if (matches(curr, binary(&b, Abstract::And, any(), any()))) {
+      // An AND can be recursively processed: both sides must be true. Push them
+      // in reverse order, so we process them in the natural order of execution.
+      work.push_back(b->right);
+      work.push_back(b->left);
+      continue;
+    }
+    // TODO: support OR
+
+    // We failed to parse this as constraints. We do still need to check for
+    // local operations that might interfere with the things we did parse,
+    // otherwise.
+    localOperations.parse(curr);
+    ret.hasUnknown = true;
+  }
+
+  if (localOperations.hasLocalInterference()) {
+    return {};
+  }
+  return ret;
+}
+
+ParsedAndedConstraints
+ParsedAndedConstraints::parseCondition(Expression* curr) {
+  // A get or tee by itself is a check for not being null.
+  LocalOperations localOperations;
+  if (auto localOp = localOperations.parse(curr)) {
+    auto value = Literal::makeZero(curr->type);
+    return {LocalConstraint{localOp->index, Constraint{Abstract::Ne, {value}}}};
+  }
+
+  // Otherwise, parse normally.
+  return parse(curr);
+}
+
+void ParsedAndedConstraints::negate() {
+  if (empty()) {
+    return;
+  }
+
+  if (hasUnknown) {
+    // This includes things we don't know about, and don't know how to negate.
+    clear();
+    return;
+  }
+
+  // The input is a list of constraints all applying at once, A & B & C. The
+  // negation is !A | !B | !C, but we cannot express a general OR like that,
+  // except in the simple case where they all talk about the same local: then
+  // we can at least approximateOr them all into one constraint.
+  auto& self = *this;
+  for (Index i = 1; i < size(); i++) {
+    if (self[i].local != self[0].local) {
+      // They refer to different locals. Give up.
+      clear();
+      return;
+    }
+  }
+
+  // Negate them before the OR.
+  for (auto& pair : self) {
+    pair.constraint = pair.constraint.negate();
+  }
+
+  if (size() == 1) {
+    // The simple case of 1 doesn't need any more work.
+    return;
+  }
+
+  // Do the OR.
+  AndedConstraintSet anded;
+  anded.set(self[0].constraint);
+  for (Index i = 1; i < size(); i++) {
+    anded.approximateOr({self[i].constraint});
+    if (anded.provesNothing()) {
+      // We have nothing useful here.
+      clear();
+      return;
+    }
+  }
+
+  // Return only the OR'ed result.
+  auto local = self[0].local;
+  clear();
+  for (auto& c : anded) {
+    emplace_back(local, c);
+  }
+}
+
+void LocalConstraint::flip() {
+  auto other = std::get<Index>(constraint.term);
+  constraint.term = Term{local};
+  local = other;
+  if (Abstract::isRelationalAntisymmetric(constraint.op)) {
+    constraint.op = Abstract::flipRelational(constraint.op);
+  } else {
+    // All we support for now are symmetric and antisymmetric operations.
+    assert(Abstract::isRelationalSymmetric(constraint.op));
+  }
+}
+
+void BasicBlockConstraintMap::set(Index index, const Constraint& c) {
+  set(index, AndedConstraintSet{c});
+}
+
+void BasicBlockConstraintMap::set(Index index,
+                                  const AndedConstraintSet& constraints) {
+  // We should not set values in unreachable code.
+  assert(!unreachable);
+
+  // Clear the old state, making us prove nothing.
+  eraseStaleRefs(index);
+  map.erase(index);
+
+  // Apply the constraints, if there are any.
+  if (!constraints.provesNothing()) {
+    for (auto& c : constraints) {
+      approximateAnd(index, c);
+    }
+  }
+}
+
+void BasicBlockConstraintMap::set(Index index, Expression* value) {
+  using namespace Match;
+  using namespace Abstract;
+
+  // Apply a constraint to a value, x = C.
+  if (Properties::isSingleConstantExpression(value)) {
+    auto c = Properties::getLiteral(value);
+    set(index, Constraint{Eq, {c}});
+    return;
+  }
+
+  // Apply a constraint to a local, x = y.
+  if (auto* get = value->dynCast<LocalGet>()) {
+    set(index, Constraint{Eq, {get->index}});
+    return;
+  }
+  if (auto* tee = value->dynCast<LocalSet>()) {
+    set(index, Constraint{Eq, {tee->index}});
+    return;
+  }
+
+  // Apply an increment of a local, x = y + 1.
+  Index y;
+  if (matches(value, binary(Add, local(&y), ival(1)))) {
+    // The local y must have old constraints that we know how to increment and
+    // transform into new ones.
+    const auto old = get(y);
+    auto new_ = old;
+
+    // If we see an unsigned upper bound but not a lower one, we can add a
+    // lower one (if we do not overflow). That is, if we see x < 100, x++, then
+    // we can not only update x < 100 to x <= 100, but also add x > 0 (since 0
+    // is impossible after the ++). This is not possible for signed operations,
+    // since x++ does not prove x > 0 there (0 is not the only value that is
+    // <= 0).
+    bool hasUnsignedUpperBound = false;
+    Type type;
+
+    // Iterate over the old constraints and increment each one.
+    for (auto iter = new_.begin(); iter != new_.end();) {
+      auto& c = *iter;
+      auto* N = std::get_if<Literal>(&c.term);
+      if (!N) {
+        // A non-constant term, which we don't know how to increment. Simply
+        // remove it: we are losing proving power here, but doing so is never
+        // invalid.
+        iter = new_.erase(iter);
+        continue;
+      }
+      type = N->type;
+
+      switch (c.op) {
+        // x == N, x++  =>  x == N+1.
+        case Eq:
+          *N = N->add(Literal::makeFromInt32(1, N->type));
+          break;
+        // x >= N, x++  =>  x > N if no overflow
+        case GeS:
+          if (old.proves({LtS, {Literal::makeSignedMax(N->type)}}) != True) {
+            iter = new_.erase(iter);
+            continue;
+          }
+          c.op = GtS;
+          break;
+        case GeU:
+          if (old.proves({LtU, {Literal::makeUnsignedMax(N->type)}}) != True) {
+            iter = new_.erase(iter);
+            continue;
+          }
+          c.op = GtU;
+          break;
+        // x < N, x++  =>  x <= N
+        case LtS:
+          c.op = LeS;
+          break;
+        case LtU:
+          c.op = LeU;
+          hasUnsignedUpperBound = true;
+          break;
+        // x <= N, x++ => x <= N+1 if no overflow
+        case LeS:
+          if (N->isSignedMax()) {
+            iter = new_.erase(iter);
+            continue;
+          }
+          *N = N->add(Literal::makeFromInt32(1, N->type));
+          break;
+        case LeU:
+          if (N->isUnsignedMax()) {
+            iter = new_.erase(iter);
+            continue;
+          }
+          *N = N->add(Literal::makeFromInt32(1, N->type));
+          hasUnsignedUpperBound = true;
+          break;
+        default:
+          // Something we don't recognize.
+          iter = new_.erase(iter);
+          continue;
+      }
+
+      ++iter;
+    }
+
+    if (hasUnsignedUpperBound) {
+      // We know we did not overflow (we are bounded from above), so add x > 0.
+      new_.approximateAnd({GtU, {Literal::makeFromInt32(0, type)}});
+    }
+
+    set(index, new_);
+    return;
+  }
+
+  // We know and can prove nothing.
+  setProvesNothing(index);
+}
+
+void BasicBlockConstraintMap::setProvesNothing(Index index) {
+  assert(!unreachable);
+  eraseStaleRefs(index);
+  map.erase(index);
+}
+
+bool BasicBlockConstraintMap::approximateOr(
+  const BasicBlockConstraintMap& other) {
+  // If one is unreachable, it adds nothing to the other.
+  if (other.unreachable) {
+    return false;
+  }
+  if (unreachable) {
+    *this = other;
+    return true;
+  }
+
+  // Both maps are sorted by local Index. Intersect in place: for us to be able
+  // to prove something (for us to have an entry in the ORed map), there must
+  // have been an entry in both original maps.
+  bool changed = false;
+  auto oldSize = map.size();
+  map.intersectAndFilter(other.map, [&](auto& self, const auto& other) {
+    changed |= self.value.approximateOr(other.value);
+    assert(!self.value.provesEverything());
+    // Keep only entries that prove things, as others should not be in the map.
+    return !self.value.provesNothing();
+  });
+  if (map.size() != oldSize) {
+    changed = true;
+  }
+
+  // We could more precisely find which locals were removed from the map, but
+  // stale refs have low overhead and no correctness cost, so just handle the
+  // common, simple case of nothing remaining, so no refs are needed.
+  if (map.empty()) {
+    refs.clear();
+  }
+
+  return changed;
+}
+
+void BasicBlockConstraintMap::approximateAndInternal(Index index,
+                                                     const Constraint& c,
+                                                     bool flip,
+                                                     bool isCopy) {
+  // We should not be applying constraints when already unreachable.
+  assert(!unreachable);
+
+  Constraint actual = c;
+  if (flip) {
+    LocalConstraint flipped{index, c};
+    flipped.flip();
+    index = flipped.local;
+    actual = flipped.constraint;
+  }
+
+  if (auto* other = std::get_if<Index>(&actual.term)) {
+    // Never add constraints to ourselves (x == x, etc., which can happen due to
+    // copying/flipping).
+    if (*other == index) {
+      return;
+    }
+
+    // If we are applying a constraint to another local, and we know that
+    // local's value, propagate it. That is, if x == 42, then if we try to apply
+    // y < x we instead apply y < 42, which is better.
+    if (auto iter = map.find(*other); iter != map.end()) {
+      if (auto lit = iter->value.getLiteral()) {
+        actual.term = Term{*lit};
+      }
+    }
+  }
+
+  // Refer to the constraints for this index. If this is the first access of
+  // the local, then we insert a new item into the map, which has a default of
+  // provesNothing, which we need to populate (provesNothing cannot otherwise
+  // be found in the map, as we never store it).
+  auto& indexConstraints =
+    map.insert({index, AndedConstraintSet::makeProvesNothing()}).value;
+  // As in ::set(), this makes the map temporarily invalid until the
+  // approximateAnd, as we don't store proves-nothing in the map, normally.
+
+  indexConstraints.approximateAnd(actual);
+
+  if (indexConstraints.provesEverything()) {
+    // We just proved we are in unreachable code.
+    unreachable = true;
+    map.clear();
+    refs.clear();
+    return;
+  }
+
+  // We just added a constraint, so we can prove something (we may lose some
+  // information as this is an approximate AND, but we cannot lose it all).
+  assert(!indexConstraints.provesNothing());
+
+  // Add a ref of what we are adding. Note that the approximation above may end
+  // up not actually adding this, or adding only part of this, but it is safe to
+  // always add a ref (at the cost of minor wasted work).
+  noteRefs(index, actual);
+
+  // If this is not the flipped version, and it refers to a local, add the
+  // flipped one too.
+  if (!flip && std::holds_alternative<Index>(actual.term)) {
+    approximateAndInternal(index, actual, true, isCopy);
+    if (unreachable) {
+      // We just found a contradiction.
+      return;
+    }
+  }
+
+  // If this constraint is simply "== x", then we are equal to that other local
+  // x, and can copy its constraints (if we are not already such a copy).
+  if (!isCopy) {
+    if (auto* other = std::get_if<Index>(&actual.term)) {
+      if (actual.op == Abstract::Eq) {
+        for (auto& otherC : get(*other)) {
+          approximateAndInternal(index, otherC, false, true);
+          if (unreachable) {
+            return;
+          }
+        }
+      }
+    }
+  }
+}
+
+Result BasicBlockConstraintMap::proves(LocalConstraint condition) const {
+  // As in approximateAnd, above, if the term is a local that we know something
+  // about, propagate it. TODO: even without equality, we can add more
+  // constraints here (e.g. x < y and y < 10 can lead to proving x < 10)
+  if (auto* other = std::get_if<Index>(&condition.constraint.term)) {
+    if (*other == condition.local) {
+      // We are comparing a local to itself. The things we can prove in this
+      // case (e.g. x > x is false) do not even require the map.
+      return provesPair(Constraint{Abstract::Eq, {condition.local}},
+                        condition.constraint);
+    }
+    if (auto iter = map.find(*other); iter != map.end()) {
+      if (auto lit = iter->value.getLiteral()) {
+        condition.constraint.term = Term{*lit};
+      }
+    }
+  }
+
+  if (auto iter = map.find(condition.local); iter != map.end()) {
+    return iter->value.proves(condition.constraint);
+  }
+  return Unknown;
+}
+
+void BasicBlockConstraintMap::noteRefs(Index index, const Constraint& c) {
+  if (auto* i = std::get_if<Index>(&c.term)) {
+    refs.insert({*i, {}}).value.insert(index);
+  }
+}
+
+void BasicBlockConstraintMap::eraseStaleRefs(Index index) {
+  auto iter = refs.find(index);
+  if (iter == refs.end()) {
+    return;
+  }
+
+  auto refIndexes = std::move(iter->value);
+  refs.erase(iter);
+
+  for (auto refIndex : refIndexes) {
+    if (auto iter = map.find(refIndex); iter != map.end()) {
+      auto& refConstraints = iter->value;
+      std::erase_if(refConstraints, [&](const auto& c) {
+        if (auto* i = std::get_if<Index>(&c.term)) {
+          if (*i == index) {
+            return true;
+          }
+        }
+        return false;
+      });
+      if (refConstraints.empty()) {
+        // This became trivial.
+        map.erase(iter);
+      }
+    }
+  }
+}
+
+std::ostream& operator<<(std::ostream& o, const Constraint& c) {
+  o << "Constraint{" << c.op << ", ";
+  if (auto* cc = std::get_if<Literal>(&c.term)) {
+    o << *cc;
+  } else if (auto* i = std::get_if<Index>(&c.term)) {
+    o << "$" << *i;
+  }
+  o << '}';
+  return o;
+}
+
+std::ostream& operator<<(std::ostream& o, const LocalConstraint& c) {
+  o << "LocalConstraint{$" << c.local << ", " << c.constraint << '}';
+  return o;
+}
+
+std::ostream& operator<<(std::ostream& o, const AndedConstraintSet& set) {
+  if (set.provesEverything()) {
+    o << "AndedConstraintSet(contradiction)";
+    return o;
+  }
+  o << "AndedConstraintSet{";
+  bool first = true;
+  for (auto& constraint : set) {
+    if (first) {
+      first = false;
+    } else {
+      o << ", ";
+    }
+    o << constraint;
+  }
+  o << '}';
+  return o;
+}
+
+std::ostream& operator<<(std::ostream& o, const BasicBlockConstraintMap& map) {
+  if (map.unreachable) {
+    o << "BasicBlockConstraintMap(unreachable)";
+    return o;
+  }
+  o << "BasicBlockConstraintMap{";
+  bool first = true;
+  for (auto& [local, constraints] : map.map) {
+    if (first) {
+      first = false;
+    } else {
+      o << ", ";
+    }
+    o << local << ": " << constraints;
+  }
+  o << '}';
+  return o;
+}
+
+} // namespace wasm::constraint

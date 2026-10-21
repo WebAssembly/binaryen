@@ -4402,7 +4402,7 @@
   ;; CHECK:      (func $array.cast.struct.set (type $1)
   ;; CHECK-NEXT:  (local $eq (ref eq))
   ;; CHECK-NEXT:  (local $struct (ref struct))
-  ;; CHECK-NEXT:  (local.tee $struct
+  ;; CHECK-NEXT:  (local.set $struct
   ;; CHECK-NEXT:   (block
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (block (result nullref)
@@ -4808,3 +4808,59 @@
     )
   )
 )
+
+(module
+  (type $array (array (mut i32)))
+
+  ;; CHECK:      (type $0 (func))
+
+  ;; CHECK:      (func $unreachable-flow (type $0)
+  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (local $2 i32)
+  ;; CHECK-NEXT:  (local $3 i32)
+  ;; CHECK-NEXT:  (local $4 i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block $block
+  ;; CHECK-NEXT:    (block
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (block (result nullref)
+  ;; CHECK-NEXT:       (local.set $0
+  ;; CHECK-NEXT:        (i32.const 0)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (local.set $1
+  ;; CHECK-NEXT:        (i32.const 0)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (local.set $2
+  ;; CHECK-NEXT:        (i32.const 0)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (local.set $3
+  ;; CHECK-NEXT:        (i32.const 0)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (local.set $4
+  ;; CHECK-NEXT:        (i32.const 0)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (ref.null none)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (return)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $unreachable-flow
+    ;; The return flows into the br_if. This should not cause errors as we
+    ;; optimize out the allocation.
+    (drop
+      (block $block (result arrayref)
+        (br_if $block
+          (array.new_default $array
+            (i32.const 5)
+          )
+          (return)
+        )
+      )
+    )
+  )
+)
+

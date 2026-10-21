@@ -222,7 +222,7 @@ struct StructScanner : public WalkerPass<PostWalker<SubType>> {
 
   void visitStructSet(StructSet* curr) {
     auto type = curr->ref->type;
-    if (type == Type::unreachable || type.isNull()) {
+    if (type == Type::unreachable || type.isBottomRef()) {
       return;
     }
 
@@ -237,7 +237,20 @@ struct StructScanner : public WalkerPass<PostWalker<SubType>> {
 
   void visitStructGet(StructGet* curr) {
     auto type = curr->ref->type;
-    if (type == Type::unreachable || type.isNull()) {
+    if (type == Type::unreachable || type.isBottomRef()) {
+      return;
+    }
+
+    auto ht = std::make_pair(type.getHeapType(), type.getExactness());
+    auto index = curr->index;
+    self().noteRead(type.getHeapType(),
+                    index,
+                    functionSetGetInfos[this->getFunction()][ht][index]);
+  }
+
+  void visitStructWait(StructWait* curr) {
+    auto type = curr->ref->type;
+    if (type == Type::unreachable || type.isBottomRef()) {
       return;
     }
 
@@ -250,7 +263,7 @@ struct StructScanner : public WalkerPass<PostWalker<SubType>> {
 
   void visitStructRMW(StructRMW* curr) {
     auto type = curr->ref->type;
-    if (type == Type::unreachable || type.isNull()) {
+    if (type == Type::unreachable || type.isBottomRef()) {
       return;
     }
 
@@ -273,7 +286,7 @@ struct StructScanner : public WalkerPass<PostWalker<SubType>> {
 
   void visitStructCmpxchg(StructCmpxchg* curr) {
     auto type = curr->ref->type;
-    if (type == Type::unreachable || type.isNull()) {
+    if (type == Type::unreachable || type.isBottomRef()) {
       return;
     }
 
@@ -286,6 +299,8 @@ struct StructScanner : public WalkerPass<PostWalker<SubType>> {
     self().noteRead(heapType, index, info);
     noteExpressionOrCopy(curr->replacement, type, index, info);
   }
+
+  // TODO: visitStructWait
 
   void visitRefCast(RefCast* curr) {
     if (curr->desc) {

@@ -40,6 +40,7 @@ struct RemoveRelaxedSIMD : WalkerPass<PostWalker<RemoveRelaxedSIMD>> {
       ChildLocalizer(curr, getFunction(), *getModule(), getPassOptions())
         .getChildrenReplacement();
     block->list.push_back(Builder(*getModule()).makeUnreachable());
+    block->type = Type::unreachable;
     replaceCurrent(block);
   }
 

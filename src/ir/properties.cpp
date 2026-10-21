@@ -47,6 +47,28 @@ struct GenerativityScanner : public PostWalker<GenerativityScanner> {
   void visitArrayNewElem(ArrayNewElem* curr) { generative = true; }
   void visitArrayNewFixed(ArrayNewFixed* curr) { generative = true; }
   void visitContNew(ContNew* curr) { generative = true; }
+
+  // Notifications/waits depend on events on other threads.
+  void visitAtomicNotify(AtomicNotify* curr) { generative = true; }
+  void visitWaitqueueNotify(WaitqueueNotify* curr) { generative = true; }
+  void visitAtomicWait(AtomicWait* curr) { generative = true; }
+  void visitStructWait(StructWait* curr) { generative = true; }
+  void visitWaitqueueNew(WaitqueueNew* curr) { generative = true; }
+
+  // Instructions that both read and write memory are generative (as they
+  // themselves can lead to a different value being returned from identical-
+  // looking instructions; no other instruction in the middle is needed).
+  void visitAtomicRMW(AtomicRMW* curr) { generative = true; }
+  void visitAtomicCmpxchg(AtomicCmpxchg* curr) { generative = true; }
+  void visitStructRMW(StructRMW* curr) { generative = true; }
+  void visitStructCmpxchg(StructCmpxchg* curr) { generative = true; }
+  void visitArrayRMW(ArrayRMW* curr) { generative = true; }
+  void visitArrayCmpxchg(ArrayCmpxchg* curr) { generative = true; }
+
+  // Growing returns the old size and increases it, so each grow can return a
+  // different value.
+  void visitMemoryGrow(MemoryGrow* curr) { generative = true; }
+  void visitTableGrow(TableGrow* curr) { generative = true; }
 };
 
 } // anonymous namespace
@@ -73,7 +95,7 @@ bool isShallowlyGenerative(Expression* curr, Function* func, Module& wasm) {
 static bool isValidInConstantExpression(Module& wasm, Expression* expr) {
   if (isSingleConstantExpression(expr) || expr->is<StructNew>() ||
       expr->is<ArrayNew>() || expr->is<ArrayNewFixed>() || expr->is<RefI31>() ||
-      expr->is<StringConst>()) {
+      expr->is<StringConst>() || expr->is<WaitqueueNew>()) {
     return true;
   }
 

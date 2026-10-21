@@ -1,11 +1,11 @@
 var builder = new binaryen.TypeBuilder(4);
-builder.setSignatureType(0, binaryen.createType([binaryen.i32]), binaryen.none);
+builder.setSignatureType(0, binaryen.createType([binaryen.Type.i32]), binaryen.Type.none);
 builder.setStructType(1, [
-  { type: binaryen.i32, packedType: binaryen.i16, mutable: true },
-  { type: binaryen.f64, packedType: binaryen.notPacked, mutable: true }
+  { type: binaryen.Type.i32, packedType: binaryen.PackedType.i16, mutable: true },
+  { type: binaryen.Type.f64, packedType: binaryen.PackedType.notPacked, mutable: true }
 ]);
-builder.setArrayType(2, binaryen.i32, binaryen.i8, true);
-builder.setArrayType(3, binaryen.funcref, binaryen.notPacked, true);
+builder.setArrayType(2, binaryen.Type.i32, binaryen.PackedType.i8, true);
+builder.setArrayType(3, binaryen.Type.funcref, binaryen.PackedType.notPacked, true);
 var [
   signatureHeapType,
   structHeapType,
@@ -19,12 +19,12 @@ var arrayType = binaryen.getTypeFromHeapType(arrayHeapType, true);
 var funcArrayType = binaryen.getTypeFromHeapType(funcArrayHeapType, true);
 
 var module = new binaryen.Module();
-module.setFeatures(binaryen.Features.ReferenceTypes | binaryen.Features.BulkMemory | binaryen.Features.GC);
+module.setFeatures(binaryen.Features.ReferenceTypes | binaryen.Features.BulkMemory | binaryen.Features.GC | binaryen.Features.Strings);
 
-module.addFunction("add", binaryen.createType([binaryen.i32, binaryen.i32]), binaryen.i32, [],
+module.addFunction("add", binaryen.createType([binaryen.Type.i32, binaryen.Type.i32]), binaryen.Type.i32, [],
   module.i32.add(
-    module.local.get("0", binaryen.i32),
-    module.local.get("1", binaryen.i32)
+    module.local.get("0", binaryen.Type.i32),
+    module.local.get("1", binaryen.Type.i32)
   )
 );
 
@@ -78,7 +78,7 @@ var valueList = [
   module.struct.get(
     0,
     module.global.get("struct-global", structType),
-    binaryen.i32,
+    binaryen.Type.i32,
     true
   ),
   module.struct.set(
@@ -120,7 +120,7 @@ var valueList = [
   module.array.get(
     module.global.get("array-global", arrayType),
     module.i32.const(0),
-    binaryen.i32,
+    binaryen.Type.i32,
     true
   ),
   module.array.set(
@@ -157,19 +157,22 @@ var valueList = [
     module.i32.const(0),
     module.i32.const(1),
     module.i32.const(2)
-  )
+  ),
+
+  // string
+  module.string.const("hello 🌎"),
 ];
-module.addFunction("main", binaryen.none, binaryen.none, [],
+module.addFunction("main", binaryen.Type.none, binaryen.Type.none, [],
   module.block(
     null,
     valueList.map(value => {
       var type = binaryen.getExpressionType(value);
-      if (type === binaryen.none || type === binaryen.unreachable)
+      if (type === binaryen.Type.none || type === binaryen.Type.unreachable)
         return value;
       else
         return module.drop(value);
     }),
-    binaryen.none
+    binaryen.Type.none
   )
 );
 

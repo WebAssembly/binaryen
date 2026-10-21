@@ -49,6 +49,7 @@
 #include "ir/utils.h"
 #include "pass.h"
 #include "support/insert_ordered.h"
+#include "support/space.h"
 #include "support/stdckdint.h"
 #include "support/utilities.h"
 #include "wasm-builder.h"
@@ -196,7 +197,7 @@ struct Noter : public PostWalker<Noter, UnifiedExpressionVisitor<Noter>> {
   }
 
   void visitStructGet(StructGet* curr) {
-    if (curr->ref->type == Type::unreachable || curr->ref->type.isNull()) {
+    if (curr->ref->type == Type::unreachable || curr->ref->type.isBottomRef()) {
       return;
     }
     auto type = curr->ref->type.getHeapType();
@@ -292,6 +293,22 @@ struct Analyzer {
     // need to read one place.
     std::unordered_map<HeapType, std::unordered_set<Name>> typeFuncs;
     std::unordered_map<HeapType, std::unordered_set<Name>> typeElems;
+
+    // All elems, regardless of type.
+    std::unordered_set<Name> allElems;
+
+    // Whether this table's elems may overlap, i.e., trample each other. In such
+    // a case, we can optimize less: if segment A writes a function, and B
+    // tramples it with a null or with a function of another type, then if we
+    // call that index with the right type for A, the trampling causes a trap -
+    // so we cannot remove the trampling segment, even though it has nothing
+    // that can be called, forcing us to keep it just to preserve the trap.
+    //
+    // We could be more precise here, as currently we "give up" on analyzing
+    // exact overlap, and just stop removing element segments. But such an exact
+    // analysis would be complex, and is rarely needed: when trapsNeverHappen
+    // this is not an issue, and also segment overlap is rare.
+    bool mayHaveOverlappingElems = false;
   };
   std::unordered_map<Name, FlatTableInfo> flatTableInfoMap;
 
@@ -313,23 +330,71 @@ struct Analyzer {
   }
 
   void prepare() {
-    for (auto& elem : module->elementSegments) {
-      if (elem->isPassive()) {
-        continue;
-      }
-      auto& flatTableInfo = flatTableInfoMap[elem->table];
-      for (auto* item : elem->data) {
+    // The spans of element segments for each table. We use this to compute
+    // |mayHaveOverlappingElems|.
+    std::unordered_map<Name, DisjointSpans> tableElemSpans;
+
+    auto notePossibleFunc =
+      [&](FlatTableInfo& info, Expression* item, Name elem = Name()) {
         if (auto* refFunc = item->dynCast<RefFunc>()) {
           auto* func = module->getFunction(refFunc->func);
           std::optional<HeapType> type = func->type.getHeapType();
           // Add this function and element to all relevant types: each function
           // might be called by its type, or a supertype.
+          // TODO: use exactness here
           while (type) {
-            flatTableInfo.typeFuncs[*type].insert(func->name);
-            flatTableInfo.typeElems[*type].insert(elem->name);
+            info.typeFuncs[*type].insert(func->name);
+            if (elem) {
+              info.typeElems[*type].insert(elem);
+            }
             type = type->getSuperType();
           }
         }
+      };
+
+    for (auto& elem : module->elementSegments) {
+      if (elem->isPassive()) {
+        continue;
+      }
+      auto& info = flatTableInfoMap[elem->table];
+      for (auto* item : elem->data) {
+        notePossibleFunc(info, item, elem->name);
+      }
+      info.allElems.insert(elem->name);
+    }
+
+    // Compute elem overlap.
+    for (auto& elem : module->elementSegments) {
+      if (elem->isPassive()) {
+        continue;
+      }
+
+      auto& info = flatTableInfoMap[elem->table];
+
+      // There is at least one elem, this one.
+      assert(!info.allElems.empty());
+      if (info.allElems.size() <= 1) {
+        // This table has just this one elem, so no overlap is possible, even
+        // if the single elem has a non-constant offset.
+        continue;
+      }
+
+      if (auto* c = elem->offset->dynCast<Const>()) {
+        auto start = c->value.getUnsigned();
+        auto end = start + elem->data.size();
+        if (tableElemSpans[elem->table].addAndCheckOverlap({start, end})) {
+          info.mayHaveOverlappingElems = true;
+        }
+      } else {
+        // Offset is not constant, so it might overlap with others.
+        info.mayHaveOverlappingElems = true;
+      }
+    }
+
+    // If a table has an initial value, it is callable as well.
+    for (auto& table : module->tables) {
+      if (table->init) {
+        notePossibleFunc(flatTableInfoMap[table->name], table->init);
       }
     }
   }
@@ -423,11 +488,38 @@ struct Analyzer {
     auto [table, type] = call;
 
     // Find callable functions and segments.
-    for (auto& func : flatTableInfoMap[table].typeFuncs[type]) {
+    auto& info = flatTableInfoMap[table];
+    for (auto& func : info.typeFuncs[type]) {
       use({ModuleElementKind::Function, func});
     }
-    for (auto& elem : flatTableInfoMap[table].typeElems[type]) {
+    for (auto& elem : info.typeElems[type]) {
       reference({ModuleElementKind::ElementSegment, elem});
+    }
+
+    // If traps might happen, and the table has an initial value, we must
+    // consider more: imagine that we call a function with the wrong type, so we
+    // trap. The loops above handled all the non-trapping cases - info.typeFuncs
+    // refers to the functions we might actually call successfully. But if we
+    // trap on the wrong type, then we must preserve that trap. To do so, if
+    // there is an initial value of the right type, we must preserve elem
+    // segments with the *wrong* type - they write the function that we trap on
+    // into the table. Without that write, we will call the initial value, and
+    // if it has the right type, we would not trap. (Note that we were using the
+    // fact that we do not distinguish types of traps, in the case without an
+    // initial value - we turned a trap on the wrong type to one on a null.)
+    //
+    // A related situation is a table with element segments that trample valid
+    // values with nulls or functions of the wrong type for a call: when they
+    // overwrite a valid function, they cause a trap, which we must preserve if
+    // traps can happen.
+    if (!options.trapsNeverHappen) {
+      if (module->getTable(table)->init || info.mayHaveOverlappingElems) {
+        // We only need to reference the elem, so it writes its functions - the
+        // functions are not actually called, as we just trap.
+        for (auto& elem : info.allElems) {
+          reference({ModuleElementKind::ElementSegment, elem});
+        }
+      }
     }
 
     // Note a possible call of a function reference as well, if something else
@@ -1037,7 +1129,7 @@ struct RemoveUnusedModuleElements : public Pass {
     struct NullDescFinder : PostWalker<NullDescFinder> {
       bool mayTrap = false;
       void visitStructNew(StructNew* curr) {
-        if (curr->desc && curr->desc->type.isNullable()) {
+        if (curr->desc && curr->desc->type.isNullableRef()) {
           mayTrap = true;
         }
       }

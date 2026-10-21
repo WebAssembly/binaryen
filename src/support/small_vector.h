@@ -49,7 +49,7 @@ public:
     : usedFixed(other.usedFixed), fixed(std::move(other.fixed)),
       flexible(std::move(other.flexible)) {}
   SmallVector(std::initializer_list<T> init) {
-    for (T item : init) {
+    for (const T& item : init) {
       push_back(item);
     }
   }
@@ -175,9 +175,8 @@ public:
 
     Iterator(SmallVector<T, N>* parent, size_t index)
       : ParentIndexIterator<SmallVector<T, N>*, Iterator>{parent, index} {}
-    Iterator(const Iterator& other) = default;
 
-    T& operator*() { return (*this->parent)[this->index]; }
+    T& operator*() const { return (*this->parent)[this->index]; }
   };
 
   struct ConstIterator
@@ -189,7 +188,6 @@ public:
     ConstIterator(const SmallVector<T, N>* parent, size_t index)
       : ParentIndexIterator<const SmallVector<T, N>*, ConstIterator>{parent,
                                                                      index} {}
-    ConstIterator(const ConstIterator& other) = default;
 
     const T& operator*() const { return (*this->parent)[this->index]; }
   };

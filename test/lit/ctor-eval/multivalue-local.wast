@@ -32,7 +32,7 @@
 
   (call $import)
 
-  ;; Use the locals so they are not trivally removed.
+  ;; Use the locals so they are not trivially removed.
   (i32.add
    (local.get $0)
    (tuple.extract 2 0
@@ -49,8 +49,5 @@
 ;; CHECK-NEXT:   (i32.const 42)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT:  (call $import)
-;; CHECK-NEXT:  (i32.add
-;; CHECK-NEXT:   (local.get $0)
-;; CHECK-NEXT:   (local.get $0)
-;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (i32.const 84)
 ;; CHECK-NEXT: )

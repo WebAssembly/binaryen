@@ -58,7 +58,6 @@ struct GenerateDynCalls : public WalkerPass<PostWalker<GenerateDynCalls>> {
                              return segment->table == table->name;
                            });
     if (it != segments.end()) {
-      std::vector<Name> tableSegmentData;
       ElementUtils::iterElementSegmentFunctionNames(
         it->get(), [&](Name name, Index) {
           generateDynCallThunk(wasm->getFunction(name)->type.getHeapType());

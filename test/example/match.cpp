@@ -61,7 +61,7 @@ void test_internal_any() {
 
     Expression* builtExpr = builder.makeNop();
     Nop* builtNop = builder.makeNop();
-    AtomicFence* builtFence = builder.makeAtomicFence();
+    AtomicFence* builtFence = builder.makeAtomicFence(MemoryOrder::SeqCst);
 
     assert(Internal::Any(&expr).matches(builtExpr));
     assert(expr == builtExpr);

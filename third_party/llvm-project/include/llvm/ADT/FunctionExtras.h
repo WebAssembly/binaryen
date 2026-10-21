@@ -112,8 +112,7 @@ class unique_function<ReturnT(ParamTs...)> {
 
     // For in-line storage, we just provide an aligned character buffer. We
     // provide three pointers worth of storage here.
-    typename std::aligned_storage<InlineStorageSize, alignof(void *)>::type
-        InlineStorage;
+    alignas(void *) mutable std::byte InlineStorage[InlineStorageSize];
   } StorageUnion;
 
   // A compressed pointer to either our dispatching callback or our table of

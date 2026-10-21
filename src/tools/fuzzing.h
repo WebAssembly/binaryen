@@ -119,10 +119,12 @@ class TranslateToFuzzReader {
   static constexpr size_t Important = 2;
 
 public:
-  TranslateToFuzzReader(Module& wasm,
+  TranslateToFuzzReader(FuzzParams fuzzParams_,
+                        Module& wasm,
                         std::vector<char>&& input,
                         WorldMode worldMode = WorldMode::Open);
-  TranslateToFuzzReader(Module& wasm,
+  TranslateToFuzzReader(FuzzParams fuzzParams_,
+                        Module& wasm,
                         std::string& filename,
                         WorldMode worldMode = WorldMode::Open);
 
@@ -133,9 +135,12 @@ public:
     preserveImportsAndExports = preserveImportsAndExports_;
   }
   void setAgainstJS(bool againstJS_) { againstJS = againstJS_; }
+  void setNoInvokes(bool noInvokes_) { noInvokes = noInvokes_; }
   void setImportedModule(std::string importedModuleName);
 
   void build();
+
+  FuzzParams fuzzParams;
 
   Module& wasm;
 
@@ -165,6 +170,9 @@ private:
   // which might cause issues when linked against wasm or used otherwise.
   bool againstJS = false;
 
+  // Whether to avoid emitting invoker functions.
+  bool noInvokes = false;
+
   // An optional module to import from.
   std::optional<Module> importedModule;
 
@@ -172,9 +180,6 @@ private:
   // to existing code. This is randomized during startup, but could be an option
   // like the above options eventually if we find that useful.
   bool allowAddingUnreachableCode;
-
-  // Whether to emit atomic waits (which in single-threaded mode, may hang...)
-  static const bool ATOMIC_WAITS = false;
 
   // The chance to emit a logging operation for a none expression. We
   // randomize this in each function.
@@ -211,6 +216,10 @@ private:
   // subtypes of it.
   std::unordered_map<HeapType, std::vector<HeapType>> interestingHeapSubTypes;
 
+  // The subset of interestingHeapTypes that have a descriptor, indexed by
+  // Shareability.
+  std::array<std::vector<HeapType>, 2> describedTypes;
+
   // Type => list of struct fields that have that type.
   std::unordered_map<Type, std::vector<StructField>> typeStructFields;
 
@@ -245,6 +254,7 @@ private:
     TranslateToFuzzReader& parent;
     Function* func;
     std::vector<Expression*> breakableStack; // things we can break to
+    std::vector<Name> tryStack;              // tries we can delegate to
     Index labelIndex = 0;
 
     // a list of things relevant to computing the odds of an infinite loop,
@@ -268,27 +278,6 @@ private:
   };
 
   FunctionCreationContext* funcContext = nullptr;
-
-  // The fuzzing parameters we use. This may change from function to function or
-  // even in a more refined manner, so we use an RAII context to manage it.
-  struct FuzzParamsContext : public FuzzParams {
-    TranslateToFuzzReader& parent;
-
-    FuzzParamsContext* old;
-
-    FuzzParamsContext(TranslateToFuzzReader& parent)
-      : parent(parent), old(parent.fuzzParams) {
-      parent.fuzzParams = this;
-    }
-
-    ~FuzzParamsContext() { parent.fuzzParams = old; }
-  };
-
-  FuzzParamsContext* fuzzParams = nullptr;
-
-  // The default global context we use throughout the process (unless it is
-  // overridden using another context in an RAII manner).
-  std::unique_ptr<FuzzParamsContext> globalParams;
 
   const std::vector<MemoryOrder> atomicMemoryOrders;
 
@@ -480,6 +469,7 @@ private:
   Expression* makeWideIntAddSub(Type type);
   Expression* makeWideIntMul(Type type);
   Expression* makeWideIntExpression(Type type);
+  Expression* makeWideIntExtract(Type type);
   Expression* makeTupleExtract(Type type);
   Expression* makePointer();
   Expression* makeNonAtomicLoad(Type type);
@@ -538,9 +528,12 @@ private:
   Expression* makeSIMDTernary();
   Expression* makeSIMDShift();
   Expression* makeSIMDLoad();
+  Expression* makeSIMDLoadStoreLane(Type type);
   Expression* makeBulkMemory(Type type);
   Expression* makeTableGet(Type type);
   Expression* makeTableSet(Type type);
+  Expression* makeTableSize(Type type);
+  Expression* makeTableGrow(Type type);
   // TODO: support other RefIs variants, and rename this
   Expression* makeRefIsNull(Type type);
   Expression* makeRefEq(Type type);
@@ -575,6 +568,9 @@ private:
   Expression* makeDataDrop();
   Expression* makeMemoryCopy();
   Expression* makeMemoryFill();
+  Expression* makeMemorySize(Type type);
+  Expression* makeMemoryGrow(Type type);
+  Expression* makeElemDrop();
 
   // Getters for Types
   Type getSingleConcreteType();
@@ -594,6 +590,8 @@ private:
   Exactness getSubType(Exactness exactness);
   HeapType getSubType(HeapType type);
   Type getSubType(Type type);
+  bool hasDescribedSubType(Type type);
+  Type getDescribedSubType(Type type);
   Nullability getSuperType(Nullability nullability);
   HeapType getSuperType(HeapType type);
   Type getSuperType(Type type);
@@ -607,6 +605,9 @@ private:
 
   // Checks if a function is a callRef* import (call-ref or call-ref-catch).
   bool isCallRefImport(Name func);
+
+  // Pick a start function.
+  Name pickStart();
 
   // statistical distributions
 

@@ -316,8 +316,8 @@ inline Expression** getImmediateFallthroughPtr(
     // know the fallthrough in that case.
     if (br->condition && br->value &&
         behavior == FallthroughBehavior::AllowTeeBrIf &&
-        EffectAnalyzer::canReorder(
-          passOptions, module, br->condition, br->value)) {
+        !EffectAnalyzer::orderedBefore(
+          passOptions, module, br->value, br->condition)) {
       return &br->value;
     }
   } else if (auto* tryy = curr->dynCast<Try>()) {
@@ -325,7 +325,10 @@ inline Expression** getImmediateFallthroughPtr(
       return &tryy->body;
     }
   } else if (auto* as = curr->dynCast<RefCast>()) {
-    return &as->ref;
+    if (!as->desc || (!EffectAnalyzer::orderedBefore(
+                       passOptions, module, as->ref, as->desc))) {
+      return &as->ref;
+    }
   } else if (auto* as = curr->dynCast<RefAs>()) {
     // Extern conversions are not casts and actually produce new values.
     // Treating them as fallthroughs would lead to misoptimizations of
@@ -334,7 +337,12 @@ inline Expression** getImmediateFallthroughPtr(
       return &as->value;
     }
   } else if (auto* br = curr->dynCast<BrOn>()) {
-    return &br->ref;
+    if (!br->desc || (!EffectAnalyzer::orderedBefore(
+                       passOptions, module, br->ref, br->desc))) {
+      return &br->ref;
+    }
+  } else if (auto* pub = curr->dynCast<Publish>()) {
+    return &pub->ref;
   }
   return currp;
 }
@@ -522,14 +530,24 @@ inline MemoryOrder getMemoryOrder(Expression* curr) {
 
 // Whether this instruction will be unwritable in the text and binary formats
 // because it requires a type index immediate computed from an expression with
-// unreachable or null type, and therefore no type index.
+// unreachable or null type, and therefore no type index (or is a string array
+// operation with a null array operand).
 inline bool hasUnwritableTypeImmediate(Expression* curr) {
+  if (auto* sn = curr->dynCast<StringNew>()) {
+    // See BinaryInstWriter::visitStringNew.
+    return sn->ref->type.isBottomRef();
+  }
+  if (auto* se = curr->dynCast<StringEncode>()) {
+    // See BinaryInstWriter::visitStringEncode.
+    return se->array->type.isBottomRef();
+  }
+
 #define DELEGATE_ID curr->_id
 
 #define DELEGATE_FIELD_IMMEDIATE_TYPED_CHILD(id, field)                        \
   if (curr->cast<id>()->field) {                                               \
     auto type = curr->cast<id>()->field->type;                                 \
-    if (type == Type::unreachable || type.isNull()) {                          \
+    if (type == Type::unreachable || type.isBottomRef()) {                     \
       return true;                                                             \
     }                                                                          \
   }

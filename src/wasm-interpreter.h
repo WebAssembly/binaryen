@@ -159,6 +159,9 @@ struct FuncData {
   bool operator==(const FuncData& other) const {
     return name == other.name && self == other.self;
   }
+  bool operator<(const FuncData& other) const {
+    return std::tie(name, self) < std::tie(other.name, other.self);
+  }
 
   Flow doCall(const Literals& arguments) {
     assert(call);
@@ -367,10 +370,11 @@ protected:
   // this function in LSan.
   //
   // This consumes the input |data| entirely.
-  Literal makeGCData(Literals&& data,
+  template<typename T>
+  Literal makeGCData(T&& data,
                      Type type,
                      Literal desc = Literal::makeNull(HeapType::none)) {
-    auto allocation = std::make_shared<GCData>(std::move(data), desc);
+    auto allocation = std::make_shared<GCData>(std::forward<T>(data), desc);
 #if __has_feature(leak_sanitizer) || __has_feature(address_sanitizer)
     // GC data with cycles will leak, since shared_ptrs do not handle cycles.
     // Binaryen is generally not used in long-running programs so we just ignore
@@ -379,6 +383,23 @@ protected:
     __lsan_ignore_object(allocation.get());
 #endif
     return Literal(allocation, type.getHeapType());
+  }
+
+  Literal makeGCArray(Type type,
+                      size_t num,
+                      Literal desc = Literal::makeNull(HeapType::none)) {
+    auto heapType = type.getHeapType();
+    const auto& element = heapType.getArray().element;
+    if (element.type.isRef()) {
+      Literals data(num);
+      auto zero = Literal::makeZero(element.type);
+      for (size_t i = 0; i < num; ++i) {
+        data[i] = zero;
+      }
+      return makeGCData(std::move(data), type, desc);
+    }
+    size_t elemBytes = element.getByteSize();
+    return makeGCData(std::vector<uint8_t>(num * elemBytes, 0), type, desc);
   }
 
   // Same as makeGCData but for ExnData.
@@ -390,18 +411,22 @@ protected:
     return Literal(allocation);
   }
 
-  template<typename T>
-  void writeBytes(T value, int numBytes, size_t index, Literals& values) {
-    if constexpr (std::is_same_v<T, std::array<uint8_t, 16>>) {
-      for (int i = 0; i < numBytes; ++i) {
-        values[index + i] = Literal(static_cast<int32_t>(value[i]));
-      }
-    } else {
-      for (int i = 0; i < numBytes; ++i) {
-        values[index + i] =
-          Literal(static_cast<int32_t>((value >> (i * 8)) & 0xff));
-      }
+  static Literal applyRMW(AtomicRMWOp op, Literal lhs, Literal rhs) {
+    switch (op) {
+      case RMWAdd:
+        return lhs.add(rhs);
+      case RMWSub:
+        return lhs.sub(rhs);
+      case RMWAnd:
+        return lhs.and_(rhs);
+      case RMWOr:
+        return lhs.or_(rhs);
+      case RMWXor:
+        return lhs.xor_(rhs);
+      case RMWXchg:
+        return rhs;
     }
+    WASM_UNREACHABLE("unexpected op");
   }
 
 public:
@@ -1661,6 +1686,9 @@ public:
         return left.swizzleI8x16(right);
 
       case RelaxedDotI8x16I7x16SToVecI16x8:
+        if (relaxedBehavior == RelaxedBehavior::NonConstant) {
+          return NONCONSTANT_FLOW;
+        }
         return left.dotSI8x16toI16x8(right);
 
       case InvalidBinary:
@@ -1732,10 +1760,14 @@ public:
     Literal c = flow.getSingleValue();
     switch (curr->op) {
       case Bitselect:
+        return c.bitselectV128(a, b);
       case RelaxedLaneselectI8x16:
       case RelaxedLaneselectI16x8:
       case RelaxedLaneselectI32x4:
       case RelaxedLaneselectI64x2:
+        if (relaxedBehavior == RelaxedBehavior::NonConstant) {
+          return NONCONSTANT_FLOW;
+        }
         return c.bitselectV128(a, b);
 
       case MaddVecF16x8:
@@ -2124,7 +2156,7 @@ public:
     auto data = val.getGCData();
     if (!data) {
       // Check whether null is allowed.
-      if (curr->getCastType().isNullable()) {
+      if (curr->getCastType().isNullableRef()) {
         return typename Cast::Success{val};
       } else {
         return typename Cast::Failure{val};
@@ -2255,7 +2287,8 @@ public:
       trap("null ref");
     }
     auto field = curr->ref->type.getHeapType().getStruct().fields[curr->index];
-    return extendForPacking(data->values[curr->index], field, curr->signed_);
+    return extendForPacking(
+      data->getLiterals()[curr->index], field, curr->signed_);
   }
   Flow visitStructSet(StructSet* curr) {
     VISIT(ref, curr->ref)
@@ -2265,7 +2298,7 @@ public:
       trap("null ref");
     }
     auto field = curr->ref->type.getHeapType().getStruct().fields[curr->index];
-    data->values[curr->index] =
+    data->getLiterals()[curr->index] =
       truncateForPacking(value.getSingleValue(), field);
     return Flow();
   }
@@ -2277,29 +2310,9 @@ public:
     if (!data) {
       trap("null ref");
     }
-    auto& field = data->values[curr->index];
+    auto& field = data->getLiterals()[curr->index];
     auto oldVal = field;
-    auto newVal = value.getSingleValue();
-    switch (curr->op) {
-      case RMWAdd:
-        field = field.add(newVal);
-        break;
-      case RMWSub:
-        field = field.sub(newVal);
-        break;
-      case RMWAnd:
-        field = field.and_(newVal);
-        break;
-      case RMWOr:
-        field = field.or_(newVal);
-        break;
-      case RMWXor:
-        field = field.xor_(newVal);
-        break;
-      case RMWXchg:
-        field = newVal;
-        break;
-    }
+    field = applyRMW(curr->op, oldVal, value.getSingleValue());
     return oldVal;
   }
 
@@ -2311,7 +2324,7 @@ public:
     if (!data) {
       trap("null ref");
     }
-    auto& field = data->values[curr->index];
+    auto& field = data->getLiterals()[curr->index];
     auto oldVal = field;
     if (field == expected.getSingleValue()) {
       field = replacement.getSingleValue();
@@ -2321,6 +2334,7 @@ public:
 
   Flow visitStructWait(StructWait* curr) {
     VISIT(ref, curr->ref)
+    VISIT(waitqueue, curr->waitqueue)
     VISIT(expected, curr->expected)
     VISIT(timeout, curr->timeout)
 
@@ -2332,8 +2346,11 @@ public:
     if (!data) {
       trap("null ref");
     }
-    auto& field = data->values[curr->index];
-    if (field.geti32() != expected.getSingleValue().geti32()) {
+    if (!waitqueue.getSingleValue().getGCData()) {
+      trap("null ref");
+    }
+    auto& field = data->getLiterals()[curr->index];
+    if (field != expected.getSingleValue()) {
       return Literal(int32_t{1}); // not equal
     }
     // TODO: Add threads support. For now, report a host limit here, as there
@@ -2348,14 +2365,26 @@ public:
     return Literal(int32_t{2}); // Timed out
   }
 
-  Flow visitStructNotify(StructNotify* curr) {
-    VISIT(ref, curr->ref)
+  Flow visitWaitqueueNew(WaitqueueNew* curr) {
+    return self()->makeGCData(Literals{},
+                              Type(HeapTypes::sharedWaitqueue, NonNullable));
+  }
+
+  Flow visitWaitqueueNotify(WaitqueueNotify* curr) {
+    // See the TODO in `visitStructWait`. We only implement cases that don't
+    // block.
+    VISIT(waitqueue, curr->waitqueue)
     VISIT(count, curr->count)
-    auto data = ref.getSingleValue().getGCData();
+    auto data = waitqueue.getSingleValue().getGCData();
     if (!data) {
       trap("null ref");
     }
     return Literal(int32_t{0}); // none woken up
+  }
+
+  Flow visitPublish(Publish* curr) {
+    VISIT(ref, curr->ref)
+    return ref;
   }
 
   // Arbitrary deterministic limit on size. If we need to allocate a Literals
@@ -2377,26 +2406,18 @@ public:
       assert(init.breaking());
       return init;
     }
-    auto heapType = curr->type.getHeapType();
-    const auto& element = heapType.getArray().element;
     Index num = size.getSingleValue().geti32();
     if (num >= DataLimit) {
       hostLimit("allocation failure");
     }
-    Literals data(num);
-    if (curr->isWithDefault()) {
-      auto zero = Literal::makeZero(element.type);
+    auto ret = makeGCArray(curr->type, num);
+    if (!curr->isWithDefault()) {
+      Literal val = init.getSingleValue();
       for (Index i = 0; i < num; i++) {
-        data[i] = zero;
-      }
-    } else {
-      auto field = curr->type.getHeapType().getArray().element;
-      auto value = truncateForPacking(init.getSingleValue(), field);
-      for (Index i = 0; i < num; i++) {
-        data[i] = value;
+        ret.setElement(i, val);
       }
     }
-    return makeGCData(std::move(data), curr->type);
+    return ret;
   }
   Flow visitArrayNewData(ArrayNewData* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitArrayNewElem(ArrayNewElem* curr) { WASM_UNREACHABLE("unimp"); }
@@ -2413,91 +2434,119 @@ public:
       }
       WASM_UNREACHABLE("unreachable but no unreachable child");
     }
-    auto heapType = curr->type.getHeapType();
-    auto field = heapType.getArray().element;
-    Literals data(num);
+    auto ret = makeGCArray(curr->type, num);
     for (Index i = 0; i < num; i++) {
       VISIT(value, curr->values[i])
-      data[i] = truncateForPacking(value.getSingleValue(), field);
+      ret.setElement(i, value.getSingleValue());
     }
-    return makeGCData(std::move(data), curr->type);
+    return ret;
   }
   Flow visitArrayGet(ArrayGet* curr) {
     VISIT(ref, curr->ref)
     VISIT(index, curr->index)
-    auto data = ref.getSingleValue().getGCData();
-    if (!data) {
+    auto refVal = ref.getSingleValue();
+    if (refVal.isNull()) {
       trap("null ref");
     }
     Index i = index.getSingleValue().geti32();
-    if (i >= data->values.size()) {
+    if (i >= refVal.getNumElements()) {
       trap("array oob");
     }
-    auto field = curr->ref->type.getHeapType().getArray().element;
-    return extendForPacking(data->values[i], field, curr->signed_);
+    return refVal.getElement(i, curr->signed_);
   }
   Flow visitArraySet(ArraySet* curr) {
     VISIT(ref, curr->ref)
     VISIT(index, curr->index)
     VISIT(value, curr->value)
-    auto data = ref.getSingleValue().getGCData();
-    if (!data) {
+    auto refVal = ref.getSingleValue();
+    if (refVal.isNull()) {
       trap("null ref");
     }
     Index i = index.getSingleValue().geti32();
-    if (i >= data->values.size()) {
+    if (i >= refVal.getNumElements()) {
       trap("array oob");
     }
-    auto field = curr->ref->type.getHeapType().getArray().element;
-    data->values[i] = truncateForPacking(value.getSingleValue(), field);
+    refVal.setElement(i, value.getSingleValue());
     return Flow();
   }
+  // Computes the effective byte address (index + offset) of a multibyte array
+  // access and traps if the access is out of bounds. Both index and offset are
+  // unsigned 32-bit values, so we compute in 64 bits to avoid overflow.
+  uint64_t getEffectiveArrayAddress(const Literal& refVal,
+                                    const Literal& index,
+                                    Address offset,
+                                    uint8_t bytes) {
+    uint64_t addr = index.getUnsigned() + uint64_t(offset);
+    uint64_t size = refVal.getRawBytes().size();
+    // |addr| is at most 2^33 - 2 and |bytes| at most 16, so this cannot
+    // overflow.
+    if (addr + uint64_t(bytes) > size) {
+      trap("array oob");
+    }
+    return addr;
+  }
+
   Flow visitArrayLoad(ArrayLoad* curr) {
     VISIT(ref, curr->ref)
     VISIT(index, curr->index)
-    auto data = ref.getSingleValue().getGCData();
-    if (!data) {
+    auto refVal = ref.getSingleValue();
+    if (refVal.isNull()) {
       trap("null ref");
     }
-    Index i = index.getSingleValue().geti32();
-    size_t size = data->values.size();
-    if (i >= size || curr->bytes > (size - i)) {
-      trap("array oob");
-    }
-    uint64_t val = 0;
-    for (unsigned b = 0; b < curr->bytes; ++b) {
-      val |= static_cast<uint64_t>(data->values[i + b].geti32()) << (b * 8);
-    }
+    auto addr = getEffectiveArrayAddress(
+      refVal, index.getSingleValue(), curr->offset, curr->bytes);
+    const uint8_t* p = &refVal.getRawBytes()[addr];
     switch (curr->type.getBasic()) {
       case Type::i32: {
-        int32_t sval = static_cast<int32_t>(val);
-        if (curr->signed_) {
-          if (curr->bytes == 1) {
-            sval = static_cast<int32_t>(static_cast<int8_t>(sval));
-          } else if (curr->bytes == 2) {
-            sval = static_cast<int32_t>(static_cast<int16_t>(sval));
-          }
+        switch (curr->bytes) {
+          case 1:
+            return curr->signed_ ? Literal((int32_t)Bits::readLE<int8_t>(p))
+                                 : Literal((int32_t)Bits::readLE<uint8_t>(p));
+          case 2:
+            return curr->signed_ ? Literal((int32_t)Bits::readLE<int16_t>(p))
+                                 : Literal((int32_t)Bits::readLE<uint16_t>(p));
+          case 4:
+            return Literal(Bits::readLE<int32_t>(p));
+          default:
+            WASM_UNREACHABLE("invalid size");
         }
-        return Literal(sval);
       }
       case Type::i64: {
-        int64_t sval = static_cast<int64_t>(val);
-        if (curr->signed_) {
-          if (curr->bytes == 1) {
-            sval = static_cast<int64_t>(static_cast<int8_t>(sval));
-          } else if (curr->bytes == 2) {
-            sval = static_cast<int64_t>(static_cast<int16_t>(sval));
-          } else if (curr->bytes == 4) {
-            sval = static_cast<int64_t>(static_cast<int32_t>(sval));
-          }
+        switch (curr->bytes) {
+          case 1:
+            return curr->signed_ ? Literal((int64_t)Bits::readLE<int8_t>(p))
+                                 : Literal((int64_t)Bits::readLE<uint8_t>(p));
+          case 2:
+            return curr->signed_ ? Literal((int64_t)Bits::readLE<int16_t>(p))
+                                 : Literal((int64_t)Bits::readLE<uint16_t>(p));
+          case 4:
+            return curr->signed_ ? Literal((int64_t)Bits::readLE<int32_t>(p))
+                                 : Literal((int64_t)Bits::readLE<uint32_t>(p));
+          case 8:
+            return Literal(Bits::readLE<int64_t>(p));
+          default:
+            WASM_UNREACHABLE("invalid size");
         }
-        return Literal(sval);
       }
       case Type::f32: {
-        return Literal(bit_cast<float>(static_cast<int32_t>(val)));
+        switch (curr->bytes) {
+          case 2:
+            return Literal(bit_cast<int32_t>(fp16_ieee_to_fp32_value(
+                             Bits::readLE<uint16_t>(p))))
+              .castToF32();
+          case 4:
+            return Literal(Bits::readLE<uint32_t>(p)).castToF32();
+          default:
+            WASM_UNREACHABLE("invalid size");
+        }
       }
       case Type::f64: {
-        return Literal(bit_cast<double>(static_cast<int64_t>(val)));
+        assert(curr->bytes == 8);
+        return Literal(Bits::readLE<uint64_t>(p)).castToF64();
+      }
+      case Type::v128: {
+        assert(curr->bytes == 16);
+        return Literal(p);
       }
       default:
         WASM_UNREACHABLE("invalid type");
@@ -2508,55 +2557,31 @@ public:
     VISIT(ref, curr->ref)
     VISIT(index, curr->index)
     VISIT(value, curr->value)
-    auto data = ref.getSingleValue().getGCData();
-    if (!data) {
+    auto refVal = ref.getSingleValue();
+    if (refVal.isNull()) {
       trap("null ref");
     }
-
-    Index i = index.getSingleValue().geti32();
-    size_t size = data->values.size();
-    // Use subtraction to avoid overflow.
-    if (i >= size || curr->bytes > (size - i)) {
-      trap("array oob");
-    }
-    switch (curr->value->type.getBasic()) {
-      case Type::i32:
-        writeBytes(
-          value.getSingleValue().geti32(), curr->bytes, i, data->values);
-        break;
-      case Type::i64:
-        writeBytes(
-          value.getSingleValue().geti64(), curr->bytes, i, data->values);
-        break;
-      case Type::f32:
-        writeBytes(value.getSingleValue().reinterpreti32(),
-                   curr->bytes,
-                   i,
-                   data->values);
-        break;
-      case Type::f64:
-        writeBytes(value.getSingleValue().reinterpreti64(),
-                   curr->bytes,
-                   i,
-                   data->values);
-        break;
-      case Type::v128:
-        writeBytes(
-          value.getSingleValue().getv128(), curr->bytes, i, data->values);
-        break;
-      case Type::none:
-      case Type::unreachable:
-        WASM_UNREACHABLE("unimp basic type");
+    auto addr = getEffectiveArrayAddress(
+      refVal, index.getSingleValue(), curr->offset, curr->bytes);
+    uint8_t* p = &refVal.getRawBytes()[addr];
+    auto val = value.getSingleValue();
+    if (curr->value->type == Type::f32 && curr->bytes == 2) {
+      float f32 = bit_cast<float>(val.reinterpreti32());
+      Bits::writeLE<uint16_t>(fp16_ieee_from_fp32_value(f32), p);
+    } else {
+      uint8_t buf[16];
+      val.getBits(buf);
+      memcpy(p, buf, curr->bytes);
     }
     return Flow();
   }
   Flow visitArrayLen(ArrayLen* curr) {
     VISIT(ref, curr->ref)
-    auto data = ref.getSingleValue().getGCData();
-    if (!data) {
+    auto refVal = ref.getSingleValue();
+    if (refVal.isNull()) {
       trap("null ref");
     }
-    return Literal(int32_t(data->values.size()));
+    return Literal(int32_t(refVal.getNumElements()));
   }
   Flow visitArrayCopy(ArrayCopy* curr) {
     VISIT(destRef, curr->destRef)
@@ -2564,30 +2589,42 @@ public:
     VISIT(srcRef, curr->srcRef)
     VISIT(srcIndex, curr->srcIndex)
     VISIT(length, curr->length)
-    auto destData = destRef.getSingleValue().getGCData();
-    if (!destData) {
+    auto destVal = destRef.getSingleValue();
+    if (destVal.isNull()) {
       trap("null ref");
     }
-    auto srcData = srcRef.getSingleValue().getGCData();
-    if (!srcData) {
+    auto srcVal = srcRef.getSingleValue();
+    if (srcVal.isNull()) {
       trap("null ref");
     }
-    size_t destVal = destIndex.getSingleValue().getUnsigned();
-    size_t srcVal = srcIndex.getSingleValue().getUnsigned();
+    size_t destIdx = destIndex.getSingleValue().getUnsigned();
+    size_t srcIdx = srcIndex.getSingleValue().getUnsigned();
     size_t lengthVal = length.getSingleValue().getUnsigned();
-    if (destVal + lengthVal > destData->values.size()) {
+    if (destIdx + lengthVal > destVal.getNumElements()) {
       trap("oob");
     }
-    if (srcVal + lengthVal > srcData->values.size()) {
+    if (srcIdx + lengthVal > srcVal.getNumElements()) {
       trap("oob");
+    }
+    // Fast path: bulk copy raw byte buffers directly with memmove rather than
+    // extracting and setting elements one-by-one via Literals.
+    if (destVal.isRawBytes() && srcVal.isRawBytes()) {
+      if (lengthVal > 0) {
+        auto elemSize =
+          destVal.type.getHeapType().getArray().element.getByteSize();
+        memmove(&destVal.getRawBytes()[destIdx * elemSize],
+                &srcVal.getRawBytes()[srcIdx * elemSize],
+                lengthVal * elemSize);
+      }
+      return Flow();
     }
     std::vector<Literal> copied;
     copied.resize(lengthVal);
     for (size_t i = 0; i < lengthVal; i++) {
-      copied[i] = srcData->values[srcVal + i];
+      copied[i] = srcVal.getElement(srcIdx + i);
     }
     for (size_t i = 0; i < lengthVal; i++) {
-      destData->values[destVal + i] = copied[i];
+      destVal.setElement(destIdx + i, copied[i]);
     }
     return Flow();
   }
@@ -2596,24 +2633,21 @@ public:
     VISIT(index, curr->index)
     VISIT(value, curr->value)
     VISIT(size, curr->size)
-    auto data = ref.getSingleValue().getGCData();
-    if (!data) {
+    auto refVal = ref.getSingleValue();
+    if (refVal.isNull()) {
       trap("null ref");
     }
     size_t indexVal = index.getSingleValue().getUnsigned();
     Literal fillVal = value.getSingleValue();
     size_t sizeVal = size.getSingleValue().getUnsigned();
 
-    auto field = curr->ref->type.getHeapType().getArray().element;
-    fillVal = truncateForPacking(fillVal, field);
-
-    size_t arraySize = data->values.size();
+    size_t arraySize = refVal.getNumElements();
     if (indexVal > arraySize || sizeVal > arraySize ||
         indexVal + sizeVal > arraySize || indexVal + sizeVal < indexVal) {
       trap("out of bounds array access in array.fill");
     }
     for (size_t i = 0; i < sizeVal; ++i) {
-      data->values[indexVal + i] = fillVal;
+      refVal.setElement(indexVal + i, fillVal);
     }
     return {};
   }
@@ -2623,37 +2657,17 @@ public:
     VISIT(ref, curr->ref)
     VISIT(index, curr->index)
     VISIT(value, curr->value)
-    auto data = ref.getSingleValue().getGCData();
-    if (!data) {
+    auto refVal = ref.getSingleValue();
+    if (refVal.isNull()) {
       trap("null ref");
     }
     size_t indexVal = index.getSingleValue().getUnsigned();
-    if (indexVal >= data->values.size()) {
+    if (indexVal >= refVal.getNumElements()) {
       trap("array oob");
     }
-    auto& field = data->values[indexVal];
-    auto oldVal = field;
-    auto newVal = value.getSingleValue();
-    switch (curr->op) {
-      case RMWAdd:
-        field = field.add(newVal);
-        break;
-      case RMWSub:
-        field = field.sub(newVal);
-        break;
-      case RMWAnd:
-        field = field.and_(newVal);
-        break;
-      case RMWOr:
-        field = field.or_(newVal);
-        break;
-      case RMWXor:
-        field = field.xor_(newVal);
-        break;
-      case RMWXchg:
-        field = newVal;
-        break;
-    }
+    auto oldVal = refVal.getElement(indexVal);
+    refVal.setElement(indexVal,
+                      applyRMW(curr->op, oldVal, value.getSingleValue()));
     return oldVal;
   }
 
@@ -2662,18 +2676,17 @@ public:
     VISIT(index, curr->index)
     VISIT(expected, curr->expected)
     VISIT(replacement, curr->replacement)
-    auto data = ref.getSingleValue().getGCData();
-    if (!data) {
+    auto refVal = ref.getSingleValue();
+    if (refVal.isNull()) {
       trap("null ref");
     }
     size_t indexVal = index.getSingleValue().getUnsigned();
-    if (indexVal >= data->values.size()) {
+    if (indexVal >= refVal.getNumElements()) {
       trap("array oob");
     }
-    auto& field = data->values[indexVal];
-    auto oldVal = field;
-    if (field == expected.getSingleValue()) {
-      field = replacement.getSingleValue();
+    auto oldVal = refVal.getElement(indexVal);
+    if (oldVal == expected.getSingleValue()) {
+      refVal.setElement(indexVal, replacement.getSingleValue());
     }
     return oldVal;
   }
@@ -2699,22 +2712,21 @@ public:
       case StringNewWTF16Array: {
         VISIT(start, curr->start)
         VISIT(end, curr->end)
-        auto ptrData = ptr.getSingleValue().getGCData();
-        if (!ptrData) {
+        auto ptrVal = ptr.getSingleValue();
+        if (ptrVal.isNull()) {
           trap("null ref");
         }
-        const auto& ptrDataValues = ptrData->values;
+        size_t arrayLen = ptrVal.getNumElements();
         size_t startVal = start.getSingleValue().getUnsigned();
         size_t endVal = end.getSingleValue().getUnsigned();
-        if (startVal > ptrDataValues.size() || endVal > ptrDataValues.size() ||
-            endVal < startVal) {
+        if (startVal > arrayLen || endVal > arrayLen || endVal < startVal) {
           trap("array oob");
         }
         Literals contents;
         if (endVal > startVal) {
           contents.reserve(endVal - startVal);
           for (size_t i = startVal; i < endVal; i++) {
-            contents.push_back(ptrDataValues[i]);
+            contents.push_back(ptrVal.getElement(i));
           }
         }
         return makeGCData(std::move(contents), curr->type);
@@ -2751,7 +2763,7 @@ public:
       trap("null ref");
     }
 
-    return Literal(int32_t(data->values.size()));
+    return Literal(int32_t(data->getLiterals().size()));
   }
   Flow visitStringConcat(StringConcat* curr) {
     VISIT(flow, curr->left)
@@ -2764,17 +2776,19 @@ public:
       trap("null ref");
     }
 
-    auto totalSize = leftData->values.size() + rightData->values.size();
+    auto totalSize =
+      leftData->getLiterals().size() + rightData->getLiterals().size();
     if (totalSize >= DataLimit) {
       hostLimit("allocation failure");
     }
 
     Literals contents;
-    contents.reserve(leftData->values.size() + rightData->values.size());
-    for (Literal& l : leftData->values) {
+    contents.reserve(leftData->getLiterals().size() +
+                     rightData->getLiterals().size());
+    for (Literal& l : leftData->getLiterals()) {
       contents.push_back(l);
     }
-    for (Literal& l : rightData->values) {
+    for (Literal& l : rightData->getLiterals()) {
       contents.push_back(l);
     }
 
@@ -2791,24 +2805,24 @@ public:
     VISIT(start, curr->start)
 
     auto strData = str.getSingleValue().getGCData();
-    auto arrayData = array.getSingleValue().getGCData();
-    if (!strData || !arrayData) {
+    auto arrayVal = array.getSingleValue();
+    if (!strData || arrayVal.isNull()) {
       trap("null ref");
     }
     auto startVal = start.getSingleValue().getUnsigned();
-    auto& strValues = strData->values;
-    auto& arrayValues = arrayData->values;
+    auto& strValues = strData->getLiterals();
+    size_t arrayLen = arrayVal.getNumElements();
     size_t end;
     if (std::ckd_add<size_t>(&end, startVal, strValues.size()) ||
-        end > arrayValues.size()) {
+        end > arrayLen) {
       trap("oob");
     }
 
     for (Index i = 0; i < strValues.size(); i++) {
-      arrayValues[startVal + i] = strValues[i];
+      arrayVal.setElement(startVal + i, strValues[i]);
     }
 
-    return Literal(int32_t(strData->values.size()));
+    return Literal(int32_t(strValues.size()));
   }
   Flow visitStringEq(StringEq* curr) {
     VISIT(flow, curr->left)
@@ -2821,17 +2835,17 @@ public:
     switch (curr->op) {
       case StringEqEqual: {
         // They are equal if both are null, or both are non-null and equal.
-        result =
-          (!leftData && !rightData) ||
-          (leftData && rightData && leftData->values == rightData->values);
+        result = (!leftData && !rightData) ||
+                 (leftData && rightData &&
+                  leftData->getLiterals() == rightData->getLiterals());
         break;
       }
       case StringEqCompare: {
         if (!leftData || !rightData) {
           trap("null ref");
         }
-        auto& leftValues = leftData->values;
-        auto& rightValues = rightData->values;
+        auto& leftValues = leftData->getLiterals();
+        auto& rightValues = rightData->getLiterals();
         Index i = 0;
         while (1) {
           if (i == leftValues.size() && i == rightValues.size()) {
@@ -2881,7 +2895,7 @@ public:
     if (!data) {
       trap("null ref");
     }
-    auto& values = data->values;
+    auto& values = data->getLiterals();
     Index i = pos.getSingleValue().geti32();
     if (i >= values.size()) {
       trap("string oob");
@@ -2898,7 +2912,7 @@ public:
     if (!refData) {
       trap("null ref");
     }
-    auto& refValues = refData->values;
+    auto& refValues = refData->getLiterals();
     auto startVal = start.getSingleValue().getUnsigned();
     auto endVal = end.getSingleValue().getUnsigned();
     endVal = std::min<size_t>(endVal, refValues.size());
@@ -2957,26 +2971,6 @@ protected:
       }
     }
     return value;
-  }
-
-  Literal makeFromMemory(void* p, Field field) {
-    switch (field.packedType) {
-      case Field::NotPacked:
-        return Literal::makeFromMemory(p, field.type);
-      case Field::i8: {
-        return truncateForPacking(Literal(int32_t(Bits::readLE<int8_t>(p))),
-                                  field);
-      }
-      case Field::i16: {
-        return truncateForPacking(Literal(int32_t(Bits::readLE<int16_t>(p))),
-                                  field);
-      }
-      case Field::WaitQueue: {
-        WASM_UNREACHABLE("waitqueue not implemented");
-        break;
-      }
-    }
-    WASM_UNREACHABLE("unexpected type");
   }
 };
 
@@ -3119,7 +3113,11 @@ public:
   Flow visitAtomicWait(AtomicWait* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitAtomicNotify(AtomicNotify* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitStructWait(StructWait* curr) { return Flow(NONCONSTANT_FLOW); }
-  Flow visitStructNotify(StructNotify* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitWaitqueueNew(WaitqueueNew* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitWaitqueueNotify(WaitqueueNotify* curr) {
+    return Flow(NONCONSTANT_FLOW);
+  }
+  Flow visitPublish(Publish* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitSIMDLoad(SIMDLoad* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitSIMDLoadSplat(SIMDLoad* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitSIMDLoadExtend(SIMDLoad* curr) { return Flow(NONCONSTANT_FLOW); }
@@ -3429,6 +3427,16 @@ public:
     self()->continuationStore = shared;
   }
 
+  // Tracking whether we are in the start function is important for error
+  // logging in the fuzzer, see uses of inStart there.
+  bool inStart = false;
+
+  struct InStartContext {
+    SubType& parent;
+    InStartContext(SubType& parent) : parent(parent) { parent.inStart = true; }
+    ~InStartContext() { parent.inStart = false; }
+  };
+
   // Start up this instance. This must be called before doing anything else.
   // (This is separate from the constructor so that it does not occur
   // synchronously, which makes some code patterns harder to write.)
@@ -3448,6 +3456,7 @@ public:
 
     // run start, if present
     if (wasm.start.is()) {
+      InStartContext context(*self());
       Literals arguments;
       auto flow = callFunction(wasm.start, arguments);
       if (flow.suspendTag) {
@@ -3785,7 +3794,7 @@ private:
           initVal =
             ExpressionRunner<SubType>::visit(table->init).getSingleValue();
         } else {
-          assert(table->type.isNullable() &&
+          assert(table->type.isNullableRef() &&
                  "Non-nullable table must have an init expressions");
           initVal = Literal::makeNull(table->type.getHeapType());
         }
@@ -4318,26 +4327,7 @@ public:
       curr, ptr.getSingleValue(), memorySizeBytes);
     auto loaded = info.instance->doAtomicLoad(
       addr, curr->bytes, curr->type, info.name, memorySizeBytes, curr->order);
-    auto computed = value.getSingleValue();
-    switch (curr->op) {
-      case RMWAdd:
-        computed = loaded.add(computed);
-        break;
-      case RMWSub:
-        computed = loaded.sub(computed);
-        break;
-      case RMWAnd:
-        computed = loaded.and_(computed);
-        break;
-      case RMWOr:
-        computed = loaded.or_(computed);
-        break;
-      case RMWXor:
-        computed = loaded.xor_(computed);
-        break;
-      case RMWXchg:
-        break;
-    }
+    auto computed = this->applyRMW(curr->op, loaded, value.getSingleValue());
     info.instance->doAtomicStore(
       addr, curr->bytes, computed, info.name, memorySizeBytes);
     return loaded;
@@ -4753,7 +4743,6 @@ public:
 
     auto heapType = curr->type.getHeapType();
     const auto& element = heapType.getArray().element;
-    Literals contents;
 
     const auto& seg = *wasm.getDataSegment(curr->segment);
     auto elemBytes = element.getByteSize();
@@ -4768,10 +4757,9 @@ public:
     if (droppedDataSegments.contains(curr->segment) && end > 0) {
       trap("dropped segment access in array.new_data");
     }
-    contents.reserve(size);
-    for (Index i = offset; i < end; i += elemBytes) {
-      auto addr = (void*)&seg.data[i];
-      contents.push_back(this->makeFromMemory(addr, element));
+    std::vector<uint8_t> contents(size * elemBytes);
+    if (size > 0) {
+      memcpy(contents.data(), &seg.data[offset], size * elemBytes);
     }
 
 #pragma GCC diagnostic pop
@@ -4807,15 +4795,15 @@ public:
     VISIT(index, curr->index)
     VISIT(offset, curr->offset)
     VISIT(size, curr->size)
-    auto data = ref.getSingleValue().getGCData();
-    if (!data) {
+    auto refVal = ref.getSingleValue();
+    if (refVal.isNull()) {
       trap("null ref");
     }
     size_t indexVal = index.getSingleValue().getUnsigned();
     size_t offsetVal = offset.getSingleValue().getUnsigned();
     size_t sizeVal = size.getSingleValue().getUnsigned();
 
-    size_t arraySize = data->values.size();
+    size_t arraySize = refVal.getNumElements();
     if ((uint64_t)indexVal + sizeVal > arraySize) {
       trap("out of bounds array access in array.init");
     }
@@ -4833,9 +4821,11 @@ public:
         droppedDataSegments.contains(curr->segment)) {
       trap("out of bounds segment access in array.init_data");
     }
-    for (size_t i = 0; i < sizeVal; i++) {
-      void* addr = (void*)&seg->data[offsetVal + i * elemSize];
-      data->values[indexVal + i] = this->makeFromMemory(addr, elem);
+    assert(refVal.isRawBytes());
+    if (sizeVal > 0) {
+      memcpy(&refVal.getRawBytes()[indexVal * elemSize],
+             &seg->data[offsetVal],
+             sizeVal * elemSize);
     }
     return {};
   }
@@ -4844,15 +4834,15 @@ public:
     VISIT(index, curr->index)
     VISIT(offset, curr->offset)
     VISIT(size, curr->size)
-    auto data = ref.getSingleValue().getGCData();
-    if (!data) {
+    auto refVal = ref.getSingleValue();
+    if (refVal.isNull()) {
       trap("null ref");
     }
     size_t indexVal = index.getSingleValue().getUnsigned();
     size_t offsetVal = offset.getSingleValue().getUnsigned();
     size_t sizeVal = size.getSingleValue().getUnsigned();
 
-    size_t arraySize = data->values.size();
+    size_t arraySize = refVal.getNumElements();
     if ((uint64_t)indexVal + sizeVal > arraySize) {
       trap("out of bounds array access in array.init");
     }
@@ -4872,7 +4862,8 @@ public:
       // of references in the table! ArrayNew suffers the same problem.
       // Fixing it will require changing how we represent segments, at least
       // in the interpreter.
-      data->values[indexVal + i] = self()->visit(seg->data[i]).getSingleValue();
+      refVal.setElement(indexVal + i,
+                        self()->visit(seg->data[i]).getSingleValue());
     }
     return {};
   }
@@ -4972,6 +4963,12 @@ public:
     try {
       return self()->visit(curr->body);
     } catch (const WasmException& e) {
+      // If delegation is in progress, try_table cannot be the target of a
+      // legacy try-delegate, so don't handle it and just rethrow.
+      if (scope->currDelegateTarget.is()) {
+        throw;
+      }
+
       auto exnData = e.exn.getExnData();
       for (size_t i = 0; i < curr->catchTags.size(); i++) {
         auto catchTag = curr->catchTags[i];
@@ -5051,6 +5048,9 @@ public:
     // Create a new continuation, copying the old but with the new type +
     // arguments.
     auto old = contValue.getContData();
+    if (old->executed) {
+      trap("continuation already executed");
+    }
     auto newData = *old;
     newData.type = curr->type.getHeapType();
     for (auto arg : arguments) {
@@ -5152,21 +5152,23 @@ public:
       }
       contData->executed = true;
 
-      if (contData->resumeArguments.empty()) {
-        // The continuation has no bound arguments. For now, we just handle the
-        // simple case of binding all of them, so that means we can just use all
-        // the immediate ones here. TODO
-        contData->resumeArguments = arguments;
-      }
       // Fill in the continuation data. How we do this depends on whether we
       // are resume or resume_throw*.
       if (auto* resumeThrow = curr->template dynCast<ResumeThrow>()) {
         if (resumeThrow->tag) {
           // resume_throw
           contData->exceptionTag = allTags[resumeThrow->tag];
+          contData->resumeArguments = arguments;
         } else {
           // resume_throw_ref
           contData->exception = arguments[0];
+          if (contData->exception.isNull()) {
+            trap("null ref");
+          }
+        }
+      } else {
+        for (auto arg : arguments) {
+          contData->resumeArguments.push_back(arg);
         }
       }
 

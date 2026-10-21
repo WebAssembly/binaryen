@@ -34,7 +34,9 @@ struct SubTypes {
     }
   }
 
-  SubTypes(Module& wasm) : SubTypes(ModuleUtils::collectHeapTypes(wasm)) {}
+  // TODO: fix const-correctness here.
+  SubTypes(const Module& wasm)
+    : SubTypes(ModuleUtils::collectHeapTypes(const_cast<Module&>(wasm))) {}
 
   const std::vector<HeapType>& getImmediateSubTypes(HeapType type) const {
     // When we return an empty result, use a canonical constant empty vec to
@@ -156,6 +158,9 @@ struct SubTypes {
       depths[HeapTypes::nofunc.getBasic(share)] = 0;
       depths[HeapTypes::nocont.getBasic(share)] = 0;
       depths[HeapTypes::noexn.getBasic(share)] = 0;
+      depths[HeapTypes::sharedNowaitqueue.getBasic(share)] = 0;
+
+      depths[HeapTypes::sharedWaitqueue.getBasic(share)] = 1;
 
       // func would appear already if we saw function types, but if not, ensure
       // it exists here. Ditto for cont.

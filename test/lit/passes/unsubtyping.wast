@@ -2030,7 +2030,7 @@
   ;; CHECK:      (func $test (type $3) (param $C (ref $C)) (result (ref $A) (ref $A))
   ;; CHECK-NEXT:  (local $Bs (tuple (ref $B) (ref $B)))
   ;; CHECK-NEXT:  (block $l
-  ;; CHECK-NEXT:   (local.tee $Bs
+  ;; CHECK-NEXT:   (local.set $Bs
   ;; CHECK-NEXT:    (block
   ;; CHECK-NEXT:     (tuple.drop 2
   ;; CHECK-NEXT:      (tuple.make 2
@@ -2055,6 +2055,40 @@
           )
           (unreachable)
         )
+      )
+    )
+  )
+)
+
+;; Regression test for unreachable ref.eq with shared reference operands.
+(module
+  ;; CHECK:      (type $0 (func (param (ref null (shared eq)))))
+
+  ;; CHECK:      (func $ref-eq-shared-unreachable (type $0) (param $eq (ref null (shared eq)))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (local.get $eq)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (local.get $eq)
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ref-eq-shared-unreachable (param $eq (ref null (shared eq)))
+    (drop
+      (ref.eq
+        (unreachable)
+        (local.get $eq)
+      )
+    )
+    (drop
+      (ref.eq
+        (local.get $eq)
+        (unreachable)
       )
     )
   )

@@ -15,10 +15,17 @@
  */
 
 //
-// Lowers i64s to i32s by splitting variables and arguments
-// into pairs of i32s. i64 return values are lowered by
-// returning the low half and storing the high half into a
-// global.
+// Lowers i64s to i32s by splitting variables and arguments into pairs of i32s.
+// i64 return values are lowered by returning the low half and storing the high
+// half into a global.
+//
+// Note: This pass is designed primarily as an internal part of the wasm2js
+// pipeline rather than a general-purpose lowering pass for standard WebAssembly
+// runtimes. As such, it does not strictly preserve all WebAssembly trapping
+// semantics. In particular, float-to-int conversions are lowered using float
+// arithmetic and 32-bit truncations that do not trap on out-of-range values,
+// NaN, or infinity, relying on the fact that wasm2js maps 32-bit truncations
+// to non-trapping JavaScript bitwise operations (~~ and >>>).
 //
 
 #include "abi/js.h"
@@ -623,8 +630,8 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   }
 
   void lowerReinterpretFloat64(Unary* curr) {
-    // Assume that the wasm file assumes the address 0 is invalid and roundtrip
-    // our f64 through memory at address 0
+    // Roundtrip the f64 through a scratch buffer via wasm2js helper functions
+    // to extract the low and high 32-bit integer halves.
     TempVar highBits = getTemp();
     Block* result = builder->blockify(
       builder->makeCall(
@@ -643,8 +650,8 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   }
 
   void lowerReinterpretInt64(Unary* curr) {
-    // Assume that the wasm file assumes the address 0 is invalid and roundtrip
-    // our i64 through memory at address 0
+    // Roundtrip the low and high 32-bit integer halves through a scratch buffer
+    // via wasm2js helper functions to reconstruct the f64 value.
     TempVar highBits = fetchOutParam(curr->value);
     Block* result = builder->blockify(
       builder->makeCall(ABI::wasm2js::SCRATCH_STORE_I32,
@@ -661,6 +668,16 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   }
 
   void lowerTruncFloatToInt(Unary* curr) {
+    // Lowers 64-bit float-to-int truncations into 32-bit float arithmetic and
+    // 32-bit truncations.
+    //
+    // Note that this lowering is non-trapping: in wasm2js, the emitted
+    // 32-bit truncations are translated to JavaScript bitwise operations
+    // ((~~expr) >>> 0), so out-of-range values, NaN, and +/-infinity do not
+    // trap. Both signed and unsigned operations share the same logic because
+    // the two's complement bit representation is identical for in-range values.
+    //
+    // Pseudocode:
     // hiBits = if abs(f) >= 1.0 {
     //    if f > 0.0 {
     //        (unsigned) min(
@@ -682,7 +699,9 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     BinaryOp ge, gt, min, div, sub;
     switch (curr->op) {
       case TruncSFloat32ToInt64:
-      case TruncUFloat32ToInt64: {
+      case TruncSatSFloat32ToInt64:
+      case TruncUFloat32ToInt64:
+      case TruncSatUFloat32ToInt64: {
         litZero = Literal((float)0);
         litOne = Literal((float)1);
         u32Max = Literal(((float)UINT_MAX) + 1);
@@ -700,7 +719,9 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
         break;
       }
       case TruncSFloat64ToInt64:
-      case TruncUFloat64ToInt64: {
+      case TruncSatSFloat64ToInt64:
+      case TruncUFloat64ToInt64:
+      case TruncSatUFloat64ToInt64: {
         litZero = Literal((double)0);
         litOne = Literal((double)1);
         u32Max = Literal(((double)UINT_MAX) + 1);
@@ -913,9 +934,13 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
       case ExtendUInt32:
       case WrapInt64:
       case TruncSFloat32ToInt64:
+      case TruncSatSFloat32ToInt64:
       case TruncUFloat32ToInt64:
+      case TruncSatUFloat32ToInt64:
       case TruncSFloat64ToInt64:
+      case TruncSatSFloat64ToInt64:
       case TruncUFloat64ToInt64:
+      case TruncSatUFloat64ToInt64:
       case ReinterpretFloat64:
       case ConvertSInt64ToFloat32:
       case ConvertSInt64ToFloat64:
@@ -964,9 +989,13 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
         lowerReinterpretInt64(curr);
         break;
       case TruncSFloat32ToInt64:
+      case TruncSatSFloat32ToInt64:
       case TruncUFloat32ToInt64:
+      case TruncSatUFloat32ToInt64:
       case TruncSFloat64ToInt64:
+      case TruncSatSFloat64ToInt64:
       case TruncUFloat64ToInt64:
+      case TruncSatUFloat64ToInt64:
         lowerTruncFloatToInt(curr);
         break;
       case ConvertSInt64ToFloat32:

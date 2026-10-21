@@ -46,6 +46,18 @@ template<typename T> bool ckd_sub(T* output, T a, T b) {
 #endif
 }
 
+template<typename T> bool ckd_mul(T* output, T a, T b) {
+#if __has_builtin(__builtin_mul_overflow)
+  return __builtin_mul_overflow(a, b, output);
+#else
+  // Atm this polyfill only supports unsigned types.
+  static_assert(std::is_unsigned_v<T>);
+
+  *output = a * b;
+  return a != 0 && *output / a != b;
+#endif
+}
+
 } // namespace std
 
 #endif // wasm_stdckdint_h

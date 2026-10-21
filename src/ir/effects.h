@@ -23,7 +23,6 @@
 #include "ir/intrinsics.h"
 #include "pass.h"
 #include "support/name.h"
-#include "support/utilities.h"
 #include "wasm-traversal.h"
 #include "wasm-type.h"
 #include "wasm.h"
@@ -44,8 +43,8 @@ public:
       readsMutableArray(false), writesArray(false),
       readsSharedMutableArray(false), writesSharedArray(false), trap(false),
       implicitTrap(false), throws_(false), danglingPop(false),
-      mayNotReturn(false), hasReturnCallThrow(false), module(module),
-      features(module.features) {}
+      mayNotReturn(false), hasReturnCallThrow(false), suspends(false),
+      module(module), features(module.features) {}
 
   EffectAnalyzer(const PassOptions& passOptions,
                  const Module& module,
@@ -138,6 +137,8 @@ public:
   // more here.)
   bool hasReturnCallThrow : 1;
 
+  bool suspends : 1;
+
   const Module& module;
   FeatureSet features;
 
@@ -228,15 +229,17 @@ public:
     return calls || readsSharedMutableArray || writesSharedArray;
   }
   bool throws() const { return throws_ || !delegateTargets.empty(); }
+
   // Check whether this may transfer control flow to somewhere outside of this
-  // expression (aside from just flowing out normally). That includes a break
-  // or a throw (if the throw is not known to be caught inside this expression;
+  // expression (aside from just flowing out normally). That includes a break,
+  // a throw (if the throw is not known to be caught inside this expression;
   // note that if the throw is not caught in this expression then it might be
   // caught in this function but outside of this expression, or it might not be
   // caught in the function at all, which would mean control flow cannot be
-  // transferred inside the function, but this expression does not know that).
+  // transferred inside the function, but this expression does not know that),
+  // or a suspension.
   bool transfersControlFlow() const {
-    return branchesOut || throws() || hasExternalBreakTargets();
+    return branchesOut || suspends || throws() || hasExternalBreakTargets();
   }
 
   // Changes something in globally-stored state.
@@ -364,6 +367,12 @@ public:
     if (danglingPop) {
       return true;
     }
+    // Relaxed (or stronger) loads cannot be reordered after relaxed (or
+    // stronger) stores.
+    if (readOrder >= MemoryOrder::Relaxed &&
+        other.writeOrder >= MemoryOrder::Relaxed) {
+      return true;
+    }
     // Shared location accesses cannot be reordered after (but may be able to be
     // reordered before) release stores.
     if (other.writeOrder >= MemoryOrder::AcqRel &&
@@ -434,6 +443,12 @@ public:
         return true;
       }
     }
+    // Cannot reorder code that may not return with traps or global state
+    // changes.
+    if ((mayNotReturn && (other.trap || other.writesGlobalState())) ||
+        (other.mayNotReturn && (trap || writesGlobalState()))) {
+      return true;
+    }
     return false;
   }
 
@@ -474,6 +489,7 @@ public:
     danglingPop = danglingPop || other.danglingPop;
     mayNotReturn = mayNotReturn || other.mayNotReturn;
     hasReturnCallThrow = hasReturnCallThrow || other.hasReturnCallThrow;
+    suspends = suspends || other.suspends;
     readOrder = std::max(readOrder, other.readOrder);
     writeOrder = std::max(writeOrder, other.writeOrder);
 
@@ -681,11 +697,11 @@ private:
         return true;
       }
       assert(type.isRef());
-      if (type.isNull()) {
+      if (type.isBottomRef()) {
         parent.trap = true;
         return true;
       }
-      if (type.isNullable()) {
+      if (type.isNullableRef()) {
         parent.implicitTrap = true;
       }
 
@@ -823,6 +839,8 @@ private:
       parent.readOrder = parent.writeOrder = MemoryOrder::SeqCst;
       // Traps on unaligned accesses.
       parent.implicitTrap = true;
+      // If the timeout is negative and no-one wakes us.
+      parent.mayNotReturn = true;
     }
     void visitAtomicNotify(AtomicNotify* curr) {
       // Notifies on unshared memories just return 0 or trap on unaligned
@@ -1044,10 +1062,8 @@ private:
     }
     void visitRefGetDesc(RefGetDesc* curr) { trapOnNull(curr->ref); }
     void visitBrOn(BrOn* curr) {
-      if (trapOnNull(curr->desc)) {
-        return;
-      }
       parent.breakTargets.insert(curr->name);
+      trapOnNull(curr->desc);
     }
     void visitStructNew(StructNew* curr) { trapOnNull(curr->desc); }
     void visitStructGet(StructGet* curr) {
@@ -1074,11 +1090,12 @@ private:
     void visitStructRMW(StructRMW* curr) { visitStructRMWExpr(curr); }
     void visitStructCmpxchg(StructCmpxchg* curr) { visitStructRMWExpr(curr); }
     void visitStructWait(StructWait* curr) {
-      if (trapOnNull(curr->ref)) {
+      if (trapOnNull({curr->ref, curr->waitqueue})) {
         return;
       }
+
       // StructWait doesn't strictly write a struct, but it does modify the
-      // waiters list associated with the waitqueue field, which we can think
+      // waiters list associated with the waitqueue, which we can think
       // of as a write.
       parent.readsSharedMutableStruct = true;
       parent.writesSharedStruct = true;
@@ -1087,20 +1104,38 @@ private:
       // If the timeout is negative and no-one wakes us.
       parent.mayNotReturn = true;
     }
-    void visitStructNotify(StructNotify* curr) {
-      if (trapOnNull(curr->ref)) {
+    void visitWaitqueueNew(WaitqueueNew* curr) {}
+    void visitWaitqueueNotify(WaitqueueNotify* curr) {
+      if (trapOnNull(curr->waitqueue)) {
         return;
       }
-      // Non-shared notifies just return 0.
-      if (curr->ref->type.getHeapType().isShared()) {
-        return;
-      }
-      // AtomicNotify doesn't strictly write the struct, but it does
-      // modify the waiters list associated with the waitqueue field, which we
+      // WaitqueueNotify doesn't strictly write anything, but it does
+      // modify the waiters list associated with the waitqueue, which we
       // can think of as a write.
       parent.readsSharedMutableStruct = true;
       parent.writesSharedStruct = true;
       parent.readOrder = parent.writeOrder = MemoryOrder::SeqCst;
+    }
+    void visitPublish(Publish* curr) {
+      // Publish is a no-op on anything besides shared structs and arrays.
+      if (!curr->ref->type.isRef()) {
+        return;
+      }
+      auto heapType = curr->ref->type.getHeapType();
+      if (!heapType.isShared()) {
+        return;
+      }
+      if (!heapType.isStruct() && !heapType.isMaybeShared(HeapType::struct_) &&
+          !heapType.isArray() && !heapType.isMaybeShared(HeapType::array) &&
+          !heapType.isMaybeShared(HeapType::eq) &&
+          !heapType.isMaybeShared(HeapType::any)) {
+        return;
+      }
+      // TODO: Modeling `publish` as an arbitrary call is overly conservative.
+      // We need to prevent writes to the published object from being moved
+      // after the publish and we need to prevent writes of the published object
+      // to anywhere else from being moved before the publish.
+      parent.calls = true;
     }
     void visitArrayNew(ArrayNew* curr) {}
     void visitArrayNewData(ArrayNewData* curr) {
@@ -1140,7 +1175,7 @@ private:
     }
 
     void visitArrayStore(ArrayStore* curr) {
-      if (curr->ref->type.isNull()) {
+      if (curr->ref->type.isBottomRef()) {
         parent.trap = true;
         return;
       }
@@ -1269,8 +1304,9 @@ private:
       parent.calls = true;
     }
     void visitSuspend(Suspend* curr) {
-      // Similar to resume/call: Suspending means that we execute arbitrary
-      // other code before we may resume here.
+      // Suspending transfers control to an enclosing handler and executes
+      // arbitrary other code before we may resume here.
+      parent.suspends = true;
       parent.calls = true;
       if (parent.features.hasExceptionHandling() && parent.tryDepth == 0) {
         parent.throws_ = true;
@@ -1368,11 +1404,26 @@ private:
           parent.throws_ = true;
         }
       }
+      // If stack switching is enabled and we don't have global effects
+      // information, assume that the call target may suspend.
+      if (parent.features.hasStackSwitching()) {
+        parent.suspends = true;
+      }
     }
   };
 
 public:
   // Helpers
+
+  // See comment on orderedBefore() for the assumptions on the inputs here.
+  static bool orderedBefore(const PassOptions& passOptions,
+                            Module& module,
+                            Expression* a,
+                            Expression* b) {
+    EffectAnalyzer aEffects(passOptions, module, a);
+    EffectAnalyzer bEffects(passOptions, module, b);
+    return aEffects.orderedBefore(bEffects);
+  }
 
   // See comment on orderedBefore() for the assumptions on the inputs here.
   // TODO: Update users so we can check just one direction here.
@@ -1405,7 +1456,8 @@ public:
     Throws = 1 << 12,
     DanglingPop = 1 << 13,
     TrapsNeverHappen = 1 << 14,
-    Any = (1 << 15) - 1
+    Suspends = 1 << 15,
+    Any = (1 << 16) - 1
   };
   uint32_t getSideEffects() const {
     uint32_t effects = 0;
@@ -1457,12 +1509,15 @@ public:
     if (danglingPop) {
       effects |= SideEffects::DanglingPop;
     }
+    if (suspends) {
+      effects |= SideEffects::Suspends;
+    }
     return effects;
   }
 
-  // Ignores all forms of control flow transfers: breaks, returns, and
-  // exceptions. (Note that traps are not considered relevant here - a trap does
-  // not just transfer control flow, but can be seen as halting the entire
+  // Ignores all forms of control flow transfers: breaks, returns, exceptions,
+  // and suspensions. (Note that traps are not considered relevant here - a trap
+  // does not just transfer control flow, but can be seen as halting the entire
   // program.)
   //
   // This function matches transfersControlFlow(), that is, after calling this
@@ -1472,6 +1527,7 @@ public:
     breakTargets.clear();
     throws_ = false;
     delegateTargets.clear();
+    suspends = false;
     assert(!transfersControlFlow());
   }
 
