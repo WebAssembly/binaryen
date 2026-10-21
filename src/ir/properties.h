@@ -530,8 +530,18 @@ inline MemoryOrder getMemoryOrder(Expression* curr) {
 
 // Whether this instruction will be unwritable in the text and binary formats
 // because it requires a type index immediate computed from an expression with
-// unreachable or null type, and therefore no type index.
+// unreachable or null type, and therefore no type index (or is a string array
+// operation with a null array operand).
 inline bool hasUnwritableTypeImmediate(Expression* curr) {
+  if (auto* sn = curr->dynCast<StringNew>()) {
+    // See BinaryInstWriter::visitStringNew.
+    return sn->ref->type.isBottomRef();
+  }
+  if (auto* se = curr->dynCast<StringEncode>()) {
+    // See BinaryInstWriter::visitStringEncode.
+    return se->array->type.isBottomRef();
+  }
+
 #define DELEGATE_ID curr->_id
 
 #define DELEGATE_FIELD_IMMEDIATE_TYPED_CHILD(id, field)                        \
