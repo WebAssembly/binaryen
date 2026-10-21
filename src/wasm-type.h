@@ -393,8 +393,8 @@ public:
   }
 
   bool isRef() const { return !isBasic() && !(id & TupleMask); }
-  bool isNullable() const { return isRef() && (id & NullMask); }
-  bool isNonNullable() const { return isRef() && !(id & NullMask); }
+  bool isNullableRef() const { return isRef() && (id & NullMask); }
+  bool isNonNullableRef() const { return isRef() && !(id & NullMask); }
   bool isExact() const {
     return isRef() && !getHeapType().isBasic() && (id & ExactMask);
   }
@@ -412,9 +412,7 @@ public:
   bool isFunction() const { return isRef() && getHeapType().isFunction(); }
   bool isSignature() const { return isRef() && getHeapType().isSignature(); }
   bool isData() const { return isRef() && getHeapType().isData(); }
-
-  // Whether this type is only inhabited by null values.
-  bool isNull() const { return isRef() && getHeapType().isBottom(); }
+  bool isBottomRef() const { return isRef() && getHeapType().isBottom(); }
   bool isStruct() const { return isRef() && getHeapType().isStruct(); }
   bool isArray() const { return isRef() && getHeapType().isArray(); }
   bool isExn() const { return isRef() && getHeapType().isExn(); }
@@ -427,7 +425,7 @@ public:
 
   // TODO: Allow this only for reference types.
   Nullability getNullability() const {
-    return isNullable() ? Nullable : NonNullable;
+    return isNullableRef() ? Nullable : NonNullable;
   }
   Exactness getExactness() const {
     assert(isRef());

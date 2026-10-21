@@ -108,7 +108,7 @@ public:
   bool isContinuation() const { return type.isContinuation(); }
   bool isString() const { return type.isString(); }
 
-  bool isNull() const { return type.isNull(); }
+  bool isNull() const { return type.isBottomRef(); }
 
   bool isZero() const {
     switch (type.getBasic()) {

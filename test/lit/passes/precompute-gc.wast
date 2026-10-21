@@ -1195,7 +1195,7 @@
  ;; CHECK-NEXT: )
  (func $get-nonnullable-in-unreachable-tuple (result anyref i32)
   ;; As $get-nonnullable-in-unreachable but the local is a tuple (so we need to
-  ;; check isDefaultable, and not just isNullable).
+  ;; check isDefaultable, and not just isNullableRef).
   (local $x (tuple (ref any) i32))
   (local.set $x
    (unreachable)

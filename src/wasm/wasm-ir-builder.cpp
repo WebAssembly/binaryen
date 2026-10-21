@@ -2345,7 +2345,7 @@ Result<> IRBuilder::makeBrOn(Index label,
       WASM_UNREACHABLE("unexpected op");
     case BrOnCast:
     case BrOnCastDescEq:
-      if (out->isNullable()) {
+      if (out->isNullableRef()) {
         resultType = Type(in->getHeapType(), NonNullable);
       } else {
         resultType = *in;
@@ -2353,7 +2353,7 @@ Result<> IRBuilder::makeBrOn(Index label,
       break;
     case BrOnCastFail:
     case BrOnCastDescEqFail:
-      if (in->isNonNullable()) {
+      if (in->isNonNullableRef()) {
         resultType = Type(out->getHeapType(), NonNullable);
       } else {
         resultType = *out;
