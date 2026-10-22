@@ -4431,6 +4431,12 @@ void FunctionValidator::visitStringConcat(StringConcat* curr) {
                                 Type(HeapType::ext, Nullable),
                                 curr,
                                 "string.concat right should be an externref");
+  if (curr->left->type.isRef() && curr->right->type.isRef()) {
+    shouldBeEqual(curr->left->type.getHeapType().getShared(),
+                  curr->right->type.getHeapType().getShared(),
+                  curr,
+                  "string.concat operands must have the same shareability");
+  }
 }
 
 void FunctionValidator::visitStringEq(StringEq* curr) {
@@ -4445,6 +4451,12 @@ void FunctionValidator::visitStringEq(StringEq* curr) {
                                 Type(HeapType::ext, Nullable),
                                 curr,
                                 "string.eq right should be an externref");
+  if (curr->left->type.isRef() && curr->right->type.isRef()) {
+    shouldBeEqual(curr->left->type.getHeapType().getShared(),
+                  curr->right->type.getHeapType().getShared(),
+                  curr,
+                  "string.eq operands must have the same shareability");
+  }
 }
 
 void FunctionValidator::visitStringTest(StringTest* curr) {
