@@ -127,7 +127,7 @@
  ;; CHECK-NEXT:      (local.tee $7
  ;; CHECK-NEXT:       (local.get $0)
  ;; CHECK-NEXT:      )
- ;; CHECK-NEXT:      (f32.const 18446744073709551615)
+ ;; CHECK-NEXT:      (f32.const 18446744073709551616)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:     (f32.ge
  ;; CHECK-NEXT:      (local.get $7)
@@ -175,7 +175,7 @@
  ;; CHECK-NEXT:      (local.tee $9
  ;; CHECK-NEXT:       (local.get $1)
  ;; CHECK-NEXT:      )
- ;; CHECK-NEXT:      (f64.const 18446744073709551615)
+ ;; CHECK-NEXT:      (f64.const 18446744073709551616)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:     (f64.ge
  ;; CHECK-NEXT:      (local.get $9)
