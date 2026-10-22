@@ -294,7 +294,15 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
   void visitThrowRef(ThrowRef* curr) {
     self()->noteNonFlowSubtype(curr->exnref, Type(HeapType::exn, Nullable));
   }
-  void visitTupleMake(TupleMake* curr) {}
+  void visitTupleMake(TupleMake* curr) {
+    if (curr->type != Type::unreachable) {
+      assert(curr->operands.size() == curr->type.size());
+      // Ensure the inputs make sense for the tuple.
+      for (size_t i = 0, size = curr->operands.size(); i < size; ++i) {
+        self()->noteSubtype(curr->operands[i], curr->type[i]);
+      }
+    }
+  }
   void visitTupleExtract(TupleExtract* curr) {}
   void visitRefI31(RefI31* curr) {}
   void visitI31Get(I31Get* curr) {

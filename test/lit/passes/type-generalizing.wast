@@ -2605,12 +2605,14 @@
 )
 
 (module
- ;; CHECK:      (type $0 (func (result i32)))
-
  ;; CHECK:      (type $A (struct (field (mut i32))))
  (type $A (struct (field (mut i32))))
 
- ;; CHECK:      (func $struct.atomic (type $0) (result i32)
+ ;; CHECK:      (type $1 (func (result i32)))
+
+ ;; CHECK:      (type $2 (func (result i32 (ref null $A))))
+
+ ;; CHECK:      (func $struct.atomic (type $1) (result i32)
  ;; CHECK-NEXT:  (local $x (ref null $A))
  ;; CHECK-NEXT:  (struct.atomic.rmw.cmpxchg $A 0
  ;; CHECK-NEXT:   (local.tee $x
@@ -2630,6 +2632,29 @@
    )
    (i32.const 0)
    (i32.const 0)
+  )
+ )
+
+ ;; CHECK:      (func $tuple.make (type $2) (result i32 (ref null $A))
+ ;; CHECK-NEXT:  (local $x (ref null $A))
+ ;; CHECK-NEXT:  (local $tuple (tuple i32 (ref null $A)))
+ ;; CHECK-NEXT:  (local.tee $tuple
+ ;; CHECK-NEXT:   (tuple.make 2
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:    (local.get $x)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $tuple.make (result i32 (ref null $A))
+  ;; TODO: Optimize tuples. For now, just do not error by generalizing operands
+  ;;       of tuple.make too much so validation breaks.
+  (local $x (ref null $A))
+  (local $tuple (tuple i32 (ref null $A)))
+  (local.tee $tuple
+   (tuple.make 2
+    (i32.const 0)
+    (local.get $x)
+   )
   )
  )
 )
