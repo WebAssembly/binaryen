@@ -2607,7 +2607,7 @@ public:
     : name(name), kind(kind), value(value) {
     assert(std::get_if<Name>(&value));
   }
-  Name* getInternalName() { return std::get_if<Name>(&value); }
+  const Name* getInternalName() const { return std::get_if<Name>(&value); }
   void setInternalName(Name name) {
     assert(std::holds_alternative<Name>(value));
     value = name;
