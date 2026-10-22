@@ -371,8 +371,7 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
         }
         break;
     }
-    self()->noteSubtype(curr->getSentType(),
-                        breakTarget);
+    self()->noteSubtype(curr->getSentType(), breakTarget);
   }
   void visitStructNew(StructNew* curr) {
     if (!curr->type.isStruct()) {
