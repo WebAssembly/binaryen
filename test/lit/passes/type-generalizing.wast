@@ -2548,3 +2548,29 @@
  )
 )
 
+(module
+ ;; CHECK:      (type $A (sub (struct)))
+ (type $A (sub (struct)))
+
+ ;; CHECK:      (type $1 (func (result (ref $A))))
+
+ ;; CHECK:      (func $br_on_non_null (type $1) (result (ref $A))
+ ;; CHECK-NEXT:  (local $x (ref null $A))
+ ;; CHECK-NEXT:  (block $block (result (ref $A))
+ ;; CHECK-NEXT:   (br_on_non_null $block
+ ;; CHECK-NEXT:    (local.get $x)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $br_on_non_null (result (ref $A))
+  (local $x (ref null $A))
+  ;; We cannot refine the local to funcref, as the result is (ref $A).
+  (block $block (result (ref $A))
+   (br_on_non_null $block
+    (local.get $x)
+   )
+   (unreachable)
+  )
+ )
+)

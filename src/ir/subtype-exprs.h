@@ -346,9 +346,19 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
   }
   void visitRefGetDesc(RefGetDesc* curr) {}
   void visitBrOn(BrOn* curr) {
+    auto* breakTarget = self()->findBreakTarget(curr->name);
     switch (curr->op) {
       case BrOnNull:
+        break;
       case BrOnNonNull:
+        // The value sent is made non-nullable and then sent. That means it
+        // must have the right heap type.
+        if (breakTarget->type.isRef()) {
+          // Enforce the heap type requirement by making sure we are a subtype
+          // of the target, made nullable (i.e., without any non-nullability
+          // requirement, as we are making it non-nullable anyhow).
+          self()->noteSubtype(curr->ref, breakTarget->type.with(Nullable));
+        }
         break;
       case BrOnCast:
       case BrOnCastFail:
@@ -362,7 +372,7 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
         break;
     }
     self()->noteSubtype(curr->getSentType(),
-                        self()->findBreakTarget(curr->name));
+                        breakTarget);
   }
   void visitStructNew(StructNew* curr) {
     if (!curr->type.isStruct()) {
