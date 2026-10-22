@@ -242,6 +242,15 @@ struct Generalizer
                   generalized.getStruct().fields[curr->index].type);
   }
 
+  // TODO: optimize these like the above
+  void visitStructRMW(StructRMW* curr) {
+    // Ensure we do not generalize too much.
+    addConstraint(curr->ref, curr->ref->type);
+  }
+  void visitStructCmpxchg(StructCmpxchg* curr) {
+    addConstraint(curr->ref, curr->ref->type);
+  }
+
   void visitArrayGet(ArrayGet* curr) {
     if (curr->ref->type.isBottomRef()) {
       addConstraint(curr->ref, curr->ref->type);
@@ -327,6 +336,15 @@ struct Generalizer
     }
     auto generalized = generalizeArrayType(curr->ref->type.getHeapType());
     addConstraint(curr->ref, Type(generalized, Nullable));
+  }
+
+  // TODO: optimize these like the above
+  void visitArrayRMW(ArrayRMW* curr) {
+    // Ensure we do not generalize too much.
+    addConstraint(curr->ref, curr->ref->type);
+  }
+  void visitArrayCmpxchg(ArrayCmpxchg* curr) {
+    addConstraint(curr->ref, curr->ref->type);
   }
 
   void propagate() {

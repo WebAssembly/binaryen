@@ -2574,3 +2574,34 @@
   )
  )
 )
+
+(module
+ ;; CHECK:      (type $0 (func (result i32)))
+
+ ;; CHECK:      (type $A (struct (field (mut i32))))
+ (type $A (struct (field (mut i32))))
+
+ ;; CHECK:      (func $struct.atomic (type $0) (result i32)
+ ;; CHECK-NEXT:  (local $x (ref null $A))
+ ;; CHECK-NEXT:  (struct.atomic.rmw.cmpxchg $A 0
+ ;; CHECK-NEXT:   (local.tee $x
+ ;; CHECK-NEXT:    (ref.null none)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $struct.atomic (result i32)
+  ;; TODO: Optimize struct/array atomics. For now, just do not error by
+  ;;       generalizing too much so validation breaks.
+  (local $x (ref null $A))
+  (struct.atomic.rmw.cmpxchg $A 0
+   (local.tee $x
+    (ref.null none)
+   )
+   (i32.const 0)
+   (i32.const 0)
+  )
+ )
+)
+
