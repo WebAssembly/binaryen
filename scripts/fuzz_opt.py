@@ -2692,6 +2692,7 @@ opt_choices = [
     ("--code-pushing",),
     ("--code-folding",),
     ("--const-hoisting",),
+    ("--constant-arrays-to-data",),
     ("--constraint-analysis",),
     ("--dae",),
     ("--dae-optimizing",),

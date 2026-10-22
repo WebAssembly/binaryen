@@ -18,6 +18,10 @@ Current Trunk
  - Add a new wasm-embed tool for extracting Wasm modules embedded as byte arrays
    in JS source files or replacing such modules in the JS source (#9127)
  - Support reading and writing label names in the name section (#9166)
+ - Add a `--constant-arrays-to-data` pass that converts `array.new_fixed` of
+   constant numeric values to `array.new_data` when that is smaller. It runs
+   in the last set of default optimizations (when
+   `--expect-later-toolchain-opts` is not passed).
 
 v133
 ----
