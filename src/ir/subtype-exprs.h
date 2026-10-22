@@ -335,7 +335,15 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
   void visitRefTest(RefTest* curr) {
     self()->noteCast(curr->ref, curr->castType);
   }
-  void visitRefCast(RefCast* curr) { self()->noteCast(curr->ref, curr); }
+  void visitRefCast(RefCast* curr) {
+    self()->noteCast(curr->ref, curr);
+
+    if (curr->desc) {
+      // As with CallRef, we must keep a descriptor valid: it must be a declared
+      // descriptor type. Until we have addStructSubtype, make it keep its type.
+      self()->noteSubtype(curr->desc, curr->desc->type);
+    }
+  }
   void visitRefGetDesc(RefGetDesc* curr) {}
   void visitBrOn(BrOn* curr) {
     switch (curr->op) {
@@ -347,6 +355,10 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
       case BrOnCastDescEq:
       case BrOnCastDescEqFail:
         self()->noteCast(curr->ref, curr->castType);
+        if (curr->desc) {
+          // As with RefCast, we must keep a descriptor valid.
+          self()->noteSubtype(curr->desc, curr->desc->type);
+        }
         break;
     }
     self()->noteSubtype(curr->getSentType(),

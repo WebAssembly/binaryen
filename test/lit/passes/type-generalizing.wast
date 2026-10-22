@@ -2483,3 +2483,68 @@
   )
  )
 )
+
+(module
+ (rec
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $A (descriptor $A.desc) (struct))
+  (type $A (descriptor $A.desc) (struct))
+  ;; CHECK:       (type $A.desc (describes $A) (struct))
+  (type $A.desc (describes $A) (struct))
+ )
+
+ ;; CHECK:      (type $2 (func))
+
+ ;; CHECK:      (type $3 (func (param anyref)))
+
+ ;; CHECK:      (func $ref.cast_desc_eq (type $2)
+ ;; CHECK-NEXT:  (local $x (ref null $A.desc))
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (ref.cast_desc_eq (ref $A)
+ ;; CHECK-NEXT:    (ref.null none)
+ ;; CHECK-NEXT:    (local.get $x)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $ref.cast_desc_eq
+  (local $x (ref null $A.desc))
+  ;; We cannot generalize x to anyref: it is used as descriptor, and must
+  ;; remain a valid descriptor type.
+  (drop
+   (ref.cast_desc_eq (ref $A)
+    (ref.null eq)
+    (local.get $x)
+   )
+  )
+ )
+
+ ;; CHECK:      (func $br-on-cast-desc-eq (type $3) (param $any anyref)
+ ;; CHECK-NEXT:  (local $x (ref null $A.desc))
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (block $l (result (ref null $A))
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (br_on_cast_desc_eq $l anyref (ref null $A)
+ ;; CHECK-NEXT:      (local.get $any)
+ ;; CHECK-NEXT:      (local.get $x)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $br-on-cast-desc-eq (param $any anyref)
+  (local $x (ref null $A.desc))
+  ;; As above, with br_on.
+  (drop
+   (block $l (result (ref null $A))
+    (br_on_cast_desc_eq $l anyref (ref null $A)
+     (local.get $any)
+     (local.get $x)
+    )
+    (unreachable)
+    )
+   )
+  )
+ )
+)
+
