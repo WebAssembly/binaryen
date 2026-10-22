@@ -2497,6 +2497,8 @@
 
  ;; CHECK:      (type $3 (func (param anyref)))
 
+ ;; CHECK:      (type $4 (func (result (ref $A.desc))))
+
  ;; CHECK:      (func $ref.cast_desc_eq (type $2)
  ;; CHECK-NEXT:  (local $x (ref null $A.desc))
  ;; CHECK-NEXT:  (drop
@@ -2542,8 +2544,21 @@
      (local.get $x)
     )
     (unreachable)
-    )
    )
+  )
+ )
+
+ ;; CHECK:      (func $ref.get_desc (type $4) (result (ref $A.desc))
+ ;; CHECK-NEXT:  (local $x (ref null $A))
+ ;; CHECK-NEXT:  (ref.get_desc $A
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $ref.get_desc (result (ref $A.desc))
+  ;; We cannot generalize x to anyref: it must have a descriptor.
+  (local $x (ref null $A))
+  (ref.get_desc $A
+   (local.get $x)
   )
  )
 )

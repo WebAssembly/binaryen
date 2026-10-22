@@ -352,7 +352,12 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
       self()->noteSubtype(curr->desc, curr->desc->type);
     }
   }
-  void visitRefGetDesc(RefGetDesc* curr) {}
+  void visitRefGetDesc(RefGetDesc* curr) {
+    // Similar to RefCastDesc, we must keep the input a valid struct type, one
+    // with a descriptor. Until we have addStructSubtype or such, make it keep
+    // its type.
+    self()->noteSubtype(curr->ref, curr->ref->type);
+  }
   void visitBrOn(BrOn* curr) {
     auto* breakTarget = self()->findBreakTarget(curr->name);
     switch (curr->op) {
