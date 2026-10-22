@@ -33,6 +33,10 @@
 
   ;; STACKIR-OPT:      (type $6 (func (param i32 i64)))
 
+  ;; STACKIR-OPT:      (type $7 (func (param exnref)))
+
+  ;; STACKIR-OPT:      (type $8 (func (param exnref) (result (ref exn))))
+
   ;; STACKIR-OPT:      (tag $e-empty (type $1))
   (tag $e-empty)
   ;; CHECK:      (tag $e-i32 (type $5) (param i32))
@@ -1556,16 +1560,14 @@
   ;; STACKIR-OPT-NEXT:    end
   ;; STACKIR-OPT-NEXT:    br $outer3
   ;; STACKIR-OPT-NEXT:   end
-  ;; STACKIR-OPT-NEXT:   local.set $0
-  ;; STACKIR-OPT-NEXT:   block $outer0
-  ;; STACKIR-OPT-NEXT:    block $catch2 (result (ref exn))
+  ;; STACKIR-OPT-NEXT:   block $outer0 (type $7) (param exnref)
+  ;; STACKIR-OPT-NEXT:    block $catch2 (type $8) (param exnref) (result (ref exn))
   ;; STACKIR-OPT-NEXT:     block $catch1
   ;; STACKIR-OPT-NEXT:      try_table (catch $e-empty $catch1) (catch_ref $e-empty $catch2)
   ;; STACKIR-OPT-NEXT:       call $foo
   ;; STACKIR-OPT-NEXT:      end
   ;; STACKIR-OPT-NEXT:      br $outer0
   ;; STACKIR-OPT-NEXT:     end
-  ;; STACKIR-OPT-NEXT:     local.get $0
   ;; STACKIR-OPT-NEXT:     throw_ref
   ;; STACKIR-OPT-NEXT:    end
   ;; STACKIR-OPT-NEXT:    throw_ref

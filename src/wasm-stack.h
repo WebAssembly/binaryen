@@ -658,6 +658,8 @@ private:
 };
 
 // Stack IR optimizer
+struct LazyLocalGraph;
+
 class StackIROptimizer {
   Function* func;
   StackIR& insts;
@@ -683,6 +685,9 @@ private:
   bool isControlFlow(StackInst* inst);
   void removeAt(Index i);
   Index getNumConsumedValues(StackInst* inst);
+  bool isSingleUseSetGetPair(Index setIndex,
+                             Index getIndex,
+                             LazyLocalGraph& localGraph);
   bool canRemoveSetGetPair(Index setIndex, Index getIndex);
   bool isConsumedBySymmetricOp(Index getIndex);
   std::unordered_set<LocalGet*> findStringViewDeferredGets();
