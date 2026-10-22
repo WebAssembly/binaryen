@@ -2367,6 +2367,9 @@ struct BinaryLocations {
   };
 
   std::unordered_map<Function*, FunctionLocations> functions;
+
+  // Original DWARF local indices mapped to the locals actually emitted.
+  std::unordered_map<Function*, std::vector<Index>> localIndices;
 };
 
 // Forward declaration for FuncEffectsMap.
@@ -2500,6 +2503,10 @@ public:
   std::unordered_map<Expression*, BinaryLocations::DelimiterLocations>
     delimiterLocations;
   BinaryLocations::FunctionLocations funcLocation;
+
+  // Original DWARF local index -> current IR index, composed across local
+  // permutations. Empty means identity; Index(-1) means the local was removed.
+  std::vector<Index> dwarfLocalIndices;
 
   // Annotations on expressions. As with debug info, we do not store these on
   // Expressions as we assume most instances are unannotated, and do not want to
