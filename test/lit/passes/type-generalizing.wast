@@ -2573,6 +2573,35 @@
    (unreachable)
   )
  )
+
+ ;; CHECK:      (func $br_on_cast_fail (type $1) (result (ref $A))
+ ;; CHECK-NEXT:  (local $A (ref $A))
+ ;; CHECK-NEXT:  (block $block (result (ref $A))
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (br_on_cast_fail $block (ref $A) (ref $A)
+ ;; CHECK-NEXT:     (local.tee $A
+ ;; CHECK-NEXT:      (struct.new_default $A)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $br_on_cast_fail (result (ref $A))
+  (local $A (ref $A))
+  ;; The block must return $A, so the cast_fail must send it, and the local
+  ;; cannot be refined to anyref.
+  (block $block (result (ref $A))
+   (drop
+    (br_on_cast_fail $block (ref $A) (ref $A)
+     (local.tee $A
+      (struct.new $A)
+     )
+    )
+   )
+   (unreachable)
+  )
+ )
 )
 
 (module
@@ -2604,4 +2633,3 @@
   )
  )
 )
-

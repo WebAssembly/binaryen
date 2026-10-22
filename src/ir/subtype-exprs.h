@@ -369,6 +369,13 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
           // As with RefCast, we must keep a descriptor valid.
           self()->noteSubtype(curr->desc, curr->desc->type);
         }
+        if (curr->op == BrOnCastFail || curr->op == BrOnCastDescEqFail) {
+          // We send the original input along when the cast fails, so the input
+          // must be sendable to the target.
+          if (breakTarget->type.isRef()) {
+            self()->noteSubtype(curr->ref, breakTarget->type);
+          }
+        }
         break;
     }
     self()->noteSubtype(curr->getSentType(), breakTarget);
