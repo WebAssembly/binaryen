@@ -39,7 +39,7 @@ SCRIPT_PATH = os.path.relpath(os.path.abspath(__file__))
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-CPP_EXTENSIONS = {'.c', '.cc', '.cpp', '.cxx', '.c++', '.h', '.hpp', '.inc'}
+CPP_EXTENSIONS = {'.c', '.cpp', '.h', '.inc'}
 
 HUNK_RE = re.compile(r'^@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@')
 UNREACHABLE_RE = re.compile(
@@ -339,7 +339,7 @@ Or run tests manually with LLVM_PROFILE_FILE set, then re-run coverage-diff.py:
 
 def find_object_file_for_source(build_dir: str, rel_path: str) -> str | None:
     """Locate the compiled .o file for a C/C++ source file in build_dir."""
-    if rel_path.endswith(('.h', '.hpp', '.inc')):
+    if rel_path.endswith(('.h', '.inc')):
         return None
     # 1. Standard libbinaryen object path: CMakeFiles/binaryen.dir/<rel_path>.o
     cand = os.path.join(build_dir, 'CMakeFiles', 'binaryen.dir', f'{rel_path}.o')
@@ -366,7 +366,7 @@ def find_coverage_objects(
     if explicit_objects:
         return [os.path.abspath(obj) for obj in explicit_objects]
 
-    # Fast path: if all modified files in the diff are .c/.cc/.cpp compilation units
+    # Fast path: if all modified files in the diff are .c/.cpp compilation units
     # with corresponding .o files in build_dir, pass those .o files directly to
     # llvm-cov export (~0.15s) instead of parsing all 300MB+ of libbinaryen.so (~12s).
     obj_files: list[str] = []
@@ -407,7 +407,7 @@ def find_coverage_objects(
                 needed_bins.add(tool_entry)
         elif len(parts) >= 2 and parts[0] == 'test' and parts[1] == 'gtest':
             needed_bins.add('binaryen-unittests')
-        if rel_path.endswith(('.h', '.hpp', '.inc')):
+        if rel_path.endswith(('.h', '.inc')):
             # Header changes might only be instantiated inside unit tests or tools.
             needed_bins.update(['wasm-opt', 'binaryen-unittests'])
 
@@ -755,7 +755,7 @@ def demangle_names(names: list[str]) -> dict[str, str]:
     if not demangler:
         return {n: n for n in names}
     # Strip leading source filename prefix if present (e.g. "File.cpp:_Z...")
-    stripped = [n.split(':', 1)[-1] if ':' in n and n.split(':', 1)[0].endswith(('.cpp', '.cc', '.c', '.h')) else n for n in names]
+    stripped = [n.split(':', 1)[-1] if ':' in n and n.split(':', 1)[0].endswith(('.cpp', '.c', '.h')) else n for n in names]
     res = subprocess.run(
         [demangler],
         input='\n'.join(stripped),

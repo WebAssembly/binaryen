@@ -336,10 +336,10 @@ jobs:
   coverage:
     name: coverage
     if: ${{ github.event_name == 'pull_request' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     env:
       COMPILER_FLAGS: "-fprofile-instr-generate -fcoverage-mapping -fcoverage-mcdc"
-      LLVM_VERSION: 18
+      LLVM_VERSION: 21
     steps:
     - uses: actions/setup-python@v5
       with:
@@ -349,7 +349,7 @@ jobs:
         submodules: true
         fetch-depth: 0
     - name: install tools
-      run: sudo apt-get install ninja-build llvm-${LLVM_VERSION}
+      run: sudo apt-get install ninja-build clang-${LLVM_VERSION} llvm-${LLVM_VERSION}
     - name: install v8
       run: |
         npm install jsvu -g
