@@ -365,6 +365,164 @@
     )
   )
 
+  ;; CHECK:      (func $redundant-unary-sign-ext-max-bits (type $2) (param $x32 i32) (param $x64 i64) (param $addr i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.and
+  ;; CHECK-NEXT:    (local.get $x32)
+  ;; CHECK-NEXT:    (i32.const 127)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.load8_u
+  ;; CHECK-NEXT:    (local.get $addr)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.and
+  ;; CHECK-NEXT:    (local.get $x64)
+  ;; CHECK-NEXT:    (i64.const 32767)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.load16_u
+  ;; CHECK-NEXT:    (local.get $addr)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.extend8_s
+  ;; CHECK-NEXT:    (i32.and
+  ;; CHECK-NEXT:     (local.get $x32)
+  ;; CHECK-NEXT:     (i32.const 255)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $redundant-unary-sign-ext-max-bits (param $x32 i32) (param $x64 i64) (param $addr i32)
+    ;; Eliminate unary sign-extend when maxBits < bits (the sign bit is known 0).
+    (drop (i32.extend8_s (i32.and (local.get $x32) (i32.const 0x7f))))
+    (drop (i32.extend16_s (i32.load8_u (local.get $addr))))
+    (drop (i64.extend16_s (i64.and (local.get $x64) (i64.const 0x7fff))))
+    (drop (i64.extend32_s (i64.load16_u (local.get $addr))))
+    ;; Negative case: maxBits == bits (the sign bit may be 1).
+    (drop (i32.extend8_s (i32.and (local.get $x32) (i32.const 0xff))))
+  )
+
+  ;; CHECK:      (func $redundant-unary-sign-ext-already-signed (type $4) (param $x32 i32) (param $addr i32)
+  ;; CHECK-NEXT:  (local $t64 i64)
+  ;; CHECK-NEXT:  (local $t64_8 i64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.load8_s
+  ;; CHECK-NEXT:    (local.get $addr)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.load8_s
+  ;; CHECK-NEXT:    (local.get $addr)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.load16_s
+  ;; CHECK-NEXT:    (local.get $addr)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.extend_i32_s
+  ;; CHECK-NEXT:    (local.get $x32)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.extend_i32_s
+  ;; CHECK-NEXT:    (i32.extend8_s
+  ;; CHECK-NEXT:     (local.get $x32)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $t64
+  ;; CHECK-NEXT:   (i64.extend_i32_s
+  ;; CHECK-NEXT:    (local.get $x32)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $t64)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $t64_8
+  ;; CHECK-NEXT:   (i64.extend_i32_s
+  ;; CHECK-NEXT:    (i32.extend8_s
+  ;; CHECK-NEXT:     (local.get $x32)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $t64_8)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.extend8_s
+  ;; CHECK-NEXT:    (i32.load
+  ;; CHECK-NEXT:     (local.get $addr)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $redundant-unary-sign-ext-already-signed (param $x32 i32) (param $addr i32)
+    (local $t64 i64)
+    (local $t64_8 i64)
+    ;; Eliminate unary sign-extend when input is already sign-extended to <= bits
+    ;; via signed loads, i64.extend_i32_s, or locals.
+    (drop (i32.extend8_s (i32.load8_s (local.get $addr))))
+    (drop (i32.extend16_s (i32.load8_s (local.get $addr))))
+    (drop (i64.extend32_s (i64.load16_s (local.get $addr))))
+    (drop (i64.extend32_s (i64.extend_i32_s (local.get $x32))))
+    (drop (i64.extend16_s (i64.extend_i32_s (i32.extend8_s (local.get $x32)))))
+    ;; Local initialized with i64.extend_i32_s is known to be 32-bit sign-extended.
+    (local.set $t64 (i64.extend_i32_s (local.get $x32)))
+    (drop (i64.extend32_s (local.get $t64)))
+    ;; Local initialized with i64.extend_i32_s(i32.extend8_s) is 8-bit sign-extended.
+    (local.set $t64_8 (i64.extend_i32_s (i32.extend8_s (local.get $x32))))
+    (drop (i64.extend16_s (local.get $t64_8)))
+    ;; Negative case: full-width load is not sign-extended.
+    (drop (i32.extend8_s (i32.load (local.get $addr))))
+  )
+
+  ;; CHECK:      (func $nested-unary-sign-ext (type $3) (param $x32 i32) (param $x64 i64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.extend8_s
+  ;; CHECK-NEXT:    (local.get $x32)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.extend8_s
+  ;; CHECK-NEXT:    (local.get $x64)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.extend16_s
+  ;; CHECK-NEXT:    (local.get $x64)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.extend_i32_s
+  ;; CHECK-NEXT:    (local.get $x32)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.extend16_s
+  ;; CHECK-NEXT:    (i64.extend_i32_u
+  ;; CHECK-NEXT:     (local.get $x32)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $nested-unary-sign-ext (param $x32 i32) (param $x64 i64)
+    ;; Strip wider inner sign-extension inside narrower outer sign-extension.
+    (drop (i32.extend8_s (i32.extend16_s (local.get $x32))))
+    (drop (i64.extend8_s (i64.extend16_s (local.get $x64))))
+    (drop (i64.extend16_s (i64.extend32_s (local.get $x64))))
+    ;; Fold i64.extend32_s(i64.extend_i32_u(x)) => i64.extend_i32_s(x).
+    (drop (i64.extend32_s (i64.extend_i32_u (local.get $x32))))
+    ;; Negative case: narrower extend of i64.extend_i32_u cannot be folded to extend_i32_s.
+    (drop (i64.extend16_s (i64.extend_i32_u (local.get $x32))))
+  )
+
   ;; CHECK:      (func $unary-sign-ext-loads (type $1) (param $addr i32)
   ;; CHECK-NEXT:  (local $t32 i32)
   ;; CHECK-NEXT:  (local $t64 i64)
@@ -489,7 +647,7 @@
     (drop (i64.extend16_s (i64.load32_u (local.get $addr))))
   )
 
-  ;; CHECK:      (func $unary-sign-ext-eq-const (type $2) (param $x32 i32) (param $x64 i64)
+  ;; CHECK:      (func $unary-sign-ext-eq-const (type $3) (param $x32 i32) (param $x64 i64)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.eq
   ;; CHECK-NEXT:    (i32.and
@@ -563,7 +721,7 @@
     (drop (i64.ne (i64.extend32_s (local.get $x64)) (i64.const 0x80000000)))
   )
 
-  ;; CHECK:      (func $unary-sign-ext-eq-both (type $3) (param $x32 i32) (param $y32 i32) (param $x64 i64) (param $y64 i64)
+  ;; CHECK:      (func $unary-sign-ext-eq-both (type $5) (param $x32 i32) (param $y32 i32) (param $x64 i64) (param $y64 i64)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.eq
   ;; CHECK-NEXT:    (i32.and
@@ -619,7 +777,7 @@
     (drop (i64.eq (i64.extend8_s (local.get $x64)) (i64.extend16_s (local.get $y64))))
   )
 
-  ;; CHECK:      (func $unary-sign-ext-eq-load (type $4) (param $x32 i32) (param $x64 i64) (param $addr i32)
+  ;; CHECK:      (func $unary-sign-ext-eq-load (type $2) (param $x32 i32) (param $x64 i64) (param $addr i32)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.eq
   ;; CHECK-NEXT:    (i32.load16_u
