@@ -103,34 +103,46 @@ VarRef asVarRef(Type type) {
 // `true` iff the least upper bound exists.
 
 bool join(VarNullability& value, const VarNullability& other) {
-  assert(!std::get_if<Index>(&value) && !std::get_if<Index>(&other) &&
-         "joining variables not yet supported");
-  if (value == other) {
+  if (value == other || other == VarNullability{NonNullable}) {
     return true;
   }
-  value = Nullable;
-  return true;
+  if (value == VarNullability{NonNullable}) {
+    value = other;
+    return true;
+  }
+  if (value == VarNullability{Nullable} || other == VarNullability{Nullable}) {
+    value = Nullable;
+    return true;
+  }
+  WASM_UNREACHABLE("joining distinct nullability variables not supported");
 }
 
 bool join(VarExactness& value, const VarExactness& other) {
-  assert(!std::get_if<Index>(&value) && !std::get_if<Index>(&other) &&
-         "joining variables not yet supported");
-  if (value == other) {
+  if (value == other || other == VarExactness{Exact}) {
     return true;
   }
-  value = Inexact;
-  return true;
+  if (value == VarExactness{Exact}) {
+    value = other;
+    return true;
+  }
+  if (value == VarExactness{Inexact} || other == VarExactness{Inexact}) {
+    value = Inexact;
+    return true;
+  }
+  WASM_UNREACHABLE("joining distinct exactness variables not supported");
 }
 
 bool join(VarSharedness& value, const VarSharedness& other) {
-  assert(!std::get_if<Index>(&value) && !std::get_if<Index>(&other) &&
-         "joining variables not yet supported");
   if (value == other || std::get_if<BottomShare>(&other)) {
     return true;
   }
   if (std::get_if<BottomShare>(&value)) {
     value = other;
     return true;
+  }
+  if (std::get_if<Index>(&value) || std::get_if<Index>(&other)) {
+    WASM_UNREACHABLE(
+      "joining non-bottom sharedness with variable not supported");
   }
   return false;
 }
@@ -147,31 +159,59 @@ bool join(VarAbsHeapType& value, const VarAbsHeapType& other) {
   return join(value.share, other.share) && join(value.ht, other.ht);
 }
 
-bool join(VarDefHeapType& value, const VarDefHeapType& other) {
-  if (value.ht != other.ht) {
-    VarExactness inexact = Inexact;
-    return join(value.ht, other.ht) && join(value.exact, inexact) &&
-           join(inexact, other.exact);
+bool joinAbsAndDef(VarHeapType& value,
+                   const VarAbsHeapType& abs,
+                   const VarDefHeapType& def) {
+  VarSharedness share = abs.share;
+  if (!join(share, VarSharedness{def.ht.getShared()})) {
+    return false;
   }
-  return join(value.exact, other.exact);
+  // Since `def.ht.getShared()` is a concrete Shareability, the joined `share`
+  // is guaranteed to equal `def.ht.getShared()`.
+  auto lub =
+    HeapType::getLeastUpperBound(abs.ht.getBasic(def.ht.getShared()), def.ht);
+  if (!lub) {
+    return false;
+  }
+  if (lub->isBasic()) {
+    value = VarAbsHeapType{share, lub->getBasic(Unshared)};
+  } else {
+    assert(*lub == def.ht);
+    value = def;
+  }
+  return true;
 }
 
-bool join(VarAbsHeapType& value, const VarDefHeapType& other) {
-  WASM_UNREACHABLE("TODO");
-}
-
-bool join(VarDefHeapType& value, const VarAbsHeapType& other) {
-  WASM_UNREACHABLE("TODO");
+bool joinDefAndDef(VarHeapType& value,
+                   const VarDefHeapType& a,
+                   const VarDefHeapType& b) {
+  auto lub = HeapType::getLeastUpperBound(a.ht, b.ht);
+  if (!lub) {
+    return false;
+  }
+  if (lub->isBasic()) {
+    value = VarAbsHeapType{lub->getShared(), lub->getBasic(Unshared)};
+    return true;
+  }
+  VarExactness exact = a.ht == b.ht ? a.exact : VarExactness{Inexact};
+  if (!join(exact, b.exact)) {
+    return false;
+  }
+  value = VarDefHeapType{exact, *lub};
+  return true;
 }
 
 bool join(VarHeapType& value, const VarHeapType& other) {
-  assert(!std::get_if<Index>(&value) && !std::get_if<Index>(&other));
   if (value == other || std::get_if<BottomHeapType>(&other)) {
     return true;
   }
   if (std::get_if<BottomHeapType>(&value)) {
     value = other;
     return true;
+  }
+  if (std::get_if<Index>(&value) || std::get_if<Index>(&other)) {
+    WASM_UNREACHABLE(
+      "joining non-bottom heap type with variable not supported");
   }
   auto* abs = std::get_if<VarAbsHeapType>(&value);
   auto* otherAbs = std::get_if<VarAbsHeapType>(&other);
@@ -181,13 +221,13 @@ bool join(VarHeapType& value, const VarHeapType& other) {
     return join(*abs, *otherAbs);
   }
   if (abs && otherDef) {
-    return join(*abs, *otherDef);
+    return joinAbsAndDef(value, *abs, *otherDef);
   }
   if (def && otherAbs) {
-    return join(*def, *otherAbs);
+    return joinAbsAndDef(value, *otherAbs, *def);
   }
   if (def && otherDef) {
-    return join(*def, *otherDef);
+    return joinDefAndDef(value, *def, *otherDef);
   }
   WASM_UNREACHABLE("unexpected variant");
 }
@@ -201,11 +241,20 @@ bool join(Type& value, const Type& other) {
   return value != Type::none;
 }
 
-bool join(VarRef& value, const Type& other) { WASM_UNREACHABLE("TODO"); }
+bool join(VarRef& value, const Type& other) {
+  if (!other.isRef()) {
+    return false;
+  }
+  return join(value, asVarRef(other));
+}
 
 bool join(VarType& value, const VarType& other) {
   assert(!std::get_if<Index>(&value) && !std::get_if<Index>(&other));
-  if (value == other) {
+  if (value == other || other == VarType{Type(Type::unreachable)}) {
+    return true;
+  }
+  if (value == VarType{Type(Type::unreachable)}) {
+    value = other;
     return true;
   }
   auto* ref = std::get_if<VarRef>(&value);
@@ -227,11 +276,8 @@ bool join(VarType& value, const VarType& other) {
     return true;
   }
   if (type && otherRef) {
-    if (!type->isRef()) {
-      return false;
-    }
-    auto r = asVarRef(*type);
-    if (!join(r, *otherRef)) {
+    VarRef r = *otherRef;
+    if (!join(r, *type)) {
       return false;
     }
     value = canonicalizeRef(r);
@@ -449,10 +495,11 @@ template<typename T> struct AssignmentClasses {
       // Setting a variable equal to itself is a no-op.
       return true;
     }
-    // Make sure we have a class for i.
-    classes.reserve(i + 1);
-    values.reserve(i + 1);
-    while (values.size() <= i) {
+    // Make sure we have classes for i and *other.
+    size_t maxIndex = other ? std::max(i, *other) : i;
+    classes.reserve(maxIndex + 1);
+    values.reserve(maxIndex + 1);
+    while (values.size() <= maxIndex) {
       [[maybe_unused]] size_t set = classes.addSet();
       assert(set == values.size());
       values.push_back(std::nullopt);
@@ -1031,19 +1078,20 @@ bool PrincipalType::compose(const PrincipalType& next) {
 
   apply(assignments, *this);
   // If a type variable was instantiated with bottom type (i.e. unreachable) due
-  // to popping from an unreachable stack, the result type may end with some
-  // number of unreachables. This is nonsensical, since `unreachable` is not a
-  // concrete type. We could have alternatively left the variables
-  // uninstantiated, but it would have no corresponding introduction on the left
-  // hand side of the type. Even better is to canonicalize to empty results.
-  // Since the new principal type is unreachable, this has the same semantics as
-  // having an unconstrained result variable.
-  if (!results.empty()) {
-    auto& last = results[results.size() - 1];
-    if (auto* t = std::get_if<Type>(&last); t && *t == Type::unreachable) {
-      results.clear();
-    }
-  }
+  // to popping from an unreachable stack, `results` may start with some number
+  // of `unreachable`s at the bottom of the stack. This is nonsensical, since
+  // `unreachable` is not a concrete type. We could have alternatively left the
+  // variables uninstantiated, but they would have no corresponding introduction
+  // on the left hand side of the type. Even better is to remove the leading
+  // `unreachable`s at the bottom of `results`. Since the new principal type is
+  // unreachable (`*`), unconstrained elements at the bottom of the stack are
+  // absorbed into `*`, while any concrete types above them remain at the top of
+  // the stack.
+  auto firstNonBottom =
+    std::find_if(results.begin(), results.end(), [](const VarType& t) {
+      return t != VarType{Type(Type::unreachable)};
+    });
+  results.erase(results.begin(), firstNonBottom);
 
   canonicalizeVars(*this);
   return true;
