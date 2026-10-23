@@ -3253,8 +3253,8 @@
   ;; H2L-NEXT: )
   (func $struct.get-atomic-param (param $x i32) (param $p (ref $struct)) (result i32)
     (local $ref (ref null $struct))
-    ;; Now we do not see one set, which writes a param. But the field is
-    ;; immutable, so we still optimize.
+    ;; Now we have something other than an allocation flow into a local.set.
+    ;; But the field is immutable, so we still optimize.
     (local.set $ref
       (local.get $p)
     )
@@ -3313,8 +3313,8 @@
   ;; H2L-NEXT: )
   (func $struct.get-atomic-param-mut (param $x i32) (param $p (ref $struct-mut)) (result i32)
     (local $ref (ref null $struct-mut))
-    ;; Now we do not see one set, and also the field is mutable. We do not
-    ;; optimize.
+    ;; Again we have something other than an allocation flow into a local.set,
+    ;; and also the field is mutable. We do not optimize.
     (local.set $ref
       (local.get $p)
     )
