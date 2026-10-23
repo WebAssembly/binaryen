@@ -1738,3 +1738,1282 @@
   (table $table 1 1 (ref (exact $sub)) (struct.new $sub))
 )
 
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $used-in-br-on-null (sub (struct (field anyref))))
+    (type $used-in-br-on-null (sub (struct (field anyref))))
+    ;; CHECK:       (type $used-in-br-on-non-null (sub (struct (field anyref))))
+    (type $used-in-br-on-non-null (sub (struct (field anyref))))
+    ;; CHECK:       (type $used-in-ref-cast-unreachable (sub (struct (field anyref))))
+    (type $used-in-ref-cast-unreachable (sub (struct (field anyref))))
+    ;; CHECK:       (type $desc-struct (sub (descriptor $desc) (struct (field anyref))))
+    (type $desc-struct (sub (descriptor $desc) (struct (field anyref))))
+    ;; CHECK:       (type $desc (sub (describes $desc-struct) (struct)))
+    (type $desc (sub (describes $desc-struct) (struct)))
+    ;; CHECK:       (type $struct-get-type (sub (struct (field i32))))
+    (type $struct-get-type (sub (struct (field i32))))
+    ;; CHECK:       (type $used-in-struct-set-bot (sub (struct (field anyref))))
+    (type $used-in-struct-set-bot (sub (struct (field anyref))))
+    ;; CHECK:       (type $struct-set-bot (struct (field (mut (ref (exact $used-in-struct-set-bot))))))
+    (type $struct-set-bot (struct (field (mut (ref (exact $used-in-struct-set-bot))))))
+    ;; CHECK:       (type $used-in-array-new-unreachable (sub (struct (field anyref))))
+    (type $used-in-array-new-unreachable (sub (struct (field anyref))))
+    ;; CHECK:       (type $array-new-unreachable (array (ref (exact $used-in-array-new-unreachable))))
+    (type $array-new-unreachable (array (field (ref (exact $used-in-array-new-unreachable)))))
+    ;; CHECK:       (type $used-in-array-new-fixed-unreachable (sub (struct (field anyref))))
+    (type $used-in-array-new-fixed-unreachable (sub (struct (field anyref))))
+    ;; CHECK:       (type $array-new-fixed-unreachable (array (ref (exact $used-in-array-new-fixed-unreachable))))
+    (type $array-new-fixed-unreachable (array (field (ref (exact $used-in-array-new-fixed-unreachable)))))
+    ;; CHECK:       (type $i8-array (array (mut i8)))
+    (type $i8-array (array (field (mut i8))))
+    ;; CHECK:       (type $used-in-array-set-bot (sub (struct (field anyref))))
+    (type $used-in-array-set-bot (sub (struct (field anyref))))
+    ;; CHECK:       (type $array-set-bot (array (mut (ref (exact $used-in-array-set-bot)))))
+    (type $array-set-bot (array (field (mut (ref (exact $used-in-array-set-bot))))))
+    ;; CHECK:       (type $used-in-array-fill-bot (sub (struct (field anyref))))
+    (type $used-in-array-fill-bot (sub (struct (field anyref))))
+    ;; CHECK:       (type $array-fill-bot (array (mut (ref (exact $used-in-array-fill-bot)))))
+    (type $array-fill-bot (array (field (mut (ref (exact $used-in-array-fill-bot))))))
+    ;; CHECK:       (type $any-array (array (mut anyref)))
+    (type $any-array (array (field (mut anyref))))
+    ;; CHECK:       (type $func-empty (func))
+    (type $func-empty (func))
+    ;; CHECK:       (type $cont-empty (cont $func-empty))
+    (type $cont-empty (cont $func-empty))
+    ;; CHECK:       (type $used-in-cont-bind (sub (struct (field anyref))))
+    (type $used-in-cont-bind (sub (struct (field anyref))))
+    ;; CHECK:       (type $func-cont-bind-exact (func (param (ref (exact $used-in-cont-bind)))))
+    (type $func-cont-bind-exact (func (param (ref (exact $used-in-cont-bind)))))
+    ;; CHECK:       (type $cont-bind-exact (cont $func-cont-bind-exact))
+    (type $cont-bind-exact (cont $func-cont-bind-exact))
+    ;; CHECK:       (type $used-in-cont-bind-ok (sub (struct (field anyref))))
+    (type $used-in-cont-bind-ok (sub (struct (field anyref))))
+    ;; CHECK:       (type $func-cont-bind-inexact (func (param (ref $used-in-cont-bind-ok))))
+    (type $func-cont-bind-inexact (func (param (ref $used-in-cont-bind-ok))))
+    ;; CHECK:       (type $cont-bind-inexact (cont $func-cont-bind-inexact))
+    (type $cont-bind-inexact (cont $func-cont-bind-inexact))
+    ;; CHECK:       (type $used-in-cont-bind-bot (sub (struct (field anyref))))
+    (type $used-in-cont-bind-bot (sub (struct (field anyref))))
+    ;; CHECK:       (type $func-cont-bind-bot (func (param (ref (exact $used-in-cont-bind-bot)))))
+    (type $func-cont-bind-bot (func (param (ref (exact $used-in-cont-bind-bot)))))
+    ;; CHECK:       (type $cont-bind-bot (cont $func-cont-bind-bot))
+    (type $cont-bind-bot (cont $func-cont-bind-bot))
+    ;; CHECK:       (type $used-in-resume (sub (struct (field anyref))))
+    (type $used-in-resume (sub (struct (field anyref))))
+    ;; CHECK:       (type $func-resume-exact (func (param (ref (exact $used-in-resume)))))
+    (type $func-resume-exact (func (param (ref (exact $used-in-resume)))))
+    ;; CHECK:       (type $cont-resume-exact (cont $func-resume-exact))
+    (type $cont-resume-exact (cont $func-resume-exact))
+    ;; CHECK:       (type $used-in-resume-ok (sub (struct (field anyref))))
+    (type $used-in-resume-ok (sub (struct (field anyref))))
+    ;; CHECK:       (type $func-resume-inexact (func (param (ref $used-in-resume-ok))))
+    (type $func-resume-inexact (func (param (ref $used-in-resume-ok))))
+    ;; CHECK:       (type $cont-resume-inexact (cont $func-resume-inexact))
+    (type $cont-resume-inexact (cont $func-resume-inexact))
+    ;; CHECK:       (type $used-in-resume-bot (sub (struct (field anyref))))
+    (type $used-in-resume-bot (sub (struct (field anyref))))
+    ;; CHECK:       (type $func-resume-bot (func (param (ref (exact $used-in-resume-bot)))))
+    (type $func-resume-bot (func (param (ref (exact $used-in-resume-bot)))))
+    ;; CHECK:       (type $cont-resume-bot (cont $func-resume-bot))
+    (type $cont-resume-bot (cont $func-resume-bot))
+    ;; CHECK:       (type $used-in-resume-throw (sub (struct (field anyref))))
+    (type $used-in-resume-throw (sub (struct (field anyref))))
+    ;; CHECK:       (type $used-in-resume-throw-ok (sub (struct (field anyref))))
+    (type $used-in-resume-throw-ok (sub (struct (field anyref))))
+    ;; CHECK:       (type $used-in-resume-throw-bot (sub (struct (field anyref))))
+    (type $used-in-resume-throw-bot (sub (struct (field anyref))))
+    ;; CHECK:       (type $func-switch-target (func))
+    (type $func-switch-target (func))
+    ;; CHECK:       (type $cont-switch-target (cont $func-switch-target))
+    (type $cont-switch-target (cont $func-switch-target))
+    ;; CHECK:       (type $used-in-switch (sub (struct (field anyref))))
+    (type $used-in-switch (sub (struct (field anyref))))
+    ;; CHECK:       (type $func-switch-exact (func (param (ref (exact $used-in-switch)) (ref null $cont-switch-target))))
+    (type $func-switch-exact (func (param (ref (exact $used-in-switch)) (ref null $cont-switch-target))))
+    ;; CHECK:       (type $cont-switch-exact (cont $func-switch-exact))
+    (type $cont-switch-exact (cont $func-switch-exact))
+    ;; CHECK:       (type $used-in-switch-ok (sub (struct (field anyref))))
+    (type $used-in-switch-ok (sub (struct (field anyref))))
+    ;; CHECK:       (type $func-switch-inexact (func (param (ref $used-in-switch-ok) (ref null $cont-switch-target))))
+    (type $func-switch-inexact (func (param (ref $used-in-switch-ok) (ref null $cont-switch-target))))
+    ;; CHECK:       (type $cont-switch-inexact (cont $func-switch-inexact))
+    (type $cont-switch-inexact (cont $func-switch-inexact))
+    ;; CHECK:       (type $used-in-switch-bot (sub (struct (field anyref))))
+    (type $used-in-switch-bot (sub (struct (field anyref))))
+    ;; CHECK:       (type $func-switch-bot (func (param (ref (exact $used-in-switch-bot)) (ref null $cont-switch-target))))
+    (type $func-switch-bot (func (param (ref (exact $used-in-switch-bot)) (ref null $cont-switch-target))))
+    ;; CHECK:       (type $cont-switch-bot (cont $func-switch-bot))
+    (type $cont-switch-bot (cont $func-switch-bot))
+  )
+
+  ;; CHECK:      (type $52 (func (param (ref (exact $used-in-resume-throw)))))
+
+  ;; CHECK:      (type $53 (func (param (ref $used-in-resume-throw-ok))))
+
+  ;; CHECK:      (type $54 (func (param (ref (exact $used-in-resume-throw-bot)))))
+
+  ;; CHECK:      (type $55 (func))
+
+  ;; CHECK:      (type $56 (func (param (ref null (exact $used-in-br-on-null)))))
+
+  ;; CHECK:      (type $57 (func (param (ref null (exact $used-in-br-on-non-null)))))
+
+  ;; CHECK:      (type $58 (func (param anyref (ref null (exact $desc)))))
+
+  ;; CHECK:      (type $59 (func (param anyref)))
+
+  ;; CHECK:      (type $60 (func (param (ref null $desc-struct))))
+
+  ;; CHECK:      (type $61 (func (param (ref null $struct-get-type))))
+
+  ;; CHECK:      (type $62 (func (param (ref (exact $used-in-struct-set-bot)))))
+
+  ;; CHECK:      (type $63 (func (param (ref (exact $used-in-array-new-unreachable)))))
+
+  ;; CHECK:      (type $64 (func (param (ref (exact $used-in-array-new-fixed-unreachable)))))
+
+  ;; CHECK:      (type $65 (func (param (ref null $i8-array))))
+
+  ;; CHECK:      (type $66 (func (param (ref (exact $used-in-array-set-bot)))))
+
+  ;; CHECK:      (type $67 (func (param (ref (exact $used-in-array-fill-bot)))))
+
+  ;; CHECK:      (type $68 (func (param (ref null $any-array))))
+
+  ;; CHECK:      (type $69 (func (param (ref null $func-empty))))
+
+  ;; CHECK:      (type $70 (func (param (ref (exact $used-in-cont-bind)) (ref null $cont-bind-exact))))
+
+  ;; CHECK:      (type $71 (func (param (ref (exact $used-in-cont-bind-ok)) (ref null $cont-bind-inexact))))
+
+  ;; CHECK:      (type $72 (func (param (ref (exact $used-in-cont-bind-bot)))))
+
+  ;; CHECK:      (type $73 (func (param (ref null $cont-bind-inexact))))
+
+  ;; CHECK:      (type $74 (func (param (ref (exact $used-in-resume)) (ref null $cont-resume-exact))))
+
+  ;; CHECK:      (type $75 (func (param (ref (exact $used-in-resume-ok)) (ref null $cont-resume-inexact))))
+
+  ;; CHECK:      (type $76 (func (param (ref (exact $used-in-resume-bot)))))
+
+  ;; CHECK:      (type $77 (func (param (ref (exact $used-in-resume-throw)) (ref null $cont-empty))))
+
+  ;; CHECK:      (type $78 (func (param (ref (exact $used-in-resume-throw-ok)) (ref null $cont-empty))))
+
+  ;; CHECK:      (type $79 (func (param (ref (exact $used-in-switch)) (ref null $cont-switch-exact))))
+
+  ;; CHECK:      (type $80 (func (param (ref (exact $used-in-switch-ok)) (ref null $cont-switch-inexact))))
+
+  ;; CHECK:      (type $81 (func (param (ref (exact $used-in-switch-bot)))))
+
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $used-in-br-on-null_1 (sub $used-in-br-on-null (struct (field anyref))))
+
+  ;; CHECK:       (type $used-in-br-on-non-null_2 (sub $used-in-br-on-non-null (struct (field anyref))))
+
+  ;; CHECK:       (type $used-in-ref-cast-unreachable_3 (sub $used-in-ref-cast-unreachable (struct (field anyref))))
+
+  ;; CHECK:       (type $used-in-struct-set-bot_4 (sub $used-in-struct-set-bot (struct (field anyref))))
+
+  ;; CHECK:       (type $used-in-array-new-unreachable_5 (sub $used-in-array-new-unreachable (struct (field anyref))))
+
+  ;; CHECK:       (type $used-in-array-new-fixed-unreachable_6 (sub $used-in-array-new-fixed-unreachable (struct (field anyref))))
+
+  ;; CHECK:       (type $used-in-array-set-bot_7 (sub $used-in-array-set-bot (struct (field anyref))))
+
+  ;; CHECK:       (type $used-in-array-fill-bot_8 (sub $used-in-array-fill-bot (struct (field anyref))))
+
+  ;; CHECK:       (type $used-in-cont-bind-ok_9 (sub $used-in-cont-bind-ok (struct (field anyref))))
+
+  ;; CHECK:       (type $used-in-cont-bind-bot_10 (sub $used-in-cont-bind-bot (struct (field anyref))))
+
+  ;; CHECK:       (type $used-in-resume-ok_11 (sub $used-in-resume-ok (struct (field anyref))))
+
+  ;; CHECK:       (type $used-in-resume-bot_12 (sub $used-in-resume-bot (struct (field anyref))))
+
+  ;; CHECK:       (type $used-in-resume-throw-ok_13 (sub $used-in-resume-throw-ok (struct (field anyref))))
+
+  ;; CHECK:       (type $used-in-resume-throw-bot_14 (sub $used-in-resume-throw-bot (struct (field anyref))))
+
+  ;; CHECK:       (type $used-in-switch-ok_15 (sub $used-in-switch-ok (struct (field anyref))))
+
+  ;; CHECK:       (type $used-in-switch-bot_16 (sub $used-in-switch-bot (struct (field anyref))))
+
+  ;; CHECK:      (data $data "")
+  (data $data "")
+  ;; CHECK:      (elem $elem anyref)
+  (elem $elem anyref)
+
+  ;; CHECK:      (tag $tag-exact (type $52) (param (ref (exact $used-in-resume-throw))))
+  (tag $tag-exact (param (ref (exact $used-in-resume-throw))))
+  ;; CHECK:      (tag $tag-inexact (type $53) (param (ref $used-in-resume-throw-ok)))
+  (tag $tag-inexact (param (ref $used-in-resume-throw-ok)))
+  ;; CHECK:      (tag $tag-bot (type $54) (param (ref (exact $used-in-resume-throw-bot))))
+  (tag $tag-bot (param (ref (exact $used-in-resume-throw-bot))))
+  ;; CHECK:      (tag $switch-tag (type $55))
+  (tag $switch-tag)
+
+  ;; CHECK:      (func $br-on-null (type $56) (param $used (ref null (exact $used-in-br-on-null)))
+  ;; CHECK-NEXT:  (block $l
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (br_on_null $l
+  ;; CHECK-NEXT:     (local.get $used)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $used-in-br-on-null_1
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $br-on-null (param $used (ref null (exact $used-in-br-on-null)))
+    ;; br_on_null does not inhibit optimization.
+    (block $l
+      (drop
+        (br_on_null $l
+          (local.get $used)
+        )
+      )
+    )
+    (drop
+      (struct.new $used-in-br-on-null
+        (ref.null none)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $br-on-non-null (type $57) (param $used (ref null (exact $used-in-br-on-non-null)))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block $l (result (ref (exact $used-in-br-on-non-null)))
+  ;; CHECK-NEXT:    (br_on_non_null $l
+  ;; CHECK-NEXT:     (local.get $used)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $used-in-br-on-non-null_2
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $br-on-non-null (param $used (ref null (exact $used-in-br-on-non-null)))
+    ;; br_on_non_null does not inhibit optimization.
+    (drop
+      (block $l (result (ref (exact $used-in-br-on-non-null)))
+        (br_on_non_null $l
+          (local.get $used)
+        )
+        (unreachable)
+      )
+    )
+    (drop
+      (struct.new $used-in-br-on-non-null
+        (ref.null none)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $ref-cast-unreachable (type $55)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block ;; (replaces unreachable RefCast we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $used-in-ref-cast-unreachable_3
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ref-cast-unreachable
+    ;; Unreachable ref.cast does not inhibit optimization.
+    (drop
+      (ref.cast (ref (exact $used-in-ref-cast-unreachable))
+        (unreachable)
+      )
+    )
+    (drop
+      (struct.new $used-in-ref-cast-unreachable
+        (ref.null none)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $ref-cast-desc-eq (type $58) (param $any anyref) (param $desc-ref (ref null (exact $desc)))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast_desc_eq (ref (exact $desc-struct))
+  ;; CHECK-NEXT:    (local.get $any)
+  ;; CHECK-NEXT:    (local.get $desc-ref)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ref-cast-desc-eq (param $any anyref) (param $desc-ref (ref null (exact $desc)))
+    (drop
+      (ref.cast_desc_eq (ref (exact $desc-struct))
+        (local.get $any)
+        (local.get $desc-ref)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $ref-cast-desc-eq-bot (type $59) (param $any anyref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block ;; (replaces unreachable RefCast we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $any)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ref-cast-desc-eq-bot (param $any anyref)
+    (drop
+      (ref.cast_desc_eq (ref (exact $desc-struct))
+        (local.get $any)
+        (ref.null none)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $ref-get-desc (type $60) (param $desc-struct-ref (ref null $desc-struct))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.get_desc $desc-struct
+  ;; CHECK-NEXT:    (local.get $desc-struct-ref)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ref-get-desc (param $desc-struct-ref (ref null $desc-struct))
+    (drop
+      (ref.get_desc $desc-struct
+        (local.get $desc-struct-ref)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $ref-get-desc-unreachable (type $55)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block ;; (replaces unreachable RefGetDesc we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ref-get-desc-unreachable
+    (drop
+      (ref.get_desc $desc-struct
+        (unreachable)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $ref-get-desc-bot (type $55)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block ;; (replaces unreachable RefGetDesc we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ref-get-desc-bot
+    (drop
+      (ref.get_desc $desc-struct
+        (ref.null none)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $br-on-cast-desc-eq (type $58) (param $any anyref) (param $desc-ref (ref null (exact $desc)))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block $l (result (ref (exact $desc-struct)))
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (br_on_cast_desc_eq $l anyref (ref (exact $desc-struct))
+  ;; CHECK-NEXT:      (local.get $any)
+  ;; CHECK-NEXT:      (local.get $desc-ref)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $br-on-cast-desc-eq (param $any anyref) (param $desc-ref (ref null (exact $desc)))
+    (drop
+      (block $l (result (ref (exact $desc-struct)))
+        (drop
+          (br_on_cast_desc_eq $l anyref (ref (exact $desc-struct))
+            (local.get $any)
+            (local.get $desc-ref)
+          )
+        )
+        (unreachable)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $br-on-cast-desc-eq-bot (type $59) (param $any anyref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block $l (result (ref none))
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block ;; (replaces unreachable BrOn we can't emit)
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (local.get $any)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (ref.null none)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $br-on-cast-desc-eq-bot (param $any anyref)
+    (drop
+      (block $l (result (ref (exact $desc-struct)))
+        (drop
+          (br_on_cast_desc_eq $l anyref (ref (exact $desc-struct))
+            (local.get $any)
+            (ref.null none)
+          )
+        )
+        (unreachable)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $struct-get (type $61) (param $struct-ref (ref null $struct-get-type))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $struct-get-type 0
+  ;; CHECK-NEXT:    (local.get $struct-ref)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $struct-get (param $struct-ref (ref null $struct-get-type))
+    (drop
+      (struct.get $struct-get-type 0
+        (local.get $struct-ref)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $struct-get-bot (type $55)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block ;; (replaces unreachable StructGet we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $struct-get-bot
+    (drop
+      (struct.get $struct-get-type 0
+        (ref.null none)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $struct-set-bot (type $62) (param $used (ref (exact $used-in-struct-set-bot)))
+  ;; CHECK-NEXT:  (block ;; (replaces unreachable StructSet we can't emit)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (local.get $used)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $used-in-struct-set-bot_4
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $struct-set-bot (param $used (ref (exact $used-in-struct-set-bot)))
+    ;; A null struct reference does not inhibit optimization.
+    (struct.set $struct-set-bot 0
+      (ref.null none)
+      (local.get $used)
+    )
+    (drop
+      (struct.new $used-in-struct-set-bot
+        (ref.null none)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $array-new-unreachable (type $63) (param $used (ref (exact $used-in-array-new-unreachable)))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block ;; (replaces unreachable ArrayNew we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $used)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $used-in-array-new-unreachable_5
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $array-new-unreachable (param $used (ref (exact $used-in-array-new-unreachable)))
+    ;; An unreachable array.new does not inhibit optimization.
+    (drop
+      (array.new $array-new-unreachable
+        (local.get $used)
+        (unreachable)
+      )
+    )
+    (drop
+      (struct.new $used-in-array-new-unreachable
+        (ref.null none)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $array-new-fixed-unreachable (type $64) (param $used (ref (exact $used-in-array-new-fixed-unreachable)))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block ;; (replaces unreachable ArrayNewFixed we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $used)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $used-in-array-new-fixed-unreachable_6
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $array-new-fixed-unreachable (param $used (ref (exact $used-in-array-new-fixed-unreachable)))
+    ;; An unreachable array.new_fixed does not inhibit optimization.
+    (drop
+      (array.new_fixed $array-new-fixed-unreachable 2
+        (local.get $used)
+        (unreachable)
+      )
+    )
+    (drop
+      (struct.new $used-in-array-new-fixed-unreachable
+        (ref.null none)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $array-get (type $65) (param $i8-ref (ref null $i8-array))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (array.get_u $i8-array
+  ;; CHECK-NEXT:    (local.get $i8-ref)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $array-get (param $i8-ref (ref null $i8-array))
+    (drop
+      (array.get_u $i8-array
+        (local.get $i8-ref)
+        (i32.const 0)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $array-get-bot (type $55)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block ;; (replaces unreachable ArrayGet we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $array-get-bot
+    (drop
+      (array.get_u $i8-array
+        (ref.null none)
+        (i32.const 0)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $array-set-bot (type $66) (param $used (ref (exact $used-in-array-set-bot)))
+  ;; CHECK-NEXT:  (block ;; (replaces unreachable ArraySet we can't emit)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (local.get $used)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $used-in-array-set-bot_7
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $array-set-bot (param $used (ref (exact $used-in-array-set-bot)))
+    ;; A null array reference does not inhibit optimization.
+    (array.set $array-set-bot
+      (ref.null none)
+      (i32.const 0)
+      (local.get $used)
+    )
+    (drop
+      (struct.new $used-in-array-set-bot
+        (ref.null none)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $array-load (type $65) (param $i8-ref (ref null $i8-array))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.load (type $i8-array)
+  ;; CHECK-NEXT:    (local.get $i8-ref)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $array-load (param $i8-ref (ref null $i8-array))
+    (drop
+      (i32.load (type $i8-array)
+        (local.get $i8-ref)
+        (i32.const 0)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $array-load-bot (type $55)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block ;; (replaces unreachable ArrayLoad we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $array-load-bot
+    (drop
+      (i32.load (type $i8-array)
+        (ref.null none)
+        (i32.const 0)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $array-store (type $65) (param $i8-ref (ref null $i8-array))
+  ;; CHECK-NEXT:  (i32.store (type $i8-array)
+  ;; CHECK-NEXT:   (local.get $i8-ref)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $array-store (param $i8-ref (ref null $i8-array))
+    (i32.store (type $i8-array)
+      (local.get $i8-ref)
+      (i32.const 0)
+      (i32.const 0)
+    )
+  )
+
+  ;; CHECK:      (func $array-store-bot (type $55)
+  ;; CHECK-NEXT:  (block ;; (replaces unreachable ArrayStore we can't emit)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $array-store-bot
+    (i32.store (type $i8-array)
+      (ref.null none)
+      (i32.const 0)
+      (i32.const 0)
+    )
+  )
+
+  ;; CHECK:      (func $array-copy-bot-dest (type $65) (param $i8-ref (ref null $i8-array))
+  ;; CHECK-NEXT:  (block ;; (replaces unreachable ArrayCopy we can't emit)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (local.get $i8-ref)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $array-copy-bot-dest (param $i8-ref (ref null $i8-array))
+    (array.copy $i8-array $i8-array
+      (ref.null none)
+      (i32.const 0)
+      (local.get $i8-ref)
+      (i32.const 0)
+      (i32.const 0)
+    )
+  )
+
+  ;; CHECK:      (func $array-copy-bot-src (type $65) (param $i8-ref (ref null $i8-array))
+  ;; CHECK-NEXT:  (block ;; (replaces unreachable ArrayCopy we can't emit)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (local.get $i8-ref)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $array-copy-bot-src (param $i8-ref (ref null $i8-array))
+    (array.copy $i8-array $i8-array
+      (local.get $i8-ref)
+      (i32.const 0)
+      (ref.null none)
+      (i32.const 0)
+      (i32.const 0)
+    )
+  )
+
+  ;; CHECK:      (func $array-fill-bot (type $67) (param $used (ref (exact $used-in-array-fill-bot)))
+  ;; CHECK-NEXT:  (block ;; (replaces unreachable ArrayFill we can't emit)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (local.get $used)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $used-in-array-fill-bot_8
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $array-fill-bot (param $used (ref (exact $used-in-array-fill-bot)))
+    ;; A null array reference does not inhibit optimization.
+    (array.fill $array-fill-bot
+      (ref.null none)
+      (i32.const 0)
+      (local.get $used)
+      (i32.const 0)
+    )
+    (drop
+      (struct.new $used-in-array-fill-bot
+        (ref.null none)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $array-init-data (type $65) (param $i8-ref (ref null $i8-array))
+  ;; CHECK-NEXT:  (array.init_data $i8-array $data
+  ;; CHECK-NEXT:   (local.get $i8-ref)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $array-init-data (param $i8-ref (ref null $i8-array))
+    (array.init_data $i8-array $data
+      (local.get $i8-ref)
+      (i32.const 0)
+      (i32.const 0)
+      (i32.const 0)
+    )
+  )
+
+  ;; CHECK:      (func $array-init-data-bot (type $55)
+  ;; CHECK-NEXT:  (block ;; (replaces unreachable ArrayInitData we can't emit)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $array-init-data-bot
+    (array.init_data $i8-array $data
+      (ref.null none)
+      (i32.const 0)
+      (i32.const 0)
+      (i32.const 0)
+    )
+  )
+
+  ;; CHECK:      (func $array-init-elem (type $68) (param $any-arr-ref (ref null $any-array))
+  ;; CHECK-NEXT:  (array.init_elem $any-array $elem
+  ;; CHECK-NEXT:   (local.get $any-arr-ref)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $array-init-elem (param $any-arr-ref (ref null $any-array))
+    (array.init_elem $any-array $elem
+      (local.get $any-arr-ref)
+      (i32.const 0)
+      (i32.const 0)
+      (i32.const 0)
+    )
+  )
+
+  ;; CHECK:      (func $array-init-elem-bot (type $55)
+  ;; CHECK-NEXT:  (block ;; (replaces unreachable ArrayInitElem we can't emit)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $array-init-elem-bot
+    (array.init_elem $any-array $elem
+      (ref.null none)
+      (i32.const 0)
+      (i32.const 0)
+      (i32.const 0)
+    )
+  )
+
+  ;; CHECK:      (func $cont-new (type $69) (param $func (ref null $func-empty))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (cont.new $cont-empty
+  ;; CHECK-NEXT:    (local.get $func)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $cont-new (param $func (ref null $func-empty))
+    (drop
+      (cont.new $cont-empty
+        (local.get $func)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $cont-new-unreachable (type $55)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block ;; (replaces unreachable ContNew we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $cont-new-unreachable
+    (drop
+      (cont.new $cont-empty
+        (unreachable)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $cont-bind (type $70) (param $used (ref (exact $used-in-cont-bind))) (param $cont (ref null $cont-bind-exact))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (cont.bind $cont-bind-exact $cont-empty
+  ;; CHECK-NEXT:    (local.get $used)
+  ;; CHECK-NEXT:    (local.get $cont)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $used-in-cont-bind
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $cont-bind (param $used (ref (exact $used-in-cont-bind))) (param $cont (ref null $cont-bind-exact))
+    (drop
+      (cont.bind $cont-bind-exact $cont-empty
+        (local.get $used)
+        (local.get $cont)
+      )
+    )
+    (drop
+      (struct.new $used-in-cont-bind
+        (ref.null none)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $cont-bind-ok (type $71) (param $used (ref (exact $used-in-cont-bind-ok))) (param $cont (ref null $cont-bind-inexact))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (cont.bind $cont-bind-inexact $cont-empty
+  ;; CHECK-NEXT:    (local.get $used)
+  ;; CHECK-NEXT:    (local.get $cont)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $used-in-cont-bind-ok_9
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $cont-bind-ok (param $used (ref (exact $used-in-cont-bind-ok))) (param $cont (ref null $cont-bind-inexact))
+    (drop
+      (cont.bind $cont-bind-inexact $cont-empty
+        (local.get $used)
+        (local.get $cont)
+      )
+    )
+    (drop
+      (struct.new $used-in-cont-bind-ok
+        (ref.null none)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $cont-bind-bot (type $72) (param $used (ref (exact $used-in-cont-bind-bot)))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block ;; (replaces unreachable ContBind we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $used)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null nocont)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $used-in-cont-bind-bot_10
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $cont-bind-bot (param $used (ref (exact $used-in-cont-bind-bot)))
+    (drop
+      (cont.bind $cont-bind-bot $cont-empty
+        (local.get $used)
+        (ref.null nocont)
+      )
+    )
+    (drop
+      (struct.new $used-in-cont-bind-bot
+        (ref.null none)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $cont-bind-unreachable (type $73) (param $cont (ref null $cont-bind-inexact))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block ;; (replaces unreachable ContBind we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $cont)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $cont-bind-unreachable (param $cont (ref null $cont-bind-inexact))
+    (drop
+      (cont.bind $cont-bind-inexact $cont-empty
+        (unreachable)
+        (local.get $cont)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $resume (type $74) (param $used (ref (exact $used-in-resume))) (param $cont (ref null $cont-resume-exact))
+  ;; CHECK-NEXT:  (resume $cont-resume-exact
+  ;; CHECK-NEXT:   (local.get $used)
+  ;; CHECK-NEXT:   (local.get $cont)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $used-in-resume
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $resume (param $used (ref (exact $used-in-resume))) (param $cont (ref null $cont-resume-exact))
+    (resume $cont-resume-exact
+      (local.get $used)
+      (local.get $cont)
+    )
+    (drop
+      (struct.new $used-in-resume
+        (ref.null none)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $resume-ok (type $75) (param $used (ref (exact $used-in-resume-ok))) (param $cont (ref null $cont-resume-inexact))
+  ;; CHECK-NEXT:  (resume $cont-resume-inexact
+  ;; CHECK-NEXT:   (local.get $used)
+  ;; CHECK-NEXT:   (local.get $cont)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $used-in-resume-ok_11
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $resume-ok (param $used (ref (exact $used-in-resume-ok))) (param $cont (ref null $cont-resume-inexact))
+    (resume $cont-resume-inexact
+      (local.get $used)
+      (local.get $cont)
+    )
+    (drop
+      (struct.new $used-in-resume-ok
+        (ref.null none)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $resume-bot (type $76) (param $used (ref (exact $used-in-resume-bot)))
+  ;; CHECK-NEXT:  (block ;; (replaces unreachable Resume we can't emit)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (local.get $used)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (ref.null nocont)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $used-in-resume-bot_12
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $resume-bot (param $used (ref (exact $used-in-resume-bot)))
+    (resume $cont-resume-bot
+      (local.get $used)
+      (ref.null nocont)
+    )
+    (drop
+      (struct.new $used-in-resume-bot
+        (ref.null none)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $resume-throw (type $77) (param $used (ref (exact $used-in-resume-throw))) (param $cont (ref null $cont-empty))
+  ;; CHECK-NEXT:  (resume_throw $cont-empty $tag-exact
+  ;; CHECK-NEXT:   (local.get $used)
+  ;; CHECK-NEXT:   (local.get $cont)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $used-in-resume-throw
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $resume-throw (param $used (ref (exact $used-in-resume-throw))) (param $cont (ref null $cont-empty))
+    (resume_throw $cont-empty $tag-exact
+      (local.get $used)
+      (local.get $cont)
+    )
+    (drop
+      (struct.new $used-in-resume-throw
+        (ref.null none)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $resume-throw-ok (type $78) (param $used (ref (exact $used-in-resume-throw-ok))) (param $cont (ref null $cont-empty))
+  ;; CHECK-NEXT:  (resume_throw $cont-empty $tag-inexact
+  ;; CHECK-NEXT:   (local.get $used)
+  ;; CHECK-NEXT:   (local.get $cont)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $used-in-resume-throw-ok_13
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $resume-throw-ok (param $used (ref (exact $used-in-resume-throw-ok))) (param $cont (ref null $cont-empty))
+    (resume_throw $cont-empty $tag-inexact
+      (local.get $used)
+      (local.get $cont)
+    )
+    (drop
+      (struct.new $used-in-resume-throw-ok
+        (ref.null none)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $resume-throw-bot (type $54) (param $used (ref (exact $used-in-resume-throw-bot)))
+  ;; CHECK-NEXT:  (block ;; (replaces unreachable ResumeThrow we can't emit)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (local.get $used)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (ref.null nocont)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $used-in-resume-throw-bot_14
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $resume-throw-bot (param $used (ref (exact $used-in-resume-throw-bot)))
+    (resume_throw $cont-empty $tag-bot
+      (local.get $used)
+      (ref.null nocont)
+    )
+    (drop
+      (struct.new $used-in-resume-throw-bot
+        (ref.null none)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $switch (type $79) (param $used (ref (exact $used-in-switch))) (param $cont (ref null $cont-switch-exact))
+  ;; CHECK-NEXT:  (switch $cont-switch-exact $switch-tag
+  ;; CHECK-NEXT:   (local.get $used)
+  ;; CHECK-NEXT:   (local.get $cont)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $used-in-switch
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $switch (param $used (ref (exact $used-in-switch))) (param $cont (ref null $cont-switch-exact))
+    (switch $cont-switch-exact $switch-tag
+      (local.get $used)
+      (local.get $cont)
+    )
+    (drop
+      (struct.new $used-in-switch
+        (ref.null none)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $switch-ok (type $80) (param $used (ref (exact $used-in-switch-ok))) (param $cont (ref null $cont-switch-inexact))
+  ;; CHECK-NEXT:  (switch $cont-switch-inexact $switch-tag
+  ;; CHECK-NEXT:   (local.get $used)
+  ;; CHECK-NEXT:   (local.get $cont)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $used-in-switch-ok_15
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $switch-ok (param $used (ref (exact $used-in-switch-ok))) (param $cont (ref null $cont-switch-inexact))
+    (switch $cont-switch-inexact $switch-tag
+      (local.get $used)
+      (local.get $cont)
+    )
+    (drop
+      (struct.new $used-in-switch-ok
+        (ref.null none)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $switch-bot (type $81) (param $used (ref (exact $used-in-switch-bot)))
+  ;; CHECK-NEXT:  (block ;; (replaces unreachable StackSwitch we can't emit)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (local.get $used)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (ref.null nocont)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $used-in-switch-bot_16
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $switch-bot (param $used (ref (exact $used-in-switch-bot)))
+    (switch $cont-switch-bot $switch-tag
+      (local.get $used)
+      (ref.null nocont)
+    )
+    (drop
+      (struct.new $used-in-switch-bot
+        (ref.null none)
+      )
+    )
+  )
+)
+
