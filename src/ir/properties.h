@@ -151,44 +151,58 @@ inline Literals getLiterals(const Expression* curr) {
 // Check if an expression is a sign-extend, and if so, returns the value
 // that is extended, otherwise nullptr
 inline Expression* getSignExtValue(Expression* curr) {
-  // We only care about i32s here, and ignore i64s, unreachables, etc.
-  if (curr->type != Type::i32) {
+  // We only care about integers here, and ignore unreachables, etc.
+  if (!curr->type.isInteger()) {
     return nullptr;
   }
   if (auto* unary = curr->dynCast<Unary>()) {
-    if (unary->op == ExtendS8Int32 || unary->op == ExtendS16Int32) {
-      return unary->value;
+    switch (unary->op) {
+      case ExtendS8Int32:
+      case ExtendS16Int32:
+      case ExtendS8Int64:
+      case ExtendS16Int64:
+      case ExtendS32Int64:
+        return unary->value;
+      default:
+        return nullptr;
     }
-    return nullptr;
   }
+  using namespace Abstract;
   using namespace Match;
-  int32_t leftShift = 0, rightShift = 0;
+  int64_t leftShift = 0, rightShift = 0;
   Expression* extended = nullptr;
   if (matches(curr,
-              binary(ShrSInt32,
-                     binary(ShlInt32, any(&extended), i32(&leftShift)),
-                     i32(&rightShift))) &&
-      leftShift == rightShift && leftShift != 0) {
-    return extended;
+              binary(ShrS,
+                     binary(Shl, any(&extended), ival(&leftShift)),
+                     ival(&rightShift)))) {
+    auto leftShifts = Bits::getEffectiveShifts(leftShift, curr->type);
+    auto rightShifts = Bits::getEffectiveShifts(rightShift, curr->type);
+    if (leftShifts != 0 && leftShifts == rightShifts) {
+      return extended;
+    }
   }
   return nullptr;
 }
 
 // gets the size of the sign-extended value
 inline Index getSignExtBits(Expression* curr) {
-  assert(curr->type == Type::i32);
+  assert(curr->type.isInteger());
   if (auto* unary = curr->dynCast<Unary>()) {
     switch (unary->op) {
       case ExtendS8Int32:
+      case ExtendS8Int64:
         return 8;
       case ExtendS16Int32:
+      case ExtendS16Int64:
         return 16;
+      case ExtendS32Int64:
+        return 32;
       default:
         WASM_UNREACHABLE("invalid unary operation");
     }
   } else {
     auto* rightShift = curr->cast<Binary>()->right;
-    return 32 - Bits::getEffectiveShifts(rightShift);
+    return curr->type.getByteSize() * 8 - Bits::getEffectiveShifts(rightShift);
   }
 }
 
@@ -196,17 +210,19 @@ inline Index getSignExtBits(Expression* curr) {
 // is too large. We can split the shifts in that case, which is sometimes
 // useful (e.g. if we can remove the signext)
 inline Expression* getAlmostSignExt(Expression* curr) {
+  using namespace Abstract;
   using namespace Match;
-  int32_t leftShift = 0, rightShift = 0;
+  int64_t leftShift = 0, rightShift = 0;
   Expression* extended = nullptr;
   if (matches(curr,
-              binary(ShrSInt32,
-                     binary(ShlInt32, any(&extended), i32(&leftShift)),
-                     i32(&rightShift))) &&
-      Bits::getEffectiveShifts(rightShift, Type::i32) <=
-        Bits::getEffectiveShifts(leftShift, Type::i32) &&
-      rightShift != 0) {
-    return extended;
+              binary(ShrS,
+                     binary(Shl, any(&extended), ival(&leftShift)),
+                     ival(&rightShift)))) {
+    auto leftShifts = Bits::getEffectiveShifts(leftShift, curr->type);
+    auto rightShifts = Bits::getEffectiveShifts(rightShift, curr->type);
+    if (rightShifts != 0 && rightShifts <= leftShifts) {
+      return extended;
+    }
   }
   return nullptr;
 }
