@@ -216,8 +216,9 @@ inline Expression* getAlmostSignExt(Expression* curr) {
               binary(ShrS,
                      binary(Shl, any(&extended), ival(&leftShift)),
                      ival(&rightShift)))) {
+    auto leftShifts = Bits::getEffectiveShifts(leftShift, curr->type);
     auto rightShifts = Bits::getEffectiveShifts(rightShift, curr->type);
-    if (rightShifts <= Bits::getEffectiveShifts(leftShift, curr->type)) {
+    if (rightShifts <= leftShifts) {
       assert(rightShifts != 0);
       return extended;
     }
