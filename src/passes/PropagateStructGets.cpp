@@ -131,8 +131,9 @@ struct PropagateStructGets
   // local.gets are consumed by struct.gets.
   std::unordered_map<Index, Index> numGets;
 
-  // The sets for each local index.
-  std::unordered_map<Index, std::vector<Expression**>> sets;
+  // The sets for each local index. We store this in an ordered set so that
+  // later iteration is deterministic.
+  std::map<Index, std::vector<Expression**>> sets;
 
   // The parent struct.gets for each local index's local.gets (for us to
   // optimize, each local.get must have such a parent).
