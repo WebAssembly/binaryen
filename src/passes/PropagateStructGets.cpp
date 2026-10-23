@@ -261,11 +261,11 @@ struct PropagateStructGets
       //
       // If we replace `l = x` with `l_value = x.value` on the first line, then
       // we need it to remain the same until the return at the end. If x can be
-      // written to, that is a danger. Note how this cannot happen if each local.set
-      // writes a fresh struct.new: no reference arrived from outside, and we do
-      // not send it out (no local.get exists that is not consumed by a
-      // struct.get), so no outside writes can occur. If the sets are *not* all
-      // fresh, then only immutability can help us here.
+      // written to, that is a danger. Note how this cannot happen if each
+      // local.set writes a fresh struct.new: no reference arrived from outside,
+      // and we do not send it out (no local.get exists that is not consumed by
+      // a struct.get), so no outside writes can occur. If the sets are *not*
+      // all fresh, then only immutability can help us here.
       auto& fields =
         func->getLocalType(localIndex).getHeapType().getStruct().fields;
       if (!allSetsAreUnescapingAllocs) {
