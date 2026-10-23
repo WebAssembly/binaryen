@@ -1035,6 +1035,11 @@ not handle things like re-indexing of locals, and so passes that might break
 DWARF are disabled by default. As a result, this mode is not suitable for a
 fully optimized release build, but it can be useful for local debugging.
 
+When rewriting line tables, surviving instructions retain their original source
+intervals. Inserted instructions without an original location are marked with
+line zero, rather than inheriting a neighboring source line. This does not
+synthesize source-level DWARF for newly generated helper functions.
+
 ## FAQ
 
 * Why the weird name for the project?
