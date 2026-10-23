@@ -604,19 +604,8 @@ struct OptimizeInstructions
     if (auto* ext = Properties::getAlmostSignExt(curr)) {
       Index extraLeftShifts;
       auto bits = Properties::getAlmostSignExtBits(curr, extraLeftShifts);
-      if (extraLeftShifts == 0) {
-        if (auto* load = getFallthrough(ext)->dynCast<Load>()) {
-          // pattern match a load of 8 bits and a sign extend using a shl of
-          // 24 then shr_s of 24 as well, etc.
-          if (LoadUtils::canBeSigned(load) && load->bytes * 8 == bits) {
-            // if the value falls through, we can't alter the load, as it
-            // might be captured in a tee
-            if (load->signed_ || load == ext) {
-              load->signed_ = true;
-              return replaceCurrent(ext);
-            }
-          }
-        }
+      if (extraLeftShifts == 0 && trySignExtLoad(ext, bits)) {
+        return replaceCurrent(ext);
       }
       // We can in some cases remove part of a sign extend, that is,
       //   (x << A) >> B   =>   x << (A - B)
@@ -1062,15 +1051,8 @@ struct OptimizeInstructions
 
     if (auto* ext = Properties::getSignExtValue(curr)) {
       auto bits = Properties::getSignExtBits(curr);
-      if (auto* load = getFallthrough(ext)->dynCast<Load>()) {
-        if (LoadUtils::canBeSigned(load) && load->bytes * 8 == bits) {
-          // if the value falls through, we can't alter the load, as it might be
-          // captured in a tee
-          if (load->signed_ || load == ext) {
-            load->signed_ = true;
-            return replaceCurrent(ext);
-          }
-        }
+      if (trySignExtLoad(ext, bits)) {
+        return replaceCurrent(ext);
       }
       // Simple sign extends can be removed if the value is already
       // sign-extended. Note that we can handle the case of |curr| having a
@@ -4445,6 +4427,24 @@ private:
     // add a shift, by reusing the existing node
     innerConst->value = innerConst->value.sub(outerConst->value);
     return inner;
+  }
+
+  // Given `ext`, the value being sign-extended by a parent sign-extension from
+  // `bits` low bits (e.g. 8 for `extend8_s` or `(x << 24) >>_s 24`), fold the
+  // sign-extension into a narrow load if possible.
+  bool trySignExtLoad(Expression* ext, Index bits) {
+    if (auto* load = getFallthrough(ext)->dynCast<Load>()) {
+      // Pattern match a load of 8 bits and a sign extend to 8 bits, etc.
+      if (LoadUtils::canBeSigned(load) && load->bytes * 8 == bits) {
+        // If the value falls through, we can't alter the load, as it might be
+        // captured in a tee.
+        if (load->signed_ || load == ext) {
+          load->signed_ = true;
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   // Check if an expression is already sign-extended to an exact number of bits.
