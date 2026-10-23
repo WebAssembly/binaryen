@@ -174,10 +174,12 @@ inline Expression* getSignExtValue(Expression* curr) {
   if (matches(curr,
               binary(ShrS,
                      binary(Shl, any(&extended), ival(&leftShift)),
-                     ival(&rightShift))) &&
-      leftShift == rightShift &&
-      Bits::getEffectiveShifts(leftShift, curr->type) != 0) {
-    return extended;
+                     ival(&rightShift)))) {
+    auto leftShifts = Bits::getEffectiveShifts(leftShift, curr->type);
+    auto rightShifts = Bits::getEffectiveShifts(rightShift, curr->type);
+    if (leftShifts != 0 && leftShifts == rightShifts) {
+      return extended;
+    }
   }
   return nullptr;
 }
@@ -218,8 +220,7 @@ inline Expression* getAlmostSignExt(Expression* curr) {
                      ival(&rightShift)))) {
     auto leftShifts = Bits::getEffectiveShifts(leftShift, curr->type);
     auto rightShifts = Bits::getEffectiveShifts(rightShift, curr->type);
-    if (rightShifts <= leftShifts) {
-      assert(rightShifts != 0);
+    if (rightShifts != 0 && rightShifts <= leftShifts) {
       return extended;
     }
   }

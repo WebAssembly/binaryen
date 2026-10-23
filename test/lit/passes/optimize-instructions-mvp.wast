@@ -7007,6 +7007,72 @@
     )
    )
   )
+
+  ;; CHECK:      (func $almost-sign-ext-zero-shifts (param $x i32) (param $y i64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.shl
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 16)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.shl
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:    (i64.const 16)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $almost-sign-ext-zero-shifts (param $x i32) (param $y i64)
+    ;; Right shifts with effective shift 0 should not be recognized as almost
+    ;; sign-extends.
+    (drop
+      (i32.shr_s
+        (i32.shl (local.get $x) (i32.const 16))
+        (i32.const 32)
+      )
+    )
+    (drop
+      (i64.shr_s
+        (i64.shl (local.get $y) (i64.const 16))
+        (i64.const 64)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $sign-ext-unnormalized-shifts (param $x i32) (param $y i64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (i32.and
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i32.const 2147483647)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.eqz
+  ;; CHECK-NEXT:    (i64.and
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:     (i64.const 9223372036854775807)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $sign-ext-unnormalized-shifts (param $x i32) (param $y i64)
+    ;; Sign extensions with unnormalized shift amounts that have the same
+    ;; non-zero effective shift modulo the bitwidth.
+    (drop
+      (i32.eq
+        (i32.shr_s (i32.shl (local.get $x) (i32.const 33)) (i32.const 1))
+        (i32.const 0)
+      )
+    )
+    (drop
+      (i64.eq
+        (i64.shr_s (i64.shl (local.get $y) (i64.const 65)) (i64.const 1))
+        (i64.const 0)
+      )
+    )
+  )
   ;; CHECK:      (func $zero-ops (result i32)
   ;; CHECK-NEXT:  (return
   ;; CHECK-NEXT:   (i32.eq
