@@ -899,7 +899,8 @@ struct Struct2Local : PostWalker<Struct2Local> {
         // map, so it would not be updated if the allocation flowing through
         // that desc operand were later optimized.
         if (allocIsCastDescEq && !allocIsCastRef &&
-            curr->type.isNullableRef()) {
+            curr->type.isNullableRef() &&
+            curr->ref->type != Type::unreachable) {
           // There might be a null value to let through. Reuse curr as a cast to
           // null. Use a scratch local to move the reference value past the desc
           // value.
@@ -1118,7 +1119,8 @@ struct Struct2Local : PostWalker<Struct2Local> {
   }
 
   void visitStructCmpxchg(StructCmpxchg* curr) {
-    if (curr->type == Type::unreachable) {
+    if (curr->type == Type::unreachable ||
+        curr->ref->type == Type::unreachable) {
       // Leave this for DCE.
       return;
     }
@@ -1203,7 +1205,8 @@ struct Struct2Local : PostWalker<Struct2Local> {
   }
 
   void visitArrayCmpxchg(ArrayCmpxchg* curr) {
-    if (curr->type == Type::unreachable) {
+    if (curr->type == Type::unreachable ||
+        curr->ref->type == Type::unreachable) {
       // Leave this for DCE.
       return;
     }
