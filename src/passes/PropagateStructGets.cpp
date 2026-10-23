@@ -76,6 +76,35 @@
 // The live ranges of the reference local no longer overlap (only of the data-
 // storing local), so Heap2Local can handle both those allocations.
 //
+// Note that Heap2Local could safely optimize in this example, even before our
+// changes: while the `x.value` operations are not exclusive to allocations, the
+// live ranges of the allocations join exactly there - they do not overlap in a
+// dangerous way. Here is a dangerous example:
+//
+//   (local.set $a
+//     (struct.new $struct
+//       (..value..)
+//     )
+//   )
+//   (struct.get $ref 0
+//     (select
+//       (local.get $a)
+//       (local.tee $a
+//         (struct.new_default $struct)
+//       )
+//       (..condition..)
+//     )
+//   )
+//
+// The struct.get at the end may read ..value.. from set at the top, or it may
+// read the default value from the tee at the bottom. But here we cannot
+// optimize while using a single local `a_value` because of the live range
+// overlap: both allocations are alive as the select executes, and it picks
+// between them, so we must store both of them somewhere in the interm.
+// Detecting such overlaps is not trivial as it involves locals as well as the
+// wasm value stack, which is why this pass is useful, as it handles common and
+// obviously-optimizable cases.
+//
 
 #include "ir/bits.h"
 #include "ir/eh-utils.h"
