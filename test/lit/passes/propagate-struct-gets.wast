@@ -1321,6 +1321,13 @@
 
   ;; CHECK:      (func $no-optimize-multiple-fields-tee-one-mutable (type $15) (param $s1 (ref $struct-3fields-mixed)) (param $s2 (ref $struct-3fields-mixed)) (result i32)
   ;; CHECK-NEXT:  (local $ref (ref null $struct-3fields-mixed))
+  ;; CHECK-NEXT:  (local.set $ref
+  ;; CHECK-NEXT:   (struct.new $struct-3fields-mixed
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:    (i32.const 100)
+  ;; CHECK-NEXT:    (i64.const 1000)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (block $err
   ;; CHECK-NEXT:   (br_if $err
   ;; CHECK-NEXT:    (struct.get $struct-3fields-mixed 0
@@ -1346,6 +1353,35 @@
   ;; CHECK-NEXT: )
   ;; H2L:      (func $no-optimize-multiple-fields-tee-one-mutable (type $13) (param $s1 (ref $struct-3fields-mixed)) (param $s2 (ref $struct-3fields-mixed)) (result i32)
   ;; H2L-NEXT:  (local $ref (ref null $struct-3fields-mixed))
+  ;; H2L-NEXT:  (local $3 i32)
+  ;; H2L-NEXT:  (local $4 i32)
+  ;; H2L-NEXT:  (local $5 i64)
+  ;; H2L-NEXT:  (local $6 i32)
+  ;; H2L-NEXT:  (local $7 i32)
+  ;; H2L-NEXT:  (local $8 i64)
+  ;; H2L-NEXT:  (drop
+  ;; H2L-NEXT:   (block (result nullref)
+  ;; H2L-NEXT:    (local.set $6
+  ;; H2L-NEXT:     (i32.const 10)
+  ;; H2L-NEXT:    )
+  ;; H2L-NEXT:    (local.set $7
+  ;; H2L-NEXT:     (i32.const 100)
+  ;; H2L-NEXT:    )
+  ;; H2L-NEXT:    (local.set $8
+  ;; H2L-NEXT:     (i64.const 1000)
+  ;; H2L-NEXT:    )
+  ;; H2L-NEXT:    (local.set $3
+  ;; H2L-NEXT:     (local.get $6)
+  ;; H2L-NEXT:    )
+  ;; H2L-NEXT:    (local.set $4
+  ;; H2L-NEXT:     (local.get $7)
+  ;; H2L-NEXT:    )
+  ;; H2L-NEXT:    (local.set $5
+  ;; H2L-NEXT:     (local.get $8)
+  ;; H2L-NEXT:    )
+  ;; H2L-NEXT:    (ref.null none)
+  ;; H2L-NEXT:   )
+  ;; H2L-NEXT:  )
   ;; H2L-NEXT:  (block $err
   ;; H2L-NEXT:   (br_if $err
   ;; H2L-NEXT:    (struct.get $struct-3fields-mixed 0
@@ -1373,6 +1409,13 @@
     ;; As above, but now the mutable field 1 is also read, so we cannot
     ;; optimize.
     (local $ref (ref null $struct-3fields-mixed))
+    (local.set $ref ;; an allocation is needed for us (try to) to optimize $ref
+      (struct.new $struct-3fields-mixed
+        (i32.const 10)
+        (i32.const 100)
+        (i64.const 1000)
+      )
+    )
     (block $err
       (br_if $err
         (struct.get $struct-3fields-mixed 0
