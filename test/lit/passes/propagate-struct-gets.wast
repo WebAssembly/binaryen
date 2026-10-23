@@ -593,20 +593,20 @@
 
   ;; CHECK:      (func $optimize-struct-get-tee-immutable-nn-ref (type $12) (param $x i32) (param $b1 (ref $struct-nn-ref)) (param $b2 (ref $struct-nn-ref)) (result (ref struct))
   ;; CHECK-NEXT:  (local $ref (ref null $struct-nn-ref))
-  ;; CHECK-NEXT:  (local $4 (ref struct))
-  ;; CHECK-NEXT:  (block
-  ;; CHECK-NEXT:   (local.set $ref
-  ;; CHECK-NEXT:    (struct.new $struct-nn-ref
-  ;; CHECK-NEXT:     (local.get $b1)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (local.set $4
-  ;; CHECK-NEXT:    (struct.get $struct-nn-ref 0
-  ;; CHECK-NEXT:     (local.get $ref)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local $4 structref)
   ;; CHECK-NEXT:  (block $err
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (local.set $ref
+  ;; CHECK-NEXT:     (struct.new $struct-nn-ref
+  ;; CHECK-NEXT:      (local.get $b1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $4
+  ;; CHECK-NEXT:     (struct.get $struct-nn-ref 0
+  ;; CHECK-NEXT:      (local.get $ref)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (block (result (ref struct))
   ;; CHECK-NEXT:     (local.set $ref
@@ -617,7 +617,9 @@
   ;; CHECK-NEXT:       (local.get $ref)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (local.get $4)
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $4)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (br_if $err
@@ -633,7 +635,9 @@
   ;; CHECK-NEXT:       (local.get $ref)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (local.get $4)
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $4)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (br_if $err
@@ -641,35 +645,37 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (local.get $4)
+  ;; CHECK-NEXT:  (ref.as_non_null
+  ;; CHECK-NEXT:   (local.get $4)
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; H2L:      (func $optimize-struct-get-tee-immutable-nn-ref (type $10) (param $x i32) (param $b1 (ref $struct-nn-ref)) (param $b2 (ref $struct-nn-ref)) (result (ref struct))
   ;; H2L-NEXT:  (local $ref (ref null $struct-nn-ref))
-  ;; H2L-NEXT:  (local $4 (ref struct))
+  ;; H2L-NEXT:  (local $4 structref)
   ;; H2L-NEXT:  (local $5 (ref struct))
   ;; H2L-NEXT:  (local $6 (ref struct))
-  ;; H2L-NEXT:  (block
-  ;; H2L-NEXT:   (drop
-  ;; H2L-NEXT:    (block (result nullref)
-  ;; H2L-NEXT:     (local.set $6
-  ;; H2L-NEXT:      (local.get $b1)
-  ;; H2L-NEXT:     )
-  ;; H2L-NEXT:     (local.set $5
-  ;; H2L-NEXT:      (local.get $6)
-  ;; H2L-NEXT:     )
-  ;; H2L-NEXT:     (ref.null none)
-  ;; H2L-NEXT:    )
-  ;; H2L-NEXT:   )
-  ;; H2L-NEXT:   (local.set $4
-  ;; H2L-NEXT:    (block (result (ref struct))
-  ;; H2L-NEXT:     (drop
+  ;; H2L-NEXT:  (block $err
+  ;; H2L-NEXT:   (block
+  ;; H2L-NEXT:    (drop
+  ;; H2L-NEXT:     (block (result nullref)
+  ;; H2L-NEXT:      (local.set $6
+  ;; H2L-NEXT:       (local.get $b1)
+  ;; H2L-NEXT:      )
+  ;; H2L-NEXT:      (local.set $5
+  ;; H2L-NEXT:       (local.get $6)
+  ;; H2L-NEXT:      )
   ;; H2L-NEXT:      (ref.null none)
   ;; H2L-NEXT:     )
-  ;; H2L-NEXT:     (local.get $5)
+  ;; H2L-NEXT:    )
+  ;; H2L-NEXT:    (local.set $4
+  ;; H2L-NEXT:     (block (result (ref struct))
+  ;; H2L-NEXT:      (drop
+  ;; H2L-NEXT:       (ref.null none)
+  ;; H2L-NEXT:      )
+  ;; H2L-NEXT:      (local.get $5)
+  ;; H2L-NEXT:     )
   ;; H2L-NEXT:    )
   ;; H2L-NEXT:   )
-  ;; H2L-NEXT:  )
-  ;; H2L-NEXT:  (block $err
   ;; H2L-NEXT:   (drop
   ;; H2L-NEXT:    (block (result (ref struct))
   ;; H2L-NEXT:     (local.set $ref
@@ -680,7 +686,9 @@
   ;; H2L-NEXT:       (local.get $ref)
   ;; H2L-NEXT:      )
   ;; H2L-NEXT:     )
-  ;; H2L-NEXT:     (local.get $4)
+  ;; H2L-NEXT:     (ref.as_non_null
+  ;; H2L-NEXT:      (local.get $4)
+  ;; H2L-NEXT:     )
   ;; H2L-NEXT:    )
   ;; H2L-NEXT:   )
   ;; H2L-NEXT:   (br_if $err
@@ -696,7 +704,9 @@
   ;; H2L-NEXT:       (local.get $ref)
   ;; H2L-NEXT:      )
   ;; H2L-NEXT:     )
-  ;; H2L-NEXT:     (local.get $4)
+  ;; H2L-NEXT:     (ref.as_non_null
+  ;; H2L-NEXT:      (local.get $4)
+  ;; H2L-NEXT:     )
   ;; H2L-NEXT:    )
   ;; H2L-NEXT:   )
   ;; H2L-NEXT:   (br_if $err
@@ -704,7 +714,9 @@
   ;; H2L-NEXT:   )
   ;; H2L-NEXT:   (unreachable)
   ;; H2L-NEXT:  )
-  ;; H2L-NEXT:  (local.get $4)
+  ;; H2L-NEXT:  (ref.as_non_null
+  ;; H2L-NEXT:   (local.get $4)
+  ;; H2L-NEXT:  )
   ;; H2L-NEXT: )
   (func $optimize-struct-get-tee-immutable-nn-ref (param $x i32) (param $b1 (ref $struct-nn-ref)) (param $b2 (ref $struct-nn-ref)) (result (ref struct))
     ;; As above, but the immutable field has a non-nullable reference type
@@ -712,12 +724,12 @@
     ;; not dominated in the spec's sense by sets), and we add ref.as_non_null
     ;; on the tees and get so validation succeeds across blocks.
     (local $ref (ref null $struct-nn-ref))
-    (local.set $ref ;; an allocation is needed for us to optimize $ref
-      (struct.new $struct-nn-ref
-        (local.get $b1)
-      )
-    )
     (block $err
+      (local.set $ref ;; an allocation is needed for us to optimize $ref
+        (struct.new $struct-nn-ref
+          (local.get $b1)
+        )
+      )
       (drop
         (struct.get $struct-nn-ref 0
           (local.tee $ref
