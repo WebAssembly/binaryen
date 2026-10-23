@@ -1,0 +1,8 @@
+# dependency directories
+node_modules/
+
+# built files
+build/
+
+# compiled TypeScript
+dist/
