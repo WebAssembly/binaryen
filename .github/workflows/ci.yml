@@ -332,6 +332,41 @@ jobs:
     - name: test
       run: python check.py --binaryen-bin=out/bin
 
+  # Duplicates build-asan.  Please keep in sync
+  coverage:
+    name: coverage
+    if: ${{ github.event_name == 'pull_request' }}
+    runs-on: ubuntu-26.04
+    env:
+      COMPILER_FLAGS: "-fprofile-instr-generate -fcoverage-mapping -fcoverage-mcdc"
+      LLVM_VERSION: 21
+    steps:
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.x'
+    - uses: actions/checkout@v4
+      with:
+        submodules: true
+        fetch-depth: 0
+    - name: install tools
+      run: sudo apt-get install ninja-build clang-${LLVM_VERSION} llvm-${LLVM_VERSION}
+    - name: install v8
+      run: |
+        npm install jsvu -g
+        jsvu --os=default --engines=v8
+    - name: install Python dev dependencies
+      run: pip3 install -r requirements-dev.txt
+    - name: cmake
+      run: |
+        mkdir -p out
+        cmake -S . -B out -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=out/install -DCMAKE_C_COMPILER=clang-${LLVM_VERSION} -DCMAKE_CXX_COMPILER=clang++-${LLVM_VERSION} -DCMAKE_C_FLAGS="$COMPILER_FLAGS" -DCMAKE_CXX_FLAGS="$COMPILER_FLAGS"
+    - name: build
+      run: cmake --build out
+    - name: coverage-diff
+      run: |
+        ./scripts/experimental/coverage-diff.py -B out --lit test/lit --gtest -a --github-annotations
+        ./scripts/experimental/coverage-diff.py -B out -a --markdown >> "$GITHUB_STEP_SUMMARY"
+
   # Build the .js outputs using emcc
   build-emscripten:
     name: emscripten

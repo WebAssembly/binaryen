@@ -39,7 +39,7 @@ SCRIPT_PATH = os.path.relpath(os.path.abspath(__file__))
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-CPP_EXTENSIONS = {'.c', '.cc', '.cpp', '.cxx', '.c++', '.h', '.hpp', '.inc'}
+CPP_EXTENSIONS = {'.c', '.cpp', '.h', '.inc'}
 
 HUNK_RE = re.compile(r'^@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@')
 UNREACHABLE_RE = re.compile(
@@ -330,7 +330,7 @@ def print_missing_profile_instructions(build_dir: str):
   {SCRIPT_PATH} {b_flag}--run "{bin_prefix}/wasm-opt ..."
 
 Or run tests manually with LLVM_PROFILE_FILE set, then re-run coverage-diff.py:
-  LLVM_PROFILE_FILE="$(pwd)/{rel_build}/coverage/profraw/%p_%m.profraw" {bin_prefix}/binaryen-lit test/lit/...
+  LLVM_PROFILE_FILE="$(pwd)/{rel_build}/coverage/profraw/%8m.profraw" {bin_prefix}/binaryen-lit test/lit/...
   {SCRIPT_PATH} {b_flag.rstrip()}
 """,
         file=sys.stderr,
@@ -339,7 +339,7 @@ Or run tests manually with LLVM_PROFILE_FILE set, then re-run coverage-diff.py:
 
 def find_object_file_for_source(build_dir: str, rel_path: str) -> str | None:
     """Locate the compiled .o file for a C/C++ source file in build_dir."""
-    if rel_path.endswith(('.h', '.hpp', '.inc')):
+    if rel_path.endswith(('.h', '.inc')):
         return None
     # 1. Standard libbinaryen object path: CMakeFiles/binaryen.dir/<rel_path>.o
     cand = os.path.join(build_dir, 'CMakeFiles', 'binaryen.dir', f'{rel_path}.o')
@@ -366,7 +366,7 @@ def find_coverage_objects(
     if explicit_objects:
         return [os.path.abspath(obj) for obj in explicit_objects]
 
-    # Fast path: if all modified files in the diff are .c/.cc/.cpp compilation units
+    # Fast path: if all modified files in the diff are .c/.cpp compilation units
     # with corresponding .o files in build_dir, pass those .o files directly to
     # llvm-cov export (~0.15s) instead of parsing all 300MB+ of libbinaryen.so (~12s).
     obj_files: list[str] = []
@@ -377,11 +377,10 @@ def find_coverage_objects(
             obj_files.append(obj_file)
         else:
             all_have_obj = False
-            break
     if all_have_obj and obj_files:
         return obj_files
 
-    objects: list[str] = []
+    objects: list[str] = list(obj_files)
     lib_dir = os.path.join(build_dir, 'lib')
     for lib_name in ('libbinaryen.so', 'libbinaryen.dylib'):
         lib_path = os.path.join(lib_dir, lib_name)
@@ -408,7 +407,7 @@ def find_coverage_objects(
                 needed_bins.add(tool_entry)
         elif len(parts) >= 2 and parts[0] == 'test' and parts[1] == 'gtest':
             needed_bins.add('binaryen-unittests')
-        elif rel_path.endswith(('.h', '.hpp')):
+        if rel_path.endswith(('.h', '.inc')):
             # Header changes might only be instantiated inside unit tests or tools.
             needed_bins.update(['wasm-opt', 'binaryen-unittests'])
 
@@ -478,7 +477,7 @@ def run_test_commands(
         clear_coverage_profiles(build_dir)
 
     env = os.environ.copy()
-    env['LLVM_PROFILE_FILE'] = os.path.join(profraw_dir, '%p_%m.profraw')
+    env['LLVM_PROFILE_FILE'] = os.path.join(profraw_dir, '%8m.profraw')
     bin_dir = os.path.join(build_dir, 'bin')
     env['PATH'] = f"{bin_dir}{os.pathsep}{env.get('PATH', '')}"
 
@@ -625,24 +624,24 @@ def get_git_diff_lines(
             diff_cmd = ['git', 'diff', '-U0', '--no-color', 'HEAD']
             desc = 'uncommitted changes vs HEAD'
         else:
-            # Fall back to merge-base with upstream or origin/main.
-            upstream = '@{upstream}'
-            mb_res = subprocess.run(
-                ['git', 'merge-base', upstream, 'HEAD'],
-                cwd=REPO_ROOT,
-                capture_output=True,
-                text=True,
-            )
-            if mb_res.returncode != 0:
-                upstream = 'origin/main'
+            # Fall back to merge-base with GITHUB_BASE_REF, upstream, or origin/main.
+            upstreams = ['@{upstream}', 'origin/main']
+            if os.environ.get('GITHUB_BASE_REF'):
+                upstreams.insert(0, f"origin/{os.environ['GITHUB_BASE_REF']}")
+            merge_base = None
+            upstream = upstreams[0]
+            for cand in upstreams:
                 mb_res = subprocess.run(
-                    ['git', 'merge-base', upstream, 'HEAD'],
+                    ['git', 'merge-base', cand, 'HEAD'],
                     cwd=REPO_ROOT,
                     capture_output=True,
                     text=True,
                 )
-            if mb_res.returncode == 0 and mb_res.stdout.strip():
-                merge_base = mb_res.stdout.strip()
+                if mb_res.returncode == 0 and mb_res.stdout.strip():
+                    upstream = cand
+                    merge_base = mb_res.stdout.strip()
+                    break
+            if merge_base:
                 diff_cmd = ['git', 'diff', '-U0', '--no-color', merge_base]
                 desc = f'branch changes vs {upstream} ({merge_base[:10]})'
             else:
@@ -756,7 +755,7 @@ def demangle_names(names: list[str]) -> dict[str, str]:
     if not demangler:
         return {n: n for n in names}
     # Strip leading source filename prefix if present (e.g. "File.cpp:_Z...")
-    stripped = [n.split(':', 1)[-1] if ':' in n and n.split(':', 1)[0].endswith(('.cpp', '.cc', '.c', '.h')) else n for n in names]
+    stripped = [n.split(':', 1)[-1] if ':' in n and n.split(':', 1)[0].endswith(('.cpp', '.c', '.h')) else n for n in names]
     res = subprocess.run(
         [demangler],
         input='\n'.join(stripped),
@@ -1226,6 +1225,294 @@ def render_text_report(
                         )
 
 
+def render_markdown_report(
+    diff_desc: str,
+    file_results: list[FileDiffCoverage],
+    annotate: bool,
+    context_lines: int,
+) -> str:
+    lines: list[str] = [f'## Diff Coverage Report ({diff_desc})', '']
+    if not file_results:
+        lines.append(f'No modified C/C++ source files found in {diff_desc}.')
+        return '\n'.join(lines)
+
+    totals = {
+        'lines': MetricCounts(),
+        'regions': MetricCounts(),
+        'branches': MetricCounts(),
+        'mcdc': MetricCounts(),
+        'functions': MetricCounts(),
+    }
+    total_excluded_unreachable = 0
+
+    for fc in file_results:
+        if not fc.in_coverage_map:
+            continue
+        totals['lines'].add(fc.lines.covered, fc.lines.total)
+        totals['regions'].add(fc.regions.covered, fc.regions.total)
+        totals['branches'].add(fc.branches.covered, fc.branches.total)
+        totals['mcdc'].add(fc.mcdc.covered, fc.mcdc.total)
+        totals['functions'].add(fc.functions.covered, fc.functions.total)
+        total_excluded_unreachable += fc.excluded_unreachable_lines
+
+    lines.extend([
+        '| Metric | Covered / Total | Details |',
+        '| :--- | :--- | :--- |',
+        f"| **Lines** | {totals['lines'].format_summary()} | Executable lines in diff |",
+        f"| **Regions** | {totals['regions'].format_summary()} | Sub-line / block AST regions in diff |",
+        f"| **Branches** | {totals['branches'].format_summary()} | True/False branch outcomes in diff |",
+    ])
+    if totals['mcdc'].total > 0:
+        lines.append(
+            f"| **MC/DC** | {totals['mcdc'].format_summary()} | Condition independence pairs in diff |",
+        )
+    lines.append(
+        f"| **Functions** | {totals['functions'].format_summary()} | Modified functions called >= 1x |",
+    )
+
+    if total_excluded_unreachable > 0:
+        lines.extend([
+            '',
+            f'*(Note: Excluded {total_excluded_unreachable} `WASM_UNREACHABLE` line(s); '
+            'pass `--include-unreachable` to include)*',
+        ])
+
+    if len(file_results) > 1:
+        has_mcdc = any(fc.in_coverage_map and fc.mcdc.total > 0 for fc in file_results)
+        lines.extend(['', '### Per-File Summary', ''])
+        if has_mcdc:
+            lines.extend([
+                '| File | Lines | Regions | Branches | MC/DC |',
+                '| :--- | :--- | :--- | :--- | :--- |',
+            ])
+        else:
+            lines.extend([
+                '| File | Lines | Regions | Branches |',
+                '| :--- | :--- | :--- | :--- |',
+            ])
+        for fc in file_results:
+            if not fc.in_coverage_map:
+                cols = ['*(not in coverage mapping - header/uncompiled)*', '-', '-']
+                if has_mcdc:
+                    cols.append('-')
+            elif fc.lines.total == 0:
+                cols = ['*(only comments / non-executable lines changed)*', '-', '-']
+                if has_mcdc:
+                    cols.append('-')
+            else:
+                cols = [
+                    fc.lines.format_summary(),
+                    fc.regions.format_summary(),
+                    fc.branches.format_summary(),
+                ]
+                if has_mcdc:
+                    cols.append(fc.mcdc.format_summary() if fc.mcdc.total > 0 else '-')
+            lines.append(f"| `{fc.rel_path}` | {' | '.join(cols)} |")
+
+    any_gaps = False
+    for fc in file_results:
+        if not fc.in_coverage_map:
+            continue
+        has_file_gaps = bool(
+            fc.uncovered_functions
+            or fc.uncovered_lines
+            or fc.uncovered_subregions
+            or fc.uncovered_branches
+            or fc.uncovered_mcdc,
+        )
+        if not has_file_gaps:
+            continue
+
+        if not any_gaps:
+            lines.extend(['', '### Uncovered / Partially Covered Code in Diff'])
+            any_gaps = True
+
+        try:
+            with open(fc.abs_path, errors='replace') as f:
+                source_lines = [line.rstrip('\r\n') for line in f]
+        except OSError:
+            source_lines = []
+
+        lines.extend(['', f'#### `{fc.rel_path}`'])
+
+        if fc.uncovered_functions:
+            lines.append('- **Uncovered Functions (0 calls):**')
+            for fn in fc.uncovered_functions:
+                lines.append(f'  - Line {fn.line_start}-{fn.line_end}: `{fn.demangled_name}`')
+
+        if fc.uncovered_lines:
+            lines.append('- **Uncovered Executable Lines (0x):**')
+            for start, end in group_line_ranges(fc.uncovered_lines):
+                loc = f'Line {start}' if start == end else f'Lines {start}-{end}'
+                lines.append(f'  - {loc}:')
+                lines.append('    ```cpp')
+                for ln in range(start, end + 1):
+                    src = source_lines[ln - 1] if 1 <= ln <= len(source_lines) else ''
+                    lines.append(f'    {ln:5d} | {src}')
+                lines.append('    ```')
+
+        if fc.uncovered_subregions:
+            lines.append('- **Partially Covered Lines (Uncovered Sub-line Regions on Executed Lines):**')
+            for reg in fc.uncovered_subregions:
+                snippet = extract_snippet(
+                    source_lines, reg.line_start, reg.col_start, reg.line_end, reg.col_end,
+                )
+                loc = format_span_loc(reg.line_start, reg.col_start, reg.line_end, reg.col_end)
+                full_line = source_lines[reg.line_start - 1].strip() if 1 <= reg.line_start <= len(source_lines) else ''
+                context_suffix = f' (in `{full_line}`)' if reg.line_start == reg.line_end and full_line != snippet else ''
+                lines.append(f'  - {loc} (0x): `{snippet}`{context_suffix}')
+
+        if fc.uncovered_branches:
+            lines.append('- **Uncovered / One-Sided Branches:**')
+            for br in fc.uncovered_branches:
+                snippet = extract_snippet(
+                    source_lines, br.line_start, br.col_start, br.line_end, br.col_end,
+                )
+                loc = format_span_loc(br.line_start, br.col_start, br.line_end, br.col_end)
+                if br.true_count == 0 and br.false_count == 0:
+                    status = 'never reached (True: 0x, False: 0x)'
+                elif br.true_count == 0:
+                    status = f'missing TRUE branch (True: 0x, False: {br.false_count}x)'
+                else:
+                    status = f'missing FALSE branch (True: {br.true_count}x, False: 0x)'
+                lines.append(f'  - {loc} `{snippet}` -> {status}')
+
+        if fc.uncovered_mcdc:
+            lines.append('- **Uncovered MC/DC Condition Independence Pairs:**')
+            for rec in fc.uncovered_mcdc:
+                snippet = extract_snippet(
+                    source_lines, rec.line_start, rec.col_start, rec.line_end, rec.col_end,
+                )
+                loc = format_span_loc(rec.line_start, rec.col_start, rec.line_end, rec.col_end)
+                missing_conds = [f'C{i + 1}' for i, cov in enumerate(rec.conditions) if not cov]
+                lines.append(
+                    f"  - {loc} `{snippet}` -> "
+                    f"missing independence pair for {', '.join(missing_conds)}",
+                )
+
+    if not any_gaps and totals['lines'].total > 0:
+        lines.extend([
+            '',
+            'All executable lines, regions, and branches in the diff are 100% covered!',
+        ])
+
+    if annotate and any(fc.in_coverage_map for fc in file_results):
+        lines.extend([
+            '',
+            '<details>',
+            '<summary>Annotated Diff Hunks</summary>',
+            '',
+        ])
+        for fc in file_results:
+            if not fc.in_coverage_map:
+                continue
+            try:
+                with open(fc.abs_path, errors='replace') as f:
+                    source_lines = [line.rstrip('\r\n') for line in f]
+            except OSError:
+                continue
+            lines.extend([f'#### `{fc.rel_path}`', '', '```text'])
+            diff_set = set(fc.diff_lines)
+            branches_by_line: dict[int, list[BranchRecord]] = {}
+            for br in fc.uncovered_branches:
+                branches_by_line.setdefault(br.line_start, []).append(br)
+
+            for start, count in fc.hunks:
+                lo = max(1, start - context_lines)
+                hi = min(len(source_lines), start + count - 1 + context_lines)
+                lines.append(f'@@ lines {lo}-{hi} @@')
+                for ln in range(lo, hi + 1):
+                    marker = '+' if ln in diff_set else ' '
+                    st = fc.line_stats.get(ln)
+                    if st and st.mapped:
+                        cnt_str = f'{st.count:6d}x' if st.count > 0 else '  #####'
+                    else:
+                        cnt_str = '       '
+                    lines.append(f'{marker} {ln:5d} | {cnt_str} | {source_lines[ln - 1]}')
+                    for br in branches_by_line.get(ln, []):
+                        lines.append(
+                            f'        |         |   ^-- Branch ({br.line_start}:{br.col_start}): '
+                            f'[True: {br.true_count}x, False: {br.false_count}x]',
+                        )
+            lines.extend(['```', ''])
+        lines.append('</details>')
+
+    return '\n'.join(lines)
+
+
+def escape_github_annotation(msg: str) -> str:
+    return msg.replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A')
+
+
+def emit_github_annotations(file_results: list[FileDiffCoverage]):
+    for fc in file_results:
+        if not fc.in_coverage_map:
+            continue
+        try:
+            with open(fc.abs_path, errors='replace') as f:
+                source_lines = [line.rstrip('\r\n') for line in f]
+        except OSError:
+            source_lines = []
+
+        uncovered_line_set = set(fc.uncovered_lines)
+
+        for start, end in group_line_ranges(fc.uncovered_lines):
+            loc = f'Line {start}' if start == end else f'Lines {start}-{end}'
+            msg = escape_github_annotation(f'{loc} not executed by tests (0x)')
+            print(
+                f'::warning file={fc.rel_path},line={start},endLine={end},'
+                f'title=Uncovered diff lines::{msg}',
+            )
+
+        for reg in fc.uncovered_subregions:
+            snippet = extract_snippet(
+                source_lines, reg.line_start, reg.col_start, reg.line_end, reg.col_end,
+            )
+            msg = escape_github_annotation(
+                f'Sub-region `{snippet}` on executed line was never reached (0x)',
+            )
+            print(
+                f'::warning file={fc.rel_path},line={reg.line_start},endLine={reg.line_end},'
+                f'col={reg.col_start},endColumn={reg.col_end},'
+                f'title=Uncovered sub-region::{msg}',
+            )
+
+        for br in fc.uncovered_branches:
+            if br.line_start in uncovered_line_set:
+                continue
+            snippet = extract_snippet(
+                source_lines, br.line_start, br.col_start, br.line_end, br.col_end,
+            )
+            if br.true_count == 0 and br.false_count == 0:
+                status = 'never reached (True: 0x, False: 0x)'
+            elif br.true_count == 0:
+                status = f'missing TRUE branch (True: 0x, False: {br.false_count}x)'
+            else:
+                status = f'missing FALSE branch (True: {br.true_count}x, False: 0x)'
+            msg = escape_github_annotation(f'Branch `{snippet}` -> {status}')
+            print(
+                f'::warning file={fc.rel_path},line={br.line_start},endLine={br.line_end},'
+                f'col={br.col_start},endColumn={br.col_end},'
+                f'title=One-sided branch in diff::{msg}',
+            )
+
+        for rec in fc.uncovered_mcdc:
+            if rec.line_start in uncovered_line_set:
+                continue
+            snippet = extract_snippet(
+                source_lines, rec.line_start, rec.col_start, rec.line_end, rec.col_end,
+            )
+            missing_conds = [f'C{i + 1}' for i, cov in enumerate(rec.conditions) if not cov]
+            msg = escape_github_annotation(
+                f"Decision `{snippet}` -> missing MC/DC independence pair for {', '.join(missing_conds)}",
+            )
+            print(
+                f'::warning file={fc.rel_path},line={rec.line_start},endLine={rec.line_end},'
+                f'col={rec.col_start},endColumn={rec.col_end},'
+                f'title=Uncovered MC/DC condition::{msg}',
+            )
+
+
 def render_json_report(diff_desc: str, file_results: list[FileDiffCoverage]) -> str:
     totals = {
         'lines': MetricCounts(),
@@ -1381,6 +1668,16 @@ def main():
         help='Emit coverage report as JSON',
     )
     parser.add_argument(
+        '--markdown',
+        action='store_true',
+        help='Emit coverage report as GitHub-flavored Markdown (e.g. for $GITHUB_STEP_SUMMARY)',
+    )
+    parser.add_argument(
+        '--github-annotations',
+        action='store_true',
+        help='Emit GitHub Actions workflow warning annotations for uncovered diff code',
+    )
+    parser.add_argument(
         '--include-unreachable',
         action='store_true',
         help='Include WASM_UNREACHABLE lines in coverage totals',
@@ -1453,10 +1750,15 @@ def main():
     # 3. Collect git diff hunks first so we know which files/binaries are involved.
     diff_desc, file_diffs = get_git_diff_lines(base_ref, args.staged)
     if not file_diffs:
-        print(
-            f'No modified C/C++ source files found in {diff_desc}.\n'
-            f'(Tip: pass a base ref such as `{SCRIPT_PATH} origin/main` or `HEAD~1` to compare committed changes.)',
-        )
+        if args.json:
+            print(render_json_report(diff_desc, []))
+        elif args.markdown:
+            print(render_markdown_report(diff_desc, [], args.annotate, args.context))
+        else:
+            print(
+                f'No modified C/C++ source files found in {diff_desc}.\n'
+                f'(Tip: pass a base ref such as `{SCRIPT_PATH} origin/main` or `HEAD~1` to compare committed changes.)',
+            )
         sys.exit(0)
 
     # 4. Run tests if --lit, --gtest, or --run was specified.
@@ -1535,6 +1837,15 @@ def main():
 
     if args.json:
         print(render_json_report(diff_desc, file_results))
+    elif args.markdown:
+        print(
+            render_markdown_report(
+                diff_desc=diff_desc,
+                file_results=file_results,
+                annotate=args.annotate,
+                context_lines=args.context,
+            ),
+        )
     else:
         render_text_report(
             diff_desc=diff_desc,
@@ -1542,6 +1853,9 @@ def main():
             annotate=args.annotate,
             context_lines=args.context,
         )
+
+    if args.github_annotations:
+        emit_github_annotations(file_results)
 
     # 8. Check optional threshold gates.
     failed_gate = False
