@@ -118,6 +118,10 @@ HeapType generalizeArrayType(HeapType type,
 //       not need to consider their results fixed.
 struct Generalizer
   : public ControlFlowWalker<Generalizer, SubtypingDiscoverer<Generalizer>> {
+
+  using Super =
+    ControlFlowWalker<Generalizer, SubtypingDiscoverer<Generalizer>>;
+
   Function* func;
 
   // For each expression and local, track the GLB of all types it is required to
@@ -246,9 +250,13 @@ struct Generalizer
   void visitStructRMW(StructRMW* curr) {
     // Ensure we do not generalize too much.
     addConstraint(curr->ref, curr->ref->type);
+
+    Super::visitStructRMW(curr);
   }
   void visitStructCmpxchg(StructCmpxchg* curr) {
     addConstraint(curr->ref, curr->ref->type);
+
+    Super::visitStructCmpxchg(curr);
   }
 
   void visitArrayGet(ArrayGet* curr) {
@@ -342,9 +350,13 @@ struct Generalizer
   void visitArrayRMW(ArrayRMW* curr) {
     // Ensure we do not generalize too much.
     addConstraint(curr->ref, curr->ref->type);
+
+    Super::visitArrayRMW(curr);
   }
   void visitArrayCmpxchg(ArrayCmpxchg* curr) {
     addConstraint(curr->ref, curr->ref->type);
+
+    Super::visitArrayCmpxchg(curr);
   }
 
   void propagate() {

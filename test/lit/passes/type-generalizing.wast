@@ -2427,8 +2427,10 @@
  ;; CHECK-NEXT:  (local $x (ref null $A))
  ;; CHECK-NEXT:  (block $block (result (ref $A))
  ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (br_on_cast_fail $block (ref null $A) (ref null $B)
- ;; CHECK-NEXT:     (local.get $x)
+ ;; CHECK-NEXT:    (br_on_cast_fail $block (ref $A) (ref $B)
+ ;; CHECK-NEXT:     (ref.as_non_null
+ ;; CHECK-NEXT:      (local.get $x)
+ ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (unreachable)
@@ -2501,6 +2503,88 @@
    )
   )
   (unreachable)
+ )
+)
+
+(module
+ ;; CHECK:      (type $void (func))
+
+ ;; CHECK:      (type $val (sub (struct)))
+ (type $val (sub (struct)))
+ (type $subval (sub $val (struct)))
+ ;; CHECK:      (type $cont (cont $void))
+
+ ;; CHECK:      (type $struct (struct (field (mut (ref null $val)))))
+ (type $struct (struct (field (mut (ref null $val)))))
+ ;; CHECK:      (type $arr (array (mut (ref null $val))))
+ (type $arr (array (mut (ref null $val))))
+ (type $void (func))
+ (type $cont (cont $void))
+
+ ;; CHECK:      (func $struct.atomic.xchg (type $void)
+ ;; CHECK-NEXT:  (local $s (ref null $struct))
+ ;; CHECK-NEXT:  (local $v (ref null $val))
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (struct.atomic.rmw.xchg $struct 0
+ ;; CHECK-NEXT:    (local.get $s)
+ ;; CHECK-NEXT:    (local.get $v)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $struct.atomic.xchg
+  (local $s (ref null $struct))
+  (local $v (ref null $subval))
+  ;; $s must remain (ref null $struct), while $v can generalize to (ref null $val)
+  ;; (the field type), not anyref.
+  (drop
+   (struct.atomic.rmw.xchg $struct 0
+    (local.get $s)
+    (local.get $v)
+   )
+  )
+ )
+
+ ;; CHECK:      (func $array.atomic.cmpxchg (type $void)
+ ;; CHECK-NEXT:  (local $a (ref null $arr))
+ ;; CHECK-NEXT:  (local $exp eqref)
+ ;; CHECK-NEXT:  (local $rep (ref null $val))
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (array.atomic.rmw.cmpxchg $arr
+ ;; CHECK-NEXT:    (local.get $a)
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:    (local.get $exp)
+ ;; CHECK-NEXT:    (local.get $rep)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $array.atomic.cmpxchg
+  (local $a (ref null $arr))
+  (local $exp (ref null $subval))
+  (local $rep (ref null $subval))
+  ;; $a must remain (ref null $arr), $exp can generalize to eqref, and $rep can
+  ;; generalize to (ref null $val).
+  (drop
+   (array.atomic.rmw.cmpxchg $arr
+    (local.get $a)
+    (i32.const 0)
+    (local.get $exp)
+    (local.get $rep)
+   )
+  )
+ )
+
+ ;; CHECK:      (func $resume.local (type $void)
+ ;; CHECK-NEXT:  (local $c (ref null $cont))
+ ;; CHECK-NEXT:  (resume $cont
+ ;; CHECK-NEXT:   (local.get $c)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $resume.local
+  (local $c (ref null $cont))
+  ;; $c must remain (ref null $cont), not generalize to contref.
+  (resume $cont
+   (local.get $c)
+  )
  )
 )
 

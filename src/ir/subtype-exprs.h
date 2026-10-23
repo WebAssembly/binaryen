@@ -717,6 +717,11 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
     if (!curr->cont->type.isContinuation()) {
       return;
     }
+
+    // Like CallRef, we cannot generalize the ref into a basic type, it must
+    // here remain a Continuation.
+    self()->noteSubtype(curr->cont, curr->cont->type);
+
     processResumeHandlers(
       curr->cont->type, curr->handlerTags, curr->handlerBlocks);
     // The types we send to the resumed continuation must remain subtypes of the
