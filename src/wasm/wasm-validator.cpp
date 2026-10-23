@@ -4382,6 +4382,10 @@ void FunctionValidator::visitStringMeasure(StringMeasure* curr) {
   shouldBeTrue(!getModule() || getModule()->features.hasStrings(),
                curr,
                "string operations require strings [--enable-strings]");
+  shouldBeSubTypeIgnoringShared(curr->ref->type,
+                                Type(HeapType::ext, Nullable),
+                                curr,
+                                "string.measure input should be an externref");
 }
 
 void FunctionValidator::visitStringEncode(StringEncode* curr) {
@@ -4419,30 +4423,84 @@ void FunctionValidator::visitStringConcat(StringConcat* curr) {
   shouldBeTrue(!getModule() || getModule()->features.hasStrings(),
                curr,
                "string operations require strings [--enable-strings]");
+  shouldBeSubTypeIgnoringShared(curr->left->type,
+                                Type(HeapType::ext, Nullable),
+                                curr,
+                                "string.concat left should be an externref");
+  shouldBeSubTypeIgnoringShared(curr->right->type,
+                                Type(HeapType::ext, Nullable),
+                                curr,
+                                "string.concat right should be an externref");
+  if (curr->left->type.isRef() && curr->right->type.isRef()) {
+    shouldBeEqual(curr->left->type.getHeapType().getShared(),
+                  curr->right->type.getHeapType().getShared(),
+                  curr,
+                  "string.concat operands must have the same shareability");
+  }
 }
 
 void FunctionValidator::visitStringEq(StringEq* curr) {
   shouldBeTrue(!getModule() || getModule()->features.hasStrings(),
                curr,
                "string operations require strings [--enable-strings]");
+  shouldBeSubTypeIgnoringShared(curr->left->type,
+                                Type(HeapType::ext, Nullable),
+                                curr,
+                                "string.eq left should be an externref");
+  shouldBeSubTypeIgnoringShared(curr->right->type,
+                                Type(HeapType::ext, Nullable),
+                                curr,
+                                "string.eq right should be an externref");
+  if (curr->left->type.isRef() && curr->right->type.isRef()) {
+    shouldBeEqual(curr->left->type.getHeapType().getShared(),
+                  curr->right->type.getHeapType().getShared(),
+                  curr,
+                  "string.eq operands must have the same shareability");
+  }
 }
 
 void FunctionValidator::visitStringTest(StringTest* curr) {
   shouldBeTrue(!getModule() || getModule()->features.hasStrings(),
                curr,
                "string operations require strings [--enable-strings]");
+  shouldBeSubTypeIgnoringShared(curr->ref->type,
+                                Type(HeapType::ext, Nullable),
+                                curr,
+                                "string.test input should be an externref");
 }
 
 void FunctionValidator::visitStringWTF16Get(StringWTF16Get* curr) {
   shouldBeTrue(!getModule() || getModule()->features.hasStrings(),
                curr,
                "string operations require strings [--enable-strings]");
+  shouldBeSubTypeIgnoringShared(
+    curr->ref->type,
+    Type(HeapType::ext, Nullable),
+    curr,
+    "string.wtf16_get input should be an externref");
+  shouldBeSubType(curr->pos->type,
+                  Type(Type::i32),
+                  curr,
+                  "string.wtf16_get pos should be an i32");
 }
 
 void FunctionValidator::visitStringSliceWTF(StringSliceWTF* curr) {
   shouldBeTrue(!getModule() || getModule()->features.hasStrings(),
                curr,
                "string operations require strings [--enable-strings]");
+  shouldBeSubTypeIgnoringShared(
+    curr->ref->type,
+    Type(HeapType::ext, Nullable),
+    curr,
+    "string.slice_wtf input should be an externref");
+  shouldBeSubType(curr->start->type,
+                  Type(Type::i32),
+                  curr,
+                  "string.slice_wtf start should be an i32");
+  shouldBeSubType(curr->end->type,
+                  Type(Type::i32),
+                  curr,
+                  "string.slice_wtf end should be an i32");
 }
 
 void FunctionValidator::visitContNew(ContNew* curr) {
