@@ -43,33 +43,33 @@
   ;; CHECK-NEXT: )
   ;; RTRIP:      (type $0 (func))
 
-  ;; RTRIP:      (import "\'" "bar" (global $gimport$0 (ref extern)))
+  ;; RTRIP:      (import "\'" "bar" (global $bar (ref extern)))
 
-  ;; RTRIP:      (import "\'" "foo" (global $gimport$1 (ref extern)))
+  ;; RTRIP:      (import "\'" "foo" (global $foo (ref extern)))
 
-  ;; RTRIP:      (import "\'" "needs\tescaping\00.\'#%- .\r\n\\08\0c\n\r\t.\ea\99\ae" (global $gimport$2 (ref extern)))
+  ;; RTRIP:      (import "\'" "needs\tescaping\00.\'#%- .\r\n\\08\0c\n\r\t.\ea\99\ae" (global $"needs\tescaping\00.\'#%- .\r\n\\08\0c\n\r\t.\ea\99\ae" (ref extern)))
 
-  ;; RTRIP:      (import "string.const" "0" (global $gimport$3 (ref extern)))
+  ;; RTRIP:      (import "string.const" "0" (global $0 (ref extern)))
 
-  ;; RTRIP:      (import "string.const" "1" (global $gimport$4 (ref extern)))
+  ;; RTRIP:      (import "string.const" "1" (global $1 (ref extern)))
 
   ;; RTRIP:      (export "consts" (func $consts))
 
   ;; RTRIP:      (func $consts (type $0)
   ;; RTRIP-NEXT:  (drop
-  ;; RTRIP-NEXT:   (global.get $gimport$1)
+  ;; RTRIP-NEXT:   (global.get $foo)
   ;; RTRIP-NEXT:  )
   ;; RTRIP-NEXT:  (drop
-  ;; RTRIP-NEXT:   (global.get $gimport$0)
+  ;; RTRIP-NEXT:   (global.get $bar)
   ;; RTRIP-NEXT:  )
   ;; RTRIP-NEXT:  (drop
-  ;; RTRIP-NEXT:   (global.get $gimport$2)
+  ;; RTRIP-NEXT:   (global.get $"needs\tescaping\00.\'#%- .\r\n\\08\0c\n\r\t.\ea\99\ae")
   ;; RTRIP-NEXT:  )
   ;; RTRIP-NEXT:  (drop
-  ;; RTRIP-NEXT:   (global.get $gimport$3)
+  ;; RTRIP-NEXT:   (global.get $0)
   ;; RTRIP-NEXT:  )
   ;; RTRIP-NEXT:  (drop
-  ;; RTRIP-NEXT:   (global.get $gimport$4)
+  ;; RTRIP-NEXT:   (global.get $1)
   ;; RTRIP-NEXT:  )
   ;; RTRIP-NEXT: )
   (func $consts (export "consts")
