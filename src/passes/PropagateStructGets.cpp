@@ -183,9 +183,27 @@ struct PropagateStructGets
     LazyLocalGraph localGraph(func, module);
 
     for (auto& [localIndex, localSets] : sets) {
+      // We only want to optimize if there is at least one allocation, because
+      // then Heap2Local will definitely have optimizations to do. (Without any
+      // allocations, we are moving struct.get operations to an earlier time,
+      // which may or may not be good for speed.)
+      bool hasAllocation = false;
+      for (auto** setp : localSets) {
+        auto* set = (*setp)->cast<LocalSet>();
+        if (set->value->is<StructNew>()) {
+          hasAllocation = true;
+          break;
+        }
+      }
+      if (!hasAllocation) {
+        continue;
+      }
+
       if (localSets.size() < 2) {
         // We only care about the case of 2 or more sets for a local: otherwise,
-        // Heap2Local can handle things perfectly for a single set.
+        // Heap2Local can handle things perfectly for a single set (given we
+        // ensured an allocation exists, the single set is of an allocation,
+        // exactly Heap2Local's pattern).
         continue;
       }
 
