@@ -99,6 +99,7 @@ set(passes_SOURCES
   PrintCallGraph.cpp
   PrintFeatures.cpp
   PrintFunctionMap.cpp
+  PropagateStructGets.cpp
   RemoveStart.cpp
   RoundTrip.cpp
   SetGlobals.cpp

@@ -2746,6 +2746,7 @@ opt_choices = [
     ("--pick-load-signs",),
     ("--precompute",),
     ("--precompute-propagate",),
+    ("--propagate-struct-gets",),
     ("--print",),
     ("--print-boundary",),
     ("--remove-unused-brs",),

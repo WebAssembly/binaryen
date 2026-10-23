@@ -427,6 +427,10 @@ void PassRegistry::registerPasses() {
   registerPass("propagate-globals-globally",
                "propagate global values to other globals (useful for tests)",
                createPropagateGlobalsGloballyPass);
+  registerPass("propagate-struct-gets",
+               "propagate struct.get operations to simplify locals and control "
+               "flow",
+               createPropagateStructGetsPass);
   registerPass("remove-non-js-ops",
                "removes operations incompatible with js",
                createRemoveNonJSOpsPass);
@@ -725,6 +729,7 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
   // simplify-locals opens opportunities for optimizations
   addIfNoDWARFIssues("remove-unused-brs");
   if (options.optimizeLevel > 1 && wasm->features.hasGC()) {
+    addIfNoDWARFIssues("propagate-struct-gets");
     addIfNoDWARFIssues("heap2local");
   }
   // if we are willing to work hard, also optimize copies before coalescing
