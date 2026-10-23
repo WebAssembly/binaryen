@@ -59,6 +59,7 @@
 
 #include "ir/bits.h"
 #include "ir/debuginfo.h"
+#include "ir/eh-utils.h"
 #include "ir/find_all.h"
 #include "ir/module-utils.h"
 #include "ir/names.h"
@@ -353,6 +354,7 @@ struct GlobalStructInference : public Pass {
         : parent(parent), globalsToUnnest(globalsToUnnest) {}
 
       bool refinalize = false;
+      bool needEHFixups = false;
 
       // As we prepare to un-nest globals, we create global.gets of the global
       // that we will un-nest the content to. That global does not yet exist,
@@ -465,6 +467,7 @@ struct GlobalStructInference : public Pass {
           // to synchronize with in the first place.
           ref = builder.makeSequence(
             builder.makeDrop(builder.makeRefAs(RefAsNonNull, ref)), get);
+          needEHFixups = true;
           return;
         }
 
@@ -514,6 +517,7 @@ struct GlobalStructInference : public Pass {
           replaceCurrent(builder.makeSequence(
             builder.makeDrop(builder.makeRefAs(RefAsNonNull, ref)),
             getReadValue(values[0], fieldIndex, field, curr)));
+          needEHFixups = true;
           return;
         }
         assert(values.size() == 2);
@@ -547,6 +551,7 @@ struct GlobalStructInference : public Pass {
           builder.makeRefEq(builder.makeRefAs(RefAsNonNull, ref), getGlobal),
           left,
           right));
+        needEHFixups = true;
       }
 
       void visitRefCast(RefCast* curr) {
@@ -602,6 +607,9 @@ struct GlobalStructInference : public Pass {
       void visitFunction(Function* func) {
         if (refinalize) {
           ReFinalize().walkFunctionInModule(func, getModule());
+        }
+        if (needEHFixups) {
+          EHUtils::handleBlockNestedPops(func, *getModule());
         }
       }
 

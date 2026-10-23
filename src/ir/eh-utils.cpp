@@ -15,95 +15,113 @@
  */
 
 #include "ir/eh-utils.h"
-#include "ir/branch-utils.h"
 #include "ir/find_all.h"
+#include "ir/iteration.h"
+#include "ir/properties.h"
+#include "wasm-builder.h"
 
 namespace wasm {
 
 namespace EHUtils {
 
-// This returns three values, some of them as output parameters:
-// - Return value: 'pop' expression (Expression*), when there is one in
-//   first-descendant line. If there's no such pop, it returns null.
-// - isPopNested: Whether the discovered 'pop' is nested within a block
-// - popPtr: 'pop' expression's pointer (Expression**), when there is one found
-//
-// When 'catchBody' itself is a 'pop', 'pop''s pointer is null, because there is
-// no way to get the given expression's address. But that's fine because pop's
-// pointer is only necessary (in handleBlockNestedPops) to fix it up when it is
-// nested, and if 'catchBody' itself is a pop, we don't need to fix it up.
-static Expression*
-getFirstPop(Expression* catchBody, bool& isPopNested, Expression**& popPtr) {
-  Expression* firstChild = catchBody;
-  isPopNested = false;
-  popPtr = nullptr;
-  // When there are multiple expressions within a catch body, an implicit
-  // block is created within it for convenience purposes.
-  auto* implicitBlock = catchBody->dynCast<Block>();
+// Finds the first 'pop' in the given catch body that does not belong to an
+// inner try's catch, and sets `isInvalid` to true if the pop is enclosed in a
+// control flow structure (other than an unnamed block) or is not in the catch
+// body's first-descendant line.
+static Expression** findPopPtr(Expression*& catchBody,
+                               bool& isInvalid,
+                               bool stopIfInvalid = false) {
+  struct PopFinder : PostWalker<PopFinder> {
+    bool isInvalid = false;
+    bool stopIfInvalid = false;
+    bool pushedTask = false;
+    Expression** popPtr = nullptr;
 
-  // Go down the line for the first child until we reach a leaf. A pop should be
-  // in that first-descendant line.
-  Expression** firstChildPtr = nullptr;
-  while (true) {
-    if (firstChild->is<Pop>()) {
-      popPtr = firstChildPtr;
-      return firstChild;
+    PopFinder(Expression*& catchBody, bool stopIfInvalid)
+      : stopIfInvalid(stopIfInvalid) {
+      walk(catchBody);
     }
 
-    if (Properties::isControlFlowStructure(firstChild)) {
-      if (auto* iff = firstChild->dynCast<If>()) {
-        // If's condition is a value child who comes before an 'if' instruction
-        // in binary, it is fine if a 'pop' is in there. We don't allow a 'pop'
-        // to be in an 'if''s then or else body because they are not first
-        // descendants.
-        firstChild = iff->condition;
-        firstChildPtr = &iff->condition;
-        continue;
-      } else if (firstChild->is<Loop>()) {
-        // We don't allow the pop to be included in a loop, because it cannot be
-        // run more than once
-        return nullptr;
+    void pushTask(TaskFunc func, Expression** currp) {
+      pushedTask = true;
+      PostWalker<PopFinder>::pushTask(func, currp);
+    }
+
+    void maybePushTask(TaskFunc func, Expression** currp) {
+      if (*currp) {
+        pushTask(func, currp);
       }
-      if (firstChild->is<Block>()) {
-        // If there are no branches that targets the implicit block, it will be
-        // removed when written back. But if there are branches that target the
-        // implicit block,
-        // (catch $e
-        //   (block $l0
-        //     (pop i32) ;; within a block!
-        //     (br $l0)
-        //     ...
-        //   )
-        // This cannot be removed, so this is considered a nested pop (which we
-        // should fix).
-        if (firstChild == implicitBlock) {
-          if (BranchUtils::BranchSeeker::has(implicitBlock,
-                                             implicitBlock->name)) {
-            isPopNested = true;
+    }
+
+    static void scan(PopFinder* self, Expression** currp) {
+      if (self->popPtr || (self->stopIfInvalid && self->isInvalid)) {
+        return;
+      }
+
+      Expression* curr = *currp;
+      if (curr->is<Pop>()) {
+        self->popPtr = currp;
+        return;
+      }
+
+      if (auto* try_ = curr->dynCast<Try>()) {
+        self->isInvalid = true;
+        if (!self->stopIfInvalid) {
+          // Do not walk into inner catch bodies; pops in inner catch bodies
+          // belong to the inner catches.
+          self->pushTask(scan, &try_->body);
+        }
+        return;
+      }
+
+      if (!self->isInvalid && Properties::isControlFlowStructure(curr)) {
+        if (curr->is<If>()) {
+          // If's condition is a value child who comes before an 'if'
+          // instruction in binary, so it is fine if a 'pop' is in there. We
+          // don't allow a 'pop' to be in an 'if''s then or else body because
+          // they are not first descendants. PostWalker scans the condition
+          // first, and if the pop is not in the condition, reaching the end of
+          // the condition's first-descendant line will set `isInvalid` before
+          // the arms are scanned.
+        } else if (auto* block = curr->dynCast<Block>()) {
+          // Unnamed blocks are not emitted in the binary format, so a 'pop' at
+          // the beginning of an unnamed block is valid. Named blocks may be
+          // emitted if targeted by branches, so treat any 'pop' inside a named
+          // block as invalid.
+          if (block->name.is()) {
+            self->isInvalid = true;
           }
         } else {
-          isPopNested = true;
+          assert(curr->is<Loop>() || curr->is<TryTable>());
+          self->isInvalid = true;
         }
-      } else if (firstChild->is<Try>() || firstChild->is<TryTable>()) {
-        isPopNested = true;
-      } else {
-        WASM_UNREACHABLE("Unexpected control flow expression");
+      }
+
+      if (self->stopIfInvalid && self->isInvalid) {
+        return;
+      }
+
+      // If PostWalker::scan doesn't push a task to scan any children, then we
+      // must have reached a leaf node. The first leaf reached is the leftmost
+      // leaf, and the only valid place for a Pop to appear. We already know
+      // this is not a Pop, so if this is a leaf, then any later Pop will be
+      // invalid.
+      self->pushedTask = false;
+      PostWalker<PopFinder>::scan(self, currp);
+      if (!self->pushedTask) {
+        self->isInvalid = true;
       }
     }
-    ChildIterator it(firstChild);
-    if (it.getNumChildren() == 0) {
-      return nullptr;
-    }
-    firstChildPtr = &*it.begin();
-    firstChild = *firstChildPtr;
-  }
+  } finder(catchBody, stopIfInvalid);
+
+  isInvalid = finder.isInvalid;
+  return finder.popPtr;
 }
 
 bool containsValidDanglingPop(Expression* catchBody) {
-  bool isPopNested = false;
-  Expression** popPtr = nullptr;
-  auto* pop = getFirstPop(catchBody, isPopNested, popPtr);
-  return pop != nullptr && !isPopNested;
+  bool isInvalid = false;
+  auto* popPtr = findPopPtr(catchBody, isInvalid, /*stopIfInvalid=*/true);
+  return popPtr != nullptr && !isInvalid;
 }
 
 void handleBlockNestedPop(Try* try_, Function* func, Module& wasm) {
@@ -115,11 +133,10 @@ void handleBlockNestedPop(Try* try_, Function* func, Module& wasm) {
       continue;
     }
 
-    auto* catchBody = try_->catchBodies[i];
-    bool isPopNested = false;
-    Expression** popPtr = nullptr;
-    Expression* pop = getFirstPop(catchBody, isPopNested, popPtr);
-    assert(pop && "Pop has not been found in this catch");
+    auto*& catchBody = try_->catchBodies[i];
+    bool isInvalid = false;
+    Expression** popPtr = findPopPtr(catchBody, isInvalid);
+    assert(popPtr && "Pop has not been found in this catch");
 
     // Change code like
     // (catch $e
@@ -138,12 +155,12 @@ void handleBlockNestedPop(Try* try_, Function* func, Module& wasm) {
     //     (local.get $new)
     //   )
     // )
-    if (isPopNested) {
-      assert(popPtr);
+    if (isInvalid) {
+      Expression* pop = *popPtr;
       Index newLocal = builder.addVar(func, pop->type);
-      try_->catchBodies[i] =
-        builder.makeSequence(builder.makeLocalSet(newLocal, pop), catchBody);
       *popPtr = builder.makeLocalGet(newLocal, pop->type);
+      catchBody =
+        builder.makeSequence(builder.makeLocalSet(newLocal, pop), catchBody);
     }
   }
 }
