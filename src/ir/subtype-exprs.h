@@ -362,6 +362,10 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
     auto* breakTarget = self()->findBreakTarget(curr->name);
     switch (curr->op) {
       case BrOnNull:
+        // If we do not branch, we flow out the existing value as non-null.
+        if (curr->type.isRef()) {
+          self()->noteSubtype(curr->ref, curr->type.with(Nullable));
+        }
         break;
       case BrOnNonNull:
         // The value sent is made non-nullable and then sent. That means it
@@ -382,7 +386,18 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
           // As with RefCast, we must keep a descriptor valid.
           self()->noteSubtype(curr->desc, curr->desc->type);
         }
-        if (curr->op == BrOnCastFail || curr->op == BrOnCastDescEqFail) {
+        if (curr->op == BrOnCast || curr->op == BrOnCastDescEq) {
+          // If we do not branch, we flow out the original input when the cast
+          // fails. If the cast type is nullable then nulls take the branch, so
+          // the fallthrough value is made non-nullable.
+          if (curr->type.isRef()) {
+            auto type = curr->type;
+            if (curr->castType.isNullableRef()) {
+              type = type.with(Nullable);
+            }
+            self()->noteSubtype(curr->ref, type);
+          }
+        } else {
           // We send the original input along when the cast fails, so the input
           // must be sendable to the target.
           if (breakTarget->type.isRef()) {

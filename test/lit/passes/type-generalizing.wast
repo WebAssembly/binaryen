@@ -2414,3 +2414,93 @@
   )
  )
 )
+
+(module
+ ;; CHECK:      (type $A (sub (struct)))
+ (type $A (sub (struct)))
+ ;; CHECK:      (type $1 (func (result (ref $A))))
+
+ ;; CHECK:      (type $B (sub $A (struct)))
+ (type $B (sub $A (struct)))
+
+ ;; CHECK:      (func $br_on_cast_fail_nullable (type $1) (result (ref $A))
+ ;; CHECK-NEXT:  (local $x (ref null $A))
+ ;; CHECK-NEXT:  (block $block (result (ref $A))
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (br_on_cast_fail $block (ref null $A) (ref null $B)
+ ;; CHECK-NEXT:     (local.get $x)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $br_on_cast_fail_nullable (result (ref $A))
+  (local $x (ref null $B))
+  ;; The cast type is nullable, so nulls succeed the cast and do not branch.
+  ;; The sent value is therefore non-nullable, allowing $x to generalize to
+  ;; nullable (ref null $A) even though $block expects non-nullable (ref $A).
+  (block $block (result (ref $A))
+   (drop
+    (br_on_cast_fail $block (ref null $B) (ref null $B)
+     (local.get $x)
+    )
+   )
+   (unreachable)
+  )
+ )
+
+ ;; CHECK:      (func $br_on_null (type $1) (result (ref $A))
+ ;; CHECK-NEXT:  (local $x (ref null $A))
+ ;; CHECK-NEXT:  (block $block
+ ;; CHECK-NEXT:   (return
+ ;; CHECK-NEXT:    (br_on_null $block
+ ;; CHECK-NEXT:     (local.get $x)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT: )
+ (func $br_on_null (result (ref $A))
+  (local $x (ref null $A))
+  ;; The fallthrough value is returned as (ref $A), so $x cannot generalize to
+  ;; anyref, though it remains nullable.
+  (block $block
+   (return
+    (br_on_null $block
+     (local.get $x)
+    )
+   )
+  )
+  (unreachable)
+ )
+
+ ;; CHECK:      (func $br_on_cast_fallthrough (type $1) (result (ref $A))
+ ;; CHECK-NEXT:  (local $x (ref null $A))
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (block $block (result (ref null $A))
+ ;; CHECK-NEXT:    (return
+ ;; CHECK-NEXT:     (br_on_cast $block (ref null $A) (ref null $A)
+ ;; CHECK-NEXT:      (local.get $x)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT: )
+ (func $br_on_cast_fallthrough (result (ref $A))
+  (local $x (ref null $A))
+  ;; The fallthrough value is returned as (ref $A), so $x cannot generalize to
+  ;; anyref, though it remains nullable because nulls take the branch.
+  (drop
+   (block $block (result (ref null $A))
+    (return
+     (br_on_cast $block (ref null $A) (ref null $A)
+      (local.get $x)
+     )
+    )
+   )
+  )
+  (unreachable)
+ )
+)
+
