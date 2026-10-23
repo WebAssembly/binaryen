@@ -15,8 +15,10 @@
  */
 
 #include "ir/eh-utils.h"
-#include "ir/branch-utils.h"
 #include "ir/find_all.h"
+#include "ir/iteration.h"
+#include "ir/properties.h"
+#include "wasm-builder.h"
 
 namespace wasm {
 
@@ -37,9 +39,6 @@ getFirstPop(Expression* catchBody, bool& isPopNested, Expression**& popPtr) {
   Expression* firstChild = catchBody;
   isPopNested = false;
   popPtr = nullptr;
-  // When there are multiple expressions within a catch body, an implicit
-  // block is created within it for convenience purposes.
-  auto* implicitBlock = catchBody->dynCast<Block>();
 
   // Go down the line for the first child until we reach a leaf. A pop should be
   // in that first-descendant line.
@@ -64,24 +63,19 @@ getFirstPop(Expression* catchBody, bool& isPopNested, Expression**& popPtr) {
         // run more than once
         return nullptr;
       }
-      if (firstChild->is<Block>()) {
-        // If there are no branches that targets the implicit block, it will be
-        // removed when written back. But if there are branches that target the
-        // implicit block,
+      if (auto* block = firstChild->dynCast<Block>()) {
+        // An unnamed block will be removed when written back. But if the block
+        // has a name,
         // (catch $e
         //   (block $l0
         //     (pop i32) ;; within a block!
         //     (br $l0)
         //     ...
         //   )
-        // This cannot be removed, so this is considered a nested pop (which we
-        // should fix).
-        if (firstChild == implicitBlock) {
-          if (BranchUtils::BranchSeeker::has(implicitBlock,
-                                             implicitBlock->name)) {
-            isPopNested = true;
-          }
-        } else {
+        // )
+        // It may be emitted in the binary format, so this is considered a
+        // nested pop (which we should fix).
+        if (block->name.is()) {
           isPopNested = true;
         }
       } else if (firstChild->is<Try>() || firstChild->is<TryTable>()) {

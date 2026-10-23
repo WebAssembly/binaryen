@@ -39,7 +39,6 @@
 
 #include <ir/branch-utils.h>
 #include <ir/effects.h>
-#include <ir/eh-utils.h>
 #include <ir/flat.h>
 #include <ir/properties.h>
 #include <ir/utils.h>
@@ -376,10 +375,6 @@ struct Flatten
     }
     // the body may have preludes
     curr->body = getPreludesWithExpression(originalBody, curr->body);
-
-    // Flatten can generate blocks within 'catch', making pops invalid. Fix them
-    // up.
-    EHUtils::handleBlockNestedPops(curr, *getModule());
   }
 
 private:

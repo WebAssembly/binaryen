@@ -535,8 +535,8 @@
         (do)
         (catch $e-i32
           (throw $e-i32
-            (block (result i32)
-              (pop i32) ;; pop is within a block
+            (block $l0 (result i32)
+              (pop i32) ;; pop is within a named block
             )
           )
         )

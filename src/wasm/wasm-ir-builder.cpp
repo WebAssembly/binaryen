@@ -1935,16 +1935,33 @@ Result<> IRBuilder::makePop(Type type) {
   // We don't actually want to create a new Pop expression here because we
   // already create them automatically when starting a legacy catch block that
   // needs one. Just verify that the Pop we are being asked to make is the same
-  // type as the Pop we have already made.
-  auto& scope = getScope();
-  if (!scope.getCatch() || scope.exprStack.size() != 1 ||
-      !scope.exprStack[0]->is<Pop>()) {
+  // type as the Pop we have already made, and move it into the current scope if
+  // we have entered unnamed blocks since the catch began.
+  ScopeCtx* catchScope = nullptr;
+  for (int i = int(scopeStack.size()) - 1; i >= 0; --i) {
+    auto& scope = scopeStack[i];
+    if (scope.getCatch()) {
+      catchScope = &scope;
+      break;
+    }
+    auto* block = scope.getBlock();
+    if (!block || block->name || !scope.exprStack.empty()) {
+      break;
+    }
+  }
+  if (!catchScope || catchScope->exprStack.size() != 1 ||
+      !catchScope->exprStack[0]->is<Pop>()) {
     return Err{
       "pop instructions may only appear at the beginning of catch blocks"};
   }
-  auto expectedType = scope.exprStack[0]->type;
+  auto* pop = catchScope->exprStack[0];
+  auto expectedType = pop->type;
   if (!Type::isSubType(expectedType, type)) {
     return Err{std::string("Expected pop of type ") + expectedType.toString()};
+  }
+  if (catchScope != &getScope()) {
+    catchScope->exprStack.pop_back();
+    pushSynthetic(pop);
   }
   return Ok{};
 }
