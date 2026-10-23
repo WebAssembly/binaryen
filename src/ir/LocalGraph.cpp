@@ -118,10 +118,12 @@ struct LocalGraphFlower
     // scanning them linearly is efficient, avoiding hash computations (while
     // in Info, it's convenient to have a map so we can assign them easily,
     // where the last one seen overwrites the previous; and, we do that O(1)).
-    // TODO: If we also stored gets here then we could use the sets for a get
-    //       we already computed, for a get that we are computing, and stop that
-    //       part of the flow.
     std::vector<std::pair<Index, LocalSet*>> lastSets;
+
+    // Completed queries at the start of this block. If the block has no set
+    // for an index, these also describe its outgoing value. Reuse them instead
+    // of repeatedly traversing the same predecessors for later queries.
+    std::vector<std::pair<Index, LocalGet*>> computedGets;
   };
 
   // All the flow blocks.
@@ -285,12 +287,23 @@ struct LocalGraphFlower
                                       });
           if (lastSet != pred->lastSets.end()) {
             // There is a set here, apply it, and stop the flow.
-            // TODO: If we find a computed get, apply its sets and stop? That
-            //       could help but it requires more info on FlowBlock.
             for (auto* get : gets) {
               getSetsMap[get].insert(lastSet->second);
             }
           } else {
+            auto computed = std::find_if(
+              pred->computedGets.begin(),
+              pred->computedGets.end(),
+              [&](const auto& value) { return value.first == index; });
+            if (computed != pred->computedGets.end()) {
+              const auto& sets = getSetsMap.at(computed->second);
+              for (auto* get : gets) {
+                for (auto* set : sets) {
+                  getSetsMap[get].insert(set);
+                }
+              }
+              continue;
+            }
             // Keep on flowing.
             work.push_back(pred);
           }
@@ -300,6 +313,11 @@ struct LocalGraphFlower
 
     // Bump the current iteration for the next time we are called.
     currentIteration++;
+
+    // Publish only after the entire search has finished: a loop may revisit
+    // this block while its query is still incomplete.
+    getSetsMap.try_emplace(gets[0]);
+    block->computedGets.emplace_back(index, gets[0]);
   }
 
   // When the LocalGraph is in lazy mode we do not compute all of getSetsMap
