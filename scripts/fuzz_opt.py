@@ -1260,13 +1260,28 @@ class Wasm2JS(TestCaseHandler):
         return all_disallowed(['exception-handling', 'simd', 'threads', 'tail-call', 'reference-types', 'multivalue', 'gc', 'multimemory', 'memory64', 'custom-descriptors', 'acquire-release-atomics', 'relaxed-atomics', 'wide-arithmetic'])
 
 
+# Cache disassembled WAT strings by (wasm_bytes, tuple(FEATURE_OPTS)).
+# Within a single test_one() iteration, multiple handlers (e.g. TrapsNeverHappen,
+# CtorEval, Merge) inspect the same wasm binary via wasm_notices_export_changes,
+# get_exports, or filter_exports. Caching avoids repeated wasm-dis invocations.
+_WAT_CACHE = {}
+
+
 # Returns the wat for a wasm file. If it is already wat, it just returns that
 # (useful when reducing with --text, where wasm files are really wat files).
 def get_wat(wasm):
-    binary = open(wasm, 'rb').read()
+    with open(wasm, 'rb') as f:
+        binary = f.read()
     if binary.startswith(b'(module'):
         return binary.decode(encoding='utf-8')
-    return run([in_bin('wasm-dis'), wasm] + FEATURE_OPTS)
+    cache_key = (binary, tuple(FEATURE_OPTS))
+    wat = _WAT_CACHE.get(cache_key)
+    if wat is None:
+        if len(_WAT_CACHE) >= 16:
+            _WAT_CACHE.clear()
+        wat = run([in_bin('wasm-dis'), wasm] + FEATURE_OPTS)
+        _WAT_CACHE[cache_key] = wat
+    return wat
 
 
 # given a wasm, find all the exports of particular kinds (for example, kinds
@@ -1324,6 +1339,11 @@ def filter_exports(wasm, output, keep, keep_defaults=True):
 # Check if a wasm file would notice normally-unnoticeable changes to exports,
 # such as removing one that is not called.
 def wasm_notices_export_changes(wasm):
+    with open(wasm, 'rb') as f:
+        binary = f.read()
+    if b'call-export' not in binary and b'table-' not in binary:
+        return False
+
     wat = get_wat(wasm)
 
     if '(import "fuzzing-support" "call-export' in wat:
