@@ -114,7 +114,7 @@ def random_size():
 
 def make_random_input(input_size, raw_input_data):
     with open(raw_input_data, 'wb') as f:
-        f.write(bytes([random.randint(0, 255) for x in range(input_size)]))
+        f.write(random.randbytes(input_size))
 
 
 def run(cmd, stderr=None, silent=False):
