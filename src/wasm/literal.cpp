@@ -16,6 +16,7 @@
 
 #include <cassert>
 #include <cmath>
+#include <unordered_map>
 
 #include "emscripten-optimizer/simple_ast.h"
 #include "ir/bits.h"
@@ -699,215 +700,198 @@ void Literal::printVec128(std::ostream& o, const std::array<uint8_t, 16>& v) {
   o << std::dec;
 }
 
-// Printing literals is mainly for debugging purposes, and they can be of
-// massive size or even infinitely recursive, so abbreviate past some point.
-// We do so by tracking how much we've printed so far, and whether we are the
-// "toplevel" call (the entry point from somewhere else), and we reset the
-// count when we leave the toplevel call.
 namespace {
-struct PrintLimiter {
-  static const size_t PRINT_LIMIT = 100;
-  static thread_local size_t printed;
 
-  bool isTopLevel;
+struct LiteralPrinter {
+  std::ostream& o;
+  // Track the depths of active GCData objects to detect cycles and print them
+  // using relative depths.
+  std::unordered_map<GCData*, size_t> depths;
 
-  PrintLimiter() : isTopLevel(printed == 0) { printed++; }
-
-  ~PrintLimiter() {
-    if (isTopLevel) {
-      printed = 0;
+  std::ostream& print(const Literal& literal) {
+    prepareMinorColor(o);
+    assert(literal.type.isSingle());
+    if (literal.type.isBasic()) {
+      switch (literal.type.getBasic()) {
+        case Type::none:
+          o << "?";
+          break;
+        case Type::i32:
+          o << literal.geti32();
+          break;
+        case Type::i64:
+          o << literal.geti64();
+          break;
+        case Type::f32:
+          literal.printFloat(o, literal.getf32());
+          break;
+        case Type::f64:
+          literal.printDouble(o, literal.getf64());
+          break;
+        case Type::v128:
+          o << "i32x4 ";
+          literal.printVec128(o, literal.getv128());
+          break;
+        case Type::unreachable:
+          WASM_UNREACHABLE("unexpected type");
+      }
+    } else {
+      assert(literal.type.isRef());
+      auto heapType = literal.type.getHeapType();
+      if (heapType.isShared()) {
+        o << "shared ";
+      }
+      if (heapType.isBasic()) {
+        switch (heapType.getBasic(Unshared)) {
+          case HeapType::i31:
+            o << "i31ref(" << literal.geti31() << ")";
+            break;
+          case HeapType::none:
+            o << "nullref";
+            break;
+          case HeapType::noext:
+            o << "nullexternref";
+            break;
+          case HeapType::nofunc:
+            o << "nullfuncref";
+            break;
+          case HeapType::noexn:
+            o << "nullexnref";
+            break;
+          case HeapType::nocont:
+            o << "nullcontref";
+            break;
+          case HeapType::nowaitqueue:
+            o << "nullwaitqueue";
+            break;
+          case HeapType::any: {
+            auto data = literal.getGCData();
+            assert(data->getLiterals().size() == 1);
+            o << "internalized ";
+            print(data->getLiterals()[0]);
+            break;
+          }
+          case HeapType::ext: {
+            if (literal.hasExternPayload()) {
+              // Externref payload
+              o << "externref(" << literal.getExternPayload() << ")";
+            } else {
+              // Externalized internal reference.
+              o << "externalized ";
+              print(literal.internalize());
+            }
+            break;
+          }
+          case HeapType::exn:
+            o << "exnref";
+            break;
+          case HeapType::eq:
+          case HeapType::func:
+          case HeapType::cont:
+          case HeapType::struct_:
+          case HeapType::array:
+            WASM_UNREACHABLE("invalid type");
+          case HeapType::string: {
+            auto data = literal.getGCData();
+            if (!data) {
+              o << "nullstring";
+            } else {
+              o << "string(";
+              // Convert WTF-16 literals to WTF-16 string.
+              std::stringstream wtf16;
+              for (auto c : data->getLiterals()) {
+                auto u = c.getInteger();
+                assert(u < 0x10000);
+                wtf16 << uint8_t(u & 0xFF);
+                wtf16 << uint8_t(u >> 8);
+              }
+              // Escape to ensure we have valid unicode output and to make
+              // unprintable characters visible.
+              // TODO: Use wtf16.view() once we have C++20.
+              String::printEscapedJSON(o, wtf16.str());
+              o << ")";
+            }
+            break;
+          }
+          case HeapType::waitqueue: {
+            o << "waitqueue";
+            break;
+          }
+        }
+      } else if (heapType.isSignature()) {
+        o << "funcref(" << literal.getFunc() << ")";
+      } else if (heapType.isContinuation()) {
+        auto data = literal.getContData();
+        o << "cont(" << data->func << ' ' << data->type;
+        if (data->resumeExpr) {
+          o << " resumeExpr=" << reinterpret_cast<size_t>(data->resumeExpr);
+        }
+        if (!data->resumeInfo.empty()) {
+          o << " |resumeInfo|=" << data->resumeInfo.size();
+        }
+        if (!data->resumeArguments.empty()) {
+          o << " resumeArguments=";
+          print(data->resumeArguments);
+        }
+        o << " executed=" << data->executed << ')';
+      } else {
+        assert(literal.isData());
+        auto data = literal.getGCData();
+        assert(data);
+        auto [it, inserted] = depths.insert({data.get(), depths.size()});
+        if (!inserted) {
+          o << ".." << (depths.size() - 1 - it->second);
+        } else {
+          o << "[ref " << literal.type.getHeapType() << ' ';
+          for (size_t i = 0; i < literal.getNumElements(); i++) {
+            if (i > 0) {
+              o << ' ';
+            }
+            print(literal.getElement(i));
+          }
+          if (!data->desc.isNull()) {
+            if (literal.getNumElements() > 0) {
+              o << ", ";
+            }
+            o << "desc=";
+            print(data->desc);
+          }
+          o << ']';
+          depths.erase(data.get());
+        }
+      }
     }
+    restoreNormalColor(o);
+    return o;
   }
 
-  bool stop() { return printed >= PRINT_LIMIT; }
-};
+  std::ostream& print(const Literals& literals) {
+    if (literals.size() == 1) {
+      return print(literals[0]);
+    }
 
-thread_local size_t PrintLimiter::printed = 0;
+    o << '(';
+    bool first = true;
+    for (auto& literal : literals) {
+      if (first) {
+        first = false;
+      } else {
+        o << ", ";
+      }
+      print(literal);
+    }
+    return o << ')';
+  }
+};
 
 } // namespace
 
 std::ostream& operator<<(std::ostream& o, Literal literal) {
-  PrintLimiter limiter;
-
-  if (limiter.stop()) {
-    return o << "[..]";
-  }
-
-  prepareMinorColor(o);
-  assert(literal.type.isSingle());
-  if (literal.type.isBasic()) {
-    switch (literal.type.getBasic()) {
-      case Type::none:
-        o << "?";
-        break;
-      case Type::i32:
-        o << literal.geti32();
-        break;
-      case Type::i64:
-        o << literal.geti64();
-        break;
-      case Type::f32:
-        literal.printFloat(o, literal.getf32());
-        break;
-      case Type::f64:
-        literal.printDouble(o, literal.getf64());
-        break;
-      case Type::v128:
-        o << "i32x4 ";
-        literal.printVec128(o, literal.getv128());
-        break;
-      case Type::unreachable:
-        WASM_UNREACHABLE("unexpected type");
-    }
-  } else {
-    assert(literal.type.isRef());
-    auto heapType = literal.type.getHeapType();
-    if (heapType.isShared()) {
-      o << "shared ";
-    }
-    if (heapType.isBasic()) {
-      switch (heapType.getBasic(Unshared)) {
-        case HeapType::i31:
-          o << "i31ref(" << literal.geti31() << ")";
-          break;
-        case HeapType::none:
-          o << "nullref";
-          break;
-        case HeapType::noext:
-          o << "nullexternref";
-          break;
-        case HeapType::nofunc:
-          o << "nullfuncref";
-          break;
-        case HeapType::noexn:
-          o << "nullexnref";
-          break;
-        case HeapType::nocont:
-          o << "nullcontref";
-          break;
-        case HeapType::nowaitqueue:
-          o << "nullwaitqueue";
-          break;
-        case HeapType::any: {
-          auto data = literal.getGCData();
-          assert(data->getLiterals().size() == 1);
-          o << "internalized " << data->getLiterals()[0];
-          break;
-        }
-        case HeapType::ext: {
-          if (literal.hasExternPayload()) {
-            // Externref payload
-            o << "externref(" << literal.getExternPayload() << ")";
-          } else {
-            // Externalized internal reference.
-            o << "externalized " << literal.internalize();
-          }
-          break;
-        }
-        case HeapType::exn:
-          o << "exnref";
-          break;
-        case HeapType::eq:
-        case HeapType::func:
-        case HeapType::cont:
-        case HeapType::struct_:
-        case HeapType::array:
-          WASM_UNREACHABLE("invalid type");
-        case HeapType::string: {
-          auto data = literal.getGCData();
-          if (!data) {
-            o << "nullstring";
-          } else {
-            o << "string(";
-            // Convert WTF-16 literals to WTF-16 string.
-            std::stringstream wtf16;
-            for (auto c : data->getLiterals()) {
-              auto u = c.getInteger();
-              assert(u < 0x10000);
-              wtf16 << uint8_t(u & 0xFF);
-              wtf16 << uint8_t(u >> 8);
-            }
-            // Escape to ensure we have valid unicode output and to make
-            // unprintable characters visible.
-            // TODO: Use wtf16.view() once we have C++20.
-            String::printEscapedJSON(o, wtf16.str());
-            o << ")";
-          }
-          break;
-        }
-        case HeapType::waitqueue: {
-          o << "waitqueue";
-          break;
-        }
-      }
-    } else if (heapType.isSignature()) {
-      o << "funcref(" << literal.getFunc() << ")";
-    } else if (heapType.isContinuation()) {
-      auto data = literal.getContData();
-      o << "cont(" << data->func << ' ' << data->type;
-      if (data->resumeExpr) {
-        o << " resumeExpr=" << reinterpret_cast<size_t>(data->resumeExpr);
-      }
-      if (!data->resumeInfo.empty()) {
-        o << " |resumeInfo|=" << data->resumeInfo.size();
-      }
-      if (!data->resumeArguments.empty()) {
-        o << " resumeArguments=" << data->resumeArguments;
-      }
-      o << " executed=" << data->executed << ')';
-    } else {
-      assert(literal.isData());
-      auto data = literal.getGCData();
-      assert(data);
-      o << "[ref " << literal.type.getHeapType() << ' ';
-      for (size_t i = 0; i < literal.getNumElements(); i++) {
-        if (i > 0) {
-          o << ' ';
-        }
-        o << literal.getElement(i);
-        if (limiter.stop()) {
-          break;
-        }
-      }
-      if (!data->desc.isNull()) {
-        if (literal.getNumElements() > 0) {
-          o << ", ";
-        }
-        o << "desc=" << data->desc;
-      }
-      o << ']';
-    }
-  }
-  restoreNormalColor(o);
-  return o;
+  return LiteralPrinter{o, {}}.print(literal);
 }
 
 std::ostream& operator<<(std::ostream& o, wasm::Literals literals) {
-  PrintLimiter limiter;
-
-  if (limiter.stop()) {
-    return o << "[..]";
-  }
-
-  if (literals.size() == 1) {
-    return o << literals[0];
-  }
-
-  o << '(';
-  bool first = true;
-  for (auto& literal : literals) {
-    if (limiter.stop()) {
-      o << "[..]";
-      break;
-    }
-    if (first) {
-      first = false;
-    } else {
-      o << ", ";
-    }
-    o << literal;
-  }
-  return o << ')';
+  return LiteralPrinter{o, {}}.print(literals);
 }
 
 Literal Literal::countLeadingZeroes() const {
