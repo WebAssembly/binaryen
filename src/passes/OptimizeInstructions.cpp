@@ -737,24 +737,22 @@ struct OptimizeInstructions
     }
     // a bunch of operations on a constant right side can be simplified
     if (auto* right = curr->right->dynCast<Const>()) {
-      if (curr->op == AndInt32) {
-        auto mask = right->value.geti32();
-        // and with -1 does nothing (common in asm.js output)
-        if (mask == -1) {
-          return replaceCurrent(curr->left);
-        }
-        // small loads do not need to be masked, the load itself masks
-        if (auto* load = curr->left->dynCast<Load>()) {
-          if ((load->bytes == 1 && mask == 0xff) ||
-              (load->bytes == 2 && mask == 0xffff)) {
+      using namespace Abstract;
+      using namespace Match;
+      Expression* left;
+      int64_t mask;
+      if (matches(curr, binary(And, any(&left), ival(&mask)))) {
+        // Small loads do not need to be masked, the load itself masks.
+        if (auto* load = left->dynCast<Load>()) {
+          if (mask == Bits::lowBitMask64(load->bytes * 8)) {
             load->signed_ = false;
-            return replaceCurrent(curr->left);
+            return replaceCurrent(left);
           }
-        } else if (auto maskedBits = Bits::getMaskedBits(mask)) {
-          if (Bits::getMaxBits(curr->left, this) <= maskedBits) {
-            // a mask of lower bits is not needed if we are already smaller
-            return replaceCurrent(curr->left);
-          }
+        }
+        auto lowMask = Bits::lowBitMask64(Bits::getMaxBits(left, this));
+        if ((mask & lowMask) == lowMask) {
+          // A mask of more bits than can be present is not needed.
+          return replaceCurrent(left);
         }
       }
       // some math operations have trivial results
@@ -4520,11 +4518,8 @@ private:
     }
     // i32(bool(x)) == 1  ==>  i32(bool(x))
     // i32(bool(x)) != 0  ==>  i32(bool(x))
-    // i32(bool(x)) & 1   ==>  i32(bool(x))
-    // i64(bool(x)) & 1   ==>  i64(bool(x))
     if ((matches(curr, binary(EqInt32, any(&left), i32(1))) ||
-         matches(curr, binary(NeInt32, any(&left), i32(0))) ||
-         matches(curr, binary(And, any(&left), ival(1)))) &&
+         matches(curr, binary(NeInt32, any(&left), i32(0)))) &&
         Bits::getMaxBits(left, this) == 1) {
       return left;
     }
@@ -4561,10 +4556,6 @@ private:
     }
 
     // Operations on all 1s
-    // x & -1   ==>   x
-    if (matches(curr, binary(And, any(&left), ival(-1)))) {
-      return left;
-    }
     // x | -1   ==>   -1
     if (matches(curr, binary(Or, any(&left), ival(-1)))) {
       return getDroppedChildrenAndAppend(curr, right);
