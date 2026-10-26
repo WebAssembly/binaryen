@@ -704,9 +704,9 @@ namespace {
 
 struct LiteralPrinter {
   std::ostream& o;
-  // Track the depths of active GCData objects to detect cycles and print them
-  // using relative depths.
-  std::unordered_map<GCData*, size_t> depths;
+  // Track seen GCData objects to avoid re-traversing shared or cyclic
+  // allocations.
+  std::unordered_map<GCData*, size_t> names;
 
   std::ostream& print(const Literal& literal) {
     prepareMinorColor(o);
@@ -838,11 +838,12 @@ struct LiteralPrinter {
         assert(literal.isData());
         auto data = literal.getGCData();
         assert(data);
-        auto [it, inserted] = depths.insert({data.get(), depths.size()});
+        auto [it, inserted] = names.try_emplace(data.get(), names.size());
         if (!inserted) {
-          o << ".." << (depths.size() - 1 - it->second);
+          o << '$' << it->second;
         } else {
-          o << "[ref " << literal.type.getHeapType() << ' ';
+          o << "[ref $" << it->second << ' ' << literal.type.getHeapType()
+            << ' ';
           for (size_t i = 0; i < literal.getNumElements(); i++) {
             if (i > 0) {
               o << ' ';
@@ -857,7 +858,6 @@ struct LiteralPrinter {
             print(data->desc);
           }
           o << ']';
-          depths.erase(data.get());
         }
       }
     }
