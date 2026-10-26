@@ -32,10 +32,9 @@
 // functions replacement types to make sure they are not incorrectly updated by
 // the global type rewriting.
 //
-// As a POC, only do the backward analysis to find unused parameters. To match
-// and exceed the power of DAE, we will need to extend this backward analysis to
-// find unused results as well, and also add a forward analysis that propagates
-// constants and types through parameters and results.
+// As a POC, only do the backward analysis to find unused parameters and
+// results. To match and exceed the power of DAE, we will need to add a forward
+// analysis that propagates constants and types through parameters and results.
 
 #include <algorithm>
 #include <memory>
@@ -50,6 +49,7 @@
 #include "ir/local-graph.h"
 #include "ir/module-utils.h"
 #include "ir/type-updating.h"
+#include "ir/utils.h"
 #include "pass.h"
 #include "support/index.h"
 #include "support/mixed_arena.h"
@@ -204,6 +204,11 @@ struct FunctionInfo {
 
   // Root function types that this function indirectly tail-calls.
   std::vector<HeapType> tailCalleeTypes;
+
+  // Replacing a removed expression with its kept children can change its type
+  // from none to unreachable, requiring enclosing expressions to be
+  // refinalized.
+  bool refinalize = false;
 };
 
 // Analysis results and call graph information for a tree of related function
@@ -992,10 +997,10 @@ struct Optimizer
   // types to match. Function types are updated after this pass runs.
   bool requiresNonNullableLocalFixups() override { return false; }
 
-  const DAE2& parent;
+  DAE2& parent;
 
   // The info for the function we are running on.
-  const FunctionInfo* funcInfo = nullptr;
+  FunctionInfo* funcInfo = nullptr;
 
   // Map old local indices to new local indices for the function we are
   // currently optimizing. Kept parameters and locals may need to have their
@@ -1015,7 +1020,16 @@ struct Optimizer
   // We will need to generate fresh labels for trampoline blocks.
   std::optional<LabelUtils::LabelManager> labels;
 
-  Optimizer(const DAE2& parent) : parent(parent) {}
+  Optimizer(DAE2& parent) : parent(parent) {}
+
+  void replaceCurrent(Expression* rep) {
+    // If we introduce any new unreachability, we will have to refinalize.
+    if (rep->type == Type::unreachable &&
+        getCurrent()->type != Type::unreachable) {
+      funcInfo->refinalize = true;
+    }
+    Super::replaceCurrent(rep);
+  }
 
   std::unique_ptr<Pass> create() override {
     return std::make_unique<Optimizer>(parent);
@@ -1573,37 +1587,63 @@ Expression* Optimizer::getReplacement(Expression* curr) {
   return collector.collectExprsOrNull();
 }
 
+struct Refinalizer : public ReFinalize {
+  const DAE2& parent;
+
+  Refinalizer(const DAE2& parent) : parent(parent) {}
+
+  std::unique_ptr<Pass> create() override {
+    return std::make_unique<Refinalizer>(parent);
+  }
+
+  void runOnFunction(Module* wasm, Function* func) override {
+    if (parent.funcInfos[parent.funcIndices.at(func->name)].refinalize) {
+      ReFinalize::runOnFunction(wasm, func);
+    }
+  }
+};
+
 void DAE2::optimize() {
+  TIME(Timer timer);
+
   Optimizer optimizer(*this);
   if (!optimizeReferencedFuncs) {
     // Cannot globally rewrite types or optimize referenced functions, so just
     // run the optimizer to optimize unreferenced functions.
     optimizer.run(getPassRunner(), wasm);
-    return;
+
+    TIME(std::cerr << "  optimize: " << timer.lastElapsed() << "\n");
+  } else {
+    // Global type rewriting
+    DAETypeUpdater typeUpdater(*this);
+    auto [oldTypes, newTypes] = typeUpdater.rebuildTypes();
+
+    TIME(std::cerr << "  rebuild types: " << timer.lastElapsed() << "\n");
+
+    makeUnreferencedFunctionTypes(oldTypes, newTypes);
+
+    TIME(std::cerr << "  make replacements: " << timer.lastElapsed() << "\n");
+
+    optimizer.run(getPassRunner(), wasm);
+
+    TIME(std::cerr << "  optimize: " << timer.lastElapsed() << "\n");
+
+    // Update the types for referenced functions and all the locations that
+    // might hold them. The types of non-referenced functions have already been
+    // updated separately.
+    typeUpdater.mapTypes(newTypes);
+
+    TIME(std::cerr << "  update types: " << timer.lastElapsed() << "\n");
   }
 
-  TIME(Timer timer);
+  // Refinalize after global type rewriting rather than in
+  // Optimizer::runOnFunction so that indirect calls whose results were removed
+  // do not have their types reset to the original signature results, and so
+  // that ref.func instructions see the final rewritten function types rather
+  // than temporary scratch types (or race on concurrent function type updates).
+  Refinalizer(*this).run(getPassRunner(), wasm);
 
-  // Global type rewriting
-  DAETypeUpdater typeUpdater(*this);
-  auto [oldTypes, newTypes] = typeUpdater.rebuildTypes();
-
-  TIME(std::cerr << "  rebuild types: " << timer.lastElapsed() << "\n");
-
-  makeUnreferencedFunctionTypes(oldTypes, newTypes);
-
-  TIME(std::cerr << "  make replacements: " << timer.lastElapsed() << "\n");
-
-  optimizer.run(getPassRunner(), wasm);
-
-  TIME(std::cerr << "  optimize: " << timer.lastElapsed() << "\n");
-
-  // Update the types for referenced functions and all the locations that might
-  // hold them. The types of non-referenced functions have already been updated
-  // separately.
-  typeUpdater.mapTypes(newTypes);
-
-  TIME(std::cerr << "  update types: " << timer.lastElapsed() << "\n");
+  TIME(std::cerr << "  refinalize: " << timer.lastElapsed() << "\n");
 }
 
 // Generate new (possibly optimized) types for each unreferenced function so
