@@ -3463,7 +3463,7 @@ console.log("# ThrowRef");
   assert(info.type === theThrowRef.type);
   assert(info.exnref === theThrowRef.exnref);
 
-  var newExnref = module.ref.null(binaryen.HeapType.noexn);
+  var newExnref = module.ref.null(binaryen.HeapType.exn);
   theThrowRef.exnref = newExnref;
   assert(theThrowRef.exnref === newExnref);
 
