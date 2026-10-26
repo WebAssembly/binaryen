@@ -6190,7 +6190,9 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $compare-i64-load-s-sign-extend (param $addr i32) (param $x i64)
-    ;; Comparing i64 sign-extension against signed load on right or left.
+    ;; Comparing i64 sign-extension against signed load on right or left. The
+    ;; upper 32 bits are sign bits, and equal iff the lower bits are, so we can
+    ;; just do an unsigned comparison on the lower 32.
     (drop
       (i64.eq
         (i64.shr_s (i64.shl (local.get $x) (i64.const 32)) (i64.const 32))
