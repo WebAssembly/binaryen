@@ -22,6 +22,11 @@ Current Trunk
    constant numeric values to `array.new_data` when that is smaller. It runs
    in the last set of default optimizations (when
    `--expect-later-toolchain-opts` is not passed).
+ - [JS API] Four-argument `struct.get()` and `array.get()` methods
+   (with the fourth argument being `isSigned`) are no longer supported.
+   For unpacked types, call `struct/array.get()` with only three arguments;
+   for signed packed types, call `struct/array.get_s()`;
+   for unsigned packed types, call `struct/array.get_u()`.
 
 v133
 ----
