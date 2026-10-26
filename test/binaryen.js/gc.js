@@ -79,7 +79,16 @@ var valueList = [
     0,
     module.global.get("struct-global", structType),
     binaryen.Type.i32,
-    true
+  ),
+  module.struct.get_s(
+    0,
+    module.global.get("struct-global", structType),
+    binaryen.Type.i32,
+  ),
+  module.struct.get_u(
+    0,
+    module.global.get("struct-global", structType),
+    binaryen.Type.i32,
   ),
   module.struct.set(
     1,
@@ -121,7 +130,16 @@ var valueList = [
     module.global.get("array-global", arrayType),
     module.i32.const(0),
     binaryen.Type.i32,
-    true
+  ),
+  module.array.get_s(
+    module.global.get("array-global", arrayType),
+    module.i32.const(0),
+    binaryen.Type.i32,
+  ),
+  module.array.get_u(
+    module.global.get("array-global", arrayType),
+    module.i32.const(0),
+    binaryen.Type.i32,
   ),
   module.array.set(
     module.global.get("array-global", arrayType),
