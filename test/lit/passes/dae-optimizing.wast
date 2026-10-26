@@ -169,3 +169,104 @@
     (call $impossible)
   )
 )
+
+;; Test that unshared waitqueue results are treated as uninhabitable (callers
+;; become unreachable), while shared waitqueue results are inhabitable.
+(module
+  (func $import (import "" "") (result i32))
+  (func $impossible (import "" "") (result (ref waitqueue)))
+
+  ;; CHECK:      (type $0 (func (result i32)))
+
+  ;; CHECK:      (type $1 (func (result (ref waitqueue))))
+
+  ;; CHECK:      (type $2 (func))
+
+  ;; CHECK:      (import "" "" (func $import (type $0) (result i32)))
+
+  ;; CHECK:      (import "" "" (func $impossible (type $1) (result (ref waitqueue))))
+
+  ;; CHECK:      (export "export" (func $export))
+
+  ;; CHECK:      (func $export (type $0) (result i32)
+  ;; CHECK-NEXT:  (call $internal)
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $export (export "export") (result i32)
+    (drop
+      (call $internal
+        (i32.const 0)
+      )
+    )
+    (drop
+      (call $internal
+        (i32.const 1)
+      )
+    )
+    (i32.const 0)
+  )
+  ;; CHECK:      (func $internal (type $2)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (call $import)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (call $impossible)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $internal (param i32) (result (ref waitqueue))
+    (drop
+      (call $import)
+    )
+    (call $impossible)
+  )
+)
+
+(module
+  (func $import (import "" "") (result i32))
+  (func $possible (import "" "") (result (ref (shared waitqueue))))
+
+  ;; CHECK:      (type $0 (func (result i32)))
+
+  ;; CHECK:      (type $1 (func (result (ref (shared waitqueue)))))
+
+  ;; CHECK:      (type $2 (func))
+
+  ;; CHECK:      (import "" "" (func $import (type $0) (result i32)))
+
+  ;; CHECK:      (import "" "" (func $possible (type $1) (result (ref (shared waitqueue)))))
+
+  ;; CHECK:      (export "export" (func $export))
+
+  ;; CHECK:      (func $export (type $0) (result i32)
+  ;; CHECK-NEXT:  (call $internal)
+  ;; CHECK-NEXT:  (call $internal)
+  ;; CHECK-NEXT:  (i32.const 0)
+  ;; CHECK-NEXT: )
+  (func $export (export "export") (result i32)
+    (drop
+      (call $internal
+        (i32.const 0)
+      )
+    )
+    (drop
+      (call $internal
+        (i32.const 1)
+      )
+    )
+    (i32.const 0)
+  )
+  ;; CHECK:      (func $internal (type $2)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (call $import)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (call $possible)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $internal (param i32) (result (ref (shared waitqueue)))
+    (drop
+      (call $import)
+    )
+    (call $possible)
+  )
+)
