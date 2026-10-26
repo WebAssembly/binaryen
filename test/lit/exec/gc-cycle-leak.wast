@@ -42,7 +42,7 @@
  )
 
  ;; CHECK:      [fuzz-exec] export cycle2
- ;; CHECK-NEXT: [LoggingExternalInterface log-execution [ref $0 (type $struct.0 (struct (field (mut (ref null $struct.0))))) [ref $1 (type $struct.0 (struct (field (mut (ref null $struct.0))))) [ref $0]]]]
+ ;; CHECK-NEXT: [LoggingExternalInterface log-execution [ref $0 (type $struct.0 (struct (field (mut (ref null $struct.0))))) [ref $1 (type $struct.0) [ref $0]]]]
  (func $cycle2 (export "cycle2")
   (local $a (ref $A))
   (local $b (ref $A))
@@ -67,7 +67,7 @@
  )
 
  ;; CHECK:      [fuzz-exec] export dag
- ;; CHECK-NEXT: [LoggingExternalInterface log-execution [ref $0 (type $struct.0 (struct (field (ref $struct.1)) (field (ref $struct.1)))) [ref $1 (type $struct.0 (struct (field (mut (ref null $struct.0))))) nullref] [ref $1]]]
+ ;; CHECK-NEXT: [LoggingExternalInterface log-execution [ref $0 (type $struct.0 (struct (field (ref $struct.1)) (field (ref $struct.1)))) [ref $1 (type $struct.1 (struct (field (mut (ref null $struct.1))))) nullref] [ref $1]]]
  (func $dag (export "dag")
   (local $a (ref $A))
   ;; A non-cyclic DAG where $B references the same $A twice.
@@ -105,10 +105,10 @@
 ;; CHECK-NEXT: [LoggingExternalInterface log-execution [ref $0 (type $struct.0 (struct (field (mut (ref null $struct.0))))) [ref $0]]]
 
 ;; CHECK:      [fuzz-exec] export cycle2
-;; CHECK-NEXT: [LoggingExternalInterface log-execution [ref $0 (type $struct.0 (struct (field (mut (ref null $struct.0))))) [ref $1 (type $struct.0 (struct (field (mut (ref null $struct.0))))) [ref $0]]]]
+;; CHECK-NEXT: [LoggingExternalInterface log-execution [ref $0 (type $struct.0 (struct (field (mut (ref null $struct.0))))) [ref $1 (type $struct.0) [ref $0]]]]
 
 ;; CHECK:      [fuzz-exec] export dag
-;; CHECK-NEXT: [LoggingExternalInterface log-execution [ref $0 (type $struct.0 (struct (field (ref $struct.1)) (field (ref $struct.1)))) [ref $1 (type $struct.0 (struct (field (mut (ref null $struct.0))))) nullref] [ref $1]]]
+;; CHECK-NEXT: [LoggingExternalInterface log-execution [ref $0 (type $struct.0 (struct (field (ref $struct.1)) (field (ref $struct.1)))) [ref $1 (type $struct.1 (struct (field (mut (ref null $struct.1))))) nullref] [ref $1]]]
 
 ;; CHECK:      [fuzz-exec] export cont_cycle
 ;; CHECK-NEXT: [LoggingExternalInterface log-execution cont($0 funcref(target) (type $cont.0 (cont $func.0)) resumeArguments=[ref $0] executed=1)]

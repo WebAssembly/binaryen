@@ -17,6 +17,7 @@
 #include <cassert>
 #include <cmath>
 #include <unordered_map>
+#include <unordered_set>
 
 #include "emscripten-optimizer/simple_ast.h"
 #include "ir/bits.h"
@@ -27,6 +28,7 @@
 #include "support/string.h"
 #include "support/utilities.h"
 #include "wasm-interpreter.h"
+#include "wasm-type-printing.h"
 
 namespace wasm {
 
@@ -707,6 +709,19 @@ struct LiteralPrinter {
   // Track seen GCData and ContData objects to avoid re-traversing shared or
   // cyclic allocations. Use traversal order indices as names.
   std::unordered_map<void*, size_t> names;
+  DefaultTypeNameGenerator typePrinter;
+  std::unordered_set<HeapType> printedTypes;
+
+  LiteralPrinter(std::ostream& o) : o(o) {}
+
+  void print(HeapType type) {
+    if (type.isBasic() || printedTypes.insert(type).second) {
+      o << typePrinter(type);
+    } else {
+      o << "(type ";
+      typePrinter.getNames(type).name.print(o) << ')';
+    }
+  }
 
   std::ostream& print(const Literal& literal) {
     prepareMinorColor(o);
@@ -827,7 +842,8 @@ struct LiteralPrinter {
         if (!inserted) {
           o << "[ref $" << it->second << ']';
         } else {
-          o << "cont($" << it->second << ' ' << data->func << ' ' << data->type;
+          o << "cont($" << it->second << ' ' << data->func << ' ';
+          print(data->type);
           if (data->resumeExpr) {
             o << " resumeExpr=" << reinterpret_cast<size_t>(data->resumeExpr);
           }
@@ -848,8 +864,9 @@ struct LiteralPrinter {
         if (!inserted) {
           o << "[ref $" << it->second << ']';
         } else {
-          o << "[ref $" << it->second << ' ' << literal.type.getHeapType()
-            << ' ';
+          o << "[ref $" << it->second << ' ';
+          print(literal.type.getHeapType());
+          o << ' ';
           for (size_t i = 0; i < literal.getNumElements(); i++) {
             if (i > 0) {
               o << ' ';
@@ -893,11 +910,11 @@ struct LiteralPrinter {
 } // namespace
 
 std::ostream& operator<<(std::ostream& o, Literal literal) {
-  return LiteralPrinter{o, {}}.print(literal);
+  return LiteralPrinter(o).print(literal);
 }
 
 std::ostream& operator<<(std::ostream& o, wasm::Literals literals) {
-  return LiteralPrinter{o, {}}.print(literals);
+  return LiteralPrinter(o).print(literals);
 }
 
 Literal Literal::countLeadingZeroes() const {
