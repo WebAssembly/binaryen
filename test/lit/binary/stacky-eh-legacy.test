@@ -30,10 +30,8 @@
 ;;   )
 ;; )
 ;; Here the 'block' and `local $new' are newly created to read the stacky code.
-;; But now the 'pop' ends up nested within the 'block', which is invalid. This
-;; test tests if this invalid code is correctly fixed up in the binary reader.
-;; The fixup will hoist the 'pop' and create another local to store it right
-;; after 'catch'.
+;; But now the 'pop' ends up nested within the 'block'. This test checks that
+;; we emit an unnamed block, which is valid to nest a 'pop' in.
 
 ;; RUN: wasm-opt %s.wasm -S -o - | filecheck %s
 
