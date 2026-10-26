@@ -32,10 +32,9 @@
 // functions replacement types to make sure they are not incorrectly updated by
 // the global type rewriting.
 //
-// As a POC, only do the backward analysis to find unused parameters. To match
-// and exceed the power of DAE, we will need to extend this backward analysis to
-// find unused results as well, and also add a forward analysis that propagates
-// constants and types through parameters and results.
+// As a POC, only do the backward analysis to find unused parameters and
+// results. To match and exceed the power of DAE, we will need to add a forward
+// analysis that propagates constants and types through parameters and results.
 
 #include <algorithm>
 #include <memory>

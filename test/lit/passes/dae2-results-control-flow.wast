@@ -362,7 +362,8 @@
   (func $caller (param $x i32) (param $ref (ref $sig))
     ;; Refinalizing must happen after global type rewriting so that the call_ref
     ;; whose result was removed does not have its type reset to the old concrete
-    ;; result type.
+    ;; result type. That would cause a validation failure because the `drop`
+    ;; consuming that concrete type will have been removed.
     (drop
       (call_ref $sig
         (local.get $ref)
@@ -419,7 +420,11 @@
   ;; CHECK-NEXT: )
   (func $f (type $sub) (result f32)
     ;; Refinalizing must happen after global type rewriting so that the ref.func
-    ;; gets the final rewritten subtype rather than a temporary scratch type.
+    ;; gets the final rewritten subtype rather than the temporary type assigned
+    ;; in Optimizer::runOnFunction. If it were to be refinalized with the
+    ;; temporary type, there would be a validation failure where we assign the
+    ;; `ref.func` to local `$x` because the temporary type is not a subtype of
+    ;; $super.
     (local $x (ref null $super))
     (local.set $x (ref.func $f))
     (if
