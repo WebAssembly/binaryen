@@ -318,8 +318,9 @@ struct Flatten
             // we don't know which break target will be hit - assign to them all
             auto names = BranchUtils::getUniqueTargets(sw);
             for (auto name : names) {
+              Type blockType = findBreakTarget(name)->type;
               ourPreludes.push_back(
-                builder.makeLocalSet(getTempForBreakTarget(name, type),
+                builder.makeLocalSet(getTempForBreakTarget(name, blockType),
                                      builder.makeLocalGet(temp, type)));
             }
             sw->value = nullptr;
