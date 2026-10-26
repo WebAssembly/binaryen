@@ -2593,10 +2593,6 @@ def test_one(random_input, given_wasm):
     randomize_fuzz_settings()
     pick_initial_contents()
 
-    opts = get_random_opts()
-    print('randomized opts:', '\n  ' + '\n  '.join(opts))
-    print()
-
     if given_wasm:
         # We are given a wasm file to operate on. By default we modify it in the
         # usual ways, like running DeNAN on it, which is important in many cases
@@ -2629,6 +2625,10 @@ def test_one(random_input, given_wasm):
     bytes = wasm_size
     print('pre wasm size:', wasm_size)
     update_feature_opts('a.wasm')
+
+    opts = get_random_opts()
+    print('randomized opts:', '\n  ' + '\n  '.join(opts))
+    print()
 
     # create a second (optimized) wasm for handlers that want to look at pairs.
     generate_command = [in_bin('wasm-opt'), abspath('a.wasm'), '-o', abspath('b.wasm')] + opts + FUZZ_OPTS + FEATURE_OPTS
@@ -2825,7 +2825,7 @@ def get_random_opts():
             if '--enable-exception-handling' in FEATURE_OPTS:
                 print('avoiding --flatten due to exception-handling not supporting it (requires blocks with results)')
                 continue
-            if '--gc' not in FEATURE_OPTS:
+            if '--enable-gc' in FEATURE_OPTS:
                 print('avoiding --flatten due to GC not supporting it (spilling of non-nullable locals)')
                 continue
             if INITIAL_CONTENTS and os.path.getsize(INITIAL_CONTENTS) > 2000:
