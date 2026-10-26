@@ -474,6 +474,11 @@ public:
   // For more details see the LocalStructuralDominance class.
   virtual bool requiresNonNullableLocalFixups() { return true; }
 
+  // Whether this function-parallel pass does anything on this function. When
+  // it does not, the pass runner skips the function entirely, including the
+  // fixups it would otherwise do afterwards.
+  virtual bool runsOnFunction(Function* func) { return true; }
+
   // Many passes can remove effects, for example, by finding some path is not
   // reached and removing a throw or a call there. The few passes that *add*
   // effects must mark themselves as such, so that we know to discard global

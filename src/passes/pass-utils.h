@@ -47,9 +47,8 @@ struct FilteredPass : public Pass {
   }
 
   void runOnFunction(Module* module, Function* func) override {
-    if (!relevantFuncs.contains(func)) {
-      return;
-    }
+    // The pass runner skips the other functions (see runsOnFunction).
+    assert(relevantFuncs.contains(func));
 
     // The pass runner calling us set our pass runner, which we must do for the
     // wrapped pass.
@@ -65,6 +64,10 @@ struct FilteredPass : public Pass {
 
   bool requiresNonNullableLocalFixups() override {
     return pass->requiresNonNullableLocalFixups();
+  }
+
+  bool runsOnFunction(Function* func) override {
+    return relevantFuncs.contains(func);
   }
 
 private:
