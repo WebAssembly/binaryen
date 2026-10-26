@@ -6,7 +6,7 @@
   ;; CHECK:      (type $shared (shared (struct (field (mut i32)))))
   (type $shared (shared (struct (field (mut i32)))))
 
-  ;; CHECK:      (func $select-struct-wait (type $2) (param $x (ref $shared)) (param $wq (ref (shared waitqueue))) (result i32)
+  ;; CHECK:      (func $select-struct-wait (type $1) (param $x (ref $shared)) (param $wq (ref (shared waitqueue))) (result i32)
   ;; CHECK-NEXT:  (select
   ;; CHECK-NEXT:   (struct.wait $shared 0
   ;; CHECK-NEXT:    (local.get $x)
@@ -41,7 +41,7 @@
     )
   )
 
-  ;; CHECK:      (func $select-waitqueue-notify (type $1) (param $wq (ref (shared waitqueue))) (result i32)
+  ;; CHECK:      (func $select-waitqueue-notify (type $2) (param $wq (ref (shared waitqueue))) (result i32)
   ;; CHECK-NEXT:  (select
   ;; CHECK-NEXT:   (waitqueue.notify
   ;; CHECK-NEXT:    (local.get $wq)
@@ -83,22 +83,5 @@
   ;; CHECK-NEXT: )
   (func $test-unshared (param $wq (ref waitqueue)) (result i32)
     (ref.test (ref nowaitqueue) (local.get $wq))
-  )
-
-  ;; CHECK:      (func $cast-shared (type $5) (param $wq (ref (shared waitqueue))) (result (ref (shared waitqueue)))
-  ;; CHECK-NEXT:  (local.get $wq)
-  ;; CHECK-NEXT: )
-  (func $cast-shared (param $wq (ref (shared waitqueue))) (result (ref (shared waitqueue)))
-    (ref.cast (ref (shared waitqueue)) (local.get $wq))
-  )
-
-  ;; CHECK:      (func $test-shared (type $1) (param $wq (ref (shared waitqueue))) (result i32)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.get $wq)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (i32.const 1)
-  ;; CHECK-NEXT: )
-  (func $test-shared (param $wq (ref (shared waitqueue))) (result i32)
-    (ref.test (ref (shared waitqueue)) (local.get $wq))
   )
 )

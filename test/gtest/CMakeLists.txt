@@ -17,6 +17,7 @@ set(unittest_SOURCES
   disjoint_sets.cpp
   dwarf-ranges.cpp
   effects.cpp
+  gc-type-utils.cpp
   glbs.cpp
   graph.cpp
   inplace_vector.cpp
