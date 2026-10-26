@@ -67,7 +67,7 @@ struct FilteredPass : public Pass {
   }
 
   bool runsOnFunction(Function* func) override {
-    return relevantFuncs.contains(func);
+    return relevantFuncs.contains(func) && pass->runsOnFunction(func);
   }
 
 private:
