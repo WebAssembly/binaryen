@@ -44,6 +44,7 @@
 
 #include "analysis/lattices/bool.h"
 #include "ir/effects.h"
+#include "ir/eh-utils.h"
 #include "ir/intrinsics.h"
 #include "ir/label-utils.h"
 #include "ir/local-graph.h"
@@ -1111,6 +1112,9 @@ struct Optimizer
     Super::runOnFunction(wasm, func);
 
     assert(!hasRemovedResult || !func->body->type.isConcrete());
+
+    // We may have moved pops around. Fix them.
+    EHUtils::handleBlockNestedPops(func, *wasm);
 
     // We may have introduced a new non-nullable local whose sets do not
     // structurally dominate its gets. Fix it.
