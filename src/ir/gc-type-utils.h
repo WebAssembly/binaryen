@@ -22,8 +22,9 @@
 namespace wasm::GCTypeUtils {
 
 inline bool isTriviallyUninhabitable(Type type) {
-  // TODO: Include non-shared waitqueue.
-  return type.isNonNullableRef() && type.isBottomRef();
+  static constexpr Type unsharedWaitqueue(HeapType(HeapType::waitqueue).getBasic(Unshared), Nullable);
+  return (type.isNonNullableRef() && type.isBottomRef())
+      || Type::isSubType(type, unsharedWaitqueue);
 }
 
 // Helper code to evaluate a reference at compile time and check if it is of a
