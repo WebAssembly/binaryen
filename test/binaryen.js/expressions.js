@@ -3315,7 +3315,8 @@ console.log("# TryTable");
   assertDeepEqual(info.catches, theTryTable.catches);
   assert(info.hasCatchAll === theTryTable.hasCatchAll());
 
-  theTryTable.body = module.unreachable();
+  theTryTable.body = body = module.unreachable();
+  assert(theTryTable.body === body);
 
   var i32AndExnref = binaryen.createType([binaryen.Type.i32, exnref]);
   theTryTable.setCatchAt(0, { tag: "tag2", dest: "new_dest1", ref: true, sentType: i32AndExnref });
@@ -3462,7 +3463,9 @@ console.log("# ThrowRef");
   assert(info.type === theThrowRef.type);
   assert(info.exnref === theThrowRef.exnref);
 
-  theThrowRef.exnref = module.ref.null(binaryen.HeapType.noexn);
+  var newExnref = module.ref.null(binaryen.HeapType.noexn);
+  theThrowRef.exnref = newExnref;
+  assert(theThrowRef.exnref === newExnref);
 
   theThrowRef.type = binaryen.Type.f64;
   theThrowRef.finalize();
