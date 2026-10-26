@@ -1493,6 +1493,135 @@
   (func $load16_u-and-1 (result i32)
     (i32.and (i32.load16_u (i32.const 7)) (i32.const 1))
   )
+  ;; CHECK:      (func $i64-load-and-mask (param $p i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.load8_u
+  ;; CHECK-NEXT:    (local.get $p)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.load8_u
+  ;; CHECK-NEXT:    (local.get $p)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.load16_u
+  ;; CHECK-NEXT:    (local.get $p)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.load16_u
+  ;; CHECK-NEXT:    (local.get $p)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.load32_u
+  ;; CHECK-NEXT:    (local.get $p)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.load32_u
+  ;; CHECK-NEXT:    (local.get $p)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.and
+  ;; CHECK-NEXT:    (i64.load16_s
+  ;; CHECK-NEXT:     (local.get $p)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i64.const 255)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.and
+  ;; CHECK-NEXT:    (i64.load16_s
+  ;; CHECK-NEXT:     (local.get $p)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i64.const 4294967295)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.and
+  ;; CHECK-NEXT:    (i64.load32_s
+  ;; CHECK-NEXT:     (local.get $p)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i64.const 65535)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.and
+  ;; CHECK-NEXT:    (i64.load32_s
+  ;; CHECK-NEXT:     (local.get $p)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i64.const 4294967294)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $i64-load-and-mask (param $p i32)
+    ;; Narrow i64 loads masked with their exact byte width become unsigned
+    ;; loads.
+    (drop
+      (i64.and
+        (i64.load8_s (local.get $p))
+        (i64.const 0xff)
+      )
+    )
+    (drop
+      (i64.and
+        (i64.load8_u (local.get $p))
+        (i64.const 0xff)
+      )
+    )
+    (drop
+      (i64.and
+        (i64.load16_s (local.get $p))
+        (i64.const 0xffff)
+      )
+    )
+    (drop
+      (i64.and
+        (i64.load16_u (local.get $p))
+        (i64.const 0xffff)
+      )
+    )
+    (drop
+      (i64.and
+        (i64.load32_s (local.get $p))
+        (i64.const 0xffffffff)
+      )
+    )
+    (drop
+      (i64.and
+        (i64.load32_u (local.get $p))
+        (i64.const 0xffffffff)
+      )
+    )
+    ;; Negative cases: signed loads where the mask does not match the load size.
+    (drop
+      (i64.and
+        (i64.load16_s (local.get $p))
+        (i64.const 0xff)
+      )
+    )
+    (drop
+      (i64.and
+        (i64.load16_s (local.get $p))
+        (i64.const 0xffffffff)
+      )
+    )
+    (drop
+      (i64.and
+        (i64.load32_s (local.get $p))
+        (i64.const 0xffff)
+      )
+    )
+    (drop
+      (i64.and
+        (i64.load32_s (local.get $p))
+        (i64.const 0xfffffffe)
+      )
+    )
+  )
   ;; CHECK:      (func $store8-and-255
   ;; CHECK-NEXT:  (i32.store8
   ;; CHECK-NEXT:   (i32.const 8)
@@ -4915,11 +5044,8 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.and
-  ;; CHECK-NEXT:    (local.tee $0
-  ;; CHECK-NEXT:     (i32.const 128)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (i32.const 1279)
+  ;; CHECK-NEXT:   (local.tee $0
+  ;; CHECK-NEXT:    (i32.const 128)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -5012,6 +5138,162 @@
           (i32.const 128)
         )
         (i32.const 127) ;; proper mask, just too small
+      )
+    )
+  )
+  ;; CHECK:      (func $and-redundant-low-mask (param $x i32) (param $y i64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.extend_i32_u
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.extend_i32_u
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.extend_i32_u
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.shr_u
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 24)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.shr_u
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:    (i64.const 56)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.tee $y
+  ;; CHECK-NEXT:    (i64.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.load8_u
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.load8_u
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.and
+  ;; CHECK-NEXT:    (i64.extend_i32_u
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i64.const 4294967294)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.and
+  ;; CHECK-NEXT:    (i64.extend_i32_s
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i64.const 4294967295)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.and
+  ;; CHECK-NEXT:    (i32.shr_u
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i32.const 24)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 4350)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.and
+  ;; CHECK-NEXT:    (i64.shr_u
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:     (i64.const 56)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i64.const 4350)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $and-redundant-low-mask (param $x i32) (param $y i64)
+    ;; Masks that preserve all possible non-zero low bits of the input are
+    ;; redundant, including for i64, non-contiguous masks, and unsigned loads
+    ;; with wider masks.
+    (drop
+      (i64.and
+        (i64.extend_i32_u (local.get $x))
+        (i64.const 0xffffffff)
+      )
+    )
+    (drop
+      (i64.and
+        (i64.extend_i32_u (local.get $x))
+        (i64.const 0x1ffffffff)
+      )
+    )
+    (drop
+      (i64.and
+        (i64.extend_i32_u (local.get $x))
+        (i64.const 0x80000000ffffffff)
+      )
+    )
+    (drop
+      (i32.and
+        (i32.shr_u (local.get $x) (i32.const 24))
+        (i32.const 0x10ff)
+      )
+    )
+    (drop
+      (i64.and
+        (i64.shr_u (local.get $y) (i64.const 56))
+        (i64.const 0x10ff)
+      )
+    )
+    (drop
+      (i64.and
+        (local.tee $y (i64.const 0))
+        (i64.const 0x1234)
+      )
+    )
+    (drop
+      (i32.and
+        (i32.load8_u (local.get $x))
+        (i32.const 0xffff)
+      )
+    )
+    (drop
+      (i64.and
+        (i64.load8_u (local.get $x))
+        (i64.const 0xffff)
+      )
+    )
+    ;; Negative cases: masks that clear potentially set low bits.
+    (drop
+      (i64.and
+        (i64.extend_i32_u (local.get $x))
+        (i64.const 0xfffffffe)
+      )
+    )
+    (drop
+      (i64.and
+        (i64.extend_i32_s (local.get $x))
+        (i64.const 0xffffffff)
+      )
+    )
+    (drop
+      (i32.and
+        (i32.shr_u (local.get $x) (i32.const 24))
+        (i32.const 0x10fe)
+      )
+    )
+    (drop
+      (i64.and
+        (i64.shr_u (local.get $y) (i64.const 56))
+        (i64.const 0x10fe)
       )
     )
   )
@@ -7183,7 +7465,7 @@
   ;; CHECK-NEXT:   (i64.const 63)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $and-popcount64 (result i64) ;; these are TODOs
+  (func $and-popcount64 (result i64)
     (i64.and
       (i64.popcnt
         (i64.const -1)
@@ -7192,11 +7474,8 @@
     )
   )
   ;; CHECK:      (func $and-popcount64-big (result i64)
-  ;; CHECK-NEXT:  (i64.and
-  ;; CHECK-NEXT:   (i64.popcnt
-  ;; CHECK-NEXT:    (i64.const -1)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (i64.const 127)
+  ;; CHECK-NEXT:  (i64.popcnt
+  ;; CHECK-NEXT:   (i64.const -1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $and-popcount64-big (result i64)
@@ -7208,11 +7487,8 @@
     )
   )
   ;; CHECK:      (func $and-popcount64-bigger (result i64)
-  ;; CHECK-NEXT:  (i64.and
-  ;; CHECK-NEXT:   (i64.popcnt
-  ;; CHECK-NEXT:    (i64.const -1)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (i64.const 255)
+  ;; CHECK-NEXT:  (i64.popcnt
+  ;; CHECK-NEXT:   (i64.const -1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $and-popcount64-bigger (result i64)
