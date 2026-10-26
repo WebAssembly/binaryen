@@ -150,10 +150,11 @@ struct Analyzer
   void visitExpression(Expression* curr) {
     // Look at the constraints on this expression's operands to see if it
     // requires an exact operand. If it does, we cannot optimize allocations of
-    // that type. As an optimization, do not let control flow structures or
-    // branches inhibit optimization since they can safely be refinalized to use
-    // new types as long as no other instruction expected the original exact
-    // type.
+    // that type. As an optimization, do not let control flow structures,
+    // br_{if}, or `br_table` inhibit optimization since they can safely be
+    // refinalized to use new types as long as no other instruction expected the
+    // original exact type. (Not all branches can be skipped like this;
+    // branching descriptor casts can require exact descriptor arguments.)
     if (Properties::isControlFlowStructure(curr) || curr->is<Break>() ||
         curr->is<Switch>()) {
       return;
