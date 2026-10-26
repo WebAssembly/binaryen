@@ -704,9 +704,9 @@ namespace {
 
 struct LiteralPrinter {
   std::ostream& o;
-  // Track seen GCData objects to avoid re-traversing shared or cyclic
-  // allocations.
-  std::unordered_map<GCData*, size_t> names;
+  // Track seen GCData and ContData objects to avoid re-traversing shared or
+  // cyclic allocations. Use traversal order indices as names.
+  std::unordered_map<void*, size_t> names;
 
   std::ostream& print(const Literal& literal) {
     prepareMinorColor(o);
@@ -822,25 +822,31 @@ struct LiteralPrinter {
         o << "funcref(" << literal.getFunc() << ")";
       } else if (heapType.isContinuation()) {
         auto data = literal.getContData();
-        o << "cont(" << data->func << ' ' << data->type;
-        if (data->resumeExpr) {
-          o << " resumeExpr=" << reinterpret_cast<size_t>(data->resumeExpr);
+        assert(data);
+        auto [it, inserted] = names.try_emplace(data.get(), names.size());
+        if (!inserted) {
+          o << "[ref $" << it->second << ']';
+        } else {
+          o << "cont($" << it->second << ' ' << data->func << ' ' << data->type;
+          if (data->resumeExpr) {
+            o << " resumeExpr=" << reinterpret_cast<size_t>(data->resumeExpr);
+          }
+          if (!data->resumeInfo.empty()) {
+            o << " |resumeInfo|=" << data->resumeInfo.size();
+          }
+          if (!data->resumeArguments.empty()) {
+            o << " resumeArguments=";
+            print(data->resumeArguments);
+          }
+          o << " executed=" << data->executed << ')';
         }
-        if (!data->resumeInfo.empty()) {
-          o << " |resumeInfo|=" << data->resumeInfo.size();
-        }
-        if (!data->resumeArguments.empty()) {
-          o << " resumeArguments=";
-          print(data->resumeArguments);
-        }
-        o << " executed=" << data->executed << ')';
       } else {
         assert(literal.isData());
         auto data = literal.getGCData();
         assert(data);
         auto [it, inserted] = names.try_emplace(data.get(), names.size());
         if (!inserted) {
-          o << '$' << it->second;
+          o << "[ref $" << it->second << ']';
         } else {
           o << "[ref $" << it->second << ' ' << literal.type.getHeapType()
             << ' ';
