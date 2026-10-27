@@ -182,7 +182,7 @@
   end
  )
 
- ;; CHECK:      (func $stacky-named-block (type $0)
+ ;; CHECK:      (func $stacky-block-param (type $0)
  ;; CHECK-NEXT:  (local $scratch i32)
  ;; CHECK-NEXT:  (local $scratch_1 i32)
  ;; CHECK-NEXT:  (try
@@ -206,7 +206,7 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $stacky-named-block
+ (func $stacky-block-param
   try
   catch $e
    ;; Add a block with an input param, forcing us to use a local to capture the
@@ -214,6 +214,44 @@
    block (param i32)
     nop
     drop
+   end
+  end
+ )
+
+ ;; CHECK:      (func $stacky-named-block (type $0)
+ ;; CHECK-NEXT:  (local $scratch i32)
+ ;; CHECK-NEXT:  (local $scratch_1 i32)
+ ;; CHECK-NEXT:  (try
+ ;; CHECK-NEXT:   (do
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (catch $e
+ ;; CHECK-NEXT:    (local.set $scratch
+ ;; CHECK-NEXT:     (pop i32)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (block $block
+ ;; CHECK-NEXT:     (drop
+ ;; CHECK-NEXT:      (block (result i32)
+ ;; CHECK-NEXT:       (local.set $scratch_1
+ ;; CHECK-NEXT:        (local.get $scratch)
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:       (nop)
+ ;; CHECK-NEXT:       (local.get $scratch_1)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (br $block)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $stacky-named-block
+  try
+  catch $e
+   ;; The block has no name, but we find a br to it later, giving it a name.
+   ;; This leads to EH fixups that use a local to capture the pop.
+   block (param i32)
+    nop
+    drop
+    br 0
    end
   end
  )
