@@ -3,14 +3,26 @@
 ;; RUN: wasm-opt %s -all --stub-unsupported-js -S -o - | filecheck %s
 
 (module
- ;; CHECK:      (func $convert_u_i64_f32 (type $4) (param $x i64) (result f32)
+ ;; CHECK:      (func $convert_s_i64_f32 (type $1) (param $x i64) (result f32)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (f32.const 0)
+ ;; CHECK-NEXT: )
+ (func $convert_s_i64_f32 (param $x i64) (result f32)
+  ;; Signed and unsigned i64 to f32 conversions are stubbed out.
+  (f32.convert_i64_s
+   (local.get $x)
+  )
+ )
+
+ ;; CHECK:      (func $convert_u_i64_f32 (type $1) (param $x i64) (result f32)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (local.get $x)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (f32.const 0)
  ;; CHECK-NEXT: )
  (func $convert_u_i64_f32 (param $x i64) (result f32)
-  ;; Unsigned i64 to f32 conversions are stubbed out.
   (f32.convert_i64_u
    (local.get $x)
   )
@@ -41,7 +53,7 @@
   )
  )
 
- ;; CHECK:      (func $trunc_sat_s_f64_i32 (type $1) (param $x f64) (result i32)
+ ;; CHECK:      (func $trunc_sat_s_f64_i32 (type $2) (param $x f64) (result i32)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (local.get $x)
  ;; CHECK-NEXT:  )
@@ -53,7 +65,7 @@
   )
  )
 
- ;; CHECK:      (func $trunc_sat_u_f64_i32 (type $1) (param $x f64) (result i32)
+ ;; CHECK:      (func $trunc_sat_u_f64_i32 (type $2) (param $x f64) (result i32)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (local.get $x)
  ;; CHECK-NEXT:  )
@@ -65,7 +77,7 @@
   )
  )
 
- ;; CHECK:      (func $trunc_sat_s_f32_i64 (type $2) (param $x f32) (result i64)
+ ;; CHECK:      (func $trunc_sat_s_f32_i64 (type $3) (param $x f32) (result i64)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (local.get $x)
  ;; CHECK-NEXT:  )
@@ -77,7 +89,7 @@
   )
  )
 
- ;; CHECK:      (func $trunc_sat_u_f32_i64 (type $2) (param $x f32) (result i64)
+ ;; CHECK:      (func $trunc_sat_u_f32_i64 (type $3) (param $x f32) (result i64)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (local.get $x)
  ;; CHECK-NEXT:  )
@@ -89,7 +101,7 @@
   )
  )
 
- ;; CHECK:      (func $trunc_sat_s_f64_i64 (type $3) (param $x f64) (result i64)
+ ;; CHECK:      (func $trunc_sat_s_f64_i64 (type $4) (param $x f64) (result i64)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (local.get $x)
  ;; CHECK-NEXT:  )
@@ -101,7 +113,7 @@
   )
  )
 
- ;; CHECK:      (func $trunc_sat_u_f64_i64 (type $3) (param $x f64) (result i64)
+ ;; CHECK:      (func $trunc_sat_u_f64_i64 (type $4) (param $x f64) (result i64)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (local.get $x)
  ;; CHECK-NEXT:  )
