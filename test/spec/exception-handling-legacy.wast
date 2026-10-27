@@ -546,6 +546,22 @@
   "catch's body (e-i32)'s pop's location is not valid"
 )
 
+(module
+  (tag $e-i32 (param i32))
+  (func $f0
+    (try
+      (do)
+      (catch $e-i32
+        (throw $e-i32
+          (block (result i32)
+            (pop i32) ;; pop is within an *un*named block, which is valid
+          )
+        )
+      )
+    )
+  )
+)
+
 (assert_invalid
   (module
     (tag $e-i32 (param i32))
