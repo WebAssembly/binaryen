@@ -357,8 +357,18 @@ struct StubUnsupportedJSOpsPass
   void visitUnary(Unary* curr) {
     switch (curr->op) {
       case ConvertUInt64ToFloat32:
-        // See detailed comment in lowerConvertIntToFloat in
-        // I64ToI32Lowering.cpp.
+      case TruncSatSFloat32ToInt32:
+      case TruncSatUFloat32ToInt32:
+      case TruncSatSFloat64ToInt32:
+      case TruncSatUFloat64ToInt32:
+      case TruncSatSFloat32ToInt64:
+      case TruncSatUFloat32ToInt64:
+      case TruncSatSFloat64ToInt64:
+      case TruncSatUFloat64ToInt64:
+        // f32.convert_i64_u does not have perfect rounding in all cases (see
+        // lowerConvertIntToFloat in I64ToI32Lowering.cpp), and trunc_sat
+        // operations are lowered using non-saturating conversions in wasm2js
+        // and I64ToI32Lowering.
         stubOut(curr->value, curr->type);
         break;
       default: {
