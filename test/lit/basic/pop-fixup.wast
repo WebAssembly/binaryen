@@ -209,6 +209,7 @@
  (func $stacky-named-block
   try
   catch $e
+   ;; Add a named block here, forcing a fixup using a local to capture the pop.
    block $named (param i32)
     nop
     drop
