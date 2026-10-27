@@ -118,7 +118,7 @@ void handleBlockNestedPop(Try* try_, Function* func, Module& wasm) {
     // Change code like
     // (catch $e
     //   ...
-    //   (block
+    //   (block $name
     //     (pop i32)
     //   )
     // )
@@ -128,7 +128,7 @@ void handleBlockNestedPop(Try* try_, Function* func, Module& wasm) {
     //     (pop i32)
     //   )
     //   ...
-    //   (block
+    //   (block $name
     //     (local.get $new)
     //   )
     // )
