@@ -220,7 +220,6 @@ void ReFinalize::visitDataSegment(DataSegment* curr) {
   WASM_UNREACHABLE("unimp");
 }
 void ReFinalize::visitTag(Tag* curr) { WASM_UNREACHABLE("unimp"); }
-void ReFinalize::visitFunction(Function* curr) {}
 void ReFinalize::visitModule(Module* curr) { WASM_UNREACHABLE("unimp"); }
 
 void ReFinalize::updateBreakValueType(Name name, Type type) {

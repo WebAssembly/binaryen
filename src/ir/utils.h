@@ -145,7 +145,6 @@ struct ReFinalize
   void visitMemory(Memory* curr);
   void visitDataSegment(DataSegment* curr);
   void visitTag(Tag* curr);
-  void visitFunction(Function* curr);
   void visitModule(Module* curr);
 
 private:
