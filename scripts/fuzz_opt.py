@@ -51,6 +51,9 @@ assert sys.version_info >= (3, 10), 'requires Python 3.10'
 
 # Limit default thread pool size per subprocess so parallel passes are still
 # exercised without spawning a thread per hardware core on every invocation.
+# On machines with lots of cores, the overhead of setting up a full-sized
+# thread pool and synchonization around funtion-parallel passes can be
+# significant when running on the fuzzer's relatively small modules.
 os.environ.setdefault('BINARYEN_CORES', '4')
 
 # parameters
