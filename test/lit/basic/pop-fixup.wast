@@ -220,22 +220,22 @@
 
  ;; CHECK:      (func $stacky-named-block (type $0)
  ;; CHECK-NEXT:  (local $scratch i32)
- ;; CHECK-NEXT:  (local $scratch_1 i32)
+ ;; CHECK-NEXT:  (local $1 i32)
  ;; CHECK-NEXT:  (try
  ;; CHECK-NEXT:   (do
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (catch $e
- ;; CHECK-NEXT:    (local.set $scratch
+ ;; CHECK-NEXT:    (local.set $1
  ;; CHECK-NEXT:     (pop i32)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (block $block
  ;; CHECK-NEXT:     (drop
  ;; CHECK-NEXT:      (block (result i32)
- ;; CHECK-NEXT:       (local.set $scratch_1
- ;; CHECK-NEXT:        (local.get $scratch)
+ ;; CHECK-NEXT:       (local.set $scratch
+ ;; CHECK-NEXT:        (local.get $1)
  ;; CHECK-NEXT:       )
  ;; CHECK-NEXT:       (nop)
- ;; CHECK-NEXT:       (local.get $scratch_1)
+ ;; CHECK-NEXT:       (local.get $scratch)
  ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:     (br $block)
@@ -248,7 +248,11 @@
   catch $e
    ;; The block has no name, but we find a br to it later, giving it a name.
    ;; This leads to EH fixups that use a local to capture the pop.
-   block (param i32)
+   block
+    ;; Use a pop rather than a block param, so that we don't end up doing
+    ;; fixups for the block param that overlap with the thing we are testing
+    ;; here.
+    pop i32
     nop
     drop
     br 0
