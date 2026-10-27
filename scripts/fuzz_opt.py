@@ -49,6 +49,10 @@ from test import fuzzing, shared, support
 
 assert sys.version_info >= (3, 10), 'requires Python 3.10'
 
+# Limit default thread pool size per subprocess so parallel passes are still
+# exercised without spawning a thread per hardware core on every invocation.
+os.environ.setdefault('BINARYEN_CORES', '4')
+
 # parameters
 
 # feature options that are always passed to the tools.
