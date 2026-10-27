@@ -192,7 +192,7 @@
  ;; CHECK-NEXT:    (local.set $scratch
  ;; CHECK-NEXT:     (pop i32)
  ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (block $named
+ ;; CHECK-NEXT:    (block
  ;; CHECK-NEXT:     (drop
  ;; CHECK-NEXT:      (block (result i32)
  ;; CHECK-NEXT:       (local.set $scratch_1
@@ -209,8 +209,9 @@
  (func $stacky-named-block
   try
   catch $e
-   ;; Add a named block here, forcing a fixup using a local to capture the pop.
-   block $named (param i32)
+   ;; Add a block with an input param, forcing us to use a local to capture the
+   ;; pop.
+   block (param i32)
     nop
     drop
    end
