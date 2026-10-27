@@ -1936,7 +1936,10 @@ Result<> IRBuilder::makePop(Type type) {
   // already create them automatically when starting a legacy catch block that
   // needs one. Just verify that the Pop we are being asked to make is the same
   // type as the Pop we have already made, and move it into the current scope if
-  // we have entered unnamed blocks since the catch began.
+  // we have entered unnamed blocks since the catch began. (Note that the block
+  // may receive a name later, if we encounter a break to it, if we process
+  // that after the pop. In that case, the fixups that run later will have work
+  // to do.)
   ScopeCtx* catchScope = nullptr;
   for (int i = int(scopeStack.size()) - 1; i >= 0; --i) {
     auto& scope = scopeStack[i];
