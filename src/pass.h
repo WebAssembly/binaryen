@@ -477,6 +477,10 @@ public:
   // Whether this function-parallel pass does anything on this function. When
   // it does not, the pass runner skips the function entirely, including the
   // fixups it would otherwise do afterwards.
+  //
+  // Note: This is called on the registered pass instance concurrently across
+  // threads, so implementations must be thread-safe and cannot rely on
+  // getPassRunner() or getPassOptions().
   virtual bool runsOnFunction(Function* func) { return true; }
 
   // Many passes can remove effects, for example, by finding some path is not
