@@ -47,7 +47,9 @@
   ;; CHECK-BIN:      (import "env" "table" (table $timport$0 9 9 funcref))
 
   ;; CHECK-BIN:      (func $break-and-binary (type $0) (result i32)
-  ;; CHECK-BIN-NEXT:  (unreachable)
+  ;; CHECK-BIN-NEXT:  (block $x (result i32)
+  ;; CHECK-BIN-NEXT:   (unreachable)
+  ;; CHECK-BIN-NEXT:  )
   ;; CHECK-BIN-NEXT: )
   (func $break-and-binary (result i32)
     (block $x (result i32)
@@ -225,10 +227,12 @@
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
   ;; CHECK-BIN:      (func $untaken-break-should-have-value (type $0) (result i32)
-  ;; CHECK-BIN-NEXT:  (drop
-  ;; CHECK-BIN-NEXT:   (i32.const 0)
+  ;; CHECK-BIN-NEXT:  (block $x (result i32)
+  ;; CHECK-BIN-NEXT:   (drop
+  ;; CHECK-BIN-NEXT:    (i32.const 0)
+  ;; CHECK-BIN-NEXT:   )
+  ;; CHECK-BIN-NEXT:   (unreachable)
   ;; CHECK-BIN-NEXT:  )
-  ;; CHECK-BIN-NEXT:  (unreachable)
   ;; CHECK-BIN-NEXT: )
   (func $untaken-break-should-have-value (result i32)
     (block $x (result i32)
@@ -268,7 +272,7 @@
   ;; CHECK-BIN-NEXT:    )
   ;; CHECK-BIN-NEXT:   )
   ;; CHECK-BIN-NEXT:  )
-  ;; CHECK-BIN-NEXT:  (block (result i32)
+  ;; CHECK-BIN-NEXT:  (block $label$0 (result i32)
   ;; CHECK-BIN-NEXT:   (drop
   ;; CHECK-BIN-NEXT:    (i32.const 0)
   ;; CHECK-BIN-NEXT:   )
@@ -307,8 +311,10 @@
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
   ;; CHECK-BIN:      (func $br_table_unreachable_to_also_unreachable (type $0) (result i32)
-  ;; CHECK-BIN-NEXT:  (block (result i32)
-  ;; CHECK-BIN-NEXT:   (unreachable)
+  ;; CHECK-BIN-NEXT:  (block $a (result i32)
+  ;; CHECK-BIN-NEXT:   (block $b (result i32)
+  ;; CHECK-BIN-NEXT:    (unreachable)
+  ;; CHECK-BIN-NEXT:   )
   ;; CHECK-BIN-NEXT:  )
   ;; CHECK-BIN-NEXT: )
   (func $br_table_unreachable_to_also_unreachable (result i32)
@@ -343,19 +349,21 @@
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
   ;; CHECK-BIN:      (func $untaken-br_if (type $0) (result i32)
-  ;; CHECK-BIN-NEXT:  (block
-  ;; CHECK-BIN-NEXT:   (if
-  ;; CHECK-BIN-NEXT:    (i32.const 0)
-  ;; CHECK-BIN-NEXT:    (then
-  ;; CHECK-BIN-NEXT:     (unreachable)
+  ;; CHECK-BIN-NEXT:  (block $label$8 (result i32)
+  ;; CHECK-BIN-NEXT:   (block $label$9
+  ;; CHECK-BIN-NEXT:    (if
+  ;; CHECK-BIN-NEXT:     (i32.const 0)
+  ;; CHECK-BIN-NEXT:     (then
+  ;; CHECK-BIN-NEXT:      (unreachable)
+  ;; CHECK-BIN-NEXT:     )
+  ;; CHECK-BIN-NEXT:     (else
+  ;; CHECK-BIN-NEXT:      (unreachable)
+  ;; CHECK-BIN-NEXT:     )
   ;; CHECK-BIN-NEXT:    )
-  ;; CHECK-BIN-NEXT:    (else
-  ;; CHECK-BIN-NEXT:     (unreachable)
-  ;; CHECK-BIN-NEXT:    )
+  ;; CHECK-BIN-NEXT:    (unreachable)
   ;; CHECK-BIN-NEXT:   )
   ;; CHECK-BIN-NEXT:   (unreachable)
   ;; CHECK-BIN-NEXT:  )
-  ;; CHECK-BIN-NEXT:  (unreachable)
   ;; CHECK-BIN-NEXT: )
   (func $untaken-br_if (result i32)
     (block $label$8 (result i32)

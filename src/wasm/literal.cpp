@@ -52,27 +52,27 @@ Literal::Literal(Type type) : type(type) {
     }
   }
 
-  if (type.isNull()) {
-    assert(type.isNullable() && !type.isExact());
+  if (type.isBottomRef()) {
+    assert(type.isNullableRef() && !type.isExact());
     new (&gcData) std::shared_ptr<GCData>();
     return;
   }
 
   if (type.isRef() && type.getHeapType().isMaybeShared(HeapType::i31)) {
-    assert(type.isNonNullable());
+    assert(type.isNonNullableRef());
     i32 = 0;
     return;
   }
 
   if (type.isRef() && type.getHeapType().isMaybeShared(HeapType::ext)) {
-    assert(type.isNonNullable());
+    assert(type.isNonNullableRef());
     new (&gcData) std::shared_ptr<GCData>(
       std::make_shared<GCData>(Literals{Literal(int32_t{0})}));
     return;
   }
 
   if (type.isRef() && type.getHeapType().isMaybeShared(HeapType::waitqueue)) {
-    assert(type.isNonNullable());
+    assert(type.isNonNullableRef());
     return;
   }
 
@@ -165,7 +165,7 @@ Literal::Literal(const Literal& other) : type(other.type) {
     return;
   }
   // After handling nulls, only non-nullable Literals remain.
-  assert(!type.isNullable());
+  assert(!type.isNullableRef());
 
   auto heapType = type.getHeapType();
   if (other.isData()) {
@@ -314,11 +314,23 @@ Literal Literal::makeNegOne(Type type) {
   return makeFromInt32(-1, type);
 }
 
-Literal Literal::makeFromMemory(const void* p, Type type) {
+Literal Literal::makeFromMemory(const void* p,
+                                Type type,
+                                std::optional<unsigned> byteSize) {
   assert(type.isNumber());
+  auto size = byteSize.value_or(type.getByteSize());
+  assert(size == type.getByteSize() ||
+         (type == Type::i32 && (size == 1 || size == 2)));
   switch (type.getBasic()) {
     case Type::i32: {
-      return Literal(Bits::readLE<int32_t>(p));
+      switch (size) {
+        case 1:
+          return Literal(int32_t(Bits::readLE<int8_t>(p)));
+        case 2:
+          return Literal(int32_t(Bits::readLE<int16_t>(p)));
+        default:
+          return Literal(Bits::readLE<int32_t>(p));
+      }
     }
     case Type::i64: {
       return Literal(Bits::readLE<int64_t>(p));
@@ -491,8 +503,7 @@ bool Literal::operator==(const Literal& other) const {
         break;
     }
   } else if (type.isRef()) {
-    assert(type.isRef());
-    if (type.isNull()) {
+    if (type.isBottomRef()) {
       return true;
     }
     if (type.isFunction()) {
@@ -555,7 +566,7 @@ bool Literal::operator<(const Literal& other) const {
   }
 
   assert(type.isRef());
-  if (type.isNull()) {
+  if (type.isBottomRef()) {
     // All nulls are equal, and hence not <
     return false;
   }
@@ -718,6 +729,10 @@ thread_local size_t PrintLimiter::printed = 0;
 std::ostream& operator<<(std::ostream& o, Literal literal) {
   PrintLimiter limiter;
 
+  if (limiter.stop()) {
+    return o << "[..]";
+  }
+
   prepareMinorColor(o);
   assert(literal.type.isSingle());
   if (literal.type.isBasic()) {
@@ -850,6 +865,9 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
           o << ' ';
         }
         o << literal.getElement(i);
+        if (limiter.stop()) {
+          break;
+        }
       }
       if (!data->desc.isNull()) {
         if (literal.getNumElements() > 0) {

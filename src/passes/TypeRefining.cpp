@@ -25,6 +25,7 @@
 // themselves.
 //
 
+#include "ir/eh-utils.h"
 #include "ir/find_all.h"
 #include "ir/lubs.h"
 #include "ir/possible-contents.h"
@@ -209,11 +210,6 @@ struct TypeRefining : public Pass {
           if (!fields[i].type.isExact()) {
             gufaType = gufaType.withInexactIfNoCustomDescs(module->features);
           }
-          // Do not use the GUFA type if it is a continuation, as we cannot add
-          // casts to fix up issues later. Instead, use the original type.
-          if (gufaType.isContinuation()) {
-            gufaType = fields[i].type;
-          }
           infos[i] = LUBFinder(gufaType);
         }
       }
@@ -254,6 +250,24 @@ struct TypeRefining : public Pass {
 
     // Propagate to supertypes, so no field is less refined than its super.
     propagator.propagateToSuperTypes(finalInfos);
+
+    // Do not refine to an uncastable type, as we cannot add casts to fix up
+    // issues later. Instead, use the original type. The exception is null
+    // types, which we will materialize directly. Do this after noting globals
+    // and propagating to supertypes so we also catch fields whose initial
+    // null/empty GUFA type was widened to a non-null uncastable type.
+    for (auto type : allTypes) {
+      if (type.isStruct()) {
+        auto& fields = type.getStruct().fields;
+        auto& infos = finalInfos[{type, Inexact}];
+        for (Index i = 0; i < fields.size(); i++) {
+          auto lub = infos[i].getLUB();
+          if (lub.isRef() && !lub.isCastable() && !lub.isBottomRef()) {
+            infos[i] = LUBFinder(fields[i].type);
+          }
+        }
+      }
+    }
   }
 
   void useFinalInfos(Module* module, Propagator& propagator) {
@@ -385,6 +399,7 @@ struct TypeRefining : public Pass {
       bool requiresNonNullableLocalFixups() override { return false; }
 
       TypeRefining& parent;
+      bool addedBlock = false;
 
       ReadUpdater(TypeRefining& parent) : parent(parent) {}
 
@@ -398,13 +413,14 @@ struct TypeRefining : public Pass {
         }
 
         Type newFieldType;
-        if (!curr->ref->type.isNull()) {
+        if (!curr->ref->type.isBottomRef()) {
           auto oldType = curr->ref->type.getHeapType();
           newFieldType =
             parent.finalInfos[{oldType, Inexact}][curr->index].getLUB();
         }
 
-        if (curr->ref->type.isNull() || newFieldType == Type::unreachable ||
+        if (curr->ref->type.isBottomRef() ||
+            newFieldType == Type::unreachable ||
             !Type::isSubType(newFieldType, curr->type)) {
           // This get will trap, or cannot be reached: either the ref is null,
           // or the field is never written any contents, or the contents we see
@@ -413,6 +429,7 @@ struct TypeRefining : public Pass {
           Builder builder(*getModule());
           replaceCurrent(builder.makeSequence(builder.makeDrop(curr->ref),
                                               builder.makeUnreachable()));
+          addedBlock = true;
           return;
         }
 
@@ -441,6 +458,12 @@ struct TypeRefining : public Pass {
         // no update is needed - which will be correct, since we've updated it
         // ourselves here, before.)
         curr->type = newFieldType;
+      }
+
+      void visitFunction(Function* func) {
+        if (addedBlock) {
+          EHUtils::handleBlockNestedPops(func, *getModule());
+        }
       }
     };
 
@@ -568,20 +591,8 @@ struct TypeRefining : public Pass {
         curr->replacement = fixType(curr->replacement, fieldType);
       }
 
-      void visitStructWait(StructWait* curr) {
-        if (curr->ref->type == Type::unreachable) {
-          return;
-        }
-        auto type = curr->ref->type.getHeapType();
-        if (type.isBottom()) {
-          return;
-        }
-
-        auto fieldType = type.getStruct().fields[curr->index].type;
-        curr->expected = fixType(curr->expected, fieldType);
-      }
-
       bool refinalize = false;
+      bool addedBlock = false;
 
       // Fix up a given value so it fits into the type the location it is
       // written to.
@@ -596,8 +607,9 @@ struct TypeRefining : public Pass {
         Builder builder(*getModule());
         auto heapType = type.getHeapType();
         if (heapType.isBottom()) {
+          addedBlock = true;
           auto* drop = builder.makeDrop(value);
-          if (type.isNonNullable()) {
+          if (type.isNonNullableRef()) {
             // This will just trap. Make it trap, and update parents' types.
             refinalize = true;
             return builder.makeSequence(drop, builder.makeUnreachable());
@@ -611,6 +623,9 @@ struct TypeRefining : public Pass {
       void visitFunction(Function* func) {
         if (refinalize) {
           ReFinalize().walkFunctionInModule(func, getModule());
+        }
+        if (addedBlock) {
+          EHUtils::handleBlockNestedPops(func, *getModule());
         }
       }
     };

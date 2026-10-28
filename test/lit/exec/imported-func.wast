@@ -25,5 +25,7 @@
 ;; CHECK-NEXT: [fuzz-exec] export cast-B-exact
 ;; CHECK-NEXT: [trap cast error]
 ;; CHECK-NEXT: [fuzz-exec] export cast-C-exact
+;; CHECK-NEXT: [fuzz-exec] export cast-host-A-exact
+;; CHECK-NEXT: [fuzz-exec] export cast-host-B
+;; CHECK-NEXT: [trap cast error]
 ;; CHECK-NEXT: [fuzz-exec] export last
-

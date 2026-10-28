@@ -1686,6 +1686,9 @@ public:
         return left.swizzleI8x16(right);
 
       case RelaxedDotI8x16I7x16SToVecI16x8:
+        if (relaxedBehavior == RelaxedBehavior::NonConstant) {
+          return NONCONSTANT_FLOW;
+        }
         return left.dotSI8x16toI16x8(right);
 
       case InvalidBinary:
@@ -1757,10 +1760,14 @@ public:
     Literal c = flow.getSingleValue();
     switch (curr->op) {
       case Bitselect:
+        return c.bitselectV128(a, b);
       case RelaxedLaneselectI8x16:
       case RelaxedLaneselectI16x8:
       case RelaxedLaneselectI32x4:
       case RelaxedLaneselectI64x2:
+        if (relaxedBehavior == RelaxedBehavior::NonConstant) {
+          return NONCONSTANT_FLOW;
+        }
         return c.bitselectV128(a, b);
 
       case MaddVecF16x8:
@@ -2149,7 +2156,7 @@ public:
     auto data = val.getGCData();
     if (!data) {
       // Check whether null is allowed.
-      if (curr->getCastType().isNullable()) {
+      if (curr->getCastType().isNullableRef()) {
         return typename Cast::Success{val};
       } else {
         return typename Cast::Failure{val};
@@ -2462,6 +2469,23 @@ public:
     refVal.setElement(i, value.getSingleValue());
     return Flow();
   }
+  // Computes the effective byte address (index + offset) of a multibyte array
+  // access and traps if the access is out of bounds. Both index and offset are
+  // unsigned 32-bit values, so we compute in 64 bits to avoid overflow.
+  uint64_t getEffectiveArrayAddress(const Literal& refVal,
+                                    const Literal& index,
+                                    Address offset,
+                                    uint8_t bytes) {
+    uint64_t addr = index.getUnsigned() + uint64_t(offset);
+    uint64_t size = refVal.getRawBytes().size();
+    // |addr| is at most 2^33 - 2 and |bytes| at most 16, so this cannot
+    // overflow.
+    if (addr + uint64_t(bytes) > size) {
+      trap("array oob");
+    }
+    return addr;
+  }
+
   Flow visitArrayLoad(ArrayLoad* curr) {
     VISIT(ref, curr->ref)
     VISIT(index, curr->index)
@@ -2469,12 +2493,9 @@ public:
     if (refVal.isNull()) {
       trap("null ref");
     }
-    Index i = index.getSingleValue().geti32();
-    size_t size = refVal.getRawBytes().size();
-    if (i >= size || curr->bytes > (size - i)) {
-      trap("array oob");
-    }
-    const uint8_t* p = &refVal.getRawBytes()[i];
+    auto addr = getEffectiveArrayAddress(
+      refVal, index.getSingleValue(), curr->offset, curr->bytes);
+    const uint8_t* p = &refVal.getRawBytes()[addr];
     switch (curr->type.getBasic()) {
       case Type::i32: {
         switch (curr->bytes) {
@@ -2540,14 +2561,9 @@ public:
     if (refVal.isNull()) {
       trap("null ref");
     }
-
-    Index i = index.getSingleValue().geti32();
-    size_t size = refVal.getRawBytes().size();
-    // Use subtraction to avoid overflow.
-    if (i >= size || curr->bytes > (size - i)) {
-      trap("array oob");
-    }
-    uint8_t* p = &refVal.getRawBytes()[i];
+    auto addr = getEffectiveArrayAddress(
+      refVal, index.getSingleValue(), curr->offset, curr->bytes);
+    uint8_t* p = &refVal.getRawBytes()[addr];
     auto val = value.getSingleValue();
     if (curr->value->type == Type::f32 && curr->bytes == 2) {
       float f32 = bit_cast<float>(val.reinterpreti32());
@@ -3778,7 +3794,7 @@ private:
           initVal =
             ExpressionRunner<SubType>::visit(table->init).getSingleValue();
         } else {
-          assert(table->type.isNullable() &&
+          assert(table->type.isNullableRef() &&
                  "Non-nullable table must have an init expressions");
           initVal = Literal::makeNull(table->type.getHeapType());
         }
@@ -4947,6 +4963,12 @@ public:
     try {
       return self()->visit(curr->body);
     } catch (const WasmException& e) {
+      // If delegation is in progress, try_table cannot be the target of a
+      // legacy try-delegate, so don't handle it and just rethrow.
+      if (scope->currDelegateTarget.is()) {
+        throw;
+      }
+
       auto exnData = e.exn.getExnData();
       for (size_t i = 0; i < curr->catchTags.size(); i++) {
         auto catchTag = curr->catchTags[i];
@@ -5026,6 +5048,9 @@ public:
     // Create a new continuation, copying the old but with the new type +
     // arguments.
     auto old = contValue.getContData();
+    if (old->executed) {
+      trap("continuation already executed");
+    }
     auto newData = *old;
     newData.type = curr->type.getHeapType();
     for (auto arg : arguments) {
@@ -5127,24 +5152,23 @@ public:
       }
       contData->executed = true;
 
-      if (contData->resumeArguments.empty()) {
-        // The continuation has no bound arguments. For now, we just handle the
-        // simple case of binding all of them, so that means we can just use all
-        // the immediate ones here. TODO
-        contData->resumeArguments = arguments;
-      }
       // Fill in the continuation data. How we do this depends on whether we
       // are resume or resume_throw*.
       if (auto* resumeThrow = curr->template dynCast<ResumeThrow>()) {
         if (resumeThrow->tag) {
           // resume_throw
           contData->exceptionTag = allTags[resumeThrow->tag];
+          contData->resumeArguments = arguments;
         } else {
           // resume_throw_ref
           contData->exception = arguments[0];
           if (contData->exception.isNull()) {
             trap("null ref");
           }
+        }
+      } else {
+        for (auto arg : arguments) {
+          contData->resumeArguments.push_back(arg);
         }
       }
 

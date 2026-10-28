@@ -85,6 +85,9 @@
 ;; CHECK-NEXT:                                        working files have a .wat or .wast 
 ;; CHECK-NEXT:                                        suffix)
 ;; CHECK-EMPTY:
+;; CHECK-NEXT:   --js                                 Reduce embedded WebAssembly modules 
+;; CHECK-NEXT:                                        inside a JavaScript file
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --denan                              Avoid nans when reducing
 ;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --verbose,-v                         Verbose output mode

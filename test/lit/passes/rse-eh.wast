@@ -336,4 +336,48 @@
     ;; have run before this, so this can be dropped.
     (local.set $x (i32.const 1))
   )
+
+  ;; CHECK:      (func $delegate-through-try_table (type $0)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (try $l
+  ;; CHECK-NEXT:   (do
+  ;; CHECK-NEXT:    (try_table
+  ;; CHECK-NEXT:     (try
+  ;; CHECK-NEXT:      (do
+  ;; CHECK-NEXT:       (call $foo)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (delegate $l)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (catch_all
+  ;; CHECK-NEXT:    (local.set $x
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $delegate-through-try_table
+    ;; Delegation to an outer try should bypass an intermediate try_table without crashing in CFGWalker
+    (local $x i32)
+    (try $l
+      (do
+        (try_table
+          (try
+            (do
+              (call $foo)
+            )
+            (delegate $l)
+          )
+        )
+      )
+      (catch_all
+        (local.set $x (i32.const 1))
+      )
+    )
+    (local.set $x (i32.const 1))
+  )
 )

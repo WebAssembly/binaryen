@@ -321,16 +321,25 @@ bool ParseDeclsCtx::skipFunctionBody() {
       --depth;
       continue;
     }
+    if (in.takeID()) {
+      continue;
+    }
     if (auto kw = in.takeKeyword()) {
       if (*kw == "block"sv || *kw == "loop"sv || *kw == "if"sv ||
           *kw == "try"sv || *kw == "try_table"sv) {
         in.takeID();
-        (void)typeuse(*this);
+        auto pos = in.getPos();
+        if (typeuse(*this).getErr()) {
+          in.setPos(pos);
+        }
         continue;
       }
       if (*kw == "call_indirect"sv || *kw == "return_call_indirect"sv) {
         (void)maybeTableidx(*this);
-        (void)typeuse(*this, false);
+        auto pos = in.getPos();
+        if (typeuse(*this, false).getErr()) {
+          in.setPos(pos);
+        }
         continue;
       }
       continue;

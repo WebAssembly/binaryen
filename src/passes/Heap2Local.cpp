@@ -769,7 +769,7 @@ struct Struct2Local : PostWalker<Struct2Local> {
       // Preserve the trapping on null descriptors by inserting a
       // ref.as_non_null.
       Expression* desc = curr->desc;
-      if (curr->desc->type.isNullable()) {
+      if (curr->desc->type.isNullableRef()) {
         desc = builder.makeRefAs(RefAsNonNull, desc);
       }
       contents.push_back(builder.makeLocalSet(tempIndexes[numTemps - 1], desc));
@@ -898,7 +898,9 @@ struct Struct2Local : PostWalker<Struct2Local> {
         // side effects, but that local.set would not be reflected in the parent
         // map, so it would not be updated if the allocation flowing through
         // that desc operand were later optimized.
-        if (allocIsCastDescEq && !allocIsCastRef && curr->type.isNullable()) {
+        if (allocIsCastDescEq && !allocIsCastRef &&
+            curr->type.isNullableRef() &&
+            curr->ref->type != Type::unreachable) {
           // There might be a null value to let through. Reuse curr as a cast to
           // null. Use a scratch local to move the reference value past the desc
           // value.
@@ -1117,7 +1119,8 @@ struct Struct2Local : PostWalker<Struct2Local> {
   }
 
   void visitStructCmpxchg(StructCmpxchg* curr) {
-    if (curr->type == Type::unreachable) {
+    if (curr->type == Type::unreachable ||
+        curr->ref->type == Type::unreachable) {
       // Leave this for DCE.
       return;
     }
@@ -1194,12 +1197,16 @@ struct Struct2Local : PostWalker<Struct2Local> {
                                      builder.makeDrop(curr->expected),
                                      builder.makeDrop(curr->replacement),
                                      structGet});
+    if (block->type != curr->type) {
+      refinalize = true;
+    }
     replaceCurrent(block);
     return;
   }
 
   void visitArrayCmpxchg(ArrayCmpxchg* curr) {
-    if (curr->type == Type::unreachable) {
+    if (curr->type == Type::unreachable ||
+        curr->ref->type == Type::unreachable) {
       // Leave this for DCE.
       return;
     }
@@ -1226,6 +1233,9 @@ struct Struct2Local : PostWalker<Struct2Local> {
                                        builder.makeDrop(curr->expected),
                                        builder.makeDrop(curr->replacement),
                                        arrayGet});
+      if (block->type != curr->type) {
+        refinalize = true;
+      }
       replaceCurrent(block);
       // Since `ref` must be an array and arrays are processed before structs,
       // it is not possible that `ref` will be processed later. We therefore do

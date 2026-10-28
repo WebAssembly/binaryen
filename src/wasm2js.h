@@ -104,6 +104,46 @@ bool hasActiveSegments(Module& wasm) {
   return false;
 }
 
+bool hasMemoryGrow(Module& wasm) {
+  for (auto& func : wasm.functions) {
+    if (!func->imported() && func->body &&
+        FindAll<MemoryGrow>(func->body).has()) {
+      return true;
+    }
+  }
+  return false;
+}
+
+bool isMemoryExported(Module& wasm) {
+  if (wasm.memories.empty()) {
+    return false;
+  }
+  for (auto& ex : wasm.exports) {
+    if (ex->kind == ExternalKind::Memory &&
+        *ex->getInternalName() == wasm.memories[0]->name) {
+      return true;
+    }
+  }
+  return false;
+}
+
+bool canMemoryGrowExternally(Module& wasm) {
+  if (wasm.memories.empty()) {
+    return false;
+  }
+  if (wasm.memories[0]->max <= wasm.memories[0]->initial) {
+    return false;
+  }
+  return wasm.memories[0]->imported() || isMemoryExported(wasm);
+}
+
+bool needsMemoryGrow(Module& wasm) {
+  if (wasm.memories.empty()) {
+    return false;
+  }
+  return hasMemoryGrow(wasm) || canMemoryGrowExternally(wasm);
+}
+
 bool needsBufferView(Module& wasm) {
   if (wasm.memories.empty()) {
     return false;
@@ -338,14 +378,6 @@ private:
 };
 
 Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
-  // Scan the wasm for important things.
-  for (auto& exp : wasm->exports) {
-    if (exp->kind == ExternalKind::Function) {
-      functionsCallableFromOutside.insert(*exp->getInternalName());
-    }
-  }
-  ElementUtils::iterAllElementFunctionNames(
-    wasm, [&](Name name) { functionsCallableFromOutside.insert(name); });
 
   // Collect passive data segment indices.
   for (Index i = 0; i < wasm->dataSegments.size(); ++i) {
@@ -419,6 +451,15 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
     runner.run();
   }
 
+  // Scan the wasm for functions callable from outside.
+  for (auto& exp : wasm->exports) {
+    if (exp->kind == ExternalKind::Function) {
+      functionsCallableFromOutside.insert(*exp->getInternalName());
+    }
+  }
+  ElementUtils::iterAllElementFunctionNames(
+    wasm, [&](Name name) { functionsCallableFromOutside.insert(name); });
+
   if (flags.symbolsFile.size() > 0) {
     Output out(flags.symbolsFile, wasm::Flags::Text);
     Index i = 0;
@@ -461,7 +502,7 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
 
       // If memory is growable, override the imported memory's grow method to
       // ensure so that when grow is called from the output it works as expected
-      if (wasm->memories[0]->max > wasm->memories[0]->initial) {
+      if (canMemoryGrowExternally(*wasm)) {
         asmFunc[3]->push_back(
           ValueBuilder::makeStatement(ValueBuilder::makeBinary(
             ValueBuilder::makeDot(ValueBuilder::makeName("memory"),
@@ -2023,16 +2064,10 @@ Ref Wasm2JSBuilder::processExpression(Expression* curr,
     }
 
     Ref visitMemoryGrow(MemoryGrow* curr) {
-      if (!module->memories.empty() &&
-          module->memories[0]->max > module->memories[0]->initial) {
-        return ValueBuilder::makeCall(
-          WASM_MEMORY_GROW,
-          makeJsCoercion(visit(curr->delta, EXPRESSION_RESULT),
-                         wasmToJsType(curr->delta->type)));
-      } else {
-        ABI::wasm2js::ensureHelpers(module, ABI::wasm2js::TRAP);
-        return ValueBuilder::makeCall(ABI::wasm2js::TRAP);
-      }
+      return ValueBuilder::makeCall(
+        WASM_MEMORY_GROW,
+        makeJsCoercion(visit(curr->delta, EXPRESSION_RESULT),
+                       wasmToJsType(curr->delta->type)));
     }
 
     Ref visitNop(Nop* curr) { return ValueBuilder::makeToplevel(); }
@@ -2261,8 +2296,10 @@ Ref Wasm2JSBuilder::processExpression(Expression* curr,
       WASM_UNREACHABLE("unimp");
     }
     Ref visitElemDrop(ElemDrop* curr) {
-      unimplemented(curr);
-      WASM_UNREACHABLE("unimp");
+      // Element segments are statically initialized into FUNCTION_TABLE at
+      // module startup, and table.init is not supported in wasm2js, so
+      // elem.drop is a no-op.
+      return ValueBuilder::makeToplevel();
     }
     Ref visitTry(Try* curr) {
       unimplemented(curr);
@@ -2522,8 +2559,7 @@ void Wasm2JSBuilder::addMemoryFuncs(Ref ast, Module* wasm) {
       ValueBuilder::makeInt(wasm->memories[0]->pageSizeLog2))));
   ast->push_back(memorySizeFunc);
 
-  if (!wasm->memories.empty() &&
-      wasm->memories[0]->max > wasm->memories[0]->initial) {
+  if (needsMemoryGrow(*wasm)) {
     addMemoryGrowFunc(ast, wasm);
   }
 }
@@ -2560,7 +2596,7 @@ void Wasm2JSBuilder::addMemoryGrowFunc(Ref ast, Module* wasm) {
   Ref block = ValueBuilder::makeBlock();
   Ref condition = ValueBuilder::makeBinary(
     ValueBuilder::makeBinary(ValueBuilder::makeName(IString("oldPages")),
-                             LT,
+                             LE,
                              ValueBuilder::makeName(IString("newPages"))),
     IString("&&"),
     ValueBuilder::makeBinary(
@@ -2579,8 +2615,16 @@ void Wasm2JSBuilder::addMemoryGrowFunc(Ref ast, Module* wasm) {
   }
   memoryGrowFunc[3]->push_back(ValueBuilder::makeIf(condition, block, NULL));
 
+  Ref growBlock = ValueBuilder::makeBlock();
+  Ref growCondition =
+    ValueBuilder::makeBinary(ValueBuilder::makeName(IString("oldPages")),
+                             LT,
+                             ValueBuilder::makeName(IString("newPages")));
+  ValueBuilder::appendToBlock(
+    block, ValueBuilder::makeIf(growCondition, growBlock, NULL));
+
   Ref newBuffer = ValueBuilder::makeVar();
-  ValueBuilder::appendToBlock(block, newBuffer);
+  ValueBuilder::appendToBlock(growBlock, newBuffer);
   ValueBuilder::appendToVar(
     newBuffer,
     IString("newBuffer"),
@@ -2592,7 +2636,7 @@ void Wasm2JSBuilder::addMemoryGrowFunc(Ref ast, Module* wasm) {
         ValueBuilder::makeInt(wasm->memories[0]->pageSizeLog2)))));
 
   Ref newHEAP8 = ValueBuilder::makeVar();
-  ValueBuilder::appendToBlock(block, newHEAP8);
+  ValueBuilder::appendToBlock(growBlock, newHEAP8);
   ValueBuilder::appendToVar(newHEAP8,
                             IString("newHEAP8"),
                             ValueBuilder::makeNew(ValueBuilder::makeCall(
@@ -2600,7 +2644,7 @@ void Wasm2JSBuilder::addMemoryGrowFunc(Ref ast, Module* wasm) {
                               ValueBuilder::makeName(IString("newBuffer")))));
 
   ValueBuilder::appendToBlock(
-    block,
+    growBlock,
     ValueBuilder::makeCall(
       ValueBuilder::makeDot(ValueBuilder::makeName(IString("newHEAP8")),
                             IString("set")),
@@ -2608,7 +2652,7 @@ void Wasm2JSBuilder::addMemoryGrowFunc(Ref ast, Module* wasm) {
 
   auto setHeap = [&](IString name, IString view) {
     ValueBuilder::appendToBlock(
-      block,
+      growBlock,
       ValueBuilder::makeBinary(
         ValueBuilder::makeName(name),
         SET,
@@ -2627,7 +2671,7 @@ void Wasm2JSBuilder::addMemoryGrowFunc(Ref ast, Module* wasm) {
   setHeap(HEAPF64, FLOAT64ARRAY);
 
   ValueBuilder::appendToBlock(
-    block,
+    growBlock,
     ValueBuilder::makeBinary(ValueBuilder::makeName(BUFFER),
                              SET,
                              ValueBuilder::makeName(IString("newBuffer"))));
@@ -2635,7 +2679,7 @@ void Wasm2JSBuilder::addMemoryGrowFunc(Ref ast, Module* wasm) {
   // apply the changes to the memory import
   if (!wasm->memories.empty() && wasm->memories[0]->imported()) {
     ValueBuilder::appendToBlock(
-      block,
+      growBlock,
       ValueBuilder::makeBinary(
         ValueBuilder::makeDot(ValueBuilder::makeName("memory"),
                               ValueBuilder::makeName(BUFFER)),
@@ -2645,14 +2689,18 @@ void Wasm2JSBuilder::addMemoryGrowFunc(Ref ast, Module* wasm) {
 
   if (needsBufferView(*wasm)) {
     ValueBuilder::appendToBlock(
-      block,
+      growBlock,
       ValueBuilder::makeBinary(ValueBuilder::makeName("bufferView"),
                                SET,
                                ValueBuilder::makeName(HEAPU8)));
   }
 
-  memoryGrowFunc[3]->push_back(
+  ValueBuilder::appendToBlock(
+    block,
     ValueBuilder::makeReturn(ValueBuilder::makeName(IString("oldPages"))));
+
+  memoryGrowFunc[3]->push_back(
+    ValueBuilder::makeReturn(ValueBuilder::makeInt(-1)));
 
   ast->push_back(memoryGrowFunc);
 }

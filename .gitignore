@@ -19,7 +19,8 @@ options-pinned.h
 
 # files related to building in-tree
 CMakeFiles
-*.cmake
+cmake_install.cmake
+/test/gtest/CTestTestfile.cmake
 /CMakeCache.txt
 /Makefile
 /*.ninja

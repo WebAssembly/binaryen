@@ -188,6 +188,24 @@ struct GlobalStructInference : public Pass {
       }
     }
 
+    // A struct.new in a table initializer or in an element segment creates an
+    // object that is not a global, so its type cannot be optimized either.
+    auto markUnoptimizable = [&](Expression* init) {
+      for (auto* structNew : FindAll<StructNew>(init).list) {
+        unoptimizable.insert(structNew->type.getHeapType());
+      }
+    };
+    for (auto& table : module->tables) {
+      if (table->init) {
+        markUnoptimizable(table->init);
+      }
+    }
+    for (auto& segment : module->elementSegments) {
+      for (auto* item : segment->data) {
+        markUnoptimizable(item);
+      }
+    }
+
     // A struct.get might also read from any of the subtypes. As a result, an
     // unoptimizable type makes all its supertypes unoptimizable as well.
     // TODO: this could be specific per field (and not all supers have all
@@ -415,10 +433,29 @@ struct GlobalStructInference : public Pass {
           // is null, so add RefAsNonNull here.
           auto global = globals[0];
           auto globalType = wasm.getGlobal(global)->type;
-          if (globalType != ref->type) {
-            // The struct.get will now read from something of the type of the
-            // global, which is different, so the field being read might be
-            // refined, which could change the struct.get's type.
+          // Find the type the read would have if we used the global directly
+          // without a cast.
+          Type newType = Type::none;
+          if (field) {
+            if (globalType.isStruct()) {
+              const auto& fields = globalType.getHeapType().getStruct().fields;
+              if (fieldIndex < fields.size()) {
+                newType = fields[fieldIndex].type;
+              }
+            }
+          } else if (auto desc = globalType.getHeapType().getDescriptorType()) {
+            newType = Type(*desc, NonNullable, globalType.getExactness());
+          }
+          Expression* get = builder.makeGlobalGet(global, globalType);
+          if (!Type::isSubType(newType, curr->type)) {
+            // Reading from the global's type directly would either be invalid
+            // or produce a less refined type, so cast to the original operand
+            // type.
+            get = builder.makeRefCast(
+              get, ref->type.withInexactIfNoCustomDescs(wasm.features));
+          } else if (newType != curr->type) {
+            // The read will now produce a more refined type, which could change
+            // parent types.
             refinalize = true;
           }
           // No need to worry about atomic gets here. We will still read from
@@ -427,8 +464,7 @@ struct GlobalStructInference : public Pass {
           // memory location is immutable anyway, so there cannot be any writes
           // to synchronize with in the first place.
           ref = builder.makeSequence(
-            builder.makeDrop(builder.makeRefAs(RefAsNonNull, ref)),
-            builder.makeGlobalGet(global, globalType));
+            builder.makeDrop(builder.makeRefAs(RefAsNonNull, ref)), get);
           return;
         }
 
@@ -636,7 +672,7 @@ struct GlobalStructInference : public Pass {
         // We must add a cast to non-null in some cases: A read of a null
         // descriptor returns a non-null value, so if there was a null in the
         // global, that would not validate by itself.
-        if (ret->type.isNullable() && curr->type.isNonNullable()) {
+        if (ret->type.isNullableRef() && curr->type.isNonNullableRef()) {
           ret = builder.makeRefAs(RefAsNonNull, ret);
         }
 

@@ -74,6 +74,7 @@ copyFunctionWithoutAdd(Function* func,
   ret->vars = func->vars;
   ret->localNames = func->localNames;
   ret->localIndices = func->localIndices;
+  ret->explicitLabelNames = func->explicitLabelNames;
   ret->body = ExpressionManipulator::copy(func->body, out);
   metadata::copyBetweenFunctions(func->body, ret->body, func, ret.get());
   ret->funcAnnotations = func->funcAnnotations;

@@ -4429,20 +4429,18 @@
   )
   ;; CHECK:      (func $restructure-if-outerType-change
   ;; CHECK-NEXT:  (loop $label$1
-  ;; CHECK-NEXT:   (br_if $label$1
-  ;; CHECK-NEXT:    (block $label$2
-  ;; CHECK-NEXT:     (block $label$3
-  ;; CHECK-NEXT:      (if
-  ;; CHECK-NEXT:       (block $label$4
-  ;; CHECK-NEXT:        (unreachable)
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:       (then
-  ;; CHECK-NEXT:        (unreachable)
-  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:   (block $label$2
+  ;; CHECK-NEXT:    (block $label$3
+  ;; CHECK-NEXT:     (if
+  ;; CHECK-NEXT:      (block $label$4
+  ;; CHECK-NEXT:       (unreachable)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (then
+  ;; CHECK-NEXT:       (unreachable)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (unreachable)
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )

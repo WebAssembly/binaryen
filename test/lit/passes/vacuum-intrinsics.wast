@@ -145,21 +145,23 @@
   )
 
   ;; CHECK:      (func $unused-fallthrough (type $0)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (if (result i32)
-  ;; CHECK-NEXT:    (block $condition (result i32)
-  ;; CHECK-NEXT:     (call $nop)
-  ;; CHECK-NEXT:     (call $call.without.effects
-  ;; CHECK-NEXT:      (ref.func $i)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (block $condition (result i32)
+  ;; CHECK-NEXT:    (call $nop)
+  ;; CHECK-NEXT:    (call $call.without.effects
+  ;; CHECK-NEXT:     (ref.func $i)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (then
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (block $ifTrue (result i32)
   ;; CHECK-NEXT:      (call $nop)
   ;; CHECK-NEXT:      (i32.const 0)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (else
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (else
+  ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (block $ifFalse (result i32)
   ;; CHECK-NEXT:      (call $nop)
   ;; CHECK-NEXT:      (i32.const 0)
@@ -194,15 +196,17 @@
   )
 
   ;; CHECK:      (func $unused-fallthrough-bad-type (type $0)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (if (result (ref any))
-  ;; CHECK-NEXT:    (call $i)
-  ;; CHECK-NEXT:    (then
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (call $i)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (call $call.without.effects-ref
   ;; CHECK-NEXT:      (ref.func $ref)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (else
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (else
+  ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (call $call.without.effects-ref
   ;; CHECK-NEXT:      (ref.func $ref)
   ;; CHECK-NEXT:     )

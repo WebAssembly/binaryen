@@ -126,6 +126,11 @@ wasm::Output::Output(const std::string& filename, Flags::BinaryOption binary)
       return buffer;
     }()) {}
 
+void wasm::write_file(const std::string& filename, std::string_view bytes) {
+  wasm::Output out(filename, Flags::Binary);
+  out.write(bytes.data(), bytes.size());
+}
+
 void wasm::copy_file(std::string input, std::string output) {
   std::ifstream src(wasm::Path::to_path(input), std::ios::binary);
   std::ofstream dst(wasm::Path::to_path(output), std::ios::binary);
@@ -149,9 +154,10 @@ void wasm::flush_and_quick_exit(int code) {
 
 #if __has_feature(address_sanitizer) || __has_feature(thread_sanitizer) ||     \
   __has_feature(memory_sanitizer) || __has_feature(leak_sanitizer) ||          \
-  __has_feature(undefined_behavior_sanitizer)
-  // Avoid quick_exit when using sanitizers, so that leak checks and other
-  // things can run during shutdown normally.
+  __has_feature(undefined_behavior_sanitizer) ||                               \
+  defined(__LLVM_INSTR_PROFILE_GENERATE)
+  // Avoid quick_exit when using sanitizers or profile generation, so that leak
+  // checks, profile writes, and other things can run during shutdown normally.
   std::exit(code);
 #else
   // A "better" function to use here would be std::quick_exit, however on older

@@ -27,6 +27,7 @@
 #include "ir/effects.h"
 #include "ir/find_all.h"
 #include "ir/local-graph.h"
+#include "ir/properties.h"
 #include "pass.h"
 #include "wasm-builder.h"
 #include "wasm.h"
@@ -73,6 +74,13 @@ struct LoopInvariantCodeMotion
     EffectAnalyzer loopEffects(getPassOptions(), *getModule(), loop);
     loopEffects.localsRead.clear();
     loopEffects.localsWritten.clear();
+    // We can ignore the loop's mayNotReturn effect because any hoisted
+    // instruction already executes on the first iteration before the loop can
+    // branch back (or before any inner loop after it; inner loops before it are
+    // tracked in effectsSoFar), and since the hoisted instruction is
+    // loop-invariant, it cannot trap on later iterations without trapping on
+    // the first.
+    loopEffects.mayNotReturn = false;
     // Note all the sets in each loop, and how many per index. Currently
     // EffectAnalyzer can't do that, and we need it to know if we
     // can move a set out of the loop (if there is another set
@@ -125,9 +133,12 @@ struct LoopInvariantCodeMotion
         // The rest of the loop's effects matter too, we must also
         // take into account global state like interacting loads and
         // stores.
-        bool unsafeToMove = effects.writesGlobalState() ||
-                            effectsSoFar.orderedBefore(effects) ||
-                            loopEffects.orderedBefore(effects);
+        // Generative code (like an allocation) produces a new value each time
+        // it executes, so executing it once outside the loop is different.
+        bool unsafeToMove =
+          effects.writesGlobalState() || effectsSoFar.orderedBefore(effects) ||
+          loopEffects.orderedBefore(effects) ||
+          Properties::isGenerative(curr, getFunction(), *getModule());
         // TODO: look into optimizing this with exceptions. for now, disallow
         if (effects.throws() || loopEffects.throws()) {
           unsafeToMove = true;

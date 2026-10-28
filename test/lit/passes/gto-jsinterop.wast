@@ -1753,3 +1753,64 @@
     )
   )
 )
+
+(module
+  ;; All fields of $super-desc are unread and removed by GTO, leaving
+  ;; $super-desc empty after optimization. In $sub-desc, the unread supertype
+  ;; field is also removed and the following externref field shifts to index 0,
+  ;; so $sub-desc must get an i8 placeholder at index 0 to avoid exposing a
+  ;; prototype.
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $super (sub (descriptor $super-desc) (struct)))
+    (type $super (sub (descriptor $super-desc) (struct)))
+    ;; CHECK:       (type $super-desc (sub (describes $super) (struct)))
+    (type $super-desc (sub (describes $super) (struct (field f64))))
+    ;; CHECK:       (type $sub (sub final $super (descriptor $sub-desc) (struct)))
+    (type $sub (sub final $super (descriptor $sub-desc) (struct)))
+    ;; CHECK:       (type $sub-desc (sub final $super-desc (describes $sub) (struct (field i8) (field externref))))
+    (type $sub-desc (sub final $super-desc (describes $sub) (struct (field f64) (field externref))))
+  )
+
+  ;; CHECK:       (type $4 (func (param (ref $sub-desc)) (result externref)))
+
+  ;; CHECK:      (type $5 (func (result externref)))
+
+  ;; CHECK:      (import "env" "ext" (global $ext externref))
+  (import "env" "ext" (global $ext externref))
+  ;; CHECK:      (export "export" (func $test))
+  (export "export" (func $test))
+
+  ;; CHECK:      (func $test (type $5) (result externref)
+  ;; CHECK-NEXT:  (extern.convert_any
+  ;; CHECK-NEXT:   (struct.new_default_desc $sub
+  ;; CHECK-NEXT:    (struct.new $sub-desc
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:     (global.get $ext)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test (result externref)
+    ;; Convert to extern to expose the value to JS.
+    (extern.convert_any
+      (struct.new_default_desc $sub
+        (struct.new $sub-desc
+          (f64.const 0)
+          (global.get $ext)
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $use (type $4) (param $d (ref $sub-desc)) (result externref)
+  ;; CHECK-NEXT:  (struct.get $sub-desc 1
+  ;; CHECK-NEXT:   (local.get $d)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $use (param $d (ref $sub-desc)) (result externref)
+    (struct.get $sub-desc 1
+      (local.get $d)
+    )
+  )
+)
