@@ -743,7 +743,7 @@ private:
       // coalesced with a non-nullable one, which can then cause further
       // downsides. As a result, we fold non-nullable local.gets only during the
       // last set of optimizations, to reduce the risk of downsides.
-      if (!getPassOptions().lastOpts) {
+      if (!getPassOptions().lastOpts && getModule()->features.hasGC()) {
         for (auto* item : items) {
           for (auto* get : FindAll<LocalGet>(item).list) {
             if (get->type.isNonNullableRef()) {
