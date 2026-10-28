@@ -120,6 +120,7 @@ set(passes_SOURCES
   RemoveImports.cpp
   RemoveMemoryInit.cpp
   RemoveNonJSOps.cpp
+  RelaxNullability.cpp
   RemoveRelaxedSIMD.cpp
   RemoveUnusedBrs.cpp
   RemoveUnusedNames.cpp
