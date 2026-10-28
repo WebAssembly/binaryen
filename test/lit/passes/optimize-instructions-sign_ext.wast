@@ -364,4 +364,300 @@
       )
     )
   )
+
+  ;; CHECK:      (func $unary-sign-ext-loads (type $1) (param $addr i32)
+  ;; CHECK-NEXT:  (local $t32 i32)
+  ;; CHECK-NEXT:  (local $t64 i64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.load8_s
+  ;; CHECK-NEXT:    (local.get $addr)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.load8_s
+  ;; CHECK-NEXT:    (local.get $addr)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.load16_s
+  ;; CHECK-NEXT:    (local.get $addr)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.load16_s
+  ;; CHECK-NEXT:    (local.get $addr)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.load8_s
+  ;; CHECK-NEXT:    (local.get $addr)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.load8_s
+  ;; CHECK-NEXT:    (local.get $addr)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.load16_s
+  ;; CHECK-NEXT:    (local.get $addr)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.load16_s
+  ;; CHECK-NEXT:    (local.get $addr)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.load32_s
+  ;; CHECK-NEXT:    (local.get $addr)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.load32_s
+  ;; CHECK-NEXT:    (local.get $addr)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.tee $t32
+  ;; CHECK-NEXT:    (i32.load8_s
+  ;; CHECK-NEXT:     (local.get $addr)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.tee $t64
+  ;; CHECK-NEXT:    (i64.load32_s
+  ;; CHECK-NEXT:     (local.get $addr)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.extend8_s
+  ;; CHECK-NEXT:    (local.tee $t32
+  ;; CHECK-NEXT:     (i32.load8_u
+  ;; CHECK-NEXT:      (local.get $addr)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.extend32_s
+  ;; CHECK-NEXT:    (local.tee $t64
+  ;; CHECK-NEXT:     (i64.load32_u
+  ;; CHECK-NEXT:      (local.get $addr)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.extend8_s
+  ;; CHECK-NEXT:    (i32.load16_u
+  ;; CHECK-NEXT:     (local.get $addr)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.extend16_s
+  ;; CHECK-NEXT:    (i64.load32_u
+  ;; CHECK-NEXT:     (local.get $addr)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $unary-sign-ext-loads (param $addr i32)
+    (local $t32 i32)
+    (local $t64 i64)
+    ;; Fold unary sign-extend instructions into narrow loads.
+    (drop (i32.extend8_s (i32.load8_u (local.get $addr))))
+    (drop (i32.extend8_s (i32.load8_s (local.get $addr))))
+    (drop (i32.extend16_s (i32.load16_u (local.get $addr))))
+    (drop (i32.extend16_s (i32.load16_s (local.get $addr))))
+    (drop (i64.extend8_s (i64.load8_u (local.get $addr))))
+    (drop (i64.extend8_s (i64.load8_s (local.get $addr))))
+    (drop (i64.extend16_s (i64.load16_u (local.get $addr))))
+    (drop (i64.extend16_s (i64.load16_s (local.get $addr))))
+    (drop (i64.extend32_s (i64.load32_u (local.get $addr))))
+    (drop (i64.extend32_s (i64.load32_s (local.get $addr))))
+    ;; Signed load falling through a tee can drop the redundant unary extend.
+    (drop (i32.extend8_s (local.tee $t32 (i32.load8_s (local.get $addr)))))
+    (drop (i64.extend32_s (local.tee $t64 (i64.load32_s (local.get $addr)))))
+    ;; Negative cases: unsigned load in a tee, or mismatched load width.
+    (drop (i32.extend8_s (local.tee $t32 (i32.load8_u (local.get $addr)))))
+    (drop (i64.extend32_s (local.tee $t64 (i64.load32_u (local.get $addr)))))
+    (drop (i32.extend8_s (i32.load16_u (local.get $addr))))
+    (drop (i64.extend16_s (i64.load32_u (local.get $addr))))
+  )
+
+  ;; CHECK:      (func $unary-sign-ext-eq-const (type $2) (param $x32 i32) (param $x64 i64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.eq
+  ;; CHECK-NEXT:    (i32.and
+  ;; CHECK-NEXT:     (local.get $x32)
+  ;; CHECK-NEXT:     (i32.const 255)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.ne
+  ;; CHECK-NEXT:    (i32.and
+  ;; CHECK-NEXT:     (local.get $x32)
+  ;; CHECK-NEXT:     (i32.const 65535)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 65494)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $x32)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.eq
+  ;; CHECK-NEXT:    (i64.and
+  ;; CHECK-NEXT:     (local.get $x64)
+  ;; CHECK-NEXT:     (i64.const 255)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i64.const 42)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.ne
+  ;; CHECK-NEXT:    (i64.and
+  ;; CHECK-NEXT:     (local.get $x64)
+  ;; CHECK-NEXT:     (i64.const 65535)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i64.const 65494)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.eq
+  ;; CHECK-NEXT:    (i64.and
+  ;; CHECK-NEXT:     (local.get $x64)
+  ;; CHECK-NEXT:     (i64.const 4294967295)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i64.const 4294867296)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $x64)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $unary-sign-ext-eq-const (param $x32 i32) (param $x64 i64)
+    ;; Comparing unary sign-extensions against constants.
+    (drop (i32.eq (i32.extend8_s (local.get $x32)) (i32.const 42)))
+    (drop (i32.ne (i32.extend16_s (local.get $x32)) (i32.const -42)))
+    (drop (i32.eq (i32.extend8_s (local.get $x32)) (i32.const 200)))
+    (drop (i64.eq (i64.extend8_s (local.get $x64)) (i64.const 42)))
+    (drop (i64.ne (i64.extend16_s (local.get $x64)) (i64.const -42)))
+    (drop (i64.eq (i64.extend32_s (local.get $x64)) (i64.const -100000)))
+    (drop (i64.ne (i64.extend32_s (local.get $x64)) (i64.const 0x80000000)))
+  )
+
+  ;; CHECK:      (func $unary-sign-ext-eq-both (type $3) (param $x32 i32) (param $y32 i32) (param $x64 i64) (param $y64 i64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.eq
+  ;; CHECK-NEXT:    (i32.and
+  ;; CHECK-NEXT:     (local.get $x32)
+  ;; CHECK-NEXT:     (i32.const 255)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.and
+  ;; CHECK-NEXT:     (local.get $y32)
+  ;; CHECK-NEXT:     (i32.const 255)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.eq
+  ;; CHECK-NEXT:    (i64.and
+  ;; CHECK-NEXT:     (local.get $x64)
+  ;; CHECK-NEXT:     (i64.const 65535)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i64.and
+  ;; CHECK-NEXT:     (local.get $y64)
+  ;; CHECK-NEXT:     (i64.const 65535)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.ne
+  ;; CHECK-NEXT:    (i64.and
+  ;; CHECK-NEXT:     (local.get $x64)
+  ;; CHECK-NEXT:     (i64.const 4294967295)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i64.and
+  ;; CHECK-NEXT:     (local.get $y64)
+  ;; CHECK-NEXT:     (i64.const 4294967295)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.eq
+  ;; CHECK-NEXT:    (i64.extend8_s
+  ;; CHECK-NEXT:     (local.get $x64)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i64.extend16_s
+  ;; CHECK-NEXT:     (local.get $y64)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $unary-sign-ext-eq-both (param $x32 i32) (param $y32 i32) (param $x64 i64) (param $y64 i64)
+    ;; Comparing two unary sign-extensions.
+    (drop (i32.eq (i32.extend8_s (local.get $x32)) (i32.extend8_s (local.get $y32))))
+    (drop (i64.eq (i64.extend16_s (local.get $x64)) (i64.extend16_s (local.get $y64))))
+    (drop (i64.ne (i64.extend32_s (local.get $x64)) (i64.extend32_s (local.get $y64))))
+    (drop (i64.eq (i64.extend8_s (local.get $x64)) (i64.extend16_s (local.get $y64))))
+  )
+
+  ;; CHECK:      (func $unary-sign-ext-eq-load (type $4) (param $x32 i32) (param $x64 i64) (param $addr i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.eq
+  ;; CHECK-NEXT:    (i32.load16_u
+  ;; CHECK-NEXT:     (local.get $addr)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.and
+  ;; CHECK-NEXT:     (local.get $x32)
+  ;; CHECK-NEXT:     (i32.const 65535)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.eq
+  ;; CHECK-NEXT:    (i64.load32_u
+  ;; CHECK-NEXT:     (local.get $addr)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i64.and
+  ;; CHECK-NEXT:     (local.get $x64)
+  ;; CHECK-NEXT:     (i64.const 4294967295)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.ne
+  ;; CHECK-NEXT:    (i64.load8_u
+  ;; CHECK-NEXT:     (local.get $addr)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i64.and
+  ;; CHECK-NEXT:     (local.get $x64)
+  ;; CHECK-NEXT:     (i64.const 255)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $unary-sign-ext-eq-load (param $x32 i32) (param $x64 i64) (param $addr i32)
+    ;; Comparing unary sign-extension with signed loads.
+    (drop (i32.eq (i32.extend16_s (local.get $x32)) (i32.load16_s (local.get $addr))))
+    (drop (i64.eq (i64.extend32_s (local.get $x64)) (i64.load32_s (local.get $addr))))
+    (drop (i64.ne (i64.load8_s (local.get $addr)) (i64.extend8_s (local.get $x64))))
+  )
 )

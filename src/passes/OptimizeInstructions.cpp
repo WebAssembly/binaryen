@@ -604,21 +604,8 @@ struct OptimizeInstructions
     if (auto* ext = Properties::getAlmostSignExt(curr)) {
       Index extraLeftShifts;
       auto bits = Properties::getAlmostSignExtBits(curr, extraLeftShifts);
-      if (extraLeftShifts == 0) {
-        if (auto* load = getFallthrough(ext)->dynCast<Load>()) {
-          // pattern match a load of 8 bits and a sign extend using a shl of
-          // 24 then shr_s of 24 as well, etc.
-          if (LoadUtils::canBeSigned(load) &&
-              ((load->bytes == 1 && bits == 8) ||
-               (load->bytes == 2 && bits == 16))) {
-            // if the value falls through, we can't alter the load, as it
-            // might be captured in a tee
-            if (load->signed_ == true || load == ext) {
-              load->signed_ = true;
-              return replaceCurrent(ext);
-            }
-          }
-        }
+      if (extraLeftShifts == 0 && trySignExtLoad(ext, bits)) {
+        return replaceCurrent(ext);
       }
       // We can in some cases remove part of a sign extend, that is,
       //   (x << A) >> B   =>   x << (A - B)
@@ -633,7 +620,8 @@ struct OptimizeInstructions
       if (isSignExted(ext, bits) && extraLeftShifts == 0) {
         return replaceCurrent(removeAlmostSignExt(curr));
       }
-    } else if (curr->op == EqInt32 || curr->op == NeInt32) {
+    } else if (curr->op == EqInt32 || curr->op == NeInt32 ||
+               curr->op == EqInt64 || curr->op == NeInt64) {
       if (auto* c = curr->right->dynCast<Const>()) {
         if (auto* ext = Properties::getSignExtValue(curr->left)) {
           // We are comparing a sign extend to a constant, which means we can
@@ -649,10 +637,10 @@ struct OptimizeInstructions
           // the upper bits, which means that the relevant bits on the left
           // side are either all 0, or all 1.
           auto bits = Properties::getSignExtBits(curr->left);
-          uint32_t right = c->value.geti32();
-          uint32_t numRelevantBits = 32 - bits + 1;
-          uint32_t setRelevantBits =
-            Bits::popCount(right >> uint32_t(bits - 1));
+          uint64_t right = c->value.getUnsigned();
+          Index totalBits = c->type.getByteSize() * 8;
+          Index numRelevantBits = totalBits - bits + 1;
+          Index setRelevantBits = Bits::popCount(right >> (bits - 1));
           // If all the relevant bits on C are zero
           // then we can mask off the high bits instead of sign-extending x.
           // This is valid because if x is negative, then the comparison was
@@ -670,14 +658,17 @@ struct OptimizeInstructions
             // identical, then the upper bits don't matter, so masking them
             // off both sides is fine.
             curr->left = makeZeroExt(ext, bits);
-            c->value = c->value.and_(Literal(Bits::lowBitMask(bits)));
+            c->value = c->value.and_(
+              Literal::makeFromInt64(Bits::lowBitMask64(bits), c->type));
             return replaceCurrent(curr);
           } else {
             // Otherwise, C's relevant bits are mixed, and then the two sides
             // can never be equal, as the left side's bits cannot be mixed.
             Builder builder(*getModule());
             // The result is either always true, or always false.
-            c->value = Literal::makeFromInt32(curr->op == NeInt32, c->type);
+            c->value = Literal::makeFromInt32(
+              curr->op == NeInt32 || curr->op == NeInt64, Type::i32);
+            c->type = Type::i32;
             return replaceCurrent(
               builder.makeSequence(builder.makeDrop(ext), c));
           }
@@ -1058,19 +1049,19 @@ struct OptimizeInstructions
       }
     }
 
-    // Simple sign extends can be removed if the value is already sign-extended.
-    auto signExtBits = getSignExtBits(curr->value);
-    if (signExtBits > 0) {
-      // Note that we can handle the case of |curr| having a larger sign-extend:
-      // if we have an 8-bit value in 32-bit, then there are 24 sign bits, and
-      // doing a sign-extend to 16 will only affect 16 of those 24, and the
-      // effect is to leave them as they are.
-      if ((curr->op == ExtendS8Int32 && signExtBits <= 8) ||
-          (curr->op == ExtendS16Int32 && signExtBits <= 16) ||
-          (curr->op == ExtendS8Int64 && signExtBits <= 8) ||
-          (curr->op == ExtendS16Int64 && signExtBits <= 16) ||
-          (curr->op == ExtendS32Int64 && signExtBits <= 32)) {
-        return replaceCurrent(curr->value);
+    if (auto* ext = Properties::getSignExtValue(curr)) {
+      auto bits = Properties::getSignExtBits(curr);
+      if (trySignExtLoad(ext, bits)) {
+        return replaceCurrent(ext);
+      }
+      // Simple sign extends can be removed if the value is already
+      // sign-extended. Note that we can handle the case of |curr| having a
+      // larger sign-extend: if we have an 8-bit value in 32-bit, then there are
+      // 24 sign bits, and doing a sign-extend to 16 will only affect 16 of
+      // those 24, and the effect is to leave them as they are.
+      auto signExtBits = getSignExtBits(ext);
+      if (signExtBits > 0 && signExtBits <= bits) {
+        return replaceCurrent(ext);
       }
     }
 
@@ -4415,8 +4406,10 @@ private:
 
   Expression* makeZeroExt(Expression* curr, int32_t bits) {
     Builder builder(*getModule());
-    return builder.makeBinary(
-      AndInt32, curr, builder.makeConst(Literal(Bits::lowBitMask(bits))));
+    return builder.makeBinary(Abstract::getBinary(curr->type, Abstract::And),
+                              curr,
+                              builder.makeConst(Literal::makeFromInt64(
+                                Bits::lowBitMask64(bits), curr->type)));
   }
 
   // given an "almost" sign extend - either a proper one, or it
@@ -4434,6 +4427,24 @@ private:
     // add a shift, by reusing the existing node
     innerConst->value = innerConst->value.sub(outerConst->value);
     return inner;
+  }
+
+  // Given `ext`, the value being sign-extended by a parent sign-extension from
+  // `bits` low bits (e.g. 8 for `extend8_s` or `(x << 24) >>_s 24`), fold the
+  // sign-extension into a narrow load if possible.
+  bool trySignExtLoad(Expression* ext, Index bits) {
+    if (auto* load = getFallthrough(ext)->dynCast<Load>()) {
+      // Pattern match a load of 8 bits and a sign extend to 8 bits, etc.
+      if (LoadUtils::canBeSigned(load) && load->bytes * 8 == bits) {
+        // If the value falls through, we can't alter the load, as it might be
+        // captured in a tee.
+        if (load->signed_ || load == ext) {
+          load->signed_ = true;
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   // Check if an expression is already sign-extended to an exact number of bits.
@@ -5396,11 +5407,6 @@ private:
           case TruncFloat64:
           case NearestFloat64: {
             // unaryOp(unaryOp(x))  ==>   unaryOp(x)
-            return unaryInner;
-          }
-          case ExtendS8Int32:
-          case ExtendS16Int32: {
-            assert(getModule()->features.hasSignExt());
             return unaryInner;
           }
           case EqZInt32: {
