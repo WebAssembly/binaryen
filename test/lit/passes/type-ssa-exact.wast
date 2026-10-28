@@ -1765,8 +1765,6 @@
     (type $used-in-array-new-fixed-unreachable (sub (struct (field anyref))))
     ;; CHECK:       (type $array-new-fixed-unreachable (array (ref (exact $used-in-array-new-fixed-unreachable))))
     (type $array-new-fixed-unreachable (array (field (ref (exact $used-in-array-new-fixed-unreachable)))))
-    ;; CHECK:       (type $i8-array (array (mut i8)))
-    (type $i8-array (array (field (mut i8))))
     ;; CHECK:       (type $used-in-array-set-bot (sub (struct (field anyref))))
     (type $used-in-array-set-bot (sub (struct (field anyref))))
     ;; CHECK:       (type $array-set-bot (array (mut (ref (exact $used-in-array-set-bot)))))
@@ -1775,8 +1773,6 @@
     (type $used-in-array-fill-bot (sub (struct (field anyref))))
     ;; CHECK:       (type $array-fill-bot (array (mut (ref (exact $used-in-array-fill-bot)))))
     (type $array-fill-bot (array (field (mut (ref (exact $used-in-array-fill-bot))))))
-    ;; CHECK:       (type $any-array (array (mut anyref)))
-    (type $any-array (array (field (mut anyref))))
     ;; CHECK:       (type $func-empty (func))
     (type $func-empty (func))
     ;; CHECK:       (type $cont-empty (cont $func-empty))
@@ -1847,65 +1843,59 @@
     (type $cont-switch-bot (cont $func-switch-bot))
   )
 
-  ;; CHECK:      (type $52 (func (param (ref (exact $used-in-resume-throw)))))
+  ;; CHECK:      (type $50 (func (param (ref (exact $used-in-resume-throw)))))
 
-  ;; CHECK:      (type $53 (func (param (ref $used-in-resume-throw-ok))))
+  ;; CHECK:      (type $51 (func (param (ref $used-in-resume-throw-ok))))
 
-  ;; CHECK:      (type $54 (func (param (ref (exact $used-in-resume-throw-bot)))))
+  ;; CHECK:      (type $52 (func (param (ref (exact $used-in-resume-throw-bot)))))
 
-  ;; CHECK:      (type $55 (func))
+  ;; CHECK:      (type $53 (func))
 
-  ;; CHECK:      (type $56 (func (param (ref null (exact $used-in-br-on-null)))))
+  ;; CHECK:      (type $54 (func (param (ref null (exact $used-in-br-on-null)))))
 
-  ;; CHECK:      (type $57 (func (param (ref null (exact $used-in-br-on-non-null)))))
+  ;; CHECK:      (type $55 (func (param (ref null (exact $used-in-br-on-non-null)))))
 
-  ;; CHECK:      (type $58 (func (param anyref (ref null (exact $desc)))))
+  ;; CHECK:      (type $56 (func (param (ref null $desc-struct))))
 
-  ;; CHECK:      (type $59 (func (param anyref)))
+  ;; CHECK:      (type $57 (func (param anyref (ref null (exact $desc)))))
 
-  ;; CHECK:      (type $60 (func (param (ref null $desc-struct))))
+  ;; CHECK:      (type $58 (func (param anyref)))
 
-  ;; CHECK:      (type $61 (func (param (ref null $struct-get-type))))
+  ;; CHECK:      (type $59 (func (param (ref null $struct-get-type))))
 
-  ;; CHECK:      (type $62 (func (param (ref (exact $used-in-struct-set-bot)))))
+  ;; CHECK:      (type $60 (func (param (ref (exact $used-in-struct-set-bot)))))
 
-  ;; CHECK:      (type $63 (func (param (ref (exact $used-in-array-new-unreachable)))))
+  ;; CHECK:      (type $61 (func (param (ref (exact $used-in-array-new-unreachable)))))
 
-  ;; CHECK:      (type $64 (func (param (ref (exact $used-in-array-new-fixed-unreachable)))))
+  ;; CHECK:      (type $62 (func (param (ref (exact $used-in-array-new-fixed-unreachable)))))
 
-  ;; CHECK:      (type $65 (func (param (ref null $i8-array))))
+  ;; CHECK:      (type $63 (func (param (ref (exact $used-in-array-set-bot)))))
 
-  ;; CHECK:      (type $66 (func (param (ref (exact $used-in-array-set-bot)))))
+  ;; CHECK:      (type $64 (func (param (ref (exact $used-in-array-fill-bot)))))
 
-  ;; CHECK:      (type $67 (func (param (ref (exact $used-in-array-fill-bot)))))
+  ;; CHECK:      (type $65 (func (param (ref (exact $used-in-cont-bind)) (ref null $cont-bind-exact))))
 
-  ;; CHECK:      (type $68 (func (param (ref null $any-array))))
+  ;; CHECK:      (type $66 (func (param (ref (exact $used-in-cont-bind-ok)) (ref null $cont-bind-inexact))))
 
-  ;; CHECK:      (type $69 (func (param (ref null $func-empty))))
+  ;; CHECK:      (type $67 (func (param (ref (exact $used-in-cont-bind-bot)))))
 
-  ;; CHECK:      (type $70 (func (param (ref (exact $used-in-cont-bind)) (ref null $cont-bind-exact))))
+  ;; CHECK:      (type $68 (func (param (ref null $cont-bind-inexact))))
 
-  ;; CHECK:      (type $71 (func (param (ref (exact $used-in-cont-bind-ok)) (ref null $cont-bind-inexact))))
+  ;; CHECK:      (type $69 (func (param (ref (exact $used-in-resume)) (ref null $cont-resume-exact))))
 
-  ;; CHECK:      (type $72 (func (param (ref (exact $used-in-cont-bind-bot)))))
+  ;; CHECK:      (type $70 (func (param (ref (exact $used-in-resume-ok)) (ref null $cont-resume-inexact))))
 
-  ;; CHECK:      (type $73 (func (param (ref null $cont-bind-inexact))))
+  ;; CHECK:      (type $71 (func (param (ref (exact $used-in-resume-bot)))))
 
-  ;; CHECK:      (type $74 (func (param (ref (exact $used-in-resume)) (ref null $cont-resume-exact))))
+  ;; CHECK:      (type $72 (func (param (ref (exact $used-in-resume-throw)) (ref null $cont-empty))))
 
-  ;; CHECK:      (type $75 (func (param (ref (exact $used-in-resume-ok)) (ref null $cont-resume-inexact))))
+  ;; CHECK:      (type $73 (func (param (ref (exact $used-in-resume-throw-ok)) (ref null $cont-empty))))
 
-  ;; CHECK:      (type $76 (func (param (ref (exact $used-in-resume-bot)))))
+  ;; CHECK:      (type $74 (func (param (ref (exact $used-in-switch)) (ref null $cont-switch-exact))))
 
-  ;; CHECK:      (type $77 (func (param (ref (exact $used-in-resume-throw)) (ref null $cont-empty))))
+  ;; CHECK:      (type $75 (func (param (ref (exact $used-in-switch-ok)) (ref null $cont-switch-inexact))))
 
-  ;; CHECK:      (type $78 (func (param (ref (exact $used-in-resume-throw-ok)) (ref null $cont-empty))))
-
-  ;; CHECK:      (type $79 (func (param (ref (exact $used-in-switch)) (ref null $cont-switch-exact))))
-
-  ;; CHECK:      (type $80 (func (param (ref (exact $used-in-switch-ok)) (ref null $cont-switch-inexact))))
-
-  ;; CHECK:      (type $81 (func (param (ref (exact $used-in-switch-bot)))))
+  ;; CHECK:      (type $76 (func (param (ref (exact $used-in-switch-bot)))))
 
   ;; CHECK:      (rec
   ;; CHECK-NEXT:  (type $used-in-br-on-null_1 (sub $used-in-br-on-null (struct (field anyref))))
@@ -1940,21 +1930,16 @@
 
   ;; CHECK:       (type $used-in-switch-bot_16 (sub $used-in-switch-bot (struct (field anyref))))
 
-  ;; CHECK:      (data $data "")
-  (data $data "")
-  ;; CHECK:      (elem $elem anyref)
-  (elem $elem anyref)
-
-  ;; CHECK:      (tag $tag-exact (type $52) (param (ref (exact $used-in-resume-throw))))
+  ;; CHECK:      (tag $tag-exact (type $50) (param (ref (exact $used-in-resume-throw))))
   (tag $tag-exact (param (ref (exact $used-in-resume-throw))))
-  ;; CHECK:      (tag $tag-inexact (type $53) (param (ref $used-in-resume-throw-ok)))
+  ;; CHECK:      (tag $tag-inexact (type $51) (param (ref $used-in-resume-throw-ok)))
   (tag $tag-inexact (param (ref $used-in-resume-throw-ok)))
-  ;; CHECK:      (tag $tag-bot (type $54) (param (ref (exact $used-in-resume-throw-bot))))
+  ;; CHECK:      (tag $tag-bot (type $52) (param (ref (exact $used-in-resume-throw-bot))))
   (tag $tag-bot (param (ref (exact $used-in-resume-throw-bot))))
-  ;; CHECK:      (tag $switch-tag (type $55))
+  ;; CHECK:      (tag $switch-tag (type $53))
   (tag $switch-tag)
 
-  ;; CHECK:      (func $br-on-null (type $56) (param $used (ref null (exact $used-in-br-on-null)))
+  ;; CHECK:      (func $br-on-null (type $54) (param $used (ref null (exact $used-in-br-on-null)))
   ;; CHECK-NEXT:  (block $l
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (br_on_null $l
@@ -1984,7 +1969,7 @@
     )
   )
 
-  ;; CHECK:      (func $br-on-non-null (type $57) (param $used (ref null (exact $used-in-br-on-non-null)))
+  ;; CHECK:      (func $br-on-non-null (type $55) (param $used (ref null (exact $used-in-br-on-non-null)))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block $l (result (ref (exact $used-in-br-on-non-null)))
   ;; CHECK-NEXT:    (br_on_non_null $l
@@ -2016,7 +2001,7 @@
     )
   )
 
-  ;; CHECK:      (func $ref-cast-unreachable (type $55)
+  ;; CHECK:      (func $ref-cast-unreachable (type $53)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block ;; (replaces unreachable RefCast we can't emit)
   ;; CHECK-NEXT:    (drop
@@ -2045,46 +2030,7 @@
     )
   )
 
-  ;; CHECK:      (func $ref-cast-desc-eq (type $58) (param $any anyref) (param $desc-ref (ref null (exact $desc)))
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast_desc_eq (ref (exact $desc-struct))
-  ;; CHECK-NEXT:    (local.get $any)
-  ;; CHECK-NEXT:    (local.get $desc-ref)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $ref-cast-desc-eq (param $any anyref) (param $desc-ref (ref null (exact $desc)))
-    (drop
-      (ref.cast_desc_eq (ref (exact $desc-struct))
-        (local.get $any)
-        (local.get $desc-ref)
-      )
-    )
-  )
-
-  ;; CHECK:      (func $ref-cast-desc-eq-bot (type $59) (param $any anyref)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block ;; (replaces unreachable RefCast we can't emit)
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (local.get $any)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.null none)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $ref-cast-desc-eq-bot (param $any anyref)
-    (drop
-      (ref.cast_desc_eq (ref (exact $desc-struct))
-        (local.get $any)
-        (ref.null none)
-      )
-    )
-  )
-
-  ;; CHECK:      (func $ref-get-desc (type $60) (param $desc-struct-ref (ref null $desc-struct))
+  ;; CHECK:      (func $ref-get-desc (type $56) (param $desc-struct-ref (ref null $desc-struct))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.get_desc $desc-struct
   ;; CHECK-NEXT:    (local.get $desc-struct-ref)
@@ -2099,7 +2045,7 @@
     )
   )
 
-  ;; CHECK:      (func $ref-get-desc-unreachable (type $55)
+  ;; CHECK:      (func $ref-get-desc-unreachable (type $53)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block ;; (replaces unreachable RefGetDesc we can't emit)
   ;; CHECK-NEXT:    (drop
@@ -2117,7 +2063,7 @@
     )
   )
 
-  ;; CHECK:      (func $ref-get-desc-bot (type $55)
+  ;; CHECK:      (func $ref-get-desc-bot (type $53)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block ;; (replaces unreachable RefGetDesc we can't emit)
   ;; CHECK-NEXT:    (drop
@@ -2135,7 +2081,7 @@
     )
   )
 
-  ;; CHECK:      (func $br-on-cast-desc-eq (type $58) (param $any anyref) (param $desc-ref (ref null (exact $desc)))
+  ;; CHECK:      (func $br-on-cast-desc-eq (type $57) (param $any anyref) (param $desc-ref (ref null (exact $desc)))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block $l (result (ref (exact $desc-struct)))
   ;; CHECK-NEXT:    (drop
@@ -2162,7 +2108,7 @@
     )
   )
 
-  ;; CHECK:      (func $br-on-cast-desc-eq-bot (type $59) (param $any anyref)
+  ;; CHECK:      (func $br-on-cast-desc-eq-bot (type $58) (param $any anyref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block $l (result (ref none))
   ;; CHECK-NEXT:    (drop
@@ -2194,7 +2140,7 @@
     )
   )
 
-  ;; CHECK:      (func $struct-get (type $61) (param $struct-ref (ref null $struct-get-type))
+  ;; CHECK:      (func $struct-get (type $59) (param $struct-ref (ref null $struct-get-type))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.get $struct-get-type 0
   ;; CHECK-NEXT:    (local.get $struct-ref)
@@ -2209,7 +2155,7 @@
     )
   )
 
-  ;; CHECK:      (func $struct-get-bot (type $55)
+  ;; CHECK:      (func $struct-get-bot (type $53)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block ;; (replaces unreachable StructGet we can't emit)
   ;; CHECK-NEXT:    (drop
@@ -2227,7 +2173,7 @@
     )
   )
 
-  ;; CHECK:      (func $struct-set-bot (type $62) (param $used (ref (exact $used-in-struct-set-bot)))
+  ;; CHECK:      (func $struct-set-bot (type $60) (param $used (ref (exact $used-in-struct-set-bot)))
   ;; CHECK-NEXT:  (block ;; (replaces unreachable StructSet we can't emit)
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (ref.null none)
@@ -2256,7 +2202,7 @@
     )
   )
 
-  ;; CHECK:      (func $array-new-unreachable (type $63) (param $used (ref (exact $used-in-array-new-unreachable)))
+  ;; CHECK:      (func $array-new-unreachable (type $61) (param $used (ref (exact $used-in-array-new-unreachable)))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block ;; (replaces unreachable ArrayNew we can't emit)
   ;; CHECK-NEXT:    (drop
@@ -2289,7 +2235,7 @@
     )
   )
 
-  ;; CHECK:      (func $array-new-fixed-unreachable (type $64) (param $used (ref (exact $used-in-array-new-fixed-unreachable)))
+  ;; CHECK:      (func $array-new-fixed-unreachable (type $62) (param $used (ref (exact $used-in-array-new-fixed-unreachable)))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block ;; (replaces unreachable ArrayNewFixed we can't emit)
   ;; CHECK-NEXT:    (drop
@@ -2322,46 +2268,8 @@
     )
   )
 
-  ;; CHECK:      (func $array-get (type $65) (param $i8-ref (ref null $i8-array))
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (array.get_u $i8-array
-  ;; CHECK-NEXT:    (local.get $i8-ref)
-  ;; CHECK-NEXT:    (i32.const 0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $array-get (param $i8-ref (ref null $i8-array))
-    (drop
-      (array.get_u $i8-array
-        (local.get $i8-ref)
-        (i32.const 0)
-      )
-    )
-  )
 
-  ;; CHECK:      (func $array-get-bot (type $55)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block ;; (replaces unreachable ArrayGet we can't emit)
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.null none)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.const 0)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $array-get-bot
-    (drop
-      (array.get_u $i8-array
-        (ref.null none)
-        (i32.const 0)
-      )
-    )
-  )
-
-  ;; CHECK:      (func $array-set-bot (type $66) (param $used (ref (exact $used-in-array-set-bot)))
+  ;; CHECK:      (func $array-set-bot (type $63) (param $used (ref (exact $used-in-array-set-bot)))
   ;; CHECK-NEXT:  (block ;; (replaces unreachable ArraySet we can't emit)
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (ref.null none)
@@ -2394,143 +2302,7 @@
     )
   )
 
-  ;; CHECK:      (func $array-load (type $65) (param $i8-ref (ref null $i8-array))
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.load (type $i8-array)
-  ;; CHECK-NEXT:    (local.get $i8-ref)
-  ;; CHECK-NEXT:    (i32.const 0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $array-load (param $i8-ref (ref null $i8-array))
-    (drop
-      (i32.load (type $i8-array)
-        (local.get $i8-ref)
-        (i32.const 0)
-      )
-    )
-  )
-
-  ;; CHECK:      (func $array-load-bot (type $55)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block ;; (replaces unreachable ArrayLoad we can't emit)
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.null none)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.const 0)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $array-load-bot
-    (drop
-      (i32.load (type $i8-array)
-        (ref.null none)
-        (i32.const 0)
-      )
-    )
-  )
-
-  ;; CHECK:      (func $array-store (type $65) (param $i8-ref (ref null $i8-array))
-  ;; CHECK-NEXT:  (i32.store (type $i8-array)
-  ;; CHECK-NEXT:   (local.get $i8-ref)
-  ;; CHECK-NEXT:   (i32.const 0)
-  ;; CHECK-NEXT:   (i32.const 0)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $array-store (param $i8-ref (ref null $i8-array))
-    (i32.store (type $i8-array)
-      (local.get $i8-ref)
-      (i32.const 0)
-      (i32.const 0)
-    )
-  )
-
-  ;; CHECK:      (func $array-store-bot (type $55)
-  ;; CHECK-NEXT:  (block ;; (replaces unreachable ArrayStore we can't emit)
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (ref.null none)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (i32.const 0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (i32.const 0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (unreachable)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $array-store-bot
-    (i32.store (type $i8-array)
-      (ref.null none)
-      (i32.const 0)
-      (i32.const 0)
-    )
-  )
-
-  ;; CHECK:      (func $array-copy-bot-dest (type $65) (param $i8-ref (ref null $i8-array))
-  ;; CHECK-NEXT:  (block ;; (replaces unreachable ArrayCopy we can't emit)
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (ref.null none)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (i32.const 0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (local.get $i8-ref)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (i32.const 0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (i32.const 0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (unreachable)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $array-copy-bot-dest (param $i8-ref (ref null $i8-array))
-    (array.copy $i8-array $i8-array
-      (ref.null none)
-      (i32.const 0)
-      (local.get $i8-ref)
-      (i32.const 0)
-      (i32.const 0)
-    )
-  )
-
-  ;; CHECK:      (func $array-copy-bot-src (type $65) (param $i8-ref (ref null $i8-array))
-  ;; CHECK-NEXT:  (block ;; (replaces unreachable ArrayCopy we can't emit)
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (local.get $i8-ref)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (i32.const 0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (ref.null none)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (i32.const 0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (i32.const 0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (unreachable)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $array-copy-bot-src (param $i8-ref (ref null $i8-array))
-    (array.copy $i8-array $i8-array
-      (local.get $i8-ref)
-      (i32.const 0)
-      (ref.null none)
-      (i32.const 0)
-      (i32.const 0)
-    )
-  )
-
-  ;; CHECK:      (func $array-fill-bot (type $67) (param $used (ref (exact $used-in-array-fill-bot)))
+  ;; CHECK:      (func $array-fill-bot (type $64) (param $used (ref (exact $used-in-array-fill-bot)))
   ;; CHECK-NEXT:  (block ;; (replaces unreachable ArrayFill we can't emit)
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (ref.null none)
@@ -2567,126 +2339,7 @@
     )
   )
 
-  ;; CHECK:      (func $array-init-data (type $65) (param $i8-ref (ref null $i8-array))
-  ;; CHECK-NEXT:  (array.init_data $i8-array $data
-  ;; CHECK-NEXT:   (local.get $i8-ref)
-  ;; CHECK-NEXT:   (i32.const 0)
-  ;; CHECK-NEXT:   (i32.const 0)
-  ;; CHECK-NEXT:   (i32.const 0)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $array-init-data (param $i8-ref (ref null $i8-array))
-    (array.init_data $i8-array $data
-      (local.get $i8-ref)
-      (i32.const 0)
-      (i32.const 0)
-      (i32.const 0)
-    )
-  )
-
-  ;; CHECK:      (func $array-init-data-bot (type $55)
-  ;; CHECK-NEXT:  (block ;; (replaces unreachable ArrayInitData we can't emit)
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (ref.null none)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (i32.const 0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (i32.const 0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (i32.const 0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (unreachable)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $array-init-data-bot
-    (array.init_data $i8-array $data
-      (ref.null none)
-      (i32.const 0)
-      (i32.const 0)
-      (i32.const 0)
-    )
-  )
-
-  ;; CHECK:      (func $array-init-elem (type $68) (param $any-arr-ref (ref null $any-array))
-  ;; CHECK-NEXT:  (array.init_elem $any-array $elem
-  ;; CHECK-NEXT:   (local.get $any-arr-ref)
-  ;; CHECK-NEXT:   (i32.const 0)
-  ;; CHECK-NEXT:   (i32.const 0)
-  ;; CHECK-NEXT:   (i32.const 0)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $array-init-elem (param $any-arr-ref (ref null $any-array))
-    (array.init_elem $any-array $elem
-      (local.get $any-arr-ref)
-      (i32.const 0)
-      (i32.const 0)
-      (i32.const 0)
-    )
-  )
-
-  ;; CHECK:      (func $array-init-elem-bot (type $55)
-  ;; CHECK-NEXT:  (block ;; (replaces unreachable ArrayInitElem we can't emit)
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (ref.null none)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (i32.const 0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (i32.const 0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (i32.const 0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (unreachable)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $array-init-elem-bot
-    (array.init_elem $any-array $elem
-      (ref.null none)
-      (i32.const 0)
-      (i32.const 0)
-      (i32.const 0)
-    )
-  )
-
-  ;; CHECK:      (func $cont-new (type $69) (param $func (ref null $func-empty))
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (cont.new $cont-empty
-  ;; CHECK-NEXT:    (local.get $func)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $cont-new (param $func (ref null $func-empty))
-    (drop
-      (cont.new $cont-empty
-        (local.get $func)
-      )
-    )
-  )
-
-  ;; CHECK:      (func $cont-new-unreachable (type $55)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block ;; (replaces unreachable ContNew we can't emit)
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (unreachable)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $cont-new-unreachable
-    (drop
-      (cont.new $cont-empty
-        (unreachable)
-      )
-    )
-  )
-
-  ;; CHECK:      (func $cont-bind (type $70) (param $used (ref (exact $used-in-cont-bind))) (param $cont (ref null $cont-bind-exact))
+  ;; CHECK:      (func $cont-bind (type $65) (param $used (ref (exact $used-in-cont-bind))) (param $cont (ref null $cont-bind-exact))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (cont.bind $cont-bind-exact $cont-empty
   ;; CHECK-NEXT:    (local.get $used)
@@ -2713,7 +2366,7 @@
     )
   )
 
-  ;; CHECK:      (func $cont-bind-ok (type $71) (param $used (ref (exact $used-in-cont-bind-ok))) (param $cont (ref null $cont-bind-inexact))
+  ;; CHECK:      (func $cont-bind-ok (type $66) (param $used (ref (exact $used-in-cont-bind-ok))) (param $cont (ref null $cont-bind-inexact))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (cont.bind $cont-bind-inexact $cont-empty
   ;; CHECK-NEXT:    (local.get $used)
@@ -2740,7 +2393,7 @@
     )
   )
 
-  ;; CHECK:      (func $cont-bind-bot (type $72) (param $used (ref (exact $used-in-cont-bind-bot)))
+  ;; CHECK:      (func $cont-bind-bot (type $67) (param $used (ref (exact $used-in-cont-bind-bot)))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block ;; (replaces unreachable ContBind we can't emit)
   ;; CHECK-NEXT:    (drop
@@ -2772,7 +2425,7 @@
     )
   )
 
-  ;; CHECK:      (func $cont-bind-unreachable (type $73) (param $cont (ref null $cont-bind-inexact))
+  ;; CHECK:      (func $cont-bind-unreachable (type $68) (param $cont (ref null $cont-bind-inexact))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block ;; (replaces unreachable ContBind we can't emit)
   ;; CHECK-NEXT:    (drop
@@ -2794,7 +2447,7 @@
     )
   )
 
-  ;; CHECK:      (func $resume (type $74) (param $used (ref (exact $used-in-resume))) (param $cont (ref null $cont-resume-exact))
+  ;; CHECK:      (func $resume (type $69) (param $used (ref (exact $used-in-resume))) (param $cont (ref null $cont-resume-exact))
   ;; CHECK-NEXT:  (resume $cont-resume-exact
   ;; CHECK-NEXT:   (local.get $used)
   ;; CHECK-NEXT:   (local.get $cont)
@@ -2817,7 +2470,7 @@
     )
   )
 
-  ;; CHECK:      (func $resume-ok (type $75) (param $used (ref (exact $used-in-resume-ok))) (param $cont (ref null $cont-resume-inexact))
+  ;; CHECK:      (func $resume-ok (type $70) (param $used (ref (exact $used-in-resume-ok))) (param $cont (ref null $cont-resume-inexact))
   ;; CHECK-NEXT:  (resume $cont-resume-inexact
   ;; CHECK-NEXT:   (local.get $used)
   ;; CHECK-NEXT:   (local.get $cont)
@@ -2840,7 +2493,7 @@
     )
   )
 
-  ;; CHECK:      (func $resume-bot (type $76) (param $used (ref (exact $used-in-resume-bot)))
+  ;; CHECK:      (func $resume-bot (type $71) (param $used (ref (exact $used-in-resume-bot)))
   ;; CHECK-NEXT:  (block ;; (replaces unreachable Resume we can't emit)
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (local.get $used)
@@ -2868,7 +2521,7 @@
     )
   )
 
-  ;; CHECK:      (func $resume-throw (type $77) (param $used (ref (exact $used-in-resume-throw))) (param $cont (ref null $cont-empty))
+  ;; CHECK:      (func $resume-throw (type $72) (param $used (ref (exact $used-in-resume-throw))) (param $cont (ref null $cont-empty))
   ;; CHECK-NEXT:  (resume_throw $cont-empty $tag-exact
   ;; CHECK-NEXT:   (local.get $used)
   ;; CHECK-NEXT:   (local.get $cont)
@@ -2891,7 +2544,7 @@
     )
   )
 
-  ;; CHECK:      (func $resume-throw-ok (type $78) (param $used (ref (exact $used-in-resume-throw-ok))) (param $cont (ref null $cont-empty))
+  ;; CHECK:      (func $resume-throw-ok (type $73) (param $used (ref (exact $used-in-resume-throw-ok))) (param $cont (ref null $cont-empty))
   ;; CHECK-NEXT:  (resume_throw $cont-empty $tag-inexact
   ;; CHECK-NEXT:   (local.get $used)
   ;; CHECK-NEXT:   (local.get $cont)
@@ -2914,7 +2567,7 @@
     )
   )
 
-  ;; CHECK:      (func $resume-throw-bot (type $54) (param $used (ref (exact $used-in-resume-throw-bot)))
+  ;; CHECK:      (func $resume-throw-bot (type $52) (param $used (ref (exact $used-in-resume-throw-bot)))
   ;; CHECK-NEXT:  (block ;; (replaces unreachable ResumeThrow we can't emit)
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (local.get $used)
@@ -2942,7 +2595,7 @@
     )
   )
 
-  ;; CHECK:      (func $switch (type $79) (param $used (ref (exact $used-in-switch))) (param $cont (ref null $cont-switch-exact))
+  ;; CHECK:      (func $switch (type $74) (param $used (ref (exact $used-in-switch))) (param $cont (ref null $cont-switch-exact))
   ;; CHECK-NEXT:  (switch $cont-switch-exact $switch-tag
   ;; CHECK-NEXT:   (local.get $used)
   ;; CHECK-NEXT:   (local.get $cont)
@@ -2965,7 +2618,7 @@
     )
   )
 
-  ;; CHECK:      (func $switch-ok (type $80) (param $used (ref (exact $used-in-switch-ok))) (param $cont (ref null $cont-switch-inexact))
+  ;; CHECK:      (func $switch-ok (type $75) (param $used (ref (exact $used-in-switch-ok))) (param $cont (ref null $cont-switch-inexact))
   ;; CHECK-NEXT:  (switch $cont-switch-inexact $switch-tag
   ;; CHECK-NEXT:   (local.get $used)
   ;; CHECK-NEXT:   (local.get $cont)
@@ -2988,7 +2641,7 @@
     )
   )
 
-  ;; CHECK:      (func $switch-bot (type $81) (param $used (ref (exact $used-in-switch-bot)))
+  ;; CHECK:      (func $switch-bot (type $76) (param $used (ref (exact $used-in-switch-bot)))
   ;; CHECK-NEXT:  (block ;; (replaces unreachable StackSwitch we can't emit)
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (local.get $used)
@@ -3016,4 +2669,3 @@
     )
   )
 )
-
