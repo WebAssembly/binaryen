@@ -43,6 +43,8 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $br_table-subtype (result funcref)
+  ;; The br_table's value is more refined than the place we branch to, so we
+  ;; need to be careful with the types of our temp locals.
   (block $block (result funcref)
    (br_table $block $block
     (ref.null nofunc)
