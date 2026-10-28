@@ -162,7 +162,7 @@ inline Expression* getSignExtValue(Expression* curr) {
       case ExtendS8Int64:
       case ExtendS16Int64:
       case ExtendS32Int64:
-        return unary->value;
+        return unary->value->type.isInteger() ? unary->value : nullptr;
       default:
         return nullptr;
     }

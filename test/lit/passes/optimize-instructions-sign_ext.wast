@@ -660,4 +660,24 @@
     (drop (i64.eq (i64.extend32_s (local.get $x64)) (i64.load32_s (local.get $addr))))
     (drop (i64.ne (i64.load8_s (local.get $addr)) (i64.extend8_s (local.get $x64))))
   )
+
+  ;; CHECK:      (func $unary-sign-ext-newly-unreachable (type $5) (result i32)
+  ;; CHECK-NEXT:  (i32.eqz
+  ;; CHECK-NEXT:   (i32.extend8_s
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $unary-sign-ext-newly-unreachable (result i32)
+    ;; The array.len traps on null and is replaced with unreachable before
+    ;; refinalization updates the enclosing i32.extend8_s. Do not treat the
+    ;; newly-unreachable operand as an integer sign-extended value.
+    (i32.eqz
+      (i32.extend8_s
+        (array.len
+          (ref.null array)
+        )
+      )
+    )
+  )
 )
