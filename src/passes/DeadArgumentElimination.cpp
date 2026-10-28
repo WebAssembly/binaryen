@@ -552,7 +552,7 @@ private:
     // Do this for more complicated uninhabitable types such as non-nullable
     // references to structs with non-nullable reference cycles.
     bool wasReturnUninhabitable =
-      GCTypeUtils::isUninhabitable(func->getResults());
+      GCTypeUtils::isTriviallyUninhabitable(func->getResults());
     func->setResults(Type::none);
     // Remove the drops on the calls. Note that we must do this before updating
     // returns in ReturnUpdater, as there may be recursive calls of this

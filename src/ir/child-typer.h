@@ -867,11 +867,11 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
 
   void visitCallRef(CallRef* curr, std::optional<HeapType> ht = std::nullopt) {
     if (!ht) {
-      if (!curr->target->type.isRef()) {
+      if (!curr->target->type.isSignature()) {
         self().noteUnknown();
         return;
       }
-      ht = curr->target->type.getHeapType().getSignature();
+      ht = curr->target->type.getHeapType();
     }
     auto params = ht->getSignature().params;
     handleCall(curr, params);
@@ -891,11 +891,17 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
       }
       target = curr->type;
     }
+    std::optional<HeapType> desc;
+    if (curr->desc) {
+      desc = target->getHeapType().getDescriptorType();
+      if (!desc) {
+        self().noteUnknown();
+        return;
+      }
+    }
     auto top = target->getHeapType().getTop();
     note(&curr->ref, Type(top, Nullable));
     if (curr->desc) {
-      auto desc = target->getHeapType().getDescriptorType();
-      assert(desc);
       note(&curr->desc, Type(*desc, Nullable, target->getExactness()));
     }
   }
@@ -903,7 +909,7 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
   void visitRefGetDesc(RefGetDesc* curr,
                        std::optional<HeapType> ht = std::nullopt) {
     if (!ht) {
-      if (!curr->ref->type.isRef()) {
+      if (!curr->ref->type.isRef() || curr->ref->type.isBottomRef()) {
         self().noteUnknown();
         return;
       }
@@ -936,11 +942,17 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
           out = curr->castType;
           in = Type(out->getHeapType().getTop(), Nullable);
         }
-        note(&curr->ref, *in);
+        std::optional<HeapType> desc;
         if (curr->op == BrOnCastDescEq || curr->op == BrOnCastDescEqFail) {
-          auto desc = out->getHeapType().getDescriptorType();
-          assert(desc);
-          note(&curr->desc, Type(*desc, Nullable));
+          desc = out->getHeapType().getDescriptorType();
+          if (!desc) {
+            self().noteUnknown();
+            return;
+          }
+        }
+        note(&curr->ref, *in);
+        if (desc) {
+          note(&curr->desc, Type(*desc, Nullable, out->getExactness()));
         }
         return;
       }
@@ -949,7 +961,7 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
   }
 
   void visitStructNew(StructNew* curr) {
-    if (!curr->type.isRef()) {
+    if (!curr->type.isStruct()) {
       self().noteUnknown();
       return;
     }
@@ -968,7 +980,7 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
   void visitStructGet(StructGet* curr,
                       std::optional<HeapType> ht = std::nullopt) {
     if (!ht) {
-      if (!curr->ref->type.isRef()) {
+      if (!curr->ref->type.isStruct()) {
         self().noteUnknown();
         return;
       }
@@ -980,7 +992,7 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
   void visitStructSet(StructSet* curr,
                       std::optional<HeapType> ht = std::nullopt) {
     if (!ht) {
-      if (!curr->ref->type.isRef()) {
+      if (!curr->ref->type.isStruct()) {
         self().noteUnknown();
         return;
       }
@@ -995,7 +1007,7 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
   void visitStructRMW(StructRMW* curr,
                       std::optional<HeapType> ht = std::nullopt) {
     if (!ht) {
-      if (!curr->ref->type.isRef()) {
+      if (!curr->ref->type.isStruct()) {
         self().noteUnknown();
         return;
       }
@@ -1010,7 +1022,7 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
   void visitStructCmpxchg(StructCmpxchg* curr,
                           std::optional<HeapType> ht = std::nullopt) {
     if (!ht) {
-      if (!curr->ref->type.isRef()) {
+      if (!curr->ref->type.isStruct()) {
         self().noteUnknown();
         return;
       }
@@ -1063,7 +1075,7 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
 
   void visitArrayNew(ArrayNew* curr) {
     if (!curr->isWithDefault()) {
-      if (!curr->type.isRef()) {
+      if (!curr->type.isArray()) {
         self().noteUnknown();
         return;
       }
@@ -1083,7 +1095,7 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
   }
 
   void visitArrayNewFixed(ArrayNewFixed* curr) {
-    if (!curr->type.isRef()) {
+    if (!curr->type.isArray()) {
       self().noteUnknown();
       return;
     }
@@ -1096,7 +1108,7 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
   void visitArrayGet(ArrayGet* curr,
                      std::optional<HeapType> ht = std::nullopt) {
     if (!ht) {
-      if (!curr->ref->type.isRef()) {
+      if (!curr->ref->type.isArray()) {
         self().noteUnknown();
         return;
       }
@@ -1109,7 +1121,7 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
   void visitArraySet(ArraySet* curr,
                      std::optional<HeapType> ht = std::nullopt) {
     if (!ht) {
-      if (!curr->ref->type.isRef()) {
+      if (!curr->ref->type.isArray()) {
         self().noteUnknown();
         return;
       }
@@ -1124,7 +1136,7 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
   void visitArrayLoad(ArrayLoad* curr,
                       std::optional<HeapType> ht = std::nullopt) {
     if (!ht) {
-      if (!curr->ref->type.isRef()) {
+      if (!curr->ref->type.isArray()) {
         self().noteUnknown();
         return;
       }
@@ -1138,7 +1150,7 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
                        std::optional<HeapType> ht = std::nullopt,
                        std::optional<Type> valueType = std::nullopt) {
     if (!ht) {
-      if (!curr->ref->type.isRef()) {
+      if (!curr->ref->type.isArray()) {
         self().noteUnknown();
         return;
       }
@@ -1162,14 +1174,14 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
                       std::optional<HeapType> dest = std::nullopt,
                       std::optional<HeapType> src = std::nullopt) {
     if (!dest) {
-      if (!curr->destRef->type.isRef()) {
+      if (!curr->destRef->type.isArray()) {
         self().noteUnknown();
         return;
       }
       dest = curr->destRef->type.getHeapType();
     }
     if (!src) {
-      if (!curr->srcRef->type.isRef()) {
+      if (!curr->srcRef->type.isArray()) {
         self().noteUnknown();
         return;
       }
@@ -1185,7 +1197,7 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
   void visitArrayFill(ArrayFill* curr,
                       std::optional<HeapType> ht = std::nullopt) {
     if (!ht) {
-      if (!curr->ref->type.isRef()) {
+      if (!curr->ref->type.isArray()) {
         self().noteUnknown();
         return;
       }
@@ -1201,7 +1213,7 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
   void visitArrayInitData(ArrayInitData* curr,
                           std::optional<HeapType> ht = std::nullopt) {
     if (!ht) {
-      if (!curr->ref->type.isRef()) {
+      if (!curr->ref->type.isArray()) {
         self().noteUnknown();
         return;
       }
@@ -1216,7 +1228,7 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
   void visitArrayInitElem(ArrayInitElem* curr,
                           std::optional<HeapType> ht = std::nullopt) {
     if (!ht) {
-      if (!curr->ref->type.isRef()) {
+      if (!curr->ref->type.isArray()) {
         self().noteUnknown();
         return;
       }
@@ -1231,7 +1243,7 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
   void visitArrayRMW(ArrayRMW* curr,
                      std::optional<HeapType> ht = std::nullopt) {
     if (!ht) {
-      if (!curr->ref->type.isRef()) {
+      if (!curr->ref->type.isArray()) {
         self().noteUnknown();
         return;
       }
@@ -1246,7 +1258,7 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
   void visitArrayCmpxchg(ArrayCmpxchg* curr,
                          std::optional<HeapType> ht = std::nullopt) {
     if (!ht) {
-      if (!curr->ref->type.isRef()) {
+      if (!curr->ref->type.isArray()) {
         self().noteUnknown();
         return;
       }
@@ -1350,20 +1362,27 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
     note(&curr->end, Type::i32);
   }
 
-  void visitContNew(ContNew* curr) { note(&curr->func, curr->type); }
+  void visitContNew(ContNew* curr) {
+    if (!curr->type.isContinuation()) {
+      self().noteUnknown();
+      return;
+    }
+    note(&curr->func,
+         Type(curr->type.getHeapType().getContinuation().type, Nullable));
+  }
 
   void visitContBind(ContBind* curr,
                      std::optional<HeapType> src = std::nullopt,
                      std::optional<HeapType> dest = std::nullopt) {
     if (!src) {
-      if (!curr->cont->type.isRef()) {
+      if (!curr->cont->type.isContinuation()) {
         self().noteUnknown();
         return;
       }
       src = curr->cont->type.getHeapType();
     }
     if (!dest) {
-      if (!curr->type.isRef()) {
+      if (!curr->type.isContinuation()) {
         self().noteUnknown();
         return;
       }
@@ -1390,7 +1409,7 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
 
   void visitResume(Resume* curr, std::optional<HeapType> ct = std::nullopt) {
     if (!ct) {
-      if (!curr->cont->type.isRef()) {
+      if (!curr->cont->type.isContinuation()) {
         self().noteUnknown();
         return;
       }
@@ -1408,7 +1427,7 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
   void visitResumeThrow(ResumeThrow* curr,
                         std::optional<HeapType> ct = std::nullopt) {
     if (!ct) {
-      if (!curr->cont->type.isRef()) {
+      if (!curr->cont->type.isContinuation()) {
         self().noteUnknown();
         return;
       }
@@ -1432,7 +1451,7 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
   void visitStackSwitch(StackSwitch* curr,
                         std::optional<HeapType> ct = std::nullopt) {
     if (!ct) {
-      if (!curr->cont->type.isRef()) {
+      if (!curr->cont->type.isContinuation()) {
         self().noteUnknown();
         return;
       }

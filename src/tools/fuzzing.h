@@ -212,6 +212,9 @@ private:
   // The heap types we can pick from to generate instructions.
   std::vector<HeapType> interestingHeapTypes;
 
+  // Heap types from initial content that cannot be constructed.
+  std::unordered_set<HeapType> uninhabitableHeapTypes;
+
   // A mapping of a heap type to the subset of interestingHeapTypes that are
   // subtypes of it.
   std::unordered_map<HeapType, std::vector<HeapType>> interestingHeapSubTypes;
@@ -584,6 +587,7 @@ private:
   Type getStorableType();
   Type getLoggableType();
   bool isLoggableType(Type type);
+  bool isUninhabitable(Type type);
   Nullability getNullability();
   Exactness getExactness();
   Nullability getSubType(Nullability nullability);

@@ -1347,4 +1347,51 @@
   )
  )
 )
+(module
+ ;; CHECK:      (type $A (struct (field i32) (field (mut (ref null $A)))))
+ (type $A (struct (field i32) (field (mut (ref null $A)))))
 
+ ;; CHECK:      (type $1 (func))
+
+ ;; CHECK:      (type $2 (func (param (ref $A))))
+
+ ;; CHECK:      (global $ctor-eval$global_1 (ref (exact $A)) (struct.new $A
+ ;; CHECK-NEXT:  (i32.const 0)
+ ;; CHECK-NEXT:  (ref.null none)
+ ;; CHECK-NEXT: ))
+
+ ;; CHECK:      (tag $tag (type $2) (param (ref $A)))
+ (tag $tag (param (ref $A)))
+
+ (func $test (export "test")
+  ;; Throwing a cyclic struct should not cause infinite recursion when
+  ;; formatting the exception message.
+  (local $a (ref $A))
+  (local.set $a
+   (struct.new_default $A)
+  )
+  (struct.set $A 1
+   (local.get $a)
+   (local.get $a)
+  )
+  (throw $tag
+   (local.get $a)
+  )
+ )
+)
+;; CHECK:      (export "test" (func $test_2))
+
+;; CHECK:      (start $start)
+
+;; CHECK:      (func $start (type $1)
+;; CHECK-NEXT:  (struct.set $A 1
+;; CHECK-NEXT:   (global.get $ctor-eval$global_1)
+;; CHECK-NEXT:   (global.get $ctor-eval$global_1)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $test_2 (type $1)
+;; CHECK-NEXT:  (throw $tag
+;; CHECK-NEXT:   (global.get $ctor-eval$global_1)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )

@@ -1266,6 +1266,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
                       // only jumping here, so this the last place that will
                       // read it.
                       ExpressionManipulator::unreachable(br);
+                      worked = true;
                     }
                   }
                 }

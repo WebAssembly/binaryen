@@ -21,7 +21,8 @@
 
 namespace wasm::GCTypeUtils {
 
-inline bool isUninhabitable(Type type) {
+inline bool isTriviallyUninhabitable(Type type) {
+  // TODO: Include non-shared waitqueue.
   return type.isNonNullableRef() && type.isBottomRef();
 }
 
@@ -77,7 +78,7 @@ inline EvaluationResult evaluateCastCheck(Type refType, Type castType) {
     return Unknown;
   }
 
-  if (isUninhabitable(refType)) {
+  if (isTriviallyUninhabitable(refType)) {
     // No value can appear in the ref, so the cast cannot be reached.
     return Unreachable;
   }
