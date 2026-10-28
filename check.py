@@ -179,10 +179,10 @@ def run_wasm_reduce_tests():
     if 'fsanitize=thread' not in str(os.environ):
         print_heading('checking wasm-reduce fuzz testcase')
         # TODO: re-enable multivalue once it is better optimized
-        support.run_command(shared.WASM_OPT + [os.path.join(shared.options.binaryen_test, 'lit/basic/signext.wast'), '-ttf', '-Os', '-o', 'a.wasm', '--detect-features', '--disable-multivalue'])
+        support.run_command(shared.WASM_OPT + [os.path.join(shared.options.binaryen_test, 'lit/basic/signext.wast'), '-ttf', '-Os', '-o', 'a.wasm', '-all', '--disable-multivalue'])
         before = os.stat('a.wasm').st_size
         cmd = shared.WASM_OPT[0]
-        support.run_command(shared.WASM_REDUCE + ['a.wasm', f'--command={cmd} b.wasm --fuzz-exec --detect-features', '-t', 'b.wasm', '-w', 'c.wasm'])
+        support.run_command(shared.WASM_REDUCE + ['a.wasm', f'--command={cmd} b.wasm --fuzz-exec -all', '-t', 'b.wasm', '-w', 'c.wasm'])
         after = os.stat('c.wasm').st_size
         # This number is a custom threshold to check if we have shrunk the
         # output sufficiently

@@ -62,6 +62,9 @@
   ;; CHECK-NEXT: ))
   (global $g (mut eqref) (ref.i31 (i32.const 0)))
 
+  ;; CHECK:      (table $table 1 10 funcref)
+  (table $table 1 10 funcref)
+
   ;; These functions test if an `if` with subtyped arms is correctly folded
   ;; 1. if its `ifTrue` and `ifFalse` arms are identical (can fold)
   ;; CHECK:      (func $if-arms-subtype-fold (type $29) (result anyref)
@@ -866,6 +869,39 @@
             (local.get $y)
           )
         )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $select-table-grow (type $4)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (select
+  ;; CHECK-NEXT:    (table.grow $table
+  ;; CHECK-NEXT:     (ref.null nofunc)
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (table.grow $table
+  ;; CHECK-NEXT:     (ref.null nofunc)
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $select-table-grow
+    ;; The first table.grow changes the result of the second, so the arms are
+    ;; not equal and we cannot optimize.
+    (drop
+      (select
+        (table.grow $table
+          (ref.null func)
+          (i32.const 1)
+        )
+        (table.grow $table
+          (ref.null func)
+          (i32.const 1)
+        )
+        (i32.const 1)
       )
     )
   )

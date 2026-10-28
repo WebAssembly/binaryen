@@ -54,19 +54,10 @@ export function struct(mod: Module) {
 			BinaryenObj["_BinaryenStructNew"](mod[PTR], 0, 0, heapType)
 		),
 
-		/**
-		 * Gets a struct entry with an unpacked type at an index.
-		 *
-		 * **Warning:** `.get()` no longer takes the boolean `isSigned` argument, and assumes an unpacked type.
-		 * For packed types, use `.get_s()` for signed and `.get_u()` for unsigned.
-		 */
-		get: function (index: number, ref: ExpressionRef, type: Type, deprecated_isSigned?: boolean): ExpressionRef {
-			return deprecated_isSigned === undefined
-				? BinaryenObj["_BinaryenStructGet"](mod[PTR], index, ref, type)
-				: deprecated_isSigned
-					? this.get_s(index, ref, type)
-					: this.get_u(index, ref, type);
-		},
+		/** Gets a struct entry with an unpacked type at an index. */
+		get: (index: number, ref: ExpressionRef, type: Type): ExpressionRef => (
+			BinaryenObj["_BinaryenStructGet"](mod[PTR], index, ref, type)
+		),
 
 		/** Gets a struct entry with a signed packed type at an index. */
 		get_s: (index: number, ref: ExpressionRef, type: Type): ExpressionRef => (
@@ -146,19 +137,10 @@ export function array(mod: Module) {
 			preserveStack(() => BinaryenObj["_BinaryenArrayNewElem"](mod[PTR], heapType, strToStack(name), offset, size))
 		),
 
-		/**
-		 * Gets an array entry with an unpacked type at an index.
-		 *
-		 * **Warning:** `.get()` no longer takes the boolean `isSigned` argument, and assumes an unpacked type.
-		 * For packed types, use `.get_s()` for signed and `.get_u()` for unsigned.
-		 */
-		get: function (ref: ExpressionRef, index: ExpressionRef, type: Type, deprecated_isSigned?: boolean): ExpressionRef {
-			return deprecated_isSigned === undefined
-				? BinaryenObj["_BinaryenArrayGet"](mod[PTR], ref, index, type)
-				: deprecated_isSigned
-					? this.get_s(ref, index, type)
-					: this.get_u(ref, index, type);
-		},
+		/** Gets an array entry with an unpacked type at an index. */
+		get: (ref: ExpressionRef, index: ExpressionRef, type: Type): ExpressionRef => (
+			BinaryenObj["_BinaryenArrayGet"](mod[PTR], ref, index, type)
+		),
 
 		/** Gets an array entry with a signed packed type at an index. */
 		get_s: (ref: ExpressionRef, index: ExpressionRef, type: Type): ExpressionRef => (

@@ -6,6 +6,7 @@
 - Update `throw_ref` & `try_table` (#9057)
 - Add `ThrowRef` & `TryTable` expression classes (#9057)
 - fix `ExpressionBuilder#ref.func` heap type argument
+- remove `isSigned` parameter from `wasm.{struct,array}.get()` (#9311)
 
 ## v0.2.0
 - Add library API for `waitqueue` instructions (#9039, #9044)

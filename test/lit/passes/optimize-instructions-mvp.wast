@@ -5,16 +5,7 @@
   ;; CHECK:      (type $0 (func (param i32 i64)))
   (type $0 (func (param i32 i64)))
 
-  ;; CHECK:      (import "a" "b" (func $get-f64 (result f64)))
-  (import "a" "b" (func $get-f64 (result f64)))
-
-  ;; CHECK:      (import "a" "c" (func $set-i32 (param i32)))
-  (import "a" "c" (func $set-i32 (param i32)))
-
   (memory 0)
-
-  ;; CHECK:      (global $g-f32 (mut f32) (f32.const -3))
-  (global $g-f32 (mut f32) (f32.const -3))
 
   ;; CHECK:      (func $and-and (param $i1 i32) (result i32)
   ;; CHECK-NEXT:  (i32.and
@@ -1501,6 +1492,135 @@
   ;; CHECK-NEXT: )
   (func $load16_u-and-1 (result i32)
     (i32.and (i32.load16_u (i32.const 7)) (i32.const 1))
+  )
+  ;; CHECK:      (func $i64-load-and-mask (param $p i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.load8_u
+  ;; CHECK-NEXT:    (local.get $p)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.load8_u
+  ;; CHECK-NEXT:    (local.get $p)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.load16_u
+  ;; CHECK-NEXT:    (local.get $p)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.load16_u
+  ;; CHECK-NEXT:    (local.get $p)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.load32_u
+  ;; CHECK-NEXT:    (local.get $p)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.load32_u
+  ;; CHECK-NEXT:    (local.get $p)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.and
+  ;; CHECK-NEXT:    (i64.load16_s
+  ;; CHECK-NEXT:     (local.get $p)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i64.const 255)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.and
+  ;; CHECK-NEXT:    (i64.load16_s
+  ;; CHECK-NEXT:     (local.get $p)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i64.const 4294967295)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.and
+  ;; CHECK-NEXT:    (i64.load32_s
+  ;; CHECK-NEXT:     (local.get $p)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i64.const 65535)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.and
+  ;; CHECK-NEXT:    (i64.load32_s
+  ;; CHECK-NEXT:     (local.get $p)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i64.const 4294967294)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $i64-load-and-mask (param $p i32)
+    ;; Narrow i64 loads masked with their exact byte width become unsigned
+    ;; loads.
+    (drop
+      (i64.and
+        (i64.load8_s (local.get $p))
+        (i64.const 0xff)
+      )
+    )
+    (drop
+      (i64.and
+        (i64.load8_u (local.get $p))
+        (i64.const 0xff)
+      )
+    )
+    (drop
+      (i64.and
+        (i64.load16_s (local.get $p))
+        (i64.const 0xffff)
+      )
+    )
+    (drop
+      (i64.and
+        (i64.load16_u (local.get $p))
+        (i64.const 0xffff)
+      )
+    )
+    (drop
+      (i64.and
+        (i64.load32_s (local.get $p))
+        (i64.const 0xffffffff)
+      )
+    )
+    (drop
+      (i64.and
+        (i64.load32_u (local.get $p))
+        (i64.const 0xffffffff)
+      )
+    )
+    ;; Negative cases: signed loads where the mask does not match the load size.
+    (drop
+      (i64.and
+        (i64.load16_s (local.get $p))
+        (i64.const 0xff)
+      )
+    )
+    (drop
+      (i64.and
+        (i64.load16_s (local.get $p))
+        (i64.const 0xffffffff)
+      )
+    )
+    (drop
+      (i64.and
+        (i64.load32_s (local.get $p))
+        (i64.const 0xffff)
+      )
+    )
+    (drop
+      (i64.and
+        (i64.load32_s (local.get $p))
+        (i64.const 0xfffffffe)
+      )
+    )
   )
   ;; CHECK:      (func $store8-and-255
   ;; CHECK-NEXT:  (i32.store8
@@ -4924,11 +5044,8 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.and
-  ;; CHECK-NEXT:    (local.tee $0
-  ;; CHECK-NEXT:     (i32.const 128)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (i32.const 1279)
+  ;; CHECK-NEXT:   (local.tee $0
+  ;; CHECK-NEXT:    (i32.const 128)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -5021,6 +5138,162 @@
           (i32.const 128)
         )
         (i32.const 127) ;; proper mask, just too small
+      )
+    )
+  )
+  ;; CHECK:      (func $and-redundant-low-mask (param $x i32) (param $y i64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.extend_i32_u
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.extend_i32_u
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.extend_i32_u
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.shr_u
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 24)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.shr_u
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:    (i64.const 56)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.tee $y
+  ;; CHECK-NEXT:    (i64.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.load8_u
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.load8_u
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.and
+  ;; CHECK-NEXT:    (i64.extend_i32_u
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i64.const 4294967294)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.and
+  ;; CHECK-NEXT:    (i64.extend_i32_s
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i64.const 4294967295)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.and
+  ;; CHECK-NEXT:    (i32.shr_u
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i32.const 24)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 4350)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.and
+  ;; CHECK-NEXT:    (i64.shr_u
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:     (i64.const 56)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i64.const 4350)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $and-redundant-low-mask (param $x i32) (param $y i64)
+    ;; Masks that preserve all possible non-zero low bits of the input are
+    ;; redundant, including for i64, non-contiguous masks, and unsigned loads
+    ;; with wider masks.
+    (drop
+      (i64.and
+        (i64.extend_i32_u (local.get $x))
+        (i64.const 0xffffffff)
+      )
+    )
+    (drop
+      (i64.and
+        (i64.extend_i32_u (local.get $x))
+        (i64.const 0x1ffffffff)
+      )
+    )
+    (drop
+      (i64.and
+        (i64.extend_i32_u (local.get $x))
+        (i64.const 0x80000000ffffffff)
+      )
+    )
+    (drop
+      (i32.and
+        (i32.shr_u (local.get $x) (i32.const 24))
+        (i32.const 0x10ff)
+      )
+    )
+    (drop
+      (i64.and
+        (i64.shr_u (local.get $y) (i64.const 56))
+        (i64.const 0x10ff)
+      )
+    )
+    (drop
+      (i64.and
+        (local.tee $y (i64.const 0))
+        (i64.const 0x1234)
+      )
+    )
+    (drop
+      (i32.and
+        (i32.load8_u (local.get $x))
+        (i32.const 0xffff)
+      )
+    )
+    (drop
+      (i64.and
+        (i64.load8_u (local.get $x))
+        (i64.const 0xffff)
+      )
+    )
+    ;; Negative cases: masks that clear potentially set low bits.
+    (drop
+      (i64.and
+        (i64.extend_i32_u (local.get $x))
+        (i64.const 0xfffffffe)
+      )
+    )
+    (drop
+      (i64.and
+        (i64.extend_i32_s (local.get $x))
+        (i64.const 0xffffffff)
+      )
+    )
+    (drop
+      (i32.and
+        (i32.shr_u (local.get $x) (i32.const 24))
+        (i32.const 0x10fe)
+      )
+    )
+    (drop
+      (i64.and
+        (i64.shr_u (local.get $y) (i64.const 56))
+        (i64.const 0x10fe)
       )
     )
   )
@@ -7192,7 +7465,7 @@
   ;; CHECK-NEXT:   (i64.const 63)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $and-popcount64 (result i64) ;; these are TODOs
+  (func $and-popcount64 (result i64)
     (i64.and
       (i64.popcnt
         (i64.const -1)
@@ -7201,11 +7474,8 @@
     )
   )
   ;; CHECK:      (func $and-popcount64-big (result i64)
-  ;; CHECK-NEXT:  (i64.and
-  ;; CHECK-NEXT:   (i64.popcnt
-  ;; CHECK-NEXT:    (i64.const -1)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (i64.const 127)
+  ;; CHECK-NEXT:  (i64.popcnt
+  ;; CHECK-NEXT:   (i64.const -1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $and-popcount64-big (result i64)
@@ -7217,11 +7487,8 @@
     )
   )
   ;; CHECK:      (func $and-popcount64-bigger (result i64)
-  ;; CHECK-NEXT:  (i64.and
-  ;; CHECK-NEXT:   (i64.popcnt
-  ;; CHECK-NEXT:    (i64.const -1)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (i64.const 255)
+  ;; CHECK-NEXT:  (i64.popcnt
+  ;; CHECK-NEXT:   (i64.const -1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $and-popcount64-bigger (result i64)
@@ -15256,26 +15523,32 @@
   )
   ;; CHECK:      (func $optimize-float-points (param $x0 f64) (param $x1 f64) (param $y0 f32) (param $y1 f32)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (f64.mul
-  ;; CHECK-NEXT:    (local.get $x0)
-  ;; CHECK-NEXT:    (local.get $x0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (f32.mul
-  ;; CHECK-NEXT:    (local.get $y0)
-  ;; CHECK-NEXT:    (local.get $y0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (f64.mul
-  ;; CHECK-NEXT:    (f64.add
+  ;; CHECK-NEXT:   (f64.abs
+  ;; CHECK-NEXT:    (f64.mul
   ;; CHECK-NEXT:     (local.get $x0)
-  ;; CHECK-NEXT:     (local.get $x1)
+  ;; CHECK-NEXT:     (local.get $x0)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (f64.add
-  ;; CHECK-NEXT:     (local.get $x0)
-  ;; CHECK-NEXT:     (local.get $x1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.abs
+  ;; CHECK-NEXT:    (f32.mul
+  ;; CHECK-NEXT:     (local.get $y0)
+  ;; CHECK-NEXT:     (local.get $y0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f64.abs
+  ;; CHECK-NEXT:    (f64.mul
+  ;; CHECK-NEXT:     (f64.add
+  ;; CHECK-NEXT:      (local.get $x0)
+  ;; CHECK-NEXT:      (local.get $x1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (f64.add
+  ;; CHECK-NEXT:      (local.get $x0)
+  ;; CHECK-NEXT:      (local.get $x1)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -15352,26 +15625,32 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (f64.div
-  ;; CHECK-NEXT:    (local.get $x0)
-  ;; CHECK-NEXT:    (local.get $x0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (f32.div
-  ;; CHECK-NEXT:    (local.get $y0)
-  ;; CHECK-NEXT:    (local.get $y0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (f64.div
-  ;; CHECK-NEXT:    (f64.add
+  ;; CHECK-NEXT:   (f64.abs
+  ;; CHECK-NEXT:    (f64.div
   ;; CHECK-NEXT:     (local.get $x0)
-  ;; CHECK-NEXT:     (local.get $x1)
+  ;; CHECK-NEXT:     (local.get $x0)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (f64.add
-  ;; CHECK-NEXT:     (local.get $x0)
-  ;; CHECK-NEXT:     (local.get $x1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.abs
+  ;; CHECK-NEXT:    (f32.div
+  ;; CHECK-NEXT:     (local.get $y0)
+  ;; CHECK-NEXT:     (local.get $y0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f64.abs
+  ;; CHECK-NEXT:    (f64.div
+  ;; CHECK-NEXT:     (f64.add
+  ;; CHECK-NEXT:      (local.get $x0)
+  ;; CHECK-NEXT:      (local.get $x1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (f64.add
+  ;; CHECK-NEXT:      (local.get $x0)
+  ;; CHECK-NEXT:      (local.get $x1)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -15392,35 +15671,35 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (f64.mul
-  ;; CHECK-NEXT:    (local.get $x0)
-  ;; CHECK-NEXT:    (local.get $x0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (f32.mul
-  ;; CHECK-NEXT:    (local.get $y0)
-  ;; CHECK-NEXT:    (local.get $y0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (f64.abs
   ;; CHECK-NEXT:    (f64.mul
-  ;; CHECK-NEXT:     (call $get-f64)
-  ;; CHECK-NEXT:     (call $get-f64)
+  ;; CHECK-NEXT:     (local.get $x0)
+  ;; CHECK-NEXT:     (local.get $x0)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (f64.div
-  ;; CHECK-NEXT:    (local.get $x0)
-  ;; CHECK-NEXT:    (local.get $x0)
+  ;; CHECK-NEXT:   (f32.abs
+  ;; CHECK-NEXT:    (f32.mul
+  ;; CHECK-NEXT:     (local.get $y0)
+  ;; CHECK-NEXT:     (local.get $y0)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (f32.div
-  ;; CHECK-NEXT:    (local.get $y0)
-  ;; CHECK-NEXT:    (local.get $y0)
+  ;; CHECK-NEXT:   (f64.abs
+  ;; CHECK-NEXT:    (f64.div
+  ;; CHECK-NEXT:     (local.get $x0)
+  ;; CHECK-NEXT:     (local.get $x0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.abs
+  ;; CHECK-NEXT:    (f32.div
+  ;; CHECK-NEXT:     (local.get $y0)
+  ;; CHECK-NEXT:     (local.get $y0)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -15455,7 +15734,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $optimize-float-points (param $x0 f64) (param $x1 f64) (param $y0 f32) (param $y1 f32)
-    ;; abs(x) * abs(x)   ==>   x * x
+    ;; abs(x) * abs(x)   ==>   abs(x * x)
     (drop (f64.mul
       (f64.abs (local.get $x0))
       (f64.abs (local.get $x0))
@@ -15515,7 +15794,7 @@
       )
     ))
 
-    ;; abs(x) / abs(x)   ==>   x / x
+    ;; abs(x) / abs(x)   ==>   abs(x / x)
     (drop (f64.div
       (f64.abs (local.get $x0))
       (f64.abs (local.get $x0))
@@ -15539,7 +15818,9 @@
       (f32.abs (local.get $y0))
     ))
 
-    ;; abs(x * x)   ==>   x * x
+    ;; abs(x * x) and abs(x / x) are not optimized without fast-math: x * x and
+    ;; x / x may be a NaN with the sign bit set, which abs would clear. See
+    ;; optimize-instructions-fast-math.wast.
     (drop (f64.abs
       (f64.mul
         (local.get $x0)
@@ -15552,17 +15833,6 @@
         (local.get $y0)
       )
     ))
-    ;; This one cannot be optimized as the runtime values may differ: the calls
-    ;; are "generative" in that identical syntactic calls may emit different
-    ;; results.
-    (drop (f64.abs
-      (f64.mul
-        (call $get-f64)
-        (call $get-f64)
-      )
-    ))
-
-    ;; abs(x / x)   ==>   x / x
     (drop (f64.abs
       (f64.div
         (local.get $x0)
@@ -15590,296 +15860,6 @@
     ))
   )
 
-  ;; CHECK:      (func $optimize-float-points-fallthrough (param $x f64) (param $xb f64) (param $y f32)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (f32.mul
-  ;; CHECK-NEXT:    (block (result f32)
-  ;; CHECK-NEXT:     (call $set-i32
-  ;; CHECK-NEXT:      (i32.const 42)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (local.get $y)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (block (result f32)
-  ;; CHECK-NEXT:     (call $set-i32
-  ;; CHECK-NEXT:      (i32.const 1337)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (local.get $y)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $optimize-float-points-fallthrough (param $x f64) (param $xb f64) (param $y f32)
-    ;; abs(x * x)   ==>   x * x  , as in the previous function.
-    ;;
-    ;; The fallthrough values here are identical, so we can optimize away the
-    ;; f32.abs despite the effects in both (and even different-looking effects).
-    (drop (f32.abs
-      (f32.mul
-        (block (result f32)
-          (call $set-i32
-            (i32.const 42)
-          )
-          (local.get $y)
-        )
-        (block (result f32)
-          (call $set-i32
-            (i32.const 1337)
-          )
-          (local.get $y)
-        )
-      )
-    ))
-  )
-  ;; CHECK:      (func $optimize-float-points-fallthrough-b (param $x f64) (param $xb f64) (param $y f32)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (f64.abs
-  ;; CHECK-NEXT:    (f64.mul
-  ;; CHECK-NEXT:     (block (result f64)
-  ;; CHECK-NEXT:      (call $set-i32
-  ;; CHECK-NEXT:       (i32.const 42)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (call $get-f64)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (block (result f64)
-  ;; CHECK-NEXT:      (call $set-i32
-  ;; CHECK-NEXT:       (i32.const 1337)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (call $get-f64)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $optimize-float-points-fallthrough-b (param $x f64) (param $xb f64) (param $y f32)
-    ;; But generative effects in the fallthrough values themselves block us.
-    (drop (f64.abs
-      (f64.mul
-        (block (result f64)
-          (call $set-i32
-            (i32.const 42)
-          )
-          (call $get-f64) ;; this changed
-        )
-        (block (result f64)
-          (call $set-i32
-            (i32.const 1337)
-          )
-          (call $get-f64) ;; this changed
-        )
-      )
-    ))
-  )
-  ;; CHECK:      (func $optimize-float-points-fallthrough-c (param $x f64) (param $xb f64) (param $y f32)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (f64.abs
-  ;; CHECK-NEXT:    (f64.mul
-  ;; CHECK-NEXT:     (block (result f64)
-  ;; CHECK-NEXT:      (call $set-i32
-  ;; CHECK-NEXT:       (i32.const 42)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (local.tee $x
-  ;; CHECK-NEXT:       (f64.const 12.34)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (block (result f64)
-  ;; CHECK-NEXT:      (call $set-i32
-  ;; CHECK-NEXT:       (i32.const 1337)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (local.get $x)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $optimize-float-points-fallthrough-c (param $x f64) (param $xb f64) (param $y f32)
-    ;; local.tee/get pairs are ok, but atm we don't look at the fallthrough of
-    ;; the right side (we'd need to consider effects). TODO
-    (drop (f64.abs
-      (f64.mul
-        (block (result f64)
-          (call $set-i32
-            (i32.const 42)
-          )
-          (local.tee $x         ;; this changed
-            (f64.const 12.34)
-          )
-        )
-        (block (result f64)
-          (call $set-i32
-            (i32.const 1337)
-          )
-          (local.get $x)        ;; this changed
-        )
-      )
-    ))
-  )
-  ;; CHECK:      (func $optimize-float-points-fallthrough-cb (param $x f64) (param $xb f64) (param $y f32)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (f64.abs
-  ;; CHECK-NEXT:    (f64.mul
-  ;; CHECK-NEXT:     (block (result f64)
-  ;; CHECK-NEXT:      (call $set-i32
-  ;; CHECK-NEXT:       (i32.const 42)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (local.tee $x
-  ;; CHECK-NEXT:       (f64.const 12.34)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (block (result f64)
-  ;; CHECK-NEXT:      (local.set $x
-  ;; CHECK-NEXT:       (f64.const 13.37)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (local.get $x)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $optimize-float-points-fallthrough-cb (param $x f64) (param $xb f64) (param $y f32)
-    ;; A conflicting set in the middle is a problem: here we cannot optimize.
-    (drop (f64.abs
-      (f64.mul
-        (block (result f64)
-          (call $set-i32
-            (i32.const 42)
-          )
-          (local.tee $x
-            (f64.const 12.34)
-          )
-        )
-        (block (result f64)
-          (local.set $x         ;; this changed
-            (f64.const 13.37)
-          )
-          (local.get $x)
-        )
-      )
-    ))
-  )
-  ;; CHECK:      (func $optimize-float-points-fallthrough-cc (param $x f64) (param $xb f64) (param $y f32)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (f64.mul
-  ;; CHECK-NEXT:    (block (result f64)
-  ;; CHECK-NEXT:     (call $set-i32
-  ;; CHECK-NEXT:      (i32.const 42)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (local.tee $x
-  ;; CHECK-NEXT:      (f64.const 12.34)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $optimize-float-points-fallthrough-cc (param $x f64) (param $xb f64) (param $y f32)
-    ;; Removing the local.set and the block on the right lets us optimize using
-    ;; the tee/get pair.
-    (drop (f64.abs
-      (f64.mul
-        (block (result f64)
-          (call $set-i32
-            (i32.const 42)
-          )
-          (local.tee $x
-            (f64.const 12.34)
-          )
-        )
-        (local.get $x)         ;; this moved out
-      )
-    ))
-  )
-  ;; CHECK:      (func $optimize-float-points-fallthrough-d (param $x f64) (param $xb f64) (param $y f32)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (f64.abs
-  ;; CHECK-NEXT:    (f64.mul
-  ;; CHECK-NEXT:     (block (result f64)
-  ;; CHECK-NEXT:      (call $set-i32
-  ;; CHECK-NEXT:       (i32.const 42)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (local.tee $x
-  ;; CHECK-NEXT:       (f64.const 12.34)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (block (result f64)
-  ;; CHECK-NEXT:      (call $set-i32
-  ;; CHECK-NEXT:       (i32.const 1337)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (local.get $xb)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $optimize-float-points-fallthrough-d (param $x f64) (param $xb f64) (param $y f32)
-    ;; The wrong local index means we fail again.
-    (drop (f64.abs
-      (f64.mul
-        (block (result f64)
-          (call $set-i32
-            (i32.const 42)
-          )
-          (local.tee $x
-            (f64.const 12.34)
-          )
-        )
-        (block (result f64)
-          (call $set-i32
-            (i32.const 1337)
-          )
-          (local.get $xb) ;; this changed
-        )
-      )
-    ))
-  )
-  ;; CHECK:      (func $optimize-float-points-stateful (result f32)
-  ;; CHECK-NEXT:  (f32.abs
-  ;; CHECK-NEXT:   (f32.mul
-  ;; CHECK-NEXT:    (f32.neg
-  ;; CHECK-NEXT:     (block (result f32)
-  ;; CHECK-NEXT:      (global.set $g-f32
-  ;; CHECK-NEXT:       (f32.add
-  ;; CHECK-NEXT:        (global.get $g-f32)
-  ;; CHECK-NEXT:        (f32.const 2)
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (global.get $g-f32)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (f32.neg
-  ;; CHECK-NEXT:     (block (result f32)
-  ;; CHECK-NEXT:      (global.set $g-f32
-  ;; CHECK-NEXT:       (f32.add
-  ;; CHECK-NEXT:        (global.get $g-f32)
-  ;; CHECK-NEXT:        (f32.const 2)
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (global.get $g-f32)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $optimize-float-points-stateful (result f32)
-    (f32.abs
-      (f32.mul
-        ;; LHS
-        (f32.neg
-          (block (result f32)
-            (global.set $g-f32 (f32.add (global.get $g-f32) (f32.const 2)))
-            (global.get $g-f32)
-          )
-        )
-        ;; RHS - The increment of the global causes this to produce a different
-        ;; result than the LHS, so we cannot optimize out the f32.abs.
-        (f32.neg
-          (block (result f32)
-            (global.set $g-f32 (f32.add (global.get $g-f32) (f32.const 2)))
-            (global.get $g-f32)
-          )
-        )
-      )
-    )
-  )
   ;; CHECK:      (func $ternary (param $x i32) (param $y i32)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.eqz
@@ -18727,6 +18707,35 @@
     )
     (local.tee $temp
       (unreachable)
+    )
+  )
+
+  ;; CHECK:      (func $select-memory-grow
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (select
+  ;; CHECK-NEXT:    (memory.grow
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (memory.grow
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $select-memory-grow
+    ;; The first memory.grow changes the result of the second, so the arms are
+    ;; not equal and we cannot optimize.
+    (drop
+      (select
+        (memory.grow
+          (i32.const 1)
+        )
+        (memory.grow
+          (i32.const 1)
+        )
+        (i32.const 1)
+      )
     )
   )
 )

@@ -1003,7 +1003,7 @@ BinaryenMemoryFill(BinaryenModuleRef module,
                    BinaryenExpressionRef size,
                    const char* memoryName);
 BINARYEN_API BinaryenExpressionRef BinaryenRefNull(BinaryenModuleRef module,
-                                                   BinaryenType type);
+                                                   BinaryenHeapType type);
 BINARYEN_API BinaryenExpressionRef
 BinaryenRefIsNull(BinaryenModuleRef module, BinaryenExpressionRef value);
 BINARYEN_API BinaryenExpressionRef BinaryenRefAs(BinaryenModuleRef module,

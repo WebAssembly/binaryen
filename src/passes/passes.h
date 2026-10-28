@@ -31,6 +31,7 @@ Pass* createCoalesceLocalsWithLearningPass();
 Pass* createCodeFoldingPass();
 Pass* createCodePushingPass();
 Pass* createConstHoistingPass();
+Pass* createConstantArraysToDataPass();
 Pass* createConstantFieldPropagationPass();
 Pass* createConstantFieldPropagationRefTestPass();
 Pass* createConstraintAnalysisPass();
@@ -90,6 +91,7 @@ Pass* createLLVMMemoryCopyFillLoweringPass();
 Pass* createLoopInvariantCodeMotionPass();
 Pass* createMakeSharedObjectsPass();
 Pass* createMarkJSCalledPass();
+Pass* createMarkNoReturnPass();
 Pass* createMemory64LoweringPass();
 Pass* createMemoryPackingPass();
 Pass* createMergeBlocksPass();
@@ -116,6 +118,7 @@ Pass* createOptimizeAddedConstantsPropagatePass();
 Pass* createOptimizeInstructionsPass();
 Pass* createOptimizeCastsPass();
 Pass* createOptimizeForJSPass();
+Pass* createOptimizeNoReturnPass();
 // Outlining currently relies on LLVM's SuffixTree, which we can't rely upon
 // when building Binaryen for Emscripten.
 #ifdef __EMSCRIPTEN__
@@ -185,6 +188,7 @@ Pass* createStripDebugPass();
 Pass* createStripDWARFPass();
 Pass* createStripEHPass();
 Pass* createStripProducersPass();
+Pass* createStripRefiningCastsPass();
 Pass* createStripTargetFeaturesPass();
 Pass* createStripToolchainAnnotationsPass();
 Pass* createStubUnsupportedJSOpsPass();

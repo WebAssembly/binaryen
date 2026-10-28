@@ -87,9 +87,9 @@ RemovalOutcome removeParameter(const std::vector<Function*>& funcs,
 // we return Success if we removed any index, Failure if we removed none, and
 // FailureDueToEffects if at least one index could have been removed but for
 // effects).
-std::pair<SortedVector, RemovalOutcome>
+std::pair<SortedVector<Index>, RemovalOutcome>
 removeParameters(const std::vector<Function*>& funcs,
-                 SortedVector indexes,
+                 SortedVector<Index> indexes,
                  const std::vector<Call*>& calls,
                  const std::vector<CallRef*>& callRefs,
                  Module* module,
@@ -102,10 +102,10 @@ removeParameters(const std::vector<Function*>& funcs,
 // which allows other optimizations to remove it.
 //
 // Returns the indexes that were optimized.
-SortedVector applyConstantValues(const std::vector<Function*>& funcs,
-                                 const std::vector<Call*>& calls,
-                                 const std::vector<CallRef*>& callRefs,
-                                 Module* module);
+SortedVector<Index> applyConstantValues(const std::vector<Function*>& funcs,
+                                        const std::vector<Call*>& calls,
+                                        const std::vector<CallRef*>& callRefs,
+                                        Module* module);
 
 // Helper that localizes all calls to a set of targets, in an entire module.
 // This basically calls ChildLocalizer in each function, on the relevant calls.

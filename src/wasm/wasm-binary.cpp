@@ -512,6 +512,13 @@ void WasmBinaryWriter::writeExpression(Expression* curr) {
   BinaryenIRToBinaryWriter(*this, o).visit(curr);
 }
 
+void WasmBinaryWriter::noteLabelNames(
+  Function* func, std::vector<std::pair<Index, Name>>& labelNames) {
+  if (!labelNames.empty()) {
+    funcLabelNames[func->name] = std::move(labelNames);
+  }
+}
+
 void WasmBinaryWriter::writeFunctions() {
   if (importInfo->getNumDefinedFunctions() == 0) {
     return;
@@ -542,12 +549,14 @@ void WasmBinaryWriter::writeFunctions() {
       writer.write();
       if (debugInfo) {
         funcMappedLocals[func->name] = std::move(writer.getMappedLocals());
+        noteLabelNames(func, writer.getLabelNames());
       }
     } else {
       BinaryenIRToBinaryWriter writer(*this, o, func, sourceMap, DWARF);
       writer.write();
       if (debugInfo) {
         funcMappedLocals[func->name] = std::move(writer.getMappedLocals());
+        noteLabelNames(func, writer.getLabelNames());
       }
     }
     size_t size = o.size() - start;
@@ -1122,6 +1131,38 @@ void WasmBinaryWriter::writeNames() {
         emitted++;
       }
       assert(emitted == functionsWithLocalNames.size());
+      finishSubsection(substart);
+    }
+  }
+
+  // label names
+  {
+    std::vector<std::pair<Index, Function*>> functionsWithLabelNames;
+    Index checked = 0;
+    auto check = [&](Function* curr) {
+      if (funcLabelNames.count(curr->name)) {
+        functionsWithLabelNames.push_back({checked, curr});
+      }
+      checked++;
+    };
+    ModuleUtils::iterImportedFunctions(*wasm, check);
+    ModuleUtils::iterDefinedFunctions(*wasm, check);
+    assert(checked == indexes.functionIndexes.size());
+    if (functionsWithLabelNames.size() > 0) {
+      auto substart =
+        startSubsection(BinaryConsts::CustomSections::Subsection::NameLabel);
+      o << U32LEB(functionsWithLabelNames.size());
+      for (auto& [index, func] : functionsWithLabelNames) {
+        // The labels were gathered in the order they were emitted, which is the
+        // order of the label index space.
+        auto& labels = funcLabelNames[func->name];
+        o << U32LEB(index);
+        o << U32LEB(labels.size());
+        for (auto& [labelIndex, name] : labels) {
+          o << U32LEB(labelIndex);
+          writeInlineString(name.view());
+        }
+      }
       finishSubsection(substart);
     }
   }
@@ -1778,6 +1819,7 @@ std::optional<BufferWithRandomAccess> WasmBinaryWriter::writeCodeAnnotations() {
   append(getJSCalledHintsBuffer());
   append(getIdempotentHintsBuffer());
   append(getToolchainInlineHintsBuffer());
+  append(getNoReturnHintsBuffer());
   return ret;
 }
 
@@ -1949,6 +1991,11 @@ WasmBinaryWriter::getToolchainInlineHintsBuffer() {
   WRITE_I7_HINT(Annotations::ToolchainInlineHint, toolchainInline);
 }
 
+std::optional<BufferWithRandomAccess>
+WasmBinaryWriter::getNoReturnHintsBuffer() {
+  WRITE_BOOLEAN_HINT(Annotations::NoReturnHint, noReturn);
+}
+
 void WasmBinaryWriter::writeData(const char* data, size_t size) {
   for (size_t i = 0; i < size; i++) {
     o << int8_t(data[i]);
@@ -1968,7 +2015,7 @@ void WasmBinaryWriter::writeType(Type type) {
   type = type.asWrittenGivenFeatures(wasm->features);
   if (type.isRef()) {
     auto heapType = type.getHeapType();
-    if (type.isNullable() && heapType.isBasic() && !heapType.isShared()) {
+    if (type.isNullableRef() && heapType.isBasic() && !heapType.isShared()) {
       switch (heapType.getBasic(Unshared)) {
         case HeapType::ext:
           o << S32LEB(BinaryConsts::EncodedType::externref);
@@ -2023,7 +2070,7 @@ void WasmBinaryWriter::writeType(Type type) {
           return;
       }
     }
-    if (type.isNullable()) {
+    if (type.isNullableRef()) {
       o << S32LEB(BinaryConsts::EncodedType::nullable);
     } else {
       o << S32LEB(BinaryConsts::EncodedType::nonnullable);
@@ -2208,7 +2255,8 @@ void WasmBinaryReader::preScan() {
           sectionName == Annotations::RemovableIfUnusedHint ||
           sectionName == Annotations::JSCalledHint ||
           sectionName == Annotations::IdempotentHint ||
-          sectionName == Annotations::ToolchainInlineHint) {
+          sectionName == Annotations::ToolchainInlineHint ||
+          sectionName == Annotations::NoReturnHint) {
         // Code annotations require code locations.
         // TODO: We could note which functions require code locations, as an
         //       optimization.
@@ -2381,6 +2429,9 @@ void WasmBinaryReader::readCustomSection(size_t payloadLen) {
       AnnotationSectionInfo{pos, [this, payloadLen]() {
                               this->readToolchainInlineHints(payloadLen);
                             }});
+  } else if (sectionName == Annotations::NoReturnHint) {
+    deferredAnnotationSections.push_back(AnnotationSectionInfo{
+      pos, [this, payloadLen]() { this->readNoReturnHints(payloadLen); }});
   } else {
     // an unfamiliar custom section
     if (sectionName.equals(BinaryConsts::CustomSections::Linking)) {
@@ -3358,6 +3409,25 @@ void WasmBinaryReader::setLocalNames(Function& func, Index i) {
   }
 }
 
+void WasmBinaryReader::setLabelNames(Index i) {
+  if (auto it = labelNames.find(i); it != labelNames.end()) {
+    currLabelNames = &it->second;
+  } else {
+    currLabelNames = nullptr;
+  }
+  nextLabelIndex = 0;
+}
+
+Name WasmBinaryReader::getNextLabelName() {
+  auto index = nextLabelIndex++;
+  if (currLabelNames) {
+    if (auto it = currLabelNames->find(index); it != currLabelNames->end()) {
+      return it->second;
+    }
+  }
+  return Name();
+}
+
 void WasmBinaryReader::readFunctionSignatures() {
   size_t num = getU32LEB();
   auto numImports = wasm.functions.size();
@@ -3373,6 +3443,14 @@ void WasmBinaryReader::readFunctionSignatures() {
     if (index >= num + numImports) {
       std::cerr << "warning: function index out of bounds in name section: "
                    "locals at index "
+                << index << '\n';
+    }
+  }
+  // Likewise for the label names subsection.
+  for (auto& [index, labels] : labelNames) {
+    if (index >= num + numImports) {
+      std::cerr << "warning: function index out of bounds in name section: "
+                   "labels at index "
                 << index << '\n';
     }
   }
@@ -3452,6 +3530,7 @@ void WasmBinaryReader::readFunctions() {
 
     readVars();
     setLocalNames(*func, numFuncImports + i);
+    setLabelNames(numFuncImports + i);
     {
       // Process the function body. Even if we are skipping function bodies we
       // need to not skip the start function. That contains important code for
@@ -3485,12 +3564,25 @@ void WasmBinaryReader::readFunctions() {
         if (!builder.empty()) {
           throwError("expected function end");
         }
+        if (currLabelNames) {
+          // Check that the labels named in the name section actually exist.
+          Index maxIndex = 0;
+          for (auto& [index, name] : *currLabelNames) {
+            maxIndex = std::max(maxIndex, index);
+          }
+          if (maxIndex >= nextLabelIndex) {
+            std::cerr << "warning: label index out of bounds in name section: "
+                      << maxIndex << " in function " << (numFuncImports + i)
+                      << '\n';
+          }
+        }
       }
     }
 
     sourceMapReader.finishFunction();
     TypeUpdating::handleNonDefaultableLocals(func.get(), wasm);
     currFunction = nullptr;
+    currLabelNames = nullptr;
   }
 }
 
@@ -3519,20 +3611,18 @@ void WasmBinaryReader::readVars() {
 }
 
 Result<> WasmBinaryReader::readLoad(unsigned bytes, bool signed_, Type type) {
-  auto [mem, align, offset, backing] = getMemarg();
-  if (backing == BackingType::Array) {
-    HeapType arrayType = getIndexedHeapType();
+  auto [mem, align, offset, arrayType] = getMemarg();
+  if (arrayType) {
     return builder.makeArrayLoad(
-      arrayType, bytes, signed_, offset, align, type);
+      *arrayType, bytes, signed_, offset, align, type);
   }
   return builder.makeLoad(bytes, signed_, offset, align, type, mem);
 }
 
 Result<> WasmBinaryReader::readStore(unsigned bytes, Type type) {
-  auto [mem, align, offset, backing] = getMemarg();
-  if (backing == BackingType::Array) {
-    HeapType arrayType = getIndexedHeapType();
-    return builder.makeArrayStore(arrayType, bytes, offset, align, type);
+  auto [mem, align, offset, arrayType] = getMemarg();
+  if (arrayType) {
+    return builder.makeArrayStore(*arrayType, bytes, offset, align, type);
   }
   return builder.makeStore(bytes, offset, align, type, mem);
 }
@@ -3543,12 +3633,22 @@ Result<> WasmBinaryReader::readInst() {
   }
   uint8_t code = getInt8();
   switch (code) {
-    case BinaryConsts::Block:
-      return builder.makeBlock(Name(), getBlockType());
-    case BinaryConsts::If:
-      return builder.makeIf(Name(), getBlockType());
-    case BinaryConsts::Loop:
-      return builder.makeLoop(Name(), getBlockType());
+    case BinaryConsts::Block: {
+      auto name = getNextLabelName();
+      return builder.makeBlock(name, getBlockType());
+    }
+    case BinaryConsts::If: {
+      // An `if` cannot hold a name in Binaryen IR, so only use the name if we
+      // end up needing a label anyhow.
+      auto name = getNextLabelName();
+      auto result = builder.makeIf(Name(), getBlockType());
+      builder.setScopeNameHint(name);
+      return result;
+    }
+    case BinaryConsts::Loop: {
+      auto name = getNextLabelName();
+      return builder.makeLoop(name, getBlockType());
+    }
     case BinaryConsts::Br:
       return builder.makeBreak(getU32LEB(), false);
     case BinaryConsts::BrIf:
@@ -3636,9 +3736,14 @@ Result<> WasmBinaryReader::readInst() {
       return builder.makeTableGet(getTableName(getU32LEB()));
     case BinaryConsts::TableSet:
       return builder.makeTableSet(getTableName(getU32LEB()));
-    case BinaryConsts::Try:
-      return builder.makeTry(Name(), getBlockType());
+    case BinaryConsts::Try: {
+      // A `try` can hold a name in the IR, like a block or a loop.
+      auto name = getNextLabelName();
+      return builder.makeTry(name, getBlockType());
+    }
     case BinaryConsts::TryTable: {
+      // As with `if`, only use the name if we end up needing a label.
+      auto name = getNextLabelName();
       auto type = getBlockType();
       std::vector<Name> tags;
       std::vector<Index> labels;
@@ -3655,7 +3760,9 @@ Result<> WasmBinaryReader::readInst() {
         isRefs.push_back(code == BinaryConsts::CatchRef ||
                          code == BinaryConsts::CatchAllRef);
       }
-      return builder.makeTryTable(Name(), type, tags, labels, isRefs);
+      auto result = builder.makeTryTable(Name(), type, tags, labels, isRefs);
+      builder.setScopeNameHint(name);
+      return result;
     }
     case BinaryConsts::Throw:
       return builder.makeThrow(getTagName(getU32LEB()));
@@ -5476,6 +5583,19 @@ void WasmBinaryReader::readNames(size_t sectionPos, size_t payloadLen) {
           localNames[funcIndex][localIndex] = name;
         }
       }
+    } else if (nameType == Subsection::NameLabel) {
+      auto numFuncs = getU32LEB();
+      for (size_t i = 0; i < numFuncs; i++) {
+        auto funcIndex = getU32LEB();
+        auto numLabels = getU32LEB();
+        NameProcessor processor;
+        for (size_t j = 0; j < numLabels; j++) {
+          auto labelIndex = getU32LEB();
+          auto rawName = getInlineString();
+          auto name = processor.process(rawName);
+          labelNames[funcIndex][labelIndex] = name;
+        }
+      }
     } else if (nameType == Subsection::NameType) {
       auto num = getU32LEB();
       NameProcessor processor;
@@ -5850,12 +5970,16 @@ void WasmBinaryReader::readToolchainInlineHints(size_t payloadLen) {
   READ_I7_HINT(Annotations::ToolchainInlineHint, toolchainInline);
 }
 
-std::tuple<Address, Address, Index, MemoryOrder, BackingType>
+void WasmBinaryReader::readNoReturnHints(size_t payloadLen) {
+  READ_BOOLEAN_HINT(Annotations::NoReturnHint, noReturn);
+}
+
+std::tuple<Address, Address, Index, MemoryOrder, std::optional<HeapType>>
 WasmBinaryReader::readMemoryAccess(bool isAtomic, bool isRMW) {
   auto rawAlignment = getU32LEB();
-  BackingType backing = BackingType::Memory;
   Index memIdx = 0;
   Address offset = 0;
+  std::optional<HeapType> arrayType;
 
   bool hasMemoryOrder = rawAlignment & BinaryConsts::HasMemoryOrderMask;
   if (hasMemoryOrder && !isAtomic) {
@@ -5873,8 +5997,8 @@ WasmBinaryReader::readMemoryAccess(bool isAtomic, bool isRMW) {
     rawAlignment = rawAlignment & ~BinaryConsts::HasMemoryIndexMask;
   }
 
-  if (rawAlignment & BinaryConsts::HasBackingArrayMask) {
-    backing = BackingType::Array;
+  bool hasBackingArray = rawAlignment & BinaryConsts::HasBackingArrayMask;
+  if (hasBackingArray) {
     // Clear the bit before we parse alignment
     rawAlignment = rawAlignment & ~BinaryConsts::HasBackingArrayMask;
   }
@@ -5887,7 +6011,14 @@ WasmBinaryReader::readMemoryAccess(bool isAtomic, bool isRMW) {
   MemoryOrder memoryOrder =
     isAtomic ? MemoryOrder::SeqCst : MemoryOrder::Unordered;
 
-  if (backing == BackingType::Memory) {
+  if (hasBackingArray) {
+    if (hasMemIdx || hasMemoryOrder) {
+      throwError(
+        "Memory index and memory order are not allowed for array backing.");
+    }
+    arrayType = getIndexedHeapType();
+    offset = getU32LEB();
+  } else {
     if (hasMemIdx) {
       memIdx = getU32LEB();
     }
@@ -5899,40 +6030,33 @@ WasmBinaryReader::readMemoryAccess(bool isAtomic, bool isRMW) {
     }
     auto* memory = wasm.memories[memIdx].get();
     offset = memory->addressType == Type::i32 ? getU32LEB() : getU64LEB();
-  } else if (backing == BackingType::Array) {
-    if (hasMemIdx || hasMemoryOrder) {
-      throwError(
-        "Memory index and memory order are not allowed for array backing.");
-    }
-    offset = getU32LEB();
-  } else {
-    WASM_UNREACHABLE("Invalid backing type");
   }
 
-  return {alignment, offset, memIdx, memoryOrder, backing};
+  return {alignment, offset, memIdx, memoryOrder, arrayType};
 }
 
 std::tuple<Name, Address, Address, MemoryOrder>
 WasmBinaryReader::getAtomicMemarg() {
-  auto [alignment, offset, memIdx, memoryOrder, backing] =
+  auto [alignment, offset, memIdx, memoryOrder, arrayType] =
     readMemoryAccess(/*isAtomic=*/true, /*isRMW=*/false);
   return {getMemoryName(memIdx), alignment, offset, memoryOrder};
 }
 
 std::tuple<Name, Address, Address, MemoryOrder>
 WasmBinaryReader::getRMWMemarg() {
-  auto [alignment, offset, memIdx, memoryOrder, backing] =
+  auto [alignment, offset, memIdx, memoryOrder, arrayType] =
     readMemoryAccess(/*isAtomic=*/true, /*isRMW=*/true);
   return {getMemoryName(memIdx), alignment, offset, memoryOrder};
 }
 
-std::tuple<Name, Address, Address, BackingType> WasmBinaryReader::getMemarg() {
-  auto [alignment, offset, memIdx, memoryOrder, backing] =
+std::tuple<Name, Address, Address, std::optional<HeapType>>
+WasmBinaryReader::getMemarg() {
+  auto [alignment, offset, memIdx, memoryOrder, arrayType] =
     readMemoryAccess(/*isAtomic=*/false, /*isRMW=*/false);
-  if (backing == BackingType::Array) {
-    return {Name(), alignment, offset, backing};
+  if (arrayType) {
+    return {Name(), alignment, offset, arrayType};
   }
-  return {getMemoryName(memIdx), alignment, offset, backing};
+  return {getMemoryName(memIdx), alignment, offset, std::nullopt};
 }
 
 MemoryOrder WasmBinaryReader::getMemoryOrder(bool isRMW) {

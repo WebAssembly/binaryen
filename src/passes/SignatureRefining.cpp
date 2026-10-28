@@ -56,20 +56,13 @@ struct SignatureRefining : public Pass {
       return;
     }
 
-    if (!module->tables.empty()) {
-      // When there are tables we must also take their types into account, which
-      // would require us to take call_indirect, element segments, etc. into
-      // account. For now, do nothing if there are tables.
-      // TODO
-      return;
-    }
-
     // First, find all the information we need. Start by collecting inside each
     // function in parallel.
 
     struct Info {
       // The calls and call_refs.
       std::vector<Call*> calls;
+      std::vector<CallIndirect*> callIndirects;
       std::vector<CallRef*> callRefs;
 
       // Additional calls to take into account. We store intrinsic calls here,
@@ -108,8 +101,20 @@ struct SignatureRefining : public Pass {
           info.canModify = false;
           return;
         }
-        info.calls = std::move(FindAll<Call>(func->body).list);
-        info.callRefs = std::move(FindAll<CallRef>(func->body).list);
+
+        struct CallFinder : public PostWalker<CallFinder> {
+          Info& info;
+
+          CallFinder(Info& info) : info(info) {}
+
+          void visitCall(Call* curr) { info.calls.push_back(curr); }
+          void visitCallIndirect(CallIndirect* curr) {
+            info.callIndirects.push_back(curr);
+          }
+          void visitCallRef(CallRef* curr) { info.callRefs.push_back(curr); }
+        } callFinder(info);
+        callFinder.walk(func->body);
+
         info.resultsLUB = LUB::getResultsLUB(func, *module);
       });
 
@@ -137,7 +142,10 @@ struct SignatureRefining : public Pass {
         }
       }
 
-      // For indirect calls, add each call_ref to the type the call_ref uses.
+      // For non-direct calls, add each to the proper list of the relevant type.
+      for (auto* callIndirect : info.callIndirects) {
+        allInfo[callIndirect->heapType].callIndirects.push_back(callIndirect);
+      }
       for (auto* callRef : info.callRefs) {
         auto calledType = callRef->target->type;
         if (calledType != Type::unreachable) {
@@ -189,6 +197,8 @@ struct SignatureRefining : public Pass {
     // For now, do not optimize types that have subtypes. When we modify such a
     // type we need to modify subtypes as well, similar to the analysis in
     // TypeRefining, and perhaps we can unify this pass with that. TODO
+    // TODO: if we extend this, we must extend the table handling below, which
+    //       atm depends on it
     SubTypes subTypes(*module);
     for (auto& [type, info] : allInfo) {
       if (!subTypes.getImmediateSubTypes(type).empty()) {
@@ -200,6 +210,22 @@ struct SignatureRefining : public Pass {
         // param type for the parent (or equal) TODO
         info.canModify = false;
       }
+    }
+
+    // If a signature type appears in a table/elem, do not optimize it for now.
+    // TODO: We could refine the table/elem and the call_indirects etc.
+    auto handleTableType = [&](Type type) {
+      if (type.isFunction() && !type.isBasic()) {
+        // Note that we do not need to handle subtyping, because subtypes are
+        // disallowed, see above.
+        allInfo[type.getHeapType()].canModify = false;
+      }
+    };
+    for (auto& table : module->tables) {
+      handleTableType(table->type);
+    }
+    for (auto& segment : module->elementSegments) {
+      handleTableType(segment->type);
     }
 
     // Compute optimal LUBs.
@@ -232,6 +258,9 @@ struct SignatureRefining : public Pass {
 
         for (auto* call : info.calls) {
           updateLUBs(call->operands);
+        }
+        for (auto* callIndirect : info.callIndirects) {
+          updateLUBs(callIndirect->operands);
         }
         for (auto* callRef : info.callRefs) {
           updateLUBs(callRef->operands);
@@ -283,6 +312,11 @@ struct SignatureRefining : public Pass {
         for (auto* call : info.calls) {
           if (call->type != Type::unreachable) {
             call->type = newResults;
+          }
+        }
+        for (auto* callIndirect : info.callIndirects) {
+          if (callIndirect->type != Type::unreachable) {
+            callIndirect->type = newResults;
           }
         }
         for (auto* callRef : info.callRefs) {
