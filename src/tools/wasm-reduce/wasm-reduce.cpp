@@ -28,7 +28,6 @@
 #include <memory>
 
 #include "ir/branch-utils.h"
-#include "ir/eh-utils.h"
 #include "ir/iteration.h"
 #include "ir/localize.h"
 #include "ir/properties.h"
@@ -1223,8 +1222,6 @@ struct Reducer
           return std::make_unique<FunctionReplacer>();
         };
 
-        bool needEHFixups = false;
-
         void visitCall(Call* curr) {
           // Replace calls to functions we have removed.
           if (getModule()->getFunctionOrNull(curr->target)) {
@@ -1245,9 +1242,6 @@ struct Reducer
           block->list.push_back(replacement);
           block->type = originalType;
           replaceCurrent(block);
-          // We added a block around content here, possibly causing us to need
-          // EH fixups later.
-          needEHFixups = true;
         }
         void visitRefFunc(RefFunc* curr) {
           // Replace references to functions we have removed.
@@ -1257,11 +1251,6 @@ struct Reducer
           Builder builder(*getModule());
           replaceCurrent(
             builder.makeBlock({builder.makeUnreachable()}, curr->type));
-        }
-        void visitFunction(Function* curr) {
-          if (needEHFixups) {
-            EHUtils::handleBlockNestedPops(curr, *getModule());
-          }
         }
       };
       PassRunner runner(module.get());
