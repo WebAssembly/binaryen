@@ -258,7 +258,6 @@ struct Flatten
           auto type = br->value->type;
           if (type.isConcrete()) {
             // we are sending a value. use a local instead
-            Type blockType = findBreakTarget(br->name)->type;
             Index temp = getTempForBreakTarget(br->name);
             ourPreludes.push_back(builder.makeLocalSet(temp, br->value));
 
@@ -283,7 +282,7 @@ struct Flatten
             // with anyref type in case for flowing out. Here we create the
             // second 'flowing out' local in case two block's types are
             // different.
-            if (type != blockType) {
+            if (type != findBreakTarget(br->name)->type) {
               temp = builder.addVar(getFunction(), type);
               ourPreludes.push_back(builder.makeLocalSet(
                 temp, ExpressionManipulator::copy(br->value, *getModule())));
