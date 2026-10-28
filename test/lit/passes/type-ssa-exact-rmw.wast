@@ -8,42 +8,106 @@
     (type $used-in-struct-rmw (sub (struct (field anyref))))
     ;; CHECK:       (type $used-in-struct-rmw-ok (sub (struct (field anyref))))
     (type $used-in-struct-rmw-ok (sub (struct (field anyref))))
+    ;; CHECK:       (type $used-in-struct-rmw-bot (sub (struct (field anyref))))
+    (type $used-in-struct-rmw-bot (sub (struct (field anyref))))
     ;; CHECK:       (type $expected-in-struct-cmpxchg (sub (struct (field anyref))))
     (type $expected-in-struct-cmpxchg (sub (struct (field anyref))))
     ;; CHECK:       (type $used-in-struct-cmpxchg (sub $expected-in-struct-cmpxchg (struct (field anyref))))
     (type $used-in-struct-cmpxchg (sub $expected-in-struct-cmpxchg (struct (field anyref))))
     ;; CHECK:       (type $used-in-struct-cmpxchg-ok (sub $expected-in-struct-cmpxchg (struct (field anyref))))
     (type $used-in-struct-cmpxchg-ok (sub $expected-in-struct-cmpxchg (struct (field anyref))))
+    ;; CHECK:       (type $used-in-struct-cmpxchg-bot (sub $expected-in-struct-cmpxchg (struct (field anyref))))
+    (type $used-in-struct-cmpxchg-bot (sub $expected-in-struct-cmpxchg (struct (field anyref))))
+    ;; CHECK:       (type $used-in-array-rmw (sub (struct (field anyref))))
+    (type $used-in-array-rmw (sub (struct (field anyref))))
+    ;; CHECK:       (type $used-in-array-rmw-ok (sub (struct (field anyref))))
+    (type $used-in-array-rmw-ok (sub (struct (field anyref))))
+    ;; CHECK:       (type $used-in-array-rmw-bot (sub (struct (field anyref))))
+    (type $used-in-array-rmw-bot (sub (struct (field anyref))))
+    ;; CHECK:       (type $expected-in-array-cmpxchg (sub (struct (field anyref))))
+    (type $expected-in-array-cmpxchg (sub (struct (field anyref))))
+    ;; CHECK:       (type $used-in-array-cmpxchg (sub $expected-in-array-cmpxchg (struct (field anyref))))
+    (type $used-in-array-cmpxchg (sub $expected-in-array-cmpxchg (struct (field anyref))))
+    ;; CHECK:       (type $used-in-array-cmpxchg-ok (sub $expected-in-array-cmpxchg (struct (field anyref))))
+    (type $used-in-array-cmpxchg-ok (sub $expected-in-array-cmpxchg (struct (field anyref))))
+    ;; CHECK:       (type $used-in-array-cmpxchg-bot (sub $expected-in-array-cmpxchg (struct (field anyref))))
+    (type $used-in-array-cmpxchg-bot (sub $expected-in-array-cmpxchg (struct (field anyref))))
   )
 
   ;; CHECK:      (type $struct-rmw-exact (struct (field (mut (ref (exact $used-in-struct-rmw))))))
   (type $struct-rmw-exact (struct (field (mut (ref (exact $used-in-struct-rmw))))))
   ;; CHECK:      (type $struct-rmw-inexact (struct (field (mut (ref $used-in-struct-rmw-ok)))))
   (type $struct-rmw-inexact (struct (field (mut (ref $used-in-struct-rmw-ok)))))
+  (type $struct-rmw-bot (struct (field (mut (ref (exact $used-in-struct-rmw-bot))))))
 
   ;; CHECK:      (type $struct-cmpxchg-exact (struct (field (mut (ref (exact $used-in-struct-cmpxchg))))))
   (type $struct-cmpxchg-exact (struct (field (mut (ref (exact $used-in-struct-cmpxchg))))))
   ;; CHECK:      (type $struct-cmpxchg-inexact (struct (field (mut (ref $used-in-struct-cmpxchg-ok)))))
   (type $struct-cmpxchg-inexact (struct (field (mut (ref $used-in-struct-cmpxchg-ok)))))
+  (type $struct-cmpxchg-bot (struct (field (mut (ref (exact $used-in-struct-cmpxchg-bot))))))
 
-  ;; CHECK:      (type $9 (func (param (ref (exact $used-in-struct-rmw)) (ref $struct-rmw-exact))))
+  ;; CHECK:      (type $array-rmw-exact (array (mut (ref (exact $used-in-array-rmw)))))
+  (type $array-rmw-exact (array (field (mut (ref (exact $used-in-array-rmw))))))
+  ;; CHECK:      (type $array-rmw-inexact (array (mut (ref $used-in-array-rmw-ok))))
+  (type $array-rmw-inexact (array (field (mut (ref $used-in-array-rmw-ok)))))
+  (type $array-rmw-bot (array (field (mut (ref (exact $used-in-array-rmw-bot))))))
 
-  ;; CHECK:      (type $10 (func (param (ref (exact $used-in-struct-rmw-ok)) (ref $struct-rmw-inexact))))
+  ;; CHECK:      (type $array-cmpxchg-exact (array (mut (ref (exact $used-in-array-cmpxchg)))))
+  (type $array-cmpxchg-exact (array (field (mut (ref (exact $used-in-array-cmpxchg))))))
+  ;; CHECK:      (type $array-cmpxchg-inexact (array (mut (ref $used-in-array-cmpxchg-ok))))
+  (type $array-cmpxchg-inexact (array (field (mut (ref $used-in-array-cmpxchg-ok)))))
+  (type $array-cmpxchg-bot (array (field (mut (ref (exact $used-in-array-cmpxchg-bot))))))
 
-  ;; CHECK:      (type $11 (func (param (ref (exact $used-in-struct-cmpxchg)) (ref (exact $expected-in-struct-cmpxchg)) (ref $struct-cmpxchg-exact))))
+  ;; CHECK:      (type $22 (func (param (ref (exact $used-in-struct-rmw)) (ref $struct-rmw-exact))))
 
-  ;; CHECK:      (type $12 (func (param (ref (exact $used-in-struct-cmpxchg-ok)) (ref (exact $expected-in-struct-cmpxchg)) (ref $struct-cmpxchg-inexact))))
+  ;; CHECK:      (type $23 (func (param (ref (exact $used-in-struct-rmw-ok)) (ref $struct-rmw-inexact))))
+
+  ;; CHECK:      (type $24 (func (param (ref (exact $used-in-struct-rmw-bot)))))
+
+  ;; CHECK:      (type $25 (func (param (ref (exact $used-in-struct-cmpxchg)) (ref (exact $expected-in-struct-cmpxchg)) (ref $struct-cmpxchg-exact))))
+
+  ;; CHECK:      (type $26 (func (param (ref (exact $used-in-struct-cmpxchg-ok)) (ref (exact $expected-in-struct-cmpxchg)) (ref $struct-cmpxchg-inexact))))
+
+  ;; CHECK:      (type $27 (func (param (ref (exact $used-in-struct-cmpxchg-bot)) (ref (exact $expected-in-struct-cmpxchg)))))
+
+  ;; CHECK:      (type $28 (func (param (ref (exact $used-in-array-rmw)) (ref $array-rmw-exact))))
+
+  ;; CHECK:      (type $29 (func (param (ref (exact $used-in-array-rmw-ok)) (ref $array-rmw-inexact))))
+
+  ;; CHECK:      (type $30 (func (param (ref (exact $used-in-array-rmw-bot)))))
+
+  ;; CHECK:      (type $31 (func (param (ref (exact $used-in-array-cmpxchg)) (ref (exact $expected-in-array-cmpxchg)) (ref $array-cmpxchg-exact))))
+
+  ;; CHECK:      (type $32 (func (param (ref (exact $used-in-array-cmpxchg-ok)) (ref (exact $expected-in-array-cmpxchg)) (ref $array-cmpxchg-inexact))))
+
+  ;; CHECK:      (type $33 (func (param (ref (exact $used-in-array-cmpxchg-bot)) (ref (exact $expected-in-array-cmpxchg)))))
 
   ;; CHECK:      (rec
   ;; CHECK-NEXT:  (type $used-in-struct-rmw-ok_1 (sub $used-in-struct-rmw-ok (struct (field anyref))))
 
-  ;; CHECK:       (type $expected-in-struct-cmpxchg_2 (sub $expected-in-struct-cmpxchg (struct (field anyref))))
+  ;; CHECK:       (type $used-in-struct-rmw-bot_2 (sub $used-in-struct-rmw-bot (struct (field anyref))))
 
   ;; CHECK:       (type $expected-in-struct-cmpxchg_3 (sub $expected-in-struct-cmpxchg (struct (field anyref))))
 
-  ;; CHECK:       (type $used-in-struct-cmpxchg-ok_4 (sub $used-in-struct-cmpxchg-ok (struct (field anyref))))
+  ;; CHECK:       (type $expected-in-struct-cmpxchg_4 (sub $expected-in-struct-cmpxchg (struct (field anyref))))
 
-  ;; CHECK:      (func $struct-rmw (type $9) (param $used (ref (exact $used-in-struct-rmw))) (param $ref (ref $struct-rmw-exact))
+  ;; CHECK:       (type $used-in-struct-cmpxchg-ok_5 (sub $used-in-struct-cmpxchg-ok (struct (field anyref))))
+
+  ;; CHECK:       (type $used-in-struct-cmpxchg-bot_6 (sub $used-in-struct-cmpxchg-bot (struct (field anyref))))
+
+  ;; CHECK:       (type $used-in-array-rmw-ok_7 (sub $used-in-array-rmw-ok (struct (field anyref))))
+
+  ;; CHECK:       (type $used-in-array-rmw-bot_8 (sub $used-in-array-rmw-bot (struct (field anyref))))
+
+  ;; CHECK:       (type $expected-in-array-cmpxchg_9 (sub $expected-in-array-cmpxchg (struct (field anyref))))
+
+  ;; CHECK:       (type $expected-in-array-cmpxchg_10 (sub $expected-in-array-cmpxchg (struct (field anyref))))
+
+  ;; CHECK:       (type $used-in-array-cmpxchg-ok_11 (sub $used-in-array-cmpxchg-ok (struct (field anyref))))
+
+  ;; CHECK:       (type $used-in-array-cmpxchg-bot_12 (sub $used-in-array-cmpxchg-bot (struct (field anyref))))
+
+  ;; CHECK:      (func $struct-rmw (type $22) (param $used (ref (exact $used-in-struct-rmw))) (param $ref (ref $struct-rmw-exact))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.atomic.rmw.xchg $struct-rmw-exact 0
   ;; CHECK-NEXT:    (local.get $ref)
@@ -73,7 +137,7 @@
     )
   )
 
-  ;; CHECK:      (func $struct-rmw-ok (type $10) (param $used (ref (exact $used-in-struct-rmw-ok))) (param $ref (ref $struct-rmw-inexact))
+  ;; CHECK:      (func $struct-rmw-ok (type $23) (param $used (ref (exact $used-in-struct-rmw-ok))) (param $ref (ref $struct-rmw-inexact))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.atomic.rmw.xchg $struct-rmw-inexact 0
   ;; CHECK-NEXT:    (local.get $ref)
@@ -102,7 +166,41 @@
     )
   )
 
-  ;; CHECK:      (func $struct-cmpxchg (type $11) (param $used (ref (exact $used-in-struct-cmpxchg))) (param $expected (ref (exact $expected-in-struct-cmpxchg))) (param $ref (ref $struct-cmpxchg-exact))
+  ;; CHECK:      (func $struct-rmw-bot (type $24) (param $used (ref (exact $used-in-struct-rmw-bot)))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block ;; (replaces unreachable StructRMW we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $used)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $used-in-struct-rmw-bot_2
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $struct-rmw-bot (param $used (ref (exact $used-in-struct-rmw-bot)))
+    ;; This RMW has a null reference, so it will not be emitted and does not
+    ;; inhibit optimization.
+    (drop
+      (struct.atomic.rmw.xchg $struct-rmw-bot 0
+        (ref.null none)
+        (local.get $used)
+      )
+    )
+    (drop
+      (struct.new $used-in-struct-rmw-bot
+        (ref.null none)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $struct-cmpxchg (type $25) (param $used (ref (exact $used-in-struct-cmpxchg))) (param $expected (ref (exact $expected-in-struct-cmpxchg))) (param $ref (ref $struct-cmpxchg-exact))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.atomic.rmw.cmpxchg $struct-cmpxchg-exact 0
   ;; CHECK-NEXT:    (local.get $ref)
@@ -111,7 +209,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new $expected-in-struct-cmpxchg_2
+  ;; CHECK-NEXT:   (struct.new $expected-in-struct-cmpxchg_3
   ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -142,7 +240,7 @@
     )
   )
 
-  ;; CHECK:      (func $struct-cmpxchg-ok (type $12) (param $used (ref (exact $used-in-struct-cmpxchg-ok))) (param $expected (ref (exact $expected-in-struct-cmpxchg))) (param $ref (ref $struct-cmpxchg-inexact))
+  ;; CHECK:      (func $struct-cmpxchg-ok (type $26) (param $used (ref (exact $used-in-struct-cmpxchg-ok))) (param $expected (ref (exact $expected-in-struct-cmpxchg))) (param $ref (ref $struct-cmpxchg-inexact))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.atomic.rmw.cmpxchg $struct-cmpxchg-inexact 0
   ;; CHECK-NEXT:    (local.get $ref)
@@ -151,12 +249,12 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new $expected-in-struct-cmpxchg_3
+  ;; CHECK-NEXT:   (struct.new $expected-in-struct-cmpxchg_4
   ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new $used-in-struct-cmpxchg-ok_4
+  ;; CHECK-NEXT:   (struct.new $used-in-struct-cmpxchg-ok_5
   ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -177,6 +275,266 @@
     )
     (drop
       (struct.new $used-in-struct-cmpxchg-ok
+        (ref.null none)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $struct-cmpxchg-bot (type $27) (param $used (ref (exact $used-in-struct-cmpxchg-bot))) (param $expected (ref (exact $expected-in-struct-cmpxchg)))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block ;; (replaces unreachable StructCmpxchg we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $expected)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $used)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $used-in-struct-cmpxchg-bot_6
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $struct-cmpxchg-bot (param $used (ref (exact $used-in-struct-cmpxchg-bot))) (param $expected (ref (exact $expected-in-struct-cmpxchg)))
+    ;; This cmpxchg has a null reference, so it will not be emitted and does not
+    ;; inhibit optimization.
+    (drop
+      (struct.atomic.rmw.cmpxchg $struct-cmpxchg-bot 0
+        (ref.null none)
+        (local.get $expected)
+        (local.get $used)
+      )
+    )
+    (drop
+      (struct.new $used-in-struct-cmpxchg-bot
+        (ref.null none)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $array-rmw (type $28) (param $used (ref (exact $used-in-array-rmw))) (param $ref (ref $array-rmw-exact))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (array.atomic.rmw.xchg $array-rmw-exact
+  ;; CHECK-NEXT:    (local.get $ref)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (local.get $used)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $used-in-array-rmw
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $array-rmw (param $used (ref (exact $used-in-array-rmw))) (param $ref (ref $array-rmw-exact))
+    ;; This requires and observes an exact $used-in-array-rmw.
+    (drop
+      (array.atomic.rmw.xchg $array-rmw-exact
+        (local.get $ref)
+        (i32.const 0)
+        (local.get $used)
+      )
+    )
+    (drop
+      (struct.new $used-in-array-rmw
+        (ref.null none)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $array-rmw-ok (type $29) (param $used (ref (exact $used-in-array-rmw-ok))) (param $ref (ref $array-rmw-inexact))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (array.atomic.rmw.xchg $array-rmw-inexact
+  ;; CHECK-NEXT:    (local.get $ref)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (local.get $used)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $used-in-array-rmw-ok_7
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $array-rmw-ok (param $used (ref (exact $used-in-array-rmw-ok))) (param $ref (ref $array-rmw-inexact))
+    ;; The array element type is inexact, so this can be optimized.
+    (drop
+      (array.atomic.rmw.xchg $array-rmw-inexact
+        (local.get $ref)
+        (i32.const 0)
+        (local.get $used)
+      )
+    )
+    (drop
+      (struct.new $used-in-array-rmw-ok
+        (ref.null none)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $array-rmw-bot (type $30) (param $used (ref (exact $used-in-array-rmw-bot)))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block ;; (replaces unreachable ArrayRMW we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $used)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $used-in-array-rmw-bot_8
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $array-rmw-bot (param $used (ref (exact $used-in-array-rmw-bot)))
+    ;; A null array reference does not inhibit optimization.
+    (drop
+      (array.atomic.rmw.xchg $array-rmw-bot
+        (ref.null none)
+        (i32.const 0)
+        (local.get $used)
+      )
+    )
+    (drop
+      (struct.new $used-in-array-rmw-bot
+        (ref.null none)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $array-cmpxchg (type $31) (param $used (ref (exact $used-in-array-cmpxchg))) (param $expected (ref (exact $expected-in-array-cmpxchg))) (param $ref (ref $array-cmpxchg-exact))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (array.atomic.rmw.cmpxchg $array-cmpxchg-exact
+  ;; CHECK-NEXT:    (local.get $ref)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (local.get $expected)
+  ;; CHECK-NEXT:    (local.get $used)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $expected-in-array-cmpxchg_9
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $used-in-array-cmpxchg
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $array-cmpxchg (param $used (ref (exact $used-in-array-cmpxchg))) (param $expected (ref (exact $expected-in-array-cmpxchg))) (param $ref (ref $array-cmpxchg-exact))
+    ;; Only the replacement value is constrained to be exact.
+    (drop
+      (array.atomic.rmw.cmpxchg $array-cmpxchg-exact
+        (local.get $ref)
+        (i32.const 0)
+        (local.get $expected)
+        (local.get $used)
+      )
+    )
+    (drop
+      (struct.new $expected-in-array-cmpxchg
+        (ref.null none)
+      )
+    )
+    (drop
+      (struct.new $used-in-array-cmpxchg
+        (ref.null none)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $array-cmpxchg-ok (type $32) (param $used (ref (exact $used-in-array-cmpxchg-ok))) (param $expected (ref (exact $expected-in-array-cmpxchg))) (param $ref (ref $array-cmpxchg-inexact))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (array.atomic.rmw.cmpxchg $array-cmpxchg-inexact
+  ;; CHECK-NEXT:    (local.get $ref)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (local.get $expected)
+  ;; CHECK-NEXT:    (local.get $used)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $expected-in-array-cmpxchg_10
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $used-in-array-cmpxchg-ok_11
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $array-cmpxchg-ok (param $used (ref (exact $used-in-array-cmpxchg-ok))) (param $expected (ref (exact $expected-in-array-cmpxchg))) (param $ref (ref $array-cmpxchg-inexact))
+    ;; Now both can be optimized.
+    (drop
+      (array.atomic.rmw.cmpxchg $array-cmpxchg-inexact
+        (local.get $ref)
+        (i32.const 0)
+        (local.get $expected)
+        (local.get $used)
+      )
+    )
+    (drop
+      (struct.new $expected-in-array-cmpxchg
+        (ref.null none)
+      )
+    )
+    (drop
+      (struct.new $used-in-array-cmpxchg-ok
+        (ref.null none)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $array-cmpxchg-bot (type $33) (param $used (ref (exact $used-in-array-cmpxchg-bot))) (param $expected (ref (exact $expected-in-array-cmpxchg)))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block ;; (replaces unreachable ArrayCmpxchg we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $expected)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $used)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $used-in-array-cmpxchg-bot_12
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $array-cmpxchg-bot (param $used (ref (exact $used-in-array-cmpxchg-bot))) (param $expected (ref (exact $expected-in-array-cmpxchg)))
+    ;; A null array reference does not inhibit optimization.
+    (drop
+      (array.atomic.rmw.cmpxchg $array-cmpxchg-bot
+        (ref.null none)
+        (i32.const 0)
+        (local.get $expected)
+        (local.get $used)
+      )
+    )
+    (drop
+      (struct.new $used-in-array-cmpxchg-bot
         (ref.null none)
       )
     )
