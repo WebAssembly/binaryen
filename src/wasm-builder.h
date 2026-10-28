@@ -1507,7 +1507,8 @@ public:
       return makeRefI31(makeConst(value.geti31()),
                         type.getHeapType().getShared());
     }
-    if (type.getHeapType().isMaybeShared(HeapType::any)) {
+    if (type.isRef() && type.getHeapType().isMaybeShared(HeapType::any)) {
+      // The only constant anyrefs are internalized strings.
       auto externalized = value.externalize();
       assert(externalized.isString());
       return makeRefAs(AnyConvertExtern, makeConstantExpression(externalized));
