@@ -18,4 +18,36 @@
   ;; modified
   (local.get $0)
  )
+
+ ;; CHECK:      (func $br_table-subtype (type $2) (result funcref)
+ ;; CHECK-NEXT:  (local $0 nullfuncref)
+ ;; CHECK-NEXT:  (local $1 funcref)
+ ;; CHECK-NEXT:  (local $2 funcref)
+ ;; CHECK-NEXT:  (block $block
+ ;; CHECK-NEXT:   (local.set $0
+ ;; CHECK-NEXT:    (ref.null nofunc)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (local.set $1
+ ;; CHECK-NEXT:    (local.get $0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (br_table $block $block
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (local.set $2
+ ;; CHECK-NEXT:   (local.get $1)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (return
+ ;; CHECK-NEXT:   (local.get $2)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $br_table-subtype (result funcref)
+  (block $block (result funcref)
+   (br_table $block $block
+    (ref.null nofunc)
+    (i32.const 0)
+   )
+  )
+ )
 )

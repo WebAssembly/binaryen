@@ -259,7 +259,7 @@ struct Flatten
           if (type.isConcrete()) {
             // we are sending a value. use a local instead
             Type blockType = findBreakTarget(br->name)->type;
-            Index temp = getTempForBreakTarget(br->name, blockType);
+            Index temp = getTempForBreakTarget(br->name);
             ourPreludes.push_back(builder.makeLocalSet(temp, br->value));
 
             // br_if leaves a value on the stack if not taken, which later can
@@ -318,9 +318,8 @@ struct Flatten
             // we don't know which break target will be hit - assign to them all
             auto names = BranchUtils::getUniqueTargets(sw);
             for (auto name : names) {
-              ourPreludes.push_back(
-                builder.makeLocalSet(getTempForBreakTarget(name, type),
-                                     builder.makeLocalGet(temp, type)));
+              ourPreludes.push_back(builder.makeLocalSet(
+                getTempForBreakTarget(name), builder.makeLocalGet(temp, type)));
             }
             sw->value = nullptr;
             sw->finalize();
@@ -408,13 +407,14 @@ private:
 
   // get the temp local to be used for breaks to that target. allocates
   // one if there isn't one yet
-  Index getTempForBreakTarget(Name name, Type type) {
+  Index getTempForBreakTarget(Name name) {
     auto iter = breakTemps.find(name);
     if (iter != breakTemps.end()) {
       return iter->second;
     } else {
       return breakTemps[name] =
-               Builder(*getModule()).addVar(getFunction(), type);
+               Builder(*getModule())
+                 .addVar(getFunction(), findBreakTarget(name)->type);
     }
   }
 };
