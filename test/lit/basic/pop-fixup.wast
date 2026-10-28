@@ -259,4 +259,35 @@
    end
   end
  )
+
+ ;; CHECK:      (func $stacky-unnamed-block (type $0)
+ ;; CHECK-NEXT:  (local $scratch i32)
+ ;; CHECK-NEXT:  (try
+ ;; CHECK-NEXT:   (do
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (catch $e
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (block (result i32)
+ ;; CHECK-NEXT:      (local.set $scratch
+ ;; CHECK-NEXT:       (pop i32)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (nop)
+ ;; CHECK-NEXT:      (local.get $scratch)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $stacky-unnamed-block
+  try
+  catch $e
+   ;; As in the last testcase, but without the br. No name is added, and no
+   ;; fixup happens (the local $1 in the last testcase is not present).
+   block
+    pop i32
+    nop
+    drop
+   end
+  end
+ )
 )
