@@ -739,10 +739,10 @@ private:
       //
       // There can be some downsides to this, as while we are folding code, we
       // are adding ref.as_non_null checks, and this may also inhibit further
-      // optimizations (e.g. making one local nullable can prevent it getting
-      // coalesced with a non-nullable one). Still, we do this during the last
-      // set of optimizations, as then the risk of downsides to later opts is
-      // lower.
+      // optimizations: e.g. making one local nullable can prevent it getting
+      // coalesced with a non-nullable one, which can then cause further
+      // downsides. As a result, we fold non-nullable local.gets only during the
+      // last set of optimizations, to reduce the risk of downsides.
       if (!getPassOptions().lastOpts) {
         for (auto* item : items) {
           for (auto* get : FindAll<LocalGet>(item).list) {

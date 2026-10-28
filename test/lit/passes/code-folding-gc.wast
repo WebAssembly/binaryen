@@ -4,5 +4,190 @@
 ;; RUN: wasm-opt %s --code-folding --expect-later-toolchain-opts -all -S -o - | filecheck %s --check-prefix=NOT-LAST
 
 (module
+  ;; CHECK:      (func $non-nullable (type $0) (param $x i32) (param $nn (ref any))
+  ;; CHECK-NEXT:  (local $temp anyref)
+  ;; CHECK-NEXT:  (block $folding-inner0
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (local.set $temp
+  ;; CHECK-NEXT:     (local.get $nn)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (then
+  ;; CHECK-NEXT:      (br $folding-inner0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (br $folding-inner0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (local.get $temp)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (local.get $temp)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (local.get $temp)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  ;; NOT-LAST:      (func $non-nullable (type $0) (param $x i32) (param $nn (ref any))
+  ;; NOT-LAST-NEXT:  (local $temp (ref any))
+  ;; NOT-LAST-NEXT:  (local.set $temp
+  ;; NOT-LAST-NEXT:   (local.get $nn)
+  ;; NOT-LAST-NEXT:  )
+  ;; NOT-LAST-NEXT:  (if
+  ;; NOT-LAST-NEXT:   (local.get $x)
+  ;; NOT-LAST-NEXT:   (then
+  ;; NOT-LAST-NEXT:    (drop
+  ;; NOT-LAST-NEXT:     (local.get $temp)
+  ;; NOT-LAST-NEXT:    )
+  ;; NOT-LAST-NEXT:    (drop
+  ;; NOT-LAST-NEXT:     (local.get $temp)
+  ;; NOT-LAST-NEXT:    )
+  ;; NOT-LAST-NEXT:    (drop
+  ;; NOT-LAST-NEXT:     (local.get $temp)
+  ;; NOT-LAST-NEXT:    )
+  ;; NOT-LAST-NEXT:    (unreachable)
+  ;; NOT-LAST-NEXT:   )
+  ;; NOT-LAST-NEXT:  )
+  ;; NOT-LAST-NEXT:  (drop
+  ;; NOT-LAST-NEXT:   (local.get $temp)
+  ;; NOT-LAST-NEXT:  )
+  ;; NOT-LAST-NEXT:  (drop
+  ;; NOT-LAST-NEXT:   (local.get $temp)
+  ;; NOT-LAST-NEXT:  )
+  ;; NOT-LAST-NEXT:  (drop
+  ;; NOT-LAST-NEXT:   (local.get $temp)
+  ;; NOT-LAST-NEXT:  )
+  ;; NOT-LAST-NEXT:  (unreachable)
+  ;; NOT-LAST-NEXT: )
+  (func $non-nullable (param $x i32) (param $nn (ref any))
+    (local $temp (ref any))
+    ;; We only fold code with a non-nullable local.get during the last set of
+    ;; optimizations, as folding it requires making the local nullable and
+    ;; adding ref.as_non_null checks.
+    (local.set $temp
+      (local.get $nn)
+    )
+    (if
+      (local.get $x)
+      (then
+        (drop
+          (local.get $temp)
+        )
+        (drop
+          (local.get $temp)
+        )
+        (drop
+          (local.get $temp)
+        )
+        (unreachable)
+      )
+    )
+    (drop
+      (local.get $temp)
+    )
+    (drop
+      (local.get $temp)
+    )
+    (drop
+      (local.get $temp)
+    )
+    (unreachable)
+  )
+
+  ;; CHECK:      (func $nullable (type $0) (param $x i32) (param $nn (ref any))
+  ;; CHECK-NEXT:  (local $temp anyref)
+  ;; CHECK-NEXT:  (block $folding-inner0
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (local.set $temp
+  ;; CHECK-NEXT:     (local.get $nn)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (then
+  ;; CHECK-NEXT:      (br $folding-inner0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (br $folding-inner0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $temp)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $temp)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $temp)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  ;; NOT-LAST:      (func $nullable (type $0) (param $x i32) (param $nn (ref any))
+  ;; NOT-LAST-NEXT:  (local $temp anyref)
+  ;; NOT-LAST-NEXT:  (block $folding-inner0
+  ;; NOT-LAST-NEXT:   (block
+  ;; NOT-LAST-NEXT:    (local.set $temp
+  ;; NOT-LAST-NEXT:     (local.get $nn)
+  ;; NOT-LAST-NEXT:    )
+  ;; NOT-LAST-NEXT:    (if
+  ;; NOT-LAST-NEXT:     (local.get $x)
+  ;; NOT-LAST-NEXT:     (then
+  ;; NOT-LAST-NEXT:      (br $folding-inner0)
+  ;; NOT-LAST-NEXT:     )
+  ;; NOT-LAST-NEXT:    )
+  ;; NOT-LAST-NEXT:    (br $folding-inner0)
+  ;; NOT-LAST-NEXT:   )
+  ;; NOT-LAST-NEXT:  )
+  ;; NOT-LAST-NEXT:  (drop
+  ;; NOT-LAST-NEXT:   (local.get $temp)
+  ;; NOT-LAST-NEXT:  )
+  ;; NOT-LAST-NEXT:  (drop
+  ;; NOT-LAST-NEXT:   (local.get $temp)
+  ;; NOT-LAST-NEXT:  )
+  ;; NOT-LAST-NEXT:  (drop
+  ;; NOT-LAST-NEXT:   (local.get $temp)
+  ;; NOT-LAST-NEXT:  )
+  ;; NOT-LAST-NEXT:  (unreachable)
+  ;; NOT-LAST-NEXT: )
+  (func $nullable (param $x i32) (param $nn (ref any))
+    (local $temp anyref)
+    ;; A nullable local.get is always folded.
+    (local.set $temp
+      (local.get $nn)
+    )
+    (if
+      (local.get $x)
+      (then
+        (drop
+          (local.get $temp)
+        )
+        (drop
+          (local.get $temp)
+        )
+        (drop
+          (local.get $temp)
+        )
+        (unreachable)
+      )
+    )
+    (drop
+      (local.get $temp)
+    )
+    (drop
+      (local.get $temp)
+    )
+    (drop
+      (local.get $temp)
+    )
+    (unreachable)
+  )
 )
 
