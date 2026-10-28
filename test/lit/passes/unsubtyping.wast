@@ -2059,3 +2059,37 @@
     )
   )
 )
+
+;; Regression test for unreachable ref.eq with shared reference operands.
+(module
+  ;; CHECK:      (type $0 (func (param (ref null (shared eq)))))
+
+  ;; CHECK:      (func $ref-eq-shared-unreachable (type $0) (param $eq (ref null (shared eq)))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (local.get $eq)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (local.get $eq)
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ref-eq-shared-unreachable (param $eq (ref null (shared eq)))
+    (drop
+      (ref.eq
+        (unreachable)
+        (local.get $eq)
+      )
+    )
+    (drop
+      (ref.eq
+        (local.get $eq)
+        (unreachable)
+      )
+    )
+  )
+)

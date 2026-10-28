@@ -275,6 +275,12 @@ struct ToolOptions : public Options {
     writer.write(wasm, filename);
   }
 
+  void
+  write(ModuleWriter& writer, Module& wasm, std::vector<char>& output) const {
+    writer.setEmitModuleName(emitModuleNames);
+    writer.write(wasm, output);
+  }
+
   virtual void addPassArg(const std::string& key, const std::string& value) {
     passOptions.arguments[key] = value;
   }

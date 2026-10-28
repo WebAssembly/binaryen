@@ -38,6 +38,7 @@
 #include <unordered_map>
 #include <unordered_set>
 
+#include "ir/gc-type-utils.h"
 #include "ir/lubs.h"
 #include "ir/return-utils.h"
 #include "ir/type-updating.h"
@@ -45,6 +46,7 @@
 #include "param-utils.h"
 #include "pass.h"
 #include "passes/opt-utils.h"
+#include "passes/pass-utils.h"
 #include "support/sorted_vector.h"
 #include "wasm-builder.h"
 #include "wasm.h"
@@ -71,7 +73,7 @@ struct DAEFunctionInfo {
   // computation, and we reset it every time we touch the function.
   bool stale = true;
   // The unused parameters, if any.
-  SortedVector unusedParams;
+  SortedVector<Index> unusedParams;
   // Maps a function name to the calls going to it.
   std::unordered_map<Name, std::vector<Call*>> calls;
   // Map of all calls that are dropped, to their drops' locations (so that
@@ -247,20 +249,6 @@ struct DAE : public Pass {
 #endif // DAE_STATS
   }
 
-  // For each function, the set of callers. This is used to propagate changes,
-  // e.g. if we remove a return value from a function, the calls might benefit
-  // from optimization. It is ok if this is an over-approximation, that is, if
-  // we think there are more callers than there are, as it would just lead to
-  // unneeded extra scanning of calling functions (in the example just given, if
-  // a caller did not actually call, they would not benefit from the extra
-  // optimization, but no harm is done, and no optimization missed). Such over-
-  // approximation can happen in later optimization iterations: We may manage to
-  // remove a call from a function to another (say, after applying a constant
-  // param, we see the call is not reached). This is somewhat rare, and the cost
-  // of computing this map is significant, so we compute it once at the start
-  // and then use that possibly-over-approximating data.
-  std::vector<std::vector<Name>> callers;
-
   // A count of how many iterations we saw unprofitable removals of parameters.
   // An unprofitable removal is one where we only manage to remove from a single
   // call, that is, from one call target and it has a single call going to it.
@@ -305,11 +293,21 @@ struct DAE : public Pass {
     std::vector<std::vector<Call*>> allCalls(numFunctions);
     std::vector<bool> tailCallees(numFunctions);
     std::vector<bool> hasUnseenCalls(numFunctions);
+    // For each function, the functions that call it. This is used to propagate
+    // changes, e.g. if we remove a return value from a function, the calls
+    // might benefit from optimization, and if we refine a return type, the
+    // callers must be refinalized. This must be computed in each iteration
+    // rather than once, as optimizations can add new direct calls (e.g., by
+    // turning a call_ref of a ref.func into a call). As |info.calls| is keyed
+    // by callee, each caller appears at most once per callee.
+    std::vector<std::vector<Name>> callers(numFunctions);
 
     for (auto& [func, info] : infoMap) {
       for (auto& [name, calls] : info.calls) {
-        auto& allCallsToName = allCalls[indexes[name]];
+        auto index = indexes[name];
+        auto& allCallsToName = allCalls[index];
         allCallsToName.insert(allCallsToName.end(), calls.begin(), calls.end());
+        callers[index].push_back(func);
       }
       for (auto& callee : info.tailCallees) {
         tailCallees[indexes[callee]] = true;
@@ -328,29 +326,18 @@ struct DAE : public Pass {
       }
     }
 
-    // See comment above, we compute callers once and never again.
-    if (callers.empty()) {
-      // Compute first as sets, to deduplicate.
-      std::vector<std::unordered_set<Name>> callersSets(numFunctions);
-      for (auto& [func, info] : infoMap) {
-        for (auto& [name, calls] : info.calls) {
-          callersSets[indexes[name]].insert(func);
-        }
-      }
-      // Copy into efficient vectors.
-      callers.resize(numFunctions);
-      for (Index i = 0; i < numFunctions; ++i) {
-        auto& set = callersSets[i];
-        callers[i] = std::vector<Name>(set.begin(), set.end());
-      }
-    }
-
     // Track which functions we changed that are worth re-optimizing at the end.
     std::unordered_set<Function*> worthOptimizing;
 
-    // If we refine return types then we will need to do more type updating
-    // at the end.
-    bool refinedReturnTypes = false;
+    // The callers of functions whose return types we refined. The types of the
+    // calls changed, so these functions must be refinalized. The more refined
+    // types may also enable optimizations there (e.g., a cast may become
+    // statically known to succeed), so we optimize them at the end, together
+    // with |worthOptimizing|. We keep them apart from |worthOptimizing| as that
+    // set also affects which transformations we do in this iteration. If this
+    // is not empty, we iterate again, as the refined types may allow further
+    // refinements.
+    std::unordered_set<Function*> refinedCallers;
 
     // If we find that localizing call arguments can help (by moving their
     // effects outside, so ParamUtils::removeParameters can handle them), then
@@ -404,9 +391,11 @@ struct DAE : public Pass {
       }
       // Refine return types as well.
       if (refineReturnTypes(func, calls, module)) {
-        refinedReturnTypes = true;
         markStale(name);
         markCallersStale(index);
+        for (auto caller : callers[index]) {
+          refinedCallers.insert(module->getFunction(caller));
+        }
       }
       auto optimizedIndexes =
         ParamUtils::applyConstantValues({func}, calls, {}, module);
@@ -419,11 +408,14 @@ struct DAE : public Pass {
         markStale(func->name);
       }
     }
-    if (refinedReturnTypes) {
+    if (!refinedCallers.empty()) {
       // Changing a call expression's return type can propagate out to its
-      // parents, and so we must refinalize.
-      // TODO: We could track in which functions we actually make changes.
-      ReFinalize().run(getPassRunner(), module);
+      // parents, and so we must refinalize the callers.
+      PassUtils::FilteredPassRunner runner(
+        module, refinedCallers, getPassRunner()->options);
+      runner.setIsNested(true);
+      runner.add(std::make_unique<ReFinalize>());
+      runner.run();
     }
     // We now know which parameters are unused, and can potentially remove them.
     // Only do so if we didn't run into unprofitable removals - if so, leave
@@ -533,11 +525,17 @@ struct DAE : public Pass {
           markStale(func->name);
         });
     }
-    if (optimize && !worthOptimizing.empty()) {
-      OptUtils::optimizeAfterInlining(worthOptimizing, module, getPassRunner());
+    if (optimize) {
+      // This happens after the ReFinalize above, so the callers of functions
+      // with refined results see the new types.
+      worthOptimizing.insert(refinedCallers.begin(), refinedCallers.end());
+      if (!worthOptimizing.empty()) {
+        OptUtils::optimizeAfterInlining(
+          worthOptimizing, module, getPassRunner());
+      }
     }
 
-    return !worthOptimizing.empty() || refinedReturnTypes ||
+    return !worthOptimizing.empty() || !refinedCallers.empty() ||
            !callTargetsToLocalize.empty();
   }
 
@@ -554,7 +552,7 @@ private:
     // Do this for more complicated uninhabitable types such as non-nullable
     // references to structs with non-nullable reference cycles.
     bool wasReturnUninhabitable =
-      func->getResults().isNull() && func->getResults().isNonNullable();
+      GCTypeUtils::isTriviallyUninhabitable(func->getResults());
     func->setResults(Type::none);
     // Remove the drops on the calls. Note that we must do this before updating
     // returns in ReturnUpdater, as there may be recursive calls of this
@@ -664,10 +662,22 @@ private:
                          const std::vector<Call*>& calls,
                          Module* module) {
     auto lub = LUB::getResultsLUB(func, *module);
-    if (!lub.noted()) {
-      return false;
+    Type newType;
+    if (lub.noted()) {
+      newType = lub.getLUB();
+    } else {
+      // No value can ever be returned: the function never returns normally
+      // (it throws, traps, or loops forever), and neither do the functions it
+      // tail-calls. If the result is a single reference, refine it to the
+      // uninhabitable bottom type of its hierarchy, so the callers can see that
+      // the call never returns. (Callers that tail-call this function will in
+      // turn note this type as their possible result.)
+      auto results = func->getResults();
+      if (!module->features.hasGC() || !results.isRef()) {
+        return false;
+      }
+      newType = Type(results.getHeapType().getBottom(), NonNullable);
     }
-    auto newType = lub.getLUB();
     if (newType != func->getResults()) {
       func->setResults(newType);
       for (auto* call : calls) {

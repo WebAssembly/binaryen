@@ -2279,3 +2279,139 @@
     )
   )
 )
+
+(module
+  ;; CHECK:      (type $super (sub (struct (field i32) (field anyref))))
+  (type $super (sub (struct (field i32) (field anyref))))
+  ;; CHECK:      (type $sub (sub $super (struct (field i32) (field eqref) (field i64))))
+  (type $sub (sub $super (struct (field i32) (field eqref) (field i64))))
+  ;; CHECK:      (type $other (struct (field i32)))
+  (type $other (struct (field i32)))
+
+  ;; CHECK:      (type $3 (func (param (ref $sub)) (result i32)))
+
+  ;; CHECK:      (type $4 (func (param (ref $super)) (result anyref)))
+
+  ;; CHECK:      (type $5 (func (param (ref $sub)) (result eqref)))
+
+  ;; CHECK:      (type $6 (func (param (ref $sub)) (result i64)))
+
+  ;; CHECK:      (type $7 (func (param (ref $other)) (result i32)))
+
+  ;; CHECK:      (global $g (ref $super) (struct.new $sub
+  ;; CHECK-NEXT:  (i32.const 1)
+  ;; CHECK-NEXT:  (ref.null none)
+  ;; CHECK-NEXT:  (i64.const 2)
+  ;; CHECK-NEXT: ))
+  (global $g (ref $super) (struct.new $sub (i32.const 1) (ref.null eq) (i64.const 2)))
+  ;; CHECK:      (global $g-structref structref (struct.new $other
+  ;; CHECK-NEXT:  (i32.const 3)
+  ;; CHECK-NEXT: ))
+  (global $g-structref structref (struct.new $other (i32.const 3)))
+
+  ;; CHECK:      (func $in-bounds-same-type (type $3) (param $x (ref $sub)) (result i32)
+  ;; CHECK-NEXT:  (struct.get $super 0
+  ;; CHECK-NEXT:   (block (result (ref $super))
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (global.get $g)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $in-bounds-same-type (param $x (ref $sub)) (result i32)
+    ;; Field 0 is in bounds in $super and has the same type (i32), so no cast is
+    ;; needed.
+    (struct.get $sub 0
+      (local.get $x)
+    )
+  )
+
+  ;; CHECK:      (func $in-bounds-super-op (type $4) (param $x (ref $super)) (result anyref)
+  ;; CHECK-NEXT:  (struct.get $super 1
+  ;; CHECK-NEXT:   (block (result (ref $super))
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (global.get $g)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $in-bounds-super-op (param $x (ref $super)) (result anyref)
+    ;; Field 1 is refined in $sub, but this struct.get already reads from $super
+    ;; and expects to return anyref, so no cast is needed.
+    (struct.get $super 1
+      (local.get $x)
+    )
+  )
+
+  ;; CHECK:      (func $in-bounds-less-refined (type $5) (param $x (ref $sub)) (result eqref)
+  ;; CHECK-NEXT:  (struct.get $sub 1
+  ;; CHECK-NEXT:   (block (result (ref $sub))
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.cast (ref $sub)
+  ;; CHECK-NEXT:     (global.get $g)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $in-bounds-less-refined (param $x (ref $sub)) (result eqref)
+    ;; Field 1 is in bounds in $super, but has a less refined type (anyref) than
+    ;; in $sub (eqref), so we must cast the global.get to $sub.
+    (struct.get $sub 1
+      (local.get $x)
+    )
+  )
+
+  ;; CHECK:      (func $out-of-bounds (type $6) (param $x (ref $sub)) (result i64)
+  ;; CHECK-NEXT:  (struct.get $sub 2
+  ;; CHECK-NEXT:   (block (result (ref $sub))
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.cast (ref $sub)
+  ;; CHECK-NEXT:     (global.get $g)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $out-of-bounds (param $x (ref $sub)) (result i64)
+    ;; Field 2 is out of bounds in $super, so we must cast the global.get to
+    ;; $sub.
+    (struct.get $sub 2
+      (local.get $x)
+    )
+  )
+
+  ;; CHECK:      (func $non-struct-global (type $7) (param $x (ref $other)) (result i32)
+  ;; CHECK-NEXT:  (struct.get $other 0
+  ;; CHECK-NEXT:   (block (result (ref $other))
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.cast (ref $other)
+  ;; CHECK-NEXT:     (global.get $g-structref)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $non-struct-global (param $x (ref $other)) (result i32)
+    ;; The global's type (structref) is not a concrete struct type, so we must
+    ;; cast the global.get to $other.
+    (struct.get $other 0
+      (local.get $x)
+    )
+  )
+)

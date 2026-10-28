@@ -19,8 +19,9 @@
 
  (table 1 1 funcref)
 
- ;; We cannot refine the return type if nothing is actually returned.
- ;; CHECK:      (func $refine-return-no-return (type $0) (result anyref)
+ ;; If nothing is actually returned, the function never returns normally, and
+ ;; we refine the return type to the bottom type.
+ ;; CHECK:      (func $refine-return-no-return (type $7) (result (ref none))
  ;; CHECK-NEXT:  (local $temp anyref)
  ;; CHECK-NEXT:  (local.set $temp
  ;; CHECK-NEXT:   (call $refine-return-no-return)
@@ -37,7 +38,7 @@
  )
 
  ;; We cannot refine the return type if it is already the best it can be.
- ;; CHECK:      (func $refine-return-no-refining (type $0) (result anyref)
+ ;; CHECK:      (func $refine-return-no-refining (type $2) (result anyref)
  ;; CHECK-NEXT:  (local $temp anyref)
  ;; CHECK-NEXT:  (local $any anyref)
  ;; CHECK-NEXT:  (local.set $temp
@@ -170,7 +171,7 @@
   (local.get $i31)
  )
 
- ;; CHECK:      (func $refine-return-many-lub (type $7) (result eqref)
+ ;; CHECK:      (func $refine-return-many-lub (type $8) (result eqref)
  ;; CHECK-NEXT:  (local $temp anyref)
  ;; CHECK-NEXT:  (local $i31 i31ref)
  ;; CHECK-NEXT:  (local $struct structref)
@@ -218,7 +219,7 @@
   (local.get $i31)
  )
 
- ;; CHECK:      (func $refine-return-many-lub-2 (type $7) (result eqref)
+ ;; CHECK:      (func $refine-return-many-lub-2 (type $8) (result eqref)
  ;; CHECK-NEXT:  (local $temp anyref)
  ;; CHECK-NEXT:  (local $i31 i31ref)
  ;; CHECK-NEXT:  (local $struct structref)
@@ -267,7 +268,7 @@
  )
 
  ;; We can refine the return types of tuples.
- ;; CHECK:      (func $refine-return-tuple (type $8) (result i31ref i32)
+ ;; CHECK:      (func $refine-return-tuple (type $9) (result i31ref i32)
  ;; CHECK-NEXT:  (local $temp anyref)
  ;; CHECK-NEXT:  (local $i31 i31ref)
  ;; CHECK-NEXT:  (local.set $temp
@@ -306,7 +307,7 @@
  (func $do-return-call (result funcref)
   (return_call $return-ref-func)
  )
- ;; CHECK:      (func $return-ref-func (type $9) (result (ref (exact $6)))
+ ;; CHECK:      (func $return-ref-func (type $10) (result (ref (exact $6)))
  ;; CHECK-NEXT:  (ref.func $do-return-call)
  ;; CHECK-NEXT: )
  (func $return-ref-func (result funcref)
@@ -314,11 +315,12 @@
  )
 
  ;; Show that we can optimize the return type of a function that does a tail
- ;; call.
+ ;; call. The callee is exported so that its own return type is not refined (to
+ ;; the bottom type, as it never returns).
  ;; CHECK:      (func $tail-callee (type $"return_{}") (result (ref $"{}"))
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
- (func $tail-callee (result (ref $"{}"))
+ (func $tail-callee (export "tail-callee") (result (ref $"{}"))
   (unreachable)
  )
  ;; CHECK:      (func $tail-caller-yes (type $"return_{}") (result (ref $"{}"))
@@ -329,7 +331,7 @@
   ;; target's return type is more specific than anyref.
   (return_call $tail-callee)
  )
- ;; CHECK:      (func $tail-caller-no (type $0) (result anyref)
+ ;; CHECK:      (func $tail-caller-no (type $2) (result anyref)
  ;; CHECK-NEXT:  (local $any anyref)
  ;; CHECK-NEXT:  (if
  ;; CHECK-NEXT:   (i32.const 1)
@@ -386,7 +388,7 @@
  (func $tail-caller-indirect-yes (result anyref)
   (return_call_indirect (type $"return_{}") (i32.const 0))
  )
- ;; CHECK:      (func $tail-caller-indirect-no (type $0) (result anyref)
+ ;; CHECK:      (func $tail-caller-indirect-no (type $2) (result anyref)
  ;; CHECK-NEXT:  (local $any anyref)
  ;; CHECK-NEXT:  (if
  ;; CHECK-NEXT:   (i32.const 1)
@@ -445,7 +447,7 @@
 
   (return_call_ref $"return_{}" (local.get $"return_{}"))
  )
- ;; CHECK:      (func $tail-caller-call_ref-no (type $0) (result anyref)
+ ;; CHECK:      (func $tail-caller-call_ref-no (type $2) (result anyref)
  ;; CHECK-NEXT:  (local $any anyref)
  ;; CHECK-NEXT:  (local $"return_{}" (ref null $"return_{}"))
  ;; CHECK-NEXT:  (if
@@ -471,7 +473,7 @@
   )
   (return_call_ref $"return_{}" (local.get $"return_{}"))
  )
- ;; CHECK:      (func $tail-caller-call_ref-unreachable (type $0) (result anyref)
+ ;; CHECK:      (func $tail-caller-call_ref-unreachable (type $7) (result (ref none))
  ;; CHECK-NEXT:  (block ;; (replaces unreachable CallRef we can't emit)
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (unreachable)
@@ -507,7 +509,7 @@
   )
  )
 
- ;; CHECK:      (func $update-null (type $10) (param $x i32) (param $y i32) (result (ref null $"{i32}"))
+ ;; CHECK:      (func $update-null (type $11) (param $x i32) (param $y i32) (result (ref null $"{i32}"))
  ;; CHECK-NEXT:  (if
  ;; CHECK-NEXT:   (local.get $x)
  ;; CHECK-NEXT:   (then
@@ -554,7 +556,7 @@
   )
  )
 
- ;; CHECK:      (func $call-update-null (type $0) (result anyref)
+ ;; CHECK:      (func $call-update-null (type $2) (result anyref)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (call $update-null
  ;; CHECK-NEXT:    (i32.const 0)

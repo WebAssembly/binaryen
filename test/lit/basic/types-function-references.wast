@@ -200,7 +200,7 @@
   ;; CHECK-BIN-NEXT:    (local.set $scratch_2
   ;; CHECK-BIN-NEXT:     (tuple.extract 3 0
   ;; CHECK-BIN-NEXT:      (local.tee $scratch
-  ;; CHECK-BIN-NEXT:       (block (type $10) (result i32 (ref null $mixed_results) f64)
+  ;; CHECK-BIN-NEXT:       (block $block (type $10) (result i32 (ref null $mixed_results) f64)
   ;; CHECK-BIN-NEXT:        (unreachable)
   ;; CHECK-BIN-NEXT:       )
   ;; CHECK-BIN-NEXT:      )

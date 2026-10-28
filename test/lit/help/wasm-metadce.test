@@ -109,6 +109,10 @@
 ;; CHECK-NEXT:   --const-hoisting                              hoist repeated constants to a 
 ;; CHECK-NEXT:                                                 local
 ;; CHECK-EMPTY:
+;; CHECK-NEXT:   --constant-arrays-to-data                     convert constant array.new_fixed
+;; CHECK-NEXT:                                                 to array.new_data when it is 
+;; CHECK-NEXT:                                                 smaller
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --constraint-analysis                         finds and uses mathematical 
 ;; CHECK-NEXT:                                                 constraints on locals
 ;; CHECK-EMPTY:
@@ -265,6 +269,9 @@
 ;; CHECK-NEXT:   --mark-js-called                              mark js called functions (using 
 ;; CHECK-NEXT:                                                 configureAll) as doing so
 ;; CHECK-EMPTY:
+;; CHECK-NEXT:   --mark-noreturn                               mark functions that do not 
+;; CHECK-NEXT:                                                 return, enabling later opts
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --memory-packing                              packs memory into separate 
 ;; CHECK-NEXT:                                                 segments, skipping zeros
 ;; CHECK-EMPTY:
@@ -351,6 +358,9 @@
 ;; CHECK-NEXT:   --optimize-j2cl                               optimizes J2CL specific 
 ;; CHECK-NEXT:                                                 constructs.
 ;; CHECK-EMPTY:
+;; CHECK-NEXT:   --optimize-noreturn                           optimizes calls to 
+;; CHECK-NEXT:                                                 @binaryen.noreturn functions
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --outlining                                   outline instructions
 ;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --pick-load-signs                             pick load signs based on their 
@@ -394,7 +404,7 @@
 ;; CHECK-NEXT:   --propagate-globals-globally                  propagate global values to other
 ;; CHECK-NEXT:                                                 globals (useful for tests)
 ;; CHECK-EMPTY:
-;; CHECK-NEXT:   --remove-empty-function-exports               removes exports of empty
+;; CHECK-NEXT:   --remove-empty-function-exports               removes exports of empty 
 ;; CHECK-NEXT:                                                 functions
 ;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --remove-exports                              removes exports using a wildcard
@@ -537,6 +547,11 @@
 ;; CHECK-NEXT:   --strip-eh                                    strip EH instructions
 ;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --strip-producers                             strip the wasm producers section
+;; CHECK-EMPTY:
+;; CHECK-NEXT:   --strip-refining-casts                        remove casts on values flowing 
+;; CHECK-NEXT:                                                 into slots whose declared type 
+;; CHECK-NEXT:                                                 the uncast value already 
+;; CHECK-NEXT:                                                 satisfies
 ;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --strip-target-features                       strip the wasm target features 
 ;; CHECK-NEXT:                                                 section
@@ -684,6 +699,11 @@
 ;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --zero-filled-memory,-uim                     Assume that an imported memory 
 ;; CHECK-NEXT:                                                 will be zero-initialized
+;; CHECK-EMPTY:
+;; CHECK-NEXT:   --expect-later-toolchain-opts                 Expect further invocations of 
+;; CHECK-NEXT:                                                 wasm-opt later, avoiding 
+;; CHECK-NEXT:                                                 optimizations that might inhibit
+;; CHECK-NEXT:                                                 them
 ;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --skip-pass,-sp                               Skip a pass (do not run it)
 ;; CHECK-EMPTY:

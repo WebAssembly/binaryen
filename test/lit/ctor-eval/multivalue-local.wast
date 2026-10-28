@@ -49,8 +49,5 @@
 ;; CHECK-NEXT:   (i32.const 42)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT:  (call $import)
-;; CHECK-NEXT:  (i32.add
-;; CHECK-NEXT:   (local.get $0)
-;; CHECK-NEXT:   (local.get $0)
-;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (i32.const 84)
 ;; CHECK-NEXT: )

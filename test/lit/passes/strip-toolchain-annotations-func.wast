@@ -49,4 +49,11 @@
   (func $test-binaryen-inline
     ;; This hint should be removed too.
   )
+
+  ;; CHECK:      (func $noreturn (type $0)
+  ;; CHECK-NEXT: )
+  (@binaryen.noreturn)
+  (func $noreturn
+    ;; This hint should be removed too.
+  )
 )

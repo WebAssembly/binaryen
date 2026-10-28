@@ -129,6 +129,10 @@ void PassRegistry::registerPasses() {
   registerPass("cfp-reftest",
                "propagate constant struct field values, using ref.test",
                createConstantFieldPropagationRefTestPass);
+  registerPass("constant-arrays-to-data",
+               "convert constant array.new_fixed to array.new_data when it is "
+               "smaller",
+               createConstantArraysToDataPass);
   registerPass("constraint-analysis",
                "finds and uses mathematical constraints on locals",
                createConstraintAnalysisPass);
@@ -286,6 +290,9 @@ void PassRegistry::registerPasses() {
   registerPass("mark-js-called",
                "mark js called functions (using configureAll) as doing so",
                createMarkJSCalledPass);
+  registerPass("mark-noreturn",
+               "mark functions that do not return, enabling later opts",
+               createMarkNoReturnPass);
   registerPass("memory64-lowering",
                "lower loads and stores to a 64-bit memory to instead use a "
                "32-bit one",
@@ -367,6 +374,9 @@ void PassRegistry::registerPasses() {
   registerPass("optimize-instructions",
                "optimizes instruction combinations",
                createOptimizeInstructionsPass);
+  registerPass("optimize-noreturn",
+               "optimizes calls to @binaryen.noreturn functions",
+               createOptimizeNoReturnPass);
 // Outlining currently relies on LLVM's SuffixTree, which we can't rely upon
 // when building Binaryen for Emscripten.
 #ifndef SKIP_OUTLINING
@@ -565,6 +575,10 @@ void PassRegistry::registerPasses() {
                "strip debug info (including the names section)",
                createStripDebugPass);
   registerPass("strip-dwarf", "strip dwarf debug info", createStripDWARFPass);
+  registerPass("strip-refining-casts",
+               "remove casts on values flowing into slots whose declared type "
+               "the uncast value already satisfies",
+               createStripRefiningCastsPass);
   registerPass("strip-producers",
                "strip the wasm producers section",
                createStripProducersPass);
@@ -668,6 +682,8 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
     addIfNoDWARFIssues("local-cse");
     // TODO: add rereloop etc. here
   }
+  // Add unreachables on noreturn calls before DCE, so DCE cleans them up.
+  addIfNoDWARFIssues("optimize-noreturn");
   addIfNoDWARFIssues("dce");
   addIfNoDWARFIssues("remove-unused-names");
   addIfNoDWARFIssues("remove-unused-brs");
@@ -841,6 +857,14 @@ void PassRunner::addDefaultGlobalOptimizationPostPasses() {
     addIfNoDWARFIssues("simplify-globals");
   }
   addIfNoDWARFIssues("remove-unused-module-elements");
+  if (options.lastOpts && wasm->features.hasGC() &&
+      wasm->features.hasBulkMemory() &&
+      (options.optimizeLevel >= 2 || options.shrinkLevel >= 1)) {
+    // Converting array.new_fixed to array.new_data inhibits optimizations that
+    // need constant expressions or know the contents of the array (and
+    // OptimizeInstructions may undo it), so only do it at the very end.
+    addIfNoDWARFIssues("constant-arrays-to-data");
+  }
   if (options.optimizeLevel >= 2 && wasm->features.hasStrings()) {
     // Gather strings to globals right before reorder-globals, which will then
     // sort them properly.

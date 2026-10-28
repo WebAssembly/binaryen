@@ -186,3 +186,165 @@
   )
 )
 
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $super (sub (descriptor $super.desc) (struct)))
+    (type $super (sub (descriptor $super.desc) (struct)))
+    ;; CHECK:       (type $super.desc (sub (describes $super) (struct)))
+    (type $super.desc (sub (describes $super) (struct)))
+    ;; CHECK:       (type $sub (sub $super (descriptor $sub.desc) (struct)))
+    (type $sub (sub $super (descriptor $sub.desc) (struct)))
+    ;; CHECK:       (type $sub.desc (sub $super.desc (describes $sub) (struct)))
+    (type $sub.desc (sub $super.desc (describes $sub) (struct)))
+
+    ;; CHECK:       (type $super2 (sub (descriptor $super2.desc) (struct)))
+    (type $super2 (sub (descriptor $super2.desc) (struct)))
+    ;; CHECK:       (type $super2.desc (sub (describes $super2) (struct)))
+    (type $super2.desc (sub (describes $super2) (struct)))
+    ;; CHECK:       (type $sub2 (sub $super2 (descriptor $sub2.desc) (struct)))
+    (type $sub2 (sub $super2 (descriptor $sub2.desc) (struct)))
+    ;; CHECK:       (type $sub2.desc (sub $super2.desc (describes $sub2) (struct)))
+    (type $sub2.desc (sub $super2.desc (describes $sub2) (struct)))
+
+    ;; CHECK:       (type $other (sub (descriptor $other.desc) (struct)))
+    (type $other (sub (descriptor $other.desc) (struct)))
+    ;; CHECK:       (type $other.desc (sub (describes $other) (struct)))
+    (type $other.desc (sub (describes $other) (struct)))
+  )
+
+  ;; CHECK:      (type $10 (func (param (ref $super)) (result (ref $super.desc))))
+
+  ;; CHECK:      (type $11 (func (param (ref $super2)) (result (ref $super2.desc))))
+
+  ;; CHECK:      (type $12 (func (param (ref $sub)) (result (ref $sub.desc))))
+
+  ;; CHECK:      (type $13 (func (param (ref (exact $super))) (result (ref (exact $super.desc)))))
+
+  ;; CHECK:      (type $14 (func (param (ref $other)) (result (ref $other.desc))))
+
+  ;; CHECK:      (global $g (ref $super) (struct.new_default_desc $sub
+  ;; CHECK-NEXT:  (struct.new_default $sub.desc)
+  ;; CHECK-NEXT: ))
+  (global $g (ref $super) (struct.new_desc $sub (struct.new $sub.desc)))
+  ;; CHECK:      (global $g-sub (ref (exact $sub2)) (struct.new_default_desc $sub2
+  ;; CHECK-NEXT:  (struct.new_default $sub2.desc)
+  ;; CHECK-NEXT: ))
+  (global $g-sub (ref (exact $sub2)) (struct.new_desc $sub2 (struct.new $sub2.desc)))
+  ;; CHECK:      (global $g-structref structref (struct.new_default_desc $other
+  ;; CHECK-NEXT:  (struct.new_default $other.desc)
+  ;; CHECK-NEXT: ))
+  (global $g-structref structref (struct.new_desc $other (struct.new $other.desc)))
+
+  ;; CHECK:      (func $super-op (type $10) (param $x (ref $super)) (result (ref $super.desc))
+  ;; CHECK-NEXT:  (ref.get_desc $super
+  ;; CHECK-NEXT:   (block (result (ref $super))
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (global.get $g)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $super-op (param $x (ref $super)) (result (ref $super.desc))
+    ;; The global has type (ref $super), which already produces (ref $super.desc),
+    ;; so no cast is needed.
+    (ref.get_desc $super
+      (local.get $x)
+    )
+  )
+
+  ;; CHECK:      (func $refine-op (type $11) (param $x (ref $super2)) (result (ref $super2.desc))
+  ;; CHECK-NEXT:  (block $b (result (ref (exact $sub2.desc)))
+  ;; CHECK-NEXT:   (ref.get_desc $sub2
+  ;; CHECK-NEXT:    (block (result (ref (exact $sub2)))
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (ref.as_non_null
+  ;; CHECK-NEXT:       (local.get $x)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (global.get $g-sub)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $refine-op (param $x (ref $super2)) (result (ref $super2.desc))
+    ;; The global has type (ref (exact $sub2)), which produces the more refined
+    ;; type (ref (exact $sub2.desc)), so no cast is needed and the enclosing
+    ;; block's result type is refined.
+    (block $b (result (ref $super2.desc))
+      (ref.get_desc $super2
+        (local.get $x)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $sub-op (type $12) (param $x (ref $sub)) (result (ref $sub.desc))
+  ;; CHECK-NEXT:  (ref.get_desc $sub
+  ;; CHECK-NEXT:   (block (result (ref $sub))
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.cast (ref $sub)
+  ;; CHECK-NEXT:     (global.get $g)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $sub-op (param $x (ref $sub)) (result (ref $sub.desc))
+    ;; Reading the descriptor from (ref $super) would produce the less refined
+    ;; type (ref $super.desc), so we must cast the global.get to (ref $sub).
+    (ref.get_desc $sub
+      (local.get $x)
+    )
+  )
+
+  ;; CHECK:      (func $exact-op (type $13) (param $x (ref (exact $super))) (result (ref (exact $super.desc)))
+  ;; CHECK-NEXT:  (ref.get_desc $super
+  ;; CHECK-NEXT:   (block (result (ref (exact $super)))
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.cast (ref (exact $super))
+  ;; CHECK-NEXT:     (global.get $g)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $exact-op (param $x (ref (exact $super))) (result (ref (exact $super.desc)))
+    ;; Reading the descriptor from inexact (ref $super) would produce inexact
+    ;; (ref $super.desc), so we must cast the global.get to (ref (exact $super)).
+    (ref.get_desc $super
+      (local.get $x)
+    )
+  )
+
+  ;; CHECK:      (func $non-struct-global (type $14) (param $x (ref $other)) (result (ref $other.desc))
+  ;; CHECK-NEXT:  (ref.get_desc $other
+  ;; CHECK-NEXT:   (block (result (ref $other))
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.cast (ref $other)
+  ;; CHECK-NEXT:     (global.get $g-structref)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $non-struct-global (param $x (ref $other)) (result (ref $other.desc))
+    ;; The global's declared type (structref) does not have a descriptor, so we
+    ;; must cast the global.get to (ref $other).
+    (ref.get_desc $other
+      (local.get $x)
+    )
+  )
+)
+

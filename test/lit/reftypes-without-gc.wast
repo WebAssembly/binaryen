@@ -10,8 +10,8 @@
 
 (module
   ;; CHECK:      (func $test (param $x i32) (result funcref)
-  ;; CHECK-NEXT:  (block $block (result funcref)
-  ;; CHECK-NEXT:   (br_if $block
+  ;; CHECK-NEXT:  (block $out (result funcref)
+  ;; CHECK-NEXT:   (br_if $out
   ;; CHECK-NEXT:    (ref.func $test)
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )

@@ -127,4 +127,42 @@
     (drop (i32.shr_s (i32.shl (local.get $x) (i32.const 16)) (i32.const 24))) ;; skip
     (drop (i32.shr_s (i32.shl (local.get $x) (i32.const 24)) (i32.const 16))) ;; skip
   )
+
+  ;; CHECK:      (func $no-reorder-may-not-return (param $x i32) (param $y i32) (result i32)
+  ;; CHECK-NEXT:  (i32.add
+  ;; CHECK-NEXT:   (i32.sub
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (loop $loop (result i32)
+  ;; CHECK-NEXT:     (br_if $loop
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.div_s
+  ;; CHECK-NEXT:    (i32.const 3)
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $no-reorder-may-not-return (param $x i32) (param $y i32) (result i32)
+    ;; OptimizeInstructions normally rewrites (0 - X) + Y => Y - X when X and Y
+    ;; can be reordered. That rewrite cannot happen here because X is a loop
+    ;; that may not return and Y may trap.
+    (i32.add
+      (i32.sub
+        (i32.const 0)
+        (loop $loop (result i32)
+          (br_if $loop
+            (local.get $x)
+          )
+          (i32.const 1)
+        )
+      )
+      (i32.div_s
+        (i32.const 3)
+        (local.get $y)
+      )
+    )
+  )
 )
