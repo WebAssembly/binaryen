@@ -549,6 +549,8 @@ struct GlobalStructInference : public Pass {
           builder.makeRefEq(builder.makeRefAs(RefAsNonNull, ref), getGlobal),
           left,
           right));
+        // Placing `ref` into the select condition (the third child) moves any
+        // enclosed `pop` out of the catch body's first-descendant line.
         needEHFixups = true;
       }
 

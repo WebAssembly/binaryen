@@ -448,15 +448,20 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
       makeExpression(values[1 - testIndex].constant, refHeapType, curr)));
 
     changed = true;
+    // Placing `ref` into the select condition (the third child) moves any
+    // enclosed `pop` out of the catch body's first-descendant line.
+    needEHFixups = true;
   }
 
   void doWalkFunction(Function* func) {
     WalkerPass<PostWalker<FunctionOptimizer>>::doWalkFunction(func);
 
     // If we changed anything, we need to update parent types as types may have
-    // changed, and fix up any pops that we moved into a select condition.
+    // changed.
     if (changed) {
       ReFinalize().walkFunctionInModule(func, getModule());
+    }
+    if (needEHFixups) {
       EHUtils::handleBlockNestedPops(func, *getModule());
     }
   }
@@ -468,6 +473,7 @@ private:
   const bool refTest;
 
   bool changed = false;
+  bool needEHFixups = false;
 };
 
 struct PCVScanner
