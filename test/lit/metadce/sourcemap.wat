@@ -25,9 +25,9 @@
 )
 ;; BIN:      (type $0 (func))
 
-;; BIN:      (export "f" (func $0))
+;; BIN:      (export "f" (func $f))
 
-;; BIN:      (func $0
+;; BIN:      (func $f
 ;; BIN-NEXT:  ;;@ a:7:8:someSymbol
 ;; BIN-NEXT:  (nop)
 ;; BIN-NEXT:  ;;@ a:9:10

@@ -17,8 +17,8 @@
 )
 ;; CHECK-TEXT:      (import "env" "table" (table $timport$0 256 256 funcref))
 
-;; CHECK-BIN:      (import "env" "table" (table $timport$0 256 256 funcref))
+;; CHECK-BIN:      (import "env" "table" (table $table 256 256 funcref))
 
-;; CHECK-BIN-NODEBUG:      (import "env" "memory" (memory $mimport$0 256 256))
+;; CHECK-BIN-NODEBUG:      (import "env" "memory" (memory $memory 256 256))
 
-;; CHECK-BIN-NODEBUG:      (import "env" "table" (table $timport$0 256 256 funcref))
+;; CHECK-BIN-NODEBUG:      (import "env" "table" (table $table 256 256 funcref))
