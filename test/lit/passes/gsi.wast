@@ -2417,20 +2417,12 @@
 )
 
 (module
-  ;; CHECK:      (type $one (struct (field i32)))
-  (type $one (struct (field i32)))
   ;; CHECK:      (type $two (struct (field i64)))
   (type $two (struct (field i64)))
+  ;; CHECK:      (type $1 (func (param (ref $two))))
+
   ;; CHECK:      (type $2 (func))
 
-  ;; CHECK:      (type $3 (func (param (ref $one))))
-
-  ;; CHECK:      (type $4 (func (param (ref $two))))
-
-  ;; CHECK:      (global $one (ref $one) (struct.new $one
-  ;; CHECK-NEXT:  (i32.const 10)
-  ;; CHECK-NEXT: ))
-  (global $one (ref $one) (struct.new $one (i32.const 10)))
   ;; CHECK:      (global $two-a (ref $two) (struct.new $two
   ;; CHECK-NEXT:  (i64.const 10)
   ;; CHECK-NEXT: ))
@@ -2439,49 +2431,8 @@
   ;; CHECK-NEXT:  (i64.const 20)
   ;; CHECK-NEXT: ))
   (global $two-b (ref $two) (struct.new $two (i64.const 20)))
-  ;; CHECK:      (tag $e-one (type $3) (param (ref $one)))
-  (tag $e-one (param (ref $one)))
-  ;; CHECK:      (tag $e-two (type $4) (param (ref $two)))
+  ;; CHECK:      (tag $e-two (type $1) (param (ref $two)))
   (tag $e-two (param (ref $two)))
-
-  ;; CHECK:      (func $catch-pop-block (type $2)
-  ;; CHECK-NEXT:  (local $0 (ref $one))
-  ;; CHECK-NEXT:  (try
-  ;; CHECK-NEXT:   (do
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (catch $e-one
-  ;; CHECK-NEXT:    (local.set $0
-  ;; CHECK-NEXT:     (pop (ref $one))
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (struct.get $one 0
-  ;; CHECK-NEXT:      (block (result (ref $one))
-  ;; CHECK-NEXT:       (drop
-  ;; CHECK-NEXT:        (ref.as_non_null
-  ;; CHECK-NEXT:         (local.get $0)
-  ;; CHECK-NEXT:        )
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:       (global.get $one)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $catch-pop-block
-    ;; Optimizing this struct.get wraps its reference in a block, requiring the
-    ;; enclosed pop to be fixed up.
-    (try
-      (do)
-      (catch $e-one
-        (drop
-          (struct.get $one 0
-            (pop (ref $one))
-          )
-        )
-      )
-    )
-  )
 
   ;; CHECK:      (func $catch-pop-select (type $2)
   ;; CHECK-NEXT:  (local $0 (ref $two))

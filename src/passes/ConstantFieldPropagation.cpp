@@ -454,7 +454,7 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
     WalkerPass<PostWalker<FunctionOptimizer>>::doWalkFunction(func);
 
     // If we changed anything, we need to update parent types as types may have
-    // changed, and fix up any pops that we enclosed in a block.
+    // changed, and fix up any pops that we moved into a select condition.
     if (changed) {
       ReFinalize().walkFunctionInModule(func, getModule());
       EHUtils::handleBlockNestedPops(func, *getModule());

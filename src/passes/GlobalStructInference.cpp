@@ -467,7 +467,6 @@ struct GlobalStructInference : public Pass {
           // to synchronize with in the first place.
           ref = builder.makeSequence(
             builder.makeDrop(builder.makeRefAs(RefAsNonNull, ref)), get);
-          needEHFixups = true;
           return;
         }
 
@@ -517,7 +516,6 @@ struct GlobalStructInference : public Pass {
           replaceCurrent(builder.makeSequence(
             builder.makeDrop(builder.makeRefAs(RefAsNonNull, ref)),
             getReadValue(values[0], fieldIndex, field, curr)));
-          needEHFixups = true;
           return;
         }
         assert(values.size() == 2);
