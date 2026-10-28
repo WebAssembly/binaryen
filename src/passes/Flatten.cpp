@@ -37,6 +37,7 @@
 // local, but in principle there's no reason it couldn't be. For now, error on
 // this.
 
+#include "wasm-type.h"
 #include <ir/branch-utils.h>
 #include <ir/effects.h>
 #include <ir/eh-utils.h>
@@ -308,6 +309,118 @@ struct Flatten
           }
         }
 
+      } else if (auto* br = curr->dynCast<BrOn>()) {
+        if (br->op == BrOnOp::BrOnNull || br->op == BrOnOp::BrOnNonNull) {
+          auto nullableType = br->ref->type;
+
+          Index nullableTemp = builder.addVar(getFunction(), nullableType);
+          ourPreludes.push_back(builder.makeLocalSet(nullableTemp, br->ref));
+
+          Index isNullTemp = builder.addVar(getFunction(), Type::i32);
+          ourPreludes.push_back(
+            builder.makeLocalSet(isNullTemp,
+                                 builder.makeRefIsNull(builder.makeLocalGet(
+                                   nullableTemp, nullableType))));
+
+          if (br->op == BrOnOp::BrOnNull) {
+            ourPreludes.push_back(builder.makeBreak(
+              br->name, nullptr, builder.makeLocalGet(isNullTemp, Type::i32)));
+
+            replaceCurrent(builder.makeRefAs(
+              RefAsOp::RefAsNonNull,
+              builder.makeLocalGet(nullableTemp, nullableType)));
+          } else { // br_on_non_null
+            Index isNotNullTemp = builder.addVar(getFunction(), Type::i32);
+            ourPreludes.push_back(builder.makeLocalSet(
+              isNotNullTemp,
+              builder.makeUnary(UnaryOp::EqZInt32,
+                                builder.makeLocalGet(isNullTemp, Type::i32))));
+
+            Index breakTargetTemp = getTempForBreakTarget(
+              br->name, nullableType.with(Nullability::NonNullable));
+
+            std::vector<Expression*> successBlock;
+            successBlock.push_back(builder.makeLocalSet(
+              breakTargetTemp,
+              builder.makeRefAs(
+                RefAsOp::RefAsNonNull,
+                builder.makeLocalGet(nullableTemp, nullableType))));
+            successBlock.push_back(builder.makeBreak(br->name));
+
+            replaceCurrent(
+              builder.makeIf(builder.makeLocalGet(isNotNullTemp, Type::i32),
+                             builder.makeBlock(successBlock)));
+          }
+        } else if (br->op == BrOnCast || br->op == BrOnCastFail) {
+          auto sourceType = br->ref->type;
+          auto targetType = br->castType;
+
+          Index sourceTypeTemp = builder.addVar(getFunction(), sourceType);
+          ourPreludes.push_back(builder.makeLocalSet(sourceTypeTemp, br->ref));
+
+          Index typeTestTemp = builder.addVar(getFunction(), Type::i32);
+          ourPreludes.push_back(builder.makeLocalSet(
+            typeTestTemp,
+            builder.makeRefTest(
+              builder.makeLocalGet(sourceTypeTemp, sourceType), targetType)));
+
+          // On cast failure the source type is made non-nullable if the target
+          // type is nullable.
+          Expression* failValue =
+            builder.makeLocalGet(sourceTypeTemp, sourceType);
+          if (br->castType.isNullable()) {
+            failValue = builder.makeRefAs(RefAsOp::RefAsNonNull, failValue);
+          }
+
+          if (br->op == BrOnCast) {
+            Index breakTargetTemp = getTempForBreakTarget(br->name, targetType);
+
+            std::vector<Expression*> successBlock;
+            successBlock.push_back(builder.makeLocalSet(
+              breakTargetTemp,
+              builder.makeRefCast(
+                builder.makeLocalGet(sourceTypeTemp, sourceType), targetType)));
+            successBlock.push_back(builder.makeBreak(br->name));
+
+            ourPreludes.push_back(
+              builder.makeIf(builder.makeLocalGet(typeTestTemp, Type::i32),
+                             builder.makeBlock(successBlock)));
+
+            Index failTemp = builder.addVar(getFunction(), failValue->type);
+            ourPreludes.push_back(builder.makeLocalSet(failTemp, failValue));
+            replaceCurrent(builder.makeLocalGet(failTemp, failValue->type));
+          } else { // br_on_cast_fail
+            Index breakTargetTemp =
+              getTempForBreakTarget(br->name, failValue->type);
+
+            std::vector<Expression*> failureBlock;
+            failureBlock.push_back(
+              builder.makeLocalSet(breakTargetTemp, failValue));
+            failureBlock.push_back(builder.makeBreak(br->name));
+
+            Index typeTestFailTemp = builder.addVar(getFunction(), Type::i32);
+            ourPreludes.push_back(builder.makeLocalSet(
+              typeTestFailTemp,
+              builder.makeUnary(
+                UnaryOp::EqZInt32,
+                builder.makeLocalGet(typeTestTemp, Type::i32))));
+
+            ourPreludes.push_back(
+              builder.makeIf(builder.makeLocalGet(typeTestFailTemp, Type::i32),
+                             builder.makeBlock(failureBlock)));
+
+            Index targetTypeTemp = builder.addVar(getFunction(), targetType);
+            ourPreludes.push_back(builder.makeLocalSet(
+              targetTypeTemp,
+              builder.makeRefCast(
+                builder.makeLocalGet(sourceTypeTemp, sourceType), targetType)));
+
+            replaceCurrent(builder.makeLocalGet(targetTypeTemp, targetType));
+          }
+
+        } else {
+          Fatal() << "Unsupported instruction for Flatten: BrOn " << br->op;
+        }
       } else if (auto* sw = curr->dynCast<Switch>()) {
         if (sw->value) {
           auto type = sw->value->type;
@@ -333,7 +446,7 @@ struct Flatten
       }
     }
 
-    if (curr->is<BrOn>() || curr->is<TryTable>()) {
+    if (curr->is<TryTable>()) {
       Fatal() << "Unsupported instruction for Flatten: "
               << getExpressionName(curr);
     }
