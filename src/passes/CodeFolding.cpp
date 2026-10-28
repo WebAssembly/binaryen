@@ -701,16 +701,17 @@ private:
       for (auto* item : items) {
         saved += Measurer::measure(item) * (tails.size() - 1);
       }
-      // compute the cost: in non-fallthroughs, we are replacing the final
+
+      // Compute the cost: in non-fallthroughs, we are replacing the final
       // element with a br; for a fallthrough, if there is one, we must
       // add a return element (for the function body, so it doesn't reach us)
       // TODO: handle fallthroughs for return
       Index cost = tails.size();
-      // we also need to add two blocks: for us to break to, and to contain
+      // We also need to add two blocks: for us to break to, and to contain
       // that block and the merged code. very possibly one of the blocks
       // can be removed, though
       cost += WORTH_ADDING_BLOCK_TO_REMOVE_THIS_MUCH;
-      // if we cannot merge to the end, then we definitely need 2 blocks,
+      // If we cannot merge to the end, then we definitely need 2 blocks,
       // and a branch. Use the pre-computed bodyTargets to avoid repeated
       // O(N) getBranchTargets calls.
       assert(bodyTargets);
@@ -722,8 +723,38 @@ private:
         //       for now, just don't do this optimization
         return false;
       }
-      // is it worth it?
-      return saved > cost;
+      if (saved <= cost) {
+        return false;
+      }
+
+      // If GC is enabled, also avoid moving code that has a non-nullable
+      // local.get. Such a get will not validate afterwards, since we add a
+      // named block at the top level, and put the get outside of it all:
+      //
+      //   (block $folding-inner
+      //     old code, including sets for the local.get
+      //     old position of the local.get
+      //   )
+      //   merged code, including the new position of the local.get
+      //
+      // There can be some downsides to this, as while we are folding code, we
+      // are adding ref.as_non_null checks, and this may also inhibit further
+      // optimizations (e.g. making one local nullable can prevent it getting
+      // coalesced with a non-nullable one). Still, we do this during the last
+      // set of optimizations, as then the risk of downsides to later opts is
+      // lower.
+      if (!getPassOptions().lastOpts) {
+        for (auto* item : items) {
+          for (auto* get : FindAll<LocalGet>(item).list) {
+            if (get->type.isNonNullableRef()) {
+              return false;
+            }
+          }
+        }
+      }
+
+      // Worthwhile!
+      return true;
     };
     // let's see if we can merge deeper than num, to num + 1
     auto next = tails;
