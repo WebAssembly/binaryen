@@ -1640,8 +1640,8 @@
   )
 )
 
-;; A struct with a pop, which requires EH fixups to avoid popping in a nested
-;; block.
+;; A struct with a pop. The block we emit is unnamed, and validates properly
+;; even with a pop.
 (module
   ;; CHECK:      (rec
   ;; CHECK-NEXT:  (type $struct (struct))
@@ -1658,18 +1658,14 @@
 
   ;; CHECK:      (func $func (type $1)
   ;; CHECK-NEXT:  (local $0 i32)
-  ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (try
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (catch $tag
-  ;; CHECK-NEXT:    (local.set $1
-  ;; CHECK-NEXT:     (pop i32)
-  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (block (result (ref (exact $struct)))
   ;; CHECK-NEXT:      (local.set $0
-  ;; CHECK-NEXT:       (local.get $1)
+  ;; CHECK-NEXT:       (pop i32)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (struct.new_default $struct)
   ;; CHECK-NEXT:     )
