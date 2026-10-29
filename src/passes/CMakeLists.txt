@@ -24,6 +24,7 @@ set(passes_SOURCES
   CoalesceLocals.cpp
   CodePushing.cpp
   CodeFolding.cpp
+  ConstantArraysToData.cpp
   ConstantFieldPropagation.cpp
   ConstHoisting.cpp
   ConstraintAnalysis.cpp

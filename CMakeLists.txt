@@ -86,24 +86,62 @@ option(EMSCRIPTEN_ENABLE_SINGLE_FILE "Enable SINGLE_FILE mode in emscripten buil
 
 option(ENABLE_WERROR "Enable -Werror" ON)
 
-# For git users, attempt to generate a more useful version string
-if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/.git)
-  find_package(Git QUIET REQUIRED)
-  execute_process(COMMAND
-               "${GIT_EXECUTABLE}" --git-dir=${CMAKE_CURRENT_SOURCE_DIR}/.git describe --tags --match version_*
-           RESULT_VARIABLE
-               GIT_VERSION_RESULT
-           OUTPUT_VARIABLE
-               GIT_VERSION
-           OUTPUT_STRIP_TRAILING_WHITESPACE)
-  if(${GIT_VERSION_RESULT})
-    message(WARNING "Error running git describe to determine version")
-  else()
-    set(PROJECT_VERSION "${PROJECT_VERSION} (${GIT_VERSION})")
+# Generate config.h with PROJECT_VERSION (including git describe output when
+# building from a git checkout). This uses a build-time custom command
+# depending on .git/logs/HEAD so switching commits updates the version string
+# without needing to re-run CMake.
+set(VERSION_HEADER "${CMAKE_CURRENT_BINARY_DIR}/config.h")
+set(GEN_VERSION_SCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/scripts/gen-version.cmake")
+set(GEN_VERSION_DEPS "${GEN_VERSION_SCRIPT}" "${CMAKE_CURRENT_SOURCE_DIR}/config.h.in")
+set(GENERATED_VERSION_FILES "${VERSION_HEADER}")
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/.git")
+  find_package(Git QUIET)
+  if(GIT_FOUND)
+    execute_process(
+      COMMAND "${GIT_EXECUTABLE}" rev-parse --git-dir
+      WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+      RESULT_VARIABLE GIT_RESULT
+      OUTPUT_VARIABLE GIT_DIR
+      ERROR_QUIET
+      OUTPUT_STRIP_TRAILING_WHITESPACE)
+    if(GIT_RESULT EQUAL 0)
+      get_filename_component(GIT_DIR "${GIT_DIR}" ABSOLUTE BASE_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
+      if(EXISTS "${GIT_DIR}/logs/HEAD")
+        list(APPEND GEN_VERSION_DEPS "${GIT_DIR}/logs/HEAD")
+      else()
+        # Some checkouts (e.g. 'repo' or reflog-disabled) may not have
+        # .git/logs/HEAD; use a non-existent output to force checking git at
+        # build time.
+        list(APPEND GENERATED_VERSION_FILES "${CMAKE_CURRENT_BINARY_DIR}/__fake_config.h")
+      endif()
+    endif()
   endif()
 endif()
 
-configure_file(config.h.in config.h)
+set(GEN_VERSION_CMD
+  "${CMAKE_COMMAND}"
+  "-DSOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR}"
+  "-DOUTPUT_FILE=${VERSION_HEADER}"
+  "-DPROJECT_VERSION=${PROJECT_VERSION}"
+  "-DGIT_EXECUTABLE=${GIT_EXECUTABLE}"
+  -P "${GEN_VERSION_SCRIPT}")
+
+# Also generate config.h at configure time so tools like clang-tidy that run
+# before a build can find it.
+execute_process(COMMAND ${GEN_VERSION_CMD})
+
+add_custom_command(
+  OUTPUT ${GENERATED_VERSION_FILES}
+  DEPENDS ${GEN_VERSION_DEPS}
+  COMMAND ${GEN_VERSION_CMD}
+  COMMENT "Generating config.h")
+
+set_source_files_properties("${VERSION_HEADER}"
+  PROPERTIES GENERATED TRUE
+             HEADER_FILE_ONLY TRUE)
+
+add_custom_target(binaryen_version ALL DEPENDS ${GENERATED_VERSION_FILES})
 
 # Configure threads
 
@@ -444,6 +482,7 @@ endif()
 # Declare libbinaryen
 # This will be either be STATIC or SHARED depending on BUILD_SHARED_LIBS
 add_library(binaryen)
+add_dependencies(binaryen binaryen_version)
 
 if(BUILD_SHARED_LIBS)
   add_definitions(-DBUILD_SHARED_LIBS)
