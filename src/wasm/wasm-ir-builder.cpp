@@ -2958,10 +2958,15 @@ Result<> IRBuilder::makeStackSwitch(HeapType ct, Name tag) {
   }
   StackSwitch curr(wasm.allocator);
   curr.tag = tag;
-  auto nparams = ct.getContinuation().type.getSignature().params.size();
+  auto params = ct.getContinuation().type.getSignature().params;
+  auto nparams = params.size();
   if (nparams < 1) {
     return Err{"arity mismatch: the continuation argument must have, at least, "
                "unary arity"};
+  }
+  if (!params[nparams - 1].isContinuation()) {
+    return Err{"expected continuation type for last parameter of switch "
+               "continuation"};
   }
 
   // The continuation argument of the continuation is synthetic,
@@ -2971,7 +2976,7 @@ Result<> IRBuilder::makeStackSwitch(HeapType ct, Name tag) {
   CHECK_ERR(ChildPopper{*this}.visitStackSwitch(&curr, ct));
   CHECK_ERR(validateTypeAnnotation(ct, curr.cont));
 
-  push(builder.makeStackSwitch(tag, std::move(curr.operands), curr.cont));
+  push(builder.makeStackSwitch(tag, std::move(curr.operands), curr.cont, ct));
   return Ok{};
 }
 
