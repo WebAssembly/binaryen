@@ -28,7 +28,6 @@
 // have no side effects.
 //
 
-#include "ir/eh-utils.h"
 #include "ir/iteration.h"
 #include "ir/properties.h"
 #include "ir/type-updating.h"
@@ -56,10 +55,6 @@ struct DeadCodeElimination
   // as we remove code, we must keep the types of other nodes valid
   TypeUpdater typeUpdater;
 
-  // Information used to decide whether we need EH fixups at the end
-  bool hasPop = false;     // Do we have a 'pop' in this function?
-  bool addedBlock = false; // Have we added blocks in this function?
-
   Expression* replaceCurrent(Expression* expression) {
     auto* old = getCurrent();
     if (old == expression) {
@@ -77,10 +72,6 @@ struct DeadCodeElimination
   }
 
   void visitExpression(Expression* curr) {
-    if (curr->is<Pop>()) {
-      hasPop = true;
-    }
-
     if (!Properties::isControlFlowStructure(curr)) {
       // Control flow structures require special handling, but others are
       // simple.
@@ -113,7 +104,6 @@ struct DeadCodeElimination
           if (remainingChildren.size() == 1) {
             replaceCurrent(remainingChildren[0]);
           } else {
-            addedBlock = true;
             replaceCurrent(builder.makeBlock(remainingChildren));
           }
         }
@@ -193,15 +183,6 @@ struct DeadCodeElimination
       }
     } else {
       WASM_UNREACHABLE("unimplemented DCE control flow structure");
-    }
-  }
-
-  void visitFunction(Function* curr) {
-    // We conservatively run the EH pop fixup if this function has a 'pop' and
-    // if we have ever added blocks in the optimization, which may have moved
-    // pops into the blocks.
-    if (hasPop && addedBlock) {
-      EHUtils::handleBlockNestedPops(curr, *getModule());
     }
   }
 };

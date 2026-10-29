@@ -1052,7 +1052,6 @@ function test_binaries_with_features() {
       0,
       module.global.get("struct-global", structType),
       binaryen.Type.i32,
-      false
     )
   );
 

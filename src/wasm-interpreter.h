@@ -72,7 +72,8 @@ struct NonconstantException {};
 
 // Utilities
 
-extern Name RETURN_FLOW, RETURN_CALL_FLOW, NONCONSTANT_FLOW, SUSPEND_FLOW;
+extern Name RETURN_FLOW, RETURN_CALL_FLOW, NONCONSTANT_FLOW, SUSPEND_FLOW,
+  STACK_SWITCH_FLOW;
 
 // Stuff that flows around during executing expressions: a literal, or a change
 // in control flow.
@@ -88,13 +89,14 @@ public:
     : values(std::move(values)), breakTo(breakTo) {}
   Flow(Name breakTo, Tag* suspendTag, Literals&& values)
     : values(std::move(values)), breakTo(breakTo), suspendTag(suspendTag) {
-    assert(breakTo == SUSPEND_FLOW);
+    assert(breakTo == SUSPEND_FLOW || breakTo == STACK_SWITCH_FLOW);
   }
 
   Literals values;
   Name breakTo;              // if non-null, a break is going on
-  Tag* suspendTag = nullptr; // if non-null, breakTo must be SUSPEND_FLOW, and
-                             // this is the tag being suspended
+  Tag* suspendTag = nullptr; // if non-null, breakTo must be SUSPEND_FLOW or
+                             // STACK_SWITCH_FLOW, and this is the tag being
+                             // suspended
 
   // A helper function for the common case where there is only one value
   const Literal& getSingleValue() {
@@ -409,6 +411,16 @@ protected:
     __lsan_ignore_object(allocation.get());
 #endif
     return Literal(allocation);
+  }
+
+  // Same as makeGCData but for ContData.
+  template<typename... Args>
+  std::shared_ptr<ContData> makeContData(Args&&... args) {
+    auto allocation = std::make_shared<ContData>(std::forward<Args>(args)...);
+#if __has_feature(leak_sanitizer) || __has_feature(address_sanitizer)
+    __lsan_ignore_object(allocation.get());
+#endif
+    return allocation;
   }
 
   static Literal applyRMW(AtomicRMWOp op, Literal lhs, Literal rhs) {
@@ -5032,8 +5044,7 @@ public:
     if (funcValue.isNull()) {
       trap("null ref");
     }
-    return Literal(
-      std::make_shared<ContData>(funcValue, curr->type.getHeapType()));
+    return Literal(self()->makeContData(funcValue, curr->type.getHeapType()));
   }
   Flow visitContBind(ContBind* curr) {
     Literals arguments;
@@ -5045,35 +5056,62 @@ public:
       trap("null ref");
     }
 
-    // Create a new continuation, copying the old but with the new type +
+    // Create a new continuation, moving the old but with the new type +
     // arguments.
     auto old = contValue.getContData();
     if (old->executed) {
       trap("continuation already executed");
     }
-    auto newData = *old;
+    auto newData = std::move(*old);
+    old->resumeInfo.clear();
+    old->resumeArguments.clear();
     newData.type = curr->type.getHeapType();
     for (auto arg : arguments) {
       newData.resumeArguments.push_back(arg);
     }
     // The old one is done.
     old->executed = true;
-    return Literal(std::make_shared<ContData>(newData));
+    return Literal(self()->makeContData(std::move(newData)));
   }
 
   void maybeThrowAfterResuming(std::shared_ptr<ContData>& currContinuation) {
     // We may throw by creating a tag, or an exnref.
     auto* tag = currContinuation->exceptionTag;
-    auto exnref = currContinuation->exception.type != Type::none;
+    currContinuation->exceptionTag = nullptr;
+    auto exn = currContinuation->exception;
+    currContinuation->exception = Literal();
+    auto exnref = exn.type != Type::none;
     assert(!(tag && exnref));
     if (tag) {
       // resume_throw
-      throwException(WasmException{
-        self()->makeExnData(tag, currContinuation->resumeArguments)});
+      auto resumeArguments = std::move(currContinuation->resumeArguments);
+      currContinuation->resumeArguments.clear();
+      throwException(WasmException{self()->makeExnData(tag, resumeArguments)});
     } else if (exnref) {
       // resume_throw_ref
-      throwException(WasmException{currContinuation->exception});
+      throwException(WasmException{exn});
     }
+  }
+
+  Flow finishResumingAt(Expression* curr) {
+#if WASM_INTERPRETER_DEBUG
+    std::cout << self()->indent()
+              << "returned to suspend; continuing normally\n";
+#endif
+    // This is a resume, so we have found our way back to where we
+    // suspended.
+    auto currContinuation = self()->getCurrContinuation();
+    assert(curr == currContinuation->resumeExpr);
+    // We finished resuming, and will continue from here normally.
+    self()->continuationStore->resuming = false;
+    // We should have consumed all the resumeInfo and all the
+    // restoredValues map.
+    assert(currContinuation->resumeInfo.empty());
+    assert(self()->restoredValuesMap.empty());
+    maybeThrowAfterResuming(currContinuation);
+    auto resumeArguments = std::move(currContinuation->resumeArguments);
+    currContinuation->resumeArguments.clear();
+    return resumeArguments;
   }
 
   Flow visitSuspend(Suspend* curr) {
@@ -5084,22 +5122,7 @@ public:
     VISIT_ARGUMENTS(flow, curr->operands, arguments)
 
     if (self()->isResuming()) {
-#if WASM_INTERPRETER_DEBUG
-      std::cout << self()->indent()
-                << "returned to suspend; continuing normally\n";
-#endif
-      // This is a resume, so we have found our way back to where we
-      // suspended.
-      auto currContinuation = self()->getCurrContinuation();
-      assert(curr == currContinuation->resumeExpr);
-      // We finished resuming, and will continue from here normally.
-      self()->continuationStore->resuming = false;
-      // We should have consumed all the resumeInfo and all the
-      // restoredValues map.
-      assert(currContinuation->resumeInfo.empty());
-      assert(self()->restoredValuesMap.empty());
-      maybeThrowAfterResuming(currContinuation);
-      return currContinuation->resumeArguments;
+      return finishResumingAt(curr);
     }
 
     // We were not resuming, so this is a new suspend that we must execute.
@@ -5120,7 +5143,7 @@ public:
     // Note we cannot update the type yet, so it will be wrong in debug
     // logging. To update it, we must find the block that receives this value,
     // which means we cannot do it here (we don't even know what that block is).
-    auto new_ = std::make_shared<ContData>();
+    auto new_ = self()->makeContData();
 
     // Switch to the new continuation, so that as we unwind, we will save the
     // information we need to resume it later in the proper place.
@@ -5142,7 +5165,6 @@ public:
       trap("null ref");
     }
     auto contData = cont.getContData();
-    auto func = contData->func;
 
     // If we are resuming a nested suspend then we should just rewind the call
     // stack, and therefore do not change or test the state here.
@@ -5175,31 +5197,46 @@ public:
       self()->pushCurrContinuation(contData);
       self()->continuationStore->resuming = true;
 #if WASM_INTERPRETER_DEBUG
-      std::cout << self()->indent() << "resuming func " << func.getFunc()
-                << '\n';
+      std::cout << self()->indent() << "resuming func "
+                << contData->func.getFunc() << '\n';
 #endif
     }
 
-    Flow ret = func.getFuncData()->doCall(arguments);
+    // Loop to handle (on $tag switch) clauses, which switch directly to a new
+    // target continuation under this same resume handler without growing the
+    // call stack.
+    while (true) {
+      Flow ret = contData->func.getFuncData()->doCall(arguments);
 
 #if WASM_INTERPRETER_DEBUG
-    if (!self()->isResuming()) {
-      std::cout << self()->indent() << "finished resuming, with " << ret
-                << '\n';
-    }
+      if (!self()->isResuming()) {
+        std::cout << self()->indent() << "finished resuming, with " << ret
+                  << '\n';
+      }
 #endif
-    if (!ret.suspendTag) {
-      // No suspension: the coroutine finished normally. Mark it as no longer
-      // active.
-      self()->popCurrContinuation();
-    } else {
+      if (!ret.suspendTag) {
+        // No suspension: the coroutine finished normally. Mark it as no longer
+        // active.
+        self()->popCurrContinuation();
+        return ret;
+      }
+
       // We are suspending. See if a suspension arrived that we support.
+      bool switched = false;
       for (size_t i = 0; i < curr->handlerTags.size(); i++) {
         auto* handlerTag = allTags[curr->handlerTags[i]];
-        if (handlerTag == ret.suspendTag) {
+        if (handlerTag != ret.suspendTag) {
+          continue;
+        }
+        auto handlerBlock = curr->handlerBlocks[i];
+        // A non-empty handlerBlock is an (on $tag $label) clause, which only
+        // handles suspend instructions (SUSPEND_FLOW). An empty handlerBlock is
+        // an (on $tag switch) clause, which only handles switch instructions
+        // (STACK_SWITCH_FLOW).
+        if (ret.breakTo == SUSPEND_FLOW && handlerBlock.is()) {
           // Switch the flow from suspending to branching.
           ret.suspendTag = nullptr;
-          ret.breakTo = curr->handlerBlocks[i];
+          ret.breakTo = handlerBlock;
           // We can now update the continuation type, which was wrong until now
           // (see comment in visitSuspend). The type is taken from the block we
           // branch to (which we find in a quite inefficient manner).
@@ -5231,15 +5268,93 @@ public:
           self()->popCurrContinuation();
           return ret;
         }
+        if (ret.breakTo == STACK_SWITCH_FLOW && !handlerBlock.is()) {
+          // Finalize the suspended continuation from the switching coroutine
+          // (its type was already set in visitStackSwitch).
+          auto newCont = self()->getCurrContinuation();
+          newCont->func = contData->func;
+          self()->popCurrContinuation();
+
+          // Extract the target continuation that visitStackSwitch appended to
+          // the end of the flow's values.
+          assert(!ret.values.empty());
+          auto targetCont = ret.values.back();
+          ret.values.pop_back();
+          contData = targetCont.getContData();
+          assert(!contData->executed);
+          contData->executed = true;
+          // Append the forwarded payload arguments and the newly suspended
+          // sender continuation to the target continuation's arguments
+          // (preserving any arguments bound earlier via cont.bind).
+          for (auto arg : ret.values) {
+            contData->resumeArguments.push_back(arg);
+          }
+          contData->resumeArguments.push_back(Literal(newCont));
+          arguments = contData->resumeArguments;
+          // Switch the active continuation in this prompt to the target
+          // continuation and loop to immediately resume it.
+          self()->pushCurrContinuation(contData);
+          self()->continuationStore->resuming = true;
+          switched = true;
+          break;
+        }
+      }
+      if (switched) {
+        continue;
       }
       // No handler worked out, keep propagating.
+      return ret;
     }
-    // No suspension; all done.
-    return ret;
   }
   Flow visitResume(Resume* curr) { return doResume(curr); }
   Flow visitResumeThrow(ResumeThrow* curr) { return doResume(curr); }
-  Flow visitStackSwitch(StackSwitch* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitStackSwitch(StackSwitch* curr) {
+    // Process the operands and target continuation whether or not we are
+    // resuming so that saved child values are consumed when rewinding the
+    // stack.
+    Literals arguments;
+    VISIT_ARGUMENTS(flow, curr->operands, arguments)
+    VISIT_REUSE(flow, curr->cont);
+
+    if (self()->isResuming()) {
+      return finishResumingAt(curr);
+    }
+
+    // We are not resuming, so this is a new switch that we must execute.
+    auto cont = flow.getSingleValue();
+    if (cont.isNull()) {
+      trap("null ref");
+    }
+    auto contData = cont.getContData();
+    if (contData->executed) {
+      trap("continuation already executed");
+    }
+
+    // Send the target continuation as the final value on the unwinding flow so
+    // the matching (on $tag switch) handler in doResume can switch to it.
+    arguments.push_back(cont);
+    auto old = self()->getCurrContinuationOrNull();
+    auto* tag = allTags[curr->tag];
+    if (!old) {
+      return Flow(STACK_SWITCH_FLOW, tag, std::move(arguments));
+    }
+    assert(old->executed);
+    auto new_ = self()->makeContData();
+    // Unlike suspend, where the suspended continuation's type depends on the
+    // target block of the handler that catches it, a switch statically knows
+    // the type of the suspended continuation it creates: it is the last
+    // parameter of the target continuation's signature, which receives this
+    // suspended continuation when switched to.
+    auto sig =
+      curr->cont->type.getHeapType().getContinuation().type.getSignature();
+    new_->type = sig.params[sig.params.size() - 1].getHeapType();
+    // Replace the current continuation so unwinding saves resume state into the
+    // new continuation, and record this switch as the point to resume from.
+    self()->popCurrContinuation();
+    self()->pushCurrContinuation(new_);
+    new_->resumeExpr = curr;
+    return Flow(STACK_SWITCH_FLOW, tag, std::move(arguments));
+  }
 
   void trap(std::string_view why) override {
     // Traps break all current continuations - they will never be resumable.
@@ -5311,6 +5426,7 @@ public:
         // set), so resuming is done. (And throw, if resume_throw.)
         self()->continuationStore->resuming = false;
         maybeThrowAfterResuming(currContinuation);
+        currContinuation->resumeArguments.clear();
       }
     }
 
@@ -5440,7 +5556,7 @@ public:
       flow.breakTo = Name();
     }
 
-    if (flow.breakTo != SUSPEND_FLOW) {
+    if (flow.breakTo != SUSPEND_FLOW && flow.breakTo != STACK_SWITCH_FLOW) {
       // We are normally executing (not suspending), and therefore cannot still
       // be breaking, which would mean we missed our stop.
       assert(!flow.breaking() || flow.breakTo == RETURN_FLOW);

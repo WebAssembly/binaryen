@@ -61,7 +61,6 @@
 
 #include "ir/branch-utils.h"
 #include "ir/effects.h"
-#include "ir/eh-utils.h"
 #include "ir/find_all.h"
 #include "ir/iteration.h"
 #include "ir/label-utils.h"
@@ -119,9 +118,6 @@ struct CodeFolding
 
   // Set when we optimized and believe another pass is warranted.
   bool anotherPass;
-  // Set when we optimized in a manner that requires EH fixups specifically,
-  // which is generally the case when we wrap things in a block.
-  bool needEHFixups;
 
   // pass state
 
@@ -286,7 +282,6 @@ struct CodeFolding
     anotherPass = true;
     while (anotherPass) {
       anotherPass = false;
-      needEHFixups = false;
       Super::doWalkFunction(func);
       optimizeTerminatingTails(unreachableTails);
       // optimize returns at the end, so we can benefit from a fallthrough if
@@ -301,9 +296,6 @@ struct CodeFolding
       unoptimizables.clear();
       modifieds.clear();
       exitingBranchCache.clear();
-      if (needEHFixups) {
-        EHUtils::handleBlockNestedPops(func, *getModule());
-      }
     }
   }
 
@@ -629,7 +621,6 @@ private:
     // ensure the replacement has the same type, so the outside is not surprised
     block->finalize(oldType);
     replaceCurrent(block);
-    needEHFixups = true;
   }
 
   // optimize tails that terminate control flow in this function, so we
@@ -899,7 +890,6 @@ private:
     // ensure the replacement has the same type, so the outside is not surprised
     outer->finalize(getFunction()->getResults());
     getFunction()->body = outer;
-    needEHFixups = true;
     return true;
   }
 

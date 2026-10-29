@@ -5024,6 +5024,108 @@
       )
     )
   )
+  ;; CHECK:      (func $i64-sign-ext-load (param $x i32)
+  ;; CHECK-NEXT:  (local $t i64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.load8_s
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.load16_s
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.load32_s
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.load32_s
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.tee $t
+  ;; CHECK-NEXT:    (i64.load32_s
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.shr_s
+  ;; CHECK-NEXT:    (i64.shl
+  ;; CHECK-NEXT:     (local.tee $t
+  ;; CHECK-NEXT:      (i64.load32_u
+  ;; CHECK-NEXT:       (local.get $x)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i64.const 32)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i64.const 32)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.shr_s
+  ;; CHECK-NEXT:    (i64.shl
+  ;; CHECK-NEXT:     (i64.load16_u
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i64.const 56)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i64.const 56)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $i64-sign-ext-load (param $x i32)
+    (local $t i64)
+    ;; Fold shift-based sign extensions into narrow i64 loads.
+    (drop
+      (i64.shr_s
+        (i64.shl (i64.load8_u (local.get $x)) (i64.const 56))
+        (i64.const 56)
+      )
+    )
+    (drop
+      (i64.shr_s
+        (i64.shl (i64.load16_u (local.get $x)) (i64.const 48))
+        (i64.const 48)
+      )
+    )
+    (drop
+      (i64.shr_s
+        (i64.shl (i64.load32_u (local.get $x)) (i64.const 32))
+        (i64.const 32)
+      )
+    )
+    (drop
+      (i64.shr_s
+        (i64.shl (i64.load32_s (local.get $x)) (i64.const 32))
+        (i64.const 32)
+      )
+    )
+    ;; Signed load falling through a tee can still drop the outer sign-extend.
+    (drop
+      (i64.shr_s
+        (i64.shl (local.tee $t (i64.load32_s (local.get $x))) (i64.const 32))
+        (i64.const 32)
+      )
+    )
+    ;; Negative cases: unsigned load captured in a tee, or mismatched width.
+    (drop
+      (i64.shr_s
+        (i64.shl (local.tee $t (i64.load32_u (local.get $x))) (i64.const 32))
+        (i64.const 32)
+      )
+    )
+    (drop
+      (i64.shr_s
+        (i64.shl (i64.load16_u (local.get $x)) (i64.const 56))
+        (i64.const 56)
+      )
+    )
+  )
   ;; CHECK:      (func $mask-bits (param $0 i32) (param $1 i32)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $0
@@ -6063,6 +6165,47 @@
       )
     )
   )
+  ;; CHECK:      (func $compare-i64-load-s-sign-extend (param $addr i32) (param $x i64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.eq
+  ;; CHECK-NEXT:    (i64.load32_u
+  ;; CHECK-NEXT:     (local.get $addr)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i64.and
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i64.const 4294967295)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.ne
+  ;; CHECK-NEXT:    (i64.load16_u
+  ;; CHECK-NEXT:     (local.get $addr)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i64.and
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i64.const 65535)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $compare-i64-load-s-sign-extend (param $addr i32) (param $x i64)
+    ;; Comparing i64 sign-extension against signed load on right or left. The
+    ;; upper 32 bits are sign bits, and equal iff the lower bits are, so we can
+    ;; just do an unsigned comparison on the lower 32.
+    (drop
+      (i64.eq
+        (i64.shr_s (i64.shl (local.get $x) (i64.const 32)) (i64.const 32))
+        (i64.load32_s (local.get $addr))
+      )
+    )
+    (drop
+      (i64.ne
+        (i64.load16_s (local.get $addr))
+        (i64.shr_s (i64.shl (local.get $x) (i64.const 48)) (i64.const 48))
+      )
+    )
+  )
   ;; CHECK:      (func $unsign-diff-sizes (param $x i32) (param $y i32) (result i32)
   ;; CHECK-NEXT:  (i32.ne
   ;; CHECK-NEXT:   (i32.shr_s
@@ -6153,6 +6296,54 @@
       )
     )
   )
+  ;; CHECK:      (func $unsign-i64-sizes (param $x i64) (param $y i64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.eq
+  ;; CHECK-NEXT:    (i64.and
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i64.const 65535)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i64.and
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:     (i64.const 65535)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.eq
+  ;; CHECK-NEXT:    (i64.shr_s
+  ;; CHECK-NEXT:     (i64.shl
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:      (i64.const 56)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i64.const 56)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i64.shr_s
+  ;; CHECK-NEXT:     (i64.shl
+  ;; CHECK-NEXT:      (local.get $y)
+  ;; CHECK-NEXT:      (i64.const 48)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i64.const 48)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $unsign-i64-sizes (param $x i64) (param $y i64)
+    ;; Comparing two i64 sign-extensions of the same width -> both zero-extend.
+    (drop
+      (i64.eq
+        (i64.shr_s (i64.shl (local.get $x) (i64.const 48)) (i64.const 48))
+        (i64.shr_s (i64.shl (local.get $y) (i64.const 48)) (i64.const 48))
+      )
+    )
+    ;; Mismatched sign-extension widths cannot be converted to zero-extensions.
+    (drop
+      (i64.eq
+        (i64.shr_s (i64.shl (local.get $x) (i64.const 56)) (i64.const 56))
+        (i64.shr_s (i64.shl (local.get $y) (i64.const 48)) (i64.const 48))
+      )
+    )
+  )
   ;; CHECK:      (func $fuzz-almost-sign-ext
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.shr_s
@@ -6201,6 +6392,26 @@
           (i32.const 16)
         )
         (i32.const 16)
+      )
+    )
+  )
+  ;; CHECK:      (func $almost-sign-ext-i64 (param $y i64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.shl
+  ;; CHECK-NEXT:    (i64.and
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:     (i64.const 127)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i64.const 8)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $almost-sign-ext-i64 (param $y i64)
+    ;; Almost sign-extend removal when max bits fit.
+    (drop
+      (i64.shr_s
+        (i64.shl (i64.and (local.get $y) (i64.const 0x7f)) (i64.const 40))
+        (i64.const 32)
       )
     )
   )
@@ -6347,6 +6558,102 @@
           (i32.const 24)
         )
         (i32.const -4) ;; safe even with more big bits, as they are all 1s
+      )
+    )
+  )
+  ;; CHECK:      (func $i64-sign-ext-eq-const (param $x i64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.eq
+  ;; CHECK-NEXT:    (i64.and
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i64.const 255)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i64.const 100)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.ne
+  ;; CHECK-NEXT:    (i64.and
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i64.const 4294967295)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i64.const 2147483647)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.eq
+  ;; CHECK-NEXT:    (i64.and
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i64.const 255)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i64.const 251)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.ne
+  ;; CHECK-NEXT:    (i64.and
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i64.const 4294967295)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i64.const 4294867296)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $i64-sign-ext-eq-const (param $x i64)
+    ;; Comparing i64 shift sign-extend against constants:
+    ;; 1. Positive constant with all relevant bits 0 -> zero-extend.
+    (drop
+      (i64.eq
+        (i64.shr_s (i64.shl (local.get $x) (i64.const 56)) (i64.const 56))
+        (i64.const 100)
+      )
+    )
+    (drop
+      (i64.ne
+        (i64.shr_s (i64.shl (local.get $x) (i64.const 32)) (i64.const 32))
+        (i64.const 0x7fffffff)
+      )
+    )
+    ;; 2. Negative constant with all relevant bits 1 -> zero-extend both sides.
+    (drop
+      (i64.eq
+        (i64.shr_s (i64.shl (local.get $x) (i64.const 56)) (i64.const 56))
+        (i64.const -5)
+      )
+    )
+    (drop
+      (i64.ne
+        (i64.shr_s (i64.shl (local.get $x) (i64.const 32)) (i64.const 32))
+        (i64.const -100000)
+      )
+    )
+    ;; 3. Out-of-range constant with mixed relevant bits -> constant result.
+    (drop
+      (i64.eq
+        (i64.shr_s (i64.shl (local.get $x) (i64.const 56)) (i64.const 56))
+        (i64.const 200)
+      )
+    )
+    (drop
+      (i64.ne
+        (i64.shr_s (i64.shl (local.get $x) (i64.const 32)) (i64.const 32))
+        (i64.const 0x80000000)
       )
     )
   )
@@ -6628,7 +6935,11 @@
     )
   )
 
-  ;; CHECK:      (func $zero-shifts-is-not-sign-ext
+  ;; CHECK:      (func $zero-shifts-is-not-sign-ext (param $y i64)
+  ;; CHECK-NEXT:  (local $t i64)
+  ;; CHECK-NEXT:  (local.set $t
+  ;; CHECK-NEXT:   (local.get $y)
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.eq
   ;; CHECK-NEXT:    (i32.load16_s align=1
@@ -6649,7 +6960,20 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $zero-shifts-is-not-sign-ext
+  (func $zero-shifts-is-not-sign-ext (param $y i64)
+   (local $t i64)
+   ;; Also test in a local.set so LocalScanner::visitLocalSet's call to
+   ;; getSignExtValue sees the initial zero shifts before visitBinary folds
+   ;; them away.
+   (local.set $t
+    (i64.shr_s
+     (i64.shl
+      (local.get $y)
+      (i64.const 0)
+     )
+     (i64.const 0)
+    )
+   )
    (drop
     (i32.eq
      (i32.const -5431187)
@@ -6684,6 +7008,72 @@
      )
     )
    )
+  )
+
+  ;; CHECK:      (func $almost-sign-ext-zero-shifts (param $x i32) (param $y i64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.shl
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 16)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.shl
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:    (i64.const 16)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $almost-sign-ext-zero-shifts (param $x i32) (param $y i64)
+    ;; Right shifts with effective shift 0 should not be recognized as almost
+    ;; sign-extends.
+    (drop
+      (i32.shr_s
+        (i32.shl (local.get $x) (i32.const 16))
+        (i32.const 32)
+      )
+    )
+    (drop
+      (i64.shr_s
+        (i64.shl (local.get $y) (i64.const 16))
+        (i64.const 64)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $sign-ext-unnormalized-shifts (param $x i32) (param $y i64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (i32.and
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i32.const 2147483647)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.eqz
+  ;; CHECK-NEXT:    (i64.and
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:     (i64.const 9223372036854775807)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $sign-ext-unnormalized-shifts (param $x i32) (param $y i64)
+    ;; Sign extensions with unnormalized shift amounts that have the same
+    ;; non-zero effective shift modulo the bitwidth.
+    (drop
+      (i32.eq
+        (i32.shr_s (i32.shl (local.get $x) (i32.const 33)) (i32.const 1))
+        (i32.const 0)
+      )
+    )
+    (drop
+      (i64.eq
+        (i64.shr_s (i64.shl (local.get $y) (i64.const 65)) (i64.const 1))
+        (i64.const 0)
+      )
+    )
   )
   ;; CHECK:      (func $zero-ops (result i32)
   ;; CHECK-NEXT:  (return

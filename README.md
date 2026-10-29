@@ -93,6 +93,9 @@ There are a few differences between Binaryen IR and the WebAssembly language:
 
    * Block input values (currently only supported in `catch` blocks in the
      exception handling feature) are represented as `pop` subexpressions.
+     * `pop`s must appear as the first instruction in a `catch` block (ignoring
+       unnamed blocks around them, as those are not emitted in the binary
+       format).
 
  * Types and unreachable code
 

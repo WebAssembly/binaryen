@@ -4485,7 +4485,7 @@
   )
 )
 
-;; Pops require fixups.
+;; Pops in unnamed blocks.
 (module
   (type $struct (struct (field (mut i32))))
 
@@ -4503,19 +4503,15 @@
   ;; CHECK:      (func $struct-with-pop (type $0)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (local $1 i32)
-  ;; CHECK-NEXT:  (local $2 i32)
   ;; CHECK-NEXT:  (try
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (nop)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (catch $tag
-  ;; CHECK-NEXT:    (local.set $2
-  ;; CHECK-NEXT:     (pop i32)
-  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (block (result nullref)
   ;; CHECK-NEXT:      (local.set $1
-  ;; CHECK-NEXT:       (local.get $2)
+  ;; CHECK-NEXT:       (pop i32)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (local.set $0
   ;; CHECK-NEXT:       (local.get $1)
@@ -4533,8 +4529,8 @@
       )
       (catch $tag
         (drop
-          ;; We create a block when we replace the struct with locals, which the
-          ;; pop must be moved out of.
+          ;; We create an unnamed block when we replace the struct with locals,
+          ;; which validates properly even with a pop.
           (struct.new $struct
             (pop i32)
           )
@@ -4551,19 +4547,15 @@
   ;; CHECK-NEXT:  (local $4 i32)
   ;; CHECK-NEXT:  (local $5 i32)
   ;; CHECK-NEXT:  (local $6 i32)
-  ;; CHECK-NEXT:  (local $7 i32)
   ;; CHECK-NEXT:  (try
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (nop)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (catch $tag
-  ;; CHECK-NEXT:    (local.set $7
-  ;; CHECK-NEXT:     (pop i32)
-  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (block (result (ref null $2))
   ;; CHECK-NEXT:      (local.set $0
-  ;; CHECK-NEXT:       (local.get $7)
+  ;; CHECK-NEXT:       (pop i32)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (block (result nullref)
   ;; CHECK-NEXT:       (local.set $4

@@ -15,13 +15,18 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
- - Add a new wasm-embed tool for extracting Wasm modules embedded as byte arrays
-   in JS source files or replacing such modules in the JS source (#9127)
- - Support reading and writing label names in the name section (#9166)
- - Add a `--constant-arrays-to-data` pass that converts `array.new_fixed` of
-   constant numeric values to `array.new_data` when that is smaller. It runs
-   in the last set of default optimizations (when
-   `--expect-later-toolchain-opts` is not passed).
+- Add a new wasm-embed tool for extracting Wasm modules embedded as byte arrays
+  in JS source files or replacing such modules in the JS source (#9127)
+- Support reading and writing label names in the name section (#9166)
+- Add a `--constant-arrays-to-data` pass that converts `array.new_fixed` of
+  constant numeric values to `array.new_data` when that is smaller. It runs
+  in the last set of default optimizations (when
+  `--expect-later-toolchain-opts` is not passed).
+- [JS API] Four-argument `struct.get()` and `array.get()` methods
+  (with the fourth argument being `isSigned`) are no longer supported.
+  For unpacked types, call `struct/array.get()` with only three arguments;
+  for signed packed types, call `struct/array.get_s()`;
+  for unsigned packed types, call `struct/array.get_u()`.
 
 v133
 ----

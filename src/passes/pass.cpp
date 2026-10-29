@@ -1065,6 +1065,10 @@ void PassRunner::runPassOnFunction(Pass* pass, Function* func) {
     return;
   }
 
+  if (!pass->runsOnFunction(func)) {
+    return;
+  }
+
   auto passDebug = getPassDebug();
 
   // Add extra validation logic in pass-debug mode 2. The main logic in

@@ -232,7 +232,6 @@
   )
 
   ;; CHECK:      (func $pop (type $0)
-  ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (try
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (throw $e
@@ -240,23 +239,19 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (catch $e
-  ;; CHECK-NEXT:    (local.set $0
-  ;; CHECK-NEXT:     (pop i32)
-  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (block
-  ;; CHECK-NEXT:     (block
-  ;; CHECK-NEXT:      (call $defined-param
-  ;; CHECK-NEXT:       (local.get $0)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:     (call $defined-param
+  ;; CHECK-NEXT:      (pop i32)
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (nop)
+  ;; CHECK-NEXT:     (unreachable)
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (nop)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $pop
-    ;; After adding a block with an unreachable, the pop will need handling.
+    ;; After adding an unnamed block with an unreachable, this still validates
+    ;; properly even with a pop.
     (try
       (do
         (throw $e (i32.const 1))

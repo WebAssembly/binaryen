@@ -925,8 +925,8 @@
   )
 )
 
-;; Handle block-nested pops created when updating writes to and reads from
-;; refined fields.
+;; Verify that blocks created around pops when updating writes to and reads from
+;; refined fields are unnamed and validate properly.
 (module
   ;; NRML:      (rec
   ;; NRML-NEXT:  (type $struct (struct (field eqref) (field nullref)))
@@ -978,7 +978,6 @@
   ;; GUFA:      (export "read" (func $read))
 
   ;; GUFA:      (func $write (type $3)
-  ;; GUFA-NEXT:  (local $0 eqref)
   ;; GUFA-NEXT:  (drop
   ;; GUFA-NEXT:   (struct.new_default $struct)
   ;; GUFA-NEXT:  )
@@ -986,14 +985,11 @@
   ;; GUFA-NEXT:   (do
   ;; GUFA-NEXT:   )
   ;; GUFA-NEXT:   (catch $ref
-  ;; GUFA-NEXT:    (local.set $0
-  ;; GUFA-NEXT:     (pop eqref)
-  ;; GUFA-NEXT:    )
   ;; GUFA-NEXT:    (drop
   ;; GUFA-NEXT:     (struct.new $struct
   ;; GUFA-NEXT:      (block (result nullref)
   ;; GUFA-NEXT:       (drop
-  ;; GUFA-NEXT:        (local.get $0)
+  ;; GUFA-NEXT:        (pop eqref)
   ;; GUFA-NEXT:       )
   ;; GUFA-NEXT:       (ref.null none)
   ;; GUFA-NEXT:      )
@@ -1014,8 +1010,8 @@
   ;; O3O3-NEXT: )
   (func $write (export "write")
     ;; In GUFA, the first field is refined to nullref, so the write operand in
-    ;; the catch block is replaced with a block that drops the pop and produces
-    ;; a null. The newly nested pop must be fixed up.
+    ;; the catch block is replaced with an unnamed block that drops the pop and
+    ;; produces a null, which validates properly even with a pop.
     (drop
       (struct.new_default $struct)
     )
@@ -1033,18 +1029,14 @@
   )
 
   ;; NRML:      (func $read (type $3)
-  ;; NRML-NEXT:  (local $0 nullref)
   ;; NRML-NEXT:  (try
   ;; NRML-NEXT:   (do
   ;; NRML-NEXT:   )
   ;; NRML-NEXT:   (catch $null
-  ;; NRML-NEXT:    (local.set $0
-  ;; NRML-NEXT:     (pop nullref)
-  ;; NRML-NEXT:    )
   ;; NRML-NEXT:    (drop
   ;; NRML-NEXT:     (block
   ;; NRML-NEXT:      (drop
-  ;; NRML-NEXT:       (local.get $0)
+  ;; NRML-NEXT:       (pop nullref)
   ;; NRML-NEXT:      )
   ;; NRML-NEXT:      (unreachable)
   ;; NRML-NEXT:     )
@@ -1053,18 +1045,14 @@
   ;; NRML-NEXT:  )
   ;; NRML-NEXT: )
   ;; GUFA:      (func $read (type $3)
-  ;; GUFA-NEXT:  (local $0 nullref)
   ;; GUFA-NEXT:  (try
   ;; GUFA-NEXT:   (do
   ;; GUFA-NEXT:   )
   ;; GUFA-NEXT:   (catch $null
-  ;; GUFA-NEXT:    (local.set $0
-  ;; GUFA-NEXT:     (pop nullref)
-  ;; GUFA-NEXT:    )
   ;; GUFA-NEXT:    (drop
   ;; GUFA-NEXT:     (block
   ;; GUFA-NEXT:      (drop
-  ;; GUFA-NEXT:       (local.get $0)
+  ;; GUFA-NEXT:       (pop nullref)
   ;; GUFA-NEXT:      )
   ;; GUFA-NEXT:      (unreachable)
   ;; GUFA-NEXT:     )
@@ -1073,8 +1061,8 @@
   ;; GUFA-NEXT:  )
   ;; GUFA-NEXT: )
   (func $read (export "read")
-    ;; Reading from a null reference is replaced with a block that drops the pop
-    ;; and traps. The newly nested pop must be fixed up.
+    ;; Reading from a null reference is replaced with an unnamed block that
+    ;; drops the pop and traps, which validates properly even with a pop.
     (try
       (do)
       (catch $null

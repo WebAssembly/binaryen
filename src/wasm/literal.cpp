@@ -729,6 +729,10 @@ thread_local size_t PrintLimiter::printed = 0;
 std::ostream& operator<<(std::ostream& o, Literal literal) {
   PrintLimiter limiter;
 
+  if (limiter.stop()) {
+    return o << "[..]";
+  }
+
   prepareMinorColor(o);
   assert(literal.type.isSingle());
   if (literal.type.isBasic()) {
@@ -861,6 +865,9 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
           o << ' ';
         }
         o << literal.getElement(i);
+        if (limiter.stop()) {
+          break;
+        }
       }
       if (!data->desc.isNull()) {
         if (literal.getNumElements() > 0) {

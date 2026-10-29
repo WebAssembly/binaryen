@@ -153,7 +153,6 @@
 #include "ir/abstract.h"
 #include "ir/bits.h"
 #include "ir/branch-utils.h"
-#include "ir/eh-utils.h"
 #include "ir/local-graph.h"
 #include "ir/parents.h"
 #include "ir/properties.h"
@@ -1611,15 +1610,8 @@ struct Heap2Local {
         // some cases, so to be careful here use a fairly small limit.
         return size < 20;
       }
-
-      // Also note if a pop exists here, as they may require fixups.
-      bool hasPop = false;
-
-      void visitPop(Pop* curr) { hasPop = true; }
     } finder;
     finder.walk(func->body);
-
-    bool optimized = false;
 
     // First, lower non-escaping arrays into structs. That allows us to handle
     // arrays in a single place, and let all the rest of this pass assume we are
@@ -1640,7 +1632,6 @@ struct Heap2Local {
         auto* structNew =
           Array2Struct(allocation, analyzer, func, wasm).structNew;
         Struct2Local(structNew, analyzer, func, wasm);
-        optimized = true;
         resetAnalysisData();
       }
     }
@@ -1657,16 +1648,8 @@ struct Heap2Local {
         *localGraph, *parents, *branchTargets, passOptions, wasm);
       if (!analyzer.escapes(allocation)) {
         Struct2Local(allocation, analyzer, func, wasm);
-        optimized = true;
         resetAnalysisData();
       }
-    }
-
-    // We conservatively run the EH pop fixup if this function has a 'pop' and
-    // if we have ever optimized, as all of the things we do here involve
-    // creating blocks, so we might have moved pops into the blocks.
-    if (finder.hasPop && optimized) {
-      EHUtils::handleBlockNestedPops(func, wasm);
     }
   }
 
