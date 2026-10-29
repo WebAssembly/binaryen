@@ -187,7 +187,7 @@ struct PropagateStructGets
       // can be folded into a single struct.new (that is, we are writing all the
       // fields, then writing an additional one, and other passes make us do
       // them all at once anyhow).
-      if (!curr->is<StructSet>()) {
+      if (!curr->template is<StructSet>()) {
         teeParents[tee] = curr;
         structOperations.push_back(getCurrentPointer());
       }
@@ -329,12 +329,12 @@ struct PropagateStructGets
     struct Optimizer : PostWalker<Optimizer> {
       PropagateStructGets& parent;
 
-      Optimizer(PropagateStructGets& parent) : parent) {}
+      Optimizer(PropagateStructGets& parent) : parent(parent) {}
 
       void visitLocalSet(LocalSet* curr) {
         if (!curr->isTee() && parent.optimizedLocals.contains(curr->index)) {
           // local.set now stores the used fields (tee is handled below).
-          replaceCurrent(makeFieldSets(tee));
+          replaceCurrent(makeFieldSets(curr));
         }
       }
 
@@ -347,12 +347,12 @@ struct PropagateStructGets
         } else if (auto* tee = curr->ref->dynCast<LocalSet>()) {
           if (parent.optimizedLocals.contains(tee->index)) {
             // struct.get of a local.tee first writes the fields, then reads.
-            *currp = makeFieldSets(tee, sget);
+            replaceCurrent(makeFieldSets(tee, curr));
           }
         }
       }
 
-      void visitStructSet(StructGet* curr) {
+      void visitStructSet(StructSet* curr) {
         if (auto* get = curr->ref->dynCast<LocalGet>()) {
           if (parent.optimizedLocals.contains(get->index)) {
             // struct.set of a local.get writes the field into a new local.
@@ -371,14 +371,10 @@ struct PropagateStructGets
         Builder builder(*getModule());
         Expression* ret =
           builder.makeLocalGet(newLocal, getFunction()->getLocalType(newLocal));
-        return Bits::makePackedFieldGet(ret, field, signed_, *module);
+        return Bits::makePackedFieldGet(ret, field, signed_, *getModule());
       }
 
       Expression* setFieldToLocal(Index localIndex, Index fieldIndex, Expression* value) {
-        auto& field = getFunction()->getLocalType(localIndex)
-                        .getHeapType()
-                        .getStruct()
-                        .fields[fieldIndex];
         // Read from the appropriate new local, handling sign extension as needed.
         auto newLocal = parent.optimizedLocals[localIndex][fieldIndex];
         Builder builder(*getModule());
@@ -417,7 +413,7 @@ struct PropagateStructGets
         }
         return builder.makeBlock(list);
       }
-    } optimizer;
+    } optimizer(*this);
     optimizer.setModule(getModule());
     optimizer.walkFunction(func);
 
