@@ -65,6 +65,9 @@ static Expression** findPopPtr(Expression*& catchBody,
       }
 
       if (auto* try_ = curr->dynCast<Try>()) {
+        // It is neither valid for a pop to appear inside a try body (or any
+        // other control flow structure that will be emitted in the binary), nor
+        // after the try.
         self->isInvalid = true;
         if (!self->stopIfInvalid) {
           // Do not walk into inner catch bodies; pops in inner catch bodies
