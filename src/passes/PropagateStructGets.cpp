@@ -342,7 +342,8 @@ struct PropagateStructGets
         if (auto* get = curr->ref->dynCast<LocalGet>()) {
           if (parent.optimizedLocals.contains(get->index)) {
             // struct.get of a local.get reads the field from a new local.
-            replaceCurrent(getFieldFromLocal(get->index, curr->index, curr->signed_));
+            replaceCurrent(
+              getFieldFromLocal(get->index, curr->index, curr->signed_));
           }
         } else if (auto* tee = curr->ref->dynCast<LocalSet>()) {
           if (parent.optimizedLocals.contains(tee->index)) {
@@ -356,17 +357,21 @@ struct PropagateStructGets
         if (auto* get = curr->ref->dynCast<LocalGet>()) {
           if (parent.optimizedLocals.contains(get->index)) {
             // struct.set of a local.get writes the field into a new local.
-            replaceCurrent(setFieldToLocal(get->index, curr->index, curr->value));
+            replaceCurrent(
+              setFieldToLocal(get->index, curr->index, curr->value));
           }
         }
       }
 
-      Expression* getFieldFromLocal(Index localIndex, Index fieldIndex, bool signed_) {
-        auto& field = getFunction()->getLocalType(localIndex)
+      Expression*
+      getFieldFromLocal(Index localIndex, Index fieldIndex, bool signed_) {
+        auto& field = getFunction()
+                        ->getLocalType(localIndex)
                         .getHeapType()
                         .getStruct()
                         .fields[fieldIndex];
-        // Read from the appropriate new local, handling sign extension as needed.
+        // Read from the appropriate new local, handling sign extension as
+        // needed.
         auto newLocal = parent.optimizedLocals[localIndex][fieldIndex];
         Builder builder(*getModule());
         Expression* ret =
@@ -374,15 +379,16 @@ struct PropagateStructGets
         return Bits::makePackedFieldGet(ret, field, signed_, *getModule());
       }
 
-      Expression* setFieldToLocal(Index localIndex, Index fieldIndex, Expression* value) {
-        // Read from the appropriate new local, handling sign extension as needed.
+      Expression*
+      setFieldToLocal(Index localIndex, Index fieldIndex, Expression* value) {
+        // Read from the appropriate new local, handling sign extension as
+        // needed.
         auto newLocal = parent.optimizedLocals[localIndex][fieldIndex];
         Builder builder(*getModule());
         return builder.makeLocalSet(newLocal, value);
       }
 
-      Expression* makeFieldSets(LocalSet* set,
-                               StructGet* teeParent = nullptr) {
+      Expression* makeFieldSets(LocalSet* set, StructGet* teeParent = nullptr) {
         auto localIndex = set->index;
         auto localType = getFunction()->getLocalType(localIndex);
         auto& fields = localType.getHeapType().getStruct().fields;
@@ -394,8 +400,9 @@ struct PropagateStructGets
           builder.makeLocalSet(localIndex, set->value)};
         for (auto [fieldIndex, newLocal] : parent.optimizedLocals[localIndex]) {
           auto& field = fields[fieldIndex];
-          // Note that the sign does not matter here: we just store the bits, and
-          // will handle the sign when reading back out (like in Heap2Local).
+          // Note that the sign does not matter here: we just store the bits,
+          // and will handle the sign when reading back out (like in
+          // Heap2Local).
           auto* sget =
             builder.makeStructGet(fieldIndex,
                                   builder.makeLocalGet(localIndex, localType),
@@ -405,11 +412,11 @@ struct PropagateStructGets
           list.push_back(builder.makeLocalSet(newLocal, sget));
         }
 
-        // Finally, if this is a tee, then it was consumed by a struct.get, and we
-        // can read that field and return it.
+        // Finally, if this is a tee, then it was consumed by a struct.get, and
+        // we can read that field and return it.
         if (teeParent) {
-          list.push_back(
-            getFieldFromLocal(localIndex, teeParent->index, teeParent->signed_));
+          list.push_back(getFieldFromLocal(
+            localIndex, teeParent->index, teeParent->signed_));
         }
         return builder.makeBlock(list);
       }
