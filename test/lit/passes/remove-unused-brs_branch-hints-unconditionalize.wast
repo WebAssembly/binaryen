@@ -9,6 +9,9 @@
 ;; not run code unconditionally that previously might not have run. This is
 ;; important as the branch hint in un-executed code may be right or wrong, which
 ;; can confuse the fuzzer.
+;;
+;; Run with --shrink-level=1 because the optimization of merging two adjacent
+;; br_ifs is gated on it.
 
 (module
   ;; CHECK:      (func $selectify (type $0) (param $x i32) (param $y i32) (result i32)
