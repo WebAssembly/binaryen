@@ -155,12 +155,6 @@ struct PropagateStructGets
     }
   }
 
-  void visitLocalSet(LocalSet* curr) {
-    if (isStructLocal(curr->index)) {
-      sets[curr->index].push_back(getCurrentPointer());
-    }
-  }
-
   void visitStructGet(StructGet* curr) { handleStructOperation(curr); }
   void visitStructSet(StructSet* curr) { handleStructOperation(curr); }
 
@@ -175,9 +169,22 @@ struct PropagateStructGets
     if (auto* get = curr->ref->template dynCast<LocalGet>()) {
       getParents[get->index].push_back(curr);
       structOperations.push_back(getCurrentPointer());
-    } else if (auto* set = curr->ref->template dynCast<LocalSet>()) {
-      teeParents[set] = curr;
-      structOperations.push_back(getCurrentPointer());
+    } else if (auto* tee = curr->ref->template dynCast<LocalSet>()) {
+      // TODO: Handle a tee for struct.set. This is a little complex to handle
+      // below, and not really needed, since
+      //
+      //   (struct.set $A k
+      //     (struct.new $A ..)
+      //     (value)
+      //   )
+      //
+      // can be folded into a single struct.new (that is, we are writing all the
+      // fields, then writing an additional one, and other passes make us do
+      // them all at once anyhow).
+      if (!curr->is<StructSet>()) {
+        teeParents[tee] = curr;
+        structOperations.push_back(getCurrentPointer());
+      }
     }
     // TODO: handle more things flowing into struct.get, like an If
   }
@@ -313,83 +320,100 @@ struct PropagateStructGets
   }
 
   void optimize(Function* func) {
-    auto* module = getModule();
-    Builder builder(*module);
+    struct Optimizer : PostWalker<Optimizer> {
+      PropagateStructGets& parent;
 
-    auto getFieldFromLocal =
-      [&](Index localIndex, Index fieldIndex, bool signed_) -> Expression* {
-      auto& field = func->getLocalType(localIndex)
-                      .getHeapType()
-                      .getStruct()
-                      .fields[fieldIndex];
-      // Read from the appropriate new local, handling sign extension as needed.
-      auto newLocal = optimizedLocals[localIndex][fieldIndex];
-      Expression* ret =
-        builder.makeLocalGet(newLocal, func->getLocalType(newLocal));
-      return Bits::makePackedFieldGet(ret, field, signed_, *module);
-    };
+      Optimizer(PropagateStructGets& parent) : parent) {}
 
-    auto makeFieldSets = [&](LocalSet* set,
-                             StructGet* teeParent = nullptr) -> Expression* {
-      auto localIndex = set->index;
-      auto localType = func->getLocalType(localIndex);
-      auto& fields = localType.getHeapType().getStruct().fields;
-
-      // Store the reference, then store struct.gets of all used fields in the
-      // new locals.
-      std::vector<Expression*> list = {
-        builder.makeLocalSet(localIndex, set->value)};
-      for (auto [fieldIndex, newLocal] : optimizedLocals[localIndex]) {
-        auto& field = fields[fieldIndex];
-        // Note that the sign does not matter here: we just store the bits, and
-        // will handle the sign when reading back out (like in Heap2Local).
-        auto* sget =
-          builder.makeStructGet(fieldIndex,
-                                builder.makeLocalGet(localIndex, localType),
-                                MemoryOrder::Unordered,
-                                field.type,
-                                false);
-        list.push_back(builder.makeLocalSet(newLocal, sget));
-      }
-
-      // Finally, if this is a tee, then it was consumed by a struct.get, and we
-      // can read that field and return it.
-      if (teeParent) {
-        list.push_back(
-          getFieldFromLocal(localIndex, teeParent->index, teeParent->signed_));
-      }
-      return builder.makeBlock(list);
-    };
-
-    // Rewrite recorded struct.gets in post-order.
-    for (auto** currp : structOperations) {
-      auto* sget = (*currp)->cast<StructGet>();
-      if (auto* get = sget->ref->dynCast<LocalGet>()) {
-        if (!optimizedLocals.contains(get->index)) {
-          continue;
-        }
-        // struct.get of a local.get reads the field from a new local.
-        *currp = getFieldFromLocal(get->index, sget->index, sget->signed_);
-      } else if (auto* tee = sget->ref->dynCast<LocalSet>()) {
-        if (!optimizedLocals.contains(tee->index)) {
-          continue;
-        }
-        // struct.get of a local.tee first writes the fields, then reads.
-        *currp = makeFieldSets(tee, sget);
-      }
-    }
-
-    // Rewrite non-tee local.sets of optimized locals: local.sets now store the
-    // used fields.
-    for (auto& [x, _] : optimizedLocals) {
-      for (auto** setp : sets[x]) {
-        auto* set = (*setp)->cast<LocalSet>();
-        // Tees were already handled.
-        if (!set->isTee()) {
-          *setp = makeFieldSets(set);
+      void visitLocalSet(LocalSet* curr) {
+        if (!curr->isTee() && parent.optimizedLocals.contains(curr->index)) {
+          // local.set now stores the used fields (tee is handled below).
+          replaceCurrent(makeFieldSets(tee));
         }
       }
-    }
+
+      void visitStructGet(StructGet* curr) {
+        if (auto* get = curr->ref->dynCast<LocalGet>()) {
+          if (parent.optimizedLocals.contains(get->index)) {
+            // struct.get of a local.get reads the field from a new local.
+            replaceCurrent(getFieldFromLocal(get->index, curr->index, curr->signed_));
+          }
+        } else if (auto* tee = curr->ref->dynCast<LocalSet>()) {
+          if (parent.optimizedLocals.contains(tee->index)) {
+            // struct.get of a local.tee first writes the fields, then reads.
+            *currp = makeFieldSets(tee, sget);
+          }
+        }
+      }
+
+      void visitStructSet(StructGet* curr) {
+        if (auto* get = curr->ref->dynCast<LocalGet>()) {
+          if (parent.optimizedLocals.contains(get->index)) {
+            // struct.set of a local.get writes the field into a new local.
+            replaceCurrent(setFieldToLocal(get->index, curr->index, curr->value));
+          }
+        }
+      }
+
+      Expression* getFieldFromLocal(Index localIndex, Index fieldIndex, bool signed_) {
+        auto& field = getFunction()->getLocalType(localIndex)
+                        .getHeapType()
+                        .getStruct()
+                        .fields[fieldIndex];
+        // Read from the appropriate new local, handling sign extension as needed.
+        auto newLocal = parent.optimizedLocals[localIndex][fieldIndex];
+        Builder builder(*getModule());
+        Expression* ret =
+          builder.makeLocalGet(newLocal, getFunction()->getLocalType(newLocal));
+        return Bits::makePackedFieldGet(ret, field, signed_, *module);
+      }
+
+      Expression* setFieldToLocal(Index localIndex, Index fieldIndex, Expression* value) {
+        auto& field = getFunction()->getLocalType(localIndex)
+                        .getHeapType()
+                        .getStruct()
+                        .fields[fieldIndex];
+        // Read from the appropriate new local, handling sign extension as needed.
+        auto newLocal = parent.optimizedLocals[localIndex][fieldIndex];
+        Builder builder(*getModule());
+        return builder.makeLocalSet(newLocal, value);
+      }
+
+      Expression* makeFieldSets(LocalSet* set,
+                               StructGet* teeParent = nullptr) {
+        auto localIndex = set->index;
+        auto localType = getFunction()->getLocalType(localIndex);
+        auto& fields = localType.getHeapType().getStruct().fields;
+
+        // Store the reference, then store struct.gets of all used fields in the
+        // new locals.
+        Builder builder(*getModule());
+        std::vector<Expression*> list = {
+          builder.makeLocalSet(localIndex, set->value)};
+        for (auto [fieldIndex, newLocal] : parent.optimizedLocals[localIndex]) {
+          auto& field = fields[fieldIndex];
+          // Note that the sign does not matter here: we just store the bits, and
+          // will handle the sign when reading back out (like in Heap2Local).
+          auto* sget =
+            builder.makeStructGet(fieldIndex,
+                                  builder.makeLocalGet(localIndex, localType),
+                                  MemoryOrder::Unordered,
+                                  field.type,
+                                  false);
+          list.push_back(builder.makeLocalSet(newLocal, sget));
+        }
+
+        // Finally, if this is a tee, then it was consumed by a struct.get, and we
+        // can read that field and return it.
+        if (teeParent) {
+          list.push_back(
+            getFieldFromLocal(localIndex, teeParent->index, teeParent->signed_));
+        }
+        return builder.makeBlock(list);
+      }
+    } optimizer;
+    optimizer.setModule(getModule());
+    optimizer.walkFunction(func);
 
     if (hasTry) {
       EHUtils::handleBlockNestedPops(func, *getModule());
