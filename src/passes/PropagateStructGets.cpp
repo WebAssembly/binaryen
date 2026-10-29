@@ -161,15 +161,10 @@ struct PropagateStructGets
     }
   }
 
-  void visitStructGet(StructGet* curr) {
-    handleStructOperation(curr);
-  }
-  void visitStructSet(StructSet* curr) {
-    handleStructOperation(curr);
-  }
+  void visitStructGet(StructGet* curr) { handleStructOperation(curr); }
+  void visitStructSet(StructSet* curr) { handleStructOperation(curr); }
 
-  template<typename T>
-  void handleStructOperation(T* curr) {
+  template<typename T> void handleStructOperation(T* curr) {
     // Avoid unreachable code.
     if (curr->type == Type::unreachable) {
       return;
