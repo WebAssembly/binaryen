@@ -155,6 +155,12 @@ struct PropagateStructGets
     }
   }
 
+  void visitLocalSet(LocalSet* curr) {
+    if (isStructLocal(curr->index)) {
+      sets[curr->index].push_back(getCurrentPointer());
+    }
+  }
+
   void visitStructGet(StructGet* curr) { handleStructOperation(curr); }
   void visitStructSet(StructSet* curr) { handleStructOperation(curr); }
 
