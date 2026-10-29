@@ -104,7 +104,9 @@ using VarType = std::variant<Type, VarRef, Index>;
 struct PrincipalType {
   std::vector<VarType> rparams;
   std::vector<VarType> results;
-  bool unreachable;
+  bool unreachable = false;
+
+  PrincipalType() = default;
 
   PrincipalType(std::initializer_list<VarType> params,
                 std::initializer_list<VarType> results,

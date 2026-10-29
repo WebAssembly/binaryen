@@ -162,7 +162,9 @@ inline Expression* getSignExtValue(Expression* curr) {
       case ExtendS8Int64:
       case ExtendS16Int64:
       case ExtendS32Int64:
-        return unary->value;
+        // The operand may have become unreachable before refinalization updates
+        // `curr->type`.
+        return unary->value->type.isInteger() ? unary->value : nullptr;
       default:
         return nullptr;
     }
@@ -174,10 +176,12 @@ inline Expression* getSignExtValue(Expression* curr) {
   if (matches(curr,
               binary(ShrS,
                      binary(Shl, any(&extended), ival(&leftShift)),
-                     ival(&rightShift))) &&
-      leftShift == rightShift &&
-      Bits::getEffectiveShifts(leftShift, curr->type) != 0) {
-    return extended;
+                     ival(&rightShift)))) {
+    auto leftShifts = Bits::getEffectiveShifts(leftShift, curr->type);
+    auto rightShifts = Bits::getEffectiveShifts(rightShift, curr->type);
+    if (leftShifts != 0 && leftShifts == rightShifts) {
+      return extended;
+    }
   }
   return nullptr;
 }
@@ -216,9 +220,9 @@ inline Expression* getAlmostSignExt(Expression* curr) {
               binary(ShrS,
                      binary(Shl, any(&extended), ival(&leftShift)),
                      ival(&rightShift)))) {
+    auto leftShifts = Bits::getEffectiveShifts(leftShift, curr->type);
     auto rightShifts = Bits::getEffectiveShifts(rightShift, curr->type);
-    if (rightShifts <= Bits::getEffectiveShifts(leftShift, curr->type)) {
-      assert(rightShifts != 0);
+    if (rightShifts != 0 && rightShifts <= leftShifts) {
       return extended;
     }
   }

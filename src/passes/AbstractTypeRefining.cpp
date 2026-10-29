@@ -36,7 +36,6 @@
 #include <memory>
 
 #include "ir/drop.h"
-#include "ir/eh-utils.h"
 #include "ir/localize.h"
 #include "ir/module-utils.h"
 #include "ir/subtypes.h"
@@ -320,7 +319,6 @@ struct AbstractTypeRefining : public Pass {
 
     struct Preoptimizer : WalkerPass<PostWalker<Preoptimizer>> {
       const TypeMapper::TypeUpdates& mapping;
-      bool addedBlock = false;
 
       Preoptimizer(const TypeMapper::TypeUpdates& mapping) : mapping(mapping) {}
 
@@ -331,7 +329,6 @@ struct AbstractTypeRefining : public Pass {
       }
 
       Block* localizeChildren(Expression* curr) {
-        addedBlock = true;
         return ChildLocalizer(
                  curr, getFunction(), *getModule(), getPassOptions())
           .getChildrenReplacement();
@@ -420,7 +417,6 @@ struct AbstractTypeRefining : public Pass {
           // optimize to. In this case it must trap.
           replaceCurrent(builder.makeSequence(builder.makeDrop(curr->ref),
                                               builder.makeUnreachable()));
-          addedBlock = true;
         } else {
           // The descriptor is abstract, but it has a subtype that is not
           // (which we want to optimize to). We know this will only succeed if
@@ -490,15 +486,8 @@ struct AbstractTypeRefining : public Pass {
         if (getFunction()) {
           replaceCurrent(getDroppedChildrenAndAppend(
             curr, *getModule(), getPassOptions(), builder.makeUnreachable()));
-          addedBlock = true;
         } else {
           curr->desc = builder.makeRefNull(HeapType::none);
-        }
-      }
-
-      void visitFunction(Function* func) {
-        if (addedBlock) {
-          EHUtils::handleBlockNestedPops(func, *getModule());
         }
       }
     } preoptimizer(mapping);
