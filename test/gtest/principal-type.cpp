@@ -183,6 +183,8 @@ TEST(PrincipalTypeTest, MatchTypeVariables) {
   // Match bottom.
   // []*->[] + [t0]->[t0] = []*->[]
   COMPOSE(({}, {}, true), ({t0}, {t0}), ({}, {}, true));
+  // []*->[i32] + [t1 t0]->[t1 t0] = []*->[i32]
+  COMPOSE(({}, {i32}, true), ({t1, t0}, {t1, t0}), ({}, {i32}, true));
   // [t0]->[t0] + []*->[] = [t0]*->[]
   COMPOSE(({t0}, {t0}), ({}, {}, true), ({t0}, {}, true));
 
@@ -469,11 +471,12 @@ TEST(PrincipalTypeTest, UnifyVariables) {
   VarType t2 = {2u};
   VarType refN0T0 = VarRef{{0u}, {0u}};
 
-  TypeBuilder builder(2);
+  TypeBuilder builder(3);
   builder[0] = Struct{};
   builder[0].setOpen();
   builder[1] = Struct();
   builder[1].subTypeOf(builder[0]);
+  builder[2] = Struct{};
   auto built = builder.build();
   HeapType foo = (*built)[0];
   VarType refFoo = Type(foo, NonNullable);
@@ -482,6 +485,13 @@ TEST(PrincipalTypeTest, UnifyVariables) {
   HeapType bar = (*built)[1];
   VarType refBar = Type(bar, NonNullable);
   VarType refExactBar = Type(bar, NonNullable, Exact);
+  HeapType baz = (*built)[2];
+  VarType refBaz = Type(baz, NonNullable);
+  Type refStruct = Type(HeapType::struct_, NonNullable);
+  Type refNone = Type(HeapType::none, NonNullable);
+  VarType refBot = VarRef{NonNullable, BottomHeapType{}};
+  VarType refBotNone =
+    VarRef{NonNullable, VarAbsHeapType{BottomShare{}, HeapType::none}};
 
   // Unify multiple variables.
   // []->[t2 t2 t1 t1 t0] + [t2' t1' t1' t0' t0']->[t0' t1' t2']
@@ -502,7 +512,55 @@ TEST(PrincipalTypeTest, UnifyVariables) {
   //     = []->[anyref]
   COMPOSE(
     ({}, {eqref, refAny}), ({refN0T0, refN0T0}, {refN0T0}), ({}, {anyref}));
-  // TODO: Join abstract and defined heap types.
+  // []->[(ref (bot-share eq)) (ref any)] + [t0 t0]->[t0] = []->[(ref any)]
+  COMPOSE(({}, {refBotEq, refAny}), ({t0, t0}, {t0}), ({}, {refAny}));
+  // []->[(ref any) (ref (bot-share eq))] + [t0 t0]->[t0] = []->[(ref any)]
+  COMPOSE(({}, {refAny, refBotEq}), ({t0, t0}, {t0}), ({}, {refAny}));
+  // []*->[(ref (bot-share eq))] + [t0 t0]->[t0] = []*->[(ref (bot-share eq))]
+  COMPOSE(({}, {refBotEq}, true), ({t0, t0}, {t0}), ({}, {refBotEq}, true));
+  // [(ref n0 t0)]->[(ref bot) (ref n0 t0)] + [t0 t0]->[t0]
+  //     = [(ref n0 t0)]->[(ref n0 t0)]
+  COMPOSE(
+    ({refN0T0}, {refBot, refN0T0}), ({t0, t0}, {t0}), ({refN0T0}, {refN0T0}));
+
+  // Join abstract and defined heap types.
+  // []->[eqref (ref foo)] + [t0 t0]->[t0] = []->[eqref]
+  COMPOSE(({}, {eqref, refFoo}), ({t0, t0}, {t0}), ({}, {eqref}));
+  // []->[(ref foo) eqref] + [t0 t0]->[t0] = []->[eqref]
+  COMPOSE(({}, {refFoo, eqref}), ({t0, t0}, {t0}), ({}, {eqref}));
+  // []->[eqref (ref foo)] + [(ref n0 t0) (ref n0 t0)]->[(ref n0 t0)]
+  //     = []->[eqref]
+  COMPOSE(
+    ({}, {eqref, refFoo}), ({refN0T0, refN0T0}, {refN0T0}), ({}, {eqref}));
+  // []->[(ref foo) eqref] + [(ref n0 t0) (ref n0 t0)]->[(ref n0 t0)]
+  //     = []->[eqref]
+  COMPOSE(
+    ({}, {refFoo, eqref}), ({refN0T0, refN0T0}, {refN0T0}), ({}, {eqref}));
+  // []->[(ref (bot-share eq)) (ref foo)]
+  //     + [(ref n0 t0) (ref n0 t0)]->[(ref n0 t0)] = []->[(ref eq)]
+  COMPOSE(
+    ({}, {refBotEq, refFoo}), ({refN0T0, refN0T0}, {refN0T0}), ({}, {refEq}));
+  // []->[(ref foo) (ref (bot-share eq))]
+  //     + [(ref n0 t0) (ref n0 t0)]->[(ref n0 t0)] = []->[(ref eq)]
+  COMPOSE(
+    ({}, {refFoo, refBotEq}), ({refN0T0, refN0T0}, {refN0T0}), ({}, {refEq}));
+  // []->[(ref none) (ref (exact foo))]
+  //     + [(ref n0 t0) (ref n0 t0)]->[(ref n0 t0)] = []->[(ref (exact foo))]
+  COMPOSE(({}, {refNone, refExactFoo}),
+          ({refN0T0, refN0T0}, {refN0T0}),
+          ({}, {refExactFoo}));
+  // []->[(ref (bot-share none)) (ref (exact foo))]
+  //     + [(ref n0 t0) (ref n0 t0)]->[(ref n0 t0)] = []->[(ref (exact foo))]
+  COMPOSE(({}, {refBotNone, refExactFoo}),
+          ({refN0T0, refN0T0}, {refN0T0}),
+          ({}, {refExactFoo}));
+  // []->[(ref (shared any)) (ref foo)]
+  //     + [(ref n0 t0) (ref n0 t0)]->[(ref n0 t0)] = X
+  NO_COMPOSE(({}, {refSharedAny, refFoo}), ({refN0T0, refN0T0}, {refN0T0}));
+  // []->[(ref foo) (ref baz)] + [(ref n0 t0) (ref n0 t0)]->[(ref n0 t0)]
+  //     = []->[(ref struct)]
+  COMPOSE(
+    ({}, {refFoo, refBaz}), ({refN0T0, refN0T0}, {refN0T0}), ({}, {refStruct}));
 
   // Join sharedness assignments.
   // []->[(ref any) (ref any)]
@@ -618,6 +676,7 @@ static void testSignatureRoundTrip(const Signature& sig) {
   SCOPED_TRACE("Testing signature: " + sig.toString());
 
   PrincipalType pt(sig);
+  EXPECT_FALSE(pt.unreachable);
   std::optional<Signature> maybeSig = pt.getSignature();
   ASSERT_TRUE(maybeSig.has_value());
   EXPECT_EQ(*maybeSig, sig);

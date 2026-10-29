@@ -779,8 +779,7 @@
   (elem declare func $f $g)
 )
 
-;; TODO: Fix wasm-shell assertion.
-;; (assert_return (invoke "init") (i32.const 42))
+(assert_return (invoke "init") (i32.const 42))
 
 (module
   (rec
@@ -822,8 +821,7 @@
   (elem declare func $f $g)
 )
 
-;; TODO: Fix wasm-shell assertion.
-;; (assert_return (invoke "init") (i32.const 4))
+(assert_return (invoke "init") (i32.const 4))
 
 (assert_invalid
   (module
@@ -884,9 +882,8 @@
   (elem declare func $suspend $switch)
 )
 
-;; TODO: Fix assertion.
-;; (assert_suspension (invoke "unhandled-suspend-t") "unhandled tag")
-;; (assert_suspension (invoke "unhandled-switch-t") "unhandled tag")
+(assert_suspension (invoke "unhandled-suspend-t") "unhandled tag")
+(assert_suspension (invoke "unhandled-switch-t") "unhandled tag")
 
 (module
   (rec
@@ -1027,8 +1024,7 @@
   )
 )
 
-;; TODO: Fix wasm-shell assertion failure.
-;; (assert_return (invoke "main") (i32.const -1))
+(assert_return (invoke "main") (i32.const -1))
 
 ;; Syntax: check unfolded forms
 (module
