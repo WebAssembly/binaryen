@@ -427,10 +427,6 @@ void PassRegistry::registerPasses() {
   registerPass("propagate-globals-globally",
                "propagate global values to other globals (useful for tests)",
                createPropagateGlobalsGloballyPass);
-  registerPass("propagate-struct-gets",
-               "propagate struct.get operations to simplify locals and control "
-               "flow",
-               createPropagateStructGetsPass);
   registerPass("remove-non-js-ops",
                "removes operations incompatible with js",
                createRemoveNonJSOpsPass);
@@ -493,6 +489,9 @@ void PassRegistry::registerPasses() {
   registerPass("safe-heap",
                "instrument loads and stores to check for invalid behavior",
                createSafeHeapPass);
+  registerPass("scalarize-struct-locals",
+               "replace non-escaping struct locals with locals for their fields",
+               createScalarizeStructLocalsPass);
   registerPass("set-globals",
                "sets specified globals to specified values",
                createSetGlobalsPass);
@@ -729,7 +728,7 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
   // simplify-locals opens opportunities for optimizations
   addIfNoDWARFIssues("remove-unused-brs");
   if (options.optimizeLevel > 1 && wasm->features.hasGC()) {
-    addIfNoDWARFIssues("propagate-struct-gets");
+    addIfNoDWARFIssues("scalarize-struct-locals");
     addIfNoDWARFIssues("heap2local");
   }
   // if we are willing to work hard, also optimize copies before coalescing

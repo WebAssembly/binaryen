@@ -449,10 +449,6 @@
 ;; CHECK-NEXT:   --propagate-globals-globally                  propagate global values to other
 ;; CHECK-NEXT:                                                 globals (useful for tests)
 ;; CHECK-EMPTY:
-;; CHECK-NEXT:   --propagate-struct-gets                       propagate struct.get operations 
-;; CHECK-NEXT:                                                 to simplify locals and control 
-;; CHECK-NEXT:                                                 flow
-;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --remove-empty-function-exports               removes exports of empty 
 ;; CHECK-NEXT:                                                 functions
 ;; CHECK-EMPTY:
@@ -509,6 +505,10 @@
 ;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --safe-heap                                   instrument loads and stores to 
 ;; CHECK-NEXT:                                                 check for invalid behavior
+;; CHECK-EMPTY:
+;; CHECK-NEXT:   --scalarize-struct-locals                     replace non-escaping struct 
+;; CHECK-NEXT:                                                 locals with locals for their 
+;; CHECK-NEXT:                                                 fields
 ;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --separate-data-segments                      write data segments to a file 
 ;; CHECK-NEXT:                                                 and strip them from the module

@@ -3,8 +3,8 @@
 ;; Test the pass by itself, and also followed up by Heap2Local, to verify that
 ;; we emit things Heap2Local can handle.
 
-;; RUN: foreach %s %t wasm-opt --propagate-struct-gets -all -S -o - | filecheck %s
-;; RUN: foreach %s %t wasm-opt --propagate-struct-gets --heap2local -all -S -o - | filecheck %s --check-prefix=H2L
+;; RUN: foreach %s %t wasm-opt --scalarize-struct-locals -all -S -o - | filecheck %s
+;; RUN: foreach %s %t wasm-opt --scalarize-struct-locals --heap2local -all -S -o - | filecheck %s --check-prefix=H2L
 
 (module
   ;; CHECK:      (type $struct (struct (field (mut i32))))

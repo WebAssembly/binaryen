@@ -99,7 +99,6 @@ set(passes_SOURCES
   PrintCallGraph.cpp
   PrintFeatures.cpp
   PrintFunctionMap.cpp
-  PropagateStructGets.cpp
   RemoveStart.cpp
   RoundTrip.cpp
   SetGlobals.cpp
@@ -135,6 +134,7 @@ set(passes_SOURCES
   TypeMerging.cpp
   TypeSSA.cpp
   SafeHeap.cpp
+  ScalarizeStructLocals.cpp
   SeparateDataSegments.cpp
   SimplifyGlobals.cpp
   SimplifyLocals.cpp

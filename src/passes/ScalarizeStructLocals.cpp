@@ -20,7 +20,7 @@
 // This pass identifies a simple case of refs not escaping, like Heap2Local, but
 // allowing more than a single allocation (struct.new), which is better, and
 // which handles a far simpler-to-identify situation, which is worse. To see the
-// motivataion, consider overlapping allocations like this:
+// motivation, consider overlapping allocations like this:
 //
 //    x = new Foo(42);
 //    if (condition) x = new Foo(1337);
@@ -68,7 +68,7 @@
 // read the default value from the tee at the bottom. But here we cannot
 // optimize while using a single local `a_value` because of the live range
 // overlap: both allocations are alive as the select executes, and it picks
-// between them, so we must store both of them somewhere in the interm.
+// between them, so we must store both of them somewhere in the interim.
 // Detecting such overlaps is not trivial as it involves locals as well as the
 // wasm value stack, which is why this pass is useful, as it handles common and
 // obviously-optimizable cases.
@@ -87,16 +87,16 @@ namespace wasm {
 
 namespace {
 
-struct PropagateStructGets
-  : public WalkerPass<PostWalker<PropagateStructGets>> {
+struct ScalarizeStructLocals
+  : public WalkerPass<PostWalker<ScalarizeStructLocals>> {
   bool isFunctionParallel() override { return true; }
 
   std::unique_ptr<Pass> create() override {
-    return std::make_unique<PropagateStructGets>();
+    return std::make_unique<ScalarizeStructLocals>();
   }
 
   // Track the number of gets for each local, so that we can see if all the
-  // local.gets are consumed by struct.gets.
+  // local.gets are consumed by struct.get/sets.
   std::unordered_map<Index, Index> numGets;
 
   // The sets for each local index. We store this in an ordered set so that
@@ -205,16 +205,16 @@ struct PropagateStructGets
 
       auto getIt = getParents.find(localIndex);
       if (getIt == getParents.end()) {
-        // No struct.get parents for this local's gets.
+        // No struct.get/set parents for this local's gets.
         continue;
       }
 
-      // Check if each local.get is consumed by a struct.get, which is the case
-      // if the counts match. If so, then we understand all the gets, and this
-      // situation is the pattern we optimize: each local.get is consumed
-      // by a struct.get.
+      // Check if each local.get is consumed by a struct.get/set, which is the
+      // case if the counts match. If so, then we understand all the gets, and
+      // this situation is the pattern we optimize: each local.get is consumed
+      // by a struct.get/set.
       const auto& getStructOperations = getIt->second;
-      // There must be a struct.get, if we added one for this local.
+      // There must be a struct.get/set, if we added one for this local.
       assert(!getStructOperations.empty());
       if (getStructOperations.size() != numGets[localIndex]) {
         continue;
@@ -300,9 +300,9 @@ struct PropagateStructGets
 
   void optimize(Function* func) {
     struct Optimizer : PostWalker<Optimizer> {
-      PropagateStructGets& parent;
+      ScalarizeStructLocals& parent;
 
-      Optimizer(PropagateStructGets& parent) : parent(parent) {}
+      Optimizer(ScalarizeStructLocals& parent) : parent(parent) {}
 
       void visitLocalSet(LocalSet* curr) {
         if (!curr->isTee() && parent.optimizedLocals.contains(curr->index)) {
@@ -405,6 +405,6 @@ struct PropagateStructGets
 
 } // anonymous namespace
 
-Pass* createPropagateStructGetsPass() { return new PropagateStructGets(); }
+Pass* createScalarizeStructLocalsPass() { return new ScalarizeStructLocals(); }
 
 } // namespace wasm
