@@ -303,6 +303,7 @@ struct PropagateStructGets
 
       // Success! The pattern fits, prepare to optimize this local by adding a
       // local to store the value of each used field.
+      auto& fields = func->getLocalType(localIndex).getHeapType().getStruct().fields;
       for (auto fieldIndex : usedFields) {
         optimizedLocals[localIndex][fieldIndex] =
           builder.addVar(func, fields[fieldIndex].type);
