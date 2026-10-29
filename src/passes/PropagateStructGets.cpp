@@ -15,47 +15,16 @@
  */
 
 //
-// Identify when a GC reference local is always used as "data". If all the
-// local.gets and local.tees of a reference local are immediately consumed by
-// a struct.get, to read data from the reference, then we can optimize:
+// Simple multi-allocation escape analysis.
 //
-//    x = new Foo(42);
-//    bar(x.value, x.value);
-//
-//  =>
-//
-//    // Store the value directly.
-//    x_value = (new Foo(42)).value; // do the struct.get earlier, here
-//    bar(x_value, x_value);
-//
-// More concretely, when we see all local operations look like this:
-//
-//    (local.set $ref ..)               # no constraint on local.set
-//    (struct.get (local.tee $ref ..))  # consumed by struct.get
-//    (struct.get (local.get $ref))     # consumed by struct.get
-//
-// Then we can reshape the code to look like this:
-//
-//    (local.set $ref_field (struct.get (..))  # store data in local
-//    (local.tee $ref_field (struct.get (..))  # store data in local, get it
-//    (local.get $ref_field))                  # get data from local
-//
-// In effect we "propagate" struct.gets to earlier positions.
-//
-// We could in principle handle any input to local.set/local.tee, not just
-// struct.news. However, we only guarantee that Heap2Local will remove an
-// allocation when we do see struct.new, and when we do not remove an
-// allocation, we are basically moving struct.gets to an earlier point in time,
-// which may or may not be faster. Only handling struct.news leaves us in the
-// simple case where all the allocations are removed by Heap2Local.
-//
-// This pass is basically a simple form of escape analysis, like Heap2Local, but
-// which handles a far more restricted case (where the reference is immediately
-// struct.get-ed). The benefit of this pass is that our restricted case can
-// handle overlapping allocations, like this:
+// This pass identifies a simple case of refs not escaping, like Heap2Local, but
+// allowing more than a single allocation (struct.new), which is better, and
+// which handles a far simpler-to-identify situation, which is worse. To see the
+// motivataion, consider overlapping allocations like this:
 //
 //    x = new Foo(42);
 //    if (condition) x = new Foo(1337);
+//    else x.value = -1;
 //    bar(x.value, x.value);
 //
 // Heap2Local cannot optimize this due to the overlapping live ranges (it sees
@@ -64,10 +33,16 @@
 //
 //    x_value = (new Foo(42)).value;
 //    if (condition) x_value = (new Foo(1337)).value;
+//    else x_value = -1;
 //    bar(x_value, x_value);
 //
-// The live ranges of the reference local no longer overlap (only of the data-
-// storing local), so Heap2Local can handle both those allocations.
+// Note how we now operate on x_value, a new local with data. Basically, each
+// struct.get/struct.set is turned into an operation on that new local. This is
+// safe despite the multiple allocations because the local x is always used
+// immediately, as data: rather than store a reference, we can just focus on the
+// data. Nothing observes x as a reference (no ref.eq), and it does not escape,
+// so this is valid. Heap2Local will then see 'untangled' allocations, each one
+// immediately consumed, and remove them all.
 //
 // Note that Heap2Local could safely optimize in this example, even before our
 // changes: while the `x.value` operations are not exclusive to allocations, the
@@ -97,8 +72,6 @@
 // Detecting such overlaps is not trivial as it involves locals as well as the
 // wasm value stack, which is why this pass is useful, as it handles common and
 // obviously-optimizable cases.
-//
-// TODO: document struct.set
 //
 
 #include "ir/bits.h"
