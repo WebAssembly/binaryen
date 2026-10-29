@@ -11,7 +11,8 @@
 ;; can confuse the fuzzer.
 ;;
 ;; Run with --shrink-level=1 because the optimization of merging two adjacent
-;; br_ifs is gated on it.
+;; br_ifs is gated on it. Higher shrink levels allow RemoveUnusedBrs to do
+;; strictly more transformations.
 
 (module
   ;; CHECK:      (func $selectify (type $0) (param $x i32) (param $y i32) (result i32)
