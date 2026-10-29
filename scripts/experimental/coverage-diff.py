@@ -624,24 +624,24 @@ def get_git_diff_lines(
             diff_cmd = ['git', 'diff', '-U0', '--no-color', 'HEAD']
             desc = 'uncommitted changes vs HEAD'
         else:
-            # Fall back to merge-base with GITHUB_BASE_REF, upstream, or origin/main.
-            upstreams = ['@{upstream}', 'origin/main']
-            if os.environ.get('GITHUB_BASE_REF'):
-                upstreams.insert(0, f"origin/{os.environ['GITHUB_BASE_REF']}")
-            merge_base = None
-            upstream = upstreams[0]
-            for cand in upstreams:
+            # Fall back to merge-base with upstream or origin/main.
+            upstream = '@{upstream}'
+            mb_res = subprocess.run(
+                ['git', 'merge-base', upstream, 'HEAD'],
+                cwd=REPO_ROOT,
+                capture_output=True,
+                text=True,
+            )
+            if mb_res.returncode != 0:
+                upstream = 'origin/main'
                 mb_res = subprocess.run(
-                    ['git', 'merge-base', cand, 'HEAD'],
+                    ['git', 'merge-base', upstream, 'HEAD'],
                     cwd=REPO_ROOT,
                     capture_output=True,
                     text=True,
                 )
-                if mb_res.returncode == 0 and mb_res.stdout.strip():
-                    upstream = cand
-                    merge_base = mb_res.stdout.strip()
-                    break
-            if merge_base:
+            if mb_res.returncode == 0 and mb_res.stdout.strip():
+                merge_base = mb_res.stdout.strip()
                 diff_cmd = ['git', 'diff', '-U0', '--no-color', merge_base]
                 desc = f'branch changes vs {upstream} ({merge_base[:10]})'
             else:

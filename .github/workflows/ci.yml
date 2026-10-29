@@ -364,8 +364,9 @@ jobs:
       run: cmake --build out
     - name: coverage-diff
       run: |
-        ./scripts/experimental/coverage-diff.py -B out --lit test/lit --gtest -a --github-annotations
-        ./scripts/experimental/coverage-diff.py -B out -a --markdown >> "$GITHUB_STEP_SUMMARY"
+        MERGE_BASE=$(git merge-base "origin/$GITHUB_BASE_REF" HEAD)
+        ./scripts/experimental/coverage-diff.py --base "$MERGE_BASE" -B out --lit test/lit --gtest -a --github-annotations
+        ./scripts/experimental/coverage-diff.py --base "$MERGE_BASE" -B out -a --markdown >> "$GITHUB_STEP_SUMMARY"
 
   # Build the .js outputs using emcc
   build-emscripten:
