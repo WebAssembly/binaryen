@@ -162,6 +162,9 @@ inline Expression* getSignExtValue(Expression* curr) {
       case ExtendS8Int64:
       case ExtendS16Int64:
       case ExtendS32Int64:
+        // The operand may have become unreachable before refinalization updates
+        // `curr->type`. (The shift pattern below already checks `extended`'s
+        // type via `Abstract::Shl`.)
         return unary->value->type.isInteger() ? unary->value : nullptr;
       default:
         return nullptr;
