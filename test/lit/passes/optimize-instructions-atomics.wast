@@ -13,8 +13,22 @@
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i32.atomic.load8_u
+ ;; CHECK-NEXT:    (i32.const 100)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i32.extend8_s
+ ;; CHECK-NEXT:    (i32.atomic.load8_u
+ ;; CHECK-NEXT:     (i32.const 100)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $x
+  ;; An 8-bit shift sign-extend cannot be folded into an atomic load, which
+  ;; cannot be signed, so it is only canonicalized to i32.extend8_s.
   (drop
    (i32.shr_s
     (i32.shl
@@ -24,6 +38,27 @@
      (i32.const 24)
     )
     (i32.const 24)
+   )
+  )
+  ;; A 12-bit shift sign-extend on an 8-bit unsigned atomic load is a no-op
+  ;; because the upper bits of the 12-bit value are already zero.
+  (drop
+   (i32.shr_s
+    (i32.shl
+     (i32.atomic.load8_u ;; can't be signed
+      (i32.const 100)
+     )
+     (i32.const 20)
+    )
+    (i32.const 20)
+   )
+  )
+  ;; A unary sign-extend also cannot be folded into an atomic load.
+  (drop
+   (i32.extend8_s
+    (i32.atomic.load8_u ;; can't be signed
+     (i32.const 100)
+    )
    )
   )
  )
