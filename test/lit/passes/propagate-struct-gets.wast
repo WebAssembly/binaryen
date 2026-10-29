@@ -432,7 +432,6 @@
   ;; CHECK-NEXT:   (local.get $3)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  
   ;; H2L:      (func $optimize-struct-get-different-fields (type $3) (param $x i32) (result i32)
   ;; H2L-NEXT:  (local $ref (ref null $struct-2fields))
   ;; H2L-NEXT:  (local $2 i32)
@@ -2508,7 +2507,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.get $2)
   ;; CHECK-NEXT: )
-  ;; H2L:      (func $struct.get-atomic (type $2) (param $x i32) (result i32)
+  ;; H2L:      (func $struct.get-atomic (type $1) (param $x i32) (result i32)
   ;; H2L-NEXT:  (local $ref (ref null $struct-mut))
   ;; H2L-NEXT:  (local $2 i32)
   ;; H2L-NEXT:  (local $3 i32)
@@ -2581,7 +2580,7 @@
   )
 
 
-  ;; CHECK:      (func $no-allocations (type $5) (param $param (ref $struct)) (result i32)
+  ;; CHECK:      (func $no-allocations (type $3) (param $param (ref $struct)) (result i32)
   ;; CHECK-NEXT:  (local $ref (ref $struct))
   ;; CHECK-NEXT:  (local.set $ref
   ;; CHECK-NEXT:   (local.get $param)
@@ -2593,7 +2592,7 @@
   ;; CHECK-NEXT:   (local.get $ref)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; H2L:      (func $no-allocations (type $5) (param $param (ref $struct)) (result i32)
+  ;; H2L:      (func $no-allocations (type $3) (param $param (ref $struct)) (result i32)
   ;; H2L-NEXT:  (local $ref (ref $struct))
   ;; H2L-NEXT:  (local.set $ref
   ;; H2L-NEXT:   (local.get $param)
