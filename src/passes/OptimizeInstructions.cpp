@@ -3480,24 +3480,35 @@ private:
     Builder builder(*getModule());
     curr->condition = optimizeBoolean(curr->condition);
     {
-      // Constant condition, we can just pick the correct side (barring side
-      // effects)
-      Expression *ifTrue, *ifFalse;
-      if (matches(curr, select(pure(&ifTrue), any(&ifFalse), i32(0)))) {
-        return ifFalse;
-      }
-      if (matches(curr, select(any(&ifTrue), any(&ifFalse), i32(0)))) {
-        return builder.makeSequence(builder.makeDrop(ifTrue), ifFalse);
-      }
+      // Constant condition. Pick the correct side, keeping the other side's
+      // effects (if any).
+      Expression* ifTrue;
+      Expression* ifFalse;
       int32_t cond;
-      if (matches(curr, select(any(&ifTrue), pure(&ifFalse), i32(&cond)))) {
-        // The condition must be non-zero because a zero would have matched one
-        // of the previous patterns.
-        assert(cond != 0);
-        return ifTrue;
+      if (matches(curr, select(any(&ifTrue), any(&ifFalse), i32(&cond)))) {
+        if (cond != 0) {
+          // The result is always ifTrue.
+          if (!effects(ifFalse).hasSideEffects()) {
+            return ifTrue;
+          }
+          // ifFalse has side effects, so we must run them. This reorders
+          // ifFalse before ifTrue, which is safe only if the arms do not
+          // interfere.
+          if (EffectAnalyzer::canReorder(
+                getPassOptions(), *getModule(), ifFalse, ifTrue)) {
+            return builder.makeSequence(builder.makeDrop(ifFalse), ifTrue);
+          }
+        } else {
+          // The result is always ifFalse.
+          if (!effects(ifTrue).hasSideEffects()) {
+            return ifFalse;
+          }
+          // ifTrue has side effects, so run them. The original evaluation
+          // order (ifTrue before ifFalse) is preserved, so no reorder check
+          // is needed.
+          return builder.makeSequence(builder.makeDrop(ifTrue), ifFalse);
+        }
       }
-      // Don't bother when `ifFalse` isn't pure - we would need to reverse the
-      // order using a temp local, which would be bad
     }
     {
       // TODO: Remove this after landing SCCP pass. See: #4161
