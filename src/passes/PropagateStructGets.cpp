@@ -172,10 +172,10 @@ struct PropagateStructGets
 
     // See if the reference is one of the patterns we recognize.
     // TODO fallthrough, but careful of br_if which can escape the value
-    if (auto* get = curr->ref->dynCast<LocalGet>()) {
+    if (auto* get = curr->ref->template dynCast<LocalGet>()) {
       getParents[get->index].push_back(curr);
       structOperations.push_back(getCurrentPointer());
-    } else if (auto* set = curr->ref->dynCast<LocalSet>()) {
+    } else if (auto* set = curr->ref->template dynCast<LocalSet>()) {
       teeParents[set] = curr;
       structOperations.push_back(getCurrentPointer());
     }
@@ -234,17 +234,21 @@ struct PropagateStructGets
         continue;
       }
 
+      auto getIndex = [](Expression* curr) {
+        if (auto* get = curr->dynCast<StructGet>()) {
+          return get->index;
+        } else if (auto* set = curr->dynCast<StructSet>()) {
+          return set->index;
+        } else {
+          WASM_UNREACHABLE("bad op");
+        }
+      };
+
       // Gather all the field indexes read from this local, first from the
       // local.gets, and later from the tees.
       std::set<Index> usedFields;
       for (auto* op : getStructOperations) {
-        if (auto* get = op->dynCast<StructGet>() {
-          usedFields.insert(get->index);
-        } else if (auto* set = op->dynCast<StructSet>() {
-          usedFields.insert(set->index);
-        } else {
-          WASM_UNREACHABLE("bad op");
-        }
+        usedFields.insert(getIndex(op));
       }
 
       // Analyze the sets to the local: a struct.new must be written in each.
@@ -264,12 +268,12 @@ struct PropagateStructGets
         if (set->isTee()) {
           auto teeIt = teeParents.find(set);
           if (teeIt == teeParents.end()) {
-            // This tee does not feed into a struct.get, so the allocation(s)
+            // This tee does not feed into a struct.get/set, so the allocation(s)
             // might escape.
             ok = false;
             break;
           }
-          usedFields.insert(teeIt->second->index);
+          usedFields.insert(getIndex(teeIt->second));
         }
       }
       if (!ok) {
@@ -281,10 +285,10 @@ struct PropagateStructGets
       // will trap. TODO tnh?
       for (auto* op : getStructOperations) {
         Expression* ref;
-        if (auto* get = op->dynCast<StructGet>() {
+        if (auto* get = op->dynCast<StructGet>()) {
           ref = get->ref;
-        } else if (auto* set = op->dynCast<StructSet>() {
-          ref = get->ref;
+        } else if (auto* set = op->dynCast<StructSet>()) {
+          ref = set->ref;
         } else {
           WASM_UNREACHABLE("bad op");
         }
