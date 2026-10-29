@@ -27,6 +27,7 @@ import * as expressions from "./classes/expression/index.ts";
 import type {
 	ExpressionId,
 	ExpressionRef,
+	ModuleRef,
 	HeapType,
 	Type,
 } from "./constants.ts";
@@ -149,7 +150,7 @@ const EXPRESSION_TYPE_REGISTRY: ReadonlyMap<ExpressionId, new (expr: ExpressionR
  * Private utility to create a Module from a given pointer.
  * Users don’t have access to this.
  */
-function wrapModule(ptr: number): Module {
+function wrapModule(ptr: ModuleRef): Module {
 	const returned = new Module();
 	// @ts-expect-error -- warning: reassigning a readonly field
 	returned[PTR] = ptr;
@@ -209,7 +210,7 @@ export function emitText(expr: ExpressionRef): string {
 export function readBinary(data: Uint8Array, features?: Feature): Module {
 	const buffer = _malloc(data.length);
 	BinaryenObj.HEAP8.set(data, buffer);
-	const ptr = features === undefined
+	const ptr: ModuleRef = features === undefined
 		? handleFatalError(() => BinaryenObj["_BinaryenModuleRead"](buffer, data.length))
 		: handleFatalError(() => BinaryenObj["_BinaryenModuleReadWithFeatures"](buffer, data.length, features));
 	_free(buffer);
@@ -220,7 +221,7 @@ export function readBinary(data: Uint8Array, features?: Feature): Module {
 export function parseText(text: string, features?: Feature): Module {
 	const buffer = _malloc(text.length + 1);
 	stringToAscii(text, buffer);
-	const ptr = features === undefined
+	const ptr: ModuleRef = features === undefined
 		? handleFatalError(() => BinaryenObj["_BinaryenModuleParse"](buffer))
 		: handleFatalError(() => BinaryenObj["_BinaryenModuleParseWithFeatures"](buffer, features));
 	_free(buffer);
