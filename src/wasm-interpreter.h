@@ -413,6 +413,16 @@ protected:
     return Literal(allocation);
   }
 
+  // Same as makeGCData but for ContData.
+  template<typename... Args>
+  std::shared_ptr<ContData> makeContData(Args&&... args) {
+    auto allocation = std::make_shared<ContData>(std::forward<Args>(args)...);
+#if __has_feature(leak_sanitizer) || __has_feature(address_sanitizer)
+    __lsan_ignore_object(allocation.get());
+#endif
+    return allocation;
+  }
+
   static Literal applyRMW(AtomicRMWOp op, Literal lhs, Literal rhs) {
     switch (op) {
       case RMWAdd:
@@ -5034,8 +5044,7 @@ public:
     if (funcValue.isNull()) {
       trap("null ref");
     }
-    return Literal(
-      std::make_shared<ContData>(funcValue, curr->type.getHeapType()));
+    return Literal(self()->makeContData(funcValue, curr->type.getHeapType()));
   }
   Flow visitContBind(ContBind* curr) {
     Literals arguments;
@@ -5047,34 +5056,40 @@ public:
       trap("null ref");
     }
 
-    // Create a new continuation, copying the old but with the new type +
+    // Create a new continuation, moving the old but with the new type +
     // arguments.
     auto old = contValue.getContData();
     if (old->executed) {
       trap("continuation already executed");
     }
-    auto newData = *old;
+    auto newData = std::move(*old);
+    old->resumeInfo.clear();
+    old->resumeArguments.clear();
     newData.type = curr->type.getHeapType();
     for (auto arg : arguments) {
       newData.resumeArguments.push_back(arg);
     }
     // The old one is done.
     old->executed = true;
-    return Literal(std::make_shared<ContData>(newData));
+    return Literal(self()->makeContData(std::move(newData)));
   }
 
   void maybeThrowAfterResuming(std::shared_ptr<ContData>& currContinuation) {
     // We may throw by creating a tag, or an exnref.
     auto* tag = currContinuation->exceptionTag;
-    auto exnref = currContinuation->exception.type != Type::none;
+    currContinuation->exceptionTag = nullptr;
+    auto exn = currContinuation->exception;
+    currContinuation->exception = Literal();
+    auto exnref = exn.type != Type::none;
     assert(!(tag && exnref));
     if (tag) {
       // resume_throw
-      throwException(WasmException{
-        self()->makeExnData(tag, currContinuation->resumeArguments)});
+      auto resumeArguments = std::move(currContinuation->resumeArguments);
+      currContinuation->resumeArguments.clear();
+      throwException(WasmException{self()->makeExnData(tag, resumeArguments)});
     } else if (exnref) {
       // resume_throw_ref
-      throwException(WasmException{currContinuation->exception});
+      throwException(WasmException{exn});
     }
   }
 
@@ -5094,7 +5109,9 @@ public:
     assert(currContinuation->resumeInfo.empty());
     assert(self()->restoredValuesMap.empty());
     maybeThrowAfterResuming(currContinuation);
-    return currContinuation->resumeArguments;
+    auto resumeArguments = std::move(currContinuation->resumeArguments);
+    currContinuation->resumeArguments.clear();
+    return resumeArguments;
   }
 
   Flow visitSuspend(Suspend* curr) {
@@ -5126,7 +5143,7 @@ public:
     // Note we cannot update the type yet, so it will be wrong in debug
     // logging. To update it, we must find the block that receives this value,
     // which means we cannot do it here (we don't even know what that block is).
-    auto new_ = std::make_shared<ContData>();
+    auto new_ = self()->makeContData();
 
     // Switch to the new continuation, so that as we unwind, we will save the
     // information we need to resume it later in the proper place.
@@ -5322,7 +5339,7 @@ public:
       return Flow(STACK_SWITCH_FLOW, tag, std::move(arguments));
     }
     assert(old->executed);
-    auto new_ = std::make_shared<ContData>();
+    auto new_ = self()->makeContData();
     // Unlike suspend, where the suspended continuation's type depends on the
     // target block of the handler that catches it, a switch statically knows
     // the type of the suspended continuation it creates: it is the last
@@ -5409,6 +5426,7 @@ public:
         // set), so resuming is done. (And throw, if resume_throw.)
         self()->continuationStore->resuming = false;
         maybeThrowAfterResuming(currContinuation);
+        currContinuation->resumeArguments.clear();
       }
     }
 
