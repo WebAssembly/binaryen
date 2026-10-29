@@ -42,19 +42,12 @@
 //
 // In effect we "propagate" struct.gets to earlier positions.
 //
-// Note that this pattern can handle any input to local.set/local.tee. The only
-// requirement is that the local.tees and local.gets are properly consumed (by
-// struct.get). For example, we can handle this:
-//
-//    (struct.get (local.tee $ref (local.get $param)))
-//
-// The tee is of a param, some unknown value, but that is fine: we can still
-// optimize this to
-//
-//    (local.tee $ref_field (struct.get (local.get $param)))
-//
-// When the uses of the local are of its data (immediate struct.get), then we
-// can optimize, no matter what the reference is.
+// We could in principle handle any input to local.set/local.tee, not just
+// struct.news. However, we only guarantee that Heap2Local will remove an
+// allocation when we do see struct.new, and when we do not remove an
+// allocation, we are basically moving struct.gets to an earlier point in time,
+// which may or may not be faster. Only handling struct.news leaves us in the
+// simple case where all the allocations are removed by Heap2Local.
 //
 // This pass is basically a simple form of escape analysis, like Heap2Local, but
 // which handles a far more restricted case (where the reference is immediately
@@ -105,6 +98,8 @@
 // wasm value stack, which is why this pass is useful, as it handles common and
 // obviously-optimizable cases.
 //
+// TODO: document struct.set
+//
 
 #include "ir/bits.h"
 #include "ir/eh-utils.h"
@@ -135,18 +130,18 @@ struct PropagateStructGets
   // later iteration is deterministic.
   std::map<Index, std::vector<Expression**>> sets;
 
-  // The parent struct.gets for each local index's local.gets (for us to
+  // The parent struct.get/sets for each local index's local.gets (for us to
   // optimize, each local.get must have such a parent).
-  std::unordered_map<Index, std::vector<StructGet*>> getParents;
+  std::unordered_map<Index, std::vector<Expression*>> getParents;
 
   // The parent struct.get for each tee (for us to optimize, each tee must have
   // such a parent).
-  std::unordered_map<LocalSet*, StructGet*> teeParents;
+  std::unordered_map<LocalSet*, Expression*> teeParents;
 
-  // All relevant struct.gets in the function. We gather these during the walk,
+  // All the relevant struct.gets/sets. We gather these during the walk,
   // and then determine which can actually be optimized (the final decision is
   // stored in optimizedLocals, for each local, below).
-  std::vector<Expression**> structGets;
+  std::vector<Expression**> structOperations;
 
   // Checks if a local index is relevant for us: if it refers to a struct.
   bool isStructLocal(Index index) {
@@ -167,6 +162,14 @@ struct PropagateStructGets
   }
 
   void visitStructGet(StructGet* curr) {
+    handleStructOperation(curr);
+  }
+  void visitStructSet(StructSet* curr) {
+    handleStructOperation(curr);
+  }
+
+  template<typename T>
+  void handleStructOperation(T* curr) {
     // Avoid unreachable code.
     if (curr->type == Type::unreachable) {
       return;
@@ -176,10 +179,10 @@ struct PropagateStructGets
     // TODO fallthrough, but careful of br_if which can escape the value
     if (auto* get = curr->ref->dynCast<LocalGet>()) {
       getParents[get->index].push_back(curr);
-      structGets.push_back(getCurrentPointer());
+      structOperations.push_back(getCurrentPointer());
     } else if (auto* set = curr->ref->dynCast<LocalSet>()) {
       teeParents[set] = curr;
-      structGets.push_back(getCurrentPointer());
+      structOperations.push_back(getCurrentPointer());
     }
     // TODO: handle more things flowing into struct.get, like an If
   }
@@ -189,7 +192,7 @@ struct PropagateStructGets
   void visitTry(Try* curr) { hasTry = true; }
 
   void visitFunction(Function* func) {
-    if (structGets.empty()) {
+    if (structOperations.empty()) {
       // Nothing was found to be optimizable in the walk.
       return;
     }
@@ -213,27 +216,9 @@ struct PropagateStructGets
     LazyLocalGraph localGraph(func, module);
 
     for (auto& [localIndex, localSets] : sets) {
-      // We only want to optimize if there is at least one allocation, because
-      // then Heap2Local will definitely have optimizations to do. (Without any
-      // allocations, we are moving struct.get operations to an earlier time,
-      // which may or may not be good for speed.)
-      bool hasAllocation = false;
-      for (auto** setp : localSets) {
-        auto* set = (*setp)->cast<LocalSet>();
-        if (set->value->is<StructNew>()) {
-          hasAllocation = true;
-          break;
-        }
-      }
-      if (!hasAllocation) {
-        continue;
-      }
-
       if (localSets.size() < 2) {
         // We only care about the case of 2 or more sets for a local: otherwise,
-        // Heap2Local can handle things perfectly for a single set (given we
-        // ensured an allocation exists, the single set is of an allocation,
-        // exactly Heap2Local's pattern).
+        // Heap2Local can handle things perfectly for a single set.
         continue;
       }
 
@@ -247,25 +232,28 @@ struct PropagateStructGets
       // if the counts match. If so, then we understand all the gets, and this
       // situation is the pattern we optimize: each local.get is consumed
       // by a struct.get.
-      const auto& getStructGets = getIt->second;
+      const auto& getStructOperations = getIt->second;
       // There must be a struct.get, if we added one for this local.
-      assert(!getStructGets.empty());
-      if (getStructGets.size() != numGets[localIndex]) {
+      assert(!getStructOperations.empty());
+      if (getStructOperations.size() != numGets[localIndex]) {
         continue;
       }
 
       // Gather all the field indexes read from this local, first from the
       // local.gets, and later from the tees.
       std::set<Index> usedFields;
-      for (auto* sget : getStructGets) {
-        usedFields.insert(sget->index);
+      for (auto* op : getStructOperations) {
+        if (auto* get = op->dynCast<StructGet>() {
+          usedFields.insert(get->index);
+        } else if (auto* set = op->dynCast<StructSet>() {
+          usedFields.insert(set->index);
+        } else {
+          WASM_UNREACHABLE("bad op");
+        }
       }
 
-      // Analyze the sets to the local. Things are especially simple if they all
-      // store a fresh unescaping allocation, that is, a struct.new which does
-      // not flow out through a tee.
+      // Analyze the sets to the local: a struct.new must be written in each.
       bool ok = true;
-      bool allSetsAreUnescapingAllocs = true;
       for (auto** setp : localSets) {
         auto* set = (*setp)->cast<LocalSet>();
         if (set->value->type == Type::unreachable) {
@@ -273,8 +261,12 @@ struct PropagateStructGets
           ok = false;
           break;
         }
+        if (!set->value->is<StructNew>()) {
+          // Stop on writing an unknown reference that is not a struct.new.
+          ok = false;
+          break;
+        }
         if (set->isTee()) {
-          allSetsAreUnescapingAllocs = false;
           auto teeIt = teeParents.find(set);
           if (teeIt == teeParents.end()) {
             // This tee does not feed into a struct.get, so the allocation(s)
@@ -283,76 +275,6 @@ struct PropagateStructGets
             break;
           }
           usedFields.insert(teeIt->second->index);
-        } else {
-          // Not a tee: a normal local.set.
-          if (!set->value->is<StructNew>()) {
-            allSetsAreUnescapingAllocs = false;
-          }
-        }
-      }
-      if (!ok) {
-        continue;
-      }
-
-      // Each used field's value must not change between the local.set and
-      // local.get: either the field is immutable, or every set writes a fresh
-      // struct.new that only ever flows into this local's struct.gets. (Note
-      // that struct.*sets* - writes - are ruled out by the fact that we
-      // analyzed all local.get/tee operations, and all flowed into struct.get.)
-      // For example:
-      //
-      //  fun foo(x) {
-      //    var l = x;  // local.set
-      //    bar();      // x may be modified here, if foo's caller stashed it
-      //    return l.value;
-      //  }
-      //
-      // If we replace `l = x` with `l_value = x.value` on the first line, then
-      // we need it to remain the same until the return at the end. If x can be
-      // written to, that is a danger. Note how this cannot happen if each
-      // local.set writes a fresh struct.new: no reference arrived from outside,
-      // and we do not send it out (no local.get exists that is not consumed by
-      // a struct.get), so no outside writes can occur. If the sets are *not*
-      // all fresh, then only immutability can help us here.
-      auto& fields =
-        func->getLocalType(localIndex).getHeapType().getStruct().fields;
-      if (!allSetsAreUnescapingAllocs) {
-        for (auto fieldIndex : usedFields) {
-          if (fields[fieldIndex].mutable_ != Immutable) {
-            ok = false;
-            break;
-          }
-        }
-        if (!ok) {
-          continue;
-        }
-      }
-
-      // If the original local is nullable, then the struct.gets that we add may
-      // end up reading it and trapping:
-      //
-      //   x = getRef();
-      //   foo();
-      //   bar(x.value, x.value);
-      //
-      // This pass optimizes that to:
-      //
-      //   x_value = getRef().value;
-      //   foo();
-      //   bar(x_value, x_value);
-      //
-      // Note how the `.value` (the struct.get) happens *before* `foo()`,
-      // after the optimization, so we may have moved a trap around here. It is
-      // not enough to check trapsNeverHappen, since we are moving the trap to
-      // an earlier place, and `foo()` might have prevented us from reaching
-      // there. We can rule most of this problem out by seeing that only non-
-      // nullable values are written to the local. That leaves only the initial
-      // value of the local at the function entry, handled later.
-      for (auto** setp : localSets) {
-        auto* set = (*setp)->cast<LocalSet>();
-        if (set->value->type.isNullableRef()) {
-          ok = false;
-          break;
         }
       }
       if (!ok) {
@@ -361,11 +283,17 @@ struct PropagateStructGets
 
       // Finally, if the initial value of the local from the function entry is
       // used, do not optimize. For a var, that means the default of zero, which
-      // will trap, but there is another issue for a param: the value is not
-      // known, so Heap2Local will not be able to optimize anything after us
-      // anyhow.
-      for (auto* sget : getStructGets) {
-        if (localGraph.getSets(sget->ref->cast<LocalGet>()).contains(nullptr)) {
+      // will trap. TODO tnh?
+      for (auto* op : getStructOperations) {
+        Expression* ref;
+        if (auto* get = op->dynCast<StructGet>() {
+          ref = get->ref;
+        } else if (auto* set = op->dynCast<StructSet>() {
+          ref = get->ref;
+        } else {
+          WASM_UNREACHABLE("bad op");
+        }
+        if (localGraph.getSets(ref->cast<LocalGet>()).contains(nullptr)) {
           ok = false;
           break;
         }
@@ -433,7 +361,7 @@ struct PropagateStructGets
     };
 
     // Rewrite recorded struct.gets in post-order.
-    for (auto** currp : structGets) {
+    for (auto** currp : structOperations) {
       auto* sget = (*currp)->cast<StructGet>();
       if (auto* get = sget->ref->dynCast<LocalGet>()) {
         if (!optimizedLocals.contains(get->index)) {
