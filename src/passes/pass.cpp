@@ -489,9 +489,10 @@ void PassRegistry::registerPasses() {
   registerPass("safe-heap",
                "instrument loads and stores to check for invalid behavior",
                createSafeHeapPass);
-  registerPass("scalarize-struct-locals",
-               "replace non-escaping struct locals with locals for their fields",
-               createScalarizeStructLocalsPass);
+  registerPass(
+    "scalarize-struct-locals",
+    "replace non-escaping struct locals with locals for their fields",
+    createScalarizeStructLocalsPass);
   registerPass("set-globals",
                "sets specified globals to specified values",
                createSetGlobalsPass);
