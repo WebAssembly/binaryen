@@ -499,19 +499,18 @@ bool isPrintableUTF8(std::string_view str) {
   return true;
 }
 
-std::ostream& unescapeUTF8JSONtoWTF16(std::ostream& os, const char* str) {
-  std::string_view view(str);
+std::ostream& unescapeUTF8JSONtoWTF16(std::ostream& os, std::string_view str) {
   size_t i = 0;
   while (str[i]) {
     if (str[i] != '\\') {
       // Normal character, possibly a multi-byte UTF-8 sequence.
-      auto rest = view.substr(i);
+      auto rest = str.substr(i);
       auto u = takeWTF8CodePoint(rest);
       if (!u) {
         Fatal() << "Invalid UTF-8 in JSON string";
       }
       writeWTF16CodePoint(os, *u);
-      i = view.size() - rest.size();
+      i = str.size() - rest.size();
       continue;
     }
 
@@ -548,7 +547,7 @@ std::ostream& unescapeUTF8JSONtoWTF16(std::ostream& os, const char* str) {
     if (!str[i + 2] || !str[i + 3] || !str[i + 4] || !str[i + 5]) {
       Fatal() << "Invalid escaped JSON \\uXXXX";
     }
-    unhex << std::hex << std::string_view(str + i + 2, 4);
+    unhex << std::hex << str.substr(i + 2, 4);
     unhex >> x;
 
     // Write out the results.

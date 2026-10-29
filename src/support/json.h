@@ -467,13 +467,12 @@ struct Value {
 
 private:
   // Unescape the input (UTF8) string into one of our internal strings (WTF16).
-  void unescapeIntoWTF16(char* str) {
+  void unescapeIntoWTF16(std::string_view str) {
     // TODO: Optimize the unescaped path? But it is impossible to avoid an
     //       allocation here.
     std::stringstream ss;
     wasm::String::unescapeUTF8JSONtoWTF16(ss, str);
-    // TODO: Use ss.view() once we have C++20.
-    setString(ss.str());
+    setString(ss.view());
   }
 };
 
