@@ -1656,9 +1656,8 @@
   ;; H2L-NEXT:  )
   ;; H2L-NEXT: )
   (func $no-param-value (param $ref (ref $struct)) (param $x i32) (result i32)
-    ;; Do not optimize here even though the param is non-nullable, as the param
-    ;; may be used. In such cases Heap2Local will not be able to optimize
-    ;; anyhow.
+    ;; Do not optimize here, as the param may be used. In such cases Heap2Local
+    ;; will not be able to optimize anyhow.
     (if
       (local.get $x)
       (then
@@ -2027,8 +2026,7 @@
             (pop i32)
           )
         )
-        (nop) ;; add a second instruction so that there is a block here,
-              ;; which forces the fixup
+        (nop) ;; add a second instruction so that a block is added
       )
     )
     (struct.get $struct 0
@@ -2508,6 +2506,37 @@
       )
     )
     (struct.get $struct 0
+      (local.get $ref)
+    )
+  )
+
+  (func $optimize-struct-set-2 (param $x i32) (result i32)
+    (local $ref (ref null $struct-2fields))
+    ;; Test sets to multiple fields, each writing the right local.
+      (struct.new_default $struct-2fields)
+    )
+    (if
+      (local.get $x)
+      (then
+        (local.set $ref
+          (struct.new $struct-2fields
+            (i32.const 42)
+            (i32.const 43)
+          )
+        )
+      )
+      (else
+        (struct.set $struct-2fields 0
+          (local.get $ref)
+          (i32.const 1337)
+        )
+        (struct.set $struct-2fields 1
+          (local.get $ref)
+          (i32.const 1338)
+        )
+      )
+    )
+    (struct.get $struct-2fields 0
       (local.get $ref)
     )
   )
