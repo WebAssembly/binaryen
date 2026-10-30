@@ -934,7 +934,7 @@
   ;; H2L-NEXT:  )
   ;; H2L-NEXT: )
   (func $unreachable (result i32)
-    ;; We ignore unreachable struct.gets code, but still optimize the rest.
+    ;; We ignore unreachable struct.gets, but still optimize the rest.
     (local $ref (ref null $struct))
     (local.set $ref
       (struct.new $struct
@@ -1078,8 +1078,7 @@
   ;; H2L-NEXT:  )
   ;; H2L-NEXT: )
   (func $no-struct.get
-    ;; No struct.gets for our local. We do not optimize (no struct.gets to
-    ;; propagate).
+    ;; No struct.gets for our local. We do not optimize, as this is trivial.
     (local $ref (ref null $struct))
     (local.set $ref
       (struct.new $struct
