@@ -16,7 +16,7 @@
 
 //
 // Simple multi-allocation escape analysis, aiming to cleanly separate multiple
-// allocations to a single local.
+// allocations written to a single local.
 //
 // This pass identifies a simple case of refs not escaping, like Heap2Local, but
 // allowing more than a single allocation (struct.new), which is better, but
