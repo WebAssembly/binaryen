@@ -250,27 +250,30 @@ struct HeapUntangling : public WalkerPass<PostWalker<HeapUntangling>> {
 
       // Finally, if the initial value of the local from the function entry is
       // used, do not optimize. For a var, that means the default of zero, which
-      // will trap, while for params it means an unknown value.
-      // TODO tnh for vars?
-      bool ok = true;
-      for (auto* op : info.structOperations) {
-        Expression* ref;
-        if (auto* get = op->dynCast<StructGet>()) {
-          ref = get->ref;
-        } else if (auto* set = op->dynCast<StructSet>()) {
-          ref = set->ref;
-        } else {
-          WASM_UNREACHABLE("bad op");
-        }
-        if (auto* get = ref->dynCast<LocalGet>()) {
-          if (localGraph.getSets(get).contains(nullptr)) {
-            ok = false;
-            break;
+      // will trap, while for params it means an unknown value. We therefore
+      // must always check for params, but for vars, if trapsNeverHappen then we
+      // can assume the null is never accessed, and ignore this issue.
+      if (func->isParam(localIndex) || !getPassOptions().trapsNeverHappen) {
+        bool ok = true;
+        for (auto* op : info.structOperations) {
+          Expression* ref;
+          if (auto* get = op->dynCast<StructGet>()) {
+            ref = get->ref;
+          } else if (auto* set = op->dynCast<StructSet>()) {
+            ref = set->ref;
+          } else {
+            WASM_UNREACHABLE("bad op");
+          }
+          if (auto* get = ref->dynCast<LocalGet>()) {
+            if (localGraph.getSets(get).contains(nullptr)) {
+              ok = false;
+              break;
+            }
           }
         }
-      }
-      if (!ok) {
-        continue;
+        if (!ok) {
+          continue;
+        }
       }
 
       // We can optimize!
