@@ -235,10 +235,9 @@ void PassRegistry::registerPasses() {
   registerPass("heap-store-optimization",
                "optimize heap (GC) stores",
                createHeapStoreOptimizationPass);
-  registerPass(
-    "heap-untangling",
-    "cleanly separate multiple heap allocations to a single local",
-    createHeapUntanglingPass);
+  registerPass("heap-untangling",
+               "cleanly separate multiple heap allocations to a single local",
+               createHeapUntanglingPass);
   registerPass(
     "inline-main", "inline __original_main into main", createInlineMainPass);
   registerPass("inlining",
