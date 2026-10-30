@@ -250,7 +250,8 @@ struct HeapUntangling : public WalkerPass<PostWalker<HeapUntangling>> {
 
       // Finally, if the initial value of the local from the function entry is
       // used, do not optimize. For a var, that means the default of zero, which
-      // will trap. TODO tnh?
+      // will trap, while for params it means an unknown value.
+      // TODO tnh for vars?
       bool ok = true;
       for (auto* op : info.structOperations) {
         Expression* ref;
