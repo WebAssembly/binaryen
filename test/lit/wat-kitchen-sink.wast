@@ -5304,6 +5304,24 @@
    struct.set $pair 0
  )
 
+ ;; CHECK:      (func $stacky-unreachable-tuple-fallback (type $0)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (tuple.make 3
+ ;; CHECK-NEXT:    (return)
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $stacky-unreachable-tuple-fallback
+   ;; There are not enough values on the stack to construct the tuple without
+   ;; reaching past the unreachable return, so we must synthesize an unreachable
+   ;; for the middle tuple element and place the return in the first element.
+   return
+   i32.const 0
+   tuple.drop 3
+ )
+
  ;; CHECK:      (func $paren-in-string (type $0)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (string.const ")")

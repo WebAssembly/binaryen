@@ -406,13 +406,13 @@ struct IRBuilder::ChildPopper
   ChildPopper(IRBuilder& builder) : builder(builder) {}
 
 private:
+  // The stack size at which we are about to pop an unreachable instruction
+  // that we must not pop past because the expressions underneath it do not
+  // have the types we need.
+  std::optional<size_t> unreachableFallbackSize;
+
   Result<> popConstrainedChildren(std::vector<Child>& children) {
     auto& scope = builder.getScope();
-
-    // The stack size at which we are about to pop an unreachable instruction
-    // that we must not pop past because the expressions underneath it do not
-    // have the types we need.
-    std::optional<size_t> unreachableFallbackSize;
 
     // We only need to check requirements if there is an unreachable.
     // Otherwise the validator will catch any problems.
@@ -422,20 +422,8 @@ private:
 
     // We have checked all the constraints, so we are ready to pop children.
     for (int i = children.size() - 1; i >= 0; --i) {
-      if (unreachableFallbackSize &&
-          scope.exprStack.size() == *unreachableFallbackSize && i > 0) {
-        // The next item on the stack is the unreachable instruction we must
-        // not pop past. We could pop it as child 0, but we are not ready to pop
-        // child 0 yet, so synthesize an unreachable instead of popping. The
-        // deeper instructions that would otherwise have been popped will remain
-        // on the stack to become prior children of future expressions or to be
-        // implicitly dropped at the end of the scope.
-        *children[i].childp = builder.builder.makeUnreachable();
-        continue;
-      }
-
-      // Pop a child normally. Pop greedily for children other than the first
-      // (i.e. the last to be popped).
+      // Pop a child. Pop greedily for children other than the first (i.e. the
+      // last to be popped).
       bool greedy = i > 0;
       auto val = pop(children[i].constraint.size(), greedy);
       CHECK_ERR(val);
@@ -545,6 +533,18 @@ private:
   Result<Expression*> pop(size_t size, bool greedy = false) {
     assert(size >= 1);
     auto& scope = builder.getScope();
+
+    if (unreachableFallbackSize &&
+        scope.exprStack.size() == *unreachableFallbackSize && greedy) {
+      // The next item on the stack is the unreachable instruction we must not
+      // pop past. We could pop it as the first child or tuple element, but we
+      // are not ready to pop that yet (since we are popping greedily, we must
+      // not be at the first child), so synthesize an unreachable instead of
+      // popping. The deeper instructions that would otherwise have been popped
+      // will remain on the stack to become prior children of future expressions
+      // or to be implicitly dropped at the end of the scope.
+      return builder.builder.makeUnreachable();
+    }
 
     // Find the suffix of expressions that do not produce values.
     auto hoisted = builder.hoistLastValue(greedy);
