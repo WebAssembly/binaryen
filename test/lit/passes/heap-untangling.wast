@@ -2581,6 +2581,93 @@
       (local.get $ref)
     )
   )
+
+  ;; CHECK:      (func $test (type $3) (result i32)
+  ;; CHECK-NEXT:  (local $a (ref null $struct))
+  ;; CHECK-NEXT:  (local.set $a
+  ;; CHECK-NEXT:   (struct.new_default $struct)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.set $struct 0
+  ;; CHECK-NEXT:   (local.get $a)
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (local.set $a
+  ;; CHECK-NEXT:     (struct.new $struct
+  ;; CHECK-NEXT:      (i32.const 99)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.get $struct 0
+  ;; CHECK-NEXT:   (local.get $a)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; H2L:      (func $test (type $2) (result i32)
+  ;; H2L-NEXT:  (local $a (ref null $struct))
+  ;; H2L-NEXT:  (local $1 i32)
+  ;; H2L-NEXT:  (local $2 i32)
+  ;; H2L-NEXT:  (local $3 i32)
+  ;; H2L-NEXT:  (drop
+  ;; H2L-NEXT:   (block (result nullref)
+  ;; H2L-NEXT:    (local.set $1
+  ;; H2L-NEXT:     (i32.const 0)
+  ;; H2L-NEXT:    )
+  ;; H2L-NEXT:    (ref.null none)
+  ;; H2L-NEXT:   )
+  ;; H2L-NEXT:  )
+  ;; H2L-NEXT:  (block
+  ;; H2L-NEXT:   (drop
+  ;; H2L-NEXT:    (ref.null none)
+  ;; H2L-NEXT:   )
+  ;; H2L-NEXT:   (local.set $1
+  ;; H2L-NEXT:    (block (result i32)
+  ;; H2L-NEXT:     (drop
+  ;; H2L-NEXT:      (block (result nullref)
+  ;; H2L-NEXT:       (local.set $3
+  ;; H2L-NEXT:        (i32.const 99)
+  ;; H2L-NEXT:       )
+  ;; H2L-NEXT:       (local.set $2
+  ;; H2L-NEXT:        (local.get $3)
+  ;; H2L-NEXT:       )
+  ;; H2L-NEXT:       (ref.null none)
+  ;; H2L-NEXT:      )
+  ;; H2L-NEXT:     )
+  ;; H2L-NEXT:     (i32.const 10)
+  ;; H2L-NEXT:    )
+  ;; H2L-NEXT:   )
+  ;; H2L-NEXT:  )
+  ;; H2L-NEXT:  (block (result i32)
+  ;; H2L-NEXT:   (drop
+  ;; H2L-NEXT:    (ref.null none)
+  ;; H2L-NEXT:   )
+  ;; H2L-NEXT:   (local.get $2)
+  ;; H2L-NEXT:  )
+  ;; H2L-NEXT: )
+  (func $test (export "test") (result i32)
+    (local $a (ref null $struct))
+    (local.set $a
+      (struct.new_default $struct)
+    )
+    ;; A set inside a struct.set's value. the local $a is on the stack, then we
+    ;; write a new struct to $a, so the struct.set ends up writing 10 to the old
+    ;; reference, which no longer matters, so 99 is the value read at the end.
+    ;; We must not optimize here, as simply turning this struct.set into a write
+    ;; to the local would end up returning 10 at the end, not 99.
+    (struct.set $struct 0
+      (local.get $a)
+      (block (result i32)
+        (local.set $a
+          (struct.new $struct
+            (i32.const 99)
+          )
+        )
+        (i32.const 10)
+      )
+    )
+    (struct.get $struct 0
+      (local.get $a)
+    )
+  )
 )
 
 ;; Shared data is optimizable too.

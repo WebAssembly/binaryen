@@ -79,6 +79,7 @@
 //
 
 #include "ir/bits.h"
+#include "ir/find_all.h"
 #include "ir/local-graph.h"
 #include "ir/properties.h"
 #include "pass.h"
@@ -162,6 +163,29 @@ struct HeapUntangling : public WalkerPass<PostWalker<HeapUntangling>> {
     // TODO fallthrough, but careful of br_if which can escape the value
     if (auto* get = curr->ref->template dynCast<LocalGet>()) {
       localInfos[get->index].structOperations.push_back(curr);
+
+      // Also handle the value for a struct.set: a struct.set has two inputs,
+      // and if the value modifies the local, then two allocations can be
+      // live at once:
+      //
+      //   (struct.set
+      //     (local.get $x)
+      //     (block
+      //       (local.set $x ..)
+      //       ..
+      //
+      // Here $x is put on the value stack, but then we write something new into
+      // $x before the struct.set, which means the struct.set is writing to the
+      // old allocation - one that no struct.get will later read. When we see
+      // such live range overlaps, give up.
+      if (auto* structSet = curr->template dynCast<StructSet>()) {
+        for (auto* localSet : FindAll<LocalSet>(structSet->value).list) {
+          if (localSet->index == get->index) {
+            localInfos[get->index].unoptimizable = true;
+            break;
+          }
+        }
+      }
     } else if (auto* tee = curr->ref->template dynCast<LocalSet>()) {
       // TODO: Handle a tee for struct.set. This is a little complex to handle
       // below, and not really needed, since
