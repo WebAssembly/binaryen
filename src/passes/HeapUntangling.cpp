@@ -322,8 +322,7 @@ struct HeapUntangling : public WalkerPass<PostWalker<HeapUntangling>> {
 
       Expression*
       setFieldToLocal(Index localIndex, Index fieldIndex, Expression* value) {
-        // Read from the appropriate new local, handling sign extension as
-        // needed.
+        // Write to the appropriate new local.
         auto newLocal = parent.optimizedLocals[localIndex][fieldIndex];
         Builder builder(*getModule());
         return builder.makeLocalSet(newLocal, value);
