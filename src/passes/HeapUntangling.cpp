@@ -98,26 +98,30 @@ struct HeapUntangling : public WalkerPass<PostWalker<HeapUntangling>> {
     return std::make_unique<HeapUntangling>();
   }
 
-  // Track the number of gets for each local, so that we can see if all the
-  // local.gets are consumed by struct.get/sets.
-  std::unordered_map<Index, Index> numGets;
+  // Information about a local index, used to decide whether we can optimize.
+  struct LocalInfo {
+    // The number of gets for the local, tracked so that we can see if all the
+    // local.gets are consumed by struct.get/sets.
+    Index numGets = 0;
 
-  // The sets for each local index. We store this in an ordered set so that
-  // later iteration is deterministic.
-  std::map<Index, std::vector<Expression**>> sets;
+    // The number of sets for the local, tracked as we only optimize when we see
+    // 2 or more local.sets (a single one is trivially optimized by Heap2Local).
+    Index numSets = 0;
 
-  // The parent struct.get/sets for each local index's local.gets (for us to
-  // optimize, each local.get must have such a parent).
-  std::unordered_map<Index, std::vector<Expression*>> getParents;
+    // The number of tees for the local, tracked for the same reason as gets:
+    // they flow out the reference, so we must see them consumed by struct
+    // gets/sets.
+    Index numTees = 0;
 
-  // The parent struct.get for each tee (for us to optimize, each tee must have
-  // such a parent).
-  std::unordered_map<LocalSet*, Expression*> teeParents;
+    // All struct.get/struct.set operations that read a get/tee of this local.
+    std::vector<Expression*> structOperations;
 
-  // All the relevant struct.gets/sets. We gather these during the walk,
-  // and then determine which can actually be optimized (the final decision is
-  // stored in optimizedLocals, for each local, below).
-  std::vector<Expression**> structOperations;
+    // Certain conditions prevent us from optimizing.
+    bool unoptimizable = false;
+  };
+
+  // For each local index, its info.
+  std::vector<LocalInfo> localInfos;
 
   // Checks if a local index is relevant for us: if it refers to a struct.
   bool isStructLocal(Index index) {
@@ -127,13 +131,21 @@ struct HeapUntangling : public WalkerPass<PostWalker<HeapUntangling>> {
 
   void visitLocalGet(LocalGet* curr) {
     if (isStructLocal(curr->index)) {
-      numGets[curr->index]++;
+      localInfos[curr->index].numGets++;
     }
   }
 
   void visitLocalSet(LocalSet* curr) {
     if (isStructLocal(curr->index)) {
-      sets[curr->index].push_back(getCurrentPointer());
+      localInfos[curr->index].numSets++;
+      if (curr->isTee()) {
+        localInfos[curr->index].numTees++;
+      }
+      // All sets must write a struct.new, otherwise we cannot analyze this
+      // local.
+      if (!curr->value->is<StructNew>()) {
+        localInfos[curr->index].unoptimizable = true;
+      }
     }
   }
 
@@ -149,8 +161,7 @@ struct HeapUntangling : public WalkerPass<PostWalker<HeapUntangling>> {
     // See if the reference is one of the patterns we recognize.
     // TODO fallthrough, but careful of br_if which can escape the value
     if (auto* get = curr->ref->template dynCast<LocalGet>()) {
-      getParents[get->index].push_back(curr);
-      structOperations.push_back(getCurrentPointer());
+      localInfos[get->index].structOperations.push_back(curr);
     } else if (auto* tee = curr->ref->template dynCast<LocalSet>()) {
       // TODO: Handle a tee for struct.set. This is a little complex to handle
       // below, and not really needed, since
@@ -164,8 +175,7 @@ struct HeapUntangling : public WalkerPass<PostWalker<HeapUntangling>> {
       // fields, then writing an additional one, and other passes make us do
       // them all at once anyhow).
       if (!curr->template is<StructSet>()) {
-        teeParents[tee] = curr;
-        structOperations.push_back(getCurrentPointer());
+        localInfos[tee->index].structOperations.push_back(curr);
       }
     }
     // TODO: handle more things flowing into struct.get, like an If
@@ -175,11 +185,10 @@ struct HeapUntangling : public WalkerPass<PostWalker<HeapUntangling>> {
 
   void visitTry(Try* curr) { hasTry = true; }
 
-  void visitFunction(Function* func) {
-    if (structOperations.empty()) {
-      // Nothing was found to be optimizable in the walk.
-      return;
-    }
+  void doWalkFunction(Function* func) {
+    localInfos.resize(func->getNumLocals());
+
+    WalkerPass<PostWalker<HeapUntangling>>::doWalkFunction(func);
 
     pickLocalsToOptimize(func);
 
@@ -199,80 +208,30 @@ struct HeapUntangling : public WalkerPass<PostWalker<HeapUntangling>> {
     Builder builder(*module);
     LazyLocalGraph localGraph(func, module);
 
-    for (auto& [localIndex, localSets] : sets) {
-      if (localSets.size() < 2) {
+    for (Index localIndex = 0; localIndex < localInfos.size(); ++localIndex) {
+      auto& info = localInfos[localIndex];
+      if (info.unoptimizable) {
+        continue;
+      }
+
+      if (info.numSets < 2) {
         // We only care about the case of 2 or more sets for a local: otherwise,
         // Heap2Local can handle things perfectly for a single set.
         continue;
       }
 
-      auto getIt = getParents.find(localIndex);
-      if (getIt == getParents.end()) {
-        // No struct.get/set parents for this local's gets.
-        continue;
-      }
-
       // Check if each local.get is consumed by a struct.get/set, which is the
-      // case if the counts match. If so, then we understand all the gets, and
-      // this situation is the pattern we optimize: each local.get is consumed
-      // by a struct.get/set.
-      const auto& getStructOperations = getIt->second;
-      // There must be a struct.get/set, if we added one for this local.
-      assert(!getStructOperations.empty());
-      if (getStructOperations.size() != numGets[localIndex]) {
-        continue;
-      }
-
-      auto getIndex = [](Expression* curr) {
-        if (auto* get = curr->dynCast<StructGet>()) {
-          return get->index;
-        } else if (auto* set = curr->dynCast<StructSet>()) {
-          return set->index;
-        } else {
-          WASM_UNREACHABLE("bad op");
-        }
-      };
-
-      // Gather all the field indexes read from this local, first from the
-      // local.gets, and later from the tees.
-      std::set<Index> usedFields;
-      for (auto* op : getStructOperations) {
-        usedFields.insert(getIndex(op));
-      }
-
-      // Analyze the sets to the local: a struct.new must be written in each.
-      bool ok = true;
-      for (auto** setp : localSets) {
-        auto* set = (*setp)->cast<LocalSet>();
-        if (set->value->type == Type::unreachable) {
-          // Stop on dead code.
-          ok = false;
-          break;
-        }
-        if (!set->value->is<StructNew>()) {
-          // Stop on writing an unknown reference that is not a struct.new.
-          ok = false;
-          break;
-        }
-        if (set->isTee()) {
-          auto teeIt = teeParents.find(set);
-          if (teeIt == teeParents.end()) {
-            // This tee does not feed into a struct.get/set, so the
-            // allocation(s) might escape.
-            ok = false;
-            break;
-          }
-          usedFields.insert(getIndex(teeIt->second));
-        }
-      }
-      if (!ok) {
+      // case if the counts match: the sum of local.gets/local.tees (things
+      // that flow out the reference) must match the number of struct.gets/sets
+      // (things that consume the reference).
+      if (info.numGets + info.numTees != info.structOperations.size()) {
         continue;
       }
 
       // Finally, if the initial value of the local from the function entry is
       // used, do not optimize. For a var, that means the default of zero, which
       // will trap. TODO tnh?
-      for (auto* op : getStructOperations) {
+      for (auto* op : info.structOperations) {
         Expression* ref;
         if (auto* get = op->dynCast<StructGet>()) {
           ref = get->ref;
@@ -281,17 +240,26 @@ struct HeapUntangling : public WalkerPass<PostWalker<HeapUntangling>> {
         } else {
           WASM_UNREACHABLE("bad op");
         }
-        if (localGraph.getSets(ref->cast<LocalGet>()).contains(nullptr)) {
-          ok = false;
-          break;
+        if (auto* get = ref->dynCast<LocalGet>()) {
+          if (localGraph.getSets(get).contains(nullptr)) {
+            ok = false;
+            break;
+          }
         }
       }
       if (!ok) {
         continue;
       }
 
-      // Success! The pattern fits, prepare to optimize this local by adding a
-      // local to store the value of each used field.
+      // We can optimize!
+
+      // Gather all the struct field indexes read from this local.
+      std::set<Index> usedFields;
+      for (auto* op : info.structOperations) {
+        usedFields.insert(getFieldIndex(op));
+      }
+
+      // Allocate new locals to store each field.
       auto& fields =
         func->getLocalType(localIndex).getHeapType().getStruct().fields;
       for (auto fieldIndex : usedFields) {
@@ -404,6 +372,17 @@ struct HeapUntangling : public WalkerPass<PostWalker<HeapUntangling>> {
       EHUtils::handleBlockNestedPops(func, *getModule());
     }
   }
+
+  // Given a struct.get or struct.set, return the field index.
+  Index getFieldIndex(Expression* curr) {
+    if (auto* get = curr->dynCast<StructGet>()) {
+      return get->index;
+    } else if (auto* set = curr->dynCast<StructSet>()) {
+      return set->index;
+    } else {
+      WASM_UNREACHABLE("bad op");
+    }
+  };
 };
 
 } // anonymous namespace
