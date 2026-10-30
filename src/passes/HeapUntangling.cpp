@@ -15,10 +15,11 @@
  */
 
 //
-// Simple multi-allocation escape analysis.
+// Simple multi-allocation escape analysis, aiming to cleanly separate multiple
+// allocations to a single local.
 //
 // This pass identifies a simple case of refs not escaping, like Heap2Local, but
-// allowing more than a single allocation (struct.new), which is better, and
+// allowing more than a single allocation (struct.new), which is better, but
 // which handles a far simpler-to-identify situation, which is worse. To see the
 // motivation, consider overlapping allocations like this:
 //
@@ -40,14 +41,17 @@
 // struct.get/struct.set is turned into an operation on that new local. This is
 // safe despite the multiple allocations because the local x is always used
 // immediately, as data: rather than store a reference, we can just focus on the
-// data. Nothing observes x as a reference (no ref.eq), and it does not escape,
-// so this is valid. Heap2Local will then see 'untangled' allocations, each one
-// immediately consumed, and remove them all.
+// data. That is, each struct.new just writes a bunch of fields, and it all
+// could have been replaced with a single allocation up front and struct.sets in
+// all other places. After verifying that nothing observes x as a reference (no
+// ref.eq), and it does not escape, we can optimize this. Heap2Local will then
+// see 'untangled' allocations, each one immediately consumed, and remove them
+// all.
 //
 // Note that Heap2Local could safely optimize in this example, even before our
 // changes: while the `x.value` operations are not exclusive to allocations, the
 // live ranges of the allocations join exactly there - they do not overlap in a
-// dangerous way. Here is an actually dangerous example:
+// dangerous way. But here is an actually dangerous example:
 //
 //   (local.set $a
 //     (struct.new $struct
