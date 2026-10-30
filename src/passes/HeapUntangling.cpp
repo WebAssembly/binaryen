@@ -402,7 +402,7 @@ struct HeapUntangling : public WalkerPass<PostWalker<HeapUntangling>> {
     } else {
       WASM_UNREACHABLE("bad op");
     }
-  };
+  }
 };
 
 } // anonymous namespace
