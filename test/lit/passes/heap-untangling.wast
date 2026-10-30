@@ -2586,7 +2586,7 @@
     )
   )
 
-  ;; CHECK:      (func $test (type $4) (result i32)
+  ;; CHECK:      (func $set-value-overlap (type $4) (result i32)
   ;; CHECK-NEXT:  (local $a (ref null $struct))
   ;; CHECK-NEXT:  (local.set $a
   ;; CHECK-NEXT:   (struct.new_default $struct)
@@ -2606,7 +2606,7 @@
   ;; CHECK-NEXT:   (local.get $a)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; H2L:      (func $test (type $2) (result i32)
+  ;; H2L:      (func $set-value-overlap (type $2) (result i32)
   ;; H2L-NEXT:  (local $a (ref null $struct))
   ;; H2L-NEXT:  (local $1 i32)
   ;; H2L-NEXT:  (local $2 i32)
@@ -2647,7 +2647,7 @@
   ;; H2L-NEXT:   (local.get $2)
   ;; H2L-NEXT:  )
   ;; H2L-NEXT: )
-  (func $test (export "test") (result i32)
+  (func $set-value-overlap (export "test") (result i32)
     (local $a (ref null $struct))
     (local.set $a
       (struct.new_default $struct)
