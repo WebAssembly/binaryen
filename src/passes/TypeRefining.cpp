@@ -107,7 +107,12 @@ struct FieldInfoScanner
     info.note(expr->type);
   }
 
-  Properties::FallthroughBehavior getFallthroughBehavior() {
+  Expression* getFallthrough(Expression* expr) {
+    if (!expr->type.isCastable()) {
+      // We cannot add casts later to fix up intermediate expressions whose
+      // types do not update with the fallthrough (such as a try with a catch).
+      return expr;
+    }
     // Looking at fallthrough values may be dangerous here, because it ignores
     // intermediate steps. Consider this:
     //
@@ -122,7 +127,11 @@ struct FieldInfoScanner
     // using casts later, but those casts may be expensive (especially ref.casts
     // as opposed to ref.as_non_null), so for now just ignore tee fallthroughs.
     // TODO: investigate more
-    return Properties::FallthroughBehavior::NoTeeBrIf;
+    return Properties::getFallthrough(
+      expr,
+      getPassOptions(),
+      *getModule(),
+      Properties::FallthroughBehavior::NoTeeBrIf);
   }
 };
 
