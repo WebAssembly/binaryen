@@ -29,7 +29,7 @@
 //    bar(x.value, x.value);
 //
 // Heap2Local cannot optimize this due to the overlapping live ranges (it sees
-// the x.value operations are not exclusive to any single allocation). But this
+// some x.value operations are not exclusive to any single allocation). But this
 // pass can optimize into this:
 //
 //    x_value = (new Foo(42)).value;
@@ -79,7 +79,6 @@
 //
 
 #include "ir/bits.h"
-#include "ir/eh-utils.h"
 #include "ir/local-graph.h"
 #include "ir/properties.h"
 #include "pass.h"
@@ -105,7 +104,8 @@ struct HeapUntangling : public WalkerPass<PostWalker<HeapUntangling>> {
     Index numGets = 0;
 
     // The number of sets for the local, tracked as we only optimize when we see
-    // 2 or more local.sets (a single one is trivially optimized by Heap2Local).
+    // 2 or more local.sets (a single one is trivially optimized by Heap2Local,
+    // so we would be doing pointless work).
     Index numSets = 0;
 
     // The number of tees for the local, tracked for the same reason as gets:
@@ -180,10 +180,6 @@ struct HeapUntangling : public WalkerPass<PostWalker<HeapUntangling>> {
     }
     // TODO: handle more things flowing into struct.get, like an If
   }
-
-  bool hasTry = false;
-
-  void visitTry(Try* curr) { hasTry = true; }
 
   void doWalkFunction(Function* func) {
     localInfos.resize(func->getNumLocals());
@@ -368,10 +364,6 @@ struct HeapUntangling : public WalkerPass<PostWalker<HeapUntangling>> {
     } optimizer(*this);
     optimizer.setModule(getModule());
     optimizer.walkFunction(func);
-
-    if (hasTry) {
-      EHUtils::handleBlockNestedPops(func, *getModule());
-    }
   }
 
   // Given a struct.get or struct.set, return the field index.
