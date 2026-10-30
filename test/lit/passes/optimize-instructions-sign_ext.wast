@@ -819,7 +819,7 @@
     (drop (i64.ne (i64.load8_s (local.get $addr)) (i64.extend8_s (local.get $x64))))
   )
 
-  ;; CHECK:      (func $unary-sign-ext-newly-unreachable (type $5) (result i32)
+  ;; CHECK:      (func $unary-sign-ext-newly-unreachable (type $6) (result i32)
   ;; CHECK-NEXT:  (i32.eqz
   ;; CHECK-NEXT:   (i32.extend8_s
   ;; CHECK-NEXT:    (unreachable)
