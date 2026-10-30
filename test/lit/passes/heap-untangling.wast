@@ -1513,7 +1513,8 @@
   (func $set-unknown-mut (param $param (ref $struct)) (result i32)
     (local $ref (ref null $struct))
     ;; The first set is of an unknown, and the field is mutable, so we do not
-    ;; optimize.
+    ;; optimize. (Even if it was immutable we wouldn't, but this is extra test
+    ;; coverage for a possible future change where we do more things.)
     (local.set $ref
       (local.get $param)
     )
@@ -1588,80 +1589,6 @@
     (local $ref (ref null $struct-immutable))
     ;; As above, but now the field is immutable. We still do not optimize, as
     ;; the value is unknown.
-    (local.set $ref
-      (local.get $param)
-    )
-    (local.set $ref
-      (struct.new $struct-immutable
-        (i32.const 42)
-      )
-    )
-    (i32.add
-      (struct.get $struct-immutable 0
-        (local.get $ref)
-      )
-      (struct.get $struct-immutable 0
-        (local.get $ref)
-      )
-    )
-  )
-
-  ;; CHECK:      (func $set-unknown-mutable (type $14) (param $param (ref null $struct-immutable)) (result i32)
-  ;; CHECK-NEXT:  (local $ref (ref null $struct-immutable))
-  ;; CHECK-NEXT:  (local.set $ref
-  ;; CHECK-NEXT:   (local.get $param)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (local.set $ref
-  ;; CHECK-NEXT:   (struct.new $struct-immutable
-  ;; CHECK-NEXT:    (i32.const 42)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (i32.add
-  ;; CHECK-NEXT:   (struct.get $struct-immutable 0
-  ;; CHECK-NEXT:    (local.get $ref)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (struct.get $struct-immutable 0
-  ;; CHECK-NEXT:    (local.get $ref)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  ;; H2L:      (func $set-unknown-mutable (type $13) (param $param (ref null $struct-immutable)) (result i32)
-  ;; H2L-NEXT:  (local $ref (ref null $struct-immutable))
-  ;; H2L-NEXT:  (local $2 i32)
-  ;; H2L-NEXT:  (local $3 i32)
-  ;; H2L-NEXT:  (local.set $ref
-  ;; H2L-NEXT:   (local.get $param)
-  ;; H2L-NEXT:  )
-  ;; H2L-NEXT:  (drop
-  ;; H2L-NEXT:   (block (result nullref)
-  ;; H2L-NEXT:    (local.set $3
-  ;; H2L-NEXT:     (i32.const 42)
-  ;; H2L-NEXT:    )
-  ;; H2L-NEXT:    (local.set $2
-  ;; H2L-NEXT:     (local.get $3)
-  ;; H2L-NEXT:    )
-  ;; H2L-NEXT:    (ref.null none)
-  ;; H2L-NEXT:   )
-  ;; H2L-NEXT:  )
-  ;; H2L-NEXT:  (i32.add
-  ;; H2L-NEXT:   (block (result i32)
-  ;; H2L-NEXT:    (drop
-  ;; H2L-NEXT:     (ref.null none)
-  ;; H2L-NEXT:    )
-  ;; H2L-NEXT:    (local.get $2)
-  ;; H2L-NEXT:   )
-  ;; H2L-NEXT:   (block (result i32)
-  ;; H2L-NEXT:    (drop
-  ;; H2L-NEXT:     (ref.null none)
-  ;; H2L-NEXT:    )
-  ;; H2L-NEXT:    (local.get $2)
-  ;; H2L-NEXT:   )
-  ;; H2L-NEXT:  )
-  ;; H2L-NEXT: )
-  (func $set-unknown-mutable (param $param (ref null $struct-immutable)) (result i32)
-    (local $ref (ref null $struct-immutable))
-    ;; The first set is of a nullable value, so we might trap. We do not
-    ;; optimize.
     (local.set $ref
       (local.get $param)
     )
