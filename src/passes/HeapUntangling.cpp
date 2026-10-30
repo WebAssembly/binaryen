@@ -198,7 +198,10 @@ struct HeapUntangling : public WalkerPass<PostWalker<HeapUntangling>> {
       // can be folded into a single struct.new (that is, we are writing all the
       // fields, then writing an additional one, and other passes make us do
       // them all at once anyhow).
-      if (!curr->template is<StructSet>()) {
+      if (curr->template is<StructSet>()) {
+        localInfos[tee->index].unoptimizable = true;
+      } else {
+        // Otherwise, this is a valid struct operation.
         localInfos[tee->index].structOperations.push_back(curr);
       }
     }
