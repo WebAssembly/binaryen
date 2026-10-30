@@ -1341,6 +1341,9 @@ def filter_exports(wasm, output, keep, keep_defaults=True):
 def wasm_notices_export_changes(wasm):
     with open(wasm, 'rb') as f:
         binary = f.read()
+    # Check the binary directly for the import strings before disassembling and
+    # doing full checks below. This saves the cost of running wasm-dis in the
+    # common case.
     if b'call-export' not in binary and b'table-' not in binary:
         return False
 
