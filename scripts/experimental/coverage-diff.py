@@ -377,10 +377,11 @@ def find_coverage_objects(
             obj_files.append(obj_file)
         else:
             all_have_obj = False
+            break
     if all_have_obj and obj_files:
         return obj_files
 
-    objects: list[str] = list(obj_files)
+    objects: list[str] = []
     lib_dir = os.path.join(build_dir, 'lib')
     for lib_name in ('libbinaryen.so', 'libbinaryen.dylib'):
         lib_path = os.path.join(lib_dir, lib_name)
