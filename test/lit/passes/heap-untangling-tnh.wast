@@ -4,7 +4,6 @@
 ;; RUN: foreach %s %t wasm-opt --heap-untangling -tnh -all -S -o - | filecheck %s --check-prefix=TNH__
 
 (module
-  ;; H2L:      (type $struct (struct (field (mut i32))))
   ;; CHECK:      (type $struct (struct (field (mut i32))))
   ;; TNH__:      (type $struct (struct (field (mut i32))))
   (type $struct (struct (field (mut i32))))
