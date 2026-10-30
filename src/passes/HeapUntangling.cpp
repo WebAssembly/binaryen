@@ -278,7 +278,7 @@ struct HeapUntangling : public WalkerPass<PostWalker<HeapUntangling>> {
 
       // We can optimize!
 
-      // Gather all the struct field indexes read from this local.
+      // Gather all the struct field indexes operated on from this local.
       std::set<Index> usedFields;
       for (auto* op : info.structOperations) {
         usedFields.insert(getFieldIndex(op));
