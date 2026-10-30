@@ -87,12 +87,11 @@ namespace wasm {
 
 namespace {
 
-struct ScalarizeStructLocals
-  : public WalkerPass<PostWalker<ScalarizeStructLocals>> {
+struct HeapUntangling : public WalkerPass<PostWalker<HeapUntangling>> {
   bool isFunctionParallel() override { return true; }
 
   std::unique_ptr<Pass> create() override {
-    return std::make_unique<ScalarizeStructLocals>();
+    return std::make_unique<HeapUntangling>();
   }
 
   // Track the number of gets for each local, so that we can see if all the
@@ -300,9 +299,9 @@ struct ScalarizeStructLocals
 
   void optimize(Function* func) {
     struct Optimizer : PostWalker<Optimizer> {
-      ScalarizeStructLocals& parent;
+      HeapUntangling& parent;
 
-      Optimizer(ScalarizeStructLocals& parent) : parent(parent) {}
+      Optimizer(HeapUntangling& parent) : parent(parent) {}
 
       void visitLocalSet(LocalSet* curr) {
         if (!curr->isTee() && parent.optimizedLocals.contains(curr->index)) {
@@ -405,6 +404,6 @@ struct ScalarizeStructLocals
 
 } // anonymous namespace
 
-Pass* createScalarizeStructLocalsPass() { return new ScalarizeStructLocals(); }
+Pass* createHeapUntanglingPass() { return new HeapUntangling(); }
 
 } // namespace wasm

@@ -236,6 +236,10 @@ void PassRegistry::registerPasses() {
                "optimize heap (GC) stores",
                createHeapStoreOptimizationPass);
   registerPass(
+    "heap-untangling",
+    "cleanly separate multiple heap allocations to a single local",
+    createHeapUntanglingPass);
+  registerPass(
     "inline-main", "inline __original_main into main", createInlineMainPass);
   registerPass("inlining",
                "inline functions (you probably want inlining-optimizing)",
@@ -489,10 +493,6 @@ void PassRegistry::registerPasses() {
   registerPass("safe-heap",
                "instrument loads and stores to check for invalid behavior",
                createSafeHeapPass);
-  registerPass(
-    "scalarize-struct-locals",
-    "replace non-escaping struct locals with locals for their fields",
-    createScalarizeStructLocalsPass);
   registerPass("set-globals",
                "sets specified globals to specified values",
                createSetGlobalsPass);
@@ -729,7 +729,7 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
   // simplify-locals opens opportunities for optimizations
   addIfNoDWARFIssues("remove-unused-brs");
   if (options.optimizeLevel > 1 && wasm->features.hasGC()) {
-    addIfNoDWARFIssues("scalarize-struct-locals");
+    addIfNoDWARFIssues("heap-untangling");
     addIfNoDWARFIssues("heap2local");
   }
   // if we are willing to work hard, also optimize copies before coalescing

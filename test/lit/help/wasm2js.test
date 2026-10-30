@@ -171,6 +171,9 @@
 ;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --heap-store-optimization                     optimize heap (GC) stores
 ;; CHECK-EMPTY:
+;; CHECK-NEXT:   --heap-untangling                             cleanly separate multiple heap 
+;; CHECK-NEXT:                                                 allocations to a single local
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --heap2local                                  replace GC allocations with 
 ;; CHECK-NEXT:                                                 locals
 ;; CHECK-EMPTY:
@@ -424,10 +427,6 @@
 ;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --safe-heap                                   instrument loads and stores to 
 ;; CHECK-NEXT:                                                 check for invalid behavior
-;; CHECK-EMPTY:
-;; CHECK-NEXT:   --scalarize-struct-locals                     replace non-escaping struct 
-;; CHECK-NEXT:                                                 locals with locals for their 
-;; CHECK-NEXT:                                                 fields
 ;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --separate-data-segments                      write data segments to a file 
 ;; CHECK-NEXT:                                                 and strip them from the module

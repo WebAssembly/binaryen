@@ -52,6 +52,7 @@ set(passes_SOURCES
   Outlining.cpp
   Heap2Local.cpp
   HeapStoreOptimization.cpp
+  HeapUntangling.cpp
   I64ToI32Lowering.cpp
   Inlining.cpp
   InstrumentBranchHints.cpp
@@ -134,7 +135,6 @@ set(passes_SOURCES
   TypeMerging.cpp
   TypeSSA.cpp
   SafeHeap.cpp
-  ScalarizeStructLocals.cpp
   SeparateDataSegments.cpp
   SimplifyGlobals.cpp
   SimplifyLocals.cpp
