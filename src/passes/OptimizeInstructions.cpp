@@ -1576,6 +1576,9 @@ struct OptimizeInstructions
   //    Given the large amount of potential benefit we can get from a successful
   //    optimization in GUFA, any reduction there may be a bad idea, so we
   //    should be very careful and probably *not* remove such casts.
+  //
+  // The only case where we are always ok to remove such casts is when lastOpts
+  // is true, because nothing significant runs after us that can be harmed.
 
   // If an instruction traps on a null input, there is no need for a
   // ref.as_non_null on that input: we will trap either way (and the binaryen
