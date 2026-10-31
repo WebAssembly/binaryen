@@ -24,9 +24,10 @@ static Name IMPOSSIBLE_CONTINUE("impossible-continue");
 
 void BinaryInstWriter::emitResultType(Type type) {
   if (type == Type::unreachable) {
-    parent.writeType(Type::none);
-  } else if (type.isTuple()) {
-    o << S32LEB(parent.getSignatureIndex(Signature(Type::none, type)));
+    type = Type::none;
+  }
+  if (currParams != Type::none || type.isTuple()) {
+    o << S32LEB(parent.getSignatureIndex(Signature(currParams, type)));
   } else {
     parent.writeType(type);
   }
@@ -3750,7 +3751,7 @@ void StackIRToBinaryWriter::write() {
         if (sourceMap) {
           parent.writeSourceMapLocation(inst->origin, func);
         }
-        writer.visit(inst->origin);
+        writer.visit(inst);
         break;
       }
       case StackInst::TryEnd:
