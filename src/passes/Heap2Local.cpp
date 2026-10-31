@@ -1131,6 +1131,18 @@ struct Struct2Local : PostWalker<Struct2Local> {
       auto type = curr->type;
       assert(type == field.type);
       assert(!field.isPacked());
+      auto local = localIndexes[curr->index];
+
+      if (analyzer.getInteraction(curr->expected) ==
+          ParentChildInteraction::Flows) {
+        // Since the allocation does not escape, it cannot possibly match the
+        // value already in the struct. The cmpxchg will just do a read.
+        replaceCurrent(builder.makeBlock({builder.makeDrop(curr->ref),
+                                          builder.makeDrop(curr->expected),
+                                          builder.makeDrop(curr->replacement),
+                                          builder.makeLocalGet(local, type)}));
+        return;
+      }
 
       // Hold everything in scratch locals, just like for other RMW ops and
       // struct.new. Use a nullable (shared) eqref local for `expected` to
@@ -1143,7 +1155,6 @@ struct Struct2Local : PostWalker<Struct2Local> {
       auto oldScratch = builder.addVar(func, type);
       auto expectedScratch = builder.addVar(func, expectedType);
       auto replacementScratch = builder.addVar(func, type);
-      auto local = localIndexes[curr->index];
 
       auto* block = builder.makeBlock(
         {builder.makeDrop(curr->ref),
