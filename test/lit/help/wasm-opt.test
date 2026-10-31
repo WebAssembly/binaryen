@@ -252,6 +252,9 @@
 ;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --heap-store-optimization                     optimize heap (GC) stores
 ;; CHECK-EMPTY:
+;; CHECK-NEXT:   --heap-untangling                             cleanly separate multiple heap 
+;; CHECK-NEXT:                                                 allocations to a single local
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --heap2local                                  replace GC allocations with 
 ;; CHECK-NEXT:                                                 locals
 ;; CHECK-EMPTY:
