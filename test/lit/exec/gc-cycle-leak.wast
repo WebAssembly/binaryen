@@ -83,7 +83,7 @@
  )
 
  ;; CHECK:      [fuzz-exec] export cont_cycle
- ;; CHECK-NEXT: [LoggingExternalInterface log-execution cont($0 funcref(target) (type $cont.0 (cont $func.0)) resumeArguments=[ref $0] executed=1)]
+ ;; CHECK-NEXT: [LoggingExternalInterface log-execution cont($0 funcref(target) (type $cont.0 (cont $func.0)) executed=1)]
  (func $cont_cycle (export "cont_cycle")
   (local $k (ref $ct))
   ;; A continuation cycle where $k's resumeArguments reference $k itself.
@@ -111,7 +111,7 @@
 ;; CHECK-NEXT: [LoggingExternalInterface log-execution [ref $0 (type $struct.0 (struct (field (ref $struct.1)) (field (ref $struct.1)))) [ref $1 (type $struct.1 (struct (field (mut (ref null $struct.1))))) nullref] [ref $1]]]
 
 ;; CHECK:      [fuzz-exec] export cont_cycle
-;; CHECK-NEXT: [LoggingExternalInterface log-execution cont($0 funcref(target) (type $cont.0 (cont $func.0)) resumeArguments=[ref $0] executed=1)]
+;; CHECK-NEXT: [LoggingExternalInterface log-execution cont($0 funcref(target) (type $cont.0 (cont $func.0)) executed=1)]
 ;; CHECK-NEXT: [fuzz-exec] comparing cont_cycle
 ;; CHECK-NEXT: [fuzz-exec] comparing cycle2
 ;; CHECK-NEXT: [fuzz-exec] comparing dag
