@@ -1442,16 +1442,16 @@
   ;; CHECK:      (type $struct (struct (field (mut (ref null $struct)))))
   (type $struct (struct (field (mut (ref null $struct)))))
 
-  ;; CHECK:      (type $1 (func))
+  ;; CHECK:      (type $1 (func (result (ref null $struct))))
+
+  ;; CHECK:      (type $2 (func (param (ref $struct)) (result (ref null $struct))))
 
   ;; CHECK:      (export "test" (func $cmpxchg-ref-and-expected))
 
-  ;; CHECK:      (func $cmpxchg-ref-and-expected (type $1)
+  ;; CHECK:      (func $cmpxchg-ref-and-expected (type $1) (result (ref null $struct))
   ;; CHECK-NEXT:  (local $local (ref $struct))
   ;; CHECK-NEXT:  (local $1 (ref null $struct))
   ;; CHECK-NEXT:  (local $2 (ref null $struct))
-  ;; CHECK-NEXT:  (local $3 eqref)
-  ;; CHECK-NEXT:  (local $4 (ref null $struct))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result (ref null $struct))
   ;; CHECK-NEXT:    (drop
@@ -1462,45 +1462,95 @@
   ;; CHECK-NEXT:      (ref.null none)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.set $3
+  ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (ref.null none)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.set $4
-  ;; CHECK-NEXT:     (ref.null none)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.set $2
-  ;; CHECK-NEXT:     (local.get $1)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (if
-  ;; CHECK-NEXT:     (ref.eq
-  ;; CHECK-NEXT:      (local.get $1)
-  ;; CHECK-NEXT:      (local.get $3)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (then
-  ;; CHECK-NEXT:      (local.set $1
-  ;; CHECK-NEXT:       (local.get $4)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result nullref)
+  ;; CHECK-NEXT:      (local.set $2
+  ;; CHECK-NEXT:       (ref.null none)
   ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (ref.null none)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.get $2)
+  ;; CHECK-NEXT:    (local.get $1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block (result (ref null $struct))
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.get $1)
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $cmpxchg-ref-and-expected (export "test")
+  (func $cmpxchg-ref-and-expected (export "test") (result (ref null $struct))
     (local $local (ref $struct))
     (drop
-      ;; The allocation flows to both `ref` and `expected` fields. We must
-      ;; prioritize the optimization for flows through `ref`. Otherwise, if we
-      ;; did the optimization for `expected` first, we would end up with a
-      ;; struct.get of the ref value, but the ref value would have been changed
-      ;; to a null and we would introduce a trap.
+      ;; The allocation flows to both `ref` and `expected`. Since it does not
+      ;; escape, it cannot match the value in the field, so the cmpxchg must
+      ;; just drop its operands and read the field local (rather than emitting a
+      ;; struct.get on the nulled-out `ref` or comparing the field local against
+      ;; the nulled-out `expected` via `ref.eq`). Because the replacement is
+      ;; dropped, it does not escape either and can also be optimized.
       (struct.atomic.rmw.cmpxchg $struct 0
         (local.tee $local
           (struct.new_default $struct)
         )
         (local.get $local)
-        (ref.null none)
+        (struct.new_default $struct)
       )
+    )
+    (struct.get $struct 0
+      (local.get $local)
+    )
+  )
+
+  ;; CHECK:      (func $cmpxchg-ref-and-expected-non-null-replacement (type $2) (param $replacement (ref $struct)) (result (ref null $struct))
+  ;; CHECK-NEXT:  (local $local (ref $struct))
+  ;; CHECK-NEXT:  (local $2 (ref null $struct))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result (ref null $struct))
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result nullref)
+  ;; CHECK-NEXT:      (local.set $2
+  ;; CHECK-NEXT:       (ref.null none)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (ref.null none)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $replacement)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $2)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block (result (ref null $struct))
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.get $2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $cmpxchg-ref-and-expected-non-null-replacement (param $replacement (ref $struct)) (result (ref null $struct))
+    (local $local (ref $struct))
+    (drop
+      ;; The replacement is non-null and cannot be optimized, so if the cmpxchg
+      ;; spuriously succeeded (e.g. by comparing the null-initialized field
+      ;; against an `expected` replaced with `null`), this would return
+      ;; `$replacement` instead of `null`.
+      (struct.atomic.rmw.cmpxchg $struct 0
+        (local.tee $local
+          (struct.new_default $struct)
+        )
+        (local.get $local)
+        (local.get $replacement)
+      )
+    )
+    (struct.get $struct 0
+      (local.get $local)
     )
   )
 )
