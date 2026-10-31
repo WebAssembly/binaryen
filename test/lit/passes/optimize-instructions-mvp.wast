@@ -5999,6 +5999,183 @@
       )
     )
   )
+
+  ;; CHECK:      (func $redundant-shift-sign-ext (param $x32 i32) (param $x64 i64) (param $addr i32)
+  ;; CHECK-NEXT:  (local $t64 i64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.shr_s
+  ;; CHECK-NEXT:    (i32.shl
+  ;; CHECK-NEXT:     (local.get $x32)
+  ;; CHECK-NEXT:     (i32.const 24)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 24)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.load8_s
+  ;; CHECK-NEXT:    (local.get $addr)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.extend_i32_s
+  ;; CHECK-NEXT:    (local.get $x32)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.extend_i32_s
+  ;; CHECK-NEXT:    (i32.shr_s
+  ;; CHECK-NEXT:     (i32.shl
+  ;; CHECK-NEXT:      (local.get $x32)
+  ;; CHECK-NEXT:      (i32.const 24)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.const 24)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $t64
+  ;; CHECK-NEXT:   (i64.extend_i32_s
+  ;; CHECK-NEXT:    (local.get $x32)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $t64)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.shr_s
+  ;; CHECK-NEXT:    (i32.shl
+  ;; CHECK-NEXT:     (i32.load
+  ;; CHECK-NEXT:      (local.get $addr)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.const 24)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 24)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $redundant-shift-sign-ext (param $x32 i32) (param $x64 i64) (param $addr i32)
+    (local $t64 i64)
+    ;; Outer shift sign-extension is redundant when the inner value is already
+    ;; sign-extended to fewer or equal bits.
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (i32.shr_s (i32.shl (local.get $x32) (i32.const 24)) (i32.const 24))
+          (i32.const 16)
+        )
+        (i32.const 16)
+      )
+    )
+    ;; Signed narrow load is already sign-extended to 8 bits.
+    (drop
+      (i32.shr_s
+        (i32.shl (i32.load8_s (local.get $addr)) (i32.const 16))
+        (i32.const 16)
+      )
+    )
+    ;; i64.extend_i32_s is already sign-extended to 32 bits.
+    (drop
+      (i64.shr_s
+        (i64.shl (i64.extend_i32_s (local.get $x32)) (i64.const 32))
+        (i64.const 32)
+      )
+    )
+    ;; i64.extend_i32_s of an 8-bit sign-extended i32 is sign-extended to 8 bits.
+    (drop
+      (i64.shr_s
+        (i64.shl
+          (i64.extend_i32_s
+            (i32.shr_s (i32.shl (local.get $x32) (i32.const 24)) (i32.const 24))
+          )
+          (i64.const 48)
+        )
+        (i64.const 48)
+      )
+    )
+    ;; Local initialized with i64.extend_i32_s is known to be 32-bit sign-extended.
+    (local.set $t64 (i64.extend_i32_s (local.get $x32)))
+    (drop
+      (i64.shr_s
+        (i64.shl (local.get $t64) (i64.const 32))
+        (i64.const 32)
+      )
+    )
+    ;; Negative case: full-width load is not sign-extended to 8 bits.
+    (drop
+      (i32.shr_s
+        (i32.shl (i32.load (local.get $addr)) (i32.const 24))
+        (i32.const 24)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $nested-shift-sign-ext (param $x32 i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.shr_s
+  ;; CHECK-NEXT:    (i32.shl
+  ;; CHECK-NEXT:     (local.get $x32)
+  ;; CHECK-NEXT:     (i32.const 24)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 24)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.shr_s
+  ;; CHECK-NEXT:    (i32.shl
+  ;; CHECK-NEXT:     (local.get $x32)
+  ;; CHECK-NEXT:     (i32.const 26)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 24)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.shr_s
+  ;; CHECK-NEXT:    (i32.shl
+  ;; CHECK-NEXT:     (i32.shr_s
+  ;; CHECK-NEXT:      (i32.shl
+  ;; CHECK-NEXT:       (local.get $x32)
+  ;; CHECK-NEXT:       (i32.const 24)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (i32.const 24)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.const 16)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 8)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $nested-shift-sign-ext (param $x32 i32)
+    ;; Narrower outer shift sign-extension strips wider inner shift sign-extension.
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (i32.shr_s (i32.shl (local.get $x32) (i32.const 16)) (i32.const 16))
+          (i32.const 24)
+        )
+        (i32.const 24)
+      )
+    )
+    ;; Also strips when the outer shift is an almost-sign-ext with extra left shifts
+    ;; that still only read bits inside the inner sign-extended width.
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (i32.shr_s (i32.shl (local.get $x32) (i32.const 24)) (i32.const 24))
+          (i32.const 26)
+        )
+        (i32.const 24)
+      )
+    )
+    ;; Negative case: extra left shifts keep sign-extended bits from the inner shift.
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (i32.shr_s (i32.shl (local.get $x32) (i32.const 24)) (i32.const 24))
+          (i32.const 16)
+        )
+        (i32.const 8)
+      )
+    )
+  )
   ;; CHECK:      (func $compare-load-s-sign-extend (param $0 i32) (param $1 i32)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.eq
