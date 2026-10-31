@@ -40,9 +40,9 @@
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@stylistic/eslint-plugin": "^5.10.0",
-    "@types/node": "^25.8.0 || ^26",
+    "@types/node": "^26.6.0",
     "eslint": "^10.2.1",
-    "globals": "^17.5.0",
+    "globals": "^17.13.0",
     "tsx": "^4.21.0",
     "typedoc": "^0.28.19",
     "typescript": "~6.0.0",
