@@ -41,13 +41,22 @@ authored_load: dict[str, float] = {}
 last_assigned: dict[str, float] = {}
 
 QUERY = """
-query($owner: String!, $name: String!, $pr: Int!) {
+query($owner: String!, $name: String!, $pr: Int!, $team: String!) {
+  organization(login: $owner) {
+    team(slug: $team) {
+      members(first: 100) {
+        nodes {
+          login
+        }
+      }
+    }
+  }
   repository(owner: $owner, name: $name) {
     targetPR: pullRequest(number: $pr) {
       state
       isDraft
       author { login }
-      reviewRequests(first: 20) {
+      reviewRequests(first: 100) {
         nodes {
           requestedReviewer {
             ... on User { login }
@@ -55,7 +64,7 @@ query($owner: String!, $name: String!, $pr: Int!) {
           }
         }
       }
-      reviews(last: 100) {
+      latestReviews(first: 100) {
         nodes {
           author { login }
           state
@@ -70,13 +79,20 @@ query($owner: String!, $name: String!, $pr: Int!) {
         createdAt
         additions
         author { login }
-        reviews(last: 100) {
+        latestReviews(first: 100) {
           nodes {
             author { login }
             state
           }
         }
-        timelineItems(first: 50, itemTypes: [REVIEW_REQUESTED_EVENT, READY_FOR_REVIEW_EVENT]) {
+        reviewRequests(first: 100) {
+          nodes {
+            requestedReviewer {
+              ... on User { login }
+            }
+          }
+        }
+        timelineItems(first: 100, itemTypes: [REVIEW_REQUESTED_EVENT, READY_FOR_REVIEW_EVENT]) {
           nodes {
             __typename
             ... on ReviewRequestedEvent {
@@ -106,17 +122,22 @@ def pr_weight(additions: int) -> float:
 
 
 def gh_api(args: list[str]) -> str:
-    res = subprocess.run(
-        ['gh', 'api', *args],
-        capture_output=True,
-        text=True,
-        check=True,
-    )
-    return res.stdout
+    try:
+        res = subprocess.run(
+            ['gh', 'api', *args],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        return res.stdout
+    except subprocess.CalledProcessError as e:
+        if e.stderr:
+            print(e.stderr.strip(), file=sys.stderr)
+        raise
 
 
 def accumulate_pr_activity(pr: dict, reviewer_set: set[str]) -> None:
-    author = pr['author']['login'] if pr.get('author') else ''
+    author = pr['author']['login'] if pr['author'] else ''
     created_at = parse_iso(pr['createdAt'])
     timeline = pr['timelineItems']['nodes']
 
@@ -125,40 +146,51 @@ def accumulate_pr_activity(pr: dict, reviewer_set: set[str]) -> None:
         (
             parse_iso(e['createdAt'])
             for e in reversed(timeline)
-            if e.get('__typename') == 'ReadyForReviewEvent'
+            if e['__typename'] == 'ReadyForReviewEvent'
         ),
         created_at,
     )
     w_pr = pr_weight(pr['additions'])
 
-    if author in authored_load:
+    if author in reviewer_set:
         age = max(0.0, now - active_at)
         authored_load[author] += w_pr * math.exp(-DECAY_RATE * age)
 
-    # Track which reviewers have approved so open approved PRs drop
-    # PENDING_REVIEW_MULTIPLIER.
-    approved_by = {
-        rev['author']['login']
-        for rev in pr['reviews']['nodes']
-        if rev.get('author') and rev['state'] == 'APPROVED'
-    }
+    # Track which reviewers have reviewed or approved so we can ignore removed
+    # unreviewed requests and drop PENDING_REVIEW_MULTIPLIER on approved PRs.
+    reviewed_by: set[str] = set()
+    approved_by: set[str] = set()
+    for rev in pr['latestReviews']['nodes']:
+        if rev['author'] and rev['state'] != 'PENDING':
+            r_login = rev['author']['login']
+            reviewed_by.add(r_login)
+            if rev['state'] == 'APPROVED':
+                approved_by.add(r_login)
+
+    currently_requested = {
+        n['requestedReviewer'].get('login')
+        for n in pr['reviewRequests']['nodes']
+        if n['requestedReviewer']
+    } - {None}
 
     # Track the earliest ReviewRequestedEvent per reviewer for decay timestamps.
     first_requested_at: dict[str, float] = {}
     for e in timeline:
-        if e.get('__typename') == 'ReviewRequestedEvent':
-            r_login = (e.get('requestedReviewer') or {}).get('login')
-            if (
-                r_login in reviewer_set
-                and r_login != author
-                and r_login not in first_requested_at
-            ):
-                first_requested_at[r_login] = parse_iso(e['createdAt'])
+        if e['__typename'] == 'ReviewRequestedEvent' and e['requestedReviewer']:
+            r_login = e['requestedReviewer'].get('login')
+            if r_login in reviewer_set and r_login != author:
+                first_requested_at.setdefault(r_login, parse_iso(e['createdAt']))
 
     for r, assign_ts in first_requested_at.items():
+        if r not in currently_requested and r not in reviewed_by:
+            continue
         last_assigned[r] = max(last_assigned[r], assign_ts)
         # Open unapproved reviews count extra toward review load.
-        is_pending = pr['state'] == 'OPEN' and r not in approved_by
+        is_pending = (
+            pr['state'] == 'OPEN'
+            and r in currently_requested
+            and r not in approved_by
+        )
         mult = PENDING_REVIEW_MULTIPLIER if is_pending else 1.0
         age = max(0.0, now - assign_ts)
         review_load[r] += mult * w_pr * math.exp(-DECAY_RATE * age)
@@ -183,15 +215,8 @@ def load_weights(reviewers: list[str]) -> dict[str, float]:
 
 
 def main() -> None:
-    owner, name = os.environ['REPO'].split('/', 1)
+    owner, name = os.environ['GITHUB_REPOSITORY'].split('/', 1)
     pr_number = int(os.environ['PR_NUMBER'])
-
-    members = json.loads(
-        gh_api(['--paginate', f'orgs/{owner}/teams/{TEAM_SLUG}/members']),
-    )
-    reviewers = [m['login'] for m in members]
-    reviewer_set = set(reviewers)
-    weights = load_weights(reviewers)
 
     data = json.loads(
         gh_api([
@@ -204,30 +229,46 @@ def main() -> None:
             f'name={name}',
             '-F',
             f'pr={pr_number}',
+            '-f',
+            f'team={TEAM_SLUG}',
         ]),
-    )['data']['repository']
+    )['data']
 
-    target = data['targetPR']
+    org = data['organization']
+    team = org['team'] if org else None
+    if not team:
+        sys.exit(
+            f'Could not fetch team {owner}/{TEAM_SLUG}; check GH_TOKEN permissions.',
+        )
+    reviewers = [m['login'] for m in team['members']['nodes']]
+    reviewer_set = set(reviewers)
+    weights = load_weights(reviewers)
+
+    repo_data = data['repository']
+    target = repo_data['targetPR']
     if not target or target['state'] != 'OPEN' or target['isDraft']:
         print(f'PR #{pr_number} is not an open non-draft PR; skipping.')
         return
 
-    # Skip if a team member is already requested or has already reviewed.
+    pr_author = target['author']['login'] if target['author'] else ''
+
+    # Skip if another team member is already requested or has already reviewed.
+    target_requests = target['reviewRequests']['nodes']
     existing_users = {
-        (n.get('requestedReviewer') or {}).get('login')
-        for n in target['reviewRequests']['nodes']
+        n['requestedReviewer'].get('login')
+        for n in target_requests
+        if n['requestedReviewer']
     } - {None}
     reviewed_users = {
-        (n.get('author') or {}).get('login')
-        for n in target['reviews']['nodes']
-        if n['state'] != 'PENDING'
-    } - {None}
-    if (existing_users | reviewed_users) & reviewer_set:
+        n['author']['login']
+        for n in target['latestReviews']['nodes']
+        if n['author'] and n['state'] != 'PENDING'
+    }
+    if ((existing_users | reviewed_users) - {pr_author}) & reviewer_set:
         print(f'PR #{pr_number} already has a team reviewer assigned; skipping.')
         return
 
     # Exclude the PR author and any reviewer with a non-positive weight.
-    pr_author = target['author']['login'] if target.get('author') else ''
     eligible = [r for r in reviewers if r != pr_author and weights[r] > 0]
     if not eligible:
         print(f'No eligible reviewers for PR #{pr_number} (author={pr_author}).')
@@ -236,8 +277,7 @@ def main() -> None:
     review_load.update(dict.fromkeys(reviewers, 0.0))
     authored_load.update(dict.fromkeys(reviewers, 0.0))
     last_assigned.update(dict.fromkeys(reviewers, 0.0))
-
-    for pr in data['recentPRs']['nodes']:
+    for pr in repo_data['recentPRs']['nodes']:
         if not pr['isDraft'] and pr['number'] != pr_number:
             accumulate_pr_activity(pr, reviewer_set)
 
@@ -265,8 +305,9 @@ def main() -> None:
     ])
     # Replace the CODEOWNERS team review request with the individual reviewer.
     team_requested = any(
-        (n.get('requestedReviewer') or {}).get('slug') == TEAM_SLUG
-        for n in target['reviewRequests']['nodes']
+        n['requestedReviewer'].get('slug') == TEAM_SLUG
+        for n in target_requests
+        if n['requestedReviewer']
     )
     if team_requested:
         try:
