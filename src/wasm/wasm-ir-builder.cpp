@@ -138,6 +138,15 @@ MaybeResult<IRBuilder::HoistedVal> IRBuilder::hoistLastValue(bool greedy) {
     // No need for a scratch local to hoist an unreachable.
     return HoistedVal{Index(hoistIndex), nullptr};
   }
+  if (auto* get = expr->dynCast<LocalGet>();
+      get && getScope().isInputLocal(get->index)) {
+    // Input scratch locals are never modified while their initial `local.get`s
+    // remain on the stack, so we can hoist them directly across subsequent
+    // none-typed expressions without allocating a new scratch local.
+    stack.erase(stack.begin() + valIndex);
+    stack.push_back(get);
+    return HoistedVal{Index(stack.size() - 1), nullptr};
+  }
   // Hoist with a scratch local. Normally the scratch local is the same type as
   // the hoisted expression, but we may need to adjust it given the enabled
   // features. Otherwise, if the expression has a tuple type with a more refined
@@ -916,24 +925,17 @@ Result<> IRBuilder::pushScope(ScopeCtx&& scope) {
       inputs.push_back(getScope().exprStack.back());
       getScope().exprStack.pop_back();
     }
-    const auto& parentLocals = getScope().inputLocals;
-    // The new scope may only receive a suffix of the outer scope's parameters,
-    // so match inputs starting from the remaining size of the outer stack
-    // rather than from the beginning.
-    size_t baseIndex = getScope().exprStack.size();
     for (size_t i = 0; i < inputs.size(); ++i) {
       // Move an enclosing scope's input expression (a scratch local.get or a
       // catch pop) directly into this scope rather than allocating a new
       // scratch local.
       auto* expr = inputs[i];
-      size_t parentIndex = baseIndex + i;
-      bool isInputGet = expr->is<LocalGet>() &&
-                        expr->type == scope.inputType[i] &&
-                        parentIndex < parentLocals.size();
+      auto* get = expr->dynCast<LocalGet>();
+      bool isInputGet = get && get->type == scope.inputType[i] &&
+                        getScope().isInputLocal(get->index);
       bool isPop = isUnnamedBlock && inputs.size() == 1 && expr->is<Pop>();
       if (isInputGet) {
-        assert(expr->cast<LocalGet>()->index == parentLocals[parentIndex]);
-        scope.inputLocals.push_back(parentLocals[parentIndex]);
+        scope.inputLocals.push_back(get->index);
       } else if (!isPop) {
         auto scratch = addScratchLocal(scope.inputType[i]);
         CHECK_ERR(scratch);

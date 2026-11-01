@@ -511,6 +511,10 @@ private:
       }
     }
     bool isNone() { return std::get_if<NoScope>(&scope); }
+    bool isInputLocal(Index local) const {
+      return std::find(inputLocals.begin(), inputLocals.end(), local) !=
+             inputLocals.end();
+    }
     Function* getFunction() {
       if (auto* funcScope = std::get_if<FuncScope>(&scope)) {
         return funcScope->func;
