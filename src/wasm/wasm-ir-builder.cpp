@@ -778,6 +778,16 @@ public:
     ConstraintCollector{builder, children}.visitStackSwitch(curr, ct);
     return popConstrainedChildren(children);
   }
+
+  Result<> popInputs(Type inputType, std::vector<Expression*>& inputs) {
+    inputs.resize(inputType.size());
+    std::vector<Child> children;
+    children.reserve(inputType.size());
+    for (size_t i = 0; i < inputType.size(); ++i) {
+      children.push_back({&inputs[i], {inputType[i]}});
+    }
+    return popConstrainedChildren(children);
+  }
 };
 
 Result<> IRBuilder::visit(Expression* curr) {
@@ -875,6 +885,42 @@ Result<>
 IRBuilder::visitTryTableStart(TryTable* trytable, Name label, Type inputType) {
   applyDebugLoc(trytable);
   return pushScope(ScopeCtx::makeTryTable(trytable, label, inputType));
+}
+
+Result<> IRBuilder::pushScope(ScopeCtx&& scope) {
+  if (auto label = scope.getOriginalLabel()) {
+    // Assign a fresh label to the scope, if necessary.
+    if (!scope.label) {
+      scope.label = makeFresh(label);
+    }
+    // Record the original label to handle references to it correctly.
+    labelDepths[label].push_back(scopeStack.size() + 1);
+  }
+  if (binaryPos) {
+    scope.startPos = lastBinaryPos;
+    lastBinaryPos = *binaryPos;
+  }
+  bool hasInput = scope.inputType != Type::none;
+  if (hasInput && !scope.isDelimiter()) {
+    std::vector<Expression*> inputs;
+    CHECK_ERR(ChildPopper{*this}.popInputs(scope.inputType, inputs));
+    scope.inputLocals.reserve(inputs.size());
+    for (size_t i = 0; i < inputs.size(); ++i) {
+      auto scratch = addScratchLocal(scope.inputType[i]);
+      CHECK_ERR(scratch);
+      scope.inputLocals.push_back(*scratch);
+      pushSynthetic(builder.makeLocalSet(*scratch, inputs[i]));
+    }
+  }
+  scopeStack.emplace_back(std::move(scope));
+  if (hasInput) {
+    auto& newScope = getScope();
+    for (size_t i = 0; i < newScope.inputLocals.size(); ++i) {
+      pushSynthetic(
+        builder.makeLocalGet(newScope.inputLocals[i], newScope.inputType[i]));
+    }
+  }
+  return Ok{};
 }
 
 Result<Expression*> IRBuilder::finishScope(Block* block) {
@@ -1212,8 +1258,8 @@ Result<> IRBuilder::visitEnd() {
     if (scope.inputType != Type::none && scope.labelUsed) {
       // Branches to this loop carry values, but Binaryen IR does not support
       // that. Fix this by trampolining the branches through new code that sets
-      // the branch value to the appropriate scratch local.
-      fixLoopWithInput(loop, scope.inputType, scope.inputLocal);
+      // the branch value to the appropriate scratch locals.
+      fixLoopWithInput(loop, scope.inputType, scope.inputLocals);
     }
     loop->finalize(loop->type);
     push(loop);
@@ -1222,8 +1268,19 @@ Result<> IRBuilder::visitEnd() {
     if (scope.inputType != Type::none) {
       // Normally an if without an else must have type none, but if there is an
       // input parameter, the empty else arm must propagate its value.
-      // Synthesize an else arm that loads the value from the scratch local.
-      iff->ifFalse = builder.makeLocalGet(scope.inputLocal, scope.inputType);
+      // Synthesize an else arm that loads the value from the scratch locals.
+      if (scope.inputType.isSingle()) {
+        iff->ifFalse =
+          builder.makeLocalGet(scope.inputLocals[0], scope.inputType);
+      } else {
+        std::vector<Expression*> gets;
+        gets.reserve(scope.inputLocals.size());
+        for (size_t i = 0; i < scope.inputLocals.size(); ++i) {
+          gets.push_back(
+            builder.makeLocalGet(scope.inputLocals[i], scope.inputType[i]));
+        }
+        iff->ifFalse = builder.makeTupleMake(gets);
+      }
     } else {
       iff->ifFalse = nullptr;
     }
@@ -1368,17 +1425,18 @@ IRBuilder::fixExtraOutput(ScopeCtx& scope, Name label, Expression* curr) {
   return curr;
 }
 
-// Branches to this loop need to be trampolined through code that sets the value
-// carried by the branch to the appropriate scratch local before branching to
-// the loop. Transform this:
+// Branches to this loop need to be trampolined through code that sets the
+// values carried by the branch to the appropriate scratch locals before
+// branching to the loop. Transform this:
 //
 //   (loop $l (param t1) (result t2) ...)
 //
-// to this:
+// to this (or, when t1 is a tuple, using a tuple scratch local to extract each
+// element into its corresponding input scratch local):
 //
 //  (loop $l0 (result t2)
 //    (block $l1 (result t2)
-//      (local.set $scratch ;; set the branch values to the scratch local
+//      (local.set $scratch ;; set the branch value to the scratch local
 //        (block $l (result t1)
 //          (br $l1 ;; exit the loop with the fallthrough value, if any.
 //            ...   ;; contains branches to $l
@@ -1388,7 +1446,9 @@ IRBuilder::fixExtraOutput(ScopeCtx& scope, Name label, Expression* curr) {
 //      (br $l0) ;; continue the loop
 //    )
 //  )
-void IRBuilder::fixLoopWithInput(Loop* loop, Type inputType, Index scratch) {
+void IRBuilder::fixLoopWithInput(Loop* loop,
+                                 Type inputType,
+                                 const std::vector<Index>& scratch) {
   auto l = loop->name;
   auto l0 = makeFresh(l, 0);
   auto l1 = makeFresh(l, 1);
@@ -1399,10 +1459,21 @@ void IRBuilder::fixLoopWithInput(Loop* loop, Type inputType, Index scratch) {
           loop->body, l, builder.makeBreak(l1), inputType)
       : builder.makeBlock(l, {builder.makeBreak(l1, loop->body)}, inputType);
 
-  Block* outer = builder.makeBlock(
-    l1,
-    {builder.makeLocalSet(scratch, inner), builder.makeBreak(l0)},
-    loop->type);
+  std::vector<Expression*> list;
+  if (inputType.isSingle()) {
+    list.push_back(builder.makeLocalSet(scratch[0], inner));
+  } else {
+    auto tupleScratch = *addScratchLocal(inputType);
+    list.push_back(builder.makeLocalSet(tupleScratch, inner));
+    for (Index i = 0; i < scratch.size(); ++i) {
+      list.push_back(builder.makeLocalSet(
+        scratch[i],
+        builder.makeTupleExtract(builder.makeLocalGet(tupleScratch, inputType),
+                                 i)));
+    }
+  }
+  list.push_back(builder.makeBreak(l0));
+  Block* outer = builder.makeBlock(l1, list, loop->type);
 
   loop->body = outer;
   loop->name = l0;
