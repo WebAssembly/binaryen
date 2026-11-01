@@ -1181,39 +1181,6 @@
     )
   )
 
-  ;; CHECK-TEXT:      (func $pop-can-be-supertype (type $0)
-  ;; CHECK-TEXT-NEXT:  (try
-  ;; CHECK-TEXT-NEXT:   (do
-  ;; CHECK-TEXT-NEXT:   )
-  ;; CHECK-TEXT-NEXT:   (catch $e-eqref
-  ;; CHECK-TEXT-NEXT:    (drop
-  ;; CHECK-TEXT-NEXT:     (pop eqref)
-  ;; CHECK-TEXT-NEXT:    )
-  ;; CHECK-TEXT-NEXT:   )
-  ;; CHECK-TEXT-NEXT:  )
-  ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $pop-can-be-supertype (type $0)
-  ;; CHECK-BIN-NEXT:  (try
-  ;; CHECK-BIN-NEXT:   (do
-  ;; CHECK-BIN-NEXT:   )
-  ;; CHECK-BIN-NEXT:   (catch $e-eqref
-  ;; CHECK-BIN-NEXT:    (drop
-  ;; CHECK-BIN-NEXT:     (pop eqref)
-  ;; CHECK-BIN-NEXT:    )
-  ;; CHECK-BIN-NEXT:   )
-  ;; CHECK-BIN-NEXT:  )
-  ;; CHECK-BIN-NEXT: )
-  (func $pop-can-be-supertype
-    (try
-      (do)
-      (catch $e-eqref
-        (drop
-          (pop anyref) ;; pop can be supertype
-        )
-      )
-    )
-  )
-
   ;; CHECK-TEXT:      (func $catchless-try-with-inner-delegate (type $0)
   ;; CHECK-TEXT-NEXT:  (try $label$0
   ;; CHECK-TEXT-NEXT:   (do
@@ -1780,18 +1747,6 @@
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
 ;; CHECK-BIN-NODEBUG:      (func $22 (type $0)
-;; CHECK-BIN-NODEBUG-NEXT:  (try
-;; CHECK-BIN-NODEBUG-NEXT:   (do
-;; CHECK-BIN-NODEBUG-NEXT:   )
-;; CHECK-BIN-NODEBUG-NEXT:   (catch $tag$3
-;; CHECK-BIN-NODEBUG-NEXT:    (drop
-;; CHECK-BIN-NODEBUG-NEXT:     (pop eqref)
-;; CHECK-BIN-NODEBUG-NEXT:    )
-;; CHECK-BIN-NODEBUG-NEXT:   )
-;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT: )
-
-;; CHECK-BIN-NODEBUG:      (func $23 (type $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  (try $label
 ;; CHECK-BIN-NODEBUG-NEXT:   (do
 ;; CHECK-BIN-NODEBUG-NEXT:    (try
@@ -1808,7 +1763,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  (unreachable)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $24 (type $0)
+;; CHECK-BIN-NODEBUG:      (func $23 (type $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  (block
 ;; CHECK-BIN-NODEBUG-NEXT:   (block
 ;; CHECK-BIN-NODEBUG-NEXT:   )
@@ -1821,7 +1776,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  (nop)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $25 (type $0)
+;; CHECK-BIN-NODEBUG:      (func $24 (type $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  (if
 ;; CHECK-BIN-NODEBUG-NEXT:   (try (result i32)
 ;; CHECK-BIN-NODEBUG-NEXT:    (do
