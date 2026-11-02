@@ -42,15 +42,16 @@
 // safe despite the multiple allocations because the local x is always used
 // immediately, as data: rather than store a reference, we can just focus on the
 // data. That is, each struct.new just writes a bunch of fields, and it all
-// could have been unboxed. After verifying that nothing observes x as a reference (no
-// ref.eq), and it does not escape, we can optimize this. Heap2Local will then
-// see 'untangled' allocations, each one immediately consumed, and remove them
-// all.
+// could have been unboxed. After verifying that nothing observes x as a
+// reference (no ref.eq), and it does not escape, we can optimize this.
+// Heap2Local will then see 'untangled' allocations, each one immediately
+// consumed, and remove them all.
 //
 // Note that Heap2Local could safely optimize in this example, even before our
 // changes: while the `x.value` operations are not exclusive to allocations, the
 // live ranges of the allocations join exactly there - they do not overlap in a
-// dangerous way. But here is an example HeapUntangling can optimize that Heap2Local cannot:
+// dangerous way. But here is an example HeapUntangling can optimize that
+// Heap2Local cannot:
 //
 //   (local.set $a
 //     (struct.new $struct
