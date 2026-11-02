@@ -255,9 +255,10 @@ struct HeapUntangling : public WalkerPass<PostWalker<HeapUntangling>> {
 
       // Finally, if the initial value of the local from the function entry is
       // used, do not optimize. For a var, that means the default of zero, which
-      // will trap when accessed, while for params it means an unknown value. We therefore
-      // must always check for params, but for vars, if trapsNeverHappen then we
-      // can assume the null is never accessed, and ignore this issue.
+      // will trap when accessed, while for params it means an unknown value. We
+      // therefore must always check for params, but for vars, if
+      // trapsNeverHappen then we can assume the null is never accessed, and
+      // ignore this issue.
       if (func->isParam(localIndex) || !getPassOptions().trapsNeverHappen) {
         bool ok = true;
         for (auto* op : info.structOperations) {
