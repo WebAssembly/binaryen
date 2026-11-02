@@ -123,15 +123,15 @@ struct SubtypingDiscoverer
     self()->noteSubtype(sub, super);
   }
   void internalNoteSubtype(Expression*& sub, Type super) {
-    notedChildren.push_back(sub);
+    markNoted(sub);
     self()->noteSubtype(sub, super);
   }
   void internalNoteSubtype(Expression*& sub, Expression* super) {
-    notedChildren.push_back(sub);
+    markNoted(sub);
     self()->noteSubtype(sub, super);
   }
   void internalNoteNonFlowSubtype(Expression*& sub, Type super) {
-    notedChildren.push_back(sub);
+    markNoted(sub);
     self()->noteNonFlowSubtype(sub, super);
   }
   void internalNoteCast(HeapType sub, Type super) {
@@ -141,12 +141,25 @@ struct SubtypingDiscoverer
     self()->noteCast(sub, super);
   }
   void internalNoteCast(Expression*& sub, Type super) {
-    notedChildren.push_back(sub);
+    markNoted(sub);
     self()->noteCast(sub, super);
   }
   void internalNoteCast(Expression*& sub, Expression* super) {
-    notedChildren.push_back(sub);
+    markNoted(sub);
     self()->noteCast(sub, super);
+  }
+
+  // Mark something as being noted in some manner; no default value need be
+  // applied for it.
+  void markNoted(Expression* curr) {
+    notedChildren.push_back(curr);
+  }
+
+  // Mark something as having no constraints, and so it does not need to be
+  // noted, and still gets no default value.
+  void markUnconstrained(Expression* curr) {
+    // Internally, we implement this by just marking it as if it were noted.
+    markNoted(curr);
   }
 
   // Visitor wrapper: all the visitFoo() methods call visit(), which wraps
@@ -297,7 +310,9 @@ struct SubtypingDiscoverer
     internalNoteSubtype(curr->ifTrue, curr);
     internalNoteSubtype(curr->ifFalse, curr);
   }
-  void visitDrop(Drop* curr) {}
+  void visitDrop(Drop* curr) {
+    markUnconstrained(curr->value);
+  }
   void visitReturn(Return* curr) {
     if (curr->value) {
       internalNoteSubtype(curr->value, self()->getFunction()->getResults());
