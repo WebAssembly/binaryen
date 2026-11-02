@@ -94,11 +94,10 @@ namespace wasm {
 // Note that noteCast(Type, Type) and noteCast(Type, Expression) never occur and
 // do not need to be implemented.
 //
-// The class must also inherit from ControlFlowWalker (for findBreakTarget).
-//
 
 template<typename SubType>
-struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
+struct SubtypingDiscoverer
+  : public ControlFlowWalker<SubType, OverriddenVisitor<SubType>> {
   SubType* self() { return static_cast<SubType*>(this); }
 
   void visitFunction(Function* func) {
@@ -150,14 +149,22 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
     self()->noteCast(sub, super);
   }
 
-  // Visitor wrapper
+  // Visitor wrapper: all the visitFoo() methods call visit(), which wraps
+  // around the super's visit().
+
+#define DELEGATE(CLASS_TO_VISIT)                                               \
+  static void doVisit##CLASS_TO_VISIT(SubType* self, Expression** currp) {     \
+    self->visit(*currp);                                                       \
+  }
+
+#include "wasm-delegations.def"
 
   void visit(Expression* curr) {
     notedChildren.clear();
 
-    OverriddenVisitor<SubType>::visit();
+    OverriddenVisitor<SubType>::visit(curr);
 
-    for (auto* child : ChildIterator(curr)) {
+    for (auto*& child : ChildIterator(curr)) {
       if (std::find(notedChildren.begin(),
                     notedChildren.end(),
                     child) == notedChildren.end()) {
@@ -416,6 +423,29 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
       case BrOnCastDescEq:
       case BrOnCastDescEqFail:
         internalNoteCast(curr->ref, curr->castType);
+        if (curr->desc) {
+          // As with RefCast, we must keep a descriptor valid.
+          self()->noteSubtype(curr->desc, curr->desc->type);
+        }
+        if (curr->op == BrOnCast || curr->op == BrOnCastDescEq) {
+          // If we do not branch, we flow out the original input when the cast
+          // fails. If the cast type is nullable then nulls take the branch, so
+          // the fallthrough value is made non-nullable.
+          if (curr->type.isRef()) {
+            auto type = curr->type;
+            if (curr->castType.isNullableRef()) {
+              type = type.with(Nullable);
+            }
+            self()->noteSubtype(curr->ref, type);
+          }
+        } else {
+          // We send the original input along when the cast fails, so the input
+          // must be sendable to the target.
+          auto* breakTarget = self()->findBreakTarget(curr->name);
+          if (breakTarget->type.isRef()) {
+            self()->noteSubtype(curr->ref, breakTarget->type);
+          }
+        }
         break;
     }
     internalNoteSubtype(curr->getSentType(),

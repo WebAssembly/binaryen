@@ -2112,8 +2112,7 @@ void TranslateToFuzzReader::mutate(Function* func) {
   // First, find things to replace and their types. SubtypingDiscoverer needs to
   // do this in a single, full walk (as types of children depend on parents, and
   // even block targets).
-  struct Finder
-    : public ControlFlowWalker<Finder, SubtypingDiscoverer<Finder>> {
+  struct Finder : public SubtypingDiscoverer<Finder> {
     // Maps children we can replace to the types we can replace them with. We
     // only store nontrivial ones (i.e., where the type is not just the child's
     // type).

@@ -116,11 +116,9 @@ HeapType generalizeArrayType(HeapType type,
 //
 // TODO: handle ref.as_non_null, br_on_null, publish, br_if, etc. better: we do
 //       not need to consider their results fixed.
-struct Generalizer
-  : public ControlFlowWalker<Generalizer, SubtypingDiscoverer<Generalizer>> {
+struct Generalizer : public SubtypingDiscoverer<Generalizer> {
 
-  using Super =
-    ControlFlowWalker<Generalizer, SubtypingDiscoverer<Generalizer>>;
+  using Super = SubtypingDiscoverer<Generalizer>;
 
   Function* func;
 

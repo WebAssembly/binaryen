@@ -65,12 +65,8 @@ namespace wasm {
 namespace {
 
 struct StripRefiningCasts
-  : public WalkerPass<
-      ControlFlowWalker<StripRefiningCasts,
-                        SubtypingDiscoverer<StripRefiningCasts>>> {
-  using Super =
-    WalkerPass<ControlFlowWalker<StripRefiningCasts,
-                                 SubtypingDiscoverer<StripRefiningCasts>>>;
+  : public WalkerPass<SubtypingDiscoverer<StripRefiningCasts>> {
+  using Super = WalkerPass<SubtypingDiscoverer<StripRefiningCasts>>;
 
   bool isFunctionParallel() override { return true; }
 

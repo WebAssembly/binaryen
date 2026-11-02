@@ -682,11 +682,8 @@ struct Unsubtyping : Pass, Noter<Unsubtyping> {
       Set<Type> exposedToJS;
     };
 
-    struct Collector
-      : ControlFlowWalker<Collector, SubtypingDiscoverer<Collector>>,
-        Noter<Collector> {
-      using Super =
-        ControlFlowWalker<Collector, SubtypingDiscoverer<Collector>>;
+    struct Collector : SubtypingDiscoverer<Collector>, Noter<Collector> {
+      using Super = SubtypingDiscoverer<Collector>;
 
       Info& info;
       bool trapsNeverHappen;
