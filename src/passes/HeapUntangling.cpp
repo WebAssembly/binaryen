@@ -42,8 +42,7 @@
 // safe despite the multiple allocations because the local x is always used
 // immediately, as data: rather than store a reference, we can just focus on the
 // data. That is, each struct.new just writes a bunch of fields, and it all
-// could have been replaced with a single allocation up front and struct.sets in
-// all other places. After verifying that nothing observes x as a reference (no
+// could have been unboxed. After verifying that nothing observes x as a reference (no
 // ref.eq), and it does not escape, we can optimize this. Heap2Local will then
 // see 'untangled' allocations, each one immediately consumed, and remove them
 // all.
