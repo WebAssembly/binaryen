@@ -17,6 +17,7 @@
 #ifndef wasm_support_result_h
 #define wasm_support_result_h
 
+#include <cassert>
 #include <string>
 #include <variant>
 
@@ -38,6 +39,9 @@ struct Err {
   if (auto _val = (val); auto err = _val.getErr()) {                           \
     return (typename decltype(_val)::ErrorType)(*err);                         \
   }
+
+// Assert that the result is not an error.
+#define ASSERT_OK(val) assert(!(val).getErr());
 
 // Represent a result of type T or an error message.
 template<typename T = Ok, typename E = Err> struct [[nodiscard]] Result {
