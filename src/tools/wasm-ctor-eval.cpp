@@ -1256,20 +1256,25 @@ start_eval:
       // of them, and leave it to the optimizer to remove redundant or
       // unnecessary operations. We just recompute the entire local
       // serialization sets from scratch each time here, for all locals.
-      localExprs.clear();
+      //
+      // Serialize into a new vector first and only update |localExprs| once
+      // all locals succeed: if serialization fails partway through, we must
+      // preserve the previous |localExprs|.
+      std::vector<Expression*> nextLocalExprs;
       for (Index i = 0; i < func->getNumLocals(); i++) {
         auto* serialized = interface.getSerialization(scope.locals[i]);
         if (!serialized) {
           break;
         }
-        localExprs.push_back(serialized);
+        nextLocalExprs.push_back(serialized);
       }
-      if (localExprs.size() < func->getNumLocals()) {
+      if (nextLocalExprs.size() < func->getNumLocals()) {
         if (!quiet) {
           std::cout << "  ...stopping due to non-serializable local\n";
         }
         break;
       }
+      localExprs = std::move(nextLocalExprs);
       interface.applyToModule();
       successes++;
 

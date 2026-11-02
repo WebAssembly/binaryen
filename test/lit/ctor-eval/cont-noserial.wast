@@ -208,6 +208,119 @@
  )
 )
 
+(module
+ (type $func (func))
+ (type $cont (cont $func))
+
+ (elem declare func $func)
+
+ (func $func (type $func))
+
+ (func $test (export "test") (result i32)
+  ;; When a statement fails to serialize a local after an earlier statement
+  ;; succeeded, we must preserve the serialized local state from the earlier
+  ;; statement. Without the fix, clearing localExprs when failing to serialize
+  ;; $cont omitted (local.set $str (string.const "hello")) in $test_2, leaving
+  ;; (local.get $str) reading an uninitialized non-nullable local so post-eval
+  ;; optimization replaced it with (unreachable) instead of returning 42.
+  (local $cont (ref null $cont))
+  (local $str (ref string))
+  ;; This will succeed.
+  (local.set $str
+   (string.const "hello")
+  )
+  ;; This will fail; we cannot serialize continuations.
+  (local.set $cont
+   (cont.new $cont
+    (ref.func $func)
+   )
+  )
+  ;; Optimizations should not turn this into (unreachable).
+  (drop
+   (local.get $str)
+  )
+  (i32.const 42)
+ )
+)
+
+;; CHECK:      (type $0 (func (result i32)))
+
+;; CHECK:      (export "test" (func $test_2))
+
+;; CHECK:      (func $test_2 (type $0) (result i32)
+;; CHECK-NEXT:  (i32.const 42)
+;; CHECK-NEXT: )
+
+;; NOKEEP:      (type $0 (func (result i32)))
+
+;; NOKEEP:      (export "test" (func $test_2))
+
+;; NOKEEP:      (func $test_2 (type $0) (result i32)
+;; NOKEEP-NEXT:  (i32.const 42)
+;; NOKEEP-NEXT: )
+(module
+ ;; CHECK:      (type $func (func))
+ ;; NOKEEP:      (type $func (func))
+ (type $func (func))
+ ;; CHECK:      (type $cont (cont $func))
+ ;; NOKEEP:      (type $cont (cont $func))
+ (type $cont (cont $func))
+
+ ;; CHECK:      (type $2 (func (param i32) (result i32)))
+
+ ;; CHECK:      (elem declare func $func)
+ ;; NOKEEP:      (type $2 (func (param i32) (result i32)))
+
+ ;; NOKEEP:      (elem declare func $func)
+ (elem declare func $func)
+
+ ;; CHECK:      (export "test" (func $test))
+
+ ;; CHECK:      (func $func (type $func)
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT: )
+ ;; NOKEEP:      (export "test" (func $test))
+
+ ;; NOKEEP:      (func $func (type $func)
+ ;; NOKEEP-NEXT:  (nop)
+ ;; NOKEEP-NEXT: )
+ (func $func (type $func))
+
+ ;; CHECK:      (func $test (type $2) (param $x i32) (result i32)
+ ;; CHECK-NEXT:  (local $cont (ref null $cont))
+ ;; CHECK-NEXT:  (local.set $cont
+ ;; CHECK-NEXT:   (cont.new $cont
+ ;; CHECK-NEXT:    (ref.func $func)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (local.get $x)
+ ;; CHECK-NEXT: )
+ ;; NOKEEP:      (func $test (type $2) (param $x i32) (result i32)
+ ;; NOKEEP-NEXT:  (local $cont (ref null $cont))
+ ;; NOKEEP-NEXT:  (local.set $cont
+ ;; NOKEEP-NEXT:   (cont.new $cont
+ ;; NOKEEP-NEXT:    (ref.func $func)
+ ;; NOKEEP-NEXT:   )
+ ;; NOKEEP-NEXT:  )
+ ;; NOKEEP-NEXT:  (local.get $x)
+ ;; NOKEEP-NEXT: )
+ (func $test (export "test") (param $x i32) (result i32)
+  ;; When the very first statement fails to serialize a local after serializing a
+  ;; parameter, we must not leave partial parameter serializations behind.
+  ;; Without the fix, serializing $x (to i32.const 0) before failing on $cont
+  ;; left localExprs non-empty even with zero successful statements, which
+  ;; caused wasm-ctor-eval to emit a partially evaluated copy $test_2 that
+  ;; overwrote $x with (i32.const 0) and always returned 0 instead of $x.
+  (local $cont (ref null $cont))
+  (local.set $cont
+   (cont.new $cont
+    (ref.func $func)
+   )
+  )
+  (local.get $x)
+ )
+)
+
 ;; As the original testcase, but the serialization problem happens in a
 ;; return_call param.
 (module
