@@ -19,8 +19,8 @@
 // allocations written to a single local.
 //
 // This pass identifies a simple case of refs not escaping, like Heap2Local, but
-// allowing more than a single allocation (struct.new), which is better, but
-// which handles a far simpler-to-identify situation, which is worse. To see the
+// allows more than a single allocation (struct.new), which is better, and
+// only handles a far simpler-to-identify situation, which is worse. To see the
 // motivation, consider overlapping allocations like this:
 //
 //    x = new Foo(42);
