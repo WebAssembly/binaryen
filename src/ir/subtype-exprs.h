@@ -158,8 +158,9 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
     OverriddenVisitor<SubType>::visit();
 
     for (auto* child : ChildIterator(curr)) {
-      if (std::find(notedChildren.begin(), notedChildren.end(), child) ==
-          notedChildren.end()) {
+      if (std::find(notedChildren.begin(),
+                    notedChildren.end(),
+                    child) == notedChildren.end()) {
         // Nothing was noted for this child, so note the default, that is, its
         // current value.
         self()->noteSubtype(child, child->type);
