@@ -256,10 +256,14 @@ struct HeapUntangling : public WalkerPass<PostWalker<HeapUntangling>> {
       // Finally, if the initial value of the local from the function entry is
       // used, do not optimize. For a var, that means the default of zero, which
       // will trap when accessed, while for params it means an unknown value. We
-      // therefore must always check for params, but for vars, if
-      // trapsNeverHappen then we can assume the null is never accessed, and
-      // ignore this issue.
-      if (func->isParam(localIndex) || !getPassOptions().trapsNeverHappen) {
+      // therefore must always check for params, but for vars, if we know the
+      // default cannot be accessed, we can skip this (which is the case for
+      // a non-nullable local, and if trapsNeverHappen as a trap on the null
+      // default can be ignored).
+      auto localType = func->getLocalType(localIndex);
+      auto canReadDefault =
+        localType.isNullableRef() && !getPassOptions().trapsNeverHappen;
+      if (func->isParam(localIndex) || canReadDefault) {
         bool ok = true;
         for (auto* op : info.structOperations) {
           Expression* ref;
@@ -291,8 +295,7 @@ struct HeapUntangling : public WalkerPass<PostWalker<HeapUntangling>> {
       }
 
       // Allocate new locals to store each field.
-      auto& fields =
-        func->getLocalType(localIndex).getHeapType().getStruct().fields;
+      auto& fields = localType.getHeapType().getStruct().fields;
       for (auto fieldIndex : usedFields) {
         optimizedLocals[localIndex][fieldIndex] =
           builder.addVar(func, fields[fieldIndex].type);
