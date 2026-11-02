@@ -76,18 +76,19 @@ namespace wasm {
 // This is the only signature we need for the non-flowing case since it always
 // stems from an expression that is compared against a type.
 //
-// The concrete signatures are:
+// The concrete signatures are (Expression* by value is also fine when the
+// expression slot itself is not needed):
 //
 //      void noteSubtype(Type, Type);
 //      void noteSubtype(HeapType, HeapType);
 //      void noteSubtype(Type, Expression*);
-//      void noteSubtype(Expression*, Type);
-//      void noteSubtype(Expression*, Expression*);
-//      void noteNonFlowSubtype(Expression*, Type);
+//      void noteSubtype(Expression*&, Type);
+//      void noteSubtype(Expression*&, Expression*);
+//      void noteNonFlowSubtype(Expression*&, Type);
 //      void noteCast(HeapType, Type);
 //      void noteCast(HeapType, HeapType);
-//      void noteCast(Expression*, Type);
-//      void noteCast(Expression*, Expression*);
+//      void noteCast(Expression*&, Type);
+//      void noteCast(Expression*&, Expression*);
 //
 // Note that noteCast(Type, Type) and noteCast(Type, Expression) never occur and
 // do not need to be implemented.
@@ -119,21 +120,23 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
   void doNoteSubtype(Type sub, Expression* super) {
     self()->noteSubtype(sub, super);
   }
-  void doNoteSubtype(Expression* sub, Type super) {
+  void doNoteSubtype(Expression*& sub, Type super) {
     self()->noteSubtype(sub, super);
   }
-  void doNoteSubtype(Expression* sub, Expression* super) {
+  void doNoteSubtype(Expression*& sub, Expression* super) {
     self()->noteSubtype(sub, super);
   }
-  void doNoteNonFlowSubtype(Expression* sub, Type super) {
+  void doNoteNonFlowSubtype(Expression*& sub, Type super) {
     self()->noteNonFlowSubtype(sub, super);
   }
   void doNoteCast(HeapType sub, Type super) { self()->noteCast(sub, super); }
   void doNoteCast(HeapType sub, HeapType super) {
     self()->noteCast(sub, super);
   }
-  void doNoteCast(Expression* sub, Type super) { self()->noteCast(sub, super); }
-  void doNoteCast(Expression* sub, Expression* super) {
+  void doNoteCast(Expression*& sub, Type super) {
+    self()->noteCast(sub, super);
+  }
+  void doNoteCast(Expression*& sub, Expression* super) {
     self()->noteCast(sub, super);
   }
 
