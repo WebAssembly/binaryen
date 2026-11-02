@@ -152,6 +152,10 @@ struct Generalizer : public SubtypingDiscoverer<Generalizer> {
     if (glb.getGLB() != old) {
       worklist.push_back(expr);
     }
+
+    // Prevent the parent subtype-exprs from applying a default constraint
+    // (of its own type); we will compute things.
+    markUnconstrained(expr);
   }
 
   void addConstraint(Index local, Type type) {
@@ -188,6 +192,9 @@ struct Generalizer : public SubtypingDiscoverer<Generalizer> {
       addConstraint(curr->value, localType);
     } else if (localType.isRef()) {
       localSetValues[curr->index].push_back(curr->value);
+
+      // Prevent the parent subtype-exprs from applying a default constraint.
+      markUnconstrained(curr->value);
     }
   }
 
