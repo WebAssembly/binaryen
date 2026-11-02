@@ -50,7 +50,7 @@
 // Note that Heap2Local could safely optimize in this example, even before our
 // changes: while the `x.value` operations are not exclusive to allocations, the
 // live ranges of the allocations join exactly there - they do not overlap in a
-// dangerous way. But here is an actually dangerous example:
+// dangerous way. But here is an example HeapUntangling can optimize that Heap2Local cannot:
 //
 //   (local.set $a
 //     (struct.new $struct
