@@ -191,7 +191,9 @@ struct HeapUntangling : public WalkerPass<PostWalker<HeapUntangling>> {
       // below, and not really needed, since
       //
       //   (struct.set $A k
-      //     (struct.new $A ..)
+      //     (local.tee
+      //       (struct.new $A ..)
+      //     )
       //     (value)
       //   )
       //
