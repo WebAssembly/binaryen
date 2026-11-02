@@ -18,6 +18,7 @@
 #define wasm_ir_subtype_exprs_h
 
 #include "ir/branch-utils.h"
+#include "ir/iteration.h"
 #include "wasm-traversal.h"
 #include "wasm-type.h"
 #include "wasm.h"
@@ -123,12 +124,15 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
     self()->noteSubtype(sub, super);
   }
   void internalNoteSubtype(Expression*& sub, Type super) {
+    notedChildren.push_back(sub);
     self()->noteSubtype(sub, super);
   }
   void internalNoteSubtype(Expression*& sub, Expression* super) {
+    notedChildren.push_back(sub);
     self()->noteSubtype(sub, super);
   }
   void internalNoteNonFlowSubtype(Expression*& sub, Type super) {
+    notedChildren.push_back(sub);
     self()->noteNonFlowSubtype(sub, super);
   }
   void internalNoteCast(HeapType sub, Type super) {
@@ -138,11 +142,34 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
     self()->noteCast(sub, super);
   }
   void internalNoteCast(Expression*& sub, Type super) {
+    notedChildren.push_back(sub);
     self()->noteCast(sub, super);
   }
   void internalNoteCast(Expression*& sub, Expression* super) {
+    notedChildren.push_back(sub);
     self()->noteCast(sub, super);
   }
+
+  // Visitor wrapper
+
+  void visit(Expression* curr) {
+    notedChildren.clear();
+
+    OverriddenVisitor<SubType>::visit();
+
+    for (auto* child : ChildIterator(curr)) {
+      if (std::find(notedChildren.begin(), notedChildren.end(), child) ==
+          notedChildren.end()) {
+        // Nothing was noted for this child, so note the default, that is, its
+        // current value.
+        self()->noteSubtype(child, child->type);
+      }
+    }
+  }
+
+  // The children that were noted. We will apply the default value to others,
+  // that were not.
+  std::vector<Expression*> notedChildren;
 
   // Visitors
 
