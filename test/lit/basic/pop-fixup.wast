@@ -289,8 +289,6 @@
  ;; CHECK-NEXT:  (local $scratch (tuple i32 i32))
  ;; CHECK-NEXT:  (local $scratch_1 i32)
  ;; CHECK-NEXT:  (local $scratch_2 i32)
- ;; CHECK-NEXT:  (local $scratch_3 i32)
- ;; CHECK-NEXT:  (local $scratch_4 i32)
  ;; CHECK-NEXT:  (try
  ;; CHECK-NEXT:   (do
  ;; CHECK-NEXT:   )
@@ -308,22 +306,12 @@
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (block
+ ;; CHECK-NEXT:     (nop)
  ;; CHECK-NEXT:     (drop
- ;; CHECK-NEXT:      (block (result i32)
- ;; CHECK-NEXT:       (local.set $scratch_4
- ;; CHECK-NEXT:        (local.get $scratch_1)
- ;; CHECK-NEXT:       )
- ;; CHECK-NEXT:       (drop
- ;; CHECK-NEXT:        (block (result i32)
- ;; CHECK-NEXT:         (local.set $scratch_3
- ;; CHECK-NEXT:          (local.get $scratch_2)
- ;; CHECK-NEXT:         )
- ;; CHECK-NEXT:         (nop)
- ;; CHECK-NEXT:         (local.get $scratch_3)
- ;; CHECK-NEXT:        )
- ;; CHECK-NEXT:       )
- ;; CHECK-NEXT:       (local.get $scratch_4)
- ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (local.get $scratch_2)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (drop
+ ;; CHECK-NEXT:      (local.get $scratch_1)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
@@ -334,7 +322,8 @@
   catch $e2
    ;; An unnamed block with multivalue input params extracts the tuple elements
    ;; into scratch locals before the block rather than moving the pop into the
-   ;; block.
+   ;; block. Inside the block, the input local.gets are hoisted across the nop
+   ;; without needing extra scratch locals.
    block (param i32 i32)
     nop
     drop

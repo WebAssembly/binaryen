@@ -186,7 +186,6 @@
   ;; CHECK:      (func $block-multivalue-drop (type $2)
   ;; CHECK-NEXT:  (local $scratch i32)
   ;; CHECK-NEXT:  (local $scratch_1 i64)
-  ;; CHECK-NEXT:  (local $scratch_2 i32)
   ;; CHECK-NEXT:  (local.set $scratch
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
@@ -195,15 +194,10 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (block
   ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (block (result i32)
-  ;; CHECK-NEXT:     (local.set $scratch_2
-  ;; CHECK-NEXT:      (local.get $scratch)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (drop
-  ;; CHECK-NEXT:      (local.get $scratch_1)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (local.get $scratch_2)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $scratch_1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (local.get $scratch)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -218,16 +212,12 @@
 
   ;; CHECK:      (func $block-passthrough-nop (type $1) (result i32)
   ;; CHECK-NEXT:  (local $scratch i32)
-  ;; CHECK-NEXT:  (local $scratch_1 i32)
   ;; CHECK-NEXT:  (local.set $scratch
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (block (result i32)
-  ;; CHECK-NEXT:   (local.set $scratch_1
-  ;; CHECK-NEXT:    (local.get $scratch)
-  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (nop)
-  ;; CHECK-NEXT:   (local.get $scratch_1)
+  ;; CHECK-NEXT:   (local.get $scratch)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $block-passthrough-nop (result i32)
@@ -769,8 +759,6 @@
   ;; CHECK:      (func $if-else-multivalue (type $8) (result f32)
   ;; CHECK-NEXT:  (local $scratch i32)
   ;; CHECK-NEXT:  (local $scratch_1 i64)
-  ;; CHECK-NEXT:  (local $scratch_2 i32)
-  ;; CHECK-NEXT:  (local $scratch_3 i32)
   ;; CHECK-NEXT:  (local.set $scratch
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
@@ -781,29 +769,19 @@
   ;; CHECK-NEXT:   (i32.const 2)
   ;; CHECK-NEXT:   (then
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block (result i32)
-  ;; CHECK-NEXT:      (local.set $scratch_2
-  ;; CHECK-NEXT:       (local.get $scratch)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (local.get $scratch_1)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (local.get $scratch_2)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.get $scratch_1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $scratch)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (f32.const 3)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (else
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block (result i32)
-  ;; CHECK-NEXT:      (local.set $scratch_3
-  ;; CHECK-NEXT:       (local.get $scratch)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (local.get $scratch_1)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (local.get $scratch_3)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.get $scratch_1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $scratch)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (f32.const 4)
   ;; CHECK-NEXT:   )
@@ -864,35 +842,25 @@
 
   ;; CHECK:      (func $if-tunnel-nop (type $1) (result i32)
   ;; CHECK-NEXT:  (local $scratch i32)
-  ;; CHECK-NEXT:  (local $scratch_1 i32)
-  ;; CHECK-NEXT:  (local $scratch_2 i32)
   ;; CHECK-NEXT:  (local.set $scratch
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (block (result i32)
-  ;; CHECK-NEXT:   (local.set $scratch_2
-  ;; CHECK-NEXT:    (block (result i32)
-  ;; CHECK-NEXT:     (local.set $scratch_1
-  ;; CHECK-NEXT:      (local.get $scratch)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (nop)
-  ;; CHECK-NEXT:     (local.get $scratch_1)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (nop)
   ;; CHECK-NEXT:   (if (result i32)
   ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:    (then
-  ;; CHECK-NEXT:     (local.get $scratch_2)
+  ;; CHECK-NEXT:     (local.get $scratch)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (else
-  ;; CHECK-NEXT:     (local.get $scratch_2)
+  ;; CHECK-NEXT:     (local.get $scratch)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $if-tunnel-nop (result i32)
-    ;; A none-typed instruction before an if wraps the outer input in a block
-    ;; when popping the if input, requiring a new scratch local for the if.
+    ;; A none-typed instruction before an if does not prevent the outer input
+    ;; from being hoisted and tunneled into the if.
     i32.const 0
     block (param i32) (result i32)
       nop
