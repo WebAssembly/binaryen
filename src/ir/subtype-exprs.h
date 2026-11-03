@@ -323,7 +323,9 @@ struct SubtypingDiscoverer
   void visitUnreachable(Unreachable* curr) {}
   void visitPop(Pop* curr) {}
   void visitRefNull(RefNull* curr) {}
-  void visitRefIsNull(RefIsNull* curr) {}
+  void visitRefIsNull(RefIsNull* curr) {
+    markUnconstrained(curr->value);
+  }
   void visitRefFunc(RefFunc* curr) {}
   void visitRefEq(RefEq* curr) {
     // Match the shareability of the current content (if it exists).

@@ -203,6 +203,9 @@ struct Generalizer : public SubtypingDiscoverer<Generalizer> {
     // will refinalize them if their input types generalize. Propagate any
     // requirement on the output back to the input.
     exprSubs[curr].push_back(curr->value);
+
+    // Prevent the parent subtype-exprs from applying a default constraint.
+    markUnconstrained(curr->value);
   }
 
   void visitCallRef(CallRef* curr) {
