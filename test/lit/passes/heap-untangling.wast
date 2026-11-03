@@ -49,7 +49,7 @@
   ;; H2L:      (tag $tag (type $4) (param i32))
   (tag $tag (param i32))
 
-  ;; CHECK:      (func $optimize-struct-get-if (type $4) (param $x i32) (result i32)
+  ;; CHECK:      (func $optimize-struct-get-if (type $5) (param $x i32) (result i32)
   ;; CHECK-NEXT:  (local $ref (ref null $struct))
   ;; CHECK-NEXT:  (local $2 i32)
   ;; CHECK-NEXT:  (if
@@ -79,7 +79,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.get $2)
   ;; CHECK-NEXT: )
-  ;; H2L:      (func $optimize-struct-get-if (type $1) (param $x i32) (result i32)
+  ;; H2L:      (func $optimize-struct-get-if (type $2) (param $x i32) (result i32)
   ;; H2L-NEXT:  (local $ref (ref null $struct))
   ;; H2L-NEXT:  (local $2 i32)
   ;; H2L-NEXT:  (local $3 i32)
@@ -398,7 +398,7 @@
     )
   )
 
-  ;; CHECK:      (func $optimize-struct-get-different-fields (type $4) (param $x i32) (result i32)
+  ;; CHECK:      (func $optimize-struct-get-different-fields (type $5) (param $x i32) (result i32)
   ;; CHECK-NEXT:  (local $ref (ref null $struct-2fields))
   ;; CHECK-NEXT:  (local $2 i32)
   ;; CHECK-NEXT:  (local $3 i32)
@@ -443,7 +443,7 @@
   ;; CHECK-NEXT:   (local.get $3)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; H2L:      (func $optimize-struct-get-different-fields (type $1) (param $x i32) (result i32)
+  ;; H2L:      (func $optimize-struct-get-different-fields (type $2) (param $x i32) (result i32)
   ;; H2L-NEXT:  (local $ref (ref null $struct-2fields))
   ;; H2L-NEXT:  (local $2 i32)
   ;; H2L-NEXT:  (local $3 i32)
@@ -554,7 +554,7 @@
     )
   )
 
-  ;; CHECK:      (func $optimize-packed-signed-and-unsigned (type $4) (param $x i32) (result i32)
+  ;; CHECK:      (func $optimize-packed-signed-and-unsigned (type $5) (param $x i32) (result i32)
   ;; CHECK-NEXT:  (local $ref (ref null $struct-packed))
   ;; CHECK-NEXT:  (local $2 i32)
   ;; CHECK-NEXT:  (local $3 i32)
@@ -620,7 +620,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; H2L:      (func $optimize-packed-signed-and-unsigned (type $1) (param $x i32) (result i32)
+  ;; H2L:      (func $optimize-packed-signed-and-unsigned (type $2) (param $x i32) (result i32)
   ;; H2L-NEXT:  (local $ref (ref null $struct-packed))
   ;; H2L-NEXT:  (local $2 i32)
   ;; H2L-NEXT:  (local $3 i32)
@@ -779,7 +779,7 @@
     )
   )
 
-  ;; CHECK:      (func $no-single-set (type $5) (result i32)
+  ;; CHECK:      (func $no-single-set (type $4) (result i32)
   ;; CHECK-NEXT:  (local $ref (ref null $struct))
   ;; CHECK-NEXT:  (local.set $ref
   ;; CHECK-NEXT:   (struct.new $struct
@@ -795,7 +795,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; H2L:      (func $no-single-set (type $2) (result i32)
+  ;; H2L:      (func $no-single-set (type $1) (result i32)
   ;; H2L-NEXT:  (local $ref (ref null $struct))
   ;; H2L-NEXT:  (local $1 i32)
   ;; H2L-NEXT:  (local $2 i32)
@@ -844,7 +844,7 @@
     )
   )
 
-  ;; CHECK:      (func $unreachable (type $5) (result i32)
+  ;; CHECK:      (func $unreachable (type $4) (result i32)
   ;; CHECK-NEXT:  (local $ref (ref null $struct))
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (block
@@ -881,7 +881,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; H2L:      (func $unreachable (type $2) (result i32)
+  ;; H2L:      (func $unreachable (type $1) (result i32)
   ;; H2L-NEXT:  (local $ref (ref null $struct))
   ;; H2L-NEXT:  (local $1 i32)
   ;; H2L-NEXT:  (local $2 i32)
@@ -963,7 +963,7 @@
     )
   )
 
-  ;; CHECK:      (func $unreachable-2 (type $5) (result i32)
+  ;; CHECK:      (func $unreachable-2 (type $4) (result i32)
   ;; CHECK-NEXT:  (local $ref (ref null $struct))
   ;; CHECK-NEXT:  (local.set $ref
   ;; CHECK-NEXT:   (block ;; (replaces unreachable StructNew we can't emit)
@@ -987,7 +987,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; H2L:      (func $unreachable-2 (type $2) (result i32)
+  ;; H2L:      (func $unreachable-2 (type $1) (result i32)
   ;; H2L-NEXT:  (local $ref (ref null $struct))
   ;; H2L-NEXT:  (local $1 i32)
   ;; H2L-NEXT:  (local $2 i32)
@@ -1099,7 +1099,7 @@
     )
   )
 
-  ;; CHECK:      (func $extra-local.get (type $5) (result i32)
+  ;; CHECK:      (func $extra-local.get (type $4) (result i32)
   ;; CHECK-NEXT:  (local $ref (ref null $struct))
   ;; CHECK-NEXT:  (local.set $ref
   ;; CHECK-NEXT:   (struct.new $struct
@@ -1123,7 +1123,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; H2L:      (func $extra-local.get (type $2) (result i32)
+  ;; H2L:      (func $extra-local.get (type $1) (result i32)
   ;; H2L-NEXT:  (local $ref (ref null $struct))
   ;; H2L-NEXT:  (local $1 i32)
   ;; H2L-NEXT:  (local $2 i32)
@@ -1195,7 +1195,7 @@
     )
   )
 
-  ;; CHECK:      (func $extra-local.tee (type $5) (result i32)
+  ;; CHECK:      (func $extra-local.tee (type $4) (result i32)
   ;; CHECK-NEXT:  (local $ref (ref null $struct))
   ;; CHECK-NEXT:  (local.set $ref
   ;; CHECK-NEXT:   (struct.new $struct
@@ -1223,7 +1223,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; H2L:      (func $extra-local.tee (type $2) (result i32)
+  ;; H2L:      (func $extra-local.tee (type $1) (result i32)
   ;; H2L-NEXT:  (local $ref (ref null $struct))
   ;; H2L-NEXT:  (local $1 i32)
   ;; H2L-NEXT:  (local $2 i32)
@@ -1309,7 +1309,7 @@
     )
   )
 
-  ;; CHECK:      (func $only-local.tee (type $5) (result i32)
+  ;; CHECK:      (func $only-local.tee (type $4) (result i32)
   ;; CHECK-NEXT:  (local $ref (ref null $struct-2fields))
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 i32)
@@ -1354,7 +1354,7 @@
   ;; CHECK-NEXT:   (local.get $2)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; H2L:      (func $only-local.tee (type $2) (result i32)
+  ;; H2L:      (func $only-local.tee (type $1) (result i32)
   ;; H2L-NEXT:  (local $ref (ref null $struct-2fields))
   ;; H2L-NEXT:  (local $1 i32)
   ;; H2L-NEXT:  (local $2 i32)
@@ -1784,7 +1784,7 @@
     )
   )
 
-  ;; CHECK:      (func $subtyping (type $5) (result i32)
+  ;; CHECK:      (func $subtyping (type $4) (result i32)
   ;; CHECK-NEXT:  (local $ref (ref null $super))
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (block
@@ -1816,7 +1816,7 @@
   ;; CHECK-NEXT:   (local.get $1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; H2L:      (func $subtyping (type $2) (result i32)
+  ;; H2L:      (func $subtyping (type $1) (result i32)
   ;; H2L-NEXT:  (local $ref (ref null $super))
   ;; H2L-NEXT:  (local $1 i32)
   ;; H2L-NEXT:  (local $2 i32)
@@ -1894,7 +1894,7 @@
     )
   )
 
-  ;; CHECK:      (func $try-pop (type $4) (param $x i32) (result i32)
+  ;; CHECK:      (func $try-pop (type $5) (param $x i32) (result i32)
   ;; CHECK-NEXT:  (local $ref (ref null $struct))
   ;; CHECK-NEXT:  (local $2 i32)
   ;; CHECK-NEXT:  (block
@@ -1938,7 +1938,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.get $2)
   ;; CHECK-NEXT: )
-  ;; H2L:      (func $try-pop (type $1) (param $x i32) (result i32)
+  ;; H2L:      (func $try-pop (type $2) (param $x i32) (result i32)
   ;; H2L-NEXT:  (local $ref (ref null $struct))
   ;; H2L-NEXT:  (local $2 i32)
   ;; H2L-NEXT:  (local $3 i32)
@@ -2041,7 +2041,7 @@
     )
   )
 
-  ;; CHECK:      (func $nullref (type $5) (result i32)
+  ;; CHECK:      (func $nullref (type $4) (result i32)
   ;; CHECK-NEXT:  (local $ref nullref)
   ;; CHECK-NEXT:  (local.set $ref
   ;; CHECK-NEXT:   (ref.null none)
@@ -2056,7 +2056,7 @@
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; H2L:      (func $nullref (type $2) (result i32)
+  ;; H2L:      (func $nullref (type $1) (result i32)
   ;; H2L-NEXT:  (local $ref nullref)
   ;; H2L-NEXT:  (local.set $ref
   ;; H2L-NEXT:   (ref.null none)
@@ -2274,7 +2274,7 @@
     )
   )
 
-  ;; CHECK:      (func $struct.get-unknown-child (type $4) (param $x i32) (result i32)
+  ;; CHECK:      (func $struct.get-unknown-child (type $5) (param $x i32) (result i32)
   ;; CHECK-NEXT:  (local $ref (ref null $struct))
   ;; CHECK-NEXT:  (local $2 i32)
   ;; CHECK-NEXT:  (block
@@ -2309,7 +2309,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.get $2)
   ;; CHECK-NEXT: )
-  ;; H2L:      (func $struct.get-unknown-child (type $1) (param $x i32) (result i32)
+  ;; H2L:      (func $struct.get-unknown-child (type $2) (param $x i32) (result i32)
   ;; H2L-NEXT:  (local $ref (ref null $struct))
   ;; H2L-NEXT:  (local $2 i32)
   ;; H2L-NEXT:  (local $3 i32)
@@ -2401,7 +2401,7 @@
     (struct.new_default $struct)
   )
 
-  ;; CHECK:      (func $optimize-struct-set (type $4) (param $x i32) (result i32)
+  ;; CHECK:      (func $optimize-struct-set (type $5) (param $x i32) (result i32)
   ;; CHECK-NEXT:  (local $ref (ref null $struct))
   ;; CHECK-NEXT:  (local $2 i32)
   ;; CHECK-NEXT:  (block
@@ -2436,7 +2436,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.get $2)
   ;; CHECK-NEXT: )
-  ;; H2L:      (func $optimize-struct-set (type $1) (param $x i32) (result i32)
+  ;; H2L:      (func $optimize-struct-set (type $2) (param $x i32) (result i32)
   ;; H2L-NEXT:  (local $ref (ref null $struct))
   ;; H2L-NEXT:  (local $2 i32)
   ;; H2L-NEXT:  (local $3 i32)
@@ -2518,7 +2518,7 @@
     )
   )
 
-  ;; CHECK:      (func $optimize-struct-set-2 (type $4) (param $x i32) (result i32)
+  ;; CHECK:      (func $optimize-struct-set-2 (type $5) (param $x i32) (result i32)
   ;; CHECK-NEXT:  (local $ref (ref null $struct-2fields-mut))
   ;; CHECK-NEXT:  (local $2 i32)
   ;; CHECK-NEXT:  (local $3 i32)
@@ -2568,7 +2568,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.get $2)
   ;; CHECK-NEXT: )
-  ;; H2L:      (func $optimize-struct-set-2 (type $1) (param $x i32) (result i32)
+  ;; H2L:      (func $optimize-struct-set-2 (type $2) (param $x i32) (result i32)
   ;; H2L-NEXT:  (local $ref (ref null $struct-2fields-mut))
   ;; H2L-NEXT:  (local $2 i32)
   ;; H2L-NEXT:  (local $3 i32)
@@ -2687,8 +2687,11 @@
     )
   )
 
-  ;; CHECK:      (func $set-value-overlap (type $5) (result i32)
+  ;; CHECK:      (func $set-value-overlap (type $4) (result i32)
   ;; CHECK-NEXT:  (local $a (ref null $struct))
+  ;; CHECK-NEXT:  (local.set $a
+  ;; CHECK-NEXT:   (struct.new_default $struct)
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.set $a
   ;; CHECK-NEXT:   (struct.new_default $struct)
   ;; CHECK-NEXT:  )
@@ -2707,14 +2710,23 @@
   ;; CHECK-NEXT:   (local.get $a)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; H2L:      (func $set-value-overlap (type $2) (result i32)
+  ;; H2L:      (func $set-value-overlap (type $1) (result i32)
   ;; H2L-NEXT:  (local $a (ref null $struct))
   ;; H2L-NEXT:  (local $1 i32)
   ;; H2L-NEXT:  (local $2 i32)
   ;; H2L-NEXT:  (local $3 i32)
+  ;; H2L-NEXT:  (local $4 i32)
   ;; H2L-NEXT:  (drop
   ;; H2L-NEXT:   (block (result nullref)
   ;; H2L-NEXT:    (local.set $1
+  ;; H2L-NEXT:     (i32.const 0)
+  ;; H2L-NEXT:    )
+  ;; H2L-NEXT:    (ref.null none)
+  ;; H2L-NEXT:   )
+  ;; H2L-NEXT:  )
+  ;; H2L-NEXT:  (drop
+  ;; H2L-NEXT:   (block (result nullref)
+  ;; H2L-NEXT:    (local.set $2
   ;; H2L-NEXT:     (i32.const 0)
   ;; H2L-NEXT:    )
   ;; H2L-NEXT:    (ref.null none)
@@ -2724,15 +2736,15 @@
   ;; H2L-NEXT:   (drop
   ;; H2L-NEXT:    (ref.null none)
   ;; H2L-NEXT:   )
-  ;; H2L-NEXT:   (local.set $1
+  ;; H2L-NEXT:   (local.set $2
   ;; H2L-NEXT:    (block (result i32)
   ;; H2L-NEXT:     (drop
   ;; H2L-NEXT:      (block (result nullref)
-  ;; H2L-NEXT:       (local.set $3
+  ;; H2L-NEXT:       (local.set $4
   ;; H2L-NEXT:        (i32.const 99)
   ;; H2L-NEXT:       )
-  ;; H2L-NEXT:       (local.set $2
-  ;; H2L-NEXT:        (local.get $3)
+  ;; H2L-NEXT:       (local.set $3
+  ;; H2L-NEXT:        (local.get $4)
   ;; H2L-NEXT:       )
   ;; H2L-NEXT:       (ref.null none)
   ;; H2L-NEXT:      )
@@ -2745,11 +2757,14 @@
   ;; H2L-NEXT:   (drop
   ;; H2L-NEXT:    (ref.null none)
   ;; H2L-NEXT:   )
-  ;; H2L-NEXT:   (local.get $2)
+  ;; H2L-NEXT:   (local.get $3)
   ;; H2L-NEXT:  )
   ;; H2L-NEXT: )
-  (func $set-value-overlap (export "test") (result i32)
+  (func $set-value-overlap (result i32)
     (local $a (ref null $struct))
+    (local.set $a
+      (struct.new_default $struct)
+    )
     (local.set $a
       (struct.new_default $struct)
     )
@@ -2774,7 +2789,132 @@
     )
   )
 
-  ;; CHECK:      (func $use-some (type $4) (param $x i32) (result i32)
+  ;; CHECK:      (func $set-value-overlap-2 (type $4) (result i32)
+  ;; CHECK-NEXT:  (local $a (ref null $struct))
+  ;; CHECK-NEXT:  (local $b (ref null $struct))
+  ;; CHECK-NEXT:  (local $2 i32)
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (local.set $a
+  ;; CHECK-NEXT:    (struct.new_default $struct)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.set $2
+  ;; CHECK-NEXT:    (struct.get $struct 0
+  ;; CHECK-NEXT:     (local.get $a)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (local.set $a
+  ;; CHECK-NEXT:    (struct.new_default $struct)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.set $2
+  ;; CHECK-NEXT:    (struct.get $struct 0
+  ;; CHECK-NEXT:     (local.get $a)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $2
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (local.set $b
+  ;; CHECK-NEXT:     (struct.new $struct
+  ;; CHECK-NEXT:      (i32.const 99)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.get $2)
+  ;; CHECK-NEXT: )
+  ;; H2L:      (func $set-value-overlap-2 (type $1) (result i32)
+  ;; H2L-NEXT:  (local $a (ref null $struct))
+  ;; H2L-NEXT:  (local $b (ref null $struct))
+  ;; H2L-NEXT:  (local $2 i32)
+  ;; H2L-NEXT:  (local $3 i32)
+  ;; H2L-NEXT:  (local $4 i32)
+  ;; H2L-NEXT:  (local $5 i32)
+  ;; H2L-NEXT:  (local $6 i32)
+  ;; H2L-NEXT:  (block
+  ;; H2L-NEXT:   (drop
+  ;; H2L-NEXT:    (block (result nullref)
+  ;; H2L-NEXT:     (local.set $3
+  ;; H2L-NEXT:      (i32.const 0)
+  ;; H2L-NEXT:     )
+  ;; H2L-NEXT:     (ref.null none)
+  ;; H2L-NEXT:    )
+  ;; H2L-NEXT:   )
+  ;; H2L-NEXT:   (local.set $2
+  ;; H2L-NEXT:    (block (result i32)
+  ;; H2L-NEXT:     (drop
+  ;; H2L-NEXT:      (ref.null none)
+  ;; H2L-NEXT:     )
+  ;; H2L-NEXT:     (local.get $3)
+  ;; H2L-NEXT:    )
+  ;; H2L-NEXT:   )
+  ;; H2L-NEXT:  )
+  ;; H2L-NEXT:  (block
+  ;; H2L-NEXT:   (drop
+  ;; H2L-NEXT:    (block (result nullref)
+  ;; H2L-NEXT:     (local.set $4
+  ;; H2L-NEXT:      (i32.const 0)
+  ;; H2L-NEXT:     )
+  ;; H2L-NEXT:     (ref.null none)
+  ;; H2L-NEXT:    )
+  ;; H2L-NEXT:   )
+  ;; H2L-NEXT:   (local.set $2
+  ;; H2L-NEXT:    (block (result i32)
+  ;; H2L-NEXT:     (drop
+  ;; H2L-NEXT:      (ref.null none)
+  ;; H2L-NEXT:     )
+  ;; H2L-NEXT:     (local.get $4)
+  ;; H2L-NEXT:    )
+  ;; H2L-NEXT:   )
+  ;; H2L-NEXT:  )
+  ;; H2L-NEXT:  (local.set $2
+  ;; H2L-NEXT:   (block (result i32)
+  ;; H2L-NEXT:    (drop
+  ;; H2L-NEXT:     (block (result nullref)
+  ;; H2L-NEXT:      (local.set $6
+  ;; H2L-NEXT:       (i32.const 99)
+  ;; H2L-NEXT:      )
+  ;; H2L-NEXT:      (local.set $5
+  ;; H2L-NEXT:       (local.get $6)
+  ;; H2L-NEXT:      )
+  ;; H2L-NEXT:      (ref.null none)
+  ;; H2L-NEXT:     )
+  ;; H2L-NEXT:    )
+  ;; H2L-NEXT:    (i32.const 10)
+  ;; H2L-NEXT:   )
+  ;; H2L-NEXT:  )
+  ;; H2L-NEXT:  (local.get $2)
+  ;; H2L-NEXT: )
+  (func $set-value-overlap-2 (result i32)
+    (local $a (ref null $struct))
+    (local $b (ref null $struct))
+    (local.set $a
+      (struct.new_default $struct)
+    )
+    (local.set $a
+      (struct.new_default $struct)
+    )
+    ;; As above, but now the nested local.set is of $b. Now we can optimize
+    ;; $a.
+    (struct.set $struct 0
+      (local.get $a)
+      (block (result i32)
+        (local.set $b          ;; this changed
+          (struct.new $struct
+            (i32.const 99)
+          )
+        )
+        (i32.const 10)
+      )
+    )
+    (struct.get $struct 0
+      (local.get $a)
+    )
+  )
+
+  ;; CHECK:      (func $use-some (type $5) (param $x i32) (result i32)
   ;; CHECK-NEXT:  (local $ref (ref null $struct-3fields-mixed))
   ;; CHECK-NEXT:  (local $2 i32)
   ;; CHECK-NEXT:  (if
@@ -2806,7 +2946,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.get $2)
   ;; CHECK-NEXT: )
-  ;; H2L:      (func $use-some (type $1) (param $x i32) (result i32)
+  ;; H2L:      (func $use-some (type $2) (param $x i32) (result i32)
   ;; H2L-NEXT:  (local $ref (ref null $struct-3fields-mixed))
   ;; H2L-NEXT:  (local $2 i32)
   ;; H2L-NEXT:  (local $3 i32)
@@ -2905,7 +3045,7 @@
     )
   )
 
-  ;; CHECK:      (func $use-some-2 (type $4) (param $x i32) (result i32)
+  ;; CHECK:      (func $use-some-2 (type $5) (param $x i32) (result i32)
   ;; CHECK-NEXT:  (local $ref (ref null $struct-3fields-mixed))
   ;; CHECK-NEXT:  (local $2 i32)
   ;; CHECK-NEXT:  (local $3 i64)
@@ -2953,7 +3093,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; H2L:      (func $use-some-2 (type $1) (param $x i32) (result i32)
+  ;; H2L:      (func $use-some-2 (type $2) (param $x i32) (result i32)
   ;; H2L-NEXT:  (local $ref (ref null $struct-3fields-mixed))
   ;; H2L-NEXT:  (local $2 i32)
   ;; H2L-NEXT:  (local $3 i64)
