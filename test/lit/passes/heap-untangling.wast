@@ -45,9 +45,15 @@
   ;; CHECK:      (type $sub (sub $super (struct (field i32))))
   (type $sub (sub $super (struct (field i32))))
 
+  ;; CHECK:      (global $struct (ref $struct) (struct.new_default $struct))
+
   ;; CHECK:      (tag $tag (type $9) (param i32))
+  ;; H2L:      (global $struct (ref $struct) (struct.new_default $struct))
+
   ;; H2L:      (tag $tag (type $4) (param i32))
   (tag $tag (param i32))
+
+  (global $struct (ref $struct) (struct.new_default $struct))
 
   ;; CHECK:      (func $optimize-struct-get-if (type $5) (param $x i32) (result i32)
   ;; CHECK-NEXT:  (local $ref (ref null $struct))
@@ -76,6 +82,10 @@
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.set $struct 0
+  ;; CHECK-NEXT:   (global.get $struct)
+  ;; CHECK-NEXT:   (i32.const 42)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.get $2)
   ;; CHECK-NEXT: )
@@ -127,6 +137,10 @@
   ;; H2L-NEXT:    )
   ;; H2L-NEXT:   )
   ;; H2L-NEXT:  )
+  ;; H2L-NEXT:  (struct.set $struct 0
+  ;; H2L-NEXT:   (global.get $struct)
+  ;; H2L-NEXT:   (i32.const 42)
+  ;; H2L-NEXT:  )
   ;; H2L-NEXT:  (local.get $2)
   ;; H2L-NEXT: )
   (func $optimize-struct-get-if (param $x i32) (result i32)
@@ -148,6 +162,11 @@
           )
         )
       )
+    )
+    ;; An irrelevant struct set to the same type does not confuse us.
+    (struct.set $struct 0
+      (global.get $struct)
+      (i32.const 42)
     )
     (struct.get $struct 0
       (local.get $ref)
