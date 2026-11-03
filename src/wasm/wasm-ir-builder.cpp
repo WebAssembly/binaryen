@@ -788,14 +788,15 @@ public:
     return popConstrainedChildren(children);
   }
 
-  Result<> popInputs(Type inputType, std::vector<Expression*>& inputs) {
-    inputs.resize(inputType.size());
+  Result<std::vector<Expression*>> popInputs(Type inputType) {
+    std::vector<Expression*> inputs(inputType.size());
     std::vector<Child> children;
     children.reserve(inputType.size());
     for (size_t i = 0; i < inputType.size(); ++i) {
       children.push_back({&inputs[i], {inputType[i]}});
     }
-    return popConstrainedChildren(children);
+    CHECK_ERR(popConstrainedChildren(children));
+    return inputs;
   }
 };
 
@@ -914,7 +915,9 @@ Result<> IRBuilder::pushScope(ScopeCtx&& scope) {
   if (!scope.isDelimiter()) {
     bool isUnnamedBlock = scope.getBlock() && !scope.getBlock()->name;
     if (hasInput) {
-      CHECK_ERR(ChildPopper{*this}.popInputs(scope.inputType, inputs));
+      auto popped = ChildPopper{*this}.popInputs(scope.inputType);
+      CHECK_ERR(popped);
+      inputs = std::move(*popped);
     } else if (isUnnamedBlock && getScope().exprStack.size() == 1 &&
                getScope().exprStack[0]->is<Pop>()) {
       // Allow pops to move into unnamed blocks even without input types so we
@@ -1500,12 +1503,13 @@ void IRBuilder::fixLoopWithInput(Loop* loop,
   if (inputType.isSingle()) {
     list.push_back(builder.makeLocalSet(scratch[0], inner));
   } else {
-    auto tupleScratch = *addScratchLocal(inputType);
-    list.push_back(builder.makeLocalSet(tupleScratch, inner));
+    auto tupleScratch = addScratchLocal(inputType);
+    ASSERT_OK(tupleScratch);
+    list.push_back(builder.makeLocalSet(*tupleScratch, inner));
     for (Index i = 0; i < scratch.size(); ++i) {
       list.push_back(builder.makeLocalSet(
         scratch[i],
-        builder.makeTupleExtract(builder.makeLocalGet(tupleScratch, inputType),
+        builder.makeTupleExtract(builder.makeLocalGet(*tupleScratch, inputType),
                                  i)));
     }
   }
