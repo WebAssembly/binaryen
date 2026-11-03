@@ -379,7 +379,9 @@ struct SubtypingDiscoverer
     }
   }
   void visitRethrow(Rethrow* curr) {}
-  void visitThrowRef(ThrowRef* curr) {}
+  void visitThrowRef(ThrowRef* curr) {
+    internalNoteNonFlowSubtype(curr->exnref, Type(HeapType::exn, Nullable));
+  }
   void visitTupleMake(TupleMake* curr) {}
   void visitTupleExtract(TupleExtract* curr) {}
   void visitRefI31(RefI31* curr) {}
@@ -462,13 +464,15 @@ struct SubtypingDiscoverer
                         self()->findBreakTarget(curr->name));
   }
   void visitStructNew(StructNew* curr) {
-    if (!curr->type.isStruct() || curr->isWithDefault()) {
+    if (!curr->type.isStruct()) {
       return;
     }
-    const auto& fields = curr->type.getHeapType().getStruct().fields;
-    assert(fields.size() == curr->operands.size());
-    for (size_t i = 0, size = fields.size(); i < size; ++i) {
-      internalNoteSubtype(curr->operands[i], fields[i].type);
+    if (!curr->isWithDefault()) {
+      const auto& fields = curr->type.getHeapType().getStruct().fields;
+      assert(fields.size() == curr->operands.size());
+      for (size_t i = 0, size = fields.size(); i < size; ++i) {
+        internalNoteSubtype(curr->operands[i], fields[i].type);
+      }
     }
     if (curr->desc) {
       auto descType = curr->type.getHeapType().getDescriptorType();
@@ -655,8 +659,10 @@ struct SubtypingDiscoverer
     }
     // The type of the function reference must remain a subtype of the function
     // type expected by the continuation.
-    internalNoteSubtype(curr->func->type.getHeapType(),
-                        curr->type.getHeapType().getContinuation().type);
+    internalNoteSubtype(
+      curr->func,
+      Type(curr->type.getHeapType().getContinuation().type, Nullable));
+
   }
   void visitContBind(ContBind* curr) {
     if (!curr->cont->type.isContinuation() || !curr->type.isContinuation()) {
@@ -757,6 +763,10 @@ struct SubtypingDiscoverer
       for (Index i = 0; i < curr->operands.size(); ++i) {
         internalNoteSubtype(curr->operands[i], params[i]);
       }
+    } else {
+      assert(curr->operands.size() == 1);
+      internalNoteNonFlowSubtype(curr->operands[0],
+                                 Type(HeapType::exn, Nullable));
     }
   }
   void visitStackSwitch(StackSwitch* curr) {
