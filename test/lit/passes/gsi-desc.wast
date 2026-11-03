@@ -219,9 +219,11 @@
 
   ;; CHECK:      (type $12 (func (param (ref $sub)) (result (ref $sub.desc))))
 
-  ;; CHECK:      (type $13 (func (param (ref (exact $super))) (result (ref (exact $super.desc)))))
+  ;; CHECK:      (type $13 (func (param (ref (exact $sub))) (result (ref (exact $sub.desc)))))
 
-  ;; CHECK:      (type $14 (func (param (ref $other)) (result (ref $other.desc))))
+  ;; CHECK:      (type $14 (func (param (ref (exact $super))) (result (ref (exact $super.desc)))))
+
+  ;; CHECK:      (type $15 (func (param (ref $other)) (result (ref $other.desc))))
 
   ;; CHECK:      (global $g (ref $super) (struct.new_default_desc $sub
   ;; CHECK-NEXT:  (struct.new_default $sub.desc)
@@ -303,29 +305,42 @@
     )
   )
 
-  ;; CHECK:      (func $exact-op (type $13) (param $x (ref (exact $super))) (result (ref (exact $super.desc)))
-  ;; CHECK-NEXT:  (ref.get_desc $super
-  ;; CHECK-NEXT:   (block (result (ref (exact $super)))
+  ;; CHECK:      (func $exact-op (type $13) (param $x (ref (exact $sub))) (result (ref (exact $sub.desc)))
+  ;; CHECK-NEXT:  (ref.get_desc $sub
+  ;; CHECK-NEXT:   (block (result (ref (exact $sub)))
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (ref.as_non_null
   ;; CHECK-NEXT:      (local.get $x)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (ref.cast (ref (exact $super))
+  ;; CHECK-NEXT:    (ref.cast (ref (exact $sub))
   ;; CHECK-NEXT:     (global.get $g)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $exact-op (param $x (ref (exact $super))) (result (ref (exact $super.desc)))
+  (func $exact-op (param $x (ref (exact $sub))) (result (ref (exact $sub.desc)))
     ;; Reading the descriptor from inexact (ref $super) would produce inexact
-    ;; (ref $super.desc), so we must cast the global.get to (ref (exact $super)).
+    ;; (ref $super.desc), so we must cast the global.get to (ref (exact $sub)).
+    (ref.get_desc $sub
+      (local.get $x)
+    )
+  )
+
+  ;; CHECK:      (func $exact-super-op (type $14) (param $x (ref (exact $super))) (result (ref (exact $super.desc)))
+  ;; CHECK-NEXT:  (ref.get_desc $super
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $exact-super-op (param $x (ref (exact $super))) (result (ref (exact $super.desc)))
+    ;; $g initializes $sub, not $super, so an exact reference to $super cannot
+    ;; refer to $g and is not optimized.
     (ref.get_desc $super
       (local.get $x)
     )
   )
 
-  ;; CHECK:      (func $non-struct-global (type $14) (param $x (ref $other)) (result (ref $other.desc))
+  ;; CHECK:      (func $non-struct-global (type $15) (param $x (ref $other)) (result (ref $other.desc))
   ;; CHECK-NEXT:  (ref.get_desc $other
   ;; CHECK-NEXT:   (block (result (ref $other))
   ;; CHECK-NEXT:    (drop
@@ -348,3 +363,177 @@
   )
 )
 
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $super (sub (descriptor $super.desc) (struct)))
+    (type $super (sub (descriptor $super.desc) (struct)))
+    ;; CHECK:       (type $super.desc (sub (describes $super) (struct)))
+    (type $super.desc (sub (describes $super) (struct)))
+    ;; CHECK:       (type $sub (sub $super (descriptor $sub.desc) (struct)))
+    (type $sub (sub $super (descriptor $sub.desc) (struct)))
+    ;; CHECK:       (type $sub.desc (sub $super.desc (describes $sub) (struct)))
+    (type $sub.desc (sub $super.desc (describes $sub) (struct)))
+
+    ;; CHECK:       (type $super2 (sub (descriptor $super2.desc) (struct)))
+    (type $super2 (sub (descriptor $super2.desc) (struct)))
+    ;; CHECK:       (type $super2.desc (sub (describes $super2) (struct)))
+    (type $super2.desc (sub (describes $super2) (struct)))
+    ;; CHECK:       (type $sub2 (sub $super2 (descriptor $sub2.desc) (struct)))
+    (type $sub2 (sub $super2 (descriptor $sub2.desc) (struct)))
+    ;; CHECK:       (type $sub2.desc (sub $super2.desc (describes $sub2) (struct)))
+    (type $sub2.desc (sub $super2.desc (describes $sub2) (struct)))
+
+    ;; CHECK:       (type $other (sub (descriptor $other.desc) (struct)))
+    (type $other (sub (descriptor $other.desc) (struct)))
+    ;; CHECK:       (type $other.desc (sub (describes $other) (struct)))
+    (type $other.desc (sub (describes $other) (struct)))
+  )
+
+  ;; CHECK:      (type $10 (func (param (ref $super)) (result (ref $super.desc))))
+
+  ;; CHECK:      (type $11 (func (param (ref (exact $super))) (result (ref (exact $super.desc)))))
+
+  ;; CHECK:      (type $12 (func (param (ref $super2) (ref (exact $super2)))))
+
+  ;; CHECK:      (type $13 (func (param (ref (exact $other))) (result (ref (exact $other.desc)))))
+
+  ;; CHECK:      (global $sub.unnested.desc (ref (exact $sub.desc)) (struct.new_default $sub.desc))
+
+  ;; CHECK:      (global $super.unnested.desc (ref (exact $super.desc)) (struct.new_default $super.desc))
+
+  ;; CHECK:      (global $sub (ref $super) (struct.new_default_desc $sub
+  ;; CHECK-NEXT:  (global.get $sub.unnested.desc)
+  ;; CHECK-NEXT: ))
+  (global $sub (ref $super) (struct.new_default_desc $sub
+    (struct.new_default $sub.desc)
+  ))
+  ;; CHECK:      (global $super (ref $super) (struct.new_default_desc $super
+  ;; CHECK-NEXT:  (global.get $super.unnested.desc)
+  ;; CHECK-NEXT: ))
+  (global $super (ref $super) (struct.new_default_desc $super
+    (struct.new_default $super.desc)
+  ))
+  ;; CHECK:      (global $super2 (ref (exact $super2)) (struct.new_default_desc $super2
+  ;; CHECK-NEXT:  (struct.new_default $super2.desc)
+  ;; CHECK-NEXT: ))
+  (global $super2 (ref (exact $super2)) (struct.new_default_desc $super2
+    (struct.new_default $super2.desc)
+  ))
+  ;; CHECK:      (global $other (ref (exact $other)) (struct.new_default_desc $other
+  ;; CHECK-NEXT:  (struct.new_default $other.desc)
+  ;; CHECK-NEXT: ))
+  (global $other (ref (exact $other)) (struct.new_default_desc $other
+    (struct.new_default $other.desc)
+  ))
+
+  ;; CHECK:      (func $super-non-exact (type $10) (param $x (ref $super)) (result (ref $super.desc))
+  ;; CHECK-NEXT:  (select (result (ref $super.desc))
+  ;; CHECK-NEXT:   (global.get $sub.unnested.desc)
+  ;; CHECK-NEXT:   (global.get $super.unnested.desc)
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (ref.as_non_null
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (global.get $sub)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $super-non-exact (param $x (ref $super)) (result (ref $super.desc))
+    ;; A non-exact reference to $super can refer to either $super or $sub, so
+    ;; we select between their descriptors.
+    (ref.get_desc $super
+      (local.get $x)
+    )
+  )
+
+  ;; CHECK:      (func $super-exact (type $11) (param $x (ref (exact $super))) (result (ref (exact $super.desc)))
+  ;; CHECK-NEXT:  (ref.get_desc $super
+  ;; CHECK-NEXT:   (block (result (ref (exact $super)))
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.cast (ref (exact $super))
+  ;; CHECK-NEXT:     (global.get $super)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $super-exact (param $x (ref (exact $super))) (result (ref (exact $super.desc)))
+    ;; An exact reference to $super can only refer to $super, not $sub.
+    (ref.get_desc $super
+      (local.get $x)
+    )
+  )
+
+  ;; CHECK:      (func $allocated-sub (type $12) (param $non-exact (ref $super2)) (param $exact (ref (exact $super2)))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new_default_desc $sub2
+  ;; CHECK-NEXT:    (struct.new_default $sub2.desc)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.get_desc $super2
+  ;; CHECK-NEXT:    (local.get $non-exact)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.get_desc $super2
+  ;; CHECK-NEXT:    (block (result (ref (exact $super2)))
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (ref.as_non_null
+  ;; CHECK-NEXT:       (local.get $exact)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (global.get $super2)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $allocated-sub (param $non-exact (ref $super2)) (param $exact (ref (exact $super2)))
+    ;; Allocating $sub2 in a function marks $sub2 unoptimizable and propagates
+    ;; that unoptimizability to its supertype $super2, preventing optimization
+    ;; of non-exact $super2. However, exact $super2 can still be optimized
+    ;; because exact references cannot refer to $sub2.
+    (drop
+      (struct.new_default_desc $sub2
+        (struct.new_default $sub2.desc)
+      )
+    )
+    (drop
+      (ref.get_desc $super2
+        (local.get $non-exact)
+      )
+    )
+    (drop
+      (ref.get_desc $super2
+        (local.get $exact)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $allocated-exact (type $13) (param $x (ref (exact $other))) (result (ref (exact $other.desc)))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new_default_desc $other
+  ;; CHECK-NEXT:    (struct.new_default $other.desc)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (ref.get_desc $other
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $allocated-exact (param $x (ref (exact $other))) (result (ref (exact $other.desc)))
+    ;; Allocating $other in a function prevents optimizing even an exact
+    ;; reference to $other.
+    (drop
+      (struct.new_default_desc $other
+        (struct.new_default $other.desc)
+      )
+    )
+    (ref.get_desc $other
+      (local.get $x)
+    )
+  )
+)

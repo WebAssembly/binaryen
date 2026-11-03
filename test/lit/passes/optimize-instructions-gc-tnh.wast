@@ -312,6 +312,69 @@
     )
   )
 
+  ;; TNH:      (func $if.arm.null.unreachable (type $void)
+  ;; TNH-NEXT:  (block ;; (replaces unreachable StructSet we can't emit)
+  ;; TNH-NEXT:   (drop
+  ;; TNH-NEXT:    (if (result i31ref)
+  ;; TNH-NEXT:     (unreachable)
+  ;; TNH-NEXT:     (then
+  ;; TNH-NEXT:      (ref.i31
+  ;; TNH-NEXT:       (i32.const 0)
+  ;; TNH-NEXT:      )
+  ;; TNH-NEXT:     )
+  ;; TNH-NEXT:     (else
+  ;; TNH-NEXT:      (ref.null none)
+  ;; TNH-NEXT:     )
+  ;; TNH-NEXT:    )
+  ;; TNH-NEXT:   )
+  ;; TNH-NEXT:   (drop
+  ;; TNH-NEXT:    (i32.const 1)
+  ;; TNH-NEXT:   )
+  ;; TNH-NEXT:   (unreachable)
+  ;; TNH-NEXT:  )
+  ;; TNH-NEXT: )
+  ;; NO_TNH:      (func $if.arm.null.unreachable (type $void)
+  ;; NO_TNH-NEXT:  (block ;; (replaces unreachable StructSet we can't emit)
+  ;; NO_TNH-NEXT:   (drop
+  ;; NO_TNH-NEXT:    (if (result i31ref)
+  ;; NO_TNH-NEXT:     (unreachable)
+  ;; NO_TNH-NEXT:     (then
+  ;; NO_TNH-NEXT:      (ref.i31
+  ;; NO_TNH-NEXT:       (i32.const 0)
+  ;; NO_TNH-NEXT:      )
+  ;; NO_TNH-NEXT:     )
+  ;; NO_TNH-NEXT:     (else
+  ;; NO_TNH-NEXT:      (ref.null none)
+  ;; NO_TNH-NEXT:     )
+  ;; NO_TNH-NEXT:    )
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:   (drop
+  ;; NO_TNH-NEXT:    (i32.const 1)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:   (unreachable)
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT: )
+  (func $if.arm.null.unreachable
+    ;; If we saw that the `else` produced null here and tried to replace the If
+    ;; with a drop of its condition followed by is `then` arm, we would end up
+    ;; doing a struct.set of an i31ref, which is invalid. Do not do this
+    ;; optimization for Ifs with unreachable conditions.
+    (struct.set $struct 0
+      (if (result i31ref)
+        (unreachable)
+        (then
+          (ref.i31
+            (i32.const 0)
+          )
+        )
+        (else
+          (ref.null none)
+        )
+      )
+      (i32.const 1)
+    )
+  )
+
   ;; TNH:      (func $select.arm.null (type $4) (param $x i32) (param $ref (ref $struct))
   ;; TNH-NEXT:  (struct.set $struct 0
   ;; TNH-NEXT:   (block (result (ref $struct))
