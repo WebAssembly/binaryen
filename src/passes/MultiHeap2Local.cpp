@@ -50,7 +50,7 @@
 // Note that Heap2Local could safely optimize in this example, even before our
 // changes: while the `x.value` operations are not exclusive to allocations, the
 // live ranges of the allocations join exactly there - they do not overlap in a
-// dangerous way. But here is an example HeapUntangling can optimize that
+// dangerous way. But here is an example MultiHeap2Local can optimize that
 // Heap2Local cannot:
 //
 //   (local.set $a
@@ -91,11 +91,11 @@ namespace wasm {
 
 namespace {
 
-struct HeapUntangling : public WalkerPass<PostWalker<HeapUntangling>> {
+struct MultiHeap2Local : public WalkerPass<PostWalker<MultiHeap2Local>> {
   bool isFunctionParallel() override { return true; }
 
   std::unique_ptr<Pass> create() override {
-    return std::make_unique<HeapUntangling>();
+    return std::make_unique<MultiHeap2Local>();
   }
 
   // Information about a local index, used to decide whether we can optimize.
@@ -213,7 +213,7 @@ struct HeapUntangling : public WalkerPass<PostWalker<HeapUntangling>> {
   void doWalkFunction(Function* func) {
     localInfos.resize(func->getNumLocals());
 
-    WalkerPass<PostWalker<HeapUntangling>>::doWalkFunction(func);
+    WalkerPass<PostWalker<MultiHeap2Local>>::doWalkFunction(func);
 
     pickLocalsToOptimize(func);
 
@@ -305,9 +305,9 @@ struct HeapUntangling : public WalkerPass<PostWalker<HeapUntangling>> {
 
   void optimize(Function* func) {
     struct Optimizer : PostWalker<Optimizer> {
-      HeapUntangling& parent;
+      MultiHeap2Local& parent;
 
-      Optimizer(HeapUntangling& parent) : parent(parent) {}
+      Optimizer(MultiHeap2Local& parent) : parent(parent) {}
 
       void visitLocalSet(LocalSet* curr) {
         if (!curr->isTee() && parent.optimizedLocals.contains(curr->index)) {
@@ -416,6 +416,6 @@ struct HeapUntangling : public WalkerPass<PostWalker<HeapUntangling>> {
 
 } // anonymous namespace
 
-Pass* createHeapUntanglingPass() { return new HeapUntangling(); }
+Pass* createMultiHeap2LocalPass() { return new MultiHeap2Local(); }
 
 } // namespace wasm

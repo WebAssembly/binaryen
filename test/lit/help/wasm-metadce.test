@@ -207,9 +207,6 @@
 ;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --heap-store-optimization                     optimize heap (GC) stores
 ;; CHECK-EMPTY:
-;; CHECK-NEXT:   --heap-untangling                             cleanly separate multiple heap 
-;; CHECK-NEXT:                                                 allocations to a single local
-;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --heap2local                                  replace GC allocations with 
 ;; CHECK-NEXT:                                                 locals
 ;; CHECK-EMPTY:
@@ -319,6 +316,9 @@
 ;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --monomorphize-always                         creates specialized versions of 
 ;; CHECK-NEXT:                                                 functions (even if unhelpful)
+;; CHECK-EMPTY:
+;; CHECK-NEXT:   --multi-heap2local                            cleanly separate multiple heap 
+;; CHECK-NEXT:                                                 allocations to a single local
 ;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --multi-memory-lowering                       combines multiple memories into 
 ;; CHECK-NEXT:                                                 a single memory
