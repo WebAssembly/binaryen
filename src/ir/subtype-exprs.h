@@ -470,6 +470,10 @@ struct SubtypingDiscoverer
     for (size_t i = 0, size = fields.size(); i < size; ++i) {
       internalNoteSubtype(curr->operands[i], fields[i].type);
     }
+    if (curr->desc) {
+      auto descType = curr->type.getHeapType().getDescriptorType();
+      internalNoteSubtype(curr->desc, Type(*descType, Nullable, Exact));
+    }
   }
   void visitStructGet(StructGet* curr) {}
   void visitStructSet(StructSet* curr) {

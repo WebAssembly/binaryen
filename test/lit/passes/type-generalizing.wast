@@ -204,6 +204,7 @@
  (func $br_table-sent (param $eq eqref) (param $any anyref)
   (local $var i31ref)
   ;; Require typeof($var) <: eqref.
+  ;; TODO: for now this keeps the type unchanged
   (local.set $eq
    (block $l1 (result i31ref)
     ;; Require typeof($var) <: anyref.
@@ -240,6 +241,7 @@
   ;; Same as above, but with the sources of requirements flipped.
   (local $var i31ref)
   ;; Require typeof($var) <: anyref.
+  ;; TODO: for now this keeps the type unchanged
   (local.set $any
    (block $l1 (result i31ref)
     ;; Require typeof($var) <: eqref.
@@ -913,7 +915,7 @@
 
  ;; CHECK:      (func $call-ref-impossible (type $0) (result eqref)
  ;; CHECK-NEXT:  (local $f nullfuncref)
- ;; CHECK-NEXT:  (local $arg anyref)
+ ;; CHECK-NEXT:  (local $arg i31ref)
  ;; CHECK-NEXT:  (block ;; (replaces unreachable CallRef we can't emit)
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (local.get $arg)
@@ -929,6 +931,8 @@
   (local $arg i31ref)
   ;; Require that typeof($f) <: nullref, but do not constrain $arg because the
   ;; call_ref will not be reached.
+  ;; TODO: for now this keeps the type unchanged (and is likely not worth
+  ;;       optimizing, as this is dead code)
   (call_ref $bot
    (local.get $arg)
    (local.get $f)
@@ -1099,7 +1103,7 @@
 
  ;; CHECK:      (func $struct-set-impossible (type $3)
  ;; CHECK-NEXT:  (local $ref nullref)
- ;; CHECK-NEXT:  (local $val anyref)
+ ;; CHECK-NEXT:  (local $val nullref)
  ;; CHECK-NEXT:  (block ;; (replaces unreachable StructSet we can't emit)
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (local.get $ref)
@@ -1114,6 +1118,8 @@
   (local $ref nullref)
   (local $val nullref)
   ;; Require that typeof($ref) <: nullref, but do not constrain $val.
+  ;; TODO: for now this keeps the type unchanged (and is likely not worth
+  ;;       optimizing, as this is dead code)
   (struct.set $bot 0
    (local.get $ref)
    (local.get $val)
@@ -1138,6 +1144,7 @@
  (type $sub (sub $super (array (field i31ref))))
 
  (type $super-mut (sub (array (field (mut eqref)))))
+ ;; CHECK:      (type $sub-mut (sub $super-mut (array (mut eqref))))
  (type $sub-mut (sub $super-mut (array (field (mut eqref)))))
 
  (type $bytes (sub (array i8)))
@@ -1287,7 +1294,7 @@
 
  ;; CHECK:      (func $array-set-impossible (type $0)
  ;; CHECK-NEXT:  (local $ref nullref)
- ;; CHECK-NEXT:  (local $val anyref)
+ ;; CHECK-NEXT:  (local $val i31ref)
  ;; CHECK-NEXT:  (block ;; (replaces unreachable ArraySet we can't emit)
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (local.get $ref)
@@ -1305,6 +1312,8 @@
   (local $ref nullref)
   (local $val i31ref)
   ;; Require that typeof($ref) <: nullref and do not constrain $ref.
+  ;; TODO: for now this keeps the type unchanged (and is likely not worth
+  ;;       optimizing, as this is dead code)
   (array.set $sub-mut
    (local.get $ref)
    (i32.const 0)
@@ -1381,7 +1390,7 @@
 
  ;; CHECK:      (func $array-copy-impossible-dest (type $0)
  ;; CHECK-NEXT:  (local $dest nullref)
- ;; CHECK-NEXT:  (local $src anyref)
+ ;; CHECK-NEXT:  (local $src (ref null $sub))
  ;; CHECK-NEXT:  (block ;; (replaces unreachable ArrayCopy we can't emit)
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (local.get $dest)
@@ -1406,6 +1415,8 @@
   (local $dest nullref)
   (local $src (ref null $sub))
   ;; Require that typeof($dest) <: nullref but do not constrain $src.
+  ;; TODO: for now this keeps the type unchanged (and is likely not worth
+  ;;       optimizing, as this is dead code)
   (array.copy $sub-mut $sub
    (local.get $dest)
    (i32.const 0)
@@ -1416,7 +1427,7 @@
  )
 
  ;; CHECK:      (func $array-copy-impossible-src (type $0)
- ;; CHECK-NEXT:  (local $dest anyref)
+ ;; CHECK-NEXT:  (local $dest (ref null $sub-mut))
  ;; CHECK-NEXT:  (local $src nullref)
  ;; CHECK-NEXT:  (block ;; (replaces unreachable ArrayCopy we can't emit)
  ;; CHECK-NEXT:   (drop
@@ -1442,6 +1453,8 @@
   (local $dest (ref null $sub-mut))
   (local $src nullref)
   ;; Require that typeof($src) <: nullref but do not constrain $dest.
+  ;; TODO: for now this keeps the type unchanged (and is likely not worth
+  ;;       optimizing, as this is dead code)
   (array.copy $sub-mut $sub
    (local.get $dest)
    (i32.const 0)
@@ -1512,7 +1525,7 @@
 
  ;; CHECK:      (func $array-fill-impossible (type $0)
  ;; CHECK-NEXT:  (local $ref nullref)
- ;; CHECK-NEXT:  (local $val anyref)
+ ;; CHECK-NEXT:  (local $val i31ref)
  ;; CHECK-NEXT:  (block ;; (replaces unreachable ArrayFill we can't emit)
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (local.get $ref)
@@ -1533,6 +1546,8 @@
   (local $ref nullref)
   (local $val i31ref)
   ;; Require that typeof($ref) <: nullref, but do not constrain $val.
+  ;; TODO: for now this keeps the type unchanged (and is likely not worth
+  ;;       optimizing, as this is dead code)
   (array.fill $sub-mut
    (local.get $ref)
    (i32.const 0)
@@ -1869,8 +1884,8 @@
  )
 
  ;; CHECK:      (func $publish (type $0) (result eqref)
- ;; CHECK-NEXT:  (local $var1 anyref)
- ;; CHECK-NEXT:  (local $var2 eqref)
+ ;; CHECK-NEXT:  (local $var1 i31ref)
+ ;; CHECK-NEXT:  (local $var2 i31ref)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (publish
  ;; CHECK-NEXT:    (local.get $var1)
@@ -1884,12 +1899,14 @@
   (local $var1 i31ref)
   (local $var2 i31ref)
   ;; No constraint on $var1 because the publish is dropped.
+  ;; TODO
   (drop
    (publish
     (local.get $var1)
    )
   )
   ;; Require that typeof($var2) <: eqref through the publish.
+  ;; TODO
   (publish
    (local.get $var2)
   )
