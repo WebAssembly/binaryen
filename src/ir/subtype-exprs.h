@@ -442,7 +442,7 @@ struct SubtypingDiscoverer
         internalNoteCast(curr->ref, curr->castType);
         if (curr->desc) {
           // As with RefCast, we must keep a descriptor valid.
-          self()->noteSubtype(curr->desc, curr->desc->type);
+          internalNoteSubtype(curr->desc, curr->desc->type);
         }
         if (curr->op == BrOnCast || curr->op == BrOnCastDescEq) {
           // If we do not branch, we flow out the original input when the cast
@@ -453,14 +453,14 @@ struct SubtypingDiscoverer
             if (curr->castType.isNullableRef()) {
               type = type.with(Nullable);
             }
-            self()->noteSubtype(curr->ref, type);
+            internalNoteSubtype(curr->ref, type);
           }
         } else {
           // We send the original input along when the cast fails, so the input
           // must be sendable to the target.
           auto* breakTarget = self()->findBreakTarget(curr->name);
           if (breakTarget->type.isRef()) {
-            self()->noteSubtype(curr->ref, breakTarget->type);
+            internalNoteSubtype(curr->ref, breakTarget->type);
           }
         }
         break;
@@ -477,6 +477,7 @@ struct SubtypingDiscoverer
     for (size_t i = 0, size = fields.size(); i < size; ++i) {
       internalNoteSubtype(curr->operands[i], fields[i].type);
     }
+
   }
   void visitStructGet(StructGet* curr) {}
   void visitStructSet(StructSet* curr) {
@@ -562,7 +563,12 @@ struct SubtypingDiscoverer
   }
   void visitArrayLoad(ArrayLoad* curr) {}
   void visitArrayStore(ArrayStore* curr) {}
-  void visitArrayLen(ArrayLen* curr) {}
+  void visitArrayLen(ArrayLen* curr) {
+    if (!curr->ref->type.isArray()) {
+      return;
+    }
+    internalNoteSubtype(curr->ref, Type(HeapTypes::array.getBasic(curr->ref->type.getHeapType().getShared()), Nullable));
+  }
   void visitArrayCopy(ArrayCopy* curr) {
     if (!curr->srcRef->type.isArray() || !curr->destRef->type.isArray()) {
       return;
