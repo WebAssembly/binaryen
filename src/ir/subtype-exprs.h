@@ -662,7 +662,6 @@ struct SubtypingDiscoverer
     internalNoteSubtype(
       curr->func,
       Type(curr->type.getHeapType().getContinuation().type, Nullable));
-
   }
   void visitContBind(ContBind* curr) {
     if (!curr->cont->type.isContinuation() || !curr->type.isContinuation()) {
