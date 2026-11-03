@@ -1,6 +1,8 @@
 # TypeScript API Changelog
 
 ## Current Trunk
+
+## v0.3.0
 - Fix TypeBuilder `setArrayType` & `setSubType` signatures
 - Expose heap types `exn` & `noexn`, and ref types `exnref` & `nullexnref` (#9057)
 - Update `throw_ref` & `try_table` (#9057)
@@ -8,7 +10,7 @@
 - fix `ExpressionBuilder#ref.func` heap type argument
 - remove `isSigned` parameter from `wasm.{struct,array}.get()` (#9311)
 
-## v0.2.0
+## v0.2.0 (2026-09-19T00:33Z)
 - Add library API for `waitqueue` instructions (#9039, #9044)
 - Add library API for `publish` instructions (#9072)
 - Expose WASM heap types (`binaryen.HeapType.struct`, `binaryen.HeapType.array`, `binaryen.HeapType.func`, etc.). (#8981)
@@ -22,5 +24,5 @@
 - Add `ExpressionBuilder#string.const()`. (#8951)
 - Organize types, heap types, and packed types, into enums (#9098)
 
-## v0.1.0 (`2026-07-08T00:43Z`)
+## v0.1.0 (2026-07-08T00:43Z)
 - Init.
