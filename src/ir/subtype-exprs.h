@@ -151,9 +151,7 @@ struct SubtypingDiscoverer
 
   // Mark something as being noted in some manner; no default value need be
   // applied for it.
-  void markNoted(Expression* curr) {
-    notedChildren.push_back(curr);
-  }
+  void markNoted(Expression* curr) { notedChildren.push_back(curr); }
 
   // Mark something as having no constraints, and so it does not need to be
   // noted, and still gets no default value.
@@ -178,9 +176,8 @@ struct SubtypingDiscoverer
     OverriddenVisitor<SubType>::visit(curr);
 
     for (auto*& child : ChildIterator(curr)) {
-      if (std::find(notedChildren.begin(),
-                    notedChildren.end(),
-                    child) == notedChildren.end()) {
+      if (std::find(notedChildren.begin(), notedChildren.end(), child) ==
+          notedChildren.end()) {
         // Nothing was noted for this child, so note the default, that is, its
         // current value.
         self()->noteSubtype(child, child->type);
@@ -310,9 +307,7 @@ struct SubtypingDiscoverer
     internalNoteSubtype(curr->ifTrue, curr);
     internalNoteSubtype(curr->ifFalse, curr);
   }
-  void visitDrop(Drop* curr) {
-    markUnconstrained(curr->value);
-  }
+  void visitDrop(Drop* curr) { markUnconstrained(curr->value); }
   void visitReturn(Return* curr) {
     if (curr->value) {
       internalNoteSubtype(curr->value, self()->getFunction()->getResults());
@@ -323,9 +318,7 @@ struct SubtypingDiscoverer
   void visitUnreachable(Unreachable* curr) {}
   void visitPop(Pop* curr) {}
   void visitRefNull(RefNull* curr) {}
-  void visitRefIsNull(RefIsNull* curr) {
-    markUnconstrained(curr->value);
-  }
+  void visitRefIsNull(RefIsNull* curr) { markUnconstrained(curr->value); }
   void visitRefFunc(RefFunc* curr) {}
   void visitRefEq(RefEq* curr) {
     // Match the shareability of the current content (if it exists).
@@ -477,7 +470,6 @@ struct SubtypingDiscoverer
     for (size_t i = 0, size = fields.size(); i < size; ++i) {
       internalNoteSubtype(curr->operands[i], fields[i].type);
     }
-
   }
   void visitStructGet(StructGet* curr) {}
   void visitStructSet(StructSet* curr) {
@@ -567,7 +559,10 @@ struct SubtypingDiscoverer
     if (!curr->ref->type.isArray()) {
       return;
     }
-    internalNoteSubtype(curr->ref, Type(HeapTypes::array.getBasic(curr->ref->type.getHeapType().getShared()), Nullable));
+    internalNoteSubtype(
+      curr->ref,
+      Type(HeapTypes::array.getBasic(curr->ref->type.getHeapType().getShared()),
+           Nullable));
   }
   void visitArrayCopy(ArrayCopy* curr) {
     if (!curr->srcRef->type.isArray() || !curr->destRef->type.isArray()) {
