@@ -2227,7 +2227,8 @@
     (local $yes (ref null $struct-immutable))
     ;; The local.get at the end might escape so we don't optimize $no. We should
     ;; do nothing with the local.set or local.tee for that local. We can,
-    ;; however, optimize $yes.
+    ;; however, optimize $yes. This tests that one local does not interfere with
+    ;; another.
     (local.set $no
       (struct.new_default $struct-immutable)
     )
