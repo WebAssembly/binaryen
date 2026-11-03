@@ -1261,6 +1261,7 @@ start_eval:
       // all locals succeed: if serialization fails partway through, we must
       // preserve the previous |localExprs|.
       std::vector<Expression*> nextLocalExprs;
+      nextLocalExprs.reserve(func->getNumLocals());
       for (Index i = 0; i < func->getNumLocals(); i++) {
         auto* serialized = interface.getSerialization(scope.locals[i]);
         if (!serialized) {
