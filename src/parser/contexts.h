@@ -1700,10 +1700,15 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
   // local.get, etc.
   Function* func = nullptr;
 
+  // The number of user-declared locals in the current function, excluding
+  // scratch locals added by IRBuilder.
+  Index numLocals = 0;
+
   IRBuilder irBuilder;
 
   Result<> visitFunctionStart(Function* func) {
     this->func = func;
+    this->numLocals = func->getNumLocals();
     CHECK_ERR(irBuilder.visitFunctionStart(func));
     return Ok{};
   }
@@ -1821,7 +1826,7 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
     if (!func) {
       return in.err("cannot access locals outside of a function");
     }
-    if (idx >= func->getNumLocals()) {
+    if (idx >= numLocals) {
       return in.err("local index out of bounds");
     }
     return idx;
@@ -1848,7 +1853,11 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
     if (!func->hasLocalIndex(name)) {
       return in.err("local $" + name.toString() + " does not exist");
     }
-    return func->getLocalIndex(name);
+    auto index = func->getLocalIndex(name);
+    if (index >= numLocals) {
+      return in.err("local $" + name.toString() + " does not exist");
+    }
+    return index;
   }
 
   Result<Name> getGlobalFromIdx(uint32_t idx) {
