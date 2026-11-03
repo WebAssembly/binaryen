@@ -40,8 +40,12 @@ struct Err {
     return (typename decltype(_val)::ErrorType)(*err);                         \
   }
 
-// Assert that the result is not an error.
-#define ASSERT_OK(val) assert(!(val).getErr());
+// Assert that a Result or MaybeResult is not an error.
+#define ASSERT_OK(val)                                                         \
+  do {                                                                         \
+    [[maybe_unused]] auto _val = (val);                                        \
+    assert(!_val.getErr());                                                    \
+  } while (false)
 
 // Represent a result of type T or an error message.
 template<typename T = Ok, typename E = Err> struct [[nodiscard]] Result {
