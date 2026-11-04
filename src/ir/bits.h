@@ -145,7 +145,8 @@ inline Expression* makePackedFieldGet(Expression* value,
   return builder.makeBinary(AndInt32, value, builder.makeConst(int32_t(mask)));
 }
 
-// getMaxBits() helper that has pessimistic results for the bits used in locals.
+// LocalInfoProvider helper that has pessimistic results for the bits used in
+// locals.
 struct DummyLocalInfoProvider {
   Index getMaxBitsForLocal(LocalGet* get) {
     if (get->type == Type::i32) {
@@ -155,6 +156,8 @@ struct DummyLocalInfoProvider {
     }
     WASM_UNREACHABLE("type has no integer bit size");
   }
+
+  Index getSignExtKeptBitsForLocal(LocalGet* get) { return 0; }
 };
 
 // Returns the maximum amount of bits used in an integer expression
