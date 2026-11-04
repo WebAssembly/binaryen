@@ -118,6 +118,9 @@ void SourceMapReader::parse(Module& wasm) {
     return;
   }
 
+  numFiles = wasm.debugInfoFileNames.size();
+  numSymbols = wasm.debugInfoSymbolNames.size();
+
   // Read the location of the first debug location.
   location = readBase64VLQ();
 }
@@ -135,6 +138,9 @@ SourceMapReader::readDebugLocationAt(size_t currLocation) {
 
       hasInfo = true;
       file += readBase64VLQ();
+      if (file >= numFiles) {
+        throw MapParseException("Source index out of range");
+      }
       line += readBase64VLQ();
       col += readBase64VLQ();
 
@@ -152,6 +158,9 @@ SourceMapReader::readDebugLocationAt(size_t currLocation) {
 
       hasSymbol = true;
       symbol += readBase64VLQ();
+      if (symbol >= numSymbols) {
+        throw MapParseException("Symbol index out of range");
+      }
 
     } while (false);
 
