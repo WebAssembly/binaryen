@@ -47,6 +47,7 @@ UNREACHABLE_RE = re.compile(
     r'|LCOV_EXCL_LINE|GCOVR_EXCL_LINE|COV_EXCL_LINE',
 )
 DEFAULT_LABEL_RE = re.compile(r'^\s*default\s*:\s*(//.*|/\*.*\*/)?$')
+CLOSING_BRACE_RE = re.compile(r'^\s*\}\s*(//.*|/\*.*\*/)?$')
 
 # CounterMappingRegion::RegionKind values in llvm-cov JSON export.
 REGION_KIND_CODE = 0
@@ -781,6 +782,9 @@ def find_unreachable_lines(source_lines: list[str]) -> set[int]:
             # Also exclude an immediately preceding standalone `default:` label.
             if idx > 0 and DEFAULT_LABEL_RE.match(source_lines[idx - 1]):
                 unreachable.add(line_no - 1)
+            # Also exclude an immediately following standalone closing `}`.
+            if idx + 1 < len(source_lines) and CLOSING_BRACE_RE.match(source_lines[idx + 1]):
+                unreachable.add(line_no + 1)
     return unreachable
 
 
@@ -857,7 +861,10 @@ def populate_regions_and_functions(
                 continue
             if not include_system_macros and r_lstart == r_lend and r_cstart == r_cend:
                 continue
-            if r_lstart in unreachable_lines:
+            if r_lstart in unreachable_lines or (
+                r_lstart < r_lend
+                and all(ln in unreachable_lines for ln in range(r_lstart + 1, r_lend + 1))
+            ):
                 continue
             r_key = (r_lstart, r_cstart, r_lend, r_cend)
             region_counts[r_key] = region_counts.get(r_key, 0) + r_count
