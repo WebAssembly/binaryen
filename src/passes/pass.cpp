@@ -338,6 +338,9 @@ void PassRegistry::registerPasses() {
   registerPass("monomorphize-always",
                "creates specialized versions of functions (even if unhelpful)",
                createMonomorphizeAlwaysPass);
+  registerPass("multi-heap2local",
+               "cleanly separate multiple heap allocations to a single local",
+               createMultiHeap2LocalPass);
   registerPass("multi-memory-lowering",
                "combines multiple memories into a single memory",
                createMultiMemoryLoweringPass);
@@ -725,6 +728,7 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
   // simplify-locals opens opportunities for optimizations
   addIfNoDWARFIssues("remove-unused-brs");
   if (options.optimizeLevel > 1 && wasm->features.hasGC()) {
+    addIfNoDWARFIssues("multi-heap2local");
     addIfNoDWARFIssues("heap2local");
   }
   // if we are willing to work hard, also optimize copies before coalescing

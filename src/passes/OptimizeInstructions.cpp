@@ -1757,7 +1757,8 @@ struct OptimizeInstructions
       };
 
       if (auto* iff = ref->dynCast<If>()) {
-        if (iff->ifFalse) {
+        if (iff->condition->type != Type::unreachable) {
+          assert(iff->ifFalse);
           if (flowsOutNull(iff->ifTrue)) {
             if (ref->type != iff->ifFalse->type) {
               refinalize = true;
