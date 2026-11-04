@@ -317,6 +317,9 @@
 ;; CHECK-NEXT:   --monomorphize-always                         creates specialized versions of 
 ;; CHECK-NEXT:                                                 functions (even if unhelpful)
 ;; CHECK-EMPTY:
+;; CHECK-NEXT:   --multi-heap2local                            cleanly separate multiple heap 
+;; CHECK-NEXT:                                                 allocations to a single local
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --multi-memory-lowering                       combines multiple memories into 
 ;; CHECK-NEXT:                                                 a single memory
 ;; CHECK-EMPTY:

@@ -84,14 +84,15 @@ struct GlobalStructInference : public Pass {
     : optimizeToDescCasts(optimizeToDescCasts) {}
 
   // Maps optimizable struct types to the globals whose init is a struct.new of
-  // them.
+  // them. `typeGlobals` includes globals of subtypes, while `exactTypeGlobals`
+  // only includes globals of that exact type.
   //
   // We will remove unoptimizable types from here, so in practice, if a type is
   // optimizable it will have an entry here, and not if not.
   //
   // This is filled in when in closed world. In open world, we cannot do such
   // type-based inference, and this remains empty.
-  std::unordered_map<HeapType, std::vector<Name>> typeGlobals;
+  std::unordered_map<HeapType, std::vector<Name>> typeGlobals, exactTypeGlobals;
 
   // Whether to optimize ref.cast to ref.cast_desc_eq. This increases code size,
   // so it may not always be beneficial (perhaps running it late in the
@@ -206,6 +207,14 @@ struct GlobalStructInference : public Pass {
         markUnoptimizable(item);
       }
     }
+
+    // Erase directly unoptimizable types and save the remaining globals for
+    // optimizing reads of exact references, which cannot refer to strict
+    // subtypes.
+    for (auto type : unoptimizable) {
+      typeGlobals.erase(type);
+    }
+    exactTypeGlobals = typeGlobals;
 
     // A struct.get might also read from any of the subtypes. As a result, an
     // unoptimizable type makes all its supertypes unoptimizable as well.
@@ -416,8 +425,10 @@ struct GlobalStructInference : public Pass {
           }
         }
 
-        auto iter = parent.typeGlobals.find(heapType);
-        if (iter == parent.typeGlobals.end()) {
+        auto& typeGlobals =
+          type.isExact() ? parent.exactTypeGlobals : parent.typeGlobals;
+        auto iter = typeGlobals.find(heapType);
+        if (iter == typeGlobals.end()) {
           return;
         }
 
