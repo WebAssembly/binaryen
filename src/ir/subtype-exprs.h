@@ -108,10 +108,11 @@ struct SubtypingDiscoverer
 
   // Expression visiting. By default we make each child expression require the
   // same type as it currently has, which is safe but conservative. We apply
-  // that default only when we see a child has not been noted by an overridden.
-  // To detect that, we note all the outgoing calls to note*()
+  // that default only when we see a child has not been noted by an overridden
+  // visit*() method. To detect that, we note all the outgoing calls to note*()
   // methods, using the following internalNote*() methods, which are what are
-  // directly called below.
+  // directly called below (and what subclasses overriding visit*() must call as
+  // well).
 
   void internalNoteSubtype(Type sub, Type super) {
     self()->noteSubtype(sub, super);
