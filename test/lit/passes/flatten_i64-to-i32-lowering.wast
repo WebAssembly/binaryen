@@ -356,90 +356,90 @@
  ;; CHECK-NEXT:   (local.set $i64toi32_i32$0
  ;; CHECK-NEXT:    (i32.const 0)
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (i32.store
- ;; CHECK-NEXT:    (local.get $i64toi32_i32$0)
- ;; CHECK-NEXT:    (block (result i32)
- ;; CHECK-NEXT:     (local.set $i64toi32_i32$1
- ;; CHECK-NEXT:      (i32.const 0)
- ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (i32.const 1)
+ ;; CHECK-NEXT:   (block
+ ;; CHECK-NEXT:    (local.set $i64toi32_i32$1
+ ;; CHECK-NEXT:     (i32.const 0)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (i32.store offset=4
  ;; CHECK-NEXT:    (local.get $i64toi32_i32$0)
  ;; CHECK-NEXT:    (local.get $i64toi32_i32$1)
  ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (i32.store
+ ;; CHECK-NEXT:    (local.get $i64toi32_i32$0)
+ ;; CHECK-NEXT:    (i32.const 1)
+ ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (block
  ;; CHECK-NEXT:   (local.set $i64toi32_i32$0
  ;; CHECK-NEXT:    (i32.const 0)
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (i32.store
- ;; CHECK-NEXT:    (local.get $i64toi32_i32$0)
- ;; CHECK-NEXT:    (block (result i32)
- ;; CHECK-NEXT:     (local.set $i64toi32_i32$1
- ;; CHECK-NEXT:      (i32.const 0)
- ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (i32.const 2)
+ ;; CHECK-NEXT:   (block
+ ;; CHECK-NEXT:    (local.set $i64toi32_i32$1
+ ;; CHECK-NEXT:     (i32.const 0)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (i32.store offset=4
  ;; CHECK-NEXT:    (local.get $i64toi32_i32$0)
  ;; CHECK-NEXT:    (local.get $i64toi32_i32$1)
  ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (i32.store
+ ;; CHECK-NEXT:    (local.get $i64toi32_i32$0)
+ ;; CHECK-NEXT:    (i32.const 2)
+ ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (block
  ;; CHECK-NEXT:   (local.set $i64toi32_i32$0
  ;; CHECK-NEXT:    (i32.const 0)
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (i32.store align=2
- ;; CHECK-NEXT:    (local.get $i64toi32_i32$0)
- ;; CHECK-NEXT:    (block (result i32)
- ;; CHECK-NEXT:     (local.set $i64toi32_i32$1
- ;; CHECK-NEXT:      (i32.const 0)
- ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (i32.const 3)
+ ;; CHECK-NEXT:   (block
+ ;; CHECK-NEXT:    (local.set $i64toi32_i32$1
+ ;; CHECK-NEXT:     (i32.const 0)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (i32.store offset=4 align=2
  ;; CHECK-NEXT:    (local.get $i64toi32_i32$0)
  ;; CHECK-NEXT:    (local.get $i64toi32_i32$1)
  ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (i32.store align=2
+ ;; CHECK-NEXT:    (local.get $i64toi32_i32$0)
+ ;; CHECK-NEXT:    (i32.const 3)
+ ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (block
  ;; CHECK-NEXT:   (local.set $i64toi32_i32$0
  ;; CHECK-NEXT:    (i32.const 0)
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (i32.store align=1
- ;; CHECK-NEXT:    (local.get $i64toi32_i32$0)
- ;; CHECK-NEXT:    (block (result i32)
- ;; CHECK-NEXT:     (local.set $i64toi32_i32$1
- ;; CHECK-NEXT:      (i32.const 0)
- ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (i32.const 4)
+ ;; CHECK-NEXT:   (block
+ ;; CHECK-NEXT:    (local.set $i64toi32_i32$1
+ ;; CHECK-NEXT:     (i32.const 0)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (i32.store offset=4 align=1
  ;; CHECK-NEXT:    (local.get $i64toi32_i32$0)
  ;; CHECK-NEXT:    (local.get $i64toi32_i32$1)
  ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (i32.store align=1
+ ;; CHECK-NEXT:    (local.get $i64toi32_i32$0)
+ ;; CHECK-NEXT:    (i32.const 4)
+ ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (block
  ;; CHECK-NEXT:   (local.set $i64toi32_i32$0
  ;; CHECK-NEXT:    (i32.const 0)
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (i32.store
- ;; CHECK-NEXT:    (local.get $i64toi32_i32$0)
- ;; CHECK-NEXT:    (block (result i32)
- ;; CHECK-NEXT:     (local.set $i64toi32_i32$1
- ;; CHECK-NEXT:      (i32.const 0)
- ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (i32.const 5)
+ ;; CHECK-NEXT:   (block
+ ;; CHECK-NEXT:    (local.set $i64toi32_i32$1
+ ;; CHECK-NEXT:     (i32.const 0)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (i32.store offset=4
  ;; CHECK-NEXT:    (local.get $i64toi32_i32$0)
  ;; CHECK-NEXT:    (local.get $i64toi32_i32$1)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (i32.store
+ ;; CHECK-NEXT:    (local.get $i64toi32_i32$0)
+ ;; CHECK-NEXT:    (i32.const 5)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
