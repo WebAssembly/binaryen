@@ -427,9 +427,23 @@ struct SubtypingDiscoverer
   void visitRefCast(RefCast* curr) { internalNoteCast(curr->ref, curr); }
   void visitRefGetDesc(RefGetDesc* curr) {}
   void visitBrOn(BrOn* curr) {
+    auto* breakTarget = self()->findBreakTarget(curr->name);
     switch (curr->op) {
       case BrOnNull:
+        // If we do not branch, we flow out the existing value as non-null.
+        if (curr->type.isRef()) {
+          internalNoteSubtype(curr->ref, curr->type.with(Nullable));
+        }
+        break;
       case BrOnNonNull:
+        // The value sent is made non-nullable and then sent. That means it
+        // must have the right heap type.
+        if (breakTarget->type.isRef()) {
+          // Enforce the heap type requirement by making sure we are a subtype
+          // of the target, made nullable (i.e., without any non-nullability
+          // requirement, as we are making it non-nullable anyhow).
+          internalNoteSubtype(curr->ref, breakTarget->type.with(Nullable));
+        }
         break;
       case BrOnCast:
       case BrOnCastFail:
@@ -454,15 +468,13 @@ struct SubtypingDiscoverer
         } else {
           // We send the original input along when the cast fails, so the input
           // must be sendable to the target.
-          auto* breakTarget = self()->findBreakTarget(curr->name);
           if (breakTarget->type.isRef()) {
             internalNoteSubtype(curr->ref, breakTarget->type);
           }
         }
         break;
     }
-    internalNoteSubtype(curr->getSentType(),
-                        self()->findBreakTarget(curr->name));
+    internalNoteSubtype(curr->getSentType(), breakTarget);
   }
   void visitStructNew(StructNew* curr) {
     if (!curr->type.isStruct()) {
