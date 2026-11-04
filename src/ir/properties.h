@@ -186,26 +186,39 @@ inline Expression* getSignExtValue(Expression* curr) {
   return nullptr;
 }
 
-// gets the size of the sign-extended value
-inline Index getSignExtBits(Expression* curr) {
-  assert(curr->type.isInteger());
-  if (auto* unary = curr->dynCast<Unary>()) {
-    switch (unary->op) {
-      case ExtendS8Int32:
-      case ExtendS8Int64:
-        return 8;
-      case ExtendS16Int32:
-      case ExtendS16Int64:
-        return 16;
-      case ExtendS32Int64:
-        return 32;
-      default:
-        WASM_UNREACHABLE("invalid unary operation");
+// If |curr| is known to be sign-extended, returns the number of low bits kept
+// before sign-extending into the upper bits, or 0 otherwise. LocalInfoProvider
+// is an optional class that can provide answers about local.get.
+template<typename LocalInfoProvider = Bits::DummyLocalInfoProvider>
+inline Index
+getSignExtKeptBits(Expression* curr,
+                   LocalInfoProvider* localInfoProvider = nullptr) {
+  if (getSignExtValue(curr)) {
+    if (auto* unary = curr->dynCast<Unary>()) {
+      switch (unary->op) {
+        case ExtendS8Int32:
+        case ExtendS8Int64:
+          return 8;
+        case ExtendS16Int32:
+        case ExtendS16Int64:
+          return 16;
+        case ExtendS32Int64:
+          return 32;
+        default:
+          WASM_UNREACHABLE("invalid unary operation");
+      }
+    } else {
+      auto* rightShift = curr->cast<Binary>()->right;
+      return curr->type.getByteSize() * 8 -
+             Bits::getEffectiveShifts(rightShift);
     }
-  } else {
-    auto* rightShift = curr->cast<Binary>()->right;
-    return curr->type.getByteSize() * 8 - Bits::getEffectiveShifts(rightShift);
   }
+  if (auto* get = curr->dynCast<LocalGet>()) {
+    if (localInfoProvider) {
+      return localInfoProvider->getSignExtKeptBitsForLocal(get);
+    }
+  }
+  return 0;
 }
 
 // Check if an expression is almost a sign-extend: perhaps the inner shift
@@ -229,14 +242,16 @@ inline Expression* getAlmostSignExt(Expression* curr) {
   return nullptr;
 }
 
-// gets the size of the almost sign-extended value, as well as the
-// extra shifts, if any
-inline Index getAlmostSignExtBits(Expression* curr, Index& extraLeftShifts) {
+// Returns the number of low bits kept by an almost-sign-extend (including any
+// extra left-shifted zero bits), and sets |extraLeftShifts| to the number of
+// extra left shifts.
+inline Index getAlmostSignExtKeptBits(Expression* curr,
+                                      Index& extraLeftShifts) {
   auto* leftShift = curr->cast<Binary>()->left->cast<Binary>()->right;
   auto* rightShift = curr->cast<Binary>()->right;
   extraLeftShifts =
     Bits::getEffectiveShifts(leftShift) - Bits::getEffectiveShifts(rightShift);
-  return getSignExtBits(curr);
+  return curr->type.getByteSize() * 8 - Bits::getEffectiveShifts(rightShift);
 }
 
 // Check if an expression is a zero-extend, and if so, returns the value
@@ -256,8 +271,8 @@ inline Expression* getZeroExtValue(Expression* curr) {
   return nullptr;
 }
 
-// gets the size of the sign-extended value
-inline Index getZeroExtBits(Expression* curr) {
+// Returns the number of low bits kept by a zero-extend operation.
+inline Index getZeroExtKeptBits(Expression* curr) {
   assert(curr->type == Type::i32);
   int32_t mask = curr->cast<Binary>()->right->cast<Const>()->value.geti32();
   return Bits::getMaskedBits(mask);

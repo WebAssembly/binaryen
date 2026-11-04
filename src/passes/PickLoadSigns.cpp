@@ -74,7 +74,7 @@ struct PickLoadSigns : public WalkerPass<ExpressionStackWalker<PickLoadSigns>> {
 
       auto* parent = expressionStack[expressionStack.size() - i];
       if (Properties::getZeroExtValue(parent) == curr) {
-        auto bits = Properties::getZeroExtBits(parent);
+        auto bits = Properties::getZeroExtKeptBits(parent);
         if (usage.unsignedUsages == 0) {
           usage.unsignedBits = bits;
         } else if (usage.unsignedBits != bits) {
@@ -82,7 +82,7 @@ struct PickLoadSigns : public WalkerPass<ExpressionStackWalker<PickLoadSigns>> {
         }
         usage.unsignedUsages++;
       } else if (Properties::getSignExtValue(parent) == curr) {
-        auto bits = Properties::getSignExtBits(parent);
+        auto bits = Properties::getSignExtKeptBits(parent);
         if (usage.signedUsages == 0) {
           usage.signedBits = bits;
         } else if (usage.signedBits != bits) {
