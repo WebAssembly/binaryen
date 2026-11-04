@@ -83,7 +83,7 @@ struct LocalInfo {
   static const Index kUnknown = Index(-1);
 
   Index maxBits = -1;
-  Index signExtBits = 0;
+  Index signExtKeptBits = 0;
 };
 
 struct LocalScanner : PostWalker<LocalScanner> {
@@ -101,9 +101,10 @@ struct LocalScanner : PostWalker<LocalScanner> {
       auto& info = localInfo[i];
       if (func->isParam(i)) {
         info.maxBits = getBitsForType(func->getLocalType(i)); // worst-case
-        info.signExtBits = LocalInfo::kUnknown; // we will never know anything
+        info.signExtKeptBits =
+          LocalInfo::kUnknown; // we will never know anything
       } else {
-        info.maxBits = info.signExtBits = 0; // we are open to learning
+        info.maxBits = info.signExtKeptBits = 0; // we are open to learning
       }
     }
     // walk
@@ -111,8 +112,8 @@ struct LocalScanner : PostWalker<LocalScanner> {
     // finalize
     for (Index i = 0; i < func->getNumLocals(); i++) {
       auto& info = localInfo[i];
-      if (info.signExtBits == LocalInfo::kUnknown) {
-        info.signExtBits = 0;
+      if (info.signExtKeptBits == LocalInfo::kUnknown) {
+        info.signExtKeptBits = 0;
       }
     }
   }
@@ -132,19 +133,20 @@ struct LocalScanner : PostWalker<LocalScanner> {
     auto& info = localInfo[curr->index];
     info.maxBits = std::max(info.maxBits, Bits::getMaxBits(value, this));
     info.maxBits = std::min(info.maxBits, getBitsForType(type));
-    auto signExtBits = LocalInfo::kUnknown;
-    if (Properties::getSignExtValue(value)) {
-      signExtBits = Properties::getSignExtBits(value);
-    } else if (auto* load = value->dynCast<Load>()) {
-      if (LoadUtils::isSignRelevant(load) && load->signed_) {
-        signExtBits = load->bytes * 8;
+    auto keptBits = Properties::getSignExtKeptBits(value);
+    if (keptBits == 0) {
+      if (auto* load = value->dynCast<Load>();
+          load && LoadUtils::isSignRelevant(load) && load->signed_) {
+        keptBits = load->bytes * 8;
+      } else {
+        keptBits = LocalInfo::kUnknown;
       }
     }
-    if (info.signExtBits == 0) {
-      info.signExtBits = signExtBits; // first info we see
-    } else if (info.signExtBits != signExtBits) {
+    if (info.signExtKeptBits == 0) {
+      info.signExtKeptBits = keptBits; // first info we see
+    } else if (info.signExtKeptBits != keptBits) {
       // contradictory information, give up
-      info.signExtBits = LocalInfo::kUnknown;
+      info.signExtKeptBits = LocalInfo::kUnknown;
     }
   }
 
@@ -598,7 +600,7 @@ struct OptimizeInstructions
     }
     if (auto* ext = Properties::getAlmostSignExt(curr)) {
       Index extraLeftShifts;
-      auto bits = Properties::getAlmostSignExtBits(curr, extraLeftShifts);
+      auto bits = Properties::getAlmostSignExtKeptBits(curr, extraLeftShifts);
       if (extraLeftShifts == 0 && trySignExtLoad(ext, bits)) {
         return replaceCurrent(ext);
       }
@@ -631,7 +633,7 @@ struct OptimizeInstructions
           // sign-extended, that is, its effective sign bit is spread to all
           // the upper bits, which means that the relevant bits on the left
           // side are either all 0, or all 1.
-          auto bits = Properties::getSignExtBits(curr->left);
+          auto bits = Properties::getSignExtKeptBits(curr->left);
           uint64_t right = c->value.getUnsigned();
           Index totalBits = c->type.getByteSize() * 8;
           Index numRelevantBits = totalBits - bits + 1;
@@ -670,8 +672,8 @@ struct OptimizeInstructions
         }
       } else if (auto* left = Properties::getSignExtValue(curr->left)) {
         if (auto* right = Properties::getSignExtValue(curr->right)) {
-          auto bits = Properties::getSignExtBits(curr->left);
-          if (Properties::getSignExtBits(curr->right) == bits) {
+          auto bits = Properties::getSignExtKeptBits(curr->left);
+          if (Properties::getSignExtKeptBits(curr->right) == bits) {
             // we are comparing two sign-exts with the same bits, so we may as
             // well replace both with cheaper zexts
             curr->left = makeZeroExt(left, bits);
@@ -681,7 +683,7 @@ struct OptimizeInstructions
         } else if (auto* load = curr->right->dynCast<Load>()) {
           // we are comparing a load to a sign-ext, we may be able to switch
           // to zext
-          auto leftBits = Properties::getSignExtBits(curr->left);
+          auto leftBits = Properties::getSignExtKeptBits(curr->left);
           if (load->signed_ && leftBits == load->bytes * 8) {
             load->signed_ = false;
             curr->left = makeZeroExt(left, leftBits);
@@ -692,7 +694,7 @@ struct OptimizeInstructions
         if (auto* right = Properties::getSignExtValue(curr->right)) {
           // we are comparing a load to a sign-ext, we may be able to switch
           // to zext
-          auto rightBits = Properties::getSignExtBits(curr->right);
+          auto rightBits = Properties::getSignExtKeptBits(curr->right);
           if (load->signed_ && rightBits == load->bytes * 8) {
             load->signed_ = false;
             curr->right = makeZeroExt(right, rightBits);
@@ -1045,7 +1047,7 @@ struct OptimizeInstructions
     }
 
     if (auto* ext = Properties::getSignExtValue(curr)) {
-      auto bits = Properties::getSignExtBits(curr);
+      auto bits = Properties::getSignExtKeptBits(curr);
       if (trySignExtLoad(ext, bits)) {
         return replaceCurrent(ext);
       }
@@ -1054,8 +1056,8 @@ struct OptimizeInstructions
       // larger sign-extend: if we have an 8-bit value in 32-bit, then there are
       // 24 sign bits, and doing a sign-extend to 16 will only affect 16 of
       // those 24, and the effect is to leave them as they are.
-      auto signExtBits = getSignExtBits(ext);
-      if (signExtBits > 0 && signExtBits <= bits) {
+      auto keptBits = Properties::getSignExtKeptBits(ext, this);
+      if (keptBits > 0 && keptBits <= bits) {
         return replaceCurrent(ext);
       }
     }
@@ -1097,7 +1099,7 @@ struct OptimizeInstructions
       if (auto* ext = Properties::getSignExtValue(curr->value)) {
         // we are comparing a sign extend to a constant, which means we can
         // use a cheaper zext
-        auto bits = Properties::getSignExtBits(curr->value);
+        auto bits = Properties::getSignExtKeptBits(curr->value);
         curr->value = makeZeroExt(ext, bits);
         return replaceCurrent(curr);
       }
@@ -1313,7 +1315,7 @@ struct OptimizeInstructions
         // if sign extending the exact bit size we store, we can skip the
         // extension if extending something bigger, then we just alter bits we
         // don't save anyhow
-        if (Properties::getSignExtBits(binary) >= Index(bytes) * 8) {
+        if (Properties::getSignExtKeptBits(binary) >= Index(bytes) * 8) {
           value = ext;
         }
       }
@@ -2990,6 +2992,13 @@ struct OptimizeInstructions
     return getBitsForType(get->type);
   }
 
+  Index getSignExtKeptBitsForLocal(LocalGet* get) {
+    if (get->index < localInfo.size()) {
+      return localInfo[get->index].signExtKeptBits;
+    }
+    return 0;
+  }
+
 private:
   // Information about our locals
   std::vector<LocalInfo> localInfo;
@@ -3449,7 +3458,7 @@ private:
       if (auto* ext = Properties::getSignExtValue(binary)) {
         // use a cheaper zero-extent, we just care about the boolean value
         // anyhow
-        return makeZeroExt(ext, Properties::getSignExtBits(binary));
+        return makeZeroExt(ext, Properties::getSignExtKeptBits(binary));
       }
     } else if (auto* block = boolean->dynCast<Block>()) {
       if (block->type == Type::i32 && block->list.size() > 0) {
@@ -4443,22 +4452,10 @@ private:
     return false;
   }
 
-  // Check if an expression is already sign-extended to an exact number of bits.
+  // Check if an expression is already sign-extended with an exact number of
+  // kept bits.
   bool isSignExted(Expression* curr, Index bits) {
-    return getSignExtBits(curr) == bits;
-  }
-
-  // Returns the number of bits an expression is sign-extended (or 0 if it is
-  // not).
-  Index getSignExtBits(Expression* curr) {
-    if (Properties::getSignExtValue(curr)) {
-      return Properties::getSignExtBits(curr);
-    }
-    if (auto* get = curr->dynCast<LocalGet>()) {
-      // Check what we know about the local.
-      return localInfo[get->index].signExtBits;
-    }
-    return 0;
+    return Properties::getSignExtKeptBits(curr, this) == bits;
   }
 
   // optimize trivial math operations, given that the right side of a binary
