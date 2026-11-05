@@ -605,19 +605,21 @@ struct OptimizeInstructions
       if (Bits::getMaxBits(ext, this) + extraLeftShifts < bits) {
         return replaceCurrent(removeAlmostSignExt(curr));
       }
-      // We also don't need it if it already has an identical-sized or larger
-      // sign extend applied to it. That is, if it is already a sign-extended
-      // value, then another sign extend will do nothing. We do need to be
-      // careful of the extra shifts, though.
-      if (hasSignExtKeptBits(ext, bits) && extraLeftShifts == 0) {
+      // A wider (or equal) outer shift sign-extension is redundant around a
+      // narrower inner sign-extension: if |ext| is already sign-extended with
+      // at most |bits - extraLeftShifts| kept bits, shifting it left by
+      // |extraLeftShifts| and sign-extending from |bits| bits only re-extends
+      // bits that are already copies of the sign bit, so we can remove the
+      // outer sign-extension (leaving any |extraLeftShifts|).
+      if (hasSignExtKeptBits(ext, bits - extraLeftShifts)) {
         return replaceCurrent(removeAlmostSignExt(curr));
       }
-      // A narrower outer shift sign-extension can strip a wider inner one.
+      // Conversely, when the inner sign-extension is wider than the outer shift
+      // sign-extension, we can strip the redundant inner sign-extension.
       if (auto* innerExt = Properties::getSignExtValue(ext)) {
-        if (bits - extraLeftShifts <= Properties::getSignExtKeptBits(ext)) {
-          curr->left->cast<Binary>()->left = innerExt;
-          return replaceCurrent(curr);
-        }
+        assert(Properties::getSignExtKeptBits(ext) > bits - extraLeftShifts);
+        curr->left->cast<Binary>()->left = innerExt;
+        return replaceCurrent(curr);
       }
       // Sign-extending the low 32 bits of a zero-extended i32 is a signed
       // i32 extension (plus any remaining left shifts).

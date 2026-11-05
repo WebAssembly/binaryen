@@ -511,6 +511,14 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.shl
+  ;; CHECK-NEXT:    (i32.extend8_s
+  ;; CHECK-NEXT:     (local.get $x32)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 8)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $nested-unary-sign-ext (param $x32 i32) (param $x64 i64)
     ;; Strip wider inner sign-extension inside narrower outer sign-extension.
@@ -521,6 +529,9 @@
     (drop (i64.extend32_s (i64.extend_i32_u (local.get $x32))))
     ;; Negative case: narrower extend of i64.extend_i32_u cannot be folded to extend_i32_s.
     (drop (i64.extend16_s (i64.extend_i32_u (local.get $x32))))
+    ;; Strip wider outer almost-sign-ext around narrower inner unary sign-ext,
+    ;; leaving the extra left shifts.
+    (drop (i32.shr_s (i32.shl (i32.extend8_s (local.get $x32)) (i32.const 16)) (i32.const 8)))
   )
 
   ;; CHECK:      (func $unary-sign-ext-loads (type $1) (param $addr i32)

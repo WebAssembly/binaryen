@@ -6128,16 +6128,13 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.shr_s
-  ;; CHECK-NEXT:    (i32.shl
-  ;; CHECK-NEXT:     (i32.shr_s
-  ;; CHECK-NEXT:      (i32.shl
-  ;; CHECK-NEXT:       (local.get $x32)
-  ;; CHECK-NEXT:       (i32.const 24)
-  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:   (i32.shl
+  ;; CHECK-NEXT:    (i32.shr_s
+  ;; CHECK-NEXT:     (i32.shl
+  ;; CHECK-NEXT:      (local.get $x32)
   ;; CHECK-NEXT:      (i32.const 24)
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (i32.const 16)
+  ;; CHECK-NEXT:     (i32.const 24)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (i32.const 8)
   ;; CHECK-NEXT:   )
@@ -6189,7 +6186,9 @@
         (i32.const 24)
       )
     )
-    ;; Negative case: extra left shifts keep sign-extended bits from the inner shift.
+    ;; Conversely, when the outer almost-sign-ext is wider than the inner
+    ;; sign-extension, the outer sign-extension is stripped (leaving any extra
+    ;; left shifts).
     (drop
       (i32.shr_s
         (i32.shl
