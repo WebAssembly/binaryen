@@ -7267,7 +7267,7 @@
       (local.get $x)
     )
   )
-  
+
   ;; CHECK:      (func $asymmetric-contradiction (type $2) (param $0 i32) (param $1 i32)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.and

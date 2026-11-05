@@ -264,6 +264,9 @@ inline void iterModuleItems(const Module& wasm, auto&& visitor) {
 // default - otherwise, set the Mutability to Mutable. (This is not enforced at
 // compile time - TODO find a way - but at runtime in pass-debug mode it is
 // checked.)
+// The map has an entry for each function, inserted in the order of
+// wasm.functions, so with MapT = InsertOrderedMap, iterating over it visits the
+// functions in a deterministic order.
 template<typename K, typename V> using DefaultMap = std::map<K, V>;
 template<typename T,
          Mutability Mut = Immutable,

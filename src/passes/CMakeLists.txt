@@ -24,6 +24,7 @@ set(passes_SOURCES
   CoalesceLocals.cpp
   CodePushing.cpp
   CodeFolding.cpp
+  ConstantArraysToData.cpp
   ConstantFieldPropagation.cpp
   ConstHoisting.cpp
   ConstraintAnalysis.cpp
@@ -78,6 +79,7 @@ set(passes_SOURCES
   MinifyImportsAndExports.cpp
   MinimizeRecGroups.cpp
   Monomorphize.cpp
+  MultiHeap2Local.cpp
   MultiMemoryLowering.cpp
   NameList.cpp
   NameTypes.cpp

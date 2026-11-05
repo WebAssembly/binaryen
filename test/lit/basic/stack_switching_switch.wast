@@ -18,25 +18,38 @@
    (type $ft (func (param i32) (param (ref null $ct)) (result i32)))
    ;; CHECK-TEXT:       (type $ct (cont $ft))
    ;; CHECK-BIN:       (type $ct (cont $ft))
-   (type $ct (cont $ft)))
+   (type $ct (cont $ft))
+   ;; CHECK-TEXT:       (type $ft2 (func (param (ref null $ct2))))
+   ;; CHECK-BIN:       (type $ft2 (func (param (ref null $ct2))))
+   (type $ft2 (func (param (ref null $ct2))))
+   ;; CHECK-TEXT:       (type $ct2 (cont $ft2))
+   ;; CHECK-BIN:       (type $ct2 (cont $ft2))
+   (type $ct2 (cont $ft2)))
 
- ;; CHECK-TEXT:      (type $2 (func (param (ref null $ct)) (result i32)))
+ ;; CHECK-TEXT:      (type $4 (func (param (ref null $ct)) (result i32)))
 
- ;; CHECK-TEXT:      (type $3 (func (result i32)))
+ ;; CHECK-TEXT:      (type $5 (func))
 
- ;; CHECK-TEXT:      (type $4 (func (param (ref $ct)) (result i32)))
+ ;; CHECK-TEXT:      (type $6 (func (result i32)))
 
- ;; CHECK-TEXT:      (tag $t (type $3) (result i32))
- ;; CHECK-BIN:      (type $2 (func (param (ref null $ct)) (result i32)))
+ ;; CHECK-TEXT:      (type $7 (func (param (ref $ct)) (result i32)))
 
- ;; CHECK-BIN:      (type $3 (func (result i32)))
+ ;; CHECK-TEXT:      (tag $t (type $6) (result i32))
+ ;; CHECK-BIN:      (type $4 (func (param (ref null $ct)) (result i32)))
 
- ;; CHECK-BIN:      (type $4 (func (param (ref $ct)) (result i32)))
+ ;; CHECK-BIN:      (type $5 (func))
 
- ;; CHECK-BIN:      (tag $t (type $3) (result i32))
+ ;; CHECK-BIN:      (type $6 (func (result i32)))
+
+ ;; CHECK-BIN:      (type $7 (func (param (ref $ct)) (result i32)))
+
+ ;; CHECK-BIN:      (tag $t (type $6) (result i32))
  (tag $t (result i32))
+ ;; CHECK-TEXT:      (tag $t2 (type $5))
+ ;; CHECK-BIN:      (tag $t2 (type $5))
+ (tag $t2)
 
- ;; CHECK-TEXT:      (func $swap (type $2) (param $k (ref null $ct)) (result i32)
+ ;; CHECK-TEXT:      (func $swap (type $4) (param $k (ref null $ct)) (result i32)
  ;; CHECK-TEXT-NEXT:  (local $scratch (tuple i32 (ref null $ct)))
  ;; CHECK-TEXT-NEXT:  (local $scratch_2 i32)
  ;; CHECK-TEXT-NEXT:  (return
@@ -60,7 +73,7 @@
  ;; CHECK-TEXT-NEXT:   )
  ;; CHECK-TEXT-NEXT:  )
  ;; CHECK-TEXT-NEXT: )
- ;; CHECK-BIN:      (func $swap (type $2) (param $k (ref null $ct)) (result i32)
+ ;; CHECK-BIN:      (func $swap (type $4) (param $k (ref null $ct)) (result i32)
  ;; CHECK-BIN-NEXT:  (local $scratch i32)
  ;; CHECK-BIN-NEXT:  (local $scratch_2 i32)
  ;; CHECK-BIN-NEXT:  (local $3 (ref null $ct))
@@ -102,14 +115,14 @@
    (local.set $k)
    (return))
 
- ;; CHECK-TEXT:      (func $go (type $4) (param $x (ref $ct)) (result i32)
+ ;; CHECK-TEXT:      (func $go (type $7) (param $x (ref $ct)) (result i32)
  ;; CHECK-TEXT-NEXT:  (resume $ct (on $t switch)
  ;; CHECK-TEXT-NEXT:   (i32.const 123)
  ;; CHECK-TEXT-NEXT:   (ref.null nocont)
  ;; CHECK-TEXT-NEXT:   (local.get $x)
  ;; CHECK-TEXT-NEXT:  )
  ;; CHECK-TEXT-NEXT: )
- ;; CHECK-BIN:      (func $go (type $4) (param $x (ref $ct)) (result i32)
+ ;; CHECK-BIN:      (func $go (type $7) (param $x (ref $ct)) (result i32)
  ;; CHECK-BIN-NEXT:  (resume $ct (on $t switch)
  ;; CHECK-BIN-NEXT:   (i32.const 123)
  ;; CHECK-BIN-NEXT:   (ref.null nocont)
@@ -125,7 +138,7 @@
    )
  )
 
- ;; CHECK-TEXT:      (func $unreachable (type $2) (param $k (ref null $ct)) (result i32)
+ ;; CHECK-TEXT:      (func $unreachable (type $4) (param $k (ref null $ct)) (result i32)
  ;; CHECK-TEXT-NEXT:  (return
  ;; CHECK-TEXT-NEXT:   (local.set $k
  ;; CHECK-TEXT-NEXT:    (block ;; (replaces unreachable StackSwitch we can't emit)
@@ -140,7 +153,7 @@
  ;; CHECK-TEXT-NEXT:   )
  ;; CHECK-TEXT-NEXT:  )
  ;; CHECK-TEXT-NEXT: )
- ;; CHECK-BIN:      (func $unreachable (type $2) (param $k (ref null $ct)) (result i32)
+ ;; CHECK-BIN:      (func $unreachable (type $4) (param $k (ref null $ct)) (result i32)
  ;; CHECK-BIN-NEXT:  (drop
  ;; CHECK-BIN-NEXT:   (i32.const 42)
  ;; CHECK-BIN-NEXT:  )
@@ -153,21 +166,118 @@
    (local.set $k)
    (return)
  )
+
+ ;; CHECK-TEXT:      (func $null (type $4) (param $k (ref null $ct)) (result i32)
+ ;; CHECK-TEXT-NEXT:  (local $scratch (tuple i32 (ref nocont)))
+ ;; CHECK-TEXT-NEXT:  (local $scratch_2 i32)
+ ;; CHECK-TEXT-NEXT:  (return
+ ;; CHECK-TEXT-NEXT:   (block (result i32)
+ ;; CHECK-TEXT-NEXT:    (local.set $scratch_2
+ ;; CHECK-TEXT-NEXT:     (tuple.extract 2 0
+ ;; CHECK-TEXT-NEXT:      (local.tee $scratch
+ ;; CHECK-TEXT-NEXT:       (block ;; (replaces unreachable StackSwitch we can't emit)
+ ;; CHECK-TEXT-NEXT:        (drop
+ ;; CHECK-TEXT-NEXT:         (i32.const 42)
+ ;; CHECK-TEXT-NEXT:        )
+ ;; CHECK-TEXT-NEXT:        (drop
+ ;; CHECK-TEXT-NEXT:         (ref.null nocont)
+ ;; CHECK-TEXT-NEXT:        )
+ ;; CHECK-TEXT-NEXT:        (unreachable)
+ ;; CHECK-TEXT-NEXT:       )
+ ;; CHECK-TEXT-NEXT:      )
+ ;; CHECK-TEXT-NEXT:     )
+ ;; CHECK-TEXT-NEXT:    )
+ ;; CHECK-TEXT-NEXT:    (local.set $k
+ ;; CHECK-TEXT-NEXT:     (tuple.extract 2 1
+ ;; CHECK-TEXT-NEXT:      (local.get $scratch)
+ ;; CHECK-TEXT-NEXT:     )
+ ;; CHECK-TEXT-NEXT:    )
+ ;; CHECK-TEXT-NEXT:    (local.get $scratch_2)
+ ;; CHECK-TEXT-NEXT:   )
+ ;; CHECK-TEXT-NEXT:  )
+ ;; CHECK-TEXT-NEXT: )
+ ;; CHECK-BIN:      (func $null (type $4) (param $k (ref null $ct)) (result i32)
+ ;; CHECK-BIN-NEXT:  (local $scratch i32)
+ ;; CHECK-BIN-NEXT:  (local $scratch_2 i32)
+ ;; CHECK-BIN-NEXT:  (local $3 (ref nocont))
+ ;; CHECK-BIN-NEXT:  (drop
+ ;; CHECK-BIN-NEXT:   (i32.const 42)
+ ;; CHECK-BIN-NEXT:  )
+ ;; CHECK-BIN-NEXT:  (drop
+ ;; CHECK-BIN-NEXT:   (ref.null nocont)
+ ;; CHECK-BIN-NEXT:  )
+ ;; CHECK-BIN-NEXT:  (local.set $scratch_2
+ ;; CHECK-BIN-NEXT:   (local.set $scratch
+ ;; CHECK-BIN-NEXT:    (local.set $3
+ ;; CHECK-BIN-NEXT:     (unreachable)
+ ;; CHECK-BIN-NEXT:    )
+ ;; CHECK-BIN-NEXT:   )
+ ;; CHECK-BIN-NEXT:  )
+ ;; CHECK-BIN-NEXT:  (local.set $k
+ ;; CHECK-BIN-NEXT:   (local.get $3)
+ ;; CHECK-BIN-NEXT:  )
+ ;; CHECK-BIN-NEXT:  (return
+ ;; CHECK-BIN-NEXT:   (local.get $scratch_2)
+ ;; CHECK-BIN-NEXT:  )
+ ;; CHECK-BIN-NEXT: )
+ (func $null (param $k (ref null $ct)) (result i32)
+   ;; Switching to a null continuation produces uninhabitable results on the
+   ;; stack. (And does not produce invalid code or crash the parser!)
+   (switch $ct $t
+     (i32.const 42)
+     (ref.null $ct))
+   (local.set $k)
+   (return)
+ )
+
+ ;; CHECK-TEXT:      (func $null_single (type $5)
+ ;; CHECK-TEXT-NEXT:  (drop
+ ;; CHECK-TEXT-NEXT:   (block ;; (replaces unreachable StackSwitch we can't emit)
+ ;; CHECK-TEXT-NEXT:    (drop
+ ;; CHECK-TEXT-NEXT:     (ref.null nocont)
+ ;; CHECK-TEXT-NEXT:    )
+ ;; CHECK-TEXT-NEXT:    (unreachable)
+ ;; CHECK-TEXT-NEXT:   )
+ ;; CHECK-TEXT-NEXT:  )
+ ;; CHECK-TEXT-NEXT: )
+ ;; CHECK-BIN:      (func $null_single (type $5)
+ ;; CHECK-BIN-NEXT:  (drop
+ ;; CHECK-BIN-NEXT:   (ref.null nocont)
+ ;; CHECK-BIN-NEXT:  )
+ ;; CHECK-BIN-NEXT:  (drop
+ ;; CHECK-BIN-NEXT:   (unreachable)
+ ;; CHECK-BIN-NEXT:  )
+ ;; CHECK-BIN-NEXT: )
+ (func $null_single
+   (drop
+     (switch $ct2 $t2
+       (ref.null $ct2)
+     )
+   )
+ )
 )
 ;; CHECK-BIN-NODEBUG:      (rec
 ;; CHECK-BIN-NODEBUG-NEXT:  (type $0 (func (param i32 (ref null $1)) (result i32)))
 
 ;; CHECK-BIN-NODEBUG:       (type $1 (cont $0))
 
-;; CHECK-BIN-NODEBUG:      (type $2 (func (param (ref null $1)) (result i32)))
+;; CHECK-BIN-NODEBUG:       (type $2 (func (param (ref null $3))))
 
-;; CHECK-BIN-NODEBUG:      (type $3 (func (result i32)))
+;; CHECK-BIN-NODEBUG:       (type $3 (cont $2))
 
-;; CHECK-BIN-NODEBUG:      (type $4 (func (param (ref $1)) (result i32)))
+;; CHECK-BIN-NODEBUG:      (type $4 (func (param (ref null $1)) (result i32)))
 
-;; CHECK-BIN-NODEBUG:      (tag $tag$0 (type $3) (result i32))
+;; CHECK-BIN-NODEBUG:      (type $5 (func))
 
-;; CHECK-BIN-NODEBUG:      (func $0 (type $2) (param $0 (ref null $1)) (result i32)
+;; CHECK-BIN-NODEBUG:      (type $6 (func (result i32)))
+
+;; CHECK-BIN-NODEBUG:      (type $7 (func (param (ref $1)) (result i32)))
+
+;; CHECK-BIN-NODEBUG:      (tag $tag$0 (type $6) (result i32))
+
+;; CHECK-BIN-NODEBUG:      (tag $tag$1 (type $5))
+
+;; CHECK-BIN-NODEBUG:      (func $0 (type $4) (param $0 (ref null $1)) (result i32)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $1 i32)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $2 i32)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $3 (ref null $1))
@@ -203,7 +313,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $1 (type $4) (param $0 (ref $1)) (result i32)
+;; CHECK-BIN-NODEBUG:      (func $1 (type $7) (param $0 (ref $1)) (result i32)
 ;; CHECK-BIN-NODEBUG-NEXT:  (resume $1 (on $tag$0 switch)
 ;; CHECK-BIN-NODEBUG-NEXT:   (i32.const 123)
 ;; CHECK-BIN-NODEBUG-NEXT:   (ref.null nocont)
@@ -211,9 +321,43 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $2 (type $2) (param $0 (ref null $1)) (result i32)
+;; CHECK-BIN-NODEBUG:      (func $2 (type $4) (param $0 (ref null $1)) (result i32)
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
 ;; CHECK-BIN-NODEBUG-NEXT:   (i32.const 42)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT:  (unreachable)
+;; CHECK-BIN-NODEBUG-NEXT: )
+
+;; CHECK-BIN-NODEBUG:      (func $3 (type $4) (param $0 (ref null $1)) (result i32)
+;; CHECK-BIN-NODEBUG-NEXT:  (local $1 i32)
+;; CHECK-BIN-NODEBUG-NEXT:  (local $2 i32)
+;; CHECK-BIN-NODEBUG-NEXT:  (local $3 (ref nocont))
+;; CHECK-BIN-NODEBUG-NEXT:  (drop
+;; CHECK-BIN-NODEBUG-NEXT:   (i32.const 42)
+;; CHECK-BIN-NODEBUG-NEXT:  )
+;; CHECK-BIN-NODEBUG-NEXT:  (drop
+;; CHECK-BIN-NODEBUG-NEXT:   (ref.null nocont)
+;; CHECK-BIN-NODEBUG-NEXT:  )
+;; CHECK-BIN-NODEBUG-NEXT:  (local.set $2
+;; CHECK-BIN-NODEBUG-NEXT:   (local.set $1
+;; CHECK-BIN-NODEBUG-NEXT:    (local.set $3
+;; CHECK-BIN-NODEBUG-NEXT:     (unreachable)
+;; CHECK-BIN-NODEBUG-NEXT:    )
+;; CHECK-BIN-NODEBUG-NEXT:   )
+;; CHECK-BIN-NODEBUG-NEXT:  )
+;; CHECK-BIN-NODEBUG-NEXT:  (local.set $0
+;; CHECK-BIN-NODEBUG-NEXT:   (local.get $3)
+;; CHECK-BIN-NODEBUG-NEXT:  )
+;; CHECK-BIN-NODEBUG-NEXT:  (return
+;; CHECK-BIN-NODEBUG-NEXT:   (local.get $2)
+;; CHECK-BIN-NODEBUG-NEXT:  )
+;; CHECK-BIN-NODEBUG-NEXT: )
+
+;; CHECK-BIN-NODEBUG:      (func $4 (type $5)
+;; CHECK-BIN-NODEBUG-NEXT:  (drop
+;; CHECK-BIN-NODEBUG-NEXT:   (ref.null nocont)
+;; CHECK-BIN-NODEBUG-NEXT:  )
+;; CHECK-BIN-NODEBUG-NEXT:  (drop
+;; CHECK-BIN-NODEBUG-NEXT:   (unreachable)
+;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )

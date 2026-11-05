@@ -1914,7 +1914,6 @@
   (tag $empty (param))
 
   ;; CHECK:      (func $func (type $0)
-  ;; CHECK-NEXT:  (local $0 anyref)
   ;; CHECK-NEXT:  (throw $nothing
   ;; CHECK-NEXT:   (ref.null none)
   ;; CHECK-NEXT:  )
@@ -1922,15 +1921,12 @@
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (catch $nothing
-  ;; CHECK-NEXT:    (local.set $0
-  ;; CHECK-NEXT:     (pop anyref)
-  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (block
   ;; CHECK-NEXT:      (drop
   ;; CHECK-NEXT:       (block (result nullref)
   ;; CHECK-NEXT:        (drop
-  ;; CHECK-NEXT:         (local.get $0)
+  ;; CHECK-NEXT:         (pop anyref)
   ;; CHECK-NEXT:        )
   ;; CHECK-NEXT:        (ref.null none)
   ;; CHECK-NEXT:       )
@@ -2140,7 +2136,6 @@
   (tag $tag (param (ref null any)) (param (ref null any)))
 
   ;; CHECK:      (func $func (type $1)
-  ;; CHECK-NEXT:  (local $0 (tuple anyref anyref))
   ;; CHECK-NEXT:  (throw $tag
   ;; CHECK-NEXT:   (ref.null none)
   ;; CHECK-NEXT:   (struct.new_default $struct)
@@ -2149,13 +2144,10 @@
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (catch $tag
-  ;; CHECK-NEXT:    (local.set $0
-  ;; CHECK-NEXT:     (pop (tuple anyref anyref))
-  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (block (result nullref)
   ;; CHECK-NEXT:      (tuple.drop 2
-  ;; CHECK-NEXT:       (local.get $0)
+  ;; CHECK-NEXT:       (pop (tuple anyref anyref))
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (ref.null none)
   ;; CHECK-NEXT:     )
@@ -4169,7 +4161,6 @@
   )
 
   ;; CHECK:      (func $rethrow (type $0)
-  ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (try $l0
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (throw $e-i32
@@ -4177,20 +4168,15 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (catch $e-i32
-  ;; CHECK-NEXT:    (local.set $0
-  ;; CHECK-NEXT:     (pop i32)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (block
-  ;; CHECK-NEXT:     (drop
-  ;; CHECK-NEXT:      (block (result i32)
-  ;; CHECK-NEXT:       (drop
-  ;; CHECK-NEXT:        (local.get $0)
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:       (i32.const 0)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result i32)
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (pop i32)
   ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (i32.const 0)
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (rethrow $l0)
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (rethrow $l0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )

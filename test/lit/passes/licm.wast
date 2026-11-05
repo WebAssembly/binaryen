@@ -186,6 +186,79 @@
     (local.get $y)
   )
 
+  ;; CHECK:      (func $nested-loop-lazy-local-graph (type $1) (param $cond i32) (result i32)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (local $y i32)
+  ;; CHECK-NEXT:  (local $z i32)
+  ;; CHECK-NEXT:  (loop $outer
+  ;; CHECK-NEXT:   (local.set $y
+  ;; CHECK-NEXT:    (i32.add
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i32.const 10)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:     (then
+  ;; CHECK-NEXT:      (local.set $x
+  ;; CHECK-NEXT:       (i32.const 1)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $z
+  ;; CHECK-NEXT:     (i32.eqz
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (loop $inner
+  ;; CHECK-NEXT:     (nop)
+  ;; CHECK-NEXT:     (nop)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (br_if $outer
+  ;; CHECK-NEXT:    (local.get $cond)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.get $y)
+  ;; CHECK-NEXT: )
+  (func $nested-loop-lazy-local-graph (param $cond i32) (result i32)
+    (local $x i32)
+    (local $y i32)
+    (local $z i32)
+    ;; Hoisting the (if ...) out of $inner must not detach its (local.set $x)
+    ;; from the function before LazyLocalGraph initializes when checking the
+    ;; subsequent (local.get $x) in $inner. Otherwise, $outer would miss the
+    ;; write to $x and invalidly hoist (local.set $y ...).
+    (loop $outer
+      (local.set $y
+        (i32.add
+          (local.get $x)
+          (i32.const 10)
+        )
+      )
+      (loop $inner
+        (if
+          (i32.const 1)
+          (then
+            (local.set $x
+              (i32.const 1)
+            )
+          )
+        )
+        (local.set $z
+          (i32.eqz
+            (local.get $x)
+          )
+        )
+      )
+      (br_if $outer
+        (local.get $cond)
+      )
+    )
+    (local.get $y)
+  )
+
   ;; CHECK:      (func $hoist-trap-before-backedge (type $1) (param $x i32) (result i32)
   ;; CHECK-NEXT:  (local $y i32)
   ;; CHECK-NEXT:  (block

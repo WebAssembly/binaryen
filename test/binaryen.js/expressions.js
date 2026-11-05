@@ -2344,7 +2344,7 @@ console.log("# StructGet");
   var ref = module.local.get(0, struct0Type);
   var type = binaryen.Type.i32;
   var signed = false;
-  const theStructGet = binaryen.StructGet(module.struct.get(index, ref, type, signed));
+  const theStructGet = binaryen.StructGet(module.struct.get(index, ref, type));
   assert(theStructGet instanceof binaryen.StructGet);
   assert(theStructGet instanceof binaryen.Expression);
   assert(theStructGet.index === index);
@@ -2774,7 +2774,7 @@ console.log("# ArrayGet");
   var index = module.i32.const(0);
   var type = binaryen.Type.i32;
   var signed = false;
-  const theArrayGet = binaryen.ArrayGet(module.array.get(ref, index, type, signed));
+  const theArrayGet = binaryen.ArrayGet(module.array.get(ref, index, type));
   assert(theArrayGet instanceof binaryen.ArrayGet);
   assert(theArrayGet instanceof binaryen.Expression);
   assert(theArrayGet.ref === ref);
@@ -3315,7 +3315,8 @@ console.log("# TryTable");
   assertDeepEqual(info.catches, theTryTable.catches);
   assert(info.hasCatchAll === theTryTable.hasCatchAll());
 
-  theTryTable.body = module.unreachable();
+  theTryTable.body = body = module.unreachable();
+  assert(theTryTable.body === body);
 
   var i32AndExnref = binaryen.createType([binaryen.Type.i32, exnref]);
   theTryTable.setCatchAt(0, { tag: "tag2", dest: "new_dest1", ref: true, sentType: i32AndExnref });
@@ -3462,7 +3463,9 @@ console.log("# ThrowRef");
   assert(info.type === theThrowRef.type);
   assert(info.exnref === theThrowRef.exnref);
 
-  theThrowRef.exnref = module.ref.null(binaryen.HeapType.noexn);
+  var newExnref = module.ref.null(binaryen.HeapType.exn);
+  theThrowRef.exnref = newExnref;
+  assert(theThrowRef.exnref === newExnref);
 
   theThrowRef.type = binaryen.Type.f64;
   theThrowRef.finalize();

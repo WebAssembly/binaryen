@@ -433,10 +433,10 @@ private:
     // function's `explicitLabelNames`.
     bool labelExplicit = false;
 
-    // If the control flow scope has an input type, we need to lower it using a
-    // scratch local because we cannot represent control flow input in the IR.
+    // If the control flow scope has an input type, we need to lower it using
+    // scratch locals because we cannot represent control flow input in the IR.
     Type inputType;
-    Index inputLocal = -1;
+    std::vector<Index> inputLocals;
 
     // If there are br_on_*, try_table, or resume branches that target this
     // scope and carry additional values, we need to use a scratch local to
@@ -461,13 +461,6 @@ private:
     ScopeCtx() : scope(NoScope{}) {}
     ScopeCtx(Scope scope, Type inputType)
       : scope(scope), inputType(inputType) {}
-    ScopeCtx(
-      Scope scope, Name label, bool labelUsed, Type inputType, Index inputLocal)
-      : scope(scope), label(label), labelUsed(labelUsed), inputType(inputType),
-        inputLocal(inputLocal) {}
-    ScopeCtx(Scope scope, Name label, bool labelUsed, Name branchLabel)
-      : scope(scope), label(label), branchLabel(branchLabel),
-        labelUsed(labelUsed) {}
 
     static ScopeCtx makeFunc(Function* func) {
       return ScopeCtx(FuncScope{func}, Type::none);
@@ -514,7 +507,7 @@ private:
       unreachable = false;
       if (!keepInput) {
         inputType = Type::none;
-        inputLocal = -1;
+        inputLocals.clear();
       }
     }
     bool isNone() { return std::get_if<NoScope>(&scope); }
@@ -715,35 +708,7 @@ private:
   Index blockHint = 0;
   Index labelHint = 0;
 
-  Result<> pushScope(ScopeCtx&& scope) {
-    if (auto label = scope.getOriginalLabel()) {
-      // Assign a fresh label to the scope, if necessary.
-      if (!scope.label) {
-        scope.label = makeFresh(label);
-      }
-      // Record the original label to handle references to it correctly.
-      labelDepths[label].push_back(scopeStack.size() + 1);
-    }
-    if (binaryPos) {
-      scope.startPos = lastBinaryPos;
-      lastBinaryPos = *binaryPos;
-    }
-    bool hasInput = scope.inputType != Type::none;
-    Index inputLocal = scope.inputLocal;
-    if (hasInput && !scope.isDelimiter()) {
-      if (inputLocal == Index(-1)) {
-        auto scratch = addScratchLocal(scope.inputType);
-        CHECK_ERR(scratch);
-        inputLocal = scope.inputLocal = *scratch;
-      }
-      CHECK_ERR(makeLocalSet(inputLocal));
-    }
-    scopeStack.emplace_back(std::move(scope));
-    if (hasInput) {
-      CHECK_ERR(makeLocalGet(inputLocal));
-    }
-    return Ok{};
-  }
+  Result<> pushScope(ScopeCtx&& scope);
 
   ScopeCtx& getScope() {
     if (scopeStack.empty()) {
@@ -806,7 +771,9 @@ private:
   Result<std::pair<Index, Name>> getExtraOutputLocalAndLabel(Index label,
                                                              size_t extraArity);
   Expression* fixExtraOutput(ScopeCtx& scope, Name label, Expression* expr);
-  void fixLoopWithInput(Loop* loop, Type inputType, Index scratch);
+  void fixLoopWithInput(Loop* loop,
+                        Type inputType,
+                        const std::vector<Index>& scratch);
 
   void applyAnnotations(Expression* expr, const CodeAnnotation& annotation);
 

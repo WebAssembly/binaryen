@@ -2415,3 +2415,61 @@
     )
   )
 )
+
+(module
+  ;; CHECK:      (type $two (struct (field i64)))
+  (type $two (struct (field i64)))
+  ;; CHECK:      (type $1 (func (param (ref $two))))
+
+  ;; CHECK:      (type $2 (func))
+
+  ;; CHECK:      (global $two-a (ref $two) (struct.new $two
+  ;; CHECK-NEXT:  (i64.const 10)
+  ;; CHECK-NEXT: ))
+  (global $two-a (ref $two) (struct.new $two (i64.const 10)))
+  ;; CHECK:      (global $two-b (ref $two) (struct.new $two
+  ;; CHECK-NEXT:  (i64.const 20)
+  ;; CHECK-NEXT: ))
+  (global $two-b (ref $two) (struct.new $two (i64.const 20)))
+  ;; CHECK:      (tag $e-two (type $1) (param (ref $two)))
+  (tag $e-two (param (ref $two)))
+
+  ;; CHECK:      (func $catch-pop-select (type $2)
+  ;; CHECK-NEXT:  (local $0 (ref $two))
+  ;; CHECK-NEXT:  (try
+  ;; CHECK-NEXT:   (do
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (catch $e-two
+  ;; CHECK-NEXT:    (local.set $0
+  ;; CHECK-NEXT:     (pop (ref $two))
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (select
+  ;; CHECK-NEXT:      (i64.const 10)
+  ;; CHECK-NEXT:      (i64.const 20)
+  ;; CHECK-NEXT:      (ref.eq
+  ;; CHECK-NEXT:       (ref.as_non_null
+  ;; CHECK-NEXT:        (local.get $0)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (global.get $two-a)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $catch-pop-select
+    ;; Optimizing this struct.get into a select moves its reference into the
+    ;; select condition (third child), requiring the enclosed pop to be fixed up.
+    (try
+      (do)
+      (catch $e-two
+        (drop
+          (struct.get $two 0
+            (pop (ref $two))
+          )
+        )
+      )
+    )
+  )
+)

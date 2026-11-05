@@ -12,7 +12,6 @@
  (tag $tag (type $func) (param i32))
 
  ;; CHECK:      (func $test (type $1) (result i32)
- ;; CHECK-NEXT:  (local $0 i32)
  ;; CHECK-NEXT:  (block $block (result i32)
  ;; CHECK-NEXT:   (try
  ;; CHECK-NEXT:    (do
@@ -21,13 +20,10 @@
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (catch $tag
- ;; CHECK-NEXT:     (local.set $0
- ;; CHECK-NEXT:      (pop i32)
- ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:     (drop
  ;; CHECK-NEXT:      (block
  ;; CHECK-NEXT:       (drop
- ;; CHECK-NEXT:        (local.get $0)
+ ;; CHECK-NEXT:        (pop i32)
  ;; CHECK-NEXT:       )
  ;; CHECK-NEXT:       (unreachable)
  ;; CHECK-NEXT:      )
@@ -40,9 +36,9 @@
  (func $test (result i32)
   (block $block (result i32)
    ;; Vacuum cannot simplify the body here, but it will make a change to the
-   ;; unreachable br_if, replacing it with its dropped children (as the branch
-   ;; is untaken, and we want to remove that reference to $block). While doing
-   ;; so we must update the IR to handle the pop.
+   ;; unreachable br_if, replacing it with an unnamed block containing its
+   ;; dropped children (as the branch is untaken, and we want to remove that
+   ;; reference to $block), which validates properly even with a pop.
    (try
     (do
      (call $import

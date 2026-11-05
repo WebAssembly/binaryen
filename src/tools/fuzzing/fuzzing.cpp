@@ -528,24 +528,36 @@ void TranslateToFuzzReader::setupMemory() {
 }
 
 void TranslateToFuzzReader::setupHeapTypes() {
+  // Filter away uninhabitable heap types, that is, heap types that we cannot
+  // construct, like a type with a non-nullable reference to itself, and record
+  // them in uninhabitableHeapTypes.
+  auto filterInhabitable = [&](const std::vector<HeapType>& types) {
+    auto inhabitable = HeapTypeGenerator::getInhabitable(types);
+    std::unordered_set<HeapType> inhabitableSet(inhabitable.begin(),
+                                                inhabitable.end());
+    for (auto type : types) {
+      if (!inhabitableSet.contains(type)) {
+        uninhabitableHeapTypes.insert(type);
+      }
+    }
+    return inhabitable;
+  };
+
   // Start with any existing heap types in the module, which may exist in any
   // initial content we began with.
-  auto possibleHeapTypes = ModuleUtils::collectHeapTypes(wasm);
+  interestingHeapTypes = filterInhabitable(ModuleUtils::collectHeapTypes(wasm));
 
   // Use heap types from an imported module, if present.
   if (importedModule) {
-    auto importedHeapTypes = ModuleUtils::collectHeapTypes(*importedModule);
+    auto importedHeapTypes =
+      filterInhabitable(ModuleUtils::collectHeapTypes(*importedModule));
     auto rate = upTo(11);
     for (auto type : importedHeapTypes) {
       if (upTo(10) < rate) {
-        possibleHeapTypes.push_back(type);
+        interestingHeapTypes.push_back(type);
       }
     }
   }
-
-  // Filter away uninhabitable heap types, that is, heap types that we cannot
-  // construct, like a type with a non-nullable reference to itself.
-  interestingHeapTypes = HeapTypeGenerator::getInhabitable(possibleHeapTypes);
 
   // For GC, also generate random types.
   if (wasm.features.hasGC()) {
@@ -4524,8 +4536,9 @@ Expression* TranslateToFuzzReader::makeCompoundRef(Type type) {
   // inhabitable.)
   const auto LIMIT = fuzzParams.NESTING_LIMIT + 1;
   AutoNester nester(*this);
-  if (type.isNullableRef() &&
-      (random.finished() || nesting >= LIMIT || oneIn(LIMIT - nesting + 1))) {
+  if (type.isNullableRef() && (random.finished() || nesting >= LIMIT ||
+                               uninhabitableHeapTypes.contains(heapType) ||
+                               oneIn(LIMIT - nesting + 1))) {
     return builder.makeRefNull(heapType);
   }
 
@@ -4533,7 +4546,8 @@ Expression* TranslateToFuzzReader::makeCompoundRef(Type type) {
   // something here to avoid infinite recursion. In the worse case we'll emit a
   // cast to non-null of a null, which validates, but it will trap at runtime
   // which is not ideal.
-  if (type.isNonNullableRef() && (random.finished() || nesting >= LIMIT)) {
+  if (type.isNonNullableRef() && (random.finished() || nesting >= LIMIT ||
+                                  uninhabitableHeapTypes.contains(heapType))) {
     // If we have a function context then we can at least emit a local.get,
     // sometimes, which is less bad. Note that we need to check typeLocals
     // manually here to avoid infinite recursion (as makeLocalGet will fall back
@@ -4547,7 +4561,12 @@ Expression* TranslateToFuzzReader::makeCompoundRef(Type type) {
       return builder.makeRefAs(RefAsNonNull, builder.makeRefNull(heapType));
     }
     // No function context, so we are in quite the pickle. Continue onwards, as
-    // we may succeed to emit something more complex (like a struct.new).
+    // we may succeed to emit something more complex (like a struct.new). If the
+    // type is uninhabitable, though, use the ref.as_non_null escape hatch
+    // immediately.
+    if (uninhabitableHeapTypes.contains(heapType)) {
+      return builder.makeRefAs(RefAsNonNull, builder.makeRefNull(heapType));
+    }
   }
 
   // When we make children, they must be trivial if we are not in a function
@@ -6866,6 +6885,12 @@ bool TranslateToFuzzReader::isLoggableType(Type type) {
          loggableTypes.end();
 }
 
+bool TranslateToFuzzReader::isUninhabitable(Type type) {
+  return GCTypeUtils::isTriviallyUninhabitable(type) ||
+         (type.isNonNullableRef() &&
+          uninhabitableHeapTypes.contains(type.getHeapType()));
+}
+
 Nullability TranslateToFuzzReader::getNullability() {
   // Without wasm GC, avoid non-nullable types as we cannot create any values
   // of such types. For example, reference types adds eqref, but there is no
@@ -7022,8 +7047,8 @@ Type TranslateToFuzzReader::getSubType(Type type) {
     // inhabitable then return that; avoid adding more uninhabitability. We can
     // never add new uninhabitability outside of functions, where we cannot
     // use casts to generate something valid.
-    if (GCTypeUtils::isUninhabitable(subType) &&
-        !GCTypeUtils::isUninhabitable(type) && (!funcContext || !oneIn(20))) {
+    if (isUninhabitable(subType) && !isUninhabitable(type) &&
+        (!funcContext || !oneIn(20))) {
       return type;
     }
     return subType;
@@ -7090,7 +7115,7 @@ Type TranslateToFuzzReader::getSuperType(Type type) {
   auto superType = Type(heapType, nullability);
   // As with getSubType, we want to avoid returning an uninhabitable type where
   // possible. Here all we can do is flip the super's nullability to nullable.
-  if (GCTypeUtils::isUninhabitable(superType)) {
+  if (isUninhabitable(superType)) {
     superType = Type(heapType, Nullable);
   }
   return superType;

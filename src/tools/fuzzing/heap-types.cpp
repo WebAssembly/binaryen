@@ -1400,7 +1400,7 @@ bool isUninhabitable(HeapType type,
 bool isUninhabitable(Type type,
                      std::unordered_set<HeapType>& visited,
                      std::unordered_set<HeapType>& visiting) {
-  if (GCTypeUtils::isUninhabitable(type)) {
+  if (GCTypeUtils::isTriviallyUninhabitable(type)) {
     return true;
   }
   if (type.isNonNullableRef()) {
