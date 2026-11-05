@@ -3,8 +3,9 @@
 ;; RUN: wasm-dis -all %t1.wasm | filecheck %s --check-prefix SECONDARY1
 ;; RUN: wasm-dis -all %t2.wasm | filecheck %s --check-prefix SECONDARY2
 
-;; Because global $e is used in both module1 ($split1) and module2 ($split2), $e
-;; will be exported / imported, but we don't need to export $f.
+;; In case of immutable globals, they are copied to whichever modules they are
+;; used. $e will be copied to both module1 ($split1) and module2 ($split2), and
+;; this will also cause $f to be copied to both modules.
 
 (module
   (global $f i32 (i32.const 42))
@@ -25,9 +26,6 @@
 
 ;; PRIMARY:      (module
 ;; PRIMARY-NEXT:  (type $0 (func))
-;; PRIMARY-NEXT:  (global $f i32 (i32.const 42))
-;; PRIMARY-NEXT:  (global $e i32 (global.get $f))
-;; PRIMARY-NEXT:  (export "global" (global $e))
 ;; PRIMARY-NEXT:  (func $keep (type $0)
 ;; PRIMARY-NEXT:   (nop)
 ;; PRIMARY-NEXT:  )
@@ -35,7 +33,8 @@
 
 ;; SECONDARY1:      (module
 ;; SECONDARY1-NEXT:  (type $0 (func))
-;; SECONDARY1-NEXT:  (import "primary" "global" (global $e i32))
+;; SECONDARY1-NEXT:  (global $f i32 (i32.const 42))
+;; SECONDARY1-NEXT:  (global $e i32 (global.get $f))
 ;; SECONDARY1-NEXT:  (func $split1 (type $0)
 ;; SECONDARY1-NEXT:   (drop
 ;; SECONDARY1-NEXT:    (global.get $e)
@@ -45,7 +44,8 @@
 
 ;; SECONDARY2:      (module
 ;; SECONDARY2-NEXT:  (type $0 (func))
-;; SECONDARY2-NEXT:  (import "primary" "global" (global $e i32))
+;; SECONDARY2-NEXT:  (global $f i32 (i32.const 42))
+;; SECONDARY2-NEXT:  (global $e i32 (global.get $f))
 ;; SECONDARY2-NEXT:  (func $split2 (type $0)
 ;; SECONDARY2-NEXT:   (drop
 ;; SECONDARY2-NEXT:    (global.get $e)
