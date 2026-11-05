@@ -40,6 +40,7 @@ set(unittest_SOURCES
   stringify.cpp
   subtype-exprs.cpp
   suffix_tree.cpp
+  threads.cpp
   topological-sort.cpp
   type-builder.cpp
   type-updating.cpp

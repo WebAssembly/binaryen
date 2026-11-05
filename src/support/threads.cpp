@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <iostream>
 #include <string>
+#include <system_error>
 
 #ifdef __linux__
 #include <sched.h> // For sched_getaffinity
@@ -28,6 +29,12 @@
 #include "support/debug.h"
 #include "threads.h"
 #include "utilities.h"
+
+#ifdef BINARYEN_PTHREAD_WORKERS
+#include <limits.h>
+#include <sys/resource.h>
+#include <unistd.h>
+#endif
 
 // debugging tools
 
@@ -60,6 +67,61 @@ namespace wasm {
 
 // Thread
 
+#ifdef BINARYEN_PTHREAD_WORKERS
+
+size_t getWorkerThreadStackSize() {
+  static const size_t size = []() -> size_t {
+    // Matches glibc's default for new threads, which also falls back to a
+    // fixed size when the limit is unbounded.
+    const size_t defaultSize = 8 * 1024 * 1024;
+    struct rlimit limit;
+    size_t size = defaultSize;
+    if (getrlimit(RLIMIT_STACK, &limit) == 0 &&
+        limit.rlim_cur != RLIM_INFINITY) {
+      size = limit.rlim_cur;
+    }
+    size = std::max(size, size_t(PTHREAD_STACK_MIN));
+    // Some platforms (macOS) require a page-aligned size.
+    long page = sysconf(_SC_PAGESIZE);
+    if (page > 0) {
+      size = (size + page - 1) / page * page;
+    }
+    return size;
+  }();
+  return size;
+}
+
+static void* threadEntry(void* self) {
+  Thread::mainLoop(self);
+  return nullptr;
+}
+
+Thread::Thread(ThreadPool* parent) : parent(parent) {
+  assert(!parent->isRunning());
+  pthread_attr_t attr;
+  pthread_attr_init(&attr);
+  pthread_attr_setstacksize(&attr, getWorkerThreadStackSize());
+  int err = pthread_create(&thread, &attr, threadEntry, this);
+  pthread_attr_destroy(&attr);
+  if (err != 0) {
+    throw std::system_error(err, std::generic_category());
+  }
+}
+
+Thread::~Thread() {
+  {
+    std::lock_guard<std::mutex> lock(mutex);
+    // notify the thread that it can exit
+    done = true;
+    condition.notify_one();
+  }
+  pthread_join(thread, nullptr);
+}
+
+#else
+
+size_t getWorkerThreadStackSize() { return 0; }
+
 Thread::Thread(ThreadPool* parent) : parent(parent) {
   assert(!parent->isRunning());
   thread = std::make_unique<std::thread>(mainLoop, this);
@@ -74,6 +136,8 @@ Thread::~Thread() {
   }
   thread->join();
 }
+
+#endif // BINARYEN_PTHREAD_WORKERS
 
 void Thread::work(std::function<ThreadWorkState()> doWork_) {
   // TODO: fancy work stealing
