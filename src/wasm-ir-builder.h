@@ -87,8 +87,10 @@ public:
   // The current function, used to create scratch locals, add annotations, etc.
   void setFunction(Function* func) {
     this->func = func;
-    this->numLocals = func ? func->getNumLocals() : 0;
+    this->numDeclaredLocals = func ? func->getNumLocals() : 0;
   }
+  Function* getFunction() const { return func; }
+  Index getNumDeclaredLocals() const { return numDeclaredLocals; }
 
   // Handle the boundaries of control flow structures. Users may choose to use
   // the corresponding `makeXYZ` function below instead of `visitXYZStart`, but
@@ -338,7 +340,7 @@ private:
   Function* func = nullptr;
   // The number of user-declared locals in the current function, excluding
   // scratch locals added by IRBuilder.
-  Index numLocals = 0;
+  Index numDeclaredLocals = 0;
   Builder builder;
 
   // Used for setting DWARF expression locations.

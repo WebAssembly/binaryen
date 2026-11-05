@@ -852,8 +852,7 @@ Result<> IRBuilder::visitFunctionStart(Function* func) {
   }
   debugLoc = CanReceiveDebug();
   scopeStack.push_back(ScopeCtx::makeFunc(func));
-  this->func = func;
-  this->numLocals = func->getNumLocals();
+  setFunction(func);
 
   if (binaryPos) {
     lastBinaryPos = *binaryPos;
@@ -1243,8 +1242,7 @@ Result<> IRBuilder::visitEnd() {
       EHUtils::handleBlockNestedPops(
         func, wasm, EHUtils::FeaturePolicy::RunIfNoEH);
     }
-    this->func = nullptr;
-    this->numLocals = 0;
+    setFunction(nullptr);
     blockHint = 0;
     labelHint = 0;
   } else if (auto* block = scope.getBlock()) {
@@ -1657,13 +1655,13 @@ Result<> IRBuilder::makeCallIndirect(Name table,
 }
 
 Result<> IRBuilder::makeScratchLocalGet(Index local) {
-  assert(func && local >= numLocals && local < func->getNumLocals());
+  assert(func && local >= numDeclaredLocals && local < func->getNumLocals());
   push(builder.makeLocalGet(local, func->getLocalType(local)));
   return Ok{};
 }
 
 Result<> IRBuilder::makeScratchLocalSet(Index local) {
-  assert(func && local >= numLocals && local < func->getNumLocals());
+  assert(func && local >= numDeclaredLocals && local < func->getNumLocals());
   LocalSet curr;
   curr.index = local;
   CHECK_ERR(visitLocalSet(&curr));
@@ -1675,7 +1673,7 @@ Result<> IRBuilder::makeLocalGet(Index local) {
   if (!func) {
     return Err{"local.get is only valid in a function context"};
   }
-  if (local >= numLocals) {
+  if (local >= numDeclaredLocals) {
     return Err{"invalid local.get index"};
   }
   push(builder.makeLocalGet(local, func->getLocalType(local)));
@@ -1686,7 +1684,7 @@ Result<> IRBuilder::makeLocalSet(Index local) {
   if (!func) {
     return Err{"local.set is only valid in a function context"};
   }
-  if (local >= numLocals) {
+  if (local >= numDeclaredLocals) {
     return Err{"invalid local.set index"};
   }
   LocalSet curr;
@@ -1700,7 +1698,7 @@ Result<> IRBuilder::makeLocalTee(Index local) {
   if (!func) {
     return Err{"local.tee is only valid in a function context"};
   }
-  if (local >= numLocals) {
+  if (local >= numDeclaredLocals) {
     return Err{"invalid local.tee index"};
   }
   LocalSet curr;
