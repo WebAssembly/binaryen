@@ -605,8 +605,8 @@ struct OptimizeInstructions
       if (Bits::getMaxBits(ext, this) + extraLeftShifts < bits) {
         return replaceCurrent(removeAlmostSignExt(curr));
       }
-      // We also don't need it if it already has an identical-sized sign
-      // extend applied to it. That is, if it is already a sign-extended
+      // We also don't need it if it already has an identical-sized or larger
+      // sign extend applied to it. That is, if it is already a sign-extended
       // value, then another sign extend will do nothing. We do need to be
       // careful of the extra shifts, though.
       if (isSignExted(ext, bits) && extraLeftShifts == 0) {
@@ -625,7 +625,7 @@ struct OptimizeInstructions
         if (auto* ext = Properties::getSignExtValue(curr->left)) {
           // TODO: Reexamine whether replacing unary sign-extend instructions
           // (as opposed to shift pairs) with zero-extend masks here is
-          // worthwhile, since an and with a constant is larger than a unary
+          // worthwhile, since an `and` with a constant is larger than a unary
           // extend.
           //
           // We are comparing a sign extend to a constant, which means we can
@@ -685,7 +685,7 @@ struct OptimizeInstructions
             // well replace both with cheaper zexts
             // TODO: Reexamine whether replacing unary sign-extend instructions
             // (as opposed to shift pairs) with zero-extend masks here is
-            // worthwhile, since an and with a constant is larger than a unary
+            // worthwhile, since an `and` with a constant is larger than a unary
             // extend.
             curr->left = makeZeroExt(left, bits);
             curr->right = makeZeroExt(right, bits);
@@ -1128,7 +1128,7 @@ struct OptimizeInstructions
         // use a cheaper zext
         // TODO: Reexamine whether replacing unary sign-extend instructions (as
         // opposed to shift pairs) with zero-extend masks here is worthwhile,
-        // since an and with a constant is larger than a unary extend.
+        // since an `and` with a constant is larger than a unary extend.
         auto bits = Properties::getSignExtKeptBits(curr->value);
         curr->value = makeZeroExt(ext, bits);
         return replaceCurrent(curr);
@@ -3488,10 +3488,6 @@ private:
       if (auto* ext = Properties::getSignExtValue(binary)) {
         // use a cheaper zero-extent, we just care about the boolean value
         // anyhow
-        // TODO: Reexamine whether replacing unary sign-extend instructions (as
-        // opposed to shift pairs) with zero-extend masks in boolean contexts
-        // is worthwhile, since an and with a constant is larger than a unary
-        // extend.
         return makeZeroExt(ext, Properties::getSignExtKeptBits(binary));
       }
     } else if (auto* block = boolean->dynCast<Block>()) {
