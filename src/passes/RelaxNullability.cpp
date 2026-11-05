@@ -134,9 +134,9 @@ struct InsertRefAsNonNull
           [&](const VarRef& var) {
             std::visit(overloaded{
                          [](Index) { /* no nullability constraint */ },
-                         // A polymorphic expression demanded a non-null. This
-                         // can't actually happen today.
                          [&](Nullability nullability) {
+                           // A polymorphic expression demanded a non-null. This
+                           // can't actually happen today.
                            if (nullability == Nullability::NonNullable) {
                              *currp = Builder(wasm).makeRefAs(
                                RefAsOp::RefAsNonNull, *currp);
