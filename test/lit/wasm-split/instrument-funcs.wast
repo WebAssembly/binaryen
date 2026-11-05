@@ -1,8 +1,8 @@
-;; RUN: wasm-split %s --instrument -S -o - | filecheck %s
+;; RUN: wasm-split %s --instrument -S -o - | filecheck %s --check-prefixes=CHECK,TEXT
 
 ;; Check that the output round trips and validates as well
 ;; RUN: wasm-split %s --instrument -g -o %t
-;; RUN: wasm-opt %t --print | filecheck %s
+;; RUN: wasm-opt %t --print | filecheck %s --check-prefixes=CHECK,BIN
 
 (module
   (import "env" "foo" (func $foo))
@@ -21,13 +21,15 @@
 ;; CHECK: (global $baz_timestamp (mut i32) (i32.const 0))
 
 ;; Check that a memory has been added
-;; CHECK: (memory $0 1 1)
+;; TEXT: (memory $0 1 1)
+;; BIN: (memory $profile-memory 1 1)
 
 ;; And the profiling function is exported
 ;; CHECK: (export "__write_profile" (func $__write_profile))
 
 ;; And the memory has been exported
-;; CHECK: (export "profile-memory" (memory $0))
+;; TEXT: (export "profile-memory" (memory $0))
+;; BIN: (export "profile-memory" (memory $profile-memory))
 
 ;; Check that the function instrumentation is correct
 
