@@ -101,8 +101,8 @@ struct LocalScanner : PostWalker<LocalScanner> {
       auto& info = localInfo[i];
       if (func->isParam(i)) {
         info.maxBits = getBitsForType(func->getLocalType(i)); // worst-case
-        info.signExtKeptBits =
-          LocalInfo::kUnknown; // we will never know anything
+        // We will never know anything.
+        info.signExtKeptBits = LocalInfo::kUnknown;
       } else {
         info.maxBits = info.signExtKeptBits = 0; // we are open to learning
       }
@@ -609,7 +609,7 @@ struct OptimizeInstructions
       // sign extend applied to it. That is, if it is already a sign-extended
       // value, then another sign extend will do nothing. We do need to be
       // careful of the extra shifts, though.
-      if (isSignExted(ext, bits) && extraLeftShifts == 0) {
+      if (hasSignExtKeptBits(ext, bits) && extraLeftShifts == 0) {
         return replaceCurrent(removeAlmostSignExt(curr));
       }
       // A narrower outer shift sign-extension can strip a wider inner one.
@@ -1079,12 +1079,12 @@ struct OptimizeInstructions
       // larger sign-extend: if we have an 8-bit value in 32-bit, then there
       // are 24 sign bits, and doing a sign-extend to 16 will only affect 16
       // of those 24, and the effect is to leave them as they are.
-      if (isSignExted(ext, bits)) {
+      if (hasSignExtKeptBits(ext, bits)) {
         return replaceCurrent(ext);
       }
       // A narrower unary sign-extension can strip a wider inner one. Since
-      // isSignExted(ext, bits) was false above, any inner sign-extension is
-      // strictly wider than |bits|.
+      // hasSignExtKeptBits(ext, bits) was false above, any inner sign-extension
+      // is strictly wider than |bits|.
       if (auto* innerExt = Properties::getSignExtValue(ext)) {
         assert(Properties::getSignExtKeptBits(ext) > bits);
         curr->value = innerExt;
@@ -4495,7 +4495,7 @@ private:
 
   // Check if an expression is already sign-extended with at most |bits| kept
   // bits.
-  bool isSignExted(Expression* curr, Index bits) {
+  bool hasSignExtKeptBits(Expression* curr, Index bits) {
     auto keptBits = Properties::getSignExtKeptBits(curr, this);
     return keptBits > 0 && keptBits <= bits;
   }
