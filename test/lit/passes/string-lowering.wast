@@ -30,7 +30,8 @@
 )
 
 ;; The custom section should contain foo and bar, and foo only once, and the
-;; string with \t should be escaped.
+;; string with \t should be escaped. Non-ASCII characters are emitted as raw
+;; UTF-8 rather than \uXXXX escapes, except for lone surrogates.
 ;;
 ;; RUN: wasm-opt %s --string-lowering -all -S -o - | filecheck %s
 ;;
@@ -44,7 +45,7 @@
 ;; RUN: not wasm-opt %s --string-lowering-magic-imports-assert -all -S -o - \
 ;; RUN:     2>&1 | filecheck %s --check-prefix=ASSERT
 ;;
-;; CHECK: custom section "string.consts", size 167, contents: "[\"bar\",\"foo\",\"needs\\tescaping\\u0000.'#%\\\"- .\\r\\n\\\\08\\f\\n\\r\\t.\\ua66e\",\"surrogate pair \\ud800\\udf48 \",\"unpaired high surrogate \\ud800 \",\"unpaired low surrogate \\udf48 \"]"
+;; CHECK: custom section "string.consts", size 156, contents: "[\"bar\",\"foo\",\"needs\\tescaping\\u0000.'#%\\\"- .\\r\\n\\\\08\\f\\n\\r\\t.ꙮ\",\"surrogate pair 𐍈 \",\"unpaired high surrogate \\ud800 \",\"unpaired low surrogate \\udf48 \"]"
 ;;
 ;; MAGIC: custom section "string.consts", size 68, contents: "[\"unpaired high surrogate \\ud800 \",\"unpaired low surrogate \\udf48 \"]"
 ;;
@@ -57,6 +58,6 @@
 ;; RUN: wasm-opt %s --string-lowering --remove-unused-module-elements -all -o %t.wasm
 ;; RUN: node %S/string-lowering.js %t.wasm | filecheck %s --check-prefix=CHECK-JS
 ;;
-;; CHECK-JS: string: ["bar","foo","needs\tescaping\x00.'#%\"- .\r\n\\08\f\n\r\t.\ua66e","surrogate pair \ud800\udf48 ","unpaired high surrogate \ud800 ","unpaired low surrogate \udf48 "]
+;; CHECK-JS: string: ["bar","foo","needs\tescaping\x00.'#%\"- .\r\n\\08\f\n\r\t.ꙮ","surrogate pair 𐍈 ","unpaired high surrogate \ud800 ","unpaired low surrogate \udf48 "]
 ;;
 ;; CHECK-JS: JSON: ["bar","foo","needs\tescaping\x00.'#%\"- .\r\n\\08\f\n\r\t.ꙮ","surrogate pair 𐍈 ","unpaired high surrogate \ud800 ","unpaired low surrogate \udf48 "]
