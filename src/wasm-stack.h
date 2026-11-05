@@ -100,12 +100,16 @@ public:
       scratchLocals(parent.getModule()->features) {}
 
   void visit(Expression* curr) {
+    auto start = o.size();
     if (func) {
       parent.trackExpressionStart(curr, func);
     }
     OverriddenVisitor<BinaryInstWriter>::visit(curr);
     if (func) {
       parent.trackExpressionEnd(curr, func);
+      if (DWARF) {
+        parent.trackInstruction(curr, func, start);
+      }
     }
   }
 
@@ -123,7 +127,9 @@ public:
   void emitScopeEnd(Expression* curr);
   // emit an end at the end of a function
   void emitFunctionEnd();
-  void emitUnreachable();
+  // Standalone writer-inserted traps have no origin. Other traps get their
+  // origin from the surrounding visit(), including explicit unreachables.
+  void emitUnreachable(bool generated = false);
   void emitUnreachableLocalSet(Index index);
   void mapLocalsAndEmitHeader();
 
@@ -565,7 +571,7 @@ public:
     }
     writer.emitFunctionEnd();
   }
-  void emitUnreachable() { writer.emitUnreachable(); }
+  void emitUnreachable() { writer.emitUnreachable(true); }
   void emitUnreachableLocalSet(Index index) {
     writer.emitUnreachableLocalSet(index);
   }

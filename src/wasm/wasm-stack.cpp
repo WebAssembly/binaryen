@@ -2472,8 +2472,14 @@ void BinaryInstWriter::emitDelegate(Try* curr) {
   // target its own try.
   assert(!breakStack.empty());
   breakStack.pop_back();
+  if (func) {
+    parent.trackExpressionDelimiter(curr, func, 0);
+  }
   o << static_cast<int8_t>(BinaryConsts::Delegate)
     << U32LEB(getBreakIndex(curr->delegateTarget));
+  if (func) {
+    parent.trackExpressionEnd(curr, func);
+  }
 }
 
 void BinaryInstWriter::visitThrow(Throw* curr) {
@@ -3216,26 +3222,42 @@ void BinaryInstWriter::visitStackSwitch(StackSwitch* curr) {
 void BinaryInstWriter::emitScopeEnd(Expression* curr) {
   assert(!breakStack.empty());
   breakStack.pop_back();
+  auto start = o.size();
   o << static_cast<int8_t>(BinaryConsts::End);
   if (func) {
     parent.trackExpressionEnd(curr, func);
+    if (DWARF) {
+      parent.trackInstruction(curr, func, start, true);
+    }
   }
 }
 
 void BinaryInstWriter::emitFunctionEnd() {
+  auto start = o.size();
   o << static_cast<int8_t>(BinaryConsts::End);
+  if (DWARF) {
+    parent.trackInstruction(nullptr, func, start, true);
+  }
 }
 
-void BinaryInstWriter::emitUnreachable() {
+void BinaryInstWriter::emitUnreachable(bool generated) {
+  auto start = o.size();
   o << static_cast<int8_t>(BinaryConsts::Unreachable);
+  if (generated && DWARF) {
+    parent.trackInstruction(nullptr, func, start);
+  }
 }
 
 void BinaryInstWriter::emitUnreachableLocalSet(Index index) {
+  auto start = o.size();
   LocalSet set;
   set.index = index;
   set.type = Type::none;
   set.value = nullptr;
   visitLocalSet(&set);
+  if (DWARF) {
+    parent.trackInstruction(nullptr, func, start);
+  }
 }
 
 void BinaryInstWriter::mapLocalsAndEmitHeader() {

@@ -31,6 +31,7 @@
 #include "parsing.h"
 #include "source-map.h"
 #include "wasm-builder.h"
+#include "wasm-debug.h"
 #include "wasm-features.h"
 #include "wasm-ir-builder.h"
 #include "wasm-traversal.h"
@@ -1474,6 +1475,13 @@ public:
   void trackExpressionEnd(Expression* curr, Function* func);
   void trackExpressionDelimiter(Expression* curr, Function* func, size_t id);
 
+  // Track a written instruction (not an empty expression). A null expression
+  // denotes generated code, or the function's final end when isEnd is true.
+  void trackInstruction(Expression* curr,
+                        Function* func,
+                        BinaryLocation start,
+                        bool isEnd = false);
+
   // Writes code annotations into a buffer and returns it. We cannot write them
   // directly into the output since we write function code first (to get the
   // offsets for the annotations), and only then can write annotations, which we
@@ -1555,6 +1563,8 @@ private:
 
   // General debugging info: track locations as we write.
   BinaryLocations binaryLocations;
+  // Output-only DWARF origins belong to the writer, not the main IR.
+  std::vector<Debug::InstructionLocation> instructionLocations;
   size_t binaryLocationsSizeAtSectionStart;
   // Track the expressions that we added for the current function being
   // written, so that we can update those specific binary locations when
