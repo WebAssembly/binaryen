@@ -619,6 +619,13 @@ struct OptimizeInstructions
           return replaceCurrent(curr);
         }
       }
+      // Sign-extending the low 32 bits of a zero-extended i32 is a signed
+      // i32 extension (plus any remaining left shifts).
+      if (auto* unary = ext->dynCast<Unary>();
+          unary && unary->op == ExtendUInt32 && bits - extraLeftShifts == 32) {
+        unary->op = ExtendSInt32;
+        return replaceCurrent(removeAlmostSignExt(curr));
+      }
     } else if (curr->op == EqInt32 || curr->op == NeInt32 ||
                curr->op == EqInt64 || curr->op == NeInt64) {
       if (auto* c = curr->right->dynCast<Const>()) {
@@ -1063,12 +1070,16 @@ struct OptimizeInstructions
       if (trySignExtLoad(ext, bits)) {
         return replaceCurrent(ext);
       }
-      // Simple sign extends can be removed if the input cannot have a sign bit
-      // or is already sign-extended. Note that we can handle the case of |curr|
-      // having a larger sign-extend: if we have an 8-bit value in 32-bit, then
-      // there are 24 sign bits, and doing a sign-extend to 16 will only affect
-      // 16 of those 24, and the effect is to leave them as they are.
-      if (Bits::getMaxBits(ext, this) < bits || isSignExted(ext, bits)) {
+      // If the sign-extend input cannot have a sign bit, we don't need it.
+      if (Bits::getMaxBits(ext, this) < bits) {
+        return replaceCurrent(ext);
+      }
+      // Simple sign extends can also be removed if the input is already
+      // sign-extended. Note that we can handle the case of |curr| having a
+      // larger sign-extend: if we have an 8-bit value in 32-bit, then there
+      // are 24 sign bits, and doing a sign-extend to 16 will only affect 16
+      // of those 24, and the effect is to leave them as they are.
+      if (isSignExted(ext, bits)) {
         return replaceCurrent(ext);
       }
       // A narrower unary sign-extension can strip a wider inner one. Since

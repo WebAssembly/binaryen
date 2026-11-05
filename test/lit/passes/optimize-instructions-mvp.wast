@@ -6142,6 +6142,30 @@
   ;; CHECK-NEXT:    (i32.const 8)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.extend_i32_s
+  ;; CHECK-NEXT:    (local.get $x32)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.shl
+  ;; CHECK-NEXT:    (i64.extend_i32_s
+  ;; CHECK-NEXT:     (local.get $x32)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i64.const 8)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.shr_s
+  ;; CHECK-NEXT:    (i64.shl
+  ;; CHECK-NEXT:     (i64.extend_i32_u
+  ;; CHECK-NEXT:      (local.get $x32)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i64.const 48)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i64.const 48)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $nested-shift-sign-ext (param $x32 i32)
     ;; Narrower outer shift sign-extension strips wider inner shift sign-extension.
@@ -6173,6 +6197,37 @@
           (i32.const 16)
         )
         (i32.const 8)
+      )
+    )
+    ;; Sign-extending the low 32 bits of a zero-extended i32 is a signed i32 extension.
+    (drop
+      (i64.shr_s
+        (i64.shl
+          (i64.extend_i32_u (local.get $x32))
+          (i64.const 32)
+        )
+        (i64.const 32)
+      )
+    )
+    ;; Also applies when there are remaining left shifts after shifting the i32
+    ;; sign bit into the i64 sign bit.
+    (drop
+      (i64.shr_s
+        (i64.shl
+          (i64.extend_i32_u (local.get $x32))
+          (i64.const 32)
+        )
+        (i64.const 24)
+      )
+    )
+    ;; Negative case: shifting by more than 32 bits sign-extends a narrower width.
+    (drop
+      (i64.shr_s
+        (i64.shl
+          (i64.extend_i32_u (local.get $x32))
+          (i64.const 48)
+        )
+        (i64.const 48)
       )
     )
   )
