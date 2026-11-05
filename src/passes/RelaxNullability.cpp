@@ -15,19 +15,18 @@
  */
 
 // Unconditionally make all ref params, locals, and struct fields (todo)
-// nullable when --traps-never-happen is enabled. This helps reduce code size
-// by
-// 1. Eliminating `ref.as_non_null`s - All `ref.as_non_null`s can be eliminated,
-//    except on the boundary of things that couldn't be relaxed e.g.
-//    imported function params.
+// nullable. This helps reduce code size by
+// 1. Eliminating `ref.as_non_null`s - When --traps-never-happen, all
+//    `ref.as_non_null`s can be eliminated, except on the boundary of things
+//    that couldn't be relaxed e.g. imported function params. This is done
+//    by --strip-refining-casts.
 // 2. Allowing more locals to share a declaration group, since they can no
 //    longer differ by nullability.
-//
-// It may also improve type merging by causing more function signatures to be
-// identical.
+// 3. Exposing more opportunities for type merging by causing more function
+//    signatures and struct/arrays to be identical.
 //
 // This pass does not strip redundant ref.as_non_nulls after definitions have
-// been relaxed. Follow with --strip-refinining-casts to do so.
+// been relaxed. Follow with --strip-refining-casts to do so.
 //
 // This pass strictly removes information so it should come near the end of
 // Binaryen's pipeline.
@@ -58,12 +57,13 @@ bool isRelaxable(Function* func,
   return !func->imported() && !referencedFuncs.contains(func);
 }
 
-std::pair<bool, Type> toNullable(Type t) {
+[[nodiscard]] bool makeNullable(Type& t) {
   if (t.isNonNullableRef()) {
-    return {true, t.with(Nullability::Nullable)};
-  } else {
-    return {false, t};
+    t = t.with(Nullability::Nullable);
+    return true;
   }
+
+  return false;
 }
 
 void insertRefAsNonNull(Expression** curr, Builder builder) {
@@ -92,8 +92,7 @@ struct LocalsToNullable : PostWalker<LocalsToNullable> {
 
   void doWalkFunction(Function* func) {
     for (Index i = 0; i < func->vars.size(); ++i) {
-      auto [_, nullable] = toNullable(func->vars[i]);
-      func->vars[i] = nullable;
+      bool _ = makeNullable(func->vars[i]);
     }
 
     // TODO: could consider doing this only if locals changed
@@ -102,17 +101,11 @@ struct LocalsToNullable : PostWalker<LocalsToNullable> {
     PostWalker<LocalsToNullable>::doWalkFunction(func);
   }
 
-  void visitLocalGet(LocalGet* curr) {
-    auto [changed, nullable] = toNullable(curr->type);
-    curr->type = nullable;
-    this->changed |= changed;
-  }
+  void visitLocalGet(LocalGet* curr) { changed |= makeNullable(curr->type); }
 
   void visitLocalSet(LocalSet* curr) {
     if (curr->isTee()) {
-      auto [changed, nullable] = toNullable(curr->type);
-      curr->type = nullable;
-      this->changed |= changed;
+      changed |= makeNullable(curr->type);
     }
   }
 };
@@ -159,7 +152,10 @@ struct InsertRefAsNonNull
       // In this case we don't need to insert any ref.as_non_null.
     }
 
-    Type getLabelType(Name) { WASM_UNREACHABLE("unexpected branch"); }
+    Type getLabelType(Name) {
+      // Labeled blocks are skipped. See `InsertRefAsNonNull::visitExpression`.
+      WASM_UNREACHABLE("unexpected branch");
+    }
   } typer;
 
   InsertRefAsNonNull(Module& module, Function* func) : typer(module, func) {}
@@ -176,14 +172,17 @@ struct InsertRefAsNonNull
   }
 };
 
-struct Runner : Pass {
+// Pass implementing the bulk of function-parallel work after global rewrites
+// are done.
+struct FunctionNullabilityRelaxer : Pass {
   const std::unordered_set<Function*>& referencedFuncs;
 
-  Runner(const std::unordered_set<Function*>& referencedFuncs)
+  FunctionNullabilityRelaxer(
+    const std::unordered_set<Function*>& referencedFuncs)
     : referencedFuncs(referencedFuncs) {}
 
   std::unique_ptr<Pass> create() override {
-    return std::make_unique<Runner>(*this);
+    return std::make_unique<FunctionNullabilityRelaxer>(*this);
   }
 
   bool isFunctionParallel() override { return true; }
@@ -220,8 +219,8 @@ struct RelaxNullability : Pass {
     auto referencedFuncs = ModuleUtils::getReferencedFuncs(*module);
     relaxFunctionParams(module, referencedFuncs);
 
-    PassRunner runner(module);
-    runner.add(std::make_unique<Runner>(referencedFuncs));
+    PassRunner runner(getPassRunner());
+    runner.add(std::make_unique<FunctionNullabilityRelaxer>(referencedFuncs));
     runner.run();
   }
 
@@ -235,11 +234,15 @@ private:
       }
 
       std::vector<Type> relaxedParams;
+      bool changed = false;
       for (Type t : func->getParams()) {
-        auto [_, nullable] = toNullable(t);
-        relaxedParams.push_back(nullable);
+        changed |= makeNullable(t);
+        relaxedParams.push_back(t);
       }
-      func->setParams(std::move(relaxedParams));
+
+      if (changed) {
+        func->setParams(std::move(relaxedParams));
+      }
     }
   }
 };
