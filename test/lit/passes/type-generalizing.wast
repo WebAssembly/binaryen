@@ -2444,10 +2444,8 @@
  ;; CHECK-NEXT:  (local $x (ref null $A))
  ;; CHECK-NEXT:  (block $block (result (ref $A))
  ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (br_on_cast_fail $block (ref $A) (ref $B)
- ;; CHECK-NEXT:     (ref.as_non_null
- ;; CHECK-NEXT:      (local.get $x)
- ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    (br_on_cast_fail $block (ref null $A) (ref null $B)
+ ;; CHECK-NEXT:     (local.get $x)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (unreachable)

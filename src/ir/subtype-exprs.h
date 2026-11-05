@@ -453,6 +453,14 @@ struct SubtypingDiscoverer
         if (curr->desc) {
           // As with RefCast, we must keep a descriptor valid.
           internalNoteSubtype(curr->desc, curr->desc->type);
+          if (curr->desc->type.isBottomRef()) {
+            // The cast will trap on the null descriptor before branching or
+            // falling through, so the input only needs to stay in the same
+            // type hierarchy.
+            internalNoteNonFlowSubtype(
+              curr->ref, Type(curr->castType.getHeapType().getTop(), Nullable));
+            break;
+          }
         }
         if (curr->op == BrOnCast || curr->op == BrOnCastDescEq) {
           // If we do not branch, we flow out the original input when the cast
@@ -467,9 +475,14 @@ struct SubtypingDiscoverer
           }
         } else {
           // We send the original input along when the cast fails, so the input
-          // must be sendable to the target.
+          // must be sendable to the target. If the cast type is nullable then
+          // nulls do not fail the cast, so the sent value is made non-nullable.
           if (breakTarget->type.isRef()) {
-            internalNoteSubtype(curr->ref, breakTarget->type);
+            auto type = breakTarget->type;
+            if (curr->castType.isNullableRef()) {
+              type = type.with(Nullable);
+            }
+            internalNoteSubtype(curr->ref, type);
           }
         }
         break;
