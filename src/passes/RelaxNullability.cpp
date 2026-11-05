@@ -31,6 +31,7 @@
 // This pass strictly removes information so it should come near the end of
 // Binaryen's pipeline.
 
+#include <utility>
 #include <variant>
 
 #include "pass.h"
@@ -92,7 +93,7 @@ struct LocalsToNullable : PostWalker<LocalsToNullable> {
 
   void doWalkFunction(Function* func) {
     for (Index i = 0; i < func->vars.size(); ++i) {
-      bool _ = makeNullable(func->vars[i]);
+      std::ignore = makeNullable(func->vars[i]);
     }
 
     // TODO: could consider doing this only if locals changed
