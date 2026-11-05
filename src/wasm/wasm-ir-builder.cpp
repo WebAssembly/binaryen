@@ -930,14 +930,20 @@ Result<> IRBuilder::pushScope(ScopeCtx&& scope) {
       // scratch local.
       auto* expr = inputs[i];
       size_t parentIndex = baseIndex + i;
-      bool isInputGet = expr->is<LocalGet>() &&
-                        expr->type == scope.inputType[i] &&
-                        parentIndex < parentLocals.size();
       bool isPop = isUnnamedBlock && inputs.size() == 1 && expr->is<Pop>();
+      if (isPop) {
+        // If this unnamed block later receives a name from a branch targeting
+        // it, the nested pop will need to be fixed up.
+        scopeStack[0].noteSyntheticBlock();
+        continue;
+      }
+      bool isInputGet =
+        parentIndex < parentLocals.size() && expr->is<LocalGet>() &&
+        expr->cast<LocalGet>()->index == parentLocals[parentIndex] &&
+        expr->type == scope.inputType[i];
       if (isInputGet) {
-        assert(expr->cast<LocalGet>()->index == parentLocals[parentIndex]);
         scope.inputLocals.push_back(parentLocals[parentIndex]);
-      } else if (!isPop) {
+      } else {
         auto scratch = addScratchLocal(scope.inputType[i]);
         CHECK_ERR(scratch);
         scope.inputLocals.push_back(*scratch);
