@@ -1106,7 +1106,7 @@ std::unordered_set<Function*> getReferencedFuncs(Module& module) {
       std::unordered_map<Function*, std::unordered_set<Function*>>&
         allReferencedFuncs)
       : allReferencedFuncs(allReferencedFuncs),
-        referencedFuncs(&allReferencedFuncs[nullptr]) {}
+        referencedFuncs(&allReferencedFuncs.at(nullptr)) {}
 
     std::unique_ptr<Pass> create() override {
       return std::make_unique<AddressedFuncsWalker>(allReferencedFuncs);
@@ -1128,6 +1128,7 @@ std::unordered_set<Function*> getReferencedFuncs(Module& module) {
 
   std::unordered_map<Function*, std::unordered_set<Function*>>
     allReferencedFuncs;
+  allReferencedFuncs[nullptr];
   for (auto& func : module.functions) {
     allReferencedFuncs[func.get()];
   }
