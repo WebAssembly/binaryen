@@ -3,36 +3,30 @@
 ;; RUN: foreach %s %t wasm-opt --experimental-type-generalizing -all -S -o - | filecheck %s
 
 (module
- (type $i8-array (array (mut i8)))
- (type $i16-array (array (mut i16)))
-
  ;; CHECK:      (type $0 (func))
 
  ;; CHECK:      (type $1 (func (result stringref)))
 
- ;; CHECK:      (type $2 (func (result externref)))
+ ;; CHECK:      (type $i8-array (array (mut i8)))
+ (type $i8-array (array (mut i8)))
+ ;; CHECK:      (type $i16-array (array (mut i16)))
+ (type $i16-array (array (mut i16)))
 
- ;; CHECK:      (type $3 (func (result i32)))
+ ;; CHECK:      (type $4 (func (result externref)))
+
+ ;; CHECK:      (type $5 (func (result i32)))
 
  ;; CHECK:      (func $string-new-utf8 (type $1) (result stringref)
- ;; CHECK-NEXT:  (local $arr nullref)
- ;; CHECK-NEXT:  (block ;; (replaces unreachable StringNew we can't emit)
- ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (local.get $arr)
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (i32.const 0)
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (i32.const 0)
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  (local $arr (ref null $i8-array))
+ ;; CHECK-NEXT:  (string.new_lossy_utf8_array
+ ;; CHECK-NEXT:   (local.get $arr)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $string-new-utf8 (result stringref)
   (local $arr nullref)
   ;; Require typeof($arr) <: (ref null $i8-array).
-  ;; TODO: for now this keeps the type unchanged
   (string.new_lossy_utf8_array
    (local.get $arr)
    (i32.const 0)
@@ -41,24 +35,16 @@
  )
 
  ;; CHECK:      (func $string-new-wtf16 (type $1) (result stringref)
- ;; CHECK-NEXT:  (local $arr nullref)
- ;; CHECK-NEXT:  (block ;; (replaces unreachable StringNew we can't emit)
- ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (local.get $arr)
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (i32.const 0)
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (i32.const 0)
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  (local $arr (ref null $i16-array))
+ ;; CHECK-NEXT:  (string.new_wtf16_array
+ ;; CHECK-NEXT:   (local.get $arr)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $string-new-wtf16 (result stringref)
   (local $arr nullref)
   ;; Require typeof($arr) <: (ref null $i16-array).
-  ;; TODO: for now this keeps the type unchanged
   (string.new_wtf16_array
    (local.get $arr)
    (i32.const 0)
@@ -93,8 +79,8 @@
  )
 
  ;; CHECK:      (func $string-measure (type $0)
- ;; CHECK-NEXT:  (local $s1 nullexternref)
- ;; CHECK-NEXT:  (local $s2 nullexternref)
+ ;; CHECK-NEXT:  (local $s1 stringref)
+ ;; CHECK-NEXT:  (local $s2 stringref)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (string.measure_utf8
  ;; CHECK-NEXT:    (local.get $s1)
@@ -110,7 +96,6 @@
   (local $s1 nullexternref)
   (local $s2 nullexternref)
   ;; Require typeof($s1) <: stringref and typeof($s2) <: stringref.
-  ;; TODO: for now this keeps the type unchanged
   (drop
    (string.measure_utf8
     (local.get $s1)
@@ -124,20 +109,13 @@
  )
 
  ;; CHECK:      (func $string-encode-utf8 (type $0)
- ;; CHECK-NEXT:  (local $s nullexternref)
- ;; CHECK-NEXT:  (local $arr nullref)
+ ;; CHECK-NEXT:  (local $s stringref)
+ ;; CHECK-NEXT:  (local $arr (ref null $i8-array))
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (block ;; (replaces unreachable StringEncode we can't emit)
- ;; CHECK-NEXT:    (drop
- ;; CHECK-NEXT:     (local.get $s)
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (drop
- ;; CHECK-NEXT:     (local.get $arr)
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (drop
- ;; CHECK-NEXT:     (i32.const 0)
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   (string.encode_lossy_utf8_array
+ ;; CHECK-NEXT:    (local.get $s)
+ ;; CHECK-NEXT:    (local.get $arr)
+ ;; CHECK-NEXT:    (i32.const 0)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -145,7 +123,6 @@
   (local $s nullexternref)
   (local $arr nullref)
   ;; Require typeof($s) <: stringref and typeof($arr) <: (ref null $i8-array).
-  ;; TODO: for now this keeps the type unchanged
   (drop
    (string.encode_lossy_utf8_array
     (local.get $s)
@@ -156,20 +133,13 @@
  )
 
  ;; CHECK:      (func $string-encode-wtf16 (type $0)
- ;; CHECK-NEXT:  (local $s nullexternref)
- ;; CHECK-NEXT:  (local $arr nullref)
+ ;; CHECK-NEXT:  (local $s stringref)
+ ;; CHECK-NEXT:  (local $arr (ref null $i16-array))
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (block ;; (replaces unreachable StringEncode we can't emit)
- ;; CHECK-NEXT:    (drop
- ;; CHECK-NEXT:     (local.get $s)
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (drop
- ;; CHECK-NEXT:     (local.get $arr)
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (drop
- ;; CHECK-NEXT:     (i32.const 0)
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   (string.encode_wtf16_array
+ ;; CHECK-NEXT:    (local.get $s)
+ ;; CHECK-NEXT:    (local.get $arr)
+ ;; CHECK-NEXT:    (i32.const 0)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -177,7 +147,6 @@
   (local $s nullexternref)
   (local $arr nullref)
   ;; Require typeof($s) <: stringref and typeof($arr) <: (ref null $i16-array).
-  ;; TODO: for now this keeps the type unchanged
   (drop
    (string.encode_wtf16_array
     (local.get $s)
@@ -187,9 +156,9 @@
   )
  )
 
- ;; CHECK:      (func $string-concat (type $2) (result externref)
- ;; CHECK-NEXT:  (local $s1 nullexternref)
- ;; CHECK-NEXT:  (local $s2 nullexternref)
+ ;; CHECK:      (func $string-concat (type $4) (result externref)
+ ;; CHECK-NEXT:  (local $s1 stringref)
+ ;; CHECK-NEXT:  (local $s2 stringref)
  ;; CHECK-NEXT:  (string.concat
  ;; CHECK-NEXT:   (local.get $s1)
  ;; CHECK-NEXT:   (local.get $s2)
@@ -199,7 +168,6 @@
   (local $s1 nullexternref)
   (local $s2 nullexternref)
   ;; Require typeof($s1) <: stringref and typeof($s2) <: stringref.
-  ;; TODO: for now this keeps the type unchanged
   (string.concat
    (local.get $s1)
    (local.get $s2)
@@ -207,10 +175,10 @@
  )
 
  ;; CHECK:      (func $string-eq (type $0)
- ;; CHECK-NEXT:  (local $s1 nullexternref)
- ;; CHECK-NEXT:  (local $s2 nullexternref)
- ;; CHECK-NEXT:  (local $s3 nullexternref)
- ;; CHECK-NEXT:  (local $s4 nullexternref)
+ ;; CHECK-NEXT:  (local $s1 stringref)
+ ;; CHECK-NEXT:  (local $s2 stringref)
+ ;; CHECK-NEXT:  (local $s3 stringref)
+ ;; CHECK-NEXT:  (local $s4 stringref)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (string.eq
  ;; CHECK-NEXT:    (local.get $s1)
@@ -230,7 +198,6 @@
   (local $s3 nullexternref)
   (local $s4 nullexternref)
   ;; Require all operands <: stringref.
-  ;; TODO: for now this keeps the type unchanged
   (drop
    (string.eq
     (local.get $s1)
@@ -245,8 +212,8 @@
   )
  )
 
- ;; CHECK:      (func $string-test (type $3) (result i32)
- ;; CHECK-NEXT:  (local $s stringref)
+ ;; CHECK:      (func $string-test (type $5) (result i32)
+ ;; CHECK-NEXT:  (local $s externref)
  ;; CHECK-NEXT:  (string.test
  ;; CHECK-NEXT:   (local.get $s)
  ;; CHECK-NEXT:  )
@@ -254,14 +221,13 @@
  (func $string-test (result i32)
   (local $s stringref)
   ;; Require typeof($s) <: externref.
-  ;; TODO: for now this keeps the type unchanged
   (string.test
    (local.get $s)
   )
  )
 
- ;; CHECK:      (func $string-wtf16-get (type $3) (result i32)
- ;; CHECK-NEXT:  (local $s nullexternref)
+ ;; CHECK:      (func $string-wtf16-get (type $5) (result i32)
+ ;; CHECK-NEXT:  (local $s stringref)
  ;; CHECK-NEXT:  (stringview_wtf16.get_codeunit
  ;; CHECK-NEXT:   (local.get $s)
  ;; CHECK-NEXT:   (i32.const 0)
@@ -270,15 +236,14 @@
  (func $string-wtf16-get (result i32)
   (local $s nullexternref)
   ;; Require typeof($s) <: stringref.
-  ;; TODO: for now this keeps the type unchanged
   (stringview_wtf16.get_codeunit
    (local.get $s)
    (i32.const 0)
   )
  )
 
- ;; CHECK:      (func $string-slice-wtf (type $2) (result externref)
- ;; CHECK-NEXT:  (local $s nullexternref)
+ ;; CHECK:      (func $string-slice-wtf (type $4) (result externref)
+ ;; CHECK-NEXT:  (local $s stringref)
  ;; CHECK-NEXT:  (stringview_wtf16.slice
  ;; CHECK-NEXT:   (local.get $s)
  ;; CHECK-NEXT:   (i32.const 0)
@@ -288,7 +253,6 @@
  (func $string-slice-wtf (result externref)
   (local $s nullexternref)
   ;; Require typeof($s) <: stringref.
-  ;; TODO: for now this keeps the type unchanged
   (stringview_wtf16.slice
    (local.get $s)
    (i32.const 0)

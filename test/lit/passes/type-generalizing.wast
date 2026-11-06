@@ -2061,6 +2061,47 @@
   )
  )
 
+ ;; CHECK:      (func $i31-get-shared (type $0)
+ ;; CHECK-NEXT:  (local $null (ref null (shared i31)))
+ ;; CHECK-NEXT:  (local $nonnullable (ref null (shared i31)))
+ ;; CHECK-NEXT:  (local.set $nonnullable
+ ;; CHECK-NEXT:   (ref.i31_shared
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i31.get_s
+ ;; CHECK-NEXT:    (local.get $null)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i31.get_u
+ ;; CHECK-NEXT:    (local.get $nonnullable)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $i31-get-shared
+  (local $null (ref null (shared none)))
+  (local $nonnullable (ref (shared i31)))
+  (local.set $nonnullable
+   (ref.i31_shared
+    (i32.const 0)
+   )
+  )
+  (drop
+   ;; Require that typeof($null) <: (ref null (shared i31)).
+   (i31.get_s
+    (local.get $null)
+   )
+  )
+  (drop
+   ;; Require that typeof($nonnullable) <: (ref null (shared i31)).
+   (i31.get_u
+    (local.get $nonnullable)
+   )
+  )
+ )
+
  ;; CHECK:      (func $array-copy-ref-limited (type $0)
  ;; CHECK-NEXT:  (local $dest (ref null $mut-i31))
  ;; CHECK-NEXT:  (local $src (ref null $sub))
