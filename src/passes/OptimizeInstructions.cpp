@@ -597,21 +597,21 @@ struct OptimizeInstructions
     }
     if (auto* ext = Bits::getAlmostSignExt(curr)) {
       Index extraLeftShifts;
-      auto bits = Bits::getAlmostSignExtKeptBits(curr, extraLeftShifts);
-      if (extraLeftShifts == 0 && trySignExtLoad(ext, bits)) {
+      auto keptBits = Bits::getAlmostSignExtKeptBits(curr, extraLeftShifts);
+      if (extraLeftShifts == 0 && trySignExtLoad(ext, keptBits)) {
         return replaceCurrent(ext);
       }
       // We can in some cases remove part of a sign extend, that is,
       //   (x << A) >> B   =>   x << (A - B)
       // If the sign-extend input cannot have a sign bit, we don't need it.
-      if (this->bits.getMaxBits(ext) + extraLeftShifts < bits) {
+      if (bits.getMaxBits(ext) + extraLeftShifts < keptBits) {
         return replaceCurrent(removeAlmostSignExt(curr));
       }
       // We also don't need it if it already has an identical-sized sign
       // extend applied to it. That is, if it is already a sign-extended
       // value, then another sign extend will do nothing. We do need to be
       // careful of the extra shifts, though.
-      if (hasSignExtKeptBits(ext, bits) && extraLeftShifts == 0) {
+      if (hasSignExtKeptBits(ext, keptBits) && extraLeftShifts == 0) {
         return replaceCurrent(removeAlmostSignExt(curr));
       }
     } else if (curr->op == EqInt32 || curr->op == NeInt32 ||
@@ -1044,8 +1044,8 @@ struct OptimizeInstructions
     }
 
     if (auto* ext = Bits::getSignExtValue(curr)) {
-      auto bits = Bits::getSignExtKeptBits(curr);
-      if (trySignExtLoad(ext, bits)) {
+      auto currBits = Bits::getSignExtKeptBits(curr);
+      if (trySignExtLoad(ext, currBits)) {
         return replaceCurrent(ext);
       }
       // Simple sign extends can be removed if the value is already
@@ -1053,8 +1053,8 @@ struct OptimizeInstructions
       // larger sign-extend: if we have an 8-bit value in 32-bit, then there are
       // 24 sign bits, and doing a sign-extend to 16 will only affect 16 of
       // those 24, and the effect is to leave them as they are.
-      auto keptBits = this->bits.getSignExtKeptBits(ext);
-      if (keptBits > 0 && keptBits <= bits) {
+      auto extBits = bits.getSignExtKeptBits(ext);
+      if (extBits > 0 && extBits <= currBits) {
         return replaceCurrent(ext);
       }
     }
