@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include <ir/properties.h>
+#include "ir/bits.h"
 #include <pass.h>
 #include <wasm.h>
 
@@ -73,16 +73,16 @@ struct PickLoadSigns : public WalkerPass<ExpressionStackWalker<PickLoadSigns>> {
       }
 
       auto* parent = expressionStack[expressionStack.size() - i];
-      if (Properties::getZeroExtValue(parent) == curr) {
-        auto bits = Properties::getZeroExtKeptBits(parent);
+      if (Bits::getZeroExtValue(parent) == curr) {
+        auto bits = Bits::getZeroExtKeptBits(parent);
         if (usage.unsignedUsages == 0) {
           usage.unsignedBits = bits;
         } else if (usage.unsignedBits != bits) {
           usage.unsignedBits = 0;
         }
         usage.unsignedUsages++;
-      } else if (Properties::getSignExtValue(parent) == curr) {
-        auto bits = Properties::getSignExtKeptBits(parent);
+      } else if (Bits::getSignExtValue(parent) == curr) {
+        auto bits = Bits::getSignExtKeptBits(parent);
         if (usage.signedUsages == 0) {
           usage.signedBits = bits;
         } else if (usage.signedBits != bits) {
