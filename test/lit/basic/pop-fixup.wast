@@ -184,23 +184,17 @@
 
  ;; CHECK:      (func $stacky-block-param (type $0)
  ;; CHECK-NEXT:  (local $scratch i32)
- ;; CHECK-NEXT:  (local $scratch_1 i32)
  ;; CHECK-NEXT:  (try
  ;; CHECK-NEXT:   (do
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (catch $e
- ;; CHECK-NEXT:    (local.set $scratch
- ;; CHECK-NEXT:     (pop i32)
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (block
- ;; CHECK-NEXT:     (drop
- ;; CHECK-NEXT:      (block (result i32)
- ;; CHECK-NEXT:       (local.set $scratch_1
- ;; CHECK-NEXT:        (local.get $scratch)
- ;; CHECK-NEXT:       )
- ;; CHECK-NEXT:       (nop)
- ;; CHECK-NEXT:       (local.get $scratch_1)
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (block (result i32)
+ ;; CHECK-NEXT:      (local.set $scratch
+ ;; CHECK-NEXT:       (pop i32)
  ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (nop)
+ ;; CHECK-NEXT:      (local.get $scratch)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
@@ -209,8 +203,8 @@
  (func $stacky-block-param
   try
   catch $e
-   ;; Add a block with an input param, forcing us to use a local to capture the
-   ;; pop.
+   ;; An unnamed block with an input param moves the pop directly into the
+   ;; block rather than using an extra scratch local to capture it.
    block (param i32)
     nop
     drop
@@ -286,6 +280,141 @@
    block
     pop i32
     nop
+    drop
+   end
+  end
+ )
+
+ ;; CHECK:      (func $named-block (type $0)
+ ;; CHECK-NEXT:  (local $0 i32)
+ ;; CHECK-NEXT:  (try
+ ;; CHECK-NEXT:   (do
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (catch $e
+ ;; CHECK-NEXT:    (local.set $0
+ ;; CHECK-NEXT:     (pop i32)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (block $block
+ ;; CHECK-NEXT:     (drop
+ ;; CHECK-NEXT:      (local.get $0)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (br $block)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $named-block
+  try
+  catch $e
+   ;; As in $stacky-named-block, but without the nop so no synthetic block is
+   ;; created for stacky code. The block still receives a name from the br, so
+   ;; the pop still needs to be fixed up.
+   block
+    pop i32
+    drop
+    br 0
+   end
+  end
+ )
+
+ ;; CHECK:      (func $stacky-block-param-tuple (type $0)
+ ;; CHECK-NEXT:  (local $scratch (tuple i32 i32))
+ ;; CHECK-NEXT:  (local $scratch_1 i32)
+ ;; CHECK-NEXT:  (local $scratch_2 i32)
+ ;; CHECK-NEXT:  (local $scratch_3 i32)
+ ;; CHECK-NEXT:  (local $scratch_4 i32)
+ ;; CHECK-NEXT:  (try
+ ;; CHECK-NEXT:   (do
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (catch $e2
+ ;; CHECK-NEXT:    (local.set $scratch_1
+ ;; CHECK-NEXT:     (tuple.extract 2 0
+ ;; CHECK-NEXT:      (local.tee $scratch
+ ;; CHECK-NEXT:       (pop (tuple i32 i32))
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (local.set $scratch_2
+ ;; CHECK-NEXT:     (tuple.extract 2 1
+ ;; CHECK-NEXT:      (local.get $scratch)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (block
+ ;; CHECK-NEXT:     (drop
+ ;; CHECK-NEXT:      (block (result i32)
+ ;; CHECK-NEXT:       (local.set $scratch_4
+ ;; CHECK-NEXT:        (local.get $scratch_1)
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:       (drop
+ ;; CHECK-NEXT:        (block (result i32)
+ ;; CHECK-NEXT:         (local.set $scratch_3
+ ;; CHECK-NEXT:          (local.get $scratch_2)
+ ;; CHECK-NEXT:         )
+ ;; CHECK-NEXT:         (nop)
+ ;; CHECK-NEXT:         (local.get $scratch_3)
+ ;; CHECK-NEXT:        )
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:       (local.get $scratch_4)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $stacky-block-param-tuple
+  try
+  catch $e2
+   ;; An unnamed block with multivalue input params extracts the tuple elements
+   ;; into scratch locals before the block rather than moving the pop into the
+   ;; block.
+   block (param i32 i32)
+    nop
+    drop
+    drop
+   end
+  end
+ )
+
+ ;; CHECK:      (func $stacky-unnamed-block-tuple (type $0)
+ ;; CHECK-NEXT:  (local $scratch (tuple i32 i32))
+ ;; CHECK-NEXT:  (local $scratch_1 i32)
+ ;; CHECK-NEXT:  (try
+ ;; CHECK-NEXT:   (do
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (catch $e2
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (block (result i32)
+ ;; CHECK-NEXT:      (local.set $scratch_1
+ ;; CHECK-NEXT:       (block (result i32)
+ ;; CHECK-NEXT:        (local.set $scratch
+ ;; CHECK-NEXT:         (pop (tuple i32 i32))
+ ;; CHECK-NEXT:        )
+ ;; CHECK-NEXT:        (nop)
+ ;; CHECK-NEXT:        (tuple.extract 2 0
+ ;; CHECK-NEXT:         (local.get $scratch)
+ ;; CHECK-NEXT:        )
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (drop
+ ;; CHECK-NEXT:       (tuple.extract 2 1
+ ;; CHECK-NEXT:        (local.get $scratch)
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (local.get $scratch_1)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $stacky-unnamed-block-tuple
+  try
+  catch $e2
+   ;; An unnamed block without explicit input params moves a multivalue pop
+   ;; directly into the block.
+   block
+    pop (tuple i32 i32)
+    nop
+    drop
     drop
    end
   end
