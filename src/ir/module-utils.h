@@ -22,6 +22,10 @@
 #include "support/unique_deferring_queue.h"
 #include "wasm.h"
 
+namespace wasm {
+class ModuleStackIR;
+} // namespace wasm
+
 namespace wasm::ModuleUtils {
 
 // Copies a function into a module. If newName is provided it is used as the
@@ -475,7 +479,8 @@ InsertOrderedMap<HeapType, HeapTypeInfo> collectHeapTypeInfo(
   Module& wasm,
   WorldMode worldMode,
   TypeInclusion inclusion = TypeInclusion::AllTypes,
-  VisibilityHandling visibility = VisibilityHandling::NoVisibility);
+  VisibilityHandling visibility = VisibilityHandling::NoVisibility,
+  const ModuleStackIR* stackIR = nullptr);
 
 // Helper function for collecting all the non-basic heap types used in the
 // module, i.e. the types that would appear in the type section.
@@ -503,7 +508,9 @@ struct IndexedHeapTypes {
 // Similar to `collectHeapTypes`, but provides fast lookup of the index for each
 // type as well. Also orders the types to be valid and sorts the types by
 // frequency of use to minimize code size.
-IndexedHeapTypes getOptimizedIndexedHeapTypes(Module& wasm);
+IndexedHeapTypes
+getOptimizedIndexedHeapTypes(Module& wasm,
+                             const ModuleStackIR* stackIR = nullptr);
 
 } // namespace wasm::ModuleUtils
 

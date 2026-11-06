@@ -1309,6 +1309,8 @@ enum FeaturePrefix { FeatureUsed = '+', FeatureDisallowed = '-' };
 // (local index in IR, tuple index) => binary local index
 using MappedLocals = std::unordered_map<std::pair<Index, Index>, size_t>;
 
+class ModuleStackIR;
+
 // Writes out wasm to the binary format
 
 class WasmBinaryWriter {
@@ -1383,10 +1385,8 @@ class WasmBinaryWriter {
 public:
   WasmBinaryWriter(Module* input,
                    BufferWithRandomAccess& o,
-                   const PassOptions& options)
-    : wasm(input), o(o), options(options), indexes(*input) {
-    prepare();
-  }
+                   const PassOptions& options);
+  ~WasmBinaryWriter();
 
   // locations in the output binary for the various parts of the module
   struct TableOfContents {
@@ -1552,6 +1552,7 @@ private:
   Function::DebugLocation lastDebugLocation;
 
   std::unique_ptr<ImportInfo> importInfo;
+  std::unique_ptr<ModuleStackIR> moduleStackIR;
 
   // General debugging info: track locations as we write.
   BinaryLocations binaryLocations;
