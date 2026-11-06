@@ -2761,6 +2761,7 @@ opt_choices = [
     ('--monomorphize', '--pass-arg=monomorphize-min-benefit@95'),
     ('--monomorphize-always',),
     ('--minimize-rec-groups',),
+    ("--multi-heap2local",),
     ('--no-stack-ir',),
     ('--once-reduction',),
     ("--optimize-casts",),
