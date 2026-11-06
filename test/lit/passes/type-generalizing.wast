@@ -2377,7 +2377,7 @@
  ;; CHECK-NEXT: )
  (func $br_on_non_null (result (ref $A))
   (local $x (ref null $A))
-  ;; We cannot refine the local to funcref, as the result is (ref $A).
+  ;; We cannot refine the local to anyref, as the result is (ref $A).
   (block $block (result (ref $A))
    (br_on_non_null $block
     (local.get $x)
