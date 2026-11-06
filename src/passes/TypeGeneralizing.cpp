@@ -219,6 +219,8 @@ struct Generalizer : public ChildTyper<Generalizer> {
     }
   }
 
+  // Control flow handling. TODO: Perhaps find a way to do this in ChildTyper,
+  // or a helper that extends ChildTyper?
   void visitBlock(Block* curr) {
     if (!curr->list.empty()) {
       exprSubs[curr].push_back(curr->list.back());
