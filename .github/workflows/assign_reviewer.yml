@@ -37,6 +37,6 @@ jobs:
       - name: Assign reviewer
         env:
           GH_TOKEN: ${{ secrets.REVIEWER_ASSIGNMENT_TOKEN || secrets.GITHUB_TOKEN }}
-          REVIEWER_WEIGHTS: ${{ secrets.REVIEWER_WEIGHTS }}
+          REVIEWER_WEIGHTS: ${{ vars.REVIEWER_WEIGHTS }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: python3 scripts/assign_reviewer.py
