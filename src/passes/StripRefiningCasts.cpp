@@ -65,8 +65,12 @@ namespace wasm {
 namespace {
 
 struct StripRefiningCasts
-  : public WalkerPass<SubtypingDiscoverer<StripRefiningCasts>> {
-  using Super = WalkerPass<SubtypingDiscoverer<StripRefiningCasts>>;
+  : public WalkerPass<
+      ControlFlowWalker<StripRefiningCasts,
+                        SubtypingDiscoverer<StripRefiningCasts>>> {
+  using Super =
+    WalkerPass<ControlFlowWalker<StripRefiningCasts,
+                                 SubtypingDiscoverer<StripRefiningCasts>>>;
 
   bool isFunctionParallel() override { return true; }
 
@@ -152,8 +156,8 @@ struct StripRefiningCasts
     // Any input in the hierarchy of the cast type is valid. Nullability does
     // not matter either: a removed cast is assumed to succeed, so it only ever
     // passes its input through unchanged.
-    internalNoteSubtype(curr->ref,
-                        Type(curr->castType.getHeapType().getTop(), Nullable));
+    noteSubtype(curr->ref,
+                Type(curr->castType.getHeapType().getTop(), Nullable));
   }
 
   void visitFunction(Function* func) {
