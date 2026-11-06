@@ -408,15 +408,19 @@ struct DAE : public Pass {
         markStale(func->name);
       }
     }
-    if (!refinedCallers.empty()) {
-      // Changing a call expression's return type can propagate out to its
-      // parents, and so we must refinalize the callers.
-      PassUtils::FilteredPassRunner runner(
-        module, refinedCallers, getPassRunner()->options);
-      runner.setIsNested(true);
-      runner.add(std::make_unique<ReFinalize>());
-      runner.run();
-    }
+    auto refinalize = [&](const std::unordered_set<Function*>& funcs) {
+      if (!funcs.empty()) {
+        PassUtils::FilteredPassRunner runner(
+          module, funcs, getPassRunner()->options);
+        runner.setIsNested(true);
+        runner.add(std::make_unique<ReFinalize>());
+        runner.run();
+      }
+    };
+
+    // Changing a call expression's return type can propagate out to its
+    // parents, and so we must refinalize the callers.
+    refinalize(refinedCallers);
     // We now know which parameters are unused, and can potentially remove them.
     // Only do so if we didn't run into unprofitable removals - if so, leave
     // any further removals for other invocations of this pass. (This avoids us
@@ -477,6 +481,7 @@ struct DAE : public Pass {
     // modified allCalls (we can't modify a call site twice in one iteration,
     // once to remove a param, once to drop the return value).
     if (worthOptimizing.empty()) {
+      std::unordered_set<Function*> callersToRefinalize;
       for (Index index = 0; index < numFunctions; index++) {
         auto& func = module->functions[index];
         if (func->imported()) {
@@ -507,9 +512,13 @@ struct DAE : public Pass {
           continue;
         }
         if (removeReturnValue(func.get(), calls, module)) {
-          // We should optimize the callers.
+          // Replacing the drop of the call with an unreachable changes the type
+          // from none to unreachable, so we must refinalize the callers, and we
+          // should also optimize them.
           for (auto caller : callers[index]) {
-            worthOptimizing.insert(module->getFunction(caller));
+            auto* callerFunc = module->getFunction(caller);
+            callersToRefinalize.insert(callerFunc);
+            worthOptimizing.insert(callerFunc);
           }
         }
         // TODO Removing a drop may also open optimization opportunities in the
@@ -518,6 +527,7 @@ struct DAE : public Pass {
         markStale(name);
         markCallersStale(index);
       }
+      refinalize(callersToRefinalize);
     }
     if (!callTargetsToLocalize.empty()) {
       ParamUtils::localizeCallsTo(
