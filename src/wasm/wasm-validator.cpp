@@ -1229,7 +1229,7 @@ void FunctionValidator::visitLoad(Load* curr) {
     case MemoryOrder::AcqRel: {
       shouldBeTrue(getModule()->features.hasAcquireReleaseAtomics(),
                    curr,
-                   "Acquire/release operations require relaxed atomics "
+                   "Acquire/release operations require acquire-release atomics "
                    "[--enable-acquire-release-atomics]");
       break;
     }
@@ -1286,7 +1286,7 @@ void FunctionValidator::visitStore(Store* curr) {
     case MemoryOrder::AcqRel: {
       shouldBeTrue(getModule()->features.hasAcquireReleaseAtomics(),
                    curr,
-                   "Acquire/release operations require relaxed atomics "
+                   "Acquire/release operations require acquire-release atomics "
                    "[--enable-acquire-release-atomics]");
       break;
     }
@@ -1343,7 +1343,7 @@ void FunctionValidator::visitAtomicRMW(AtomicRMW* curr) {
     case MemoryOrder::AcqRel: {
       shouldBeTrue(getModule()->features.hasAcquireReleaseAtomics(),
                    curr,
-                   "Acquire/release operations require relaxed atomics "
+                   "Acquire/release operations require acquire-release atomics "
                    "[--enable-acquire-release-atomics]");
       break;
     }
@@ -1391,7 +1391,7 @@ void FunctionValidator::visitAtomicCmpxchg(AtomicCmpxchg* curr) {
     case MemoryOrder::AcqRel: {
       shouldBeTrue(getModule()->features.hasAcquireReleaseAtomics(),
                    curr,
-                   "Acquire/release operations require relaxed atomics "
+                   "Acquire/release operations require acquire-release atomics "
                    "[--enable-acquire-release-atomics]");
       break;
     }
@@ -1496,7 +1496,7 @@ void FunctionValidator::visitAtomicFence(AtomicFence* curr) {
     case MemoryOrder::AcqRel: {
       shouldBeTrue(getModule()->features.hasAcquireReleaseAtomics(),
                    curr,
-                   "Acquire/release operations require relaxed atomics "
+                   "Acquire/release operations require acquire-release atomics "
                    "[--enable-acquire-release-atomics]");
       break;
     }
