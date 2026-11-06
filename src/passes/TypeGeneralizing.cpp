@@ -203,21 +203,31 @@ struct Generalizer : public ChildTyper<Generalizer> {
     assert(constraints.size() == 1);
     auto& type = constraints[0];
     if (auto* t = std::get_if<Type>(&type)) {
+      // A constraint to a specific type.
       addConstraint(child, *t);
     } else if (auto* ref = std::get_if<VarRef>(&type)) {
+      // If the nullability is variable, set to nullable (as the indexed
+      // variable can appear nowhere else).
       auto* nullp = std::get_if<Nullability>(&ref->null);
       auto null = nullp ? *nullp : Nullable;
+
       if (std::holds_alternative<Index>(ref->ht)) {
+        // The heap type is variable, so use the top.
         addConstraint(child, Type(child->type.getHeapType().getTop(), null));
       } else if (auto* abs = std::get_if<VarAbsHeapType>(&ref->ht)) {
+        // The heap type is abstract/basic, possibly with specified
+        // shareability (if not, use the current shareability).
         auto* sharep = std::get_if<Shareability>(&abs->share);
         auto share = sharep ? *sharep : child->type.getHeapType().getShared();
         addConstraint(child, Type(abs->ht.getBasic(share), null));
       } else if (auto* def = std::get_if<VarDefHeapType>(&ref->ht)) {
+        // The heap type is defined, possibly with specified exactness (if not,
+        // generalize to inexact).
         auto* exactp = std::get_if<Exactness>(&def->exact);
         auto exact = exactp ? *exactp : Inexact;
         addConstraint(child, Type(def->ht, null, exact));
       } else {
+        // A bottom heap type, but no expression in the IR mandates that.
         WASM_UNREACHABLE("unexpected bottom heap type");
       }
     } else {
