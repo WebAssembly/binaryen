@@ -86,31 +86,6 @@ void fixupReturn(Expression** returnVal, Module* module, Function* func) {
   }
 }
 
-struct LocalsToNullable : PostWalker<LocalsToNullable> {
-  // true iff any expression types were changed.
-  // false if only dead local definitions were changed.
-  bool changed = false;
-
-  void doWalkFunction(Function* func) {
-    for (Index i = 0; i < func->vars.size(); ++i) {
-      std::ignore = makeNullable(func->vars[i]);
-    }
-
-    // TODO: could consider doing this only if locals changed
-    // but a function param could have changed and we can't tell that easily
-    // from here.
-    PostWalker<LocalsToNullable>::doWalkFunction(func);
-  }
-
-  void visitLocalGet(LocalGet* curr) { changed |= makeNullable(curr->type); }
-
-  void visitLocalSet(LocalSet* curr) {
-    if (curr->isTee()) {
-      changed |= makeNullable(curr->type);
-    }
-  }
-};
-
 struct InsertRefAsNonNull
   : PostWalker<InsertRefAsNonNull,
                UnifiedExpressionVisitor<InsertRefAsNonNull>> {
@@ -175,15 +150,20 @@ struct InsertRefAsNonNull
 
 // Pass implementing the bulk of function-parallel work after global rewrites
 // are done.
-struct FunctionNullabilityRelaxer : Pass {
+struct LocalsToNullable : WalkerPass<PostWalker<LocalsToNullable>> {
+  using Super = WalkerPass<PostWalker<LocalsToNullable>>;
+
   const std::unordered_set<Function*>& referencedFuncs;
 
-  FunctionNullabilityRelaxer(
-    const std::unordered_set<Function*>& referencedFuncs)
+  // true iff any expression types were changed.
+  // false if only dead local definitions were changed.
+  bool changed = false;
+
+  LocalsToNullable(const std::unordered_set<Function*>& referencedFuncs)
     : referencedFuncs(referencedFuncs) {}
 
   std::unique_ptr<Pass> create() override {
-    return std::make_unique<FunctionNullabilityRelaxer>(*this);
+    return std::make_unique<LocalsToNullable>(referencedFuncs);
   }
 
   bool isFunctionParallel() override { return true; }
@@ -192,7 +172,7 @@ struct FunctionNullabilityRelaxer : Pass {
     return isRelaxable(func, referencedFuncs);
   }
 
-  void runOnFunction(Module* module, Function* func) override {
+  void doWalkFunction(Function* func) {
     // 1. Make all local definitions nullable and update gets and sets.
     // 2. Refinalize to fixup block types
     // 3. Insert ref.as_non_null where a parent demands it, e.g. return values,
@@ -200,16 +180,31 @@ struct FunctionNullabilityRelaxer : Pass {
     //
     // Refinalize is not needed after step 3 because a block never demands a
     // non-null and thus step 3 makes no difference to block types.
-    LocalsToNullable localsToNullable;
-    localsToNullable.walkFunction(func);
 
-    if (!localsToNullable.changed) {
-      return;
+    for (Index i = 0; i < func->vars.size(); ++i) {
+      std::ignore = makeNullable(func->vars[i]);
     }
 
-    ReFinalize().walkFunctionInModule(func, module);
-    InsertRefAsNonNull(*module, func).walkFunctionInModule(func, module);
-    fixupReturn(&func->body, module, func);
+    // TODO: could consider doing this only if locals changed
+    // but a function param could have changed and we can't tell that easily
+    // from here.
+    Super::doWalkFunction(func);
+
+    if (!changed) {
+      return;
+    }
+    ReFinalize().walkFunctionInModule(func, getModule());
+    InsertRefAsNonNull(*getModule(), func)
+      .walkFunctionInModule(func, getModule());
+    fixupReturn(&func->body, getModule(), func);
+  }
+
+  void visitLocalGet(LocalGet* curr) { changed |= makeNullable(curr->type); }
+
+  void visitLocalSet(LocalSet* curr) {
+    if (curr->isTee()) {
+      changed |= makeNullable(curr->type);
+    }
   }
 };
 
@@ -221,7 +216,7 @@ struct RelaxNullability : Pass {
     relaxFunctionParams(module, referencedFuncs);
 
     PassRunner runner(getPassRunner());
-    runner.add(std::make_unique<FunctionNullabilityRelaxer>(referencedFuncs));
+    runner.add(std::make_unique<LocalsToNullable>(referencedFuncs));
     runner.run();
   }
 
