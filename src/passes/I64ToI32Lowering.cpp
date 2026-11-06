@@ -480,6 +480,19 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
       TempVar ptrTemp = getTemp();
       LocalSet* setPtr = builder->makeLocalSet(ptrTemp, curr->ptr);
       curr->ptr = builder->makeLocalGet(ptrTemp, Type::i32);
+      // Store the high word first. It is at the higher address, so if the
+      // store is out of bounds it traps before anything is written. The value
+      // has to be evaluated before that, since that is what sets highBits. The
+      // IR is flat, so the lowered value is a block ending in a constant or a
+      // local.get, and that can stay in the low store because the high store
+      // does not write any locals.
+      auto* setLow = curr->value->cast<Block>();
+      assert(!setLow->name.is() && setLow->type == Type::i32);
+      assert(setLow->list.back()->is<Const>() ||
+             setLow->list.back()->is<LocalGet>());
+      curr->value = setLow->list.back();
+      setLow->list.pop_back();
+      setLow->finalize();
       curr->finalize();
       Store* storeHigh =
         builder->makeStore(4,
@@ -489,7 +502,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
                            builder->makeLocalGet(highBits, Type::i32),
                            Type::i32,
                            curr->memory);
-      replaceCurrent(builder->blockify(setPtr, curr, storeHigh));
+      replaceCurrent(builder->blockify(setPtr, setLow, storeHigh, curr));
     }
   }
 
