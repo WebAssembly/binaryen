@@ -371,6 +371,11 @@ struct AbstractTypeRefining : public Pass {
       // This might cause the casts to incorrectly start succeeding. To avoid
       // that, optimize them out first.
       void visitRefCast(RefCast* curr) {
+        if (curr->ref->type == Type::unreachable ||
+            (curr->desc && curr->desc->type == Type::unreachable)) {
+          curr->type = Type::unreachable;
+          return;
+        }
         auto optimized = getOptimized(curr->type);
         if (!optimized) {
           return;
@@ -402,6 +407,10 @@ struct AbstractTypeRefining : public Pass {
       // If we optimize away a descriptor type, then we must fix up any
       // ref.get_desc of it, as ReFinalize would fix us up to return it.
       void visitRefGetDesc(RefGetDesc* curr) {
+        if (curr->ref->type == Type::unreachable) {
+          curr->type = Type::unreachable;
+          return;
+        }
         auto optimized = getOptimized(curr->type);
         if (!optimized) {
           return;
@@ -431,6 +440,11 @@ struct AbstractTypeRefining : public Pass {
 
       void visitBrOn(BrOn* curr) {
         if (curr->op == BrOnNull || curr->op == BrOnNonNull) {
+          return;
+        }
+        if (curr->ref->type == Type::unreachable ||
+            (curr->desc && curr->desc->type == Type::unreachable)) {
+          curr->type = Type::unreachable;
           return;
         }
         auto optimized = getOptimized(curr->castType);
