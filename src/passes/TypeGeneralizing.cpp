@@ -18,7 +18,7 @@
 // Generalize the types of locals as much as possible, both to eliminate
 // unnecessarily refined types from the type section and (TODO) to weaken casts
 // that cast to unnecessarily refined types. If the casts are weakened enough,
-// they will be able to be removed by OptimizeInstructions.
+// they will be able to be removed by OptimizeInstructions/StripRefiningCasts.
 //
 
 #include <optional>
@@ -138,6 +138,7 @@ struct Generalizer : public ChildTyper<Generalizer> {
 
   Expression* currExpr = nullptr;
 
+  // Walker for the code, using ControlFlowWalker for findBreakTarget.
   struct Walker : ControlFlowWalker<Walker, UnifiedExpressionVisitor<Walker>> {
     Generalizer& generalizer;
     Walker(Generalizer& generalizer) : generalizer(generalizer) {}
@@ -184,20 +185,26 @@ struct Generalizer : public ChildTyper<Generalizer> {
   Type getLabelType(Name label) { return walker.findBreakTarget(label)->type; }
 
   void noteUnknown() {
+    // When we do not have enough information in the IR, constrain each child to
+    // its current type, which is always safe.
     for (auto* child : ChildIterator(currExpr)) {
       addConstraint(child, child->type);
     }
   }
 
-  void note(Expression** childp, Constraints type) {
+  void note(Expression** childp, Constraints constraints) {
     auto* child = *childp;
     if (!child->type.isRef()) {
       return;
     }
-    assert(type.size() == 1);
-    if (auto* t = std::get_if<Type>(&type[0])) {
+
+    // Tuples are handled element by element, in this pass, so we only receive a
+    // single constraint.
+    assert(constraints.size() == 1);
+    auto& type = constraints[0];
+    if (auto* t = std::get_if<Type>(&type)) {
       addConstraint(child, *t);
-    } else if (auto* ref = std::get_if<VarRef>(&type[0])) {
+    } else if (auto* ref = std::get_if<VarRef>(&type)) {
       auto* nullp = std::get_if<Nullability>(&ref->null);
       auto null = nullp ? *nullp : Nullable;
       if (std::holds_alternative<Index>(ref->ht)) {
@@ -215,7 +222,7 @@ struct Generalizer : public ChildTyper<Generalizer> {
       }
     } else {
       // Unconstrained type variable (e.g. drop).
-      assert(std::holds_alternative<Index>(type[0]));
+      assert(std::holds_alternative<Index>(type));
     }
   }
 
