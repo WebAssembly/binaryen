@@ -204,7 +204,6 @@
  (func $br_table-sent (param $eq eqref) (param $any anyref)
   (local $var i31ref)
   ;; Require typeof($var) <: eqref.
-  ;; TODO: for now this keeps the type unchanged
   (local.set $eq
    (block $l1 (result i31ref)
     ;; Require typeof($var) <: anyref.
@@ -241,7 +240,6 @@
   ;; Same as above, but with the sources of requirements flipped.
   (local $var i31ref)
   ;; Require typeof($var) <: anyref.
-  ;; TODO: for now this keeps the type unchanged
   (local.set $any
    (block $l1 (result i31ref)
     ;; Require typeof($var) <: eqref.
@@ -931,7 +929,7 @@
   (local $arg i31ref)
   ;; Require that typeof($f) <: nullref, but do not constrain $arg because the
   ;; call_ref will not be reached.
-  ;; TODO: for now this keeps the type unchanged (and is likely not worth
+  ;; TODO: for now this keeps the $arg unchanged (and is likely not worth
   ;;       optimizing, as this is dead code)
   (call_ref $bot
    (local.get $arg)
@@ -1415,7 +1413,7 @@
   (local $dest nullref)
   (local $src (ref null $sub))
   ;; Require that typeof($dest) <: nullref but do not constrain $src.
-  ;; TODO: for now this keeps the type unchanged (and is likely not worth
+  ;; TODO: for now this keeps $src's type unchanged (and is likely not worth
   ;;       optimizing, as this is dead code)
   (array.copy $sub-mut $sub
    (local.get $dest)
