@@ -41,6 +41,7 @@
 #include "ir/child-typer.h"
 #include "ir/find_all.h"
 #include "ir/module-utils.h"
+#include "ir/type-updating.h"
 #include "ir/utils.h"
 
 namespace wasm {
@@ -199,6 +200,9 @@ struct LocalsToNullable : WalkerPass<PostWalker<LocalsToNullable>> {
     fixupReturn(&func->body, getModule(), func);
   }
 
+  // void visitStructGet(StructGet* curr) { changed |= makeNullable(curr->type);
+  // }
+
   void visitLocalGet(LocalGet* curr) { changed |= makeNullable(curr->type); }
 
   void visitLocalSet(LocalSet* curr) {
@@ -213,6 +217,7 @@ struct RelaxNullability : Pass {
 
   void run(Module* module) override {
     auto referencedFuncs = ModuleUtils::getReferencedFuncs(*module);
+    relaxStructs(module, getPassOptions().worldMode);
     relaxFunctionParams(module, referencedFuncs);
 
     PassRunner runner(getPassRunner());
@@ -221,6 +226,35 @@ struct RelaxNullability : Pass {
   }
 
 private:
+  void relaxStructs(Module* module, WorldMode worldMode) {
+    using TypeMap = GlobalTypeRewriter::TypeMap;
+    auto privateTypes = ModuleUtils::getPrivateHeapTypes(*module, worldMode);
+
+    TypeMap map;
+    for (HeapType old : privateTypes) {
+      if (old.isStruct()) {
+        bool changed = false;
+
+        std::vector<Field> relaxedFields;
+        relaxedFields.reserve(old.getStruct().fields.size());
+        for (auto field : old.getStruct().fields) {
+          changed |= makeNullable(field.type);
+          relaxedFields.push_back(field);
+        }
+        if (!changed) {
+          continue;
+        }
+
+        HeapType rewritten(Struct{std::move(relaxedFields)});
+        map.try_emplace(old, rewritten);
+      }
+    }
+
+    GlobalTypeRewriter rewriter(*module, worldMode);
+    // TODO: does this handle public/private?
+    rewriter.mapTypes(map);
+    rewriter.mapTypeNamesAndIndices(map);
+  }
   void
   relaxFunctionParams(Module* module,
                       const std::unordered_set<Function*>& referencedFuncs) {

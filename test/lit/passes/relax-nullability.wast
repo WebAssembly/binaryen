@@ -4,6 +4,22 @@
 
 ;; Locals, params, and blocks are relaxed.
 (module
+  ;; CHECK:      (type $func.0 (func (param (ref any) (ref $struct.0)) (result (ref any))))
+
+  ;; CHECK:      (type $func.0 (func (result anyref)))
+
+  ;; CHECK:      (type $struct.0 (struct))
+
+  ;; CHECK:      (type $func.0 (func (result (ref any))))
+
+  ;; CHECK:      (type $func.0 (func (param i32) (result (ref any))))
+
+  ;; CHECK:      (type $func.0 (func (param i32 (ref any) (ref any)) (result (ref any))))
+
+  ;; CHECK:      (type $func.0 (func (param (ref any)) (result (ref any))))
+
+  ;; CHECK:      (type $func.0 (func (param anyref)))
+
   ;; CHECK:      (type $struct (struct))
   (type $struct (struct))
 
@@ -179,6 +195,10 @@
 ;; call_ref/call_indirect.
 (module
   (type $struct (struct))
+  ;; CHECK:      (type $func.0 (func (param (ref any))))
+
+  ;; CHECK:      (type $func.0 (func))
+
   ;; CHECK:      (type $shared-sig (func (param (ref any)) (result (ref any))))
 
   ;; CHECK:      (type $1 (func (param anyref)))
