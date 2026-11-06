@@ -38,7 +38,8 @@ TEST(SubtypeExprsTest, BrIf) {
     "func", {}, Signature(Type::none, Type::none), {}, drop);
 
   // Implement a SubtypingDiscoverer.
-  struct Finder : public SubtypingDiscoverer<Finder> {
+  struct Finder
+    : public ControlFlowWalker<Finder, SubtypingDiscoverer<Finder>> {
     std::set<Expression*> seen;
 
     void noteSubtype(Type sub, Type super) {}
@@ -91,7 +92,8 @@ TEST(SubtypeExprsTest, RefEqSharedUnreachable) {
   auto func = builder.makeFunction(
     "func", {}, Signature(Type::none, Type::none), {}, drop);
 
-  struct Finder : public SubtypingDiscoverer<Finder> {
+  struct Finder
+    : public ControlFlowWalker<Finder, SubtypingDiscoverer<Finder>> {
     std::map<Expression*, Type> noted;
 
     void noteSubtype(Type sub, Type super) {}
