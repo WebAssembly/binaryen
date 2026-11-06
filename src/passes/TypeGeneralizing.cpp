@@ -239,24 +239,29 @@ struct Generalizer : public ChildTyper<Generalizer> {
   // Control flow handling. TODO: Perhaps find a way to do this in ChildTyper,
   // or a helper that extends ChildTyper?
   void visitBlock(Block* curr) {
-    if (!curr->list.empty()) {
+    if (curr->type.isConcrete()) {
+      assert(!curr->list.empty());
       exprSubs[curr].push_back(curr->list.back());
     }
   }
 
   void visitIf(If* curr) {
-    if (curr->ifFalse && curr->type != Type::unreachable) {
+    if (curr->type.isConcrete()) {
       exprSubs[curr].push_back(curr->ifTrue);
       exprSubs[curr].push_back(curr->ifFalse);
     }
   }
 
-  void visitLoop(Loop* curr) { exprSubs[curr].push_back(curr->body); }
+  void visitLoop(Loop* curr) {
+    if (curr->type.isConcrete()) {
+      exprSubs[curr].push_back(curr->body);
+    }
+  }
 
   void visitBreak(Break* curr) {
     if (curr->value) {
       exprSubs[walker.findBreakTarget(curr->name)].push_back(curr->value);
-      if (curr->condition && curr->type != Type::unreachable) {
+      if (curr->type.isConcrete()) {
         exprSubs[curr].push_back(curr->value);
       }
     }
@@ -271,8 +276,10 @@ struct Generalizer : public ChildTyper<Generalizer> {
   }
 
   void visitSelect(Select* curr) {
-    exprSubs[curr].push_back(curr->ifTrue);
-    exprSubs[curr].push_back(curr->ifFalse);
+    if (curr->type.isConcrete()) {
+      exprSubs[curr].push_back(curr->ifTrue);
+      exprSubs[curr].push_back(curr->ifFalse);
+    }
   }
 
   void visitTry(Try* curr) {
