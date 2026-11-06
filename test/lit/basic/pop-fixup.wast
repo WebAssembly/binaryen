@@ -9,18 +9,14 @@
 
  ;; CHECK:      (func $stacky (type $0)
  ;; CHECK-NEXT:  (local $scratch i32)
- ;; CHECK-NEXT:  (local $1 i32)
  ;; CHECK-NEXT:  (try
  ;; CHECK-NEXT:   (do
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (catch $e
- ;; CHECK-NEXT:    (local.set $1
- ;; CHECK-NEXT:     (pop i32)
- ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (drop
  ;; CHECK-NEXT:     (block (result i32)
  ;; CHECK-NEXT:      (local.set $scratch
- ;; CHECK-NEXT:       (local.get $1)
+ ;; CHECK-NEXT:       (pop i32)
  ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:      (nop)
  ;; CHECK-NEXT:      (local.get $scratch)
@@ -39,19 +35,15 @@
 
  ;; CHECK:      (func $stacky-later (type $0)
  ;; CHECK-NEXT:  (local $scratch i32)
- ;; CHECK-NEXT:  (local $1 i32)
  ;; CHECK-NEXT:  (try
  ;; CHECK-NEXT:   (do
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (catch $e
- ;; CHECK-NEXT:    (local.set $1
- ;; CHECK-NEXT:     (pop i32)
- ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (drop
  ;; CHECK-NEXT:     (block (result i32)
  ;; CHECK-NEXT:      (local.set $scratch
  ;; CHECK-NEXT:       (i32.eqz
- ;; CHECK-NEXT:        (local.get $1)
+ ;; CHECK-NEXT:        (pop i32)
  ;; CHECK-NEXT:       )
  ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:      (nop)
@@ -73,20 +65,16 @@
  ;; CHECK:      (func $tuple (type $0)
  ;; CHECK-NEXT:  (local $scratch (tuple i32 i32))
  ;; CHECK-NEXT:  (local $scratch_1 i32)
- ;; CHECK-NEXT:  (local $2 (tuple i32 i32))
  ;; CHECK-NEXT:  (try
  ;; CHECK-NEXT:   (do
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (catch $e2
- ;; CHECK-NEXT:    (local.set $2
- ;; CHECK-NEXT:     (pop (tuple i32 i32))
- ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (drop
  ;; CHECK-NEXT:     (block (result i32)
  ;; CHECK-NEXT:      (local.set $scratch_1
  ;; CHECK-NEXT:       (tuple.extract 2 0
  ;; CHECK-NEXT:        (local.tee $scratch
- ;; CHECK-NEXT:         (local.get $2)
+ ;; CHECK-NEXT:         (pop (tuple i32 i32))
  ;; CHECK-NEXT:        )
  ;; CHECK-NEXT:       )
  ;; CHECK-NEXT:      )
@@ -112,20 +100,16 @@
  ;; CHECK:      (func $stacky-tuple (type $0)
  ;; CHECK-NEXT:  (local $scratch (tuple i32 i32))
  ;; CHECK-NEXT:  (local $scratch_1 i32)
- ;; CHECK-NEXT:  (local $2 (tuple i32 i32))
  ;; CHECK-NEXT:  (try
  ;; CHECK-NEXT:   (do
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (catch $e2
- ;; CHECK-NEXT:    (local.set $2
- ;; CHECK-NEXT:     (pop (tuple i32 i32))
- ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (drop
  ;; CHECK-NEXT:     (block (result i32)
  ;; CHECK-NEXT:      (local.set $scratch_1
  ;; CHECK-NEXT:       (block (result i32)
  ;; CHECK-NEXT:        (local.set $scratch
- ;; CHECK-NEXT:         (local.get $2)
+ ;; CHECK-NEXT:         (pop (tuple i32 i32))
  ;; CHECK-NEXT:        )
  ;; CHECK-NEXT:        (nop)
  ;; CHECK-NEXT:        (tuple.extract 2 0
@@ -157,21 +141,17 @@
  ;; CHECK-NEXT:  (local $0 (tuple i32 i32))
  ;; CHECK-NEXT:  (local $scratch (tuple i32 i32))
  ;; CHECK-NEXT:  (local $scratch_2 i32)
- ;; CHECK-NEXT:  (local $3 (tuple i32 i32))
  ;; CHECK-NEXT:  (try
  ;; CHECK-NEXT:   (do
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (catch $e2
- ;; CHECK-NEXT:    (local.set $3
- ;; CHECK-NEXT:     (pop (tuple i32 i32))
- ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (drop
  ;; CHECK-NEXT:     (block (result i32)
  ;; CHECK-NEXT:      (local.set $scratch_2
  ;; CHECK-NEXT:       (block (result i32)
  ;; CHECK-NEXT:        (local.set $scratch
  ;; CHECK-NEXT:         (local.tee $0
- ;; CHECK-NEXT:          (local.get $3)
+ ;; CHECK-NEXT:          (pop (tuple i32 i32))
  ;; CHECK-NEXT:         )
  ;; CHECK-NEXT:        )
  ;; CHECK-NEXT:        (nop)
@@ -199,6 +179,115 @@
    nop
    drop
    drop
+  end
+ )
+
+ ;; CHECK:      (func $stacky-block-param (type $0)
+ ;; CHECK-NEXT:  (local $scratch i32)
+ ;; CHECK-NEXT:  (local $scratch_1 i32)
+ ;; CHECK-NEXT:  (try
+ ;; CHECK-NEXT:   (do
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (catch $e
+ ;; CHECK-NEXT:    (local.set $scratch
+ ;; CHECK-NEXT:     (pop i32)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (block
+ ;; CHECK-NEXT:     (drop
+ ;; CHECK-NEXT:      (block (result i32)
+ ;; CHECK-NEXT:       (local.set $scratch_1
+ ;; CHECK-NEXT:        (local.get $scratch)
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:       (nop)
+ ;; CHECK-NEXT:       (local.get $scratch_1)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $stacky-block-param
+  try
+  catch $e
+   ;; Add a block with an input param, forcing us to use a local to capture the
+   ;; pop.
+   block (param i32)
+    nop
+    drop
+   end
+  end
+ )
+
+ ;; CHECK:      (func $stacky-named-block (type $0)
+ ;; CHECK-NEXT:  (local $scratch i32)
+ ;; CHECK-NEXT:  (local $1 i32)
+ ;; CHECK-NEXT:  (try
+ ;; CHECK-NEXT:   (do
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (catch $e
+ ;; CHECK-NEXT:    (local.set $1
+ ;; CHECK-NEXT:     (pop i32)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (block $block
+ ;; CHECK-NEXT:     (drop
+ ;; CHECK-NEXT:      (block (result i32)
+ ;; CHECK-NEXT:       (local.set $scratch
+ ;; CHECK-NEXT:        (local.get $1)
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:       (nop)
+ ;; CHECK-NEXT:       (local.get $scratch)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (br $block)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $stacky-named-block
+  try
+  catch $e
+   ;; The block has no name, but we find a br to it later, giving it a name.
+   ;; This leads to EH fixups that use a local to capture the pop.
+   block
+    ;; Use a pop rather than a block param, so that we don't end up doing
+    ;; fixups for the block param that overlap with the thing we are testing
+    ;; here.
+    pop i32
+    nop
+    drop
+    br 0
+   end
+  end
+ )
+
+ ;; CHECK:      (func $stacky-unnamed-block (type $0)
+ ;; CHECK-NEXT:  (local $scratch i32)
+ ;; CHECK-NEXT:  (try
+ ;; CHECK-NEXT:   (do
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (catch $e
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (block (result i32)
+ ;; CHECK-NEXT:      (local.set $scratch
+ ;; CHECK-NEXT:       (pop i32)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (nop)
+ ;; CHECK-NEXT:      (local.get $scratch)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $stacky-unnamed-block
+  try
+  catch $e
+   ;; As in the last testcase, but without the br. No name is added, and no
+   ;; fixup happens (the local $1 in the last testcase is not present).
+   block
+    pop i32
+    nop
+    drop
+   end
   end
  )
 )

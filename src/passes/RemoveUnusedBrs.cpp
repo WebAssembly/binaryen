@@ -76,6 +76,7 @@ static bool tooCostlyToRunUnconditionally(const PassOptions& passOptions,
 // expensive to run unconditionally.
 static bool canTurnIfIntoBrIf(Expression* ifCondition,
                               Expression* brValue,
+                              bool neverUnconditionalize,
                               PassOptions& options,
                               Module& wasm) {
   // if the if isn't even reached, this is all dead code anyhow
@@ -84,6 +85,9 @@ static bool canTurnIfIntoBrIf(Expression* ifCondition,
   }
   if (!brValue) {
     return true;
+  }
+  if (neverUnconditionalize) {
+    return false;
   }
   if (tooCostlyToRunUnconditionally(options, brValue)) {
     return false;
@@ -407,8 +411,11 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       // if without an else. try to reduce
       //    if (condition) br  =>  br_if (condition)
       if (Break* br = curr->ifTrue->dynCast<Break>()) {
-        if (canTurnIfIntoBrIf(
-              curr->condition, br->value, getPassOptions(), *getModule())) {
+        if (canTurnIfIntoBrIf(curr->condition,
+                              br->value,
+                              neverUnconditionalize,
+                              getPassOptions(),
+                              *getModule())) {
           if (!br->condition) {
             br->condition = curr->condition;
             BranchHints::copyTo(curr, br, getFunction());
@@ -1335,6 +1342,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           if (ifTrueBreak && !ifTrueBreak->condition &&
               canTurnIfIntoBrIf(iff->condition,
                                 ifTrueBreak->value,
+                                neverUnconditionalize,
                                 passOptions,
                                 *getModule())) {
             // we are an if-else where the ifTrue is a break without a
@@ -1351,6 +1359,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           if (ifFalseBreak && !ifFalseBreak->condition &&
               canTurnIfIntoBrIf(iff->condition,
                                 ifFalseBreak->value,
+                                neverUnconditionalize,
                                 passOptions,
                                 *getModule())) {
             ifFalseBreak->condition =
@@ -1380,6 +1389,9 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             // a br_if and then a br[_if] with the same target right after it
             if (br2->condition) {
               if (shrink && br2->type != Type::unreachable) {
+                if (neverUnconditionalize) {
+                  continue;
+                }
                 // Join adjacent br_ifs to the same target, making one br_if
                 // with a "selectified" condition that executes both.
                 if (!EffectAnalyzer(passOptions, *getModule(), br2->condition)

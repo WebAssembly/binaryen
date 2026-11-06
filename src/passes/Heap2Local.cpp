@@ -153,7 +153,6 @@
 #include "ir/abstract.h"
 #include "ir/bits.h"
 #include "ir/branch-utils.h"
-#include "ir/eh-utils.h"
 #include "ir/local-graph.h"
 #include "ir/parents.h"
 #include "ir/properties.h"
@@ -1132,6 +1131,18 @@ struct Struct2Local : PostWalker<Struct2Local> {
       auto type = curr->type;
       assert(type == field.type);
       assert(!field.isPacked());
+      auto local = localIndexes[curr->index];
+
+      if (analyzer.getInteraction(curr->expected) ==
+          ParentChildInteraction::Flows) {
+        // Since the allocation does not escape, it cannot possibly match the
+        // value already in the struct. The cmpxchg will just do a read.
+        replaceCurrent(builder.makeBlock({builder.makeDrop(curr->ref),
+                                          builder.makeDrop(curr->expected),
+                                          builder.makeDrop(curr->replacement),
+                                          builder.makeLocalGet(local, type)}));
+        return;
+      }
 
       // Hold everything in scratch locals, just like for other RMW ops and
       // struct.new. Use a nullable (shared) eqref local for `expected` to
@@ -1144,7 +1155,6 @@ struct Struct2Local : PostWalker<Struct2Local> {
       auto oldScratch = builder.addVar(func, type);
       auto expectedScratch = builder.addVar(func, expectedType);
       auto replacementScratch = builder.addVar(func, type);
-      auto local = localIndexes[curr->index];
 
       auto* block = builder.makeBlock(
         {builder.makeDrop(curr->ref),
@@ -1611,15 +1621,8 @@ struct Heap2Local {
         // some cases, so to be careful here use a fairly small limit.
         return size < 20;
       }
-
-      // Also note if a pop exists here, as they may require fixups.
-      bool hasPop = false;
-
-      void visitPop(Pop* curr) { hasPop = true; }
     } finder;
     finder.walk(func->body);
-
-    bool optimized = false;
 
     // First, lower non-escaping arrays into structs. That allows us to handle
     // arrays in a single place, and let all the rest of this pass assume we are
@@ -1640,7 +1643,6 @@ struct Heap2Local {
         auto* structNew =
           Array2Struct(allocation, analyzer, func, wasm).structNew;
         Struct2Local(structNew, analyzer, func, wasm);
-        optimized = true;
         resetAnalysisData();
       }
     }
@@ -1657,16 +1659,8 @@ struct Heap2Local {
         *localGraph, *parents, *branchTargets, passOptions, wasm);
       if (!analyzer.escapes(allocation)) {
         Struct2Local(allocation, analyzer, func, wasm);
-        optimized = true;
         resetAnalysisData();
       }
-    }
-
-    // We conservatively run the EH pop fixup if this function has a 'pop' and
-    // if we have ever optimized, as all of the things we do here involve
-    // creating blocks, so we might have moved pops into the blocks.
-    if (finder.hasPop && optimized) {
-      EHUtils::handleBlockNestedPops(func, wasm);
     }
   }
 

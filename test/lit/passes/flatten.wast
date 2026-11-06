@@ -18,4 +18,39 @@
   ;; modified
   (local.get $0)
  )
+
+ ;; CHECK:      (func $switch_subtype (type $2) (result funcref)
+ ;; CHECK-NEXT:  (local $0 nullfuncref)
+ ;; CHECK-NEXT:  (local $1 funcref)
+ ;; CHECK-NEXT:  (local $2 funcref)
+ ;; CHECK-NEXT:  (block $b
+ ;; CHECK-NEXT:   (local.set $0
+ ;; CHECK-NEXT:    (ref.null nofunc)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (local.set $1
+ ;; CHECK-NEXT:    (local.get $0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (br_table $b
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (local.set $2
+ ;; CHECK-NEXT:   (local.get $1)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (return
+ ;; CHECK-NEXT:   (local.get $2)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $switch_subtype (result funcref)
+  ;; A br_table sending a subtype of its target block's result type should
+  ;; allocate the break target local with the target block's type, not the
+  ;; narrower sent value type.
+  (block $b (result funcref)
+   (br_table $b
+    (ref.null nofunc)
+    (i32.const 0)
+   )
+  )
+ )
 )

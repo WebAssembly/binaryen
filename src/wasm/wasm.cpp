@@ -43,6 +43,7 @@ Name RETURN_FLOW("*return:)*");
 Name RETURN_CALL_FLOW("*return-call:)*");
 Name NONCONSTANT_FLOW("*nonconstant:)*");
 Name SUSPEND_FLOW("*suspend:)*");
+Name STACK_SWITCH_FLOW("*stack-switch:)*");
 
 namespace BinaryConsts::CustomSections {
 
