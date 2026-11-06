@@ -1,7 +1,6 @@
 FILE(GLOB ir_HEADERS *.h)
 set(ir_SOURCES
   abstract.cpp
-  bits.cpp
   ExpressionAnalyzer.cpp
   ExpressionManipulator.cpp
   constraint.cpp
