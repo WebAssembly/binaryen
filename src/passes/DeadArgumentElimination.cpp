@@ -410,9 +410,7 @@ struct DAE : public Pass {
     }
     auto refinalize = [&](const std::unordered_set<Function*>& funcs) {
       if (!funcs.empty()) {
-        PassUtils::FilteredPassRunner runner(
-          module, funcs, getPassRunner()->options);
-        runner.setIsNested(true);
+        PassUtils::FilteredPassRunner runner(getPassRunner(), funcs);
         runner.add(std::make_unique<ReFinalize>());
         runner.run();
       }
