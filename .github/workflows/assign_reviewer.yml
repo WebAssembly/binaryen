@@ -1,0 +1,42 @@
+name: Assign Reviewer
+
+on:
+  # pull_request_target runs in the context of the base branch with access to
+  # secrets and write permissions, allowing reviewer assignment on fork PRs.
+  # Never check out or execute code from the untrusted PR head in this workflow.
+  pull_request_target:
+    types: [opened, ready_for_review]
+
+# Restrict default token permissions to none; grant only what the job needs.
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  assign:
+    name: Assign PR Reviewer
+    if: ${{ !github.event.pull_request.draft }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      # Pin checkout to a full commit SHA to prevent supply-chain tampering.
+      # Omit `ref` so only the trusted base branch is checked out, and disable
+      # credential persistence and submodules.
+      - name: Checkout base branch
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+          submodules: false
+
+      # Pass all GitHub context values via environment variables rather than
+      # interpolating ${{ ... }} directly into `run:` to prevent script injection.
+      - name: Assign reviewer
+        env:
+          GH_TOKEN: ${{ secrets.REVIEWER_ASSIGNMENT_TOKEN || secrets.GITHUB_TOKEN }}
+          REVIEWER_WEIGHTS: ${{ secrets.REVIEWER_WEIGHTS }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: python3 scripts/assign_reviewer.py
