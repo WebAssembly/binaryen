@@ -831,6 +831,13 @@
   )
 
   ;; CHECK:      (func $unary-sign-ext-newly-unreachable (type $6) (result i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.extend32_s
+  ;; CHECK-NEXT:    (i64.extend_i32_s
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (i32.eqz
   ;; CHECK-NEXT:   (i32.extend8_s
   ;; CHECK-NEXT:    (unreachable)
@@ -839,8 +846,17 @@
   ;; CHECK-NEXT: )
   (func $unary-sign-ext-newly-unreachable (result i32)
     ;; The array.len traps on null and is replaced with unreachable before
-    ;; refinalization updates the enclosing i32.extend8_s. Do not treat the
-    ;; newly-unreachable operand as an integer sign-extended value.
+    ;; refinalization updates the enclosing sign extensions. Do not treat the
+    ;; newly-unreachable operands as integer sign-extended values.
+    (drop
+      (i64.extend32_s
+        (i64.extend_i32_s
+          (array.len
+            (ref.null array)
+          )
+        )
+      )
+    )
     (i32.eqz
       (i32.extend8_s
         (array.len
