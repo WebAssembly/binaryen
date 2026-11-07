@@ -1166,6 +1166,8 @@
 
   ;; YESTNH:       (type $6 (func (param (ref $A)) (result (ref $B.sub))))
 
+  ;; YESTNH:       (type $7 (func (param (ref (exact $B.sub)) (ref $B.sub)) (result (ref $B.sub))))
+
   ;; YESTNH:      (func $create (type $4)
   ;; YESTNH-NEXT:  (drop
   ;; YESTNH-NEXT:   (struct.new_default_desc $A.sub
@@ -1178,6 +1180,8 @@
   ;; NO_TNH:       (type $5 (func (result (ref (exact $B)))))
 
   ;; NO_TNH:       (type $6 (func (param (ref $A)) (result (ref $B))))
+
+  ;; NO_TNH:       (type $7 (func (param (ref (exact $B)) (ref $B)) (result (ref $B))))
 
   ;; NO_TNH:      (func $create (type $4)
   ;; NO_TNH-NEXT:  (drop
@@ -1238,116 +1242,40 @@
       (local.get $inexact)
     )
   )
-)
 
-(module
-  ;; As above, but now $A is also uninstantiated and the inexact operand of
-  ;; ref.get_desc becomes unreachable during optimization.
-  (rec
-    ;; YESTNH:      (rec
-    ;; YESTNH-NEXT:  (type $A (sub (descriptor $B) (struct)))
-    ;; NO_TNH:      (rec
-    ;; NO_TNH-NEXT:  (type $A (sub (descriptor $B) (struct)))
-    (type $A (sub (descriptor $B) (struct)))
-    ;; YESTNH:       (type $B (sub (describes $A) (struct)))
-    ;; NO_TNH:       (type $B (sub (describes $A) (struct)))
-    (type $B (sub (describes $A) (struct)))
-    ;; YESTNH:       (type $A.sub (sub $A (descriptor $B.sub) (struct)))
-    ;; NO_TNH:       (type $A.sub (sub $A (descriptor $B.sub) (struct)))
-    (type $A.sub (sub $A (descriptor $B.sub) (struct)))
-    ;; YESTNH:       (type $B.sub (sub $B (describes $A.sub) (struct)))
-    ;; NO_TNH:       (type $B.sub (sub $B (describes $A.sub) (struct)))
-    (type $B.sub (sub $B (describes $A.sub) (struct)))
-  )
-
-  ;; YESTNH:       (type $4 (func))
-
-  ;; YESTNH:       (type $5 (func (param (ref $A.sub) (ref (exact $A.sub))) (result (ref $B.sub))))
-
-  ;; YESTNH:      (func $create (type $4)
-  ;; YESTNH-NEXT:  (drop
-  ;; YESTNH-NEXT:   (struct.new_default_desc $A.sub
-  ;; YESTNH-NEXT:    (struct.new_default $B.sub)
-  ;; YESTNH-NEXT:   )
-  ;; YESTNH-NEXT:  )
-  ;; YESTNH-NEXT: )
-  ;; NO_TNH:       (type $4 (func))
-
-  ;; NO_TNH:       (type $5 (func (param (ref $A) (ref (exact $A))) (result (ref $B))))
-
-  ;; NO_TNH:      (func $create (type $4)
-  ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (struct.new_default_desc $A.sub
-  ;; NO_TNH-NEXT:    (struct.new_default $B.sub)
-  ;; NO_TNH-NEXT:   )
-  ;; NO_TNH-NEXT:  )
-  ;; NO_TNH-NEXT: )
-  (func $create
-    (drop
-      (struct.new_default_desc $A.sub
-        (struct.new_default $B.sub)
-      )
-    )
-  )
-
-  ;; YESTNH:      (func $inexact-unreachable (type $5) (param $inexact (ref $A.sub)) (param $exact (ref (exact $A.sub))) (result (ref $B.sub))
-  ;; YESTNH-NEXT:  (drop
-  ;; YESTNH-NEXT:   (block $block
-  ;; YESTNH-NEXT:    (return
-  ;; YESTNH-NEXT:     (block ;; (replaces unreachable RefGetDesc we can't emit)
-  ;; YESTNH-NEXT:      (drop
-  ;; YESTNH-NEXT:       (block
-  ;; YESTNH-NEXT:        (drop
-  ;; YESTNH-NEXT:         (local.get $inexact)
-  ;; YESTNH-NEXT:        )
-  ;; YESTNH-NEXT:        (block
-  ;; YESTNH-NEXT:         (drop
-  ;; YESTNH-NEXT:          (local.get $exact)
-  ;; YESTNH-NEXT:         )
-  ;; YESTNH-NEXT:         (unreachable)
-  ;; YESTNH-NEXT:        )
-  ;; YESTNH-NEXT:       )
-  ;; YESTNH-NEXT:      )
-  ;; YESTNH-NEXT:      (unreachable)
-  ;; YESTNH-NEXT:     )
+  ;; YESTNH:      (func $inexact-unreachable (type $7) (param $exact (ref (exact $B.sub))) (param $inexact (ref $B.sub)) (result (ref $B.sub))
+  ;; YESTNH-NEXT:  (block ;; (replaces unreachable RefGetDesc we can't emit)
+  ;; YESTNH-NEXT:   (drop
+  ;; YESTNH-NEXT:    (ref.cast_desc_eq (ref $A.sub)
+  ;; YESTNH-NEXT:     (unreachable)
+  ;; YESTNH-NEXT:     (local.get $inexact)
   ;; YESTNH-NEXT:    )
   ;; YESTNH-NEXT:   )
+  ;; YESTNH-NEXT:   (unreachable)
   ;; YESTNH-NEXT:  )
-  ;; YESTNH-NEXT:  (unreachable)
   ;; YESTNH-NEXT: )
-  ;; NO_TNH:      (func $inexact-unreachable (type $5) (param $inexact (ref $A)) (param $exact (ref (exact $A))) (result (ref $B))
-  ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (block $block (result (ref (exact $A)))
-  ;; NO_TNH-NEXT:    (return
-  ;; NO_TNH-NEXT:     (ref.get_desc $A
-  ;; NO_TNH-NEXT:      (br_on_cast_desc_eq $block (ref $A) (ref (exact $A))
-  ;; NO_TNH-NEXT:       (local.get $inexact)
-  ;; NO_TNH-NEXT:       (ref.get_desc $A
-  ;; NO_TNH-NEXT:        (local.get $exact)
-  ;; NO_TNH-NEXT:       )
-  ;; NO_TNH-NEXT:      )
-  ;; NO_TNH-NEXT:     )
+  ;; NO_TNH:      (func $inexact-unreachable (type $7) (param $exact (ref (exact $B))) (param $inexact (ref $B)) (result (ref $B))
+  ;; NO_TNH-NEXT:  (ref.get_desc $A
+  ;; NO_TNH-NEXT:   (ref.cast_desc_eq (ref $A)
+  ;; NO_TNH-NEXT:    (struct.new_default_desc $A
+  ;; NO_TNH-NEXT:     (local.get $exact)
   ;; NO_TNH-NEXT:    )
+  ;; NO_TNH-NEXT:    (local.get $inexact)
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
-  ;; NO_TNH-NEXT:  (unreachable)
   ;; NO_TNH-NEXT: )
-  (func $inexact-unreachable (param $inexact (ref $A)) (param $exact (ref (exact $A))) (result (ref $B))
-    (drop
-      (block $block (result (ref (exact $A)))
-        (return
-          (ref.get_desc $A
-            (br_on_cast_desc_eq $block (ref $A) (ref (exact $A))
-              (local.get $inexact)
-              (ref.get_desc $A
-                (local.get $exact)
-              )
-            )
-          )
+  (func $inexact-unreachable (param $exact (ref (exact $B))) (param $inexact (ref $B)) (result (ref $B))
+    ;; The struct.new_default_desc is replaced with unreachable, which makes the
+    ;; inexact ref.cast_desc_eq unreachable, which in turn makes the
+    ;; ref.get_desc unreachable.
+    (ref.get_desc $A
+      (ref.cast_desc_eq (ref $A)
+        (struct.new_default_desc $A
+          (local.get $exact)
         )
+        (local.get $inexact)
       )
     )
-    (unreachable)
   )
 )
 
