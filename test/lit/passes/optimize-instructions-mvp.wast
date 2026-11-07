@@ -9204,6 +9204,245 @@
       (i64.const 0x8000000000000000)
     ))
   )
+  ;; CHECK:      (func $rem-s-neg-divisor-max-bits-i32 (param $x i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.rem_s
+  ;; CHECK-NEXT:    (i32.and
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i32.const 255)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const -5)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.rem_s
+  ;; CHECK-NEXT:    (i32.and
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i32.const 255)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const -4)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.tee $x
+  ;; CHECK-NEXT:      (i32.const 3)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.rem_s
+  ;; CHECK-NEXT:    (i32.and
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i32.const 2147483647)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const -2147483648)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.and
+  ;; CHECK-NEXT:    (i32.rem_s
+  ;; CHECK-NEXT:     (i32.and
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:      (i32.const 255)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.const -5)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 3)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.and
+  ;; CHECK-NEXT:    (i32.rem_s
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i32.const -5)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 7)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $rem-s-neg-divisor-max-bits-i32 (param $x i32)
+    ;; Non-negative dividend with negative constant divisors: getMaxBits uses
+    ;; abs(divisor), allowing redundant masks and zero-bit remainders to fold.
+    ;; abs(-5) = 5 -> max 3 bits (remainder in [0, 4]), so masking with 7 is redundant.
+    (drop
+      (i32.and
+        (i32.rem_s
+          (i32.and (local.get $x) (i32.const 0xff))
+          (i32.const -5)
+        )
+        (i32.const 7)
+      )
+    )
+    ;; abs(-4) = 4 -> max 2 bits (remainder in [0, 3]), so masking with 3 is redundant.
+    (drop
+      (i32.and
+        (i32.rem_s
+          (i32.and (local.get $x) (i32.const 0xff))
+          (i32.const -4)
+        )
+        (i32.const 3)
+      )
+    )
+    ;; Impure non-negative dividend % -1 has 0 max bits and folds to 0 via
+    ;; replaceZeroBitsWithZero while keeping the local.set side effect.
+    (drop
+      (i32.rem_s
+        (local.tee $x (i32.const 3))
+        (i32.const -1)
+      )
+    )
+    ;; Minimum signed i32 divisor (-2147483648) has unsigned abs 2^31 (31 bits).
+    (drop
+      (i32.and
+        (i32.rem_s
+          (i32.and (local.get $x) (i32.const 0x7fffffff))
+          (i32.const 0x80000000)
+        )
+        (i32.const 0x7fffffff)
+      )
+    )
+    ;; Negative case: mask of 3 is too narrow for remainder in [0, 4].
+    (drop
+      (i32.and
+        (i32.rem_s
+          (i32.and (local.get $x) (i32.const 0xff))
+          (i32.const -5)
+        )
+        (i32.const 3)
+      )
+    )
+    ;; Negative case: dividend may be negative, so remainder may be negative and
+    ;; masking with 7 is not redundant.
+    (drop
+      (i32.and
+        (i32.rem_s
+          (local.get $x)
+          (i32.const -5)
+        )
+        (i32.const 7)
+      )
+    )
+  )
+  ;; CHECK:      (func $rem-s-neg-divisor-max-bits-i64 (param $y i64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.rem_s
+  ;; CHECK-NEXT:    (i64.and
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:     (i64.const 255)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i64.const -5)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.rem_s
+  ;; CHECK-NEXT:    (i64.and
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:     (i64.const 255)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i64.const -4)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i64)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.tee $y
+  ;; CHECK-NEXT:      (i64.const 3)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i64.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.rem_s
+  ;; CHECK-NEXT:    (i64.and
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:     (i64.const 9223372036854775807)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i64.const -9223372036854775808)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.and
+  ;; CHECK-NEXT:    (i64.rem_s
+  ;; CHECK-NEXT:     (i64.and
+  ;; CHECK-NEXT:      (local.get $y)
+  ;; CHECK-NEXT:      (i64.const 255)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i64.const -5)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i64.const 3)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.and
+  ;; CHECK-NEXT:    (i64.rem_s
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:     (i64.const -5)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i64.const 7)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $rem-s-neg-divisor-max-bits-i64 (param $y i64)
+    ;; Same cases for i64.rem_s.
+    (drop
+      (i64.and
+        (i64.rem_s
+          (i64.and (local.get $y) (i64.const 0xff))
+          (i64.const -5)
+        )
+        (i64.const 7)
+      )
+    )
+    (drop
+      (i64.and
+        (i64.rem_s
+          (i64.and (local.get $y) (i64.const 0xff))
+          (i64.const -4)
+        )
+        (i64.const 3)
+      )
+    )
+    (drop
+      (i64.rem_s
+        (local.tee $y (i64.const 3))
+        (i64.const -1)
+      )
+    )
+    (drop
+      (i64.and
+        (i64.rem_s
+          (i64.and (local.get $y) (i64.const 0x7fffffffffffffff))
+          (i64.const 0x8000000000000000)
+        )
+        (i64.const 0x7fffffffffffffff)
+      )
+    )
+    ;; Negative case: mask of 3 is too narrow for remainder in [0, 4].
+    (drop
+      (i64.and
+        (i64.rem_s
+          (i64.and (local.get $y) (i64.const 0xff))
+          (i64.const -5)
+        )
+        (i64.const 3)
+      )
+    )
+    ;; Negative case: dividend may be negative, so masking with 7 is needed.
+    (drop
+      (i64.and
+        (i64.rem_s
+          (local.get $y)
+          (i64.const -5)
+        )
+        (i64.const 7)
+      )
+    )
+  )
   ;; CHECK:      (func $srem-by-pot-eq-ne-zero (param $x i32) (param $y i64)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.eqz

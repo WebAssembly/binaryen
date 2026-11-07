@@ -214,7 +214,9 @@ Index Provider::getMaxBits(Expression* curr) const {
           if (maxBitsLeft == 32) {
             return 32;
           }
-          auto bitsRight = Index(ceilLog2(c->value.geti32()));
+          int32_t rhs = c->value.geti32();
+          uint32_t absRhs = rhs < 0 ? -uint32_t(rhs) : uint32_t(rhs);
+          auto bitsRight = Index(ceilLog2(absRhs));
           return std::min(maxBitsLeft, bitsRight);
         }
         return 32;
@@ -310,7 +312,9 @@ Index Provider::getMaxBits(Expression* curr) const {
           if (maxBitsLeft == 64) {
             return 64;
           }
-          auto bitsRight = Index(ceilLog2(c->value.geti64()));
+          int64_t rhs = c->value.geti64();
+          uint64_t absRhs = rhs < 0 ? -uint64_t(rhs) : uint64_t(rhs);
+          auto bitsRight = Index(ceilLog2(absRhs));
           return std::min(maxBitsLeft, bitsRight);
         }
         return 64;
