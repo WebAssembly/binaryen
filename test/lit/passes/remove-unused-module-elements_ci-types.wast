@@ -546,3 +546,209 @@
   )
  )
 )
+
+;; Active element segments initialized via imported globals, and a table
+;; initialized via an imported global.
+;;
+;;  * $g-funcref (funcref) may hold $A, so $e-funcref and $g-funcref are kept.
+;;  * $g-super ((ref null $A-super)) may hold $A, so $e-super and $g-super are
+;;    kept.
+;;  * $g-sub ((ref null $A-sub)) is a subtype of $A, so $e-sub and $g-sub are
+;;    kept.
+;;  * $g-exact-super ((ref null (exact $A-super))) cannot hold $A, so
+;;    $e-exact-super and $g-exact-super are removed.
+;;  * $g-exact-sub ((ref null (exact $A-sub))) is a subtype of $A, so
+;;    $e-exact-sub and $g-exact-sub are kept.
+;;  * $g-other ((ref null $B)) is unrelated to $A, so $e-other and $g-other are
+;;    removed.
+;;  * $g-nofunc (nullfuncref) can only hold null, so $e-nofunc and $g-nofunc
+;;    are removed.
+;;  * $e-null ((ref.null $A)) can only hold null, so $e-null is removed.
+;;  * $t2's init (global.get $g-init) keeps $g-init alive.
+(module
+ (rec
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $A-super (sub (func)))
+  (type $A-super (sub (func)))
+  ;; CHECK:       (type $A (sub $A-super (func)))
+  (type $A (sub $A-super (func)))
+  ;; CHECK:       (type $A-sub (sub $A (func)))
+  (type $A-sub (sub $A (func)))
+  ;; CHECK:       (type $B (func (param f64)))
+  (type $B (func (param f64)))
+ )
+
+ ;; CHECK:      (type $4 (func))
+
+ ;; CHECK:      (import "env" "g-funcref" (global $g-funcref funcref))
+ (import "env" "g-funcref" (global $g-funcref funcref))
+ ;; CHECK:      (import "env" "g-super" (global $g-super (ref null $A-super)))
+ (import "env" "g-super" (global $g-super (ref null $A-super)))
+ ;; CHECK:      (import "env" "g-sub" (global $g-sub (ref null $A-sub)))
+ (import "env" "g-sub" (global $g-sub (ref null $A-sub)))
+ (import "env" "g-exact-super" (global $g-exact-super (ref null (exact $A-super))))
+ ;; CHECK:      (import "env" "g-exact-sub" (global $g-exact-sub (ref null (exact $A-sub))))
+ (import "env" "g-exact-sub" (global $g-exact-sub (ref null (exact $A-sub))))
+ (import "env" "g-other" (global $g-other (ref null $B)))
+ (import "env" "g-nofunc" (global $g-nofunc nullfuncref))
+ ;; CHECK:      (import "env" "g-init" (global $g-init funcref))
+ (import "env" "g-init" (global $g-init funcref))
+
+ ;; CHECK:      (table $t1 10 10 funcref)
+ (table $t1 10 10 funcref)
+ ;; CHECK:      (table $t2 1 1 funcref (global.get $g-init))
+ (table $t2 1 1 funcref (global.get $g-init))
+
+ ;; CHECK:      (elem $e-funcref (table $t1) (i32.const 0) funcref (item (global.get $g-funcref)))
+ (elem $e-funcref (table $t1) (i32.const 0) funcref (item (global.get $g-funcref)))
+ ;; CHECK:      (elem $e-super (table $t1) (i32.const 1) funcref (item (global.get $g-super)))
+ (elem $e-super (table $t1) (i32.const 1) funcref (item (global.get $g-super)))
+ ;; CHECK:      (elem $e-sub (table $t1) (i32.const 2) funcref (item (global.get $g-sub)))
+ (elem $e-sub (table $t1) (i32.const 2) funcref (item (global.get $g-sub)))
+ (elem $e-exact-super (table $t1) (i32.const 3) funcref (item (global.get $g-exact-super)))
+ ;; CHECK:      (elem $e-exact-sub (table $t1) (i32.const 4) funcref (item (global.get $g-exact-sub)))
+ (elem $e-exact-sub (table $t1) (i32.const 4) funcref (item (global.get $g-exact-sub)))
+ (elem $e-other (table $t1) (i32.const 5) funcref (item (global.get $g-other)))
+ (elem $e-nofunc (table $t1) (i32.const 6) funcref (item (global.get $g-nofunc)))
+ (elem $e-null (table $t1) (i32.const 7) (ref null $A) (item (ref.null $A)))
+
+ ;; CHECK:      (export "export" (func $export))
+
+ ;; CHECK:      (func $export (type $4)
+ ;; CHECK-NEXT:  (call_indirect $t1 (type $A)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (call_indirect $t2 (type $A)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $export (export "export")
+  (call_indirect $t1 (type $A)
+   (i32.const 0)
+  )
+  (call_indirect $t2 (type $A)
+   (i32.const 0)
+  )
+ )
+)
+
+;; Active element segments initialized via module-defined immutable globals
+;; (directly and via chained global.gets).
+;;
+;;  * $g-func-A holds (ref.func $func-A), so $e-def-A, $g-func-A, and $func-A's
+;;    body are kept.
+;;  * $g-chain-1 -> $g-chain-2 -> (ref.func $func-subA) resolves to $func-subA
+;;    (subtype of $A), so $e-chain-func, $g-chain-1, $g-chain-2, and
+;;    $func-subA's body are kept.
+;;  * $g-chain-imp-def -> (global.get $g-imp) resolves to imported $g-imp
+;;    (funcref), so $e-chain-imp, $g-chain-imp-def, and $g-imp are kept.
+;;  * $g-def-B has static type funcref, which is a supertype of $A, but traces
+;;    to (ref.func $func-B) of unrelated type $B, so $e-def-B, $g-def-B, and
+;;    $func-B are all removed.
+;;  * $g-def-null traces to (ref.null $A), so $e-def-null and $g-def-null are
+;;    removed.
+;;  * $e-mixed has both (ref.func $func-A-2) and (global.get $g-dead-B). $e-mixed
+;;    and $g-dead-B are kept, $func-A-2's body is kept, and $func-dead-B's body
+;;    is emptied to unreachable.
+(module
+ (rec
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $A (sub (func)))
+  (type $A (sub (func)))
+  ;; CHECK:       (type $subA (sub $A (func)))
+  (type $subA (sub $A (func)))
+  ;; CHECK:       (type $B (func (param f64)))
+  (type $B (func (param f64)))
+ )
+
+ ;; CHECK:      (type $3 (func))
+
+ ;; CHECK:      (import "env" "g-imp" (global $g-imp funcref))
+ (import "env" "g-imp" (global $g-imp funcref))
+
+ ;; CHECK:      (global $g-func-A funcref (ref.func $func-A))
+ (global $g-func-A funcref (ref.func $func-A))
+ ;; CHECK:      (global $g-chain-2 (ref $subA) (ref.func $func-subA))
+ (global $g-chain-2 (ref $subA) (ref.func $func-subA))
+ ;; CHECK:      (global $g-chain-1 funcref (global.get $g-chain-2))
+ (global $g-chain-1 funcref (global.get $g-chain-2))
+ ;; CHECK:      (global $g-chain-imp-def funcref (global.get $g-imp))
+ (global $g-chain-imp-def funcref (global.get $g-imp))
+ (global $g-def-B funcref (ref.func $func-B))
+ (global $g-def-null (ref null $A) (ref.null $A))
+ ;; CHECK:      (global $g-dead-B funcref (ref.func $func-dead-B))
+ (global $g-dead-B funcref (ref.func $func-dead-B))
+
+ ;; CHECK:      (table $t 10 10 funcref)
+ (table $t 10 10 funcref)
+
+ ;; CHECK:      (elem $e-def-A (table $t) (i32.const 0) funcref (item (global.get $g-func-A)))
+ (elem $e-def-A (table $t) (i32.const 0) funcref (item (global.get $g-func-A)))
+ ;; CHECK:      (elem $e-chain-func (table $t) (i32.const 1) funcref (item (global.get $g-chain-1)))
+ (elem $e-chain-func (table $t) (i32.const 1) funcref (item (global.get $g-chain-1)))
+ ;; CHECK:      (elem $e-chain-imp (table $t) (i32.const 2) funcref (item (global.get $g-chain-imp-def)))
+ (elem $e-chain-imp (table $t) (i32.const 2) funcref (item (global.get $g-chain-imp-def)))
+ (elem $e-def-B (table $t) (i32.const 3) funcref (item (global.get $g-def-B)))
+ (elem $e-def-null (table $t) (i32.const 4) funcref (item (global.get $g-def-null)))
+ ;; CHECK:      (elem $e-mixed (table $t) (i32.const 5) funcref (item (ref.func $func-A-2)) (item (global.get $g-dead-B)))
+ (elem $e-mixed (table $t) (i32.const 5) funcref
+  (item (ref.func $func-A-2))
+  (item (global.get $g-dead-B))
+ )
+
+ ;; CHECK:      (export "export" (func $export))
+
+ ;; CHECK:      (func $export (type $3)
+ ;; CHECK-NEXT:  (call_indirect $t (type $A)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $export (export "export")
+  (call_indirect $t (type $A)
+   (i32.const 0)
+  )
+ )
+
+ ;; CHECK:      (func $func-A (type $A)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i32.const 10)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $func-A (type $A)
+  ;; Kept in full via $g-func-A.
+  (drop (i32.const 10))
+ )
+
+ ;; CHECK:      (func $func-subA (type $subA)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i32.const 20)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $func-subA (type $subA)
+  ;; Kept in full via $g-chain-1 -> $g-chain-2.
+  (drop (i32.const 20))
+ )
+
+ (func $func-B (type $B) (param $p f64)
+  ;; Removed entirely despite $g-def-B having type funcref.
+  (drop (i32.const 30))
+ )
+
+ ;; CHECK:      (func $func-A-2 (type $A)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i32.const 40)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $func-A-2 (type $A)
+  ;; Kept in full via $e-mixed.
+  (drop (i32.const 40))
+ )
+
+ ;; CHECK:      (func $func-dead-B (type $B) (param $p f64)
+ ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT: )
+ (func $func-dead-B (type $B) (param $p f64)
+  ;; Referenced via $e-mixed -> $g-dead-B, so emptied to unreachable.
+  (drop (i32.const 50))
+ )
+)

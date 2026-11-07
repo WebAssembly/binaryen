@@ -336,6 +336,18 @@ struct Analyzer {
 
     auto notePossibleFunc =
       [&](FlatTableInfo& info, Expression* item, Name elem = Name()) {
+        // Trace through module-defined immutable globals to find the
+        // underlying constant expression (which may be a RefFunc, RefNull, or
+        // an imported GlobalGet).
+        while (auto* get = item->dynCast<GlobalGet>()) {
+          auto* global = module->getGlobal(get->name);
+          if (global->imported()) {
+            break;
+          }
+          // Note that infinite recursion is not a danger here since a global
+          // can only refer to previous globals.
+          item = global->init;
+        }
         if (auto* refFunc = item->dynCast<RefFunc>()) {
           auto* func = module->getFunction(refFunc->func);
           std::optional<HeapType> type = func->type.getHeapType();
@@ -349,6 +361,9 @@ struct Analyzer {
             }
             type = type->getSuperType();
           }
+        } else if (elem && item->type.isFunction()) {
+          // This might be e.g. a global.get of an imported global.
+          propagateUnknownFuncElem(info, item->type, elem);
         }
       };
 
@@ -399,6 +414,30 @@ struct Analyzer {
     }
   }
 
+  void propagateUnknownFuncElem(FlatTableInfo& info, Type itemType, Name elem) {
+    // We do not know the concrete function (because this might be e.g. a
+    // global.get of an imported global), so this segment might be called by the
+    // item's type, any supertype, or (if inexact) any subtype.
+    auto type = itemType.getHeapType();
+    for (std::optional<HeapType> super = type; super;
+         super = super->getSuperType()) {
+      info.typeElems[*super].insert(elem);
+    }
+    if (!itemType.isExact()) {
+      if (type.isBasic()) {
+        for (auto sub : subtypes().types) {
+          if (HeapType::isSubType(sub, type)) {
+            info.typeElems[sub].insert(elem);
+          }
+        }
+      } else {
+        for (auto sub : subtypes().getStrictSubTypes(type)) {
+          info.typeElems[sub].insert(elem);
+        }
+      }
+    }
+  }
+
   // Process expressions in the expression queue while we have any, visiting
   // them (using their contents) and adding children. Returns whether we did any
   // work.
@@ -440,8 +479,15 @@ struct Analyzer {
     return worked;
   }
 
-  // We'll compute SubTypes if we need them.
-  std::optional<SubTypes> subTypes;
+  // Lazily compute SubTypes at most once for the module.
+  std::optional<SubTypes> _subTypes;
+
+  SubTypes& subtypes() {
+    if (!_subTypes) {
+      _subTypes = SubTypes(*module);
+    }
+    return *_subTypes;
+  }
 
   void useCallRefType(HeapType type) {
     if (type.isBasic()) {
@@ -450,13 +496,9 @@ struct Analyzer {
       return;
     }
 
-    if (!subTypes) {
-      subTypes = SubTypes(*module);
-    }
-
     // Call all the functions of that signature, and subtypes. We can then
     // forget about them, as those signatures will be marked as called.
-    for (auto subType : subTypes->getSubTypes(type)) {
+    for (auto subType : subtypes().getSubTypes(type)) {
       auto iter = uncalledRefFuncMap.find(subType);
       if (iter != uncalledRefFuncMap.end()) {
         // We must not have a type in both calledSignatures and
@@ -574,10 +616,7 @@ struct Analyzer {
       // This is the first time we see a read of this data. Note that it is
       // read, and also all subtypes since we might be reading from them as
       // well.
-      if (!subTypes) {
-        subTypes = SubTypes(*module);
-      }
-      subTypes->iterSubTypes(type, [&](HeapType subType, Index depth) {
+      subtypes().iterSubTypes(type, [&](HeapType subType, Index depth) {
         auto subStructField = StructField{subType, index};
         readStructFields.insert(subStructField);
 
