@@ -17,6 +17,7 @@
 #include <variant>
 
 #include "passes/stringify-walker.h"
+#include "wasm-builder.h"
 #include "wasm-type.h"
 #include "wasm.h"
 #include "gtest/gtest.h"

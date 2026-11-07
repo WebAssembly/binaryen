@@ -31,6 +31,7 @@
 #define cfg_traversal_h
 
 #include "ir/branch-utils.h"
+#include "shared-constants.h"
 #include "wasm-traversal.h"
 #include "wasm.h"
 

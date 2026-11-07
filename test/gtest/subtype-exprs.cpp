@@ -15,6 +15,7 @@
  */
 
 #include "ir/subtype-exprs.h"
+#include "wasm-builder.h"
 #include "wasm-traversal.h"
 #include "wasm.h"
 #include "gtest/gtest.h"
