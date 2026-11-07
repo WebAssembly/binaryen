@@ -310,20 +310,15 @@ def main() -> None:
         if n['requestedReviewer']
     )
     if team_requested:
-        try:
-            gh_api([
-                '--method',
-                'DELETE',
-                f'repos/{owner}/{name}/pulls/{pr_number}/requested_reviewers',
-                '-f',
-                f'team_reviewers[]={TEAM_SLUG}',
-            ])
-        except subprocess.CalledProcessError as e:
-            detail = e.stderr.strip() if e.stderr else str(e)
-            print(
-                f'Note: could not remove team review request: {detail}',
-                file=sys.stderr,
-            )
+        gh_api([
+            '--method',
+            'DELETE',
+            f'repos/{owner}/{name}/pulls/{pr_number}/requested_reviewers',
+            '-f',
+            'reviewers[]',
+            '-f',
+            f'team_reviewers[]={TEAM_SLUG}',
+        ])
 
 
 if __name__ == '__main__':
