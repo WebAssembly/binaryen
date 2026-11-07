@@ -439,12 +439,12 @@ struct AbstractTypeRefining : public Pass {
       }
 
       void visitBrOn(BrOn* curr) {
-        if (curr->op == BrOnNull || curr->op == BrOnNonNull) {
-          return;
-        }
         if (curr->ref->type == Type::unreachable ||
             (curr->desc && curr->desc->type == Type::unreachable)) {
           curr->type = Type::unreachable;
+          return;
+        }
+        if (curr->op == BrOnNull || curr->op == BrOnNonNull) {
           return;
         }
         auto optimized = getOptimized(curr->castType);
