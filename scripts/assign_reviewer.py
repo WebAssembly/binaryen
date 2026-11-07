@@ -34,8 +34,14 @@ now = datetime.now(timezone.utc).timestamp()
 # Accumulated exponentially decayed review load per reviewer.
 review_load: dict[str, float] = {}
 
+# Number of review-requested PRs per reviewer.
+review_count: dict[str, int] = {}
+
 # Accumulated exponentially decayed authored-PR load per reviewer.
 authored_load: dict[str, float] = {}
+
+# Number of authored PRs per reviewer.
+authored_count: dict[str, int] = {}
 
 # Most recent review-request timestamp per reviewer, used for tie-breaking.
 last_assigned: dict[str, float] = {}
@@ -155,6 +161,7 @@ def accumulate_pr_activity(pr: dict, reviewer_set: set[str]) -> None:
     if author in reviewer_set:
         age = max(0.0, now - active_at)
         authored_load[author] += w_pr * math.exp(-DECAY_RATE * age)
+        authored_count[author] += 1
 
     # Track which reviewers have reviewed or approved so we can ignore removed
     # unreviewed requests and drop PENDING_REVIEW_MULTIPLIER on approved PRs.
@@ -194,6 +201,7 @@ def accumulate_pr_activity(pr: dict, reviewer_set: set[str]) -> None:
         mult = PENDING_REVIEW_MULTIPLIER if is_pending else 1.0
         age = max(0.0, now - assign_ts)
         review_load[r] += mult * w_pr * math.exp(-DECAY_RATE * age)
+        review_count[r] += 1
 
 
 # Load per-reviewer weight overrides from REVIEWER_WEIGHTS (JSON object mapping
@@ -275,7 +283,9 @@ def main() -> None:
         return
 
     review_load.update(dict.fromkeys(reviewers, 0.0))
+    review_count.update(dict.fromkeys(reviewers, 0))
     authored_load.update(dict.fromkeys(reviewers, 0.0))
+    authored_count.update(dict.fromkeys(reviewers, 0))
     last_assigned.update(dict.fromkeys(reviewers, 0.0))
     for pr in repo_data['recentPRs']['nodes']:
         if not pr['isDraft'] and pr['number'] != pr_number:
@@ -286,7 +296,7 @@ def main() -> None:
         for r in eligible
     }
     # Break ties by least-recently-assigned reviewer, then team member order.
-    chosen = min(
+    ranked = sorted(
         eligible,
         key=lambda r: (
             round(scores[r], 6),
@@ -294,6 +304,14 @@ def main() -> None:
             reviewers.index(r),
         ),
     )
+    print('Candidate reviewers:')
+    for r in ranked:
+        print(
+            f'  {r}: score={scores[r]:.2f} '
+            f'(review_requests={review_count[r]}, review_load={review_load[r]:.2f}, '
+            f'authored={authored_count[r]}, authored_load={authored_load[r]:.2f})',
+        )
+    chosen = ranked[0]
     print(f'Selected reviewer for PR #{pr_number}: {chosen}')
 
     gh_api([
