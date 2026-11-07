@@ -862,7 +862,9 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
   void visitRefI31(RefI31* curr) { note(&curr->value, Type::i32); }
 
   void visitI31Get(I31Get* curr) {
-    note(&curr->i31, Type(HeapType::i31, Nullable));
+    // Polymorphic over sharedness.
+    note(&curr->i31,
+         VarRef{Nullable, VarAbsHeapType{VarSharedness{0u}, HeapType::i31}});
   }
 
   void visitCallRef(CallRef* curr, std::optional<HeapType> ht = std::nullopt) {
@@ -973,7 +975,7 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
       }
     }
     if (auto desc = curr->type.getHeapType().getDescriptorType()) {
-      note(&curr->desc, Type(*desc, NonNullable, Exact));
+      note(&curr->desc, Type(*desc, Nullable, Exact));
     }
   }
 
@@ -1167,7 +1169,9 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
   }
 
   void visitArrayLen(ArrayLen* curr) {
-    note(&curr->ref, Type(HeapType::array, Nullable));
+    // Polymorphic over sharedness.
+    note(&curr->ref,
+         VarRef{Nullable, VarAbsHeapType{VarSharedness{0u}, HeapType::array}});
   }
 
   void visitArrayCopy(ArrayCopy* curr,
