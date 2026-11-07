@@ -14,13 +14,22 @@
  * limitations under the License.
  */
 
+#include <algorithm>
+#include <cassert>
+#include <cstdint>
+
+#include "ir/abstract.h"
 #include "ir/bits.h"
 #include "ir/boolean.h"
 #include "ir/literal-utils.h"
 #include "ir/load-utils.h"
 #include "ir/match.h"
 #include "support/bits.h"
+#include "support/index.h"
+#include "support/utilities.h"
 #include "wasm-builder.h"
+#include "wasm-type.h"
+#include "wasm.h"
 
 namespace wasm::Bits {
 

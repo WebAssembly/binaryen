@@ -14,9 +14,15 @@
  * limitations under the License.
  */
 
+#include <cstdint>
+#include <map>
+#include <set>
+
 #include "ir/subtype-exprs.h"
+#include "literal.h"
 #include "wasm-builder.h"
 #include "wasm-traversal.h"
+#include "wasm-type.h"
 #include "wasm.h"
 #include "gtest/gtest.h"
 

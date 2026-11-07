@@ -17,10 +17,14 @@
 #ifndef wasm_passes_call_utils_h
 #define wasm_passes_call_utils_h
 
+#include <functional>
 #include <variant>
+#include <vector>
 
 #include "ir/debuginfo.h"
+#include "support/name.h"
 #include "wasm-builder.h"
+#include "wasm-type.h"
 #include "wasm.h"
 
 namespace wasm::CallUtils {

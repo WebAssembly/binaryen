@@ -17,6 +17,9 @@
 #ifndef wasm_ir_bits_h
 #define wasm_ir_bits_h
 
+#include <cassert>
+#include <cstdint>
+
 #include "support/bits.h"
 #include "support/index.h"
 #include "support/utilities.h"
