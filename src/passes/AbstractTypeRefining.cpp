@@ -373,6 +373,8 @@ struct AbstractTypeRefining : public Pass {
       void visitRefCast(RefCast* curr) {
         if (curr->ref->type == Type::unreachable ||
             (curr->desc && curr->desc->type == Type::unreachable)) {
+          // A child may have become unreachable earlier in Preoptimizer, before
+          // ReFinalize has run. Propagate unreachability and skip optimizing.
           curr->type = Type::unreachable;
           return;
         }
@@ -408,6 +410,7 @@ struct AbstractTypeRefining : public Pass {
       // ref.get_desc of it, as ReFinalize would fix us up to return it.
       void visitRefGetDesc(RefGetDesc* curr) {
         if (curr->ref->type == Type::unreachable) {
+          // As in visitRefCast, propagate unreachability and skip optimizing.
           curr->type = Type::unreachable;
           return;
         }
@@ -441,6 +444,7 @@ struct AbstractTypeRefining : public Pass {
       void visitBrOn(BrOn* curr) {
         if (curr->ref->type == Type::unreachable ||
             (curr->desc && curr->desc->type == Type::unreachable)) {
+          // As in visitRefCast, propagate unreachability and skip optimizing.
           curr->type = Type::unreachable;
           return;
         }
