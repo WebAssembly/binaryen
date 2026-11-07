@@ -2557,3 +2557,16 @@
   )
  )
 )
+(module
+ ;; Avoid colliding with existing segment names when splitting a segment.
+ ;; CHECK:      (memory $0 1 1)
+ (memory $0 1 1)
+ ;; CHECK:      (data $0 (i32.const 0) "a")
+ (data $0 (i32.const 0) "a\00\00\00\00\00\00\00\00\00b\00\00\00\00\00\00\00\00\00c")
+ ;; CHECK:      (data $0.1_2 (i32.const 10) "b")
+
+ ;; CHECK:      (data $0.2 (i32.const 20) "c")
+
+ ;; CHECK:      (data $0.1 (i32.const 30) "d")
+ (data $0.1 (i32.const 30) "d")
+)
