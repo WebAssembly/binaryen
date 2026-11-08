@@ -77,3 +77,49 @@ TEST(SubtypeExprsTest, BrIf) {
   ASSERT_EQ(finder.seen.size(), 1);
   EXPECT_EQ(finder.seen.count(block), 1);
 }
+
+// A RefEq with an unreachable operand and a shared reference operand must still
+// constrain its operands to shared eqref rather than unshared eqref.
+TEST(SubtypeExprsTest, RefEqSharedUnreachable) {
+  Module wasm;
+  Builder builder(wasm);
+  Type sharedEqref = Type(HeapTypes::eq.getBasic(Shared), Nullable);
+  auto* sharedNull = builder.makeRefNull(HeapTypes::none.getBasic(Shared));
+  auto* unreachable = builder.makeUnreachable();
+  auto* refEq = builder.makeRefEq(unreachable, sharedNull);
+  ASSERT_EQ(refEq->type, Type::unreachable);
+  auto* drop = builder.makeDrop(refEq);
+  auto func = builder.makeFunction(
+    "func", {}, Signature(Type::none, Type::none), {}, drop);
+
+  struct Finder
+    : public ControlFlowWalker<Finder, SubtypingDiscoverer<Finder>> {
+    std::map<Expression*, Type> noted;
+
+    void noteSubtype(Type sub, Type super) {}
+    void noteSubtype(HeapType sub, HeapType super) {}
+    void noteSubtype(Type sub, Expression* super) {}
+    void noteSubtype(Expression* sub, Type super) {}
+    void noteSubtype(Expression* sub, Expression* super) {}
+    void noteNonFlowSubtype(Expression* sub, Type super) { noted[sub] = super; }
+    void noteCast(HeapType src, Type dst) {}
+    void noteCast(Expression* src, Type dst) {}
+    void noteCast(Expression* src, Expression* dst) {}
+  } finder;
+
+  finder.walkFunctionInModule(func.get(), &wasm);
+  EXPECT_EQ(finder.noted[sharedNull], sharedEqref);
+  EXPECT_TRUE(Type::isSubType(sharedNull->type, finder.noted[sharedNull]));
+
+  // Swap the operands so the shared reference is on the left and unreachable is
+  // on the right.
+  refEq->left = sharedNull;
+  refEq->right = unreachable;
+  refEq->finalize();
+  ASSERT_EQ(refEq->type, Type::unreachable);
+
+  finder.noted.clear();
+  finder.walkFunctionInModule(func.get(), &wasm);
+  EXPECT_EQ(finder.noted[sharedNull], sharedEqref);
+  EXPECT_TRUE(Type::isSubType(sharedNull->type, finder.noted[sharedNull]));
+}

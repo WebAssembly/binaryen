@@ -1065,7 +1065,7 @@
     )
   )
 
-  ;; CHECK:      (func $unreachable.tuple.extract (type $3) (result i32)
+  ;; CHECK:      (func $unreachable.tuple.extract (type $4) (result i32)
   ;; CHECK-NEXT:  (local $tuple (tuple i32 i64))
   ;; CHECK-NEXT:  (local $non-tuple i32)
   ;; CHECK-NEXT:  (tuple.extract 2 0
@@ -1081,6 +1081,215 @@
       (local.tee $non-tuple
         (unreachable)
       )
+    )
+  )
+
+  ;; CHECK:      (func $swap (type $3) (param $x i32) (param $y i32) (result i32)
+  ;; CHECK-NEXT:  (local $t (tuple i32 i32))
+  ;; CHECK-NEXT:  (local $3 i32)
+  ;; CHECK-NEXT:  (local $4 i32)
+  ;; CHECK-NEXT:  (local $5 i32)
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (local.set $3
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.set $4
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (local.set $5
+  ;; CHECK-NEXT:    (local.get $4)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.set $4
+  ;; CHECK-NEXT:    (local.get $3)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.set $3
+  ;; CHECK-NEXT:    (local.get $5)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.get $4)
+  ;; CHECK-NEXT: )
+  (func $swap (param $x i32) (param $y i32) (result i32)
+    ;; Swapping elements of a tuple must not overwrite the earlier element
+    ;; before the later element reads it.
+    (local $t (tuple i32 i32))
+    (local.set $t
+      (tuple.make 2
+        (local.get $x)
+        (local.get $y)
+      )
+    )
+    (local.set $t
+      (tuple.make 2
+        (tuple.extract 2 1
+          (local.get $t)
+        )
+        (tuple.extract 2 0
+          (local.get $t)
+        )
+      )
+    )
+    (tuple.extract 2 1
+      (local.get $t)
+    )
+  )
+
+  ;; CHECK:      (func $no-swap (type $3) (param $x i32) (param $y i32) (result i32)
+  ;; CHECK-NEXT:  (local $t (tuple i32 i32))
+  ;; CHECK-NEXT:  (local $t' (tuple i32 i32))
+  ;; CHECK-NEXT:  (local $4 i32)
+  ;; CHECK-NEXT:  (local $5 i32)
+  ;; CHECK-NEXT:  (local $6 i32)
+  ;; CHECK-NEXT:  (local $7 i32)
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (local.set $4
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.set $5
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (local.set $6
+  ;; CHECK-NEXT:    (local.get $5)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.set $7
+  ;; CHECK-NEXT:    (local.get $4)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.get $7)
+  ;; CHECK-NEXT: )
+  (func $no-swap (param $x i32) (param $y i32) (result i32)
+    ;; Like $swap, but this time we are copying the elements to a different
+    ;; tuple local, so we don't need temp locals.
+    (local $t (tuple i32 i32))
+    (local $t' (tuple i32 i32))
+    (local.set $t
+      (tuple.make 2
+        (local.get $x)
+        (local.get $y)
+      )
+    )
+    (local.set $t'
+      (tuple.make 2
+        (tuple.extract 2 1
+          (local.get $t)
+        )
+        (tuple.extract 2 0
+          (local.get $t)
+        )
+      )
+    )
+    (tuple.extract 2 1
+      (local.get $t')
+    )
+  )
+
+  ;; CHECK:      (func $swap-3 (type $5) (param $x i32) (param $y i32) (param $z i32) (result i32)
+  ;; CHECK-NEXT:  (local $t (tuple i32 i32 i32))
+  ;; CHECK-NEXT:  (local $4 i32)
+  ;; CHECK-NEXT:  (local $5 i32)
+  ;; CHECK-NEXT:  (local $6 i32)
+  ;; CHECK-NEXT:  (local $7 i32)
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (local.set $4
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.set $5
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.set $6
+  ;; CHECK-NEXT:    (local.get $z)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (local.set $7
+  ;; CHECK-NEXT:    (local.get $5)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.set $5
+  ;; CHECK-NEXT:    (local.get $6)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.set $6
+  ;; CHECK-NEXT:    (local.get $4)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.set $4
+  ;; CHECK-NEXT:    (local.get $7)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.get $6)
+  ;; CHECK-NEXT: )
+  (func $swap-3 (param $x i32) (param $y i32) (param $z i32) (result i32)
+    ;; Rotating 3 elements of a tuple (0->1, 1->2, 2->0) requires saving only
+    ;; the element that would be overwritten before being read.
+    (local $t (tuple i32 i32 i32))
+    (local.set $t
+      (tuple.make 3
+        (local.get $x)
+        (local.get $y)
+        (local.get $z)
+      )
+    )
+    (local.set $t
+      (tuple.make 3
+        (tuple.extract 3 1
+          (local.get $t)
+        )
+        (tuple.extract 3 2
+          (local.get $t)
+        )
+        (tuple.extract 3 0
+          (local.get $t)
+        )
+      )
+    )
+    (tuple.extract 3 2
+      (local.get $t)
+    )
+  )
+
+  ;; CHECK:      (func $branch-out (type $6) (param $cond i32) (result i32)
+  ;; CHECK-NEXT:  (local $t (tuple i32 i32))
+  ;; CHECK-NEXT:  (local $2 i32)
+  ;; CHECK-NEXT:  (local $3 i32)
+  ;; CHECK-NEXT:  (local $4 i32)
+  ;; CHECK-NEXT:  (block $b
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (local.set $4
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $3
+  ;; CHECK-NEXT:     (block (result i32)
+  ;; CHECK-NEXT:      (br_if $b
+  ;; CHECK-NEXT:       (local.get $cond)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (i32.const 2)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $2
+  ;; CHECK-NEXT:     (local.get $4)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.get $2)
+  ;; CHECK-NEXT: )
+  (func $branch-out (param $cond i32) (result i32)
+    ;; If a later operand transfers control flow to an enclosing scope in the
+    ;; function, earlier operands must not prematurely overwrite target locals.
+    (local $t (tuple i32 i32))
+    (block $b
+      (local.set $t
+        (tuple.make 2
+          (i32.const 1)
+          (block (result i32)
+            (br_if $b (local.get $cond))
+            (i32.const 2)
+          )
+        )
+      )
+    )
+    (tuple.extract 2 0
+      (local.get $t)
     )
   )
 )

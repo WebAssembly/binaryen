@@ -117,40 +117,9 @@ function asmFunc(imports) {
  
  function foo4($0) {
   $0 = $0 | 0;
-  a : {
-   b : {
-    c : {
-     if ($0) {
-      break c
-     }
-     d : {
-      switch ($0 | 0) {
-      default:
-       if ($0) {
-        break c
-       }
-       zed(-1);
-       zed(-2);
-       break;
-      case 0:
-       break a;
-      case 1:
-       break b;
-      case 2:
-       break c;
-      case 3:
-       break d;
-      };
-     }
-     zed(-3);
-     zed(-4);
-    }
-    zed(-5);
-    zed(-6);
-    break a;
-   }
-   zed(-7);
-   zed(-8);
+  if ($0) {
+   zed(-5);
+   zed(-6);
   }
   zed(-9);
   zed(-10);

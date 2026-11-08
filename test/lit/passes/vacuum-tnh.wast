@@ -777,4 +777,50 @@
     )
     (unreachable)
   )
+
+  ;; YESTNH:      (func $unreached-atomic-wait (type $0)
+  ;; YESTNH-NEXT:  (i32.store
+  ;; YESTNH-NEXT:   (i32.const 0)
+  ;; YESTNH-NEXT:   (i32.const 1)
+  ;; YESTNH-NEXT:  )
+  ;; YESTNH-NEXT:  (drop
+  ;; YESTNH-NEXT:   (memory.atomic.wait32
+  ;; YESTNH-NEXT:    (i32.const 0)
+  ;; YESTNH-NEXT:    (i32.const 0)
+  ;; YESTNH-NEXT:    (i64.const -1)
+  ;; YESTNH-NEXT:   )
+  ;; YESTNH-NEXT:  )
+  ;; YESTNH-NEXT:  (unreachable)
+  ;; YESTNH-NEXT: )
+  ;; NO_TNH:      (func $unreached-atomic-wait (type $0)
+  ;; NO_TNH-NEXT:  (i32.store
+  ;; NO_TNH-NEXT:   (i32.const 0)
+  ;; NO_TNH-NEXT:   (i32.const 1)
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT:  (drop
+  ;; NO_TNH-NEXT:   (memory.atomic.wait32
+  ;; NO_TNH-NEXT:    (i32.const 0)
+  ;; NO_TNH-NEXT:    (i32.const 0)
+  ;; NO_TNH-NEXT:    (i64.const -1)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT:  (unreachable)
+  ;; NO_TNH-NEXT: )
+  (func $unreached-atomic-wait
+    ;; Like an infinite loop, an atomic.wait may never return (if the timeout is
+    ;; negative and no one wakes it), so it and any preceding side effects
+    ;; cannot be removed in TNH mode even when followed by an unreachable.
+    (i32.store
+      (i32.const 0)
+      (i32.const 1)
+    )
+    (drop
+      (memory.atomic.wait32
+        (i32.const 0)
+        (i32.const 0)
+        (i64.const -1)
+      )
+    )
+    (unreachable)
+  )
 )

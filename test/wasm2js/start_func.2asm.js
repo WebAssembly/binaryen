@@ -28,27 +28,6 @@ function asmFunc(imports) {
   return buffer.byteLength >> 16;
  }
  
- function __wasm_memory_grow(pagesToAdd) {
-  pagesToAdd = pagesToAdd | 0;
-  var oldPages = __wasm_memory_size() | 0;
-  var newPages = oldPages + pagesToAdd | 0;
-  if ((oldPages < newPages) && (newPages < 65536)) {
-   var newBuffer = new ArrayBuffer(newPages << 16);
-   var newHEAP8 = new Int8Array(newBuffer);
-   newHEAP8.set(HEAP8);
-   HEAP8 = new Int8Array(newBuffer);
-   HEAP16 = new Int16Array(newBuffer);
-   HEAP32 = new Int32Array(newBuffer);
-   HEAPU8 = new Uint8Array(newBuffer);
-   HEAPU16 = new Uint16Array(newBuffer);
-   HEAPU32 = new Uint32Array(newBuffer);
-   HEAPF32 = new Float32Array(newBuffer);
-   HEAPF64 = new Float64Array(newBuffer);
-   buffer = newBuffer;
-  }
-  return oldPages;
- }
- 
  return {
   
  };

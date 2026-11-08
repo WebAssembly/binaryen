@@ -222,7 +222,7 @@ struct StructScanner : public WalkerPass<PostWalker<SubType>> {
 
   void visitStructSet(StructSet* curr) {
     auto type = curr->ref->type;
-    if (type == Type::unreachable || type.isNull()) {
+    if (type == Type::unreachable || type.isBottomRef()) {
       return;
     }
 
@@ -237,7 +237,7 @@ struct StructScanner : public WalkerPass<PostWalker<SubType>> {
 
   void visitStructGet(StructGet* curr) {
     auto type = curr->ref->type;
-    if (type == Type::unreachable || type.isNull()) {
+    if (type == Type::unreachable || type.isBottomRef()) {
       return;
     }
 
@@ -250,7 +250,7 @@ struct StructScanner : public WalkerPass<PostWalker<SubType>> {
 
   void visitStructWait(StructWait* curr) {
     auto type = curr->ref->type;
-    if (type == Type::unreachable || type.isNull()) {
+    if (type == Type::unreachable || type.isBottomRef()) {
       return;
     }
 
@@ -263,7 +263,7 @@ struct StructScanner : public WalkerPass<PostWalker<SubType>> {
 
   void visitStructRMW(StructRMW* curr) {
     auto type = curr->ref->type;
-    if (type == Type::unreachable || type.isNull()) {
+    if (type == Type::unreachable || type.isBottomRef()) {
       return;
     }
 
@@ -286,7 +286,7 @@ struct StructScanner : public WalkerPass<PostWalker<SubType>> {
 
   void visitStructCmpxchg(StructCmpxchg* curr) {
     auto type = curr->ref->type;
-    if (type == Type::unreachable || type.isNull()) {
+    if (type == Type::unreachable || type.isBottomRef()) {
       return;
     }
 
@@ -340,11 +340,7 @@ struct StructScanner : public WalkerPass<PostWalker<SubType>> {
   }
 
   void noteExpressionOrCopy(Expression* expr, Type type, Index index, T& info) {
-    auto* fallthrough =
-      Properties::getFallthrough(expr,
-                                 this->getPassOptions(),
-                                 *this->getModule(),
-                                 self().getFallthroughBehavior());
+    auto* fallthrough = self().getFallthrough(expr);
     // TODO: Consider lifting this restriction on the use of fallthrough values.
     if (fallthrough->type == expr->type) {
       expr = fallthrough;
@@ -357,9 +353,13 @@ struct StructScanner : public WalkerPass<PostWalker<SubType>> {
     self().noteExpression(expr, type.getHeapType(), index, info);
   }
 
-  Properties::FallthroughBehavior getFallthroughBehavior() {
+  Expression* getFallthrough(Expression* expr) {
     // By default, look at and use tee&br_if fallthrough values.
-    return Properties::FallthroughBehavior::AllowTeeBrIf;
+    return Properties::getFallthrough(
+      expr,
+      this->getPassOptions(),
+      *this->getModule(),
+      Properties::FallthroughBehavior::AllowTeeBrIf);
   }
 
   FunctionStructValuesMap<T>& functionNewInfos;

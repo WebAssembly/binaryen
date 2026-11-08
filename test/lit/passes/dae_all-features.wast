@@ -716,12 +716,13 @@
 )
 
 (module
- ;; CHECK:      (type $A (func (result (ref $A))))
  (type $A (func (result (ref $A))))
+
+ ;; CHECK:      (type $0 (func (result (ref nofunc))))
 
  ;; CHECK:      (type $1 (func))
 
- ;; CHECK:      (func $no-caller (type $A) (result (ref $A))
+ ;; CHECK:      (func $no-caller (type $0) (result (ref nofunc))
  ;; CHECK-NEXT:  (block ;; (replaces unreachable CallRef we can't emit)
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (ref.null nofunc)
@@ -731,9 +732,10 @@
  ;; CHECK-NEXT: )
  (func $no-caller (type $A) (result (ref $A))
   ;; This return_call is to a bottom type, which we should ignore and not error
-  ;; on. There is nothing to optimize here (other passes will turn this call
-  ;; into an unreachable). In particular we should not be confused by the fact
-  ;; that this expression itself is unreachable (as a return call).
+  ;; on (other passes will turn this call into an unreachable). In particular
+  ;; we should not be confused by the fact that this expression itself is
+  ;; unreachable (as a return call). As the function never returns, its result
+  ;; is refined to the bottom type.
   (return_call_ref $A
    (ref.null nofunc)
   )

@@ -1,0 +1,89 @@
+/*
+ * Copyright 2026 WebAssembly Community Group participants
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+//
+// Utilities for reverse-postorder queue management.
+//
+
+#ifndef cfg_rpo_h
+#define cfg_rpo_h
+
+#include <queue>
+
+#include "wasm.h"
+
+namespace wasm {
+
+//
+// Given a CFG in reverse postorder (e.g. from cfg-traversal), implement a
+// priority queue working in reverse postorder. BasicBlock indexes indicate the
+// block's position in RPO, and by processing the ones with lower indexes first,
+// we can ensure that we fully process loops and diamonds before proceeding
+// onward to flow data elsewhere in the CFG. This avoids the wasted work problem
+// where we have, say, an If, and process one arm, then look at the rest of a
+// massive function, then process the other If arm, and the entire massive
+// function must be recomputed.
+//
+// The BasicBlock of the CFG must contain two fields:
+//
+//   bool inQueue; // whether already in the queue
+//   Index index;  // basic block index
+//
+template<typename CFG, typename Compare = std::greater<Index>> struct RPOQueue {
+  CFG& cfg;
+
+  RPOQueue(CFG& cfg) : cfg(cfg) {
+    // Initialize the block indexes and queue booleans.
+    auto& basicBlocks = cfg.basicBlocks;
+    for (Index i = 0; i < basicBlocks.size(); ++i) {
+      auto& contents = basicBlocks[i]->contents;
+      contents.inQueue = false;
+      contents.index = i;
+    }
+  }
+
+  std::priority_queue<Index, std::vector<Index>, Compare> queue;
+
+  void push(typename CFG::BasicBlock* block) {
+    // Push if not already in the queue.
+    if (!block->contents.inQueue) {
+      block->contents.inQueue = true;
+      queue.push(block->contents.index);
+    }
+  }
+
+  typename CFG::BasicBlock* pop() {
+    // Pop the top element.
+    auto* block = cfg.basicBlocks[queue.top()].get();
+    queue.pop();
+    block->contents.inQueue = false;
+    return block;
+  }
+
+  bool empty() const { return queue.empty(); }
+};
+
+// A queue that works in postorder (the reverse of RPO), which is useful when
+// flowing information backwards through the CFG (such as in liveness analysis).
+// By processing blocks with higher RPO indexes first, we process successors
+// before predecessors, and fully process loops and diamonds before flowing data
+// backwards to earlier blocks in the CFG.
+template<typename CFG> using POQueue = RPOQueue<CFG, std::less<Index>>;
+
+} // namespace wasm
+
+#endif // cfg_rpo_h
+

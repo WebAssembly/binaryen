@@ -29,7 +29,6 @@
 
 #include <memory>
 
-#include <ir/element-utils.h>
 #include <pass.h>
 #include <wasm.h>
 
@@ -54,6 +53,12 @@ struct CallCountScanner : public WalkerPass<PostWalker<CallCountScanner>> {
     (*counts)[curr->target]++;
   }
 
+  void visitRefFunc(RefFunc* curr) {
+    // can't add a new element in parallel
+    assert(counts->count(curr->func) > 0);
+    (*counts)[curr->func]++;
+  }
+
 private:
   NameCountMap* counts;
 };
@@ -69,8 +74,10 @@ struct ReorderFunctions : public Pass {
     for (auto& func : module->functions) {
       counts.try_emplace(func->name, 0);
     }
-    // find counts on function calls
+    // find counts on function calls and ref.funcs in function bodies
     CallCountScanner(&counts).run(getPassRunner(), module);
+    // find counts on ref.funcs in module code: globals, element segments, etc.
+    CallCountScanner(&counts).walkModuleCode(module);
     // find counts on global usages
     if (module->start.is()) {
       counts[module->start]++;
@@ -80,9 +87,6 @@ struct ReorderFunctions : public Pass {
         counts[*curr->getInternalName()]++;
       }
     }
-    ElementUtils::iterAllElementFunctionNames(
-      module, [&](Name name) { counts[name]++; });
-    // TODO: count all RefFunc as well
     // TODO: count the declaration section as well, which adds another mention
     // sort
     std::sort(module->functions.begin(),

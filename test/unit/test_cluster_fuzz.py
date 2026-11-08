@@ -194,8 +194,8 @@ class ClusterFuzz(utils.BinaryenTestCase):
             # stale files.
             for f in glob.glob('extracted*'):
                 os.unlink(f)
-            extractor = shared.in_binaryen('scripts', 'clusterfuzz', 'extract_wasms.py')
-            subprocess.check_call([sys.executable, extractor, fuzz_file, 'extracted'])
+            subprocess.check_call(
+                shared.WASM_EMBED + ['--extract', fuzz_file, 'extracted'])
 
             # One wasm file must always exist, and must be valid.
             binary_file = 'extracted.0.wasm'

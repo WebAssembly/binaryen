@@ -108,7 +108,7 @@ try:
     def pick_passes():
         # return '--waka'.split(' ')
         ret = []
-        while 1:
+        while True:
             str_ret = str(ret)
             if random.random() < 0.5 and str_ret not in tested:
                 tested.add(str_ret)
@@ -117,7 +117,7 @@ try:
 
     counter = 0
 
-    while 1:
+    while True:
         passes = pick_passes()
         print('>>> [' + str(counter) + '] testing:', ' '.join(passes))
         counter += 1

@@ -1399,6 +1399,8 @@ struct AnnotationParserCtx {
         ret.idempotent = true;
       } else if (a.kind == Annotations::ToolchainInlineHint) {
         toolchainInlineHint = &a;
+      } else if (a.kind == Annotations::NoReturnHint) {
+        ret.noReturn = true;
       }
     }
 
@@ -1694,16 +1696,10 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
   // The index of the current module element.
   Index index = 0;
 
-  // The current function being parsed, used to create scratch locals, type
-  // local.get, etc.
-  Function* func = nullptr;
-
   IRBuilder irBuilder;
 
   Result<> visitFunctionStart(Function* func) {
-    this->func = func;
-    CHECK_ERR(irBuilder.visitFunctionStart(func));
-    return Ok{};
+    return irBuilder.visitFunctionStart(func);
   }
 
   ParseDefsCtx(
@@ -1816,10 +1812,10 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
   }
 
   Result<Index> getLocalFromIdx(uint32_t idx) {
-    if (!func) {
+    if (!irBuilder.getFunction()) {
       return in.err("cannot access locals outside of a function");
     }
-    if (idx >= func->getNumLocals()) {
+    if (idx >= irBuilder.getNumDeclaredLocals()) {
       return in.err("local index out of bounds");
     }
     return idx;
@@ -1840,13 +1836,18 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
   }
 
   Result<Index> getLocalFromName(Name name) {
+    auto* func = irBuilder.getFunction();
     if (!func) {
       return in.err("cannot access locals outside of a function");
     }
     if (!func->hasLocalIndex(name)) {
       return in.err("local $" + name.toString() + " does not exist");
     }
-    return func->getLocalIndex(name);
+    auto index = func->getLocalIndex(name);
+    if (index >= irBuilder.getNumDeclaredLocals()) {
+      return in.err("local $" + name.toString() + " does not exist");
+    }
+    return index;
   }
 
   Result<Name> getGlobalFromIdx(uint32_t idx) {
@@ -2010,15 +2011,6 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
     }
     wasm.addExport(builder.makeExport(name, value, kind));
     return Ok{};
-  }
-
-  Result<Index> addScratchLocal(Index pos, Type type) {
-    if (!func) {
-      return in.err(pos,
-                    "scratch local required, but there is no function context");
-    }
-    Name name = Names::getValidLocalName(*func, "scratch");
-    return Builder::addVar(func, name, type);
   }
 
   Result<Expression*> makeExpr() { return withLoc(irBuilder.build()); }

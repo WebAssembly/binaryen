@@ -1,7 +1,7 @@
 ;; A gc type that uses a SIMD type requires the SIMD feature.
 ;; RUN: not wasm-opt --enable-reference-types --enable-gc %s 2>&1 | filecheck %s
 
-;; CHECK: all used types should be allowed
+;; CHECK: invalid type: SIMD types require SIMD feature
 
 (module
   (type $simd-user (struct (field v128)))

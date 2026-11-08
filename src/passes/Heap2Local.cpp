@@ -153,7 +153,6 @@
 #include "ir/abstract.h"
 #include "ir/bits.h"
 #include "ir/branch-utils.h"
-#include "ir/eh-utils.h"
 #include "ir/local-graph.h"
 #include "ir/parents.h"
 #include "ir/properties.h"
@@ -769,7 +768,7 @@ struct Struct2Local : PostWalker<Struct2Local> {
       // Preserve the trapping on null descriptors by inserting a
       // ref.as_non_null.
       Expression* desc = curr->desc;
-      if (curr->desc->type.isNullable()) {
+      if (curr->desc->type.isNullableRef()) {
         desc = builder.makeRefAs(RefAsNonNull, desc);
       }
       contents.push_back(builder.makeLocalSet(tempIndexes[numTemps - 1], desc));
@@ -898,7 +897,9 @@ struct Struct2Local : PostWalker<Struct2Local> {
         // side effects, but that local.set would not be reflected in the parent
         // map, so it would not be updated if the allocation flowing through
         // that desc operand were later optimized.
-        if (allocIsCastDescEq && !allocIsCastRef && curr->type.isNullable()) {
+        if (allocIsCastDescEq && !allocIsCastRef &&
+            curr->type.isNullableRef() &&
+            curr->ref->type != Type::unreachable) {
           // There might be a null value to let through. Reuse curr as a cast to
           // null. Use a scratch local to move the reference value past the desc
           // value.
@@ -1117,7 +1118,8 @@ struct Struct2Local : PostWalker<Struct2Local> {
   }
 
   void visitStructCmpxchg(StructCmpxchg* curr) {
-    if (curr->type == Type::unreachable) {
+    if (curr->type == Type::unreachable ||
+        curr->ref->type == Type::unreachable) {
       // Leave this for DCE.
       return;
     }
@@ -1129,6 +1131,18 @@ struct Struct2Local : PostWalker<Struct2Local> {
       auto type = curr->type;
       assert(type == field.type);
       assert(!field.isPacked());
+      auto local = localIndexes[curr->index];
+
+      if (analyzer.getInteraction(curr->expected) ==
+          ParentChildInteraction::Flows) {
+        // Since the allocation does not escape, it cannot possibly match the
+        // value already in the struct. The cmpxchg will just do a read.
+        replaceCurrent(builder.makeBlock({builder.makeDrop(curr->ref),
+                                          builder.makeDrop(curr->expected),
+                                          builder.makeDrop(curr->replacement),
+                                          builder.makeLocalGet(local, type)}));
+        return;
+      }
 
       // Hold everything in scratch locals, just like for other RMW ops and
       // struct.new. Use a nullable (shared) eqref local for `expected` to
@@ -1141,7 +1155,6 @@ struct Struct2Local : PostWalker<Struct2Local> {
       auto oldScratch = builder.addVar(func, type);
       auto expectedScratch = builder.addVar(func, expectedType);
       auto replacementScratch = builder.addVar(func, type);
-      auto local = localIndexes[curr->index];
 
       auto* block = builder.makeBlock(
         {builder.makeDrop(curr->ref),
@@ -1194,12 +1207,16 @@ struct Struct2Local : PostWalker<Struct2Local> {
                                      builder.makeDrop(curr->expected),
                                      builder.makeDrop(curr->replacement),
                                      structGet});
+    if (block->type != curr->type) {
+      refinalize = true;
+    }
     replaceCurrent(block);
     return;
   }
 
   void visitArrayCmpxchg(ArrayCmpxchg* curr) {
-    if (curr->type == Type::unreachable) {
+    if (curr->type == Type::unreachable ||
+        curr->ref->type == Type::unreachable) {
       // Leave this for DCE.
       return;
     }
@@ -1226,6 +1243,9 @@ struct Struct2Local : PostWalker<Struct2Local> {
                                        builder.makeDrop(curr->expected),
                                        builder.makeDrop(curr->replacement),
                                        arrayGet});
+      if (block->type != curr->type) {
+        refinalize = true;
+      }
       replaceCurrent(block);
       // Since `ref` must be an array and arrays are processed before structs,
       // it is not possible that `ref` will be processed later. We therefore do
@@ -1601,15 +1621,8 @@ struct Heap2Local {
         // some cases, so to be careful here use a fairly small limit.
         return size < 20;
       }
-
-      // Also note if a pop exists here, as they may require fixups.
-      bool hasPop = false;
-
-      void visitPop(Pop* curr) { hasPop = true; }
     } finder;
     finder.walk(func->body);
-
-    bool optimized = false;
 
     // First, lower non-escaping arrays into structs. That allows us to handle
     // arrays in a single place, and let all the rest of this pass assume we are
@@ -1630,7 +1643,6 @@ struct Heap2Local {
         auto* structNew =
           Array2Struct(allocation, analyzer, func, wasm).structNew;
         Struct2Local(structNew, analyzer, func, wasm);
-        optimized = true;
         resetAnalysisData();
       }
     }
@@ -1647,16 +1659,8 @@ struct Heap2Local {
         *localGraph, *parents, *branchTargets, passOptions, wasm);
       if (!analyzer.escapes(allocation)) {
         Struct2Local(allocation, analyzer, func, wasm);
-        optimized = true;
         resetAnalysisData();
       }
-    }
-
-    // We conservatively run the EH pop fixup if this function has a 'pop' and
-    // if we have ever optimized, as all of the things we do here involve
-    // creating blocks, so we might have moved pops into the blocks.
-    if (finder.hasPop && optimized) {
-      EHUtils::handleBlockNestedPops(func, wasm);
     }
   }
 

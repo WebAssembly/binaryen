@@ -264,6 +264,9 @@ inline void iterModuleItems(const Module& wasm, auto&& visitor) {
 // default - otherwise, set the Mutability to Mutable. (This is not enforced at
 // compile time - TODO find a way - but at runtime in pass-debug mode it is
 // checked.)
+// The map has an entry for each function, inserted in the order of
+// wasm.functions, so with MapT = InsertOrderedMap, iterating over it visits the
+// functions in a deterministic order.
 template<typename K, typename V> using DefaultMap = std::map<K, V>;
 template<typename T,
          Mutability Mut = Immutable,
@@ -501,6 +504,14 @@ struct IndexedHeapTypes {
 // type as well. Also orders the types to be valid and sorts the types by
 // frequency of use to minimize code size.
 IndexedHeapTypes getOptimizedIndexedHeapTypes(Module& wasm);
+
+// Returns the set of functions that can potentially be the target of a call_ref
+// or call_indirect. These are:
+//  * Functions that appear in a ref.func in the module.
+//  * Functions that are `elem declare`d (which is represented as ref.func in
+//  the IR).
+//  * Exported functions, since they can flow back to us as a reference.
+std::unordered_set<Function*> getReferencedFuncs(Module& module);
 
 } // namespace wasm::ModuleUtils
 

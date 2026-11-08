@@ -107,7 +107,12 @@ struct FieldInfoScanner
     info.note(expr->type);
   }
 
-  Properties::FallthroughBehavior getFallthroughBehavior() {
+  Expression* getFallthrough(Expression* expr) {
+    if (!expr->type.isCastable()) {
+      // We cannot add casts later to fix up intermediate expressions whose
+      // types do not update with the fallthrough (such as a try with a catch).
+      return expr;
+    }
     // Looking at fallthrough values may be dangerous here, because it ignores
     // intermediate steps. Consider this:
     //
@@ -122,7 +127,11 @@ struct FieldInfoScanner
     // using casts later, but those casts may be expensive (especially ref.casts
     // as opposed to ref.as_non_null), so for now just ignore tee fallthroughs.
     // TODO: investigate more
-    return Properties::FallthroughBehavior::NoTeeBrIf;
+    return Properties::getFallthrough(
+      expr,
+      getPassOptions(),
+      *getModule(),
+      Properties::FallthroughBehavior::NoTeeBrIf);
   }
 };
 
@@ -209,11 +218,6 @@ struct TypeRefining : public Pass {
           if (!fields[i].type.isExact()) {
             gufaType = gufaType.withInexactIfNoCustomDescs(module->features);
           }
-          // Do not use the GUFA type if it is a continuation, as we cannot add
-          // casts to fix up issues later. Instead, use the original type.
-          if (gufaType.isContinuation()) {
-            gufaType = fields[i].type;
-          }
           infos[i] = LUBFinder(gufaType);
         }
       }
@@ -254,6 +258,24 @@ struct TypeRefining : public Pass {
 
     // Propagate to supertypes, so no field is less refined than its super.
     propagator.propagateToSuperTypes(finalInfos);
+
+    // Do not refine to an uncastable type, as we cannot add casts to fix up
+    // issues later. Instead, use the original type. The exception is null
+    // types, which we will materialize directly. Do this after noting globals
+    // and propagating to supertypes so we also catch fields whose initial
+    // null/empty GUFA type was widened to a non-null uncastable type.
+    for (auto type : allTypes) {
+      if (type.isStruct()) {
+        auto& fields = type.getStruct().fields;
+        auto& infos = finalInfos[{type, Inexact}];
+        for (Index i = 0; i < fields.size(); i++) {
+          auto lub = infos[i].getLUB();
+          if (lub.isRef() && !lub.isCastable() && !lub.isBottomRef()) {
+            infos[i] = LUBFinder(fields[i].type);
+          }
+        }
+      }
+    }
   }
 
   void useFinalInfos(Module* module, Propagator& propagator) {
@@ -398,13 +420,14 @@ struct TypeRefining : public Pass {
         }
 
         Type newFieldType;
-        if (!curr->ref->type.isNull()) {
+        if (!curr->ref->type.isBottomRef()) {
           auto oldType = curr->ref->type.getHeapType();
           newFieldType =
             parent.finalInfos[{oldType, Inexact}][curr->index].getLUB();
         }
 
-        if (curr->ref->type.isNull() || newFieldType == Type::unreachable ||
+        if (curr->ref->type.isBottomRef() ||
+            newFieldType == Type::unreachable ||
             !Type::isSubType(newFieldType, curr->type)) {
           // This get will trap, or cannot be reached: either the ref is null,
           // or the field is never written any contents, or the contents we see
@@ -568,19 +591,6 @@ struct TypeRefining : public Pass {
         curr->replacement = fixType(curr->replacement, fieldType);
       }
 
-      void visitStructWait(StructWait* curr) {
-        if (curr->ref->type == Type::unreachable) {
-          return;
-        }
-        auto type = curr->ref->type.getHeapType();
-        if (type.isBottom()) {
-          return;
-        }
-
-        auto fieldType = type.getStruct().fields[curr->index].type;
-        curr->expected = fixType(curr->expected, fieldType);
-      }
-
       bool refinalize = false;
 
       // Fix up a given value so it fits into the type the location it is
@@ -597,7 +607,7 @@ struct TypeRefining : public Pass {
         auto heapType = type.getHeapType();
         if (heapType.isBottom()) {
           auto* drop = builder.makeDrop(value);
-          if (type.isNonNullable()) {
+          if (type.isNonNullableRef()) {
             // This will just trap. Make it trap, and update parents' types.
             refinalize = true;
             return builder.makeSequence(drop, builder.makeUnreachable());

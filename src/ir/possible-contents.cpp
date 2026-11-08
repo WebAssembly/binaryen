@@ -197,14 +197,14 @@ void PossibleContents::intersect(const PossibleContents& other) {
   auto newType = Type::getGreatestLowerBound(type, otherType);
 
   auto setNoneOrNull = [&]() {
-    if (newType.isNullable()) {
+    if (newType.isNullableRef()) {
       value = Literal::makeNull(heapType);
     } else {
       value = None();
     }
   };
 
-  if (newType == Type::unreachable || newType.isNull()) {
+  if (newType == Type::unreachable || newType.isBottomRef()) {
     setNoneOrNull();
     return;
   }
@@ -278,7 +278,7 @@ bool PossibleContents::haveIntersection(const PossibleContents& a,
   auto aHeapType = aType.getHeapType();
   auto bHeapType = bType.getHeapType();
 
-  if (aType.isNullable() && bType.isNullable() &&
+  if (aType.isNullableRef() && bType.isNullableRef() &&
       aHeapType.getBottom() == bHeapType.getBottom()) {
     // A compatible null is possible on both sides.
     return true;
@@ -356,7 +356,7 @@ bool PossibleContents::isSubContents(const PossibleContents& a,
 
   if (b.isFullConeType()) {
     if (a.isNull()) {
-      return b.getType().isNullable();
+      return b.getType().isNullableRef();
     }
     return Type::isSubType(a.getType(), b.getType());
   }
@@ -1764,7 +1764,7 @@ void TNHOracle::scan(Function* func,
     // This function is called with the reference that will be trapped on,
     // if it is null.
     void notePossibleTrap(Expression* expr) {
-      if (!expr->type.isRef() || expr->type.isNonNullable()) {
+      if (!expr->type.isNullableRef()) {
         return;
       }
       noteCast(expr, Type(expr->type.getHeapType(), NonNullable));
@@ -3182,7 +3182,7 @@ void Flower::filterPackedDataReads(PossibleContents& contents,
   }
 
   // If there is no struct or array to read, no value will ever be returned.
-  if (ref->type.isNull()) {
+  if (ref->type.isBottomRef()) {
     contents = PossibleContents::none();
     return;
   }

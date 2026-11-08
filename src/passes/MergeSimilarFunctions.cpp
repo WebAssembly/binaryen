@@ -79,6 +79,7 @@
 #include "ir/manipulation.h"
 #include "ir/module-utils.h"
 #include "ir/names.h"
+#include "ir/public-type-validator.h"
 #include "ir/utils.h"
 #include "opt-utils.h"
 #include "pass.h"
@@ -246,6 +247,18 @@ bool MergeSimilarFunctions::areInEquvalentClass(Function* lhs,
       auto* lhsCallee = module->getFunction(lhsCast->target);
       auto* rhsCallee = module->getFunction(rhsCast->target);
       if (lhsCallee->type != rhsCallee->type) {
+        return false;
+      }
+      // Parameterizing direct calls to different functions requires creating
+      // `ref.func` and `call_ref` instructions for them. In an open world, this
+      // can cause a previously private function signature to become public (for
+      // instance, if `funcref` is publicly exposed). Do not parameterize the
+      // call if the callee's signature is not a valid public type (e.g., if it
+      // contains an exact reference when custom descriptors are disabled).
+      if (lhsCallee != rhsCallee &&
+          getPassOptions().worldMode == WorldMode::Open &&
+          !PublicTypeValidator(module->features)
+             .isValidPublicType(lhsCallee->type.getHeapType())) {
         return false;
       }
 

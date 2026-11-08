@@ -25,8 +25,8 @@
   ;; RTRIP:      (type $1 (func (param anyref)))
 
   ;; RTRIP:      (func $no-annotations (type $0) (param $x i32)
-  ;; RTRIP-NEXT:  (block $block
-  ;; RTRIP-NEXT:   (br_if $block
+  ;; RTRIP-NEXT:  (block $out
+  ;; RTRIP-NEXT:   (br_if $out
   ;; RTRIP-NEXT:    (local.get $x)
   ;; RTRIP-NEXT:   )
   ;; RTRIP-NEXT:  )
@@ -36,8 +36,8 @@
   ;; SRCMP:      (type $1 (func (param anyref)))
 
   ;; SRCMP:      (func $no-annotations (type $0) (param $x i32)
-  ;; SRCMP-NEXT:  (block $block
-  ;; SRCMP-NEXT:   (br_if $block
+  ;; SRCMP-NEXT:  (block $out
+  ;; SRCMP-NEXT:   (br_if $out
   ;; SRCMP-NEXT:    (local.get $x)
   ;; SRCMP-NEXT:   )
   ;; SRCMP-NEXT:  )
@@ -69,33 +69,33 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; RTRIP:      (func $branch-hints-br_if (type $0) (param $x i32)
-  ;; RTRIP-NEXT:  (block $block
+  ;; RTRIP-NEXT:  (block $out
   ;; RTRIP-NEXT:   (@metadata.code.branch_hint "\00")
-  ;; RTRIP-NEXT:   (br_if $block
+  ;; RTRIP-NEXT:   (br_if $out
   ;; RTRIP-NEXT:    (local.get $x)
   ;; RTRIP-NEXT:   )
   ;; RTRIP-NEXT:   (@metadata.code.branch_hint "\01")
-  ;; RTRIP-NEXT:   (br_if $block
+  ;; RTRIP-NEXT:   (br_if $out
   ;; RTRIP-NEXT:    (local.get $x)
   ;; RTRIP-NEXT:   )
   ;; RTRIP-NEXT:   (@metadata.code.branch_hint "\00")
-  ;; RTRIP-NEXT:   (br_if $block
+  ;; RTRIP-NEXT:   (br_if $out
   ;; RTRIP-NEXT:    (local.get $x)
   ;; RTRIP-NEXT:   )
   ;; RTRIP-NEXT:  )
   ;; RTRIP-NEXT: )
   ;; SRCMP:      (func $branch-hints-br_if (type $0) (param $x i32)
-  ;; SRCMP-NEXT:  (block $block
+  ;; SRCMP-NEXT:  (block $out
   ;; SRCMP-NEXT:   (@metadata.code.branch_hint "\00")
-  ;; SRCMP-NEXT:   (br_if $block
+  ;; SRCMP-NEXT:   (br_if $out
   ;; SRCMP-NEXT:    (local.get $x)
   ;; SRCMP-NEXT:   )
   ;; SRCMP-NEXT:   (@metadata.code.branch_hint "\01")
-  ;; SRCMP-NEXT:   (br_if $block
+  ;; SRCMP-NEXT:   (br_if $out
   ;; SRCMP-NEXT:    (local.get $x)
   ;; SRCMP-NEXT:   )
   ;; SRCMP-NEXT:   (@metadata.code.branch_hint "\00")
-  ;; SRCMP-NEXT:   (br_if $block
+  ;; SRCMP-NEXT:   (br_if $out
   ;; SRCMP-NEXT:    (local.get $x)
   ;; SRCMP-NEXT:   )
   ;; SRCMP-NEXT:  )
@@ -131,18 +131,18 @@
   ;; CHECK-NEXT: )
   ;; RTRIP:      (func $branch_hints-br_if-2 (type $0) (param $x i32)
   ;; RTRIP-NEXT:  (local $unused f64)
-  ;; RTRIP-NEXT:  (block $block
+  ;; RTRIP-NEXT:  (block $out
   ;; RTRIP-NEXT:   (@metadata.code.branch_hint "\01")
-  ;; RTRIP-NEXT:   (br_if $block
+  ;; RTRIP-NEXT:   (br_if $out
   ;; RTRIP-NEXT:    (local.get $x)
   ;; RTRIP-NEXT:   )
   ;; RTRIP-NEXT:  )
   ;; RTRIP-NEXT: )
   ;; SRCMP:      (func $branch_hints-br_if-2 (type $0) (param $x i32)
   ;; SRCMP-NEXT:  (local $unused f64)
-  ;; SRCMP-NEXT:  (block $block
+  ;; SRCMP-NEXT:  (block $out
   ;; SRCMP-NEXT:   (@metadata.code.branch_hint "\01")
-  ;; SRCMP-NEXT:   (br_if $block
+  ;; SRCMP-NEXT:   (br_if $out
   ;; SRCMP-NEXT:    (local.get $x)
   ;; SRCMP-NEXT:   )
   ;; SRCMP-NEXT:  )
@@ -170,18 +170,18 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; RTRIP:      (func $mixing (type $0) (param $x i32)
-  ;; RTRIP-NEXT:  (block $block
+  ;; RTRIP-NEXT:  (block $out
   ;; RTRIP-NEXT:   (@metadata.code.branch_hint "\01")
-  ;; RTRIP-NEXT:   (br_if $block
+  ;; RTRIP-NEXT:   (br_if $out
   ;; RTRIP-NEXT:    (local.get $x)
   ;; RTRIP-NEXT:   )
   ;; RTRIP-NEXT:  )
   ;; RTRIP-NEXT: )
   ;; SRCMP:      (func $mixing (type $0) (param $x i32)
   ;; SRCMP-NEXT:  ;;@ mixing.src:1337:42
-  ;; SRCMP-NEXT:  (block $block
+  ;; SRCMP-NEXT:  (block $out
   ;; SRCMP-NEXT:   (@metadata.code.branch_hint "\01")
-  ;; SRCMP-NEXT:   (br_if $block
+  ;; SRCMP-NEXT:   (br_if $out
   ;; SRCMP-NEXT:    (local.get $x)
   ;; SRCMP-NEXT:   )
   ;; SRCMP-NEXT:  )
@@ -392,20 +392,20 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; RTRIP:      (func $branch-hints-br_on (type $1) (param $x anyref)
-  ;; RTRIP-NEXT:  (block $block
+  ;; RTRIP-NEXT:  (block $out
   ;; RTRIP-NEXT:   (drop
   ;; RTRIP-NEXT:    (@metadata.code.branch_hint "\00")
-  ;; RTRIP-NEXT:    (br_on_null $block
+  ;; RTRIP-NEXT:    (br_on_null $out
   ;; RTRIP-NEXT:     (local.get $x)
   ;; RTRIP-NEXT:    )
   ;; RTRIP-NEXT:   )
   ;; RTRIP-NEXT:  )
   ;; RTRIP-NEXT: )
   ;; SRCMP:      (func $branch-hints-br_on (type $1) (param $x anyref)
-  ;; SRCMP-NEXT:  (block $block
+  ;; SRCMP-NEXT:  (block $out
   ;; SRCMP-NEXT:   (drop
   ;; SRCMP-NEXT:    (@metadata.code.branch_hint "\00")
-  ;; SRCMP-NEXT:    (br_on_null $block
+  ;; SRCMP-NEXT:    (br_on_null $out
   ;; SRCMP-NEXT:     (local.get $x)
   ;; SRCMP-NEXT:    )
   ;; SRCMP-NEXT:   )

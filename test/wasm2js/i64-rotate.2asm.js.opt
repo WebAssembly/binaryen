@@ -12,6 +12,12 @@ function asmFunc(imports) {
  var Math_sqrt = Math.sqrt;
  var i64toi32_i32$HIGH_BITS = 0;
  function legalstub$0($0, $1, $2, $3, $4, $5) {
+  $0 = $0 | 0;
+  $1 = $1 | 0;
+  $2 = $2 | 0;
+  $3 = $3 | 0;
+  $4 = $4 | 0;
+  $5 = $5 | 0;
   var $6 = 0, $7 = 0, $8 = 0;
   $8 = $0;
   $0 = 0;
@@ -60,6 +66,12 @@ function asmFunc(imports) {
  }
  
  function legalstub$1($0, $1, $2, $3, $4, $5) {
+  $0 = $0 | 0;
+  $1 = $1 | 0;
+  $2 = $2 | 0;
+  $3 = $3 | 0;
+  $4 = $4 | 0;
+  $5 = $5 | 0;
   var $6 = 0, $7 = 0, $8 = 0, $9 = 0;
   $8 = $0;
   $7 = $2 & 63;

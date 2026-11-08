@@ -197,7 +197,7 @@ struct Noter : public PostWalker<Noter, UnifiedExpressionVisitor<Noter>> {
   }
 
   void visitStructGet(StructGet* curr) {
-    if (curr->ref->type == Type::unreachable || curr->ref->type.isNull()) {
+    if (curr->ref->type == Type::unreachable || curr->ref->type.isBottomRef()) {
       return;
     }
     auto type = curr->ref->type.getHeapType();
@@ -1129,7 +1129,7 @@ struct RemoveUnusedModuleElements : public Pass {
     struct NullDescFinder : PostWalker<NullDescFinder> {
       bool mayTrap = false;
       void visitStructNew(StructNew* curr) {
-        if (curr->desc && curr->desc->type.isNullable()) {
+        if (curr->desc && curr->desc->type.isNullableRef()) {
           mayTrap = true;
         }
       }

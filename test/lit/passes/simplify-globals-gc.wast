@@ -86,3 +86,31 @@
  (global $B (ref $struct) (global.get $A))
 )
 
+(module
+ ;; CHECK:      (type $0 (func (result anyref)))
+
+ ;; CHECK:      (global $a (mut anyref) (ref.null none))
+ (global $a (mut anyref) (ref.null none))
+
+ ;; CHECK:      (export "test" (func $internalized_string))
+
+ ;; CHECK:      (func $internalized_string (type $0) (result anyref)
+ ;; CHECK-NEXT:  (global.set $a
+ ;; CHECK-NEXT:   (any.convert_extern
+ ;; CHECK-NEXT:    (string.const "foo")
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (any.convert_extern
+ ;; CHECK-NEXT:   (string.const "foo")
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $internalized_string (export "test") (result anyref)
+  ;; Propagate an internalized string constant across a global set and get.
+  (global.set $a
+   (any.convert_extern
+    (string.const "foo")
+   )
+  )
+  (global.get $a)
+ )
+)

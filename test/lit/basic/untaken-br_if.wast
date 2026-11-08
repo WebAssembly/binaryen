@@ -37,10 +37,12 @@
  ;; CHECK-BIN-NEXT:    (unreachable)
  ;; CHECK-BIN-NEXT:   )
  ;; CHECK-BIN-NEXT:   (else
- ;; CHECK-BIN-NEXT:    (drop
- ;; CHECK-BIN-NEXT:     (f32.const 1)
+ ;; CHECK-BIN-NEXT:    (block $label$1 (result f32)
+ ;; CHECK-BIN-NEXT:     (drop
+ ;; CHECK-BIN-NEXT:      (f32.const 1)
+ ;; CHECK-BIN-NEXT:     )
+ ;; CHECK-BIN-NEXT:     (unreachable)
  ;; CHECK-BIN-NEXT:    )
- ;; CHECK-BIN-NEXT:    (unreachable)
  ;; CHECK-BIN-NEXT:   )
  ;; CHECK-BIN-NEXT:  )
  ;; CHECK-BIN-NEXT: )

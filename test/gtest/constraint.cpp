@@ -717,6 +717,39 @@ TEST(ConstraintTest, TestEqConstraints) {
   check(map.get(1), {GtS, {Literal(int32_t(42))}});
 }
 
+TEST(ConstraintTest, TestSelfConstraints) {
+  BasicBlockConstraintMap map;
+  map.setReachable();
+
+  // Even knowing nothing about $0, we can prove $0 == $0, $0 >= $0, etc. are
+  // true, and $0 != $0, $0 > $0, etc. are false.
+  EXPECT_EQ(map.proves(LocalConstraint{0, {Eq, {Index(0)}}}), True);
+  EXPECT_EQ(map.proves(LocalConstraint{0, {LeS, {Index(0)}}}), True);
+  EXPECT_EQ(map.proves(LocalConstraint{0, {LeU, {Index(0)}}}), True);
+  EXPECT_EQ(map.proves(LocalConstraint{0, {GeS, {Index(0)}}}), True);
+  EXPECT_EQ(map.proves(LocalConstraint{0, {GeU, {Index(0)}}}), True);
+
+  EXPECT_EQ(map.proves(LocalConstraint{0, {Ne, {Index(0)}}}), False);
+  EXPECT_EQ(map.proves(LocalConstraint{0, {LtS, {Index(0)}}}), False);
+  EXPECT_EQ(map.proves(LocalConstraint{0, {LtU, {Index(0)}}}), False);
+  EXPECT_EQ(map.proves(LocalConstraint{0, {GtS, {Index(0)}}}), False);
+  EXPECT_EQ(map.proves(LocalConstraint{0, {GtU, {Index(0)}}}), False);
+
+  // Adding a tautological self-constraint ($0 == $0, $0 <= $0) is a no-op.
+  map.approximateAnd(0, {Eq, {Index(0)}});
+  EXPECT_FALSE(map.unreachable);
+  EXPECT_TRUE(map.get(0).provesNothing());
+
+  map.approximateAnd(0, {LeS, {Index(0)}});
+  EXPECT_FALSE(map.unreachable);
+  EXPECT_TRUE(map.get(0).provesNothing());
+
+  // Adding a contradictory self-constraint ($0 > $0) marks the map unreachable.
+  // TODO
+  // map.approximateAnd(0, {GtS, {Index(0)}});
+  // EXPECT_TRUE(map.unreachable);
+}
+
 TEST(ConstraintTest, ComplexOrRegression) {
   // $0 == 0
   BasicBlockConstraintMap left;
@@ -1722,6 +1755,54 @@ TEST(ConstraintTest, ParseUnaryEqZ) {
     auto parsed = ParsedAndedConstraints::parse(expr);
     EXPECT_TRUE(parsed.empty());
     EXPECT_TRUE(parsed.hasUnknown);
+  }
+
+  // 8. eqz of ref.is_null of local.get: parsed as x != null.
+  {
+    auto anyref = Type(HeapType::any, Nullable);
+    auto* inner = builder.makeRefIsNull(builder.makeLocalGet(0, anyref));
+    auto* expr = builder.makeUnary(EqZInt32, inner);
+    auto parsed = ParsedAndedConstraints::parse(expr);
+    EXPECT_FALSE(parsed.hasUnknown);
+    ASSERT_EQ(parsed.size(), 1);
+    EXPECT_EQ(
+      parsed[0],
+      (LocalConstraint{0, Constraint{Ne, {Literal::makeNull(HeapType::any)}}}));
+  }
+
+  // 9. eqz of binary comparison: parsed as negated comparison.
+  {
+    auto* inner = builder.makeBinary(
+      EqInt32, builder.makeLocalGet(0, Type::i32), builder.makeConst(10));
+    auto* expr = builder.makeUnary(EqZInt32, inner);
+    auto parsed = ParsedAndedConstraints::parse(expr);
+    EXPECT_FALSE(parsed.hasUnknown);
+    ASSERT_EQ(parsed.size(), 1);
+    EXPECT_EQ(parsed[0],
+              (LocalConstraint{0, Constraint{Ne, {Literal(int32_t(10))}}}));
+  }
+  {
+    auto* inner = builder.makeBinary(
+      LtSInt32, builder.makeLocalGet(0, Type::i32), builder.makeConst(10));
+    auto* expr = builder.makeUnary(EqZInt32, inner);
+    auto parsed = ParsedAndedConstraints::parse(expr);
+    EXPECT_FALSE(parsed.hasUnknown);
+    ASSERT_EQ(parsed.size(), 1);
+    EXPECT_EQ(parsed[0],
+              (LocalConstraint{0, Constraint{GeS, {Literal(int32_t(10))}}}));
+  }
+
+  // 10. Triple eqz: parsed as x == 0.
+  {
+    auto* inner1 =
+      builder.makeUnary(EqZInt32, builder.makeLocalGet(0, Type::i32));
+    auto* inner2 = builder.makeUnary(EqZInt32, inner1);
+    auto* expr = builder.makeUnary(EqZInt32, inner2);
+    auto parsed = ParsedAndedConstraints::parse(expr);
+    EXPECT_FALSE(parsed.hasUnknown);
+    ASSERT_EQ(parsed.size(), 1);
+    EXPECT_EQ(parsed[0],
+              (LocalConstraint{0, Constraint{Eq, {Literal(int32_t(0))}}}));
   }
 }
 

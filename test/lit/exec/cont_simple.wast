@@ -12,6 +12,14 @@
   (type $f-get-i32 (func (param i32)))
   (type $k-get-i32 (cont $f-get-i32))
 
+  (type $f-switch (func (param i32 (ref null $k))))
+  (type $k-switch (cont $f-switch))
+
+  (rec
+    (type $f-swap (func (param i32 (ref null $k-swap)) (result i32)))
+    (type $k-swap (cont $f-swap))
+  )
+
   (import "fuzzing-support" "log-i32" (func $log (param i32)))
 
   (tag $more)
@@ -873,5 +881,157 @@
     ;; unhandled suspend.
     (suspend $more)
     (nop)
+  )
+
+  (func $switch-target (param $x i32) (param $k (ref null $k)))
+
+  ;; CHECK:      [fuzz-exec] export switch-null
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 10]
+  ;; CHECK-NEXT: [trap null ref]
+  (func $switch-null (export "switch-null")
+    ;; Operands should be evaluated before trapping on a null continuation.
+    (switch $k-switch $more
+      (block (result i32)
+        (call $log (i32.const 10))
+        (i32.const 20)
+      )
+      (ref.null $k-switch)
+    )
+  )
+
+  ;; CHECK:      [fuzz-exec] export switch-unhandled
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 30]
+  ;; CHECK-NEXT: [exception thrown: unhandled suspend]
+  (func $switch-unhandled (export "switch-unhandled")
+    ;; Switching without an enclosing switch handler should report an unhandled
+    ;; suspend.
+    (switch $k-switch $more
+      (block (result i32)
+        (call $log (i32.const 30))
+        (i32.const 40)
+      )
+      (cont.new $k-switch
+        (ref.func $switch-target)
+      )
+    )
+  )
+
+  (func $swap-first (type $f-swap) (param $x i32) (param $next (ref null $k-swap)) (result i32)
+    (call $log (local.get $x))
+    (local.set $next
+      (switch $k-swap $more-i32
+        (i32.add (local.get $x) (i32.const 1))
+        (local.get $next)
+      )
+    )
+    (local.set $x)
+    (call $log (local.get $x))
+    (drop
+      (switch $k-swap $more-i32
+        (i32.add (local.get $x) (i32.const 1))
+        (local.get $next)
+      )
+    )
+    (unreachable)
+  )
+
+  (func $swap-second (type $f-swap) (param $x i32) (param $next (ref null $k-swap)) (result i32)
+    (call $log (local.get $x))
+    (local.set $next
+      (switch $k-swap $more-i32
+        (i32.add (local.get $x) (i32.const 10))
+        (local.get $next)
+      )
+    )
+    (local.set $x)
+    (call $log (local.get $x))
+    (i32.add (local.get $x) (i32.const 100))
+  )
+
+  ;; CHECK:      [fuzz-exec] export run-switch
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 1]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 2]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 12]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 13]
+  ;; CHECK-NEXT: [fuzz-exec] note result: run-switch => 113
+  (func $run-switch (export "run-switch") (result i32)
+    ;; Switch back and forth between two continuations.
+    (resume $k-swap (on $more-i32 switch)
+      (i32.const 1)
+      (cont.new $k-swap (ref.func $swap-second))
+      (cont.new $k-swap (ref.func $swap-first))
+    )
+  )
+
+  (func $switch-twice (type $f-swap) (param $x i32) (param $next (ref null $k-swap)) (result i32)
+    ;; Try switching to the same continuation twice, which traps the second
+    ;; time because the first continuation was already executed.
+    (drop
+      (switch $k-swap $more-i32
+        (local.get $x)
+        (local.get $next)
+      )
+    )
+    (drop)
+    (drop
+      (switch $k-swap $more-i32
+        (local.get $x)
+        (local.get $next)
+      )
+    )
+    (drop)
+    (i32.const 0)
+  )
+
+  (func $switch-back-once (type $f-swap) (param $x i32) (param $next (ref null $k-swap)) (result i32)
+    (drop
+      (switch $k-swap $more-i32
+        (local.get $x)
+        (local.get $next)
+      )
+    )
+    (drop)
+    (i32.const 0)
+  )
+
+  ;; CHECK:      [fuzz-exec] export switch-already-executed
+  ;; CHECK-NEXT: [trap continuation already executed]
+  (func $switch-already-executed (export "switch-already-executed") (result i32)
+    ;; Switching to an already-executed continuation should trap.
+    (resume $k-swap (on $more-i32 switch)
+      (i32.const 1)
+      (cont.new $k-swap (ref.func $switch-back-once))
+      (cont.new $k-swap (ref.func $switch-twice))
+    )
+  )
+
+  (func $switch-thrower (param $x i32) (param $k (ref null $k))
+    (call $log (local.get $x))
+    (resume_throw $k $more
+      (local.get $k)
+    )
+  )
+
+  (func $switch-catcher
+    (block $caught
+      (try_table (catch $more $caught)
+        (switch $k-switch $more
+          (i32.const 55)
+          (cont.new $k-switch (ref.func $switch-thrower))
+        )
+        (unreachable)
+      )
+    )
+    (call $log (i32.const 66))
+  )
+
+  ;; CHECK:      [fuzz-exec] export run-switch-resume-throw
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 55]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 66]
+  (func $run-switch-resume-throw (export "run-switch-resume-throw")
+    ;; Resume a switched-from continuation with resume_throw and catch it.
+    (resume $k (on $more switch)
+      (cont.new $k (ref.func $switch-catcher))
+    )
   )
 )

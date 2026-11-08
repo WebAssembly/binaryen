@@ -47,6 +47,46 @@
       )
     )
   )
+
+  ;; CHECK:      [fuzz-exec] export try-delegate-caller-through-try_table
+  ;; CHECK-NEXT: [exception thrown: e-i32 5]
+  (func $try-delegate-caller-through-try_table (export "try-delegate-caller-through-try_table")
+    ;; Delegation to the caller should bypass an intermediate try_table.
+    (block $catch
+      (try_table (catch_all $catch)
+        (try
+          (do
+            (throw $e-i32 (i32.const 5))
+          )
+          (delegate 1)
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      [fuzz-exec] export try-delegate-try-through-try_table
+  ;; CHECK-NEXT: [fuzz-exec] note result: try-delegate-try-through-try_table => 6
+  (func $try-delegate-try-through-try_table (export "try-delegate-try-through-try_table") (result i32)
+    ;; Delegation to an outer try should also bypass an intermediate try_table.
+    (try $l0 (result i32)
+      (do
+        (block $catch
+          (try_table (catch_all $catch)
+            (try
+              (do
+                (throw $e-i32 (i32.const 6))
+              )
+              (delegate $l0)
+            )
+          )
+        )
+        (i32.const 0)
+      )
+      (catch $e-i32
+        (pop i32)
+      )
+    )
+  )
 )
 ;; CHECK:      [fuzz-exec] export throw
 ;; CHECK-NEXT: [exception thrown: e-i32 1]
@@ -58,7 +98,15 @@
 
 ;; CHECK:      [fuzz-exec] export try-delegate
 ;; CHECK-NEXT: [exception thrown: e-i32 4]
+
+;; CHECK:      [fuzz-exec] export try-delegate-caller-through-try_table
+;; CHECK-NEXT: [exception thrown: e-i32 5]
+
+;; CHECK:      [fuzz-exec] export try-delegate-try-through-try_table
+;; CHECK-NEXT: [fuzz-exec] note result: try-delegate-try-through-try_table => 6
 ;; CHECK-NEXT: [fuzz-exec] comparing catchless-try
 ;; CHECK-NEXT: [fuzz-exec] comparing throw
 ;; CHECK-NEXT: [fuzz-exec] comparing try-catch
 ;; CHECK-NEXT: [fuzz-exec] comparing try-delegate
+;; CHECK-NEXT: [fuzz-exec] comparing try-delegate-caller-through-try_table
+;; CHECK-NEXT: [fuzz-exec] comparing try-delegate-try-through-try_table

@@ -519,6 +519,44 @@
     )
   )
 
+  ;; CHECK:      (func $cast-desc-eq-fail-became-unreachable-nullable (type $10)
+  ;; CHECK-NEXT:  (local $desc (ref null (exact $super.desc)))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (block (result nullref)
+  ;; CHECK-NEXT:        (ref.null none)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $cast-desc-eq-fail-became-unreachable-nullable
+    ;; The cast admits nulls and the allocation flows into the descriptor, but
+    ;; the reference operand becomes unreachable during the walk due to an inner
+    ;; failing cast of the same allocation.
+    (local $desc (ref null (exact $super.desc)))
+    (drop
+      (ref.cast_desc_eq (ref null (exact $super))
+        (ref.cast (ref null $super)
+          (local.tee $desc
+            (struct.new $super.desc)
+          )
+        )
+        (local.get $desc)
+      )
+    )
+  )
+
   ;; CHECK:      (func $cast-no-desc (type $11) (param $desc (ref null (exact $super.desc)))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block

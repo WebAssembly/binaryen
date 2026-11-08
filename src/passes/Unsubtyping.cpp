@@ -19,7 +19,6 @@
 #include <memory>
 
 #include "ir/effects.h"
-#include "ir/eh-utils.h"
 #include "ir/js-utils.h"
 #include "ir/localize.h"
 #include "ir/module-utils.h"
@@ -456,6 +455,7 @@ template<typename Self> struct Noter {
   Self& self() { return *static_cast<Self*>(this); }
 
   void noteSubtype(HeapType sub, HeapType super) {
+    assert(HeapType::isSubType(sub, super));
     // Bottom types are uninteresting, but other basic heap types can be
     // interesting because of their interactions with casts.
     if (sub == super || sub.isBottom()) {
@@ -701,6 +701,7 @@ struct Unsubtyping : Pass, Noter<Unsubtyping> {
       }
 
       void noteNonFlowSubtype(Expression* sub, Type super) {
+        assert(Type::isSubType(sub->type, super));
         // This expression's type must be a subtype of |super|, but the value
         // does not flow anywhere - this is a static constraint. As the value
         // does not flow, it cannot reach anywhere else, which means we need
@@ -768,7 +769,7 @@ struct Unsubtyping : Pass, Noter<Unsubtyping> {
         // a trap, then we have no way to preserve that trap without keeping the
         // descriptor around.
         if (trapsNeverHappen || getFunction() ||
-            curr->desc->type.isNonNullable()) {
+            curr->desc->type.isNonNullableRef()) {
           return;
         }
         // We must preserve the potential trap. When we update the instructions
@@ -1074,7 +1075,6 @@ struct Unsubtyping : Pass, Noter<Unsubtyping> {
     // collecting and iterating over all the types, though.
     struct Rewriter : WalkerPass<PostWalker<Rewriter>> {
       const TypeTree& types;
-      bool needEHFixups = false;
 
       // Allocations that might trap that have been removed from module-level
       // initializers. These need to be placed in new globals to preserve any
@@ -1106,7 +1106,7 @@ struct Unsubtyping : Pass, Noter<Unsubtyping> {
         if (auto* func = getFunction()) {
           // Preserve a trap from a null descriptor if necessary.
           if (!getPassOptions().trapsNeverHappen &&
-              curr->desc->type.isNullable()) {
+              curr->desc->type.isNullableRef()) {
             curr->desc =
               Builder(*getModule()).makeRefAs(RefAsNonNull, curr->desc);
           }
@@ -1116,7 +1116,6 @@ struct Unsubtyping : Pass, Noter<Unsubtyping> {
           block->list.push_back(curr);
           block->type = curr->type;
           replaceCurrent(block);
-          needEHFixups = true;
         } else {
           // We are dropping this descriptor, but it might have a potential trap
           // nested inside it. In that case we need to preserve the trap by
@@ -1127,12 +1126,6 @@ struct Unsubtyping : Pass, Noter<Unsubtyping> {
           }
         }
         curr->desc = nullptr;
-      }
-
-      void visitFunction(Function* curr) {
-        if (needEHFixups) {
-          EHUtils::handleBlockNestedPops(curr, *getModule());
-        }
       }
     };
 

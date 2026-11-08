@@ -41,9 +41,9 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; RTRIP:      (func $branch (type $0) (param $x i32)
-  ;; RTRIP-NEXT:  (block $block
+  ;; RTRIP-NEXT:  (block $out
   ;; RTRIP-NEXT:   (@metadata.code.branch_hint "\01")
-  ;; RTRIP-NEXT:   (br_if $block
+  ;; RTRIP-NEXT:   (br_if $out
   ;; RTRIP-NEXT:    (local.get $x)
   ;; RTRIP-NEXT:   )
   ;; RTRIP-NEXT:  )
@@ -68,11 +68,11 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; RTRIP:      (func $both (type $0) (param $x i32)
-  ;; RTRIP-NEXT:  (block $block
+  ;; RTRIP-NEXT:  (block $out
   ;; RTRIP-NEXT:   (@metadata.code.inline "\02")
   ;; RTRIP-NEXT:   (call $inline)
   ;; RTRIP-NEXT:   (@metadata.code.branch_hint "\00")
-  ;; RTRIP-NEXT:   (br_if $block
+  ;; RTRIP-NEXT:   (br_if $out
   ;; RTRIP-NEXT:    (local.get $x)
   ;; RTRIP-NEXT:   )
   ;; RTRIP-NEXT:  )

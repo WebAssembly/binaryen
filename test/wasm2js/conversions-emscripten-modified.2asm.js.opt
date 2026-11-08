@@ -36,6 +36,7 @@ function asmFunc(imports) {
  }
  
  function legalstub$4($0_1) {
+  $0_1 = Math_fround($0_1);
   var $1_1 = 0, $2_1 = 0;
   $2_1 = ~~$0_1 >>> 0;
   if (Math_fround(Math_abs($0_1)) >= Math_fround(1.0)) {
@@ -45,10 +46,11 @@ function asmFunc(imports) {
   }
   i64toi32_i32$HIGH_BITS = $1_1;
   setTempRet0(i64toi32_i32$HIGH_BITS | 0);
-  return $2_1;
+  return $2_1 | 0;
  }
  
  function legalstub$6($0_1) {
+  $0_1 = +$0_1;
   var $1_1 = 0, $2_1 = 0;
   $2_1 = ~~$0_1 >>> 0;
   if (Math_abs($0_1) >= 1.0) {
@@ -58,7 +60,7 @@ function asmFunc(imports) {
   }
   i64toi32_i32$HIGH_BITS = $1_1;
   setTempRet0(i64toi32_i32$HIGH_BITS | 0);
-  return $2_1;
+  return $2_1 | 0;
  }
  
  // EMSCRIPTEN_END_FUNCS

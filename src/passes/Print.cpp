@@ -2468,7 +2468,9 @@ struct PrintExpressionContents
     printHeapTypeName(curr->ref->type.getHeapType());
   }
   void visitArrayLoad(ArrayLoad* curr) {
-    prepareColor(o) << forceConcrete(curr->type);
+    // Whatever type we print must be valid for the alignment, which matters
+    // when the type is unreachable and we must pick one.
+    prepareColor(o) << forceConcrete(curr->type, curr->align);
     o << ".load";
     if (curr->type != Type::unreachable &&
         curr->bytes < curr->type.getByteSize()) {
@@ -2491,7 +2493,9 @@ struct PrintExpressionContents
   }
 
   void visitArrayStore(ArrayStore* curr) {
-    prepareColor(o) << forceConcrete(curr->value->type);
+    // Whatever type we print must be valid for the alignment, which matters
+    // when the value is unreachable and we must pick one.
+    prepareColor(o) << forceConcrete(curr->value->type, curr->align);
     o << ".store";
     printStorePostfix(curr->bytes, curr->value->type);
     o << " ";
@@ -2871,6 +2875,12 @@ void PrintSExpression::printCodeAnnotations(const CodeAnnotation& annotation) {
     restoreNormalColor(o);
     doIndent(o, indent);
   }
+  if (annotation.noReturn) {
+    Colors::grey(o);
+    o << "(@" << Annotations::NoReturnHint << ")\n";
+    restoreNormalColor(o);
+    doIndent(o, indent);
+  }
 }
 
 void PrintSExpression::printExpressionContents(Expression* curr) {
@@ -2999,11 +3009,11 @@ void PrintSExpression::visitBlock(Block* curr) {
 }
 
 void PrintSExpression::visitIf(If* curr) {
-  controlFlowDepth++;
   o << '(';
   printExpressionContents(curr);
   incIndent();
   printFullLine(curr->condition);
+  controlFlowDepth++;
   doIndent(o, indent);
   o << "(then";
   incIndent();
@@ -3955,6 +3965,7 @@ static std::ostream& printStackIR(StackIR* ir, PrintSExpression& printer) {
         } else {
           curr->delegateTarget.print(o);
         }
+        catchIndexStack.pop_back();
         break;
       }
       default:

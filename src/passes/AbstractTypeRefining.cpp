@@ -383,7 +383,7 @@ struct AbstractTypeRefining : public Pass {
         Builder builder(*getModule());
         if (curr->type.isExact() || (curr->desc && optimized->isBottom())) {
           if (curr->desc) {
-            if (curr->desc->type.isNullable() &&
+            if (curr->desc->type.isNullableRef() &&
                 !getPassOptions().trapsNeverHappen) {
               curr->desc = builder.makeRefAs(RefAsNonNull, curr->desc);
             }
@@ -442,7 +442,7 @@ struct AbstractTypeRefining : public Pass {
         bool isFail = curr->op == BrOnCastDescEqFail;
         if (curr->castType.isExact() || (curr->desc && optimized->isBottom())) {
           if (curr->desc) {
-            if (curr->desc->type.isNullable() &&
+            if (curr->desc->type.isNullableRef() &&
                 !getPassOptions().trapsNeverHappen) {
               curr->desc = builder.makeRefAs(RefAsNonNull, curr->desc);
             }

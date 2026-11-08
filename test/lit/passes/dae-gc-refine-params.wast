@@ -59,22 +59,24 @@
   (drop (local.get $y))
  )
 
+ ;; These functions are exported so that their result types are not refined
+ ;; (to the bottom type, as they never return).
  ;; CHECK:      (func $"get_{}" (type $9) (result (ref null $"{}"))
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
- (func $"get_{}" (result (ref null $"{}"))
+ (func $"get_{}" (export "get_{}") (result (ref null $"{}"))
   (unreachable)
  )
  ;; CHECK:      (func $"get_{i32}" (type $5) (result (ref null $"{i32}"))
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
- (func $"get_{i32}" (result (ref null $"{i32}"))
+ (func $"get_{i32}" (export "get_{i32}") (result (ref null $"{i32}"))
   (unreachable)
  )
  ;; CHECK:      (func $"get_{f64}" (type $10) (result (ref null $"{f64}"))
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
- (func $"get_{f64}" (result (ref null $"{f64}"))
+ (func $"get_{f64}" (export "get_{f64}") (result (ref null $"{f64}"))
   (unreachable)
  )
 

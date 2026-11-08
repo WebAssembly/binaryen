@@ -26,7 +26,8 @@ test_dir = os.path.join(root_dir, 'test', 'lit', 'help')
 
 TOOLS = ['wasm-opt', 'wasm-as', 'wasm-dis', 'wasm2js', 'wasm-ctor-eval',
          'wasm-shell', 'wasm-reduce', 'wasm-metadce', 'wasm-split',
-         'wasm-fuzz-types', 'wasm-emscripten-finalize', 'wasm-merge']
+         'wasm-fuzz-types', 'wasm-emscripten-finalize', 'wasm-merge',
+         'wasm-embed']
 
 
 def main():

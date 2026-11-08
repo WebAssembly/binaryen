@@ -251,7 +251,7 @@ struct LazyTable {
     Type sharedI31Nullable = Type(HeapTypes::i31.getBasic(Shared), Nullable);
     Expression* res =
       builder.makeCall(getRefToIndexName(), {arg}, sharedI31Nullable);
-    if (targetType.isNonNullable()) {
+    if (targetType.isNonNullableRef()) {
       res = builder.makeRefAs(RefAsNonNull, res);
     }
     return res;
@@ -564,7 +564,7 @@ struct MakeSharedObjects
       return;
     }
     Builder builder(*getModule());
-    if (curr->ref->type.isNonNullable()) {
+    if (curr->ref->type.isNonNullableRef()) {
       // (ref.test castType (table.get $t (i31.get_u ref)))
       curr->ref = builder.makeTableGet(
         funcTable.getName(), builder.makeI31Get(curr->ref, false), funcref);
@@ -582,7 +582,7 @@ struct MakeSharedObjects
     auto* cond = builder.makeRefIsNull(
       builder.makeLocalTee(scratch, curr->ref, scratchType));
     auto* ifNull =
-      builder.makeConst(Literal(int32_t(curr->castType.isNullable())));
+      builder.makeConst(Literal(int32_t(curr->castType.isNullableRef())));
     curr->ref = builder.makeTableGet(
       funcTable.getName(),
       builder.makeI31Get(builder.makeLocalGet(scratch, scratchType), false),
@@ -630,7 +630,7 @@ struct MakeSharedObjects
     auto* tee = builder.makeLocalTee(scratch, curr->ref, scratchType);
     auto* isNull = builder.makeRefIsNull(tee);
     Expression* ifNull = nullptr;
-    if (curr->type.isNullable()) {
+    if (curr->type.isNullableRef()) {
       ifNull = builder.makeLocalGet(scratch, scratchType);
     } else {
       ifNull = builder.makeUnreachable();
@@ -640,7 +640,7 @@ struct MakeSharedObjects
     auto* tableGet = builder.makeTableGet(funcTable.getName(), i31get, funcref);
     auto* refTest = builder.makeRefTest(tableGet, curr->type);
     Expression* ifPass = builder.makeLocalGet(scratch, scratchType);
-    if (curr->type.isNonNullable()) {
+    if (curr->type.isNonNullableRef()) {
       ifPass = builder.makeRefAs(RefAsNonNull, ifPass);
     }
     auto* ifFail = builder.makeUnreachable();
@@ -676,7 +676,7 @@ struct MakeSharedObjects
       Type sharedAnyNullable = Type(HeapTypes::any.getBasic(Shared), Nullable);
       Expression* call =
         builder.makeCall(getExternToAnyName(), {ext}, sharedAnyNullable);
-      if (curr->type.isNonNullable()) {
+      if (curr->type.isNonNullableRef()) {
         call = builder.makeRefAs(RefAsNonNull, call);
       }
       replaceCurrent(call);

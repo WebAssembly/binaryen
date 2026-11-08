@@ -33,8 +33,10 @@ static bool canReplaceWithReinterpret(Load* load) {
   // a reinterpret of the same address. A partial load would see
   // more bytes and possibly invalid data, and an unreachable
   // pointer is just not interesting to handle.
+  // An atomic load cannot be replaced either, as there are no
+  // atomic float loads.
   return load->type != Type::unreachable &&
-         load->bytes == load->type.getByteSize();
+         load->bytes == load->type.getByteSize() && !load->isAtomic();
 }
 
 static Load* getSingleLoad(LocalGraph* localGraph,

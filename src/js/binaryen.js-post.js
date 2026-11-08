@@ -2612,8 +2612,17 @@ function wrapModule(module, self = {}) {
       // struct.new_default.
       return Module['_BinaryenStructNew'](module, 0, 0, type);
     },
-    'get'(index, ref, type, isSigned) {
-      return Module['_BinaryenStructGet'](module, index, ref, type, isSigned);
+    /** Gets a struct entry with an unpacked type at an index. */
+    'get'(index, ref, type) {
+      return Module['_BinaryenStructGet'](module, index, ref, type);
+    },
+    /** Gets a struct entry with a signed packed type at an index. */
+    'get_s'(index, ref, type) {
+      return Module['_BinaryenStructGet'](module, index, ref, type, true);
+    },
+    /** Gets a struct entry with an unsigned packed type at an index. */
+    'get_u'(index, ref, type) {
+      return Module['_BinaryenStructGet'](module, index, ref, type, false);
     },
     'set'(index, ref, value) {
       return Module['_BinaryenStructSet'](module, index, ref, value);
@@ -2652,8 +2661,17 @@ function wrapModule(module, self = {}) {
     'new_elem'(type, name, offset, size) {
       return preserveStack(() => Module['_BinaryenArrayNewElem'](module, type, strToStack(name), offset, size));
     },
-    'get'(ref, index, type, isSigned) {
-      return Module['_BinaryenArrayGet'](module, ref, index, type, isSigned);
+    /** Gets an array entry with an unpacked type at an index. */
+    'get'(ref, index, type) {
+      return Module['_BinaryenArrayGet'](module, ref, index, type);
+    },
+    /** Gets an array entry with a signed packed type at an index. */
+    'get_s'(ref, index, type) {
+      return Module['_BinaryenArrayGet'](module, ref, index, type, true);
+    },
+    /** Gets an array entry with an unsigned packed type at an index. */
+    'get_u'(ref, index, type) {
+      return Module['_BinaryenArrayGet'](module, ref, index, type, false);
     },
     'set'(ref, index, value) {
       return Module['_BinaryenArraySet'](module, ref, index, value);

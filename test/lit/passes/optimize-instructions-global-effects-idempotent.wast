@@ -94,39 +94,35 @@
 )
 
 (module
-  ;; CHECK:      (global $f (mut f32) (f32.const -3))
-  (global $f (mut f32) (f32.const -3))
+  ;; CHECK:      (global $g (mut i32) (i32.const 0))
+  (global $g (mut i32) (i32.const 0))
 
-  ;; CHECK:      (func $potent (type $0) (result f32)
-  ;; CHECK-NEXT:  (global.set $f
-  ;; CHECK-NEXT:   (f32.add
-  ;; CHECK-NEXT:    (global.get $f)
-  ;; CHECK-NEXT:    (f32.const 2)
+  ;; CHECK:      (func $potent (type $0) (result i32)
+  ;; CHECK-NEXT:  (global.set $g
+  ;; CHECK-NEXT:   (i32.add
+  ;; CHECK-NEXT:    (global.get $g)
+  ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (global.get $f)
+  ;; CHECK-NEXT:  (global.get $g)
   ;; CHECK-NEXT: )
-  (func $potent (result f32)
-    (global.set $f (f32.add (global.get $f) (f32.const 2)))
-    (global.get $f)
+  (func $potent (result i32)
+    (global.set $g (i32.add (global.get $g) (i32.const 1)))
+    (global.get $g)
   )
 
-  ;; CHECK:      (func $function-effects-interfere (type $0) (result f32)
-  ;; CHECK-NEXT:  (f32.abs
-  ;; CHECK-NEXT:   (f32.mul
-  ;; CHECK-NEXT:    (call $potent)
-  ;; CHECK-NEXT:    (call $potent)
-  ;; CHECK-NEXT:   )
+  ;; CHECK:      (func $function-effects-interfere (type $0) (result i32)
+  ;; CHECK-NEXT:  (i32.eq
+  ;; CHECK-NEXT:   (call $potent)
+  ;; CHECK-NEXT:   (call $potent)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $function-effects-interfere (result f32)
+  (func $function-effects-interfere (result i32)
     ;; Even knowing the effects of the call, we should not be able to optimize
     ;; here because the calls will return different values.
-    (f32.abs
-      (f32.mul
-        (call $potent)
-        (call $potent)
-      )
+    (i32.eq
+      (call $potent)
+      (call $potent)
     )
   )
 )

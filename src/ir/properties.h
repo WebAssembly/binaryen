@@ -148,103 +148,6 @@ inline Literals getLiterals(const Expression* curr) {
   }
 }
 
-// Check if an expression is a sign-extend, and if so, returns the value
-// that is extended, otherwise nullptr
-inline Expression* getSignExtValue(Expression* curr) {
-  // We only care about i32s here, and ignore i64s, unreachables, etc.
-  if (curr->type != Type::i32) {
-    return nullptr;
-  }
-  if (auto* unary = curr->dynCast<Unary>()) {
-    if (unary->op == ExtendS8Int32 || unary->op == ExtendS16Int32) {
-      return unary->value;
-    }
-    return nullptr;
-  }
-  using namespace Match;
-  int32_t leftShift = 0, rightShift = 0;
-  Expression* extended = nullptr;
-  if (matches(curr,
-              binary(ShrSInt32,
-                     binary(ShlInt32, any(&extended), i32(&leftShift)),
-                     i32(&rightShift))) &&
-      leftShift == rightShift && leftShift != 0) {
-    return extended;
-  }
-  return nullptr;
-}
-
-// gets the size of the sign-extended value
-inline Index getSignExtBits(Expression* curr) {
-  assert(curr->type == Type::i32);
-  if (auto* unary = curr->dynCast<Unary>()) {
-    switch (unary->op) {
-      case ExtendS8Int32:
-        return 8;
-      case ExtendS16Int32:
-        return 16;
-      default:
-        WASM_UNREACHABLE("invalid unary operation");
-    }
-  } else {
-    auto* rightShift = curr->cast<Binary>()->right;
-    return 32 - Bits::getEffectiveShifts(rightShift);
-  }
-}
-
-// Check if an expression is almost a sign-extend: perhaps the inner shift
-// is too large. We can split the shifts in that case, which is sometimes
-// useful (e.g. if we can remove the signext)
-inline Expression* getAlmostSignExt(Expression* curr) {
-  using namespace Match;
-  int32_t leftShift = 0, rightShift = 0;
-  Expression* extended = nullptr;
-  if (matches(curr,
-              binary(ShrSInt32,
-                     binary(ShlInt32, any(&extended), i32(&leftShift)),
-                     i32(&rightShift))) &&
-      Bits::getEffectiveShifts(rightShift, Type::i32) <=
-        Bits::getEffectiveShifts(leftShift, Type::i32) &&
-      rightShift != 0) {
-    return extended;
-  }
-  return nullptr;
-}
-
-// gets the size of the almost sign-extended value, as well as the
-// extra shifts, if any
-inline Index getAlmostSignExtBits(Expression* curr, Index& extraLeftShifts) {
-  auto* leftShift = curr->cast<Binary>()->left->cast<Binary>()->right;
-  auto* rightShift = curr->cast<Binary>()->right;
-  extraLeftShifts =
-    Bits::getEffectiveShifts(leftShift) - Bits::getEffectiveShifts(rightShift);
-  return getSignExtBits(curr);
-}
-
-// Check if an expression is a zero-extend, and if so, returns the value
-// that is extended, otherwise nullptr
-inline Expression* getZeroExtValue(Expression* curr) {
-  // We only care about i32s here, and ignore i64s, unreachables, etc.
-  if (curr->type != Type::i32) {
-    return nullptr;
-  }
-  using namespace Match;
-  int32_t mask = 0;
-  Expression* extended = nullptr;
-  if (matches(curr, binary(AndInt32, any(&extended), i32(&mask))) &&
-      Bits::getMaskedBits(mask) != 0) {
-    return extended;
-  }
-  return nullptr;
-}
-
-// gets the size of the sign-extended value
-inline Index getZeroExtBits(Expression* curr) {
-  assert(curr->type == Type::i32);
-  int32_t mask = curr->cast<Binary>()->right->cast<Const>()->value.geti32();
-  return Bits::getMaskedBits(mask);
-}
-
 // Returns a falling-through value, that is, it looks through a local.tee
 // and other operations that receive a value and let it flow through them. If
 // there is no value falling through, returns the node itself (as that is the
@@ -530,14 +433,24 @@ inline MemoryOrder getMemoryOrder(Expression* curr) {
 
 // Whether this instruction will be unwritable in the text and binary formats
 // because it requires a type index immediate computed from an expression with
-// unreachable or null type, and therefore no type index.
+// unreachable or null type, and therefore no type index (or is a string array
+// operation with a null array operand).
 inline bool hasUnwritableTypeImmediate(Expression* curr) {
+  if (auto* sn = curr->dynCast<StringNew>()) {
+    // See BinaryInstWriter::visitStringNew.
+    return sn->ref->type.isBottomRef();
+  }
+  if (auto* se = curr->dynCast<StringEncode>()) {
+    // See BinaryInstWriter::visitStringEncode.
+    return se->array->type.isBottomRef();
+  }
+
 #define DELEGATE_ID curr->_id
 
 #define DELEGATE_FIELD_IMMEDIATE_TYPED_CHILD(id, field)                        \
   if (curr->cast<id>()->field) {                                               \
     auto type = curr->cast<id>()->field->type;                                 \
-    if (type == Type::unreachable || type.isNull()) {                          \
+    if (type == Type::unreachable || type.isBottomRef()) {                     \
       return true;                                                             \
     }                                                                          \
   }

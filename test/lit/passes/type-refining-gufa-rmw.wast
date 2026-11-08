@@ -436,6 +436,20 @@
  ;; NRML-NEXT:   )
  ;; NRML-NEXT:  )
  ;; NRML-NEXT:  (drop
+ ;; NRML-NEXT:   (block ;; (replaces unreachable StructCmpxchg we can't emit)
+ ;; NRML-NEXT:    (drop
+ ;; NRML-NEXT:     (unreachable)
+ ;; NRML-NEXT:    )
+ ;; NRML-NEXT:    (drop
+ ;; NRML-NEXT:     (local.get $struct)
+ ;; NRML-NEXT:    )
+ ;; NRML-NEXT:    (drop
+ ;; NRML-NEXT:     (local.get $struct)
+ ;; NRML-NEXT:    )
+ ;; NRML-NEXT:    (unreachable)
+ ;; NRML-NEXT:   )
+ ;; NRML-NEXT:  )
+ ;; NRML-NEXT:  (drop
  ;; NRML-NEXT:   (struct.wait $struct 0
  ;; NRML-NEXT:    (local.get $struct)
  ;; NRML-NEXT:    (unreachable)
@@ -463,15 +477,24 @@
  ;; GUFA-NEXT:   )
  ;; GUFA-NEXT:  )
  ;; GUFA-NEXT:  (drop
+ ;; GUFA-NEXT:   (block ;; (replaces unreachable StructCmpxchg we can't emit)
+ ;; GUFA-NEXT:    (drop
+ ;; GUFA-NEXT:     (unreachable)
+ ;; GUFA-NEXT:    )
+ ;; GUFA-NEXT:    (drop
+ ;; GUFA-NEXT:     (local.get $struct)
+ ;; GUFA-NEXT:    )
+ ;; GUFA-NEXT:    (drop
+ ;; GUFA-NEXT:     (local.get $struct)
+ ;; GUFA-NEXT:    )
+ ;; GUFA-NEXT:    (unreachable)
+ ;; GUFA-NEXT:   )
+ ;; GUFA-NEXT:  )
+ ;; GUFA-NEXT:  (drop
  ;; GUFA-NEXT:   (struct.wait $struct 0
  ;; GUFA-NEXT:    (local.get $struct)
  ;; GUFA-NEXT:    (unreachable)
- ;; GUFA-NEXT:    (block (result (ref null (shared none)))
- ;; GUFA-NEXT:     (drop
- ;; GUFA-NEXT:      (local.get $struct)
- ;; GUFA-NEXT:     )
- ;; GUFA-NEXT:     (ref.null (shared none))
- ;; GUFA-NEXT:    )
+ ;; GUFA-NEXT:    (local.get $struct)
  ;; GUFA-NEXT:    (i64.const -1)
  ;; GUFA-NEXT:   )
  ;; GUFA-NEXT:  )
@@ -492,7 +515,19 @@
     (local.get $struct)
    )
   )
-  ;; Likewise with struct.wait.
+  ;; The fixup to null does *not* happen for the `expected` ref of a cmpxchg,
+  ;; because the expected value is allowed to be a supertype of the field's
+  ;; type. i.e. (local.get $struct) remains valid here even after the field's
+  ;; type is refined.
+  (drop
+   (struct.atomic.rmw.cmpxchg acqrel acqrel $struct 0
+    (unreachable)
+    (local.get $struct)
+    (local.get $struct)
+   )
+  )
+  ;; Ditto for struct.wait, the `expected` ref may remain a supertype and
+  ;; doesn't need to be fixed up.
   (drop
    (struct.wait $struct 0
     (local.get $struct)

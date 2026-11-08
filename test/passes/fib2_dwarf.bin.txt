@@ -453,7 +453,7 @@ Abbrev table for offset: 0x00000000
                 DW_AT_external [DW_FORM_flag_present]	(true)
 
 0x0000009a:     DW_TAG_GNU_call_site [7]  
-                  DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000000)
+                  DW_AT_low_pc [DW_FORM_addr]	(0x00000000ffffffff)
 
 0x0000009f:     NULL
 

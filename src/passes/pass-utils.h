@@ -47,9 +47,8 @@ struct FilteredPass : public Pass {
   }
 
   void runOnFunction(Module* module, Function* func) override {
-    if (!relevantFuncs.contains(func)) {
-      return;
-    }
+    // The pass runner skips the other functions (see runsOnFunction).
+    assert(relevantFuncs.contains(func));
 
     // The pass runner calling us set our pass runner, which we must do for the
     // wrapped pass.
@@ -67,6 +66,10 @@ struct FilteredPass : public Pass {
     return pass->requiresNonNullableLocalFixups();
   }
 
+  bool runsOnFunction(Function* func) override {
+    return relevantFuncs.contains(func) && pass->runsOnFunction(func);
+  }
+
 private:
   std::unique_ptr<Pass> pass;
   const FuncSet& relevantFuncs;
@@ -82,6 +85,9 @@ struct FilteredPassRunner : public PassRunner {
                      const FuncSet& relevantFuncs,
                      const PassOptions& options)
     : PassRunner(wasm, options), relevantFuncs(relevantFuncs) {}
+
+  FilteredPassRunner(const PassRunner* outer, const FuncSet& relevantFuncs)
+    : PassRunner(outer), relevantFuncs(relevantFuncs) {}
 
 protected:
   void doAdd(std::unique_ptr<Pass> pass) override {

@@ -43,6 +43,7 @@ Name RETURN_FLOW("*return:)*");
 Name RETURN_CALL_FLOW("*return-call:)*");
 Name NONCONSTANT_FLOW("*nonconstant:)*");
 Name SUSPEND_FLOW("*suspend:)*");
+Name STACK_SWITCH_FLOW("*stack-switch:)*");
 
 namespace BinaryConsts::CustomSections {
 
@@ -93,6 +94,7 @@ const Name RemovableIfUnusedHint = "binaryen.removable.if.unused";
 const Name JSCalledHint = "binaryen.js.called";
 const Name IdempotentHint = "binaryen.idempotent";
 const Name ToolchainInlineHint = "binaryen.inline";
+const Name NoReturnHint = "binaryen.noreturn";
 
 } // namespace Annotations
 
@@ -1080,7 +1082,7 @@ void CallRef::finalize() {
     return;
   }
   assert(target->type.isRef());
-  if (target->type.isNull()) {
+  if (target->type.isBottomRef()) {
     type = getMaximallyUninhabitable(type);
     return;
   }
@@ -1111,7 +1113,7 @@ void RefCast::finalize() {
   }
 
   if (desc) {
-    if (desc->type.isNull()) {
+    if (desc->type.isBottomRef()) {
       // Cast will never be executed and the instruction will not be emitted.
       // Model this with an uninhabitable cast type.
       type = desc->type.with(NonNullable);
@@ -1123,7 +1125,7 @@ void RefCast::finalize() {
     assert(heapType);
     auto exactness = desc->type.getExactness();
     type = type.with(*heapType).with(exactness);
-    if (ref->type.isNonNullable()) {
+    if (ref->type.isNonNullableRef()) {
       type = type.with(NonNullable);
     }
     return;
@@ -1150,7 +1152,7 @@ void RefGetDesc::finalize() {
     return;
   }
 
-  if (ref->type.isNull()) {
+  if (ref->type.isBottomRef()) {
     // The operation will trap. Model it as returning an uninhabitable type.
     type = ref->type.with(NonNullable);
   } else {
@@ -1181,7 +1183,7 @@ void BrOn::finalize() {
     castType = newCastType;
     assert(castType.isRef());
   } else if (op == BrOnCastDescEq || op == BrOnCastDescEqFail) {
-    if (desc->type.isNull()) {
+    if (desc->type.isBottomRef()) {
       // Cast will never be executed and the instruction will not be emitted.
       // Model this with an uninhabitable cast type.
       castType = desc->type.with(NonNullable);
@@ -1193,7 +1195,7 @@ void BrOn::finalize() {
       assert(heapType);
       auto exactness = desc->type.getExactness();
       castType = castType.with(*heapType).with(exactness);
-      if (ref->type.isNonNullable()) {
+      if (ref->type.isNonNullableRef()) {
         castType = castType.with(NonNullable);
       }
     }
@@ -1210,10 +1212,10 @@ void BrOn::finalize() {
       return;
     case BrOnCast:
     case BrOnCastDescEq:
-      if (castType.isNullable()) {
+      if (castType.isNullableRef()) {
         // Nulls take the branch, so the result is non-nullable.
         type = ref->type.with(NonNullable);
-      } else if (desc && desc->type.isNull()) {
+      } else if (desc && desc->type.isBottomRef()) {
         // Cast will never be executed and the instruction will not be emitted.
         // Model this with an uninhabitable result type.
         type = desc->type.with(NonNullable);
@@ -1225,7 +1227,7 @@ void BrOn::finalize() {
       return;
     case BrOnCastFail:
     case BrOnCastDescEqFail:
-      if (castType.isNullable()) {
+      if (castType.isNullableRef()) {
         // Nulls do not take the branch, so the result is non-nullable only if
         // the input is.
         type = castType.with(ref->type.getNullability());
@@ -1254,7 +1256,7 @@ Type BrOn::getSentType() {
     case BrOnCast:
     case BrOnCastDescEq:
       // The same as the result type of br_on_cast_fail.
-      if (castType.isNullable()) {
+      if (castType.isNullableRef()) {
         return castType.with(ref->type.getNullability());
       } else {
         return castType;
@@ -1265,12 +1267,12 @@ Type BrOn::getSentType() {
       if (ref->type == Type::unreachable) {
         return Type::unreachable;
       }
-      if (desc && desc->type.isNull()) {
+      if (desc && desc->type.isBottomRef()) {
         // Cast will never be executed and the branch will not be taken.
         // Model this with an uninhabitable sent type.
         return desc->type.with(NonNullable);
       }
-      if (castType.isNullable()) {
+      if (castType.isNullableRef()) {
         return ref->type.with(NonNullable);
       } else {
         return ref->type;
@@ -1291,7 +1293,7 @@ void StructNew::finalize() {
 void StructGet::finalize() {
   if (ref->type == Type::unreachable) {
     type = Type::unreachable;
-  } else if (ref->type.isNull()) {
+  } else if (ref->type.isBottomRef()) {
     // See comment on CallRef for explanation.
     if (type.isRef()) {
       // TODO: Make this exact.
@@ -1313,7 +1315,7 @@ void StructSet::finalize() {
 void StructRMW::finalize() {
   if (ref->type == Type::unreachable || value->type == Type::unreachable) {
     type = Type::unreachable;
-  } else if (ref->type.isNull()) {
+  } else if (ref->type.isBottomRef()) {
     // We have no struct type to read the field off of, but the most precise
     // possible option is the type of the value we are using to make the
     // modification.
@@ -1327,7 +1329,7 @@ void StructCmpxchg::finalize() {
   if (ref->type == Type::unreachable || expected->type == Type::unreachable ||
       replacement->type == Type::unreachable) {
     type = Type::unreachable;
-  } else if (ref->type.isNull()) {
+  } else if (ref->type.isBottomRef()) {
     type = replacement->type;
   } else {
     type = ref->type.getHeapType().getStruct().fields[index].type;
@@ -1390,7 +1392,7 @@ void ArrayNewFixed::finalize() {
 void ArrayGet::finalize() {
   if (ref->type == Type::unreachable || index->type == Type::unreachable) {
     type = Type::unreachable;
-  } else if (ref->type.isNull()) {
+  } else if (ref->type.isBottomRef()) {
     // See comment on CallRef for explanation.
     if (type.isRef()) {
       // TODO: Make this exact.
@@ -1476,7 +1478,7 @@ void ArrayRMW::finalize() {
   if (ref->type == Type::unreachable || index->type == Type::unreachable ||
       value->type == Type::unreachable) {
     type = Type::unreachable;
-  } else if (ref->type.isNull()) {
+  } else if (ref->type.isBottomRef()) {
     // We have no array type to read the field off of, but the most precise
     // possible option is the type of the value we are using to make the
     // modification.
@@ -1491,7 +1493,7 @@ void ArrayCmpxchg::finalize() {
       expected->type == Type::unreachable ||
       replacement->type == Type::unreachable) {
     type = Type::unreachable;
-  } else if (ref->type.isNull()) {
+  } else if (ref->type.isBottomRef()) {
     type = replacement->type;
   } else {
     type = ref->type.getHeapType().getArray().element.type;
@@ -1636,7 +1638,7 @@ void Resume::finalize() {
   if (handleUnreachableOperands(this)) {
     return;
   }
-  if (cont->type.isNull()) {
+  if (cont->type.isBottomRef()) {
     type = getMaximallyUninhabitable(type);
     return;
   }
@@ -1655,7 +1657,7 @@ void ResumeThrow::finalize() {
   if (handleUnreachableOperands(this)) {
     return;
   }
-  if (cont->type.isNull()) {
+  if (cont->type.isBottomRef()) {
     type = getMaximallyUninhabitable(type);
     return;
   }
@@ -1674,7 +1676,7 @@ void StackSwitch::finalize() {
   if (handleUnreachableOperands(this)) {
     return;
   }
-  if (cont->type.isNull()) {
+  if (cont->type.isBottomRef()) {
     type = getMaximallyUninhabitable(type);
     return;
   }
@@ -1760,7 +1762,10 @@ Type Function::getLocalType(Index index) {
   }
 }
 
-void Function::clearNames() { localNames.clear(); }
+void Function::clearNames() {
+  localNames.clear();
+  explicitLabelNames.clear();
+}
 
 void Function::clearDebugInfo() {
   localIndices.clear();

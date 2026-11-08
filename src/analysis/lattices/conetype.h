@@ -47,7 +47,7 @@ struct ConeType {
 
   Element get(Type type) const noexcept {
     assert(!type.isTuple());
-    if (!type.isRef() || type.isExact() || type.isNull() ||
+    if (!type.isRef() || type.isExact() || type.isBottomRef() ||
         type.getHeapType().isMaybeShared(HeapType::i31)) {
       return Element{type, 0};
     }
@@ -69,10 +69,10 @@ struct ConeType {
       return changed;
     }
     Index joineeToLub = 0, joinerToLub = 0;
-    if (!joinee.isBottom() && !joinee.type.isNull()) {
+    if (!joinee.isBottom() && !joinee.type.isBottomRef()) {
       joineeToLub = depthToSuper(joinee, lub);
     }
-    if (!joiner.isBottom() && !joiner.type.isNull()) {
+    if (!joiner.isBottom() && !joiner.type.isBottomRef()) {
       joinerToLub = depthToSuper(joiner, lub);
     }
     Index newDepth =
@@ -102,7 +102,7 @@ struct ConeType {
     }
     Index newDepth;
     auto glb = Type::getGreatestLowerBound(meetee.type, meeter.type);
-    if (glb == Type::unreachable || glb.isNull()) {
+    if (glb == Type::unreachable || glb.isBottomRef()) {
       newDepth = 0;
     } else if (HeapType::isSubType(meetee.type.getHeapType(),
                                    meeter.type.getHeapType())) {
@@ -146,14 +146,14 @@ struct ConeType {
       return a.depth < b.depth ? analysis::LESS : analysis::GREATER;
     }
     if (Type::isSubType(a.type, b.type)) {
-      if (a.type.isNull()) {
+      if (a.type.isBottomRef()) {
         return analysis::LESS;
       }
       Index diff = depthToSuper(a, b.type);
       return a.depth + diff <= b.depth ? analysis::LESS : analysis::NO_RELATION;
     }
     if (Type::isSubType(b.type, a.type)) {
-      if (b.type.isNull()) {
+      if (b.type.isBottomRef()) {
         return analysis::GREATER;
       }
       Index diff = depthToSuper(b, a.type);

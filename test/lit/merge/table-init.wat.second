@@ -1,0 +1,7 @@
+(module
+  (type $f (func))
+
+  (func $h)
+
+  (global $g (export "g") (ref $f) (ref.func $h))
+)

@@ -88,6 +88,10 @@ struct ShellExternalInterface : ModuleRunner::ExternalInterface {
     return ret;
   }
 
+  // Apply a reasonable limit on memory size, 1GB, to avoid DOS on the
+  // interpreter.
+  static constexpr uint64_t MaxMemorySize = 1024 * 1024 * 1024;
+
   void init(Module& wasm, ModuleRunner& instance) override {
     ModuleUtils::iterDefinedMemories(wasm, [&](wasm::Memory* memory) {
       // Compute the initial size in bytes carefully: the byte size of a
@@ -95,9 +99,8 @@ struct ShellExternalInterface : ModuleRunner::ExternalInterface {
       // we let it wrap, instantiation would "succeed" with an empty buffer
       // and every later access would spuriously trap as out of bounds.
       uint64_t bytes = uint64_t(memory->initial) << memory->pageSizeLog2;
-      if ((bytes >> memory->pageSizeLog2) != uint64_t(memory->initial)) {
-        // The byte size is not even representable; we certainly cannot
-        // allocate it, just like a real VM could not.
+      if ((bytes >> memory->pageSizeLog2) != uint64_t(memory->initial) ||
+          bytes > MaxMemorySize) {
         hostLimit("memory too large");
       }
       auto shellMemory = Memory();
@@ -236,10 +239,16 @@ struct ShellExternalInterface : ModuleRunner::ExternalInterface {
   }
   bool
   growMemory(Name memoryName, Address /*oldSize*/, Address newSize) override {
-    // Apply a reasonable limit on memory size, 1GB, to avoid DOS on the
-    // interpreter.
-    if (newSize > 1024 * 1024 * 1024) {
-      return false;
+    if (newSize > MaxMemorySize) {
+      // According to the spec, this should return -1. However, that kind of
+      // non-deterministic graceful failure causes false positives when doing
+      // differential fuzzing between implementations that vary in their ability
+      // to do the grow. To avoid those false positives in the fuzzer, we fail
+      // with an exceeded host limit here. This will cause fuzzer executions
+      // with large memory growths to be ignored. This limit is implemented here
+      // instead of in the main interpreter so other users (e.g. Precompute) get
+      // the standard behavior.
+      hostLimit("memory too large");
     }
     auto it = memories.find(memoryName);
     if (it == memories.end()) {

@@ -45,9 +45,9 @@
 
 ;; CHECK-BIN:      (func $0 (type $0)
 ;; CHECK-BIN-NEXT:  (nop)
-;; CHECK-BIN-NEXT:  (block
-;; CHECK-BIN-NEXT:   (block $block
-;; CHECK-BIN-NEXT:    (br $block)
+;; CHECK-BIN-NEXT:  (block $l0
+;; CHECK-BIN-NEXT:   (block $l1
+;; CHECK-BIN-NEXT:    (br $l1)
 ;; CHECK-BIN-NEXT:   )
 ;; CHECK-BIN-NEXT:  )
 ;; CHECK-BIN-NEXT:  (return)

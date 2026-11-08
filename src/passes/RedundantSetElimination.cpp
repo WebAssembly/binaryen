@@ -34,13 +34,13 @@
 //
 
 #include <cfg/cfg-traversal.h>
+#include <cfg/wto.h>
 #include <ir/literal-utils.h>
 #include <ir/numbering.h>
 #include <ir/properties.h>
 #include <ir/utils.h>
 #include <pass.h>
 #include <support/small_set.h>
-#include <support/unique_deferring_queue.h>
 #include <wasm-builder.h>
 #include <wasm.h>
 
@@ -58,6 +58,10 @@ namespace {
 
 // information in a basic block
 struct Info {
+  // For WTOWorklist
+  bool inQueue;
+  Index index;
+
   LocalValues start, end; // the local values at the start and end of the block
   std::vector<Expression**> items;
 };
@@ -221,14 +225,12 @@ struct RedundantSetElimination
         end[i] = unseenValue;
       }
     }
-    // keep working while stuff is flowing. we use a unique deferred queue
-    // which ensures both FIFO and that we don't do needless work - if
-    // A and B reach C, and both queue C, we only want to do C at the latest
-    // time, when we have information from all those reaching it.
-    UniqueDeferredQueue<BasicBlock*> work;
+    // Keep working while stuff is flowing, in weak topological order so that we
+    // reach code after its predecessors and stabilize inner loops before outer
+    // loops, avoiding wasted recomputation.
+    WTOWorklist<RedundantSetElimination> work(*this);
     work.push(entry);
-    while (!work.empty()) {
-      auto* curr = work.pop();
+    work.run([&](BasicBlock* curr) {
 #if RSE_DEBUG
       std::cout << "flow block " << curr << '\n';
 #endif
@@ -323,7 +325,7 @@ struct RedundantSetElimination
         // note that the first iteration this is always not the case,
         // since end contains unseen (and then the comparison ends on
         // the first element)
-        continue;
+        return;
       }
       // update the end state and update children
 #ifndef NDEBUG
@@ -340,7 +342,7 @@ struct RedundantSetElimination
       for (auto* next : curr->out) {
         work.push(next);
       }
-    }
+    });
   }
 
   // optimizing

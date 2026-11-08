@@ -22,7 +22,6 @@
 //  * Fields that are never read from can be removed entirely.
 //
 
-#include "ir/eh-utils.h"
 #include "ir/js-utils.h"
 #include "ir/localize.h"
 #include "ir/names.h"
@@ -372,6 +371,7 @@ struct GlobalTypeOptimization : public Pass {
         // That is, we can only append fields: we cannot reorder or remove any
         // field that is in the super.
         Index numSuperFields = 0;
+        bool superHasKeptFields = false;
         if (super) {
           // We have visited the super before. Get the information about its
           // fields.
@@ -408,6 +408,7 @@ struct GlobalTypeOptimization : public Pass {
               // The super kept this field, so we must keep it as well. This can
               // happen when we need the field in both, but also in the corner
               // case where we don't need the field but the super is public.
+              superHasKeptFields = true;
 
               // We need to keep it at the same index so we remain compatible.
               indexesAfterRemoval[i] = superIndex;
@@ -433,10 +434,10 @@ struct GlobalTypeOptimization : public Pass {
           }
         }
 
-        // If the type has no supertype (or its supertype has no fields), check
-        // if its first field becomes prototype-exposing. If so, add a
+        // If the type has no supertype (or its supertype has no kept fields),
+        // check if its first field becomes prototype-exposing. If so, add a
         // placeholder at index 0 and shift all computed indices.
-        if (isExposedNoProto && (!super || super->getStruct().fields.empty())) {
+        if (isExposedNoProto && !superHasKeptFields) {
           // Find the field that will become field 0.
           Index i = 0;
           for (; i < fields.size(); ++i) {
@@ -675,8 +676,6 @@ struct GlobalTypeOptimization : public Pass {
         return std::make_unique<FieldRemover>(parent);
       }
 
-      bool needEHFixups = false;
-
       // Expressions that might trap that have been removed from module-level
       // initializers. These need to be placed in new globals to preserve any
       // instantiation-time traps.
@@ -708,8 +707,6 @@ struct GlobalTypeOptimization : public Pass {
         if (func) {
           ChildLocalizer localizer(curr, func, *getModule(), getPassOptions());
           replaceCurrent(localizer.getReplacement());
-          // Adding a block here requires EH fixups.
-          needEHFixups = true;
         }
 
         // Remove and reorder operands.
@@ -764,19 +761,12 @@ struct GlobalTypeOptimization : public Pass {
                                            getFunction(),
                                            getModule(),
                                            getPassOptions());
-          needEHFixups = true;
           Expression* replacement =
             builder.makeDrop(builder.makeRefAs(RefAsNonNull, flipped));
           // We only remove fields with no reads, so if this set is atomic,
           // there are no reads it can possibly synchronize with and we do not
           // need a fence.
           replaceCurrent(replacement);
-        }
-      }
-
-      void visitFunction(Function* curr) {
-        if (needEHFixups) {
-          EHUtils::handleBlockNestedPops(curr, *getModule());
         }
       }
     };

@@ -239,6 +239,11 @@ struct PassOptions {
   // that needs lowering, then we lower it, then we can optimize it again to the
   // original form).
   bool targetJS = false;
+  // Whether we are in the last major sequence of optimizations being run. If so
+  // then we can perform optimizations that only make sense to do at the very
+  // end (because they might inhibit further ones after). For example, if we run
+  // -O3 -O3 then in the second -O3 we might do more things.
+  bool lastOpts = false;
   // Arbitrary string arguments from the commandline, which we forward to
   // passes.
   std::unordered_map<std::string, std::string> arguments;
@@ -473,6 +478,15 @@ public:
   //
   // For more details see the LocalStructuralDominance class.
   virtual bool requiresNonNullableLocalFixups() { return true; }
+
+  // Whether this function-parallel pass does anything on this function. When
+  // it does not, the pass runner skips the function entirely, including the
+  // fixups it would otherwise do afterwards.
+  //
+  // Note: This is called on the registered pass instance concurrently across
+  // threads, so implementations must be thread-safe and cannot rely on
+  // getPassRunner() or getPassOptions().
+  virtual bool runsOnFunction(Function* func) { return true; }
 
   // Many passes can remove effects, for example, by finding some path is not
   // reached and removing a throw or a call there. The few passes that *add*

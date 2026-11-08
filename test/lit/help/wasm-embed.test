@@ -1,0 +1,27 @@
+;; RUN: wasm-embed --help | filecheck %s
+;; CHECK: ================================================================================
+;; CHECK-NEXT: wasm-embed INFILE.js [WASM_FILES...] [OUTFILE]
+;; CHECK-EMPTY:
+;; CHECK-NEXT: Embed Wasm binaries into a JS file, or extract embedded Wasm binaries from a JS 
+;; CHECK-NEXT: file
+;; CHECK-NEXT: ================================================================================
+;; CHECK-EMPTY:
+;; CHECK-EMPTY:
+;; CHECK-NEXT: wasm-embed options:
+;; CHECK-NEXT: -------------------
+;; CHECK-EMPTY:
+;; CHECK-NEXT:   --extract,-e Extract embedded Wasm modules from the input JS file into 
+;; CHECK-NEXT:                <output>.0.wasm, <output>.1.wasm, ...
+;; CHECK-EMPTY:
+;; CHECK-NEXT:   --output,-o  Output JS file (or output prefix when --extract is used)
+;; CHECK-EMPTY:
+;; CHECK-EMPTY:
+;; CHECK-NEXT: General options:
+;; CHECK-NEXT: ----------------
+;; CHECK-EMPTY:
+;; CHECK-NEXT:   --version    Output version information and exit
+;; CHECK-EMPTY:
+;; CHECK-NEXT:   --help,-h    Show this help message and exit
+;; CHECK-EMPTY:
+;; CHECK-NEXT:   --debug,-d   Print debug information to stderr
+;; CHECK-EMPTY:

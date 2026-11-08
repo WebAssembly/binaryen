@@ -44,12 +44,81 @@
 //       definitely worth lowering.
 //
 
+#include <ir/effects.h>
 #include <pass.h>
 #include <support/unique_deferring_queue.h>
 #include <wasm-builder.h>
 #include <wasm.h>
 
 namespace wasm {
+
+namespace {
+
+// Helper class to analyze interferences between tuple.make operands and their
+// target locals. When lowering a tuple local.set to individual local.sets:
+//
+//   (local.set $t (tuple.make op0 op1 ... opN-1))
+//
+// into:
+//
+//   (local.set $t0 op0)
+//   (local.set $t1 op1)
+//   ...
+//
+// an operand op_i cannot be written directly to target local $ti if doing so
+// interferes with the evaluation of any subsequent operand op_j (j > i). An
+// interference occurs if:
+//   1. op_j reads $ti (op_j would see the new value of $ti instead of the old
+//      value).
+//   2. op_j writes $ti (op_j's write would be overwritten by op_i's value later
+//      in the original code, but would overwrite op_i's value here).
+//   3. op_j transfers control flow (e.g. branches to an enclosing block or
+//      throws; in the original code, no target locals are written if control
+//      flow transfers out to an enclosing scope in the same function).
+//
+// Any operand that interferes must be written to a scratch local first and then
+// copied to its target local after all operands have been evaluated.
+class TupleInterferenceFinder {
+  std::vector<bool> interfering;
+
+public:
+  TupleInterferenceFinder(const ExpressionList& operands,
+                          Index targetBase,
+                          const PassOptions& passOptions,
+                          const Module& wasm)
+    : interfering(operands.size(), false) {
+    Index numOperands = operands.size();
+    assert(numOperands > 1);
+
+    std::unordered_set<Index> subsequentReads;
+    std::unordered_set<Index> subsequentWrites;
+    bool subsequentTransfersControlFlow = false;
+
+    for (Index i = numOperands; i > 0; i--) {
+      Index opIndex = i - 1;
+      Index targetLocal = targetBase + opIndex;
+
+      if (subsequentTransfersControlFlow ||
+          subsequentReads.contains(targetLocal) ||
+          subsequentWrites.contains(targetLocal)) {
+        interfering[opIndex] = true;
+      }
+
+      EffectAnalyzer effects(passOptions, wasm, operands[opIndex]);
+      subsequentReads.insert(effects.localsRead.begin(),
+                             effects.localsRead.end());
+      subsequentWrites.insert(effects.localsWritten.begin(),
+                              effects.localsWritten.end());
+      if (effects.transfersControlFlow()) {
+        subsequentTransfersControlFlow = true;
+      }
+    }
+  }
+
+  bool interferes(Index i) const { return interfering[i]; }
+};
+
+} // anonymous namespace
 
 struct TupleOptimization : public WalkerPass<PostWalker<TupleOptimization>> {
   bool isFunctionParallel() override { return true; }
@@ -231,15 +300,17 @@ struct TupleOptimization : public WalkerPass<PostWalker<TupleOptimization>> {
       }
     }
 
-    MapApplier mapApplier(tupleToNewBaseMap);
+    MapApplier mapApplier(tupleToNewBaseMap, getPassOptions());
     mapApplier.walkFunctionInModule(func, getModule());
   }
 
   struct MapApplier : public PostWalker<MapApplier> {
     std::unordered_map<Index, Index>& tupleToNewBaseMap;
+    const PassOptions& passOptions;
 
-    MapApplier(std::unordered_map<Index, Index>& tupleToNewBaseMap)
-      : tupleToNewBaseMap(tupleToNewBaseMap) {}
+    MapApplier(std::unordered_map<Index, Index>& tupleToNewBaseMap,
+               const PassOptions& passOptions)
+      : tupleToNewBaseMap(tupleToNewBaseMap), passOptions(passOptions) {}
 
     // Gets the new base index if there is one, or 0 if not (0 is an impossible
     // value for a new index, as local index 0 was taken before, as tuple
@@ -294,11 +365,31 @@ struct TupleOptimization : public WalkerPass<PostWalker<TupleOptimization>> {
 
         auto* value = curr->value;
         if (auto* make = value->dynCast<TupleMake>()) {
-          // Write each of the tuple.make fields into the proper local.
+          // If writing an operand directly to its target local would interfere
+          // with any subsequent operand (e.g. in a tuple swap), write it to a
+          // temporary local first and copy it at the end.
+          Index numOperands = type.size();
+          TupleInterferenceFinder interferences(
+            make->operands, targetBase, passOptions, *getModule());
+
+          std::vector<Index> tempIndexes(numOperands);
+          for (Index i = 0; i < numOperands; i++) {
+            if (interferences.interferes(i)) {
+              tempIndexes[i] = Builder::addVar(getFunction(), type[i]);
+            }
+          }
+
           std::vector<Expression*> sets;
-          for (Index i = 0; i < type.size(); i++) {
-            auto* value = make->operands[i];
-            sets.push_back(builder.makeLocalSet(targetBase + i, value));
+          for (Index i = 0; i < numOperands; i++) {
+            Index dest =
+              interferences.interferes(i) ? tempIndexes[i] : targetBase + i;
+            sets.push_back(builder.makeLocalSet(dest, make->operands[i]));
+          }
+          for (Index i = 0; i < numOperands; i++) {
+            if (interferences.interferes(i)) {
+              sets.push_back(builder.makeLocalSet(
+                targetBase + i, builder.makeLocalGet(tempIndexes[i], type[i])));
+            }
           }
           replace(builder.makeBlock(sets));
           return;

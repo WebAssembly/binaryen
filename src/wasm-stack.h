@@ -129,14 +129,25 @@ public:
 
   MappedLocals mappedLocals;
 
+  // The explicitly named labels of this function, as (label index, name).
+  std::vector<std::pair<Index, Name>> labelNames;
+
 private:
+  // The index the next scope in this function will take.
+  Index nextLabelIndex = 0;
+
+  // Note the start of a scope: every block, loop, if, try and try_table takes
+  // an index in the function's label index space, in the order they appear in
+  // the function body, whether or not they have a name. Records the explicitly
+  // named ones for the name section.
+  void noteScopeStart(Name name = Name());
+
   void emitMemoryAccess(size_t alignment,
                         size_t bytes,
                         uint64_t offset,
                         Name memory,
                         MemoryOrder order,
-                        bool isRMW,
-                        BackingType backing = BackingType::Memory);
+                        bool isRMW);
   void emitLoadOpcode(unsigned bytes, bool signed_, Type type);
   void emitStoreOpcode(uint8_t bytes, Type valueType);
   int32_t getBreakIndex(Name name);
@@ -565,6 +576,9 @@ public:
   }
 
   MappedLocals& getMappedLocals() { return writer.mappedLocals; }
+  std::vector<std::pair<Index, Name>>& getLabelNames() {
+    return writer.labelNames;
+  }
 
 private:
   WasmBinaryWriter& parent;
@@ -607,6 +621,9 @@ public:
   void write();
 
   MappedLocals& getMappedLocals() { return writer.mappedLocals; }
+  std::vector<std::pair<Index, Name>>& getLabelNames() {
+    return writer.labelNames;
+  }
 
 private:
   WasmBinaryWriter& parent;
@@ -643,6 +660,7 @@ private:
   void removeAt(Index i);
   Index getNumConsumedValues(StackInst* inst);
   bool canRemoveSetGetPair(Index setIndex, Index getIndex);
+  bool isConsumedBySymmetricOp(Index getIndex);
   std::unordered_set<LocalGet*> findStringViewDeferredGets();
 };
 
