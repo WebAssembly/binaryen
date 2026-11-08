@@ -611,9 +611,11 @@ struct Struct2Local : PostWalker<Struct2Local> {
   Struct2Local(StructNew* allocation,
                EscapeAnalyzer& analyzer,
                Function* func,
-               Module& wasm)
+               Module& wasm,
+               bool refinalize_ = false)
     : allocation(allocation), analyzer(analyzer), func(func), wasm(wasm),
-      builder(wasm), fields(allocation->type.getHeapType().getStruct().fields) {
+      builder(wasm), fields(allocation->type.getHeapType().getStruct().fields),
+      refinalize(refinalize_) {
 
     // Allocate locals to store the allocation's fields and descriptor in.
     for (auto field : fields) {
@@ -1294,43 +1296,6 @@ struct Array2Struct : PostWalker<Array2Struct> {
     typeBuilder[0].setShared(arrayType.getShared());
     structType = (*typeBuilder.build())[0];
 
-    // Generate a StructNew to replace the ArrayNew*.
-    if (auto* arrayNew = allocation->dynCast<ArrayNew>()) {
-      if (arrayNew->isWithDefault()) {
-        structNew = builder.makeStructNew(structType, {});
-        arrayNewReplacement = structNew;
-      } else {
-        // The ArrayNew is writing the same value to each slot of the array. To
-        // do the same for the struct, we store that value in an local and
-        // generate multiple local.gets of it.
-        auto local = builder.addVar(func, element.type);
-        auto* set = builder.makeLocalSet(local, arrayNew->init);
-        std::vector<Expression*> gets;
-        for (Index i = 0; i < numFields; i++) {
-          gets.push_back(builder.makeLocalGet(local, element.type));
-        }
-        structNew = builder.makeStructNew(structType, gets);
-        // The ArrayNew* will be replaced with a block containing the local.set
-        // and the structNew.
-        arrayNewReplacement = builder.makeSequence(set, structNew);
-      }
-    } else if (auto* arrayNewFixed = allocation->dynCast<ArrayNewFixed>()) {
-      // Simply use the same values as the array.
-      structNew = builder.makeStructNew(structType, arrayNewFixed->values);
-      arrayNewReplacement = structNew;
-    } else {
-      WASM_UNREACHABLE("bad allocation");
-    }
-
-    // Mark new expressions we created as flowing out the allocation. We need to
-    // inform the analysis of this because Struct2Local will only process such
-    // code (it depends on the analysis to tell it what the allocation is and
-    // where it flowed). Note that the two values here may be identical but
-    // there is no harm to doing this twice in that case.
-    analyzer.reachedInteractions[structNew] =
-      analyzer.reachedInteractions[arrayNewReplacement] =
-        ParentChildInteraction::Flows;
-
     // Update types along the path reached by the allocation: whenever we see
     // the array type, it should be the struct type. Note that we do this before
     // the walk that is after us, because the walk may read these types and
@@ -1370,10 +1335,6 @@ struct Array2Struct : PostWalker<Array2Struct> {
 
     // Replace the things we need to using the visit* methods.
     walk(func->body);
-
-    if (refinalize) {
-      ReFinalize().walkFunctionInModule(func, &wasm);
-    }
   }
 
   Expression* replaceCurrent(Expression* expression) {
@@ -1393,19 +1354,45 @@ struct Array2Struct : PostWalker<Array2Struct> {
   // optimize that StructNew using Struct2Local.
   StructNew* structNew;
 
-  // The replacement for the original ArrayNew*. Typically this is |structNew|,
-  // unless we have additional code we need alongside it.
-  Expression* arrayNewReplacement;
-
   void visitArrayNew(ArrayNew* curr) {
     if (curr == allocation) {
+      // Generate a StructNew to replace the ArrayNew.
+      Expression* arrayNewReplacement;
+      if (curr->isWithDefault()) {
+        structNew = builder.makeStructNew(structType, {});
+        arrayNewReplacement = structNew;
+      } else {
+        // The ArrayNew is writing the same value to each slot of the array. To
+        // do the same for the struct, we store that value in a local and
+        // generate multiple local.gets of it.
+        auto elementType = originalType.getHeapType().getArray().element.type;
+        auto local = builder.addVar(func, elementType);
+        auto* set = builder.makeLocalSet(local, curr->init);
+        std::vector<Expression*> gets;
+        for (Index i = 0; i < numFields; i++) {
+          gets.push_back(builder.makeLocalGet(local, elementType));
+        }
+        structNew = builder.makeStructNew(structType, gets);
+        // The ArrayNew* will be replaced with a block containing the local.set
+        // and the structNew.
+        arrayNewReplacement = builder.makeSequence(set, structNew);
+      }
+      // Mark the new StructNew as flowing out the allocation so Struct2Local
+      // will process it. (replaceCurrent below does the same for
+      // arrayNewReplacement.)
+      analyzer.reachedInteractions[structNew] = ParentChildInteraction::Flows;
       replaceCurrent(arrayNewReplacement);
     }
   }
 
   void visitArrayNewFixed(ArrayNewFixed* curr) {
     if (curr == allocation) {
-      replaceCurrent(arrayNewReplacement);
+      // Simply use the same values as the array. Ensure the type remains the
+      // struct type even if an operand became unreachable so Struct2Local can
+      // still inspect the struct type before refinalization.
+      structNew = builder.makeStructNew(structType, curr->values);
+      structNew->type = Type(structType, NonNullable, Exact);
+      replaceCurrent(structNew);
     }
   }
 
@@ -1640,9 +1627,12 @@ struct Heap2Local {
       if (!analyzer.escapes(allocation)) {
         // Convert the allocation and all its uses into a struct. Then convert
         // the struct into locals.
-        auto* structNew =
-          Array2Struct(allocation, analyzer, func, wasm).structNew;
-        Struct2Local(structNew, analyzer, func, wasm);
+        Array2Struct array2Struct(allocation, analyzer, func, wasm);
+        Struct2Local(array2Struct.structNew,
+                     analyzer,
+                     func,
+                     wasm,
+                     array2Struct.refinalize);
         resetAnalysisData();
       }
     }
