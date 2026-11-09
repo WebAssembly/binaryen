@@ -18,6 +18,7 @@ import math
 import os
 import subprocess
 import sys
+import time
 from datetime import datetime, timezone
 
 TEAM_SLUG = 'binaryen-reviewers'
@@ -27,6 +28,16 @@ HALF_LIFE_DAYS = 7.0
 SECONDS_PER_DAY = 86400.0
 DECAY_RATE = math.log(2.0) / (HALF_LIFE_DAYS * SECONDS_PER_DAY)
 ADDITIONS_OFFSET = 10.0
+RECENT_PR_PAGE_SIZE = 50
+RECENT_PR_PAGES = 2
+MAX_API_ATTEMPTS = 3
+RETRYABLE_ERRORS = (
+    'HTTP 500',
+    'HTTP 502',
+    'HTTP 503',
+    'HTTP 504',
+    'Something went wrong while executing your query',
+)
 
 # Current UTC timestamp used as the reference point for exponential time decay.
 now = datetime.now(timezone.utc).timestamp()
@@ -46,7 +57,9 @@ authored_count: dict[str, int] = {}
 # Most recent review-request timestamp per reviewer, used for tie-breaking.
 last_assigned: dict[str, float] = {}
 
-QUERY = """
+# Fetches the reviewer team roster and target PR metadata so closed, draft, or
+# already-assigned PRs can exit early without querying PR history.
+SETUP_QUERY = """
 query($owner: String!, $name: String!, $pr: Int!, $team: String!) {
   organization(login: $owner) {
     team(slug: $team) {
@@ -62,7 +75,7 @@ query($owner: String!, $name: String!, $pr: Int!, $team: String!) {
       state
       isDraft
       author { login }
-      reviewRequests(first: 100) {
+      reviewRequests(first: 20) {
         nodes {
           requestedReviewer {
             ... on User { login }
@@ -70,14 +83,31 @@ query($owner: String!, $name: String!, $pr: Int!, $team: String!) {
           }
         }
       }
-      latestReviews(first: 100) {
+      latestReviews(first: 20) {
         nodes {
           author { login }
           state
         }
       }
     }
-    recentPRs: pullRequests(first: 100, orderBy: {field: UPDATED_AT, direction: DESC}) {
+  }
+}
+"""
+
+# Fetches a page of recently updated PRs with their review and timeline state
+# to compute exponentially decayed reviewer and author loads.
+RECENT_PRS_QUERY = """
+query($owner: String!, $name: String!, $pageSize: Int!, $cursor: String) {
+  repository(owner: $owner, name: $name) {
+    recentPRs: pullRequests(
+      first: $pageSize
+      after: $cursor
+      orderBy: {field: UPDATED_AT, direction: DESC}
+    ) {
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
       nodes {
         number
         state
@@ -85,13 +115,13 @@ query($owner: String!, $name: String!, $pr: Int!, $team: String!) {
         createdAt
         additions
         author { login }
-        latestReviews(first: 100) {
+        latestReviews(first: 20) {
           nodes {
             author { login }
             state
           }
         }
-        reviewRequests(first: 100) {
+        reviewRequests(first: 20) {
           nodes {
             requestedReviewer {
               ... on User { login }
@@ -128,18 +158,63 @@ def pr_weight(additions: int) -> float:
 
 
 def gh_api(args: list[str]) -> str:
-    try:
+    for attempt in range(1, MAX_API_ATTEMPTS + 1):
         res = subprocess.run(
             ['gh', 'api', *args],
             capture_output=True,
             text=True,
-            check=True,
+            check=False,
         )
-        return res.stdout
-    except subprocess.CalledProcessError as e:
-        if e.stderr:
-            print(e.stderr.strip(), file=sys.stderr)
-        raise
+        if res.returncode == 0:
+            return res.stdout
+        stderr = res.stderr.strip() if res.stderr else ''
+        if attempt == MAX_API_ATTEMPTS or not any(
+            err in stderr for err in RETRYABLE_ERRORS
+        ):
+            break
+        delay = 2**attempt
+        print(
+            f'Transient GitHub API error ({stderr}); retrying in {delay}s...',
+            file=sys.stderr,
+        )
+        time.sleep(delay)
+    if stderr:
+        print(stderr, file=sys.stderr)
+    raise subprocess.CalledProcessError(
+        res.returncode,
+        res.args,
+        output=res.stdout,
+        stderr=res.stderr,
+    )
+
+
+def fetch_recent_prs(owner: str, name: str) -> list[dict]:
+    prs: list[dict] = []
+    seen: set[int] = set()
+    cursor: str | None = None
+    for _ in range(RECENT_PR_PAGES):
+        args = [
+            'graphql',
+            '-f',
+            f'query={RECENT_PRS_QUERY}',
+            '-f',
+            f'owner={owner}',
+            '-f',
+            f'name={name}',
+            '-F',
+            f'pageSize={RECENT_PR_PAGE_SIZE}',
+        ]
+        if cursor is not None:
+            args.extend(['-f', f'cursor={cursor}'])
+        page = json.loads(gh_api(args))['data']['repository']['recentPRs']
+        for pr in page['nodes']:
+            if pr['number'] not in seen:
+                seen.add(pr['number'])
+                prs.append(pr)
+        if not page['pageInfo']['hasNextPage']:
+            break
+        cursor = page['pageInfo']['endCursor']
+    return prs
 
 
 def accumulate_pr_activity(pr: dict, reviewer_set: set[str]) -> None:
@@ -230,7 +305,7 @@ def main() -> None:
         gh_api([
             'graphql',
             '-f',
-            f'query={QUERY}',
+            f'query={SETUP_QUERY}',
             '-f',
             f'owner={owner}',
             '-f',
@@ -282,12 +357,14 @@ def main() -> None:
         print(f'No eligible reviewers for PR #{pr_number} (author={pr_author}).')
         return
 
+    recent_prs = fetch_recent_prs(owner, name)
+
     review_load.update(dict.fromkeys(reviewers, 0.0))
     review_count.update(dict.fromkeys(reviewers, 0))
     authored_load.update(dict.fromkeys(reviewers, 0.0))
     authored_count.update(dict.fromkeys(reviewers, 0))
     last_assigned.update(dict.fromkeys(reviewers, 0.0))
-    for pr in repo_data['recentPRs']['nodes']:
+    for pr in recent_prs:
         if not pr['isDraft'] and pr['number'] != pr_number:
             accumulate_pr_activity(pr, reviewer_set)
 
