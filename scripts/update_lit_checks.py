@@ -23,6 +23,7 @@ import argparse
 import glob
 import os
 import re
+import shlex
 import subprocess
 import sys
 import tempfile
@@ -109,15 +110,31 @@ def find_run_lines(test, lines):
 def run_command(args, test, tmp, command):
     env = dict(os.environ)
     env['PATH'] = args.binaryen_bin + os.pathsep + env['PATH']
-    command = command.replace('%s', test)
-    command = command.replace('%S', os.path.dirname(test))
-    command = command.replace('%t', tmp)
 
-    match = re.match(r'^(.*)\s*foreach\s+(\S+)\s+(\S+)\s+(.*)$', command)
+    def replace_paths(text):
+        return text.replace('%s', test).replace('%S', os.path.dirname(test)).replace('%t', tmp)
+
+    def quote_path(path):
+        return subprocess.list2cmdline([path]) if os.name == 'nt' else shlex.quote(path)
+
+    def replace_shell_paths(text):
+        def replace(match):
+            token = match.group()
+            if not any(path in token for path in ('%s', '%S', '%t')):
+                return token
+            if token[0] in {'"', "'"}:
+                token = token[1:-1]
+            return quote_path(replace_paths(token))
+
+        return re.sub(r'''"[^"]*"|'[^']*'|%[sSt]''', replace, text)
+
+    # Parse foreach arguments before expanding paths, which can contain spaces.
+    argument = r'''(?:"[^"]*"|'[^']*'|\S+)'''
+    match = re.match(r'^(.*)\s*foreach\s+(' + argument + r')\s+(' + argument + r')\s+(.*)$', command)
     if match:
         prefix = match.group(1)
-        infile = match.group(2)
-        tempfile = match.group(3)
+        infile = replace_paths(match.group(2).strip('\'"'))
+        tempfile = replace_paths(match.group(3).strip('\'"'))
         cmd_rest = match.group(4)
 
         outputs = []
@@ -125,14 +142,14 @@ def run_command(args, test, tmp, command):
             tempname = tempfile + '.' + str(i)
             with open(tempname, 'w') as temp:
                 print(module, file=temp)
-            new_command = prefix + ' ' + cmd_rest + ' ' + tempname
+            new_command = replace_shell_paths(prefix + ' ' + cmd_rest) + ' ' + quote_path(tempname)
             out = subprocess.check_output(new_command, shell=True, env=env).decode('utf-8')
             outputs.append(out)
 
         return f"\n{INTERNAL_SEPARATOR}\n".join(outputs)
     else:
         assert 'foreach' not in command, 'bad foreach matching: ' + command
-        return subprocess.check_output(command, shell=True, env=env).decode('utf-8')
+        return subprocess.check_output(replace_shell_paths(command), shell=True, env=env).decode('utf-8')
 
 
 def find_end(module, start):
