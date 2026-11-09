@@ -387,10 +387,8 @@ struct OwnershipTracker {
     if (info.usedByPrimary || info.usingSecondaries.size() > 1) {
       return &primary;
     }
-    if (info.usingSecondaries.size() == 1) {
-      return info.usingSecondaries[0];
-    }
-    return nullptr;
+    assert(info.usingSecondaries.size() == 1);
+    return info.usingSecondaries[0];
   }
 
   template<typename T>
@@ -405,12 +403,7 @@ struct OwnershipTracker {
   }
 
   template<typename T> bool isUnused(Name name) {
-    auto& map = getMap<T>();
-    auto it = map.find(name);
-    if (it != map.end()) {
-      return !it->second.usedByPrimary && it->second.usingSecondaries.empty();
-    }
-    return true;
+    return !getMap<T>().contains(name);
   }
 
   template<typename T> bool isUsedByPrimary(Name name) {
