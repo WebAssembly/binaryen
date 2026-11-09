@@ -354,10 +354,12 @@
 #include "ir/memory-utils.h"
 #include "ir/module-utils.h"
 #include "ir/names.h"
+#include "ir/type-updating.h"
 #include "ir/utils.h"
 #include "pass.h"
 #include "passes/pass-utils.h"
 #include "support/file.h"
+#include "support/insert_ordered.h"
 #include "support/string.h"
 #include "wasm-builder.h"
 #include "wasm.h"
@@ -390,16 +392,36 @@ enum class DataOffset { BStackPos = 0, BStackEnd = 4, BStackEnd64 = 8 };
 
 const auto STACK_ALIGN = 4;
 
-// Reference spill tables start at the acyclic per-function sum and grow on
-// unwind (for recursion); overflow traps on the out-of-bounds table.set.
+// Reference locals are spilled into one table per heap type/exactness, with a
+// global holding the current slot position (like the Asyncify stack pointer).
+// The saved region grows on unwind and shrinks on rewind (which clears slots).
+// Initial size covers live ref locals of that type; recursion grows as needed,
+// and overflow traps on the out-of-bounds table.set.
 const uint32_t REF_TABLE_MAX = 1 << 26;
 
-static Name refTableName(HeapType ht) {
-  return Name(std::string("__asyncify_ref_table_") + ht.toString());
+static Name refName(Module& module, Type type, const char* prefix) {
+  std::string name = prefix;
+  auto heapType = type.getHeapType();
+  if (auto it = module.typeNames.find(heapType);
+      it != module.typeNames.end() && it->second.name.is()) {
+    name += it->second.name.toString();
+  } else {
+    // Basic types and unnamed types have no name in the module
+    name += heapType.toString();
+  }
+  if (type.isExact()) {
+    // Exact references need their own tables
+    name += "_exact";
+  }
+  return Name(name);
 }
 
-static Name refCursorName(HeapType ht) {
-  return Name(std::string("__asyncify_ref_pos_") + ht.toString());
+static Name refTableName(Module& module, Type type) {
+  return refName(module, type, "__asyncify_ref_table_");
+}
+
+static Name refCursorName(Module& module, Type type) {
+  return refName(module, type, "__asyncify_ref_pos_");
 }
 
 // A helper class for managing fake global names. Creates the globals and
@@ -413,29 +435,42 @@ static Name refCursorName(HeapType ht) {
 // i.e., we don't store to the target local if not running normally).
 class FakeGlobalHelper {
   Module& module;
+  std::unordered_set<Type> storageTypes;
 
 public:
   FakeGlobalHelper(Module& module) : module(module) {
-    Builder builder(module);
-    std::string prefix = "asyncify_fake_call_global_";
+    // Store the types in their nullable versions so that makeZero can
+    // initialize the globals (non-defaultable types have no zero)
     for (auto type : collectTypes()) {
-      auto global = prefix + Type(type).toString();
-      map[type] = global;
-      rev[global] = type;
+      storageTypes.insert(getStorageType(type));
+    }
+    Builder builder(module);
+    for (auto type : storageTypes) {
+      auto name = getNameForStorageType(type);
+      rev[name] = type;
       module.addGlobal(builder.makeGlobal(
-        global, type, LiteralUtils::makeZero(type, module), Builder::Mutable));
+        name, type, LiteralUtils::makeZero(type, module), Builder::Mutable));
     }
   }
 
   ~FakeGlobalHelper() {
-    for (auto& pair : map) {
-      auto name = pair.second;
-      module.removeGlobal(name);
+    for (auto type : storageTypes) {
+      module.removeGlobal(getNameForStorageType(type));
     }
   }
 
-  Name getName(Type type) { return map.at(type); }
+  // The name of the fake global used to stash a call result of this type
+  Name getName(Type type) { return getNameForStorageType(getStorageType(type)); }
 
+  // The type a call result is stored as.
+  // Non-defaultable reference types are stored as their nullable versions, 
+  // and readers cast back with ref.as_non_null
+  Type getStorageType(Type type) {
+    return TypeUpdating::getValidLocalType(type, module.features);
+  }
+
+  // The storage type of the fake global with this name, or none if this is not
+  // a fake global.
   Type getTypeOrNone(Name name) {
     auto iter = rev.find(name);
     if (iter != rev.end()) {
@@ -445,8 +480,11 @@ public:
   }
 
 private:
-  std::unordered_map<Type, Name> map;
   std::unordered_map<Name, Type> rev;
+
+  Name getNameForStorageType(Type type) {
+    return Name(std::string("asyncify_fake_call_global_") + type.toString());
+  }
 
   // Collect the types returned from all calls for which call support globals
   // may need to be generated.
@@ -887,14 +925,8 @@ static bool doesCall(Expression* curr) {
   return curr->is<Call>() || curr->is<CallIndirect>();
 }
 
-// Interned types (Type, HeapType) carry no ordering operators, but their
-// canonical ids give a stable, deterministic order for map iteration.
-struct HeapTypeIdLess {
-  bool operator()(HeapType a, HeapType b) const {
-    return a.getID() < b.getID();
-  }
-};
-using RefCountMap = std::map<HeapType, Index, HeapTypeIdLess>;
+// Counts of spill slots per reference type
+using RefCountMap = InsertOrderedMap<Type, Index>;
 
 class AsyncifyBuilder : public Builder {
 public:
@@ -906,59 +938,58 @@ public:
     : Builder(wasm), wasm(wasm), pointerType(pointerType),
       asyncifyMemory(asyncifyMemory) {}
 
-  Name getRefTable(HeapType heapType) { return refTableName(heapType); }
+  Name getRefTable(Type type) { return refTableName(wasm, type); }
 
-  Expression* makeGetRefPos(HeapType heapType) {
-    return makeGlobalGet(refCursorName(heapType), pointerType);
+  Expression* makeGetRefPos(Type type) {
+    return makeGlobalGet(refCursorName(wasm, type), pointerType);
   }
 
-  // The table index for the `offset`th spilled slot of this heap type within
-  // the current frame, i.e. the cursor global advanced by the slot offset.
-  Expression* makeRefIndex(HeapType heapType, Index offset) {
+  // The table index for the `offset`th spilled slot of this reference type
+  // within the current frame, i.e. the cursor global advanced by the slot
+  // offset.
+  Expression* makeRefIndex(Type type, Index offset) {
     return makeBinary(Abstract::getBinary(pointerType, Abstract::Add),
-                      makeGetRefPos(heapType),
+                      makeGetRefPos(type),
                       makeConst(Literal::makeFromInt64(offset, pointerType)));
   }
 
   // A spill slot is a GC root, so once a reference has been restored into its
   // local the slot must be cleared to stop the table retaining the object.
-  Expression* makeClearRefSlot(HeapType heapType, Index offset) {
-    return makeTableSet(getRefTable(heapType),
-                        makeRefIndex(heapType, offset),
-                        LiteralUtils::makeZero(Type(heapType, Nullable), wasm));
+  Expression* makeClearRefSlot(Type type, Index offset) {
+    return makeTableSet(
+      getRefTable(type), makeRefIndex(type, offset),
+      LiteralUtils::makeZero(type, wasm));
   }
 
-  Expression* makeIncRefPos(HeapType heapType, int32_t by) {
+  Expression* makeIncRefPos(Type type, int32_t by) {
     if (by == 0) {
       return makeNop();
     }
     return makeGlobalSet(
-      refCursorName(heapType),
+      refCursorName(wasm, type),
       makeBinary(Abstract::getBinary(pointerType, Abstract::Add),
-                 makeGetRefPos(heapType),
+                 makeGetRefPos(type),
                  makeConst(Literal::makeFromInt64(by, pointerType))));
   }
 
   // Ensure the table has room for `count` more slots at the cursor, so that
   // recursive callers (live on the stack more than once) still fit.
-  Expression* makeEnsureRefCapacity(HeapType heapType, uint32_t count) {
+  Expression* makeEnsureRefCapacity(Type type, uint32_t count) {
     if (count == 0) {
       return makeNop();
     }
-    auto table = getRefTable(heapType);
+    auto table = getRefTable(type);
     // Each operand gets its own copy: the IR is a tree, so an Expression*
     // cannot be shared between the condition and the grow.
     auto deficit = makeBinary(Abstract::getBinary(pointerType, Abstract::Sub),
-                              makeRefIndex(heapType, count),
+                              makeRefIndex(type, count),
                               makeTableSize(table));
     auto full = makeBinary(Abstract::getBinary(pointerType, Abstract::GtU),
-                           makeRefIndex(heapType, count),
+                           makeRefIndex(type, count),
                            makeTableSize(table));
     return makeIf(full,
                   makeDrop(makeTableGrow(
-                    table,
-                    LiteralUtils::makeZero(Type(heapType, Nullable), wasm),
-                    deficit)));
+                    table, LiteralUtils::makeZero(type, wasm), deficit)));
   }
 
   Expression* makeGetStackPos() {
@@ -1269,6 +1300,32 @@ private:
     return builder->makeIf(builder->makeStateCheck(State::Normal), curr);
   }
 
+  // Reads back a fake call-result global, restoring the call result's type.
+  // The global stores a nullable version of that type, so non-nullable
+  // references need ref.as_non_null.
+  Expression* makeFakeGlobalGet(Name name, Type type) {
+    auto storageType = analyzer->fakeGlobals.getStorageType(type);
+    if (storageType == type) {
+      return builder->makeGlobalGet(name, type);
+    }
+    if (!type.isTuple()) {
+      return builder->makeRefAs(RefAsNonNull,
+                                builder->makeGlobalGet(name, storageType));
+    }
+    std::vector<Expression*> elems(type.size());
+    for (Index i = 0, size = type.size(); i < size; ++i) {
+      // Each component needs its own global.get: the IR is a tree, so an
+      // Expression* cannot be shared.
+      Expression* elem = builder->makeTupleExtract(
+        builder->makeGlobalGet(name, storageType), i);
+      if (type[i].isNonNullableRef()) {
+        elem = builder->makeRefAs(RefAsNonNull, elem);
+      }
+      elems[i] = elem;
+    }
+    return builder->makeTupleMake(std::move(elems));
+  }
+
   Expression* makeCallSupport(Expression* curr) {
     // TODO: stop doing this after code can no longer reach a call that may
     //       change the state
@@ -1288,9 +1345,10 @@ private:
     // AsyncifyLocals locals adds local saving/restoring.
     auto* set = curr->dynCast<LocalSet>();
     if (set) {
-      auto name = analyzer->fakeGlobals.getName(set->value->type);
+      auto type = set->value->type;
+      auto name = analyzer->fakeGlobals.getName(type);
       curr = builder->makeGlobalSet(name, set->value);
-      set->value = builder->makeGlobalGet(name, set->value->type);
+      set->value = makeFakeGlobalGet(name, type);
     }
     // Instrument the call itself (or, if a drop, the drop+call).
     auto index = callIndex++;
@@ -1626,6 +1684,9 @@ struct AsyncifyLocals : public WalkerPass<PostWalker<AsyncifyLocals>> {
     // Find the locals that we actually need to load and save: any local that is
     // alive at a relevant call site must be handled, but others can be ignored.
     findRelevantLiveLocals(func);
+    // A spilled local may not be initialized before its first call, so make
+    // non-nullable ones nullable. Reads/writes are cast back with ref.as_non_null.
+    makeRelevantLocalsDefaultable(func);
     // The new function body has a prelude to load locals if rewinding,
     // then the actual main body, which does all its unwindings by breaking
     // to the unwind block, which then handles pushing the call index, as
@@ -1681,6 +1742,19 @@ private:
     relevantLiveLocals = computeRelevantLiveLocals(func, getModule());
   }
 
+  // Make the non-defaultable locals that we spill nullable
+  void makeRelevantLocalsDefaultable(Function* func) {
+    std::unordered_set<Index> forced;
+    for (auto index : relevantLiveLocals) {
+      if (!func->isParam(index) && !func->getLocalType(index).isDefaultable()) {
+        forced.insert(index);
+      }
+    }
+    if (!forced.empty()) {
+      TypeUpdating::handleNonDefaultableLocals(func, *getModule(), &forced);
+    }
+  }
+
   // Next slot for a local: a table slot for reference components, a byte
   // range in linear memory for everything else
   struct SpillCursors {
@@ -1691,8 +1765,8 @@ private:
     SpillCursors(AsyncifyBuilder& builder) : builder(builder) {}
 
     // Table slot for the next reference
-    Expression* nextRef(HeapType heapType) {
-      return builder.makeRefIndex(heapType, refOffsets[heapType]++);
+    Expression* nextRef(Type type) {
+      return builder.makeRefIndex(type, refOffsets[type]++);
     }
 
     // Byte offset of the next non-reference component
@@ -1707,12 +1781,13 @@ private:
   Expression*
   makeComponentLoading(Type type, Index tempIndex, SpillCursors& cursors) {
     if (type.isRef()) {
-      auto heapType = type.getHeapType();
       // The table is nullable, so a non-nullable local needs a cast back.
-      Expression* load = builder->makeTableGet(builder->getRefTable(heapType),
-                                               cursors.nextRef(heapType),
-                                               Type(heapType, Nullable));
-      if (!type.isNullable()) {
+      auto storageType = type.with(Nullable);
+      Expression* load = builder->makeTableGet(
+        builder->getRefTable(storageType),
+        cursors.nextRef(storageType),
+        storageType);
+      if (type.isNonNullableRef()) {
         load = builder->makeRefAs(RefAsNonNull, load);
       }
       return load;
@@ -1736,8 +1811,9 @@ private:
                                   Index tempIndex,
                                   SpillCursors& cursors) {
     if (type.isRef()) {
-      return builder->makeTableSet(builder->getRefTable(type.getHeapType()),
-                                   cursors.nextRef(type.getHeapType()),
+      auto storageType = type.with(Nullable);
+      return builder->makeTableSet(builder->getRefTable(storageType),
+                                   cursors.nextRef(storageType),
                                    value);
     }
     auto size = getByteSize(type);
@@ -1767,7 +1843,7 @@ private:
       }
       for (const auto& type : func->getLocalType(i)) {
         if (type.isRef()) {
-          layout.refTotals[type.getHeapType()] += 1;
+          layout.refTotals[type.with(Nullable)] += 1;
         } else {
           layout.memTotal += getByteSize(type);
         }
@@ -1786,8 +1862,8 @@ private:
     auto* block = builder->makeBlock();
 
     block->list.push_back(builder->makeIncStackPos(-layout.memTotal));
-    for (const auto& [heapType, count] : layout.refTotals) {
-      block->list.push_back(builder->makeIncRefPos(heapType, -int32_t(count)));
+    for (const auto& [type, count] : layout.refTotals) {
+      block->list.push_back(builder->makeIncRefPos(type, -int32_t(count)));
     }
     auto tempIndex = builder->addVar(func, builder->pointerType);
     block->list.push_back(
@@ -1814,9 +1890,9 @@ private:
     }
     // Release the slots just restored, so the table does not keep the
     // references alive for the life of the instance.
-    for (const auto& [heapType, count] : layout.refTotals) {
+    for (const auto& [type, count] : layout.refTotals) {
       for (Index offset = 0; offset < count; offset++) {
-        block->list.push_back(builder->makeClearRefSlot(heapType, offset));
+        block->list.push_back(builder->makeClearRefSlot(type, offset));
       }
     }
     block->finalize();
@@ -1835,8 +1911,8 @@ private:
     block->list.push_back(
       builder->makeLocalSet(tempIndex, builder->makeGetStackPos()));
     // Ensure room for this frame's reference spill before writing any of it
-    for (const auto& [heapType, total] : layout.refTotals) {
-      block->list.push_back(builder->makeEnsureRefCapacity(heapType, total));
+    for (const auto& [type, total] : layout.refTotals) {
+      block->list.push_back(builder->makeEnsureRefCapacity(type, total));
     }
     SpillCursors cursors(*builder);
     for (Index i = 0; i < numLocals; i++) {
@@ -1856,8 +1932,8 @@ private:
       }
     }
     block->list.push_back(builder->makeIncStackPos(cursors.memOffset));
-    for (const auto& [heapType, total] : cursors.refOffsets) {
-      block->list.push_back(builder->makeIncRefPos(heapType, int32_t(total)));
+    for (const auto& [type, total] : cursors.refOffsets) {
+      block->list.push_back(builder->makeIncRefPos(type, int32_t(total)));
     }
     block->finalize();
     return block;
@@ -2046,7 +2122,6 @@ struct Asyncify : public Pass {
       runner.setValidateGlobally(false);
       runner.run();
     }
-    setupRefSpill(module, instrumentedFuncs);
     if (asserts) {
       // Add asserts in non-instrumented code. Note we do not use an
       // instrumented pass runner here as we do want to run on all functions.
@@ -2059,16 +2134,22 @@ struct Asyncify : public Pass {
       runner.setValidateGlobally(false);
       runner.run();
     }
-    // Next, add local saving/restoring logic. We optimize before doing this,
-    // to undo the extra code generated by flattening, and to arrive at the
-    // minimal amount of locals (which is important as we must save and
-    // restore those locals). We also and optimize after as well to simplify
-    // the code as much as possible.
+    // Optimize before adding local saving/restoring, to undo flattening and
+    // reach the minimal set of locals to save/restore. This must run before
+    // setting up the spill tables, since optimization can add/remove ref locals
+    // (e.g. heap2local) that the tables must match.
+    if (optimize) {
+      PassUtils::FilteredPassRunner runner(module, instrumentedFuncs);
+      runner.addDefaultFunctionOptimizationPasses();
+      runner.setIsNested(true);
+      runner.setValidateGlobally(false);
+      runner.run();
+    }
+    setupRefSpill(module, instrumentedFuncs);
+    // Next, add local saving/restoring logic. We optimize after as well to
+    // simplify the code as much as possible.
     {
       PassUtils::FilteredPassRunner runner(module, instrumentedFuncs);
-      if (optimize) {
-        runner.addDefaultFunctionOptimizationPasses();
-      }
       runner.add(std::make_unique<AsyncifyLocals>(
         &analyzer, pointerType, asyncifyMemory));
       if (optimize) {
@@ -2124,35 +2205,36 @@ private:
                      const PassUtils::FuncSet& instrumentedFuncs) {
     Builder builder(*module);
     RefCountMap counts;
-    for (auto* func : instrumentedFuncs) {
-      if (!func->body) {
+    // Iterate in module order
+    for (auto& func : module->functions) {
+      if (!instrumentedFuncs.contains(func.get()) || !func->body) {
         continue;
       }
-      for (auto local : computeRelevantLiveLocals(func, module)) {
+      for (auto local : computeRelevantLiveLocals(func.get(), module)) {
         for (const auto& type : func->getLocalType(local)) {
           if (type.isRef()) {
-            counts[type.getHeapType()] += 1;
+            counts[type.with(Nullable)] += 1;
           }
         }
       }
     }
-    for (const auto& [heapType, count] : counts) {
+    for (const auto& [type, count] : counts) {
       if (count == 0) {
         continue;
       }
 
-      auto table = Builder::makeTable(refTableName(heapType),
-                                      Type(heapType, Nullable),
+      auto table = Builder::makeTable(refTableName(*module, type),
+                                      type,          // nullable table type
                                       count,         // initial size
                                       REF_TABLE_MAX, // max size (growable)
                                       pointerType,   // address type
                                       nullptr);      // init: default null
       module->addTable(std::move(table));
-      module->addGlobal(builder.makeGlobal(refCursorName(heapType),
+      module->addGlobal(builder.makeGlobal(refCursorName(*module, type),
                                            pointerType,
                                            builder.makeConst(pointerType),
                                            Builder::Mutable));
-      refHeapTypes.insert(heapType);
+      refTypes.insert(type);
     }
   }
 
@@ -2172,15 +2254,15 @@ private:
       }
       // Asyncify only supports one pause at a time.
       if (name == ASYNCIFY_START_UNWIND) {
-        for (auto heapType : refHeapTypes) {
+        for (auto type : refTypes) {
           body->list.push_back(builder.makeIf(
             builder.makeBinary(
               Abstract::getBinary(pointerType, Abstract::Ne),
-              builder.makeGlobalGet(refCursorName(heapType), pointerType),
+              builder.makeGlobalGet(refCursorName(*module, type), pointerType),
               builder.makeConst(pointerType)),
             builder.makeUnreachable()));
           body->list.push_back(builder.makeGlobalSet(
-            refCursorName(heapType), builder.makeConst(pointerType)));
+            refCursorName(*module, type), builder.makeConst(pointerType)));
         }
       }
       // Verify the data is valid.
@@ -2236,7 +2318,7 @@ private:
 
   Type pointerType;
   Name asyncifyMemory;
-  std::set<HeapType, HeapTypeIdLess> refHeapTypes;
+  InsertOrderedSet<Type> refTypes;
 };
 
 Pass* createAsyncifyPass() { return new Asyncify(); }
