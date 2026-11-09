@@ -118,7 +118,7 @@ struct MemoryPacking : public Pass {
                        const std::unique_ptr<DataSegment>& segment,
                        const Referrers& referrers,
                        std::vector<Range>& ranges);
-  void createSplitSegments(Builder& builder,
+  void createSplitSegments(Module* module,
                            const DataSegment* segment,
                            std::vector<Range>& ranges,
                            std::vector<std::unique_ptr<DataSegment>>& packed,
@@ -160,7 +160,6 @@ void MemoryPacking::run(Module* module) {
   std::vector<std::unique_ptr<DataSegment>> packed;
 
   Replacements replacements;
-  Builder builder(*module);
   for (size_t index = 0; index < segments.size(); ++index) {
     auto& segment = segments[index];
     auto& currReferrers = referrers[segment->name];
@@ -178,7 +177,7 @@ void MemoryPacking::run(Module* module) {
     size_t segmentsRemaining = segments.size() - index;
     size_t currSegmentsStart = packed.size();
     createSplitSegments(
-      builder, segment.get(), ranges, packed, segmentsRemaining);
+      module, segment.get(), ranges, packed, segmentsRemaining);
     std::vector<Name> currSegmentNames;
     for (size_t i = currSegmentsStart; i < packed.size(); ++i) {
       currSegmentNames.push_back(packed[i]->name);
@@ -716,11 +715,12 @@ Expression* addStartAndOffset(T start, T offset, Builder& builder) {
 }
 
 void MemoryPacking::createSplitSegments(
-  Builder& builder,
+  Module* module,
   const DataSegment* segment,
   std::vector<Range>& ranges,
   std::vector<std::unique_ptr<DataSegment>>& packed,
   size_t segmentsRemaining) {
+  Builder builder(*module);
   size_t segmentCount = 0;
   bool hasExplicitName = false;
   for (size_t i = 0; i < ranges.size(); ++i) {
@@ -763,7 +763,9 @@ void MemoryPacking::createSplitSegments(
         name = segment->name;
         hasExplicitName = segment->hasExplicitName;
       } else {
-        name = segment->name.toString() + "." + std::to_string(segmentCount);
+        name = Names::getValidDataSegmentName(*module,
+                                              segment->name.toString() + "." +
+                                                std::to_string(segmentCount));
       }
       segmentCount++;
     }

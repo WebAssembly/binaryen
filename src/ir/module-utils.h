@@ -505,6 +505,14 @@ struct IndexedHeapTypes {
 // frequency of use to minimize code size.
 IndexedHeapTypes getOptimizedIndexedHeapTypes(Module& wasm);
 
+// Returns the set of functions that can potentially be the target of a call_ref
+// or call_indirect. These are:
+//  * Functions that appear in a ref.func in the module.
+//  * Functions that are `elem declare`d (which is represented as ref.func in
+//  the IR).
+//  * Exported functions, since they can flow back to us as a reference.
+std::unordered_set<Function*> getReferencedFuncs(Module& module);
+
 } // namespace wasm::ModuleUtils
 
 #endif // wasm_ir_module_h

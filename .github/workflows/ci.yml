@@ -52,8 +52,8 @@ jobs:
         # Test on the oldest support Ubuntu version in addition to `latest`.
         # Build using the oldest support macOS version.  For emsdk this is
         # currently macos-13, but unfortunately that doesn't exist in github
-        # actions so we settle for macos-14.
-        os: [ubuntu-22.04, ubuntu-latest, macos-14, windows-latest, windows-11-arm]
+        # actions so we settle for macos-15.
+        os: [ubuntu-22.04, ubuntu-latest, macos-15, windows-latest, windows-11-arm]
     steps:
     - uses: actions/setup-python@v5
       with:
