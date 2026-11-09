@@ -845,6 +845,8 @@
     ;; $sub receives a non-null $cont. Propagating $sub's field type to $super
     ;; widens $super's LUB from nullcontref to (ref null $cont), which is not
     ;; castable, so $super's field must remain contref.
+    ;; TODO: Also allow GUFA to refine $sub's field to (ref (exact $cont)) like
+    ;; normal TypeRefining does, since no cast is required at $sub's write site.
     (local $c contref)
     (drop
       (struct.new $super
@@ -920,6 +922,111 @@
     (drop
       (struct.new $struct
         (local.get $c)
+      )
+    )
+  )
+)
+
+(module
+  ;; NRML:      (type $func (func))
+  ;; GUFA:      (type $func (func))
+  ;; O3O3:      (type $func (func))
+  (type $func (func))
+  ;; NRML:      (type $cont (cont $func))
+  ;; GUFA:      (type $cont (cont $func))
+  ;; O3O3:      (type $cont (cont $func))
+  (type $cont (cont $func))
+  ;; NRML:      (type $struct (struct (field (ref $cont))))
+  ;; GUFA:      (type $struct (struct (field (ref $cont))))
+  (type $struct (struct (field (ref $cont))))
+  ;; NRML:      (type $3 (func (param (ref $cont))))
+
+  ;; NRML:      (elem declare func $f)
+  ;; GUFA:      (type $3 (func (param (ref $cont))))
+
+  ;; GUFA:      (elem declare func $f)
+  (elem declare func $f)
+  ;; NRML:      (tag $e (type $func))
+  ;; GUFA:      (tag $e (type $func))
+  (tag $e)
+  ;; NRML:      (export "test" (func $test))
+
+  ;; NRML:      (func $f (type $func)
+  ;; NRML-NEXT: )
+  ;; GUFA:      (export "test" (func $test))
+
+  ;; GUFA:      (func $f (type $func)
+  ;; GUFA-NEXT: )
+  (func $f (type $func))
+  ;; NRML:      (func $test (type $3) (param $c (ref $cont))
+  ;; NRML-NEXT:  (drop
+  ;; NRML-NEXT:   (struct.new $struct
+  ;; NRML-NEXT:    (try (result (ref $cont))
+  ;; NRML-NEXT:     (do
+  ;; NRML-NEXT:      (struct.get $struct 0
+  ;; NRML-NEXT:       (struct.new $struct
+  ;; NRML-NEXT:        (cont.new $cont
+  ;; NRML-NEXT:         (ref.func $f)
+  ;; NRML-NEXT:        )
+  ;; NRML-NEXT:       )
+  ;; NRML-NEXT:      )
+  ;; NRML-NEXT:     )
+  ;; NRML-NEXT:     (catch $e
+  ;; NRML-NEXT:      (local.get $c)
+  ;; NRML-NEXT:     )
+  ;; NRML-NEXT:    )
+  ;; NRML-NEXT:   )
+  ;; NRML-NEXT:  )
+  ;; NRML-NEXT: )
+  ;; GUFA:      (func $test (type $3) (param $c (ref $cont))
+  ;; GUFA-NEXT:  (drop
+  ;; GUFA-NEXT:   (struct.new $struct
+  ;; GUFA-NEXT:    (try (result (ref $cont))
+  ;; GUFA-NEXT:     (do
+  ;; GUFA-NEXT:      (struct.get $struct 0
+  ;; GUFA-NEXT:       (struct.new $struct
+  ;; GUFA-NEXT:        (cont.new $cont
+  ;; GUFA-NEXT:         (ref.func $f)
+  ;; GUFA-NEXT:        )
+  ;; GUFA-NEXT:       )
+  ;; GUFA-NEXT:      )
+  ;; GUFA-NEXT:     )
+  ;; GUFA-NEXT:     (catch $e
+  ;; GUFA-NEXT:      (local.get $c)
+  ;; GUFA-NEXT:     )
+  ;; GUFA-NEXT:    )
+  ;; GUFA-NEXT:   )
+  ;; GUFA-NEXT:  )
+  ;; GUFA-NEXT: )
+  ;; O3O3:      (type $2 (func (param (ref $cont))))
+
+  ;; O3O3:      (export "test" (func $test))
+
+  ;; O3O3:      (func $test (type $2) (param $0 (ref $cont))
+  ;; O3O3-NEXT:  (nop)
+  ;; O3O3-NEXT: )
+  (func $test (export "test") (param $c (ref $cont))
+    ;; The try body does not throw, so its fallthrough is a self-copy
+    ;; struct.get. Because continuation types are not castable, FieldInfoScanner
+    ;; must not look through the try fallthrough and ignore the catch arm, which
+    ;; would refine $struct's field to (ref (exact $cont)) and require an
+    ;; invalid ref.cast on the try.
+    (drop
+      (struct.new $struct
+        (try (result (ref $cont))
+          (do
+            (struct.get $struct 0
+              (struct.new $struct
+                (cont.new $cont
+                  (ref.func $f)
+                )
+              )
+            )
+          )
+          (catch $e
+            (local.get $c)
+          )
+        )
       )
     )
   )

@@ -105,6 +105,7 @@ Pass* createMinimizeRecGroupsPass();
 Pass* createMetricsPass();
 Pass* createMonomorphizePass();
 Pass* createMonomorphizeAlwaysPass();
+Pass* createMultiHeap2LocalPass();
 Pass* createMultiMemoryLoweringPass();
 Pass* createMultiMemoryLoweringWithBoundsChecksPass();
 Pass* createNameListPass();

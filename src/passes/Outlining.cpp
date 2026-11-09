@@ -34,12 +34,6 @@
 #define ODBG(statement)
 #endif
 
-// Check a Result or MaybeResult for error and call Fatal() if the error exists.
-#define ASSERT_OK(val)                                                         \
-  if (auto _val = (val); auto err = _val.getErr()) {                           \
-    Fatal() << err->msg;                                                       \
-  }
-
 namespace wasm {
 
 // This custom hasher conforms to std::hash<Key>. Its purpose is to provide
