@@ -77,6 +77,7 @@
 #include "ir/find_all.h"
 #include "ir/module-utils.h"
 #include "ir/names.h"
+#include "ir/properties.h"
 #include "support/small_vector.h"
 #include "support/stdckdint.h"
 #include "wasm-builder.h"
@@ -779,6 +780,17 @@ void ModuleSplitter::thunkExportedSecondaryFunctions() {
   }
 }
 
+bool canCopyGlobal(Global* global, Module& wasm) {
+  // Mutable globals cannot be copied to multiple modules because mutations in
+  // one module would not be visible in others. Immutable globals with
+  // generative initializers (e.g. struct.new) also cannot be copied because
+  // there would be an observable difference (e.g. struct identity tested with
+  // ref.eq) between the values in the copies.
+  return !global->mutable_ &&
+         (!global->init ||
+          !Properties::isGenerative(global->init, nullptr, wasm));
+}
+
 void ModuleSplitter::computeUsedNames() {
   tracker.secondaries = &secondaries;
   tracker.secondaryUsed.resize(secondaries.size());
@@ -1073,9 +1085,10 @@ void ModuleSplitter::computeUsedNames() {
       continue;
     }
 
-    // In case of mutable globals, we cannot have multiple copies. Compute the
-    // 'owner' of the global and insert its dependent globals there.
-    if (global->mutable_) {
+    // In case of mutable globals or immutable globals with generative
+    // initializers (e.g. struct.new), we cannot have multiple copies. Compute
+    // the 'owner' of the global and insert its dependent globals there.
+    if (!canCopyGlobal(global.get(), primary)) {
       if (UsedNames* owner = tracker.getOwner(global->name, tracker.globals)) {
         for (auto* get : gets) {
           tracker.insert<Global>(get->name, owner);
@@ -1084,9 +1097,10 @@ void ModuleSplitter::computeUsedNames() {
       continue;
     }
 
-    // In case of immutable globals, we can have multiple copies of it. To
-    // reduce the primary module size, we just copy the globals to all secondary
-    // modules using them. So here we insert the global in all using modules.
+    // In case of copyable immutable globals, we can have multiple copies of
+    // them. To reduce the primary module size, we just copy the globals to all
+    // secondary modules using them. So here we insert the dependent globals in
+    // all using modules.
     if (tracker.isUsedByPrimary(global->name, tracker.globals)) {
       for (auto* get : gets) {
         tracker.insert<Global>(get->name, &primaryUsed);
@@ -1114,8 +1128,8 @@ void ModuleSplitter::shareImportableItems() {
   // 2. If an item is used by only a single secondary module, move the item to
   //    that secondary module. If an item is used by multiple modules (including
   //    the primary and secondary modules), export the item from the primary and
-  //    import it from the using secondary modules. (except for immutable
-  //    globals, which we just copy to using secondary modules)
+  //    import it from the using secondary modules. (except for non-generative
+  //    immutable globals, which we just copy to using secondary modules)
   auto shareElements = [&](auto& elements,
                            auto& trackerElements,
                            auto copyElement,
@@ -1125,11 +1139,9 @@ void ModuleSplitter::shareImportableItems() {
     std::unordered_set<Name> elementsToRemove;
     for (auto& element : elements) {
       using T = std::remove_pointer_t<decltype(element.get())>;
-      bool isImmutableGlobal = false;
+      bool isCopyableGlobal = false;
       if constexpr (std::is_same_v<T, Global>) {
-        if (!element->mutable_) {
-          isImmutableGlobal = true;
-        }
+        isCopyableGlobal = canCopyGlobal(element.get(), primary);
       }
 
       if (tracker.isUnused(element->name, trackerElements)) {
@@ -1143,8 +1155,8 @@ void ModuleSplitter::shareImportableItems() {
           tracker.getUsingSecondaries(element->name, trackerElements)[0];
         copyElement(element.get(), *secondary);
         elementsToRemove.insert(element->name);
-      } else if (isImmutableGlobal) {
-        // If this element is an immutable global, copy it to all using
+      } else if (isCopyableGlobal) {
+        // If this element is a copyable immutable global, copy it to all using
         // secondary modules to reduce the primary module size, because we can
         // have multiple copies. If it is not used in the primary module, remove
         // it from there.
