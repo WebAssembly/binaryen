@@ -780,7 +780,7 @@ void ModuleSplitter::thunkExportedSecondaryFunctions() {
   }
 }
 
-bool canCopyGlobal(Global* global, Module& wasm) {
+static bool canCopyGlobal(Global* global, Module& wasm) {
   // Mutable globals cannot be copied to multiple modules because mutations in
   // one module would not be visible in others. Immutable globals with
   // generative initializers (e.g. struct.new) also cannot be copied because
