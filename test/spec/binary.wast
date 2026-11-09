@@ -618,3 +618,83 @@
   )
   "junk after last section"
 )
+
+;; Accessing scratch locals created by IRBuilder (e.g. for block parameters)
+;; is invalid.
+(assert_invalid
+  (module binary
+    "\00asm" "\01\00\00\00"
+    "\01\0a\02"                                    ;; Type section: 2 types
+    "\60\00\01\7f"                                 ;; type 0: [] -> [i32]
+    "\60\01\7f\01\7f"                              ;; type 1: [i32] -> [i32]
+    "\03\02\01\00"                                 ;; Function section: func 0 (type 0)
+    "\0a\0c\01"                                    ;; Code section: 1 function
+    "\0a\00"                                       ;; body size 10, 0 locals
+    "\41\0a"                                       ;; i32.const 10
+    "\02\01"                                       ;; block (type 1)
+    "\20\00"                                       ;; local.get 0 (scratch local)
+    "\1a"                                          ;; drop
+    "\0b"                                          ;; end block
+    "\0b"                                          ;; end func
+  )
+  "invalid local.get index"
+)
+
+(assert_invalid
+  (module binary
+    "\00asm" "\01\00\00\00"
+    "\01\0a\02"                                    ;; Type section: 2 types
+    "\60\00\01\7f"                                 ;; type 0: [] -> [i32]
+    "\60\01\7f\01\7f"                              ;; type 1: [i32] -> [i32]
+    "\03\02\01\00"                                 ;; Function section: func 0 (type 0)
+    "\0a\0d\01"                                    ;; Code section: 1 function
+    "\0b\00"                                       ;; body size 11, 0 locals
+    "\41\0a"                                       ;; i32.const 10
+    "\02\01"                                       ;; block (type 1)
+    "\41\63"                                       ;; i32.const 99
+    "\21\00"                                       ;; local.set 0 (scratch local)
+    "\0b"                                          ;; end block
+    "\0b"                                          ;; end func
+  )
+  "invalid local.set index"
+)
+
+(assert_invalid
+  (module binary
+    "\00asm" "\01\00\00\00"
+    "\01\0a\02"                                    ;; Type section: 2 types
+    "\60\00\01\7f"                                 ;; type 0: [] -> [i32]
+    "\60\01\7f\01\7f"                              ;; type 1: [i32] -> [i32]
+    "\03\02\01\00"                                 ;; Function section: func 0 (type 0)
+    "\0a\0e\01"                                    ;; Code section: 1 function
+    "\0c\00"                                       ;; body size 12, 0 locals
+    "\41\0a"                                       ;; i32.const 10
+    "\02\01"                                       ;; block (type 1)
+    "\41\63"                                       ;; i32.const 99
+    "\22\00"                                       ;; local.tee 0 (scratch local)
+    "\1a"                                          ;; drop
+    "\0b"                                          ;; end block
+    "\0b"                                          ;; end func
+  )
+  "invalid local.tee index"
+)
+
+;; Declared local 0 is valid, while scratch local 1 is out of bounds.
+(assert_invalid
+  (module binary
+    "\00asm" "\01\00\00\00"
+    "\01\0a\02"                                    ;; Type section: 2 types
+    "\60\00\01\7f"                                 ;; type 0: [] -> [i32]
+    "\60\01\7f\01\7f"                              ;; type 1: [i32] -> [i32]
+    "\03\02\01\00"                                 ;; Function section: func 0 (type 0)
+    "\0a\0f\01"                                    ;; Code section: 1 function
+    "\0d\01\01\7f"                                 ;; body size 13, 1 declared i32 local
+    "\41\0a"                                       ;; i32.const 10
+    "\02\01"                                       ;; block (type 1)
+    "\20\00"                                       ;; local.get 0 (declared local)
+    "\21\01"                                       ;; local.set 1 (scratch local)
+    "\0b"                                          ;; end block
+    "\0b"                                          ;; end func
+  )
+  "invalid local.set index"
+)

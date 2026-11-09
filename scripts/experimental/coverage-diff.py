@@ -15,16 +15,17 @@
 
 """Multi-metric differential test coverage reporter for Binaryen.
 
-Intersects `git diff` hunks with Clang/LLVM source-based code coverage
-(`llvm-cov export`) to report Line, Region, Branch, MC/DC, and Function coverage
-specifically for the code modified in a change. With -a / --annotate, also
-prints the diff annotated with coverage information.
+Intersects Git or Jujutsu (`jj`) diff hunks with Clang/LLVM source-based code
+coverage (`llvm-cov export`) to report Line, Region, Branch, MC/DC, and Function
+coverage specifically for the code modified in a change. With -a / --annotate,
+also prints the diff annotated with coverage information.
 
 Prints instructions for configuring a coverage reporting build and collecting
 coverage information if a coverage build cannot be found automatically.
 """
 
 import argparse
+import fnmatch
 import glob
 import json
 import os
@@ -598,15 +599,166 @@ def resolve_profdata(
     return None
 
 
-def get_git_diff_lines(
+def detect_vcs(explicit_vcs: str | None = None) -> str:
+    if explicit_vcs and explicit_vcs != 'auto':
+        return explicit_vcs
+    cur = os.path.abspath(REPO_ROOT)
+    while True:
+        if os.path.isdir(os.path.join(cur, '.jj')) and shutil.which('jj'):
+            return 'jj'
+        if os.path.exists(os.path.join(cur, '.git')):
+            return 'git'
+        parent = os.path.dirname(cur)
+        if parent == cur:
+            break
+        cur = parent
+    return 'jj' if shutil.which('jj') and not shutil.which('git') else 'git'
+
+
+def matches_file_patterns(rel_path: str, file_patterns: list[str] | None) -> bool:
+    if not file_patterns:
+        return True
+    rel_norm = rel_path.replace('\\', '/')
+    base_name = os.path.basename(rel_norm)
+    target_real = os.path.realpath(os.path.join(REPO_ROOT, rel_norm))
+    for raw_pat in file_patterns:
+        pat = raw_pat.replace('\\', '/')
+        while pat.startswith('./'):
+            pat = pat[2:]
+        if pat in {rel_norm, base_name}:
+            return True
+        if fnmatch.fnmatch(rel_norm, pat) or fnmatch.fnmatch(base_name, pat):
+            return True
+        if not any(ch in raw_pat for ch in '*?[') and os.path.realpath(raw_pat) == target_real:
+            return True
+    return False
+
+
+def parse_unified_diff(
+    diff_stdout: str,
+    file_patterns: list[str] | None = None,
+) -> dict[str, tuple[list[int], list[tuple[int, int]]]]:
+    file_diffs: dict[str, tuple[set[int], list[tuple[int, int]]]] = {}
+    current_file: str | None = None
+
+    for raw_line in diff_stdout.splitlines():
+        if raw_line.startswith('diff --git '):
+            current_file = None
+        elif raw_line.startswith('+++ b/'):
+            rel_path = raw_line[6:].strip()
+            ext = os.path.splitext(rel_path)[1]
+            abs_path = os.path.join(REPO_ROOT, rel_path)
+            if (
+                ext in CPP_EXTENSIONS
+                and os.path.isfile(abs_path)
+                and not rel_path.startswith('third_party/')
+                and matches_file_patterns(rel_path, file_patterns)
+            ):
+                current_file = rel_path
+                if current_file not in file_diffs:
+                    file_diffs[current_file] = (set(), [])
+            else:
+                current_file = None
+        elif raw_line.startswith('+++ /dev/null'):
+            current_file = None
+        elif current_file and raw_line.startswith('@@ '):
+            m = HUNK_RE.match(raw_line)
+            if m:
+                start_line = int(m.group(1))
+                count = int(m.group(2)) if m.group(2) is not None else 1
+                if count > 0:
+                    lines_set, hunks = file_diffs[current_file]
+                    lines_set.update(range(start_line, start_line + count))
+                    hunks.append((start_line, count))
+
+    return {
+        rel: (sorted(lines_set), hunks)
+        for rel, (lines_set, hunks) in sorted(file_diffs.items())
+        if lines_set
+    }
+
+
+def get_jj_diff_output(
     base_ref: str | None,
+    revisions: str | None,
     staged_only: bool,
-) -> tuple[str, dict[str, tuple[list[int], list[tuple[int, int]]]]]:
-    """Return (diff_description, {rel_path: (sorted_lines, [(start, count), ...])})."""
+) -> tuple[str, str]:
+    if staged_only:
+        print(
+            'Error: --staged is only supported with Git (Jujutsu has no staging area; use -r @ or --base @-).',
+            file=sys.stderr,
+        )
+        sys.exit(2)
+    if not shutil.which('jj'):
+        print("Error: 'jj' executable not found in PATH.", file=sys.stderr)
+        sys.exit(2)
+
+    jj_prefix = ['jj', '--no-pager', '--color=never']
+    if revisions:
+        diff_cmd = [*jj_prefix, 'diff', '--git', '--context=0', f'--revisions={revisions}']
+        desc = f'jj revisions {revisions}'
+    elif base_ref:
+        diff_cmd = [*jj_prefix, 'diff', '--git', '--context=0', f'--from={base_ref}', '--to=@']
+        desc = f'changes vs {base_ref}'
+    else:
+        mb_res = subprocess.run(
+            [*jj_prefix, 'log', '--no-graph', '-r', 'latest(heads(::(trunk() ~ root()) & ::@))', '-T', 'commit_id.short(10)'],
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        base_commit = mb_res.stdout.strip().splitlines()[0].strip() if mb_res.returncode == 0 and mb_res.stdout.strip() else ''
+        if base_commit:
+            rev_res = subprocess.run(
+                [*jj_prefix, 'log', '--no-graph', '-r', '(trunk() ~ root())..@', '-T', 'change_id.short(8) ++ "\\n"'],
+                cwd=REPO_ROOT,
+                capture_output=True,
+                text=True,
+            )
+            if rev_res.returncode == 0 and rev_res.stdout.strip():
+                diff_cmd = [*jj_prefix, 'diff', '--git', '--context=0', '--revisions=(trunk() ~ root())..@']
+            else:
+                diff_cmd = [*jj_prefix, 'diff', '--git', '--context=0', f'--from={base_commit}', '--to=@']
+            desc = f'branch changes vs trunk() ({base_commit})'
+        else:
+            wc_res = subprocess.run(
+                [*jj_prefix, 'log', '--no-graph', '-r', '@ & ~empty()', '-T', 'change_id.short(8)'],
+                cwd=REPO_ROOT,
+                capture_output=True,
+                text=True,
+            )
+            if wc_res.returncode == 0 and wc_res.stdout.strip():
+                diff_cmd = [*jj_prefix, 'diff', '--git', '--context=0', '--revisions=@']
+                desc = 'working-copy changes (@)'
+            else:
+                diff_cmd = [*jj_prefix, 'diff', '--git', '--context=0', '--revisions=@-']
+                desc = 'parent commit changes (@-)'
+
+    res = subprocess.run(diff_cmd, cwd=REPO_ROOT, capture_output=True, text=True)
+    if res.returncode != 0:
+        print(f'Error running jj diff:\n{res.stderr}', file=sys.stderr)
+        sys.exit(2)
+    return desc, res.stdout
+
+
+def get_git_diff_output(
+    base_ref: str | None,
+    revisions: str | None,
+    staged_only: bool,
+) -> tuple[str, str]:
     if staged_only:
         diff_cmd = ['git', 'diff', '--cached', '-U0', '--no-color']
         desc = 'staged changes (git diff --cached)'
+    elif revisions:
+        if '..' in revisions:
+            diff_cmd = ['git', 'diff', '-U0', '--no-color', '--end-of-options', revisions]
+        else:
+            diff_cmd = ['git', 'diff', '-U0', '--no-color', '--end-of-options', f'{revisions}~1', revisions]
+        desc = f'git revisions {revisions}'
     elif base_ref:
+        if base_ref.startswith('-'):
+            print(f"Error: Invalid base ref '{base_ref}'.", file=sys.stderr)
+            sys.exit(2)
         diff_cmd = ['git', 'diff', '-U0', '--no-color', base_ref]
         desc = f'changes vs {base_ref}'
     else:
@@ -654,39 +806,24 @@ def get_git_diff_lines(
     if res.returncode != 0:
         print(f'Error running git diff:\n{res.stderr}', file=sys.stderr)
         sys.exit(2)
+    return desc, res.stdout
 
-    file_diffs: dict[str, tuple[set[int], list[tuple[int, int]]]] = {}
-    current_file: str | None = None
 
-    for raw_line in res.stdout.splitlines():
-        if raw_line.startswith('+++ b/'):
-            rel_path = raw_line[6:].strip()
-            ext = os.path.splitext(rel_path)[1]
-            abs_path = os.path.join(REPO_ROOT, rel_path)
-            if ext in CPP_EXTENSIONS and os.path.isfile(abs_path) and not rel_path.startswith('third_party/'):
-                current_file = rel_path
-                if current_file not in file_diffs:
-                    file_diffs[current_file] = (set(), [])
-            else:
-                current_file = None
-        elif raw_line.startswith('+++ /dev/null'):
-            current_file = None
-        elif current_file and raw_line.startswith('@@ '):
-            m = HUNK_RE.match(raw_line)
-            if m:
-                start_line = int(m.group(1))
-                count = int(m.group(2)) if m.group(2) is not None else 1
-                if count > 0:
-                    lines_set, hunks = file_diffs[current_file]
-                    lines_set.update(range(start_line, start_line + count))
-                    hunks.append((start_line, count))
-
-    result = {
-        rel: (sorted(lines_set), hunks)
-        for rel, (lines_set, hunks) in sorted(file_diffs.items())
-        if lines_set
-    }
-    return desc, result
+def get_diff_lines(
+    vcs: str,
+    base_ref: str | None,
+    revisions: str | None,
+    staged_only: bool,
+    file_patterns: list[str] | None = None,
+) -> tuple[str, dict[str, tuple[list[int], list[tuple[int, int]]]]]:
+    """Return (diff_description, {rel_path: (sorted_lines, [(start, count), ...])})."""
+    if vcs == 'jj':
+        desc, stdout = get_jj_diff_output(base_ref, revisions, staged_only)
+    else:
+        desc, stdout = get_git_diff_output(base_ref, revisions, staged_only)
+    if file_patterns:
+        desc = f"{desc} [files: {', '.join(file_patterns)}]"
+    return desc, parse_unified_diff(stdout, file_patterns)
 
 
 def compute_line_stats(raw_segments: list[list]) -> dict[int, LineStat]:
@@ -977,7 +1114,7 @@ def analyze_coverage(
     include_unreachable: bool,
     include_system_macros: bool,
 ) -> list[FileDiffCoverage]:
-    """Intersect llvm-cov export JSON with git diff line sets across all metrics."""
+    """Intersect llvm-cov export JSON with diff line sets across all metrics."""
     files_by_realpath: dict[str, dict] = {}
     functions_by_realpath: dict[str, list[dict]] = {}
 
@@ -1596,13 +1733,34 @@ def main():
         'base',
         nargs='?',
         default=None,
-        help='Git ref to diff against (default: HEAD if uncommitted changes exist, else merge-base with upstream)',
+        help='Git ref or Jujutsu revset to diff against (default: branch changes vs trunk/upstream)',
     )
     parser.add_argument(
         '--base',
         dest='base_flag',
         default=None,
-        help='Git ref to diff against (overrides positional base)',
+        help='Git ref or Jujutsu revset to diff against (overrides positional base)',
+    )
+    parser.add_argument(
+        '-r',
+        '--revisions',
+        default=None,
+        metavar='REVSET',
+        help='Revision(s) to analyze (e.g. Jujutsu `-r @-`, `-r "trunk()..@"`, or Git commit/range)',
+    )
+    parser.add_argument(
+        '--vcs',
+        choices=['auto', 'git', 'jj'],
+        default='auto',
+        help='Version control system to query for diff hunks (default: auto)',
+    )
+    parser.add_argument(
+        '--files',
+        '--file',
+        nargs='+',
+        default=None,
+        metavar='PATTERN',
+        help='Restrict report to modified C/C++ files matching repo-relative path, basename, or glob',
     )
     parser.add_argument(
         '--staged',
@@ -1727,8 +1885,21 @@ def main():
         help='Path to llvm-profdata binary',
     )
 
-    args = parser.parse_args()
+    argv = sys.argv[2:] if len(sys.argv) > 2 and sys.argv[1] == '--' and sys.argv[2].startswith('-') else sys.argv[1:]
+    args = parser.parse_args(argv)
+    if args.base in {'-h', '--help'}:
+        parser.print_help()
+        sys.exit(0)
     base_ref = args.base_flag or args.base
+
+    if args.revisions and base_ref:
+        print('Error: Cannot combine -r/--revisions with a base ref.', file=sys.stderr)
+        sys.exit(2)
+    if args.revisions and args.staged:
+        print('Error: Cannot combine -r/--revisions with --staged.', file=sys.stderr)
+        sys.exit(2)
+
+    vcs = detect_vcs(args.vcs)
 
     # 1. Verify llvm-cov and llvm-profdata are installed.
     llvm_cov = find_llvm_tool('llvm-cov', args.llvm_cov)
@@ -1755,18 +1926,26 @@ def main():
         if not (args.lit or args.gtest is not None or args.run):
             sys.exit(0)
 
-    # 3. Collect git diff hunks first so we know which files/binaries are involved.
-    diff_desc, file_diffs = get_git_diff_lines(base_ref, args.staged)
+    # 3. Collect diff hunks first so we know which files/binaries are involved.
+    diff_desc, file_diffs = get_diff_lines(
+        vcs=vcs,
+        base_ref=base_ref,
+        revisions=args.revisions,
+        staged_only=args.staged,
+        file_patterns=args.files,
+    )
     if not file_diffs:
         if args.json:
             print(render_json_report(diff_desc, []))
         elif args.markdown:
             print(render_markdown_report(diff_desc, [], args.annotate, args.context))
         else:
-            print(
-                f'No modified C/C++ source files found in {diff_desc}.\n'
-                f'(Tip: pass a base ref such as `{SCRIPT_PATH} origin/main` or `HEAD~1` to compare committed changes.)',
+            tip = (
+                f'(Tip: pass `-r @-` or a base revset such as `{SCRIPT_PATH} main` to compare other revisions.)'
+                if vcs == 'jj'
+                else f'(Tip: pass a base ref such as `{SCRIPT_PATH} origin/main` or `HEAD~1` to compare committed changes.)'
             )
+            print(f'No modified C/C++ source files found in {diff_desc}.\n{tip}')
         sys.exit(0)
 
     # 4. Run tests if --lit, --gtest, or --run was specified.

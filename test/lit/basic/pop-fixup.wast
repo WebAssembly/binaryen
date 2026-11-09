@@ -285,6 +285,38 @@
   end
  )
 
+ ;; CHECK:      (func $named-block (type $0)
+ ;; CHECK-NEXT:  (local $0 i32)
+ ;; CHECK-NEXT:  (try
+ ;; CHECK-NEXT:   (do
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (catch $e
+ ;; CHECK-NEXT:    (local.set $0
+ ;; CHECK-NEXT:     (pop i32)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (block $block
+ ;; CHECK-NEXT:     (drop
+ ;; CHECK-NEXT:      (local.get $0)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (br $block)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $named-block
+  try
+  catch $e
+   ;; As in $stacky-named-block, but without the nop so no synthetic block is
+   ;; created for stacky code. The block still receives a name from the br, so
+   ;; the pop still needs to be fixed up.
+   block
+    pop i32
+    drop
+    br 0
+   end
+  end
+ )
+
  ;; CHECK:      (func $stacky-block-param-tuple (type $0)
  ;; CHECK-NEXT:  (local $scratch (tuple i32 i32))
  ;; CHECK-NEXT:  (local $scratch_1 i32)

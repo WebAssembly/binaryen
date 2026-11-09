@@ -12,7 +12,7 @@
 (module
   (memory 1 1 shared)
   (func $acqrel (result i32)
-    ;; CHECK: Acquire/release operations require relaxed atomics [--enable-acquire-release-atomics]
+    ;; CHECK: Acquire/release operations require acquire-release atomics [--enable-acquire-release-atomics]
     (i32.atomic.load acqrel
       (i32.const 1)
     )

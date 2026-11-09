@@ -45,76 +45,6 @@ struct FuncInfo {
   std::unordered_set<HeapType> indirectCalledTypes;
 };
 
-// Only funcs that are referenced may be the target of an indirect call. A
-// function is referenced if:
-// - It appears in a ref.func expression (this includes `elem` statements
-// because of how our IR is represented).
-// - It's exported, because it may flow back to us as a reference.
-//
-// If a function doesn't meet any of these criteria, it can't be the target of
-// an indirect call and we don't need to include its effects in indirect calls.
-std::unordered_set<Function*> getReferencedFuncs(Module& module,
-                                                 PassRunner& passRunner) {
-  struct AddressedFuncsWalker : WalkerPass<PostWalker<AddressedFuncsWalker>> {
-    // For each function, which functions are referenced in its body.
-    // The key for `nullptr` contains references that are not in a function
-    // (e.g. `elem` segments).
-    std::unordered_map<Function*, std::unordered_set<Function*>>&
-      allReferencedFuncs;
-    // Points to `allReferencedFuncs`.
-    std::unordered_set<Function*>* referencedFuncs = nullptr;
-
-    AddressedFuncsWalker(
-      std::unordered_map<Function*, std::unordered_set<Function*>>&
-        allReferencedFuncs)
-      : allReferencedFuncs(allReferencedFuncs),
-        referencedFuncs(&allReferencedFuncs[nullptr]) {}
-
-    std::unique_ptr<Pass> create() override {
-      return std::make_unique<AddressedFuncsWalker>(allReferencedFuncs);
-    }
-
-    bool isFunctionParallel() override { return true; }
-
-    bool modifiesBinaryenIR() override { return false; }
-
-    void doWalkFunction(Function* func) {
-      referencedFuncs = &allReferencedFuncs.at(func);
-      walk(func->body);
-    }
-
-    void visitRefFunc(RefFunc* refFunc) {
-      referencedFuncs->insert(getModule()->getFunction(refFunc->func));
-    }
-  };
-
-  std::unordered_map<Function*, std::unordered_set<Function*>>
-    allReferencedFuncs;
-  for (auto& func : module.functions) {
-    allReferencedFuncs[func.get()];
-  }
-
-  AddressedFuncsWalker walker(allReferencedFuncs);
-  walker.run(&passRunner, &module);
-  walker.runOnModuleCode(&passRunner, &module);
-
-  std::unordered_set<Function*> mergedReferencedFuncs;
-  for (auto& [_, referencedFuncs] : allReferencedFuncs) {
-    mergedReferencedFuncs.merge(referencedFuncs);
-  }
-
-  for (const auto& export_ : module.exports) {
-    if (export_->kind != ExternalKind::Function) {
-      continue;
-    }
-
-    mergedReferencedFuncs.insert(
-      module.getFunction(*export_->getInternalName()));
-  }
-
-  return mergedReferencedFuncs;
-}
-
 std::map<Function*, FuncInfo> analyzeFuncs(Module& module,
                                            const PassOptions& passOptions) {
   ModuleUtils::ParallelFunctionAnalysis<FuncInfo> analysis(
@@ -456,7 +386,7 @@ struct GenerateGlobalEffects : public Pass {
     std::map<Function*, FuncInfo> funcInfos =
       analyzeFuncs(*module, getPassOptions());
 
-    auto referencedFuncs = getReferencedFuncs(*module, *getPassRunner());
+    auto referencedFuncs = ModuleUtils::getReferencedFuncs(*module);
 
     auto callGraph = buildCallGraph(
       *module, funcInfos, referencedFuncs, getPassOptions().worldMode);
