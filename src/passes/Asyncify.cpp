@@ -460,10 +460,12 @@ public:
   }
 
   // The name of the fake global used to stash a call result of this type
-  Name getName(Type type) { return getNameForStorageType(getStorageType(type)); }
+  Name getName(Type type) {
+    return getNameForStorageType(getStorageType(type));
+  }
 
   // The type a call result is stored as.
-  // Non-defaultable reference types are stored as their nullable versions, 
+  // Non-defaultable reference types are stored as their nullable versions,
   // and readers cast back with ref.as_non_null
   Type getStorageType(Type type) {
     return TypeUpdating::getValidLocalType(type, module.features);
@@ -956,9 +958,9 @@ public:
   // A spill slot is a GC root, so once a reference has been restored into its
   // local the slot must be cleared to stop the table retaining the object.
   Expression* makeClearRefSlot(Type type, Index offset) {
-    return makeTableSet(
-      getRefTable(type), makeRefIndex(type, offset),
-      LiteralUtils::makeZero(type, wasm));
+    return makeTableSet(getRefTable(type),
+                        makeRefIndex(type, offset),
+                        LiteralUtils::makeZero(type, wasm));
   }
 
   Expression* makeIncRefPos(Type type, int32_t by) {
@@ -1316,8 +1318,8 @@ private:
     for (Index i = 0, size = type.size(); i < size; ++i) {
       // Each component needs its own global.get: the IR is a tree, so an
       // Expression* cannot be shared.
-      Expression* elem = builder->makeTupleExtract(
-        builder->makeGlobalGet(name, storageType), i);
+      Expression* elem =
+        builder->makeTupleExtract(builder->makeGlobalGet(name, storageType), i);
       if (type[i].isNonNullableRef()) {
         elem = builder->makeRefAs(RefAsNonNull, elem);
       }
@@ -1685,7 +1687,8 @@ struct AsyncifyLocals : public WalkerPass<PostWalker<AsyncifyLocals>> {
     // alive at a relevant call site must be handled, but others can be ignored.
     findRelevantLiveLocals(func);
     // A spilled local may not be initialized before its first call, so make
-    // non-nullable ones nullable. Reads/writes are cast back with ref.as_non_null.
+    // non-nullable ones nullable. Reads/writes are cast back with
+    // ref.as_non_null.
     makeRelevantLocalsDefaultable(func);
     // The new function body has a prelude to load locals if rewinding,
     // then the actual main body, which does all its unwindings by breaking
@@ -1783,10 +1786,10 @@ private:
     if (type.isRef()) {
       // The table is nullable, so a non-nullable local needs a cast back.
       auto storageType = type.with(Nullable);
-      Expression* load = builder->makeTableGet(
-        builder->getRefTable(storageType),
-        cursors.nextRef(storageType),
-        storageType);
+      Expression* load =
+        builder->makeTableGet(builder->getRefTable(storageType),
+                              cursors.nextRef(storageType),
+                              storageType);
       if (type.isNonNullableRef()) {
         load = builder->makeRefAs(RefAsNonNull, load);
       }
@@ -1812,9 +1815,8 @@ private:
                                   SpillCursors& cursors) {
     if (type.isRef()) {
       auto storageType = type.with(Nullable);
-      return builder->makeTableSet(builder->getRefTable(storageType),
-                                   cursors.nextRef(storageType),
-                                   value);
+      return builder->makeTableSet(
+        builder->getRefTable(storageType), cursors.nextRef(storageType), value);
     }
     auto size = getByteSize(type);
     assert(size % STACK_ALIGN == 0);
