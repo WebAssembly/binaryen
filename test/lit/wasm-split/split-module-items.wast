@@ -129,7 +129,8 @@
     (i32.const 0)
    )
   )
-  ;; Uses $keep-immutable-global, $keep-immutable-generative-global, and $keep-mutable-global
+  ;; Uses $keep-immutable-global, $keep-immutable-generative-global, and
+  ;; $keep-mutable-global
   (drop
    (global.get $keep-immutable-global)
   )
@@ -156,7 +157,8 @@
     (i32.const 0)
    )
   )
-  ;; Uses $shared-immutable-global, $shared-immutable-generative-global, and $shared-mutable-global
+  ;; Uses $shared-immutable-global, $shared-immutable-generative-global, and
+  ;; $shared-mutable-global
   (drop
    (global.get $shared-immutable-global)
   )
@@ -198,7 +200,8 @@
   (drop
    (table.get $keep-table2 (i32.const 0))
   )
-  ;; Uses $split-immutable-global, $split-immutable-generative-global, and $split-mutable-global
+  ;; Uses $split-immutable-global, $split-immutable-generative-global, and
+  ;; $split-mutable-global
   (drop
    (global.get $split-immutable-global)
   )
@@ -225,7 +228,8 @@
     (i32.const 0)
    )
   )
-  ;; Uses $shared-immutable-global, $shared-immutable-generative-global, and $shared-mutable-global
+  ;; Uses $shared-immutable-global, $shared-immutable-generative-global, and
+  ;; $shared-mutable-global
   (drop
    (global.get $shared-immutable-global)
   )
