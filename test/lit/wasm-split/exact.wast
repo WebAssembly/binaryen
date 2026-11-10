@@ -19,7 +19,7 @@
 
  ;; PRIMARY:      (import "placeholder.deferred" "0" (func $placeholder_0 (type $func)))
 
- ;; PRIMARY:      (table $0 1 funcref)
+ ;; PRIMARY:      (table $table 1 funcref)
 
  ;; PRIMARY:      (elem $0 (i32.const 0) $placeholder_0)
 
@@ -27,7 +27,7 @@
 
  ;; PRIMARY:      (export "foo" (func $foo))
 
- ;; PRIMARY:      (export "table" (table $0))
+ ;; PRIMARY:      (export "table" (table $table))
 
  ;; PRIMARY:      (func $foo (type $func)
  ;; PRIMARY-NEXT:  (local $exact (ref (exact $func)))
@@ -40,7 +40,7 @@
  ;; PRIMARY-NEXT: )
  ;; PRIMARY_NOCD:      (import "placeholder.deferred" "0" (func $placeholder_0 (type $func)))
 
- ;; PRIMARY_NOCD:      (table $0 1 funcref)
+ ;; PRIMARY_NOCD:      (table $table 1 funcref)
 
  ;; PRIMARY_NOCD:      (elem $0 (i32.const 0) $placeholder_0)
 
@@ -48,7 +48,7 @@
 
  ;; PRIMARY_NOCD:      (export "foo" (func $foo))
 
- ;; PRIMARY_NOCD:      (export "table" (table $0))
+ ;; PRIMARY_NOCD:      (export "table" (table $table))
 
  ;; PRIMARY_NOCD:      (func $foo (type $func)
  ;; PRIMARY_NOCD-NEXT:  (local $exact (ref $func))
@@ -71,7 +71,7 @@
 
  ;; SECONDARY:      (type $0 (sub (func)))
 
- ;; SECONDARY:      (import "primary" "table" (table $timport$0 1 funcref))
+ ;; SECONDARY:      (import "primary" "table" (table $table 1 funcref))
 
  ;; SECONDARY:      (import "primary" "foo" (func $foo (exact (type $0))))
 
@@ -90,7 +90,7 @@
  ;; SECONDARY-NEXT: )
  ;; SECONDARY_NOCD:      (type $0 (sub (func)))
 
- ;; SECONDARY_NOCD:      (import "primary" "table" (table $timport$0 1 funcref))
+ ;; SECONDARY_NOCD:      (import "primary" "table" (table $table 1 funcref))
 
  ;; SECONDARY_NOCD:      (import "primary" "foo" (func $foo (type $0)))
 
@@ -118,13 +118,13 @@
  )
 )
 ;; PRIMARY:      (func $trampoline_bar (type $func)
-;; PRIMARY-NEXT:  (call_indirect $0 (type $func)
+;; PRIMARY-NEXT:  (call_indirect $table (type $func)
 ;; PRIMARY-NEXT:   (i32.const 0)
 ;; PRIMARY-NEXT:  )
 ;; PRIMARY-NEXT: )
 
 ;; PRIMARY_NOCD:      (func $trampoline_bar (type $func)
-;; PRIMARY_NOCD-NEXT:  (call_indirect $0 (type $func)
+;; PRIMARY_NOCD-NEXT:  (call_indirect $table (type $func)
 ;; PRIMARY_NOCD-NEXT:   (i32.const 0)
 ;; PRIMARY_NOCD-NEXT:  )
 ;; PRIMARY_NOCD-NEXT: )

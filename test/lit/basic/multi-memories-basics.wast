@@ -366,7 +366,7 @@
 
 ;; CHECK-BIN-NODEBUG:      (type $1 (func (result i32)))
 
-;; CHECK-BIN-NODEBUG:      (import "env" "memory" (memory $mimport$0 1 1))
+;; CHECK-BIN-NODEBUG:      (import "env" "memory" (memory $memory 1 1))
 
 ;; CHECK-BIN-NODEBUG:      (memory $0 1 500)
 
@@ -476,7 +476,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:   (i32.const 20)
 ;; CHECK-BIN-NODEBUG-NEXT:   (i32.const 31353)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT:  (i32.store16 $mimport$0
+;; CHECK-BIN-NODEBUG-NEXT:  (i32.store16 $memory
 ;; CHECK-BIN-NODEBUG-NEXT:   (i32.const 20)
 ;; CHECK-BIN-NODEBUG-NEXT:   (i32.const 31353)
 ;; CHECK-BIN-NODEBUG-NEXT:  )

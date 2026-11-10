@@ -7,13 +7,13 @@
 (module
  ;; PRIMARY:      (type $0 (func))
 
- ;; PRIMARY:      (table $0 2 funcref)
+ ;; PRIMARY:      (table $table 2 funcref)
 
- ;; PRIMARY:      (elem $0 (table $0) (i32.const 0) funcref (item (ref.null nofunc)) (item (ref.null nofunc)))
+ ;; PRIMARY:      (elem $0 (table $table) (i32.const 0) funcref (item (ref.null nofunc)) (item (ref.null nofunc)))
 
  ;; PRIMARY:      (export "foo" (func $foo))
 
- ;; PRIMARY:      (export "table" (table $0))
+ ;; PRIMARY:      (export "table" (table $table))
 
  ;; PRIMARY:      (func $foo
  ;; PRIMARY-NEXT:  (call_indirect (type $0)
@@ -29,7 +29,7 @@
  )
  ;; SECONDARY:      (type $0 (func))
 
- ;; SECONDARY:      (import "primary" "table" (table $timport$0 2 funcref))
+ ;; SECONDARY:      (import "primary" "table" (table $table 2 funcref))
 
  ;; SECONDARY:      (import "primary" "foo" (func $foo (exact)))
 

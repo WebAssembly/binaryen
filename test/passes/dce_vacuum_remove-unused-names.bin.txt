@@ -1,9 +1,9 @@
 (module
  (type $0 (func (param f32 f32) (result f32)))
  (type $1 (func (param f64 f64) (result f64)))
- (export "f32.compute_radix" (func $0))
- (export "f64.compute_radix" (func $1))
- (func $0 (param $0 f32) (param $1 f32) (result f32)
+ (export "f32.compute_radix" (func $f32.compute_radix))
+ (export "f64.compute_radix" (func $f64.compute_radix))
+ (func $f32.compute_radix (param $0 f32) (param $1 f32) (result f32)
   (loop $label
    (br_if $label
     (f32.eq
@@ -28,7 +28,7 @@
   )
   (block
    (drop
-    (call $0
+    (call $f32.compute_radix
      (f32.add
       (local.get $0)
       (local.tee $1
@@ -44,7 +44,7 @@
    (unreachable)
   )
  )
- (func $1 (param $0 f64) (param $1 f64) (result f64)
+ (func $f64.compute_radix (param $0 f64) (param $1 f64) (result f64)
   (loop $label
    (br_if $label
     (f64.eq

@@ -12,7 +12,7 @@
  (export "foo" (func $foo))
  ;; SECONDARY:      (type $0 (func))
 
- ;; SECONDARY:      (import "primary" "table" (table $timport$0 1 funcref))
+ ;; SECONDARY:      (import "primary" "table" (table $table 1 funcref))
 
  ;; SECONDARY:      (elem $0 (i32.const 0) $foo)
 
@@ -27,13 +27,13 @@
 
 ;; PRIMARY:      (import "placeholder.deferred" "0" (func $placeholder_0))
 
-;; PRIMARY:      (table $0 1 funcref)
+;; PRIMARY:      (table $table 1 funcref)
 
 ;; PRIMARY:      (elem $0 (i32.const 0) $placeholder_0)
 
 ;; PRIMARY:      (export "foo" (func $trampoline_foo))
 
-;; PRIMARY:      (export "table" (table $0))
+;; PRIMARY:      (export "table" (table $table))
 
 ;; PRIMARY:      (func $trampoline_foo
 ;; PRIMARY-NEXT:  (call_indirect (type $0)

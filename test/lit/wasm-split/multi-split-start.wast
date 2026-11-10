@@ -13,11 +13,11 @@
 
  ;; PRIMARY:      (import "placeholder.2" "0" (func $placeholder_0))
 
- ;; PRIMARY:      (table $0 1 funcref)
+ ;; PRIMARY:      (table $table 1 funcref)
 
  ;; PRIMARY:      (elem $0 (i32.const 0) $placeholder_0)
 
- ;; PRIMARY:      (export "table" (table $0))
+ ;; PRIMARY:      (export "table" (table $table))
 
  ;; PRIMARY:      (export "C" (func $C))
 
@@ -26,7 +26,7 @@
 
  ;; MOD1:      (type $0 (func))
 
- ;; MOD1:      (import "primary" "table" (table $timport$0 1 funcref))
+ ;; MOD1:      (import "primary" "table" (table $table 1 funcref))
 
  ;; MOD1:      (import "primary" "C" (func $C (exact)))
 
@@ -45,7 +45,7 @@
 
  ;; MOD2:      (type $0 (func))
 
- ;; MOD2:      (import "primary" "table" (table $timport$0 1 funcref))
+ ;; MOD2:      (import "primary" "table" (table $table 1 funcref))
 
  ;; MOD2:      (elem $0 (i32.const 0) $B)
 

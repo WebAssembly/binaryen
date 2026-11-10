@@ -36,17 +36,17 @@
 
 ;; CHECK-BIN:      (type $0 (func))
 
-;; CHECK-BIN:      (export "f" (func $0))
+;; CHECK-BIN:      (export "f" (func $f))
 
-;; CHECK-BIN:      (export "g" (func $1))
+;; CHECK-BIN:      (export "g" (func $g))
 
-;; CHECK-BIN:      (func $0
+;; CHECK-BIN:      (func $f
 ;; CHECK-BIN-NEXT:  ;;@ a:3:4:myFunction
 ;; CHECK-BIN-NEXT:  (nop)
 ;; CHECK-BIN-NEXT:  ;;@ a:5:6
 ;; CHECK-BIN-NEXT: )
 
-;; CHECK-BIN:      (func $1
+;; CHECK-BIN:      (func $g
 ;; CHECK-BIN-NEXT:  ;;@ b:9:10:MyClass::g
 ;; CHECK-BIN-NEXT:  (nop)
 ;; CHECK-BIN-NEXT:  ;;@ b:11:12
