@@ -586,10 +586,13 @@
  (import "env" "g-super" (global $g-super (ref null $A-super)))
  ;; CHECK:      (import "env" "g-sub" (global $g-sub (ref null $A-sub)))
  (import "env" "g-sub" (global $g-sub (ref null $A-sub)))
+ ;; CHECK:      (import "env" "g-exact-super" (global $g-exact-super (ref null (exact $A-super))))
  (import "env" "g-exact-super" (global $g-exact-super (ref null (exact $A-super))))
  ;; CHECK:      (import "env" "g-exact-sub" (global $g-exact-sub (ref null (exact $A-sub))))
  (import "env" "g-exact-sub" (global $g-exact-sub (ref null (exact $A-sub))))
+ ;; CHECK:      (import "env" "g-other" (global $g-other (ref null $B)))
  (import "env" "g-other" (global $g-other (ref null $B)))
+ ;; CHECK:      (import "env" "g-nofunc" (global $g-nofunc nullfuncref))
  (import "env" "g-nofunc" (global $g-nofunc nullfuncref))
  ;; CHECK:      (import "env" "g-init" (global $g-init funcref))
  (import "env" "g-init" (global $g-init funcref))
@@ -599,17 +602,21 @@
  ;; CHECK:      (table $t2 1 1 funcref (global.get $g-init))
  (table $t2 1 1 funcref (global.get $g-init))
 
- ;; CHECK:      (elem $e-funcref (table $t1) (i32.const 0) funcref (item (global.get $g-funcref)))
- (elem $e-funcref (table $t1) (i32.const 0) funcref (item (global.get $g-funcref)))
+ ;; CHECK:      (elem $e-funcref (table $t1) (i32.const 0) funcref (item (global.get $g-funcref)) (item (global.get $g-funcref)))
+ (elem $e-funcref (table $t1) (i32.const 0) funcref (item (global.get $g-funcref)) (item (global.get $g-funcref)))
  ;; CHECK:      (elem $e-super (table $t1) (i32.const 1) funcref (item (global.get $g-super)))
  (elem $e-super (table $t1) (i32.const 1) funcref (item (global.get $g-super)))
  ;; CHECK:      (elem $e-sub (table $t1) (i32.const 2) funcref (item (global.get $g-sub)))
  (elem $e-sub (table $t1) (i32.const 2) funcref (item (global.get $g-sub)))
+ ;; CHECK:      (elem $e-exact-super (table $t1) (i32.const 3) funcref (item (global.get $g-exact-super)))
  (elem $e-exact-super (table $t1) (i32.const 3) funcref (item (global.get $g-exact-super)))
  ;; CHECK:      (elem $e-exact-sub (table $t1) (i32.const 4) funcref (item (global.get $g-exact-sub)))
  (elem $e-exact-sub (table $t1) (i32.const 4) funcref (item (global.get $g-exact-sub)))
+ ;; CHECK:      (elem $e-other (table $t1) (i32.const 5) funcref (item (global.get $g-other)))
  (elem $e-other (table $t1) (i32.const 5) funcref (item (global.get $g-other)))
+ ;; CHECK:      (elem $e-nofunc (table $t1) (i32.const 6) funcref (item (global.get $g-nofunc)))
  (elem $e-nofunc (table $t1) (i32.const 6) funcref (item (global.get $g-nofunc)))
+ ;; CHECK:      (elem $e-null (table $t1) (i32.const 7) (ref null $A) (item (ref.null nofunc)))
  (elem $e-null (table $t1) (i32.const 7) (ref null $A) (item (ref.null $A)))
 
  ;; CHECK:      (export "export" (func $export))
@@ -627,6 +634,67 @@
    (i32.const 0)
   )
   (call_indirect $t2 (type $A)
+   (i32.const 0)
+  )
+ )
+)
+
+;; Active element segments initialized via shared imported globals, verifying
+;; that shared and unshared function types remain isolated.
+(module
+ (rec
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $unshared-A (sub (func)))
+  (type $unshared-A (sub (func)))
+  ;; CHECK:       (type $shared-A (sub (shared (func))))
+  (type $shared-A (sub (shared (func))))
+  ;; CHECK:       (type $shared-sub (sub $shared-A (shared (func))))
+  (type $shared-sub (sub $shared-A (shared (func))))
+  ;; CHECK:       (type $shared-B (shared (func (param f64))))
+  (type $shared-B (shared (func (param f64))))
+ )
+
+ ;; CHECK:      (type $4 (func))
+
+ ;; CHECK:      (import "env" "g-shared-func" (global $g-shared-func (ref null (shared func))))
+ (import "env" "g-shared-func" (global $g-shared-func (ref null (shared func))))
+ ;; CHECK:      (import "env" "g-shared-super" (global $g-shared-super (ref null $shared-A)))
+ (import "env" "g-shared-super" (global $g-shared-super (ref null $shared-A)))
+ (import "env" "g-shared-other" (global $g-shared-other (ref null $shared-B)))
+ (import "env" "g-shared-unused" (global $g-shared-unused (ref null (shared func))))
+
+ ;; CHECK:      (table $t-shared 10 10 (ref null (shared func)))
+ (table $t-shared 10 10 (ref null (shared func)))
+ ;; CHECK:      (table $t-cross 10 10 (ref null (shared func)))
+
+ ;; CHECK:      (elem $e-shared-func (table $t-shared) (i32.const 0) (ref null (shared func)) (item (global.get $g-shared-func)))
+ (elem $e-shared-func (table $t-shared) (i32.const 0) (ref null (shared func)) (item (global.get $g-shared-func)))
+ ;; CHECK:      (elem $e-shared-super (table $t-shared) (i32.const 1) (ref null (shared func)) (item (global.get $g-shared-super)))
+ (elem $e-shared-super (table $t-shared) (i32.const 1) (ref null (shared func)) (item (global.get $g-shared-super)))
+ (elem $e-shared-other (table $t-shared) (i32.const 2) (ref null (shared func)) (item (global.get $g-shared-other)))
+
+ (table $t-cross 10 10 (ref null (shared func)))
+ (elem $e-cross (table $t-cross) (i32.const 0) (ref null (shared func)) (item (global.get $g-shared-unused)))
+
+ ;; CHECK:      (export "export" (func $export))
+
+ ;; CHECK:      (func $export (type $4)
+ ;; CHECK-NEXT:  (call_indirect $t-shared (type $shared-sub)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (call_indirect $t-cross (type $unshared-A)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $export (export "export")
+  ;; Shared call_indirect keeps $e-shared-func and $e-shared-super, and drops
+  ;; $e-shared-other.
+  (call_indirect $t-shared (type $shared-sub)
+   (i32.const 0)
+  )
+  ;; Unshared signature call_indirect on a shared table cannot match shared
+  ;; functions, so $e-cross and $g-shared-unused are removed.
+  (call_indirect $t-cross (type $unshared-A)
    (i32.const 0)
   )
  )
