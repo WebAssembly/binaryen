@@ -1728,7 +1728,7 @@ public:
   void readFunctionSignatures();
   HeapType getTypeByIndex(Index index);
   HeapType getTypeByFunctionIndex(Index index);
-  Signature getSignatureByTypeIndex(Index index);
+  HeapType getSignatureTypeByIndex(Index index);
   Signature getSignatureByFunctionIndex(Index index);
 
   // We read the names section first so we know in advance what names various
