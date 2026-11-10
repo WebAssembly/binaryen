@@ -263,7 +263,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $string.from_char_code.flipped (param $x i32) (result stringref)
-    ;; As above, but with the order is flipped.
+    ;; As above, but with the order flipped.
     (string.from_code_point
       (i32.and
         (i32.const 0xffff)

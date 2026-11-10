@@ -378,8 +378,8 @@ struct StringLowering : public StringGathering {
       CastWalker(Casts& casts) : casts(casts) {}
 
       void visitRefCast(RefCast* curr) {
-        if (curr->type.isRef() &&
-            curr->type.getHeapType() == HeapType::string && !curr->desc) {
+        if (curr->type.isString()) {
+          assert(!curr->desc);
           casts.push_back(getCurrentPointer());
         }
       }
@@ -497,9 +497,8 @@ struct StringLowering : public StringGathering {
         auto isCharCodeMask = [](Expression* expr) {
           if (auto* constExpr = expr->dynCast<Const>()) {
             return constExpr->value.geti32() == 0xFFFF;
-          } else {
-            return false;
           }
+          return false;
         };
 
         if (isCharCodeMask(binary->right)) {
