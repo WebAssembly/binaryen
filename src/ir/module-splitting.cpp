@@ -348,10 +348,10 @@ struct OwnershipTracker {
       return tags;
     } else if constexpr (std::is_same_v<T, DataSegment>) {
       return dataSegments;
-    } else if constexpr (std::is_same_v<T, ElementSegment>) {
-      return elementSegments;
     } else {
-      static_assert(!sizeof(T*), "Unsupported module item type");
+      static_assert(std::is_same_v<T, ElementSegment>,
+                    "Unsupported module item type");
+      return elementSegments;
     }
   }
 
