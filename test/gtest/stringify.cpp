@@ -14,9 +14,15 @@
  * limitations under the License.
  */
 
+#include <cstdint>
+#include <ostream>
+#include <utility>
 #include <variant>
+#include <vector>
 
 #include "passes/stringify-walker.h"
+#include "support/name.h"
+#include "wasm-builder.h"
 #include "wasm-type.h"
 #include "wasm.h"
 #include "gtest/gtest.h"

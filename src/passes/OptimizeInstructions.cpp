@@ -135,12 +135,7 @@ struct LocalScanner : PostWalker<LocalScanner> {
     info.maxBits = std::min(info.maxBits, getBitsForType(type));
     auto keptBits = Bits::getSignExtKeptBits(value);
     if (keptBits == 0) {
-      if (auto* load = value->dynCast<Load>();
-          load && LoadUtils::isSignRelevant(load) && load->signed_) {
-        keptBits = load->bytes * 8;
-      } else {
-        keptBits = LocalInfo::kUnknown;
-      }
+      keptBits = LocalInfo::kUnknown;
     }
     if (info.signExtKeptBits == 0) {
       info.signExtKeptBits = keptBits; // first info we see
@@ -607,17 +602,39 @@ struct OptimizeInstructions
       if (bits.getMaxBits(ext) + extraLeftShifts < keptBits) {
         return replaceCurrent(removeAlmostSignExt(curr));
       }
-      // We also don't need it if it already has an identical-sized sign
-      // extend applied to it. That is, if it is already a sign-extended
-      // value, then another sign extend will do nothing. We do need to be
-      // careful of the extra shifts, though.
-      if (hasSignExtKeptBits(ext, keptBits) && extraLeftShifts == 0) {
+      // A wider (or equal) outer shift sign-extension is redundant around a
+      // narrower inner sign-extension: if |ext| is already sign-extended with
+      // at most |keptBits - extraLeftShifts| kept bits, shifting it left by
+      // |extraLeftShifts| and sign-extending from |keptBits| bits only
+      // re-extends bits that are already copies of the sign bit, so we can
+      // remove the outer sign-extension (leaving any |extraLeftShifts|).
+      if (hasSignExtKeptBits(ext, keptBits - extraLeftShifts)) {
+        return replaceCurrent(removeAlmostSignExt(curr));
+      }
+      // Conversely, when the inner sign-extension is wider than the outer shift
+      // sign-extension, we can strip the redundant inner sign-extension.
+      if (auto* innerExt = Bits::getSignExtValue(ext)) {
+        assert(Bits::getSignExtKeptBits(ext) > keptBits - extraLeftShifts);
+        curr->left->cast<Binary>()->left = innerExt;
+        return replaceCurrent(curr);
+      }
+      // Sign-extending the low 32 bits of a zero-extended i32 is a signed
+      // i32 extension (plus any remaining left shifts).
+      if (auto* unary = ext->dynCast<Unary>();
+          unary && unary->op == ExtendUInt32 &&
+          keptBits - extraLeftShifts == 32) {
+        unary->op = ExtendSInt32;
         return replaceCurrent(removeAlmostSignExt(curr));
       }
     } else if (curr->op == EqInt32 || curr->op == NeInt32 ||
                curr->op == EqInt64 || curr->op == NeInt64) {
       if (auto* c = curr->right->dynCast<Const>()) {
         if (auto* ext = Bits::getSignExtValue(curr->left)) {
+          // TODO: Reexamine whether replacing unary sign-extend instructions
+          // (as opposed to shift pairs) with zero-extend masks here is
+          // worthwhile, since an `and` with a constant is larger than a unary
+          // extend.
+          //
           // We are comparing a sign extend to a constant, which means we can
           // use a cheaper zero-extend in some cases. That is,
           //  (x << S) >> S ==/!= C    =>    x & T ==/!= C
@@ -673,6 +690,10 @@ struct OptimizeInstructions
           if (Bits::getSignExtKeptBits(curr->right) == bits) {
             // we are comparing two sign-exts with the same bits, so we may as
             // well replace both with cheaper zexts
+            // TODO: Reexamine whether replacing unary sign-extend instructions
+            // (as opposed to shift pairs) with zero-extend masks here is
+            // worthwhile, since an `and` with a constant is larger than a unary
+            // extend.
             curr->left = makeZeroExt(left, bits);
             curr->right = makeZeroExt(right, bits);
             return replaceCurrent(curr);
@@ -1044,18 +1065,38 @@ struct OptimizeInstructions
     }
 
     if (auto* ext = Bits::getSignExtValue(curr)) {
+      using namespace Match;
       auto currBits = Bits::getSignExtKeptBits(curr);
       if (trySignExtLoad(ext, currBits)) {
         return replaceCurrent(ext);
       }
-      // Simple sign extends can be removed if the value is already
-      // sign-extended. Note that we can handle the case of |curr| having a
-      // larger sign-extend: if we have an 8-bit value in 32-bit, then there are
-      // 24 sign bits, and doing a sign-extend to 16 will only affect 16 of
-      // those 24, and the effect is to leave them as they are.
-      auto extBits = bits.getSignExtKeptBits(ext);
-      if (extBits > 0 && extBits <= currBits) {
+      // If the sign-extend input cannot have a sign bit, we don't need it.
+      if (bits.getMaxBits(ext) < currBits) {
         return replaceCurrent(ext);
+      }
+      // Simple sign extends can also be removed if the input is already
+      // sign-extended. Note that we can handle the case of |curr| having a
+      // larger sign-extend: if we have an 8-bit value in 32-bit, then there
+      // are 24 sign bits, and doing a sign-extend to 16 will only affect 16
+      // of those 24, and the effect is to leave them as they are.
+      if (hasSignExtKeptBits(ext, currBits)) {
+        return replaceCurrent(ext);
+      }
+      // A narrower unary sign-extension can strip a wider inner one. Since
+      // hasSignExtKeptBits(ext, currBits) was false above, any inner
+      // sign-extension is strictly wider than |currBits|.
+      if (auto* innerExt = Bits::getSignExtValue(ext)) {
+        assert(Bits::getSignExtKeptBits(ext) > currBits);
+        curr->value = innerExt;
+        return replaceCurrent(curr);
+      }
+      // Sign-extending the low 32 bits of a zero-extended i32 is a signed i32
+      // extension.
+      Unary* inner;
+      if (matches(curr,
+                  unary(ExtendS32Int64, unary(&inner, ExtendUInt32, any())))) {
+        inner->op = ExtendSInt32;
+        return replaceCurrent(inner);
       }
     }
 
@@ -1096,6 +1137,9 @@ struct OptimizeInstructions
       if (auto* ext = Bits::getSignExtValue(curr->value)) {
         // we are comparing a sign extend to a constant, which means we can
         // use a cheaper zext
+        // TODO: Reexamine whether replacing unary sign-extend instructions (as
+        // opposed to shift pairs) with zero-extend masks here is worthwhile,
+        // since an `and` with a constant is larger than a unary extend.
         auto bits = Bits::getSignExtKeptBits(curr->value);
         curr->value = makeZeroExt(ext, bits);
         return replaceCurrent(curr);
@@ -4449,10 +4493,11 @@ private:
     return false;
   }
 
-  // Check if an expression is already sign-extended with an exact number of
+  // Check if an expression is already sign-extended with at most |keptBits|
   // kept bits.
   bool hasSignExtKeptBits(Expression* curr, Index keptBits) {
-    return bits.getSignExtKeptBits(curr) == keptBits;
+    auto currKeptBits = bits.getSignExtKeptBits(curr);
+    return currKeptBits > 0 && currKeptBits <= keptBits;
   }
 
   // optimize trivial math operations, given that the right side of a binary
