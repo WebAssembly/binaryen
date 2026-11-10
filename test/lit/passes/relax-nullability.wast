@@ -173,10 +173,6 @@
   )
 )
 
-;; ref.as_non_null is inserted where needed: {array/struct}.{new/set},
-;; global.set, throw for non-nullable tag params, calls to imported and
-;; exported functions, and functions that may be the target of a
-;; call_ref/call_indirect.
 (module
   (type $struct (struct))
   ;; CHECK:      (type $shared-sig (func (param (ref any)) (result (ref any))))

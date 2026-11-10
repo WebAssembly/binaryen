@@ -67,7 +67,7 @@ bool isRelaxable(Function* func,
   return false;
 }
 
-void insertRefAsNonNull(Expression** curr, Builder builder) {
+void insertRefAsNonNull(Expression** curr, Builder& builder) {
   // unreachable also doesn't need a change
   if (!(*curr)->type.isNullableRef()) {
     return;
@@ -82,7 +82,8 @@ void fixupReturn(Expression** returnVal, Module* module, Function* func) {
     return;
   }
   if (results.size() == 1 && results[0].isNonNullableRef()) {
-    insertRefAsNonNull(returnVal, Builder(*module));
+    Builder builder(*module);
+    insertRefAsNonNull(returnVal, builder);
   }
 }
 
@@ -169,6 +170,9 @@ struct LocalsToNullable : WalkerPass<PostWalker<LocalsToNullable>> {
   bool isFunctionParallel() override { return true; }
 
   bool runsOnFunction(Function* func) override {
+    // If we didn't relax the params, don't update local.gets / local.tee which
+    // might touch unrelaxed params.
+    // TODO: Relax locals even if the params weren't relaxed.
     return isRelaxable(func, referencedFuncs);
   }
 
