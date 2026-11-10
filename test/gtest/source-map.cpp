@@ -247,6 +247,36 @@ TEST_F(SourceMapTest, SourcesContent) {
             "Gott, Welt!\\\"); return 0;}");
 }
 
+TEST_F(SourceMapTest, FileIndexOutOfBounds) {
+  // sources has 1 entry (index 0 valid). The mapping "ACAA" decodes as:
+  // location=0, file+=1, line+=0, col+=0. file=1 >= numFiles=1 is out of range.
+  std::string sourceMap = R"(
+    {
+      "version": 3,
+      "sources": ["foo.c"],
+      "names": [],
+      "mappings": "ACAA"
+    }
+  )";
+  parseMap(sourceMap);
+  EXPECT_THROW(reader->readDebugLocationAt(0), MapParseException);
+}
+
+TEST_F(SourceMapTest, SymbolIndexOutOfBounds) {
+  // names has 1 entry (index 0 valid). The mapping "AAAAC" decodes as:
+  // location=0, file+=0, line+=0, col+=0, symbol+=1. symbol=1 >= numSymbols=1.
+  std::string sourceMap = R"(
+    {
+      "version": 3,
+      "sources": ["foo.c"],
+      "names": ["sym"],
+      "mappings": "AAAAC"
+    }
+  )";
+  parseMap(sourceMap);
+  EXPECT_THROW(reader->readDebugLocationAt(0), MapParseException);
+}
+
 // Regression test: updateSymbol calls for prologLocation/epilogLocation were
 // inside the debugLocations loop instead of outside. When debugLocations is
 // empty, the loop never executes and the locations are not updated.
