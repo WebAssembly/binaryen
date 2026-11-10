@@ -474,6 +474,18 @@ Index Provider::getMaxBits(Expression* curr) const {
 }
 
 Index Provider::getSignExtKeptBits(Expression* curr) const {
+  if (!curr->type.isInteger()) {
+    return 0;
+  }
+  if (auto* unary = curr->dynCast<Unary>();
+      unary && unary->op == ExtendSInt32 && unary->value->type.isInteger()) {
+    // i64.extend_i32_s sign-extends from 32 bits, or from a narrower width if
+    // its i32 input is itself sign-extended (since any i32 sign extension is
+    // narrower than 32 bits and extending to i64 replicates the same sign
+    // bit).
+    auto innerBits = getSignExtKeptBits(unary->value);
+    return innerBits > 0 ? innerBits : 32;
+  }
   if (getSignExtValue(curr)) {
     if (auto* unary = curr->dynCast<Unary>()) {
       switch (unary->op) {
@@ -491,6 +503,11 @@ Index Provider::getSignExtKeptBits(Expression* curr) const {
     } else {
       auto* rightShift = curr->cast<Binary>()->right;
       return curr->type.getByteSize() * 8 - getEffectiveShifts(rightShift);
+    }
+  }
+  if (auto* load = curr->dynCast<Load>()) {
+    if (LoadUtils::isSignRelevant(load) && load->signed_) {
+      return load->bytes * 8;
     }
   }
   if (auto* get = curr->dynCast<LocalGet>()) {
