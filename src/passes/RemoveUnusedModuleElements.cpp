@@ -431,9 +431,12 @@ struct Analyzer {
           }
         }
       } else {
-        for (auto sub : subtypes().getStrictSubTypes(type)) {
-          info.typeElems[sub].insert(elem);
-        }
+        subtypes().iterSubTypes(type, [&](HeapType sub, Index depth) {
+          if (depth > 0) {
+            info.typeElems[sub].insert(elem);
+          }
+          return true;
+        });
       }
     }
   }
@@ -498,7 +501,7 @@ struct Analyzer {
 
     // Call all the functions of that signature, and subtypes. We can then
     // forget about them, as those signatures will be marked as called.
-    for (auto subType : subtypes().getSubTypes(type)) {
+    subtypes().iterSubTypes(type, [&](HeapType subType, Index depth) {
       auto iter = uncalledRefFuncMap.find(subType);
       if (iter != uncalledRefFuncMap.end()) {
         // We must not have a type in both calledSignatures and
@@ -514,7 +517,8 @@ struct Analyzer {
       }
 
       calledSignatures.insert(subType);
-    }
+      return true;
+    });
   }
 
   std::unordered_set<IndirectCall> usedIndirectCalls;
