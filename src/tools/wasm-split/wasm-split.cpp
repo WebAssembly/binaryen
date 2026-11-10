@@ -424,42 +424,41 @@ void multiSplitModule(const WasmSplitOptions& options) {
   bool newSection = true;
   std::unordered_set<Name> moduleNameSet;
   while (std::getline(manifest, line)) {
-    if (line.empty()) {
-      newSection = true;
-      if (currFuncs->empty() && !options.quiet) {
-        std::cerr << "warning: Module " << currModule << " will be empty\n";
-      }
-      continue;
-    }
-    Name name = line;
     if (newSection) {
-      if (name.endsWith(":")) {
-        name = name.substr(0, name.size() - 1);
-        if (name.size() == 0) {
-          Fatal() << "Module name is empty\n";
-        }
+      Name moduleName = line;
+      if (moduleName.endsWith(":")) {
+        moduleName = moduleName.substr(0, moduleName.size() - 1);
       }
-      if (moduleNameSet.contains(name)) {
-        Fatal() << "Module name " << name << " is listed more than once\n";
+      if (moduleName.size() == 0) {
+        Fatal() << "Module name is empty\n";
       }
-      currModule = name;
+      if (moduleNameSet.contains(moduleName)) {
+        Fatal() << "Module name " << moduleName
+                << " is listed more than once\n";
+      }
+      currModule = moduleName;
       moduleNameSet.insert(currModule);
       config.secondaryNames.push_back(currModule);
       config.secondaryFuncs.emplace_back(std::set<Name>());
       currFuncs = &config.secondaryFuncs.back();
       newSection = false;
-      continue;
-    }
-    assert(currFuncs);
-    if (!canSplitFunc(name, wasm, options)) {
-      continue;
-    }
-    currFuncs->insert(name);
-    auto [it, inserted] = funcModules.insert({name, currModule});
-    if (!inserted && it->second != currModule) {
-      Fatal() << "Function " << name << "cannot be assigned to module "
-              << currModule << "; it is already assigned to module "
-              << it->second << '\n';
+    } else if (line.empty()) {
+      newSection = true;
+      if (currFuncs->empty() && !options.quiet) {
+        std::cerr << "warning: Module " << currModule << " will be empty\n";
+      }
+    } else {
+      assert(currFuncs);
+      Name funcName = line;
+      if (canSplitFunc(funcName, wasm, options)) {
+        currFuncs->insert(funcName);
+        auto [it, inserted] = funcModules.try_emplace(funcName, currModule);
+        if (!inserted && it->second != currModule) {
+          Fatal() << "Function " << funcName << " cannot be assigned to module "
+                  << currModule << "; it is already assigned to module "
+                  << it->second << '\n';
+        }
+      }
     }
   }
 
