@@ -498,10 +498,21 @@ Type GlobalTypeRewriter::getTempTupleType(Tuple tuple) {
 
 namespace TypeUpdating {
 
-void handleNonDefaultableLocals(Function* func, Module& wasm) {
+void handleNonDefaultableLocals(Function* func,
+                                Module& wasm,
+                                const std::unordered_set<Index>* forced) {
   if (!wasm.features.hasReferenceTypes()) {
     // No references, so no non-nullable ones at all.
     return;
+  }
+  std::unordered_set<Index> badIndexes;
+  if (forced) {
+    for (auto index : *forced) {
+      assert(!func->isParam(index));
+      if (!func->getLocalType(index).isDefaultable()) {
+        badIndexes.insert(index);
+      }
+    }
   }
   bool hasNonNullable = false;
   for (auto varType : func->vars) {
@@ -522,7 +533,6 @@ void handleNonDefaultableLocals(Function* func, Module& wasm) {
   // the wasm spec. We do not need to modify such locals.
   LocalStructuralDominance info(
     func, wasm, LocalStructuralDominance::NonNullableOnly);
-  std::unordered_set<Index> badIndexes;
   for (auto index : info.nonDominatingIndices) {
     badIndexes.insert(index);
 
