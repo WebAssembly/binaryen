@@ -425,8 +425,7 @@ struct StringLowering : public StringGathering {
 
       void visitRefCast(RefCast* curr) {
         // Ignore non-string RefCast.
-        if (!curr->type.isRef() ||
-            curr->type.getHeapType() != HeapType::string) {
+        if (!curr->type.isString()) {
           return;
         }
 

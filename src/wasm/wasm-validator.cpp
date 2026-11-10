@@ -3144,11 +3144,9 @@ void FunctionValidator::visitRefTest(RefTest* curr) {
 void FunctionValidator::visitRefCast(RefCast* curr) {
   // Allows RefCast to strings when at least strings are enabled and not GC.
   // Otherwise, RefCast requires GC to be enabled.
-  bool hasStringCasts =
-    curr->type.isRef() &&
-    curr->type.getHeapType().isMaybeShared(HeapType::string);
+  bool isStringCast = curr->type.isString();
   shouldBeTrue(getModule()->features.hasGC() ||
-                 (hasStringCasts && getModule()->features.hasStrings()),
+                 (isStringCast && getModule()->features.hasStrings()),
                curr,
                "ref.cast requires gc [--enable-gc]");
 
