@@ -311,7 +311,7 @@ struct Generalizer : public ChildTyper<Generalizer> {
   void visitBrOn(BrOn* curr) {
     // Note immediate constraints (including descriptor constraints).
     Super::visitBrOn(curr);
-    if (curr->desc && curr->desc->type.isBottomRef()) {
+    if (curr->desc && !curr->desc->type.isStruct()) {
       return;
     }
     switch (curr->op) {
