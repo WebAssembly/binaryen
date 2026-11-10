@@ -36,7 +36,9 @@
 
   ;; CHECK:      (type $15 (func (param i32) (result externref)))
 
-  ;; CHECK:      (type $16 (func (param externref)))
+  ;; CHECK:      (type $16 (func (param i32 i32) (result externref)))
+
+  ;; CHECK:      (type $17 (func (param externref)))
 
   ;; CHECK:      (import "\'" "foo" (global $string_foo (ref extern)))
   (import "\'" "foo" (global $string_foo (ref extern)))
@@ -239,11 +241,8 @@
   )
 
   ;; CHECK:      (func $string.from_char_code (type $15) (param $x i32) (result externref)
-  ;; CHECK-NEXT:  (string.from_code_point
-  ;; CHECK-NEXT:   (i32.and
-  ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:    (i32.const 65535)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  (string.from_char_code
+  ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $string.from_char_code (param $x i32) (result externref)
@@ -263,7 +262,40 @@
     )
   )
 
-  ;; CHECK:      (func $wrong (type $16) (param $ref externref)
+  ;; CHECK:      (func $refinalize (type $16) (param $x i32) (param $c i32) (result externref)
+  ;; CHECK-NEXT:  (if (result (ref string))
+  ;; CHECK-NEXT:   (local.get $c)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (string.from_char_code
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (else
+  ;; CHECK-NEXT:    (string.from_char_code
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $refinalize (param $x i32) (param $c i32) (result externref)
+    ;; Asserts IR is refinalized when externrefs (in this case, non-nullable)
+    ;; are replaced with stringrefs.
+    (if (result (ref extern))
+      (local.get $c)
+      (then
+        (call $fromCharCode
+          (local.get $x)
+        )
+      )
+      (else
+        (call $fromCharCode
+          (local.get $x)
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $wrong (type $17) (param $ref externref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (call $wrong-base
   ;; CHECK-NEXT:    (local.get $ref)

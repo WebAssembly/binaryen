@@ -291,19 +291,19 @@ struct StringLifting : public Pass {
                                                curr->operands[1],
                                                curr->operands[2]));
         } else if (curr->target == parent.fromCharCodeImport) {
-          // String.fromCharCode(0x10000) => '\x00'
-          // String.fromCodePoint(0x10000) => '𐀀'
-          // Hence, String.fromCharCode(x) == String.fromCodePoint(x & 0xFFFF)
-          Builder builder(*getModule());
-          replaceCurrent(builder.makeStringNew(
-            StringNewFromCodePoint,
-            builder.makeBinary(AndInt32,
-                               curr->operands[0],
-                               builder.makeConst(Literal(int32_t(0xFFFF))))));
+          replaceCurrent(
+            Builder(*getModule())
+              .makeStringNew(StringNewFromCharCode, curr->operands[0]));
         } else if (curr->target == parent.castImport) {
           replaceCurrent(Builder(*getModule())
                            .makeRefCast(curr->operands[0],
                                         Type(HeapType::string, NonNullable)));
+        }
+
+        // An expression that previously had type externref was replaced by a
+        // subtype, stringref; refinalize the IR.
+        if (getCurrent() != curr) {
+          modified = true;
         }
       }
 

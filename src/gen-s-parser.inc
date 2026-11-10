@@ -5202,12 +5202,23 @@ switch (buf[0]) {
                       default: goto parse_error;
                     }
                   }
-                  case 'f':
-                    if (op == "string.from_code_point"sv) {
-                      CHECK_ERR(makeStringNew(ctx, pos, annotations, StringNewFromCodePoint));
-                      return Ok{};
+                  case 'f': {
+                    switch (buf[13]) {
+                      case 'h':
+                        if (op == "string.from_char_code"sv) {
+                          CHECK_ERR(makeStringNew(ctx, pos, annotations, StringNewFromCharCode));
+                          return Ok{};
+                        }
+                        goto parse_error;
+                      case 'o':
+                        if (op == "string.from_code_point"sv) {
+                          CHECK_ERR(makeStringNew(ctx, pos, annotations, StringNewFromCodePoint));
+                          return Ok{};
+                        }
+                        goto parse_error;
+                      default: goto parse_error;
                     }
-                    goto parse_error;
+                  }
                   case 'm': {
                     switch (buf[15]) {
                       case 'u':

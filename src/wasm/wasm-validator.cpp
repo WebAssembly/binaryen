@@ -3142,8 +3142,15 @@ void FunctionValidator::visitRefTest(RefTest* curr) {
 }
 
 void FunctionValidator::visitRefCast(RefCast* curr) {
-  shouldBeTrue(
-    getModule()->features.hasGC(), curr, "ref.cast requires gc [--enable-gc]");
+  // Allows RefCast to strings when at least strings are enabled and not GC.
+  // Otherwise, RefCast requires GC to be enabled.
+  bool hasStringCasts =
+    curr->type.isRef() &&
+    curr->type.getHeapType().isMaybeShared(HeapType::string);
+  shouldBeTrue(getModule()->features.hasGC() ||
+                 (hasStringCasts && getModule()->features.hasStrings()),
+               curr,
+               "ref.cast requires gc [--enable-gc]");
 
   // Require descriptors to be valid even if the ref is unreachable.
   if (curr->desc && curr->desc->type != Type::unreachable) {
@@ -4262,6 +4269,17 @@ void FunctionValidator::visitStringNew(StringNew* curr) {
         !curr->start, curr, "string.from_code_point should not have start");
       shouldBeTrue(
         !curr->end, curr, "string.from_code_point should not have end");
+      return;
+    case StringNewFromCharCode:
+      shouldBeEqualOrFirstIsUnreachable(
+        curr->ref->type,
+        Type(Type::i32),
+        curr,
+        "string.from_char_code char code must be i32");
+      shouldBeTrue(
+        !curr->start, curr, "string.from_char_code should not have start");
+      shouldBeTrue(
+        !curr->end, curr, "string.from_char_code should not have end");
       return;
   }
   WASM_UNREACHABLE("unexpected op");

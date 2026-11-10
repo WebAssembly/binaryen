@@ -219,17 +219,14 @@ struct StringLowering : public StringGathering {
     // First, run the gathering operation so all string.consts are in one place.
     StringGathering::run(module);
 
-    // Find casts to string before they are turned to externref by updateTypes
-    findStringCasts(module);
+    // Replace string.* etc. operations with imported ones.
+    replaceInstructions(module);
 
     // Remove all HeapType::string etc. in favor of externref.
     updateTypes(module);
 
     // Lower the string.const globals into imports.
     makeImports(module);
-
-    // Replace string.* etc. operations with imported ones.
-    replaceInstructions(module);
 
     // ReFinalize to apply all the above changes.
     ReFinalize().run(getPassRunner(), module);
@@ -366,61 +363,6 @@ struct StringLowering : public StringGathering {
   Name fromCharCodeImport;
   Name castImport;
 
-  // All the casts to string, so we can replace them
-  std::vector<std::pair<Function*, Expression**>> stringCasts;
-
-  void findStringCasts(Module* module) {
-    using Casts = std::vector<Expression**>;
-
-    struct CastWalker : public PostWalker<CastWalker> {
-      Casts& casts;
-
-      CastWalker(Casts& casts) : casts(casts) {}
-
-      void visitRefCast(RefCast* curr) {
-        if (curr->type.isString()) {
-          assert(!curr->desc);
-          casts.push_back(getCurrentPointer());
-        }
-      }
-    };
-
-    // Casts cannot be found outside of a function (e.g. a global initializer)
-    // since ref.cast is not a constant expression.
-    ModuleUtils::ParallelFunctionAnalysis<Casts> analysis(
-      *module, [&](Function* func, Casts& casts) {
-        if (!func->imported()) {
-          CastWalker(casts).walk(func->body);
-        }
-      });
-
-    for (auto& [func, casts] : analysis.map) {
-      for (auto** castPtr : casts) {
-        stringCasts.push_back({func, castPtr});
-      }
-    }
-  }
-
-  // Replaces string casts with imported cast function call
-  void lowerStringCast(Module* module, Function* func, Expression** castp) {
-    Builder builder(*module);
-    auto* cast = (*castp)->cast<RefCast>();
-    if (cast->type.isNonNullableRef()) {
-      *castp = builder.makeCall(castImport, {cast->ref}, nnExt);
-      return;
-    }
-    // (if (ref.is_null (local.tee $temp (..)))
-    //   (then (ref.null noextern))
-    //   (else (call $cast (local.get $temp)))
-    // )
-    auto temp = Builder::addVar(func, nullExt);
-    *castp = builder.makeIf(
-      builder.makeRefIsNull(builder.makeLocalTee(temp, cast->ref, nullExt)),
-      builder.makeRefNull(HeapType::ext),
-      builder.makeCall(
-        castImport, {builder.makeLocalGet(temp, nullExt)}, nnExt));
-  }
-
   // Creates an imported string function, returning its name (which is equal to
   // the true name of the import, if there is no conflict).
   Name addImport(Module* module, Name trueName, Type params, Type results) {
@@ -469,11 +411,6 @@ struct StringLowering : public StringGathering {
     // string.cast: externref -> string
     castImport = addImport(module, "cast", nullExt, nnExt);
 
-    // Lowering casts cannot be done in parallel since it may add locals
-    for (auto& [func, castPtr] : stringCasts) {
-      lowerStringCast(module, func, castPtr);
-    }
-
     // Replace the string instructions in parallel.
     struct Replacer : public WalkerPass<PostWalker<Replacer>> {
       bool isFunctionParallel() override { return true; }
@@ -486,28 +423,35 @@ struct StringLowering : public StringGathering {
 
       Replacer(StringLowering& lowering) : lowering(lowering) {}
 
-      // Returns the charCode if it is a code point with mask 0xFFFF in either
-      // order, or nullptr otherwise.
-      static Expression* getCharCode(Expression* curr) {
-        auto* binary = curr->dynCast<Binary>();
-        if (!binary || binary->op != AndInt32) {
-          return nullptr;
+      void visitRefCast(RefCast* curr) {
+        // Ignore non-string RefCast.
+        if (!curr->type.isRef() ||
+            curr->type.getHeapType() != HeapType::string) {
+          return;
         }
 
-        auto isCharCodeMask = [](Expression* expr) {
-          if (auto* constExpr = expr->dynCast<Const>()) {
-            return constExpr->value.geti32() == 0xFFFF;
-          }
-          return false;
-        };
+        Builder builder(*getModule());
+        if (curr->type.isNonNullableRef()) {
+          replaceCurrent(
+            builder.makeCall(lowering.castImport, {curr->ref}, lowering.nnExt));
+          return;
+        }
 
-        if (isCharCodeMask(binary->right)) {
-          return binary->left;
-        }
-        if (isCharCodeMask(binary->left)) {
-          return binary->right;
-        }
-        return nullptr;
+        // Casts cannot be found outside of a function (e.g. a global
+        // initializer) since ref.cast is not a constant expression.
+        assert(getFunction());
+        // (if (ref.is_null (local.tee $temp (..)))
+        //   (then (ref.null noextern))
+        //   (else (call $cast (local.get $temp)))
+        // )
+        auto temp = Builder::addVar(getFunction(), lowering.nullExt);
+        replaceCurrent(builder.makeIf(
+          builder.makeRefIsNull(
+            builder.makeLocalTee(temp, curr->ref, lowering.nullExt)),
+          builder.makeRefNull(HeapType::ext),
+          builder.makeCall(lowering.castImport,
+                           {builder.makeLocalGet(temp, lowering.nullExt)},
+                           lowering.nnExt)));
       }
 
       void visitStringNew(StringNew* curr) {
@@ -519,13 +463,12 @@ struct StringLowering : public StringGathering {
                                             lowering.nnExt));
             return;
           case StringNewFromCodePoint:
-            if (auto* charCode = getCharCode(curr->ref)) {
-              replaceCurrent(builder.makeCall(
-                lowering.fromCharCodeImport, {charCode}, lowering.nnExt));
-              return;
-            }
             replaceCurrent(builder.makeCall(
               lowering.fromCodePointImport, {curr->ref}, lowering.nnExt));
+            return;
+          case StringNewFromCharCode:
+            replaceCurrent(builder.makeCall(
+              lowering.fromCharCodeImport, {curr->ref}, lowering.nnExt));
             return;
           default:
             WASM_UNREACHABLE("TODO: all of string.new*");
