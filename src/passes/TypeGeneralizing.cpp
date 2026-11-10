@@ -198,7 +198,7 @@ struct Generalizer : public ChildTyper<Generalizer> {
       return;
     }
 
-    // Tuples are handled element by element, in this pass, so we only receive a
+    // Tuples are handled element by element in this pass, so we only receive a
     // single constraint.
     assert(constraints.size() == 1);
     auto& type = constraints[0];
