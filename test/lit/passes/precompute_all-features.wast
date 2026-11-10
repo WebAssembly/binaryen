@@ -810,4 +810,13 @@
     )
    )
   )
+
+  ;; CHECK:      (func $atomic-fence (type $1)
+  ;; CHECK-NEXT:  (atomic.fence)
+  ;; CHECK-NEXT:  (atomic.fence acqrel)
+  ;; CHECK-NEXT: )
+  (func $atomic-fence
+    (atomic.fence)
+    (atomic.fence acqrel)
+  )
 )
