@@ -36,8 +36,7 @@ namespace wasm {
 
 static void readTextData(std::optional<std::string> filename,
                          std::string_view input,
-                         Module& wasm,
-                         IRProfile profile) {
+                         Module& wasm) {
   if (auto parsed = WATParser::parseModule(wasm, input, filename);
       auto err = parsed.getErr()) {
     Fatal() << err->msg;
@@ -47,7 +46,7 @@ static void readTextData(std::optional<std::string> filename,
 void ModuleReader::readText(std::string filename, Module& wasm) {
   BYN_TRACE("reading text from " << filename << "\n");
   auto input(read_file<std::string>(filename, Flags::Text));
-  readTextData(filename, input, wasm, profile);
+  readTextData(filename, input, wasm);
 }
 
 void ModuleReader::readBinaryData(const std::vector<char>& input,
@@ -116,10 +115,8 @@ void ModuleReader::readData(const std::vector<char>& input,
       input[2] == 's' && input[3] == 'm') {
     readBinaryData(input, wasm, sourceMapFilename);
   } else {
-    readTextData(std::nullopt,
-                 std::string_view(input.data(), input.size()),
-                 wasm,
-                 profile);
+    readTextData(
+      std::nullopt, std::string_view(input.data(), input.size()), wasm);
   }
 }
 

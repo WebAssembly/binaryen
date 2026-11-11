@@ -369,9 +369,6 @@
 ;; CHECK-NEXT:   --pick-load-signs                             pick load signs based on their 
 ;; CHECK-NEXT:                                                 uses
 ;; CHECK-EMPTY:
-;; CHECK-NEXT:   --poppify                                     Transform Binaryen IR into Poppy
-;; CHECK-NEXT:                                                 IR
-;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --post-emscripten                             miscellaneous optimizations for 
 ;; CHECK-NEXT:                                                 Emscripten-generated code
 ;; CHECK-EMPTY:
@@ -728,9 +725,6 @@
 ;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --quiet,-q                                    Emit less verbose output and 
 ;; CHECK-NEXT:                                                 hide trivial warnings.
-;; CHECK-EMPTY:
-;; CHECK-NEXT:   --experimental-poppy                          Parse wast files as Poppy IR for
-;; CHECK-NEXT:                                                 testing purposes.
 ;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --emit-module-names                           Emit module names, even if not 
 ;; CHECK-NEXT:                                                 emitting the rest of the names 

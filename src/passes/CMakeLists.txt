@@ -92,7 +92,6 @@ set(passes_SOURCES
   OptimizeForJS.cpp
   OptimizeNoReturn.cpp
   PickLoadSigns.cpp
-  Poppify.cpp
   PostEmscripten.cpp
   Precompute.cpp
   Print.cpp
