@@ -2995,14 +2995,6 @@ void BinaryInstWriter::visitStringNew(StringNew* curr) {
     emitUnreachable();
     return;
   }
-  if (curr->op == StringNewFromCharCode) {
-    // This is not part of the spec, so use a bitmask to get the expected output
-    // String.fromCharCode(0x10000) => '\x00'
-    // String.fromCodePoint(0x10000) => '𐀀'
-    // Hence, String.fromCharCode(x) == String.fromCodePoint(x & 0xFFFF)
-    o << int8_t(BinaryConsts::I32Const) << S32LEB(0xFFFF)
-      << int8_t(BinaryConsts::I32And);
-  }
   o << static_cast<int8_t>(BinaryConsts::GCPrefix);
   switch (curr->op) {
     case StringNewLossyUTF8Array:
@@ -3012,8 +3004,10 @@ void BinaryInstWriter::visitStringNew(StringNew* curr) {
       o << U32LEB(BinaryConsts::StringNewWTF16Array);
       break;
     case StringNewFromCodePoint:
-    case StringNewFromCharCode:
       o << U32LEB(BinaryConsts::StringFromCodePoint);
+      break;
+    case StringNewFromCharCode:
+      o << U32LEB(BinaryConsts::StringFromCharCode);
       break;
     default:
       WASM_UNREACHABLE("invalid string.new*");
