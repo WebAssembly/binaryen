@@ -2747,6 +2747,7 @@ opt_choices = [
     ("--local-cse",),
     ("--heap2local",),
     ("--remove-unused-names", "--heap2local",),
+    ("--heap2local2",),
     ("--heap-store-optimization",),
     ("--generate-stack-ir",),
     ("--licm",),
