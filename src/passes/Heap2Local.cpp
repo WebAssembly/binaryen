@@ -1387,9 +1387,16 @@ struct Array2Struct : PostWalker<Array2Struct> {
 
   void visitArrayNewFixed(ArrayNewFixed* curr) {
     if (curr == allocation) {
-      // Simply use the same values as the array. Ensure the type remains the
-      // struct type even if an operand became unreachable so Struct2Local can
-      // still inspect the struct type before refinalization.
+      // Simply use the same values as the array. An operand may have become
+      // unreachable during the walk (e.g. an OOB array.get of this allocation
+      // in an unreachable loop), which causes makeStructNew to finalize
+      // structNew->type to unreachable. However, we still must run Struct2Local
+      // because Array2Struct has already rewritten reached expressions (such as
+      // local.gets) to use structType without updating local types, leaving the
+      // IR invalid until Struct2Local removes them. Keep structNew->type as the
+      // concrete struct type (the only place StructNew stores its HeapType) and
+      // defer ReFinalize until the end of Struct2Local so Struct2Local can look
+      // up the struct fields and replace structNew.
       structNew = builder.makeStructNew(structType, curr->values);
       structNew->type = Type(structType, NonNullable, Exact);
       replaceCurrent(structNew);
