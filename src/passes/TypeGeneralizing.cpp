@@ -406,16 +406,6 @@ struct Generalizer : public ChildTyper<Generalizer> {
     Super::visitCallRef(curr, generalized);
   }
 
-  void visitRefGetDesc(RefGetDesc* curr) {
-    if (!curr->ref->type.isStruct()) {
-      Super::visitRefGetDesc(curr);
-      return;
-    }
-    auto generalized =
-      generalizeStructTypeByDescriptor(curr->ref->type.getHeapType());
-    Super::visitRefGetDesc(curr, generalized);
-  }
-
   void visitStructGet(StructGet* curr) {
     if (!curr->ref->type.isStruct()) {
       Super::visitStructGet(curr);
@@ -495,6 +485,16 @@ struct Generalizer : public ChildTyper<Generalizer> {
     }
     auto generalized = generalizeArrayType(curr->ref->type.getHeapType());
     Super::visitArrayInitElem(curr, generalized);
+  }
+
+  void visitRefGetDesc(RefGetDesc* curr) {
+    if (!curr->ref->type.isStruct()) {
+      Super::visitRefGetDesc(curr);
+      return;
+    }
+    auto generalized =
+      generalizeStructTypeByDescriptor(curr->ref->type.getHeapType());
+    Super::visitRefGetDesc(curr, generalized);
   }
 
   void propagate() {
