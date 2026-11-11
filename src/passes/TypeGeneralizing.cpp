@@ -90,6 +90,26 @@ HeapType generalizeStructType(HeapType type,
   return type;
 }
 
+// Find the most general supertype of a struct type that still has a descriptor
+// of a given type, if any.
+HeapType generalizeStructTypeByDescriptor(
+  HeapType type, std::optional<HeapType> reqDesc = std::nullopt) {
+  while (true) {
+    auto candidateType = type.getDeclaredSuperType();
+    if (!candidateType) {
+      break;
+    }
+    // Every supertype of a described type must also have a descriptor.
+    auto candidateDesc = candidateType->getDescriptorType();
+    assert(candidateDesc);
+    if (reqDesc && !HeapType::isSubType(*candidateDesc, *reqDesc)) {
+      break;
+    }
+    type = *candidateType;
+  }
+  return type;
+}
+
 // Find the most general supertype of an array type whose element type satisfies
 // `reqElemType`, if any.
 HeapType generalizeArrayType(HeapType type,
@@ -386,6 +406,16 @@ struct Generalizer : public ChildTyper<Generalizer> {
     Super::visitCallRef(curr, generalized);
   }
 
+  void visitRefGetDesc(RefGetDesc* curr) {
+    if (!curr->ref->type.isStruct()) {
+      Super::visitRefGetDesc(curr);
+      return;
+    }
+    auto generalized =
+      generalizeStructTypeByDescriptor(curr->ref->type.getHeapType());
+    Super::visitRefGetDesc(curr, generalized);
+  }
+
   void visitStructGet(StructGet* curr) {
     if (!curr->ref->type.isStruct()) {
       Super::visitStructGet(curr);
@@ -512,6 +542,13 @@ struct Generalizer : public ChildTyper<Generalizer> {
             auto generalized =
               generalizeCallRefTarget(call->target->type.getHeapType(), type);
             addConstraint(call->target, Type(generalized, Nullable));
+          }
+        } else if (auto* get = expr->dynCast<RefGetDesc>()) {
+          if (get->ref->type.isStruct()) {
+            auto generalized = generalizeStructTypeByDescriptor(
+              get->ref->type.getHeapType(), type.getHeapType());
+            addConstraint(
+              get->ref, Type(generalized, Nullable, type.getExactness()));
           }
         }
         if (auto it = exprSubs.find(expr); it != exprSubs.end()) {

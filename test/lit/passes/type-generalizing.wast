@@ -2284,19 +2284,33 @@
 (module
  (rec
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $A (descriptor $A.desc) (struct))
-  (type $A (descriptor $A.desc) (struct))
-  ;; CHECK:       (type $A.desc (describes $A) (struct))
-  (type $A.desc (describes $A) (struct))
+  ;; CHECK-NEXT:  (type $A (sub (descriptor $A.desc) (struct)))
+  (type $A (sub (descriptor $A.desc) (struct)))
+  ;; CHECK:       (type $A.desc (sub (describes $A) (struct)))
+  (type $A.desc (sub (describes $A) (struct)))
+  ;; CHECK:       (type $B (sub $A (descriptor $B.desc) (struct)))
+  (type $B (sub $A (descriptor $B.desc) (struct)))
+  ;; CHECK:       (type $B.desc (sub $A.desc (describes $B) (struct)))
+  (type $B.desc (sub $A.desc (describes $B) (struct)))
+  ;; CHECK:       (type $C (sub $B (descriptor $C.desc) (struct)))
+  (type $C (sub $B (descriptor $C.desc) (struct)))
+  ;; CHECK:       (type $C.desc (sub $B.desc (describes $C) (struct)))
+  (type $C.desc (sub $B.desc (describes $C) (struct)))
  )
 
- ;; CHECK:      (type $2 (func))
+ ;; CHECK:      (type $6 (func))
 
- ;; CHECK:      (type $3 (func (param anyref)))
+ ;; CHECK:      (type $7 (func (result (ref $A.desc))))
 
- ;; CHECK:      (type $4 (func (result (ref $A.desc))))
+ ;; CHECK:      (type $8 (func (result (ref $B.desc))))
 
- ;; CHECK:      (func $ref.cast_desc_eq (type $2)
+ ;; CHECK:      (type $9 (func (param anyref)))
+
+ ;; CHECK:      (type $10 (func (result (ref (exact $A.desc)))))
+
+ ;; CHECK:      (type $11 (func (result (ref (exact $B.desc)))))
+
+ ;; CHECK:      (func $ref.cast_desc_eq (type $6)
  ;; CHECK-NEXT:  (local $x (ref null $A.desc))
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (ref.cast_desc_eq (ref $A)
@@ -2317,7 +2331,7 @@
   )
  )
 
- ;; CHECK:      (func $br-on-cast-desc-eq (type $3) (param $any anyref)
+ ;; CHECK:      (func $br-on-cast-desc-eq (type $9) (param $any anyref)
  ;; CHECK-NEXT:  (local $x (ref null $A.desc))
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (block $l (result (ref null $A))
@@ -2345,7 +2359,7 @@
   )
  )
 
- ;; CHECK:      (func $ref.get_desc (type $4) (result (ref $A.desc))
+ ;; CHECK:      (func $ref.get_desc (type $7) (result (ref $A.desc))
  ;; CHECK-NEXT:  (local $x (ref null $A))
  ;; CHECK-NEXT:  (ref.get_desc $A
  ;; CHECK-NEXT:   (local.get $x)
@@ -2355,6 +2369,99 @@
   ;; We cannot generalize x to anyref: it must have a descriptor.
   (local $x (ref null $A))
   (ref.get_desc $A
+   (local.get $x)
+  )
+ )
+
+ ;; CHECK:      (func $ref.get_desc-exact (type $10) (result (ref (exact $A.desc)))
+ ;; CHECK-NEXT:  (local $x (ref null (exact $A)))
+ ;; CHECK-NEXT:  (ref.get_desc $A
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $ref.get_desc-exact (result (ref (exact $A.desc)))
+  (local $x (ref null (exact $A)))
+  ;; As above, but the output must also be exact, so we must keep $x exact.
+  (ref.get_desc $A
+   (local.get $x)
+  )
+ )
+
+ ;; CHECK:      (func $ref.get_desc-stop-middle (type $8) (result (ref $B.desc))
+ ;; CHECK-NEXT:  (local $x (ref null $B))
+ ;; CHECK-NEXT:  (ref.get_desc $B
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $ref.get_desc-stop-middle (result (ref $B.desc))
+  (local $x (ref null $C))
+  ;; We can generalize $x from $C to $B, but must stop there because $A's
+  ;; descriptor ($A.desc) is not refined enough for the result ($B.desc).
+  (ref.get_desc $C
+   (local.get $x)
+  )
+ )
+
+ ;; CHECK:      (func $ref.get_desc-stop-top (type $7) (result (ref $A.desc))
+ ;; CHECK-NEXT:  (local $x (ref null $A))
+ ;; CHECK-NEXT:  (ref.get_desc $A
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $ref.get_desc-stop-top (result (ref $A.desc))
+  (local $x (ref null $C))
+  ;; We can generalize $x all the way up the supertype chain from $C to $A.
+  (ref.get_desc $C
+   (local.get $x)
+  )
+ )
+
+ ;; CHECK:      (func $ref.get_desc-drop (type $6)
+ ;; CHECK-NEXT:  (local $x (ref null $A))
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (ref.get_desc $A
+ ;; CHECK-NEXT:    (local.get $x)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $ref.get_desc-drop
+  (local $x (ref null $C))
+  ;; Even when the ref.get_desc is dropped, $x can generalize to $A (the top
+  ;; supertype with a descriptor), but not to structref/anyref.
+  (drop
+   (ref.get_desc $C
+    (local.get $x)
+   )
+  )
+ )
+
+ ;; CHECK:      (func $ref.get_desc-exact-to-inexact (type $8) (result (ref $B.desc))
+ ;; CHECK-NEXT:  (local $x (ref null $B))
+ ;; CHECK-NEXT:  (ref.get_desc $B
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $ref.get_desc-exact-to-inexact (result (ref $B.desc))
+  (local $x (ref null (exact $C)))
+  ;; The local starts as exact $C, so the ref.get_desc initially has an exact
+  ;; type, but the required output is inexact $B.desc, so $x can generalize to
+  ;; inexact $B.
+  (ref.get_desc $C
+   (local.get $x)
+  )
+ )
+
+ ;; CHECK:      (func $ref.get_desc-exact-sub (type $11) (result (ref (exact $B.desc)))
+ ;; CHECK-NEXT:  (local $x (ref null (exact $B)))
+ ;; CHECK-NEXT:  (ref.get_desc $B
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $ref.get_desc-exact-sub (result (ref (exact $B.desc)))
+  (local $x (ref null (exact $B)))
+  ;; Even though $B has a supertype $A with a descriptor, the required output is
+  ;; exact $B.desc, so $x must remain (ref null (exact $B)).
+  (ref.get_desc $B
    (local.get $x)
   )
  )
