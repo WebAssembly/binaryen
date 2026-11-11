@@ -79,7 +79,6 @@ query($owner: String!, $name: String!, $pr: Int!, $team: String!) {
         nodes {
           requestedReviewer {
             ... on User { login }
-            ... on Team { slug }
           }
         }
       }
@@ -336,10 +335,9 @@ def main() -> None:
     pr_author = target['author']['login'] if target['author'] else ''
 
     # Skip if another team member is already requested or has already reviewed.
-    target_requests = target['reviewRequests']['nodes']
     existing_users = {
         n['requestedReviewer'].get('login')
-        for n in target_requests
+        for n in target['reviewRequests']['nodes']
         if n['requestedReviewer']
     } - {None}
     reviewed_users = {
@@ -398,22 +396,6 @@ def main() -> None:
         '-f',
         f'reviewers[]={chosen}',
     ])
-    # Replace the CODEOWNERS team review request with the individual reviewer.
-    team_requested = any(
-        n['requestedReviewer'].get('slug') == TEAM_SLUG
-        for n in target_requests
-        if n['requestedReviewer']
-    )
-    if team_requested:
-        gh_api([
-            '--method',
-            'DELETE',
-            f'repos/{owner}/{name}/pulls/{pr_number}/requested_reviewers',
-            '-f',
-            'reviewers[]',
-            '-f',
-            f'team_reviewers[]={TEAM_SLUG}',
-        ])
 
 
 if __name__ == '__main__':
