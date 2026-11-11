@@ -47,8 +47,8 @@ namespace wasm {
 
 namespace {
 
-bool isRelaxable(Function* func,
-                 const std::unordered_set<Function*>& referencedFuncs) {
+bool isSignatureRewritable(
+  Function* func, const std::unordered_set<Function*>& referencedFuncs) {
   // The signatures of imported and exported functions aren't changed to
   // preserve the API boundary. Exported functions are implicitly 'referenced'
   // (i.e. they may be the target of a call_ref even if they never appear in a
@@ -152,45 +152,45 @@ struct InsertRefAsNonNull
 struct LocalsToNullable : WalkerPass<PostWalker<LocalsToNullable>> {
   using Super = WalkerPass<PostWalker<LocalsToNullable>>;
 
-  const std::unordered_set<Function*>& referencedFuncs;
+  const std::unordered_set<Function*>& funcsWithRelaxedSignature;
 
   // true iff any expression types were changed.
   // false if only dead local definitions were changed.
   bool changed = false;
 
-  // true iff the callee relaxed the params of the particular function that
-  // we're looking at. If not, then we know not to update the types of
-  // local.get or local.tee on those params.
-  bool signatureWasUpdated = false;
+  // true iff the function's signature was relaxed before this pass ran, i.e. if
+  // funcsWithRelaxedSignature contains the function.
+  bool signatureWasRelaxed = false;
 
-  LocalsToNullable(const std::unordered_set<Function*>& referencedFuncs)
-    : referencedFuncs(referencedFuncs) {}
+  LocalsToNullable(
+    const std::unordered_set<Function*>& funcsWithRelaxedSignature)
+    : funcsWithRelaxedSignature(funcsWithRelaxedSignature) {}
 
   std::unique_ptr<Pass> create() override {
-    return std::make_unique<LocalsToNullable>(referencedFuncs);
+    return std::make_unique<LocalsToNullable>(funcsWithRelaxedSignature);
   }
 
   bool isFunctionParallel() override { return true; }
 
   bool runsOnFunction(Function* func) const override {
-    return func->vars.size() > 0 || isRelaxable(func, referencedFuncs);
+    return func->vars.size() > 0 || funcsWithRelaxedSignature.contains(func);
   }
 
+  // 1. Make all local definitions nullable and update gets and sets.
+  // 2. Refinalize to fixup block types
+  // 3. Insert ref.as_non_null where a parent demands it, e.g. return values,
+  //    calls to unrelaxed imports, unrelaxed struct.set.
+  //
+  // Refinalize is not needed after step 3 because a block never demands a
+  // non-null and thus step 3 makes no difference to block types.
   void doWalkFunction(Function* func) {
-    signatureWasUpdated = isRelaxable(func, referencedFuncs);
-    // 1. Make all local definitions nullable and update gets and sets.
-    // 2. Refinalize to fixup block types
-    // 3. Insert ref.as_non_null where a parent demands it, e.g. return values,
-    //    calls to unrelaxed imports, unrelaxed struct.set.
-    //
-    // Refinalize is not needed after step 3 because a block never demands a
-    // non-null and thus step 3 makes no difference to block types.
+    signatureWasRelaxed = funcsWithRelaxedSignature.contains(func);
 
     bool changedLocals = false;
     for (Index i = 0; i < func->vars.size(); ++i) {
       changedLocals |= makeNullable(func->vars[i]);
     }
-    if (!changedLocals && !signatureWasUpdated) {
+    if (!changedLocals && !signatureWasRelaxed) {
       return;
     }
 
@@ -206,7 +206,7 @@ struct LocalsToNullable : WalkerPass<PostWalker<LocalsToNullable>> {
   }
 
   void visitLocalGet(LocalGet* curr) {
-    if (!signatureWasUpdated && getFunction()->isParam(curr->index)) {
+    if (!signatureWasRelaxed && getFunction()->isParam(curr->index)) {
       return;
     }
 
@@ -214,7 +214,7 @@ struct LocalsToNullable : WalkerPass<PostWalker<LocalsToNullable>> {
   }
 
   void visitLocalSet(LocalSet* curr) {
-    if (!signatureWasUpdated && getFunction()->isParam(curr->index)) {
+    if (!signatureWasRelaxed && getFunction()->isParam(curr->index)) {
       return;
     }
 
@@ -228,20 +228,21 @@ struct RelaxNullability : Pass {
   bool requiresNonNullableLocalFixups() override { return false; }
 
   void run(Module* module) override {
-    auto referencedFuncs = ModuleUtils::getReferencedFuncs(*module);
-    relaxFunctionParams(module, referencedFuncs);
+    auto relaxedFuncs = relaxFunctionParams(module);
 
     PassRunner runner(getPassRunner());
-    runner.add(std::make_unique<LocalsToNullable>(referencedFuncs));
+    runner.add(std::make_unique<LocalsToNullable>(relaxedFuncs));
     runner.run();
   }
 
 private:
-  void
-  relaxFunctionParams(Module* module,
-                      const std::unordered_set<Function*>& referencedFuncs) {
+  // Returns the set of functions that had their signatures changed.
+  std::unordered_set<Function*> relaxFunctionParams(Module* module) {
+    auto referencedFuncs = ModuleUtils::getReferencedFuncs(*module);
+
+    std::unordered_set<Function*> relaxedFuncs;
     for (auto& func : module->functions) {
-      if (!isRelaxable(func.get(), referencedFuncs)) {
+      if (!isSignatureRewritable(func.get(), referencedFuncs)) {
         continue;
       }
 
@@ -253,9 +254,12 @@ private:
       }
 
       if (changed) {
+        relaxedFuncs.insert(func.get());
         func->setParams(std::move(relaxedParams));
       }
     }
+
+    return relaxedFuncs;
   }
 };
 
