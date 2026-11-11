@@ -53,8 +53,6 @@ bool isRelaxable(Function* func,
   // preserve the API boundary. Exported functions are implicitly 'referenced'
   // (i.e. they may be the target of a call_ref even if they never appear in a
   // ref.func), so no need to check that a second time.
-  //
-  // TODO: Relax private referenced funcs + bodies of public referenced funcs.
   return !func->imported() && !referencedFuncs.contains(func);
 }
 
@@ -160,6 +158,11 @@ struct LocalsToNullable : WalkerPass<PostWalker<LocalsToNullable>> {
   // false if only dead local definitions were changed.
   bool changed = false;
 
+  // true iff the callee relaxed the params of the particular function that
+  // we're looking at. If not, then we know not to update the types of
+  // local.get or local.tee on those params.
+  bool signatureWasUpdated = false;
+
   LocalsToNullable(const std::unordered_set<Function*>& referencedFuncs)
     : referencedFuncs(referencedFuncs) {}
 
@@ -169,14 +172,12 @@ struct LocalsToNullable : WalkerPass<PostWalker<LocalsToNullable>> {
 
   bool isFunctionParallel() override { return true; }
 
-  bool runsOnFunction(Function* func) override {
-    // If we didn't relax the params, don't update local.gets / local.tee which
-    // might touch unrelaxed params.
-    // TODO: Relax locals even if the params weren't relaxed.
-    return isRelaxable(func, referencedFuncs);
+  bool runsOnFunction(Function* func) const override {
+    return func->vars.size() > 0 || isRelaxable(func, referencedFuncs);
   }
 
   void doWalkFunction(Function* func) {
+    signatureWasUpdated = isRelaxable(func, referencedFuncs);
     // 1. Make all local definitions nullable and update gets and sets.
     // 2. Refinalize to fixup block types
     // 3. Insert ref.as_non_null where a parent demands it, e.g. return values,
@@ -185,13 +186,14 @@ struct LocalsToNullable : WalkerPass<PostWalker<LocalsToNullable>> {
     // Refinalize is not needed after step 3 because a block never demands a
     // non-null and thus step 3 makes no difference to block types.
 
+    bool changedLocals = false;
     for (Index i = 0; i < func->vars.size(); ++i) {
-      std::ignore = makeNullable(func->vars[i]);
+      changedLocals |= makeNullable(func->vars[i]);
+    }
+    if (!changedLocals && !signatureWasUpdated) {
+      return;
     }
 
-    // TODO: could consider doing this only if locals changed
-    // but a function param could have changed and we can't tell that easily
-    // from here.
     Super::doWalkFunction(func);
 
     if (!changed) {
@@ -203,9 +205,19 @@ struct LocalsToNullable : WalkerPass<PostWalker<LocalsToNullable>> {
     fixupReturn(&func->body, getModule(), func);
   }
 
-  void visitLocalGet(LocalGet* curr) { changed |= makeNullable(curr->type); }
+  void visitLocalGet(LocalGet* curr) {
+    if (!signatureWasUpdated && getFunction()->isParam(curr->index)) {
+      return;
+    }
+
+    changed |= makeNullable(curr->type);
+  }
 
   void visitLocalSet(LocalSet* curr) {
+    if (!signatureWasUpdated && getFunction()->isParam(curr->index)) {
+      return;
+    }
+
     if (curr->isTee()) {
       changed |= makeNullable(curr->type);
     }
