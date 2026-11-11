@@ -83,7 +83,7 @@ struct LocalInfo {
   static const Index kUnknown = Index(-1);
 
   Index maxBits = -1;
-  Index signExtBits = 0;
+  Index signExtKeptBits = 0;
 };
 
 struct LocalScanner : PostWalker<LocalScanner> {
@@ -101,9 +101,10 @@ struct LocalScanner : PostWalker<LocalScanner> {
       auto& info = localInfo[i];
       if (func->isParam(i)) {
         info.maxBits = getBitsForType(func->getLocalType(i)); // worst-case
-        info.signExtBits = LocalInfo::kUnknown; // we will never know anything
+        // We will never know anything.
+        info.signExtKeptBits = LocalInfo::kUnknown;
       } else {
-        info.maxBits = info.signExtBits = 0; // we are open to learning
+        info.maxBits = info.signExtKeptBits = 0; // we are open to learning
       }
     }
     // walk
@@ -111,8 +112,8 @@ struct LocalScanner : PostWalker<LocalScanner> {
     // finalize
     for (Index i = 0; i < func->getNumLocals(); i++) {
       auto& info = localInfo[i];
-      if (info.signExtBits == LocalInfo::kUnknown) {
-        info.signExtBits = 0;
+      if (info.signExtKeptBits == LocalInfo::kUnknown) {
+        info.signExtKeptBits = 0;
       }
     }
   }
@@ -130,27 +131,19 @@ struct LocalScanner : PostWalker<LocalScanner> {
     auto* value =
       Properties::getFallthrough(curr->value, passOptions, *getModule());
     auto& info = localInfo[curr->index];
-    info.maxBits = std::max(info.maxBits, Bits::getMaxBits(value, this));
+    info.maxBits = std::max(info.maxBits, Bits::getMaxBits(value));
     info.maxBits = std::min(info.maxBits, getBitsForType(type));
-    auto signExtBits = LocalInfo::kUnknown;
-    if (Properties::getSignExtValue(value)) {
-      signExtBits = Properties::getSignExtBits(value);
-    } else if (auto* load = value->dynCast<Load>()) {
-      if (LoadUtils::isSignRelevant(load) && load->signed_) {
-        signExtBits = load->bytes * 8;
-      }
+    auto keptBits = Bits::getSignExtKeptBits(value);
+    if (keptBits == 0) {
+      keptBits = LocalInfo::kUnknown;
     }
-    if (info.signExtBits == 0) {
-      info.signExtBits = signExtBits; // first info we see
-    } else if (info.signExtBits != signExtBits) {
+    if (info.signExtKeptBits == 0) {
+      info.signExtKeptBits = keptBits; // first info we see
+    } else if (info.signExtKeptBits != keptBits) {
       // contradictory information, give up
-      info.signExtBits = LocalInfo::kUnknown;
+      info.signExtKeptBits = LocalInfo::kUnknown;
     }
   }
-
-  // define this for the templated getMaxBits method. we know nothing here yet
-  // about locals, so return the maxes
-  Index getMaxBitsForLocal(LocalGet* get) { return getBitsForType(get->type); }
 };
 
 namespace {
@@ -219,7 +212,8 @@ template<class Opt> struct Match::Internal::MatchSelf<PureMatcherKind<Opt>> {
 
 // Main pass class
 struct OptimizeInstructions
-  : public WalkerPass<PostWalker<OptimizeInstructions>> {
+  : public WalkerPass<PostWalker<OptimizeInstructions>>,
+    public Bits::LocalInfoProvider {
   bool isFunctionParallel() override { return true; }
 
   std::unique_ptr<Pass> create() override {
@@ -334,7 +328,7 @@ struct OptimizeInstructions
     // We should never be called with a constant.
     assert(!curr->is<Const>());
 
-    if (!curr->type.isInteger() || Bits::getMaxBits(curr, this) != 0) {
+    if (!curr->type.isInteger() || bits.getMaxBits(curr) != 0) {
       return nullptr;
     }
 
@@ -596,29 +590,51 @@ struct OptimizeInstructions
         }
       }
     }
-    if (auto* ext = Properties::getAlmostSignExt(curr)) {
+    if (auto* ext = Bits::getAlmostSignExt(curr)) {
       Index extraLeftShifts;
-      auto bits = Properties::getAlmostSignExtBits(curr, extraLeftShifts);
-      if (extraLeftShifts == 0 && trySignExtLoad(ext, bits)) {
+      auto keptBits = Bits::getAlmostSignExtKeptBits(curr, extraLeftShifts);
+      if (extraLeftShifts == 0 && trySignExtLoad(ext, keptBits)) {
         return replaceCurrent(ext);
       }
       // We can in some cases remove part of a sign extend, that is,
       //   (x << A) >> B   =>   x << (A - B)
       // If the sign-extend input cannot have a sign bit, we don't need it.
-      if (Bits::getMaxBits(ext, this) + extraLeftShifts < bits) {
+      if (bits.getMaxBits(ext) + extraLeftShifts < keptBits) {
         return replaceCurrent(removeAlmostSignExt(curr));
       }
-      // We also don't need it if it already has an identical-sized sign
-      // extend applied to it. That is, if it is already a sign-extended
-      // value, then another sign extend will do nothing. We do need to be
-      // careful of the extra shifts, though.
-      if (isSignExted(ext, bits) && extraLeftShifts == 0) {
+      // A wider (or equal) outer shift sign-extension is redundant around a
+      // narrower inner sign-extension: if |ext| is already sign-extended with
+      // at most |keptBits - extraLeftShifts| kept bits, shifting it left by
+      // |extraLeftShifts| and sign-extending from |keptBits| bits only
+      // re-extends bits that are already copies of the sign bit, so we can
+      // remove the outer sign-extension (leaving any |extraLeftShifts|).
+      if (hasSignExtKeptBits(ext, keptBits - extraLeftShifts)) {
+        return replaceCurrent(removeAlmostSignExt(curr));
+      }
+      // Conversely, when the inner sign-extension is wider than the outer shift
+      // sign-extension, we can strip the redundant inner sign-extension.
+      if (auto* innerExt = Bits::getSignExtValue(ext)) {
+        assert(Bits::getSignExtKeptBits(ext) > keptBits - extraLeftShifts);
+        curr->left->cast<Binary>()->left = innerExt;
+        return replaceCurrent(curr);
+      }
+      // Sign-extending the low 32 bits of a zero-extended i32 is a signed
+      // i32 extension (plus any remaining left shifts).
+      if (auto* unary = ext->dynCast<Unary>();
+          unary && unary->op == ExtendUInt32 &&
+          keptBits - extraLeftShifts == 32) {
+        unary->op = ExtendSInt32;
         return replaceCurrent(removeAlmostSignExt(curr));
       }
     } else if (curr->op == EqInt32 || curr->op == NeInt32 ||
                curr->op == EqInt64 || curr->op == NeInt64) {
       if (auto* c = curr->right->dynCast<Const>()) {
-        if (auto* ext = Properties::getSignExtValue(curr->left)) {
+        if (auto* ext = Bits::getSignExtValue(curr->left)) {
+          // TODO: Reexamine whether replacing unary sign-extend instructions
+          // (as opposed to shift pairs) with zero-extend masks here is
+          // worthwhile, since an `and` with a constant is larger than a unary
+          // extend.
+          //
           // We are comparing a sign extend to a constant, which means we can
           // use a cheaper zero-extend in some cases. That is,
           //  (x << S) >> S ==/!= C    =>    x & T ==/!= C
@@ -631,7 +647,7 @@ struct OptimizeInstructions
           // sign-extended, that is, its effective sign bit is spread to all
           // the upper bits, which means that the relevant bits on the left
           // side are either all 0, or all 1.
-          auto bits = Properties::getSignExtBits(curr->left);
+          auto bits = Bits::getSignExtKeptBits(curr->left);
           uint64_t right = c->value.getUnsigned();
           Index totalBits = c->type.getByteSize() * 8;
           Index numRelevantBits = totalBits - bits + 1;
@@ -668,12 +684,16 @@ struct OptimizeInstructions
               builder.makeSequence(builder.makeDrop(ext), c));
           }
         }
-      } else if (auto* left = Properties::getSignExtValue(curr->left)) {
-        if (auto* right = Properties::getSignExtValue(curr->right)) {
-          auto bits = Properties::getSignExtBits(curr->left);
-          if (Properties::getSignExtBits(curr->right) == bits) {
+      } else if (auto* left = Bits::getSignExtValue(curr->left)) {
+        if (auto* right = Bits::getSignExtValue(curr->right)) {
+          auto bits = Bits::getSignExtKeptBits(curr->left);
+          if (Bits::getSignExtKeptBits(curr->right) == bits) {
             // we are comparing two sign-exts with the same bits, so we may as
             // well replace both with cheaper zexts
+            // TODO: Reexamine whether replacing unary sign-extend instructions
+            // (as opposed to shift pairs) with zero-extend masks here is
+            // worthwhile, since an `and` with a constant is larger than a unary
+            // extend.
             curr->left = makeZeroExt(left, bits);
             curr->right = makeZeroExt(right, bits);
             return replaceCurrent(curr);
@@ -681,7 +701,7 @@ struct OptimizeInstructions
         } else if (auto* load = curr->right->dynCast<Load>()) {
           // we are comparing a load to a sign-ext, we may be able to switch
           // to zext
-          auto leftBits = Properties::getSignExtBits(curr->left);
+          auto leftBits = Bits::getSignExtKeptBits(curr->left);
           if (load->signed_ && leftBits == load->bytes * 8) {
             load->signed_ = false;
             curr->left = makeZeroExt(left, leftBits);
@@ -689,10 +709,10 @@ struct OptimizeInstructions
           }
         }
       } else if (auto* load = curr->left->dynCast<Load>()) {
-        if (auto* right = Properties::getSignExtValue(curr->right)) {
+        if (auto* right = Bits::getSignExtValue(curr->right)) {
           // we are comparing a load to a sign-ext, we may be able to switch
           // to zext
-          auto rightBits = Properties::getSignExtBits(curr->right);
+          auto rightBits = Bits::getSignExtKeptBits(curr->right);
           if (load->signed_ && rightBits == load->bytes * 8) {
             load->signed_ = false;
             curr->right = makeZeroExt(right, rightBits);
@@ -740,7 +760,7 @@ struct OptimizeInstructions
             return replaceCurrent(left);
           }
         }
-        auto lowMask = Bits::lowBitMask64(Bits::getMaxBits(left, this));
+        auto lowMask = Bits::lowBitMask64(bits.getMaxBits(left));
         if ((mask & lowMask) == lowMask) {
           // A mask of more bits than can be present is not needed.
           return replaceCurrent(left);
@@ -761,7 +781,7 @@ struct OptimizeInstructions
         // faster on VMs. Also this opens more possibilities for further
         // simplifications afterwards.
         if (c >= 0 && (op = makeUnsignedBinaryOp(curr->op)) != InvalidBinary &&
-            Bits::getMaxBits(curr->left, this) <= 31) {
+            bits.getMaxBits(curr->left) <= 31) {
           curr->op = op;
         }
         if (c < 0 && c > std::numeric_limits<int32_t>::min() &&
@@ -791,7 +811,7 @@ struct OptimizeInstructions
         int64_t c = right->value.geti64();
         // See description above for Type::i32
         if (c >= 0 && (op = makeUnsignedBinaryOp(curr->op)) != InvalidBinary &&
-            Bits::getMaxBits(curr->left, this) <= 63) {
+            bits.getMaxBits(curr->left) <= 63) {
           curr->op = op;
         }
         if (getPassOptions().shrinkLevel == 0 && c < 0 &&
@@ -953,7 +973,7 @@ struct OptimizeInstructions
         Unary* inner;
         Expression* x;
         if (matches(curr, unary(EqZInt32, unary(&inner, WrapInt64, any(&x)))) &&
-            Bits::getMaxBits(x, this) <= 32) {
+            bits.getMaxBits(x) <= 32) {
           inner->op = EqZInt64;
           return replaceCurrent(inner);
         }
@@ -984,7 +1004,7 @@ struct OptimizeInstructions
         UnaryOp unaryOp;
         if (matches(curr, unary(&unaryOp, unary(WrapInt64, any(&x))))) {
           if (unaryOp == ExtendSInt32 || unaryOp == ExtendUInt32) {
-            auto maxBits = Bits::getMaxBits(x, this);
+            auto maxBits = bits.getMaxBits(x);
             if ((unaryOp == ExtendSInt32 && maxBits <= 31) ||
                 (unaryOp == ExtendUInt32 && maxBits <= 32)) {
               return replaceCurrent(x);
@@ -1044,19 +1064,39 @@ struct OptimizeInstructions
       }
     }
 
-    if (auto* ext = Properties::getSignExtValue(curr)) {
-      auto bits = Properties::getSignExtBits(curr);
-      if (trySignExtLoad(ext, bits)) {
+    if (auto* ext = Bits::getSignExtValue(curr)) {
+      using namespace Match;
+      auto currBits = Bits::getSignExtKeptBits(curr);
+      if (trySignExtLoad(ext, currBits)) {
         return replaceCurrent(ext);
       }
-      // Simple sign extends can be removed if the value is already
-      // sign-extended. Note that we can handle the case of |curr| having a
-      // larger sign-extend: if we have an 8-bit value in 32-bit, then there are
-      // 24 sign bits, and doing a sign-extend to 16 will only affect 16 of
-      // those 24, and the effect is to leave them as they are.
-      auto signExtBits = getSignExtBits(ext);
-      if (signExtBits > 0 && signExtBits <= bits) {
+      // If the sign-extend input cannot have a sign bit, we don't need it.
+      if (bits.getMaxBits(ext) < currBits) {
         return replaceCurrent(ext);
+      }
+      // Simple sign extends can also be removed if the input is already
+      // sign-extended. Note that we can handle the case of |curr| having a
+      // larger sign-extend: if we have an 8-bit value in 32-bit, then there
+      // are 24 sign bits, and doing a sign-extend to 16 will only affect 16
+      // of those 24, and the effect is to leave them as they are.
+      if (hasSignExtKeptBits(ext, currBits)) {
+        return replaceCurrent(ext);
+      }
+      // A narrower unary sign-extension can strip a wider inner one. Since
+      // hasSignExtKeptBits(ext, currBits) was false above, any inner
+      // sign-extension is strictly wider than |currBits|.
+      if (auto* innerExt = Bits::getSignExtValue(ext)) {
+        assert(Bits::getSignExtKeptBits(ext) > currBits);
+        curr->value = innerExt;
+        return replaceCurrent(curr);
+      }
+      // Sign-extending the low 32 bits of a zero-extended i32 is a signed i32
+      // extension.
+      Unary* inner;
+      if (matches(curr,
+                  unary(ExtendS32Int64, unary(&inner, ExtendUInt32, any())))) {
+        inner->op = ExtendSInt32;
+        return replaceCurrent(inner);
       }
     }
 
@@ -1094,10 +1134,13 @@ struct OptimizeInstructions
         }
       }
       // eqz of a sign extension can be of zero-extension
-      if (auto* ext = Properties::getSignExtValue(curr->value)) {
+      if (auto* ext = Bits::getSignExtValue(curr->value)) {
         // we are comparing a sign extend to a constant, which means we can
         // use a cheaper zext
-        auto bits = Properties::getSignExtBits(curr->value);
+        // TODO: Reexamine whether replacing unary sign-extend instructions (as
+        // opposed to shift pairs) with zero-extend masks here is worthwhile,
+        // since an `and` with a constant is larger than a unary extend.
+        auto bits = Bits::getSignExtKeptBits(curr->value);
         curr->value = makeZeroExt(ext, bits);
         return replaceCurrent(curr);
       }
@@ -1309,11 +1352,11 @@ struct OptimizeInstructions
             }
           }
         }
-      } else if (auto* ext = Properties::getSignExtValue(binary)) {
+      } else if (auto* ext = Bits::getSignExtValue(binary)) {
         // if sign extending the exact bit size we store, we can skip the
         // extension if extending something bigger, then we just alter bits we
         // don't save anyhow
-        if (Properties::getSignExtBits(binary) >= Index(bytes) * 8) {
+        if (Bits::getSignExtKeptBits(binary) >= Index(bytes) * 8) {
           value = ext;
         }
       }
@@ -2983,7 +3026,7 @@ struct OptimizeInstructions
     }
   }
 
-  Index getMaxBitsForLocal(LocalGet* get) {
+  Index getMaxBitsForLocal(LocalGet* get) const override {
     // check what we know about the local (we may know nothing, if this local
     // was added after the pass scanned for locals; in that case, full
     // optimization may require another cycle)
@@ -2993,9 +3036,17 @@ struct OptimizeInstructions
     return getBitsForType(get->type);
   }
 
+  Index getSignExtKeptBitsForLocal(LocalGet* get) const override {
+    if (get->index < localInfo.size()) {
+      return localInfo[get->index].signExtKeptBits;
+    }
+    return 0;
+  }
+
 private:
   // Information about our locals
   std::vector<LocalInfo> localInfo;
+  Bits::Provider bits{this};
 
   // Checks if the first is a local.tee and the second a local.get of that same
   // index. This is useful in the methods right below us, as it is a common
@@ -3449,10 +3500,10 @@ private:
           }
         }
       }
-      if (auto* ext = Properties::getSignExtValue(binary)) {
+      if (auto* ext = Bits::getSignExtValue(binary)) {
         // use a cheaper zero-extent, we just care about the boolean value
         // anyhow
-        return makeZeroExt(ext, Properties::getSignExtBits(binary));
+        return makeZeroExt(ext, Bits::getSignExtKeptBits(binary));
       }
     } else if (auto* block = boolean->dynCast<Block>()) {
       if (block->type == Type::i32 && block->list.size() > 0) {
@@ -3575,10 +3626,9 @@ private:
         }
       }
     }
-    if (curr->type == Type::i32 &&
-        Bits::getMaxBits(curr->condition, this) <= 1 &&
-        Bits::getMaxBits(curr->ifTrue, this) <= 1 &&
-        Bits::getMaxBits(curr->ifFalse, this) <= 1) {
+    if (curr->type == Type::i32 && bits.getMaxBits(curr->condition) <= 1 &&
+        bits.getMaxBits(curr->ifTrue) <= 1 &&
+        bits.getMaxBits(curr->ifFalse) <= 1) {
       // The condition and both arms are i32 booleans, which allows us to do
       // boolean optimizations.
       Expression* x;
@@ -4096,7 +4146,7 @@ private:
     auto* right = curr->right;
 
     // Check left's max bits and right is constant.
-    auto leftMaxBits = Bits::getMaxBits(left, this);
+    auto leftMaxBits = bits.getMaxBits(left);
     uint64_t maskLeft;
     // leftMaxBits may be greater than size if the lhs is unreachable but has
     // not been refinalized yet.
@@ -4446,22 +4496,11 @@ private:
     return false;
   }
 
-  // Check if an expression is already sign-extended to an exact number of bits.
-  bool isSignExted(Expression* curr, Index bits) {
-    return getSignExtBits(curr) == bits;
-  }
-
-  // Returns the number of bits an expression is sign-extended (or 0 if it is
-  // not).
-  Index getSignExtBits(Expression* curr) {
-    if (Properties::getSignExtValue(curr)) {
-      return Properties::getSignExtBits(curr);
-    }
-    if (auto* get = curr->dynCast<LocalGet>()) {
-      // Check what we know about the local.
-      return localInfo[get->index].signExtBits;
-    }
-    return 0;
+  // Check if an expression is already sign-extended with at most |keptBits|
+  // kept bits.
+  bool hasSignExtKeptBits(Expression* curr, Index keptBits) {
+    auto currKeptBits = bits.getSignExtKeptBits(curr);
+    return currKeptBits > 0 && currKeptBits <= keptBits;
   }
 
   // optimize trivial math operations, given that the right side of a binary
@@ -4535,24 +4574,24 @@ private:
     // i32(bool(x)) != 0  ==>  i32(bool(x))
     if ((matches(curr, binary(EqInt32, any(&left), i32(1))) ||
          matches(curr, binary(NeInt32, any(&left), i32(0)))) &&
-        Bits::getMaxBits(left, this) == 1) {
+        bits.getMaxBits(left) == 1) {
       return left;
     }
     // i64(bool(x)) == 1  ==>  i32(bool(x))
     // i64(bool(x)) != 0  ==>  i32(bool(x))
     if ((matches(curr, binary(EqInt64, any(&left), i64(1))) ||
          matches(curr, binary(NeInt64, any(&left), i64(0)))) &&
-        Bits::getMaxBits(left, this) == 1) {
+        bits.getMaxBits(left) == 1) {
       return builder.makeUnary(WrapInt64, left);
     }
     // bool(x) != 1  ==>  !bool(x)
     if (matches(curr, binary(Ne, any(&left), ival(1))) &&
-        Bits::getMaxBits(left, this) == 1) {
+        bits.getMaxBits(left) == 1) {
       return builder.makeUnary(Abstract::getUnary(type, EqZ), left);
     }
     // bool(x)  ^ 1  ==>  !bool(x)
     if (matches(curr, binary(Xor, any(&left), ival(1))) &&
-        Bits::getMaxBits(left, this) == 1) {
+        bits.getMaxBits(left) == 1) {
       auto* result = builder.makeUnary(Abstract::getUnary(type, EqZ), left);
       if (left->type == Type::i64) {
         // Xor's result is also an i64 in this case, but EqZ returns i32, so we
@@ -4566,7 +4605,7 @@ private:
     }
     // bool(x) | 1  ==>  1
     if (matches(curr, binary(Or, any(&left), ival(1))) &&
-        Bits::getMaxBits(left, this) == 1) {
+        bits.getMaxBits(left) == 1) {
       return getDroppedChildrenAndAppend(curr, right);
     }
 
@@ -4814,8 +4853,8 @@ private:
     // If we know nothing about a limit on the amount of bits on either side,
     // give up.
     auto typeMaxBits = getBitsForType(binary->type);
-    auto leftMaxBits = Bits::getMaxBits(binary->left, this);
-    auto rightMaxBits = Bits::getMaxBits(binary->right, this);
+    auto leftMaxBits = bits.getMaxBits(binary->left);
+    auto rightMaxBits = bits.getMaxBits(binary->right);
     if (std::max(leftMaxBits, rightMaxBits) == typeMaxBits) {
       return true;
     }
@@ -5254,11 +5293,11 @@ private:
       {
         // Check if there is a nontrivial amount of bits on the left, which may
         // provide enough to optimize.
-        auto leftMaxBits = Bits::getMaxBits(curr->left, this);
+        auto leftMaxBits = bits.getMaxBits(curr->left);
         auto type = curr->left->type;
         if (leftMaxBits < getBitsForType(type)) {
           using namespace Abstract;
-          auto rightMinBits = Bits::getMinBits(curr->right);
+          auto rightMinBits = bits.getMinBits(curr->right);
           auto rightIsNegative = rightMinBits == getBitsForType(type);
           if (leftMaxBits < rightMinBits) {
             // There are not enough bits on the left for it to be equal to the
@@ -5410,7 +5449,7 @@ private:
           }
           case EqZInt32: {
             // eqz(eqz(bool(x)))  ==>   bool(x)
-            if (Bits::getMaxBits(unaryInner->value, this) == 1) {
+            if (bits.getMaxBits(unaryInner->value) == 1) {
               return unaryInner->value;
             }
             break;

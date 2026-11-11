@@ -2669,7 +2669,7 @@ Signature WasmBinaryReader::getBlockType() {
   // Single value types are negative; signature indices are non-negative.
   auto code = getS32LEB();
   if (code >= 0) {
-    return getSignatureByTypeIndex(code);
+    return getSignatureTypeByIndex(code).getSignature();
   }
   if (code == BinaryConsts::EncodedType::Empty) {
     return Signature();
@@ -3300,7 +3300,7 @@ std::unique_ptr<Tag> WasmBinaryReader::readTagImport(Name module, Name base) {
   Builder builder(wasm);
   getInt8(); // Reserved 'attribute' field
   auto index = getU32LEB();
-  auto curr = builder.makeTag("", getSignatureByTypeIndex(index));
+  auto curr = builder.makeTag("", getSignatureTypeByIndex(index));
   curr->module = module;
   curr->base = base;
   return curr;
@@ -3458,10 +3458,8 @@ void WasmBinaryReader::readFunctionSignatures() {
     auto [name, isExplicit] = getOrMakeName(
       functionNames, numImports + i, makeName("", i), usedFunctionNames);
     auto index = getU32LEB();
-    HeapType type = getTypeByIndex(index);
+    HeapType type = getSignatureTypeByIndex(index);
     functionTypes.push_back(type);
-    // Check that the type is a signature.
-    getSignatureByTypeIndex(index);
     auto func = Builder(wasm).makeFunction(
       name, Type(type, NonNullable, Exact), {}, nullptr);
     func->hasExplicitName = isExplicit;
@@ -3484,12 +3482,12 @@ HeapType WasmBinaryReader::getTypeByFunctionIndex(Index index) {
   return functionTypes[index];
 }
 
-Signature WasmBinaryReader::getSignatureByTypeIndex(Index index) {
+HeapType WasmBinaryReader::getSignatureTypeByIndex(Index index) {
   auto heapType = getTypeByIndex(index);
   if (!heapType.isSignature()) {
     throwError("invalid signature type " + heapType.toString());
   }
-  return heapType.getSignature();
+  return heapType;
 }
 
 Signature WasmBinaryReader::getSignatureByFunctionIndex(Index index) {
@@ -5519,7 +5517,7 @@ void WasmBinaryReader::readTags() {
     auto [name, isExplicit] = getOrMakeName(
       tagNames, numImports + i, makeName("tag$", i), usedTagNames);
     auto typeIndex = getU32LEB();
-    auto tag = Builder::makeTag(name, getSignatureByTypeIndex(typeIndex));
+    auto tag = Builder::makeTag(name, getSignatureTypeByIndex(typeIndex));
     tag->hasExplicitName = isExplicit;
     wasm.addTag(std::move(tag));
   }

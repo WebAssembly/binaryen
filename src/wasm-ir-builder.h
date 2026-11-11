@@ -85,7 +85,12 @@ public:
   }
 
   // The current function, used to create scratch locals, add annotations, etc.
-  void setFunction(Function* func) { this->func = func; }
+  void setFunction(Function* func) {
+    this->func = func;
+    this->numDeclaredLocals = func ? func->getNumLocals() : 0;
+  }
+  Function* getFunction() const { return func; }
+  Index getNumDeclaredLocals() const { return numDeclaredLocals; }
 
   // Handle the boundaries of control flow structures. Users may choose to use
   // the corresponding `makeXYZ` function below instead of `visitXYZStart`, but
@@ -333,6 +338,9 @@ public:
 private:
   Module& wasm;
   Function* func = nullptr;
+  // The number of user-declared locals in the current function, excluding
+  // scratch locals added by IRBuilder.
+  Index numDeclaredLocals = 0;
   Builder builder;
 
   // Used for setting DWARF expression locations.
@@ -740,6 +748,8 @@ private:
     return getLabelName(label, true);
   }
   Result<Index> addScratchLocal(Type);
+  Result<> makeScratchLocalGet(Index local);
+  Result<> makeScratchLocalSet(Index local);
 
   struct HoistedVal {
     // The index in the stack of the deepest expression to be popped. This can

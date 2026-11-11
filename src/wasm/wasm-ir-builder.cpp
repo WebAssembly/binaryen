@@ -852,7 +852,7 @@ Result<> IRBuilder::visitFunctionStart(Function* func) {
   }
   debugLoc = CanReceiveDebug();
   scopeStack.push_back(ScopeCtx::makeFunc(func));
-  this->func = func;
+  setFunction(func);
 
   if (binaryPos) {
     lastBinaryPos = *binaryPos;
@@ -1242,7 +1242,7 @@ Result<> IRBuilder::visitEnd() {
       EHUtils::handleBlockNestedPops(
         func, wasm, EHUtils::FeaturePolicy::RunIfNoEH);
     }
-    this->func = nullptr;
+    setFunction(nullptr);
     blockHint = 0;
     labelHint = 0;
   } else if (auto* block = scope.getBlock()) {
@@ -1654,11 +1654,26 @@ Result<> IRBuilder::makeCallIndirect(Name table,
   return Ok{};
 }
 
+Result<> IRBuilder::makeScratchLocalGet(Index local) {
+  assert(func && local >= numDeclaredLocals && local < func->getNumLocals());
+  push(builder.makeLocalGet(local, func->getLocalType(local)));
+  return Ok{};
+}
+
+Result<> IRBuilder::makeScratchLocalSet(Index local) {
+  assert(func && local >= numDeclaredLocals && local < func->getNumLocals());
+  LocalSet curr;
+  curr.index = local;
+  CHECK_ERR(visitLocalSet(&curr));
+  push(builder.makeLocalSet(local, curr.value));
+  return Ok{};
+}
+
 Result<> IRBuilder::makeLocalGet(Index local) {
   if (!func) {
     return Err{"local.get is only valid in a function context"};
   }
-  if (local >= func->getNumLocals()) {
+  if (local >= numDeclaredLocals) {
     return Err{"invalid local.get index"};
   }
   push(builder.makeLocalGet(local, func->getLocalType(local)));
@@ -1669,7 +1684,7 @@ Result<> IRBuilder::makeLocalSet(Index local) {
   if (!func) {
     return Err{"local.set is only valid in a function context"};
   }
-  if (local >= func->getNumLocals()) {
+  if (local >= numDeclaredLocals) {
     return Err{"invalid local.set index"};
   }
   LocalSet curr;
@@ -1683,7 +1698,7 @@ Result<> IRBuilder::makeLocalTee(Index local) {
   if (!func) {
     return Err{"local.tee is only valid in a function context"};
   }
-  if (local >= func->getNumLocals()) {
+  if (local >= numDeclaredLocals) {
     return Err{"invalid local.tee index"};
   }
   LocalSet curr;
@@ -2402,16 +2417,16 @@ Result<> IRBuilder::makeBrOn(Index label,
 
   // Put the value under test back on the stack and stash it.
   getScope().exprStack.push_back(curr.ref);
-  CHECK_ERR(makeLocalSet(*testLocal));
+  CHECK_ERR(makeScratchLocalSet(*testLocal));
 
   // Now we can stash the extra values.
   auto info = getExtraOutputLocalAndLabel(label, extraArity);
   CHECK_ERR(info);
   auto [extraLocal, extraLabel] = *info;
-  CHECK_ERR(makeLocalSet(extraLocal));
+  CHECK_ERR(makeScratchLocalSet(extraLocal));
 
   // Restore the test value.
-  CHECK_ERR(makeLocalGet(*testLocal));
+  CHECK_ERR(makeScratchLocalGet(*testLocal));
 
   // Perform the branch.
   CHECK_ERR(visitBrOn(&curr));
@@ -2425,7 +2440,7 @@ Result<> IRBuilder::makeBrOn(Index label,
   // to be under the result value. br_on_non_null does not have a result
   // value, so it is simpler.
   if (op == BrOnNonNull) {
-    CHECK_ERR(makeLocalGet(extraLocal));
+    CHECK_ERR(makeScratchLocalGet(extraLocal));
     return Ok{};
   }
 
@@ -2457,9 +2472,9 @@ Result<> IRBuilder::makeBrOn(Index label,
   auto resultLocal = addScratchLocal(resultType);
   CHECK_ERR(resultLocal);
 
-  CHECK_ERR(makeLocalSet(*resultLocal));
-  CHECK_ERR(makeLocalGet(extraLocal));
-  CHECK_ERR(makeLocalGet(*resultLocal));
+  CHECK_ERR(makeScratchLocalSet(*resultLocal));
+  CHECK_ERR(makeScratchLocalGet(extraLocal));
+  CHECK_ERR(makeScratchLocalGet(*resultLocal));
   return Ok{};
 }
 

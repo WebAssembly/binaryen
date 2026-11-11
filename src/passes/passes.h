@@ -142,6 +142,7 @@ Pass* createPrintFunctionMapPass();
 Pass* createPropagateGlobalsGloballyPass();
 Pass* createRandomizeBranchHintsPass();
 Pass* createRemoveNonJSOpsPass();
+Pass* createRelaxNullabilityPass();
 Pass* createRemoveRelaxedSIMDPass();
 Pass* createRemoveEmptyFunctionExportsPass();
 Pass* createRemoveExportsPass();
