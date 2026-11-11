@@ -320,42 +320,29 @@
  ;; CHECK:      (func $stacky-block-param-tuple (type $0)
  ;; CHECK-NEXT:  (local $scratch (tuple i32 i32))
  ;; CHECK-NEXT:  (local $scratch_1 i32)
- ;; CHECK-NEXT:  (local $scratch_2 i32)
- ;; CHECK-NEXT:  (local $scratch_3 i32)
- ;; CHECK-NEXT:  (local $scratch_4 i32)
  ;; CHECK-NEXT:  (try
  ;; CHECK-NEXT:   (do
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (catch $e2
- ;; CHECK-NEXT:    (local.set $scratch_1
- ;; CHECK-NEXT:     (tuple.extract 2 0
- ;; CHECK-NEXT:      (local.tee $scratch
- ;; CHECK-NEXT:       (pop (tuple i32 i32))
- ;; CHECK-NEXT:      )
- ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (local.set $scratch_2
- ;; CHECK-NEXT:     (tuple.extract 2 1
- ;; CHECK-NEXT:      (local.get $scratch)
- ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (block
- ;; CHECK-NEXT:     (drop
- ;; CHECK-NEXT:      (block (result i32)
- ;; CHECK-NEXT:       (local.set $scratch_4
- ;; CHECK-NEXT:        (local.get $scratch_1)
- ;; CHECK-NEXT:       )
- ;; CHECK-NEXT:       (drop
- ;; CHECK-NEXT:        (block (result i32)
- ;; CHECK-NEXT:         (local.set $scratch_3
- ;; CHECK-NEXT:          (local.get $scratch_2)
- ;; CHECK-NEXT:         )
- ;; CHECK-NEXT:         (nop)
- ;; CHECK-NEXT:         (local.get $scratch_3)
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (block (result i32)
+ ;; CHECK-NEXT:      (local.set $scratch_1
+ ;; CHECK-NEXT:       (block (result i32)
+ ;; CHECK-NEXT:        (local.set $scratch
+ ;; CHECK-NEXT:         (pop (tuple i32 i32))
+ ;; CHECK-NEXT:        )
+ ;; CHECK-NEXT:        (nop)
+ ;; CHECK-NEXT:        (tuple.extract 2 0
+ ;; CHECK-NEXT:         (local.get $scratch)
  ;; CHECK-NEXT:        )
  ;; CHECK-NEXT:       )
- ;; CHECK-NEXT:       (local.get $scratch_4)
  ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (drop
+ ;; CHECK-NEXT:       (tuple.extract 2 1
+ ;; CHECK-NEXT:        (local.get $scratch)
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (local.get $scratch_1)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
@@ -364,14 +351,67 @@
  (func $stacky-block-param-tuple
   try
   catch $e2
-   ;; An unnamed block with multivalue input params extracts the tuple elements
-   ;; into scratch locals before the block rather than moving the pop into the
-   ;; block.
+   ;; An unnamed block with matching multivalue input params moves the
+   ;; multivalue pop directly into the block.
    block (param i32 i32)
     nop
     drop
     drop
    end
+  end
+ )
+
+ ;; CHECK:      (func $stacky-block-param-tuple-partial (type $0)
+ ;; CHECK-NEXT:  (local $scratch (tuple i32 i32))
+ ;; CHECK-NEXT:  (local $scratch_1 i32)
+ ;; CHECK-NEXT:  (local $scratch_2 i32)
+ ;; CHECK-NEXT:  (local $scratch_3 i32)
+ ;; CHECK-NEXT:  (try
+ ;; CHECK-NEXT:   (do
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (catch $e2
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (block (result i32)
+ ;; CHECK-NEXT:      (local.set $scratch_3
+ ;; CHECK-NEXT:       (tuple.extract 2 0
+ ;; CHECK-NEXT:        (local.tee $scratch
+ ;; CHECK-NEXT:         (pop (tuple i32 i32))
+ ;; CHECK-NEXT:        )
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (local.set $scratch_1
+ ;; CHECK-NEXT:       (tuple.extract 2 1
+ ;; CHECK-NEXT:        (local.get $scratch)
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (block
+ ;; CHECK-NEXT:       (drop
+ ;; CHECK-NEXT:        (block (result i32)
+ ;; CHECK-NEXT:         (local.set $scratch_2
+ ;; CHECK-NEXT:          (local.get $scratch_1)
+ ;; CHECK-NEXT:         )
+ ;; CHECK-NEXT:         (nop)
+ ;; CHECK-NEXT:         (local.get $scratch_2)
+ ;; CHECK-NEXT:        )
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (local.get $scratch_3)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $stacky-block-param-tuple-partial
+  try
+  catch $e2
+   ;; An unnamed block whose input param only consumes part of a multivalue pop
+   ;; extracts the tuple elements before the block rather than moving the pop
+   ;; into the block.
+   block (param i32)
+    nop
+    drop
+   end
+   drop
   end
  )
 

@@ -15,20 +15,22 @@
 
   ;; CHECK:      (type $2 (func))
 
+  ;; CHECK:      (type $3 (func (result funcref i32)))
+
   ;; CHECK:      (type $id (func (param i32) (result i32)))
   (type $id (func (param i32) (result i32)))
 
-  ;; CHECK:      (type $4 (func (param i32)))
+  ;; CHECK:      (type $5 (func (param i32)))
 
-  ;; CHECK:      (type $5 (func (param i64) (result i32 i64)))
+  ;; CHECK:      (type $6 (func (param i64) (result i32 i64)))
 
-  ;; CHECK:      (type $6 (func (result funcref)))
+  ;; CHECK:      (type $7 (func (result funcref)))
 
-  ;; CHECK:      (type $7 (func (result i64)))
+  ;; CHECK:      (type $8 (func (result i64)))
 
-  ;; CHECK:      (type $8 (func (result f32)))
+  ;; CHECK:      (type $9 (func (result f32)))
 
-  ;; CHECK:      (tag $e (type $4) (param i32))
+  ;; CHECK:      (tag $e (type $5) (param i32))
   (tag $e (param i32))
 
   ;; CHECK:      (func $block (type $1) (result i32)
@@ -273,6 +275,31 @@
     end
   )
 
+  ;; CHECK:      (func $block-double-tunnel (type $1) (result i32)
+  ;; CHECK-NEXT:  (local $scratch i32)
+  ;; CHECK-NEXT:  (local.set $scratch
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block (result i32)
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (block (result i32)
+  ;; CHECK-NEXT:     (local.get $scratch)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $block-double-tunnel (result i32)
+    ;; A parameter tunneled through multiple nested blocks should still reuse a
+    ;; single scratch local.
+    i32.const 0
+    block (param i32) (result i32)
+      block (param i32) (result i32)
+        block (param i32) (result i32)
+        end
+      end
+    end
+  )
+
   ;; CHECK:      (func $block-tunnel-multivalue (type $0) (result i32 i64)
   ;; CHECK-NEXT:  (local $scratch i32)
   ;; CHECK-NEXT:  (local $scratch_1 i64)
@@ -331,7 +358,7 @@
     end
   )
 
-  ;; CHECK:      (func $block-tunnel-partial (type $5) (param $x i64) (result i32 i64)
+  ;; CHECK:      (func $block-tunnel-partial (type $6) (param $x i64) (result i32 i64)
   ;; CHECK-NEXT:  (local $scratch i32)
   ;; CHECK-NEXT:  (local $scratch_2 i64)
   ;; CHECK-NEXT:  (local.set $scratch
@@ -401,7 +428,7 @@
     end
   )
 
-  ;; CHECK:      (func $block-tunnel-subtype (type $6) (result funcref)
+  ;; CHECK:      (func $block-tunnel-subtype (type $7) (result funcref)
   ;; CHECK-NEXT:  (local $scratch (ref null $id))
   ;; CHECK-NEXT:  (local $scratch_1 funcref)
   ;; CHECK-NEXT:  (local.set $scratch
@@ -423,6 +450,40 @@
     ref.null $id
     block (param (ref null $id)) (result funcref)
       block (param funcref) (result funcref)
+      end
+    end
+  )
+
+  ;; CHECK:      (func $block-tunnel-subtype-mixed (type $3) (result funcref i32)
+  ;; CHECK-NEXT:  (local $scratch (ref null $id))
+  ;; CHECK-NEXT:  (local $scratch_1 i32)
+  ;; CHECK-NEXT:  (local $scratch_2 funcref)
+  ;; CHECK-NEXT:  (local.set $scratch
+  ;; CHECK-NEXT:   (ref.null nofunc)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $scratch_1
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block (type $3) (result funcref i32)
+  ;; CHECK-NEXT:   (local.set $scratch_2
+  ;; CHECK-NEXT:    (local.get $scratch)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (block (type $3) (result funcref i32)
+  ;; CHECK-NEXT:    (tuple.make 2
+  ;; CHECK-NEXT:     (local.get $scratch_2)
+  ;; CHECK-NEXT:     (local.get $scratch_1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $block-tunnel-subtype-mixed (result funcref i32)
+    ;; If an earlier parameter is widened and allocates a new scratch local, a
+    ;; subsequent parameter whose type matches can still reuse its scratch
+    ;; local.
+    ref.null $id
+    i32.const 0
+    block (param (ref null $id) i32) (result funcref i32)
+      block (param funcref i32) (result funcref i32)
       end
     end
   )
@@ -528,7 +589,7 @@
     end
   )
 
-  ;; CHECK:      (func $loop-branch-cond-new-val (type $7) (result i64)
+  ;; CHECK:      (func $loop-branch-cond-new-val (type $8) (result i64)
   ;; CHECK-NEXT:  (local $scratch i32)
   ;; CHECK-NEXT:  (local.set $scratch
   ;; CHECK-NEXT:   (i32.const 0)
@@ -807,7 +868,7 @@
     end
   )
 
-  ;; CHECK:      (func $if-else-multivalue (type $8) (result f32)
+  ;; CHECK:      (func $if-else-multivalue (type $9) (result f32)
   ;; CHECK-NEXT:  (local $scratch i32)
   ;; CHECK-NEXT:  (local $scratch_1 i64)
   ;; CHECK-NEXT:  (local $scratch_2 i32)

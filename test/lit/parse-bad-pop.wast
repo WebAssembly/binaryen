@@ -137,3 +137,48 @@
     )
   )
 )
+
+;; CHECK: 8:11: error: pop instructions may only appear at the beginning of catch blocks
+(module
+  (tag $e (param i64))
+  (func $in-mismatched-param-block
+    (try
+      (do)
+      (catch $e
+        (block (param i32)
+          (pop i64)
+        )
+      )
+    )
+  )
+)
+
+;; CHECK: local.set's value type must be correct
+(module
+  (tag $e (param i64))
+  (func $implicit-mismatched-param-block
+    (try
+      (do)
+      (catch $e
+        (block (param i32)
+          (drop)
+        )
+      )
+    )
+  )
+)
+
+;; CHECK: block with value and last element with value must match types
+(module
+  (tag $e (param eqref))
+  (func $implicit-supertype-param-block (result eqref)
+    (try (result eqref)
+      (do
+        (ref.null eq)
+      )
+      (catch $e
+        (block (param anyref) (result eqref))
+      )
+    )
+  )
+)

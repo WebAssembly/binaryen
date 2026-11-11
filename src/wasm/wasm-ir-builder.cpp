@@ -901,68 +901,66 @@ Result<> IRBuilder::pushScope(ScopeCtx&& scope) {
     scope.startPos = lastBinaryPos;
     lastBinaryPos = *binaryPos;
   }
+  // Tunnel catch pops directly into unnamed blocks. Allow this even when the
+  // block has no input type so we can round-trip WAT without the printer
+  // needing to synthesize block input types, as well as when the block's input
+  // type matches the pop's type.
+  bool isUnnamedBlock = scope.getBlock() && !scope.getBlock()->name;
+  bool hasPop =
+    getScope().exprStack.size() == 1 && getScope().exprStack[0]->is<Pop>();
+  if (isUnnamedBlock && hasPop &&
+      (scope.inputType == Type::none ||
+       scope.inputType == getScope().exprStack[0]->type)) {
+    // Move the pop into the new scope.
+    auto* pop = getScope().exprStack.back();
+    getScope().exprStack.pop_back();
+    scopeStack.emplace_back(std::move(scope));
+    pushSynthetic(pop);
+    // If this unnamed block later receives a name from a branch targeting it,
+    // the nested pop will need to be fixed up.
+    scopeStack[0].noteSyntheticBlock();
+    return Ok{};
+  }
+
   bool hasInput = scope.inputType != Type::none;
-  std::vector<Expression*> inputs;
-  if (!scope.isDelimiter()) {
-    bool isUnnamedBlock = scope.getBlock() && !scope.getBlock()->name;
-    if (hasInput) {
-      auto popped = ChildPopper{*this}.popInputs(scope.inputType);
-      CHECK_ERR(popped);
-      inputs = std::move(*popped);
-    } else if (isUnnamedBlock && getScope().exprStack.size() == 1 &&
-               getScope().exprStack[0]->is<Pop>()) {
-      // Allow pops to move into unnamed blocks even without input types so we
-      // can round-trip WAT without the printer needing to synthesize block
-      // input types. (Note that the block may receive a name later if we
-      // encounter a break to it; in that case, the fixups that run later will
-      // have work to do.)
-      inputs.push_back(getScope().exprStack.back());
-      getScope().exprStack.pop_back();
-    }
+  if (hasInput && !scope.isDelimiter()) {
+    auto inputs = ChildPopper{*this}.popInputs(scope.inputType);
+    CHECK_ERR(inputs);
     const auto& parentLocals = getScope().inputLocals;
     // The new scope may only receive a suffix of the outer scope's parameters,
     // so match inputs starting from the remaining size of the outer stack
     // rather than from the beginning.
     size_t baseIndex = getScope().exprStack.size();
-    for (size_t i = 0; i < inputs.size(); ++i) {
-      // Move an enclosing scope's input expression (a scratch local.get or a
-      // catch pop) directly into this scope rather than allocating a new
-      // scratch local.
-      auto* expr = inputs[i];
+    scope.inputLocals.reserve(inputs->size());
+    for (size_t i = 0; i < inputs->size(); ++i) {
+      // Reuse the enclosing scope's scratch local rather than allocating a new
+      // one when an input comes directly from an enclosing scope's input.
+      // Earlier inputs that allocate new scratch locals (e.g. due to type
+      // widening) are copied before this scope starts, which safely reorders
+      // scratch `local.get`s past any subsequent reused inputs.
+      auto* input = (*inputs)[i];
       size_t parentIndex = baseIndex + i;
-      bool isPop = isUnnamedBlock && inputs.size() == 1 && expr->is<Pop>();
-      if (isPop) {
-        // If this unnamed block later receives a name from a branch targeting
-        // it, the nested pop will need to be fixed up.
-        scopeStack[0].noteSyntheticBlock();
-        continue;
-      }
       bool isInputGet =
-        parentIndex < parentLocals.size() && expr->is<LocalGet>() &&
-        expr->cast<LocalGet>()->index == parentLocals[parentIndex] &&
-        expr->type == scope.inputType[i];
+        parentIndex < parentLocals.size() && input->is<LocalGet>() &&
+        input->cast<LocalGet>()->index == parentLocals[parentIndex] &&
+        input->type == scope.inputType[i];
       if (isInputGet) {
         scope.inputLocals.push_back(parentLocals[parentIndex]);
       } else {
         auto scratch = addScratchLocal(scope.inputType[i]);
         CHECK_ERR(scratch);
         scope.inputLocals.push_back(*scratch);
-        pushSynthetic(builder.makeLocalSet(*scratch, expr));
-        inputs[i] = builder.makeLocalGet(*scratch, scope.inputType[i]);
+        pushSynthetic(builder.makeLocalSet(*scratch, input));
       }
-    }
-  } else if (hasInput) {
-    // Delimiters (such as `else`) reuse the scratch locals that were already
-    // populated when the enclosing scope started, pushing fresh `local.get`s
-    // onto the new scope's stack.
-    for (size_t i = 0; i < scope.inputLocals.size(); ++i) {
-      inputs.push_back(
-        builder.makeLocalGet(scope.inputLocals[i], scope.inputType[i]));
     }
   }
   scopeStack.emplace_back(std::move(scope));
-  for (auto* input : inputs) {
-    pushSynthetic(input);
+  if (hasInput) {
+    auto& newScope = getScope();
+    for (size_t i = 0; i < newScope.inputLocals.size(); ++i) {
+      pushSynthetic(
+        builder.makeLocalGet(newScope.inputLocals[i], newScope.inputType[i]));
+    }
   }
   return Ok{};
 }
