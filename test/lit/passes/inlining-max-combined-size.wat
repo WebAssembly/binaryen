@@ -3,80 +3,124 @@
 ;; Test that --inline-max-combined-binary-size takes into account repeated
 ;; inlinings into a function. We can inline $A, $B, $C into $caller, but if we
 ;; did so with all of them, we'd end up with too large a size, so we stop after
-;; $A.
+;; $A:
+;; RUN: foreach %s %t wasm-opt --inlining --inline-max-combined-binary-size=40  -S -o - | filecheck %s --check-prefix=LOW__
 
-;; RUN: foreach %s %t wasm-opt --inlining --inline-max-combined-binary-size=40 -S -o - | filecheck %s
+;; Without a very high limit, we inline them all:
+;; RUN: foreach %s %t wasm-opt --inlining --inline-max-combined-binary-size=999 -S -o - | filecheck %s --check-prefix=VHIGH
 
-;; Without a very high limit, we inline them all.
-
-;; RUN: foreach %s %t wasm-opt --inlining --inline-max-combined-binary-size=40 -S -o - | filecheck %s --check-prefix=VHIGH
-
-;; Ditto without a specified limit, as the default is infinity.
-
-;; RUN: foreach %s %t wasm-opt --inlining                                      -S -o - | filecheck %s --check-prefix=VHIGH
+;; Ditto without a specified limit, as the default is infinity:
+;; RUN: foreach %s %t wasm-opt --inlining                                       -S -o - | filecheck %s --check-prefix=VHIGH
 
 (module
+  ;; LOW__:      (type $0 (func))
+
+  ;; LOW__:      (func $caller
+  ;; LOW__-NEXT:  (block $__inlined_func$A
+  ;; LOW__-NEXT:   (block
+  ;; LOW__-NEXT:    (nop)
+  ;; LOW__-NEXT:    (nop)
+  ;; LOW__-NEXT:    (nop)
+  ;; LOW__-NEXT:    (nop)
+  ;; LOW__-NEXT:    (nop)
+  ;; LOW__-NEXT:    (nop)
+  ;; LOW__-NEXT:    (nop)
+  ;; LOW__-NEXT:    (nop)
+  ;; LOW__-NEXT:    (nop)
+  ;; LOW__-NEXT:    (nop)
+  ;; LOW__-NEXT:   )
+  ;; LOW__-NEXT:  )
+  ;; LOW__-NEXT:  (call $B)
+  ;; LOW__-NEXT:  (call $C)
+  ;; LOW__-NEXT: )
+  ;; VHIGH:      (type $0 (func))
+
+  ;; VHIGH:      (func $caller
+  ;; VHIGH-NEXT:  (block $__inlined_func$A
+  ;; VHIGH-NEXT:   (block
+  ;; VHIGH-NEXT:    (nop)
+  ;; VHIGH-NEXT:    (nop)
+  ;; VHIGH-NEXT:    (nop)
+  ;; VHIGH-NEXT:    (nop)
+  ;; VHIGH-NEXT:    (nop)
+  ;; VHIGH-NEXT:    (nop)
+  ;; VHIGH-NEXT:    (nop)
+  ;; VHIGH-NEXT:    (nop)
+  ;; VHIGH-NEXT:    (nop)
+  ;; VHIGH-NEXT:    (nop)
+  ;; VHIGH-NEXT:   )
+  ;; VHIGH-NEXT:  )
+  ;; VHIGH-NEXT:  (block $__inlined_func$B$1
+  ;; VHIGH-NEXT:   (block
+  ;; VHIGH-NEXT:    (nop)
+  ;; VHIGH-NEXT:    (nop)
+  ;; VHIGH-NEXT:    (nop)
+  ;; VHIGH-NEXT:    (nop)
+  ;; VHIGH-NEXT:    (nop)
+  ;; VHIGH-NEXT:    (nop)
+  ;; VHIGH-NEXT:    (nop)
+  ;; VHIGH-NEXT:    (nop)
+  ;; VHIGH-NEXT:    (nop)
+  ;; VHIGH-NEXT:    (nop)
+  ;; VHIGH-NEXT:   )
+  ;; VHIGH-NEXT:  )
+  ;; VHIGH-NEXT:  (block $__inlined_func$C$2
+  ;; VHIGH-NEXT:   (block
+  ;; VHIGH-NEXT:    (nop)
+  ;; VHIGH-NEXT:    (nop)
+  ;; VHIGH-NEXT:    (nop)
+  ;; VHIGH-NEXT:    (nop)
+  ;; VHIGH-NEXT:    (nop)
+  ;; VHIGH-NEXT:    (nop)
+  ;; VHIGH-NEXT:    (nop)
+  ;; VHIGH-NEXT:    (nop)
+  ;; VHIGH-NEXT:    (nop)
+  ;; VHIGH-NEXT:    (nop)
+  ;; VHIGH-NEXT:   )
+  ;; VHIGH-NEXT:  )
+  ;; VHIGH-NEXT: )
+  (func $caller
+    ;; LOW inlines only A; VHIGH inlines both.
+    (call $A)
+    (call $B)
+    (call $C)
+  )
+
   (func $A
     ;; 10 nops
     (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop)
   )
 
-  ;; CHECK:      (type $0 (func))
-
-  ;; CHECK:      (func $B
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT: )
+  ;; LOW__:      (func $B
+  ;; LOW__-NEXT:  (nop)
+  ;; LOW__-NEXT:  (nop)
+  ;; LOW__-NEXT:  (nop)
+  ;; LOW__-NEXT:  (nop)
+  ;; LOW__-NEXT:  (nop)
+  ;; LOW__-NEXT:  (nop)
+  ;; LOW__-NEXT:  (nop)
+  ;; LOW__-NEXT:  (nop)
+  ;; LOW__-NEXT:  (nop)
+  ;; LOW__-NEXT:  (nop)
+  ;; LOW__-NEXT: )
   (func $B
     (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop)
   )
 
-  ;; CHECK:      (func $C
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT: )
+  ;; LOW__:      (func $C
+  ;; LOW__-NEXT:  (nop)
+  ;; LOW__-NEXT:  (nop)
+  ;; LOW__-NEXT:  (nop)
+  ;; LOW__-NEXT:  (nop)
+  ;; LOW__-NEXT:  (nop)
+  ;; LOW__-NEXT:  (nop)
+  ;; LOW__-NEXT:  (nop)
+  ;; LOW__-NEXT:  (nop)
+  ;; LOW__-NEXT:  (nop)
+  ;; LOW__-NEXT:  (nop)
+  ;; LOW__-NEXT: )
   (func $C
     (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop)
-  )
-
-  ;; CHECK:      (func $caller
-  ;; CHECK-NEXT:  (block $__inlined_func$A
-  ;; CHECK-NEXT:   (block
-  ;; CHECK-NEXT:    (nop)
-  ;; CHECK-NEXT:    (nop)
-  ;; CHECK-NEXT:    (nop)
-  ;; CHECK-NEXT:    (nop)
-  ;; CHECK-NEXT:    (nop)
-  ;; CHECK-NEXT:    (nop)
-  ;; CHECK-NEXT:    (nop)
-  ;; CHECK-NEXT:    (nop)
-  ;; CHECK-NEXT:    (nop)
-  ;; CHECK-NEXT:    (nop)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (call $B)
-  ;; CHECK-NEXT:  (call $C)
-  ;; CHECK-NEXT: )
-  (func $caller
-    (call $A)
-    (call $B)
-    (call $C)
   )
 )
 
