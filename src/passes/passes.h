@@ -130,7 +130,6 @@ Pass* createOutliningPass();
 #endif
 Pass* createPickLoadSignsPass();
 Pass* createLLVMNonTrappingFPToIntLoweringPass();
-Pass* createPoppifyPass();
 Pass* createPostEmscriptenPass();
 Pass* createPrecomputePass();
 Pass* createPrecomputePropagatePass();
@@ -142,6 +141,7 @@ Pass* createPrintFunctionMapPass();
 Pass* createPropagateGlobalsGloballyPass();
 Pass* createRandomizeBranchHintsPass();
 Pass* createRemoveNonJSOpsPass();
+Pass* createRelaxNullabilityPass();
 Pass* createRemoveRelaxedSIMDPass();
 Pass* createRemoveEmptyFunctionExportsPass();
 Pass* createRemoveExportsPass();

@@ -388,8 +388,6 @@ void PassRegistry::registerPasses() {
   registerPass("pick-load-signs",
                "pick load signs based on their uses",
                createPickLoadSignsPass);
-  registerPass(
-    "poppify", "Transform Binaryen IR into Poppy IR", createPoppifyPass);
   registerPass("post-emscripten",
                "miscellaneous optimizations for Emscripten-generated code",
                createPostEmscriptenPass);
@@ -433,6 +431,10 @@ void PassRegistry::registerPasses() {
   registerPass("remove-non-js-ops",
                "removes operations incompatible with js",
                createRemoveNonJSOpsPass);
+  registerPass("relax-nullability",
+               "make private function params, locals, struct fields, tags, and "
+               "globals nullable, inserting ref.as_non_null where demanded",
+               createRelaxNullabilityPass);
   registerPass("remove-relaxed-simd",
                "replaces relaxed SIMD instructions with unreachable",
                createRemoveRelaxedSIMDPass);
@@ -759,7 +761,7 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
   addIfNoDWARFIssues(
     "remove-unused-brs"); // coalesce-locals opens opportunities
   addIfNoDWARFIssues(
-    "remove-unused-names");           // remove-unused-brs opens opportunities
+    "remove-unused-names"); // remove-unused-brs opens opportunities
   if (options.optimizeLevel >= 3 || options.shrinkLevel >= 1) {
     addIfNoDWARFIssues("constraint-analysis");
   }

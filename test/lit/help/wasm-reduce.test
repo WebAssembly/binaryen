@@ -121,9 +121,6 @@
 ;; CHECK-NEXT:   --quiet,-q                           Emit less verbose output and hide trivial
 ;; CHECK-NEXT:                                        warnings.
 ;; CHECK-EMPTY:
-;; CHECK-NEXT:   --experimental-poppy                 Parse wast files as Poppy IR for testing 
-;; CHECK-NEXT:                                        purposes.
-;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --emit-module-names                  Emit module names, even if not emitting 
 ;; CHECK-NEXT:                                        the rest of the names section.
 ;; CHECK-EMPTY:

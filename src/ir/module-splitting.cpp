@@ -760,7 +760,8 @@ static bool canCopyGlobal(Global* global, Module& wasm) {
   // one module would not be visible in others. Immutable globals with
   // generative initializers (e.g. struct.new) also cannot be copied because
   // there would be an observable difference (e.g. struct identity tested with
-  // ref.eq) between the values in the copies.
+  // ref.eq) between the values in the copies. Note that imported globals can be
+  // copied / moved.
   return !global->mutable_ &&
          (!global->init ||
           !Properties::isGenerative(global->init, nullptr, wasm));

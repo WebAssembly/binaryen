@@ -341,7 +341,6 @@ For more on how to optimize effectively, see
     // asked to remove it.
     reader.setDWARF(options.passOptions.debugInfo &&
                     !willRemoveDebugInfo(options.passes));
-    reader.setProfile(options.profile);
     try {
       reader.read(inputFile, wasm, inputSourceMapFilename);
     } catch (ParseException& p) {

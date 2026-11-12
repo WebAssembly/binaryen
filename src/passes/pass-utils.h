@@ -66,7 +66,7 @@ struct FilteredPass : public Pass {
     return pass->requiresNonNullableLocalFixups();
   }
 
-  bool runsOnFunction(Function* func) override {
+  bool runsOnFunction(Function* func) const override {
     return relevantFuncs.contains(func) && pass->runsOnFunction(func);
   }
 
