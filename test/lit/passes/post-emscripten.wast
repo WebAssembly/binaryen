@@ -4,8 +4,8 @@
 ;; Checks that the start/stop exports are removed and that the data they
 ;; refer to is either zero'd out, or the segment emptied.
 
-;; Two of the segments used here are active, so their offsets are trivial
-;; to dirive.  One segment is passive and its offset is derived from the
+;; Three of the segments used here are active, so their offsets are trivial
+;; to derive.  One segment is passive and its offset is derived from the
 ;; memory.init instruction.
 
 ;; Explicitly use a data address that is larger then INT_MAX to verify
@@ -26,6 +26,10 @@
  (global $em_lib_deps_start i32 (i32.const 3000))
  ;; CHECK:      (global $em_lib_deps_stop i32 (i32.const 3009))
  (global $em_lib_deps_stop i32 (i32.const 3009))
+ ;; CHECK:      (global $em_embind_start i32 (i32.const 3500))
+ (global $em_embind_start i32 (i32.const 3500))
+ ;; CHECK:      (global $em_embind_stop i32 (i32.const 3511))
+ (global $em_embind_stop i32 (i32.const 3511))
  ;; CHECK:      (global $foo_start i32 (i32.const 4000))
  (global $foo_start i32 (i32.const 4000))
  ;; CHECK:      (global $foo_stop i32 (i32.const 4015))
@@ -38,12 +42,16 @@
  (data $data2 "hello DELETE ME world")
  ;; CHECK:      (data $data3 (i32.const 3000) "")
  (data $data3 (i32.const 3000) "some deps")
+ ;; CHECK:      (data $data4 (i32.const 3500) "")
+ (data $data4 (i32.const 3500) "some embind")
  (export "__start_em_asm" (global $em_asm_start))
  (export "__stop_em_asm" (global $em_asm_stop))
  (export "__start_em_js" (global $em_js_start))
  (export "__stop_em_js" (global $em_js_stop))
  (export "__start_em_lib_deps" (global $em_lib_deps_start))
  (export "__stop_em_lib_deps" (global $em_lib_deps_stop))
+ (export "__start_em_embind" (global $em_embind_start))
+ (export "__stop_em_embind" (global $em_embind_stop))
  ;; CHECK:      (export "__start_foo" (global $foo_start))
  (export "__start_foo" (global $foo_start))
  ;; CHECK:      (export "__stop_foo" (global $foo_stop))
