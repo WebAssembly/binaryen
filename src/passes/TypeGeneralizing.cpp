@@ -130,6 +130,18 @@ HeapType generalizeArrayType(HeapType type,
   return type;
 }
 
+// Find the most general supertype of a type, or of each element of a tuple.
+Type getTop(Type type) {
+  if (type.isTuple()) {
+    Tuple elems;
+    for (auto t : type) {
+      elems.push_back(t.isRef() ? getTop(t) : t);
+    }
+    return Type(elems);
+  }
+  return Type(type.getHeapType().getTop(), Nullable);
+}
+
 // Use ChildTyper to find all subtyping constraints on expressions and locals,
 // and compute the greatest lower bound (GLB) of the required supertypes for
 // each local so that each local is given the least-refined valid type.
@@ -212,20 +224,16 @@ struct Generalizer : public ChildTyper<Generalizer> {
     }
   }
 
-  void note(Expression** childp, Constraints constraints) {
-    auto* child = *childp;
-    if (!child->type.hasRef()) {
-      return;
+  // Get the constrained type from a single (non-tuple) constraint.
+  std::optional<Type> getSingleConstraintType(Type elemType, VarType constraint) {
+    assert(elemType.size() == 1);
+    if (!elemType.isRef()) {
+      return elemType;
     }
-
-    // Tuples are handled element by element in this pass, so we only receive a
-    // single constraint.
-    assert(constraints.size() == 1);
-    auto& type = constraints[0];
-    if (auto* t = std::get_if<Type>(&type)) {
+    if (auto* t = std::get_if<Type>(&constraint)) {
       // A constraint to a specific type.
-      addConstraint(child, *t);
-    } else if (auto* ref = std::get_if<VarRef>(&type)) {
+      return *t;
+    } else if (auto* ref = std::get_if<VarRef>(&constraint)) {
       // If the nullability is variable, set to nullable (as the indexed
       // variable can appear nowhere else).
       auto* nullp = std::get_if<Nullability>(&ref->null);
@@ -233,26 +241,51 @@ struct Generalizer : public ChildTyper<Generalizer> {
 
       if (std::holds_alternative<Index>(ref->ht)) {
         // The heap type is variable, so use the top.
-        addConstraint(child, Type(child->type.getHeapType().getTop(), null));
+        return Type(elemType.getHeapType().getTop(), null);
       } else if (auto* abs = std::get_if<VarAbsHeapType>(&ref->ht)) {
         // The heap type is abstract/basic, possibly with specified
         // shareability (if not, use the current shareability).
         auto* sharep = std::get_if<Shareability>(&abs->share);
-        auto share = sharep ? *sharep : child->type.getHeapType().getShared();
-        addConstraint(child, Type(abs->ht.getBasic(share), null));
+        auto share = sharep ? *sharep : elemType.getHeapType().getShared();
+        return Type(abs->ht.getBasic(share), null);
       } else if (auto* def = std::get_if<VarDefHeapType>(&ref->ht)) {
         // The heap type is defined, possibly with specified exactness (if not,
         // generalize to inexact).
         auto* exactp = std::get_if<Exactness>(&def->exact);
         auto exact = exactp ? *exactp : Inexact;
-        addConstraint(child, Type(def->ht, null, exact));
+        return Type(def->ht, null, exact);
       } else {
         // A bottom heap type, but no expression in the IR mandates that.
         WASM_UNREACHABLE("unexpected bottom heap type");
       }
     } else {
       // Unconstrained type variable (e.g. drop).
-      assert(std::holds_alternative<Index>(type));
+      assert(std::holds_alternative<Index>(constraint));
+      return std::nullopt;
+    }
+  }
+
+  void note(Expression** childp, Constraints constraints) {
+    auto* child = *childp;
+    if (!child->type.hasRef()) {
+      return;
+    }
+
+    assert(constraints.size() == child->type.size());
+    Tuple elems(constraints.size());
+    bool hasConstraint = false;
+    for (size_t i = 0; i < constraints.size(); ++i) {
+      if (auto type = getSingleConstraintType(child->type[i], constraints[i])) {
+        elems[i] = *type;
+        if (child->type[i].isRef()) {
+          hasConstraint = true;
+        }
+      } else {
+        elems[i] = getTop(child->type[i]);
+      }
+    }
+    if (hasConstraint) {
+      addConstraint(child, Type(elems));
     }
   }
 
@@ -547,8 +580,14 @@ struct Generalizer : public ChildTyper<Generalizer> {
           if (get->ref->type.isStruct()) {
             auto generalized = generalizeStructTypeByDescriptor(
               get->ref->type.getHeapType(), type.getHeapType());
-            addConstraint(
-              get->ref, Type(generalized, Nullable, type.getExactness()));
+            addConstraint(get->ref,
+                          Type(generalized, Nullable, type.getExactness()));
+          }
+        } else if (auto* extract = expr->dynCast<TupleExtract>()) {
+          if (extract->tuple->type.isTuple()) {
+            Tuple elems = getTop(extract->tuple->type).getTuple();
+            elems[extract->index] = type;
+            addConstraint(extract->tuple, Type(elems));
           }
         }
         if (auto it = exprSubs.find(expr); it != exprSubs.end()) {
@@ -599,9 +638,7 @@ struct TypeGeneralizing : WalkerPass<PostWalker<TypeGeneralizing>> {
       auto origType = func->getLocalType(i);
       if (origType.hasRef()) {
         auto& glb = generalizer.localGLBs[i];
-        auto newType = glb.noted()
-                         ? glb.getGLB()
-                         : Type(origType.getHeapType().getTop(), Nullable);
+        auto newType = glb.noted() ? glb.getGLB() : getTop(origType);
         localTypes[i] = newType;
         func->vars[i - numParams] = newType;
       } else {

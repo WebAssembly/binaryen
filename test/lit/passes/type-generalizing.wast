@@ -2750,17 +2750,223 @@
 )
 
 (module
+ ;; CHECK:      (type $Super (sub (struct)))
  (type $Super (sub (struct)))
+ ;; CHECK:      (type $FuncSuper (sub (func (result i32 (ref $Super)))))
+
+ ;; CHECK:      (type $Sub (sub $Super (struct)))
  (type $Sub (sub $Super (struct)))
  (type $FuncSuper (sub (func (result i32 (ref $Super)))))
+ ;; CHECK:      (type $FuncSub (sub $FuncSuper (func (result i32 (ref $Sub)))))
  (type $FuncSub (sub $FuncSuper (func (result i32 (ref $Sub)))))
 
+ ;; CHECK:      (type $4 (func))
+
+ ;; CHECK:      (type $5 (func (result i32 (ref $Sub))))
+
+ ;; CHECK:      (type $6 (func (result i32 (ref null $Sub))))
+
+ ;; CHECK:      (type $7 (func (result i32 (ref null $Super))))
+
+ ;; CHECK:      (type $8 (func (result i32 (ref $Super))))
+
+ ;; CHECK:      (type $9 (func (result (ref $Sub))))
+
+ ;; CHECK:      (type $10 (func (result i32)))
+
+ ;; CHECK:      (global $g (mut (tuple i32 (ref null $Sub))) (tuple.make 2
+ ;; CHECK-NEXT:  (i32.const 0)
+ ;; CHECK-NEXT:  (ref.null none)
+ ;; CHECK-NEXT: ))
+ (global $g (mut (tuple i32 (ref null $Sub))) (tuple.make 2 (i32.const 0) (ref.null none)))
+
+ ;; CHECK:      (func $call-ref-tuple (type $5) (result i32 (ref $Sub))
+ ;; CHECK-NEXT:  (local $f (ref null $FuncSub))
+ ;; CHECK-NEXT:  (call_ref $FuncSub
+ ;; CHECK-NEXT:   (local.get $f)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
  (func $call-ref-tuple (result i32 (ref $Sub))
   (local $f (ref null $FuncSub))
   ;; The result is a tuple, which we should properly handle: it cannot get
   ;; generalized to FuncSuper, as then we wouldn't return Sub any more.
   (call_ref $FuncSub
    (local.get $f)
+  )
+ )
+
+ ;; CHECK:      (func $call-ref-tuple-generalize (type $8) (result i32 (ref $Super))
+ ;; CHECK-NEXT:  (local $f (ref null $FuncSuper))
+ ;; CHECK-NEXT:  (call_ref $FuncSuper
+ ;; CHECK-NEXT:   (local.get $f)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $call-ref-tuple-generalize (result i32 (ref $Super))
+  (local $f (ref null $FuncSub))
+  ;; Here the function returns Super in the second element, so we can generalize
+  ;; $f to FuncSuper.
+  (call_ref $FuncSub
+   (local.get $f)
+  )
+ )
+
+ ;; CHECK:      (func $tuple-local-constrained (type $6) (result i32 (ref null $Sub))
+ ;; CHECK-NEXT:  (local $f (ref null $FuncSub))
+ ;; CHECK-NEXT:  (local $t (tuple i32 (ref null $Sub)))
+ ;; CHECK-NEXT:  (local.set $t
+ ;; CHECK-NEXT:   (call_ref $FuncSub
+ ;; CHECK-NEXT:    (local.get $f)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (local.get $t)
+ ;; CHECK-NEXT: )
+ (func $tuple-local-constrained (result i32 (ref null $Sub))
+  (local $f (ref null $FuncSub))
+  (local $t (tuple i32 (ref null $Sub)))
+  ;; The constraint on $t flows from the return value through local.get and
+  ;; local.set to the call_ref, preventing $f from generalizing to FuncSuper,
+  ;; and keeping $t's second element as (ref null $Sub).
+  (local.set $t
+   (call_ref $FuncSub
+    (local.get $f)
+   )
+  )
+  (local.get $t)
+ )
+
+ ;; CHECK:      (func $tuple-local-generalize (type $7) (result i32 (ref null $Super))
+ ;; CHECK-NEXT:  (local $f (ref null $FuncSuper))
+ ;; CHECK-NEXT:  (local $t (tuple i32 (ref null $Super)))
+ ;; CHECK-NEXT:  (local.set $t
+ ;; CHECK-NEXT:   (call_ref $FuncSuper
+ ;; CHECK-NEXT:    (local.get $f)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (local.get $t)
+ ;; CHECK-NEXT: )
+ (func $tuple-local-generalize (result i32 (ref null $Super))
+  (local $f (ref null $FuncSub))
+  (local $t (tuple i32 (ref null $Sub)))
+  ;; Now the return type only requires Super, so both $t and $f can generalize.
+  (local.set $t
+   (call_ref $FuncSub
+    (local.get $f)
+   )
+  )
+  (local.get $t)
+ )
+
+ ;; CHECK:      (func $tuple-local-unconstrained (type $4)
+ ;; CHECK-NEXT:  (local $f (ref null $FuncSuper))
+ ;; CHECK-NEXT:  (local $t (tuple i32 anyref))
+ ;; CHECK-NEXT:  (local.set $t
+ ;; CHECK-NEXT:   (call_ref $FuncSuper
+ ;; CHECK-NEXT:    (local.get $f)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $tuple-local-unconstrained
+  (local $f (ref null $FuncSub))
+  (local $t (tuple i32 (ref null $Sub)))
+  ;; $t is never read, so it is unconstrained and generalizes to (tuple i32
+  ;; anyref), allowing $f to generalize to FuncSuper as well.
+  (local.set $t
+   (call_ref $FuncSub
+    (local.get $f)
+   )
+  )
+ )
+
+ ;; CHECK:      (func $return-tuple (type $5) (result i32 (ref $Sub))
+ ;; CHECK-NEXT:  (local $f (ref null $FuncSub))
+ ;; CHECK-NEXT:  (return
+ ;; CHECK-NEXT:   (call_ref $FuncSub
+ ;; CHECK-NEXT:    (local.get $f)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $return-tuple (result i32 (ref $Sub))
+  (local $f (ref null $FuncSub))
+  ;; Explicit return of a tuple constrains its child via Generalizer::note.
+  (return
+   (call_ref $FuncSub
+    (local.get $f)
+   )
+  )
+ )
+
+ ;; CHECK:      (func $global-set-tuple (type $4)
+ ;; CHECK-NEXT:  (local $f (ref null $FuncSub))
+ ;; CHECK-NEXT:  (global.set $g
+ ;; CHECK-NEXT:   (call_ref $FuncSub
+ ;; CHECK-NEXT:    (local.get $f)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $global-set-tuple
+  (local $f (ref null $FuncSub))
+  ;; global.set of a tuple global constrains its child via Generalizer::note.
+  (global.set $g
+   (call_ref $FuncSub
+    (local.get $f)
+   )
+  )
+ )
+
+ ;; CHECK:      (func $drop-tuple (type $4)
+ ;; CHECK-NEXT:  (local $f (ref null $FuncSuper))
+ ;; CHECK-NEXT:  (tuple.drop 2
+ ;; CHECK-NEXT:   (call_ref $FuncSuper
+ ;; CHECK-NEXT:    (local.get $f)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $drop-tuple
+  (local $f (ref null $FuncSub))
+  ;; Dropping a tuple imposes no constraint via Generalizer::note, so $f can
+  ;; generalize to FuncSuper.
+  (tuple.drop 2
+   (call_ref $FuncSub
+    (local.get $f)
+   )
+  )
+ )
+
+ ;; CHECK:      (func $tuple-extract-ref (type $9) (result (ref $Sub))
+ ;; CHECK-NEXT:  (local $f (ref null $FuncSub))
+ ;; CHECK-NEXT:  (tuple.extract 2 1
+ ;; CHECK-NEXT:   (call_ref $FuncSub
+ ;; CHECK-NEXT:    (local.get $f)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $tuple-extract-ref (result (ref $Sub))
+  (local $f (ref null $FuncSub))
+  ;; Extracting the ref element and returning it as Sub constrains the tuple, so
+  ;; $f cannot generalize to FuncSuper.
+  (tuple.extract 2 1
+   (call_ref $FuncSub
+    (local.get $f)
+   )
+  )
+ )
+
+ ;; CHECK:      (func $tuple-extract-i32 (type $10) (result i32)
+ ;; CHECK-NEXT:  (local $f (ref null $FuncSuper))
+ ;; CHECK-NEXT:  (tuple.extract 2 0
+ ;; CHECK-NEXT:   (call_ref $FuncSuper
+ ;; CHECK-NEXT:    (local.get $f)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $tuple-extract-i32 (result i32)
+  (local $f (ref null $FuncSub))
+  ;; Extracting only the i32 element leaves the ref element unconstrained, so $f
+  ;; can generalize to FuncSuper.
+  (tuple.extract 2 0
+   (call_ref $FuncSub
+    (local.get $f)
+   )
   )
  )
 )
