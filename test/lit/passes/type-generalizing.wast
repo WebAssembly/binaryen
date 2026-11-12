@@ -2749,3 +2749,18 @@
  )
 )
 
+(module
+ (type $Super (sub (struct)))
+ (type $Sub (sub $Super (struct)))
+ (type $FuncSuper (sub (func (result i32 (ref $Super)))))
+ (type $FuncSub (sub $FuncSuper (func (result i32 (ref $Sub)))))
+
+ (func $call-ref-tuple (result i32 (ref $Sub))
+  (local $f (ref null $FuncSub))
+  ;; The result is a tuple, which we should properly handle: it cannot get
+  ;; generalized to FuncSuper, as then we wouldn't return Sub any more.
+  (call_ref $FuncSub
+   (local.get $f)
+  )
+ )
+)

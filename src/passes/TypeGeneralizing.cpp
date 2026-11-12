@@ -178,7 +178,7 @@ struct Generalizer : public ChildTyper<Generalizer> {
   }
 
   void addConstraint(Expression* expr, Type type) {
-    if (!expr->type.isRef() || !type.isRef()) {
+    if (!expr->type.hasRef() || !type.hasRef()) {
       return;
     }
     auto& glb = exprGLBs[expr];
@@ -190,8 +190,8 @@ struct Generalizer : public ChildTyper<Generalizer> {
   }
 
   void addConstraint(Index local, Type type) {
-    if (!func->isVar(local) || !func->getLocalType(local).isRef() ||
-        !type.isRef()) {
+    if (!func->isVar(local) || !func->getLocalType(local).hasRef() ||
+        !type.hasRef()) {
       return;
     }
     auto& glb = localGLBs[local];
@@ -214,7 +214,7 @@ struct Generalizer : public ChildTyper<Generalizer> {
 
   void note(Expression** childp, Constraints constraints) {
     auto* child = *childp;
-    if (!child->type.isRef()) {
+    if (!child->type.hasRef()) {
       return;
     }
 
@@ -316,7 +316,7 @@ struct Generalizer : public ChildTyper<Generalizer> {
     if (func->isParam(curr->index)) {
       // Parameters have fixed types.
       addConstraint(curr->value, localType);
-    } else if (localType.isRef()) {
+    } else if (localType.hasRef()) {
       localSetValues[curr->index].push_back(curr->value);
     }
   }
@@ -337,14 +337,14 @@ struct Generalizer : public ChildTyper<Generalizer> {
     switch (curr->op) {
       case BrOnNull:
         // If we do not branch, we flow out the non-null input.
-        if (curr->type.isRef()) {
+        if (curr->type.hasRef()) {
           addConstraint(curr->ref, curr->type.with(Nullable));
         }
         break;
       case BrOnNonNull: {
         // If we branch, we send the non-null input to the target.
         auto* breakTarget = walker.findBreakTarget(curr->name);
-        if (breakTarget->type.isRef()) {
+        if (breakTarget->type.hasRef()) {
           addConstraint(curr->ref, breakTarget->type.with(Nullable));
         }
         break;
@@ -354,7 +354,7 @@ struct Generalizer : public ChildTyper<Generalizer> {
         // If we do not branch, we flow out the original input when the cast
         // fails. If the cast type is nullable then nulls take the branch, so
         // the fallthrough value is made non-nullable.
-        if (curr->type.isRef()) {
+        if (curr->type.hasRef()) {
           auto type = curr->type;
           if (curr->castType.isNullableRef()) {
             type = type.with(Nullable);
@@ -368,7 +368,7 @@ struct Generalizer : public ChildTyper<Generalizer> {
         // must be sendable to the target. If the cast type is nullable then
         // nulls do not fail the cast, so the sent value is non-nullable.
         auto* breakTarget = walker.findBreakTarget(curr->name);
-        if (breakTarget->type.isRef()) {
+        if (breakTarget->type.hasRef()) {
           auto type = breakTarget->type;
           if (curr->castType.isNullableRef()) {
             type = type.with(Nullable);
@@ -597,7 +597,7 @@ struct TypeGeneralizing : WalkerPass<PostWalker<TypeGeneralizing>> {
     }
     for (Index i = numParams; i < numLocals; ++i) {
       auto origType = func->getLocalType(i);
-      if (origType.isRef()) {
+      if (origType.hasRef()) {
         auto& glb = generalizer.localGLBs[i];
         auto newType = glb.noted()
                          ? glb.getGLB()
