@@ -7,6 +7,14 @@
 
 ;; RUN: foreach %s %t wasm-opt --inlining --inline-max-combined-binary-size=40 -S -o - | filecheck %s
 
+;; Without a very high limit, we inline them all.
+
+;; RUN: foreach %s %t wasm-opt --inlining --inline-max-combined-binary-size=40 -S -o - | filecheck %s --check-prefix=VHIGH
+
+;; Ditto without a specified limit, as the default is infinity.
+
+;; RUN: foreach %s %t wasm-opt --inlining                                      -S -o - | filecheck %s --check-prefix=VHIGH
+
 (module
   (func $A
     ;; 10 nops
