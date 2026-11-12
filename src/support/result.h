@@ -40,13 +40,6 @@ struct Err {
     return (typename decltype(_val)::ErrorType)(*err);                         \
   }
 
-// Assert that a Result or MaybeResult is not an error.
-#define ASSERT_OK(val)                                                         \
-  do {                                                                         \
-    [[maybe_unused]] auto _val = (val);                                        \
-    assert(!_val.getErr());                                                    \
-  } while (false)
-
 // Represent a result of type T or an error message.
 template<typename T = Ok, typename E = Err> struct [[nodiscard]] Result {
   using ErrorType = E;
@@ -60,6 +53,7 @@ template<typename T = Ok, typename E = Err> struct [[nodiscard]] Result {
   Result(U&& u) : val(std::in_place_type<T>, std::forward<U>(u)) {}
 
   E* getErr() { return std::get_if<E>(&val); }
+  const E* getErr() const { return std::get_if<E>(&val); }
   T& operator*() { return *std::get_if<T>(&val); }
   T* operator->() { return std::get_if<T>(&val); }
 };
@@ -89,11 +83,21 @@ template<typename T = Ok> struct [[nodiscard]] MaybeResult {
   MaybeResult<T>& operator=(MaybeResult<T>&&) = default;
 
   Err* getErr() { return std::get_if<Err>(&val); }
+  const Err* getErr() const { return std::get_if<Err>(&val); }
   T& operator*() { return *std::get_if<T>(&val); }
   T* operator->() { return std::get_if<T>(&val); }
 
   T* getPtr() { return std::get_if<T>(&val); }
 };
+
+template<typename T, typename E>
+void assertOk([[maybe_unused]] const Result<T, E>& val) {
+  assert(!val.getErr());
+}
+
+template<typename T> void assertOk([[maybe_unused]] const MaybeResult<T>& val) {
+  assert(!val.getErr());
+}
 
 } // namespace wasm
 
