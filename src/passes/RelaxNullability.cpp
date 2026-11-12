@@ -41,6 +41,7 @@
 #include "ir/child-typer.h"
 #include "ir/find_all.h"
 #include "ir/module-utils.h"
+#include "ir/type-updating.h"
 #include "ir/utils.h"
 
 namespace wasm {
@@ -196,7 +197,7 @@ struct LocalsToNullable : WalkerPass<PostWalker<LocalsToNullable>> {
 
     Super::doWalkFunction(func);
 
-    if (!changed) {
+    if (!changed && !signatureWasRelaxed) {
       return;
     }
     ReFinalize().walkFunctionInModule(func, getModule());
@@ -228,7 +229,11 @@ struct RelaxNullability : Pass {
   bool requiresNonNullableLocalFixups() override { return false; }
 
   void run(Module* module) override {
-    auto relaxedFuncs = relaxFunctionParams(module);
+    // rewrite signatures globally
+    auto relaxedTypes = relaxTypes(module, getPassOptions().worldMode);
+    // rewrite signatures for private functions by giving them a new private
+    // type.
+    auto relaxedFuncs = relaxFunctionParams(module, relaxedTypes);
 
     PassRunner runner(getPassRunner());
     runner.add(std::make_unique<LocalsToNullable>(relaxedFuncs));
@@ -236,12 +241,68 @@ struct RelaxNullability : Pass {
   }
 
 private:
-  // Returns the set of functions that had their signatures changed.
-  std::unordered_set<Function*> relaxFunctionParams(Module* module) {
+  // Rewrites private signature types to have nullable params and returns the
+  // set of newly rewritten types.
+  std::unordered_set<HeapType> relaxTypes(Module* module, WorldMode worldMode) {
+    class Rewriter : private GlobalTypeRewriter {
+    public:
+      Rewriter(Module& wasm, WorldMode worldMode)
+        : GlobalTypeRewriter(wasm, worldMode) {}
+
+      std::unordered_set<HeapType> update() {
+        auto typeMap = rebuildTypes(getSortedTypes(getPrivatePredecessors()));
+        mapTypes(typeMap);
+
+        std::unordered_set<HeapType> relaxedNewTypes;
+
+        for (HeapType t : relaxedTypes) {
+          HeapType* newType = find_or_null(typeMap, t);
+          assert(newType && "relaxedTypes only contains private types which "
+                            "must be in the typeMap");
+
+          relaxedNewTypes.insert(*newType);
+        }
+
+        return relaxedNewTypes;
+      }
+
+    private:
+      std::unordered_set<HeapType> relaxedTypes;
+
+      void modifySignature(HeapType oldType, Signature& sig) override {
+        std::vector<Type> relaxedParams;
+
+        bool changed = false;
+        for (Type t : sig.params) {
+          changed |= makeNullable(t);
+          relaxedParams.push_back(t);
+        }
+
+        if (changed) {
+          relaxedTypes.insert(oldType);
+          sig.params = getTempTupleType(std::move(relaxedParams));
+        }
+      }
+
+    } rewriter(*module, worldMode);
+    return rewriter.update();
+  }
+
+  // Relax private function signatures -- even if their signature is public --
+  // by giving them a new private signature. Return the set of functions that
+  // were relaxed, as well as those that were relaxed by `relaxTypes` when
+  // signatures were rewritten globally.
+  std::unordered_set<Function*>
+  relaxFunctionParams(Module* module,
+                      const std::unordered_set<HeapType>& relaxedTypes) {
     auto referencedFuncs = ModuleUtils::getReferencedFuncs(*module);
 
     std::unordered_set<Function*> relaxedFuncs;
     for (auto& func : module->functions) {
+      if (relaxedTypes.contains(func->type.getHeapType())) {
+        relaxedFuncs.insert(func.get());
+        continue;
+      }
       if (!isSignatureRewritable(func.get(), referencedFuncs)) {
         continue;
       }
