@@ -80,7 +80,7 @@ public:
 
   template<typename... ArgTypes> void emplace_back(ArgTypes&&... Args) {
     assert(usedFixed < N);
-    new (&fixed[usedFixed++]) T(std::forward<ArgTypes>(Args)...);
+    fixed[usedFixed++] = T(std::forward<ArgTypes>(Args)...);
   }
 
   void pop_back() {

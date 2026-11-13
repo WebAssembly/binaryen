@@ -47,14 +47,12 @@ namespace wasm {
 
 namespace {
 
-bool isRelaxable(Function* func,
-                 const std::unordered_set<Function*>& referencedFuncs) {
+bool isSignatureRewritable(
+  Function* func, const std::unordered_set<Function*>& referencedFuncs) {
   // The signatures of imported and exported functions aren't changed to
   // preserve the API boundary. Exported functions are implicitly 'referenced'
   // (i.e. they may be the target of a call_ref even if they never appear in a
   // ref.func), so no need to check that a second time.
-  //
-  // TODO: Relax private referenced funcs + bodies of public referenced funcs.
   return !func->imported() && !referencedFuncs.contains(func);
 }
 
@@ -154,44 +152,48 @@ struct InsertRefAsNonNull
 struct LocalsToNullable : WalkerPass<PostWalker<LocalsToNullable>> {
   using Super = WalkerPass<PostWalker<LocalsToNullable>>;
 
-  const std::unordered_set<Function*>& referencedFuncs;
+  const std::unordered_set<Function*>& funcsWithRelaxedSignature;
 
   // true iff any expression types were changed.
   // false if only dead local definitions were changed.
   bool changed = false;
 
-  LocalsToNullable(const std::unordered_set<Function*>& referencedFuncs)
-    : referencedFuncs(referencedFuncs) {}
+  // true iff the function's signature was relaxed before this pass ran, i.e. if
+  // funcsWithRelaxedSignature contains the function.
+  bool signatureWasRelaxed = false;
+
+  LocalsToNullable(
+    const std::unordered_set<Function*>& funcsWithRelaxedSignature)
+    : funcsWithRelaxedSignature(funcsWithRelaxedSignature) {}
 
   std::unique_ptr<Pass> create() override {
-    return std::make_unique<LocalsToNullable>(referencedFuncs);
+    return std::make_unique<LocalsToNullable>(funcsWithRelaxedSignature);
   }
 
   bool isFunctionParallel() override { return true; }
 
-  bool runsOnFunction(Function* func) override {
-    // If we didn't relax the params, don't update local.gets / local.tee which
-    // might touch unrelaxed params.
-    // TODO: Relax locals even if the params weren't relaxed.
-    return isRelaxable(func, referencedFuncs);
+  bool runsOnFunction(Function* func) const override {
+    return func->vars.size() > 0 || funcsWithRelaxedSignature.contains(func);
   }
 
+  // 1. Make all local definitions nullable and update gets and sets.
+  // 2. Refinalize to fixup block types
+  // 3. Insert ref.as_non_null where a parent demands it, e.g. return values,
+  //    calls to unrelaxed imports, unrelaxed struct.set.
+  //
+  // Refinalize is not needed after step 3 because a block never demands a
+  // non-null and thus step 3 makes no difference to block types.
   void doWalkFunction(Function* func) {
-    // 1. Make all local definitions nullable and update gets and sets.
-    // 2. Refinalize to fixup block types
-    // 3. Insert ref.as_non_null where a parent demands it, e.g. return values,
-    //    calls to unrelaxed imports, unrelaxed struct.set.
-    //
-    // Refinalize is not needed after step 3 because a block never demands a
-    // non-null and thus step 3 makes no difference to block types.
+    signatureWasRelaxed = funcsWithRelaxedSignature.contains(func);
 
+    bool changedLocals = false;
     for (Index i = 0; i < func->vars.size(); ++i) {
-      std::ignore = makeNullable(func->vars[i]);
+      changedLocals |= makeNullable(func->vars[i]);
+    }
+    if (!changedLocals && !signatureWasRelaxed) {
+      return;
     }
 
-    // TODO: could consider doing this only if locals changed
-    // but a function param could have changed and we can't tell that easily
-    // from here.
     Super::doWalkFunction(func);
 
     if (!changed) {
@@ -203,9 +205,19 @@ struct LocalsToNullable : WalkerPass<PostWalker<LocalsToNullable>> {
     fixupReturn(&func->body, getModule(), func);
   }
 
-  void visitLocalGet(LocalGet* curr) { changed |= makeNullable(curr->type); }
+  void visitLocalGet(LocalGet* curr) {
+    if (!signatureWasRelaxed && getFunction()->isParam(curr->index)) {
+      return;
+    }
+
+    changed |= makeNullable(curr->type);
+  }
 
   void visitLocalSet(LocalSet* curr) {
+    if (!signatureWasRelaxed && getFunction()->isParam(curr->index)) {
+      return;
+    }
+
     if (curr->isTee()) {
       changed |= makeNullable(curr->type);
     }
@@ -216,20 +228,21 @@ struct RelaxNullability : Pass {
   bool requiresNonNullableLocalFixups() override { return false; }
 
   void run(Module* module) override {
-    auto referencedFuncs = ModuleUtils::getReferencedFuncs(*module);
-    relaxFunctionParams(module, referencedFuncs);
+    auto relaxedFuncs = relaxFunctionParams(module);
 
     PassRunner runner(getPassRunner());
-    runner.add(std::make_unique<LocalsToNullable>(referencedFuncs));
+    runner.add(std::make_unique<LocalsToNullable>(relaxedFuncs));
     runner.run();
   }
 
 private:
-  void
-  relaxFunctionParams(Module* module,
-                      const std::unordered_set<Function*>& referencedFuncs) {
+  // Returns the set of functions that had their signatures changed.
+  std::unordered_set<Function*> relaxFunctionParams(Module* module) {
+    auto referencedFuncs = ModuleUtils::getReferencedFuncs(*module);
+
+    std::unordered_set<Function*> relaxedFuncs;
     for (auto& func : module->functions) {
-      if (!isRelaxable(func.get(), referencedFuncs)) {
+      if (!isSignatureRewritable(func.get(), referencedFuncs)) {
         continue;
       }
 
@@ -241,9 +254,12 @@ private:
       }
 
       if (changed) {
+        relaxedFuncs.insert(func.get());
         func->setParams(std::move(relaxedParams));
       }
     }
+
+    return relaxedFuncs;
   }
 };
 

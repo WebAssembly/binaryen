@@ -388,7 +388,7 @@ it usually is run on the final linked wasm.
 Advanced optimization techniques in the Binaryen optimizer include
 [SSAification](https://github.com/WebAssembly/binaryen/blob/main/src/passes/SSAify.cpp),
 [Flat IR](https://github.com/WebAssembly/binaryen/blob/main/src/ir/flat.h), and
-[Stack/Poppy IR](https://github.com/WebAssembly/binaryen/blob/main/src/ir/stack-utils.h).
+[Stack IR](https://github.com/WebAssembly/binaryen/blob/main/src/wasm-stack.h).
 
 See the
 [Optimizer Cookbook wiki page](https://github.com/WebAssembly/binaryen/wiki/Optimizer-Cookbook)

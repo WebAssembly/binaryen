@@ -189,7 +189,9 @@
 
   ;; CHECK:      (type $4 (func (param (ref any))))
 
-  ;; CHECK:      (type $5 (func (param anyref) (result (ref any))))
+  ;; CHECK:      (type $5 (func (result i32)))
+
+  ;; CHECK:      (type $6 (func (param anyref) (result (ref any))))
 
   ;; CHECK:      (import "" "" (func $imported-not-relaxed (type $shared-sig) (param (ref any)) (result (ref any))))
   (import "" "" (func $imported-not-relaxed (type $shared-sig) (param (ref any)) (result (ref any))))
@@ -212,27 +214,82 @@
 
   ;; CHECK:      (export "exported-not-relaxed" (func $exported-not-relaxed))
 
+  ;; CHECK:      (export "" (func $unrelaxable-with-no-relaxable-imports-short-circuits))
+
   ;; CHECK:      (func $exported-not-relaxed (type $shared-sig) (param $ref (ref any)) (result (ref any))
-  ;; CHECK-NEXT:  (local.get $ref)
+  ;; CHECK-NEXT:  (local $l anyref)
+  ;; CHECK-NEXT:  (ref.as_non_null
+  ;; CHECK-NEXT:   (block (result anyref)
+  ;; CHECK-NEXT:    (local.set $l
+  ;; CHECK-NEXT:     (local.get $ref)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.tee $ref
+  ;; CHECK-NEXT:      (local.get $ref)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $l)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $exported-not-relaxed (export "exported-not-relaxed") (param $ref (ref any)) (result (ref any))
-    (local.get $ref)
+    ;; Function is exported, so we can't mutate its signature. Relax its locals
+    ;; but not its params.
+    (local $l (ref any))
+    (local.set $l (local.get $ref))
+
+    ;; no-op tee for code coverage. Not relaxed.
+    (drop (local.tee $ref (local.get $ref)))
+
+    (local.get $l)
   )
 
   ;; CHECK:      (func $referenced-not-relaxed (type $shared-sig) (param $ref (ref any)) (result (ref any))
-  ;; CHECK-NEXT:  (local.get $ref)
+  ;; CHECK-NEXT:  (local $l anyref)
+  ;; CHECK-NEXT:  (ref.as_non_null
+  ;; CHECK-NEXT:   (block (result anyref)
+  ;; CHECK-NEXT:    (local.set $l
+  ;; CHECK-NEXT:     (local.get $ref)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $l)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $referenced-not-relaxed (type $shared-sig) (param $ref (ref any)) (result (ref any))
-    ;; Function referenced via ref.func: cannot be relaxed
-    (local.get $ref)
+    ;; Function referenced via ref.func. Relax its locals but not its params.
+    (local $l (ref any))
+    (local.set $l (local.get $ref))
+    (local.get $l)
   )
 
   ;; CHECK:      (func $referenced-via-table-not-relaxed (type $shared-sig) (param $ref (ref any)) (result (ref any))
-  ;; CHECK-NEXT:  (local.get $ref)
+  ;; CHECK-NEXT:  (local $l anyref)
+  ;; CHECK-NEXT:  (ref.as_non_null
+  ;; CHECK-NEXT:   (block (result anyref)
+  ;; CHECK-NEXT:    (local.set $l
+  ;; CHECK-NEXT:     (local.get $ref)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $l)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $referenced-via-table-not-relaxed (type $shared-sig) (param $ref (ref any)) (result (ref any))
-    ;; Function referenced via elem declare: cannot be relaxed
-    (local.get $ref)
+    ;; Function referenced via elem declare. Relax its locals but not its
+    ;; params.
+    (local $l (ref any))
+    (local.set $l (local.get $ref))
+    (local.get $l)
+  )
+
+  ;; CHECK:      (func $unrelaxable-with-no-relaxable-imports-short-circuits (type $5) (result i32)
+  ;; CHECK-NEXT:  (local $l i32)
+  ;; CHECK-NEXT:  (local.get $l)
+  ;; CHECK-NEXT: )
+  (func $unrelaxable-with-no-relaxable-imports-short-circuits (export "") (result i32)
+    ;; Coverage: The params weren't relaxed and no locals are relaxable. We can
+    ;; short-circuit and skip traversing the function body at all
+    (local $l i32)
+    (local.get $l)
   )
 
   (elem (i32.const 0) $referenced-via-table-not-relaxed)
@@ -246,7 +303,7 @@
     (drop (ref.func $referenced-not-relaxed))
   )
 
-  ;; CHECK:      (func $shares-type (type $5) (param $ref anyref) (result (ref any))
+  ;; CHECK:      (func $shares-type (type $6) (param $ref anyref) (result (ref any))
   ;; CHECK-NEXT:  (ref.as_non_null
   ;; CHECK-NEXT:   (local.get $ref)
   ;; CHECK-NEXT:  )

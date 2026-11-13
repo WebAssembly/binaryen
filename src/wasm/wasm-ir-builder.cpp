@@ -1465,7 +1465,7 @@ void IRBuilder::fixLoopWithInput(Loop* loop,
     list.push_back(builder.makeLocalSet(scratch[0], inner));
   } else {
     auto tupleScratch = addScratchLocal(inputType);
-    ASSERT_OK(tupleScratch);
+    assertOk(tupleScratch);
     list.push_back(builder.makeLocalSet(*tupleScratch, inner));
     for (Index i = 0; i < scratch.size(); ++i) {
       list.push_back(builder.makeLocalSet(
