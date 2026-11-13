@@ -138,8 +138,6 @@ def find_end(module, start):
     in_string = False
     escaped = False
     for end in range(start + 1, len(module)):
-        if depth == 0:
-            break
         if in_string:
             if escaped:
                 escaped = False
@@ -153,7 +151,10 @@ def find_end(module, start):
             depth += 1
         elif module[end] == ')':
             depth -= 1
-    return end
+            if depth == 0:
+                return end + 1
+    return len(module)
+
 
 
 
