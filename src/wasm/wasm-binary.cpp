@@ -38,10 +38,23 @@
 
 namespace wasm {
 
+WasmBinaryWriter::WasmBinaryWriter(Module* input,
+                                   BufferWithRandomAccess& o,
+                                   const PassOptions& options)
+  : wasm(input), o(o), options(options), indexes(*input) {
+  prepare();
+}
+
+WasmBinaryWriter::~WasmBinaryWriter() = default;
+
 void WasmBinaryWriter::prepare() {
+  if (options.generateStackIR) {
+    moduleStackIR = std::make_unique<ModuleStackIR>(*wasm, options);
+  }
   // Collect function types and their frequencies. Collect information in each
   // function in parallel, then merge.
-  indexedTypes = ModuleUtils::getOptimizedIndexedHeapTypes(*wasm);
+  indexedTypes =
+    ModuleUtils::getOptimizedIndexedHeapTypes(*wasm, moduleStackIR.get());
   for (Index i = 0, size = indexedTypes.types.size(); i < size; ++i) {
     if (indexedTypes.types[i].isSignature()) {
       signatureIndexes.insert({indexedTypes.types[i].getSignature(), i});
@@ -522,11 +535,6 @@ void WasmBinaryWriter::noteLabelNames(
 void WasmBinaryWriter::writeFunctions() {
   if (importInfo->getNumDefinedFunctions() == 0) {
     return;
-  }
-
-  std::optional<ModuleStackIR> moduleStackIR;
-  if (options.generateStackIR) {
-    moduleStackIR.emplace(*wasm, options);
   }
 
   auto sectionStart = startSection(BinaryConsts::Section::Code);

@@ -216,7 +216,7 @@ void StackIROptimizer::local2Stack() {
     if (isControlFlowBegin(inst)) {
       // Save the stack for when we end this control flow.
       savedValues.push_back(values); // TODO: optimize copies
-      values.clear();
+      values.assign(inst->params.size(), null);
     } else if (isControlFlowEnd(inst)) {
       assert(!savedValues.empty());
       values = savedValues.back();
@@ -491,9 +491,12 @@ void StackIROptimizer::removeAt(Index i) {
 
 Index StackIROptimizer::getNumConsumedValues(StackInst* inst) {
   if (isControlFlow(inst)) {
-    // If consumes 1; that's it.
+    // If consumes 1 (condition) plus any input parameters.
     if (inst->op == StackInst::IfBegin) {
-      return 1;
+      return 1 + inst->params.size();
+    }
+    if (isControlFlowBegin(inst)) {
+      return inst->params.size();
     }
     return 0;
   }

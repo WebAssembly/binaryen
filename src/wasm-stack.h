@@ -23,6 +23,7 @@
 #include "ir/properties.h"
 #include "pass.h"
 #include "support/insert_ordered.h"
+#include "support/utilities.h"
 #include "wasm-binary.h"
 #include "wasm-traversal.h"
 #include "wasm.h"
@@ -85,6 +86,11 @@ public:
   // the type - usually identical to the origin type, but e.g. wasm has no
   // unreachable blocks, they must be none
   Type type;
+
+  // For control-flow begin instructions (BlockBegin, IfBegin, LoopBegin,
+  // TryBegin, TryTableBegin), the input parameter types of the control-flow
+  // block signature.
+  Type params = Type::none;
 };
 
 using StackIR = std::vector<StackInst*>;
@@ -99,15 +105,19 @@ public:
       numLocalsByType(parent.getModule()->features),
       scratchLocals(parent.getModule()->features) {}
 
-  void visit(Expression* curr) {
+  void visit(Expression* curr, Type params = Type::none) {
     if (func) {
       parent.trackExpressionStart(curr, func);
     }
+    currParams = params;
     OverriddenVisitor<BinaryInstWriter>::visit(curr);
+    currParams = Type::none;
     if (func) {
       parent.trackExpressionEnd(curr, func);
     }
   }
+
+  void visit(StackInst* inst) { visit(inst->origin, inst->params); }
 
 #define DELEGATE(CLASS_TO_VISIT)                                               \
   void visit##CLASS_TO_VISIT(CLASS_TO_VISIT* curr);
@@ -156,6 +166,7 @@ private:
   BufferWithRandomAccess& o;
   Function* func = nullptr;
   bool DWARF;
+  Type currParams = Type::none;
 
   std::vector<Name> breakStack;
 
@@ -598,11 +609,11 @@ public:
   // Get StackIR for a function, if it exists. (This allows some functions to
   // have it and others not, if we add such capability in the future.)
   StackIR* getStackIROrNull(Function* func) {
-    auto iter = analysis.map.find(func);
-    if (iter == analysis.map.end()) {
-      return nullptr;
-    }
-    return &iter->second;
+    return find_or_null(analysis.map, func);
+  }
+
+  const StackIR* getStackIROrNull(Function* func) const {
+    return find_or_null(analysis.map, func);
   }
 };
 
@@ -668,10 +679,8 @@ private:
 std::ostream&
 printStackIR(std::ostream& o, Module* module, const PassOptions& options);
 
-} // namespace wasm
-
-namespace std {
 std::ostream& operator<<(std::ostream& o, wasm::StackInst& inst);
-} // namespace std
+
+} // namespace wasm
 
 #endif // wasm_wasm_stack_h
