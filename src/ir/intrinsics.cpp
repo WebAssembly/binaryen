@@ -34,16 +34,21 @@ bool Intrinsics::isCallWithoutEffects(Function* func) {
   Fatal() << "Unrecognized intrinsic";
 }
 
+bool Intrinsics::isCallWithoutEffects(Call* call) {
+  // The target function may not exist if the module is still being
+  // constructed.
+  if (auto* func = module.getFunctionOrNull(call->target)) {
+    return isCallWithoutEffects(func);
+  }
+
+  return false;
+}
+
 Call* Intrinsics::isCallWithoutEffects(Expression* curr) {
   if (auto* call = curr->dynCast<Call>()) {
-    // The target function may not exist if the module is still being
-    // constructed.
-    if (auto* func = module.getFunctionOrNull(call->target)) {
-      if (isCallWithoutEffects(func)) {
-        return call;
-      }
-    }
+    return isCallWithoutEffects(call) ? call : nullptr;
   }
+
   return nullptr;
 }
 

@@ -86,6 +86,7 @@ public:
   // Later passes will then turn that into a direct call and further optimize
   // things.
   bool isCallWithoutEffects(Function* func);
+  bool isCallWithoutEffects(Call* curr);
   Call* isCallWithoutEffects(Expression* curr);
 
   // Check if an instruction is the wasm/JS interop configureAll builtin. Such

@@ -48,6 +48,7 @@
 //
 
 #include "ir/child-typer.h"
+#include "ir/intrinsics.h"
 #include "ir/module-utils.h"
 #include "ir/names.h"
 #include "ir/possible-constant.h"
@@ -161,10 +162,30 @@ struct Analyzer
     }
 
     struct ExactChildTyper : ChildTyper<ExactChildTyper> {
+      using Super = ChildTyper<ExactChildTyper>;
+      using Super::note;
+
       Analyzer& parent;
       ExactChildTyper(Analyzer& parent)
-        : ChildTyper(*parent.getModule(), parent.getFunction()),
-          parent(parent) {}
+        : Super(*parent.getModule(), parent.getFunction()), parent(parent) {}
+
+      void visitCall(Call* curr) {
+        Super::visitCall(curr);
+
+        if (Intrinsics(wasm).isCallWithoutEffects(curr)) {
+          if (!curr->operands.back()->type.isSignature()) {
+            // unreachable, nothing to note.
+            return;
+          }
+
+          const auto& params =
+            curr->operands.back()->type.getHeapType().getSignature().params;
+          assert(params.size() == curr->operands.size() - 1);
+          for (size_t i = 0; i < params.size(); ++i) {
+            note(&curr->operands[i], params[i]);
+          }
+        }
+      }
 
       void note(Expression**, Constraints type) {
         // Check closed type constraints for exactness. Other kinds of type
