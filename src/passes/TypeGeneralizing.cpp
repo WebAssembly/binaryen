@@ -223,11 +223,11 @@ struct Generalizer : public ChildTyper<Generalizer> {
   }
 
   // Get the constrained type from a single (non-tuple) constraint.
-  std::optional<Type> getSingleConstraintType(Type elemType,
+  std::optional<Type> getSingleConstraintType(Type type,
                                               VarType constraint) {
-    assert(elemType.size() == 1);
-    if (!elemType.isRef()) {
-      return elemType;
+    assert(type.size() == 1);
+    if (!type.isRef()) {
+      return type;
     }
     if (auto* t = std::get_if<Type>(&constraint)) {
       // A constraint to a specific type.
@@ -240,12 +240,12 @@ struct Generalizer : public ChildTyper<Generalizer> {
 
       if (std::holds_alternative<Index>(ref->ht)) {
         // The heap type is variable, so use the top.
-        return Type(elemType.getHeapType().getTop(), null);
+        return Type(type.getHeapType().getTop(), null);
       } else if (auto* abs = std::get_if<VarAbsHeapType>(&ref->ht)) {
         // The heap type is abstract/basic, possibly with specified
         // shareability (if not, use the current shareability).
         auto* sharep = std::get_if<Shareability>(&abs->share);
-        auto share = sharep ? *sharep : elemType.getHeapType().getShared();
+        auto share = sharep ? *sharep : type.getHeapType().getShared();
         return Type(abs->ht.getBasic(share), null);
       } else if (auto* def = std::get_if<VarDefHeapType>(&ref->ht)) {
         // The heap type is defined, possibly with specified exactness (if not,
