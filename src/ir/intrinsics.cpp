@@ -45,8 +45,8 @@ bool Intrinsics::isCallWithoutEffects(Call* call) {
 }
 
 Call* Intrinsics::isCallWithoutEffects(Expression* curr) {
-  if (auto* call = curr->dynCast<Call>()) {
-    return isCallWithoutEffects(call) ? call : nullptr;
+  if (auto* call = curr->dynCast<Call>(); isCallWithoutEffects(call)) {
+    return call;
   }
 
   return nullptr;
