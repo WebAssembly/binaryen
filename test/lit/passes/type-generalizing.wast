@@ -2375,13 +2375,24 @@
 
  ;; CHECK:      (func $ref.get_desc-exact (type $10) (result (ref (exact $A.desc)))
  ;; CHECK-NEXT:  (local $x (ref null (exact $A)))
+ ;; CHECK-NEXT:  (local.set $x
+ ;; CHECK-NEXT:   (struct.new_default_desc $A
+ ;; CHECK-NEXT:    (struct.new_default $A.desc)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (ref.get_desc $A
  ;; CHECK-NEXT:   (local.get $x)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $ref.get_desc-exact (result (ref (exact $A.desc)))
-  (local $x (ref null (exact $A)))
-  ;; As above, but the output must also be exact, so we must keep $x exact.
+  (local $x (ref (exact $A)))
+  ;; As above, but the output must also be exact, so we must keep $x exact (we
+  ;; can generalize the nullability, though).
+  (local.set $x
+    (struct.new_desc $A
+      (struct.new $A.desc)
+    )
+  )
   (ref.get_desc $A
    (local.get $x)
   )
