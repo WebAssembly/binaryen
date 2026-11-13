@@ -6,6 +6,8 @@
  (tag $e (param i32))
  ;; CHECK:      (tag $e2 (type $2) (param i32 i32))
  (tag $e2 (param i32 i32))
+ ;; CHECK:      (tag $e-eqref (type $3) (param eqref))
+ (tag $e-eqref (param eqref))
 
  ;; CHECK:      (func $stacky (type $0)
  ;; CHECK-NEXT:  (local $scratch i32)
@@ -455,6 +457,37 @@
     pop (tuple i32 i32)
     nop
     drop
+    drop
+   end
+  end
+ )
+
+ ;; CHECK:      (func $stacky-unnamed-block-supertype (type $0)
+ ;; CHECK-NEXT:  (local $scratch eqref)
+ ;; CHECK-NEXT:  (try
+ ;; CHECK-NEXT:   (do
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (catch $e-eqref
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (block (result eqref)
+ ;; CHECK-NEXT:      (local.set $scratch
+ ;; CHECK-NEXT:       (pop eqref)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (nop)
+ ;; CHECK-NEXT:      (local.get $scratch)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $stacky-unnamed-block-supertype
+  try
+  catch $e-eqref
+   ;; A pop tunneled into an unnamed block can also specify a supertype of the
+   ;; tag's parameter type.
+   block
+    pop anyref
+    nop
     drop
    end
   end

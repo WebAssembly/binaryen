@@ -125,20 +125,8 @@
   )
 )
 
-;; CHECK: 7:9: error: Expected pop of type eqref
-(module
-  (tag $e (param eqref))
-  (func $supertype
-    (try
-      (do)
-      (catch $e
-        (pop anyref)
-      )
-    )
-  )
-)
-
 ;; CHECK: 8:11: error: pop instructions may only appear at the beginning of catch blocks
+;; TODO: More accurate error message here.
 (module
   (tag $e (param i64))
   (func $in-mismatched-param-block
@@ -154,6 +142,7 @@
 )
 
 ;; CHECK: local.set's value type must be correct
+;; TODO: More accurate error message here.
 (module
   (tag $e (param i64))
   (func $implicit-mismatched-param-block
@@ -169,6 +158,7 @@
 )
 
 ;; CHECK: block with value and last element with value must match types
+;; TODO: More accurate error message here.
 (module
   (tag $e (param eqref))
   (func $implicit-supertype-param-block (result eqref)

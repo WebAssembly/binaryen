@@ -935,9 +935,12 @@ Result<> IRBuilder::pushScope(ScopeCtx&& scope) {
     for (size_t i = 0; i < inputs->size(); ++i) {
       // Reuse the enclosing scope's scratch local rather than allocating a new
       // one when an input comes directly from an enclosing scope's input.
-      // Earlier inputs that allocate new scratch locals (e.g. due to type
-      // widening) are copied before this scope starts, which safely reorders
-      // scratch `local.get`s past any subsequent reused inputs.
+      // Earlier inputs that allocated new scratch locals (e.g. due to type
+      // widening) had their values copied to those new scratch locals before
+      // the start of this scope, and have already had local.gets of those new
+      // scratch locals pushed in this scope. It is still safe to reuse this
+      // later input's scratch local because local.gets can always be safely
+      // reordered.
       auto* input = (*inputs)[i];
       size_t parentIndex = baseIndex + i;
       bool isInputGet =
@@ -2064,7 +2067,7 @@ Result<> IRBuilder::makePop(Type type) {
   // We don't actually want to create a new Pop expression here because we
   // already create them automatically when starting a legacy catch block that
   // needs one (and move them into nested unnamed blocks in pushScope). Just
-  // verify that the Pop we are being asked to make is the same type as the Pop
+  // verify that the Pop we are being asked to make is a supertype of the Pop
   // we have already made.
   auto& scope = getScope();
   if (scope.exprStack.size() != 1 || !scope.exprStack[0]->is<Pop>()) {
@@ -2076,7 +2079,7 @@ Result<> IRBuilder::makePop(Type type) {
       "pop instructions may only appear at the beginning of catch blocks"};
   }
   auto expectedType = scope.exprStack[0]->type;
-  if (type != expectedType) {
+  if (!Type::isSubType(expectedType, type)) {
     return Err{std::string("Expected pop of type ") + expectedType.toString()};
   }
   return Ok{};
