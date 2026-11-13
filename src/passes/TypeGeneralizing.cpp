@@ -214,8 +214,6 @@ struct Generalizer : public ChildTyper<Generalizer> {
     }
   }
 
-  Type getLabelType(Name label) { return walker.findBreakTarget(label)->type; }
-
   void noteUnknown() {
     // When we do not have enough information in the IR, constrain each child to
     // its current type, which is always safe.
