@@ -1,4 +1,12 @@
 if(BUILD_FUZZTEST)
+  # FuzzTest's CMakeLists.txt unconditionally sets CMAKE_CXX_STANDARD to 17,
+  # which would build Abseil with C++17 while Binaryen builds with C++20,
+  # causing an ABI mismatch on absl::SourceLocation. Restore Binaryen's C++
+  # standard when configuring Abseil (which then propagates it to FuzzTest via
+  # ABSL_PROPAGATE_CXX_STD).
+  file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/absl-cxx-std.cmake"
+    "set(CMAKE_CXX_STANDARD ${CMAKE_CXX_STANDARD})\n")
+  set(CMAKE_PROJECT_absl_INCLUDE "${CMAKE_CURRENT_BINARY_DIR}/absl-cxx-std.cmake")
   add_subdirectory(fuzztest)
 elseif(BUILD_TESTS)
   # fuzztest includes gtest, but if we're not building fuzztest, build gtest ourselves.
