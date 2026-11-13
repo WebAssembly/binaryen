@@ -65,10 +65,12 @@ class DWARFLocalsTest(utils.BinaryenTestCase):
         if verifier:
             shared.run_process([verifier, '--verify', path])
 
-    def fixture(self, path, count, extra=()):
+    def fixture(self, path, count, extra=(), address_size=4):
         # All locals survive; the last local is the most frequent. A final
         # unused local must become unavailable, not silently become local 0.
         module = '(module (import "env" "touch" (func $touch (param i32) (result i32)))'
+        if address_size == 8:
+            module += '(memory i64 1)'
         module += '(func (export "run") (param $p i32) (result i32)'
         module += ' (local i32)' * (count + 1)
         for i in range(1, count + 1):
@@ -76,7 +78,7 @@ class DWARFLocalsTest(utils.BinaryenTestCase):
             module += f' (drop (local.get {i}))'
         module += f' (drop (local.get {count}))' * 3
         module += ' (local.get $p)))'
-        shared.run_process(shared.WASM_OPT + ['-o', path], input=module)
+        shared.run_process(shared.WASM_OPT + ['--enable-memory64', '-o', path], input=module)
         with open(path, 'rb') as f:
             wasm = f.read()
         code = sections(wasm)[10]
@@ -91,7 +93,10 @@ class DWARFLocalsTest(utils.BinaryenTestCase):
             '0334000308021849130000'
             '0434000308021749130000'
             '05240003083e0b0b0b000000')
-        info = bytearray(b'\x01\x02run\0' + word(start) + word(end - start))
+        def address(value):
+            return value.to_bytes(address_size, 'little')
+
+        info = bytearray(b'\x01\x02run\0' + address(start) + word(end - start))
         locations = bytearray()
         refs = []
         expected = {}
@@ -108,10 +113,10 @@ class DWARFLocalsTest(utils.BinaryenTestCase):
                     info += uleb(len(expression)) + expression
                 else:
                     info += word(len(locations))
-                    locations += word(0xffffffff) + word(0)
-                    locations += word(start) + word(end)
+                    locations += b'\xff' * address_size + address(0)
+                    locations += address(start) + address(end)
                     locations += len(expression).to_bytes(2, 'little') + expression
-                    locations += bytes(8)
+                    locations += bytes(2 * address_size)
                 refs.append(len(info))
                 info += bytes(4)
                 expected[full_name] = result
@@ -120,7 +125,7 @@ class DWARFLocalsTest(utils.BinaryenTestCase):
         info += b'\x05int\0\x05\x04\0'
         for pos in refs:
             info[pos:pos + 4] = word(type_offset)
-        unit = b'\x04\0' + word(0) + b'\x04' + info
+        unit = b'\x04\0' + word(0) + bytes([address_size]) + info
         wasm += custom('.debug_abbrev', abbrev)
         wasm += custom('.debug_info', word(len(unit)) + unit)
         wasm += custom('.debug_loc', locations)
@@ -141,6 +146,7 @@ class DWARFLocalsTest(utils.BinaryenTestCase):
 
     def check_unit(self, info, locs, expected):
         pos = 12 if info[4:6] == b'\x05\0' else 11
+        address_size = info[7] if pos == 12 else info[10]
         found = {}
         references = []
         type_offset = None
@@ -153,7 +159,7 @@ class DWARFLocalsTest(utils.BinaryenTestCase):
             name = info[pos:end].decode()
             pos = end + 1
             if kind == 2:
-                pos += 8
+                pos += address_size + 4
                 continue
             if kind == 5:
                 self.assertEqual(name, 'int')
@@ -168,14 +174,17 @@ class DWARFLocalsTest(utils.BinaryenTestCase):
                 self.assertEqual(kind, 4)
                 loc = int.from_bytes(info[pos:pos + 4], 'little')
                 pos += 4
-                self.assertEqual(locs[loc:loc + 4], word(0xffffffff))
-                while locs[loc:loc + 4] == word(0xffffffff):
-                    loc += 8
-                self.assertLessEqual(loc + 10, len(locs))
-                size = int.from_bytes(locs[loc + 8:loc + 10], 'little')
-                expression = locs[loc + 10:loc + 10 + size]
+                marker = b'\xff' * address_size
+                self.assertEqual(locs[loc:loc + address_size], marker)
+                while locs[loc:loc + address_size] == marker:
+                    loc += 2 * address_size
+                loc += 2 * address_size
+                self.assertLessEqual(loc + 2, len(locs))
+                size = int.from_bytes(locs[loc:loc + 2], 'little')
+                expression = locs[loc + 2:loc + 2 + size]
                 self.assertEqual(len(expression), size)
-                self.assertEqual(locs[loc + 10 + size:loc + 18 + size], bytes(8))
+                self.assertEqual(locs[loc + 2 + size:loc + 2 + size + 2 * address_size],
+                                 bytes(2 * address_size))
             found[name] = expression
             references.append(int.from_bytes(info[pos:pos + 4], 'little'))
             pos += 4
@@ -223,6 +232,35 @@ class DWARFLocalsTest(utils.BinaryenTestCase):
             shared.run_process(shared.WASM_OPT +
                                [path, '-g', '--reorder-locals', '-o', out])
             self.check_variables(out, expected)
+
+    def test_memory64_lowering(self):
+        for count, lower in ((2, False), (2, True), (130, False), (130, True)):
+            with self.subTest(count=count, lower=lower), tempfile.TemporaryDirectory() as directory:
+                path = os.path.join(directory, 'input.wasm')
+                out = os.path.join(directory, 'output.wasm')
+                expected = self.fixture(path, count, address_size=8)
+                self.verify_dwarf(path)
+                options = ['--memory64-lowering'] if lower else []
+                shared.run_process(shared.WASM_OPT +
+                                   [path, '-g', '--enable-memory64', '--reorder-locals',
+                                    '-o', out] + options)
+                self.check_variables(out, expected)
+                self.verify_dwarf(out)
+
+    def test_truncated_expression_operands(self):
+        suffixes = [b'\x0c\x30', b'\x10\x80', b'\x11\x80', b'\x92\0\x80',
+                    b'\x9e\x03\x01', b'\xed', b'\xed\0\x80', b'\xed\x03\x30',
+                    b'\xf3\x80', b'\xa4\x80', b'\xa4\0', b'\xa0\x01',
+                    b'\xa0\x01\0\0\0\x80']
+        for suffix in suffixes:
+            with self.subTest(suffix=suffix.hex()), tempfile.TemporaryDirectory() as directory:
+                path = os.path.join(directory, 'input.wasm')
+                self.fixture(path, 2, [('truncated', local(1) + suffix, b'')])
+                result = shared.run_process(shared.WASM_OPT +
+                                            [path, '-g', '--reorder-locals', '-o', os.devnull],
+                                            check=False, capture_output=True, timeout=10)
+                self.assertEqual(result.returncode, 1)
+                self.assertIn('truncated DWARF location expression', result.stderr)
 
     def test_optimized_out_locals(self):
         with tempfile.TemporaryDirectory() as directory:
