@@ -188,6 +188,7 @@ jobs:
     env:
       ASAN_OPTIONS: "symbolize=1"
       COMPILER_FLAGS: "-fsanitize=address"
+      LLVM_VERSION: 18
       CC: "clang-18"
       CXX: "clang++-18"
     steps:
@@ -306,6 +307,7 @@ jobs:
     env:
       COMPILER_FLAGS: "-fsanitize=thread"
       LINKER_FLAGS: "-fsanitize=thread"
+      LLVM_VERSION: 18
       CC: "clang-18"
       CXX: "clang++-18"
     steps:
