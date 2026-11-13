@@ -2970,3 +2970,116 @@
   )
  )
 )
+
+(module
+ ;; CHECK:      (type $0 (func (result eqref)))
+
+ ;; CHECK:      (type $1 (func (result eqref exnref)))
+
+ ;; CHECK:      (type $2 (func (param eqref)))
+
+ ;; CHECK:      (type $3 (func (param i31ref)))
+
+ ;; CHECK:      (tag $tag-eq (type $2) (param eqref))
+ (tag $tag-eq (param eqref))
+ ;; CHECK:      (tag $tag-i31 (type $3) (param i31ref))
+ (tag $tag-i31 (param i31ref))
+
+ ;; CHECK:      (func $try (type $0) (result eqref)
+ ;; CHECK-NEXT:  (local $x eqref)
+ ;; CHECK-NEXT:  (local $y eqref)
+ ;; CHECK-NEXT:  (local $z eqref)
+ ;; CHECK-NEXT:  (try (result eqref)
+ ;; CHECK-NEXT:   (do
+ ;; CHECK-NEXT:    (local.get $x)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (catch $tag-eq
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (pop eqref)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (local.get $y)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (catch_all
+ ;; CHECK-NEXT:    (local.get $z)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $try (result eqref)
+  (local $x i31ref)
+  (local $y i31ref)
+  (local $z i31ref)
+  (try (result i31ref)
+   (do
+    ;; Require that typeof($x) <: eqref.
+    (local.get $x)
+   )
+   (catch $tag-eq
+    (drop
+     (pop eqref)
+    )
+    ;; Require that typeof($y) <: eqref.
+    (local.get $y)
+   )
+   (catch_all
+    ;; Require that typeof($z) <: eqref.
+    (local.get $z)
+   )
+  )
+ )
+
+ ;; CHECK:      (func $try-delegate (type $0) (result eqref)
+ ;; CHECK-NEXT:  (local $x eqref)
+ ;; CHECK-NEXT:  (try (result eqref)
+ ;; CHECK-NEXT:   (do
+ ;; CHECK-NEXT:    (local.get $x)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (delegate 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $try-delegate (result eqref)
+  (local $x i31ref)
+  (try (result i31ref)
+   (do
+    ;; Require that typeof($x) <: eqref.
+    (local.get $x)
+   )
+   (delegate 0)
+  )
+ )
+
+ ;; CHECK:      (func $try_table (type $0) (result eqref)
+ ;; CHECK-NEXT:  (local $x eqref)
+ ;; CHECK-NEXT:  (block $catch (result eqref)
+ ;; CHECK-NEXT:   (try_table (result eqref) (catch $tag-i31 $catch)
+ ;; CHECK-NEXT:    (local.get $x)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $try_table (result eqref)
+  (local $x i31ref)
+  (block $catch (result i31ref)
+   ;; Require that typeof($x) <: eqref.
+   (try_table (result i31ref) (catch $tag-i31 $catch)
+    (local.get $x)
+   )
+  )
+ )
+
+ ;; CHECK:      (func $try_table-tuple (type $1) (result eqref exnref)
+ ;; CHECK-NEXT:  (local $t (tuple eqref exnref))
+ ;; CHECK-NEXT:  (block $catch (type $1) (result eqref exnref)
+ ;; CHECK-NEXT:   (try_table (type $1) (result eqref exnref) (catch_ref $tag-i31 $catch)
+ ;; CHECK-NEXT:    (local.get $t)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $try_table-tuple (result eqref exnref)
+  (local $t (tuple i31ref exnref))
+  (block $catch (result i31ref exnref)
+   ;; Require that typeof($t) <: (tuple eqref exnref).
+   (try_table (result i31ref exnref) (catch_ref $tag-i31 $catch)
+    (local.get $t)
+   )
+  )
+ )
+)
