@@ -223,8 +223,7 @@ struct Generalizer : public ChildTyper<Generalizer> {
   }
 
   // Get the constrained type from a single (non-tuple) constraint.
-  std::optional<Type> getSingleConstraintType(Type type,
-                                              VarType constraint) {
+  std::optional<Type> getSingleConstraintType(Type type, VarType constraint) {
     assert(type.size() == 1);
     if (!type.isRef()) {
       return type;
