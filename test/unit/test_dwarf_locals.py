@@ -93,6 +93,7 @@ class DWARFLocalsTest(utils.BinaryenTestCase):
             '0334000308021849130000'
             '0434000308021749130000'
             '05240003083e0b0b0b000000')
+
         def address(value):
             return value.to_bytes(address_size, 'little')
 
