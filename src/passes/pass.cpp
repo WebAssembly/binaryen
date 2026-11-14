@@ -445,7 +445,7 @@ void PassRegistry::registerPasses() {
                "removes exports using a wildcard",
                createRemoveExportsPass);
   registerPass("remove-imports",
-               "removes imports and replaces them with nops",
+               "removes imports using a wildcard and replaces them with nops",
                createRemoveImportsPass);
   registerPass("remove-memory-init",
                "removes memory initialization",
