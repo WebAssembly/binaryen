@@ -21,20 +21,54 @@
 // imports, we can at least get the reference interpreter to
 // look at all the rest of the code).
 //
+// By default, all imports are removed. Imports can be specified as a
+// comma-separated list with format module.base (with or without wildcards) or
+// as a response file.
 
 #include "ir/element-utils.h"
 #include "ir/module-utils.h"
 #include "pass.h"
+#include "support/file.h"
+#include "support/string.h"
 #include "wasm.h"
 
 namespace wasm {
 
 struct RemoveImports : public WalkerPass<PostWalker<RemoveImports>> {
+  std::set<Name> toRemove;
+
+  void run(Module* module) override {
+    toRemove.clear();
+
+    // If no arguments are provided, all function imports are removed.
+    std::string param = getArgumentOrDefault(name, "");
+    param = String::trim(read_possible_response_file(param));
+    bool removeAllImports = param.empty();
+
+    String::Split patterns(param, String::Split::NewLineOr(","));
+    patterns = handleBracketingOperators(patterns);
+
+    ModuleUtils::iterImportedFunctions(*module, [&](Function* func) {
+      if (removeAllImports) {
+        toRemove.insert(func->name);
+        return;
+      }
+      auto full = func->module.toString() + '.' + func->base.toString();
+      for (auto& pattern : patterns) {
+        if (String::wildcardMatch(pattern, full)) {
+          toRemove.insert(func->name);
+          break;
+        }
+      }
+    });
+    WalkerPass<PostWalker<RemoveImports>>::run(module);
+  }
+
   void visitCall(Call* curr) {
-    auto* func = getModule()->getFunction(curr->target);
-    if (!func->imported()) {
+    if (!toRemove.count(curr->target)) {
       return;
     }
+    auto* func = getModule()->getFunction(curr->target);
     Type type = func->getResults();
     if (type == Type::none) {
       replaceCurrent(getModule()->allocator.alloc<Nop>());
@@ -45,14 +79,11 @@ struct RemoveImports : public WalkerPass<PostWalker<RemoveImports>> {
   }
 
   void visitModule(Module* curr) {
-    std::vector<Name> names;
-    ModuleUtils::iterImportedFunctions(
-      *curr, [&](Function* func) { names.push_back(func->name); });
     // Do not remove names referenced in a table
     std::set<Name> indirectNames;
     ElementUtils::iterAllElementFunctionNames(
       curr, [&](Name name) { indirectNames.insert(name); });
-    for (auto& name : names) {
+    for (auto& name : toRemove) {
       if (indirectNames.find(name) == indirectNames.end()) {
         curr->removeFunction(name);
       }

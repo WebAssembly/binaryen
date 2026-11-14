@@ -459,8 +459,8 @@
 ;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --remove-exports                              removes exports using a wildcard
 ;; CHECK-EMPTY:
-;; CHECK-NEXT:   --remove-imports                              removes imports and replaces 
-;; CHECK-NEXT:                                                 them with nops
+;; CHECK-NEXT:   --remove-imports                              removes imports using a wildcard
+;; CHECK-NEXT:                                                 and replaces them with nops
 ;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --remove-memory                               removes memory init (legacy 
 ;; CHECK-NEXT:                                                 name)
