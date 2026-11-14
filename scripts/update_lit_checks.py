@@ -156,8 +156,6 @@ def find_end(module, start):
     return len(module)
 
 
-
-
 def find_annotations(module, start):
     # Search backward to find the start of the line containing the first of the
     # annotations preceding `start`, if any.
