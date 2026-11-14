@@ -901,16 +901,71 @@ Result<> IRBuilder::pushScope(ScopeCtx&& scope) {
     scope.startPos = lastBinaryPos;
     lastBinaryPos = *binaryPos;
   }
+  // Tunnel catch pops directly into unnamed blocks. Allow this even when the
+  // block has no input type so we can round-trip WAT without the printer
+  // needing to synthesize block input types, as well as when the block's input
+  // type matches the pop's type. For example:
+  //
+  // (catch $i32
+  //   (block (param i32)
+  //     (pop i32)
+  //   )
+  // )
+  //
+  // This should clearly be allowed, but if it were required, then the printer
+  // would need to know to print `(param i32)` to successfully round-trip
+  // through text.
+  bool isUnnamedBlock = scope.getBlock() && !scope.getBlock()->name;
+  bool hasPop =
+    getScope().exprStack.size() == 1 && getScope().exprStack[0]->is<Pop>();
+  if (isUnnamedBlock && hasPop &&
+      (scope.inputType == Type::none ||
+       scope.inputType == getScope().exprStack[0]->type)) {
+    // Move the pop into the new scope.
+    auto* pop = getScope().exprStack.back();
+    getScope().exprStack.pop_back();
+    scopeStack.emplace_back(std::move(scope));
+    pushSynthetic(pop);
+    // If this unnamed block later receives a name from a branch targeting it,
+    // the nested pop will need to be fixed up.
+    scopeStack[0].noteSyntheticBlock();
+    return Ok{};
+  }
+
   bool hasInput = scope.inputType != Type::none;
   if (hasInput && !scope.isDelimiter()) {
     auto inputs = ChildPopper{*this}.popInputs(scope.inputType);
     CHECK_ERR(inputs);
+    const auto& parentLocals = getScope().inputLocals;
+    // The new scope may only receive a suffix of the outer scope's parameters,
+    // so match inputs starting from the remaining size of the outer stack
+    // rather than from the beginning.
+    size_t baseIndex = getScope().exprStack.size();
     scope.inputLocals.reserve(inputs->size());
     for (size_t i = 0; i < inputs->size(); ++i) {
-      auto scratch = addScratchLocal(scope.inputType[i]);
-      CHECK_ERR(scratch);
-      scope.inputLocals.push_back(*scratch);
-      pushSynthetic(builder.makeLocalSet(*scratch, (*inputs)[i]));
+      // Reuse the enclosing scope's scratch local rather than allocating a new
+      // one when an input comes directly from an enclosing scope's input.
+      // This is safe even in the case where earlier inputs for the new scope
+      // had to use new scratch locals (e.g. due to type widening). In that case
+      // the previous inputs had their values copied to the new scratch locals
+      // before the start of this scope and have already had local.gets of those
+      // new scratch locals pushed in this scope. It is still safe to reuse this
+      // later input's scratch local because local.gets can always be safely
+      // reordered.
+      auto* input = (*inputs)[i];
+      size_t parentIndex = baseIndex + i;
+      bool isInputGet =
+        parentIndex < parentLocals.size() && input->is<LocalGet>() &&
+        input->cast<LocalGet>()->index == parentLocals[parentIndex] &&
+        input->type == scope.inputType[i];
+      if (isInputGet) {
+        scope.inputLocals.push_back(parentLocals[parentIndex]);
+      } else {
+        auto scratch = addScratchLocal(scope.inputType[i]);
+        CHECK_ERR(scratch);
+        scope.inputLocals.push_back(*scratch);
+        pushSynthetic(builder.makeLocalSet(*scratch, input));
+      }
     }
   }
   scopeStack.emplace_back(std::move(scope));
@@ -2022,37 +2077,21 @@ Result<> IRBuilder::makeUnreachable() {
 Result<> IRBuilder::makePop(Type type) {
   // We don't actually want to create a new Pop expression here because we
   // already create them automatically when starting a legacy catch block that
-  // needs one. Just verify that the Pop we are being asked to make is the same
-  // type as the Pop we have already made, and move it into the current scope if
-  // we have entered unnamed blocks since the catch began. (Note that the block
-  // may receive a name later, if we encounter a break to it, if we process
-  // that after the pop. In that case, the fixups that run later will have work
-  // to do.)
-  ScopeCtx* catchScope = nullptr;
-  for (int i = int(scopeStack.size()) - 1; i >= 0; --i) {
-    auto& scope = scopeStack[i];
-    if (scope.getCatch()) {
-      catchScope = &scope;
-      break;
+  // needs one (and move them into nested unnamed blocks in pushScope). Just
+  // verify that the Pop we are being asked to make is a supertype of the Pop
+  // we have already made.
+  auto& scope = getScope();
+  if (scope.exprStack.size() != 1 || !scope.exprStack[0]->is<Pop>()) {
+    if (auto* tryy = scope.getCatch();
+        tryy && wasm.getTag(tryy->catchTags.back())->params() == Type::none) {
+      return Err{"cannot pop from empty tag"};
     }
-    auto* block = scope.getBlock();
-    if (!block || block->name || !scope.exprStack.empty()) {
-      break;
-    }
-  }
-  if (!catchScope || catchScope->exprStack.size() != 1 ||
-      !catchScope->exprStack[0]->is<Pop>()) {
     return Err{
       "pop instructions may only appear at the beginning of catch blocks"};
   }
-  auto* pop = catchScope->exprStack[0];
-  auto expectedType = pop->type;
+  auto expectedType = scope.exprStack[0]->type;
   if (!Type::isSubType(expectedType, type)) {
     return Err{std::string("Expected pop of type ") + expectedType.toString()};
-  }
-  if (catchScope != &getScope()) {
-    catchScope->exprStack.pop_back();
-    pushSynthetic(pop);
   }
   return Ok{};
 }
