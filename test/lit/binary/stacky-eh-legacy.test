@@ -52,7 +52,7 @@
 ;; CHECK-NEXT:   )
 ;; CHECK-NEXT:   (catch $tag$0
 ;; CHECK-NEXT:    (local.set $2
-;; CHECK-NEXT:     (block (result i32)
+;; CHECK-NEXT:     (block (param i32) (result i32)
 ;; CHECK-NEXT:      (local.set $scratch
 ;; CHECK-NEXT:       (pop i32)
 ;; CHECK-NEXT:      )

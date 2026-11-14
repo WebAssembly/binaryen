@@ -416,8 +416,8 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (catch $tag
   ;; CHECK-NEXT:     (ref.i31
-  ;; CHECK-NEXT:      (block (result i32)
-  ;; CHECK-NEXT:       (block
+  ;; CHECK-NEXT:      (block (param (ref null $array)) (result i32)
+  ;; CHECK-NEXT:       (block (param (ref null $array))
   ;; CHECK-NEXT:        (drop
   ;; CHECK-NEXT:         (pop (ref null $array))
   ;; CHECK-NEXT:        )

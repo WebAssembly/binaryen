@@ -25,7 +25,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (catch $tag$i32
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block (result i32)
+  ;; CHECK-NEXT:     (block (param i32) (result i32)
   ;; CHECK-NEXT:      (drop
   ;; CHECK-NEXT:       (pop i32)
   ;; CHECK-NEXT:      )
@@ -35,7 +35,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (catch $tag$f32
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block
+  ;; CHECK-NEXT:     (block (param f32)
   ;; CHECK-NEXT:      (drop
   ;; CHECK-NEXT:       (pop f32)
   ;; CHECK-NEXT:      )

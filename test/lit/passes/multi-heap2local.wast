@@ -1938,7 +1938,7 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (catch $tag
-  ;; CHECK-NEXT:    (block
+  ;; CHECK-NEXT:    (block (param i32)
   ;; CHECK-NEXT:     (local.set $ref
   ;; CHECK-NEXT:      (struct.new $struct
   ;; CHECK-NEXT:       (pop i32)
@@ -2004,9 +2004,9 @@
   ;; H2L-NEXT:    )
   ;; H2L-NEXT:   )
   ;; H2L-NEXT:   (catch $tag
-  ;; H2L-NEXT:    (block
+  ;; H2L-NEXT:    (block (param i32)
   ;; H2L-NEXT:     (drop
-  ;; H2L-NEXT:      (block (result nullref)
+  ;; H2L-NEXT:      (block (param i32) (result nullref)
   ;; H2L-NEXT:       (local.set $7
   ;; H2L-NEXT:        (pop i32)
   ;; H2L-NEXT:       )

@@ -4509,7 +4509,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (catch $tag
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block (result nullref)
+  ;; CHECK-NEXT:     (block (param i32) (result nullref)
   ;; CHECK-NEXT:      (local.set $1
   ;; CHECK-NEXT:       (pop i32)
   ;; CHECK-NEXT:      )
@@ -4553,7 +4553,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (catch $tag
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block (result (ref null $2))
+  ;; CHECK-NEXT:     (block (param i32) (result (ref null $2))
   ;; CHECK-NEXT:      (local.set $0
   ;; CHECK-NEXT:       (pop i32)
   ;; CHECK-NEXT:      )

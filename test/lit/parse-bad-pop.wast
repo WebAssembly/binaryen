@@ -85,6 +85,22 @@
 )
 
 ;; CHECK: 8:11: error: pop instructions may only appear at the beginning of catch blocks
+;; TODO: More accurate error message here.
+(module
+  (tag $e (param i32))
+  (func $in-unnamed-block
+    (try
+      (do)
+      (catch $e
+        (block
+          (pop i32)
+        )
+      )
+    )
+  )
+)
+
+;; CHECK: 8:11: error: pop instructions may only appear at the beginning of catch blocks
 (module
   (tag $e (param i32))
   (func $in-loop

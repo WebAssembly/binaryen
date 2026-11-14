@@ -135,7 +135,7 @@
   ;; CHECK-BIN-NEXT:   )
   ;; CHECK-BIN-NEXT:   (catch $e-i32-i64
   ;; CHECK-BIN-NEXT:    (local.set $x
-  ;; CHECK-BIN-NEXT:     (block (result i32)
+  ;; CHECK-BIN-NEXT:     (block (param i32 i64) (result i32)
   ;; CHECK-BIN-NEXT:      (local.set $scratch_3
   ;; CHECK-BIN-NEXT:       (tuple.extract 2 0
   ;; CHECK-BIN-NEXT:        (local.tee $scratch
@@ -1393,7 +1393,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:   (catch $tag$2
 ;; CHECK-BIN-NODEBUG-NEXT:    (local.set $0
-;; CHECK-BIN-NODEBUG-NEXT:     (block (result i32)
+;; CHECK-BIN-NODEBUG-NEXT:     (block (param i32 i64) (result i32)
 ;; CHECK-BIN-NODEBUG-NEXT:      (local.set $scratch_3
 ;; CHECK-BIN-NODEBUG-NEXT:       (tuple.extract 2 0
 ;; CHECK-BIN-NODEBUG-NEXT:        (local.tee $scratch

@@ -553,7 +553,7 @@
       (do)
       (catch $e-i32
         (throw $e-i32
-          (block (result i32)
+          (block (param i32) (result i32)
             (pop i32) ;; pop is within an *un*named block, which is valid
           )
         )

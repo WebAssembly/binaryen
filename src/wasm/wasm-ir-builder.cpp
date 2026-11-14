@@ -901,10 +901,8 @@ Result<> IRBuilder::pushScope(ScopeCtx&& scope) {
     scope.startPos = lastBinaryPos;
     lastBinaryPos = *binaryPos;
   }
-  // Tunnel catch pops directly into unnamed blocks. Allow this even when the
-  // block has no input type so we can round-trip WAT without the printer
-  // needing to synthesize block input types, as well as when the block's input
-  // type matches the pop's type. For example:
+  // Tunnel catch pops directly into unnamed blocks whose input type matches
+  // the pop's type. For example:
   //
   // (catch $i32
   //   (block (param i32)
@@ -912,15 +910,16 @@ Result<> IRBuilder::pushScope(ScopeCtx&& scope) {
   //   )
   // )
   //
-  // This should clearly be allowed, but if it were required, then the printer
-  // would need to know to print `(param i32)` to successfully round-trip
-  // through text.
+  // Do not tunnel into unnamed blocks without matching input parameters, since
+  // a block with no parameters does not consume the exception value on the
+  // outer catch stack. To round-trip through text, the printer emits matching
+  // `(param ...)` declarations on unnamed blocks surrounding `pop`
+  // instructions.
   bool isUnnamedBlock = scope.getBlock() && !scope.getBlock()->name;
   bool hasPop =
     getScope().exprStack.size() == 1 && getScope().exprStack[0]->is<Pop>();
   if (isUnnamedBlock && hasPop &&
-      (scope.inputType == Type::none ||
-       scope.inputType == getScope().exprStack[0]->type)) {
+      scope.inputType == getScope().exprStack[0]->type) {
     // Move the pop into the new scope.
     auto* pop = getScope().exprStack.back();
     getScope().exprStack.pop_back();
