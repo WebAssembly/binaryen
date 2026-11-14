@@ -87,7 +87,6 @@ public:
   // things.
   bool isCallWithoutEffects(Function* func);
   bool isCallWithoutEffects(Call* curr);
-  Call* isCallWithoutEffects(Expression* curr);
 
   // Check if an instruction is the wasm/JS interop configureAll builtin. Such
   // calls have a second parameter which is an array of function references,

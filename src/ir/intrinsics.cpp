@@ -44,14 +44,6 @@ bool Intrinsics::isCallWithoutEffects(Call* call) {
   return false;
 }
 
-Call* Intrinsics::isCallWithoutEffects(Expression* curr) {
-  if (auto* call = curr->dynCast<Call>(); call && isCallWithoutEffects(call)) {
-    return call;
-  }
-
-  return nullptr;
-}
-
 bool Intrinsics::isConfigureAll(Function* func) {
   return func->module == JSPrototypesModule && func->base == ConfigureAll;
 }
