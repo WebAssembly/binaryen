@@ -63,7 +63,7 @@
 ;; CHECK-NEXT:   )
 ;; CHECK-NEXT:   (catch $tag$0
 ;; CHECK-NEXT:    (local.set $0
-;; CHECK-NEXT:     (block (param (ref null $0) (ref null $1)) (result (ref null $0))
+;; CHECK-NEXT:     (block (result (ref null $0))
 ;; CHECK-NEXT:      (local.set $scratch_4
 ;; CHECK-NEXT:       (tuple.extract 2 0
 ;; CHECK-NEXT:        (local.tee $scratch

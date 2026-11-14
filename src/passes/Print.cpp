@@ -21,7 +21,6 @@
 #include <algorithm>
 #include <fstream>
 
-#include <ir/eh-utils.h>
 #include <ir/iteration.h>
 #include <ir/module-utils.h>
 #include <ir/table-utils.h>
@@ -144,9 +143,6 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
   // Used to print delegate's depth argument when it throws to the caller
   int controlFlowDepth = 0;
 
-  // Parameter type to emit on unnamed blocks surrounding a catch's pop.
-  Type pendingPopType = Type::none;
-
   std::vector<HeapType> heapTypes;
   std::unordered_map<Signature, HeapType> signatureTypes;
 
@@ -256,21 +252,18 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
   }
 
   std::ostream& printBlockType(Signature sig) {
-    if (sig.params == Type::none && sig.results.isTuple()) {
+    assert(sig.params == Type::none);
+    if (sig.results == Type::none) {
+      return o;
+    }
+    if (sig.results.isTuple()) {
       if (auto it = signatureTypes.find(sig); it != signatureTypes.end()) {
-        o << " (type ";
+        o << "(type ";
         printHeapTypeName(it->second);
-        o << ')';
+        o << ") ";
       }
     }
-    if (sig.params != Type::none) {
-      o << ' ';
-      printParamType(sig.params);
-    }
-    if (sig.results != Type::none) {
-      o << ' ';
-      printResultType(sig.results);
-    }
+    printResultType(sig.results);
     return o;
   }
 
@@ -383,11 +376,8 @@ struct PrintExpressionContents
     return parent.printParamType(type);
   }
 
-  void printBlockType(Type results, Type params = Type::none) {
-    if (!results.isConcrete()) {
-      results = Type::none;
-    }
-    parent.printBlockType(Signature(params, results));
+  std::ostream& printBlockType(Signature sig) {
+    return parent.printBlockType(sig);
   }
 
   void printMemoryPostfix(uint8_t bytes, Type type) {
@@ -423,8 +413,10 @@ struct PrintExpressionContents
       o << ' ';
       curr->name.print(o);
     }
-    printBlockType(curr->type,
-                   curr->name.is() ? Type::none : parent.pendingPopType);
+    if (curr->type.isConcrete()) {
+      o << ' ';
+      printBlockType(Signature(Type::none, curr->type));
+    }
   }
   void visitIf(If* curr) {
     printMedium(o, "if");
@@ -435,7 +427,10 @@ struct PrintExpressionContents
     if (curr->condition->type == Type::unreachable && curr->ifFalse) {
       type = Type::getLeastUpperBound(curr->ifTrue->type, curr->ifFalse->type);
     }
-    printBlockType(type);
+    if (type.isConcrete()) {
+      o << ' ';
+      printBlockType(Signature(Type::none, type));
+    }
   }
   void visitLoop(Loop* curr) {
     printMedium(o, "loop");
@@ -443,7 +438,10 @@ struct PrintExpressionContents
       o << ' ';
       curr->name.print(o);
     }
-    printBlockType(curr->type);
+    if (curr->type.isConcrete()) {
+      o << ' ';
+      printBlockType(Signature(Type::none, curr->type));
+    }
   }
   void visitBreak(Break* curr) {
     if (curr->condition) {
@@ -2144,11 +2142,17 @@ struct PrintExpressionContents
       o << ' ';
       curr->name.print(o);
     }
-    printBlockType(curr->type);
+    if (curr->type.isConcrete()) {
+      o << ' ';
+      printBlockType(Signature(Type::none, curr->type));
+    }
   }
   void visitTryTable(TryTable* curr) {
     printMedium(o, "try_table");
-    printBlockType(curr->type);
+    if (curr->type.isConcrete()) {
+      o << ' ';
+      printBlockType(Signature(Type::none, curr->type));
+    }
     for (Index i = 0; i < curr->catchTags.size(); i++) {
       o << " (";
       if (curr->catchTags[i]) {
@@ -2174,7 +2178,6 @@ struct PrintExpressionContents
   void visitNop(Nop* curr) { printMinor(o, "nop"); }
   void visitUnreachable(Unreachable* curr) { printMinor(o, "unreachable"); }
   void visitPop(Pop* curr) {
-    parent.pendingPopType = Type::none;
     prepareColor(o) << "pop ";
     printType(curr->type);
     restoreNormalColor(o);
@@ -3096,17 +3099,7 @@ void PrintSExpression::visitTry(Try* curr) {
     printMedium(o, "catch ");
     curr->catchTags[i].print(o);
     incIndent();
-    auto prevPendingPopType = pendingPopType;
-    pendingPopType = Type::none;
-    if (EHUtils::containsValidDanglingPop(curr->catchBodies[i])) {
-      Tag* tag =
-        currModule ? currModule->getTagOrNull(curr->catchTags[i]) : nullptr;
-      pendingPopType =
-        tag ? tag->params() : EHUtils::findPop(curr->catchBodies[i])->type;
-    }
     maybePrintImplicitBlock(curr->catchBodies[i]);
-    assert(pendingPopType == Type::none);
-    pendingPopType = prevPendingPopType;
     decIndent();
     o << "\n";
   }
@@ -3155,7 +3148,6 @@ void PrintSExpression::visitTryTable(TryTable* curr) {
 void PrintSExpression::printUnreachableReplacement(Expression* curr) {
   // Emit a block with drops of the children.
   o << "(block";
-  printBlockType(Signature(pendingPopType, Type::none));
   if (!minify) {
     o << " ;; (replaces unreachable " << getExpressionName(curr)
       << " we can't emit)";

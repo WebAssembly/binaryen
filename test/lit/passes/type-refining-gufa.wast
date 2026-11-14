@@ -1094,7 +1094,7 @@
   ;; GUFA-NEXT:   (catch $ref
   ;; GUFA-NEXT:    (drop
   ;; GUFA-NEXT:     (struct.new $struct
-  ;; GUFA-NEXT:      (block (param eqref) (result nullref)
+  ;; GUFA-NEXT:      (block (result nullref)
   ;; GUFA-NEXT:       (drop
   ;; GUFA-NEXT:        (pop eqref)
   ;; GUFA-NEXT:       )
@@ -1141,7 +1141,7 @@
   ;; NRML-NEXT:   )
   ;; NRML-NEXT:   (catch $null
   ;; NRML-NEXT:    (drop
-  ;; NRML-NEXT:     (block (param nullref)
+  ;; NRML-NEXT:     (block
   ;; NRML-NEXT:      (drop
   ;; NRML-NEXT:       (pop nullref)
   ;; NRML-NEXT:      )
@@ -1157,7 +1157,7 @@
   ;; GUFA-NEXT:   )
   ;; GUFA-NEXT:   (catch $null
   ;; GUFA-NEXT:    (drop
-  ;; GUFA-NEXT:     (block (param nullref)
+  ;; GUFA-NEXT:     (block
   ;; GUFA-NEXT:      (drop
   ;; GUFA-NEXT:       (pop nullref)
   ;; GUFA-NEXT:      )

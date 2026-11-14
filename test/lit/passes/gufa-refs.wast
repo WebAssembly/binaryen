@@ -1922,9 +1922,9 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (catch $nothing
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block (param anyref)
+  ;; CHECK-NEXT:     (block
   ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (block (param anyref) (result nullref)
+  ;; CHECK-NEXT:       (block (result nullref)
   ;; CHECK-NEXT:        (drop
   ;; CHECK-NEXT:         (pop anyref)
   ;; CHECK-NEXT:        )
@@ -2145,7 +2145,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (catch $tag
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block (param anyref anyref) (result nullref)
+  ;; CHECK-NEXT:     (block (result nullref)
   ;; CHECK-NEXT:      (tuple.drop 2
   ;; CHECK-NEXT:       (pop (tuple anyref anyref))
   ;; CHECK-NEXT:      )
@@ -4169,7 +4169,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (catch $e-i32
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block (param i32) (result i32)
+  ;; CHECK-NEXT:     (block (result i32)
   ;; CHECK-NEXT:      (drop
   ;; CHECK-NEXT:       (pop i32)
   ;; CHECK-NEXT:      )

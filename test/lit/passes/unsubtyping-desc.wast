@@ -1264,7 +1264,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (catch $e
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block (param (ref (exact $A.desc))) (result (ref (exact $A)))
+  ;; CHECK-NEXT:     (block (result (ref (exact $A)))
   ;; CHECK-NEXT:      (local.set $0
   ;; CHECK-NEXT:       (pop (ref (exact $A.desc)))
   ;; CHECK-NEXT:      )

@@ -1446,7 +1446,7 @@
   ;; YESTNH-NEXT:   )
   ;; YESTNH-NEXT:   (catch $tag-desc
   ;; YESTNH-NEXT:    (drop
-  ;; YESTNH-NEXT:     (block (param (ref none))
+  ;; YESTNH-NEXT:     (block
   ;; YESTNH-NEXT:      (drop
   ;; YESTNH-NEXT:       (pop (ref none))
   ;; YESTNH-NEXT:      )
@@ -1462,7 +1462,7 @@
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:   (catch $tag-desc
   ;; NO_TNH-NEXT:    (drop
-  ;; NO_TNH-NEXT:     (block (param (ref none))
+  ;; NO_TNH-NEXT:     (block
   ;; NO_TNH-NEXT:      (drop
   ;; NO_TNH-NEXT:       (pop (ref none))
   ;; NO_TNH-NEXT:      )
@@ -1493,7 +1493,7 @@
   ;; YESTNH-NEXT:   )
   ;; YESTNH-NEXT:   (catch $tag-struct
   ;; YESTNH-NEXT:    (drop
-  ;; YESTNH-NEXT:     (block (param (ref $struct))
+  ;; YESTNH-NEXT:     (block
   ;; YESTNH-NEXT:      (drop
   ;; YESTNH-NEXT:       (pop (ref $struct))
   ;; YESTNH-NEXT:      )
@@ -1509,7 +1509,7 @@
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:   (catch $tag-struct
   ;; NO_TNH-NEXT:    (drop
-  ;; NO_TNH-NEXT:     (block (param (ref $struct))
+  ;; NO_TNH-NEXT:     (block
   ;; NO_TNH-NEXT:      (drop
   ;; NO_TNH-NEXT:       (pop (ref $struct))
   ;; NO_TNH-NEXT:      )
@@ -1541,7 +1541,7 @@
   ;; YESTNH-NEXT:   )
   ;; YESTNH-NEXT:   (catch $tag-any
   ;; YESTNH-NEXT:    (drop
-  ;; YESTNH-NEXT:     (block (param anyref) (result (ref none))
+  ;; YESTNH-NEXT:     (block (result (ref none))
   ;; YESTNH-NEXT:      (local.set $1
   ;; YESTNH-NEXT:       (pop anyref)
   ;; YESTNH-NEXT:      )
@@ -1564,7 +1564,7 @@
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:   (catch $tag-any
   ;; NO_TNH-NEXT:    (drop
-  ;; NO_TNH-NEXT:     (block (param anyref) (result (ref none))
+  ;; NO_TNH-NEXT:     (block (result (ref none))
   ;; NO_TNH-NEXT:      (local.set $1
   ;; NO_TNH-NEXT:       (pop anyref)
   ;; NO_TNH-NEXT:      )
@@ -1646,7 +1646,7 @@
   ;; YESTNH-NEXT:     )
   ;; YESTNH-NEXT:     (catch $tag-any
   ;; YESTNH-NEXT:      (drop
-  ;; YESTNH-NEXT:       (block (param anyref) (result anyref)
+  ;; YESTNH-NEXT:       (block (result anyref)
   ;; YESTNH-NEXT:        (local.set $1
   ;; YESTNH-NEXT:         (pop anyref)
   ;; YESTNH-NEXT:        )
@@ -1674,7 +1674,7 @@
   ;; NO_TNH-NEXT:     )
   ;; NO_TNH-NEXT:     (catch $tag-any
   ;; NO_TNH-NEXT:      (drop
-  ;; NO_TNH-NEXT:       (block (param anyref) (result anyref)
+  ;; NO_TNH-NEXT:       (block (result anyref)
   ;; NO_TNH-NEXT:        (local.set $1
   ;; NO_TNH-NEXT:         (pop anyref)
   ;; NO_TNH-NEXT:        )

@@ -1663,7 +1663,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (catch $tag
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block (param i32) (result (ref (exact $struct)))
+  ;; CHECK-NEXT:     (block (result (ref (exact $struct)))
   ;; CHECK-NEXT:      (local.set $0
   ;; CHECK-NEXT:       (pop i32)
   ;; CHECK-NEXT:      )

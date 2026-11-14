@@ -901,36 +901,6 @@ Result<> IRBuilder::pushScope(ScopeCtx&& scope) {
     scope.startPos = lastBinaryPos;
     lastBinaryPos = *binaryPos;
   }
-  // Tunnel catch pops directly into unnamed blocks whose input type matches
-  // the pop's type. For example:
-  //
-  // (catch $i32
-  //   (block (param i32)
-  //     (pop i32)
-  //   )
-  // )
-  //
-  // Do not tunnel into unnamed blocks without matching input parameters, since
-  // a block with no parameters does not consume the exception value on the
-  // outer catch stack. To round-trip through text, the printer emits matching
-  // `(param ...)` declarations on unnamed blocks surrounding `pop`
-  // instructions.
-  bool isUnnamedBlock = scope.getBlock() && !scope.getBlock()->name;
-  bool hasPop =
-    getScope().exprStack.size() == 1 && getScope().exprStack[0]->is<Pop>();
-  if (isUnnamedBlock && hasPop &&
-      scope.inputType == getScope().exprStack[0]->type) {
-    // Move the pop into the new scope.
-    auto* pop = getScope().exprStack.back();
-    getScope().exprStack.pop_back();
-    scopeStack.emplace_back(std::move(scope));
-    pushSynthetic(pop);
-    // If this unnamed block later receives a name from a branch targeting it,
-    // the nested pop will need to be fixed up.
-    scopeStack[0].noteSyntheticBlock();
-    return Ok{};
-  }
-
   bool hasInput = scope.inputType != Type::none;
   if (hasInput && !scope.isDelimiter()) {
     auto inputs = ChildPopper{*this}.popInputs(scope.inputType);
@@ -2076,21 +2046,37 @@ Result<> IRBuilder::makeUnreachable() {
 Result<> IRBuilder::makePop(Type type) {
   // We don't actually want to create a new Pop expression here because we
   // already create them automatically when starting a legacy catch block that
-  // needs one (and move them into nested unnamed blocks in pushScope). Just
-  // verify that the Pop we are being asked to make is a supertype of the Pop
-  // we have already made.
-  auto& scope = getScope();
-  if (scope.exprStack.size() != 1 || !scope.exprStack[0]->is<Pop>()) {
-    if (auto* tryy = scope.getCatch();
-        tryy && wasm.getTag(tryy->catchTags.back())->params() == Type::none) {
-      return Err{"cannot pop from empty tag"};
+  // needs one. Just verify that the Pop we are being asked to make is the same
+  // type as the Pop we have already made, and move it into the current scope if
+  // we have entered unnamed blocks since the catch began. (Note that the block
+  // may receive a name later, if we encounter a break to it, if we process
+  // that after the pop. In that case, the fixups that run later will have work
+  // to do.)
+  ScopeCtx* catchScope = nullptr;
+  for (int i = int(scopeStack.size()) - 1; i >= 0; --i) {
+    auto& scope = scopeStack[i];
+    if (scope.getCatch()) {
+      catchScope = &scope;
+      break;
     }
+    auto* block = scope.getBlock();
+    if (!block || block->name || !scope.exprStack.empty()) {
+      break;
+    }
+  }
+  if (!catchScope || catchScope->exprStack.size() != 1 ||
+      !catchScope->exprStack[0]->is<Pop>()) {
     return Err{
       "pop instructions may only appear at the beginning of catch blocks"};
   }
-  auto expectedType = scope.exprStack[0]->type;
+  auto* pop = catchScope->exprStack[0];
+  auto expectedType = pop->type;
   if (!Type::isSubType(expectedType, type)) {
     return Err{std::string("Expected pop of type ") + expectedType.toString()};
+  }
+  if (catchScope != &getScope()) {
+    catchScope->exprStack.pop_back();
+    pushSynthetic(pop);
   }
   return Ok{};
 }
