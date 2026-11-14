@@ -45,7 +45,7 @@ bool Intrinsics::isCallWithoutEffects(Call* call) {
 }
 
 Call* Intrinsics::isCallWithoutEffects(Expression* curr) {
-  if (auto* call = curr->dynCast<Call>(); isCallWithoutEffects(call)) {
+  if (auto* call = curr->dynCast<Call>(); call && isCallWithoutEffects(call)) {
     return call;
   }
 
