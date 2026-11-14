@@ -1159,6 +1159,10 @@ Result<> IRBuilder::visitDelegate(Index label) {
   if (label == scopeStack.size()) {
     return Err{"unexpected delegate"};
   }
+  if (binaryPos && func) {
+    // Delegate is this try's only delimiter and has a variable-length label.
+    func->delimiterLocations[tryy][0] = lastBinaryPos - codeSectionOffset;
+  }
   // Delegate ends the try.
   return visitEnd();
 }
