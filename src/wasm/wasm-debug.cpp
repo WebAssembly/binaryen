@@ -36,6 +36,7 @@
 #endif
 
 #include "llvm/ObjectYAML/DWARFYAML.h"
+#include "llvm/Support/LEB128.h"
 #include "llvm/include/llvm/DebugInfo/DWARFContext.h"
 
 std::error_code dwarf2yaml(llvm::DWARFContext& DCtx, llvm::DWARFYAML::Data& Y);
@@ -289,9 +290,9 @@ struct LineState {
   }
 
   bool needToEmit() {
-    // Zero values imply we can ignore this line.
+    // A zero line means no source attribution, not a dead address.
     // https://github.com/WebAssembly/debugging/issues/9#issuecomment-567720872
-    return line != 0 && addr != 0;
+    return addr != 0;
   }
 
   // Given an old state, emit the diff from it to this state into a new line
@@ -305,11 +306,20 @@ struct LineState {
       // Try to use a special opcode TODO
     }
     if (addr != old.addr && !useSpecial) {
-      // len = 1 (subopcode) + 4 (wasm32 address)
-      // FIXME: look at AddrSize on the Unit.
-      auto item = makeItem(llvm::dwarf::DW_LNE_set_address, 5);
-      item.Data = addr;
-      newOpcodes.push_back(item);
+      // Most instruction boundaries are only a few bytes apart. A relative
+      // advance avoids a full address per source/generated-code transition.
+      if (sequenceId == old.sequenceId && addr > old.addr &&
+          table.MinInstLength == 1) {
+        auto item = makeItem(llvm::dwarf::DW_LNS_advance_pc);
+        item.Data = addr - old.addr;
+        newOpcodes.push_back(item);
+      } else {
+        // len = 1 (subopcode) + 4 (wasm32 address)
+        // FIXME: look at AddrSize on the Unit.
+        auto item = makeItem(llvm::dwarf::DW_LNE_set_address, 5);
+        item.Data = addr;
+        newOpcodes.push_back(item);
+      }
     }
     if (line != old.line && !useSpecial) {
       auto item = makeItem(llvm::dwarf::DW_LNS_advance_line);
@@ -334,9 +344,10 @@ struct LineState {
       item.Data = isa;
       newOpcodes.push_back(item);
     }
-    if (discriminator != old.discriminator) {
-      // len = 1 (subopcode) + 4 (wasm32 address)
-      auto item = makeItem(llvm::dwarf::DW_LNE_set_discriminator, 5);
+    // Unlike file/line/column, the discriminator resets after every row.
+    if (discriminator) {
+      auto item = makeItem(llvm::dwarf::DW_LNE_set_discriminator,
+                           1 + llvm::getULEB128Size(discriminator));
       item.Data = discriminator;
       newOpcodes.push_back(item);
     }
@@ -367,10 +378,17 @@ struct LineState {
     }
   }
 
-  // Some flags are automatically reset after each debug line.
-  void resetAfterLine() {
+  // These flags describe a row boundary, not the rest of its address range.
+  void clearRowMarkers() {
+    basicBlock = false;
     prologueEnd = false;
     epilogueBegin = false;
+  }
+
+  // Some flags are automatically reset after each debug line.
+  void resetAfterLine() {
+    clearRowMarkers();
+    discriminator = 0;
   }
 
 private:
@@ -744,17 +762,14 @@ static void updateDebugLines(llvm::DWARFYAML::Data& data,
         if (newAddr && state.needToEmit()) {
           // LLVM sometimes emits the same address more than once. We should
           // probably investigate that.
-          if (newAddrInfo.contains(newAddr)) {
-            continue;
+          if (!newAddrInfo.contains(newAddr)) {
+            newAddrs.push_back(newAddr);
+            newAddrInfo.emplace(newAddr, state);
+            newAddrInfo.at(newAddr).addr = newAddr;
           }
-          newAddrs.push_back(newAddr);
-          newAddrInfo.emplace(newAddr, state);
-          auto& updatedState = newAddrInfo.at(newAddr);
-          // The only difference is the address TODO other stuff?
-          updatedState.addr = newAddr;
-          // Reset relevant state.
-          state.resetAfterLine();
         }
+        // Reset even when a row is unmapped or duplicates another address.
+        state.resetAfterLine();
         if (opcode.Opcode == 0 &&
             opcode.SubOpcode == llvm::dwarf::DW_LNE_end_sequence) {
           sequenceId++;
@@ -783,6 +798,7 @@ static void updateDebugLines(llvm::DWARFYAML::Data& data,
             lastState = LineState(table, -1);
           }
         }
+        lastState.resetAfterLine();
         // This line ends a sequence if there is no next line after it, or if
         // the next line is in a different sequence.
         bool endSequence =
