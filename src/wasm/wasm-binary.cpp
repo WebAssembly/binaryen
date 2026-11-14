@@ -5147,6 +5147,8 @@ Result<> WasmBinaryReader::readInst() {
           return builder.makeStringNew(StringNewWTF16Array);
         case BinaryConsts::StringFromCodePoint:
           return builder.makeStringNew(StringNewFromCodePoint);
+        case BinaryConsts::StringFromCharCode:
+          return builder.makeStringNew(StringNewFromCharCode);
         case BinaryConsts::StringAsWTF16:
           // This turns into nothing because we do not represent stringviews in
           // the IR.

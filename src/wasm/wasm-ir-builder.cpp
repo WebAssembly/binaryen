@@ -2805,7 +2805,7 @@ Result<> IRBuilder::makeRefAs(RefAsOp op) {
 Result<> IRBuilder::makeStringNew(StringNewOp op) {
   StringNew curr;
   curr.op = op;
-  if (op == StringNewFromCodePoint) {
+  if (op == StringNewFromCodePoint || op == StringNewFromCharCode) {
     CHECK_ERR(visitStringNew(&curr));
     push(builder.makeStringNew(op, curr.ref));
     return Ok{};

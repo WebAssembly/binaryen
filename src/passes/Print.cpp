@@ -2582,6 +2582,9 @@ struct PrintExpressionContents
       case StringNewFromCodePoint:
         printMedium(o, "string.from_code_point");
         break;
+      case StringNewFromCharCode:
+        printMedium(o, "string.from_char_code");
+        break;
       default:
         WASM_UNREACHABLE("invalid string.new*");
     }
