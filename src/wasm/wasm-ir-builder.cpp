@@ -904,7 +904,17 @@ Result<> IRBuilder::pushScope(ScopeCtx&& scope) {
   // Tunnel catch pops directly into unnamed blocks. Allow this even when the
   // block has no input type so we can round-trip WAT without the printer
   // needing to synthesize block input types, as well as when the block's input
-  // type matches the pop's type.
+  // type matches the pop's type. For example:
+  //
+  // (catch $i32
+  //   (block (param i32)
+  //     (pop i32)
+  //   )
+  // )
+  //
+  // This should clearly be allowed, but if it were required, then the printer
+  // would need to know to print `(param i32)` to successfully round-trip
+  // through text.
   bool isUnnamedBlock = scope.getBlock() && !scope.getBlock()->name;
   bool hasPop =
     getScope().exprStack.size() == 1 && getScope().exprStack[0]->is<Pop>();
@@ -935,10 +945,11 @@ Result<> IRBuilder::pushScope(ScopeCtx&& scope) {
     for (size_t i = 0; i < inputs->size(); ++i) {
       // Reuse the enclosing scope's scratch local rather than allocating a new
       // one when an input comes directly from an enclosing scope's input.
-      // Earlier inputs that allocated new scratch locals (e.g. due to type
-      // widening) had their values copied to those new scratch locals before
-      // the start of this scope, and have already had local.gets of those new
-      // scratch locals pushed in this scope. It is still safe to reuse this
+      // This is safe even in the case where earlier inputs for the new scope
+      // had to use new scratch locals (e.g. due to type widening). In that case
+      // the previous inputs had their values copied to the new scratch locals
+      // before the start of this scope and have already had local.gets of those
+      // new scratch locals pushed in this scope. It is still safe to reuse this
       // later input's scratch local because local.gets can always be safely
       // reordered.
       auto* input = (*inputs)[i];
