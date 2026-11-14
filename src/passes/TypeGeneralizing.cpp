@@ -14,905 +14,594 @@
  * limitations under the License.
  */
 
-#include "analysis/cfg.h"
-#include "analysis/lattices/inverted.h"
-#include "analysis/lattices/shared.h"
-#include "analysis/lattices/stack.h"
-#include "analysis/lattices/tuple.h"
-#include "analysis/lattices/valtype.h"
-#include "analysis/lattices/vector.h"
-#include "analysis/monotone-analyzer.h"
+//
+// Generalize the types of locals as much as possible, both to eliminate
+// unnecessarily refined types from the type section and (TODO) to weaken casts
+// that cast to unnecessarily refined types. If the casts are weakened enough,
+// they will be able to be removed by OptimizeInstructions/StripRefiningCasts.
+//
+
+#include <optional>
+#include <unordered_map>
+#include <variant>
+#include <vector>
+
+#include "ir/branch-utils.h"
+#include "ir/child-typer.h"
+#include "ir/glbs.h"
 #include "ir/utils.h"
 #include "pass.h"
 #include "wasm-traversal.h"
 #include "wasm.h"
 
-#ifndef TYPE_GENERALIZING_DEBUG
-#define TYPE_GENERALIZING_DEBUG 0
-#endif
-
-#if TYPE_GENERALIZING_DEBUG
-#define DBG(statement) statement
-#else
-#define DBG(statement)
-#endif
-
-// Generalize the types of program locations as much as possible, both to
-// eliminate unnecessarily refined types from the type section and (TODO) to
-// weaken casts that cast to unnecessarily refined types. If the casts are
-// weakened enough, they will be able to be removed by OptimizeInstructions.
-//
-// Perform a backward analysis tracking requirements on the types of program
-// locations (currently just locals and stack values) to discover how much the
-// type of each location can be generalized without breaking validation or
-// changing program behavior.
-
 namespace wasm {
 
 namespace {
 
-using namespace analysis;
-
-// We will learn stricter and stricter requirements as we perform the analysis,
-// so more specific types need to be higher up the lattice.
-using TypeRequirement = Inverted<ValType>;
-
-// Record a type requirement for each local variable. Shared the requirements
-// across basic blocks.
-using LocalTypeRequirements = SharedPath<Vector<TypeRequirement>>;
-
-// The type requirements for each reference-typed value on the stack at a
-// particular location.
-using ValueStackTypeRequirements = Stack<TypeRequirement>;
-
-// The full lattice used for the analysis.
-using StateLattice =
-  analysis::Tuple<LocalTypeRequirements, ValueStackTypeRequirements>;
-
-// Equip the state lattice with helpful accessors.
-struct State : StateLattice {
-  using Element = StateLattice::Element;
-
-  static constexpr int LocalsIndex = 0;
-  static constexpr int StackIndex = 1;
-
-  State(Function* func)
-    : StateLattice{SharedPath{initLocals(func)}, initStack()} {}
-
-  void push(Element& elem, Type type) const noexcept {
-    stackLattice().push(stack(elem), std::move(type));
-  }
-
-  Type pop(Element& elem) const noexcept {
-    return stackLattice().pop(stack(elem));
-  }
-
-  void clearStack(Element& elem) const noexcept {
-    stack(elem) = stackLattice().getBottom();
-  }
-
-  const std::vector<Type>& getLocals(Element& elem) const noexcept {
-    return *locals(elem);
-  }
-
-  const std::vector<Type>& getLocals() const noexcept {
-    return *locals(getBottom());
-  }
-
-  Type getLocal(Element& elem, Index i) const noexcept {
-    return getLocals(elem)[i];
-  }
-
-  bool updateLocal(Element& elem, Index i, Type type) const noexcept {
-    return localsLattice().join(
-      locals(elem),
-      Vector<TypeRequirement>::SingletonElement(i, std::move(type)));
-  }
-
-private:
-  static LocalTypeRequirements initLocals(Function* func) noexcept {
-    return SharedPath{Vector{Inverted{ValType{}}, func->getNumLocals()}};
-  }
-
-  static ValueStackTypeRequirements initStack() noexcept {
-    return Stack{Inverted{ValType{}}};
-  }
-
-  const LocalTypeRequirements& localsLattice() const noexcept {
-    return std::get<LocalsIndex>(lattices);
-  }
-
-  const ValueStackTypeRequirements& stackLattice() const noexcept {
-    return std::get<StackIndex>(lattices);
-  }
-
-  typename LocalTypeRequirements::Element&
-  locals(Element& elem) const noexcept {
-    return std::get<LocalsIndex>(elem);
-  }
-
-  const typename LocalTypeRequirements::Element&
-  locals(const Element& elem) const noexcept {
-    return std::get<LocalsIndex>(elem);
-  }
-
-  typename ValueStackTypeRequirements::Element&
-  stack(Element& elem) const noexcept {
-    return std::get<StackIndex>(elem);
-  }
-
-  const typename ValueStackTypeRequirements::Element&
-  stack(const Element& elem) const noexcept {
-    return std::get<StackIndex>(elem);
-  }
-};
-
-struct TransferFn : OverriddenVisitor<TransferFn> {
-  Module& wasm;
-  Function* func;
-  State lattice;
-  typename State::Element* state = nullptr;
-
-  // For each local, the set of blocks we may need to re-analyze when we update
-  // the constraint on the local.
-  std::vector<std::vector<const BasicBlock*>> localDependents;
-
-  // The set of basic blocks that may depend on the result of the current
-  // transfer.
-  std::unordered_set<const BasicBlock*> currDependents;
-
-  TransferFn(Module& wasm, Function* func, CFG& cfg)
-    : wasm(wasm), func(func), lattice(func),
-      localDependents(func->getNumLocals()) {
-    // Initialize `localDependents`. Any block containing a `local.set l` may
-    // need to be re-analyzed whenever the constraint on `l` is updated.
-    auto numLocals = func->getNumLocals();
-    std::vector<std::unordered_set<const BasicBlock*>> dependentSets(numLocals);
-    for (const auto& bb : cfg) {
-      for (const auto* inst : bb) {
-        if (auto set = inst->dynCast<LocalSet>()) {
-          dependentSets[set->index].insert(&bb);
-        }
+// Find the most general supertype of a signature type that does not change
+// parameter types (which are contravariant and would restrict argument
+// generalization) and whose result type satisfies `resultReq`, if any.
+HeapType generalizeCallRefTarget(HeapType sigType,
+                                 std::optional<Type> resultReq = std::nullopt) {
+  auto sig = sigType.getSignature();
+  auto numParams = sig.params.size();
+  auto targetReq = sigType;
+  while (true) {
+    auto candidateReq = targetReq.getDeclaredSuperType();
+    if (!candidateReq) {
+      break;
+    }
+    auto candidateSig = candidateReq->getSignature();
+    if (resultReq && !Type::isSubType(candidateSig.results, *resultReq)) {
+      break;
+    }
+    for (size_t i = 0; i < numParams; ++i) {
+      if (candidateSig.params[i] != sig.params[i]) {
+        return targetReq;
       }
     }
-    for (size_t i = 0, n = dependentSets.size(); i < n; ++i) {
-      localDependents[i] = std::vector<const BasicBlock*>(
-        dependentSets[i].begin(), dependentSets[i].end());
-    }
+    targetReq = *candidateReq;
   }
+  return targetReq;
+}
 
-  Type pop() noexcept { return lattice.pop(*state); }
-  void push(Type type) noexcept { lattice.push(*state, type); }
-  void clearStack() noexcept { lattice.clearStack(*state); }
-  Type getLocal(Index i) noexcept { return lattice.getLocal(*state, i); }
-  void updateLocal(Index i, Type type) noexcept {
-    if (lattice.updateLocal(*state, i, type)) {
-      currDependents.insert(localDependents[i].begin(),
-                            localDependents[i].end());
+// Find the most general supertype of a struct type that still has a field at
+// `index` whose type satisfies `reqFieldType`, if any.
+HeapType generalizeStructType(HeapType type,
+                              Index index,
+                              std::optional<Type> reqFieldType = std::nullopt) {
+  while (true) {
+    auto candidateType = type.getDeclaredSuperType();
+    if (!candidateType) {
+      break;
     }
-  }
-
-  void dumpState() {
-#if TYPE_GENERALIZING_DEBUG
-    std::cerr << "locals: ";
-    for (size_t i = 0, n = lattice.getLocals(*state).size(); i < n; ++i) {
-      if (i != 0) {
-        std::cerr << ", ";
+    const auto& candidateFields = candidateType->getStruct().fields;
+    if (candidateFields.size() <= index) {
+      break;
+    }
+    if (reqFieldType) {
+      auto candidateFieldType = candidateFields[index].type;
+      if (!Type::isSubType(candidateFieldType, *reqFieldType)) {
+        break;
       }
-      std::cerr << getLocal(i);
     }
-    std::cerr << "\nstack: ";
-    auto& stack = std::get<1>(*state);
-    for (size_t i = 0, n = stack.size(); i < n; ++i) {
-      if (i != 0) {
-        std::cerr << ", ";
+    type = *candidateType;
+  }
+  return type;
+}
+
+// Find the most general supertype of a struct type that still has a descriptor
+// of a given type, if any.
+HeapType generalizeStructTypeByDescriptor(
+  HeapType type, std::optional<HeapType> reqDesc = std::nullopt) {
+  while (true) {
+    auto candidateType = type.getDeclaredSuperType();
+    if (!candidateType) {
+      break;
+    }
+    // Every supertype of a described type must also have a descriptor.
+    auto candidateDesc = candidateType->getDescriptorType();
+    assert(candidateDesc);
+    if (reqDesc && !HeapType::isSubType(*candidateDesc, *reqDesc)) {
+      break;
+    }
+    type = *candidateType;
+  }
+  return type;
+}
+
+// Find the most general supertype of an array type whose element type satisfies
+// `reqElemType`, if any.
+HeapType generalizeArrayType(HeapType type,
+                             std::optional<Type> reqElemType = std::nullopt) {
+  while (true) {
+    auto candidateType = type.getDeclaredSuperType();
+    if (!candidateType) {
+      break;
+    }
+    if (reqElemType) {
+      auto candidateElemType = candidateType->getArray().element.type;
+      if (!Type::isSubType(candidateElemType, *reqElemType)) {
+        break;
       }
-      std::cerr << stack[i];
     }
-    std::cerr << "\n";
-#endif // TYPE_GENERALIZING_DEBUG
+    type = *candidateType;
+  }
+  return type;
+}
+
+// Find the most general supertype of a type, or of each element of a tuple.
+Type getTop(Type type) {
+  if (type.isTuple()) {
+    Tuple elems;
+    for (auto t : type) {
+      elems.push_back(t.isRef() ? getTop(t) : t);
+    }
+    return Type(elems);
+  }
+  return Type(type.getHeapType().getTop(), Nullable);
+}
+
+// Use ChildTyper to find all subtyping constraints on expressions and locals,
+// and compute the greatest lower bound (GLB) of the required supertypes for
+// each local so that each local is given the least-refined valid type.
+//
+// TODO: handle ref.as_non_null, br_on_null, publish, br_if, etc. better: we do
+//       not need to consider their results fixed.
+struct Generalizer : public ChildTyper<Generalizer> {
+
+  using Super = ChildTyper<Generalizer>;
+
+  // For each expression and local, track the GLB of all types it is required to
+  // be a subtype of.
+  std::unordered_map<Expression*, GLBFinder> exprGLBs;
+  std::vector<GLBFinder> localGLBs;
+
+  // Map from an expression to the sub-expressions whose types flow out of it
+  // (or depend on its required output type, as in RefAs).
+  std::unordered_map<Expression*, std::vector<Expression*>> exprSubs;
+
+  // For each local, the values assigned to it via local.set / local.tee.
+  std::vector<std::vector<Expression*>> localSetValues;
+
+  // We use a worklist of things to process: expressions and local indexes.
+  using WorkItem = std::variant<Expression*, Index>;
+  std::vector<WorkItem> worklist;
+
+  Expression* currExpr = nullptr;
+
+  // Walker for the code, using ControlFlowWalker for findBreakTarget.
+  struct Walker : ControlFlowWalker<Walker, UnifiedExpressionVisitor<Walker>> {
+    Generalizer& generalizer;
+    Walker(Generalizer& generalizer) : generalizer(generalizer) {}
+    void visitExpression(Expression* curr) {
+      generalizer.currExpr = curr;
+      generalizer.visit(curr);
+    }
+  } walker{*this};
+
+  Generalizer(Module& wasm, Function* func)
+    : Super(wasm, func), localGLBs(func->getNumLocals()),
+      localSetValues(func->getNumLocals()) {}
+
+  void walk() {
+    addConstraint(func->body, func->getResults());
+    walker.walkFunctionInModule(func, &wasm);
   }
 
-  std::unordered_set<const BasicBlock*>
-  transfer(const BasicBlock& bb, typename State::Element& elem) noexcept {
-    DBG(std::cerr << "transferring bb " << bb.getIndex() << "\n");
-    state = &elem;
-
-    // This is a backward analysis: The constraints on a type depend on how it
-    // will be used in the future. Traverse the basic block in reverse and
-    // return the predecessors as the dependent blocks.
-    assert(currDependents.empty());
-    const auto& preds = bb.preds();
-    currDependents.insert(preds.begin(), preds.end());
-
-    dumpState();
-    if (bb.isExit()) {
-      DBG(std::cerr << "visiting exit\n");
-      visitFunctionExit();
-      dumpState();
+  void addConstraint(Expression* expr, Type type) {
+    if (!expr->type.hasRef() || !type.hasRef()) {
+      return;
     }
-    for (auto it = bb.rbegin(); it != bb.rend(); ++it) {
-      DBG(std::cerr << "visiting " << ShallowExpression{*it} << "\n");
-      visit(*it);
-      dumpState();
-    }
-    if (bb.isEntry()) {
-      DBG(std::cerr << "visiting entry\n");
-      visitFunctionEntry();
-      dumpState();
-    }
-    DBG(std::cerr << "\n");
-
-    state = nullptr;
-
-    // Return the blocks that may need to be re-analyzed.
-    return std::move(currDependents);
-  }
-
-  void visitFunctionExit() {
-    // We cannot change the types of results. Push a requirement that the stack
-    // end up with the correct type.
-    auto result = func->getResults();
-    if (result.isRef()) {
-      push(result);
+    auto& glb = exprGLBs[expr];
+    auto old = glb.getGLB();
+    glb.note(type);
+    if (glb.getGLB() != old) {
+      worklist.push_back(expr);
     }
   }
 
-  void visitFunctionEntry() {
-    // We cannot change the types of parameters, so require that they have their
-    // original types.
-    Index i = 0;
-    Index numParams = func->getNumParams();
-    Index numLocals = func->getNumLocals();
-    for (; i < numParams; ++i) {
-      updateLocal(i, func->getLocalType(i));
+  void addConstraint(Index local, Type type) {
+    if (!func->isVar(local) || !func->getLocalType(local).hasRef() ||
+        !type.hasRef()) {
+      return;
     }
-    // We also cannot change the types of any other non-ref locals. For
-    // reference-typed locals, we cannot generalize beyond their top type.
-    for (Index i = numParams; i < numLocals; ++i) {
-      auto type = func->getLocalType(i);
-      // TODO: Support optimizing tuple locals.
-      if (type.isRef()) {
-        updateLocal(i, Type(type.getHeapType().getTop(), Nullable));
+    auto& glb = localGLBs[local];
+    auto old = glb.getGLB();
+    glb.note(type);
+    if (glb.getGLB() != old) {
+      worklist.push_back(local);
+    }
+  }
+
+  void noteUnknown() {
+    // When we do not have enough information in the IR, constrain each child to
+    // its current type, which is always safe.
+    for (auto* child : ChildIterator(currExpr)) {
+      addConstraint(child, child->type);
+    }
+  }
+
+  // Get the constrained type from a single (non-tuple) constraint.
+  std::optional<Type> getSingleConstraintType(Type type, VarType constraint) {
+    assert(type.size() == 1);
+    if (!type.isRef()) {
+      return type;
+    }
+    if (auto* t = std::get_if<Type>(&constraint)) {
+      // A constraint to a specific type.
+      return *t;
+    } else if (auto* ref = std::get_if<VarRef>(&constraint)) {
+      // If the nullability is variable, set to nullable (as the indexed
+      // variable can appear nowhere else).
+      auto* nullp = std::get_if<Nullability>(&ref->null);
+      auto null = nullp ? *nullp : Nullable;
+
+      if (std::holds_alternative<Index>(ref->ht)) {
+        // The heap type is variable, so use the top.
+        return Type(type.getHeapType().getTop(), null);
+      } else if (auto* abs = std::get_if<VarAbsHeapType>(&ref->ht)) {
+        // The heap type is abstract/basic, possibly with specified
+        // shareability (if not, use the current shareability).
+        auto* sharep = std::get_if<Shareability>(&abs->share);
+        auto share = sharep ? *sharep : type.getHeapType().getShared();
+        return Type(abs->ht.getBasic(share), null);
+      } else if (auto* def = std::get_if<VarDefHeapType>(&ref->ht)) {
+        // The heap type is defined, possibly with specified exactness (if not,
+        // generalize to inexact).
+        auto* exactp = std::get_if<Exactness>(&def->exact);
+        auto exact = exactp ? *exactp : Inexact;
+        return Type(def->ht, null, exact);
       } else {
-        updateLocal(i, type);
+        // A bottom heap type, but no expression in the IR mandates that.
+        WASM_UNREACHABLE("unexpected bottom heap type");
       }
+    } else {
+      // Unconstrained type variable (e.g. drop).
+      assert(std::holds_alternative<Index>(constraint));
+      return std::nullopt;
     }
   }
 
-  void visitNop(Nop* curr) {}
-  void visitBlock(Block* curr) {}
-  void visitIf(If* curr) {}
-  void visitLoop(Loop* curr) {}
+  void note(Expression** childp, Constraints constraints) {
+    auto* child = *childp;
+    if (!child->type.hasRef()) {
+      return;
+    }
+
+    assert(constraints.size() == child->type.size());
+    Tuple elems(constraints.size());
+    bool hasConstraint = false;
+    for (size_t i = 0; i < constraints.size(); ++i) {
+      if (auto type = getSingleConstraintType(child->type[i], constraints[i])) {
+        elems[i] = *type;
+        if (child->type[i].isRef()) {
+          hasConstraint = true;
+        }
+      } else {
+        elems[i] = getTop(child->type[i]);
+      }
+    }
+    if (hasConstraint) {
+      addConstraint(child, Type(elems));
+    }
+  }
+
+  // Control flow handling. TODO: Perhaps find a way to do this in ChildTyper,
+  // or a helper that extends ChildTyper?
+  void visitBlock(Block* curr) {
+    if (curr->type.isConcrete()) {
+      assert(!curr->list.empty());
+      exprSubs[curr].push_back(curr->list.back());
+    }
+  }
+
+  void visitIf(If* curr) {
+    if (curr->type.isConcrete()) {
+      exprSubs[curr].push_back(curr->ifTrue);
+      exprSubs[curr].push_back(curr->ifFalse);
+    }
+  }
+
+  void visitLoop(Loop* curr) {
+    if (curr->type.isConcrete()) {
+      exprSubs[curr].push_back(curr->body);
+    }
+  }
 
   void visitBreak(Break* curr) {
-    if (curr->condition) {
-      // `br_if` pops everything but the sent value off the stack if the branch
-      // is taken, but if the branch is not taken, it only pops the condition.
-      // We must therefore propagate all requirements from the fallthrough
-      // successor but only the requirements for the sent value, if any, from
-      // the branch successor. We don't have any way to differentiate between
-      // requirements received from the two successors, however, so we cannot
-      // yet do anything correct here!
-      //
-      // Here is a sample program that would break if we tried to conservatively
-      // preserve the join of the requirements from both successors:
-      //
-      // (module
-      //  (func $func_any (param funcref anyref)
-      //   (unreachable)
-      //  )
-      //
-      //  (func $extern_any-any (param externref anyref) (result anyref)
-      //   (unreachable)
-      //  )
-      //
-      //  (func $br-if-bad
-      //   (local $bang externref)
-      //   (call $func_any ;; 2. Requires [func, any]
-      //    (ref.null nofunc)
-      //    (block $l (result anyref)
-      //     (call $extern_any-any ;; 1. Requires [extern, any]
-      //      (local.get $bang)
-      //      (br_if $l ;; 3. After join, requires [unreachable, any]
-      //       (ref.null none)
-      //       (i32.const 0)
-      //      )
-      //     )
-      //    )
-      //   )
-      //  )
-      // )
-      //
-      // To fix this, we need to insert an extra basic block encompassing the
-      // liminal space between where the br_if determines it should take the
-      // branch and when control arrives at the branch target. This is when the
-      // extra values are popped off the stack.
-      WASM_UNREACHABLE("TODO");
-    } else {
-      // `br` pops everything but the sent value off the stack, so do not
-      // require anything of values on the stack except for that sent value, if
-      // it exists.
-      if (curr->value && curr->value->type.isRef()) {
-        auto type = pop();
-        clearStack();
-        push(type);
-      } else {
-        // No sent value. Do not require anything.
-        clearStack();
+    if (curr->value) {
+      exprSubs[walker.findBreakTarget(curr->name)].push_back(curr->value);
+      if (curr->type.isConcrete()) {
+        exprSubs[curr].push_back(curr->value);
       }
     }
   }
 
   void visitSwitch(Switch* curr) {
-    // Just like `br`, do not require anything of the values on the stack except
-    // for the sent value, if it exists.
-    if (curr->value && curr->value->type.isRef()) {
-      auto type = pop();
-      clearStack();
-      push(type);
-    } else {
-      clearStack();
-    }
-  }
-
-  template<typename T> void handleCall(T* curr, Type params) {
-    if (curr->type.isRef()) {
-      pop();
-    }
-    for (auto param : params) {
-      // Cannot generalize beyond param types without interprocedural analysis.
-      if (param.isRef()) {
-        push(param);
+    if (curr->value) {
+      for (auto name : BranchUtils::getUniqueTargets(curr)) {
+        exprSubs[walker.findBreakTarget(name)].push_back(curr->value);
       }
     }
   }
-
-  void visitCall(Call* curr) {
-    handleCall(curr, wasm.getFunction(curr->target)->getParams());
-  }
-
-  void visitCallIndirect(CallIndirect* curr) {
-    handleCall(curr, curr->heapType.getSignature().params);
-  }
-
-  void visitLocalGet(LocalGet* curr) {
-    if (!curr->type.isRef()) {
-      return;
-    }
-    // Propagate the requirement on the local.get output to the local.
-    updateLocal(curr->index, pop());
-  }
-
-  void visitLocalSet(LocalSet* curr) {
-    if (!curr->value->type.isRef()) {
-      return;
-    }
-    if (curr->isTee()) {
-      // Same as the local.get.
-      updateLocal(curr->index, pop());
-    }
-    // Propagate the requirement on the local to our input value.
-    push(getLocal(curr->index));
-  }
-
-  void visitGlobalGet(GlobalGet* curr) {
-    if (curr->type.isRef()) {
-      // Cannot generalize globals without interprocedural analysis.
-      pop();
-    }
-  }
-
-  void visitGlobalSet(GlobalSet* curr) {
-    auto type = wasm.getGlobal(curr->name)->type;
-    if (type.isRef()) {
-      // Cannot generalize globals without interprocedural analysis.
-      push(type);
-    }
-  }
-
-  void visitLoad(Load* curr) {}
-  void visitStore(Store* curr) {}
-  void visitAtomicRMW(AtomicRMW* curr) {}
-  void visitAtomicCmpxchg(AtomicCmpxchg* curr) {}
-  void visitAtomicWait(AtomicWait* curr) {}
-  void visitAtomicNotify(AtomicNotify* curr) {}
-  void visitAtomicFence(AtomicFence* curr) {}
-  void visitPause(Pause* curr) {}
-  void visitSIMDExtract(SIMDExtract* curr) {}
-  void visitSIMDReplace(SIMDReplace* curr) {}
-  void visitSIMDShuffle(SIMDShuffle* curr) {}
-  void visitSIMDTernary(SIMDTernary* curr) {}
-  void visitSIMDShift(SIMDShift* curr) {}
-  void visitSIMDLoad(SIMDLoad* curr) {}
-  void visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) {}
-  void visitMemoryInit(MemoryInit* curr) {}
-  void visitDataDrop(DataDrop* curr) {}
-  void visitMemoryCopy(MemoryCopy* curr) {}
-  void visitMemoryFill(MemoryFill* curr) {}
-  void visitConst(Const* curr) {}
-  void visitUnary(Unary* curr) {}
-  void visitBinary(Binary* curr) {}
-  void visitWideIntAddSub(WideIntAddSub* curr) {}
-  void visitWideIntMul(WideIntMul* curr) {}
 
   void visitSelect(Select* curr) {
-    if (curr->type.isRef()) {
-      // The inputs may be as general as the output.
-      auto type = pop();
-      push(type);
-      push(type);
+    if (curr->type.isConcrete()) {
+      exprSubs[curr].push_back(curr->ifTrue);
+      exprSubs[curr].push_back(curr->ifFalse);
     }
   }
 
-  void visitDrop(Drop* curr) {
-    if (curr->type.isRef()) {
-      pop();
+  void visitTry(Try* curr) {
+    exprSubs[curr].push_back(curr->body);
+    for (auto* body : curr->catchBodies) {
+      exprSubs[curr].push_back(body);
     }
   }
 
-  // This is handled by propagating the stack backward from the exit block.
-  void visitReturn(Return* curr) {}
+  void visitTryTable(TryTable* curr) { exprSubs[curr].push_back(curr->body); }
 
-  void visitMemorySize(MemorySize* curr) {}
-  void visitMemoryGrow(MemoryGrow* curr) {}
-
-  void visitUnreachable(Unreachable* curr) {
-    // Require nothing about values flowing into an unreachable.
-    clearStack();
-  }
-
-  void visitPop(Pop* curr) { WASM_UNREACHABLE("TODO"); }
-
-  void visitRefNull(RefNull* curr) { pop(); }
-
-  void visitRefIsNull(RefIsNull* curr) {
-    // ref.is_null works on any reference type, so do not impose any
-    // constraints. We still need to push something, so push bottom.
-    push(Type::none);
-  }
-
-  void visitRefFunc(RefFunc* curr) { pop(); }
-
-  void visitRefEq(RefEq* curr) {
-    // Both operands must be eqref.
-    auto eqref = Type(HeapType::eq, Nullable);
-    push(eqref);
-    push(eqref);
-  }
-
-  void visitTableGet(TableGet* curr) {
-    // Cannot generalize table types yet.
-    pop();
-  }
-
-  void visitTableSet(TableSet* curr) {
-    // Cannot generalize table types yet.
-    push(wasm.getTable(curr->table)->type);
-  }
-
-  void visitTableSize(TableSize* curr) {}
-  void visitTableGrow(TableGrow* curr) {}
-
-  void visitTableFill(TableFill* curr) {
-    // Cannot generalize table types yet.
-    push(wasm.getTable(curr->table)->type);
-  }
-
-  void visitTableCopy(TableCopy* curr) {
-    // Cannot generalize table types yet.
-  }
-
-  void visitTableInit(TableInit* curr) {}
-
-  void visitElemDrop(ElemDrop* curr) {}
-
-  void visitTry(Try* curr) { WASM_UNREACHABLE("TODO"); }
-  void visitTryTable(TryTable* curr) { WASM_UNREACHABLE("TODO"); }
-  void visitThrow(Throw* curr) { WASM_UNREACHABLE("TODO"); }
-  void visitRethrow(Rethrow* curr) { WASM_UNREACHABLE("TODO"); }
-  void visitThrowRef(ThrowRef* curr) { WASM_UNREACHABLE("TODO"); }
-  void visitTupleMake(TupleMake* curr) { WASM_UNREACHABLE("TODO"); }
-  void visitTupleExtract(TupleExtract* curr) { WASM_UNREACHABLE("TODO"); }
-
-  void visitRefI31(RefI31* curr) { pop(); }
-  void visitI31Get(I31Get* curr) { push(Type(HeapType::i31, Nullable)); }
-
-  void visitCallRef(CallRef* curr) {
-    auto sigType = curr->target->type.getHeapType();
-    if (sigType.isBottom()) {
-      // This will be emitted as an unreachable, so impose no requirements on
-      // the arguments, but do require that the target continue to have bottom
-      // type.
-      clearStack();
-      push(Type(HeapType::nofunc, Nullable));
-      return;
+  void visitLocalSet(LocalSet* curr) {
+    auto localType = func->getLocalType(curr->index);
+    if (func->isParam(curr->index)) {
+      // Parameters have fixed types.
+      addConstraint(curr->value, localType);
+    } else if (localType.hasRef()) {
+      localSetValues[curr->index].push_back(curr->value);
     }
-
-    auto sig = sigType.getSignature();
-    auto numParams = sig.params.size();
-    std::optional<Type> resultReq;
-    if (sig.results.isRef()) {
-      resultReq = pop();
-    }
-
-    // We have a choice here: We can either try to generalize the type of the
-    // incoming function reference or the type of the incoming function
-    // arguments. Because function parameters are contravariant, generalizing
-    // the function type inhibits generalizing the arguments and vice versa.
-    // Attempt to split the difference by generalizing the function type only as
-    // much as we can without imposing stronger requirements on the arguments.
-    auto targetReq = sigType;
-    while (true) {
-      auto candidateReq = targetReq.getDeclaredSuperType();
-      if (!candidateReq) {
-        // There is no more general type we can require.
-        break;
-      }
-
-      auto candidateSig = candidateReq->getSignature();
-
-      if (resultReq && *resultReq != candidateSig.results &&
-          Type::isSubType(*resultReq, candidateSig.results)) {
-        // Generalizing further would violate the requirement on the result
-        // type.
-        break;
-      }
-
-      for (size_t i = 0; i < numParams; ++i) {
-        if (candidateSig.params[i] != sig.params[i]) {
-          // Generalizing further would restrict how much we could generalize
-          // this argument, so we choose not to generalize further.
-          // TODO: Experiment with making the opposite choice.
-          goto done;
-        }
-      }
-
-      // We can generalize.
-      targetReq = *candidateReq;
-    }
-  done:
-
-    // Push the new requirements for the parameters.
-    auto targetSig = targetReq.getSignature();
-    for (auto param : targetSig.params) {
-      if (param.isRef()) {
-        push(param);
-      }
-    }
-    // The new requirement for the call target.
-    push(Type(targetReq, Nullable));
-  }
-
-  void visitRefTest(RefTest* curr) {
-    // Do not require anything of the input.
-    push(Type::none);
-  }
-
-  void visitRefCast(RefCast* curr) {
-    // We do not have to require anything of the input, and not doing so might
-    // allow us generalize the output of previous casts enough that they can be
-    // optimized out. On the other hand, allowing the input to this cast to be
-    // generalized might prevent us from optimizing this cast out, so this is
-    // not a clear-cut decision. For now, leave the input unconstrained for
-    // simplicity. TODO: Experiment with requiring the LUB of the output
-    // requirement and the current input instead.
-    pop();
-    push(Type::none);
-  }
-
-  void visitRefGetDesc(RefGetDesc* curr) { WASM_UNREACHABLE("TODO"); }
-
-  void visitBrOn(BrOn* curr) {
-    // Like br_if, these instructions do different things to the stack depending
-    // on whether the branch is taken or not. For branches that drop the tested
-    // value, we need to push a requirement for that value, but for branches
-    // that propagate the tested value, we need to propagate the existing
-    // requirement instead. Like br_if, these instructions will require extra
-    // basic blocks on the branches that drop values.
-    WASM_UNREACHABLE("TODO");
-  }
-
-  void visitStructNew(StructNew* curr) {
-    // We cannot yet generalize allocations. Push requirements for the types
-    // needed to initialize the struct.
-    pop();
-    if (!curr->isWithDefault()) {
-      auto type = curr->type.getHeapType();
-      for (const auto& field : type.getStruct().fields) {
-        if (field.type.isRef()) {
-          push(field.type);
-        }
-      }
-    }
-  }
-
-  HeapType
-  generalizeStructType(HeapType type,
-                       Index index,
-                       std::optional<Type> reqFieldType = std::nullopt) {
-    // Find the most general struct type for which this access could be valid,
-    // i.e. the most general supertype that still has a field at the given index
-    // where the field is a subtype of the required type, if any.
-    while (true) {
-      auto candidateType = type.getDeclaredSuperType();
-      if (!candidateType) {
-        // Cannot get any more general.
-        break;
-      }
-      const auto& candidateFields = candidateType->getStruct().fields;
-      if (candidateFields.size() <= index) {
-        // Cannot get any more general and still have a field at the necessary
-        // index.
-        break;
-      }
-      if (reqFieldType) {
-        auto candidateFieldType = candidateFields[index].type;
-        if (candidateFieldType != *reqFieldType &&
-            Type::isSubType(*reqFieldType, candidateFieldType)) {
-          // Cannot generalize without violating the requirements on the field.
-          break;
-        }
-      }
-      type = *candidateType;
-    }
-    return type;
-  }
-
-  void visitStructGet(StructGet* curr) {
-    auto type = curr->ref->type.getHeapType();
-    if (type.isBottom()) {
-      // This will be emitted as unreachable. Do not require anything of the
-      // input, except that the ref remain bottom.
-      clearStack();
-      push(Type(HeapType::none, Nullable));
-      return;
-    }
-    std::optional<Type> reqFieldType;
-    if (curr->type.isRef()) {
-      reqFieldType = pop();
-    }
-    auto generalized = generalizeStructType(type, curr->index, reqFieldType);
-    push(Type(generalized, Nullable));
-  }
-
-  void visitStructSet(StructSet* curr) {
-    auto type = curr->ref->type.getHeapType();
-    if (type.isBottom()) {
-      // This will be emitted as unreachable. Do not require anything of the
-      // input except that the ref remain bottom.
-      clearStack();
-      push(Type(HeapType::none, Nullable));
-      if (curr->value->type.isRef()) {
-        push(Type::none);
-      }
-      return;
-    }
-    auto generalized = generalizeStructType(type, curr->index);
-    push(Type(generalized, Nullable));
-    auto fieldType = generalized.getStruct().fields[curr->index].type;
-    if (fieldType.isRef()) {
-      push(fieldType);
-    }
-  }
-
-  void visitStructRMW(StructRMW* curr) { WASM_UNREACHABLE("TODO"); }
-
-  void visitStructCmpxchg(StructCmpxchg* curr) { WASM_UNREACHABLE("TODO"); }
-
-  void visitStructWait(StructWait* curr) { WASM_UNREACHABLE("TODO"); }
-
-  void visitWaitqueueNew(WaitqueueNew* curr) { WASM_UNREACHABLE("TODO"); }
-
-  void visitWaitqueueNotify(WaitqueueNotify* curr) { WASM_UNREACHABLE("TODO"); }
-
-  void visitPublish(Publish* curr) { WASM_UNREACHABLE("TODO"); }
-
-  void visitArrayNew(ArrayNew* curr) {
-    // We cannot yet generalize allocations. Push a requirement for the
-    // reference type needed to initialize the array, if any.
-    pop();
-    if (!curr->isWithDefault()) {
-      auto type = curr->type.getHeapType();
-      auto fieldType = type.getArray().element.type;
-      if (fieldType.isRef()) {
-        push(fieldType);
-      }
-    }
-  }
-
-  void visitArrayNewData(ArrayNewData* curr) {
-    // We cannot yet generalize allocations.
-    pop();
-  }
-
-  void visitArrayNewElem(ArrayNewElem* curr) {
-    // We cannot yet generalize allocations or tables.
-    pop();
-  }
-
-  void visitArrayNewFixed(ArrayNewFixed* curr) {
-    // We cannot yet generalize allocations. Push a requirements for the
-    // reference type needed to initialize the array, if any.
-    pop();
-    auto type = curr->type.getHeapType();
-    auto fieldType = type.getArray().element.type;
-    if (fieldType.isRef()) {
-      for (size_t i = 0, n = curr->values.size(); i < n; ++i) {
-        push(fieldType);
-      }
-    }
-  }
-
-  void visitArrayRMW(ArrayRMW* curr) { WASM_UNREACHABLE("TODO"); }
-
-  void visitArrayCmpxchg(ArrayCmpxchg* curr) { WASM_UNREACHABLE("TODO"); }
-
-  HeapType
-  generalizeArrayType(HeapType type,
-                      std::optional<Type> reqFieldType = std::nullopt) {
-    // Find the most general array type for which this access could be valid.
-    while (true) {
-      auto candidateType = type.getDeclaredSuperType();
-      if (!candidateType) {
-        // Cannot get any more general.
-        break;
-      }
-      if (reqFieldType) {
-        auto candidateFieldType = candidateType->getArray().element.type;
-        if (candidateFieldType != *reqFieldType &&
-            Type::isSubType(*reqFieldType, candidateFieldType)) {
-          // Cannot generalize without violating requirements on the field.
-          break;
-        }
-      }
-      type = *candidateType;
-    }
-    return type;
-  }
-
-  void visitArrayGet(ArrayGet* curr) {
-    auto type = curr->ref->type.getHeapType();
-    if (type.isBottom()) {
-      // This will be emitted as unreachable. Do not require anything of the
-      // input, except that the ref remain bottom.
-      clearStack();
-      push(Type(HeapType::none, Nullable));
-      return;
-    }
-    std::optional<Type> reqFieldType;
-    if (curr->type.isRef()) {
-      reqFieldType = pop();
-    }
-    auto generalized = generalizeArrayType(type, reqFieldType);
-    push(Type(generalized, Nullable));
-  }
-
-  void visitArraySet(ArraySet* curr) {
-    auto type = curr->ref->type.getHeapType();
-    if (type.isBottom()) {
-      // This will be emitted as unreachable. Do not require anything of the
-      // input, except that the ref remain bottom.
-      clearStack();
-      push(Type(HeapType::none, Nullable));
-      if (curr->value->type.isRef()) {
-        push(Type::none);
-      }
-      return;
-    }
-    auto generalized = generalizeArrayType(type);
-    push(Type(generalized, Nullable));
-    auto elemType = generalized.getArray().element.type;
-    if (elemType.isRef()) {
-      push(elemType);
-    }
-  }
-
-  void visitArrayLoad(ArrayLoad* curr) { WASM_UNREACHABLE("TODO"); }
-  void visitArrayStore(ArrayStore* curr) { WASM_UNREACHABLE("TODO"); }
-
-  void visitArrayLen(ArrayLen* curr) {
-    // The input must be an array.
-    push(Type(HeapType::array, Nullable));
-  }
-
-  void visitArrayCopy(ArrayCopy* curr) {
-    auto destType = curr->destRef->type.getHeapType();
-    auto srcType = curr->srcRef->type.getHeapType();
-    if (destType.isBottom() || srcType.isBottom()) {
-      // This will be emitted as unreachable. Do not require anything of the
-      // input, except that the bottom refs remain bottom.
-      clearStack();
-      auto nullref = Type(HeapType::none, Nullable);
-      push(destType.isBottom() ? nullref : Type::none);
-      push(srcType.isBottom() ? nullref : Type::none);
-      return;
-    }
-    // Model the copy as a get + set.
-    ArraySet set;
-    set.ref = curr->destRef;
-    set.index = nullptr;
-    set.value = nullptr;
-    visitArraySet(&set);
-    ArrayGet get;
-    get.ref = curr->srcRef;
-    get.index = nullptr;
-    get.type = srcType.getArray().element.type;
-    visitArrayGet(&get);
-  }
-
-  void visitArrayFill(ArrayFill* curr) {
-    // Model the fill as a set.
-    ArraySet set;
-    set.ref = curr->ref;
-    set.value = curr->value;
-    visitArraySet(&set);
-  }
-
-  void visitArrayInitData(ArrayInitData* curr) {
-    auto type = curr->ref->type.getHeapType();
-    if (type.isBottom()) {
-      // This will be emitted as unreachable. Do not require anything of the
-      // input, except that the ref remain bottom.
-      clearStack();
-      push(Type(HeapType::none, Nullable));
-      return;
-    }
-    auto generalized = generalizeArrayType(type);
-    push(Type(generalized, Nullable));
-  }
-
-  void visitArrayInitElem(ArrayInitElem* curr) {
-    auto type = curr->ref->type.getHeapType();
-    if (type.isBottom()) {
-      // This will be emitted as unreachable. Do not require anything of the
-      // input, except that the ref remain bottom.
-      clearStack();
-      push(Type(HeapType::none, Nullable));
-      return;
-    }
-    auto generalized = generalizeArrayType(type);
-    push(Type(generalized, Nullable));
-    // Cannot yet generalize table types.
   }
 
   void visitRefAs(RefAs* curr) {
-    auto type = pop();
-    if (type == Type::none) {
-      // No downstream requirement, so no requirement for the input either.
-      push(Type::none);
+    // All RefAs ops have output types that depend on their input types, and we
+    // will refinalize them if their input types generalize. Propagate any
+    // requirement on the output back to the input.
+    exprSubs[curr].push_back(curr->value);
+  }
+
+  void visitBrOn(BrOn* curr) {
+    // Note immediate constraints (including descriptor constraints).
+    Super::visitBrOn(curr);
+    if (curr->desc && !curr->desc->type.isStruct()) {
       return;
     }
     switch (curr->op) {
-      case RefAsNonNull:
-        push(Type(type.getHeapType(), Nullable));
-        return;
-      case AnyConvertExtern:
-        push(Type(HeapType::ext, type.getNullability()));
-        return;
-      case ExternConvertAny:
-        push(Type(HeapType::any, type.getNullability()));
-        return;
+      case BrOnNull:
+        // If we do not branch, we flow out the non-null input.
+        if (curr->type.hasRef()) {
+          addConstraint(curr->ref, curr->type.with(Nullable));
+        }
+        break;
+      case BrOnNonNull: {
+        // If we branch, we send the non-null input to the target.
+        auto* breakTarget = walker.findBreakTarget(curr->name);
+        if (breakTarget->type.hasRef()) {
+          addConstraint(curr->ref, breakTarget->type.with(Nullable));
+        }
+        break;
+      }
+      case BrOnCast:
+      case BrOnCastDescEq:
+        // If we do not branch, we flow out the original input when the cast
+        // fails. If the cast type is nullable then nulls take the branch, so
+        // the fallthrough value is made non-nullable.
+        if (curr->type.hasRef()) {
+          auto type = curr->type;
+          if (curr->castType.isNullableRef()) {
+            type = type.with(Nullable);
+          }
+          addConstraint(curr->ref, type);
+        }
+        break;
+      case BrOnCastFail:
+      case BrOnCastDescEqFail: {
+        // We send the original input along when the cast fails, so the input
+        // must be sendable to the target. If the cast type is nullable then
+        // nulls do not fail the cast, so the sent value is non-nullable.
+        auto* breakTarget = walker.findBreakTarget(curr->name);
+        if (breakTarget->type.hasRef()) {
+          auto type = breakTarget->type;
+          if (curr->castType.isNullableRef()) {
+            type = type.with(Nullable);
+          }
+          addConstraint(curr->ref, type);
+        }
+        break;
+      }
     }
-    WASM_UNREACHABLE("unexpected op");
   }
 
-  void visitStringNew(StringNew* curr) { WASM_UNREACHABLE("TODO"); }
-  void visitStringConst(StringConst* curr) { WASM_UNREACHABLE("TODO"); }
-  void visitStringMeasure(StringMeasure* curr) { WASM_UNREACHABLE("TODO"); }
-  void visitStringEncode(StringEncode* curr) { WASM_UNREACHABLE("TODO"); }
-  void visitStringConcat(StringConcat* curr) { WASM_UNREACHABLE("TODO"); }
-  void visitStringEq(StringEq* curr) { WASM_UNREACHABLE("TODO"); }
-  void visitStringTest(StringTest* curr) { WASM_UNREACHABLE("TODO"); }
-  void visitStringWTF16Get(StringWTF16Get* curr) { WASM_UNREACHABLE("TODO"); }
-  void visitStringSliceWTF(StringSliceWTF* curr) { WASM_UNREACHABLE("TODO"); }
+  void visitPublish(Publish* curr) {
+    // TODO: Propagate output constraints back to the input, like RefAs.
+    addConstraint(curr->ref, curr->ref->type);
+  }
 
-  void visitContNew(ContNew* curr) { WASM_UNREACHABLE("TODO"); }
-  void visitContBind(ContBind* curr) { WASM_UNREACHABLE("TODO"); }
-  void visitSuspend(Suspend* curr) { WASM_UNREACHABLE("TODO"); }
-  void visitResume(Resume* curr) { WASM_UNREACHABLE("TODO"); }
-  void visitResumeThrow(ResumeThrow* curr) { WASM_UNREACHABLE("TODO"); }
-  void visitStackSwitch(StackSwitch* curr) { WASM_UNREACHABLE("TODO"); }
+  void visitTupleMake(TupleMake* curr) {
+    // TODO: Track constraints on tuple elements.
+    for (auto* op : curr->operands) {
+      addConstraint(op, op->type);
+    }
+  }
+
+  void visitCallRef(CallRef* curr) {
+    if (!curr->target->type.isSignature()) {
+      Super::visitCallRef(curr);
+      return;
+    }
+    auto sigType = curr->target->type.getHeapType();
+    std::optional<Type> resultReq;
+    if (curr->isReturn) {
+      resultReq = func->getResults();
+    }
+    auto generalized = generalizeCallRefTarget(sigType, resultReq);
+    Super::visitCallRef(curr, generalized);
+  }
+
+  void visitStructGet(StructGet* curr) {
+    if (!curr->ref->type.isStruct()) {
+      Super::visitStructGet(curr);
+      return;
+    }
+    auto generalized =
+      generalizeStructType(curr->ref->type.getHeapType(), curr->index);
+    Super::visitStructGet(curr, generalized);
+  }
+
+  void visitStructSet(StructSet* curr) {
+    if (!curr->ref->type.isStruct()) {
+      Super::visitStructSet(curr);
+      return;
+    }
+    auto generalized =
+      generalizeStructType(curr->ref->type.getHeapType(), curr->index);
+    Super::visitStructSet(curr, generalized);
+  }
+
+  void visitArrayGet(ArrayGet* curr) {
+    if (!curr->ref->type.isArray()) {
+      Super::visitArrayGet(curr);
+      return;
+    }
+    auto generalized = generalizeArrayType(curr->ref->type.getHeapType());
+    Super::visitArrayGet(curr, generalized);
+  }
+
+  void visitArraySet(ArraySet* curr) {
+    if (!curr->ref->type.isArray()) {
+      Super::visitArraySet(curr);
+      return;
+    }
+    auto generalized = generalizeArrayType(curr->ref->type.getHeapType());
+    Super::visitArraySet(curr, generalized);
+  }
+
+  void visitArrayCopy(ArrayCopy* curr) {
+    if (!curr->destRef->type.isArray() || !curr->srcRef->type.isArray()) {
+      Super::visitArrayCopy(curr);
+      return;
+    }
+    auto destGen = generalizeArrayType(curr->destRef->type.getHeapType());
+    auto elemType = destGen.getArray().element.type;
+    std::optional<Type> reqElemType;
+    if (elemType.isRef()) {
+      reqElemType = elemType;
+    }
+    auto srcGen =
+      generalizeArrayType(curr->srcRef->type.getHeapType(), reqElemType);
+    Super::visitArrayCopy(curr, destGen, srcGen);
+  }
+
+  void visitArrayFill(ArrayFill* curr) {
+    if (!curr->ref->type.isArray()) {
+      Super::visitArrayFill(curr);
+      return;
+    }
+    auto generalized = generalizeArrayType(curr->ref->type.getHeapType());
+    Super::visitArrayFill(curr, generalized);
+  }
+
+  void visitArrayInitData(ArrayInitData* curr) {
+    if (!curr->ref->type.isArray()) {
+      Super::visitArrayInitData(curr);
+      return;
+    }
+    auto generalized = generalizeArrayType(curr->ref->type.getHeapType());
+    Super::visitArrayInitData(curr, generalized);
+  }
+
+  void visitArrayInitElem(ArrayInitElem* curr) {
+    if (!curr->ref->type.isArray()) {
+      Super::visitArrayInitElem(curr);
+      return;
+    }
+    auto generalized = generalizeArrayType(curr->ref->type.getHeapType());
+    Super::visitArrayInitElem(curr, generalized);
+  }
+
+  void visitRefGetDesc(RefGetDesc* curr) {
+    if (!curr->ref->type.isStruct()) {
+      Super::visitRefGetDesc(curr);
+      return;
+    }
+    auto generalized =
+      generalizeStructTypeByDescriptor(curr->ref->type.getHeapType());
+    Super::visitRefGetDesc(curr, generalized);
+  }
+
+  void propagate() {
+    while (!worklist.empty()) {
+      auto item = worklist.back();
+      worklist.pop_back();
+      if (auto* exprPtr = std::get_if<Expression*>(&item)) {
+        auto* expr = *exprPtr;
+        auto type = exprGLBs[expr].getGLB();
+        if (auto* get = expr->dynCast<LocalGet>()) {
+          addConstraint(get->index, type);
+        } else if (auto* set = expr->dynCast<LocalSet>()) {
+          if (set->isTee()) {
+            addConstraint(set->index, type);
+          }
+        } else if (auto* as = expr->dynCast<RefAs>()) {
+          auto share = type.getHeapType().getShared();
+          switch (as->op) {
+            case RefAsNonNull:
+              type = type.with(Nullable);
+              break;
+            case AnyConvertExtern:
+              type =
+                Type(HeapTypes::ext.getBasic(share), type.getNullability());
+              break;
+            case ExternConvertAny:
+              type =
+                Type(HeapTypes::any.getBasic(share), type.getNullability());
+              break;
+          }
+        } else if (auto* get = expr->dynCast<StructGet>()) {
+          if (get->ref->type.isStruct()) {
+            auto generalized = generalizeStructType(
+              get->ref->type.getHeapType(), get->index, type);
+            addConstraint(get->ref, Type(generalized, Nullable));
+          }
+        } else if (auto* get = expr->dynCast<ArrayGet>()) {
+          if (get->ref->type.isArray()) {
+            auto generalized =
+              generalizeArrayType(get->ref->type.getHeapType(), type);
+            addConstraint(get->ref, Type(generalized, Nullable));
+          }
+        } else if (auto* call = expr->dynCast<CallRef>()) {
+          if (call->target->type.isSignature()) {
+            auto generalized =
+              generalizeCallRefTarget(call->target->type.getHeapType(), type);
+            addConstraint(call->target, Type(generalized, Nullable));
+          }
+        } else if (auto* get = expr->dynCast<RefGetDesc>()) {
+          if (get->ref->type.isStruct()) {
+            auto generalized = generalizeStructTypeByDescriptor(
+              get->ref->type.getHeapType(), type.getHeapType());
+            addConstraint(get->ref,
+                          Type(generalized, Nullable, type.getExactness()));
+          }
+        } else if (auto* extract = expr->dynCast<TupleExtract>()) {
+          if (extract->tuple->type.isTuple()) {
+            Tuple elems = getTop(extract->tuple->type).getTuple();
+            elems[extract->index] = type;
+            addConstraint(extract->tuple, Type(elems));
+          }
+        }
+        if (auto it = exprSubs.find(expr); it != exprSubs.end()) {
+          for (auto* sub : it->second) {
+            addConstraint(sub, type);
+          }
+        }
+      } else {
+        auto local = std::get<Index>(item);
+        auto type = localGLBs[local].getGLB();
+        for (auto* val : localSetValues[local]) {
+          addConstraint(val, type);
+        }
+      }
+    }
+  }
 };
 
 struct TypeGeneralizing : WalkerPass<PostWalker<TypeGeneralizing>> {
@@ -926,23 +615,33 @@ struct TypeGeneralizing : WalkerPass<PostWalker<TypeGeneralizing>> {
 
   void runOnFunction(Module* wasm, Function* func) override {
     // First, remove unreachable code. If we didn't, the unreachable code could
-    // become invalid after this optimization because we do not materialize or
-    // analyze unreachable blocks.
+    // become invalid after this optimization because ChildTyper does not
+    // constrain unreachable expressions in all cases.
     PassRunner runner(getPassRunner());
     runner.add("dce");
     runner.runOnFunction(func);
 
-    auto cfg = CFG::fromFunction(func, wasm);
-    DBG(cfg.print(std::cerr));
-    TransferFn txfn(*wasm, func, cfg);
-    MonotoneCFGAnalyzer analyzer(txfn.lattice, txfn, cfg);
-    analyzer.evaluate();
+    Generalizer generalizer(*wasm, func);
+    generalizer.walk();
+    generalizer.propagate();
 
     // Optimize local types. TODO: Optimize casts as well.
-    localTypes = txfn.lattice.getLocals();
+    auto numLocals = func->getNumLocals();
     auto numParams = func->getNumParams();
-    for (Index i = numParams; i < localTypes.size(); ++i) {
-      func->vars[i - numParams] = localTypes[i];
+    localTypes.resize(numLocals);
+    for (Index i = 0; i < numParams; ++i) {
+      localTypes[i] = func->getLocalType(i);
+    }
+    for (Index i = numParams; i < numLocals; ++i) {
+      auto origType = func->getLocalType(i);
+      if (origType.hasRef()) {
+        auto& glb = generalizer.localGLBs[i];
+        auto newType = glb.noted() ? glb.getGLB() : getTop(origType);
+        localTypes[i] = newType;
+        func->vars[i - numParams] = newType;
+      } else {
+        localTypes[i] = origType;
+      }
     }
 
     // Update gets and sets accordingly.
