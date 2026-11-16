@@ -22,7 +22,6 @@
 //  * Fields that are never read from can be removed entirely.
 //
 
-#include "ir/eh-utils.h"
 #include "ir/js-utils.h"
 #include "ir/localize.h"
 #include "ir/names.h"
@@ -372,6 +371,7 @@ struct GlobalTypeOptimization : public Pass {
         // That is, we can only append fields: we cannot reorder or remove any
         // field that is in the super.
         Index numSuperFields = 0;
+        bool superHasKeptFields = false;
         if (super) {
           // We have visited the super before. Get the information about its
           // fields.
@@ -408,6 +408,7 @@ struct GlobalTypeOptimization : public Pass {
               // The super kept this field, so we must keep it as well. This can
               // happen when we need the field in both, but also in the corner
               // case where we don't need the field but the super is public.
+              superHasKeptFields = true;
 
               // We need to keep it at the same index so we remain compatible.
               indexesAfterRemoval[i] = superIndex;
@@ -433,10 +434,10 @@ struct GlobalTypeOptimization : public Pass {
           }
         }
 
-        // If the type has no supertype (or its supertype has no fields), check
-        // if its first field becomes prototype-exposing. If so, add a
+        // If the type has no supertype (or its supertype has no kept fields),
+        // check if its first field becomes prototype-exposing. If so, add a
         // placeholder at index 0 and shift all computed indices.
-        if (isExposedNoProto && (!super || super->getStruct().fields.empty())) {
+        if (isExposedNoProto && !superHasKeptFields) {
           // Find the field that will become field 0.
           Index i = 0;
           for (; i < fields.size(); ++i) {
@@ -643,8 +644,26 @@ struct GlobalTypeOptimization : public Pass {
     TypeRewriter(wasm, *this).update();
   }
 
+  Index getNewIndex(HeapType type, Index index) {
+    auto iter = indexesAfterRemovals.find(type);
+    if (iter == indexesAfterRemovals.end()) {
+      return index;
+    }
+    auto& indexesAfterRemoval = iter->second;
+    auto newIndex = indexesAfterRemoval[index];
+    assert(newIndex < IndexAnalysis(indexesAfterRemoval).newSize ||
+           newIndex == RemovedField);
+    return newIndex;
+  }
+
   // After updating the types to remove certain fields, we must also remove
-  // them from struct instructions.
+  // them from struct instructions and update field indices. We do this in two
+  // passes: first FieldRemover removes/reorders StructNew operands and replaces
+  // removed StructSets (which invokes EffectAnalyzer via ChildLocalizer and
+  // getResultOfFirst), and then IndexUpdater updates the field indices on
+  // remaining struct instructions. Keeping the old indices during FieldRemover
+  // is essential because EffectAnalyzer inspects type.getStruct().fields[index]
+  // on the old HeapTypes, which requires old indices.
   void updateInstructions(Module& wasm) {
     struct FieldRemover : public WalkerPass<PostWalker<FieldRemover>> {
       bool isFunctionParallel() override { return true; }
@@ -656,8 +675,6 @@ struct GlobalTypeOptimization : public Pass {
       std::unique_ptr<Pass> create() override {
         return std::make_unique<FieldRemover>(parent);
       }
-
-      bool needEHFixups = false;
 
       // Expressions that might trap that have been removed from module-level
       // initializers. These need to be placed in new globals to preserve any
@@ -690,8 +707,6 @@ struct GlobalTypeOptimization : public Pass {
         if (func) {
           ChildLocalizer localizer(curr, func, *getModule(), getPassOptions());
           replaceCurrent(localizer.getReplacement());
-          // Adding a block here requires EH fixups.
-          needEHFixups = true;
         }
 
         // Remove and reorder operands.
@@ -733,11 +748,9 @@ struct GlobalTypeOptimization : public Pass {
           return;
         }
 
-        auto newIndex = getNewIndex(curr->ref->type.getHeapType(), curr->index);
-        if (newIndex != RemovedField) {
-          // Map to the new index.
-          curr->index = newIndex;
-        } else {
+        auto newIndex =
+          parent.getNewIndex(curr->ref->type.getHeapType(), curr->index);
+        if (newIndex == RemovedField) {
           // This field was removed, so just emit drops of our children, plus a
           // trap if the ref is null. Note that we must preserve the order of
           // operations here: the trap on a null ref happens after the value,
@@ -748,7 +761,6 @@ struct GlobalTypeOptimization : public Pass {
                                            getFunction(),
                                            getModule(),
                                            getPassOptions());
-          needEHFixups = true;
           Expression* replacement =
             builder.makeDrop(builder.makeRefAs(RefAsNonNull, flipped));
           // We only remove fields with no reads, so if this set is atomic,
@@ -757,13 +769,37 @@ struct GlobalTypeOptimization : public Pass {
           replaceCurrent(replacement);
         }
       }
+    };
+
+    struct IndexUpdater : public WalkerPass<PostWalker<IndexUpdater>> {
+      bool isFunctionParallel() override { return true; }
+
+      GlobalTypeOptimization& parent;
+
+      IndexUpdater(GlobalTypeOptimization& parent) : parent(parent) {}
+
+      std::unique_ptr<Pass> create() override {
+        return std::make_unique<IndexUpdater>(parent);
+      }
+
+      void visitStructSet(StructSet* curr) {
+        if (curr->ref->type == Type::unreachable) {
+          return;
+        }
+
+        auto newIndex =
+          parent.getNewIndex(curr->ref->type.getHeapType(), curr->index);
+        assert(newIndex != RemovedField);
+        curr->index = newIndex;
+      }
 
       void visitStructGet(StructGet* curr) {
         if (curr->ref->type == Type::unreachable) {
           return;
         }
 
-        auto newIndex = getNewIndex(curr->ref->type.getHeapType(), curr->index);
+        auto newIndex =
+          parent.getNewIndex(curr->ref->type.getHeapType(), curr->index);
         // We must not remove a field that is read from.
         assert(newIndex != RemovedField);
         curr->index = newIndex;
@@ -774,7 +810,8 @@ struct GlobalTypeOptimization : public Pass {
           return;
         }
 
-        auto newIndex = getNewIndex(curr->ref->type.getHeapType(), curr->index);
+        auto newIndex =
+          parent.getNewIndex(curr->ref->type.getHeapType(), curr->index);
         // We must not remove a field that is read from.
         assert(newIndex != RemovedField);
         curr->index = newIndex;
@@ -785,45 +822,46 @@ struct GlobalTypeOptimization : public Pass {
           return;
         }
 
-        auto newIndex = getNewIndex(curr->ref->type.getHeapType(), curr->index);
+        auto newIndex =
+          parent.getNewIndex(curr->ref->type.getHeapType(), curr->index);
         // We must not remove a field that is read from.
         assert(newIndex != RemovedField);
         curr->index = newIndex;
       }
 
-      void visitFunction(Function* curr) {
-        if (needEHFixups) {
-          EHUtils::handleBlockNestedPops(curr, *getModule());
+      void visitStructWait(StructWait* curr) {
+        if (curr->ref->type == Type::unreachable) {
+          return;
         }
-      }
 
-    private:
-      Index getNewIndex(HeapType type, Index index) {
-        auto iter = parent.indexesAfterRemovals.find(type);
-        if (iter == parent.indexesAfterRemovals.end()) {
-          return index;
-        }
-        auto& indexesAfterRemoval = iter->second;
-        auto newIndex = indexesAfterRemoval[index];
-        assert(newIndex < IndexAnalysis(indexesAfterRemoval).newSize ||
-               newIndex == RemovedField);
-        return newIndex;
+        auto newIndex =
+          parent.getNewIndex(curr->ref->type.getHeapType(), curr->index);
+        // We must not remove a field that is read from.
+        assert(newIndex != RemovedField);
+        curr->index = newIndex;
       }
     };
 
-    FieldRemover remover(*this);
-    remover.run(getPassRunner(), &wasm);
-    remover.runOnModuleCode(getPassRunner(), &wasm);
+    PassRunner runner(getPassRunner());
+    runner.add(std::make_unique<FieldRemover>(*this));
+    runner.add(std::make_unique<IndexUpdater>(*this));
+    runner.run();
+
+    FieldRemover moduleRemover(*this);
+    moduleRemover.runOnModuleCode(getPassRunner(), &wasm);
 
     // Insert globals necessary to preserve instantiation-time trapping of
     // removed expressions.
-    for (Index i = 0; i < remover.removedTrappingInits.size(); ++i) {
-      auto* curr = remover.removedTrappingInits[i];
+    for (Index i = 0; i < moduleRemover.removedTrappingInits.size(); ++i) {
+      auto* curr = moduleRemover.removedTrappingInits[i];
       auto name = Names::getValidGlobalName(
         wasm, std::string("gto-removed-") + std::to_string(i));
       wasm.addGlobal(
         Builder::makeGlobal(name, curr->type, curr, Builder::Immutable));
     }
+
+    IndexUpdater moduleUpdater(*this);
+    moduleUpdater.runOnModuleCode(getPassRunner(), &wasm);
   }
 };
 

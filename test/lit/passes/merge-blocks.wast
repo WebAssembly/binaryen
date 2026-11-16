@@ -186,7 +186,7 @@
   )
  )
 
- ;; CHECK:      (func $if-condition (type $6) (result i32)
+ ;; CHECK:      (func $if-condition (type $7) (result i32)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:  )
@@ -424,7 +424,90 @@
   )
  )
 
- ;; CHECK:      (func $helper (type $7) (param $x i32) (result i32)
+ ;; CHECK:      (func $subsequent-children-loop-call (type $6) (param $x i32) (param $y i32) (result i32)
+ ;; CHECK-NEXT:  (call $subsequent-children
+ ;; CHECK-NEXT:   (loop $loop (result i32)
+ ;; CHECK-NEXT:    (br_if $loop
+ ;; CHECK-NEXT:     (local.get $x)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (i32.const 1)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (i32.const 2)
+ ;; CHECK-NEXT:   (block (result i32)
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (call $helper
+ ;; CHECK-NEXT:      (i32.const 3)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (i32.const 4)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $subsequent-children-loop-call (param $x i32) (param $y i32) (result i32)
+  ;; A loop that may not return in an earlier child prevents moving a call out
+  ;; of a later child past it.
+  (call $subsequent-children
+   (loop $loop (result i32)
+    (br_if $loop
+     (local.get $x)
+    )
+    (i32.const 1)
+   )
+   (i32.const 2)
+   (block (result i32)
+    (drop
+     (call $helper
+      (i32.const 3)
+     )
+    )
+    (i32.const 4)
+   )
+  )
+ )
+
+ ;; CHECK:      (func $subsequent-children-loop-trap (type $6) (param $x i32) (param $y i32) (result i32)
+ ;; CHECK-NEXT:  (i32.add
+ ;; CHECK-NEXT:   (loop $loop (result i32)
+ ;; CHECK-NEXT:    (br_if $loop
+ ;; CHECK-NEXT:     (local.get $x)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (i32.const 1)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (block (result i32)
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (i32.div_s
+ ;; CHECK-NEXT:      (i32.const 1)
+ ;; CHECK-NEXT:      (local.get $y)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (i32.const 2)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $subsequent-children-loop-trap (param $x i32) (param $y i32) (result i32)
+  ;; A loop that may not return in an earlier child prevents moving a trap out
+  ;; of a later child past it.
+  (i32.add
+   (loop $loop (result i32)
+    (br_if $loop
+     (local.get $x)
+    )
+    (i32.const 1)
+   )
+   (block (result i32)
+    (drop
+     (i32.div_s
+      (i32.const 1)
+      (local.get $y)
+     )
+    )
+    (i32.const 2)
+   )
+  )
+ )
+
+
+ ;; CHECK:      (func $helper (type $8) (param $x i32) (result i32)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  (func $helper (param $x i32) (result i32)

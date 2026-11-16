@@ -10,11 +10,19 @@
   (type $F1 (func (param i32 f64)))
   (type $F2 (func (param f64)))
   (type $F3 (func))
+  (type $F6 (func (param i32 i32 i32 i32 i32 i32)))
+  (type $F4 (func (param i32 i32 i32 i32)))
+  (type $F2-i32 (func (param i32 i32)))
 
   (type $C1 (cont $F1))
   (type $C2 (cont $F2))
   (type $C3 (cont $F3))
+  (type $C6 (cont $F6))
+  (type $C4 (cont $F4))
+  (type $C2-i32 (cont $F2-i32))
  )
+
+ (tag $tag (param i32))
 
  (func $f1 (type $F1) (param $x i32) (param $y f64)
   (call $log-i32
@@ -22,6 +30,27 @@
   )
   (call $log-f64
    (local.get $y)
+  )
+ )
+
+ (func $f6 (type $F6) (param $a i32) (param $b i32) (param $c i32) (param $d i32) (param $e i32) (param $f i32)
+  (call $log-i32
+   (local.get $a)
+  )
+  (call $log-i32
+   (local.get $b)
+  )
+  (call $log-i32
+   (local.get $c)
+  )
+  (call $log-i32
+   (local.get $d)
+  )
+  (call $log-i32
+   (local.get $e)
+  )
+  (call $log-i32
+   (local.get $f)
   )
  )
 
@@ -44,6 +73,108 @@
   )
  )
 
+ ;; CHECK:      [fuzz-exec] export partial-bindings
+ ;; CHECK-NEXT: [LoggingExternalInterface logging 42]
+ ;; CHECK-NEXT: [LoggingExternalInterface logging 3.14159]
+ (func $partial-bindings (export "partial-bindings")
+  ;; Bind the first param with cont.bind and pass the remaining param in resume.
+  (resume $C2
+   (f64.const 3.14159)
+   (cont.bind $C1 $C2
+    (i32.const 42)
+    (cont.new $C1
+     (ref.func $f1)
+    )
+   )
+  )
+ )
+
+ ;; CHECK:      [fuzz-exec] export multi-partial-bindings
+ ;; CHECK-NEXT: [LoggingExternalInterface logging 1]
+ ;; CHECK-NEXT: [LoggingExternalInterface logging 2]
+ ;; CHECK-NEXT: [LoggingExternalInterface logging 3]
+ ;; CHECK-NEXT: [LoggingExternalInterface logging 4]
+ ;; CHECK-NEXT: [LoggingExternalInterface logging 5]
+ ;; CHECK-NEXT: [LoggingExternalInterface logging 6]
+ (func $multi-partial-bindings (export "multi-partial-bindings")
+  ;; Use multiple cont.binds in a row and then pass the remaining operands in
+  ;; resume, verifying all operands are passed in the expected order.
+  (resume $C2-i32
+   (i32.const 5)
+   (i32.const 6)
+   (cont.bind $C4 $C2-i32
+    (i32.const 3)
+    (i32.const 4)
+    (cont.bind $C6 $C4
+     (i32.const 1)
+     (i32.const 2)
+     (cont.new $C6
+      (ref.func $f6)
+     )
+    )
+   )
+  )
+ )
+
+ ;; CHECK:      [fuzz-exec] export bind-then-resume-throw
+ ;; CHECK-NEXT: [LoggingExternalInterface logging 99]
+ (func $bind-then-resume-throw (export "bind-then-resume-throw")
+  ;; Ensure resume_throw uses the exception tag arguments rather than any
+  ;; previously bound continuation arguments.
+  (call $log-i32
+   (block $catch (result i32)
+    (try_table (catch $tag $catch)
+     (resume_throw $C2 $tag
+      (i32.const 99)
+      (cont.bind $C1 $C2
+       (i32.const 42)
+       (cont.new $C1
+        (ref.func $f1)
+       )
+      )
+     )
+    )
+    (i32.const -1)
+   )
+  )
+ )
+
+ ;; CHECK:      [fuzz-exec] export bind-then-resume-throw-ref
+ ;; CHECK-NEXT: [LoggingExternalInterface logging 99]
+ (func $bind-then-resume-throw-ref (export "bind-then-resume-throw-ref")
+  ;; Ensure resume_throw_ref throws the given exnref on a continuation with
+  ;; bound arguments.
+  (local $exn exnref)
+  (local.set $exn
+   (tuple.extract 2 1
+    (block $make-exn (result i32 exnref)
+     (try_table (catch_ref $tag $make-exn)
+      (throw $tag
+       (i32.const 99)
+      )
+     )
+     (unreachable)
+    )
+   )
+  )
+  (call $log-i32
+   (block $catch (result i32)
+    (try_table (catch $tag $catch)
+     (resume_throw_ref $C2
+      (local.get $exn)
+      (cont.bind $C1 $C2
+       (i32.const 42)
+       (cont.new $C1
+        (ref.func $f1)
+       )
+      )
+     )
+    )
+    (i32.const -1)
+   )
+  )
+ )
+
  ;; CHECK:      [fuzz-exec] export null-binding
  ;; CHECK-NEXT: [trap null ref]
  (func $null-binding (export "null-binding")
@@ -51,6 +182,30 @@
    (cont.bind $C1 $C2
     (i32.const 42)
     (ref.null $C1)
+   )
+  )
+ )
+
+ ;; CHECK:      [fuzz-exec] export already-executed-binding
+ ;; CHECK-NEXT: [trap continuation already executed]
+ (func $already-executed-binding (export "already-executed-binding")
+  ;; Binding a continuation that has already been consumed must trap.
+  (local $c (ref null $C1))
+  (local.set $c
+   (cont.new $C1
+    (ref.func $f1)
+   )
+  )
+  (drop
+   (cont.bind $C1 $C2
+    (i32.const 42)
+    (local.get $c)
+   )
+  )
+  (drop
+   (cont.bind $C1 $C2
+    (i32.const 42)
+    (local.get $c)
    )
   )
  )

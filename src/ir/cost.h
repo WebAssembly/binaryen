@@ -885,7 +885,7 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
 private:
   CostType nullCheckCost(Expression* ref) {
     // A nullable type requires a bounds check in most VMs.
-    return ref->type.isNullable();
+    return ref->type.isNullableRef();
   }
 };
 

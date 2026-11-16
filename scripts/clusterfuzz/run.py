@@ -33,11 +33,11 @@ import sys
 
 # The V8 flags we put in the "fuzzer flags" files, which tell ClusterFuzz how to
 # run V8. By default we apply all staging flags.
-FUZZER_FLAGS = '--wasm-staging --experimental-wasm-custom-descriptors --experimental-wasm-js-interop --experimental-wasm-acquire-release --experimental-wasm-wide-arithmetic --wasm-compact-imports'
+FUZZER_FLAGS = '--wasm-staging --wasm-custom-descriptors --wasm-js-interop --wasm-acquire-release --wasm-wide-arithmetic --wasm-compact-imports'
 
 # Optional V8 flags to add to FUZZER_FLAGS, some of the time.
 OPTIONAL_FUZZER_FLAGS = [
-    '--experimental-wasm-revectorize',
+    '--wasm-revectorize',
 ]
 
 # Maximum size of the random data that we feed into wasm-opt -ttf. This is

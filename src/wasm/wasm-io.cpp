@@ -35,9 +35,8 @@ namespace wasm {
 #define DEBUG_TYPE "writer"
 
 static void readTextData(std::optional<std::string> filename,
-                         std::string& input,
-                         Module& wasm,
-                         IRProfile profile) {
+                         std::string_view input,
+                         Module& wasm) {
   if (auto parsed = WATParser::parseModule(wasm, input, filename);
       auto err = parsed.getErr()) {
     Fatal() << err->msg;
@@ -47,10 +46,10 @@ static void readTextData(std::optional<std::string> filename,
 void ModuleReader::readText(std::string filename, Module& wasm) {
   BYN_TRACE("reading text from " << filename << "\n");
   auto input(read_file<std::string>(filename, Flags::Text));
-  readTextData(filename, input, wasm, profile);
+  readTextData(filename, input, wasm);
 }
 
-void ModuleReader::readBinaryData(std::vector<char>& input,
+void ModuleReader::readBinaryData(const std::vector<char>& input,
                                   Module& wasm,
                                   std::string sourceMapFilename) {
   std::vector<char> sourceMapBuffer;
@@ -109,19 +108,21 @@ void ModuleReader::read(std::string filename,
   }
 }
 
-// TODO: reading into a vector<char> then copying into a string is unnecessarily
-// inefficient. It would be better to read just once into a stringstream.
-void ModuleReader::readStdin(Module& wasm, std::string sourceMapFilename) {
-  std::vector<char> input = read_stdin();
+void ModuleReader::readData(const std::vector<char>& input,
+                            Module& wasm,
+                            std::string sourceMapFilename) {
   if (input.size() >= 4 && input[0] == '\0' && input[1] == 'a' &&
       input[2] == 's' && input[3] == 'm') {
     readBinaryData(input, wasm, sourceMapFilename);
   } else {
-    std::ostringstream s;
-    s.write(input.data(), input.size());
-    std::string input_str = s.str();
-    readTextData(std::nullopt, input_str, wasm, profile);
+    readTextData(
+      std::nullopt, std::string_view(input.data(), input.size()), wasm);
   }
+}
+
+void ModuleReader::readStdin(Module& wasm, std::string sourceMapFilename) {
+  std::vector<char> input = read_stdin();
+  readData(input, wasm, sourceMapFilename);
 }
 
 #undef DEBUG_TYPE
@@ -137,8 +138,7 @@ void ModuleWriter::writeText(Module& wasm, std::string filename) {
   writeText(wasm, output);
 }
 
-void ModuleWriter::writeBinary(Module& wasm, Output& output) {
-  BufferWithRandomAccess buffer;
+void ModuleWriter::writeBinary(Module& wasm, BufferWithRandomAccess& buffer) {
   WasmBinaryWriter writer(&wasm, buffer, options);
   // if debug info is used, then we want to emit the names section
   writer.setNamesSection(debugInfo);
@@ -159,10 +159,15 @@ void ModuleWriter::writeBinary(Module& wasm, Output& output) {
     writer.setSymbolMap(symbolMap);
   }
   writer.write();
-  buffer.writeTo(output);
   if (sourceMapStream) {
     sourceMapStream->close();
   }
+}
+
+void ModuleWriter::writeBinary(Module& wasm, Output& output) {
+  BufferWithRandomAccess buffer;
+  writeBinary(wasm, buffer);
+  buffer.writeTo(output);
 }
 
 void ModuleWriter::writeBinary(Module& wasm, std::string filename) {
@@ -184,6 +189,19 @@ void ModuleWriter::write(Module& wasm, std::string filename) {
     writeBinary(wasm, filename);
   } else {
     writeText(wasm, filename);
+  }
+}
+
+void ModuleWriter::write(Module& wasm, std::vector<char>& output) {
+  if (binary) {
+    BufferWithRandomAccess buffer;
+    writeBinary(wasm, buffer);
+    output.assign(buffer.begin(), buffer.end());
+  } else {
+    std::ostringstream s;
+    s << wasm;
+    std::string str = s.str();
+    output.assign(str.begin(), str.end());
   }
 }
 

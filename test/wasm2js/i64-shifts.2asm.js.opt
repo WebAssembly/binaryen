@@ -11,6 +11,12 @@ function asmFunc(imports) {
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
  function legalstub$0($0, $1, $2, $3, $4, $5) {
+  $0 = $0 | 0;
+  $1 = $1 | 0;
+  $2 = $2 | 0;
+  $3 = $3 | 0;
+  $4 = $4 | 0;
+  $5 = $5 | 0;
   $3 = $0;
   $0 = $2 & 31;
   if (($2 & 63) >>> 0 >= 32) {
@@ -24,6 +30,12 @@ function asmFunc(imports) {
  }
  
  function legalstub$1($0, $1, $2, $3, $4, $5) {
+  $0 = $0 | 0;
+  $1 = $1 | 0;
+  $2 = $2 | 0;
+  $3 = $3 | 0;
+  $4 = $4 | 0;
+  $5 = $5 | 0;
   $3 = $0;
   $0 = $2 & 31;
   if (($2 & 63) >>> 0 >= 32) {

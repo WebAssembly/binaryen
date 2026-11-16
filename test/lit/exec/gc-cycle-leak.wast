@@ -4,15 +4,29 @@
 
 (module
  (type $A (struct (field (mut (ref null $A)))))
+ (type $B (struct (field (ref $A)) (field (ref $A))))
+ (rec
+  (type $ct (cont $ft))
+  (type $ft (func (param (ref $ct))))
+ )
+
+ (import "env" "log_execution" (func $log (param anyref)))
+ (import "env" "log_execution" (func $log_cont (param (ref $ct))))
+
+ (elem declare func $target)
+
+ (func $target (type $ft) (param $k (ref $ct)))
 
  ;; CHECK:      [fuzz-exec] export test
+ ;; CHECK-NEXT: [LoggingExternalInterface log-execution [ref $0 (type $struct.0 (struct (field (mut (ref null $struct.0))))) [ref $0]]]
  (func $test (export "test")
   (local $a (ref $A))
   ;; This function makes a self-cycle where the local $a's ref field points to
   ;; itself. This test checks that we do not error, even in sanitizers, when
   ;; such cycles are created (at the time of creating this test, we represent
   ;; GC data using std::shared_ptr, which does not handle cycles, and so by
-  ;; default leak checks will error if not suppressed).
+  ;; default leak checks will error if not suppressed). Also log $a to test
+  ;; printing of recursive GC structures.
   (local.set $a
    (struct.new $A
     (ref.null $A)
@@ -22,7 +36,83 @@
    (local.get $a)
    (local.get $a)
   )
+  (call $log
+   (local.get $a)
+  )
+ )
+
+ ;; CHECK:      [fuzz-exec] export cycle2
+ ;; CHECK-NEXT: [LoggingExternalInterface log-execution [ref $0 (type $struct.0 (struct (field (mut (ref null $struct.0))))) [ref $1 (type $struct.0) [ref $0]]]]
+ (func $cycle2 (export "cycle2")
+  (local $a (ref $A))
+  (local $b (ref $A))
+  ;; A cycle of length 2 between $a and $b.
+  (local.set $a
+   (struct.new $A
+    (ref.null $A)
+   )
+  )
+  (local.set $b
+   (struct.new $A
+    (local.get $a)
+   )
+  )
+  (struct.set $A 0
+   (local.get $a)
+   (local.get $b)
+  )
+  (call $log
+   (local.get $a)
+  )
+ )
+
+ ;; CHECK:      [fuzz-exec] export dag
+ ;; CHECK-NEXT: [LoggingExternalInterface log-execution [ref $0 (type $struct.0 (struct (field (ref $struct.1)) (field (ref $struct.1)))) [ref $1 (type $struct.1 (struct (field (mut (ref null $struct.1))))) nullref] [ref $1]]]
+ (func $dag (export "dag")
+  (local $a (ref $A))
+  ;; A non-cyclic DAG where $B references the same $A twice.
+  (local.set $a
+   (struct.new_default $A)
+  )
+  (call $log
+   (struct.new $B
+    (local.get $a)
+    (local.get $a)
+   )
+  )
+ )
+
+ ;; CHECK:      [fuzz-exec] export cont_cycle
+ ;; CHECK-NEXT: [LoggingExternalInterface log-execution cont($0 funcref(target) (type $cont.0 (cont $func.0)) executed=1)]
+ (func $cont_cycle (export "cont_cycle")
+  (local $k (ref $ct))
+  ;; A continuation cycle where $k's resumeArguments reference $k itself.
+  (local.set $k
+   (cont.new $ct
+    (ref.func $target)
+   )
+  )
+  (resume $ct
+   (local.get $k)
+   (local.get $k)
+  )
+  (call $log_cont
+   (local.get $k)
+  )
  )
 )
 ;; CHECK:      [fuzz-exec] export test
+;; CHECK-NEXT: [LoggingExternalInterface log-execution [ref $0 (type $struct.0 (struct (field (mut (ref null $struct.0))))) [ref $0]]]
+
+;; CHECK:      [fuzz-exec] export cycle2
+;; CHECK-NEXT: [LoggingExternalInterface log-execution [ref $0 (type $struct.0 (struct (field (mut (ref null $struct.0))))) [ref $1 (type $struct.0) [ref $0]]]]
+
+;; CHECK:      [fuzz-exec] export dag
+;; CHECK-NEXT: [LoggingExternalInterface log-execution [ref $0 (type $struct.0 (struct (field (ref $struct.1)) (field (ref $struct.1)))) [ref $1 (type $struct.1 (struct (field (mut (ref null $struct.1))))) nullref] [ref $1]]]
+
+;; CHECK:      [fuzz-exec] export cont_cycle
+;; CHECK-NEXT: [LoggingExternalInterface log-execution cont($0 funcref(target) (type $cont.0 (cont $func.0)) executed=1)]
+;; CHECK-NEXT: [fuzz-exec] comparing cont_cycle
+;; CHECK-NEXT: [fuzz-exec] comparing cycle2
+;; CHECK-NEXT: [fuzz-exec] comparing dag
 ;; CHECK-NEXT: [fuzz-exec] comparing test

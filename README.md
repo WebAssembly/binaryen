@@ -93,6 +93,9 @@ There are a few differences between Binaryen IR and the WebAssembly language:
 
    * Block input values (currently only supported in `catch` blocks in the
      exception handling feature) are represented as `pop` subexpressions.
+     * `pop`s must appear as the first instruction in a `catch` block (ignoring
+       unnamed blocks around them, as those are not emitted in the binary
+       format).
 
  * Types and unreachable code
 
@@ -385,7 +388,7 @@ it usually is run on the final linked wasm.
 Advanced optimization techniques in the Binaryen optimizer include
 [SSAification](https://github.com/WebAssembly/binaryen/blob/main/src/passes/SSAify.cpp),
 [Flat IR](https://github.com/WebAssembly/binaryen/blob/main/src/ir/flat.h), and
-[Stack/Poppy IR](https://github.com/WebAssembly/binaryen/blob/main/src/ir/stack-utils.h).
+[Stack IR](https://github.com/WebAssembly/binaryen/blob/main/src/wasm-stack.h).
 
 See the
 [Optimizer Cookbook wiki page](https://github.com/WebAssembly/binaryen/wiki/Optimizer-Cookbook)

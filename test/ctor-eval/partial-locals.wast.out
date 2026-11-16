@@ -16,7 +16,7 @@
    (i32.const 115)
   )
   (global.set $sp
-   (local.get $0)
+   (i32.const 100)
   )
  )
 )

@@ -2193,6 +2193,16 @@ BinaryenFeatureAll: 268435455
         (nop)
        )
       )
+      (block $catch_all_dest
+       (try_table (catch_all $catch_all_dest)
+        (throw $a-tag
+         (i32.const 0)
+        )
+       )
+      )
+      (throw_ref
+       (ref.null noexn)
+      )
       (i32.atomic.store
        (i32.const 0)
        (i32.atomic.load

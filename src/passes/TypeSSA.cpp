@@ -51,6 +51,7 @@
 #include "ir/module-utils.h"
 #include "ir/names.h"
 #include "ir/possible-constant.h"
+#include "ir/properties.h"
 #include "ir/utils.h"
 #include "pass.h"
 #include "support/hash.h"
@@ -136,26 +137,26 @@ struct Analyzer
     }
   }
   void visitRefTest(RefTest* curr) { visitCast(curr); }
-  void visitRefCast(RefCast* curr) { visitCast(curr); }
+  void visitRefCast(RefCast* curr) {
+    visitCast(curr);
+    visitExpression(curr);
+  }
   void visitBrOn(BrOn* curr) {
-    if (curr->op == BrOnCast || curr->op == BrOnCastFail) {
+    if (curr->op != BrOnNull && curr->op != BrOnNonNull) {
       visitCast(curr);
     }
+    visitExpression(curr);
   }
 
   void visitExpression(Expression* curr) {
     // Look at the constraints on this expression's operands to see if it
     // requires an exact operand. If it does, we cannot optimize allocations of
     // that type. As an optimization, do not let control flow structures or
-    // branches inhibit optimization since they can safely be refinalized to use
+    // branches inhibit optimization. They can safely be refinalized to use
     // new types as long as no other instruction expected the original exact
-    // type. Also allow optimizing if the instruction that would inhibit
-    // optimizing will not be written in the final output. Skipping further
-    // analysis for these instructions also ensures that the ChildTyper below
-    // sees the type information it expects in the instructions it analyzes.
+    // type.
     if (Properties::isControlFlowStructure(curr) ||
-        Properties::isBranch(curr) ||
-        Properties::hasUnwritableTypeImmediate(curr)) {
+        Properties::isBranch(curr)) {
       return;
     }
 

@@ -17,6 +17,7 @@
 #include <optional>
 
 #include "ir/constraint.h"
+#include "ir/find_all.h"
 #include "ir/properties.h"
 #include "wasm.h"
 
@@ -341,26 +342,46 @@ Result provesPair(const Constraint& a, const Constraint& b) {
   // must be a constant in this case, so that we know the type.
   if (aConstant || bConstant) {
     auto type = aConstant ? aConstant->type : bConstant->type;
-    // Use proven spans for a, and exact for b. This allows us to do
-    // a => proven spans for a => exact spans for b => b.
-    if (auto aSpans = a.getProvenSpans(type)) {
-      if (auto bSpans = b.getSpans(type)) {
-        if (aSpans->empty()) {
-          // An empty span implies a contradiction (e.g. x > MAX_INT), as it
-          // means no possible number can apply. And contradictions prove
-          // anything.
-          return True;
-        }
-        if (bSpans->empty()) {
-          // Anything that is not a contradiction can prove a contradiction.
-          return False;
-        }
-        if (bSpans->contains(*aSpans)) {
+    // A constraint's "proven spans" are an over-approximation (superset) of the
+    // values for which the constraint holds (c => proven(c)), whereas its
+    // "exact spans" are the exact set of values (c <=> exact(c)), which may not
+    // exist when comparing against another local.
+    //
+    // To prove that a => b (return True), we check that b's exact spans contain
+    // a's proven spans:
+    //
+    //   a => proven(a) => exact(b) => b
+    //
+    // Using proven(b) here would be unsound because exact(b) => proven(b) goes
+    // the wrong way.
+    //
+    // To prove that a => !b (return False), however, it suffices to check that
+    // a's proven spans and b's proven spans do not overlap:
+    //
+    //   a => proven(a) => !proven(b) => !b
+    //
+    // Using proven(b) instead of exact(b) here is both more powerful (it works
+    // when b compares against a local, such as x <_u $y having proven span
+    // [0, MAX_UINT - 1]) and ensures that disjointness is symmetric between
+    // provesPair(a, b) and provesPair(b, a).
+    //
+    // Note that empty spans (from immediate contradictions such as
+    // x >_s MAX_INT) do not need special-casing: an empty proven(a) is
+    // vacuously contained in any exact(b) (returning True), and an empty
+    // proven(b) has no overlap with any proven(a) (returning False).
+    if (auto aProvenSpans = a.getProvenSpans(type)) {
+      auto bSpans = b.getSpans(type);
+      auto bProvenSpans = b.getProvenSpans(type);
+
+      if (bSpans) {
+        if (bSpans->contains(*aProvenSpans)) {
           // b's values contains a's, e.g., b = { 0 < x < 10 } and
           // a = { 3 < x < 7 }, so a => b.
           return True;
         }
-        if (!bSpans->hasOverlap(*aSpans)) {
+      }
+      if (bProvenSpans) {
+        if (!bProvenSpans->hasOverlap(*aProvenSpans)) {
           // There is no overlap at all, e.g., { 0 < x < 10 } vs { 20 < x < 30
           // }, both cannot be true and each proves the other false.
           return False;
@@ -733,29 +754,117 @@ bool AndedConstraintSet::approximateOr(const AndedConstraintSet& other) {
   return changed;
 }
 
-std::optional<LocalConstraint> LocalConstraint::parse(Expression* curr) {
-  using namespace Match;
+namespace {
 
+// Internal parsing, utilizing a map of tees. We can handle tees in an
+// expression, so long as they do not interfere with each other:
+//
+//  (i32.eq
+//    (local.tee $x ..)
+//    (i32.const 10)
+//  )
+//
+// We can parse this into $x == 10, just as if we saw a local.get $x there. But
+// we cannot handle this:
+//
+//  (i32.eq
+//    (local.get $x)
+//    (local.tee $x ..)
+//  )
+//
+// Parsing this into $x == $x would be wrong: the first $x is the old value.
+// That is, fully handling tees requires a more SSA-like IR. To handle the
+// common cases we want to, we parse the code in the natural order of execution,
+// and maintain a list of local operations. A get before a tee indicates
+// possible interference.
+struct LocalOperations {
+  SmallVector<Expression*, 10> vec;
+
+  // Check if an Expression returns a local's value: it is either a get or a
+  // tee. Returns the index and type if so, and notes it in our vector.
+  struct LocalOperation {
+    Index index;
+  };
+  std::optional<LocalOperation> parse(Expression* curr) {
+    auto handleNestedSets = [&](Expression* from) {
+      for (auto* nested : FindAll<LocalSet>(from).list) {
+        vec.push_back(nested);
+      }
+    };
+
+    if (auto* get = curr->dynCast<LocalGet>()) {
+      vec.push_back(get);
+      return LocalOperation{get->index};
+    }
+    if (auto* set = curr->dynCast<LocalSet>()) {
+      // We are parsing expressions in a tree, not none-typed items in a block.
+      assert(set->isTee());
+
+      // We know the value of this expression - the local the tee writes to -
+      // but further sets may be nested in the value, affecting other locals.
+      handleNestedSets(set->value);
+
+      // Ignore unreachable code, so the callers don't need to handle it.
+      if (set->type == Type::unreachable) {
+        return {};
+      }
+
+      vec.push_back(set);
+      return LocalOperation{set->index};
+    }
+    // Unrecognized. As above, we must scan for nested sets.
+    handleNestedSets(curr);
+    return {};
+  }
+
+  // Check for any possible interference between locals, which would tell the
+  // caller that whatever was parsed is not valid.
+  bool hasLocalInterference() const {
+    if (vec.size() <= 1) {
+      return false;
+    }
+
+    // Process the list in detail, as interference - a get before a set of the
+    // same local - is possible. We track the read locals, and if we see a
+    // later write, that shows a problem.
+    std::unordered_set<Index> read;
+    for (auto* curr : vec) {
+      if (auto* get = curr->dynCast<LocalGet>()) {
+        read.insert(get->index);
+      } else if (auto* set = curr->dynCast<LocalSet>()) {
+        if (read.contains(set->index)) {
+          return true;
+        }
+        // Insert a read, because the tee does both a write and a read.
+        if (set->isTee()) {
+          read.insert(set->index);
+        }
+      } else {
+        WASM_UNREACHABLE("invalid local op");
+      }
+    }
+    return false;
+  }
+};
+
+std::optional<LocalConstraint>
+localConstraintParseInternal(Expression* curr,
+                             LocalOperations& localOperations) {
   auto parseEqZArgument =
     [&](Expression* value) -> std::optional<LocalConstraint> {
-    if (auto* get = value->dynCast<LocalGet>()) {
-      // Canonicalize EqZ to Eq of 0.
-      auto value = Literal::makeZero(get->type);
-      return LocalConstraint{get->index, Constraint{Abstract::Eq, {value}}};
+    if (auto parsed = localConstraintParseInternal(value, localOperations)) {
+      return parsed->negate();
     }
-    // TODO: Recursively parse and reverse a constraint
+    if (auto localOp = localOperations.parse(value)) {
+      // Canonicalize EqZ to Eq of 0.
+      auto zero = Literal::makeZero(value->type);
+      return LocalConstraint{localOp->index, Constraint{Abstract::Eq, {zero}}};
+    }
     return {};
   };
 
   if (auto* u = curr->dynCast<Unary>()) {
     if (Abstract::getUnary(u->value->type, Abstract::EqZ) == u->op) {
-      // EqZ of EqZ means a check that the value is *not* zero.
-      LocalGet* get;
-      if (matches(u->value, unary(Abstract::EqZ, Match::local(&get)))) {
-        auto value = Literal::makeZero(get->type);
-        return LocalConstraint{get->index, Constraint{Abstract::Ne, {value}}};
-      }
-
       return parseEqZArgument(u->value);
     }
 
@@ -766,10 +875,10 @@ std::optional<LocalConstraint> LocalConstraint::parse(Expression* curr) {
     return parseEqZArgument(refIsNull->value);
   }
 
-  // Parse a get or a constant.
+  // Parse a get, tee, or a constant.
   auto parseTerm = [&](Expression* expr) -> std::optional<Term> {
-    if (auto* get = expr->dynCast<LocalGet>()) {
-      return Term{get->index};
+    if (auto localOp = localOperations.parse(expr)) {
+      return Term{localOp->index};
     }
     if (Properties::isSingleConstantExpression(expr)) {
       return Term{Properties::getLiteral(expr)};
@@ -781,11 +890,11 @@ std::optional<LocalConstraint> LocalConstraint::parse(Expression* curr) {
     [&](Abstract::Op op,
         Expression* left,
         Expression* right) -> std::optional<LocalConstraint> {
-    // The left must be a get.
-    if (auto* get = left->dynCast<LocalGet>()) {
+    // The left must be a get or a tee.
+    if (auto localOp = localOperations.parse(left)) {
       // The right can be any term.
       if (auto value = parseTerm(right)) {
-        return LocalConstraint{get->index, Constraint{op, *value}};
+        return LocalConstraint{localOp->index, Constraint{op, *value}};
       }
     }
     return {};
@@ -817,11 +926,25 @@ std::optional<LocalConstraint> LocalConstraint::parse(Expression* curr) {
   return {};
 }
 
+} // anonymous namespace
+
+std::optional<LocalConstraint> LocalConstraint::parse(Expression* curr) {
+  LocalOperations localOperations;
+  auto ret = localConstraintParseInternal(curr, localOperations);
+  if (localOperations.hasLocalInterference()) {
+    return {};
+  }
+  return ret;
+}
+
 ParsedAndedConstraints ParsedAndedConstraints::parse(Expression* curr) {
   using namespace Match;
 
   // The final return value.
   ParsedAndedConstraints ret;
+
+  // We will track local operations over the entire tree we parse.
+  LocalOperations localOperations;
 
   // Starting from |curr|, parse and recurse into sub-trees: when we see an AND,
   // we push both children as further work.
@@ -831,7 +954,7 @@ ParsedAndedConstraints ParsedAndedConstraints::parse(Expression* curr) {
     auto* curr = work.back();
     work.pop_back();
 
-    auto parsed = LocalConstraint::parse(curr);
+    auto parsed = localConstraintParseInternal(curr, localOperations);
     if (parsed) {
       ret.push_back(*parsed);
       continue;
@@ -839,26 +962,34 @@ ParsedAndedConstraints ParsedAndedConstraints::parse(Expression* curr) {
 
     Binary* b;
     if (matches(curr, binary(&b, Abstract::And, any(), any()))) {
-      // An AND can be recursively processed: both sides must be true.
-      work.push_back(b->left);
+      // An AND can be recursively processed: both sides must be true. Push them
+      // in reverse order, so we process them in the natural order of execution.
       work.push_back(b->right);
+      work.push_back(b->left);
       continue;
     }
     // TODO: support OR
 
-    // We failed to parse this.
+    // We failed to parse this as constraints. We do still need to check for
+    // local operations that might interfere with the things we did parse,
+    // otherwise.
+    localOperations.parse(curr);
     ret.hasUnknown = true;
   }
 
+  if (localOperations.hasLocalInterference()) {
+    return {};
+  }
   return ret;
 }
 
 ParsedAndedConstraints
 ParsedAndedConstraints::parseCondition(Expression* curr) {
-  // A get by itself is a check for not being null.
-  if (auto* get = curr->dynCast<LocalGet>()) {
-    auto value = Literal::makeZero(get->type);
-    return {LocalConstraint{get->index, Constraint{Abstract::Ne, {value}}}};
+  // A get or tee by itself is a check for not being null.
+  LocalOperations localOperations;
+  if (auto localOp = localOperations.parse(curr)) {
+    auto value = Literal::makeZero(curr->type);
+    return {LocalConstraint{localOp->index, Constraint{Abstract::Ne, {value}}}};
   }
 
   // Otherwise, parse normally.
@@ -940,14 +1071,12 @@ void BasicBlockConstraintMap::set(Index index,
   // We should not set values in unreachable code.
   assert(!unreachable);
 
-  // Clear the old state.
+  // Clear the old state, making us prove nothing.
   eraseStaleRefs(index);
   map.erase(index);
 
   // Apply the constraints, if there are any.
-  if (constraints.provesNothing()) {
-    setProvesNothing(index);
-  } else {
+  if (!constraints.provesNothing()) {
     for (auto& c : constraints) {
       approximateAnd(index, c);
     }
@@ -1088,24 +1217,27 @@ bool BasicBlockConstraintMap::approximateOr(
     return true;
   }
 
-  // We only need to loop on our locals, as any local that is missing in us is
-  // one that would end up proving nothing (and get removed).
+  // Both maps are sorted by local Index. Intersect in place: for us to be able
+  // to prove something (for us to have an entry in the ORed map), there must
+  // have been an entry in both original maps.
   bool changed = false;
-  for (auto& [local, constraints] : map) {
-    changed |= constraints.approximateOr(other.get(local));
+  auto oldSize = map.size();
+  map.intersectAndFilter(other.map, [&](auto& self, const auto& other) {
+    changed |= self.value.approximateOr(other.value);
+    assert(!self.value.provesEverything());
+    // Keep only entries that prove things, as others should not be in the map.
+    return !self.value.provesNothing();
+  });
+  if (map.size() != oldSize) {
+    changed = true;
   }
 
-  // Anything that became trivial after the OR must be removed.
-  std::erase_if(map, [&](const auto& item) {
-    const auto& [local, constraints] = item;
-    // We do not store contradictions.
-    assert(!constraints.provesEverything());
-    if (constraints.provesNothing()) {
-      changed = true;
-      return true;
-    }
-    return false;
-  });
+  // We could more precisely find which locals were removed from the map, but
+  // stale refs have low overhead and no correctness cost, so just handle the
+  // common, simple case of nothing remaining, so no refs are needed.
+  if (map.empty()) {
+    refs.clear();
+  }
 
   return changed;
 }
@@ -1135,18 +1267,19 @@ void BasicBlockConstraintMap::approximateAndInternal(Index index,
     // If we are applying a constraint to another local, and we know that
     // local's value, propagate it. That is, if x == 42, then if we try to apply
     // y < x we instead apply y < 42, which is better.
-    auto otherConstraints = get(*other);
-    if (auto lit = otherConstraints.getLiteral()) {
-      actual.term = Term{*lit};
+    if (auto iter = map.find(*other); iter != map.end()) {
+      if (auto lit = iter->value.getLiteral()) {
+        actual.term = Term{*lit};
+      }
     }
   }
 
   // Refer to the constraints for this index. If this is the first access of
   // the local, then we insert a new item into the map, which has a default of
-  // proxesEverything, which we need to flip (provesEverything cannot otherwise
+  // provesNothing, which we need to populate (provesNothing cannot otherwise
   // be found in the map, as we never store it).
-  auto [iter, _] = map.insert({index, AndedConstraintSet::makeProvesNothing()});
-  auto& indexConstraints = iter->second;
+  auto& indexConstraints =
+    map.insert({index, AndedConstraintSet::makeProvesNothing()}).value;
   // As in ::set(), this makes the map temporarily invalid until the
   // approximateAnd, as we don't store proves-nothing in the map, normally.
 
@@ -1156,6 +1289,7 @@ void BasicBlockConstraintMap::approximateAndInternal(Index index,
     // We just proved we are in unreachable code.
     unreachable = true;
     map.clear();
+    refs.clear();
     return;
   }
 
@@ -1199,18 +1333,28 @@ Result BasicBlockConstraintMap::proves(LocalConstraint condition) const {
   // about, propagate it. TODO: even without equality, we can add more
   // constraints here (e.g. x < y and y < 10 can lead to proving x < 10)
   if (auto* other = std::get_if<Index>(&condition.constraint.term)) {
-    auto otherConstraints = get(*other);
-    if (auto lit = otherConstraints.getLiteral()) {
-      condition.constraint.term = Term{*lit};
+    if (*other == condition.local) {
+      // We are comparing a local to itself. The things we can prove in this
+      // case (e.g. x > x is false) do not even require the map.
+      return provesPair(Constraint{Abstract::Eq, {condition.local}},
+                        condition.constraint);
+    }
+    if (auto iter = map.find(*other); iter != map.end()) {
+      if (auto lit = iter->value.getLiteral()) {
+        condition.constraint.term = Term{*lit};
+      }
     }
   }
 
-  return get(condition.local).proves(condition.constraint);
+  if (auto iter = map.find(condition.local); iter != map.end()) {
+    return iter->value.proves(condition.constraint);
+  }
+  return Unknown;
 }
 
 void BasicBlockConstraintMap::noteRefs(Index index, const Constraint& c) {
   if (auto* i = std::get_if<Index>(&c.term)) {
-    refs[*i].insert(index);
+    refs.insert({*i, {}}).value.insert(index);
   }
 }
 
@@ -1220,11 +1364,12 @@ void BasicBlockConstraintMap::eraseStaleRefs(Index index) {
     return;
   }
 
-  auto& refIndexes = iter->second;
+  auto refIndexes = std::move(iter->value);
+  refs.erase(iter);
 
   for (auto refIndex : refIndexes) {
     if (auto iter = map.find(refIndex); iter != map.end()) {
-      auto& refConstraints = iter->second;
+      auto& refConstraints = iter->value;
       std::erase_if(refConstraints, [&](const auto& c) {
         if (auto* i = std::get_if<Index>(&c.term)) {
           if (*i == index) {

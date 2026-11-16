@@ -141,12 +141,26 @@ def red_stderr():
     return red_output(file=sys.stderr)
 
 
+# Adapted from Emscripten's tools/utils.py
+def get_num_cores():
+    # Prefer `os.process_cpu_count` when available (3.13 and above) since it
+    # takes into account thread affinity. Fall back to `os.sched_getaffinity`
+    # where available and finally `os.cpu_count`, which should work everywhere.
+    if hasattr(os, 'process_cpu_count'):
+        cpu_count = os.process_cpu_count()
+    elif hasattr(os, 'sched_getaffinity'):
+        cpu_count = len(os.sched_getaffinity(0))
+    else:
+        cpu_count = os.cpu_count()
+    return int(os.getenv('BINARYEN_CORES', cpu_count))
+
+
 def run_parallel_tests(run_one_test_func, tests, show_worker_count=True):
     global num_failures
     tests = list(tests)
     if not tests:
         return
-    worker_count = min(os.cpu_count() or 1, len(tests))
+    worker_count = min(get_num_cores() or 1, len(tests))
     if show_worker_count:
         print(f"Running with {worker_count} workers")
 
@@ -216,7 +230,8 @@ if not any(os.path.isfile(os.path.join(options.binaryen_bin, f))
 options.binaryen_test = os.path.join(options.binaryen_root, 'test')
 
 if not options.out_dir:
-    options.out_dir = os.path.join(options.binaryen_root, 'out', 'test')
+    default_out_dir = os.path.join(options.binaryen_root, 'out', 'test')
+    options.out_dir = os.environ.get('BINARYEN_OUT_DIR', default_out_dir)
 
 if not os.path.exists(options.out_dir):
     os.makedirs(options.out_dir)
@@ -269,6 +284,7 @@ WASM2JS = [os.path.join(options.binaryen_bin, 'wasm2js')]
 WASM_CTOR_EVAL = [os.path.join(options.binaryen_bin, 'wasm-ctor-eval')]
 WASM_SHELL = [os.path.join(options.binaryen_bin, 'wasm-shell')]
 WASM_REDUCE = [os.path.join(options.binaryen_bin, 'wasm-reduce')]
+WASM_EMBED = [os.path.join(options.binaryen_bin, 'wasm-embed')]
 WASM_METADCE = [os.path.join(options.binaryen_bin, 'wasm-metadce')]
 WASM_EMSCRIPTEN_FINALIZE = [os.path.join(options.binaryen_bin,
                                          'wasm-emscripten-finalize')]
@@ -314,13 +330,13 @@ def has_shell_timeout():
 # See https://github.com/v8/v8/blob/master/src/wasm/wasm-feature-flags.h
 V8_OPTS = [
     '--wasm-staging',
-    '--experimental-wasm-compilation-hints',
-    '--experimental-wasm-stringref',
-    '--experimental-wasm-fp16',
-    '--experimental-wasm-custom-descriptors',
-    '--experimental-wasm-js-interop',
-    '--experimental-wasm-acquire-release',
-    '--experimental-wasm-wide-arithmetic',
+    '--wasm-compilation-hints',
+    '--wasm-stringref',
+    '--wasm-fp16',
+    '--wasm-custom-descriptors',
+    '--wasm-js-interop',
+    '--wasm-acquire-release',
+    '--wasm-wide-arithmetic',
     '--wasm-compact-imports',
 ]
 

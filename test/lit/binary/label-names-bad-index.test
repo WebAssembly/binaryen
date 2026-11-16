@@ -1,0 +1,13 @@
+;; RUN: wasm-opt -all %s.wasm -q -S -o - 2>&1 | filecheck %s
+
+;; This is label-names.test.wasm with the label index of $used-try-table in the
+;; name section changed from 7 to 99, which is past the end of the function's
+;; label index space. We should warn and ignore that name, but otherwise read
+;; the module normally.
+
+;; CHECK: warning: label index out of bounds in name section: 99 in function 0
+
+;; CHECK:      (block $handler
+;; CHECK-NEXT:  (block $label
+;; CHECK-NEXT:   (try_table (catch_all $handler)
+;; CHECK-NEXT:    (br $label)

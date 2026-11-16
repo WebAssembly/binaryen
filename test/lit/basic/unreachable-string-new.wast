@@ -84,11 +84,18 @@
   )
 
   ;; CHECK:      (func $i8-ok-none (type $4) (result (ref string))
-  ;; CHECK-NEXT:  (string.new_lossy_utf8_array
-  ;; CHECK-NEXT:   (block (result (ref none))
+  ;; CHECK-NEXT:  (block ;; (replaces unreachable StringNew we can't emit)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (block (result (ref none))
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -219,11 +226,18 @@
   )
 
   ;; CHECK:      (func $i16-ok-none (type $4) (result (ref string))
-  ;; CHECK-NEXT:  (string.new_wtf16_array
-  ;; CHECK-NEXT:   (block (result (ref none))
+  ;; CHECK-NEXT:  (block ;; (replaces unreachable StringNew we can't emit)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (block (result (ref none))
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )

@@ -99,8 +99,8 @@
   ;; A read *does* keep a field from being removed.
 
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $struct (sub (struct (field funcref))))
-  (type $struct (sub (struct (field (mut funcref)))))
+  ;; CHECK-NEXT:  (type $struct (sub (struct (field funcref) (field i32))))
+  (type $struct (sub (struct (field (mut funcref)) (field (mut i32)))))
 
   ;; CHECK:       (type $1 (func (param (ref $struct))))
 
@@ -110,11 +110,27 @@
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.wait $struct 1
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (waitqueue.new)
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:    (i64.const -1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $func (param $x (ref $struct))
     (drop
       (struct.get $struct 0
         (local.get $x)
+      )
+    )
+    (drop
+      (struct.wait $struct 1
+        (local.get $x)
+        (waitqueue.new)
+        (i32.const 1)
+        (i64.const -1)
       )
     )
   )
@@ -1624,8 +1640,8 @@
   )
 )
 
-;; A struct with a pop, which requires EH fixups to avoid popping in a nested
-;; block.
+;; A struct with a pop. The block we emit is unnamed, and validates properly
+;; even with a pop.
 (module
   ;; CHECK:      (rec
   ;; CHECK-NEXT:  (type $struct (struct))
@@ -1642,18 +1658,14 @@
 
   ;; CHECK:      (func $func (type $1)
   ;; CHECK-NEXT:  (local $0 i32)
-  ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (try
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (catch $tag
-  ;; CHECK-NEXT:    (local.set $1
-  ;; CHECK-NEXT:     (pop i32)
-  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (block (result (ref (exact $struct)))
   ;; CHECK-NEXT:      (local.set $0
-  ;; CHECK-NEXT:       (local.get $1)
+  ;; CHECK-NEXT:       (pop i32)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (struct.new_default $struct)
   ;; CHECK-NEXT:     )

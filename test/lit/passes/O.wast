@@ -137,7 +137,7 @@
   ;; CHECK-NEXT:    (call $ret)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (else
-  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )

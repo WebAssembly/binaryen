@@ -276,7 +276,7 @@ struct SignaturePruning : public Pass {
 
       // We found possible work! Find the specific params that are unused & try
       // to prune them.
-      SortedVector unusedParams;
+      SortedVector<Index> unusedParams;
       for (Index i = 0; i < numParams; i++) {
         if (!usedParams.contains(i)) {
           unusedParams.insert(i);

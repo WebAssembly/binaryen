@@ -455,6 +455,7 @@ template<typename Self> struct Noter {
   Self& self() { return *static_cast<Self*>(this); }
 
   void noteSubtype(HeapType sub, HeapType super) {
+    assert(HeapType::isSubType(sub, super));
     // Bottom types are uninteresting, but other basic heap types can be
     // interesting because of their interactions with casts.
     if (sub == super || sub.isBottom()) {
@@ -700,6 +701,7 @@ struct Unsubtyping : Pass, Noter<Unsubtyping> {
       }
 
       void noteNonFlowSubtype(Expression* sub, Type super) {
+        assert(Type::isSubType(sub->type, super));
         // This expression's type must be a subtype of |super|, but the value
         // does not flow anywhere - this is a static constraint. As the value
         // does not flow, it cannot reach anywhere else, which means we need
@@ -767,7 +769,7 @@ struct Unsubtyping : Pass, Noter<Unsubtyping> {
         // a trap, then we have no way to preserve that trap without keeping the
         // descriptor around.
         if (trapsNeverHappen || getFunction() ||
-            curr->desc->type.isNonNullable()) {
+            curr->desc->type.isNonNullableRef()) {
           return;
         }
         // We must preserve the potential trap. When we update the instructions
@@ -1104,7 +1106,7 @@ struct Unsubtyping : Pass, Noter<Unsubtyping> {
         if (auto* func = getFunction()) {
           // Preserve a trap from a null descriptor if necessary.
           if (!getPassOptions().trapsNeverHappen &&
-              curr->desc->type.isNullable()) {
+              curr->desc->type.isNullableRef()) {
             curr->desc =
               Builder(*getModule()).makeRefAs(RefAsNonNull, curr->desc);
           }

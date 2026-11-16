@@ -22,8 +22,8 @@
 
   ;; CHECK:      (global $global-mut (mut i32) (i32.const 2))
 
-  ;; CHECK:      (memory $m 512 512)
-  (memory $m 512 512)
+  ;; CHECK:      (memory $m 512 65536)
+  (memory $m 512 65536)
   (data (memory $m) (i32.const 0) "hello!")
   (type $0 (func (param i32)))
   (global $global i32 (i32.const 1))
@@ -635,6 +635,18 @@
     (i32.const 12)
    )
   )
+  ;; CHECK:      (func $no-memory-grow-precompute (type $2) (result i32)
+  ;; CHECK-NEXT:  (memory.grow
+  ;; CHECK-NEXT:   (i32.const 32768)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $no-memory-grow-precompute (result i32)
+   ;; A very large memory.grow should not be precomputed and should not hit the
+   ;; shell interpreter's host memory limit.
+   (memory.grow
+    (i32.const 32768)
+   )
+  )
   ;; CHECK:      (func $tuple-precompute (type $6) (result i32 i64)
   ;; CHECK-NEXT:  (tuple.make 2
   ;; CHECK-NEXT:   (i32.const 42)
@@ -797,5 +809,14 @@
      (ref.null func)
     )
    )
+  )
+
+  ;; CHECK:      (func $atomic-fence (type $1)
+  ;; CHECK-NEXT:  (atomic.fence)
+  ;; CHECK-NEXT:  (atomic.fence acqrel)
+  ;; CHECK-NEXT: )
+  (func $atomic-fence
+    (atomic.fence)
+    (atomic.fence acqrel)
   )
 )
