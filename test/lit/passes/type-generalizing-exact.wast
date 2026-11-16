@@ -130,6 +130,8 @@
  (func $br_on_cast (param $exact (ref (exact $foo))) (result anyref)
   (local $x (ref (exact $foo)))
   ;; As above, but with br_on_cast.
+  ;; TODO: in CHECK we could generalize this to anyref, by adding more logic to
+  ;;       handle br_on like we handle ref.as
   (local.set $x
    (local.get $exact)
   )
