@@ -82,7 +82,6 @@ using Origin = OriginLattice::Element;
 // Metadata and lowered local variable assignments for a candidate allocation.
 struct AllocInfo {
   Expression* expr = nullptr;
-  Type type;
   FieldList fields;
   std::optional<HeapType> descHeapType;
   bool escaped = false;
@@ -308,7 +307,6 @@ struct GraphBuilder
     AllocId id = AllocId(state.allocs.size());
     auto& info = state.allocs.emplace_back();
     info.expr = curr;
-    info.type = curr->type;
     info.fields.assign(fields.begin(), fields.end());
     info.descHeapType = descHeapType;
     state.allocIds[curr] = id;
@@ -701,7 +699,8 @@ void computeOrigins(AnalysisState& state) {
         if (refOrigin.isTop()) {
           out = state.originLattice.getTop();
         } else if (const auto* alloc = refOrigin.getVal()) {
-          if (Type::isSubType(state.allocs[*alloc].type, site.expr->type)) {
+          if (Type::isSubType(state.allocs[*alloc].expr->type,
+                              site.expr->type)) {
             // Every subtype of a type with a descriptor also has a descriptor
             // (and a StructNew of that type must supply one).
             assert(!site.expr->desc ||
@@ -878,7 +877,7 @@ struct Optimizer : public PostWalker<Optimizer> {
 
   Expression* makeOptimizedNull(AllocId alloc) {
     return builder.makeRefNull(
-      state.allocs[alloc].type.getHeapType().getBottom());
+      state.allocs[alloc].expr->type.getHeapType().getBottom());
   }
 
   void visitLocalSet(LocalSet* curr) {
@@ -1045,7 +1044,8 @@ struct Optimizer : public PostWalker<Optimizer> {
   void visitRefTest(RefTest* curr) {
     if (auto alloc = getOptimizedAlloc(curr->ref)) {
       assert(curr->type != Type::unreachable);
-      int32_t res = Type::isSubType(state.allocs[*alloc].type, curr->castType);
+      int32_t res =
+        Type::isSubType(state.allocs[*alloc].expr->type, curr->castType);
       replaceCurrent(builder.makeSequence(builder.makeDrop(curr->ref),
                                           builder.makeConst(res)));
     }
@@ -1058,7 +1058,7 @@ struct Optimizer : public PostWalker<Optimizer> {
     auto refAlloc = getOptimizedAlloc(curr->ref);
     if (!curr->desc) {
       if (refAlloc) {
-        if (Type::isSubType(state.allocs[*refAlloc].type, curr->type)) {
+        if (Type::isSubType(state.allocs[*refAlloc].expr->type, curr->type)) {
           replaceCurrent(curr->ref);
         } else {
           replaceCurrent(builder.makeSequence(builder.makeDrop(curr->ref),
@@ -1111,7 +1111,7 @@ struct Optimizer : public PostWalker<Optimizer> {
       descTrap();
       return;
     }
-    assert(Type::isSubType(info.type, curr->type));
+    assert(Type::isSubType(info.expr->type, curr->type));
     assert(info.descHeapType.has_value());
 
     replaceCurrent(builder.makeSequence(
