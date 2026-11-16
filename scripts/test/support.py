@@ -46,7 +46,7 @@ def split_wast(wastFile):
         depth = 1
         while depth > 0 and j < len(wast):
             if wast[j] == '"':
-                while 1:
+                while True:
                     j = wast.find('"', j + 1)
                     if wast[j - 1] == '\\':
                         continue
@@ -136,7 +136,8 @@ def _subprocess_run(*args, **kwargs):
 
 
 def run_command(cmd, expected_status=0, stdout=None, stderr=None,
-                expected_err=None, err_contains=False, err_ignore=None):
+                expected_err=None, err_contains=False, err_ignore=None,
+                *, env=None):
     """Run a subprocess, returning its output.
 
     stderr - None, subprocess.PIPE, subprocess.STDOUT or a file handle / io.StringIO to write stdout to
@@ -149,7 +150,7 @@ def run_command(cmd, expected_status=0, stdout=None, stderr=None,
         stderr = subprocess.PIPE
     print('executing: ', ' '.join(cmd), file=stdout)
 
-    out, err, code = _subprocess_run(cmd, stdout=subprocess.PIPE, stderr=stderr, encoding='UTF-8')
+    out, err, code = _subprocess_run(cmd, stdout=subprocess.PIPE, stderr=stderr, encoding='UTF-8', env=env)
 
     if expected_status is not None and code != expected_status:
         raise Exception(f"run_command `{' '.join(cmd)}` failed ({code}) {err or ''}")

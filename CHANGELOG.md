@@ -15,13 +15,40 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
+- Add a new wasm-embed tool for extracting Wasm modules embedded as byte arrays
+  in JS source files or replacing such modules in the JS source (#9127)
+- Support reading and writing label names in the name section (#9166)
+- Add a `--constant-arrays-to-data` pass that converts `array.new_fixed` of
+  constant numeric values to `array.new_data` when that is smaller. It runs
+  in the last set of default optimizations (when
+  `--expect-later-toolchain-opts` is not passed).
+- [JS API] Four-argument `struct.get()` and `array.get()` methods
+  (with the fourth argument being `isSigned`) are no longer supported.
+  For unpacked types, call `struct/array.get()` with only three arguments;
+  for signed packed types, call `struct/array.get_s()`;
+  for unsigned packed types, call `struct/array.get_u()`.
+- Add a new `--relax-nullability` pass to force all locals and params to be
+  nullable. This exposes opportunities for type merging since function
+  signatures (and later structs/arrays) may no longer differ by nullability. It
+  also removes most `ref.as_non_null` instructions when paired with
+  `--traps-never-happen` and `--strip-refining-casts`. The pass currently
+  panics on tuples and can't be used with multivalue.
+
+v133
+----
+
 - Add a new `--constraint-analysis` pass which propagates logical facts along
-  branches. (#9010)
+  branches. The pass runs automatically in `-O3` and `-Os` and above. (#9010)
+- Add an optional TailCall optimization pass (`--tail-call`). (#9103)
+- Add an optional pass to remove empty function exports. (#9078)
 - Replace the `BINARYEN_ROOT` environment variable (used by developers who are
   doing out-of-tree builds of binaryen) with `BINARYEN_BIN` (#9023)
 - Reject non-natural alignment for atomic memory operations at parse time (#8962)
 - Note that fast-math mode can ignore the difference between negative zero and
   zero (like clang and gcc). (#9056)
+- [JS API] Organize types into enums (breaking change in JS API). (#9098)
+- [JS API] Expose heap types `exn` & `noexn` (#9057)
+- [JS API] Expose instructions `try_table` & `throw_ref` (#9057)
 
 v132
 ----

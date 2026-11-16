@@ -1084,7 +1084,7 @@ void TestBuiltTypes(std::pair<std::vector<HeapType>, TypeBuilderPlan> pair) {
   auto checkRefType = [&](RefPlan& plan, Type type) {
     ASSERT_TRUE(type.isRef());
     checkHeapType(plan.type, type.getHeapType());
-    EXPECT_EQ(plan.nullable, type.isNullable());
+    EXPECT_EQ(plan.nullable, type.isNullableRef());
   };
 
   auto checkType = [&](TypePlan& plan, Type type) {

@@ -6,19 +6,19 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (string.compare
   ;; CHECK-NEXT:    (string.const "hello")
-  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:    (ref.null noextern)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (string.compare
-  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:    (ref.null noextern)
   ;; CHECK-NEXT:    (string.const "world")
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (string.compare
-  ;; CHECK-NEXT:    (ref.null none)
-  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:    (ref.null noextern)
+  ;; CHECK-NEXT:    (ref.null noextern)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -33,19 +33,19 @@
     (drop
       (string.compare
         (string.const "hello")
-        (ref.null none)
+        (ref.null noextern)
       )
     )
     (drop
       (string.compare
-        (ref.null none)
+        (ref.null noextern)
         (string.const "world")
       )
     )
     (drop
       (string.compare
-        (ref.null none)
-        (ref.null none)
+        (ref.null noextern)
+        (ref.null noextern)
       )
     )
   )
@@ -64,19 +64,19 @@
     (drop
       (string.eq
         (string.const "hello")
-        (ref.null none)
+        (ref.null noextern)
       )
     )
     (drop
       (string.eq
-        (ref.null none)
+        (ref.null noextern)
         (string.const "world")
       )
     )
     (drop
       (string.eq
-        (ref.null none)
-        (ref.null none)
+        (ref.null noextern)
+        (ref.null noextern)
       )
     )
   )

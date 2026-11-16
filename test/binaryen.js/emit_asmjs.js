@@ -1,6 +1,6 @@
 var module = new binaryen.Module();
 
-module.addFunction("main", binaryen.i32, binaryen.i32, [], module.local.get(0, binaryen.i32));
+module.addFunction("main", binaryen.Type.i32, binaryen.Type.i32, [], module.local.get(0, binaryen.Type.i32));
 
 module.addFunctionExport("main", "main");
 

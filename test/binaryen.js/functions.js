@@ -10,7 +10,7 @@ function cleanInfo(info) {
 
 var module = new binaryen.Module();
 
-var func = module.addFunction("a-function", binaryen.none, binaryen.i32, [],
+var func = module.addFunction("a-function", binaryen.Type.none, binaryen.Type.i32, [],
   module.i32.add(
     module.i32.const(1),
     module.i32.const(2)
@@ -36,15 +36,15 @@ console.log(module.emitText());
 // Test wrapper
 
 func = module.addFunction("b-function",
-  binaryen.createType([binaryen.i32, binaryen.i32]),
-  binaryen.i32,
-  [ binaryen.i32, binaryen.f64 ],
+  binaryen.createType([binaryen.Type.i32, binaryen.Type.i32]),
+  binaryen.Type.i32,
+  [ binaryen.Type.i32, binaryen.Type.f64 ],
   module.local.tee(2,
     module.i32.add(
-      module.local.get(0, binaryen.i32),
-      module.local.get(1, binaryen.i32)
+      module.local.get(0, binaryen.Type.i32),
+      module.local.get(1, binaryen.Type.i32)
     ),
-    binaryen.i32
+    binaryen.Type.i32
   )
 );
 binaryen.Function.setLocalName(func, 0, "a");
@@ -54,11 +54,11 @@ binaryen.Function.setLocalName(func, 3, "unused");
 
 var theFunc = binaryen.Function(func);
 assert(theFunc.name === "b-function");
-assert(theFunc.params === binaryen.createType([binaryen.i32, binaryen.i32]));
-assert(theFunc.results === binaryen.i32);
+assert(theFunc.params === binaryen.createType([binaryen.Type.i32, binaryen.Type.i32]));
+assert(theFunc.results === binaryen.Type.i32);
 assert(theFunc.numVars === 2);
-assert(theFunc.getVar(0) === binaryen.i32);
-assert(theFunc.getVar(1) === binaryen.f64);
+assert(theFunc.getVar(0) === binaryen.Type.i32);
+assert(theFunc.getVar(1) === binaryen.Type.f64);
 assert(theFunc.numLocals === 4);
 assert(theFunc.getLocalName(0) === "a");
 assert(theFunc.getLocalName(1) === "b");

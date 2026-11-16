@@ -5,6 +5,8 @@
 (module
   ;; CHECK:      (type $0 (func (result v128)))
 
+  ;; CHECK:      (type $1 (func (result i32)))
+
   ;; CHECK:      (func $relaxed-max (type $0) (result v128)
   ;; CHECK-NEXT:  (f32x4.relaxed_max
   ;; CHECK-NEXT:   (v128.const i32x4 0x3f800000 0x40000000 0x40400000 0x40800000)
@@ -31,6 +33,42 @@
     (f32x4.max
       (v128.const f32x4 5 6 7 8)
       (v128.const f32x4 9 3 1 0)
+    )
+  )
+
+  ;; CHECK:      (func $relaxed-laneselect (type $1) (result i32)
+  ;; CHECK-NEXT:  (i32x4.extract_lane 0
+  ;; CHECK-NEXT:   (i32x4.relaxed_laneselect
+  ;; CHECK-NEXT:    (v128.const i32x4 0x00000001 0x00000001 0x00000001 0x00000001)
+  ;; CHECK-NEXT:    (v128.const i32x4 0x00000002 0x00000002 0x00000002 0x00000002)
+  ;; CHECK-NEXT:    (v128.const i32x4 0x7fffffff 0x7fffffff 0x7fffffff 0x7fffffff)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $relaxed-laneselect (result i32)
+    (i32x4.extract_lane 0
+      (i32x4.relaxed_laneselect
+        (v128.const i32x4 1 1 1 1)
+        (v128.const i32x4 2 2 2 2)
+        (v128.const i32x4 0x7fffffff 0x7fffffff 0x7fffffff 0x7fffffff)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $relaxed-dot (type $1) (result i32)
+  ;; CHECK-NEXT:  (i32x4.extract_lane 0
+  ;; CHECK-NEXT:   (i16x8.relaxed_dot_i8x16_i7x16_s
+  ;; CHECK-NEXT:    (v128.const i32x4 0xffffffff 0xffffffff 0xffffffff 0xffffffff)
+  ;; CHECK-NEXT:    (v128.const i32x4 0xffffffff 0xffffffff 0xffffffff 0xffffffff)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $relaxed-dot (result i32)
+    (i32x4.extract_lane 0
+      (i16x8.relaxed_dot_i8x16_i7x16_s
+        (v128.const i8x16 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1)
+        (v128.const i8x16 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1)
+      )
     )
   )
 )

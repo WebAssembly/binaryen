@@ -76,7 +76,7 @@
   ;; CHECK-BIN-NEXT:  (local $n f32)
   ;; CHECK-BIN-NEXT:  (local.tee $n
   ;; CHECK-BIN-NEXT:   (f32.neg
-  ;; CHECK-BIN-NEXT:    (block (result f32)
+  ;; CHECK-BIN-NEXT:    (block $block0 (result f32)
   ;; CHECK-BIN-NEXT:     (i32.store
   ;; CHECK-BIN-NEXT:      (local.get $k)
   ;; CHECK-BIN-NEXT:      (local.get $p)
@@ -127,21 +127,21 @@
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
   ;; CHECK-BIN:      (func $littleswitch (type $2) (param $x i32) (result i32)
-  ;; CHECK-BIN-NEXT:  (block $block2 (result i32)
-  ;; CHECK-BIN-NEXT:   (block $block1
-  ;; CHECK-BIN-NEXT:    (block $block
-  ;; CHECK-BIN-NEXT:     (br_table $block $block1 $block
+  ;; CHECK-BIN-NEXT:  (block $topmost (result i32)
+  ;; CHECK-BIN-NEXT:   (block $switch-case$2
+  ;; CHECK-BIN-NEXT:    (block $switch-case$1
+  ;; CHECK-BIN-NEXT:     (br_table $switch-case$1 $switch-case$2 $switch-case$1
   ;; CHECK-BIN-NEXT:      (i32.sub
   ;; CHECK-BIN-NEXT:       (local.get $x)
   ;; CHECK-BIN-NEXT:       (i32.const 1)
   ;; CHECK-BIN-NEXT:      )
   ;; CHECK-BIN-NEXT:     )
   ;; CHECK-BIN-NEXT:    )
-  ;; CHECK-BIN-NEXT:    (br $block2
+  ;; CHECK-BIN-NEXT:    (br $topmost
   ;; CHECK-BIN-NEXT:     (i32.const 1)
   ;; CHECK-BIN-NEXT:    )
   ;; CHECK-BIN-NEXT:   )
-  ;; CHECK-BIN-NEXT:   (br $block2
+  ;; CHECK-BIN-NEXT:   (br $topmost
   ;; CHECK-BIN-NEXT:    (i32.const 2)
   ;; CHECK-BIN-NEXT:   )
   ;; CHECK-BIN-NEXT:  )

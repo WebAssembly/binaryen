@@ -23,6 +23,18 @@
 
 namespace wasm::JSUtils {
 
+// Whether a field is immutable and a reference to a subtype of externref that
+// could hold a JS prototype.
+inline bool isPossibleJSPrototypeField(const Field& field) {
+  if (field.mutable_ != Immutable) {
+    return false;
+  }
+  if (!field.type.isRef()) {
+    return false;
+  }
+  return field.type.getHeapType().isMaybeShared(HeapType::ext);
+}
+
 // Whether this is a descriptor struct type whose first field is immutable and a
 // subtype of externref.
 inline bool hasPossibleJSPrototypeField(HeapType type) {
@@ -34,13 +46,7 @@ inline bool hasPossibleJSPrototypeField(HeapType type) {
   if (fields.empty()) {
     return false;
   }
-  if (fields[0].mutable_ == Mutable) {
-    return false;
-  }
-  if (!fields[0].type.isRef()) {
-    return false;
-  }
-  return fields[0].type.getHeapType().isMaybeShared(HeapType::ext);
+  return isPossibleJSPrototypeField(fields[0]);
 }
 
 // Calls flowIn and flowOut on all types that may flow in from or out to JS.

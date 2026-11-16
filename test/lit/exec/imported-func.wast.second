@@ -8,6 +8,7 @@
  )
 
  (import "primary" "func" (func $fimport (type $A)))
+ (import "fuzzing-support" "log" (func $host-import (type $A)))
 
  (func $cast-A (export "cast-A")
   (drop
@@ -57,8 +58,24 @@
   )
  )
 
+ (func $cast-host-A-exact (export "cast-host-A-exact")
+  ;; Host functions have the exact type of the import.
+  (drop
+   (ref.cast (ref (exact $A))
+    (ref.func $host-import)
+   )
+  )
+ )
+
+ (func $cast-host-B (export "cast-host-B")
+  (drop
+   (ref.cast (ref $B)
+    (ref.func $host-import)
+   )
+  )
+ )
+
  (func $last (export "last")
   ;; Just a non-trapping method to make the test output easier to read.
  )
 )
-

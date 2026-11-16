@@ -1,0 +1,87 @@
+// REQUIRES: node
+
+// Reduce multiple embedded Wasm modules in a JS file in reverse order (last to
+// first) and verify that both modules are minimized without offset drift.
+// RUN: wasm-reduce %s --js -t %t.test.js -w %t.working.js '--command=node %t.test.js' 2>&1 | filecheck %s --check-prefix=LOG
+// RUN: filecheck %s < %t.working.js
+// RUN: node %t.working.js | filecheck %s --check-prefix=OUT
+
+// LOG: |reducing embedded module 1 of 2
+// LOG: |input size: 52
+// LOG: |finished, final size: 34
+// LOG: |reducing embedded module 0 of 2
+// LOG: |input size: 52
+// LOG: |finished, final size: 34
+
+// Reduced module 0: (module (func (export "a") (result i32) (i32.const 10)))
+// Reduced module 1: (module (func (export "b") (result i32) (i32.const 32)))
+// CHECK:      const bytes0 = new Uint8Array([
+// CHECK-NEXT:   0x00, 0x61, 0x73, 0x6d, 0x01, 0x00, 0x00, 0x00, 0x01, 0x05, 0x01, 0x60, 0x00, 0x01, 0x7f, 0x03,
+// CHECK-NEXT:   0x02, 0x01, 0x00, 0x07, 0x05, 0x01, 0x01, 0x61, 0x00, 0x00, 0x0a, 0x06, 0x01, 0x04, 0x00, 0x41,
+// CHECK-NEXT:   0x0a, 0x0b
+// CHECK-NEXT: ]);
+// CHECK:      const bytes1 = new Uint8Array([
+// CHECK-NEXT:   0x00, 0x61, 0x73, 0x6d, 0x01, 0x00, 0x00, 0x00, 0x01, 0x05, 0x01, 0x60, 0x00, 0x01, 0x7f, 0x03,
+// CHECK-NEXT:   0x02, 0x01, 0x00, 0x07, 0x05, 0x01, 0x01, 0x62, 0x00, 0x00, 0x0a, 0x06, 0x01, 0x04, 0x00, 0x41,
+// CHECK-NEXT:   0x20, 0x0b
+// CHECK-NEXT: ]);
+// CHECK-NEXT: const inst0 = new WebAssembly.Instance(new WebAssembly.Module(bytes0));
+// CHECK-NEXT: const inst1 = new WebAssembly.Instance(new WebAssembly.Module(bytes1));
+// CHECK-NEXT: console.log(inst0.exports.a() + inst1.exports.b());
+
+// OUT: 42
+
+// Original module 0 (52 bytes):
+// (module
+//   (func $unused0 (param i32) (result i32)
+//     (i32.sub (local.get 0) (i32.const 77))
+//   )
+//   (func (export "a") (result i32)
+//     (i32.add (i32.const 7) (i32.const 3))
+//   )
+// )
+const bytes0 = new Uint8Array([
+  // Magic ("\0asm") and version (1)
+  0x00, 0x61, 0x73, 0x6d, 0x01, 0x00, 0x00, 0x00,
+  // Type section: 2 types
+  0x01, 0x0a, 0x02,
+  0x60, 0x01, 0x7f, 0x01, 0x7f, // type 0: (func (param i32) (result i32)) [removed with $unused0]
+  0x60, 0x00, 0x01, 0x7f,       // type 1: (func (result i32)) [kept]
+  // Function section: 2 functions (type 0 [removed], type 1 [kept])
+  0x03, 0x03, 0x02, 0x00, 0x01,
+  // Export section: export "a" -> func 1
+  0x07, 0x05, 0x01, 0x01, 0x61, 0x00, 0x01,
+  // Code section: 2 function bodies
+  0x0a, 0x12, 0x02,
+  0x08, 0x00, 0x20, 0x00, 0x41, 0xcd, 0x00, 0x6b, 0x0b, // func 0 ($unused0): (i32.sub (local.get 0) (i32.const 77)) [removed]
+  0x07, 0x00, 0x41, 0x07, 0x41, 0x03, 0x6a, 0x0b        // func 1 ("a"): (i32.add (i32.const 7) (i32.const 3)) [simplified to (i32.const 10)]
+]);
+
+// Original module 1 (52 bytes):
+// (module
+//   (func $unused1 (param i32) (result i32)
+//     (i32.xor (local.get 0) (i32.const 88))
+//   )
+//   (func (export "b") (result i32)
+//     (i32.add (i32.const 30) (i32.const 2))
+//   )
+// )
+const bytes1 = new Uint8Array([
+  // Magic ("\0asm") and version (1)
+  0x00, 0x61, 0x73, 0x6d, 0x01, 0x00, 0x00, 0x00,
+  // Type section: 2 types
+  0x01, 0x0a, 0x02,
+  0x60, 0x01, 0x7f, 0x01, 0x7f, // type 0: (func (param i32) (result i32)) [removed with $unused1]
+  0x60, 0x00, 0x01, 0x7f,       // type 1: (func (result i32)) [kept]
+  // Function section: 2 functions (type 0 [removed], type 1 [kept])
+  0x03, 0x03, 0x02, 0x00, 0x01,
+  // Export section: export "b" -> func 1
+  0x07, 0x05, 0x01, 0x01, 0x62, 0x00, 0x01,
+  // Code section: 2 function bodies
+  0x0a, 0x12, 0x02,
+  0x08, 0x00, 0x20, 0x00, 0x41, 0xd8, 0x00, 0x73, 0x0b, // func 0 ($unused1): (i32.xor (local.get 0) (i32.const 88)) [removed]
+  0x07, 0x00, 0x41, 0x1e, 0x41, 0x02, 0x6a, 0x0b        // func 1 ("b"): (i32.add (i32.const 30) (i32.const 2)) [simplified to (i32.const 32)]
+]);
+const inst0 = new WebAssembly.Instance(new WebAssembly.Module(bytes0));
+const inst1 = new WebAssembly.Instance(new WebAssembly.Module(bytes1));
+console.log(inst0.exports.a() + inst1.exports.b());

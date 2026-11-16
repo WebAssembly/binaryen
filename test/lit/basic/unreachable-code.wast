@@ -293,9 +293,9 @@
   ;; CHECK-TEXT-NEXT: )
   ;; CHECK-BIN:      (func $recurse (type $0)
   ;; CHECK-BIN-NEXT:  (nop)
-  ;; CHECK-BIN-NEXT:  (block $block
+  ;; CHECK-BIN-NEXT:  (block $b
   ;; CHECK-BIN-NEXT:   (nop)
-  ;; CHECK-BIN-NEXT:   (br $block)
+  ;; CHECK-BIN-NEXT:   (br $b)
   ;; CHECK-BIN-NEXT:  )
   ;; CHECK-BIN-NEXT:  (nop)
   ;; CHECK-BIN-NEXT: )
@@ -323,11 +323,11 @@
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
   ;; CHECK-BIN:      (func $recurse-b (type $0)
-  ;; CHECK-BIN-NEXT:  (block $block
+  ;; CHECK-BIN-NEXT:  (block $a
   ;; CHECK-BIN-NEXT:   (nop)
-  ;; CHECK-BIN-NEXT:   (block
+  ;; CHECK-BIN-NEXT:   (block $b
   ;; CHECK-BIN-NEXT:    (nop)
-  ;; CHECK-BIN-NEXT:    (br $block)
+  ;; CHECK-BIN-NEXT:    (br $a)
   ;; CHECK-BIN-NEXT:   )
   ;; CHECK-BIN-NEXT:   (unreachable)
   ;; CHECK-BIN-NEXT:  )

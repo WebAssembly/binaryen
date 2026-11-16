@@ -15,10 +15,72 @@
 import os
 import shutil
 import subprocess
-import sys
 
 from . import shared, support
 from .shared import print_heading
+
+
+def run_one_pass_test(t, stdout=None):
+    # windows has some failures that need to be investigated:
+    # * ttf tests have different outputs - order of execution of params?
+    # * dwarf tests print windows slashes instead of unix
+    if ('translate-to-fuzz' in t or 'dwarf' in t) and \
+       shared.skip_if_on_windows('fuzz translation tests'):
+        return
+    print('..', os.path.basename(t), file=stdout)
+    binary = t.endswith('.wasm')
+    base = os.path.basename(t).replace('.wast', '').replace('.wasm', '')
+    passname = base
+    passes_file = os.path.join(shared.get_test_dir('passes'), passname + '.passes')
+    if os.path.exists(passes_file):
+        passname = open(passes_file).read().strip()
+    passes = [p for p in passname.split('_') if p != 'noprint']
+    opts = [('--' + p if not p.startswith('O') and p != 'g' else '-' + p) for p in passes]
+    actual = ''
+    split_wast = f'split_{base}.wast'
+    try:
+        for module, asserts in support.split_wast(t):
+            assert len(asserts) == 0
+            support.write_wast(split_wast, module)
+            cmd = shared.WASM_OPT + opts + [split_wast, '-q']
+            if 'noprint' not in t:
+                cmd.append('--print')
+            curr = support.run_command(cmd, stdout=stdout)
+            actual += curr
+            # also check debug mode output is valid
+            debugged = support.run_command(cmd + ['--debug'], stderr=subprocess.PIPE, stdout=stdout)
+            shared.fail_if_not_contained(actual, debugged)
+
+            # also check pass-debug mode
+            # ignore stderr, as the pass-debug output is very verbose in CI
+            pass_debug = support.run_command(cmd, stderr=subprocess.PIPE, stdout=stdout, env=shared.pass_debug_env())
+            shared.fail_if_not_identical(curr, pass_debug)
+
+        expected_file = os.path.join(shared.get_test_dir('passes'), base + ('.bin' if binary else '') + '.txt')
+        shared.fail_if_not_identical_to_file(actual, expected_file)
+
+        if 'emit-js-wrapper' in t:
+            with open('a.js') as actual_wrapper:
+                shared.fail_if_not_identical_to_file(actual_wrapper.read(), t + '.js')
+        if 'emit-spec-wrapper' in t:
+            with open('a.wat') as actual_wrapper:
+                shared.fail_if_not_identical_to_file(actual_wrapper.read(), t + '.wat')
+    finally:
+        shared.delete_from_orbit(split_wast)
+
+
+def run_one_print_test(t, stdout=None):
+    print('..', os.path.basename(t), file=stdout)
+    wasm = os.path.basename(t).replace('.wast', '')
+    cmd = shared.WASM_OPT + [t, '--print', '-all']
+    print('    ', ' '.join(cmd), file=stdout)
+    proc = subprocess.run(cmd, capture_output=True, text=True)
+    expected_file = os.path.join(shared.get_test_dir('print'), wasm + '.txt')
+    shared.fail_if_not_identical_to_file(proc.stdout, expected_file)
+    cmd = shared.WASM_OPT + [os.path.join(shared.get_test_dir('print'), t), '--print-minified', '-all']
+    print('    ', ' '.join(cmd), file=stdout)
+    proc = subprocess.run(cmd, capture_output=True, text=True)
+    shared.fail_if_not_identical(proc.stdout.strip(), open(os.path.join(shared.get_test_dir('print'), wasm + '.minified.txt')).read().strip())
 
 
 def test_wasm_opt():
@@ -43,72 +105,12 @@ def test_wasm_opt():
     assert open('b.wast', 'rb').read()[0] != 0, 'we emit text with -S'
 
     print_heading('checking wasm-opt passes...')
-
-    for t in shared.get_tests(shared.get_test_dir('passes'), ['.wast', '.wasm']):
-        print('..', os.path.basename(t))
-        # windows has some failures that need to be investigated:
-        # * ttf tests have different outputs - order of execution of params?
-        # * dwarf tests print windows slashes instead of unix
-        if ('translate-to-fuzz' in t or 'dwarf' in t) and \
-           shared.skip_if_on_windows('fuzz translation tests'):
-            continue
-        binary = t.endswith('.wasm')
-        base = os.path.basename(t).replace('.wast', '').replace('.wasm', '')
-        passname = base
-        passes_file = os.path.join(shared.get_test_dir('passes'), passname + '.passes')
-        if os.path.exists(passes_file):
-            passname = open(passes_file).read().strip()
-        passes = [p for p in passname.split('_') if p != 'noprint']
-        opts = [('--' + p if not p.startswith('O') and p != 'g' else '-' + p) for p in passes]
-        actual = ''
-        for module, asserts in support.split_wast(t):
-            # Flush stdout/stderr between each test.  This prevent confusing
-            # interleaving in output of github CI
-            # TODO: Find a better, more systematic way to achieve this that
-            # works for all test suites.
-            sys.stdout.flush()
-            sys.stderr.flush()
-            assert len(asserts) == 0
-            support.write_wast('split.wast', module)
-            cmd = shared.WASM_OPT + opts + ['split.wast', '-q']
-            if 'noprint' not in t:
-                cmd.append('--print')
-            curr = support.run_command(cmd)
-            actual += curr
-            # also check debug mode output is valid
-            debugged = support.run_command(cmd + ['--debug'], stderr=subprocess.PIPE)
-            shared.fail_if_not_contained(actual, debugged)
-
-            # also check pass-debug mode
-            with shared.with_pass_debug():
-                # ignore stderr, as the pass-debug output is very verbose in CI
-                pass_debug = support.run_command(cmd, stderr=subprocess.PIPE)
-                shared.fail_if_not_identical(curr, pass_debug)
-
-        expected_file = os.path.join(shared.get_test_dir('passes'), base + ('.bin' if binary else '') + '.txt')
-        shared.fail_if_not_identical_to_file(actual, expected_file)
-
-        if 'emit-js-wrapper' in t:
-            with open('a.js') as actual:
-                shared.fail_if_not_identical_to_file(actual.read(), t + '.js')
-        if 'emit-spec-wrapper' in t:
-            with open('a.wat') as actual:
-                shared.fail_if_not_identical_to_file(actual.read(), t + '.wat')
+    passes_tests = shared.get_tests(shared.get_test_dir('passes'), ['.wast', '.wasm'])
+    shared.run_parallel_tests(run_one_pass_test, passes_tests)
 
     print_heading('checking wasm-opt parsing & printing...')
-
-    for t in shared.get_tests(shared.get_test_dir('print'), ['.wast']):
-        print('..', os.path.basename(t))
-        wasm = os.path.basename(t).replace('.wast', '')
-        cmd = shared.WASM_OPT + [t, '--print', '-all']
-        print('    ', ' '.join(cmd))
-        proc = subprocess.run(cmd, capture_output=True, text=True)
-        expected_file = os.path.join(shared.get_test_dir('print'), wasm + '.txt')
-        shared.fail_if_not_identical_to_file(proc.stdout, expected_file)
-        cmd = shared.WASM_OPT + [os.path.join(shared.get_test_dir('print'), t), '--print-minified', '-all']
-        print('    ', ' '.join(cmd))
-        proc = subprocess.run(cmd, capture_output=True, text=True)
-        shared.fail_if_not_identical(proc.stdout.strip(), open(os.path.join(shared.get_test_dir('print'), wasm + '.minified.txt')).read().strip())
+    print_tests = shared.get_tests(shared.get_test_dir('print'), ['.wast'])
+    shared.run_parallel_tests(run_one_print_test, print_tests)
 
 
 def update_wasm_opt_tests():

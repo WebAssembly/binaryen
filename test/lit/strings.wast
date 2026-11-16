@@ -31,6 +31,8 @@
 
   ;; CHECK:      (type $8 (func (param stringref (ref $array) (ref $array16))))
 
+  ;; CHECK:      (type $9 (func (param stringref i32) (result i32)))
+
   ;; CHECK:      (import "env" "get-string-ref" (func $get-string-ref (type $4) (result externref)))
   (import "env" "get-string-ref" (func $get-string-ref  (result externref)))
 
@@ -202,6 +204,13 @@
   ;; CHECK-NEXT:    (i32.const 10)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (string.encode_wtf16_array
+  ;; CHECK-NEXT:    (ref.null noextern)
+  ;; CHECK-NEXT:    (local.get $array16)
+  ;; CHECK-NEXT:    (i32.const 30)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $string.encode.gc (param $ref stringref) (param $array (ref $array)) (param $array16 (ref $array16))
     (drop
@@ -219,6 +228,41 @@
         (local.get $array)
         (i32.const 10)
       )
+    )
+    ;; A null string reference is still a valid string.encode input and should
+    ;; not be replaced with unreachable.
+    (drop
+      (string.encode_wtf16_array
+        (ref.null noextern)
+        (local.get $array16)
+        (i32.const 30)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $string.encode.null-array (type $9) (param $ref stringref) (param $start i32) (result i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $ref)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $start)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $string.encode.null-array (param $ref stringref) (param $start i32) (result i32)
+    ;; A null array reference has no array type and is replaced with
+    ;; unreachable.
+    (string.encode_wtf16_array
+      (local.get $ref)
+      (ref.as_non_null
+        (ref.null none)
+      )
+      (local.get $start)
     )
   )
 

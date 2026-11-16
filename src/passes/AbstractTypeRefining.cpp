@@ -371,6 +371,13 @@ struct AbstractTypeRefining : public Pass {
       // This might cause the casts to incorrectly start succeeding. To avoid
       // that, optimize them out first.
       void visitRefCast(RefCast* curr) {
+        if (curr->ref->type == Type::unreachable ||
+            (curr->desc && curr->desc->type == Type::unreachable)) {
+          // A child may have become unreachable earlier in Preoptimizer, before
+          // ReFinalize has run. Propagate unreachability and skip optimizing.
+          curr->type = Type::unreachable;
+          return;
+        }
         auto optimized = getOptimized(curr->type);
         if (!optimized) {
           return;
@@ -383,7 +390,7 @@ struct AbstractTypeRefining : public Pass {
         Builder builder(*getModule());
         if (curr->type.isExact() || (curr->desc && optimized->isBottom())) {
           if (curr->desc) {
-            if (curr->desc->type.isNullable() &&
+            if (curr->desc->type.isNullableRef() &&
                 !getPassOptions().trapsNeverHappen) {
               curr->desc = builder.makeRefAs(RefAsNonNull, curr->desc);
             }
@@ -402,6 +409,11 @@ struct AbstractTypeRefining : public Pass {
       // If we optimize away a descriptor type, then we must fix up any
       // ref.get_desc of it, as ReFinalize would fix us up to return it.
       void visitRefGetDesc(RefGetDesc* curr) {
+        if (curr->ref->type == Type::unreachable) {
+          // As in visitRefCast, propagate unreachability and skip optimizing.
+          curr->type = Type::unreachable;
+          return;
+        }
         auto optimized = getOptimized(curr->type);
         if (!optimized) {
           return;
@@ -430,6 +442,12 @@ struct AbstractTypeRefining : public Pass {
       }
 
       void visitBrOn(BrOn* curr) {
+        if (curr->ref->type == Type::unreachable ||
+            (curr->desc && curr->desc->type == Type::unreachable)) {
+          // As in visitRefCast, propagate unreachability and skip optimizing.
+          curr->type = Type::unreachable;
+          return;
+        }
         if (curr->op == BrOnNull || curr->op == BrOnNonNull) {
           return;
         }
@@ -442,7 +460,7 @@ struct AbstractTypeRefining : public Pass {
         bool isFail = curr->op == BrOnCastDescEqFail;
         if (curr->castType.isExact() || (curr->desc && optimized->isBottom())) {
           if (curr->desc) {
-            if (curr->desc->type.isNullable() &&
+            if (curr->desc->type.isNullableRef() &&
                 !getPassOptions().trapsNeverHappen) {
               curr->desc = builder.makeRefAs(RefAsNonNull, curr->desc);
             }

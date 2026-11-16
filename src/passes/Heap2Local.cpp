@@ -153,7 +153,6 @@
 #include "ir/abstract.h"
 #include "ir/bits.h"
 #include "ir/branch-utils.h"
-#include "ir/eh-utils.h"
 #include "ir/local-graph.h"
 #include "ir/parents.h"
 #include "ir/properties.h"
@@ -612,9 +611,11 @@ struct Struct2Local : PostWalker<Struct2Local> {
   Struct2Local(StructNew* allocation,
                EscapeAnalyzer& analyzer,
                Function* func,
-               Module& wasm)
+               Module& wasm,
+               bool refinalize_ = false)
     : allocation(allocation), analyzer(analyzer), func(func), wasm(wasm),
-      builder(wasm), fields(allocation->type.getHeapType().getStruct().fields) {
+      builder(wasm), fields(allocation->type.getHeapType().getStruct().fields),
+      refinalize(refinalize_) {
 
     // Allocate locals to store the allocation's fields and descriptor in.
     for (auto field : fields) {
@@ -769,7 +770,7 @@ struct Struct2Local : PostWalker<Struct2Local> {
       // Preserve the trapping on null descriptors by inserting a
       // ref.as_non_null.
       Expression* desc = curr->desc;
-      if (curr->desc->type.isNullable()) {
+      if (curr->desc->type.isNullableRef()) {
         desc = builder.makeRefAs(RefAsNonNull, desc);
       }
       contents.push_back(builder.makeLocalSet(tempIndexes[numTemps - 1], desc));
@@ -898,7 +899,9 @@ struct Struct2Local : PostWalker<Struct2Local> {
         // side effects, but that local.set would not be reflected in the parent
         // map, so it would not be updated if the allocation flowing through
         // that desc operand were later optimized.
-        if (allocIsCastDescEq && !allocIsCastRef && curr->type.isNullable()) {
+        if (allocIsCastDescEq && !allocIsCastRef &&
+            curr->type.isNullableRef() &&
+            curr->ref->type != Type::unreachable) {
           // There might be a null value to let through. Reuse curr as a cast to
           // null. Use a scratch local to move the reference value past the desc
           // value.
@@ -1117,7 +1120,8 @@ struct Struct2Local : PostWalker<Struct2Local> {
   }
 
   void visitStructCmpxchg(StructCmpxchg* curr) {
-    if (curr->type == Type::unreachable) {
+    if (curr->type == Type::unreachable ||
+        curr->ref->type == Type::unreachable) {
       // Leave this for DCE.
       return;
     }
@@ -1129,6 +1133,18 @@ struct Struct2Local : PostWalker<Struct2Local> {
       auto type = curr->type;
       assert(type == field.type);
       assert(!field.isPacked());
+      auto local = localIndexes[curr->index];
+
+      if (analyzer.getInteraction(curr->expected) ==
+          ParentChildInteraction::Flows) {
+        // Since the allocation does not escape, it cannot possibly match the
+        // value already in the struct. The cmpxchg will just do a read.
+        replaceCurrent(builder.makeBlock({builder.makeDrop(curr->ref),
+                                          builder.makeDrop(curr->expected),
+                                          builder.makeDrop(curr->replacement),
+                                          builder.makeLocalGet(local, type)}));
+        return;
+      }
 
       // Hold everything in scratch locals, just like for other RMW ops and
       // struct.new. Use a nullable (shared) eqref local for `expected` to
@@ -1141,7 +1157,6 @@ struct Struct2Local : PostWalker<Struct2Local> {
       auto oldScratch = builder.addVar(func, type);
       auto expectedScratch = builder.addVar(func, expectedType);
       auto replacementScratch = builder.addVar(func, type);
-      auto local = localIndexes[curr->index];
 
       auto* block = builder.makeBlock(
         {builder.makeDrop(curr->ref),
@@ -1194,12 +1209,16 @@ struct Struct2Local : PostWalker<Struct2Local> {
                                      builder.makeDrop(curr->expected),
                                      builder.makeDrop(curr->replacement),
                                      structGet});
+    if (block->type != curr->type) {
+      refinalize = true;
+    }
     replaceCurrent(block);
     return;
   }
 
   void visitArrayCmpxchg(ArrayCmpxchg* curr) {
-    if (curr->type == Type::unreachable) {
+    if (curr->type == Type::unreachable ||
+        curr->ref->type == Type::unreachable) {
       // Leave this for DCE.
       return;
     }
@@ -1226,6 +1245,9 @@ struct Struct2Local : PostWalker<Struct2Local> {
                                        builder.makeDrop(curr->expected),
                                        builder.makeDrop(curr->replacement),
                                        arrayGet});
+      if (block->type != curr->type) {
+        refinalize = true;
+      }
       replaceCurrent(block);
       // Since `ref` must be an array and arrays are processed before structs,
       // it is not possible that `ref` will be processed later. We therefore do
@@ -1274,43 +1296,6 @@ struct Array2Struct : PostWalker<Array2Struct> {
     typeBuilder[0].setShared(arrayType.getShared());
     structType = (*typeBuilder.build())[0];
 
-    // Generate a StructNew to replace the ArrayNew*.
-    if (auto* arrayNew = allocation->dynCast<ArrayNew>()) {
-      if (arrayNew->isWithDefault()) {
-        structNew = builder.makeStructNew(structType, {});
-        arrayNewReplacement = structNew;
-      } else {
-        // The ArrayNew is writing the same value to each slot of the array. To
-        // do the same for the struct, we store that value in an local and
-        // generate multiple local.gets of it.
-        auto local = builder.addVar(func, element.type);
-        auto* set = builder.makeLocalSet(local, arrayNew->init);
-        std::vector<Expression*> gets;
-        for (Index i = 0; i < numFields; i++) {
-          gets.push_back(builder.makeLocalGet(local, element.type));
-        }
-        structNew = builder.makeStructNew(structType, gets);
-        // The ArrayNew* will be replaced with a block containing the local.set
-        // and the structNew.
-        arrayNewReplacement = builder.makeSequence(set, structNew);
-      }
-    } else if (auto* arrayNewFixed = allocation->dynCast<ArrayNewFixed>()) {
-      // Simply use the same values as the array.
-      structNew = builder.makeStructNew(structType, arrayNewFixed->values);
-      arrayNewReplacement = structNew;
-    } else {
-      WASM_UNREACHABLE("bad allocation");
-    }
-
-    // Mark new expressions we created as flowing out the allocation. We need to
-    // inform the analysis of this because Struct2Local will only process such
-    // code (it depends on the analysis to tell it what the allocation is and
-    // where it flowed). Note that the two values here may be identical but
-    // there is no harm to doing this twice in that case.
-    analyzer.reachedInteractions[structNew] =
-      analyzer.reachedInteractions[arrayNewReplacement] =
-        ParentChildInteraction::Flows;
-
     // Update types along the path reached by the allocation: whenever we see
     // the array type, it should be the struct type. Note that we do this before
     // the walk that is after us, because the walk may read these types and
@@ -1350,10 +1335,6 @@ struct Array2Struct : PostWalker<Array2Struct> {
 
     // Replace the things we need to using the visit* methods.
     walk(func->body);
-
-    if (refinalize) {
-      ReFinalize().walkFunctionInModule(func, &wasm);
-    }
   }
 
   Expression* replaceCurrent(Expression* expression) {
@@ -1373,19 +1354,52 @@ struct Array2Struct : PostWalker<Array2Struct> {
   // optimize that StructNew using Struct2Local.
   StructNew* structNew;
 
-  // The replacement for the original ArrayNew*. Typically this is |structNew|,
-  // unless we have additional code we need alongside it.
-  Expression* arrayNewReplacement;
-
   void visitArrayNew(ArrayNew* curr) {
     if (curr == allocation) {
+      // Generate a StructNew to replace the ArrayNew.
+      Expression* arrayNewReplacement;
+      if (curr->isWithDefault()) {
+        structNew = builder.makeStructNew(structType, {});
+        arrayNewReplacement = structNew;
+      } else {
+        // The ArrayNew is writing the same value to each slot of the array. To
+        // do the same for the struct, we store that value in a local and
+        // generate multiple local.gets of it.
+        auto elementType = originalType.getHeapType().getArray().element.type;
+        auto local = builder.addVar(func, elementType);
+        auto* set = builder.makeLocalSet(local, curr->init);
+        std::vector<Expression*> gets;
+        for (Index i = 0; i < numFields; i++) {
+          gets.push_back(builder.makeLocalGet(local, elementType));
+        }
+        structNew = builder.makeStructNew(structType, gets);
+        // The ArrayNew* will be replaced with a block containing the local.set
+        // and the structNew.
+        arrayNewReplacement = builder.makeSequence(set, structNew);
+      }
+      // Mark the new StructNew as flowing out the allocation so Struct2Local
+      // will process it. (replaceCurrent below does the same for
+      // arrayNewReplacement.)
+      analyzer.reachedInteractions[structNew] = ParentChildInteraction::Flows;
       replaceCurrent(arrayNewReplacement);
     }
   }
 
   void visitArrayNewFixed(ArrayNewFixed* curr) {
     if (curr == allocation) {
-      replaceCurrent(arrayNewReplacement);
+      // Simply use the same values as the array. An operand may have become
+      // unreachable during the walk (e.g. an OOB array.get of this allocation
+      // in an unreachable loop), which causes makeStructNew to finalize
+      // structNew->type to unreachable. However, we still must run Struct2Local
+      // because Array2Struct has already rewritten reached expressions (such as
+      // local.gets) to use structType without updating local types, leaving the
+      // IR invalid until Struct2Local removes them. Keep structNew->type as the
+      // concrete struct type (the only place StructNew stores its HeapType) and
+      // defer ReFinalize until the end of Struct2Local so Struct2Local can look
+      // up the struct fields and replace structNew.
+      structNew = builder.makeStructNew(structType, curr->values);
+      structNew->type = Type(structType, NonNullable, Exact);
+      replaceCurrent(structNew);
     }
   }
 
@@ -1601,15 +1615,8 @@ struct Heap2Local {
         // some cases, so to be careful here use a fairly small limit.
         return size < 20;
       }
-
-      // Also note if a pop exists here, as they may require fixups.
-      bool hasPop = false;
-
-      void visitPop(Pop* curr) { hasPop = true; }
     } finder;
     finder.walk(func->body);
-
-    bool optimized = false;
 
     // First, lower non-escaping arrays into structs. That allows us to handle
     // arrays in a single place, and let all the rest of this pass assume we are
@@ -1627,10 +1634,12 @@ struct Heap2Local {
       if (!analyzer.escapes(allocation)) {
         // Convert the allocation and all its uses into a struct. Then convert
         // the struct into locals.
-        auto* structNew =
-          Array2Struct(allocation, analyzer, func, wasm).structNew;
-        Struct2Local(structNew, analyzer, func, wasm);
-        optimized = true;
+        Array2Struct array2Struct(allocation, analyzer, func, wasm);
+        Struct2Local(array2Struct.structNew,
+                     analyzer,
+                     func,
+                     wasm,
+                     array2Struct.refinalize);
         resetAnalysisData();
       }
     }
@@ -1647,16 +1656,8 @@ struct Heap2Local {
         *localGraph, *parents, *branchTargets, passOptions, wasm);
       if (!analyzer.escapes(allocation)) {
         Struct2Local(allocation, analyzer, func, wasm);
-        optimized = true;
         resetAnalysisData();
       }
-    }
-
-    // We conservatively run the EH pop fixup if this function has a 'pop' and
-    // if we have ever optimized, as all of the things we do here involve
-    // creating blocks, so we might have moved pops into the blocks.
-    if (finder.hasPop && optimized) {
-      EHUtils::handleBlockNestedPops(func, wasm);
     }
   }
 

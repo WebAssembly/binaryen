@@ -156,8 +156,8 @@ template<typename CompareTypes> struct RecGroupComparator {
       return compare(a.getTuple(), b.getTuple());
     }
     assert(a.isRef() && b.isRef());
-    if (a.isNullable() != b.isNullable()) {
-      return a.isNullable() < b.isNullable() ? LT : GT;
+    if (a.isNullableRef() != b.isNullableRef()) {
+      return a.isNullableRef() < b.isNullableRef() ? LT : GT;
     }
     if (a.isExact() != b.isExact()) {
       return a.isExact() < b.isExact() ? LT : GT;
@@ -310,7 +310,7 @@ struct RecGroupHasher {
       return digest;
     }
     assert(type.isRef());
-    wasm::rehash(digest, type.isNullable());
+    wasm::rehash(digest, type.isNullableRef());
     wasm::rehash(digest, type.isExact());
     hash_combine(digest, hash(type.getHeapType()));
     return digest;

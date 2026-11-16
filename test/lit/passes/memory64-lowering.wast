@@ -366,6 +366,18 @@
 
   ;; CHECK:      (type $1 (func (result i64)))
 
+  ;; CHECK:      (type $2 (func (param i64) (result funcref)))
+
+  ;; CHECK:      (type $3 (func (result funcref)))
+
+  ;; CHECK:      (type $4 (func (param funcref)))
+
+  ;; CHECK:      (type $5 (func (param i64 funcref)))
+
+  ;; CHECK:      (type $6 (func (param i32) (result funcref)))
+
+  ;; CHECK:      (type $7 (func (param i32 funcref)))
+
   ;; CHECK:      (table $t64 10 100 funcref)
   (table $t64 i64 10 100 funcref)
 
@@ -455,6 +467,86 @@
   ;; CHECK-NEXT: )
   (func $test_table_init
     (table.init $t64 $elem64 (i64.const 0) (i32.const 5) (i32.const 10))
+  )
+
+  ;; CHECK:      (func $test_table_get (result funcref)
+  ;; CHECK-NEXT:  (table.get $t64
+  ;; CHECK-NEXT:   (i32.wrap_i64
+  ;; CHECK-NEXT:    (i64.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test_table_get (result funcref)
+    (table.get $t64 (i64.const 0))
+  )
+
+  ;; CHECK:      (func $test_table_set (param $x funcref)
+  ;; CHECK-NEXT:  (table.set $t64
+  ;; CHECK-NEXT:   (i32.wrap_i64
+  ;; CHECK-NEXT:    (i64.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test_table_set (param $x funcref)
+    (table.set $t64 (i64.const 0) (local.get $x))
+  )
+
+  ;; CHECK:      (func $test_table_get_dynamic (param $i i64) (result funcref)
+  ;; CHECK-NEXT:  (table.get $t64
+  ;; CHECK-NEXT:   (i32.wrap_i64
+  ;; CHECK-NEXT:    (local.get $i)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test_table_get_dynamic (param $i i64) (result funcref)
+    (table.get $t64 (local.get $i))
+  )
+
+  ;; CHECK:      (func $test_table_set_dynamic (param $i i64) (param $x funcref)
+  ;; CHECK-NEXT:  (table.set $t64
+  ;; CHECK-NEXT:   (i32.wrap_i64
+  ;; CHECK-NEXT:    (local.get $i)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test_table_set_dynamic (param $i i64) (param $x funcref)
+    (table.set $t64 (local.get $i) (local.get $x))
+  )
+
+  ;; CHECK:      (func $test_table_get_nested (param $i i64) (result funcref)
+  ;; CHECK-NEXT:  (table.get $t64
+  ;; CHECK-NEXT:   (i32.wrap_i64
+  ;; CHECK-NEXT:    (i64.add
+  ;; CHECK-NEXT:     (local.get $i)
+  ;; CHECK-NEXT:     (i64.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test_table_get_nested (param $i i64) (result funcref)
+    (table.get $t64 (i64.add (local.get $i) (i64.const 1)))
+  )
+
+  ;; The index of an i32 table must not be wrapped.
+  ;; CHECK:      (func $test_table_get_32 (param $i i32) (result funcref)
+  ;; CHECK-NEXT:  (table.get $t32
+  ;; CHECK-NEXT:   (local.get $i)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test_table_get_32 (param $i i32) (result funcref)
+    (table.get $t32 (local.get $i))
+  )
+
+  ;; CHECK:      (func $test_table_set_32 (param $i i32) (param $x funcref)
+  ;; CHECK-NEXT:  (table.set $t32
+  ;; CHECK-NEXT:   (local.get $i)
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test_table_set_32 (param $i i32) (param $x funcref)
+    (table.set $t32 (local.get $i) (local.get $x))
   )
 )
 

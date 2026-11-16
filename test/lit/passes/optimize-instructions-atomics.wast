@@ -13,8 +13,22 @@
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i32.atomic.load8_u
+ ;; CHECK-NEXT:    (i32.const 100)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i32.extend8_s
+ ;; CHECK-NEXT:    (i32.atomic.load8_u
+ ;; CHECK-NEXT:     (i32.const 100)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $x
+  ;; An 8-bit shift sign-extend cannot be folded into an atomic load, which
+  ;; cannot be signed, so it is only canonicalized to i32.extend8_s.
   (drop
    (i32.shr_s
     (i32.shl
@@ -24,6 +38,27 @@
      (i32.const 24)
     )
     (i32.const 24)
+   )
+  )
+  ;; A 12-bit shift sign-extend on an 8-bit unsigned atomic load is a no-op
+  ;; because the upper bits of the 12-bit value are already zero.
+  (drop
+   (i32.shr_s
+    (i32.shl
+     (i32.atomic.load8_u ;; can't be signed
+      (i32.const 100)
+     )
+     (i32.const 20)
+    )
+    (i32.const 20)
+   )
+  )
+  ;; A unary sign-extend also cannot be folded into an atomic load.
+  (drop
+   (i32.extend8_s
+    (i32.atomic.load8_u ;; can't be signed
+     (i32.const 100)
+    )
    )
   )
  )
@@ -90,5 +125,153 @@
   (drop (i64.extend_i32_s (i32.atomic.load16_u (local.get $x))))
   ;; skips
   (drop (i64.extend_i32_s (i32.atomic.load (local.get $x))))
+ )
+
+ ;; CHECK:      (func $select-atomic-rmw (result i32)
+ ;; CHECK-NEXT:  (select
+ ;; CHECK-NEXT:   (i32.atomic.rmw16.xchg_u
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:    (i32.const 1)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (i32.atomic.rmw16.xchg_u
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:    (i32.const 1)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (i32.const 1)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $select-atomic-rmw (result i32)
+  ;; The first rmw here influences the second, and we need to return the result
+  ;; of the first, which means we need a temp local. We avoid adding one and do
+  ;; not optimize here. Other instructions are tested in the functions below.
+  (select
+   (i32.atomic.rmw16.xchg_u
+    (i32.const 0)
+    (i32.const 1)
+   )
+   (i32.atomic.rmw16.xchg_u
+    (i32.const 0)
+    (i32.const 1)
+   )
+   (i32.const 1)
+  )
+ )
+
+ ;; CHECK:      (func $select-atomic-cmpxchg (result i32)
+ ;; CHECK-NEXT:  (select
+ ;; CHECK-NEXT:   (i32.atomic.rmw.cmpxchg
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:    (i32.const 1)
+ ;; CHECK-NEXT:    (i32.const 2)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (i32.atomic.rmw.cmpxchg
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:    (i32.const 1)
+ ;; CHECK-NEXT:    (i32.const 2)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (i32.const 1)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $select-atomic-cmpxchg (result i32)
+  (select
+   (i32.atomic.rmw.cmpxchg
+    (i32.const 0)
+    (i32.const 1)
+    (i32.const 2)
+   )
+   (i32.atomic.rmw.cmpxchg
+    (i32.const 0)
+    (i32.const 1)
+    (i32.const 2)
+   )
+   (i32.const 1)
+  )
+ )
+
+ ;; CHECK:      (func $select-atomic-wait (result i32)
+ ;; CHECK-NEXT:  (select
+ ;; CHECK-NEXT:   (memory.atomic.wait32
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:    (i32.const 1)
+ ;; CHECK-NEXT:    (i64.const 2)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (memory.atomic.wait32
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:    (i32.const 1)
+ ;; CHECK-NEXT:    (i64.const 2)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (i32.const 1)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $select-atomic-wait (result i32)
+  (select
+   (memory.atomic.wait32
+    (i32.const 0)
+    (i32.const 1)
+    (i64.const 2)
+   )
+   (memory.atomic.wait32
+    (i32.const 0)
+    (i32.const 1)
+    (i64.const 2)
+   )
+   (i32.const 1)
+  )
+ )
+
+ ;; CHECK:      (func $select-atomic-notify (result i32)
+ ;; CHECK-NEXT:  (select
+ ;; CHECK-NEXT:   (memory.atomic.notify
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:    (i32.const 1)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (memory.atomic.notify
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:    (i32.const 1)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (i32.const 1)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $select-atomic-notify (result i32)
+  (select
+   (memory.atomic.notify
+    (i32.const 0)
+    (i32.const 1)
+   )
+   (memory.atomic.notify
+    (i32.const 0)
+    (i32.const 1)
+   )
+   (i32.const 1)
+  )
+ )
+
+ ;; CHECK:      (func $select-atomic-load (result i32)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i32.atomic.load
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i32.const 1)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (i32.atomic.load
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $select-atomic-load (result i32)
+  ;; For comparison with above, when the instruction is not generative, we can
+  ;; optimize: the two atomic loads must return the same thing, so we drop the
+  ;; first and return the second (even though the first is what the select
+  ;; returns).
+  (select
+   (i32.atomic.load
+    (i32.const 0)
+   )
+   (i32.atomic.load
+    (i32.const 0)
+   )
+   (i32.const 1)
+  )
  )
 )

@@ -34,7 +34,6 @@ struct ToolOptions : public Options {
   bool quiet = false;
   bool preserveTypeOrder = false;
   bool emitModuleNames = false;
-  IRProfile profile = IRProfile::Normal;
 
   constexpr static const char* ToolOptionsCategory = "Tool options";
 
@@ -71,12 +70,6 @@ struct ToolOptions : public Options {
            ToolOptionsCategory,
            Arguments::Zero,
            [this](Options*, const std::string&) { quiet = true; })
-      .add("--experimental-poppy",
-           "",
-           "Parse wast files as Poppy IR for testing purposes.",
-           ToolOptionsCategory,
-           Arguments::Zero,
-           [this](Options*, const std::string&) { profile = IRProfile::Poppy; })
       .add("--emit-module-names",
            "",
            "Emit module names, even if not emitting the rest of the names "
@@ -273,6 +266,12 @@ struct ToolOptions : public Options {
   write(ModuleWriter& writer, Module& wasm, const std::string& filename) const {
     writer.setEmitModuleName(emitModuleNames);
     writer.write(wasm, filename);
+  }
+
+  void
+  write(ModuleWriter& writer, Module& wasm, std::vector<char>& output) const {
+    writer.setEmitModuleName(emitModuleNames);
+    writer.write(wasm, output);
   }
 
   virtual void addPassArg(const std::string& key, const std::string& value) {

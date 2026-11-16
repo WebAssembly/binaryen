@@ -65,11 +65,18 @@ stealSlice(Builder& builder, Block* input, Index from, Index to) {
   return ret;
 }
 
-// to turn an if into a br-if, we must be able to reorder the
-// condition and possible value, and the possible value must
-// not have side effects (as they would run unconditionally)
+// Check if a single expression is too costly to move from a conditional to an
+// unconditional place.
+static bool tooCostlyToRunUnconditionally(const PassOptions& passOptions,
+                                          Expression* curr);
+
+// To turn an if into a br-if, we must be able to reorder the condition and
+// possible value, and the possible value must not have side effects (as they
+// would run unconditionally). Also, if there is a value, it must not be too
+// expensive to run unconditionally.
 static bool canTurnIfIntoBrIf(Expression* ifCondition,
                               Expression* brValue,
+                              bool neverUnconditionalize,
                               PassOptions& options,
                               Module& wasm) {
   // if the if isn't even reached, this is all dead code anyhow
@@ -78,6 +85,12 @@ static bool canTurnIfIntoBrIf(Expression* ifCondition,
   }
   if (!brValue) {
     return true;
+  }
+  if (neverUnconditionalize) {
+    return false;
+  }
+  if (tooCostlyToRunUnconditionally(options, brValue)) {
+    return false;
   }
   EffectAnalyzer value(options, wasm, brValue);
   if (value.hasSideEffects()) {
@@ -120,8 +133,6 @@ static bool tooCostlyToRunUnconditionally(const PassOptions& passOptions,
   }
 }
 
-// As above, but a single expression that we are considering moving to a place
-// where it executes unconditionally.
 static bool tooCostlyToRunUnconditionally(const PassOptions& passOptions,
                                           Expression* curr) {
   // If we care entirely about code size, just do it for that reason (early
@@ -400,8 +411,11 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       // if without an else. try to reduce
       //    if (condition) br  =>  br_if (condition)
       if (Break* br = curr->ifTrue->dynCast<Break>()) {
-        if (canTurnIfIntoBrIf(
-              curr->condition, br->value, getPassOptions(), *getModule())) {
+        if (canTurnIfIntoBrIf(curr->condition,
+                              br->value,
+                              neverUnconditionalize,
+                              getPassOptions(),
+                              *getModule())) {
           if (!br->condition) {
             br->condition = curr->condition;
             BranchHints::copyTo(curr, br, getFunction());
@@ -848,12 +862,13 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
 
       void visitBrOn(BrOn* curr) {
         // Ignore unreachable BrOns which we cannot improve anyhow. Note that
-        // we must check the ref field manually, as we may be changing types as
-        // we go here. (Another option would be to use a TypeUpdater here
-        // instead of calling ReFinalize at the very end, but that would be more
-        // complex and slower.)
+        // we must check the ref and desc fields manually, as we may be changing
+        // types as we go here. (Another option would be to use a TypeUpdater
+        // here instead of calling ReFinalize at the very end, but that would be
+        // more complex and slower.)
         if (curr->type == Type::unreachable ||
-            curr->ref->type == Type::unreachable) {
+            curr->ref->type == Type::unreachable ||
+            (curr->desc && curr->desc->type == Type::unreachable)) {
           return;
         }
 
@@ -884,7 +899,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           if (Type::isSubType(expr->type, type)) {
             return expr;
           }
-          if (type.isNonNullable() && expr->type.isNullable() &&
+          if (type.isNonNullableRef() && expr->type.isNullableRef() &&
               Type::isSubType(expr->type.with(NonNullable), type)) {
             return builder.makeRefAs(RefAsNonNull, expr);
           }
@@ -899,7 +914,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         auto getRefValue = [&]() -> Expression* {
           if (curr->desc) {
             // Preserve the trap on a null descriptor.
-            if (curr->desc->type.isNullable()) {
+            if (curr->desc->type.isNullableRef()) {
               curr->desc = builder.makeRefAs(RefAsNonNull, curr->desc);
             }
             Block* ref =
@@ -914,14 +929,14 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
 
         switch (curr->op) {
           case BrOnNull:
-            if (refType.isNull()) {
+            if (refType.isBottomRef()) {
               // The branch will definitely be taken.
               replaceCurrent(builder.makeSequence(
                 builder.makeDrop(curr->ref), builder.makeBreak(curr->name)));
               worked = true;
               return;
             }
-            if (refType.isNonNullable()) {
+            if (refType.isNonNullableRef()) {
               // The branch will definitely not be taken.
               replaceCurrent(maybeCast(curr->ref, curr->type));
               worked = true;
@@ -929,13 +944,13 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             }
             return;
           case BrOnNonNull:
-            if (refType.isNull()) {
+            if (refType.isBottomRef()) {
               // Definitely not taken.
               replaceCurrent(builder.makeDrop(curr->ref));
               worked = true;
               return;
             }
-            if (refType.isNonNullable()) {
+            if (refType.isNonNullableRef()) {
               // Definitely taken.
               replaceCurrent(builder.makeBreak(
                 curr->name, maybeCast(curr->ref, curr->getSentType())));
@@ -963,7 +978,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             } else {
               // For descriptor casts, the target heap type is controlled by the
               // descriptor operand, but we can still improve nullability.
-              if (improvedType.isNullable() && refType.isNonNullable()) {
+              if (improvedType.isNullableRef() && refType.isNonNullableRef()) {
                 improvedType = improvedType.with(NonNullable);
               }
             }
@@ -984,7 +999,8 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
               // that would *un*refine the send type.
               // TODO: Consider allowing this change if the branch target
               // expects a nullable type anyway.
-              if (curr->castType.isNullable() && improvedType.isNonNullable()) {
+              if (curr->castType.isNullableRef() &&
+                  improvedType.isNonNullableRef()) {
                 improvedType = improvedType.with(Nullable);
               }
             }
@@ -1257,6 +1273,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
                       // only jumping here, so this the last place that will
                       // read it.
                       ExpressionManipulator::unreachable(br);
+                      worked = true;
                     }
                   }
                 }
@@ -1325,6 +1342,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           if (ifTrueBreak && !ifTrueBreak->condition &&
               canTurnIfIntoBrIf(iff->condition,
                                 ifTrueBreak->value,
+                                neverUnconditionalize,
                                 passOptions,
                                 *getModule())) {
             // we are an if-else where the ifTrue is a break without a
@@ -1341,6 +1359,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           if (ifFalseBreak && !ifFalseBreak->condition &&
               canTurnIfIntoBrIf(iff->condition,
                                 ifFalseBreak->value,
+                                neverUnconditionalize,
                                 passOptions,
                                 *getModule())) {
             ifFalseBreak->condition =
@@ -1370,6 +1389,9 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             // a br_if and then a br[_if] with the same target right after it
             if (br2->condition) {
               if (shrink && br2->type != Type::unreachable) {
+                if (neverUnconditionalize) {
+                  continue;
+                }
                 // Join adjacent br_ifs to the same target, making one br_if
                 // with a "selectified" condition that executes both.
                 if (!EffectAnalyzer(passOptions, *getModule(), br2->condition)

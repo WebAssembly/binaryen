@@ -24,6 +24,7 @@ set(passes_SOURCES
   CoalesceLocals.cpp
   CodePushing.cpp
   CodeFolding.cpp
+  ConstantArraysToData.cpp
   ConstantFieldPropagation.cpp
   ConstHoisting.cpp
   ConstraintAnalysis.cpp
@@ -68,6 +69,7 @@ set(passes_SOURCES
   LoopInvariantCodeMotion.cpp
   MakeSharedObjects.cpp
   MarkJSCalled.cpp
+  MarkNoReturn.cpp
   Memory64Lowering.cpp
   MemoryPacking.cpp
   MergeBlocks.cpp
@@ -77,6 +79,7 @@ set(passes_SOURCES
   MinifyImportsAndExports.cpp
   MinimizeRecGroups.cpp
   Monomorphize.cpp
+  MultiHeap2Local.cpp
   MultiMemoryLowering.cpp
   NameList.cpp
   NameTypes.cpp
@@ -87,8 +90,8 @@ set(passes_SOURCES
   OptimizeCasts.cpp
   OptimizeInstructions.cpp
   OptimizeForJS.cpp
+  OptimizeNoReturn.cpp
   PickLoadSigns.cpp
-  Poppify.cpp
   PostEmscripten.cpp
   Precompute.cpp
   Print.cpp
@@ -105,15 +108,18 @@ set(passes_SOURCES
   StringLifting.cpp
   StringLowering.cpp
   Strip.cpp
+  StripRefiningCasts.cpp
   StripTargetFeatures.cpp
   StripToolchainAnnotations.cpp
   TraceCalls.cpp
   RandomizeBranchHints.cpp
   RedundantSetElimination.cpp
+  RemoveEmptyFunctionExports.cpp
   RemoveExports.cpp
   RemoveImports.cpp
   RemoveMemoryInit.cpp
   RemoveNonJSOps.cpp
+  RelaxNullability.cpp
   RemoveRelaxedSIMD.cpp
   RemoveUnusedBrs.cpp
   RemoveUnusedNames.cpp
@@ -124,7 +130,6 @@ set(passes_SOURCES
   ReorderLocals.cpp
   ReorderTypes.cpp
   ReReloop.cpp
-  TrapMode.cpp
   TypeGeneralizing.cpp
   TypeRefining.cpp
   TypeMerging.cpp
@@ -138,6 +143,7 @@ set(passes_SOURCES
   StackCheck.cpp
   StripEH.cpp
   SSAify.cpp
+  TailCall.cpp
   TupleOptimization.cpp
   TranslateEH.cpp
   TypeFinalizing.cpp

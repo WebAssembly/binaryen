@@ -47,7 +47,7 @@ LocalStructuralDominance::LocalStructuralDominance(Function* func,
       for (auto type : var) {
         // Check if we have any non-nullable vars (or tuple vars with
         // non-nullable elements) at all.
-        if (type.isNonNullable()) {
+        if (type.isNonNullableRef()) {
           hasNonNullableVar = true;
           break;
         }
@@ -78,7 +78,7 @@ LocalStructuralDominance::LocalStructuralDominance(Function* func,
         auto localType = func->getLocalType(i);
         bool interesting = false;
         for (auto type : localType) {
-          if (type.isRef() && (mode == All || type.isNonNullable())) {
+          if ((mode == All && type.isRef()) || type.isNonNullableRef()) {
             interesting = true;
             break;
           }

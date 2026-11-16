@@ -1,0 +1,28 @@
+;; Test extracting wasm files from JS.
+
+;; A proper wasm module (\0asm), so we will extract it as %t.out.0.wasm.
+;; RUN: echo "good1(new Uint8Array([0x00, 0x61, 0x73, 0x6D, 0x01, 0x00, 0x00, 0x00]));" > %t.js
+
+;; A difference in the second byte, so we won't extract it.
+;; RUN: echo "bad1(new Uint8Array([0x00, 0xff, 0x73, 0x6D, 0x01, 0x00, 0x00, 0x00]));" >> %t.js
+
+;; The last byte is unparsable as an integer, so we won't extract it.
+;; RUN: echo "bad2(new Uint8Array([0x00, 0x61, 0x73, 0x6D, 6Dx0]));" >> %t.js
+
+;; Another proper one ((module (func))) with base 10 and odd whitespace,
+;; extracted as %t.out.1.wasm.
+;; RUN: echo "good2([0x00,97,   0x73, 0x6D,0x01, 0x00, 0x00, 0x00, 0x01, 0x04, 0x01, 0x60, 0x00, 0x00, 0x03, 0x02, 0x01, 0x00, 0x0a, 0x04, 0x01, 0x02, 0x00, 0x0b]);" >> %t.js
+
+;; RUN: wasm-embed --extract %t.js %t.out
+;; RUN: wasm-dis %t.out.0.wasm | filecheck %s --check-prefix=WASM0
+;; RUN: wasm-dis %t.out.1.wasm | filecheck %s --check-prefix=WASM1
+;; RUN: not wasm-dis %t.out.2.wasm
+
+;; WASM0:      (module
+;; WASM0-NEXT: )
+
+;; WASM1:      (module
+;; WASM1-NEXT:  (type $0 (func))
+;; WASM1-NEXT:  (func $0
+;; WASM1-NEXT:  )
+;; WASM1-NEXT: )

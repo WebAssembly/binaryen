@@ -148,7 +148,7 @@ public:
     return Flow(NONCONSTANT_FLOW);
   }
   Flow visitStructGet(StructGet* curr) {
-    if (curr->ref->type == Type::unreachable || curr->ref->type.isNull()) {
+    if (curr->ref->type == Type::unreachable || curr->ref->type.isBottomRef()) {
       return Flow(NONCONSTANT_FLOW);
     }
     switch (curr->order) {
@@ -193,7 +193,7 @@ public:
   Flow visitArrayRMW(ArrayRMW* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitArrayCmpxchg(ArrayCmpxchg* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitArrayGet(ArrayGet* curr) {
-    if (curr->ref->type == Type::unreachable || curr->ref->type.isNull()) {
+    if (curr->ref->type == Type::unreachable || curr->ref->type.isBottomRef()) {
       return Flow(NONCONSTANT_FLOW);
     }
     switch (curr->order) {
@@ -1103,7 +1103,7 @@ private:
   // string.
   bool isValidUTF16Literal(const Literal& value) {
     bool expectLowSurrogate = false;
-    for (auto& v : value.getGCData()->values) {
+    for (auto& v : value.getGCData()->getLiterals()) {
       auto c = v.getInteger();
       if (c >= 0xDC00 && c <= 0xDFFF) {
         if (expectLowSurrogate) {

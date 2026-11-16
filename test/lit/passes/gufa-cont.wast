@@ -44,6 +44,10 @@
 
  ;; CHECK:      (export "resume-i32" (func $resume-i32))
 
+ ;; CHECK:      (export "resume-switch" (func $resume-switch))
+
+ ;; CHECK:      (export "resume_throw-switch" (func $resume_throw-switch))
+
  ;; CHECK:      (func $cont (type $func)
  ;; CHECK-NEXT:  (suspend $tag)
  ;; CHECK-NEXT: )
@@ -52,6 +56,10 @@
  ;; OPEN_WORLD:      (export "resume_throw" (func $resume_throw))
 
  ;; OPEN_WORLD:      (export "resume-i32" (func $resume-i32))
+
+ ;; OPEN_WORLD:      (export "resume-switch" (func $resume-switch))
+
+ ;; OPEN_WORLD:      (export "resume_throw-switch" (func $resume_throw-switch))
 
  ;; OPEN_WORLD:      (func $cont (type $func)
  ;; OPEN_WORLD-NEXT:  (suspend $tag)
@@ -192,6 +200,58 @@
      )
     )
     (return)
+   )
+  )
+ )
+
+ ;; CHECK:      (func $resume-switch (type $func)
+ ;; CHECK-NEXT:  (resume $cont (on $tag switch)
+ ;; CHECK-NEXT:   (cont.new $cont
+ ;; CHECK-NEXT:    (ref.func $cont)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; OPEN_WORLD:      (func $resume-switch (type $func)
+ ;; OPEN_WORLD-NEXT:  (resume $cont (on $tag switch)
+ ;; OPEN_WORLD-NEXT:   (cont.new $cont
+ ;; OPEN_WORLD-NEXT:    (ref.func $cont)
+ ;; OPEN_WORLD-NEXT:   )
+ ;; OPEN_WORLD-NEXT:  )
+ ;; OPEN_WORLD-NEXT: )
+ (func $resume-switch (export "resume-switch")
+  ;; Switch handlers do not branch to a target block. Ensure GUFA does not
+  ;; attempt to look up a target block name (which would incorrectly find an
+  ;; unnamed block in scope or null) and crash.
+  (block
+   (resume $cont (on $tag switch)
+    (cont.new $cont
+     (ref.func $cont)
+    )
+   )
+  )
+ )
+
+ ;; CHECK:      (func $resume_throw-switch (type $func)
+ ;; CHECK-NEXT:  (resume_throw $cont $tag (on $tag switch)
+ ;; CHECK-NEXT:   (cont.new $cont
+ ;; CHECK-NEXT:    (ref.func $cont)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; OPEN_WORLD:      (func $resume_throw-switch (type $func)
+ ;; OPEN_WORLD-NEXT:  (resume_throw $cont $tag (on $tag switch)
+ ;; OPEN_WORLD-NEXT:   (cont.new $cont
+ ;; OPEN_WORLD-NEXT:    (ref.func $cont)
+ ;; OPEN_WORLD-NEXT:   )
+ ;; OPEN_WORLD-NEXT:  )
+ ;; OPEN_WORLD-NEXT: )
+ (func $resume_throw-switch (export "resume_throw-switch")
+  ;; As above, but with resume_throw.
+  (block
+   (resume_throw $cont $tag (on $tag switch)
+    (cont.new $cont
+     (ref.func $cont)
+    )
    )
   )
  )

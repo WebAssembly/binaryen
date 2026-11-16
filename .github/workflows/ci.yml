@@ -18,7 +18,8 @@ jobs:
   lint:
     name: lint
     if: ${{ github.event_name == 'pull_request' }}
-    runs-on: ubuntu-latest
+    # Use Ubuntu 26.04 to get clang-21 (not present in 24.04)
+    runs-on: ubuntu-26.04
     env:
       # Keep this in sync with clang-format-diff.sh
       LLVM_VERSION: 21
@@ -34,10 +35,7 @@ jobs:
       run: |
         pip3 install -r requirements-dev.txt
         sudo apt install lsb-release wget software-properties-common gnupg
-        wget https://apt.llvm.org/llvm.sh
-        sudo chmod +x llvm.sh
-        sudo ./llvm.sh ${LLVM_VERSION}
-        sudo apt-get install clang-format clang-format-${LLVM_VERSION} clang-tidy-${LLVM_VERSION}
+        sudo apt-get install clang-${LLVM_VERSION} clang-format-${LLVM_VERSION} clang-tidy-${LLVM_VERSION}
     - run: ruff check
     - run: ./scripts/clang-format-diff.sh
     - name: clang-tidy
@@ -54,8 +52,8 @@ jobs:
         # Test on the oldest support Ubuntu version in addition to `latest`.
         # Build using the oldest support macOS version.  For emsdk this is
         # currently macos-13, but unfortunately that doesn't exist in github
-        # actions so we settle for macos-14.
-        os: [ubuntu-22.04, ubuntu-latest, macos-14, windows-latest, windows-11-arm]
+        # actions so we settle for macos-15.
+        os: [ubuntu-22.04, ubuntu-latest, macos-15, windows-latest, windows-11-arm]
     steps:
     - uses: actions/setup-python@v5
       with:
@@ -190,8 +188,8 @@ jobs:
     env:
       ASAN_OPTIONS: "symbolize=1"
       COMPILER_FLAGS: "-fsanitize=address"
-      CC: "clang-18"
-      CXX: "clang++-18"
+      CC: "clang"
+      CXX: "clang++"
     steps:
     - uses: actions/setup-python@v5
       with:
@@ -199,11 +197,6 @@ jobs:
     - uses: actions/checkout@v4
       with:
         submodules: true
-    - name: install clang 18
-      run: |
-        wget https://apt.llvm.org/llvm.sh
-        chmod +x llvm.sh
-        sudo ./llvm.sh 18
     - name: install ninja
       run: sudo apt-get install ninja-build
     - name: install v8
@@ -215,7 +208,7 @@ jobs:
     - name: cmake
       run: |
         mkdir -p out
-        cmake -S . -B out -G Ninja -DCMAKE_INSTALL_PREFIX=out/install -DCMAKE_C_COMPILER=clang-18 -DCMAKE_CXX_COMPILER=clang++-18 -DCMAKE_C_FLAGS="$COMPILER_FLAGS" -DCMAKE_CXX_FLAGS="$COMPILER_FLAGS"
+        cmake -S . -B out -G Ninja -DCMAKE_INSTALL_PREFIX=out/install -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_FLAGS="$COMPILER_FLAGS" -DCMAKE_CXX_FLAGS="$COMPILER_FLAGS"
     - name: build
       run: cmake --build out
     - name: test
@@ -313,8 +306,8 @@ jobs:
     env:
       COMPILER_FLAGS: "-fsanitize=thread"
       LINKER_FLAGS: "-fsanitize=thread"
-      CC: "clang-18"
-      CXX: "clang++-18"
+      CC: "clang"
+      CXX: "clang++"
     steps:
     - uses: actions/setup-python@v5
       with:
@@ -322,11 +315,6 @@ jobs:
     - uses: actions/checkout@v4
       with:
         submodules: true
-    - name: install clang 18
-      run: |
-        wget https://apt.llvm.org/llvm.sh
-        chmod +x llvm.sh
-        sudo ./llvm.sh 18
     - name: install ninja
       run: sudo apt-get install ninja-build
     - name: install v8
@@ -338,11 +326,47 @@ jobs:
     - name: cmake
       run: |
         mkdir -p out
-        cmake -S . -B out -G Ninja -DCMAKE_INSTALL_PREFIX=out/install -DCMAKE_C_COMPILER=clang-18 -DCMAKE_CXX_COMPILER=clang++-18 -DCMAKE_C_FLAGS="$COMPILER_FLAGS" -DCMAKE_CXX_FLAGS="$COMPILER_FLAGS" -DCMAKE_EXE_LINKER_FLAGS="$LINKER_FLAGS"
+        cmake -S . -B out -G Ninja -DCMAKE_INSTALL_PREFIX=out/install -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_FLAGS="$COMPILER_FLAGS" -DCMAKE_CXX_FLAGS="$COMPILER_FLAGS" -DCMAKE_EXE_LINKER_FLAGS="$LINKER_FLAGS"
     - name: build
       run: cmake --build out
     - name: test
       run: python check.py --binaryen-bin=out/bin
+
+  # Duplicates build-asan.  Please keep in sync
+  coverage:
+    name: coverage
+    if: ${{ github.event_name == 'pull_request' }}
+    runs-on: ubuntu-26.04
+    env:
+      COMPILER_FLAGS: "-fprofile-instr-generate -fcoverage-mapping -fcoverage-mcdc"
+      LLVM_VERSION: 21
+    steps:
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.x'
+    - uses: actions/checkout@v4
+      with:
+        submodules: true
+        fetch-depth: 0
+    - name: install tools
+      run: sudo apt-get install ninja-build clang-${LLVM_VERSION} llvm-${LLVM_VERSION}
+    - name: install v8
+      run: |
+        npm install jsvu -g
+        jsvu --os=default --engines=v8
+    - name: install Python dev dependencies
+      run: pip3 install -r requirements-dev.txt
+    - name: cmake
+      run: |
+        mkdir -p out
+        cmake -S . -B out -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=out/install -DCMAKE_C_COMPILER=clang-${LLVM_VERSION} -DCMAKE_CXX_COMPILER=clang++-${LLVM_VERSION} -DCMAKE_C_FLAGS="$COMPILER_FLAGS" -DCMAKE_CXX_FLAGS="$COMPILER_FLAGS"
+    - name: build
+      run: cmake --build out
+    - name: coverage-diff
+      run: |
+        MERGE_BASE=$(git merge-base "origin/$GITHUB_BASE_REF" HEAD)
+        ./scripts/experimental/coverage-diff.py --base "$MERGE_BASE" -B out --lit test/lit --gtest -a --github-annotations
+        ./scripts/experimental/coverage-diff.py --base "$MERGE_BASE" -B out -a --markdown >> "$GITHUB_STEP_SUMMARY"
 
   # Build the .js outputs using emcc
   build-emscripten:
@@ -394,7 +418,7 @@ jobs:
         mkdir -p out
         cmake -S . -B out -G "MSYS Makefiles"
     - name: build
-      run: cmake --build out
+      run: cmake --build out --parallel 4
 
   # Ensures we can build in no-asserts mode (just building).
   build-noasserts:

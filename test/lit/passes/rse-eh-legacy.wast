@@ -798,4 +798,56 @@
     ;; catch_all runs the same local.set. So this can be dropped.
     (local.set $x (i32.const 1))
   )
+
+  ;; CHECK:      (func $try-delegate-across-try-table (type $0)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (try $l0
+  ;; CHECK-NEXT:   (do
+  ;; CHECK-NEXT:    (block $catch
+  ;; CHECK-NEXT:     (try_table (catch_all $catch)
+  ;; CHECK-NEXT:      (try
+  ;; CHECK-NEXT:       (do
+  ;; CHECK-NEXT:        (throw $e
+  ;; CHECK-NEXT:         (i32.const 0)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (delegate $l0)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (catch_all
+  ;; CHECK-NEXT:    (local.set $x
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $try-delegate-across-try-table
+    (local $x i32)
+    (try $l0
+      (do
+        (block $catch
+          (try_table (catch_all $catch)
+            (try
+              (do
+                (throw $e (i32.const 0))
+              )
+              (delegate $l0)
+            )
+          )
+        )
+      )
+      (catch_all
+        (local.set $x (i32.const 1))
+      )
+    )
+    ;; The innermost try delegates to $l0 across a try_table, so the exception
+    ;; is caught by $l0's catch_all, which sets $x to 1. Thus this redundant set
+    ;; can be dropped.
+    (local.set $x (i32.const 1))
+  )
 )

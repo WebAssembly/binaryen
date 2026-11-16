@@ -22,7 +22,6 @@
 #include <ir/branch-hints.h>
 #include <ir/drop.h>
 #include <ir/effects.h>
-#include <ir/eh-utils.h>
 #include <ir/find_all.h>
 #include <ir/intrinsics.h>
 #include <ir/iteration.h>
@@ -39,17 +38,8 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
 
   std::unique_ptr<Pass> create() override { return std::make_unique<Vacuum>(); }
 
-  // Track whether we need to fix up pops at the end: adding a block in a Try
-  // can require that.
-  bool hasTry = false;
-  bool addedBlocks = false;
-
   void doWalkFunction(Function* func) {
     walk(func->body);
-
-    if (hasTry && addedBlocks) {
-      EHUtils::handleBlockNestedPops(func, *getModule());
-    }
 
     ReFinalize().walkFunctionInModule(func, getModule());
   }
@@ -133,7 +123,6 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
       if (curr->type.isDefaultable()) {
         auto* dummy = Builder(*getModule())
                         .makeConstantExpression(Literal::makeZeros(curr->type));
-        addedBlocks = true;
         return getDroppedChildrenAndAppend(
           curr, *getModule(), getPassOptions(), dummy);
       }
@@ -331,17 +320,6 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
         curr->condition =
           Builder(*getModule()).makeUnary(EqZInt32, curr->condition);
         BranchHints::flip(curr, getFunction());
-      } else if (curr->ifTrue->is<Drop>() && curr->ifFalse->is<Drop>()) {
-        // instead of dropping both sides, drop the if, if they are the same
-        // type
-        auto* left = curr->ifTrue->cast<Drop>()->value;
-        auto* right = curr->ifFalse->cast<Drop>()->value;
-        if (left->type == right->type) {
-          curr->ifTrue = left;
-          curr->ifFalse = right;
-          curr->finalize();
-          replaceCurrent(Builder(*getModule()).makeDrop(curr));
-        }
       }
     } else {
       // This is an if without an else. If the body is empty, we do not need it.
@@ -427,9 +405,11 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
         }
       }
     }
-    // sink a drop into an arm of an if-else if the other arm ends in an
-    // unreachable, as it if is a branch, this can make that branch optimizable
-    // and more vacuuming possible
+    // Sink a drop into an arm of an if-else if the other arm ends in an
+    // unreachable, or sink drops into both arms if both arms are concrete.
+    // This allows the if expression to become void, eliminates block type
+    // overhead, and enables further vacuuming/dead-code elimination in each
+    // arm.
     auto* iff = curr->value->dynCast<If>();
     if (iff && iff->ifFalse && iff->type.isConcrete()) {
       // reuse the drop in both cases
@@ -445,13 +425,18 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
         iff->ifTrue = curr;
         iff->type = Type::none;
         replaceCurrent(iff);
+      } else if (iff->ifTrue->type.isConcrete() &&
+                 iff->ifFalse->type.isConcrete()) {
+        Builder builder(*getModule());
+        iff->ifTrue = builder.makeDrop(iff->ifTrue);
+        iff->ifFalse = builder.makeDrop(iff->ifFalse);
+        iff->type = Type::none;
+        replaceCurrent(iff);
       }
     }
   }
 
   void visitTry(Try* curr) {
-    hasTry = true;
-
     // If try's body does not throw, the whole try-catch can be replaced with
     // the try's body.
     if (!EffectAnalyzer(getPassOptions(), *getModule(), curr->body).throws()) {

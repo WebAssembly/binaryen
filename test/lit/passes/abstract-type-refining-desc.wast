@@ -843,6 +843,107 @@
     )
     (unreachable)
   )
+
+  ;; YESTNH:      (func $branch-fail-unreachable (type $2) (param $ref anyref) (param $desc (ref null $desc)) (result nullref)
+  ;; YESTNH-NEXT:  (block $block
+  ;; YESTNH-NEXT:   (ref.cast_desc_eq (ref $struct)
+  ;; YESTNH-NEXT:    (drop
+  ;; YESTNH-NEXT:     (block
+  ;; YESTNH-NEXT:      (drop
+  ;; YESTNH-NEXT:       (ref.null none)
+  ;; YESTNH-NEXT:      )
+  ;; YESTNH-NEXT:      (unreachable)
+  ;; YESTNH-NEXT:     )
+  ;; YESTNH-NEXT:    )
+  ;; YESTNH-NEXT:    (local.get $desc)
+  ;; YESTNH-NEXT:   )
+  ;; YESTNH-NEXT:  )
+  ;; YESTNH-NEXT: )
+  ;; NO_TNH:      (func $branch-fail-unreachable (type $2) (param $ref anyref) (param $desc (ref null $desc)) (result nullref)
+  ;; NO_TNH-NEXT:  (block $block
+  ;; NO_TNH-NEXT:   (ref.cast_desc_eq (ref $struct)
+  ;; NO_TNH-NEXT:    (drop
+  ;; NO_TNH-NEXT:     (block
+  ;; NO_TNH-NEXT:      (drop
+  ;; NO_TNH-NEXT:       (ref.null none)
+  ;; NO_TNH-NEXT:      )
+  ;; NO_TNH-NEXT:      (unreachable)
+  ;; NO_TNH-NEXT:     )
+  ;; NO_TNH-NEXT:    )
+  ;; NO_TNH-NEXT:    (local.get $desc)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT: )
+  (func $branch-fail-unreachable (param $ref anyref) (param $desc (ref null $desc)) (result (ref null $struct))
+    (block $block (result (ref null $struct))
+      ;; This cast is unreachable because its ref input is an unreachable drop,
+      ;; so it is skipped. During ReFinalize it requires its ref input to remain
+      ;; unreachable.
+      (ref.cast_desc_eq (ref $struct)
+        ;; This drop is only valid as the ref input to ref.cast_desc_eq because
+        ;; its child is unreachable.
+        (drop
+          ;; The descriptor operand is unreachable, so this branch is skipped
+          ;; and replaced by an unreachable block in ReFinalize.
+          (br_on_cast_desc_eq_fail $block (ref null $struct) (ref $struct)
+            (ref.null none)
+            (unreachable)
+          )
+        )
+        (local.get $desc)
+      )
+    )
+  )
+
+  ;; YESTNH:      (func $cast-unreachable-desc (type $2) (param $ref anyref) (param $desc (ref null $desc)) (result nullref)
+  ;; YESTNH-NEXT:  (block $block
+  ;; YESTNH-NEXT:   (block ;; (replaces unreachable RefCast we can't emit)
+  ;; YESTNH-NEXT:    (drop
+  ;; YESTNH-NEXT:     (local.get $ref)
+  ;; YESTNH-NEXT:    )
+  ;; YESTNH-NEXT:    (drop
+  ;; YESTNH-NEXT:     (block
+  ;; YESTNH-NEXT:      (unreachable)
+  ;; YESTNH-NEXT:      (drop
+  ;; YESTNH-NEXT:       (local.get $desc)
+  ;; YESTNH-NEXT:      )
+  ;; YESTNH-NEXT:     )
+  ;; YESTNH-NEXT:    )
+  ;; YESTNH-NEXT:    (unreachable)
+  ;; YESTNH-NEXT:   )
+  ;; YESTNH-NEXT:  )
+  ;; YESTNH-NEXT: )
+  ;; NO_TNH:      (func $cast-unreachable-desc (type $2) (param $ref anyref) (param $desc (ref null $desc)) (result nullref)
+  ;; NO_TNH-NEXT:  (block $block
+  ;; NO_TNH-NEXT:   (block ;; (replaces unreachable RefCast we can't emit)
+  ;; NO_TNH-NEXT:    (drop
+  ;; NO_TNH-NEXT:     (local.get $ref)
+  ;; NO_TNH-NEXT:    )
+  ;; NO_TNH-NEXT:    (drop
+  ;; NO_TNH-NEXT:     (block
+  ;; NO_TNH-NEXT:      (unreachable)
+  ;; NO_TNH-NEXT:      (drop
+  ;; NO_TNH-NEXT:       (local.get $desc)
+  ;; NO_TNH-NEXT:      )
+  ;; NO_TNH-NEXT:     )
+  ;; NO_TNH-NEXT:    )
+  ;; NO_TNH-NEXT:    (unreachable)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT: )
+  (func $cast-unreachable-desc (param $ref anyref) (param $desc (ref null $desc)) (result (ref null $struct))
+    (block $block (result (ref null $struct))
+      ;; Same as above, but with an unreachable ref operand in the branch and an
+      ;; unreachable descriptor operand in the cast.
+      (ref.cast_desc_eq (ref $struct)
+        (local.get $ref)
+        (br_on_cast_desc_eq_fail $block (ref null $struct) (ref $struct)
+          (unreachable)
+          (local.get $desc)
+        )
+      )
+    )
+  )
 )
 
 (module
@@ -1115,6 +1216,8 @@
 
   ;; YESTNH:       (type $6 (func (param (ref $A)) (result (ref $B.sub))))
 
+  ;; YESTNH:       (type $7 (func (param (ref (exact $B.sub)) (ref $B.sub)) (result (ref $B.sub))))
+
   ;; YESTNH:      (func $create (type $4)
   ;; YESTNH-NEXT:  (drop
   ;; YESTNH-NEXT:   (struct.new_default_desc $A.sub
@@ -1127,6 +1230,8 @@
   ;; NO_TNH:       (type $5 (func (result (ref (exact $B)))))
 
   ;; NO_TNH:       (type $6 (func (param (ref $A)) (result (ref $B))))
+
+  ;; NO_TNH:       (type $7 (func (param (ref (exact $B)) (ref $B)) (result (ref $B))))
 
   ;; NO_TNH:      (func $create (type $4)
   ;; NO_TNH-NEXT:  (drop
@@ -1187,6 +1292,41 @@
       (local.get $inexact)
     )
   )
+
+  ;; YESTNH:      (func $inexact-unreachable (type $7) (param $exact (ref (exact $B.sub))) (param $inexact (ref $B.sub)) (result (ref $B.sub))
+  ;; YESTNH-NEXT:  (block ;; (replaces unreachable RefGetDesc we can't emit)
+  ;; YESTNH-NEXT:   (drop
+  ;; YESTNH-NEXT:    (ref.cast_desc_eq (ref $A.sub)
+  ;; YESTNH-NEXT:     (unreachable)
+  ;; YESTNH-NEXT:     (local.get $inexact)
+  ;; YESTNH-NEXT:    )
+  ;; YESTNH-NEXT:   )
+  ;; YESTNH-NEXT:   (unreachable)
+  ;; YESTNH-NEXT:  )
+  ;; YESTNH-NEXT: )
+  ;; NO_TNH:      (func $inexact-unreachable (type $7) (param $exact (ref (exact $B))) (param $inexact (ref $B)) (result (ref $B))
+  ;; NO_TNH-NEXT:  (ref.get_desc $A
+  ;; NO_TNH-NEXT:   (ref.cast_desc_eq (ref $A)
+  ;; NO_TNH-NEXT:    (struct.new_default_desc $A
+  ;; NO_TNH-NEXT:     (local.get $exact)
+  ;; NO_TNH-NEXT:    )
+  ;; NO_TNH-NEXT:    (local.get $inexact)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT: )
+  (func $inexact-unreachable (param $exact (ref (exact $B))) (param $inexact (ref $B)) (result (ref $B))
+    ;; The struct.new_default_desc is replaced with unreachable, which makes the
+    ;; inexact ref.cast_desc_eq unreachable, which in turn makes the
+    ;; ref.get_desc unreachable.
+    (ref.get_desc $A
+      (ref.cast_desc_eq (ref $A)
+        (struct.new_default_desc $A
+          (local.get $exact)
+        )
+        (local.get $inexact)
+      )
+    )
+  )
 )
 
 ;; Shared abstract described types.
@@ -1242,4 +1382,335 @@
    (local.get $x)
   )
  )
+)
+
+(module
+  (rec
+    ;; YESTNH:      (rec
+    ;; YESTNH-NEXT:  (type $struct (descriptor $desc) (struct))
+    ;; NO_TNH:      (rec
+    ;; NO_TNH-NEXT:  (type $struct (descriptor $desc) (struct))
+    (type $struct (descriptor $desc) (struct))
+    ;; YESTNH:       (type $desc (describes $struct) (struct))
+    ;; NO_TNH:       (type $desc (describes $struct) (struct))
+    (type $desc (describes $struct) (struct))
+    ;; YESTNH:       (type $struct2 (descriptor $desc2) (struct))
+    ;; NO_TNH:       (type $struct2 (descriptor $desc2) (struct))
+    (type $struct2 (descriptor $desc2) (struct))
+    ;; YESTNH:       (type $desc2 (describes $struct2) (struct))
+    ;; NO_TNH:       (type $desc2 (describes $struct2) (struct))
+    (type $desc2 (describes $struct2) (struct))
+  )
+
+  ;; YESTNH:       (type $4 (func (param (ref none))))
+
+  ;; YESTNH:       (type $5 (func (param (ref $struct))))
+
+  ;; YESTNH:       (type $6 (func (param anyref)))
+
+  ;; YESTNH:       (type $7 (func))
+
+  ;; YESTNH:       (type $8 (func (param (ref null $desc2))))
+
+  ;; YESTNH:       (type $9 (func (param (ref $struct) (ref null $desc2))))
+
+  ;; YESTNH:      (global $desc2 (ref $desc2) (struct.new_default $desc2))
+  ;; NO_TNH:       (type $4 (func (param (ref none))))
+
+  ;; NO_TNH:       (type $5 (func (param (ref $struct))))
+
+  ;; NO_TNH:       (type $6 (func (param anyref)))
+
+  ;; NO_TNH:       (type $7 (func))
+
+  ;; NO_TNH:       (type $8 (func (param (ref null $desc2))))
+
+  ;; NO_TNH:       (type $9 (func (param (ref $struct) (ref null $desc2))))
+
+  ;; NO_TNH:      (global $desc2 (ref $desc2) (struct.new_default $desc2))
+  (global $desc2 (ref $desc2) (struct.new_default $desc2))
+
+  ;; YESTNH:      (tag $tag-desc (type $4) (param (ref none)))
+  ;; NO_TNH:      (tag $tag-desc (type $4) (param (ref none)))
+  (tag $tag-desc (param (ref (exact $desc))))
+  ;; YESTNH:      (tag $tag-struct (type $5) (param (ref $struct)))
+  ;; NO_TNH:      (tag $tag-struct (type $5) (param (ref $struct)))
+  (tag $tag-struct (param (ref $struct)))
+  ;; YESTNH:      (tag $tag-any (type $6) (param anyref))
+  ;; NO_TNH:      (tag $tag-any (type $6) (param anyref))
+  (tag $tag-any (param anyref))
+
+  ;; YESTNH:      (func $struct-new-pop (type $7)
+  ;; YESTNH-NEXT:  (try
+  ;; YESTNH-NEXT:   (do
+  ;; YESTNH-NEXT:   )
+  ;; YESTNH-NEXT:   (catch $tag-desc
+  ;; YESTNH-NEXT:    (drop
+  ;; YESTNH-NEXT:     (block
+  ;; YESTNH-NEXT:      (drop
+  ;; YESTNH-NEXT:       (pop (ref none))
+  ;; YESTNH-NEXT:      )
+  ;; YESTNH-NEXT:      (unreachable)
+  ;; YESTNH-NEXT:     )
+  ;; YESTNH-NEXT:    )
+  ;; YESTNH-NEXT:   )
+  ;; YESTNH-NEXT:  )
+  ;; YESTNH-NEXT: )
+  ;; NO_TNH:      (func $struct-new-pop (type $7)
+  ;; NO_TNH-NEXT:  (try
+  ;; NO_TNH-NEXT:   (do
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:   (catch $tag-desc
+  ;; NO_TNH-NEXT:    (drop
+  ;; NO_TNH-NEXT:     (block
+  ;; NO_TNH-NEXT:      (drop
+  ;; NO_TNH-NEXT:       (pop (ref none))
+  ;; NO_TNH-NEXT:      )
+  ;; NO_TNH-NEXT:      (unreachable)
+  ;; NO_TNH-NEXT:     )
+  ;; NO_TNH-NEXT:    )
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT: )
+  (func $struct-new-pop
+    ;; Wrapping a dropped pop in an unnamed block when replacing an impossible
+    ;; struct.new_default_desc validates properly even with a pop.
+    (try
+      (do)
+      (catch $tag-desc
+        (drop
+          (struct.new_default_desc $struct
+            (pop (ref (exact $desc)))
+          )
+        )
+      )
+    )
+  )
+
+  ;; YESTNH:      (func $ref-get-desc-pop (type $7)
+  ;; YESTNH-NEXT:  (try
+  ;; YESTNH-NEXT:   (do
+  ;; YESTNH-NEXT:   )
+  ;; YESTNH-NEXT:   (catch $tag-struct
+  ;; YESTNH-NEXT:    (drop
+  ;; YESTNH-NEXT:     (block
+  ;; YESTNH-NEXT:      (drop
+  ;; YESTNH-NEXT:       (pop (ref $struct))
+  ;; YESTNH-NEXT:      )
+  ;; YESTNH-NEXT:      (unreachable)
+  ;; YESTNH-NEXT:     )
+  ;; YESTNH-NEXT:    )
+  ;; YESTNH-NEXT:   )
+  ;; YESTNH-NEXT:  )
+  ;; YESTNH-NEXT: )
+  ;; NO_TNH:      (func $ref-get-desc-pop (type $7)
+  ;; NO_TNH-NEXT:  (try
+  ;; NO_TNH-NEXT:   (do
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:   (catch $tag-struct
+  ;; NO_TNH-NEXT:    (drop
+  ;; NO_TNH-NEXT:     (block
+  ;; NO_TNH-NEXT:      (drop
+  ;; NO_TNH-NEXT:       (pop (ref $struct))
+  ;; NO_TNH-NEXT:      )
+  ;; NO_TNH-NEXT:      (unreachable)
+  ;; NO_TNH-NEXT:     )
+  ;; NO_TNH-NEXT:    )
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT: )
+  (func $ref-get-desc-pop
+    ;; Same for ref.get_desc replaced with a drop + unreachable sequence.
+    (try
+      (do)
+      (catch $tag-struct
+        (drop
+          (ref.get_desc $struct
+            (pop (ref $struct))
+          )
+        )
+      )
+    )
+  )
+
+  ;; YESTNH:      (func $ref-cast-desc-pop (type $8) (param $desc (ref null $desc2))
+  ;; YESTNH-NEXT:  (local $1 anyref)
+  ;; YESTNH-NEXT:  (local $2 (ref null $desc2))
+  ;; YESTNH-NEXT:  (try
+  ;; YESTNH-NEXT:   (do
+  ;; YESTNH-NEXT:   )
+  ;; YESTNH-NEXT:   (catch $tag-any
+  ;; YESTNH-NEXT:    (drop
+  ;; YESTNH-NEXT:     (block (result (ref none))
+  ;; YESTNH-NEXT:      (local.set $1
+  ;; YESTNH-NEXT:       (pop anyref)
+  ;; YESTNH-NEXT:      )
+  ;; YESTNH-NEXT:      (local.set $2
+  ;; YESTNH-NEXT:       (local.get $desc)
+  ;; YESTNH-NEXT:      )
+  ;; YESTNH-NEXT:      (ref.cast (ref none)
+  ;; YESTNH-NEXT:       (local.get $1)
+  ;; YESTNH-NEXT:      )
+  ;; YESTNH-NEXT:     )
+  ;; YESTNH-NEXT:    )
+  ;; YESTNH-NEXT:   )
+  ;; YESTNH-NEXT:  )
+  ;; YESTNH-NEXT: )
+  ;; NO_TNH:      (func $ref-cast-desc-pop (type $8) (param $desc (ref null $desc2))
+  ;; NO_TNH-NEXT:  (local $1 anyref)
+  ;; NO_TNH-NEXT:  (local $2 (ref $desc2))
+  ;; NO_TNH-NEXT:  (try
+  ;; NO_TNH-NEXT:   (do
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:   (catch $tag-any
+  ;; NO_TNH-NEXT:    (drop
+  ;; NO_TNH-NEXT:     (block (result (ref none))
+  ;; NO_TNH-NEXT:      (local.set $1
+  ;; NO_TNH-NEXT:       (pop anyref)
+  ;; NO_TNH-NEXT:      )
+  ;; NO_TNH-NEXT:      (local.set $2
+  ;; NO_TNH-NEXT:       (ref.as_non_null
+  ;; NO_TNH-NEXT:        (local.get $desc)
+  ;; NO_TNH-NEXT:       )
+  ;; NO_TNH-NEXT:      )
+  ;; NO_TNH-NEXT:      (ref.cast (ref none)
+  ;; NO_TNH-NEXT:       (local.get $1)
+  ;; NO_TNH-NEXT:      )
+  ;; NO_TNH-NEXT:     )
+  ;; NO_TNH-NEXT:    )
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT: )
+  (func $ref-cast-desc-pop (param $desc (ref null $desc2))
+    ;; Same for ref.cast_desc_eq localized into an unnamed block.
+    (try
+      (do)
+      (catch $tag-any
+        (drop
+          (ref.cast_desc_eq (ref $struct2)
+            (pop anyref)
+            (local.get $desc)
+          )
+        )
+      )
+    )
+  )
+
+  ;; YESTNH:      (func $ref-cast-desc-unreachable (type $9) (param $s (ref $struct)) (param $desc2 (ref null $desc2))
+  ;; YESTNH-NEXT:  (drop
+  ;; YESTNH-NEXT:   (ref.cast_desc_eq (ref $struct2)
+  ;; YESTNH-NEXT:    (block
+  ;; YESTNH-NEXT:     (drop
+  ;; YESTNH-NEXT:      (local.get $s)
+  ;; YESTNH-NEXT:     )
+  ;; YESTNH-NEXT:     (unreachable)
+  ;; YESTNH-NEXT:    )
+  ;; YESTNH-NEXT:    (local.get $desc2)
+  ;; YESTNH-NEXT:   )
+  ;; YESTNH-NEXT:  )
+  ;; YESTNH-NEXT: )
+  ;; NO_TNH:      (func $ref-cast-desc-unreachable (type $9) (param $s (ref $struct)) (param $desc2 (ref null $desc2))
+  ;; NO_TNH-NEXT:  (drop
+  ;; NO_TNH-NEXT:   (ref.cast_desc_eq (ref $struct2)
+  ;; NO_TNH-NEXT:    (block
+  ;; NO_TNH-NEXT:     (drop
+  ;; NO_TNH-NEXT:      (local.get $s)
+  ;; NO_TNH-NEXT:     )
+  ;; NO_TNH-NEXT:     (unreachable)
+  ;; NO_TNH-NEXT:    )
+  ;; NO_TNH-NEXT:    (local.get $desc2)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT: )
+  (func $ref-cast-desc-unreachable (param $s (ref $struct)) (param $desc2 (ref null $desc2))
+    ;; The inner ref.get_desc is replaced with an unreachable block before the
+    ;; enclosing ref.cast_desc_eq is visited, so the enclosing cast becomes
+    ;; unreachable and is skipped.
+    (drop
+      (ref.cast_desc_eq (ref $struct2)
+        (ref.get_desc $struct
+          (local.get $s)
+        )
+        (local.get $desc2)
+      )
+    )
+  )
+
+  ;; YESTNH:      (func $br-on-cast-desc-pop (type $8) (param $desc (ref null $desc2))
+  ;; YESTNH-NEXT:  (local $1 anyref)
+  ;; YESTNH-NEXT:  (local $2 (ref null $desc2))
+  ;; YESTNH-NEXT:  (drop
+  ;; YESTNH-NEXT:   (block $l (result (ref none))
+  ;; YESTNH-NEXT:    (try
+  ;; YESTNH-NEXT:     (do
+  ;; YESTNH-NEXT:     )
+  ;; YESTNH-NEXT:     (catch $tag-any
+  ;; YESTNH-NEXT:      (drop
+  ;; YESTNH-NEXT:       (block (result anyref)
+  ;; YESTNH-NEXT:        (local.set $1
+  ;; YESTNH-NEXT:         (pop anyref)
+  ;; YESTNH-NEXT:        )
+  ;; YESTNH-NEXT:        (local.set $2
+  ;; YESTNH-NEXT:         (local.get $desc)
+  ;; YESTNH-NEXT:        )
+  ;; YESTNH-NEXT:        (br_on_cast $l anyref (ref none)
+  ;; YESTNH-NEXT:         (local.get $1)
+  ;; YESTNH-NEXT:        )
+  ;; YESTNH-NEXT:       )
+  ;; YESTNH-NEXT:      )
+  ;; YESTNH-NEXT:     )
+  ;; YESTNH-NEXT:    )
+  ;; YESTNH-NEXT:    (unreachable)
+  ;; YESTNH-NEXT:   )
+  ;; YESTNH-NEXT:  )
+  ;; YESTNH-NEXT: )
+  ;; NO_TNH:      (func $br-on-cast-desc-pop (type $8) (param $desc (ref null $desc2))
+  ;; NO_TNH-NEXT:  (local $1 anyref)
+  ;; NO_TNH-NEXT:  (local $2 (ref $desc2))
+  ;; NO_TNH-NEXT:  (drop
+  ;; NO_TNH-NEXT:   (block $l (result (ref none))
+  ;; NO_TNH-NEXT:    (try
+  ;; NO_TNH-NEXT:     (do
+  ;; NO_TNH-NEXT:     )
+  ;; NO_TNH-NEXT:     (catch $tag-any
+  ;; NO_TNH-NEXT:      (drop
+  ;; NO_TNH-NEXT:       (block (result anyref)
+  ;; NO_TNH-NEXT:        (local.set $1
+  ;; NO_TNH-NEXT:         (pop anyref)
+  ;; NO_TNH-NEXT:        )
+  ;; NO_TNH-NEXT:        (local.set $2
+  ;; NO_TNH-NEXT:         (ref.as_non_null
+  ;; NO_TNH-NEXT:          (local.get $desc)
+  ;; NO_TNH-NEXT:         )
+  ;; NO_TNH-NEXT:        )
+  ;; NO_TNH-NEXT:        (br_on_cast $l anyref (ref none)
+  ;; NO_TNH-NEXT:         (local.get $1)
+  ;; NO_TNH-NEXT:        )
+  ;; NO_TNH-NEXT:       )
+  ;; NO_TNH-NEXT:      )
+  ;; NO_TNH-NEXT:     )
+  ;; NO_TNH-NEXT:    )
+  ;; NO_TNH-NEXT:    (unreachable)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT: )
+  (func $br-on-cast-desc-pop (param $desc (ref null $desc2))
+    ;; Same for br_on_cast_desc_eq localized into an unnamed block.
+    (drop
+      (block $l (result (ref $struct2))
+        (try
+          (do)
+          (catch $tag-any
+            (drop
+              (br_on_cast_desc_eq $l anyref (ref $struct2)
+                (pop anyref)
+                (local.get $desc)
+              )
+            )
+          )
+        )
+        (unreachable)
+      )
+    )
+  )
 )

@@ -39,7 +39,6 @@
 
 #include <ir/branch-utils.h>
 #include <ir/effects.h>
-#include <ir/eh-utils.h>
 #include <ir/flat.h>
 #include <ir/properties.h>
 #include <ir/utils.h>
@@ -318,8 +317,9 @@ struct Flatten
             // we don't know which break target will be hit - assign to them all
             auto names = BranchUtils::getUniqueTargets(sw);
             for (auto name : names) {
+              Type blockType = findBreakTarget(name)->type;
               ourPreludes.push_back(
-                builder.makeLocalSet(getTempForBreakTarget(name, type),
+                builder.makeLocalSet(getTempForBreakTarget(name, blockType),
                                      builder.makeLocalGet(temp, type)));
             }
             sw->value = nullptr;
@@ -376,10 +376,6 @@ struct Flatten
     }
     // the body may have preludes
     curr->body = getPreludesWithExpression(originalBody, curr->body);
-
-    // Flatten can generate blocks within 'catch', making pops invalid. Fix them
-    // up.
-    EHUtils::handleBlockNestedPops(curr, *getModule());
   }
 
 private:

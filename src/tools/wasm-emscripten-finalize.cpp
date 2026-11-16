@@ -22,7 +22,6 @@
 #include <exception>
 
 #include "abi/js.h"
-#include "ir/trapping.h"
 #include "support/colors.h"
 #include "support/debug.h"
 #include "support/file.h"

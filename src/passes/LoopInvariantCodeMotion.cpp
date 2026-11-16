@@ -27,6 +27,7 @@
 #include "ir/effects.h"
 #include "ir/find_all.h"
 #include "ir/local-graph.h"
+#include "ir/properties.h"
 #include "pass.h"
 #include "wasm-builder.h"
 #include "wasm.h"
@@ -59,7 +60,7 @@ struct LoopInvariantCodeMotion
   void visitLoop(Loop* loop) {
     // We accumulate all the code we can move out, and will place it
     // in a block just preceding the loop.
-    std::vector<Expression*> movedCode;
+    std::vector<Expression**> movedCode;
     // Accumulate effects of things we can't move out - things
     // we move out later must cross them, so we must verify it
     // is ok to do so.
@@ -73,6 +74,13 @@ struct LoopInvariantCodeMotion
     EffectAnalyzer loopEffects(getPassOptions(), *getModule(), loop);
     loopEffects.localsRead.clear();
     loopEffects.localsWritten.clear();
+    // We can ignore the loop's mayNotReturn effect because any hoisted
+    // instruction already executes on the first iteration before the loop can
+    // branch back (or before any inner loop after it; inner loops before it are
+    // tracked in effectsSoFar), and since the hoisted instruction is
+    // loop-invariant, it cannot trap on later iterations without trapping on
+    // the first.
+    loopEffects.mayNotReturn = false;
     // Note all the sets in each loop, and how many per index. Currently
     // EffectAnalyzer can't do that, and we need it to know if we
     // can move a set out of the loop (if there is another set
@@ -125,9 +133,12 @@ struct LoopInvariantCodeMotion
         // The rest of the loop's effects matter too, we must also
         // take into account global state like interacting loads and
         // stores.
-        bool unsafeToMove = effects.writesGlobalState() ||
-                            effectsSoFar.orderedBefore(effects) ||
-                            loopEffects.orderedBefore(effects);
+        // Generative code (like an allocation) produces a new value each time
+        // it executes, so executing it once outside the loop is different.
+        bool unsafeToMove =
+          effects.writesGlobalState() || effectsSoFar.orderedBefore(effects) ||
+          loopEffects.orderedBefore(effects) ||
+          Properties::isGenerative(curr, getFunction(), *getModule());
         // TODO: look into optimizing this with exceptions. for now, disallow
         if (effects.throws() || loopEffects.throws()) {
           unsafeToMove = true;
@@ -161,10 +172,11 @@ struct LoopInvariantCodeMotion
                 numSetsForIndex[set->index]++;
               }
             } else {
-              // We can move it! Leave the changes, move the code, and update
-              // loopSets.
-              movedCode.push_back(curr);
-              *currp = Builder(*getModule()).makeNop();
+              // We can move it! Leave the changes, record the code to move, and
+              // update loopSets. Do not replace *currp with a nop yet, as that
+              // would detach the expression from the function body before a
+              // potential lazy initialization of localGraph.
+              movedCode.push_back(currp);
               for (auto* set : currSets.list) {
                 loopSets.erase(set);
               }
@@ -184,10 +196,14 @@ struct LoopInvariantCodeMotion
     if (!movedCode.empty()) {
       // Finish the moving by emitting the code outside.
       Builder builder(*getModule());
-      auto* ret = builder.makeBlock(movedCode);
-      ret->list.push_back(loop);
-      ret->finalize(loop->type);
-      replaceCurrent(ret);
+      std::vector<Expression*> exprs;
+      exprs.reserve(movedCode.size() + 1);
+      for (auto** currp : movedCode) {
+        exprs.push_back(*currp);
+        *currp = builder.makeNop();
+      }
+      exprs.push_back(loop);
+      replaceCurrent(builder.makeBlock(exprs, loop->type));
       // Note that we do not need to modify the localGraph - we keep
       // each get in a position to be influenced by exactly the same
       // sets as before.

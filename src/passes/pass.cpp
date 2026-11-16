@@ -129,6 +129,10 @@ void PassRegistry::registerPasses() {
   registerPass("cfp-reftest",
                "propagate constant struct field values, using ref.test",
                createConstantFieldPropagationRefTestPass);
+  registerPass("constant-arrays-to-data",
+               "convert constant array.new_fixed to array.new_data when it is "
+               "smaller",
+               createConstantArraysToDataPass);
   registerPass("constraint-analysis",
                "finds and uses mathematical constraints on locals",
                createConstraintAnalysisPass);
@@ -286,6 +290,9 @@ void PassRegistry::registerPasses() {
   registerPass("mark-js-called",
                "mark js called functions (using configureAll) as doing so",
                createMarkJSCalledPass);
+  registerPass("mark-noreturn",
+               "mark functions that do not return, enabling later opts",
+               createMarkNoReturnPass);
   registerPass("memory64-lowering",
                "lower loads and stores to a 64-bit memory to instead use a "
                "32-bit one",
@@ -331,6 +338,9 @@ void PassRegistry::registerPasses() {
   registerPass("monomorphize-always",
                "creates specialized versions of functions (even if unhelpful)",
                createMonomorphizeAlwaysPass);
+  registerPass("multi-heap2local",
+               "cleanly separate multiple heap allocations to a single local",
+               createMultiHeap2LocalPass);
   registerPass("multi-memory-lowering",
                "combines multiple memories into a single memory",
                createMultiMemoryLoweringPass);
@@ -367,6 +377,9 @@ void PassRegistry::registerPasses() {
   registerPass("optimize-instructions",
                "optimizes instruction combinations",
                createOptimizeInstructionsPass);
+  registerPass("optimize-noreturn",
+               "optimizes calls to @binaryen.noreturn functions",
+               createOptimizeNoReturnPass);
 // Outlining currently relies on LLVM's SuffixTree, which we can't rely upon
 // when building Binaryen for Emscripten.
 #ifndef SKIP_OUTLINING
@@ -375,8 +388,6 @@ void PassRegistry::registerPasses() {
   registerPass("pick-load-signs",
                "pick load signs based on their uses",
                createPickLoadSignsPass);
-  registerPass(
-    "poppify", "Transform Binaryen IR into Poppy IR", createPoppifyPass);
   registerPass("post-emscripten",
                "miscellaneous optimizations for Emscripten-generated code",
                createPostEmscriptenPass);
@@ -420,9 +431,16 @@ void PassRegistry::registerPasses() {
   registerPass("remove-non-js-ops",
                "removes operations incompatible with js",
                createRemoveNonJSOpsPass);
+  registerPass("relax-nullability",
+               "make private function params, locals, struct fields, tags, and "
+               "globals nullable, inserting ref.as_non_null where demanded",
+               createRelaxNullabilityPass);
   registerPass("remove-relaxed-simd",
                "replaces relaxed SIMD instructions with unreachable",
                createRemoveRelaxedSIMDPass);
+  registerPass("remove-empty-function-exports",
+               "removes exports of empty functions",
+               createRemoveEmptyFunctionExportsPass);
   registerPass("remove-exports",
                "removes exports using a wildcard",
                createRemoveExportsPass);
@@ -555,10 +573,17 @@ void PassRegistry::registerPasses() {
   registerPass("stack-check",
                "enforce limits on llvm's __stack_pointer global",
                createStackCheckPass);
+  registerPass("tail-call",
+               "convert calls in tail position to return calls",
+               createTailCallPass);
   registerPass("strip-debug",
                "strip debug info (including the names section)",
                createStripDebugPass);
   registerPass("strip-dwarf", "strip dwarf debug info", createStripDWARFPass);
+  registerPass("strip-refining-casts",
+               "remove casts on values flowing into slots whose declared type "
+               "the uncast value already satisfies",
+               createStripRefiningCastsPass);
   registerPass("strip-producers",
                "strip the wasm producers section",
                createStripProducersPass);
@@ -575,12 +600,6 @@ void PassRegistry::registerPasses() {
   registerPass("translate-to-exnref",
                "translate old Phase 3 EH instructions to new ones with exnref",
                createTranslateToExnrefPass);
-  registerPass("trap-mode-clamp",
-               "replace trapping operations with clamping semantics",
-               createTrapModeClamp);
-  registerPass("trap-mode-js",
-               "replace trapping operations with js semantics",
-               createTrapModeJS);
   registerPass("tuple-optimization",
                "optimize trivial tuples away",
                createTupleOptimizationPass);
@@ -668,6 +687,8 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
     addIfNoDWARFIssues("local-cse");
     // TODO: add rereloop etc. here
   }
+  // Add unreachables on noreturn calls before DCE, so DCE cleans them up.
+  addIfNoDWARFIssues("optimize-noreturn");
   addIfNoDWARFIssues("dce");
   addIfNoDWARFIssues("remove-unused-names");
   addIfNoDWARFIssues("remove-unused-brs");
@@ -709,6 +730,7 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
   // simplify-locals opens opportunities for optimizations
   addIfNoDWARFIssues("remove-unused-brs");
   if (options.optimizeLevel > 1 && wasm->features.hasGC()) {
+    addIfNoDWARFIssues("multi-heap2local");
     addIfNoDWARFIssues("heap2local");
   }
   // if we are willing to work hard, also optimize copies before coalescing
@@ -739,7 +761,7 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
   addIfNoDWARFIssues(
     "remove-unused-brs"); // coalesce-locals opens opportunities
   addIfNoDWARFIssues(
-    "remove-unused-names");           // remove-unused-brs opens opportunities
+    "remove-unused-names"); // remove-unused-brs opens opportunities
   if (options.optimizeLevel >= 3 || options.shrinkLevel >= 1) {
     addIfNoDWARFIssues("constraint-analysis");
   }
@@ -841,6 +863,14 @@ void PassRunner::addDefaultGlobalOptimizationPostPasses() {
     addIfNoDWARFIssues("simplify-globals");
   }
   addIfNoDWARFIssues("remove-unused-module-elements");
+  if (options.lastOpts && wasm->features.hasGC() &&
+      wasm->features.hasBulkMemory() &&
+      (options.optimizeLevel >= 2 || options.shrinkLevel >= 1)) {
+    // Converting array.new_fixed to array.new_data inhibits optimizations that
+    // need constant expressions or know the contents of the array (and
+    // OptimizeInstructions may undo it), so only do it at the very end.
+    addIfNoDWARFIssues("constant-arrays-to-data");
+  }
   if (options.optimizeLevel >= 2 && wasm->features.hasStrings()) {
     // Gather strings to globals right before reorder-globals, which will then
     // sort them properly.
@@ -1038,6 +1068,10 @@ void PassRunner::runPassOnFunction(Pass* pass, Function* func) {
   assert(pass->isFunctionParallel());
 
   if (options.passesToSkip.contains(pass->name)) {
+    return;
+  }
+
+  if (!pass->runsOnFunction(func)) {
     return;
   }
 
