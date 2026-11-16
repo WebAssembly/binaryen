@@ -76,8 +76,6 @@ enum class MemoryOrder : uint8_t {
   SeqCst,
 };
 
-enum class IRProfile { Normal, Poppy };
-
 // Operators
 
 enum UnaryOp {
@@ -2444,7 +2442,6 @@ class Function : public Importable {
 public:
   // A non-nullable reference to a function type. Exact for defined functions.
   Type type = Type(Signature(), NonNullable, Exact);
-  IRProfile profile = IRProfile::Normal;
   std::vector<Type> vars; // non-param locals
 
   // The body of the function

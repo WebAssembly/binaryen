@@ -913,7 +913,7 @@
 
  ;; CHECK:      (func $call-ref-impossible (type $0) (result eqref)
  ;; CHECK-NEXT:  (local $f nullfuncref)
- ;; CHECK-NEXT:  (local $arg anyref)
+ ;; CHECK-NEXT:  (local $arg i31ref)
  ;; CHECK-NEXT:  (block ;; (replaces unreachable CallRef we can't emit)
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (local.get $arg)
@@ -929,6 +929,8 @@
   (local $arg i31ref)
   ;; Require that typeof($f) <: nullref, but do not constrain $arg because the
   ;; call_ref will not be reached.
+  ;; TODO: for now this keeps the $arg unchanged (and is likely not worth
+  ;;       optimizing, as this is dead code)
   (call_ref $bot
    (local.get $arg)
    (local.get $f)
@@ -1099,7 +1101,7 @@
 
  ;; CHECK:      (func $struct-set-impossible (type $3)
  ;; CHECK-NEXT:  (local $ref nullref)
- ;; CHECK-NEXT:  (local $val anyref)
+ ;; CHECK-NEXT:  (local $val nullref)
  ;; CHECK-NEXT:  (block ;; (replaces unreachable StructSet we can't emit)
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (local.get $ref)
@@ -1114,6 +1116,8 @@
   (local $ref nullref)
   (local $val nullref)
   ;; Require that typeof($ref) <: nullref, but do not constrain $val.
+  ;; TODO: for now this keeps the type unchanged (and is likely not worth
+  ;;       optimizing, as this is dead code)
   (struct.set $bot 0
    (local.get $ref)
    (local.get $val)
@@ -1138,6 +1142,7 @@
  (type $sub (sub $super (array (field i31ref))))
 
  (type $super-mut (sub (array (field (mut eqref)))))
+ ;; CHECK:      (type $sub-mut (sub $super-mut (array (mut eqref))))
  (type $sub-mut (sub $super-mut (array (field (mut eqref)))))
 
  (type $bytes (sub (array i8)))
@@ -1287,7 +1292,7 @@
 
  ;; CHECK:      (func $array-set-impossible (type $0)
  ;; CHECK-NEXT:  (local $ref nullref)
- ;; CHECK-NEXT:  (local $val anyref)
+ ;; CHECK-NEXT:  (local $val i31ref)
  ;; CHECK-NEXT:  (block ;; (replaces unreachable ArraySet we can't emit)
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (local.get $ref)
@@ -1305,6 +1310,8 @@
   (local $ref nullref)
   (local $val i31ref)
   ;; Require that typeof($ref) <: nullref and do not constrain $ref.
+  ;; TODO: for now this keeps the type unchanged (and is likely not worth
+  ;;       optimizing, as this is dead code)
   (array.set $sub-mut
    (local.get $ref)
    (i32.const 0)
@@ -1381,7 +1388,7 @@
 
  ;; CHECK:      (func $array-copy-impossible-dest (type $0)
  ;; CHECK-NEXT:  (local $dest nullref)
- ;; CHECK-NEXT:  (local $src anyref)
+ ;; CHECK-NEXT:  (local $src (ref null $sub))
  ;; CHECK-NEXT:  (block ;; (replaces unreachable ArrayCopy we can't emit)
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (local.get $dest)
@@ -1406,6 +1413,8 @@
   (local $dest nullref)
   (local $src (ref null $sub))
   ;; Require that typeof($dest) <: nullref but do not constrain $src.
+  ;; TODO: for now this keeps $src's type unchanged (and is likely not worth
+  ;;       optimizing, as this is dead code)
   (array.copy $sub-mut $sub
    (local.get $dest)
    (i32.const 0)
@@ -1416,7 +1425,7 @@
  )
 
  ;; CHECK:      (func $array-copy-impossible-src (type $0)
- ;; CHECK-NEXT:  (local $dest anyref)
+ ;; CHECK-NEXT:  (local $dest (ref null $sub-mut))
  ;; CHECK-NEXT:  (local $src nullref)
  ;; CHECK-NEXT:  (block ;; (replaces unreachable ArrayCopy we can't emit)
  ;; CHECK-NEXT:   (drop
@@ -1442,6 +1451,8 @@
   (local $dest (ref null $sub-mut))
   (local $src nullref)
   ;; Require that typeof($src) <: nullref but do not constrain $dest.
+  ;; TODO: for now this keeps the type unchanged (and is likely not worth
+  ;;       optimizing, as this is dead code)
   (array.copy $sub-mut $sub
    (local.get $dest)
    (i32.const 0)
@@ -1512,7 +1523,7 @@
 
  ;; CHECK:      (func $array-fill-impossible (type $0)
  ;; CHECK-NEXT:  (local $ref nullref)
- ;; CHECK-NEXT:  (local $val anyref)
+ ;; CHECK-NEXT:  (local $val i31ref)
  ;; CHECK-NEXT:  (block ;; (replaces unreachable ArrayFill we can't emit)
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (local.get $ref)
@@ -1533,6 +1544,8 @@
   (local $ref nullref)
   (local $val i31ref)
   ;; Require that typeof($ref) <: nullref, but do not constrain $val.
+  ;; TODO: for now this keeps the type unchanged (and is likely not worth
+  ;;       optimizing, as this is dead code)
   (array.fill $sub-mut
    (local.get $ref)
    (i32.const 0)
@@ -1636,6 +1649,1448 @@
    (i32.const 0)
    (i32.const 0)
    (i32.const 0)
+  )
+ )
+)
+
+(module
+ ;; CHECK:      (type $outer-super (sub (struct)))
+ (type $outer-super (sub (struct)))
+ ;; CHECK:      (type $outer-sub (sub $outer-super (struct (field i32))))
+ (type $outer-sub (sub $outer-super (struct (field i32))))
+ ;; CHECK:      (type $inner-super (sub (struct (field (ref $outer-super)))))
+ (type $inner-super (sub (struct (field (ref $outer-super)))))
+ ;; CHECK:      (type $inner-sub (sub $inner-super (struct (field (ref $outer-sub)))))
+ (type $inner-sub (sub $inner-super (struct (field (ref $outer-sub)))))
+
+ ;; CHECK:      (type $4 (func (result i32)))
+
+ ;; CHECK:      (func $struct-get-non-null-field (type $4) (result i32)
+ ;; CHECK-NEXT:  (local $var (ref null $inner-sub))
+ ;; CHECK-NEXT:  (struct.get $outer-sub 0
+ ;; CHECK-NEXT:   (struct.get $inner-sub 0
+ ;; CHECK-NEXT:    (local.get $var)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $struct-get-non-null-field (result i32)
+  (local $var (ref null $inner-sub))
+  ;; The outer struct.get must return an i32, so it cannot be generalized from
+  ;; $outer-sub to $outer-super. That means we cannot generalize the inner
+  ;; struct.get from $inner-sub to $inner-super (which would emit $outer-super).
+  (struct.get $outer-sub 0
+   (struct.get $inner-sub 0
+    (local.get $var)
+   )
+  )
+ )
+)
+
+(module
+ ;; CHECK:      (type $0 (func (result eqref)))
+
+ ;; CHECK:      (type $1 (func (param eqref anyref)))
+
+ ;; CHECK:      (type $2 (func))
+
+ ;; CHECK:      (type $3 (func (param (ref (shared noextern))) (result (ref null (shared any)))))
+
+ ;; CHECK:      (type $4 (func (param (ref (shared noextern))) (result (ref (shared any)))))
+
+ ;; CHECK:      (type $5 (func (result (ref null (shared extern)))))
+
+ ;; CHECK:      (type $6 (func (result (ref (shared extern)))))
+
+ ;; CHECK:      (table $eq-table 0 0 eqref)
+ (table $eq-table 0 0 eqref)
+
+ ;; CHECK:      (func $br_if (type $1) (param $eq eqref) (param $any anyref)
+ ;; CHECK-NEXT:  (local $var1 eqref)
+ ;; CHECK-NEXT:  (local $var2 eqref)
+ ;; CHECK-NEXT:  (local.set $eq
+ ;; CHECK-NEXT:   (block $l1 (result eqref)
+ ;; CHECK-NEXT:    (local.set $any
+ ;; CHECK-NEXT:     (br_if $l1
+ ;; CHECK-NEXT:      (local.get $var1)
+ ;; CHECK-NEXT:      (i32.const 0)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (local.set $any
+ ;; CHECK-NEXT:   (block $l2 (result eqref)
+ ;; CHECK-NEXT:    (local.set $eq
+ ;; CHECK-NEXT:     (br_if $l2
+ ;; CHECK-NEXT:      (local.get $var2)
+ ;; CHECK-NEXT:      (i32.const 0)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $br_if (param $eq eqref) (param $any anyref)
+  (local $var1 i31ref)
+  (local $var2 i31ref)
+  ;; Require typeof($var1) <: eqref from the branch target.
+  (local.set $eq
+   (block $l1 (result i31ref)
+    (local.set $any
+     (br_if $l1
+      (local.get $var1)
+      (i32.const 0)
+     )
+    )
+    (unreachable)
+   )
+  )
+  ;; Require typeof($var2) <: eqref from the value flowing through the br_if.
+  (local.set $any
+   (block $l2 (result i31ref)
+    (local.set $eq
+     (br_if $l2
+      (local.get $var2)
+      (i32.const 0)
+     )
+    )
+    (unreachable)
+   )
+  )
+ )
+
+ ;; CHECK:      (func $return (type $0) (result eqref)
+ ;; CHECK-NEXT:  (local $var eqref)
+ ;; CHECK-NEXT:  (return
+ ;; CHECK-NEXT:   (local.get $var)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $return (result eqref)
+  (local $var i31ref)
+  ;; Require typeof($var) <: eqref.
+  (return
+   (local.get $var)
+  )
+ )
+
+ ;; CHECK:      (func $table-grow (type $2)
+ ;; CHECK-NEXT:  (local $var eqref)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (table.grow $eq-table
+ ;; CHECK-NEXT:    (local.get $var)
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $table-grow
+  (local $var i31ref)
+  ;; Require typeof($var) <: eqref.
+  (drop
+   (table.grow $eq-table
+    (local.get $var)
+    (i32.const 0)
+   )
+  )
+ )
+
+ ;; CHECK:      (func $any-convert-extern-shared-nullable (type $3) (param $x (ref (shared noextern))) (result (ref null (shared any)))
+ ;; CHECK-NEXT:  (local $var (ref null (shared extern)))
+ ;; CHECK-NEXT:  (local.set $var
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (any.convert_extern
+ ;; CHECK-NEXT:   (local.get $var)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $any-convert-extern-shared-nullable (param $x (ref (shared noextern))) (result (ref null (shared any)))
+  (local $var (ref (shared noextern)))
+  (local.set $var
+   (local.get $x)
+  )
+  ;; Require that typeof($var) <: (ref null (shared extern)).
+  (any.convert_extern
+   (local.get $var)
+  )
+ )
+
+ ;; CHECK:      (func $any-convert-extern-shared-non-nullable (type $4) (param $x (ref (shared noextern))) (result (ref (shared any)))
+ ;; CHECK-NEXT:  (local $var (ref (shared extern)))
+ ;; CHECK-NEXT:  (local.set $var
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (any.convert_extern
+ ;; CHECK-NEXT:   (local.get $var)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $any-convert-extern-shared-non-nullable (param $x (ref (shared noextern))) (result (ref (shared any)))
+  (local $var (ref (shared noextern)))
+  (local.set $var
+   (local.get $x)
+  )
+  ;; Require that typeof($var) <: (ref (shared extern)).
+  (any.convert_extern
+   (local.get $var)
+  )
+ )
+
+ ;; CHECK:      (func $extern-convert-any-shared-nullable (type $5) (result (ref null (shared extern)))
+ ;; CHECK-NEXT:  (local $var (ref null (shared any)))
+ ;; CHECK-NEXT:  (local.set $var
+ ;; CHECK-NEXT:   (ref.i31_shared
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (extern.convert_any
+ ;; CHECK-NEXT:   (local.get $var)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $extern-convert-any-shared-nullable (result (ref null (shared extern)))
+  (local $var (ref (shared i31)))
+  (local.set $var
+   (ref.i31_shared
+    (i32.const 0)
+   )
+  )
+  ;; Require that typeof($var) <: (ref null (shared any)).
+  (extern.convert_any
+   (local.get $var)
+  )
+ )
+
+ ;; CHECK:      (func $extern-convert-any-shared-non-nullable (type $6) (result (ref (shared extern)))
+ ;; CHECK-NEXT:  (local $var (ref (shared any)))
+ ;; CHECK-NEXT:  (local.set $var
+ ;; CHECK-NEXT:   (ref.i31_shared
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (extern.convert_any
+ ;; CHECK-NEXT:   (local.get $var)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $extern-convert-any-shared-non-nullable (result (ref (shared extern)))
+  (local $var (ref (shared i31)))
+  (local.set $var
+   (ref.i31_shared
+    (i32.const 0)
+   )
+  )
+  ;; Require that typeof($var) <: (ref (shared any)).
+  (extern.convert_any
+   (local.get $var)
+  )
+ )
+
+ ;; CHECK:      (func $publish (type $0) (result eqref)
+ ;; CHECK-NEXT:  (local $var1 i31ref)
+ ;; CHECK-NEXT:  (local $var2 i31ref)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (publish
+ ;; CHECK-NEXT:    (local.get $var1)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (publish
+ ;; CHECK-NEXT:   (local.get $var2)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $publish (result eqref)
+  (local $var1 i31ref)
+  (local $var2 i31ref)
+  ;; No constraint on $var1 because the publish is dropped.
+  ;; TODO
+  (drop
+   (publish
+    (local.get $var1)
+   )
+  )
+  ;; Require that typeof($var2) <: eqref through the publish.
+  ;; TODO
+  (publish
+   (local.get $var2)
+  )
+ )
+)
+
+(module
+ ;; CHECK:      (type $top (sub (func (param i31ref) (result anyref))))
+ (type $top (sub (func (param i31ref) (result anyref))))
+ ;; CHECK:      (type $mid (sub $top (func (param eqref) (result anyref))))
+ (type $mid (sub $top (func (param eqref) (result anyref))))
+ ;; CHECK:      (type $bot (sub $mid (func (param eqref) (result eqref))))
+ (type $bot (sub $mid (func (param eqref) (result eqref))))
+
+ ;; CHECK:      (type $3 (func (result anyref)))
+
+ ;; CHECK:      (type $4 (func (result eqref)))
+
+ ;; CHECK:      (func $return-call-ref-params-limited (type $3) (result anyref)
+ ;; CHECK-NEXT:  (local $f (ref null $mid))
+ ;; CHECK-NEXT:  (local $arg eqref)
+ ;; CHECK-NEXT:  (return_call_ref $mid
+ ;; CHECK-NEXT:   (local.get $arg)
+ ;; CHECK-NEXT:   (local.get $f)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $return-call-ref-params-limited (result anyref)
+  (local $f (ref null $bot))
+  (local $arg i31ref)
+  ;; Same as $call-ref-params-limited, but with return_call_ref.
+  (return_call_ref $bot
+   (local.get $arg)
+   (local.get $f)
+  )
+ )
+
+ ;; CHECK:      (func $return-call-ref-results-limited (type $4) (result eqref)
+ ;; CHECK-NEXT:  (local $f (ref null $bot))
+ ;; CHECK-NEXT:  (local $arg eqref)
+ ;; CHECK-NEXT:  (return_call_ref $bot
+ ;; CHECK-NEXT:   (local.get $arg)
+ ;; CHECK-NEXT:   (local.get $f)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $return-call-ref-results-limited (result eqref)
+  (local $f (ref null $bot))
+  (local $arg i31ref)
+  ;; Same as $call-ref-results-limited, but with return_call_ref, testing that
+  ;; the function's return type constrains the target signature.
+  (return_call_ref $bot
+   (local.get $arg)
+   (local.get $f)
+  )
+ )
+)
+
+(module
+ (rec
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $described (descriptor $desc) (struct (field eqref) (field anyref)))
+  (type $described (descriptor $desc) (struct (field eqref) (field anyref)))
+  ;; CHECK:       (type $desc (describes $described) (struct))
+  (type $desc (describes $described) (struct))
+ )
+
+ ;; CHECK:      (type $2 (func (result anyref)))
+
+ ;; CHECK:      (func $struct-new-desc (type $2) (result anyref)
+ ;; CHECK-NEXT:  (local $var1 eqref)
+ ;; CHECK-NEXT:  (local $var2 anyref)
+ ;; CHECK-NEXT:  (local $desc (ref null (exact $desc)))
+ ;; CHECK-NEXT:  (struct.new_desc $described
+ ;; CHECK-NEXT:   (local.get $var1)
+ ;; CHECK-NEXT:   (local.get $var2)
+ ;; CHECK-NEXT:   (local.get $desc)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $struct-new-desc (result anyref)
+  (local $var1 i31ref)
+  (local $var2 i31ref)
+  (local $desc nullref)
+  ;; Require that typeof($var1) <: eqref, typeof($var2) <: anyref, and
+  ;; typeof($desc) <: (ref null (exact $desc)).
+  (struct.new_desc $described
+   (local.get $var1)
+   (local.get $var2)
+   (local.get $desc)
+  )
+ )
+
+ ;; CHECK:      (func $struct-new-default-desc (type $2) (result anyref)
+ ;; CHECK-NEXT:  (local $desc (ref null (exact $desc)))
+ ;; CHECK-NEXT:  (struct.new_default_desc $described
+ ;; CHECK-NEXT:   (local.get $desc)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $struct-new-default-desc (result anyref)
+  (local $desc nullref)
+  ;; Require that typeof($desc) <: (ref null (exact $desc)).
+  (struct.new_default_desc $described
+   (local.get $desc)
+  )
+ )
+)
+
+(module
+ ;; CHECK:      (type $0 (func))
+
+ ;; CHECK:      (type $mut-i31 (sub (array (mut i31ref))))
+
+ ;; CHECK:      (type $super (sub (array eqref)))
+ (type $super (sub (array (field eqref))))
+ ;; CHECK:      (type $sub (sub $super (array i31ref)))
+ (type $sub (sub $super (array (field i31ref))))
+ (type $mut-i31 (sub (array (field (mut i31ref)))))
+ (type $shared-array (shared (array i8)))
+
+ ;; CHECK:      (type $4 (func (result i31ref)))
+
+ ;; CHECK:      (func $array-get-type (type $4) (result i31ref)
+ ;; CHECK-NEXT:  (local $val (ref null $sub))
+ ;; CHECK-NEXT:  (array.get $sub
+ ;; CHECK-NEXT:   (local.get $val)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $array-get-type (result i31ref)
+  (local $val (ref null $sub))
+  ;; Require that typeof($val) <: (ref null $sub) because further supertypes do
+  ;; not satisfy the requirement on the element type.
+  (array.get $sub
+   (local.get $val)
+   (i32.const 0)
+  )
+ )
+
+ ;; CHECK:      (func $array-len-shared (type $0)
+ ;; CHECK-NEXT:  (local $ref (ref null (shared array)))
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (array.len
+ ;; CHECK-NEXT:    (local.get $ref)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $array-len-shared
+  (local $ref (ref null $shared-array))
+  (drop
+   ;; Require that typeof($ref) <: (ref null (shared array)).
+   (array.len
+    (local.get $ref)
+   )
+  )
+ )
+
+ ;; CHECK:      (func $i31-get-shared (type $0)
+ ;; CHECK-NEXT:  (local $null (ref null (shared i31)))
+ ;; CHECK-NEXT:  (local $nonnullable (ref null (shared i31)))
+ ;; CHECK-NEXT:  (local.set $nonnullable
+ ;; CHECK-NEXT:   (ref.i31_shared
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i31.get_s
+ ;; CHECK-NEXT:    (local.get $null)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i31.get_u
+ ;; CHECK-NEXT:    (local.get $nonnullable)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $i31-get-shared
+  (local $null (ref null (shared none)))
+  (local $nonnullable (ref (shared i31)))
+  (local.set $nonnullable
+   (ref.i31_shared
+    (i32.const 0)
+   )
+  )
+  (drop
+   ;; Require that typeof($null) <: (ref null (shared i31)).
+   (i31.get_s
+    (local.get $null)
+   )
+  )
+  (drop
+   ;; Require that typeof($nonnullable) <: (ref null (shared i31)).
+   (i31.get_u
+    (local.get $nonnullable)
+   )
+  )
+ )
+
+ ;; CHECK:      (func $array-copy-ref-limited (type $0)
+ ;; CHECK-NEXT:  (local $dest (ref null $mut-i31))
+ ;; CHECK-NEXT:  (local $src (ref null $sub))
+ ;; CHECK-NEXT:  (array.copy $mut-i31 $sub
+ ;; CHECK-NEXT:   (local.get $dest)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:   (local.get $src)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $array-copy-ref-limited
+  (local $dest (ref null $mut-i31))
+  (local $src (ref null $sub))
+  ;; Require that typeof($dest) <: $mut-i31 and that typeof($src) <: $sub
+  ;; because $super's element type (eqref) is not a subtype of $mut-i31's
+  ;; element type (i31ref).
+  (array.copy $mut-i31 $sub
+   (local.get $dest)
+   (i32.const 0)
+   (local.get $src)
+   (i32.const 0)
+   (i32.const 0)
+  )
+ )
+)
+
+(module
+ ;; CHECK:      (type $outer-super (sub (struct)))
+ (type $outer-super (sub (struct)))
+ ;; CHECK:      (type $outer-sub (sub $outer-super (struct (field i32))))
+ (type $outer-sub (sub $outer-super (struct (field i32))))
+ ;; CHECK:      (type $2 (func (result i32)))
+
+ ;; CHECK:      (type $array-super (sub (array (ref $outer-super))))
+ (type $array-super (sub (array (ref $outer-super))))
+ ;; CHECK:      (type $array-sub (sub $array-super (array (ref $outer-sub))))
+ (type $array-sub (sub $array-super (array (ref $outer-sub))))
+ ;; CHECK:      (type $func-super (sub (func (result (ref $outer-super)))))
+ (type $func-super (sub (func (result (ref $outer-super)))))
+ ;; CHECK:      (type $func-sub (sub $func-super (func (result (ref $outer-sub)))))
+ (type $func-sub (sub $func-super (func (result (ref $outer-sub)))))
+
+ ;; CHECK:      (func $array-get-non-null-elem (type $2) (result i32)
+ ;; CHECK-NEXT:  (local $var (ref null $array-sub))
+ ;; CHECK-NEXT:  (struct.get $outer-sub 0
+ ;; CHECK-NEXT:   (array.get $array-sub
+ ;; CHECK-NEXT:    (local.get $var)
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $array-get-non-null-elem (result i32)
+  (local $var (ref null $array-sub))
+  ;; Same as $struct-get-non-null-field, but with an inner array.get.
+  (struct.get $outer-sub 0
+   (array.get $array-sub
+    (local.get $var)
+    (i32.const 0)
+   )
+  )
+ )
+
+ ;; CHECK:      (func $call-ref-non-null-result (type $2) (result i32)
+ ;; CHECK-NEXT:  (local $var (ref null $func-sub))
+ ;; CHECK-NEXT:  (struct.get $outer-sub 0
+ ;; CHECK-NEXT:   (call_ref $func-sub
+ ;; CHECK-NEXT:    (local.get $var)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $call-ref-non-null-result (result i32)
+  (local $var (ref null $func-sub))
+  ;; Same as $struct-get-non-null-field, but with an inner call_ref.
+  (struct.get $outer-sub 0
+   (call_ref $func-sub
+    (local.get $var)
+   )
+  )
+ )
+)
+
+(module
+ ;; CHECK:      (type $func-void (func))
+
+ ;; CHECK:      (type $cont-void (cont $func-void))
+
+ ;; CHECK:      (type $super-func (sub (func (param eqref) (result eqref))))
+ (type $super-func (sub (func (param eqref) (result eqref))))
+ (type $sub-func (sub $super-func (func (param anyref) (result i31ref))))
+ ;; CHECK:      (type $3 (func (param (ref null $cont-void))))
+
+ ;; CHECK:      (type $4 (func (param eqref)))
+
+ ;; CHECK:      (type $cont-super (cont $super-func))
+ (type $cont-super (cont $super-func))
+ (type $func-void (func))
+ (type $cont-void (cont $func-void))
+
+ ;; CHECK:      (tag $tag-eq (type $4) (param eqref))
+ (tag $tag-eq (param eqref))
+
+ ;; CHECK:      (func $throw (type $func-void)
+ ;; CHECK-NEXT:  (local $val eqref)
+ ;; CHECK-NEXT:  (throw $tag-eq
+ ;; CHECK-NEXT:   (local.get $val)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $throw
+  (local $val i31ref)
+  ;; Require typeof($val) <: eqref.
+  (throw $tag-eq
+   (local.get $val)
+  )
+ )
+
+ ;; CHECK:      (func $throw-ref (type $func-void)
+ ;; CHECK-NEXT:  (local $exn exnref)
+ ;; CHECK-NEXT:  (throw_ref
+ ;; CHECK-NEXT:   (local.get $exn)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $throw-ref
+  (local $exn nullexnref)
+  ;; Require typeof($exn) <: exnref.
+  (throw_ref
+   (local.get $exn)
+  )
+ )
+
+ ;; CHECK:      (func $cont-new (type $func-void)
+ ;; CHECK-NEXT:  (local $f (ref null $super-func))
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (cont.new $cont-super
+ ;; CHECK-NEXT:    (local.get $f)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $cont-new
+  (local $f (ref null $sub-func))
+  ;; Require typeof($f) <: (ref null $super-func).
+  (drop
+   (cont.new $cont-super
+    (local.get $f)
+   )
+  )
+ )
+
+ ;; CHECK:      (func $resume-throw (type $3) (param $c (ref null $cont-void))
+ ;; CHECK-NEXT:  (local $val eqref)
+ ;; CHECK-NEXT:  (resume_throw $cont-void $tag-eq
+ ;; CHECK-NEXT:   (local.get $val)
+ ;; CHECK-NEXT:   (local.get $c)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $resume-throw (param $c (ref null $cont-void))
+  (local $val i31ref)
+  ;; Require typeof($val) <: eqref.
+  (resume_throw $cont-void $tag-eq
+   (local.get $val)
+   (local.get $c)
+  )
+ )
+
+ ;; CHECK:      (func $resume-throw-ref (type $3) (param $c (ref null $cont-void))
+ ;; CHECK-NEXT:  (local $exn exnref)
+ ;; CHECK-NEXT:  (resume_throw_ref $cont-void
+ ;; CHECK-NEXT:   (local.get $exn)
+ ;; CHECK-NEXT:   (local.get $c)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $resume-throw-ref (param $c (ref null $cont-void))
+  (local $exn nullexnref)
+  ;; Require typeof($exn) <: exnref.
+  (resume_throw_ref $cont-void
+   (local.get $exn)
+   (local.get $c)
+  )
+ )
+)
+
+(module
+ (rec
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $A (sub (descriptor $A.desc) (struct)))
+  (type $A (sub (descriptor $A.desc) (struct)))
+  ;; CHECK:       (type $A.desc (sub (describes $A) (struct)))
+  (type $A.desc (sub (describes $A) (struct)))
+  ;; CHECK:       (type $B (sub $A (descriptor $B.desc) (struct)))
+  (type $B (sub $A (descriptor $B.desc) (struct)))
+  ;; CHECK:       (type $B.desc (sub $A.desc (describes $B) (struct)))
+  (type $B.desc (sub $A.desc (describes $B) (struct)))
+  ;; CHECK:       (type $C (sub $B (descriptor $C.desc) (struct)))
+  (type $C (sub $B (descriptor $C.desc) (struct)))
+  ;; CHECK:       (type $C.desc (sub $B.desc (describes $C) (struct)))
+  (type $C.desc (sub $B.desc (describes $C) (struct)))
+ )
+
+ ;; CHECK:      (type $6 (func))
+
+ ;; CHECK:      (type $7 (func (result (ref $A.desc))))
+
+ ;; CHECK:      (type $8 (func (result (ref $B.desc))))
+
+ ;; CHECK:      (type $9 (func (param anyref)))
+
+ ;; CHECK:      (type $10 (func (result (ref (exact $A.desc)))))
+
+ ;; CHECK:      (type $11 (func (result (ref (exact $B.desc)))))
+
+ ;; CHECK:      (func $ref.cast_desc_eq (type $6)
+ ;; CHECK-NEXT:  (local $x (ref null $A.desc))
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (ref.cast_desc_eq (ref $A)
+ ;; CHECK-NEXT:    (ref.null none)
+ ;; CHECK-NEXT:    (local.get $x)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $ref.cast_desc_eq
+  (local $x (ref null $A.desc))
+  ;; We cannot generalize x to anyref: it is used as descriptor, and must
+  ;; remain a valid descriptor type.
+  (drop
+   (ref.cast_desc_eq (ref $A)
+    (ref.null eq)
+    (local.get $x)
+   )
+  )
+ )
+
+ ;; CHECK:      (func $br-on-cast-desc-eq (type $9) (param $any anyref)
+ ;; CHECK-NEXT:  (local $x (ref null $A.desc))
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (block $l (result (ref null $A))
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (br_on_cast_desc_eq $l anyref (ref null $A)
+ ;; CHECK-NEXT:      (local.get $any)
+ ;; CHECK-NEXT:      (local.get $x)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $br-on-cast-desc-eq (param $any anyref)
+  (local $x (ref null $A.desc))
+  ;; As above, with br_on.
+  (drop
+   (block $l (result (ref null $A))
+    (br_on_cast_desc_eq $l anyref (ref null $A)
+     (local.get $any)
+     (local.get $x)
+    )
+    (unreachable)
+   )
+  )
+ )
+
+ ;; CHECK:      (func $ref.get_desc (type $7) (result (ref $A.desc))
+ ;; CHECK-NEXT:  (local $x (ref null $A))
+ ;; CHECK-NEXT:  (ref.get_desc $A
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $ref.get_desc (result (ref $A.desc))
+  ;; We cannot generalize x to anyref: it must have a descriptor.
+  (local $x (ref null $A))
+  (ref.get_desc $A
+   (local.get $x)
+  )
+ )
+
+ ;; CHECK:      (func $ref.get_desc-exact (type $10) (result (ref (exact $A.desc)))
+ ;; CHECK-NEXT:  (local $x (ref null (exact $A)))
+ ;; CHECK-NEXT:  (local.set $x
+ ;; CHECK-NEXT:   (struct.new_default_desc $A
+ ;; CHECK-NEXT:    (struct.new_default $A.desc)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (ref.get_desc $A
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $ref.get_desc-exact (result (ref (exact $A.desc)))
+  (local $x (ref (exact $A)))
+  ;; As above, but the output must also be exact, so we must keep $x exact (we
+  ;; can generalize the nullability, though).
+  (local.set $x
+    (struct.new_desc $A
+      (struct.new $A.desc)
+    )
+  )
+  (ref.get_desc $A
+   (local.get $x)
+  )
+ )
+
+ ;; CHECK:      (func $ref.get_desc-stop-middle (type $8) (result (ref $B.desc))
+ ;; CHECK-NEXT:  (local $x (ref null $B))
+ ;; CHECK-NEXT:  (ref.get_desc $B
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $ref.get_desc-stop-middle (result (ref $B.desc))
+  (local $x (ref null $C))
+  ;; We can generalize $x from $C to $B, but must stop there because $A's
+  ;; descriptor ($A.desc) is not refined enough for the result ($B.desc).
+  (ref.get_desc $C
+   (local.get $x)
+  )
+ )
+
+ ;; CHECK:      (func $ref.get_desc-stop-top (type $7) (result (ref $A.desc))
+ ;; CHECK-NEXT:  (local $x (ref null $A))
+ ;; CHECK-NEXT:  (ref.get_desc $A
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $ref.get_desc-stop-top (result (ref $A.desc))
+  (local $x (ref null $C))
+  ;; We can generalize $x all the way up the supertype chain from $C to $A.
+  (ref.get_desc $C
+   (local.get $x)
+  )
+ )
+
+ ;; CHECK:      (func $ref.get_desc-drop (type $6)
+ ;; CHECK-NEXT:  (local $x (ref null $A))
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (ref.get_desc $A
+ ;; CHECK-NEXT:    (local.get $x)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $ref.get_desc-drop
+  (local $x (ref null $C))
+  ;; Even when the ref.get_desc is dropped, $x can generalize to $A (the top
+  ;; supertype with a descriptor), but not to structref/anyref.
+  (drop
+   (ref.get_desc $C
+    (local.get $x)
+   )
+  )
+ )
+
+ ;; CHECK:      (func $ref.get_desc-exact-to-inexact (type $8) (result (ref $B.desc))
+ ;; CHECK-NEXT:  (local $x (ref null $B))
+ ;; CHECK-NEXT:  (ref.get_desc $B
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $ref.get_desc-exact-to-inexact (result (ref $B.desc))
+  (local $x (ref null (exact $C)))
+  ;; The local starts as exact $C, so the ref.get_desc initially has an exact
+  ;; type, but the required output is inexact $B.desc, so $x can generalize to
+  ;; inexact $B.
+  (ref.get_desc $C
+   (local.get $x)
+  )
+ )
+
+ ;; CHECK:      (func $ref.get_desc-exact-sub (type $11) (result (ref (exact $B.desc)))
+ ;; CHECK-NEXT:  (local $x (ref null (exact $B)))
+ ;; CHECK-NEXT:  (ref.get_desc $B
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $ref.get_desc-exact-sub (result (ref (exact $B.desc)))
+  (local $x (ref null (exact $B)))
+  ;; Even though $B has a supertype $A with a descriptor, the required output is
+  ;; exact $B.desc, so $x must remain (ref null (exact $B)).
+  (ref.get_desc $B
+   (local.get $x)
+  )
+ )
+)
+
+(module
+ ;; CHECK:      (type $A (sub (struct)))
+ (type $A (sub (struct)))
+
+ ;; CHECK:      (type $1 (func (result (ref $A))))
+
+ ;; CHECK:      (func $br_on_non_null (type $1) (result (ref $A))
+ ;; CHECK-NEXT:  (local $x (ref null $A))
+ ;; CHECK-NEXT:  (block $block (result (ref $A))
+ ;; CHECK-NEXT:   (br_on_non_null $block
+ ;; CHECK-NEXT:    (local.get $x)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $br_on_non_null (result (ref $A))
+  (local $x (ref null $A))
+  ;; We cannot refine the local to anyref, as the result is (ref $A).
+  (block $block (result (ref $A))
+   (br_on_non_null $block
+    (local.get $x)
+   )
+   (unreachable)
+  )
+ )
+
+ ;; CHECK:      (func $br_on_cast_fail (type $1) (result (ref $A))
+ ;; CHECK-NEXT:  (local $A (ref $A))
+ ;; CHECK-NEXT:  (block $block (result (ref $A))
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (br_on_cast_fail $block (ref $A) (ref $A)
+ ;; CHECK-NEXT:     (local.tee $A
+ ;; CHECK-NEXT:      (struct.new_default $A)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $br_on_cast_fail (result (ref $A))
+  (local $A (ref $A))
+  ;; The block must return $A, so the cast_fail must send it, and the local
+  ;; cannot be refined to anyref.
+  (block $block (result (ref $A))
+   (drop
+    (br_on_cast_fail $block (ref $A) (ref $A)
+     (local.tee $A
+      (struct.new $A)
+     )
+    )
+   )
+   (unreachable)
+  )
+ )
+)
+
+(module
+ ;; CHECK:      (type $A (struct (field (mut i32))))
+ (type $A (struct (field (mut i32))))
+
+ ;; CHECK:      (type $1 (func (result i32)))
+
+ ;; CHECK:      (type $2 (func (result i32 (ref null $A))))
+
+ ;; CHECK:      (func $struct.atomic (type $1) (result i32)
+ ;; CHECK-NEXT:  (local $x (ref null $A))
+ ;; CHECK-NEXT:  (struct.atomic.rmw.cmpxchg $A 0
+ ;; CHECK-NEXT:   (local.tee $x
+ ;; CHECK-NEXT:    (ref.null none)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $struct.atomic (result i32)
+  ;; TODO: Optimize struct/array atomics. For now, just do not error by
+  ;;       generalizing too much so validation breaks.
+  (local $x (ref null $A))
+  (struct.atomic.rmw.cmpxchg $A 0
+   (local.tee $x
+    (ref.null none)
+   )
+   (i32.const 0)
+   (i32.const 0)
+  )
+ )
+
+ ;; CHECK:      (func $tuple.make (type $2) (result i32 (ref null $A))
+ ;; CHECK-NEXT:  (local $x (ref null $A))
+ ;; CHECK-NEXT:  (local $tuple (tuple i32 (ref null $A)))
+ ;; CHECK-NEXT:  (local.tee $tuple
+ ;; CHECK-NEXT:   (tuple.make 2
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:    (local.get $x)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $tuple.make (result i32 (ref null $A))
+  ;; TODO: Optimize tuples. For now, just do not error by generalizing operands
+  ;;       of tuple.make too much so validation breaks.
+  (local $x (ref null $A))
+  (local $tuple (tuple i32 (ref null $A)))
+  (local.tee $tuple
+   (tuple.make 2
+    (i32.const 0)
+    (local.get $x)
+   )
+  )
+ )
+)
+
+(module
+ ;; CHECK:      (type $A (sub (struct)))
+ (type $A (sub (struct)))
+ ;; CHECK:      (type $1 (func (result (ref $A))))
+
+ ;; CHECK:      (type $B (sub $A (struct)))
+ (type $B (sub $A (struct)))
+
+ ;; CHECK:      (func $br_on_cast_fail_nullable (type $1) (result (ref $A))
+ ;; CHECK-NEXT:  (local $x (ref null $A))
+ ;; CHECK-NEXT:  (block $block (result (ref $A))
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (br_on_cast_fail $block (ref null $A) (ref null $B)
+ ;; CHECK-NEXT:     (local.get $x)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $br_on_cast_fail_nullable (result (ref $A))
+  (local $x (ref null $B))
+  ;; The cast type is nullable, so nulls succeed the cast and do not branch.
+  ;; The sent value is therefore non-nullable, allowing $x to generalize to
+  ;; nullable (ref null $A) even though $block expects non-nullable (ref $A).
+  (block $block (result (ref $A))
+   (drop
+    (br_on_cast_fail $block (ref null $B) (ref null $B)
+     (local.get $x)
+    )
+   )
+   (unreachable)
+  )
+ )
+
+ ;; CHECK:      (func $br_on_null (type $1) (result (ref $A))
+ ;; CHECK-NEXT:  (local $x (ref null $A))
+ ;; CHECK-NEXT:  (block $block
+ ;; CHECK-NEXT:   (return
+ ;; CHECK-NEXT:    (br_on_null $block
+ ;; CHECK-NEXT:     (local.get $x)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT: )
+ (func $br_on_null (result (ref $A))
+  (local $x (ref null $A))
+  ;; The fallthrough value is returned as (ref $A), so $x cannot generalize to
+  ;; anyref, though it remains nullable.
+  (block $block
+   (return
+    (br_on_null $block
+     (local.get $x)
+    )
+   )
+  )
+  (unreachable)
+ )
+
+ ;; CHECK:      (func $br_on_cast_fallthrough (type $1) (result (ref $A))
+ ;; CHECK-NEXT:  (local $x (ref null $A))
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (block $block (result (ref null $A))
+ ;; CHECK-NEXT:    (return
+ ;; CHECK-NEXT:     (br_on_cast $block (ref null $A) (ref null $A)
+ ;; CHECK-NEXT:      (local.get $x)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT: )
+ (func $br_on_cast_fallthrough (result (ref $A))
+  (local $x (ref null $A))
+  ;; The fallthrough value is returned as (ref $A), so $x cannot generalize to
+  ;; anyref, though it remains nullable because nulls take the branch.
+  (drop
+   (block $block (result (ref null $A))
+    (return
+     (br_on_cast $block (ref null $A) (ref null $A)
+      (local.get $x)
+     )
+    )
+   )
+  )
+  (unreachable)
+ )
+)
+
+(module
+ ;; CHECK:      (type $void (func))
+
+ ;; CHECK:      (type $val (sub (struct)))
+ (type $val (sub (struct)))
+ (type $subval (sub $val (struct)))
+ ;; CHECK:      (type $cont (cont $void))
+
+ ;; CHECK:      (type $struct (struct (field (mut (ref null $val)))))
+ (type $struct (struct (field (mut (ref null $val)))))
+ ;; CHECK:      (type $arr (array (mut (ref null $val))))
+ (type $arr (array (mut (ref null $val))))
+ (type $void (func))
+ (type $cont (cont $void))
+
+ ;; CHECK:      (func $struct.atomic.xchg (type $void)
+ ;; CHECK-NEXT:  (local $s (ref null $struct))
+ ;; CHECK-NEXT:  (local $v (ref null $val))
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (struct.atomic.rmw.xchg $struct 0
+ ;; CHECK-NEXT:    (local.get $s)
+ ;; CHECK-NEXT:    (local.get $v)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $struct.atomic.xchg
+  (local $s (ref null $struct))
+  (local $v (ref null $subval))
+  ;; $s must remain (ref null $struct), while $v can generalize to (ref null $val)
+  ;; (the field type), not anyref.
+  (drop
+   (struct.atomic.rmw.xchg $struct 0
+    (local.get $s)
+    (local.get $v)
+   )
+  )
+ )
+
+ ;; CHECK:      (func $array.atomic.cmpxchg (type $void)
+ ;; CHECK-NEXT:  (local $a (ref null $arr))
+ ;; CHECK-NEXT:  (local $exp eqref)
+ ;; CHECK-NEXT:  (local $rep (ref null $val))
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (array.atomic.rmw.cmpxchg $arr
+ ;; CHECK-NEXT:    (local.get $a)
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:    (local.get $exp)
+ ;; CHECK-NEXT:    (local.get $rep)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $array.atomic.cmpxchg
+  (local $a (ref null $arr))
+  (local $exp (ref null $subval))
+  (local $rep (ref null $subval))
+  ;; $a must remain (ref null $arr), $exp can generalize to eqref, and $rep can
+  ;; generalize to (ref null $val).
+  (drop
+   (array.atomic.rmw.cmpxchg $arr
+    (local.get $a)
+    (i32.const 0)
+    (local.get $exp)
+    (local.get $rep)
+   )
+  )
+ )
+
+ ;; CHECK:      (func $resume.local (type $void)
+ ;; CHECK-NEXT:  (local $c (ref null $cont))
+ ;; CHECK-NEXT:  (resume $cont
+ ;; CHECK-NEXT:   (local.get $c)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $resume.local
+  (local $c (ref null $cont))
+  ;; $c must remain (ref null $cont), not generalize to contref.
+  (resume $cont
+   (local.get $c)
+  )
+ )
+)
+
+(module
+ ;; CHECK:      (type $Super (sub (struct)))
+ (type $Super (sub (struct)))
+ ;; CHECK:      (type $FuncSuper (sub (func (result i32 (ref $Super)))))
+
+ ;; CHECK:      (type $Sub (sub $Super (struct)))
+ (type $Sub (sub $Super (struct)))
+ (type $FuncSuper (sub (func (result i32 (ref $Super)))))
+ ;; CHECK:      (type $FuncSub (sub $FuncSuper (func (result i32 (ref $Sub)))))
+ (type $FuncSub (sub $FuncSuper (func (result i32 (ref $Sub)))))
+
+ ;; CHECK:      (type $4 (func))
+
+ ;; CHECK:      (type $5 (func (result i32 (ref $Sub))))
+
+ ;; CHECK:      (type $6 (func (result i32 (ref null $Sub))))
+
+ ;; CHECK:      (type $7 (func (result i32 (ref null $Super))))
+
+ ;; CHECK:      (type $8 (func (result i32 (ref $Super))))
+
+ ;; CHECK:      (type $9 (func (result (ref $Sub))))
+
+ ;; CHECK:      (type $10 (func (result i32)))
+
+ ;; CHECK:      (global $g (mut (tuple i32 (ref null $Sub))) (tuple.make 2
+ ;; CHECK-NEXT:  (i32.const 0)
+ ;; CHECK-NEXT:  (ref.null none)
+ ;; CHECK-NEXT: ))
+ (global $g (mut (tuple i32 (ref null $Sub))) (tuple.make 2 (i32.const 0) (ref.null none)))
+
+ ;; CHECK:      (func $call-ref-tuple (type $5) (result i32 (ref $Sub))
+ ;; CHECK-NEXT:  (local $f (ref null $FuncSub))
+ ;; CHECK-NEXT:  (call_ref $FuncSub
+ ;; CHECK-NEXT:   (local.get $f)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $call-ref-tuple (result i32 (ref $Sub))
+  (local $f (ref null $FuncSub))
+  ;; The result is a tuple, which we should properly handle: it cannot get
+  ;; generalized to FuncSuper, as then we wouldn't return Sub any more.
+  (call_ref $FuncSub
+   (local.get $f)
+  )
+ )
+
+ ;; CHECK:      (func $call-ref-tuple-generalize (type $8) (result i32 (ref $Super))
+ ;; CHECK-NEXT:  (local $f (ref null $FuncSuper))
+ ;; CHECK-NEXT:  (call_ref $FuncSuper
+ ;; CHECK-NEXT:   (local.get $f)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $call-ref-tuple-generalize (result i32 (ref $Super))
+  (local $f (ref null $FuncSub))
+  ;; Here the function returns Super in the second element, so we can generalize
+  ;; $f to FuncSuper.
+  (call_ref $FuncSub
+   (local.get $f)
+  )
+ )
+
+ ;; CHECK:      (func $tuple-local-constrained (type $6) (result i32 (ref null $Sub))
+ ;; CHECK-NEXT:  (local $f (ref null $FuncSub))
+ ;; CHECK-NEXT:  (local $t (tuple i32 (ref null $Sub)))
+ ;; CHECK-NEXT:  (local.set $t
+ ;; CHECK-NEXT:   (call_ref $FuncSub
+ ;; CHECK-NEXT:    (local.get $f)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (local.get $t)
+ ;; CHECK-NEXT: )
+ (func $tuple-local-constrained (result i32 (ref null $Sub))
+  (local $f (ref null $FuncSub))
+  (local $t (tuple i32 (ref null $Sub)))
+  ;; The constraint on $t flows from the return value through local.get and
+  ;; local.set to the call_ref, preventing $f from generalizing to FuncSuper,
+  ;; and keeping $t's second element as (ref null $Sub).
+  (local.set $t
+   (call_ref $FuncSub
+    (local.get $f)
+   )
+  )
+  (local.get $t)
+ )
+
+ ;; CHECK:      (func $tuple-local-generalize (type $7) (result i32 (ref null $Super))
+ ;; CHECK-NEXT:  (local $f (ref null $FuncSuper))
+ ;; CHECK-NEXT:  (local $t (tuple i32 (ref null $Super)))
+ ;; CHECK-NEXT:  (local.set $t
+ ;; CHECK-NEXT:   (call_ref $FuncSuper
+ ;; CHECK-NEXT:    (local.get $f)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (local.get $t)
+ ;; CHECK-NEXT: )
+ (func $tuple-local-generalize (result i32 (ref null $Super))
+  (local $f (ref null $FuncSub))
+  (local $t (tuple i32 (ref null $Sub)))
+  ;; Now the return type only requires Super, so both $t and $f can generalize.
+  (local.set $t
+   (call_ref $FuncSub
+    (local.get $f)
+   )
+  )
+  (local.get $t)
+ )
+
+ ;; CHECK:      (func $tuple-local-unconstrained (type $4)
+ ;; CHECK-NEXT:  (local $f (ref null $FuncSuper))
+ ;; CHECK-NEXT:  (local $t (tuple i32 anyref))
+ ;; CHECK-NEXT:  (local.set $t
+ ;; CHECK-NEXT:   (call_ref $FuncSuper
+ ;; CHECK-NEXT:    (local.get $f)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $tuple-local-unconstrained
+  (local $f (ref null $FuncSub))
+  (local $t (tuple i32 (ref null $Sub)))
+  ;; $t is never read, so it is unconstrained and generalizes to (tuple i32
+  ;; anyref), allowing $f to generalize to FuncSuper as well.
+  (local.set $t
+   (call_ref $FuncSub
+    (local.get $f)
+   )
+  )
+ )
+
+ ;; CHECK:      (func $return-tuple (type $5) (result i32 (ref $Sub))
+ ;; CHECK-NEXT:  (local $f (ref null $FuncSub))
+ ;; CHECK-NEXT:  (return
+ ;; CHECK-NEXT:   (call_ref $FuncSub
+ ;; CHECK-NEXT:    (local.get $f)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $return-tuple (result i32 (ref $Sub))
+  (local $f (ref null $FuncSub))
+  ;; Explicit return of a tuple constrains its child via Generalizer::note.
+  (return
+   (call_ref $FuncSub
+    (local.get $f)
+   )
+  )
+ )
+
+ ;; CHECK:      (func $global-set-tuple (type $4)
+ ;; CHECK-NEXT:  (local $f (ref null $FuncSub))
+ ;; CHECK-NEXT:  (global.set $g
+ ;; CHECK-NEXT:   (call_ref $FuncSub
+ ;; CHECK-NEXT:    (local.get $f)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $global-set-tuple
+  (local $f (ref null $FuncSub))
+  ;; global.set of a tuple global constrains its child via Generalizer::note.
+  (global.set $g
+   (call_ref $FuncSub
+    (local.get $f)
+   )
+  )
+ )
+
+ ;; CHECK:      (func $drop-tuple (type $4)
+ ;; CHECK-NEXT:  (local $f (ref null $FuncSuper))
+ ;; CHECK-NEXT:  (tuple.drop 2
+ ;; CHECK-NEXT:   (call_ref $FuncSuper
+ ;; CHECK-NEXT:    (local.get $f)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $drop-tuple
+  (local $f (ref null $FuncSub))
+  ;; Dropping a tuple imposes no constraint via Generalizer::note, so $f can
+  ;; generalize to FuncSuper.
+  (tuple.drop 2
+   (call_ref $FuncSub
+    (local.get $f)
+   )
+  )
+ )
+
+ ;; CHECK:      (func $tuple-extract-ref (type $9) (result (ref $Sub))
+ ;; CHECK-NEXT:  (local $f (ref null $FuncSub))
+ ;; CHECK-NEXT:  (tuple.extract 2 1
+ ;; CHECK-NEXT:   (call_ref $FuncSub
+ ;; CHECK-NEXT:    (local.get $f)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $tuple-extract-ref (result (ref $Sub))
+  (local $f (ref null $FuncSub))
+  ;; Extracting the ref element and returning it as Sub constrains the tuple, so
+  ;; $f cannot generalize to FuncSuper.
+  (tuple.extract 2 1
+   (call_ref $FuncSub
+    (local.get $f)
+   )
+  )
+ )
+
+ ;; CHECK:      (func $tuple-extract-i32 (type $10) (result i32)
+ ;; CHECK-NEXT:  (local $f (ref null $FuncSuper))
+ ;; CHECK-NEXT:  (tuple.extract 2 0
+ ;; CHECK-NEXT:   (call_ref $FuncSuper
+ ;; CHECK-NEXT:    (local.get $f)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $tuple-extract-i32 (result i32)
+  (local $f (ref null $FuncSub))
+  ;; Extracting only the i32 element leaves the ref element unconstrained, so $f
+  ;; can generalize to FuncSuper.
+  (tuple.extract 2 0
+   (call_ref $FuncSub
+    (local.get $f)
+   )
+  )
+ )
+)
+
+(module
+ ;; CHECK:      (type $0 (func (result eqref)))
+
+ ;; CHECK:      (type $1 (func (result eqref exnref)))
+
+ ;; CHECK:      (type $2 (func (param eqref)))
+
+ ;; CHECK:      (type $3 (func (param i31ref)))
+
+ ;; CHECK:      (tag $tag-eq (type $2) (param eqref))
+ (tag $tag-eq (param eqref))
+ ;; CHECK:      (tag $tag-i31 (type $3) (param i31ref))
+ (tag $tag-i31 (param i31ref))
+
+ ;; CHECK:      (func $try (type $0) (result eqref)
+ ;; CHECK-NEXT:  (local $x eqref)
+ ;; CHECK-NEXT:  (local $y eqref)
+ ;; CHECK-NEXT:  (local $z eqref)
+ ;; CHECK-NEXT:  (try (result eqref)
+ ;; CHECK-NEXT:   (do
+ ;; CHECK-NEXT:    (local.get $x)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (catch $tag-eq
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (pop eqref)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (local.get $y)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (catch_all
+ ;; CHECK-NEXT:    (local.get $z)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $try (result eqref)
+  (local $x i31ref)
+  (local $y i31ref)
+  (local $z i31ref)
+  (try (result i31ref)
+   (do
+    ;; Require that typeof($x) <: eqref.
+    (local.get $x)
+   )
+   (catch $tag-eq
+    (drop
+     (pop eqref)
+    )
+    ;; Require that typeof($y) <: eqref.
+    (local.get $y)
+   )
+   (catch_all
+    ;; Require that typeof($z) <: eqref.
+    (local.get $z)
+   )
+  )
+ )
+
+ ;; CHECK:      (func $try-delegate (type $0) (result eqref)
+ ;; CHECK-NEXT:  (local $x eqref)
+ ;; CHECK-NEXT:  (try (result eqref)
+ ;; CHECK-NEXT:   (do
+ ;; CHECK-NEXT:    (local.get $x)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (delegate 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $try-delegate (result eqref)
+  (local $x i31ref)
+  (try (result i31ref)
+   (do
+    ;; Require that typeof($x) <: eqref.
+    (local.get $x)
+   )
+   (delegate 0)
+  )
+ )
+
+ ;; CHECK:      (func $try_table (type $0) (result eqref)
+ ;; CHECK-NEXT:  (local $x eqref)
+ ;; CHECK-NEXT:  (block $catch (result eqref)
+ ;; CHECK-NEXT:   (try_table (result eqref) (catch $tag-i31 $catch)
+ ;; CHECK-NEXT:    (local.get $x)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $try_table (result eqref)
+  (local $x i31ref)
+  (block $catch (result i31ref)
+   ;; Require that typeof($x) <: eqref.
+   (try_table (result i31ref) (catch $tag-i31 $catch)
+    (local.get $x)
+   )
+  )
+ )
+
+ ;; CHECK:      (func $try_table-tuple (type $1) (result eqref exnref)
+ ;; CHECK-NEXT:  (local $t (tuple eqref exnref))
+ ;; CHECK-NEXT:  (block $catch (type $1) (result eqref exnref)
+ ;; CHECK-NEXT:   (try_table (type $1) (result eqref exnref) (catch_ref $tag-i31 $catch)
+ ;; CHECK-NEXT:    (local.get $t)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $try_table-tuple (result eqref exnref)
+  (local $t (tuple i31ref exnref))
+  (block $catch (result i31ref exnref)
+   ;; Require that typeof($t) <: (tuple eqref exnref).
+   (try_table (result i31ref exnref) (catch_ref $tag-i31 $catch)
+    (local.get $t)
+   )
   )
  )
 )

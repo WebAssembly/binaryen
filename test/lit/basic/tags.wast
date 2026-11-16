@@ -12,41 +12,61 @@
 ;; Test tags
 
 (module
+  (rec
+    ;; CHECK-TEXT:      (type $0 (func (param i32 f32)))
+
+    ;; CHECK-TEXT:      (type $1 (func (param i32)))
+
+    ;; CHECK-TEXT:      (rec
+    ;; CHECK-TEXT-NEXT:  (type $super (sub (func)))
+    ;; CHECK-BIN:      (type $0 (func (param i32 f32)))
+
+    ;; CHECK-BIN:      (type $1 (func (param i32)))
+
+    ;; CHECK-BIN:      (rec
+    ;; CHECK-BIN-NEXT:  (type $super (sub (func)))
+    (type $super (sub (func)))
+    ;; CHECK-TEXT:       (type $sub (sub $super (func)))
+    ;; CHECK-BIN:       (type $sub (sub $super (func)))
+    (type $sub (sub $super (func)))
+  )
+
   (tag $e-import (import "env" "im0") (param i32))
   (import "env" "im1" (tag (param i32 f32)))
-
-  (tag (param i32))
-
-  ;; CHECK-TEXT:      (type $0 (func (param i32 f32)))
-
-  ;; CHECK-TEXT:      (type $1 (func (param i32)))
-
-  ;; CHECK-TEXT:      (type $2 (func))
+  ;; CHECK-TEXT:      (type $4 (func))
 
   ;; CHECK-TEXT:      (import "env" "im0" (tag $e-import (type $1) (param i32)))
 
   ;; CHECK-TEXT:      (import "env" "im1" (tag $eimport$0 (type $0) (param i32 f32)))
 
-  ;; CHECK-TEXT:      (tag $tag$1 (type $1) (param i32))
-
-  ;; CHECK-TEXT:      (tag $e (type $0) (param i32 f32))
-  ;; CHECK-BIN:      (type $0 (func (param i32 f32)))
-
-  ;; CHECK-BIN:      (type $1 (func (param i32)))
-
-  ;; CHECK-BIN:      (type $2 (func))
+  ;; CHECK-TEXT:      (import "env" "im2" (tag $e-import-sub (type $sub)))
+  ;; CHECK-BIN:      (type $4 (func))
 
   ;; CHECK-BIN:      (import "env" "im0" (tag $e-import (type $1) (param i32)))
 
   ;; CHECK-BIN:      (import "env" "im1" (tag $eimport$1 (type $0) (param i32 f32)))
 
+  ;; CHECK-BIN:      (import "env" "im2" (tag $e-import-sub (type $sub)))
+  (import "env" "im2" (tag $e-import-sub (type $sub)))
+
+  (tag (param i32))
+
+  ;; CHECK-TEXT:      (tag $tag$1 (type $1) (param i32))
+
+  ;; CHECK-TEXT:      (tag $e (type $0) (param i32 f32))
   ;; CHECK-BIN:      (tag $tag$0 (type $1) (param i32))
 
   ;; CHECK-BIN:      (tag $e (type $0) (param i32 f32))
   (tag $e (param i32 f32))
-  ;; CHECK-TEXT:      (tag $empty (type $2))
-  ;; CHECK-BIN:      (tag $empty (type $2))
+  ;; CHECK-TEXT:      (tag $empty (type $4))
+  ;; CHECK-BIN:      (tag $empty (type $4))
   (tag $empty)
+  ;; CHECK-TEXT:      (tag $e-super (type $super))
+  ;; CHECK-BIN:      (tag $e-super (type $super))
+  (tag $e-super (type $super))
+  ;; CHECK-TEXT:      (tag $e-sub (type $sub))
+  ;; CHECK-BIN:      (tag $e-sub (type $sub))
+  (tag $e-sub (type $sub))
 
   ;; CHECK-TEXT:      (tag $e-params0 (type $0) (param i32 f32))
   ;; CHECK-BIN:      (tag $e-params0 (type $0) (param i32 f32))
@@ -71,24 +91,35 @@
 
 ;; CHECK-BIN-NODEBUG:      (type $1 (func (param i32)))
 
-;; CHECK-BIN-NODEBUG:      (type $2 (func))
+;; CHECK-BIN-NODEBUG:      (rec
+;; CHECK-BIN-NODEBUG-NEXT:  (type $2 (sub (func)))
+
+;; CHECK-BIN-NODEBUG:       (type $3 (sub $2 (func)))
+
+;; CHECK-BIN-NODEBUG:      (type $4 (func))
 
 ;; CHECK-BIN-NODEBUG:      (import "env" "im0" (tag $eimport$0 (type $1) (param i32)))
 
 ;; CHECK-BIN-NODEBUG:      (import "env" "im1" (tag $eimport$1 (type $0) (param i32 f32)))
 
+;; CHECK-BIN-NODEBUG:      (import "env" "im2" (tag $eimport$2 (type $3)))
+
 ;; CHECK-BIN-NODEBUG:      (tag $tag$0 (type $1) (param i32))
 
 ;; CHECK-BIN-NODEBUG:      (tag $tag$1 (type $0) (param i32 f32))
 
-;; CHECK-BIN-NODEBUG:      (tag $tag$2 (type $2))
+;; CHECK-BIN-NODEBUG:      (tag $tag$2 (type $4))
 
-;; CHECK-BIN-NODEBUG:      (tag $tag$3 (type $0) (param i32 f32))
+;; CHECK-BIN-NODEBUG:      (tag $tag$3 (type $2))
 
-;; CHECK-BIN-NODEBUG:      (tag $tag$4 (type $0) (param i32 f32))
+;; CHECK-BIN-NODEBUG:      (tag $tag$4 (type $3))
 
-;; CHECK-BIN-NODEBUG:      (tag $tag$5 (type $1) (param i32))
+;; CHECK-BIN-NODEBUG:      (tag $tag$5 (type $0) (param i32 f32))
 
-;; CHECK-BIN-NODEBUG:      (export "ex0" (tag $tag$5))
+;; CHECK-BIN-NODEBUG:      (tag $tag$6 (type $0) (param i32 f32))
+
+;; CHECK-BIN-NODEBUG:      (tag $tag$7 (type $1) (param i32))
+
+;; CHECK-BIN-NODEBUG:      (export "ex0" (tag $tag$7))
 
 ;; CHECK-BIN-NODEBUG:      (export "ex1" (tag $tag$1))

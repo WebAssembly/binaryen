@@ -48,8 +48,6 @@ public:
   // the binary, so that we can update DWARF sections later when writing.
   void setDWARF(bool DWARF_) { DWARF = DWARF_; }
 
-  void setProfile(IRProfile profile_) { profile = profile_; }
-
   // TODO: add support for this in the text format as well
   void setSkipFunctionBodies(bool skipFunctionBodies_) {
     skipFunctionBodies = skipFunctionBodies_;
@@ -76,8 +74,6 @@ public:
 
 private:
   bool DWARF = false;
-
-  IRProfile profile = IRProfile::Normal;
 
   bool skipFunctionBodies = false;
 

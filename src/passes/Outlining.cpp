@@ -442,7 +442,7 @@ struct ReconstructStringifyWalker
     ODBG(std::string desc);
     if (auto curr = reason.getBlockStart()) {
       ODBG(desc = "Block Start at ");
-      ASSERT_OK(existingBuilder.visitBlockStart(curr->block));
+      assertOk(existingBuilder.visitBlockStart(curr->block));
     } else if (auto curr = reason.getIfStart()) {
       // IR builder needs the condition of the If pushed onto the builder before
       // visitIfStart(), which will expect to be able to pop the condition.
@@ -450,33 +450,33 @@ struct ReconstructStringifyWalker
       // onto the If when the outer scope was visited.
       existingBuilder.pushSynthetic(curr->iff->condition);
       ODBG(desc = "If Start at ");
-      ASSERT_OK(existingBuilder.visitIfStart(curr->iff));
+      assertOk(existingBuilder.visitIfStart(curr->iff));
     } else if (reason.getElseStart()) {
       ODBG(desc = "Else Start at ");
-      ASSERT_OK(existingBuilder.visitElse());
+      assertOk(existingBuilder.visitElse());
     } else if (auto curr = reason.getLoopStart()) {
       ODBG(desc = "Loop Start at ");
-      ASSERT_OK(existingBuilder.visitLoopStart(curr->loop));
+      assertOk(existingBuilder.visitLoopStart(curr->loop));
     } else if (auto curr = reason.getTryStart()) {
       // We preserve the name of the tryy because IRBuilder expects
       // visitTryStart() to be called on an empty Try, during the normal case of
       // parsing. TODO: Fix this.
       auto name = curr->tryy->name;
-      ASSERT_OK(existingBuilder.visitTryStart(curr->tryy, Name()));
+      assertOk(existingBuilder.visitTryStart(curr->tryy, Name()));
       ODBG(desc = "Try Start at ");
       curr->tryy->name = name;
     } else if (auto curr = reason.getCatchStart()) {
-      ASSERT_OK(existingBuilder.visitCatch(curr->tag));
+      assertOk(existingBuilder.visitCatch(curr->tag));
       ODBG(desc = "Catch Start at ");
     } else if (reason.getCatchAllStart()) {
-      ASSERT_OK(existingBuilder.visitCatchAll());
+      assertOk(existingBuilder.visitCatchAll());
       ODBG(desc = "Catch All Start at");
     } else if (auto curr = reason.getTryTableStart()) {
       ODBG(desc = "Try Table Start at ");
-      ASSERT_OK(existingBuilder.visitTryTableStart(curr->tryt));
+      assertOk(existingBuilder.visitTryTableStart(curr->tryt));
     } else if (reason.getEnd()) {
       ODBG(desc = "End at ");
-      ASSERT_OK(existingBuilder.visitEnd());
+      assertOk(existingBuilder.visitEnd());
       // Reset the function in case we just ended the function scope.
       existingBuilder.setFunction(func);
       // Outlining performs an unnested walk of the Wasm module, visiting
@@ -487,7 +487,7 @@ struct ReconstructStringifyWalker
       // outlining walks unnested, the enclosing scope never arrives to retrieve
       // its expressions off the stack, so we must call build() after visitEnd()
       // to clear the internal stack IRBuilder manages.
-      ASSERT_OK(existingBuilder.build());
+      assertOk(existingBuilder.build());
     } else {
       ODBG(desc = "addUniqueSymbol for unimplemented control flow ");
       WASM_UNREACHABLE("unimplemented control flow");
@@ -504,16 +504,16 @@ struct ReconstructStringifyWalker
     if (builder) {
       if (auto* expr = curr->dynCast<Break>()) {
         Type type = expr->value ? expr->value->type : Type::none;
-        ASSERT_OK(builder->visitBreakWithType(expr, type));
+        assertOk(builder->visitBreakWithType(expr, type));
       } else if (auto* expr = curr->dynCast<Switch>()) {
         Type type = expr->value ? expr->value->type : Type::none;
-        ASSERT_OK(builder->visitSwitchWithType(expr, type));
+        assertOk(builder->visitSwitchWithType(expr, type));
       } else {
         // Assert ensures new unhandled branch instructions
         // will quickly cause an error. Serves as a reminder to
         // implement a new special-case visit*WithType.
         assert(curr->is<BrOn>() || !Properties::isBranch(curr));
-        ASSERT_OK(builder->visit(curr));
+        assertOk(builder->visit(curr));
       }
     }
     ODBG(printVisitExpression(curr));
@@ -525,8 +525,8 @@ struct ReconstructStringifyWalker
 
   // Helpers
   void startExistingFunction(Function* func) {
-    ASSERT_OK(existingBuilder.build());
-    ASSERT_OK(existingBuilder.visitFunctionStart(func));
+    assertOk(existingBuilder.build());
+    assertOk(existingBuilder.visitFunctionStart(func));
     instrCounter = 0;
     seqCounter = 0;
     state = NotInSeq;
@@ -572,13 +572,13 @@ struct ReconstructStringifyWalker
   void transitionToInSeq() {
     Function* outlinedFunc =
       getModule()->getFunction(sequences[seqCounter].func);
-    ASSERT_OK(outlinedBuilder.visitFunctionStart(outlinedFunc));
+    assertOk(outlinedBuilder.visitFunctionStart(outlinedFunc));
 
     // Make a call from the existing function to the outlined function. This
     // call will replace the instructions moved to the outlined function.
     ODBG(std::cerr << "\nadding call " << outlinedFunc->name << " to "
                    << &existingBuilder << "\n");
-    ASSERT_OK(existingBuilder.makeCall(outlinedFunc->name, false));
+    assertOk(existingBuilder.makeCall(outlinedFunc->name, false));
 
     // If the last instruction of the outlined sequence is unreachable, insert
     // an unreachable instruction immediately after the call to the outlined
@@ -587,7 +587,7 @@ struct ReconstructStringifyWalker
     if (sequences[seqCounter].endsTypeUnreachable) {
       ODBG(std::cerr << "\nadding endsUnreachable to " << &existingBuilder
                      << "\n");
-      ASSERT_OK(existingBuilder.makeUnreachable());
+      assertOk(existingBuilder.makeUnreachable());
     }
 
     // Add a local.get instruction for every parameter of the outlined function.
@@ -597,7 +597,7 @@ struct ReconstructStringifyWalker
     for (Index i = 0; i < sig.params.size(); i++) {
       ODBG(std::cerr << "adding local.get $" << i << " to " << &outlinedBuilder
                      << "\n");
-      ASSERT_OK(outlinedBuilder.makeLocalGet(i));
+      assertOk(outlinedBuilder.makeLocalGet(i));
     }
   }
 
@@ -609,13 +609,13 @@ struct ReconstructStringifyWalker
                    << sequences[seqCounter].endIdx - 1 << " to "
                    << sequences[seqCounter].func
                    << " and adding call() instead\n");
-    ASSERT_OK(existingBuilder.makeCall(outlinedFunc->name, false));
+    assertOk(existingBuilder.makeCall(outlinedFunc->name, false));
     // If the last instruction of the outlined sequence is unreachable, insert
     // an unreachable instruction immediately after the call to the outlined
     // function. This maintains the unreachable type in the original scope
     // of the outlined sequence.
     if (sequences[seqCounter].endsTypeUnreachable) {
-      ASSERT_OK(existingBuilder.makeUnreachable());
+      assertOk(existingBuilder.makeUnreachable());
     }
   }
 
@@ -630,7 +630,7 @@ struct ReconstructStringifyWalker
     ODBG(std::cerr << "End of sequence ");
     if (state == InSeq) {
       ODBG(std::cerr << "to " << &outlinedBuilder);
-      ASSERT_OK(outlinedBuilder.visitEnd());
+      assertOk(outlinedBuilder.visitEnd());
     }
     ODBG(std::cerr << "\n\n");
     // Completed a sequence so increase the seqCounter and reset the state.

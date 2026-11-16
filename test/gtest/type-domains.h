@@ -76,6 +76,7 @@ struct TypeKind {
 };
 
 struct HeapTypePlan : std::variant<HeapType, size_t> {
+  using variant::variant;
   HeapType* getHeapType() { return std::get_if<HeapType>(this); }
   size_t* getIndex() { return std::get_if<size_t>(this); }
 };
@@ -86,11 +87,13 @@ struct RefPlan {
 };
 
 struct TypePlan : std::variant<Type, RefPlan> {
+  using variant::variant;
   Type* getNonRef() { return std::get_if<Type>(this); }
   RefPlan* getRef() { return std::get_if<RefPlan>(this); }
 };
 
 struct FieldTypePlan : std::variant<Field::PackedType, TypePlan> {
+  using variant::variant;
   Field::PackedType* getPacked() {
     return std::get_if<Field::PackedType>(this);
   }
@@ -110,6 +113,7 @@ using ArrayPlan = FieldPlan;
 using ContPlan = std::optional<size_t>;
 
 struct TypeDefPlan : std::variant<FuncPlan, StructPlan, ArrayPlan, ContPlan> {
+  using variant::variant;
   FuncPlan* getFunc() { return std::get_if<FuncPlan>(this); }
   StructPlan* getStruct() { return std::get_if<StructPlan>(this); }
   ArrayPlan* getArray() { return std::get_if<ArrayPlan>(this); }

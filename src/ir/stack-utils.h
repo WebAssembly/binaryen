@@ -15,29 +15,16 @@
  */
 
 //
-// stack-utils.h: Utilities for manipulating and analyzing stack machine code in
-// the form of Poppy IR. See src/passes/Poppify.cpp for Poppy IR documentation.
+// Utilities for manipulating and analyzing stack machine code.
 //
 
 #ifndef wasm_ir_stack_h
 #define wasm_ir_stack_h
 
-#include "ir/properties.h"
 #include "wasm-type.h"
 #include "wasm.h"
 
 namespace wasm {
-
-namespace StackUtils {
-
-// Iterate through `block` and remove nops.
-void removeNops(Block* block);
-
-// Whether `expr` may be unreachable in Poppy IR. True for control flow
-// structures and polymorphic unreachable instructions.
-bool mayBeUnreachable(Expression* expr);
-
-} // namespace StackUtils
 
 // Stack signatures are like regular function signatures, but they are used to
 // represent the stack parameters and results of arbitrary sequences of stack
@@ -66,6 +53,7 @@ bool mayBeUnreachable(Expression* expr);
 //  (block (param i32 i32) (result f64 f32) ... )
 //  (block (param f64 i32 i32) (result f64 f32) ... )
 //
+// TODO: Replace StackSignature with PrincipalType.
 struct StackSignature {
   Type params;
   Type results;
@@ -173,47 +161,6 @@ struct StackSignature {
 
   // Returns the LUB of `a` and `b`. Assumes that the LUB exists.
   static StackSignature getLeastUpperBound(StackSignature a, StackSignature b);
-};
-
-// Calculates stack machine data flow, associating the sources and destinations
-// of all values in a block.
-struct StackFlow {
-  // The destination (source) location at which a value of type `type` is
-  // consumed (produced), corresponding to the `index`th value consumed by
-  // (produced by) instruction `expr`. For destination locations, `unreachable`
-  // is true iff the corresponding value is consumed by the polymorphic behavior
-  // of an unreachable instruction rather than being used directly. For source
-  // locations, `unreachable` is true iff the corresponding value is produced by
-  // an unreachable instruction. For produced values that are not consumed
-  // within the block (TODO: also for consumed values that are not produced
-  // within the block), `expr` will be the enclosing block.
-  struct Location {
-    Expression* expr;
-    Index index;
-    Type type;
-    bool unreachable;
-
-    bool operator==(const Location& other) const {
-      return expr == other.expr && index == other.index && type == other.type &&
-             unreachable == other.unreachable;
-    }
-  };
-
-  using LocationMap = std::unordered_map<Expression*, std::vector<Location>>;
-
-  // Maps each instruction to the set of source locations producing its inputs.
-  LocationMap srcs;
-
-  // Maps each instruction to the set of output locations consuming its results.
-  LocationMap dests;
-
-  // Gets the effective stack signature of `expr`, which must be a child of the
-  // block. If `expr` is unreachable, the returned signature will reflect the
-  // values consumed and produced by its polymorphic unreachable behavior.
-  StackSignature getSignature(Expression* expr);
-
-  // Calculates `srcs` and `dests`.
-  StackFlow(Block* curr);
 };
 
 } // namespace wasm

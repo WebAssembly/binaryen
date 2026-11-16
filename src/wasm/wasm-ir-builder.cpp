@@ -911,36 +911,22 @@ Result<> IRBuilder::pushScope(ScopeCtx&& scope) {
     lastBinaryPos = *binaryPos;
   }
   bool hasInput = scope.inputType != Type::none;
-  std::vector<Expression*> inputs;
-  if (!scope.isDelimiter()) {
-    bool isUnnamedBlock = scope.getBlock() && !scope.getBlock()->name;
-    if (hasInput) {
-      auto popped = ChildPopper{*this}.popInputs(scope.inputType);
-      CHECK_ERR(popped);
-      inputs = std::move(*popped);
-    } else if (isUnnamedBlock && getScope().exprStack.size() == 1 &&
-               getScope().exprStack[0]->is<Pop>()) {
-      // Allow pops to move into unnamed blocks even without input types so we
-      // can round-trip WAT without the printer needing to synthesize block
-      // input types. (Note that the block may receive a name later if we
-      // encounter a break to it; in that case, the fixups that run later will
-      // have work to do.)
-      inputs.push_back(getScope().exprStack.back());
-      getScope().exprStack.pop_back();
-    }
-    for (size_t i = 0; i < inputs.size(); ++i) {
-      // Move an enclosing scope's input expression (a scratch local.get or a
-      // catch pop) directly into this scope rather than allocating a new
-      // scratch local.
-      auto* expr = inputs[i];
-      bool isPop = isUnnamedBlock && inputs.size() == 1 && expr->is<Pop>();
-      if (isPop) {
-        // If this unnamed block later receives a name from a branch targeting
-        // it, the nested pop will need to be fixed up.
-        scopeStack[0].noteSyntheticBlock();
-        continue;
-      }
-      auto* get = expr->dynCast<LocalGet>();
+  if (hasInput && !scope.isDelimiter()) {
+    auto inputs = ChildPopper{*this}.popInputs(scope.inputType);
+    CHECK_ERR(inputs);
+    scope.inputLocals.reserve(inputs->size());
+    for (size_t i = 0; i < inputs->size(); ++i) {
+      // Reuse the enclosing scope's scratch local rather than allocating a new
+      // one when an input comes directly from an enclosing scope's input.
+      // This is safe even in the case where earlier inputs for the new scope
+      // had to use new scratch locals (e.g. due to type widening). In that case
+      // the previous inputs had their values copied to the new scratch locals
+      // before the start of this scope and have already had local.gets of those
+      // new scratch locals pushed in this scope. It is still safe to reuse this
+      // later input's scratch local because local.gets can always be safely
+      // reordered.
+      auto* input = (*inputs)[i];
+      auto* get = input->dynCast<LocalGet>();
       bool isInputGet = get && get->type == scope.inputType[i] &&
                         getScope().isInputLocal(get->index);
       if (isInputGet) {
@@ -949,22 +935,17 @@ Result<> IRBuilder::pushScope(ScopeCtx&& scope) {
         auto scratch = addScratchLocal(scope.inputType[i]);
         CHECK_ERR(scratch);
         scope.inputLocals.push_back(*scratch);
-        pushSynthetic(builder.makeLocalSet(*scratch, expr));
-        inputs[i] = builder.makeLocalGet(*scratch, scope.inputType[i]);
+        pushSynthetic(builder.makeLocalSet(*scratch, input));
       }
-    }
-  } else if (hasInput) {
-    // Delimiters (such as `else`) reuse the scratch locals that were already
-    // populated when the enclosing scope started, pushing fresh `local.get`s
-    // onto the new scope's stack.
-    for (size_t i = 0; i < scope.inputLocals.size(); ++i) {
-      inputs.push_back(
-        builder.makeLocalGet(scope.inputLocals[i], scope.inputType[i]));
     }
   }
   scopeStack.emplace_back(std::move(scope));
-  for (auto* input : inputs) {
-    pushSynthetic(input);
+  if (hasInput) {
+    auto& newScope = getScope();
+    for (size_t i = 0; i < newScope.inputLocals.size(); ++i) {
+      pushSynthetic(
+        builder.makeLocalGet(newScope.inputLocals[i], newScope.inputType[i]));
+    }
   }
   return Ok{};
 }
@@ -1510,7 +1491,7 @@ void IRBuilder::fixLoopWithInput(Loop* loop,
     list.push_back(builder.makeLocalSet(scratch[0], inner));
   } else {
     auto tupleScratch = addScratchLocal(inputType);
-    ASSERT_OK(tupleScratch);
+    assertOk(tupleScratch);
     list.push_back(builder.makeLocalSet(*tupleScratch, inner));
     for (Index i = 0; i < scratch.size(); ++i) {
       list.push_back(builder.makeLocalSet(
@@ -2067,21 +2048,37 @@ Result<> IRBuilder::makeUnreachable() {
 Result<> IRBuilder::makePop(Type type) {
   // We don't actually want to create a new Pop expression here because we
   // already create them automatically when starting a legacy catch block that
-  // needs one (and move them into nested unnamed blocks in pushScope). Just
-  // verify that the Pop we are being asked to make is the same type as the Pop
-  // we have already made.
-  auto& scope = getScope();
-  if (scope.exprStack.size() != 1 || !scope.exprStack[0]->is<Pop>()) {
-    if (auto* tryy = scope.getCatch();
-        tryy && wasm.getTag(tryy->catchTags.back())->params() == Type::none) {
-      return Err{"cannot pop from empty tag"};
+  // needs one. Just verify that the Pop we are being asked to make is the same
+  // type as the Pop we have already made, and move it into the current scope if
+  // we have entered unnamed blocks since the catch began. (Note that the block
+  // may receive a name later, if we encounter a break to it, if we process
+  // that after the pop. In that case, the fixups that run later will have work
+  // to do.)
+  ScopeCtx* catchScope = nullptr;
+  for (int i = int(scopeStack.size()) - 1; i >= 0; --i) {
+    auto& scope = scopeStack[i];
+    if (scope.getCatch()) {
+      catchScope = &scope;
+      break;
     }
+    auto* block = scope.getBlock();
+    if (!block || block->name || !scope.exprStack.empty()) {
+      break;
+    }
+  }
+  if (!catchScope || catchScope->exprStack.size() != 1 ||
+      !catchScope->exprStack[0]->is<Pop>()) {
     return Err{
       "pop instructions may only appear at the beginning of catch blocks"};
   }
-  auto expectedType = scope.exprStack[0]->type;
-  if (type != expectedType) {
+  auto* pop = catchScope->exprStack[0];
+  auto expectedType = pop->type;
+  if (!Type::isSubType(expectedType, type)) {
     return Err{std::string("Expected pop of type ") + expectedType.toString()};
+  }
+  if (catchScope != &getScope()) {
+    catchScope->exprStack.pop_back();
+    pushSynthetic(pop);
   }
   return Ok{};
 }
