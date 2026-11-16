@@ -222,9 +222,7 @@ struct Generalizer : public ChildTyper<Generalizer> {
     }
   }
 
-  // Get the constrained type from a single (non-tuple) constraint. This does
-  // not take into consideration the enabled features, see
-  // getSingleValidConstraintType below.
+  // Get the constrained type from a single (non-tuple) constraint.
   std::optional<Type> getSingleConstraintType(Type type, VarType constraint) {
     assert(type.size() == 1);
     if (!type.isRef()) {
@@ -265,32 +263,6 @@ struct Generalizer : public ChildTyper<Generalizer> {
     }
   }
 
-  // Get the constrained type from a single (non-tuple) constraint, as above,
-  // and also making sure that the type change is valid for the features.
-  std::optional<Type> getSingleValidConstraintType(Type type, VarType constraint) {
-    auto ret = getSingleConstraintType(type, constraint);
-    // If custom descriptors are disabled, we still use exact types in the IR,
-    // and we accept trivial casts that do not change the exactness. In this
-    // pass we must therefore avoid making a cast non-trivial:
-    //
-    //  (ref.cast (exact $A)
-    //    (local.get $x))
-    //
-    // Imagine that we generalized the local to inexact, then the cast would no
-    // longer be trivial, and we would fail validation.
-    if (ret && ret->isRef() && ret->getExactness() != type.getExactness() &&
-        !wasm.features.hasCustomDescriptors()) {
-      // Make the type exact, to match the original exactness (that is the
-      // only direction possible, as we generalize types). However, we cannot
-      // make a basic type exact, so we must be careful here, and for
-      // simplicity just don't generalize & return the old type
-      // TODO: optimize better here
-      assert(type.getExactness() == Exact);
-      ret = type;
-    }
-    return ret;
-  }
-
   void note(Expression** childp, Constraints constraints) {
     auto* child = *childp;
     if (!child->type.hasRef()) {
@@ -301,7 +273,7 @@ struct Generalizer : public ChildTyper<Generalizer> {
     Tuple elems(constraints.size());
     bool hasConstraint = false;
     for (size_t i = 0; i < constraints.size(); ++i) {
-      if (auto type = getSingleValidConstraintType(child->type[i], constraints[i])) {
+      if (auto type = getSingleConstraintType(child->type[i], constraints[i])) {
         elems[i] = *type;
         if (child->type[i].isRef()) {
           hasConstraint = true;
@@ -387,9 +359,31 @@ struct Generalizer : public ChildTyper<Generalizer> {
     exprSubs[curr].push_back(curr->value);
   }
 
+  // If custom descriptors are disabled, we still use exact types in the IR,
+  // and we accept trivial casts (and null checks) where the input has the same
+  // exact heap type as the cast target. We must therefore avoid generalizing
+  // the input's heap type or exactness in a way that would make an exact cast
+  // non-trivial (but nullability can still be generalized).
+  void noteExactCast(Expression* ref, Type castType) {
+    if (!wasm.features.hasCustomDescriptors() && castType.isExact()) {
+      addConstraint(ref, castType.with(Nullable));
+    }
+  }
+
+  void visitRefTest(RefTest* curr) {
+    Super::visitRefTest(curr);
+    noteExactCast(curr->ref, curr->castType);
+  }
+
+  void visitRefCast(RefCast* curr) {
+    Super::visitRefCast(curr);
+    noteExactCast(curr->ref, curr->type);
+  }
+
   void visitBrOn(BrOn* curr) {
     // Note immediate constraints (including descriptor constraints).
     Super::visitBrOn(curr);
+    noteExactCast(curr->ref, curr->castType);
     if (curr->desc && !curr->desc->type.isStruct()) {
       return;
     }
