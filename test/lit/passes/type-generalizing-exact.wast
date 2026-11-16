@@ -217,9 +217,8 @@
   (local $x (ref (exact $bar)))
   ;; Note that parsing refines (ref.cast (ref $foo) (local.get $x)) to
   ;; (ref.cast (ref (exact $bar)) (local.get $x)). With custom descriptors
-  ;; enabled, $x generalizes to (ref $foo). Without custom descriptors, $x
-  ;; cannot become (ref (exact $foo)) (not a supertype of (ref (exact $bar)))
-  ;; and cannot become inexact (ref $foo) without also generalizing the cast.
+  ;; enabled, $x generalizes to (ref $foo). Without custom descriptors, we must
+  ;; keep the cast trivial, so $x stays (ref (exact $bar)).
   (local.set $x
    (local.get $bar)
   )
