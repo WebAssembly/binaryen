@@ -905,12 +905,36 @@ Result<> IRBuilder::pushScope(ScopeCtx&& scope) {
   if (hasInput && !scope.isDelimiter()) {
     auto inputs = ChildPopper{*this}.popInputs(scope.inputType);
     CHECK_ERR(inputs);
+    const auto& parentLocals = getScope().inputLocals;
+    // The new scope may only receive a suffix of the outer scope's parameters,
+    // so match inputs starting from the remaining size of the outer stack
+    // rather than from the beginning.
+    size_t baseIndex = getScope().exprStack.size();
     scope.inputLocals.reserve(inputs->size());
     for (size_t i = 0; i < inputs->size(); ++i) {
-      auto scratch = addScratchLocal(scope.inputType[i]);
-      CHECK_ERR(scratch);
-      scope.inputLocals.push_back(*scratch);
-      pushSynthetic(builder.makeLocalSet(*scratch, (*inputs)[i]));
+      // Reuse the enclosing scope's scratch local rather than allocating a new
+      // one when an input comes directly from an enclosing scope's input.
+      // This is safe even in the case where earlier inputs for the new scope
+      // had to use new scratch locals (e.g. due to type widening). In that case
+      // the previous inputs had their values copied to the new scratch locals
+      // before the start of this scope and have already had local.gets of those
+      // new scratch locals pushed in this scope. It is still safe to reuse this
+      // later input's scratch local because local.gets can always be safely
+      // reordered.
+      auto* input = (*inputs)[i];
+      size_t parentIndex = baseIndex + i;
+      bool isInputGet =
+        parentIndex < parentLocals.size() && input->is<LocalGet>() &&
+        input->cast<LocalGet>()->index == parentLocals[parentIndex] &&
+        input->type == scope.inputType[i];
+      if (isInputGet) {
+        scope.inputLocals.push_back(parentLocals[parentIndex]);
+      } else {
+        auto scratch = addScratchLocal(scope.inputType[i]);
+        CHECK_ERR(scratch);
+        scope.inputLocals.push_back(*scratch);
+        pushSynthetic(builder.makeLocalSet(*scratch, input));
+      }
     }
   }
   scopeStack.emplace_back(std::move(scope));
