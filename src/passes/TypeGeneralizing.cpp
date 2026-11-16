@@ -282,14 +282,11 @@ struct Generalizer : public ChildTyper<Generalizer> {
         !wasm.features.hasCustomDescriptors()) {
       // Make the type exact, to match the original exactness (that is the
       // only direction possible, as we generalize types). However, we cannot
-      // make a basic type exact, so in that case we give up and do not
-      // generalize.
+      // make a basic type exact, so we must be careful here, and for
+      // simplicity just don't generalize & return the old type
+      // TODO: optimize better here
       assert(type.getExactness() == Exact);
-      if (ret->getHeapType().isBasic()) {
-        ret = type;
-      } else {
-        ret = ret->with(Exact);
-      }
+      ret = type;
     }
     return ret;
   }

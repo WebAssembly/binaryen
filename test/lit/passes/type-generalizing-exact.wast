@@ -220,4 +220,22 @@
   )
   (local.get $x)
  )
+
+ (func $nonbasic-return (param $bar (ref (exact $bar))) (result (ref $foo))
+  (local $x (ref (exact $bar)))
+  ;; As above, but with an explicit return at the end, which exercises a
+  ;; slightly different code path.
+  ;; $x can be generalized to $foo, but must remain exact because of the cast.
+  (local.set $x
+   (local.get $bar)
+  )
+  (drop
+   (ref.cast (ref $foo)
+    (local.get $x)
+   )
+  )
+  (return          ;; this was added
+   (local.get $x)
+  )
+ )
 )
