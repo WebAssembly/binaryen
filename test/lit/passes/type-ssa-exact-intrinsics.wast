@@ -20,7 +20,9 @@
   (import "binaryen-intrinsics" "call.without.effects"
     (func $cwe-inexact (param (ref $inexact-target-arg) (ref $sig-inexact))))
   (import "binaryen-intrinsics" "call.without.effects"
-    (func $cwe-funcref (param (ref $inexact-target-arg) funcref)))
+    (func $cwe-inexact-funcref (param (ref $inexact-target-arg) funcref)))
+  (import "binaryen-intrinsics" "call.without.effects"
+    (func $cwe-exact-funcref (param (ref $exact-target-arg) funcref)))
 
   ;; CHECK:      (type $4 (func (param (ref $exact-target-arg) (ref $sig-exact))))
 
@@ -28,18 +30,26 @@
 
   ;; CHECK:      (type $6 (func (param (ref $inexact-target-arg) funcref)))
 
-  ;; CHECK:      (type $7 (func))
+  ;; CHECK:      (type $7 (func (param (ref $exact-target-arg) funcref)))
+
+  ;; CHECK:      (type $8 (func))
 
   ;; CHECK:      (rec
   ;; CHECK-NEXT:  (type $inexact-target-arg_1 (sub $inexact-target-arg (struct)))
 
   ;; CHECK:       (type $inexact-target-arg_2 (sub $inexact-target-arg (struct)))
 
+  ;; CHECK:       (type $inexact-target-arg_3 (sub $inexact-target-arg (struct)))
+
+  ;; CHECK:       (type $inexact-target-arg_4 (sub $inexact-target-arg (struct)))
+
   ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $cwe-exact (type $4) (param (ref $exact-target-arg) (ref $sig-exact))))
 
   ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $cwe-inexact (type $5) (param (ref $inexact-target-arg) (ref $sig-inexact))))
 
-  ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $cwe-funcref (type $6) (param (ref $inexact-target-arg) funcref)))
+  ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $cwe-inexact-funcref (type $6) (param (ref $inexact-target-arg) funcref)))
+
+  ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $cwe-exact-funcref (type $7) (param (ref $exact-target-arg) funcref)))
 
   ;; CHECK:      (elem declare func $target-exact $target-inexact)
 
@@ -50,8 +60,12 @@
   ;; CHECK-NEXT: )
   (func $target-inexact (type $sig-inexact) (param $x (ref $inexact-target-arg)))
 
-  ;; CHECK:      (func $call-exact (type $7)
+  ;; CHECK:      (func $call-exact (type $8)
   ;; CHECK-NEXT:  (call $cwe-exact
+  ;; CHECK-NEXT:   (struct.new_default $exact-target-arg)
+  ;; CHECK-NEXT:   (ref.func $target-exact)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $cwe-exact-funcref
   ;; CHECK-NEXT:   (struct.new_default $exact-target-arg)
   ;; CHECK-NEXT:   (ref.func $target-exact)
   ;; CHECK-NEXT:  )
@@ -62,11 +76,21 @@
       (struct.new_default $exact-target-arg)
       (ref.func $target-exact)
     )
+
+    ;; ditto when called as an untyped funcref
+    (call $cwe-exact-funcref
+      (struct.new_default $exact-target-arg)
+      (ref.func $target-exact)
+    )
   )
 
-  ;; CHECK:      (func $call-inexact (type $7)
+  ;; CHECK:      (func $call-inexact (type $8)
   ;; CHECK-NEXT:  (call $cwe-inexact
   ;; CHECK-NEXT:   (struct.new_default $inexact-target-arg_1)
+  ;; CHECK-NEXT:   (ref.func $target-inexact)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $cwe-inexact-funcref
+  ;; CHECK-NEXT:   (struct.new_default $inexact-target-arg_2)
   ;; CHECK-NEXT:   (ref.func $target-inexact)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -76,19 +100,54 @@
       (struct.new_default $inexact-target-arg)
       (ref.func $target-inexact)
     )
+
+    ;; ditto when called as an untyped funcref
+    (call $cwe-inexact-funcref
+      (struct.new_default $inexact-target-arg)
+      (ref.func $target-inexact)
+    )
   )
 
-  ;; CHECK:      (func $call-unreachable (type $7)
-  ;; CHECK-NEXT:  (call $cwe-funcref
-  ;; CHECK-NEXT:   (struct.new_default $inexact-target-arg_2)
+  ;; CHECK:      (func $call-unreachable (type $8)
+  ;; CHECK-NEXT:  (call $cwe-inexact-funcref
+  ;; CHECK-NEXT:   (struct.new_default $inexact-target-arg_3)
   ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $cwe-inexact-funcref
+  ;; CHECK-NEXT:   (struct.new_default $inexact-target-arg_4)
+  ;; CHECK-NEXT:   (ref.null nofunc)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $cwe-exact-funcref
+  ;; CHECK-NEXT:   (struct.new_default $exact-target-arg)
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $cwe-exact-funcref
+  ;; CHECK-NEXT:   (struct.new_default $exact-target-arg)
+  ;; CHECK-NEXT:   (ref.null nofunc)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $call-unreachable
-    ;; Non-signature target operand (unreachable) should not crash.
-    (call $cwe-funcref
+    ;; Non-signature target operand (unreachable or null) can still be refined.
+    (call $cwe-inexact-funcref
       (struct.new_default $inexact-target-arg)
       (unreachable)
+    )
+
+    (call $cwe-inexact-funcref
+      (struct.new_default $inexact-target-arg)
+      (ref.null nofunc)
+    )
+
+    ;; Non-signature target operand still can't be refined if the param is
+    ;; exact.
+    (call $cwe-exact-funcref
+      (struct.new_default $exact-target-arg)
+      (unreachable)
+    )
+
+    (call $cwe-exact-funcref
+      (struct.new_default $exact-target-arg)
+      (ref.null nofunc)
     )
   )
 )
