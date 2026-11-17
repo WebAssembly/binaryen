@@ -178,11 +178,11 @@ struct AnalysisState {
     return it != exprNodes.end() ? it->second : TopNode;
   }
 
-  void seedOrigin(Expression* curr, Origin val) {
+  void join(Expression* curr, Origin val) {
     originLattice.join(origins[getNode(curr)], val);
   }
 
-  void seedTop(Expression* curr) { seedOrigin(curr, originLattice.getTop()); }
+  void joinTop(Expression* curr) { join(curr, originLattice.getTop()); }
 
   void addIdentityEdge(NodeId fromNode, NodeId toNode) {
     if (fromNode == TopNode) {
@@ -282,10 +282,10 @@ struct GraphBuilder
     // are no reference-typed local.sets in the function, every reachable
     // reference local.get must read either a function parameter or a default
     // null local initializer, neither of which can be a candidate allocation.
-    // Seed them directly with Top to avoid constructing LazyLocalGraph.
+    // Initialize them directly with Top to avoid constructing LazyLocalGraph.
     if (!hasRefLocalSet) {
       for (auto* get : refLocalGets) {
-        state.seedTop(get);
+        state.joinTop(get);
       }
       return;
     }
@@ -296,7 +296,7 @@ struct GraphBuilder
         if (!set) {
           // Reading entry/default local value violates the single-live-instance
           // invariant (e.g. a value from an earlier loop iteration or param).
-          state.seedTop(get);
+          state.joinTop(get);
         } else {
           assert(set->value->type.isRef() && "unexpected unreachable set");
           state.addIdentityEdge(set->value, get);
@@ -312,7 +312,7 @@ struct GraphBuilder
     info.expr = curr;
     info.fields.assign(fields.begin(), fields.end());
     state.allocIds[curr] = id;
-    state.seedOrigin(curr, state.originLattice.get(id));
+    state.join(curr, state.originLattice.get(id));
     return id;
   }
 
@@ -580,17 +580,18 @@ struct GraphBuilder
       state.escapeIfRef(child);
     }
     // Unhandled scope-branching instructions (e.g. TryTable, BrOn) can send
-    // values to enclosing ref-typed Blocks. Seed those target Blocks with Top
-    // so any candidate allocations flowing into them are treated as escaping.
+    // values to enclosing ref-typed Blocks. Initialize those target Blocks with
+    // Top so any candidate allocations flowing into them are treated as
+    // escaping.
     // TODO: Model BrOn* and TryTable dataflow edges directly instead of
-    // conservatively seeding target blocks with Top.
+    // conservatively initializing target blocks with Top.
     BranchUtils::operateOnScopeNameUsesAndSentTypes(
       curr, [&](Name& name, Type sentType) {
         if (sentType.isRef()) {
           auto* target = findBreakTarget(name);
           assert(target);
           assert(target->type.isRef());
-          state.seedTop(target);
+          state.joinTop(target);
         }
       });
   }
