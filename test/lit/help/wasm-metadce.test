@@ -589,6 +589,8 @@
 ;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --type-finalizing                             mark all leaf types as final
 ;; CHECK-EMPTY:
+;; CHECK-NEXT:   --type-generalizing                           generalize types
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --type-merging                                merge types to their supertypes 
 ;; CHECK-NEXT:                                                 where possible
 ;; CHECK-EMPTY:
