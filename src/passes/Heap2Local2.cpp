@@ -193,6 +193,10 @@ struct AnalysisState {
   }
 
   void addIdentityEdge(Expression* from, NodeId toNode) {
+    // Since we are building up the graph via a post-order traversal, we will
+    // have visited a child node (i.e. `from`) before its parent (i.e.
+    // `toNode`). If the child is not already in the graph, then it must be
+    // something we can't analyze, so we represent it as Top.
     addIdentityEdge(getNodeOrTop(from), toNode);
   }
 
