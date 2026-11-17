@@ -76,6 +76,7 @@ using NodeId = uint32_t;
 constexpr NodeId TopNode = 0;
 constexpr NodeId InvalidNode = NodeId(-1);
 
+// Lattice of origins used in Phase 2 origin analysis.
 using OriginLattice = analysis::Flat<AllocId>;
 using Origin = OriginLattice::Element;
 
