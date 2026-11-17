@@ -40,20 +40,29 @@
 
 #include "ir/child-typer.h"
 #include "ir/find_all.h"
+#include "ir/intrinsics.h"
 #include "ir/module-utils.h"
+#include "ir/type-updating.h"
 #include "ir/utils.h"
+#include "support/graph_traversal.h"
 
 namespace wasm {
 
 namespace {
 
-bool isSignatureRewritable(
-  Function* func, const std::unordered_set<Function*>& referencedFuncs) {
-  // The signatures of imported and exported functions aren't changed to
-  // preserve the API boundary. Exported functions are implicitly 'referenced'
-  // (i.e. they may be the target of a call_ref even if they never appear in a
-  // ref.func), so no need to check that a second time.
-  return !func->imported() && !referencedFuncs.contains(func);
+bool isSignatureRewritable(Function* func,
+                           const std::unordered_set<Function*>& referencedFuncs,
+                           const std::unordered_set<Function*>& jsCalledFuncs) {
+  // The signatures of imported, exported, and JS-called functions aren't
+  // changed to preserve the API boundary. Exported functions are implicitly
+  // 'referenced' (i.e. they may be the target of a call_ref even if they never
+  // appear in a ref.func), so no need to check that a second time.
+  //
+  // Checking jsCalledFuncs here is usually redundant, since the annotion is
+  // only meaningful if a reference to the function can escape somehow which is
+  // already covered by `referencedFuncs`.
+  return !func->imported() && !referencedFuncs.contains(func) &&
+         !jsCalledFuncs.contains(func);
 }
 
 [[nodiscard]] bool makeNullable(Type& t) {
@@ -89,6 +98,9 @@ struct InsertRefAsNonNull
   : PostWalker<InsertRefAsNonNull,
                UnifiedExpressionVisitor<InsertRefAsNonNull>> {
   struct Typer : ChildTyper<Typer> {
+    using Super = ChildTyper<Typer>;
+    using Super::note;
+
     Typer(Module& module, Function* func) : ChildTyper(module, func) {}
 
     void note(Expression** currp, Constraints constraints) {
@@ -130,6 +142,28 @@ struct InsertRefAsNonNull
     Type getLabelType(Name) {
       // Labeled blocks are skipped. See `InsertRefAsNonNull::visitExpression`.
       WASM_UNREACHABLE("unexpected branch");
+    }
+
+    void visitCall(Call* curr) {
+      // call.without.effects imports are treated as having a private type,
+      // so its params were relaxed regardless of what the underlying function
+      // being called demands. We don't need to note anything for the call to
+      // call.without.effects but we do need to note the demanded type for the
+      // underlying function's params seperately. Do that here.
+      if (Intrinsics(wasm).isCallWithoutEffects(curr)) {
+        if (curr->operands.back()->type.isSignature()) {
+          const auto& params =
+            curr->operands.back()->type.getHeapType().getSignature().params;
+          assert(params.size() == curr->operands.size() - 1);
+          for (size_t i = 0; i < params.size(); ++i) {
+            note(&curr->operands[i], params[i]);
+          }
+        }
+
+        return;
+      }
+
+      Super::visitCall(curr);
     }
   } typer;
 
@@ -196,7 +230,7 @@ struct LocalsToNullable : WalkerPass<PostWalker<LocalsToNullable>> {
 
     Super::doWalkFunction(func);
 
-    if (!changed) {
+    if (!changed && !signatureWasRelaxed) {
       return;
     }
     ReFinalize().walkFunctionInModule(func, getModule());
@@ -228,7 +262,23 @@ struct RelaxNullability : Pass {
   bool requiresNonNullableLocalFixups() override { return false; }
 
   void run(Module* module) override {
-    auto relaxedFuncs = relaxFunctionParams(module);
+    if (!module->features.hasGC()) {
+      Fatal() << "--relax-nullability should only run when GC is enabled.";
+      return;
+    }
+
+    std::unordered_set<Function*> jsCalledFuncs;
+    for (Name name : Intrinsics(*module).getJSCalledFunctions()) {
+      jsCalledFuncs.insert(module->getFunction(name));
+    }
+
+    // rewrite signatures globally
+    auto relaxedTypes =
+      relaxTypes(module, getPassOptions().worldMode, jsCalledFuncs);
+    // rewrite signatures for private functions by giving them a new private
+    // type.
+    auto relaxedFuncs =
+      relaxFunctionParams(module, relaxedTypes, jsCalledFuncs);
 
     PassRunner runner(getPassRunner());
     runner.add(std::make_unique<LocalsToNullable>(relaxedFuncs));
@@ -236,13 +286,111 @@ struct RelaxNullability : Pass {
   }
 
 private:
-  // Returns the set of functions that had their signatures changed.
-  std::unordered_set<Function*> relaxFunctionParams(Module* module) {
+  // Rewrites private signature types to have nullable params and returns the
+  // set of newly rewritten types.
+  std::unordered_set<HeapType>
+  relaxTypes(Module* module,
+             WorldMode worldMode,
+             const std::unordered_set<Function*>& jsCalledFuncs) {
+    // Public types are already not touched by GlobalTypeRewriter below.
+    // In addition to public types, don't rewrite private tag types, JS-called
+    // function types, continuation function types, or their supertypes to avoid
+    // having to fixup catch block types, violating JS-boundary contracts /
+    // subtyping, or mismatching continuation types at cont.new / cont.bind /
+    // resume / switch.
+    std::unordered_set<HeapType> unrelaxableTypes;
+    for (const auto& tag : module->tags) {
+      unrelaxableTypes.insert(tag->type);
+    }
+    for (Function* func : jsCalledFuncs) {
+      unrelaxableTypes.insert(func->type.getHeapType());
+    }
+    if (module->features.hasStackSwitching()) {
+      for (auto type : ModuleUtils::collectHeapTypes(*module)) {
+        if (type.isContinuation()) {
+          unrelaxableTypes.insert(type.getContinuation().type);
+        }
+      }
+    }
+    Graph g(unrelaxableTypes.begin(),
+            unrelaxableTypes.end(),
+            [](const auto& push, HeapType t) {
+              if (auto super = t.getDeclaredSuperType()) {
+                push(*super);
+              }
+            });
+    unrelaxableTypes = g.traverseDepthFirst();
+
+    class Rewriter : private GlobalTypeRewriter {
+    public:
+      Rewriter(Module& wasm,
+               WorldMode worldMode,
+               const std::unordered_set<HeapType>& unrelaxableTypes)
+        : GlobalTypeRewriter(wasm, worldMode),
+          unrelaxableTypes(unrelaxableTypes) {}
+
+      // return the set of relaxed types.
+      std::unordered_set<HeapType> update() {
+        auto typeMap = rebuildTypes(getSortedTypes(getPrivatePredecessors()));
+        mapTypes(typeMap);
+
+        std::unordered_set<HeapType> relaxedNewTypes;
+
+        for (HeapType relaxedOldType : relaxedOldTypes) {
+          HeapType* newType = find_or_null(typeMap, relaxedOldType);
+          assert(newType && "relaxedTypes only contains private types which "
+                            "must be in the typeMap");
+
+          relaxedNewTypes.insert(*newType);
+        }
+
+        return relaxedNewTypes;
+      }
+
+    private:
+      std::unordered_set<HeapType> relaxedOldTypes;
+      const std::unordered_set<HeapType>& unrelaxableTypes;
+
+      void modifySignature(HeapType oldType, Signature& sig) override {
+        if (unrelaxableTypes.contains(oldType)) {
+          return;
+        }
+
+        std::vector<Type> relaxedParams;
+
+        bool changed = false;
+        for (Type t : sig.params) {
+          changed |= makeNullable(t);
+          relaxedParams.push_back(t);
+        }
+
+        if (changed) {
+          relaxedOldTypes.insert(oldType);
+          sig.params = getTempTupleType(std::move(relaxedParams));
+        }
+      }
+
+    } rewriter(*module, worldMode, unrelaxableTypes);
+    return rewriter.update();
+  }
+
+  // Relax private function signatures -- even if their signature is public --
+  // by giving them a new private signature. Return the set of functions that
+  // were relaxed, as well as those that were relaxed by `relaxTypes` when
+  // signatures were rewritten globally.
+  std::unordered_set<Function*>
+  relaxFunctionParams(Module* module,
+                      const std::unordered_set<HeapType>& relaxedTypes,
+                      const std::unordered_set<Function*>& jsCalledFuncs) {
     auto referencedFuncs = ModuleUtils::getReferencedFuncs(*module);
 
     std::unordered_set<Function*> relaxedFuncs;
     for (auto& func : module->functions) {
-      if (!isSignatureRewritable(func.get(), referencedFuncs)) {
+      if (relaxedTypes.contains(func->type.getHeapType())) {
+        relaxedFuncs.insert(func.get());
+        continue;
+      }
+      if (!isSignatureRewritable(func.get(), referencedFuncs, jsCalledFuncs)) {
         continue;
       }
 
