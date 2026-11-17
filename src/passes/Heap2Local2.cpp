@@ -233,9 +233,6 @@ struct GraphBuilder
   AnalysisState& state;
   Function* func;
   Module& wasm;
-  // Whether any local.set writes a reference, used to skip LazyLocalGraph
-  // construction when no reference locals are written.
-  bool hasRefLocalSet = false;
   // Reference-typed local.gets collected during the walk to connect to their
   // reaching local.sets in build().
   std::vector<LocalGet*> refLocalGets;
@@ -251,18 +248,7 @@ struct GraphBuilder
     // Values returned out of the function body escape.
     state.escapeIfRef(func->body);
 
-    // Connect local.gets to reaching local.sets via LazyLocalGraph. If there
-    // are no reference-typed local.sets in the function, every reachable
-    // reference local.get must read either a function parameter or a default
-    // null local initializer, neither of which can be a candidate allocation.
-    // Initialize them directly with Top to avoid constructing LazyLocalGraph.
-    if (!hasRefLocalSet) {
-      for (auto* get : refLocalGets) {
-        state.joinTop(get);
-      }
-      return;
-    }
-
+    // Connect local.gets to reaching local.sets via LazyLocalGraph.
     LazyLocalGraph localGraph(func, &wasm);
     for (auto* get : refLocalGets) {
       for (LocalSet* set : localGraph.getSets(get)) {
@@ -410,16 +396,13 @@ struct GraphBuilder
   }
 
   void visitLocalSet(LocalSet* curr) {
-    if (curr->value->type.isRef()) {
-      hasRefLocalSet = true;
-      // In Binaryen IR, a local.tee is a LocalSet whose expression type is
-      // the local's type rather than Type::none. Its write to the local is
-      // wired to reaching local.gets via LazyLocalGraph in build(), while its
-      // fallthrough value flows to its parent expression via this identity
-      // edge.
-      if (curr->isTee()) {
-        state.addIdentityEdge(curr->value, curr);
-      }
+    // In Binaryen IR, a local.tee is a LocalSet whose expression type is
+    // the local's type rather than Type::none. Its write to the local is
+    // wired to reaching local.gets via LazyLocalGraph in build(), while its
+    // fallthrough value flows to its parent expression via this identity
+    // edge.
+    if (curr->isTee() && curr->value->type.isRef()) {
+      state.addIdentityEdge(curr->value, curr);
     }
   }
 
