@@ -26,9 +26,9 @@
 // Phase 2 solves a smallest fixed point over Flat<AllocId> origins (i.e. the
 // flat lattice of all allocation sites) across all candidate allocations
 // simultaneously:
-//   - Bot: unreachable or statically trapping cast output.
-//   - Val(a): definitely non-null reference to a single allocation `a`.
 //   - Top: unknown / nullable / multiple merged allocations.
+//   - Val(a): definitely non-null reference to a single allocation `a`.
+//   - Bot: unreachable or statically trapping cast output.
 //
 // Phase 3 propagates escapes over cmpxchg (expected -> replacement) edges,
 // escaping uses, and identity-edge mixes (Val(a) flowing into Top).
