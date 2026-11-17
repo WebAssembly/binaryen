@@ -54,25 +54,9 @@
 
   ;; CHECK:      (type $14 (func (param (ref null (exact $chain-descriptor)))))
 
-  ;; CHECK:      (type $15 (func (result anyref)))
+  ;; CHECK:      (type $15 (func (result (ref (exact $super)))))
 
-  ;; CHECK:      (type $16 (func (result (ref null (exact $super.desc)))))
-
-  ;; CHECK:      (type $17 (func (result (ref (exact $super)))))
-
-  ;; CHECK:      (type $18 (func (result (ref (exact $super.desc)))))
-
-  ;; CHECK:      (type $19 (func (param (ref (exact $super.desc))) (result (ref (exact $super)))))
-
-  ;; CHECK:      (type $20 (func (param (ref (exact $sub.desc)))))
-
-  ;; CHECK:      (type $21 (func (param i32) (result eqref)))
-
-  ;; CHECK:      (type $22 (func (param (ref null (exact $super)) (ref null (exact $super.desc)))))
-
-  ;; CHECK:      (type $23 (func (param (ref (exact $sub.desc)) (ref null $super.desc))))
-
-  ;; CHECK:      (type $24 (func (param (ref (exact $sub.desc)) (ref null (exact $super.desc))) (result (ref (exact $super)))))
+  ;; CHECK:      (type $16 (func (result (ref (exact $super.desc)))))
 
   ;; CHECK:      (import "" "" (func $effect (type $10)))
   ;; HP2L2:      (type $10 (func))
@@ -85,34 +69,12 @@
 
   ;; HP2L2:      (type $14 (func (param (ref null (exact $chain-descriptor)))))
 
-  ;; HP2L2:      (type $15 (func (result anyref)))
+  ;; HP2L2:      (type $15 (func (result (ref (exact $super)))))
 
-  ;; HP2L2:      (type $16 (func (result (ref null (exact $super.desc)))))
-
-  ;; HP2L2:      (type $17 (func (result (ref (exact $super)))))
-
-  ;; HP2L2:      (type $18 (func (result (ref (exact $super.desc)))))
-
-  ;; HP2L2:      (type $19 (func (param (ref (exact $super.desc))) (result (ref (exact $super)))))
-
-  ;; HP2L2:      (type $20 (func (param (ref (exact $sub.desc)))))
-
-  ;; HP2L2:      (type $21 (func (param i32) (result eqref)))
-
-  ;; HP2L2:      (type $22 (func (param (ref null (exact $super)) (ref null (exact $super.desc)))))
-
-  ;; HP2L2:      (type $23 (func (param (ref (exact $sub.desc)) (ref null $super.desc))))
-
-  ;; HP2L2:      (type $24 (func (param (ref (exact $sub.desc)) (ref null (exact $super.desc))) (result (ref (exact $super)))))
+  ;; HP2L2:      (type $16 (func (result (ref (exact $super.desc)))))
 
   ;; HP2L2:      (import "" "" (func $effect (type $10)))
   (import "" "" (func $effect))
-  ;; CHECK:      (import "" "any" (func $import-any (type $15) (result anyref)))
-  ;; HP2L2:      (import "" "any" (func $import-any (type $15) (result anyref)))
-  (import "" "any" (func $import-any (result anyref)))
-  ;; CHECK:      (import "" "desc" (func $import-desc (type $16) (result (ref null (exact $super.desc)))))
-  ;; HP2L2:      (import "" "desc" (func $import-desc (type $16) (result (ref null (exact $super.desc)))))
-  (import "" "desc" (func $import-desc (result (ref null (exact $super.desc)))))
 
   ;; CHECK:      (global $desc (ref null (exact $descriptor)) (ref.null none))
   ;; HP2L2:      (global $desc (ref null (exact $descriptor)) (ref.null none))
@@ -472,38 +434,15 @@
   ;; CHECK-NEXT: )
   ;; HP2L2:      (func $cast-desc-eq-success (type $10)
   ;; HP2L2-NEXT:  (local $desc (ref null (exact $super.desc)))
-  ;; HP2L2-NEXT:  (local $1 (ref (exact $super.desc)))
-  ;; HP2L2-NEXT:  (local $2 (ref (exact $super.desc)))
   ;; HP2L2-NEXT:  (local.set $desc
   ;; HP2L2-NEXT:   (struct.new_default $super.desc)
   ;; HP2L2-NEXT:  )
   ;; HP2L2-NEXT:  (drop
-  ;; HP2L2-NEXT:   (block (result nullref)
-  ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (block (result nullref)
-  ;; HP2L2-NEXT:      (local.set $2
-  ;; HP2L2-NEXT:       (ref.as_non_null
-  ;; HP2L2-NEXT:        (local.get $desc)
-  ;; HP2L2-NEXT:       )
-  ;; HP2L2-NEXT:      )
-  ;; HP2L2-NEXT:      (local.set $1
-  ;; HP2L2-NEXT:       (local.get $2)
-  ;; HP2L2-NEXT:      )
-  ;; HP2L2-NEXT:      (ref.null none)
-  ;; HP2L2-NEXT:     )
+  ;; HP2L2-NEXT:   (ref.cast_desc_eq (ref (exact $super))
+  ;; HP2L2-NEXT:    (struct.new_default_desc $super
+  ;; HP2L2-NEXT:     (local.get $desc)
   ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (if (result nullref)
-  ;; HP2L2-NEXT:     (ref.eq
-  ;; HP2L2-NEXT:      (local.get $desc)
-  ;; HP2L2-NEXT:      (local.get $1)
-  ;; HP2L2-NEXT:     )
-  ;; HP2L2-NEXT:     (then
-  ;; HP2L2-NEXT:      (ref.null none)
-  ;; HP2L2-NEXT:     )
-  ;; HP2L2-NEXT:     (else
-  ;; HP2L2-NEXT:      (unreachable)
-  ;; HP2L2-NEXT:     )
-  ;; HP2L2-NEXT:    )
+  ;; HP2L2-NEXT:    (local.get $desc)
   ;; HP2L2-NEXT:   )
   ;; HP2L2-NEXT:  )
   ;; HP2L2-NEXT: )
@@ -554,33 +493,12 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; HP2L2:      (func $cast-desc-eq-fail (type $11) (param $desc (ref null (exact $super.desc)))
-  ;; HP2L2-NEXT:  (local $1 (ref (exact $super.desc)))
-  ;; HP2L2-NEXT:  (local $2 (ref (exact $super.desc)))
   ;; HP2L2-NEXT:  (drop
-  ;; HP2L2-NEXT:   (block (result nullref)
-  ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (block (result nullref)
-  ;; HP2L2-NEXT:      (local.set $2
-  ;; HP2L2-NEXT:       (struct.new_default $super.desc)
-  ;; HP2L2-NEXT:      )
-  ;; HP2L2-NEXT:      (local.set $1
-  ;; HP2L2-NEXT:       (local.get $2)
-  ;; HP2L2-NEXT:      )
-  ;; HP2L2-NEXT:      (ref.null none)
-  ;; HP2L2-NEXT:     )
+  ;; HP2L2-NEXT:   (ref.cast_desc_eq (ref (exact $super))
+  ;; HP2L2-NEXT:    (struct.new_default_desc $super
+  ;; HP2L2-NEXT:     (struct.new_default $super.desc)
   ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (if (result nullref)
-  ;; HP2L2-NEXT:     (ref.eq
-  ;; HP2L2-NEXT:      (local.get $desc)
-  ;; HP2L2-NEXT:      (local.get $1)
-  ;; HP2L2-NEXT:     )
-  ;; HP2L2-NEXT:     (then
-  ;; HP2L2-NEXT:      (ref.null none)
-  ;; HP2L2-NEXT:     )
-  ;; HP2L2-NEXT:     (else
-  ;; HP2L2-NEXT:      (unreachable)
-  ;; HP2L2-NEXT:     )
-  ;; HP2L2-NEXT:    )
+  ;; HP2L2-NEXT:    (local.get $desc)
   ;; HP2L2-NEXT:   )
   ;; HP2L2-NEXT:  )
   ;; HP2L2-NEXT: )
@@ -636,29 +554,12 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; HP2L2:      (func $cast-desc-eq-fail-reverse (type $11) (param $desc (ref null (exact $super.desc)))
-  ;; HP2L2-NEXT:  (local $1 (ref (exact $super.desc)))
-  ;; HP2L2-NEXT:  (local $2 (ref (exact $super.desc)))
   ;; HP2L2-NEXT:  (drop
-  ;; HP2L2-NEXT:   (block
-  ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (block (result nullref)
-  ;; HP2L2-NEXT:      (local.set $2
-  ;; HP2L2-NEXT:       (ref.as_non_null
-  ;; HP2L2-NEXT:        (local.get $desc)
-  ;; HP2L2-NEXT:       )
-  ;; HP2L2-NEXT:      )
-  ;; HP2L2-NEXT:      (local.set $1
-  ;; HP2L2-NEXT:       (local.get $2)
-  ;; HP2L2-NEXT:      )
-  ;; HP2L2-NEXT:      (ref.null none)
-  ;; HP2L2-NEXT:     )
+  ;; HP2L2-NEXT:   (ref.cast_desc_eq (ref (exact $super))
+  ;; HP2L2-NEXT:    (struct.new_default_desc $super
+  ;; HP2L2-NEXT:     (local.get $desc)
   ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (block (result nullref)
-  ;; HP2L2-NEXT:      (ref.null none)
-  ;; HP2L2-NEXT:     )
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (unreachable)
+  ;; HP2L2-NEXT:    (struct.new_default $super.desc)
   ;; HP2L2-NEXT:   )
   ;; HP2L2-NEXT:  )
   ;; HP2L2-NEXT: )
@@ -694,16 +595,9 @@
   ;; CHECK-NEXT: )
   ;; HP2L2:      (func $cast-desc-eq-fail-param (type $12) (param $ref (ref null (exact $super)))
   ;; HP2L2-NEXT:  (drop
-  ;; HP2L2-NEXT:   (block
-  ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (local.get $ref)
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (block (result nullref)
-  ;; HP2L2-NEXT:      (ref.null none)
-  ;; HP2L2-NEXT:     )
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (unreachable)
+  ;; HP2L2-NEXT:   (ref.cast_desc_eq (ref (exact $super))
+  ;; HP2L2-NEXT:    (local.get $ref)
+  ;; HP2L2-NEXT:    (struct.new_default $super.desc)
   ;; HP2L2-NEXT:   )
   ;; HP2L2-NEXT:  )
   ;; HP2L2-NEXT: )
@@ -741,22 +635,15 @@
   ;; CHECK-NEXT: )
   ;; HP2L2:      (func $cast-desc-eq-fail-param-effect (type $12) (param $ref (ref null (exact $super)))
   ;; HP2L2-NEXT:  (drop
-  ;; HP2L2-NEXT:   (block
-  ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (block (result (ref null (exact $super)))
-  ;; HP2L2-NEXT:      (call $effect)
-  ;; HP2L2-NEXT:      (local.get $ref)
-  ;; HP2L2-NEXT:     )
+  ;; HP2L2-NEXT:   (ref.cast_desc_eq (ref (exact $super))
+  ;; HP2L2-NEXT:    (block (result (ref null (exact $super)))
+  ;; HP2L2-NEXT:     (call $effect)
+  ;; HP2L2-NEXT:     (local.get $ref)
   ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (block (result nullref)
-  ;; HP2L2-NEXT:      (call $effect)
-  ;; HP2L2-NEXT:      (block (result nullref)
-  ;; HP2L2-NEXT:       (ref.null none)
-  ;; HP2L2-NEXT:      )
-  ;; HP2L2-NEXT:     )
+  ;; HP2L2-NEXT:    (block (result (ref (exact $super.desc)))
+  ;; HP2L2-NEXT:     (call $effect)
+  ;; HP2L2-NEXT:     (struct.new_default $super.desc)
   ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (unreachable)
   ;; HP2L2-NEXT:   )
   ;; HP2L2-NEXT:  )
   ;; HP2L2-NEXT: )
@@ -795,20 +682,10 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; HP2L2:      (func $cast-desc-eq-fail-param-nullable (type $12) (param $ref (ref null (exact $super)))
-  ;; HP2L2-NEXT:  (local $1 (ref null (exact $super)))
   ;; HP2L2-NEXT:  (drop
-  ;; HP2L2-NEXT:   (block (result nullref)
-  ;; HP2L2-NEXT:    (local.set $1
-  ;; HP2L2-NEXT:     (local.get $ref)
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (block (result nullref)
-  ;; HP2L2-NEXT:      (ref.null none)
-  ;; HP2L2-NEXT:     )
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (ref.cast nullref
-  ;; HP2L2-NEXT:     (local.get $1)
-  ;; HP2L2-NEXT:    )
+  ;; HP2L2-NEXT:   (ref.cast_desc_eq (ref null (exact $super))
+  ;; HP2L2-NEXT:    (local.get $ref)
+  ;; HP2L2-NEXT:    (struct.new_default $super.desc)
   ;; HP2L2-NEXT:   )
   ;; HP2L2-NEXT:  )
   ;; HP2L2-NEXT: )
@@ -847,25 +724,15 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; HP2L2:      (func $cast-desc-eq-fail-param-nullable-effect (type $12) (param $ref (ref null (exact $super)))
-  ;; HP2L2-NEXT:  (local $1 (ref null (exact $super)))
   ;; HP2L2-NEXT:  (drop
-  ;; HP2L2-NEXT:   (block (result nullref)
-  ;; HP2L2-NEXT:    (local.set $1
-  ;; HP2L2-NEXT:     (block (result (ref null (exact $super)))
-  ;; HP2L2-NEXT:      (call $effect)
-  ;; HP2L2-NEXT:      (local.get $ref)
-  ;; HP2L2-NEXT:     )
+  ;; HP2L2-NEXT:   (ref.cast_desc_eq (ref null (exact $super))
+  ;; HP2L2-NEXT:    (block (result (ref null (exact $super)))
+  ;; HP2L2-NEXT:     (call $effect)
+  ;; HP2L2-NEXT:     (local.get $ref)
   ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (block (result nullref)
-  ;; HP2L2-NEXT:      (call $effect)
-  ;; HP2L2-NEXT:      (block (result nullref)
-  ;; HP2L2-NEXT:       (ref.null none)
-  ;; HP2L2-NEXT:      )
-  ;; HP2L2-NEXT:     )
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (ref.cast nullref
-  ;; HP2L2-NEXT:     (local.get $1)
+  ;; HP2L2-NEXT:    (block (result (ref (exact $super.desc)))
+  ;; HP2L2-NEXT:     (call $effect)
+  ;; HP2L2-NEXT:     (struct.new_default $super.desc)
   ;; HP2L2-NEXT:    )
   ;; HP2L2-NEXT:   )
   ;; HP2L2-NEXT:  )
@@ -910,21 +777,13 @@
   ;; HP2L2:      (func $cast-desc-eq-fail-became-unreachable-nullable (type $10)
   ;; HP2L2-NEXT:  (local $desc (ref null (exact $super.desc)))
   ;; HP2L2-NEXT:  (drop
-  ;; HP2L2-NEXT:   (block
-  ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (block
-  ;; HP2L2-NEXT:      (drop
-  ;; HP2L2-NEXT:       (block (result nullref)
-  ;; HP2L2-NEXT:        (ref.null none)
-  ;; HP2L2-NEXT:       )
-  ;; HP2L2-NEXT:      )
-  ;; HP2L2-NEXT:      (unreachable)
+  ;; HP2L2-NEXT:   (ref.cast_desc_eq (ref null (exact $super))
+  ;; HP2L2-NEXT:    (ref.cast nullref
+  ;; HP2L2-NEXT:     (local.tee $desc
+  ;; HP2L2-NEXT:      (struct.new_default $super.desc)
   ;; HP2L2-NEXT:     )
   ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (ref.null none)
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (unreachable)
+  ;; HP2L2-NEXT:    (local.get $desc)
   ;; HP2L2-NEXT:   )
   ;; HP2L2-NEXT:  )
   ;; HP2L2-NEXT: )
@@ -962,16 +821,9 @@
   ;; CHECK-NEXT: )
   ;; HP2L2:      (func $cast-no-desc (type $11) (param $desc (ref null (exact $super.desc)))
   ;; HP2L2-NEXT:  (drop
-  ;; HP2L2-NEXT:   (block
-  ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (block (result nullref)
-  ;; HP2L2-NEXT:      (ref.null none)
-  ;; HP2L2-NEXT:     )
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (local.get $desc)
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (unreachable)
+  ;; HP2L2-NEXT:   (ref.cast_desc_eq (ref (exact $super))
+  ;; HP2L2-NEXT:    (struct.new_default $no-desc)
+  ;; HP2L2-NEXT:    (local.get $desc)
   ;; HP2L2-NEXT:   )
   ;; HP2L2-NEXT:  )
   ;; HP2L2-NEXT: )
@@ -1008,22 +860,15 @@
   ;; CHECK-NEXT: )
   ;; HP2L2:      (func $cast-no-desc-effect (type $11) (param $desc (ref null (exact $super.desc)))
   ;; HP2L2-NEXT:  (drop
-  ;; HP2L2-NEXT:   (block
-  ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (block (result nullref)
-  ;; HP2L2-NEXT:      (call $effect)
-  ;; HP2L2-NEXT:      (block (result nullref)
-  ;; HP2L2-NEXT:       (ref.null none)
-  ;; HP2L2-NEXT:      )
-  ;; HP2L2-NEXT:     )
+  ;; HP2L2-NEXT:   (ref.cast_desc_eq (ref (exact $super))
+  ;; HP2L2-NEXT:    (block (result (ref (exact $no-desc)))
+  ;; HP2L2-NEXT:     (call $effect)
+  ;; HP2L2-NEXT:     (struct.new_default $no-desc)
   ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (block (result (ref null (exact $super.desc)))
-  ;; HP2L2-NEXT:      (call $effect)
-  ;; HP2L2-NEXT:      (local.get $desc)
-  ;; HP2L2-NEXT:     )
+  ;; HP2L2-NEXT:    (block (result (ref null (exact $super.desc)))
+  ;; HP2L2-NEXT:     (call $effect)
+  ;; HP2L2-NEXT:     (local.get $desc)
   ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (unreachable)
   ;; HP2L2-NEXT:   )
   ;; HP2L2-NEXT:  )
   ;; HP2L2-NEXT: )
@@ -1060,16 +905,9 @@
   ;; CHECK-NEXT: )
   ;; HP2L2:      (func $cast-no-desc-nullable (type $11) (param $desc (ref null (exact $super.desc)))
   ;; HP2L2-NEXT:  (drop
-  ;; HP2L2-NEXT:   (block
-  ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (block (result nullref)
-  ;; HP2L2-NEXT:      (ref.null none)
-  ;; HP2L2-NEXT:     )
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (local.get $desc)
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (unreachable)
+  ;; HP2L2-NEXT:   (ref.cast_desc_eq (ref (exact $super))
+  ;; HP2L2-NEXT:    (struct.new_default $no-desc)
+  ;; HP2L2-NEXT:    (local.get $desc)
   ;; HP2L2-NEXT:   )
   ;; HP2L2-NEXT:  )
   ;; HP2L2-NEXT: )
@@ -1108,22 +946,15 @@
   ;; CHECK-NEXT: )
   ;; HP2L2:      (func $cast-no-desc-nullable-effect (type $11) (param $desc (ref null (exact $super.desc)))
   ;; HP2L2-NEXT:  (drop
-  ;; HP2L2-NEXT:   (block
-  ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (block (result nullref)
-  ;; HP2L2-NEXT:      (call $effect)
-  ;; HP2L2-NEXT:      (block (result nullref)
-  ;; HP2L2-NEXT:       (ref.null none)
-  ;; HP2L2-NEXT:      )
-  ;; HP2L2-NEXT:     )
+  ;; HP2L2-NEXT:   (ref.cast_desc_eq (ref (exact $super))
+  ;; HP2L2-NEXT:    (block (result (ref (exact $no-desc)))
+  ;; HP2L2-NEXT:     (call $effect)
+  ;; HP2L2-NEXT:     (struct.new_default $no-desc)
   ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (block (result (ref null (exact $super.desc)))
-  ;; HP2L2-NEXT:      (call $effect)
-  ;; HP2L2-NEXT:      (local.get $desc)
-  ;; HP2L2-NEXT:     )
+  ;; HP2L2-NEXT:    (block (result (ref null (exact $super.desc)))
+  ;; HP2L2-NEXT:     (call $effect)
+  ;; HP2L2-NEXT:     (local.get $desc)
   ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (unreachable)
   ;; HP2L2-NEXT:   )
   ;; HP2L2-NEXT:  )
   ;; HP2L2-NEXT: )
@@ -1174,30 +1005,15 @@
   ;; CHECK-NEXT: )
   ;; HP2L2:      (func $cast-desc-eq-and-ref (type $14) (param $desc (ref null (exact $chain-descriptor)))
   ;; HP2L2-NEXT:  (local $middle (ref null (exact $chain-middle)))
-  ;; HP2L2-NEXT:  (local $2 (ref (exact $chain-descriptor)))
-  ;; HP2L2-NEXT:  (local $3 (ref (exact $chain-descriptor)))
-  ;; HP2L2-NEXT:  (drop
-  ;; HP2L2-NEXT:   (block (result nullref)
-  ;; HP2L2-NEXT:    (local.set $3
-  ;; HP2L2-NEXT:     (ref.as_non_null
-  ;; HP2L2-NEXT:      (local.get $desc)
-  ;; HP2L2-NEXT:     )
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (local.set $2
-  ;; HP2L2-NEXT:     (local.get $3)
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (ref.null none)
+  ;; HP2L2-NEXT:  (local.set $middle
+  ;; HP2L2-NEXT:   (struct.new_default_desc $chain-middle
+  ;; HP2L2-NEXT:    (local.get $desc)
   ;; HP2L2-NEXT:   )
   ;; HP2L2-NEXT:  )
   ;; HP2L2-NEXT:  (drop
-  ;; HP2L2-NEXT:   (block
-  ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (ref.null none)
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (ref.null none)
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (unreachable)
+  ;; HP2L2-NEXT:   (ref.cast_desc_eq (ref (exact $chain-described))
+  ;; HP2L2-NEXT:    (local.get $middle)
+  ;; HP2L2-NEXT:    (local.get $middle)
   ;; HP2L2-NEXT:   )
   ;; HP2L2-NEXT:  )
   ;; HP2L2-NEXT: )
@@ -1251,30 +1067,15 @@
   ;; CHECK-NEXT: )
   ;; HP2L2:      (func $cast-desc-eq-and-ref-nullable (type $14) (param $desc (ref null (exact $chain-descriptor)))
   ;; HP2L2-NEXT:  (local $middle (ref null (exact $chain-middle)))
-  ;; HP2L2-NEXT:  (local $2 (ref (exact $chain-descriptor)))
-  ;; HP2L2-NEXT:  (local $3 (ref (exact $chain-descriptor)))
-  ;; HP2L2-NEXT:  (drop
-  ;; HP2L2-NEXT:   (block (result nullref)
-  ;; HP2L2-NEXT:    (local.set $3
-  ;; HP2L2-NEXT:     (ref.as_non_null
-  ;; HP2L2-NEXT:      (local.get $desc)
-  ;; HP2L2-NEXT:     )
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (local.set $2
-  ;; HP2L2-NEXT:     (local.get $3)
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (ref.null none)
+  ;; HP2L2-NEXT:  (local.set $middle
+  ;; HP2L2-NEXT:   (struct.new_default_desc $chain-middle
+  ;; HP2L2-NEXT:    (local.get $desc)
   ;; HP2L2-NEXT:   )
   ;; HP2L2-NEXT:  )
   ;; HP2L2-NEXT:  (drop
-  ;; HP2L2-NEXT:   (block
-  ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (ref.null none)
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (ref.null none)
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (unreachable)
+  ;; HP2L2-NEXT:   (ref.cast_desc_eq (ref null (exact $chain-described))
+  ;; HP2L2-NEXT:    (local.get $middle)
+  ;; HP2L2-NEXT:    (local.get $middle)
   ;; HP2L2-NEXT:   )
   ;; HP2L2-NEXT:  )
   ;; HP2L2-NEXT: )
@@ -1313,16 +1114,11 @@
   ;; HP2L2:      (func $cast-desc-eq-and-ref-tee (type $10)
   ;; HP2L2-NEXT:  (local $desc (ref null (exact $super.desc)))
   ;; HP2L2-NEXT:  (drop
-  ;; HP2L2-NEXT:   (block
-  ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (block (result nullref)
-  ;; HP2L2-NEXT:      (ref.null none)
-  ;; HP2L2-NEXT:     )
+  ;; HP2L2-NEXT:   (ref.cast_desc_eq (ref (exact $super))
+  ;; HP2L2-NEXT:    (local.tee $desc
+  ;; HP2L2-NEXT:     (struct.new_default $super.desc)
   ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (ref.null none)
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (unreachable)
+  ;; HP2L2-NEXT:    (local.get $desc)
   ;; HP2L2-NEXT:   )
   ;; HP2L2-NEXT:  )
   ;; HP2L2-NEXT: )
@@ -1359,16 +1155,11 @@
   ;; HP2L2:      (func $cast-desc-eq-and-ref-tee-nullable (type $10)
   ;; HP2L2-NEXT:  (local $desc (ref null (exact $super.desc)))
   ;; HP2L2-NEXT:  (drop
-  ;; HP2L2-NEXT:   (block
-  ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (block (result nullref)
-  ;; HP2L2-NEXT:      (ref.null none)
-  ;; HP2L2-NEXT:     )
+  ;; HP2L2-NEXT:   (ref.cast_desc_eq (ref null (exact $super))
+  ;; HP2L2-NEXT:    (local.tee $desc
+  ;; HP2L2-NEXT:     (struct.new_default $super.desc)
   ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (ref.null none)
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (unreachable)
+  ;; HP2L2-NEXT:    (local.get $desc)
   ;; HP2L2-NEXT:   )
   ;; HP2L2-NEXT:  )
   ;; HP2L2-NEXT: )
@@ -1385,7 +1176,7 @@
     )
   )
 
-  ;; CHECK:      (func $cast-desc-eq-stale-parent (type $17) (result (ref (exact $super)))
+  ;; CHECK:      (func $cast-desc-eq-stale-parent (type $15) (result (ref (exact $super)))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result nullref)
   ;; CHECK-NEXT:    (ref.null none)
@@ -1401,21 +1192,14 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
-  ;; HP2L2:      (func $cast-desc-eq-stale-parent (type $17) (result (ref (exact $super)))
-  ;; HP2L2-NEXT:  (drop
-  ;; HP2L2-NEXT:   (block (result nullref)
-  ;; HP2L2-NEXT:    (ref.null none)
-  ;; HP2L2-NEXT:   )
-  ;; HP2L2-NEXT:  )
-  ;; HP2L2-NEXT:  (drop
-  ;; HP2L2-NEXT:   (block (result nullref)
+  ;; HP2L2:      (func $cast-desc-eq-stale-parent (type $15) (result (ref (exact $super)))
+  ;; HP2L2-NEXT:  (ref.cast_desc_eq (ref (exact $super))
+  ;; HP2L2-NEXT:   (struct.new_default $no-desc)
+  ;; HP2L2-NEXT:   (block (result (ref (exact $super.desc)))
   ;; HP2L2-NEXT:    (call $effect)
-  ;; HP2L2-NEXT:    (block (result nullref)
-  ;; HP2L2-NEXT:     (ref.null none)
-  ;; HP2L2-NEXT:    )
+  ;; HP2L2-NEXT:    (struct.new_default $super.desc)
   ;; HP2L2-NEXT:   )
   ;; HP2L2-NEXT:  )
-  ;; HP2L2-NEXT:  (unreachable)
   ;; HP2L2-NEXT: )
   (func $cast-desc-eq-stale-parent (result (ref (exact $super)))
     (ref.cast_desc_eq (ref (exact $super))
@@ -1431,7 +1215,7 @@
     )
   )
 
-  ;; CHECK:      (func $cast-desc-eq-stale-parent-escape (type $18) (result (ref (exact $super.desc)))
+  ;; CHECK:      (func $cast-desc-eq-stale-parent-escape (type $16) (result (ref (exact $super.desc)))
   ;; CHECK-NEXT:  (local $desc (ref null (exact $super.desc)))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block
@@ -1452,21 +1236,14 @@
   ;; CHECK-NEXT:   (local.get $desc)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; HP2L2:      (func $cast-desc-eq-stale-parent-escape (type $18) (result (ref (exact $super.desc)))
+  ;; HP2L2:      (func $cast-desc-eq-stale-parent-escape (type $16) (result (ref (exact $super.desc)))
   ;; HP2L2-NEXT:  (local $desc (ref (exact $super.desc)))
   ;; HP2L2-NEXT:  (drop
-  ;; HP2L2-NEXT:   (block
-  ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (block (result nullref)
-  ;; HP2L2-NEXT:      (ref.null none)
-  ;; HP2L2-NEXT:     )
+  ;; HP2L2-NEXT:   (ref.cast_desc_eq (ref (exact $super))
+  ;; HP2L2-NEXT:    (struct.new_default $no-desc)
+  ;; HP2L2-NEXT:    (local.tee $desc
+  ;; HP2L2-NEXT:     (struct.new_default $super.desc)
   ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (local.tee $desc
-  ;; HP2L2-NEXT:      (struct.new_default $super.desc)
-  ;; HP2L2-NEXT:     )
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (unreachable)
   ;; HP2L2-NEXT:   )
   ;; HP2L2-NEXT:  )
   ;; HP2L2-NEXT:  (local.get $desc)
@@ -1487,211 +1264,6 @@
     (local.get $desc)
   )
 
-  ;; CHECK:      (func $cast-desc-bot (type $10)
-  ;; CHECK-NEXT:  (local $0 (ref (exact $super.desc)))
-  ;; CHECK-NEXT:  (local $1 (ref (exact $super.desc)))
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block (result nullref)
-  ;; CHECK-NEXT:      (local.set $1
-  ;; CHECK-NEXT:       (struct.new_default $super.desc)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (local.set $0
-  ;; CHECK-NEXT:       (local.get $1)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (ref.null none)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block
-  ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (block (result nullref)
-  ;; CHECK-NEXT:        (ref.null none)
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (unreachable)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  ;; HP2L2:      (func $cast-desc-bot (type $10)
-  ;; HP2L2-NEXT:  (local $0 (ref (exact $super.desc)))
-  ;; HP2L2-NEXT:  (local $1 (ref (exact $super.desc)))
-  ;; HP2L2-NEXT:  (drop
-  ;; HP2L2-NEXT:   (block
-  ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (block (result nullref)
-  ;; HP2L2-NEXT:      (local.set $1
-  ;; HP2L2-NEXT:       (struct.new_default $super.desc)
-  ;; HP2L2-NEXT:      )
-  ;; HP2L2-NEXT:      (local.set $0
-  ;; HP2L2-NEXT:       (local.get $1)
-  ;; HP2L2-NEXT:      )
-  ;; HP2L2-NEXT:      (ref.null none)
-  ;; HP2L2-NEXT:     )
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (block
-  ;; HP2L2-NEXT:      (drop
-  ;; HP2L2-NEXT:       (block (result nullref)
-  ;; HP2L2-NEXT:        (ref.null none)
-  ;; HP2L2-NEXT:       )
-  ;; HP2L2-NEXT:      )
-  ;; HP2L2-NEXT:      (unreachable)
-  ;; HP2L2-NEXT:     )
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (unreachable)
-  ;; HP2L2-NEXT:   )
-  ;; HP2L2-NEXT:  )
-  ;; HP2L2-NEXT: )
-  (func $cast-desc-bot
-    ;; Failing inner cast in the descriptor operand yields an unreachable origin
-    ;; during origin propagation, so the outer cast traps too.
-    (drop
-      (ref.cast_desc_eq (ref (exact $sub))
-        (struct.new_default_desc $super
-          (struct.new_default $super.desc)
-        )
-        (ref.cast (ref (exact $sub.desc))
-          (struct.new_default $super.desc)
-        )
-      )
-    )
-  )
-
-  ;; CHECK:      (func $cast-desc-eq-dead-desc (type $19) (param $desc (ref (exact $super.desc))) (result (ref (exact $super)))
-  ;; CHECK-NEXT:  (local.set $desc
-  ;; CHECK-NEXT:   (local.get $desc)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (ref.cast_desc_eq (ref (exact $super))
-  ;; CHECK-NEXT:   (struct.new_default_desc $super
-  ;; CHECK-NEXT:    (local.get $desc)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (block (result (ref (exact $super.desc)))
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (loop (result (ref none))
-  ;; CHECK-NEXT:      (unreachable)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.get $desc)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  ;; HP2L2:      (func $cast-desc-eq-dead-desc (type $19) (param $desc (ref (exact $super.desc))) (result (ref (exact $super)))
-  ;; HP2L2-NEXT:  (local $1 (ref (exact $super.desc)))
-  ;; HP2L2-NEXT:  (local $2 (ref (exact $super.desc)))
-  ;; HP2L2-NEXT:  (local.set $desc
-  ;; HP2L2-NEXT:   (local.get $desc)
-  ;; HP2L2-NEXT:  )
-  ;; HP2L2-NEXT:  (block
-  ;; HP2L2-NEXT:   (drop
-  ;; HP2L2-NEXT:    (block (result nullref)
-  ;; HP2L2-NEXT:     (local.set $2
-  ;; HP2L2-NEXT:      (local.get $desc)
-  ;; HP2L2-NEXT:     )
-  ;; HP2L2-NEXT:     (local.set $1
-  ;; HP2L2-NEXT:      (local.get $2)
-  ;; HP2L2-NEXT:     )
-  ;; HP2L2-NEXT:     (ref.null none)
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:   )
-  ;; HP2L2-NEXT:   (drop
-  ;; HP2L2-NEXT:    (block (result (ref (exact $super.desc)))
-  ;; HP2L2-NEXT:     (drop
-  ;; HP2L2-NEXT:      (loop
-  ;; HP2L2-NEXT:       (unreachable)
-  ;; HP2L2-NEXT:      )
-  ;; HP2L2-NEXT:     )
-  ;; HP2L2-NEXT:     (local.get $desc)
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:   )
-  ;; HP2L2-NEXT:   (unreachable)
-  ;; HP2L2-NEXT:  )
-  ;; HP2L2-NEXT: )
-  (func $cast-desc-eq-dead-desc (param $desc (ref (exact $super.desc))) (result (ref (exact $super)))
-    ;; A descriptor block after an unreachable typed loop gets an unreachable
-    ;; origin during origin propagation when the local has a reachable set, even
-    ;; though the block retains its concrete result type, so the outer cast folds
-    ;; to a trap instead of emitting a nullable result.
-    (local.set $desc
-      (local.get $desc)
-    )
-    (ref.cast_desc_eq (ref (exact $super))
-      (struct.new_default_desc $super
-        (local.get $desc)
-      )
-      (block (result (ref (exact $super.desc)))
-        (drop
-          (loop (result (ref none))
-            (unreachable)
-          )
-        )
-        (local.get $desc)
-      )
-    )
-  )
-
-  ;; CHECK:      (func $cast-desc-wrong-subtype (type $20) (param $desc (ref (exact $sub.desc)))
-  ;; CHECK-NEXT:  (local $1 (ref (exact $super.desc)))
-  ;; CHECK-NEXT:  (local $2 (ref (exact $super.desc)))
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block (result nullref)
-  ;; CHECK-NEXT:      (local.set $2
-  ;; CHECK-NEXT:       (struct.new_default $super.desc)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (local.set $1
-  ;; CHECK-NEXT:       (local.get $2)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (ref.null none)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (local.get $desc)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  ;; HP2L2:      (func $cast-desc-wrong-subtype (type $20) (param $desc (ref (exact $sub.desc)))
-  ;; HP2L2-NEXT:  (local $1 (ref (exact $super.desc)))
-  ;; HP2L2-NEXT:  (local $2 (ref (exact $super.desc)))
-  ;; HP2L2-NEXT:  (drop
-  ;; HP2L2-NEXT:   (block
-  ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (block (result nullref)
-  ;; HP2L2-NEXT:      (local.set $2
-  ;; HP2L2-NEXT:       (struct.new_default $super.desc)
-  ;; HP2L2-NEXT:      )
-  ;; HP2L2-NEXT:      (local.set $1
-  ;; HP2L2-NEXT:       (local.get $2)
-  ;; HP2L2-NEXT:      )
-  ;; HP2L2-NEXT:      (ref.null none)
-  ;; HP2L2-NEXT:     )
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (local.get $desc)
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (unreachable)
-  ;; HP2L2-NEXT:   )
-  ;; HP2L2-NEXT:  )
-  ;; HP2L2-NEXT: )
-  (func $cast-desc-wrong-subtype (param $desc (ref (exact $sub.desc)))
-    ;; Cast fails because $super is not a subtype of $sub.
-    (drop
-      (ref.cast_desc_eq (ref (exact $sub))
-        (struct.new_default_desc $super
-          (struct.new_default $super.desc)
-        )
-        (local.get $desc)
-      )
-    )
-  )
-
   ;; CHECK:      (func $get-desc-unreachable (type $10)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result nullref)
@@ -1704,6 +1276,19 @@
   ;; CHECK-NEXT:     (unreachable)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block ;; (replaces unreachable StructNew we can't emit)
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (unreachable)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -1721,353 +1306,6 @@
   ;; HP2L2-NEXT:    (unreachable)
   ;; HP2L2-NEXT:   )
   ;; HP2L2-NEXT:  )
-  ;; HP2L2-NEXT: )
-  (func $get-desc-unreachable
-    ;; Unreachable ref.get_desc should be left untouched.
-    (drop
-      (struct.new_default $no-desc)
-    )
-    (drop
-      (ref.get_desc $super
-        (unreachable)
-      )
-    )
-  )
-
-  ;; CHECK:      (func $worklist-repeat (type $21) (param $p i32) (result eqref)
-  ;; CHECK-NEXT:  (local $d (ref null (exact $super.desc)))
-  ;; CHECK-NEXT:  (ref.as_non_null
-  ;; CHECK-NEXT:   (block $V (result eqref)
-  ;; CHECK-NEXT:    (local.set $d
-  ;; CHECK-NEXT:     (br_if $V
-  ;; CHECK-NEXT:      (struct.new_default $super.desc)
-  ;; CHECK-NEXT:      (local.get $p)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (ref.cast_desc_eq (ref (exact $super))
-  ;; CHECK-NEXT:     (struct.new_default_desc $super
-  ;; CHECK-NEXT:      (call $import-desc)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (local.get $d)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  ;; HP2L2:      (func $worklist-repeat (type $21) (param $p i32) (result eqref)
-  ;; HP2L2-NEXT:  (local $d (ref null (exact $super.desc)))
-  ;; HP2L2-NEXT:  (ref.as_non_null
-  ;; HP2L2-NEXT:   (block $V (result eqref)
-  ;; HP2L2-NEXT:    (local.set $d
-  ;; HP2L2-NEXT:     (br_if $V
-  ;; HP2L2-NEXT:      (struct.new_default $super.desc)
-  ;; HP2L2-NEXT:      (local.get $p)
-  ;; HP2L2-NEXT:     )
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (ref.cast_desc_eq (ref (exact $super))
-  ;; HP2L2-NEXT:     (struct.new_default_desc $super
-  ;; HP2L2-NEXT:      (call $import-desc)
-  ;; HP2L2-NEXT:     )
-  ;; HP2L2-NEXT:     (local.get $d)
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:   )
-  ;; HP2L2-NEXT:  )
-  ;; HP2L2-NEXT: )
-  (func $worklist-repeat (param $p i32) (result eqref)
-    (local $d (ref null (exact $super.desc)))
-    ;; The allocation flows both directly to $V via br_if and through $d into
-    ;; ref.cast_desc_eq, merging an unknown cast result into $V during origin
-    ;; propagation so the allocation escapes.
-    (ref.as_non_null
-      (block $V (result eqref)
-        (local.set $d
-          (br_if $V
-            (struct.new_default $super.desc)
-            (local.get $p)
-          )
-        )
-        (ref.cast_desc_eq (ref null $super)
-          (struct.new_default_desc $super
-            (call $import-desc)
-          )
-          (local.get $d)
-        )
-      )
-    )
-  )
-
-  ;; CHECK:      (func $cast-null-ref-candidate-desc (type $10)
-  ;; CHECK-NEXT:  (local $0 nullref)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result nullref)
-  ;; CHECK-NEXT:    (local.set $0
-  ;; CHECK-NEXT:     (ref.null none)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block (result nullref)
-  ;; CHECK-NEXT:      (ref.null none)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (ref.cast nullref
-  ;; CHECK-NEXT:     (local.get $0)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  ;; HP2L2:      (func $cast-null-ref-candidate-desc (type $10)
-  ;; HP2L2-NEXT:  (local $0 nullref)
-  ;; HP2L2-NEXT:  (drop
-  ;; HP2L2-NEXT:   (block (result nullref)
-  ;; HP2L2-NEXT:    (local.set $0
-  ;; HP2L2-NEXT:     (ref.null none)
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (block (result nullref)
-  ;; HP2L2-NEXT:      (ref.null none)
-  ;; HP2L2-NEXT:     )
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (ref.cast nullref
-  ;; HP2L2-NEXT:     (local.get $0)
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:   )
-  ;; HP2L2-NEXT:  )
-  ;; HP2L2-NEXT: )
-  (func $cast-null-ref-candidate-desc
-    ;; A null ref in ref.cast_desc_eq is not a candidate allocation, while the
-    ;; descriptor allocation still optimizes because it does not escape.
-    (drop
-      (ref.cast_desc_eq (ref null $super)
-        (ref.null none)
-        (struct.new_default $super.desc)
-      )
-    )
-  )
-
-  ;; CHECK:      (func $cast-desc-eq-neither-optimized (type $22) (param $ref (ref null (exact $super))) (param $desc (ref null (exact $super.desc)))
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result nullref)
-  ;; CHECK-NEXT:    (ref.null none)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast_desc_eq (ref null (exact $super))
-  ;; CHECK-NEXT:    (local.get $ref)
-  ;; CHECK-NEXT:    (local.get $desc)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  ;; HP2L2:      (func $cast-desc-eq-neither-optimized (type $22) (param $ref (ref null (exact $super))) (param $desc (ref null (exact $super.desc)))
-  ;; HP2L2-NEXT:  (drop
-  ;; HP2L2-NEXT:   (block (result nullref)
-  ;; HP2L2-NEXT:    (ref.null none)
-  ;; HP2L2-NEXT:   )
-  ;; HP2L2-NEXT:  )
-  ;; HP2L2-NEXT:  (drop
-  ;; HP2L2-NEXT:   (ref.cast_desc_eq (ref null (exact $super))
-  ;; HP2L2-NEXT:    (local.get $ref)
-  ;; HP2L2-NEXT:    (local.get $desc)
-  ;; HP2L2-NEXT:   )
-  ;; HP2L2-NEXT:  )
-  ;; HP2L2-NEXT: )
-  (func $cast-desc-eq-neither-optimized (param $ref (ref null (exact $super))) (param $desc (ref null (exact $super.desc)))
-    ;; Neither operand is an optimized allocation, alongside another optimized allocation.
-    (drop
-      (struct.new_default $no-desc)
-    )
-    (drop
-      (ref.cast_desc_eq (ref null $super)
-        (local.get $ref)
-        (local.get $desc)
-      )
-    )
-  )
-
-  ;; CHECK:      (func $cast-desc-eq-subtype (type $23) (param $sub-desc (ref (exact $sub.desc))) (param $desc (ref null $super.desc))
-  ;; CHECK-NEXT:  (local $2 (ref (exact $sub.desc)))
-  ;; CHECK-NEXT:  (local $3 (ref (exact $sub.desc)))
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result nullref)
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block (result nullref)
-  ;; CHECK-NEXT:      (local.set $3
-  ;; CHECK-NEXT:       (local.get $sub-desc)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (local.set $2
-  ;; CHECK-NEXT:       (local.get $3)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (ref.null none)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (if (result nullref)
-  ;; CHECK-NEXT:     (ref.eq
-  ;; CHECK-NEXT:      (local.get $desc)
-  ;; CHECK-NEXT:      (local.get $2)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (then
-  ;; CHECK-NEXT:      (ref.null none)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (else
-  ;; CHECK-NEXT:      (unreachable)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  ;; HP2L2:      (func $cast-desc-eq-subtype (type $23) (param $sub-desc (ref (exact $sub.desc))) (param $desc (ref null $super.desc))
-  ;; HP2L2-NEXT:  (local $2 (ref (exact $sub.desc)))
-  ;; HP2L2-NEXT:  (local $3 (ref (exact $sub.desc)))
-  ;; HP2L2-NEXT:  (drop
-  ;; HP2L2-NEXT:   (block (result nullref)
-  ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (block (result nullref)
-  ;; HP2L2-NEXT:      (local.set $3
-  ;; HP2L2-NEXT:       (local.get $sub-desc)
-  ;; HP2L2-NEXT:      )
-  ;; HP2L2-NEXT:      (local.set $2
-  ;; HP2L2-NEXT:       (local.get $3)
-  ;; HP2L2-NEXT:      )
-  ;; HP2L2-NEXT:      (ref.null none)
-  ;; HP2L2-NEXT:     )
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (if (result nullref)
-  ;; HP2L2-NEXT:     (ref.eq
-  ;; HP2L2-NEXT:      (local.get $desc)
-  ;; HP2L2-NEXT:      (local.get $2)
-  ;; HP2L2-NEXT:     )
-  ;; HP2L2-NEXT:     (then
-  ;; HP2L2-NEXT:      (ref.null none)
-  ;; HP2L2-NEXT:     )
-  ;; HP2L2-NEXT:     (else
-  ;; HP2L2-NEXT:      (unreachable)
-  ;; HP2L2-NEXT:     )
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:   )
-  ;; HP2L2-NEXT:  )
-  ;; HP2L2-NEXT: )
-  (func $cast-desc-eq-subtype (param $sub-desc (ref (exact $sub.desc))) (param $desc (ref null $super.desc))
-    ;; Subtype $sub optimizes through an inexact supertype ref.cast_desc_eq.
-    (drop
-      (ref.cast_desc_eq (ref $super)
-        (struct.new_default_desc $sub
-          (local.get $sub-desc)
-        )
-        (local.get $desc)
-      )
-    )
-  )
-
-  ;; CHECK:      (func $cast-desc-eq-inexact-fail (type $24) (param $sub-desc (ref (exact $sub.desc))) (param $desc (ref null (exact $super.desc))) (result (ref (exact $super)))
-  ;; CHECK-NEXT:  (local $2 (ref (exact $sub.desc)))
-  ;; CHECK-NEXT:  (local $3 (ref (exact $sub.desc)))
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result nullref)
-  ;; CHECK-NEXT:    (local.set $3
-  ;; CHECK-NEXT:     (local.get $sub-desc)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.set $2
-  ;; CHECK-NEXT:     (local.get $3)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (ref.null none)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.get $desc)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (unreachable)
-  ;; CHECK-NEXT: )
-  ;; HP2L2:      (func $cast-desc-eq-inexact-fail (type $24) (param $sub-desc (ref (exact $sub.desc))) (param $desc (ref null (exact $super.desc))) (result (ref (exact $super)))
-  ;; HP2L2-NEXT:  (local $2 (ref (exact $sub.desc)))
-  ;; HP2L2-NEXT:  (local $3 (ref (exact $sub.desc)))
-  ;; HP2L2-NEXT:  (drop
-  ;; HP2L2-NEXT:   (block (result nullref)
-  ;; HP2L2-NEXT:    (local.set $3
-  ;; HP2L2-NEXT:     (local.get $sub-desc)
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (local.set $2
-  ;; HP2L2-NEXT:     (local.get $3)
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (ref.null none)
-  ;; HP2L2-NEXT:   )
-  ;; HP2L2-NEXT:  )
-  ;; HP2L2-NEXT:  (drop
-  ;; HP2L2-NEXT:   (local.get $desc)
-  ;; HP2L2-NEXT:  )
-  ;; HP2L2-NEXT:  (unreachable)
-  ;; HP2L2-NEXT: )
-  (func $cast-desc-eq-inexact-fail (param $sub-desc (ref (exact $sub.desc))) (param $desc (ref null (exact $super.desc))) (result (ref (exact $super)))
-    ;; Exact supertype cast fails for subtype $sub allocation and traps.
-    (ref.cast_desc_eq (ref (exact $super))
-      (struct.new_default_desc $sub
-        (local.get $sub-desc)
-      )
-      (local.get $desc)
-    )
-  )
-
-  ;; CHECK:      (func $cast-unknown-ref-and-desc (type $10)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast (ref $super)
-  ;; CHECK-NEXT:    (call $import-any)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast_desc_eq (ref (exact $super))
-  ;; CHECK-NEXT:    (struct.new_default_desc $super
-  ;; CHECK-NEXT:     (call $import-desc)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (call $import-desc)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (if
-  ;; CHECK-NEXT:   (i32.const 0)
-  ;; CHECK-NEXT:   (then
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block ;; (replaces unreachable StructNew we can't emit)
-  ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (unreachable)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (unreachable)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  ;; HP2L2:      (func $cast-unknown-ref-and-desc (type $10)
-  ;; HP2L2-NEXT:  (local $0 (ref (exact $super.desc)))
-  ;; HP2L2-NEXT:  (local $1 (ref (exact $super.desc)))
-  ;; HP2L2-NEXT:  (drop
-  ;; HP2L2-NEXT:   (ref.cast (ref $super)
-  ;; HP2L2-NEXT:    (call $import-any)
-  ;; HP2L2-NEXT:   )
-  ;; HP2L2-NEXT:  )
-  ;; HP2L2-NEXT:  (drop
-  ;; HP2L2-NEXT:   (block (result nullref)
-  ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (block (result nullref)
-  ;; HP2L2-NEXT:      (local.set $1
-  ;; HP2L2-NEXT:       (ref.as_non_null
-  ;; HP2L2-NEXT:        (call $import-desc)
-  ;; HP2L2-NEXT:       )
-  ;; HP2L2-NEXT:      )
-  ;; HP2L2-NEXT:      (local.set $0
-  ;; HP2L2-NEXT:       (local.get $1)
-  ;; HP2L2-NEXT:      )
-  ;; HP2L2-NEXT:      (ref.null none)
-  ;; HP2L2-NEXT:     )
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (if (result nullref)
-  ;; HP2L2-NEXT:     (ref.eq
-  ;; HP2L2-NEXT:      (call $import-desc)
-  ;; HP2L2-NEXT:      (local.get $0)
-  ;; HP2L2-NEXT:     )
-  ;; HP2L2-NEXT:     (then
-  ;; HP2L2-NEXT:      (ref.null none)
-  ;; HP2L2-NEXT:     )
-  ;; HP2L2-NEXT:     (else
-  ;; HP2L2-NEXT:      (unreachable)
-  ;; HP2L2-NEXT:     )
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:   )
-  ;; HP2L2-NEXT:  )
   ;; HP2L2-NEXT:  (if
   ;; HP2L2-NEXT:   (i32.const 0)
   ;; HP2L2-NEXT:   (then
@@ -2082,21 +1320,15 @@
   ;; HP2L2-NEXT:   )
   ;; HP2L2-NEXT:  )
   ;; HP2L2-NEXT: )
-  (func $cast-unknown-ref-and-desc
-    ;; Exercise unknown (imported) ref and descriptor operands in ref.cast and
-    ;; ref.cast_desc_eq alongside a candidate allocation, plus an unreachable
-    ;; struct.new_default_desc.
+  (func $get-desc-unreachable
+    ;; Unreachable ref.get_desc and struct.new_default_desc should be left
+    ;; untouched.
     (drop
-      (ref.cast (ref $super)
-        (call $import-any)
-      )
+      (struct.new_default $no-desc)
     )
     (drop
-      (ref.cast_desc_eq (ref $super)
-        (struct.new_default_desc $super
-          (call $import-desc)
-        )
-        (call $import-desc)
+      (ref.get_desc $super
+        (unreachable)
       )
     )
     (if
@@ -2321,25 +1553,12 @@
   ;; HP2L2:      (type $4 (func (result (ref $A))))
 
   ;; HP2L2:      (func $A (type $4) (result (ref $A))
-  ;; HP2L2-NEXT:  (local $0 (ref (exact $B2)))
-  ;; HP2L2-NEXT:  (local $1 (ref (exact $B2)))
-  ;; HP2L2-NEXT:  (drop
-  ;; HP2L2-NEXT:   (block (result nullref)
-  ;; HP2L2-NEXT:    (local.set $1
-  ;; HP2L2-NEXT:     (struct.new_default $B2)
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (local.set $0
-  ;; HP2L2-NEXT:     (local.get $1)
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (ref.null none)
+  ;; HP2L2-NEXT:  (ref.cast_desc_eq (ref (exact $A))
+  ;; HP2L2-NEXT:   (struct.new_default_desc $A2
+  ;; HP2L2-NEXT:    (struct.new_default $B2)
   ;; HP2L2-NEXT:   )
+  ;; HP2L2-NEXT:   (struct.new_default $B)
   ;; HP2L2-NEXT:  )
-  ;; HP2L2-NEXT:  (drop
-  ;; HP2L2-NEXT:   (block (result nullref)
-  ;; HP2L2-NEXT:    (ref.null none)
-  ;; HP2L2-NEXT:   )
-  ;; HP2L2-NEXT:  )
-  ;; HP2L2-NEXT:  (unreachable)
   ;; HP2L2-NEXT: )
   (func $A (result (ref $A))
     (ref.cast_desc_eq (ref $A)
@@ -2495,41 +1714,25 @@
   ;; HP2L2:      (func $test (type $2)
   ;; HP2L2-NEXT:  (local $B (ref null $B))
   ;; HP2L2-NEXT:  (local $v v128)
-  ;; HP2L2-NEXT:  (local $2 v128)
-  ;; HP2L2-NEXT:  (local $3 (ref (exact $B)))
-  ;; HP2L2-NEXT:  (local $4 (ref (exact $B)))
   ;; HP2L2-NEXT:  (drop
-  ;; HP2L2-NEXT:   (block (result nullref)
-  ;; HP2L2-NEXT:    (ref.null none)
+  ;; HP2L2-NEXT:   (ref.as_non_null
+  ;; HP2L2-NEXT:    (local.tee $B
+  ;; HP2L2-NEXT:     (struct.new_default $B)
+  ;; HP2L2-NEXT:    )
   ;; HP2L2-NEXT:   )
   ;; HP2L2-NEXT:  )
   ;; HP2L2-NEXT:  (local.set $v
-  ;; HP2L2-NEXT:   (block (result v128)
-  ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (block
-  ;; HP2L2-NEXT:      (drop
-  ;; HP2L2-NEXT:       (block (result nullref)
-  ;; HP2L2-NEXT:        (local.set $4
-  ;; HP2L2-NEXT:         (ref.as_non_null
-  ;; HP2L2-NEXT:          (ref.null none)
-  ;; HP2L2-NEXT:         )
-  ;; HP2L2-NEXT:        )
-  ;; HP2L2-NEXT:        (local.set $2
-  ;; HP2L2-NEXT:         (v128.const i32x4 0x00000000 0x00000000 0x00000000 0x00000000)
-  ;; HP2L2-NEXT:        )
-  ;; HP2L2-NEXT:        (local.set $3
-  ;; HP2L2-NEXT:         (local.get $4)
-  ;; HP2L2-NEXT:        )
-  ;; HP2L2-NEXT:        (ref.null none)
-  ;; HP2L2-NEXT:       )
-  ;; HP2L2-NEXT:      )
-  ;; HP2L2-NEXT:      (drop
+  ;; HP2L2-NEXT:   (struct.get $A 0
+  ;; HP2L2-NEXT:    (ref.cast_desc_eq (ref $A)
+  ;; HP2L2-NEXT:     (struct.new_default_desc $A
+  ;; HP2L2-NEXT:      (ref.as_non_null
   ;; HP2L2-NEXT:       (ref.null none)
   ;; HP2L2-NEXT:      )
-  ;; HP2L2-NEXT:      (unreachable)
+  ;; HP2L2-NEXT:     )
+  ;; HP2L2-NEXT:     (ref.as_non_null
+  ;; HP2L2-NEXT:      (local.get $B)
   ;; HP2L2-NEXT:     )
   ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (local.get $2)
   ;; HP2L2-NEXT:   )
   ;; HP2L2-NEXT:  )
   ;; HP2L2-NEXT: )
@@ -2629,31 +1832,17 @@
 
   ;; HP2L2:      (func $test (type $3) (result (ref (shared any)))
   ;; HP2L2-NEXT:  (local $temp (ref $C))
-  ;; HP2L2-NEXT:  (drop
-  ;; HP2L2-NEXT:   (block (result (ref null (shared none)))
-  ;; HP2L2-NEXT:    (ref.null (shared none))
-  ;; HP2L2-NEXT:   )
+  ;; HP2L2-NEXT:  (local.set $temp
+  ;; HP2L2-NEXT:   (struct.new_default $C)
   ;; HP2L2-NEXT:  )
-  ;; HP2L2-NEXT:  (block
-  ;; HP2L2-NEXT:   (drop
-  ;; HP2L2-NEXT:    (block
-  ;; HP2L2-NEXT:     (drop
-  ;; HP2L2-NEXT:      (struct.new_default_desc $B
-  ;; HP2L2-NEXT:       (ref.null (shared none))
-  ;; HP2L2-NEXT:      )
-  ;; HP2L2-NEXT:     )
-  ;; HP2L2-NEXT:     (drop
-  ;; HP2L2-NEXT:      (ref.null (shared none))
-  ;; HP2L2-NEXT:     )
-  ;; HP2L2-NEXT:     (unreachable)
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:   )
-  ;; HP2L2-NEXT:   (drop
-  ;; HP2L2-NEXT:    (block (result (ref null (shared none)))
+  ;; HP2L2-NEXT:  (ref.cast_desc_eq (ref (exact $B))
+  ;; HP2L2-NEXT:   (ref.cast_desc_eq (ref $B)
+  ;; HP2L2-NEXT:    (struct.new_default_desc $B
   ;; HP2L2-NEXT:     (ref.null (shared none))
   ;; HP2L2-NEXT:    )
+  ;; HP2L2-NEXT:    (local.get $temp)
   ;; HP2L2-NEXT:   )
-  ;; HP2L2-NEXT:   (unreachable)
+  ;; HP2L2-NEXT:   (struct.new_default $C)
   ;; HP2L2-NEXT:  )
   ;; HP2L2-NEXT: )
   (func $test (result (ref (shared any)))
@@ -2724,34 +1913,16 @@
 
   ;; HP2L2:      (func $test (type $2) (result i32)
   ;; HP2L2-NEXT:  (local $desc (ref $desc))
-  ;; HP2L2-NEXT:  (local $1 (ref (exact $desc)))
-  ;; HP2L2-NEXT:  (local $2 (ref (exact $desc)))
-  ;; HP2L2-NEXT:  (drop
-  ;; HP2L2-NEXT:   (block (result nullref)
-  ;; HP2L2-NEXT:    (ref.null none)
-  ;; HP2L2-NEXT:   )
+  ;; HP2L2-NEXT:  (local.set $desc
+  ;; HP2L2-NEXT:   (struct.new_default $desc)
   ;; HP2L2-NEXT:  )
-  ;; HP2L2-NEXT:  (block (result i32)
-  ;; HP2L2-NEXT:   (drop
-  ;; HP2L2-NEXT:    (block
-  ;; HP2L2-NEXT:     (drop
-  ;; HP2L2-NEXT:      (block (result nullref)
-  ;; HP2L2-NEXT:       (local.set $2
-  ;; HP2L2-NEXT:        (struct.new_default $desc)
-  ;; HP2L2-NEXT:       )
-  ;; HP2L2-NEXT:       (local.set $1
-  ;; HP2L2-NEXT:        (local.get $2)
-  ;; HP2L2-NEXT:       )
-  ;; HP2L2-NEXT:       (ref.null none)
-  ;; HP2L2-NEXT:      )
-  ;; HP2L2-NEXT:     )
-  ;; HP2L2-NEXT:     (drop
-  ;; HP2L2-NEXT:      (ref.null none)
-  ;; HP2L2-NEXT:     )
-  ;; HP2L2-NEXT:     (unreachable)
+  ;; HP2L2-NEXT:  (ref.is_null
+  ;; HP2L2-NEXT:   (ref.cast_desc_eq (ref $struct)
+  ;; HP2L2-NEXT:    (struct.new_default_desc $struct
+  ;; HP2L2-NEXT:     (struct.new_default $desc)
   ;; HP2L2-NEXT:    )
+  ;; HP2L2-NEXT:    (local.get $desc)
   ;; HP2L2-NEXT:   )
-  ;; HP2L2-NEXT:   (i32.const 0)
   ;; HP2L2-NEXT:  )
   ;; HP2L2-NEXT: )
   (func $test (result i32)
@@ -2839,40 +2010,18 @@
   ;; HP2L2:      (func $test (type $2)
   ;; HP2L2-NEXT:  (local $desc (ref $desc))
   ;; HP2L2-NEXT:  (local $func funcref)
-  ;; HP2L2-NEXT:  (local $2 funcref)
-  ;; HP2L2-NEXT:  (local $3 (ref (exact $desc)))
-  ;; HP2L2-NEXT:  (local $4 (ref (exact $desc)))
-  ;; HP2L2-NEXT:  (drop
-  ;; HP2L2-NEXT:   (block (result nullref)
-  ;; HP2L2-NEXT:    (local.set $2
-  ;; HP2L2-NEXT:     (ref.null nofunc)
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (ref.null none)
-  ;; HP2L2-NEXT:   )
+  ;; HP2L2-NEXT:  (local.set $desc
+  ;; HP2L2-NEXT:   (struct.new_default $desc)
   ;; HP2L2-NEXT:  )
   ;; HP2L2-NEXT:  (local.set $func
   ;; HP2L2-NEXT:   (struct.get $desc 0
-  ;; HP2L2-NEXT:    (block (result (ref (exact $desc)))
-  ;; HP2L2-NEXT:     (drop
-  ;; HP2L2-NEXT:      (block
-  ;; HP2L2-NEXT:       (drop
-  ;; HP2L2-NEXT:        (block (result nullref)
-  ;; HP2L2-NEXT:         (local.set $4
-  ;; HP2L2-NEXT:          (struct.new_default $desc)
-  ;; HP2L2-NEXT:         )
-  ;; HP2L2-NEXT:         (local.set $3
-  ;; HP2L2-NEXT:          (local.get $4)
-  ;; HP2L2-NEXT:         )
-  ;; HP2L2-NEXT:         (ref.null none)
-  ;; HP2L2-NEXT:        )
-  ;; HP2L2-NEXT:       )
-  ;; HP2L2-NEXT:       (drop
-  ;; HP2L2-NEXT:        (ref.null none)
-  ;; HP2L2-NEXT:       )
-  ;; HP2L2-NEXT:       (unreachable)
+  ;; HP2L2-NEXT:    (ref.get_desc $struct
+  ;; HP2L2-NEXT:     (ref.cast_desc_eq (ref $struct)
+  ;; HP2L2-NEXT:      (struct.new_default_desc $struct
+  ;; HP2L2-NEXT:       (struct.new_default $desc)
   ;; HP2L2-NEXT:      )
+  ;; HP2L2-NEXT:      (local.get $desc)
   ;; HP2L2-NEXT:     )
-  ;; HP2L2-NEXT:     (local.get $3)
   ;; HP2L2-NEXT:    )
   ;; HP2L2-NEXT:   )
   ;; HP2L2-NEXT:  )
@@ -2954,37 +2103,19 @@
 
   ;; HP2L2:      (func $test (type $2)
   ;; HP2L2-NEXT:  (local $temp (ref $desc))
-  ;; HP2L2-NEXT:  (local $1 (ref (exact $desc)))
-  ;; HP2L2-NEXT:  (local $2 (ref (exact $desc)))
-  ;; HP2L2-NEXT:  (drop
-  ;; HP2L2-NEXT:   (block (result nullref)
-  ;; HP2L2-NEXT:    (ref.null none)
-  ;; HP2L2-NEXT:   )
+  ;; HP2L2-NEXT:  (local.set $temp
+  ;; HP2L2-NEXT:   (struct.new_default $desc)
   ;; HP2L2-NEXT:  )
   ;; HP2L2-NEXT:  (drop
-  ;; HP2L2-NEXT:   (block (result i32)
-  ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (block
-  ;; HP2L2-NEXT:      (drop
-  ;; HP2L2-NEXT:       (block (result nullref)
-  ;; HP2L2-NEXT:        (local.set $2
-  ;; HP2L2-NEXT:         (ref.as_non_null
-  ;; HP2L2-NEXT:          (ref.null none)
-  ;; HP2L2-NEXT:         )
-  ;; HP2L2-NEXT:        )
-  ;; HP2L2-NEXT:        (local.set $1
-  ;; HP2L2-NEXT:         (local.get $2)
-  ;; HP2L2-NEXT:        )
-  ;; HP2L2-NEXT:        (ref.null none)
-  ;; HP2L2-NEXT:       )
-  ;; HP2L2-NEXT:      )
-  ;; HP2L2-NEXT:      (drop
+  ;; HP2L2-NEXT:   (ref.test (ref none)
+  ;; HP2L2-NEXT:    (ref.cast_desc_eq (ref $struct)
+  ;; HP2L2-NEXT:     (struct.new_default_desc $struct
+  ;; HP2L2-NEXT:      (ref.as_non_null
   ;; HP2L2-NEXT:       (ref.null none)
   ;; HP2L2-NEXT:      )
-  ;; HP2L2-NEXT:      (unreachable)
   ;; HP2L2-NEXT:     )
+  ;; HP2L2-NEXT:     (local.get $temp)
   ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (i32.const 0)
   ;; HP2L2-NEXT:   )
   ;; HP2L2-NEXT:  )
   ;; HP2L2-NEXT: )
