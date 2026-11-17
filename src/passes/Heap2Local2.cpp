@@ -85,14 +85,18 @@ using Origin = OriginLattice::Element;
 struct AllocInfo {
   Expression* expr = nullptr;
   FieldList fields;
-  std::optional<HeapType> descHeapType;
   bool escaped = false;
 
   // Populated before Phase 4 if we can optimize this allocation.
   std::vector<Index> fieldLocals;
   std::optional<Index> descLocal;
 
+  std::optional<HeapType> getDescHeapType() const {
+    return expr->type.getHeapType().getDescriptorType();
+  }
+
   Type getDescLocalType() const {
+    auto descHeapType = getDescHeapType();
     assert(descHeapType.has_value());
     return Type(*descHeapType, NonNullable, Exact);
   }
@@ -301,16 +305,12 @@ struct GraphBuilder
     }
   }
 
-  AllocId
-  addCandidateAlloc(Expression* curr,
-                    const FieldList& fields,
-                    std::optional<HeapType> descHeapType = std::nullopt) {
+  AllocId addCandidateAlloc(Expression* curr, const FieldList& fields) {
     assert(state.allocs.size() < std::numeric_limits<AllocId>::max());
     AllocId id = AllocId(state.allocs.size());
     auto& info = state.allocs.emplace_back();
     info.expr = curr;
     info.fields.assign(fields.begin(), fields.end());
-    info.descHeapType = descHeapType;
     state.allocIds[curr] = id;
     state.seedOrigin(curr, state.originLattice.get(id));
     return id;
@@ -329,12 +329,8 @@ struct GraphBuilder
     // because a later unreachable operand lets earlier operands execute before
     // trapping. Only register reachable struct.new instructions as candidates.
     if (curr->type != Type::unreachable) {
-      std::optional<HeapType> descHeapType =
-        curr->type.getHeapType().getDescriptorType();
-      assert(bool(curr->desc) == descHeapType.has_value());
       assert(!curr->desc || curr->desc->type.isRef());
-      addCandidateAlloc(
-        curr, curr->type.getHeapType().getStruct().fields, descHeapType);
+      addCandidateAlloc(curr, curr->type.getHeapType().getStruct().fields);
     }
   }
 
@@ -706,7 +702,7 @@ void computeOrigins(AnalysisState& state) {
             // Every subtype of a type with a descriptor also has a descriptor
             // (and a StructNew of that type must supply one).
             assert(!site.expr->desc ||
-                   state.allocs[*alloc].descHeapType.has_value());
+                   state.allocs[*alloc].getDescHeapType().has_value());
             out = state.originLattice.get(*alloc);
           }
         }
@@ -822,7 +818,7 @@ struct Optimizer : public PostWalker<Optimizer> {
       for (const auto& field : info.fields) {
         info.fieldLocals.push_back(builder.addVar(func, field.type));
       }
-      if (info.descHeapType) {
+      if (info.getDescHeapType()) {
         info.descLocal = builder.addVar(func, info.getDescLocalType());
       }
     }
@@ -1114,7 +1110,7 @@ struct Optimizer : public PostWalker<Optimizer> {
       return;
     }
     assert(Type::isSubType(info.expr->type, curr->type));
-    assert(info.descHeapType.has_value());
+    assert(info.getDescHeapType().has_value());
 
     replaceCurrent(builder.makeSequence(
       builder.makeDrop(curr->ref),
