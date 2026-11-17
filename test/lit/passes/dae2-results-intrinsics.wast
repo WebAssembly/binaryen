@@ -2,22 +2,45 @@
 ;; RUN: foreach %s %t wasm-opt -all --dae2 --closed-world -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $cwe (type $2) (param funcref) (result i32)))
+  ;; CHECK:       (type $target-type (func (result i32)))
+
+  ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $cwe (type $3) (param funcref) (result i32)))
   (import "binaryen-intrinsics" "call.without.effects" (func $cwe (param funcref) (result i32)))
-  ;; CHECK:      (func $target (type $1) (result i32)
+
+  (type $target-type (func (result i32)))
+  ;; CHECK:      (func $target1 (type $target-type) (result i32)
   ;; CHECK-NEXT:  (i32.const 42)
   ;; CHECK-NEXT: )
-  (func $target (result i32) (i32.const 42))
-  ;; CHECK:      (func $caller (type $0)
+  (func $target1 (type $target-type) (result i32) (i32.const 42))
+
+  ;; CHECK:      (func $target2 (type $target-type) (result i32)
+  ;; CHECK-NEXT:  (i32.const 42)
+  ;; CHECK-NEXT: )
+  (func $target2 (type $target-type) (result i32) (i32.const 42))
+
+  ;; CHECK:      (func $caller (type $4) (param $ref (ref $target-type))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (call $cwe
-  ;; CHECK-NEXT:    (ref.func $target)
+  ;; CHECK-NEXT:    (local.get $ref)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $caller
+  (func $caller (param $ref (ref $target-type))
     ;; We cannot optimize function called via intrinsics.
-    (drop (call $cwe (ref.func $target)))
+    (drop (call $cwe (local.get $ref)))
+  )
+
+  ;; CHECK:      (func $reference (type $0)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.func $target1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.func $target2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $reference
+    (drop (ref.func $target1))
+    (drop (ref.func $target2))
   )
 )
 
@@ -100,10 +123,8 @@
 )
 
 (module
-  ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $cwe (type $1) (param funcref) (result i32)))
-  (import "binaryen-intrinsics" "call.without.effects" (func $cwe (param funcref) (result i32)))
   ;; CHECK:      (@binaryen.js.called)
-  ;; CHECK-NEXT: (func $target (type $2) (result i32)
+  ;; CHECK-NEXT: (func $target (type $0) (result i32)
   ;; CHECK-NEXT:  (i32.const 42)
   ;; CHECK-NEXT: )
   (@binaryen.js.called)
