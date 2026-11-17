@@ -6,8 +6,8 @@
 ;; so we would not validate if we generalized a type in a way that made a
 ;; previously exact-and-trivial cast into an exact-and-*non*trivial cast.)
 
-;; RUN: foreach %s %t wasm-opt --experimental-type-generalizing -all                              -S -o - | filecheck %s
-;; RUN: foreach %s %t wasm-opt --experimental-type-generalizing -all --disable-custom-descriptors -S -o - | filecheck %s --check-prefix=NO_CD
+;; RUN: foreach %s %t wasm-opt --type-generalizing -all                              -S -o - | filecheck %s
+;; RUN: foreach %s %t wasm-opt --type-generalizing -all --disable-custom-descriptors -S -o - | filecheck %s --check-prefix=NO_CD
 
 (module
  ;; CHECK:      (type $foo (sub (struct)))
