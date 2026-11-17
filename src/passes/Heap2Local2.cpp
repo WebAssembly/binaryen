@@ -80,7 +80,8 @@ constexpr NodeId InvalidNode = NodeId(-1);
 using OriginLattice = analysis::Flat<AllocId>;
 using Origin = OriginLattice::Element;
 
-// Metadata and lowered local variable assignments for a candidate allocation.
+// Metadata and lowered local variable assignments for a candidate allocation
+// (either a struct.new* or array.new*).
 struct AllocInfo {
   Expression* expr = nullptr;
   FieldList fields;
