@@ -20,14 +20,14 @@
 //
 // Phase 1 builds a dataflow graph over reference expressions in a function,
 // collecting candidate StructNew, fixed-size ArrayNew, and ArrayNewFixed
-// allocations alongside identity edges and escaping uses.
+// allocations alongside identity edges, cast sites, and escaping uses.
 //
 // Phase 2 solves a smallest fixed point over Flat<AllocId> origins (i.e. the
 // flat lattice of all allocation sites) across all candidate allocations
 // simultaneously:
 //   - Top: unknown / nullable / multiple merged allocations.
 //   - Val(a): definitely non-null reference to a single allocation `a`.
-//   - Bot: unreachable.
+//   - Bot: unreachable or statically trapping cast output.
 //
 // Phase 3 marks allocations escaped from escaping uses and identity-edge mixes
 // (Val(a) flowing into Top).
@@ -74,6 +74,9 @@ using AllocId = uint32_t;
 using NodeId = uint32_t;
 constexpr NodeId TopNode = 0;
 
+// Sentinel for absent optional NodeId fields (e.g. missing descriptors).
+constexpr NodeId InvalidNode = NodeId(-1);
+
 // Lattice of origins used in Phase 2 origin analysis.
 using OriginLattice = analysis::Flat<AllocId>;
 using Origin = OriginLattice::Element;
@@ -100,6 +103,19 @@ struct AllocInfo {
   }
 };
 
+// A ref.cast or ref.cast_desc_eq expression tracked during origin propagation.
+// Casts do not escape their inputs, but depending on the input origin,
+// descriptor reachability, and target subtype check they either propagate an
+// allocation origin, trap (Bot), or produce Top, so Phase 2 must re-evaluate
+// them as input origins are discovered rather than using plain identity edges.
+struct CastSite {
+  RefCast* expr;
+  NodeId refNode;
+  // InvalidNode when !expr->desc or when expr->desc is mapped to TopNode.
+  NodeId descNode;
+  NodeId outNode;
+};
+
 // Shared per-function state populated by GraphBuilder (Phase 1) and consumed by
 // origin propagation (Phase 2), escape analysis (Phase 3), and IR rewriting
 // (Phase 4).
@@ -118,6 +134,9 @@ struct AnalysisState {
   // Nodes whose values flow into contexts that escape the function or alias
   // heap memory.
   std::vector<NodeId> escapingNodes;
+  // Tracked ref.cast and ref.cast_desc_eq sites re-evaluated in Phase 2 as
+  // their input origins move up the lattice.
+  std::vector<CastSite> castSites;
 
   AnalysisState() {
     // Node 0 (TopNode) is a shared sentinel node with fixed origin Top
@@ -184,7 +203,7 @@ struct AnalysisState {
 };
 
 // Phase 1: Single post-order walk over the function body to collect candidate
-// allocations, dataflow edges, and escaping uses.
+// allocations, dataflow edges, casts, and escaping uses.
 struct GraphBuilder
   : public ControlFlowWalker<GraphBuilder,
                              UnifiedExpressionVisitor<GraphBuilder>> {
@@ -406,6 +425,29 @@ struct GraphBuilder
     }
   }
 
+  void visitRefCast(RefCast* curr) {
+    // Neither ref nor desc escapes through ref.cast{,_desc_eq}; if the cast
+    // is already unreachable, Optimizer will skip it.
+    if (curr->type.isRef()) {
+      assert(curr->ref->type.isRef());
+      NodeId refNode = state.getNodeOrTop(curr->ref);
+      if (refNode == TopNode) {
+        // We already know this cast is not optimizable, so we don't need to
+        // consider it further.
+        return;
+      }
+      NodeId descNode = InvalidNode;
+      if (curr->desc) {
+        assert(curr->desc->type.isRef());
+        NodeId maybeDesc = state.getNodeOrTop(curr->desc);
+        if (maybeDesc != TopNode) {
+          descNode = maybeDesc;
+        }
+      }
+      state.castSites.push_back({curr, refNode, descNode, state.getNode(curr)});
+    }
+  }
+
   // These instructions only inspect or consume their reference operands without
   // letting them escape; overriding them prevents visitExpression from marking
   // their reference children as escaping.
@@ -467,11 +509,37 @@ void computeOrigins(AnalysisState& state) {
     outTargets[nextTargetIdx[u]++] = v;
   }
 
-  // Skip sink nodes that have no outgoing identity edges to propagate into.
+  // For each node, the index of the cast it flows into (either as ref or desc),
+  // if such a cast exists.
+  std::vector<std::optional<Index>> nodeCasts;
+  if (!state.castSites.empty()) {
+    nodeCasts.resize(numNodes);
+    for (Index i = 0; i < state.castSites.size(); ++i) {
+      const auto& site = state.castSites[i];
+      nodeCasts[site.refNode] = i;
+      if (site.descNode != InvalidNode) {
+        assert(!nodeCasts[site.descNode]);
+        nodeCasts[site.descNode] = i;
+      }
+    }
+  }
+
+  // Used by pushNode below to skip sink nodes that have no outgoing identity
+  // edges or dependent casts to propagate into.
+  auto hasOutgoing = [&](NodeId u) {
+    if (outOffsets[u] != outOffsets[u + 1]) {
+      return true;
+    }
+    if (!nodeCasts.empty() && nodeCasts[u]) {
+      return true;
+    }
+    return false;
+  };
+
   std::vector<bool> inWorklist(numNodes, false);
   std::vector<NodeId> worklist;
   auto pushNode = [&](NodeId u) {
-    if (outOffsets[u] != outOffsets[u + 1]) {
+    if (hasOutgoing(u)) {
       if (!inWorklist[u]) {
         inWorklist[u] = true;
         worklist.push_back(u);
@@ -479,7 +547,7 @@ void computeOrigins(AnalysisState& state) {
     }
   };
 
-  // Start at node 1 because TopNode (0) never has outgoing edges.
+  // Start at node 1 because TopNode (0) never has outgoing edges or casts.
   for (NodeId u = 1; u < numNodes; ++u) {
     if (!state.origins[u].isBottom()) {
       pushNode(u);
@@ -496,6 +564,38 @@ void computeOrigins(AnalysisState& state) {
       NodeId v = outTargets[i];
       if (state.originLattice.join(state.origins[v], uOrigin)) {
         pushNode(v);
+      }
+    }
+
+    // Node u may be the ref or desc input to a cast. Re-evaluate that cast now
+    // that u's origin has been refined so any newly reachable or widened cast
+    // result propagates to site.outNode.
+    if (!nodeCasts.empty() && nodeCasts[u]) {
+      const auto& site = state.castSites[*nodeCasts[u]];
+      const auto& refOrigin = state.origins[site.refNode];
+      if (refOrigin.isBottom()) {
+        // No allocation flowing in yet, so nothing to update.
+        continue;
+      }
+      if (site.descNode != InvalidNode &&
+          state.origins[site.descNode].isBottom()) {
+        // No desc flowing in yet, so nothing to update.
+        continue;
+      }
+      Origin out = state.originLattice.getBottom();
+      if (refOrigin.isTop()) {
+        out = state.originLattice.getTop();
+      } else {
+        const auto* alloc = refOrigin.getVal();
+        assert(alloc);
+        if (Type::isSubType(state.allocs[*alloc].expr->type, site.expr->type)) {
+          // TODO: Consider the descriptor flowing into the allocation site once
+          // we can do better than just considering it to have escaped.
+          out = state.originLattice.get(*alloc);
+        }
+      }
+      if (state.originLattice.join(state.origins[site.outNode], out)) {
+        pushNode(site.outNode);
       }
     }
   }
@@ -766,6 +866,91 @@ struct Optimizer : public PostWalker<Optimizer> {
       replaceCurrent(builder.makeSequence(builder.makeDrop(curr->ref),
                                           builder.makeConst(res)));
     }
+  }
+
+  void visitRefCast(RefCast* curr) {
+    if (curr->type == Type::unreachable) {
+      return;
+    }
+    auto refAlloc = getOptimizedAlloc(curr->ref);
+    auto descAlloc = curr->desc ? getOptimizedAlloc(curr->desc) : std::nullopt;
+    if (!refAlloc && !descAlloc) {
+      return;
+    }
+
+    auto descTrap = [&]() {
+      assert(curr->desc);
+      replaceCurrent(builder.makeBlock({builder.makeDrop(curr->ref),
+                                        builder.makeDrop(curr->desc),
+                                        builder.makeUnreachable()}));
+    };
+
+    if (refAlloc && descAlloc) {
+      // An allocation's descriptor is currently always marked as escaping, so a
+      // non-escaping `desc` cannot match `ref`'s descriptor, and `ref` is
+      // non-null, so the cast always traps.
+      descTrap();
+      return;
+    }
+
+    if (refAlloc) {
+      const auto& info = state.allocs[*refAlloc];
+      if (!curr->desc) {
+        // Without a descriptor operand, the cast depends only on the static
+        // type of the non-null allocation.
+        if (Type::isSubType(info.expr->type, curr->type)) {
+          replaceCurrent(curr->ref);
+        } else {
+          replaceCurrent(builder.makeSequence(builder.makeDrop(curr->ref),
+                                              builder.makeUnreachable()));
+        }
+        return;
+      }
+      // `ref` is an optimized allocation while `desc` is not optimized. If
+      // origin propagation left the cast output Bot (either because the target
+      // type is incompatible or `desc` never produces a value), fold to a trap;
+      // otherwise check `desc` against the allocation's stored descriptor local
+      // at runtime.
+      auto outIt = state.exprNodes.find(curr);
+      assert(outIt != state.exprNodes.end());
+      if (state.origins[outIt->second].isBottom()) {
+        descTrap();
+        return;
+      }
+      assert(Type::isSubType(info.expr->type, curr->type));
+      assert(info.getDescHeapType().has_value());
+      replaceCurrent(builder.makeSequence(
+        builder.makeDrop(curr->ref),
+        builder.makeIf(
+          builder.makeRefEq(
+            curr->desc,
+            builder.makeLocalGet(*info.descLocal, info.getDescLocalType())),
+          makeOptimizedNull(*refAlloc),
+          builder.makeUnreachable())));
+      return;
+    }
+
+    assert(descAlloc);
+    // `desc` is an optimized non-escaping allocation and `ref` is not
+    // optimized, so no non-null `ref` can have `desc` as its descriptor. A
+    // nullable cast can still succeed if `ref` is null, unless `curr->ref` was
+    // already rewritten to unreachable earlier in the post-order walk (before
+    // ReFinalize updates `curr->type`).
+    if (curr->type.isNullableRef() && curr->ref->type != Type::unreachable) {
+      // Stash `ref` in a scratch local before evaluating `desc` to preserve
+      // operand evaluation order while keeping only a null check on `ref`.
+      Type refType = curr->ref->type;
+      Index scratch = builder.addVar(func, refType);
+      replaceCurrent(
+        builder.makeBlock({builder.makeLocalSet(scratch, curr->ref),
+                           builder.makeDrop(curr->desc),
+                           curr}));
+      curr->desc = nullptr;
+      curr->type = curr->type.with(curr->type.getHeapType().getBottom());
+      curr->ref = builder.makeLocalGet(scratch, refType);
+      return;
+    }
+    descTrap();
   }
 
   void visitRefGetDesc(RefGetDesc* curr) {

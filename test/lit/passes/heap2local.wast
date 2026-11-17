@@ -3332,14 +3332,28 @@
   ;; CHECK-NEXT:  (local.get $0)
   ;; CHECK-NEXT: )
   ;; HP2L2:      (func $ref-cast (type $4) (result i32)
-  ;; HP2L2-NEXT:  (struct.get $struct.A 0
-  ;; HP2L2-NEXT:   (ref.cast (ref (exact $struct.A))
-  ;; HP2L2-NEXT:    (struct.new $struct.A
+  ;; HP2L2-NEXT:  (local $0 i32)
+  ;; HP2L2-NEXT:  (local $1 f64)
+  ;; HP2L2-NEXT:  (local $2 i32)
+  ;; HP2L2-NEXT:  (local $3 f64)
+  ;; HP2L2-NEXT:  (drop
+  ;; HP2L2-NEXT:   (block (result nullref)
+  ;; HP2L2-NEXT:    (local.set $2
   ;; HP2L2-NEXT:     (i32.const 0)
+  ;; HP2L2-NEXT:    )
+  ;; HP2L2-NEXT:    (local.set $3
   ;; HP2L2-NEXT:     (f64.const 0)
   ;; HP2L2-NEXT:    )
+  ;; HP2L2-NEXT:    (local.set $0
+  ;; HP2L2-NEXT:     (local.get $2)
+  ;; HP2L2-NEXT:    )
+  ;; HP2L2-NEXT:    (local.set $1
+  ;; HP2L2-NEXT:     (local.get $3)
+  ;; HP2L2-NEXT:    )
+  ;; HP2L2-NEXT:    (ref.null none)
   ;; HP2L2-NEXT:   )
   ;; HP2L2-NEXT:  )
+  ;; HP2L2-NEXT:  (local.get $0)
   ;; HP2L2-NEXT: )
   (func $ref-cast (result i32)
     (struct.get $struct.A 0
@@ -5367,6 +5381,8 @@
   ;; CHECK:      (type $1 (func (result anyref)))
 
   ;; CHECK:      (type $B (sub $A (struct (field (ref $A)) (field i32))))
+  ;; HP2L2:      (type $1 (func (result anyref)))
+
   ;; HP2L2:      (type $B (sub $A (struct (field (ref $A)) (field i32))))
   (type $B (sub $A (struct (field (ref $A)) (field i32))))
 
@@ -5403,11 +5419,9 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; HP2L2:      (type $2 (func (result anyref)))
-
   ;; HP2L2:      (type $3 (func (result i32)))
 
-  ;; HP2L2:      (func $func (type $2) (result anyref)
+  ;; HP2L2:      (func $func (type $1) (result anyref)
   ;; HP2L2-NEXT:  (local $a (ref $A))
   ;; HP2L2-NEXT:  (local $1 (ref $A))
   ;; HP2L2-NEXT:  (local $2 i32)
@@ -5485,17 +5499,31 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.get $0)
   ;; CHECK-NEXT: )
-  ;; HP2L2:      (func $cast-success (type $2) (result anyref)
-  ;; HP2L2-NEXT:  (struct.get $B 0
-  ;; HP2L2-NEXT:   (ref.cast (ref (exact $B))
-  ;; HP2L2-NEXT:    (struct.new $B
+  ;; HP2L2:      (func $cast-success (type $1) (result anyref)
+  ;; HP2L2-NEXT:  (local $0 (ref $A))
+  ;; HP2L2-NEXT:  (local $1 i32)
+  ;; HP2L2-NEXT:  (local $2 (ref $A))
+  ;; HP2L2-NEXT:  (local $3 i32)
+  ;; HP2L2-NEXT:  (drop
+  ;; HP2L2-NEXT:   (block (result nullref)
+  ;; HP2L2-NEXT:    (local.set $2
   ;; HP2L2-NEXT:     (struct.new $A
   ;; HP2L2-NEXT:      (ref.null none)
   ;; HP2L2-NEXT:     )
+  ;; HP2L2-NEXT:    )
+  ;; HP2L2-NEXT:    (local.set $3
   ;; HP2L2-NEXT:     (i32.const 1)
   ;; HP2L2-NEXT:    )
+  ;; HP2L2-NEXT:    (local.set $0
+  ;; HP2L2-NEXT:     (local.get $2)
+  ;; HP2L2-NEXT:    )
+  ;; HP2L2-NEXT:    (local.set $1
+  ;; HP2L2-NEXT:     (local.get $3)
+  ;; HP2L2-NEXT:    )
+  ;; HP2L2-NEXT:    (ref.null none)
   ;; HP2L2-NEXT:   )
   ;; HP2L2-NEXT:  )
+  ;; HP2L2-NEXT:  (local.get $0)
   ;; HP2L2-NEXT: )
   (func $cast-success (result anyref)
     (struct.get $A 0
@@ -5534,15 +5562,26 @@
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; HP2L2:      (func $cast-failure (type $2) (result anyref)
+  ;; HP2L2:      (func $cast-failure (type $1) (result anyref)
+  ;; HP2L2-NEXT:  (local $0 (ref null $A))
+  ;; HP2L2-NEXT:  (local $1 (ref null $A))
   ;; HP2L2-NEXT:  (block ;; (replaces unreachable StructGet we can't emit)
   ;; HP2L2-NEXT:   (drop
-  ;; HP2L2-NEXT:    (ref.cast (ref none)
-  ;; HP2L2-NEXT:     (struct.new $A
-  ;; HP2L2-NEXT:      (struct.new $A
+  ;; HP2L2-NEXT:    (block
+  ;; HP2L2-NEXT:     (drop
+  ;; HP2L2-NEXT:      (block (result nullref)
+  ;; HP2L2-NEXT:       (local.set $1
+  ;; HP2L2-NEXT:        (struct.new $A
+  ;; HP2L2-NEXT:         (ref.null none)
+  ;; HP2L2-NEXT:        )
+  ;; HP2L2-NEXT:       )
+  ;; HP2L2-NEXT:       (local.set $0
+  ;; HP2L2-NEXT:        (local.get $1)
+  ;; HP2L2-NEXT:       )
   ;; HP2L2-NEXT:       (ref.null none)
   ;; HP2L2-NEXT:      )
   ;; HP2L2-NEXT:     )
+  ;; HP2L2-NEXT:     (unreachable)
   ;; HP2L2-NEXT:    )
   ;; HP2L2-NEXT:   )
   ;; HP2L2-NEXT:   (unreachable)
@@ -5589,14 +5628,25 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; HP2L2:      (func $cast-failure-nofield (type $3) (result i32)
+  ;; HP2L2-NEXT:  (local $0 (ref null $A))
+  ;; HP2L2-NEXT:  (local $1 (ref null $A))
   ;; HP2L2-NEXT:  (block ;; (replaces unreachable StructGet we can't emit)
   ;; HP2L2-NEXT:   (drop
-  ;; HP2L2-NEXT:    (ref.cast (ref none)
-  ;; HP2L2-NEXT:     (struct.new $A
-  ;; HP2L2-NEXT:      (struct.new $A
+  ;; HP2L2-NEXT:    (block
+  ;; HP2L2-NEXT:     (drop
+  ;; HP2L2-NEXT:      (block (result nullref)
+  ;; HP2L2-NEXT:       (local.set $1
+  ;; HP2L2-NEXT:        (struct.new $A
+  ;; HP2L2-NEXT:         (ref.null none)
+  ;; HP2L2-NEXT:        )
+  ;; HP2L2-NEXT:       )
+  ;; HP2L2-NEXT:       (local.set $0
+  ;; HP2L2-NEXT:        (local.get $1)
+  ;; HP2L2-NEXT:       )
   ;; HP2L2-NEXT:       (ref.null none)
   ;; HP2L2-NEXT:      )
   ;; HP2L2-NEXT:     )
+  ;; HP2L2-NEXT:     (unreachable)
   ;; HP2L2-NEXT:    )
   ;; HP2L2-NEXT:   )
   ;; HP2L2-NEXT:   (unreachable)
@@ -5618,14 +5668,18 @@
 )
 
 (module
+  ;; CHECK:      (type $A (sub (struct (field (mut i32)))))
   ;; HP2L2:      (type $A (sub (struct (field (mut i32)))))
   (type $A (sub (struct (field (mut i32)))))
+  ;; CHECK:      (type $B (sub $A (struct (field (mut i32)))))
   ;; HP2L2:      (type $B (sub $A (struct (field (mut i32)))))
   (type $B (sub $A (struct (field (mut i32)))))
 
-  ;; CHECK:      (type $0 (func))
+  ;; CHECK:      (type $2 (func))
 
-  ;; CHECK:      (func $func (type $0)
+  ;; CHECK:      (type $3 (func (param i32 i32)))
+
+  ;; CHECK:      (func $func (type $2)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (drop
@@ -5646,14 +5700,22 @@
   ;; CHECK-NEXT: )
   ;; HP2L2:      (type $2 (func))
 
+  ;; HP2L2:      (type $3 (func (param i32 i32)))
+
   ;; HP2L2:      (func $func (type $2)
+  ;; HP2L2-NEXT:  (local $0 i32)
+  ;; HP2L2-NEXT:  (local $1 i32)
   ;; HP2L2-NEXT:  (drop
-  ;; HP2L2-NEXT:   (block (result (ref $B))
-  ;; HP2L2-NEXT:    (ref.cast (ref $B)
-  ;; HP2L2-NEXT:     (block (result (ref $A))
-  ;; HP2L2-NEXT:      (struct.new $B
+  ;; HP2L2-NEXT:   (block (result nullref)
+  ;; HP2L2-NEXT:    (block (result nullref)
+  ;; HP2L2-NEXT:     (block (result nullref)
+  ;; HP2L2-NEXT:      (local.set $1
   ;; HP2L2-NEXT:       (i32.const 0)
   ;; HP2L2-NEXT:      )
+  ;; HP2L2-NEXT:      (local.set $0
+  ;; HP2L2-NEXT:       (local.get $1)
+  ;; HP2L2-NEXT:      )
+  ;; HP2L2-NEXT:      (ref.null none)
   ;; HP2L2-NEXT:     )
   ;; HP2L2-NEXT:    )
   ;; HP2L2-NEXT:   )
@@ -5672,6 +5734,105 @@
             (struct.new $B
               (i32.const 0)
             )
+          )
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $cast-revisit-in-worklist (type $3) (param $p i32) (param $q i32)
+  ;; CHECK-NEXT:  (local $y (ref null $A))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (block $V (result (ref null $A))
+  ;; CHECK-NEXT:     (if
+  ;; CHECK-NEXT:      (local.get $q)
+  ;; CHECK-NEXT:      (then
+  ;; CHECK-NEXT:       (local.set $y
+  ;; CHECK-NEXT:        (br_if $V
+  ;; CHECK-NEXT:         (struct.new $B
+  ;; CHECK-NEXT:          (i32.const 1)
+  ;; CHECK-NEXT:         )
+  ;; CHECK-NEXT:         (local.get $p)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (else
+  ;; CHECK-NEXT:       (local.set $y
+  ;; CHECK-NEXT:        (struct.new $A
+  ;; CHECK-NEXT:         (i32.const 2)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (ref.cast (ref $B)
+  ;; CHECK-NEXT:      (local.get $y)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; HP2L2:      (func $cast-revisit-in-worklist (type $3) (param $p i32) (param $q i32)
+  ;; HP2L2-NEXT:  (local $y (ref null $A))
+  ;; HP2L2-NEXT:  (drop
+  ;; HP2L2-NEXT:   (ref.as_non_null
+  ;; HP2L2-NEXT:    (block $V (result (ref null $A))
+  ;; HP2L2-NEXT:     (if
+  ;; HP2L2-NEXT:      (local.get $q)
+  ;; HP2L2-NEXT:      (then
+  ;; HP2L2-NEXT:       (local.set $y
+  ;; HP2L2-NEXT:        (br_if $V
+  ;; HP2L2-NEXT:         (struct.new $B
+  ;; HP2L2-NEXT:          (i32.const 1)
+  ;; HP2L2-NEXT:         )
+  ;; HP2L2-NEXT:         (local.get $p)
+  ;; HP2L2-NEXT:        )
+  ;; HP2L2-NEXT:       )
+  ;; HP2L2-NEXT:      )
+  ;; HP2L2-NEXT:      (else
+  ;; HP2L2-NEXT:       (local.set $y
+  ;; HP2L2-NEXT:        (struct.new $A
+  ;; HP2L2-NEXT:         (i32.const 2)
+  ;; HP2L2-NEXT:        )
+  ;; HP2L2-NEXT:       )
+  ;; HP2L2-NEXT:      )
+  ;; HP2L2-NEXT:     )
+  ;; HP2L2-NEXT:     (ref.cast (ref $B)
+  ;; HP2L2-NEXT:      (local.get $y)
+  ;; HP2L2-NEXT:     )
+  ;; HP2L2-NEXT:    )
+  ;; HP2L2-NEXT:   )
+  ;; HP2L2-NEXT:  )
+  ;; HP2L2-NEXT: )
+  (func $cast-revisit-in-worklist (param $p i32) (param $q i32)
+    (local $y (ref null $A))
+    ;; Test ref.cast over a local merging two candidate allocations alongside a
+    ;; conditional br_if into $V.
+    (drop
+      (ref.as_non_null
+        (block $V (result (ref null $A))
+          (if
+            (local.get $q)
+            (then
+              (local.set $y
+                (br_if $V
+                  (struct.new $B
+                    (i32.const 1)
+                  )
+                  (local.get $p)
+                )
+              )
+            )
+            (else
+              (local.set $y
+                (struct.new $A
+                  (i32.const 2)
+                )
+              )
+            )
+          )
+          (ref.cast (ref $B)
+            (local.get $y)
           )
         )
       )
@@ -6438,18 +6599,26 @@
   ;; CHECK-NEXT: )
   ;; HP2L2:      (func $array.local.super (type $1)
   ;; HP2L2-NEXT:  (local $temp anyref)
-  ;; HP2L2-NEXT:  (local.set $temp
-  ;; HP2L2-NEXT:   (array.new $array
-  ;; HP2L2-NEXT:    (i32.const 42)
-  ;; HP2L2-NEXT:    (i32.const 1)
+  ;; HP2L2-NEXT:  (local $1 i32)
+  ;; HP2L2-NEXT:  (local $2 i32)
+  ;; HP2L2-NEXT:  (drop
+  ;; HP2L2-NEXT:   (block (result nullref)
+  ;; HP2L2-NEXT:    (local.set $2
+  ;; HP2L2-NEXT:     (i32.const 42)
+  ;; HP2L2-NEXT:    )
+  ;; HP2L2-NEXT:    (local.set $1
+  ;; HP2L2-NEXT:     (local.get $2)
+  ;; HP2L2-NEXT:    )
+  ;; HP2L2-NEXT:    (ref.null none)
   ;; HP2L2-NEXT:   )
   ;; HP2L2-NEXT:  )
-  ;; HP2L2-NEXT:  (array.set $array
-  ;; HP2L2-NEXT:   (ref.cast (ref $array)
-  ;; HP2L2-NEXT:    (local.get $temp)
+  ;; HP2L2-NEXT:  (block
+  ;; HP2L2-NEXT:   (drop
+  ;; HP2L2-NEXT:    (ref.null none)
   ;; HP2L2-NEXT:   )
-  ;; HP2L2-NEXT:   (i32.const 0)
-  ;; HP2L2-NEXT:   (i32.const 100)
+  ;; HP2L2-NEXT:   (local.set $1
+  ;; HP2L2-NEXT:    (i32.const 100)
+  ;; HP2L2-NEXT:   )
   ;; HP2L2-NEXT:  )
   ;; HP2L2-NEXT: )
   (func $array.local.super
@@ -8399,8 +8568,6 @@
  ;; CHECK:      (type $1 (func))
 
  ;; CHECK:      (type $0 (func (result (ref struct))))
- ;; HP2L2:      (type $array (array i8))
-
  ;; HP2L2:      (type $1 (func))
 
  ;; HP2L2:      (type $0 (func (result (ref struct))))
@@ -8410,6 +8577,11 @@
  ;; CHECK:      (type $4 (func (result (ref array))))
 
  ;; CHECK:      (type $array (array i8))
+ ;; HP2L2:      (type $3 (func (result structref)))
+
+ ;; HP2L2:      (type $4 (func (result (ref array))))
+
+ ;; HP2L2:      (type $array (array i8))
  (type $array (array i8))
 
   ;; CHECK:      (func $array.cast.struct (type $0) (result (ref struct))
@@ -8421,17 +8593,14 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
-  ;; HP2L2:      (type $3 (func (result structref)))
-
-  ;; HP2L2:      (type $4 (func (result (ref array))))
-
   ;; HP2L2:      (func $array.cast.struct (type $0) (result (ref struct))
   ;; HP2L2-NEXT:  (local $eq (ref eq))
-  ;; HP2L2-NEXT:  (ref.cast (ref struct)
-  ;; HP2L2-NEXT:   (local.tee $eq
-  ;; HP2L2-NEXT:    (array.new_fixed $array 0)
+  ;; HP2L2-NEXT:  (drop
+  ;; HP2L2-NEXT:   (block (result nullref)
+  ;; HP2L2-NEXT:    (ref.null none)
   ;; HP2L2-NEXT:   )
   ;; HP2L2-NEXT:  )
+  ;; HP2L2-NEXT:  (unreachable)
   ;; HP2L2-NEXT: )
   (func $array.cast.struct (result (ref struct))
     (local $eq (ref eq))
@@ -8457,11 +8626,12 @@
   ;; CHECK-NEXT: )
   ;; HP2L2:      (func $array.cast.struct.null (type $3) (result structref)
   ;; HP2L2-NEXT:  (local $eq (ref eq))
-  ;; HP2L2-NEXT:  (ref.cast (ref struct)
-  ;; HP2L2-NEXT:   (local.tee $eq
-  ;; HP2L2-NEXT:    (array.new_fixed $array 0)
+  ;; HP2L2-NEXT:  (drop
+  ;; HP2L2-NEXT:   (block (result nullref)
+  ;; HP2L2-NEXT:    (ref.null none)
   ;; HP2L2-NEXT:   )
   ;; HP2L2-NEXT:  )
+  ;; HP2L2-NEXT:  (unreachable)
   ;; HP2L2-NEXT: )
   (func $array.cast.struct.null (result (ref null struct))
     (local $eq (ref eq))
@@ -8512,11 +8682,9 @@
   ;; HP2L2:      (func $array.cast.array.set (type $1)
   ;; HP2L2-NEXT:  (local $eq (ref eq))
   ;; HP2L2-NEXT:  (local $array (ref array))
-  ;; HP2L2-NEXT:  (local.set $array
-  ;; HP2L2-NEXT:   (ref.cast (ref array)
-  ;; HP2L2-NEXT:    (local.tee $eq
-  ;; HP2L2-NEXT:     (array.new_fixed $array 0)
-  ;; HP2L2-NEXT:    )
+  ;; HP2L2-NEXT:  (drop
+  ;; HP2L2-NEXT:   (block (result nullref)
+  ;; HP2L2-NEXT:    (ref.null none)
   ;; HP2L2-NEXT:   )
   ;; HP2L2-NEXT:  )
   ;; HP2L2-NEXT: )
@@ -8552,10 +8720,13 @@
   ;; HP2L2-NEXT:  (local $eq (ref eq))
   ;; HP2L2-NEXT:  (local $struct (ref struct))
   ;; HP2L2-NEXT:  (local.set $struct
-  ;; HP2L2-NEXT:   (ref.cast (ref struct)
-  ;; HP2L2-NEXT:    (local.tee $eq
-  ;; HP2L2-NEXT:     (array.new_fixed $array 0)
+  ;; HP2L2-NEXT:   (block
+  ;; HP2L2-NEXT:    (drop
+  ;; HP2L2-NEXT:     (block (result nullref)
+  ;; HP2L2-NEXT:      (ref.null none)
+  ;; HP2L2-NEXT:     )
   ;; HP2L2-NEXT:    )
+  ;; HP2L2-NEXT:    (unreachable)
   ;; HP2L2-NEXT:   )
   ;; HP2L2-NEXT:  )
   ;; HP2L2-NEXT: )
