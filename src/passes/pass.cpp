@@ -606,9 +606,8 @@ void PassRegistry::registerPasses() {
   registerPass("type-finalizing",
                "mark all leaf types as final",
                createTypeFinalizingPass);
-  registerPass("type-generalizing",
-               "generalize types",
-               createTypeGeneralizingPass);
+  registerPass(
+    "type-generalizing", "generalize types", createTypeGeneralizingPass);
   registerPass("type-merging",
                "merge types to their supertypes where possible",
                createTypeMergingPass);
