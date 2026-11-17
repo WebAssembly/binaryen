@@ -102,7 +102,7 @@
 
 ;; CHECK-BIN-NODEBUG:      (import "env" "im1" (tag $im1 (type $0) (param i32 f32)))
 
-;; CHECK-BIN-NODEBUG:      (import "env" "im2" (tag $eimport$2 (type $3)))
+;; CHECK-BIN-NODEBUG:      (import "env" "im2" (tag $im2 (type $3)))
 
 ;; CHECK-BIN-NODEBUG:      (tag $tag$0 (type $1) (param i32))
 

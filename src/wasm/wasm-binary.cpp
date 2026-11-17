@@ -2825,8 +2825,7 @@ getOrMakeName(const std::unordered_map<Index, Name>& nameMap,
               Index i,
               Name name,
               std::unordered_set<Name>& usedNames) {
-  if (auto it = exportNames.find(i);
-      it != exportNames.end() && !it->second.view().empty()) {
+  if (auto it = exportNames.find(i); it != exportNames.end()) {
     name = it->second;
   }
   return getOrMakeName(nameMap, i, name, usedNames);
@@ -3190,7 +3189,8 @@ void WasmBinaryReader::addImport(std::unique_ptr<Function> func) {
   auto [name, isExplicit] = getOrMakeName(
     functionNames,
     wasm.functions.size(),
-    func->base ? func->base : makeName("fimport$", wasm.functions.size()),
+    !func->base.view().empty() ? func->base
+                               : makeName("fimport$", wasm.functions.size()),
     usedFunctionNames);
   func->name = name;
   func->hasExplicitName = isExplicit;
@@ -3203,7 +3203,8 @@ void WasmBinaryReader::addImport(std::unique_ptr<Table> table) {
   auto [name, isExplicit] = getOrMakeName(
     tableNames,
     wasm.tables.size(),
-    table->base ? table->base : makeName("timport$", wasm.tables.size()),
+    !table->base.view().empty() ? table->base
+                                : makeName("timport$", wasm.tables.size()),
     usedTableNames);
   table->name = name;
   table->hasExplicitName = isExplicit;
@@ -3214,7 +3215,8 @@ void WasmBinaryReader::addImport(std::unique_ptr<Memory> memory) {
   auto [name, isExplicit] = getOrMakeName(
     memoryNames,
     wasm.memories.size(),
-    memory->base ? memory->base : makeName("mimport$", wasm.memories.size()),
+    !memory->base.view().empty() ? memory->base
+                                 : makeName("mimport$", wasm.memories.size()),
     usedMemoryNames);
   memory->name = name;
   memory->hasExplicitName = isExplicit;
@@ -3225,7 +3227,8 @@ void WasmBinaryReader::addImport(std::unique_ptr<Global> global) {
   auto [name, isExplicit] = getOrMakeName(
     globalNames,
     wasm.globals.size(),
-    global->base ? global->base : makeName("gimport$", wasm.globals.size()),
+    !global->base.view().empty() ? global->base
+                                 : makeName("gimport$", wasm.globals.size()),
     usedGlobalNames);
   global->name = name;
   global->hasExplicitName = isExplicit;
@@ -3236,7 +3239,8 @@ void WasmBinaryReader::addImport(std::unique_ptr<Tag> tag) {
   auto [name, isExplicit] = getOrMakeName(
     tagNames,
     wasm.tags.size(),
-    tag->base ? tag->base : makeName("eimport$", wasm.tags.size()),
+    !tag->base.view().empty() ? tag->base
+                              : makeName("eimport$", wasm.tags.size()),
     usedTagNames);
   tag->name = name;
   tag->hasExplicitName = isExplicit;
@@ -5212,6 +5216,9 @@ void WasmBinaryReader::readExportNames() {
     auto name = getInlineString();
     auto kind = getU32LEB();
     auto index = getU32LEB();
+    if (name.view().empty()) {
+      continue;
+    }
     switch (kind) {
       case ExternalKind::Function:
         functionExportNames.try_emplace(index, name);
