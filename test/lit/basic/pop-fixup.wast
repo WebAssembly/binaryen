@@ -184,7 +184,6 @@
 
  ;; CHECK:      (func $stacky-block-param (type $0)
  ;; CHECK-NEXT:  (local $scratch i32)
- ;; CHECK-NEXT:  (local $scratch_1 i32)
  ;; CHECK-NEXT:  (try
  ;; CHECK-NEXT:   (do
  ;; CHECK-NEXT:   )
@@ -193,14 +192,9 @@
  ;; CHECK-NEXT:     (pop i32)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (block
+ ;; CHECK-NEXT:     (nop)
  ;; CHECK-NEXT:     (drop
- ;; CHECK-NEXT:      (block (result i32)
- ;; CHECK-NEXT:       (local.set $scratch_1
- ;; CHECK-NEXT:        (local.get $scratch)
- ;; CHECK-NEXT:       )
- ;; CHECK-NEXT:       (nop)
- ;; CHECK-NEXT:       (local.get $scratch_1)
- ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (local.get $scratch)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )

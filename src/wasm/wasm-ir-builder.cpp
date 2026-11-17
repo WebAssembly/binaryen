@@ -110,7 +110,8 @@ Result<Index> IRBuilder::addScratchLocal(Type type) {
 }
 
 MaybeResult<IRBuilder::HoistedVal> IRBuilder::hoistLastValue(bool greedy) {
-  auto& stack = getScope().exprStack;
+  auto& scope = getScope();
+  auto& stack = scope.exprStack;
   int valIndex = stack.size() - 1;
   for (; valIndex >= 0; --valIndex) {
     if (stack[valIndex]->type != Type::none) {
@@ -137,6 +138,17 @@ MaybeResult<IRBuilder::HoistedVal> IRBuilder::hoistLastValue(bool greedy) {
   if (expr->type == Type::unreachable) {
     // No need for a scratch local to hoist an unreachable.
     return HoistedVal{Index(hoistIndex), nullptr};
+  }
+  if (auto* get = expr->dynCast<LocalGet>();
+      get && scope.isInputLocal(get->index)) {
+    // Input scratch locals are never modified while their initial `local.get`s
+    // remain on the stack, so we can hoist them directly across subsequent
+    // none-typed expressions without allocating a new scratch local or
+    // packaging those expressions into a block.
+    assert(hoistIndex == valIndex && get->type.isSingle());
+    stack.erase(stack.begin() + valIndex);
+    stack.push_back(get);
+    return HoistedVal{Index(stack.size() - 1), nullptr};
   }
   // Hoist with a scratch local. Normally the scratch local is the same type as
   // the hoisted expression, but we may need to adjust it given the enabled
@@ -905,30 +917,22 @@ Result<> IRBuilder::pushScope(ScopeCtx&& scope) {
   if (hasInput && !scope.isDelimiter()) {
     auto inputs = ChildPopper{*this}.popInputs(scope.inputType);
     CHECK_ERR(inputs);
-    const auto& parentLocals = getScope().inputLocals;
-    // The new scope may only receive a suffix of the outer scope's parameters,
-    // so match inputs starting from the remaining size of the outer stack
-    // rather than from the beginning.
-    size_t baseIndex = getScope().exprStack.size();
     scope.inputLocals.reserve(inputs->size());
     for (size_t i = 0; i < inputs->size(); ++i) {
       // Reuse the enclosing scope's scratch local rather than allocating a new
-      // one when an input comes directly from an enclosing scope's input.
-      // This is safe even in the case where earlier inputs for the new scope
-      // had to use new scratch locals (e.g. due to type widening). In that case
-      // the previous inputs had their values copied to the new scratch locals
-      // before the start of this scope and have already had local.gets of those
-      // new scratch locals pushed in this scope. It is still safe to reuse this
-      // later input's scratch local because local.gets can always be safely
-      // reordered.
+      // one when an input comes directly from an enclosing scope's input. This
+      // is safe even when other inputs for the new scope are copied into new
+      // scratch locals via `local.set`s emitted before the start of this scope
+      // (e.g. due to type widening or newly pushed expressions), because an
+      // enclosing scope's input scratch local is never modified while its
+      // initial `local.get` remains on the stack.
       auto* input = (*inputs)[i];
-      size_t parentIndex = baseIndex + i;
-      bool isInputGet =
-        parentIndex < parentLocals.size() && input->is<LocalGet>() &&
-        input->cast<LocalGet>()->index == parentLocals[parentIndex] &&
-        input->type == scope.inputType[i];
+      auto* get = input->dynCast<LocalGet>();
+      bool isInputGet = get && get->type == scope.inputType[i] &&
+                        getScope().isInputLocal(get->index);
       if (isInputGet) {
-        scope.inputLocals.push_back(parentLocals[parentIndex]);
+        assert(!scope.isInputLocal(get->index));
+        scope.inputLocals.push_back(get->index);
       } else {
         auto scratch = addScratchLocal(scope.inputType[i]);
         CHECK_ERR(scratch);

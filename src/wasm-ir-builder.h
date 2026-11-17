@@ -519,6 +519,10 @@ private:
       }
     }
     bool isNone() { return std::get_if<NoScope>(&scope); }
+    bool isInputLocal(Index local) const {
+      return std::find(inputLocals.begin(), inputLocals.end(), local) !=
+             inputLocals.end();
+    }
     Function* getFunction() {
       if (auto* funcScope = std::get_if<FuncScope>(&scope)) {
         return funcScope->func;
@@ -753,18 +757,19 @@ private:
 
   struct HoistedVal {
     // The index in the stack of the deepest expression to be popped. This can
-    // be the original value-producing expression, or if we are popping
-    // greedily, it might be the deepest none-typed expression under the
-    // value-producing expression.
+    // be the original value-producing expression, a moved input local.get on
+    // top of the stack, or if we are popping greedily, the deepest none-typed
+    // expression under the value-producing expression.
     Index hoistIndex;
-    // The local.get placed on the stack, if any.
+    // The local.get of a newly allocated scratch local placed on the stack, if
+    // any.
     LocalGet* get;
   };
 
   // Find the last value-producing expression, if any, and hoist its value to
   // the top of the stack using a scratch local if necessary. If `greedy`, then
-  // also include none-typed expressions and the value-producing expression in
-  // the hoisted range of expressions.
+  // also include preceding none-typed expressions in the hoisted range of
+  // expressions.
   MaybeResult<HoistedVal> hoistLastValue(bool greedy = false);
   // Transform the stack as necessary such that the original producer of the
   // hoisted value will be popped along with the final expression that produces
