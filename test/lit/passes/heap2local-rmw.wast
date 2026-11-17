@@ -21,12 +21,15 @@
 
   ;; HP2L2:      (type $2 (func (result i64)))
 
-  ;; HP2L2:      (type $3 (func (param (ref null $struct)) (result (ref null $struct))))
-
-  ;; HP2L2:      (type $arr (array (mut i32)))
-
   ;; HP2L2:      (type $i32 (struct (field (mut i32))))
   (type $i32 (struct (field (mut i32))))
+  ;; HP2L2:      (type $arr (array (mut i32)))
+
+  ;; HP2L2:      (type $5 (func (param (ref null $struct)) (result (ref null $struct))))
+
+  ;; HP2L2:      (type $6 (func (param (ref $struct))))
+
+  ;; HP2L2:      (type $i64 (struct (field (mut i64))))
   (type $i64 (struct (field (mut i64))))
   (type $struct (struct (field (mut (ref null $struct)))))
   (type $arr (array (mut i32)))
@@ -47,17 +50,15 @@
   ;; CHECK-NEXT:   (struct.new_default $struct)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; HP2L2:      (type $6 (func (param (ref $struct))))
+  ;; HP2L2:      (type $8 (func (param (ref null $struct) (ref null $struct)) (result (ref null $struct))))
 
-  ;; HP2L2:      (type $7 (func (param (ref null $struct) (ref null $struct)) (result (ref null $struct))))
+  ;; HP2L2:      (type $9 (func (param i32) (result i32)))
 
-  ;; HP2L2:      (type $8 (func (param i32) (result i32)))
+  ;; HP2L2:      (type $10 (func))
 
-  ;; HP2L2:      (type $9 (func))
+  ;; HP2L2:      (type $11 (func (param (ref null $i32) (ref null $arr))))
 
-  ;; HP2L2:      (type $10 (func (param (ref null $i32) (ref null $arr))))
-
-  ;; HP2L2:      (func $escape-rmw (type $3) (param $0 (ref null $struct)) (result (ref null $struct))
+  ;; HP2L2:      (func $escape-rmw (type $5) (param $0 (ref null $struct)) (result (ref null $struct))
   ;; HP2L2-NEXT:  (struct.atomic.rmw.xchg $struct 0
   ;; HP2L2-NEXT:   (local.get $0)
   ;; HP2L2-NEXT:   (struct.new_default $struct)
@@ -78,7 +79,7 @@
   ;; CHECK-NEXT:   (struct.new_default $struct)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; HP2L2:      (func $escape-cmpxchg (type $3) (param $0 (ref null $struct)) (result (ref null $struct))
+  ;; HP2L2:      (func $escape-cmpxchg (type $5) (param $0 (ref null $struct)) (result (ref null $struct))
   ;; HP2L2-NEXT:  (struct.atomic.rmw.cmpxchg $struct 0
   ;; HP2L2-NEXT:   (local.get $0)
   ;; HP2L2-NEXT:   (local.get $0)
@@ -115,25 +116,11 @@
   ;; CHECK-NEXT:   (local.get $2)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; HP2L2:      (func $no-escape-cmpxchg-expected (type $3) (param $0 (ref null $struct)) (result (ref null $struct))
-  ;; HP2L2-NEXT:  (local $1 (ref null $struct))
-  ;; HP2L2-NEXT:  (local $2 (ref null $struct))
-  ;; HP2L2-NEXT:  (local.set $2
+  ;; HP2L2:      (func $no-escape-cmpxchg-expected (type $5) (param $0 (ref null $struct)) (result (ref null $struct))
+  ;; HP2L2-NEXT:  (struct.atomic.rmw.cmpxchg $struct 0
   ;; HP2L2-NEXT:   (local.get $0)
-  ;; HP2L2-NEXT:  )
-  ;; HP2L2-NEXT:  (drop
-  ;; HP2L2-NEXT:   (block (result nullref)
-  ;; HP2L2-NEXT:    (local.set $1
-  ;; HP2L2-NEXT:     (ref.null none)
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (ref.null none)
-  ;; HP2L2-NEXT:   )
-  ;; HP2L2-NEXT:  )
-  ;; HP2L2-NEXT:  (drop
+  ;; HP2L2-NEXT:   (struct.new_default $struct)
   ;; HP2L2-NEXT:   (local.get $0)
-  ;; HP2L2-NEXT:  )
-  ;; HP2L2-NEXT:  (struct.atomic.get $struct 0
-  ;; HP2L2-NEXT:   (local.get $2)
   ;; HP2L2-NEXT:  )
   ;; HP2L2-NEXT: )
   (func $no-escape-cmpxchg-expected (param (ref null $struct)) (result (ref null $struct))
@@ -179,32 +166,20 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; HP2L2:      (func $no-escape-cmpxchg-expected-null-ref (type $6) (param $x (ref $struct))
-  ;; HP2L2-NEXT:  (local $1 (ref null $struct))
-  ;; HP2L2-NEXT:  (local $2 nullref)
   ;; HP2L2-NEXT:  (drop
-  ;; HP2L2-NEXT:   (block $block (result (ref none))
-  ;; HP2L2-NEXT:    (br_on_cast_fail $block (ref none) (ref none)
-  ;; HP2L2-NEXT:     (block (result (ref none))
-  ;; HP2L2-NEXT:      (local.set $2
+  ;; HP2L2-NEXT:   (block $block (result (ref $struct))
+  ;; HP2L2-NEXT:    (br_on_cast_fail $block (ref $struct) (ref $struct)
+  ;; HP2L2-NEXT:     (block ;; (replaces unreachable StructCmpxchg we can't emit)
+  ;; HP2L2-NEXT:      (drop
   ;; HP2L2-NEXT:       (ref.null none)
   ;; HP2L2-NEXT:      )
   ;; HP2L2-NEXT:      (drop
-  ;; HP2L2-NEXT:       (block (result nullref)
-  ;; HP2L2-NEXT:        (local.set $1
-  ;; HP2L2-NEXT:         (ref.null none)
-  ;; HP2L2-NEXT:        )
-  ;; HP2L2-NEXT:        (ref.null none)
-  ;; HP2L2-NEXT:       )
+  ;; HP2L2-NEXT:       (struct.new_default $struct)
   ;; HP2L2-NEXT:      )
   ;; HP2L2-NEXT:      (drop
   ;; HP2L2-NEXT:       (local.get $x)
   ;; HP2L2-NEXT:      )
-  ;; HP2L2-NEXT:      (block ;; (replaces unreachable StructGet we can't emit)
-  ;; HP2L2-NEXT:       (drop
-  ;; HP2L2-NEXT:        (local.get $2)
-  ;; HP2L2-NEXT:       )
-  ;; HP2L2-NEXT:       (unreachable)
-  ;; HP2L2-NEXT:      )
+  ;; HP2L2-NEXT:      (unreachable)
   ;; HP2L2-NEXT:     )
   ;; HP2L2-NEXT:    )
   ;; HP2L2-NEXT:   )
@@ -611,39 +586,11 @@
   ;; CHECK-NEXT:  (local.get $1)
   ;; CHECK-NEXT: )
   ;; HP2L2:      (func $rmw-cmpxchg-i32 (type $1) (result i32)
-  ;; HP2L2-NEXT:  (local $0 i32)
-  ;; HP2L2-NEXT:  (local $1 i32)
-  ;; HP2L2-NEXT:  (local $2 i32)
-  ;; HP2L2-NEXT:  (local $3 i32)
-  ;; HP2L2-NEXT:  (drop
-  ;; HP2L2-NEXT:   (block (result nullref)
-  ;; HP2L2-NEXT:    (local.set $0
-  ;; HP2L2-NEXT:     (i32.const 0)
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (ref.null none)
-  ;; HP2L2-NEXT:   )
-  ;; HP2L2-NEXT:  )
-  ;; HP2L2-NEXT:  (local.set $2
+  ;; HP2L2-NEXT:  (struct.atomic.rmw.cmpxchg $i32 0
+  ;; HP2L2-NEXT:   (struct.new_default $i32)
   ;; HP2L2-NEXT:   (i32.const 1)
-  ;; HP2L2-NEXT:  )
-  ;; HP2L2-NEXT:  (local.set $3
   ;; HP2L2-NEXT:   (i32.const 2)
   ;; HP2L2-NEXT:  )
-  ;; HP2L2-NEXT:  (local.set $1
-  ;; HP2L2-NEXT:   (local.get $0)
-  ;; HP2L2-NEXT:  )
-  ;; HP2L2-NEXT:  (if
-  ;; HP2L2-NEXT:   (i32.eq
-  ;; HP2L2-NEXT:    (local.get $0)
-  ;; HP2L2-NEXT:    (local.get $2)
-  ;; HP2L2-NEXT:   )
-  ;; HP2L2-NEXT:   (then
-  ;; HP2L2-NEXT:    (local.set $0
-  ;; HP2L2-NEXT:     (local.get $3)
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:   )
-  ;; HP2L2-NEXT:  )
-  ;; HP2L2-NEXT:  (local.get $1)
   ;; HP2L2-NEXT: )
   (func $rmw-cmpxchg-i32 (result i32)
     (struct.atomic.rmw.cmpxchg $i32 0
@@ -1037,39 +984,11 @@
   ;; CHECK-NEXT:  (local.get $1)
   ;; CHECK-NEXT: )
   ;; HP2L2:      (func $rmw-cmpxchg-i64 (type $2) (result i64)
-  ;; HP2L2-NEXT:  (local $0 i64)
-  ;; HP2L2-NEXT:  (local $1 i64)
-  ;; HP2L2-NEXT:  (local $2 i64)
-  ;; HP2L2-NEXT:  (local $3 i64)
-  ;; HP2L2-NEXT:  (drop
-  ;; HP2L2-NEXT:   (block (result nullref)
-  ;; HP2L2-NEXT:    (local.set $0
-  ;; HP2L2-NEXT:     (i64.const 0)
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (ref.null none)
-  ;; HP2L2-NEXT:   )
-  ;; HP2L2-NEXT:  )
-  ;; HP2L2-NEXT:  (local.set $2
+  ;; HP2L2-NEXT:  (struct.atomic.rmw.cmpxchg $i64 0
+  ;; HP2L2-NEXT:   (struct.new_default $i64)
   ;; HP2L2-NEXT:   (i64.const 1)
-  ;; HP2L2-NEXT:  )
-  ;; HP2L2-NEXT:  (local.set $3
   ;; HP2L2-NEXT:   (i64.const 2)
   ;; HP2L2-NEXT:  )
-  ;; HP2L2-NEXT:  (local.set $1
-  ;; HP2L2-NEXT:   (local.get $0)
-  ;; HP2L2-NEXT:  )
-  ;; HP2L2-NEXT:  (if
-  ;; HP2L2-NEXT:   (i64.eq
-  ;; HP2L2-NEXT:    (local.get $0)
-  ;; HP2L2-NEXT:    (local.get $2)
-  ;; HP2L2-NEXT:   )
-  ;; HP2L2-NEXT:   (then
-  ;; HP2L2-NEXT:    (local.set $0
-  ;; HP2L2-NEXT:     (local.get $3)
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:   )
-  ;; HP2L2-NEXT:  )
-  ;; HP2L2-NEXT:  (local.get $1)
   ;; HP2L2-NEXT: )
   (func $rmw-cmpxchg-i64 (result i64)
     (struct.atomic.rmw.cmpxchg $i64 0
@@ -1102,7 +1021,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.get $2)
   ;; CHECK-NEXT: )
-  ;; HP2L2:      (func $rmw-xchg-ref (type $3) (param $0 (ref null $struct)) (result (ref null $struct))
+  ;; HP2L2:      (func $rmw-xchg-ref (type $5) (param $0 (ref null $struct)) (result (ref null $struct))
   ;; HP2L2-NEXT:  (local $1 (ref null $struct))
   ;; HP2L2-NEXT:  (local $2 (ref null $struct))
   ;; HP2L2-NEXT:  (local $3 (ref null $struct))
@@ -1167,40 +1086,12 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.get $3)
   ;; CHECK-NEXT: )
-  ;; HP2L2:      (func $rmw-cmpxchg-ref (type $7) (param $0 (ref null $struct)) (param $1 (ref null $struct)) (result (ref null $struct))
-  ;; HP2L2-NEXT:  (local $2 (ref null $struct))
-  ;; HP2L2-NEXT:  (local $3 (ref null $struct))
-  ;; HP2L2-NEXT:  (local $4 eqref)
-  ;; HP2L2-NEXT:  (local $5 (ref null $struct))
-  ;; HP2L2-NEXT:  (drop
-  ;; HP2L2-NEXT:   (block (result nullref)
-  ;; HP2L2-NEXT:    (local.set $2
-  ;; HP2L2-NEXT:     (ref.null none)
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (ref.null none)
-  ;; HP2L2-NEXT:   )
-  ;; HP2L2-NEXT:  )
-  ;; HP2L2-NEXT:  (local.set $4
+  ;; HP2L2:      (func $rmw-cmpxchg-ref (type $8) (param $0 (ref null $struct)) (param $1 (ref null $struct)) (result (ref null $struct))
+  ;; HP2L2-NEXT:  (struct.atomic.rmw.cmpxchg $struct 0
+  ;; HP2L2-NEXT:   (struct.new_default $struct)
   ;; HP2L2-NEXT:   (local.get $0)
-  ;; HP2L2-NEXT:  )
-  ;; HP2L2-NEXT:  (local.set $5
   ;; HP2L2-NEXT:   (local.get $1)
   ;; HP2L2-NEXT:  )
-  ;; HP2L2-NEXT:  (local.set $3
-  ;; HP2L2-NEXT:   (local.get $2)
-  ;; HP2L2-NEXT:  )
-  ;; HP2L2-NEXT:  (if
-  ;; HP2L2-NEXT:   (ref.eq
-  ;; HP2L2-NEXT:    (local.get $2)
-  ;; HP2L2-NEXT:    (local.get $4)
-  ;; HP2L2-NEXT:   )
-  ;; HP2L2-NEXT:   (then
-  ;; HP2L2-NEXT:    (local.set $2
-  ;; HP2L2-NEXT:     (local.get $5)
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:   )
-  ;; HP2L2-NEXT:  )
-  ;; HP2L2-NEXT:  (local.get $3)
   ;; HP2L2-NEXT: )
   (func $rmw-cmpxchg-ref (param (ref null $struct) (ref null $struct)) (result (ref null $struct))
     (struct.atomic.rmw.cmpxchg $struct 0
@@ -1305,39 +1196,11 @@
   ;; CHECK-NEXT:  (local.get $1)
   ;; CHECK-NEXT: )
   ;; HP2L2:      (func $cmpxchg-acqrel (type $1) (result i32)
-  ;; HP2L2-NEXT:  (local $0 i32)
-  ;; HP2L2-NEXT:  (local $1 i32)
-  ;; HP2L2-NEXT:  (local $2 i32)
-  ;; HP2L2-NEXT:  (local $3 i32)
-  ;; HP2L2-NEXT:  (drop
-  ;; HP2L2-NEXT:   (block (result nullref)
-  ;; HP2L2-NEXT:    (local.set $0
-  ;; HP2L2-NEXT:     (i32.const 0)
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (ref.null none)
-  ;; HP2L2-NEXT:   )
-  ;; HP2L2-NEXT:  )
-  ;; HP2L2-NEXT:  (local.set $2
+  ;; HP2L2-NEXT:  (struct.atomic.rmw.cmpxchg acqrel acqrel $i32 0
+  ;; HP2L2-NEXT:   (struct.new_default $i32)
   ;; HP2L2-NEXT:   (i32.const 1)
-  ;; HP2L2-NEXT:  )
-  ;; HP2L2-NEXT:  (local.set $3
   ;; HP2L2-NEXT:   (i32.const 2)
   ;; HP2L2-NEXT:  )
-  ;; HP2L2-NEXT:  (local.set $1
-  ;; HP2L2-NEXT:   (local.get $0)
-  ;; HP2L2-NEXT:  )
-  ;; HP2L2-NEXT:  (if
-  ;; HP2L2-NEXT:   (i32.eq
-  ;; HP2L2-NEXT:    (local.get $0)
-  ;; HP2L2-NEXT:    (local.get $2)
-  ;; HP2L2-NEXT:   )
-  ;; HP2L2-NEXT:   (then
-  ;; HP2L2-NEXT:    (local.set $0
-  ;; HP2L2-NEXT:     (local.get $3)
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:   )
-  ;; HP2L2-NEXT:  )
-  ;; HP2L2-NEXT:  (local.get $1)
   ;; HP2L2-NEXT: )
   (func $cmpxchg-acqrel (result i32)
     (struct.atomic.rmw.cmpxchg acqrel acqrel $i32 0
@@ -1412,23 +1275,10 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; HP2L2:      (func $cmpxchg-unreachable-expected (type $1) (result i32)
-  ;; HP2L2-NEXT:  (local $0 i32)
-  ;; HP2L2-NEXT:  (block ;; (replaces unreachable StructCmpxchg we can't emit)
-  ;; HP2L2-NEXT:   (drop
-  ;; HP2L2-NEXT:    (block (result nullref)
-  ;; HP2L2-NEXT:     (local.set $0
-  ;; HP2L2-NEXT:      (i32.const 0)
-  ;; HP2L2-NEXT:     )
-  ;; HP2L2-NEXT:     (ref.null none)
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:   )
-  ;; HP2L2-NEXT:   (drop
-  ;; HP2L2-NEXT:    (unreachable)
-  ;; HP2L2-NEXT:   )
-  ;; HP2L2-NEXT:   (drop
-  ;; HP2L2-NEXT:    (i32.const 1)
-  ;; HP2L2-NEXT:   )
+  ;; HP2L2-NEXT:  (struct.atomic.rmw.cmpxchg $i32 0
+  ;; HP2L2-NEXT:   (struct.new_default $i32)
   ;; HP2L2-NEXT:   (unreachable)
+  ;; HP2L2-NEXT:   (i32.const 1)
   ;; HP2L2-NEXT:  )
   ;; HP2L2-NEXT: )
   (func $cmpxchg-unreachable-expected (result i32)
@@ -1578,51 +1428,15 @@
   ;; CHECK-NEXT:  (local.get $4)
   ;; CHECK-NEXT: )
   ;; HP2L2:      (func $array-cmpxchg (type $1) (result i32)
-  ;; HP2L2-NEXT:  (local $0 i32)
-  ;; HP2L2-NEXT:  (local $1 i32)
-  ;; HP2L2-NEXT:  (local $2 i32)
-  ;; HP2L2-NEXT:  (local $3 i32)
-  ;; HP2L2-NEXT:  (local $4 i32)
-  ;; HP2L2-NEXT:  (local $5 i32)
-  ;; HP2L2-NEXT:  (local $6 i32)
-  ;; HP2L2-NEXT:  (drop
-  ;; HP2L2-NEXT:   (block (result nullref)
-  ;; HP2L2-NEXT:    (local.set $2
-  ;; HP2L2-NEXT:     (i32.const 0)
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (local.set $3
-  ;; HP2L2-NEXT:     (i32.const 0)
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (local.set $0
-  ;; HP2L2-NEXT:     (local.get $2)
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (local.set $1
-  ;; HP2L2-NEXT:     (local.get $3)
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (ref.null none)
+  ;; HP2L2-NEXT:  (array.atomic.rmw.cmpxchg $arr
+  ;; HP2L2-NEXT:   (array.new_fixed $arr 2
+  ;; HP2L2-NEXT:    (i32.const 0)
+  ;; HP2L2-NEXT:    (i32.const 0)
   ;; HP2L2-NEXT:   )
-  ;; HP2L2-NEXT:  )
-  ;; HP2L2-NEXT:  (local.set $5
+  ;; HP2L2-NEXT:   (i32.const 0)
   ;; HP2L2-NEXT:   (i32.const 10)
-  ;; HP2L2-NEXT:  )
-  ;; HP2L2-NEXT:  (local.set $6
   ;; HP2L2-NEXT:   (i32.const 20)
   ;; HP2L2-NEXT:  )
-  ;; HP2L2-NEXT:  (local.set $4
-  ;; HP2L2-NEXT:   (local.get $0)
-  ;; HP2L2-NEXT:  )
-  ;; HP2L2-NEXT:  (if
-  ;; HP2L2-NEXT:   (i32.eq
-  ;; HP2L2-NEXT:    (local.get $0)
-  ;; HP2L2-NEXT:    (local.get $5)
-  ;; HP2L2-NEXT:   )
-  ;; HP2L2-NEXT:   (then
-  ;; HP2L2-NEXT:    (local.set $0
-  ;; HP2L2-NEXT:     (local.get $6)
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:   )
-  ;; HP2L2-NEXT:  )
-  ;; HP2L2-NEXT:  (local.get $4)
   ;; HP2L2-NEXT: )
   (func $array-cmpxchg (result i32)
     ;; Array atomic cmpxchg on a non-escaping fixed-size array should be
@@ -1648,7 +1462,7 @@
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; HP2L2:      (func $array-rmw-nonconstant-index (type $8) (param $idx i32) (result i32)
+  ;; HP2L2:      (func $array-rmw-nonconstant-index (type $9) (param $idx i32) (result i32)
   ;; HP2L2-NEXT:  (array.atomic.rmw.add $arr
   ;; HP2L2-NEXT:   (array.new_fixed $arr 2
   ;; HP2L2-NEXT:    (i32.const 0)
@@ -1720,18 +1534,14 @@
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   ;; HP2L2:      (func $array-cmpxchg-oob (type $1) (result i32)
-  ;; HP2L2-NEXT:  (drop
-  ;; HP2L2-NEXT:   (block (result nullref)
-  ;; HP2L2-NEXT:    (ref.null none)
+  ;; HP2L2-NEXT:  (array.atomic.rmw.cmpxchg $arr
+  ;; HP2L2-NEXT:   (array.new_default $arr
+  ;; HP2L2-NEXT:    (i32.const 0)
   ;; HP2L2-NEXT:   )
-  ;; HP2L2-NEXT:  )
-  ;; HP2L2-NEXT:  (drop
+  ;; HP2L2-NEXT:   (i32.const 0)
   ;; HP2L2-NEXT:   (i32.const 10)
-  ;; HP2L2-NEXT:  )
-  ;; HP2L2-NEXT:  (drop
   ;; HP2L2-NEXT:   (i32.const 20)
   ;; HP2L2-NEXT:  )
-  ;; HP2L2-NEXT:  (unreachable)
   ;; HP2L2-NEXT: )
   (func $array-cmpxchg-oob (result i32)
     ;; As above, but for cmpxchg with an out-of-bounds index.
@@ -1748,8 +1558,6 @@
   ;; CHECK:      (func $array-rmw-nonzero-oob (type $9)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (local $1 i32)
-  ;; CHECK-NEXT:  (local $2 i32)
-  ;; CHECK-NEXT:  (local $3 i32)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block
   ;; CHECK-NEXT:    (drop
@@ -1769,34 +1577,10 @@
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block (result nullref)
-  ;; CHECK-NEXT:      (local.set $2
-  ;; CHECK-NEXT:       (i32.const 0)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (local.set $3
-  ;; CHECK-NEXT:       (i32.const 0)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (ref.null none)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.const 10)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.const 20)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; HP2L2:      (func $array-rmw-nonzero-oob (type $9)
+  ;; HP2L2:      (func $array-rmw-nonzero-oob (type $10)
   ;; HP2L2-NEXT:  (local $0 i32)
   ;; HP2L2-NEXT:  (local $1 i32)
-  ;; HP2L2-NEXT:  (local $2 i32)
-  ;; HP2L2-NEXT:  (local $3 i32)
   ;; HP2L2-NEXT:  (drop
   ;; HP2L2-NEXT:   (block
   ;; HP2L2-NEXT:    (drop
@@ -1816,31 +1600,9 @@
   ;; HP2L2-NEXT:    (unreachable)
   ;; HP2L2-NEXT:   )
   ;; HP2L2-NEXT:  )
-  ;; HP2L2-NEXT:  (drop
-  ;; HP2L2-NEXT:   (block
-  ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (block (result nullref)
-  ;; HP2L2-NEXT:      (local.set $2
-  ;; HP2L2-NEXT:       (i32.const 0)
-  ;; HP2L2-NEXT:      )
-  ;; HP2L2-NEXT:      (local.set $3
-  ;; HP2L2-NEXT:       (i32.const 0)
-  ;; HP2L2-NEXT:      )
-  ;; HP2L2-NEXT:      (ref.null none)
-  ;; HP2L2-NEXT:     )
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (i32.const 10)
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (i32.const 20)
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (unreachable)
-  ;; HP2L2-NEXT:   )
-  ;; HP2L2-NEXT:  )
   ;; HP2L2-NEXT: )
   (func $array-rmw-nonzero-oob
-    ;; Out-of-bounds atomic RMW and cmpxchg on a non-empty array allocation.
+    ;; Out-of-bounds atomic RMW on a non-empty array allocation.
     (drop
       (array.atomic.rmw.add $arr
         (array.new_default $arr
@@ -1848,16 +1610,6 @@
         )
         (i32.const 2)
         (i32.const 1)
-      )
-    )
-    (drop
-      (array.atomic.rmw.cmpxchg $arr
-        (array.new_default $arr
-          (i32.const 2)
-        )
-        (i32.const 2)
-        (i32.const 10)
-        (i32.const 20)
       )
     )
   )
@@ -1913,7 +1665,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; HP2L2:      (func $rmw-other-and-unreachable (type $10) (param $i (ref null $i32)) (param $a (ref null $arr))
+  ;; HP2L2:      (func $rmw-other-and-unreachable (type $11) (param $i (ref null $i32)) (param $a (ref null $arr))
   ;; HP2L2-NEXT:  (local $2 i32)
   ;; HP2L2-NEXT:  (drop
   ;; HP2L2-NEXT:   (block (result nullref)
@@ -2066,40 +1818,15 @@
   ;; HP2L2:      (type $2 (func))
 
   ;; HP2L2:      (func $cmpxchg-expected-first (type $2)
-  ;; HP2L2-NEXT:  (local $0 (ref null $array))
-  ;; HP2L2-NEXT:  (local $1 i32)
-  ;; HP2L2-NEXT:  (local $2 i32)
-  ;; HP2L2-NEXT:  (local $3 i32)
   ;; HP2L2-NEXT:  (drop
-  ;; HP2L2-NEXT:   (block (result (ref null $array))
-  ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (block (result nullref)
-  ;; HP2L2-NEXT:      (local.set $0
-  ;; HP2L2-NEXT:       (ref.null none)
-  ;; HP2L2-NEXT:      )
-  ;; HP2L2-NEXT:      (ref.null none)
-  ;; HP2L2-NEXT:     )
+  ;; HP2L2-NEXT:   (struct.atomic.rmw.cmpxchg $struct 0
+  ;; HP2L2-NEXT:    (struct.new_default $struct)
+  ;; HP2L2-NEXT:    (array.new_default $array
+  ;; HP2L2-NEXT:     (i32.const 1)
   ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (block (result nullref)
-  ;; HP2L2-NEXT:      (local.set $1
-  ;; HP2L2-NEXT:       (i32.const 0)
-  ;; HP2L2-NEXT:      )
-  ;; HP2L2-NEXT:      (ref.null none)
-  ;; HP2L2-NEXT:     )
+  ;; HP2L2-NEXT:    (array.new_default $array
+  ;; HP2L2-NEXT:     (i32.const 2)
   ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (block (result nullref)
-  ;; HP2L2-NEXT:      (local.set $2
-  ;; HP2L2-NEXT:       (i32.const 0)
-  ;; HP2L2-NEXT:      )
-  ;; HP2L2-NEXT:      (local.set $3
-  ;; HP2L2-NEXT:       (i32.const 0)
-  ;; HP2L2-NEXT:      )
-  ;; HP2L2-NEXT:      (ref.null none)
-  ;; HP2L2-NEXT:     )
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (local.get $0)
   ;; HP2L2-NEXT:   )
   ;; HP2L2-NEXT:  )
   ;; HP2L2-NEXT: )
@@ -2179,34 +1906,17 @@
 
   ;; HP2L2:      (func $cmpxchg-expected-first (type $2) (result (ref $array))
   ;; HP2L2-NEXT:  (local $array (ref $array))
-  ;; HP2L2-NEXT:  (local $1 (ref null $array))
-  ;; HP2L2-NEXT:  (local $2 i32)
   ;; HP2L2-NEXT:  (drop
-  ;; HP2L2-NEXT:   (block (result (ref null $array))
-  ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (block (result nullref)
-  ;; HP2L2-NEXT:      (local.set $1
-  ;; HP2L2-NEXT:       (ref.null none)
-  ;; HP2L2-NEXT:      )
-  ;; HP2L2-NEXT:      (ref.null none)
+  ;; HP2L2-NEXT:   (struct.atomic.rmw.cmpxchg $struct 0
+  ;; HP2L2-NEXT:    (struct.new_default $struct)
+  ;; HP2L2-NEXT:    (array.new_default $array
+  ;; HP2L2-NEXT:     (i32.const 1)
+  ;; HP2L2-NEXT:    )
+  ;; HP2L2-NEXT:    (local.tee $array
+  ;; HP2L2-NEXT:     (array.new_default $array
+  ;; HP2L2-NEXT:      (i32.const 2)
   ;; HP2L2-NEXT:     )
   ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (block (result nullref)
-  ;; HP2L2-NEXT:      (local.set $2
-  ;; HP2L2-NEXT:       (i32.const 0)
-  ;; HP2L2-NEXT:      )
-  ;; HP2L2-NEXT:      (ref.null none)
-  ;; HP2L2-NEXT:     )
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (local.tee $array
-  ;; HP2L2-NEXT:      (array.new_default $array
-  ;; HP2L2-NEXT:       (i32.const 2)
-  ;; HP2L2-NEXT:      )
-  ;; HP2L2-NEXT:     )
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (local.get $1)
   ;; HP2L2-NEXT:   )
   ;; HP2L2-NEXT:  )
   ;; HP2L2-NEXT:  (local.get $array)
@@ -2234,10 +1944,16 @@
 
     ;; CHECK:      (rec
     ;; CHECK-NEXT:  (type $inner (array i8))
+    ;; HP2L2:      (type $0 (func))
+
+    ;; HP2L2:      (rec
+    ;; HP2L2-NEXT:  (type $inner (array i8))
     (type $inner (array i8))
     ;; CHECK:       (type $struct (struct (field (mut eqref))))
+    ;; HP2L2:       (type $struct (struct (field (mut eqref))))
     (type $struct (struct (field (mut eqref))))
     ;; CHECK:       (type $array (array (mut eqref)))
+    ;; HP2L2:       (type $array (array (mut eqref)))
     (type $array (array (field (mut eqref))))
   )
   ;; CHECK:      (func $test-cmpxchg-scratch-oob (type $0)
@@ -2279,37 +1995,18 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
-  ;; HP2L2:      (type $0 (func))
-
   ;; HP2L2:      (func $test-cmpxchg-scratch-oob (type $0)
   ;; HP2L2-NEXT:  (local $a arrayref)
-  ;; HP2L2-NEXT:  (local $1 eqref)
   ;; HP2L2-NEXT:  (drop
   ;; HP2L2-NEXT:   (block (result nullref)
   ;; HP2L2-NEXT:    (ref.null none)
   ;; HP2L2-NEXT:   )
   ;; HP2L2-NEXT:  )
   ;; HP2L2-NEXT:  (drop
-  ;; HP2L2-NEXT:   (block (result eqref)
-  ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (block (result nullref)
-  ;; HP2L2-NEXT:      (local.set $1
-  ;; HP2L2-NEXT:       (ref.null none)
-  ;; HP2L2-NEXT:      )
-  ;; HP2L2-NEXT:      (ref.null none)
-  ;; HP2L2-NEXT:     )
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (block (result nullref)
-  ;; HP2L2-NEXT:      (ref.null none)
-  ;; HP2L2-NEXT:     )
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (block (result nullref)
-  ;; HP2L2-NEXT:      (ref.null none)
-  ;; HP2L2-NEXT:     )
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (local.get $1)
+  ;; HP2L2-NEXT:   (struct.atomic.rmw.cmpxchg $struct 0
+  ;; HP2L2-NEXT:    (struct.new_default $struct)
+  ;; HP2L2-NEXT:    (array.new_fixed $inner 0)
+  ;; HP2L2-NEXT:    (array.new_fixed $inner 0)
   ;; HP2L2-NEXT:   )
   ;; HP2L2-NEXT:  )
   ;; HP2L2-NEXT:  (unreachable)
@@ -2392,33 +2089,19 @@
   ;; CHECK-NEXT: )
   ;; HP2L2:      (func $test-cmpxchg-scratch-oob-array (type $0)
   ;; HP2L2-NEXT:  (local $a arrayref)
-  ;; HP2L2-NEXT:  (local $1 eqref)
   ;; HP2L2-NEXT:  (drop
   ;; HP2L2-NEXT:   (block (result nullref)
   ;; HP2L2-NEXT:    (ref.null none)
   ;; HP2L2-NEXT:   )
   ;; HP2L2-NEXT:  )
   ;; HP2L2-NEXT:  (drop
-  ;; HP2L2-NEXT:   (block (result eqref)
-  ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (block (result nullref)
-  ;; HP2L2-NEXT:      (local.set $1
-  ;; HP2L2-NEXT:       (ref.null none)
-  ;; HP2L2-NEXT:      )
-  ;; HP2L2-NEXT:      (ref.null none)
-  ;; HP2L2-NEXT:     )
+  ;; HP2L2-NEXT:   (array.atomic.rmw.cmpxchg $array
+  ;; HP2L2-NEXT:    (array.new_default $array
+  ;; HP2L2-NEXT:     (i32.const 1)
   ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (block (result nullref)
-  ;; HP2L2-NEXT:      (ref.null none)
-  ;; HP2L2-NEXT:     )
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (block (result nullref)
-  ;; HP2L2-NEXT:      (ref.null none)
-  ;; HP2L2-NEXT:     )
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (local.get $1)
+  ;; HP2L2-NEXT:    (i32.const 0)
+  ;; HP2L2-NEXT:    (array.new_fixed $inner 0)
+  ;; HP2L2-NEXT:    (array.new_fixed $inner 0)
   ;; HP2L2-NEXT:   )
   ;; HP2L2-NEXT:  )
   ;; HP2L2-NEXT:  (unreachable)
@@ -2520,32 +2203,13 @@
   ;; HP2L2:      (type $4 (func))
 
   ;; HP2L2:      (func $cmpxchg-non-nullable-field (type $4)
-  ;; HP2L2-NEXT:  (local $0 (ref $inner))
-  ;; HP2L2-NEXT:  (local $1 (ref $inner))
   ;; HP2L2-NEXT:  (drop
-  ;; HP2L2-NEXT:   (block (result (ref $inner))
-  ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (block (result nullref)
-  ;; HP2L2-NEXT:      (local.set $1
-  ;; HP2L2-NEXT:       (struct.new_default $inner)
-  ;; HP2L2-NEXT:      )
-  ;; HP2L2-NEXT:      (local.set $0
-  ;; HP2L2-NEXT:       (local.get $1)
-  ;; HP2L2-NEXT:      )
-  ;; HP2L2-NEXT:      (ref.null none)
-  ;; HP2L2-NEXT:     )
+  ;; HP2L2-NEXT:   (struct.atomic.rmw.cmpxchg $outer 0
+  ;; HP2L2-NEXT:    (struct.new $outer
+  ;; HP2L2-NEXT:     (struct.new_default $inner)
   ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (block (result nullref)
-  ;; HP2L2-NEXT:      (ref.null none)
-  ;; HP2L2-NEXT:     )
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (block (result nullref)
-  ;; HP2L2-NEXT:      (ref.null none)
-  ;; HP2L2-NEXT:     )
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (local.get $0)
+  ;; HP2L2-NEXT:    (struct.new_default $inner)
+  ;; HP2L2-NEXT:    (struct.new_default $inner)
   ;; HP2L2-NEXT:   )
   ;; HP2L2-NEXT:  )
   ;; HP2L2-NEXT: )
@@ -2618,32 +2282,13 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; HP2L2:      (func $cmpxchg-non-nullable-field-shared (type $4)
-  ;; HP2L2-NEXT:  (local $0 (ref $shared-inner))
-  ;; HP2L2-NEXT:  (local $1 (ref $shared-inner))
   ;; HP2L2-NEXT:  (drop
-  ;; HP2L2-NEXT:   (block (result (ref $shared-inner))
-  ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (block (result (ref null (shared none)))
-  ;; HP2L2-NEXT:      (local.set $1
-  ;; HP2L2-NEXT:       (struct.new_default $shared-inner)
-  ;; HP2L2-NEXT:      )
-  ;; HP2L2-NEXT:      (local.set $0
-  ;; HP2L2-NEXT:       (local.get $1)
-  ;; HP2L2-NEXT:      )
-  ;; HP2L2-NEXT:      (ref.null (shared none))
-  ;; HP2L2-NEXT:     )
+  ;; HP2L2-NEXT:   (struct.atomic.rmw.cmpxchg $shared-outer 0
+  ;; HP2L2-NEXT:    (struct.new $shared-outer
+  ;; HP2L2-NEXT:     (struct.new_default $shared-inner)
   ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (block (result (ref null (shared none)))
-  ;; HP2L2-NEXT:      (ref.null (shared none))
-  ;; HP2L2-NEXT:     )
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (block (result (ref null (shared none)))
-  ;; HP2L2-NEXT:      (ref.null (shared none))
-  ;; HP2L2-NEXT:     )
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (local.get $0)
+  ;; HP2L2-NEXT:    (struct.new_default $shared-inner)
+  ;; HP2L2-NEXT:    (struct.new_default $shared-inner)
   ;; HP2L2-NEXT:   )
   ;; HP2L2-NEXT:  )
   ;; HP2L2-NEXT: )
@@ -2716,37 +2361,17 @@
 
   ;; HP2L2:      (func $cmpxchg-ref-and-expected (type $1) (result (ref null $struct))
   ;; HP2L2-NEXT:  (local $local (ref $struct))
-  ;; HP2L2-NEXT:  (local $1 (ref null $struct))
-  ;; HP2L2-NEXT:  (local $2 (ref null $struct))
   ;; HP2L2-NEXT:  (drop
-  ;; HP2L2-NEXT:   (block (result (ref null $struct))
-  ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (block (result nullref)
-  ;; HP2L2-NEXT:      (local.set $1
-  ;; HP2L2-NEXT:       (ref.null none)
-  ;; HP2L2-NEXT:      )
-  ;; HP2L2-NEXT:      (ref.null none)
-  ;; HP2L2-NEXT:     )
+  ;; HP2L2-NEXT:   (struct.atomic.rmw.cmpxchg $struct 0
+  ;; HP2L2-NEXT:    (local.tee $local
+  ;; HP2L2-NEXT:     (struct.new_default $struct)
   ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (ref.null none)
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (block (result nullref)
-  ;; HP2L2-NEXT:      (local.set $2
-  ;; HP2L2-NEXT:       (ref.null none)
-  ;; HP2L2-NEXT:      )
-  ;; HP2L2-NEXT:      (ref.null none)
-  ;; HP2L2-NEXT:     )
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (local.get $1)
+  ;; HP2L2-NEXT:    (local.get $local)
+  ;; HP2L2-NEXT:    (struct.new_default $struct)
   ;; HP2L2-NEXT:   )
   ;; HP2L2-NEXT:  )
-  ;; HP2L2-NEXT:  (block (result (ref null $struct))
-  ;; HP2L2-NEXT:   (drop
-  ;; HP2L2-NEXT:    (ref.null none)
-  ;; HP2L2-NEXT:   )
-  ;; HP2L2-NEXT:   (local.get $1)
+  ;; HP2L2-NEXT:  (struct.get $struct 0
+  ;; HP2L2-NEXT:   (local.get $local)
   ;; HP2L2-NEXT:  )
   ;; HP2L2-NEXT: )
   (func $cmpxchg-ref-and-expected (export "test") (result (ref null $struct))
@@ -2802,31 +2427,17 @@
   ;; CHECK-NEXT: )
   ;; HP2L2:      (func $cmpxchg-ref-and-expected-non-null-replacement (type $2) (param $replacement (ref $struct)) (result (ref null $struct))
   ;; HP2L2-NEXT:  (local $local (ref $struct))
-  ;; HP2L2-NEXT:  (local $2 (ref null $struct))
   ;; HP2L2-NEXT:  (drop
-  ;; HP2L2-NEXT:   (block (result (ref null $struct))
-  ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (block (result nullref)
-  ;; HP2L2-NEXT:      (local.set $2
-  ;; HP2L2-NEXT:       (ref.null none)
-  ;; HP2L2-NEXT:      )
-  ;; HP2L2-NEXT:      (ref.null none)
-  ;; HP2L2-NEXT:     )
+  ;; HP2L2-NEXT:   (struct.atomic.rmw.cmpxchg $struct 0
+  ;; HP2L2-NEXT:    (local.tee $local
+  ;; HP2L2-NEXT:     (struct.new_default $struct)
   ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (ref.null none)
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (local.get $replacement)
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (local.get $2)
+  ;; HP2L2-NEXT:    (local.get $local)
+  ;; HP2L2-NEXT:    (local.get $replacement)
   ;; HP2L2-NEXT:   )
   ;; HP2L2-NEXT:  )
-  ;; HP2L2-NEXT:  (block (result (ref null $struct))
-  ;; HP2L2-NEXT:   (drop
-  ;; HP2L2-NEXT:    (ref.null none)
-  ;; HP2L2-NEXT:   )
-  ;; HP2L2-NEXT:   (local.get $2)
+  ;; HP2L2-NEXT:  (struct.get $struct 0
+  ;; HP2L2-NEXT:   (local.get $local)
   ;; HP2L2-NEXT:  )
   ;; HP2L2-NEXT: )
   (func $cmpxchg-ref-and-expected-non-null-replacement (param $replacement (ref $struct)) (result (ref null $struct))
@@ -2851,9 +2462,13 @@
 )
 
 (module
+  ;; HP2L2:      (type $struct (shared (struct (field (mut (ref null (shared array)))))))
+
+  ;; HP2L2:      (type $1 (func (param (ref $struct))))
+
+  ;; HP2L2:      (type $array (shared (array i8)))
   (type $array (shared (array i8)))
   ;; CHECK:      (type $struct (shared (struct (field (mut (ref null (shared array)))))))
-  ;; HP2L2:      (type $struct (shared (struct (field (mut (ref null (shared array)))))))
   (type $struct (shared (struct (field (mut (ref null (shared array)))))))
 
   ;; CHECK:      (type $1 (func (param (ref $struct))))
@@ -2869,15 +2484,11 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; HP2L2:      (type $1 (func (param (ref $struct))))
-
   ;; HP2L2:      (func $unreachable-shared-expected (type $1) (param $struct (ref $struct))
   ;; HP2L2-NEXT:  (drop
   ;; HP2L2-NEXT:   (struct.atomic.rmw.cmpxchg $struct 0
   ;; HP2L2-NEXT:    (local.get $struct)
-  ;; HP2L2-NEXT:    (block (result (ref null (shared none)))
-  ;; HP2L2-NEXT:     (ref.null (shared none))
-  ;; HP2L2-NEXT:    )
+  ;; HP2L2-NEXT:    (array.new_fixed $array 0)
   ;; HP2L2-NEXT:    (unreachable)
   ;; HP2L2-NEXT:   )
   ;; HP2L2-NEXT:  )
@@ -2943,32 +2554,14 @@
   ;; HP2L2:      (type $2 (func (param (ref eq))))
 
   ;; HP2L2:      (func $array-cmpxchg-expected (type $1) (param $array (ref $array))
-  ;; HP2L2-NEXT:  (local $1 eqref)
-  ;; HP2L2-NEXT:  (local $2 (ref null $array))
-  ;; HP2L2-NEXT:  (local $3 i32)
   ;; HP2L2-NEXT:  (drop
-  ;; HP2L2-NEXT:   (block (result eqref)
-  ;; HP2L2-NEXT:    (local.set $2
-  ;; HP2L2-NEXT:     (local.get $array)
+  ;; HP2L2-NEXT:   (array.atomic.rmw.cmpxchg $array
+  ;; HP2L2-NEXT:    (local.get $array)
+  ;; HP2L2-NEXT:    (i32.const 0)
+  ;; HP2L2-NEXT:    (array.new_default $array
+  ;; HP2L2-NEXT:     (i32.const 1)
   ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (local.set $3
-  ;; HP2L2-NEXT:     (i32.const 0)
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (block (result nullref)
-  ;; HP2L2-NEXT:      (local.set $1
-  ;; HP2L2-NEXT:       (ref.null none)
-  ;; HP2L2-NEXT:      )
-  ;; HP2L2-NEXT:      (ref.null none)
-  ;; HP2L2-NEXT:     )
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (ref.null none)
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (array.atomic.get $array
-  ;; HP2L2-NEXT:     (local.get $2)
-  ;; HP2L2-NEXT:     (local.get $3)
-  ;; HP2L2-NEXT:    )
+  ;; HP2L2-NEXT:    (ref.null none)
   ;; HP2L2-NEXT:   )
   ;; HP2L2-NEXT:  )
   ;; HP2L2-NEXT: )
@@ -3028,39 +2621,25 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; HP2L2:      (func $array-cmpxchg-expected-null-ref (type $2) (param $x (ref eq))
-  ;; HP2L2-NEXT:  (local $1 eqref)
-  ;; HP2L2-NEXT:  (local $2 nullref)
-  ;; HP2L2-NEXT:  (local $3 i32)
   ;; HP2L2-NEXT:  (drop
-  ;; HP2L2-NEXT:   (block $block (result (ref none))
-  ;; HP2L2-NEXT:    (br_on_cast_fail $block (ref none) (ref none)
-  ;; HP2L2-NEXT:     (block (result (ref none))
-  ;; HP2L2-NEXT:      (local.set $2
+  ;; HP2L2-NEXT:   (block $block (result (ref eq))
+  ;; HP2L2-NEXT:    (br_on_cast_fail $block (ref eq) (ref eq)
+  ;; HP2L2-NEXT:     (block ;; (replaces unreachable ArrayCmpxchg we can't emit)
+  ;; HP2L2-NEXT:      (drop
   ;; HP2L2-NEXT:       (ref.null none)
   ;; HP2L2-NEXT:      )
-  ;; HP2L2-NEXT:      (local.set $3
+  ;; HP2L2-NEXT:      (drop
   ;; HP2L2-NEXT:       (i32.const 0)
   ;; HP2L2-NEXT:      )
   ;; HP2L2-NEXT:      (drop
-  ;; HP2L2-NEXT:       (block (result nullref)
-  ;; HP2L2-NEXT:        (local.set $1
-  ;; HP2L2-NEXT:         (ref.null none)
-  ;; HP2L2-NEXT:        )
-  ;; HP2L2-NEXT:        (ref.null none)
+  ;; HP2L2-NEXT:       (array.new_default $array
+  ;; HP2L2-NEXT:        (i32.const 1)
   ;; HP2L2-NEXT:       )
   ;; HP2L2-NEXT:      )
   ;; HP2L2-NEXT:      (drop
   ;; HP2L2-NEXT:       (local.get $x)
   ;; HP2L2-NEXT:      )
-  ;; HP2L2-NEXT:      (block ;; (replaces unreachable ArrayGet we can't emit)
-  ;; HP2L2-NEXT:       (drop
-  ;; HP2L2-NEXT:        (local.get $2)
-  ;; HP2L2-NEXT:       )
-  ;; HP2L2-NEXT:       (drop
-  ;; HP2L2-NEXT:        (local.get $3)
-  ;; HP2L2-NEXT:       )
-  ;; HP2L2-NEXT:       (unreachable)
-  ;; HP2L2-NEXT:      )
+  ;; HP2L2-NEXT:      (unreachable)
   ;; HP2L2-NEXT:     )
   ;; HP2L2-NEXT:    )
   ;; HP2L2-NEXT:   )
@@ -3096,16 +2675,12 @@
 
   ;; CHECK:      (type $3 (func (result eqref)))
 
-  ;; CHECK:      (type $4 (func (param eqref) (result eqref)))
-
   ;; CHECK:      (import "" "" (func $effect-i32 (type $2) (result i32)))
   ;; HP2L2:      (type $1 (func (param (ref $array))))
 
   ;; HP2L2:      (type $2 (func (result i32)))
 
   ;; HP2L2:      (type $3 (func (result eqref)))
-
-  ;; HP2L2:      (type $4 (func (param eqref) (result eqref)))
 
   ;; HP2L2:      (import "" "" (func $effect-i32 (type $2) (result i32)))
   (import "" "" (func $effect-i32 (result i32)))
@@ -3144,32 +2719,14 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; HP2L2:      (func $array-cmpxchg-expected-index-effect (type $1) (param $array (ref $array))
-  ;; HP2L2-NEXT:  (local $1 eqref)
-  ;; HP2L2-NEXT:  (local $2 (ref null $array))
-  ;; HP2L2-NEXT:  (local $3 i32)
   ;; HP2L2-NEXT:  (drop
-  ;; HP2L2-NEXT:   (block (result eqref)
-  ;; HP2L2-NEXT:    (local.set $2
-  ;; HP2L2-NEXT:     (local.get $array)
+  ;; HP2L2-NEXT:   (array.atomic.rmw.cmpxchg $array
+  ;; HP2L2-NEXT:    (local.get $array)
+  ;; HP2L2-NEXT:    (call $effect-i32)
+  ;; HP2L2-NEXT:    (array.new_default $array
+  ;; HP2L2-NEXT:     (i32.const 1)
   ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (local.set $3
-  ;; HP2L2-NEXT:     (call $effect-i32)
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (block (result nullref)
-  ;; HP2L2-NEXT:      (local.set $1
-  ;; HP2L2-NEXT:       (ref.null none)
-  ;; HP2L2-NEXT:      )
-  ;; HP2L2-NEXT:      (ref.null none)
-  ;; HP2L2-NEXT:     )
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (call $effect-eq)
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (array.atomic.get $array
-  ;; HP2L2-NEXT:     (local.get $2)
-  ;; HP2L2-NEXT:     (local.get $3)
-  ;; HP2L2-NEXT:    )
+  ;; HP2L2-NEXT:    (call $effect-eq)
   ;; HP2L2-NEXT:   )
   ;; HP2L2-NEXT:  )
   ;; HP2L2-NEXT: )
@@ -3217,32 +2774,14 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; HP2L2:      (func $array-cmpxchg-expected-index-oob (type $1) (param $array (ref $array))
-  ;; HP2L2-NEXT:  (local $1 eqref)
-  ;; HP2L2-NEXT:  (local $2 (ref null $array))
-  ;; HP2L2-NEXT:  (local $3 i32)
   ;; HP2L2-NEXT:  (drop
-  ;; HP2L2-NEXT:   (block (result eqref)
-  ;; HP2L2-NEXT:    (local.set $2
-  ;; HP2L2-NEXT:     (local.get $array)
+  ;; HP2L2-NEXT:   (array.atomic.rmw.cmpxchg $array
+  ;; HP2L2-NEXT:    (local.get $array)
+  ;; HP2L2-NEXT:    (i32.const -1)
+  ;; HP2L2-NEXT:    (array.new_default $array
+  ;; HP2L2-NEXT:     (i32.const 1)
   ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (local.set $3
-  ;; HP2L2-NEXT:     (i32.const -1)
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (block (result nullref)
-  ;; HP2L2-NEXT:      (local.set $1
-  ;; HP2L2-NEXT:       (ref.null none)
-  ;; HP2L2-NEXT:      )
-  ;; HP2L2-NEXT:      (ref.null none)
-  ;; HP2L2-NEXT:     )
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (call $effect-eq)
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (array.atomic.get $array
-  ;; HP2L2-NEXT:     (local.get $2)
-  ;; HP2L2-NEXT:     (local.get $3)
-  ;; HP2L2-NEXT:    )
+  ;; HP2L2-NEXT:    (call $effect-eq)
   ;; HP2L2-NEXT:   )
   ;; HP2L2-NEXT:  )
   ;; HP2L2-NEXT: )
@@ -3258,102 +2797,15 @@
       )
     )
   )
-
-  ;; CHECK:      (func $array-cmpxchg-ref-unoptimized-expected (type $4) (param $expected eqref) (result eqref)
-  ;; CHECK-NEXT:  (local $1 eqref)
-  ;; CHECK-NEXT:  (local $2 eqref)
-  ;; CHECK-NEXT:  (local $3 eqref)
-  ;; CHECK-NEXT:  (local $4 eqref)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result nullref)
-  ;; CHECK-NEXT:    (local.set $1
-  ;; CHECK-NEXT:     (ref.null none)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (ref.null none)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (local.set $3
-  ;; CHECK-NEXT:   (local.get $expected)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (local.set $4
-  ;; CHECK-NEXT:   (call $effect-eq)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (local.set $2
-  ;; CHECK-NEXT:   (local.get $1)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (if
-  ;; CHECK-NEXT:   (ref.eq
-  ;; CHECK-NEXT:    (local.get $1)
-  ;; CHECK-NEXT:    (local.get $3)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (then
-  ;; CHECK-NEXT:    (local.set $1
-  ;; CHECK-NEXT:     (local.get $4)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (local.get $2)
-  ;; CHECK-NEXT: )
-  ;; HP2L2:      (func $array-cmpxchg-ref-unoptimized-expected (type $4) (param $expected eqref) (result eqref)
-  ;; HP2L2-NEXT:  (local $1 eqref)
-  ;; HP2L2-NEXT:  (local $2 eqref)
-  ;; HP2L2-NEXT:  (local $3 eqref)
-  ;; HP2L2-NEXT:  (local $4 eqref)
-  ;; HP2L2-NEXT:  (drop
-  ;; HP2L2-NEXT:   (block (result nullref)
-  ;; HP2L2-NEXT:    (local.set $1
-  ;; HP2L2-NEXT:     (ref.null none)
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (ref.null none)
-  ;; HP2L2-NEXT:   )
-  ;; HP2L2-NEXT:  )
-  ;; HP2L2-NEXT:  (local.set $3
-  ;; HP2L2-NEXT:   (local.get $expected)
-  ;; HP2L2-NEXT:  )
-  ;; HP2L2-NEXT:  (local.set $4
-  ;; HP2L2-NEXT:   (call $effect-eq)
-  ;; HP2L2-NEXT:  )
-  ;; HP2L2-NEXT:  (local.set $2
-  ;; HP2L2-NEXT:   (local.get $1)
-  ;; HP2L2-NEXT:  )
-  ;; HP2L2-NEXT:  (if
-  ;; HP2L2-NEXT:   (ref.eq
-  ;; HP2L2-NEXT:    (local.get $1)
-  ;; HP2L2-NEXT:    (local.get $3)
-  ;; HP2L2-NEXT:   )
-  ;; HP2L2-NEXT:   (then
-  ;; HP2L2-NEXT:    (local.set $1
-  ;; HP2L2-NEXT:     (local.get $4)
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:   )
-  ;; HP2L2-NEXT:  )
-  ;; HP2L2-NEXT:  (local.get $2)
-  ;; HP2L2-NEXT: )
-  (func $array-cmpxchg-ref-unoptimized-expected (param $expected eqref) (result eqref)
-    ;; Reference-element array with unescaped array ref and unoptimized
-    ;; expected emits the eqref scratch local and ref.eq comparison.
-    (array.atomic.rmw.cmpxchg $array
-      (array.new_default $array
-        (i32.const 1)
-      )
-      (i32.const 0)
-      (local.get $expected)
-      (call $effect-eq)
-    )
-  )
 )
 
 (module
   ;; CHECK:      (type $struct (shared (struct (field (mut (ref null $struct))))))
   ;; HP2L2:      (type $struct (shared (struct (field (mut (ref null $struct))))))
   (type $struct (shared (struct (field (mut (ref null $struct))))))
-  ;; CHECK:      (type $1 (func (param (ref $struct)) (result (ref null $struct))))
+  ;; CHECK:      (type $1 (func (result i32)))
 
-  ;; CHECK:      (type $2 (func (param (ref $struct))))
-
-  ;; CHECK:      (type $3 (func (result i32)))
-
-  ;; CHECK:      (func $must-optimize-ref-eq (type $3) (result i32)
+  ;; CHECK:      (func $must-optimize-ref-eq (type $1) (result i32)
   ;; CHECK-NEXT:  (local $local (ref null $struct))
   ;; CHECK-NEXT:  (local $1 (ref null $struct))
   ;; CHECK-NEXT:  (local $2 (ref null $struct))
@@ -3412,52 +2864,22 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; HP2L2:      (type $1 (func (param (ref $struct)) (result (ref null $struct))))
+  ;; HP2L2:      (type $1 (func (result i32)))
 
-  ;; HP2L2:      (type $2 (func (param (ref $struct))))
-
-  ;; HP2L2:      (type $3 (func (result i32)))
-
-  ;; HP2L2:      (func $must-optimize-ref-eq (type $3) (result i32)
+  ;; HP2L2:      (func $must-optimize-ref-eq (type $1) (result i32)
   ;; HP2L2-NEXT:  (local $local (ref null $struct))
-  ;; HP2L2-NEXT:  (local $1 (ref null $struct))
-  ;; HP2L2-NEXT:  (local $2 (ref null $struct))
-  ;; HP2L2-NEXT:  (local $3 (ref null $struct))
   ;; HP2L2-NEXT:  (drop
-  ;; HP2L2-NEXT:   (block (result (ref null $struct))
-  ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (block (result (ref null (shared none)))
-  ;; HP2L2-NEXT:      (local.set $1
-  ;; HP2L2-NEXT:       (ref.null (shared none))
-  ;; HP2L2-NEXT:      )
-  ;; HP2L2-NEXT:      (ref.null (shared none))
-  ;; HP2L2-NEXT:     )
+  ;; HP2L2-NEXT:   (struct.atomic.rmw.cmpxchg acqrel acqrel $struct 0
+  ;; HP2L2-NEXT:    (local.tee $local
+  ;; HP2L2-NEXT:     (struct.new_default $struct)
   ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (block (result (ref null (shared none)))
-  ;; HP2L2-NEXT:      (local.set $2
-  ;; HP2L2-NEXT:       (ref.null (shared none))
-  ;; HP2L2-NEXT:      )
-  ;; HP2L2-NEXT:      (ref.null (shared none))
-  ;; HP2L2-NEXT:     )
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (block (result (ref null (shared none)))
-  ;; HP2L2-NEXT:      (local.set $3
-  ;; HP2L2-NEXT:       (ref.null (shared none))
-  ;; HP2L2-NEXT:      )
-  ;; HP2L2-NEXT:      (ref.null (shared none))
-  ;; HP2L2-NEXT:     )
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (local.get $1)
+  ;; HP2L2-NEXT:    (struct.new_default $struct)
+  ;; HP2L2-NEXT:    (struct.new_default $struct)
   ;; HP2L2-NEXT:   )
   ;; HP2L2-NEXT:  )
   ;; HP2L2-NEXT:  (ref.is_null
-  ;; HP2L2-NEXT:   (block (result (ref null $struct))
-  ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (ref.null (shared none))
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (local.get $1)
+  ;; HP2L2-NEXT:   (struct.get $struct 0
+  ;; HP2L2-NEXT:    (local.get $local)
   ;; HP2L2-NEXT:   )
   ;; HP2L2-NEXT:  )
   ;; HP2L2-NEXT: )
@@ -3492,381 +2914,28 @@
       (struct.get $struct 0 (local.get $local))
     )
   )
-
-  ;; CHECK:      (func $cmpxchg-expected-and-replacement-unescaped (type $1) (param $s (ref $struct)) (result (ref null $struct))
-  ;; CHECK-NEXT:  (local $1 (ref null $struct))
-  ;; CHECK-NEXT:  (local $2 (ref null $struct))
-  ;; CHECK-NEXT:  (local $3 (ref null $struct))
-  ;; CHECK-NEXT:  (local.set $2
-  ;; CHECK-NEXT:   (local.get $s)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref null (shared none)))
-  ;; CHECK-NEXT:    (local.set $1
-  ;; CHECK-NEXT:     (ref.null (shared none))
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (ref.null (shared none))
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref null (shared none)))
-  ;; CHECK-NEXT:    (local.set $3
-  ;; CHECK-NEXT:     (ref.null (shared none))
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (ref.null (shared none))
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (struct.atomic.get $struct 0
-  ;; CHECK-NEXT:   (local.get $2)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  ;; HP2L2:      (func $cmpxchg-expected-and-replacement-unescaped (type $1) (param $s (ref $struct)) (result (ref null $struct))
-  ;; HP2L2-NEXT:  (local $1 (ref null $struct))
-  ;; HP2L2-NEXT:  (local $2 (ref null $struct))
-  ;; HP2L2-NEXT:  (local $3 (ref null $struct))
-  ;; HP2L2-NEXT:  (local.set $3
-  ;; HP2L2-NEXT:   (local.get $s)
-  ;; HP2L2-NEXT:  )
-  ;; HP2L2-NEXT:  (drop
-  ;; HP2L2-NEXT:   (block (result (ref null (shared none)))
-  ;; HP2L2-NEXT:    (local.set $1
-  ;; HP2L2-NEXT:     (ref.null (shared none))
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (ref.null (shared none))
-  ;; HP2L2-NEXT:   )
-  ;; HP2L2-NEXT:  )
-  ;; HP2L2-NEXT:  (drop
-  ;; HP2L2-NEXT:   (block (result (ref null (shared none)))
-  ;; HP2L2-NEXT:    (local.set $2
-  ;; HP2L2-NEXT:     (ref.null (shared none))
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (ref.null (shared none))
-  ;; HP2L2-NEXT:   )
-  ;; HP2L2-NEXT:  )
-  ;; HP2L2-NEXT:  (struct.atomic.get $struct 0
-  ;; HP2L2-NEXT:   (local.get $3)
-  ;; HP2L2-NEXT:  )
-  ;; HP2L2-NEXT: )
-  (func $cmpxchg-expected-and-replacement-unescaped (param $s (ref $struct)) (result (ref null $struct))
-    ;; Conditional cmpxchg escape: unescaped expected allows replacement to
-    ;; stay unescaped too when neither escapes elsewhere.
-    (struct.atomic.rmw.cmpxchg $struct 0
-      (local.get $s)
-      (struct.new_default $struct)
-      (struct.new_default $struct)
-    )
-  )
-
-  ;; CHECK:      (func $cmpxchg-expected-escaped-escapes-replacement (type $1) (param $s (ref $struct)) (result (ref null $struct))
-  ;; CHECK-NEXT:  (local $exp (ref null $struct))
-  ;; CHECK-NEXT:  (local.set $exp
-  ;; CHECK-NEXT:   (struct.new_default $struct)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.atomic.rmw.cmpxchg $struct 0
-  ;; CHECK-NEXT:    (local.get $s)
-  ;; CHECK-NEXT:    (local.get $exp)
-  ;; CHECK-NEXT:    (struct.new_default $struct)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (local.get $exp)
-  ;; CHECK-NEXT: )
-  ;; HP2L2:      (func $cmpxchg-expected-escaped-escapes-replacement (type $1) (param $s (ref $struct)) (result (ref null $struct))
-  ;; HP2L2-NEXT:  (local $exp (ref null $struct))
-  ;; HP2L2-NEXT:  (local.set $exp
-  ;; HP2L2-NEXT:   (struct.new_default $struct)
-  ;; HP2L2-NEXT:  )
-  ;; HP2L2-NEXT:  (drop
-  ;; HP2L2-NEXT:   (struct.atomic.rmw.cmpxchg $struct 0
-  ;; HP2L2-NEXT:    (local.get $s)
-  ;; HP2L2-NEXT:    (local.get $exp)
-  ;; HP2L2-NEXT:    (struct.new_default $struct)
-  ;; HP2L2-NEXT:   )
-  ;; HP2L2-NEXT:  )
-  ;; HP2L2-NEXT:  (local.get $exp)
-  ;; HP2L2-NEXT: )
-  (func $cmpxchg-expected-escaped-escapes-replacement (param $s (ref $struct)) (result (ref null $struct))
-    (local $exp (ref null $struct))
-    ;; Escaping expected forces replacement to escape too.
-    (local.set $exp
-      (struct.new_default $struct)
-    )
-    (drop
-      (struct.atomic.rmw.cmpxchg $struct 0
-        (local.get $s)
-        (local.get $exp)
-        (struct.new_default $struct)
-      )
-    )
-    (local.get $exp)
-  )
-
-  ;; CHECK:      (func $cmpxchg-self-expected-replacement (type $2) (param $s (ref $struct))
-  ;; CHECK-NEXT:  (local $x (ref null $struct))
-  ;; CHECK-NEXT:  (local.set $x
-  ;; CHECK-NEXT:   (struct.new_default $struct)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.atomic.rmw.cmpxchg $struct 0
-  ;; CHECK-NEXT:    (local.get $s)
-  ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  ;; HP2L2:      (func $cmpxchg-self-expected-replacement (type $2) (param $s (ref $struct))
-  ;; HP2L2-NEXT:  (local $x (ref null $struct))
-  ;; HP2L2-NEXT:  (local $2 (ref null $struct))
-  ;; HP2L2-NEXT:  (local $3 (ref null $struct))
-  ;; HP2L2-NEXT:  (drop
-  ;; HP2L2-NEXT:   (block (result (ref null (shared none)))
-  ;; HP2L2-NEXT:    (local.set $2
-  ;; HP2L2-NEXT:     (ref.null (shared none))
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (ref.null (shared none))
-  ;; HP2L2-NEXT:   )
-  ;; HP2L2-NEXT:  )
-  ;; HP2L2-NEXT:  (drop
-  ;; HP2L2-NEXT:   (block (result (ref null $struct))
-  ;; HP2L2-NEXT:    (local.set $3
-  ;; HP2L2-NEXT:     (local.get $s)
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (ref.null (shared none))
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (ref.null (shared none))
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (struct.atomic.get $struct 0
-  ;; HP2L2-NEXT:     (local.get $3)
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:   )
-  ;; HP2L2-NEXT:  )
-  ;; HP2L2-NEXT: )
-  (func $cmpxchg-self-expected-replacement (param $s (ref $struct))
-    (local $x (ref null $struct))
-    ;; Self-dependency in escape graph keeps $x unescaped.
-    (local.set $x
-      (struct.new_default $struct)
-    )
-    (drop
-      (struct.atomic.rmw.cmpxchg $struct 0
-        (local.get $s)
-        (local.get $x)
-        (local.get $x)
-      )
-    )
-  )
-
-  ;; CHECK:      (func $cmpxchg-multi-hop-chain (type $1) (param $s (ref $struct)) (result (ref null $struct))
-  ;; CHECK-NEXT:  (local $a (ref null $struct))
-  ;; CHECK-NEXT:  (local $b (ref null $struct))
-  ;; CHECK-NEXT:  (local.set $a
-  ;; CHECK-NEXT:   (struct.new_default $struct)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (local.set $b
-  ;; CHECK-NEXT:   (struct.new_default $struct)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.atomic.rmw.cmpxchg $struct 0
-  ;; CHECK-NEXT:    (local.get $s)
-  ;; CHECK-NEXT:    (local.get $a)
-  ;; CHECK-NEXT:    (local.get $b)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.atomic.rmw.cmpxchg $struct 0
-  ;; CHECK-NEXT:    (local.get $s)
-  ;; CHECK-NEXT:    (local.get $b)
-  ;; CHECK-NEXT:    (struct.new_default $struct)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (local.get $a)
-  ;; CHECK-NEXT: )
-  ;; HP2L2:      (func $cmpxchg-multi-hop-chain (type $1) (param $s (ref $struct)) (result (ref null $struct))
-  ;; HP2L2-NEXT:  (local $a (ref null $struct))
-  ;; HP2L2-NEXT:  (local $b (ref null $struct))
-  ;; HP2L2-NEXT:  (local.set $a
-  ;; HP2L2-NEXT:   (struct.new_default $struct)
-  ;; HP2L2-NEXT:  )
-  ;; HP2L2-NEXT:  (local.set $b
-  ;; HP2L2-NEXT:   (struct.new_default $struct)
-  ;; HP2L2-NEXT:  )
-  ;; HP2L2-NEXT:  (drop
-  ;; HP2L2-NEXT:   (struct.atomic.rmw.cmpxchg $struct 0
-  ;; HP2L2-NEXT:    (local.get $s)
-  ;; HP2L2-NEXT:    (local.get $a)
-  ;; HP2L2-NEXT:    (local.get $b)
-  ;; HP2L2-NEXT:   )
-  ;; HP2L2-NEXT:  )
-  ;; HP2L2-NEXT:  (drop
-  ;; HP2L2-NEXT:   (struct.atomic.rmw.cmpxchg $struct 0
-  ;; HP2L2-NEXT:    (local.get $s)
-  ;; HP2L2-NEXT:    (local.get $b)
-  ;; HP2L2-NEXT:    (struct.new_default $struct)
-  ;; HP2L2-NEXT:   )
-  ;; HP2L2-NEXT:  )
-  ;; HP2L2-NEXT:  (local.get $a)
-  ;; HP2L2-NEXT: )
-  (func $cmpxchg-multi-hop-chain (param $s (ref $struct)) (result (ref null $struct))
-    (local $a (ref null $struct))
-    (local $b (ref null $struct))
-    ;; Transitive escape chain: A -> B -> C where A escapes via return.
-    (local.set $a
-      (struct.new_default $struct)
-    )
-    (local.set $b
-      (struct.new_default $struct)
-    )
-    (drop
-      (struct.atomic.rmw.cmpxchg $struct 0
-        (local.get $s)
-        (local.get $a)
-        (local.get $b)
-      )
-    )
-    (drop
-      (struct.atomic.rmw.cmpxchg $struct 0
-        (local.get $s)
-        (local.get $b)
-        (struct.new_default $struct)
-      )
-    )
-    (local.get $a)
-  )
-
-  ;; CHECK:      (func $cmpxchg-mutual-cycle (type $2) (param $s (ref $struct))
-  ;; CHECK-NEXT:  (local $a (ref null $struct))
-  ;; CHECK-NEXT:  (local $b (ref null $struct))
-  ;; CHECK-NEXT:  (local.set $a
-  ;; CHECK-NEXT:   (struct.new_default $struct)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (local.set $b
-  ;; CHECK-NEXT:   (struct.new_default $struct)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.atomic.rmw.cmpxchg $struct 0
-  ;; CHECK-NEXT:    (local.get $s)
-  ;; CHECK-NEXT:    (local.get $a)
-  ;; CHECK-NEXT:    (local.get $b)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.atomic.rmw.cmpxchg $struct 0
-  ;; CHECK-NEXT:    (local.get $s)
-  ;; CHECK-NEXT:    (local.get $b)
-  ;; CHECK-NEXT:    (local.get $a)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  ;; HP2L2:      (func $cmpxchg-mutual-cycle (type $2) (param $s (ref $struct))
-  ;; HP2L2-NEXT:  (local $a (ref null $struct))
-  ;; HP2L2-NEXT:  (local $b (ref null $struct))
-  ;; HP2L2-NEXT:  (local $3 (ref null $struct))
-  ;; HP2L2-NEXT:  (local $4 (ref null $struct))
-  ;; HP2L2-NEXT:  (local $5 (ref null $struct))
-  ;; HP2L2-NEXT:  (local $6 (ref null $struct))
-  ;; HP2L2-NEXT:  (drop
-  ;; HP2L2-NEXT:   (block (result (ref null (shared none)))
-  ;; HP2L2-NEXT:    (local.set $3
-  ;; HP2L2-NEXT:     (ref.null (shared none))
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (ref.null (shared none))
-  ;; HP2L2-NEXT:   )
-  ;; HP2L2-NEXT:  )
-  ;; HP2L2-NEXT:  (drop
-  ;; HP2L2-NEXT:   (block (result (ref null (shared none)))
-  ;; HP2L2-NEXT:    (local.set $4
-  ;; HP2L2-NEXT:     (ref.null (shared none))
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (ref.null (shared none))
-  ;; HP2L2-NEXT:   )
-  ;; HP2L2-NEXT:  )
-  ;; HP2L2-NEXT:  (drop
-  ;; HP2L2-NEXT:   (block (result (ref null $struct))
-  ;; HP2L2-NEXT:    (local.set $5
-  ;; HP2L2-NEXT:     (local.get $s)
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (ref.null (shared none))
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (ref.null (shared none))
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (struct.atomic.get $struct 0
-  ;; HP2L2-NEXT:     (local.get $5)
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:   )
-  ;; HP2L2-NEXT:  )
-  ;; HP2L2-NEXT:  (drop
-  ;; HP2L2-NEXT:   (block (result (ref null $struct))
-  ;; HP2L2-NEXT:    (local.set $6
-  ;; HP2L2-NEXT:     (local.get $s)
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (ref.null (shared none))
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (ref.null (shared none))
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (struct.atomic.get $struct 0
-  ;; HP2L2-NEXT:     (local.get $6)
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:   )
-  ;; HP2L2-NEXT:  )
-  ;; HP2L2-NEXT: )
-  (func $cmpxchg-mutual-cycle (param $s (ref $struct))
-    (local $a (ref null $struct))
-    (local $b (ref null $struct))
-    ;; Mutual escape cycle A <-> B where neither escapes elsewhere optimizes
-    ;; both allocations cleanly.
-    (local.set $a
-      (struct.new_default $struct)
-    )
-    (local.set $b
-      (struct.new_default $struct)
-    )
-    (drop
-      (struct.atomic.rmw.cmpxchg $struct 0
-        (local.get $s)
-        (local.get $a)
-        (local.get $b)
-      )
-    )
-    (drop
-      (struct.atomic.rmw.cmpxchg $struct 0
-        (local.get $s)
-        (local.get $b)
-        (local.get $a)
-      )
-    )
-  )
 )
 
 (module
+  (type $s0 (shared (struct (field (mut (ref null (shared eq)))))))
   ;; CHECK:      (type $s1 (shared (struct)))
 
-  ;; CHECK:      (type $a0 (shared (array (mut (ref null (shared eq))))))
+  ;; CHECK:      (type $1 (func))
 
-  ;; CHECK:      (type $s0 (shared (struct (field (mut (ref null (shared eq)))))))
+  ;; CHECK:      (type $a0 (shared (array (mut (ref null (shared eq))))))
   ;; HP2L2:      (type $s1 (shared (struct)))
 
-  ;; HP2L2:      (type $a0 (shared (array (mut (ref null (shared eq))))))
+  ;; HP2L2:      (type $1 (func))
 
-  ;; HP2L2:      (type $s0 (shared (struct (field (mut (ref null (shared eq)))))))
-  (type $s0 (shared (struct (field (mut (ref null (shared eq)))))))
+  ;; HP2L2:      (type $a0 (shared (array (mut (ref null (shared eq))))))
   (type $a0 (shared (array (mut (ref null (shared eq))))))
   (type $s1 (shared (struct)))
 
-  ;; CHECK:      (type $3 (func))
+  ;; CHECK:      (type $3 (func (param (ref $a0))))
 
-  ;; CHECK:      (type $4 (func (param (ref $a0))))
+  ;; CHECK:      (type $4 (func (param (ref null $s1)) (result (ref null (shared eq)))))
 
-  ;; CHECK:      (type $5 (func (param (ref null $s1)) (result (ref null (shared eq)))))
-
-  ;; CHECK:      (type $6 (func (param (ref $s0) (ref $a0))))
-
-  ;; CHECK:      (func $cmpxchg-became-unreachable-ref (type $3)
+  ;; CHECK:      (func $cmpxchg-became-unreachable-ref (type $1)
   ;; CHECK-NEXT:  (local $x (ref null $s1))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block ;; (replaces unreachable StructCmpxchg we can't emit)
@@ -3890,30 +2959,23 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; HP2L2:      (type $3 (func))
+  ;; HP2L2:      (type $3 (func (param (ref $a0))))
 
-  ;; HP2L2:      (type $4 (func (param (ref $a0))))
+  ;; HP2L2:      (type $4 (func (param (ref null $s1)) (result (ref null (shared eq)))))
 
-  ;; HP2L2:      (type $5 (func (param (ref null $s1)) (result (ref null (shared eq)))))
-
-  ;; HP2L2:      (type $6 (func (param (ref $s0) (ref $a0))))
-
-  ;; HP2L2:      (func $cmpxchg-became-unreachable-ref (type $3)
+  ;; HP2L2:      (func $cmpxchg-became-unreachable-ref (type $1)
   ;; HP2L2-NEXT:  (local $x (ref null $s1))
   ;; HP2L2-NEXT:  (drop
   ;; HP2L2-NEXT:   (block ;; (replaces unreachable StructCmpxchg we can't emit)
   ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (block
-  ;; HP2L2-NEXT:      (drop
-  ;; HP2L2-NEXT:       (block (result (ref null (shared none)))
-  ;; HP2L2-NEXT:        (ref.null (shared none))
-  ;; HP2L2-NEXT:       )
+  ;; HP2L2-NEXT:     (ref.cast (ref (shared none))
+  ;; HP2L2-NEXT:      (local.tee $x
+  ;; HP2L2-NEXT:       (struct.new_default $s1)
   ;; HP2L2-NEXT:      )
-  ;; HP2L2-NEXT:      (unreachable)
   ;; HP2L2-NEXT:     )
   ;; HP2L2-NEXT:    )
   ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (ref.null (shared none))
+  ;; HP2L2-NEXT:     (local.get $x)
   ;; HP2L2-NEXT:    )
   ;; HP2L2-NEXT:    (drop
   ;; HP2L2-NEXT:     (ref.null (shared none))
@@ -3941,7 +3003,7 @@
     )
   )
 
-  ;; CHECK:      (func $array-cmpxchg-became-unreachable-ref (type $3)
+  ;; CHECK:      (func $array-cmpxchg-became-unreachable-ref (type $1)
   ;; CHECK-NEXT:  (local $x (ref null $s1))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block ;; (replaces unreachable ArrayCmpxchg we can't emit)
@@ -3968,25 +3030,22 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; HP2L2:      (func $array-cmpxchg-became-unreachable-ref (type $3)
+  ;; HP2L2:      (func $array-cmpxchg-became-unreachable-ref (type $1)
   ;; HP2L2-NEXT:  (local $x (ref null $s1))
   ;; HP2L2-NEXT:  (drop
   ;; HP2L2-NEXT:   (block ;; (replaces unreachable ArrayCmpxchg we can't emit)
   ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (block
-  ;; HP2L2-NEXT:      (drop
-  ;; HP2L2-NEXT:       (block (result (ref null (shared none)))
-  ;; HP2L2-NEXT:        (ref.null (shared none))
-  ;; HP2L2-NEXT:       )
+  ;; HP2L2-NEXT:     (ref.cast (ref (shared none))
+  ;; HP2L2-NEXT:      (local.tee $x
+  ;; HP2L2-NEXT:       (struct.new_default $s1)
   ;; HP2L2-NEXT:      )
-  ;; HP2L2-NEXT:      (unreachable)
   ;; HP2L2-NEXT:     )
   ;; HP2L2-NEXT:    )
   ;; HP2L2-NEXT:    (drop
   ;; HP2L2-NEXT:     (i32.const 0)
   ;; HP2L2-NEXT:    )
   ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (ref.null (shared none))
+  ;; HP2L2-NEXT:     (local.get $x)
   ;; HP2L2-NEXT:    )
   ;; HP2L2-NEXT:    (drop
   ;; HP2L2-NEXT:     (ref.null (shared none))
@@ -4012,7 +3071,7 @@
     )
   )
 
-  ;; CHECK:      (func $array-cmpxchg-unreachable (type $4) (param $a (ref $a0))
+  ;; CHECK:      (func $array-cmpxchg-unreachable (type $3) (param $a (ref $a0))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (array.atomic.rmw.cmpxchg $a0
   ;; CHECK-NEXT:    (local.get $a)
@@ -4024,14 +3083,12 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; HP2L2:      (func $array-cmpxchg-unreachable (type $4) (param $a (ref $a0))
+  ;; HP2L2:      (func $array-cmpxchg-unreachable (type $3) (param $a (ref $a0))
   ;; HP2L2-NEXT:  (drop
   ;; HP2L2-NEXT:   (array.atomic.rmw.cmpxchg $a0
   ;; HP2L2-NEXT:    (local.get $a)
   ;; HP2L2-NEXT:    (i32.const 0)
-  ;; HP2L2-NEXT:    (block (result (ref null (shared none)))
-  ;; HP2L2-NEXT:     (ref.null (shared none))
-  ;; HP2L2-NEXT:    )
+  ;; HP2L2-NEXT:    (struct.new_default $s1)
   ;; HP2L2-NEXT:    (unreachable)
   ;; HP2L2-NEXT:   )
   ;; HP2L2-NEXT:  )
@@ -4048,7 +3105,7 @@
     )
   )
 
-  ;; CHECK:      (func $array-rmw-xchg-ref (type $5) (param $r (ref null $s1)) (result (ref null (shared eq)))
+  ;; CHECK:      (func $array-rmw-xchg-ref (type $4) (param $r (ref null $s1)) (result (ref null (shared eq)))
   ;; CHECK-NEXT:  (local $1 (ref null (shared eq)))
   ;; CHECK-NEXT:  (local $2 (ref null (shared eq)))
   ;; CHECK-NEXT:  (local $3 (ref null (shared eq)))
@@ -4071,7 +3128,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.get $2)
   ;; CHECK-NEXT: )
-  ;; HP2L2:      (func $array-rmw-xchg-ref (type $5) (param $r (ref null $s1)) (result (ref null (shared eq)))
+  ;; HP2L2:      (func $array-rmw-xchg-ref (type $4) (param $r (ref null $s1)) (result (ref null (shared eq)))
   ;; HP2L2-NEXT:  (local $1 (ref null (shared eq)))
   ;; HP2L2-NEXT:  (local $2 (ref null (shared eq)))
   ;; HP2L2-NEXT:  (local $3 (ref null (shared eq)))
@@ -4102,519 +3159,6 @@
       )
       (i32.const 0)
       (local.get $r)
-    )
-  )
-
-  ;; CHECK:      (func $cmpxchg-unknown-operands (type $6) (param $s (ref $s0)) (param $a (ref $a0))
-  ;; CHECK-NEXT:  (local $2 (ref null $s0))
-  ;; CHECK-NEXT:  (local $3 (ref null $a0))
-  ;; CHECK-NEXT:  (local $4 i32)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref null (shared eq)))
-  ;; CHECK-NEXT:    (local.set $2
-  ;; CHECK-NEXT:     (local.get $s)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block (result (ref null (shared none)))
-  ;; CHECK-NEXT:      (ref.null (shared none))
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.null (shared none))
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (struct.atomic.get $s0 0
-  ;; CHECK-NEXT:     (local.get $2)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.atomic.rmw.cmpxchg $s0 0
-  ;; CHECK-NEXT:    (local.get $s)
-  ;; CHECK-NEXT:    (ref.null (shared none))
-  ;; CHECK-NEXT:    (struct.new_default $s1)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref null (shared eq)))
-  ;; CHECK-NEXT:    (local.set $3
-  ;; CHECK-NEXT:     (local.get $a)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.set $4
-  ;; CHECK-NEXT:     (i32.const 0)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block (result (ref null (shared none)))
-  ;; CHECK-NEXT:      (ref.null (shared none))
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.null (shared none))
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (array.atomic.get $a0
-  ;; CHECK-NEXT:     (local.get $3)
-  ;; CHECK-NEXT:     (local.get $4)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (array.atomic.rmw.cmpxchg $a0
-  ;; CHECK-NEXT:    (local.get $a)
-  ;; CHECK-NEXT:    (i32.const 0)
-  ;; CHECK-NEXT:    (ref.null (shared none))
-  ;; CHECK-NEXT:    (struct.new_default $s1)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.atomic.rmw.cmpxchg $s0 0
-  ;; CHECK-NEXT:    (local.get $s)
-  ;; CHECK-NEXT:    (select (result (ref null (exact $s1)))
-  ;; CHECK-NEXT:     (struct.new_default $s1)
-  ;; CHECK-NEXT:     (ref.null (shared none))
-  ;; CHECK-NEXT:     (i32.const 0)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (struct.new_default $s1)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  ;; HP2L2:      (func $cmpxchg-unknown-operands (type $6) (param $s (ref $s0)) (param $a (ref $a0))
-  ;; HP2L2-NEXT:  (local $2 (ref null $s0))
-  ;; HP2L2-NEXT:  (local $3 (ref null $a0))
-  ;; HP2L2-NEXT:  (local $4 i32)
-  ;; HP2L2-NEXT:  (drop
-  ;; HP2L2-NEXT:   (block (result (ref null (shared eq)))
-  ;; HP2L2-NEXT:    (local.set $2
-  ;; HP2L2-NEXT:     (local.get $s)
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (block (result (ref null (shared none)))
-  ;; HP2L2-NEXT:      (ref.null (shared none))
-  ;; HP2L2-NEXT:     )
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (ref.null (shared none))
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (struct.atomic.get $s0 0
-  ;; HP2L2-NEXT:     (local.get $2)
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:   )
-  ;; HP2L2-NEXT:  )
-  ;; HP2L2-NEXT:  (drop
-  ;; HP2L2-NEXT:   (struct.atomic.rmw.cmpxchg $s0 0
-  ;; HP2L2-NEXT:    (local.get $s)
-  ;; HP2L2-NEXT:    (ref.null (shared none))
-  ;; HP2L2-NEXT:    (struct.new_default $s1)
-  ;; HP2L2-NEXT:   )
-  ;; HP2L2-NEXT:  )
-  ;; HP2L2-NEXT:  (drop
-  ;; HP2L2-NEXT:   (block (result (ref null (shared eq)))
-  ;; HP2L2-NEXT:    (local.set $3
-  ;; HP2L2-NEXT:     (local.get $a)
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (local.set $4
-  ;; HP2L2-NEXT:     (i32.const 0)
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (block (result (ref null (shared none)))
-  ;; HP2L2-NEXT:      (ref.null (shared none))
-  ;; HP2L2-NEXT:     )
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (ref.null (shared none))
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (array.atomic.get $a0
-  ;; HP2L2-NEXT:     (local.get $3)
-  ;; HP2L2-NEXT:     (local.get $4)
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:   )
-  ;; HP2L2-NEXT:  )
-  ;; HP2L2-NEXT:  (drop
-  ;; HP2L2-NEXT:   (array.atomic.rmw.cmpxchg $a0
-  ;; HP2L2-NEXT:    (local.get $a)
-  ;; HP2L2-NEXT:    (i32.const 0)
-  ;; HP2L2-NEXT:    (ref.null (shared none))
-  ;; HP2L2-NEXT:    (struct.new_default $s1)
-  ;; HP2L2-NEXT:   )
-  ;; HP2L2-NEXT:  )
-  ;; HP2L2-NEXT:  (drop
-  ;; HP2L2-NEXT:   (struct.atomic.rmw.cmpxchg $s0 0
-  ;; HP2L2-NEXT:    (local.get $s)
-  ;; HP2L2-NEXT:    (select (result (ref null (exact $s1)))
-  ;; HP2L2-NEXT:     (struct.new_default $s1)
-  ;; HP2L2-NEXT:     (ref.null (shared none))
-  ;; HP2L2-NEXT:     (i32.const 0)
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (struct.new_default $s1)
-  ;; HP2L2-NEXT:   )
-  ;; HP2L2-NEXT:  )
-  ;; HP2L2-NEXT: )
-  (func $cmpxchg-unknown-operands (param $s (ref $s0)) (param $a (ref $a0))
-    ;; Unknown (null) replacement or expected operands on struct and array
-    ;; cmpxchg alongside candidate allocations, plus an expected operand that
-    ;; merges a candidate allocation with null during origin propagation.
-    (drop
-      (struct.atomic.rmw.cmpxchg $s0 0
-        (local.get $s)
-        (struct.new_default $s1)
-        (ref.null (shared none))
-      )
-    )
-    (drop
-      (struct.atomic.rmw.cmpxchg $s0 0
-        (local.get $s)
-        (ref.null (shared eq))
-        (struct.new_default $s1)
-      )
-    )
-    (drop
-      (array.atomic.rmw.cmpxchg $a0
-        (local.get $a)
-        (i32.const 0)
-        (struct.new_default $s1)
-        (ref.null (shared none))
-      )
-    )
-    (drop
-      (array.atomic.rmw.cmpxchg $a0
-        (local.get $a)
-        (i32.const 0)
-        (ref.null (shared eq))
-        (struct.new_default $s1)
-      )
-    )
-    (drop
-      (struct.atomic.rmw.cmpxchg $s0 0
-        (local.get $s)
-        (select (result (ref null (shared eq)))
-          (struct.new_default $s1)
-          (ref.null (shared eq))
-          (i32.const 0)
-        )
-        (struct.new_default $s1)
-      )
-    )
-  )
-)
-
-(module
-  (rec
-    ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $outer (shared (struct (field (mut (ref $inner))))))
-    ;; HP2L2:      (rec
-    ;; HP2L2-NEXT:  (type $outer (shared (struct (field (mut (ref $inner))))))
-    (type $outer (shared (struct (field (mut (ref $inner))))))
-    ;; CHECK:       (type $inner (shared (struct)))
-    ;; HP2L2:       (type $inner (shared (struct)))
-    (type $inner (shared (struct)))
-    ;; CHECK:       (type $other (shared (struct)))
-    ;; HP2L2:       (type $other (shared (struct)))
-    (type $other (shared (struct)))
-  )
-
-  ;; CHECK:      (type $arr (shared (array (mut (ref $inner)))))
-  ;; HP2L2:      (type $arr (shared (array (mut (ref $inner)))))
-  (type $arr (shared (array (mut (ref $inner)))))
-
-  ;; CHECK:      (type $4 (func (param (ref $outer))))
-
-  ;; CHECK:      (type $5 (func (param (ref $outer) (ref $arr) i32)))
-
-  ;; CHECK:      (type $6 (func (result (ref $inner))))
-
-  ;; CHECK:      (func $cmpxchg-bot-expected-nonnull-replacement (type $4) (param $s (ref $outer))
-  ;; CHECK-NEXT:  (local $1 (ref $inner))
-  ;; CHECK-NEXT:  (local $2 (ref $inner))
-  ;; CHECK-NEXT:  (local $3 (ref $inner))
-  ;; CHECK-NEXT:  (local $4 (ref null (shared eq)))
-  ;; CHECK-NEXT:  (local $5 (ref null $inner))
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.atomic.rmw.cmpxchg $outer 0
-  ;; CHECK-NEXT:    (local.get $s)
-  ;; CHECK-NEXT:    (block
-  ;; CHECK-NEXT:     (drop
-  ;; CHECK-NEXT:      (block (result (ref null (shared none)))
-  ;; CHECK-NEXT:       (ref.null (shared none))
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (unreachable)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (struct.new_default $inner)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref $inner))
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block (result (ref null (shared none)))
-  ;; CHECK-NEXT:      (local.set $2
-  ;; CHECK-NEXT:       (struct.new_default $inner)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (local.set $1
-  ;; CHECK-NEXT:       (local.get $2)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (ref.null (shared none))
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.set $4
-  ;; CHECK-NEXT:     (block
-  ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (block (result (ref null (shared none)))
-  ;; CHECK-NEXT:        (ref.null (shared none))
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (unreachable)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block (result (ref null (shared none)))
-  ;; CHECK-NEXT:      (ref.null (shared none))
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.set $3
-  ;; CHECK-NEXT:     (local.get $1)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (if
-  ;; CHECK-NEXT:     (ref.eq
-  ;; CHECK-NEXT:      (local.get $1)
-  ;; CHECK-NEXT:      (local.get $4)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (then
-  ;; CHECK-NEXT:      (local.set $1
-  ;; CHECK-NEXT:       (ref.as_non_null
-  ;; CHECK-NEXT:        (local.get $5)
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.get $3)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  ;; HP2L2:      (type $4 (func (param (ref $outer))))
-
-  ;; HP2L2:      (type $5 (func (param (ref $outer) (ref $arr) i32)))
-
-  ;; HP2L2:      (type $6 (func (result (ref $inner))))
-
-  ;; HP2L2:      (func $cmpxchg-bot-expected-nonnull-replacement (type $4) (param $s (ref $outer))
-  ;; HP2L2-NEXT:  (local $1 (ref $inner))
-  ;; HP2L2-NEXT:  (local $2 (ref null $outer))
-  ;; HP2L2-NEXT:  (local $3 (ref $inner))
-  ;; HP2L2-NEXT:  (drop
-  ;; HP2L2-NEXT:   (block (result (ref $inner))
-  ;; HP2L2-NEXT:    (local.set $2
-  ;; HP2L2-NEXT:     (local.get $s)
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (block
-  ;; HP2L2-NEXT:      (drop
-  ;; HP2L2-NEXT:       (block (result (ref null (shared none)))
-  ;; HP2L2-NEXT:        (ref.null (shared none))
-  ;; HP2L2-NEXT:       )
-  ;; HP2L2-NEXT:      )
-  ;; HP2L2-NEXT:      (unreachable)
-  ;; HP2L2-NEXT:     )
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (block (result (ref null (shared none)))
-  ;; HP2L2-NEXT:      (ref.null (shared none))
-  ;; HP2L2-NEXT:     )
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (struct.atomic.get $outer 0
-  ;; HP2L2-NEXT:     (local.get $2)
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:   )
-  ;; HP2L2-NEXT:  )
-  ;; HP2L2-NEXT:  (drop
-  ;; HP2L2-NEXT:   (block (result (ref $inner))
-  ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (block (result (ref null (shared none)))
-  ;; HP2L2-NEXT:      (local.set $3
-  ;; HP2L2-NEXT:       (struct.new_default $inner)
-  ;; HP2L2-NEXT:      )
-  ;; HP2L2-NEXT:      (local.set $1
-  ;; HP2L2-NEXT:       (local.get $3)
-  ;; HP2L2-NEXT:      )
-  ;; HP2L2-NEXT:      (ref.null (shared none))
-  ;; HP2L2-NEXT:     )
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (block
-  ;; HP2L2-NEXT:      (drop
-  ;; HP2L2-NEXT:       (block (result (ref null (shared none)))
-  ;; HP2L2-NEXT:        (ref.null (shared none))
-  ;; HP2L2-NEXT:       )
-  ;; HP2L2-NEXT:      )
-  ;; HP2L2-NEXT:      (unreachable)
-  ;; HP2L2-NEXT:     )
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (block (result (ref null (shared none)))
-  ;; HP2L2-NEXT:      (ref.null (shared none))
-  ;; HP2L2-NEXT:     )
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (local.get $1)
-  ;; HP2L2-NEXT:   )
-  ;; HP2L2-NEXT:  )
-  ;; HP2L2-NEXT: )
-  (func $cmpxchg-bot-expected-nonnull-replacement (param $s (ref $outer))
-    ;; When expected traps in a failing cast, cmpxchg never executes, so even a
-    ;; non-nullable replacement cannot be written to the heap and is optimized
-    ;; away when --heap2local2 rewrites the cmpxchg to drop its operands.
-    (drop
-      (struct.atomic.rmw.cmpxchg $outer 0
-        (local.get $s)
-        (ref.cast (ref null $inner)
-          (struct.new_default $other)
-        )
-        (struct.new_default $inner)
-      )
-    )
-    ;; Same when the struct reference itself is a non-escaping allocation.
-    (drop
-      (struct.atomic.rmw.cmpxchg $outer 0
-        (struct.new $outer
-          (struct.new_default $inner)
-        )
-        (ref.cast (ref null $inner)
-          (struct.new_default $other)
-        )
-        (struct.new_default $inner)
-      )
-    )
-  )
-
-  ;; CHECK:      (func $cmpxchg-unreachable-ref-replacement (type $5) (param $s (ref $outer)) (param $a (ref $arr)) (param $i i32)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.atomic.rmw.cmpxchg $outer 0
-  ;; CHECK-NEXT:    (local.get $s)
-  ;; CHECK-NEXT:    (unreachable)
-  ;; CHECK-NEXT:    (struct.new_default $inner)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (array.atomic.rmw.cmpxchg $arr
-  ;; CHECK-NEXT:    (local.get $a)
-  ;; CHECK-NEXT:    (local.get $i)
-  ;; CHECK-NEXT:    (unreachable)
-  ;; CHECK-NEXT:    (struct.new_default $inner)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  ;; HP2L2:      (func $cmpxchg-unreachable-ref-replacement (type $5) (param $s (ref $outer)) (param $a (ref $arr)) (param $i i32)
-  ;; HP2L2-NEXT:  (drop
-  ;; HP2L2-NEXT:   (struct.atomic.rmw.cmpxchg $outer 0
-  ;; HP2L2-NEXT:    (local.get $s)
-  ;; HP2L2-NEXT:    (unreachable)
-  ;; HP2L2-NEXT:    (struct.new_default $inner)
-  ;; HP2L2-NEXT:   )
-  ;; HP2L2-NEXT:  )
-  ;; HP2L2-NEXT:  (drop
-  ;; HP2L2-NEXT:   (array.atomic.rmw.cmpxchg $arr
-  ;; HP2L2-NEXT:    (local.get $a)
-  ;; HP2L2-NEXT:    (local.get $i)
-  ;; HP2L2-NEXT:    (unreachable)
-  ;; HP2L2-NEXT:    (struct.new_default $inner)
-  ;; HP2L2-NEXT:   )
-  ;; HP2L2-NEXT:  )
-  ;; HP2L2-NEXT: )
-  (func $cmpxchg-unreachable-ref-replacement (param $s (ref $outer)) (param $a (ref $arr)) (param $i i32)
-    ;; Optimizer skips unreachable cmpxchg ops, and validation still checks
-    ;; replacement against a reachable ref's non-nullable field or element type,
-    ;; so replacement must not be optimized to null.
-    (drop
-      (struct.atomic.rmw.cmpxchg $outer 0
-        (local.get $s)
-        (unreachable)
-        (struct.new_default $inner)
-      )
-    )
-    (drop
-      (array.atomic.rmw.cmpxchg $arr
-        (local.get $a)
-        (local.get $i)
-        (unreachable)
-        (struct.new_default $inner)
-      )
-    )
-  )
-
-  ;; CHECK:      (func $cmpxchg-bottom-ref-i32-expected (type $6) (result (ref $inner))
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block ;; (replaces unreachable StructCmpxchg we can't emit)
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.null (shared none))
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.const 0)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (struct.new_default $inner)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (block ;; (replaces unreachable ArrayCmpxchg we can't emit)
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (ref.null (shared none))
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (i32.const 0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (i32.const 0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (struct.new_default $inner)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (unreachable)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  ;; HP2L2:      (func $cmpxchg-bottom-ref-i32-expected (type $6) (result (ref $inner))
-  ;; HP2L2-NEXT:  (drop
-  ;; HP2L2-NEXT:   (block ;; (replaces unreachable StructCmpxchg we can't emit)
-  ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (ref.null (shared none))
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (i32.const 0)
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (drop
-  ;; HP2L2-NEXT:     (struct.new_default $inner)
-  ;; HP2L2-NEXT:    )
-  ;; HP2L2-NEXT:    (unreachable)
-  ;; HP2L2-NEXT:   )
-  ;; HP2L2-NEXT:  )
-  ;; HP2L2-NEXT:  (block ;; (replaces unreachable ArrayCmpxchg we can't emit)
-  ;; HP2L2-NEXT:   (drop
-  ;; HP2L2-NEXT:    (ref.null (shared none))
-  ;; HP2L2-NEXT:   )
-  ;; HP2L2-NEXT:   (drop
-  ;; HP2L2-NEXT:    (i32.const 0)
-  ;; HP2L2-NEXT:   )
-  ;; HP2L2-NEXT:   (drop
-  ;; HP2L2-NEXT:    (i32.const 0)
-  ;; HP2L2-NEXT:   )
-  ;; HP2L2-NEXT:   (drop
-  ;; HP2L2-NEXT:    (struct.new_default $inner)
-  ;; HP2L2-NEXT:   )
-  ;; HP2L2-NEXT:   (unreachable)
-  ;; HP2L2-NEXT:  )
-  ;; HP2L2-NEXT: )
-  (func $cmpxchg-bottom-ref-i32-expected (result (ref $inner))
-    ;; A bottom nullref in ref makes the cmpxchg unreachable and lets validation
-    ;; accept a non-reference expected operand; because the unreachable cmpxchg is
-    ;; not rewritten, replacement stays unoptimized.
-    (drop
-      (struct.atomic.rmw.cmpxchg $outer 0
-        (ref.null (shared none))
-        (i32.const 0)
-        (struct.new_default $inner)
-      )
-    )
-    (array.atomic.rmw.cmpxchg $arr
-      (ref.null (shared none))
-      (i32.const 0)
-      (i32.const 0)
-      (struct.new_default $inner)
     )
   )
 )
