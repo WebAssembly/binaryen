@@ -280,7 +280,7 @@ struct GraphBuilder
 
   AllocId addCandidateAlloc(Expression* curr, const FieldList& fields) {
     assert(state.allocs.size() < std::numeric_limits<AllocId>::max());
-    AllocId id = AllocId(state.allocs.size());
+    auto id = AllocId(state.allocs.size());
     auto& info = state.allocs.emplace_back();
     info.expr = curr;
     info.fields.assign(fields.begin(), fields.end());
