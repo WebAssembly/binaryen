@@ -73,7 +73,6 @@ constexpr uint32_t MaxArraySize = 20;
 using AllocId = uint32_t;
 using NodeId = uint32_t;
 constexpr NodeId TopNode = 0;
-constexpr NodeId InvalidNode = NodeId(-1);
 
 // Lattice of origins used in Phase 2 origin analysis.
 using OriginLattice = analysis::Flat<AllocId>;
@@ -132,7 +131,6 @@ struct AnalysisState {
   NodeId getNode(Expression* curr) {
     assert(curr);
     assert(curr->type.isRef());
-    assert(origins.size() < InvalidNode);
     auto [it, inserted] = exprNodes.emplace(curr, NodeId(origins.size()));
     if (inserted) {
       origins.push_back(originLattice.getBottom());
@@ -497,7 +495,6 @@ struct GraphBuilder
 // Phase 2: Solve smallest fixed point over Flat<AllocId> origins.
 void computeOrigins(AnalysisState& state) {
   size_t numNodes = state.origins.size();
-  assert(state.identityEdges.size() < InvalidNode);
   // Build a compressed-sparse-row (CSR) forward-adjacency table from
   // state.identityEdges: first count outgoing edges per node and compute prefix
   // sums in outOffsets so node u's targets live in [outOffsets[u],
