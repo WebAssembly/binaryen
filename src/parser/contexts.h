@@ -2038,77 +2038,79 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
   }
 
   void setSrcLoc(const std::vector<Annotation>& annotations) {
-    const Annotation* annotation = nullptr;
+    bool hasSrcAnnotation = false;
+    Function::DebugLocations locs;
     for (auto& a : annotations) {
-      if (a.kind.view() == std::string_view("src")) {
-        annotation = &a;
+      if (a.kind.view() != std::string_view("src")) {
+        continue;
       }
-    }
-    if (!annotation) {
-      return;
-    }
-    Lexer lexer(annotation->contents);
-    if (lexer.empty()) {
-      irBuilder.setDebugLocation({});
-      return;
-    }
+      hasSrcAnnotation = true;
+      Lexer lexer(a.contents);
+      if (lexer.empty()) {
+        locs.clear();
+        continue;
+      }
 
-    auto contents = lexer.next();
+      auto contents = lexer.next();
 
-    auto fileSize = contents.find(':');
-    if (fileSize == 0 || fileSize == contents.npos) {
-      return;
-    }
-    auto file = contents.substr(0, fileSize);
-    contents = contents.substr(fileSize + 1);
-
-    auto lineSize = contents.find(':');
-    if (lineSize == contents.npos) {
-      return;
-    }
-    lexer = Lexer(contents.substr(0, lineSize));
-    auto line = lexer.takeU32();
-    if (!line || !lexer.empty()) {
-      return;
-    }
-    contents = contents.substr(lineSize + 1);
-
-    auto colSize = contents.find(':');
-    if (colSize == contents.npos) {
-      colSize = contents.size();
-      if (colSize == 0) {
+      auto fileSize = contents.find(':');
+      if (fileSize == 0 || fileSize == contents.npos) {
         return;
       }
+      auto file = contents.substr(0, fileSize);
+      contents = contents.substr(fileSize + 1);
+
+      auto lineSize = contents.find(':');
+      if (lineSize == contents.npos) {
+        return;
+      }
+      lexer = Lexer(contents.substr(0, lineSize));
+      auto line = lexer.takeU32();
+      if (!line || !lexer.empty()) {
+        return;
+      }
+      contents = contents.substr(lineSize + 1);
+
+      auto colSize = contents.find(':');
+      if (colSize == contents.npos) {
+        colSize = contents.size();
+        if (colSize == 0) {
+          return;
+        }
+      }
+      lexer = Lexer(contents.substr(0, colSize));
+      auto col = lexer.takeU32();
+      if (!col) {
+        return;
+      }
+
+      std::optional<BinaryLocation> symbolNameIndex;
+      if (colSize != contents.size()) {
+        contents = contents.substr(colSize + 1);
+        auto symbolName = contents;
+        auto [it, inserted] = debugSymbolNameIndices.insert(
+          {symbolName, debugSymbolNameIndices.size()});
+        if (inserted) {
+          assert(wasm.debugInfoSymbolNames.size() == it->second);
+          wasm.debugInfoSymbolNames.push_back(std::string(symbolName));
+        }
+        symbolNameIndex = it->second;
+      }
+
+      // TODO: If we ever parallelize the parse, access to
+      // `wasm.debugInfoFileNames` will have to be protected by a lock.
+      auto [it, inserted] =
+        debugFileIndices.insert({file, debugFileIndices.size()});
+      if (inserted) {
+        assert(wasm.debugInfoFileNames.size() == it->second);
+        wasm.debugInfoFileNames.push_back(std::string(file));
+      }
+      locs.emplace_back(it->second, *line, *col, symbolNameIndex);
     }
-    lexer = Lexer(contents.substr(0, colSize));
-    auto col = lexer.takeU32();
-    if (!col) {
+    if (!hasSrcAnnotation) {
       return;
     }
-
-    std::optional<BinaryLocation> symbolNameIndex;
-    if (colSize != contents.size()) {
-      contents = contents.substr(colSize + 1);
-      auto symbolName = contents;
-      auto [it, inserted] = debugSymbolNameIndices.insert(
-        {symbolName, debugSymbolNameIndices.size()});
-      if (inserted) {
-        assert(wasm.debugInfoSymbolNames.size() == it->second);
-        wasm.debugInfoSymbolNames.push_back(std::string(symbolName));
-      }
-      symbolNameIndex = it->second;
-    }
-
-    // TODO: If we ever parallelize the parse, access to
-    // `wasm.debugInfoFileNames` will have to be protected by a lock.
-    auto [it, inserted] =
-      debugFileIndices.insert({file, debugFileIndices.size()});
-    if (inserted) {
-      assert(wasm.debugInfoFileNames.size() == it->second);
-      wasm.debugInfoFileNames.push_back(std::string(file));
-    }
-    irBuilder.setDebugLocation(
-      {Function::DebugLocation{it->second, *line, *col, symbolNameIndex}});
+    irBuilder.setDebugLocation(locs);
   }
 
   Result<> makeBlock(Index pos,
