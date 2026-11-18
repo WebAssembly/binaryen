@@ -459,8 +459,8 @@
   ;; CHECK:      (func $super-func (type $super) (param $0 (ref any))
   ;; CHECK-NEXT: )
   (func $super-func (type $super) (param (ref any))
-    ;; supertype of js.called function. Can't be relaxed since its subtype
-    ;; is unrelaxed.
+    ;; This is a supertype of a js.called function. It can't be relaxed since
+    ;; its subtype is unrelaxable and we'd break the subtyping relationship.
   )
 
   ;; CHECK:      (@binaryen.js.called)
@@ -473,7 +473,10 @@
 
   ;; CHECK:      (func $sub-func (type $sub) (param $0 anyref)
   ;; CHECK-NEXT: )
-  (func $sub-func (type $sub) (param (ref any)))
+  (func $sub-func (type $sub) (param (ref any))
+    ;; The supertype $js-called is called from JS, but this type is not. We can
+    ;; still relax.
+  )
 
   ;; CHECK:      (func $reference (type $2)
   ;; CHECK-NEXT:  (drop
