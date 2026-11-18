@@ -15,10 +15,16 @@
  */
 
 //
-// Generalize the types of locals as much as possible, both to eliminate
-// unnecessarily refined types from the type section and (TODO) to weaken casts
-// that cast to unnecessarily refined types. If the casts are weakened enough,
-// they will be able to be removed by OptimizeInstructions/StripRefiningCasts.
+// Generalize the types of locals and casts as much as possible, both to
+// eliminate unnecessarily refined types from the type section and to weaken
+// casts that cast to unnecessarily refined types. If the casts are weakened
+// enough, they will be able to be removed by
+// OptimizeInstructions/StripRefiningCasts.
+//
+// Currently we only weaken casts in ways that cannot remove traps (e.g. when
+// the input's original static type already guaranteed the cast outcome, or when
+// generalizing descriptor supertypes).
+// TODO: Look into weakening casts further when trapsNeverHappen is enabled.
 //
 
 #include <optional>
@@ -29,6 +35,7 @@
 #include "ir/branch-utils.h"
 #include "ir/child-typer.h"
 #include "ir/glbs.h"
+#include "ir/intrinsics.h"
 #include "ir/utils.h"
 #include "pass.h"
 #include "wasm-traversal.h"
@@ -110,6 +117,25 @@ HeapType generalizeStructTypeByDescriptor(
   return type;
 }
 
+// Find the most general supertype of a described struct type that still
+// satisfies `reqType`, if any.
+HeapType
+generalizeDescribedStructType(HeapType type,
+                              std::optional<HeapType> reqType = std::nullopt) {
+  while (true) {
+    auto candidateType = type.getDeclaredSuperType();
+    if (!candidateType) {
+      break;
+    }
+    assert(candidateType->getDescriptorType());
+    if (reqType && !HeapType::isSubType(*candidateType, *reqType)) {
+      break;
+    }
+    type = *candidateType;
+  }
+  return type;
+}
+
 // Find the most general supertype of an array type whose element type satisfies
 // `reqElemType`, if any.
 HeapType generalizeArrayType(HeapType type,
@@ -142,12 +168,34 @@ Type getTop(Type type) {
   return Type(type.getHeapType().getTop(), Nullable);
 }
 
+// Find the most general cast target up to `reqType` that preserves exact
+// runtime cast/branch/test behavior given that the input originally had type
+// `origRefType`. Any runtime value reaching the cast is guaranteed to inhabit
+// `origRefType`, so any `candidate` with `GLB(candidate, origRefType) ==
+// origCastType` accepts and rejects the exact same values at runtime.
+// TODO: Look into generalizing to `reqType` directly for trapping casts when
+// trapsNeverHappen is enabled.
+Type getGeneralizedCastType(Type origCastType, Type origRefType, Type reqType) {
+  auto nullability =
+    (origCastType.isNonNullableRef() && origRefType.isNullableRef())
+      ? NonNullable
+      : reqType.getNullability();
+  auto candidate = reqType.with(nullability);
+  if (Type::getGreatestLowerBound(candidate, origRefType) == origCastType) {
+    return candidate;
+  }
+  // Even if we cannot generalize the heap type to `reqType`, we may still be
+  // able to generalize nullability (when `origRefType` was non-nullable).
+  candidate = origCastType.with(nullability);
+  if (Type::getGreatestLowerBound(candidate, origRefType) == origCastType) {
+    return candidate;
+  }
+  return origCastType;
+}
+
 // Use ChildTyper to find all subtyping constraints on expressions and locals,
 // and compute the greatest lower bound (GLB) of the required supertypes for
-// each local so that each local is given the least-refined valid type.
-//
-// TODO: handle ref.as_non_null, br_on_null, publish, br_if, etc. better: we do
-//       not need to consider their results fixed.
+// each local and cast so that they are given the least-refined valid types.
 struct Generalizer : public ChildTyper<Generalizer> {
 
   using Super = ChildTyper<Generalizer>;
@@ -160,6 +208,14 @@ struct Generalizer : public ChildTyper<Generalizer> {
   // Map from an expression to the sub-expressions whose types flow out of it
   // (or depend on its required output type, as in RefAs).
   std::unordered_map<Expression*, std::vector<Expression*>> exprSubs;
+
+  // Map from a break target to the BrOn instructions targeting it, and the
+  // reverse map from each BrOn to its target.
+  std::unordered_map<Expression*, std::vector<BrOn*>> targetBrOns;
+  std::unordered_map<BrOn*, Expression*> brOnTargets;
+
+  // Original input type of each cast instruction before any generalization.
+  std::unordered_map<Expression*, Type> origRefTypes;
 
   // For each local, the values assigned to it via local.set / local.tee.
   std::vector<std::vector<Expression*>> localSetValues;
@@ -361,89 +417,92 @@ struct Generalizer : public ChildTyper<Generalizer> {
 
   // If custom descriptors are disabled, we still use exact types in the IR,
   // and we accept trivial casts (and null checks) where the input has the same
-  // exact heap type as the cast target. We must therefore avoid generalizing
-  // the input's heap type or exactness in a way that would make an exact cast
-  // non-trivial (but nullability can still be generalized).
+  // exact heap type as the cast target. When a cast must remain exact, we must
+  // therefore avoid generalizing the input's heap type or exactness in a way
+  // that would make the exact cast non-trivial (but nullability can still be
+  // generalized).
   void noteExactCast(Expression* ref, Type castType) {
     if (!wasm.features.hasCustomDescriptors() && castType.isExact()) {
       addConstraint(ref, castType.with(Nullable));
     }
   }
 
+  void
+  constrainCastDesc(Expression* descExpr, HeapType origStruct, Type reqType) {
+    if (reqType.isExact()) {
+      auto desc = origStruct.getDescriptorType();
+      assert(desc);
+      addConstraint(descExpr, Type(*desc, Nullable, Exact));
+    } else {
+      auto genStruct =
+        generalizeDescribedStructType(origStruct, reqType.getHeapType());
+      auto desc = genStruct.getDescriptorType();
+      assert(desc);
+      addConstraint(descExpr, Type(*desc, Nullable, Inexact));
+    }
+  }
+
+  void visitCall(Call* curr) {
+    Super::visitCall(curr);
+    if (Intrinsics(wasm).isCallWithoutEffects(curr) &&
+        !curr->operands.empty()) {
+      auto* target = curr->operands.back();
+      if (target->type.isSignature()) {
+        auto sigType = target->type.getHeapType();
+        auto reqResults = curr->isReturn ? func->getResults() : curr->type;
+        sigType = generalizeCallRefTarget(sigType, reqResults);
+        auto params = sigType.getSignature().params;
+        assert(params.size() == curr->operands.size() - 1);
+        for (size_t i = 0; i < params.size(); ++i) {
+          addConstraint(curr->operands[i], params[i]);
+        }
+        addConstraint(target, Type(sigType, Nullable));
+      } else {
+        addConstraint(target, target->type);
+      }
+    }
+  }
+
   void visitRefTest(RefTest* curr) {
+    origRefTypes[curr] = curr->ref->type;
     Super::visitRefTest(curr);
-    noteExactCast(curr->ref, curr->castType);
   }
 
   void visitRefCast(RefCast* curr) {
-    Super::visitRefCast(curr);
-    noteExactCast(curr->ref, curr->type);
+    origRefTypes[curr] = curr->ref->type;
+    if (curr->desc && curr->type.isStruct() && curr->desc->type.isStruct()) {
+      auto genStruct = generalizeDescribedStructType(curr->type.getHeapType());
+      Super::visitRefCast(curr, Type(genStruct, Nullable, Inexact));
+    } else {
+      Super::visitRefCast(curr);
+    }
   }
 
   void visitBrOn(BrOn* curr) {
-    // Note immediate constraints (including descriptor constraints).
-    Super::visitBrOn(curr);
-    noteExactCast(curr->ref, curr->castType);
-    if (curr->desc && !curr->desc->type.isStruct()) {
+    origRefTypes[curr] = curr->ref->type;
+    if (curr->desc &&
+        (!curr->desc->type.isStruct() || !curr->castType.isStruct())) {
+      Super::visitBrOn(curr);
       return;
     }
-    switch (curr->op) {
-      case BrOnNull:
-        // If we do not branch, we flow out the non-null input.
-        if (curr->type.hasRef()) {
-          addConstraint(curr->ref, curr->type.with(Nullable));
-        }
-        break;
-      case BrOnNonNull: {
-        // If we branch, we send the non-null input to the target.
-        auto* breakTarget = walker.findBreakTarget(curr->name);
-        if (breakTarget->type.hasRef()) {
-          addConstraint(curr->ref, breakTarget->type.with(Nullable));
-        }
-        break;
-      }
-      case BrOnCast:
-      case BrOnCastDescEq:
-        // If we do not branch, we flow out the original input when the cast
-        // fails. If the cast type is nullable then nulls take the branch, so
-        // the fallthrough value is made non-nullable.
-        if (curr->type.hasRef()) {
-          auto type = curr->type;
-          if (curr->castType.isNullableRef()) {
-            type = type.with(Nullable);
-          }
-          addConstraint(curr->ref, type);
-        }
-        break;
-      case BrOnCastFail:
-      case BrOnCastDescEqFail: {
-        // We send the original input along when the cast fails, so the input
-        // must be sendable to the target. If the cast type is nullable then
-        // nulls do not fail the cast, so the sent value is non-nullable.
-        auto* breakTarget = walker.findBreakTarget(curr->name);
-        if (breakTarget->type.hasRef()) {
-          auto type = breakTarget->type;
-          if (curr->castType.isNullableRef()) {
-            type = type.with(Nullable);
-          }
-          addConstraint(curr->ref, type);
-        }
-        break;
-      }
+    if (curr->desc) {
+      auto genStruct =
+        generalizeDescribedStructType(curr->castType.getHeapType());
+      auto top = Type(genStruct.getTop(), Nullable);
+      Super::visitBrOn(curr, top, Type(genStruct, Nullable, Inexact));
+    } else {
+      Super::visitBrOn(curr);
+    }
+    if (curr->op != BrOnNull) {
+      auto* target = walker.findBreakTarget(curr->name);
+      brOnTargets[curr] = target;
+      targetBrOns[target].push_back(curr);
     }
   }
 
-  void visitPublish(Publish* curr) {
-    // TODO: Propagate output constraints back to the input, like RefAs.
-    addConstraint(curr->ref, curr->ref->type);
-  }
+  void visitPublish(Publish* curr) { exprSubs[curr].push_back(curr->ref); }
 
-  void visitTupleMake(TupleMake* curr) {
-    // TODO: Track constraints on tuple elements.
-    for (auto* op : curr->operands) {
-      addConstraint(op, op->type);
-    }
-  }
+  void visitTupleMake(TupleMake* curr) {}
 
   void visitCallRef(CallRef* curr) {
     if (!curr->target->type.isSignature()) {
@@ -603,16 +662,83 @@ struct Generalizer : public ChildTyper<Generalizer> {
             addConstraint(get->ref,
                           Type(generalized, Nullable, type.getExactness()));
           }
+        } else if (auto* make = expr->dynCast<TupleMake>()) {
+          assert(type.size() == make->operands.size());
+          for (size_t i = 0; i < make->operands.size(); ++i) {
+            addConstraint(make->operands[i], type[i]);
+          }
         } else if (auto* extract = expr->dynCast<TupleExtract>()) {
           if (extract->tuple->type.isTuple()) {
             Tuple elems = getTop(extract->tuple->type).getTuple();
             elems[extract->index] = type;
             addConstraint(extract->tuple, Type(elems));
           }
+        } else if (auto* cast = expr->dynCast<RefCast>()) {
+          if (cast->desc) {
+            if (cast->type.isStruct() && cast->desc->type.isStruct()) {
+              constrainCastDesc(cast->desc, cast->type.getHeapType(), type);
+            }
+          } else if (type.isExact()) {
+            noteExactCast(cast->ref, cast->type);
+          }
+        } else if (auto* brOn = expr->dynCast<BrOn>()) {
+          if (!brOn->desc ||
+              (brOn->desc->type.isStruct() && brOn->castType.isStruct())) {
+            switch (brOn->op) {
+              case BrOnNull:
+                addConstraint(brOn->ref, type.with(Nullable));
+                break;
+              case BrOnNonNull:
+                WASM_UNREACHABLE("BrOnNonNull has none type");
+              case BrOnCast:
+              case BrOnCastDescEq: {
+                auto refReq =
+                  brOn->castType.isNullableRef() ? type.with(Nullable) : type;
+                addConstraint(brOn->ref, refReq);
+                break;
+              }
+              case BrOnCastFail:
+                if (type.isExact()) {
+                  noteExactCast(brOn->ref, brOn->castType);
+                }
+                break;
+              case BrOnCastDescEqFail:
+                constrainCastDesc(
+                  brOn->desc, brOn->castType.getHeapType(), type);
+                break;
+            }
+          }
         }
         if (auto it = exprSubs.find(expr); it != exprSubs.end()) {
           for (auto* sub : it->second) {
             addConstraint(sub, type);
+          }
+        }
+        if (auto it = targetBrOns.find(expr); it != targetBrOns.end()) {
+          for (auto* brOn : it->second) {
+            switch (brOn->op) {
+              case BrOnNull:
+                WASM_UNREACHABLE("BrOnNull is not in targetBrOns");
+              case BrOnNonNull:
+                addConstraint(brOn->ref, type.with(Nullable));
+                break;
+              case BrOnCast:
+                if (type.isExact()) {
+                  noteExactCast(brOn->ref, brOn->castType);
+                }
+                break;
+              case BrOnCastDescEq:
+                constrainCastDesc(
+                  brOn->desc, brOn->castType.getHeapType(), type);
+                break;
+              case BrOnCastFail:
+              case BrOnCastDescEqFail: {
+                auto refReq =
+                  brOn->castType.isNullableRef() ? type.with(Nullable) : type;
+                addConstraint(brOn->ref, refReq);
+                break;
+              }
+            }
           }
         }
       } else {
@@ -628,6 +754,7 @@ struct Generalizer : public ChildTyper<Generalizer> {
 
 struct TypeGeneralizing : WalkerPass<PostWalker<TypeGeneralizing>> {
   std::vector<Type> localTypes;
+  Generalizer* currGeneralizer = nullptr;
   bool refinalize = false;
 
   bool isFunctionParallel() override { return true; }
@@ -636,6 +763,8 @@ struct TypeGeneralizing : WalkerPass<PostWalker<TypeGeneralizing>> {
   }
 
   void runOnFunction(Module* wasm, Function* func) override {
+    refinalize = false;
+
     // First, remove unreachable code. If we didn't, the unreachable code could
     // become invalid after this optimization because ChildTyper does not
     // constrain unreachable expressions in all cases.
@@ -646,8 +775,9 @@ struct TypeGeneralizing : WalkerPass<PostWalker<TypeGeneralizing>> {
     Generalizer generalizer(*wasm, func);
     generalizer.walk();
     generalizer.propagate();
+    currGeneralizer = &generalizer;
 
-    // Optimize local types. TODO: Optimize casts as well.
+    // Optimize local types.
     auto numLocals = func->getNumLocals();
     auto numParams = func->getNumParams();
     localTypes.resize(numLocals);
@@ -666,8 +796,9 @@ struct TypeGeneralizing : WalkerPass<PostWalker<TypeGeneralizing>> {
       }
     }
 
-    // Update gets and sets accordingly.
+    // Update gets, sets, and casts accordingly.
     Super::runOnFunction(wasm, func);
+    currGeneralizer = nullptr;
 
     if (refinalize) {
       ReFinalize().walkFunctionInModule(func, wasm);
@@ -684,6 +815,90 @@ struct TypeGeneralizing : WalkerPass<PostWalker<TypeGeneralizing>> {
   void visitLocalSet(LocalSet* curr) {
     if (curr->isTee() && localTypes[curr->index] != curr->type) {
       curr->type = localTypes[curr->index];
+      refinalize = true;
+    }
+  }
+
+  void visitRefTest(RefTest* curr) {
+    if (!curr->castType.isRef()) {
+      return;
+    }
+    auto origIt = currGeneralizer->origRefTypes.find(curr);
+    if (origIt == currGeneralizer->origRefTypes.end() ||
+        !origIt->second.isRef()) {
+      return;
+    }
+    auto origRefType = origIt->second;
+    auto reqType = getTop(curr->castType);
+    auto newCastType =
+      getGeneralizedCastType(curr->castType, origRefType, reqType);
+    if (newCastType != curr->castType) {
+      curr->castType = newCastType;
+      refinalize = true;
+    }
+  }
+
+  void visitRefCast(RefCast* curr) {
+    if (!curr->type.isRef()) {
+      return;
+    }
+    auto origIt = currGeneralizer->origRefTypes.find(curr);
+    if (origIt == currGeneralizer->origRefTypes.end() ||
+        !origIt->second.isRef()) {
+      return;
+    }
+    auto origRefType = origIt->second;
+    auto& glb = currGeneralizer->exprGLBs[curr];
+    auto reqType = glb.noted() ? glb.getGLB() : getTop(curr->type);
+    Type newType = curr->type;
+    if (curr->desc) {
+      if (curr->type.isStruct() && curr->desc->type.isStruct()) {
+        // Heap type and exactness are updated from `curr->desc` during
+        // refinalization; we can also relax nullability if the input was
+        // originally non-nullable (so null never occurred at runtime).
+        // TODO: Also relax nullability when trapsNeverHappen is enabled.
+        if (origRefType.isNonNullableRef()) {
+          newType = curr->type.with(reqType.getNullability());
+        }
+      }
+    } else {
+      newType = getGeneralizedCastType(curr->type, origRefType, reqType);
+    }
+    if (newType != curr->type) {
+      curr->type = newType;
+      refinalize = true;
+    }
+  }
+
+  void visitBrOn(BrOn* curr) {
+    if (curr->op == BrOnNull || curr->op == BrOnNonNull ||
+        !curr->castType.isRef()) {
+      return;
+    }
+    auto origIt = currGeneralizer->origRefTypes.find(curr);
+    if (origIt == currGeneralizer->origRefTypes.end() ||
+        !origIt->second.isRef()) {
+      return;
+    }
+    auto origRefType = origIt->second;
+    auto* reqExpr = (curr->op == BrOnCast || curr->op == BrOnCastDescEq)
+                      ? currGeneralizer->brOnTargets.at(curr)
+                      : curr;
+    auto& glb = currGeneralizer->exprGLBs[reqExpr];
+    auto reqType = glb.noted() ? glb.getGLB() : getTop(curr->castType);
+    Type newCastType = curr->castType;
+    if (curr->desc) {
+      if (curr->castType.isStruct() && curr->desc->type.isStruct()) {
+        if (origRefType.isNonNullableRef()) {
+          newCastType = curr->castType.with(reqType.getNullability());
+        }
+      }
+    } else {
+      newCastType =
+        getGeneralizedCastType(curr->castType, origRefType, reqType);
+    }
+    if (newCastType != curr->castType) {
+      curr->castType = newCastType;
       refinalize = true;
     }
   }

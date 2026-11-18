@@ -14,47 +14,50 @@
  ;; NO_CD:      (type $foo (sub (struct)))
  (type $foo (sub (struct)))
 
+ ;; CHECK:      (type $1 (func (param (ref (exact $foo))) (result (ref (exact $foo)))))
+
  ;; CHECK:      (type $bar (sub $foo (struct)))
+ ;; NO_CD:      (type $1 (func (param (ref (exact $foo))) (result (ref (exact $foo)))))
+
  ;; NO_CD:      (type $bar (sub $foo (struct)))
  (type $bar (sub $foo (struct)))
 
- ;; CHECK:      (type $2 (func (param (ref (exact $bar))) (result (ref $foo))))
+ ;; CHECK:      (type $3 (func (param (ref (exact $bar))) (result (ref $foo))))
 
- ;; CHECK:      (type $3 (func (param (ref (exact $foo))) (result anyref)))
+ ;; CHECK:      (type $4 (func (param (ref (exact $foo))) (result anyref)))
 
- ;; CHECK:      (type $4 (func (param (ref (exact $foo))) (result i32)))
+ ;; CHECK:      (type $5 (func (param (ref (exact $foo))) (result i32)))
 
- ;; CHECK:      (type $5 (func (param (ref (exact $foo)))))
+ ;; CHECK:      (type $6 (func (param (ref (exact $foo)))))
 
- ;; CHECK:      (func $ref.test (type $4) (param $exact (ref (exact $foo))) (result i32)
+ ;; CHECK:      (func $ref.test (type $5) (param $exact (ref (exact $foo))) (result i32)
  ;; CHECK-NEXT:  (local $x anyref)
  ;; CHECK-NEXT:  (local.set $x
  ;; CHECK-NEXT:   (local.get $exact)
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (ref.test (ref (exact $foo))
+ ;; CHECK-NEXT:  (ref.test anyref
  ;; CHECK-NEXT:   (local.get $x)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; NO_CD:      (type $2 (func (param (ref (exact $bar))) (result (ref $foo))))
+ ;; NO_CD:      (type $3 (func (param (ref (exact $bar))) (result (ref $foo))))
 
- ;; NO_CD:      (type $3 (func (param (ref (exact $foo))) (result anyref)))
+ ;; NO_CD:      (type $4 (func (param (ref (exact $foo))) (result anyref)))
 
- ;; NO_CD:      (type $4 (func (param (ref (exact $foo))) (result i32)))
+ ;; NO_CD:      (type $5 (func (param (ref (exact $foo))) (result i32)))
 
- ;; NO_CD:      (type $5 (func (param (ref (exact $foo)))))
+ ;; NO_CD:      (type $6 (func (param (ref (exact $foo)))))
 
- ;; NO_CD:      (func $ref.test (type $4) (param $exact (ref (exact $foo))) (result i32)
- ;; NO_CD-NEXT:  (local $x (ref null (exact $foo)))
+ ;; NO_CD:      (func $ref.test (type $5) (param $exact (ref (exact $foo))) (result i32)
+ ;; NO_CD-NEXT:  (local $x anyref)
  ;; NO_CD-NEXT:  (local.set $x
  ;; NO_CD-NEXT:   (local.get $exact)
  ;; NO_CD-NEXT:  )
- ;; NO_CD-NEXT:  (ref.test (ref (exact $foo))
+ ;; NO_CD-NEXT:  (ref.test anyref
  ;; NO_CD-NEXT:   (local.get $x)
  ;; NO_CD-NEXT:  )
  ;; NO_CD-NEXT: )
  (func $ref.test (param $exact (ref (exact $foo))) (result i32)
-  ;; We can generalize $x to anyref, except if NO_CD - then it must remain
-  ;; exact, so the cast remains trivial.
+  ;; Both the test and $x generalize to anyref, even in NO_CD.
   (local $x (ref (exact $foo)))
   (local.set $x
    (local.get $exact)
@@ -64,24 +67,24 @@
   )
  )
 
- ;; CHECK:      (func $ref.cast (type $5) (param $exact (ref (exact $foo)))
+ ;; CHECK:      (func $ref.cast (type $6) (param $exact (ref (exact $foo)))
  ;; CHECK-NEXT:  (local $x anyref)
  ;; CHECK-NEXT:  (local.set $x
  ;; CHECK-NEXT:   (local.get $exact)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (ref.cast (ref (exact $foo))
+ ;; CHECK-NEXT:   (ref.cast anyref
  ;; CHECK-NEXT:    (local.get $x)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; NO_CD:      (func $ref.cast (type $5) (param $exact (ref (exact $foo)))
- ;; NO_CD-NEXT:  (local $x (ref null (exact $foo)))
+ ;; NO_CD:      (func $ref.cast (type $6) (param $exact (ref (exact $foo)))
+ ;; NO_CD-NEXT:  (local $x anyref)
  ;; NO_CD-NEXT:  (local.set $x
  ;; NO_CD-NEXT:   (local.get $exact)
  ;; NO_CD-NEXT:  )
  ;; NO_CD-NEXT:  (drop
- ;; NO_CD-NEXT:   (ref.cast (ref (exact $foo))
+ ;; NO_CD-NEXT:   (ref.cast anyref
  ;; NO_CD-NEXT:    (local.get $x)
  ;; NO_CD-NEXT:   )
  ;; NO_CD-NEXT:  )
@@ -99,28 +102,28 @@
   )
  )
 
- ;; CHECK:      (func $br_on_cast (type $3) (param $exact (ref (exact $foo))) (result anyref)
- ;; CHECK-NEXT:  (local $x (ref (exact $foo)))
+ ;; CHECK:      (func $br_on_cast (type $4) (param $exact (ref (exact $foo))) (result anyref)
+ ;; CHECK-NEXT:  (local $x anyref)
  ;; CHECK-NEXT:  (local.set $x
  ;; CHECK-NEXT:   (local.get $exact)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (block $block (result anyref)
  ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (br_on_cast $block (ref (exact $foo)) (ref (exact $foo))
+ ;; CHECK-NEXT:    (br_on_cast $block anyref anyref
  ;; CHECK-NEXT:     (local.get $x)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (ref.null none)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; NO_CD:      (func $br_on_cast (type $3) (param $exact (ref (exact $foo))) (result anyref)
- ;; NO_CD-NEXT:  (local $x (ref (exact $foo)))
+ ;; NO_CD:      (func $br_on_cast (type $4) (param $exact (ref (exact $foo))) (result anyref)
+ ;; NO_CD-NEXT:  (local $x anyref)
  ;; NO_CD-NEXT:  (local.set $x
  ;; NO_CD-NEXT:   (local.get $exact)
  ;; NO_CD-NEXT:  )
  ;; NO_CD-NEXT:  (block $block (result anyref)
  ;; NO_CD-NEXT:   (drop
- ;; NO_CD-NEXT:    (br_on_cast $block (ref (exact $foo)) (ref (exact $foo))
+ ;; NO_CD-NEXT:    (br_on_cast $block anyref anyref
  ;; NO_CD-NEXT:     (local.get $x)
  ;; NO_CD-NEXT:    )
  ;; NO_CD-NEXT:   )
@@ -130,8 +133,6 @@
  (func $br_on_cast (param $exact (ref (exact $foo))) (result anyref)
   (local $x (ref (exact $foo)))
   ;; As above, but with br_on_cast.
-  ;; TODO: in CHECK we could generalize this to anyref, by adding more logic to
-  ;;       handle br_on like we handle ref.as
   (local.set $x
    (local.get $exact)
   )
@@ -145,28 +146,28 @@
   )
  )
 
- ;; CHECK:      (func $br_on_cast_fail (type $3) (param $exact (ref (exact $foo))) (result anyref)
+ ;; CHECK:      (func $br_on_cast_fail (type $4) (param $exact (ref (exact $foo))) (result anyref)
  ;; CHECK-NEXT:  (local $x anyref)
  ;; CHECK-NEXT:  (local.set $x
  ;; CHECK-NEXT:   (local.get $exact)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (block $block (result anyref)
  ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (br_on_cast_fail $block anyref (ref (exact $foo))
+ ;; CHECK-NEXT:    (br_on_cast_fail $block anyref anyref
  ;; CHECK-NEXT:     (local.get $x)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (ref.null none)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; NO_CD:      (func $br_on_cast_fail (type $3) (param $exact (ref (exact $foo))) (result anyref)
- ;; NO_CD-NEXT:  (local $x (ref null (exact $foo)))
+ ;; NO_CD:      (func $br_on_cast_fail (type $4) (param $exact (ref (exact $foo))) (result anyref)
+ ;; NO_CD-NEXT:  (local $x anyref)
  ;; NO_CD-NEXT:  (local.set $x
  ;; NO_CD-NEXT:   (local.get $exact)
  ;; NO_CD-NEXT:  )
- ;; NO_CD-NEXT:  (block $block (result (ref null (exact $foo)))
+ ;; NO_CD-NEXT:  (block $block (result anyref)
  ;; NO_CD-NEXT:   (drop
- ;; NO_CD-NEXT:    (br_on_cast_fail $block (ref null (exact $foo)) (ref (exact $foo))
+ ;; NO_CD-NEXT:    (br_on_cast_fail $block anyref anyref
  ;; NO_CD-NEXT:     (local.get $x)
  ;; NO_CD-NEXT:    )
  ;; NO_CD-NEXT:   )
@@ -189,25 +190,25 @@
   )
  )
 
- ;; CHECK:      (func $nonbasic (type $2) (param $bar (ref (exact $bar))) (result (ref $foo))
+ ;; CHECK:      (func $nonbasic (type $3) (param $bar (ref (exact $bar))) (result (ref $foo))
  ;; CHECK-NEXT:  (local $x (ref $foo))
  ;; CHECK-NEXT:  (local.set $x
  ;; CHECK-NEXT:   (local.get $bar)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (ref.cast (ref (exact $bar))
+ ;; CHECK-NEXT:   (ref.cast (ref $foo)
  ;; CHECK-NEXT:    (local.get $x)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (local.get $x)
  ;; CHECK-NEXT: )
- ;; NO_CD:      (func $nonbasic (type $2) (param $bar (ref (exact $bar))) (result (ref $foo))
- ;; NO_CD-NEXT:  (local $x (ref (exact $bar)))
+ ;; NO_CD:      (func $nonbasic (type $3) (param $bar (ref (exact $bar))) (result (ref $foo))
+ ;; NO_CD-NEXT:  (local $x (ref $foo))
  ;; NO_CD-NEXT:  (local.set $x
  ;; NO_CD-NEXT:   (local.get $bar)
  ;; NO_CD-NEXT:  )
  ;; NO_CD-NEXT:  (drop
- ;; NO_CD-NEXT:   (ref.cast (ref (exact $bar))
+ ;; NO_CD-NEXT:   (ref.cast (ref $foo)
  ;; NO_CD-NEXT:    (local.get $x)
  ;; NO_CD-NEXT:   )
  ;; NO_CD-NEXT:  )
@@ -216,9 +217,9 @@
  (func $nonbasic (param $bar (ref (exact $bar))) (result (ref $foo))
   (local $x (ref (exact $bar)))
   ;; Note that parsing refines (ref.cast (ref $foo) (local.get $x)) to
-  ;; (ref.cast (ref (exact $bar)) (local.get $x)). With custom descriptors
-  ;; enabled, $x generalizes to (ref $foo). Without custom descriptors, we must
-  ;; keep the cast trivial, so $x stays (ref (exact $bar)).
+  ;; (ref.cast (ref (exact $bar)) (local.get $x)), and TypeGeneralizing weakens
+  ;; the cast back to inexact, allowing $x to generalize to (ref $foo) even
+  ;; without custom descriptors.
   (local.set $x
    (local.get $bar)
   )
@@ -230,13 +231,13 @@
   (local.get $x)
  )
 
- ;; CHECK:      (func $nonbasic-return (type $2) (param $bar (ref (exact $bar))) (result (ref $foo))
+ ;; CHECK:      (func $nonbasic-return (type $3) (param $bar (ref (exact $bar))) (result (ref $foo))
  ;; CHECK-NEXT:  (local $x (ref $foo))
  ;; CHECK-NEXT:  (local.set $x
  ;; CHECK-NEXT:   (local.get $bar)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (ref.cast (ref (exact $bar))
+ ;; CHECK-NEXT:   (ref.cast (ref $foo)
  ;; CHECK-NEXT:    (local.get $x)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
@@ -244,13 +245,13 @@
  ;; CHECK-NEXT:   (local.get $x)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; NO_CD:      (func $nonbasic-return (type $2) (param $bar (ref (exact $bar))) (result (ref $foo))
- ;; NO_CD-NEXT:  (local $x (ref (exact $bar)))
+ ;; NO_CD:      (func $nonbasic-return (type $3) (param $bar (ref (exact $bar))) (result (ref $foo))
+ ;; NO_CD-NEXT:  (local $x (ref $foo))
  ;; NO_CD-NEXT:  (local.set $x
  ;; NO_CD-NEXT:   (local.get $bar)
  ;; NO_CD-NEXT:  )
  ;; NO_CD-NEXT:  (drop
- ;; NO_CD-NEXT:   (ref.cast (ref (exact $bar))
+ ;; NO_CD-NEXT:   (ref.cast (ref $foo)
  ;; NO_CD-NEXT:    (local.get $x)
  ;; NO_CD-NEXT:   )
  ;; NO_CD-NEXT:  )
@@ -275,14 +276,14 @@
   )
  )
 
- ;; CHECK:      (func $nonbasic-no-cast (type $2) (param $bar (ref (exact $bar))) (result (ref $foo))
+ ;; CHECK:      (func $nonbasic-no-cast (type $3) (param $bar (ref (exact $bar))) (result (ref $foo))
  ;; CHECK-NEXT:  (local $x (ref $foo))
  ;; CHECK-NEXT:  (local.set $x
  ;; CHECK-NEXT:   (local.get $bar)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (local.get $x)
  ;; CHECK-NEXT: )
- ;; NO_CD:      (func $nonbasic-no-cast (type $2) (param $bar (ref (exact $bar))) (result (ref $foo))
+ ;; NO_CD:      (func $nonbasic-no-cast (type $3) (param $bar (ref (exact $bar))) (result (ref $foo))
  ;; NO_CD-NEXT:  (local $x (ref $foo))
  ;; NO_CD-NEXT:  (local.set $x
  ;; NO_CD-NEXT:   (local.get $bar)
@@ -299,7 +300,7 @@
   (local.get $x)
  )
 
- ;; CHECK:      (func $nonbasic-return-no-cast (type $2) (param $bar (ref (exact $bar))) (result (ref $foo))
+ ;; CHECK:      (func $nonbasic-return-no-cast (type $3) (param $bar (ref (exact $bar))) (result (ref $foo))
  ;; CHECK-NEXT:  (local $x (ref $foo))
  ;; CHECK-NEXT:  (local.set $x
  ;; CHECK-NEXT:   (local.get $bar)
@@ -308,7 +309,7 @@
  ;; CHECK-NEXT:   (local.get $x)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; NO_CD:      (func $nonbasic-return-no-cast (type $2) (param $bar (ref (exact $bar))) (result (ref $foo))
+ ;; NO_CD:      (func $nonbasic-return-no-cast (type $3) (param $bar (ref (exact $bar))) (result (ref $foo))
  ;; NO_CD-NEXT:  (local $x (ref $foo))
  ;; NO_CD-NEXT:  (local.set $x
  ;; NO_CD-NEXT:   (local.get $bar)
@@ -330,13 +331,13 @@
   )
  )
 
- ;; CHECK:      (func $nonbasic-inexact-cast (type $2) (param $bar (ref (exact $bar))) (result (ref $foo))
+ ;; CHECK:      (func $nonbasic-inexact-cast (type $3) (param $bar (ref (exact $bar))) (result (ref $foo))
  ;; CHECK-NEXT:  (local $x (ref $foo))
  ;; CHECK-NEXT:  (local.set $x
  ;; CHECK-NEXT:   (local.get $bar)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (ref.cast (ref $bar)
+ ;; CHECK-NEXT:   (ref.cast (ref $foo)
  ;; CHECK-NEXT:    (block (result (ref $foo))
  ;; CHECK-NEXT:     (local.get $x)
  ;; CHECK-NEXT:    )
@@ -346,13 +347,13 @@
  ;; CHECK-NEXT:   (local.get $x)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; NO_CD:      (func $nonbasic-inexact-cast (type $2) (param $bar (ref (exact $bar))) (result (ref $foo))
+ ;; NO_CD:      (func $nonbasic-inexact-cast (type $3) (param $bar (ref (exact $bar))) (result (ref $foo))
  ;; NO_CD-NEXT:  (local $x (ref $foo))
  ;; NO_CD-NEXT:  (local.set $x
  ;; NO_CD-NEXT:   (local.get $bar)
  ;; NO_CD-NEXT:  )
  ;; NO_CD-NEXT:  (drop
- ;; NO_CD-NEXT:   (ref.cast (ref $bar)
+ ;; NO_CD-NEXT:   (ref.cast (ref $foo)
  ;; NO_CD-NEXT:    (block (result (ref $foo))
  ;; NO_CD-NEXT:     (local.get $x)
  ;; NO_CD-NEXT:    )
@@ -380,5 +381,131 @@
   (return
    (local.get $x)
   )
+ )
+
+ ;; CHECK:      (func $ref.cast-exact-result (type $1) (param $exact (ref (exact $foo))) (result (ref (exact $foo)))
+ ;; CHECK-NEXT:  (local $x anyref)
+ ;; CHECK-NEXT:  (local.set $x
+ ;; CHECK-NEXT:   (local.get $exact)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (ref.cast (ref (exact $foo))
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; NO_CD:      (func $ref.cast-exact-result (type $1) (param $exact (ref (exact $foo))) (result (ref (exact $foo)))
+ ;; NO_CD-NEXT:  (local $x (ref null (exact $foo)))
+ ;; NO_CD-NEXT:  (local.set $x
+ ;; NO_CD-NEXT:   (local.get $exact)
+ ;; NO_CD-NEXT:  )
+ ;; NO_CD-NEXT:  (ref.cast (ref (exact $foo))
+ ;; NO_CD-NEXT:   (local.get $x)
+ ;; NO_CD-NEXT:  )
+ ;; NO_CD-NEXT: )
+ (func $ref.cast-exact-result (param $exact (ref (exact $foo))) (result (ref (exact $foo)))
+  ;; Because the result must be exact, the cast cannot generalize to inexact.
+  ;; With custom descriptors $x generalizes to anyref; without custom
+  ;; descriptors $x must keep its exact heap type so the cast remains trivial,
+  ;; though nullability still generalizes.
+  (local $x (ref (exact $foo)))
+  (local.set $x
+   (local.get $exact)
+  )
+  (ref.cast (ref (exact $foo))
+   (local.get $x)
+  )
+ )
+
+ ;; CHECK:      (func $br_on_cast-exact-result (type $1) (param $exact (ref (exact $foo))) (result (ref (exact $foo)))
+ ;; CHECK-NEXT:  (local $x anyref)
+ ;; CHECK-NEXT:  (local.set $x
+ ;; CHECK-NEXT:   (local.get $exact)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (block $block (result (ref (exact $foo)))
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (br_on_cast $block anyref (ref (exact $foo))
+ ;; CHECK-NEXT:     (local.get $x)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; NO_CD:      (func $br_on_cast-exact-result (type $1) (param $exact (ref (exact $foo))) (result (ref (exact $foo)))
+ ;; NO_CD-NEXT:  (local $x (ref null (exact $foo)))
+ ;; NO_CD-NEXT:  (local.set $x
+ ;; NO_CD-NEXT:   (local.get $exact)
+ ;; NO_CD-NEXT:  )
+ ;; NO_CD-NEXT:  (block $block (result (ref (exact $foo)))
+ ;; NO_CD-NEXT:   (drop
+ ;; NO_CD-NEXT:    (br_on_cast $block (ref null (exact $foo)) (ref (exact $foo))
+ ;; NO_CD-NEXT:     (local.get $x)
+ ;; NO_CD-NEXT:    )
+ ;; NO_CD-NEXT:   )
+ ;; NO_CD-NEXT:   (unreachable)
+ ;; NO_CD-NEXT:  )
+ ;; NO_CD-NEXT: )
+ (func $br_on_cast-exact-result (param $exact (ref (exact $foo))) (result (ref (exact $foo)))
+  ;; As above, with br_on_cast whose branch target requires an exact result.
+  (local $x (ref (exact $foo)))
+  (local.set $x
+   (local.get $exact)
+  )
+  (block $block (result (ref (exact $foo)))
+   (drop
+    (br_on_cast $block (ref (exact $foo)) (ref (exact $foo))
+     (local.get $x)
+    )
+   )
+   (unreachable)
+  )
+ )
+
+ ;; CHECK:      (func $br_on_cast_fail-exact-result (type $1) (param $exact (ref (exact $foo))) (result (ref (exact $foo)))
+ ;; CHECK-NEXT:  (local $x anyref)
+ ;; CHECK-NEXT:  (local.set $x
+ ;; CHECK-NEXT:   (local.get $exact)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (block $block (result anyref)
+ ;; CHECK-NEXT:    (return
+ ;; CHECK-NEXT:     (br_on_cast_fail $block anyref (ref (exact $foo))
+ ;; CHECK-NEXT:      (local.get $x)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT: )
+ ;; NO_CD:      (func $br_on_cast_fail-exact-result (type $1) (param $exact (ref (exact $foo))) (result (ref (exact $foo)))
+ ;; NO_CD-NEXT:  (local $x (ref null (exact $foo)))
+ ;; NO_CD-NEXT:  (local.set $x
+ ;; NO_CD-NEXT:   (local.get $exact)
+ ;; NO_CD-NEXT:  )
+ ;; NO_CD-NEXT:  (drop
+ ;; NO_CD-NEXT:   (block $block (result (ref null (exact $foo)))
+ ;; NO_CD-NEXT:    (return
+ ;; NO_CD-NEXT:     (br_on_cast_fail $block (ref null (exact $foo)) (ref (exact $foo))
+ ;; NO_CD-NEXT:      (local.get $x)
+ ;; NO_CD-NEXT:     )
+ ;; NO_CD-NEXT:    )
+ ;; NO_CD-NEXT:   )
+ ;; NO_CD-NEXT:  )
+ ;; NO_CD-NEXT:  (unreachable)
+ ;; NO_CD-NEXT: )
+ (func $br_on_cast_fail-exact-result (param $exact (ref (exact $foo))) (result (ref (exact $foo)))
+  ;; As above, with br_on_cast_fail whose fallthrough requires an exact result.
+  (local $x (ref (exact $foo)))
+  (local.set $x
+   (local.get $exact)
+  )
+  (drop
+   (block $block (result anyref)
+    (return
+     (br_on_cast_fail $block (ref null (exact $foo)) (ref (exact $foo))
+      (local.get $x)
+     )
+    )
+   )
+  )
+  (unreachable)
  )
 )

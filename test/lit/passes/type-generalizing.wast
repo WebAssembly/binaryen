@@ -692,7 +692,7 @@
  ;; CHECK:      (func $ref-cast (type $void)
  ;; CHECK-NEXT:  (local $var anyref)
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (ref.cast i31ref
+ ;; CHECK-NEXT:   (ref.cast anyref
  ;; CHECK-NEXT:    (local.get $var)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
@@ -709,7 +709,7 @@
 
  ;; CHECK:      (func $ref-cast-limited (type $1) (result eqref)
  ;; CHECK-NEXT:  (local $var anyref)
- ;; CHECK-NEXT:  (ref.cast i31ref
+ ;; CHECK-NEXT:  (ref.cast eqref
  ;; CHECK-NEXT:   (local.get $var)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -738,7 +738,7 @@
 
  ;; CHECK:      (func $ref-cast-lub (type $9) (result structref)
  ;; CHECK-NEXT:  (local $var anyref)
- ;; CHECK-NEXT:  (ref.cast nullref
+ ;; CHECK-NEXT:  (ref.cast structref
  ;; CHECK-NEXT:   (local.get $var)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -1882,8 +1882,8 @@
  )
 
  ;; CHECK:      (func $publish (type $0) (result eqref)
- ;; CHECK-NEXT:  (local $var1 i31ref)
- ;; CHECK-NEXT:  (local $var2 i31ref)
+ ;; CHECK-NEXT:  (local $var1 anyref)
+ ;; CHECK-NEXT:  (local $var2 eqref)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (publish
  ;; CHECK-NEXT:    (local.get $var1)
@@ -1897,14 +1897,12 @@
   (local $var1 i31ref)
   (local $var2 i31ref)
   ;; No constraint on $var1 because the publish is dropped.
-  ;; TODO
   (drop
    (publish
     (local.get $var1)
    )
   )
   ;; Require that typeof($var2) <: eqref through the publish.
-  ;; TODO
   (publish
    (local.get $var2)
   )
@@ -2576,8 +2574,7 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $tuple.make (result i32 (ref null $A))
-  ;; TODO: Optimize tuples. For now, just do not error by generalizing operands
-  ;;       of tuple.make too much so validation breaks.
+  ;; Propagate constraints on the tuple back to tuple.make operands.
   (local $x (ref null $A))
   (local $tuple (tuple i32 (ref null $A)))
   (local.tee $tuple
@@ -2592,16 +2589,15 @@
 (module
  ;; CHECK:      (type $A (sub (struct)))
  (type $A (sub (struct)))
- ;; CHECK:      (type $1 (func (result (ref $A))))
-
- ;; CHECK:      (type $B (sub $A (struct)))
  (type $B (sub $A (struct)))
+
+ ;; CHECK:      (type $1 (func (result (ref $A))))
 
  ;; CHECK:      (func $br_on_cast_fail_nullable (type $1) (result (ref $A))
  ;; CHECK-NEXT:  (local $x (ref null $A))
  ;; CHECK-NEXT:  (block $block (result (ref $A))
  ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (br_on_cast_fail $block (ref null $A) (ref null $B)
+ ;; CHECK-NEXT:    (br_on_cast_fail $block (ref null $A) (ref null $A)
  ;; CHECK-NEXT:     (local.get $x)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
@@ -3091,6 +3087,573 @@
    (try_table (result i31ref exnref) (catch_ref $tag-i31 $catch)
     (local.get $t)
    )
+  )
+ )
+)
+
+;; Cast generalization, dynamic BrOn/TupleMake propagation, descriptor casts,
+;; and call.without.effects.
+(module
+ ;; CHECK:      (type $Top (sub (struct (field i32))))
+ (type $Top (sub (struct (field i32))))
+ ;; CHECK:      (type $Mid (sub $Top (struct (field i32) (field i64))))
+ (type $Mid (sub $Top (struct (field i32) (field i64))))
+ ;; CHECK:      (type $Bot (sub $Mid (struct (field i32) (field i64) (field f32))))
+ (type $Bot (sub $Mid (struct (field i32) (field i64) (field f32))))
+
+ ;; CHECK:      (type $3 (func (result (ref $Top))))
+
+ ;; CHECK:      (type $4 (func (result i32)))
+
+ ;; CHECK:      (type $5 (func (result i32 (ref null $Top))))
+
+ ;; CHECK:      (type $6 (func (param (ref any))))
+
+ ;; CHECK:      (type $7 (func (param anyref) (result (ref null $Top))))
+
+ ;; CHECK:      (type $8 (func (param (ref null $Top)) (result i32)))
+
+ ;; CHECK:      (type $9 (func))
+
+ ;; CHECK:      (type $10 (func (param (ref null $Top)) (result (ref null $Mid))))
+
+ ;; CHECK:      (func $ref-cast-null-check-generalize (type $3) (result (ref $Top))
+ ;; CHECK-NEXT:  (local $x anyref)
+ ;; CHECK-NEXT:  (ref.cast (ref $Top)
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $ref-cast-null-check-generalize (result (ref $Top))
+  ;; $x originally has type (ref null $Bot), so (ref.cast (ref $Bot) ...) only
+  ;; checks non-null at runtime. $x generalizes to anyref and the cast
+  ;; generalizes to (ref $Top), preserving the non-null trap.
+  (local $x (ref null $Bot))
+  (ref.cast (ref $Bot)
+   (local.get $x)
+  )
+ )
+
+ ;; CHECK:      (func $ref-cast-struct-get (type $4) (result i32)
+ ;; CHECK-NEXT:  (local $x anyref)
+ ;; CHECK-NEXT:  (struct.get $Top 0
+ ;; CHECK-NEXT:   (ref.cast (ref $Top)
+ ;; CHECK-NEXT:    (local.get $x)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $ref-cast-struct-get (result i32)
+  ;; Generalizing the cast from (ref $Bot) to (ref $Top) also generalizes the
+  ;; outer struct.get from $Bot to $Top.
+  (local $x (ref null $Bot))
+  (struct.get $Bot 0
+   (ref.cast (ref $Bot)
+    (local.get $x)
+   )
+  )
+ )
+
+ ;; CHECK:      (func $ref-cast-nonnull-input-relax-nullability (type $6) (param $init (ref any))
+ ;; CHECK-NEXT:  (local $x anyref)
+ ;; CHECK-NEXT:  (local.set $x
+ ;; CHECK-NEXT:   (local.get $init)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (ref.cast i31ref
+ ;; CHECK-NEXT:    (local.get $x)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $ref-cast-nonnull-input-relax-nullability (param $init (ref any))
+  ;; $x is originally non-nullable (ref any), so at runtime it is never null.
+  ;; The heap type check (i31) must be kept to preserve traps on non-i31, while
+  ;; nullability of both $x and the cast can generalize to nullable.
+  (local $x (ref any))
+  (local.set $x
+   (local.get $init)
+  )
+  (drop
+   (ref.cast (ref i31)
+    (local.get $x)
+   )
+  )
+ )
+
+ ;; CHECK:      (func $ref-cast-nontrivial-keep (type $7) (param $any anyref) (result (ref null $Top))
+ ;; CHECK-NEXT:  (ref.cast (ref null $Bot)
+ ;; CHECK-NEXT:   (local.get $any)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $ref-cast-nontrivial-keep (param $any anyref) (result (ref null $Top))
+  ;; Without trapsNeverHappen, a non-trivial cast from anyref to (ref null $Bot)
+  ;; must stay (ref null $Bot) so inputs of type $Top still trap.
+  (ref.cast (ref null $Bot)
+   (local.get $any)
+  )
+ )
+
+ ;; CHECK:      (func $ref-test-null-check-generalize (type $4) (result i32)
+ ;; CHECK-NEXT:  (local $x anyref)
+ ;; CHECK-NEXT:  (ref.test (ref any)
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $ref-test-null-check-generalize (result i32)
+  ;; Testing (ref $Bot) on (ref null $Bot) only checks non-null, so $x
+  ;; generalizes to anyref and the test generalizes to (ref any).
+  (local $x (ref null $Bot))
+  (ref.test (ref $Bot)
+   (local.get $x)
+  )
+ )
+
+ ;; CHECK:      (func $ref-test-nontrivial-keep (type $8) (param $top (ref null $Top)) (result i32)
+ ;; CHECK-NEXT:  (local $x anyref)
+ ;; CHECK-NEXT:  (local.set $x
+ ;; CHECK-NEXT:   (local.get $top)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (ref.test (ref $Bot)
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $ref-test-nontrivial-keep (param $top (ref null $Top)) (result i32)
+  (local $x (ref null $Top))
+  (local.set $x
+   (local.get $top)
+  )
+  ;; Testing (ref $Bot) on (ref null $Top) is non-trivial, so the test keeps
+  ;; (ref $Bot) while $x generalizes to anyref.
+  (ref.test (ref $Bot)
+   (local.get $x)
+  )
+ )
+
+ ;; CHECK:      (func $br_on_null-dropped (type $9)
+ ;; CHECK-NEXT:  (local $x anyref)
+ ;; CHECK-NEXT:  (block $null
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (br_on_null $null
+ ;; CHECK-NEXT:     (local.get $x)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $br_on_null-dropped
+  (local $x (ref null $Bot))
+  ;; Because the fallthrough of br_on_null is dropped, $x generalizes to anyref.
+  (block $null
+   (drop
+    (br_on_null $null
+     (local.get $x)
+    )
+   )
+  )
+ )
+
+ ;; CHECK:      (func $br_on_null-generalize (type $3) (result (ref $Top))
+ ;; CHECK-NEXT:  (local $x (ref null $Top))
+ ;; CHECK-NEXT:  (block $null
+ ;; CHECK-NEXT:   (return
+ ;; CHECK-NEXT:    (br_on_null $null
+ ;; CHECK-NEXT:     (local.get $x)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT: )
+ (func $br_on_null-generalize (result (ref $Top))
+  (local $x (ref null $Bot))
+  (block $null
+   (return
+    (br_on_null $null
+     (local.get $x)
+    )
+   )
+  )
+  (unreachable)
+ )
+
+ ;; CHECK:      (func $br_on_non_null-generalize (type $3) (result (ref $Top))
+ ;; CHECK-NEXT:  (local $x anyref)
+ ;; CHECK-NEXT:  (local $y (ref null $Top))
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (block $dropped (result (ref any))
+ ;; CHECK-NEXT:    (br_on_non_null $dropped
+ ;; CHECK-NEXT:     (local.get $x)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (block $ret (result (ref $Top))
+ ;; CHECK-NEXT:   (br_on_non_null $ret
+ ;; CHECK-NEXT:    (local.get $y)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $br_on_non_null-generalize (result (ref $Top))
+  (local $x (ref null $Bot))
+  (local $y (ref null $Bot))
+  ;; The target block generalizes from (ref $Bot) to (ref $Top) (and to (ref
+  ;; any) when dropped), allowing $x to generalize to anyref and $y to
+  ;; generalize to (ref null $Top).
+  (drop
+   (block $dropped (result (ref $Bot))
+    (br_on_non_null $dropped
+     (local.get $x)
+    )
+    (unreachable)
+   )
+  )
+  (block $ret (result (ref $Bot))
+   (br_on_non_null $ret
+    (local.get $y)
+   )
+   (unreachable)
+  )
+ )
+
+ ;; CHECK:      (func $br_on_cast-generalize (type $10) (param $top (ref null $Top)) (result (ref null $Mid))
+ ;; CHECK-NEXT:  (local $x anyref)
+ ;; CHECK-NEXT:  (local $y anyref)
+ ;; CHECK-NEXT:  (local.set $y
+ ;; CHECK-NEXT:   (local.get $top)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (block $b1 (result (ref $Bot))
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (br_on_cast $b1 anyref (ref $Bot)
+ ;; CHECK-NEXT:      (local.get $y)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (block $b2 (result (ref null $Mid))
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (br_on_cast $b2 anyref (ref $Mid)
+ ;; CHECK-NEXT:     (local.get $x)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (ref.null none)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $br_on_cast-generalize (param $top (ref null $Top)) (result (ref null $Mid))
+  ;; $x has original type (ref null $Bot), so both $x and the cast generalize
+  ;; based on the target block's required type (ref null $Mid).
+  (local $x (ref null $Bot))
+  ;; $y has original type (ref null $Top), so with dropped fallthrough $y
+  ;; generalizes to anyref while the non-trivial cast to (ref $Bot) is kept.
+  (local $y (ref null $Top))
+  (local.set $y
+   (local.get $top)
+  )
+  (drop
+   (block $b1 (result (ref $Top))
+    (drop
+     (br_on_cast $b1 (ref null $Top) (ref $Bot)
+      (local.get $y)
+     )
+    )
+    (unreachable)
+   )
+  )
+  (block $b2 (result (ref null $Bot))
+   (drop
+    (br_on_cast $b2 (ref null $Bot) (ref $Bot)
+     (local.get $x)
+    )
+   )
+   (ref.null none)
+  )
+ )
+
+ ;; CHECK:      (func $tuple-make-generalize (type $5) (result i32 (ref null $Top))
+ ;; CHECK-NEXT:  (local $a anyref)
+ ;; CHECK-NEXT:  (local $b anyref)
+ ;; CHECK-NEXT:  (local $c (ref null $Top))
+ ;; CHECK-NEXT:  (local $t (tuple i32 (ref null $Top)))
+ ;; CHECK-NEXT:  (tuple.drop 2
+ ;; CHECK-NEXT:   (tuple.make 2
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:    (local.get $a)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (tuple.extract 2 0
+ ;; CHECK-NEXT:    (tuple.make 2
+ ;; CHECK-NEXT:     (i32.const 0)
+ ;; CHECK-NEXT:     (local.get $b)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (local.set $t
+ ;; CHECK-NEXT:   (tuple.make 2
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:    (local.get $c)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (local.get $t)
+ ;; CHECK-NEXT: )
+ (func $tuple-make-generalize (result i32 (ref null $Top))
+  (local $a (ref null $Bot))
+  (local $b (ref null $Bot))
+  (local $c (ref null $Bot))
+  (local $t (tuple i32 (ref null $Bot)))
+  ;; Dropped tuple.make imposes no constraints on $a.
+  (tuple.drop 2
+   (tuple.make 2
+    (i32.const 0)
+    (local.get $a)
+   )
+  )
+  ;; Extracting only element 0 imposes no constraint on $b in element 1.
+  (drop
+   (tuple.extract 2 0
+    (tuple.make 2
+     (i32.const 0)
+     (local.get $b)
+    )
+   )
+  )
+  ;; Returning through $t generalizes both $t and $c to (ref null $Top).
+  (local.set $t
+   (tuple.make 2
+    (i32.const 0)
+    (local.get $c)
+   )
+  )
+  (local.get $t)
+ )
+)
+
+;; Descriptor cast generalization.
+(module
+ (rec
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $A (sub (descriptor $A.desc) (struct)))
+  (type $A (sub (descriptor $A.desc) (struct)))
+  ;; CHECK:       (type $A.desc (sub (describes $A) (struct)))
+  (type $A.desc (sub (describes $A) (struct)))
+  ;; CHECK:       (type $B (sub $A (descriptor $B.desc) (struct)))
+  (type $B (sub $A (descriptor $B.desc) (struct)))
+  ;; CHECK:       (type $B.desc (sub $A.desc (describes $B) (struct)))
+  (type $B.desc (sub $A.desc (describes $B) (struct)))
+  ;; CHECK:       (type $C (sub $B (descriptor $C.desc) (struct)))
+  (type $C (sub $B (descriptor $C.desc) (struct)))
+  ;; CHECK:       (type $C.desc (sub $B.desc (describes $C) (struct)))
+  (type $C.desc (sub $B.desc (describes $C) (struct)))
+ )
+
+ ;; CHECK:      (type $6 (func (param (ref $C) (ref (exact $C.desc))) (result (ref $B))))
+
+ ;; CHECK:      (type $7 (func (param anyref (ref (exact $C.desc))) (result (ref (exact $C)))))
+
+ ;; CHECK:      (type $8 (func (param anyref (ref (exact $C.desc))) (result (ref null $B))))
+
+ ;; CHECK:      (func $ref.cast_desc_eq-generalize (type $6) (param $init (ref $C)) (param $cdesc (ref (exact $C.desc))) (result (ref $B))
+ ;; CHECK-NEXT:  (local $r1 anyref)
+ ;; CHECK-NEXT:  (local $d1 (ref null $A.desc))
+ ;; CHECK-NEXT:  (local $r2 anyref)
+ ;; CHECK-NEXT:  (local $d2 (ref null $B.desc))
+ ;; CHECK-NEXT:  (local.set $r1
+ ;; CHECK-NEXT:   (local.get $init)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (local.set $d1
+ ;; CHECK-NEXT:   (local.get $cdesc)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (ref.cast_desc_eq (ref null $A)
+ ;; CHECK-NEXT:    (local.get $r1)
+ ;; CHECK-NEXT:    (local.get $d1)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (local.set $d2
+ ;; CHECK-NEXT:   (local.get $cdesc)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (ref.cast_desc_eq (ref $B)
+ ;; CHECK-NEXT:   (local.get $r2)
+ ;; CHECK-NEXT:   (local.get $d2)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $ref.cast_desc_eq-generalize (param $init (ref $C)) (param $cdesc (ref (exact $C.desc))) (result (ref $B))
+  ;; Dropped ref.cast_desc_eq with non-nullable input: $d1 generalizes to
+  ;; (ref null $A.desc), $r1 generalizes to anyref, and the cast generalizes to
+  ;; nullable (ref null $A).
+  (local $r1 (ref $C))
+  (local $d1 (ref (exact $C.desc)))
+  ;; Result required to be (ref $B): $d2 generalizes to (ref null $B.desc) and
+  ;; the cast generalizes to (ref $B).
+  (local $r2 anyref)
+  (local $d2 (ref (exact $C.desc)))
+  (local.set $r1
+   (local.get $init)
+  )
+  (local.set $d1
+   (local.get $cdesc)
+  )
+  (drop
+   (ref.cast_desc_eq (ref (exact $C))
+    (local.get $r1)
+    (local.get $d1)
+   )
+  )
+  (local.set $d2
+   (local.get $cdesc)
+  )
+  (ref.cast_desc_eq (ref (exact $C))
+   (local.get $r2)
+   (local.get $d2)
+  )
+ )
+
+ ;; CHECK:      (func $ref.cast_desc_eq-exact (type $7) (param $r anyref) (param $cdesc (ref (exact $C.desc))) (result (ref (exact $C)))
+ ;; CHECK-NEXT:  (local $d (ref null (exact $C.desc)))
+ ;; CHECK-NEXT:  (local.set $d
+ ;; CHECK-NEXT:   (local.get $cdesc)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (ref.cast_desc_eq (ref (exact $C))
+ ;; CHECK-NEXT:   (local.get $r)
+ ;; CHECK-NEXT:   (local.get $d)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $ref.cast_desc_eq-exact (param $r anyref) (param $cdesc (ref (exact $C.desc))) (result (ref (exact $C)))
+  (local $d (ref (exact $C.desc)))
+  (local.set $d
+   (local.get $cdesc)
+  )
+  ;; Exact output required: $d generalizes nullability to (ref null (exact $C.desc))
+  ;; while preserving exactness.
+  (ref.cast_desc_eq (ref (exact $C))
+   (local.get $r)
+   (local.get $d)
+  )
+ )
+
+ ;; CHECK:      (func $br_on_cast_desc_eq-generalize (type $8) (param $r anyref) (param $cdesc (ref (exact $C.desc))) (result (ref null $B))
+ ;; CHECK-NEXT:  (local $d1 (ref null $A.desc))
+ ;; CHECK-NEXT:  (local $d2 (ref null $B.desc))
+ ;; CHECK-NEXT:  (local.set $d1
+ ;; CHECK-NEXT:   (local.get $cdesc)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (local.set $d2
+ ;; CHECK-NEXT:   (local.get $cdesc)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (block $b1 (result (ref $A))
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (br_on_cast_desc_eq $b1 anyref (ref $A)
+ ;; CHECK-NEXT:      (local.get $r)
+ ;; CHECK-NEXT:      (local.get $d1)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (block $b2 (result anyref)
+ ;; CHECK-NEXT:    (return
+ ;; CHECK-NEXT:     (br_on_cast_desc_eq_fail $b2 anyref (ref $B)
+ ;; CHECK-NEXT:      (local.get $r)
+ ;; CHECK-NEXT:      (local.get $d2)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (ref.null none)
+ ;; CHECK-NEXT: )
+ (func $br_on_cast_desc_eq-generalize (param $r anyref) (param $cdesc (ref (exact $C.desc))) (result (ref null $B))
+  (local $d1 (ref (exact $C.desc)))
+  (local $d2 (ref (exact $C.desc)))
+  (local.set $d1
+   (local.get $cdesc)
+  )
+  (local.set $d2
+   (local.get $cdesc)
+  )
+  ;; br_on_cast_desc_eq to a dropped block generalizes $d1 to $A.desc.
+  (drop
+   (block $b1 (result (ref (exact $C)))
+    (drop
+     (br_on_cast_desc_eq $b1 anyref (ref (exact $C))
+      (local.get $r)
+      (local.get $d1)
+     )
+    )
+    (unreachable)
+   )
+  )
+  ;; br_on_cast_desc_eq_fail whose fallthrough is returned as (ref null $B)
+  ;; generalizes $d2 to (ref null $B.desc).
+  (drop
+   (block $b2 (result anyref)
+    (return
+     (br_on_cast_desc_eq_fail $b2 anyref (ref (exact $C))
+      (local.get $r)
+      (local.get $d2)
+     )
+    )
+   )
+  )
+  (ref.null none)
+ )
+)
+
+;; call.without.effects must respect the target function's signature.
+(module
+ ;; CHECK:      (type $Super (sub (struct)))
+ (type $Super (sub (struct)))
+ ;; CHECK:      (type $Sub (sub $Super (struct)))
+ (type $Sub (sub $Super (struct)))
+ ;; CHECK:      (type $SigSuper (sub (func (param (ref null $Sub)))))
+ (type $SigSuper (sub (func (param (ref null $Sub)))))
+ (type $SigSub (sub $SigSuper (func (param (ref null $Super)))))
+
+ (import "binaryen-intrinsics" "call.without.effects"
+  (func $cwe (param anyref funcref)))
+
+ ;; CHECK:      (type $3 (func (param anyref funcref)))
+
+ ;; CHECK:      (type $4 (func))
+
+ ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $cwe (type $3) (param anyref funcref)))
+
+ ;; CHECK:      (elem declare func $target-super)
+
+ ;; CHECK:      (func $target-super (type $SigSuper) (param $x (ref null $Sub))
+ ;; CHECK-NEXT: )
+ (func $target-super (type $SigSuper) (param $x (ref null $Sub)))
+
+ ;; CHECK:      (func $call-without-effects (type $4)
+ ;; CHECK-NEXT:  (local $arg (ref null $Sub))
+ ;; CHECK-NEXT:  (local $fn (ref null $SigSuper))
+ ;; CHECK-NEXT:  (local $nullfn nullfuncref)
+ ;; CHECK-NEXT:  (call $cwe
+ ;; CHECK-NEXT:   (local.get $arg)
+ ;; CHECK-NEXT:   (local.tee $fn
+ ;; CHECK-NEXT:    (ref.func $target-super)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (call $cwe
+ ;; CHECK-NEXT:   (ref.null none)
+ ;; CHECK-NEXT:   (local.get $nullfn)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $call-without-effects
+  (local $arg (ref null $Sub))
+  (local $fn (ref null $SigSuper))
+  (local $nullfn nullfuncref)
+  ;; $target-super expects (ref null $Sub), so $arg cannot generalize to anyref.
+  (call $cwe
+   (local.get $arg)
+   (local.tee $fn
+    (ref.func $target-super)
+   )
+  )
+  ;; A nullfuncref target must not generalize to funcref (which has no
+  ;; signature and would fail call.without.effects validation).
+  (call $cwe
+   (ref.null none)
+   (local.get $nullfn)
   )
  )
 )
