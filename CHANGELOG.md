@@ -27,6 +27,12 @@ Current Trunk
   For unpacked types, call `struct/array.get()` with only three arguments;
   for signed packed types, call `struct/array.get_s()`;
   for unsigned packed types, call `struct/array.get_u()`.
+- Add a new `--relax-nullability` pass to force all locals and params to be
+  nullable. This exposes opportunities for type merging since function
+  signatures (and later structs/arrays) may no longer differ by nullability. It
+  also removes most `ref.as_non_null` instructions when paired with
+  `--traps-never-happen` and `--strip-refining-casts`. The pass currently
+  panics on tuples and can't be used with multivalue.
 
 v133
 ----

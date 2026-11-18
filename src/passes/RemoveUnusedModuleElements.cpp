@@ -294,6 +294,12 @@ struct Analyzer {
     std::unordered_map<HeapType, std::unordered_set<Name>> typeFuncs;
     std::unordered_map<HeapType, std::unordered_set<Name>> typeElems;
 
+    // Maps each heap type of an inexact unknown function item (such as an
+    // imported global.get) to its segments. When a subtype of that heap type is
+    // called indirectly, walking the call type's supertypes finds these
+    // segments without eagerly expanding to all subtypes in the module.
+    std::unordered_map<HeapType, std::unordered_set<Name>> inexactTypeElems;
+
     // All elems, regardless of type.
     std::unordered_set<Name> allElems;
 
@@ -336,12 +342,23 @@ struct Analyzer {
 
     auto notePossibleFunc =
       [&](FlatTableInfo& info, Expression* item, Name elem = Name()) {
+        // Trace through module-defined immutable globals to find the
+        // underlying constant expression (which may be a RefFunc, RefNull, or
+        // an imported GlobalGet).
+        while (auto* get = item->dynCast<GlobalGet>()) {
+          auto* global = module->getGlobal(get->name);
+          if (global->imported()) {
+            break;
+          }
+          // Note that infinite recursion is not a danger here since a global
+          // can only refer to previous globals.
+          item = global->init;
+        }
         if (auto* refFunc = item->dynCast<RefFunc>()) {
           auto* func = module->getFunction(refFunc->func);
           std::optional<HeapType> type = func->type.getHeapType();
           // Add this function and element to all relevant types: each function
           // might be called by its type, or a supertype.
-          // TODO: use exactness here
           while (type) {
             info.typeFuncs[*type].insert(func->name);
             if (elem) {
@@ -349,6 +366,11 @@ struct Analyzer {
             }
             type = type->getSuperType();
           }
+        } else if (elem && item->type.isFunction()) {
+          // This might be e.g. a global.get of an imported global. Note that
+          // ref.null always has a bottom heap type, for which isFunction() is
+          // false.
+          propagateUnknownFuncElem(info, item->type, elem);
         }
       };
 
@@ -399,6 +421,24 @@ struct Analyzer {
     }
   }
 
+  void propagateUnknownFuncElem(FlatTableInfo& info, Type itemType, Name elem) {
+    // We do not know the concrete function (because this might be e.g. a
+    // global.get of an imported global), so this segment might be called by the
+    // item's type, any supertype, or (if inexact) any subtype. Record the
+    // item's type and its supertypes in |typeElems|, and record inexact types
+    // in |inexactTypeElems| so subtype calls find them by walking supertypes.
+    auto type = itemType.getHeapType();
+    for (std::optional<HeapType> super = type; super;
+         super = super->getSuperType()) {
+      if (!info.typeElems[*super].insert(elem).second) {
+        break;
+      }
+    }
+    if (!itemType.isExact()) {
+      info.inexactTypeElems[type].insert(elem);
+    }
+  }
+
   // Process expressions in the expression queue while we have any, visiting
   // them (using their contents) and adding children. Returns whether we did any
   // work.
@@ -440,8 +480,15 @@ struct Analyzer {
     return worked;
   }
 
-  // We'll compute SubTypes if we need them.
+  // Lazily compute SubTypes at most once for the module.
   std::optional<SubTypes> subTypes;
+
+  SubTypes& getSubTypes() {
+    if (!subTypes) {
+      subTypes = SubTypes(*module);
+    }
+    return *subTypes;
+  }
 
   void useCallRefType(HeapType type) {
     if (type.isBasic()) {
@@ -450,13 +497,9 @@ struct Analyzer {
       return;
     }
 
-    if (!subTypes) {
-      subTypes = SubTypes(*module);
-    }
-
     // Call all the functions of that signature, and subtypes. We can then
     // forget about them, as those signatures will be marked as called.
-    for (auto subType : subTypes->getSubTypes(type)) {
+    getSubTypes().iterSubTypes(type, [&](HeapType subType, Index depth) {
       auto iter = uncalledRefFuncMap.find(subType);
       if (iter != uncalledRefFuncMap.end()) {
         // We must not have a type in both calledSignatures and
@@ -472,7 +515,8 @@ struct Analyzer {
       }
 
       calledSignatures.insert(subType);
-    }
+      return true;
+    });
   }
 
   std::unordered_set<IndirectCall> usedIndirectCalls;
@@ -494,6 +538,16 @@ struct Analyzer {
     }
     for (auto& elem : info.typeElems[type]) {
       reference({ModuleElementKind::ElementSegment, elem});
+    }
+    for (auto super = type.getSuperType(); super;
+         super = super->getSuperType()) {
+      if (auto iter = info.inexactTypeElems.find(*super);
+          iter != info.inexactTypeElems.end()) {
+        for (auto& elem : iter->second) {
+          reference({ModuleElementKind::ElementSegment, elem});
+        }
+        info.inexactTypeElems.erase(iter);
+      }
     }
 
     // If traps might happen, and the table has an initial value, we must
@@ -574,10 +628,7 @@ struct Analyzer {
       // This is the first time we see a read of this data. Note that it is
       // read, and also all subtypes since we might be reading from them as
       // well.
-      if (!subTypes) {
-        subTypes = SubTypes(*module);
-      }
-      subTypes->iterSubTypes(type, [&](HeapType subType, Index depth) {
+      getSubTypes().iterSubTypes(type, [&](HeapType subType, Index depth) {
         auto subStructField = StructField{subType, index};
         readStructFields.insert(subStructField);
 

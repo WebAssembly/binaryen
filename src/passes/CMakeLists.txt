@@ -92,7 +92,6 @@ set(passes_SOURCES
   OptimizeForJS.cpp
   OptimizeNoReturn.cpp
   PickLoadSigns.cpp
-  Poppify.cpp
   PostEmscripten.cpp
   Precompute.cpp
   Print.cpp
@@ -120,6 +119,7 @@ set(passes_SOURCES
   RemoveImports.cpp
   RemoveMemoryInit.cpp
   RemoveNonJSOps.cpp
+  RelaxNullability.cpp
   RemoveRelaxedSIMD.cpp
   RemoveUnusedBrs.cpp
   RemoveUnusedNames.cpp

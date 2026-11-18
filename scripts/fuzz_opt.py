@@ -2776,6 +2776,7 @@ opt_choices = [
     ("--precompute-propagate",),
     ("--print",),
     ("--print-boundary",),
+    ("--relax-nullability",),
     ("--remove-unused-brs",),
     ("--remove-unused-nonfunction-module-elements",),
     ("--remove-unused-module-elements",),
@@ -2801,6 +2802,7 @@ opt_choices = [
     ("--tail-call",),
     ("--tuple-optimization",),
     ("--type-finalizing",),
+    ("--type-generalizing",),
     ("--type-refining",),
     ("--type-refining-gufa",),
     ("--type-merging",),
@@ -2822,6 +2824,7 @@ requires_closed_world = {("--type-refining",),
                          ("--cfp-reftest",),
                          ("--reorder-types",),
                          ("--type-finalizing",),
+                         ("--type-generalizing",),
                          ("--type-unfinalizing",),
                          ("--type-ssa",),
                          ("--type-merging",),
@@ -2864,6 +2867,9 @@ def get_random_opts():
         if ('--rereloop' in choice or '--dfo' in choice) and \
            '--enable-exception-handling' in FEATURE_OPTS:
             print('avoiding --rereloop or --dfo due to exception-handling not supporting it')
+            continue
+        if '--relax-nullability' in choice and '--enable-multivalue' in FEATURE_OPTS:
+            print('avoiding --relax-nullability due to it not supporting multivalue')
             continue
         flag_groups.append(choice)
         if len(flag_groups) > 20 or random.random() < 0.3:

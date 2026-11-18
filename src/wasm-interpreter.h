@@ -3124,6 +3124,7 @@ public:
   }
   Flow visitAtomicWait(AtomicWait* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitAtomicNotify(AtomicNotify* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitAtomicFence(AtomicFence* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitStructWait(StructWait* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitWaitqueueNew(WaitqueueNew* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitWaitqueueNotify(WaitqueueNotify* curr) {
