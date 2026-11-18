@@ -185,44 +185,6 @@ struct AnalysisState {
   }
 };
 
-// Lightweight pre-pass that stops as soon as any candidate allocation exists.
-// Most functions contain no candidate allocations, so this avoids paying
-// ControlFlowWalker and AnalysisState hash-map overhead for them.
-struct CandidateFinder : public PostWalker<CandidateFinder> {
-  bool found = false;
-
-  static void scan(CandidateFinder* self, Expression** currp) {
-    if (self->found) {
-      return;
-    }
-    PostWalker<CandidateFinder>::scan(self, currp);
-  }
-
-  void visitStructNew(StructNew* curr) {
-    if (curr->type != Type::unreachable) {
-      found = true;
-    }
-  }
-
-  void visitArrayNew(ArrayNew* curr) {
-    if (curr->type != Type::unreachable) {
-      if (auto* c = curr->size->dynCast<Const>()) {
-        if (c->value.getUnsigned() < MaxArraySize) {
-          found = true;
-        }
-      }
-    }
-  }
-
-  void visitArrayNewFixed(ArrayNewFixed* curr) {
-    if (curr->type != Type::unreachable) {
-      if (curr->values.size() < MaxArraySize) {
-        found = true;
-      }
-    }
-  }
-};
-
 // Phase 1: Single post-order walk over the function body to collect candidate
 // allocations, dataflow edges, and escaping uses.
 struct GraphBuilder
@@ -240,8 +202,11 @@ struct GraphBuilder
 
   void build() {
     walk(func->body);
-    // Guaranteed by the CandidateFinder pre-pass.
-    assert(!state.allocs.empty());
+
+    if (state.allocs.empty()) {
+      // Nothing to optimize.
+      return;
+    }
 
     // Values returned out of the function body escape.
     state.escapeIfRef(func->body);
@@ -992,13 +957,12 @@ struct Heap2Local2 : public WalkerPass<PostWalker<Heap2Local2>> {
     if (!wasm.features.hasGC()) {
       return;
     }
-    CandidateFinder finder;
-    finder.walk(func->body);
-    if (!finder.found) {
-      return;
-    }
     AnalysisState state;
     GraphBuilder(state, func, wasm).build();
+    if (state.allocs.empty()) {
+      // Nothing to do.
+      return;
+    }
     computeOrigins(state);
     if (!computeEscapes(state)) {
       return;
