@@ -1737,16 +1737,11 @@ void FunctionValidator::visitMemoryCopy(MemoryCopy* curr) {
     sourceMemory->addressType,
     curr,
     "memory.copy source must match sourceMemory index type");
+  // The size is i64 only when both memories are 64-bit.
+  Type sizeType =
+    destMemory->is64() && sourceMemory->is64() ? Type::i64 : Type::i32;
   shouldBeEqualOrFirstIsUnreachable(
-    curr->size->type,
-    destMemory->addressType,
-    curr,
-    "memory.copy size must match destMemory index type");
-  shouldBeEqualOrFirstIsUnreachable(
-    curr->size->type,
-    sourceMemory->addressType,
-    curr,
-    "memory.copy size must match destMemory index type");
+    curr->size->type, sizeType, curr, "memory.copy size must be valid");
 }
 
 void FunctionValidator::visitMemoryFill(MemoryFill* curr) {

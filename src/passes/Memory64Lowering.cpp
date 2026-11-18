@@ -170,7 +170,12 @@ struct Memory64Lowering : public WalkerPass<PostWalker<Memory64Lowering>> {
   void visitMemoryCopy(MemoryCopy* curr) {
     wrapAddress64(curr->dest, curr->destMemory);
     wrapAddress64(curr->source, curr->sourceMemory);
-    wrapAddress64(curr->size, curr->destMemory);
+    // The size type is i64 only when both memories are 64-bit.
+    auto& module = *getModule();
+    if (module.getMemory(curr->destMemory)->is64() &&
+        module.getMemory(curr->sourceMemory)->is64()) {
+      wrapAddress64(curr->size, curr->destMemory);
+    }
   }
 
   void visitAtomicRMW(AtomicRMW* curr) { visitMemoryAccess(curr); }
