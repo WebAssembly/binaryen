@@ -114,7 +114,8 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $calls-private (param $f (ref $private-func)) (param $ref (ref any)) (result (ref any))
-  ;; private-func was relaxed, so no need for ref.as_non_null
+  ;; private-func gets relaxed, so no need for ref.as_non_null even though
+  ;; our param is now nullable too.
   (call_ref $private-func (local.get $ref) (local.get $f))
  )
 
@@ -127,7 +128,8 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $calls-public (param $f (ref $public-func)) (param $ref (ref any)) (result (ref any))
-  ;; public-func wasn't relaxed, insert ref.as_non_null
+  ;; $calls-public is relaxed while $public-func is not. Insert a
+  ;; ref.as_non_null to make type-checking work.
   (call_ref $public-func (local.get $ref) (local.get $f))
  )
 )
@@ -170,7 +172,9 @@
  )
 )
 
-;; Public supertype with private subtype. Nothing can be relaxed.
+;; Reverse of the above: private supertype with public subtype.
+;; Nothing can be relaxed. Relaxing the private supertype would break the
+;; subtype relationship.
 (module
  ;; CHECK:      (type $private-super (sub (func (param (ref any)))))
  (type $private-super (sub (func (param (ref any)))))

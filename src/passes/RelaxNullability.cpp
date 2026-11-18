@@ -50,6 +50,43 @@ namespace wasm {
 
 namespace {
 
+// Return the set of types that can't be relaxed, besides public types which are
+// anyway ignored by GlobalTypeRewriter. The following and their supertypes are
+// not relaxable:
+// * Tag types, since it would require rewriting catch blocks
+// * Types of functions that may be the target of @binaryen.js.called
+//   * TODO: we may be able to relax these when --traps-never-happen
+// * Signatures for continuation types, since this would also require
+//   rewriting blocks and accounting for constraints from cont.bind.
+std::unordered_set<HeapType>
+getUnrelaxableTypes(Module& wasm,
+                    const std::unordered_set<Function*>& jsCalledFuncs) {
+  std::unordered_set<HeapType> unrelaxableTypes;
+  for (const auto& tag : wasm.tags) {
+    unrelaxableTypes.insert(tag->type);
+  }
+  for (Function* func : jsCalledFuncs) {
+    unrelaxableTypes.insert(func->type.getHeapType());
+  }
+  if (wasm.features.hasStackSwitching()) {
+    for (auto type : ModuleUtils::collectHeapTypes(wasm)) {
+      if (type.isContinuation()) {
+        unrelaxableTypes.insert(type.getContinuation().type);
+      }
+    }
+  }
+  Graph unrelaxableTypesGraph(unrelaxableTypes.begin(),
+                              unrelaxableTypes.end(),
+                              [](const auto& push, HeapType t) {
+                                if (auto super = t.getDeclaredSuperType()) {
+                                  push(*super);
+                                }
+                              });
+  unrelaxableTypes = unrelaxableTypesGraph.traverseDepthFirst();
+
+  return unrelaxableTypes;
+}
+
 bool isSignatureRewritable(Function* func,
                            const std::unordered_set<Function*>& referencedFuncs,
                            const std::unordered_set<Function*>& jsCalledFuncs) {
@@ -263,7 +300,7 @@ struct RelaxNullability : Pass {
 
   void run(Module* module) override {
     if (!module->features.hasGC()) {
-      Fatal() << "--relax-nullability should only run when GC is enabled.";
+      // Nothing to relax.
       return;
     }
 
@@ -272,10 +309,12 @@ struct RelaxNullability : Pass {
       jsCalledFuncs.insert(module->getFunction(name));
     }
 
-    // rewrite signatures globally
+    auto unrelaxableTypes = getUnrelaxableTypes(*module, jsCalledFuncs);
+
+    // Rewrite signatures globally.
     auto relaxedTypes =
-      relaxTypes(module, getPassOptions().worldMode, jsCalledFuncs);
-    // rewrite signatures for private functions by giving them a new private
+      relaxTypes(module, getPassOptions().worldMode, unrelaxableTypes);
+    // Rewrite signatures for private functions by giving them a new private
     // type.
     auto relaxedFuncs =
       relaxFunctionParams(module, relaxedTypes, jsCalledFuncs);
@@ -291,36 +330,7 @@ private:
   std::unordered_set<HeapType>
   relaxTypes(Module* module,
              WorldMode worldMode,
-             const std::unordered_set<Function*>& jsCalledFuncs) {
-    // Public types are already not touched by GlobalTypeRewriter below.
-    // In addition to public types, don't rewrite private tag types, JS-called
-    // function types, continuation function types, or their supertypes to avoid
-    // having to fixup catch block types, violating JS-boundary contracts /
-    // subtyping, or mismatching continuation types at cont.new / cont.bind /
-    // resume / switch.
-    std::unordered_set<HeapType> unrelaxableTypes;
-    for (const auto& tag : module->tags) {
-      unrelaxableTypes.insert(tag->type);
-    }
-    for (Function* func : jsCalledFuncs) {
-      unrelaxableTypes.insert(func->type.getHeapType());
-    }
-    if (module->features.hasStackSwitching()) {
-      for (auto type : ModuleUtils::collectHeapTypes(*module)) {
-        if (type.isContinuation()) {
-          unrelaxableTypes.insert(type.getContinuation().type);
-        }
-      }
-    }
-    Graph g(unrelaxableTypes.begin(),
-            unrelaxableTypes.end(),
-            [](const auto& push, HeapType t) {
-              if (auto super = t.getDeclaredSuperType()) {
-                push(*super);
-              }
-            });
-    unrelaxableTypes = g.traverseDepthFirst();
-
+             const std::unordered_set<HeapType>& unrelaxableTypes) {
     class Rewriter : private GlobalTypeRewriter {
     public:
       Rewriter(Module& wasm,
@@ -374,10 +384,10 @@ private:
     return rewriter.update();
   }
 
-  // Relax private function signatures -- even if their signature is public --
-  // by giving them a new private signature. Return the set of functions that
-  // were relaxed, as well as those that were relaxed by `relaxTypes` when
-  // signatures were rewritten globally.
+  // Relax private functions -- even if their signature is public -- by giving
+  // them a new private signature. Return the set of functions that were
+  // relaxed, as well as those that were relaxed by `relaxTypes` when signatures
+  // were rewritten globally.
   std::unordered_set<Function*>
   relaxFunctionParams(Module* module,
                       const std::unordered_set<HeapType>& relaxedTypes,
