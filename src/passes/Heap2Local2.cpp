@@ -227,6 +227,28 @@ struct GraphBuilder
     }
   }
 
+  void visitExpression(Expression* curr) {
+    // Default to assuming all reference-typed children escape.
+    for (auto* child : ChildIterator(curr)) {
+      state.escapeIfRef(child);
+    }
+    // Unhandled scope-branching instructions (e.g. TryTable, BrOn) can send
+    // values to enclosing ref-typed Blocks. Initialize those target Blocks with
+    // Top so any candidate allocations flowing into them are treated as
+    // escaping.
+    // TODO: Model BrOn* and TryTable dataflow edges directly instead of
+    // conservatively initializing target blocks with Top.
+    BranchUtils::operateOnScopeNameUsesAndSentTypes(
+      curr, [&](Name& name, Type sentType) {
+        if (sentType.isRef()) {
+          auto* target = findBreakTarget(name);
+          assert(target);
+          assert(target->type.isRef());
+          state.joinTop(target);
+        }
+      });
+  }
+
   AllocId addCandidateAlloc(Expression* curr, const FieldList& fields) {
     assert(state.allocs.size() < std::numeric_limits<AllocId>::max());
     auto id = AllocId(state.allocs.size());
@@ -387,20 +409,6 @@ struct GraphBuilder
     }
   }
 
-  void visitGlobalSet(GlobalSet* curr) { state.escapeIfRef(curr->value); }
-
-  void visitReturn(Return* curr) {
-    if (curr->value) {
-      state.escapeIfRef(curr->value);
-    }
-  }
-
-  void visitCall(Call* curr) {
-    for (auto* op : curr->operands) {
-      state.escapeIfRef(op);
-    }
-  }
-
   // These instructions only inspect or consume their reference operands without
   // letting them escape; overriding them prevents visitExpression from marking
   // their reference children as escaping.
@@ -433,27 +441,6 @@ struct GraphBuilder
       state.escapeIfRef(curr->ref);
     }
     state.escapeIfRef(curr->value);
-  }
-
-  void visitExpression(Expression* curr) {
-    for (auto* child : ChildIterator(curr)) {
-      state.escapeIfRef(child);
-    }
-    // Unhandled scope-branching instructions (e.g. TryTable, BrOn) can send
-    // values to enclosing ref-typed Blocks. Initialize those target Blocks with
-    // Top so any candidate allocations flowing into them are treated as
-    // escaping.
-    // TODO: Model BrOn* and TryTable dataflow edges directly instead of
-    // conservatively initializing target blocks with Top.
-    BranchUtils::operateOnScopeNameUsesAndSentTypes(
-      curr, [&](Name& name, Type sentType) {
-        if (sentType.isRef()) {
-          auto* target = findBreakTarget(name);
-          assert(target);
-          assert(target->type.isRef());
-          state.joinTop(target);
-        }
-      });
   }
 };
 
