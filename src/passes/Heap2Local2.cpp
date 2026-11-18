@@ -425,11 +425,13 @@ struct GraphBuilder
   }
 
   void visitGlobalSet(GlobalSet* curr) { state.escapeIfRef(curr->value); }
+
   void visitReturn(Return* curr) {
     if (curr->value) {
       state.escapeIfRef(curr->value);
     }
   }
+
   void visitCall(Call* curr) {
     for (auto* op : curr->operands) {
       state.escapeIfRef(op);
