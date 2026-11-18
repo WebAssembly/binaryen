@@ -40,7 +40,7 @@
   ;; CHECK-NEXT: )
   (func $caller (param $ref (ref any))
    ;; $unrelaxed has a public type. Insert a ref.as_non_null as if this were
-   ;; a direct call to $unrelaxed
+   ;; a direct call to $unrelaxed.
    (call $cwe-unrelaxed (local.get $ref) (ref.func $unrelaxed))
 
    ;; $relaxed has a private type and was relaxed.

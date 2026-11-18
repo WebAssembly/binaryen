@@ -449,12 +449,14 @@
   (type $super (sub (func (param (ref any)))))
   ;; CHECK:       (type $js-called (sub $super (func (param (ref any)))))
   (type $js-called (sub $super (func (param (ref any)))))
+  ;; CHECK:       (type $2 (func))
+
   ;; CHECK:       (type $sub (sub $js-called (func (param anyref))))
   (type $sub (sub $js-called (func (param (ref any)))))
 
-  ;; CHECK:      (type $3 (func (param anyref)))
+  ;; CHECK:      (elem declare func $js-called-func $sub-func $super-func)
 
-  ;; CHECK:      (func $super-func (type $3) (param $0 anyref)
+  ;; CHECK:      (func $super-func (type $super) (param $0 (ref any))
   ;; CHECK-NEXT: )
   (func $super-func (type $super) (param (ref any))
     ;; supertype of js.called function. Can't be relaxed since its subtype
@@ -472,4 +474,21 @@
   ;; CHECK:      (func $sub-func (type $sub) (param $0 anyref)
   ;; CHECK-NEXT: )
   (func $sub-func (type $sub) (param (ref any)))
+
+  ;; CHECK:      (func $reference (type $2)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.func $super-func)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.func $js-called-func)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.func $sub-func)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $reference
+    (drop (ref.func $super-func))
+    (drop (ref.func $js-called-func))
+    (drop (ref.func $sub-func))
+  )
 )

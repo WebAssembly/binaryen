@@ -210,7 +210,7 @@
  )
 )
 
-;; Private supertype and private subtype. Both are relaxed
+;; Private supertype and private subtype. Both are relaxed.
 (module
  ;; CHECK:      (rec
  ;; CHECK-NEXT:  (type $private-super (sub (func (param anyref))))
