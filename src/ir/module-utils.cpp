@@ -419,6 +419,9 @@ using ReferencedFuncs = std::unordered_map<Name, std::atomic<bool>>;
 struct CodeScanner : PostWalker<CodeScanner> {
   TypeInfos& info;
   ReferencedFuncs& referencedFuncs;
+  // Whether StackIR is available for the function being scanned, in which case
+  // control flow signatures have already been collected from StackIR and should
+  // not be collected again from the Binaryen IR control flow nodes.
   bool hasStackIR;
 
   CodeScanner(Module& wasm,

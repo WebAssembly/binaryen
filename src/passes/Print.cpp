@@ -407,7 +407,7 @@ struct PrintExpressionContents
   }
 
   void printBlockType(Type results, Type params = Type::none) {
-    if (!results.isConcrete()) {
+    if (results == Type::unreachable) {
       results = Type::none;
     }
     parent.printBlockType(Signature(params, results));
