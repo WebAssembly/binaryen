@@ -156,13 +156,15 @@ def pr_weight(additions: int) -> float:
     return math.log10(additions + ADDITIONS_OFFSET)
 
 
-def gh_api(args: list[str]) -> str:
+def gh_api(args: list[str], token: str | None = None) -> str:
+    env = {**os.environ, 'GH_TOKEN': token} if token else None
     for attempt in range(1, MAX_API_ATTEMPTS + 1):
         res = subprocess.run(
             ['gh', 'api', *args],
             capture_output=True,
             text=True,
             check=False,
+            env=env,
         )
         if res.returncode == 0:
             return res.stdout
@@ -389,13 +391,15 @@ def main() -> None:
     chosen = ranked[0]
     print(f'Selected reviewer for PR #{pr_number}: {chosen}')
 
+    # Use BOT_TOKEN (GITHUB_TOKEN) when available so the review request is
+    # attributed to github-actions[bot] rather than the PAT owner.
     gh_api([
         '--method',
         'POST',
         f'repos/{owner}/{name}/pulls/{pr_number}/requested_reviewers',
         '-f',
         f'reviewers[]={chosen}',
-    ])
+    ], token=os.environ.get('BOT_TOKEN'))
 
 
 if __name__ == '__main__':
