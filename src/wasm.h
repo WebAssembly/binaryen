@@ -41,6 +41,7 @@
 #include "support/index.h"
 #include "support/mixed_arena.h"
 #include "support/name.h"
+#include "support/small_vector.h"
 #include "wasm-features.h"
 #include "wasm-type.h"
 
@@ -2463,7 +2464,9 @@ public:
   // Source maps debugging info: map expression nodes to their file, line, col,
   // symbol name.
   struct DebugLocation {
-    BinaryLocation fileIndex = -1, lineNumber = -1, columnNumber = -1;
+    BinaryLocation fileIndex = BinaryLocation(-1),
+                   lineNumber = BinaryLocation(-1),
+                   columnNumber = BinaryLocation(-1);
     std::optional<BinaryLocation> symbolNameIndex;
     bool operator==(const DebugLocation& other) const {
       return fileIndex == other.fileIndex && lineNumber == other.lineNumber &&
@@ -2486,11 +2489,15 @@ public:
                 << "\n";
     }
   };
-  // One can explicitly set the debug location of an expression to
-  // nullopt to stop the propagation of debug locations.
-  std::unordered_map<Expression*, std::optional<DebugLocation>> debugLocations;
-  std::optional<DebugLocation> prologLocation;
-  std::optional<DebugLocation> epilogLocation;
+  // DebugLocations holds the source location stack for an expression, ordered
+  // from outermost caller to innermost inlined frame (a single element for
+  // non-inlined code, or multiple elements when inlined). One can explicitly
+  // set the debug location of an expression to an empty vector to stop the
+  // propagation of debug locations.
+  using DebugLocations = SmallVector<DebugLocation, 1>;
+  std::unordered_map<Expression*, DebugLocations> debugLocations;
+  DebugLocations prologLocation;
+  DebugLocations epilogLocation;
 
   // General debugging info support: track instructions and the function itself.
   std::unordered_map<Expression*, BinaryLocations::Span> expressionLocations;

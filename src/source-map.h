@@ -58,8 +58,7 @@ public:
 
   void parse(Module& wasm);
 
-  std::optional<Function::DebugLocation>
-  readDebugLocationAt(size_t currLocation);
+  Function::DebugLocations readDebugLocationAt(size_t currLocation);
 
   // Do not reuse debug info across function boundaries.
   void finishFunction() { hasInfo = false; }

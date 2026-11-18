@@ -122,7 +122,7 @@ void SourceMapReader::parse(Module& wasm) {
   location = readBase64VLQ();
 }
 
-std::optional<Function::DebugLocation>
+Function::DebugLocations
 SourceMapReader::readDebugLocationAt(size_t currLocation) {
   while (location && location <= currLocation) {
     do {
@@ -171,10 +171,10 @@ SourceMapReader::readDebugLocationAt(size_t currLocation) {
   }
 
   if (!hasInfo) {
-    return std::nullopt;
+    return {};
   }
   auto sym = hasSymbol ? symbol : std::optional<uint32_t>{};
-  return Function::DebugLocation{file, line, col, sym};
+  return {Function::DebugLocation{file, line, col, sym}};
 }
 
 int32_t SourceMapReader::readBase64VLQ() {

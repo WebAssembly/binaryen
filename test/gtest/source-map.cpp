@@ -50,11 +50,11 @@ protected:
     auto loc_str = std::stringstream() << "location: " << location;
     SCOPED_TRACE(loc_str.str());
     auto loc = reader->readDebugLocationAt(location);
-    ASSERT_TRUE(loc.has_value());
-    EXPECT_EQ(loc->fileIndex, file);
-    EXPECT_EQ(loc->lineNumber, line);
-    EXPECT_EQ(loc->columnNumber, col);
-    EXPECT_EQ(loc->symbolNameIndex, sym);
+    ASSERT_FALSE(loc.empty());
+    EXPECT_EQ(loc[0].fileIndex, file);
+    EXPECT_EQ(loc[0].lineNumber, line);
+    EXPECT_EQ(loc[0].columnNumber, col);
+    EXPECT_EQ(loc[0].symbolNameIndex, sym);
   }
 
   void ExpectParseError(std::string& mapString, const char* expectedError) {
@@ -83,7 +83,7 @@ TEST_F(SourceMapTest, SourceMappingSingleSegment) {
   parseMap(sourceMap);
 
   auto loc = reader->readDebugLocationAt(0);
-  EXPECT_FALSE(loc.has_value());
+  EXPECT_TRUE(loc.empty());
 }
 
 TEST_F(SourceMapTest, BadSourceMaps) {
@@ -189,7 +189,7 @@ TEST_F(SourceMapTest, Fibonacci) {
 
   // Location before the first record has no value
   auto loc = reader->readDebugLocationAt(642);
-  EXPECT_FALSE(loc.has_value());
+  EXPECT_TRUE(loc.empty());
 
   // TODO: These column numbers show as 0 but emsymbolizer.py prints them as 1.
   // Figure out which is right.
@@ -260,10 +260,10 @@ TEST(SourceMapCopyTest, UpdateSymbolOutsideLoop) {
 
   // Set prologLocation and epilogLocation with symbolNameIndex values,
   // but leave debugLocations empty.
-  func->prologLocation =
-    Function::DebugLocation{0, 1, 1, std::optional<BinaryLocation>(0)};
-  func->epilogLocation =
-    Function::DebugLocation{0, 2, 1, std::optional<BinaryLocation>(1)};
+  func->prologLocation = {
+    Function::DebugLocation{0, 1, 1, std::optional<BinaryLocation>(0)}};
+  func->epilogLocation = {
+    Function::DebugLocation{0, 2, 1, std::optional<BinaryLocation>(1)}};
 
   // Symbol name index map: 0->10, 1->11.
   std::vector<Index> symbolNameIndexMap = {10, 11};
@@ -271,13 +271,13 @@ TEST(SourceMapCopyTest, UpdateSymbolOutsideLoop) {
   auto copied = ModuleUtils::copyFunctionWithoutAdd(
     func.get(), dstModule, Name(), std::nullopt, symbolNameIndexMap);
 
-  ASSERT_TRUE(copied->prologLocation.has_value());
-  ASSERT_TRUE(copied->prologLocation->symbolNameIndex.has_value());
-  EXPECT_EQ(*copied->prologLocation->symbolNameIndex, 10u);
+  ASSERT_FALSE(copied->prologLocation.empty());
+  ASSERT_TRUE(copied->prologLocation[0].symbolNameIndex.has_value());
+  EXPECT_EQ(*copied->prologLocation[0].symbolNameIndex, 10u);
 
-  ASSERT_TRUE(copied->epilogLocation.has_value());
-  ASSERT_TRUE(copied->epilogLocation->symbolNameIndex.has_value());
-  EXPECT_EQ(*copied->epilogLocation->symbolNameIndex, 11u);
+  ASSERT_FALSE(copied->epilogLocation.empty());
+  ASSERT_TRUE(copied->epilogLocation[0].symbolNameIndex.has_value());
+  EXPECT_EQ(*copied->epilogLocation[0].symbolNameIndex, 11u);
 }
 
 // When debugLocations has multiple entries, updateSymbol should only run once
@@ -290,16 +290,16 @@ TEST(SourceMapCopyTest, UpdateSymbolNotDoubleRemapped) {
   auto func = builder.makeFunction(
     "test", {}, Signature(Type::none, Type::none), {}, builder.makeNop());
 
-  func->prologLocation =
-    Function::DebugLocation{0, 1, 1, std::optional<BinaryLocation>(0)};
+  func->prologLocation = {
+    Function::DebugLocation{0, 1, 1, std::optional<BinaryLocation>(0)}};
 
   // Add multiple debug locations so the loop runs multiple times.
   auto* nop1 = srcModule.allocator.alloc<Nop>();
   auto* nop2 = srcModule.allocator.alloc<Nop>();
-  func->debugLocations[nop1] =
-    Function::DebugLocation{0, 10, 1, std::optional<BinaryLocation>(0)};
-  func->debugLocations[nop2] =
-    Function::DebugLocation{0, 11, 1, std::optional<BinaryLocation>(1)};
+  func->debugLocations[nop1] = {
+    Function::DebugLocation{0, 10, 1, std::optional<BinaryLocation>(0)}};
+  func->debugLocations[nop2] = {
+    Function::DebugLocation{0, 11, 1, std::optional<BinaryLocation>(1)}};
 
   // Map: 0->5, 1->6.
   std::vector<Index> symbolNameIndexMap = {5, 6};
@@ -308,7 +308,34 @@ TEST(SourceMapCopyTest, UpdateSymbolNotDoubleRemapped) {
     func.get(), dstModule, Name(), std::nullopt, symbolNameIndexMap);
 
   // Should be remapped exactly once: 0 -> 5.
-  ASSERT_TRUE(copied->prologLocation.has_value());
-  ASSERT_TRUE(copied->prologLocation->symbolNameIndex.has_value());
-  EXPECT_EQ(*copied->prologLocation->symbolNameIndex, 5u);
+  ASSERT_FALSE(copied->prologLocation.empty());
+  ASSERT_TRUE(copied->prologLocation[0].symbolNameIndex.has_value());
+  EXPECT_EQ(*copied->prologLocation[0].symbolNameIndex, 5u);
+}
+
+TEST(SourceMapCopyTest, RemapInlinedStackLocations) {
+  Module srcModule;
+  Module dstModule;
+  Builder builder(srcModule);
+
+  auto* nop = builder.makeNop();
+  auto func = builder.makeFunction(
+    "test", {}, Signature(Type::none, Type::none), {}, nop);
+
+  func->debugLocations[nop] = {
+    Function::DebugLocation{0, 10, 5, std::optional<BinaryLocation>(0)},
+    Function::DebugLocation{1, 20, 3, std::optional<BinaryLocation>(1)}};
+
+  std::vector<Index> fileIndexMap = {3, 5};
+  std::vector<Index> symbolNameIndexMap = {7, 9};
+
+  auto copied = ModuleUtils::copyFunctionWithoutAdd(
+    func.get(), dstModule, Name(), fileIndexMap, symbolNameIndexMap);
+
+  const auto& locs = copied->debugLocations.at(copied->body);
+  ASSERT_EQ(locs.size(), 2u);
+  EXPECT_EQ(locs[0].fileIndex, 3u);
+  EXPECT_EQ(locs[0].symbolNameIndex, std::optional<BinaryLocation>(7));
+  EXPECT_EQ(locs[1].fileIndex, 5u);
+  EXPECT_EQ(locs[1].symbolNameIndex, std::optional<BinaryLocation>(9));
 }

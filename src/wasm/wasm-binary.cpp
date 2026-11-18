@@ -1421,20 +1421,21 @@ void WasmBinaryWriter::writeSourceMapProlog() {
     }
   }
 
-  // Remove unused function names from 'names' field.
+  // Remove unused function/scope names from 'names' field.
   if (!wasm->debugInfoSymbolNames.empty()) {
     std::vector<std::string> newSymbolNames;
     std::map<Index, Index> oldToNewIndex;
 
-    // Collect all used symbol name indexes.
-    auto prepareIndexMap =
-      [&](const std::optional<Function::DebugLocation>& location) {
-        if (location && location->symbolNameIndex) {
-          uint32_t oldIndex = *location->symbolNameIndex;
+    // Collect all used symbol name indexes from debugLocations.
+    auto prepareIndexMap = [&](const Function::DebugLocations& locations) {
+      for (const auto& loc : locations) {
+        if (loc.symbolNameIndex) {
+          uint32_t oldIndex = *loc.symbolNameIndex;
           assert(oldIndex < wasm->debugInfoSymbolNames.size());
           oldToNewIndex[oldIndex] = 0; // placeholder
         }
-      };
+      }
+    };
     for (auto& func : wasm->functions) {
       for (auto& [_, location] : func->debugLocations) {
         prepareIndexMap(location);
@@ -1451,10 +1452,11 @@ void WasmBinaryWriter::writeSourceMapProlog() {
     }
 
     // Update all debug locations to point to the new indices.
-    auto updateIndex = [&](std::optional<Function::DebugLocation>& location) {
-      if (location && location->symbolNameIndex) {
-        uint32_t oldIndex = *location->symbolNameIndex;
-        location->symbolNameIndex = oldToNewIndex[oldIndex];
+    auto updateIndex = [&](Function::DebugLocations& locations) {
+      for (auto& loc : locations) {
+        if (loc.symbolNameIndex) {
+          loc.symbolNameIndex = oldToNewIndex[*loc.symbolNameIndex];
+        }
       }
     };
     for (auto& func : wasm->functions) {
@@ -1757,9 +1759,9 @@ void WasmBinaryWriter::writeSourceMapLocation(Expression* curr,
 
   auto& debugLocations = func->debugLocations;
   auto iter = debugLocations.find(curr);
-  if (iter != debugLocations.end() && iter->second) {
+  if (iter != debugLocations.end() && !iter->second.empty()) {
     // There is debug information here, write it out.
-    writeDebugLocation(*(iter->second));
+    writeDebugLocation(iter->second.back());
   } else {
     // This expression has no debug location.
     writeNoDebugLocation();
@@ -3626,7 +3628,7 @@ Result<> WasmBinaryReader::readStore(unsigned bytes, Type type) {
 }
 
 Result<> WasmBinaryReader::readInst() {
-  if (auto loc = sourceMapReader.readDebugLocationAt(pos)) {
+  if (auto loc = sourceMapReader.readDebugLocationAt(pos); !loc.empty()) {
     builder.setDebugLocation(loc);
   }
   uint8_t code = getInt8();

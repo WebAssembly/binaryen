@@ -73,7 +73,7 @@ public:
 
   // Set the debug location to be attached to the next visited, created, or
   // pushed instruction.
-  void setDebugLocation(const std::optional<Function::DebugLocation>&);
+  void setDebugLocation(const Function::DebugLocations&);
 
   // Give the builder a pointer to the counter tracking the current location in
   // the binary. If this pointer is non-null, the builder will record the binary
@@ -355,7 +355,7 @@ private:
   // (if it has one).
   struct CanReceiveDebug : public std::monostate {};
   using DebugVariant =
-    std::variant<NoDebug, CanReceiveDebug, Function::DebugLocation>;
+    std::variant<NoDebug, CanReceiveDebug, Function::DebugLocations>;
 
   DebugVariant debugLoc;
 

@@ -2049,7 +2049,7 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
     }
     Lexer lexer(annotation->contents);
     if (lexer.empty()) {
-      irBuilder.setDebugLocation(std::nullopt);
+      irBuilder.setDebugLocation({});
       return;
     }
 
@@ -2108,7 +2108,7 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
       wasm.debugInfoFileNames.push_back(std::string(file));
     }
     irBuilder.setDebugLocation(
-      Function::DebugLocation({it->second, *line, *col, symbolNameIndex}));
+      {Function::DebugLocation{it->second, *line, *col, symbolNameIndex}});
   }
 
   Result<> makeBlock(Index pos,

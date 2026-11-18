@@ -1770,8 +1770,8 @@ void Function::clearNames() {
 void Function::clearDebugInfo() {
   localIndices.clear();
   debugLocations.clear();
-  prologLocation.reset();
-  epilogLocation.reset();
+  prologLocation.clear();
+  epilogLocation.clear();
 }
 
 Export* Module::getExport(Name name) const {
