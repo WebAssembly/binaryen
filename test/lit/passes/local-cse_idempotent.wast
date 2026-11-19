@@ -4,12 +4,18 @@
 ;; RUN: foreach %s %t wasm-opt --local-cse -all -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (type $0 (func))
+  ;; CHECK:      (type $0 (func (param i32)))
 
-  ;; CHECK:      (type $1 (func (param i32) (result i32)))
+  ;; CHECK:      (type $1 (func))
 
-  ;; CHECK:      (import "a" "b" (func $import (type $0)))
+  ;; CHECK:      (type $2 (func (param i32) (result i32)))
+
+  ;; CHECK:      (import "a" "b" (func $import (type $1)))
   (import "a" "b" (func $import))
+  ;; CHECK:      (import "a" "c" (func $use1 (type $0) (param i32)))
+  (import "a" "c" (func $use1 (param i32)))
+  ;; CHECK:      (import "a" "d" (func $use2 (type $0) (param i32)))
+  (import "a" "d" (func $use2 (param i32)))
 
   ;; CHECK:      (global $mutable (mut i32) (i32.const 42))
   (global $mutable (mut i32) (i32.const 42))
@@ -18,7 +24,7 @@
   (global $immutable i32 (i32.const 1337))
 
   ;; CHECK:      (@binaryen.idempotent)
-  ;; CHECK-NEXT: (func $idempotent (type $1) (param $0 i32) (result i32)
+  ;; CHECK-NEXT: (func $idempotent (type $2) (param $0 i32) (result i32)
   ;; CHECK-NEXT:  (call $import)
   ;; CHECK-NEXT:  (i32.const 42)
   ;; CHECK-NEXT: )
@@ -29,7 +35,7 @@
     (i32.const 42)
   )
 
-  ;; CHECK:      (func $potent (type $1) (param $0 i32) (result i32)
+  ;; CHECK:      (func $potent (type $2) (param $0 i32) (result i32)
   ;; CHECK-NEXT:  (call $import)
   ;; CHECK-NEXT:  (i32.const 1337)
   ;; CHECK-NEXT: )
@@ -39,7 +45,7 @@
     (i32.const 1337)
   )
 
-  ;; CHECK:      (func $yes (type $0)
+  ;; CHECK:      (func $yes (type $1)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $0
@@ -66,7 +72,7 @@
     )
   )
 
-  ;; CHECK:      (func $no (type $0)
+  ;; CHECK:      (func $no (type $1)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (call $potent
   ;; CHECK-NEXT:    (i32.const 10)
@@ -92,7 +98,7 @@
     )
   )
 
-  ;; CHECK:      (func $different-input (type $0)
+  ;; CHECK:      (func $different-input (type $1)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (call $idempotent
   ;; CHECK-NEXT:    (i32.const 10)
@@ -118,7 +124,7 @@
     )
   )
 
-  ;; CHECK:      (func $idem-effects (type $0)
+  ;; CHECK:      (func $idem-effects (type $1)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (call $idempotent
   ;; CHECK-NEXT:    (global.get $mutable)
@@ -145,7 +151,7 @@
     )
   )
 
-  ;; CHECK:      (func $idem-effects-immutable (type $0)
+  ;; CHECK:      (func $idem-effects-immutable (type $1)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $0
@@ -172,7 +178,8 @@
     )
   )
 
-  ;; CHECK:      (func $idem-effects-interact (type $0)
+  ;; CHECK:      (func $idem-effects-interact (type $1)
+  ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.add
   ;; CHECK-NEXT:    (global.get $mutable)
@@ -180,8 +187,10 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (call $idempotent
-  ;; CHECK-NEXT:    (global.get $immutable)
+  ;; CHECK-NEXT:   (local.tee $0
+  ;; CHECK-NEXT:    (call $idempotent
+  ;; CHECK-NEXT:     (global.get $immutable)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -191,14 +200,14 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (call $idempotent
-  ;; CHECK-NEXT:    (global.get $immutable)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $idem-effects-interact
     ;; An idempotent function still has effects on the first call. That
     ;; prevents optimizing the i32.add, as the first call might alter $mutable.
+    ;; However, the second idempotent call itself can still be optimized, since
+    ;; the intervening i32.add does not affect its immutable operand.
     (drop
       (i32.add
         (global.get $mutable)
@@ -223,36 +232,37 @@
     )
   )
 
-  ;; CHECK:      (func $idem-effects-interact-2 (type $0)
+  ;; CHECK:      (func $idem-effects-interact-2 (type $1)
+  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (call $idempotent
-  ;; CHECK-NEXT:    (global.get $immutable)
+  ;; CHECK-NEXT:   (local.tee $0
+  ;; CHECK-NEXT:    (call $idempotent
+  ;; CHECK-NEXT:     (global.get $immutable)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.add
-  ;; CHECK-NEXT:    (global.get $mutable)
-  ;; CHECK-NEXT:    (global.get $mutable)
+  ;; CHECK-NEXT:   (local.tee $1
+  ;; CHECK-NEXT:    (i32.add
+  ;; CHECK-NEXT:     (global.get $mutable)
+  ;; CHECK-NEXT:     (global.get $mutable)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (call $idempotent
-  ;; CHECK-NEXT:    (global.get $immutable)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.add
-  ;; CHECK-NEXT:    (global.get $mutable)
-  ;; CHECK-NEXT:    (global.get $mutable)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.get $1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $idem-effects-interact-2
     ;; As above, but interleaved differently. The first i32.add is now between
-    ;; the two idempotent calls. Here we could optimize, but do not atm, as the
-    ;; mutable reads invalidate the first call (only the reverse is true, but
-    ;; our check is symmetrical atm), and the second call - which we fail to
-    ;; optimize out - invalidates the later mutable reads. TODO
+    ;; the two idempotent calls. The mutable reads do not invalidate the first
+    ;; idempotent call, and since the second idempotent call is replaced with a
+    ;; local.get (and has no effects), it does not invalidate the i32.add, so
+    ;; both can be optimized.
     (drop
       (call $idempotent
         (global.get $immutable)
@@ -267,6 +277,410 @@
     (drop
       (call $idempotent
         (global.get $immutable)
+      )
+    )
+    (drop
+      (i32.add
+        (global.get $mutable)
+        (global.get $mutable)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $intervening-call (type $0) (param $x i32)
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (call $use1
+  ;; CHECK-NEXT:   (local.tee $1
+  ;; CHECK-NEXT:    (call $idempotent
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $use2
+  ;; CHECK-NEXT:   (local.get $1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $intervening-call (param $x i32)
+    ;; Intervening side-effecting calls ($use1) do not invalidate an idempotent
+    ;; call whose operands are unaffected (like a local).
+    (call $use1
+      (call $idempotent
+        (local.get $x)
+      )
+    )
+    (call $use2
+      (call $idempotent
+        (local.get $x)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $intervening-global-set (type $0) (param $x i32)
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.tee $1
+  ;; CHECK-NEXT:    (call $idempotent
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (global.set $mutable
+  ;; CHECK-NEXT:   (i32.const 99)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $intervening-global-set (param $x i32)
+    ;; Intervening global writes do not invalidate an idempotent call with a
+    ;; local operand.
+    (drop
+      (call $idempotent
+        (local.get $x)
+      )
+    )
+    (global.set $mutable
+      (i32.const 99)
+    )
+    (drop
+      (call $idempotent
+        (local.get $x)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $intervening-local-set (type $0) (param $x i32)
+  ;; CHECK-NEXT:  (call $use1
+  ;; CHECK-NEXT:   (call $idempotent
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (i32.const 99)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $use2
+  ;; CHECK-NEXT:   (call $idempotent
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $intervening-local-set (param $x i32)
+    ;; Modifying the operand local DOES invalidate the idempotent call.
+    (call $use1
+      (call $idempotent
+        (local.get $x)
+      )
+    )
+    (local.set $x
+      (i32.const 99)
+    )
+    (call $use2
+      (call $idempotent
+        (local.get $x)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $enclosing (type $0) (param $x i32)
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (call $use1
+  ;; CHECK-NEXT:   (local.tee $1
+  ;; CHECK-NEXT:    (i32.add
+  ;; CHECK-NEXT:     (call $idempotent
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $use2
+  ;; CHECK-NEXT:   (local.get $1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $enclosing (param $x i32)
+    ;; An enclosing expression around an idempotent call can also be
+    ;; deduplicated across intervening side effects.
+    (call $use1
+      (i32.add
+        (call $idempotent
+          (local.get $x)
+        )
+        (i32.const 1)
+      )
+    )
+    (call $use2
+      (i32.add
+        (call $idempotent
+          (local.get $x)
+        )
+        (i32.const 1)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $enclosing-mutable (type $0) (param $x i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.add
+  ;; CHECK-NEXT:    (global.get $mutable)
+  ;; CHECK-NEXT:    (call $idempotent
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.add
+  ;; CHECK-NEXT:    (global.get $mutable)
+  ;; CHECK-NEXT:    (call $idempotent
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $enclosing-mutable (param $x i32)
+    ;; An enclosing expression that also reads mutable state cannot be
+    ;; deduplicated, because the idempotent call's first execution might alter
+    ;; $mutable before the copy evaluates it.
+    (drop
+      (i32.add
+        (global.get $mutable)
+        (call $idempotent
+          (local.get $x)
+        )
+      )
+    )
+    (drop
+      (i32.add
+        (global.get $mutable)
+        (call $idempotent
+          (local.get $x)
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $enclosing-trap (type $0) (param $x i32)
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (call $use1
+  ;; CHECK-NEXT:   (local.tee $1
+  ;; CHECK-NEXT:    (i32.div_s
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:     (call $idempotent
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $use2
+  ;; CHECK-NEXT:   (local.get $1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $enclosing-trap (param $x i32)
+    ;; Traps in the enclosing expression or operands do not prevent
+    ;; deduplication: if the first traps, the copy is not reached.
+    (call $use1
+      (i32.div_s
+        (i32.const 1)
+        (call $idempotent
+          (local.get $x)
+        )
+      )
+    )
+    (call $use2
+      (i32.div_s
+        (i32.const 1)
+        (call $idempotent
+          (local.get $x)
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $nested-idempotent (type $0) (param $x i32)
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (call $use1
+  ;; CHECK-NEXT:   (local.tee $1
+  ;; CHECK-NEXT:    (call $idempotent
+  ;; CHECK-NEXT:     (call $idempotent
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $use2
+  ;; CHECK-NEXT:   (local.get $1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $nested-idempotent (param $x i32)
+    ;; Nested idempotent calls can be deduplicated across intervening side
+    ;; effects.
+    (call $use1
+      (call $idempotent
+        (call $idempotent
+          (local.get $x)
+        )
+      )
+    )
+    (call $use2
+      (call $idempotent
+        (call $idempotent
+          (local.get $x)
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $nested-idempotent-mutable (type $1)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (call $idempotent
+  ;; CHECK-NEXT:    (call $idempotent
+  ;; CHECK-NEXT:     (global.get $mutable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (call $idempotent
+  ;; CHECK-NEXT:    (call $idempotent
+  ;; CHECK-NEXT:     (global.get $mutable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $nested-idempotent-mutable
+    ;; Nested idempotent calls with a mutable global operand cannot be
+    ;; deduplicated, because the first call might alter $mutable.
+    (drop
+      (call $idempotent
+        (call $idempotent
+          (global.get $mutable)
+        )
+      )
+    )
+    (drop
+      (call $idempotent
+        (call $idempotent
+          (global.get $mutable)
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $invalidated-idem-still-invalidates (type $0) (param $x i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (call $idempotent
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (i32.const 99)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.add
+  ;; CHECK-NEXT:    (global.get $mutable)
+  ;; CHECK-NEXT:    (global.get $mutable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (call $idempotent
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.add
+  ;; CHECK-NEXT:    (global.get $mutable)
+  ;; CHECK-NEXT:    (global.get $mutable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $invalidated-idem-still-invalidates (param $x i32)
+    ;; The first idempotent call is invalidated by local.set $x, so the second
+    ;; idempotent call is not replaced and still executes with a new argument.
+    ;; Therefore it must still invalidate the i32.add of $mutable globals.
+    (drop
+      (call $idempotent
+        (local.get $x)
+      )
+    )
+    (local.set $x
+      (i32.const 99)
+    )
+    (drop
+      (i32.add
+        (global.get $mutable)
+        (global.get $mutable)
+      )
+    )
+    (drop
+      (call $idempotent
+        (local.get $x)
+      )
+    )
+    (drop
+      (i32.add
+        (global.get $mutable)
+        (global.get $mutable)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $partial-invalidation (type $0) (param $x i32)
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (call $use1
+  ;; CHECK-NEXT:   (local.tee $1
+  ;; CHECK-NEXT:    (call $idempotent
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $use2
+  ;; CHECK-NEXT:   (local.get $1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (i32.const 99)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.add
+  ;; CHECK-NEXT:    (global.get $mutable)
+  ;; CHECK-NEXT:    (global.get $mutable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (call $idempotent
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.add
+  ;; CHECK-NEXT:    (global.get $mutable)
+  ;; CHECK-NEXT:    (global.get $mutable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $partial-invalidation (param $x i32)
+    ;; The second call is deduplicated, then local.set $x invalidates the
+    ;; original before the third call. The third call still executes and must
+    ;; invalidate the i32.add.
+    (call $use1
+      (call $idempotent
+        (local.get $x)
+      )
+    )
+    (call $use2
+      (call $idempotent
+        (local.get $x)
+      )
+    )
+    (local.set $x
+      (i32.const 99)
+    )
+    (drop
+      (i32.add
+        (global.get $mutable)
+        (global.get $mutable)
+      )
+    )
+    (drop
+      (call $idempotent
+        (local.get $x)
       )
     )
     (drop

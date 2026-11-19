@@ -115,6 +115,7 @@
 
 #include <algorithm>
 #include <memory>
+#include <optional>
 
 #include <ir/cost.h>
 #include <ir/effects.h>
@@ -217,7 +218,8 @@ struct RequestInfoMap : public std::unordered_map<Expression*, RequestInfo> {
 // TODO if users want the call annotation, handle that too.
 bool isIdempotent(Expression* curr, Module& wasm) {
   if (auto* call = curr->dynCast<Call>()) {
-    if (Intrinsics::getAnnotations(wasm.getFunction(call->target)).idempotent) {
+    if (!call->isReturn &&
+        Intrinsics::getAnnotations(wasm.getFunction(call->target)).idempotent) {
       return true;
     }
   }
@@ -449,7 +451,8 @@ struct Checker
     // the block.
     Index requestsLeft;
 
-    // The effects in the expression.
+    // The effects when re-evaluating the expression as a copy (excluding the
+    // shallow effects of any idempotent calls inside it).
     EffectAnalyzer effects;
   };
 
@@ -457,9 +460,63 @@ struct Checker
   // optimized in the current basic block.
   std::unordered_map<Expression*, ActiveOriginalInfo> activeOriginals;
 
+  // Collect the effects of an expression when re-evaluated as a copy. Any
+  // idempotent calls inside it have no effects on subsequent executions (as
+  // long as their operands evaluate to the same values), so we split their
+  // shallow effects into |idempotentCallEffects| and put all other shallow
+  // effects (operands and enclosing expressions) into |effects|.
+  void
+  collectCopyEffects(Expression* expr,
+                     EffectAnalyzer& effects,
+                     std::optional<EffectAnalyzer>& idempotentCallEffects) {
+    SmallVector<Expression*, 16> worklist{expr};
+    while (!worklist.empty()) {
+      auto* curr = worklist.back();
+      worklist.pop_back();
+      if (isIdempotent(curr, *getModule())) {
+        if (!idempotentCallEffects) {
+          idempotentCallEffects.emplace(options, *getModule());
+        }
+        idempotentCallEffects->visit(curr);
+      } else {
+        effects.visit(curr);
+      }
+      for (auto* child : ChildIterator(curr)) {
+        worklist.push_back(child);
+      }
+    }
+  }
+
   void visitExpression(Expression* curr) {
     // This is the first time we encounter this expression.
     assert(!activeOriginals.contains(curr));
+
+    auto iter = requestInfos.find(curr);
+    if (iter != requestInfos.end()) {
+      auto& info = iter->second;
+      info.validate();
+      if (info.original) {
+        auto originalIter = activeOriginals.find(info.original);
+        if (originalIter != activeOriginals.end()) {
+          // This expression is a valid copy that will be replaced with a
+          // local.get of its original, so it will not actually execute (and in
+          // particular, if it is an idempotent call, it has no effects here and
+          // cannot invalidate other active originals).
+          auto& originalInfo = originalIter->second;
+          if (originalInfo.requestsLeft == 1) {
+            activeOriginals.erase(originalIter);
+          } else {
+            originalInfo.requestsLeft--;
+          }
+          return;
+        }
+        // The original was already invalidated (or rejected). Remove our info,
+        // and fall through to check if |curr| invalidates other active
+        // originals (since |curr| will still execute).
+        requestInfos.erase(iter);
+        iter = requestInfos.end();
+      }
+    }
 
     // Given the current expression, see what it invalidates of the currently-
     // hashed expressions, if there are any.
@@ -486,34 +543,27 @@ struct Checker
       // effects.
       effects.trap = false;
 
-      auto idempotent = isIdempotent(curr, *getModule());
-
       std::vector<Expression*> invalidated;
-      for (auto& kv : activeOriginals) {
-        auto* original = kv.first;
-        if (idempotent && ExpressionAnalyzer::shallowEqual(curr, original)) {
-          // |curr| is idempotent, so it does not invalidate later appearances
-          // of itself.
-          continue;
-        }
-        auto& originalInfo = kv.second;
-        // Check whether curr must remain before COPY. We use ORIGINAL's effects
-        // in the check because we know they are the same as COPY's effects.
+      for (auto& [original, originalInfo] : activeOriginals) {
+        // Check whether curr must remain before COPY. We use ORIGINAL's copy
+        // effects in the check because we know they are the same as COPY's
+        // effects.
         if (effects.orderedBefore(originalInfo.effects)) {
           invalidated.push_back(original);
         }
       }
 
       for (auto* original : invalidated) {
+        assert(original != curr);
         // Remove all requests after this expression, as we cannot optimize to
         // them.
-        requestInfos[original].requests -=
-          activeOriginals.at(original).requestsLeft;
+        auto& originalReqInfo = requestInfos.at(original);
+        originalReqInfo.requests -= activeOriginals.at(original).requestsLeft;
 
         // If no requests remain at all (that is, there were no requests we
         // could provide before we ran into this invalidation) then we do not
         // need this original at all.
-        if (requestInfos[original].requests == 0) {
+        if (originalReqInfo.requests == 0) {
           requestInfos.erase(original);
         }
 
@@ -521,51 +571,42 @@ struct Checker
       }
     }
 
-    auto iter = requestInfos.find(curr);
     if (iter == requestInfos.end()) {
       return;
     }
+
     auto& info = iter->second;
-    info.validate();
+    assert(info.requests > 0);
+    // This is an original. Compute its effects when re-evaluated as a copy.
+    EffectAnalyzer effects(options, *getModule());
+    std::optional<EffectAnalyzer> idempotentCallEffects;
+    collectCopyEffects(curr, effects, idempotentCallEffects);
 
-    if (info.requests > 0) {
-      // This is an original. Compute its side effects, as we cannot optimize
-      // away repeated appearances if it has any.
-      EffectAnalyzer effects(options, *getModule(), curr);
+    // We can ignore traps here, as we replace a repeating expression with a
+    // single appearance of it, a store to a local, and gets in the other
+    // locations, and so if the expression traps then the first appearance -
+    // that we keep around - would trap, and the others are never reached
+    // anyhow. (The other checks we perform here, including invalidation and
+    // determinism, will ensure that either all of the appearances trap, or
+    // none of them.)
+    effects.trap = false;
 
-      // We can ignore traps here, as we replace a repeating expression with a
-      // single appearance of it, a store to a local, and gets in the other
-      // locations, and so if the expression traps then the first appearance -
-      // that we keep around - would trap, and the others are never reached
-      // anyhow. (The other checks we perform here, including invalidation and
-      // determinism, will ensure that either all of the appearances trap, or
-      // none of them.)
-      effects.trap = false;
-
-      // Note that we've already checked above that this has no side effects or
-      // generativity: if we got here, then it is good to go from the
-      // perspective of this expression itself (but may be invalidated by other
-      // code in between, see above).
-      activeOriginals.emplace(
-        curr, ActiveOriginalInfo{info.requests, std::move(effects)});
-    } else if (info.original) {
-      // The original may have already been invalidated. If so, remove our info
-      // as well.
-      auto originalIter = activeOriginals.find(info.original);
-      if (originalIter == activeOriginals.end()) {
-        requestInfos.erase(iter);
-        return;
-      }
-
-      // After visiting this expression, we have one less request for its
-      // original, and perhaps none are left.
-      auto& originalInfo = originalIter->second;
-      if (originalInfo.requestsLeft == 1) {
-        activeOriginals.erase(info.original);
-      } else {
-        originalInfo.requestsLeft--;
-      }
+    if (idempotentCallEffects &&
+        idempotentCallEffects->orderedBefore(effects)) {
+      // An idempotent call inside ORIGINAL may have side effects on its first
+      // call that interfere with re-evaluating the rest of the expression
+      // (e.g., (call $idempotent (global.get $mutable))), so we cannot
+      // deduplicate it.
+      requestInfos.erase(iter);
+      return;
     }
+
+    // Note that we've already checked above that this has no side effects or
+    // generativity: if we got here, then it is good to go from the
+    // perspective of this expression itself (but may be invalidated by other
+    // code in between, see above).
+    activeOriginals.emplace(
+      curr, ActiveOriginalInfo{info.requests, std::move(effects)});
   }
 
   static void doNoteNonLinear(Checker* self, Expression** currp) {

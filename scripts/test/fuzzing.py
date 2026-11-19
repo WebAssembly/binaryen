@@ -106,6 +106,7 @@ unfuzzable = [
     'duplicate-function-elimination_annotations.wast',
     'once-reduction_idempotent.wast',
     'local-cse_idempotent.wast',
+    'local-cse-global-effects-idempotent.wast',
     'optimize-instructions-global-effects-idempotent.wast',
     'noreturn.wast',
     'optimize-noreturn.wast',
