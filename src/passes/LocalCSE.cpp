@@ -506,7 +506,10 @@ struct Checker
           // This expression is a valid copy that will be replaced with a
           // local.get of its original, so it will not actually execute (and in
           // particular, if it is an idempotent call, it has no effects here and
-          // cannot invalidate other active originals).
+          // cannot invalidate other active originals). All we need to do is
+          // remove one request (since we finished processing this expression,
+          // which was one of those requests), and if none are left, remove the
+          // original from being active.
           auto& originalInfo = originalIter->second;
           if (originalInfo.requestsLeft == 1) {
             activeOriginals.erase(originalIter);
@@ -582,7 +585,8 @@ struct Checker
 
     auto& info = iter->second;
     assert(info.requests > 0);
-    // This is an original. Compute its effects when re-evaluated as a copy.
+    // This is an original. Compute its effects when re-evaluated as a copy,
+    // noting idempotent effect separately.
     EffectAnalyzer copyEffects(options, *getModule());
     std::optional<EffectAnalyzer> idempotentCallEffects;
     collectCopyEffects(curr, copyEffects, idempotentCallEffects);
@@ -599,7 +603,7 @@ struct Checker
     if (idempotentCallEffects &&
         idempotentCallEffects->orderedBefore(copyEffects)) {
       // An idempotent call inside ORIGINAL may have side effects on its first
-      // call that interfere with re-evaluating the rest of the expression
+      // call that interfere with re-evaluating the rest of the expression later
       // (e.g., (call $idempotent (global.get $mutable))), so we cannot
       // deduplicate it.
       requestInfos.erase(iter);
