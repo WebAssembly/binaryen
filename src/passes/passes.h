@@ -69,6 +69,7 @@ Pass* createGUFAPass();
 Pass* createGUFACastAllPass();
 Pass* createGUFAOptimizingPass();
 Pass* createHeap2LocalPass();
+Pass* createHeap2Local2Pass();
 Pass* createHeapStoreOptimizationPass();
 Pass* createI64ToI32LoweringPass();
 Pass* createInlineMainPass();

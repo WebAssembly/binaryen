@@ -255,6 +255,9 @@
 ;; CHECK-NEXT:   --heap2local                                  replace GC allocations with 
 ;; CHECK-NEXT:                                                 locals
 ;; CHECK-EMPTY:
+;; CHECK-NEXT:   --heap2local2                                 experimental reimplementation of
+;; CHECK-NEXT:                                                 heap2local
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --i64-to-i32-lowering                         lower all uses of i64s to use 
 ;; CHECK-NEXT:                                                 i32s instead
 ;; CHECK-EMPTY:
