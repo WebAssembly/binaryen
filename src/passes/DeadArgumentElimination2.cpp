@@ -43,6 +43,7 @@
 
 #include "analysis/lattices/bool.h"
 #include "ir/effects.h"
+#include "ir/gc-type-utils.h"
 #include "ir/intrinsics.h"
 #include "ir/label-utils.h"
 #include "ir/local-graph.h"
@@ -208,6 +209,10 @@ struct FunctionInfo {
   // from none to unreachable, requiring enclosing expressions to be
   // refinalized.
   bool refinalize = false;
+
+  // Whether this function can never return normally (e.g. always traps/throws
+  // or loops, is marked @binaryen.noreturn, or has an uninhabitable result).
+  bool neverReturns = false;
 };
 
 // Analysis results and call graph information for a tree of related function
@@ -219,6 +224,10 @@ struct RootFuncTypeInfo {
 
   // Analysis result for the function result.
   Used::Element resultUsage;
+
+  // Whether all referenced functions in this type tree can never return
+  // normally. (This will be set to false if any referenced function returns.)
+  bool neverReturns = true;
 
   // The list of referenced functions with types in this tree. When a parameter
   // in this type tree is used, the parameter becomes used in these functions
@@ -401,6 +410,9 @@ struct GraphBuilder : public WalkerPass<ExpressionStackWalker<GraphBuilder>> {
 
   bool optimizeReferencedFuncs;
 
+  // Whether this function has at least one potentially normal return path.
+  bool canReturn = false;
+
   GraphBuilder(const Used& used,
                const std::unordered_map<Name, Index>& funcIndices,
                std::vector<FunctionInfo>& funcInfos,
@@ -413,11 +425,29 @@ struct GraphBuilder : public WalkerPass<ExpressionStackWalker<GraphBuilder>> {
       used, funcIndices, funcInfos, optimizeReferencedFuncs);
   }
 
+  static bool hasUnreachableOperand(const ExpressionList& operands) {
+    return std::any_of(operands.begin(), operands.end(), [](Expression* op) {
+      return op->type == Type::unreachable;
+    });
+  }
+
   void runOnFunction(Module* wasm, Function* func) override {
     assert(index == Index(-1));
     index = funcIndices.at(func->name);
     localGraph.emplace(func);
     WalkerPass<ExpressionStackWalker<GraphBuilder>>::runOnFunction(wasm, func);
+    if (func->body->type != Type::unreachable) {
+      canReturn = true;
+    }
+    if (!canReturn) {
+      funcInfos[index].neverReturns = true;
+    }
+  }
+
+  void visitReturn(Return* curr) {
+    if (!curr->value || curr->value->type != Type::unreachable) {
+      canReturn = true;
+    }
   }
 
   void visitRefFunc(RefFunc* curr) {
@@ -634,6 +664,9 @@ struct GraphBuilder : public WalkerPass<ExpressionStackWalker<GraphBuilder>> {
           target->type.getHeapType());
       }
     }
+    if (curr->isReturn && !hasUnreachableOperand(curr->operands)) {
+      canReturn = true;
+    }
     auto* callee = getModule()->getFunction(curr->target);
     if (callee->getResults().isConcrete()) {
       Location source = FuncResultLoc{funcIndices.at(curr->target)};
@@ -646,7 +679,15 @@ struct GraphBuilder : public WalkerPass<ExpressionStackWalker<GraphBuilder>> {
     }
   }
 
-  void handleIndirectCall(Expression* curr, HeapType type, bool isReturn) {
+  void handleIndirectCall(Expression* curr,
+                          HeapType type,
+                          bool isReturn,
+                          Expression* target,
+                          const ExpressionList& operands) {
+    if (isReturn && target->type != Type::unreachable &&
+        !hasUnreachableOperand(operands)) {
+      canReturn = true;
+    }
     auto sig = type.getSignature();
     if (sig.results.isConcrete()) {
       HeapType rootType = getRootType(type);
@@ -665,13 +706,18 @@ struct GraphBuilder : public WalkerPass<ExpressionStackWalker<GraphBuilder>> {
   }
 
   void visitCallIndirect(CallIndirect* curr) {
-    handleIndirectCall(curr, curr->heapType, curr->isReturn);
+    handleIndirectCall(
+      curr, curr->heapType, curr->isReturn, curr->target, curr->operands);
   }
 
   void visitCallRef(CallRef* curr) {
     auto targetType = curr->target->type;
     if (targetType.isSignature()) {
-      handleIndirectCall(curr, targetType.getHeapType(), curr->isReturn);
+      handleIndirectCall(curr,
+                         targetType.getHeapType(),
+                         curr->isReturn,
+                         curr->target,
+                         curr->operands);
     }
   }
 };
@@ -694,6 +740,16 @@ void DAE2::analyzeModule() {
 
   // Find additional function references at the module level.
   builder.walkModuleCode(wasm);
+
+  // Mark functions with uninhabitable results or @binaryen.noreturn as never
+  // returning even if their bodies appear to reach the end.
+  for (Index i = 0; i < wasm->functions.size(); ++i) {
+    auto* func = wasm->functions[i].get();
+    if (GCTypeUtils::isTriviallyUninhabitable(func->getResults()) ||
+        Intrinsics::getAnnotations(func).noReturn) {
+      funcInfos[i].neverReturns = true;
+    }
+  }
 
   // Update the locations for which we observed direct usage.
   for (Index i = 0; i < wasm->functions.size(); ++i) {
@@ -806,7 +862,11 @@ void DAE2::prepareReverseGraph() {
     funcInfos[i].paramSources.resize(funcInfos[i].paramUsages.size());
     if (funcInfos[i].referenced) {
       auto root = getRootType(wasm->functions[i]->type.getHeapType());
-      getTypeTreeInfo(root).referencedFuncs.push_back(i);
+      auto& typeTreeInfo = getTypeTreeInfo(root);
+      typeTreeInfo.referencedFuncs.push_back(i);
+      if (!funcInfos[i].neverReturns) {
+        typeTreeInfo.neverReturns = false;
+      }
     }
   }
   for (Index callerIndex = 0; callerIndex < funcInfos.size(); ++callerIndex) {
@@ -1274,13 +1334,35 @@ struct Optimizer
     replaceCurrent(block);
   }
 
-  void visitCall(Call* curr) {
-    auto& calleeInfo = parent.funcInfos[parent.funcIndices.at(curr->target)];
-    if (!calleeInfo.resultUsage && curr->type.isConcrete()) {
+  void finishCall(Expression* curr,
+                  ExpressionList& operands,
+                  bool hasUsedResult,
+                  const Params& paramUsages,
+                  bool neverReturns) {
+    bool removedResult = false;
+    if (!hasUsedResult && curr->type.isConcrete()) {
       curr->type = Type::none;
       markParentsRemoved();
+      removedResult = true;
     }
-    removeOperands(curr, curr->operands, calleeInfo.paramUsages);
+    removeOperands(curr, operands, paramUsages);
+    // Removing a concrete result from a call that can never return loses
+    // unreachability unless we append an unreachable after the call.
+    if (removedResult && neverReturns &&
+        getCurrent()->type != Type::unreachable) {
+      Builder builder(*getModule());
+      replaceCurrent(
+        builder.makeSequence(getCurrent(), builder.makeUnreachable()));
+    }
+  }
+
+  void visitCall(Call* curr) {
+    auto& calleeInfo = parent.funcInfos[parent.funcIndices.at(curr->target)];
+    finishCall(curr,
+               curr->operands,
+               calleeInfo.resultUsage,
+               calleeInfo.paramUsages,
+               calleeInfo.neverReturns);
   }
 
   void handleIndirectCall(Expression* curr,
@@ -1290,21 +1372,12 @@ struct Optimizer
       return;
     }
     auto it = parent.typeTreeInfos.find(getRootType(type));
-    if (it == parent.typeTreeInfos.end()) {
-      // No analysis results for this type, so none of its parameters or results
-      // are used.
-      if (curr->type.isConcrete()) {
-        curr->type = Type::none;
-        markParentsRemoved();
-      }
-      removeOperands(curr, operands, {});
-    } else {
-      if (!it->second.resultUsage && curr->type.isConcrete()) {
-        curr->type = Type::none;
-        markParentsRemoved();
-      }
-      removeOperands(curr, operands, it->second.paramUsages);
-    }
+    assert(it != parent.typeTreeInfos.end());
+    finishCall(curr,
+               operands,
+               it->second.resultUsage,
+               it->second.paramUsages,
+               it->second.neverReturns);
   }
 
   void visitCallRef(CallRef* curr) {
@@ -1418,7 +1491,7 @@ Expression* Optimizer::getReplacement(Expression* curr) {
           result = exprs[0];
           break;
         default:
-          result = builder.makeBlock(exprs, Type::none);
+          result = builder.makeBlock(exprs);
           break;
       }
       exprs.clear();

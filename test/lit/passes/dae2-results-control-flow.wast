@@ -294,7 +294,10 @@
   ;; CHECK-NEXT:     (local.get $x)
   ;; CHECK-NEXT:     (then
   ;; CHECK-NEXT:      (unreachable)
-  ;; CHECK-NEXT:      (call $callee)
+  ;; CHECK-NEXT:      (block
+  ;; CHECK-NEXT:       (call $callee)
+  ;; CHECK-NEXT:       (unreachable)
+  ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (else
   ;; CHECK-NEXT:      (unreachable)
@@ -340,8 +343,11 @@
     (unreachable)
   )
   ;; CHECK:      (func $caller (type $2) (param $x i32) (param $ref (ref $sig))
-  ;; CHECK-NEXT:  (call_ref $sig
-  ;; CHECK-NEXT:   (local.get $ref)
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (call_ref $sig
+  ;; CHECK-NEXT:    (local.get $ref)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block
@@ -349,7 +355,10 @@
   ;; CHECK-NEXT:     (local.get $x)
   ;; CHECK-NEXT:     (then
   ;; CHECK-NEXT:      (unreachable)
-  ;; CHECK-NEXT:      (call $callee)
+  ;; CHECK-NEXT:      (block
+  ;; CHECK-NEXT:       (call $callee)
+  ;; CHECK-NEXT:       (unreachable)
+  ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (else
   ;; CHECK-NEXT:      (unreachable)
