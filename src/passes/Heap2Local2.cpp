@@ -109,8 +109,6 @@ struct AnalysisState {
   // Metadata and lowered local indices for each candidate allocation, indexed
   // by AllocId.
   std::vector<AllocInfo> allocs;
-  // Maps each candidate allocation expression to its index in allocs.
-  std::unordered_map<Expression*, AllocId> allocIds;
   // Maps tracked reference-typed expressions to their dataflow NodeId.
   std::unordered_map<Expression*, NodeId> exprNodes;
   // Current lattice value for each dataflow node, indexed by NodeId.
@@ -255,7 +253,6 @@ struct GraphBuilder
     auto& info = state.allocs.emplace_back();
     info.expr = curr;
     info.fields.assign(fields.begin(), fields.end());
-    state.allocIds[curr] = id;
     state.join(curr, state.originLattice.get(id));
     return id;
   }
@@ -591,16 +588,6 @@ struct Optimizer : public PostWalker<Optimizer> {
     return std::nullopt;
   }
 
-  // If `curr` is an optimizable allocation, return its ID; otherwise return
-  // nullopt.
-  std::optional<AllocId> getOptimizedCandidate(Expression* curr) {
-    auto it = state.allocIds.find(curr);
-    if (it == state.allocIds.end() || state.allocs[it->second].escaped) {
-      return std::nullopt;
-    }
-    return it->second;
-  }
-
   // Create the null value with which we will replace an optimized allocation.
   Expression* makeOptimizedNull(AllocId alloc) {
     return builder.makeRefNull(
@@ -626,11 +613,12 @@ struct Optimizer : public PostWalker<Optimizer> {
   }
 
   void visitStructNew(StructNew* curr) {
-    auto alloc = getOptimizedCandidate(curr);
+    auto alloc = getOptimizedAlloc(curr);
     if (!alloc) {
       return;
     }
     const auto& info = state.allocs[*alloc];
+    assert(info.expr == curr);
     SmallVector<Expression*, 8> contents;
     SmallVector<Index, 8> tempIndexes;
 
@@ -675,11 +663,12 @@ struct Optimizer : public PostWalker<Optimizer> {
   }
 
   void visitArrayNew(ArrayNew* curr) {
-    auto alloc = getOptimizedCandidate(curr);
+    auto alloc = getOptimizedAlloc(curr);
     if (!alloc) {
       return;
     }
     const auto& info = state.allocs[*alloc];
+    assert(info.expr == curr);
     Type elemType = curr->type.getHeapType().getArray().element.type;
 
     if (curr->isWithDefault()) {
@@ -713,11 +702,12 @@ struct Optimizer : public PostWalker<Optimizer> {
   }
 
   void visitArrayNewFixed(ArrayNewFixed* curr) {
-    auto alloc = getOptimizedCandidate(curr);
+    auto alloc = getOptimizedAlloc(curr);
     if (!alloc) {
       return;
     }
     const auto& info = state.allocs[*alloc];
+    assert(info.expr == curr);
     Type elemType = curr->type.getHeapType().getArray().element.type;
     SmallVector<Index, 8> tempIndexes;
     SmallVector<Expression*, 8> contents;
