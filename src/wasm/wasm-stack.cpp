@@ -3729,7 +3729,7 @@ ModuleStackIR::ModuleStackIR(Module& wasm, const PassOptions& options)
 
 void StackIRToBinaryWriter::write() {
   if (!func->prologLocation.empty()) {
-    parent.writeDebugLocation(func->prologLocation.back());
+    parent.writeDebugLocation(func->prologLocation);
   }
   writer.mapLocalsAndEmitHeader();
   // Stack to track indices of catches within a try
@@ -3788,7 +3788,7 @@ void StackIRToBinaryWriter::write() {
   // Indicate the debug location corresponding to the end opcode that
   // terminates the function code.
   if (!func->epilogLocation.empty()) {
-    parent.writeDebugLocation(func->epilogLocation.back());
+    parent.writeDebugLocation(func->epilogLocation);
   } else {
     // The end opcode has no debug location.
     parent.writeNoDebugLocation();

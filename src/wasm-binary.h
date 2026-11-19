@@ -1465,7 +1465,7 @@ public:
   void initializeDebugInfo();
   void writeSourceMapProlog();
   void writeSourceMapEpilog();
-  void writeDebugLocation(const Function::DebugLocation& loc);
+  void writeDebugLocation(const Function::DebugLocations& loc);
   void writeNoDebugLocation();
   void writeSourceMapLocation(Expression* curr, Function* func);
 
@@ -1544,12 +1544,13 @@ private:
   // Storage of source map locations until the section is placed at its final
   // location (shrinking LEBs may cause changes there).
   //
-  // A null DebugLocation* indicates we have no debug information for that
+  // A null DebugLocations* indicates we have no debug information for that
   // location.
-  std::vector<std::pair<size_t, const Function::DebugLocation*>>
+  std::vector<std::pair<size_t, const Function::DebugLocations*>>
     sourceMapLocations;
   size_t sourceMapLocationsSizeAtSectionStart;
-  Function::DebugLocation lastDebugLocation;
+  size_t lastFunctionEndOffset = 0;
+  Function::DebugLocations lastDebugLocation;
 
   std::unique_ptr<ImportInfo> importInfo;
 

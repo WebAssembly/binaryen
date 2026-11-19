@@ -17,6 +17,7 @@
 #include "source-map.h"
 #include "ir/module-utils.h"
 #include "print-test.h"
+#include "wasm-binary.h"
 #include "wasm-builder.h"
 #include "gmock/gmock-matchers.h"
 #include "gtest/gtest.h"
@@ -451,6 +452,75 @@ TEST_F(SourceMapTest, RelativeCallSiteParsing) {
   EXPECT_EQ(loc21[1].lineNumber, 13u);
   EXPECT_EQ(loc21[1].columnNumber, 9u);
   EXPECT_EQ(loc21[1].symbolNameIndex, std::optional<BinaryLocation>(0));
+}
+
+TEST_F(SourceMapTest, ScopesAndRangesBinaryRoundTrip) {
+  Module m1;
+  m1.debugInfoFileNames = {"app.dart"};
+  m1.debugInfoSymbolNames = {"caller", "callee"};
+
+  Builder builder(m1);
+  auto* nop1 = builder.makeNop();
+  auto* nop2 = builder.makeNop();
+  auto* nop3 = builder.makeNop();
+  auto* body = builder.makeBlock({nop1, nop2, nop3});
+  auto func = builder.makeFunction(
+    "main", {}, Signature(Type::none, Type::none), {}, body);
+
+  // nop1: in caller at app.dart:12:4
+  func->debugLocations[nop1] = {
+    Function::DebugLocation{0, 12, 4, std::optional<BinaryLocation>(0)}};
+  // nop2: inlined callee called from app.dart:15:8, body at app.dart:32:6.
+  func->debugLocations[nop2] = {
+    Function::DebugLocation{0, 15, 8, std::optional<BinaryLocation>(0)},
+    Function::DebugLocation{0, 32, 6, std::optional<BinaryLocation>(1)}};
+  // nop3: back in caller at app.dart:16:4
+  func->debugLocations[nop3] = {
+    Function::DebugLocation{0, 16, 4, std::optional<BinaryLocation>(0)}};
+
+  m1.addFunction(std::move(func));
+
+  BufferWithRandomAccess wasmBuf;
+  std::stringstream mapStream;
+  PassOptions options;
+  WasmBinaryWriter writer(&m1, wasmBuf, options);
+  writer.setNamesSection(true);
+  writer.setSourceMap(&mapStream, "out.map");
+  writer.write();
+
+  std::vector<char> wasmBytes(wasmBuf.begin(), wasmBuf.end());
+  std::string mapStr = mapStream.str();
+  std::vector<char> mapBytes(mapStr.begin(), mapStr.end());
+
+  Module m2;
+  WasmBinaryReader binaryReader(m2, FeatureSet::MVP, wasmBytes, mapBytes);
+  binaryReader.read();
+
+  ASSERT_EQ(m2.functions.size(), 1u);
+  auto* f2 = m2.functions[0].get();
+  auto* block2 = f2->body->cast<Block>();
+  ASSERT_EQ(block2->list.size(), 3u);
+
+  const auto& dl1 = f2->debugLocations.at(block2->list[0]);
+  ASSERT_EQ(dl1.size(), 1u);
+  EXPECT_EQ(dl1[0].lineNumber, 12u);
+  EXPECT_EQ(dl1[0].columnNumber, 4u);
+  EXPECT_EQ(dl1[0].symbolNameIndex, std::optional<BinaryLocation>(0));
+
+  const auto& dl2 = f2->debugLocations.at(block2->list[1]);
+  ASSERT_EQ(dl2.size(), 2u);
+  EXPECT_EQ(dl2[0].lineNumber, 15u);
+  EXPECT_EQ(dl2[0].columnNumber, 8u);
+  EXPECT_EQ(dl2[0].symbolNameIndex, std::optional<BinaryLocation>(0));
+  EXPECT_EQ(dl2[1].lineNumber, 32u);
+  EXPECT_EQ(dl2[1].columnNumber, 6u);
+  EXPECT_EQ(dl2[1].symbolNameIndex, std::optional<BinaryLocation>(1));
+
+  const auto& dl3 = f2->debugLocations.at(block2->list[2]);
+  ASSERT_EQ(dl3.size(), 1u);
+  EXPECT_EQ(dl3[0].lineNumber, 16u);
+  EXPECT_EQ(dl3[0].columnNumber, 4u);
+  EXPECT_EQ(dl3[0].symbolNameIndex, std::optional<BinaryLocation>(0));
 }
 
 TEST(SourceMapCopyTest, RemapInlinedStackLocations) {
