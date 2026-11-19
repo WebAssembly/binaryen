@@ -244,6 +244,10 @@ struct RootFuncTypeInfo {
 };
 
 struct DAE2 : public Pass {
+  // This pass changes locals and parameters.
+  // FIXME: DWARF updating does not handle local changes yet.
+  bool invalidatesDWARF() override { return true; }
+
   // Analysis lattice.
   Used used;
 
